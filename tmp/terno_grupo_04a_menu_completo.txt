@@ -1,0 +1,612 @@
+====================================================================================================
+TERNO-GRUPO-04A — MENU COMPLETO E SISTEMA DE ÍCONES
+====================================================================================================
+Gerado em: 26/07/2026 19:56:39
+Arquivo principal: .\src\pages\Dashboard\components\Sidebar\AppShell.jsx
+
+====================================================================================================
+APP SHELL COMPLETO
+====================================================================================================
+
+00001: import React, { useEffect, useMemo, useState } from "react";
+00002: import Icon from "./Icon";
+00003: import MiniLogo from "./MiniLogo";
+00004: 
+00005: import { auth } from "../../../../services/firebase";
+00006: import { onAuthStateChanged, signOut } from "firebase/auth";
+00007: 
+00008: const ROUTES = {
+00009:   DASHBOARD: "dashboard",
+00010:   ACCOUNT: "account",
+00011:   RESULTS: "results",
+00012:   TOP3: "top3",
+00013:   TERNO_GRUPO: "terno-grupo",
+00014:   LATE: "late",
+00015:   SEARCH: "search",
+00016:   PAYMENTS: "payments",
+00017:   DOWNLOADS: "downloads",
+00018:   CENTENAS: "centenas",
+00019:   STATISTICS: "statistics",
+00020: };
+00021: 
+00022: const ACCOUNT_SESSION_KEY = "pp_session_v1";
+00023: const LS_GUEST_ACTIVE_KEY = "pp_guest_active_v1";
+00024: 
+00025: const safeReadLS = (k) => {
+00026:   try {
+00027:     return localStorage.getItem(k);
+00028:   } catch {
+00029:     return null;
+00030:   }
+00031: };
+00032: 
+00033: const safeRemoveLS = (k) => {
+00034:   try {
+00035:     localStorage.removeItem(k);
+00036:   } catch {}
+00037: };
+00038: 
+00039: function normalizePlan(plan) {
+00040:   const p = String(plan || "").trim().toUpperCase();
+00041:   if (p === "VIP") return "VIP";
+00042:   if (p === "PREMIUM") return "PREMIUM";
+00043:   if (p === "FREE") return "FREE";
+00044:   return "";
+00045: }
+00046: 
+00047: function readSession() {
+00048:   const raw = safeReadLS(ACCOUNT_SESSION_KEY);
+00049:   if (!raw) {
+00050:     return {
+00051:       ok: false,
+00052:       type: "anon",
+00053:       plan: "",
+00054:       uid: "",
+00055:       email: "",
+00056:       raw: null,
+00057:     };
+00058:   }
+00059: 
+00060:   try {
+00061:     const obj = JSON.parse(raw);
+00062:     const type = String(obj?.type || "").trim().toLowerCase();
+00063:     const plan = normalizePlan(obj?.plan);
+00064: 
+00065:     return {
+00066:       ok: obj?.ok === true,
+00067:       type: type || "anon",
+00068:       plan: type === "guest" ? "FREE" : plan || (type === "user" ? "FREE" : ""),
+00069:       uid: String(obj?.uid || "").trim(),
+00070:       email: String(obj?.email || "").trim().toLowerCase(),
+00071:       raw: obj,
+00072:     };
+00073:   } catch {
+00074:     return {
+00075:       ok: true,
+00076:       type: "user",
+00077:       plan: "FREE",
+00078:       uid: "",
+00079:       email: "",
+00080:       raw: null,
+00081:     };
+00082:   }
+00083: }
+00084: 
+00085: function useViewport() {
+00086:   const [vw, setVw] = useState(() =>
+00087:     typeof window !== "undefined" ? window.innerWidth : 1200
+00088:   );
+00089: 
+00090:   useEffect(() => {
+00091:     const onR = () => setVw(window.innerWidth);
+00092:     window.addEventListener("resize", onR);
+00093:     return () => window.removeEventListener("resize", onR);
+00094:   }, []);
+00095: 
+00096:   return vw;
+00097: }
+00098: 
+00099: export default function AppShell({ active, onNavigate, onLogout, children }) {
+00100:   const [session, setSession] = useState(() => readSession());
+00101:   const vw = useViewport();
+00102:   const isMobile = vw < 980;
+00103: 
+00104:   const [sidebarOpen, setSidebarOpen] = useState(() => {
+00105:     if (typeof window === "undefined") return true;
+00106:     return window.innerWidth >= 980;
+00107:   });
+00108: 
+00109:   useEffect(() => {
+00110:     if (!isMobile) setSidebarOpen(true);
+00111:     else setSidebarOpen(false);
+00112:   }, [isMobile]);
+00113: 
+00114:   useEffect(() => {
+00115:     const unsub = onAuthStateChanged(auth, (user) => {
+00116:       if (user?.uid) {
+00117:         setSession(readSession());
+00118:         return;
+00119:       }
+00120: 
+00121:       if (safeReadLS(LS_GUEST_ACTIVE_KEY) === "1") {
+00122:         setSession({
+00123:           ok: true,
+00124:           type: "guest",
+00125:           plan: "FREE",
+00126:           uid: "",
+00127:           email: "",
+00128:           raw: null,
+00129:         });
+00130:         return;
+00131:       }
+00132: 
+00133:       setSession({
+00134:         ok: false,
+00135:         type: "anon",
+00136:         plan: "",
+00137:         uid: "",
+00138:         email: "",
+00139:         raw: null,
+00140:       });
+00141:     });
+00142: 
+00143:     return () => unsub();
+00144:   }, []);
+00145: 
+00146:   useEffect(() => {
+00147:     const refresh = () => setSession(readSession());
+00148: 
+00149:     const onStorage = (e) => {
+00150:       if (!e) return;
+00151:       if (e.key === ACCOUNT_SESSION_KEY || e.key === LS_GUEST_ACTIVE_KEY) {
+00152:         refresh();
+00153:       }
+00154:     };
+00155: 
+00156:     window.addEventListener("storage", onStorage);
+00157:     window.addEventListener("pp_session_changed", refresh);
+00158:     window.addEventListener("focus", refresh);
+00159: 
+00160:     return () => {
+00161:       window.removeEventListener("storage", onStorage);
+00162:       window.removeEventListener("pp_session_changed", refresh);
+00163:       window.removeEventListener("focus", refresh);
+00164:     };
+00165:   }, []);
+00166: 
+00167:   const isGuest = session?.type === "guest";
+00168:   const planLabel = isGuest ? "PREVIEW" : normalizePlan(session?.plan) || "FREE";
+00169: 
+00170:   useEffect(() => {
+00171:     const isDashboard = active === ROUTES.DASHBOARD;
+00172: 
+00173:     const prevHtmlOverflow = document?.documentElement?.style?.overflow;
+00174:     const prevBodyOverflow = document?.body?.style?.overflow;
+00175: 
+00176:     const mustLock = (!isMobile && isDashboard) || (isMobile && sidebarOpen);
+00177: 
+00178:     if (mustLock) {
+00179:       document.documentElement.style.overflow = "hidden";
+00180:       document.body.style.overflow = "hidden";
+00181:     } else {
+00182:       document.documentElement.style.overflow = prevHtmlOverflow || "";
+00183:       document.body.style.overflow = prevBodyOverflow || "";
+00184:     }
+00185: 
+00186:     return () => {
+00187:       document.documentElement.style.overflow = prevHtmlOverflow || "";
+00188:       document.body.style.overflow = prevBodyOverflow || "";
+00189:     };
+00190:   }, [active, isMobile, sidebarOpen]);
+00191: 
+00192:   useEffect(() => {
+00193:     if (!isMobile) return;
+00194: 
+00195:     const onKeyDown = (e) => {
+00196:       if (e.key === "Escape") setSidebarOpen(false);
+00197:     };
+00198: 
+00199:     window.addEventListener("keydown", onKeyDown);
+00200:     return () => window.removeEventListener("keydown", onKeyDown);
+00201:   }, [isMobile]);
+00202: 
+00203:   const handleNavigate = async (key) => {
+00204:     if (!key) return;
+00205: 
+00206:     if (isMobile) setSidebarOpen(false);
+00207: 
+00208:     if (key === "__LOGOUT__") {
+00209:       try {
+00210:         await signOut(auth);
+00211:       } catch {}
+00212: 
+00213:       safeRemoveLS(ACCOUNT_SESSION_KEY);
+00214:       safeRemoveLS(LS_GUEST_ACTIVE_KEY);
+00215: 
+00216:       onLogout?.();
+00217:       return;
+00218:     }
+00219: 
+00220:     onNavigate?.(key);
+00221:   };
+00222: 
+00223:   const UI = useMemo(() => {
+00224:     const GOLD = "rgba(202,166,75,1)";
+00225:     const GOLD_SOFT = "rgba(202,166,75,0.18)";
+00226:     const GOLD_SOFT_2 = "rgba(202,166,75,0.10)";
+00227:     const WHITE = "rgba(255,255,255,0.92)";
+00228:     const MUTED = "rgba(255,255,255,0.58)";
+00229:     const BORDER = "rgba(255,255,255,0.10)";
+00230:     const BG = "#050505";
+00231: 
+00232:     const SAFE_TOP = "env(safe-area-inset-top, 0px)";
+00233: 
+00234:     const sidebarW = isMobile ? 88 : 96;
+00235:     const isDashboard = active === ROUTES.DASHBOARD;
+00236: 
+00237:     const shell = {
+00238:       minHeight: "100dvh",
+00239:       maxHeight: "100dvh",
+00240:       height: "100dvh",
+00241:       background: BG,
+00242:       position: "relative",
+00243:       overflow: "hidden",
+00244:       display: "flex",
+00245:       flexDirection: "row",
+00246:     };
+00247: 
+00248:     const sidebarBase = {
+00249:       width: sidebarW,
+00250:       minWidth: sidebarW,
+00251:       height: "100%",
+00252:       borderRight: `1px solid ${BORDER}`,
+00253:       background:
+00254:         "linear-gradient(180deg, rgba(12,12,12,0.98) 0%, rgba(8,8,8,0.98) 52%, rgba(5,5,5,1) 100%)",
+00255:       display: "flex",
+00256:       flexDirection: "column",
+00257:       alignItems: "center",
+00258:       gap: 0,
+00259:       padding: "12px 10px 14px",
+00260:       boxSizing: "border-box",
+00261:     };
+00262: 
+00263:     const sidebar = isMobile
+00264:       ? {
+00265:           ...sidebarBase,
+00266:           position: "fixed",
+00267:           top: 0,
+00268:           left: 0,
+00269:           bottom: 0,
+00270:           zIndex: 60,
+00271:           transform: sidebarOpen ? "translateX(0)" : "translateX(-110%)",
+00272:           transition: "transform 220ms ease",
+00273:           boxShadow: "18px 0 48px rgba(0,0,0,0.65)",
+00274:         }
+00275:       : {
+00276:           ...sidebarBase,
+00277:           position: "relative",
+00278:           zIndex: 2,
+00279:         };
+00280: 
+00281:     const overlay = isMobile
+00282:       ? {
+00283:           position: "fixed",
+00284:           inset: 0,
+00285:           zIndex: 50,
+00286:           background: "rgba(0,0,0,0.55)",
+00287:           backdropFilter: "blur(6px)",
+00288:           WebkitBackdropFilter: "blur(6px)",
+00289:           opacity: sidebarOpen ? 1 : 0,
+00290:           pointerEvents: sidebarOpen ? "auto" : "none",
+00291:           transition: "opacity 200ms ease",
+00292:         }
+00293:       : { display: "none" };
+00294: 
+00295:     const brand = {
+00296:       width: "100%",
+00297:       display: "flex",
+00298:       flexDirection: "column",
+00299:       alignItems: "center",
+00300:       gap: 12,
+00301:       paddingTop: 8,
+00302:       paddingBottom: 14,
+00303:       marginBottom: 10,
+00304:       borderBottom: `1px solid ${BORDER}`,
+00305:     };
+00306: 
+00307:     const logoWrap = {
+00308:       width: "100%",
+00309:       minHeight: 62,
+00310:       display: "flex",
+00311:       alignItems: "center",
+00312:       justifyContent: "center",
+00313:     };
+00314: 
+00315:     const plan = {
+00316:       minWidth: 64,
+00317:       textAlign: "center",
+00318:       fontSize: 11,
+00319:       fontWeight: 900,
+00320:       padding: "8px 12px",
+00321:       borderRadius: 999,
+00322:       border: `1px solid ${GOLD_SOFT}`,
+00323:       color: GOLD,
+00324:       background:
+00325:         "linear-gradient(180deg, rgba(202,166,75,0.10), rgba(0,0,0,0.22))",
+00326:       letterSpacing: 0.4,
+00327:       boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.03)",
+00328:     };
+00329: 
+00330:     const nav = {
+00331:       width: "100%",
+00332:       display: "flex",
+00333:       flexDirection: "column",
+00334:       gap: 8,
+00335:       paddingTop: 2,
+00336:       alignItems: "center",
+00337:       overflow: "auto",
+00338:       flex: 1,
+00339:       WebkitOverflowScrolling: "touch",
+00340:     };
+00341: 
+00342:     const navDivider = {
+00343:       width: "100%",
+00344:       height: 1,
+00345:       minHeight: 1,
+00346:       margin: "6px 0 4px",
+00347:       background:
+00348:         "linear-gradient(90deg, rgba(255,255,255,0.00) 0%, rgba(255,255,255,0.10) 18%, rgba(202,166,75,0.18) 50%, rgba(255,255,255,0.10) 82%, rgba(255,255,255,0.00) 100%)",
+00349:       borderRadius: 999,
+00350:     };
+00351: 
+00352:     const btn = (isActive) => ({
+00353:       position: "relative",
+00354:       width: "100%",
+00355:       height: 46,
+00356:       borderRadius: 14,
+00357:       border: `1px solid ${isActive ? "rgba(202,166,75,0.55)" : BORDER}`,
+00358:       background: isActive
+00359:         ? "linear-gradient(180deg, rgba(202,166,75,0.16), rgba(0,0,0,0.38))"
+00360:         : "linear-gradient(180deg, rgba(255,255,255,0.03), rgba(0,0,0,0.22))",
+00361:       color: WHITE,
+00362:       cursor: "pointer",
+00363:       display: "grid",
+00364:       placeItems: "center",
+00365:       boxShadow: isActive
+00366:         ? "0 14px 36px rgba(0,0,0,0.55), inset 3px 0 0 rgba(202,166,75,0.95)"
+00367:         : "inset 0 0 0 1px rgba(255,255,255,0.015)",
+00368:       transition:
+00369:         "transform 160ms ease, border-color 160ms ease, background 160ms ease, box-shadow 160ms ease",
+00370:       outline: "none",
+00371:     });
+00372: 
+00373:     const btnMarker = (isActive) => ({
+00374:       position: "absolute",
+00375:       left: 0,
+00376:       top: 8,
+00377:       bottom: 8,
+00378:       width: 3,
+00379:       borderRadius: "0 999px 999px 0",
+00380:       background: isActive ? GOLD : "transparent",
+00381:       boxShadow: isActive ? `0 0 12px ${GOLD_SOFT}` : "none",
+00382:     });
+00383: 
+00384:     const btnHoverHint = {
+00385:       position: "absolute",
+00386:       inset: 0,
+00387:       borderRadius: 14,
+00388:       boxShadow: `inset 0 0 0 1px ${GOLD_SOFT_2}`,
+00389:       pointerEvents: "none",
+00390:     };
+00391: 
+00392:     const footerHint = {
+00393:       marginTop: "auto",
+00394:       paddingTop: 10,
+00395:       width: "100%",
+00396:       display: "flex",
+00397:       justifyContent: "center",
+00398:       color: MUTED,
+00399:       fontSize: 10,
+00400:     };
+00401: 
+00402:     const main = {
+00403:       flex: 1,
+00404:       minWidth: 0,
+00405:       height: "100%",
+00406:       overflow: !isMobile && isDashboard ? "hidden" : "auto",
+00407:       WebkitOverflowScrolling: "touch",
+00408:       position: "relative",
+00409:       zIndex: 1,
+00410:     };
+00411: 
+00412:     const mobileTopBar = isMobile
+00413:       ? {
+00414:           position: "sticky",
+00415:           top: 0,
+00416:           zIndex: 40,
+00417:           padding: `calc(${SAFE_TOP} + 10px) 0 8px 10px`,
+00418:           background:
+00419:             "linear-gradient(180deg, rgba(0,0,0,0.72), rgba(0,0,0,0.22), rgba(0,0,0,0))",
+00420:           backdropFilter: "blur(10px)",
+00421:           WebkitBackdropFilter: "blur(10px)",
+00422:         }
+00423:       : { display: "none" };
+00424: 
+00425:     const mobileMenuBtn = isMobile
+00426:       ? {
+00427:           width: 48,
+00428:           height: 48,
+00429:           borderRadius: 14,
+00430:           border: `1px solid ${BORDER}`,
+00431:           background:
+00432:             "linear-gradient(180deg, rgba(255,255,255,0.08), rgba(0,0,0,0.38))",
+00433:           boxShadow: "0 14px 36px rgba(0,0,0,0.55)",
+00434:           display: "grid",
+00435:           placeItems: "center",
+00436:           cursor: "pointer",
+00437:         }
+00438:       : { display: "none" };
+00439: 
+00440:     const mainInner =
+00441:       !isMobile && isDashboard
+00442:         ? { minWidth: 0, height: "100%", overflow: "hidden" }
+00443:         : { minWidth: 0 };
+00444: 
+00445:     return {
+00446:       shell,
+00447:       sidebar,
+00448:       overlay,
+00449:       brand,
+00450:       logoWrap,
+00451:       plan,
+00452:       nav,
+00453:       navDivider,
+00454:       btn,
+00455:       btnMarker,
+00456:       btnHoverHint,
+00457:       footerHint,
+00458:       main,
+00459:       mobileTopBar,
+00460:       mobileMenuBtn,
+00461:       mainInner,
+00462:     };
+00463:   }, [isMobile, sidebarOpen, active]);
+00464: 
+00465:   const menuPrimary = [
+00466:     { key: ROUTES.DASHBOARD, icon: "home", title: "Dashboard" },
+00467:     { key: ROUTES.RESULTS, icon: "calendar", title: "Resultados" },
+00468:     { key: ROUTES.TOP3, icon: "trophy", title: "Top 3" },
+00469:     {
+00470:       key: ROUTES.TERNO_GRUPO,
+00471:       icon: "pets",
+00472:       title: "Terno de Grupo",
+00473:     },
+00474:     { key: ROUTES.LATE, icon: "clock", title: "Atrasados" },
+00475:   ];
+00476: 
+00477:   const menuTools = [
+00478:     { key: ROUTES.SEARCH, icon: "search", title: "Busca" },
+00479:     { key: ROUTES.STATISTICS, icon: "chart", title: "Estatísticas" },
+00480:     { key: ROUTES.CENTENAS, icon: "hash", title: "Centenas" },
+00481:     { key: ROUTES.DOWNLOADS, icon: "download", title: "Downloads" },
+00482:   ];
+00483: 
+00484:   const menuAccount = [
+00485:     { key: ROUTES.ACCOUNT, icon: "user", title: "Minha Conta" },
+00486:   ];
+00487: 
+00488:   const renderMenuButton = (item) => {
+00489:     const isActive = active === item.key;
+00490: 
+00491:     return (
+00492:       <button
+00493:         key={item.key}
+00494:         onClick={() => handleNavigate(item.key)}
+00495:         title={item.title}
+00496:         style={UI.btn(isActive)}
+00497:         aria-current={isActive ? "page" : undefined}
+00498:         aria-label={item.title}
+00499:         type="button"
+00500:         onMouseEnter={(e) => {
+00501:           if (!isActive) {
+00502:             e.currentTarget.style.borderColor = "rgba(202,166,75,0.28)";
+00503:             e.currentTarget.style.transform = "translateY(-1px)";
+00504:             e.currentTarget.style.boxShadow =
+00505:               "0 10px 24px rgba(0,0,0,0.34), inset 0 0 0 1px rgba(202,166,75,0.08)";
+00506:           }
+00507:         }}
+00508:         onMouseLeave={(e) => {
+00509:           if (!isActive) {
+00510:             e.currentTarget.style.borderColor = "rgba(255,255,255,0.10)";
+00511:             e.currentTarget.style.transform = "translateY(0)";
+00512:             e.currentTarget.style.boxShadow =
+00513:               "inset 0 0 0 1px rgba(255,255,255,0.015)";
+00514:           }
+00515:         }}
+00516:       >
+00517:         <span style={UI.btnMarker(isActive)} />
+00518:         <span style={UI.btnHoverHint} />
+00519:         <Icon name={item.icon} size={22} />
+00520:       </button>
+00521:     );
+00522:   };
+00523: 
+00524:   return (
+00525:     <div style={UI.shell}>
+00526:       <div
+00527:         style={UI.overlay}
+00528:         onClick={() => setSidebarOpen(false)}
+00529:         aria-hidden="true"
+00530:       />
+00531: 
+00532:       <aside style={UI.sidebar} aria-label="Menu lateral">
+00533:         <div style={UI.brand}>
+00534:           <div style={UI.logoWrap}>
+00535:             <MiniLogo size={52} />
+00536:           </div>
+00537:           <div style={UI.plan}>{planLabel}</div>
+00538:         </div>
+00539: 
+00540:         <nav style={UI.nav} role="navigation" aria-label="Navegação principal">
+00541:           {menuPrimary.map(renderMenuButton)}
+00542: 
+00543:           <div style={UI.navDivider} />
+00544: 
+00545:           {menuTools.map(renderMenuButton)}
+00546: 
+00547:           <div style={UI.navDivider} />
+00548: 
+00549:           {menuAccount.map(renderMenuButton)}
+00550: 
+00551:           <button
+00552:             onClick={() => handleNavigate("__LOGOUT__")}
+00553:             title={isGuest ? "Sair do Preview" : "Sair"}
+00554:             style={UI.btn(false)}
+00555:             aria-label={isGuest ? "Sair do Preview" : "Sair"}
+00556:             type="button"
+00557:             onMouseEnter={(e) => {
+00558:               e.currentTarget.style.borderColor = "rgba(202,166,75,0.28)";
+00559:               e.currentTarget.style.transform = "translateY(-1px)";
+00560:               e.currentTarget.style.boxShadow =
+00561:                 "0 10px 24px rgba(0,0,0,0.34), inset 0 0 0 1px rgba(202,166,75,0.08)";
+00562:             }}
+00563:             onMouseLeave={(e) => {
+00564:               e.currentTarget.style.borderColor = "rgba(255,255,255,0.10)";
+00565:               e.currentTarget.style.transform = "translateY(0)";
+00566:               e.currentTarget.style.boxShadow =
+00567:                 "inset 0 0 0 1px rgba(255,255,255,0.015)";
+00568:             }}
+00569:           >
+00570:             <span style={UI.btnMarker(false)} />
+00571:             <span style={UI.btnHoverHint} />
+00572:             <Icon name="logout" size={22} />
+00573:           </button>
+00574: 
+00575:           <div style={UI.footerHint}>Palpitaco JB</div>
+00576:         </nav>
+00577:       </aside>
+00578: 
+00579:       <main style={UI.main}>
+00580:         <div style={UI.mobileTopBar}>
+00581:           <button
+00582:             type="button"
+00583:             style={UI.mobileMenuBtn}
+00584:             onClick={() => setSidebarOpen(true)}
+00585:             title="Menu"
+00586:             aria-label="Abrir menu"
+00587:           >
+00588:             <Icon name="menu" size={24} />
+00589:           </button>
+00590:         </div>
+00591: 
+00592:         <div style={UI.mainInner}>{children}</div>
+00593:       </main>
+00594:     </div>
+00595:   );
+00596: }
+00597: 
+
+====================================================================================================
+REFERÊNCIAS A TERNO DE GRUPO E SISTEMA DE ÍCONES
+====================================================================================================
+

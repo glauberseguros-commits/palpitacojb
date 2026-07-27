@@ -1,0 +1,612 @@
+
+====================================================================================================
+Padrão: .filter(
+Linha: 1226
+====================================================================================================
+01146:           "pt-BR",
+01147:           { numeric: true }
+01148:         );
+01149:       }
+01150: 
+01151:       if (sort === "latest_desc") {
+01152:         return String(b.latestKey).localeCompare(
+01153:           String(a.latestKey)
+01154:         );
+01155:       }
+01156: 
+01157:       if (a.count !== b.count) return b.count - a.count;
+01158: 
+01159:       return String(a.key).localeCompare(
+01160:         String(b.key),
+01161:         "pt-BR",
+01162:         { numeric: true }
+01163:       );
+01164:     });
+01165: 
+01166:     const parsedLimit = Number(limit);
+01167: 
+01168:     if (
+01169:       Number.isFinite(parsedLimit) &&
+01170:       parsedLimit > 0
+01171:     ) {
+01172:       return output.slice(0, parsedLimit);
+01173:     }
+01174: 
+01175:     return output;
+01176:   }, [rows, sort, limit]);
+01177: 
+01178:   const mostFrequent = useMemo(() => {
+01179:     if (!rows.length) return null;
+01180: 
+01181:     return [...rows].sort((a, b) => {
+01182:       if (a.count !== b.count) return b.count - a.count;
+01183: 
+01184:       return String(a.key).localeCompare(
+01185:         String(b.key),
+01186:         "pt-BR",
+01187:         { numeric: true }
+01188:       );
+01189:     })[0];
+01190:   }, [rows]);
+01191: 
+01192:   const mostFrequentLabel = useMemo(() => {
+01193:     if (!mostFrequent) return "—";
+01194: 
+01195:     return itemLabel(mode, mostFrequent.key).main;
+01196:   }, [mode, mostFrequent]);
+01197: 
+01198:   const distinctItemsLabel = useMemo(() => {
+01199:     if (mode === "dezena") return "Dezenas distintas";
+01200:     if (mode === "centena") return "Centenas distintas";
+01201:     if (mode === "milhar") return "Milhares distintas";
+01202: 
+01203:     return "Animais distintos";
+01204:   }, [mode]);
+01205: 
+01206:   const isUnseenView =
+01207:     mode === "milhar" &&
+01208:     rankingView === "ineditas";
+01209: 
+01210:   const milharUniverse = useMemo(
+01211:     () => buildMilharUniverse(selectedGroup),
+01212:     [selectedGroup]
+01213:   );
+01214: 
+01215:   const unseenRows = useMemo(() => {
+01216:     if (!isUnseenView) return [];
+01217: 
+01218:     if (selectedPosition === 7) {
+01219:       return [];
+01220:     }
+01221: 
+01222:     const appeared = new Set(
+01223:       rows.map((row) => lastDigits(row.key, 4))
+01224:     );
+01225: 
+01226:     const output = milharUniverse.filter(
+01227:       (item) => !appeared.has(item.key)
+01228:     );
+01229: 
+01230:     output.sort((a, b) => {
+01231:       if (sort === "number_desc") {
+01232:         return b.key.localeCompare(a.key, "pt-BR", {
+01233:           numeric: true,
+01234:         });
+01235:       }
+01236: 
+01237:       return a.key.localeCompare(b.key, "pt-BR", {
+01238:         numeric: true,
+01239:       });
+01240:     });
+01241: 
+01242:     return output;
+01243:   }, [
+01244:     isUnseenView,
+01245:     rows,
+01246:     milharUniverse,
+01247:     sort,
+01248:     selectedPosition,
+01249:   ]);
+01250: 
+01251:   const visibleUnseenRows = useMemo(() => {
+01252:     const parsedLimit = Number(limit);
+01253: 
+01254:     if (
+01255:       Number.isFinite(parsedLimit) &&
+01256:       parsedLimit > 0
+01257:     ) {
+01258:       return unseenRows.slice(0, parsedLimit);
+01259:     }
+01260: 
+01261:     return unseenRows;
+01262:   }, [unseenRows, limit]);
+01263: 
+01264:   const progressPercent = useMemo(() => {
+01265:     const done = Number(progress.done || 0);
+01266:     const total = Number(progress.total || 0);
+01267: 
+01268:     if (!total) return 0;
+01269: 
+01270:     return Math.min(
+01271:       100,
+01272:       Math.max(0, Math.round((done / total) * 100))
+01273:     );
+01274:   }, [progress]);
+01275: 
+01276:   const thirdKpiLabel = isUnseenView
+01277:     ? "Milhares inéditas"
+01278:     : distinctItemsLabel;
+01279: 
+01280:   const thirdKpiValue = isUnseenView
+01281:     ? unseenRows.length
+01282:     : rows.length;
+01283: 
+01284:   const fourthKpiLabel = isUnseenView
+01285:     ? "Universo possível"
+01286:     : "Mais frequente";
+01287: 
+01288:   const fourthKpiValue = isUnseenView
+01289:     ? milharUniverse.length
+01290:     : mostFrequentLabel;
+01291: 
+01292:   const copyRanking = useCallback(async () => {
+01293:     const lines = [];
+01294: 
+01295:     if (isUnseenView) {
+01296:       lines.push(
+01297:         "MILHARES INÉDITAS",
+01298:         "",
+01299:         "Loteria: " + selectedLottery.label,
+01300:         "Período: " +
+01301:           ymdToBr(safeRange.from) +
+01302:           " até " +
+01303:           ymdToBr(safeRange.to),
+01304:         "Quantidade: " +
+01305:           formatInteger(unseenRows.length),
+01306:         ""
+01307:       );
+01308: 
+01309:       visibleUnseenRows.forEach((row, index) => {
+01310:         lines.push(
+01311:           String(index + 1) +
+01312:             "º - " +
+01313:             row.key +
+01314:             " - Grupo " +
+01315:             pad2(row.group) +
+01316:             " - " +
+01317:             row.animal
+01318:         );
+01319:       });
+01320:     } else {
+01321:       const title =
+01322:         mode === "dezena"
+01323:           ? "RANKING DE DEZENAS"
+01324:           : mode === "centena"
+01325:           ? "RANKING DE CENTENAS"
+01326:           : mode === "milhar"
+01327:           ? "RANKING DE MILHARES"
+01328:           : "RANKING DE ANIMAIS";
+01329: 
+01330:       lines.push(
+01331:         title,
+01332:         "",
+01333:         "Loteria: " + selectedLottery.label,
+01334:         "Período: " +
+01335:           ymdToBr(safeRange.from) +
+01336:           " até " +
+01337:           ymdToBr(safeRange.to),
+01338:         ""
+01339:       );
+01340: 
+01341:       sortedRows.forEach((row, index) => {
+01342:         const label = itemLabel(mode, row.key);
+01343: 
+01344:         lines.push(
+01345:           String(index + 1) +
+01346:             "º - " +
+01347:             label.main +
+01348:             " - " +
+01349:             formatInteger(row.count) +
+01350:             " ocorrência(s)"
+01351:         );
+01352:       });
+01353:     }
+01354: 
+01355:     try {
+01356:       await navigator.clipboard.writeText(
+01357:         lines.join("\n")
+01358:       );
+01359: 
+01360:       setCopyFeedback(true);
+01361: 
+01362:       window.setTimeout(() => {
+01363:         setCopyFeedback(false);
+01364:       }, 2200);
+01365:     } catch {
+01366:       alert(
+01367:         "Não foi possível copiar automaticamente."
+01368:       );
+01369:     }
+01370:   }, [
+01371:     isUnseenView,
+01372:     mode,
+01373:     selectedLottery,
+01374:     safeRange,
+01375:     sortedRows,
+01376:     unseenRows,
+01377:     visibleUnseenRows,
+01378:   ]);
+01379: 
+01380:   return (
+01381:     <div className="ppStatistics">
+01382:       <style>{`
+01383:         .ppStatistics{
+01384:           width:100%;
+01385:           min-height:100%;
+01386:           padding:14px;
+01387:           color:#e9e9e9;
+01388:           background:
+01389:             radial-gradient(900px 500px at 15% 0%, rgba(202,166,75,0.08), transparent 58%),
+01390:             radial-gradient(850px 500px at 90% 10%, rgba(255,255,255,0.04), transparent 55%),
+01391:             #050505;
+01392:         }
+01393: 
+01394:         .ppStatistics *{
+01395:           box-sizing:border-box;
+01396:         }
+01397: 
+01398:         .ppStatsPanel{
+01399:           width:100%;
+01400:           min-height:calc(100dvh - 28px);
+01401:           border-radius:20px;
+01402:           border:1px solid rgba(202,166,75,0.18);
+01403:           background:rgba(0,0,0,0.48);
+01404:           box-shadow:0 24px 70px rgba(0,0,0,0.48);
+01405:           overflow:hidden;
+01406:         }
+01407: 
+01408:         .ppStatsHeader{
+01409:           padding:18px;
+01410:           border-bottom:1px solid rgba(255,255,255,0.07);
+01411:           display:flex;
+01412:           align-items:flex-start;
+01413:           justify-content:space-between;
+01414:           gap:16px;
+01415:           flex-wrap:wrap;
+01416:         }
+01417: 
+01418:         .ppStatsTitle{
+01419:           font-size:22px;
+01420:           line-height:1;
+01421:           font-weight:950;
+01422:           letter-spacing:0.2px;
+01423:           color:#f2f2f2;
+01424:         }
+01425: 
+01426:         .ppStatsSubtitle{
+01427:           margin-top:8px;
+01428:           font-size:12px;
+01429:           color:rgba(233,233,233,0.66);
+01430:           line-height:1.4;
+01431:         }
+01432: 
+01433:         .ppStatsTabs{
+01434:           display:flex;
+01435:           flex-wrap:wrap;
+01436:           gap:8px;
+01437:         }
+01438: 
+01439:         .ppStatsTab{
+01440:           min-height:40px;
+01441:           padding:9px 14px;
+01442:           border-radius:999px;
+01443:           border:1px solid rgba(202,166,75,0.24);
+01444:           background:rgba(0,0,0,0.48);
+01445:           color:rgba(233,233,233,0.84);
+01446:           font-size:11px;
+
+====================================================================================================
+Padrão: selectedHour
+Linha: 830
+====================================================================================================
+00750: 
+00751:         setRange({
+00752:           from: normalized.minYmd,
+00753:           to: normalized.maxYmd,
+00754:         });
+00755:       } catch (caught) {
+00756:         if (!alive) return;
+00757: 
+00758:         setBounds({
+00759:           minYmd: "",
+00760:           maxYmd: "",
+00761:           source: "",
+00762:         });
+00763: 
+00764:         setRange({
+00765:           from: "",
+00766:           to: "",
+00767:         });
+00768: 
+00769:         setError(
+00770:           safeStr(caught?.message || caught) ||
+00771:             "Falha ao carregar o período histórico."
+00772:         );
+00773:       }
+00774:     })();
+00775: 
+00776:     return () => {
+00777:       alive = false;
+00778:     };
+00779:   }, [lotteryKey]);
+00780: 
+00781:   const handleLotteryChange = useCallback((nextLottery) => {
+00782:     if (!LOTTERIES.some((item) => item.value === nextLottery)) return;
+00783: 
+00784:     runIdRef.current += 1;
+00785: 
+00786:     setLoading(false);
+00787:     setProgress({
+00788:       done: 0,
+00789:       total: 0,
+00790:     });
+00791: 
+00792:     setRows([]);
+00793:     setMeta({
+00794:       draws: 0,
+00795:       prizes: 0,
+00796:       occurrences: 0,
+00797:     });
+00798: 
+00799:     setError("");
+00800:     setSchedule("Todos");
+00801:     setLotteryKey(nextLottery);
+00802:   }, []);
+00803: 
+00804:   const selectedGroup = useMemo(() => {
+00805:     if (animal === "Todos") return null;
+00806: 
+00807:     const group = Number(animal);
+00808: 
+00809:     return Number.isFinite(group) &&
+00810:       group >= 1 &&
+00811:       group <= 25
+00812:       ? group
+00813:       : null;
+00814:   }, [animal]);
+00815: 
+00816:   const selectedPosition = useMemo(() => {
+00817:     if (position === "Todos") return null;
+00818: 
+00819:     const parsed = Number(
+00820:       safeStr(position).replace(/\D+/g, "")
+00821:     );
+00822: 
+00823:     return Number.isFinite(parsed) &&
+00824:       parsed >= 1 &&
+00825:       parsed <= 7
+00826:       ? parsed
+00827:       : null;
+00828:   }, [position]);
+00829: 
+00830:   const selectedHourBucket = useMemo(() => {
+00831:     if (schedule === "Todos") return null;
+00832: 
+00833:     return hourBucket(schedule);
+00834:   }, [schedule]);
+00835: 
+00836:   const analyze = useCallback(async () => {
+00837:     const runId = runIdRef.current + 1;
+00838:     runIdRef.current = runId;
+00839: 
+00840:     const isCurrent = () =>
+00841:       mountedRef.current &&
+00842:       runIdRef.current === runId;
+00843: 
+00844:     setLoading(true);
+00845:     setError("");
+00846:     setRows([]);
+00847:     setMeta({
+00848:       draws: 0,
+00849:       prizes: 0,
+00850:       occurrences: 0,
+00851:     });
+00852: 
+00853:     try {
+00854:       if (!boundsReady) {
+00855:         throw new Error(
+00856:           "O período histórico ainda não foi carregado."
+00857:         );
+00858:       }
+00859: 
+00860:       const from = clampYmd(
+00861:         safeRange.from,
+00862:         bounds.minYmd,
+00863:         bounds.maxYmd
+00864:       );
+00865: 
+00866:       const to = clampYmd(
+00867:         safeRange.to,
+00868:         bounds.minYmd,
+00869:         bounds.maxYmd
+00870:       );
+00871: 
+00872:       if (!isYmd(from) || !isYmd(to)) {
+00873:         throw new Error("Intervalo de datas inválido.");
+00874:       }
+00875: 
+00876:       if (from > to) {
+00877:         throw new Error(
+00878:           "A data inicial não pode ser posterior à data final."
+00879:         );
+00880:       }
+00881: 
+00882:       const chunks = splitRange(from, to, 60);
+00883: 
+00884:       if (!chunks.length) {
+00885:         throw new Error(
+00886:           "Não foi possível dividir o período para análise."
+00887:         );
+00888:       }
+00889: 
+00890:       setProgress({
+00891:         done: 0,
+00892:         total: chunks.length,
+00893:       });
+00894: 
+00895:       const aggregate = new Map();
+00896: 
+00897:       let analyzedDraws = 0;
+00898:       let analyzedPrizes = 0;
+00899:       let occurrences = 0;
+00900:       let completedChunks = 0;
+00901: 
+00902:       const worker = async (chunk) => {
+00903:         if (!isCurrent()) return;
+00904: 
+00905:         const response = await getKingResultsByRange({
+00906:           uf: lotteryKey,
+00907:           dateFrom: chunk.from,
+00908:           dateTo: chunk.to,
+00909:           closeHourBucket: null,
+00910:           closeHour: selectedHourBucket
+00911:             ? `${selectedHourBucket.slice(0, 2)}:00`
+00912:             : null,
+00913:           positions: selectedPosition
+00914:             ? [selectedPosition]
+00915:             : null,
+00916:           mode: "detailed",
+00917:         });
+00918: 
+00919:         if (!isCurrent()) return;
+00920: 
+00921:         const draws = normalizeDrawsResponse(response);
+00922: 
+00923:         for (const draw of draws) {
+00924:           const ymd = normalizeYmd(
+00925:             draw?.ymd ??
+00926:               draw?.dateYmd ??
+00927:               draw?.date ??
+00928:               draw?.data ??
+00929:               ""
+00930:           );
+00931: 
+00932:           if (!ymd) continue;
+00933: 
+00934:           const drawHour = normalizeHour(
+00935:             draw?.close_hour ??
+00936:               draw?.closeHour ??
+00937:               draw?.hour ??
+00938:               draw?.hora ??
+00939:               draw?.close_hour_bucket ??
+00940:               ""
+00941:           );
+00942: 
+00943:           const drawHourBucket = hourBucket(drawHour);
+00944: 
+00945:           if (
+00946:             selectedHourBucket &&
+00947:             drawHourBucket !== selectedHourBucket
+00948:           ) {
+00949:             continue;
+00950:           }
+00951: 
+00952:           if (
+00953:             month !== "Todos" &&
+00954:             monthLabel(ymd) !== month
+00955:           ) {
+00956:             continue;
+00957:           }
+00958: 
+00959:           if (monthDay !== "Todos") {
+00960:             const day = Number(ymd.slice(8, 10));
+00961: 
+00962:             if (String(day) !== String(monthDay)) {
+00963:               continue;
+00964:             }
+00965:           }
+00966: 
+00967:           if (
+00968:             weekday !== "Todos" &&
+00969:             weekdayLabel(ymd) !== weekday
+00970:           ) {
+00971:             continue;
+00972:           }
+00973: 
+00974:           analyzedDraws += 1;
+00975: 
+00976:           const prizes = ensurePrizes(draw);
+00977: 
+00978:           for (const prize of prizes) {
+00979:             const prizePosition = Number(prize.position);
+00980:             const prizeGroup = Number(prize.group);
+00981: 
+00982:             if (
+00983:               selectedPosition &&
+00984:               prizePosition !== selectedPosition
+00985:             ) {
+00986:               continue;
+00987:             }
+00988: 
+00989:             if (
+00990:               selectedGroup &&
+00991:               prizeGroup !== selectedGroup
+00992:             ) {
+00993:               continue;
+00994:             }
+00995: 
+00996:             const number =
+00997:               prizePosition === 7
+00998:                 ? lastDigits(prize.number, 3)
+00999:                 : lastDigits(prize.number, 4);
+01000: 
+01001:             if (!number && mode !== "animal") continue;
+01002: 
+01003:             let key = "";
+01004: 
+01005:             if (mode === "dezena") {
+01006:               key = lastDigits(number, 2);
+01007:             } else if (mode === "centena") {
+01008:               key = lastDigits(number, 3);
+01009:             } else if (mode === "milhar") {
+01010:               if (prizePosition === 7) continue;
+01011:               key = lastDigits(number, 4);
+01012:             } else if (mode === "animal") {
+01013:               if (
+01014:                 !Number.isFinite(prizeGroup) ||
+01015:                 prizeGroup < 1 ||
+01016:                 prizeGroup > 25
+01017:               ) {
+01018:                 continue;
+01019:               }
+01020: 
+01021:               key = String(prizeGroup);
+01022:             }
+01023: 
+01024:             if (!key) continue;
+01025: 
+01026:             analyzedPrizes += 1;
+01027:             occurrences += 1;
+01028: 
+01029:             const latestKey = buildLatestKey(
+01030:               ymd,
+01031:               drawHour,
+01032:               prizePosition
+01033:             );
+01034: 
+01035:             const current = aggregate.get(key) ?? {
+01036:               key,
+01037:               count: 0,
+01038:               latestKey: "",
+01039:               latestYmd: "",
+01040:               latestHour: "",
+01041:               latestPosition: null,
+01042:             };
+01043: 
+01044:             current.count += 1;
+01045: 
+01046:             if (
+01047:               !current.latestKey ||
+01048:               latestKey > current.latestKey
+01049:             ) {
+01050:               current.latestKey = latestKey;

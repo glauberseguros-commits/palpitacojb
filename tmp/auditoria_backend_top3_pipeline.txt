@@ -1,0 +1,2795 @@
+========================================================================================================================
+backend\engine\bootstrapSnapshot.js
+    4  statisticsEngine
+    7  ranking
+    7  ranking
+    8  scoreEngine
+    8  scoreEngine
+   19  ranking
+   21  ranking
+   21  ranking
+   22  ranking
+   25  ranking
+   25  ranking
+   25  scoreEngine
+   36  ranking
+   37  ranking
+   38  Top3
+   38  ranking
+   38  top3
+   46  ranking
+   46  ranking
+   47  Top3
+   47  ranking
+   47  top3
+========================================================================================================================
+backend\engine\drawRepository.js
+    3  statisticsEngine
+  126  Top3
+  126  top3
+  156  Top3
+  156  top3
+========================================================================================================================
+backend\engine\hypothesisEngine.js
+    9  scoreEngine
+    9  scoreEngineV2
+========================================================================================================================
+backend\engine\predictionModel.js
+   19  prediction
+   28  prediction
+   40  prediction
+   54  prediction
+   91  prediction
+   92  prediction
+   93  prediction
+========================================================================================================================
+backend\engine\predictionRepository.js
+    5  prediction
+    6  prediction
+   12  prediction
+   14  prediction
+   31  prediction
+   31  prediction
+   43  prediction
+   46  prediction
+   52  prediction
+   52  prediction
+   60  prediction
+   60  prediction
+   64  prediction
+   67  prediction
+   73  prediction
+   76  prediction
+   90  prediction
+   91  prediction
+   92  prediction
+   93  prediction
+========================================================================================================================
+backend\engine\predictionService.js
+    4  prediction
+    5  prediction
+    6  prediction
+    9  prediction
+   10  prediction
+   11  prediction
+   24  prediction
+   27  prediction
+   29  prediction
+   38  prediction
+   40  prediction
+   41  prediction
+   48  prediction
+   53  prediction
+   58  prediction
+========================================================================================================================
+backend\engine\scoreEngineUnified.js
+    5  Top3
+    5  top3
+    7  Top3
+    7  top3
+   13  Top3
+   13  top3
+   15  Top3
+   15  top3
+   18  Top3
+   18  top3
+   33  Top3
+   33  top3
+   34  Top3
+   34  top3
+   46  Top3
+   46  Top3
+   46  top3
+   46  top3
+   55  Top3
+   55  top3
+   62  Top3
+   62  top3
+   63  Top3
+   63  top3
+   70  Top3
+   70  top3
+   71  Top3
+   71  top3
+   75  Top3
+   75  top3
+   79  Top3
+   79  top3
+   80  Top3
+   80  top3
+   84  Top3
+   84  top3
+   88  Top3
+   88  top3
+   89  Top3
+   89  top3
+   93  Top3
+   93  top3
+   98  Top3
+   98  top3
+   99  Top3
+   99  top3
+  100  Top3
+  100  top3
+  101  Top3
+  101  top3
+  102  Top3
+  102  top3
+========================================================================================================================
+backend\engine\scoreEngineV1.js
+   40  prediction
+   40  ranking
+   40  ranking
+   43  ranking
+   43  ranking
+   72  ranking
+   85  prediction
+   85  ranking
+========================================================================================================================
+backend\engine\scoreEngineV2.js
+   73  ranking
+   93  ranking
+========================================================================================================================
+backend\engine\snapshotManager.js
+    6  statisticsEngine
+========================================================================================================================
+backend\engine\snapshotMetadata.js
+    3  statisticsEngine
+========================================================================================================================
+backend\engine\top3HistoryRepository.js
+    7  Top3
+    7  top3
+========================================================================================================================
+backend\engine\top3HistorySync.js
+   13  Top3
+   13  top3
+  210  Top3
+  210  top3
+  219  Top3
+  219  top3
+  363  Top3
+  363  top3
+  379  Top3
+  379  top3
+  411  Top3
+  411  top3
+========================================================================================================================
+backend\engine\top3PredictionService.js
+   10  Top3
+   10  top3
+   13  Top3
+   13  top3
+   14  Top3
+   14  top3
+   15  scoreEngine
+   18  prediction
+   19  prediction
+   19  predictionService
+   21  schedule
+   30  schedule
+   38  schedule
+  163  prediction
+  217  Top3
+  217  top3
+  234  Top3
+  234  top3
+  240  Top3
+  240  top3
+  308  Top3
+  308  prediction
+  308  top3
+  348  Top3
+  348  top3
+  359  Top3
+  359  prediction
+  359  top3
+  370  Top3
+  370  top3
+  371  Top3
+  371  top3
+  372  Top3
+  372  top3
+  376  prediction
+  380  Top3
+  380  top3
+  382  prediction
+  446  Top3
+  446  top3
+  450  schedule
+  451  schedule
+  452  schedule
+  458  Top3
+  458  prediction
+  458  prediction
+  458  top3
+  462  prediction
+  464  Top3
+  464  top3
+  470  Top3
+  470  top3
+  491  Top3
+  491  top3
+  510  prediction
+  520  Top3
+  520  top3
+  521  Top3
+  521  top3
+  523  prediction
+  534  Top3
+  534  prediction
+  534  top3
+  535  Top3
+  535  prediction
+  535  top3
+  538  prediction
+========================================================================================================================
+backend\logs\auditSlots-FEDERAL-2022-06-07_to_2026-01-21.json
+    7  schedule
+    9  schedule
+    9  schedule
+   10  schedule
+   37  schedule
+========================================================================================================================
+backend\logs\auditSlots-FEDERAL-2022-06-07_to_2026-01-31.json
+    7  schedule
+    9  schedule
+    9  schedule
+   10  schedule
+   37  schedule
+   38  schedule
+========================================================================================================================
+backend\logs\auditSlots-FEDERAL-2022-06-07_to_2026-02-01.json
+    7  schedule
+    9  schedule
+    9  schedule
+   10  schedule
+   37  schedule
+   38  schedule
+========================================================================================================================
+backend\logs\auditSlots-FEDERAL-2022-06-08_to_2026-02-09.json
+    7  schedule
+    9  schedule
+    9  schedule
+   10  schedule
+   46  schedule
+========================================================================================================================
+backend\logs\auditSlots-FEDERAL-2022-06-08_to_2026-02-13.json
+    7  schedule
+    9  schedule
+    9  schedule
+   10  schedule
+   13  schedule
+   30  schedule
+   90  schedule
+   91  schedule
+========================================================================================================================
+backend\logs\auditSlots-FEDERAL-2022-06-08_to_2026-07-03.json
+   14  schedule
+   16  schedule
+   16  schedule
+   17  schedule
+   20  schedule
+   37  schedule
+   97  schedule
+   98  schedule
+========================================================================================================================
+backend\logs\auditSlots-FEDERAL-2022-06-11_to_2022-06-12.json
+    7  schedule
+    9  schedule
+    9  schedule
+   10  schedule
+   37  schedule
+   38  schedule
+========================================================================================================================
+backend\logs\auditSlots-FEDERAL-2025-12-11_to_2026-02-09.json
+    7  schedule
+    9  schedule
+    9  schedule
+   10  schedule
+   37  schedule
+========================================================================================================================
+backend\logs\auditSlots-FEDERAL-2025-12-25_to_2026-02-09.json
+    7  schedule
+    9  schedule
+    9  schedule
+   10  schedule
+   37  schedule
+========================================================================================================================
+backend\logs\auditSlots-FEDERAL-2025-12-26_to_2026-02-09.json
+    7  schedule
+    9  schedule
+    9  schedule
+   10  schedule
+   37  schedule
+========================================================================================================================
+backend\logs\auditSlots-FEDERAL-2026-01-11_to_2026-02-09.json
+    7  schedule
+    9  schedule
+    9  schedule
+   10  schedule
+   46  schedule
+========================================================================================================================
+backend\logs\auditSlots-FEDERAL-2026-02-05_to_2026-02-13.json
+    7  schedule
+    9  schedule
+    9  schedule
+   10  schedule
+   13  schedule
+   30  schedule
+   90  schedule
+   91  schedule
+========================================================================================================================
+backend\logs\auditSlots-PT_RIO-2022-06-07_to_2022-06-07.json
+    7  schedule
+    9  schedule
+    9  schedule
+   10  schedule
+   46  schedule
+========================================================================================================================
+backend\logs\auditSlots-PT_RIO-2022-06-07_to_2022-06-30.json
+    7  schedule
+    9  schedule
+    9  schedule
+   10  schedule
+   13  schedule
+   19  schedule
+   52  schedule
+========================================================================================================================
+backend\logs\auditSlots-PT_RIO-2022-06-07_to_2026-01-21.json
+    7  schedule
+    9  schedule
+    9  schedule
+   10  schedule
+   13  schedule
+   19  schedule
+   52  schedule
+========================================================================================================================
+backend\logs\auditSlots-PT_RIO-2022-06-07_to_2026-01-31.json
+    7  schedule
+    9  schedule
+    9  schedule
+   10  schedule
+   37  schedule
+========================================================================================================================
+backend\logs\auditSlots-PT_RIO-2022-06-07_to_2026-02-01.json
+    7  schedule
+    9  schedule
+    9  schedule
+   10  schedule
+   37  schedule
+   38  schedule
+========================================================================================================================
+backend\logs\auditSlots-PT_RIO-2022-06-07_to_2026-02-02.json
+    7  schedule
+    9  schedule
+    9  schedule
+   10  schedule
+   37  schedule
+========================================================================================================================
+backend\logs\auditSlots-PT_RIO-2022-06-07_to_2026-02-07.json
+    7  schedule
+    9  schedule
+    9  schedule
+   10  schedule
+   13  schedule
+   19  schedule
+   52  schedule
+========================================================================================================================
+backend\logs\auditSlots-PT_RIO-2022-06-07_to_2026-02-26.json
+    7  schedule
+    9  schedule
+    9  schedule
+   10  schedule
+   13  schedule
+   19  schedule
+   52  schedule
+========================================================================================================================
+backend\logs\auditSlots-PT_RIO-2022-06-07_to_2026-02-27.json
+   14  schedule
+   16  schedule
+   16  schedule
+   17  schedule
+   20  schedule
+   26  schedule
+   59  schedule
+========================================================================================================================
+backend\logs\auditSlots-PT_RIO-2022-07-01_to_2022-07-31.json
+    7  schedule
+    9  schedule
+    9  schedule
+   10  schedule
+   13  schedule
+   19  schedule
+   52  schedule
+========================================================================================================================
+backend\logs\auditSlots-PT_RIO-2022-08-01_to_2022-08-31.json
+    7  schedule
+    9  schedule
+    9  schedule
+   10  schedule
+   13  schedule
+   19  schedule
+   52  schedule
+========================================================================================================================
+backend\logs\auditSlots-PT_RIO-2022-09-01_to_2022-09-30.json
+    7  schedule
+    9  schedule
+    9  schedule
+   10  schedule
+   13  schedule
+   19  schedule
+   52  schedule
+========================================================================================================================
+backend\logs\auditSlots-PT_RIO-2022-10-01_to_2022-10-31.json
+    7  schedule
+    9  schedule
+    9  schedule
+   10  schedule
+   13  schedule
+   19  schedule
+   52  schedule
+========================================================================================================================
+backend\logs\auditSlots-PT_RIO-2022-11-01_to_2022-11-30.json
+    7  schedule
+    9  schedule
+    9  schedule
+   10  schedule
+   13  schedule
+   19  schedule
+   52  schedule
+========================================================================================================================
+backend\logs\auditSlots-PT_RIO-2022-12-01_to_2022-12-31.json
+    7  schedule
+    9  schedule
+    9  schedule
+   10  schedule
+   13  schedule
+   19  schedule
+   52  schedule
+========================================================================================================================
+backend\logs\auditSlots-PT_RIO-2023-01-01_to_2023-01-31.json
+    7  schedule
+    9  schedule
+    9  schedule
+   10  schedule
+   13  schedule
+   19  schedule
+   52  schedule
+========================================================================================================================
+backend\logs\auditSlots-PT_RIO-2023-02-01_to_2023-02-28.json
+    7  schedule
+    9  schedule
+    9  schedule
+   10  schedule
+   13  schedule
+   19  schedule
+   52  schedule
+========================================================================================================================
+backend\logs\auditSlots-PT_RIO-2023-03-01_to_2023-03-31.json
+    7  schedule
+    9  schedule
+    9  schedule
+   10  schedule
+   13  schedule
+   19  schedule
+   52  schedule
+========================================================================================================================
+backend\logs\auditSlots-PT_RIO-2023-04-01_to_2023-04-30.json
+    7  schedule
+    9  schedule
+    9  schedule
+   10  schedule
+   13  schedule
+   19  schedule
+   52  schedule
+========================================================================================================================
+backend\logs\auditSlots-PT_RIO-2023-05-01_to_2023-05-31.json
+    7  schedule
+    9  schedule
+    9  schedule
+   10  schedule
+   13  schedule
+   19  schedule
+   52  schedule
+========================================================================================================================
+backend\logs\auditSlots-PT_RIO-2023-06-01_to_2023-06-30.json
+    7  schedule
+    9  schedule
+    9  schedule
+   10  schedule
+   13  schedule
+   19  schedule
+   52  schedule
+========================================================================================================================
+backend\logs\auditSlots-PT_RIO-2023-07-01_to_2023-07-31.json
+    7  schedule
+    9  schedule
+    9  schedule
+   10  schedule
+   13  schedule
+   19  schedule
+   52  schedule
+========================================================================================================================
+backend\logs\auditSlots-PT_RIO-2023-08-01_to_2023-08-31.json
+    7  schedule
+    9  schedule
+    9  schedule
+   10  schedule
+   13  schedule
+   19  schedule
+   52  schedule
+========================================================================================================================
+backend\logs\auditSlots-PT_RIO-2023-09-01_to_2023-09-30.json
+    7  schedule
+    9  schedule
+    9  schedule
+   10  schedule
+   13  schedule
+   19  schedule
+   52  schedule
+========================================================================================================================
+backend\logs\auditSlots-PT_RIO-2023-10-01_to_2023-10-31.json
+    7  schedule
+    9  schedule
+    9  schedule
+   10  schedule
+   13  schedule
+   19  schedule
+   52  schedule
+========================================================================================================================
+backend\logs\auditSlots-PT_RIO-2023-11-01_to_2023-11-30.json
+    7  schedule
+    9  schedule
+    9  schedule
+   10  schedule
+   13  schedule
+   19  schedule
+   52  schedule
+========================================================================================================================
+backend\logs\auditSlots-PT_RIO-2023-12-01_to_2023-12-31.json
+    7  schedule
+    9  schedule
+    9  schedule
+   10  schedule
+   13  schedule
+   19  schedule
+   52  schedule
+========================================================================================================================
+backend\logs\auditSlots-PT_RIO-2024-01-01_to_2024-01-31.json
+    7  schedule
+    9  schedule
+    9  schedule
+   10  schedule
+   13  schedule
+   19  schedule
+   52  schedule
+========================================================================================================================
+backend\logs\auditSlots-PT_RIO-2024-01-01_to_2024-03-31.json
+    7  schedule
+    9  schedule
+    9  schedule
+   10  schedule
+   46  schedule
+========================================================================================================================
+backend\logs\auditSlots-PT_RIO-2024-02-01_to_2024-02-29.json
+    7  schedule
+    9  schedule
+    9  schedule
+   10  schedule
+   13  schedule
+   19  schedule
+   52  schedule
+========================================================================================================================
+backend\logs\auditSlots-PT_RIO-2024-03-01_to_2024-03-31.json
+    7  schedule
+    9  schedule
+    9  schedule
+   10  schedule
+   13  schedule
+   19  schedule
+   52  schedule
+========================================================================================================================
+backend\logs\auditSlots-PT_RIO-2024-04-01_to_2024-04-30.json
+    7  schedule
+    9  schedule
+    9  schedule
+   10  schedule
+   13  schedule
+   19  schedule
+   52  schedule
+========================================================================================================================
+backend\logs\auditSlots-PT_RIO-2024-05-01_to_2024-05-31.json
+    7  schedule
+    9  schedule
+    9  schedule
+   10  schedule
+   13  schedule
+   19  schedule
+   52  schedule
+========================================================================================================================
+backend\logs\auditSlots-PT_RIO-2024-06-01_to_2024-06-30.json
+    7  schedule
+    9  schedule
+    9  schedule
+   10  schedule
+   13  schedule
+   19  schedule
+   52  schedule
+========================================================================================================================
+backend\logs\auditSlots-PT_RIO-2024-07-01_to_2024-07-31.json
+    7  schedule
+    9  schedule
+    9  schedule
+   10  schedule
+   13  schedule
+   19  schedule
+   52  schedule
+========================================================================================================================
+backend\logs\auditSlots-PT_RIO-2024-08-01_to_2024-08-31.json
+    7  schedule
+    9  schedule
+    9  schedule
+   10  schedule
+   13  schedule
+   19  schedule
+   52  schedule
+========================================================================================================================
+backend\logs\auditSlots-PT_RIO-2024-09-01_to_2024-09-30.json
+    7  schedule
+    9  schedule
+    9  schedule
+   10  schedule
+   13  schedule
+   19  schedule
+   52  schedule
+========================================================================================================================
+backend\logs\auditSlots-PT_RIO-2024-10-01_to_2024-10-31.json
+    7  schedule
+    9  schedule
+    9  schedule
+   10  schedule
+   13  schedule
+   19  schedule
+   52  schedule
+========================================================================================================================
+backend\logs\auditSlots-PT_RIO-2024-11-01_to_2024-11-30.json
+    7  schedule
+    9  schedule
+    9  schedule
+   10  schedule
+   13  schedule
+   19  schedule
+   52  schedule
+========================================================================================================================
+backend\logs\auditSlots-PT_RIO-2024-12-01_to_2024-12-31.json
+    7  schedule
+    9  schedule
+    9  schedule
+   10  schedule
+   13  schedule
+   19  schedule
+   52  schedule
+========================================================================================================================
+backend\logs\auditSlots-PT_RIO-2025-01-01_to_2025-01-31.json
+    7  schedule
+    9  schedule
+    9  schedule
+   10  schedule
+   13  schedule
+   19  schedule
+   52  schedule
+========================================================================================================================
+backend\logs\auditSlots-PT_RIO-2025-02-01_to_2025-02-28.json
+    7  schedule
+    9  schedule
+    9  schedule
+   10  schedule
+   13  schedule
+   19  schedule
+   52  schedule
+========================================================================================================================
+backend\logs\auditSlots-PT_RIO-2025-03-01_to_2025-03-31.json
+    7  schedule
+    9  schedule
+    9  schedule
+   10  schedule
+   13  schedule
+   19  schedule
+   52  schedule
+========================================================================================================================
+backend\logs\auditSlots-PT_RIO-2025-04-01_to_2025-04-30.json
+    7  schedule
+    9  schedule
+    9  schedule
+   10  schedule
+   13  schedule
+   19  schedule
+   52  schedule
+========================================================================================================================
+backend\logs\auditSlots-PT_RIO-2025-05-01_to_2025-05-31.json
+    7  schedule
+    9  schedule
+    9  schedule
+   10  schedule
+   13  schedule
+   19  schedule
+   52  schedule
+========================================================================================================================
+backend\logs\auditSlots-PT_RIO-2025-06-01_to_2025-06-30.json
+    7  schedule
+    9  schedule
+    9  schedule
+   10  schedule
+   13  schedule
+   19  schedule
+   52  schedule
+========================================================================================================================
+backend\logs\auditSlots-PT_RIO-2025-07-01_to_2025-07-31.json
+    7  schedule
+    9  schedule
+    9  schedule
+   10  schedule
+   13  schedule
+   19  schedule
+   52  schedule
+========================================================================================================================
+backend\logs\auditSlots-PT_RIO-2025-08-01_to_2025-08-31.json
+    7  schedule
+    9  schedule
+    9  schedule
+   10  schedule
+   13  schedule
+   19  schedule
+   52  schedule
+========================================================================================================================
+backend\logs\auditSlots-PT_RIO-2025-09-01_to_2025-09-30.json
+    7  schedule
+    9  schedule
+    9  schedule
+   10  schedule
+   13  schedule
+   19  schedule
+   52  schedule
+========================================================================================================================
+backend\logs\auditSlots-PT_RIO-2025-10-01_to_2025-10-31.json
+    7  schedule
+    9  schedule
+    9  schedule
+   10  schedule
+   13  schedule
+   19  schedule
+   52  schedule
+========================================================================================================================
+backend\logs\auditSlots-PT_RIO-2025-11-01_to_2025-11-30.json
+    7  schedule
+    9  schedule
+    9  schedule
+   10  schedule
+   13  schedule
+   19  schedule
+   52  schedule
+========================================================================================================================
+backend\logs\auditSlots-PT_RIO-2025-12-01_to_2025-12-31.json
+    7  schedule
+    9  schedule
+    9  schedule
+   10  schedule
+   13  schedule
+   19  schedule
+   52  schedule
+========================================================================================================================
+backend\logs\auditSlots-PT_RIO-2025-12-25_to_2026-02-09.json
+    7  schedule
+    9  schedule
+    9  schedule
+   10  schedule
+   37  schedule
+========================================================================================================================
+backend\logs\auditSlots-PT_RIO-2025-12-26_to_2026-02-09.json
+    7  schedule
+    9  schedule
+    9  schedule
+   10  schedule
+   37  schedule
+========================================================================================================================
+backend\logs\auditSlots-PT_RIO-2026-01-01_to_2026-01-31.json
+    7  schedule
+    9  schedule
+    9  schedule
+   10  schedule
+   13  schedule
+   19  schedule
+   52  schedule
+========================================================================================================================
+backend\logs\auditSlots-PT_RIO-2026-01-09_to_2026-02-08.json
+    7  schedule
+    9  schedule
+    9  schedule
+   10  schedule
+   37  schedule
+========================================================================================================================
+backend\logs\auditSlots-PT_RIO-2026-01-10_to_2026-02-09.json
+    7  schedule
+    9  schedule
+    9  schedule
+   10  schedule
+   37  schedule
+========================================================================================================================
+backend\logs\auditSlots-PT_RIO-2026-01-29_to_2026-02-13.json
+    7  schedule
+    9  schedule
+    9  schedule
+   10  schedule
+   13  schedule
+   19  schedule
+   52  schedule
+========================================================================================================================
+backend\logs\auditSlots-PT_RIO-2026-01-29_to_2026-02-27.json
+   14  schedule
+   16  schedule
+   16  schedule
+   17  schedule
+   20  schedule
+   26  schedule
+   59  schedule
+========================================================================================================================
+backend\logs\auditSlots-PT_RIO-2026-02-01_to_2026-02-27.json
+    7  schedule
+    9  schedule
+    9  schedule
+   10  schedule
+   13  schedule
+   19  schedule
+   52  schedule
+========================================================================================================================
+backend\logs\auditSlots-PT_RIO-2026-02-01_to_2026-02-28.json
+    7  schedule
+    9  schedule
+    9  schedule
+   10  schedule
+   13  schedule
+   19  schedule
+   52  schedule
+========================================================================================================================
+backend\logs\auditSlots-PT_RIO-2026-02-06_to_2026-02-07.json
+    7  schedule
+    9  schedule
+    9  schedule
+   10  schedule
+   37  schedule
+   38  schedule
+========================================================================================================================
+backend\logs\auditSlots-PT_RIO-2026-02-10_to_2026-02-13.json
+    7  schedule
+    9  schedule
+    9  schedule
+   10  schedule
+   13  schedule
+   19  schedule
+   52  schedule
+========================================================================================================================
+backend\logs\auditSlots-PT_RIO-2026-02-13_to_2026-02-27.json
+    7  schedule
+    9  schedule
+    9  schedule
+   10  schedule
+   13  schedule
+   19  schedule
+   52  schedule
+========================================================================================================================
+backend\logs\auditSlots-PT_RIO-2026-02-16_to_2026-02-26.json
+    7  schedule
+    9  schedule
+    9  schedule
+   10  schedule
+   13  schedule
+   19  schedule
+   52  schedule
+========================================================================================================================
+backend\logs\auditSlots-PT_RIO-2026-02-21_to_2026-02-25.json
+    7  schedule
+    9  schedule
+    9  schedule
+   10  schedule
+   13  schedule
+   19  schedule
+   52  schedule
+========================================================================================================================
+backend\logs\auditSlots-PT_RIO-2026-02-27_to_2026-02-27.json
+    7  schedule
+    9  schedule
+    9  schedule
+   10  schedule
+   13  schedule
+   19  schedule
+   52  schedule
+========================================================================================================================
+backend\logs\dayStatusCache-FEDERAL-2022-09-08.json
+   18  schedule
+   19  schedule
+   20  schedule
+   21  schedule
+   22  schedule
+========================================================================================================================
+backend\logs\dayStatusCache-FEDERAL-2025-11-14.json
+   18  schedule
+   19  schedule
+   20  schedule
+   21  schedule
+   22  schedule
+========================================================================================================================
+backend\logs\dayStatusCache-FEDERAL-2026-02-26.json
+   14  schedule
+   15  schedule
+   16  schedule
+   17  schedule
+   18  schedule
+========================================================================================================================
+backend\logs\dayStatusCache-FEDERAL-2026-07-11.json
+   16  schedule
+   17  schedule
+   18  schedule
+   19  schedule
+   20  schedule
+========================================================================================================================
+backend\logs\dayStatusCache-PT_RIO-2026-02-27.json
+   28  schedule
+   29  schedule
+   30  schedule
+   31  schedule
+   32  schedule
+========================================================================================================================
+backend\logs\dayStatusCache-PT_RIO-2026-02-28.json
+   28  schedule
+   29  schedule
+   30  schedule
+   31  schedule
+   32  schedule
+========================================================================================================================
+backend\logs\dayStatusCache-PT_RIO-2026-03-09.json
+   27  schedule
+   28  schedule
+   29  schedule
+   30  schedule
+   31  schedule
+========================================================================================================================
+backend\logs\dayStatusCache-PT_RIO-2026-03-25.json
+   28  schedule
+   29  schedule
+   30  schedule
+   31  schedule
+   32  schedule
+========================================================================================================================
+backend\logs\dayStatusCache-PT_RIO-2026-07-06.json
+   28  schedule
+   29  schedule
+   30  schedule
+   31  schedule
+   32  schedule
+========================================================================================================================
+backend\logs\dayStatusCache-PT_RIO-2026-07-11.json
+   28  schedule
+   29  schedule
+   30  schedule
+   31  schedule
+   32  schedule
+========================================================================================================================
+backend\node_modules\@babel\helper-globals\data\browser-upper.json
+   31  schedule
+  607  schedule
+========================================================================================================================
+backend\node_modules\@babel\parser\lib\index.js
+ 4242  cron
+ 4266  cron
+========================================================================================================================
+backend\node_modules\@firebase\database\dist\index.cjs.js
+ 3684  schedule
+ 3699  schedule
+ 3710  schedule
+ 3720  schedule
+ 3756  schedule
+ 3850  schedule
+========================================================================================================================
+backend\node_modules\@firebase\database\dist\index.esm.js
+ 3680  schedule
+ 3695  schedule
+ 3706  schedule
+ 3716  schedule
+ 3752  schedule
+ 3846  schedule
+========================================================================================================================
+backend\node_modules\@firebase\database\dist\index.node.cjs.js
+ 3692  schedule
+ 3707  schedule
+ 3718  schedule
+ 3728  schedule
+ 3764  schedule
+ 3858  schedule
+========================================================================================================================
+backend\node_modules\@firebase\database\dist\index.standalone.js
+ 3689  schedule
+ 3704  schedule
+ 3715  schedule
+ 3725  schedule
+ 3761  schedule
+ 3855  schedule
+========================================================================================================================
+backend\node_modules\@firebase\database\dist\internal.d.ts
+ 1918  schedule
+========================================================================================================================
+backend\node_modules\@firebase\database\dist\node-esm\index.node.esm.js
+ 3684  schedule
+ 3699  schedule
+ 3710  schedule
+ 3720  schedule
+ 3756  schedule
+ 3850  schedule
+========================================================================================================================
+backend\node_modules\@firebase\database\dist\node-esm\src\core\PersistentConnection.d.ts
+  114  schedule
+========================================================================================================================
+backend\node_modules\@firebase\database\dist\private.d.ts
+ 1902  schedule
+========================================================================================================================
+backend\node_modules\@firebase\database\dist\src\core\PersistentConnection.d.ts
+  114  schedule
+========================================================================================================================
+backend\node_modules\@firebase\database-compat\dist\index.standalone.js
+ 8610  schedule
+ 8625  schedule
+ 8636  schedule
+ 8646  schedule
+ 8682  schedule
+ 8776  schedule
+========================================================================================================================
+backend\node_modules\@firebase\util\dist\index.cjs.js
+ 1594  schedule
+========================================================================================================================
+backend\node_modules\@firebase\util\dist\index.esm.js
+ 1590  schedule
+========================================================================================================================
+backend\node_modules\@firebase\util\dist\index.node.cjs.js
+ 1594  schedule
+========================================================================================================================
+backend\node_modules\@firebase\util\dist\node-esm\index.node.esm.js
+ 1590  schedule
+========================================================================================================================
+backend\node_modules\@firebase\util\dist\node-esm\src\sha1.d.ts
+   54  schedule
+========================================================================================================================
+backend\node_modules\@firebase\util\dist\src\sha1.d.ts
+   54  schedule
+========================================================================================================================
+backend\node_modules\@firebase\util\dist\util-public.d.ts
+  895  schedule
+========================================================================================================================
+backend\node_modules\@firebase\util\dist\util.d.ts
+  915  schedule
+========================================================================================================================
+backend\node_modules\@google-cloud\firestore\build\protos\admin_v1.json
+    1  schedule
+    1  schedule
+    1  schedule
+    1  schedule
+    1  schedule
+    1  schedule
+    1  schedule
+    1  schedule
+    1  schedule
+    1  schedule
+    1  schedule
+    1  schedule
+    1  schedule
+    1  schedule
+    1  schedule
+    1  schedule
+    1  schedule
+    1  schedule
+    1  schedule
+    1  schedule
+    1  schedule
+    1  schedule
+    1  schedule
+    1  schedule
+    1  schedule
+    1  schedule
+    1  schedule
+    1  schedule
+    1  schedule
+    1  schedule
+    1  schedule
+    1  schedule
+    1  schedule
+    1  schedule
+    1  schedule
+    1  schedule
+    1  schedule
+    1  schedule
+    1  schedule
+    1  schedule
+    1  schedule
+    1  schedule
+    1  schedule
+    1  schedule
+    1  schedule
+    1  schedule
+    1  schedule
+    1  schedule
+    1  schedule
+    1  schedule
+    1  schedule
+    1  schedule
+========================================================================================================================
+backend\node_modules\@google-cloud\firestore\build\protos\firestore_admin_v1_proto_api.d.ts
+ 1445  schedule
+ 1446  schedule
+ 1447  schedule
+ 1449  schedule
+ 1449  schedule
+ 1449  schedule
+ 1452  schedule
+ 1453  schedule
+ 1456  schedule
+ 1456  schedule
+ 1456  schedule
+ 1459  schedule
+ 1460  schedule
+ 1461  schedule
+ 1463  schedule
+ 1463  schedule
+ 1463  schedule
+ 1466  schedule
+ 1467  schedule
+ 1470  schedule
+ 1470  schedule
+ 1470  schedule
+ 1473  schedule
+ 1474  schedule
+ 1475  schedule
+ 1477  schedule
+ 1477  schedule
+ 1477  schedule
+ 1480  schedule
+ 1481  schedule
+ 1484  schedule
+ 1484  schedule
+ 1484  schedule
+ 1487  schedule
+ 1488  schedule
+ 1489  schedule
+ 1491  schedule
+ 1491  schedule
+ 1491  schedule
+ 1494  schedule
+ 1495  schedule
+ 1498  schedule
+ 1498  schedule
+ 1498  schedule
+ 1501  schedule
+ 1502  schedule
+ 1505  schedule
+ 1505  schedule
+ 1505  schedule
+ 1508  schedule
+ 1509  schedule
+ 1512  schedule
+ 1512  schedule
+ 1651  schedule
+ 1653  schedule
+ 1655  schedule
+ 1655  schedule
+ 1658  schedule
+ 1660  schedule
+ 1662  schedule
+ 1662  schedule
+ 1665  schedule
+ 1667  schedule
+ 1669  schedule
+ 1669  schedule
+ 1672  schedule
+ 1674  schedule
+ 1676  schedule
+ 1676  schedule
+ 1679  schedule
+ 1683  schedule
+ 2136  schedule
+ 2137  schedule
+ 2139  schedule
+ 2142  schedule
+ 2142  schedule
+ 2143  schedule
+ 2143  schedule
+ 2146  schedule
+ 2147  schedule
+ 2147  schedule
+ 2150  schedule
+ 2153  schedule
+ 2155  schedule
+ 2158  schedule
+ 2158  schedule
+ 2159  schedule
+ 2159  schedule
+ 2162  schedule
+ 2164  schedule
+ 2166  schedule
+ 2169  schedule
+ 2170  schedule
+ 2174  schedule
+ 2177  schedule
+ 2183  schedule
+ 2190  schedule
+ 2191  schedule
+ 2193  schedule
+ 2197  schedule
+ 2198  schedule
+ 2198  schedule
+ 2201  schedule
+ 2204  schedule
+ 2206  schedule
+ 2210  schedule
+ 2212  schedule
+ 2214  schedule
+ 2217  schedule
+ 2218  schedule
+ 2222  schedule
+ 2225  schedule
+ 2231  schedule
+ 2238  schedule
+ 2239  schedule
+ 2241  schedule
+ 2241  schedule
+ 2242  schedule
+ 2242  schedule
+ 2244  schedule
+ 2248  schedule
+ 2249  schedule
+ 2249  schedule
+ 2252  schedule
+ 2255  schedule
+ 2257  schedule
+ 2257  schedule
+ 2258  schedule
+ 2258  schedule
+ 2260  schedule
+ 2264  schedule
+ 2266  schedule
+ 2268  schedule
+ 2271  schedule
+ 2272  schedule
+ 2276  schedule
+ 2279  schedule
+ 2285  schedule
+ 2292  schedule
+ 2293  schedule
+ 2295  schedule
+ 2299  schedule
+ 2300  schedule
+ 2300  schedule
+ 2303  schedule
+ 2306  schedule
+ 2308  schedule
+ 2312  schedule
+ 2314  schedule
+ 2316  schedule
+ 2319  schedule
+ 2320  schedule
+ 2324  schedule
+ 2327  schedule
+ 2333  schedule
+ 2340  schedule
+ 2341  schedule
+ 2343  schedule
+ 2343  schedule
+ 2344  schedule
+ 2344  schedule
+ 2347  schedule
+ 2348  schedule
+ 2348  schedule
+ 2351  schedule
+ 2354  schedule
+ 2356  schedule
+ 2356  schedule
+ 2357  schedule
+ 2357  schedule
+ 2360  schedule
+ 2362  schedule
+ 2364  schedule
+ 2367  schedule
+ 2368  schedule
+ 2372  schedule
+ 2375  schedule
+ 2381  schedule
+ 2388  schedule
+ 2389  schedule
+ 2391  schedule
+ 2395  schedule
+ 2396  schedule
+ 2396  schedule
+ 2399  schedule
+ 2402  schedule
+ 2404  schedule
+ 2408  schedule
+ 2410  schedule
+ 2412  schedule
+ 2415  schedule
+ 2416  schedule
+ 2420  schedule
+ 2423  schedule
+ 2429  schedule
+ 4185  schedule
+ 4186  schedule
+ 4188  schedule
+ 4191  schedule
+ 4194  schedule
+ 4197  schedule
+ 4200  schedule
+ 4203  schedule
+ 4207  schedule
+ 4208  schedule
+ 4208  schedule
+ 4211  schedule
+ 4214  schedule
+ 4216  schedule
+ 4219  schedule
+ 4222  schedule
+ 4225  schedule
+ 4228  schedule
+ 4231  schedule
+ 4234  schedule
+ 4238  schedule
+ 4240  schedule
+ 4242  schedule
+ 4245  schedule
+ 4246  schedule
+ 4250  schedule
+ 4253  schedule
+ 4259  schedule
+========================================================================================================================
+backend\node_modules\@google-cloud\firestore\build\protos\firestore_admin_v1_proto_api.js
+    1  schedule
+    1  schedule
+    1  schedule
+    1  schedule
+    1  schedule
+    1  schedule
+    1  schedule
+    1  schedule
+    1  schedule
+    1  schedule
+    1  schedule
+    1  schedule
+    1  schedule
+    1  schedule
+    1  schedule
+    1  schedule
+    1  schedule
+    1  schedule
+    1  schedule
+    1  schedule
+    1  schedule
+    1  schedule
+    1  schedule
+    1  schedule
+    1  schedule
+    1  schedule
+    1  schedule
+    1  schedule
+    1  schedule
+    1  schedule
+    1  schedule
+    1  schedule
+    1  schedule
+    1  schedule
+    1  schedule
+    1  schedule
+    1  schedule
+    1  schedule
+    1  schedule
+    1  schedule
+    1  schedule
+    1  schedule
+    1  schedule
+    1  schedule
+    1  schedule
+    1  schedule
+    1  schedule
+    1  schedule
+    1  schedule
+    1  schedule
+    1  schedule
+    1  schedule
+    1  schedule
+    1  schedule
+    1  schedule
+    1  schedule
+    1  schedule
+    1  schedule
+    1  schedule
+    1  schedule
+    1  schedule
+    1  schedule
+    1  schedule
+    1  schedule
+    1  schedule
+    1  schedule
+    1  schedule
+    1  schedule
+    1  schedule
+    1  schedule
+    1  schedule
+    1  schedule
+    1  schedule
+    1  schedule
+    1  schedule
+    1  schedule
+    1  schedule
+    1  schedule
+    1  schedule
+    1  schedule
+    1  schedule
+    1  schedule
+    1  schedule
+    1  schedule
+    1  schedule
+    1  schedule
+    1  schedule
+    1  schedule
+    1  schedule
+    1  schedule
+    1  schedule
+    1  schedule
+    1  schedule
+    1  schedule
+    1  schedule
+    1  schedule
+    1  schedule
+    1  schedule
+    1  schedule
+    1  schedule
+    1  schedule
+    1  schedule
+    1  schedule
+========================================================================================================================
+backend\node_modules\@google-cloud\firestore\build\src\backoff.js
+  187  schedule
+========================================================================================================================
+backend\node_modules\@google-cloud\firestore\build\src\bulk-writer.d.ts
+  151  schedule
+  167  schedule
+  455  schedule
+  493  schedule
+  508  schedule
+  514  schedule
+  521  schedule
+========================================================================================================================
+backend\node_modules\@google-cloud\firestore\build\src\bulk-writer.js
+  300  schedule
+  667  schedule
+  679  schedule
+  727  schedule
+  751  schedule
+  757  schedule
+  779  schedule
+  802  schedule
+  817  schedule
+  831  schedule
+  844  schedule
+  856  schedule
+  863  schedule
+  868  schedule
+  872  schedule
+  873  schedule
+========================================================================================================================
+backend\node_modules\@google-cloud\firestore\build\src\index.d.ts
+  884  schedule
+========================================================================================================================
+backend\node_modules\@google-cloud\firestore\build\src\index.js
+ 1249  schedule
+========================================================================================================================
+backend\node_modules\@google-cloud\firestore\build\src\pool.d.ts
+   58  schedule
+========================================================================================================================
+backend\node_modules\@google-cloud\firestore\build\src\pool.js
+   70  schedule
+========================================================================================================================
+backend\node_modules\@google-cloud\firestore\build\src\v1\firestore_admin_client.d.ts
+  360  schedule
+  361  schedule
+  362  schedule
+  362  schedule
+  370  schedule
+  370  schedule
+  371  schedule
+  375  schedule
+  375  schedule
+  378  schedule
+  379  schedule
+  381  schedule
+  381  schedule
+  382  schedule
+  383  schedule
+  386  schedule
+  386  schedule
+  386  schedule
+  386  schedule
+  387  schedule
+  387  schedule
+  387  schedule
+  387  schedule
+  389  schedule
+  394  schedule
+  397  schedule
+  397  schedule
+  401  schedule
+  401  schedule
+  404  schedule
+  405  schedule
+  407  schedule
+  407  schedule
+  408  schedule
+  409  schedule
+  412  schedule
+  412  schedule
+  412  schedule
+  412  schedule
+  413  schedule
+  413  schedule
+  413  schedule
+  413  schedule
+  415  schedule
+  426  schedule
+  426  schedule
+  429  schedule
+  430  schedule
+  432  schedule
+  432  schedule
+  433  schedule
+  434  schedule
+  437  schedule
+  437  schedule
+  437  schedule
+  437  schedule
+  438  schedule
+  438  schedule
+  438  schedule
+  438  schedule
+  440  schedule
+  444  schedule
+  444  schedule
+  445  schedule
+  451  schedule
+  451  schedule
+  454  schedule
+  455  schedule
+  457  schedule
+  457  schedule
+  458  schedule
+  459  schedule
+  462  schedule
+  462  schedule
+  462  schedule
+  462  schedule
+  463  schedule
+  463  schedule
+  463  schedule
+  463  schedule
+  465  schedule
+  470  schedule
+  473  schedule
+  473  schedule
+  480  schedule
+  481  schedule
+  483  schedule
+  483  schedule
+  485  schedule
+  488  schedule
+  488  schedule
+  488  schedule
+  489  schedule
+  489  schedule
+  489  schedule
+ 1406  schedule
+ 1410  schedule
+ 1413  schedule
+ 1413  schedule
+ 1415  schedule
+ 1417  schedule
+ 1418  schedule
+ 1421  schedule
+ 1421  schedule
+ 1423  schedule
+ 1425  schedule
+ 1426  schedule
+ 1429  schedule
+ 1429  schedule
+ 1431  schedule
+ 1431  schedule
+ 1433  schedule
+ 1434  schedule
+ 1435  schedule
+ 1437  schedule
+ 1437  schedule
+ 1437  schedule
+========================================================================================================================
+backend\node_modules\@google-cloud\firestore\build\src\v1\firestore_admin_client.js
+  180  schedule
+  180  schedule
+  180  schedule
+  310  schedule
+  311  schedule
+  312  schedule
+  313  schedule
+  314  schedule
+  565  schedule
+  584  schedule
+  586  schedule
+  605  schedule
+  607  schedule
+  626  schedule
+  628  schedule
+  644  schedule
+  644  schedule
+  647  schedule
+  649  schedule
+  668  schedule
+ 1524  schedule
+ 1528  schedule
+ 1531  schedule
+ 1531  schedule
+ 1532  schedule
+ 1535  schedule
+ 1535  schedule
+ 1539  schedule
+ 1541  schedule
+ 1542  schedule
+ 1545  schedule
+ 1545  schedule
+ 1546  schedule
+ 1546  schedule
+ 1549  schedule
+ 1551  schedule
+ 1552  schedule
+ 1555  schedule
+ 1555  schedule
+ 1556  schedule
+ 1556  schedule
+ 1559  schedule
+ 1559  schedule
+ 1561  schedule
+ 1562  schedule
+ 1563  schedule
+ 1565  schedule
+ 1565  schedule
+ 1565  schedule
+ 1566  schedule
+ 1566  schedule
+ 1566  schedule
+========================================================================================================================
+backend\node_modules\@google-cloud\firestore\build\src\v1\firestore_admin_client_config.json
+  116  schedule
+  120  schedule
+  124  schedule
+  128  schedule
+  132  schedule
+========================================================================================================================
+backend\node_modules\@google-cloud\firestore\build\src\v1\firestore_admin_proto_list.json
+    9  schedule
+========================================================================================================================
+backend\node_modules\@google-cloud\firestore\build\src\watch.d.ts
+  193  schedule
+========================================================================================================================
+backend\node_modules\@google-cloud\firestore\build\src\watch.js
+  251  schedule
+========================================================================================================================
+backend\node_modules\@google-cloud\firestore\types\firestore.d.ts
+ 1129  schedule
+========================================================================================================================
+backend\node_modules\@google-cloud\firestore\types\protos\firestore_admin_v1_proto_api.d.ts
+ 1445  schedule
+ 1446  schedule
+ 1447  schedule
+ 1449  schedule
+ 1449  schedule
+ 1449  schedule
+ 1452  schedule
+ 1453  schedule
+ 1456  schedule
+ 1456  schedule
+ 1456  schedule
+ 1459  schedule
+ 1460  schedule
+ 1461  schedule
+ 1463  schedule
+ 1463  schedule
+ 1463  schedule
+ 1466  schedule
+ 1467  schedule
+ 1470  schedule
+ 1470  schedule
+ 1470  schedule
+ 1473  schedule
+ 1474  schedule
+ 1475  schedule
+ 1477  schedule
+ 1477  schedule
+ 1477  schedule
+ 1480  schedule
+ 1481  schedule
+ 1484  schedule
+ 1484  schedule
+ 1484  schedule
+ 1487  schedule
+ 1488  schedule
+ 1489  schedule
+ 1491  schedule
+ 1491  schedule
+ 1491  schedule
+ 1494  schedule
+ 1495  schedule
+ 1498  schedule
+ 1498  schedule
+ 1498  schedule
+ 1501  schedule
+ 1502  schedule
+ 1505  schedule
+ 1505  schedule
+ 1505  schedule
+ 1508  schedule
+ 1509  schedule
+ 1512  schedule
+ 1512  schedule
+ 1651  schedule
+ 1653  schedule
+ 1655  schedule
+ 1655  schedule
+ 1658  schedule
+ 1660  schedule
+ 1662  schedule
+ 1662  schedule
+ 1665  schedule
+ 1667  schedule
+ 1669  schedule
+ 1669  schedule
+ 1672  schedule
+ 1674  schedule
+ 1676  schedule
+ 1676  schedule
+ 1679  schedule
+ 1683  schedule
+ 2136  schedule
+ 2137  schedule
+ 2139  schedule
+ 2142  schedule
+ 2142  schedule
+ 2143  schedule
+ 2143  schedule
+ 2146  schedule
+ 2147  schedule
+ 2147  schedule
+ 2150  schedule
+ 2153  schedule
+ 2155  schedule
+ 2158  schedule
+ 2158  schedule
+ 2159  schedule
+ 2159  schedule
+ 2162  schedule
+ 2164  schedule
+ 2166  schedule
+ 2169  schedule
+ 2170  schedule
+ 2174  schedule
+ 2177  schedule
+ 2183  schedule
+ 2190  schedule
+ 2191  schedule
+ 2193  schedule
+ 2197  schedule
+ 2198  schedule
+ 2198  schedule
+ 2201  schedule
+ 2204  schedule
+ 2206  schedule
+ 2210  schedule
+ 2212  schedule
+ 2214  schedule
+ 2217  schedule
+ 2218  schedule
+ 2222  schedule
+ 2225  schedule
+ 2231  schedule
+ 2238  schedule
+ 2239  schedule
+ 2241  schedule
+ 2241  schedule
+ 2242  schedule
+ 2242  schedule
+ 2244  schedule
+ 2248  schedule
+ 2249  schedule
+ 2249  schedule
+ 2252  schedule
+ 2255  schedule
+ 2257  schedule
+ 2257  schedule
+ 2258  schedule
+ 2258  schedule
+ 2260  schedule
+ 2264  schedule
+ 2266  schedule
+ 2268  schedule
+ 2271  schedule
+ 2272  schedule
+ 2276  schedule
+ 2279  schedule
+ 2285  schedule
+ 2292  schedule
+ 2293  schedule
+ 2295  schedule
+ 2299  schedule
+ 2300  schedule
+ 2300  schedule
+ 2303  schedule
+ 2306  schedule
+ 2308  schedule
+ 2312  schedule
+ 2314  schedule
+ 2316  schedule
+ 2319  schedule
+ 2320  schedule
+ 2324  schedule
+ 2327  schedule
+ 2333  schedule
+ 2340  schedule
+ 2341  schedule
+ 2343  schedule
+ 2343  schedule
+ 2344  schedule
+ 2344  schedule
+ 2347  schedule
+ 2348  schedule
+ 2348  schedule
+ 2351  schedule
+ 2354  schedule
+ 2356  schedule
+ 2356  schedule
+ 2357  schedule
+ 2357  schedule
+ 2360  schedule
+ 2362  schedule
+ 2364  schedule
+ 2367  schedule
+ 2368  schedule
+ 2372  schedule
+ 2375  schedule
+ 2381  schedule
+ 2388  schedule
+ 2389  schedule
+ 2391  schedule
+ 2395  schedule
+ 2396  schedule
+ 2396  schedule
+ 2399  schedule
+ 2402  schedule
+ 2404  schedule
+ 2408  schedule
+ 2410  schedule
+ 2412  schedule
+ 2415  schedule
+ 2416  schedule
+ 2420  schedule
+ 2423  schedule
+ 2429  schedule
+ 4185  schedule
+ 4186  schedule
+ 4188  schedule
+ 4191  schedule
+ 4194  schedule
+ 4197  schedule
+ 4200  schedule
+ 4203  schedule
+ 4207  schedule
+ 4208  schedule
+ 4208  schedule
+ 4211  schedule
+ 4214  schedule
+ 4216  schedule
+ 4219  schedule
+ 4222  schedule
+ 4225  schedule
+ 4228  schedule
+ 4231  schedule
+ 4234  schedule
+ 4238  schedule
+ 4240  schedule
+ 4242  schedule
+ 4245  schedule
+ 4246  schedule
+ 4250  schedule
+ 4253  schedule
+ 4259  schedule
+========================================================================================================================
+backend\node_modules\@google-cloud\firestore\types\v1\firestore_admin_client.d.ts
+  548  schedule
+  549  schedule
+  550  schedule
+  550  schedule
+  558  schedule
+  558  schedule
+  559  schedule
+  563  schedule
+  563  schedule
+  566  schedule
+  567  schedule
+  569  schedule
+  570  schedule
+  574  schedule
+  575  schedule
+  579  schedule
+  580  schedule
+  583  schedule
+  584  schedule
+  590  schedule
+  591  schedule
+  593  schedule
+  594  schedule
+  601  schedule
+  606  schedule
+  609  schedule
+  609  schedule
+  613  schedule
+  613  schedule
+  616  schedule
+  617  schedule
+  619  schedule
+  620  schedule
+  624  schedule
+  625  schedule
+  629  schedule
+  630  schedule
+  633  schedule
+  634  schedule
+  640  schedule
+  641  schedule
+  643  schedule
+  644  schedule
+  651  schedule
+  662  schedule
+  662  schedule
+  665  schedule
+  666  schedule
+  668  schedule
+  669  schedule
+  673  schedule
+  674  schedule
+  678  schedule
+  679  schedule
+  682  schedule
+  683  schedule
+  689  schedule
+  690  schedule
+  692  schedule
+  693  schedule
+  700  schedule
+  704  schedule
+  704  schedule
+  705  schedule
+  711  schedule
+  711  schedule
+  714  schedule
+  715  schedule
+  717  schedule
+  718  schedule
+  722  schedule
+  723  schedule
+  727  schedule
+  728  schedule
+  731  schedule
+  732  schedule
+  738  schedule
+  739  schedule
+  741  schedule
+  742  schedule
+  749  schedule
+  754  schedule
+  757  schedule
+  757  schedule
+  764  schedule
+  765  schedule
+  767  schedule
+  768  schedule
+  773  schedule
+  777  schedule
+  778  schedule
+  782  schedule
+  788  schedule
+  789  schedule
+  792  schedule
+ 2156  schedule
+ 2160  schedule
+ 2163  schedule
+ 2166  schedule
+ 2169  schedule
+ 2171  schedule
+ 2172  schedule
+ 2175  schedule
+ 2176  schedule
+ 2179  schedule
+ 2181  schedule
+ 2182  schedule
+ 2185  schedule
+ 2186  schedule
+ 2189  schedule
+ 2189  schedule
+ 2191  schedule
+ 2192  schedule
+ 2193  schedule
+ 2195  schedule
+ 2195  schedule
+ 2196  schedule
+========================================================================================================================
+backend\node_modules\@grpc\grpc-js\build\src\server.js
+ 1364  schedule
+========================================================================================================================
+backend\node_modules\@grpc\grpc-js\src\server.ts
+ 1922  schedule
+========================================================================================================================
+backend\node_modules\@types\node\child_process.d.ts
+  406  workflow
+========================================================================================================================
+backend\node_modules\@types\node\inspector.generated.d.ts
+  901  schedule
+ 1293  schedule
+ 2150  schedule
+ 2150  schedule
+ 2150  schedule
+ 2150  schedule
+ 2150  schedule
+ 2153  schedule
+ 3214  schedule
+ 3214  schedule
+ 3214  schedule
+ 3214  schedule
+ 3214  schedule
+ 3217  schedule
+========================================================================================================================
+backend\node_modules\@types\node\perf_hooks.d.ts
+  186  schedule
+  187  schedule
+  710  schedule
+========================================================================================================================
+backend\node_modules\@types\node\process.d.ts
+ 1633  schedule
+ 1636  schedule
+========================================================================================================================
+backend\node_modules\@types\node\test.d.ts
+  116  schedule
+========================================================================================================================
+backend\node_modules\@types\node\timers\promises.d.ts
+   73  schedule
+   78  schedule
+   83  schedule
+   85  schedule
+   97  schedule
+  104  schedule
+  104  schedule
+========================================================================================================================
+backend\node_modules\@types\node\timers.d.ts
+   16  schedule
+   26  schedule
+   29  schedule
+   79  schedule
+   81  schedule
+  111  schedule
+  151  schedule
+  183  schedule
+  209  schedule
+========================================================================================================================
+backend\node_modules\browserslist\index.js
+    5  schedule
+    5  schedule
+========================================================================================================================
+backend\node_modules\call-bind-apply-helpers\package.json
+   79  workflow
+========================================================================================================================
+backend\node_modules\call-bound\package.json
+   93  workflow
+========================================================================================================================
+backend\node_modules\dunder-proto\package.json
+   70  workflow
+========================================================================================================================
+backend\node_modules\es-define-property\package.json
+   78  workflow
+========================================================================================================================
+backend\node_modules\es-errors\package.json
+   74  workflow
+========================================================================================================================
+backend\node_modules\es-object-atoms\package.json
+   74  workflow
+========================================================================================================================
+backend\node_modules\es-set-tostringtag\package.json
+   75  workflow
+========================================================================================================================
+backend\node_modules\finalhandler\index.js
+  120  schedule
+========================================================================================================================
+backend\node_modules\firebase-admin\lib\database\database.d.ts
+   63  schedule
+========================================================================================================================
+backend\node_modules\firebase-admin\lib\database\database.js
+  105  schedule
+  109  schedule
+========================================================================================================================
+backend\node_modules\firebase-admin\lib\functions\functions-api-client-internal.d.ts
+   26  schedule
+========================================================================================================================
+backend\node_modules\firebase-admin\lib\functions\functions-api-client-internal.js
+  229  schedule
+  229  schedule
+  230  schedule
+  230  schedule
+  233  schedule
+  233  schedule
+  234  schedule
+  235  schedule
+  237  schedule
+  237  schedule
+  239  schedule
+  239  schedule
+  240  schedule
+  240  schedule
+  241  schedule
+  244  schedule
+  245  schedule
+========================================================================================================================
+backend\node_modules\firebase-admin\lib\functions\functions-api.d.ts
+   23  schedule
+   26  schedule
+   28  schedule
+   35  schedule
+   37  schedule
+   39  schedule
+   42  schedule
+   43  schedule
+   45  schedule
+   49  schedule
+========================================================================================================================
+backend\node_modules\firebase-admin\lib\functions\index.d.ts
+   25  schedule
+========================================================================================================================
+backend\node_modules\function-bind\package.json
+   84  workflow
+========================================================================================================================
+backend\node_modules\get-intrinsic\package.json
+   91  workflow
+========================================================================================================================
+backend\node_modules\get-proto\package.json
+   75  workflow
+========================================================================================================================
+backend\node_modules\google-gax\build\src\bundlingCalls\bundleApiCaller.js
+   43  schedule
+========================================================================================================================
+backend\node_modules\google-gax\build\src\bundlingCalls\bundleExecutor.d.ts
+   84  schedule
+   89  schedule
+   91  schedule
+   95  schedule
+========================================================================================================================
+backend\node_modules\google-gax\build\src\bundlingCalls\bundleExecutor.js
+   50  schedule
+   55  schedule
+   57  schedule
+   61  schedule
+  141  schedule
+========================================================================================================================
+backend\node_modules\google-gax\build\src\paginationCalls\resourceCollector.js
+   52  schedule
+   60  schedule
+========================================================================================================================
+backend\node_modules\gopd\package.json
+   71  workflow
+========================================================================================================================
+backend\node_modules\has-symbols\package.json
+  107  workflow
+========================================================================================================================
+backend\node_modules\has-tostringtag\package.json
+  102  workflow
+========================================================================================================================
+backend\node_modules\hasown\package.json
+   88  workflow
+========================================================================================================================
+backend\node_modules\html-entities\dist\commonjs\named-references.js
+   48  cron
+   48  cron
+========================================================================================================================
+backend\node_modules\html-entities\dist\esm\named-references.js
+   45  cron
+   45  cron
+========================================================================================================================
+backend\node_modules\html-entities\src\named-references.ts
+   47  cron
+   47  cron
+========================================================================================================================
+backend\node_modules\math-intrinsics\package.json
+   80  workflow
+========================================================================================================================
+backend\node_modules\mime\types\other.js
+    1  schedule
+========================================================================================================================
+backend\node_modules\mime-db\db.json
+  867  schedule
+ 5982  schedule
+========================================================================================================================
+backend\node_modules\node-forge\lib\aes.js
+  644  schedule
+  647  schedule
+  650  schedule
+  662  schedule
+  663  schedule
+  665  schedule
+  668  schedule
+  711  schedule
+  718  schedule
+  719  schedule
+  740  schedule
+  747  schedule
+  796  schedule
+  865  schedule
+  982  schedule
+========================================================================================================================
+backend\node_modules\node-forge\lib\socket.js
+   78  schedule
+========================================================================================================================
+backend\node_modules\node-forge\lib\tls.js
+ 2427  schedule
+========================================================================================================================
+backend\node_modules\node-forge\lib\util.js
+ 2646  schedule
+========================================================================================================================
+backend\node_modules\object-inspect\package.json
+   97  workflow
+========================================================================================================================
+backend\node_modules\protobufjs\dist\light\protobuf.js
+ 7290  schedule
+ 7462  schedule
+========================================================================================================================
+backend\node_modules\protobufjs\dist\minimal\protobuf.js
+ 2193  schedule
+ 2365  schedule
+========================================================================================================================
+backend\node_modules\protobufjs\dist\protobuf.js
+ 9094  schedule
+ 9266  schedule
+========================================================================================================================
+backend\node_modules\protobufjs\src\writer.js
+   14  schedule
+  186  schedule
+========================================================================================================================
+backend\node_modules\qs\package.json
+   89  workflow
+========================================================================================================================
+backend\node_modules\readable-stream\lib\_stream_readable.js
+  133  schedule
+  153  schedule
+  505  schedule
+  799  schedule
+  830  schedule
+  831  schedule
+  840  schedule
+========================================================================================================================
+backend\node_modules\send\node_modules\mime\types.json
+    1  schedule
+========================================================================================================================
+backend\node_modules\side-channel\package.json
+   79  workflow
+========================================================================================================================
+backend\node_modules\side-channel-list\package.json
+   71  workflow
+========================================================================================================================
+backend\node_modules\side-channel-map\package.json
+   74  workflow
+========================================================================================================================
+backend\node_modules\side-channel-weakmap\package.json
+   81  workflow
+========================================================================================================================
+backend\routes\pitacoResults.js
+  304  schedule
+  307  schedule
+  307  schedule
+  358  schedule
+  364  schedule
+  391  schedule
+  391  schedule
+  392  schedule
+  392  schedule
+  393  schedule
+  393  schedule
+  394  schedule
+  395  schedule
+  395  schedule
+  396  schedule
+  396  schedule
+  401  schedule
+  402  schedule
+  403  schedule
+  403  schedule
+  405  schedule
+  406  schedule
+  406  schedule
+  410  schedule
+  410  schedule
+  410  schedule
+  423  schedule
+  423  schedule
+  424  schedule
+  424  schedule
+  430  schedule
+  430  schedule
+  431  schedule
+  431  schedule
+  438  schedule
+  551  schedule
+  566  schedule
+  566  schedule
+  804  schedule
+  855  schedule
+  875  schedule
+  875  schedule
+  876  schedule
+  877  schedule
+  878  schedule
+  878  schedule
+  963  schedule
+  983  schedule
+  983  schedule
+  984  schedule
+  985  schedule
+  986  schedule
+  986  schedule
+========================================================================================================================
+backend\routes\predictions.js
+    8  prediction
+    9  prediction
+    9  predictionService
+   12  Top3
+   12  prediction
+   12  top3
+   13  Top3
+   13  prediction
+   13  predictionService
+   13  top3
+   16  prediction
+   25  prediction
+   33  prediction
+   33  prediction
+   55  Top3
+   55  prediction
+   55  top3
+   57  Top3
+   57  top3
+   59  Top3
+   59  top3
+   61  Top3
+   61  prediction
+   61  top3
+   68  prediction
+   68  prediction
+========================================================================================================================
+backend\scripts\auditDrawSlotsRange.js
+   11  schedule
+   11  schedule
+  111  schedule
+  111  schedule
+  122  schedule
+  124  schedule
+  125  schedule
+  141  schedule
+  196  schedule
+  196  schedule
+  216  schedule
+  216  schedule
+  217  schedule
+  218  schedule
+  219  schedule
+  221  schedule
+  221  schedule
+  221  schedule
+  223  schedule
+  223  schedule
+  224  schedule
+  224  schedule
+  224  schedule
+  224  schedule
+  226  schedule
+  228  schedule
+  228  schedule
+  231  schedule
+  231  schedule
+  232  schedule
+  233  schedule
+  242  schedule
+  242  schedule
+  245  schedule
+  246  schedule
+  246  schedule
+  248  schedule
+  257  schedule
+  257  schedule
+  258  schedule
+  268  schedule
+  279  schedule
+  285  schedule
+  287  schedule
+  287  schedule
+  289  schedule
+  504  schedule
+  504  schedule
+  505  schedule
+  505  schedule
+  521  schedule
+  521  schedule
+  521  schedule
+  521  schedule
+  522  schedule
+  522  schedule
+  524  schedule
+  524  schedule
+  524  schedule
+  524  schedule
+  536  schedule
+  536  schedule
+  536  schedule
+  536  schedule
+  581  schedule
+  582  schedule
+  590  schedule
+  593  schedule
+  594  schedule
+  594  schedule
+  596  schedule
+  598  schedule
+  599  schedule
+  600  schedule
+  605  schedule
+  757  schedule
+  758  schedule
+  759  schedule
+  760  schedule
+  761  schedule
+  763  schedule
+  764  schedule
+  803  schedule
+  804  schedule
+  804  schedule
+  836  schedule
+  838  schedule
+  838  schedule
+  838  schedule
+  853  schedule
+  855  schedule
+  855  schedule
+  857  schedule
+========================================================================================================================
+backend\scripts\auditFederalContent.js
+    6  importKingApostas
+========================================================================================================================
+backend\scripts\auditFederalContestContent.js
+    7  importKingApostas
+========================================================================================================================
+backend\scripts\auditFederalDateContent.js
+    6  importKingApostas
+========================================================================================================================
+backend\scripts\auditHistoricalGaps.js
+  112  schedule
+  113  schedule
+  127  schedule
+  128  schedule
+  128  schedule
+  128  schedule
+  146  schedule
+  198  schedule
+  198  schedule
+  229  schedule
+========================================================================================================================
+backend\scripts\auditPredictionRuns.js
+   10  prediction
+   16  prediction
+   36  prediction
+   39  prediction
+========================================================================================================================
+backend\scripts\auditPtRioContent.js
+    6  importKingApostas
+========================================================================================================================
+backend\scripts\autoImportToday.js
+   20  importKingApostas
+   20  runImport
+   29  autoImportToday
+   43  cron
+   47  cron
+   77  cron
+  128  schedule
+  130  schedule
+  150  schedule
+  150  schedule
+  150  schedule
+  150  schedule
+  279  schedule
+  320  schedule
+  354  schedule
+  459  schedule
+  495  schedule
+  536  schedule
+  545  schedule
+  585  schedule
+  615  schedule
+  616  schedule
+  617  schedule
+  618  schedule
+  621  schedule
+  640  schedule
+  641  schedule
+  642  schedule
+  693  autoImportToday
+  723  schedule
+  840  autoImportToday
+  941  schedule
+  989  schedule
+ 1056  schedule
+ 1143  schedule
+ 1155  schedule
+ 1184  schedule
+ 1193  cron
+ 1225  schedule
+ 1264  schedule
+ 1325  runImport
+========================================================================================================================
+backend\scripts\autoRepairToday.js
+    3  importKingApostas
+    3  runImport
+  122  runImport
+========================================================================================================================
+backend\scripts\backtestTop3Official.js
+    9  Top3
+    9  top3
+   12  Top3
+   12  top3
+   13  Top3
+   13  top3
+   14  scoreEngine
+   16  schedule
+   25  schedule
+   34  schedule
+  223  prediction
+  229  ranking
+  255  Top3
+  255  top3
+  272  Top3
+  272  top3
+  273  Top3
+  273  top3
+  279  Top3
+  279  top3
+  293  Top3
+  293  top3
+  297  Top3
+  297  top3
+  333  Top3
+  333  top3
+  383  Top3
+  383  Top3
+  383  Top3
+  383  top3
+  383  top3
+  383  top3
+  398  Top3
+  398  Top3
+  398  top3
+  398  top3
+  410  Top3
+  410  Top3
+  410  top3
+  410  top3
+  422  Top3
+  422  Top3
+  422  top3
+  422  top3
+  443  Top3
+  443  top3
+  453  Top3
+  453  top3
+  454  Top3
+  454  top3
+  455  Top3
+  455  top3
+  467  Top3
+  467  top3
+  489  Top3
+  489  top3
+  553  Top3
+  553  top3
+  640  Top3
+  640  top3
+  645  schedule
+  646  schedule
+  647  schedule
+  655  prediction
+  656  prediction
+  661  prediction
+  669  prediction
+  672  Top3
+  672  top3
+  673  prediction
+  689  Top3
+  689  top3
+  690  Top3
+  690  top3
+  735  Top3
+  735  top3
+  803  Top3
+  803  top3
+  850  Top3
+  850  top3
+  855  Top3
+  855  top3
+  905  prediction
+========================================================================================================================
+backend\scripts\fixPtRioContentAudit.js
+    6  importKingApostas
+========================================================================================================================
+backend\scripts\importKingApostas.js
+    4  importKingApostas
+  152  Top3
+  152  top3
+  153  Top3
+  153  top3
+  388  schedule
+ 1017  schedule
+ 1217  schedule
+ 1315  runImport
+ 1382  schedule
+ 1571  schedule
+ 1628  Top3
+ 1628  top3
+ 1629  Top3
+ 1629  top3
+ 1635  Top3
+ 1635  top3
+ 1649  importKingApostas
+ 1656  importKingApostas
+ 1672  importKingApostas
+ 1764  runImport
+========================================================================================================================
+backend\scripts\importKingRange.js
+  204  runImport
+  353  importKingApostas
+  370  runImport
+========================================================================================================================
+backend\scripts\integrityCheck.js
+    2  importKingApostas
+    2  runImport
+   55  runImport
+   58  runImport
+========================================================================================================================
+backend\scripts\reconcileKingFirestore.js
+    4  importKingApostas
+    4  runImport
+   97  runImport
+========================================================================================================================
+backend\scripts\repairHistoricalHardGaps.js
+    3  importKingApostas
+    3  runImport
+   36  runImport
+========================================================================================================================
+backend\scripts\runBackfillFromPlan.js
+    6  autoImportToday
+    7  importKingApostas
+    7  runImport
+  103  runImport
+  106  runImport
+  109  runImport
+  111  runImport
+  254  runImport
+========================================================================================================================
+backend\scripts\testPredictionRun.js
+    5  scoreEngine
+    8  scoreEngine
+    9  prediction
+    9  ranking
+    9  scoreEngine
+   10  prediction
+   10  prediction
+   10  predictionService
+   14  ranking
+   22  prediction
+   22  prediction
+   22  ranking
+   22  ranking
+   26  prediction
+   36  prediction
+   40  prediction
+   43  prediction
+   43  prediction
+========================================================================================================================
+backend\server.js
+  409  prediction
+  409  prediction
+  415  prediction
+  415  prediction
+  685  importKingApostas
+  685  runImport
+  708  runImport
+  758  runImport
+========================================================================================================================
+backend\workers\bootstrapTop3History.js
+   14  Top3
+   14  top3
+  175  Top3
+  175  top3
+  203  Top3
+  203  top3
+  245  Top3
+  245  top3
+  250  Top3
+  250  top3
+  288  Top3
+  288  top3
+  380  Top3
+  380  top3
+  395  Top3
+  395  top3
+  427  Top3
+  427  top3
+========================================================================================================================
+.github\workflows\auto-import.yml
+    4  schedule
+    8  cron
+   10  cron
+   12  cron
+   14  cron
+   17  cron
+   20  cron
+   24  cron
+   29  cron
+   31  cron
+   33  workflow
+   71  schedule
+   71  schedule
+   74  schedule
+   75  schedule
+   76  schedule
+   78  workflow
+  104  autoImportToday
+  118  schedule
+  121  schedule
+  122  schedule
+  122  schedule
+  124  workflow
+  149  autoImportToday
+========================================================================================================================
+.github\workflows\auto-maintain-backfill.yml
+    4  workflow
+   14  schedule
+   16  cron
+   39  schedule
+   67  workflow
+   68  workflow

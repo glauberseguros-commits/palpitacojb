@@ -1,0 +1,379 @@
+====================================================================================================
+HIST-01 — DIAGNÓSTICO historyVersion
+====================================================================================================
+
+HEAD: 92d8b19 fix(results): atualiza resultados do dia automaticamente
+
+====================================================================================================
+ARQUIVO: backend/engine/snapshotManager.js
+====================================================================================================
+bootstrapStatus                0
+bootstrapCompletedAt           0
+snapshotReady                  0
+snapshot                       14
+metadata                       10
+version                        0
+historyVersion                 0
+lastProcessedDrawId            8
+lastDrawId                     0
+incrementalUpdatedAt           0
+lastImportAt                   0
+
+TRECHOS RELEVANTES:
+     3:   readStatisticsSnapshot,
+     4:   writeStatisticsSnapshot,
+     9:   readSnapshotMetadata,
+    10:   writeSnapshotMetadata,
+    11: } = require("./snapshotMetadata");
+    14: async function fetchNewDrawsAfter(db, lottery, lastProcessedDrawId, limit = 25) {
+    15:   if (!lastProcessedDrawId) {
+    29:     .startAfter(String(lastProcessedDrawId))
+    42: async function updateSnapshot({
+    52:   // Snapshot existente
+    53:   const current = await readStatisticsSnapshot({
+    58:   // Metadata de controle incremental
+    59:   const metadata = await readSnapshotMetadata(lottery);
+    61:   const lastProcessedDrawId = metadata?.lastProcessedDrawId || null;
+    66:     lastProcessedDrawId &&
+    68:     String(lastProcessedDrawId) === String(latestDrawId);
+    75:       reason: "snapshot_already_up_to_date",
+    77:       metadata,
+    85:     lastProcessedDrawId,
+    89:   await writeSnapshotMetadata(lottery, {
+   108:     snapshot: current.data || null,
+   109:     metadata,
+   115:       ? "IMPLEMENT_BOOTSTRAP_SNAPSHOT"
+   121:   updateSnapshot,
+
+====================================================================================================
+ARQUIVO: backend/engine/snapshotMetadata.js
+====================================================================================================
+bootstrapStatus                0
+bootstrapCompletedAt           0
+snapshotReady                  0
+snapshot                       5
+metadata                       8
+version                        0
+historyVersion                 0
+lastProcessedDrawId            0
+lastDrawId                     0
+incrementalUpdatedAt           0
+lastImportAt                   0
+
+TRECHOS RELEVANTES:
+     5: function metadataRef(db, lottery) {
+     9:     .collection("snapshots")
+    10:     .doc("metadata");
+    13: async function readSnapshotMetadata(lottery = "PT_RIO") {
+    16:   const snap = await metadataRef(db, lottery).get();
+    21: async function writeSnapshotMetadata(
+    27:   await metadataRef(db, lottery).set(
+    37:   readSnapshotMetadata,
+    38:   writeSnapshotMetadata,
+
+====================================================================================================
+ARQUIVO: backend/engine/statisticsEngine.js
+====================================================================================================
+bootstrapStatus                0
+bootstrapCompletedAt           0
+snapshotReady                  0
+snapshot                       8
+metadata                       0
+version                        0
+historyVersion                 0
+lastProcessedDrawId            0
+lastDrawId                     0
+incrementalUpdatedAt           0
+lastImportAt                   0
+
+TRECHOS RELEVANTES:
+    17: function snapshotRef(db, uf, scope = "dashboard_full") {
+    21:     .collection("snapshots")
+    25: async function readStatisticsSnapshot({ uf = "PT_RIO", scope = "dashboard_full" } = {}) {
+    27:   const snap = await snapshotRef(db, uf, scope).get();
+    36: async function writeStatisticsSnapshot({
+    50:   await snapshotRef(db, uf, scope).set(payload, { merge: true });
+    59:   readStatisticsSnapshot,
+    60:   writeStatisticsSnapshot,
+
+====================================================================================================
+ARQUIVO: backend/engine/top3PredictionService.js
+====================================================================================================
+bootstrapStatus                5
+bootstrapCompletedAt           0
+snapshotReady                  2
+snapshot                       26
+metadata                       25
+version                        3
+historyVersion                 0
+lastProcessedDrawId            0
+lastDrawId                     0
+incrementalUpdatedAt           0
+lastImportAt                   0
+
+TRECHOS RELEVANTES:
+     9:   readMetadata,
+   156:     source !== "snapshot" &&
+   160:       "historySource inválido. Utilize auto, snapshot ou range."
+   177:   const loadMetadata =
+   178:     dependencies.readHistoryMetadata ||
+   179:     readMetadata;
+   191:     requestedSource === "snapshot"
+   193:     const metadataResult = await loadMetadata(
+   198:     const metadata =
+   199:       metadataResult?.data || null;
+   201:     const snapshotReady =
+   202:       metadataResult?.exists === true &&
+   203:       metadata?.bootstrapStatus === "complete";
+   205:     if (snapshotReady) {
+   213:           metadata?.totalDraws || 0
+   221:             "Histórico TOP3 inconsistente: metadata.totalDraws=" +
+   227:           source: "snapshot",
+   229:           metadata,
+   233:             metadata?.firstYmd || null,
+   238:         "Metadata do histórico TOP3 está completo, mas nenhum draw foi carregado."
+   242:     if (requestedSource === "snapshot") {
+   284:     metadata: null,
+   447: function buildTop3PublicSnapshot({
+   540:   snapshot,
+   541:   engineVersion = "V3_STATISTICAL",
+   551:   const normalizedSnapshot =
+   552:     Array.isArray(snapshot)
+   553:       ? snapshot.slice(0, 3)
+   556:   if (!normalizedSnapshot.length) {
+   558:       "Snapshot público TOP3 vazio."
+   562:   const picks = normalizedSnapshot
+   594:     snapshot: normalizedSnapshot,
+   595:     engineVersion,
+   780:     metadata: historyMetadata,
+   847:   const publicSnapshot =
+   848:     buildTop3PublicSnapshot({
+   864:     publicSnapshot.length !== 3 ||
+   865:     publicSnapshot.some(
+   876:   const metadata = {
+   877:     ...(input.metadata || {}),
+   882:     historyBootstrapStatus:
+   883:       historyMetadata?.bootstrapStatus || null,
+   885:       Number(historyMetadata?.totalDraws || 0) || null,
+   903:     historyBootstrapStatus:
+   904:       historyMetadata?.bootstrapStatus || null,
+   906:       Number(historyMetadata?.totalDraws || 0) || null,
+   919:       publicSnapshot,
+   934:     metadata,
+   943:       snapshot: publicSnapshot,
+   944:       engineVersion: "V3_STATISTICAL",
+   950:     publicSnapshot,
+   964:   buildTop3PublicSnapshot,
+
+====================================================================================================
+ARQUIVO: backend/engine/top3HistorySync.js
+====================================================================================================
+bootstrapStatus                3
+bootstrapCompletedAt           0
+snapshotReady                  0
+snapshot                       1
+metadata                       22
+version                        0
+historyVersion                 0
+lastProcessedDrawId            1
+lastDrawId                     4
+incrementalUpdatedAt           1
+lastImportAt                   0
+
+TRECHOS RELEVANTES:
+     8:   readMetadata,
+     9:   writeMetadata,
+   176:     lastDrawId:
+   186:   const saveMetadata =
+   187:     dependencies.writeMetadata ||
+   188:     writeMetadata;
+   191:     await saveMetadata(
+   194:         bootstrapStatus: "stale",
+   208:   } catch (metadataError) {
+   210:       "[TOP3-HISTORY] Falha também ao marcar snapshot como stale:",
+   211:       metadataError?.message ||
+   212:       metadataError
+   227:   const loadMetadata =
+   228:     dependencies.readMetadata ||
+   229:     readMetadata;
+   239:   const saveMetadata =
+   240:     dependencies.writeMetadata ||
+   241:     writeMetadata;
+   258:     const metadataResult = await loadMetadata(
+   263:     const metadata =
+   264:       metadataResult?.data || null;
+   267:       metadataResult?.exists !== true ||
+   268:       metadata?.bootstrapStatus !== "complete"
+   332:     await saveMetadata(
+   335:         bootstrapStatus: "complete",
+   336:         incrementalUpdatedAt:
+   350:         lastDrawId:
+   351:           summary.lastDrawId,
+   352:         lastProcessedDrawId:
+   353:           summary.lastDrawId,
+
+====================================================================================================
+ARQUIVO: backend/engine/top3HistoryRepository.js
+====================================================================================================
+bootstrapStatus                0
+bootstrapCompletedAt           0
+snapshotReady                  0
+snapshot                       0
+metadata                       15
+version                        6
+historyVersion                 0
+lastProcessedDrawId            0
+lastDrawId                     1
+incrementalUpdatedAt           0
+lastImportAt                   0
+
+TRECHOS RELEVANTES:
+     9: const METADATA_COLLECTION = "metadata";
+    10: const CURRENT_METADATA_DOC = "current";
+    11: const SCHEMA_VERSION = 1;
+    87: function metadataRef(
+    95:     .collection(METADATA_COLLECTION)
+    96:     .doc(CURRENT_METADATA_DOC);
+   289:     schemaVersion: SCHEMA_VERSION,
+   297:     lastDrawId:
+   342: async function readMetadata(
+   349:   const snap = await metadataRef(
+   369: async function writeMetadata(
+   371:   metadata = {},
+   378:     ...metadata,
+   379:     schemaVersion: SCHEMA_VERSION,
+   384:   await metadataRef(
+   448:   METADATA_COLLECTION,
+   449:   SCHEMA_VERSION,
+   457:   readMetadata,
+   458:   writeMetadata,
+
+====================================================================================================
+ARQUIVO: backend/workers/bootstrapTop3History.js
+====================================================================================================
+bootstrapStatus                1
+bootstrapCompletedAt           1
+snapshotReady                  0
+snapshot                       0
+metadata                       7
+version                        3
+historyVersion                 0
+lastProcessedDrawId            1
+lastDrawId                     10
+incrementalUpdatedAt           0
+lastImportAt                   0
+
+TRECHOS RELEVANTES:
+    12:   writeMetadata,
+    13:   SCHEMA_VERSION,
+   111:           schemaVersion: SCHEMA_VERSION,
+   119:           lastDrawId:
+   132:         lastDrawId:
+   170:     lastDrawId:
+   196:   const persistMetadata =
+   197:     dependencies.writeMetadata ||
+   198:     writeMetadata;
+   271:       lastDrawId:
+   272:         plan.lastDrawId,
+   295:   const metadata =
+   296:     await persistMetadata(
+   299:         bootstrapStatus:
+   301:         bootstrapCompletedAt:
+   315:         lastDrawId:
+   316:           plan.lastDrawId,
+   317:         lastProcessedDrawId:
+   318:           plan.lastDrawId,
+   341:     lastDrawId:
+   342:       plan.lastDrawId,
+   343:     metadata,
+
+====================================================================================================
+ARQUIVO: backend/scripts/importKingApostas.js
+====================================================================================================
+bootstrapStatus                0
+bootstrapCompletedAt           0
+snapshotReady                  0
+snapshot                       0
+metadata                       1
+version                        0
+historyVersion                 0
+lastProcessedDrawId            0
+lastDrawId                     0
+incrementalUpdatedAt           0
+lastImportAt                   0
+
+TRECHOS RELEVANTES:
+  1823:             metadata: {
+
+====================================================================================================
+ARQUIVO: src/services/statisticsEngine.js
+====================================================================================================
+bootstrapStatus                0
+bootstrapCompletedAt           0
+snapshotReady                  0
+snapshot                       10
+metadata                       0
+version                        1
+historyVersion                 0
+lastProcessedDrawId            0
+lastDrawId                     0
+incrementalUpdatedAt           0
+lastImportAt                   0
+
+TRECHOS RELEVANTES:
+    15: function snapshotDocRef(uf, scope = "dashboard_full") {
+    17:   return doc(db, "statistics", key, "snapshots", scope);
+    20: export async function readStatisticsSnapshot({ uf, scope = "dashboard_full" } = {}) {
+    21:   const ref = snapshotDocRef(uf, scope);
+    37: export async function buildStatisticsSnapshot({
+    45:     throw new Error("buildStatisticsSnapshot exige dateFrom e dateTo.");
+    61:     version: 1,
+    78:   await setDoc(snapshotDocRef(uf, scope), payload, { merge: true });
+    83: export async function ensureStatisticsSnapshot({
+    91:   const current = await readStatisticsSnapshot({ uf, scope });
+   100:   const data = await buildStatisticsSnapshot({
+
+====================================================================================================
+BUSCA GLOBAL
+====================================================================================================
+backend/engine/snapshotManager.js:14:async function fetchNewDrawsAfter(db, lottery, lastProcessedDrawId, limit = 25) {
+backend/engine/snapshotManager.js:15:  if (!lastProcessedDrawId) {
+backend/engine/snapshotManager.js:29:    .startAfter(String(lastProcessedDrawId))
+backend/engine/snapshotManager.js:61:  const lastProcessedDrawId = metadata?.lastProcessedDrawId || null;
+backend/engine/snapshotManager.js:66:    lastProcessedDrawId &&
+backend/engine/snapshotManager.js:68:    String(lastProcessedDrawId) === String(latestDrawId);
+backend/engine/snapshotManager.js:85:    lastProcessedDrawId,
+backend/engine/top3HistoryRepository.js:297:    lastDrawId:
+backend/engine/top3HistorySync.js:176:    lastDrawId:
+backend/engine/top3HistorySync.js:194:        bootstrapStatus: "stale",
+backend/engine/top3HistorySync.js:268:      metadata?.bootstrapStatus !== "complete"
+backend/engine/top3HistorySync.js:335:        bootstrapStatus: "complete",
+backend/engine/top3HistorySync.js:336:        incrementalUpdatedAt:
+backend/engine/top3HistorySync.js:350:        lastDrawId:
+backend/engine/top3HistorySync.js:351:          summary.lastDrawId,
+backend/engine/top3HistorySync.js:352:        lastProcessedDrawId:
+backend/engine/top3HistorySync.js:353:          summary.lastDrawId,
+backend/engine/top3PredictionService.js:203:      metadata?.bootstrapStatus === "complete";
+backend/engine/top3PredictionService.js:883:      historyMetadata?.bootstrapStatus || null,
+backend/engine/top3PredictionService.js:904:      historyMetadata?.bootstrapStatus || null,
+backend/scripts/backtestTop3Official.js:545:      metadata?.bootstrapStatus !==
+backend/scripts/backtestTop3Official.js:940:      bootstrapStatus:
+backend/scripts/backtestTop3Official.js:941:        metadata?.bootstrapStatus ||
+backend/scripts/backtestTop3Official.js:947:      lastProcessedDrawId:
+backend/scripts/backtestTop3Official.js:948:        metadata?.lastProcessedDrawId ||
+backend/server.js:578:          lastDrawId: null,
+backend/server.js:629:        lastDrawId: seen?.drawId || null,
+backend/workers/bootstrapTop3History.js:119:          lastDrawId:
+backend/workers/bootstrapTop3History.js:132:        lastDrawId:
+backend/workers/bootstrapTop3History.js:170:    lastDrawId:
+backend/workers/bootstrapTop3History.js:271:      lastDrawId:
+backend/workers/bootstrapTop3History.js:272:        plan.lastDrawId,
+backend/workers/bootstrapTop3History.js:299:        bootstrapStatus:
+backend/workers/bootstrapTop3History.js:315:        lastDrawId:
+backend/workers/bootstrapTop3History.js:316:          plan.lastDrawId,
+backend/workers/bootstrapTop3History.js:317:        lastProcessedDrawId:
+backend/workers/bootstrapTop3History.js:318:          plan.lastDrawId,
+backend/workers/bootstrapTop3History.js:341:    lastDrawId:
+backend/workers/bootstrapTop3History.js:342:      plan.lastDrawId,
+src/services/kingResultsService.js:1676:      lastDrawId: null,
+src/services/kingResultsService.js:1746:      lastDrawId: seen?.drawId || null,

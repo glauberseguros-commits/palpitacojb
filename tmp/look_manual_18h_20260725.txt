@@ -1,0 +1,9 @@
+npm warn using --force Recommended protections disabled.
+
+> palpitaco@0.1.0 vitenode:import
+> powershell -ExecutionPolicy Bypass -File .\tools\run-vitenode.ps1 -Entry
+
+C:\Users\glaub\palpitaco\tools\run-vitenode.ps1 : Falta um argumento para o par├ómetro 'Entry'. Especifique um par├ómetro do tipo 'System.String' e tente novamente.
+    + CategoryInfo          : InvalidArgument: (:) [run-vitenode.ps1], ParentContainsErrorRecordException
+    + FullyQualifiedErrorId : MissingArgument,run-vitenode.ps1
+ 

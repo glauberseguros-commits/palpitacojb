@@ -1,0 +1,54 @@
+============================================================
+BACKTEST COMPARATIVO OFFLINE — TOP1/3/5/10/25
+============================================================
+
+LOTTERY_KEY........: PT_RIO
+HISTORY_LOADED.....: 7500
+ELIGIBLE_CASES.....: 7400
+SELECTED_CASES.....: 100
+EVALUATED..........: 100
+ERRORS.............: 0
+NOT_FOUND..........: 0
+
+RESULTADOS CUMULATIVOS
+TOP1  hits=  6 | rate=6.00%
+TOP3  hits= 13 | rate=13.00%
+TOP5  hits= 17 | rate=17.00%
+TOP10 hits= 38 | rate=38.00%
+TOP25 hits=100 | rate=100.00%
+
+VALIDAÇÃO DA BASELINE OFICIAL
+TOP1 esperado=6 | obtido=6 | OK
+TOP3 esperado=13 | obtido=13 | OK
+
+BASELINE_VALIDATION=OK
+COMPARATIVE_VALIDATION=OK
+
+ACERTOS POR POSIÇÃO EXATA
+01º | 6
+02º | 3
+03º | 4
+04º | 1
+05º | 3
+06º | 3
+07º | 4
+08º | 5
+09º | 4
+10º | 5
+11º | 3
+12º | 3
+13º | 6
+14º | 2
+15º | 5
+16º | 5
+17º | 4
+18º | 7
+19º | 5
+20º | 1
+21º | 3
+22º | 3
+23º | 5
+24º | 4
+25º | 6
+
+TEMPO_MS...........: 11699

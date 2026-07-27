@@ -1,0 +1,2351 @@
+{
+  "ok": true,
+  "lotteryKey": "PT_RIO",
+  "minHistory": 100,
+  "historyLoaded": 7500,
+  "eligibleCases": 7400,
+  "evaluationPeriod": {
+    "from": "2022-06-29",
+    "to": "2026-07-17"
+  },
+  "notFound": 0,
+  "global": {
+    "evaluated": 7400,
+    "errors": 0,
+    "metrics": {
+      "top1": {
+        "hits": 321,
+        "rate": 4.3378,
+        "randomRate": 4,
+        "liftPoints": 0.3378
+      },
+      "top3": {
+        "hits": 912,
+        "rate": 12.3243,
+        "randomRate": 12,
+        "liftPoints": 0.3243
+      },
+      "top5": {
+        "hits": 1499,
+        "rate": 20.2568,
+        "randomRate": 20,
+        "liftPoints": 0.2568
+      },
+      "top10": {
+        "hits": 2958,
+        "rate": 39.973,
+        "randomRate": 40,
+        "liftPoints": -0.027
+      },
+      "top25": {
+        "hits": 7400,
+        "rate": 100,
+        "randomRate": 100,
+        "liftPoints": 0
+      }
+    }
+  },
+  "byHour": {
+    "09:00": {
+      "evaluated": 911,
+      "errors": 0,
+      "metrics": {
+        "top1": {
+          "hits": 29,
+          "rate": 3.1833,
+          "randomRate": 4,
+          "liftPoints": -0.8167
+        },
+        "top3": {
+          "hits": 100,
+          "rate": 10.9769,
+          "randomRate": 12,
+          "liftPoints": -1.0231
+        },
+        "top5": {
+          "hits": 176,
+          "rate": 19.3194,
+          "randomRate": 20,
+          "liftPoints": -0.6806
+        },
+        "top10": {
+          "hits": 340,
+          "rate": 37.3216,
+          "randomRate": 40,
+          "liftPoints": -2.6784
+        },
+        "top25": {
+          "hits": 911,
+          "rate": 100,
+          "randomRate": 100,
+          "liftPoints": 0
+        }
+      }
+    },
+    "11:00": {
+      "evaluated": 1464,
+      "errors": 0,
+      "metrics": {
+        "top1": {
+          "hits": 69,
+          "rate": 4.7131,
+          "randomRate": 4,
+          "liftPoints": 0.7131
+        },
+        "top3": {
+          "hits": 175,
+          "rate": 11.9536,
+          "randomRate": 12,
+          "liftPoints": -0.0464
+        },
+        "top5": {
+          "hits": 298,
+          "rate": 20.3552,
+          "randomRate": 20,
+          "liftPoints": 0.3552
+        },
+        "top10": {
+          "hits": 625,
+          "rate": 42.6913,
+          "randomRate": 40,
+          "liftPoints": 2.6913
+        },
+        "top25": {
+          "hits": 1464,
+          "rate": 100,
+          "randomRate": 100,
+          "liftPoints": 0
+        }
+      }
+    },
+    "14:00": {
+      "evaluated": 1464,
+      "errors": 0,
+      "metrics": {
+        "top1": {
+          "hits": 65,
+          "rate": 4.4399,
+          "randomRate": 4,
+          "liftPoints": 0.4399
+        },
+        "top3": {
+          "hits": 178,
+          "rate": 12.1585,
+          "randomRate": 12,
+          "liftPoints": 0.1585
+        },
+        "top5": {
+          "hits": 287,
+          "rate": 19.6038,
+          "randomRate": 20,
+          "liftPoints": -0.3962
+        },
+        "top10": {
+          "hits": 565,
+          "rate": 38.5929,
+          "randomRate": 40,
+          "liftPoints": -1.4071
+        },
+        "top25": {
+          "hits": 1464,
+          "rate": 100,
+          "randomRate": 100,
+          "liftPoints": 0
+        }
+      }
+    },
+    "16:00": {
+      "evaluated": 1463,
+      "errors": 0,
+      "metrics": {
+        "top1": {
+          "hits": 53,
+          "rate": 3.6227,
+          "randomRate": 4,
+          "liftPoints": -0.3773
+        },
+        "top3": {
+          "hits": 189,
+          "rate": 12.9187,
+          "randomRate": 12,
+          "liftPoints": 0.9187
+        },
+        "top5": {
+          "hits": 320,
+          "rate": 21.8729,
+          "randomRate": 20,
+          "liftPoints": 1.8729
+        },
+        "top10": {
+          "hits": 602,
+          "rate": 41.1483,
+          "randomRate": 40,
+          "liftPoints": 1.1483
+        },
+        "top25": {
+          "hits": 1463,
+          "rate": 100,
+          "randomRate": 100,
+          "liftPoints": 0
+        }
+      }
+    },
+    "18:00": {
+      "evaluated": 848,
+      "errors": 0,
+      "metrics": {
+        "top1": {
+          "hits": 30,
+          "rate": 3.5377,
+          "randomRate": 4,
+          "liftPoints": -0.4623
+        },
+        "top3": {
+          "hits": 101,
+          "rate": 11.9104,
+          "randomRate": 12,
+          "liftPoints": -0.0896
+        },
+        "top5": {
+          "hits": 162,
+          "rate": 19.1038,
+          "randomRate": 20,
+          "liftPoints": -0.8962
+        },
+        "top10": {
+          "hits": 338,
+          "rate": 39.8585,
+          "randomRate": 40,
+          "liftPoints": -0.1415
+        },
+        "top25": {
+          "hits": 848,
+          "rate": 100,
+          "randomRate": 100,
+          "liftPoints": 0
+        }
+      }
+    },
+    "21:00": {
+      "evaluated": 1250,
+      "errors": 0,
+      "metrics": {
+        "top1": {
+          "hits": 75,
+          "rate": 6,
+          "randomRate": 4,
+          "liftPoints": 2
+        },
+        "top3": {
+          "hits": 169,
+          "rate": 13.52,
+          "randomRate": 12,
+          "liftPoints": 1.52
+        },
+        "top5": {
+          "hits": 256,
+          "rate": 20.48,
+          "randomRate": 20,
+          "liftPoints": 0.48
+        },
+        "top10": {
+          "hits": 488,
+          "rate": 39.04,
+          "randomRate": 40,
+          "liftPoints": -0.96
+        },
+        "top25": {
+          "hits": 1250,
+          "rate": 100,
+          "randomRate": 100,
+          "liftPoints": 0
+        }
+      }
+    }
+  },
+  "byWeekday": {
+    "0": {
+      "evaluated": 744,
+      "errors": 0,
+      "metrics": {
+        "top1": {
+          "hits": 17,
+          "rate": 2.2849,
+          "randomRate": 4,
+          "liftPoints": -1.7151
+        },
+        "top3": {
+          "hits": 68,
+          "rate": 9.1398,
+          "randomRate": 12,
+          "liftPoints": -2.8602
+        },
+        "top5": {
+          "hits": 132,
+          "rate": 17.7419,
+          "randomRate": 20,
+          "liftPoints": -2.2581
+        },
+        "top10": {
+          "hits": 293,
+          "rate": 39.3817,
+          "randomRate": 40,
+          "liftPoints": -0.6183
+        },
+        "top25": {
+          "hits": 744,
+          "rate": 100,
+          "randomRate": 100,
+          "liftPoints": 0
+        }
+      }
+    },
+    "1": {
+      "evaluated": 1178,
+      "errors": 0,
+      "metrics": {
+        "top1": {
+          "hits": 48,
+          "rate": 4.0747,
+          "randomRate": 4,
+          "liftPoints": 0.0747
+        },
+        "top3": {
+          "hits": 150,
+          "rate": 12.7334,
+          "randomRate": 12,
+          "liftPoints": 0.7334
+        },
+        "top5": {
+          "hits": 247,
+          "rate": 20.9677,
+          "randomRate": 20,
+          "liftPoints": 0.9677
+        },
+        "top10": {
+          "hits": 474,
+          "rate": 40.2377,
+          "randomRate": 40,
+          "liftPoints": 0.2377
+        },
+        "top25": {
+          "hits": 1178,
+          "rate": 100,
+          "randomRate": 100,
+          "liftPoints": 0
+        }
+      }
+    },
+    "2": {
+      "evaluated": 1181,
+      "errors": 0,
+      "metrics": {
+        "top1": {
+          "hits": 52,
+          "rate": 4.403,
+          "randomRate": 4,
+          "liftPoints": 0.403
+        },
+        "top3": {
+          "hits": 148,
+          "rate": 12.5318,
+          "randomRate": 12,
+          "liftPoints": 0.5318
+        },
+        "top5": {
+          "hits": 236,
+          "rate": 19.9831,
+          "randomRate": 20,
+          "liftPoints": -0.0169
+        },
+        "top10": {
+          "hits": 459,
+          "rate": 38.8654,
+          "randomRate": 40,
+          "liftPoints": -1.1346
+        },
+        "top25": {
+          "hits": 1181,
+          "rate": 100,
+          "randomRate": 100,
+          "liftPoints": 0
+        }
+      }
+    },
+    "3": {
+      "evaluated": 976,
+      "errors": 0,
+      "metrics": {
+        "top1": {
+          "hits": 40,
+          "rate": 4.0984,
+          "randomRate": 4,
+          "liftPoints": 0.0984
+        },
+        "top3": {
+          "hits": 121,
+          "rate": 12.3975,
+          "randomRate": 12,
+          "liftPoints": 0.3975
+        },
+        "top5": {
+          "hits": 193,
+          "rate": 19.7746,
+          "randomRate": 20,
+          "liftPoints": -0.2254
+        },
+        "top10": {
+          "hits": 385,
+          "rate": 39.4467,
+          "randomRate": 40,
+          "liftPoints": -0.5533
+        },
+        "top25": {
+          "hits": 976,
+          "rate": 100,
+          "randomRate": 100,
+          "liftPoints": 0
+        }
+      }
+    },
+    "4": {
+      "evaluated": 1169,
+      "errors": 0,
+      "metrics": {
+        "top1": {
+          "hits": 61,
+          "rate": 5.2181,
+          "randomRate": 4,
+          "liftPoints": 1.2181
+        },
+        "top3": {
+          "hits": 150,
+          "rate": 12.8315,
+          "randomRate": 12,
+          "liftPoints": 0.8315
+        },
+        "top5": {
+          "hits": 235,
+          "rate": 20.1027,
+          "randomRate": 20,
+          "liftPoints": 0.1027
+        },
+        "top10": {
+          "hits": 473,
+          "rate": 40.4619,
+          "randomRate": 40,
+          "liftPoints": 0.4619
+        },
+        "top25": {
+          "hits": 1169,
+          "rate": 100,
+          "randomRate": 100,
+          "liftPoints": 0
+        }
+      }
+    },
+    "5": {
+      "evaluated": 1174,
+      "errors": 0,
+      "metrics": {
+        "top1": {
+          "hits": 58,
+          "rate": 4.9404,
+          "randomRate": 4,
+          "liftPoints": 0.9404
+        },
+        "top3": {
+          "hits": 160,
+          "rate": 13.6286,
+          "randomRate": 12,
+          "liftPoints": 1.6286
+        },
+        "top5": {
+          "hits": 257,
+          "rate": 21.891,
+          "randomRate": 20,
+          "liftPoints": 1.891
+        },
+        "top10": {
+          "hits": 501,
+          "rate": 42.6746,
+          "randomRate": 40,
+          "liftPoints": 2.6746
+        },
+        "top25": {
+          "hits": 1174,
+          "rate": 100,
+          "randomRate": 100,
+          "liftPoints": 0
+        }
+      }
+    },
+    "6": {
+      "evaluated": 978,
+      "errors": 0,
+      "metrics": {
+        "top1": {
+          "hits": 45,
+          "rate": 4.6012,
+          "randomRate": 4,
+          "liftPoints": 0.6012
+        },
+        "top3": {
+          "hits": 115,
+          "rate": 11.7587,
+          "randomRate": 12,
+          "liftPoints": -0.2413
+        },
+        "top5": {
+          "hits": 199,
+          "rate": 20.3476,
+          "randomRate": 20,
+          "liftPoints": 0.3476
+        },
+        "top10": {
+          "hits": 373,
+          "rate": 38.1391,
+          "randomRate": 40,
+          "liftPoints": -1.8609
+        },
+        "top25": {
+          "hits": 978,
+          "rate": 100,
+          "randomRate": 100,
+          "liftPoints": 0
+        }
+      }
+    }
+  },
+  "byMonth": {
+    "2022-06": {
+      "evaluated": 7,
+      "errors": 0,
+      "metrics": {
+        "top1": {
+          "hits": 0,
+          "rate": 0,
+          "randomRate": 4,
+          "liftPoints": -4
+        },
+        "top3": {
+          "hits": 1,
+          "rate": 14.2857,
+          "randomRate": 12,
+          "liftPoints": 2.2857
+        },
+        "top5": {
+          "hits": 1,
+          "rate": 14.2857,
+          "randomRate": 20,
+          "liftPoints": -5.7143
+        },
+        "top10": {
+          "hits": 3,
+          "rate": 42.8571,
+          "randomRate": 40,
+          "liftPoints": 2.8571
+        },
+        "top25": {
+          "hits": 7,
+          "rate": 100,
+          "randomRate": 100,
+          "liftPoints": 0
+        }
+      }
+    },
+    "2022-07": {
+      "evaluated": 136,
+      "errors": 0,
+      "metrics": {
+        "top1": {
+          "hits": 8,
+          "rate": 5.8824,
+          "randomRate": 4,
+          "liftPoints": 1.8824
+        },
+        "top3": {
+          "hits": 18,
+          "rate": 13.2353,
+          "randomRate": 12,
+          "liftPoints": 1.2353
+        },
+        "top5": {
+          "hits": 26,
+          "rate": 19.1176,
+          "randomRate": 20,
+          "liftPoints": -0.8824
+        },
+        "top10": {
+          "hits": 53,
+          "rate": 38.9706,
+          "randomRate": 40,
+          "liftPoints": -1.0294
+        },
+        "top25": {
+          "hits": 136,
+          "rate": 100,
+          "randomRate": 100,
+          "liftPoints": 0
+        }
+      }
+    },
+    "2022-08": {
+      "evaluated": 138,
+      "errors": 0,
+      "metrics": {
+        "top1": {
+          "hits": 8,
+          "rate": 5.7971,
+          "randomRate": 4,
+          "liftPoints": 1.7971
+        },
+        "top3": {
+          "hits": 16,
+          "rate": 11.5942,
+          "randomRate": 12,
+          "liftPoints": -0.4058
+        },
+        "top5": {
+          "hits": 28,
+          "rate": 20.2899,
+          "randomRate": 20,
+          "liftPoints": 0.2899
+        },
+        "top10": {
+          "hits": 53,
+          "rate": 38.4058,
+          "randomRate": 40,
+          "liftPoints": -1.5942
+        },
+        "top25": {
+          "hits": 138,
+          "rate": 100,
+          "randomRate": 100,
+          "liftPoints": 0
+        }
+      }
+    },
+    "2022-09": {
+      "evaluated": 132,
+      "errors": 0,
+      "metrics": {
+        "top1": {
+          "hits": 8,
+          "rate": 6.0606,
+          "randomRate": 4,
+          "liftPoints": 2.0606
+        },
+        "top3": {
+          "hits": 19,
+          "rate": 14.3939,
+          "randomRate": 12,
+          "liftPoints": 2.3939
+        },
+        "top5": {
+          "hits": 39,
+          "rate": 29.5455,
+          "randomRate": 20,
+          "liftPoints": 9.5455
+        },
+        "top10": {
+          "hits": 59,
+          "rate": 44.697,
+          "randomRate": 40,
+          "liftPoints": 4.697
+        },
+        "top25": {
+          "hits": 132,
+          "rate": 100,
+          "randomRate": 100,
+          "liftPoints": 0
+        }
+      }
+    },
+    "2022-10": {
+      "evaluated": 131,
+      "errors": 0,
+      "metrics": {
+        "top1": {
+          "hits": 9,
+          "rate": 6.8702,
+          "randomRate": 4,
+          "liftPoints": 2.8702
+        },
+        "top3": {
+          "hits": 22,
+          "rate": 16.7939,
+          "randomRate": 12,
+          "liftPoints": 4.7939
+        },
+        "top5": {
+          "hits": 35,
+          "rate": 26.7176,
+          "randomRate": 20,
+          "liftPoints": 6.7176
+        },
+        "top10": {
+          "hits": 64,
+          "rate": 48.855,
+          "randomRate": 40,
+          "liftPoints": 8.855
+        },
+        "top25": {
+          "hits": 131,
+          "rate": 100,
+          "randomRate": 100,
+          "liftPoints": 0
+        }
+      }
+    },
+    "2022-11": {
+      "evaluated": 126,
+      "errors": 0,
+      "metrics": {
+        "top1": {
+          "hits": 10,
+          "rate": 7.9365,
+          "randomRate": 4,
+          "liftPoints": 3.9365
+        },
+        "top3": {
+          "hits": 20,
+          "rate": 15.873,
+          "randomRate": 12,
+          "liftPoints": 3.873
+        },
+        "top5": {
+          "hits": 28,
+          "rate": 22.2222,
+          "randomRate": 20,
+          "liftPoints": 2.2222
+        },
+        "top10": {
+          "hits": 51,
+          "rate": 40.4762,
+          "randomRate": 40,
+          "liftPoints": 0.4762
+        },
+        "top25": {
+          "hits": 126,
+          "rate": 100,
+          "randomRate": 100,
+          "liftPoints": 0
+        }
+      }
+    },
+    "2022-12": {
+      "evaluated": 133,
+      "errors": 0,
+      "metrics": {
+        "top1": {
+          "hits": 4,
+          "rate": 3.0075,
+          "randomRate": 4,
+          "liftPoints": -0.9925
+        },
+        "top3": {
+          "hits": 13,
+          "rate": 9.7744,
+          "randomRate": 12,
+          "liftPoints": -2.2256
+        },
+        "top5": {
+          "hits": 29,
+          "rate": 21.8045,
+          "randomRate": 20,
+          "liftPoints": 1.8045
+        },
+        "top10": {
+          "hits": 57,
+          "rate": 42.8571,
+          "randomRate": 40,
+          "liftPoints": 2.8571
+        },
+        "top25": {
+          "hits": 133,
+          "rate": 100,
+          "randomRate": 100,
+          "liftPoints": 0
+        }
+      }
+    },
+    "2023-01": {
+      "evaluated": 134,
+      "errors": 0,
+      "metrics": {
+        "top1": {
+          "hits": 9,
+          "rate": 6.7164,
+          "randomRate": 4,
+          "liftPoints": 2.7164
+        },
+        "top3": {
+          "hits": 15,
+          "rate": 11.194,
+          "randomRate": 12,
+          "liftPoints": -0.806
+        },
+        "top5": {
+          "hits": 27,
+          "rate": 20.1493,
+          "randomRate": 20,
+          "liftPoints": 0.1493
+        },
+        "top10": {
+          "hits": 50,
+          "rate": 37.3134,
+          "randomRate": 40,
+          "liftPoints": -2.6866
+        },
+        "top25": {
+          "hits": 134,
+          "rate": 100,
+          "randomRate": 100,
+          "liftPoints": 0
+        }
+      }
+    },
+    "2023-02": {
+      "evaluated": 125,
+      "errors": 0,
+      "metrics": {
+        "top1": {
+          "hits": 6,
+          "rate": 4.8,
+          "randomRate": 4,
+          "liftPoints": 0.8
+        },
+        "top3": {
+          "hits": 17,
+          "rate": 13.6,
+          "randomRate": 12,
+          "liftPoints": 1.6
+        },
+        "top5": {
+          "hits": 22,
+          "rate": 17.6,
+          "randomRate": 20,
+          "liftPoints": -2.4
+        },
+        "top10": {
+          "hits": 40,
+          "rate": 32,
+          "randomRate": 40,
+          "liftPoints": -8
+        },
+        "top25": {
+          "hits": 125,
+          "rate": 100,
+          "randomRate": 100,
+          "liftPoints": 0
+        }
+      }
+    },
+    "2023-03": {
+      "evaluated": 138,
+      "errors": 0,
+      "metrics": {
+        "top1": {
+          "hits": 4,
+          "rate": 2.8986,
+          "randomRate": 4,
+          "liftPoints": -1.1014
+        },
+        "top3": {
+          "hits": 20,
+          "rate": 14.4928,
+          "randomRate": 12,
+          "liftPoints": 2.4928
+        },
+        "top5": {
+          "hits": 30,
+          "rate": 21.7391,
+          "randomRate": 20,
+          "liftPoints": 1.7391
+        },
+        "top10": {
+          "hits": 54,
+          "rate": 39.1304,
+          "randomRate": 40,
+          "liftPoints": -0.8696
+        },
+        "top25": {
+          "hits": 138,
+          "rate": 100,
+          "randomRate": 100,
+          "liftPoints": 0
+        }
+      }
+    },
+    "2023-04": {
+      "evaluated": 126,
+      "errors": 0,
+      "metrics": {
+        "top1": {
+          "hits": 3,
+          "rate": 2.381,
+          "randomRate": 4,
+          "liftPoints": -1.619
+        },
+        "top3": {
+          "hits": 14,
+          "rate": 11.1111,
+          "randomRate": 12,
+          "liftPoints": -0.8889
+        },
+        "top5": {
+          "hits": 30,
+          "rate": 23.8095,
+          "randomRate": 20,
+          "liftPoints": 3.8095
+        },
+        "top10": {
+          "hits": 46,
+          "rate": 36.5079,
+          "randomRate": 40,
+          "liftPoints": -3.4921
+        },
+        "top25": {
+          "hits": 126,
+          "rate": 100,
+          "randomRate": 100,
+          "liftPoints": 0
+        }
+      }
+    },
+    "2023-05": {
+      "evaluated": 138,
+      "errors": 0,
+      "metrics": {
+        "top1": {
+          "hits": 9,
+          "rate": 6.5217,
+          "randomRate": 4,
+          "liftPoints": 2.5217
+        },
+        "top3": {
+          "hits": 19,
+          "rate": 13.7681,
+          "randomRate": 12,
+          "liftPoints": 1.7681
+        },
+        "top5": {
+          "hits": 26,
+          "rate": 18.8406,
+          "randomRate": 20,
+          "liftPoints": -1.1594
+        },
+        "top10": {
+          "hits": 57,
+          "rate": 41.3043,
+          "randomRate": 40,
+          "liftPoints": 1.3043
+        },
+        "top25": {
+          "hits": 138,
+          "rate": 100,
+          "randomRate": 100,
+          "liftPoints": 0
+        }
+      }
+    },
+    "2023-06": {
+      "evaluated": 134,
+      "errors": 0,
+      "metrics": {
+        "top1": {
+          "hits": 12,
+          "rate": 8.9552,
+          "randomRate": 4,
+          "liftPoints": 4.9552
+        },
+        "top3": {
+          "hits": 25,
+          "rate": 18.6567,
+          "randomRate": 12,
+          "liftPoints": 6.6567
+        },
+        "top5": {
+          "hits": 34,
+          "rate": 25.3731,
+          "randomRate": 20,
+          "liftPoints": 5.3731
+        },
+        "top10": {
+          "hits": 54,
+          "rate": 40.2985,
+          "randomRate": 40,
+          "liftPoints": 0.2985
+        },
+        "top25": {
+          "hits": 134,
+          "rate": 100,
+          "randomRate": 100,
+          "liftPoints": 0
+        }
+      }
+    },
+    "2023-07": {
+      "evaluated": 136,
+      "errors": 0,
+      "metrics": {
+        "top1": {
+          "hits": 8,
+          "rate": 5.8824,
+          "randomRate": 4,
+          "liftPoints": 1.8824
+        },
+        "top3": {
+          "hits": 22,
+          "rate": 16.1765,
+          "randomRate": 12,
+          "liftPoints": 4.1765
+        },
+        "top5": {
+          "hits": 32,
+          "rate": 23.5294,
+          "randomRate": 20,
+          "liftPoints": 3.5294
+        },
+        "top10": {
+          "hits": 61,
+          "rate": 44.8529,
+          "randomRate": 40,
+          "liftPoints": 4.8529
+        },
+        "top25": {
+          "hits": 136,
+          "rate": 100,
+          "randomRate": 100,
+          "liftPoints": 0
+        }
+      }
+    },
+    "2023-08": {
+      "evaluated": 138,
+      "errors": 0,
+      "metrics": {
+        "top1": {
+          "hits": 5,
+          "rate": 3.6232,
+          "randomRate": 4,
+          "liftPoints": -0.3768
+        },
+        "top3": {
+          "hits": 15,
+          "rate": 10.8696,
+          "randomRate": 12,
+          "liftPoints": -1.1304
+        },
+        "top5": {
+          "hits": 27,
+          "rate": 19.5652,
+          "randomRate": 20,
+          "liftPoints": -0.4348
+        },
+        "top10": {
+          "hits": 53,
+          "rate": 38.4058,
+          "randomRate": 40,
+          "liftPoints": -1.5942
+        },
+        "top25": {
+          "hits": 138,
+          "rate": 100,
+          "randomRate": 100,
+          "liftPoints": 0
+        }
+      }
+    },
+    "2023-09": {
+      "evaluated": 133,
+      "errors": 0,
+      "metrics": {
+        "top1": {
+          "hits": 8,
+          "rate": 6.015,
+          "randomRate": 4,
+          "liftPoints": 2.015
+        },
+        "top3": {
+          "hits": 19,
+          "rate": 14.2857,
+          "randomRate": 12,
+          "liftPoints": 2.2857
+        },
+        "top5": {
+          "hits": 25,
+          "rate": 18.797,
+          "randomRate": 20,
+          "liftPoints": -1.203
+        },
+        "top10": {
+          "hits": 57,
+          "rate": 42.8571,
+          "randomRate": 40,
+          "liftPoints": 2.8571
+        },
+        "top25": {
+          "hits": 133,
+          "rate": 100,
+          "randomRate": 100,
+          "liftPoints": 0
+        }
+      }
+    },
+    "2023-10": {
+      "evaluated": 137,
+      "errors": 0,
+      "metrics": {
+        "top1": {
+          "hits": 4,
+          "rate": 2.9197,
+          "randomRate": 4,
+          "liftPoints": -1.0803
+        },
+        "top3": {
+          "hits": 17,
+          "rate": 12.4088,
+          "randomRate": 12,
+          "liftPoints": 0.4088
+        },
+        "top5": {
+          "hits": 24,
+          "rate": 17.5182,
+          "randomRate": 20,
+          "liftPoints": -2.4818
+        },
+        "top10": {
+          "hits": 51,
+          "rate": 37.2263,
+          "randomRate": 40,
+          "liftPoints": -2.7737
+        },
+        "top25": {
+          "hits": 137,
+          "rate": 100,
+          "randomRate": 100,
+          "liftPoints": 0
+        }
+      }
+    },
+    "2023-11": {
+      "evaluated": 128,
+      "errors": 0,
+      "metrics": {
+        "top1": {
+          "hits": 6,
+          "rate": 4.6875,
+          "randomRate": 4,
+          "liftPoints": 0.6875
+        },
+        "top3": {
+          "hits": 19,
+          "rate": 14.8438,
+          "randomRate": 12,
+          "liftPoints": 2.8438
+        },
+        "top5": {
+          "hits": 30,
+          "rate": 23.4375,
+          "randomRate": 20,
+          "liftPoints": 3.4375
+        },
+        "top10": {
+          "hits": 56,
+          "rate": 43.75,
+          "randomRate": 40,
+          "liftPoints": 3.75
+        },
+        "top25": {
+          "hits": 128,
+          "rate": 100,
+          "randomRate": 100,
+          "liftPoints": 0
+        }
+      }
+    },
+    "2023-12": {
+      "evaluated": 133,
+      "errors": 0,
+      "metrics": {
+        "top1": {
+          "hits": 4,
+          "rate": 3.0075,
+          "randomRate": 4,
+          "liftPoints": -0.9925
+        },
+        "top3": {
+          "hits": 12,
+          "rate": 9.0226,
+          "randomRate": 12,
+          "liftPoints": -2.9774
+        },
+        "top5": {
+          "hits": 21,
+          "rate": 15.7895,
+          "randomRate": 20,
+          "liftPoints": -4.2105
+        },
+        "top10": {
+          "hits": 45,
+          "rate": 33.8346,
+          "randomRate": 40,
+          "liftPoints": -6.1654
+        },
+        "top25": {
+          "hits": 133,
+          "rate": 100,
+          "randomRate": 100,
+          "liftPoints": 0
+        }
+      }
+    },
+    "2024-01": {
+      "evaluated": 160,
+      "errors": 0,
+      "metrics": {
+        "top1": {
+          "hits": 6,
+          "rate": 3.75,
+          "randomRate": 4,
+          "liftPoints": -0.25
+        },
+        "top3": {
+          "hits": 18,
+          "rate": 11.25,
+          "randomRate": 12,
+          "liftPoints": -0.75
+        },
+        "top5": {
+          "hits": 29,
+          "rate": 18.125,
+          "randomRate": 20,
+          "liftPoints": -1.875
+        },
+        "top10": {
+          "hits": 69,
+          "rate": 43.125,
+          "randomRate": 40,
+          "liftPoints": 3.125
+        },
+        "top25": {
+          "hits": 160,
+          "rate": 100,
+          "randomRate": 100,
+          "liftPoints": 0
+        }
+      }
+    },
+    "2024-02": {
+      "evaluated": 158,
+      "errors": 0,
+      "metrics": {
+        "top1": {
+          "hits": 6,
+          "rate": 3.7975,
+          "randomRate": 4,
+          "liftPoints": -0.2025
+        },
+        "top3": {
+          "hits": 19,
+          "rate": 12.0253,
+          "randomRate": 12,
+          "liftPoints": 0.0253
+        },
+        "top5": {
+          "hits": 29,
+          "rate": 18.3544,
+          "randomRate": 20,
+          "liftPoints": -1.6456
+        },
+        "top10": {
+          "hits": 67,
+          "rate": 42.4051,
+          "randomRate": 40,
+          "liftPoints": 2.4051
+        },
+        "top25": {
+          "hits": 158,
+          "rate": 100,
+          "randomRate": 100,
+          "liftPoints": 0
+        }
+      }
+    },
+    "2024-03": {
+      "evaluated": 156,
+      "errors": 0,
+      "metrics": {
+        "top1": {
+          "hits": 3,
+          "rate": 1.9231,
+          "randomRate": 4,
+          "liftPoints": -2.0769
+        },
+        "top3": {
+          "hits": 13,
+          "rate": 8.3333,
+          "randomRate": 12,
+          "liftPoints": -3.6667
+        },
+        "top5": {
+          "hits": 35,
+          "rate": 22.4359,
+          "randomRate": 20,
+          "liftPoints": 2.4359
+        },
+        "top10": {
+          "hits": 65,
+          "rate": 41.6667,
+          "randomRate": 40,
+          "liftPoints": 1.6667
+        },
+        "top25": {
+          "hits": 156,
+          "rate": 100,
+          "randomRate": 100,
+          "liftPoints": 0
+        }
+      }
+    },
+    "2024-04": {
+      "evaluated": 163,
+      "errors": 0,
+      "metrics": {
+        "top1": {
+          "hits": 4,
+          "rate": 2.454,
+          "randomRate": 4,
+          "liftPoints": -1.546
+        },
+        "top3": {
+          "hits": 15,
+          "rate": 9.2025,
+          "randomRate": 12,
+          "liftPoints": -2.7975
+        },
+        "top5": {
+          "hits": 24,
+          "rate": 14.7239,
+          "randomRate": 20,
+          "liftPoints": -5.2761
+        },
+        "top10": {
+          "hits": 54,
+          "rate": 33.1288,
+          "randomRate": 40,
+          "liftPoints": -6.8712
+        },
+        "top25": {
+          "hits": 163,
+          "rate": 100,
+          "randomRate": 100,
+          "liftPoints": 0
+        }
+      }
+    },
+    "2024-05": {
+      "evaluated": 170,
+      "errors": 0,
+      "metrics": {
+        "top1": {
+          "hits": 6,
+          "rate": 3.5294,
+          "randomRate": 4,
+          "liftPoints": -0.4706
+        },
+        "top3": {
+          "hits": 18,
+          "rate": 10.5882,
+          "randomRate": 12,
+          "liftPoints": -1.4118
+        },
+        "top5": {
+          "hits": 27,
+          "rate": 15.8824,
+          "randomRate": 20,
+          "liftPoints": -4.1176
+        },
+        "top10": {
+          "hits": 66,
+          "rate": 38.8235,
+          "randomRate": 40,
+          "liftPoints": -1.1765
+        },
+        "top25": {
+          "hits": 170,
+          "rate": 100,
+          "randomRate": 100,
+          "liftPoints": 0
+        }
+      }
+    },
+    "2024-06": {
+      "evaluated": 161,
+      "errors": 0,
+      "metrics": {
+        "top1": {
+          "hits": 9,
+          "rate": 5.5901,
+          "randomRate": 4,
+          "liftPoints": 1.5901
+        },
+        "top3": {
+          "hits": 25,
+          "rate": 15.528,
+          "randomRate": 12,
+          "liftPoints": 3.528
+        },
+        "top5": {
+          "hits": 36,
+          "rate": 22.3602,
+          "randomRate": 20,
+          "liftPoints": 2.3602
+        },
+        "top10": {
+          "hits": 64,
+          "rate": 39.7516,
+          "randomRate": 40,
+          "liftPoints": -0.2484
+        },
+        "top25": {
+          "hits": 161,
+          "rate": 100,
+          "randomRate": 100,
+          "liftPoints": 0
+        }
+      }
+    },
+    "2024-07": {
+      "evaluated": 169,
+      "errors": 0,
+      "metrics": {
+        "top1": {
+          "hits": 10,
+          "rate": 5.9172,
+          "randomRate": 4,
+          "liftPoints": 1.9172
+        },
+        "top3": {
+          "hits": 18,
+          "rate": 10.6509,
+          "randomRate": 12,
+          "liftPoints": -1.3491
+        },
+        "top5": {
+          "hits": 33,
+          "rate": 19.5266,
+          "randomRate": 20,
+          "liftPoints": -0.4734
+        },
+        "top10": {
+          "hits": 66,
+          "rate": 39.0533,
+          "randomRate": 40,
+          "liftPoints": -0.9467
+        },
+        "top25": {
+          "hits": 169,
+          "rate": 100,
+          "randomRate": 100,
+          "liftPoints": 0
+        }
+      }
+    },
+    "2024-08": {
+      "evaluated": 169,
+      "errors": 0,
+      "metrics": {
+        "top1": {
+          "hits": 5,
+          "rate": 2.9586,
+          "randomRate": 4,
+          "liftPoints": -1.0414
+        },
+        "top3": {
+          "hits": 19,
+          "rate": 11.2426,
+          "randomRate": 12,
+          "liftPoints": -0.7574
+        },
+        "top5": {
+          "hits": 32,
+          "rate": 18.9349,
+          "randomRate": 20,
+          "liftPoints": -1.0651
+        },
+        "top10": {
+          "hits": 64,
+          "rate": 37.8698,
+          "randomRate": 40,
+          "liftPoints": -2.1302
+        },
+        "top25": {
+          "hits": 169,
+          "rate": 100,
+          "randomRate": 100,
+          "liftPoints": 0
+        }
+      }
+    },
+    "2024-09": {
+      "evaluated": 162,
+      "errors": 0,
+      "metrics": {
+        "top1": {
+          "hits": 3,
+          "rate": 1.8519,
+          "randomRate": 4,
+          "liftPoints": -2.1481
+        },
+        "top3": {
+          "hits": 14,
+          "rate": 8.642,
+          "randomRate": 12,
+          "liftPoints": -3.358
+        },
+        "top5": {
+          "hits": 20,
+          "rate": 12.3457,
+          "randomRate": 20,
+          "liftPoints": -7.6543
+        },
+        "top10": {
+          "hits": 46,
+          "rate": 28.3951,
+          "randomRate": 40,
+          "liftPoints": -11.6049
+        },
+        "top25": {
+          "hits": 162,
+          "rate": 100,
+          "randomRate": 100,
+          "liftPoints": 0
+        }
+      }
+    },
+    "2024-10": {
+      "evaluated": 165,
+      "errors": 0,
+      "metrics": {
+        "top1": {
+          "hits": 9,
+          "rate": 5.4545,
+          "randomRate": 4,
+          "liftPoints": 1.4545
+        },
+        "top3": {
+          "hits": 18,
+          "rate": 10.9091,
+          "randomRate": 12,
+          "liftPoints": -1.0909
+        },
+        "top5": {
+          "hits": 38,
+          "rate": 23.0303,
+          "randomRate": 20,
+          "liftPoints": 3.0303
+        },
+        "top10": {
+          "hits": 68,
+          "rate": 41.2121,
+          "randomRate": 40,
+          "liftPoints": 1.2121
+        },
+        "top25": {
+          "hits": 165,
+          "rate": 100,
+          "randomRate": 100,
+          "liftPoints": 0
+        }
+      }
+    },
+    "2024-11": {
+      "evaluated": 163,
+      "errors": 0,
+      "metrics": {
+        "top1": {
+          "hits": 9,
+          "rate": 5.5215,
+          "randomRate": 4,
+          "liftPoints": 1.5215
+        },
+        "top3": {
+          "hits": 26,
+          "rate": 15.9509,
+          "randomRate": 12,
+          "liftPoints": 3.9509
+        },
+        "top5": {
+          "hits": 38,
+          "rate": 23.3129,
+          "randomRate": 20,
+          "liftPoints": 3.3129
+        },
+        "top10": {
+          "hits": 63,
+          "rate": 38.6503,
+          "randomRate": 40,
+          "liftPoints": -1.3497
+        },
+        "top25": {
+          "hits": 163,
+          "rate": 100,
+          "randomRate": 100,
+          "liftPoints": 0
+        }
+      }
+    },
+    "2024-12": {
+      "evaluated": 160,
+      "errors": 0,
+      "metrics": {
+        "top1": {
+          "hits": 7,
+          "rate": 4.375,
+          "randomRate": 4,
+          "liftPoints": 0.375
+        },
+        "top3": {
+          "hits": 23,
+          "rate": 14.375,
+          "randomRate": 12,
+          "liftPoints": 2.375
+        },
+        "top5": {
+          "hits": 36,
+          "rate": 22.5,
+          "randomRate": 20,
+          "liftPoints": 2.5
+        },
+        "top10": {
+          "hits": 73,
+          "rate": 45.625,
+          "randomRate": 40,
+          "liftPoints": 5.625
+        },
+        "top25": {
+          "hits": 160,
+          "rate": 100,
+          "randomRate": 100,
+          "liftPoints": 0
+        }
+      }
+    },
+    "2025-01": {
+      "evaluated": 164,
+      "errors": 0,
+      "metrics": {
+        "top1": {
+          "hits": 6,
+          "rate": 3.6585,
+          "randomRate": 4,
+          "liftPoints": -0.3415
+        },
+        "top3": {
+          "hits": 25,
+          "rate": 15.2439,
+          "randomRate": 12,
+          "liftPoints": 3.2439
+        },
+        "top5": {
+          "hits": 37,
+          "rate": 22.561,
+          "randomRate": 20,
+          "liftPoints": 2.561
+        },
+        "top10": {
+          "hits": 72,
+          "rate": 43.9024,
+          "randomRate": 40,
+          "liftPoints": 3.9024
+        },
+        "top25": {
+          "hits": 164,
+          "rate": 100,
+          "randomRate": 100,
+          "liftPoints": 0
+        }
+      }
+    },
+    "2025-02": {
+      "evaluated": 152,
+      "errors": 0,
+      "metrics": {
+        "top1": {
+          "hits": 2,
+          "rate": 1.3158,
+          "randomRate": 4,
+          "liftPoints": -2.6842
+        },
+        "top3": {
+          "hits": 13,
+          "rate": 8.5526,
+          "randomRate": 12,
+          "liftPoints": -3.4474
+        },
+        "top5": {
+          "hits": 26,
+          "rate": 17.1053,
+          "randomRate": 20,
+          "liftPoints": -2.8947
+        },
+        "top10": {
+          "hits": 61,
+          "rate": 40.1316,
+          "randomRate": 40,
+          "liftPoints": 0.1316
+        },
+        "top25": {
+          "hits": 152,
+          "rate": 100,
+          "randomRate": 100,
+          "liftPoints": 0
+        }
+      }
+    },
+    "2025-03": {
+      "evaluated": 168,
+      "errors": 0,
+      "metrics": {
+        "top1": {
+          "hits": 5,
+          "rate": 2.9762,
+          "randomRate": 4,
+          "liftPoints": -1.0238
+        },
+        "top3": {
+          "hits": 21,
+          "rate": 12.5,
+          "randomRate": 12,
+          "liftPoints": 0.5
+        },
+        "top5": {
+          "hits": 34,
+          "rate": 20.2381,
+          "randomRate": 20,
+          "liftPoints": 0.2381
+        },
+        "top10": {
+          "hits": 71,
+          "rate": 42.2619,
+          "randomRate": 40,
+          "liftPoints": 2.2619
+        },
+        "top25": {
+          "hits": 168,
+          "rate": 100,
+          "randomRate": 100,
+          "liftPoints": 0
+        }
+      }
+    },
+    "2025-04": {
+      "evaluated": 164,
+      "errors": 0,
+      "metrics": {
+        "top1": {
+          "hits": 7,
+          "rate": 4.2683,
+          "randomRate": 4,
+          "liftPoints": 0.2683
+        },
+        "top3": {
+          "hits": 12,
+          "rate": 7.3171,
+          "randomRate": 12,
+          "liftPoints": -4.6829
+        },
+        "top5": {
+          "hits": 27,
+          "rate": 16.4634,
+          "randomRate": 20,
+          "liftPoints": -3.5366
+        },
+        "top10": {
+          "hits": 61,
+          "rate": 37.1951,
+          "randomRate": 40,
+          "liftPoints": -2.8049
+        },
+        "top25": {
+          "hits": 164,
+          "rate": 100,
+          "randomRate": 100,
+          "liftPoints": 0
+        }
+      }
+    },
+    "2025-05": {
+      "evaluated": 169,
+      "errors": 0,
+      "metrics": {
+        "top1": {
+          "hits": 10,
+          "rate": 5.9172,
+          "randomRate": 4,
+          "liftPoints": 1.9172
+        },
+        "top3": {
+          "hits": 23,
+          "rate": 13.6095,
+          "randomRate": 12,
+          "liftPoints": 1.6095
+        },
+        "top5": {
+          "hits": 38,
+          "rate": 22.4852,
+          "randomRate": 20,
+          "liftPoints": 2.4852
+        },
+        "top10": {
+          "hits": 63,
+          "rate": 37.2781,
+          "randomRate": 40,
+          "liftPoints": -2.7219
+        },
+        "top25": {
+          "hits": 169,
+          "rate": 100,
+          "randomRate": 100,
+          "liftPoints": 0
+        }
+      }
+    },
+    "2025-06": {
+      "evaluated": 162,
+      "errors": 0,
+      "metrics": {
+        "top1": {
+          "hits": 3,
+          "rate": 1.8519,
+          "randomRate": 4,
+          "liftPoints": -2.1481
+        },
+        "top3": {
+          "hits": 16,
+          "rate": 9.8765,
+          "randomRate": 12,
+          "liftPoints": -2.1235
+        },
+        "top5": {
+          "hits": 31,
+          "rate": 19.1358,
+          "randomRate": 20,
+          "liftPoints": -0.8642
+        },
+        "top10": {
+          "hits": 66,
+          "rate": 40.7407,
+          "randomRate": 40,
+          "liftPoints": 0.7407
+        },
+        "top25": {
+          "hits": 162,
+          "rate": 100,
+          "randomRate": 100,
+          "liftPoints": 0
+        }
+      }
+    },
+    "2025-07": {
+      "evaluated": 169,
+      "errors": 0,
+      "metrics": {
+        "top1": {
+          "hits": 8,
+          "rate": 4.7337,
+          "randomRate": 4,
+          "liftPoints": 0.7337
+        },
+        "top3": {
+          "hits": 21,
+          "rate": 12.426,
+          "randomRate": 12,
+          "liftPoints": 0.426
+        },
+        "top5": {
+          "hits": 38,
+          "rate": 22.4852,
+          "randomRate": 20,
+          "liftPoints": 2.4852
+        },
+        "top10": {
+          "hits": 75,
+          "rate": 44.3787,
+          "randomRate": 40,
+          "liftPoints": 4.3787
+        },
+        "top25": {
+          "hits": 169,
+          "rate": 100,
+          "randomRate": 100,
+          "liftPoints": 0
+        }
+      }
+    },
+    "2025-08": {
+      "evaluated": 167,
+      "errors": 0,
+      "metrics": {
+        "top1": {
+          "hits": 6,
+          "rate": 3.5928,
+          "randomRate": 4,
+          "liftPoints": -0.4072
+        },
+        "top3": {
+          "hits": 19,
+          "rate": 11.3772,
+          "randomRate": 12,
+          "liftPoints": -0.6228
+        },
+        "top5": {
+          "hits": 28,
+          "rate": 16.7665,
+          "randomRate": 20,
+          "liftPoints": -3.2335
+        },
+        "top10": {
+          "hits": 62,
+          "rate": 37.1257,
+          "randomRate": 40,
+          "liftPoints": -2.8743
+        },
+        "top25": {
+          "hits": 167,
+          "rate": 100,
+          "randomRate": 100,
+          "liftPoints": 0
+        }
+      }
+    },
+    "2025-09": {
+      "evaluated": 164,
+      "errors": 0,
+      "metrics": {
+        "top1": {
+          "hits": 6,
+          "rate": 3.6585,
+          "randomRate": 4,
+          "liftPoints": -0.3415
+        },
+        "top3": {
+          "hits": 18,
+          "rate": 10.9756,
+          "randomRate": 12,
+          "liftPoints": -1.0244
+        },
+        "top5": {
+          "hits": 37,
+          "rate": 22.561,
+          "randomRate": 20,
+          "liftPoints": 2.561
+        },
+        "top10": {
+          "hits": 70,
+          "rate": 42.6829,
+          "randomRate": 40,
+          "liftPoints": 2.6829
+        },
+        "top25": {
+          "hits": 164,
+          "rate": 100,
+          "randomRate": 100,
+          "liftPoints": 0
+        }
+      }
+    },
+    "2025-10": {
+      "evaluated": 169,
+      "errors": 0,
+      "metrics": {
+        "top1": {
+          "hits": 6,
+          "rate": 3.5503,
+          "randomRate": 4,
+          "liftPoints": -0.4497
+        },
+        "top3": {
+          "hits": 17,
+          "rate": 10.0592,
+          "randomRate": 12,
+          "liftPoints": -1.9408
+        },
+        "top5": {
+          "hits": 31,
+          "rate": 18.3432,
+          "randomRate": 20,
+          "liftPoints": -1.6568
+        },
+        "top10": {
+          "hits": 59,
+          "rate": 34.9112,
+          "randomRate": 40,
+          "liftPoints": -5.0888
+        },
+        "top25": {
+          "hits": 169,
+          "rate": 100,
+          "randomRate": 100,
+          "liftPoints": 0
+        }
+      }
+    },
+    "2025-11": {
+      "evaluated": 161,
+      "errors": 0,
+      "metrics": {
+        "top1": {
+          "hits": 6,
+          "rate": 3.7267,
+          "randomRate": 4,
+          "liftPoints": -0.2733
+        },
+        "top3": {
+          "hits": 19,
+          "rate": 11.8012,
+          "randomRate": 12,
+          "liftPoints": -0.1988
+        },
+        "top5": {
+          "hits": 36,
+          "rate": 22.3602,
+          "randomRate": 20,
+          "liftPoints": 2.3602
+        },
+        "top10": {
+          "hits": 72,
+          "rate": 44.7205,
+          "randomRate": 40,
+          "liftPoints": 4.7205
+        },
+        "top25": {
+          "hits": 161,
+          "rate": 100,
+          "randomRate": 100,
+          "liftPoints": 0
+        }
+      }
+    },
+    "2025-12": {
+      "evaluated": 163,
+      "errors": 0,
+      "metrics": {
+        "top1": {
+          "hits": 5,
+          "rate": 3.0675,
+          "randomRate": 4,
+          "liftPoints": -0.9325
+        },
+        "top3": {
+          "hits": 16,
+          "rate": 9.816,
+          "randomRate": 12,
+          "liftPoints": -2.184
+        },
+        "top5": {
+          "hits": 30,
+          "rate": 18.4049,
+          "randomRate": 20,
+          "liftPoints": -1.5951
+        },
+        "top10": {
+          "hits": 53,
+          "rate": 32.5153,
+          "randomRate": 40,
+          "liftPoints": -7.4847
+        },
+        "top25": {
+          "hits": 163,
+          "rate": 100,
+          "randomRate": 100,
+          "liftPoints": 0
+        }
+      }
+    },
+    "2026-01": {
+      "evaluated": 163,
+      "errors": 0,
+      "metrics": {
+        "top1": {
+          "hits": 9,
+          "rate": 5.5215,
+          "randomRate": 4,
+          "liftPoints": 1.5215
+        },
+        "top3": {
+          "hits": 20,
+          "rate": 12.2699,
+          "randomRate": 12,
+          "liftPoints": 0.2699
+        },
+        "top5": {
+          "hits": 42,
+          "rate": 25.7669,
+          "randomRate": 20,
+          "liftPoints": 5.7669
+        },
+        "top10": {
+          "hits": 75,
+          "rate": 46.0123,
+          "randomRate": 40,
+          "liftPoints": 6.0123
+        },
+        "top25": {
+          "hits": 163,
+          "rate": 100,
+          "randomRate": 100,
+          "liftPoints": 0
+        }
+      }
+    },
+    "2026-02": {
+      "evaluated": 153,
+      "errors": 0,
+      "metrics": {
+        "top1": {
+          "hits": 9,
+          "rate": 5.8824,
+          "randomRate": 4,
+          "liftPoints": 1.8824
+        },
+        "top3": {
+          "hits": 23,
+          "rate": 15.0327,
+          "randomRate": 12,
+          "liftPoints": 3.0327
+        },
+        "top5": {
+          "hits": 34,
+          "rate": 22.2222,
+          "randomRate": 20,
+          "liftPoints": 2.2222
+        },
+        "top10": {
+          "hits": 64,
+          "rate": 41.8301,
+          "randomRate": 40,
+          "liftPoints": 1.8301
+        },
+        "top25": {
+          "hits": 153,
+          "rate": 100,
+          "randomRate": 100,
+          "liftPoints": 0
+        }
+      }
+    },
+    "2026-03": {
+      "evaluated": 169,
+      "errors": 0,
+      "metrics": {
+        "top1": {
+          "hits": 9,
+          "rate": 5.3254,
+          "randomRate": 4,
+          "liftPoints": 1.3254
+        },
+        "top3": {
+          "hits": 30,
+          "rate": 17.7515,
+          "randomRate": 12,
+          "liftPoints": 5.7515
+        },
+        "top5": {
+          "hits": 41,
+          "rate": 24.2604,
+          "randomRate": 20,
+          "liftPoints": 4.2604
+        },
+        "top10": {
+          "hits": 70,
+          "rate": 41.4201,
+          "randomRate": 40,
+          "liftPoints": 1.4201
+        },
+        "top25": {
+          "hits": 169,
+          "rate": 100,
+          "randomRate": 100,
+          "liftPoints": 0
+        }
+      }
+    },
+    "2026-04": {
+      "evaluated": 164,
+      "errors": 0,
+      "metrics": {
+        "top1": {
+          "hits": 6,
+          "rate": 3.6585,
+          "randomRate": 4,
+          "liftPoints": -0.3415
+        },
+        "top3": {
+          "hits": 18,
+          "rate": 10.9756,
+          "randomRate": 12,
+          "liftPoints": -1.0244
+        },
+        "top5": {
+          "hits": 24,
+          "rate": 14.6341,
+          "randomRate": 20,
+          "liftPoints": -5.3659
+        },
+        "top10": {
+          "hits": 61,
+          "rate": 37.1951,
+          "randomRate": 40,
+          "liftPoints": -2.8049
+        },
+        "top25": {
+          "hits": 164,
+          "rate": 100,
+          "randomRate": 100,
+          "liftPoints": 0
+        }
+      }
+    },
+    "2026-05": {
+      "evaluated": 167,
+      "errors": 0,
+      "metrics": {
+        "top1": {
+          "hits": 6,
+          "rate": 3.5928,
+          "randomRate": 4,
+          "liftPoints": -0.4072
+        },
+        "top3": {
+          "hits": 21,
+          "rate": 12.5749,
+          "randomRate": 12,
+          "liftPoints": 0.5749
+        },
+        "top5": {
+          "hits": 28,
+          "rate": 16.7665,
+          "randomRate": 20,
+          "liftPoints": -3.2335
+        },
+        "top10": {
+          "hits": 68,
+          "rate": 40.7186,
+          "randomRate": 40,
+          "liftPoints": 0.7186
+        },
+        "top25": {
+          "hits": 167,
+          "rate": 100,
+          "randomRate": 100,
+          "liftPoints": 0
+        }
+      }
+    },
+    "2026-06": {
+      "evaluated": 164,
+      "errors": 0,
+      "metrics": {
+        "top1": {
+          "hits": 5,
+          "rate": 3.0488,
+          "randomRate": 4,
+          "liftPoints": -0.9512
+        },
+        "top3": {
+          "hits": 17,
+          "rate": 10.3659,
+          "randomRate": 12,
+          "liftPoints": -1.6341
+        },
+        "top5": {
+          "hits": 27,
+          "rate": 16.4634,
+          "randomRate": 20,
+          "liftPoints": -3.5366
+        },
+        "top10": {
+          "hits": 66,
+          "rate": 40.2439,
+          "randomRate": 40,
+          "liftPoints": 0.2439
+        },
+        "top25": {
+          "hits": 164,
+          "rate": 100,
+          "randomRate": 100,
+          "liftPoints": 0
+        }
+      }
+    },
+    "2026-07": {
+      "evaluated": 89,
+      "errors": 0,
+      "metrics": {
+        "top1": {
+          "hits": 5,
+          "rate": 5.618,
+          "randomRate": 4,
+          "liftPoints": 1.618
+        },
+        "top3": {
+          "hits": 14,
+          "rate": 15.7303,
+          "randomRate": 12,
+          "liftPoints": 3.7303
+        },
+        "top5": {
+          "hits": 19,
+          "rate": 21.3483,
+          "randomRate": 20,
+          "liftPoints": 1.3483
+        },
+        "top10": {
+          "hits": 40,
+          "rate": 44.9438,
+          "randomRate": 40,
+          "liftPoints": 4.9438
+        },
+        "top25": {
+          "hits": 89,
+          "rate": 100,
+          "randomRate": 100,
+          "liftPoints": 0
+        }
+      }
+    }
+  },
+  "exactRankCounts": {
+    "1": 321,
+    "2": 308,
+    "3": 283,
+    "4": 299,
+    "5": 288,
+    "6": 281,
+    "7": 313,
+    "8": 295,
+    "9": 275,
+    "10": 295,
+    "11": 302,
+    "12": 302,
+    "13": 306,
+    "14": 287,
+    "15": 299,
+    "16": 319,
+    "17": 287,
+    "18": 298,
+    "19": 301,
+    "20": 265,
+    "21": 307,
+    "22": 298,
+    "23": 277,
+    "24": 303,
+    "25": 291
+  },
+  "errorCases": [],
+  "tookMs": 2505973
+}

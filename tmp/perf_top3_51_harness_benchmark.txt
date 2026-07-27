@@ -1,0 +1,830 @@
+====================================================================================================
+PERF-TOP3-51 — DIAGNÓSTICO DO HARNESS DE BENCHMARK
+====================================================================================================
+Data: 2026-07-24 11:54:34
+HEAD: 5669fdf446ed90ce2f442bdfcf23f901a80c162d
+
+Objetivo:
+- identificar o harness exato usado nas assinaturas das quatro loterias;
+- confirmar comandos, argumentos, imports e arquivos de dados;
+- preparar instrumentação temporária sem alterar o motor de produção;
+- não executar deploy, commit, push ou escrita no Firestore.
+
+====================================================================================================
+1. ARQUIVOS CONFIRMADOS
+====================================================================================================
+
+OK: .\tmp\perf_top3_41_signatures.js
+Bytes: 3574
+SHA256: 17916DB67852A5C7D15EC7928199AB0E58EEC537F0647C8FC19973B26AADBB4C
+
+OK: .\tmp\perf_top3_46_analisar.py
+Bytes: 5400
+SHA256: 642763FEEE9539AD52D0D6219AEB9E6829973E78A879F664DA7ECE708990C33E
+
+OK: .\tmp\perf_top3_46_patch.py
+Bytes: 1814
+SHA256: D178EC8E07BA32737BDDAC394F16E8D3C5B24F04CF22BF74D207BB20F5E69C23
+
+OK: .\tmp\perf_top3_46_benchmark_original_x_otimizado.txt
+Bytes: 6256
+SHA256: AAED58CC735121B45A99D4D3EC73AD39203972DA3AE1E22752A9B280F34F9003
+
+OK: .\tmp\perf_top3_43_patch.py
+Bytes: 1877
+SHA256: 02BDD4684C76450460F668F9712DD046568BE670BF78851F1B4DE1EE58975D41
+
+OK: .\tmp\perf_top3_45_compare.py
+Bytes: 5376
+SHA256: D09EAB3EF6D66A686117B9DCE0B7CFA1B30044AAA65AE40B65CC237400DBEF81
+
+OK: .\package.json
+Bytes: 1730
+SHA256: 79AE1E9CBFEF00E8D6ADCFD1D0F3DFFC5BC077AEC0DB23730AEDB6CE6836BF58
+
+====================================================================================================
+2. HARNESS DE ASSINATURAS — CONTEÚDO COMPLETO
+====================================================================================================
+"use strict";
+
+const fs = require("fs");
+const path = require("path");
+const crypto = require("crypto");
+
+const {
+  runOfficialBacktest,
+} = require("../backend/scripts/backtestTop3Official");
+
+function stableSortObject(value) {
+  if (Array.isArray(value)) {
+    return value.map(stableSortObject);
+  }
+
+  if (value && typeof value === "object") {
+    return Object.keys(value)
+      .sort()
+      .reduce((result, key) => {
+        result[key] = stableSortObject(value[key]);
+        return result;
+      }, {});
+  }
+
+  return value;
+}
+
+function stableJson(value) {
+  return JSON.stringify(stableSortObject(value));
+}
+
+function sha256(value) {
+  return crypto
+    .createHash("sha256")
+    .update(value, "utf8")
+    .digest("hex")
+    .toUpperCase();
+}
+
+async function main() {
+  const outputDir = path.resolve(
+    process.argv[2] || "tmp/perf_top3_41_data"
+  );
+
+  fs.mkdirSync(outputDir, {
+    recursive: true,
+  });
+
+  const lotteries = [
+    "PT_RIO",
+    "FEDERAL",
+    "LOOK",
+    "NACIONAL",
+  ];
+
+  const summary = [];
+
+  for (const lotteryKey of lotteries) {
+    console.log("");
+    console.log(`===== ${lotteryKey} =====`);
+
+    const result = await runOfficialBacktest({
+      lotteryKey,
+      limit: 100,
+      minHistory: 100,
+      telemetry: true,
+      progress: false,
+    });
+
+    const cases = (
+      result.telemetry?.cases || []
+    ).map((item) => ({
+      caseNumber: Number(item.caseNumber),
+      historyIndex: Number(item.historyIndex),
+      target: {
+        ymd: item.target?.ymd || null,
+        hour: item.target?.hour || null,
+      },
+      actual: {
+        group: Number(item.actual?.group),
+        top3Groups: (
+          item.actual?.top3Groups || []
+        ).map(Number),
+      },
+      prediction: {
+        groups: (
+          item.prediction?.groups || []
+        ).map(Number),
+        top1Hit:
+          item.prediction?.top1Hit === true,
+        top3Hit:
+          item.prediction?.top3Hit === true,
+      },
+    }));
+
+    const canonical = {
+      lotteryKey,
+      historyLoaded:
+        Number(result.historyLoaded || 0),
+      eligibleCases:
+        Number(result.eligibleCases || 0),
+      evaluated:
+        Number(result.global?.evaluated || 0),
+      errors:
+        Number(result.global?.errors || 0),
+      top1Hits:
+        Number(result.global?.top1Hits || 0),
+      top3Hits:
+        Number(result.global?.top3Hits || 0),
+      cases,
+    };
+
+    const canonicalText = stableJson(canonical);
+    const signature = sha256(canonicalText);
+
+    const filePath = path.join(
+      outputDir,
+      `${lotteryKey.toLowerCase()}_signature.json`
+    );
+
+    fs.writeFileSync(
+      filePath,
+      JSON.stringify(
+        {
+          ...canonical,
+          signature,
+        },
+        null,
+        2
+      ) + "\n",
+      "utf8"
+    );
+
+    summary.push({
+      lotteryKey,
+      signature,
+      historyLoaded:
+        canonical.historyLoaded,
+      eligibleCases:
+        canonical.eligibleCases,
+      evaluated:
+        canonical.evaluated,
+      errors:
+        canonical.errors,
+      top1Hits:
+        canonical.top1Hits,
+      top3Hits:
+        canonical.top3Hits,
+      filePath,
+    });
+
+    console.log(`Assinatura: ${signature}`);
+  }
+
+  const summaryPath = path.join(
+    outputDir,
+    "summary.json"
+  );
+
+  fs.writeFileSync(
+    summaryPath,
+    JSON.stringify(summary, null, 2) + "\n",
+    "utf8"
+  );
+
+  console.log("");
+  console.log(`Resumo: ${summaryPath}`);
+}
+
+main().catch((error) => {
+  console.error(
+    error?.stack ||
+    error?.message ||
+    error
+  );
+
+  process.exitCode = 1;
+});
+
+
+====================================================================================================
+3. ANALISADOR DO BENCHMARK ANTERIOR — CONTEÚDO COMPLETO
+====================================================================================================
+from pathlib import Path
+import json
+import re
+import statistics
+
+work_dir = Path(r"tmp/perf_top3_46_work")
+report_path = Path(r"tmp/perf_top3_46_benchmark_original_x_otimizado.txt")
+
+expected = {
+    "PT_RIO": "02DFCACF1A50F59DD064246DFC179D12A9C22958990B84D9C38356424C9FBD35",
+    "FEDERAL": "5F4267C52469CB43729C63D594A00B0624332B866A0C1A5F0D29DA983B7431A2",
+    "LOOK": "D11B6930450A23CECD8F8322D0C9D948396A9F6A7349CB892929C863B200ECAA",
+    "NACIONAL": "9F675860326EC008E84D2A1DDE2D48DB99A26EB4BD25383DE4D93A96C1F5463D",
+}
+
+def append(text=""):
+    with report_path.open("a", encoding="utf-8") as f:
+        f.write(str(text) + "\n")
+
+def parse_key_values(path):
+    values = {}
+
+    for line in path.read_text(
+        encoding="utf-8-sig"
+    ).splitlines():
+        if "=" not in line:
+            continue
+
+        key, value = line.split("=", 1)
+        values[key.strip()] = value.strip()
+
+    return values
+
+def read_times(version):
+    values = []
+
+    for run in range(1, 4):
+        timing = work_dir / f"{version}_run_{run}_timing.txt"
+        data = parse_key_values(timing)
+        values.append(int(data["elapsed_ms"]))
+
+    return values
+
+def parse_signatures(console_path):
+    text = console_path.read_text(
+        encoding="utf-8-sig",
+        errors="replace"
+    )
+
+    signatures = {}
+    current = None
+
+    for line in text.splitlines():
+        heading = re.match(
+            r"^===== (PT_RIO|FEDERAL|LOOK|NACIONAL) =====$",
+            line.strip()
+        )
+
+        if heading:
+            current = heading.group(1)
+            continue
+
+        signature = re.match(
+            r"^Assinatura:\s*([A-Fa-f0-9]{64})$",
+            line.strip()
+        )
+
+        if signature and current:
+            signatures[current] = signature.group(1).upper()
+            current = None
+
+    return signatures
+
+original_times = read_times("original")
+optimized_times = read_times("optimized")
+
+original_mean = statistics.mean(original_times)
+optimized_mean = statistics.mean(optimized_times)
+
+original_median = statistics.median(original_times)
+optimized_median = statistics.median(optimized_times)
+
+gain_ms = original_mean - optimized_mean
+gain_percent = (
+    (gain_ms / original_mean) * 100
+    if original_mean
+    else 0
+)
+
+append("")
+append("=" * 100)
+append("3. TEMPOS MEDIDOS")
+append("=" * 100)
+
+append(
+    "Original — execuções: " +
+    ", ".join(f"{value} ms" for value in original_times)
+)
+append(f"Original — média: {original_mean:.2f} ms")
+append(f"Original — mediana: {original_median:.2f} ms")
+append("")
+
+append(
+    "Otimizado — execuções: " +
+    ", ".join(f"{value} ms" for value in optimized_times)
+)
+append(f"Otimizado — média: {optimized_mean:.2f} ms")
+append(f"Otimizado — mediana: {optimized_median:.2f} ms")
+append("")
+
+append(f"Ganho médio absoluto: {gain_ms:.2f} ms")
+append(f"Ganho médio percentual: {gain_percent:.2f}%")
+
+append("")
+append("=" * 100)
+append("4. VALIDAÇÃO DAS ASSINATURAS")
+append("=" * 100)
+
+all_valid = True
+all_equal = True
+
+for run in range(1, 4):
+    original_log = (
+        work_dir /
+        f"original_run_{run}_console.txt"
+    )
+
+    optimized_log = (
+        work_dir /
+        f"optimized_run_{run}_console.txt"
+    )
+
+    original_signatures = parse_signatures(original_log)
+    optimized_signatures = parse_signatures(optimized_log)
+
+    append(f"EXECUÇÃO {run}")
+
+    for lottery in [
+        "PT_RIO",
+        "FEDERAL",
+        "LOOK",
+        "NACIONAL",
+    ]:
+        original = original_signatures.get(lottery)
+        optimized = optimized_signatures.get(lottery)
+        expected_signature = expected[lottery]
+
+        original_ok = original == expected_signature
+        optimized_ok = optimized == expected_signature
+        equal = original == optimized
+
+        if not original_ok or not optimized_ok:
+            all_valid = False
+
+        if not equal:
+            all_equal = False
+
+        append(
+            f"{lottery}: "
+            f"original={original or 'AUSENTE'} | "
+            f"otimizado={optimized or 'AUSENTE'} | "
+            f"esperada={'OK' if original_ok and optimized_ok else 'FALHA'} | "
+            f"igual={'SIM' if equal else 'NÃO'}"
+        )
+
+    append("")
+
+append("=" * 100)
+append("5. DECISÃO TÉCNICA")
+append("=" * 100)
+
+if not all_valid:
+    append(
+        "REPROVADO: pelo menos uma assinatura não correspondeu "
+        "ao valor determinístico esperado."
+    )
+elif not all_equal:
+    append(
+        "REPROVADO: houve divergência entre motor original "
+        "e motor otimizado."
+    )
+elif gain_percent <= 0:
+    append(
+        "SEM GANHO: as assinaturas são idênticas, mas a versão "
+        "otimizada não reduziu o tempo médio."
+    )
+elif gain_percent < 3:
+    append(
+        "GANHO PEQUENO: assinaturas idênticas, porém melhoria "
+        "inferior a 3%."
+    )
+else:
+    append(
+        "APROVADO PARA IMPLANTAÇÃO: assinaturas idênticas e "
+        "ganho de desempenho mensurável."
+    )
+
+append("")
+append(f"Assinaturas válidas: {'SIM' if all_valid else 'NÃO'}")
+append(f"Original e otimizado idênticos: {'SIM' if all_equal else 'NÃO'}")
+append(f"Ganho médio: {gain_percent:.2f}%")
+append("")
+append("Motor original restaurado: SIM")
+append("Commit criado: NÃO")
+append("Push executado: NÃO")
+append("Deploy executado: NÃO")
+append("Firestore alterado: NÃO")
+append("=" * 100)
+
+print("ANALISE_OK")
+
+
+====================================================================================================
+4. PATCH TEMPORÁRIO DO BENCHMARK ANTERIOR — CONTEÚDO COMPLETO
+====================================================================================================
+from pathlib import Path
+import sys
+
+target = Path(r"src/pages/Top3/top3.engine.js")
+text = target.read_text(encoding="utf-8")
+
+old_block = '''  const ranked = Array.from({ length: safeInt(TOP3_GROUPS_K, 25) }, (_, idx) => {
+    const grupo = idx + 1;
+
+    let scoreProb = 0;
+    const details = {};
+
+    for (const [keyLayer, layer] of Object.entries(layers)) {
+      const pFirst = Number(layerProbability(layer.first, layer.samples).get(grupo) || 0);
+      const pPrizePresence = Number(layerProbability(layer.prizePresence, layer.samples).get(grupo) || 0);
+
+      const pLayer = (pFirst * 0.92) + (pPrizePresence * 0.08);
+'''
+
+new_block = '''  const layerProbabilities = Object.fromEntries(
+    Object.entries(layers).map(([keyLayer, layer]) => [
+      keyLayer,
+      {
+        first: layerProbability(
+          layer.first,
+          layer.samples
+        ),
+        prizePresence: layerProbability(
+          layer.prizePresence,
+          layer.samples
+        ),
+      },
+    ])
+  );
+
+  const ranked = Array.from({ length: safeInt(TOP3_GROUPS_K, 25) }, (_, idx) => {
+    const grupo = idx + 1;
+
+    let scoreProb = 0;
+    const details = {};
+
+    for (const [keyLayer, layer] of Object.entries(layers)) {
+      const probabilities =
+        layerProbabilities[keyLayer];
+
+      const pFirst = Number(
+        probabilities?.first?.get?.(grupo) || 0
+      );
+
+      const pPrizePresence = Number(
+        probabilities?.prizePresence?.get?.(grupo) || 0
+      );
+
+      const pLayer = (pFirst * 0.92) + (pPrizePresence * 0.08);
+'''
+
+count = text.count(old_block)
+
+if count != 1:
+    print(
+        f"ERRO: bloco original encontrado {count} vez(es); esperado=1."
+    )
+    sys.exit(1)
+
+target.write_text(
+    text.replace(old_block, new_block, 1),
+    encoding="utf-8",
+    newline=""
+)
+
+print("PATCH_OK")
+
+
+====================================================================================================
+5. RESULTADO DO BENCHMARK ANTERIOR
+====================================================================================================
+====================================================================================================
+PERF-TOP3-46 — BENCHMARK ORIGINAL X CACHE LAYERPROBABILITY
+====================================================================================================
+Data: 2026-07-24 11:18:27
+HEAD: 28d88bf9000215e8fbf3ea782224bbc4188b038c
+Branch: main
+
+Objetivo:
+- medir o tempo do motor original;
+- medir o tempo com cache de layerProbability;
+- executar uma etapa de aquecimento;
+- executar três medições em cada versão;
+- validar as assinaturas das quatro loterias;
+- restaurar o motor original obrigatoriamente;
+- não executar commit, push, deploy ou gravação no Firestore.
+====================================================================================================
+
+====================================================================================================
+1. PRÉ-VALIDAÇÃO
+====================================================================================================
+Motor: .\src\pages\Top3\top3.engine.js
+SHA256 encontrado: EC56034075F4B73C191B3CD9F47EC1C42E68B0B41DD7EF22AFBE1C517E32764E
+SHA256 esperado:  EC56034075F4B73C191B3CD9F47EC1C42E68B0B41DD7EF22AFBE1C517E32764E
+====================================================================================================
+
+====================================================================================================
+2. OTIMIZAÇÃO TEMPORÁRIA APLICADA
+====================================================================================================
+SHA256 temporário: 57D19B65704EA7D2F53624A2499263E455EE1BF768DC69AAC71EE06A6A400D40
+Alteração:
+- cache de layerProbability por camada;
+- reutilização dos Maps durante o ranking dos 25 grupos.
+====================================================================================================
+
+====================================================================================================
+3. TEMPOS MEDIDOS
+====================================================================================================
+Original — execuções: 37337 ms, 41449 ms, 33329 ms
+Original — média: 37371.67 ms
+Original — mediana: 37337.00 ms
+
+Otimizado — execuções: 37928 ms, 31495 ms, 36947 ms
+Otimizado — média: 35456.67 ms
+Otimizado — mediana: 36947.00 ms
+
+Ganho médio absoluto: 1915.00 ms
+Ganho médio percentual: 5.12%
+
+====================================================================================================
+4. VALIDAÇÃO DAS ASSINATURAS
+====================================================================================================
+EXECUÇÃO 1
+PT_RIO: original=02DFCACF1A50F59DD064246DFC179D12A9C22958990B84D9C38356424C9FBD35 | otimizado=02DFCACF1A50F59DD064246DFC179D12A9C22958990B84D9C38356424C9FBD35 | esperada=OK | igual=SIM
+FEDERAL: original=5F4267C52469CB43729C63D594A00B0624332B866A0C1A5F0D29DA983B7431A2 | otimizado=5F4267C52469CB43729C63D594A00B0624332B866A0C1A5F0D29DA983B7431A2 | esperada=OK | igual=SIM
+LOOK: original=D11B6930450A23CECD8F8322D0C9D948396A9F6A7349CB892929C863B200ECAA | otimizado=D11B6930450A23CECD8F8322D0C9D948396A9F6A7349CB892929C863B200ECAA | esperada=OK | igual=SIM
+NACIONAL: original=9F675860326EC008E84D2A1DDE2D48DB99A26EB4BD25383DE4D93A96C1F5463D | otimizado=9F675860326EC008E84D2A1DDE2D48DB99A26EB4BD25383DE4D93A96C1F5463D | esperada=OK | igual=SIM
+
+EXECUÇÃO 2
+PT_RIO: original=02DFCACF1A50F59DD064246DFC179D12A9C22958990B84D9C38356424C9FBD35 | otimizado=02DFCACF1A50F59DD064246DFC179D12A9C22958990B84D9C38356424C9FBD35 | esperada=OK | igual=SIM
+FEDERAL: original=5F4267C52469CB43729C63D594A00B0624332B866A0C1A5F0D29DA983B7431A2 | otimizado=5F4267C52469CB43729C63D594A00B0624332B866A0C1A5F0D29DA983B7431A2 | esperada=OK | igual=SIM
+LOOK: original=D11B6930450A23CECD8F8322D0C9D948396A9F6A7349CB892929C863B200ECAA | otimizado=D11B6930450A23CECD8F8322D0C9D948396A9F6A7349CB892929C863B200ECAA | esperada=OK | igual=SIM
+NACIONAL: original=9F675860326EC008E84D2A1DDE2D48DB99A26EB4BD25383DE4D93A96C1F5463D | otimizado=9F675860326EC008E84D2A1DDE2D48DB99A26EB4BD25383DE4D93A96C1F5463D | esperada=OK | igual=SIM
+
+EXECUÇÃO 3
+PT_RIO: original=02DFCACF1A50F59DD064246DFC179D12A9C22958990B84D9C38356424C9FBD35 | otimizado=02DFCACF1A50F59DD064246DFC179D12A9C22958990B84D9C38356424C9FBD35 | esperada=OK | igual=SIM
+FEDERAL: original=5F4267C52469CB43729C63D594A00B0624332B866A0C1A5F0D29DA983B7431A2 | otimizado=5F4267C52469CB43729C63D594A00B0624332B866A0C1A5F0D29DA983B7431A2 | esperada=OK | igual=SIM
+LOOK: original=D11B6930450A23CECD8F8322D0C9D948396A9F6A7349CB892929C863B200ECAA | otimizado=D11B6930450A23CECD8F8322D0C9D948396A9F6A7349CB892929C863B200ECAA | esperada=OK | igual=SIM
+NACIONAL: original=9F675860326EC008E84D2A1DDE2D48DB99A26EB4BD25383DE4D93A96C1F5463D | otimizado=9F675860326EC008E84D2A1DDE2D48DB99A26EB4BD25383DE4D93A96C1F5463D | esperada=OK | igual=SIM
+
+====================================================================================================
+5. DECISÃO TÉCNICA
+====================================================================================================
+APROVADO PARA IMPLANTAÇÃO: assinaturas idênticas e ganho de desempenho mensurável.
+
+Assinaturas válidas: SIM
+Original e otimizado idênticos: SIM
+Ganho médio: 5.12%
+
+Motor original restaurado: SIM
+Commit criado: NÃO
+Push executado: NÃO
+Deploy executado: NÃO
+Firestore alterado: NÃO
+====================================================================================================
+
+====================================================================================================
+6. RESTAURAÇÃO VALIDADA
+====================================================================================================
+SHA256 restaurado: EC56034075F4B73C191B3CD9F47EC1C42E68B0B41DD7EF22AFBE1C517E32764E
+SHA256 esperado:  EC56034075F4B73C191B3CD9F47EC1C42E68B0B41DD7EF22AFBE1C517E32764E
+
+Motor original restaurado corretamente.
+Nenhuma alteração foi mantida.
+Nenhum commit foi criado.
+Nenhum push foi executado.
+Nenhum deploy foi executado.
+Nenhuma gravação no Firestore foi realizada.
+====================================================================================================
+
+
+====================================================================================================
+6. IMPORTS, ARGUMENTOS E COMANDOS RELEVANTES
+====================================================================================================
+C:\Users\glaub\palpitaco\tmp\perf_top3_41_signatures.js:42: process.argv[2] || "tmp/perf_top3_41_data"
+C:\Users\glaub\palpitaco\tmp\perf_top3_41_signatures.js:50: "PT_RIO",
+C:\Users\glaub\palpitaco\tmp\perf_top3_41_signatures.js:51: "FEDERAL",
+C:\Users\glaub\palpitaco\tmp\perf_top3_41_signatures.js:52: "LOOK",
+C:\Users\glaub\palpitaco\tmp\perf_top3_41_signatures.js:53: "NACIONAL",
+C:\Users\glaub\palpitaco\tmp\perf_top3_41_signatures.js:114: const signature = sha256(canonicalText);
+C:\Users\glaub\palpitaco\tmp\perf_top3_41_signatures.js:118: `${lotteryKey.toLowerCase()}_signature.json`
+C:\Users\glaub\palpitaco\tmp\perf_top3_41_signatures.js:126: signature,
+C:\Users\glaub\palpitaco\tmp\perf_top3_41_signatures.js:136: signature,
+C:\Users\glaub\palpitaco\tmp\perf_top3_41_signatures.js:152: console.log(`Assinatura: ${signature}`);
+C:\Users\glaub\palpitaco\tmp\perf_top3_46_analisar.py:10: "PT_RIO": "02DFCACF1A50F59DD064246DFC179D12A9C22958990B84D9C38356424C9FBD35",
+C:\Users\glaub\palpitaco\tmp\perf_top3_46_analisar.py:11: "FEDERAL": "5F4267C52469CB43729C63D594A00B0624332B866A0C1A5F0D29DA983B7431A2",
+C:\Users\glaub\palpitaco\tmp\perf_top3_46_analisar.py:12: "LOOK": "D11B6930450A23CECD8F8322D0C9D948396A9F6A7349CB892929C863B200ECAA",
+C:\Users\glaub\palpitaco\tmp\perf_top3_46_analisar.py:13: "NACIONAL": "9F675860326EC008E84D2A1DDE2D48DB99A26EB4BD25383DE4D93A96C1F5463D",
+C:\Users\glaub\palpitaco\tmp\perf_top3_46_analisar.py:44: def parse_signatures(console_path):
+C:\Users\glaub\palpitaco\tmp\perf_top3_46_analisar.py:50: signatures = {}
+C:\Users\glaub\palpitaco\tmp\perf_top3_46_analisar.py:55: r"^===== (PT_RIO|FEDERAL|LOOK|NACIONAL) =====$",
+C:\Users\glaub\palpitaco\tmp\perf_top3_46_analisar.py:63: signature = re.match(
+C:\Users\glaub\palpitaco\tmp\perf_top3_46_analisar.py:68: if signature and current:
+C:\Users\glaub\palpitaco\tmp\perf_top3_46_analisar.py:69: signatures[current] = signature.group(1).upper()
+C:\Users\glaub\palpitaco\tmp\perf_top3_46_analisar.py:72: return signatures
+C:\Users\glaub\palpitaco\tmp\perf_top3_46_analisar.py:133: original_signatures = parse_signatures(original_log)
+C:\Users\glaub\palpitaco\tmp\perf_top3_46_analisar.py:134: optimized_signatures = parse_signatures(optimized_log)
+C:\Users\glaub\palpitaco\tmp\perf_top3_46_analisar.py:139: "PT_RIO",
+C:\Users\glaub\palpitaco\tmp\perf_top3_46_analisar.py:140: "FEDERAL",
+C:\Users\glaub\palpitaco\tmp\perf_top3_46_analisar.py:141: "LOOK",
+C:\Users\glaub\palpitaco\tmp\perf_top3_46_analisar.py:142: "NACIONAL",
+C:\Users\glaub\palpitaco\tmp\perf_top3_46_analisar.py:144: original = original_signatures.get(lottery)
+C:\Users\glaub\palpitaco\tmp\perf_top3_46_analisar.py:145: optimized = optimized_signatures.get(lottery)
+C:\Users\glaub\palpitaco\tmp\perf_top3_46_analisar.py:146: expected_signature = expected[lottery]
+C:\Users\glaub\palpitaco\tmp\perf_top3_46_analisar.py:148: original_ok = original == expected_signature
+C:\Users\glaub\palpitaco\tmp\perf_top3_46_analisar.py:149: optimized_ok = optimized == expected_signature
+C:\Users\glaub\palpitaco\tmp\perf_top3_46_patch.py:4: target = Path(r"src/pages/Top3/top3.engine.js")
+C:\Users\glaub\palpitaco\tmp\perf_top3_46_benchmark_original_x_otimizado.txt:21: Motor: .\src\pages\Top3\top3.engine.js
+C:\Users\glaub\palpitaco\tmp\perf_top3_46_benchmark_original_x_otimizado.txt:53: PT_RIO: original=02DFCACF1A50F59DD064246DFC179D12A9C22958990B84D9C38356424C9FBD35 | otimizado=02DFCACF1A50F59DD064246DFC179D12A9C22958990B84D9C38356424C9FBD35 | esperada=OK | igual=SIM
+C:\Users\glaub\palpitaco\tmp\perf_top3_46_benchmark_original_x_otimizado.txt:54: FEDERAL: original=5F4267C52469CB43729C63D594A00B0624332B866A0C1A5F0D29DA983B7431A2 | otimizado=5F4267C52469CB43729C63D594A00B0624332B866A0C1A5F0D29DA983B7431A2 | esperada=OK | igual=SIM
+C:\Users\glaub\palpitaco\tmp\perf_top3_46_benchmark_original_x_otimizado.txt:55: LOOK: original=D11B6930450A23CECD8F8322D0C9D948396A9F6A7349CB892929C863B200ECAA | otimizado=D11B6930450A23CECD8F8322D0C9D948396A9F6A7349CB892929C863B200ECAA | esperada=OK | igual=SIM
+C:\Users\glaub\palpitaco\tmp\perf_top3_46_benchmark_original_x_otimizado.txt:56: NACIONAL: original=9F675860326EC008E84D2A1DDE2D48DB99A26EB4BD25383DE4D93A96C1F5463D | otimizado=9F675860326EC008E84D2A1DDE2D48DB99A26EB4BD25383DE4D93A96C1F5463D | esperada=OK | igual=SIM
+C:\Users\glaub\palpitaco\tmp\perf_top3_46_benchmark_original_x_otimizado.txt:59: PT_RIO: original=02DFCACF1A50F59DD064246DFC179D12A9C22958990B84D9C38356424C9FBD35 | otimizado=02DFCACF1A50F59DD064246DFC179D12A9C22958990B84D9C38356424C9FBD35 | esperada=OK | igual=SIM
+C:\Users\glaub\palpitaco\tmp\perf_top3_46_benchmark_original_x_otimizado.txt:60: FEDERAL: original=5F4267C52469CB43729C63D594A00B0624332B866A0C1A5F0D29DA983B7431A2 | otimizado=5F4267C52469CB43729C63D594A00B0624332B866A0C1A5F0D29DA983B7431A2 | esperada=OK | igual=SIM
+C:\Users\glaub\palpitaco\tmp\perf_top3_46_benchmark_original_x_otimizado.txt:61: LOOK: original=D11B6930450A23CECD8F8322D0C9D948396A9F6A7349CB892929C863B200ECAA | otimizado=D11B6930450A23CECD8F8322D0C9D948396A9F6A7349CB892929C863B200ECAA | esperada=OK | igual=SIM
+C:\Users\glaub\palpitaco\tmp\perf_top3_46_benchmark_original_x_otimizado.txt:62: NACIONAL: original=9F675860326EC008E84D2A1DDE2D48DB99A26EB4BD25383DE4D93A96C1F5463D | otimizado=9F675860326EC008E84D2A1DDE2D48DB99A26EB4BD25383DE4D93A96C1F5463D | esperada=OK | igual=SIM
+C:\Users\glaub\palpitaco\tmp\perf_top3_46_benchmark_original_x_otimizado.txt:65: PT_RIO: original=02DFCACF1A50F59DD064246DFC179D12A9C22958990B84D9C38356424C9FBD35 | otimizado=02DFCACF1A50F59DD064246DFC179D12A9C22958990B84D9C38356424C9FBD35 | esperada=OK | igual=SIM
+C:\Users\glaub\palpitaco\tmp\perf_top3_46_benchmark_original_x_otimizado.txt:66: FEDERAL: original=5F4267C52469CB43729C63D594A00B0624332B866A0C1A5F0D29DA983B7431A2 | otimizado=5F4267C52469CB43729C63D594A00B0624332B866A0C1A5F0D29DA983B7431A2 | esperada=OK | igual=SIM
+C:\Users\glaub\palpitaco\tmp\perf_top3_46_benchmark_original_x_otimizado.txt:67: LOOK: original=D11B6930450A23CECD8F8322D0C9D948396A9F6A7349CB892929C863B200ECAA | otimizado=D11B6930450A23CECD8F8322D0C9D948396A9F6A7349CB892929C863B200ECAA | esperada=OK | igual=SIM
+C:\Users\glaub\palpitaco\tmp\perf_top3_46_benchmark_original_x_otimizado.txt:68: NACIONAL: original=9F675860326EC008E84D2A1DDE2D48DB99A26EB4BD25383DE4D93A96C1F5463D | otimizado=9F675860326EC008E84D2A1DDE2D48DB99A26EB4BD25383DE4D93A96C1F5463D | esperada=OK | igual=SIM
+C:\Users\glaub\palpitaco\tmp\perf_top3_43_patch.py:4: target = Path(r"src/pages/Top3/top3.engine.js")
+C:\Users\glaub\palpitaco\tmp\perf_top3_45_compare.py:8: report_path = Path(r"tmp/perf_top3_45_primeira_divergencia_nacional.txt")
+C:\Users\glaub\palpitaco\tmp\perf_top3_45_compare.py:20: def contains_nacional(value):
+C:\Users\glaub\palpitaco\tmp\perf_top3_45_compare.py:23: if "NACIONAL" in str(k).upper():
+C:\Users\glaub\palpitaco\tmp\perf_top3_45_compare.py:25: if contains_nacional(v):
+C:\Users\glaub\palpitaco\tmp\perf_top3_45_compare.py:30: return any(contains_nacional(v) for v in value)
+C:\Users\glaub\palpitaco\tmp\perf_top3_45_compare.py:32: return "NACIONAL" in str(value).upper()
+C:\Users\glaub\palpitaco\tmp\perf_top3_45_compare.py:157: "NACIONAL" in name.upper() or
+C:\Users\glaub\palpitaco\tmp\perf_top3_45_compare.py:158: contains_nacional(original_data) or
+C:\Users\glaub\palpitaco\tmp\perf_top3_45_compare.py:159: contains_nacional(optimized_data)
+C:\Users\glaub\palpitaco\tmp\perf_top3_45_compare.py:167: append("3. PRIMEIRA DIVERGÊNCIA DA NACIONAL")
+C:\Users\glaub\palpitaco\tmp\perf_top3_45_compare.py:208: "como pertencentes à NACIONAL."
+C:\Users\glaub\palpitaco\package.json:22: "backend:server": "node backend/server.js",
+C:\Users\glaub\palpitaco\package.json:23: "stats:update": "node backend/workers/updateStatistics.js",
+C:\Users\glaub\palpitaco\package.json:25: "auto:pt_rio": "node backend/scripts/autoImportToday.js",
+C:\Users\glaub\palpitaco\package.json:30: "auto:federal": "powershell -NoProfile -Command \"$env:LOTTERY='FEDERAL'; node backend/scripts/autoImportToday.js\"",
+
+====================================================================================================
+7. DIRETÓRIOS DE DADOS E RESULTADOS EXISTENTES
+====================================================================================================
+
+DIRETÓRIO: .\tmp\perf_top3_40_runs
+
+FullName                                                                                               Length LastWriteTime
+--------                                                                                               ------ -------------
+C:\Users\glaub\palpitaco\tmp\perf_top3_40_runs\federal\console.txt                                       3642 24/07/2026 10:23:05
+C:\Users\glaub\palpitaco\tmp\perf_top3_40_runs\federal\top3_official_backtest_federal_limit_100.json     9605 24/07/2026 10:23:05
+C:\Users\glaub\palpitaco\tmp\perf_top3_40_runs\federal\top3_official_backtest_federal_limit_100.txt      2644 24/07/2026 10:23:05
+C:\Users\glaub\palpitaco\tmp\perf_top3_40_runs\look\console.txt                                          3106 24/07/2026 10:23:18
+C:\Users\glaub\palpitaco\tmp\perf_top3_40_runs\look\top3_official_backtest_look_limit_100.json           7479 24/07/2026 10:23:18
+C:\Users\glaub\palpitaco\tmp\perf_top3_40_runs\look\top3_official_backtest_look_limit_100.txt            2175 24/07/2026 10:23:18
+C:\Users\glaub\palpitaco\tmp\perf_top3_40_runs\nacional\console.txt                                      3516 24/07/2026 10:23:32
+C:\Users\glaub\palpitaco\tmp\perf_top3_40_runs\nacional\top3_official_backtest_nacional_limit_100.json   9198 24/07/2026 10:23:32
+C:\Users\glaub\palpitaco\tmp\perf_top3_40_runs\nacional\top3_official_backtest_nacional_limit_100.txt    2526 24/07/2026 10:23:32
+C:\Users\glaub\palpitaco\tmp\perf_top3_40_runs\pt_rio\console.txt                                        3373 24/07/2026 10:23:00
+C:\Users\glaub\palpitaco\tmp\perf_top3_40_runs\pt_rio\top3_official_backtest_pt_rio_limit_100.json       8645 24/07/2026 10:23:00
+C:\Users\glaub\palpitaco\tmp\perf_top3_40_runs\pt_rio\top3_official_backtest_pt_rio_limit_100.txt        2406 24/07/2026 10:23:00
+
+
+
+DIRETÓRIO: .\tmp\perf_top3_41_data
+
+FullName                                                               Length LastWriteTime
+--------                                                               ------ -------------
+C:\Users\glaub\palpitaco\tmp\perf_top3_41_data\federal_signature.json   41979 24/07/2026 10:26:15
+C:\Users\glaub\palpitaco\tmp\perf_top3_41_data\look_signature.json      41921 24/07/2026 10:26:25
+C:\Users\glaub\palpitaco\tmp\perf_top3_41_data\nacional_signature.json  41986 24/07/2026 10:26:35
+C:\Users\glaub\palpitaco\tmp\perf_top3_41_data\pt_rio_signature.json    41910 24/07/2026 10:26:13
+C:\Users\glaub\palpitaco\tmp\perf_top3_41_data\summary.json              1395 24/07/2026 10:26:35
+
+
+
+DIRETÓRIO: .\tmp\perf_top3_43_data
+
+FullName                                                               Length LastWriteTime
+--------                                                               ------ -------------
+C:\Users\glaub\palpitaco\tmp\perf_top3_43_data\federal_signature.json   41979 24/07/2026 10:44:33
+C:\Users\glaub\palpitaco\tmp\perf_top3_43_data\look_signature.json      41921 24/07/2026 10:44:43
+C:\Users\glaub\palpitaco\tmp\perf_top3_43_data\nacional_signature.json  41986 24/07/2026 10:44:53
+C:\Users\glaub\palpitaco\tmp\perf_top3_43_data\pt_rio_signature.json    41910 24/07/2026 10:44:30
+C:\Users\glaub\palpitaco\tmp\perf_top3_43_data\summary.json              1395 24/07/2026 10:44:53
+
+
+
+DIRETÓRIO: .\tmp\perf_top3_45_original
+
+FullName                                                                   Length LastWriteTime
+--------                                                                   ------ -------------
+C:\Users\glaub\palpitaco\tmp\perf_top3_45_original\federal_signature.json   41979 24/07/2026 11:03:57
+C:\Users\glaub\palpitaco\tmp\perf_top3_45_original\look_signature.json      41921 24/07/2026 11:04:06
+C:\Users\glaub\palpitaco\tmp\perf_top3_45_original\nacional_signature.json  41986 24/07/2026 11:04:17
+C:\Users\glaub\palpitaco\tmp\perf_top3_45_original\pt_rio_signature.json    41910 24/07/2026 11:03:53
+C:\Users\glaub\palpitaco\tmp\perf_top3_45_original\summary.json              1411 24/07/2026 11:04:17
+
+
+
+DIRETÓRIO: .\tmp\perf_top3_45_otimizado
+
+FullName                                                                    Length LastWriteTime
+--------                                                                    ------ -------------
+C:\Users\glaub\palpitaco\tmp\perf_top3_45_otimizado\federal_signature.json   41979 24/07/2026 11:04:33
+C:\Users\glaub\palpitaco\tmp\perf_top3_45_otimizado\look_signature.json      41921 24/07/2026 11:04:43
+C:\Users\glaub\palpitaco\tmp\perf_top3_45_otimizado\nacional_signature.json  41986 24/07/2026 11:04:54
+C:\Users\glaub\palpitaco\tmp\perf_top3_45_otimizado\pt_rio_signature.json    41910 24/07/2026 11:04:30
+C:\Users\glaub\palpitaco\tmp\perf_top3_45_otimizado\summary.json              1415 24/07/2026 11:04:54
+
+
+
+DIRETÓRIO: .\tmp\perf_top3_46_work
+
+FullName                                                                                Length LastWriteTime
+--------                                                                                ------ -------------
+C:\Users\glaub\palpitaco\tmp\perf_top3_46_work\optimized_run_1_console.txt                 488 24/07/2026 11:22:16
+C:\Users\glaub\palpitaco\tmp\perf_top3_46_work\optimized_run_1_timing.txt                   67 24/07/2026 11:22:16
+C:\Users\glaub\palpitaco\tmp\perf_top3_46_work\optimized_run_2_console.txt                 488 24/07/2026 11:22:47
+C:\Users\glaub\palpitaco\tmp\perf_top3_46_work\optimized_run_2_timing.txt                   67 24/07/2026 11:22:47
+C:\Users\glaub\palpitaco\tmp\perf_top3_46_work\optimized_run_3_console.txt                 488 24/07/2026 11:23:24
+C:\Users\glaub\palpitaco\tmp\perf_top3_46_work\optimized_run_3_timing.txt                   67 24/07/2026 11:23:24
+C:\Users\glaub\palpitaco\tmp\perf_top3_46_work\optimized_warmup_console.txt                489 24/07/2026 11:21:38
+C:\Users\glaub\palpitaco\tmp\perf_top3_46_work\optimized_warmup_timing.txt                  66 24/07/2026 11:21:38
+C:\Users\glaub\palpitaco\tmp\perf_top3_46_work\original_run_1_console.txt                  487 24/07/2026 11:19:46
+C:\Users\glaub\palpitaco\tmp\perf_top3_46_work\original_run_1_timing.txt                    66 24/07/2026 11:19:46
+C:\Users\glaub\palpitaco\tmp\perf_top3_46_work\original_run_2_console.txt                  487 24/07/2026 11:20:27
+C:\Users\glaub\palpitaco\tmp\perf_top3_46_work\original_run_2_timing.txt                    66 24/07/2026 11:20:27
+C:\Users\glaub\palpitaco\tmp\perf_top3_46_work\original_run_3_console.txt                  487 24/07/2026 11:21:01
+C:\Users\glaub\palpitaco\tmp\perf_top3_46_work\original_run_3_timing.txt                    66 24/07/2026 11:21:01
+C:\Users\glaub\palpitaco\tmp\perf_top3_46_work\original_warmup_console.txt                 488 24/07/2026 11:19:09
+C:\Users\glaub\palpitaco\tmp\perf_top3_46_work\original_warmup_timing.txt                   65 24/07/2026 11:19:09
+C:\Users\glaub\palpitaco\tmp\perf_top3_46_work\optimized_run_1\federal_signature.json    41979 24/07/2026 11:21:53
+C:\Users\glaub\palpitaco\tmp\perf_top3_46_work\optimized_run_1\look_signature.json       41921 24/07/2026 11:22:04
+C:\Users\glaub\palpitaco\tmp\perf_top3_46_work\optimized_run_1\nacional_signature.json   41986 24/07/2026 11:22:16
+C:\Users\glaub\palpitaco\tmp\perf_top3_46_work\optimized_run_1\pt_rio_signature.json     41910 24/07/2026 11:21:50
+C:\Users\glaub\palpitaco\tmp\perf_top3_46_work\optimized_run_1\summary.json               1463 24/07/2026 11:22:16
+C:\Users\glaub\palpitaco\tmp\perf_top3_46_work\optimized_run_2\federal_signature.json    41979 24/07/2026 11:22:27
+C:\Users\glaub\palpitaco\tmp\perf_top3_46_work\optimized_run_2\look_signature.json       41921 24/07/2026 11:22:36
+C:\Users\glaub\palpitaco\tmp\perf_top3_46_work\optimized_run_2\nacional_signature.json   41986 24/07/2026 11:22:47
+C:\Users\glaub\palpitaco\tmp\perf_top3_46_work\optimized_run_2\pt_rio_signature.json     41910 24/07/2026 11:22:25
+C:\Users\glaub\palpitaco\tmp\perf_top3_46_work\optimized_run_2\summary.json               1463 24/07/2026 11:22:47
+C:\Users\glaub\palpitaco\tmp\perf_top3_46_work\optimized_run_3\federal_signature.json    41979 24/07/2026 11:23:04
+C:\Users\glaub\palpitaco\tmp\perf_top3_46_work\optimized_run_3\look_signature.json       41921 24/07/2026 11:23:14
+C:\Users\glaub\palpitaco\tmp\perf_top3_46_work\optimized_run_3\nacional_signature.json   41986 24/07/2026 11:23:24
+C:\Users\glaub\palpitaco\tmp\perf_top3_46_work\optimized_run_3\pt_rio_signature.json     41910 24/07/2026 11:22:59
+C:\Users\glaub\palpitaco\tmp\perf_top3_46_work\optimized_run_3\summary.json               1463 24/07/2026 11:23:24
+C:\Users\glaub\palpitaco\tmp\perf_top3_46_work\optimized_warmup\federal_signature.json   41979 24/07/2026 11:21:17
+C:\Users\glaub\palpitaco\tmp\perf_top3_46_work\optimized_warmup\look_signature.json      41921 24/07/2026 11:21:27
+C:\Users\glaub\palpitaco\tmp\perf_top3_46_work\optimized_warmup\nacional_signature.json  41986 24/07/2026 11:21:38
+C:\Users\glaub\palpitaco\tmp\perf_top3_46_work\optimized_warmup\pt_rio_signature.json    41910 24/07/2026 11:21:15
+C:\Users\glaub\palpitaco\tmp\perf_top3_46_work\optimized_warmup\summary.json              1467 24/07/2026 11:21:38
+C:\Users\glaub\palpitaco\tmp\perf_top3_46_work\original_run_1\federal_signature.json     41979 24/07/2026 11:19:22
+C:\Users\glaub\palpitaco\tmp\perf_top3_46_work\original_run_1\look_signature.json        41921 24/07/2026 11:19:33
+C:\Users\glaub\palpitaco\tmp\perf_top3_46_work\original_run_1\nacional_signature.json    41986 24/07/2026 11:19:46
+C:\Users\glaub\palpitaco\tmp\perf_top3_46_work\original_run_1\pt_rio_signature.json      41910 24/07/2026 11:19:20
+C:\Users\glaub\palpitaco\tmp\perf_top3_46_work\original_run_1\summary.json                1459 24/07/2026 11:19:46
+C:\Users\glaub\palpitaco\tmp\perf_top3_46_work\original_run_2\federal_signature.json     41979 24/07/2026 11:20:06
+C:\Users\glaub\palpitaco\tmp\perf_top3_46_work\original_run_2\look_signature.json        41921 24/07/2026 11:20:15
+C:\Users\glaub\palpitaco\tmp\perf_top3_46_work\original_run_2\nacional_signature.json    41986 24/07/2026 11:20:27
+C:\Users\glaub\palpitaco\tmp\perf_top3_46_work\original_run_2\pt_rio_signature.json      41910 24/07/2026 11:20:01
+C:\Users\glaub\palpitaco\tmp\perf_top3_46_work\original_run_2\summary.json                1459 24/07/2026 11:20:27
+C:\Users\glaub\palpitaco\tmp\perf_top3_46_work\original_run_3\federal_signature.json     41979 24/07/2026 11:20:40
+C:\Users\glaub\palpitaco\tmp\perf_top3_46_work\original_run_3\look_signature.json        41921 24/07/2026 11:20:50
+C:\Users\glaub\palpitaco\tmp\perf_top3_46_work\original_run_3\nacional_signature.json    41986 24/07/2026 11:21:01
+C:\Users\glaub\palpitaco\tmp\perf_top3_46_work\original_run_3\pt_rio_signature.json      41910 24/07/2026 11:20:38
+C:\Users\glaub\palpitaco\tmp\perf_top3_46_work\original_run_3\summary.json                1459 24/07/2026 11:21:01
+C:\Users\glaub\palpitaco\tmp\perf_top3_46_work\original_warmup\federal_signature.json    41979 24/07/2026 11:18:47
+C:\Users\glaub\palpitaco\tmp\perf_top3_46_work\original_warmup\look_signature.json       41921 24/07/2026 11:18:56
+C:\Users\glaub\palpitaco\tmp\perf_top3_46_work\original_warmup\nacional_signature.json   41986 24/07/2026 11:19:09
+C:\Users\glaub\palpitaco\tmp\perf_top3_46_work\original_warmup\pt_rio_signature.json     41910 24/07/2026 11:18:44
+C:\Users\glaub\palpitaco\tmp\perf_top3_46_work\original_warmup\summary.json               1463 24/07/2026 11:19:09
+
+
+
+====================================================================================================
+8. ESTADO FINAL
+====================================================================================================
+Motor de produção alterado: NÃO
+Firestore acessado: NÃO
+Deploy executado: NÃO
+Commit executado: NÃO
+Push executado: NÃO
+====================================================================================================

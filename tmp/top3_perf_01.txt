@@ -1,0 +1,130 @@
+
+===== src/pages/Top3/Top3View.jsx =====
+
+src\pages\Top3\Top3View.jsx:2:import React, { useMemo, useState, useCallback, useEffect } from "react";
+src\pages\Top3\Top3View.jsx:528:  useEffect(() => {
+src\pages\Top3\Top3View.jsx:865:    const ok = await copyText(payload);
+src\pages\Top3\Top3View.jsx:873:    const ok = await copyText(mm);
+src\pages\Top3\Top3View.jsx:1673:  useEffect(() => {
+src\pages\Top3\Top3View.jsx:1679:  useEffect(() => {
+src\pages\Top3\Top3View.jsx:1685:  const copyText = useCallback(async (txt) => {
+src\pages\Top3\Top3View.jsx:1691:        await navigator.clipboard.writeText(s);
+src\pages\Top3\Top3View.jsx:2085:  const goToHistoryDate = useCallback(
+
+
+===== src/pages/Top3/top3.hooks.js =====
+
+src\pages\Top3\top3.hooks.js:1:import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+src\pages\Top3\top3.hooks.js:46:  saveTop3PredictionSnapshot,
+src\pages\Top3\top3.hooks.js:47:  loadTop3PredictionDay,
+src\pages\Top3\top3.hooks.js:61:  loadHistoryRange,
+src\pages\Top3\top3.hooks.js:442:  const resetStateForNoData = useCallback(() => {
+src\pages\Top3\top3.hooks.js:472:  const load = useCallback(async () => {
+src\pages\Top3\top3.hooks.js:498:        const b = await getKingBoundsByUf({ uf: ufResolved });
+src\pages\Top3\top3.hooks.js:516:        (await getKingResultsByDate({
+src\pages\Top3\top3.hooks.js:622:        const previousForFirstSlot = await getPreviousDrawRobust({
+src\pages\Top3\top3.hooks.js:636:          : await fallbackBaseSearch({
+src\pages\Top3\top3.hooks.js:681:          : (await getKingResultsByDate({
+src\pages\Top3\top3.hooks.js:694:      resolvedPrev = await getPreviousDrawRobust({
+src\pages\Top3\top3.hooks.js:707:        resolvedPrev = await fallbackBaseSearch({
+src\pages\Top3\top3.hooks.js:791:      const histRaw = await loadHistoryRange({
+src\pages\Top3\top3.hooks.js:864:  useEffect(() => {
+src\pages\Top3\top3.hooks.js:874:  useEffect(() => {
+src\pages\Top3\top3.hooks.js:924:  useEffect(() => {
+src\pages\Top3\top3.hooks.js:960:  useEffect(() => {
+src\pages\Top3\top3.hooks.js:970:  const buildMilharesCached = useCallback(
+src\pages\Top3\top3.hooks.js:1013:  const build16 = useCallback(
+src\pages\Top3\top3.hooks.js:1024:  const build20 = useCallback(
+src\pages\Top3\top3.hooks.js:1087:  useEffect(() => {
+src\pages\Top3\top3.hooks.js:1148:    saveTop3PredictionSnapshot({
+src\pages\Top3\top3.hooks.js:1223:  useEffect(() => {
+src\pages\Top3\top3.hooks.js:1249:        const history = await loadTop3PredictionDay({
+src\pages\Top3\top3.hooks.js:1277:  useEffect(() => {
+
+
+===== src/pages/Top3/top3.firestore.js =====
+
+src\pages\Top3\top3.firestore.js:3:  getDoc,
+src\pages\Top3\top3.firestore.js:345:export async function saveTop3PredictionSnapshot({
+src\pages\Top3\top3.firestore.js:356:    user = await loginAnonymous();
+src\pages\Top3\top3.firestore.js:433:  const result = await runTransaction(db, async (transaction) => {
+src\pages\Top3\top3.firestore.js:434:    const current = await transaction.get(ref);
+src\pages\Top3\top3.firestore.js:456:export async function loadTop3PredictionDay({
+src\pages\Top3\top3.firestore.js:474:  const snapshots = await Promise.all(
+src\pages\Top3\top3.firestore.js:485:        const snap = await getDoc(ref);
+src\pages\Top3\top3.firestore.js:516:    user = await loginAnonymous();
+src\pages\Top3\top3.firestore.js:534:  const history = await loadTop3PredictionDay({
+src\pages\Top3\top3.firestore.js:646:    await setDoc(
+
+
+===== src/pages/Top3/top3.engine.js =====
+
+src\pages\Top3\top3.engine.js:469:    const out = await getKingResultsByDate({
+
+
+===== src/pages/Top3/top3.public-api.js =====
+
+===== src/pages/Top3/Top3View.jsx =====
+
+src\pages\Top3\Top3View.jsx:2:import React, { useMemo, useState, useCallback, useEffect } from "react";
+src\pages\Top3\Top3View.jsx:528:  useEffect(() => {
+src\pages\Top3\Top3View.jsx:865:    const ok = await copyText(payload);
+src\pages\Top3\Top3View.jsx:873:    const ok = await copyText(mm);
+src\pages\Top3\Top3View.jsx:1673:  useEffect(() => {
+src\pages\Top3\Top3View.jsx:1679:  useEffect(() => {
+src\pages\Top3\Top3View.jsx:1685:  const copyText = useCallback(async (txt) => {
+src\pages\Top3\Top3View.jsx:1691:        await navigator.clipboard.writeText(s);
+src\pages\Top3\Top3View.jsx:2085:  const goToHistoryDate = useCallback(
+
+
+===== src/pages/Top3/top3.hooks.js =====
+
+src\pages\Top3\top3.hooks.js:1:import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+src\pages\Top3\top3.hooks.js:46:  saveTop3PredictionSnapshot,
+src\pages\Top3\top3.hooks.js:47:  loadTop3PredictionDay,
+src\pages\Top3\top3.hooks.js:61:  loadHistoryRange,
+src\pages\Top3\top3.hooks.js:442:  const resetStateForNoData = useCallback(() => {
+src\pages\Top3\top3.hooks.js:472:  const load = useCallback(async () => {
+src\pages\Top3\top3.hooks.js:498:        const b = await getKingBoundsByUf({ uf: ufResolved });
+src\pages\Top3\top3.hooks.js:516:        (await getKingResultsByDate({
+src\pages\Top3\top3.hooks.js:622:        const previousForFirstSlot = await getPreviousDrawRobust({
+src\pages\Top3\top3.hooks.js:636:          : await fallbackBaseSearch({
+src\pages\Top3\top3.hooks.js:681:          : (await getKingResultsByDate({
+src\pages\Top3\top3.hooks.js:694:      resolvedPrev = await getPreviousDrawRobust({
+src\pages\Top3\top3.hooks.js:707:        resolvedPrev = await fallbackBaseSearch({
+src\pages\Top3\top3.hooks.js:791:      const histRaw = await loadHistoryRange({
+src\pages\Top3\top3.hooks.js:864:  useEffect(() => {
+src\pages\Top3\top3.hooks.js:874:  useEffect(() => {
+src\pages\Top3\top3.hooks.js:924:  useEffect(() => {
+src\pages\Top3\top3.hooks.js:960:  useEffect(() => {
+src\pages\Top3\top3.hooks.js:970:  const buildMilharesCached = useCallback(
+src\pages\Top3\top3.hooks.js:1013:  const build16 = useCallback(
+src\pages\Top3\top3.hooks.js:1024:  const build20 = useCallback(
+src\pages\Top3\top3.hooks.js:1087:  useEffect(() => {
+src\pages\Top3\top3.hooks.js:1148:    saveTop3PredictionSnapshot({
+src\pages\Top3\top3.hooks.js:1223:  useEffect(() => {
+src\pages\Top3\top3.hooks.js:1249:        const history = await loadTop3PredictionDay({
+src\pages\Top3\top3.hooks.js:1277:  useEffect(() => {
+
+
+===== src/pages/Top3/top3.firestore.js =====
+
+src\pages\Top3\top3.firestore.js:3:  getDoc,
+src\pages\Top3\top3.firestore.js:345:export async function saveTop3PredictionSnapshot({
+src\pages\Top3\top3.firestore.js:356:    user = await loginAnonymous();
+src\pages\Top3\top3.firestore.js:433:  const result = await runTransaction(db, async (transaction) => {
+src\pages\Top3\top3.firestore.js:434:    const current = await transaction.get(ref);
+src\pages\Top3\top3.firestore.js:456:export async function loadTop3PredictionDay({
+src\pages\Top3\top3.firestore.js:474:  const snapshots = await Promise.all(
+src\pages\Top3\top3.firestore.js:485:        const snap = await getDoc(ref);
+src\pages\Top3\top3.firestore.js:516:    user = await loginAnonymous();
+src\pages\Top3\top3.firestore.js:534:  const history = await loadTop3PredictionDay({
+src\pages\Top3\top3.firestore.js:646:    await setDoc(
+
+
+===== src/pages/Top3/top3.engine.js =====
+
+src\pages\Top3\top3.engine.js:469:    const out = await getKingResultsByDate({
+
+
+===== src/pages/Top3/top3.public-api.js =====

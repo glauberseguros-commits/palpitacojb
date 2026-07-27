@@ -1,0 +1,34 @@
+===== CHAVES DO OBJETO RETORNADO =====
+
+byHour -> object
+byMonth -> object
+byWeekday -> object
+eligibleCases -> number
+engine -> string
+evaluationPeriod -> object
+global -> object
+historyLoaded -> number
+historyPeriod -> object
+historySource -> string
+limit -> number
+lotteryKey -> string
+metadata -> object
+minHistory -> number
+ok -> boolean
+selectedCases -> number
+skipped -> number
+telemetry -> object
+tookMs -> number
+
+===== PROCURA POR TELEMETRIA =====
+
+telemetry          : SIM
+   chaves = enabled, schemaVersion, cases
+telemetryCases     : NÃO
+cases              : NÃO
+rows               : NÃO
+details            : NÃO
+metadata           : SIM
+   chaves = bootstrapStatus, totalStored, lastProcessedDrawId
+debug              : NÃO
+diagnostics        : NÃO

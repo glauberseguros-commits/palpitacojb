@@ -1,0 +1,115 @@
+Activated [palpitacojb].
+Operation "operations/acf.p2-884770900140-37d114a7-0f0c-43c3-ba9b-664492b8d0cf" finished successfully.
+Operation "operations/acf.p2-884770900140-915a2f2c-e8d0-4997-be50-17940321c517" finished successfully.
+Operation "operations/acf.p2-884770900140-e914b53d-fcbd-45f3-8ee0-cf269f52081b" finished successfully.
+Created service account [palpitaco-build].
+Created service account [palpitaco-import-job].
+Updated IAM policy for project [palpitacojb-app].
+Updated IAM policy for project [palpitacojb-app].
+Updated IAM policy for serviceAccount [palpitaco-build@palpitacojb-app.iam.gserviceaccount.com].
+Updated IAM policy for serviceAccount [palpitaco-import-job@palpitacojb-app.iam.gserviceaccount.com].
+Create request issued for: [palpitaco-jobs]
+Waiting for operation [projects/palpitacojb-app/locations/southamerica-east1/operations/711b8c42-4fa3-4c8e-8564-748a61f84165] to complete...
+......................................................................................................done.
+Created repository [palpitaco-jobs].
+steps:
+  - name: "gcr.io/cloud-builders/docker"
+    args:
+      - "build"
+      - "-t"
+      - "southamerica-east1-docker.pkg.dev/palpitacojb-app/palpitaco-jobs/auto-import:56963685e1ca"
+      - "."
+images:
+  - "southamerica-east1-docker.pkg.dev/palpitacojb-app/palpitaco-jobs/auto-import:56963685e1ca"
+serviceAccount: "projects/palpitacojb-app/serviceAccounts/palpitaco-build@palpitacojb-app.iam.gserviceaccount.com"
+options:
+  logging: CLOUD_LOGGING_ONLY
+Creating temporary archive of 105 file(s) totalling 774.4 KiB before compression.
+Some files were not included in the source upload.
+
+Check the gcloud log [C:\Users\glaub\AppData\Roaming\gcloud\logs\2026.07.21\17.40.18.950883.log] to see which files and the contents of the
+default gcloudignore file used (see `$ gcloud topic gcloudignore` to learn
+more).
+
+Uploading tarball of [.\tmp\gcp09_build_context\backend] to [gs://palpitacojb-app_cloudbuild/source/1784666419.821781-88cd117f57894b3588b10d793ede7145.tgz]
+Created [https://cloudbuild.googleapis.com/v1/projects/palpitacojb-app/locations/global/builds/d5f315aa-80af-421b-8e5a-70b31d33d901].
+Logs are available at [ https://console.cloud.google.com/cloud-build/builds/d5f315aa-80af-421b-8e5a-70b31d33d901?project=884770900140 ].
+
+gcloud builds submit only displays logs from Cloud Storage. To view logs from Cloud Logging, run:
+gcloud beta builds submit
+
+Waiting for build to complete. Polling interval: 1 second(s).
+ID                                    CREATE_TIME                DURATION  SOURCE                                                                                         IMAGES                                                                                     STATUS
+d5f315aa-80af-421b-8e5a-70b31d33d901  2026-07-21T20:40:23+00:00  52S       gs://palpitacojb-app_cloudbuild/source/1784666419.821781-88cd117f57894b3588b10d793ede7145.tgz  southamerica-east1-docker.pkg.dev/palpitacojb-app/palpitaco-jobs/auto-import:56963685e1ca  SUCCESS
+Deploying container to Cloud Run job [palpitaco-auto-import] in project [palpitacojb-app] region [southamerica-east1]
+Creating job...
+Done.
+Job [palpitaco-auto-import] has successfully been deployed.
+
+To execute this job, use:
+gcloud run jobs execute palpitaco-auto-import
+metadata:
+  labels:
+    app: palpitaco
+    cloud.googleapis.com/location: southamerica-east1
+    component: auto-import
+    environment: production
+    run.googleapis.com/lastUpdatedTime: '2026-07-21T20:41:29.566616Z'
+    run.googleapis.com/satisfiesPzs: 'true'
+  name: palpitaco-auto-import
+spec:
+  template:
+    spec:
+      template:
+        spec:
+          containers:
+          - env:
+            - name: TZ
+              value: America/Sao_Paulo
+            - name: PITACO_API_BASE
+              value: https://api.palpitacojb.com.br
+            - name: FAIL_ON_CRITICAL
+              value: '1'
+            - name: VERIFY_PERSISTED
+              value: '1'
+            - name: AUDIT_WARN_MIN
+              value: '20'
+            - name: AUDIT_CRIT_MIN
+              value: '60'
+            - name: CATCHUP_MAX_AFTER_END_MIN
+              value: '1440'
+            image: southamerica-east1-docker.pkg.dev/palpitacojb-app/palpitaco-jobs/auto-import:56963685e1ca
+            resources:
+              limits:
+                cpu: '1'
+                memory: 512Mi
+          maxRetries: 0
+          serviceAccountName: palpitaco-import-job@palpitacojb-app.iam.gserviceaccount.com
+Creating execution...
+Provisioning resources..........................................done
+Starting execution.............................................................................................done
+Running execution............................................................................................................................................................done
+Done.
+Execution [palpitaco-auto-import-bv2r5] has successfully completed.
+
+View details about this execution by running:
+gcloud run jobs executions describe palpitaco-auto-import-bv2r5
+
+Or visit https://console.cloud.google.com/run/jobs/executions/details/southamerica-east1/palpitaco-auto-import-bv2r5?project=884770900140
+[HEARTBEAT] START local=17:41 date=2026-07-21 period=TODAY
+LOTTERY=PT_RIO | PERIOD=TODAY | DATE=2026-07-21
+[HEARTBEAT] OK LOTTERY=PT_RIO
+LOTTERY=FEDERAL | PERIOD=TODAY | DATE=2026-07-21
+[HEARTBEAT] OK LOTTERY=FEDERAL
+LOTTERY=LOOK | PERIOD=TODAY | DATE=2026-07-21
+[HEARTBEAT] OK LOTTERY=LOOK
+LOTTERY=NACIONAL | PERIOD=TODAY | DATE=2026-07-21
+[FETCH] NACIONAL 2026-07-21 per-lottery=8 -> merged_draws=6 close_hours=[02:00, 08:00, 10:00, 12:00, 15:00, 17:00]
+[HEARTBEAT] OK LOTTERY=NACIONAL
+[HEARTBEAT] FINAL=SUCCESS
+NAME                   REGION              STATUS
+palpitaco-auto-import  southamerica-east1  True
+Listing items under project palpitacojb-app, location southamerica-east1.
+
+REPOSITORY      FORMAT  LOCATION
+palpitaco-jobs  DOCKER

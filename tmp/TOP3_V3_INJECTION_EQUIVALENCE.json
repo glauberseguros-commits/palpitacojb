@@ -1,0 +1,31 @@
+{
+  "validation": "TOP3_V3_NATIVE_VS_INJECTED",
+  "lotteryKey": "PT_RIO",
+  "limit": 100,
+  "minHistory": 100,
+  "telemetry": true,
+  "aggregateEquivalent": true,
+  "casesEquivalent": true,
+  "fullyEquivalent": true,
+  "native": {
+    "tookMs": 10086,
+    "evaluated": 100,
+    "top1Hits": 6,
+    "top3Hits": 13,
+    "top1Rate": 6,
+    "top3Rate": 13,
+    "telemetryCases": 0
+  },
+  "injected": {
+    "tookMs": 6675,
+    "evaluated": 100,
+    "top1Hits": 6,
+    "top3Hits": 13,
+    "top1Rate": 6,
+    "top3Rate": 13,
+    "telemetryCases": 0
+  },
+  "aggregateError": null,
+  "differenceCount": 0,
+  "caseDifferences": []
+}

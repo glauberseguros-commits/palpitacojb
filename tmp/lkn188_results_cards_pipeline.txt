@@ -1,0 +1,954 @@
+
+====================================================================================================
+src/pages/Results/Results.jsx
+====================================================================================================
+
+[drawsForView] linha 981
+     973:   const drawsDisplayBase = useMemo(() => {
+     974:     return buildExpectedDrawsForScope(scopeKey, drawsOrdered, ymdClamped);
+     975:   }, [scopeKey, drawsOrdered, ymdClamped]);
+     976: 
+     977:   useEffect(() => {
+     978:     setNeedsToggle(drawsDisplayBase.length > 6);
+     979:   }, [drawsDisplayBase.length]);
+     980: 
+>>   981:   const drawsForView = useMemo(() => {
+     982:     if (!drawsDisplayBase.length) return [];
+     983:     if (!needsToggle) return drawsDisplayBase;
+     984:     if (showAll) return drawsDisplayBase;
+     985:     return drawsDisplayBase.slice(0, 6);
+     986:   }, [drawsDisplayBase, needsToggle, showAll]);
+     987: 
+     988:   const canGoPrevMonth = useMemo(() => {
+     989:     if (!isYMD(effectiveBounds?.minYmd)) return true;
+
+[drawsForView] linha 1824
+    1816:                       title={showAll ? "Ver menos" : "Ver mais"}
+    1817:                     >
+    1818:                       {showAll ? "Ver menos" : "Ver mais"}
+    1819:                     </button>
+    1820:                   ) : null}
+    1821:                 </div>
+    1822: 
+    1823:                 <div className="pp_grid2">
+>>  1824:                   {drawsForView.map((d, idx) => {
+    1825:                     const hour = normalizeHourLike(
+    1826:                       d?.close_hour || d?.closeHour || d?.hour || d?.hora || ""
+    1827:                     );
+    1828:                     const id = safeStr(d?.drawId || d?.id || `idx_${idx}`);
+    1829:                     const prizesRaw = Array.isArray(d?.prizes) ? d.prizes : [];
+    1830:                     const displayHour =
+    1831:   scopeKey === SCOPE_NACIONAL
+    1832:     ? normalizeNacionalDisplayHour(d)
+
+[normalizeNacionalDisplayHour] linha 601
+     593:   if (hNum < 0) return true;
+     594: 
+     595:   if (safeStr(ymd) !== todayYMDLocal()) return true;
+     596: 
+     597:   return hNum <= currentHourNumLocal();
+     598: }
+     599: 
+     600: 
+>>   601: function normalizeNacionalDisplayHour(draw) {
+     602:   const hour = normalizeHourLike(
+     603:     draw?.close_hour || draw?.closeHour || draw?.hour || draw?.hora || ""
+     604:   );
+     605: 
+     606:   const lotteryName = safeStr(draw?.lottery_name).toUpperCase();
+     607: 
+     608:   const m = lotteryName.match(/(\d{2})\s*HS?/);
+     609: 
+
+[normalizeNacionalDisplayHour] linha 646
+     638: 
+     639: function buildExpectedDrawsForScope(scopeKey, orderedDraws, ymd) {
+     640:   const list = Array.isArray(orderedDraws) ? orderedDraws : [];
+     641:   const byHour = new Map();
+     642: 
+     643:   for (const d of list) {
+     644:     const h =
+     645:       scopeKey === SCOPE_NACIONAL
+>>   646:         ? normalizeNacionalDisplayHour(d)
+     647:         : normalizeHourLike(
+     648:             d?.close_hour || d?.closeHour || d?.hour || d?.hora || ""
+     649:           );
+     650:     if (!h) continue;
+     651:     if (!byHour.has(h)) byHour.set(h, d);
+     652:   }
+     653: 
+     654:   if (scopeKey === SCOPE_FEDERAL) {
+
+[normalizeNacionalDisplayHour] linha 1832
+    1824:                   {drawsForView.map((d, idx) => {
+    1825:                     const hour = normalizeHourLike(
+    1826:                       d?.close_hour || d?.closeHour || d?.hour || d?.hora || ""
+    1827:                     );
+    1828:                     const id = safeStr(d?.drawId || d?.id || `idx_${idx}`);
+    1829:                     const prizesRaw = Array.isArray(d?.prizes) ? d.prizes : [];
+    1830:                     const displayHour =
+    1831:   scopeKey === SCOPE_NACIONAL
+>>  1832:     ? normalizeNacionalDisplayHour(d)
+    1833:     : hour;
+    1834: 
+    1835: const hs = displayHour
+    1836:   ? `${displayHour.slice(0,2)}HS`
+    1837:   : "—";
+    1838: 
+    1839:                     const byPos = new Map();
+    1840:                     for (const p of prizesRaw) {
+
+[normalizeHourLike] linha 113
+     105:     return {
+     106:       ymd,
+     107:       day: d.getDate(),
+     108:       inMonth: d.getMonth() === first.getMonth(),
+     109:     };
+     110:   });
+     111: }
+     112: 
+>>   113: function normalizeHourLike(value) {
+     114:   const s0 = safeStr(value);
+     115:   if (!s0) return "";
+     116: 
+     117:   const s = s0.replace(/\s+/g, "");
+     118: 
+     119:   const mhx = s.match(/^(\d{1,2})(?:h|hs|hr|hrs)$/i);
+     120:   if (mhx) return `${pad2(mhx[1])}:00`;
+     121: 
+
+[normalizeHourLike] linha 134
+     126: 
+     127:   const m2 = s.match(/^(\d{1,2})$/);
+     128:   if (m2) return `${pad2(m2[1])}:00`;
+     129: 
+     130:   return s0;
+     131: }
+     132: 
+     133: function hourToNum(h) {
+>>   134:   const s = normalizeHourLike(h);
+     135:   const m = s.match(/^(\d{2}):(\d{2})$/);
+     136:   if (!m) return -1;
+     137:   return Number(m[1]) * 100 + Number(m[2]);
+     138: }
+     139: 
+     140: function unwrapDraws(maybe) {
+     141:   if (Array.isArray(maybe)) return maybe;
+     142:   if (maybe && typeof maybe === "object") {
+
+[normalizeHourLike] linha 495
+     487:   return { grupo: null, label, imgVariants: [] };
+     488: }
+     489: 
+     490: /* =========================
+     491:    Dedup de draws
+     492: ========================= */
+     493: 
+     494: function drawKeyForDedup(d, scopeKey, ymd) {
+>>   495:   const hour = normalizeHourLike(
+     496:     d?.close_hour || d?.closeHour || d?.hour || d?.hora || ""
+     497:   );
+     498:   if (hour) return `HOUR:${scopeKey}|${ymd}|${hour}`;
+     499:   const id = safeStr(d?.drawId || d?.id || "");
+     500:   return `ID:${scopeKey}|${ymd}|${id || "?"}`;
+     501: }
+     502: 
+     503: function countPrizes(d) {
+
+[normalizeHourLike] linha 602
+     594: 
+     595:   if (safeStr(ymd) !== todayYMDLocal()) return true;
+     596: 
+     597:   return hNum <= currentHourNumLocal();
+     598: }
+     599: 
+     600: 
+     601: function normalizeNacionalDisplayHour(draw) {
+>>   602:   const hour = normalizeHourLike(
+     603:     draw?.close_hour || draw?.closeHour || draw?.hour || draw?.hora || ""
+     604:   );
+     605: 
+     606:   const lotteryName = safeStr(draw?.lottery_name).toUpperCase();
+     607: 
+     608:   const m = lotteryName.match(/(\d{2})\s*HS?/);
+     609: 
+     610:   if (m) {
+
+[normalizeHourLike] linha 647
+     639: function buildExpectedDrawsForScope(scopeKey, orderedDraws, ymd) {
+     640:   const list = Array.isArray(orderedDraws) ? orderedDraws : [];
+     641:   const byHour = new Map();
+     642: 
+     643:   for (const d of list) {
+     644:     const h =
+     645:       scopeKey === SCOPE_NACIONAL
+     646:         ? normalizeNacionalDisplayHour(d)
+>>   647:         : normalizeHourLike(
+     648:             d?.close_hour || d?.closeHour || d?.hour || d?.hora || ""
+     649:           );
+     650:     if (!h) continue;
+     651:     if (!byHour.has(h)) byHour.set(h, d);
+     652:   }
+     653: 
+     654:   if (scopeKey === SCOPE_FEDERAL) {
+     655:     return [...list].sort((a, b) => {
+
+[normalizeHourLike] linha 697
+     689:       id: `placeholder_${scopeKey}_${hour}`,
+     690:       close_hour: hour,
+     691:       closeHour: hour,
+     692:       prizes: [],
+     693:     };
+     694:   });
+     695: 
+     696:   const extraActual = list.filter((d) => {
+>>   697:     const h = normalizeHourLike(
+     698:       d?.close_hour || d?.closeHour || d?.hour || d?.hora || ""
+     699:     );
+     700:     return h && !visibleExpectedHours.includes(h);
+     701:   });
+     702: 
+     703:   return [...result, ...extraActual].sort((a, b) => {
+     704:     const ha = hourToNum(
+     705:       a?.__slotHour || a?.close_hour || a?.closeHour || a?.hour || a?.hora
+
+[normalizeHourLike] linha 1825
+    1817:                     >
+    1818:                       {showAll ? "Ver menos" : "Ver mais"}
+    1819:                     </button>
+    1820:                   ) : null}
+    1821:                 </div>
+    1822: 
+    1823:                 <div className="pp_grid2">
+    1824:                   {drawsForView.map((d, idx) => {
+>>  1825:                     const hour = normalizeHourLike(
+    1826:                       d?.close_hour || d?.closeHour || d?.hour || d?.hora || ""
+    1827:                     );
+    1828:                     const id = safeStr(d?.drawId || d?.id || `idx_${idx}`);
+    1829:                     const prizesRaw = Array.isArray(d?.prizes) ? d.prizes : [];
+    1830:                     const displayHour =
+    1831:   scopeKey === SCOPE_NACIONAL
+    1832:     ? normalizeNacionalDisplayHour(d)
+    1833:     : hour;
+
+[lottery_name] linha 606
+     598: }
+     599: 
+     600: 
+     601: function normalizeNacionalDisplayHour(draw) {
+     602:   const hour = normalizeHourLike(
+     603:     draw?.close_hour || draw?.closeHour || draw?.hour || draw?.hora || ""
+     604:   );
+     605: 
+>>   606:   const lotteryName = safeStr(draw?.lottery_name).toUpperCase();
+     607: 
+     608:   const m = lotteryName.match(/(\d{2})\s*HS?/);
+     609: 
+     610:   if (m) {
+     611:     return `${m[1]}:00`;
+     612:   }
+     613: 
+     614:   switch (hour) {
+
+[displayHour] linha 1830
+    1822: 
+    1823:                 <div className="pp_grid2">
+    1824:                   {drawsForView.map((d, idx) => {
+    1825:                     const hour = normalizeHourLike(
+    1826:                       d?.close_hour || d?.closeHour || d?.hour || d?.hora || ""
+    1827:                     );
+    1828:                     const id = safeStr(d?.drawId || d?.id || `idx_${idx}`);
+    1829:                     const prizesRaw = Array.isArray(d?.prizes) ? d.prizes : [];
+>>  1830:                     const displayHour =
+    1831:   scopeKey === SCOPE_NACIONAL
+    1832:     ? normalizeNacionalDisplayHour(d)
+    1833:     : hour;
+    1834: 
+    1835: const hs = displayHour
+    1836:   ? `${displayHour.slice(0,2)}HS`
+    1837:   : "—";
+    1838: 
+
+[displayHour] linha 1835
+    1827:                     );
+    1828:                     const id = safeStr(d?.drawId || d?.id || `idx_${idx}`);
+    1829:                     const prizesRaw = Array.isArray(d?.prizes) ? d.prizes : [];
+    1830:                     const displayHour =
+    1831:   scopeKey === SCOPE_NACIONAL
+    1832:     ? normalizeNacionalDisplayHour(d)
+    1833:     : hour;
+    1834: 
+>>  1835: const hs = displayHour
+    1836:   ? `${displayHour.slice(0,2)}HS`
+    1837:   : "—";
+    1838: 
+    1839:                     const byPos = new Map();
+    1840:                     for (const p of prizesRaw) {
+    1841:                       const pos = guessPrizePos(p);
+    1842:                       if (!pos) continue;
+    1843:                       if (!byPos.has(pos)) byPos.set(pos, p);
+
+[displayHour] linha 1836
+    1828:                     const id = safeStr(d?.drawId || d?.id || `idx_${idx}`);
+    1829:                     const prizesRaw = Array.isArray(d?.prizes) ? d.prizes : [];
+    1830:                     const displayHour =
+    1831:   scopeKey === SCOPE_NACIONAL
+    1832:     ? normalizeNacionalDisplayHour(d)
+    1833:     : hour;
+    1834: 
+    1835: const hs = displayHour
+>>  1836:   ? `${displayHour.slice(0,2)}HS`
+    1837:   : "—";
+    1838: 
+    1839:                     const byPos = new Map();
+    1840:                     for (const p of prizesRaw) {
+    1841:                       const pos = guessPrizePos(p);
+    1842:                       if (!pos) continue;
+    1843:                       if (!byPos.has(pos)) byPos.set(pos, p);
+    1844:                     }
+
+[\.map\(] linha 680
+     672:   } else if (scopeKey === SCOPE_NACIONAL) {
+     673:     expectedHours = NACIONAL_EXPECTED_HOURS_DESC;
+     674:   }
+     675: 
+     676:   const visibleExpectedHours = expectedHours.filter((hour) =>
+     677:     shouldShowExpectedHour(ymd, hour)
+     678:   );
+     679: 
+>>   680:   const result = visibleExpectedHours.map((hour) => {
+     681:     const found = byHour.get(hour);
+     682:     if (found) return found;
+     683: 
+     684:     return {
+     685:       __placeholder: true,
+     686:       __slotHour: hour,
+     687:       __placeholderKind: "compact",
+     688:       drawId: `placeholder_${scopeKey}_${hour}`,
+
+[\.map\(] linha 884
+     876:       const deduped = dedupeDraws(list, sKey, d);
+     877: 
+     878:       console.log("[RESULTS_DEBUG]", {
+     879:         scope: sKey,
+     880:         date: d,
+     881:         rawLen: Array.isArray(out) ? out.length : null,
+     882:         listLen: Array.isArray(list) ? list.length : null,
+     883:         dedupedLen: Array.isArray(deduped) ? deduped.length : null,
+>>   884:         hours: deduped.map((x) => ({
+     885:           id: x?.drawId || x?.id || null,
+     886:           hour: x?.close_hour || x?.closeHour || x?.hour || x?.hora || null,
+     887:           ymd: x?.ymd || x?.date || null,
+     888:           prizesLen: Array.isArray(x?.prizes) ? x.prizes.length : null,
+     889:           prizesCount: x?.prizesCount ?? null,
+     890:           placeholder: !!x?.__placeholder,
+     891:         })),
+     892:       });
+
+[\.map\(] linha 1700
+    1692:                       }}
+    1693:                       aria-label="Próximo mês"
+    1694:                     >
+    1695:                       ›
+    1696:                     </button>
+    1697:                   </div>
+    1698: 
+    1699:                   <div className="pp_calWeek">
+>>  1700:                     {["D", "S", "T", "Q", "Q", "S", "S"].map((w, idx) => (
+    1701:                       <div key={`${w}_${idx}`} className="pp_calWeekItem">
+    1702:                         {w}
+    1703:                       </div>
+    1704:                     ))}
+    1705:                   </div>
+    1706: 
+    1707:                   <div className="pp_calGrid">
+    1708:                     {calendarCells.map((cell) => {
+
+[\.map\(] linha 1708
+    1700:                     {["D", "S", "T", "Q", "Q", "S", "S"].map((w, idx) => (
+    1701:                       <div key={`${w}_${idx}`} className="pp_calWeekItem">
+    1702:                         {w}
+    1703:                       </div>
+    1704:                     ))}
+    1705:                   </div>
+    1706: 
+    1707:                   <div className="pp_calGrid">
+>>  1708:                     {calendarCells.map((cell) => {
+    1709:                       const disabled =
+    1710:                         (isYMD(effectiveBounds?.minYmd) &&
+    1711:                           cell.ymd < effectiveBounds.minYmd) ||
+    1712:                         (isYMD(effectiveBounds?.maxYmd) &&
+    1713:                           cell.ymd > effectiveBounds.maxYmd);
+    1714: 
+    1715:                       const isMarked = calendarMarkedSet.has(cell.ymd);
+    1716:                       const isSelected = cell.ymd === ymdClamped;
+
+[\.map\(] linha 1824
+    1816:                       title={showAll ? "Ver menos" : "Ver mais"}
+    1817:                     >
+    1818:                       {showAll ? "Ver menos" : "Ver mais"}
+    1819:                     </button>
+    1820:                   ) : null}
+    1821:                 </div>
+    1822: 
+    1823:                 <div className="pp_grid2">
+>>  1824:                   {drawsForView.map((d, idx) => {
+    1825:                     const hour = normalizeHourLike(
+    1826:                       d?.close_hour || d?.closeHour || d?.hour || d?.hora || ""
+    1827:                     );
+    1828:                     const id = safeStr(d?.drawId || d?.id || `idx_${idx}`);
+    1829:                     const prizesRaw = Array.isArray(d?.prizes) ? d.prizes : [];
+    1830:                     const displayHour =
+    1831:   scopeKey === SCOPE_NACIONAL
+    1832:     ? normalizeNacionalDisplayHour(d)
+
+[\.map\(] linha 1878
+    1870:                               <div className="pp_headTitle">{`Resultado • ${label}`}</div>
+    1871:                               <div className="pp_headSub">{dateBR}</div>
+    1872:                             </div>
+    1873: 
+    1874:                             <div className="pp_headPill">{hs}</div>
+    1875:                           </div>
+    1876: 
+    1877:                           <div className="pp_rows">
+>>  1878:                             {rows.map((r) => {
+    1879:                               const gtxt = r.grupo ? `G${pad2(r.grupo)}` : "—";
+    1880:                               const numFmt = r.numero
+    1881:                                 ? formatPrizeNumberByPos(r.numero, r.pos)
+    1882:                                 : "";
+    1883: 
+    1884:                               return (
+    1885:                                 <div key={`${id}_pos_${r.pos}`} className="pp_row">
+    1886:                                   <div className={`pp_posBadge ${prizeRankClass(r.pos)}`}>
+
+====================================================================================================
+src/services/kingResultsService.js
+====================================================================================================
+
+[normalizeHourLike] linha 200
+     192: 
+     193: /* =========================
+     194:    Utils
+     195: ========================= */
+     196: 
+     197: /**
+     198:  * ✅ Normaliza "horário" para HH:MM
+     199:  */
+>>   200: function normalizeHourLike(value) {
+     201:   const s0 = String(value ?? "").trim();
+     202:   if (!s0) return "";
+     203: 
+     204:   const s = s0.replace(/\s+/g, "");
+     205: 
+     206:   const mhx = s.match(/^(\d{1,2})(?:h|hs|hr|hrs)$/i);
+     207:   if (mhx) return `${pad2(mhx[1])}:00`;
+     208: 
+
+[normalizeHourLike] linha 268
+     260:    - exact  SOMENTE via closeHour
+     261:    (elimina ambiguidade e "filtro fantasma")
+     262: ========================= */
+     263: 
+     264: function resolveHourFilter({ closeHour = null, closeHourBucket = null }) {
+     265:   const bucket = toHourBucket(closeHourBucket);
+     266:   if (bucket) return { kind: "bucket", bucket, hhmm: null };
+     267: 
+>>   268:   const hhmm = closeHour ? normalizeHourLike(closeHour) : null;
+     269:   if (hhmm) return { kind: "exact", bucket: null, hhmm };
+     270: 
+     271:   return { kind: null, bucket: null, hhmm: null };
+     272: }
+     273: 
+     274: function drawPassesHourFilter(draw, hourFilter) {
+     275:   if (!hourFilter || !hourFilter.kind) return true;
+     276: 
+
+[normalizeHourLike] linha 279
+     271:   return { kind: null, bucket: null, hhmm: null };
+     272: }
+     273: 
+     274: function drawPassesHourFilter(draw, hourFilter) {
+     275:   if (!hourFilter || !hourFilter.kind) return true;
+     276: 
+     277:   const raw =
+     278:     draw?.close_hour ?? draw?.closeHour ?? draw?.hour ?? draw?.hora ?? "";
+>>   279:   const norm = normalizeHourLike(raw);
+     280: 
+     281:   if (hourFilter.kind === "exact") {
+     282:     return norm === normalizeHourLike(hourFilter.hhmm);
+     283:   }
+     284: 
+     285:   if (hourFilter.kind === "bucket") {
+     286:     return toHourBucket(norm) === toHourBucket(hourFilter.bucket);
+     287:   }
+
+[normalizeHourLike] linha 282
+     274: function drawPassesHourFilter(draw, hourFilter) {
+     275:   if (!hourFilter || !hourFilter.kind) return true;
+     276: 
+     277:   const raw =
+     278:     draw?.close_hour ?? draw?.closeHour ?? draw?.hour ?? draw?.hora ?? "";
+     279:   const norm = normalizeHourLike(raw);
+     280: 
+     281:   if (hourFilter.kind === "exact") {
+>>   282:     return norm === normalizeHourLike(hourFilter.hhmm);
+     283:   }
+     284: 
+     285:   if (hourFilter.kind === "bucket") {
+     286:     return toHourBucket(norm) === toHourBucket(hourFilter.bucket);
+     287:   }
+     288: 
+     289:   return true;
+     290: }
+
+[normalizeHourLike] linha 323
+     315:     d?.code ??
+     316:     null;
+     317:   const up = raw ? String(raw).trim().toUpperCase() : "";
+     318:   return up || "";
+     319: }
+     320: 
+     321: function sortDrawsLocal(draws) {
+     322:   const toNum = (h) => {
+>>   323:     const s = normalizeHourLike(h);
+     324:     const m = s.match(/^(\d{2}):(\d{2})$/);
+     325:     if (!m) return 0;
+     326:     return Number(m[1]) * 100 + Number(m[2]);
+     327:   };
+     328: 
+     329:   return [...(draws || [])].sort((a, b) => {
+     330:     const ya = String(a?.ymd || "");
+     331:     const yb = String(b?.ymd || "");
+
+[normalizeHourLike] linha 350
+     342:     const ia = String(a?.drawId || a?.id || "");
+     343:     const ib = String(b?.drawId || b?.id || "");
+     344:     return ia.localeCompare(ib);
+     345:   });
+     346: }
+     347: 
+     348: function sortDrawsLocalDesc(draws) {
+     349:   const toNum = (h) => {
+>>   350:     const s = normalizeHourLike(h);
+     351:     const m = s.match(/^(\d{2}):(\d{2})$/);
+     352:     if (!m) return 0;
+     353:     return Number(m[1]) * 100 + Number(m[2]);
+     354:   };
+     355: 
+     356:   return [...(draws || [])].sort((a, b) => {
+     357:     const ya = String(a?.ymd || "");
+     358:     const yb = String(b?.ymd || "");
+
+[normalizeHourLike] linha 402
+     394:     const hasLogical = !!(d?.ymd && d?.close_hour);
+     395:     return prizesLen * 1_000_000 + pc * 1_000 + (hasLogical ? 10 : 0);
+     396:   }
+     397: 
+     398:   for (let i = 0; i < arr.length; i += 1) {
+     399:     const raw = arr[i] || {};
+     400: 
+     401:     const ymd = raw.ymd || normalizeToYMD(raw.date) || "";
+>>   402:     const hour = normalizeHourLike(raw.close_hour || raw.closeHour || "");
+     403: 
+     404:     const lotCode = normalizeLotteryCodeAny(raw);
+     405: 
+     406:     const drawId = raw.drawId ?? raw.id ?? raw.__name__ ?? null;
+     407:     const idStr = drawId != null ? String(drawId) : "";
+     408: 
+     409:     const hasLogical = !!(ymd && hour);
+     410: 
+
+[normalizeHourLike] linha 550
+     542: /* =========================
+     543:    Map Draw
+     544: ========================= */
+     545: 
+     546: function mapDrawDoc(doc) {
+     547:   const d = doc.data();
+     548: 
+     549:   const ymd = d.ymd || normalizeToYMD(getDocDateRaw(d));
+>>   550:   const hourNorm = normalizeHourLike(
+     551:     d.close_hour ?? d.closeHour ?? d.hour ?? d.hora ?? ""
+     552:   );
+     553: 
+     554:   const embeddedPrizes = Array.isArray(d.prizes) && d.prizes.length > 0 ? d.prizes : null;
+     555: 
+     556:   const ufRaw = d.uf ?? null;
+     557:   const lotteryKeyRaw = d.lottery_key ?? d.lotteryKey ?? d.lottery ?? null;
+     558: 
+
+[normalizeHourLike] linha 1030
+    1022:     })
+    1023:     .filter(Boolean)
+    1024:     .sort();
+    1025: 
+    1026:   return parts.join("|");
+    1027: }
+    1028: 
+    1029: function federalHourPriority(draw) {
+>>  1030:   const h = normalizeHourLike(
+    1031:     draw?.close_hour || draw?.closeHour || draw?.hour || draw?.hora || ""
+    1032:   );
+    1033:   const ymd = String(draw?.ymd || normalizeToYMD(draw?.date) || "").trim();
+    1034:   const n = hourToNumSafe(h);
+    1035: 
+    1036:   const prefer20h = getFederalPreferredHourForYmd(ymd) === "20:00";
+    1037: 
+    1038:   if (prefer20h) {
+
+[normalizeHourLike] linha 1603
+    1595:       : "all";
+    1596:   const lots = lotteriesArr && lotteriesArr.length ? lotteriesArr.join(",") : "all";
+    1597:   const cd = Number(chunkDays) || 15;
+    1598:   const pos = Number(prizePosition) || 1;
+    1599:   return `late::${scopeKey}::${fromYmd}..${toYmd}::base=${baseYmd}::pos=${pos}::h=${h}::lots=${lots}::chunk=${cd}`;
+    1600: }
+    1601: 
+    1602: function hourToNumSafe(hhmm) {
+>>  1603:   const s = normalizeHourLike(hhmm);
+    1604:   const m = s.match(/^(\d{2}):(\d{2})$/);
+    1605:   if (!m) return Number.POSITIVE_INFINITY;
+    1606:   return Number(m[1]) * 100 + Number(m[2]);
+    1607: }
+    1608: 
+    1609: export async function getKingLateByRange({
+    1610:   uf,
+    1611:   dateFrom,
+
+[normalizeHourLike] linha 1731
+    1723:     const diff = lastYmd ? daysDiffUTC(lastYmd, baseYmd) : NaN;
+    1724:     const atrasoDias =
+    1725:       lastYmd && Number.isFinite(diff) ? Math.max(0, diff) : null;
+    1726: 
+    1727:     rows.push({
+    1728:       pos: 0,
+    1729:       grupo: g,
+    1730:       lastYmd,
+>>  1731:       lastHour: seen?.hour ? normalizeHourLike(seen.hour) : null,
+    1732:       lastDrawId: seen?.drawId || null,
+    1733:       lastLottery: seen?.lottery_code || null,
+    1734:       atrasoDias,
+    1735:     });
+    1736:   }
+    1737: 
+    1738:   const sorted = [...rows].sort((a, b) => {
+    1739:     const aa = Number.isFinite(Number(a?.atrasoDias)) ? Number(a.atrasoDias) : -1;
+
+[lottery_name] linha 585
+     577:     close_hour: hourNorm,
+     578:     closeHour: hourNorm,
+     579: 
+     580:     uf: ufRaw,
+     581:     lottery_key: lotteryKeyRaw,
+     582: 
+     583:     lottery_code: lotteryCodeRaw ? String(lotteryCodeRaw).toUpperCase() : null,
+     584: 
+>>   585:     lottery_name: d.lottery_name ?? d.lotteryName ?? null,
+     586:     lottery_label: d.lottery_label ?? d.lotteryLabel ?? null,
+     587: 
+     588:     prizesCount: d.prizesCount,
+     589:     prizes: embeddedPrizes,
+     590:   };
+     591: }
+     592: 
+     593: /* =========================
+
+[lottery_label] linha 586
+     578:     closeHour: hourNorm,
+     579: 
+     580:     uf: ufRaw,
+     581:     lottery_key: lotteryKeyRaw,
+     582: 
+     583:     lottery_code: lotteryCodeRaw ? String(lotteryCodeRaw).toUpperCase() : null,
+     584: 
+     585:     lottery_name: d.lottery_name ?? d.lotteryName ?? null,
+>>   586:     lottery_label: d.lottery_label ?? d.lotteryLabel ?? null,
+     587: 
+     588:     prizesCount: d.prizesCount,
+     589:     prizes: embeddedPrizes,
+     590:   };
+     591: }
+     592: 
+     593: /* =========================
+     594:    Compat: uf OU lottery_key
+
+[\.map\(] linha 439
+     431:     }
+     432: 
+     433:     const prev = byKey.get(key);
+     434:     if (score(normalized) > score(prev)) {
+     435:       byKey.set(key, normalized);
+     436:     }
+     437:   }
+     438: 
+>>   439:   return order.map((k) => byKey.get(k)).filter(Boolean);
+     440: }
+     441: 
+     442: async function mapWithConcurrency(items, limitN, mapper) {
+     443:   const arr = Array.isArray(items) ? items : [];
+     444:   const concurrency = Math.max(1, Number(limitN) || 6);
+     445:   const results = new Array(arr.length);
+     446:   let idx = 0;
+     447: 
+
+[\.map\(] linha 501
+     493:  * Se existir embeddedPrizes mas vier "agregado/incompleto" (sem grupo/posição válidos),
+     494:  * faz fallback e busca a subcollection draws/{id}/prizes.
+     495:  */
+     496: async function fetchPrizesForDraw(drawId, positionsArr, embeddedPrizes) {
+     497:   const drawKey = String(drawId || "").trim();
+     498:   if (!drawKey) return [];
+     499: 
+     500:   if (Array.isArray(embeddedPrizes) && embeddedPrizes.length) {
+>>   501:     const normalized = embeddedPrizes.map((p, idx) =>
+     502:       normalizePrize(p, p?.prizeId ?? `emb_${idx}`)
+     503:     );
+     504: 
+     505:     const cleaned = normalized.filter(
+     506:       (x) => isValidGrupo(x?.grupo) && isValidPosition(x?.position)
+     507:     );
+     508: 
+     509:     if (cleaned.length) {
+
+[\.map\(] linha 526
+     518:     return filterPrizesByPositions(cachedAll, positionsArr);
+     519:   }
+     520: 
+     521:   const prizesCol = collection(db, "draws", drawKey, "prizes");
+     522: 
+     523:   const { snap, error } = await safeGetDocsSmart(prizesCol, { policy: "server" });
+     524:   if (error) throw error;
+     525: 
+>>   526:   const allRaw = snap.docs.map((d) => normalizePrize(d.data(), d.id));
+     527: 
+     528:   // console.log("DEBUG allRaw:", allRaw);
+     529: 
+     530: const all = allRaw.filter(
+     531:   (x) => isValidGrupo(x?.grupo) && isValidPosition(x?.position)
+     532: );
+     533: 
+     534: // console.log("DEBUG allFiltered:", all);
+
+[\.map\(] linha 852
+     844:     const last = await queryDrawsByField({
+     845:       fieldName,
+     846:       uf: ufValue,
+     847:       extraOrderBy: [orderBy(DOC_ID)],
+     848:       extraLimit: limitToLast(FALLBACK_EDGE_LIMIT),
+     849:       policy: "server",
+     850:     });
+     851: 
+>>   852:     const mappedA = (asc?.snap?.docs || []).map(mapDrawDoc);
+     853:     const mappedB = (last?.snap?.docs || []).map(mapDrawDoc);
+     854: 
+     855:     const merged = dedupeDrawsLocal([...mappedA, ...mappedB]);
+     856: 
+     857:     return {
+     858:       merged,
+     859:       ok: merged.length > 0,
+     860:       errors: [asc?.error, last?.error].filter(Boolean),
+
+[\.map\(] linha 853
+     845:       fieldName,
+     846:       uf: ufValue,
+     847:       extraOrderBy: [orderBy(DOC_ID)],
+     848:       extraLimit: limitToLast(FALLBACK_EDGE_LIMIT),
+     849:       policy: "server",
+     850:     });
+     851: 
+     852:     const mappedA = (asc?.snap?.docs || []).map(mapDrawDoc);
+>>   853:     const mappedB = (last?.snap?.docs || []).map(mapDrawDoc);
+     854: 
+     855:     const merged = dedupeDrawsLocal([...mappedA, ...mappedB]);
+     856: 
+     857:     return {
+     858:       merged,
+     859:       ok: merged.length > 0,
+     860:       errors: [asc?.error, last?.error].filter(Boolean),
+     861:       sources: [asc?.source, last?.source].filter(Boolean),
+
+[\.map\(] linha 896
+     888:       policy: "server",
+     889:     });
+     890: 
+     891:     if (eMin || eMax) {
+     892:       if (!isIndexError(eMin) && !isIndexError(eMax)) firstTryError = eMin || eMax;
+     893:     }
+     894: 
+     895:     if (minDocs.length && maxDocs.length && !eMin && !eMax) {
+>>   896:       const mappedMin = minDocs.map(mapDrawDoc);
+     897:       const mappedMax = maxDocs.map(mapDrawDoc);
+     898: 
+     899:       const { minYmd } = pickMinMaxFromMapped(mappedMin);
+     900:       const { maxYmd } = pickMinMaxFromMapped(mappedMax);
+     901: 
+     902:       if (minYmd && maxYmd) {
+     903:         return {
+     904:           ok: true,
+
+[\.map\(] linha 897
+     889:     });
+     890: 
+     891:     if (eMin || eMax) {
+     892:       if (!isIndexError(eMin) && !isIndexError(eMax)) firstTryError = eMin || eMax;
+     893:     }
+     894: 
+     895:     if (minDocs.length && maxDocs.length && !eMin && !eMax) {
+     896:       const mappedMin = minDocs.map(mapDrawDoc);
+>>   897:       const mappedMax = maxDocs.map(mapDrawDoc);
+     898: 
+     899:       const { minYmd } = pickMinMaxFromMapped(mappedMin);
+     900:       const { maxYmd } = pickMinMaxFromMapped(mappedMax);
+     901: 
+     902:       if (minYmd && maxYmd) {
+     903:         return {
+     904:           ok: true,
+     905:           uf,
+
+[\.map\(] linha 1012
+    1004:    API: Day
+    1005: ========================= */
+    1006: 
+    1007: function buildPrizeSignature(draw) {
+    1008:   const prizes = Array.isArray(draw?.prizes) ? draw.prizes : [];
+    1009:   if (!prizes.length) return "";
+    1010: 
+    1011:   const parts = prizes
+>>  1012:     .map((p) => {
+    1013:       const pos = Number(p?.position);
+    1014:       const grupo = Number(p?.grupo);
+    1015:       const numero = toPrizeDigitsByPosition(
+    1016:         p?.numero ?? p?.milhar ?? p?.number ?? p?.num ?? p?.valor ?? "",
+    1017:         pos
+    1018:       );
+    1019: 
+    1020:       if (!Number.isFinite(pos) || !Number.isFinite(grupo) || !numero) return "";
+
+[\.map\(] linha 1194
+    1186:       });
+    1187:       if (error) throw error;
+    1188:       if (found.length) docCandidates.push(...found);
+    1189:     }
+    1190:   }
+    1191: 
+    1192:   if (!docCandidates.length) return [];
+    1193: 
+>>  1194:   let baseAll = dedupeDrawsLocal(docCandidates.map(mapDrawDoc));
+    1195:   baseAll = baseAll.filter((x) => (x.ymd || normalizeToYMD(x.date)) === ymdDate);
+    1196: 
+    1197:   const orderedAll = sortDrawsLocal(baseAll);
+    1198: 
+    1199:   const hydratedAll = await mapWithConcurrency(orderedAll, 6, async (item) => {
+    1200:     const prizes = await fetchPrizesForDraw(item.drawId, positionsArr, item.prizes);
+    1201:     const pc = Array.isArray(prizes) ? prizes.length : 0;
+    1202:     return { ...item, prizes, prizesCount: pc, __mode: "detailed" };
+
+[\.map\(] linha 1287
+    1279:   const { docs, error } = await fetchDrawDocsPreferUf({
+    1280:     uf,
+    1281:     extraWheres: [where("ymd", "==", dayYmd)],
+    1282:     policy: readPolicy,
+    1283:   });
+    1284:   if (error) throw error;
+    1285:   if (!docs || !docs.length) return [];
+    1286: 
+>>  1287:   let baseAll = dedupeDrawsLocal(docs.map(mapDrawDoc));
+    1288:   baseAll = baseAll.filter((x) => (x.ymd || normalizeToYMD(x.date)) === dayYmd);
+    1289: 
+    1290:   const ordered = sortDrawsLocal(baseAll);
+    1291: 
+    1292:   return ordered.map((d) => {
+    1293:     const embedded = normalizeEmbeddedPrizesForAggregated(d?.prizes);
+    1294:     return {
+    1295:       ...d,
+
+[\.map\(] linha 1292
+    1284:   if (error) throw error;
+    1285:   if (!docs || !docs.length) return [];
+    1286: 
+    1287:   let baseAll = dedupeDrawsLocal(docs.map(mapDrawDoc));
+    1288:   baseAll = baseAll.filter((x) => (x.ymd || normalizeToYMD(x.date)) === dayYmd);
+    1289: 
+    1290:   const ordered = sortDrawsLocal(baseAll);
+    1291: 
+>>  1292:   return ordered.map((d) => {
+    1293:     const embedded = normalizeEmbeddedPrizesForAggregated(d?.prizes);
+    1294:     return {
+    1295:       ...d,
+    1296:       prizes: embedded,
+    1297:       prizesCount: embedded.length || Number(d?.prizesCount || 0),
+    1298:       __mode: "aggregated",
+    1299:     };
+    1300:   });
+
+[\.map\(] linha 1491
+    1483:       cacheSet(DRAWS_CACHE, rangeKey, out);
+    1484:     }
+    1485:       return out;
+    1486:     }
+    1487: 
+    1488:     return [];
+    1489:   }
+    1490: 
+>>  1491:   const baseAll = dedupeDrawsLocal(docs.map(mapDrawDoc));
+    1492:   const base = hourFilter?.kind
+    1493:     ? baseAll.filter((d) => drawPassesHourFilter(d, hourFilter))
+    1494:     : baseAll;
+    1495: 
+    1496:   const ordered = sortDrawsLocal(base);
+    1497: 
+    1498:   if (effectiveMode === "aggregated") {
+    1499:     const out = dedupeDrawsLocal(
+
+[\.map\(] linha 1500
+    1492:   const base = hourFilter?.kind
+    1493:     ? baseAll.filter((d) => drawPassesHourFilter(d, hourFilter))
+    1494:     : baseAll;
+    1495: 
+    1496:   const ordered = sortDrawsLocal(base);
+    1497: 
+    1498:   if (effectiveMode === "aggregated") {
+    1499:     const out = dedupeDrawsLocal(
+>>  1500:       ordered.map((d) => {
+    1501:         const embedded = normalizeEmbeddedPrizesForAggregated(d?.prizes);
+    1502:         return {
+    1503:           ...d,
+    1504:           prizes: embedded,
+    1505:           prizesCount: Number.isFinite(Number(d?.prizesCount))
+    1506:             ? Number(d.prizesCount)
+    1507:             : embedded.length || 0,
+    1508:           __mode: "aggregated",
+
+[\.map\(] linha 1568
+    1560: 
+    1561: /* =========================
+    1562:    ✅ ATRASADOS (Late) — 100% baseado na SUA base
+    1563: ========================= */
+    1564: 
+    1565: function normalizeLotteriesList(lotteries) {
+    1566:   const arr = Array.isArray(lotteries) ? lotteries : [];
+    1567:   const cleaned = arr
+>>  1568:     .map((x) => String(x ?? "").trim().toUpperCase())
+    1569:     .filter(Boolean);
+    1570:   return cleaned.length ? Array.from(new Set(cleaned)) : null;
+    1571: }
+    1572: 
+    1573: function drawPassesLotteriesFilter(draw, lotteriesArr) {
+    1574:   if (!lotteriesArr || !lotteriesArr.length) return true;
+    1575:   const code = String(draw?.lottery_code ?? "").trim().toUpperCase();
+    1576:   if (!code) return false;
+
+[\.map\(] linha 1750
+    1742: 
+    1743:     const ha = hourToNumSafe(a?.lastHour);
+    1744:     const hb = hourToNumSafe(b?.lastHour);
+    1745:     if (ha !== hb) return ha - hb;
+    1746: 
+    1747:     return Number(a?.grupo || 0) - Number(b?.grupo || 0);
+    1748:   });
+    1749: 
+>>  1750:   const out = sorted.map((r, idx) => ({ ...r, pos: idx + 1 }));
+    1751: 
+    1752:   cacheSet(LATE_CACHE, cacheKey, out);
+    1753:   return out;
+    1754: }

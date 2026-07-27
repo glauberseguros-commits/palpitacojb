@@ -1,0 +1,38 @@
+Error: 3 INVALID_ARGUMENT: Transaction too big. Decrease transaction size.
+    at callErrorFromStatus (C:\Users\glaub\palpitaco\backend\node_modules\@grpc\grpc-js\build\src\call.js:32:19)
+    at Object.onReceiveStatus (C:\Users\glaub\palpitaco\backend\node_modules\@grpc\grpc-js\build\src\client.js:193:76)
+    at Object.onReceiveStatus (C:\Users\glaub\palpitaco\backend\node_modules\@grpc\grpc-js\build\src\client-interceptors.js:367:141)
+    at Object.onReceiveStatus (C:\Users\glaub\palpitaco\backend\node_modules\@grpc\grpc-js\build\src\client-interceptors.js:327:181)
+    at C:\Users\glaub\palpitaco\backend\node_modules\@grpc\grpc-js\build\src\resolving-call.js:135:78
+    at process.processTicksAndRejections (node:internal/process/task_queues:85:11)
+for call at
+    at ServiceClientImpl.makeUnaryRequest (C:\Users\glaub\palpitaco\backend\node_modules\@grpc\grpc-js\build\src\client.js:161:32)
+    at ServiceClientImpl.<anonymous> (C:\Users\glaub\palpitaco\backend\node_modules\@grpc\grpc-js\build\src\make-client.js:105:19)
+    at C:\Users\glaub\palpitaco\backend\node_modules\@google-cloud\firestore\build\src\v1\firestore_client.js:242:33
+    at C:\Users\glaub\palpitaco\backend\node_modules\google-gax\build\src\normalCalls\timeout.js:44:16
+    at repeat (C:\Users\glaub\palpitaco\backend\node_modules\google-gax\build\src\normalCalls\retries.js:82:25)
+    at C:\Users\glaub\palpitaco\backend\node_modules\google-gax\build\src\normalCalls\retries.js:125:13
+    at OngoingCallPromise.call (C:\Users\glaub\palpitaco\backend\node_modules\google-gax\build\src\call.js:67:27)
+    at NormalApiCaller.call (C:\Users\glaub\palpitaco\backend\node_modules\google-gax\build\src\normalCalls\normalApiCaller.js:34:19)
+    at C:\Users\glaub\palpitaco\backend\node_modules\google-gax\build\src\createApiCall.js:112:30
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5)
+Caused by: Error
+    at _firestore._traceUtil.startActiveSpan (C:\Users\glaub\palpitaco\backend\node_modules\@google-cloud\firestore\build\src\write-batch.js:438:27)
+    at C:\Users\glaub\palpitaco\backend\node_modules\@google-cloud\firestore\build\src\telemetry\enabled-trace-util.js:110:30
+    at NoopContextManager.with (C:\Users\glaub\palpitaco\backend\node_modules\@opentelemetry\api\build\src\context\NoopContextManager.js:25:19)
+    at ContextAPI.with (C:\Users\glaub\palpitaco\backend\node_modules\@opentelemetry\api\build\src\api\context.js:60:46)
+    at NoopTracer.startActiveSpan (C:\Users\glaub\palpitaco\backend\node_modules\@opentelemetry\api\build\src\trace\NoopTracer.js:65:31)
+    at ProxyTracer.startActiveSpan (C:\Users\glaub\palpitaco\backend\node_modules\@opentelemetry\api\build\src\trace\ProxyTracer.js:36:24)
+    at EnabledTraceUtil.startActiveSpan (C:\Users\glaub\palpitaco\backend\node_modules\@google-cloud\firestore\build\src\telemetry\enabled-trace-util.js:102:28)
+    at WriteBatch.commit (C:\Users\glaub\palpitaco\backend\node_modules\@google-cloud\firestore\build\src\write-batch.js:436:43)
+    at C:\Users\glaub\palpitaco\tmp\cleanup_nacional_legacy.js:43:17
+    at process.processTicksAndRejections (node:internal/process/task_queues:105:5) {
+  code: 3,
+  details: 'Transaction too big. Decrease transaction size.',
+  metadata: Metadata {
+    internalRepr: Map(1) { 'x-debug-tracking-id' => [Array] },
+    opaqueData: Map(0) {},
+    options: {}
+  },
+  note: 'Exception occurred in retry method that was not classified as transient'
+}

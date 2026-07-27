@@ -1,0 +1,618 @@
+FAIL src/pages/Top3/__tests__/top3.schedule-transition.test.js
+  TOP3 ÔÇö transi├º├úo oficial de hor├írios
+    ├ù preserva Federal hist├│rica no s├íbado 18/07/2026 ├ás 20h (6 ms)
+    ÔêÜ Federal passa para domingo 19/07/2026 ├ás 11h (1 ms)
+    ÔêÜ Federal deixa de funcionar aos s├íbados ap├│s a transi├º├úo
+    ├ù Federal continua funcionando na quarta-feira ├ás 20h (2 ms)
+    ÔêÜ PT Rio preserva domingo hist├│rico anterior ├á mudan├ºa (1 ms)
+    ├ù PT Rio remove 09h e 11h do domingo ap├│s a mudan├ºa (1 ms)
+    ÔêÜ PT Rio mant├®m 18h no s├íbado depois da sa├¡da da Federal (1 ms)
+    ├ù PT Rio hist├│rico mant├®m remo├º├úo de 18h no s├íbado com Federal
+
+  ÔùÅ TOP3 ÔÇö transi├º├úo oficial de hor├írios ÔÇ║ preserva Federal hist├│rica no s├íbado 18/07/2026 ├ás 20h
+
+    expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 1
+    + Received  + 1
+
+      Array [
+    -   "20:00",
+    +   "20h",
+      ]
+
+      24 |   test("preserva Federal hist├│rica no s├íbado 18/07/2026 ├ás 20h", () => {
+      25 |     expect(isFederalDrawDay("2026-07-18")).toBe(true);
+    > 26 |     expect(schedule("FEDERAL", "2026-07-18")).toEqual(["20:00"]);
+         |                                               ^
+      27 |   });
+      28 |
+      29 |   test("Federal passa para domingo 19/07/2026 ├ás 11h", () => {
+
+      at Object.<anonymous> (src/pages/Top3/__tests__/top3.schedule-transition.test.js:26:47)
+      at TestScheduler.scheduleTests (node_modules/@jest/core/build/TestScheduler.js:333:13)
+      at runJest (node_modules/@jest/core/build/runJest.js:404:19)
+
+  ÔùÅ TOP3 ÔÇö transi├º├úo oficial de hor├írios ÔÇ║ Federal continua funcionando na quarta-feira ├ás 20h
+
+    expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 1
+    + Received  + 1
+
+      Array [
+    -   "20:00",
+    +   "20h",
+      ]
+
+      39 |   test("Federal continua funcionando na quarta-feira ├ás 20h", () => {
+      40 |     expect(isFederalDrawDay("2026-07-22")).toBe(true);
+    > 41 |     expect(schedule("FEDERAL", "2026-07-22")).toEqual(["20:00"]);
+         |                                               ^
+      42 |   });
+      43 |
+      44 |   test("PT Rio preserva domingo hist├│rico anterior ├á mudan├ºa", () => {
+
+      at Object.<anonymous> (src/pages/Top3/__tests__/top3.schedule-transition.test.js:41:47)
+      at TestScheduler.scheduleTests (node_modules/@jest/core/build/TestScheduler.js:333:13)
+      at runJest (node_modules/@jest/core/build/runJest.js:404:19)
+
+  ÔùÅ TOP3 ÔÇö transi├º├úo oficial de hor├írios ÔÇ║ PT Rio remove 09h e 11h do domingo ap├│s a mudan├ºa
+
+    expect(received).not.toContain(expected) // indexOf
+
+    Expected value: not "09:00"
+    Received array:     ["09:00", "11:00", "14:00", "16:00"]
+
+      60 |     );
+      61 |
+    > 62 |     expect(result).not.toContain("09:00");
+         |                        ^
+      63 |     expect(result).not.toContain("11:00");
+      64 |   });
+      65 |
+
+      at Object.<anonymous> (src/pages/Top3/__tests__/top3.schedule-transition.test.js:62:24)
+      at TestScheduler.scheduleTests (node_modules/@jest/core/build/TestScheduler.js:333:13)
+      at runJest (node_modules/@jest/core/build/runJest.js:404:19)
+
+  ÔùÅ TOP3 ÔÇö transi├º├úo oficial de hor├írios ÔÇ║ PT Rio hist├│rico mant├®m remo├º├úo de 18h no s├íbado com Federal
+
+    expect(received).not.toContain(expected) // indexOf
+
+    Expected value: not "18:00"
+    Received array:     ["09:00", "11:00", "14:00", "16:00", "18:00", "21:00"]
+
+      81 |     );
+      82 |
+    > 83 |     expect(result).not.toContain("18:00");
+         |                        ^
+      84 |   });
+      85 | });
+      86 |
+
+      at Object.<anonymous> (src/pages/Top3/__tests__/top3.schedule-transition.test.js:83:24)
+      at TestScheduler.scheduleTests (node_modules/@jest/core/build/TestScheduler.js:333:13)
+      at runJest (node_modules/@jest/core/build/runJest.js:404:19)
+
+Test Suites: 1 failed, 1 total
+Tests:       4 failed, 4 passed, 8 total
+Snapshots:   0 total
+Time:        1.463 s, estimated 2 s
+Ran all test suites within paths "src/pages/Top3/__tests__/top3.schedule-transition.test.js".
+
+FAIL src/pages/Top3/__tests__/top3.schedule-transition.test.js
+  TOP3 ÔÇö transi├º├úo oficial de hor├írios
+    ÔêÜ Federal hist├│rica funciona no s├íbado 18/07/2026 ├ás 20h (2 ms)
+    ÔêÜ Federal passa para domingo 19/07/2026 ├ás 11h (1 ms)
+    ÔêÜ Federal deixa de funcionar aos s├íbados ap├│s a transi├º├úo (1 ms)
+    ÔêÜ Federal continua funcionando na quarta-feira ├ás 20h (3 ms)
+    ÔêÜ PT Rio preserva domingo hist├│rico anterior ├á mudan├ºa (1 ms)
+    ├ù PT Rio passa a ter somente 14h e 16h no domingo (2 ms)
+    ÔêÜ PT Rio preserva s├íbado hist├│rico com 18h
+    ├ù PT Rio substitui 18h por 19h em 18/07/2026 (1 ms)
+    ├ù PT Rio mant├®m 19h nos s├íbados posteriores (1 ms)
+    ÔêÜ PT Rio mant├®m 18h na quarta-feira (1 ms)
+    ÔêÜ PT Rio mant├®m 18h nos demais dias ├║teis
+
+  ÔùÅ TOP3 ÔÇö transi├º├úo oficial de hor├írios ÔÇ║ PT Rio passa a ter somente 14h e 16h no domingo
+
+    expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 4
+    + Received  + 1
+
+    - Array [
+    -   "14:00",
+    -   "16:00",
+    - ]
+    + Array []
+
+      102 |
+      103 |   test("PT Rio passa a ter somente 14h e 16h no domingo", () => {
+    > 104 |     expect(rioSchedule("2026-07-19")).toEqual([
+          |                                       ^
+      105 |       "14:00",
+      106 |       "16:00",
+      107 |     ]);
+
+      at Object.<anonymous> (src/pages/Top3/__tests__/top3.schedule-transition.test.js:104:39)
+      at TestScheduler.scheduleTests (node_modules/@jest/core/build/TestScheduler.js:333:13)
+      at runJest (node_modules/@jest/core/build/runJest.js:404:19)
+
+  ÔùÅ TOP3 ÔÇö transi├º├úo oficial de hor├írios ÔÇ║ PT Rio substitui 18h por 19h em 18/07/2026
+
+    expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 0
+    + Received  + 1
+
+      Array [
+        "09:00",
+        "11:00",
+        "14:00",
+        "16:00",
+    +   "18:00",
+        "19:00",
+        "21:00",
+      ]
+
+      116 |
+      117 |   test("PT Rio substitui 18h por 19h em 18/07/2026", () => {
+    > 118 |     expect(rioSchedule("2026-07-18")).toEqual([
+          |                                       ^
+      119 |       "09:00",
+      120 |       "11:00",
+      121 |       "14:00",
+
+      at Object.<anonymous> (src/pages/Top3/__tests__/top3.schedule-transition.test.js:118:39)
+      at TestScheduler.scheduleTests (node_modules/@jest/core/build/TestScheduler.js:333:13)
+      at runJest (node_modules/@jest/core/build/runJest.js:404:19)
+
+  ÔùÅ TOP3 ÔÇö transi├º├úo oficial de hor├írios ÔÇ║ PT Rio mant├®m 19h nos s├íbados posteriores
+
+    expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 0
+    + Received  + 1
+
+      Array [
+        "09:00",
+        "11:00",
+        "14:00",
+        "16:00",
+    +   "18:00",
+        "19:00",
+        "21:00",
+      ]
+
+      127 |
+      128 |   test("PT Rio mant├®m 19h nos s├íbados posteriores", () => {
+    > 129 |     expect(rioSchedule("2026-07-25")).toEqual([
+          |                                       ^
+      130 |       "09:00",
+      131 |       "11:00",
+      132 |       "14:00",
+
+      at Object.<anonymous> (src/pages/Top3/__tests__/top3.schedule-transition.test.js:129:39)
+      at TestScheduler.scheduleTests (node_modules/@jest/core/build/TestScheduler.js:333:13)
+      at runJest (node_modules/@jest/core/build/runJest.js:404:19)
+
+Test Suites: 1 failed, 1 total
+Tests:       3 failed, 8 passed, 11 total
+Snapshots:   0 total
+Time:        4.382 s
+Ran all test suites within paths "src/pages/Top3/__tests__/top3.schedule-transition.test.js".
+
+FAIL src/pages/Top3/__tests__/top3.schedule-transition.test.js
+  TOP3 ÔÇö transi├º├úo oficial de hor├írios
+    ÔêÜ Federal hist├│rica funciona no s├íbado 18/07/2026 ├ás 20h (2 ms)
+    ÔêÜ Federal passa para domingo 19/07/2026 ├ás 11h (1 ms)
+    ÔêÜ Federal deixa de funcionar aos s├íbados ap├│s a transi├º├úo
+    ÔêÜ Federal continua funcionando na quarta-feira ├ás 20h (1 ms)
+    ÔêÜ PT Rio preserva domingo hist├│rico anterior ├á mudan├ºa (1 ms)
+    ├ù PT Rio passa a ter somente 14h e 16h no domingo (2 ms)
+    ÔêÜ PT Rio preserva s├íbado hist├│rico com 18h (1 ms)
+    ├ù PT Rio substitui 18h por 19h em 18/07/2026
+    ├ù PT Rio mant├®m 19h nos s├íbados posteriores
+    ÔêÜ PT Rio mant├®m 18h na quarta-feira
+    ÔêÜ PT Rio mant├®m 18h nos demais dias ├║teis (1 ms)
+
+  ÔùÅ TOP3 ÔÇö transi├º├úo oficial de hor├írios ÔÇ║ PT Rio passa a ter somente 14h e 16h no domingo
+
+    expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 4
+    + Received  + 1
+
+    - Array [
+    -   "14:00",
+    -   "16:00",
+    - ]
+    + Array []
+
+      102 |
+      103 |   test("PT Rio passa a ter somente 14h e 16h no domingo", () => {
+    > 104 |     expect(rioSchedule("2026-07-19")).toEqual([
+          |                                       ^
+      105 |       "14:00",
+      106 |       "16:00",
+      107 |     ]);
+
+      at Object.<anonymous> (src/pages/Top3/__tests__/top3.schedule-transition.test.js:104:39)
+      at TestScheduler.scheduleTests (node_modules/@jest/core/build/TestScheduler.js:333:13)
+      at runJest (node_modules/@jest/core/build/runJest.js:404:19)
+
+  ÔùÅ TOP3 ÔÇö transi├º├úo oficial de hor├írios ÔÇ║ PT Rio substitui 18h por 19h em 18/07/2026
+
+    expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 0
+    + Received  + 1
+
+      Array [
+        "09:00",
+        "11:00",
+        "14:00",
+        "16:00",
+    +   "18:00",
+        "19:00",
+        "21:00",
+      ]
+
+      116 |
+      117 |   test("PT Rio substitui 18h por 19h em 18/07/2026", () => {
+    > 118 |     expect(rioSchedule("2026-07-18")).toEqual([
+          |                                       ^
+      119 |       "09:00",
+      120 |       "11:00",
+      121 |       "14:00",
+
+      at Object.<anonymous> (src/pages/Top3/__tests__/top3.schedule-transition.test.js:118:39)
+      at TestScheduler.scheduleTests (node_modules/@jest/core/build/TestScheduler.js:333:13)
+      at runJest (node_modules/@jest/core/build/runJest.js:404:19)
+
+  ÔùÅ TOP3 ÔÇö transi├º├úo oficial de hor├írios ÔÇ║ PT Rio mant├®m 19h nos s├íbados posteriores
+
+    expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 0
+    + Received  + 1
+
+      Array [
+        "09:00",
+        "11:00",
+        "14:00",
+        "16:00",
+    +   "18:00",
+        "19:00",
+        "21:00",
+      ]
+
+      127 |
+      128 |   test("PT Rio mant├®m 19h nos s├íbados posteriores", () => {
+    > 129 |     expect(rioSchedule("2026-07-25")).toEqual([
+          |                                       ^
+      130 |       "09:00",
+      131 |       "11:00",
+      132 |       "14:00",
+
+      at Object.<anonymous> (src/pages/Top3/__tests__/top3.schedule-transition.test.js:129:39)
+      at TestScheduler.scheduleTests (node_modules/@jest/core/build/TestScheduler.js:333:13)
+      at runJest (node_modules/@jest/core/build/runJest.js:404:19)
+
+Test Suites: 1 failed, 1 total
+Tests:       3 failed, 8 passed, 11 total
+Snapshots:   0 total
+Time:        0.519 s, estimated 1 s
+Ran all test suites within paths "src/pages/Top3/__tests__/top3.schedule-transition.test.js".
+
+FAIL src/pages/Top3/__tests__/top3.schedule-transition.test.js
+  TOP3 ÔÇö transi├º├úo oficial de hor├írios
+    ÔêÜ Federal hist├│rica funciona no s├íbado 18/07/2026 ├ás 20h (2 ms)
+    ÔêÜ Federal passa para domingo 19/07/2026 ├ás 11h (2 ms)
+    ÔêÜ Federal deixa de funcionar aos s├íbados ap├│s a transi├º├úo (1 ms)
+    ÔêÜ Federal continua funcionando na quarta-feira ├ás 20h (1 ms)
+    ÔêÜ PT Rio preserva domingo hist├│rico anterior ├á mudan├ºa (1 ms)
+    ├ù PT Rio passa a ter somente 14h e 16h no domingo (2 ms)
+    ÔêÜ PT Rio preserva s├íbado hist├│rico com 18h (1 ms)
+    ├ù PT Rio substitui 18h por 19h em 18/07/2026 (2 ms)
+    ├ù PT Rio mant├®m 19h nos s├íbados posteriores (1 ms)
+    ÔêÜ PT Rio mant├®m 18h na quarta-feira (1 ms)
+    ÔêÜ PT Rio mant├®m 18h nos demais dias ├║teis (2 ms)
+
+  ÔùÅ TOP3 ÔÇö transi├º├úo oficial de hor├írios ÔÇ║ PT Rio passa a ter somente 14h e 16h no domingo
+
+    expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 4
+    + Received  + 1
+
+    - Array [
+    -   "14:00",
+    -   "16:00",
+    - ]
+    + Array []
+
+      102 |
+      103 |   test("PT Rio passa a ter somente 14h e 16h no domingo", () => {
+    > 104 |     expect(rioSchedule("2026-07-19")).toEqual([
+          |                                       ^
+      105 |       "14:00",
+      106 |       "16:00",
+      107 |     ]);
+
+      at Object.<anonymous> (src/pages/Top3/__tests__/top3.schedule-transition.test.js:104:39)
+      at TestScheduler.scheduleTests (node_modules/@jest/core/build/TestScheduler.js:333:13)
+      at runJest (node_modules/@jest/core/build/runJest.js:404:19)
+
+  ÔùÅ TOP3 ÔÇö transi├º├úo oficial de hor├írios ÔÇ║ PT Rio substitui 18h por 19h em 18/07/2026
+
+    expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 0
+    + Received  + 1
+
+      Array [
+        "09:00",
+        "11:00",
+        "14:00",
+        "16:00",
+    +   "18:00",
+        "19:00",
+        "21:00",
+      ]
+
+      116 |
+      117 |   test("PT Rio substitui 18h por 19h em 18/07/2026", () => {
+    > 118 |     expect(rioSchedule("2026-07-18")).toEqual([
+          |                                       ^
+      119 |       "09:00",
+      120 |       "11:00",
+      121 |       "14:00",
+
+      at Object.<anonymous> (src/pages/Top3/__tests__/top3.schedule-transition.test.js:118:39)
+      at TestScheduler.scheduleTests (node_modules/@jest/core/build/TestScheduler.js:333:13)
+      at runJest (node_modules/@jest/core/build/runJest.js:404:19)
+
+  ÔùÅ TOP3 ÔÇö transi├º├úo oficial de hor├írios ÔÇ║ PT Rio mant├®m 19h nos s├íbados posteriores
+
+    expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 0
+    + Received  + 1
+
+      Array [
+        "09:00",
+        "11:00",
+        "14:00",
+        "16:00",
+    +   "18:00",
+        "19:00",
+        "21:00",
+      ]
+
+      127 |
+      128 |   test("PT Rio mant├®m 19h nos s├íbados posteriores", () => {
+    > 129 |     expect(rioSchedule("2026-07-25")).toEqual([
+          |                                       ^
+      130 |       "09:00",
+      131 |       "11:00",
+      132 |       "14:00",
+
+      at Object.<anonymous> (src/pages/Top3/__tests__/top3.schedule-transition.test.js:129:39)
+      at TestScheduler.scheduleTests (node_modules/@jest/core/build/TestScheduler.js:333:13)
+      at runJest (node_modules/@jest/core/build/runJest.js:404:19)
+
+Test Suites: 1 failed, 1 total
+Tests:       3 failed, 8 passed, 11 total
+Snapshots:   0 total
+Time:        0.458 s, estimated 1 s
+Ran all test suites within paths "src/pages/Top3/__tests__/top3.schedule-transition.test.js".
+
+FAIL src/pages/Top3/__tests__/top3.schedule-transition.test.js
+  TOP3 ÔÇö transi├º├úo oficial de hor├írios
+    ÔêÜ Federal hist├│rica funciona no s├íbado 18/07/2026 ├ás 20h (2 ms)
+    ÔêÜ Federal passa para domingo 19/07/2026 ├ás 11h (1 ms)
+    ÔêÜ Federal deixa de funcionar aos s├íbados ap├│s a transi├º├úo (1 ms)
+    ÔêÜ Federal continua funcionando na quarta-feira ├ás 20h
+    ÔêÜ PT Rio preserva domingo hist├│rico anterior ├á mudan├ºa (1 ms)
+    ├ù PT Rio passa a ter somente 14h e 16h no domingo (2 ms)
+    ÔêÜ PT Rio preserva s├íbado hist├│rico com 18h (3 ms)
+    ├ù PT Rio substitui 18h por 19h em 18/07/2026 (1 ms)
+    ├ù PT Rio mant├®m 19h nos s├íbados posteriores (1 ms)
+    ÔêÜ PT Rio mant├®m 18h na quarta-feira (1 ms)
+    ÔêÜ PT Rio mant├®m 18h nos demais dias ├║teis
+
+  ÔùÅ TOP3 ÔÇö transi├º├úo oficial de hor├írios ÔÇ║ PT Rio passa a ter somente 14h e 16h no domingo
+
+    expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 4
+    + Received  + 1
+
+    - Array [
+    -   "14:00",
+    -   "16:00",
+    - ]
+    + Array []
+
+      102 |
+      103 |   test("PT Rio passa a ter somente 14h e 16h no domingo", () => {
+    > 104 |     expect(rioSchedule("2026-07-19")).toEqual([
+          |                                       ^
+      105 |       "14:00",
+      106 |       "16:00",
+      107 |     ]);
+
+      at Object.<anonymous> (src/pages/Top3/__tests__/top3.schedule-transition.test.js:104:39)
+      at TestScheduler.scheduleTests (node_modules/@jest/core/build/TestScheduler.js:333:13)
+      at runJest (node_modules/@jest/core/build/runJest.js:404:19)
+
+  ÔùÅ TOP3 ÔÇö transi├º├úo oficial de hor├írios ÔÇ║ PT Rio substitui 18h por 19h em 18/07/2026
+
+    expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 0
+    + Received  + 1
+
+      Array [
+        "09:00",
+        "11:00",
+        "14:00",
+        "16:00",
+    +   "18:00",
+        "19:00",
+        "21:00",
+      ]
+
+      116 |
+      117 |   test("PT Rio substitui 18h por 19h em 18/07/2026", () => {
+    > 118 |     expect(rioSchedule("2026-07-18")).toEqual([
+          |                                       ^
+      119 |       "09:00",
+      120 |       "11:00",
+      121 |       "14:00",
+
+      at Object.<anonymous> (src/pages/Top3/__tests__/top3.schedule-transition.test.js:118:39)
+      at TestScheduler.scheduleTests (node_modules/@jest/core/build/TestScheduler.js:333:13)
+      at runJest (node_modules/@jest/core/build/runJest.js:404:19)
+
+  ÔùÅ TOP3 ÔÇö transi├º├úo oficial de hor├írios ÔÇ║ PT Rio mant├®m 19h nos s├íbados posteriores
+
+    expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 0
+    + Received  + 1
+
+      Array [
+        "09:00",
+        "11:00",
+        "14:00",
+        "16:00",
+    +   "18:00",
+        "19:00",
+        "21:00",
+      ]
+
+      127 |
+      128 |   test("PT Rio mant├®m 19h nos s├íbados posteriores", () => {
+    > 129 |     expect(rioSchedule("2026-07-25")).toEqual([
+          |                                       ^
+      130 |       "09:00",
+      131 |       "11:00",
+      132 |       "14:00",
+
+      at Object.<anonymous> (src/pages/Top3/__tests__/top3.schedule-transition.test.js:129:39)
+      at TestScheduler.scheduleTests (node_modules/@jest/core/build/TestScheduler.js:333:13)
+      at runJest (node_modules/@jest/core/build/runJest.js:404:19)
+
+Test Suites: 1 failed, 1 total
+Tests:       3 failed, 8 passed, 11 total
+Snapshots:   0 total
+Time:        1.444 s
+Ran all test suites within paths "src/pages/Top3/__tests__/top3.schedule-transition.test.js".
+
+FAIL src/pages/Top3/__tests__/top3.schedule-transition.test.js
+  TOP3 ÔÇö transi├º├úo oficial de hor├írios
+    ÔêÜ Federal hist├│rica funciona no s├íbado 18/07/2026 ├ás 20h (4 ms)
+    ÔêÜ Federal passa para domingo 19/07/2026 ├ás 11h (1 ms)
+    ÔêÜ Federal deixa de funcionar aos s├íbados ap├│s a transi├º├úo (1 ms)
+    ÔêÜ Federal continua funcionando na quarta-feira ├ás 20h (6 ms)
+    ÔêÜ PT Rio preserva domingo hist├│rico anterior ├á mudan├ºa (1 ms)
+    ├ù PT Rio passa a ter somente 14h e 16h no domingo (2 ms)
+    ÔêÜ PT Rio preserva s├íbado hist├│rico com 18h (1 ms)
+    ├ù PT Rio substitui 18h por 19h em 18/07/2026 (1 ms)
+    ├ù PT Rio mant├®m 19h nos s├íbados posteriores (3 ms)
+    ÔêÜ PT Rio mant├®m 18h na quarta-feira
+    ÔêÜ PT Rio mant├®m 18h nos demais dias ├║teis (1 ms)
+
+  ÔùÅ TOP3 ÔÇö transi├º├úo oficial de hor├írios ÔÇ║ PT Rio passa a ter somente 14h e 16h no domingo
+
+    expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 4
+    + Received  + 1
+
+    - Array [
+    -   "14:00",
+    -   "16:00",
+    - ]
+    + Array []
+
+      102 |
+      103 |   test("PT Rio passa a ter somente 14h e 16h no domingo", () => {
+    > 104 |     expect(rioSchedule("2026-07-19")).toEqual([
+          |                                       ^
+      105 |       "14:00",
+      106 |       "16:00",
+      107 |     ]);
+
+      at Object.<anonymous> (src/pages/Top3/__tests__/top3.schedule-transition.test.js:104:39)
+      at TestScheduler.scheduleTests (node_modules/@jest/core/build/TestScheduler.js:333:13)
+      at runJest (node_modules/@jest/core/build/runJest.js:404:19)
+
+  ÔùÅ TOP3 ÔÇö transi├º├úo oficial de hor├írios ÔÇ║ PT Rio substitui 18h por 19h em 18/07/2026
+
+    expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 0
+    + Received  + 1
+
+      Array [
+        "09:00",
+        "11:00",
+        "14:00",
+        "16:00",
+    +   "18:00",
+        "19:00",
+        "21:00",
+      ]
+
+      116 |
+      117 |   test("PT Rio substitui 18h por 19h em 18/07/2026", () => {
+    > 118 |     expect(rioSchedule("2026-07-18")).toEqual([
+          |                                       ^
+      119 |       "09:00",
+      120 |       "11:00",
+      121 |       "14:00",
+
+      at Object.<anonymous> (src/pages/Top3/__tests__/top3.schedule-transition.test.js:118:39)
+      at TestScheduler.scheduleTests (node_modules/@jest/core/build/TestScheduler.js:333:13)
+      at runJest (node_modules/@jest/core/build/runJest.js:404:19)
+
+  ÔùÅ TOP3 ÔÇö transi├º├úo oficial de hor├írios ÔÇ║ PT Rio mant├®m 19h nos s├íbados posteriores
+
+    expect(received).toEqual(expected) // deep equality
+
+    - Expected  - 0
+    + Received  + 1
+
+      Array [
+        "09:00",
+        "11:00",
+        "14:00",
+        "16:00",
+    +   "18:00",
+        "19:00",
+        "21:00",
+      ]
+
+      127 |
+      128 |   test("PT Rio mant├®m 19h nos s├íbados posteriores", () => {
+    > 129 |     expect(rioSchedule("2026-07-25")).toEqual([
+          |                                       ^
+      130 |       "09:00",
+      131 |       "11:00",
+      132 |       "14:00",
+
+      at Object.<anonymous> (src/pages/Top3/__tests__/top3.schedule-transition.test.js:129:39)
+      at TestScheduler.scheduleTests (node_modules/@jest/core/build/TestScheduler.js:333:13)
+      at runJest (node_modules/@jest/core/build/runJest.js:404:19)
+
+Test Suites: 1 failed, 1 total
+Tests:       3 failed, 8 passed, 11 total
+Snapshots:   0 total
+Time:        3.346 s
+Ran all test suites within paths "src/pages/Top3/__tests__/top3.schedule-transition.test.js".
+

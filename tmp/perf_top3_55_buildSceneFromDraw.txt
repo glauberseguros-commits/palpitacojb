@@ -1,0 +1,53 @@
+====================================================================================================
+FUNÃ├O buildSceneFromDraw
+====================================================================================================
+function buildSceneFromDraw(draw) {
+  const prizes = Array.isArray(draw?.prizes) ? draw.prizes : [];
+
+  const rows = prizes
+    .map((p) => {
+      const pos = Number(guessPrizePos(p));
+      const milhar = scenePickMilhar4(p);
+      const grupo = sceneGrupoFromMilhar4(milhar);
+
+      return {
+        pos,
+        milhar: String(milhar || "").replace(/\D+/g, "").padStart(4, "0").slice(-4),
+        centena: getCentena3(milhar),
+        dezena: getDezena2(milhar),
+        grupo,
+      };
+    })
+    .filter((x) => Number.isFinite(x.pos) && x.pos >= 1 && x.pos <= 7)
+    .sort((a, b) => a.pos - b.pos);
+
+  const grupos = rows.map((x) => x.grupo).filter((x) => Number.isFinite(x));
+  const dezenas = rows.map((x) => x.dezena).filter(Boolean);
+  const centenas = rows.map((x) => x.centena).filter(Boolean);
+  const milhares = rows.map((x) => x.milhar).filter(Boolean);
+
+  const countMap = (arr) => {
+    const m = new Map();
+    for (const x of arr) m.set(String(x), (m.get(String(x)) || 0) + 1);
+    return Array.from(m.entries())
+      .filter(([, n]) => n > 1)
+      .map(([value, count]) => ({ value, count }));
+  };
+
+  return {
+    ymd: pickDrawYMD(draw),
+    hour: toHourBucket(pickDrawHour(draw)),
+    firstGrupo: grupos[0] ?? null,
+    grupos,
+    dezenas,
+    centenas,
+    milhares,
+    repeatedGroups: countMap(grupos),
+    repeatedDezenas: countMap(dezenas),
+    repeatedCentenas: countMap(centenas),
+    rows,
+    signature: grupos.map((g) => String(g).padStart(2, "0")).join("-"),
+  };
+}
+====================================================================================================
+Tamanho: 1501 caracteres

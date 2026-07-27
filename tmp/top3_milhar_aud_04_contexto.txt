@@ -1,0 +1,1317 @@
+====================================================================================================
+TOP3-MILHAR-AUD-04 — CONTEXTO EXATO DA INTEGRAÇÃO
+====================================================================================================
+Gerado em: 25/07/2026 12:32:54
+====================================================================================================
+
+OBJETIVO
+
+- confirmar como o Top3 monta as 20 milhares;
+- confirmar como chooseBestMilhar é utilizado;
+- identificar fallback, diversificação, cache e consumidores;
+- não alterar nenhum arquivo.
+
+
+====================================================================================================
+ARQUIVO: .\src\pages\Top3\top3.engine.js
+====================================================================================================
+
+TRECHO: LINHAS 1 A 45
+----------------------------------------------------------------------------------------------------
+    1: // src/pages/Top3/top3.engine.js
+    2: import {
+    3:   safeStr,
+    4:   isYMD,
+    5:   normalizeToYMD,
+    6:   addDaysYMD,
+    7:   normalizeHourLike,
+    8:   toHourBucket,
+    9:   hourToInt,
+   10:   getDowKey,
+   11:   pickPrizeMilhar4,
+   12:   getDezena2,
+   13:   getCentena3,
+   14:   milharCompareAsc,
+   15:   wrapToDezena2,
+   16: } from "./top3.formatters";
+   17: 
+   18: import { scoreRanking } from "./modules/scoreEngine/scoreEngineV2";
+   19: 
+   20: import { chooseBestMilhar } from "../../shared/predictiveMilharEngine";
+   21: 
+   22: import {
+   23:   TOP3_NEXTDRAW_SCAN_MAX_STEPS,
+   24:   TOP3_NEXTDRAW_SCAN_MAX_DAYS,
+   25:   TOP3_GROUPS_K,
+   26:   TOP3_SMOOTH_ALPHA,
+   27:   TOP3_SCENE_WEIGHT,
+   28:   TOP3_SCENE_SAMPLE_TARGET,
+   29:   TOP3_SCENE_BLEND_SCENE,
+   30:   TOP3_SCENE_BLEND_UNIFORM,
+   31:   PT_RIO_SCHEDULE_SUNDAY,
+   32:   LOOK_SCHEDULE,
+   33:   NACIONAL_SCHEDULE,
+   34: } from "./top3.constants";
+   35: 
+   36: function findPreviousValidDraw(draws, currentYmd, currentHour) {
+   37:   const list = Array.isArray(draws) ? draws : [];
+   38:   const targetY = safeStr(currentYmd);
+   39:   const targetH = toHourBucket(currentHour);
+   40: 
+   41:   if (!isYMD(targetY) || !targetH) return null;
+   42: 
+   43:   const targetTs = ymdHourToTs(targetY, targetH);
+   44: 
+   45:   return list
+
+TRECHO: LINHAS 3590 A 4050
+----------------------------------------------------------------------------------------------------
+ 3590:     freq,
+ 3591:     prob,
+ 3592:     samples: ranking.length,
+ 3593:     totalWeight,
+ 3594:   };
+ 3595: }
+ 3596: 
+ 3597: 
+ 3598: /* =========================
+ 3599:    16/20 milhares (por grupo) — POR TERMINAÇÃO (CORRETO)
+ 3600: ========================= */
+ 3601: 
+ 3602: function getDezenasFixasFromGrupo(grupo2) {
+ 3603:   const g = Number(grupo2);
+ 3604:   if (!Number.isFinite(g) || g < 1 || g > 25) return [];
+ 3605: 
+ 3606:   const start = (g - 1) * 4 + 1;
+ 3607:   const out = [];
+ 3608: 
+ 3609:   for (let i = 0; i < 4; i += 1) {
+ 3610:     out.push(wrapToDezena2(start + i));
+ 3611:   }
+ 3612: 
+ 3613:   return out.filter(Boolean);
+ 3614: }
+ 3615: 
+ 3616: 
+ 3617: export function buildMilharesForGrupo({
+ 3618:   rangeDraws,
+ 3619:   analysisHourBucket,
+ 3620:   schedule,
+ 3621:   grupo2,
+ 3622:   count = 20,
+ 3623:   targetYmd = "",
+ 3624: }) {
+ 3625:   const list = Array.isArray(rangeDraws) ? rangeDraws : [];
+ 3626:   const target = toHourBucket(analysisHourBucket);
+ 3627:   const schSet = scheduleSet(schedule);
+ 3628:   const targetDay = safeStr(targetYmd);
+ 3629:   const targetDow = isYMD(targetDay) ? getDowKey(targetDay) : null;
+ 3630: 
+ 3631:   const N = Number.isFinite(Number(count))
+ 3632:     ? Math.max(4, Math.trunc(Number(count)))
+ 3633:     : 20;
+ 3634: 
+ 3635:   const grupoNum = Number(grupo2);
+ 3636: 
+ 3637:   if (!Number.isFinite(grupoNum) || grupoNum < 1 || grupoNum > 25 || !list.length) {
+ 3638:     return { dezenas: [], slots: [] };
+ 3639:   }
+ 3640: 
+ 3641:   const dezenasFixas = getDezenasFixasFromGrupo(grupoNum);
+ 3642:   if (!dezenasFixas.length) return { dezenas: [], slots: [] };
+ 3643: 
+ 3644:   const perDezena = Math.max(1, Math.ceil(N / dezenasFixas.length));
+ 3645:   const byMilhar = new Map();
+ 3646: 
+ 3647:   for (const d of list) {
+ 3648:     const y = pickDrawYMD(d);
+ 3649:     const h = toHourBucket(pickDrawHour(d));
+ 3650:     if (!h) continue;
+ 3651: 
+ 3652:     const isTargetHour = target && h === target;
+ 3653:     const isScheduleHour = schSet.size && schSet.has(h);
+ 3654:     const isSameDow = targetDow !== null && Number(getDowKey(y)) === Number(targetDow);
+ 3655:     const ts = ymdHourToTs(y, h);
+ 3656: 
+ 3657:     const ps = Array.isArray(d?.prizes) ? d.prizes : [];
+ 3658: 
+ 3659:     for (const prize of ps) {
+ 3660:       const pos = Number(guessPrizePos(prize));
+ 3661:       if (!Number.isFinite(pos) || pos < 1 || pos > 7) continue;
+ 3662: 
+ 3663:       const g = Number(guessPrizeGrupo(prize));
+ 3664:       if (g !== grupoNum) continue;
+ 3665: 
+ 3666:       const m4 = String(pickPrizeMilhar4(prize) || "").replace(/\D+/g, "").padStart(4, "0").slice(-4);
+ 3667:       if (!/^\d{4}$/.test(m4)) continue;
+ 3668: 
+ 3669:       const dz = getDezena2(m4);
+ 3670:       const c3 = getCentena3(m4);
+ 3671: 
+ 3672:       if (!dz || !c3 || !dezenasFixas.includes(dz)) continue;
+ 3673: 
+ 3674:       const current = byMilhar.get(m4) || {
+ 3675:         milhar: m4,
+ 3676:         dezena: dz,
+ 3677:         centena: c3,
+ 3678:         freq: 0,
+ 3679:         score: 0,
+ 3680:         targetHits: 0,
+ 3681:         scheduleHits: 0,
+ 3682:         sameDowHits: 0,
+ 3683:         firstPrizeHits: 0,
+ 3684:         lastTs: 0,
+ 3685:       };
+ 3686: 
+ 3687:       let inc = 1;
+ 3688: 
+ 3689:       if (isTargetHour) {
+ 3690:         inc += 8;
+ 3691:         current.targetHits += 1;
+ 3692:       }
+ 3693: 
+ 3694:       if (isScheduleHour) {
+ 3695:         inc += 3;
+ 3696:         current.scheduleHits += 1;
+ 3697:       }
+ 3698: 
+ 3699:       if (isSameDow) {
+ 3700:         inc += 2;
+ 3701:         current.sameDowHits += 1;
+ 3702:       }
+ 3703: 
+ 3704:       if (pos === 1) {
+ 3705:         inc += 3;
+ 3706:         current.firstPrizeHits += 1;
+ 3707:       } else if (pos <= 3) {
+ 3708:         inc += 1;
+ 3709:       }
+ 3710: 
+ 3711:       current.freq += 1;
+ 3712:       current.score += inc;
+ 3713: 
+ 3714:       if (Number.isFinite(ts)) {
+ 3715:         current.lastTs = Math.max(Number(current.lastTs || 0), ts);
+ 3716:       }
+ 3717: 
+ 3718:       byMilhar.set(m4, current);
+ 3719:     }
+ 3720:   }
+ 3721: 
+ 3722:   const ranked = Array.from(byMilhar.values())
+ 3723:     .map((m) => {
+ 3724:       const freq = Number(m.freq || 0);
+ 3725:       const targetHits = Number(m.targetHits || 0);
+ 3726:       const scheduleHits = Number(m.scheduleHits || 0);
+ 3727:       const sameDowHits = Number(m.sameDowHits || 0);
+ 3728:       const firstPrizeHits = Number(m.firstPrizeHits || 0);
+ 3729:       const recencyBoost = Number(m.lastTs || 0) > 0 ? 1 : 0;
+ 3730: 
+ 3731:       return {
+ 3732:         ...m,
+ 3733:         score:
+ 3734:           freq * 100 +
+ 3735:           targetHits * 70 +
+ 3736:           scheduleHits * 35 +
+ 3737:           sameDowHits * 25 +
+ 3738:           firstPrizeHits * 45 +
+ 3739:           recencyBoost * 5,
+ 3740:       };
+ 3741:     })
+ 3742:     .sort((a, b) => {
+ 3743:       if (Number(b.score) !== Number(a.score)) return Number(b.score) - Number(a.score);
+ 3744:       if (Number(b.targetHits) !== Number(a.targetHits)) return Number(b.targetHits) - Number(a.targetHits);
+ 3745:       if (Number(b.freq) !== Number(a.freq)) return Number(b.freq) - Number(a.freq);
+ 3746:       if (Number(b.lastTs) !== Number(a.lastTs)) return Number(b.lastTs) - Number(a.lastTs);
+ 3747:       return milharCompareAsc(a.milhar, b.milhar);
+ 3748:     });
+ 3749: 
+ 3750:   const centenaStats = new Map();
+ 3751: 
+ 3752:   for (const item of ranked) {
+ 3753:     const centena = String(item?.centena || "").trim();
+ 3754:     if (!centena) continue;
+ 3755: 
+ 3756:     const current = centenaStats.get(centena) || {
+ 3757:       centena,
+ 3758:       freq: 0,
+ 3759:       score: 0,
+ 3760:       targetHits: 0,
+ 3761:       sameDowHits: 0,
+ 3762:       firstPrizeHits: 0,
+ 3763:       lastTs: 0,
+ 3764:     };
+ 3765: 
+ 3766:     current.freq += Number(item.freq || 0);
+ 3767:     current.score += Number(item.score || 0);
+ 3768:     current.targetHits += Number(item.targetHits || 0);
+ 3769:     current.sameDowHits += Number(item.sameDowHits || 0);
+ 3770:     current.firstPrizeHits += Number(item.firstPrizeHits || 0);
+ 3771:     current.lastTs = Math.max(Number(current.lastTs || 0), Number(item.lastTs || 0));
+ 3772: 
+ 3773:     centenaStats.set(centena, current);
+ 3774:   }
+ 3775: 
+ 3776:   const centenaScoreMap = new Map();
+ 3777: 
+ 3778:   for (const c of centenaStats.values()) {
+ 3779:     centenaScoreMap.set(
+ 3780:       c.centena,
+ 3781:       Number(c.score || 0) +
+ 3782:         Number(c.freq || 0) * 25 +
+ 3783:         Number(c.targetHits || 0) * 60 +
+ 3784:         Number(c.sameDowHits || 0) * 30 +
+ 3785:         Number(c.firstPrizeHits || 0) * 40 +
+ 3786:         (Number(c.lastTs || 0) > 0 ? 10 : 0)
+ 3787:     );
+ 3788:   }
+ 3789: 
+ 3790:   /*
+ 3791:    * Contexto compartilhado do seletor de milhar.
+ 3792:    *
+ 3793:    * O Top3 continua escolhendo:
+ 3794:    * - grupo;
+ 3795:    * - dezenas;
+ 3796:    * - centenas.
+ 3797:    *
+ 3798:    * O chooseBestMilhar escolhe somente o prefixo vencedor
+ 3799:    * para cada centena selecionada.
+ 3800:    */
+ 3801:   const fallbackMilharPrizes = [];
+ 3802:   const primaryMilharPrizes = [];
+ 3803: 
+ 3804:   for (const draw of list) {
+ 3805:     const drawYmd = pickDrawYMD(draw);
+ 3806:     const drawHour = toHourBucket(pickDrawHour(draw));
+ 3807:     const drawDow =
+ 3808:       isYMD(drawYmd)
+ 3809:         ? getDowKey(drawYmd)
+ 3810:         : null;
+ 3811: 
+ 3812:     const matchesTargetHour =
+ 3813:       Boolean(target) &&
+ 3814:       drawHour === target;
+ 3815: 
+ 3816:     const matchesTargetDow =
+ 3817:       targetDow === null ||
+ 3818:       Number(drawDow) === Number(targetDow);
+ 3819: 
+ 3820:     const prizes = Array.isArray(draw?.prizes)
+ 3821:       ? draw.prizes
+ 3822:       : [];
+ 3823: 
+ 3824:     for (const prize of prizes) {
+ 3825:       const position = Number(guessPrizePos(prize));
+ 3826:       const prizeGroup = Number(guessPrizeGrupo(prize));
+ 3827: 
+ 3828:       if (
+ 3829:         !Number.isFinite(position) ||
+ 3830:         position < 1 ||
+ 3831:         position > 7 ||
+ 3832:         prizeGroup !== grupoNum
+ 3833:       ) {
+ 3834:         continue;
+ 3835:       }
+ 3836: 
+ 3837:       fallbackMilharPrizes.push(prize);
+ 3838: 
+ 3839:       if (matchesTargetHour && matchesTargetDow) {
+ 3840:         primaryMilharPrizes.push(prize);
+ 3841:       }
+ 3842:     }
+ 3843:   }
+ 3844: 
+ 3845:   const usedMilhares = new Set();
+ 3846:   const slots = [];
+ 3847: 
+ 3848:   function pickDiversifiedMilharesForDezena(dz, limit) {
+ 3849:     const candidates = ranked
+ 3850:       .filter((item) => item.dezena === dz)
+ 3851:       .map((item) => {
+ 3852:         const centena = String(
+ 3853:           item?.centena || ""
+ 3854:         )
+ 3855:           .replace(/\D+/g, "")
+ 3856:           .padStart(3, "0")
+ 3857:           .slice(-3);
+ 3858: 
+ 3859:         return {
+ 3860:           ...item,
+ 3861:           centena,
+ 3862:           centenaScore: Number(
+ 3863:             centenaScoreMap.get(centena) || 0
+ 3864:           ),
+ 3865:         };
+ 3866:       })
+ 3867:       .filter((item) => /^\d{3}$/.test(item.centena));
+ 3868: 
+ 3869:     const byCentena = new Map();
+ 3870: 
+ 3871:     for (const item of candidates) {
+ 3872:       const current = byCentena.get(item.centena);
+ 3873: 
+ 3874:       if (
+ 3875:         !current ||
+ 3876:         Number(item.centenaScore || 0) >
+ 3877:           Number(current.centenaScore || 0) ||
+ 3878:         (
+ 3879:           Number(item.centenaScore || 0) ===
+ 3880:             Number(current.centenaScore || 0) &&
+ 3881:           Number(item.score || 0) >
+ 3882:             Number(current.score || 0)
+ 3883:         )
+ 3884:       ) {
+ 3885:         byCentena.set(item.centena, item);
+ 3886:       }
+ 3887:     }
+ 3888: 
+ 3889:     const strongestCentenas = Array.from(
+ 3890:       byCentena.values()
+ 3891:     ).sort((a, b) => {
+ 3892:       if (
+ 3893:         Number(b.centenaScore || 0) !==
+ 3894:         Number(a.centenaScore || 0)
+ 3895:       ) {
+ 3896:         return (
+ 3897:           Number(b.centenaScore || 0) -
+ 3898:           Number(a.centenaScore || 0)
+ 3899:         );
+ 3900:       }
+ 3901: 
+ 3902:       if (
+ 3903:         Number(b.score || 0) !==
+ 3904:         Number(a.score || 0)
+ 3905:       ) {
+ 3906:         return (
+ 3907:           Number(b.score || 0) -
+ 3908:           Number(a.score || 0)
+ 3909:         );
+ 3910:       }
+ 3911: 
+ 3912:       if (
+ 3913:         Number(b.targetHits || 0) !==
+ 3914:         Number(a.targetHits || 0)
+ 3915:       ) {
+ 3916:         return (
+ 3917:           Number(b.targetHits || 0) -
+ 3918:           Number(a.targetHits || 0)
+ 3919:         );
+ 3920:       }
+ 3921: 
+ 3922:       if (
+ 3923:         Number(b.freq || 0) !==
+ 3924:         Number(a.freq || 0)
+ 3925:       ) {
+ 3926:         return (
+ 3927:           Number(b.freq || 0) -
+ 3928:           Number(a.freq || 0)
+ 3929:         );
+ 3930:       }
+ 3931: 
+ 3932:       return String(a.centena).localeCompare(
+ 3933:         String(b.centena)
+ 3934:       );
+ 3935:     });
+ 3936: 
+ 3937:     const picked = [];
+ 3938: 
+ 3939:     for (const centenaItem of strongestCentenas) {
+ 3940:       if (picked.length >= limit) break;
+ 3941: 
+ 3942:       const sharedResult = chooseBestMilhar({
+ 3943:         centena: centenaItem.centena,
+ 3944:         prizes: primaryMilharPrizes,
+ 3945:         fallbackPrizes: fallbackMilharPrizes,
+ 3946:       });
+ 3947: 
+ 3948:       const sharedWinner =
+ 3949:         sharedResult?.winner || null;
+ 3950: 
+ 3951:       const selectedMilhar = String(
+ 3952:         sharedWinner?.milhar || ""
+ 3953:       )
+ 3954:         .replace(/\D+/g, "")
+ 3955:         .padStart(4, "0")
+ 3956:         .slice(-4);
+ 3957: 
+ 3958:       if (!/^\d{4}$/.test(selectedMilhar)) {
+ 3959:         continue;
+ 3960:       }
+ 3961: 
+ 3962:       if (
+ 3963:         selectedMilhar.slice(-3) !==
+ 3964:         centenaItem.centena
+ 3965:       ) {
+ 3966:         continue;
+ 3967:       }
+ 3968: 
+ 3969:       if (
+ 3970:         getDezena2(selectedMilhar) !== dz ||
+ 3971:         usedMilhares.has(selectedMilhar) ||
+ 3972:         picked.some(
+ 3973:           (item) =>
+ 3974:             item.milhar === selectedMilhar
+ 3975:         )
+ 3976:       ) {
+ 3977:         continue;
+ 3978:       }
+ 3979: 
+ 3980:       picked.push({
+ 3981:         ...centenaItem,
+ 3982:         milhar: selectedMilhar,
+ 3983:         prefix:
+ 3984:           sharedWinner?.prefix ??
+ 3985:           selectedMilhar.slice(0, 1),
+ 3986:         adjustedScore: Number(
+ 3987:           sharedWinner?.score ||
+ 3988:           centenaItem.score ||
+ 3989:           0
+ 3990:         ),
+ 3991:         sharedMilharModel:
+ 3992:           sharedResult?.model ||
+ 3993:           "MILHAR_PROBABILITY_V2",
+ 3994:         sharedMilharSampleSize: Number(
+ 3995:           sharedResult?.sampleSize || 0
+ 3996:         ),
+ 3997:       });
+ 3998:     }
+ 3999: 
+ 4000:     return picked.slice(0, limit);
+ 4001:   }
+ 4002: 
+ 4003:   for (const dz of dezenasFixas) {
+ 4004:     const items = pickDiversifiedMilharesForDezena(dz, perDezena);
+ 4005: 
+ 4006:     let pushed = 0;
+ 4007: 
+ 4008:     for (const item of items) {
+ 4009:       usedMilhares.add(item.milhar);
+ 4010:       slots.push({
+ 4011:         dezena: dz,
+ 4012:         milhar: item.milhar,
+ 4013:         score: item.score,
+ 4014:         adjustedScore: item.adjustedScore,
+ 4015:         centena: item.centena,
+ 4016:         centenaScore: item.centenaScore,
+ 4017:         freq: item.freq,
+ 4018:         targetHits: item.targetHits,
+ 4019:         scheduleHits: item.scheduleHits,
+ 4020:         sameDowHits: item.sameDowHits,
+ 4021:         firstPrizeHits: item.firstPrizeHits,
+ 4022:       });
+ 4023:       pushed += 1;
+ 4024:     }
+ 4025: 
+ 4026:     while (pushed < perDezena) {
+ 4027:       slots.push({ dezena: dz, milhar: "" });
+ 4028:       pushed += 1;
+ 4029:     }
+ 4030:   }
+ 4031: 
+ 4032:   while (slots.length < N) slots.push({ dezena: "", milhar: "" });
+ 4033: 
+ 4034:   return { dezenas: dezenasFixas, slots: slots.slice(0, N) };
+ 4035: }
+ 4036: 
+ 4037: export function build16MilharesForGrupo(args) {
+ 4038:   return buildMilharesForGrupo({ ...(args || {}), count: 16 });
+ 4039: }
+ 4040: 
+ 4041: export function build20MilharesForGrupo(args) {
+ 4042:   return buildMilharesForGrupo({ ...(args || {}), count: 20 });
+ 4043: }
+ 4044: 
+ 4045: /* =========================
+ 4046:    TIMELINE DO DIA (CADEIA PREDITIVA)
+ 4047: ========================= */
+ 4048: 
+ 4049: 
+ 4050: 
+
+====================================================================================================
+ARQUIVO: .\src\shared\predictiveMilharEngine\index.js
+====================================================================================================
+
+TRECHO: LINHAS 1 A 34
+----------------------------------------------------------------------------------------------------
+    1: // src/shared/predictiveMilharEngine/index.js
+    2: 
+    3: /*
+    4:  * Contrato compartilhado do motor de milhar.
+    5:  *
+    6:  * Etapa estrutural:
+    7:  * - não altera regras;
+    8:  * - não altera pesos;
+    9:  * - não altera resultados;
+   10:  * - não altera o motor preditivo de grupos do Top3.
+   11:  *
+   12:  * O módulo preserva temporariamente os comportamentos dos motores V2 e V3
+   13:  * enquanto os consumidores são migrados de forma independente.
+   14:  */
+   15: 
+   16: export {
+   17:   normalizeCentena3,
+   18:   normalizeMilhar4,
+   19:   pickMilharFromPrize,
+   20:   buildMilharCandidates,
+   21:   rankMilharCandidates,
+   22:   chooseBestMilhar,
+   23:   buildMilharRecommendation,
+   24:   diversifyMilharRecommendations,
+   25:   buildMilharAudit,
+   26: } from "../../pages/Centenas/modules/milharProbabilityEngine";
+   27: 
+   28: export {
+   29:   buildMilharRecommendationV3,
+   30:   diversifyMilharRecommendationsV3,
+   31: } from "../../pages/Centenas/modules/milharProbabilityEngineV3";
+   32: 
+   33: export const PREDICTIVE_MILHAR_ENGINE_CONTRACT =
+   34:   "PREDICTIVE_MILHAR_ENGINE_SHARED_V1";
+
+====================================================================================================
+ARQUIVO: .\src\pages\Centenas\modules\milharProbabilityEngine.js
+====================================================================================================
+
+TRECHO: LINHAS 110 A 445
+----------------------------------------------------------------------------------------------------
+  110:     return out;
+  111:   }, {});
+  112: }
+  113: 
+  114: export function rankMilharCandidates({
+  115:   centena,
+  116:   prizes = [],
+  117:   fallbackPrizes = [],
+  118:   weights = DEFAULT_WEIGHTS,
+  119: } = {}) {
+  120:   const centena3 = normalizeCentena3(centena);
+  121:   const candidates = buildMilharCandidates(centena3);
+  122: 
+  123:   if (!centena3 || !candidates.length) return [];
+  124: 
+  125:   const dezena = centena3.slice(-2);
+  126:   const rows = [];
+  127: 
+  128:   for (let index = 0; index < prizes.length; index += 1) {
+  129:     const milhar = pickMilharFromPrize(prizes[index]);
+  130:     if (!milhar) continue;
+  131: 
+  132:     rows.push({
+  133:       milhar,
+  134:       prefix: milhar.slice(0, 1),
+  135:       centena: milhar.slice(-3),
+  136:       dezena: milhar.slice(-2),
+  137:       sequence: index + 1,
+  138:     });
+  139:   }
+  140: 
+  141:   const fallbackRows = [];
+  142: 
+  143:   for (
+  144:     let index = 0;
+  145:     index < fallbackPrizes.length;
+  146:     index += 1
+  147:   ) {
+  148:     const milhar = pickMilharFromPrize(
+  149:       fallbackPrizes[index]
+  150:     );
+  151: 
+  152:     if (!milhar) continue;
+  153: 
+  154:     fallbackRows.push({
+  155:       milhar,
+  156:       prefix: milhar.slice(0, 1),
+  157:       centena: milhar.slice(-3),
+  158:       dezena: milhar.slice(-2),
+  159:       sequence: index + 1,
+  160:     });
+  161:   }
+  162: 
+  163:   /*
+  164:    * Hierarquia da evidência:
+  165:    *
+  166:    * 1. ocorrências da própria centena no recorte atual;
+  167:    * 2. ocorrências históricas da própria centena;
+  168:    * 3. contexto de prefixos do recorte atual;
+  169:    * 4. contexto histórico, quando o recorte estiver vazio.
+  170:    *
+  171:    * Assim, todas as 40 centenas recebem uma milhar sem voltar
+  172:    * a aplicar mecanicamente um único prefixo ao grupo inteiro.
+  173:    */
+  174:   const currentCentenaRows = rows.filter(
+  175:     (row) => row.centena === centena3
+  176:   );
+  177: 
+  178:   const historicalCentenaRows = fallbackRows.filter(
+  179:     (row) => row.centena === centena3
+  180:   );
+  181: 
+  182:   const centenaRows = currentCentenaRows.length
+  183:     ? currentCentenaRows
+  184:     : historicalCentenaRows;
+  185: 
+  186:   const contextRows = rows.length
+  187:     ? rows
+  188:     : fallbackRows;
+  189: 
+  190:   if (
+  191:     centenaRows.length === 0 &&
+  192:     contextRows.length === 0
+  193:   ) {
+  194:     return [];
+  195:   }
+  196: 
+  197:   const totalRows = centenaRows.length;
+  198: 
+  199:   const exactCount = new Map();
+  200:   const exactLastSeen = new Map();
+  201:   const prefixSameDezenaCount = new Map();
+  202:   const prefixOverallCount = new Map();
+  203: 
+  204:   for (
+  205:     let index = 0;
+  206:     index < centenaRows.length;
+  207:     index += 1
+  208:   ) {
+  209:     const row = centenaRows[index];
+  210: 
+  211:     exactCount.set(
+  212:       row.milhar,
+  213:       (exactCount.get(row.milhar) || 0) + 1
+  214:     );
+  215: 
+  216:     exactLastSeen.set(
+  217:       row.milhar,
+  218:       index + 1
+  219:     );
+  220:   }
+  221: 
+  222:   for (const row of contextRows) {
+  223:     prefixOverallCount.set(
+  224:       row.prefix,
+  225:       (prefixOverallCount.get(row.prefix) || 0) + 1
+  226:     );
+  227: 
+  228:     if (row.dezena === dezena) {
+  229:       prefixSameDezenaCount.set(
+  230:         row.prefix,
+  231:         (prefixSameDezenaCount.get(row.prefix) || 0) + 1
+  232:       );
+  233:     }
+  234:   }
+  235: 
+  236:   const maxExact = Math.max(
+  237:     0,
+  238:     ...candidates.map((candidate) => exactCount.get(candidate.milhar) || 0)
+  239:   );
+  240: 
+  241:   const maxPrefixSameDezena = Math.max(
+  242:     0,
+  243:     ...candidates.map(
+  244:       (candidate) => prefixSameDezenaCount.get(candidate.prefix) || 0
+  245:     )
+  246:   );
+  247: 
+  248:   const maxPrefixOverall = Math.max(
+  249:     0,
+  250:     ...candidates.map(
+  251:       (candidate) => prefixOverallCount.get(candidate.prefix) || 0
+  252:     )
+  253:   );
+  254: 
+  255:   const normalizedWeights = normalizeWeights(weights);
+  256: 
+  257:   const ranking = candidates.map((candidate) => {
+  258:     const countExact = exactCount.get(candidate.milhar) || 0;
+  259:     const countPrefixSameDezena =
+  260:       prefixSameDezenaCount.get(candidate.prefix) || 0;
+  261:     const countPrefixOverall =
+  262:       prefixOverallCount.get(candidate.prefix) || 0;
+  263:     const lastSeen = exactLastSeen.get(candidate.milhar) || 0;
+  264: 
+  265:     const exactFrequency = normalizeRatio(countExact, maxExact);
+  266:     const prefixSameDezena = normalizeRatio(
+  267:       countPrefixSameDezena,
+  268:       maxPrefixSameDezena
+  269:     );
+  270:     const prefixOverall = normalizeRatio(
+  271:       countPrefixOverall,
+  272:       maxPrefixOverall
+  273:     );
+  274:     const exactRecency = totalRows > 0
+  275:       ? normalizeRatio(lastSeen, totalRows)
+  276:       : 0;
+  277: 
+  278:     const score =
+  279:       exactFrequency * normalizedWeights.exactFrequency +
+  280:       prefixSameDezena * normalizedWeights.prefixSameDezena +
+  281:       prefixOverall * normalizedWeights.prefixOverall +
+  282:       exactRecency * normalizedWeights.exactRecency;
+  283: 
+  284:     return {
+  285:       ...candidate,
+  286:       score: Number((score * 100).toFixed(4)),
+  287:       evidence: {
+  288:         exactFrequency: {
+  289:           count: countExact,
+  290:           normalized: Number(exactFrequency.toFixed(6)),
+  291:         },
+  292:         prefixSameDezena: {
+  293:           count: countPrefixSameDezena,
+  294:           normalized: Number(prefixSameDezena.toFixed(6)),
+  295:         },
+  296:         prefixOverall: {
+  297:           count: countPrefixOverall,
+  298:           normalized: Number(prefixOverall.toFixed(6)),
+  299:         },
+  300:         exactRecency: {
+  301:           lastSeen,
+  302:           totalRows,
+  303:           normalized: Number(exactRecency.toFixed(6)),
+  304:         },
+  305:       },
+  306:     };
+  307:   });
+  308: 
+  309:   ranking.sort((a, b) => {
+  310:     if (b.score !== a.score) return b.score - a.score;
+  311: 
+  312:     const aExact = a.evidence.exactFrequency.count;
+  313:     const bExact = b.evidence.exactFrequency.count;
+  314:     if (bExact !== aExact) return bExact - aExact;
+  315: 
+  316:     /*
+  317:      * O prefixo já participa do score.
+  318:      * Não pode voltar a dominar o desempate.
+  319:      */
+  320:     const aLastSeen = a.evidence.exactRecency.lastSeen;
+  321:     const bLastSeen = b.evidence.exactRecency.lastSeen;
+  322:     if (bLastSeen !== aLastSeen) return bLastSeen - aLastSeen;
+  323: 
+  324:     return Number(a.prefix) - Number(b.prefix);
+  325:   });
+  326: 
+  327:   return ranking.map((item, index) => ({
+  328:     position: index + 1,
+  329:     ...item,
+  330:   }));
+  331: }
+  332: 
+  333: export function chooseBestMilhar(args = {}) {
+  334:   const ranking = rankMilharCandidates(args);
+  335: 
+  336:   return {
+  337:     centena: normalizeCentena3(args.centena),
+  338:     winner: ranking[0] || null,
+  339:     ranking,
+  340:     sampleSize: (() => {
+  341:       const centena3 = normalizeCentena3(args.centena);
+  342: 
+  343:       const currentCount = Array.isArray(args.prizes)
+  344:         ? args.prizes.reduce((total, prize) => {
+  345:             const milhar = pickMilharFromPrize(prize);
+  346: 
+  347:             return milhar.slice(-3) === centena3
+  348:               ? total + 1
+  349:               : total;
+  350:           }, 0)
+  351:         : 0;
+  352: 
+  353:       if (currentCount > 0) return currentCount;
+  354: 
+  355:       return Array.isArray(args.fallbackPrizes)
+  356:         ? args.fallbackPrizes.reduce(
+  357:             (total, prize) => {
+  358:               const milhar = pickMilharFromPrize(prize);
+  359: 
+  360:               return milhar.slice(-3) === centena3
+  361:                 ? total + 1
+  362:                 : total;
+  363:             },
+  364:             0
+  365:           )
+  366:         : 0;
+  367:     })(),
+  368:     weights: normalizeWeights(args.weights),
+  369:     model: "MILHAR_PROBABILITY_V2",
+  370:   };
+  371: }
+  372: /*
+  373: ==========================================================
+  374: Recomendação consolidada — V2
+  375: ==========================================================
+  376: 
+  377: Esta função será a futura fonte única para:
+  378: 
+  379: - exibição na tabela;
+  380: - botão Copiar;
+  381: - envio para aposta.
+  382: 
+  383: Ela ainda não está conectada à interface.
+  384: */
+  385: 
+  386: function classifySampleQuality(sampleSize) {
+  387:   const n = Number(sampleSize) || 0;
+  388: 
+  389:   if (n <= 0) return "none";
+  390:   if (n < 30) return "low";
+  391:   if (n < 100) return "medium";
+  392:   return "high";
+  393: }
+  394: 
+  395: export function buildMilharRecommendation(args = {}) {
+  396:   const result = chooseBestMilhar(args);
+  397:   const winner = result?.winner || null;
+  398:   const sampleSize = Number(result?.sampleSize || 0);
+  399: 
+  400:   if (!winner) {
+  401:     return {
+  402:       ok: false,
+  403:       status: "insufficient_evidence",
+  404:       model: "MILHAR_PROBABILITY_V2",
+  405:       centena: normalizeCentena3(args?.centena),
+  406:       milhar: null,
+  407:       prefixo: null,
+  408:       score: 0,
+  409:       confidence: 0,
+  410:       sampleSize,
+  411:       sampleQuality: classifySampleQuality(sampleSize),
+  412:       evidence: null,
+  413:       alternatives: [],
+  414:       candidates: [],
+  415:     };
+  416:   }
+  417: 
+  418:   const candidates = (result.ranking || [])
+  419:     .map((item) => ({
+  420:       position: item.position,
+  421:       milhar: item.milhar,
+  422:       prefixo: item.prefix,
+  423:       score: item.score,
+  424:     }));
+  425: 
+  426:   const alternatives = candidates.slice(0, 3);
+  427: 
+  428:   return {
+  429:     ok: true,
+  430:     status: "recommended",
+  431:     model: "MILHAR_PROBABILITY_V2",
+  432: 
+  433:     centena: result.centena,
+  434:     milhar: winner.milhar,
+  435:     prefixo: winner.prefix,
+  436: 
+  437:     score: winner.score,
+  438:     confidence: Number((winner.score / 100).toFixed(6)),
+  439: 
+  440:     sampleSize,
+  441:     sampleQuality: classifySampleQuality(sampleSize),
+  442: 
+  443:     evidence: {
+  444:       exactFrequency: {
+  445:         count: Number(
+
+====================================================================================================
+ARQUIVO: .\src\pages\Top3\modules\top3.prediction.js
+====================================================================================================
+
+TRECHO: LINHAS 1 A 71
+----------------------------------------------------------------------------------------------------
+    1: function clampProb(v) {
+    2:   const n = Number(v);
+    3: 
+    4:   if (!Number.isFinite(n)) return 0;
+    5:   if (n > 1) return Math.max(0, Math.min(1, n / 100));
+    6: 
+    7:   return Math.max(0, Math.min(1, n));
+    8: }
+    9: 
+   10: function isValidGrupo(g) {
+   11:   const n = Number(g);
+   12:   return Number.isFinite(n) && n >= 1 && n <= 25;
+   13: }
+   14: 
+   15: export function buildTop3Predictions({
+   16:   analytics,
+   17:   build20,
+   18:   safeStr,
+   19:   toHourBucket,
+   20:   getAnimalLabel,
+   21:   build4ColsFromEngineOut,
+   22:   resolveProbValue,
+   23:   getGrupoImgSrc,
+   24:   buildResultStyleImgVariants,
+   25: }) {
+   26:   const arr = Array.isArray(analytics?.top) ? analytics.top : [];
+   27:   const milharesCache = new Map();
+   28: 
+   29:   return arr
+   30:     .filter((x) => isValidGrupo(x?.grupo))
+   31:     .slice(0, 3)
+   32:     .map((x) => {
+   33:       const g = Number(x.grupo);
+   34:       const animal = safeStr(getAnimalLabel(g) || "");
+   35: 
+   36:       const nextY = safeStr(x?.meta?.next?.ymd || "");
+   37:       const nextH = toHourBucket
+   38:         ? toHourBucket(x?.meta?.next?.hour || "")
+   39:         : safeStr(x?.meta?.next?.hour || "");
+   40: 
+   41:       const cacheKey = `${g}|${nextY}|${nextH}`;
+   42: 
+   43:       let out = milharesCache.get(cacheKey);
+   44: 
+   45:       if (!out) {
+   46:         out = build20(g, x);
+   47:         milharesCache.set(cacheKey, out);
+   48:       }
+   49: 
+   50:       const milharesCols = build4ColsFromEngineOut(out, 4, 5);
+   51:       const milhares20 = milharesCols.flatMap((c) => c.items).slice(0, 20);
+   52: 
+   53:       const prob = clampProb(resolveProbValue(x));
+   54:       const probPct = prob * 100;
+   55: 
+   56:       const bgPrimary = getGrupoImgSrc(g, 512);
+   57:       const iconVariants = buildResultStyleImgVariants(g, 96);
+   58: 
+   59:       return {
+   60:         ...x,
+   61:         animal,
+   62:         imgBg: bgPrimary ? [bgPrimary] : [],
+   63:         imgIcon: iconVariants,
+   64:         prob,
+   65:         probPct,
+   66:         meta: x?.meta || null,
+   67:         milharesCols,
+   68:         milhares20,
+   69:       };
+   70:     });
+   71: }
+
+====================================================================================================
+ARQUIVO: .\src\pages\Top3\modules\top3.timeline.js
+====================================================================================================
+
+TRECHO: LINHAS 175 A 249
+----------------------------------------------------------------------------------------------------
+  175:     console.groupEnd();
+  176:   }
+  177: 
+  178: 
+  179:   const milharesCache = new Map();
+  180: 
+  181:   return (Array.isArray(rawTimeline) ? rawTimeline : []).map((slot) => {
+  182:     const arr = Array.isArray(slot?.top3) ? slot.top3 : [];
+  183: 
+  184:     const slotYmd = safeStr(slot?.targetYmd || "");
+  185:     const slotHour = toHourBucket(slot?.targetHour || "");
+  186: 
+  187:     const mappedTop3 = arr
+  188:       .filter((x) => {
+  189:         const g = Number(x?.grupo);
+  190:         return Number.isFinite(g) && g >= 1 && g <= 25;
+  191:       })
+  192:       .filter((x) => top3ItemMatchesSlot(x, slot))
+  193:       .slice(0, 3)
+  194:       .map((x) => {
+  195:         const g = Number(x?.grupo);
+  196:         const animal = safeStr(getAnimalLabel(g) || "");
+  197: 
+  198:         const cacheKey = [g, slotYmd, slotHour].join("|");
+  199: 
+  200:         let out = milharesCache.get(cacheKey);
+  201: 
+  202:         if (!out) {
+  203:           out = buildMilharesForGrupo({
+  204:             rangeDraws: range,
+  205:             analysisHourBucket: slotHour,
+  206:             schedule: getScheduleForLottery({
+  207:               lotteryKey: lotteryKeySafe,
+  208:               ymd: slotYmd,
+  209:               PT_RIO_SCHEDULE_NORMAL,
+  210:               PT_RIO_SCHEDULE_WED_SAT,
+  211:               FEDERAL_SCHEDULE,
+  212:             }),
+  213:             grupo2: g,
+  214:             count: 20,
+  215:             targetYmd: slotYmd,
+  216:           });
+  217: 
+  218:           milharesCache.set(cacheKey, out);
+  219:         }
+  220: 
+  221:         const milharesCols = build4ColsFromEngineOut(out, 4, 5);
+  222:         const milhares20 = milharesCols.flatMap((c) => c.items).slice(0, 20);
+  223: 
+  224:         const prob = resolveProbValue(x);
+  225: 
+  226:         const bgPrimary = normalizeImgSrc(
+  227:           safeStr(getImgFromGrupo?.(g, 512) || getImgFromGrupo?.(g) || ""),
+  228:           publicBase
+  229:         );
+  230: 
+  231:         return {
+  232:           ...x,
+  233:           animal,
+  234:           imgBg: bgPrimary ? [bgPrimary] : [],
+  235:           imgIcon: buildResultStyleImgVariants(g, publicBase, 96),
+  236:           prob,
+  237:           probPct: prob * 100,
+  238:           meta: x?.meta || null,
+  239:           milharesCols,
+  240:           milhares20,
+  241:         };
+  242:       });
+  243: 
+  244:     return {
+  245:       ...slot,
+  246:       top3: mappedTop3,
+  247:     };
+  248:   });
+  249: }
+
+====================================================================================================
+ARQUIVO: .\src\pages\Top3\modules\top3.viewmodel.js
+====================================================================================================
+
+TRECHO: LINHAS 95 A 159
+----------------------------------------------------------------------------------------------------
+   95: 
+   96: function isValidGrupo(g) {
+   97:   const n = Number(g);
+   98:   return Number.isFinite(n) && n >= 1 && n <= 25;
+   99: }
+  100: 
+  101: export function buildTop3CardViewModel({
+  102:   item,
+  103:   grupo,
+  104:   rangeDraws,
+  105:   analysisHourBucket,
+  106:   schedule,
+  107:   publicBase = "",
+  108:   milharesCache,
+  109: }) {
+  110:   const g = Number(grupo ?? item?.grupo);
+  111: 
+  112:   if (!isValidGrupo(g)) {
+  113:     return null;
+  114:   }
+  115: 
+  116:   const animal = safeStr(getAnimalLabel(g) || "");
+  117:   const nextY = safeStr(item?.meta?.next?.ymd || "");
+  118:   const nextH = toHourBucket(item?.meta?.next?.hour || "");
+  119:   const safeAnalysisHour = toHourBucket(analysisHourBucket || "");
+  120: 
+  121:   const cacheKey = `${g}|${nextY}|${nextH}|${safeAnalysisHour}`;
+  122: 
+  123:   let out = milharesCache?.get?.(cacheKey);
+  124: 
+  125:   if (!out) {
+  126:     out = buildMilharesForGrupo({
+  127:       rangeDraws,
+  128:       analysisHourBucket: safeAnalysisHour,
+  129:       schedule,
+  130:       grupo2: g,
+  131:       count: 20,
+  132:       targetYmd: nextY,
+  133:     });
+  134: 
+  135:     milharesCache?.set?.(cacheKey, out);
+  136:   }
+  137: 
+  138:   const milharesCols = buildTop3MilharesCols(out, 4, 5);
+  139:   const milhares20 = milharesCols.flatMap((c) => c.items).slice(0, 20);
+  140: 
+  141:   const prob = resolveTop3ProbValue(item);
+  142: 
+  143:   const bgPrimary = normalizeTop3ImgSrc(
+  144:     safeStr(getImgFromGrupo?.(g, 512) || getImgFromGrupo?.(g) || ""),
+  145:     publicBase
+  146:   );
+  147: 
+  148:   return {
+  149:     ...(item || {}),
+  150:     animal,
+  151:     imgBg: bgPrimary ? [bgPrimary] : [],
+  152:     imgIcon: buildTop3ImgVariants(g, publicBase, 96),
+  153:     prob,
+  154:     probPct: prob * 100,
+  155:     meta: item?.meta || null,
+  156:     milharesCols,
+  157:     milhares20,
+  158:   };
+  159: }
+
+====================================================================================================
+ARQUIVO: .\backend\engine\top3PredictionService.js
+====================================================================================================
+
+TRECHO: LINHAS 380 A 535
+----------------------------------------------------------------------------------------------------
+  380:   date
+  381: ) {
+  382:   if (normalizeLotteryKey(lotteryKey) === "FEDERAL") {
+  383:     return [...FEDERAL_SCHEDULE];
+  384:   }
+  385: 
+  386:   const parsed = new Date(`${date}T12:00:00Z`);
+  387:   const dow = parsed.getUTCDay();
+  388: 
+  389:   if (dow === 3 || dow === 6) {
+  390:     return [...PT_RIO_SCHEDULE_WED_SAT];
+  391:   }
+  392: 
+  393:   return [...PT_RIO_SCHEDULE_NORMAL];
+  394: }
+  395: 
+  396: function buildPublicMilharesCols(
+  397:   engineOutput,
+  398:   expectedCols = 4,
+  399:   perCol = 5
+  400: ) {
+  401:   const dezenas = Array.isArray(engineOutput?.dezenas)
+  402:     ? engineOutput.dezenas
+  403:     : [];
+  404: 
+  405:   const slots = Array.isArray(engineOutput?.slots)
+  406:     ? engineOutput.slots
+  407:     : [];
+  408: 
+  409:   const cols = [];
+  410: 
+  411:   for (const dezena of dezenas.slice(0, expectedCols)) {
+  412:     const items = slots
+  413:       .filter(
+  414:         (slot) =>
+  415:           String(slot?.dezena || "") ===
+  416:           String(dezena || "")
+  417:       )
+  418:       .map(
+  419:         (slot) =>
+  420:           normalizePublicMilhar(slot?.milhar)
+  421:       )
+  422:       .filter(
+  423:         (milhar) => /^\d{4}$/.test(milhar)
+  424:       )
+  425:       .slice(0, perCol);
+  426: 
+  427:     while (items.length < perCol) {
+  428:       items.push("");
+  429:     }
+  430: 
+  431:     cols.push({
+  432:       dezena: String(dezena || ""),
+  433:       items,
+  434:     });
+  435:   }
+  436: 
+  437:   while (cols.length < expectedCols) {
+  438:     cols.push({
+  439:       dezena: "",
+  440:       items: Array(perCol).fill(""),
+  441:     });
+  442:   }
+  443: 
+  444:   return cols.slice(0, expectedCols);
+  445: }
+  446: 
+  447: function buildTop3PublicSnapshot({
+  448:   computedTop,
+  449:   history,
+  450:   lotteryKey,
+  451:   date,
+  452:   closeHour,
+  453:   publicApi,
+  454: }) {
+  455:   const schedule = scheduleForPublicProjection(
+  456:     lotteryKey,
+  457:     date
+  458:   );
+  459: 
+  460:   return (Array.isArray(computedTop)
+  461:     ? computedTop
+  462:     : []
+  463:   )
+  464:     .slice(0, 3)
+  465:     .map((item, index) => {
+  466:       const grupo = Number(item?.grupo);
+  467: 
+  468:       if (
+  469:         !Number.isFinite(grupo) ||
+  470:         grupo < 1 ||
+  471:         grupo > 25
+  472:       ) {
+  473:         return null;
+  474:       }
+  475: 
+  476:       const probability = Number(
+  477:         item?.scoreProb ??
+  478:         item?.probability ??
+  479:         item?.confidence ??
+  480:         0
+  481:       );
+  482: 
+  483:       const prob =
+  484:         probability > 1
+  485:           ? probability / 100
+  486:           : probability;
+  487: 
+  488:       const engineOutput =
+  489:         publicApi.build20MilharesForGrupo({
+  490:           rangeDraws: history,
+  491:           analysisHourBucket: closeHour,
+  492:           schedule,
+  493:           grupo2: grupo,
+  494:           targetYmd: date,
+  495:         });
+  496: 
+  497:       const milharesCols =
+  498:         buildPublicMilharesCols(
+  499:           engineOutput,
+  500:           4,
+  501:           5
+  502:         );
+  503: 
+  504:       const milhares20 = milharesCols
+  505:         .flatMap((column) => column.items)
+  506:         .filter(
+  507:           (milhar) => /^\d{4}$/.test(milhar)
+  508:         )
+  509:         .slice(0, 20);
+  510: 
+  511:       return {
+  512:         rank: index + 1,
+  513:         grupo,
+  514:         animal:
+  515:           item?.animal ||
+  516:           ANIMALS[
+  517:             String(grupo).padStart(2, "0")
+  518:           ] ||
+  519:           "",
+  520:         prob:
+  521:           Number.isFinite(prob)
+  522:             ? prob
+  523:             : 0,
+  524:         probPct:
+  525:           Number.isFinite(prob)
+  526:             ? Number((prob * 100).toFixed(4))
+  527:             : 0,
+  528:         milhares20,
+  529:         milharesCols,
+  530:         meta: item?.meta || null,
+  531:       };
+  532:     })
+  533:     .filter(Boolean);
+  534: }
+  535: 
+
+====================================================================================================
+STATUS FINAL
+====================================================================================================
+DIAGNÓSTICO CONCLUÍDO
+ARQUIVOS DE CÓDIGO: NÃO ALTERADOS
+BUILD: NÃO EXECUTADO
+COMMIT: NÃO REALIZADO
+PUSH: NÃO REALIZADO

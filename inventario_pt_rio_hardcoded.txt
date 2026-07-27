@@ -1,0 +1,1400 @@
+
+============================================================================================================================================
+ARQUIVOS COM CALENDÁRIO DO PT_RIO
+============================================================================================================================================
+
+============================================================================================================================================
+backend/routes/kingDraws.js
+============================================================================================================================================
+
+--- LINHAS 28 A 58 ---
+00028:   const dt = new Date(`${date}T12:00:00`);
+00029:   const dow = dt.getDay(); // 0 = domingo
+00030: 
+00031:   // Domingo: só 09, 11, 14, 16
+00032:   if (dow === 0) {
+00033:     return ["09:00", "11:00", "14:00", "16:00"];
+00034:   }
+00035: 
+00036:   // Base fixa todos os outros dias
+00037:   const expected = ["09:00", "11:00", "14:00", "16:00"];
+00038: 
+00039:   // 21h existe fora domingo
+00040:   expected.push("21:00");
+00041: 
+00042:   // 18h só se NÃO tiver Federal no dia
+00043:   if (!hasFederal) {
+00044:     expected.push("18:00");
+00045:   }
+00046: 
+00047:   return expected.sort();
+00048: }
+00049: 
+00050: function checkDrawIntegrity(draws, lottery, date, hasFederal) {
+00051:   const expectedHours = getExpectedHours(lottery, date, hasFederal);
+00052: 
+00053:   if (!expectedHours.length) {
+00054:     return {
+00055:       ok: true,
+00056:       missing: [],
+00057:       extra: [],
+00058:       expectedHours: [],
+
+============================================================================================================================================
+backend/routes/pitacoResults.js
+============================================================================================================================================
+
+--- LINHAS 386 A 416 ---
+00386:   return null;
+00387: }
+00388: 
+00389: function parseScheduleGlobal(scheduleRaw) {
+00390:   const hard = normalizeHourList(scheduleRaw?.hard || scheduleRaw?.expectedHard || []);
+00391:   const soft = normalizeHourList(scheduleRaw?.soft || scheduleRaw?.expectedSoft || []);
+00392:   const hours = normalizeHourList(scheduleRaw?.hours || []);
+00393:   if (hours.length) return { hard: hours, soft: [], mode: "schedule", scheduleFile: true };
+00394:   if (hard.length || soft.length) return { hard, soft, mode: "schedule", scheduleFile: true };
+00395:   return null;
+00396: }
+00397: 
+00398: function getExpectedForDate(lotteryKey, ymd, include09FromYmdDefault) {
+00399:   const p = path.join(DEFAULT_SCHEDULE_DIR, `${lotteryKey}.json`);
+00400:   const scheduleRaw = safeReadJson(p, null);
+00401:   const scheduleFile = !!scheduleRaw;
+00402: 
+00403:   if (scheduleRaw) {
+00404:     const global = parseScheduleGlobal(scheduleRaw);
+00405:     if (global && (global.hard.length || global.soft.length)) return global;
+00406:   }
+00407: 
+00408:   const ranges = Array.isArray(scheduleRaw) ? scheduleRaw : scheduleRaw?.ranges;
+00409:   const r = pickRangeForDate(ranges, ymd);
+00410: 
+00411:   if (r) {
+00412:     if (r.dow && typeof r.dow === "object") {
+00413:       const d = new Date(String(ymd) + "T12:00:00-03:00");
+00414:       const dow = String(d.getDay());
+00415:       const block = r.dow[dow] || r.dow[Number(dow)] || null;
+00416: 
+
+--- LINHAS 686 A 716 ---
+00686:           count: 0,
+00687:           draws: [],
+00688:           slots: [],
+00689:         });
+00690:       }
+00691:     }
+00692: 
+00693:     const docsFound = docsAll.length;
+00694:     const docs = docsAll.slice(0, limitDocs);
+00695:     const docsCapped = docs.length !== docsFound;
+00696: 
+00697:     const include09FromDefault = "2024-01-05";
+00698:     const expectedBase = getExpectedForDate(lottery, date, include09FromDefault);
+00699: 
+00700:     const baseHard = expectedBase?.hard || [];
+00701:     const baseSoft = expectedBase?.soft || [];
+00702: 
+00703:     const todayBR = todayYMDInSaoPaulo();
+00704:     const isToday = date === todayBR;
+00705:     const nowMinBR = nowMinutesInSaoPaulo();
+00706: 
+00707:     if (process.env.NODE_ENV === "development") {
+00708:       try {
+00709:         const dbg18 = isSlotPublishedToday("18", nowMinBR, slotGraceMin);
+00710:         const dbg21 = isSlotPublishedToday("21", nowMinBR, slotGraceMin);
+00711:         console.log("[pitaco/results][capToday]", {
+00712:           date,
+00713:           todayBR,
+00714:           isToday,
+00715:           nowMinBR,
+00716:           slotGraceMin,
+
+============================================================================================================================================
+backend/routes/receiveResults.js
+============================================================================================================================================
+
+--- LINHAS 31 A 61 ---
+00031: 
+00032: function isHHMM(s) {
+00033:   const str = String(s || "").trim();
+00034:   const m = str.match(/^(\d{2}):(\d{2})$/);
+00035:   if (!m) return false;
+00036: 
+00037:   const hh = Number(m[1]);
+00038:   const mm = Number(m[2]);
+00039: 
+00040:   return hh >= 0 && hh <= 23 && mm >= 0 && mm <= 59;
+00041: }
+00042: 
+00043: // aceita "21", "21h", "21:0", "21:00"
+00044: function normalizeHHMM(value) {
+00045:   const s = String(value ?? "").trim();
+00046:   if (!s) return "";
+00047: 
+00048:   if (isHHMM(s)) return s;
+00049: 
+00050:   const m1 = s.match(/^(\d{1,2})h$/i);
+00051:   if (m1) {
+00052:     const hh = Number(m1[1]);
+00053:     if (hh >= 0 && hh <= 23) return `${pad2(hh)}:00`;
+00054:     return "";
+00055:   }
+00056: 
+00057:   const m2 = s.match(/^(\d{1,2})$/);
+00058:   if (m2) {
+00059:     const hh = Number(m2[1]);
+00060:     if (hh >= 0 && hh <= 23) return `${pad2(hh)}:00`;
+00061:     return "";
+
+============================================================================================================================================
+backend/scripts/auditCoverage.js
+============================================================================================================================================
+
+--- LINHAS 17 A 47 ---
+00017: }
+00018: 
+00019: function expectedHours(ymd){
+00020: 
+00021:   const dow = weekday(ymd);
+00022: 
+00023:   // domingo
+00024:   if(dow===0)
+00025:     return ["09:00","11:00","14:00","16:00"];
+00026: 
+00027:   // quarta
+00028:   if(dow===3)
+00029:     return ["09:00","11:00","14:00","16:00","21:00"];
+00030: 
+00031:   // sábado
+00032:   if(dow===6)
+00033:     return ["09:00","11:00","14:00","16:00","21:00"];
+00034: 
+00035:   return ["09:00","11:00","14:00","16:00","18:00","21:00"];
+00036: }
+00037: 
+00038: function normHour(v){
+00039:   const m=String(v||"").match(/(\d{1,2})/);
+00040:   if(!m) return "";
+00041:   return String(Number(m[1])).padStart(2,"0")+":00";
+00042: }
+00043: 
+00044: (async()=>{
+00045: 
+00046:   const db=getDb();
+00047: 
+
+============================================================================================================================================
+backend/scripts/auditFastPtRio.js
+============================================================================================================================================
+
+--- LINHAS 1 A 26 ---
+00001: const fs = require("fs");
+00002: const path = require("path");
+00003: const { getDb } = require("../service/firebaseAdmin");
+00004: 
+00005: const LOTTERY = "PT_RIO";
+00006: const START = "2022-06-07";
+00007: const END = "2026-07-08";
+00008: const EXPECTED = ["09:00", "11:00", "14:00", "16:00", "18:00", "21:00"];
+00009: 
+00010: function addDays(ymd, n) {
+00011:   const d = new Date(ymd + "T00:00:00Z");
+00012:   d.setUTCDate(d.getUTCDate() + n);
+00013:   return d.toISOString().slice(0, 10);
+00014: }
+00015: 
+00016: function normHour(v) {
+00017:   const s = String(v || "").trim();
+00018:   const m = s.match(/(\d{1,2})[:hH]?(\d{2})?/);
+00019:   if (!m) return "";
+00020:   return `${String(Number(m[1])).padStart(2, "0")}:00`;
+00021: }
+00022: 
+00023: (async () => {
+00024:   const db = getDb();
+00025: 
+00026:   console.log("Buscando draws no Firestore...");
+
+============================================================================================================================================
+backend/scripts/auditFirestorePtRioRange.js
+============================================================================================================================================
+
+--- LINHAS 1 A 26 ---
+00001: const fs = require("fs");
+00002: const path = require("path");
+00003: const { getDb } = require("../service/firebaseAdmin");
+00004: 
+00005: const START = "2022-06-07";
+00006: const END = "2026-07-08";
+00007: const LOTTERY = "PT_RIO";
+00008: const EXPECTED = ["09:00", "11:00", "14:00", "16:00", "18:00", "21:00"];
+00009: 
+00010: function addDays(ymd, n) {
+00011:   const d = new Date(ymd + "T00:00:00Z");
+00012:   d.setUTCDate(d.getUTCDate() + n);
+00013:   return d.toISOString().slice(0, 10);
+00014: }
+00015: 
+00016: function normHour(v) {
+00017:   const s = String(v || "").trim();
+00018:   const m = s.match(/(\d{1,2})[:hH]?(\d{2})?/);
+00019:   if (!m) return "";
+00020:   return String(Number(m[1])).padStart(2, "0") + ":00";
+00021: }
+00022: 
+00023: (async () => {
+00024:   const db = getDb();
+00025: 
+00026:   const missing = [];
+
+============================================================================================================================================
+backend/scripts/auditHistoricalGaps.js
+============================================================================================================================================
+
+--- LINHAS 115 A 145 ---
+00115: }
+00116: 
+00117: function readSourceGaps() {
+00118:   const p = path.join(__dirname, "..", "data", "source_gaps", `${TARGET_LOTTERY}.json`);
+00119:   return safeReadJson(p, { gapsByDay: {} });
+00120: }
+00121: 
+00122: function readNoDrawDays() {
+00123:   const p = path.join(__dirname, "..", "data", "no_draw_days", `${TARGET_LOTTERY}.json`);
+00124:   return safeReadJson(p, { days: [] });
+00125: }
+00126: 
+00127: function getExpectedForDate(ymd, slotSchedule) {
+00128:   const ranges = Array.isArray(slotSchedule) ? slotSchedule : slotSchedule?.ranges;
+00129:   const r = pickRangeForDate(ranges, ymd);
+00130: 
+00131:   if (!r || !r.dow || typeof r.dow !== "object") {
+00132:     return { hard: [], soft: [], source: "none" };
+00133:   }
+00134: 
+00135:   const d = new Date(`${ymd}T12:00:00-03:00`);
+00136:   const dow = String(d.getDay());
+00137:   const block = r.dow[dow] || r.dow[Number(dow)] || null;
+00138: 
+00139:   if (!block) {
+00140:     return { hard: [], soft: [], source: "none" };
+00141:   }
+00142: 
+00143:   return {
+00144:     hard: normalizeHourList(block.hard || []),
+00145:     soft: normalizeHourList(block.soft || []),
+
+--- LINHAS 217 A 247 ---
+00217: 
+00218:     if (report.days % 25 === 0 || date === START || date === END) {
+00219:       console.log(`Scanning: ${date} | dias=${report.days}`);
+00220:     }
+00221: 
+00222:     try {
+00223:       if (isNoDrawDay(date, noDrawDays)) {
+00224:         report.blockedNoDraw.push({ date, reason: "no_draw_days" });
+00225:         date = nextDay(date);
+00226:         continue;
+00227:       }
+00228: 
+00229:       const expectedBase = getExpectedForDate(date, slotSchedule);
+00230:       const gaps = getGapsForDate(date, sourceGaps);
+00231: 
+00232:       const expectedHard = expectedBase.hard.filter((h) => !gaps.removedHard.includes(h));
+00233:       const expectedSoft = expectedBase.soft.filter((h) => !gaps.removedSoft.includes(h));
+00234:       const expectedAll = uniqSorted([...expectedHard, ...expectedSoft]);
+00235: 
+00236:       const docs = await fetchDay(db, date);
+00237: 
+00238:       const draws = docs
+00239:         .map((d) => d.data())
+00240:         .filter((d) => isTargetLottery(d));
+00241: 
+00242:       const present = [];
+00243: 
+00244:       for (const d of draws) {
+00245:         const slot = normalizeSlot(
+00246:           d.close_hour ||
+00247:             d.close ||
+
+============================================================================================================================================
+backend/scripts/auditOfficialSource.js
+============================================================================================================================================
+
+--- LINHAS 27 A 57 ---
+00027: function weekdayUTC(ymd) {
+00028:   return new Date(`${ymd}T00:00:00Z`).getUTCDay();
+00029: }
+00030: 
+00031: function expectedPtRioSlots(ymd) {
+00032:   const wd = weekdayUTC(ymd);
+00033: 
+00034:   // 0 domingo
+00035:   if (wd === 0) return ["09:00", "11:00", "14:00", "16:00"];
+00036: 
+00037:   // 3 quarta e 6 sábado
+00038:   if (wd === 3 || wd === 6) {
+00039:     return ["09:00", "11:00", "14:00", "16:00", "21:00"];
+00040:   }
+00041: 
+00042:   // segunda, terça, quinta, sexta
+00043:   return ["09:00", "11:00", "14:00", "16:00", "18:00", "21:00"];
+00044: }
+00045: 
+00046: function classifyProblem(problem) {
+00047:   const date = String(problem?.date || "");
+00048:   const slot = String(problem?.slot || "");
+00049:   const type = String(problem?.type || "");
+00050: 
+00051:   const expected = expectedPtRioSlots(date).includes(slot);
+00052: 
+00053:   if (type === "extra_firestore") {
+00054:     return expected ? "documento_extra_em_horario_previsto" : "nao_havia_sorteio_previsto";
+00055:   }
+00056: 
+00057:   if (type === "missing_firestore") {
+
+============================================================================================================================================
+backend/scripts/auditRealGradePtRio.js
+============================================================================================================================================
+
+--- LINHAS 18 A 48 ---
+00018:   const m = s.match(/(\d{1,2})[:hH]?(\d{2})?/);
+00019:   if (!m) return "";
+00020:   return `${String(Number(m[1])).padStart(2, "0")}:00`;
+00021: }
+00022: 
+00023: function expectedHoursForDay(ymd) {
+00024:   const dow = new Date(ymd + "T00:00:00Z").getUTCDay();
+00025: 
+00026:   let hours;
+00027:   if (dow === 0) {
+00028:     hours = ["09:00", "11:00", "14:00", "16:00"];
+00029:   } else if (dow === 3 || dow === 6) {
+00030:     hours = ["09:00", "11:00", "14:00", "16:00", "18:00"];
+00031:   } else {
+00032:     hours = ["09:00", "11:00", "14:00", "16:00", "18:00", "21:00"];
+00033:   }
+00034: 
+00035:   if (ymd === END) {
+00036:     hours = hours.filter(h => h <= END_LIMIT_HOUR);
+00037:   }
+00038: 
+00039:   return hours;
+00040: }
+00041: 
+00042: (async () => {
+00043:   const db = getDb();
+00044: 
+00045:   console.log("Buscando draws PT_RIO no Firestore...");
+00046: 
+00047:   const snap = await db
+00048:     .collection("draws")
+
+============================================================================================================================================
+backend/scripts/autoImportToday.js
+============================================================================================================================================
+
+--- LINHAS 115 A 145 ---
+00115:   return value;
+00116: }
+00117: 
+00118: /* =========================
+00119:    Schedules (por loteria)
+00120: ========================= */
+00121: const SCHEDULES = {
+00122:   PT_RIO: [
+00123:     { hour: "09:00", windowStart: "09:05", releaseAt: "09:29", windowEnd: "09:35" },
+00124:     { hour: "11:00", windowStart: "11:05", releaseAt: "11:29", windowEnd: "11:35" },
+00125:     { hour: "14:00", windowStart: "14:05", releaseAt: "14:29", windowEnd: "14:35" },
+00126:     { hour: "16:00", windowStart: "16:05", releaseAt: "16:29", windowEnd: "16:35" },
+00127:     { hour: "18:00", windowStart: "18:05", releaseAt: "18:29", windowEnd: "18:35" },
+00128:     // 21h: janela longa
+00129:     { hour: "21:00", windowStart: "21:05", releaseAt: "21:05", windowEnd: "21:45" },
+00130:   ],
+00131: 
+00132:   // FEDERAL
+00133:   // - 19:00 = PROBE (SOFT)
+00134:   // - 20:00 = HARD (padrão)
+00135:   FEDERAL: [
+00136:     { hour: "19:00", windowStart: "18:50", releaseAt: "19:00", windowEnd: "19:20" }, // PROBE (SOFT)
+00137:     { hour: "20:00", windowStart: "19:50", releaseAt: "20:00", windowEnd: "20:20" }, // HARD
+00138:   ],
+00139: };
+00140: 
+00141: const SCHEDULE = Array.isArray(SCHEDULES[LOTTERY]) ? SCHEDULES[LOTTERY] : SCHEDULES.PT_RIO;
+00142: 
+00143: /* =========================
+00144:    Utils
+00145: ========================= */
+
+--- LINHAS 355 A 385 ---
+00355:   if (hardCount === 0) return false;
+00356:   return true;
+00357: }
+00358: 
+00359: /**
+00360:  * Gera closes candidatos (tolerância de minutos)
+00361:  */
+00362: function closeCandidates(hhmm) {
+00363:   const s = String(hhmm || "").trim();
+00364: 
+00365:   // PT_RIO 21h pode sair como fechamento de 21:30.
+00366:   // Mantém os closes históricos e adiciona a faixa 21:29~21:32.
+00367:   if (LOTTERY === "PT_RIO" && s === "21:00") {
+00368:     return [
+00369:       "21:00", "21:01", "21:02",
+00370:       "21:09", "21:10", "21:11",
+00371:       "21:29", "21:30", "21:31", "21:32"
+00372:     ];
+00373:   }
+00374: 
+00375:   const parsed = parseHH(s);
+00376:   if (!parsed) return [];
+00377:   const { h } = parsed;
+00378: 
+00379:   const out = new Set();
+00380:   const bases = [0, 9];
+00381:   const deltas = [0, 1, 2];
+00382: 
+00383:   for (const base of bases) {
+00384:     for (const d of deltas) {
+00385:       const mm = base + d;
+
+--- LINHAS 402 A 432 ---
+00402: 
+00403: function resultMatchesSlotHour(r, slotHHMM) {
+00404:   const key = slotHourKey(slotHHMM);
+00405:   if (!key) return true; // se não dá pra inferir, não bloqueia
+00406:   const ids = Array.isArray(r && r.targetDrawIds) ? r.targetDrawIds.map(String) : [];
+00407:   if (ids.length === 0) return true; // sem id, não bloqueia
+00408:   return ids.some((id) => String(id).includes("__" + key + "__"));
+00409: }
+00410: 
+00411: /* =========================
+00412:    Regras de aplicabilidade
+00413: ========================= */
+00414: function buildTodaySlotStatusMapPT_RIO(dateYMD, dow) {
+00415:   const map = new Map();
+00416: 
+00417:   const isSunday = dow === 0;
+00418:   const isWed = dow === 3;
+00419:   const isSat = dow === 6;
+00420: 
+00421:   for (const sched of SCHEDULE) {
+00422:     const hh = sched.hour;
+00423: 
+00424:     if (isSunday) {
+00425:       if (hh === "18:00" || hh === "21:00") map.set(hh, "OFF");
+00426:       else map.set(hh, "HARD");
+00427:       continue;
+00428:     }
+00429: 
+00430:     if (isWed || isSat) {
+00431:       if (hh === "18:00") map.set(hh, "SOFT");
+00432:       else map.set(hh, "HARD");
+
+--- LINHAS 419 A 449 ---
+00419:   const isSat = dow === 6;
+00420: 
+00421:   for (const sched of SCHEDULE) {
+00422:     const hh = sched.hour;
+00423: 
+00424:     if (isSunday) {
+00425:       if (hh === "18:00" || hh === "21:00") map.set(hh, "OFF");
+00426:       else map.set(hh, "HARD");
+00427:       continue;
+00428:     }
+00429: 
+00430:     if (isWed || isSat) {
+00431:       if (hh === "18:00") map.set(hh, "SOFT");
+00432:       else map.set(hh, "HARD");
+00433:       continue;
+00434:     }
+00435: 
+00436:     map.set(hh, "HARD");
+00437:   }
+00438: 
+00439:   if (isSunday) {
+00440:     logLine(`[CAL] PT_RIO domingo: date=${dateYMD} dow=${dow} => HARD=[09,11,14,16] OFF=[18,21]`, "INFO");
+00441:   } else if (isWed || isSat) {
+00442:     logLine(`[CAL] PT_RIO qua/sab: date=${dateYMD} dow=${dow} => HARD=[09,11,14,16,21] SOFT=[18]`, "INFO");
+00443:   } else {
+00444:     logLine(`[CAL] PT_RIO seg-sex: date=${dateYMD} dow=${dow} => HARD=[09,11,14,16,18,21]`, "INFO");
+00445:   }
+00446: 
+00447:   return map;
+00448: }
+00449: 
+
+--- LINHAS 1001 A 1031 ---
+01001:     return;
+01002:   }
+01003: 
+01004:   try {
+01005:     const state = loadState(date);
+01006:     const isoNow = new Date().toISOString();
+01007: 
+01008:     // ✅ Buscar DS cedo (cache)
+01009:     const ds = await fetchDayStatusCached({ date, lottery: LOTTERY });
+01010: 
+01011:     let statusMap = null;
+01012:     if (LOTTERY === "PT_RIO") {
+01013:       statusMap = buildTodaySlotStatusMapPT_RIO(date, dow);
+01014:     } else if (LOTTERY === "FEDERAL") {
+01015:       statusMap = buildTodaySlotStatusMapFEDERAL({ dateYMD: date, dow, ds });
+01016:     } else {
+01017:       statusMap = new Map();
+01018:       for (const sched of SCHEDULE) statusMap.set(sched.hour, "HARD");
+01019:     }
+01020: 
+01021:     // O workspace do GitHub Actions é novo a cada execução.
+01022:     // Antes de auditar, sincroniza o state local com a fonte real.
+01023:     const syncedFromBackend = syncStateFromBackendSnapshot({
+01024:       state,
+01025:       statusMap,
+01026:       daySnapshot: ds,
+01027:       isoNow,
+01028:     });
+01029: 
+01030:     if (syncedFromBackend > 0) {
+01031:       saveState(date, state);
+
+============================================================================================================================================
+backend/scripts/autoRepairToday.js
+============================================================================================================================================
+
+--- LINHAS 33 A 63 ---
+00033:   return "";
+00034: }
+00035: 
+00036: function getDowLocal(ymd) {
+00037:   return new Date(`${ymd}T12:00:00`).getDay();
+00038: }
+00039: 
+00040: function getExpectedPtRioHours(ymd, hasFederal) {
+00041:   const dow = getDowLocal(ymd);
+00042: 
+00043:   if (dow === 0) return ["09:00", "11:00", "14:00", "16:00"];
+00044: 
+00045:   const expected = ["09:00", "11:00", "14:00", "16:00", "21:00"];
+00046:   if (!hasFederal) expected.push("18:00");
+00047:   return expected.sort();
+00048: }
+00049: 
+00050: async function loadDay(ymd) {
+00051:   const db = getDb();
+00052:   const snap = await db.collection("draws").where("ymd", "==", ymd).get();
+00053: 
+00054:   const rows = snap.docs.map((doc) => {
+00055:     const d = doc.data() || {};
+00056:     return {
+00057:       lottery_key: String(d.lottery_key || "").trim().toUpperCase(),
+00058:       close_hour: normalizeHHMM(d.close_hour || d.close || d.hour || ""),
+00059:     };
+00060:   });
+00061: 
+00062:   const pt = Array.from(new Set(rows.filter(x => x.lottery_key === "PT_RIO").map(x => x.close_hour).filter(Boolean))).sort();
+00063:   const fed = Array.from(new Set(rows.filter(x => x.lottery_key === "FEDERAL").map(x => x.close_hour).filter(Boolean))).sort();
+
+============================================================================================================================================
+backend/scripts/genPtRioCalendarRules.js
+============================================================================================================================================
+
+--- LINHAS 1 A 27 ---
+00001: "use strict";
+00002: 
+00003: const fs = require("fs");
+00004: const path = require("path");
+00005: const { getDb } = require("../service/firebaseAdmin");
+00006: 
+00007: (async () => {
+00008:   const lot = "PT_RIO";
+00009:   const HOURS = ["09:00", "11:00", "14:00", "16:00", "18:00", "21:00"];
+00010: 
+00011:   const CORE_MIN = 0.90;
+00012:   const OPT_MIN = 0.50;
+00013: 
+00014:   // Para não poluir regra com amostra pequena (ex.: ano com poucos dias)
+00015:   const MIN_DAYS_PER_GROUP = 20;
+00016: 
+00017:   // Ano corrente (UTC)
+00018:   const CURRENT_YEAR = new Date().getUTCFullYear();
+00019: 
+00020:   // Se quiser permitir "estatística parcial" do ano corrente (sem herança),
+00021:   // ajuste este valor. Recomendo manter baixo, mas NÃO 1.
+00022:   const MIN_DAYS_CURRENT_YEAR = 3;
+00023: 
+00024:   function pad2(n) {
+00025:     return String(n).padStart(2, "0");
+00026:   }
+00027: 
+
+============================================================================================================================================
+backend/scripts/importKingApostas.js
+============================================================================================================================================
+
+--- LINHAS 137 A 167 ---
+00137: })();
+00138: 
+00139: /**
+00140:  * =========================
+00141:  * Firebase Admin (central)
+00142:  * =========================
+00143:  *
+00144:  * Importante:
+00145:  * este require vem DEPOIS do ensureGoogleCredentials/loadEnvLocal
+00146:  */
+00147: const { admin, db } = require("../service/firebaseAdmin");
+00148: 
+00149: const { getPtRioSlotsByDate } = require("./ptRioCalendar");
+00150: 
+00151: /**
+00152:  * =========================
+00153:  * Config / toggles
+00154:  * =========================
+00155:  */
+00156: 
+00157: /**
+00158:  * Para desempenho/estabilidade:
+00159:  * - CHECK_EXISTENCE=1 => faz reads extras para calcular "novos" (lento)
+00160:  * - default => não faz reads extras (rápido)
+00161:  */
+00162: const CHECK_EXISTENCE = String(process.env.CHECK_EXISTENCE || "").trim() === "1";
+00163: 
+00164: /**
+00165:  * Retry HTTP simples (evita falhas intermitentes/429)
+00166:  */
+00167: const HTTP_RETRIES = Number.isFinite(Number(process.env.HTTP_RETRIES))
+
+--- LINHAS 682 A 712 ---
+00682: 
+00683:   // mantém heurística, mas só vale quando não for login
+00684:   if (/(prize[_\s-]?\d+)|(\b\d{4}\b)/i.test(h)) out.hasAnyPrize = true;
+00685: 
+00686:   return out;
+00687: }
+00688: 
+00689: async function tryHtmlDetailsFallback({ date, lotteryKey, closeHour }) {
+00690:   const lk = String(lotteryKey || "").trim().toUpperCase();
+00691:   const slot = normalizeCloseHourForLottery(closeHour || "", lk).slot;
+00692:   if (!slot || !isHHMM(slot)) return { ok: false, reason: "bad_slot" };
+00693: 
+00694:   // por enquanto: só PT_RIO 18:00 (não altera outros horários)
+00695:   if (!(lk === "PT_RIO" && slot === "18:00")) {
+00696:     return { ok: false, reason: "not_applicable" };
+00697:   }
+00698: 
+00699:   const url = buildDetailsUrl({ date, lotteryKey: lk });
+00700:   const html = await axiosGetText(url);
+00701:   const parsed = parseDetailsHtmlForSlot(html, slot);
+00702: 
+00703:   return {
+00704:     ok: true,
+00705:     url,
+00706:     slot,
+00707:     hasSlot: parsed.hasSlot,
+00708:     hasAnyPrize: parsed.hasAnyPrize,
+00709:     kind: parsed.kind,
+00710:   };
+00711: }
+00712: 
+
+--- LINHAS 1375 A 1405 ---
+01375:     };
+01376:   }
+01377: 
+01378:   // ✅ closeHour do scheduler: normaliza SEM log enganoso
+01379:   const norm = normalizeRequestedCloseHour(closeHour, lk);
+01380:   if (norm.note === "invalid") {
+01381:     throw new Error('Parâmetro "closeHour" inválido. Use HH:MM.');
+01382:   }
+01383:   const normalizedClose = norm.slot || null;
+01384: 
+01385:   const startedAt = Date.now();
+01386: 
+01387:   // ✅ SOFT OVERRIDE: PT_RIO 18:00 fora do calendário (controlado por env)
+01388:   const allowSoftOverride18 =
+01389:     lk === "PT_RIO" &&
+01390:     normalizedClose === "18:00" &&
+01391:     String(process.env.PT_RIO_SOFT_OVERRIDE_18 || "1").trim() === "1";
+01392: 
+01393:   // ✅ GATE POR CALENDÁRIO (PT_RIO)
+01394:   if (normalizedClose && lk === "PT_RIO") {
+01395:     const cal = getPtRioSlotsByDate(date);
+01396:     const expected = new Set((cal.core || []).concat(cal.opcional || []));
+01397: 
+01398:     if (!expected.has(normalizedClose)) {
+01399:       if (allowSoftOverride18) {
+01400:         try {
+01401:           console.log(
+01402:             "[CAL-OVERRIDE] PT_RIO " +
+01403:               date +
+01404:               " slot=" +
+01405:               normalizedClose +
+
+============================================================================================================================================
+backend/scripts/lintSourceGaps.js
+============================================================================================================================================
+
+--- LINHAS 18 A 48 ---
+00018:   const str = String(s ?? "").trim();
+00019:   if (!/^\d{4}-\d{2}-\d{2}$/.test(str)) return false;
+00020:   const [y, m, d] = str.split("-").map(Number);
+00021:   const dt = new Date(Date.UTC(y, m - 1, d));
+00022:   return (
+00023:     dt.getUTCFullYear() === y &&
+00024:     dt.getUTCMonth() === m - 1 &&
+00025:     dt.getUTCDate() === d
+00026:   );
+00027: }
+00028: 
+00029: function normHour(x) {
+00030:   // aceita 21, "21", "21h", "21:00", "21:30" -> "21"
+00031:   const m = String(x ?? "").trim().match(/\b(\d{1,2})\b/);
+00032:   if (!m) return "";
+00033:   const n = Number(m[1]);
+00034:   if (!Number.isFinite(n) || n < 0 || n > 23) return "";
+00035:   return String(n).padStart(2, "0");
+00036: }
+00037: 
+00038: function readJson(p) {
+00039:   try {
+00040:     const raw = fs.readFileSync(p, "utf8");
+00041:     return JSON.parse(raw);
+00042:   } catch (err) {
+00043:     const msg = err?.message || String(err);
+00044:     throw new Error(`Falha ao ler/parsear JSON: ${p} | ${msg}`);
+00045:   }
+00046: }
+00047: 
+00048: async function existsDraw(db, lotteryKey, ymd, hh) {
+
+============================================================================================================================================
+backend/scripts/ptRioCalendar.js
+============================================================================================================================================
+
+--- LINHAS 138 A 168 ---
+00138:     return _cache;
+00139:   }
+00140: }
+00141: 
+00142: /**
+00143:  * Retorna classificação CORE/OPCIONAL/RARA para a data.
+00144:  * - Usa ano+dow (regra estatística) gerada do seu Firestore.
+00145:  * - Se não houver regra (ou data inválida), faz fallback conservador:
+00146:  *   - Core mínimo: 11,14,16
+00147:  *   - Opcional: 09
+00148:  *   - Rara: 18,21
+00149:  */
+00150: function getPtRioSlotsByDate(ymd) {
+00151:   const date = safeStr(ymd);
+00152: 
+00153:   // Se data inválida, não “chuta” dow/ano — cai no fallback, mas deixa explícito.
+00154:   if (!isISODate(date)) {
+00155:     return {
+00156:       ok: true,
+00157:       source: "fallback",
+00158:       date,
+00159:       year: null,
+00160:       dow: null,
+00161:       core: ["11:00", "14:00", "16:00"],
+00162:       opcional: ["09:00"],
+00163:       rara: ["18:00", "21:00"],
+00164:       note: "INVALID_YMD_FORMAT",
+00165:     };
+00166:   }
+00167: 
+00168:   const year = Number(date.slice(0, 4));
+
+--- LINHAS 168 A 198 ---
+00168:   const year = Number(date.slice(0, 4));
+00169:   const dow = ymdDow(date);
+00170: 
+00171:   if (!Number.isFinite(year) || !Number.isFinite(dow)) {
+00172:     return {
+00173:       ok: true,
+00174:       source: "fallback",
+00175:       date,
+00176:       year: Number.isFinite(year) ? year : null,
+00177:       dow: Number.isFinite(dow) ? dow : null,
+00178:       core: ["11:00", "14:00", "16:00"],
+00179:       opcional: ["09:00"],
+00180:       rara: ["18:00", "21:00"],
+00181:       note: "INVALID_YEAR_OR_DOW",
+00182:     };
+00183:   }
+00184: 
+00185:   const loaded = loadRules();
+00186:   if (loaded.ok && loaded.map) {
+00187:     const hit = loaded.map.get(`${year}:${dow}`);
+00188:     if (hit) {
+00189:       return {
+00190:         ok: true,
+00191:         source: "pt_rio_calendar_rules.json",
+00192:         date,
+00193:         year,
+00194:         dow,
+00195:         core: hit.CORE,
+00196:         opcional: hit.OPCIONAL,
+00197:         rara: hit.RARA,
+00198:       };
+
+--- LINHAS 198 A 228 ---
+00198:       };
+00199:     }
+00200:   }
+00201: 
+00202:   return {
+00203:     ok: true,
+00204:     source: "fallback",
+00205:     date,
+00206:     year,
+00207:     dow,
+00208:     core: ["11:00", "14:00", "16:00"],
+00209:     opcional: ["09:00"],
+00210:     rara: ["18:00", "21:00"],
+00211:   };
+00212: }
+00213: 
+00214: module.exports = { getPtRioSlotsByDate };
+00215: 
+00216: /**
+00217:  * CLI helper:
+00218:  *   node backend/scripts/ptRioCalendar.js --date 2026-02-09
+00219:  *   node backend/scripts/ptRioCalendar.js 2026-02-09
+00220:  */
+00221: if (require.main === module) {
+00222:   const argv = process.argv.slice(2);
+00223:   const pick = (k) => {
+00224:     const i = argv.indexOf(k);
+00225:     if (i >= 0 && argv[i + 1]) return argv[i + 1];
+00226:     return null;
+00227:   };
+00228:   const ymd = pick("--date") || argv.find((x) => /^\d{4}-\d{2}-\d{2}$/.test(String(x || ""))) || null;
+
+--- LINHAS 224 A 244 ---
+00224:     const i = argv.indexOf(k);
+00225:     if (i >= 0 && argv[i + 1]) return argv[i + 1];
+00226:     return null;
+00227:   };
+00228:   const ymd = pick("--date") || argv.find((x) => /^\d{4}-\d{2}-\d{2}$/.test(String(x || ""))) || null;
+00229: 
+00230:   if (!ymd) {
+00231:     console.log("usage: node backend/scripts/ptRioCalendar.js --date YYYY-MM-DD");
+00232:     process.exit(2);
+00233:   }
+00234: 
+00235:   try {
+00236:     const out = module.exports.getPtRioSlotsByDate(ymd);
+00237:     console.log(JSON.stringify({ date: ymd, ...out }, null, 2));
+00238:     process.exit(0);
+00239:   } catch (e) {
+00240:     console.error(e && e.stack ? e.stack : e);
+00241:     process.exit(1);
+00242:   }
+00243: }
+00244: 
+
+============================================================================================================================================
+backend/scripts/repairHistoricalHardGaps.js
+============================================================================================================================================
+
+--- LINHAS 1 A 31 ---
+00001: "use strict";
+00002: 
+00003: const { runImport } = require("./importKingApostas");
+00004: 
+00005: const HARD_GAPS = [
+00006:   { date: "2024-02-25", hours: ["09:00"] },
+00007:   { date: "2024-03-03", hours: ["09:00"] },
+00008:   { date: "2024-03-10", hours: ["09:00"] },
+00009:   { date: "2024-03-17", hours: ["09:00"] },
+00010:   { date: "2024-03-24", hours: ["09:00"] },
+00011:   { date: "2024-03-31", hours: ["09:00"] },
+00012:   { date: "2024-04-07", hours: ["09:00"] },
+00013:   { date: "2026-03-18", hours: ["21:00"] },
+00014:   { date: "2026-03-24", hours: ["14:00", "16:00", "18:00", "21:00"] },
+00015: ];
+00016: 
+00017: async function main() {
+00018:   const onlyDate = String(process.argv[2] || "").trim();
+00019: 
+00020:   const targets = onlyDate
+00021:     ? HARD_GAPS.filter((x) => x.date === onlyDate)
+00022:     : HARD_GAPS;
+00023: 
+00024:   if (!targets.length) {
+00025:     console.log("Nenhum gap HARD encontrado para o filtro informado.");
+00026:     process.exit(0);
+00027:   }
+00028: 
+00029:   const summary = [];
+00030: 
+00031:   for (const item of targets) {
+
+============================================================================================================================================
+src/constants/schedule.js
+============================================================================================================================================
+
+--- LINHAS 28 A 58 ---
+00028:     const [ha, ma] = a.split(":").map(Number);
+00029:     const [hb, mb] = b.split(":").map(Number);
+00030:     return ha * 60 + ma - (hb * 60 + mb);
+00031:   });
+00032: }
+00033: 
+00034: export const SCHEDULES = Object.freeze({
+00035:   PT_RIO: Object.freeze([
+00036:     "09:00",
+00037:     "11:00",
+00038:     "14:00",
+00039:     "16:00",
+00040:     "18:00",
+00041:     "21:00",
+00042:   ]),
+00043:   FEDERAL: Object.freeze([
+00044:     "20:00",
+00045:   ]),
+00046: });
+00047: 
+00048: /**
+00049:  * Retorna os horários da loteria (normalizado e seguro)
+00050:  */
+00051: export function getScheduleByLottery(lottery = "PT_RIO") {
+00052:   const key = normalizeLotteryKey(lottery);
+00053: 
+00054:   const list = SCHEDULES[key];
+00055:   if (!Array.isArray(list)) return [];
+00056: 
+00057:   // Filtra formato inválido por segurança
+00058:   return sortHoursAsc(list.filter(isValidHourFormat));
+
+============================================================================================================================================
+src/pages/Centenas/centenas.utils.js
+============================================================================================================================================
+
+--- LINHAS 74 A 104 ---
+00074: 
+00075:   const mISO = s.match(/^(\d{1,2}):(\d{1,2})(?::(\d{1,2}))?$/);
+00076:   if (mISO) return `${pad2(mISO[1])}:${pad2(mISO[2])}`;
+00077: 
+00078:   const m2 = s.match(/^(\d{1,2})$/);
+00079:   if (m2) return `${pad2(m2[1])}:00`;
+00080: 
+00081:   return s0.trim();
+00082: }
+00083: 
+00084: /**
+00085:  * Bucketiza para HH:00, ignorando minutos/segundos.
+00086:  * Ex: "21:10" -> "21:00", "21h" -> "21:00", "09:00" -> "09:00"
+00087:  */
+00088: export function toHourBucketHH00(value) {
+00089:   const norm = normalizeHourLike(value);
+00090:   if (!norm) return "";
+00091:   const m = String(norm).match(/^(\d{2})/);
+00092:   if (!m) return "";
+00093:   const hh = m[1];
+00094:   const n = Number(hh);
+00095:   if (!Number.isFinite(n) || n < 0 || n > 23) return "";
+00096:   return `${hh}:00`;
+00097: }
+00098: 
+00099: export function extractHourFromText(text) {
+00100:   const s = String(text ?? "").trim();
+00101:   if (!s) return "";
+00102:   const mh = s.match(/\b(\d{1,2})\s*(?:h|hs|hr|hrs)\b/i);
+00103:   if (mh) return `${pad2(mh[1])}:00`;
+00104:   const mIso = s.match(/\b(\d{1,2}):(\d{2})(?::\d{2})?\b/);
+
+============================================================================================================================================
+src/pages/Centenas/CentenasView.jsx
+============================================================================================================================================
+
+--- LINHAS 97 A 127 ---
+00097: 
+00098:   const mISO = s.match(/^(\d{1,2}):(\d{1,2})(?::(\d{1,2}))?$/);
+00099:   if (mISO) return `${pad2(mISO[1])}:${pad2(mISO[2])}`;
+00100: 
+00101:   const m2 = s.match(/^(\d{1,2})$/);
+00102:   if (m2) return `${pad2(m2[1])}:00`;
+00103: 
+00104:   return s0.trim();
+00105: }
+00106: 
+00107: /**
+00108:  * ✅ Bucketiza para HH:00, ignorando minutos/segundos.
+00109:  * Ex: "21:10" -> "21:00", "21h" -> "21:00", "09:00" -> "09:00"
+00110:  */
+00111: function toHourBucketHH00(value) {
+00112:   const norm = normalizeHourLike(value);
+00113:   if (!norm) return "";
+00114:   const m = String(norm).match(/^(\d{2})/);
+00115:   if (!m) return "";
+00116:   const hh = m[1];
+00117:   const n = Number(hh);
+00118:   if (!Number.isFinite(n) || n < 0 || n > 23) return "";
+00119:   return `${hh}:00`;
+00120: }
+00121: 
+00122: function extractHourFromText(text) {
+00123:   const s = String(text ?? "").trim();
+00124:   if (!s) return "";
+00125:   const mh = s.match(/\b(\d{1,2})\s*(?:h|hs|hr|hrs)\b/i);
+00126:   if (mh) return `${pad2(mh[1])}:00`;
+00127:   const mIso = s.match(/\b(\d{1,2}):(\d{2})(?::\d{2})?\b/);
+
+--- LINHAS 468 A 498 ---
+00468:   // usando querystring (envia pro servidor)
+00469:   return `https://app.kingapostas.com/bet/guess?pp=${payload}`;
+00470: }
+00471: 
+00472: export default function CentenasView() {
+00473:   const LOTTERY_OPTIONS = useMemo(
+00474:     () => [
+00475:       { id: "ALL", label: "Todas as loterias", closeHour: null },
+00476:       { id: "09", label: "LT PT RIO 09HS", closeHour: "09:00" },
+00477:       { id: "11", label: "LT PT RIO 11HS", closeHour: "11:00" },
+00478:       { id: "14", label: "LT PT RIO 14HS", closeHour: "14:00" },
+00479:       { id: "16", label: "LT PT RIO 16HS", closeHour: "16:00" },
+00480:       { id: "18", label: "LT PT RIO 18HS", closeHour: "18:00" },
+00481:       { id: "21", label: "LT PT RIO 21HS", closeHour: "21:00" },
+00482:     ],
+00483:     []
+00484:   );
+00485: 
+00486:   const prizePositions = useMemo(() => [1, 2, 3, 4, 5, 6, 7], []);
+00487: // filtros
+00488:   const [lotteryOptId, setLotteryOptId] = useState("ALL");
+00489:   const [fMes, setFMes] = useState("Todos");
+00490:   const [fDiaMes, setFDiaMes] = useState("Todos");
+00491:   const [fDiaSemana, setFDiaSemana] = useState("Todos");
+00492:   const [fHorario, setFHorario] = useState("Todos");
+00493:   const [fAnimal, setFAnimal] = useState("Todos");
+00494:   const [fPosicao, setFPosicao] = useState("Todos");
+00495:   const [showOnlyHits, setShowOnlyHits] = useState(false);
+00496: 
+00497:   // bounds
+00498:   const [bounds, setBounds] = useState({ minYmd: null, maxYmd: null, source: "" });
+
+--- LINHAS 597 A 627 ---
+00597:     return out;
+00598:   }, []);
+00599: 
+00600:   const diaSemanaOptions = useMemo(() => {
+00601:     const out = [{ v: "Todos", label: "Todos" }];
+00602:     ["Domingo", "Segunda-Feira", "Terça-Feira", "Quarta-Feira", "Quinta-Feira", "Sexta-Feira", "Sábado"].forEach((x) =>
+00603:       out.push({ v: x, label: x })
+00604:     );
+00605:     return out;
+00606:   }, []);
+00607: 
+00608:   const horarioOptions = useMemo(() => {
+00609:     const base = ["09:00", "11:00", "14:00", "16:00", "18:00", "21:00"];
+00610:     return [{ v: "Todos", label: "Todos" }, ...base.map((h) => ({ v: h, label: h.replace(":00", "h") }))];
+00611:   }, []);
+00612: 
+00613:   const animalOptions = useMemo(() => {
+00614:     const out = [{ v: "Todos", label: "Todos" }];
+00615:     for (let g = 1; g <= 25; g += 1) {
+00616:       const g2 = pad2(g);
+00617:       const label = (getAnimalLabel && getAnimalLabel(g)) || `Grupo ${g2}`;
+00618:       out.push({ v: g2, label });
+00619:     }
+00620:     return out;
+00621:   }, [getAnimalLabel]);
+00622: 
+00623:   const posicaoOptions = useMemo(() => {
+00624:     const out = [{ v: "Todos", label: "Todos" }];
+00625:     for (let p = 1; p <= 7; p += 1) out.push({ v: String(p), label: `${p}º` });
+00626:     return out;
+00627:   }, []);
+
+============================================================================================================================================
+src/pages/Downloads/Downloads.jsx
+============================================================================================================================================
+
+--- LINHAS 648 A 678 ---
+00648:   );
+00649: 
+00650:   const animalOptions = useMemo(() => {
+00651:     const opts = [{ v: "ALL", label: "Todos" }];
+00652:     for (let g = 1; g <= 25; g += 1) {
+00653:       const name = safeStr(getAnimalLabel?.(g) || "");
+00654:       opts.push({ v: String(g), label: `G${pad2(g)} • ${name || "—"}` });
+00655:     }
+00656:     return opts;
+00657:   }, []);
+00658: 
+00659:   const hourOptions = useMemo(() => {
+00660:     const base = ["ALL", "09:00", "11:00", "14:00", "16:00", "18:00", "21:00"];
+00661:     const uniq = Array.from(new Set(base));
+00662:     return uniq.map((h) => (h === "ALL" ? { v: "ALL", label: "Todos" } : { v: h, label: h }));
+00663:   }, []);
+00664: 
+00665:   const applyFiltersToRows = useCallback(
+00666:     (rows) => {
+00667:       const monthN = fMonth === "ALL" ? null : Number(fMonth);
+00668:       const dayN = fDay === "ALL" ? null : Number(fDay);
+00669:       const dowN = fDow === "ALL" ? null : Number(fDow);
+00670:       const hour = fHour === "ALL" ? null : toHourBucket(fHour);
+00671:       const grupoN = fAnimalGrupo === "ALL" ? null : Number(fAnimalGrupo);
+00672:       const posN = fPos === "ALL" ? null : Number(fPos);
+00673: 
+00674:       return rows.filter((r) => {
+00675:         if (monthN != null && Number(r.month) !== monthN) return false;
+00676:         if (dayN != null && Number(r.day) !== dayN) return false;
+00677:         if (dowN != null && Number(r.dow) !== dowN) return false;
+00678:         if (hour && toHourBucket(r.hour) !== hour) return false;
+
+============================================================================================================================================
+src/pages/Results/Results.jsx
+============================================================================================================================================
+
+--- LINHAS 195 A 225 ---
+00195: 
+00196: const FEDERAL_INPUT_ALIASES = new Set([
+00197:   "FEDERAL",
+00198:   "FED",
+00199:   "LOTERIA FEDERAL",
+00200:   "LOTERIA_FEDERAL",
+00201:   "LOT FEDERAL",
+00202:   "LT_FEDERAL",
+00203:   "FED_BR",
+00204: ]);
+00205: 
+00206: const RJ_09H_START_YMD = "2024-01-05";
+00207: const RJ_EXPECTED_HOURS_BASE_DESC = ["21:00", "18:00", "16:00", "14:00", "11:00"];
+00208: 
+00209: function isFederalInput(scope) {
+00210:   const up = safeStr(scope).toUpperCase();
+00211:   if (!up) return false;
+00212:   if (up === SCOPE_FEDERAL) return true;
+00213:   if (FEDERAL_INPUT_ALIASES.has(up)) return true;
+00214:   const compact = up.replace(/[\s_]+/g, " ").trim();
+00215:   if (FEDERAL_INPUT_ALIASES.has(compact)) return true;
+00216:   const unders = up.replace(/[\s_]+/g, "_");
+00217:   if (FEDERAL_INPUT_ALIASES.has(unders)) return true;
+00218:   return false;
+00219: }
+00220: 
+00221: function normalizeScopeInput(input) {
+00222:   const s = safeStr(input).toUpperCase();
+00223:   if (!s) return SCOPE_RJ;
+00224:   if (s === SCOPE_RJ) return SCOPE_RJ;
+00225:   if (isFederalInput(s)) return SCOPE_FEDERAL;
+
+============================================================================================================================================
+src/pages/Search/Search.jsx
+============================================================================================================================================
+
+--- LINHAS 1122 A 1152 ---
+01122:             <select value={diaSemana} onChange={(e) => setDiaSemana(String(e.target.value || "Todos"))}>
+01123:               {["Todos", "Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"].map((x) => (
+01124:                 <option key={x} value={x}>
+01125:                   {x}
+01126:                 </option>
+01127:               ))}
+01128:             </select>
+01129:           </div>
+01130: 
+01131:           <div className="ppCtl">
+01132:             <label>Horário</label>
+01133:             <select value={horario} onChange={(e) => setHorario(String(e.target.value || "Todos"))}>
+01134:               {["Todos", "09:00", "11:00", "14:00", "16:00", "18:00", "21:00"].map((x) => (
+01135:                 <option key={x} value={x}>
+01136:                   {x}
+01137:                 </option>
+01138:               ))}
+01139:             </select>
+01140:           </div>
+01141: 
+01142:           <div className="ppCtl">
+01143:             <label>Animal</label>
+01144:             <select value={animal} onChange={(e) => setAnimal(String(e.target.value || "Todos"))}>
+01145:               {animalOptions.map((x) => (
+01146:                 <option key={x} value={x}>
+01147:                   {x}
+01148:                 </option>
+01149:               ))}
+01150:             </select>
+01151:           </div>
+01152: 
+
+============================================================================================================================================
+src/pages/Top3/top3.constants.js
+============================================================================================================================================
+
+--- LINHAS 17 A 47 ---
+00017: 
+00018: export const LOTTERY_OPTIONS = [
+00019:   { key: "PT_RIO", value: "PT_RIO", label: "RJ (PT_RIO)" },
+00020:   { key: "FEDERAL", value: "FEDERAL", label: "Federal" },
+00021: ];
+00022: 
+00023: // Grades
+00024: export const PT_RIO_SCHEDULE_NORMAL = [
+00025:   "09:00",
+00026:   "11:00",
+00027:   "14:00",
+00028:   "16:00",
+00029:   "18:00",
+00030:   "21:00",
+00031: ];
+00032: 
+00033: export const PT_RIO_SCHEDULE_SUNDAY = [
+00034:   "09:00",
+00035:   "11:00",
+00036:   "14:00",
+00037:   "16:00",
+00038: ];
+00039: 
+00040: /**
+00041:  * PT_RIO em QUA/SÁB (RJ)
+00042:  * Mantém 18:00 porque existem ocorrências históricas nesse horário.
+00043:  * A ausência eventual do sorteio deve ser tratada pelo motor/dados reais,
+00044:  * não pela exclusão rígida da grade.
+00045:  */
+00046: export const PT_RIO_SCHEDULE_WED_SAT = [
+00047:   "09:00",
+
+--- LINHAS 39 A 69 ---
+00039: 
+00040: /**
+00041:  * PT_RIO em QUA/SÁB (RJ)
+00042:  * Mantém 18:00 porque existem ocorrências históricas nesse horário.
+00043:  * A ausência eventual do sorteio deve ser tratada pelo motor/dados reais,
+00044:  * não pela exclusão rígida da grade.
+00045:  */
+00046: export const PT_RIO_SCHEDULE_WED_SAT = [
+00047:   "09:00",
+00048:   "11:00",
+00049:   "14:00",
+00050:   "16:00",
+00051:   "18:00",
+00052:   "21:00",
+00053: ];
+00054: 
+00055: // Federal: travado em 20h
+00056: export const FEDERAL_SCHEDULE = ["20:00"];
+00057: 
+00058: /* =========================
+00059:    Parâmetros do motor TOP3
+00060: ========================= */
+00061: 
+00062: export const TOP3_SMOOTH_ALPHA = 1;
+00063: export const TOP3_SHRINK_M = 40;
+00064: 
+00065: export const TOP3_NEXTDRAW_SCAN_MAX_STEPS = 18;
+00066: export const TOP3_NEXTDRAW_SCAN_MAX_DAYS = 7;
+00067: 
+00068: export const TOP3_GROUPS_K = 25;
+00069: 
+
+============================================================================================================================================
+src/pages/Top3/top3.hooks.js
+============================================================================================================================================
+
+--- LINHAS 488 A 518 ---
+00488:         try {
+00489:           federalToday =
+00490:             (await getKingResultsByDate({
+00491:               uf: "FEDERAL",
+00492:               date: effectiveYmd,
+00493:               readPolicy: "server",
+00494:             })) || [];
+00495:         } catch {
+00496:           federalToday = [];
+00497:         }
+00498: 
+00499:         const federal20Exists = hasDrawAtHour(federalToday, "20:00");
+00500:         const ptRio18Exists = hasDrawAtHour(today, "18:00");
+00501: 
+00502:         shouldSkipPtRio18 = federal20Exists && !ptRio18Exists;
+00503: 
+00504:         if (shouldSkipPtRio18) {
+00505:           todaySchedule = (Array.isArray(todaySchedule) ? todaySchedule : [])
+00506:             .map(toHourBucket)
+00507:             .filter((h) => h && h !== "18:00");
+00508:         }
+00509:       }
+00510: 
+00511:       setSkipPtRio18ByFederal(Boolean(shouldSkipPtRio18));
+00512: 
+00513:       if (!Array.isArray(todaySchedule) || !todaySchedule.length) {
+00514:         resetStateForNoData();
+00515:         setError("Não há grade de sorteio válida para esta data/loteria.");
+00516:         return;
+00517:       }
+00518: 
+
+--- LINHAS 893 A 923 ---
+00893:       analysisYmd,
+00894:       publicBase: String(process.env.PUBLIC_URL || "").trim(),
+00895:     });
+00896: 
+00897:     if (
+00898:       (lotteryKeySafe === "PT_RIO" || lotteryKeySafe === "RJ") &&
+00899:       skipPtRio18ByFederal &&
+00900:       isYMD(timelineYmd)
+00901:     ) {
+00902:       return (Array.isArray(built) ? built : []).filter((slot) => {
+00903:         const y = String(slot?.targetYmd || "").trim();
+00904:         const h = toHourBucket(slot?.targetHour || "");
+00905:         return !(y === timelineYmd && h === "18:00");
+00906:       });
+00907:     }
+00908: 
+00909:     return built;
+00910:   }, [
+00911:     todayDraws,
+00912:     rangeDraws,
+00913:     lotteryKeySafe,
+00914:     timelineYmd,
+00915:     analysisYmd,
+00916:     skipPtRio18ByFederal,
+00917:   ]);
+00918: 
+00919:   useEffect(() => {
+00920:     if (!analysisYmd || !analysisHourBucket) return;
+00921:     if (!Array.isArray(top3) || !top3.length) return;
+00922:     if (!isFutureTarget(analysisYmd, analysisHourBucket)) return;
+00923: 
+
+============================================================================================================================================
+src/services/statsSignals.js
+============================================================================================================================================
+
+--- LINHAS 370 A 400 ---
+00370:       meta: {
+00371:         reason: "no_samples_any",
+00372:         hour: target,
+00373:         debug: { byKeySize: byKey.size, targetHour: target },
+00374:       },
+00375:     };
+00376:   }
+00377: 
+00378:   const prevHourSameDay = prevHourFromSchedule(schedule, target);
+00379:   const lastHourInDay =
+00380:     (Array.isArray(schedule) && schedule.length
+00381:       ? toHourBucket(schedule[schedule.length - 1])
+00382:       : "21:00") || "21:00";
+00383: 
+00384:   const transitions = [];
+00385:   for (const [k, nextG] of byKey.entries()) {
+00386:     const [y, hour] = k.split("__");
+00387:     if (hour !== target) continue;
+00388: 
+00389:     let pG = null;
+00390: 
+00391:     if (prevHourSameDay) {
+00392:       pG = byKey.get(`${y}__${toHourBucket(prevHourSameDay)}`) ?? null;
+00393:     } else {
+00394:       const yPrev = addDaysYMD(y, -1);
+00395:       pG = byKey.get(`${yPrev}__${lastHourInDay}`) ?? null;
+00396:     }
+00397: 
+00398:     if (!Number.isFinite(Number(pG))) continue;
+00399: 
+00400:     transitions.push({

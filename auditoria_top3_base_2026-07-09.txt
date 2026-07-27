@@ -1,0 +1,70 @@
+OK: import via vite-node -> file:///C:/Users/glaub/palpitaco/tmp/probe_top3_base_2026_07_09.js
+
+==============================================================================================================
+1. RETORNO BRUTO DO SERVIÇO
+==============================================================================================================
+Tipo: object
+É array: true
+Quantidade de sorteios: 16
+
+==============================================================================================================
+2. SORTEIOS NORMALIZADOS
+==============================================================================================================
+index=0 | key=2026-07-09|09:00 | rawYmd="2026-07-09" | rawHour="09:00" | 1º=3074 | prêmios=7
+chaves=__mode, closeHour, close_hour, date, drawId, id, lottery_code, lottery_key, prizes, prizesCount, uf, ymd
+index=1 | key=2026-07-09|11:00 | rawYmd="2026-07-09" | rawHour="11:00" | 1º=2428 | prêmios=7
+chaves=__mode, closeHour, close_hour, date, drawId, id, lottery_code, lottery_key, prizes, prizesCount, uf, ymd
+index=2 | key=2026-07-09|14:00 | rawYmd="2026-07-09" | rawHour="14:00" | 1º=3205 | prêmios=7
+chaves=__mode, closeHour, close_hour, date, drawId, id, lottery_code, lottery_key, prizes, prizesCount, uf, ymd
+index=3 | key=2026-07-09|16:00 | rawYmd="2026-07-09" | rawHour="16:00" | 1º=5677 | prêmios=7
+chaves=__mode, closeHour, close_hour, date, drawId, id, lottery_code, lottery_key, prizes, prizesCount, uf, ymd
+index=4 | key=2026-07-09|18:00 | rawYmd="2026-07-09" | rawHour="18:00" | 1º=0072 | prêmios=7
+chaves=__mode, closeHour, close_hour, date, drawId, id, lottery_code, lottery_key, prizes, prizesCount, uf, ymd
+index=5 | key=2026-07-10|09:00 | rawYmd="2026-07-10" | rawHour="09:00" | 1º=8591 | prêmios=7
+chaves=__mode, closeHour, close_hour, date, drawId, id, lottery_code, lottery_key, prizes, prizesCount, uf, ymd
+index=6 | key=2026-07-10|11:00 | rawYmd="2026-07-10" | rawHour="11:00" | 1º=5015 | prêmios=7
+chaves=__mode, closeHour, close_hour, date, drawId, id, lottery_code, lottery_key, prizes, prizesCount, uf, ymd
+index=7 | key=2026-07-10|14:00 | rawYmd="2026-07-10" | rawHour="14:00" | 1º=0346 | prêmios=7
+chaves=__mode, closeHour, close_hour, date, drawId, id, lottery_code, lottery_key, prizes, prizesCount, uf, ymd
+index=8 | key=2026-07-10|16:00 | rawYmd="2026-07-10" | rawHour="16:00" | 1º=8119 | prêmios=7
+chaves=__mode, closeHour, close_hour, date, drawId, id, lottery_code, lottery_key, prizes, prizesCount, uf, ymd
+index=9 | key=2026-07-10|18:00 | rawYmd="2026-07-10" | rawHour="18:00" | 1º=8781 | prêmios=7
+chaves=__mode, closeHour, close_hour, date, drawId, id, lottery_code, lottery_key, prizes, prizesCount, uf, ymd
+index=10 | key=2026-07-10|21:00 | rawYmd="2026-07-10" | rawHour="21:00" | 1º=3363 | prêmios=7
+chaves=__mode, closeHour, close_hour, date, drawId, id, lottery_code, lottery_key, prizes, prizesCount, uf, ymd
+index=11 | key=2026-07-11|09:00 | rawYmd="2026-07-11" | rawHour="09:00" | 1º=9955 | prêmios=7
+chaves=__mode, closeHour, close_hour, date, drawId, id, lottery_code, lottery_key, prizes, prizesCount, uf, ymd
+index=12 | key=2026-07-11|11:00 | rawYmd="2026-07-11" | rawHour="11:00" | 1º=4052 | prêmios=7
+chaves=__mode, closeHour, close_hour, date, drawId, id, lottery_code, lottery_key, prizes, prizesCount, uf, ymd
+index=13 | key=2026-07-11|14:00 | rawYmd="2026-07-11" | rawHour="14:00" | 1º=3147 | prêmios=7
+chaves=__mode, closeHour, close_hour, date, drawId, id, lottery_code, lottery_key, prizes, prizesCount, uf, ymd
+index=14 | key=2026-07-11|16:00 | rawYmd="2026-07-11" | rawHour="16:00" | 1º=5308 | prêmios=7
+chaves=__mode, closeHour, close_hour, date, drawId, id, lottery_code, lottery_key, prizes, prizesCount, uf, ymd
+index=15 | key=2026-07-11|21:00 | rawYmd="2026-07-11" | rawHour="21:00" | 1º=7052 | prêmios=7
+chaves=__mode, closeHour, close_hour, date, drawId, id, lottery_code, lottery_key, prizes, prizesCount, uf, ymd
+
+==============================================================================================================
+3. VERIFICAÇÃO DO DIA 09/07/2026
+==============================================================================================================
+Sorteios encontrados em 09/07/2026: 5
+2026-07-09|09:00 | 1º=3074
+2026-07-09|11:00 | 1º=2428
+2026-07-09|14:00 | 1º=3205
+2026-07-09|16:00 | 1º=5677
+2026-07-09|18:00 | 1º=0072
+
+==============================================================================================================
+4. VERIFICAÇÃO EXATA DAS 21H
+==============================================================================================================
+Registros com chave 2026-07-09|21:00: 0
+RESULTADO: O serviço usado pelo backtest NÃO contém o sorteio das 21h.
+
+==============================================================================================================
+5. CHAVES DUPLICADAS
+==============================================================================================================
+Quantidade de chaves duplicadas: 0
+
+==============================================================================================================
+6. AMOSTRA BRUTA DO REGISTRO DAS 21H
+==============================================================================================================
+Registro bruto das 21h não localizado.

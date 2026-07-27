@@ -1,0 +1,1382 @@
+====================================================================================================
+PERF-TOP3-09 — REPOSITÓRIO COMPLETO DO HISTÓRICO
+Gerado em: 24/07/2026 01:13:43
+HEAD: a53d3cecfb90d21b8bb5e5cc6697af7aa2ef3797
+====================================================================================================
+
+====================================================================================================
+ARQUIVO: .\backend\engine\top3HistoryRepository.js
+====================================================================================================
+"use strict";
+
+const {
+  getDb,
+} = require("../service/firebaseAdmin");
+
+const ROOT_COLLECTION = "top3_history";
+const MONTHS_COLLECTION = "months";
+const METADATA_COLLECTION = "metadata";
+const CURRENT_METADATA_DOC = "current";
+const SCHEMA_VERSION = 1;
+
+function normalizeLotteryKey(value) {
+  const key = String(value || "PT_RIO")
+    .trim()
+    .toUpperCase();
+
+  if (!key) {
+    throw new Error(
+      "lotteryKey obrigatório."
+    );
+  }
+
+  return key;
+}
+
+function normalizeYearMonth(value) {
+  const yearMonth = String(value || "").trim();
+
+  if (!/^\d{4}-\d{2}$/.test(yearMonth)) {
+    throw new Error(
+      "yearMonth inválido. Utilize YYYY-MM."
+    );
+  }
+
+  const month = Number(yearMonth.slice(5, 7));
+
+  if (month < 1 || month > 12) {
+    throw new Error(
+      "Mês inválido em yearMonth."
+    );
+  }
+
+  return yearMonth;
+}
+
+function normalizeYmd(value) {
+  const ymd = String(value || "").trim();
+
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(ymd)) {
+    return null;
+  }
+
+  return ymd;
+}
+
+function resolveDb(dependencies = {}) {
+  if (dependencies.db) {
+    return dependencies.db;
+  }
+
+  return getDb();
+}
+
+function historyRootRef(
+  database,
+  lotteryKey
+) {
+  return database
+    .collection(ROOT_COLLECTION)
+    .doc(normalizeLotteryKey(lotteryKey));
+}
+
+function historyMonthRef(
+  database,
+  lotteryKey,
+  yearMonth
+) {
+  return historyRootRef(
+    database,
+    lotteryKey
+  )
+    .collection(MONTHS_COLLECTION)
+    .doc(normalizeYearMonth(yearMonth));
+}
+
+function metadataRef(
+  database,
+  lotteryKey
+) {
+  return historyRootRef(
+    database,
+    lotteryKey
+  )
+    .collection(METADATA_COLLECTION)
+    .doc(CURRENT_METADATA_DOC);
+}
+
+function safeArray(value) {
+  return Array.isArray(value)
+    ? value
+    : [];
+}
+
+function normalizePrize(prize = {}) {
+  const position = Number(prize.position);
+  const grupo = Number(prize.grupo);
+
+  if (
+    !Number.isFinite(position) ||
+    position < 1 ||
+    position > 10 ||
+    !Number.isFinite(grupo) ||
+    grupo < 1 ||
+    grupo > 25
+  ) {
+    return null;
+  }
+
+  return {
+    id: prize.id
+      ? String(prize.id)
+      : null,
+    position,
+    grupo,
+    milhar:
+      prize.milhar != null
+        ? String(prize.milhar).padStart(4, "0")
+        : null,
+    centena:
+      prize.centena != null
+        ? String(prize.centena).padStart(3, "0")
+        : null,
+    dezena:
+      prize.dezena != null
+        ? String(prize.dezena).padStart(2, "0")
+        : null,
+  };
+}
+
+function normalizeDraw(draw = {}) {
+  const drawId = String(
+    draw.drawId ||
+    draw.id ||
+    ""
+  ).trim();
+
+  const ymd = normalizeYmd(
+    draw.ymd ||
+    draw.date
+  );
+
+  const closeHour = String(
+    draw.close_hour ||
+    draw.closeHour ||
+    draw.hour ||
+    ""
+  ).trim();
+
+  if (!drawId || !ymd || !closeHour) {
+    return null;
+  }
+
+  const prizes = safeArray(draw.prizes)
+    .map(normalizePrize)
+    .filter(Boolean)
+    .sort(
+      (a, b) =>
+        Number(a.position) -
+        Number(b.position)
+    );
+
+  return {
+    drawId,
+    id: drawId,
+    ymd,
+    closeHour,
+    lotteryKey: normalizeLotteryKey(
+      draw.lottery_key ||
+      draw.lotteryKey ||
+      "PT_RIO"
+    ),
+    lotteryCode:
+      draw.lottery_code ||
+      draw.lotteryCode ||
+      null,
+    prizes,
+  };
+}
+
+function sortDraws(draws = []) {
+  return [...draws].sort((a, b) => {
+    const aKey =
+      `${a.ymd}T${a.closeHour}T${a.drawId}`;
+
+    const bKey =
+      `${b.ymd}T${b.closeHour}T${b.drawId}`;
+
+    return aKey.localeCompare(bKey);
+  });
+}
+
+function deduplicateDraws(draws = []) {
+  const map = new Map();
+
+  for (const raw of safeArray(draws)) {
+    const draw = normalizeDraw(raw);
+
+    if (!draw) {
+      continue;
+    }
+
+    map.set(draw.drawId, draw);
+  }
+
+  return sortDraws(
+    Array.from(map.values())
+  );
+}
+
+async function readHistoryMonth(
+  lotteryKey,
+  yearMonth,
+  dependencies = {}
+) {
+  const database = resolveDb(dependencies);
+
+  const snap = await historyMonthRef(
+    database,
+    lotteryKey,
+    yearMonth
+  ).get();
+
+  if (!snap.exists) {
+    return {
+      exists: false,
+      lotteryKey: normalizeLotteryKey(
+        lotteryKey
+      ),
+      yearMonth: normalizeYearMonth(
+        yearMonth
+      ),
+      draws: [],
+      data: null,
+    };
+  }
+
+  const data = snap.data() || {};
+
+  return {
+    exists: true,
+    lotteryKey: normalizeLotteryKey(
+      lotteryKey
+    ),
+    yearMonth: normalizeYearMonth(
+      yearMonth
+    ),
+    draws: deduplicateDraws(data.draws),
+    data,
+  };
+}
+
+async function writeHistoryMonth(
+  lotteryKey,
+  yearMonth,
+  draws,
+  dependencies = {}
+) {
+  const database = resolveDb(dependencies);
+  const key = normalizeLotteryKey(lotteryKey);
+  const month = normalizeYearMonth(yearMonth);
+
+  const normalizedDraws = deduplicateDraws(
+    draws
+  ).filter(
+    (draw) =>
+      draw.ymd.slice(0, 7) === month
+  );
+
+  const firstDraw =
+    normalizedDraws[0] || null;
+
+  const lastDraw =
+    normalizedDraws[
+      normalizedDraws.length - 1
+    ] || null;
+
+  const payload = {
+    schemaVersion: SCHEMA_VERSION,
+    lotteryKey: key,
+    yearMonth: month,
+    drawCount: normalizedDraws.length,
+    firstYmd: firstDraw?.ymd || null,
+    lastYmd: lastDraw?.ymd || null,
+    firstDrawId:
+      firstDraw?.drawId || null,
+    lastDrawId:
+      lastDraw?.drawId || null,
+    draws: normalizedDraws,
+    updatedAt: new Date(),
+  };
+
+  await historyMonthRef(
+    database,
+    key,
+    month
+  ).set(
+    payload,
+    {
+      merge: false,
+    }
+  );
+
+  return payload;
+}
+
+async function upsertHistoryMonth(
+  lotteryKey,
+  yearMonth,
+  newDraws,
+  dependencies = {}
+) {
+  const current = await readHistoryMonth(
+    lotteryKey,
+    yearMonth,
+    dependencies
+  );
+
+  const merged = deduplicateDraws([
+    ...current.draws,
+    ...safeArray(newDraws),
+  ]);
+
+  const payload = await writeHistoryMonth(
+    lotteryKey,
+    yearMonth,
+    merged,
+    dependencies
+  );
+
+  return {
+    ...payload,
+    previousDrawCount: current.draws.length,
+    previousFirstYmd:
+      current.draws[0]?.ymd || null,
+    previousLastYmd:
+      current.draws[
+        current.draws.length - 1
+      ]?.ymd || null,
+    previousFirstDrawId:
+      current.draws[0]?.drawId || null,
+    previousLastDrawId:
+      current.draws[
+        current.draws.length - 1
+      ]?.drawId || null,
+  };
+}
+
+async function readMetadata(
+  lotteryKey,
+  dependencies = {}
+) {
+  const database = resolveDb(dependencies);
+  const key = normalizeLotteryKey(lotteryKey);
+
+  const snap = await metadataRef(
+    database,
+    key
+  ).get();
+
+  if (!snap.exists) {
+    return {
+      exists: false,
+      lotteryKey: key,
+      data: null,
+    };
+  }
+
+  return {
+    exists: true,
+    lotteryKey: key,
+    data: snap.data() || {},
+  };
+}
+
+async function writeMetadata(
+  lotteryKey,
+  metadata = {},
+  dependencies = {}
+) {
+  const database = resolveDb(dependencies);
+  const key = normalizeLotteryKey(lotteryKey);
+
+  const payload = {
+    ...metadata,
+    schemaVersion: SCHEMA_VERSION,
+    lotteryKey: key,
+    updatedAt: new Date(),
+  };
+
+  await metadataRef(
+    database,
+    key
+  ).set(
+    payload,
+    {
+      merge: true,
+    }
+  );
+
+  return payload;
+}
+
+async function listHistoryMonths(
+  lotteryKey,
+  dependencies = {}
+) {
+  const database = resolveDb(dependencies);
+  const key = normalizeLotteryKey(lotteryKey);
+
+  const snap = await historyRootRef(
+    database,
+    key
+  )
+    .collection(MONTHS_COLLECTION)
+    .get();
+
+  return snap.docs
+    .map((doc) => ({
+      id: doc.id,
+      ...(doc.data() || {}),
+    }))
+    .sort(
+      (a, b) =>
+        String(a.yearMonth || a.id)
+          .localeCompare(
+            String(b.yearMonth || b.id)
+          )
+    );
+}
+
+async function readFullHistory(
+  lotteryKey,
+  dependencies = {}
+) {
+  const months = await listHistoryMonths(
+    lotteryKey,
+    dependencies
+  );
+
+  const draws = [];
+
+  for (const month of months) {
+    draws.push(
+      ...safeArray(month.draws)
+    );
+  }
+
+  return deduplicateDraws(draws);
+}
+
+module.exports = {
+  ROOT_COLLECTION,
+  MONTHS_COLLECTION,
+  METADATA_COLLECTION,
+  SCHEMA_VERSION,
+  normalizeLotteryKey,
+  normalizeYearMonth,
+  normalizeDraw,
+  deduplicateDraws,
+  readHistoryMonth,
+  writeHistoryMonth,
+  upsertHistoryMonth,
+  readMetadata,
+  writeMetadata,
+  listHistoryMonths,
+  readFullHistory,
+};
+
+
+====================================================================================================
+ARQUIVO: .\backend\engine\top3HistorySync.js
+====================================================================================================
+"use strict";
+
+const {
+  getDb,
+} = require("../service/firebaseAdmin");
+
+const {
+  readMetadata,
+  writeMetadata,
+  upsertHistoryMonth,
+  deduplicateDraws,
+} = require("./top3HistoryRepository");
+
+function safeArray(value) {
+  return Array.isArray(value)
+    ? value
+    : [];
+}
+
+function normalizeLotteryKey(value) {
+  return String(value || "PT_RIO")
+    .trim()
+    .toUpperCase() || "PT_RIO";
+}
+
+function validYmd(value) {
+  const ymd = String(value || "").trim();
+
+  return /^\d{4}-\d{2}-\d{2}$/.test(ymd)
+    ? ymd
+    : null;
+}
+
+function resolveDb(dependencies = {}) {
+  return dependencies.db || getDb();
+}
+
+async function readDrawWithPrizes(
+  database,
+  drawDoc
+) {
+  if (!drawDoc || !drawDoc.exists) {
+    return null;
+  }
+
+  const data = drawDoc.data() || {};
+
+  const prizesSnap = await drawDoc.ref
+    .collection("prizes")
+    .get();
+
+  const prizes = prizesSnap.docs.map(
+    (doc) => ({
+      id: doc.id,
+      ...(doc.data() || {}),
+    })
+  );
+
+  return {
+    id: drawDoc.id,
+    drawId: drawDoc.id,
+    ...data,
+    prizes,
+  };
+}
+
+async function loadImportedDraws(
+  importResult = {},
+  dependencies = {}
+) {
+  const database = resolveDb(dependencies);
+
+  const lotteryKey = normalizeLotteryKey(
+    importResult.lotteryKey
+  );
+
+  const date = validYmd(
+    importResult.date
+  );
+
+  const targetDrawIds = safeArray(
+    importResult.targetDrawIds
+  )
+    .map((value) => String(value || "").trim())
+    .filter(Boolean);
+
+  const docs = [];
+
+  if (targetDrawIds.length) {
+    const snapshots = await Promise.all(
+      targetDrawIds.map(
+        (drawId) =>
+          database
+            .collection("draws")
+            .doc(drawId)
+            .get()
+      )
+    );
+
+    docs.push(
+      ...snapshots.filter(
+        (snap) => snap.exists
+      )
+    );
+  } else if (date) {
+    const snap = await database
+      .collection("draws")
+      .where("lottery_key", "==", lotteryKey)
+      .where("ymd", "==", date)
+      .get();
+
+    docs.push(...snap.docs);
+  }
+
+  const loadedDraws = await Promise.all(
+    docs.map(
+      (doc) =>
+        readDrawWithPrizes(
+          database,
+          doc
+        )
+    )
+  );
+
+  const draws = loadedDraws.filter((draw) => {
+    if (!draw) {
+      return false;
+    }
+
+    const drawLotteryKey = normalizeLotteryKey(
+      draw.lottery_key ||
+      draw.lotteryKey
+    );
+
+    if (drawLotteryKey !== lotteryKey) {
+      return false;
+    }
+
+    if (
+      date &&
+      String(draw.ymd || draw.date || "") !== date
+    ) {
+      return false;
+    }
+
+    return true;
+  });
+
+  return deduplicateDraws(draws);
+}
+
+function summarizeMonths(months = []) {
+  const ordered = [...safeArray(months)]
+    .sort((a, b) =>
+      String(a.yearMonth || a.id)
+        .localeCompare(
+          String(b.yearMonth || b.id)
+        )
+    );
+
+  const allDraws = deduplicateDraws(
+    ordered.flatMap(
+      (month) =>
+        safeArray(month.draws)
+    )
+  );
+
+  const first = allDraws[0] || null;
+  const last =
+    allDraws[allDraws.length - 1] || null;
+
+  return {
+    totalDraws: allDraws.length,
+    monthCount: ordered.length,
+    months: ordered.map(
+      (month) =>
+        month.yearMonth || month.id
+    ),
+    firstYmd: first?.ymd || null,
+    lastYmd: last?.ymd || null,
+    firstDrawId:
+      first?.drawId || null,
+    lastDrawId:
+      last?.drawId || null,
+  };
+}
+
+async function markHistoryStale(
+  lotteryKey,
+  error,
+  dependencies = {}
+) {
+  const saveMetadata =
+    dependencies.writeMetadata ||
+    writeMetadata;
+
+  try {
+    await saveMetadata(
+      lotteryKey,
+      {
+        bootstrapStatus: "stale",
+        staleReason:
+          String(
+            error?.message ||
+            error ||
+            "incremental_sync_failed"
+          ),
+        staleAt:
+          new Date().toISOString(),
+      },
+      dependencies.repositoryDependencies || {}
+    );
+
+    return true;
+  } catch (metadataError) {
+    console.error(
+      "[TOP3-HISTORY] Falha também ao marcar snapshot como stale:",
+      metadataError?.message ||
+      metadataError
+    );
+
+    return false;
+  }
+}
+
+async function syncImportedResultToTop3History(
+  importResult = {},
+  dependencies = {}
+) {
+  const lotteryKey = normalizeLotteryKey(
+    importResult.lotteryKey
+  );
+
+  const loadMetadata =
+    dependencies.readMetadata ||
+    readMetadata;
+
+  const saveMonth =
+    dependencies.upsertHistoryMonth ||
+    upsertHistoryMonth;
+
+  const saveMetadata =
+    dependencies.writeMetadata ||
+    writeMetadata;
+
+  try {
+    if (
+      importResult.blocked === true ||
+      !validYmd(importResult.date)
+    ) {
+      return {
+        ok: true,
+        skipped: true,
+        reason:
+          importResult.blocked === true
+            ? "import_blocked"
+            : "invalid_date",
+      };
+    }
+
+    const metadataResult = await loadMetadata(
+      lotteryKey,
+      dependencies.repositoryDependencies || {}
+    );
+
+    const metadata =
+      metadataResult?.data || null;
+
+    if (
+      metadataResult?.exists !== true ||
+      metadata?.bootstrapStatus !== "complete"
+    ) {
+      return {
+        ok: true,
+        skipped: true,
+        reason: "bootstrap_not_complete",
+      };
+    }
+
+    const draws = await (
+      dependencies.loadImportedDraws ||
+      loadImportedDraws
+    )(
+      importResult,
+      dependencies
+    );
+
+    if (!draws.length) {
+      return {
+        ok: true,
+        skipped: true,
+        reason: "no_draws_found",
+      };
+    }
+
+    const byMonth = new Map();
+
+    for (const draw of draws) {
+      const yearMonth = draw.ymd.slice(0, 7);
+
+      if (!byMonth.has(yearMonth)) {
+        byMonth.set(yearMonth, []);
+      }
+
+      byMonth.get(yearMonth).push(draw);
+    }
+
+    const updatedMonths = [];
+
+    for (
+      const [yearMonth, monthDraws]
+      of byMonth.entries()
+    ) {
+      const payload = await saveMonth(
+        lotteryKey,
+        yearMonth,
+        monthDraws,
+        dependencies.repositoryDependencies || {}
+      );
+
+      updatedMonths.push({
+        yearMonth,
+        drawCount:
+          Number(payload?.drawCount || 0),
+        previousDrawCount:
+          Number(
+            payload?.previousDrawCount || 0
+          ),
+        firstYmd:
+          payload?.firstYmd || null,
+        lastYmd:
+          payload?.lastYmd || null,
+        firstDrawId:
+          payload?.firstDrawId || null,
+        lastDrawId:
+          payload?.lastDrawId || null,
+      });
+    }
+
+    const metadataMonths = safeArray(
+      metadata?.months
+    )
+      .map((value) =>
+        String(value || "").trim()
+      )
+      .filter(Boolean);
+
+    const monthSet = new Set(
+      metadataMonths
+    );
+
+    for (const item of updatedMonths) {
+      monthSet.add(item.yearMonth);
+    }
+
+    const orderedMonths =
+      Array.from(monthSet).sort();
+
+    const totalDelta =
+      updatedMonths.reduce(
+        (total, item) =>
+          total +
+          Number(item.drawCount || 0) -
+          Number(
+            item.previousDrawCount || 0
+          ),
+        0
+      );
+
+    const totalDraws = Math.max(
+      0,
+      Number(metadata?.totalDraws || 0) +
+      totalDelta
+    );
+
+    const firstCandidates = [
+      metadata?.firstYmd
+        ? {
+            ymd: metadata.firstYmd,
+            drawId:
+              metadata.firstDrawId || null,
+          }
+        : null,
+      ...updatedMonths.map((item) =>
+        item.firstYmd
+          ? {
+              ymd: item.firstYmd,
+              drawId:
+                item.firstDrawId || null,
+            }
+          : null
+      ),
+    ]
+      .filter(Boolean)
+      .sort((a, b) =>
+        String(a.ymd)
+          .localeCompare(String(b.ymd))
+      );
+
+    const lastCandidates = [
+      metadata?.lastYmd
+        ? {
+            ymd: metadata.lastYmd,
+            drawId:
+              metadata.lastDrawId || null,
+          }
+        : null,
+      ...updatedMonths.map((item) =>
+        item.lastYmd
+          ? {
+              ymd: item.lastYmd,
+              drawId:
+                item.lastDrawId || null,
+            }
+          : null
+      ),
+    ]
+      .filter(Boolean)
+      .sort((a, b) =>
+        String(a.ymd)
+          .localeCompare(String(b.ymd))
+      );
+
+    const first =
+      firstCandidates[0] || null;
+
+    const last =
+      lastCandidates[
+        lastCandidates.length - 1
+      ] || null;
+
+    const summary = {
+      totalDraws,
+      monthCount:
+        orderedMonths.length,
+      months:
+        orderedMonths,
+      firstYmd:
+        first?.ymd || null,
+      lastYmd:
+        last?.ymd || null,
+      firstDrawId:
+        first?.drawId || null,
+      lastDrawId:
+        last?.drawId || null,
+    };
+
+    await saveMetadata(
+      lotteryKey,
+      {
+        bootstrapStatus: "complete",
+        incrementalUpdatedAt:
+          new Date().toISOString(),
+        totalDraws:
+          summary.totalDraws,
+        monthCount:
+          summary.monthCount,
+        months:
+          summary.months,
+        firstYmd:
+          summary.firstYmd,
+        lastYmd:
+          summary.lastYmd,
+        firstDrawId:
+          summary.firstDrawId,
+        lastDrawId:
+          summary.lastDrawId,
+        lastProcessedDrawId:
+          summary.lastDrawId,
+        staleReason: null,
+        staleAt: null,
+        source:
+          "bootstrap_plus_incremental",
+      },
+      dependencies.repositoryDependencies || {}
+    );
+
+    console.log(
+      `[TOP3-HISTORY] Incremental OK | ${lotteryKey} | ` +
+      `draws=${draws.length} | meses=${updatedMonths
+        .map((item) => item.yearMonth)
+        .join(",")}`
+    );
+
+    return {
+      ok: true,
+      skipped: false,
+      lotteryKey,
+      importedDraws: draws.length,
+      updatedMonths,
+      ...summary,
+    };
+  } catch (error) {
+    console.error(
+      "[TOP3-HISTORY] Incremental falhou:",
+      error?.stack ||
+      error?.message ||
+      error
+    );
+
+    const markedStale = await markHistoryStale(
+      lotteryKey,
+      error,
+      dependencies
+    );
+
+    return {
+      ok: false,
+      skipped: false,
+      lotteryKey,
+      markedStale,
+      error:
+        String(
+          error?.message ||
+          error ||
+          "incremental_sync_failed"
+        ),
+    };
+  }
+}
+
+module.exports = {
+  readDrawWithPrizes,
+  loadImportedDraws,
+  summarizeMonths,
+  markHistoryStale,
+  syncImportedResultToTop3History,
+};
+
+
+====================================================================================================
+ARQUIVO: .\backend\service\firebaseAdmin.js
+====================================================================================================
+// backend/service/firebaseAdmin.js
+"use strict";
+
+const fs = require("fs");
+const path = require("path");
+const admin = require("firebase-admin");
+
+let _db = null;
+let _initialized = false;
+
+/* =========================
+   .env.local loader (robusto)
+========================= */
+(function loadEnvLocal() {
+  try {
+    const envPath = path.join(__dirname, "..", ".env.local");
+    if (!fs.existsSync(envPath)) return;
+
+    let raw = fs.readFileSync(envPath, "utf8");
+    raw = String(raw || "").replace(/^\uFEFF/, "");
+
+    raw.split(/\r?\n/).forEach((line) => {
+      let s = String(line || "").trim();
+      if (!s || s.startsWith("#")) return;
+
+      if (/^export\s+/i.test(s)) s = s.replace(/^export\s+/i, "").trim();
+
+      const i = s.indexOf("=");
+      if (i <= 0) return;
+
+      const key = s.slice(0, i).trim();
+      let val = s.slice(i + 1).trim();
+
+      if (
+        (val.startsWith('"') && val.endsWith('"')) ||
+        (val.startsWith("'") && val.endsWith("'"))
+      ) {
+        val = val.slice(1, -1);
+      }
+
+      if (key && val && !process.env[key]) {
+        process.env[key] = val;
+      }
+    });
+  } catch {
+    // silencioso por design
+  }
+})();
+
+/* =========================
+   Helpers
+========================= */
+
+function fail(msg) {
+  throw new Error(`🔥 Firebase Admin init error:\n${msg}`);
+}
+
+function stripBomAndTrim(s) {
+  return String(s || "").replace(/^\uFEFF/, "").trim();
+}
+
+function safeJsonParse(v) {
+  try {
+    const raw = stripBomAndTrim(v);
+    if (!raw) return null;
+    const o = JSON.parse(raw);
+    return o && typeof o === "object" ? o : null;
+  } catch {
+    return null;
+  }
+}
+
+function readJsonFileOrFail(filePath, labelForError) {
+  const p = String(filePath || "").trim();
+  try {
+    const raw = stripBomAndTrim(fs.readFileSync(p, "utf8"));
+    const obj = JSON.parse(raw);
+    if (!obj || typeof obj !== "object") {
+      fail(`${labelForError} existe, mas NÃO é um JSON objeto válido:\n${p}`);
+    }
+    return obj;
+  } catch (e) {
+    fail(
+      `${labelForError} inválido (falha ao ler/parsear JSON):\n${p}\n\n` +
+        (e?.message || String(e))
+    );
+  }
+}
+
+function normalizePrivateKey(sa) {
+  if (sa && typeof sa.private_key === "string") {
+    // render/railway/vercel frequentemente salvam como "\n"
+    sa.private_key = sa.private_key.replace(/\\n/g, "\n");
+  }
+  return sa;
+}
+
+function isValidServiceAccount(sa) {
+  if (!sa || typeof sa !== "object") return false;
+
+  return (
+    typeof sa.project_id === "string" &&
+    typeof sa.client_email === "string" &&
+    typeof sa.private_key === "string" &&
+    sa.client_email.includes("@") &&
+    sa.private_key.includes("BEGIN PRIVATE KEY") &&
+    sa.private_key.includes("END PRIVATE KEY")
+  );
+}
+
+/**
+ * Procura candidatos comuns quando GOOGLE_APPLICATION_CREDENTIALS está errado.
+ * - backend/*.json com "firebase-adminsdk" no nome
+ * - backend/serviceAccount*.json
+ * - backend/serviceAccount.json
+ * - <repo>/_secrets/palpitaco/firebase-admin.json (se existir)
+ */
+function findCredentialCandidates() {
+  const candidates = new Set();
+
+  const backendDir = path.resolve(__dirname, ".."); // .../backend
+  const repoDir = path.resolve(backendDir, ".."); // .../palpitaco
+
+  // 1) backend/
+  try {
+    const files = fs.readdirSync(backendDir, { withFileTypes: true });
+    for (const f of files) {
+      if (!f.isFile()) continue;
+      const name = String(f.name || "");
+      const lower = name.toLowerCase();
+
+      if (!lower.endsWith(".json")) continue;
+
+      // padrões comuns
+      if (lower.includes("firebase-adminsdk") || lower.startsWith("serviceaccount")) {
+        candidates.add(path.join(backendDir, name));
+      }
+      if (lower === "serviceaccount.json") {
+        candidates.add(path.join(backendDir, name));
+      }
+    }
+  } catch {
+    // ignora
+  }
+
+  // 2) _secrets/palpitaco/firebase-admin.json
+  try {
+    const p = path.join(repoDir, "_secrets", "palpitaco", "firebase-admin.json");
+    if (fs.existsSync(p)) candidates.add(p);
+  } catch {
+    // ignora
+  }
+
+  // determinístico
+  return Array.from(candidates).sort((a, b) => String(a).localeCompare(String(b)));
+}
+
+function resolveCredentialsPath() {
+  const rawEnv = String(process.env.GOOGLE_APPLICATION_CREDENTIALS || "").trim();
+  if (!rawEnv) return null;
+
+  // remove aspas externas
+  let p = rawEnv.replace(/^['"]|['"]$/g, "").trim();
+
+  // normaliza separadores
+  p = path.normalize(p);
+
+  // Se veio relativo, resolve a partir do repo (palpitaco),
+  // mas também aceitamos relativo ao backend.
+  if (!path.isAbsolute(p)) {
+    const backendDir = path.resolve(__dirname, "..");
+    const repoDir = path.resolve(backendDir, "..");
+
+    const asBackend = path.resolve(backendDir, p);
+    const asRepo = path.resolve(repoDir, p);
+
+    if (fs.existsSync(asBackend)) {
+      p = asBackend;
+    } else {
+      p = asRepo;
+    }
+  }
+
+  if (!fs.existsSync(p)) {
+    const found = findCredentialCandidates();
+
+    // Se achou exatamente 1, usa automaticamente (evita travar dev)
+    if (found.length === 1) {
+      const auto = found[0];
+      process.env.GOOGLE_APPLICATION_CREDENTIALS = auto;
+      console.warn(
+        "[WARN] GOOGLE_APPLICATION_CREDENTIALS inválido. Usando automaticamente:",
+        auto
+      );
+      return auto;
+    }
+
+    const hint =
+      found.length === 0
+        ? "Nenhum JSON candidato encontrado em backend/ ou _secrets."
+        : "Encontrei mais de um candidato. Defina explicitamente no .env.local.";
+
+    const list =
+      found.length > 0 ? "\nCandidatos:\n- " + found.join("\n- ") : "";
+
+    fail(
+      `GOOGLE_APPLICATION_CREDENTIALS aponta para caminho inexistente:\n${p}\n\n` +
+        `${hint}${list}\n\n` +
+        `✅ Ajuste no .env.local, exemplo:\n` +
+        `GOOGLE_APPLICATION_CREDENTIALS=C:\\Users\\glaub\\palpitaco\\backend\\SEU_ARQUIVO.json`
+    );
+  }
+
+  return p;
+}
+
+function readServiceAccountFromEnv() {
+  if (process.env.FIREBASE_ADMIN_SA_JSON) {
+    const sa = safeJsonParse(process.env.FIREBASE_ADMIN_SA_JSON);
+    if (!sa) fail("FIREBASE_ADMIN_SA_JSON existe, mas NÃO é JSON válido.");
+
+    normalizePrivateKey(sa);
+    if (!isValidServiceAccount(sa)) {
+      fail("FIREBASE_ADMIN_SA_JSON é JSON, mas NÃO é um service account válido.");
+    }
+    return sa;
+  }
+
+  if (process.env.FIREBASE_ADMIN_SA_BASE64) {
+    let decoded;
+    try {
+      decoded = Buffer.from(
+        String(process.env.FIREBASE_ADMIN_SA_BASE64),
+        "base64"
+      ).toString("utf8");
+    } catch {
+      fail("FIREBASE_ADMIN_SA_BASE64 não é base64 válido.");
+    }
+
+    const sa = safeJsonParse(decoded);
+    if (!sa) fail("FIREBASE_ADMIN_SA_BASE64 decodificou, mas NÃO virou JSON.");
+
+    normalizePrivateKey(sa);
+    if (!isValidServiceAccount(sa)) {
+      fail("FIREBASE_ADMIN_SA_BASE64 é JSON, mas NÃO é um service account válido.");
+    }
+    return sa;
+  }
+
+  return null;
+}
+
+/**
+ * Garante que o runner tenha Project ID visível para as libs @google-cloud/*
+ * (evita: "Unable to detect a Project Id in the current environment")
+ */
+function ensureProjectEnv(projectId) {
+  const pid = String(projectId || "").trim();
+  if (!pid) return;
+
+  if (!process.env.GOOGLE_CLOUD_PROJECT) process.env.GOOGLE_CLOUD_PROJECT = pid;
+  if (!process.env.GCLOUD_PROJECT) process.env.GCLOUD_PROJECT = pid;
+
+  // opcional: alguns setups leem isso
+  if (!process.env.FIREBASE_PROJECT_ID) process.env.FIREBASE_PROJECT_ID = pid;
+}
+
+/* =========================
+   Init
+========================= */
+
+function initAdmin() {
+  if (_initialized) return admin;
+
+  if (admin.apps && admin.apps.length) {
+    _initialized = true;
+    return admin;
+  }
+
+  const saFromEnv = readServiceAccountFromEnv();
+  if (saFromEnv) {
+    ensureProjectEnv(saFromEnv.project_id);
+
+    admin.initializeApp({
+      credential: admin.credential.cert(saFromEnv),
+      projectId: saFromEnv.project_id,
+    });
+
+    _initialized = true;
+    return admin;
+  }
+
+  if (process.env.GOOGLE_APPLICATION_CREDENTIALS) {
+    const p = resolveCredentialsPath();
+    const json = readJsonFileOrFail(p, "Service account file");
+    normalizePrivateKey(json);
+
+    if (!isValidServiceAccount(json)) {
+      fail(`Service account inválido no arquivo:\n${p}`);
+    }
+
+    ensureProjectEnv(json.project_id);
+
+    admin.initializeApp({
+      credential: admin.credential.cert(json),
+      projectId: json.project_id,
+    });
+
+    _initialized = true;
+    return admin;
+  }
+
+  // ADC só se NÃO houver nenhuma tentativa de credencial
+  try {
+    admin.initializeApp({
+      credential: admin.credential.applicationDefault(),
+    });
+    _initialized = true;
+    return admin;
+  } catch (e) {
+    fail(
+      "Nenhuma credencial válida encontrada.\n" +
+        "Use UMA opção:\n" +
+        "- FIREBASE_ADMIN_SA_JSON\n" +
+        "- FIREBASE_ADMIN_SA_BASE64\n" +
+        "- GOOGLE_APPLICATION_CREDENTIALS\n\n" +
+        (e?.message || "")
+    );
+  }
+}
+
+function getDb(forceNew = false) {
+  if (_db && !forceNew) return _db;
+
+  initAdmin();
+  _db = admin.firestore();
+  return _db;
+}
+
+/* =========================
+   Exports (compat)
+========================= */
+
+const exportsObj = {
+  admin,
+  initAdmin,
+  getDb,
+};
+
+Object.defineProperty(exportsObj, "db", {
+  enumerable: true,
+  get() {
+    return getDb(false);
+  },
+});
+
+module.exports = exportsObj;

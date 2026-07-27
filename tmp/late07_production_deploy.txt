@@ -1,0 +1,52 @@
+dc38dc5 fix(late): filtrar atrasados pela loteria correta
+ src/services/kingResultsService.js | 22 ++++++++++++++++++----
+ 1 file changed, 18 insertions(+), 4 deletions(-)
+{"state":"success","statuses":[{"context":"Vercel","description":"Deployment has completed","state":"success","target_url":"https://vercel.com/glauber-oliveiras-projects/palpitacojb/6ohkY4ZWd74CkhEBWe6JpNkszp2b"}]}
+[]
+Retrieving projectÔÇª
+Fetching deployments in glauber-oliveiras-projects
+> Deployments for glauber-oliveiras-projects/palpitacojb [314ms]
+
+https://palpitacojb-dfh0kl0lk-glauber-oliveiras-projects.vercel.app
+  Age     Project                                    Deployment                                                              Status      Environment     Duration     Username                   
+  11m     glauber-oliveiras-projects/palpitacojb     https://palpitacojb-dfh0kl0lk-glauber-oliveiras-projects.vercel.app     ÔùÅ Ready     Production      43s          glauberseguros-commits     
+  17m     glauber-oliveiras-projects/palpitacojb     https://palpitacojb-8r95xy9za-glauber-oliveiras-projects.vercel.app     ÔùÅ Ready     Production      42s          glauberseguros-commits     
+  28m     glauber-oliveiras-projects/palpitacojb     https://palpitacojb-d0r9zk4qx-glauber-oliveiras-projects.vercel.app     ÔùÅ Ready     Production      48s          glauberseguros-commits     
+https://palpitacojb-8r95xy9za-glauber-oliveiras-projects.vercel.app
+https://palpitacojb-d0r9zk4qx-glauber-oliveiras-projects.vercel.app
+  47m     glauber-oliveiras-projects/palpitacojb     https://palpitacojb-25ivr2ek7-glauber-oliveiras-projects.vercel.app     ÔùÅ Ready     Production      45s          glauberseguros-commits     
+https://palpitacojb-25ivr2ek7-glauber-oliveiras-projects.vercel.app
+https://palpitacojb-9k7im90gx-glauber-oliveiras-projects.vercel.app
+https://palpitacojb-h9f83e936-glauber-oliveiras-projects.vercel.app
+https://palpitacojb-3mgxx6m0z-glauber-oliveiras-projects.vercel.app
+https://palpitacojb-l1j52o1qi-glauber-oliveiras-projects.vercel.app
+https://palpitacojb-59p7bztcv-glauber-oliveiras-projects.vercel.app
+https://palpitacojb-11dxeah1e-glauber-oliveiras-projects.vercel.app
+https://palpitacojb-c2qlal2pd-glauber-oliveiras-projects.vercel.app
+https://palpitacojb-o0ld5qohb-glauber-oliveiras-projects.vercel.app
+https://palpitacojb-35n3laao2-glauber-oliveiras-projects.vercel.app
+https://palpitacojb-smrhofyp1-glauber-oliveiras-projects.vercel.app
+https://palpitacojb-ksut466kb-glauber-oliveiras-projects.vercel.app
+https://palpitacojb-bf3s0g7vb-glauber-oliveiras-projects.vercel.app
+https://palpitacojb-nmux64pna-glauber-oliveiras-projects.vercel.app
+https://palpitacojb-bc4660fci-glauber-oliveiras-projects.vercel.app
+https://palpitacojb-367taumbc-glauber-oliveiras-projects.vercel.app
+https://palpitacojb-elqnae5uh-glauber-oliveiras-projects.vercel.app
+  1h      glauber-oliveiras-projects/palpitacojb     https://palpitacojb-9k7im90gx-glauber-oliveiras-projects.vercel.app     ÔùÅ Ready     Production      41s          glauberseguros-commits     
+  2h      glauber-oliveiras-projects/palpitacojb     https://palpitacojb-h9f83e936-glauber-oliveiras-projects.vercel.app     ÔùÅ Ready     Production      47s          glauberseguros-commits     
+  2h      glauber-oliveiras-projects/palpitacojb     https://palpitacojb-3mgxx6m0z-glauber-oliveiras-projects.vercel.app     ÔùÅ Ready     Production      46s          glauberseguros-commits     
+  3h      glauber-oliveiras-projects/palpitacojb     https://palpitacojb-l1j52o1qi-glauber-oliveiras-projects.vercel.app     ÔùÅ Ready     Production      46s          glauberseguros-commits     
+  4h      glauber-oliveiras-projects/palpitacojb     https://palpitacojb-59p7bztcv-glauber-oliveiras-projects.vercel.app     ÔùÅ Ready     Production      43s          glauberseguros-commits     
+  4h      glauber-oliveiras-projects/palpitacojb     https://palpitacojb-11dxeah1e-glauber-oliveiras-projects.vercel.app     ÔùÅ Ready     Production      43s          glauberseguros-commits     
+  6h      glauber-oliveiras-projects/palpitacojb     https://palpitacojb-c2qlal2pd-glauber-oliveiras-projects.vercel.app     ÔùÅ Ready     Production      42s          glauberseguros-commits     
+  6h      glauber-oliveiras-projects/palpitacojb     https://palpitacojb-o0ld5qohb-glauber-oliveiras-projects.vercel.app     ÔùÅ Ready     Production      51s          glauberseguros-commits     
+  7h      glauber-oliveiras-projects/palpitacojb     https://palpitacojb-35n3laao2-glauber-oliveiras-projects.vercel.app     ÔùÅ Ready     Production      51s          glauberseguros-commits     
+  7h      glauber-oliveiras-projects/palpitacojb     https://palpitacojb-smrhofyp1-glauber-oliveiras-projects.vercel.app     ÔùÅ Ready     Production      44s          glauberseguros-commits     
+  8h      glauber-oliveiras-projects/palpitacojb     https://palpitacojb-ksut466kb-glauber-oliveiras-projects.vercel.app     ÔùÅ Ready     Production      42s          glauberseguros-commits     
+  24h     glauber-oliveiras-projects/palpitacojb     https://palpitacojb-bf3s0g7vb-glauber-oliveiras-projects.vercel.app     ÔùÅ Ready     Production      42s          glauberseguros-commits     
+  24h     glauber-oliveiras-projects/palpitacojb     https://palpitacojb-nmux64pna-glauber-oliveiras-projects.vercel.app     ÔùÅ Ready     Production      46s          glauberseguros-commits     
+  1d      glauber-oliveiras-projects/palpitacojb     https://palpitacojb-bc4660fci-glauber-oliveiras-projects.vercel.app     ÔùÅ Ready     Production      46s          glauberseguros-commits     
+  1d      glauber-oliveiras-projects/palpitacojb     https://palpitacojb-367taumbc-glauber-oliveiras-projects.vercel.app     ÔùÅ Ready     Production      46s          glauberseguros-commits     
+  1d      glauber-oliveiras-projects/palpitacojb     https://palpitacojb-elqnae5uh-glauber-oliveiras-projects.vercel.app     ÔùÅ Ready     Production      42s          glauberseguros-commits     
+
+> To display the next page, run `vercel ls --yes --next 1784586000667`

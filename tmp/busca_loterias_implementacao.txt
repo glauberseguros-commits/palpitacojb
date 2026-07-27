@@ -1,0 +1,19 @@
+506:const SEARCH_LOTTERIES = Object.freeze([
+559:  const [lotteryKey, setLotteryKey] = useState("PT_RIO");
+560:  const LOTTERY_KEY = lotteryKey;
+562:  const selectedLottery = useMemo(
+564:      SEARCH_LOTTERIES.find((lottery) => lottery.value === lotteryKey) ||
+565:      SEARCH_LOTTERIES[0],
+566:    [lotteryKey]
+569:  const lotteryHours = selectedLottery.hours;
+614:        const b = await getKingBoundsByUf({ uf: LOTTERY_KEY });
+643:  const onLotteryChange = useCallback((nextLottery) => {
+644:    const validLottery = SEARCH_LOTTERIES.some(
+648:    if (!validLottery || nextLottery === lotteryKey) return;
+659:  }, [lotteryKey]);
+754:          uf: LOTTERY_KEY,
+1157:            <label>Loteria</label>
+1159:              value={lotteryKey}
+1160:              onChange={(e) => onLotteryChange(String(e.target.value || "PT_RIO"))}
+1163:              {SEARCH_LOTTERIES.map((lottery) => (
+1229:              {["Todos", ...lotteryHours].map((x) => (

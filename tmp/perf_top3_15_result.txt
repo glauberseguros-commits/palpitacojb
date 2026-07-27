@@ -1,0 +1,60 @@
+
+===== 1. SINTAXE =====
+
+===== 2. MIGRAÇÃO PT_RIO =====
+Migrando hist├│rico compacto: PT_RIO
+TypeError: readLegacyFullHistory is not a function
+    at main (C:\Users\glaub\palpitaco\tmp\perf_top3_15_migrate.js:20:24)
+    at Object.<anonymous> (C:\Users\glaub\palpitaco\tmp\perf_top3_15_migrate.js:119:1)
+    at Module._compile (node:internal/modules/cjs/loader:1730:14)
+    at Object..js (node:internal/modules/cjs/loader:1895:10)
+    at Module.load (node:internal/modules/cjs/loader:1465:32)
+    at Function._load (node:internal/modules/cjs/loader:1282:12)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:235:24)
+    at Function.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:171:5)
+    at node:internal/main/run_main_module:36:49
+
+===== 3. EQUIVALÊNCIA E DESEMPENHO =====
+TypeError: readLegacyFullHistory is not a function
+    at C:\Users\glaub\palpitaco\tmp\perf_top3_15_validate.js:73:9
+    at measure (C:\Users\glaub\palpitaco\tmp\perf_top3_15_validate.js:53:23)
+    at main (C:\Users\glaub\palpitaco\tmp\perf_top3_15_validate.js:71:11)
+    at Object.<anonymous> (C:\Users\glaub\palpitaco\tmp\perf_top3_15_validate.js:181:1)
+    at Module._compile (node:internal/modules/cjs/loader:1730:14)
+    at Object..js (node:internal/modules/cjs/loader:1895:10)
+    at Module.load (node:internal/modules/cjs/loader:1465:32)
+    at Function._load (node:internal/modules/cjs/loader:1282:12)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:235:24)
+
+===== 4. TESTES DO PROJETO =====
+
+> palpitaco@0.1.0 test
+> react-scripts test
+
+PASS src/pages/Top3/__tests__/top3.public-api.node.test.js
+PASS src/pages/Top3/__tests__/top3.schedule-transition.test.js
+FAIL src/pages/Top3/__tests__/top3.schedule-calendar-rules.node.test.js
+  ÔùÅ Test suite failed to run
+
+    ENOENT: no such file or directory, open 'C:\Users\glaub\palpitaco\node:test'
+
+    > 1 | import test from "node:test";
+        | ^
+      2 | import assert from "node:assert/strict";
+      3 |
+      4 | import {
+
+      at Runtime.readFile (node_modules/jest-runtime/build/index.js:2421:21)
+      at Object.<anonymous> (src/pages/Top3/__tests__/top3.schedule-calendar-rules.node.test.js:1:1)
+
+PASS src/pages/Centenas/__tests__/milharProbabilityEngineV3.test.js
+A worker process has failed to exit gracefully and has been force exited. This is likely caused by tests leaking due to improper teardown. Try running with --detectOpenHandles to find leaks. Active timers can also cause this, ensure that .unref() was called on them.
+
+Test Suites: 1 failed, 3 passed, 4 of 6 total
+Tests:       25 passed, 25 total
+Snapshots:   0 total
+Time:        26.181 s, estimated 659 s
+Test run was interrupted.
+

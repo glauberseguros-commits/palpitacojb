@@ -1,0 +1,98 @@
+====================================================================================================
+PERF-TOP3-46 — BENCHMARK ORIGINAL X CACHE LAYERPROBABILITY
+====================================================================================================
+Data: 2026-07-24 11:18:27
+HEAD: 28d88bf9000215e8fbf3ea782224bbc4188b038c
+Branch: main
+
+Objetivo:
+- medir o tempo do motor original;
+- medir o tempo com cache de layerProbability;
+- executar uma etapa de aquecimento;
+- executar três medições em cada versão;
+- validar as assinaturas das quatro loterias;
+- restaurar o motor original obrigatoriamente;
+- não executar commit, push, deploy ou gravação no Firestore.
+====================================================================================================
+
+====================================================================================================
+1. PRÉ-VALIDAÇÃO
+====================================================================================================
+Motor: .\src\pages\Top3\top3.engine.js
+SHA256 encontrado: EC56034075F4B73C191B3CD9F47EC1C42E68B0B41DD7EF22AFBE1C517E32764E
+SHA256 esperado:  EC56034075F4B73C191B3CD9F47EC1C42E68B0B41DD7EF22AFBE1C517E32764E
+====================================================================================================
+
+====================================================================================================
+2. OTIMIZAÇÃO TEMPORÁRIA APLICADA
+====================================================================================================
+SHA256 temporário: 57D19B65704EA7D2F53624A2499263E455EE1BF768DC69AAC71EE06A6A400D40
+Alteração:
+- cache de layerProbability por camada;
+- reutilização dos Maps durante o ranking dos 25 grupos.
+====================================================================================================
+
+====================================================================================================
+3. TEMPOS MEDIDOS
+====================================================================================================
+Original — execuções: 37337 ms, 41449 ms, 33329 ms
+Original — média: 37371.67 ms
+Original — mediana: 37337.00 ms
+
+Otimizado — execuções: 37928 ms, 31495 ms, 36947 ms
+Otimizado — média: 35456.67 ms
+Otimizado — mediana: 36947.00 ms
+
+Ganho médio absoluto: 1915.00 ms
+Ganho médio percentual: 5.12%
+
+====================================================================================================
+4. VALIDAÇÃO DAS ASSINATURAS
+====================================================================================================
+EXECUÇÃO 1
+PT_RIO: original=02DFCACF1A50F59DD064246DFC179D12A9C22958990B84D9C38356424C9FBD35 | otimizado=02DFCACF1A50F59DD064246DFC179D12A9C22958990B84D9C38356424C9FBD35 | esperada=OK | igual=SIM
+FEDERAL: original=5F4267C52469CB43729C63D594A00B0624332B866A0C1A5F0D29DA983B7431A2 | otimizado=5F4267C52469CB43729C63D594A00B0624332B866A0C1A5F0D29DA983B7431A2 | esperada=OK | igual=SIM
+LOOK: original=D11B6930450A23CECD8F8322D0C9D948396A9F6A7349CB892929C863B200ECAA | otimizado=D11B6930450A23CECD8F8322D0C9D948396A9F6A7349CB892929C863B200ECAA | esperada=OK | igual=SIM
+NACIONAL: original=9F675860326EC008E84D2A1DDE2D48DB99A26EB4BD25383DE4D93A96C1F5463D | otimizado=9F675860326EC008E84D2A1DDE2D48DB99A26EB4BD25383DE4D93A96C1F5463D | esperada=OK | igual=SIM
+
+EXECUÇÃO 2
+PT_RIO: original=02DFCACF1A50F59DD064246DFC179D12A9C22958990B84D9C38356424C9FBD35 | otimizado=02DFCACF1A50F59DD064246DFC179D12A9C22958990B84D9C38356424C9FBD35 | esperada=OK | igual=SIM
+FEDERAL: original=5F4267C52469CB43729C63D594A00B0624332B866A0C1A5F0D29DA983B7431A2 | otimizado=5F4267C52469CB43729C63D594A00B0624332B866A0C1A5F0D29DA983B7431A2 | esperada=OK | igual=SIM
+LOOK: original=D11B6930450A23CECD8F8322D0C9D948396A9F6A7349CB892929C863B200ECAA | otimizado=D11B6930450A23CECD8F8322D0C9D948396A9F6A7349CB892929C863B200ECAA | esperada=OK | igual=SIM
+NACIONAL: original=9F675860326EC008E84D2A1DDE2D48DB99A26EB4BD25383DE4D93A96C1F5463D | otimizado=9F675860326EC008E84D2A1DDE2D48DB99A26EB4BD25383DE4D93A96C1F5463D | esperada=OK | igual=SIM
+
+EXECUÇÃO 3
+PT_RIO: original=02DFCACF1A50F59DD064246DFC179D12A9C22958990B84D9C38356424C9FBD35 | otimizado=02DFCACF1A50F59DD064246DFC179D12A9C22958990B84D9C38356424C9FBD35 | esperada=OK | igual=SIM
+FEDERAL: original=5F4267C52469CB43729C63D594A00B0624332B866A0C1A5F0D29DA983B7431A2 | otimizado=5F4267C52469CB43729C63D594A00B0624332B866A0C1A5F0D29DA983B7431A2 | esperada=OK | igual=SIM
+LOOK: original=D11B6930450A23CECD8F8322D0C9D948396A9F6A7349CB892929C863B200ECAA | otimizado=D11B6930450A23CECD8F8322D0C9D948396A9F6A7349CB892929C863B200ECAA | esperada=OK | igual=SIM
+NACIONAL: original=9F675860326EC008E84D2A1DDE2D48DB99A26EB4BD25383DE4D93A96C1F5463D | otimizado=9F675860326EC008E84D2A1DDE2D48DB99A26EB4BD25383DE4D93A96C1F5463D | esperada=OK | igual=SIM
+
+====================================================================================================
+5. DECISÃO TÉCNICA
+====================================================================================================
+APROVADO PARA IMPLANTAÇÃO: assinaturas idênticas e ganho de desempenho mensurável.
+
+Assinaturas válidas: SIM
+Original e otimizado idênticos: SIM
+Ganho médio: 5.12%
+
+Motor original restaurado: SIM
+Commit criado: NÃO
+Push executado: NÃO
+Deploy executado: NÃO
+Firestore alterado: NÃO
+====================================================================================================
+
+====================================================================================================
+6. RESTAURAÇÃO VALIDADA
+====================================================================================================
+SHA256 restaurado: EC56034075F4B73C191B3CD9F47EC1C42E68B0B41DD7EF22AFBE1C517E32764E
+SHA256 esperado:  EC56034075F4B73C191B3CD9F47EC1C42E68B0B41DD7EF22AFBE1C517E32764E
+
+Motor original restaurado corretamente.
+Nenhuma alteração foi mantida.
+Nenhum commit foi criado.
+Nenhum push foi executado.
+Nenhum deploy foi executado.
+Nenhuma gravação no Firestore foi realizada.
+====================================================================================================

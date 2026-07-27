@@ -1,0 +1,149 @@
+{
+  "ok": true,
+  "experiment": "E08",
+  "hypothesis": "Reordenar apenas os tres candidatos da V3 usando frequencia do mesmo horario.",
+  "lotteryKey": "PT_RIO",
+  "limit": 0,
+  "minHistory": 100,
+  "invariants": {
+    "evaluatedEqual": true,
+    "errorsEqual": true,
+    "top3HitsEqual": true,
+    "candidateSetPreserved": true
+  },
+  "baseline": {
+    "evaluated": 7406,
+    "errors": 0,
+    "top1Hits": 321,
+    "top1Rate": 4.3343,
+    "top3Hits": 913,
+    "top3Rate": 12.3278
+  },
+  "experimental": {
+    "evaluated": 7406,
+    "errors": 0,
+    "top1Hits": 333,
+    "top1Rate": 4.4964,
+    "top3Hits": 913,
+    "top3Rate": 12.3278
+  },
+  "delta": {
+    "top1Hits": 12,
+    "top1Rate": 0.1621,
+    "top3Hits": 0,
+    "top3Rate": 0
+  },
+  "byHour": {
+    "baseline": {
+      "16:00": {
+        "evaluated": 1464,
+        "top1Hits": 53,
+        "top3Hits": 189,
+        "errors": 0,
+        "top1Rate": 3.6202,
+        "top3Rate": 12.9098
+      },
+      "21:00": {
+        "evaluated": 1251,
+        "top1Hits": 75,
+        "top3Hits": 170,
+        "errors": 0,
+        "top1Rate": 5.9952,
+        "top3Rate": 13.5891
+      },
+      "11:00": {
+        "evaluated": 1465,
+        "top1Hits": 69,
+        "top3Hits": 175,
+        "errors": 0,
+        "top1Rate": 4.7099,
+        "top3Rate": 11.9454
+      },
+      "14:00": {
+        "evaluated": 1465,
+        "top1Hits": 65,
+        "top3Hits": 178,
+        "errors": 0,
+        "top1Rate": 4.4369,
+        "top3Rate": 12.1502
+      },
+      "18:00": {
+        "evaluated": 849,
+        "top1Hits": 30,
+        "top3Hits": 101,
+        "errors": 0,
+        "top1Rate": 3.5336,
+        "top3Rate": 11.8963
+      },
+      "09:00": {
+        "evaluated": 912,
+        "top1Hits": 29,
+        "top3Hits": 100,
+        "errors": 0,
+        "top1Rate": 3.1798,
+        "top3Rate": 10.9649
+      }
+    },
+    "experimental": {
+      "16:00": {
+        "evaluated": 1464,
+        "top1Hits": 63,
+        "top3Hits": 189,
+        "errors": 0,
+        "top1Rate": 4.3033,
+        "top3Rate": 12.9098
+      },
+      "21:00": {
+        "evaluated": 1251,
+        "top1Hits": 79,
+        "top3Hits": 170,
+        "errors": 0,
+        "top1Rate": 6.3149,
+        "top3Rate": 13.5891
+      },
+      "11:00": {
+        "evaluated": 1465,
+        "top1Hits": 58,
+        "top3Hits": 175,
+        "errors": 0,
+        "top1Rate": 3.959,
+        "top3Rate": 11.9454
+      },
+      "14:00": {
+        "evaluated": 1465,
+        "top1Hits": 69,
+        "top3Hits": 178,
+        "errors": 0,
+        "top1Rate": 4.7099,
+        "top3Rate": 12.1502
+      },
+      "18:00": {
+        "evaluated": 849,
+        "top1Hits": 37,
+        "top3Hits": 101,
+        "errors": 0,
+        "top1Rate": 4.3581,
+        "top3Rate": 11.8963
+      },
+      "09:00": {
+        "evaluated": 912,
+        "top1Hits": 27,
+        "top3Hits": 100,
+        "errors": 0,
+        "top1Rate": 2.9605,
+        "top3Rate": 10.9649
+      }
+    }
+  },
+  "periods": {
+    "history": {
+      "from": "2022-06-07",
+      "to": "2026-07-18"
+    },
+    "evaluation": {
+      "from": "2022-06-29",
+      "to": "2026-07-18"
+    }
+  },
+  "generatedAt": "2026-07-18T17:39:21.200Z"
+}

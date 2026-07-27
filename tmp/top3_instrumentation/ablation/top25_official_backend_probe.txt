@@ -1,0 +1,36 @@
+PROVA DEFINITIVA — TOP25 PELO MOTOR OFICIAL
+==========================================================================================
+HISTORY_SIZE=7500
+HISTORY_BEFORE_SIZE=7499
+TOP_SIZE=25
+VALID_GROUPS=25
+UNIQUE_GROUPS=25
+META_PRESENT=SIM
+
+01 | G19 | scoreProb=0.062244171 | score=0.000000 | confidence=0.000000
+02 | G15 | scoreProb=0.061122054 | score=0.000000 | confidence=0.000000
+03 | G10 | scoreProb=0.060848157 | score=0.000000 | confidence=0.000000
+04 | G11 | scoreProb=0.058656665 | score=0.000000 | confidence=0.000000
+05 | G04 | scoreProb=0.058278323 | score=0.000000 | confidence=0.000000
+06 | G01 | scoreProb=0.054890951 | score=0.000000 | confidence=0.000000
+07 | G23 | scoreProb=0.053589204 | score=0.000000 | confidence=0.000000
+08 | G20 | scoreProb=0.051548546 | score=0.000000 | confidence=0.000000
+09 | G02 | scoreProb=0.051351570 | score=0.000000 | confidence=0.000000
+10 | G22 | scoreProb=0.050984427 | score=0.000000 | confidence=0.000000
+11 | G08 | scoreProb=0.050363620 | score=0.000000 | confidence=0.000000
+12 | G12 | scoreProb=0.049944831 | score=0.000000 | confidence=0.000000
+13 | G24 | scoreProb=0.049221993 | score=0.000000 | confidence=0.000000
+14 | G13 | scoreProb=0.048371800 | score=0.000000 | confidence=0.000000
+15 | G14 | scoreProb=0.047483258 | score=0.000000 | confidence=0.000000
+16 | G25 | scoreProb=0.047320742 | score=0.000000 | confidence=0.000000
+17 | G05 | scoreProb=0.045282535 | score=0.000000 | confidence=0.000000
+18 | G17 | scoreProb=0.043808799 | score=0.000000 | confidence=0.000000
+19 | G07 | scoreProb=0.043776230 | score=0.000000 | confidence=0.000000
+20 | G03 | scoreProb=0.043615853 | score=0.000000 | confidence=0.000000
+21 | G06 | scoreProb=0.042459700 | score=0.000000 | confidence=0.000000
+22 | G21 | scoreProb=0.040123415 | score=0.000000 | confidence=0.000000
+23 | G18 | scoreProb=0.037368273 | score=0.000000 | confidence=0.000000
+24 | G16 | scoreProb=0.035654946 | score=0.000000 | confidence=0.000000
+25 | G09 | scoreProb=0.035091220 | score=0.000000 | confidence=0.000000
+
+TOP25_VALIDATION=OK

@@ -1,0 +1,981 @@
+========================================================================================================================
+TERNO-REP-03 — MOTOR TRADICIONAL COMPLETO
+========================================================================================================================
+Arquivo: .\src\pages\TernoGrupo\modules\ternoGrupo.generator.js
+Total de linhas: 953
+Gerado em: 26/07/2026 23:45:37
+========================================================================================================================
+
+00001: import {
+00002:   extractTop5Groups,
+00003: } from "../ternoGrupo.public-api";
+00004: 
+00005: export const TERNO_GRUPO_MIN_QUANTITY = 1;
+00006: export const TERNO_GRUPO_MAX_QUANTITY = 2300;
+00007: 
+00008: export const TERNO_GRUPO_RANKING_VERSION =
+00009:   "TERNO_GRUPO_V3_HISTORICAL_COMBINATION";
+00010: 
+00011: const GROUP_MIN = 1;
+00012: const GROUP_MAX = 25;
+00013: const RECENT_WINDOW = 120;
+00014: 
+00015: function normalizeGrupo(value) {
+00016:   const grupo = Number(value);
+00017: 
+00018:   if (
+00019:     !Number.isInteger(grupo) ||
+00020:     grupo < GROUP_MIN ||
+00021:     grupo > GROUP_MAX
+00022:   ) {
+00023:     return null;
+00024:   }
+00025: 
+00026:   return grupo;
+00027: }
+00028: 
+00029: function normalizeHour(value) {
+00030:   const text = String(value ?? "")
+00031:     .trim()
+00032:     .toLowerCase();
+00033: 
+00034:   if (!text) return "";
+00035: 
+00036:   const match = text.match(
+00037:     /(?:^|\D)(\d{1,2})(?::(\d{2}))?\s*h?/
+00038:   );
+00039: 
+00040:   if (!match) return "";
+00041: 
+00042:   const hour = Number(match[1]);
+00043:   const minute = Number(match[2] || 0);
+00044: 
+00045:   if (
+00046:     !Number.isInteger(hour) ||
+00047:     hour < 0 ||
+00048:     hour > 23 ||
+00049:     !Number.isInteger(minute) ||
+00050:     minute < 0 ||
+00051:     minute > 59
+00052:   ) {
+00053:     return "";
+00054:   }
+00055: 
+00056:   return `${String(hour).padStart(2, "0")}:${String(
+00057:     minute
+00058:   ).padStart(2, "0")}`;
+00059: }
+00060: 
+00061: function extractDrawHour(draw) {
+00062:   return normalizeHour(
+00063:     draw?.close_hour ??
+00064:       draw?.closeHour ??
+00065:       draw?.hour ??
+00066:       draw?.hora ??
+00067:       draw?.draw_hour ??
+00068:       draw?.drawHour ??
+00069:       ""
+00070:   );
+00071: }
+00072: 
+00073: function extractGrupo(item) {
+00074:   return normalizeGrupo(
+00075:     item?.grupo ??
+00076:       item?.group ??
+00077:       item?.grupo2 ??
+00078:       item?.animal_grupo ??
+00079:       item?.id
+00080:   );
+00081: }
+00082: 
+00083: function clamp01(value) {
+00084:   const number = Number(value);
+00085: 
+00086:   if (!Number.isFinite(number)) {
+00087:     return 0;
+00088:   }
+00089: 
+00090:   return Math.max(0, Math.min(1, number));
+00091: }
+00092: 
+00093: function normalizeProbability(value) {
+00094:   const number = Number(value);
+00095: 
+00096:   if (!Number.isFinite(number)) {
+00097:     return 0;
+00098:   }
+00099: 
+00100:   if (number > 1) {
+00101:     return clamp01(number / 100);
+00102:   }
+00103: 
+00104:   return clamp01(number);
+00105: }
+00106: 
+00107: function extractAnalyticsScore(item) {
+00108:   const candidates = [
+00109:     item?.displayConfidence,
+00110:     item?.confidence,
+00111:     item?.scoreProb,
+00112:     item?.prob,
+00113:     item?.probPct,
+00114:     item?.probCond,
+00115:     item?.score,
+00116:     item?.weight,
+00117:     item?.strength,
+00118:     item?.frequencyPct,
+00119:     item?.rate,
+00120:   ];
+00121: 
+00122:   for (const candidate of candidates) {
+00123:     const number = Number(candidate);
+00124: 
+00125:     if (Number.isFinite(number)) {
+00126:       return normalizeProbability(number);
+00127:     }
+00128:   }
+00129: 
+00130:   return 0;
+00131: }
+00132: 
+00133: function pairKey(first, second) {
+00134:   return [first, second]
+00135:     .sort((a, b) => a - b)
+00136:     .join("-");
+00137: }
+00138: 
+00139: function tripleKey(values) {
+00140:   return [...values]
+00141:     .sort((a, b) => a - b)
+00142:     .join("-");
+00143: }
+00144: 
+00145: function incrementMap(map, key, amount = 1) {
+00146:   if (!key) return;
+00147: 
+00148:   map.set(
+00149:     key,
+00150:     Number(map.get(key) || 0) + amount
+00151:   );
+00152: }
+00153: 
+00154: function getMapValue(map, key) {
+00155:   return Number(map.get(key) || 0);
+00156: }
+00157: 
+00158: function getMapMaximum(map) {
+00159:   let maximum = 0;
+00160: 
+00161:   for (const value of map.values()) {
+00162:     const number = Number(value || 0);
+00163: 
+00164:     if (number > maximum) {
+00165:       maximum = number;
+00166:     }
+00167:   }
+00168: 
+00169:   return maximum;
+00170: }
+00171: 
+00172: function uniqueTop5Groups(draw) {
+00173:   const seen = new Set();
+00174:   const groups = [];
+00175: 
+00176:   for (const item of extractTop5Groups(draw)) {
+00177:     const grupo = normalizeGrupo(item?.grupo);
+00178: 
+00179:     if (
+00180:       grupo == null ||
+00181:       seen.has(grupo)
+00182:     ) {
+00183:       continue;
+00184:     }
+00185: 
+00186:     seen.add(grupo);
+00187:     groups.push(grupo);
+00188:   }
+00189: 
+00190:   return groups;
+00191: }
+00192: 
+00193: function createEmptyHistoricalStats() {
+00194:   return {
+00195:     drawCount: 0,
+00196:     usableDrawCount: 0,
+00197:     targetHourDrawCount: 0,
+00198: 
+00199:     individual: new Map(),
+00200:     pair: new Map(),
+00201:     triple: new Map(),
+00202: 
+00203:     recentIndividual: new Map(),
+00204:     recentPair: new Map(),
+00205:     recentTriple: new Map(),
+00206: 
+00207:     targetHourIndividual: new Map(),
+00208:     targetHourPair: new Map(),
+00209:     targetHourTriple: new Map(),
+00210:   };
+00211: }
+00212: 
+00213: function registerGroups({
+00214:   groups,
+00215:   individualMap,
+00216:   pairMap,
+00217:   tripleMap,
+00218:   weight = 1,
+00219: }) {
+00220:   for (const grupo of groups) {
+00221:     incrementMap(
+00222:       individualMap,
+00223:       String(grupo),
+00224:       weight
+00225:     );
+00226:   }
+00227: 
+00228:   for (
+00229:     let first = 0;
+00230:     first < groups.length - 1;
+00231:     first += 1
+00232:   ) {
+00233:     for (
+00234:       let second = first + 1;
+00235:       second < groups.length;
+00236:       second += 1
+00237:     ) {
+00238:       incrementMap(
+00239:         pairMap,
+00240:         pairKey(
+00241:           groups[first],
+00242:           groups[second]
+00243:         ),
+00244:         weight
+00245:       );
+00246:     }
+00247:   }
+00248: 
+00249:   if (groups.length >= 3) {
+00250:     for (
+00251:       let first = 0;
+00252:       first < groups.length - 2;
+00253:       first += 1
+00254:     ) {
+00255:       for (
+00256:         let second = first + 1;
+00257:         second < groups.length - 1;
+00258:         second += 1
+00259:       ) {
+00260:         for (
+00261:           let third = second + 1;
+00262:           third < groups.length;
+00263:           third += 1
+00264:         ) {
+00265:           incrementMap(
+00266:             tripleMap,
+00267:             tripleKey([
+00268:               groups[first],
+00269:               groups[second],
+00270:               groups[third],
+00271:             ]),
+00272:             weight
+00273:           );
+00274:         }
+00275:       }
+00276:     }
+00277:   }
+00278: }
+00279: 
+00280: function buildHistoricalStats({
+00281:   historicalDraws,
+00282:   targetHour,
+00283: }) {
+00284:   const stats = createEmptyHistoricalStats();
+00285: 
+00286:   const draws = Array.isArray(historicalDraws)
+00287:     ? historicalDraws.filter(Boolean)
+00288:     : [];
+00289: 
+00290:   stats.drawCount = draws.length;
+00291: 
+00292:   const recentStart = Math.max(
+00293:     0,
+00294:     draws.length - RECENT_WINDOW
+00295:   );
+00296: 
+00297:   draws.forEach((draw, index) => {
+00298:     const groups = uniqueTop5Groups(draw);
+00299: 
+00300:     if (groups.length < 3) {
+00301:       return;
+00302:     }
+00303: 
+00304:     stats.usableDrawCount += 1;
+00305: 
+00306:     registerGroups({
+00307:       groups,
+00308:       individualMap: stats.individual,
+00309:       pairMap: stats.pair,
+00310:       tripleMap: stats.triple,
+00311:     });
+00312: 
+00313:     if (index >= recentStart) {
+00314:       const recentPosition =
+00315:         index - recentStart + 1;
+00316: 
+00317:       const recentLength =
+00318:         draws.length - recentStart;
+00319: 
+00320:       const recencyWeight =
+00321:         recentLength > 1
+00322:           ? 0.65 +
+00323:             0.35 *
+00324:               ((recentPosition - 1) /
+00325:                 (recentLength - 1))
+00326:           : 1;
+00327: 
+00328:       registerGroups({
+00329:         groups,
+00330:         individualMap:
+00331:           stats.recentIndividual,
+00332:         pairMap: stats.recentPair,
+00333:         tripleMap: stats.recentTriple,
+00334:         weight: recencyWeight,
+00335:       });
+00336:     }
+00337: 
+00338:     const drawHour = extractDrawHour(draw);
+00339: 
+00340:     if (
+00341:       targetHour &&
+00342:       drawHour === targetHour
+00343:     ) {
+00344:       stats.targetHourDrawCount += 1;
+00345: 
+00346:       registerGroups({
+00347:         groups,
+00348:         individualMap:
+00349:           stats.targetHourIndividual,
+00350:         pairMap: stats.targetHourPair,
+00351:         tripleMap:
+00352:           stats.targetHourTriple,
+00353:       });
+00354:     }
+00355:   });
+00356: 
+00357:   return stats;
+00358: }
+00359: 
+00360: function buildAnalyticsMap(analytics) {
+00361:   const map = new Map();
+00362: 
+00363:   const source = Array.isArray(
+00364:     analytics?.top
+00365:   )
+00366:     ? analytics.top
+00367:     : [];
+00368: 
+00369:   source.forEach((item, index) => {
+00370:     const grupo = extractGrupo(item);
+00371: 
+00372:     if (grupo == null) {
+00373:       return;
+00374:     }
+00375: 
+00376:     const explicitScore =
+00377:       extractAnalyticsScore(item);
+00378: 
+00379:     const rankingScore =
+00380:       source.length > 1
+00381:         ? 1 - index / (source.length - 1)
+00382:         : 1;
+00383: 
+00384:     const score =
+00385:       explicitScore > 0
+00386:         ? explicitScore
+00387:         : rankingScore;
+00388: 
+00389:     map.set(
+00390:       grupo,
+00391:       Math.max(
+00392:         Number(map.get(grupo) || 0),
+00393:         clamp01(score)
+00394:       )
+00395:     );
+00396:   });
+00397: 
+00398:   return map;
+00399: }
+00400: 
+00401: function normalizedMapValue(
+00402:   map,
+00403:   key,
+00404:   maximum
+00405: ) {
+00406:   if (!(maximum > 0)) {
+00407:     return 0;
+00408:   }
+00409: 
+00410:   return clamp01(
+00411:     getMapValue(map, key) / maximum
+00412:   );
+00413: }
+00414: 
+00415: function average(values) {
+00416:   const valid = values.filter(
+00417:     Number.isFinite
+00418:   );
+00419: 
+00420:   if (!valid.length) {
+00421:     return 0;
+00422:   }
+00423: 
+00424:   return (
+00425:     valid.reduce(
+00426:       (sum, value) => sum + value,
+00427:       0
+00428:     ) / valid.length
+00429:   );
+00430: }
+00431: 
+00432: function harmonicMean(values) {
+00433:   const valid = values
+00434:     .map((value) =>
+00435:       Math.max(0.000001, Number(value || 0))
+00436:     )
+00437:     .filter(Number.isFinite);
+00438: 
+00439:   if (!valid.length) {
+00440:     return 0;
+00441:   }
+00442: 
+00443:   const denominator = valid.reduce(
+00444:     (sum, value) => sum + 1 / value,
+00445:     0
+00446:   );
+00447: 
+00448:   if (!(denominator > 0)) {
+00449:     return 0;
+00450:   }
+00451: 
+00452:   return valid.length / denominator;
+00453: }
+00454: 
+00455: function buildNormalization(stats) {
+00456:   return {
+00457:     individualMax:
+00458:       getMapMaximum(stats.individual),
+00459: 
+00460:     pairMax:
+00461:       getMapMaximum(stats.pair),
+00462: 
+00463:     tripleMax:
+00464:       getMapMaximum(stats.triple),
+00465: 
+00466:     recentIndividualMax:
+00467:       getMapMaximum(
+00468:         stats.recentIndividual
+00469:       ),
+00470: 
+00471:     recentPairMax:
+00472:       getMapMaximum(stats.recentPair),
+00473: 
+00474:     recentTripleMax:
+00475:       getMapMaximum(
+00476:         stats.recentTriple
+00477:       ),
+00478: 
+00479:     targetHourIndividualMax:
+00480:       getMapMaximum(
+00481:         stats.targetHourIndividual
+00482:       ),
+00483: 
+00484:     targetHourPairMax:
+00485:       getMapMaximum(
+00486:         stats.targetHourPair
+00487:       ),
+00488: 
+00489:     targetHourTripleMax:
+00490:       getMapMaximum(
+00491:         stats.targetHourTriple
+00492:       ),
+00493:   };
+00494: }
+00495: 
+00496: function calculateCombinationEvidence({
+00497:   grupos,
+00498:   analyticsMap,
+00499:   stats,
+00500:   normalization,
+00501: }) {
+00502:   const [first, second, third] = grupos;
+00503: 
+00504:   const groupKeys = grupos.map(String);
+00505: 
+00506:   const pairKeys = [
+00507:     pairKey(first, second),
+00508:     pairKey(first, third),
+00509:     pairKey(second, third),
+00510:   ];
+00511: 
+00512:   const combinationKey =
+00513:     tripleKey(grupos);
+00514: 
+00515:   const individualHistorical =
+00516:     groupKeys.map((key) =>
+00517:       normalizedMapValue(
+00518:         stats.individual,
+00519:         key,
+00520:         normalization.individualMax
+00521:       )
+00522:     );
+00523: 
+00524:   const individualRecent =
+00525:     groupKeys.map((key) =>
+00526:       normalizedMapValue(
+00527:         stats.recentIndividual,
+00528:         key,
+00529:         normalization.recentIndividualMax
+00530:       )
+00531:     );
+00532: 
+00533:   const individualTargetHour =
+00534:     groupKeys.map((key) =>
+00535:       normalizedMapValue(
+00536:         stats.targetHourIndividual,
+00537:         key,
+00538:         normalization.targetHourIndividualMax
+00539:       )
+00540:     );
+00541: 
+00542:   const analyticsSignals =
+00543:     grupos.map((grupo) =>
+00544:       Number(analyticsMap.get(grupo) || 0)
+00545:     );
+00546: 
+00547:   const pairHistorical =
+00548:     pairKeys.map((key) =>
+00549:       normalizedMapValue(
+00550:         stats.pair,
+00551:         key,
+00552:         normalization.pairMax
+00553:       )
+00554:     );
+00555: 
+00556:   const pairRecent =
+00557:     pairKeys.map((key) =>
+00558:       normalizedMapValue(
+00559:         stats.recentPair,
+00560:         key,
+00561:         normalization.recentPairMax
+00562:       )
+00563:     );
+00564: 
+00565:   const pairTargetHour =
+00566:     pairKeys.map((key) =>
+00567:       normalizedMapValue(
+00568:         stats.targetHourPair,
+00569:         key,
+00570:         normalization.targetHourPairMax
+00571:       )
+00572:     );
+00573: 
+00574:   const tripleHistorical =
+00575:     normalizedMapValue(
+00576:       stats.triple,
+00577:       combinationKey,
+00578:       normalization.tripleMax
+00579:     );
+00580: 
+00581:   const tripleRecent =
+00582:     normalizedMapValue(
+00583:       stats.recentTriple,
+00584:       combinationKey,
+00585:       normalization.recentTripleMax
+00586:     );
+00587: 
+00588:   const tripleTargetHour =
+00589:     normalizedMapValue(
+00590:       stats.targetHourTriple,
+00591:       combinationKey,
+00592:       normalization.targetHourTripleMax
+00593:     );
+00594: 
+00595:   const individualStrength =
+00596:     harmonicMean([
+00597:       average(individualHistorical),
+00598:       average(individualRecent),
+00599:     ]);
+00600: 
+00601:   const pairStrength =
+00602:     harmonicMean([
+00603:       average(pairHistorical),
+00604:       average(pairRecent),
+00605:     ]);
+00606: 
+00607:   const tripleStrength =
+00608:     tripleHistorical * 0.65 +
+00609:     tripleRecent * 0.35;
+00610: 
+00611:   const targetHourStrength =
+00612:     stats.targetHourDrawCount > 0
+00613:       ? (
+00614:           average(
+00615:             individualTargetHour
+00616:           ) *
+00617:             0.35 +
+00618:           average(pairTargetHour) *
+00619:             0.4 +
+00620:           tripleTargetHour * 0.25
+00621:         )
+00622:       : 0;
+00623: 
+00624:   const analyticsStrength =
+00625:     analyticsSignals.some(
+00626:       (value) => value > 0
+00627:     )
+00628:       ? harmonicMean(
+00629:           analyticsSignals.map(
+00630:             (value) =>
+00631:               value > 0
+00632:                 ? value
+00633:                 : 0.08
+00634:           )
+00635:         )
+00636:       : 0;
+00637: 
+00638:   const individualSpread =
+00639:     Math.max(
+00640:       ...individualHistorical
+00641:     ) -
+00642:     Math.min(
+00643:       ...individualHistorical
+00644:     );
+00645: 
+00646:   const balance =
+00647:     1 - clamp01(individualSpread);
+00648: 
+00649:   const evidenceScore =
+00650:     individualStrength * 0.26 +
+00651:     pairStrength * 0.3 +
+00652:     tripleStrength * 0.24 +
+00653:     targetHourStrength * 0.12 +
+00654:     analyticsStrength * 0.06 +
+00655:     balance * 0.02;
+00656: 
+00657:   return {
+00658:     rawScore: clamp01(evidenceScore),
+00659: 
+00660:     components: {
+00661:       individualStrength,
+00662:       pairStrength,
+00663:       tripleStrength,
+00664:       targetHourStrength,
+00665:       analyticsStrength,
+00666:       balance,
+00667:     },
+00668: 
+00669:     occurrences: {
+00670:       tripleHistorical:
+00671:         getMapValue(
+00672:           stats.triple,
+00673:           combinationKey
+00674:         ),
+00675: 
+00676:       tripleRecent:
+00677:         getMapValue(
+00678:           stats.recentTriple,
+00679:           combinationKey
+00680:         ),
+00681: 
+00682:       tripleTargetHour:
+00683:         getMapValue(
+00684:           stats.targetHourTriple,
+00685:           combinationKey
+00686:         ),
+00687: 
+00688:       pairHistorical:
+00689:         pairKeys.map((key) =>
+00690:           getMapValue(stats.pair, key)
+00691:         ),
+00692:     },
+00693:   };
+00694: }
+00695: 
+00696: function buildAllCombinations({
+00697:   analytics,
+00698:   historicalDraws,
+00699:   targetHour,
+00700: }) {
+00701:   const analyticsMap =
+00702:     buildAnalyticsMap(analytics);
+00703: 
+00704:   const stats = buildHistoricalStats({
+00705:     historicalDraws,
+00706:     targetHour:
+00707:       normalizeHour(targetHour),
+00708:   });
+00709: 
+00710:   const normalization =
+00711:     buildNormalization(stats);
+00712: 
+00713:   const combinations = [];
+00714: 
+00715:   for (
+00716:     let first = GROUP_MIN;
+00717:     first <= GROUP_MAX - 2;
+00718:     first += 1
+00719:   ) {
+00720:     for (
+00721:       let second = first + 1;
+00722:       second <= GROUP_MAX - 1;
+00723:       second += 1
+00724:     ) {
+00725:       for (
+00726:         let third = second + 1;
+00727:         third <= GROUP_MAX;
+00728:         third += 1
+00729:       ) {
+00730:         const grupos = [
+00731:           first,
+00732:           second,
+00733:           third,
+00734:         ];
+00735: 
+00736:         const evidence =
+00737:           calculateCombinationEvidence({
+00738:             grupos,
+00739:             analyticsMap,
+00740:             stats,
+00741:             normalization,
+00742:           });
+00743: 
+00744:         combinations.push({
+00745:           key: tripleKey(grupos),
+00746:           grupos,
+00747:           items: grupos.map((grupo) => ({
+00748:             grupo,
+00749:             analyticsScore:
+00750:               Number(
+00751:                 analyticsMap.get(grupo) || 0
+00752:               ),
+00753:           })),
+00754:           rawScore: evidence.rawScore,
+00755:           components:
+00756:             evidence.components,
+00757:           occurrences:
+00758:             evidence.occurrences,
+00759:         });
+00760:       }
+00761:     }
+00762:   }
+00763: 
+00764:   return {
+00765:     combinations,
+00766:     stats,
+00767:   };
+00768: }
+00769: 
+00770: function applyRelativeStrength(
+00771:   combinations
+00772: ) {
+00773:   const scores = combinations
+00774:     .map((item) =>
+00775:       Number(item?.rawScore || 0)
+00776:     )
+00777:     .filter(Number.isFinite);
+00778: 
+00779:   const minimum = scores.length
+00780:     ? Math.min(...scores)
+00781:     : 0;
+00782: 
+00783:   const maximum = scores.length
+00784:     ? Math.max(...scores)
+00785:     : 0;
+00786: 
+00787:   const span = maximum - minimum;
+00788: 
+00789:   return combinations.map((item) => {
+00790:     const relative =
+00791:       span > 0
+00792:         ? (
+00793:             Number(item.rawScore || 0) -
+00794:             minimum
+00795:           ) / span
+00796:         : 0;
+00797: 
+00798:     return {
+00799:       ...item,
+00800: 
+00801:       scorePct:
+00802:         1 + clamp01(relative) * 98,
+00803: 
+00804:       rawEvidencePct:
+00805:         clamp01(item.rawScore) * 100,
+00806:     };
+00807:   });
+00808: }
+00809: 
+00810: export function buildAllTernosGrupo({
+00811:   analytics,
+00812:   seedGroups,
+00813:   historicalDraws,
+00814:   targetHour,
+00815: }) {
+00816:   const {
+00817:     combinations,
+00818:     stats,
+00819:   } = buildAllCombinations({
+00820:     analytics,
+00821:     historicalDraws,
+00822:     targetHour,
+00823:   });
+00824: 
+00825:   const ranked =
+00826:     applyRelativeStrength(
+00827:       combinations
+00828:     );
+00829: 
+00830:   ranked.sort((a, b) => {
+00831:     if (
+00832:       b.rawScore !== a.rawScore
+00833:     ) {
+00834:       return (
+00835:         b.rawScore - a.rawScore
+00836:       );
+00837:     }
+00838: 
+00839:     const bTriple =
+00840:       Number(
+00841:         b?.occurrences
+00842:           ?.tripleHistorical || 0
+00843:       );
+00844: 
+00845:     const aTriple =
+00846:       Number(
+00847:         a?.occurrences
+00848:           ?.tripleHistorical || 0
+00849:       );
+00850: 
+00851:     if (bTriple !== aTriple) {
+00852:       return bTriple - aTriple;
+00853:     }
+00854: 
+00855:     return a.key.localeCompare(b.key);
+00856:   });
+00857: 
+00858:   return ranked.map(
+00859:     (combination, index) => ({
+00860:       ...combination,
+00861: 
+00862:       rank: index + 1,
+00863: 
+00864:       engineVersion:
+00865:         TERNO_GRUPO_RANKING_VERSION,
+00866: 
+00867:       scoreType:
+00868:         "RELATIVE_STRENGTH_INDEX",
+00869: 
+00870:       validationRule:
+00871:         "3_GROUPS_IN_TOP5",
+00872: 
+00873:       orderMatters: false,
+00874: 
+00875:       historicalMeta: {
+00876:         drawCount:
+00877:           stats.drawCount,
+00878: 
+00879:         usableDrawCount:
+00880:           stats.usableDrawCount,
+00881: 
+00882:         targetHourDrawCount:
+00883:           stats.targetHourDrawCount,
+00884: 
+00885:         recentWindow:
+00886:           RECENT_WINDOW,
+00887: 
+00888:         seedGroupsReceived:
+00889:           Array.isArray(seedGroups)
+00890:             ? seedGroups.length
+00891:             : 0,
+00892:       },
+00893:     })
+00894:   );
+00895: }
+00896: 
+00897: export function normalizeTernoQuantity(value) {
+00898:   const parsed = Number.parseInt(
+00899:     String(value ?? "")
+00900:       .replace(/\D/g, ""),
+00901:     10
+00902:   );
+00903: 
+00904:   if (!Number.isFinite(parsed)) {
+00905:     return null;
+00906:   }
+00907: 
+00908:   return parsed;
+00909: }
+00910: 
+00911: export function validateTernoQuantity(value) {
+00912:   const quantity =
+00913:     normalizeTernoQuantity(value);
+00914: 
+00915:   if (quantity == null) {
+00916:     return {
+00917:       valid: false,
+00918:       quantity: null,
+00919:       message:
+00920:         "Informe a quantidade de ternos que deseja gerar.",
+00921:     };
+00922:   }
+00923: 
+00924:   if (
+00925:     quantity <
+00926:     TERNO_GRUPO_MIN_QUANTITY
+00927:   ) {
+00928:     return {
+00929:       valid: false,
+00930:       quantity,
+00931:       message:
+00932:         "A quantidade mínima é 1 terno de grupo.",
+00933:     };
+00934:   }
+00935: 
+00936:   if (
+00937:     quantity >
+00938:     TERNO_GRUPO_MAX_QUANTITY
+00939:   ) {
+00940:     return {
+00941:       valid: false,
+00942:       quantity,
+00943:       message:
+00944:         "A quantidade informada é superior às 2.300 combinações possíveis.",
+00945:     };
+00946:   }
+00947: 
+00948:   return {
+00949:     valid: true,
+00950:     quantity,
+00951:     message: "",
+00952:   };
+00953: }
+
+========================================================================================================================
+PONTOS QUE SERÃO PRESERVADOS
+========================================================================================================================
+1. Motor tradicional com 2.300 combinações distintas.
+2. Ranking e pesos estatísticos atuais.
+3. Normalização relativa de força.
+4. Integração atual com analytics e histórico.
+5. Estrutura atual de retorno para a interface.
+
+========================================================================================================================
+NOVO MOTOR A SER CRIADO
+========================================================================================================================
+1. Arquivo independente para combinações com repetição.
+2. Universo de 2.925 combinações.
+3. Preservação das ocorrências repetidas no TOP5.
+4. Pares como 18-18.
+5. Triplas como 18-18-18.
+6. Validação baseada em multiplicidade.
+7. Nenhuma alteração funcional no motor tradicional.

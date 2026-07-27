@@ -1,0 +1,1126 @@
+==============================================================================================================
+TPP-03.09 - LOCALIZAÃ├O REAL DO CAMINHO DA ABLAÃ├O
+==============================================================================================================
+
+Arquivos de c¾digo examinados: 221
+Arquivos com termos relevantes: 11
+
+--------------------------------------------------------------------------------------------------------------
+ARQUIVO: backend\engine\evidenceEngine.js
+--------------------------------------------------------------------------------------------------------------
+TERMOS LOCALIZADOS: collectEvidence
+
+### BLOCO 1 ù LINHAS 6 A 38
+    6 | /**
+    7 |  * Evidence Engine
+    8 |  *
+    9 |  * Centraliza todos os m¾dulos de evidÛncia.
+   10 |  * Cada m¾dulo produz fatos; nenhum decide o resultado.
+   11 |  */
+   12 | 
+   13 | const MODULES = {
+   14 |   frequency: buildFrequencyEvidence,
+   15 |   context: buildContextEvidence,
+   16 | };
+   17 | 
+   18 | function collectEvidence({
+   19 |   item = {},
+   20 |   context = {},
+   21 |   config = {},
+   22 | } = {}) {
+   23 | 
+   24 |   const evidence = [];
+   25 |   const enabled = config.evidenceModules || {};
+   26 | 
+   27 |   for (const [name, builder] of Object.entries(MODULES)) {
+   28 | 
+   29 |     if (!enabled[name]?.enabled) {
+   30 |       continue;
+   31 |     }
+   32 | 
+   33 |     try {
+   34 | 
+   35 |       const result = builder(item, context);
+   36 | 
+   37 |       if (result) {
+   38 |         evidence.push(result);
+
+### BLOCO 2 ù LINHAS 56 A 69
+   56 | 
+   57 |     modules: evidence
+   58 |       .filter(e => !e.error)
+   59 |       .map(e => e.module),
+   60 | 
+   61 |     evidence,
+   62 | 
+   63 |   };
+   64 | 
+   65 | }
+   66 | 
+   67 | module.exports = {
+   68 |   collectEvidence,
+   69 | };
+
+--------------------------------------------------------------------------------------------------------------
+ARQUIVO: backend\engine\scoreEngineV2.js
+--------------------------------------------------------------------------------------------------------------
+TERMOS LOCALIZADOS: collectEvidence, scoreItem, scoreRanking
+
+### BLOCO 1 ù LINHAS 1 A 24
+    1 | "use strict";
+    2 | 
+    3 | const scoreConfig = require("./scoreConfig");
+    4 | const { collectEvidence } = require("./evidenceEngine");
+    5 | 
+    6 | /**
+    7 |  * Score Engine V2 inicial
+    8 |  *
+    9 |  * Consome evidÛncias.
+   10 |  * NÒo aplica regra cega isolada.
+   11 |  */
+   12 | 
+   13 | function normalizeEvidenceValue(value) {
+   14 |   const n = Number(value);
+   15 |   if (!Number.isFinite(n) || n <= 0) return 0;
+   16 |   return n;
+   17 | }
+   18 | 
+   19 | function calculateEvidenceStrength(evidenceList = []) {
+   20 |   const list = Array.isArray(evidenceList) ? evidenceList : [];
+   21 | 
+   22 |   if (!list.length) {
+   23 |     return {
+   24 |       score: 0,
+
+### BLOCO 2 ù LINHAS 41 A 95
+   41 |   for (const e of list) {
+   42 |     signals[e.module] = e.evidence || {};
+   43 |   }
+   44 | 
+   45 |   return {
+   46 |     score,
+   47 |     confidence,
+   48 |     reasons,
+   49 |     signals,
+   50 |   };
+   51 | }
+   52 | 
+   53 | function scoreItem(item = {}, context = {}) {
+   54 |   const collected = collectEvidence({
+   55 |     item,
+   56 |     context,
+   57 |     config: scoreConfig,
+   58 |   });
+   59 | 
+   60 |   const strength = calculateEvidenceStrength(collected.evidence);
+   61 | 
+   62 |   return {
+   63 |     ...item,
+   64 |     score: strength.score,
+   65 |     confidence: strength.confidence,
+   66 |     reasons: strength.reasons,
+   67 |     signals: strength.signals,
+   68 |     evidenceCount: collected.count,
+   69 |     evidenceModules: collected.modules,
+   70 |   };
+   71 | }
+   72 | 
+   73 | function scoreRanking(items = [], context = {}) {
+   74 | 
+   75 |   return (Array.isArray(items) ? items : [])
+   76 |     .map(item => scoreItem(item, context))
+   77 |     .sort((a, b) => {
+   78 | 
+   79 |       if (b.score !== a.score)
+   80 |         return b.score - a.score;
+   81 | 
+   82 |       if (b.confidence !== a.confidence)
+   83 |         return b.confidence - a.confidence;
+   84 | 
+   85 |       return (Number(b.scoreProb || 0) - Number(a.scoreProb || 0));
+   86 | 
+   87 |     });
+   88 | 
+   89 | }
+   90 | 
+   91 | module.exports = {
+   92 |   scoreItem,
+   93 |   scoreRanking,
+   94 |   calculateEvidenceStrength,
+   95 | };
+
+--------------------------------------------------------------------------------------------------------------
+ARQUIVO: backend\scripts\backtestTop3AblationExperimental.js
+--------------------------------------------------------------------------------------------------------------
+TERMOS LOCALIZADOS: BASELINE_COMPLETO, SEM_CONTEXT, SEM_FREQUENCY, __TOP3_ABLATION__
+
+### BLOCO 1 ù LINHAS 8 A 48
+    8 |  *
+    9 |  * Este arquivo nÒo Ú utilizado pela produþÒo.
+   10 |  */
+   11 | 
+   12 | const fs = require("fs");
+   13 | const path = require("path");
+   14 | 
+   15 | const {
+   16 |   runOfficialBacktest,
+   17 | } = require("./backtestTop3Official");
+   18 | 
+   19 | const VALID_VARIANTS = new Map([
+   20 |   ["A00", "BASELINE_COMPLETO"],
+   21 |   ["BASELINE", "BASELINE_COMPLETO"],
+   22 |   ["BASELINE_COMPLETO", "BASELINE_COMPLETO"],
+   23 | 
+   24 |   ["A01", "SEM_FREQUENCY"],
+   25 |   ["SEM_FREQUENCY", "SEM_FREQUENCY"],
+   26 | 
+   27 |   ["A02", "SEM_CONTEXT"],
+   28 |   ["SEM_CONTEXT", "SEM_CONTEXT"],
+   29 | ]);
+   30 | 
+   31 | function parseStringFlag(
+   32 |   args,
+   33 |   name,
+   34 |   fallback = null
+   35 | ) {
+   36 |   const prefix = `--${name}=`;
+   37 | 
+   38 |   const match = args.find(
+   39 |     (arg) => String(arg).startsWith(prefix)
+   40 |   );
+   41 | 
+   42 |   if (!match) return fallback;
+   43 | 
+   44 |   return String(match)
+   45 |     .slice(prefix.length)
+   46 |     .trim();
+   47 | }
+   48 | 
+
+### BLOCO 2 ù LINHAS 402 A 457
+  402 | 
+  403 | function stableJson(value) {
+  404 |   return JSON.stringify(
+  405 |     stableSortObject(value)
+  406 |   );
+  407 | }
+  408 | 
+  409 | async function runWithVariant(
+  410 |   variant,
+  411 |   options
+  412 | ) {
+  413 |   const previous =
+  414 |     globalThis.__TOP3_ABLATION__;
+  415 | 
+  416 |   try {
+  417 |     if (
+  418 |       variant === "BASELINE_OFICIAL"
+  419 |     ) {
+  420 |       delete globalThis.__TOP3_ABLATION__;
+  421 |     } else {
+  422 |       globalThis.__TOP3_ABLATION__ =
+  423 |         variant;
+  424 |     }
+  425 | 
+  426 |     return await runOfficialBacktest(
+  427 |       {
+  428 |         ...options,
+  429 |         progress: false,
+  430 |         telemetry: true,
+  431 |       }
+  432 |     );
+  433 |   } finally {
+  434 |     if (previous == null) {
+  435 |       delete globalThis.__TOP3_ABLATION__;
+  436 |     } else {
+  437 |       globalThis.__TOP3_ABLATION__ =
+  438 |         previous;
+  439 |     }
+  440 |   }
+  441 | }
+  442 | 
+  443 | async function main() {
+  444 |   const args =
+  445 |     process.argv.slice(2);
+  446 | 
+  447 |   const lotteryKey = String(
+  448 |     args[0] || "PT_RIO"
+  449 |   )
+  450 |     .trim()
+  451 |     .toUpperCase();
+  452 | 
+  453 |   const requestedVariant =
+  454 |     parseStringFlag(
+  455 |       args,
+  456 |       "variant",
+  457 |       "A00"
+
+### BLOCO 3 ù LINHAS 660 A 729
+  660 |     `TOP3: ${variantComparable.top3.hits}`,
+  661 |     `Erros: ${variantComparable.errors}`,
+  662 |     "",
+  663 |     "COMPARAÃ├O",
+  664 |     `Equivalente: ${equivalent ? "SIM" : "N├O"}`,
+  665 |     `Delta TOP1: ${result.comparison.top1HitsDelta}`,
+  666 |     `Delta TOP3: ${result.comparison.top3HitsDelta}`,
+  667 |     `Delta erros: ${result.comparison.errorsDelta}`,
+  668 |     "",
+  669 |   ];
+  670 | 
+  671 |   if (
+  672 |     variant === "BASELINE_COMPLETO" &&
+  673 |     !equivalent
+  674 |   ) {
+  675 |     lines.push(
+  676 |       "STATUS: FALHA ù A00 divergiu do baseline oficial."
+  677 |     );
+  678 |   } else if (
+  679 |     variant === "BASELINE_COMPLETO"
+  680 |   ) {
+  681 |     lines.push(
+  682 |       "STATUS: OK ù A00 equivalente ao baseline oficial."
+  683 |     );
+  684 |   } else {
+  685 |     lines.push(
+  686 |       "STATUS: VARIANTE EXPERIMENTAL EXECUTADA."
+  687 |     );
+  688 |   }
+  689 | 
+  690 |   fs.writeFileSync(
+  691 |     txtPath,
+  692 |     lines.join("\n") + "\n",
+  693 |     "utf8"
+  694 |   );
+  695 | 
+  696 |   console.log(
+  697 |     lines.join("\n")
+  698 |   );
+  699 | 
+  700 |   console.log("");
+  701 |   console.log(
+  702 |     `JSON: ${jsonPath}`
+  703 |   );
+  704 |   console.log(
+  705 |     `TXT : ${txtPath}`
+  706 |   );
+  707 | 
+  708 |   if (
+  709 |     variant === "BASELINE_COMPLETO" &&
+  710 |     !equivalent
+  711 |   ) {
+  712 |     process.exitCode = 2;
+  713 |   }
+  714 | }
+  715 | 
+  716 | main().catch((error) => {
+  717 |   console.error("");
+  718 |   console.error(
+  719 |     "Falha no harness de ablaþÒo:"
+  720 |   );
+  721 |   console.error(
+  722 |     error?.stack ||
+  723 |     error?.message ||
+  724 |     error
+  725 |   );
+  726 | 
+  727 |   process.exitCode = 1;
+  728 | });
+  729 | 
+
+--------------------------------------------------------------------------------------------------------------
+ARQUIVO: src\pages\Top3\__tests__\top3.public-api.node.test.js
+--------------------------------------------------------------------------------------------------------------
+TERMOS LOCALIZADOS: collectEvidence, scoreItem, scoreRanking
+
+### BLOCO 1 ù LINHAS 3 A 54
+    3 | import * as publicApi from "../top3.public-api";
+    4 | 
+    5 | const EXPECTED_EXPORTS = [
+    6 |   "auditTop3Backtest",
+    7 |   "auditTop3Timeline",
+    8 |   "build16MilharesForGrupo",
+    9 |   "build20MilharesForGrupo",
+   10 |   "buildContextEvidence",
+   11 |   "buildFrequencyEvidence",
+   12 |   "buildMilharesForGrupo",
+   13 |   "buildTimelineTop3",
+   14 |   "calculateEvidenceStrength",
+   15 |   "collectEvidence",
+   16 |   "computeConditionalNextTop3",
+   17 |   "computeConditionalNextTop3V2",
+   18 |   "computeLastSeenByGrupo",
+   19 |   "computeStatisticalTop3V3",
+   20 |   "countAparicoesByGrupoInDraw",
+   21 |   "getNextSlotForLottery",
+   22 |   "getPtRioScheduleForYmd",
+   23 |   "getScheduleForLottery",
+   24 |   "guessPrizeGrupo",
+   25 |   "guessPrizePos",
+   26 |   "indexDrawsByYmdHour",
+   27 |   "isFederalDrawDay",
+   28 |   "isHourInSchedule",
+   29 |   "pickDrawHour",
+   30 |   "pickDrawYMD",
+   31 |   "pickPrize1GrupoFromDraw",
+   32 |   "scheduleSet",
+   33 |   "scoreItem",
+   34 |   "scoreRanking",
+   35 | ];
+   36 | 
+   37 | describe("TOP3 public API contract", () => {
+   38 |   test("executa em ambiente Node sem APIs do navegador", () => {
+   39 |     expect(typeof window).toBe("undefined");
+   40 |     expect(typeof document).toBe("undefined");
+   41 |     expect(typeof navigator).toBe("undefined");
+   42 |   });
+   43 | 
+   44 |   test("exp§e exatamente o contrato p·blico aprovado", () => {
+   45 |     expect(
+   46 |       Object.keys(publicApi).sort()
+   47 |     ).toEqual(
+   48 |       [...EXPECTED_EXPORTS].sort()
+   49 |     );
+   50 |   });
+   51 | 
+   52 |   test("todas as exportaþ§es p·blicas sÒo funþ§es", () => {
+   53 |     for (const name of EXPECTED_EXPORTS) {
+   54 |       expect(typeof publicApi[name]).toBe("function");
+
+--------------------------------------------------------------------------------------------------------------
+ARQUIVO: src\pages\Top3\modules\scoreEngine\evidenceEngine.js
+--------------------------------------------------------------------------------------------------------------
+TERMOS LOCALIZADOS: collectEvidence
+
+### BLOCO 1 ù LINHAS 6 A 38
+    6 | /**
+    7 |  * Evidence Engine
+    8 |  *
+    9 |  * Centraliza todos os m¾dulos de evidÛncia.
+   10 |  * Cada m¾dulo produz fatos; nenhum decide o resultado.
+   11 |  */
+   12 | 
+   13 | const MODULES = {
+   14 |   frequency: buildFrequencyEvidence,
+   15 |   context: buildContextEvidence,
+   16 | };
+   17 | 
+   18 | function collectEvidence({
+   19 |   item = {},
+   20 |   context = {},
+   21 |   config = {},
+   22 | } = {}) {
+   23 | 
+   24 |   const evidence = [];
+   25 |   const enabled = config.evidenceModules || {};
+   26 | 
+   27 |   for (const [name, builder] of Object.entries(MODULES)) {
+   28 | 
+   29 |     if (!enabled[name]?.enabled) {
+   30 |       continue;
+   31 |     }
+   32 | 
+   33 |     try {
+   34 | 
+   35 |       const result = builder(item, context);
+   36 | 
+   37 |       if (result) {
+   38 |         evidence.push(result);
+
+### BLOCO 2 ù LINHAS 56 A 69
+   56 | 
+   57 |     modules: evidence
+   58 |       .filter(e => !e.error)
+   59 |       .map(e => e.module),
+   60 | 
+   61 |     evidence,
+   62 | 
+   63 |   };
+   64 | 
+   65 | }
+   66 | 
+   67 | export {
+   68 | collectEvidence,
+   69 | };
+
+--------------------------------------------------------------------------------------------------------------
+ARQUIVO: src\pages\Top3\modules\scoreEngine\scoreEngineV2.backup.js
+--------------------------------------------------------------------------------------------------------------
+TERMOS LOCALIZADOS: collectEvidence, scoreItem, scoreRanking
+
+### BLOCO 1 ù LINHAS 1 A 24
+    1 | "use strict";
+    2 | 
+    3 | import scoreConfig from "./scoreConfig";
+    4 | import { collectEvidence } from "./evidenceEngine";
+    5 | 
+    6 | /**
+    7 |  * Score Engine V2 inicial
+    8 |  *
+    9 |  * Consome evidÛncias.
+   10 |  * NÒo aplica regra cega isolada.
+   11 |  */
+   12 | 
+   13 | function normalizeEvidenceValue(value) {
+   14 |   const n = Number(value);
+   15 |   if (!Number.isFinite(n) || n <= 0) return 0;
+   16 |   return n;
+   17 | }
+   18 | 
+   19 | function calculateEvidenceStrength(evidenceList = []) {
+   20 |   const list = Array.isArray(evidenceList) ? evidenceList : [];
+   21 | 
+   22 |   if (!list.length) {
+   23 |     return {
+   24 |       score: 0,
+
+### BLOCO 2 ù LINHAS 41 A 95
+   41 |   for (const e of list) {
+   42 |     signals[e.module] = e.evidence || {};
+   43 |   }
+   44 | 
+   45 |   return {
+   46 |     score,
+   47 |     confidence,
+   48 |     reasons,
+   49 |     signals,
+   50 |   };
+   51 | }
+   52 | 
+   53 | function scoreItem(item = {}, context = {}) {
+   54 |   const collected = collectEvidence({
+   55 |     item,
+   56 |     context,
+   57 |     config: scoreConfig,
+   58 |   });
+   59 | 
+   60 |   const strength = calculateEvidenceStrength(collected.evidence);
+   61 | 
+   62 |   return {
+   63 |     ...item,
+   64 |     score: strength.score,
+   65 |     confidence: strength.confidence,
+   66 |     reasons: strength.reasons,
+   67 |     signals: strength.signals,
+   68 |     evidenceCount: collected.count,
+   69 |     evidenceModules: collected.modules,
+   70 |   };
+   71 | }
+   72 | 
+   73 | function scoreRanking(items = [], context = {}) {
+   74 | 
+   75 |   return (Array.isArray(items) ? items : [])
+   76 |     .map(item => scoreItem(item, context))
+   77 |     .sort((a, b) => {
+   78 | 
+   79 |       if (b.score !== a.score)
+   80 |         return b.score - a.score;
+   81 | 
+   82 |       if (b.confidence !== a.confidence)
+   83 |         return b.confidence - a.confidence;
+   84 | 
+   85 |       return (Number(b.scoreProb || 0) - Number(a.scoreProb || 0));
+   86 | 
+   87 |     });
+   88 | 
+   89 | }
+   90 | 
+   91 | export {
+   92 | scoreItem,
+   93 |   scoreRanking,
+   94 |   calculateEvidenceStrength,
+   95 | };
+
+--------------------------------------------------------------------------------------------------------------
+ARQUIVO: src\pages\Top3\modules\scoreEngine\scoreEngineV2.js
+--------------------------------------------------------------------------------------------------------------
+TERMOS LOCALIZADOS: BASELINE_COMPLETO, SEM_CONTEXT, SEM_FREQUENCY, __TOP3_ABLATION__, collectEvidence, getTop3AblationVariant, resolveScoreConfigForAblation, scoreItem, scoreRanking
+
+### BLOCO 1 ù LINHAS 1 A 95
+    1 | "use strict";
+    2 | 
+    3 | import scoreConfig from "./scoreConfig";
+    4 | 
+    5 | 
+    6 | /* TPP01_ABLATION_SUPPORT_START */
+    7 | function getTop3AblationVariant() {
+    8 |   if (
+    9 |     typeof globalThis === "undefined" ||
+   10 |     !globalThis.__TOP3_ABLATION__
+   11 |   ) {
+   12 |     return "A00";
+   13 |   }
+   14 | 
+   15 |   return String(
+   16 |     globalThis.__TOP3_ABLATION__
+   17 |   )
+   18 |     .trim()
+   19 |     .toUpperCase();
+   20 | }
+   21 | 
+   22 | function resolveScoreConfigForAblation() {
+   23 |   const variant =
+   24 |     getTop3AblationVariant();
+   25 | 
+   26 |   if (
+   27 |     variant === "A00" ||
+   28 |     variant === "BASELINE" ||
+   29 |     variant === "BASELINE_COMPLETO"
+   30 |   ) {
+   31 |     return scoreConfig;
+   32 |   }
+   33 | 
+   34 |   const evidenceModules = {
+   35 |     ...(scoreConfig?.evidenceModules || {}),
+   36 |   };
+   37 | 
+   38 |   for (
+   39 |     const [name, config]
+   40 |     of Object.entries(evidenceModules)
+   41 |   ) {
+   42 |     evidenceModules[name] = {
+   43 |       ...(config || {}),
+   44 |     };
+   45 |   }
+   46 | 
+   47 |   if (
+   48 |     variant === "A01" ||
+   49 |     variant === "SEM_FREQUENCY"
+   50 |   ) {
+   51 |     evidenceModules.frequency = {
+   52 |       ...(evidenceModules.frequency || {}),
+   53 |       enabled: false,
+   54 |     };
+   55 |   } else if (
+   56 |     variant === "A02" ||
+   57 |     variant === "SEM_CONTEXT"
+   58 |   ) {
+   59 |     evidenceModules.context = {
+   60 |       ...(evidenceModules.context || {}),
+   61 |       enabled: false,
+   62 |     };
+   63 |   } else {
+   64 |     throw new Error(
+   65 |       `Variante de ablaþÒo desconhecida: ${variant}`
+   66 |     );
+   67 |   }
+   68 | 
+   69 |   return {
+   70 |     ...scoreConfig,
+   71 |     evidenceModules,
+   72 |   };
+   73 | }
+   74 | /* TPP01_ABLATION_SUPPORT_END */
+   75 | import { collectEvidence } from "./evidenceEngine";
+   76 | 
+   77 | /**
+   78 |  * Score Engine V2 inicial
+   79 |  *
+   80 |  * Consome evidÛncias.
+   81 |  * NÒo aplica regra cega isolada.
+   82 |  */
+   83 | 
+   84 | function normalizeEvidenceValue(value) {
+   85 |   const n = Number(value);
+   86 |   if (!Number.isFinite(n) || n <= 0) return 0;
+   87 |   return n;
+   88 | }
+   89 | 
+   90 | function calculateEvidenceStrength(evidenceList = []) {
+   91 |   const list = Array.isArray(evidenceList) ? evidenceList : [];
+   92 | 
+   93 |   if (!list.length) {
+   94 |     return {
+   95 |       score: 0,
+
+### BLOCO 2 ù LINHAS 112 A 148
+  112 |   for (const e of list) {
+  113 |     signals[e.module] = e.evidence || {};
+  114 |   }
+  115 | 
+  116 |   return {
+  117 |     score,
+  118 |     confidence,
+  119 |     reasons,
+  120 |     signals,
+  121 |   };
+  122 | }
+  123 | 
+  124 | function scoreItem(item = {}, context = {}) {
+  125 |   const collected = collectEvidence({
+  126 |     item,
+  127 |     context,
+  128 |     config: resolveScoreConfigForAblation(),
+  129 |   });
+  130 | 
+  131 |   const strength = calculateEvidenceStrength(collected.evidence);
+  132 | 
+  133 |   const probability = Math.max(
+  134 |     0,
+  135 |     Math.min(
+  136 |       100,
+  137 |       Number(item.scoreProb || item.rawScoreProb || 0) * 100
+  138 |     )
+  139 |   );
+  140 | 
+  141 |   const finalScore = Math.round(
+  142 |     (strength.score * 0.45) +
+  143 |     (probability * 0.55)
+  144 |   );
+  145 | 
+  146 |   const finalConfidence = Math.round(
+  147 |     (strength.confidence * 0.40) +
+  148 |     (probability * 0.60)
+
+### BLOCO 3 ù LINHAS 162 A 196
+  162 | 
+  163 |     signals: {
+  164 |       ...strength.signals,
+  165 |       probability,
+  166 |     },
+  167 | 
+  168 |     evidenceCount: collected.count,
+  169 | 
+  170 |     evidenceModules: collected.modules,
+  171 |   };
+  172 | }
+  173 | 
+  174 | function scoreRanking(items = [], context = {}) {
+  175 | 
+  176 |   return (Array.isArray(items) ? items : [])
+  177 |     .map(item => scoreItem(item, context))
+  178 |     .sort((a, b) => {
+  179 | 
+  180 |       if (b.score !== a.score)
+  181 |         return b.score - a.score;
+  182 | 
+  183 |       if (b.confidence !== a.confidence)
+  184 |         return b.confidence - a.confidence;
+  185 | 
+  186 |       return (Number(b.scoreProb || 0) - Number(a.scoreProb || 0));
+  187 | 
+  188 |     });
+  189 | 
+  190 | }
+  191 | 
+  192 | export {
+  193 | scoreItem,
+  194 |   scoreRanking,
+  195 |   calculateEvidenceStrength,
+  196 | };
+
+--------------------------------------------------------------------------------------------------------------
+ARQUIVO: src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js
+--------------------------------------------------------------------------------------------------------------
+TERMOS LOCALIZADOS: scoreRanking
+
+### BLOCO 1 ù LINHAS 6 A 38
+    6 |   addDaysYMD,
+    7 |   normalizeHourLike,
+    8 |   toHourBucket,
+    9 |   hourToInt,
+   10 |   getDowKey,
+   11 |   pickPrizeMilhar4,
+   12 |   getDezena2,
+   13 |   getCentena3,
+   14 |   milharCompareAsc,
+   15 |   wrapToDezena2,
+   16 | } from "./top3.formatters";
+   17 | 
+   18 | import { scoreRanking } from "./modules/scoreEngine/scoreEngineV2";
+   19 | 
+   20 | import {
+   21 |   TOP3_NEXTDRAW_SCAN_MAX_STEPS,
+   22 |   TOP3_NEXTDRAW_SCAN_MAX_DAYS,
+   23 |   TOP3_GROUPS_K,
+   24 |   TOP3_SMOOTH_ALPHA,
+   25 |   TOP3_SCENE_WEIGHT,
+   26 |   TOP3_SCENE_SAMPLE_TARGET,
+   27 |   TOP3_SCENE_BLEND_SCENE,
+   28 |   TOP3_SCENE_BLEND_UNIFORM,
+   29 |   PT_RIO_SCHEDULE_SUNDAY,
+   30 | } from "./top3.constants";
+   31 | 
+   32 | function findPreviousValidDraw(draws, currentYmd, currentHour) {
+   33 |   const list = Array.isArray(draws) ? draws : [];
+   34 |   const targetY = safeStr(currentYmd);
+   35 |   const targetH = toHourBucket(currentHour);
+   36 | 
+   37 |   if (!isYMD(targetY) || !targetH) return null;
+   38 | 
+
+### BLOCO 2 ù LINHAS 3097 A 3129
+ 3097 |       grupo,
+ 3098 |       scoreProb,
+ 3099 |       score: scoreProb * 1000,
+ 3100 |       details,
+ 3101 |     };
+ 3102 |   })
+ 3103 |     .sort((a, b) => {
+ 3104 |       if (b.score !== a.score) return b.score - a.score;
+ 3105 |       return a.grupo - b.grupo;
+ 3106 |     })
+ 3107 |     .slice(0, Math.max(1, Number(topN || 3)));
+ 3108 | 
+ 3109 |   const rankedScored = scoreRanking(
+ 3110 |     ranked,
+ 3111 |     {
+ 3112 |       lotteryKey,
+ 3113 |       targetYmd: targetY,
+ 3114 |       targetHour: targetH,
+ 3115 |       previousGroup: prevGrupo,
+ 3116 |       totalDraws: history.length,
+ 3117 |     }
+ 3118 |   );
+ 3119 | 
+ 3120 |   const top = rankedScored.map((x, idx) => {
+ 3121 |     const g2 = String(x.grupo).padStart(2, "0");
+ 3122 |     const rawScoreProb = Number(x.scoreProb || 0);
+ 3123 | 
+ 3124 |     const strongest = Object.values(x.details)
+ 3125 |       .filter((d) => Number(d.probability || 0) > 0)
+ 3126 |       .sort((a, b) => (b.probability * b.weight) - (a.probability * a.weight))
+ 3127 |       .slice(0, 3);
+ 3128 | 
+ 3129 |     return {
+
+--------------------------------------------------------------------------------------------------------------
+ARQUIVO: src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js
+--------------------------------------------------------------------------------------------------------------
+TERMOS LOCALIZADOS: scoreRanking
+
+### BLOCO 1 ù LINHAS 6 A 38
+    6 |   addDaysYMD,
+    7 |   normalizeHourLike,
+    8 |   toHourBucket,
+    9 |   hourToInt,
+   10 |   getDowKey,
+   11 |   pickPrizeMilhar4,
+   12 |   getDezena2,
+   13 |   getCentena3,
+   14 |   milharCompareAsc,
+   15 |   wrapToDezena2,
+   16 | } from "./top3.formatters";
+   17 | 
+   18 | import { scoreRanking } from "./modules/scoreEngine/scoreEngineV2";
+   19 | 
+   20 | import {
+   21 |   TOP3_NEXTDRAW_SCAN_MAX_STEPS,
+   22 |   TOP3_NEXTDRAW_SCAN_MAX_DAYS,
+   23 |   TOP3_GROUPS_K,
+   24 |   TOP3_SMOOTH_ALPHA,
+   25 |   TOP3_SCENE_WEIGHT,
+   26 |   TOP3_SCENE_SAMPLE_TARGET,
+   27 |   TOP3_SCENE_BLEND_SCENE,
+   28 |   TOP3_SCENE_BLEND_UNIFORM,
+   29 |   PT_RIO_SCHEDULE_SUNDAY,
+   30 | } from "./top3.constants";
+   31 | 
+   32 | function findPreviousValidDraw(draws, currentYmd, currentHour) {
+   33 |   const list = Array.isArray(draws) ? draws : [];
+   34 |   const targetY = safeStr(currentYmd);
+   35 |   const targetH = toHourBucket(currentHour);
+   36 | 
+   37 |   if (!isYMD(targetY) || !targetH) return null;
+   38 | 
+
+### BLOCO 2 ù LINHAS 3097 A 3129
+ 3097 |       grupo,
+ 3098 |       scoreProb,
+ 3099 |       score: scoreProb * 1000,
+ 3100 |       details,
+ 3101 |     };
+ 3102 |   })
+ 3103 |     .sort((a, b) => {
+ 3104 |       if (b.score !== a.score) return b.score - a.score;
+ 3105 |       return a.grupo - b.grupo;
+ 3106 |     })
+ 3107 |     .slice(0, Math.max(1, Number(topN || 3)));
+ 3108 | 
+ 3109 |   const rankedScored = scoreRanking(
+ 3110 |     ranked,
+ 3111 |     {
+ 3112 |       lotteryKey,
+ 3113 |       targetYmd: targetY,
+ 3114 |       targetHour: targetH,
+ 3115 |       previousGroup: prevGrupo,
+ 3116 |       totalDraws: history.length,
+ 3117 |     }
+ 3118 |   );
+ 3119 | 
+ 3120 |   const top = rankedScored.map((x, idx) => {
+ 3121 |     const g2 = String(x.grupo).padStart(2, "0");
+ 3122 |     const rawScoreProb = Number(x.scoreProb || 0);
+ 3123 | 
+ 3124 |     const strongest = Object.values(x.details)
+ 3125 |       .filter((d) => Number(d.probability || 0) > 0)
+ 3126 |       .sort((a, b) => (b.probability * b.weight) - (a.probability * a.weight))
+ 3127 |       .slice(0, 3);
+ 3128 | 
+ 3129 |     return {
+
+--------------------------------------------------------------------------------------------------------------
+ARQUIVO: src\pages\Top3\top3.engine.js
+--------------------------------------------------------------------------------------------------------------
+TERMOS LOCALIZADOS: scoreRanking
+
+### BLOCO 1 ù LINHAS 6 A 38
+    6 |   addDaysYMD,
+    7 |   normalizeHourLike,
+    8 |   toHourBucket,
+    9 |   hourToInt,
+   10 |   getDowKey,
+   11 |   pickPrizeMilhar4,
+   12 |   getDezena2,
+   13 |   getCentena3,
+   14 |   milharCompareAsc,
+   15 |   wrapToDezena2,
+   16 | } from "./top3.formatters";
+   17 | 
+   18 | import { scoreRanking } from "./modules/scoreEngine/scoreEngineV2";
+   19 | 
+   20 | import {
+   21 |   TOP3_NEXTDRAW_SCAN_MAX_STEPS,
+   22 |   TOP3_NEXTDRAW_SCAN_MAX_DAYS,
+   23 |   TOP3_GROUPS_K,
+   24 |   TOP3_SMOOTH_ALPHA,
+   25 |   TOP3_SCENE_WEIGHT,
+   26 |   TOP3_SCENE_SAMPLE_TARGET,
+   27 |   TOP3_SCENE_BLEND_SCENE,
+   28 |   TOP3_SCENE_BLEND_UNIFORM,
+   29 |   PT_RIO_SCHEDULE_SUNDAY,
+   30 | } from "./top3.constants";
+   31 | 
+   32 | function findPreviousValidDraw(draws, currentYmd, currentHour) {
+   33 |   const list = Array.isArray(draws) ? draws : [];
+   34 |   const targetY = safeStr(currentYmd);
+   35 |   const targetH = toHourBucket(currentHour);
+   36 | 
+   37 |   if (!isYMD(targetY) || !targetH) return null;
+   38 | 
+
+### BLOCO 2 ù LINHAS 3051 A 3083
+ 3051 |       grupo,
+ 3052 |       scoreProb,
+ 3053 |       score: scoreProb * 1000,
+ 3054 |       details,
+ 3055 |     };
+ 3056 |   })
+ 3057 |     .sort((a, b) => {
+ 3058 |       if (b.score !== a.score) return b.score - a.score;
+ 3059 |       return a.grupo - b.grupo;
+ 3060 |     })
+ 3061 |     .slice(0, Math.max(1, Number(topN || 3)));
+ 3062 | 
+ 3063 |   const rankedScored = scoreRanking(
+ 3064 |     ranked,
+ 3065 |     {
+ 3066 |       lotteryKey,
+ 3067 |       targetYmd: targetY,
+ 3068 |       targetHour: targetH,
+ 3069 |       previousGroup: prevGrupo,
+ 3070 |       totalDraws: history.length,
+ 3071 |     }
+ 3072 |   );
+ 3073 | 
+ 3074 |   const top = rankedScored.map((x, idx) => {
+ 3075 |     const g2 = String(x.grupo).padStart(2, "0");
+ 3076 |     const rawScoreProb = Number(x.scoreProb || 0);
+ 3077 | 
+ 3078 |     const strongest = Object.values(x.details)
+ 3079 |       .filter((d) => Number(d.probability || 0) > 0)
+ 3080 |       .sort((a, b) => (b.probability * b.weight) - (a.probability * a.weight))
+ 3081 |       .slice(0, 3);
+ 3082 | 
+ 3083 |     return {
+
+--------------------------------------------------------------------------------------------------------------
+ARQUIVO: src\pages\Top3\top3.public-api.js
+--------------------------------------------------------------------------------------------------------------
+TERMOS LOCALIZADOS: collectEvidence, scoreItem, scoreRanking
+
+### BLOCO 1 ù LINHAS 37 A 64
+   37 |   pickDrawYMD,
+   38 |   pickPrize1GrupoFromDraw,
+   39 |   guessPrizeGrupo,
+   40 |   guessPrizePos,
+   41 | 
+   42 |   // ═ndices e utilitßrios p·blicos
+   43 |   indexDrawsByYmdHour,
+   44 |   computeLastSeenByGrupo,
+   45 |   countAparicoesByGrupoInDraw,
+   46 | } from "./top3.engine";
+   47 | 
+   48 | export {
+   49 |   scoreRanking,
+   50 |   scoreItem,
+   51 |   calculateEvidenceStrength,
+   52 | } from "./modules/scoreEngine/scoreEngineV2";
+   53 | 
+   54 | export {
+   55 |   collectEvidence,
+   56 | } from "./modules/scoreEngine/evidenceEngine";
+   57 | 
+   58 | export {
+   59 |   buildContextEvidence,
+   60 | } from "./modules/scoreEngine/contextEvidence";
+   61 | 
+   62 | export {
+   63 |   buildFrequencyEvidence,
+   64 | } from "./modules/scoreEngine/frequencyEvidence";
+
+==============================================================================================================
+RESUMO POR TERMO
+==============================================================================================================
+
+__TOP3_ABLATION__: 7 ocorrÛncia(s)
+  - backend\scripts\backtestTop3AblationExperimental.js:414
+    globalThis.__TOP3_ABLATION__;
+  - backend\scripts\backtestTop3AblationExperimental.js:420
+    delete globalThis.__TOP3_ABLATION__;
+  - backend\scripts\backtestTop3AblationExperimental.js:422
+    globalThis.__TOP3_ABLATION__ =
+  - backend\scripts\backtestTop3AblationExperimental.js:435
+    delete globalThis.__TOP3_ABLATION__;
+  - backend\scripts\backtestTop3AblationExperimental.js:437
+    globalThis.__TOP3_ABLATION__ =
+  - src\pages\Top3\modules\scoreEngine\scoreEngineV2.js:10
+    !globalThis.__TOP3_ABLATION__
+  - src\pages\Top3\modules\scoreEngine\scoreEngineV2.js:16
+    globalThis.__TOP3_ABLATION__
+
+getTop3AblationVariant: 2 ocorrÛncia(s)
+  - src\pages\Top3\modules\scoreEngine\scoreEngineV2.js:7
+    function getTop3AblationVariant() {
+  - src\pages\Top3\modules\scoreEngine\scoreEngineV2.js:24
+    getTop3AblationVariant();
+
+resolveScoreConfigForAblation: 2 ocorrÛncia(s)
+  - src\pages\Top3\modules\scoreEngine\scoreEngineV2.js:22
+    function resolveScoreConfigForAblation() {
+  - src\pages\Top3\modules\scoreEngine\scoreEngineV2.js:128
+    config: resolveScoreConfigForAblation(),
+
+SEM_FREQUENCY: 3 ocorrÛncia(s)
+  - backend\scripts\backtestTop3AblationExperimental.js:24
+    ["A01", "SEM_FREQUENCY"],
+  - backend\scripts\backtestTop3AblationExperimental.js:25
+    ["SEM_FREQUENCY", "SEM_FREQUENCY"],
+  - src\pages\Top3\modules\scoreEngine\scoreEngineV2.js:49
+    variant === "SEM_FREQUENCY"
+
+SEM_CONTEXT: 3 ocorrÛncia(s)
+  - backend\scripts\backtestTop3AblationExperimental.js:27
+    ["A02", "SEM_CONTEXT"],
+  - backend\scripts\backtestTop3AblationExperimental.js:28
+    ["SEM_CONTEXT", "SEM_CONTEXT"],
+  - src\pages\Top3\modules\scoreEngine\scoreEngineV2.js:57
+    variant === "SEM_CONTEXT"
+
+BASELINE_COMPLETO: 7 ocorrÛncia(s)
+  - backend\scripts\backtestTop3AblationExperimental.js:20
+    ["A00", "BASELINE_COMPLETO"],
+  - backend\scripts\backtestTop3AblationExperimental.js:21
+    ["BASELINE", "BASELINE_COMPLETO"],
+  - backend\scripts\backtestTop3AblationExperimental.js:22
+    ["BASELINE_COMPLETO", "BASELINE_COMPLETO"],
+  - backend\scripts\backtestTop3AblationExperimental.js:672
+    variant === "BASELINE_COMPLETO" &&
+  - backend\scripts\backtestTop3AblationExperimental.js:679
+    variant === "BASELINE_COMPLETO"
+  - backend\scripts\backtestTop3AblationExperimental.js:709
+    variant === "BASELINE_COMPLETO" &&
+  - src\pages\Top3\modules\scoreEngine\scoreEngineV2.js:29
+    variant === "BASELINE_COMPLETO"
+
+scoreRanking: 14 ocorrÛncia(s)
+  - backend\engine\scoreEngineV2.js:73
+    function scoreRanking(items = [], context = {}) {
+  - backend\engine\scoreEngineV2.js:93
+    scoreRanking,
+  - src\pages\Top3\__tests__\top3.public-api.node.test.js:34
+    "scoreRanking",
+  - src\pages\Top3\modules\scoreEngine\scoreEngineV2.backup.js:73
+    function scoreRanking(items = [], context = {}) {
+  - src\pages\Top3\modules\scoreEngine\scoreEngineV2.backup.js:93
+    scoreRanking,
+  - src\pages\Top3\modules\scoreEngine\scoreEngineV2.js:174
+    function scoreRanking(items = [], context = {}) {
+  - src\pages\Top3\modules\scoreEngine\scoreEngineV2.js:194
+    scoreRanking,
+  - src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js:18
+    import { scoreRanking } from "./modules/scoreEngine/scoreEngineV2";
+  - src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js:3109
+    const rankedScored = scoreRanking(
+  - src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js:18
+    import { scoreRanking } from "./modules/scoreEngine/scoreEngineV2";
+  - src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js:3109
+    const rankedScored = scoreRanking(
+  - src\pages\Top3\top3.engine.js:18
+    import { scoreRanking } from "./modules/scoreEngine/scoreEngineV2";
+  - src\pages\Top3\top3.engine.js:3063
+    const rankedScored = scoreRanking(
+  - src\pages\Top3\top3.public-api.js:49
+    scoreRanking,
+
+scoreItem: 11 ocorrÛncia(s)
+  - backend\engine\scoreEngineV2.js:53
+    function scoreItem(item = {}, context = {}) {
+  - backend\engine\scoreEngineV2.js:76
+    .map(item => scoreItem(item, context))
+  - backend\engine\scoreEngineV2.js:92
+    scoreItem,
+  - src\pages\Top3\__tests__\top3.public-api.node.test.js:33
+    "scoreItem",
+  - src\pages\Top3\modules\scoreEngine\scoreEngineV2.backup.js:53
+    function scoreItem(item = {}, context = {}) {
+  - src\pages\Top3\modules\scoreEngine\scoreEngineV2.backup.js:76
+    .map(item => scoreItem(item, context))
+  - src\pages\Top3\modules\scoreEngine\scoreEngineV2.backup.js:92
+    scoreItem,
+  - src\pages\Top3\modules\scoreEngine\scoreEngineV2.js:124
+    function scoreItem(item = {}, context = {}) {
+  - src\pages\Top3\modules\scoreEngine\scoreEngineV2.js:177
+    .map(item => scoreItem(item, context))
+  - src\pages\Top3\modules\scoreEngine\scoreEngineV2.js:193
+    scoreItem,
+  - src\pages\Top3\top3.public-api.js:50
+    scoreItem,
+
+collectEvidence: 12 ocorrÛncia(s)
+  - backend\engine\evidenceEngine.js:18
+    function collectEvidence({
+  - backend\engine\evidenceEngine.js:68
+    collectEvidence,
+  - backend\engine\scoreEngineV2.js:4
+    const { collectEvidence } = require("./evidenceEngine");
+  - backend\engine\scoreEngineV2.js:54
+    const collected = collectEvidence({
+  - src\pages\Top3\__tests__\top3.public-api.node.test.js:15
+    "collectEvidence",
+  - src\pages\Top3\modules\scoreEngine\evidenceEngine.js:18
+    function collectEvidence({
+  - src\pages\Top3\modules\scoreEngine\evidenceEngine.js:68
+    collectEvidence,
+  - src\pages\Top3\modules\scoreEngine\scoreEngineV2.backup.js:4
+    import { collectEvidence } from "./evidenceEngine";
+  - src\pages\Top3\modules\scoreEngine\scoreEngineV2.backup.js:54
+    const collected = collectEvidence({
+  - src\pages\Top3\modules\scoreEngine\scoreEngineV2.js:75
+    import { collectEvidence } from "./evidenceEngine";
+  - src\pages\Top3\modules\scoreEngine\scoreEngineV2.js:125
+    const collected = collectEvidence({
+  - src\pages\Top3\top3.public-api.js:55
+    collectEvidence,
+
+==============================================================================================================
+DIAGNËSTICO AUTOM┴TICO
+==============================================================================================================
+
+STATUS: TODOS OS TERMOS CR═TICOS FORAM LOCALIZADOS
+Agora serß possÝvel auditar o encadeamento real entre os arquivos.
+
+Nenhuma alteraþÒo realizada.
+Nenhum commit.
+Nenhum deploy.
+ProduþÒo inalterada.
+==============================================================================================================

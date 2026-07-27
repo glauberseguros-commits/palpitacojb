@@ -1,0 +1,39 @@
+
+> src\pages\Top3\Top3View.jsx:4012:                const hasExactHit =
+  src\pages\Top3\Top3View.jsx:4013:                  hitType === "hit_exact";
+  src\pages\Top3\Top3View.jsx:4014:
+> src\pages\Top3\Top3View.jsx:4015:                const hasCentenaHit =
+  src\pages\Top3\Top3View.jsx:4016:                  hitType === "hit_centena" ||
+  src\pages\Top3\Top3View.jsx:4017:                  hasExactHit;
+  src\pages\Top3\Top3View.jsx:4018:
+  src\pages\Top3\Top3View.jsx:4019:                /*
+  src\pages\Top3\Top3View.jsx:4020:                 * Todo acerto de grupo também identifica a dezena real
+> src\pages\Top3\Top3View.jsx:4024:                const hasDezenaHit =
+  src\pages\Top3\Top3View.jsx:4025:                  isHit &&
+  src\pages\Top3\Top3View.jsx:4026:                  Boolean(matchedResultDezena);
+  src\pages\Top3\Top3View.jsx:4027:
+> src\pages\Top3\Top3View.jsx:4028:                const hitGrupo =
+  src\pages\Top3\Top3View.jsx:4029:                  isHit &&
+  src\pages\Top3\Top3View.jsx:4030:                  Number.isFinite(
+  src\pages\Top3\Top3View.jsx:4031:                    matchedResultGrupo
+  src\pages\Top3\Top3View.jsx:4032:                  )
+  src\pages\Top3\Top3View.jsx:4033:                    ? formatGrupo(
+> src\pages\Top3\Top3View.jsx:4038:                const hitDezena =
+  src\pages\Top3\Top3View.jsx:4039:                  hasDezenaHit
+  src\pages\Top3\Top3View.jsx:4040:                    ? matchedResultDezena
+  src\pages\Top3\Top3View.jsx:4041:                    : "";
+  src\pages\Top3\Top3View.jsx:4042:
+> src\pages\Top3\Top3View.jsx:4043:                const hitCentena =
+  src\pages\Top3\Top3View.jsx:4044:                  isHit &&
+  src\pages\Top3\Top3View.jsx:4045:                  hasCentenaHit
+  src\pages\Top3\Top3View.jsx:4046:                    ? matchedResultCentena
+  src\pages\Top3\Top3View.jsx:4047:                    : "";
+  src\pages\Top3\Top3View.jsx:4048:
+> src\pages\Top3\Top3View.jsx:4049:                const hitMilhar =
+  src\pages\Top3\Top3View.jsx:4050:                  isHit &&
+  src\pages\Top3\Top3View.jsx:4051:                  hasExactHit
+  src\pages\Top3\Top3View.jsx:4052:                    ? matchedResultMilhar
+  src\pages\Top3\Top3View.jsx:4053:                    : "";
+  src\pages\Top3\Top3View.jsx:4054:
+
+

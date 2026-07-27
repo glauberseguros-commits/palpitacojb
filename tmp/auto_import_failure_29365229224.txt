@@ -1,0 +1,29 @@
+run-import (PT_RIO)	Rodar importa├º├úo autom├ítica (PT_RIO)	´╗┐2026-07-14T20:19:12.4233093Z ##[group]Run node scripts/autoImportToday.js
+run-import (PT_RIO)	Rodar importa├º├úo autom├ítica (PT_RIO)	2026-07-14T20:19:12.4233570Z ^[[36;1mnode scripts/autoImportToday.js^[[0m
+run-import (PT_RIO)	Rodar importa├º├úo autom├ítica (PT_RIO)	2026-07-14T20:19:12.4271032Z shell: /usr/bin/bash -e ***0***
+run-import (PT_RIO)	Rodar importa├º├úo autom├ítica (PT_RIO)	2026-07-14T20:19:12.4271388Z env:
+run-import (PT_RIO)	Rodar importa├º├úo autom├ítica (PT_RIO)	2026-07-14T20:19:12.4271669Z   TZ: America/Sao_Paulo
+run-import (PT_RIO)	Rodar importa├º├úo autom├ítica (PT_RIO)	2026-07-14T20:19:12.4272089Z   PITACO_API_BASE: https://api.palpitacojb.com.br
+run-import (PT_RIO)	Rodar importa├º├úo autom├ítica (PT_RIO)	2026-07-14T20:19:12.4281720Z   FIREBASE_ADMIN_SA_JSON: ***
+run-import (PT_RIO)	Rodar importa├º├úo autom├ítica (PT_RIO)	
+run-import (PT_RIO)	Rodar importa├º├úo autom├ítica (PT_RIO)	2026-07-14T20:19:12.4282064Z   LOTTERY: PT_RIO
+run-import (PT_RIO)	Rodar importa├º├úo autom├ítica (PT_RIO)	2026-07-14T20:19:12.4282344Z   FAIL_ON_CRITICAL: 1
+run-import (PT_RIO)	Rodar importa├º├úo autom├ítica (PT_RIO)	2026-07-14T20:19:12.4282633Z   AUDIT_WARN_MIN: 20
+run-import (PT_RIO)	Rodar importa├º├úo autom├ítica (PT_RIO)	2026-07-14T20:19:12.4282910Z   AUDIT_CRIT_MIN: 60
+run-import (PT_RIO)	Rodar importa├º├úo autom├ítica (PT_RIO)	2026-07-14T20:19:12.4283182Z ##[endgroup]
+run-import (PT_RIO)	Rodar importa├º├úo autom├ítica (PT_RIO)	2026-07-14T20:19:12.6373289Z [CFG] PITACO_API_BASE efetivo => https://api.palpitacojb.com.br
+run-import (PT_RIO)	Rodar importa├º├úo autom├ítica (PT_RIO)	2026-07-14T20:19:27.7052799Z [CAL] PT_RIO seg-sex: date=2026-07-14 dow=2 => HARD=[09,11,14,16,18,21]
+run-import (PT_RIO)	Rodar importa├º├úo autom├ítica (PT_RIO)	2026-07-14T20:19:27.7058838Z [AUTO] CATCH-UP p├│s-release 2026-07-14 slot=16:00 (HARD) releaseAt=16:29 window=16:05~16:35 (fora da janela)
+run-import (PT_RIO)	Rodar importa├º├úo autom├ítica (PT_RIO)	2026-07-14T20:19:27.7064733Z [AUTO] tentando 2026-07-14 slot=16:00 (HARD) window=16:05-16:35 closes=16:00,16:01,16:02,16:09,16:10,16:11
+run-import (PT_RIO)	Rodar importa├º├úo autom├ítica (PT_RIO)	2026-07-14T20:19:29.0924576Z [FETCH] PT_RIO 2026-07-14 per-lottery=6 -> merged_draws=4 close_hours=[09:00, 11:00, 14:00, 16:00]
+run-import (PT_RIO)	Rodar importa├º├úo autom├ítica (PT_RIO)	2026-07-14T20:19:31.1766854Z [IMPORT] API draws=4 | match_close=1 | validos=1 | draws_upserted=0 | draws_novos=0 | prizes_upserted=0 | prizes_novos=0 | skip_vazio=0 | skip_invalido=0 | skip_close=3 | skip_complete=1 | CHECK_EXISTENCE=OFF | uf=RJ lottery_key=PT_RIO | expected=1 complete=1 slotDocs=1 apiTargets=1
+run-import (PT_RIO)	Rodar importa├º├úo autom├ítica (PT_RIO)	2026-07-14T20:19:31.1774891Z [AUTO] FS j├í tem slot=16:00 COMPLETO (close=16:00) -> DONE
+run-import (PT_RIO)	Rodar importa├º├úo autom├ítica (PT_RIO)	2026-07-14T20:19:31.1781849Z [ALERT] HARD slot perdeu janela: date=2026-07-14 slot=09:00 releaseAt=09:29 windowEnd=09:35 tries=0
+run-import (PT_RIO)	Rodar importa├º├úo autom├ítica (PT_RIO)	2026-07-14T20:19:31.1784555Z [ALERT] HARD slot CRITICAL: date=2026-07-14 slot=09:00 since=470min (>=60) tries=0
+run-import (PT_RIO)	Rodar importa├º├úo autom├ítica (PT_RIO)	2026-07-14T20:19:31.1787173Z [ALERT] HARD slot perdeu janela: date=2026-07-14 slot=11:00 releaseAt=11:29 windowEnd=11:35 tries=0
+run-import (PT_RIO)	Rodar importa├º├úo autom├ítica (PT_RIO)	2026-07-14T20:19:31.1789390Z [ALERT] HARD slot CRITICAL: date=2026-07-14 slot=11:00 since=350min (>=60) tries=0
+run-import (PT_RIO)	Rodar importa├º├úo autom├ítica (PT_RIO)	2026-07-14T20:19:31.1792012Z [ALERT] HARD slot perdeu janela: date=2026-07-14 slot=14:00 releaseAt=14:29 windowEnd=14:35 tries=0
+run-import (PT_RIO)	Rodar importa├º├úo autom├ítica (PT_RIO)	2026-07-14T20:19:31.1794286Z [ALERT] HARD slot CRITICAL: date=2026-07-14 slot=14:00 since=170min (>=60) tries=0
+run-import (PT_RIO)	Rodar importa├º├úo autom├ítica (PT_RIO)	2026-07-14T20:19:31.1807532Z [AUDIT] CRITICAL missing=3 warning=0 softLate=0 (relat├│rio salvo em auditCritical-PT_RIO-2026-07-14.json)
+run-import (PT_RIO)	Rodar importa├º├úo autom├ítica (PT_RIO)	2026-07-14T20:19:31.1809052Z [AUDIT] FAIL_ON_CRITICAL=1 => exit(2)
+run-import (PT_RIO)	Rodar importa├º├úo autom├ítica (PT_RIO)	2026-07-14T20:19:31.1928921Z ##[error]Process completed with exit code 2.

@@ -1,0 +1,53 @@
+
+===== backend\scripts\backtestTop3E08Experimental.js =====
+L0011:   computeStatisticalTop3E08Experimental,
+L0012: } = require("../engine/scoreEngineE08Experimental");
+L0173:   const experimental =
+L0179:           computeStatisticalTop3E08Experimental,
+L0186:       experimental.global.top3Hits
+L0192:       experimental.global.evaluated
+L0198:       experimental.global.errors
+L0251:     experimental: {
+L0253:         experimental.global.evaluated,
+L0255:         experimental.global.errors,
+L0257:         experimental.global.top1Hits,
+L0259:         experimental.global.top1Rate,
+L0261:         experimental.global.top3Hits,
+L0263:         experimental.global.top3Rate,
+L0267:         experimental.global.top1Hits -
+L0272:             experimental.global.top1Rate -
+L0277:         experimental.global.top3Hits -
+L0282:             experimental.global.top3Rate -
+L0290:       experimental:
+L0291:         experimental.byHour,
+L0328:         experimental.byHour || {}
+L0338:       experimental.byHour?.[hour] || {};
+L0372:     "EXPERIMENTAL E08",
+L0373:     `TOP1................: ${experimental.global.top1Hits} (${percent(experimental.global.top1Rate)})`,
+L0374:     `TOP3................: ${experimental.global.top3Hits} (${percent(experimental.global.top3Rate)})`,
+L0375:     `Erros...............: ${experimental.global.errors}`,
+L0397:   fs.writeFileSync(
+L0399:     JSON.stringify(
+L0407:   fs.writeFileSync(
+
+===== backend\engine\scoreEngineE08Experimental.js =====
+L0349: function computeStatisticalTop3E08Experimental(
+L0357:   const baselineTop =
+L0361:   if (baselineTop.length < 3) {
+L0364:       experimental: {
+L0367:         applied: false,
+L0385:   const rerankedTop =
+L0386:     baselineTop
+L0470:       baselineTop,
+L0471:       rerankedTop
+L0481:     top: rerankedTop,
+L0482:     ranking: rerankedTop,
+L0483:     baselineTop,
+L0484:     experimental: {
+L0488:       applied: true,
+L0495:       baselineGroups:
+L0496:         baselineTop.map(
+L0499:       rerankedGroups:
+L0500:         rerankedTop.map(
+L0508:       experimental: {
+L0522:   computeStatisticalTop3E08Experimental,

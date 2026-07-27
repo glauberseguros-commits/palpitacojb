@@ -1,0 +1,87 @@
+====================================================================================================
+TOP3-HIT-10B — RESULTADO
+====================================================================================================
+INÍCIO: 26/07/2026 00:14:15
+ARQUIVO: .\src\pages\Top3\top3.hooks.js
+HASH ORIGINAL CONFIRMADO: C0F237044BFF66A964F824274C0F22CF1712240AD383C5DBE077B7E5DF133046
+====================================================================================================
+
+PATCH_STATUS=OK
+RETRY_MAP_REFERENCES=7
+NONCE_REFERENCES=2
+
+HASH NOVO: 788D5832393E990BE6AA8BAC5E7BD1C914FA29A563FE6F30BDF3DD00128B65A6
+VALIDADO: const top3ReconcileRetryCounts = new Map();
+VALIDADO: const TOP3_RECONCILE_MAX_RETRIES = 3;
+VALIDADO: const TOP3_RECONCILE_RETRY_DELAY_MS = 1200;
+VALIDADO: const [reconcileRetryNonce, setReconcileRetryNonce] = useState(0);
+VALIDADO: const hasPendingResult = reconciledHistory.some
+VALIDADO: setReconcileRetryNonce((value) => value + 1);
+VALIDADO: reconcileRetryNonce,
+
+> palpitaco@0.1.0 build
+> react-scripts build
+
+Creating an optimized production build...
+Compiled successfully.
+
+File sizes after gzip:
+
+  264.25 kB (-3 B)   build\static\js\main.da1668f2.js
+  138.8 kB           build\static\js\238.133659d3.chunk.js
+  128.07 kB          build\static\js\389.21aa2d35.chunk.js
+  46.35 kB           build\static\js\239.6b4eaf90.chunk.js
+  42.9 kB            build\static\js\455.7220bbdf.chunk.js
+  36.95 kB (+215 B)  build\static\js\741.328e6357.chunk.js
+  10.7 kB            build\static\js\916.71c8a438.chunk.js
+  9.79 kB            build\static\js\857.e51a2e06.chunk.js
+  9.28 kB            build\static\js\411.f420f62d.chunk.js
+  9.01 kB            build\static\js\848.8045fd05.chunk.js
+  8.96 kB            build\static\js\812.eb0d3036.chunk.js
+  8.89 kB            build\static\js\188.2b4c0ac7.chunk.js
+  8.69 kB            build\static\js\977.efeedf50.chunk.js
+  6.73 kB            build\static\js\960.417ace1e.chunk.js
+  6.07 kB            build\static\js\886.320165d3.chunk.js
+  4.2 kB             build\static\js\854.7290a099.chunk.js
+  3.89 kB            build\static\js\532.86885c87.chunk.js
+  3.11 kB            build\static\css\960.a7d00216.chunk.css
+  2.87 kB            build\static\css\main.f1823042.css
+  1.82 kB            build\static\js\611.337809cd.chunk.js
+  1.53 kB            build\static\css\611.3878f01e.chunk.css
+  775 B              build\static\js\784.e009081b.chunk.js
+
+The project was built assuming it is hosted at /.
+You can control this with the homepage field in your package.json.
+
+The build folder is ready to be deployed.
+You may serve it with a static server:
+
+  serve -s build
+
+Find out more about deployment here:
+
+  https://cra.link/deployment
+
+
+BUILD: APROVADO
+[main 75f0a8a] fix(top3): retry pending Firestore reconciliation
+ 1 file changed, 73 insertions(+), 6 deletions(-)
+To https://github.com/glauberseguros-commits/palpitacojb.git
+   ed45024..75f0a8a  main -> main
+
+====================================================================================================
+STATUS FINAL
+====================================================================================================
+STATUS: OK
+ARQUIVO ALTERADO: src/pages/Top3/top3.hooks.js
+BUILD: APROVADO
+COMMIT: 75f0a8a2be2ad9a653283896a042e372179d9a7f
+PUSH: CONCLUÍDO
+DEPLOY: ACIONADO PELO PUSH
+
+CORREÇÃO:
+- chave de reconciliação não bloqueia permanentemente registros pendentes;
+- até três retentativas controladas;
+- proteção contra chamadas simultâneas mantida;
+- sem repetição infinita.
+====================================================================================================

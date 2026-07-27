@@ -1,0 +1,453 @@
+====================================================================================================
+PERF-TOP3-33 — ARQUIVO COMPLETO DO BOOTSTRAP TOP3
+====================================================================================================
+Data: 2026-07-24 09:34:46
+HEAD: 28d88bf9000215e8fbf3ea782224bbc4188b038c
+Branch: main
+
+Objetivo:
+- analisar integralmente o worker oficial;
+- confirmar argumentos, dry-run, commit e validações;
+- nenhuma alteração em código ou Firestore.
+====================================================================================================
+
+ARQUIVO: .\backend\workers\bootstrapTop3History.js
+====================================================================================================
+    1: "use strict";
+    2: 
+    3: const {
+    4:   fetchAllDrawsWithPrizes,
+    5: } = require("../engine/drawRepository");
+    6: 
+    7: const {
+    8:   normalizeLotteryKey,
+    9:   normalizeDraw,
+   10:   deduplicateDraws,
+   11:   writeHistoryMonth,
+   12:   writeMetadata,
+   13:   SCHEMA_VERSION,
+   14: } = require("../engine/top3HistoryRepository");
+   15: 
+   16: const DEFAULT_PAGE_SIZE = 500;
+   17: const DEFAULT_PRIZE_CONCURRENCY = 24;
+   18: 
+   19: /**
+   20:  * Margem abaixo do limite de 1 MiB do Firestore.
+   21:  * O bootstrap é interrompido antes de tentar gravar
+   22:  * um documento mensal excessivamente grande.
+   23:  */
+   24: const MAX_MONTH_DOCUMENT_BYTES = 850 * 1024;
+   25: 
+   26: function safeArray(value) {
+   27:   return Array.isArray(value)
+   28:     ? value
+   29:     : [];
+   30: }
+   31: 
+   32: function estimateJsonBytes(value) {
+   33:   return Buffer.byteLength(
+   34:     JSON.stringify(value),
+   35:     "utf8"
+   36:   );
+   37: }
+   38: 
+   39: function groupDrawsByMonth(draws = []) {
+   40:   const grouped = new Map();
+   41: 
+   42:   for (const rawDraw of safeArray(draws)) {
+   43:     const draw = normalizeDraw(rawDraw);
+   44: 
+   45:     if (!draw) {
+   46:       continue;
+   47:     }
+   48: 
+   49:     const yearMonth = draw.ymd.slice(0, 7);
+   50: 
+   51:     if (!grouped.has(yearMonth)) {
+   52:       grouped.set(yearMonth, []);
+   53:     }
+   54: 
+   55:     grouped.get(yearMonth).push(draw);
+   56:   }
+   57: 
+   58:   const normalized = new Map();
+   59: 
+   60:   for (
+   61:     const [yearMonth, monthDraws]
+   62:     of grouped.entries()
+   63:   ) {
+   64:     normalized.set(
+   65:       yearMonth,
+   66:       deduplicateDraws(monthDraws)
+   67:     );
+   68:   }
+   69: 
+   70:   return normalized;
+   71: }
+   72: 
+   73: function buildBootstrapPlan({
+   74:   lotteryKey,
+   75:   draws,
+   76: } = {}) {
+   77:   const key = normalizeLotteryKey(
+   78:     lotteryKey
+   79:   );
+   80: 
+   81:   const normalizedDraws = deduplicateDraws(
+   82:     safeArray(draws)
+   83:   ).filter(
+   84:     (draw) =>
+   85:       draw.lotteryKey === key
+   86:   );
+   87: 
+   88:   const grouped = groupDrawsByMonth(
+   89:     normalizedDraws
+   90:   );
+   91: 
+   92:   const months = Array.from(
+   93:     grouped.keys()
+   94:   ).sort();
+   95: 
+   96:   const monthPlans = months.map(
+   97:     (yearMonth) => {
+   98:       const monthDraws =
+   99:         grouped.get(yearMonth) || [];
+  100: 
+  101:       const first =
+  102:         monthDraws[0] || null;
+  103: 
+  104:       const last =
+  105:         monthDraws[
+  106:           monthDraws.length - 1
+  107:         ] || null;
+  108: 
+  109:       const estimatedBytes =
+  110:         estimateJsonBytes({
+  111:           schemaVersion: SCHEMA_VERSION,
+  112:           lotteryKey: key,
+  113:           yearMonth,
+  114:           drawCount: monthDraws.length,
+  115:           firstYmd: first?.ymd || null,
+  116:           lastYmd: last?.ymd || null,
+  117:           firstDrawId:
+  118:             first?.drawId || null,
+  119:           lastDrawId:
+  120:             last?.drawId || null,
+  121:           draws: monthDraws,
+  122:         });
+  123: 
+  124:       return {
+  125:         yearMonth,
+  126:         draws: monthDraws,
+  127:         drawCount: monthDraws.length,
+  128:         firstYmd: first?.ymd || null,
+  129:         lastYmd: last?.ymd || null,
+  130:         firstDrawId:
+  131:           first?.drawId || null,
+  132:         lastDrawId:
+  133:           last?.drawId || null,
+  134:         estimatedBytes,
+  135:         withinSizeLimit:
+  136:           estimatedBytes <=
+  137:           MAX_MONTH_DOCUMENT_BYTES,
+  138:       };
+  139:     }
+  140:   );
+  141: 
+  142:   const oversizedMonths =
+  143:     monthPlans.filter(
+  144:       (month) =>
+  145:         !month.withinSizeLimit
+  146:     );
+  147: 
+  148:   const first =
+  149:     normalizedDraws[0] || null;
+  150: 
+  151:   const last =
+  152:     normalizedDraws[
+  153:       normalizedDraws.length - 1
+  154:     ] || null;
+  155: 
+  156:   return {
+  157:     lotteryKey: key,
+  158:     draws: normalizedDraws,
+  159:     totalDraws:
+  160:       normalizedDraws.length,
+  161:     months,
+  162:     monthPlans,
+  163:     oversizedMonths,
+  164:     firstYmd:
+  165:       first?.ymd || null,
+  166:     lastYmd:
+  167:       last?.ymd || null,
+  168:     firstDrawId:
+  169:       first?.drawId || null,
+  170:     lastDrawId:
+  171:       last?.drawId || null,
+  172:   };
+  173: }
+  174: 
+  175: async function bootstrapTop3History(
+  176:   options = {},
+  177:   dependencies = {}
+  178: ) {
+  179:   const lotteryKey =
+  180:     normalizeLotteryKey(
+  181:       options.lotteryKey ||
+  182:       "PT_RIO"
+  183:     );
+  184: 
+  185:   const dryRun =
+  186:     options.dryRun !== false;
+  187: 
+  188:   const fetchDraws =
+  189:     dependencies.fetchDraws ||
+  190:     fetchAllDrawsWithPrizes;
+  191: 
+  192:   const persistMonth =
+  193:     dependencies.writeHistoryMonth ||
+  194:     writeHistoryMonth;
+  195: 
+  196:   const persistMetadata =
+  197:     dependencies.writeMetadata ||
+  198:     writeMetadata;
+  199: 
+  200:   const startedAt = Date.now();
+  201: 
+  202:   console.log(
+  203:     `[TOP3-HISTORY] Iniciando bootstrap ${lotteryKey} | dryRun=${dryRun}`
+  204:   );
+  205: 
+  206:   const rawDraws = await fetchDraws({
+  207:     lottery: lotteryKey,
+  208:     pageSize: Number(
+  209:       options.pageSize ||
+  210:       DEFAULT_PAGE_SIZE
+  211:     ),
+  212:     prizeConcurrency: Number(
+  213:       options.prizeConcurrency ||
+  214:       DEFAULT_PRIZE_CONCURRENCY
+  215:     ),
+  216:   });
+  217: 
+  218:   const plan = buildBootstrapPlan({
+  219:     lotteryKey,
+  220:     draws: rawDraws,
+  221:   });
+  222: 
+  223:   if (!plan.totalDraws) {
+  224:     throw new Error(
+  225:       `Nenhum draw válido encontrado para ${lotteryKey}.`
+  226:     );
+  227:   }
+  228: 
+  229:   if (plan.oversizedMonths.length) {
+  230:     const details =
+  231:       plan.oversizedMonths
+  232:         .map(
+  233:           (month) =>
+  234:             `${month.yearMonth}=${month.estimatedBytes} bytes`
+  235:         )
+  236:         .join(", ");
+  237: 
+  238:     throw new Error(
+  239:       "Bootstrap bloqueado: documento mensal acima do limite seguro. " +
+  240:       details
+  241:     );
+  242:   }
+  243: 
+  244:   console.log(
+  245:     `[TOP3-HISTORY] Draws=${plan.totalDraws} | meses=${plan.months.length}`
+  246:   );
+  247: 
+  248:   for (const month of plan.monthPlans) {
+  249:     console.log(
+  250:       `[TOP3-HISTORY] ${month.yearMonth} | draws=${month.drawCount} | bytes≈${month.estimatedBytes}`
+  251:     );
+  252:   }
+  253: 
+  254:   if (dryRun) {
+  255:     return {
+  256:       ok: true,
+  257:       dryRun: true,
+  258:       lotteryKey,
+  259:       totalDraws:
+  260:         plan.totalDraws,
+  261:       months:
+  262:         plan.months,
+  263:       monthCount:
+  264:         plan.months.length,
+  265:       firstYmd:
+  266:         plan.firstYmd,
+  267:       lastYmd:
+  268:         plan.lastYmd,
+  269:       firstDrawId:
+  270:         plan.firstDrawId,
+  271:       lastDrawId:
+  272:         plan.lastDrawId,
+  273:       oversizedMonths: [],
+  274:       tookMs:
+  275:         Date.now() - startedAt,
+  276:     };
+  277:   }
+  278: 
+  279:   for (const month of plan.monthPlans) {
+  280:     await persistMonth(
+  281:       lotteryKey,
+  282:       month.yearMonth,
+  283:       month.draws,
+  284:       dependencies
+  285:     );
+  286: 
+  287:     console.log(
+  288:       `[TOP3-HISTORY] Gravado ${month.yearMonth}: ${month.drawCount} draws`
+  289:     );
+  290:   }
+  291: 
+  292:   const completedAt =
+  293:     new Date().toISOString();
+  294: 
+  295:   const metadata =
+  296:     await persistMetadata(
+  297:       lotteryKey,
+  298:       {
+  299:         bootstrapStatus:
+  300:           "complete",
+  301:         bootstrapCompletedAt:
+  302:           completedAt,
+  303:         totalDraws:
+  304:           plan.totalDraws,
+  305:         monthCount:
+  306:           plan.months.length,
+  307:         months:
+  308:           plan.months,
+  309:         firstYmd:
+  310:           plan.firstYmd,
+  311:         lastYmd:
+  312:           plan.lastYmd,
+  313:         firstDrawId:
+  314:           plan.firstDrawId,
+  315:         lastDrawId:
+  316:           plan.lastDrawId,
+  317:         lastProcessedDrawId:
+  318:           plan.lastDrawId,
+  319:         source:
+  320:           "fetchAllDrawsWithPrizes",
+  321:       },
+  322:       dependencies
+  323:     );
+  324: 
+  325:   return {
+  326:     ok: true,
+  327:     dryRun: false,
+  328:     lotteryKey,
+  329:     totalDraws:
+  330:       plan.totalDraws,
+  331:     months:
+  332:       plan.months,
+  333:     monthCount:
+  334:       plan.months.length,
+  335:     firstYmd:
+  336:       plan.firstYmd,
+  337:     lastYmd:
+  338:       plan.lastYmd,
+  339:     firstDrawId:
+  340:       plan.firstDrawId,
+  341:     lastDrawId:
+  342:       plan.lastDrawId,
+  343:     metadata,
+  344:     tookMs:
+  345:       Date.now() - startedAt,
+  346:   };
+  347: }
+  348: 
+  349: function parseCliArgs(argv = []) {
+  350:   const lotteryKey =
+  351:     String(argv[0] || "PT_RIO")
+  352:       .trim()
+  353:       .toUpperCase();
+  354: 
+  355:   const flags = new Set(
+  356:     argv.slice(1).map(
+  357:       (value) =>
+  358:         String(value)
+  359:           .trim()
+  360:           .toLowerCase()
+  361:     )
+  362:   );
+  363: 
+  364:   const commit =
+  365:     flags.has("--commit");
+  366: 
+  367:   return {
+  368:     lotteryKey,
+  369:     dryRun: !commit,
+  370:   };
+  371: }
+  372: 
+  373: async function main() {
+  374:   const options = parseCliArgs(
+  375:     process.argv.slice(2)
+  376:   );
+  377: 
+  378:   console.log("");
+  379:   console.log(
+  380:     "===== TOP3 HISTORY BOOTSTRAP ====="
+  381:   );
+  382:   console.log(
+  383:     "Loteria:",
+  384:     options.lotteryKey
+  385:   );
+  386:   console.log(
+  387:     "Modo....:",
+  388:     options.dryRun
+  389:       ? "DRY-RUN"
+  390:       : "COMMIT"
+  391:   );
+  392:   console.log("");
+  393: 
+  394:   const result =
+  395:     await bootstrapTop3History(
+  396:       options
+  397:     );
+  398: 
+  399:   console.log("");
+  400:   console.log(
+  401:     JSON.stringify(
+  402:       result,
+  403:       null,
+  404:       2
+  405:     )
+  406:   );
+  407: }
+  408: 
+  409: if (require.main === module) {
+  410:   main().catch((error) => {
+  411:     console.error(
+  412:       "ERRO:",
+  413:       error?.stack ||
+  414:       error?.message ||
+  415:       error
+  416:     );
+  417: 
+  418:     process.exit(1);
+  419:   });
+  420: }
+  421: 
+  422: module.exports = {
+  423:   MAX_MONTH_DOCUMENT_BYTES,
+  424:   estimateJsonBytes,
+  425:   groupDrawsByMonth,
+  426:   buildBootstrapPlan,
+  427:   bootstrapTop3History,
+  428:   parseCliArgs,
+  429: };
+
+====================================================================================================
+RESULTADO
+====================================================================================================
+Nenhum código foi alterado.
+Nenhuma gravação no Firestore foi realizada.
+Nenhum commit foi criado.
+Nenhum push foi executado.
+====================================================================================================

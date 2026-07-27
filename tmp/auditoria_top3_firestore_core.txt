@@ -1,0 +1,468 @@
+========================================================================================================================
+src\pages\Top3\top3.firestore.js
+========================================================================================================================
+
+
+===== LINHAS 7 A 467 =====
+
+    7: 
+    8: import { db } from "../../services/firebase";
+    9: import { loginAnonymous } from "../../services/auth";
+   10: 
+   11: import {
+   12:   safeStr,
+   13:   isYMD,
+   14:   toHourBucket,
+   15: } from "./top3.formatters";
+   16: 
+   17: import {
+   18:   pickDrawYMD,
+   19:   pickDrawHour,
+   20:   pickPrize1GrupoFromDraw,
+   21: } from "./top3.engine";
+   22: 
+   23: const COLLECTION = "top3_predictions";
+   24: 
+   25: function normalizeLotteryKey(value) {
+   26:   return safeStr(value).toUpperCase() || "PT_RIO";
+   27: }
+   28: 
+   29: function normalizeHour(value) {
+   30:   return toHourBucket(value) || "";
+   31: }
+   32: 
+   33: function hourCode(value) {
+   34:   return normalizeHour(value).replace(/\D/g, "").padStart(2, "0");
+   35: }
+   36: 
+   37: function makePredictionId({ lotteryKey, targetYmd, targetHour }) {
+   38:   const lottery = normalizeLotteryKey(lotteryKey);
+   39:   const ymd = safeStr(targetYmd);
+   40:   const hour = hourCode(targetHour);
+   41: 
+   42:   if (!lottery || !isYMD(ymd) || !hour) return "";
+   43: 
+   44:   return `${lottery}__${ymd}__${hour}`;
+   45: }
+   46: 
+   47: function predictionRef(params) {
+   48:   const id = makePredictionId(params);
+   49:   return id ? doc(db, COLLECTION, id) : null;
+   50: }
+   51: 
+   52: function cleanFirestoreValue(value) {
+   53:   try {
+   54:     return JSON.parse(
+   55:       JSON.stringify(value, (_key, current) => {
+   56:         if (current === undefined) return null;
+   57:         if (typeof current === "number" && !Number.isFinite(current)) {
+   58:           return null;
+   59:         }
+   60:         return current;
+   61:       })
+   62:     );
+   63:   } catch {
+   64:     return null;
+   65:   }
+   66: }
+   67: 
+   68: function normalizeMilhar(value) {
+   69:   const digits = String(value || "").replace(/\D/g, "");
+   70:   if (!digits) return "";
+   71:   return digits.slice(-4).padStart(4, "0");
+   72: }
+   73: 
+   74: function extractPrize1(draw) {
+   75:   const prizes = Array.isArray(draw?.prizes) ? draw.prizes : [];
+   76: 
+   77:   return (
+   78:     prizes.find((item) => Number(item?.position) === 1) ||
+   79:     prizes[0] ||
+   80:     null
+   81:   );
+   82: }
+   83: 
+   84: function extractPrize1Milhar(draw) {
+   85:   const prize = extractPrize1(draw);
+   86: 
+   87:   return normalizeMilhar(
+   88:     prize?.milhar ??
+   89:       prize?.numero ??
+   90:       prize?.number ??
+   91:       prize?.valor ??
+   92:       draw?.prize_1 ??
+   93:       ""
+   94:   );
+   95: }
+   96: 
+   97: function findDrawForTarget({
+   98:   draws,
+   99:   targetYmd,
+  100:   targetHour,
+  101: }) {
+  102:   const ymd = safeStr(targetYmd);
+  103:   const hour = normalizeHour(targetHour);
+  104: 
+  105:   if (!isYMD(ymd) || !hour) return null;
+  106: 
+  107:   return (
+  108:     (Array.isArray(draws) ? draws : []).find((draw) => {
+  109:       return (
+  110:         pickDrawYMD(draw) === ymd &&
+  111:         normalizeHour(pickDrawHour(draw)) === hour
+  112:       );
+  113:     }) || null
+  114:   );
+  115: }
+  116: 
+  117: function normalizeSnapshot(snapshot) {
+  118:   return (Array.isArray(snapshot) ? snapshot : [])
+  119:     .slice(0, 3)
+  120:     .map((item, index) => ({
+  121:       rank: Number(item?.rank || index + 1),
+  122:       grupo: Number(item?.grupo),
+  123:       animal: safeStr(item?.animal || ""),
+  124:       prob: Number(item?.prob || 0),
+  125:       probPct: Number(item?.probPct || 0),
+  126:       milhares20: Array.isArray(item?.milhares20)
+  127:         ? item.milhares20.map(normalizeMilhar).filter(Boolean).slice(0, 20)
+  128:         : [],
+  129:       milharesCols: Array.isArray(item?.milharesCols)
+  130:         ? cleanFirestoreValue(item.milharesCols)
+  131:         : [],
+  132:       meta: cleanFirestoreValue(item?.meta || null),
+  133:     }))
+  134:     .filter((item) => {
+  135:       return (
+  136:         Number.isFinite(item.grupo) &&
+  137:         item.grupo >= 1 &&
+  138:         item.grupo <= 25
+  139:       );
+  140:     });
+  141: }
+  142: 
+  143: function analyzeSnapshotHit(snapshot, resultGrupo, resultMilhar) {
+  144:   const top3 = Array.isArray(snapshot) ? snapshot.slice(0, 3) : [];
+  145:   const grupo = Number(resultGrupo);
+  146:   const milhar = normalizeMilhar(resultMilhar);
+  147:   const centena = milhar ? milhar.slice(-3) : "";
+  148: 
+  149:   let best = {
+  150:     hitType: "miss",
+  151:     hitScore: 0,
+  152:     hitPosition: -1,
+  153:     matchedValue: "",
+  154:   };
+  155: 
+  156:   top3.forEach((item, index) => {
+  157:     const itemGrupo = Number(item?.grupo);
+  158: 
+  159:     const milhares = (Array.isArray(item?.milhares20)
+  160:       ? item.milhares20
+  161:       : []
+  162:     )
+  163:       .map(normalizeMilhar)
+  164:       .filter(Boolean);
+  165: 
+  166:     const centenas = milhares.map((value) => value.slice(-3));
+  167: 
+  168:     if (milhar && milhares.includes(milhar)) {
+  169:       best = {
+  170:         hitType: "hit_exact",
+  171:         hitScore: 100,
+  172:         hitPosition: index + 1,
+  173:         matchedValue: milhar,
+  174:       };
+  175:       return;
+  176:     }
+  177: 
+  178:     if (
+  179:       best.hitScore < 66.67 &&
+  180:       centena &&
+  181:       centenas.includes(centena)
+  182:     ) {
+  183:       best = {
+  184:         hitType: "hit_centena",
+  185:         hitScore: 66.67,
+  186:         hitPosition: index + 1,
+  187:         matchedValue: centena,
+  188:       };
+  189:       return;
+  190:     }
+  191: 
+  192:     if (
+  193:       best.hitScore < 33.33 &&
+  194:       Number.isFinite(grupo) &&
+  195:       itemGrupo === grupo
+  196:     ) {
+  197:       best = {
+  198:         hitType: "hit_grupo",
+  199:         hitScore: 33.33,
+  200:         hitPosition: index + 1,
+  201:         matchedValue: milhar ? milhar.slice(-2) : String(grupo),
+  202:       };
+  203:     }
+  204:   });
+  205: 
+  206:   return best;
+  207: }
+  208: 
+  209: export async function saveTop3PredictionSnapshot({
+  210:   lotteryKey,
+  211:   targetYmd,
+  212:   targetHour,
+  213:   picks,
+  214:   snapshot,
+  215:   engineVersion,
+  216: }) {
+  217:   let user = null;
+  218: 
+  219:   try {
+  220:     user = await loginAnonymous();
+  221:   } catch (error) {
+  222:     return {
+  223:       ok: false,
+  224:       skipped: true,
+  225:       reason: "AUTH_FAILED",
+  226:       error: String(error?.message || error || ""),
+  227:     };
+  228:   }
+  229: 
+  230:   if (!user?.uid) {
+  231:     return {
+  232:       ok: false,
+  233:       skipped: true,
+  234:       reason: "AUTH_REQUIRED",
+  235:     };
+  236:   }
+  237: 
+  238:   const lottery = normalizeLotteryKey(lotteryKey);
+  239:   const ymd = safeStr(targetYmd);
+  240:   const hour = normalizeHour(targetHour);
+  241:   const ref = predictionRef({
+  242:     lotteryKey: lottery,
+  243:     targetYmd: ymd,
+  244:     targetHour: hour,
+  245:   });
+  246: 
+  247:   if (!ref || !isYMD(ymd) || !hour) {
+  248:     return {
+  249:       ok: false,
+  250:       skipped: true,
+  251:       reason: "INVALID_TARGET",
+  252:     };
+  253:   }
+  254: 
+  255:   const normalizedSnapshot = normalizeSnapshot(snapshot);
+  256: 
+  257:   if (!normalizedSnapshot.length) {
+  258:     return {
+  259:       ok: false,
+  260:       skipped: true,
+  261:       reason: "EMPTY_SNAPSHOT",
+  262:     };
+  263:   }
+  264: 
+  265:   const normalizedPicks = Array.from(
+  266:     new Set(
+  267:       (Array.isArray(picks) ? picks : [])
+  268:         .map(Number)
+  269:         .filter((value) => value >= 1 && value <= 25)
+  270:     )
+  271:   ).slice(0, 3);
+  272: 
+  273:   const now = Date.now();
+  274: 
+  275:   const payload = cleanFirestoreValue({
+  276:     id: ref.id,
+  277:     lotteryKey: lottery,
+  278:     targetYmd: ymd,
+  279:     targetHour: hour,
+  280:     targetKey: `${ymd}_${hour}`,
+  281:     picks: normalizedPicks,
+  282:     snapshot: normalizedSnapshot,
+  283:     engineVersion: safeStr(engineVersion || "V3_STATISTICAL"),
+  284:     status: "predicted",
+  285:     resultGrupo: null,
+  286:     resultMilhar: "",
+  287:     resultAnimal: "",
+  288:     hitType: "",
+  289:     hitScore: 0,
+  290:     hitPosition: -1,
+  291:     matchedValue: "",
+  292:     createdAt: now,
+  293:     updatedAt: now,
+  294:     createdBy: user.uid,
+  295:   });
+  296: 
+  297:   const result = await runTransaction(db, async (transaction) => {
+  298:     const current = await transaction.get(ref);
+  299: 
+  300:     if (current.exists()) {
+  301:       return {
+  302:         ok: true,
+  303:         created: false,
+  304:         existing: true,
+  305:       };
+  306:     }
+  307: 
+  308:     transaction.set(ref, payload);
+  309: 
+  310:     return {
+  311:       ok: true,
+  312:       created: true,
+  313:       existing: false,
+  314:     };
+  315:   });
+  316: 
+  317:   return result;
+  318: }
+  319: 
+  320: export async function loadTop3PredictionDay({
+  321:   lotteryKey,
+  322:   targetYmd,
+  323:   schedule,
+  324: }) {
+  325:   const lottery = normalizeLotteryKey(lotteryKey);
+  326:   const ymd = safeStr(targetYmd);
+  327: 
+  328:   if (!isYMD(ymd)) return [];
+  329: 
+  330:   const hours = Array.from(
+  331:     new Set(
+  332:       (Array.isArray(schedule) ? schedule : [])
+  333:         .map(normalizeHour)
+  334:         .filter(Boolean)
+  335:     )
+  336:   );
+  337: 
+  338:   const snapshots = await Promise.all(
+  339:     hours.map(async (hour) => {
+  340:       const ref = predictionRef({
+  341:         lotteryKey: lottery,
+  342:         targetYmd: ymd,
+  343:         targetHour: hour,
+  344:       });
+  345: 
+  346:       if (!ref) return null;
+  347: 
+  348:       try {
+  349:         const snap = await getDoc(ref);
+  350:         if (!snap.exists()) return null;
+  351: 
+  352:         return {
+  353:           id: snap.id,
+  354:           ...snap.data(),
+  355:         };
+  356:       } catch {
+  357:         return null;
+  358:       }
+  359:     })
+  360:   );
+  361: 
+  362:   return snapshots
+  363:     .filter(Boolean)
+  364:     .sort((a, b) => {
+  365:       return normalizeHour(a?.targetHour).localeCompare(
+  366:         normalizeHour(b?.targetHour)
+  367:       );
+  368:     });
+  369: }
+  370: 
+  371: export async function reconcileTop3PredictionDay({
+  372:   lotteryKey,
+  373:   targetYmd,
+  374:   schedule,
+  375:   draws,
+  376: }) {
+  377:   let user = null;
+  378: 
+  379:   try {
+  380:     user = await loginAnonymous();
+  381:   } catch (error) {
+  382:     return {
+  383:       ok: false,
+  384:       skipped: true,
+  385:       reason: "AUTH_FAILED",
+  386:       error: String(error?.message || error || ""),
+  387:     };
+  388:   }
+  389: 
+  390:   if (!user?.uid) {
+  391:     return {
+  392:       ok: false,
+  393:       skipped: true,
+  394:       reason: "AUTH_REQUIRED",
+  395:     };
+  396:   }
+  397: 
+  398:   const history = await loadTop3PredictionDay({
+  399:     lotteryKey,
+  400:     targetYmd,
+  401:     schedule,
+  402:   });
+  403: 
+  404:   let updated = 0;
+  405: 
+  406:   for (const entry of history) {
+  407:     if (!entry || entry?.status === "validated") continue;
+  408: 
+  409:     const realDraw = findDrawForTarget({
+  410:       draws,
+  411:       targetYmd: entry?.targetYmd,
+  412:       targetHour: entry?.targetHour,
+  413:     });
+  414: 
+  415:     if (!realDraw) continue;
+  416: 
+  417:     const resultGrupo = Number(
+  418:       pickPrize1GrupoFromDraw(realDraw)
+  419:     );
+  420: 
+  421:     if (
+  422:       !Number.isFinite(resultGrupo) ||
+  423:       resultGrupo < 1 ||
+  424:       resultGrupo > 25
+  425:     ) {
+  426:       continue;
+  427:     }
+  428: 
+  429:     const resultMilhar = extractPrize1Milhar(realDraw);
+  430: 
+  431:     const analysis = analyzeSnapshotHit(
+  432:       entry?.snapshot,
+  433:       resultGrupo,
+  434:       resultMilhar
+  435:     );
+  436: 
+  437:     const ref = doc(db, COLLECTION, entry.id);
+  438:     const now = Date.now();
+  439: 
+  440:     await setDoc(
+  441:       ref,
+  442:       {
+  443:         resultGrupo,
+  444:         resultMilhar,
+  445:         resultAnimal: safeStr(
+  446:           extractPrize1(realDraw)?.animal || ""
+  447:         ),
+  448:         hitType: analysis.hitType,
+  449:         hitScore: analysis.hitScore,
+  450:         hitPosition: analysis.hitPosition,
+  451:         matchedValue: analysis.matchedValue,
+  452:         validatedAt: now,
+  453:         validatedBy: user.uid,
+  454:         updatedAt: now,
+  455:         status: "validated",
+  456:       },
+  457:       { merge: true }
+  458:     );
+  459: 
+  460:     updated += 1;
+  461:   }
+  462: 
+  463:   return {
+  464:     ok: true,
+  465:     updated,
+  466:   };
+  467: }

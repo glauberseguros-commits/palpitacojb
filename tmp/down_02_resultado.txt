@@ -1,0 +1,18 @@
+====================================================================================================
+DOWN-02 — RESULTADO FINAL
+====================================================================================================
+Data: 24/07/2026 15:50:17
+Arquivo alterado: src/pages/Downloads/Downloads.jsx
+Backup: .\tmp\down_02_backup_20260724_154912\Downloads.jsx
+Build: OK
+Commit: e700de40e0c33324928da1e2d4eb310bde14846b
+Branch: main
+Push: OK
+
+CORREÇÃO:
+- PDF consulta diretamente os resultados usando os filtros atuais.
+- Excel consulta diretamente os resultados usando os filtros atuais.
+- Não é mais necessário clicar em Consultar antes de exportar.
+- A prévia e a paginação continuam funcionando de forma independente.
+- Nenhuma outra alteração pendente foi incluída no commit.
+====================================================================================================

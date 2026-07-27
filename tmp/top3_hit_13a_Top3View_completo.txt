@@ -1,0 +1,4258 @@
+====================================================================================================
+TOP3-HIT-13A — TOP3VIEW COMPLETO PARA CORREÇÃO
+====================================================================================================
+Gerado em: 26/07/2026 01:22:51
+ARQUIVO: .\src\pages\Top3\Top3View.jsx
+LINHAS: 4248
+TAMANHO: 124620
+SHA256: AF10DB462AF85A0F16F533AA16DAA5F416F8A8BC62B1F13FA269D2A748F60064
+====================================================================================================
+
+00001: /* eslint-disable no-unused-vars */
+00002: // src/pages/Top3/Top3View.jsx
+00003: import React, { useMemo, useState, useCallback, useEffect } from "react";
+00004: import { getAnimalLabel, getImgFromGrupo } from "../../constants/bichoMap";
+00005: 
+00006: function extractPrizeMilharByPosition(slot, position) {
+00007:   const prizes = Array.isArray(slot?.prizes)
+00008:     ? slot.prizes
+00009:     : [];
+00010: 
+00011:   const prize =
+00012:     prizes.find(
+00013:       (item) => Number(item?.position) === Number(position)
+00014:     ) ||
+00015:     prizes[Number(position) - 1] ||
+00016:     null;
+00017: 
+00018:   if (!prize) return "";
+00019: 
+00020:   const digits = String(
+00021:     prize?.numero ??
+00022:       prize?.milhar ??
+00023:       prize?.number ??
+00024:       prize?.valor ??
+00025:       ""
+00026:   ).replace(/\D/g, "");
+00027: 
+00028:   return digits
+00029:     ? digits.slice(-4).padStart(4, "0")
+00030:     : "";
+00031: }
+00032: 
+00033: function extractResultMilhar(slot) {
+00034:   return extractPrizeMilharByPosition(slot, 1);
+00035: }
+00036: 
+00037: function getPrizeGrupoByPosition(slot, position) {
+00038:   const persisted = Array.isArray(
+00039:     slot?.resultTop3Groups
+00040:   )
+00041:     ? Number(slot.resultTop3Groups[position - 1])
+00042:     : NaN;
+00043: 
+00044:   if (
+00045:     Number.isFinite(persisted) &&
+00046:     persisted >= 1 &&
+00047:     persisted <= 25
+00048:   ) {
+00049:     return persisted;
+00050:   }
+00051: 
+00052:   const prizes = Array.isArray(slot?.prizes)
+00053:     ? slot.prizes
+00054:     : [];
+00055: 
+00056:   const prize =
+00057:     prizes.find(
+00058:       (item) => Number(item?.position) === Number(position)
+00059:     ) ||
+00060:     prizes[Number(position) - 1] ||
+00061:     null;
+00062: 
+00063:   const direct = Number(
+00064:     prize?.grupo ??
+00065:       prize?.group ??
+00066:       prize?.animal_grupo ??
+00067:       prize?.grupo2
+00068:   );
+00069: 
+00070:   if (
+00071:     Number.isFinite(direct) &&
+00072:     direct >= 1 &&
+00073:     direct <= 25
+00074:   ) {
+00075:     return direct;
+00076:   }
+00077: 
+00078:   const milhar = extractPrizeMilharByPosition(
+00079:     slot,
+00080:     position
+00081:   );
+00082: 
+00083:   if (!milhar) return NaN;
+00084: 
+00085:   const dezena = Number(milhar.slice(-2));
+00086:   const normalizedDezena = dezena === 0 ? 100 : dezena;
+00087:   const grupo = Math.ceil(normalizedDezena / 4);
+00088: 
+00089:   return grupo >= 1 && grupo <= 25
+00090:     ? grupo
+00091:     : NaN;
+00092: }
+00093: 
+00094: function getOfficialPodium(slot) {
+00095:   return [1, 2, 3]
+00096:     .map((position) => {
+00097:       const grupo = getPrizeGrupoByPosition(
+00098:         slot,
+00099:         position
+00100:       );
+00101: 
+00102:       if (
+00103:         !Number.isFinite(grupo) ||
+00104:         grupo < 1 ||
+00105:         grupo > 25
+00106:       ) {
+00107:         return null;
+00108:       }
+00109: 
+00110:       const persistedMilhares = Array.isArray(
+00111:         slot?.resultTop3Milhares
+00112:       )
+00113:         ? slot.resultTop3Milhares
+00114:         : [];
+00115: 
+00116:       const milhar =
+00117:         String(
+00118:           persistedMilhares[position - 1] || ""
+00119:         ).replace(/\D/g, "") ||
+00120:         extractPrizeMilharByPosition(slot, position);
+00121: 
+00122:       return {
+00123:         position,
+00124:         grupo,
+00125:         milhar: milhar
+00126:           ? milhar.slice(-4).padStart(4, "0")
+00127:           : "",
+00128:       };
+00129:     })
+00130:     .filter(Boolean);
+00131: }
+00132: 
+00133: function podiumMedalFromPosition(position) {
+00134:   if (Number(position) === 1) return "gold";
+00135:   if (Number(position) === 2) return "silver";
+00136:   if (Number(position) === 3) return "bronze";
+00137:   return "";
+00138: }
+00139: 
+00140: function toPercent(score) {
+00141:   const n = Number(score);
+00142:   if (!Number.isFinite(n)) return 0;
+00143:   const pct = n <= 1 ? n * 100 : n;
+00144:   return Math.max(0, Math.min(100, pct));
+00145: }
+00146: 
+00147: function formatGrupo(grupo) {
+00148:   const g = Number(grupo);
+00149:   if (!Number.isFinite(g) || g <= 0) return "—";
+00150:   return String(Math.trunc(g)).padStart(2, "0");
+00151: }
+00152: 
+00153: function normalizeMilharStr(v) {
+00154:   const s = String(v || "").trim();
+00155:   if (!s) return "";
+00156:   const dig = s.replace(/\D+/g, "");
+00157:   if (!dig) return "";
+00158:   return dig.length >= 4 ? dig.slice(-4) : dig.padStart(4, "0");
+00159: }
+00160: 
+00161: function centenaFromMilhar(m4) {
+00162:   const s = normalizeMilharStr(m4);
+00163:   return s ? s.slice(-3) : "";
+00164: }
+00165: 
+00166: function dezenaFromMilhar(m4) {
+00167:   const s = normalizeMilharStr(m4);
+00168:   return s ? s.slice(-2) : "";
+00169: }
+00170: 
+00171: function isYMD(s) {
+00172:   return /^\d{4}-\d{2}-\d{2}$/.test(String(s || "").trim());
+00173: }
+00174: 
+00175: function ymdToBR(ymd) {
+00176:   const s = String(ymd || "").trim();
+00177:   if (!isYMD(s)) return s || "—";
+00178:   const [y, m, d] = s.split("-");
+00179:   return `${d}/${m}/${y}`;
+00180: }
+00181: 
+00182: function addDaysYMDLocal(ymd, amount) {
+00183:   const s = String(ymd || "").trim();
+00184:   if (!isYMD(s)) return "";
+00185: 
+00186:   const [y, m, d] = s.split("-").map(Number);
+00187:   const date = new Date(Date.UTC(y, m - 1, d));
+00188: 
+00189:   date.setUTCDate(date.getUTCDate() + Number(amount || 0));
+00190: 
+00191:   return [
+00192:     date.getUTCFullYear(),
+00193:     String(date.getUTCMonth() + 1).padStart(2, "0"),
+00194:     String(date.getUTCDate()).padStart(2, "0"),
+00195:   ].join("-");
+00196: }
+00197: 
+00198: function todayYMDLocalView() {
+00199:   const now = new Date();
+00200: 
+00201:   return [
+00202:     now.getFullYear(),
+00203:     String(now.getMonth() + 1).padStart(2, "0"),
+00204:     String(now.getDate()).padStart(2, "0"),
+00205:   ].join("-");
+00206: }
+00207: 
+00208: function formatYmdHour(ymd, hour) {
+00209:   const y = String(ymd || "").trim();
+00210:   const h = String(hour || "").trim();
+00211:   if (y && h) return `${ymdToBR(y)} ${h}`;
+00212:   if (y) return ymdToBR(y);
+00213:   if (h) return h;
+00214:   return "—";
+00215: }
+00216: 
+00217: function hourBucketToSortValue(hour) {
+00218:   const s = String(hour || "").trim().toLowerCase();
+00219:   const m = s.match(/^(\d{1,2})(?::(\d{2}))?h?$/);
+00220:   if (!m) return -1;
+00221:   const hh = Number(m[1]);
+00222:   const mm = Number(m[2] || 0);
+00223:   if (!Number.isFinite(hh) || !Number.isFinite(mm)) return -1;
+00224:   return hh * 60 + mm;
+00225: }
+00226: 
+00227: function wrapToDezena2(n) {
+00228:   const x = Number(n);
+00229:   if (!Number.isFinite(x)) return "";
+00230:   const d = ((x % 100) + 100) % 100;
+00231:   return String(d).padStart(2, "0");
+00232: }
+00233: 
+00234: function getDezenasFixasFromGrupo(grupo) {
+00235:   const g = Number(grupo);
+00236:   if (!Number.isFinite(g) || g < 1 || g > 25) return [];
+00237: 
+00238:   const start = (g - 1) * 4 + 1;
+00239:   const out = [];
+00240: 
+00241:   for (let i = 0; i < 4; i += 1) {
+00242:     out.push(wrapToDezena2(start + i));
+00243:   }
+00244: 
+00245:   return out;
+00246: }
+00247: 
+00248: function clampColsFromItemMilharesCols(milharesCols, expectedCols = 4, perCol = 5) {
+00249:   const colsArr = Array.isArray(milharesCols) ? milharesCols : [];
+00250:   const out = [];
+00251: 
+00252:   for (let i = 0; i < Math.min(expectedCols, colsArr.length); i += 1) {
+00253:     const dz = String(colsArr[i]?.dezena || "").trim();
+00254:     const items0 = Array.isArray(colsArr[i]?.items) ? colsArr[i].items : [];
+00255: 
+00256:     const items = items0
+00257:       .map(normalizeMilharStr)
+00258:       .map((m) => (m && /^\d{4}$/.test(m) ? m : ""))
+00259:       .slice(0, perCol);
+00260: 
+00261:     while (items.length < perCol) items.push("");
+00262:     out.push({ dezena: dz, items });
+00263:   }
+00264: 
+00265:   while (out.length < expectedCols) {
+00266:     out.push({ dezena: "", items: Array(perCol).fill("") });
+00267:   }
+00268: 
+00269:   return out.slice(0, expectedCols);
+00270: }
+00271: 
+00272: function build20ByDezena({ grupo, baseMilhares, perCol = 5 }) {
+00273:   const g = Number(grupo);
+00274:   const dezenas = getDezenasFixasFromGrupo(g);
+00275: 
+00276:   if (!dezenas.length) {
+00277:     return { dezenas: [], rows: [], flat20: [] };
+00278:   }
+00279: 
+00280:   const input = Array.isArray(baseMilhares) ? baseMilhares : [];
+00281:   const normalized = input
+00282:     .map(normalizeMilharStr)
+00283:     .filter((x) => /^\d{4}$/.test(x));
+00284: 
+00285:   const byDz = new Map();
+00286:   for (const dz of dezenas) byDz.set(dz, []);
+00287: 
+00288:   for (const m4 of normalized) {
+00289:     const dz = dezenaFromMilhar(m4);
+00290:     if (byDz.has(dz)) byDz.get(dz).push(m4);
+00291:   }
+00292: 
+00293:   const seenCent = new Set();
+00294:   const seenMilhar = new Set();
+00295: 
+00296:   const cols = {};
+00297:   for (const dz of dezenas) cols[dz] = [];
+00298: 
+00299:   const tryPush = (dz, m4) => {
+00300:     const mm = normalizeMilharStr(m4);
+00301:     if (!mm) return false;
+00302: 
+00303:     const c3 = centenaFromMilhar(mm);
+00304:     if (!c3) return false;
+00305: 
+00306:     if (seenCent.has(c3)) return false;
+00307:     if (seenMilhar.has(mm)) return false;
+00308: 
+00309:     cols[dz].push(mm);
+00310:     seenCent.add(c3);
+00311:     seenMilhar.add(mm);
+00312:     return true;
+00313:   };
+00314: 
+00315:   for (const dz of dezenas) {
+00316:     const arr = byDz.get(dz) || [];
+00317:     for (const m4 of arr) {
+00318:       if (cols[dz].length >= perCol) break;
+00319:       tryPush(dz, m4);
+00320:     }
+00321:   }
+00322: 
+00323:   for (const dz of dezenas) {
+00324:     while (cols[dz].length < perCol) cols[dz].push("");
+00325:     if (cols[dz].length > perCol) cols[dz] = cols[dz].slice(0, perCol);
+00326:   }
+00327: 
+00328:   const rows = [];
+00329:   for (let r = 0; r < perCol; r += 1) {
+00330:     rows.push(dezenas.map((dz) => cols[dz][r] || ""));
+00331:   }
+00332: 
+00333:   const flat20 = rows.flat().filter(Boolean);
+00334:   return { dezenas, rows, flat20 };
+00335: }
+00336: 
+00337: function cleanLayerText(s) {
+00338:   const raw = String(s || "").trim();
+00339:   if (!raw) return "—";
+00340: 
+00341:   const noSamples = raw
+00342:     .replace(/\s*[•\-|]\s*Amostras:\s*\d+\s*$/i, "")
+00343:     .replace(/\s*Amostras:\s*\d+\s*$/i, "")
+00344:     .trim();
+00345: 
+00346:   return noSamples || "—";
+00347: }
+00348: 
+00349: function getSlotResultGrupo(slot) {
+00350:   const direct = Number(
+00351:     slot?.resultGrupo ??
+00352:       slot?.grupo ??
+00353:       slot?.result?.grupo ??
+00354:       slot?.resultado?.grupo
+00355:   );
+00356: 
+00357:   if (Number.isFinite(direct) && direct >= 1 && direct <= 25) {
+00358:     return direct;
+00359:   }
+00360: 
+00361:   if (Array.isArray(slot?.prizes)) {
+00362:     const p1 = slot.prizes.find((p) => Number(p?.position) === 1) || slot.prizes[0];
+00363:     const fromPrize = Number(
+00364:       p1?.grupo ??
+00365:         p1?.group ??
+00366:         p1?.animal_grupo ??
+00367:         p1?.grupo2
+00368:     );
+00369: 
+00370:     if (Number.isFinite(fromPrize) && fromPrize >= 1 && fromPrize <= 25) {
+00371:       return fromPrize;
+00372:     }
+00373:   }
+00374: 
+00375:   return NaN;
+00376: }
+00377: 
+00378: function hasOfficialResult(slot) {
+00379:   const grupo = getSlotResultGrupo(slot);
+00380:   if (Number.isFinite(grupo) && grupo >= 1 && grupo <= 25) return true;
+00381: 
+00382:   const milhar = extractResultMilhar(slot);
+00383:   return /^\d{4}$/.test(milhar);
+00384: }
+00385: 
+00386: function analyzeTop3Hit(top3, resultSource, resultMilhar) {
+00387:   if (!Array.isArray(top3) || !top3.length) {
+00388:     return {
+00389:       type: "none",
+00390:       score: 0,
+00391:       position: -1,
+00392:       predictionPosition: -1,
+00393:       resultPosition: -1,
+00394:       podiumMedal: "",
+00395:       matchedValue: "",
+00396:       matchedGrupo: null,
+00397:     };
+00398:   }
+00399: 
+00400:   const officialPodium = Array.isArray(resultSource)
+00401:     ? resultSource.filter(Boolean).slice(0, 3)
+00402:     : [
+00403:         {
+00404:           position: 1,
+00405:           grupo: Number(resultSource),
+00406:           milhar: normalizeMilharStr(resultMilhar),
+00407:         },
+00408:       ].filter(
+00409:         (item) =>
+00410:           Number.isFinite(item.grupo) &&
+00411:           item.grupo >= 1 &&
+00412:           item.grupo <= 25
+00413:       );
+00414: 
+00415:   if (!officialPodium.length) {
+00416:     return {
+00417:       type: "none",
+00418:       score: 0,
+00419:       position: -1,
+00420:       predictionPosition: -1,
+00421:       resultPosition: -1,
+00422:       podiumMedal: "",
+00423:       matchedValue: "",
+00424:       matchedGrupo: null,
+00425:     };
+00426:   }
+00427: 
+00428:   for (const officialPrize of officialPodium) {
+00429:     const grupoNum = Number(officialPrize?.grupo);
+00430:     const milhar = normalizeMilharStr(
+00431:       officialPrize?.milhar
+00432:     );
+00433:     const centena = milhar
+00434:       ? milhar.slice(-3)
+00435:       : "";
+00436: 
+00437:     for (
+00438:       let predictionIndex = 0;
+00439:       predictionIndex < top3.length;
+00440:       predictionIndex += 1
+00441:     ) {
+00442:       const item = top3[predictionIndex];
+00443:       const grupo = Number(item?.grupo);
+00444: 
+00445:       const milhares = (
+00446:         Array.isArray(item?.milhares20)
+00447:           ? item.milhares20
+00448:           : Array.isArray(item?.milhares)
+00449:             ? item.milhares
+00450:             : []
+00451:       )
+00452:         .map(normalizeMilharStr)
+00453:         .filter((value) => /^\d{4}$/.test(value));
+00454: 
+00455:       const centenas = milhares
+00456:         .map((value) => centenaFromMilhar(value))
+00457:         .filter((value) => /^\d{3}$/.test(value));
+00458: 
+00459:       let type = "miss";
+00460:       let score = 0;
+00461:       let matchedValue = "";
+00462: 
+00463:       if (
+00464:         milhar &&
+00465:         milhares.includes(milhar)
+00466:       ) {
+00467:         type = "hit_exact";
+00468:         score = 100;
+00469:         matchedValue = milhar;
+00470:       } else if (
+00471:         centena &&
+00472:         centenas.includes(centena)
+00473:       ) {
+00474:         type = "hit_centena";
+00475:         score = 66.67;
+00476:         matchedValue = centena;
+00477:       } else if (
+00478:         Number.isFinite(grupoNum) &&
+00479:         grupo === grupoNum
+00480:       ) {
+00481:         type = "hit_grupo";
+00482:         score = 33.33;
+00483:         matchedValue = milhar
+00484:           ? milhar.slice(-2)
+00485:           : formatGrupo(grupoNum);
+00486:       }
+00487: 
+00488:       if (type !== "miss") {
+00489:         const resultPosition = Number(
+00490:           officialPrize?.position
+00491:         );
+00492: 
+00493:         return {
+00494:           type,
+00495:           score,
+00496:           position: predictionIndex + 1,
+00497:           predictionPosition: predictionIndex + 1,
+00498:           resultPosition,
+00499:           podiumMedal:
+00500:             podiumMedalFromPosition(resultPosition),
+00501:           matchedValue,
+00502:           matchedGrupo: grupoNum,
+00503:         };
+00504:       }
+00505:     }
+00506:   }
+00507: 
+00508:   return {
+00509:     type: "miss",
+00510:     score: 0,
+00511:     position: -1,
+00512:     predictionPosition: -1,
+00513:     resultPosition: -1,
+00514:     podiumMedal: "",
+00515:     matchedValue: "",
+00516:     matchedGrupo: null,
+00517:   };
+00518: }
+00519: 
+00520: function ImgWithFallback({ srcs, alt, size = 84, style }) {
+00521:   const list = useMemo(
+00522:     () => (Array.isArray(srcs) ? srcs.filter(Boolean) : []),
+00523:     [srcs]
+00524:   );
+00525: 
+00526:   const [i, setI] = useState(0);
+00527:   const listKey = useMemo(() => list.join("|"), [list]);
+00528: 
+00529:   useEffect(() => {
+00530:     setI(0);
+00531:   }, [listKey]);
+00532: 
+00533:   const src = list[i] || "";
+00534: 
+00535:   const onError = () => {
+00536:     setI((prev) => (prev < list.length - 1 ? prev + 1 : prev));
+00537:   };
+00538: 
+00539:   return (
+00540:     <div
+00541:       style={{
+00542:         width: size,
+00543:         height: size,
+00544:         borderRadius: 16,
+00545:         border: "1px solid rgba(201,168,62,0.36)",
+00546:         background:
+00547:           "linear-gradient(180deg, rgba(255,255,255,0.04), rgba(0,0,0,0.28))",
+00548:         display: "grid",
+00549:         placeItems: "center",
+00550:         overflow: "hidden",
+00551:         boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.04)",
+00552:         ...style,
+00553:       }}
+00554:     >
+00555:       {src ? (
+00556:         <img
+00557:           src={src}
+00558:           alt={alt || ""}
+00559:           width={size}
+00560:           height={size}
+00561:           onError={onError}
+00562:           style={{
+00563:             width: "100%",
+00564:             height: "100%",
+00565:             objectFit: "cover",
+00566:             display: "block",
+00567:             imageRendering: "auto",
+00568:           }}
+00569:         />
+00570:       ) : (
+00571:         <div style={{ color: "rgba(255,255,255,0.55)", fontSize: 12 }}>
+00572:           sem imagem
+00573:         </div>
+00574:       )}
+00575:     </div>
+00576:   );
+00577: }
+00578: 
+00579: 
+00580: function getWeekdayNameBR(ymd) {
+00581:   const s = String(ymd || "").trim();
+00582:   const m = s.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+00583:   if (!m) return "Dia da semana";
+00584: 
+00585:   const d = new Date(Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3])));
+00586:   const names = [
+00587:     "Domingo",
+00588:     "Segunda-feira",
+00589:     "Terça-feira",
+00590:     "Quarta-feira",
+00591:     "Quinta-feira",
+00592:     "Sexta-feira",
+00593:     "Sábado",
+00594:   ];
+00595: 
+00596:   return names[d.getUTCDay()] || "Dia da semana";
+00597: }
+00598: 
+00599: function Top3Card({
+00600:   item,
+00601:   idx,
+00602:   theme,
+00603:   copiedAllKey,
+00604:   copiedCellKey,
+00605:   setCopiedAllKey,
+00606:   setCopiedCellKey,
+00607:   copyText,
+00608:   build16,
+00609:   buildMilhares,
+00610:   build20,
+00611: }) {
+00612:   const t = theme;
+00613: 
+00614:   const grupoTxt = formatGrupo(item?.grupo);
+00615:   const animal = String(item?.animal || "").trim();
+00616: 
+00617:   const samplesRaw = Number(item?.meta?.samples ?? item?.samples ?? 0);
+00618:   const samples = Number.isFinite(samplesRaw)
+00619:     ? Math.max(0, Math.trunc(samplesRaw))
+00620:     : 0;
+00621: 
+00622:   const freqRaw = Number(item?.freq ?? 0);
+00623:   const freq = Number.isFinite(freqRaw)
+00624:     ? Math.max(0, Math.trunc(freqRaw))
+00625:     : 0;
+00626: 
+00627:   const denom = samples > 0 ? samples * 5 : 0;
+00628:   const derivedScore = denom > 0 ? freq / denom : 0;
+00629: 
+00630:   const pct = toPercent(
+00631:     item?.probPct ??
+00632:       item?.prob ??
+00633:       item?.probCond ??
+00634:       item?.score ??
+00635:       derivedScore
+00636:   );
+00637: 
+00638:   const iconSrcs =
+00639:     Array.isArray(item?.imgIcon) && item.imgIcon.length
+00640:       ? item.imgIcon
+00641:       : Array.isArray(item?.imgBg)
+00642:         ? item.imgBg
+00643:         : [];
+00644: 
+00645:   const hasCols =
+00646:     Array.isArray(item?.milharesCols) &&
+00647:     item.milharesCols.length >= 4 &&
+00648:     Array.isArray(item.milharesCols[0]?.items);
+00649: 
+00650:   let dezenasHeader = [];
+00651:   let gridRows = Array.from({ length: 5 }, () => Array(4).fill(""));
+00652:   let flat20 = [];
+00653: 
+00654:   if (hasCols) {
+00655:     const cols4 = clampColsFromItemMilharesCols(item.milharesCols, 4, 5);
+00656:     dezenasHeader = cols4.map((c) => String(c.dezena || ""));
+00657:     gridRows = Array.from({ length: 5 }, (_, r) =>
+00658:       cols4.map((c) => c.items[r] || "")
+00659:     );
+00660:     flat20 = gridRows.flat().filter(Boolean);
+00661:   } else {
+00662:     let milharesBase = [];
+00663: 
+00664:     const m20 = Array.isArray(item?.milhares20) ? item.milhares20 : null;
+00665:     const mAny = Array.isArray(item?.milhares) ? item.milhares : null;
+00666: 
+00667:     if (m20 && m20.length) milharesBase = m20.slice(0);
+00668:     else if (mAny && mAny.length) milharesBase = mAny.slice(0);
+00669: 
+00670:     if (!milharesBase.length) {
+00671:       const g = Number(item?.grupo);
+00672: 
+00673:       if (Number.isFinite(g) && g > 0) {
+00674:         if (typeof build20 === "function") {
+00675:           const out20 = build20(g);
+00676:           const slots20 = Array.isArray(out20?.slots) ? out20.slots : [];
+00677:           milharesBase = slots20.map((x) => x?.milhar).filter(Boolean);
+00678:         } else if (typeof buildMilhares === "function") {
+00679:           const out = buildMilhares(g, 20);
+00680:           if (Array.isArray(out)) {
+00681:             milharesBase = out.slice(0);
+00682:           } else if (out && Array.isArray(out.slots)) {
+00683:             milharesBase = out.slots.map((x) => x?.milhar).filter(Boolean);
+00684:           }
+00685:         } else if (typeof build16 === "function") {
+00686:           const out16 = build16(g);
+00687:           const slots16 = Array.isArray(out16?.slots) ? out16.slots : [];
+00688:           milharesBase = slots16.map((x) => x?.milhar).filter(Boolean);
+00689:         }
+00690:       }
+00691:     }
+00692: 
+00693:     const grupoNum = Number(item?.grupo);
+00694:     const grid = build20ByDezena({
+00695:       grupo: grupoNum,
+00696:       baseMilhares: milharesBase,
+00697:       perCol: 5,
+00698:     });
+00699: 
+00700:     dezenasHeader = grid.dezenas;
+00701:     gridRows = grid.rows;
+00702:     flat20 = grid.flat20;
+00703:   }
+00704: 
+00705:   const key = `${String(item?.grupo ?? "g")}__${animal || "x"}__${idx}`;
+00706:   const rank = idx + 1;
+00707:   // TOP3 EQUAL CARD LAYOUT
+00708:   // A hierarquia permanece no ranking, mas os três cards usam a mesma estrutura.
+00709:   const isHero = false;
+00710: 
+00711:   const title =
+00712:     idx === 0 ? "1º MAIS FORTE" : idx === 1 ? "2º MAIS FORTE" : "3º MAIS FORTE";
+00713: 
+00714:   const engineScore = Number(item?.score ?? 0);
+00715:   const evidenceCount = Number(item?.evidenceCount ?? 0);
+00716:   const evidenceModules = Array.isArray(item?.evidenceModules)
+00717:     ? item.evidenceModules.filter(Boolean)
+00718:     : [];
+00719: 
+00720:   const explain = item?.meta?.explain || {};
+00721:   const detailMap =
+00722:     explain?.details && typeof explain.details === "object"
+00723:       ? explain.details
+00724:       : {};
+00725: 
+00726:   const transitionDetail = detailMap.transition || null;
+00727:   const hourDetail = detailMap.hour || null;
+00728:   const dowDetail = detailMap.dow || detailMap.weekday || null;
+00729:   const sceneDetail = detailMap.scene || null;
+00730: 
+00731:   const periodFrom = String(item?.meta?.period?.from || "").trim();
+00732:   const periodTo = String(item?.meta?.period?.to || "").trim();
+00733: 
+00734:   const periodLabel =
+00735:     periodFrom && periodTo
+00736:       ? `Período analisado: ${ymdToBR(periodFrom)} até ${ymdToBR(periodTo)}`
+00737:       : samples > 0
+00738:         ? `Amostra analisada: ${samples} sorteios`
+00739:         : "";
+00740: 
+00741:   const baseGrupo = formatGrupo(item?.meta?.trigger?.grupo);
+00742:   const baseHour = String(item?.meta?.trigger?.hour || "").trim();
+00743:   const targetHour = String(item?.meta?.next?.hour || "").trim();
+00744: 
+00745:   const smartReasons = [];
+00746: 
+00747:   if (periodLabel) {
+00748:     smartReasons.push(periodLabel);
+00749:   }
+00750: 
+00751:   if (transitionDetail) {
+00752:     const first = Number(transitionDetail.firstCount || 0);
+00753:     const top5 = Number(transitionDetail.top3Count || 0);
+00754:     const amostras = Number(transitionDetail.samples || 0);
+00755: 
+00756:     smartReasons.push(
+00757:       `Após G${baseGrupo} às ${baseHour}, G${grupoTxt} apareceu ${first}x em 1º e ${top5}x no TOP3 para o alvo ${targetHour}.`
+00758:     );
+00759: 
+00760:     if (amostras > 0) {
+00761:       smartReasons.push(`Cenários de transição avaliados: ${amostras}.`);
+00762:     }
+00763:   }
+00764: 
+00765:   if (hourDetail) {
+00766:     const first = Number(hourDetail.firstCount || 0);
+00767:     const top5 = Number(hourDetail.top3Count || 0);
+00768: 
+00769:     smartReasons.push(
+00770:       `No horário ${targetHour}, G${grupoTxt} apareceu ${first}x em 1º e ${top5}x no TOP3.`
+00771:     );
+00772:   }
+00773: 
+00774:   if (dowDetail) {
+00775:     const first = Number(dowDetail.firstCount || 0);
+00776:     const top5 = Number(dowDetail.top3Count || 0);
+00777: 
+00778:     smartReasons.push(
+00779:       `No mesmo dia da semana, G${grupoTxt} apareceu ${first}x em 1º e ${top5}x no TOP3.`
+00780:     );
+00781:   }
+00782: 
+00783:   if (sceneDetail && Number(sceneDetail.samples || 0) > 0) {
+00784:     smartReasons.push(
+00785:       `Cenários semelhantes encontrados: ${Number(sceneDetail.samples || 0)}.`
+00786:     );
+00787:   }
+00788: 
+00789:   smartReasons.push(`Probabilidade final do G${grupoTxt}: ${pct.toFixed(2)}%.`);
+00790: 
+00791:   const evidenceReasons = smartReasons
+00792:     .concat(Array.isArray(item?.reasons) ? item.reasons.filter(Boolean) : [])
+00793:     .filter(Boolean)
+00794:     .slice(0, 7);
+00795: 
+00796:   const visibleEvidenceCount = Math.max(
+00797:     evidenceCount || 0,
+00798:     evidenceModules.length || 0,
+00799:     evidenceReasons.length || 0
+00800:   );
+00801: 
+00802:   const trendLabel =
+00803:     engineScore >= pct
+00804:       ? "TENDÊNCIA POSITIVA"
+00805:       : "TENDÊNCIA NEUTRA";
+00806: 
+00807:   const displayScore = Math.round(
+00808:     Math.max(
+00809:       1,
+00810:       Math.min(
+00811:         99,
+00812:         Number.isFinite(engineScore) && engineScore > 0
+00813:           ? engineScore
+00814:           : pct * 10
+00815:       )
+00816:     )
+00817:   );
+00818: 
+00819:   const scoreBarPct = Math.max(4, Math.min(100, displayScore));
+00820: 
+00821:   const baseAnimalName =
+00822:     typeof getAnimalLabel === "function"
+00823:       ? String(getAnimalLabel(Number(item?.meta?.trigger?.grupo)) || "").trim()
+00824:       : "";
+00825: 
+00826:   const baseLabel = baseAnimalName
+00827:     ? `${baseAnimalName} (G${baseGrupo})`
+00828:     : `G${baseGrupo}`;
+00829: 
+00830:   const targetLabel = animal
+00831:     ? `${animal} (G${grupoTxt})`
+00832:     : `G${grupoTxt}`;
+00833: 
+00834:   const targetWeekdayName = getWeekdayNameBR(item?.meta?.next?.ymd || item?.targetYmd || "");
+00835: 
+00836:   const transitionFirst = Number(transitionDetail?.firstCount || 0);
+00837:   const transitionTop3 = Number(transitionDetail?.top3Count || transitionDetail?.top5Count || 0);
+00838:   const transitionSamples = Number(transitionDetail?.samples || 0);
+00839: 
+00840:   const hourFirst = Number(hourDetail?.firstCount || 0);
+00841:   const dowFirst = Number(dowDetail?.firstCount || 0);
+00842:   const sceneSamples = Number(sceneDetail?.samples || 0);
+00843: 
+00844:   const premiumForceLabel =
+00845:     displayScore >= 90
+00846:       ? "MUITO FORTE"
+00847:       : displayScore >= 75
+00848:         ? "FORTE"
+00849:         : displayScore >= 60
+00850:           ? "MODERADA"
+00851:           : "BAIXA";
+00852: 
+00853:   const premiumReliabilityLabel =
+00854:     displayScore >= 85
+00855:       ? "ALTA"
+00856:       : displayScore >= 70
+00857:         ? "MÉDIA"
+00858:         : visibleEvidenceCount > 0
+00859:           ? "EM FORMAÇÃO"
+00860:           : "SEM EVIDÊNCIAS";
+00861: 
+00862:   const doCopyAll = async () => {
+00863:     const payload = flat20.join(" ").trim();
+00864:     if (!payload) return;
+00865: 
+00866:     const ok = await copyText(payload);
+00867:     if (ok) setCopiedAllKey(key);
+00868:   };
+00869: 
+00870:   const doCopyOne = async (m, rIdx, cIdx) => {
+00871:     const mm = normalizeMilharStr(m);
+00872:     if (!mm) return;
+00873: 
+00874:     const ok = await copyText(mm);
+00875:     if (ok) setCopiedCellKey(`${key}__${rIdx}__${cIdx}`);
+00876:   };
+00877: 
+00878:   return (
+00879:     <article
+00880:       className={`top3-card ${isHero ? "top3-card--hero" : "top3-card--secondary"}`}
+00881:     >
+00882:       <div className="top3-card__topline">
+00883:         <div className="top3-rankBadge">{rank}</div>
+00884:         <div className="top3-card__label">🏅 {title}</div>
+00885:       </div>
+00886: 
+00887:       <div className="top3-card__summary">
+00888:         <div className="top3-card__identity">
+00889:           <ImgWithFallback
+00890:             srcs={iconSrcs}
+00891:             alt={animal ? animal : `G${grupoTxt}`}
+00892:             size={isHero ? 92 : 84}
+00893:           />
+00894: 
+00895:           <div className="top3-card__identityText">
+00896:             <div className="top3-card__group">GRUPO {grupoTxt}</div>
+00897:             <div className="top3-card__animal">
+00898:               {animal ? animal.toUpperCase() : "—"}
+00899:             </div>
+00900:           </div>
+00901:         </div>
+00902: 
+00903:         <div className="top3-card__confidence">
+00904:           <div className="top3-card__confidenceLabel">CONFIANÇA</div>
+00905:           <div className="top3-card__confidenceValue">{pct.toFixed(2)}%</div>
+00906:           <div className="top3-card__confidenceBar">
+00907:             <div
+00908:               className="top3-card__confidenceBarFill"
+00909:               style={{ width: `${pct}%`, background: t.accent }}
+00910:             />
+00911:           </div>
+00912:         </div>
+00913:       </div>
+00914: 
+00915:       <div
+00916:         className="top3-card__engine top3-card__engine--premium"
+00917:         style={{
+00918:           borderTop: "1px solid rgba(212,175,55,0.22)",
+00919:           paddingTop: 14,
+00920:           display: "grid",
+00921:           gridTemplateColumns: isHero ? "300px minmax(0, 1fr)" : "1fr",
+00922:           gap: 14,
+00923:           alignItems: "stretch",
+00924:         }}
+00925:       >
+00926:         {isHero ? (
+00927:           <div
+00928:             style={{
+00929:               border: "1px solid rgba(212,175,55,0.30)",
+00930:               borderRadius: 18,
+00931:               padding: 14,
+00932:               background:
+00933:                 "radial-gradient(circle at 50% 0%, rgba(212,175,55,0.18), rgba(0,0,0,0.12) 48%, rgba(0,0,0,0.28))",
+00934:               boxShadow: "0 18px 45px rgba(0,0,0,0.32)",
+00935:             }}
+00936:           >
+00937:             <div style={{ display: "grid", gap: 12 }}>
+00938:               <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+00939:                 <div className="top3-rankBadge">{rank}</div>
+00940:                 <div className="top3-card__label">⭐ {title}</div>
+00941:               </div>
+00942: 
+00943:               <div
+00944:                 style={{
+00945:                   borderRadius: 16,
+00946:                   overflow: "hidden",
+00947:                   border: "1px solid rgba(212,175,55,0.35)",
+00948:                   minHeight: 180,
+00949:                   display: "none",
+00950:                   placeItems: "center",
+00951:                   background: "rgba(0,0,0,0.28)",
+00952:                 }}
+00953:               >
+00954:                 <ImgWithFallback
+00955:                   srcs={iconSrcs}
+00956:                   alt={animal ? animal : `G${grupoTxt}`}
+00957:                   size={168}
+00958:                   style={{ borderRadius: 14 }}
+00959:                 />
+00960:               </div>
+00961: 
+00962:               <div>
+00963:                 <div className="top3-card__group">GRUPO {grupoTxt}</div>
+00964:                 <div className="top3-card__animal">
+00965:                   {animal ? animal.toUpperCase() : "—"}
+00966:                 </div>
+00967:               </div>
+00968: 
+00969:               <div
+00970:                 style={{
+00971:                   border: "1px solid rgba(212,175,55,0.28)",
+00972:                   borderRadius: 14,
+00973:                   padding: 14,
+00974:                   background: "rgba(0,0,0,0.22)",
+00975:                 }}
+00976:               >
+00977:                 <div className="top3-card__confidenceLabel">SCORE</div>
+00978:                 <div
+00979:                   style={{
+00980:                     fontSize: 42,
+00981:                     fontWeight: 900,
+00982:                     letterSpacing: 1,
+00983:                     color: t.accent,
+00984:                     lineHeight: 1,
+00985:                   }}
+00986:                 >
+00987:                   {displayScore}
+00988:                   <span style={{ color: "rgba(255,255,255,0.78)", fontSize: 24 }}>
+00989:                     /100
+00990:                   </span>
+00991:                 </div>
+00992: 
+00993:                 <div className="top3-card__confidenceBar" style={{ marginTop: 12 }}>
+00994:                   <div
+00995:                     className="top3-card__confidenceBarFill"
+00996:                     style={{ width: `${scoreBarPct}%`, background: t.accent }}
+00997:                   />
+00998:                 </div>
+00999:               </div>
+01000: 
+01001:               <div
+01002:                 style={{
+01003:                   display: "grid",
+01004:                   gridTemplateColumns: "1fr 1fr",
+01005:                   gap: 8,
+01006:                 }}
+01007:               >
+01008:                 <div className="top3-metaItem">
+01009:                   <div className="top3-metaItem__label">Força</div>
+01010:                   <div className="top3-metaItem__value">{premiumForceLabel}</div>
+01011:                 </div>
+01012: 
+01013:                 <div className="top3-metaItem">
+01014:                   <div className="top3-metaItem__label">Confiabilidade</div>
+01015:                   <div className="top3-metaItem__value">{premiumReliabilityLabel}</div>
+01016:                 </div>
+01017:               </div>
+01018:             </div>
+01019:           </div>
+01020:         ) : null}
+01021: 
+01022:         <div
+01023:           style={{
+01024:             border: "1px solid rgba(212,175,55,0.22)",
+01025:             borderRadius: 18,
+01026:             padding: 14,
+01027:             background:
+01028:               "linear-gradient(180deg, rgba(255,255,255,0.035), rgba(255,255,255,0.012))",
+01029:           }}
+01030:         >
+01031:           <div
+01032:             style={{
+01033:               display: "grid",
+01034:               gridTemplateColumns: isHero
+01035:                 ? "repeat(3, minmax(0, 1fr))"
+01036:                 : "1fr",
+01037:               gap: 10,
+01038:             }}
+01039:           >
+01040:             <div className="top3-metaItem">
+01041:               <div className="top3-metaItem__label">📊 Base estatística</div>
+01042:               <div className="top3-metaItem__value">
+01043:                 {periodFrom && periodTo
+01044:                   ? `${ymdToBR(periodFrom)} → ${ymdToBR(periodTo)}`
+01045:                   : `${samples} sorteios`}
+01046:               </div>
+01047:             </div>
+01048: 
+01049:             <div className="top3-metaItem">
+01050:               <div className="top3-metaItem__label">🔄 Transição</div>
+01051:               <div className="top3-metaItem__value">
+01052:                 Após {baseLabel} às {baseHour}
+01053:                 <br />
+01054:                 {targetLabel} em 1º: {transitionFirst}x
+01055:                 <br />
+01056:                 {targetLabel} no TOP3: {transitionTop3}x
+01057:               </div>
+01058:             </div>
+01059: 
+01060:             <div className="top3-metaItem">
+01061:               <div className="top3-metaItem__label">🕘 Horário</div>
+01062:               <div className="top3-metaItem__value">
+01063:                 Às {targetHour || "—"}
+01064:                 <br />
+01065:                 {targetLabel} em 1º: {hourFirst}x
+01066:               </div>
+01067:             </div>
+01068: 
+01069:             <div className="top3-metaItem">
+01070:               <div className="top3-metaItem__label">📅 Dia da semana</div>
+01071:               <div className="top3-metaItem__value">
+01072:                 {targetWeekdayName}
+01073:                 <br />
+01074:                 {targetLabel} em 1º: {dowFirst}x
+01075:               </div>
+01076:             </div>
+01077: 
+01078:             <div className="top3-metaItem">
+01079:               <div className="top3-metaItem__label">🧠 Cenários semelhantes</div>
+01080:               <div className="top3-metaItem__value">
+01081:                 {
+01082:       sceneSamples > 0
+01083:         ? `${sceneSamples} cenários semelhantes`
+01084:         : transitionSamples > 0
+01085:           ? `${transitionSamples} transições históricas`
+01086:           : `${samples} registros históricos`
+01087:     }
+01088:               </div>
+01089:             </div>
+01090: 
+01091:             <div className="top3-metaItem">
+01092:               <div className="top3-metaItem__label">🎯 Frequência histórica da transição</div>
+01093:               <div className="top3-metaItem__value">
+01094:                 {transitionFirst > 0 && transitionSamples > 0
+01095:                   ? `${transitionFirst} ocorrências em ${transitionSamples} transições`
+01096:                   : "Em apuração"}
+01097:               </div>
+01098:             </div>
+01099:           </div>
+01100: 
+01101:           <div
+01102:             style={{
+01103:               marginTop: 12,
+01104:               border: "1px solid rgba(212,175,55,0.20)",
+01105:               borderRadius: 14,
+01106:               padding: 12,
+01107:               display: "flex",
+01108:               gap: 10,
+01109:               alignItems: "center",
+01110:               background: "rgba(212,175,55,0.055)",
+01111:             }}
+01112:           >
+01113:             <div style={{ fontSize: 26 }}>⭐</div>
+01114:             <div>
+01115:               <div
+01116:                 style={{
+01117:                   color: t.accent,
+01118:                   fontWeight: 900,
+01119:                   textTransform: "uppercase",
+01120:                 }}
+01121:               >
+01122:                 Score — confiança da análise
+01123:               </div>
+01124:               <div style={{ color: "rgba(255,255,255,0.82)", fontSize: 13 }}>
+01125:                 {displayScore}/100 · {visibleEvidenceCount} evidências estatísticas · {trendLabel}
+01126:               </div>
+01127:             </div>
+01128:           </div>
+01129:         </div>
+01130:       </div>
+01131: 
+01132:       <div className="top3-card__body">
+01133:         <div
+01134:           className="top3-card__actions"
+01135:           style={{
+01136:             display: "flex",
+01137:             justifyContent: "flex-end",
+01138:             alignItems: "center",
+01139:           }}
+01140:         >
+01141:           <button
+01142:             type="button"
+01143:             onClick={doCopyAll}
+01144:             className="pp-btn"
+01145:             title="Copiar as 20 milhares"
+01146:           >
+01147:             {copiedAllKey === key ? "✅ Copiado" : "📋 Copiar"}
+01148:           </button>
+01149:         </div>
+01150: 
+01151:         {dezenasHeader.length ? (
+01152:           <div className="pp-chipRow">
+01153:             {dezenasHeader.map((dz, i) => (
+01154:               <div key={`${dz}-${i}`} className="pp-chip">
+01155:                 {dz || "—"}
+01156:               </div>
+01157:             ))}
+01158:           </div>
+01159:         ) : null}
+01160: 
+01161:         <div className="pp-gridBox">
+01162:           {gridRows.map((row, rIdx) => (
+01163:             <div key={rIdx} className="pp-row">
+01164:               {row.map((m, cIdx) => {
+01165:                 const mm = normalizeMilharStr(m);
+01166:                 const empty = !mm ? "1" : "0";
+01167:                 const cKey = `${key}__${rIdx}__${cIdx}`;
+01168:                 const isCopied = copiedCellKey === cKey;
+01169: 
+01170:                 return (
+01171:                   <div
+01172:                     key={`${rIdx}-${cIdx}`}
+01173:                     className="pp-pill"
+01174:                     data-empty={empty}
+01175:                     title={mm ? "Clique para copiar" : ""}
+01176:                     onClick={() => doCopyOne(mm, rIdx, cIdx)}
+01177:                   >
+01178:                     {mm || "—"}
+01179:                     {isCopied ? <div className="pp-copiedBadge">COPIADO</div> : null}
+01180:                   </div>
+01181:                 );
+01182:               })}
+01183:             </div>
+01184:           ))}
+01185:         </div>
+01186:       </div>
+01187:     </article>
+01188:   );
+01189: }
+01190: 
+01191: function CompactTop3Result({
+01192:   slot,
+01193:   status,
+01194:   statusLabel,
+01195:   statusDetail,
+01196:   analysis,
+01197: }) {
+01198:   const slotTop3 = Array.isArray(slot?.top3)
+01199:     ? slot.top3.slice(0, 3)
+01200:     : [];
+01201: 
+01202:   const resultGrupo = getSlotResultGrupo(slot);
+01203: 
+01204:   const hasResult =
+01205:     Number.isFinite(resultGrupo) &&
+01206:     resultGrupo >= 1 &&
+01207:     resultGrupo <= 25;
+01208: 
+01209:   const resultAnimal = hasResult
+01210:     ? String(getAnimalLabel(resultGrupo) || "")
+01211:     : "";
+01212: 
+01213:   const resultImg = hasResult
+01214:     ? getImgFromGrupo(resultGrupo, 64)
+01215:     : "";
+01216: 
+01217:   const resultMilhar = extractResultMilhar(slot);
+01218: 
+01219:   const matchedPredictionIndex =
+01220:     Number.isFinite(Number(analysis?.position)) &&
+01221:     Number(analysis.position) >= 1
+01222:       ? Number(analysis.position) - 1
+01223:       : -1;
+01224: 
+01225:   const resultPosition = Number(
+01226:     analysis?.resultPosition
+01227:   );
+01228: 
+01229:   const medal =
+01230:     status !== "hit"
+01231:       ? ""
+01232:       : resultPosition === 1
+01233:         ? "🥇"
+01234:         : resultPosition === 2
+01235:           ? "🥈"
+01236:           : resultPosition === 3
+01237:             ? "🥉"
+01238:             : "";
+01239: 
+01240:   const dateLabel = formatYmdHour(
+01241:     slot?.targetYmd,
+01242:     slot?.targetHour
+01243:   );
+01244: 
+01245:   return (
+01246:     <div
+01247:       className="timeline-compact"
+01248:       title={statusDetail || statusLabel || ""}
+01249:       style={{
+01250:         width: "100%",
+01251:         overflowX: "auto",
+01252:       }}
+01253:     >
+01254:       <div
+01255:         className="timeline-compact__twoLine"
+01256:         style={{
+01257:           display: "grid",
+01258:           gridTemplateColumns:
+01259:             "minmax(112px, 1.35fr) repeat(3, minmax(54px, 0.72fr)) minmax(82px, 0.95fr)",
+01260:           alignItems: "center",
+01261:           gap: "6px",
+01262:           minWidth: "410px",
+01263:           padding: "8px 6px",
+01264:         }}
+01265:       >
+01266:         <div
+01267:           className="timeline-compact__date"
+01268:           style={{
+01269:             gridRow: "1 / span 2",
+01270:             alignSelf: "center",
+01271:             fontSize: "12px",
+01272:             fontWeight: 800,
+01273:             lineHeight: 1.2,
+01274:             whiteSpace: "nowrap",
+01275:           }}
+01276:         >
+01277:           {dateLabel}
+01278:         </div>
+01279: 
+01280:         {slotTop3.map((item, idx) => {
+01281:           const grupo = Number(item?.grupo);
+01282: 
+01283:           const animal = String(
+01284:             item?.animal ||
+01285:               getAnimalLabel(grupo) ||
+01286:               ""
+01287:           ).trim();
+01288: 
+01289:           const img = Number.isFinite(grupo)
+01290:             ? getImgFromGrupo(grupo, 64)
+01291:             : "";
+01292: 
+01293:           const isMatched =
+01294:             status === "hit" &&
+01295:             matchedPredictionIndex === idx;
+01296: 
+01297:           return (
+01298:             <div
+01299:               key={`${String(
+01300:                 slot?.targetYmd || "y"
+01301:               )}_${String(
+01302:                 slot?.targetHour || "h"
+01303:               )}_${idx}_${grupo}`}
+01304:               className={`timeline-compact__pick ${
+01305:                 isMatched
+01306:                   ? "timeline-compact__pick--matched"
+01307:                   : ""
+01308:               }`}
+01309:               style={{
+01310:                 display: "grid",
+01311:                 gridTemplateRows: "34px 18px",
+01312:                 justifyItems: "center",
+01313:                 alignItems: "center",
+01314:                 minWidth: 0,
+01315:                 padding: 0,
+01316:                 border: "none",
+01317:                 background: "transparent",
+01318:               }}
+01319:               title={`${animal || "Animal"} — G${formatGrupo(
+01320:                 grupo
+01321:               )}`}
+01322:             >
+01323:               <div
+01324:                 style={{
+01325:                   position: "relative",
+01326:                   display: "flex",
+01327:                   alignItems: "center",
+01328:                   justifyContent: "center",
+01329:                 }}
+01330:               >
+01331:                 <ImgWithFallback
+01332:                   srcs={img ? [img] : []}
+01333:                   alt={
+01334:                     animal ||
+01335:                     `G${formatGrupo(grupo)}`
+01336:                   }
+01337:                   size={34}
+01338:                   style={{
+01339:                     borderRadius: 8,
+01340:                     outline: isMatched
+01341:                       ? "2px solid rgba(201,168,62,0.95)"
+01342:                       : "none",
+01343:                     outlineOffset: 1,
+01344:                   }}
+01345:                 />
+01346: 
+01347:                 {isMatched && medal ? (
+01348:                   <span
+01349:                     aria-label="Palpite acertado"
+01350:                     style={{
+01351:                       position: "absolute",
+01352:                       top: -8,
+01353:                       right: -13,
+01354:                       fontSize: "17px",
+01355:                       lineHeight: 1,
+01356:                       filter:
+01357:                         "drop-shadow(0 1px 2px rgba(0,0,0,0.75))",
+01358:                     }}
+01359:                   >
+01360:                     {medal}
+01361:                   </span>
+01362:                 ) : null}
+01363:               </div>
+01364: 
+01365:               <div
+01366:                 style={{
+01367:                   fontSize: "12px",
+01368:                   fontWeight: 900,
+01369:                   lineHeight: 1,
+01370:                   whiteSpace: "nowrap",
+01371:                 }}
+01372:               >
+01373:                 G{formatGrupo(grupo)}
+01374:               </div>
+01375:             </div>
+01376:           );
+01377:         })}
+01378: 
+01379:         <div
+01380:           className="timeline-compact__official"
+01381:           style={{
+01382:             display: "grid",
+01383:             gridTemplateRows: "34px 18px",
+01384:             justifyItems: "center",
+01385:             alignItems: "center",
+01386:             minWidth: 0,
+01387:             paddingLeft: "6px",
+01388:             borderLeft:
+01389:               "1px solid rgba(255,255,255,0.14)",
+01390:           }}
+01391:           title={
+01392:             hasResult
+01393:               ? `${resultAnimal} — G${formatGrupo(
+01394:                   resultGrupo
+01395:                 )}${
+01396:                   resultMilhar
+01397:                     ? ` — ${resultMilhar}`
+01398:                     : ""
+01399:                 }`
+01400:               : "Resultado pendente"
+01401:           }
+01402:         >
+01403:           {hasResult ? (
+01404:             <>
+01405:               <ImgWithFallback
+01406:                 srcs={resultImg ? [resultImg] : []}
+01407:                 alt={resultAnimal}
+01408:                 size={34}
+01409:                 style={{ borderRadius: 8 }}
+01410:               />
+01411: 
+01412:               <div
+01413:                 style={{
+01414:                   fontSize: "11px",
+01415:                   fontWeight: 900,
+01416:                   lineHeight: 1,
+01417:                   whiteSpace: "nowrap",
+01418:                 }}
+01419:               >
+01420:                 G{formatGrupo(resultGrupo)}
+01421:                 {resultMilhar
+01422:                   ? ` • ${resultMilhar}`
+01423:                   : ""}
+01424:               </div>
+01425:             </>
+01426:           ) : (
+01427:             <div
+01428:               style={{
+01429:                 gridRow: "1 / span 2",
+01430:                 alignSelf: "center",
+01431:                 fontSize: "10px",
+01432:                 fontWeight: 800,
+01433:               }}
+01434:             >
+01435:               PENDENTE
+01436:             </div>
+01437:           )}
+01438:         </div>
+01439:       </div>
+01440:     </div>
+01441:   );
+01442: }
+01443: 
+01444: function TimelineSlot({
+01445:   slot,
+01446:   theme,
+01447:   copiedAllKey,
+01448:   copiedCellKey,
+01449:   setCopiedAllKey,
+01450:   setCopiedCellKey,
+01451:   copyText,
+01452:   build16,
+01453:   buildMilhares,
+01454:   build20,
+01455: }) {
+01456:   const t = theme;
+01457:   const slotTop3 = Array.isArray(slot?.top3) ? slot.top3.slice(0, 3) : [];
+01458: 
+01459:   const resultGrupo = getSlotResultGrupo(slot);
+01460:   const hasResult = hasOfficialResult(slot);
+01461:   const resultAnimal =
+01462:     hasResult && Number.isFinite(resultGrupo)
+01463:       ? String(getAnimalLabel(resultGrupo) || "")
+01464:       : "";
+01465: 
+01466:   const officialPodium = getOfficialPodium(slot);
+01467: 
+01468:   const analysis = analyzeTop3Hit(
+01469:     slotTop3,
+01470:     officialPodium
+01471:   );
+01472: 
+01473:   const status =
+01474:     !hasResult
+01475:       ? "pending"
+01476:       : analysis.type === "miss"
+01477:         ? "miss"
+01478:         : "hit";
+01479: 
+01480:   const statusLabel =
+01481:     !hasResult
+01482:       ? "⏳ PENDENTE"
+01483:       : analysis.type === "hit_exact"
+01484:         ? "🎯 MILHAR (100%)"
+01485:         : analysis.type === "hit_centena"
+01486:           ? "🟡 CENTENA (66,67%)"
+01487:           : analysis.type === "hit_grupo"
+01488:             ? "✅ DEZENA/GRUPO (33,33%)"
+01489:             : "❌ ERRO (0%)";
+01490: 
+01491:   const statusDetail =
+01492:     !hasResult
+01493:       ? "Aguardando resultado oficial."
+01494:       : analysis.type === "hit_exact"
+01495:         ? `Milhar exata acertada no palpite #${analysis.position}.`
+01496:         : analysis.type === "hit_centena"
+01497:           ? `Centena acertada no palpite #${analysis.position}.`
+01498:           : analysis.type === "hit_grupo"
+01499:             ? `Grupo acertado no palpite #${analysis.position}.`
+01500:             : "Nenhum dos 3 palpites foi sorteado.";
+01501: 
+01502:   return (
+01503:     <section className="top3-shell">
+01504:       {status === "pending" ? (
+01505:         <>
+01506:           <div className="timeline-slot__header">
+01507:             <div className="timeline-slot__title">
+01508:               {formatYmdHour(
+01509:                 slot?.targetYmd,
+01510:                 slot?.targetHour
+01511:               )}
+01512:             </div>
+01513: 
+01514:             <div
+01515:               className={`timeline-slot__badge timeline-slot__badge--${status}`}
+01516:             >
+01517:               {statusLabel}
+01518:             </div>
+01519:           </div>
+01520: 
+01521:           <div className="timeline-slot__metaGrid">
+01522:             <div className="top3-metaItem">
+01523:               <div className="top3-metaItem__label">
+01524:                 Base usada
+01525:               </div>
+01526: 
+01527:               <div className="top3-metaItem__value">
+01528:                 {formatYmdHour(
+01529:                   slot?.baseYmd,
+01530:                   slot?.baseHour
+01531:                 )}
+01532:               </div>
+01533:             </div>
+01534: 
+01535:             <div className="top3-metaItem">
+01536:               <div className="top3-metaItem__label">
+01537:                 Resultado real
+01538:               </div>
+01539: 
+01540:               <div className="top3-metaItem__value">
+01541:                 {hasResult
+01542:                   ? `G${formatGrupo(
+01543:                       resultGrupo
+01544:                     )} • ${resultAnimal.toUpperCase()}`
+01545:                   : "Pendente"}
+01546:               </div>
+01547:             </div>
+01548: 
+01549:             <div className="top3-metaItem">
+01550:               <div className="top3-metaItem__label">
+01551:                 Status
+01552:               </div>
+01553: 
+01554:               <div className="top3-metaItem__value">
+01555:                 {statusDetail}
+01556:               </div>
+01557:             </div>
+01558:           </div>
+01559:         </>
+01560:       ) : null}
+01561: 
+01562:       {!slotTop3.length ? (
+01563:         <div className="top3-empty">Sem Top3 calculado para este horário.</div>
+01564:       ) : status === "pending" ? (
+01565:         <div className="timeline-slot__cards">
+01566:           {slotTop3.map((item, i) => (
+01567:             <Top3Card
+01568:               key={`${slot?.targetYmd || "y"}_${slot?.targetHour || "h"}_${String(item?.grupo ?? i)}`}
+01569:               item={item}
+01570:               idx={i}
+01571:               theme={t}
+01572:               copiedAllKey={copiedAllKey}
+01573:               copiedCellKey={copiedCellKey}
+01574:               setCopiedAllKey={setCopiedAllKey}
+01575:               setCopiedCellKey={setCopiedCellKey}
+01576:               copyText={copyText}
+01577:               build16={build16}
+01578:               buildMilhares={buildMilhares}
+01579:               build20={build20}
+01580:             />
+01581:           ))}
+01582:         </div>
+01583:       ) : (
+01584:         <CompactTop3Result
+01585:           slot={slot}
+01586:           status={status}
+01587:           statusLabel={statusLabel}
+01588:           statusDetail={statusDetail}
+01589:           analysis={analysis}
+01590:         />
+01591:       )}
+01592:     </section>
+01593:   );
+01594: }
+01595: 
+01596: export default function Top3View(props) {
+01597:   const {
+01598:     loading,
+01599:     error,
+01600:     timelineTop3,
+01601:     persistedTop3History,
+01602:     top3,
+01603:     layerMetaText,
+01604:     lastLabel,
+01605:     prevLabel,
+01606:     theme,
+01607:     LOTTERY_OPTIONS,
+01608:     lotteryKeySafe,
+01609:     setLotteryKey,
+01610:     setYmd,
+01611:     build16,
+01612:     buildMilhares,
+01613:     build20,
+01614:     analysisYmd,
+01615:     analysisHourBucket,
+01616:     loadedYmd,
+01617:     ymdSafe,
+01618:     lastHourBucket,
+01619:   } = props || {};
+01620: 
+01621:   // TODO_BACKTEST_REAL
+01622: // Os cards estatísticos deverão consumir auditTop3Backtest()
+01623: // evitando cálculos paralelos na interface.
+01624: //
+01625: // Fase atual:
+01626: // apenas corrigindo nomenclatura para refletir o cálculo existente.
+01627: 
+01628: const list = Array.isArray(top3)
+01629:   ? top3.slice(0, 3)
+01630:   : [];
+01631:   const timeline = (Array.isArray(timelineTop3) ? timelineTop3 : [])
+01632:   .slice()
+01633:   .sort((a, b) => {
+01634:     const ta = `${a?.targetYmd || ""} ${a?.targetHour || ""}`;
+01635:     const tb = `${b?.targetYmd || ""} ${b?.targetHour || ""}`;
+01636:     return ta.localeCompare(tb);
+01637:   });
+01638: 
+01639:   const showDetailedTimeline = false;
+01640: 
+01641:   const meta = useMemo(() => {
+01642:     const last = lastLabel || "—";
+01643:     const prev = prevLabel || "—";
+01644:     const layer = cleanLayerText(layerMetaText || "—");
+01645:     return { last, prev, layer };
+01646:   }, [lastLabel, prevLabel, layerMetaText]);
+01647: 
+01648:   const headerBase = useMemo(() => meta.last || "—", [meta.last]);
+01649: 
+01650:   const headerForecast = useMemo(() => {
+01651:     return formatYmdHour(analysisYmd, analysisHourBucket);
+01652:   }, [analysisYmd, analysisHourBucket]);
+01653: 
+01654:   const headerTransition = useMemo(() => {
+01655:     const from = String(lastHourBucket || "").trim();
+01656:     const to = String(analysisHourBucket || "").trim();
+01657:     if (from && to) return `${from} → ${to}`;
+01658:     return "—";
+01659:   }, [lastHourBucket, analysisHourBucket]);
+01660: 
+01661:   const t = theme || {
+01662:     bg: "#050505",
+01663:     panel: "rgba(0,0,0,0.55)",
+01664:     border: "rgba(255,255,255,0.18)",
+01665:     text: "rgba(255,255,255,0.92)",
+01666:     muted: "rgba(255,255,255,0.72)",
+01667:     accent: "rgba(201,168,62,0.92)",
+01668:   };
+01669: 
+01670:   const [copiedAllKey, setCopiedAllKey] = useState("");
+01671:   const [copiedCellKey, setCopiedCellKey] = useState("");
+01672: 
+01673: 
+01674:   useEffect(() => {
+01675:     if (!copiedAllKey) return;
+01676:     const id = setTimeout(() => setCopiedAllKey(""), 900);
+01677:     return () => clearTimeout(id);
+01678:   }, [copiedAllKey]);
+01679: 
+01680:   useEffect(() => {
+01681:     if (!copiedCellKey) return;
+01682:     const id = setTimeout(() => setCopiedCellKey(""), 750);
+01683:     return () => clearTimeout(id);
+01684:   }, [copiedCellKey]);
+01685: 
+01686:   const copyText = useCallback(async (txt) => {
+01687:     const s = String(txt || "").trim();
+01688:     if (!s) return false;
+01689: 
+01690:     try {
+01691:       if (typeof navigator !== "undefined" && navigator?.clipboard?.writeText) {
+01692:         await navigator.clipboard.writeText(s);
+01693:         return true;
+01694:       }
+01695:     } catch {}
+01696: 
+01697:     try {
+01698:       if (typeof document === "undefined") return false;
+01699: 
+01700:       const ta = document.createElement("textarea");
+01701:       ta.value = s;
+01702:       ta.style.position = "fixed";
+01703:       ta.style.left = "-9999px";
+01704:       ta.style.top = "0";
+01705:       document.body.appendChild(ta);
+01706:       ta.focus();
+01707:       ta.select();
+01708:       document.execCommand("copy");
+01709:       document.body.removeChild(ta);
+01710:       return true;
+01711:     } catch {
+01712:       return false;
+01713:     }
+01714:   }, []);
+01715: 
+01716:   const baseLots = Array.isArray(LOTTERY_OPTIONS) ? LOTTERY_OPTIONS : [];
+01717:   const mustHave = [
+01718:     { value: "PT_RIO", label: "RJ" },
+01719:     { value: "FEDERAL", label: "Federal" },
+01720:     { value: "LOOK", label: "LOOK" },
+01721:     { value: "NACIONAL", label: "Nacional" },
+01722:   ];
+01723: 
+01724:   const map = new Map();
+01725: 
+01726:   [...baseLots, ...mustHave].forEach((op) => {
+01727:     const rawVal = String(op?.value ?? op?.key ?? "").toUpperCase();
+01728:     if (!rawVal) return;
+01729: 
+01730:     if (!map.has(rawVal)) {
+01731:       map.set(rawVal, {
+01732:         value: rawVal,
+01733:         label:
+01734:           rawVal === "PT_RIO"
+01735:             ? "RJ"
+01736:             : op?.label || rawVal,
+01737:       });
+01738:     }
+01739:   });
+01740: 
+01741:   const lotOptions = [
+01742:     map.get("PT_RIO"),
+01743:     map.get("FEDERAL"),
+01744:     map.get("LOOK"),
+01745:     map.get("NACIONAL"),
+01746:     ...[...map.values()].filter(
+01747:       (x) =>
+01748:         ![
+01749:           "PT_RIO",
+01750:           "FEDERAL",
+01751:           "LOOK",
+01752:           "NACIONAL",
+01753:         ].includes(
+01754:           String(
+01755:             x?.value || ""
+01756:           ).toUpperCase()
+01757:         )
+01758:     ),
+01759:   ].filter(Boolean);
+01760: 
+01761:   const curLot = String(lotteryKeySafe || "PT_RIO").toUpperCase();
+01762:   const visibleTop3 = list.slice(0, 3);
+01763: 
+01764:   const historyAnchorYmd = useMemo(() => {
+01765:   const loaded = String(loadedYmd || "").trim();
+01766:   if (isYMD(loaded)) return loaded;
+01767: 
+01768:   const selected = String(ymdSafe || "").trim();
+01769:   if (isYMD(selected)) return selected;
+01770: 
+01771:   const realized = (Array.isArray(timeline) ? timeline : [])
+01772:     .filter((slot) => String(slot?.status || "").toLowerCase() === "validated")
+01773:     .slice()
+01774:     .sort((a, b) => {
+01775:       const ta = `${a?.targetYmd || ""} ${a?.targetHour || ""}`;
+01776:       const tb = `${b?.targetYmd || ""} ${b?.targetHour || ""}`;
+01777:       return tb.localeCompare(ta);
+01778:     });
+01779: 
+01780:   const fallback = String(realized?.[0]?.targetYmd || "").trim();
+01781:   return isYMD(fallback) ? fallback : "";
+01782: }, [loadedYmd, ymdSafe, timeline]);
+01783: 
+01784:   const historyRows = useMemo(() => {
+01785:     const persistedRows = (
+01786:       Array.isArray(persistedTop3History)
+01787:         ? persistedTop3History
+01788:         : []
+01789:     )
+01790:       .filter(
+01791:         (entry) =>
+01792:           String(entry?.targetYmd || "").trim() ===
+01793:           historyAnchorYmd
+01794:       )
+01795:       .map((entry) => {
+01796:         const snapshot = Array.isArray(entry?.snapshot)
+01797:           ? entry.snapshot.slice(0, 3)
+01798:           : [];
+01799: 
+01800:         const resultGrupo = Number(entry?.resultGrupo);
+01801:         const hasResult =
+01802:           Number.isFinite(resultGrupo) &&
+01803:           resultGrupo >= 1 &&
+01804:           resultGrupo <= 25;
+01805: 
+01806:         return {
+01807:           targetKey: String(
+01808:             entry?.id || entry?.targetKey || ""
+01809:           ),
+01810:           target: {
+01811:             ymd: String(entry?.targetYmd || ""),
+01812:             hour: String(entry?.targetHour || ""),
+01813:           },
+01814:           picks: Array.isArray(entry?.picks)
+01815:             ? entry.picks
+01816:             : snapshot
+01817:                 .map((item) => Number(item?.grupo))
+01818:                 .filter(Number.isFinite),
+01819:           top3: snapshot,
+01820:           result: hasResult ? resultGrupo : null,
+01821:           grupo: hasResult ? resultGrupo : null,
+01822:           animal: hasResult
+01823:             ? String(
+01824:                 entry?.resultAnimal ||
+01825:                   getAnimalLabel(resultGrupo) ||
+01826:                   ""
+01827:               )
+01828:             : "",
+01829:           resultMilhar: String(
+01830:             entry?.resultMilhar || ""
+01831:           ),
+01832:           hit:
+01833:             Number(entry?.hitScore || 0) > 0,
+01834:           hitType: String(entry?.hitType || ""),
+01835:           hitScore: Number(entry?.hitScore || 0),
+01836:           hitPosition: Number(
+01837:             entry?.hitPosition ?? -1
+01838:           ),
+01839:           predictionPosition: Number(
+01840:             entry?.predictionPosition ??
+01841:               entry?.hitPosition ??
+01842:               -1
+01843:           ),
+01844:           resultPosition: Number(
+01845:             entry?.resultPosition ?? -1
+01846:           ),
+01847:           podiumMedal: String(
+01848:             entry?.podiumMedal || ""
+01849:           ),
+01850:           resultTop3Groups: Array.isArray(
+01851:             entry?.resultTop3Groups
+01852:           )
+01853:             ? entry.resultTop3Groups
+01854:             : [],
+01855:           resultTop3Milhares: Array.isArray(
+01856:             entry?.resultTop3Milhares
+01857:           )
+01858:             ? entry.resultTop3Milhares
+01859:             : [],
+01860:           analysis: {
+01861:             type: String(entry?.hitType || ""),
+01862:             score: Number(entry?.hitScore || 0),
+01863:             position: Number(
+01864:               entry?.hitPosition ?? -1
+01865:             ),
+01866:             predictionPosition: Number(
+01867:               entry?.predictionPosition ??
+01868:                 entry?.hitPosition ??
+01869:                 -1
+01870:             ),
+01871:             resultPosition: Number(
+01872:               entry?.resultPosition ?? -1
+01873:             ),
+01874:             podiumMedal: String(
+01875:               entry?.podiumMedal || ""
+01876:             ),
+01877:             matchedValue: String(
+01878:               entry?.matchedValue || ""
+01879:             ),
+01880:           },
+01881:         };
+01882:       });
+01883: 
+01884:     const timelineRows = (
+01885:       Array.isArray(timeline) ? timeline : []
+01886:     )
+01887:       .filter(
+01888:         (slot) =>
+01889:           String(slot?.targetYmd || "").trim() ===
+01890:           historyAnchorYmd
+01891:       )
+01892:       .map((slot) => {
+01893:         const slotTop3 = Array.isArray(slot?.top3)
+01894:           ? slot.top3.slice(0, 3)
+01895:           : [];
+01896: 
+01897:         const resultGrupo = getSlotResultGrupo(slot);
+01898: 
+01899:         const hasResult =
+01900:           Number.isFinite(resultGrupo) &&
+01901:           resultGrupo >= 1 &&
+01902:           resultGrupo <= 25;
+01903: 
+01904:         const resultMilhar =
+01905:           extractResultMilhar(slot);
+01906: 
+01907:         const officialPodium =
+01908:           getOfficialPodium(slot);
+01909: 
+01910:         const analysis = analyzeTop3Hit(
+01911:           slotTop3,
+01912:           officialPodium
+01913:         );
+01914: 
+01915:         return {
+01916:           targetKey:
+01917:             `${String(slot?.targetYmd || "")}` +
+01918:             `__${String(slot?.targetHour || "")}`,
+01919:           target: {
+01920:             ymd: String(slot?.targetYmd || ""),
+01921:             hour: String(slot?.targetHour || ""),
+01922:           },
+01923:           picks: slotTop3
+01924:             .map((item) => Number(item?.grupo))
+01925:             .filter(Number.isFinite),
+01926:           top3: slotTop3,
+01927:           result: hasResult
+01928:             ? Number(resultGrupo)
+01929:             : null,
+01930:           grupo: hasResult
+01931:             ? Number(resultGrupo)
+01932:             : null,
+01933:           animal: hasResult
+01934:             ? getAnimalLabel(resultGrupo)
+01935:             : "",
+01936:           resultMilhar,
+01937:           resultTop3Groups: officialPodium.map(
+01938:             (item) => Number(item?.grupo)
+01939:           ),
+01940:           resultTop3Milhares: officialPodium.map(
+01941:             (item) => String(item?.milhar || "")
+01942:           ),
+01943:           prizes: Array.isArray(slot?.prizes)
+01944:             ? slot.prizes
+01945:             : [],
+01946:           analysis,
+01947:           hit:
+01948:             analysis.type !== "miss" &&
+01949:             analysis.type !== "none",
+01950:           hitType: analysis.type,
+01951:           hitScore: Number(analysis.score || 0),
+01952:           hitPosition: Number(
+01953:             analysis.position ?? -1
+01954:           ),
+01955:         };
+01956:       });
+01957: 
+01958:     // A timeline garante todos os horarios oficiais.
+01959:     // O registro persistido prevalece quando realmente existe.
+01960:     const rowsByTarget = new Map();
+01961: 
+01962:     for (const row of timelineRows) {
+01963:       const key =
+01964:         `${String(row?.target?.ymd || "")}` +
+01965:         `__${String(row?.target?.hour || "")}`;
+01966: 
+01967:       rowsByTarget.set(key, row);
+01968:     }
+01969: 
+01970:     for (const row of persistedRows) {
+01971:       const key =
+01972:         `${String(row?.target?.ymd || "")}` +
+01973:         `__${String(row?.target?.hour || "")}`;
+01974: 
+01975:       const timelineRow = rowsByTarget.get(key);
+01976: 
+01977:       if (!timelineRow || timelineRow?.result == null) {
+01978:         rowsByTarget.set(key, row);
+01979:         continue;
+01980:       }
+01981: 
+01982:       const resultGrupo = Number(timelineRow.result);
+01983:       const resultMilhar = String(
+01984:         timelineRow?.resultMilhar || ""
+01985:       );
+01986: 
+01987:       const officialPodium = getOfficialPodium(timelineRow);
+01988: 
+01989:       const analysis = analyzeTop3Hit(
+01990:         row?.top3,
+01991:         officialPodium
+01992:       );
+01993: 
+01994:       rowsByTarget.set(key, {
+01995:         ...row,
+01996:         result: resultGrupo,
+01997:         grupo: resultGrupo,
+01998:         animal:
+01999:           timelineRow?.animal ||
+02000:           getAnimalLabel(resultGrupo) ||
+02001:           "",
+02002:         resultMilhar,
+02003:         analysis,
+02004:         hit:
+02005:           analysis.type !== "miss" &&
+02006:           analysis.type !== "none",
+02007:         hitType: analysis.type,
+02008:         hitScore: Number(analysis.score || 0),
+02009:         hitPosition: Number(
+02010:           analysis.position ?? -1
+02011:         ),
+02012:       });
+02013:     }
+02014: 
+02015:     return Array.from(rowsByTarget.values())
+02016:       .sort((a, b) => {
+02017:         const ah = hourBucketToSortValue(
+02018:           a?.target?.hour
+02019:         );
+02020:         const bh = hourBucketToSortValue(
+02021:           b?.target?.hour
+02022:         );
+02023: 
+02024:         return ah - bh;
+02025:       });
+02026:   }, [
+02027:     timeline,
+02028:     historyAnchorYmd,
+02029:     persistedTop3History,
+02030:   ]);
+02031: 
+02032:   const historySummary = useMemo(() => {
+02033:     const validated = historyRows.filter(
+02034:       (item) => item?.result != null
+02035:     );
+02036: 
+02037:     const exact = validated.filter(
+02038:       (item) => item?.hitType === "hit_exact"
+02039:     ).length;
+02040: 
+02041:     const centena = validated.filter(
+02042:       (item) => item?.hitType === "hit_centena"
+02043:     ).length;
+02044: 
+02045:     const grupo = validated.filter(
+02046:       (item) => item?.hitType === "hit_grupo"
+02047:     ).length;
+02048: 
+02049:     const misses = validated.filter(
+02050:       (item) =>
+02051:         item?.hitType === "miss" ||
+02052:         item?.hitType === "none"
+02053:     ).length;
+02054: 
+02055:     const totalScore = validated.reduce(
+02056:       (sum, item) => sum + Number(item?.hitScore || 0),
+02057:       0
+02058:     );
+02059: 
+02060:     const average =
+02061:       validated.length > 0
+02062:         ? totalScore / validated.length
+02063:         : 0;
+02064: 
+02065:     return {
+02066:       total: historyRows.length,
+02067:       validated: validated.length,
+02068:       pending: Math.max(0, historyRows.length - validated.length),
+02069:       exact,
+02070:       centena,
+02071:       grupo,
+02072:       misses,
+02073:       average,
+02074:     };
+02075:   }, [historyRows]);
+02076: 
+02077:   const todayForCalendar = todayYMDLocalView();
+02078:   const selectedHistoryYmd = isYMD(ymdSafe)
+02079:     ? ymdSafe
+02080:     : todayForCalendar;
+02081: 
+02082:   const canGoNext =
+02083:     isYMD(selectedHistoryYmd) &&
+02084:     selectedHistoryYmd < todayForCalendar;
+02085: 
+02086:   const goToHistoryDate = useCallback(
+02087:     (nextYmd) => {
+02088:       if (!isYMD(nextYmd)) return;
+02089:       if (typeof setYmd !== "function") return;
+02090:       setYmd(nextYmd);
+02091:     },
+02092:     [setYmd]
+02093:   );
+02094: 
+02095:   return (
+02096:     <div
+02097:       style={{
+02098:         padding: 16,
+02099:         color: t.text,
+02100:         background: t.bg,
+02101:         minHeight: "100%",
+02102:         "--top3-bg": t.bg,
+02103:         "--top3-panel": t.panel,
+02104:         "--top3-border": t.border,
+02105:         "--top3-text": t.text,
+02106:         "--top3-muted": t.muted,
+02107:         "--top3-accent": t.accent,
+02108:       }}
+02109:     >
+02110:       <style>{`
+02111:         .top3-page{
+02112:           width: 100%;
+02113:           max-width: 1380px;
+02114:           margin: 0 auto;
+02115:           display: grid;
+02116:           gap: 18px;
+02117:         }
+02118: 
+02119:         .top3-shell{
+02120:           background:
+02121:             linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.00)),
+02122:             var(--top3-panel);
+02123:           border: 1px solid var(--top3-border);
+02124:           border-radius: 20px;
+02125:           padding: 18px;
+02126:           box-shadow:
+02127:             0 20px 50px rgba(0,0,0,0.34),
+02128:             inset 0 0 0 1px rgba(255,255,255,0.03);
+02129:         }
+02130: 
+02131:         .top3-header{
+02132:           display:grid;
+02133:           gap:14px;
+02134:         }
+02135: 
+02136:         .top3-header__title{
+02137:           font-weight: 950;
+02138:           font-size: 18px;
+02139:           letter-spacing: 0.2px;
+02140:         }
+02141: 
+02142:         .top3-context{
+02143:           display:grid;
+02144:           gap:6px;
+02145:           color: rgba(255,255,255,0.92);
+02146:           font-size: 13px;
+02147:           line-height: 1.35;
+02148:         }
+02149: 
+02150:         .top3-context b{
+02151:           color: rgba(255,255,255,0.98);
+02152:         }
+02153: 
+02154:         .top3-helper{
+02155:           color: var(--top3-muted);
+02156:           font-size: 13px;
+02157:           line-height: 1.4;
+02158:         }
+02159: 
+02160:         /* TOP3 LOTTERY TABS SINGLE ROW */
+02161:         .pp-tabs{
+02162:           display:flex;
+02163:           gap:8px;
+02164:           flex-wrap:nowrap;
+02165:           align-items:center;
+02166:           max-width:100%;
+02167:           margin-top:2px;
+02168:           overflow-x:auto;
+02169:           overflow-y:hidden;
+02170:           scrollbar-width:none;
+02171:           -webkit-overflow-scrolling:touch;
+02172:         }
+02173: 
+02174:         .pp-tabs::-webkit-scrollbar{
+02175:           display:none;
+02176:         }
+02177: 
+02178:         .pp-tabs > *{
+02179:           flex:0 0 auto;
+02180:         }
+02181: 
+02182:         .pp-tab{
+02183:           border-radius: 999px;
+02184:           padding: 8px 12px;
+02185:           background: rgba(0,0,0,0.35);
+02186:           border: 1px solid rgba(255,255,255,0.12);
+02187:           color: rgba(255,255,255,0.88);
+02188:           font-weight: 900;
+02189:           cursor: pointer;
+02190:           transition: transform .12s ease, box-shadow .18s ease, background .18s ease, border-color .18s ease;
+02191:           white-space: nowrap;
+02192:         }
+02193: 
+02194:         .pp-tab:hover{
+02195:           transform: translateY(-1px);
+02196:           border-color: rgba(201,168,62,0.40);
+02197:           box-shadow: 0 10px 24px rgba(0,0,0,0.35);
+02198:         }
+02199: 
+02200:         .pp-tab[data-active="1"]{
+02201:           background: rgba(201,168,62,0.16);
+02202:           border: 1px solid rgba(201,168,62,0.45);
+02203:           color: rgba(255,255,255,0.94);
+02204:         }
+02205: 
+02206:         .top3-metaGrid,
+02207:         .timeline-slot__metaGrid{
+02208:           display: grid;
+02209:           grid-template-columns: repeat(3, minmax(0, 1fr));
+02210:           gap: 10px;
+02211:         }
+02212: 
+02213:         .top3-metaItem{
+02214:           background: rgba(255,255,255,0.025);
+02215:           border: 1px solid rgba(255,255,255,0.08);
+02216:           border-radius: 14px;
+02217:           padding: 10px 12px;
+02218:           display: grid;
+02219:           gap: 4px;
+02220:           min-width: 0;
+02221:         }
+02222: 
+02223:         .top3-metaItem__label{
+02224:           color: var(--top3-muted);
+02225:           font-size: 11px;
+02226:           font-weight: 900;
+02227:           letter-spacing: 0.9px;
+02228:           text-transform: uppercase;
+02229:         }
+02230: 
+02231:         .top3-metaItem__value{
+02232:           color: var(--top3-text);
+02233:           font-size: 13px;
+02234:           font-weight: 800;
+02235:           line-height: 1.35;
+02236:           word-break: break-word;
+02237:         }
+02238: 
+02239:         .top3-stage{
+02240:           display: grid;
+02241:           gap: 16px;
+02242:         }
+02243: 
+02244:         .top3-heroWrap{
+02245:           width: 100%;
+02246:           max-width: 1120px;
+02247:           margin: 0 auto;
+02248:         }
+02249: 
+02250:         .top3-secondaryRow{
+02251:           width: 100%;
+02252:           max-width: 1120px;
+02253:           margin: 0 auto;
+02254:           display: grid;
+02255:           grid-template-columns: repeat(2, minmax(0, 1fr));
+02256:           gap: 16px;
+02257:           align-items: start;
+02258:           justify-content: center;
+02259:         }
+02260: 
+02261:         .timeline-slot__cards{
+02262:           width: 100%;
+02263:           display: grid;
+02264:           grid-template-columns: repeat(3, minmax(0, 1fr));
+02265:           gap: 14px;
+02266:           align-items: start;
+02267:         }
+02268: 
+02269:         .timeline-compact{
+02270:           margin-top: 2px;
+02271:         }
+02272: 
+02273:         .timeline-compact__grid{
+02274:           display: grid;
+02275:           grid-template-columns: minmax(0, 1.7fr) minmax(220px, 0.8fr) minmax(240px, 1fr);
+02276:           gap: 12px;
+02277:           align-items: stretch;
+02278:         }
+02279: 
+02280:         .timeline-compact__predictions,
+02281:         .timeline-compact__result,
+02282:         .timeline-compact__performance{
+02283:           border: 1px solid rgba(255,255,255,0.10);
+02284:           background: rgba(255,255,255,0.025);
+02285:           border-radius: 16px;
+02286:           padding: 12px;
+02287:           min-width: 0;
+02288:           transition: all 0.2s ease;
+02289:         }
+02290: 
+02291:         .timeline-compact__performanceBadge--miss ~ *{
+02292:           opacity: 0.92;
+02293:         }
+02294: 
+02295:         .timeline-compact__predictions{
+02296:           display: grid;
+02297:           grid-template-columns: repeat(3, minmax(0, 1fr));
+02298:           gap: 10px;
+02299:         }
+02300: 
+02301:         .timeline-compact__pick{
+02302:           display: grid;
+02303:           grid-template-columns: 28px 44px minmax(0, 1fr);
+02304:           gap: 10px;
+02305:           align-items: center;
+02306:           min-width: 0;
+02307:           padding: 8px;
+02308:           border-radius: 14px;
+02309:           background:
+02310:             linear-gradient(180deg, rgba(201,168,62,0.08), rgba(255,255,255,0.02)),
+02311:             rgba(255,255,255,0.02);
+02312:           border: 1px solid rgba(201,168,62,0.14);
+02313:         }
+02314: 
+02315:         .timeline-compact__pickRank{
+02316:           width: 28px;
+02317:           height: 28px;
+02318:           display: grid;
+02319:           place-items: center;
+02320:           border-radius: 9px;
+02321:           background: rgba(201,168,62,0.16);
+02322:           border: 1px solid rgba(201,168,62,0.30);
+02323:           color: var(--top3-accent);
+02324:           font-size: 12px;
+02325:           font-weight: 1000;
+02326:         }
+02327: 
+02328:         .timeline-compact__pickText{
+02329:           display: grid;
+02330:           gap: 2px;
+02331:           min-width: 0;
+02332:         }
+02333: 
+02334:         .timeline-compact__pickGroup{
+02335:           font-size: 11px;
+02336:           font-weight: 900;
+02337:           color: var(--top3-muted);
+02338:           letter-spacing: 0.6px;
+02339:         }
+02340: 
+02341:         .timeline-compact__pickAnimal{
+02342:           font-size: 15px;
+02343:           font-weight: 1000;
+02344:           color: var(--top3-text);
+02345:           text-transform: uppercase;
+02346:           line-height: 1.05;
+02347:           word-break: break-word;
+02348:         }
+02349: 
+02350:         .timeline-compact__result{
+02351:           display: grid;
+02352:           gap: 10px;
+02353:           align-content: start;
+02354:         }
+02355: 
+02356:         .timeline-compact__resultLabel{
+02357:           font-size: 11px;
+02358:           font-weight: 1000;
+02359:           letter-spacing: 0.9px;
+02360:           text-transform: uppercase;
+02361:           color: var(--top3-muted);
+02362:         }
+02363: 
+02364:         .timeline-compact__resultBox{
+02365:           display: flex;
+02366:           align-items: center;
+02367:           gap: 12px;
+02368:           min-width: 0;
+02369:           padding: 10px 12px;
+02370:           border-radius: 14px;
+02371:           background:
+02372:             linear-gradient(180deg, rgba(201,168,62,0.10), rgba(255,255,255,0.02)),
+02373:             rgba(255,255,255,0.04);
+02374:           border: 1px solid rgba(201,168,62,0.18);
+02375:           box-shadow: 0 8px 20px rgba(0,0,0,0.35);
+02376:         }
+02377: 
+02378:         .timeline-compact__resultText{
+02379:           display: grid;
+02380:           gap: 2px;
+02381:           min-width: 0;
+02382:         }
+02383: 
+02384:         .timeline-compact__resultGroup{
+02385:           font-size: 20px;
+02386:           font-weight: 1000;
+02387:           line-height: 1;
+02388:           color: var(--top3-accent);
+02389:           text-shadow: 0 0 8px rgba(201,168,62,0.35);
+02390:         }
+02391: 
+02392:         .timeline-compact__resultAnimal{
+02393:           font-size: 12px;
+02394:           color: var(--top3-muted);
+02395:           text-transform: uppercase;
+02396:           letter-spacing: 0.5px;
+02397:         }
+02398: 
+02399:         .timeline-compact__resultPending{
+02400:           font-size: 14px;
+02401:           font-weight: 1000;
+02402:           color: var(--top3-muted);
+02403:         }
+02404: 
+02405:         .timeline-compact__performance{
+02406:           display: grid;
+02407:           gap: 10px;
+02408:           align-content: start;
+02409:         }
+02410: 
+02411:         .timeline-compact__performanceBadge{
+02412:           width: fit-content;
+02413:           max-width: 100%;
+02414:           border-radius: 999px;
+02415:           padding: 10px 14px;
+02416:           font-size: 12px;
+02417:           font-weight: 1000;
+02418:           letter-spacing: 0.6px;
+02419:           border: 1px solid rgba(255,255,255,0.16);
+02420:           box-shadow: 0 12px 28px rgba(0,0,0,0.35);
+02421:           white-space: nowrap;
+02422:         }
+02423: 
+02424:         .timeline-compact__performanceBadge--hit{
+02425:           background: linear-gradient(180deg, rgba(201,168,62,0.28), rgba(201,168,62,0.12));
+02426:           color: #fff4c4;
+02427:           border-color: rgba(201,168,62,0.5);
+02428:           box-shadow: 0 0 16px rgba(201,168,62,0.35);
+02429:         }
+02430: 
+02431:         .timeline-compact__performanceBadge--miss{
+02432:           background: linear-gradient(180deg, rgba(220,70,70,0.28), rgba(120,20,20,0.18));
+02433:           color: #ffe0e0;
+02434:           border-color: rgba(220, 70, 70, 0.6);
+02435:           box-shadow: 0 0 18px rgba(220,70,70,0.35);
+02436:         }
+02437: 
+02438:         .timeline-compact__performanceBadge--pending{
+02439:           background: rgba(201,168,62,0.16);
+02440:           color: rgba(255,255,255,0.92);
+02441:           border-color: rgba(201,168,62,0.35);
+02442:         }
+02443: 
+02444:         .timeline-compact__performanceText{
+02445:           font-size: 14px;
+02446:           font-weight: 900;
+02447:           line-height: 1.4;
+02448:           color: var(--top3-text);
+02449:         }
+02450: 
+02451:         .timeline-slot__header{
+02452:           display:flex;
+02453:           align-items:flex-start;
+02454:           justify-content:space-between;
+02455:           gap:14px;
+02456:           margin-bottom: 14px;
+02457:         }
+02458: 
+02459:         .timeline-slot__title{
+02460:           font-weight: 1000;
+02461:           font-size: 22px;
+02462:           letter-spacing: 0.2px;
+02463:           line-height: 1;
+02464:         }
+02465: 
+02466:         .timeline-slot__badge{
+02467:           border-radius: 999px;
+02468:           padding: 10px 14px;
+02469:           font-weight: 1000;
+02470:           font-size: 12px;
+02471:           letter-spacing: 0.55px;
+02472:           border: 1px solid rgba(255,255,255,0.14);
+02473:           white-space: nowrap;
+02474:           box-shadow: 0 10px 24px rgba(0,0,0,0.28);
+02475:         }
+02476: 
+02477:         .timeline-slot__badge--hit{
+02478:           background: rgba(38, 180, 90, 0.18);
+02479:           color: #b8ffd0;
+02480:           border-color: rgba(38, 180, 90, 0.35);
+02481:         }
+02482: 
+02483:         .timeline-slot__badge--miss{
+02484:           background: rgba(220, 70, 70, 0.18);
+02485:           color: #ffd0d0;
+02486:           border-color: rgba(220, 70, 70, 0.35);
+02487:         }
+02488: 
+02489:         .timeline-slot__badge--pending{
+02490:           background: rgba(201,168,62,0.16);
+02491:           color: rgba(255,255,255,0.92);
+02492:           border-color: rgba(201,168,62,0.35);
+02493:         }
+02494: 
+02495:         .timeline-slot__resultBox{
+02496:           margin-top: 12px;
+02497:           display:flex;
+02498:           align-items:center;
+02499:           gap:14px;
+02500:           padding: 12px 14px;
+02501:           border-radius: 16px;
+02502:           background:
+02503:             linear-gradient(180deg, rgba(201,168,62,0.08), rgba(255,255,255,0.02)),
+02504:             rgba(255,255,255,0.03);
+02505:           border: 1px solid rgba(255,255,255,0.09);
+02506:           box-shadow: inset 0 0 0 1px rgba(255,255,255,0.02);
+02507:         }
+02508: 
+02509:         .timeline-slot__resultText{
+02510:           display:grid;
+02511:           gap:2px;
+02512:         }
+02513: 
+02514:         .timeline-slot__resultGroup{
+02515:           font-weight: 1000;
+02516:           font-size: 18px;
+02517:           line-height: 1;
+02518:         }
+02519: 
+02520:         .timeline-slot__resultAnimal{
+02521:           font-size: 12px;
+02522:           color: var(--top3-muted);
+02523:           text-transform: uppercase;
+02524:           letter-spacing: 0.6px;
+02525:         }
+02526: 
+02527:         .timeline-slot__insightBox{
+02528:           margin-top: 12px;
+02529:           padding: 14px 16px;
+02530:           border-radius: 16px;
+02531:           background:
+02532:             linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.015)),
+02533:             rgba(255,255,255,0.025);
+02534:           border: 1px solid rgba(255,255,255,0.08);
+02535:           display: grid;
+02536:           gap: 6px;
+02537:         }
+02538: 
+02539:         .timeline-slot__insightTitle{
+02540:           font-size: 11px;
+02541:           font-weight: 1000;
+02542:           letter-spacing: 1px;
+02543:           text-transform: uppercase;
+02544:           color: var(--top3-accent);
+02545:         }
+02546: 
+02547:         .timeline-slot__insightText{
+02548:           font-size: 14px;
+02549:           font-weight: 900;
+02550:           line-height: 1.4;
+02551:           color: var(--top3-text);
+02552:         }
+02553: 
+02554:         .top3-card{
+02555:           position: relative;
+02556:           background:
+02557:             radial-gradient(1100px 280px at 50% 0%, rgba(201,168,62,0.08), transparent 55%),
+02558:             linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.00)),
+02559:             var(--top3-panel);
+02560:           border: 1px solid var(--top3-border);
+02561:           border-radius: 20px;
+02562:           padding: 16px;
+02563:           display: grid;
+02564:           gap: 14px;
+02565:           box-shadow:
+02566:             0 18px 44px rgba(0,0,0,0.30),
+02567:             inset 0 0 0 1px rgba(255,255,255,0.03);
+02568:           overflow: hidden;
+02569:         }
+02570: 
+02571:         .top3-card::after{
+02572:           content: "";
+02573:           position: absolute;
+02574:           inset: 0;
+02575:           border-radius: inherit;
+02576:           pointer-events: none;
+02577:           box-shadow: inset 0 0 0 1px rgba(201,168,62,0.05);
+02578:         }
+02579: 
+02580:         .top3-card--hero{
+02581:           padding: 18px;
+02582:         }
+02583: 
+02584:         .top3-card__topline{
+02585:           display:flex;
+02586:           align-items:center;
+02587:           gap:10px;
+02588:         }
+02589: 
+02590:         .top3-rankBadge{
+02591:           width: 30px;
+02592:           height: 30px;
+02593:           border-radius: 10px;
+02594:           display: grid;
+02595:           place-items: center;
+02596:           background: rgba(201,168,62,0.15);
+02597:           border: 1px solid rgba(201,168,62,0.35);
+02598:           font-weight: 950;
+02599:           color: var(--top3-accent);
+02600:           flex: 0 0 auto;
+02601:         }
+02602: 
+02603:         .top3-card__label{
+02604:           font-weight: 950;
+02605:           letter-spacing: 0.4px;
+02606:           font-size: 14px;
+02607:         }
+02608: 
+02609:         .top3-card__summary{
+02610:           display:grid;
+02611:           grid-template-columns: minmax(0, 1fr) 170px;
+02612:           gap: 14px;
+02613:           align-items: center;
+02614:         }
+02615: 
+02616:         .top3-card--hero .top3-card__summary{
+02617:           grid-template-columns: minmax(0, 1fr) 190px;
+02618:         }
+02619: 
+02620:         .top3-card__identity{
+02621:           display:flex;
+02622:           align-items:center;
+02623:           gap:14px;
+02624:           min-width: 0;
+02625:         }
+02626: 
+02627:         .top3-card__identityText{
+02628:           display:grid;
+02629:           gap: 6px;
+02630:           min-width: 0;
+02631:         }
+02632: 
+02633:         .top3-card__group{
+02634:           font-size: 11px;
+02635:           color: var(--top3-muted);
+02636:           font-weight: 900;
+02637:           letter-spacing: 1px;
+02638:         }
+02639: 
+02640:         .top3-card__animal{
+02641:           font-size: 24px;
+02642:           font-weight: 950;
+02643:           letter-spacing: 0.6px;
+02644:           line-height: 1.05;
+02645:           word-break: break-word;
+02646:         }
+02647: 
+02648:         .top3-card--secondary .top3-card__animal{
+02649:           font-size: 20px;
+02650:         }
+02651: 
+02652:         .top3-card__confidence{
+02653:           justify-self: end;
+02654:           width: 100%;
+02655:           max-width: 190px;
+02656:           text-align: right;
+02657:           display:grid;
+02658:           gap: 6px;
+02659:         }
+02660: 
+02661:         .top3-card__confidenceLabel{
+02662:           color: var(--top3-muted);
+02663:           font-size: 11px;
+02664:           font-weight: 900;
+02665:           letter-spacing: 0.9px;
+02666:         }
+02667: 
+02668:         .top3-card__confidenceValue{
+02669:           font-size: 30px;
+02670:           font-weight: 950;
+02671:           color: var(--top3-accent);
+02672:           line-height: 1;
+02673:         }
+02674: 
+02675:         .top3-card--secondary .top3-card__confidenceValue{
+02676:           font-size: 26px;
+02677:         }
+02678: 
+02679:         .top3-card__confidenceBar{
+02680:           height: 7px;
+02681:           border-radius: 999px;
+02682:           background: rgba(255,255,255,0.10);
+02683:           overflow: hidden;
+02684:         }
+02685: 
+02686:         .top3-card__confidenceBarFill{
+02687:           height: 100%;
+02688:           border-radius: inherit;
+02689:           opacity: 0.78;
+02690:         }
+02691: 
+02692:         .top3-card__body{
+02693:           border-top: 1px solid rgba(255,255,255,0.07);
+02694:           padding-top: 12px;
+02695:           display:grid;
+02696:           gap: 10px;
+02697:         }
+02698: 
+02699:         .top3-card__actions{
+02700:           display:flex;
+02701:           align-items:center;
+02702:           justify-content:space-between;
+02703:           gap:12px;
+02704:         }
+02705: 
+02706:         .top3-card__sectionTitle{
+02707:           font-weight: 900;
+02708:           font-size: 13px;
+02709:           color: rgba(255,255,255,0.92);
+02710:           letter-spacing: 0.2px;
+02711:         }
+02712: 
+02713:         .pp-btn{
+02714:           border-radius: 999px;
+02715:           padding: 9px 12px;
+02716:           background: rgba(201,168,62,0.16);
+02717:           border: 1px solid rgba(201,168,62,0.35);
+02718:           color: rgba(255,255,255,0.92);
+02719:           font-weight: 950;
+02720:           cursor: pointer;
+02721:           white-space: nowrap;
+02722:           transition: transform .12s ease, box-shadow .18s ease, background .18s ease, border-color .18s ease;
+02723:           box-shadow: 0 0 0 rgba(201,168,62,0.0);
+02724:         }
+02725: 
+02726:         .pp-btn:hover{
+02727:           transform: translateY(-1px);
+02728:           background: rgba(201,168,62,0.22);
+02729:           border-color: rgba(201,168,62,0.48);
+02730:           box-shadow: 0 10px 24px rgba(0,0,0,0.35), 0 0 0 1px rgba(201,168,62,0.10);
+02731:         }
+02732: 
+02733:         .pp-btn:active{
+02734:           transform: translateY(0px);
+02735:         }
+02736: 
+02737:         .pp-chipRow{
+02738:           display:grid;
+02739:           grid-template-columns: repeat(4, minmax(0, 1fr));
+02740:           gap: 10px;
+02741:           margin-top: 2px;
+02742:         }
+02743: 
+02744:         .pp-chip{
+02745:           display:flex;
+02746:           justify-content:center;
+02747:           align-items:center;
+02748:           min-height: 28px;
+02749:           border-radius: 999px;
+02750:           font-size: 12px;
+02751:           font-weight: 950;
+02752:           letter-spacing: 1.4px;
+02753:           color: rgba(255,255,255,0.90);
+02754:           background: linear-gradient(180deg, rgba(201,168,62,0.22), rgba(201,168,62,0.10));
+02755:           border: 1px solid rgba(201,168,62,0.35);
+02756:           box-shadow: 0 10px 26px rgba(0,0,0,0.25);
+02757:         }
+02758: 
+02759:         .pp-gridBox{
+02760:           position: relative;
+02761:           display: grid;
+02762:           gap: 8px;
+02763:           padding: 12px;
+02764:           border-radius: 16px;
+02765:           background: radial-gradient(1200px 260px at 50% 0%, rgba(201,168,62,0.10), rgba(0,0,0,0.28));
+02766:           border: 1px solid rgba(201,168,62,0.22);
+02767:           overflow: hidden;
+02768:         }
+02769: 
+02770:         .pp-gridBox:before{
+02771:           content:"";
+02772:           position:absolute;
+02773:           inset:-120px -60px auto -60px;
+02774:           height:160px;
+02775:           background: radial-gradient(closest-side, rgba(201,168,62,0.14), rgba(201,168,62,0.0));
+02776:           pointer-events:none;
+02777:           filter: blur(1px);
+02778:         }
+02779: 
+02780:         .pp-row{
+02781:           display:grid;
+02782:           grid-template-columns: repeat(4, minmax(0, 1fr));
+02783:           gap: 10px;
+02784:         }
+02785: 
+02786:         .pp-pill{
+02787:           position: relative;
+02788:           padding: 11px 10px;
+02789:           border-radius: 14px;
+02790:           text-align:center;
+02791:           font-weight: 1000;
+02792:           letter-spacing: 1.4px;
+02793:           color: rgba(255,255,255,0.92);
+02794:           user-select: text;
+02795:           transition: transform .10s ease, box-shadow .18s ease, background .18s ease, border-color .18s ease, opacity .18s ease;
+02796:           background: linear-gradient(180deg, rgba(201,168,62,0.14), rgba(201,168,62,0.08));
+02797:           border: 1px solid rgba(201,168,62,0.28);
+02798:           box-shadow: 0 10px 26px rgba(0,0,0,0.24);
+02799:           min-width: 0;
+02800:         }
+02801: 
+02802:         .pp-pill[data-empty="1"]{
+02803:           opacity: .30;
+02804:           cursor: default;
+02805:           box-shadow: none;
+02806:         }
+02807: 
+02808:         .pp-pill:not([data-empty="1"]){
+02809:           cursor:pointer;
+02810:         }
+02811: 
+02812:         .pp-pill:not([data-empty="1"]):hover{
+02813:           transform: translateY(-1px);
+02814:           border-color: rgba(201,168,62,0.52);
+02815:           background: linear-gradient(180deg, rgba(201,168,62,0.22), rgba(201,168,62,0.10));
+02816:           box-shadow: 0 16px 34px rgba(0,0,0,0.34), 0 0 0 1px rgba(201,168,62,0.10);
+02817:         }
+02818: 
+02819:         .pp-pill:not([data-empty="1"]):active{
+02820:           transform: translateY(0px);
+02821:         }
+02822: 
+02823:         .pp-copiedBadge{
+02824:           position:absolute;
+02825:           right: 8px;
+02826:           top: 8px;
+02827:           font-size: 10px;
+02828:           font-weight: 900;
+02829:           color: rgba(0,0,0,0.92);
+02830:           background: rgba(201,168,62,0.92);
+02831:           padding: 4px 7px;
+02832:           border-radius: 999px;
+02833:           box-shadow: 0 10px 20px rgba(0,0,0,0.35);
+02834:         }
+02835: 
+02836:         .top3-empty{
+02837:           color: var(--top3-muted);
+02838:           padding: 6px 0;
+02839:         }
+02840: 
+02841:         .top3-error{
+02842:           color: #ff6b6b;
+02843:           font-weight: 800;
+02844:           padding: 6px 0;
+02845:         }
+02846: 
+02847:         .top3-historyToolbar{
+02848:           display: grid;
+02849:           grid-template-columns: auto minmax(190px, 260px) auto auto;
+02850:           gap: 10px;
+02851:           align-items: center;
+02852:           margin-top: 14px;
+02853:         }
+02854: 
+02855:         .top3-historyDate{
+02856:           width: 100%;
+02857:           min-height: 42px;
+02858:           border-radius: 12px;
+02859:           border: 1px solid rgba(201,168,62,0.35);
+02860:           background: rgba(0,0,0,0.38);
+02861:           color: var(--top3-text);
+02862:           padding: 9px 12px;
+02863:           font-size: 14px;
+02864:           font-weight: 900;
+02865:           color-scheme: dark;
+02866:         }
+02867: 
+02868:         .top3-historySummary{
+02869:           display: grid;
+02870:           grid-template-columns: repeat(6, minmax(0, 1fr));
+02871:           gap: 10px;
+02872:           margin-top: 14px;
+02873:         }
+02874: 
+02875:         .top3-historyMetric{
+02876:           border-radius: 14px;
+02877:           border: 1px solid rgba(255,255,255,0.08);
+02878:           background: rgba(255,255,255,0.025);
+02879:           padding: 11px 12px;
+02880:           display: grid;
+02881:           gap: 4px;
+02882:         }
+02883: 
+02884:         .top3-historyMetric__label{
+02885:           color: var(--top3-muted);
+02886:           font-size: 10px;
+02887:           font-weight: 900;
+02888:           letter-spacing: 0.8px;
+02889:           text-transform: uppercase;
+02890:         }
+02891: 
+02892:         .top3-historyMetric__value{
+02893:           color: var(--top3-text);
+02894:           font-size: 18px;
+02895:           font-weight: 1000;
+02896:         }
+02897: 
+02898:         .top3-historyRow{
+02899:           display:grid;
+02900:           grid-template-columns: 160px 1fr 220px 56px;
+02901:           align-items:center;
+02902:           gap: 10px;
+02903:           padding: 8px 10px;
+02904:           border-radius: 12px;
+02905:           background: rgba(255,255,255,0.03);
+02906:           border: 1px solid rgba(255,255,255,0.06);
+02907:           font-size: 12px;
+02908:         }
+02909: 
+02910:         .top3-historyResult{
+02911:           display:flex;
+02912:           align-items:center;
+02913:           gap:10px;
+02914:           min-width:0;
+02915:         }
+02916: 
+02917:         .top3-historyResultText{
+02918:           display:grid;
+02919:           gap:2px;
+02920:           min-width:0;
+02921:         }
+02922: 
+02923:         .top3-historyResultGroup{
+02924:           font-weight:900;
+02925:         }
+02926: 
+02927:         .top3-historyResultAnimal{
+02928:           font-size:10px;
+02929:           color: var(--top3-muted);
+02930:           text-transform: uppercase;
+02931:           white-space: nowrap;
+02932:           overflow: hidden;
+02933:           text-overflow: ellipsis;
+02934:           letter-spacing: 0.5px;
+02935:         }
+02936: 
+02937:         @media (max-width: 1180px){
+02938:           .top3-secondaryRow{
+02939:             max-width: 980px;
+02940:           }
+02941: 
+02942:           .timeline-slot__cards{
+02943:             grid-template-columns: 1fr;
+02944:           }
+02945: 
+02946:           .timeline-compact__grid{
+02947:             grid-template-columns: 1fr;
+02948:           }
+02949: 
+02950:           .timeline-compact__predictions{
+02951:             grid-template-columns: 1fr;
+02952:           }
+02953:         }
+02954: 
+02955:         @media (max-width: 980px){
+02956:           .top3-page{
+02957:             gap: 14px;
+02958:           }
+02959: 
+02960:           .top3-shell{
+02961:             padding: 14px;
+02962:             border-radius: 18px;
+02963:           }
+02964: 
+02965:           .top3-metaGrid,
+02966:           .timeline-slot__metaGrid{
+02967:             grid-template-columns: 1fr 1fr;
+02968:           }
+02969: 
+02970:           .top3-heroWrap,
+02971:           .top3-secondaryRow{
+02972:             max-width: none;
+02973:           }
+02974: 
+02975:           .top3-secondaryRow{
+02976:             grid-template-columns: 1fr;
+02977:             gap: 14px;
+02978:           }
+02979: 
+02980:           .top3-card,
+02981:           .top3-card--hero{
+02982:             padding: 14px;
+02983:             border-radius: 18px;
+02984:           }
+02985: 
+02986:           .top3-card__summary,
+02987:           .top3-card--hero .top3-card__summary{
+02988:             grid-template-columns: 1fr;
+02989:             gap: 12px;
+02990:           }
+02991: 
+02992:           .top3-card__confidence{
+02993:             justify-self: stretch;
+02994:             text-align: left;
+02995:             max-width: none;
+02996:           }
+02997: 
+02998:           .top3-card__confidenceValue{
+02999:             font-size: 28px;
+03000:           }
+03001: 
+03002:           .top3-card__actions{
+03003:             align-items: stretch;
+03004:             flex-direction: column;
+03005:           }
+03006: 
+03007:           .pp-btn{
+03008:             width: 100%;
+03009:           }
+03010: 
+03011:           .top3-historyToolbar{
+03012:             grid-template-columns: 1fr 1fr;
+03013:           }
+03014: 
+03015:           .top3-historyDate{
+03016:             grid-column: 1 / -1;
+03017:           }
+03018: 
+03019:           .top3-historySummary{
+03020:             grid-template-columns: repeat(3, minmax(0, 1fr));
+03021:           }
+03022: 
+03023:           .top3-historyRow{
+03024:             grid-template-columns: 1fr;
+03025:             align-items:start;
+03026:           }
+03027: 
+03028:           .timeline-slot__header{
+03029:             flex-direction: column;
+03030:             align-items: flex-start;
+03031:           }
+03032:         }
+03033: 
+03034:         @media (max-width: 640px){
+03035:           .timeline-compact__pick{
+03036:             grid-template-columns: 26px 40px minmax(0, 1fr);
+03037:             gap: 8px;
+03038:             padding: 8px;
+03039:           }
+03040: 
+03041:           .timeline-compact__pickRank{
+03042:             width: 26px;
+03043:             height: 26px;
+03044:             border-radius: 8px;
+03045:           }
+03046: 
+03047:           .timeline-compact__pickAnimal{
+03048:             font-size: 14px;
+03049:           }
+03050: 
+03051:           .timeline-compact__resultGroup{
+03052:             font-size: 16px;
+03053:           }
+03054: 
+03055:           .timeline-compact__performanceText{
+03056:             font-size: 13px;
+03057:           }
+03058: 
+03059:           .top3-page{
+03060:             gap: 12px;
+03061:           }
+03062: 
+03063:           .top3-shell{
+03064:             padding: 12px;
+03065:             border-radius: 16px;
+03066:           }
+03067: 
+03068:           .top3-header__title,
+03069:           .timeline-slot__title{
+03070:             font-size: 17px;
+03071:           }
+03072: 
+03073:           .top3-card__topline{
+03074:             gap: 8px;
+03075:           }
+03076: 
+03077:           .top3-rankBadge{
+03078:             width: 28px;
+03079:             height: 28px;
+03080:             border-radius: 9px;
+03081:           }
+03082: 
+03083:           .top3-card__identity{
+03084:             gap: 10px;
+03085:             align-items: center;
+03086:           }
+03087: 
+03088:           .top3-card__animal{
+03089:             font-size: 18px;
+03090:             letter-spacing: 0.35px;
+03091:           }
+03092: 
+03093:           .top3-card--secondary .top3-card__animal{
+03094:             font-size: 18px;
+03095:           }
+03096: 
+03097:           .top3-card__confidenceValue,
+03098:           .top3-card--secondary .top3-card__confidenceValue{
+03099:             font-size: 24px;
+03100:           }
+03101: 
+03102:           .pp-chipRow{
+03103:             grid-template-columns: repeat(2, minmax(0, 1fr));
+03104:           }
+03105: 
+03106:           .pp-row{
+03107:             grid-template-columns: repeat(2, minmax(0, 1fr));
+03108:           }
+03109: 
+03110:           .pp-pill{
+03111:             padding: 10px 8px;
+03112:             font-size: 13px;
+03113:             letter-spacing: 1px;
+03114:           }
+03115: 
+03116:           .pp-copiedBadge{
+03117:             right: 6px;
+03118:             top: 6px;
+03119:             font-size: 9px;
+03120:             padding: 3px 6px;
+03121:           }
+03122: 
+03123:           .top3-metaGrid,
+03124:           .timeline-slot__metaGrid{
+03125:             grid-template-columns: 1fr;
+03126:           }
+03127: 
+03128:           .top3-historyToolbar{
+03129:             grid-template-columns: 1fr 1fr;
+03130:           }
+03131: 
+03132:           .top3-historySummary{
+03133:             grid-template-columns: repeat(2, minmax(0, 1fr));
+03134:           }
+03135:         }
+03136: 
+03137:         @media (max-width: 420px){
+03138:           .top3-shell{
+03139:             padding: 10px;
+03140:           }
+03141: 
+03142:           .top3-card,
+03143:           .top3-card--hero{
+03144:             padding: 12px;
+03145:           }
+03146: 
+03147:           .top3-card__group{
+03148:             font-size: 10px;
+03149:           }
+03150: 
+03151:           .top3-card__animal{
+03152:             font-size: 16px;
+03153:           }
+03154: 
+03155:           .top3-card__confidenceValue{
+03156:             font-size: 22px;
+03157:           }
+03158: 
+03159:           .pp-gridBox{
+03160:             padding: 10px;
+03161:             gap: 7px;
+03162:           }
+03163: 
+03164:           .pp-row,
+03165:           .pp-chipRow{
+03166:             gap: 8px;
+03167:           }
+03168:         }
+03169: 
+03170:         /* TOP3 PREMIUM CRLF */
+03171:         .top3-stage--predictions,
+03172:         .top3-stage--loading{
+03173:           grid-template-columns: repeat(3, minmax(0, 1fr));
+03174:           align-items: stretch;
+03175:         }
+03176: 
+03177:         .top3-stage--predictions > .top3-card,
+03178:         .top3-stage--loading > .top3-card{
+03179:           width: 100%;
+03180:           min-width: 0;
+03181:           height: 100%;
+03182:         }
+03183: 
+03184:         .top3-loadingCard{
+03185:           display: grid;
+03186:           align-content: start;
+03187:           gap: 16px;
+03188:           min-height: 330px;
+03189:         }
+03190: 
+03191:         .top3-loadingCard__header,
+03192:         .top3-loadingCard__identity{
+03193:           display: flex;
+03194:           align-items: center;
+03195:           gap: 12px;
+03196:         }
+03197: 
+03198:         .top3-loadingCard__lines{
+03199:           display: grid;
+03200:           flex: 1;
+03201:           min-width: 0;
+03202:           gap: 10px;
+03203:         }
+03204: 
+03205:         .top3-skeleton{
+03206:           position: relative;
+03207:           display: block;
+03208:           overflow: hidden;
+03209:           max-width: 100%;
+03210:           border-radius: 999px;
+03211:           background: rgba(255,255,255,0.08);
+03212:         }
+03213: 
+03214:         .top3-skeleton::after{
+03215:           content: "";
+03216:           position: absolute;
+03217:           inset: 0;
+03218:           transform: translateX(-100%);
+03219:           background: linear-gradient(
+03220:             90deg,
+03221:             transparent,
+03222:             rgba(201,168,62,0.22),
+03223:             transparent
+03224:           );
+03225:           animation: top3PremiumSkeleton 1.2s infinite;
+03226:         }
+03227: 
+03228:         .top3-skeleton--badge{
+03229:           width: 30px;
+03230:           height: 30px;
+03231:           flex: 0 0 auto;
+03232:           border-radius: 9px;
+03233:         }
+03234: 
+03235:         .top3-skeleton--title{
+03236:           width: 120px;
+03237:           height: 14px;
+03238:         }
+03239: 
+03240:         .top3-skeleton--image{
+03241:           width: 62px;
+03242:           height: 62px;
+03243:           flex: 0 0 auto;
+03244:           border-radius: 16px;
+03245:         }
+03246: 
+03247:         .top3-skeleton--short{
+03248:           width: min(125px, 55%);
+03249:           height: 13px;
+03250:         }
+03251: 
+03252:         .top3-skeleton--animal{
+03253:           width: min(185px, 82%);
+03254:           height: 24px;
+03255:         }
+03256: 
+03257:         .top3-skeleton--block{
+03258:           width: 100%;
+03259:           height: 76px;
+03260:           border-radius: 14px;
+03261:         }
+03262: 
+03263:         @keyframes top3PremiumSkeleton{
+03264:           100%{
+03265:             transform: translateX(100%);
+03266:           }
+03267:         }
+03268: 
+03269:         @media (max-width: 980px){
+03270:           .top3-stage--predictions,
+03271:           .top3-stage--loading{
+03272:             grid-template-columns: repeat(2, minmax(0, 1fr));
+03273:           }
+03274: 
+03275:           .top3-stage--predictions > .top3-card:first-child{
+03276:             grid-column: 1 / -1;
+03277:           }
+03278:         }
+03279: 
+03280:         @media (max-width: 640px){
+03281:           .top3-stage--predictions,
+03282:           .top3-stage--loading{
+03283:             grid-template-columns: 1fr;
+03284:           }
+03285: 
+03286:           .top3-stage--predictions > .top3-card:first-child{
+03287:             grid-column: auto;
+03288:           }
+03289: 
+03290:           .top3-card__actions{
+03291:             display: grid;
+03292:             grid-template-columns: repeat(2, minmax(0, 1fr));
+03293:           }
+03294: 
+03295:           .top3-card__actions .pp-btn{
+03296:             width: 100%;
+03297:             min-width: 0;
+03298:           }
+03299: 
+03300:           .top3-metaGrid{
+03301:             grid-template-columns: repeat(2, minmax(0, 1fr));
+03302:           }
+03303: 
+03304:           .timeline-slot__metaGrid{
+03305:             grid-template-columns: 1fr;
+03306:           }
+03307:         }
+03308: 
+03309:         @media (max-width: 420px){
+03310:           .top3-card__actions,
+03311:           .top3-metaGrid{
+03312:             grid-template-columns: 1fr;
+03313:           }
+03314:         }
+03315: 
+03316:         @media (prefers-reduced-motion: reduce){
+03317:           .top3-skeleton::after{
+03318:             animation: none;
+03319:           }
+03320:         }
+03321: 
+03322: 
+03323:         @media (max-width: 640px){
+03324:           .pp-tabs{
+03325:             gap:6px;
+03326:           }
+03327: 
+03328:           .pp-tab{
+03329:             padding:8px 10px;
+03330:             font-size:13px;
+03331:           }
+03332:         }
+03333: 
+03334:       `}</style>
+03335: 
+03336:       <div className="top3-page">
+03337:         <section className="top3-shell">
+03338:           <div className="top3-header">
+03339:             <div className="top3-header__title">TOP3 — Próximo sorteio</div>
+03340: 
+03341:             <div className="top3-context">
+03342:               <div><b>Base:</b> {headerBase}</div>
+03343:               <div><b>Previsão:</b> {headerForecast}</div>
+03344:               <div><b>Transição:</b> {headerTransition}</div>
+03345:             </div>
+03346: 
+03347:             <div className="top3-helper">
+03348:               Previsão baseada na transição: <b>{meta.prev}</b> → <b>{meta.last}</b>
+03349:             </div>
+03350: 
+03351:             <div className="pp-tabs">
+03352:               {lotOptions.map((op) => {
+03353:                 const k = String(op?.value || "").toUpperCase();
+03354:                 const active = k === curLot ? "1" : "0";
+03355:                 const canSet = typeof setLotteryKey === "function" && !!k;
+03356: 
+03357:                 return (
+03358:                   <button
+03359:                     key={k || op?.label}
+03360:                     type="button"
+03361:                     className="pp-tab"
+03362:                     data-active={active}
+03363:                     onClick={() => {
+03364:                       if (!canSet) return;
+03365:                       setLotteryKey(k);
+03366:                     }}
+03367:                     title={op?.label || k}
+03368:                     style={{
+03369:                       opacity: canSet ? 1 : 0.55,
+03370:                       cursor: canSet ? "pointer" : "default",
+03371:                     }}
+03372:                   >
+03373:                     {op?.label || k}
+03374:                   </button>
+03375:                 );
+03376:               })}
+03377:             </div>
+03378: 
+03379:             <div className="top3-metaGrid">
+03380:               <div className="top3-metaItem">
+03381:                 <div className="top3-metaItem__label">Último</div>
+03382:                 <div className="top3-metaItem__value">{meta.last}</div>
+03383:               </div>
+03384: 
+03385:               <div className="top3-metaItem">
+03386:                 <div className="top3-metaItem__label">Anterior</div>
+03387:                 <div className="top3-metaItem__value">{meta.prev}</div>
+03388:               </div>
+03389: 
+03390:             </div>
+03391:           </div>
+03392:         </section>
+03393: 
+03394:         <section className="top3-shell">
+03395:           <div className="top3-header__title">Calendário do TOP3</div>
+03396: 
+03397:           <div className="top3-helper">
+03398:             Escolha uma data para consultar as previsões, os resultados e a taxa de acerto de cada horário.
+03399:           </div>
+03400: 
+03401:           <div className="top3-historyToolbar">
+03402:             <button
+03403:               type="button"
+03404:               className="pp-btn"
+03405:               onClick={() =>
+03406:                 goToHistoryDate(
+03407:                   addDaysYMDLocal(selectedHistoryYmd, -1)
+03408:                 )
+03409:               }
+03410:             >
+03411:               ◀ Dia anterior
+03412:             </button>
+03413: 
+03414:             <input
+03415:               type="date"
+03416:               className="top3-historyDate"
+03417:               value={selectedHistoryYmd}
+03418:               max={todayForCalendar}
+03419:               onChange={(event) =>
+03420:                 goToHistoryDate(event.target.value)
+03421:               }
+03422:               aria-label="Selecionar data do histórico TOP3"
+03423:             />
+03424: 
+03425:             <button
+03426:               type="button"
+03427:               className="pp-btn"
+03428:               onClick={() => goToHistoryDate(todayForCalendar)}
+03429:             >
+03430:               Hoje
+03431:             </button>
+03432: 
+03433:             <button
+03434:               type="button"
+03435:               className="pp-btn"
+03436:               disabled={!canGoNext}
+03437:               onClick={() => {
+03438:                 if (!canGoNext) return;
+03439: 
+03440:                 goToHistoryDate(
+03441:                   addDaysYMDLocal(selectedHistoryYmd, 1)
+03442:                 );
+03443:               }}
+03444:               style={{
+03445:                 opacity: canGoNext ? 1 : 0.45,
+03446:                 cursor: canGoNext ? "pointer" : "not-allowed",
+03447:               }}
+03448:             >
+03449:               Próximo dia ▶
+03450:             </button>
+03451:           </div>
+03452:         </section>
+03453: 
+03454:         {loading ? (
+03455:           <section
+03456:             className="top3-stage top3-stage--loading"
+03457:             aria-label="Carregando previsões do TOP3"
+03458:             aria-busy="true"
+03459:           >
+03460:             {[0, 1, 2].map((item) => (
+03461:               <div className="top3-card top3-loadingCard" key={item}>
+03462:                 <div className="top3-loadingCard__header">
+03463:                   <span className="top3-skeleton top3-skeleton--badge" />
+03464:                   <span className="top3-skeleton top3-skeleton--title" />
+03465:                 </div>
+03466: 
+03467:                 <div className="top3-loadingCard__identity">
+03468:                   <span className="top3-skeleton top3-skeleton--image" />
+03469: 
+03470:                   <div className="top3-loadingCard__lines">
+03471:                     <span className="top3-skeleton top3-skeleton--short" />
+03472:                     <span className="top3-skeleton top3-skeleton--animal" />
+03473:                   </div>
+03474:                 </div>
+03475: 
+03476:                 <span className="top3-skeleton top3-skeleton--block" />
+03477:                 <span className="top3-skeleton top3-skeleton--block" />
+03478:               </div>
+03479:             ))}
+03480:           </section>
+03481:         ) : error ? (
+03482:           <div className="top3-error">{String(error)}</div>
+03483:         ) : !list.length ? (
+03484:           <div className="top3-empty">Sem dados para calcular TOP3.</div>
+03485:         ) : (
+03486:           <section className="top3-stage top3-stage--predictions">
+03487:             {visibleTop3.map((item, idx) => (
+03488:               <Top3Card
+03489:                 key={`${String(item?.grupo ?? "g")}__${String(
+03490:                   item?.animal || ""
+03491:                 )}__${idx}`}
+03492:                 item={item}
+03493:                 idx={idx}
+03494:                 theme={t}
+03495:                 copiedAllKey={copiedAllKey}
+03496:                 copiedCellKey={copiedCellKey}
+03497:                 setCopiedAllKey={setCopiedAllKey}
+03498:                 setCopiedCellKey={setCopiedCellKey}
+03499:                 copyText={copyText}
+03500:                 build16={build16}
+03501:                 buildMilhares={buildMilhares}
+03502:                 build20={build20}
+03503:               />
+03504:             ))}
+03505:           </section>
+03506:         )}
+03507: 
+03508:         {showDetailedTimeline && timeline.length > 0 ? (
+03509:           <section className="top3-stage">
+03510:             <section className="top3-shell">
+03511:               <div className="top3-header__title">Leitura do dia — Timeline completa</div>
+03512:               <div className="top3-helper">
+03513:                 Cada bloco abaixo mostra o Top3 calculado para o horário alvo, a base usada e o resultado real quando disponível.
+03514:               </div>
+03515:             </section>
+03516: 
+03517:             {timeline.map((slot, idx) => (
+03518:               <TimelineSlot
+03519:                 key={`${String(slot?.targetYmd || "y")}_${String(slot?.targetHour || "h")}_${idx}`}
+03520:                 slot={slot}
+03521:                 theme={t}
+03522:                 copiedAllKey={copiedAllKey}
+03523:                 copiedCellKey={copiedCellKey}
+03524:                 setCopiedAllKey={setCopiedAllKey}
+03525:                 setCopiedCellKey={setCopiedCellKey}
+03526:                 copyText={copyText}
+03527:                 build16={build16}
+03528:                 buildMilhares={buildMilhares}
+03529:                 build20={build20}
+03530:               />
+03531:             ))}
+03532:           </section>
+03533:         ) : null}
+03534: 
+03535:         <section className="top3-shell">
+03536:           <div className="top3-header__title">
+03537:             Histórico recente {historyAnchorYmd ? `— ${ymdToBR(historyAnchorYmd)}` : ""}
+03538:           </div>
+03539: 
+03540:           <div className="top3-historySummary">
+03541:             <div className="top3-historyMetric">
+03542:               <div className="top3-historyMetric__label">Horários</div>
+03543:               <div className="top3-historyMetric__value">
+03544:                 {historySummary.total}
+03545:               </div>
+03546:             </div>
+03547: 
+03548:             <div className="top3-historyMetric">
+03549:               <div className="top3-historyMetric__label">Validados</div>
+03550:               <div className="top3-historyMetric__value">
+03551:                 {historySummary.validated}
+03552:               </div>
+03553:             </div>
+03554: 
+03555:             <div className="top3-historyMetric">
+03556:               <div className="top3-historyMetric__label">Grupo/dezena</div>
+03557:               <div className="top3-historyMetric__value">
+03558:                 {historySummary.grupo}
+03559:               </div>
+03560:             </div>
+03561: 
+03562:             <div className="top3-historyMetric">
+03563:               <div className="top3-historyMetric__label">Centena</div>
+03564:               <div className="top3-historyMetric__value">
+03565:                 {historySummary.centena}
+03566:               </div>
+03567:             </div>
+03568: 
+03569:             <div className="top3-historyMetric">
+03570:               <div className="top3-historyMetric__label">Milhar</div>
+03571:               <div className="top3-historyMetric__value">
+03572:                 {historySummary.exact}
+03573:               </div>
+03574:             </div>
+03575: 
+03576:             <div className="top3-historyMetric">
+03577:               <div className="top3-historyMetric__label">Índice médio</div>
+03578:               <div className="top3-historyMetric__value">
+03579:                 {historySummary.average.toFixed(2)}%
+03580:               </div>
+03581:             </div>
+03582:           </div>
+03583: 
+03584: 
+03585:           <div
+03586:             style={{
+03587:               display: "grid",
+03588:               gap: 8,
+03589:               marginTop: 12,
+03590:             }}
+03591:           >
+03592:             {!historyRows.length ? (
+03593:               <div className="top3-empty">
+03594:                 Sem histórico para a data analisada.
+03595:               </div>
+03596:             ) : (
+03597:               historyRows.map((item) => {
+03598:                 const y = String(
+03599:                   item?.target?.ymd || ""
+03600:                 );
+03601: 
+03602:                 const h = String(
+03603:                   item?.target?.hour || ""
+03604:                 );
+03605: 
+03606:                 const top3Items =
+03607:                   Array.isArray(item?.top3) &&
+03608:                   item.top3.length
+03609:                     ? item.top3.slice(0, 3)
+03610:                     : (
+03611:                         Array.isArray(item?.picks)
+03612:                           ? item.picks
+03613:                           : []
+03614:                       )
+03615:                         .slice(0, 3)
+03616:                         .map((grupo) => ({
+03617:                           grupo: Number(grupo),
+03618:                           animal:
+03619:                             getAnimalLabel(
+03620:                               Number(grupo)
+03621:                             ) || "",
+03622:                         }));
+03623: 
+03624:                 const resultGrupo = Number(
+03625:                   item?.result ??
+03626:                     item?.grupo ??
+03627:                     item?.prizes?.[0]?.grupo
+03628:                 );
+03629: 
+03630:                 const hasResult =
+03631:                   Number.isFinite(resultGrupo) &&
+03632:                   resultGrupo >= 1 &&
+03633:                   resultGrupo <= 25;
+03634: 
+03635:                 const resultAnimal = hasResult
+03636:                   ? String(
+03637:                       item?.animal ||
+03638:                         getAnimalLabel(
+03639:                           resultGrupo
+03640:                         ) ||
+03641:                         ""
+03642:                     )
+03643:                   : "";
+03644: 
+03645:                 const resultImg = hasResult
+03646:                   ? getImgFromGrupo(
+03647:                       resultGrupo,
+03648:                       64
+03649:                     )
+03650:                   : "";
+03651: 
+03652:                 const resultMilhar =
+03653:                   normalizeMilharStr(
+03654:                     item?.resultMilhar ||
+03655:                       item
+03656:                         ?.resultTop3Milhares?.[0] ||
+03657:                       ""
+03658:                   );
+03659: 
+03660:                 const resultCentena =
+03661:                   resultMilhar
+03662:                     ? resultMilhar.slice(-3)
+03663:                     : "";
+03664: 
+03665:                 const resultDezena =
+03666:                   resultMilhar
+03667:                     ? resultMilhar.slice(-2)
+03668:                     : "";
+03669: 
+03670:                 const analysis =
+03671:                   item?.analysis &&
+03672:                   typeof item.analysis ===
+03673:                     "object"
+03674:                     ? item.analysis
+03675:                     : {};
+03676: 
+03677:                 const predictionPosition =
+03678:                   Number(
+03679:                     analysis?.position ??
+03680:                       analysis
+03681:                         ?.predictionPosition ??
+03682:                       item
+03683:                         ?.predictionPosition ??
+03684:                       item?.hitPosition ??
+03685:                       -1
+03686:                   );
+03687: 
+03688:                 const matchedPredictionIndex =
+03689:                   Number.isFinite(
+03690:                     predictionPosition
+03691:                   ) &&
+03692:                   predictionPosition >= 1
+03693:                     ? predictionPosition - 1
+03694:                     : -1;
+03695: 
+03696:                 const resultPosition = Number(
+03697:                   analysis?.resultPosition ??
+03698:                     item?.resultPosition ??
+03699:                     -1
+03700:                 );
+03701: 
+03702:                 const hitType = String(
+03703:                   analysis?.type ??
+03704:                     analysis?.hitType ??
+03705:                     item?.hitType ??
+03706:                     ""
+03707:                 )
+03708:                   .trim()
+03709:                   .toLowerCase();
+03710: 
+03711:                 const isHit =
+03712:                   hasResult &&
+03713:                   matchedPredictionIndex >= 0;
+03714: 
+03715:                 const medal =
+03716:                   resultPosition === 1
+03717:                     ? "🥇"
+03718:                     : resultPosition === 2
+03719:                       ? "🥈"
+03720:                       : resultPosition === 3
+03721:                         ? "🥉"
+03722:                         : "";
+03723: 
+03724:                 const prizeColor =
+03725:                   resultPosition === 1
+03726:                     ? "#d4af37"
+03727:                     : resultPosition === 2
+03728:                       ? "#c0c0c0"
+03729:                       : resultPosition === 3
+03730:                         ? "#cd7f32"
+03731:                         : "#d4af37";
+03732: 
+03733:                 const prizeGlow =
+03734:                   resultPosition === 1
+03735:                     ? "rgba(212,175,55,0.58)"
+03736:                     : resultPosition === 2
+03737:                       ? "rgba(192,192,192,0.46)"
+03738:                       : resultPosition === 3
+03739:                         ? "rgba(205,127,50,0.50)"
+03740:                         : "rgba(212,175,55,0.38)";
+03741: 
+03742:                 const matchedOfficialIndex =
+03743:                   resultPosition >= 1 &&
+03744:                   resultPosition <= 3
+03745:                     ? resultPosition - 1
+03746:                     : -1;
+03747: 
+03748:                 const matchedResultGrupoRaw =
+03749:                   matchedOfficialIndex >= 0
+03750:                     ? Number(
+03751:                         item?.resultTop3Groups?.[
+03752:                           matchedOfficialIndex
+03753:                         ] ??
+03754:                           analysis?.matchedGrupo ??
+03755:                           NaN
+03756:                       )
+03757:                     : NaN;
+03758: 
+03759:                 const matchedResultGrupo =
+03760:                   Number.isFinite(
+03761:                     matchedResultGrupoRaw
+03762:                   ) &&
+03763:                   matchedResultGrupoRaw >= 1 &&
+03764:                   matchedResultGrupoRaw <= 25
+03765:                     ? matchedResultGrupoRaw
+03766:                     : NaN;
+03767: 
+03768:                 const matchedResultMilhar =
+03769:                   matchedOfficialIndex >= 0
+03770:                     ? normalizeMilharStr(
+03771:                         item?.resultTop3Milhares?.[
+03772:                           matchedOfficialIndex
+03773:                         ] ||
+03774:                           (
+03775:                             resultPosition === 1
+03776:                               ? resultMilhar
+03777:                               : ""
+03778:                           )
+03779:                       )
+03780:                     : "";
+03781: 
+03782:                 const matchedResultCentena =
+03783:                   matchedResultMilhar
+03784:                     ? matchedResultMilhar.slice(-3)
+03785:                     : "";
+03786: 
+03787:                 const matchedResultDezena =
+03788:                   matchedResultMilhar
+03789:                     ? matchedResultMilhar.slice(-2)
+03790:                     : "";
+03791: 
+03792:                 const hasExactHit =
+03793:                   hitType === "hit_exact";
+03794: 
+03795:                 const hasCentenaHit =
+03796:                   hitType === "hit_centena" ||
+03797:                   hasExactHit;
+03798: 
+03799:                 const hasDezenaHit =
+03800:                   hitType === "hit_grupo" ||
+03801:                   hasCentenaHit ||
+03802:                   hasExactHit;
+03803: 
+03804:                 const hitGrupo =
+03805:                   isHit &&
+03806:                   Number.isFinite(
+03807:                     matchedResultGrupo
+03808:                   )
+03809:                     ? formatGrupo(
+03810:                         matchedResultGrupo
+03811:                       )
+03812:                     : "";
+03813: 
+03814:                 const hitDezena =
+03815:                   isHit &&
+03816:                   hasDezenaHit
+03817:                     ? matchedResultDezena
+03818:                     : "";
+03819: 
+03820:                 const hitCentena =
+03821:                   isHit &&
+03822:                   hasCentenaHit
+03823:                     ? matchedResultCentena
+03824:                     : "";
+03825: 
+03826:                 const hitMilhar =
+03827:                   isHit &&
+03828:                   hasExactHit
+03829:                     ? matchedResultMilhar
+03830:                     : "";
+03831: 
+03832:                 return (
+03833:                   <div
+03834:                     key={String(
+03835:                       item?.targetKey ||
+03836:                         `${y}_${h}`
+03837:                     )}
+03838:                     style={{
+03839:                       width: "100%",
+03840:                       overflowX: "auto",
+03841:                       border:
+03842:                         "1px solid rgba(255,255,255,0.08)",
+03843:                       borderRadius: 12,
+03844:                       background:
+03845:                         "rgba(255,255,255,0.025)",
+03846:                     }}
+03847:                   >
+03848:                     <div
+03849:                       style={{
+03850:                         display: "grid",
+03851:                         gridTemplateColumns:
+03852:                           "minmax(118px, 1.1fr) repeat(3, minmax(62px, 0.55fr)) minmax(138px, 0.95fr) minmax(165px, 1.1fr)",
+03853:                         alignItems: "center",
+03854:                         gap: 10,
+03855:                         minWidth: 760,
+03856:                         padding: "10px 12px",
+03857:                       }}
+03858:                     >
+03859:                       <div
+03860:                         style={{
+03861:                           fontSize: 12,
+03862:                           fontWeight: 900,
+03863:                           lineHeight: 1.25,
+03864:                           whiteSpace: "nowrap",
+03865:                         }}
+03866:                       >
+03867:                         {ymdToBR(y)} {h}
+03868:                       </div>
+03869: 
+03870:                       {top3Items.map(
+03871:                         (pick, idx) => {
+03872:                           const grupo =
+03873:                             Number(
+03874:                               pick?.grupo
+03875:                             );
+03876: 
+03877:                           const animal =
+03878:                             String(
+03879:                               pick?.animal ||
+03880:                                 getAnimalLabel(
+03881:                                   grupo
+03882:                                 ) ||
+03883:                                 ""
+03884:                             ).trim();
+03885: 
+03886:                           const img =
+03887:                             Number.isFinite(
+03888:                               grupo
+03889:                             )
+03890:                               ? getImgFromGrupo(
+03891:                                   grupo,
+03892:                                   64
+03893:                                 )
+03894:                               : "";
+03895: 
+03896:                           const isMatched =
+03897:                             isHit &&
+03898:                             matchedPredictionIndex ===
+03899:                               idx;
+03900: 
+03901:                           return (
+03902:                             <div
+03903:                               key={`${y}_${h}_${idx}_${grupo}`}
+03904:                               style={{
+03905:                                 display: "grid",
+03906:                                 gridTemplateRows:
+03907:                                   "46px 18px",
+03908:                                 justifyItems:
+03909:                                   "center",
+03910:                                 alignItems:
+03911:                                   "center",
+03912:                                 minWidth: 0,
+03913:                               }}
+03914:                               title={`${
+03915:                                 animal ||
+03916:                                 "Animal"
+03917:                               } — G${formatGrupo(
+03918:                                 grupo
+03919:                               )}`}
+03920:                             >
+03921:                               <div
+03922:                                 style={{
+03923:                                   position:
+03924:                                     "relative",
+03925:                                   display:
+03926:                                     "flex",
+03927:                                   alignItems:
+03928:                                     "center",
+03929:                                   justifyContent:
+03930:                                     "center",
+03931:                                 }}
+03932:                               >
+03933:                                 <ImgWithFallback
+03934:                                   srcs={
+03935:                                     img
+03936:                                       ? [img]
+03937:                                       : []
+03938:                                   }
+03939:                                   alt={
+03940:                                     animal ||
+03941:                                     `G${formatGrupo(
+03942:                                       grupo
+03943:                                     )}`
+03944:                                   }
+03945:                                   size={40}
+03946:                                   style={{
+03947:                                     borderRadius: 9,
+03948:                                     border: isMatched
+03949:                                       ? `4px solid ${prizeColor}`
+03950:                                       : "1px solid rgba(201,168,62,0.36)",
+03951:                                     boxShadow: isMatched
+03952:                                       ? `0 0 17px ${prizeGlow}`
+03953:                                       : "none",
+03954:                                   }}
+03955:                                 />
+03956: 
+03957:                                 {isMatched &&
+03958:                                 medal ? (
+03959:                                   <span
+03960:                                     aria-label="Palpite acertado"
+03961:                                     style={{
+03962:                                       position:
+03963:                                         "absolute",
+03964:                                       top: -14,
+03965:                                       right: -19,
+03966:                                       zIndex: 3,
+03967:                                       fontSize: 27,
+03968:                                       lineHeight: 1,
+03969:                                       filter:
+03970:                                         "drop-shadow(0 2px 4px rgba(0,0,0,0.95))",
+03971:                                     }}
+03972:                                   >
+03973:                                     {medal}
+03974:                                   </span>
+03975:                                 ) : null}
+03976:                               </div>
+03977: 
+03978:                               <div
+03979:                                 style={{
+03980:                                   fontSize: 12,
+03981:                                   fontWeight: 900,
+03982:                                   lineHeight: 1,
+03983:                                   whiteSpace:
+03984:                                     "nowrap",
+03985:                                   color: isMatched
+03986:                                     ? prizeColor
+03987:                                     : "inherit",
+03988:                                 }}
+03989:                               >
+03990:                                 G
+03991:                                 {formatGrupo(
+03992:                                   grupo
+03993:                                 )}
+03994:                               </div>
+03995:                             </div>
+03996:                           );
+03997:                         }
+03998:                       )}
+03999: 
+04000:                       <div
+04001:                         style={{
+04002:                           minHeight: 70,
+04003:                           display: "grid",
+04004:                           alignContent: "center",
+04005:                           gap: 4,
+04006:                           padding: "7px 10px",
+04007:                           borderRadius: 11,
+04008:                           border: isHit
+04009:                             ? `2px solid ${prizeColor}`
+04010:                             : "1px solid rgba(255,255,255,0.10)",
+04011:                           background: isHit
+04012:                             ? `linear-gradient(180deg, ${prizeGlow}, rgba(0,0,0,0.20))`
+04013:                             : "rgba(255,255,255,0.02)",
+04014:                           boxShadow: isHit
+04015:                             ? `0 0 13px ${prizeGlow}`
+04016:                             : "none",
+04017:                         }}
+04018:                       >
+04019:                         {!hasResult ? (
+04020:                           <div
+04021:                             style={{
+04022:                               textAlign: "center",
+04023:                               fontSize: 10,
+04024:                               fontWeight: 900,
+04025:                             }}
+04026:                           >
+04027:                             ⏳ PENDENTE
+04028:                           </div>
+04029:                         ) : isHit ? (
+04030:                           <>
+04031:                             <div
+04032:                               style={{
+04033:                                 textAlign: "center",
+04034:                                 color: prizeColor,
+04035:                                 fontSize: 11,
+04036:                                 fontWeight: 1000,
+04037:                                 letterSpacing: 0.6,
+04038:                               }}
+04039:                             >
+04040:                               ACERTO
+04041:                             </div>
+04042: 
+04043:                             <div
+04044:                               style={{
+04045:                                 display: "grid",
+04046:                                 gridTemplateColumns:
+04047:                                   "1fr auto",
+04048:                                 gap: "2px 8px",
+04049:                                 fontSize: 10,
+04050:                                 lineHeight: 1.2,
+04051:                               }}
+04052:                             >
+04053:                               <span>Grupo</span>
+04054:                               <strong>
+04055:                                 {hitGrupo
+04056:                                   ? `G${hitGrupo} ✓`
+04057:                                   : "—"}
+04058:                               </strong>
+04059: 
+04060:                               <span>Dezena</span>
+04061:                               <strong>
+04062:                                 {hitDezena
+04063:                                   ? `${hitDezena} ✓`
+04064:                                   : "—"}
+04065:                               </strong>
+04066: 
+04067:                               <span>Centena</span>
+04068:                               <strong>
+04069:                                 {hitCentena
+04070:                                   ? `${hitCentena} ✓`
+04071:                                   : "—"}
+04072:                               </strong>
+04073: 
+04074:                               <span>Milhar</span>
+04075:                               <strong>
+04076:                                 {hitMilhar
+04077:                                   ? `${hitMilhar} ✓`
+04078:                                   : "—"}
+04079:                               </strong>
+04080:                             </div>
+04081:                           </>
+04082:                         ) : (
+04083:                           <div
+04084:                             style={{
+04085:                               textAlign: "center",
+04086:                               fontSize: 10,
+04087:                               fontWeight: 900,
+04088:                               color:
+04089:                                 "rgba(255,255,255,0.58)",
+04090:                             }}
+04091:                           >
+04092:                             ❌ SEM ACERTO
+04093:                           </div>
+04094:                         )}
+04095:                       </div>
+04096: 
+04097:                       <div
+04098:                         style={{
+04099:                           minHeight: 76,
+04100:                           display: "grid",
+04101:                           gridTemplateColumns:
+04102:                             "60px minmax(0, 1fr)",
+04103:                           alignItems: "center",
+04104:                           gap: 10,
+04105:                           minWidth: 0,
+04106:                           padding: "8px 10px",
+04107:                           borderRadius: 12,
+04108:                           border:
+04109:                             "1px solid rgba(255,255,255,0.14)",
+04110:                           background:
+04111:                             "rgba(255,255,255,0.025)",
+04112:                           boxShadow:
+04113:                             "inset 0 0 0 1px rgba(255,255,255,0.025)",
+04114:                         }}
+04115:                         title={
+04116:                           hasResult
+04117:                             ? `${resultAnimal} — G${formatGrupo(
+04118:                                 resultGrupo
+04119:                               )}${
+04120:                                 resultMilhar
+04121:                                   ? ` — ${resultMilhar}`
+04122:                                   : ""
+04123:                               }`
+04124:                             : "Resultado pendente"
+04125:                         }
+04126:                       >
+04127:                         {hasResult ? (
+04128:                           <>
+04129:                             <div
+04130:                               style={{
+04131:                                 position:
+04132:                                   "relative",
+04133:                                 display:
+04134:                                   "flex",
+04135:                                 alignItems:
+04136:                                   "center",
+04137:                                 justifyContent:
+04138:                                   "center",
+04139:                               }}
+04140:                             >
+04141:                               <ImgWithFallback
+04142:                                 srcs={
+04143:                                   resultImg
+04144:                                     ? [resultImg]
+04145:                                     : []
+04146:                                 }
+04147:                                 alt={
+04148:                                   resultAnimal
+04149:                                 }
+04150:                                 size={
+04151:                                   isHit &&
+04152:                                   resultPosition === 1
+04153:                                     ? 58
+04154:                                     : 48
+04155:                                 }
+04156:                                 style={{
+04157:                                   borderRadius: 10,
+04158:                                   border:
+04159:                                     "1px solid rgba(201,168,62,0.36)",
+04160:                                   boxShadow:
+04161:                                     "none",
+04162:                                 }}
+04163:                               />
+04164: 
+04165: 
+04166:                             </div>
+04167: 
+04168:                             <div
+04169:                               style={{
+04170:                                 minWidth: 0,
+04171:                                 display: "grid",
+04172:                                 gap: 3,
+04173:                               }}
+04174:                             >
+04175:                               <div
+04176:                                 style={{
+04177:                                   fontSize: 11,
+04178:                                   fontWeight: 1000,
+04179:                                   color: "inherit",
+04180:                                   whiteSpace:
+04181:                                     "nowrap",
+04182:                                   overflow: "hidden",
+04183:                                   textOverflow:
+04184:                                     "ellipsis",
+04185:                                 }}
+04186:                               >
+04187:                                 G
+04188:                                 {formatGrupo(
+04189:                                   resultGrupo
+04190:                                 )}{" "}
+04191:                                 {String(
+04192:                                   resultAnimal ||
+04193:                                     ""
+04194:                                 ).toUpperCase()}
+04195:                               </div>
+04196: 
+04197:                               <div
+04198:                                 style={{
+04199:                                   fontSize: 9,
+04200:                                   fontWeight: 800,
+04201:                                   opacity: 0.7,
+04202:                                   textTransform:
+04203:                                     "uppercase",
+04204:                                   letterSpacing:
+04205:                                     0.45,
+04206:                                 }}
+04207:                               >
+04208:                                 Milhar sorteada
+04209:                               </div>
+04210: 
+04211:                               <div
+04212:                                 style={{
+04213:                                   fontSize: 15,
+04214:                                   fontWeight: 1000,
+04215:                                   letterSpacing: 1,
+04216:                                   color: "inherit",
+04217:                                 }}
+04218:                               >
+04219:                                 {resultMilhar ||
+04220:                                   "—"}
+04221:                               </div>
+04222:                             </div>
+04223:                           </>
+04224:                         ) : (
+04225:                           <div
+04226:                             style={{
+04227:                               gridColumn:
+04228:                                 "1 / -1",
+04229:                               textAlign: "center",
+04230:                               fontSize: 10,
+04231:                               fontWeight: 900,
+04232:                             }}
+04233:                           >
+04234:                             ⏳ PENDENTE
+04235:                           </div>
+04236:                         )}
+04237:                       </div>
+04238:                     </div>
+04239:                   </div>
+04240:                 );
+04241:               })
+04242:             )}
+04243:           </div>
+04244:         </section>
+04245:       </div>
+04246:     </div>
+04247:   );
+04248: }

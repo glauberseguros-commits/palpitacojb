@@ -1,0 +1,24 @@
+====================================================================================================
+TOP3-PODIUM-02 — CORREÇÃO DEFINITIVA TOP3 OFICIAL
+====================================================================================================
+Iniciado em: 25/07/2026 14:37:15
+Backup: .\tmp\top3_podium_02_backup_20260725_143715
+
+REGRA OFICIAL:
+- qualquer um dos três animais previstos pode acertar;
+- acerto no 1º prêmio oficial = OURO;
+- acerto no 2º prêmio oficial = PRATA;
+- acerto no 3º prêmio oficial = BRONZE;
+- nenhum animal previsto no pódio = ERRO;
+- a ordem interna dos palpites não define a medalha.
+====================================================================================================
+
+====================================================================================================
+RESULTADO
+====================================================================================================
+STATUS: ERRO
+MENSAGEM: Falha ao aplicar o patch.
+BACKUP RESTAURADO: SIM
+COMMIT REALIZADO: NÃO
+PUSH REALIZADO: NÃO
+====================================================================================================

@@ -1,0 +1,1438 @@
+========================================================================================================================
+src\pages\Centenas\CentenasView.jsx
+========================================================================================================================
+
+===== requestedPrizePositions =====
+
+  514:   const [fDiaSemana, setFDiaSemana] = useState("Todos");
+  515:   const [fHorario, setFHorario] = useState("Todos");
+  516:   const [fAnimal, setFAnimal] = useState("Todos");
+  517:   const [fPosicao, setFPosicao] = useState("Todos");
+  518:   const [showOnlyHits, setShowOnlyHits] = useState(false);
+  519: 
+  520:   /*
+  521:    * A consulta deve buscar apenas a posição escolhida.
+  522:    * Quando estiver em Todos, mantém 1º ao 7º.
+  523:    */
+  524:   const requestedPrizePositions = useMemo(() => {
+  525:     if (isTodos(fPosicao)) {
+  526:       return allPrizePositions;
+  527:     }
+  528: 
+  529:     const position = Number(fPosicao);
+  530: 
+  531:     return Number.isFinite(position) &&
+  532:       position >= 1 &&
+  533:       position <= 7
+  534:       ? [position]
+  535:       : allPrizePositions;
+  536:   }, [fPosicao, allPrizePositions]);
+  537: 
+  538:   /*
+  539:    * O horário também entra na consulta.
+  540:    * Isso reduz hidratação e processamento desnecessários.
+  541:    */
+  542:   const requestedCloseHour = useMemo(
+  543:     () =>
+  544:       isTodos(fHorario)
+
+
+===== requestedPrizePositions =====
+
+  923:     },
+  924:     [fAnimal, fPosicao]
+  925:   );
+  926: 
+  927:   // ========= build base dataset (cacheado por closeHour) =========
+  928: 
+  929:   const buildBaseKey = useMemo(
+  930:     () =>
+  931:       `${selectedLotteryKeysKey}` +
+  932:       `::close=${requestedCloseHour || "all"}` +
+  933:       `::pos=${requestedPrizePositions.join(",")}`,
+  934:     [
+  935:       selectedLotteryKeysKey,
+  936:       requestedCloseHour,
+  937:       requestedPrizePositions,
+  938:     ]
+  939:   );
+  940: 
+  941:   const build = useCallback(async () => {
+  942:     const mySeq = ++buildSeqRef.current;
+  943:     abortedRef.current = false;
+  944: 
+  945:     setLoading(true);
+  946:     setError("");
+  947:     setProgress({ done: 0, total: 0, label: "" });
+  948: 
+  949:     try {
+  950:       if (!boundsReady) {
+  951:         setError("Bounds ainda não carregaram.");
+  952:         return;
+  953:       }
+
+
+===== requestedPrizePositions =====
+
+  927:   // ========= build base dataset (cacheado por closeHour) =========
+  928: 
+  929:   const buildBaseKey = useMemo(
+  930:     () =>
+  931:       `${selectedLotteryKeysKey}` +
+  932:       `::close=${requestedCloseHour || "all"}` +
+  933:       `::pos=${requestedPrizePositions.join(",")}`,
+  934:     [
+  935:       selectedLotteryKeysKey,
+  936:       requestedCloseHour,
+  937:       requestedPrizePositions,
+  938:     ]
+  939:   );
+  940: 
+  941:   const build = useCallback(async () => {
+  942:     const mySeq = ++buildSeqRef.current;
+  943:     abortedRef.current = false;
+  944: 
+  945:     setLoading(true);
+  946:     setError("");
+  947:     setProgress({ done: 0, total: 0, label: "" });
+  948: 
+  949:     try {
+  950:       if (!boundsReady) {
+  951:         setError("Bounds ainda não carregaram.");
+  952:         return;
+  953:       }
+  954: 
+  955:       const cachedBase = baseCacheRef.current.get(buildBaseKey);
+  956:       let entriesBase = cachedBase?.entries || null;
+  957: 
+
+
+===== requestedPrizePositions =====
+
+  968:               selectedLotteryKeys.map(
+  969:                 async (lotteryKey) => {
+  970:                   const res =
+  971:                     await getKingResultsByRange({
+  972:                       uf: lotteryKey,
+  973:                       dateFrom: ch.from,
+  974:                       dateTo: ch.to,
+  975:                       closeHour:
+  976:                         requestedCloseHour,
+  977:                       positions:
+  978:                         requestedPrizePositions,
+  979:                       mode: "detailed",
+  980:                     });
+  981: 
+  982:                   return {
+  983:                     lotteryKey,
+  984:                     res,
+  985:                   };
+  986:                 }
+  987:               )
+  988:             );
+  989: 
+  990:           const drawsChunk =
+  991:             responses.flatMap(
+  992:               ({
+  993:                 lotteryKey,
+  994:                 res,
+  995:               }) =>
+  996:                 normalizeDrawsResult(res)
+  997:                   .map((draw) => ({
+  998:                     ...draw,
+
+
+===== requestedPrizePositions =====
+
+ 1245:       if (!abortedRef.current && buildSeqRef.current === mySeq) {
+ 1246:         setLoading(false);
+ 1247:         setProgress((p) => ({ ...p, label: "" }));
+ 1248:       }
+ 1249:     }
+ 1250:   }, [
+ 1251:     boundsReady,
+ 1252:     bounds?.minYmd,
+ 1253:     bounds?.maxYmd,
+ 1254:     selectedLotteryKeys,
+ 1255:     requestedPrizePositions,
+ 1256:     requestedCloseHour,
+ 1257:     buildBaseKey,
+ 1258:     applyDrawFiltersToEntry,
+ 1259:     applyPrizeFilters,
+ 1260:     getAnimalLabel,
+ 1261:     getImgFromGrupo,
+ 1262:     fAnimal,
+ 1263:   ]);
+ 1264: 
+ 1265:   /*
+ 1266:    * Um único efeito controla o carregamento.
+ 1267:    * O efeito anterior disparava um build adicional
+ 1268:    * assim que os bounds eram carregados.
+ 1269:    */
+ 1270:   useEffect(() => {
+ 1271:     if (!boundsReady) return;
+ 1272:     if (autoTimerRef.current) clearTimeout(autoTimerRef.current);
+ 1273:     autoTimerRef.current = setTimeout(() => build(), 220);
+ 1274:     return () => {
+ 1275:       if (autoTimerRef.current) clearTimeout(autoTimerRef.current);
+
+
+===== positions: =====
+
+  967:             await Promise.all(
+  968:               selectedLotteryKeys.map(
+  969:                 async (lotteryKey) => {
+  970:                   const res =
+  971:                     await getKingResultsByRange({
+  972:                       uf: lotteryKey,
+  973:                       dateFrom: ch.from,
+  974:                       dateTo: ch.to,
+  975:                       closeHour:
+  976:                         requestedCloseHour,
+  977:                       positions:
+  978:                         requestedPrizePositions,
+  979:                       mode: "detailed",
+  980:                     });
+  981: 
+  982:                   return {
+  983:                     lotteryKey,
+  984:                     res,
+  985:                   };
+  986:                 }
+  987:               )
+  988:             );
+  989: 
+  990:           const drawsChunk =
+  991:             responses.flatMap(
+  992:               ({
+  993:                 lotteryKey,
+  994:                 res,
+  995:               }) =>
+  996:                 normalizeDrawsResult(res)
+  997:                   .map((draw) => ({
+
+
+===== lotteryKey =====
+
+  472:   // usando querystring (envia pro servidor)
+  473:   return `https://app.kingapostas.com/bet/guess?pp=${payload}`;
+  474: }
+  475: 
+  476: export default function CentenasView() {
+  477:   const LOTTERY_OPTIONS = useMemo(
+  478:     () => [
+  479:       {
+  480:         id: "ALL",
+  481:         label: "Todas as loterias",
+  482:         lotteryKeys: [
+  483:           LOTTERY_KEYS.PT_RIO,
+  484:           LOTTERY_KEYS.NACIONAL,
+  485:         ],
+  486:       },
+  487:       {
+  488:         id: LOTTERY_KEYS.PT_RIO,
+  489:         label: "PT Rio",
+  490:         lotteryKeys: [
+  491:           LOTTERY_KEYS.PT_RIO,
+  492:         ],
+  493:       },
+  494:       {
+  495:         id: LOTTERY_KEYS.NACIONAL,
+  496:         label: "Federal",
+  497:         lotteryKeys: [
+  498:           LOTTERY_KEYS.NACIONAL,
+  499:         ],
+  500:       },
+  501:     ],
+  502:     []
+
+
+===== lotteryKey =====
+
+  480:         id: "ALL",
+  481:         label: "Todas as loterias",
+  482:         lotteryKeys: [
+  483:           LOTTERY_KEYS.PT_RIO,
+  484:           LOTTERY_KEYS.NACIONAL,
+  485:         ],
+  486:       },
+  487:       {
+  488:         id: LOTTERY_KEYS.PT_RIO,
+  489:         label: "PT Rio",
+  490:         lotteryKeys: [
+  491:           LOTTERY_KEYS.PT_RIO,
+  492:         ],
+  493:       },
+  494:       {
+  495:         id: LOTTERY_KEYS.NACIONAL,
+  496:         label: "Federal",
+  497:         lotteryKeys: [
+  498:           LOTTERY_KEYS.NACIONAL,
+  499:         ],
+  500:       },
+  501:     ],
+  502:     []
+  503:   );
+  504: 
+  505:   const allPrizePositions = useMemo(
+  506:     () => [1, 2, 3, 4, 5, 6, 7],
+  507:     []
+  508:   );
+  509: 
+  510: // filtros
+
+
+===== lotteryKey =====
+
+  487:       {
+  488:         id: LOTTERY_KEYS.PT_RIO,
+  489:         label: "PT Rio",
+  490:         lotteryKeys: [
+  491:           LOTTERY_KEYS.PT_RIO,
+  492:         ],
+  493:       },
+  494:       {
+  495:         id: LOTTERY_KEYS.NACIONAL,
+  496:         label: "Federal",
+  497:         lotteryKeys: [
+  498:           LOTTERY_KEYS.NACIONAL,
+  499:         ],
+  500:       },
+  501:     ],
+  502:     []
+  503:   );
+  504: 
+  505:   const allPrizePositions = useMemo(
+  506:     () => [1, 2, 3, 4, 5, 6, 7],
+  507:     []
+  508:   );
+  509: 
+  510: // filtros
+  511:   const [lotteryOptId, setLotteryOptId] = useState("ALL");
+  512:   const [fMes, setFMes] = useState("Todos");
+  513:   const [fDiaMes, setFDiaMes] = useState("Todos");
+  514:   const [fDiaSemana, setFDiaSemana] = useState("Todos");
+  515:   const [fHorario, setFHorario] = useState("Todos");
+  516:   const [fAnimal, setFAnimal] = useState("Todos");
+  517:   const [fPosicao, setFPosicao] = useState("Todos");
+
+
+===== lotteryKey =====
+
+  582:   const baseCacheRef = useRef(new Map());
+  583: 
+  584:   const selectedLottery = useMemo(
+  585:     () => LOTTERY_OPTIONS.find((x) => x.id === lotteryOptId) || LOTTERY_OPTIONS[0],
+  586:     [lotteryOptId, LOTTERY_OPTIONS]
+  587:   );
+  588: 
+  589:   const selectedLotteryKeys = useMemo(
+  590:     () =>
+  591:       Array.isArray(
+  592:         selectedLottery?.lotteryKeys
+  593:       )
+  594:         ? selectedLottery.lotteryKeys
+  595:         : [LOTTERY_KEYS.PT_RIO],
+  596:     [selectedLottery]
+  597:   );
+  598: 
+  599:   const selectedLotteryKeysKey =
+  600:     selectedLotteryKeys.join(",");
+  601: 
+  602:   const boundsReady = !!(
+  603:     bounds?.minYmd &&
+  604:     bounds?.maxYmd
+  605:   );
+  606: 
+  607:   // ========= persistência de filtros =========
+  608: 
+  609:   useEffect(() => {
+  610:     try {
+  611:       const raw = localStorage.getItem(FILTERS_LS_KEY);
+  612:       if (raw) {
+
+
+===== lotteryKey =====
+
+  584:   const selectedLottery = useMemo(
+  585:     () => LOTTERY_OPTIONS.find((x) => x.id === lotteryOptId) || LOTTERY_OPTIONS[0],
+  586:     [lotteryOptId, LOTTERY_OPTIONS]
+  587:   );
+  588: 
+  589:   const selectedLotteryKeys = useMemo(
+  590:     () =>
+  591:       Array.isArray(
+  592:         selectedLottery?.lotteryKeys
+  593:       )
+  594:         ? selectedLottery.lotteryKeys
+  595:         : [LOTTERY_KEYS.PT_RIO],
+  596:     [selectedLottery]
+  597:   );
+  598: 
+  599:   const selectedLotteryKeysKey =
+  600:     selectedLotteryKeys.join(",");
+  601: 
+  602:   const boundsReady = !!(
+  603:     bounds?.minYmd &&
+  604:     bounds?.maxYmd
+  605:   );
+  606: 
+  607:   // ========= persistência de filtros =========
+  608: 
+  609:   useEffect(() => {
+  610:     try {
+  611:       const raw = localStorage.getItem(FILTERS_LS_KEY);
+  612:       if (raw) {
+  613:         const saved = JSON.parse(raw);
+  614:         if (saved && typeof saved === "object") {
+
+
+===== lotteryKey =====
+
+  775:       setBounds({
+  776:         minYmd: null,
+  777:         maxYmd: null,
+  778:         source: "",
+  779:       });
+  780: 
+  781:       try {
+  782:         const responses =
+  783:           await Promise.all(
+  784:             selectedLotteryKeys.map(
+  785:               async (lotteryKey) => {
+  786:                 const result =
+  787:                   await getKingBoundsByUf({
+  788:                     uf: lotteryKey,
+  789:                   });
+  790: 
+  791:                 return {
+  792:                   lotteryKey,
+  793:                   result,
+  794:                 };
+  795:               }
+  796:             )
+  797:           );
+  798: 
+  799:         if (!alive) return;
+  800: 
+  801:         const validBounds =
+  802:           responses
+  803:             .map(
+  804:               ({
+  805:                 lotteryKey,
+
+
+===== lotteryKey =====
+
+  778:         source: "",
+  779:       });
+  780: 
+  781:       try {
+  782:         const responses =
+  783:           await Promise.all(
+  784:             selectedLotteryKeys.map(
+  785:               async (lotteryKey) => {
+  786:                 const result =
+  787:                   await getKingBoundsByUf({
+  788:                     uf: lotteryKey,
+  789:                   });
+  790: 
+  791:                 return {
+  792:                   lotteryKey,
+  793:                   result,
+  794:                 };
+  795:               }
+  796:             )
+  797:           );
+  798: 
+  799:         if (!alive) return;
+  800: 
+  801:         const validBounds =
+  802:           responses
+  803:             .map(
+  804:               ({
+  805:                 lotteryKey,
+  806:                 result,
+  807:               }) => ({
+  808:                 lotteryKey,
+
+
+===== lotteryKey =====
+
+  782:         const responses =
+  783:           await Promise.all(
+  784:             selectedLotteryKeys.map(
+  785:               async (lotteryKey) => {
+  786:                 const result =
+  787:                   await getKingBoundsByUf({
+  788:                     uf: lotteryKey,
+  789:                   });
+  790: 
+  791:                 return {
+  792:                   lotteryKey,
+  793:                   result,
+  794:                 };
+  795:               }
+  796:             )
+  797:           );
+  798: 
+  799:         if (!alive) return;
+  800: 
+  801:         const validBounds =
+  802:           responses
+  803:             .map(
+  804:               ({
+  805:                 lotteryKey,
+  806:                 result,
+  807:               }) => ({
+  808:                 lotteryKey,
+  809:                 minYmd:
+  810:                   result?.minYmd || null,
+  811:                 maxYmd:
+  812:                   result?.maxYmd || null,
+
+
+===== lotteryKey =====
+
+  795:               }
+  796:             )
+  797:           );
+  798: 
+  799:         if (!alive) return;
+  800: 
+  801:         const validBounds =
+  802:           responses
+  803:             .map(
+  804:               ({
+  805:                 lotteryKey,
+  806:                 result,
+  807:               }) => ({
+  808:                 lotteryKey,
+  809:                 minYmd:
+  810:                   result?.minYmd || null,
+  811:                 maxYmd:
+  812:                   result?.maxYmd || null,
+  813:                 source:
+  814:                   result?.source || "",
+  815:               })
+  816:             )
+  817:             .filter(
+  818:               (item) =>
+  819:                 isYMD(item.minYmd) &&
+  820:                 isYMD(item.maxYmd)
+  821:             );
+  822: 
+  823:         if (!validBounds.length) {
+  824:           setBounds({
+  825:             minYmd: null,
+
+
+===== lotteryKey =====
+
+  798: 
+  799:         if (!alive) return;
+  800: 
+  801:         const validBounds =
+  802:           responses
+  803:             .map(
+  804:               ({
+  805:                 lotteryKey,
+  806:                 result,
+  807:               }) => ({
+  808:                 lotteryKey,
+  809:                 minYmd:
+  810:                   result?.minYmd || null,
+  811:                 maxYmd:
+  812:                   result?.maxYmd || null,
+  813:                 source:
+  814:                   result?.source || "",
+  815:               })
+  816:             )
+  817:             .filter(
+  818:               (item) =>
+  819:                 isYMD(item.minYmd) &&
+  820:                 isYMD(item.maxYmd)
+  821:             );
+  822: 
+  823:         if (!validBounds.length) {
+  824:           setBounds({
+  825:             minYmd: null,
+  826:             maxYmd: null,
+  827:             source: "",
+  828:           });
+
+
+===== lotteryKey =====
+
+  836:           minYmd: validBounds
+  837:             .map((item) => item.minYmd)
+  838:             .sort()[0],
+  839:           maxYmd: validBounds
+  840:             .map((item) => item.maxYmd)
+  841:             .sort()
+  842:             .slice(-1)[0],
+  843:           source: validBounds
+  844:             .map(
+  845:               (item) =>
+  846:                 `${item.lotteryKey}:${item.source || "dados"}`
+  847:             )
+  848:             .join(", "),
+  849:         });
+  850:       } catch (e) {
+  851:         if (!alive) return;
+  852: 
+  853:         setError(
+  854:           String(
+  855:             e?.message || e
+  856:           )
+  857:         );
+  858:       } finally {
+  859:         if (alive) {
+  860:           setLoadingBounds(false);
+  861:         }
+  862:       }
+  863:     })();
+  864: 
+  865:     return () => {
+  866:       alive = false;
+
+
+===== lotteryKey =====
+
+  959:         const chunks = splitRangeIntoChunks(bounds.minYmd, bounds.maxYmd, CHUNK_DAYS);
+  960:         setProgress({ done: 0, total: chunks.length, label: "Carregando histórico..." });
+  961: 
+  962:         const results = await mapWithConcurrency(chunks, CHUNKS_CONCURRENCY, async (ch, idx) => {
+  963:           if (abortedRef.current) return { ok: false, entries: [] };
+  964:           if (buildSeqRef.current !== mySeq) return { ok: false, entries: [] };
+  965: 
+  966:           const responses =
+  967:             await Promise.all(
+  968:               selectedLotteryKeys.map(
+  969:                 async (lotteryKey) => {
+  970:                   const res =
+  971:                     await getKingResultsByRange({
+  972:                       uf: lotteryKey,
+  973:                       dateFrom: ch.from,
+  974:                       dateTo: ch.to,
+  975:                       closeHour:
+  976:                         requestedCloseHour,
+  977:                       positions:
+  978:                         requestedPrizePositions,
+  979:                       mode: "detailed",
+  980:                     });
+  981: 
+  982:                   return {
+  983:                     lotteryKey,
+  984:                     res,
+  985:                   };
+  986:                 }
+  987:               )
+  988:             );
+  989: 
+
+
+===== lotteryKey =====
+
+  962:         const results = await mapWithConcurrency(chunks, CHUNKS_CONCURRENCY, async (ch, idx) => {
+  963:           if (abortedRef.current) return { ok: false, entries: [] };
+  964:           if (buildSeqRef.current !== mySeq) return { ok: false, entries: [] };
+  965: 
+  966:           const responses =
+  967:             await Promise.all(
+  968:               selectedLotteryKeys.map(
+  969:                 async (lotteryKey) => {
+  970:                   const res =
+  971:                     await getKingResultsByRange({
+  972:                       uf: lotteryKey,
+  973:                       dateFrom: ch.from,
+  974:                       dateTo: ch.to,
+  975:                       closeHour:
+  976:                         requestedCloseHour,
+  977:                       positions:
+  978:                         requestedPrizePositions,
+  979:                       mode: "detailed",
+  980:                     });
+  981: 
+  982:                   return {
+  983:                     lotteryKey,
+  984:                     res,
+  985:                   };
+  986:                 }
+  987:               )
+  988:             );
+  989: 
+  990:           const drawsChunk =
+  991:             responses.flatMap(
+  992:               ({
+
+
+===== lotteryKey =====
+
+  973:                       dateFrom: ch.from,
+  974:                       dateTo: ch.to,
+  975:                       closeHour:
+  976:                         requestedCloseHour,
+  977:                       positions:
+  978:                         requestedPrizePositions,
+  979:                       mode: "detailed",
+  980:                     });
+  981: 
+  982:                   return {
+  983:                     lotteryKey,
+  984:                     res,
+  985:                   };
+  986:                 }
+  987:               )
+  988:             );
+  989: 
+  990:           const drawsChunk =
+  991:             responses.flatMap(
+  992:               ({
+  993:                 lotteryKey,
+  994:                 res,
+  995:               }) =>
+  996:                 normalizeDrawsResult(res)
+  997:                   .map((draw) => ({
+  998:                     ...draw,
+  999:                     __centenasLotteryKey:
+ 1000:                       lotteryKey,
+ 1001:                   }))
+ 1002:             );
+ 1003: 
+
+
+===== lotteryKey =====
+
+  983:                     lotteryKey,
+  984:                     res,
+  985:                   };
+  986:                 }
+  987:               )
+  988:             );
+  989: 
+  990:           const drawsChunk =
+  991:             responses.flatMap(
+  992:               ({
+  993:                 lotteryKey,
+  994:                 res,
+  995:               }) =>
+  996:                 normalizeDrawsResult(res)
+  997:                   .map((draw) => ({
+  998:                     ...draw,
+  999:                     __centenasLotteryKey:
+ 1000:                       lotteryKey,
+ 1001:                   }))
+ 1002:             );
+ 1003: 
+ 1004:           const prizesFlat =
+ 1005:             responses.flatMap(
+ 1006:               ({
+ 1007:                 lotteryKey,
+ 1008:                 res,
+ 1009:               }) =>
+ 1010:                 normalizePrizesArray(res)
+ 1011:                   .map((prize) => ({
+ 1012:                     ...prize,
+ 1013:                     __centenasLotteryKey:
+
+
+===== lotteryKey =====
+
+  990:           const drawsChunk =
+  991:             responses.flatMap(
+  992:               ({
+  993:                 lotteryKey,
+  994:                 res,
+  995:               }) =>
+  996:                 normalizeDrawsResult(res)
+  997:                   .map((draw) => ({
+  998:                     ...draw,
+  999:                     __centenasLotteryKey:
+ 1000:                       lotteryKey,
+ 1001:                   }))
+ 1002:             );
+ 1003: 
+ 1004:           const prizesFlat =
+ 1005:             responses.flatMap(
+ 1006:               ({
+ 1007:                 lotteryKey,
+ 1008:                 res,
+ 1009:               }) =>
+ 1010:                 normalizePrizesArray(res)
+ 1011:                   .map((prize) => ({
+ 1012:                     ...prize,
+ 1013:                     __centenasLotteryKey:
+ 1014:                       lotteryKey,
+ 1015:                   }))
+ 1016:             );
+ 1017: 
+ 1018:           const entries = [];
+ 1019: 
+ 1020:           // (A) caminho 1: draws vêm hidratados com prizes (quando existir)
+
+
+===== lotteryKey =====
+
+  997:                   .map((draw) => ({
+  998:                     ...draw,
+  999:                     __centenasLotteryKey:
+ 1000:                       lotteryKey,
+ 1001:                   }))
+ 1002:             );
+ 1003: 
+ 1004:           const prizesFlat =
+ 1005:             responses.flatMap(
+ 1006:               ({
+ 1007:                 lotteryKey,
+ 1008:                 res,
+ 1009:               }) =>
+ 1010:                 normalizePrizesArray(res)
+ 1011:                   .map((prize) => ({
+ 1012:                     ...prize,
+ 1013:                     __centenasLotteryKey:
+ 1014:                       lotteryKey,
+ 1015:                   }))
+ 1016:             );
+ 1017: 
+ 1018:           const entries = [];
+ 1019: 
+ 1020:           // (A) caminho 1: draws vêm hidratados com prizes (quando existir)
+ 1021:           const coveredKeys = new Set(); // ymd#bucket
+ 1022:           for (const d of drawsChunk || []) {
+ 1023:             const ymd = pickDrawYmd(d);
+ 1024:             if (!ymd) continue;
+ 1025: 
+ 1026:             const hrRaw = pickDrawHour(d);
+ 1027:             const hourNorm = normalizeHourLike(hrRaw);
+
+
+===== lotteryKey =====
+
+ 1004:           const prizesFlat =
+ 1005:             responses.flatMap(
+ 1006:               ({
+ 1007:                 lotteryKey,
+ 1008:                 res,
+ 1009:               }) =>
+ 1010:                 normalizePrizesArray(res)
+ 1011:                   .map((prize) => ({
+ 1012:                     ...prize,
+ 1013:                     __centenasLotteryKey:
+ 1014:                       lotteryKey,
+ 1015:                   }))
+ 1016:             );
+ 1017: 
+ 1018:           const entries = [];
+ 1019: 
+ 1020:           // (A) caminho 1: draws vêm hidratados com prizes (quando existir)
+ 1021:           const coveredKeys = new Set(); // ymd#bucket
+ 1022:           for (const d of drawsChunk || []) {
+ 1023:             const ymd = pickDrawYmd(d);
+ 1024:             if (!ymd) continue;
+ 1025: 
+ 1026:             const hrRaw = pickDrawHour(d);
+ 1027:             const hourNorm = normalizeHourLike(hrRaw);
+ 1028:             const hourBucket = toHourBucketHH00(hourNorm);
+ 1029: 
+ 1030:             const prizes = Array.isArray(d?.prizes) ? d.prizes : null;
+ 1031:             if (prizes && prizes.length) {
+ 1032:               const lotteryKey =
+ 1033:                 d?.__centenasLotteryKey ||
+ 1034:                 "UNKNOWN";
+
+
+===== lotteryKey =====
+
+ 1022:           for (const d of drawsChunk || []) {
+ 1023:             const ymd = pickDrawYmd(d);
+ 1024:             if (!ymd) continue;
+ 1025: 
+ 1026:             const hrRaw = pickDrawHour(d);
+ 1027:             const hourNorm = normalizeHourLike(hrRaw);
+ 1028:             const hourBucket = toHourBucketHH00(hourNorm);
+ 1029: 
+ 1030:             const prizes = Array.isArray(d?.prizes) ? d.prizes : null;
+ 1031:             if (prizes && prizes.length) {
+ 1032:               const lotteryKey =
+ 1033:                 d?.__centenasLotteryKey ||
+ 1034:                 "UNKNOWN";
+ 1035: 
+ 1036:               const key =
+ 1037:                 `${lotteryKey}` +
+ 1038:                 `#${ymd}` +
+ 1039:                 `#${hourBucket || "??"}`;
+ 1040: 
+ 1041:               coveredKeys.add(key);
+ 1042: 
+ 1043:               entries.push({
+ 1044:                 lotteryKey,
+ 1045:                 ymd,
+ 1046:                 hourNorm,
+ 1047:                 hourBucket,
+ 1048:                 prizes,
+ 1049:               });
+ 1050:             }
+ 1051:           }
+ 1052: 
+
+
+===== lotteryKey =====
+
+ 1027:             const hourNorm = normalizeHourLike(hrRaw);
+ 1028:             const hourBucket = toHourBucketHH00(hourNorm);
+ 1029: 
+ 1030:             const prizes = Array.isArray(d?.prizes) ? d.prizes : null;
+ 1031:             if (prizes && prizes.length) {
+ 1032:               const lotteryKey =
+ 1033:                 d?.__centenasLotteryKey ||
+ 1034:                 "UNKNOWN";
+ 1035: 
+ 1036:               const key =
+ 1037:                 `${lotteryKey}` +
+ 1038:                 `#${ymd}` +
+ 1039:                 `#${hourBucket || "??"}`;
+ 1040: 
+ 1041:               coveredKeys.add(key);
+ 1042: 
+ 1043:               entries.push({
+ 1044:                 lotteryKey,
+ 1045:                 ymd,
+ 1046:                 hourNorm,
+ 1047:                 hourBucket,
+ 1048:                 prizes,
+ 1049:               });
+ 1050:             }
+ 1051:           }
+ 1052: 
+ 1053:           // (B) caminho 2: COMPLEMENTA usando prizesFlat agrupadas por (ymd + hourBucket)
+ 1054:           // ✅ Correção: mesmo que A tenha alguns itens, B deve preencher os faltantes
+ 1055:           if (Array.isArray(prizesFlat) && prizesFlat.length) {
+ 1056:             const map = new Map(); // key -> { ymd, hourNorm, hourBucket, prizes: [] }
+ 1057: 
+
+
+===== lotteryKey =====
+
+ 1034:                 "UNKNOWN";
+ 1035: 
+ 1036:               const key =
+ 1037:                 `${lotteryKey}` +
+ 1038:                 `#${ymd}` +
+ 1039:                 `#${hourBucket || "??"}`;
+ 1040: 
+ 1041:               coveredKeys.add(key);
+ 1042: 
+ 1043:               entries.push({
+ 1044:                 lotteryKey,
+ 1045:                 ymd,
+ 1046:                 hourNorm,
+ 1047:                 hourBucket,
+ 1048:                 prizes,
+ 1049:               });
+ 1050:             }
+ 1051:           }
+ 1052: 
+ 1053:           // (B) caminho 2: COMPLEMENTA usando prizesFlat agrupadas por (ymd + hourBucket)
+ 1054:           // ✅ Correção: mesmo que A tenha alguns itens, B deve preencher os faltantes
+ 1055:           if (Array.isArray(prizesFlat) && prizesFlat.length) {
+ 1056:             const map = new Map(); // key -> { ymd, hourNorm, hourBucket, prizes: [] }
+ 1057: 
+ 1058:             for (const p of prizesFlat) {
+ 1059:               const ymd = pickPrizeYmd(p);
+ 1060:               if (!ymd) continue;
+ 1061: 
+ 1062:               const hrRaw = pickPrizeHour(p);
+ 1063:               const hourNorm = normalizeHourLike(hrRaw);
+ 1064:               const hourBucket = toHourBucketHH00(hourNorm);
+
+
+===== lotteryKey =====
+
+ 1056:             const map = new Map(); // key -> { ymd, hourNorm, hourBucket, prizes: [] }
+ 1057: 
+ 1058:             for (const p of prizesFlat) {
+ 1059:               const ymd = pickPrizeYmd(p);
+ 1060:               if (!ymd) continue;
+ 1061: 
+ 1062:               const hrRaw = pickPrizeHour(p);
+ 1063:               const hourNorm = normalizeHourLike(hrRaw);
+ 1064:               const hourBucket = toHourBucketHH00(hourNorm);
+ 1065: 
+ 1066:               const lotteryKey =
+ 1067:                 p?.__centenasLotteryKey ||
+ 1068:                 "UNKNOWN";
+ 1069: 
+ 1070:               const key =
+ 1071:                 `${lotteryKey}` +
+ 1072:                 `#${ymd}` +
+ 1073:                 `#${hourBucket || "??"}`;
+ 1074: 
+ 1075:               if (!map.has(key)) {
+ 1076:                 map.set(key, {
+ 1077:                   lotteryKey,
+ 1078:                   ymd,
+ 1079:                   hourNorm,
+ 1080:                   hourBucket,
+ 1081:                   prizes: [],
+ 1082:                 });
+ 1083:               }
+ 1084: 
+ 1085:               map.get(key).prizes.push(p);
+ 1086:             }
+
+
+===== lotteryKey =====
+
+ 1061: 
+ 1062:               const hrRaw = pickPrizeHour(p);
+ 1063:               const hourNorm = normalizeHourLike(hrRaw);
+ 1064:               const hourBucket = toHourBucketHH00(hourNorm);
+ 1065: 
+ 1066:               const lotteryKey =
+ 1067:                 p?.__centenasLotteryKey ||
+ 1068:                 "UNKNOWN";
+ 1069: 
+ 1070:               const key =
+ 1071:                 `${lotteryKey}` +
+ 1072:                 `#${ymd}` +
+ 1073:                 `#${hourBucket || "??"}`;
+ 1074: 
+ 1075:               if (!map.has(key)) {
+ 1076:                 map.set(key, {
+ 1077:                   lotteryKey,
+ 1078:                   ymd,
+ 1079:                   hourNorm,
+ 1080:                   hourBucket,
+ 1081:                   prizes: [],
+ 1082:                 });
+ 1083:               }
+ 1084: 
+ 1085:               map.get(key).prizes.push(p);
+ 1086:             }
+ 1087: 
+ 1088:             // adiciona SOMENTE as chaves não cobertas por draws hidratados
+ 1089:             for (const [key, val] of map.entries()) {
+ 1090:               if (coveredKeys.has(key)) continue;
+ 1091:               if (val?.prizes?.length) entries.push(val);
+
+
+===== lotteryKey =====
+
+ 1067:                 p?.__centenasLotteryKey ||
+ 1068:                 "UNKNOWN";
+ 1069: 
+ 1070:               const key =
+ 1071:                 `${lotteryKey}` +
+ 1072:                 `#${ymd}` +
+ 1073:                 `#${hourBucket || "??"}`;
+ 1074: 
+ 1075:               if (!map.has(key)) {
+ 1076:                 map.set(key, {
+ 1077:                   lotteryKey,
+ 1078:                   ymd,
+ 1079:                   hourNorm,
+ 1080:                   hourBucket,
+ 1081:                   prizes: [],
+ 1082:                 });
+ 1083:               }
+ 1084: 
+ 1085:               map.get(key).prizes.push(p);
+ 1086:             }
+ 1087: 
+ 1088:             // adiciona SOMENTE as chaves não cobertas por draws hidratados
+ 1089:             for (const [key, val] of map.entries()) {
+ 1090:               if (coveredKeys.has(key)) continue;
+ 1091:               if (val?.prizes?.length) entries.push(val);
+ 1092:             }
+ 1093:           }
+ 1094: 
+ 1095:           setProgress((p) => ({
+ 1096:             done: Math.min((p?.done || 0) + 1, chunks.length),
+ 1097:             total: chunks.length,
+
+
+===== PT_RIO =====
+
+   35:  *
+   36:  * ✅ FIX CRÍTICO (rebuild indevido):
+   37:  * - openGrupo não pode entrar nas deps do build.
+   38:  * - abrir/fechar card NÃO deve disparar rebuild do histórico.
+   39:  *
+   40:  * ✅ FIX (stale/flicker):
+   41:  * - builds concorrentes não podem "finalizar UI" do build mais novo no finally.
+   42:  */
+   43: 
+   44: const LOTTERY_KEYS = {
+   45:   PT_RIO: "PT_RIO",
+   46:   NACIONAL: "NACIONAL",
+   47: };
+   48: 
+   49: const FILTERS_LS_KEY = "pp_centenas_filters_v2";
+   50: 
+   51: // tuning
+   52: const CHUNK_DAYS = 45; // manter < 60 para não cair no aggregated
+   53: const CHUNKS_CONCURRENCY = 3;
+   54: 
+   55: function pad2(n) {
+   56:   return String(n).padStart(2, "0");
+   57: }
+   58: function isYMD(s) {
+   59:   return /^\d{4}-\d{2}-\d{2}$/.test(String(s || "").trim());
+   60: }
+   61: function ymdToBR(ymd) {
+   62:   const m = String(ymd || "").trim().match(/^(\d{4})-(\d{2})-(\d{2})$/);
+   63:   if (!m) return "";
+   64:   return `${m[3]}/${m[2]}/${m[1]}`;
+   65: }
+
+
+===== PT_RIO =====
+
+  473:   return `https://app.kingapostas.com/bet/guess?pp=${payload}`;
+  474: }
+  475: 
+  476: export default function CentenasView() {
+  477:   const LOTTERY_OPTIONS = useMemo(
+  478:     () => [
+  479:       {
+  480:         id: "ALL",
+  481:         label: "Todas as loterias",
+  482:         lotteryKeys: [
+  483:           LOTTERY_KEYS.PT_RIO,
+  484:           LOTTERY_KEYS.NACIONAL,
+  485:         ],
+  486:       },
+  487:       {
+  488:         id: LOTTERY_KEYS.PT_RIO,
+  489:         label: "PT Rio",
+  490:         lotteryKeys: [
+  491:           LOTTERY_KEYS.PT_RIO,
+  492:         ],
+  493:       },
+  494:       {
+  495:         id: LOTTERY_KEYS.NACIONAL,
+  496:         label: "Federal",
+  497:         lotteryKeys: [
+  498:           LOTTERY_KEYS.NACIONAL,
+  499:         ],
+  500:       },
+  501:     ],
+  502:     []
+  503:   );
+
+
+===== PT_RIO =====
+
+  478:     () => [
+  479:       {
+  480:         id: "ALL",
+  481:         label: "Todas as loterias",
+  482:         lotteryKeys: [
+  483:           LOTTERY_KEYS.PT_RIO,
+  484:           LOTTERY_KEYS.NACIONAL,
+  485:         ],
+  486:       },
+  487:       {
+  488:         id: LOTTERY_KEYS.PT_RIO,
+  489:         label: "PT Rio",
+  490:         lotteryKeys: [
+  491:           LOTTERY_KEYS.PT_RIO,
+  492:         ],
+  493:       },
+  494:       {
+  495:         id: LOTTERY_KEYS.NACIONAL,
+  496:         label: "Federal",
+  497:         lotteryKeys: [
+  498:           LOTTERY_KEYS.NACIONAL,
+  499:         ],
+  500:       },
+  501:     ],
+  502:     []
+  503:   );
+  504: 
+  505:   const allPrizePositions = useMemo(
+  506:     () => [1, 2, 3, 4, 5, 6, 7],
+  507:     []
+  508:   );
+
+
+===== PT_RIO =====
+
+  481:         label: "Todas as loterias",
+  482:         lotteryKeys: [
+  483:           LOTTERY_KEYS.PT_RIO,
+  484:           LOTTERY_KEYS.NACIONAL,
+  485:         ],
+  486:       },
+  487:       {
+  488:         id: LOTTERY_KEYS.PT_RIO,
+  489:         label: "PT Rio",
+  490:         lotteryKeys: [
+  491:           LOTTERY_KEYS.PT_RIO,
+  492:         ],
+  493:       },
+  494:       {
+  495:         id: LOTTERY_KEYS.NACIONAL,
+  496:         label: "Federal",
+  497:         lotteryKeys: [
+  498:           LOTTERY_KEYS.NACIONAL,
+  499:         ],
+  500:       },
+  501:     ],
+  502:     []
+  503:   );
+  504: 
+  505:   const allPrizePositions = useMemo(
+  506:     () => [1, 2, 3, 4, 5, 6, 7],
+  507:     []
+  508:   );
+  509: 
+  510: // filtros
+  511:   const [lotteryOptId, setLotteryOptId] = useState("ALL");
+
+
+===== PT_RIO =====
+
+  585:     () => LOTTERY_OPTIONS.find((x) => x.id === lotteryOptId) || LOTTERY_OPTIONS[0],
+  586:     [lotteryOptId, LOTTERY_OPTIONS]
+  587:   );
+  588: 
+  589:   const selectedLotteryKeys = useMemo(
+  590:     () =>
+  591:       Array.isArray(
+  592:         selectedLottery?.lotteryKeys
+  593:       )
+  594:         ? selectedLottery.lotteryKeys
+  595:         : [LOTTERY_KEYS.PT_RIO],
+  596:     [selectedLottery]
+  597:   );
+  598: 
+  599:   const selectedLotteryKeysKey =
+  600:     selectedLotteryKeys.join(",");
+  601: 
+  602:   const boundsReady = !!(
+  603:     bounds?.minYmd &&
+  604:     bounds?.maxYmd
+  605:   );
+  606: 
+  607:   // ========= persistência de filtros =========
+  608: 
+  609:   useEffect(() => {
+  610:     try {
+  611:       const raw = localStorage.getItem(FILTERS_LS_KEY);
+  612:       if (raw) {
+  613:         const saved = JSON.parse(raw);
+  614:         if (saved && typeof saved === "object") {
+  615:           if (saved.lotteryOptId) setLotteryOptId(String(saved.lotteryOptId));
+
+
+===== PT_RIO =====
+
+  681:     ];
+  682: 
+  683:     const federalHours = [
+  684:       "20:00",
+  685:     ];
+  686: 
+  687:     let base = [];
+  688: 
+  689:     if (
+  690:       selectedLotteryKeys.includes(
+  691:         LOTTERY_KEYS.PT_RIO
+  692:       )
+  693:     ) {
+  694:       base.push(...ptRioHours);
+  695:     }
+  696: 
+  697:     if (
+  698:       selectedLotteryKeys.includes(
+  699:         LOTTERY_KEYS.NACIONAL
+  700:       )
+  701:     ) {
+  702:       base.push(...federalHours);
+  703:     }
+  704: 
+  705:     base = [...new Set(base)].sort();
+  706: 
+  707:     return [
+  708:       {
+  709:         v: "Todos",
+  710:         label: "Todos",
+  711:       },
+
+
+===== NACIONAL =====
+
+   36:  * ✅ FIX CRÍTICO (rebuild indevido):
+   37:  * - openGrupo não pode entrar nas deps do build.
+   38:  * - abrir/fechar card NÃO deve disparar rebuild do histórico.
+   39:  *
+   40:  * ✅ FIX (stale/flicker):
+   41:  * - builds concorrentes não podem "finalizar UI" do build mais novo no finally.
+   42:  */
+   43: 
+   44: const LOTTERY_KEYS = {
+   45:   PT_RIO: "PT_RIO",
+   46:   NACIONAL: "NACIONAL",
+   47: };
+   48: 
+   49: const FILTERS_LS_KEY = "pp_centenas_filters_v2";
+   50: 
+   51: // tuning
+   52: const CHUNK_DAYS = 45; // manter < 60 para não cair no aggregated
+   53: const CHUNKS_CONCURRENCY = 3;
+   54: 
+   55: function pad2(n) {
+   56:   return String(n).padStart(2, "0");
+   57: }
+   58: function isYMD(s) {
+   59:   return /^\d{4}-\d{2}-\d{2}$/.test(String(s || "").trim());
+   60: }
+   61: function ymdToBR(ymd) {
+   62:   const m = String(ymd || "").trim().match(/^(\d{4})-(\d{2})-(\d{2})$/);
+   63:   if (!m) return "";
+   64:   return `${m[3]}/${m[2]}/${m[1]}`;
+   65: }
+   66: function ymdToUTCDate(ymd) {
+
+
+===== NACIONAL =====
+
+  474: }
+  475: 
+  476: export default function CentenasView() {
+  477:   const LOTTERY_OPTIONS = useMemo(
+  478:     () => [
+  479:       {
+  480:         id: "ALL",
+  481:         label: "Todas as loterias",
+  482:         lotteryKeys: [
+  483:           LOTTERY_KEYS.PT_RIO,
+  484:           LOTTERY_KEYS.NACIONAL,
+  485:         ],
+  486:       },
+  487:       {
+  488:         id: LOTTERY_KEYS.PT_RIO,
+  489:         label: "PT Rio",
+  490:         lotteryKeys: [
+  491:           LOTTERY_KEYS.PT_RIO,
+  492:         ],
+  493:       },
+  494:       {
+  495:         id: LOTTERY_KEYS.NACIONAL,
+  496:         label: "Federal",
+  497:         lotteryKeys: [
+  498:           LOTTERY_KEYS.NACIONAL,
+  499:         ],
+  500:       },
+  501:     ],
+  502:     []
+  503:   );
+  504: 
+
+
+===== NACIONAL =====
+
+  485:         ],
+  486:       },
+  487:       {
+  488:         id: LOTTERY_KEYS.PT_RIO,
+  489:         label: "PT Rio",
+  490:         lotteryKeys: [
+  491:           LOTTERY_KEYS.PT_RIO,
+  492:         ],
+  493:       },
+  494:       {
+  495:         id: LOTTERY_KEYS.NACIONAL,
+  496:         label: "Federal",
+  497:         lotteryKeys: [
+  498:           LOTTERY_KEYS.NACIONAL,
+  499:         ],
+  500:       },
+  501:     ],
+  502:     []
+  503:   );
+  504: 
+  505:   const allPrizePositions = useMemo(
+  506:     () => [1, 2, 3, 4, 5, 6, 7],
+  507:     []
+  508:   );
+  509: 
+  510: // filtros
+  511:   const [lotteryOptId, setLotteryOptId] = useState("ALL");
+  512:   const [fMes, setFMes] = useState("Todos");
+  513:   const [fDiaMes, setFDiaMes] = useState("Todos");
+  514:   const [fDiaSemana, setFDiaSemana] = useState("Todos");
+  515:   const [fHorario, setFHorario] = useState("Todos");
+
+
+===== NACIONAL =====
+
+  488:         id: LOTTERY_KEYS.PT_RIO,
+  489:         label: "PT Rio",
+  490:         lotteryKeys: [
+  491:           LOTTERY_KEYS.PT_RIO,
+  492:         ],
+  493:       },
+  494:       {
+  495:         id: LOTTERY_KEYS.NACIONAL,
+  496:         label: "Federal",
+  497:         lotteryKeys: [
+  498:           LOTTERY_KEYS.NACIONAL,
+  499:         ],
+  500:       },
+  501:     ],
+  502:     []
+  503:   );
+  504: 
+  505:   const allPrizePositions = useMemo(
+  506:     () => [1, 2, 3, 4, 5, 6, 7],
+  507:     []
+  508:   );
+  509: 
+  510: // filtros
+  511:   const [lotteryOptId, setLotteryOptId] = useState("ALL");
+  512:   const [fMes, setFMes] = useState("Todos");
+  513:   const [fDiaMes, setFDiaMes] = useState("Todos");
+  514:   const [fDiaSemana, setFDiaSemana] = useState("Todos");
+  515:   const [fHorario, setFHorario] = useState("Todos");
+  516:   const [fAnimal, setFAnimal] = useState("Todos");
+  517:   const [fPosicao, setFPosicao] = useState("Todos");
+  518:   const [showOnlyHits, setShowOnlyHits] = useState(false);
+
+
+===== NACIONAL =====
+
+  689:     if (
+  690:       selectedLotteryKeys.includes(
+  691:         LOTTERY_KEYS.PT_RIO
+  692:       )
+  693:     ) {
+  694:       base.push(...ptRioHours);
+  695:     }
+  696: 
+  697:     if (
+  698:       selectedLotteryKeys.includes(
+  699:         LOTTERY_KEYS.NACIONAL
+  700:       )
+  701:     ) {
+  702:       base.push(...federalHours);
+  703:     }
+  704: 
+  705:     base = [...new Set(base)].sort();
+  706: 
+  707:     return [
+  708:       {
+  709:         v: "Todos",
+  710:         label: "Todos",
+  711:       },
+  712:       ...base.map((hour) => ({
+  713:         v: hour,
+  714:         label: hour.replace(":00", "h"),
+  715:       })),
+  716:     ];
+  717:   }, [selectedLotteryKeys]);
+  718: 
+  719:   useEffect(() => {
+

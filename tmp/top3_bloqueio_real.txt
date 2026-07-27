@@ -1,0 +1,72 @@
+====================================================================================================
+CONTEXTO DA LINHA 3426
+====================================================================================================
+     3401:     const score = Math.max(0, Number(item?.score || 0));
+     3402:     const nextGrupo = Number(item?.nextDraw ? pickPrize1GrupoFromDraw(item.nextDraw) : null);
+     3403: 
+     3404:     if (!Number.isFinite(nextGrupo) || nextGrupo < 1 || nextGrupo > k) continue;
+     3405:     if (score <= 0) continue;
+     3406: 
+     3407:     freq.set(nextGrupo, Number(freq.get(nextGrupo) || 0) + score);
+     3408:     totalWeight += score;
+     3409:   }
+     3410: 
+     3411:   const prob = new Map();
+     3412:   for (let g = 1; g <= k; g += 1) {
+     3413:     prob.set(g, totalWeight > 0 ? Number(freq.get(g) || 0) / totalWeight : 0);
+     3414:   }
+     3415: 
+     3416:   return {
+     3417:     freq,
+     3418:     prob,
+     3419:     samples: ranking.length,
+     3420:     totalWeight,
+     3421:   };
+     3422: }
+     3423: 
+     3424: 
+     3425: ) {
+>>>  3426:   if (typeof window === "undefined") return;
+     3427:   if (!scene) return;
+     3428: 
+     3429:   console.log(`[TOP3 SCENE] ${label}`, {
+     3430:     ...extra,
+     3431:     ymd: scene.ymd,
+     3432:     hour: scene.hour,
+     3433:     firstGrupo: scene.firstGrupo,
+     3434:     signature: scene.signature,
+     3435:     grupos: scene.grupos,
+     3436:     dezenas: scene.dezenas,
+     3437:     centenas: scene.centenas,
+     3438:     milhares: scene.milhares,
+     3439:     repeatedGroups: scene.repeatedGroups,
+     3440:     repeatedDezenas: scene.repeatedDezenas,
+     3441:     repeatedCentenas: scene.repeatedCentenas,
+     3442:     rows: scene.rows,
+     3443:   });
+     3444: }
+     3445: 
+     3446: 
+     3447: /* =========================
+     3448:    16/20 milhares (por grupo) — POR TERMINAÇÃO (CORRETO)
+     3449: ========================= */
+     3450: 
+     3451: function getDezenasFixasFromGrupo(grupo2) {
+
+====================================================================================================
+VERIFICAÇÃO DOS IMPORTS
+====================================================================================================
+src/pages/Top3/top3.constants.js -> EXISTE
+src/pages/Top3/top3.constants.jsx -> AUSENTE
+src/pages/Top3/top3.constants.ts -> AUSENTE
+src/pages/Top3/top3.constants.tsx -> AUSENTE
+src/pages/Top3/top3.formatters.js -> EXISTE
+src/pages/Top3/top3.formatters.jsx -> AUSENTE
+src/pages/Top3/top3.formatters.ts -> AUSENTE
+src/pages/Top3/top3.formatters.tsx -> AUSENTE
+
+====================================================================================================
+IMPORTS ENCONTRADOS NO ARQUIVO
+====================================================================================================
+16: } from "./top3.formatters";
+30: } from "./top3.constants";

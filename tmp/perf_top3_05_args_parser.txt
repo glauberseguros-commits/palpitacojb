@@ -1,0 +1,380 @@
+===== PERF-TOP3-05A — PARSER REAL DE ARGUMENTOS =====
+Gerado em: 24/07/2026 01:07:07
+
+===== OCORRÊNCIAS DE process.argv =====
+
+  backend\scripts\importKingApostas.js:1933:  return {
+  backend\scripts\importKingApostas.js:1934:    ...response,
+  backend\scripts\importKingApostas.js:1935:    top3HistorySync,
+  backend\scripts\importKingApostas.js:1936:    top3AutoPrediction,
+  backend\scripts\importKingApostas.js:1937:    performance,
+  backend\scripts\importKingApostas.js:1938:  };
+  backend\scripts\importKingApostas.js:1939:}
+  backend\scripts\importKingApostas.js:1940:
+  backend\scripts\importKingApostas.js:1941:/**
+  backend\scripts\importKingApostas.js:1942: * CLI wrapper (mantém compatibilidade)
+  backend\scripts\importKingApostas.js:1943: */
+  backend\scripts\importKingApostas.js:1944:async function main() {
+> backend\scripts\importKingApostas.js:1945:  const date = process.argv[2];
+> backend\scripts\importKingApostas.js:1946:  const lotteryKey = process.argv[3] || "PT_RIO";
+> backend\scripts\importKingApostas.js:1947:  const closeHour = process.argv[4] || null;
+  backend\scripts\importKingApostas.js:1948:
+  backend\scripts\importKingApostas.js:1949:  const result = await runImport({
+  backend\scripts\importKingApostas.js:1950:    date,
+  backend\scripts\importKingApostas.js:1951:    lotteryKey,
+  backend\scripts\importKingApostas.js:1952:    closeHour,
+  backend\scripts\importKingApostas.js:1953:  });
+  backend\scripts\importKingApostas.js:1954:
+  backend\scripts\importKingApostas.js:1955:  console.log("");
+  backend\scripts\importKingApostas.js:1956:  console.log("===== RESULTADO =====");
+  backend\scripts\importKingApostas.js:1957:  console.log(JSON.stringify(result, null, 2));
+  backend\scripts\importKingApostas.js:1958:}
+  backend\scripts\importKingApostas.js:1959:
+  backend\scripts\importKingApostas.js:1960:if (require.main === module) {
+  backend\scripts\importKingApostas.js:1961:  main().catch((e) => {
+  backend\scripts\importKingApostas.js:1962:    console.error("ERRO:", e?.message || e);
+  backend\scripts\importKingApostas.js:1963:    process.exit(1);
+  backend\scripts\importKingApostas.js:1964:  });
+  backend\scripts\importKingApostas.js:1965:}
+  backend\scripts\importKingApostas.js:1966:
+  backend\scripts\importKingApostas.js:1967:module.exports = {
+  backend\scripts\importKingApostas.js:1968:  runImport,
+  backend\scripts\importKingApostas.js:1969:  fetchKingResults,
+  backend\scripts\importKingApostas.js:1970:  importFromPayload,
+  backend\scripts\importKingApostas.js:1971:  buildResultsUrl,
+  backend\scripts\importKingApostas.js:1972:};
+
+===== OCORRÊNCIAS DE PARÂMETRO DATE =====
+  backend\scripts\importKingApostas.js:255: * =========================
+  backend\scripts\importKingApostas.js:256: */
+  backend\scripts\importKingApostas.js:257:
+  backend\scripts\importKingApostas.js:258:function pad2(n) {
+  backend\scripts\importKingApostas.js:259:  return String(n).padStart(2, "0");
+  backend\scripts\importKingApostas.js:260:}
+  backend\scripts\importKingApostas.js:261:
+  backend\scripts\importKingApostas.js:262:function todayYMDLocal() {
+  backend\scripts\importKingApostas.js:263:  try {
+  backend\scripts\importKingApostas.js:264:    const fmt = new Intl.DateTimeFormat("en-CA", {
+  backend\scripts\importKingApostas.js:265:      timeZone: "America/Sao_Paulo",
+  backend\scripts\importKingApostas.js:266:      year: "numeric",
+  backend\scripts\importKingApostas.js:267:      month: "2-digit",
+  backend\scripts\importKingApostas.js:268:      day: "2-digit",
+  backend\scripts\importKingApostas.js:269:    });
+> backend\scripts\importKingApostas.js:270:    return fmt.format(new Date()); // YYYY-MM-DD
+  backend\scripts\importKingApostas.js:271:  } catch {
+  backend\scripts\importKingApostas.js:272:    const d = new Date();
+  backend\scripts\importKingApostas.js:273:    return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+  backend\scripts\importKingApostas.js:274:  }
+  backend\scripts\importKingApostas.js:275:}
+  backend\scripts\importKingApostas.js:276:
+  backend\scripts\importKingApostas.js:277:function isFutureISODate(ymd) {
+> backend\scripts\importKingApostas.js:278:  // Compare lexicográfico funciona para YYYY-MM-DD
+  backend\scripts\importKingApostas.js:279:  const t = todayYMDLocal();
+  backend\scripts\importKingApostas.js:280:  return String(ymd || "").trim() > t;
+  backend\scripts\importKingApostas.js:281:}
+  backend\scripts\importKingApostas.js:282:
+  backend\scripts\importKingApostas.js:283:/**
+  backend\scripts\importKingApostas.js:284: * =========================
+  backend\scripts\importKingApostas.js:285: * Jogo do Bicho helpers
+  backend\scripts\importKingApostas.js:286: * =========================
+  backend\scripts\importKingApostas.js:287: */
+  backend\scripts\importKingApostas.js:288:
+  backend\scripts\importKingApostas.js:289:/** Mapeamento oficial Grupo -> Animal */
+  backend\scripts\importKingApostas.js:290:const GRUPO_TO_ANIMAL = {
+  backend\scripts\importKingApostas.js:291:  1: "Avestruz",
+  backend\scripts\importKingApostas.js:292:  2: "Águia",
+  backend\scripts\importKingApostas.js:293:  3: "Burro",
+  backend\scripts\importKingApostas.js:294:  4: "Borboleta",
+  backend\scripts\importKingApostas.js:295:  5: "Cachorro",
+  backend\scripts\importKingApostas.js:296:  6: "Cabra",
+  backend\scripts\importKingApostas.js:297:  7: "Carneiro",
+  backend\scripts\importKingApostas.js:298:  8: "Camelo",
+  backend\scripts\importKingApostas.js:299:  9: "Cobra",
+  backend\scripts\importKingApostas.js:300:  10: "Coelho",
+  backend\scripts\importKingApostas.js:301:  11: "Cavalo",
+  backend\scripts\importKingApostas.js:302:  12: "Elefante",
+  backend\scripts\importKingApostas.js:303:  13: "Galo",
+  backend\scripts\importKingApostas.js:304:  14: "Gato",
+  backend\scripts\importKingApostas.js:305:  15: "Jacaré",
+  backend\scripts\importKingApostas.js:306:  16: "Leão",
+  backend\scripts\importKingApostas.js:307:  17: "Macaco",
+  backend\scripts\importKingApostas.js:308:  18: "Porco",
+  backend\scripts\importKingApostas.js:309:  19: "Pavão",
+  backend\scripts\importKingApostas.js:310:  20: "Peru",
+  backend\scripts\importKingApostas.js:311:  21: "Touro",
+  backend\scripts\importKingApostas.js:312:  22: "Tigre",
+  backend\scripts\importKingApostas.js:313:  23: "Urso",
+  backend\scripts\importKingApostas.js:1452:        await batch.commit();
+  backend\scripts\importKingApostas.js:1453:        batch = db.batch();
+  backend\scripts\importKingApostas.js:1454:        ops = 0;
+  backend\scripts\importKingApostas.js:1455:      }
+  backend\scripts\importKingApostas.js:1456:    }
+  backend\scripts\importKingApostas.js:1457:    slots += 1;
+  backend\scripts\importKingApostas.js:1458:  }
+  backend\scripts\importKingApostas.js:1459:
+  backend\scripts\importKingApostas.js:1460:  if (ops > 0) await batch.commit();
+  backend\scripts\importKingApostas.js:1461:
+  backend\scripts\importKingApostas.js:1462:  return { ok: true, deleted, slots };
+  backend\scripts\importKingApostas.js:1463:}
+  backend\scripts\importKingApostas.js:1464:
+  backend\scripts\importKingApostas.js:1465:async function runImport({ date, lotteryKey = "PT_RIO", closeHour = null } = {}) {
+  backend\scripts\importKingApostas.js:1466:  if (!date || !isISODate(date)) {
+> backend\scripts\importKingApostas.js:1467:    throw new Error('Parâmetro "date" inválido. Use YYYY-MM-DD.');
+  backend\scripts\importKingApostas.js:1468:  }
+  backend\scripts\importKingApostas.js:1469:
+  backend\scripts\importKingApostas.js:1470:  const lk = String(lotteryKey || "").trim().toUpperCase();
+  backend\scripts\importKingApostas.js:1471:  if (!lk || !LOTTERIES_BY_KEY[lk]) {
+  backend\scripts\importKingApostas.js:1472:    throw new Error(`Parâmetro "lotteryKey" inválida: ${lk}`);
+  backend\scripts\importKingApostas.js:1473:  }
+  backend\scripts\importKingApostas.js:1474:
+  backend\scripts\importKingApostas.js:1475:  // ✅ BLINDAGEM: nunca importar data futura (evita “sujar” FS por engano)
+  backend\scripts\importKingApostas.js:1476:  const todayBR = todayYMDLocal();
+  backend\scripts\importKingApostas.js:1477:  if (!ALLOW_FUTURE_DATE && isFutureISODate(date)) {
+  backend\scripts\importKingApostas.js:1478:    const norm = normalizeRequestedCloseHour(closeHour, lk);
+  backend\scripts\importKingApostas.js:1479:    return {
+  backend\scripts\importKingApostas.js:1480:      ok: true,
+  backend\scripts\importKingApostas.js:1481:      lotteryKey: lk,
+  backend\scripts\importKingApostas.js:1482:      date,
+  backend\scripts\importKingApostas.js:1483:      closeHour: norm.slot || null,
+  backend\scripts\importKingApostas.js:1484:
+  backend\scripts\importKingApostas.js:1485:      requestedCloseHour: norm.requested || null,
+  backend\scripts\importKingApostas.js:1486:
+  backend\scripts\importKingApostas.js:1487:      blocked: true,
+  backend\scripts\importKingApostas.js:1488:      blockedReason: "future_date",
+  backend\scripts\importKingApostas.js:1489:      todayBR,
+  backend\scripts\importKingApostas.js:1490:
+  backend\scripts\importKingApostas.js:1491:      captured: false,
+  backend\scripts\importKingApostas.js:1492:      apiHasPrizes: null,
+  backend\scripts\importKingApostas.js:1493:      alreadyCompleteAny: null,
+  backend\scripts\importKingApostas.js:1494:      alreadyCompleteAll: null,
+  backend\scripts\importKingApostas.js:1495:      expectedTargets: null,
+  backend\scripts\importKingApostas.js:1496:      alreadyCompleteCount: null,
+  backend\scripts\importKingApostas.js:1497:      slotDocsFound: null,
+  backend\scripts\importKingApostas.js:1498:      apiReturnedTargetDraws: null,
+  backend\scripts\importKingApostas.js:1499:      savedCount: null,
+  backend\scripts\importKingApostas.js:1500:      writeCount: null,
+  backend\scripts\importKingApostas.js:1501:      targetDrawIds: null,
+  backend\scripts\importKingApostas.js:1502:      tookMs: 0,
+
+===== FINAL DO ARQUIVO =====
+  const alreadyCompleteAny = normalizedClose ? alreadyCompleteAnyReal : null;
+
+  // ✅ Captured “verdadeiro” (modo closeHour):
+  // - API liberou prizes para o horário, OU
+  // - slot já está completo no Firestore
+  const captured = normalizedClose
+    ? apiHasPrizes || alreadyCompleteAnyReal
+    : (result.totalDrawsValid || 0) > 0;
+
+  const writeCount = Number.isFinite(Number(proof.targetWriteCount))
+    ? Number(proof.targetWriteCount)
+    : 0;
+
+  const savedCount = Number.isFinite(Number(proof.targetSavedCount))
+    ? Number(proof.targetSavedCount)
+    : 0;
+
+  const response = {
+    ok: true,
+    lotteryKey: lk,
+    date,
+    closeHour: normalizedClose || null,
+    requestedCloseHour: norm.requested || null,
+
+    blocked: false,
+    blockedReason: null,
+    todayBR,
+
+    captured,
+    apiHasPrizes: normalizedClose ? apiHasPrizes : null,
+    alreadyCompleteAny: normalizedClose ? alreadyCompleteAny : null,
+    alreadyCompleteAll: normalizedClose ? alreadyCompleteAll : null,
+
+    expectedTargets: normalizedClose ? Number(proof.expectedTargets || 0) : null,
+    alreadyCompleteCount: normalizedClose ? Number(proof.alreadyCompleteCount || 0) : null,
+    slotDocsFound: normalizedClose ? Number(proof.slotDocsFound || 0) : null,
+    apiReturnedTargetDraws: normalizedClose ? Number(proof.apiReturnedTargetDraws || 0) : null,
+
+    savedCount: normalizedClose ? savedCount : null,
+    writeCount: normalizedClose ? writeCount : null,
+    targetDrawIds: normalizedClose ? proof.targetDrawIds || [] : null,
+
+    tookMs: ms,
+    ...result,
+  };
+
+  const historySyncStartedAt = Date.now();
+
+  const top3HistorySync =
+    await syncImportedResultToTop3History(
+      response
+    );
+
+  performance.historySyncMs =
+    Date.now() - historySyncStartedAt;
+
+  const top3StartedAt = Date.now();
+
+  let top3AutoPrediction = {
+    ok: true,
+    skipped: true,
+    reason: "not_attempted",
+  };
+
+  if (
+    response.ok === true &&
+    response.blocked !== true &&
+    response.captured === true &&
+    normalizedClose
+  ) {
+    try {
+      const publicApi = loadTop3PublicApi();
+
+      const nextSlot =
+        resolveNextTop3Slot({
+          lotteryKey: lk,
+          ymd: date,
+          hour: normalizedClose,
+          publicApi,
+        });
+
+      const nextYmd =
+        String(nextSlot?.ymd || "").trim();
+
+      const nextHour =
+        String(nextSlot?.hour || "").trim();
+
+      if (
+        /^\d{4}-\d{2}-\d{2}$/.test(nextYmd) &&
+        nextHour
+      ) {
+        const generated =
+          await createTop3PredictionRun({
+            lotteryKey: lk,
+            date: nextYmd,
+            closeHour: nextHour,
+            historySource: "auto",
+            source: "auto-import",
+            metadata: {
+              triggeredByImport: true,
+              importedYmd: date,
+              importedHour: normalizedClose,
+            },
+          });
+
+        top3AutoPrediction = {
+          ok: true,
+          skipped: false,
+          targetYmd: nextYmd,
+          targetHour: nextHour,
+          runId:
+            generated?.run?.id || null,
+          publicProjection:
+            generated?.publicProjection || null,
+        };
+
+        console.log(
+          `[TOP3 AUTO] OK | ${lk} | ` +
+          `importado=${date} ${normalizedClose} | ` +
+          `próximo=${nextYmd} ${nextHour}`
+        );
+      } else {
+        top3AutoPrediction = {
+          ok: true,
+          skipped: true,
+          reason: "next_slot_not_found",
+        };
+
+        console.warn(
+          `[TOP3 AUTO] próximo slot não localizado | ` +
+          `${lk} ${date} ${normalizedClose}`
+        );
+      }
+    } catch (error) {
+      top3AutoPrediction = {
+        ok: false,
+        skipped: false,
+        error: String(
+          error?.message ||
+          error ||
+          "top3_auto_failed"
+        ),
+      };
+
+      console.error(
+        "[TOP3 AUTO] falhou:",
+        error?.stack ||
+        error?.message ||
+        error
+      );
+    }
+  } else {
+    top3AutoPrediction = {
+      ok: true,
+      skipped: true,
+      reason:
+        response.blocked === true
+          ? "import_blocked"
+          : response.captured !== true
+          ? "result_not_captured"
+          : "close_hour_missing",
+    };
+  }
+
+  performance.top3Ms =
+    Date.now() - top3StartedAt;
+
+  performance.totalMs =
+    Date.now() - startedAt;
+
+  console.log(
+    `[PERF:IMPORT] ${lk} ${date}` +
+      `${normalizedClose ? ` ${normalizedClose}` : ""}` +
+      ` | fetch=${performance.fetchMs}ms` +
+      ` | firestore=${performance.importMs}ms` +
+      ` | history=${performance.historySyncMs}ms` +
+      ` | top3=${performance.top3Ms}ms` +
+      ` | total=${performance.totalMs}ms`
+  );
+
+  return {
+    ...response,
+    top3HistorySync,
+    top3AutoPrediction,
+    performance,
+  };
+}
+
+/**
+ * CLI wrapper (mantém compatibilidade)
+ */
+async function main() {
+  const date = process.argv[2];
+  const lotteryKey = process.argv[3] || "PT_RIO";
+  const closeHour = process.argv[4] || null;
+
+  const result = await runImport({
+    date,
+    lotteryKey,
+    closeHour,
+  });
+
+  console.log("");
+  console.log("===== RESULTADO =====");
+  console.log(JSON.stringify(result, null, 2));
+}
+
+if (require.main === module) {
+  main().catch((e) => {
+    console.error("ERRO:", e?.message || e);
+    process.exit(1);
+  });
+}
+
+module.exports = {
+  runImport,
+  fetchKingResults,
+  importFromPayload,
+  buildResultsUrl,
+};
+

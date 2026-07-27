@@ -1,0 +1,117 @@
+TPP-04.17B — FUNÇÕES-CHAVE COMPLETAS DO MOTOR TOP3
+
+
+====================================================================================================
+FUNÇÃO: getScheduleForLottery
+LINHAS: 232–250
+====================================================================================================
+export function getScheduleForLottery({
+  lotteryKey,
+  ymd,
+  PT_RIO_SCHEDULE_NORMAL,
+  PT_RIO_SCHEDULE_WED_SAT,
+  FEDERAL_SCHEDULE,
+}) {
+  const key = safeStr(lotteryKey).toUpperCase();
+
+  if (key === "FEDERAL") {
+    return isFederalDrawDay(ymd) ? FEDERAL_SCHEDULE : [];
+  }
+
+  return getPtRioScheduleForYmd(
+    ymd,
+    PT_RIO_SCHEDULE_NORMAL,
+    PT_RIO_SCHEDULE_WED_SAT
+  );
+}
+
+
+====================================================================================================
+FUNÇÃO: getNextSlotForLottery
+LINHAS: 367–431
+====================================================================================================
+export function getNextSlotForLottery({
+  lotteryKey,
+  ymd,
+  hourBucket,
+  PT_RIO_SCHEDULE_NORMAL,
+  PT_RIO_SCHEDULE_WED_SAT,
+  FEDERAL_SCHEDULE,
+  maxForwardDays = 21,
+}) {
+  const key = safeStr(lotteryKey).toUpperCase();
+  const y0 = safeStr(ymd);
+  const h0 = toHourBucket(hourBucket);
+
+  if (!isYMD(y0) || !safeStr(h0)) return { ymd: "", hour: "" };
+
+  if (key === "FEDERAL") {
+    for (let i = 1; i <= maxForwardDays; i += 1) {
+      const day = addDaysYMD(y0, i);
+      const sch = getScheduleForLottery({
+        lotteryKey: key,
+        ymd: day,
+        PT_RIO_SCHEDULE_NORMAL,
+        PT_RIO_SCHEDULE_WED_SAT,
+        FEDERAL_SCHEDULE,
+      });
+      if (Array.isArray(sch) && sch.length) {
+        return { ymd: day, hour: toHourBucket(sch[0]) };
+      }
+    }
+    return { ymd: "", hour: "" };
+  }
+
+  const sch0 = getScheduleForLottery({
+    lotteryKey: key,
+    ymd: y0,
+    hourBucket: h0,
+    PT_RIO_SCHEDULE_NORMAL,
+    PT_RIO_SCHEDULE_WED_SAT,
+    FEDERAL_SCHEDULE,
+  });
+
+  const idx = (Array.isArray(sch0) ? sch0 : []).findIndex(
+    (x) => toHourBucket(x) === h0
+  );
+
+  if (idx >= 0 && idx < sch0.length - 1) {
+    return { ymd: y0, hour: toHourBucket(sch0[idx + 1]) };
+  }
+
+  for (let i = 1; i <= maxForwardDays; i += 1) {
+    const day = addDaysYMD(y0, i);
+    const sch = getScheduleForLottery({
+      lotteryKey: key,
+      ymd: day,
+      PT_RIO_SCHEDULE_NORMAL,
+      PT_RIO_SCHEDULE_WED_SAT,
+      FEDERAL_SCHEDULE,
+    });
+    if (Array.isArray(sch) && sch.length) {
+      return { ymd: day, hour: toHourBucket(sch[0]) };
+    }
+  }
+
+  return { ymd: "", hour: "" };
+}
+
+
+====================================================================================================
+FUNÇÃO: findLastDrawInList
+LINHAS: 261–274
+====================================================================================================
+export function findLastDrawInList(draws, schedule) {
+  const list = Array.isArray(draws) ? draws : [];
+  if (!list.length) return null;
+
+  const sorted = [...list]
+    .filter((d) => isHourInSchedule(schedule, pickDrawHour(d)))
+    .sort((a, b) => {
+      const ta = ymdHourToTs(pickDrawYMD(a), toHourBucket(pickDrawHour(a)));
+      const tb = ymdHourToTs(pickDrawYMD(b), toHourBucket(pickDrawHour(b)));
+      return tb - ta;
+    });
+
+  return sorted[0] || null;
+}

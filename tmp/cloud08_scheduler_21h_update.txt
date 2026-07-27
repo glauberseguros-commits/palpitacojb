@@ -1,0 +1,77 @@
+====================================================================================================
+CLOUD-08 — AMPLIAR JANELA AUTOMÁTICA DAS 21H
+====================================================================================================
+Gerado em: 2026-07-23 22:49:58
+Projeto: palpitacojb-app
+Região: southamerica-east1
+Job: palpitaco-21h-windows
+====================================================================================================
+
+====================================================================================================
+1. CONFIGURAÇÃO ANTES DA ALTERAÇÃO
+====================================================================================================
+description: Duas tentativas para resultados das 21h
+httpTarget:
+  uri: https://run.googleapis.com/v2/projects/palpitacojb-app/locations/southamerica-east1/jobs/palpitaco-auto-import:run
+lastAttemptTime: '2026-07-24T00:18:01.632869Z'
+name: projects/palpitacojb-app/locations/southamerica-east1/jobs/palpitaco-21h-windows
+schedule: 8,18 21 * * *
+scheduleTime: '2026-07-25T00:08:00.833772Z'
+state: ENABLED
+timeZone: America/Sao_Paulo
+
+====================================================================================================
+2. APLICANDO NOVA JANELA
+====================================================================================================
+Nova agenda: 8,18,28,38,48,58 21 * * *
+Horários: 21:08, 21:18, 21:28, 21:38, 21:48 e 21:58
+Fuso: America/Sao_Paulo
+====================================================================================================
+attemptDeadline: 120s
+description: 'Tentativas ampliadas para resultados das 21h: 21:08 at? 21:58'
+httpTarget:
+  body: e30=
+  headers:
+    Content-Type: application/json
+    User-Agent: Google-Cloud-Scheduler
+  httpMethod: POST
+  oauthToken:
+    scope: https://www.googleapis.com/auth/cloud-platform
+    serviceAccountEmail: palpitaco-scheduler@palpitacojb-app.iam.gserviceaccount.com
+  uri: https://run.googleapis.com/v2/projects/palpitacojb-app/locations/southamerica-east1/jobs/palpitaco-auto-import:run
+lastAttemptTime: '2026-07-24T00:18:01.632869Z'
+name: projects/palpitacojb-app/locations/southamerica-east1/jobs/palpitaco-21h-windows
+retryConfig:
+  maxBackoffDuration: 3600s
+  maxDoublings: 5
+  maxRetryDuration: 0s
+  minBackoffDuration: 5s
+schedule: 8,18,28,38,48,58 21 * * *
+scheduleTime: '2026-07-25T00:08:00Z'
+state: ENABLED
+status: {}
+timeZone: America/Sao_Paulo
+userUpdateTime: '2026-07-24T01:50:13.249034Z'
+
+====================================================================================================
+3. CONFIGURAÇÃO DEPOIS DA ALTERAÇÃO
+====================================================================================================
+description: 'Tentativas ampliadas para resultados das 21h: 21:08 at? 21:58'
+httpTarget:
+  uri: https://run.googleapis.com/v2/projects/palpitacojb-app/locations/southamerica-east1/jobs/palpitaco-auto-import:run
+lastAttemptTime: '2026-07-24T00:18:01.632869Z'
+name: projects/palpitacojb-app/locations/southamerica-east1/jobs/palpitaco-21h-windows
+schedule: 8,18,28,38,48,58 21 * * *
+scheduleTime: '2026-07-25T00:08:00Z'
+state: ENABLED
+timeZone: America/Sao_Paulo
+
+====================================================================================================
+4. VALIDAÇÃO AUTOMÁTICA
+====================================================================================================
+Schedule confirmado: 8,18,28,38,48,58 21 * * *
+Fuso confirmado: America/Sao_Paulo
+Estado confirmado: ENABLED
+
+RESULTADO: CORREÇÃO APLICADA E VALIDADA COM SUCESSO.
+O mesmo Cloud Run Job continuará processando PT_RIO, FEDERAL, LOOK e NACIONAL.

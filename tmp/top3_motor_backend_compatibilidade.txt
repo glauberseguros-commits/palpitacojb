@@ -1,0 +1,284 @@
+AUDITORIA — COMPATIBILIDADE DO MOTOR TOP3 COM O BACKEND
+====================================================================================================
+
+RESULTADO
+----------------------------------------------------------------------------------------------------
+{
+  "classification": "EXIGE_REFATORACAO_DO_NUCLEO",
+  "recommendation": "O motor possui dependências de frontend ou navegador. Não deve ser importado diretamente pelo backend. Primeiro será necessário separar o cálculo puro da camada React/Firebase Client.",
+  "entryFiles": [
+    "src/pages/Top3/top3.engine.js",
+    "src/pages/Top3/modules/top3.prediction.js"
+  ],
+  "filesInDependencyGraph": 7,
+  "browserDependentFiles": [
+    "src/pages/Top3/top3.engine.js",
+    "src/pages/Top3/modules/scoreEngine/contextEvidence.js",
+    "src/pages/Top3/modules/scoreEngine/frequencyEvidence.js"
+  ],
+  "frontendDependentFiles": [],
+  "nodeUnsafeFiles": [],
+  "unresolvedImportFiles": [
+    "src/pages/Top3/top3.engine.js"
+  ],
+  "externalModules": [],
+  "blockingExternalModules": []
+}
+
+====================================================================================================
+ARQUIVO: src/pages/Top3/top3.engine.js
+====================================================================================================
+{
+  "path": "src/pages/Top3/top3.engine.js",
+  "relativeDependencies": [
+    {
+      "specifier": "./modules/scoreEngine/scoreEngineV2",
+      "resolved": "src/pages/Top3/modules/scoreEngine/scoreEngineV2.js"
+    }
+  ],
+  "externalDependencies": [],
+  "unresolvedRelativeImports": [
+    "./top3.constants",
+    "./top3.formatters"
+  ],
+  "browserHits": {
+    "window": [
+      2614,
+      3472
+    ]
+  },
+  "frontendHits": {},
+  "nodeUnsafeHits": {},
+  "exports": [
+    {
+      "line": 84,
+      "text": "export function guessPrizePos(p) {"
+    },
+    {
+      "line": 98,
+      "text": "export function guessPrizeGrupo(p) {"
+    },
+    {
+      "line": 129,
+      "text": "export function pickDrawHour(draw) {"
+    },
+    {
+      "line": 135,
+      "text": "export function pickDrawYMD(draw) {"
+    },
+    {
+      "line": 150,
+      "text": "export function pickPrize1GrupoFromDraw(draw) {"
+    },
+    {
+      "line": 216,
+      "text": "export function isFederalDrawDay(ymd) {"
+    },
+    {
+      "line": 221,
+      "text": "export function getPtRioScheduleForYmd("
+    },
+    {
+      "line": 232,
+      "text": "export function getScheduleForLottery({"
+    },
+    {
+      "line": 252,
+      "text": "export function scheduleSet(schedule) {"
+    },
+    {
+      "line": 256,
+      "text": "export function isHourInSchedule(schedule, hhmm) {"
+    },
+    {
+      "line": 261,
+      "text": "export function findLastDrawInList(draws, schedule) {"
+    },
+    {
+      "line": 276,
+      "text": "export function findPrevDrawBeforeTargetInSameDay("
+    },
+    {
+      "line": 296,
+      "text": "export async function getPreviousDrawRobust({"
+    },
+    {
+      "line": 367,
+      "text": "export function getNextSlotForLottery({"
+    },
+    {
+      "line": 437,
+      "text": "export function findNextExistingDrawFromSlot({"
+    },
+    {
+      "line": 548,
+      "text": "export function indexDrawsByYmdHour(draws) {"
+    },
+    {
+      "line": 575,
+      "text": "export function computeLastSeenByGrupo(draws) {"
+    },
+    {
+      "line": 608,
+      "text": "export function countAparicoesByGrupoInDraw(draw) {"
+    },
+    {
+      "line": 1082,
+      "text": "export function computeConditionalNextTop3({"
+    },
+    {
+      "line": 2202,
+      "text": "export function computeConditionalNextTop3V2({"
+    },
+    {
+      "line": 2880,
+      "text": "export function computeStatisticalTop3V3({"
+    },
+    {
+      "line": 3512,
+      "text": "export function buildMilharesForGrupo({"
+    },
+    {
+      "line": 3826,
+      "text": "export function build16MilharesForGrupo(args) {"
+    },
+    {
+      "line": 3830,
+      "text": "export function build20MilharesForGrupo(args) {"
+    },
+    {
+      "line": 3840,
+      "text": "export function auditTop3Timeline({"
+    },
+    {
+      "line": 4194,
+      "text": "export function buildTimelineTop3(args) {"
+    },
+    {
+      "line": 4198,
+      "text": "export function auditTop3Backtest({"
+    }
+  ],
+  "lineCount": 4236
+}
+
+====================================================================================================
+ARQUIVO: src/pages/Top3/modules/top3.prediction.js
+====================================================================================================
+{
+  "path": "src/pages/Top3/modules/top3.prediction.js",
+  "relativeDependencies": [],
+  "externalDependencies": [],
+  "unresolvedRelativeImports": [],
+  "browserHits": {},
+  "frontendHits": {},
+  "nodeUnsafeHits": {},
+  "exports": [
+    {
+      "line": 15,
+      "text": "export function buildTop3Predictions({"
+    }
+  ],
+  "lineCount": 71
+}
+
+====================================================================================================
+ARQUIVO: src/pages/Top3/modules/scoreEngine/scoreEngineV2.js
+====================================================================================================
+{
+  "path": "src/pages/Top3/modules/scoreEngine/scoreEngineV2.js",
+  "relativeDependencies": [
+    {
+      "specifier": "./evidenceEngine",
+      "resolved": "src/pages/Top3/modules/scoreEngine/evidenceEngine.js"
+    },
+    {
+      "specifier": "./scoreConfig",
+      "resolved": "src/pages/Top3/modules/scoreEngine/scoreConfig.js"
+    }
+  ],
+  "externalDependencies": [],
+  "unresolvedRelativeImports": [],
+  "browserHits": {},
+  "frontendHits": {},
+  "nodeUnsafeHits": {},
+  "exports": [],
+  "lineCount": 125
+}
+
+====================================================================================================
+ARQUIVO: src/pages/Top3/modules/scoreEngine/evidenceEngine.js
+====================================================================================================
+{
+  "path": "src/pages/Top3/modules/scoreEngine/evidenceEngine.js",
+  "relativeDependencies": [
+    {
+      "specifier": "./contextEvidence",
+      "resolved": "src/pages/Top3/modules/scoreEngine/contextEvidence.js"
+    },
+    {
+      "specifier": "./frequencyEvidence",
+      "resolved": "src/pages/Top3/modules/scoreEngine/frequencyEvidence.js"
+    }
+  ],
+  "externalDependencies": [],
+  "unresolvedRelativeImports": [],
+  "browserHits": {},
+  "frontendHits": {},
+  "nodeUnsafeHits": {},
+  "exports": [],
+  "lineCount": 69
+}
+
+====================================================================================================
+ARQUIVO: src/pages/Top3/modules/scoreEngine/scoreConfig.js
+====================================================================================================
+{
+  "path": "src/pages/Top3/modules/scoreEngine/scoreConfig.js",
+  "relativeDependencies": [],
+  "externalDependencies": [],
+  "unresolvedRelativeImports": [],
+  "browserHits": {},
+  "frontendHits": {},
+  "nodeUnsafeHits": {},
+  "exports": [],
+  "lineCount": 81
+}
+
+====================================================================================================
+ARQUIVO: src/pages/Top3/modules/scoreEngine/contextEvidence.js
+====================================================================================================
+{
+  "path": "src/pages/Top3/modules/scoreEngine/contextEvidence.js",
+  "relativeDependencies": [],
+  "externalDependencies": [],
+  "unresolvedRelativeImports": [],
+  "browserHits": {
+    "window": [
+      62
+    ]
+  },
+  "frontendHits": {},
+  "nodeUnsafeHits": {},
+  "exports": [],
+  "lineCount": 82
+}
+
+====================================================================================================
+ARQUIVO: src/pages/Top3/modules/scoreEngine/frequencyEvidence.js
+====================================================================================================
+{
+  "path": "src/pages/Top3/modules/scoreEngine/frequencyEvidence.js",
+  "relativeDependencies": [],
+  "externalDependencies": [],
+  "unresolvedRelativeImports": [],
+  "browserHits": {
+    "window": [
+      107
+    ]
+  },
+  "frontendHits": {},
+  "nodeUnsafeHits": {},
+  "exports": [],
+  "lineCount": 120
+}

@@ -1,0 +1,1230 @@
+
+====================================================================================================
+Padrão: getKingResultsByRange(
+Linha: 905
+====================================================================================================
+00845:     setError("");
+00846:     setRows([]);
+00847:     setMeta({
+00848:       draws: 0,
+00849:       prizes: 0,
+00850:       occurrences: 0,
+00851:     });
+00852: 
+00853:     try {
+00854:       if (!boundsReady) {
+00855:         throw new Error(
+00856:           "O período histórico ainda não foi carregado."
+00857:         );
+00858:       }
+00859: 
+00860:       const from = clampYmd(
+00861:         safeRange.from,
+00862:         bounds.minYmd,
+00863:         bounds.maxYmd
+00864:       );
+00865: 
+00866:       const to = clampYmd(
+00867:         safeRange.to,
+00868:         bounds.minYmd,
+00869:         bounds.maxYmd
+00870:       );
+00871: 
+00872:       if (!isYmd(from) || !isYmd(to)) {
+00873:         throw new Error("Intervalo de datas inválido.");
+00874:       }
+00875: 
+00876:       if (from > to) {
+00877:         throw new Error(
+00878:           "A data inicial não pode ser posterior à data final."
+00879:         );
+00880:       }
+00881: 
+00882:       const chunks = splitRange(from, to, 60);
+00883: 
+00884:       if (!chunks.length) {
+00885:         throw new Error(
+00886:           "Não foi possível dividir o período para análise."
+00887:         );
+00888:       }
+00889: 
+00890:       setProgress({
+00891:         done: 0,
+00892:         total: chunks.length,
+00893:       });
+00894: 
+00895:       const aggregate = new Map();
+00896: 
+00897:       let analyzedDraws = 0;
+00898:       let analyzedPrizes = 0;
+00899:       let occurrences = 0;
+00900:       let completedChunks = 0;
+00901: 
+00902:       const worker = async (chunk) => {
+00903:         if (!isCurrent()) return;
+00904: 
+00905:         const response = await getKingResultsByRange({
+00906:           uf: lotteryKey,
+00907:           dateFrom: chunk.from,
+00908:           dateTo: chunk.to,
+00909:           closeHourBucket: null,
+00910:           closeHour: selectedHourBucket
+00911:             ? `${selectedHourBucket.slice(0, 2)}:00`
+00912:             : null,
+00913:           positions: selectedPosition
+00914:             ? [selectedPosition]
+00915:             : null,
+00916:           mode: "detailed",
+00917:         });
+00918: 
+00919:         if (!isCurrent()) return;
+00920: 
+00921:         const draws = normalizeDrawsResponse(response);
+00922: 
+00923:         for (const draw of draws) {
+00924:           const ymd = normalizeYmd(
+00925:             draw?.ymd ??
+00926:               draw?.dateYmd ??
+00927:               draw?.date ??
+00928:               draw?.data ??
+00929:               ""
+00930:           );
+00931: 
+00932:           if (!ymd) continue;
+00933: 
+00934:           const drawHour = normalizeHour(
+00935:             draw?.close_hour ??
+00936:               draw?.closeHour ??
+00937:               draw?.hour ??
+00938:               draw?.hora ??
+00939:               draw?.close_hour_bucket ??
+00940:               ""
+00941:           );
+00942: 
+00943:           const drawHourBucket = hourBucket(drawHour);
+00944: 
+00945:           if (
+00946:             selectedHourBucket &&
+00947:             drawHourBucket !== selectedHourBucket
+00948:           ) {
+00949:             continue;
+00950:           }
+00951: 
+00952:           if (
+00953:             month !== "Todos" &&
+00954:             monthLabel(ymd) !== month
+00955:           ) {
+00956:             continue;
+00957:           }
+00958: 
+00959:           if (monthDay !== "Todos") {
+00960:             const day = Number(ymd.slice(8, 10));
+00961: 
+00962:             if (String(day) !== String(monthDay)) {
+00963:               continue;
+00964:             }
+00965:           }
+00966: 
+00967:           if (
+00968:             weekday !== "Todos" &&
+00969:             weekdayLabel(ymd) !== weekday
+00970:           ) {
+00971:             continue;
+00972:           }
+00973: 
+00974:           analyzedDraws += 1;
+00975: 
+00976:           const prizes = ensurePrizes(draw);
+00977: 
+00978:           for (const prize of prizes) {
+00979:             const prizePosition = Number(prize.position);
+00980:             const prizeGroup = Number(prize.group);
+00981: 
+00982:             if (
+00983:               selectedPosition &&
+00984:               prizePosition !== selectedPosition
+00985:             ) {
+00986:               continue;
+00987:             }
+00988: 
+00989:             if (
+00990:               selectedGroup &&
+00991:               prizeGroup !== selectedGroup
+00992:             ) {
+00993:               continue;
+00994:             }
+00995: 
+00996:             const number =
+00997:               prizePosition === 7
+00998:                 ? lastDigits(prize.number, 3)
+00999:                 : lastDigits(prize.number, 4);
+01000: 
+01001:             if (!number && mode !== "animal") continue;
+01002: 
+01003:             let key = "";
+01004: 
+01005:             if (mode === "dezena") {
+01006:               key = lastDigits(number, 2);
+01007:             } else if (mode === "centena") {
+01008:               key = lastDigits(number, 3);
+01009:             } else if (mode === "milhar") {
+01010:               if (prizePosition === 7) continue;
+01011:               key = lastDigits(number, 4);
+01012:             } else if (mode === "animal") {
+01013:               if (
+01014:                 !Number.isFinite(prizeGroup) ||
+01015:                 prizeGroup < 1 ||
+01016:                 prizeGroup > 25
+01017:               ) {
+01018:                 continue;
+01019:               }
+01020: 
+01021:               key = String(prizeGroup);
+01022:             }
+01023: 
+01024:             if (!key) continue;
+01025: 
+01026:             analyzedPrizes += 1;
+01027:             occurrences += 1;
+01028: 
+01029:             const latestKey = buildLatestKey(
+01030:               ymd,
+01031:               drawHour,
+01032:               prizePosition
+01033:             );
+01034: 
+01035:             const current = aggregate.get(key) ?? {
+01036:               key,
+01037:               count: 0,
+01038:               latestKey: "",
+01039:               latestYmd: "",
+01040:               latestHour: "",
+01041:               latestPosition: null,
+01042:             };
+01043: 
+01044:             current.count += 1;
+01045: 
+01046:             if (
+01047:               !current.latestKey ||
+01048:               latestKey > current.latestKey
+01049:             ) {
+01050:               current.latestKey = latestKey;
+01051:               current.latestYmd = ymd;
+01052:               current.latestHour =
+01053:                 drawHourBucket ||
+01054:                 drawHour ||
+01055:                 "—";
+01056:               current.latestPosition =
+01057:                 Number.isFinite(prizePosition)
+01058:                   ? prizePosition
+01059:                   : null;
+01060:             }
+01061: 
+01062:             aggregate.set(key, current);
+01063:           }
+01064:         }
+01065: 
+01066:         completedChunks += 1;
+01067: 
+01068:         if (isCurrent()) {
+01069:           setProgress({
+01070:             done: completedChunks,
+01071:             total: chunks.length,
+01072:           });
+01073:         }
+01074:       };
+01075: 
+01076:       await runPool(chunks, worker, 3);
+01077: 
+01078:       if (!isCurrent()) return;
+01079: 
+01080:       const output = Array.from(aggregate.values()).map(
+01081:         (item) => ({
+01082:           ...item,
+01083:           percent:
+01084:             occurrences > 0
+01085:               ? (item.count / occurrences) * 100
+
+====================================================================================================
+Padrão: const response =
+Linha: 735
+====================================================================================================
+00675:   const selectedLottery = useMemo(
+00676:     () =>
+00677:       LOTTERIES.find((item) => item.value === lotteryKey) ??
+00678:       LOTTERIES[0],
+00679:     [lotteryKey]
+00680:   );
+00681: 
+00682:   const animalOptions = useMemo(() => {
+00683:     const options = [
+00684:       {
+00685:         value: "Todos",
+00686:         label: "Todos",
+00687:       },
+00688:     ];
+00689: 
+00690:     for (let group = 1; group <= 25; group += 1) {
+00691:       options.push({
+00692:         value: String(group),
+00693:         label: `${pad2(group)} — ${
+00694:           getAnimalLabel(group) || `Grupo ${pad2(group)}`
+00695:         }`,
+00696:       });
+00697:     }
+00698: 
+00699:     return options;
+00700:   }, []);
+00701: 
+00702:   const safeRange = useMemo(() => {
+00703:     const from = isYmd(range.from)
+00704:       ? range.from
+00705:       : bounds.minYmd;
+00706: 
+00707:     const to = isYmd(range.to)
+00708:       ? range.to
+00709:       : bounds.maxYmd;
+00710: 
+00711:     return {
+00712:       from: from || "",
+00713:       to: to || "",
+00714:     };
+00715:   }, [range, bounds]);
+00716: 
+00717:   const boundsReady = Boolean(
+00718:     bounds.minYmd &&
+00719:       bounds.maxYmd
+00720:   );
+00721: 
+00722:   useEffect(() => {
+00723:     let alive = true;
+00724: 
+00725:     setError("");
+00726:     setRows([]);
+00727:     setMeta({
+00728:       draws: 0,
+00729:       prizes: 0,
+00730:       occurrences: 0,
+00731:     });
+00732: 
+00733:     (async () => {
+00734:       try {
+00735:         const response = await getKingBoundsByUf({
+00736:           uf: lotteryKey,
+00737:         });
+00738: 
+00739:         if (!alive) return;
+00740: 
+00741:         const normalized = normalizeBoundsResponse(response);
+00742: 
+00743:         if (!normalized.minYmd || !normalized.maxYmd) {
+00744:           throw new Error(
+00745:             `Período histórico não encontrado para ${lotteryKey}.`
+00746:           );
+00747:         }
+00748: 
+00749:         setBounds(normalized);
+00750: 
+00751:         setRange({
+00752:           from: normalized.minYmd,
+00753:           to: normalized.maxYmd,
+00754:         });
+00755:       } catch (caught) {
+00756:         if (!alive) return;
+00757: 
+00758:         setBounds({
+00759:           minYmd: "",
+00760:           maxYmd: "",
+00761:           source: "",
+00762:         });
+00763: 
+00764:         setRange({
+00765:           from: "",
+00766:           to: "",
+00767:         });
+00768: 
+00769:         setError(
+00770:           safeStr(caught?.message || caught) ||
+00771:             "Falha ao carregar o período histórico."
+00772:         );
+00773:       }
+00774:     })();
+00775: 
+00776:     return () => {
+00777:       alive = false;
+00778:     };
+00779:   }, [lotteryKey]);
+00780: 
+00781:   const handleLotteryChange = useCallback((nextLottery) => {
+00782:     if (!LOTTERIES.some((item) => item.value === nextLottery)) return;
+00783: 
+00784:     runIdRef.current += 1;
+00785: 
+00786:     setLoading(false);
+00787:     setProgress({
+00788:       done: 0,
+00789:       total: 0,
+00790:     });
+00791: 
+00792:     setRows([]);
+00793:     setMeta({
+00794:       draws: 0,
+00795:       prizes: 0,
+00796:       occurrences: 0,
+00797:     });
+00798: 
+00799:     setError("");
+00800:     setSchedule("Todos");
+00801:     setLotteryKey(nextLottery);
+00802:   }, []);
+00803: 
+00804:   const selectedGroup = useMemo(() => {
+00805:     if (animal === "Todos") return null;
+00806: 
+00807:     const group = Number(animal);
+00808: 
+00809:     return Number.isFinite(group) &&
+00810:       group >= 1 &&
+00811:       group <= 25
+00812:       ? group
+00813:       : null;
+00814:   }, [animal]);
+00815: 
+00816:   const selectedPosition = useMemo(() => {
+00817:     if (position === "Todos") return null;
+00818: 
+00819:     const parsed = Number(
+00820:       safeStr(position).replace(/\D+/g, "")
+00821:     );
+00822: 
+00823:     return Number.isFinite(parsed) &&
+00824:       parsed >= 1 &&
+00825:       parsed <= 7
+00826:       ? parsed
+00827:       : null;
+00828:   }, [position]);
+00829: 
+00830:   const selectedHourBucket = useMemo(() => {
+00831:     if (schedule === "Todos") return null;
+00832: 
+00833:     return hourBucket(schedule);
+00834:   }, [schedule]);
+00835: 
+00836:   const analyze = useCallback(async () => {
+00837:     const runId = runIdRef.current + 1;
+00838:     runIdRef.current = runId;
+00839: 
+00840:     const isCurrent = () =>
+00841:       mountedRef.current &&
+00842:       runIdRef.current === runId;
+00843: 
+00844:     setLoading(true);
+00845:     setError("");
+00846:     setRows([]);
+00847:     setMeta({
+00848:       draws: 0,
+00849:       prizes: 0,
+00850:       occurrences: 0,
+00851:     });
+00852: 
+00853:     try {
+00854:       if (!boundsReady) {
+00855:         throw new Error(
+00856:           "O período histórico ainda não foi carregado."
+00857:         );
+00858:       }
+00859: 
+00860:       const from = clampYmd(
+00861:         safeRange.from,
+00862:         bounds.minYmd,
+00863:         bounds.maxYmd
+00864:       );
+00865: 
+00866:       const to = clampYmd(
+00867:         safeRange.to,
+00868:         bounds.minYmd,
+00869:         bounds.maxYmd
+00870:       );
+00871: 
+00872:       if (!isYmd(from) || !isYmd(to)) {
+00873:         throw new Error("Intervalo de datas inválido.");
+00874:       }
+00875: 
+00876:       if (from > to) {
+00877:         throw new Error(
+00878:           "A data inicial não pode ser posterior à data final."
+00879:         );
+00880:       }
+00881: 
+00882:       const chunks = splitRange(from, to, 60);
+00883: 
+00884:       if (!chunks.length) {
+00885:         throw new Error(
+00886:           "Não foi possível dividir o período para análise."
+00887:         );
+00888:       }
+00889: 
+00890:       setProgress({
+00891:         done: 0,
+00892:         total: chunks.length,
+00893:       });
+00894: 
+00895:       const aggregate = new Map();
+00896: 
+00897:       let analyzedDraws = 0;
+00898:       let analyzedPrizes = 0;
+00899:       let occurrences = 0;
+00900:       let completedChunks = 0;
+00901: 
+00902:       const worker = async (chunk) => {
+00903:         if (!isCurrent()) return;
+00904: 
+00905:         const response = await getKingResultsByRange({
+00906:           uf: lotteryKey,
+00907:           dateFrom: chunk.from,
+00908:           dateTo: chunk.to,
+00909:           closeHourBucket: null,
+00910:           closeHour: selectedHourBucket
+00911:             ? `${selectedHourBucket.slice(0, 2)}:00`
+00912:             : null,
+00913:           positions: selectedPosition
+00914:             ? [selectedPosition]
+00915:             : null,
+
+====================================================================================================
+Padrão: const draws =
+Linha: 921
+====================================================================================================
+00861:         safeRange.from,
+00862:         bounds.minYmd,
+00863:         bounds.maxYmd
+00864:       );
+00865: 
+00866:       const to = clampYmd(
+00867:         safeRange.to,
+00868:         bounds.minYmd,
+00869:         bounds.maxYmd
+00870:       );
+00871: 
+00872:       if (!isYmd(from) || !isYmd(to)) {
+00873:         throw new Error("Intervalo de datas inválido.");
+00874:       }
+00875: 
+00876:       if (from > to) {
+00877:         throw new Error(
+00878:           "A data inicial não pode ser posterior à data final."
+00879:         );
+00880:       }
+00881: 
+00882:       const chunks = splitRange(from, to, 60);
+00883: 
+00884:       if (!chunks.length) {
+00885:         throw new Error(
+00886:           "Não foi possível dividir o período para análise."
+00887:         );
+00888:       }
+00889: 
+00890:       setProgress({
+00891:         done: 0,
+00892:         total: chunks.length,
+00893:       });
+00894: 
+00895:       const aggregate = new Map();
+00896: 
+00897:       let analyzedDraws = 0;
+00898:       let analyzedPrizes = 0;
+00899:       let occurrences = 0;
+00900:       let completedChunks = 0;
+00901: 
+00902:       const worker = async (chunk) => {
+00903:         if (!isCurrent()) return;
+00904: 
+00905:         const response = await getKingResultsByRange({
+00906:           uf: lotteryKey,
+00907:           dateFrom: chunk.from,
+00908:           dateTo: chunk.to,
+00909:           closeHourBucket: null,
+00910:           closeHour: selectedHourBucket
+00911:             ? `${selectedHourBucket.slice(0, 2)}:00`
+00912:             : null,
+00913:           positions: selectedPosition
+00914:             ? [selectedPosition]
+00915:             : null,
+00916:           mode: "detailed",
+00917:         });
+00918: 
+00919:         if (!isCurrent()) return;
+00920: 
+00921:         const draws = normalizeDrawsResponse(response);
+00922: 
+00923:         for (const draw of draws) {
+00924:           const ymd = normalizeYmd(
+00925:             draw?.ymd ??
+00926:               draw?.dateYmd ??
+00927:               draw?.date ??
+00928:               draw?.data ??
+00929:               ""
+00930:           );
+00931: 
+00932:           if (!ymd) continue;
+00933: 
+00934:           const drawHour = normalizeHour(
+00935:             draw?.close_hour ??
+00936:               draw?.closeHour ??
+00937:               draw?.hour ??
+00938:               draw?.hora ??
+00939:               draw?.close_hour_bucket ??
+00940:               ""
+00941:           );
+00942: 
+00943:           const drawHourBucket = hourBucket(drawHour);
+00944: 
+00945:           if (
+00946:             selectedHourBucket &&
+00947:             drawHourBucket !== selectedHourBucket
+00948:           ) {
+00949:             continue;
+00950:           }
+00951: 
+00952:           if (
+00953:             month !== "Todos" &&
+00954:             monthLabel(ymd) !== month
+00955:           ) {
+00956:             continue;
+00957:           }
+00958: 
+00959:           if (monthDay !== "Todos") {
+00960:             const day = Number(ymd.slice(8, 10));
+00961: 
+00962:             if (String(day) !== String(monthDay)) {
+00963:               continue;
+00964:             }
+00965:           }
+00966: 
+00967:           if (
+00968:             weekday !== "Todos" &&
+00969:             weekdayLabel(ymd) !== weekday
+00970:           ) {
+00971:             continue;
+00972:           }
+00973: 
+00974:           analyzedDraws += 1;
+00975: 
+00976:           const prizes = ensurePrizes(draw);
+00977: 
+00978:           for (const prize of prizes) {
+00979:             const prizePosition = Number(prize.position);
+00980:             const prizeGroup = Number(prize.group);
+00981: 
+00982:             if (
+00983:               selectedPosition &&
+00984:               prizePosition !== selectedPosition
+00985:             ) {
+00986:               continue;
+00987:             }
+00988: 
+00989:             if (
+00990:               selectedGroup &&
+00991:               prizeGroup !== selectedGroup
+00992:             ) {
+00993:               continue;
+00994:             }
+00995: 
+00996:             const number =
+00997:               prizePosition === 7
+00998:                 ? lastDigits(prize.number, 3)
+00999:                 : lastDigits(prize.number, 4);
+01000: 
+01001:             if (!number && mode !== "animal") continue;
+01002: 
+01003:             let key = "";
+01004: 
+01005:             if (mode === "dezena") {
+01006:               key = lastDigits(number, 2);
+01007:             } else if (mode === "centena") {
+01008:               key = lastDigits(number, 3);
+01009:             } else if (mode === "milhar") {
+01010:               if (prizePosition === 7) continue;
+01011:               key = lastDigits(number, 4);
+01012:             } else if (mode === "animal") {
+01013:               if (
+01014:                 !Number.isFinite(prizeGroup) ||
+01015:                 prizeGroup < 1 ||
+01016:                 prizeGroup > 25
+01017:               ) {
+01018:                 continue;
+01019:               }
+01020: 
+01021:               key = String(prizeGroup);
+01022:             }
+01023: 
+01024:             if (!key) continue;
+01025: 
+01026:             analyzedPrizes += 1;
+01027:             occurrences += 1;
+01028: 
+01029:             const latestKey = buildLatestKey(
+01030:               ymd,
+01031:               drawHour,
+01032:               prizePosition
+01033:             );
+01034: 
+01035:             const current = aggregate.get(key) ?? {
+01036:               key,
+01037:               count: 0,
+01038:               latestKey: "",
+01039:               latestYmd: "",
+01040:               latestHour: "",
+01041:               latestPosition: null,
+01042:             };
+01043: 
+01044:             current.count += 1;
+01045: 
+01046:             if (
+01047:               !current.latestKey ||
+01048:               latestKey > current.latestKey
+01049:             ) {
+01050:               current.latestKey = latestKey;
+01051:               current.latestYmd = ymd;
+01052:               current.latestHour =
+01053:                 drawHourBucket ||
+01054:                 drawHour ||
+01055:                 "—";
+01056:               current.latestPosition =
+01057:                 Number.isFinite(prizePosition)
+01058:                   ? prizePosition
+01059:                   : null;
+01060:             }
+01061: 
+01062:             aggregate.set(key, current);
+01063:           }
+01064:         }
+01065: 
+01066:         completedChunks += 1;
+01067: 
+01068:         if (isCurrent()) {
+01069:           setProgress({
+01070:             done: completedChunks,
+01071:             total: chunks.length,
+01072:           });
+01073:         }
+01074:       };
+01075: 
+01076:       await runPool(chunks, worker, 3);
+01077: 
+01078:       if (!isCurrent()) return;
+01079: 
+01080:       const output = Array.from(aggregate.values()).map(
+01081:         (item) => ({
+01082:           ...item,
+01083:           percent:
+01084:             occurrences > 0
+01085:               ? (item.count / occurrences) * 100
+01086:               : 0,
+01087:         })
+01088:       );
+01089: 
+01090:       setRows(output);
+01091:       setMeta({
+01092:         draws: analyzedDraws,
+01093:         prizes: analyzedPrizes,
+01094:         occurrences,
+01095:       });
+01096:     } catch (caught) {
+01097:       if (!isCurrent()) return;
+01098: 
+01099:       setError(
+01100:         safeStr(caught?.message || caught) ||
+01101:           "Falha ao calcular as frequências."
+
+====================================================================================================
+Padrão: normalizeDrawsResponse
+Linha: 307
+====================================================================================================
+00247: function normalizeHour(value) {
+00248:   const input = safeStr(value).replace(/\s+/g, "");
+00249:   if (!input) return "";
+00250: 
+00251:   const hourLabel = input.match(/^(\d{1,2})(?:h|hs|hr|hrs)$/i);
+00252:   if (hourLabel) return `${pad2(hourLabel[1])}:00`;
+00253: 
+00254:   const clock = input.match(/^(\d{1,2}):(\d{1,2})(?::\d{1,2})?$/);
+00255:   if (clock) return `${pad2(clock[1])}:${pad2(clock[2])}`;
+00256: 
+00257:   const hourOnly = input.match(/^(\d{1,2})$/);
+00258:   if (hourOnly) return `${pad2(hourOnly[1])}:00`;
+00259: 
+00260:   return input;
+00261: }
+00262: 
+00263: function hourBucket(value) {
+00264:   const normalized = normalizeHour(value);
+00265:   const match = normalized.match(/^(\d{2}):/);
+00266: 
+00267:   return match ? `${match[1]}h` : normalized;
+00268: }
+00269: 
+00270: function monthLabel(ymd) {
+00271:   if (!isYmd(ymd)) return "";
+00272: 
+00273:   const month = Number(ymd.slice(5, 7));
+00274: 
+00275:   return [
+00276:     "",
+00277:     "Jan",
+00278:     "Fev",
+00279:     "Mar",
+00280:     "Abr",
+00281:     "Mai",
+00282:     "Jun",
+00283:     "Jul",
+00284:     "Ago",
+00285:     "Set",
+00286:     "Out",
+00287:     "Nov",
+00288:     "Dez",
+00289:   ][month] || "";
+00290: }
+00291: 
+00292: function weekdayLabel(ymd) {
+00293:   const date = toUtcDate(ymd);
+00294:   if (!date) return "";
+00295: 
+00296:   return [
+00297:     "Dom",
+00298:     "Seg",
+00299:     "Ter",
+00300:     "Qua",
+00301:     "Qui",
+00302:     "Sex",
+00303:     "Sáb",
+00304:   ][date.getUTCDay()] || "";
+00305: }
+00306: 
+00307: function normalizeDrawsResponse(response) {
+00308:   if (Array.isArray(response)) return response;
+00309: 
+00310:   const candidate =
+00311:     response?.draws ??
+00312:     response?.results ??
+00313:     response?.data ??
+00314:     response?.items ??
+00315:     response?.docs ??
+00316:     response?.rows ??
+00317:     [];
+00318: 
+00319:   return Array.isArray(candidate) ? candidate : [];
+00320: }
+00321: 
+00322: function pickFirst(object, keys) {
+00323:   for (const key of keys) {
+00324:     const value = object?.[key];
+00325: 
+00326:     if (
+00327:       value !== undefined &&
+00328:       value !== null &&
+00329:       safeStr(value) !== ""
+00330:     ) {
+00331:       return value;
+00332:     }
+00333:   }
+00334: 
+00335:   return null;
+00336: }
+00337: 
+00338: function arrayPosition(array, position) {
+00339:   if (!Array.isArray(array)) return null;
+00340: 
+00341:   const index = Number(position) - 1;
+00342: 
+00343:   if (index < 0 || index >= array.length) return null;
+00344: 
+00345:   return array[index];
+00346: }
+00347: 
+00348: function pickPrizeDigits(draw, position) {
+00349:   const pos = Number(position);
+00350:   const length = pos === 7 ? 3 : 4;
+00351: 
+00352:   const direct = pickFirst(draw, [
+00353:     `p${pos}`,
+00354:     `p_${pos}`,
+00355:     `premio${pos}`,
+00356:     `premio_${pos}`,
+00357:     `milhar${pos}`,
+00358:     `milhar_${pos}`,
+00359:     `numero${pos}`,
+00360:     `numero_${pos}`,
+00361:     `resultado${pos}`,
+00362:     `resultado_${pos}`,
+00363:     pos === 7 ? "centena3" : "milhar4",
+00364:   ]);
+00365: 
+00366:   if (direct !== null) {
+00367:     const digits = lastDigits(direct, length);
+00368:     if (digits) return digits;
+00369:   }
+00370: 
+00371:   for (const array of [
+00372:     draw?.p,
+00373:     draw?.ps,
+00374:     draw?.premios,
+00375:     draw?.resultados,
+00376:     draw?.numbers,
+00377:     draw?.numeros,
+00378:     draw?.milhares,
+00379:   ]) {
+00380:     const digits = lastDigits(arrayPosition(array, pos), length);
+00381:     if (digits) return digits;
+00382:   }
+00383: 
+00384:   for (const dictionary of [
+00385:     draw?.premios,
+00386:     draw?.resultado,
+00387:     draw?.resultados,
+00388:     draw?.p,
+00389:   ]) {
+00390:     if (
+00391:       dictionary &&
+00392:       typeof dictionary === "object" &&
+00393:       !Array.isArray(dictionary)
+00394:     ) {
+00395:       const digits = lastDigits(
+00396:         dictionary?.[String(pos)] ?? dictionary?.[pos],
+00397:         length
+00398:       );
+00399: 
+00400:       if (digits) return digits;
+00401:     }
+00402:   }
+00403: 
+00404:   return "";
+00405: }
+00406: 
+00407: function pickPrizeGroup(draw, position) {
+00408:   const pos = Number(position);
+00409: 
+00410:   const direct = pickFirst(draw, [
+00411:     `grupo${pos}`,
+00412:     `grupo_${pos}`,
+00413:     `grupo2${pos}`,
+00414:     `grupo2_${pos}`,
+00415:     `bicho${pos}`,
+00416:     `bicho_${pos}`,
+00417:     `animal_grupo${pos}`,
+00418:     `animal_grupo_${pos}`,
+00419:   ]);
+00420: 
+00421:   const directNumber = Number(direct);
+00422:   if (Number.isFinite(directNumber)) return directNumber;
+00423: 
+00424:   for (const array of [
+00425:     draw?.grupos,
+00426:     draw?.grupo,
+00427:     draw?.grupo2,
+00428:     draw?.bichos,
+00429:     draw?.animais,
+00430:   ]) {
+00431:     const value = Number(arrayPosition(array, pos));
+00432:     if (Number.isFinite(value)) return value;
+00433:   }
+00434: 
+00435:   for (const dictionary of [
+00436:     draw?.grupos,
+00437:     draw?.grupo,
+00438:     draw?.grupo2,
+00439:     draw?.bichos,
+00440:   ]) {
+00441:     if (
+00442:       dictionary &&
+00443:       typeof dictionary === "object" &&
+00444:       !Array.isArray(dictionary)
+00445:     ) {
+00446:       const value = Number(
+00447:         dictionary?.[String(pos)] ?? dictionary?.[pos]
+00448:       );
+00449: 
+00450:       if (Number.isFinite(value)) return value;
+00451:     }
+00452:   }
+00453: 
+00454:   return null;
+00455: }
+00456: 
+00457: function normalizePrize(prize, fallbackPosition) {
+00458:   const position = Number(
+00459:     prize?.position ??
+00460:       prize?.pos ??
+00461:       prize?.posicao ??
+00462:       prize?.colocacao ??
+00463:       fallbackPosition
+00464:   );
+00465: 
+00466:   const wantedLength = position === 7 ? 3 : 4;
+00467: 
+00468:   const rawNumber =
+00469:     position === 7
+00470:       ? (
+00471:           prize?.centena3 ??
+00472:           prize?.centena ??
+00473:           prize?.numero ??
+00474:           prize?.number ??
+00475:           prize?.num ??
+00476:           prize?.valor ??
+00477:           prize?.n ??
+00478:           ""
+00479:         )
+00480:       : (
+00481:           prize?.milhar4 ??
+00482:           prize?.milhar ??
+00483:           prize?.numero ??
+00484:           prize?.number ??
+00485:           prize?.num ??
+00486:           prize?.valor ??
+00487:           prize?.n ??
+
+====================================================================================================
+Padrão: setRanking
+Linha: 625
+====================================================================================================
+00565:     const animal = getAnimalLabel(group) || `Grupo ${pad2(group)}`;
+00566: 
+00567:     return {
+00568:       main: animal,
+00569:       secondary: `Grupo ${pad2(group)}`,
+00570:     };
+00571:   }
+00572: 
+00573:   return {
+00574:     main: key,
+00575:     secondary:
+00576:       mode === "dezena"
+00577:         ? "Dezena"
+00578:         : mode === "centena"
+00579:         ? "Centena"
+00580:         : "Milhar",
+00581:   };
+00582: }
+00583: 
+00584: function groupFromMilhar(value) {
+00585:   const milhar = lastDigits(value, 4);
+00586: 
+00587:   if (!milhar) return null;
+00588: 
+00589:   const dezena = Number(milhar.slice(-2));
+00590:   const normalizedDezena = dezena === 0 ? 100 : dezena;
+00591:   const group = Math.ceil(normalizedDezena / 4);
+00592: 
+00593:   return group >= 1 && group <= 25 ? group : null;
+00594: }
+00595: 
+00596: function buildMilharUniverse(selectedGroup = null) {
+00597:   const output = [];
+00598: 
+00599:   for (let value = 0; value <= 9999; value += 1) {
+00600:     const milhar = String(value).padStart(4, "0");
+00601:     const group = groupFromMilhar(milhar);
+00602: 
+00603:     if (
+00604:       selectedGroup &&
+00605:       group !== selectedGroup
+00606:     ) {
+00607:       continue;
+00608:     }
+00609: 
+00610:     output.push({
+00611:       key: milhar,
+00612:       group,
+00613:       animal:
+00614:         getAnimalLabel(group) ||
+00615:         `Grupo ${pad2(group)}`,
+00616:     });
+00617:   }
+00618: 
+00619:   return output;
+00620: }
+00621: 
+00622: export default function Statistics() {
+00623:   const [lotteryKey, setLotteryKey] = useState("PT_RIO");
+00624:   const [mode, setMode] = useState("dezena");
+00625:   const [rankingView, setRankingView] = useState("frequentes");
+00626:   const [copyFeedback, setCopyFeedback] = useState(false);
+00627: 
+00628:   const [bounds, setBounds] = useState({
+00629:     minYmd: "",
+00630:     maxYmd: "",
+00631:     source: "",
+00632:   });
+00633: 
+00634:   const [range, setRange] = useState({
+00635:     from: "",
+00636:     to: "",
+00637:   });
+00638: 
+00639:   const [month, setMonth] = useState("Todos");
+00640:   const [monthDay, setMonthDay] = useState("Todos");
+00641:   const [weekday, setWeekday] = useState("Todos");
+00642:   const [schedule, setSchedule] = useState("Todos");
+00643:   const [animal, setAnimal] = useState("Todos");
+00644:   const [position, setPosition] = useState("Todos");
+00645: 
+00646:   const [sort, setSort] = useState("count_desc");
+00647:   const [limit, setLimit] = useState("25");
+00648: 
+00649:   const [loading, setLoading] = useState(false);
+00650:   const [progress, setProgress] = useState({
+00651:     done: 0,
+00652:     total: 0,
+00653:   });
+00654: 
+00655:   const [error, setError] = useState("");
+00656:   const [rows, setRows] = useState([]);
+00657:   const [meta, setMeta] = useState({
+00658:     draws: 0,
+00659:     prizes: 0,
+00660:     occurrences: 0,
+00661:   });
+00662: 
+00663:   const mountedRef = useRef(true);
+00664:   const runIdRef = useRef(0);
+00665: 
+00666:   useEffect(() => {
+00667:     mountedRef.current = true;
+00668: 
+00669:     return () => {
+00670:       mountedRef.current = false;
+00671:       runIdRef.current += 1;
+00672:     };
+00673:   }, []);
+00674: 
+00675:   const selectedLottery = useMemo(
+00676:     () =>
+00677:       LOTTERIES.find((item) => item.value === lotteryKey) ??
+00678:       LOTTERIES[0],
+00679:     [lotteryKey]
+00680:   );
+00681: 
+00682:   const animalOptions = useMemo(() => {
+00683:     const options = [
+00684:       {
+00685:         value: "Todos",
+00686:         label: "Todos",
+00687:       },
+00688:     ];
+00689: 
+00690:     for (let group = 1; group <= 25; group += 1) {
+00691:       options.push({
+00692:         value: String(group),
+00693:         label: `${pad2(group)} — ${
+00694:           getAnimalLabel(group) || `Grupo ${pad2(group)}`
+00695:         }`,
+00696:       });
+00697:     }
+00698: 
+00699:     return options;
+00700:   }, []);
+00701: 
+00702:   const safeRange = useMemo(() => {
+00703:     const from = isYmd(range.from)
+00704:       ? range.from
+00705:       : bounds.minYmd;
+00706: 
+00707:     const to = isYmd(range.to)
+00708:       ? range.to
+00709:       : bounds.maxYmd;
+00710: 
+00711:     return {
+00712:       from: from || "",
+00713:       to: to || "",
+00714:     };
+00715:   }, [range, bounds]);
+00716: 
+00717:   const boundsReady = Boolean(
+00718:     bounds.minYmd &&
+00719:       bounds.maxYmd
+00720:   );
+00721: 
+00722:   useEffect(() => {
+00723:     let alive = true;
+00724: 
+00725:     setError("");
+00726:     setRows([]);
+00727:     setMeta({
+00728:       draws: 0,
+00729:       prizes: 0,
+00730:       occurrences: 0,
+00731:     });
+00732: 
+00733:     (async () => {
+00734:       try {
+00735:         const response = await getKingBoundsByUf({
+00736:           uf: lotteryKey,
+00737:         });
+00738: 
+00739:         if (!alive) return;
+00740: 
+00741:         const normalized = normalizeBoundsResponse(response);
+00742: 
+00743:         if (!normalized.minYmd || !normalized.maxYmd) {
+00744:           throw new Error(
+00745:             `Período histórico não encontrado para ${lotteryKey}.`
+00746:           );
+00747:         }
+00748: 
+00749:         setBounds(normalized);
+00750: 
+00751:         setRange({
+00752:           from: normalized.minYmd,
+00753:           to: normalized.maxYmd,
+00754:         });
+00755:       } catch (caught) {
+00756:         if (!alive) return;
+00757: 
+00758:         setBounds({
+00759:           minYmd: "",
+00760:           maxYmd: "",
+00761:           source: "",
+00762:         });
+00763: 
+00764:         setRange({
+00765:           from: "",
+00766:           to: "",
+00767:         });
+00768: 
+00769:         setError(
+00770:           safeStr(caught?.message || caught) ||
+00771:             "Falha ao carregar o período histórico."
+00772:         );
+00773:       }
+00774:     })();
+00775: 
+00776:     return () => {
+00777:       alive = false;
+00778:     };
+00779:   }, [lotteryKey]);
+00780: 
+00781:   const handleLotteryChange = useCallback((nextLottery) => {
+00782:     if (!LOTTERIES.some((item) => item.value === nextLottery)) return;
+00783: 
+00784:     runIdRef.current += 1;
+00785: 
+00786:     setLoading(false);
+00787:     setProgress({
+00788:       done: 0,
+00789:       total: 0,
+00790:     });
+00791: 
+00792:     setRows([]);
+00793:     setMeta({
+00794:       draws: 0,
+00795:       prizes: 0,
+00796:       occurrences: 0,
+00797:     });
+00798: 
+00799:     setError("");
+00800:     setSchedule("Todos");
+00801:     setLotteryKey(nextLottery);
+00802:   }, []);
+00803: 
+00804:   const selectedGroup = useMemo(() => {
+00805:     if (animal === "Todos") return null;

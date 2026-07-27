@@ -1,0 +1,1560 @@
+.\src\pages\Top3\Top3View.jsx-676-    if (!payload) return;
+.\src\pages\Top3\Top3View.jsx-677-
+.\src\pages\Top3\Top3View.jsx-678-    const ok = await copyText(payload);
+.\src\pages\Top3\Top3View.jsx-679-    if (ok) setCopiedAllKey(key);
+.\src\pages\Top3\Top3View.jsx-680-  };
+.\src\pages\Top3\Top3View.jsx-681-
+.\src\pages\Top3\Top3View.jsx-682-  const doCopyOne = async (m, rIdx, cIdx) => {
+.\src\pages\Top3\Top3View.jsx-683-    const mm = normalizeMilharStr(m);
+.\src\pages\Top3\Top3View.jsx-684-    if (!mm) return;
+.\src\pages\Top3\Top3View.jsx-685-
+.\src\pages\Top3\Top3View.jsx-686-    const ok = await copyText(mm);
+.\src\pages\Top3\Top3View.jsx-687-    if (ok) setCopiedCellKey(`${key}__${rIdx}__${cIdx}`);
+.\src\pages\Top3\Top3View.jsx-688-  };
+.\src\pages\Top3\Top3View.jsx-689-
+.\src\pages\Top3\Top3View.jsx-690-  return (
+.\src\pages\Top3\Top3View.jsx-691-    <article
+.\src\pages\Top3\Top3View.jsx:692:      className={`top3-card ${isHero ? "top3-card--hero" : "top3-card--secondary"}`}
+.\src\pages\Top3\Top3View.jsx-693-    >
+.\src\pages\Top3\Top3View.jsx:694:      <div className="top3-card__topline">
+.\src\pages\Top3\Top3View.jsx-695-        <div className="top3-rankBadge">{rank}</div>
+.\src\pages\Top3\Top3View.jsx:696:        <div className="top3-card__label">­ƒÅà {title}</div>
+.\src\pages\Top3\Top3View.jsx-697-      </div>
+.\src\pages\Top3\Top3View.jsx-698-
+.\src\pages\Top3\Top3View.jsx:699:      <div className="top3-card__summary">
+.\src\pages\Top3\Top3View.jsx:700:        <div className="top3-card__identity">
+.\src\pages\Top3\Top3View.jsx-701-          <ImgWithFallback
+.\src\pages\Top3\Top3View.jsx-702-            srcs={iconSrcs}
+.\src\pages\Top3\Top3View.jsx-703-            alt={animal ? animal : `G${grupoTxt}`}
+.\src\pages\Top3\Top3View.jsx-704-            size={isHero ? 92 : 84}
+.\src\pages\Top3\Top3View.jsx-705-          />
+.\src\pages\Top3\Top3View.jsx-706-
+.\src\pages\Top3\Top3View.jsx:707:          <div className="top3-card__identityText">
+.\src\pages\Top3\Top3View.jsx:708:            <div className="top3-card__group">GRUPO {grupoTxt}</div>
+.\src\pages\Top3\Top3View.jsx:709:            <div className="top3-card__animal">
+.\src\pages\Top3\Top3View.jsx-710-              {animal ? animal.toUpperCase() : "ÔÇö"}
+.\src\pages\Top3\Top3View.jsx-711-            </div>
+.\src\pages\Top3\Top3View.jsx-712-          </div>
+.\src\pages\Top3\Top3View.jsx-713-        </div>
+.\src\pages\Top3\Top3View.jsx-714-
+.\src\pages\Top3\Top3View.jsx:715:        <div className="top3-card__confidence">
+.\src\pages\Top3\Top3View.jsx:716:          <div className="top3-card__confidenceLabel">CONFIAN├çA</div>
+.\src\pages\Top3\Top3View.jsx:717:          <div className="top3-card__confidenceValue">{pct.toFixed(2)}%</div>
+.\src\pages\Top3\Top3View.jsx:718:          <div className="top3-card__confidenceBar">
+.\src\pages\Top3\Top3View.jsx-719-            <div
+.\src\pages\Top3\Top3View.jsx:720:              className="top3-card__confidenceBarFill"
+.\src\pages\Top3\Top3View.jsx-721-              style={{ width: `${pct}%`, background: t.accent }}
+.\src\pages\Top3\Top3View.jsx-722-            />
+.\src\pages\Top3\Top3View.jsx-723-          </div>
+.\src\pages\Top3\Top3View.jsx-724-        </div>
+.\src\pages\Top3\Top3View.jsx-725-      </div>
+.\src\pages\Top3\Top3View.jsx-726-
+.\src\pages\Top3\Top3View.jsx-727-      <div
+.\src\pages\Top3\Top3View.jsx:728:        className="top3-card__engine top3-card__engine--premium"
+.\src\pages\Top3\Top3View.jsx-729-        style={{
+.\src\pages\Top3\Top3View.jsx-730-          borderTop: "1px solid rgba(212,175,55,0.22)",
+.\src\pages\Top3\Top3View.jsx-731-          paddingTop: 14,
+.\src\pages\Top3\Top3View.jsx-732-          display: "grid",
+.\src\pages\Top3\Top3View.jsx-733-          gridTemplateColumns: isHero ? "300px minmax(0, 1fr)" : "1fr",
+.\src\pages\Top3\Top3View.jsx-734-          gap: 14,
+.\src\pages\Top3\Top3View.jsx-735-          alignItems: "stretch",
+.\src\pages\Top3\Top3View.jsx-736-        }}
+.\src\pages\Top3\Top3View.jsx-737-      >
+.\src\pages\Top3\Top3View.jsx-738-        {isHero ? (
+.\src\pages\Top3\Top3View.jsx-739-          <div
+.\src\pages\Top3\Top3View.jsx-740-            style={{
+.\src\pages\Top3\Top3View.jsx-741-              border: "1px solid rgba(212,175,55,0.30)",
+.\src\pages\Top3\Top3View.jsx-742-              borderRadius: 18,
+.\src\pages\Top3\Top3View.jsx-743-              padding: 14,
+.\src\pages\Top3\Top3View.jsx-744-              background:
+.\src\pages\Top3\Top3View.jsx-745-                "radial-gradient(circle at 50% 0%, rgba(212,175,55,0.18), rgba(0,0,0,0.12) 48%, rgba(0,0,0,0.28))",
+.\src\pages\Top3\Top3View.jsx-746-              boxShadow: "0 18px 45px rgba(0,0,0,0.32)",
+.\src\pages\Top3\Top3View.jsx-747-            }}
+.\src\pages\Top3\Top3View.jsx-748-          >
+.\src\pages\Top3\Top3View.jsx-749-            <div style={{ display: "grid", gap: 12 }}>
+.\src\pages\Top3\Top3View.jsx-750-              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+.\src\pages\Top3\Top3View.jsx-751-                <div className="top3-rankBadge">{rank}</div>
+.\src\pages\Top3\Top3View.jsx:752:                <div className="top3-card__label">Ô¡É {title}</div>
+.\src\pages\Top3\Top3View.jsx-753-              </div>
+.\src\pages\Top3\Top3View.jsx-754-
+.\src\pages\Top3\Top3View.jsx-755-              <div
+.\src\pages\Top3\Top3View.jsx-756-                style={{
+.\src\pages\Top3\Top3View.jsx-757-                  borderRadius: 16,
+.\src\pages\Top3\Top3View.jsx-758-                  overflow: "hidden",
+.\src\pages\Top3\Top3View.jsx-759-                  border: "1px solid rgba(212,175,55,0.35)",
+.\src\pages\Top3\Top3View.jsx-760-                  minHeight: 180,
+.\src\pages\Top3\Top3View.jsx-761-                  display: "none",
+.\src\pages\Top3\Top3View.jsx-762-                  placeItems: "center",
+.\src\pages\Top3\Top3View.jsx-763-                  background: "rgba(0,0,0,0.28)",
+.\src\pages\Top3\Top3View.jsx-764-                }}
+.\src\pages\Top3\Top3View.jsx-765-              >
+.\src\pages\Top3\Top3View.jsx-766-                <ImgWithFallback
+.\src\pages\Top3\Top3View.jsx-767-                  srcs={iconSrcs}
+.\src\pages\Top3\Top3View.jsx-768-                  alt={animal ? animal : `G${grupoTxt}`}
+.\src\pages\Top3\Top3View.jsx-769-                  size={168}
+.\src\pages\Top3\Top3View.jsx-770-                  style={{ borderRadius: 14 }}
+.\src\pages\Top3\Top3View.jsx-771-                />
+.\src\pages\Top3\Top3View.jsx-772-              </div>
+.\src\pages\Top3\Top3View.jsx-773-
+.\src\pages\Top3\Top3View.jsx-774-              <div>
+.\src\pages\Top3\Top3View.jsx:775:                <div className="top3-card__group">GRUPO {grupoTxt}</div>
+.\src\pages\Top3\Top3View.jsx:776:                <div className="top3-card__animal">
+.\src\pages\Top3\Top3View.jsx-777-                  {animal ? animal.toUpperCase() : "ÔÇö"}
+.\src\pages\Top3\Top3View.jsx-778-                </div>
+.\src\pages\Top3\Top3View.jsx-779-              </div>
+.\src\pages\Top3\Top3View.jsx-780-
+.\src\pages\Top3\Top3View.jsx-781-              <div
+.\src\pages\Top3\Top3View.jsx-782-                style={{
+.\src\pages\Top3\Top3View.jsx-783-                  border: "1px solid rgba(212,175,55,0.28)",
+.\src\pages\Top3\Top3View.jsx-784-                  borderRadius: 14,
+.\src\pages\Top3\Top3View.jsx-785-                  padding: 14,
+.\src\pages\Top3\Top3View.jsx-786-                  background: "rgba(0,0,0,0.22)",
+.\src\pages\Top3\Top3View.jsx-787-                }}
+.\src\pages\Top3\Top3View.jsx-788-              >
+.\src\pages\Top3\Top3View.jsx:789:                <div className="top3-card__confidenceLabel">SCORE</div>
+.\src\pages\Top3\Top3View.jsx-790-                <div
+.\src\pages\Top3\Top3View.jsx-791-                  style={{
+.\src\pages\Top3\Top3View.jsx-792-                    fontSize: 42,
+.\src\pages\Top3\Top3View.jsx-793-                    fontWeight: 900,
+.\src\pages\Top3\Top3View.jsx-794-                    letterSpacing: 1,
+.\src\pages\Top3\Top3View.jsx-795-                    color: t.accent,
+.\src\pages\Top3\Top3View.jsx-796-                    lineHeight: 1,
+.\src\pages\Top3\Top3View.jsx-797-                  }}
+.\src\pages\Top3\Top3View.jsx-798-                >
+.\src\pages\Top3\Top3View.jsx-799-                  {displayScore}
+.\src\pages\Top3\Top3View.jsx-800-                  <span style={{ color: "rgba(255,255,255,0.78)", fontSize: 24 }}>
+.\src\pages\Top3\Top3View.jsx-801-                    /100
+.\src\pages\Top3\Top3View.jsx-802-                  </span>
+.\src\pages\Top3\Top3View.jsx-803-                </div>
+.\src\pages\Top3\Top3View.jsx-804-
+.\src\pages\Top3\Top3View.jsx:805:                <div className="top3-card__confidenceBar" style={{ marginTop: 12 }}>
+.\src\pages\Top3\Top3View.jsx-806-                  <div
+.\src\pages\Top3\Top3View.jsx:807:                    className="top3-card__confidenceBarFill"
+.\src\pages\Top3\Top3View.jsx-808-                    style={{ width: `${scoreBarPct}%`, background: t.accent }}
+.\src\pages\Top3\Top3View.jsx-809-                  />
+.\src\pages\Top3\Top3View.jsx-810-                </div>
+.\src\pages\Top3\Top3View.jsx-811-              </div>
+.\src\pages\Top3\Top3View.jsx-812-
+.\src\pages\Top3\Top3View.jsx-813-              <div
+.\src\pages\Top3\Top3View.jsx-814-                style={{
+.\src\pages\Top3\Top3View.jsx-815-                  display: "grid",
+.\src\pages\Top3\Top3View.jsx-816-                  gridTemplateColumns: "1fr 1fr",
+.\src\pages\Top3\Top3View.jsx-817-                  gap: 8,
+.\src\pages\Top3\Top3View.jsx-818-                }}
+.\src\pages\Top3\Top3View.jsx-819-              >
+.\src\pages\Top3\Top3View.jsx-820-                <div className="top3-metaItem">
+.\src\pages\Top3\Top3View.jsx-821-                  <div className="top3-metaItem__label">For├ºa</div>
+.\src\pages\Top3\Top3View.jsx-822-                  <div className="top3-metaItem__value">{premiumForceLabel}</div>
+.\src\pages\Top3\Top3View.jsx-823-                </div>
+--
+.\src\pages\Top3\Top3View.jsx-928-                style={{
+.\src\pages\Top3\Top3View.jsx-929-                  color: t.accent,
+.\src\pages\Top3\Top3View.jsx-930-                  fontWeight: 900,
+.\src\pages\Top3\Top3View.jsx-931-                  textTransform: "uppercase",
+.\src\pages\Top3\Top3View.jsx-932-                }}
+.\src\pages\Top3\Top3View.jsx-933-              >
+.\src\pages\Top3\Top3View.jsx-934-                Score ÔÇö confian├ºa da an├ílise
+.\src\pages\Top3\Top3View.jsx-935-              </div>
+.\src\pages\Top3\Top3View.jsx-936-              <div style={{ color: "rgba(255,255,255,0.82)", fontSize: 13 }}>
+.\src\pages\Top3\Top3View.jsx-937-                {displayScore}/100 ┬À {visibleEvidenceCount} evid├¬ncias estat├¡sticas ┬À {trendLabel}
+.\src\pages\Top3\Top3View.jsx-938-              </div>
+.\src\pages\Top3\Top3View.jsx-939-            </div>
+.\src\pages\Top3\Top3View.jsx-940-          </div>
+.\src\pages\Top3\Top3View.jsx-941-        </div>
+.\src\pages\Top3\Top3View.jsx-942-      </div>
+.\src\pages\Top3\Top3View.jsx-943-
+.\src\pages\Top3\Top3View.jsx:944:      <div className="top3-card__body">
+.\src\pages\Top3\Top3View.jsx-945-        <div
+.\src\pages\Top3\Top3View.jsx:946:          className="top3-card__actions"
+.\src\pages\Top3\Top3View.jsx-947-          style={{
+.\src\pages\Top3\Top3View.jsx-948-            display: "grid",
+.\src\pages\Top3\Top3View.jsx-949-            gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
+.\src\pages\Top3\Top3View.jsx-950-            gap: 8,
+.\src\pages\Top3\Top3View.jsx-951-            alignItems: "center",
+.\src\pages\Top3\Top3View.jsx-952-          }}
+.\src\pages\Top3\Top3View.jsx-953-        >
+.\src\pages\Top3\Top3View.jsx-954-          <div aria-hidden="true"></div>
+.\src\pages\Top3\Top3View.jsx-955-          <div aria-hidden="true"></div>
+.\src\pages\Top3\Top3View.jsx-956-
+.\src\pages\Top3\Top3View.jsx-957-          <button
+.\src\pages\Top3\Top3View.jsx-958-            type="button"
+.\src\pages\Top3\Top3View.jsx-959-            onClick={doCopyAll}
+.\src\pages\Top3\Top3View.jsx-960-            className="pp-btn"
+.\src\pages\Top3\Top3View.jsx-961-            title="Copiar as 20 milhares"
+.\src\pages\Top3\Top3View.jsx-962-            style={{ width: "100%" }}
+--
+.\src\pages\Top3\Top3View.jsx-1148-          : analysis.type === "hit_grupo"
+.\src\pages\Top3\Top3View.jsx-1149-            ? `Grupo acertado no palpite #${analysis.position}.`
+.\src\pages\Top3\Top3View.jsx-1150-            : "Nenhum dos 3 palpites foi sorteado.";
+.\src\pages\Top3\Top3View.jsx-1151-
+.\src\pages\Top3\Top3View.jsx-1152-  return (
+.\src\pages\Top3\Top3View.jsx-1153-    <section className="top3-shell">
+.\src\pages\Top3\Top3View.jsx-1154-      <div className="timeline-slot__header">
+.\src\pages\Top3\Top3View.jsx-1155-        <div className="timeline-slot__title">
+.\src\pages\Top3\Top3View.jsx-1156-          {formatYmdHour(slot?.targetYmd, slot?.targetHour)}
+.\src\pages\Top3\Top3View.jsx-1157-        </div>
+.\src\pages\Top3\Top3View.jsx-1158-
+.\src\pages\Top3\Top3View.jsx-1159-        <div className={`timeline-slot__badge timeline-slot__badge--${status}`}>
+.\src\pages\Top3\Top3View.jsx-1160-          {statusLabel}
+.\src\pages\Top3\Top3View.jsx-1161-        </div>
+.\src\pages\Top3\Top3View.jsx-1162-      </div>
+.\src\pages\Top3\Top3View.jsx-1163-
+.\src\pages\Top3\Top3View.jsx:1164:      <div className="timeline-slot__metaGrid">
+.\src\pages\Top3\Top3View.jsx-1165-        <div className="top3-metaItem">
+.\src\pages\Top3\Top3View.jsx-1166-          <div className="top3-metaItem__label">Base usada</div>
+.\src\pages\Top3\Top3View.jsx-1167-          <div className="top3-metaItem__value">
+.\src\pages\Top3\Top3View.jsx-1168-            {formatYmdHour(slot?.baseYmd, slot?.baseHour)}
+.\src\pages\Top3\Top3View.jsx-1169-          </div>
+.\src\pages\Top3\Top3View.jsx-1170-        </div>
+.\src\pages\Top3\Top3View.jsx-1171-
+.\src\pages\Top3\Top3View.jsx-1172-        <div className="top3-metaItem">
+.\src\pages\Top3\Top3View.jsx-1173-          <div className="top3-metaItem__label">Resultado real</div>
+.\src\pages\Top3\Top3View.jsx-1174-          <div className="top3-metaItem__value">
+.\src\pages\Top3\Top3View.jsx-1175-            {hasResult
+.\src\pages\Top3\Top3View.jsx-1176-              ? `G${formatGrupo(resultGrupo)} ÔÇó ${resultAnimal.toUpperCase()}`
+.\src\pages\Top3\Top3View.jsx-1177-              : "Pendente"}
+.\src\pages\Top3\Top3View.jsx-1178-          </div>
+.\src\pages\Top3\Top3View.jsx-1179-        </div>
+.\src\pages\Top3\Top3View.jsx-1180-
+--
+.\src\pages\Top3\Top3View.jsx-1770-          transition: transform .12s ease, box-shadow .18s ease, background .18s ease, border-color .18s ease;
+.\src\pages\Top3\Top3View.jsx-1771-          white-space: nowrap;
+.\src\pages\Top3\Top3View.jsx-1772-        }
+.\src\pages\Top3\Top3View.jsx-1773-
+.\src\pages\Top3\Top3View.jsx-1774-        .pp-tab:hover{
+.\src\pages\Top3\Top3View.jsx-1775-          transform: translateY(-1px);
+.\src\pages\Top3\Top3View.jsx-1776-          border-color: rgba(201,168,62,0.40);
+.\src\pages\Top3\Top3View.jsx-1777-          box-shadow: 0 10px 24px rgba(0,0,0,0.35);
+.\src\pages\Top3\Top3View.jsx-1778-        }
+.\src\pages\Top3\Top3View.jsx-1779-
+.\src\pages\Top3\Top3View.jsx-1780-        .pp-tab[data-active="1"]{
+.\src\pages\Top3\Top3View.jsx-1781-          background: rgba(201,168,62,0.16);
+.\src\pages\Top3\Top3View.jsx-1782-          border: 1px solid rgba(201,168,62,0.45);
+.\src\pages\Top3\Top3View.jsx-1783-          color: rgba(255,255,255,0.94);
+.\src\pages\Top3\Top3View.jsx-1784-        }
+.\src\pages\Top3\Top3View.jsx-1785-
+.\src\pages\Top3\Top3View.jsx:1786:        .top3-metaGrid,
+.\src\pages\Top3\Top3View.jsx:1787:        .timeline-slot__metaGrid{
+.\src\pages\Top3\Top3View.jsx-1788-          display: grid;
+.\src\pages\Top3\Top3View.jsx-1789-          grid-template-columns: repeat(3, minmax(0, 1fr));
+.\src\pages\Top3\Top3View.jsx-1790-          gap: 10px;
+.\src\pages\Top3\Top3View.jsx-1791-        }
+.\src\pages\Top3\Top3View.jsx-1792-
+.\src\pages\Top3\Top3View.jsx-1793-        .top3-metaItem{
+.\src\pages\Top3\Top3View.jsx-1794-          background: rgba(255,255,255,0.025);
+.\src\pages\Top3\Top3View.jsx-1795-          border: 1px solid rgba(255,255,255,0.08);
+.\src\pages\Top3\Top3View.jsx-1796-          border-radius: 14px;
+.\src\pages\Top3\Top3View.jsx-1797-          padding: 10px 12px;
+.\src\pages\Top3\Top3View.jsx-1798-          display: grid;
+.\src\pages\Top3\Top3View.jsx-1799-          gap: 4px;
+.\src\pages\Top3\Top3View.jsx-1800-          min-width: 0;
+.\src\pages\Top3\Top3View.jsx-1801-        }
+.\src\pages\Top3\Top3View.jsx-1802-
+.\src\pages\Top3\Top3View.jsx-1803-        .top3-metaItem__label{
+.\src\pages\Top3\Top3View.jsx-1804-          color: var(--top3-muted);
+.\src\pages\Top3\Top3View.jsx-1805-          font-size: 11px;
+.\src\pages\Top3\Top3View.jsx-1806-          font-weight: 900;
+.\src\pages\Top3\Top3View.jsx-1807-          letter-spacing: 0.9px;
+.\src\pages\Top3\Top3View.jsx-1808-          text-transform: uppercase;
+.\src\pages\Top3\Top3View.jsx-1809-        }
+.\src\pages\Top3\Top3View.jsx-1810-
+.\src\pages\Top3\Top3View.jsx-1811-        .top3-metaItem__value{
+.\src\pages\Top3\Top3View.jsx-1812-          color: var(--top3-text);
+.\src\pages\Top3\Top3View.jsx-1813-          font-size: 13px;
+.\src\pages\Top3\Top3View.jsx-1814-          font-weight: 800;
+.\src\pages\Top3\Top3View.jsx-1815-          line-height: 1.35;
+.\src\pages\Top3\Top3View.jsx-1816-          word-break: break-word;
+.\src\pages\Top3\Top3View.jsx-1817-        }
+.\src\pages\Top3\Top3View.jsx-1818-
+.\src\pages\Top3\Top3View.jsx:1819:        .top3-stage{
+.\src\pages\Top3\Top3View.jsx-1820-          display: grid;
+.\src\pages\Top3\Top3View.jsx-1821-          gap: 16px;
+.\src\pages\Top3\Top3View.jsx-1822-        }
+.\src\pages\Top3\Top3View.jsx-1823-
+.\src\pages\Top3\Top3View.jsx-1824-        .top3-heroWrap{
+.\src\pages\Top3\Top3View.jsx-1825-          width: 100%;
+.\src\pages\Top3\Top3View.jsx-1826-          max-width: 1120px;
+.\src\pages\Top3\Top3View.jsx-1827-          margin: 0 auto;
+.\src\pages\Top3\Top3View.jsx-1828-        }
+.\src\pages\Top3\Top3View.jsx-1829-
+.\src\pages\Top3\Top3View.jsx-1830-        .top3-secondaryRow{
+.\src\pages\Top3\Top3View.jsx-1831-          width: 100%;
+.\src\pages\Top3\Top3View.jsx-1832-          max-width: 1120px;
+.\src\pages\Top3\Top3View.jsx-1833-          margin: 0 auto;
+.\src\pages\Top3\Top3View.jsx-1834-          display: grid;
+.\src\pages\Top3\Top3View.jsx-1835-          grid-template-columns: repeat(2, minmax(0, 1fr));
+--
+.\src\pages\Top3\Top3View.jsx-2118-
+.\src\pages\Top3\Top3View.jsx-2119-        .timeline-slot__insightTitle{
+.\src\pages\Top3\Top3View.jsx-2120-          font-size: 11px;
+.\src\pages\Top3\Top3View.jsx-2121-          font-weight: 1000;
+.\src\pages\Top3\Top3View.jsx-2122-          letter-spacing: 1px;
+.\src\pages\Top3\Top3View.jsx-2123-          text-transform: uppercase;
+.\src\pages\Top3\Top3View.jsx-2124-          color: var(--top3-accent);
+.\src\pages\Top3\Top3View.jsx-2125-        }
+.\src\pages\Top3\Top3View.jsx-2126-
+.\src\pages\Top3\Top3View.jsx-2127-        .timeline-slot__insightText{
+.\src\pages\Top3\Top3View.jsx-2128-          font-size: 14px;
+.\src\pages\Top3\Top3View.jsx-2129-          font-weight: 900;
+.\src\pages\Top3\Top3View.jsx-2130-          line-height: 1.4;
+.\src\pages\Top3\Top3View.jsx-2131-          color: var(--top3-text);
+.\src\pages\Top3\Top3View.jsx-2132-        }
+.\src\pages\Top3\Top3View.jsx-2133-
+.\src\pages\Top3\Top3View.jsx:2134:        .top3-card{
+.\src\pages\Top3\Top3View.jsx-2135-          position: relative;
+.\src\pages\Top3\Top3View.jsx-2136-          background:
+.\src\pages\Top3\Top3View.jsx-2137-            radial-gradient(1100px 280px at 50% 0%, rgba(201,168,62,0.08), transparent 55%),
+.\src\pages\Top3\Top3View.jsx-2138-            linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.00)),
+.\src\pages\Top3\Top3View.jsx-2139-            var(--top3-panel);
+.\src\pages\Top3\Top3View.jsx-2140-          border: 1px solid var(--top3-border);
+.\src\pages\Top3\Top3View.jsx-2141-          border-radius: 20px;
+.\src\pages\Top3\Top3View.jsx-2142-          padding: 16px;
+.\src\pages\Top3\Top3View.jsx-2143-          display: grid;
+.\src\pages\Top3\Top3View.jsx-2144-          gap: 14px;
+.\src\pages\Top3\Top3View.jsx-2145-          box-shadow:
+.\src\pages\Top3\Top3View.jsx-2146-            0 18px 44px rgba(0,0,0,0.30),
+.\src\pages\Top3\Top3View.jsx-2147-            inset 0 0 0 1px rgba(255,255,255,0.03);
+.\src\pages\Top3\Top3View.jsx-2148-          overflow: hidden;
+.\src\pages\Top3\Top3View.jsx-2149-        }
+.\src\pages\Top3\Top3View.jsx-2150-
+.\src\pages\Top3\Top3View.jsx:2151:        .top3-card::after{
+.\src\pages\Top3\Top3View.jsx-2152-          content: "";
+.\src\pages\Top3\Top3View.jsx-2153-          position: absolute;
+.\src\pages\Top3\Top3View.jsx-2154-          inset: 0;
+.\src\pages\Top3\Top3View.jsx-2155-          border-radius: inherit;
+.\src\pages\Top3\Top3View.jsx-2156-          pointer-events: none;
+.\src\pages\Top3\Top3View.jsx-2157-          box-shadow: inset 0 0 0 1px rgba(201,168,62,0.05);
+.\src\pages\Top3\Top3View.jsx-2158-        }
+.\src\pages\Top3\Top3View.jsx-2159-
+.\src\pages\Top3\Top3View.jsx:2160:        .top3-card--hero{
+.\src\pages\Top3\Top3View.jsx-2161-          padding: 18px;
+.\src\pages\Top3\Top3View.jsx-2162-        }
+.\src\pages\Top3\Top3View.jsx-2163-
+.\src\pages\Top3\Top3View.jsx:2164:        .top3-card__topline{
+.\src\pages\Top3\Top3View.jsx-2165-          display:flex;
+.\src\pages\Top3\Top3View.jsx-2166-          align-items:center;
+.\src\pages\Top3\Top3View.jsx-2167-          gap:10px;
+.\src\pages\Top3\Top3View.jsx-2168-        }
+.\src\pages\Top3\Top3View.jsx-2169-
+.\src\pages\Top3\Top3View.jsx-2170-        .top3-rankBadge{
+.\src\pages\Top3\Top3View.jsx-2171-          width: 30px;
+.\src\pages\Top3\Top3View.jsx-2172-          height: 30px;
+.\src\pages\Top3\Top3View.jsx-2173-          border-radius: 10px;
+.\src\pages\Top3\Top3View.jsx-2174-          display: grid;
+.\src\pages\Top3\Top3View.jsx-2175-          place-items: center;
+.\src\pages\Top3\Top3View.jsx-2176-          background: rgba(201,168,62,0.15);
+.\src\pages\Top3\Top3View.jsx-2177-          border: 1px solid rgba(201,168,62,0.35);
+.\src\pages\Top3\Top3View.jsx-2178-          font-weight: 950;
+.\src\pages\Top3\Top3View.jsx-2179-          color: var(--top3-accent);
+.\src\pages\Top3\Top3View.jsx-2180-          flex: 0 0 auto;
+.\src\pages\Top3\Top3View.jsx-2181-        }
+.\src\pages\Top3\Top3View.jsx-2182-
+.\src\pages\Top3\Top3View.jsx:2183:        .top3-card__label{
+.\src\pages\Top3\Top3View.jsx-2184-          font-weight: 950;
+.\src\pages\Top3\Top3View.jsx-2185-          letter-spacing: 0.4px;
+.\src\pages\Top3\Top3View.jsx-2186-          font-size: 14px;
+.\src\pages\Top3\Top3View.jsx-2187-        }
+.\src\pages\Top3\Top3View.jsx-2188-
+.\src\pages\Top3\Top3View.jsx:2189:        .top3-card__summary{
+.\src\pages\Top3\Top3View.jsx-2190-          display:grid;
+.\src\pages\Top3\Top3View.jsx-2191-          grid-template-columns: minmax(0, 1fr) 170px;
+.\src\pages\Top3\Top3View.jsx-2192-          gap: 14px;
+.\src\pages\Top3\Top3View.jsx-2193-          align-items: center;
+.\src\pages\Top3\Top3View.jsx-2194-        }
+.\src\pages\Top3\Top3View.jsx-2195-
+.\src\pages\Top3\Top3View.jsx:2196:        .top3-card--hero .top3-card__summary{
+.\src\pages\Top3\Top3View.jsx-2197-          grid-template-columns: minmax(0, 1fr) 190px;
+.\src\pages\Top3\Top3View.jsx-2198-        }
+.\src\pages\Top3\Top3View.jsx-2199-
+.\src\pages\Top3\Top3View.jsx:2200:        .top3-card__identity{
+.\src\pages\Top3\Top3View.jsx-2201-          display:flex;
+.\src\pages\Top3\Top3View.jsx-2202-          align-items:center;
+.\src\pages\Top3\Top3View.jsx-2203-          gap:14px;
+.\src\pages\Top3\Top3View.jsx-2204-          min-width: 0;
+.\src\pages\Top3\Top3View.jsx-2205-        }
+.\src\pages\Top3\Top3View.jsx-2206-
+.\src\pages\Top3\Top3View.jsx:2207:        .top3-card__identityText{
+.\src\pages\Top3\Top3View.jsx-2208-          display:grid;
+.\src\pages\Top3\Top3View.jsx-2209-          gap: 6px;
+.\src\pages\Top3\Top3View.jsx-2210-          min-width: 0;
+.\src\pages\Top3\Top3View.jsx-2211-        }
+.\src\pages\Top3\Top3View.jsx-2212-
+.\src\pages\Top3\Top3View.jsx:2213:        .top3-card__group{
+.\src\pages\Top3\Top3View.jsx-2214-          font-size: 11px;
+.\src\pages\Top3\Top3View.jsx-2215-          color: var(--top3-muted);
+.\src\pages\Top3\Top3View.jsx-2216-          font-weight: 900;
+.\src\pages\Top3\Top3View.jsx-2217-          letter-spacing: 1px;
+.\src\pages\Top3\Top3View.jsx-2218-        }
+.\src\pages\Top3\Top3View.jsx-2219-
+.\src\pages\Top3\Top3View.jsx:2220:        .top3-card__animal{
+.\src\pages\Top3\Top3View.jsx-2221-          font-size: 24px;
+.\src\pages\Top3\Top3View.jsx-2222-          font-weight: 950;
+.\src\pages\Top3\Top3View.jsx-2223-          letter-spacing: 0.6px;
+.\src\pages\Top3\Top3View.jsx-2224-          line-height: 1.05;
+.\src\pages\Top3\Top3View.jsx-2225-          word-break: break-word;
+.\src\pages\Top3\Top3View.jsx-2226-        }
+.\src\pages\Top3\Top3View.jsx-2227-
+.\src\pages\Top3\Top3View.jsx:2228:        .top3-card--secondary .top3-card__animal{
+.\src\pages\Top3\Top3View.jsx-2229-          font-size: 20px;
+.\src\pages\Top3\Top3View.jsx-2230-        }
+.\src\pages\Top3\Top3View.jsx-2231-
+.\src\pages\Top3\Top3View.jsx:2232:        .top3-card__confidence{
+.\src\pages\Top3\Top3View.jsx-2233-          justify-self: end;
+.\src\pages\Top3\Top3View.jsx-2234-          width: 100%;
+.\src\pages\Top3\Top3View.jsx-2235-          max-width: 190px;
+.\src\pages\Top3\Top3View.jsx-2236-          text-align: right;
+.\src\pages\Top3\Top3View.jsx-2237-          display:grid;
+.\src\pages\Top3\Top3View.jsx-2238-          gap: 6px;
+.\src\pages\Top3\Top3View.jsx-2239-        }
+.\src\pages\Top3\Top3View.jsx-2240-
+.\src\pages\Top3\Top3View.jsx:2241:        .top3-card__confidenceLabel{
+.\src\pages\Top3\Top3View.jsx-2242-          color: var(--top3-muted);
+.\src\pages\Top3\Top3View.jsx-2243-          font-size: 11px;
+.\src\pages\Top3\Top3View.jsx-2244-          font-weight: 900;
+.\src\pages\Top3\Top3View.jsx-2245-          letter-spacing: 0.9px;
+.\src\pages\Top3\Top3View.jsx-2246-        }
+.\src\pages\Top3\Top3View.jsx-2247-
+.\src\pages\Top3\Top3View.jsx:2248:        .top3-card__confidenceValue{
+.\src\pages\Top3\Top3View.jsx-2249-          font-size: 30px;
+.\src\pages\Top3\Top3View.jsx-2250-          font-weight: 950;
+.\src\pages\Top3\Top3View.jsx-2251-          color: var(--top3-accent);
+.\src\pages\Top3\Top3View.jsx-2252-          line-height: 1;
+.\src\pages\Top3\Top3View.jsx-2253-        }
+.\src\pages\Top3\Top3View.jsx-2254-
+.\src\pages\Top3\Top3View.jsx:2255:        .top3-card--secondary .top3-card__confidenceValue{
+.\src\pages\Top3\Top3View.jsx-2256-          font-size: 26px;
+.\src\pages\Top3\Top3View.jsx-2257-        }
+.\src\pages\Top3\Top3View.jsx-2258-
+.\src\pages\Top3\Top3View.jsx:2259:        .top3-card__confidenceBar{
+.\src\pages\Top3\Top3View.jsx-2260-          height: 7px;
+.\src\pages\Top3\Top3View.jsx-2261-          border-radius: 999px;
+.\src\pages\Top3\Top3View.jsx-2262-          background: rgba(255,255,255,0.10);
+.\src\pages\Top3\Top3View.jsx-2263-          overflow: hidden;
+.\src\pages\Top3\Top3View.jsx-2264-        }
+.\src\pages\Top3\Top3View.jsx-2265-
+.\src\pages\Top3\Top3View.jsx:2266:        .top3-card__confidenceBarFill{
+.\src\pages\Top3\Top3View.jsx-2267-          height: 100%;
+.\src\pages\Top3\Top3View.jsx-2268-          border-radius: inherit;
+.\src\pages\Top3\Top3View.jsx-2269-          opacity: 0.78;
+.\src\pages\Top3\Top3View.jsx-2270-        }
+.\src\pages\Top3\Top3View.jsx-2271-
+.\src\pages\Top3\Top3View.jsx:2272:        .top3-card__body{
+.\src\pages\Top3\Top3View.jsx-2273-          border-top: 1px solid rgba(255,255,255,0.07);
+.\src\pages\Top3\Top3View.jsx-2274-          padding-top: 12px;
+.\src\pages\Top3\Top3View.jsx-2275-          display:grid;
+.\src\pages\Top3\Top3View.jsx-2276-          gap: 10px;
+.\src\pages\Top3\Top3View.jsx-2277-        }
+.\src\pages\Top3\Top3View.jsx-2278-
+.\src\pages\Top3\Top3View.jsx:2279:        .top3-card__actions{
+.\src\pages\Top3\Top3View.jsx-2280-          display:flex;
+.\src\pages\Top3\Top3View.jsx-2281-          align-items:center;
+.\src\pages\Top3\Top3View.jsx-2282-          justify-content:space-between;
+.\src\pages\Top3\Top3View.jsx-2283-          gap:12px;
+.\src\pages\Top3\Top3View.jsx-2284-        }
+.\src\pages\Top3\Top3View.jsx-2285-
+.\src\pages\Top3\Top3View.jsx:2286:        .top3-card__sectionTitle{
+.\src\pages\Top3\Top3View.jsx-2287-          font-weight: 900;
+.\src\pages\Top3\Top3View.jsx-2288-          font-size: 13px;
+.\src\pages\Top3\Top3View.jsx-2289-          color: rgba(255,255,255,0.92);
+.\src\pages\Top3\Top3View.jsx-2290-          letter-spacing: 0.2px;
+.\src\pages\Top3\Top3View.jsx-2291-        }
+.\src\pages\Top3\Top3View.jsx-2292-
+.\src\pages\Top3\Top3View.jsx-2293-        .pp-btn{
+.\src\pages\Top3\Top3View.jsx-2294-          border-radius: 999px;
+.\src\pages\Top3\Top3View.jsx-2295-          padding: 9px 12px;
+.\src\pages\Top3\Top3View.jsx-2296-          background: rgba(201,168,62,0.16);
+.\src\pages\Top3\Top3View.jsx-2297-          border: 1px solid rgba(201,168,62,0.35);
+.\src\pages\Top3\Top3View.jsx-2298-          color: rgba(255,255,255,0.92);
+.\src\pages\Top3\Top3View.jsx-2299-          font-weight: 950;
+.\src\pages\Top3\Top3View.jsx-2300-          cursor: pointer;
+.\src\pages\Top3\Top3View.jsx-2301-          white-space: nowrap;
+.\src\pages\Top3\Top3View.jsx-2302-          transition: transform .12s ease, box-shadow .18s ease, background .18s ease, border-color .18s ease;
+--
+.\src\pages\Top3\Top3View.jsx-2529-
+.\src\pages\Top3\Top3View.jsx-2530-          .timeline-compact__predictions{
+.\src\pages\Top3\Top3View.jsx-2531-            grid-template-columns: 1fr;
+.\src\pages\Top3\Top3View.jsx-2532-          }
+.\src\pages\Top3\Top3View.jsx-2533-        }
+.\src\pages\Top3\Top3View.jsx-2534-
+.\src\pages\Top3\Top3View.jsx-2535-        @media (max-width: 980px){
+.\src\pages\Top3\Top3View.jsx-2536-          .top3-page{
+.\src\pages\Top3\Top3View.jsx-2537-            gap: 14px;
+.\src\pages\Top3\Top3View.jsx-2538-          }
+.\src\pages\Top3\Top3View.jsx-2539-
+.\src\pages\Top3\Top3View.jsx-2540-          .top3-shell{
+.\src\pages\Top3\Top3View.jsx-2541-            padding: 14px;
+.\src\pages\Top3\Top3View.jsx-2542-            border-radius: 18px;
+.\src\pages\Top3\Top3View.jsx-2543-          }
+.\src\pages\Top3\Top3View.jsx-2544-
+.\src\pages\Top3\Top3View.jsx:2545:          .top3-metaGrid,
+.\src\pages\Top3\Top3View.jsx:2546:          .timeline-slot__metaGrid{
+.\src\pages\Top3\Top3View.jsx-2547-            grid-template-columns: 1fr 1fr;
+.\src\pages\Top3\Top3View.jsx-2548-          }
+.\src\pages\Top3\Top3View.jsx-2549-
+.\src\pages\Top3\Top3View.jsx-2550-          .top3-heroWrap,
+.\src\pages\Top3\Top3View.jsx-2551-          .top3-secondaryRow{
+.\src\pages\Top3\Top3View.jsx-2552-            max-width: none;
+.\src\pages\Top3\Top3View.jsx-2553-          }
+.\src\pages\Top3\Top3View.jsx-2554-
+.\src\pages\Top3\Top3View.jsx-2555-          .top3-secondaryRow{
+.\src\pages\Top3\Top3View.jsx-2556-            grid-template-columns: 1fr;
+.\src\pages\Top3\Top3View.jsx-2557-            gap: 14px;
+.\src\pages\Top3\Top3View.jsx-2558-          }
+.\src\pages\Top3\Top3View.jsx-2559-
+.\src\pages\Top3\Top3View.jsx:2560:          .top3-card,
+.\src\pages\Top3\Top3View.jsx:2561:          .top3-card--hero{
+.\src\pages\Top3\Top3View.jsx-2562-            padding: 14px;
+.\src\pages\Top3\Top3View.jsx-2563-            border-radius: 18px;
+.\src\pages\Top3\Top3View.jsx-2564-          }
+.\src\pages\Top3\Top3View.jsx-2565-
+.\src\pages\Top3\Top3View.jsx:2566:          .top3-card__summary,
+.\src\pages\Top3\Top3View.jsx:2567:          .top3-card--hero .top3-card__summary{
+.\src\pages\Top3\Top3View.jsx-2568-            grid-template-columns: 1fr;
+.\src\pages\Top3\Top3View.jsx-2569-            gap: 12px;
+.\src\pages\Top3\Top3View.jsx-2570-          }
+.\src\pages\Top3\Top3View.jsx-2571-
+.\src\pages\Top3\Top3View.jsx:2572:          .top3-card__confidence{
+.\src\pages\Top3\Top3View.jsx-2573-            justify-self: stretch;
+.\src\pages\Top3\Top3View.jsx-2574-            text-align: left;
+.\src\pages\Top3\Top3View.jsx-2575-            max-width: none;
+.\src\pages\Top3\Top3View.jsx-2576-          }
+.\src\pages\Top3\Top3View.jsx-2577-
+.\src\pages\Top3\Top3View.jsx:2578:          .top3-card__confidenceValue{
+.\src\pages\Top3\Top3View.jsx-2579-            font-size: 28px;
+.\src\pages\Top3\Top3View.jsx-2580-          }
+.\src\pages\Top3\Top3View.jsx-2581-
+.\src\pages\Top3\Top3View.jsx:2582:          .top3-card__actions{
+.\src\pages\Top3\Top3View.jsx-2583-            align-items: stretch;
+.\src\pages\Top3\Top3View.jsx-2584-            flex-direction: column;
+.\src\pages\Top3\Top3View.jsx-2585-          }
+.\src\pages\Top3\Top3View.jsx-2586-
+.\src\pages\Top3\Top3View.jsx-2587-          .pp-btn{
+.\src\pages\Top3\Top3View.jsx-2588-            width: 100%;
+.\src\pages\Top3\Top3View.jsx-2589-          }
+.\src\pages\Top3\Top3View.jsx-2590-
+.\src\pages\Top3\Top3View.jsx-2591-          .top3-historyToolbar{
+.\src\pages\Top3\Top3View.jsx-2592-            grid-template-columns: 1fr 1fr;
+.\src\pages\Top3\Top3View.jsx-2593-          }
+.\src\pages\Top3\Top3View.jsx-2594-
+.\src\pages\Top3\Top3View.jsx-2595-          .top3-historyDate{
+.\src\pages\Top3\Top3View.jsx-2596-            grid-column: 1 / -1;
+.\src\pages\Top3\Top3View.jsx-2597-          }
+.\src\pages\Top3\Top3View.jsx-2598-
+--
+.\src\pages\Top3\Top3View.jsx-2637-          }
+.\src\pages\Top3\Top3View.jsx-2638-
+.\src\pages\Top3\Top3View.jsx-2639-          .top3-page{
+.\src\pages\Top3\Top3View.jsx-2640-            gap: 12px;
+.\src\pages\Top3\Top3View.jsx-2641-          }
+.\src\pages\Top3\Top3View.jsx-2642-
+.\src\pages\Top3\Top3View.jsx-2643-          .top3-shell{
+.\src\pages\Top3\Top3View.jsx-2644-            padding: 12px;
+.\src\pages\Top3\Top3View.jsx-2645-            border-radius: 16px;
+.\src\pages\Top3\Top3View.jsx-2646-          }
+.\src\pages\Top3\Top3View.jsx-2647-
+.\src\pages\Top3\Top3View.jsx-2648-          .top3-header__title,
+.\src\pages\Top3\Top3View.jsx-2649-          .timeline-slot__title{
+.\src\pages\Top3\Top3View.jsx-2650-            font-size: 17px;
+.\src\pages\Top3\Top3View.jsx-2651-          }
+.\src\pages\Top3\Top3View.jsx-2652-
+.\src\pages\Top3\Top3View.jsx:2653:          .top3-card__topline{
+.\src\pages\Top3\Top3View.jsx-2654-            gap: 8px;
+.\src\pages\Top3\Top3View.jsx-2655-          }
+.\src\pages\Top3\Top3View.jsx-2656-
+.\src\pages\Top3\Top3View.jsx-2657-          .top3-rankBadge{
+.\src\pages\Top3\Top3View.jsx-2658-            width: 28px;
+.\src\pages\Top3\Top3View.jsx-2659-            height: 28px;
+.\src\pages\Top3\Top3View.jsx-2660-            border-radius: 9px;
+.\src\pages\Top3\Top3View.jsx-2661-          }
+.\src\pages\Top3\Top3View.jsx-2662-
+.\src\pages\Top3\Top3View.jsx:2663:          .top3-card__identity{
+.\src\pages\Top3\Top3View.jsx-2664-            gap: 10px;
+.\src\pages\Top3\Top3View.jsx-2665-            align-items: center;
+.\src\pages\Top3\Top3View.jsx-2666-          }
+.\src\pages\Top3\Top3View.jsx-2667-
+.\src\pages\Top3\Top3View.jsx:2668:          .top3-card__animal{
+.\src\pages\Top3\Top3View.jsx-2669-            font-size: 18px;
+.\src\pages\Top3\Top3View.jsx-2670-            letter-spacing: 0.35px;
+.\src\pages\Top3\Top3View.jsx-2671-          }
+.\src\pages\Top3\Top3View.jsx-2672-
+.\src\pages\Top3\Top3View.jsx:2673:          .top3-card--secondary .top3-card__animal{
+.\src\pages\Top3\Top3View.jsx-2674-            font-size: 18px;
+.\src\pages\Top3\Top3View.jsx-2675-          }
+.\src\pages\Top3\Top3View.jsx-2676-
+.\src\pages\Top3\Top3View.jsx:2677:          .top3-card__confidenceValue,
+.\src\pages\Top3\Top3View.jsx:2678:          .top3-card--secondary .top3-card__confidenceValue{
+.\src\pages\Top3\Top3View.jsx-2679-            font-size: 24px;
+.\src\pages\Top3\Top3View.jsx-2680-          }
+.\src\pages\Top3\Top3View.jsx-2681-
+.\src\pages\Top3\Top3View.jsx-2682-          .pp-chipRow{
+.\src\pages\Top3\Top3View.jsx-2683-            grid-template-columns: repeat(2, minmax(0, 1fr));
+.\src\pages\Top3\Top3View.jsx-2684-          }
+.\src\pages\Top3\Top3View.jsx-2685-
+.\src\pages\Top3\Top3View.jsx-2686-          .pp-row{
+.\src\pages\Top3\Top3View.jsx-2687-            grid-template-columns: repeat(2, minmax(0, 1fr));
+.\src\pages\Top3\Top3View.jsx-2688-          }
+.\src\pages\Top3\Top3View.jsx-2689-
+.\src\pages\Top3\Top3View.jsx-2690-          .pp-pill{
+.\src\pages\Top3\Top3View.jsx-2691-            padding: 10px 8px;
+.\src\pages\Top3\Top3View.jsx-2692-            font-size: 13px;
+.\src\pages\Top3\Top3View.jsx-2693-            letter-spacing: 1px;
+.\src\pages\Top3\Top3View.jsx-2694-          }
+.\src\pages\Top3\Top3View.jsx-2695-
+.\src\pages\Top3\Top3View.jsx-2696-          .pp-copiedBadge{
+.\src\pages\Top3\Top3View.jsx-2697-            right: 6px;
+.\src\pages\Top3\Top3View.jsx-2698-            top: 6px;
+.\src\pages\Top3\Top3View.jsx-2699-            font-size: 9px;
+.\src\pages\Top3\Top3View.jsx-2700-            padding: 3px 6px;
+.\src\pages\Top3\Top3View.jsx-2701-          }
+.\src\pages\Top3\Top3View.jsx-2702-
+.\src\pages\Top3\Top3View.jsx:2703:          .top3-metaGrid,
+.\src\pages\Top3\Top3View.jsx:2704:          .timeline-slot__metaGrid{
+.\src\pages\Top3\Top3View.jsx-2705-            grid-template-columns: 1fr;
+.\src\pages\Top3\Top3View.jsx-2706-          }
+.\src\pages\Top3\Top3View.jsx-2707-
+.\src\pages\Top3\Top3View.jsx-2708-          .top3-historyToolbar{
+.\src\pages\Top3\Top3View.jsx-2709-            grid-template-columns: 1fr 1fr;
+.\src\pages\Top3\Top3View.jsx-2710-          }
+.\src\pages\Top3\Top3View.jsx-2711-
+.\src\pages\Top3\Top3View.jsx-2712-          .top3-historySummary{
+.\src\pages\Top3\Top3View.jsx-2713-            grid-template-columns: repeat(2, minmax(0, 1fr));
+.\src\pages\Top3\Top3View.jsx-2714-          }
+.\src\pages\Top3\Top3View.jsx-2715-        }
+.\src\pages\Top3\Top3View.jsx-2716-
+.\src\pages\Top3\Top3View.jsx-2717-        @media (max-width: 420px){
+.\src\pages\Top3\Top3View.jsx-2718-          .top3-shell{
+.\src\pages\Top3\Top3View.jsx-2719-            padding: 10px;
+.\src\pages\Top3\Top3View.jsx-2720-          }
+.\src\pages\Top3\Top3View.jsx-2721-
+.\src\pages\Top3\Top3View.jsx:2722:          .top3-card,
+.\src\pages\Top3\Top3View.jsx:2723:          .top3-card--hero{
+.\src\pages\Top3\Top3View.jsx-2724-            padding: 12px;
+.\src\pages\Top3\Top3View.jsx-2725-          }
+.\src\pages\Top3\Top3View.jsx-2726-
+.\src\pages\Top3\Top3View.jsx:2727:          .top3-card__group{
+.\src\pages\Top3\Top3View.jsx-2728-            font-size: 10px;
+.\src\pages\Top3\Top3View.jsx-2729-          }
+.\src\pages\Top3\Top3View.jsx-2730-
+.\src\pages\Top3\Top3View.jsx:2731:          .top3-card__animal{
+.\src\pages\Top3\Top3View.jsx-2732-            font-size: 16px;
+.\src\pages\Top3\Top3View.jsx-2733-          }
+.\src\pages\Top3\Top3View.jsx-2734-
+.\src\pages\Top3\Top3View.jsx:2735:          .top3-card__confidenceValue{
+.\src\pages\Top3\Top3View.jsx-2736-            font-size: 22px;
+.\src\pages\Top3\Top3View.jsx-2737-          }
+.\src\pages\Top3\Top3View.jsx-2738-
+.\src\pages\Top3\Top3View.jsx-2739-          .pp-gridBox{
+.\src\pages\Top3\Top3View.jsx-2740-            padding: 10px;
+.\src\pages\Top3\Top3View.jsx-2741-            gap: 7px;
+.\src\pages\Top3\Top3View.jsx-2742-          }
+.\src\pages\Top3\Top3View.jsx-2743-
+.\src\pages\Top3\Top3View.jsx-2744-          .pp-row,
+.\src\pages\Top3\Top3View.jsx-2745-          .pp-chipRow{
+.\src\pages\Top3\Top3View.jsx-2746-            gap: 8px;
+.\src\pages\Top3\Top3View.jsx-2747-          }
+.\src\pages\Top3\Top3View.jsx-2748-        }
+.\src\pages\Top3\Top3View.jsx-2749-
+.\src\pages\Top3\Top3View.jsx-2750-        /* TOP3 PREMIUM CRLF */
+.\src\pages\Top3\Top3View.jsx:2751:        .top3-stage--predictions,
+.\src\pages\Top3\Top3View.jsx:2752:        .top3-stage--loading{
+.\src\pages\Top3\Top3View.jsx-2753-          grid-template-columns: repeat(3, minmax(0, 1fr));
+.\src\pages\Top3\Top3View.jsx-2754-          align-items: stretch;
+.\src\pages\Top3\Top3View.jsx-2755-        }
+.\src\pages\Top3\Top3View.jsx-2756-
+.\src\pages\Top3\Top3View.jsx:2757:        .top3-stage--predictions > .top3-card,
+.\src\pages\Top3\Top3View.jsx:2758:        .top3-stage--loading > .top3-card{
+.\src\pages\Top3\Top3View.jsx-2759-          width: 100%;
+.\src\pages\Top3\Top3View.jsx-2760-          min-width: 0;
+.\src\pages\Top3\Top3View.jsx-2761-          height: 100%;
+.\src\pages\Top3\Top3View.jsx-2762-        }
+.\src\pages\Top3\Top3View.jsx-2763-
+.\src\pages\Top3\Top3View.jsx-2764-        .top3-loadingCard{
+.\src\pages\Top3\Top3View.jsx-2765-          display: grid;
+.\src\pages\Top3\Top3View.jsx-2766-          align-content: start;
+.\src\pages\Top3\Top3View.jsx-2767-          gap: 16px;
+.\src\pages\Top3\Top3View.jsx-2768-          min-height: 330px;
+.\src\pages\Top3\Top3View.jsx-2769-        }
+.\src\pages\Top3\Top3View.jsx-2770-
+.\src\pages\Top3\Top3View.jsx-2771-        .top3-loadingCard__header,
+.\src\pages\Top3\Top3View.jsx-2772-        .top3-loadingCard__identity{
+.\src\pages\Top3\Top3View.jsx-2773-          display: flex;
+.\src\pages\Top3\Top3View.jsx-2774-          align-items: center;
+--
+.\src\pages\Top3\Top3View.jsx-2834-          height: 24px;
+.\src\pages\Top3\Top3View.jsx-2835-        }
+.\src\pages\Top3\Top3View.jsx-2836-
+.\src\pages\Top3\Top3View.jsx-2837-        .top3-skeleton--block{
+.\src\pages\Top3\Top3View.jsx-2838-          width: 100%;
+.\src\pages\Top3\Top3View.jsx-2839-          height: 76px;
+.\src\pages\Top3\Top3View.jsx-2840-          border-radius: 14px;
+.\src\pages\Top3\Top3View.jsx-2841-        }
+.\src\pages\Top3\Top3View.jsx-2842-
+.\src\pages\Top3\Top3View.jsx-2843-        @keyframes top3PremiumSkeleton{
+.\src\pages\Top3\Top3View.jsx-2844-          100%{
+.\src\pages\Top3\Top3View.jsx-2845-            transform: translateX(100%);
+.\src\pages\Top3\Top3View.jsx-2846-          }
+.\src\pages\Top3\Top3View.jsx-2847-        }
+.\src\pages\Top3\Top3View.jsx-2848-
+.\src\pages\Top3\Top3View.jsx-2849-        @media (max-width: 980px){
+.\src\pages\Top3\Top3View.jsx:2850:          .top3-stage--predictions,
+.\src\pages\Top3\Top3View.jsx:2851:          .top3-stage--loading{
+.\src\pages\Top3\Top3View.jsx-2852-            grid-template-columns: repeat(2, minmax(0, 1fr));
+.\src\pages\Top3\Top3View.jsx-2853-          }
+.\src\pages\Top3\Top3View.jsx-2854-
+.\src\pages\Top3\Top3View.jsx:2855:          .top3-stage--predictions > .top3-card:first-child{
+.\src\pages\Top3\Top3View.jsx-2856-            grid-column: 1 / -1;
+.\src\pages\Top3\Top3View.jsx-2857-          }
+.\src\pages\Top3\Top3View.jsx-2858-        }
+.\src\pages\Top3\Top3View.jsx-2859-
+.\src\pages\Top3\Top3View.jsx-2860-        @media (max-width: 640px){
+.\src\pages\Top3\Top3View.jsx:2861:          .top3-stage--predictions,
+.\src\pages\Top3\Top3View.jsx:2862:          .top3-stage--loading{
+.\src\pages\Top3\Top3View.jsx-2863-            grid-template-columns: 1fr;
+.\src\pages\Top3\Top3View.jsx-2864-          }
+.\src\pages\Top3\Top3View.jsx-2865-
+.\src\pages\Top3\Top3View.jsx:2866:          .top3-stage--predictions > .top3-card:first-child{
+.\src\pages\Top3\Top3View.jsx-2867-            grid-column: auto;
+.\src\pages\Top3\Top3View.jsx-2868-          }
+.\src\pages\Top3\Top3View.jsx-2869-
+.\src\pages\Top3\Top3View.jsx:2870:          .top3-card__actions{
+.\src\pages\Top3\Top3View.jsx-2871-            display: grid;
+.\src\pages\Top3\Top3View.jsx-2872-            grid-template-columns: repeat(2, minmax(0, 1fr));
+.\src\pages\Top3\Top3View.jsx-2873-          }
+.\src\pages\Top3\Top3View.jsx-2874-
+.\src\pages\Top3\Top3View.jsx:2875:          .top3-card__actions .pp-btn{
+.\src\pages\Top3\Top3View.jsx-2876-            width: 100%;
+.\src\pages\Top3\Top3View.jsx-2877-            min-width: 0;
+.\src\pages\Top3\Top3View.jsx-2878-          }
+.\src\pages\Top3\Top3View.jsx-2879-
+.\src\pages\Top3\Top3View.jsx:2880:          .top3-metaGrid{
+.\src\pages\Top3\Top3View.jsx-2881-            grid-template-columns: repeat(2, minmax(0, 1fr));
+.\src\pages\Top3\Top3View.jsx-2882-          }
+.\src\pages\Top3\Top3View.jsx-2883-
+.\src\pages\Top3\Top3View.jsx:2884:          .timeline-slot__metaGrid{
+.\src\pages\Top3\Top3View.jsx-2885-            grid-template-columns: 1fr;
+.\src\pages\Top3\Top3View.jsx-2886-          }
+.\src\pages\Top3\Top3View.jsx-2887-        }
+.\src\pages\Top3\Top3View.jsx-2888-
+.\src\pages\Top3\Top3View.jsx-2889-        @media (max-width: 420px){
+.\src\pages\Top3\Top3View.jsx:2890:          .top3-card__actions,
+.\src\pages\Top3\Top3View.jsx:2891:          .top3-metaGrid{
+.\src\pages\Top3\Top3View.jsx-2892-            grid-template-columns: 1fr;
+.\src\pages\Top3\Top3View.jsx-2893-          }
+.\src\pages\Top3\Top3View.jsx-2894-        }
+.\src\pages\Top3\Top3View.jsx-2895-
+.\src\pages\Top3\Top3View.jsx-2896-        @media (prefers-reduced-motion: reduce){
+.\src\pages\Top3\Top3View.jsx-2897-          .top3-skeleton::after{
+.\src\pages\Top3\Top3View.jsx-2898-            animation: none;
+.\src\pages\Top3\Top3View.jsx-2899-          }
+.\src\pages\Top3\Top3View.jsx-2900-        }
+.\src\pages\Top3\Top3View.jsx-2901-
+.\src\pages\Top3\Top3View.jsx-2902-
+.\src\pages\Top3\Top3View.jsx-2903-        @media (max-width: 640px){
+.\src\pages\Top3\Top3View.jsx-2904-          .pp-tabs{
+.\src\pages\Top3\Top3View.jsx-2905-            gap:6px;
+.\src\pages\Top3\Top3View.jsx-2906-          }
+.\src\pages\Top3\Top3View.jsx-2907-
+--
+.\src\pages\Top3\Top3View.jsx-2943-                    onClick={() => {
+.\src\pages\Top3\Top3View.jsx-2944-                      if (!canSet) return;
+.\src\pages\Top3\Top3View.jsx-2945-                      setLotteryKey(k);
+.\src\pages\Top3\Top3View.jsx-2946-                    }}
+.\src\pages\Top3\Top3View.jsx-2947-                    title={op?.label || k}
+.\src\pages\Top3\Top3View.jsx-2948-                    style={{
+.\src\pages\Top3\Top3View.jsx-2949-                      opacity: canSet ? 1 : 0.55,
+.\src\pages\Top3\Top3View.jsx-2950-                      cursor: canSet ? "pointer" : "default",
+.\src\pages\Top3\Top3View.jsx-2951-                    }}
+.\src\pages\Top3\Top3View.jsx-2952-                  >
+.\src\pages\Top3\Top3View.jsx-2953-                    {op?.label || k}
+.\src\pages\Top3\Top3View.jsx-2954-                  </button>
+.\src\pages\Top3\Top3View.jsx-2955-                );
+.\src\pages\Top3\Top3View.jsx-2956-              })}
+.\src\pages\Top3\Top3View.jsx-2957-            </div>
+.\src\pages\Top3\Top3View.jsx-2958-
+.\src\pages\Top3\Top3View.jsx:2959:            <div className="top3-metaGrid">
+.\src\pages\Top3\Top3View.jsx-2960-              <div className="top3-metaItem">
+.\src\pages\Top3\Top3View.jsx-2961-                <div className="top3-metaItem__label">├Ültimo</div>
+.\src\pages\Top3\Top3View.jsx-2962-                <div className="top3-metaItem__value">{meta.last}</div>
+.\src\pages\Top3\Top3View.jsx-2963-              </div>
+.\src\pages\Top3\Top3View.jsx-2964-
+.\src\pages\Top3\Top3View.jsx-2965-              <div className="top3-metaItem">
+.\src\pages\Top3\Top3View.jsx-2966-                <div className="top3-metaItem__label">Anterior</div>
+.\src\pages\Top3\Top3View.jsx-2967-                <div className="top3-metaItem__value">{meta.prev}</div>
+.\src\pages\Top3\Top3View.jsx-2968-              </div>
+.\src\pages\Top3\Top3View.jsx-2969-
+.\src\pages\Top3\Top3View.jsx-2970-            </div>
+.\src\pages\Top3\Top3View.jsx-2971-          </div>
+.\src\pages\Top3\Top3View.jsx-2972-        </section>
+.\src\pages\Top3\Top3View.jsx-2973-
+.\src\pages\Top3\Top3View.jsx-2974-        <section className="top3-shell">
+.\src\pages\Top3\Top3View.jsx-2975-          <div className="top3-header__title">Calend├írio do TOP3</div>
+--
+.\src\pages\Top3\Top3View.jsx-3020-                goToHistoryDate(
+.\src\pages\Top3\Top3View.jsx-3021-                  addDaysYMDLocal(selectedHistoryYmd, 1)
+.\src\pages\Top3\Top3View.jsx-3022-                );
+.\src\pages\Top3\Top3View.jsx-3023-              }}
+.\src\pages\Top3\Top3View.jsx-3024-              style={{
+.\src\pages\Top3\Top3View.jsx-3025-                opacity: canGoNext ? 1 : 0.45,
+.\src\pages\Top3\Top3View.jsx-3026-                cursor: canGoNext ? "pointer" : "not-allowed",
+.\src\pages\Top3\Top3View.jsx-3027-              }}
+.\src\pages\Top3\Top3View.jsx-3028-            >
+.\src\pages\Top3\Top3View.jsx-3029-              Pr├│ximo dia ÔûÂ
+.\src\pages\Top3\Top3View.jsx-3030-            </button>
+.\src\pages\Top3\Top3View.jsx-3031-          </div>
+.\src\pages\Top3\Top3View.jsx-3032-        </section>
+.\src\pages\Top3\Top3View.jsx-3033-
+.\src\pages\Top3\Top3View.jsx-3034-        {loading ? (
+.\src\pages\Top3\Top3View.jsx-3035-          <section
+.\src\pages\Top3\Top3View.jsx:3036:            className="top3-stage top3-stage--loading"
+.\src\pages\Top3\Top3View.jsx-3037-            aria-label="Carregando previs├Áes do TOP3"
+.\src\pages\Top3\Top3View.jsx-3038-            aria-busy="true"
+.\src\pages\Top3\Top3View.jsx-3039-          >
+.\src\pages\Top3\Top3View.jsx-3040-            {[0, 1, 2].map((item) => (
+.\src\pages\Top3\Top3View.jsx:3041:              <div className="top3-card top3-loadingCard" key={item}>
+.\src\pages\Top3\Top3View.jsx-3042-                <div className="top3-loadingCard__header">
+.\src\pages\Top3\Top3View.jsx-3043-                  <span className="top3-skeleton top3-skeleton--badge" />
+.\src\pages\Top3\Top3View.jsx-3044-                  <span className="top3-skeleton top3-skeleton--title" />
+.\src\pages\Top3\Top3View.jsx-3045-                </div>
+.\src\pages\Top3\Top3View.jsx-3046-
+.\src\pages\Top3\Top3View.jsx-3047-                <div className="top3-loadingCard__identity">
+.\src\pages\Top3\Top3View.jsx-3048-                  <span className="top3-skeleton top3-skeleton--image" />
+.\src\pages\Top3\Top3View.jsx-3049-
+.\src\pages\Top3\Top3View.jsx-3050-                  <div className="top3-loadingCard__lines">
+.\src\pages\Top3\Top3View.jsx-3051-                    <span className="top3-skeleton top3-skeleton--short" />
+.\src\pages\Top3\Top3View.jsx-3052-                    <span className="top3-skeleton top3-skeleton--animal" />
+.\src\pages\Top3\Top3View.jsx-3053-                  </div>
+.\src\pages\Top3\Top3View.jsx-3054-                </div>
+.\src\pages\Top3\Top3View.jsx-3055-
+.\src\pages\Top3\Top3View.jsx-3056-                <span className="top3-skeleton top3-skeleton--block" />
+.\src\pages\Top3\Top3View.jsx-3057-                <span className="top3-skeleton top3-skeleton--block" />
+.\src\pages\Top3\Top3View.jsx-3058-              </div>
+.\src\pages\Top3\Top3View.jsx-3059-            ))}
+.\src\pages\Top3\Top3View.jsx-3060-          </section>
+.\src\pages\Top3\Top3View.jsx-3061-        ) : error ? (
+.\src\pages\Top3\Top3View.jsx-3062-          <div className="top3-error">{String(error)}</div>
+.\src\pages\Top3\Top3View.jsx-3063-        ) : !list.length ? (
+.\src\pages\Top3\Top3View.jsx-3064-          <div className="top3-empty">Sem dados para calcular TOP3.</div>
+.\src\pages\Top3\Top3View.jsx-3065-        ) : (
+.\src\pages\Top3\Top3View.jsx:3066:          <section className="top3-stage top3-stage--predictions">
+.\src\pages\Top3\Top3View.jsx-3067-            {visibleTop3.map((item, idx) => (
+.\src\pages\Top3\Top3View.jsx-3068-              <Top3Card
+.\src\pages\Top3\Top3View.jsx-3069-                key={`${String(item?.grupo ?? "g")}__${String(
+.\src\pages\Top3\Top3View.jsx-3070-                  item?.animal || ""
+.\src\pages\Top3\Top3View.jsx-3071-                )}__${idx}`}
+.\src\pages\Top3\Top3View.jsx-3072-                item={item}
+.\src\pages\Top3\Top3View.jsx-3073-                idx={idx}
+.\src\pages\Top3\Top3View.jsx-3074-                theme={t}
+.\src\pages\Top3\Top3View.jsx-3075-                copiedAllKey={copiedAllKey}
+.\src\pages\Top3\Top3View.jsx-3076-                copiedCellKey={copiedCellKey}
+.\src\pages\Top3\Top3View.jsx-3077-                setCopiedAllKey={setCopiedAllKey}
+.\src\pages\Top3\Top3View.jsx-3078-                setCopiedCellKey={setCopiedCellKey}
+.\src\pages\Top3\Top3View.jsx-3079-                copyText={copyText}
+.\src\pages\Top3\Top3View.jsx-3080-                build16={build16}
+.\src\pages\Top3\Top3View.jsx-3081-                buildMilhares={buildMilhares}
+.\src\pages\Top3\Top3View.jsx-3082-                build20={build20}
+.\src\pages\Top3\Top3View.jsx-3083-              />
+.\src\pages\Top3\Top3View.jsx-3084-            ))}
+.\src\pages\Top3\Top3View.jsx-3085-          </section>
+.\src\pages\Top3\Top3View.jsx-3086-        )}
+.\src\pages\Top3\Top3View.jsx-3087-
+.\src\pages\Top3\Top3View.jsx-3088-        {showDetailedTimeline && timeline.length > 0 ? (
+.\src\pages\Top3\Top3View.jsx:3089:          <section className="top3-stage">
+.\src\pages\Top3\Top3View.jsx-3090-            <section className="top3-shell">
+.\src\pages\Top3\Top3View.jsx-3091-              <div className="top3-header__title">Leitura do dia ÔÇö Timeline completa</div>
+.\src\pages\Top3\Top3View.jsx-3092-              <div className="top3-helper">
+.\src\pages\Top3\Top3View.jsx-3093-                Cada bloco abaixo mostra o Top3 calculado para o hor├írio alvo, a base usada e o resultado real quando dispon├¡vel.
+.\src\pages\Top3\Top3View.jsx-3094-              </div>
+.\src\pages\Top3\Top3View.jsx-3095-            </section>
+.\src\pages\Top3\Top3View.jsx-3096-
+.\src\pages\Top3\Top3View.jsx-3097-            {timeline.map((slot, idx) => (
+.\src\pages\Top3\Top3View.jsx-3098-              <TimelineSlot
+.\src\pages\Top3\Top3View.jsx-3099-                key={`${String(slot?.targetYmd || "y")}_${String(slot?.targetHour || "h")}_${idx}`}
+.\src\pages\Top3\Top3View.jsx-3100-                slot={slot}
+.\src\pages\Top3\Top3View.jsx-3101-                theme={t}
+.\src\pages\Top3\Top3View.jsx-3102-                copiedAllKey={copiedAllKey}
+.\src\pages\Top3\Top3View.jsx-3103-                copiedCellKey={copiedCellKey}
+.\src\pages\Top3\Top3View.jsx-3104-                setCopiedAllKey={setCopiedAllKey}
+.\src\pages\Top3\Top3View.jsx-3105-                setCopiedCellKey={setCopiedCellKey}
+--
+.\src\pages\Top3\Top3View.premium.backup.jsx-581-    if (!payload) return;
+.\src\pages\Top3\Top3View.premium.backup.jsx-582-
+.\src\pages\Top3\Top3View.premium.backup.jsx-583-    const ok = await copyText(payload);
+.\src\pages\Top3\Top3View.premium.backup.jsx-584-    if (ok) setCopiedAllKey(key);
+.\src\pages\Top3\Top3View.premium.backup.jsx-585-  };
+.\src\pages\Top3\Top3View.premium.backup.jsx-586-
+.\src\pages\Top3\Top3View.premium.backup.jsx-587-  const doCopyOne = async (m, rIdx, cIdx) => {
+.\src\pages\Top3\Top3View.premium.backup.jsx-588-    const mm = normalizeMilharStr(m);
+.\src\pages\Top3\Top3View.premium.backup.jsx-589-    if (!mm) return;
+.\src\pages\Top3\Top3View.premium.backup.jsx-590-
+.\src\pages\Top3\Top3View.premium.backup.jsx-591-    const ok = await copyText(mm);
+.\src\pages\Top3\Top3View.premium.backup.jsx-592-    if (ok) setCopiedCellKey(`${key}__${rIdx}__${cIdx}`);
+.\src\pages\Top3\Top3View.premium.backup.jsx-593-  };
+.\src\pages\Top3\Top3View.premium.backup.jsx-594-
+.\src\pages\Top3\Top3View.premium.backup.jsx-595-  return (
+.\src\pages\Top3\Top3View.premium.backup.jsx-596-    <article
+.\src\pages\Top3\Top3View.premium.backup.jsx:597:      className={`top3-card ${isHero ? "top3-card--hero" : "top3-card--secondary"}`}
+.\src\pages\Top3\Top3View.premium.backup.jsx-598-    >
+.\src\pages\Top3\Top3View.premium.backup.jsx:599:      <div className="top3-card__topline">
+.\src\pages\Top3\Top3View.premium.backup.jsx-600-        <div className="top3-rankBadge">{rank}</div>
+.\src\pages\Top3\Top3View.premium.backup.jsx:601:        <div className="top3-card__label">­ƒÅà {title}</div>
+.\src\pages\Top3\Top3View.premium.backup.jsx-602-      </div>
+.\src\pages\Top3\Top3View.premium.backup.jsx-603-
+.\src\pages\Top3\Top3View.premium.backup.jsx:604:      <div className="top3-card__summary">
+.\src\pages\Top3\Top3View.premium.backup.jsx:605:        <div className="top3-card__identity">
+.\src\pages\Top3\Top3View.premium.backup.jsx-606-          <ImgWithFallback
+.\src\pages\Top3\Top3View.premium.backup.jsx-607-            srcs={iconSrcs}
+.\src\pages\Top3\Top3View.premium.backup.jsx-608-            alt={animal ? animal : `G${grupoTxt}`}
+.\src\pages\Top3\Top3View.premium.backup.jsx-609-            size={isHero ? 92 : 84}
+.\src\pages\Top3\Top3View.premium.backup.jsx-610-          />
+.\src\pages\Top3\Top3View.premium.backup.jsx-611-
+.\src\pages\Top3\Top3View.premium.backup.jsx:612:          <div className="top3-card__identityText">
+.\src\pages\Top3\Top3View.premium.backup.jsx:613:            <div className="top3-card__group">GRUPO {grupoTxt}</div>
+.\src\pages\Top3\Top3View.premium.backup.jsx:614:            <div className="top3-card__animal">
+.\src\pages\Top3\Top3View.premium.backup.jsx-615-              {animal ? animal.toUpperCase() : "ÔÇö"}
+.\src\pages\Top3\Top3View.premium.backup.jsx-616-            </div>
+.\src\pages\Top3\Top3View.premium.backup.jsx-617-          </div>
+.\src\pages\Top3\Top3View.premium.backup.jsx-618-        </div>
+.\src\pages\Top3\Top3View.premium.backup.jsx-619-
+.\src\pages\Top3\Top3View.premium.backup.jsx:620:        <div className="top3-card__confidence">
+.\src\pages\Top3\Top3View.premium.backup.jsx:621:          <div className="top3-card__confidenceLabel">CONFIAN├çA</div>
+.\src\pages\Top3\Top3View.premium.backup.jsx:622:          <div className="top3-card__confidenceValue">{pct.toFixed(2)}%</div>
+.\src\pages\Top3\Top3View.premium.backup.jsx:623:          <div className="top3-card__confidenceBar">
+.\src\pages\Top3\Top3View.premium.backup.jsx-624-            <div
+.\src\pages\Top3\Top3View.premium.backup.jsx:625:              className="top3-card__confidenceBarFill"
+.\src\pages\Top3\Top3View.premium.backup.jsx-626-              style={{ width: `${pct}%`, background: t.accent }}
+.\src\pages\Top3\Top3View.premium.backup.jsx-627-            />
+.\src\pages\Top3\Top3View.premium.backup.jsx-628-          </div>
+.\src\pages\Top3\Top3View.premium.backup.jsx-629-        </div>
+.\src\pages\Top3\Top3View.premium.backup.jsx-630-      </div>
+.\src\pages\Top3\Top3View.premium.backup.jsx-631-
+.\src\pages\Top3\Top3View.premium.backup.jsx-632-      <div
+.\src\pages\Top3\Top3View.premium.backup.jsx:633:        className="top3-card__engine"
+.\src\pages\Top3\Top3View.premium.backup.jsx-634-        style={{
+.\src\pages\Top3\Top3View.premium.backup.jsx-635-          borderTop: "1px solid rgba(255,255,255,0.07)",
+.\src\pages\Top3\Top3View.premium.backup.jsx-636-          paddingTop: 12,
+.\src\pages\Top3\Top3View.premium.backup.jsx-637-          display: "grid",
+.\src\pages\Top3\Top3View.premium.backup.jsx-638-          gap: 10,
+.\src\pages\Top3\Top3View.premium.backup.jsx-639-        }}
+.\src\pages\Top3\Top3View.premium.backup.jsx-640-      >
+.\src\pages\Top3\Top3View.premium.backup.jsx-641-        <div
+.\src\pages\Top3\Top3View.premium.backup.jsx-642-          style={{
+.\src\pages\Top3\Top3View.premium.backup.jsx-643-            display: "grid",
+.\src\pages\Top3\Top3View.premium.backup.jsx-644-            gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
+.\src\pages\Top3\Top3View.premium.backup.jsx-645-            gap: 8,
+.\src\pages\Top3\Top3View.premium.backup.jsx-646-          }}
+.\src\pages\Top3\Top3View.premium.backup.jsx-647-        >
+.\src\pages\Top3\Top3View.premium.backup.jsx-648-          <div className="top3-metaItem">
+.\src\pages\Top3\Top3View.premium.backup.jsx-649-            <div className="top3-metaItem__label">Score IA</div>
+--
+.\src\pages\Top3\Top3View.premium.backup.jsx-671-            alignItems: "center",
+.\src\pages\Top3\Top3View.premium.backup.jsx-672-          }}
+.\src\pages\Top3\Top3View.premium.backup.jsx-673-        >
+.\src\pages\Top3\Top3View.premium.backup.jsx-674-          <span className="pp-chip">{trendLabel}</span>
+.\src\pages\Top3\Top3View.premium.backup.jsx-675-          <span className="pp-chip">
+.\src\pages\Top3\Top3View.premium.backup.jsx-676-            {visibleEvidenceCount} evid├¬ncias
+.\src\pages\Top3\Top3View.premium.backup.jsx-677-          </span>
+.\src\pages\Top3\Top3View.premium.backup.jsx-678-          {evidenceModules.slice(0, 3).map((m) => (
+.\src\pages\Top3\Top3View.premium.backup.jsx-679-            <span key={m} className="pp-chip">
+.\src\pages\Top3\Top3View.premium.backup.jsx-680-              {String(m).toUpperCase()}
+.\src\pages\Top3\Top3View.premium.backup.jsx-681-            </span>
+.\src\pages\Top3\Top3View.premium.backup.jsx-682-          ))}
+.\src\pages\Top3\Top3View.premium.backup.jsx-683-        </div>
+.\src\pages\Top3\Top3View.premium.backup.jsx-684-
+.\src\pages\Top3\Top3View.premium.backup.jsx-685-        {evidenceReasons.length ? (
+.\src\pages\Top3\Top3View.premium.backup.jsx-686-          <div style={{ display: "grid", gap: 5 }}>
+.\src\pages\Top3\Top3View.premium.backup.jsx:687:            <div className="top3-card__sectionTitle">Por que este grupo?</div>
+.\src\pages\Top3\Top3View.premium.backup.jsx-688-            {evidenceReasons.map((reason, rIdx) => (
+.\src\pages\Top3\Top3View.premium.backup.jsx-689-              <div
+.\src\pages\Top3\Top3View.premium.backup.jsx-690-                key={`${key}_reason_${rIdx}`}
+.\src\pages\Top3\Top3View.premium.backup.jsx-691-                style={{
+.\src\pages\Top3\Top3View.premium.backup.jsx-692-                  color: "rgba(255,255,255,0.74)",
+.\src\pages\Top3\Top3View.premium.backup.jsx-693-                  fontSize: 12,
+.\src\pages\Top3\Top3View.premium.backup.jsx-694-                  lineHeight: 1.35,
+.\src\pages\Top3\Top3View.premium.backup.jsx-695-                }}
+.\src\pages\Top3\Top3View.premium.backup.jsx-696-              >
+.\src\pages\Top3\Top3View.premium.backup.jsx-697-                ÔÇó {reason}
+.\src\pages\Top3\Top3View.premium.backup.jsx-698-              </div>
+.\src\pages\Top3\Top3View.premium.backup.jsx-699-            ))}
+.\src\pages\Top3\Top3View.premium.backup.jsx-700-          </div>
+.\src\pages\Top3\Top3View.premium.backup.jsx-701-        ) : null}
+.\src\pages\Top3\Top3View.premium.backup.jsx-702-      </div>
+.\src\pages\Top3\Top3View.premium.backup.jsx-703-
+.\src\pages\Top3\Top3View.premium.backup.jsx:704:      <div className="top3-card__body">
+.\src\pages\Top3\Top3View.premium.backup.jsx:705:        <div className="top3-card__actions">
+.\src\pages\Top3\Top3View.premium.backup.jsx:706:          <div className="top3-card__sectionTitle"></div>
+.\src\pages\Top3\Top3View.premium.backup.jsx-707-
+.\src\pages\Top3\Top3View.premium.backup.jsx-708-          <button
+.\src\pages\Top3\Top3View.premium.backup.jsx-709-            type="button"
+.\src\pages\Top3\Top3View.premium.backup.jsx-710-            onClick={doCopyAll}
+.\src\pages\Top3\Top3View.premium.backup.jsx-711-            className="pp-btn"
+.\src\pages\Top3\Top3View.premium.backup.jsx-712-            title="Copiar as 20 milhares"
+.\src\pages\Top3\Top3View.premium.backup.jsx-713-          >
+.\src\pages\Top3\Top3View.premium.backup.jsx-714-            {copiedAllKey === key ? "Ô£à Copiado" : "Apostar"}
+.\src\pages\Top3\Top3View.premium.backup.jsx-715-          </button>
+.\src\pages\Top3\Top3View.premium.backup.jsx-716-        </div>
+.\src\pages\Top3\Top3View.premium.backup.jsx-717-
+.\src\pages\Top3\Top3View.premium.backup.jsx-718-        {dezenasHeader.length ? (
+.\src\pages\Top3\Top3View.premium.backup.jsx-719-          <div className="pp-chipRow">
+.\src\pages\Top3\Top3View.premium.backup.jsx-720-            {dezenasHeader.map((dz, i) => (
+.\src\pages\Top3\Top3View.premium.backup.jsx-721-              <div key={`${dz}-${i}`} className="pp-chip">
+.\src\pages\Top3\Top3View.premium.backup.jsx-722-                {dz || "ÔÇö"}
+--
+.\src\pages\Top3\Top3View.premium.backup.jsx-886-          : analysis.type === "hit_grupo"
+.\src\pages\Top3\Top3View.premium.backup.jsx-887-            ? `Grupo acertado no palpite #${analysis.position}.`
+.\src\pages\Top3\Top3View.premium.backup.jsx-888-            : "Nenhum dos 3 palpites foi sorteado.";
+.\src\pages\Top3\Top3View.premium.backup.jsx-889-
+.\src\pages\Top3\Top3View.premium.backup.jsx-890-  return (
+.\src\pages\Top3\Top3View.premium.backup.jsx-891-    <section className="top3-shell">
+.\src\pages\Top3\Top3View.premium.backup.jsx-892-      <div className="timeline-slot__header">
+.\src\pages\Top3\Top3View.premium.backup.jsx-893-        <div className="timeline-slot__title">
+.\src\pages\Top3\Top3View.premium.backup.jsx-894-          {formatYmdHour(slot?.targetYmd, slot?.targetHour)}
+.\src\pages\Top3\Top3View.premium.backup.jsx-895-        </div>
+.\src\pages\Top3\Top3View.premium.backup.jsx-896-
+.\src\pages\Top3\Top3View.premium.backup.jsx-897-        <div className={`timeline-slot__badge timeline-slot__badge--${status}`}>
+.\src\pages\Top3\Top3View.premium.backup.jsx-898-          {statusLabel}
+.\src\pages\Top3\Top3View.premium.backup.jsx-899-        </div>
+.\src\pages\Top3\Top3View.premium.backup.jsx-900-      </div>
+.\src\pages\Top3\Top3View.premium.backup.jsx-901-
+.\src\pages\Top3\Top3View.premium.backup.jsx:902:      <div className="timeline-slot__metaGrid">
+.\src\pages\Top3\Top3View.premium.backup.jsx-903-        <div className="top3-metaItem">
+.\src\pages\Top3\Top3View.premium.backup.jsx-904-          <div className="top3-metaItem__label">Base usada</div>
+.\src\pages\Top3\Top3View.premium.backup.jsx-905-          <div className="top3-metaItem__value">
+.\src\pages\Top3\Top3View.premium.backup.jsx-906-            {formatYmdHour(slot?.baseYmd, slot?.baseHour)}
+.\src\pages\Top3\Top3View.premium.backup.jsx-907-          </div>
+.\src\pages\Top3\Top3View.premium.backup.jsx-908-        </div>
+.\src\pages\Top3\Top3View.premium.backup.jsx-909-
+.\src\pages\Top3\Top3View.premium.backup.jsx-910-        <div className="top3-metaItem">
+.\src\pages\Top3\Top3View.premium.backup.jsx-911-          <div className="top3-metaItem__label">Resultado real</div>
+.\src\pages\Top3\Top3View.premium.backup.jsx-912-          <div className="top3-metaItem__value">
+.\src\pages\Top3\Top3View.premium.backup.jsx-913-            {hasResult
+.\src\pages\Top3\Top3View.premium.backup.jsx-914-              ? `G${formatGrupo(resultGrupo)} ÔÇó ${resultAnimal.toUpperCase()}`
+.\src\pages\Top3\Top3View.premium.backup.jsx-915-              : "Pendente"}
+.\src\pages\Top3\Top3View.premium.backup.jsx-916-          </div>
+.\src\pages\Top3\Top3View.premium.backup.jsx-917-        </div>
+.\src\pages\Top3\Top3View.premium.backup.jsx-918-
+--
+.\src\pages\Top3\Top3View.premium.backup.jsx-1237-          transition: transform .12s ease, box-shadow .18s ease, background .18s ease, border-color .18s ease;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1238-          white-space: nowrap;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1239-        }
+.\src\pages\Top3\Top3View.premium.backup.jsx-1240-
+.\src\pages\Top3\Top3View.premium.backup.jsx-1241-        .pp-tab:hover{
+.\src\pages\Top3\Top3View.premium.backup.jsx-1242-          transform: translateY(-1px);
+.\src\pages\Top3\Top3View.premium.backup.jsx-1243-          border-color: rgba(201,168,62,0.40);
+.\src\pages\Top3\Top3View.premium.backup.jsx-1244-          box-shadow: 0 10px 24px rgba(0,0,0,0.35);
+.\src\pages\Top3\Top3View.premium.backup.jsx-1245-        }
+.\src\pages\Top3\Top3View.premium.backup.jsx-1246-
+.\src\pages\Top3\Top3View.premium.backup.jsx-1247-        .pp-tab[data-active="1"]{
+.\src\pages\Top3\Top3View.premium.backup.jsx-1248-          background: rgba(201,168,62,0.16);
+.\src\pages\Top3\Top3View.premium.backup.jsx-1249-          border: 1px solid rgba(201,168,62,0.45);
+.\src\pages\Top3\Top3View.premium.backup.jsx-1250-          color: rgba(255,255,255,0.94);
+.\src\pages\Top3\Top3View.premium.backup.jsx-1251-        }
+.\src\pages\Top3\Top3View.premium.backup.jsx-1252-
+.\src\pages\Top3\Top3View.premium.backup.jsx:1253:        .top3-metaGrid,
+.\src\pages\Top3\Top3View.premium.backup.jsx:1254:        .timeline-slot__metaGrid{
+.\src\pages\Top3\Top3View.premium.backup.jsx-1255-          display: grid;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1256-          grid-template-columns: repeat(3, minmax(0, 1fr));
+.\src\pages\Top3\Top3View.premium.backup.jsx-1257-          gap: 10px;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1258-        }
+.\src\pages\Top3\Top3View.premium.backup.jsx-1259-
+.\src\pages\Top3\Top3View.premium.backup.jsx-1260-        .top3-metaItem{
+.\src\pages\Top3\Top3View.premium.backup.jsx-1261-          background: rgba(255,255,255,0.025);
+.\src\pages\Top3\Top3View.premium.backup.jsx-1262-          border: 1px solid rgba(255,255,255,0.08);
+.\src\pages\Top3\Top3View.premium.backup.jsx-1263-          border-radius: 14px;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1264-          padding: 10px 12px;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1265-          display: grid;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1266-          gap: 4px;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1267-          min-width: 0;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1268-        }
+.\src\pages\Top3\Top3View.premium.backup.jsx-1269-
+.\src\pages\Top3\Top3View.premium.backup.jsx-1270-        .top3-metaItem__label{
+.\src\pages\Top3\Top3View.premium.backup.jsx-1271-          color: var(--top3-muted);
+.\src\pages\Top3\Top3View.premium.backup.jsx-1272-          font-size: 11px;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1273-          font-weight: 900;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1274-          letter-spacing: 0.9px;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1275-          text-transform: uppercase;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1276-        }
+.\src\pages\Top3\Top3View.premium.backup.jsx-1277-
+.\src\pages\Top3\Top3View.premium.backup.jsx-1278-        .top3-metaItem__value{
+.\src\pages\Top3\Top3View.premium.backup.jsx-1279-          color: var(--top3-text);
+.\src\pages\Top3\Top3View.premium.backup.jsx-1280-          font-size: 13px;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1281-          font-weight: 800;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1282-          line-height: 1.35;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1283-          word-break: break-word;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1284-        }
+.\src\pages\Top3\Top3View.premium.backup.jsx-1285-
+.\src\pages\Top3\Top3View.premium.backup.jsx:1286:        .top3-stage{
+.\src\pages\Top3\Top3View.premium.backup.jsx-1287-          display: grid;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1288-          gap: 16px;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1289-        }
+.\src\pages\Top3\Top3View.premium.backup.jsx-1290-
+.\src\pages\Top3\Top3View.premium.backup.jsx-1291-        .top3-heroWrap{
+.\src\pages\Top3\Top3View.premium.backup.jsx-1292-          width: 100%;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1293-          max-width: 1120px;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1294-          margin: 0 auto;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1295-        }
+.\src\pages\Top3\Top3View.premium.backup.jsx-1296-
+.\src\pages\Top3\Top3View.premium.backup.jsx-1297-        .top3-secondaryRow{
+.\src\pages\Top3\Top3View.premium.backup.jsx-1298-          width: 100%;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1299-          max-width: 1120px;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1300-          margin: 0 auto;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1301-          display: grid;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1302-          grid-template-columns: repeat(2, minmax(0, 1fr));
+--
+.\src\pages\Top3\Top3View.premium.backup.jsx-1585-
+.\src\pages\Top3\Top3View.premium.backup.jsx-1586-        .timeline-slot__insightTitle{
+.\src\pages\Top3\Top3View.premium.backup.jsx-1587-          font-size: 11px;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1588-          font-weight: 1000;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1589-          letter-spacing: 1px;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1590-          text-transform: uppercase;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1591-          color: var(--top3-accent);
+.\src\pages\Top3\Top3View.premium.backup.jsx-1592-        }
+.\src\pages\Top3\Top3View.premium.backup.jsx-1593-
+.\src\pages\Top3\Top3View.premium.backup.jsx-1594-        .timeline-slot__insightText{
+.\src\pages\Top3\Top3View.premium.backup.jsx-1595-          font-size: 14px;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1596-          font-weight: 900;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1597-          line-height: 1.4;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1598-          color: var(--top3-text);
+.\src\pages\Top3\Top3View.premium.backup.jsx-1599-        }
+.\src\pages\Top3\Top3View.premium.backup.jsx-1600-
+.\src\pages\Top3\Top3View.premium.backup.jsx:1601:        .top3-card{
+.\src\pages\Top3\Top3View.premium.backup.jsx-1602-          position: relative;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1603-          background:
+.\src\pages\Top3\Top3View.premium.backup.jsx-1604-            radial-gradient(1100px 280px at 50% 0%, rgba(201,168,62,0.08), transparent 55%),
+.\src\pages\Top3\Top3View.premium.backup.jsx-1605-            linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.00)),
+.\src\pages\Top3\Top3View.premium.backup.jsx-1606-            var(--top3-panel);
+.\src\pages\Top3\Top3View.premium.backup.jsx-1607-          border: 1px solid var(--top3-border);
+.\src\pages\Top3\Top3View.premium.backup.jsx-1608-          border-radius: 20px;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1609-          padding: 16px;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1610-          display: grid;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1611-          gap: 14px;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1612-          box-shadow:
+.\src\pages\Top3\Top3View.premium.backup.jsx-1613-            0 18px 44px rgba(0,0,0,0.30),
+.\src\pages\Top3\Top3View.premium.backup.jsx-1614-            inset 0 0 0 1px rgba(255,255,255,0.03);
+.\src\pages\Top3\Top3View.premium.backup.jsx-1615-          overflow: hidden;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1616-        }
+.\src\pages\Top3\Top3View.premium.backup.jsx-1617-
+.\src\pages\Top3\Top3View.premium.backup.jsx:1618:        .top3-card::after{
+.\src\pages\Top3\Top3View.premium.backup.jsx-1619-          content: "";
+.\src\pages\Top3\Top3View.premium.backup.jsx-1620-          position: absolute;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1621-          inset: 0;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1622-          border-radius: inherit;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1623-          pointer-events: none;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1624-          box-shadow: inset 0 0 0 1px rgba(201,168,62,0.05);
+.\src\pages\Top3\Top3View.premium.backup.jsx-1625-        }
+.\src\pages\Top3\Top3View.premium.backup.jsx-1626-
+.\src\pages\Top3\Top3View.premium.backup.jsx:1627:        .top3-card--hero{
+.\src\pages\Top3\Top3View.premium.backup.jsx-1628-          padding: 18px;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1629-        }
+.\src\pages\Top3\Top3View.premium.backup.jsx-1630-
+.\src\pages\Top3\Top3View.premium.backup.jsx:1631:        .top3-card__topline{
+.\src\pages\Top3\Top3View.premium.backup.jsx-1632-          display:flex;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1633-          align-items:center;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1634-          gap:10px;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1635-        }
+.\src\pages\Top3\Top3View.premium.backup.jsx-1636-
+.\src\pages\Top3\Top3View.premium.backup.jsx-1637-        .top3-rankBadge{
+.\src\pages\Top3\Top3View.premium.backup.jsx-1638-          width: 30px;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1639-          height: 30px;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1640-          border-radius: 10px;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1641-          display: grid;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1642-          place-items: center;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1643-          background: rgba(201,168,62,0.15);
+.\src\pages\Top3\Top3View.premium.backup.jsx-1644-          border: 1px solid rgba(201,168,62,0.35);
+.\src\pages\Top3\Top3View.premium.backup.jsx-1645-          font-weight: 950;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1646-          color: var(--top3-accent);
+.\src\pages\Top3\Top3View.premium.backup.jsx-1647-          flex: 0 0 auto;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1648-        }
+.\src\pages\Top3\Top3View.premium.backup.jsx-1649-
+.\src\pages\Top3\Top3View.premium.backup.jsx:1650:        .top3-card__label{
+.\src\pages\Top3\Top3View.premium.backup.jsx-1651-          font-weight: 950;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1652-          letter-spacing: 0.4px;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1653-          font-size: 14px;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1654-        }
+.\src\pages\Top3\Top3View.premium.backup.jsx-1655-
+.\src\pages\Top3\Top3View.premium.backup.jsx:1656:        .top3-card__summary{
+.\src\pages\Top3\Top3View.premium.backup.jsx-1657-          display:grid;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1658-          grid-template-columns: minmax(0, 1fr) 170px;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1659-          gap: 14px;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1660-          align-items: center;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1661-        }
+.\src\pages\Top3\Top3View.premium.backup.jsx-1662-
+.\src\pages\Top3\Top3View.premium.backup.jsx:1663:        .top3-card--hero .top3-card__summary{
+.\src\pages\Top3\Top3View.premium.backup.jsx-1664-          grid-template-columns: minmax(0, 1fr) 190px;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1665-        }
+.\src\pages\Top3\Top3View.premium.backup.jsx-1666-
+.\src\pages\Top3\Top3View.premium.backup.jsx:1667:        .top3-card__identity{
+.\src\pages\Top3\Top3View.premium.backup.jsx-1668-          display:flex;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1669-          align-items:center;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1670-          gap:14px;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1671-          min-width: 0;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1672-        }
+.\src\pages\Top3\Top3View.premium.backup.jsx-1673-
+.\src\pages\Top3\Top3View.premium.backup.jsx:1674:        .top3-card__identityText{
+.\src\pages\Top3\Top3View.premium.backup.jsx-1675-          display:grid;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1676-          gap: 6px;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1677-          min-width: 0;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1678-        }
+.\src\pages\Top3\Top3View.premium.backup.jsx-1679-
+.\src\pages\Top3\Top3View.premium.backup.jsx:1680:        .top3-card__group{
+.\src\pages\Top3\Top3View.premium.backup.jsx-1681-          font-size: 11px;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1682-          color: var(--top3-muted);
+.\src\pages\Top3\Top3View.premium.backup.jsx-1683-          font-weight: 900;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1684-          letter-spacing: 1px;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1685-        }
+.\src\pages\Top3\Top3View.premium.backup.jsx-1686-
+.\src\pages\Top3\Top3View.premium.backup.jsx:1687:        .top3-card__animal{
+.\src\pages\Top3\Top3View.premium.backup.jsx-1688-          font-size: 24px;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1689-          font-weight: 950;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1690-          letter-spacing: 0.6px;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1691-          line-height: 1.05;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1692-          word-break: break-word;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1693-        }
+.\src\pages\Top3\Top3View.premium.backup.jsx-1694-
+.\src\pages\Top3\Top3View.premium.backup.jsx:1695:        .top3-card--secondary .top3-card__animal{
+.\src\pages\Top3\Top3View.premium.backup.jsx-1696-          font-size: 20px;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1697-        }
+.\src\pages\Top3\Top3View.premium.backup.jsx-1698-
+.\src\pages\Top3\Top3View.premium.backup.jsx:1699:        .top3-card__confidence{
+.\src\pages\Top3\Top3View.premium.backup.jsx-1700-          justify-self: end;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1701-          width: 100%;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1702-          max-width: 190px;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1703-          text-align: right;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1704-          display:grid;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1705-          gap: 6px;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1706-        }
+.\src\pages\Top3\Top3View.premium.backup.jsx-1707-
+.\src\pages\Top3\Top3View.premium.backup.jsx:1708:        .top3-card__confidenceLabel{
+.\src\pages\Top3\Top3View.premium.backup.jsx-1709-          color: var(--top3-muted);
+.\src\pages\Top3\Top3View.premium.backup.jsx-1710-          font-size: 11px;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1711-          font-weight: 900;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1712-          letter-spacing: 0.9px;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1713-        }
+.\src\pages\Top3\Top3View.premium.backup.jsx-1714-
+.\src\pages\Top3\Top3View.premium.backup.jsx:1715:        .top3-card__confidenceValue{
+.\src\pages\Top3\Top3View.premium.backup.jsx-1716-          font-size: 30px;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1717-          font-weight: 950;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1718-          color: var(--top3-accent);
+.\src\pages\Top3\Top3View.premium.backup.jsx-1719-          line-height: 1;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1720-        }
+.\src\pages\Top3\Top3View.premium.backup.jsx-1721-
+.\src\pages\Top3\Top3View.premium.backup.jsx:1722:        .top3-card--secondary .top3-card__confidenceValue{
+.\src\pages\Top3\Top3View.premium.backup.jsx-1723-          font-size: 26px;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1724-        }
+.\src\pages\Top3\Top3View.premium.backup.jsx-1725-
+.\src\pages\Top3\Top3View.premium.backup.jsx:1726:        .top3-card__confidenceBar{
+.\src\pages\Top3\Top3View.premium.backup.jsx-1727-          height: 7px;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1728-          border-radius: 999px;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1729-          background: rgba(255,255,255,0.10);
+.\src\pages\Top3\Top3View.premium.backup.jsx-1730-          overflow: hidden;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1731-        }
+.\src\pages\Top3\Top3View.premium.backup.jsx-1732-
+.\src\pages\Top3\Top3View.premium.backup.jsx:1733:        .top3-card__confidenceBarFill{
+.\src\pages\Top3\Top3View.premium.backup.jsx-1734-          height: 100%;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1735-          border-radius: inherit;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1736-          opacity: 0.78;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1737-        }
+.\src\pages\Top3\Top3View.premium.backup.jsx-1738-
+.\src\pages\Top3\Top3View.premium.backup.jsx:1739:        .top3-card__body{
+.\src\pages\Top3\Top3View.premium.backup.jsx-1740-          border-top: 1px solid rgba(255,255,255,0.07);
+.\src\pages\Top3\Top3View.premium.backup.jsx-1741-          padding-top: 12px;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1742-          display:grid;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1743-          gap: 10px;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1744-        }
+.\src\pages\Top3\Top3View.premium.backup.jsx-1745-
+.\src\pages\Top3\Top3View.premium.backup.jsx:1746:        .top3-card__actions{
+.\src\pages\Top3\Top3View.premium.backup.jsx-1747-          display:flex;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1748-          align-items:center;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1749-          justify-content:space-between;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1750-          gap:12px;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1751-        }
+.\src\pages\Top3\Top3View.premium.backup.jsx-1752-
+.\src\pages\Top3\Top3View.premium.backup.jsx:1753:        .top3-card__sectionTitle{
+.\src\pages\Top3\Top3View.premium.backup.jsx-1754-          font-weight: 900;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1755-          font-size: 13px;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1756-          color: rgba(255,255,255,0.92);
+.\src\pages\Top3\Top3View.premium.backup.jsx-1757-          letter-spacing: 0.2px;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1758-        }
+.\src\pages\Top3\Top3View.premium.backup.jsx-1759-
+.\src\pages\Top3\Top3View.premium.backup.jsx-1760-        .pp-btn{
+.\src\pages\Top3\Top3View.premium.backup.jsx-1761-          border-radius: 999px;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1762-          padding: 9px 12px;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1763-          background: rgba(201,168,62,0.16);
+.\src\pages\Top3\Top3View.premium.backup.jsx-1764-          border: 1px solid rgba(201,168,62,0.35);
+.\src\pages\Top3\Top3View.premium.backup.jsx-1765-          color: rgba(255,255,255,0.92);
+.\src\pages\Top3\Top3View.premium.backup.jsx-1766-          font-weight: 950;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1767-          cursor: pointer;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1768-          white-space: nowrap;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1769-          transition: transform .12s ease, box-shadow .18s ease, background .18s ease, border-color .18s ease;
+--
+.\src\pages\Top3\Top3View.premium.backup.jsx-1945-
+.\src\pages\Top3\Top3View.premium.backup.jsx-1946-          .timeline-compact__predictions{
+.\src\pages\Top3\Top3View.premium.backup.jsx-1947-            grid-template-columns: 1fr;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1948-          }
+.\src\pages\Top3\Top3View.premium.backup.jsx-1949-        }
+.\src\pages\Top3\Top3View.premium.backup.jsx-1950-
+.\src\pages\Top3\Top3View.premium.backup.jsx-1951-        @media (max-width: 980px){
+.\src\pages\Top3\Top3View.premium.backup.jsx-1952-          .top3-page{
+.\src\pages\Top3\Top3View.premium.backup.jsx-1953-            gap: 14px;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1954-          }
+.\src\pages\Top3\Top3View.premium.backup.jsx-1955-
+.\src\pages\Top3\Top3View.premium.backup.jsx-1956-          .top3-shell{
+.\src\pages\Top3\Top3View.premium.backup.jsx-1957-            padding: 14px;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1958-            border-radius: 18px;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1959-          }
+.\src\pages\Top3\Top3View.premium.backup.jsx-1960-
+.\src\pages\Top3\Top3View.premium.backup.jsx:1961:          .top3-metaGrid,
+.\src\pages\Top3\Top3View.premium.backup.jsx:1962:          .timeline-slot__metaGrid{
+.\src\pages\Top3\Top3View.premium.backup.jsx-1963-            grid-template-columns: 1fr 1fr;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1964-          }
+.\src\pages\Top3\Top3View.premium.backup.jsx-1965-
+.\src\pages\Top3\Top3View.premium.backup.jsx-1966-          .top3-heroWrap,
+.\src\pages\Top3\Top3View.premium.backup.jsx-1967-          .top3-secondaryRow{
+.\src\pages\Top3\Top3View.premium.backup.jsx-1968-            max-width: none;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1969-          }
+.\src\pages\Top3\Top3View.premium.backup.jsx-1970-
+.\src\pages\Top3\Top3View.premium.backup.jsx-1971-          .top3-secondaryRow{
+.\src\pages\Top3\Top3View.premium.backup.jsx-1972-            grid-template-columns: 1fr;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1973-            gap: 14px;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1974-          }
+.\src\pages\Top3\Top3View.premium.backup.jsx-1975-
+.\src\pages\Top3\Top3View.premium.backup.jsx:1976:          .top3-card,
+.\src\pages\Top3\Top3View.premium.backup.jsx:1977:          .top3-card--hero{
+.\src\pages\Top3\Top3View.premium.backup.jsx-1978-            padding: 14px;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1979-            border-radius: 18px;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1980-          }
+.\src\pages\Top3\Top3View.premium.backup.jsx-1981-
+.\src\pages\Top3\Top3View.premium.backup.jsx:1982:          .top3-card__summary,
+.\src\pages\Top3\Top3View.premium.backup.jsx:1983:          .top3-card--hero .top3-card__summary{
+.\src\pages\Top3\Top3View.premium.backup.jsx-1984-            grid-template-columns: 1fr;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1985-            gap: 12px;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1986-          }
+.\src\pages\Top3\Top3View.premium.backup.jsx-1987-
+.\src\pages\Top3\Top3View.premium.backup.jsx:1988:          .top3-card__confidence{
+.\src\pages\Top3\Top3View.premium.backup.jsx-1989-            justify-self: stretch;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1990-            text-align: left;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1991-            max-width: none;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1992-          }
+.\src\pages\Top3\Top3View.premium.backup.jsx-1993-
+.\src\pages\Top3\Top3View.premium.backup.jsx:1994:          .top3-card__confidenceValue{
+.\src\pages\Top3\Top3View.premium.backup.jsx-1995-            font-size: 28px;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1996-          }
+.\src\pages\Top3\Top3View.premium.backup.jsx-1997-
+.\src\pages\Top3\Top3View.premium.backup.jsx:1998:          .top3-card__actions{
+.\src\pages\Top3\Top3View.premium.backup.jsx-1999-            align-items: stretch;
+.\src\pages\Top3\Top3View.premium.backup.jsx-2000-            flex-direction: column;
+.\src\pages\Top3\Top3View.premium.backup.jsx-2001-          }
+.\src\pages\Top3\Top3View.premium.backup.jsx-2002-
+.\src\pages\Top3\Top3View.premium.backup.jsx-2003-          .pp-btn{
+.\src\pages\Top3\Top3View.premium.backup.jsx-2004-            width: 100%;
+.\src\pages\Top3\Top3View.premium.backup.jsx-2005-          }
+.\src\pages\Top3\Top3View.premium.backup.jsx-2006-
+.\src\pages\Top3\Top3View.premium.backup.jsx-2007-          .top3-historyRow{
+.\src\pages\Top3\Top3View.premium.backup.jsx-2008-            grid-template-columns: 1fr;
+.\src\pages\Top3\Top3View.premium.backup.jsx-2009-            align-items:start;
+.\src\pages\Top3\Top3View.premium.backup.jsx-2010-          }
+.\src\pages\Top3\Top3View.premium.backup.jsx-2011-
+.\src\pages\Top3\Top3View.premium.backup.jsx-2012-          .timeline-slot__header{
+.\src\pages\Top3\Top3View.premium.backup.jsx-2013-            flex-direction: column;
+.\src\pages\Top3\Top3View.premium.backup.jsx-2014-            align-items: flex-start;
+--
+.\src\pages\Top3\Top3View.premium.backup.jsx-2041-          }
+.\src\pages\Top3\Top3View.premium.backup.jsx-2042-
+.\src\pages\Top3\Top3View.premium.backup.jsx-2043-          .top3-page{
+.\src\pages\Top3\Top3View.premium.backup.jsx-2044-            gap: 12px;
+.\src\pages\Top3\Top3View.premium.backup.jsx-2045-          }
+.\src\pages\Top3\Top3View.premium.backup.jsx-2046-
+.\src\pages\Top3\Top3View.premium.backup.jsx-2047-          .top3-shell{
+.\src\pages\Top3\Top3View.premium.backup.jsx-2048-            padding: 12px;
+.\src\pages\Top3\Top3View.premium.backup.jsx-2049-            border-radius: 16px;
+.\src\pages\Top3\Top3View.premium.backup.jsx-2050-          }
+.\src\pages\Top3\Top3View.premium.backup.jsx-2051-
+.\src\pages\Top3\Top3View.premium.backup.jsx-2052-          .top3-header__title,
+.\src\pages\Top3\Top3View.premium.backup.jsx-2053-          .timeline-slot__title{
+.\src\pages\Top3\Top3View.premium.backup.jsx-2054-            font-size: 17px;
+.\src\pages\Top3\Top3View.premium.backup.jsx-2055-          }
+.\src\pages\Top3\Top3View.premium.backup.jsx-2056-
+.\src\pages\Top3\Top3View.premium.backup.jsx:2057:          .top3-card__topline{
+.\src\pages\Top3\Top3View.premium.backup.jsx-2058-            gap: 8px;
+.\src\pages\Top3\Top3View.premium.backup.jsx-2059-          }
+.\src\pages\Top3\Top3View.premium.backup.jsx-2060-
+.\src\pages\Top3\Top3View.premium.backup.jsx-2061-          .top3-rankBadge{
+.\src\pages\Top3\Top3View.premium.backup.jsx-2062-            width: 28px;
+.\src\pages\Top3\Top3View.premium.backup.jsx-2063-            height: 28px;
+.\src\pages\Top3\Top3View.premium.backup.jsx-2064-            border-radius: 9px;
+.\src\pages\Top3\Top3View.premium.backup.jsx-2065-          }
+.\src\pages\Top3\Top3View.premium.backup.jsx-2066-
+.\src\pages\Top3\Top3View.premium.backup.jsx:2067:          .top3-card__identity{
+.\src\pages\Top3\Top3View.premium.backup.jsx-2068-            gap: 10px;
+.\src\pages\Top3\Top3View.premium.backup.jsx-2069-            align-items: center;
+.\src\pages\Top3\Top3View.premium.backup.jsx-2070-          }
+.\src\pages\Top3\Top3View.premium.backup.jsx-2071-
+.\src\pages\Top3\Top3View.premium.backup.jsx:2072:          .top3-card__animal{
+.\src\pages\Top3\Top3View.premium.backup.jsx-2073-            font-size: 18px;
+.\src\pages\Top3\Top3View.premium.backup.jsx-2074-            letter-spacing: 0.35px;
+.\src\pages\Top3\Top3View.premium.backup.jsx-2075-          }
+.\src\pages\Top3\Top3View.premium.backup.jsx-2076-
+.\src\pages\Top3\Top3View.premium.backup.jsx:2077:          .top3-card--secondary .top3-card__animal{
+.\src\pages\Top3\Top3View.premium.backup.jsx-2078-            font-size: 18px;
+.\src\pages\Top3\Top3View.premium.backup.jsx-2079-          }
+.\src\pages\Top3\Top3View.premium.backup.jsx-2080-
+.\src\pages\Top3\Top3View.premium.backup.jsx:2081:          .top3-card__confidenceValue,
+.\src\pages\Top3\Top3View.premium.backup.jsx:2082:          .top3-card--secondary .top3-card__confidenceValue{
+.\src\pages\Top3\Top3View.premium.backup.jsx-2083-            font-size: 24px;
+.\src\pages\Top3\Top3View.premium.backup.jsx-2084-          }
+.\src\pages\Top3\Top3View.premium.backup.jsx-2085-
+.\src\pages\Top3\Top3View.premium.backup.jsx-2086-          .pp-chipRow{
+.\src\pages\Top3\Top3View.premium.backup.jsx-2087-            grid-template-columns: repeat(2, minmax(0, 1fr));
+.\src\pages\Top3\Top3View.premium.backup.jsx-2088-          }
+.\src\pages\Top3\Top3View.premium.backup.jsx-2089-
+.\src\pages\Top3\Top3View.premium.backup.jsx-2090-          .pp-row{
+.\src\pages\Top3\Top3View.premium.backup.jsx-2091-            grid-template-columns: repeat(2, minmax(0, 1fr));
+.\src\pages\Top3\Top3View.premium.backup.jsx-2092-          }
+.\src\pages\Top3\Top3View.premium.backup.jsx-2093-
+.\src\pages\Top3\Top3View.premium.backup.jsx-2094-          .pp-pill{
+.\src\pages\Top3\Top3View.premium.backup.jsx-2095-            padding: 10px 8px;
+.\src\pages\Top3\Top3View.premium.backup.jsx-2096-            font-size: 13px;
+.\src\pages\Top3\Top3View.premium.backup.jsx-2097-            letter-spacing: 1px;
+.\src\pages\Top3\Top3View.premium.backup.jsx-2098-          }
+.\src\pages\Top3\Top3View.premium.backup.jsx-2099-
+.\src\pages\Top3\Top3View.premium.backup.jsx-2100-          .pp-copiedBadge{
+.\src\pages\Top3\Top3View.premium.backup.jsx-2101-            right: 6px;
+.\src\pages\Top3\Top3View.premium.backup.jsx-2102-            top: 6px;
+.\src\pages\Top3\Top3View.premium.backup.jsx-2103-            font-size: 9px;
+.\src\pages\Top3\Top3View.premium.backup.jsx-2104-            padding: 3px 6px;
+.\src\pages\Top3\Top3View.premium.backup.jsx-2105-          }
+.\src\pages\Top3\Top3View.premium.backup.jsx-2106-
+.\src\pages\Top3\Top3View.premium.backup.jsx:2107:          .top3-metaGrid,
+.\src\pages\Top3\Top3View.premium.backup.jsx:2108:          .timeline-slot__metaGrid{
+.\src\pages\Top3\Top3View.premium.backup.jsx-2109-            grid-template-columns: 1fr;
+.\src\pages\Top3\Top3View.premium.backup.jsx-2110-          }
+.\src\pages\Top3\Top3View.premium.backup.jsx-2111-        }
+.\src\pages\Top3\Top3View.premium.backup.jsx-2112-
+.\src\pages\Top3\Top3View.premium.backup.jsx-2113-        @media (max-width: 420px){
+.\src\pages\Top3\Top3View.premium.backup.jsx-2114-          .top3-shell{
+.\src\pages\Top3\Top3View.premium.backup.jsx-2115-            padding: 10px;
+.\src\pages\Top3\Top3View.premium.backup.jsx-2116-          }
+.\src\pages\Top3\Top3View.premium.backup.jsx-2117-
+.\src\pages\Top3\Top3View.premium.backup.jsx:2118:          .top3-card,
+.\src\pages\Top3\Top3View.premium.backup.jsx:2119:          .top3-card--hero{
+.\src\pages\Top3\Top3View.premium.backup.jsx-2120-            padding: 12px;
+.\src\pages\Top3\Top3View.premium.backup.jsx-2121-          }
+.\src\pages\Top3\Top3View.premium.backup.jsx-2122-
+.\src\pages\Top3\Top3View.premium.backup.jsx:2123:          .top3-card__group{
+.\src\pages\Top3\Top3View.premium.backup.jsx-2124-            font-size: 10px;
+.\src\pages\Top3\Top3View.premium.backup.jsx-2125-          }
+.\src\pages\Top3\Top3View.premium.backup.jsx-2126-
+.\src\pages\Top3\Top3View.premium.backup.jsx:2127:          .top3-card__animal{
+.\src\pages\Top3\Top3View.premium.backup.jsx-2128-            font-size: 16px;
+.\src\pages\Top3\Top3View.premium.backup.jsx-2129-          }
+.\src\pages\Top3\Top3View.premium.backup.jsx-2130-
+.\src\pages\Top3\Top3View.premium.backup.jsx:2131:          .top3-card__confidenceValue{
+.\src\pages\Top3\Top3View.premium.backup.jsx-2132-            font-size: 22px;
+.\src\pages\Top3\Top3View.premium.backup.jsx-2133-          }
+.\src\pages\Top3\Top3View.premium.backup.jsx-2134-
+.\src\pages\Top3\Top3View.premium.backup.jsx-2135-          .pp-gridBox{
+.\src\pages\Top3\Top3View.premium.backup.jsx-2136-            padding: 10px;
+.\src\pages\Top3\Top3View.premium.backup.jsx-2137-            gap: 7px;
+.\src\pages\Top3\Top3View.premium.backup.jsx-2138-          }
+.\src\pages\Top3\Top3View.premium.backup.jsx-2139-
+.\src\pages\Top3\Top3View.premium.backup.jsx-2140-          .pp-row,
+.\src\pages\Top3\Top3View.premium.backup.jsx-2141-          .pp-chipRow{
+.\src\pages\Top3\Top3View.premium.backup.jsx-2142-            gap: 8px;
+.\src\pages\Top3\Top3View.premium.backup.jsx-2143-          }
+.\src\pages\Top3\Top3View.premium.backup.jsx-2144-        }
+.\src\pages\Top3\Top3View.premium.backup.jsx-2145-      `}</style>
+.\src\pages\Top3\Top3View.premium.backup.jsx-2146-
+.\src\pages\Top3\Top3View.premium.backup.jsx-2147-      <div className="top3-page">
+--
+.\src\pages\Top3\Top3View.premium.backup.jsx-2174-                    onClick={() => {
+.\src\pages\Top3\Top3View.premium.backup.jsx-2175-                      if (!canSet) return;
+.\src\pages\Top3\Top3View.premium.backup.jsx-2176-                      setLotteryKey(k);
+.\src\pages\Top3\Top3View.premium.backup.jsx-2177-                    }}
+.\src\pages\Top3\Top3View.premium.backup.jsx-2178-                    title={op?.label || k}
+.\src\pages\Top3\Top3View.premium.backup.jsx-2179-                    style={{
+.\src\pages\Top3\Top3View.premium.backup.jsx-2180-                      opacity: canSet ? 1 : 0.55,
+.\src\pages\Top3\Top3View.premium.backup.jsx-2181-                      cursor: canSet ? "pointer" : "default",
+.\src\pages\Top3\Top3View.premium.backup.jsx-2182-                    }}
+.\src\pages\Top3\Top3View.premium.backup.jsx-2183-                  >
+.\src\pages\Top3\Top3View.premium.backup.jsx-2184-                    {op?.label || k}
+.\src\pages\Top3\Top3View.premium.backup.jsx-2185-                  </button>
+.\src\pages\Top3\Top3View.premium.backup.jsx-2186-                );
+.\src\pages\Top3\Top3View.premium.backup.jsx-2187-              })}
+.\src\pages\Top3\Top3View.premium.backup.jsx-2188-            </div>
+.\src\pages\Top3\Top3View.premium.backup.jsx-2189-
+.\src\pages\Top3\Top3View.premium.backup.jsx:2190:            <div className="top3-metaGrid">
+.\src\pages\Top3\Top3View.premium.backup.jsx-2191-              <div className="top3-metaItem">
+.\src\pages\Top3\Top3View.premium.backup.jsx-2192-                <div className="top3-metaItem__label">├Ültimo</div>
+.\src\pages\Top3\Top3View.premium.backup.jsx-2193-                <div className="top3-metaItem__value">{meta.last}</div>
+.\src\pages\Top3\Top3View.premium.backup.jsx-2194-              </div>
+.\src\pages\Top3\Top3View.premium.backup.jsx-2195-
+.\src\pages\Top3\Top3View.premium.backup.jsx-2196-              <div className="top3-metaItem">
+.\src\pages\Top3\Top3View.premium.backup.jsx-2197-                <div className="top3-metaItem__label">Anterior</div>
+.\src\pages\Top3\Top3View.premium.backup.jsx-2198-                <div className="top3-metaItem__value">{meta.prev}</div>
+.\src\pages\Top3\Top3View.premium.backup.jsx-2199-              </div>
+.\src\pages\Top3\Top3View.premium.backup.jsx-2200-
+.\src\pages\Top3\Top3View.premium.backup.jsx-2201-              <div className="top3-metaItem">
+.\src\pages\Top3\Top3View.premium.backup.jsx-2202-                <div className="top3-metaItem__label">Condi├º├úo</div>
+.\src\pages\Top3\Top3View.premium.backup.jsx-2203-                <div className="top3-metaItem__value">{meta.layer}</div>
+.\src\pages\Top3\Top3View.premium.backup.jsx-2204-              </div>
+.\src\pages\Top3\Top3View.premium.backup.jsx-2205-            </div>
+.\src\pages\Top3\Top3View.premium.backup.jsx-2206-          </div>
+.\src\pages\Top3\Top3View.premium.backup.jsx-2207-        </section>
+.\src\pages\Top3\Top3View.premium.backup.jsx-2208-
+.\src\pages\Top3\Top3View.premium.backup.jsx-2209-        {loading ? (
+.\src\pages\Top3\Top3View.premium.backup.jsx-2210-          <div className="top3-empty">CarregandoÔÇª</div>
+.\src\pages\Top3\Top3View.premium.backup.jsx-2211-        ) : error ? (
+.\src\pages\Top3\Top3View.premium.backup.jsx-2212-          <div className="top3-error">{String(error)}</div>
+.\src\pages\Top3\Top3View.premium.backup.jsx-2213-        ) : !list.length ? (
+.\src\pages\Top3\Top3View.premium.backup.jsx-2214-          <div className="top3-empty">Sem dados para calcular TOP3.</div>
+.\src\pages\Top3\Top3View.premium.backup.jsx-2215-        ) : (
+.\src\pages\Top3\Top3View.premium.backup.jsx:2216:          <section className="top3-stage">
+.\src\pages\Top3\Top3View.premium.backup.jsx-2217-            {heroItem ? (
+.\src\pages\Top3\Top3View.premium.backup.jsx-2218-              <div className="top3-heroWrap">
+.\src\pages\Top3\Top3View.premium.backup.jsx-2219-                <Top3Card
+.\src\pages\Top3\Top3View.premium.backup.jsx-2220-                  item={heroItem}
+.\src\pages\Top3\Top3View.premium.backup.jsx-2221-                  idx={0}
+.\src\pages\Top3\Top3View.premium.backup.jsx-2222-                  theme={t}
+.\src\pages\Top3\Top3View.premium.backup.jsx-2223-                  copiedAllKey={copiedAllKey}
+.\src\pages\Top3\Top3View.premium.backup.jsx-2224-                  copiedCellKey={copiedCellKey}
+.\src\pages\Top3\Top3View.premium.backup.jsx-2225-                  setCopiedAllKey={setCopiedAllKey}
+.\src\pages\Top3\Top3View.premium.backup.jsx-2226-                  setCopiedCellKey={setCopiedCellKey}
+.\src\pages\Top3\Top3View.premium.backup.jsx-2227-                  copyText={copyText}
+.\src\pages\Top3\Top3View.premium.backup.jsx-2228-                  build16={build16}
+.\src\pages\Top3\Top3View.premium.backup.jsx-2229-                  buildMilhares={buildMilhares}
+.\src\pages\Top3\Top3View.premium.backup.jsx-2230-                  build20={build20}
+.\src\pages\Top3\Top3View.premium.backup.jsx-2231-                />
+.\src\pages\Top3\Top3View.premium.backup.jsx-2232-              </div>
+--
+.\src\pages\Top3\Top3View.premium.backup.jsx-2243-                    copiedAllKey={copiedAllKey}
+.\src\pages\Top3\Top3View.premium.backup.jsx-2244-                    copiedCellKey={copiedCellKey}
+.\src\pages\Top3\Top3View.premium.backup.jsx-2245-                    setCopiedAllKey={setCopiedAllKey}
+.\src\pages\Top3\Top3View.premium.backup.jsx-2246-                    setCopiedCellKey={setCopiedCellKey}
+.\src\pages\Top3\Top3View.premium.backup.jsx-2247-                    copyText={copyText}
+.\src\pages\Top3\Top3View.premium.backup.jsx-2248-                    build16={build16}
+.\src\pages\Top3\Top3View.premium.backup.jsx-2249-                    buildMilhares={buildMilhares}
+.\src\pages\Top3\Top3View.premium.backup.jsx-2250-                    build20={build20}
+.\src\pages\Top3\Top3View.premium.backup.jsx-2251-                  />
+.\src\pages\Top3\Top3View.premium.backup.jsx-2252-                ))}
+.\src\pages\Top3\Top3View.premium.backup.jsx-2253-              </div>
+.\src\pages\Top3\Top3View.premium.backup.jsx-2254-            ) : null}
+.\src\pages\Top3\Top3View.premium.backup.jsx-2255-          </section>
+.\src\pages\Top3\Top3View.premium.backup.jsx-2256-        )}
+.\src\pages\Top3\Top3View.premium.backup.jsx-2257-
+.\src\pages\Top3\Top3View.premium.backup.jsx-2258-        {showDetailedTimeline && timeline.length > 0 ? (
+.\src\pages\Top3\Top3View.premium.backup.jsx:2259:          <section className="top3-stage">
+.\src\pages\Top3\Top3View.premium.backup.jsx-2260-            <section className="top3-shell">
+.\src\pages\Top3\Top3View.premium.backup.jsx-2261-              <div className="top3-header__title">Leitura do dia ÔÇö Timeline completa</div>
+.\src\pages\Top3\Top3View.premium.backup.jsx-2262-              <div className="top3-helper">
+.\src\pages\Top3\Top3View.premium.backup.jsx-2263-                Cada bloco abaixo mostra o Top3 calculado para o hor├írio alvo, a base usada e o resultado real quando dispon├¡vel.
+.\src\pages\Top3\Top3View.premium.backup.jsx-2264-              </div>
+.\src\pages\Top3\Top3View.premium.backup.jsx-2265-            </section>
+.\src\pages\Top3\Top3View.premium.backup.jsx-2266-
+.\src\pages\Top3\Top3View.premium.backup.jsx-2267-            {timeline.map((slot, idx) => (
+.\src\pages\Top3\Top3View.premium.backup.jsx-2268-              <TimelineSlot
+.\src\pages\Top3\Top3View.premium.backup.jsx-2269-                key={`${String(slot?.targetYmd || "y")}_${String(slot?.targetHour || "h")}_${idx}`}
+.\src\pages\Top3\Top3View.premium.backup.jsx-2270-                slot={slot}
+.\src\pages\Top3\Top3View.premium.backup.jsx-2271-                theme={t}
+.\src\pages\Top3\Top3View.premium.backup.jsx-2272-                copiedAllKey={copiedAllKey}
+.\src\pages\Top3\Top3View.premium.backup.jsx-2273-                copiedCellKey={copiedCellKey}
+.\src\pages\Top3\Top3View.premium.backup.jsx-2274-                setCopiedAllKey={setCopiedAllKey}
+.\src\pages\Top3\Top3View.premium.backup.jsx-2275-                setCopiedCellKey={setCopiedCellKey}

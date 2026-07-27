@@ -1,0 +1,18 @@
+==============================================================================================================
+TERNO-GRUPO-21 — RESULTADO
+==============================================================================================================
+Gerado em: 26/07/2026 22:22:11
+
+CAUSA=CONTROLLER_NAO_EXPUNHA_DADOS
+ANALYTICS_EXPOSTO=SIM
+RANGE_DRAWS_EXPOSTO=SIM
+TODAY_DRAWS_EXPOSTO=SIM
+HISTORICO_REAL_CONECTADO=SIM
+BUILD=APROVADO
+PUSH=CONCLUIDO
+
+ARQUIVO_PUBLICADO:
+src/pages/TernoGrupo/top3.hooks.js
+
+ULTIMO_COMMIT:
+54603ed fix: conecta historico real ao motor de terno de grupo

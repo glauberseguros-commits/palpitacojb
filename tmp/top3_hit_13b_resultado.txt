@@ -1,0 +1,124 @@
+====================================================================================================
+TOP3-HIT-13B — RESULTADO
+====================================================================================================
+INÍCIO: 26/07/2026 01:32:13
+PÁGINA: TOP3
+ARQUIVO: src/pages/Top3/Top3View.jsx
+HASH ANTERIOR: AF10DB462AF85A0F16F533AA16DAA5F416F8A8BC62B1F13FA269D2A748F60064
+HASH NOVO: 9BF831EDA249D4DC0EC47CC24B14FD6B89CD7BB597432985A05EE68A03A63582
+BACKUP: .\tmp\top3_hit_13b_backup_20260726_013213
+
+PATCH:
+- extractResultMilhar substituída com sucesso;
+- resultMilhar persistido será priorizado;
+- resultTop3Milhares[0] será usado como fallback;
+- prizes permanece como fallback final.
+====================================================================================================
+
+
+> palpitaco@0.1.0 build
+> react-scripts build
+
+Creating an optimized production build...
+Compiled successfully.
+
+File sizes after gzip:
+
+  264.34 kB (+4 B)  build\static\js\main.d5432619.js
+  138.8 kB          build\static\js\238.133659d3.chunk.js
+  128.07 kB         build\static\js\389.21aa2d35.chunk.js
+  46.35 kB          build\static\js\239.6b4eaf90.chunk.js
+  42.9 kB           build\static\js\455.7220bbdf.chunk.js
+  37.03 kB (+82 B)  build\static\js\741.1632e820.chunk.js
+  10.7 kB           build\static\js\916.71c8a438.chunk.js
+  9.79 kB           build\static\js\857.e51a2e06.chunk.js
+  9.28 kB           build\static\js\411.c57e08e0.chunk.js
+  9.01 kB           build\static\js\848.8045fd05.chunk.js
+  8.96 kB           build\static\js\812.eb0d3036.chunk.js
+  8.89 kB           build\static\js\188.2b4c0ac7.chunk.js
+  8.69 kB           build\static\js\977.efeedf50.chunk.js
+  6.73 kB           build\static\js\960.417ace1e.chunk.js
+  6.07 kB           build\static\js\886.320165d3.chunk.js
+  4.2 kB            build\static\js\854.7290a099.chunk.js
+  3.89 kB           build\static\js\532.86885c87.chunk.js
+  3.11 kB           build\static\css\960.a7d00216.chunk.css
+  2.87 kB           build\static\css\main.f1823042.css
+  1.82 kB           build\static\js\611.337809cd.chunk.js
+  1.53 kB           build\static\css\611.3878f01e.chunk.css
+  775 B             build\static\js\784.e009081b.chunk.js
+
+The project was built assuming it is hosted at /.
+You can control this with the homepage field in your package.json.
+
+The build folder is ready to be deployed.
+You may serve it with a static server:
+
+  serve -s build
+
+Find out more about deployment here:
+
+  https://cra.link/deployment
+
+
+BUILD: APROVADO
+diff --git a/src/pages/Top3/Top3View.jsx b/src/pages/Top3/Top3View.jsx
+index 2974bfa..3fea507 100644
+--- a/src/pages/Top3/Top3View.jsx
++++ b/src/pages/Top3/Top3View.jsx
+@@ -31,6 +31,32 @@ function extractPrizeMilharByPosition(slot, position) {
+ }
+ 
+ function extractResultMilhar(slot) {
++  const persistedMilhar = normalizeMilharStr(
++    slot?.resultMilhar ??
++      slot?.milhar ??
++      slot?.result?.milhar ??
++      slot?.resultado?.milhar ??
++      ""
++  );
++
++  if (persistedMilhar) {
++    return persistedMilhar;
++  }
++
++  const persistedTop3 = Array.isArray(
++    slot?.resultTop3Milhares
++  )
++    ? slot.resultTop3Milhares
++    : [];
++
++  const persistedPrimeira = normalizeMilharStr(
++    persistedTop3[0] ?? ""
++  );
++
++  if (persistedPrimeira) {
++    return persistedPrimeira;
++  }
++
+   return extractPrizeMilharByPosition(slot, 1);
+ }
+ 
+[main 19f83dd] fix(top3): usa milhar persistida no historico
+ 1 file changed, 26 insertions(+)
+To https://github.com/glauberseguros-commits/palpitacojb.git
+   eb3e6b1..19f83dd  main -> main
+
+====================================================================================================
+STATUS FINAL
+====================================================================================================
+STATUS: OK
+PÁGINA: TOP3
+ARQUIVO ALTERADO: src/pages/Top3/Top3View.jsx
+BUILD: APROVADO
+COMMIT: 19f83ddb09e8296068e1e1c664ff08fa57b6e79f
+PUSH: CONCLUÍDO
+DEPLOY: ACIONADO PELO PUSH
+BACKUP: .\tmp\top3_hit_13b_backup_20260726_013213
+
+CORREÇÃO:
+- usa resultMilhar persistido no Firestore;
+- usa resultTop3Milhares[0] como segundo fallback;
+- mantém leitura de prizes como fallback final;
+- preserva milhares iniciadas por zero;
+- nenhuma página de Frequências foi alterada.
+====================================================================================================

@@ -1,0 +1,435 @@
+====================================================================================================
+RJ-1930-09 — BLOCOS EXATOS PARA O PATCH DEFINITIVO
+====================================================================================================
+Gerado em: 26/07/2026 11:59:27
+
+
+####################################################################################################
+ARQUIVO: src\pages\Statistics\Statistics.jsx
+TRECHO: linhas 1 até 90
+####################################################################################################
+00001: import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+00002: import {
+00003:   getKingBoundsByUf,
+00004:   getKingResultsByRange,
+00005: } from "../../services/kingResultsService";
+00006: import {
+00007:   getAnimalLabel,
+00008: } from "../../constants/bichoMap";
+00009: 
+00010: const LOTTERIES = Object.freeze([
+00011:   Object.freeze({
+00012:     value: "PT_RIO",
+00013:     label: "Rio de Janeiro",
+00014:     hours: Object.freeze([
+00015:       "09:00",
+00016:       "11:00",
+00017:       "14:00",
+00018:       "16:00",
+00019:       "18:00",
+00020:       "19:20",
+00021:       "21:00",
+00022:     ]),
+00023:   }),
+00024:   Object.freeze({
+00025:     value: "FEDERAL",
+00026:     label: "Federal",
+00027:     hours: Object.freeze([
+00028:       "11:00",
+00029:       "19:00",
+00030:       "20:00",
+00031:     ]),
+00032:   }),
+00033:   Object.freeze({
+00034:     value: "LOOK",
+00035:     label: "LOOK",
+00036:     hours: Object.freeze([
+00037:       "07:00",
+00038:       "09:00",
+00039:       "11:00",
+00040:       "14:00",
+00041:       "16:00",
+00042:       "18:00",
+00043:       "21:00",
+00044:       "23:00",
+00045:     ]),
+00046:   }),
+00047:   Object.freeze({
+00048:     value: "NACIONAL",
+00049:     label: "Nacional",
+00050:     hours: Object.freeze([
+00051:       "02:00",
+00052:       "08:00",
+00053:       "10:00",
+00054:       "12:00",
+00055:       "15:00",
+00056:       "17:00",
+00057:       "21:00",
+00058:       "23:00",
+00059:     ]),
+00060:   }),
+00061: ]);
+00062: 
+00063: const MODES = Object.freeze([
+00064:   Object.freeze({ value: "dezena", label: "Dezenas" }),
+00065:   Object.freeze({ value: "centena", label: "Centenas" }),
+00066:   Object.freeze({ value: "milhar", label: "Milhares" }),
+00067:   Object.freeze({ value: "animal", label: "Animais" }),
+00068: ]);
+00069: 
+00070: const MONTHS = Object.freeze([
+00071:   "Todos",
+00072:   "Jan",
+00073:   "Fev",
+00074:   "Mar",
+00075:   "Abr",
+00076:   "Mai",
+00077:   "Jun",
+00078:   "Jul",
+00079:   "Ago",
+00080:   "Set",
+00081:   "Out",
+00082:   "Nov",
+00083:   "Dez",
+00084: ]);
+00085: 
+00086: const WEEKDAYS = Object.freeze([
+00087:   "Todos",
+00088:   "Dom",
+00089:   "Seg",
+00090:   "Ter",
+
+####################################################################################################
+ARQUIVO: src\pages\Downloads\Downloads.jsx
+TRECHO: linhas 640 até 720
+####################################################################################################
+00640: 
+00641:   // ✅ sempre use bounds atuais para normalizar range nas ações/export
+00642:   const normalizeRange = useCallback(() => {
+00643:     return normalizeRangeWithBounds(dateFrom, dateTo, bounds?.minDate, bounds?.maxDate);
+00644:   }, [dateFrom, dateTo, bounds?.minDate, bounds?.maxDate]);
+00645: 
+00646:   // ✅ handlers que impedem “De > Até” e mantêm dentro do bounds
+00647:   const onChangeFrom = useCallback(
+00648:     (v) => {
+00649:       const { from, to } = normalizeRangeWithBounds(v, dateTo, bounds?.minDate, bounds?.maxDate);
+00650:       setDateFrom(from);
+00651:       setDateTo(to);
+00652:     },
+00653:     [dateTo, bounds?.minDate, bounds?.maxDate]
+00654:   );
+00655: 
+00656:   const onChangeTo = useCallback(
+00657:     (v) => {
+00658:       const { from, to } = normalizeRangeWithBounds(dateFrom, v, bounds?.minDate, bounds?.maxDate);
+00659:       setDateFrom(from);
+00660:       setDateTo(to);
+00661:     },
+00662:     [dateFrom, bounds?.minDate, bounds?.maxDate]
+00663:   );
+00664: 
+00665:   const animalOptions = useMemo(() => {
+00666:     const opts = [{ v: "ALL", label: "Todos" }];
+00667:     for (let g = 1; g <= 25; g += 1) {
+00668:       const name = safeStr(getAnimalLabel?.(g) || "");
+00669:       opts.push({ v: String(g), label: `G${pad2(g)} • ${name || "—"}` });
+00670:     }
+00671:     return opts;
+00672:   }, []);
+00673: 
+00674:   const hourOptions = useMemo(() => {
+00675:     const lotteryKey = safeStr(ufQueryKey).toUpperCase();
+00676: 
+00677:     const hoursByLottery = {
+00678:       PT_RIO: ["09:00", "11:00", "14:00", "16:00", "18:00", "19:00", "21:00"],
+00679:       FEDERAL: ["19:00", "20:00"],
+00680:       LOOK: ["07:00", "09:00", "11:00", "14:00", "16:00", "18:00", "21:00", "23:00"],
+00681:       NACIONAL: ["02:00", "08:00", "10:00", "12:00", "15:00", "17:00", "21:00", "23:00"],
+00682:     };
+00683: 
+00684:     const base = ["ALL", ...(hoursByLottery[lotteryKey] || [])];
+00685:     const uniq = Array.from(new Set(base));
+00686: 
+00687:     return uniq.map((h) =>
+00688:       h === "ALL"
+00689:         ? { v: "ALL", label: "Todos" }
+00690:         : { v: h, label: h }
+00691:     );
+00692:   }, [ufQueryKey]);
+00693: 
+00694:   const applyFiltersToRows = useCallback(
+00695:     (rows) => {
+00696:       const monthN = fMonth === "ALL" ? null : Number(fMonth);
+00697:       const dayN = fDay === "ALL" ? null : Number(fDay);
+00698:       const dowN = fDow === "ALL" ? null : Number(fDow);
+00699:       const hour = fHour === "ALL" ? null : toHourBucket(fHour);
+00700:       const grupoN = fAnimalGrupo === "ALL" ? null : Number(fAnimalGrupo);
+00701:       const posN = fPos === "ALL" ? null : Number(fPos);
+00702: 
+00703:       return rows.filter((r) => {
+00704:         if (monthN != null && Number(r.month) !== monthN) return false;
+00705:         if (dayN != null && Number(r.day) !== dayN) return false;
+00706:         if (dowN != null && Number(r.dow) !== dowN) return false;
+00707:         if (hour && toHourBucket(r.hour) !== hour) return false;
+00708:         if (grupoN != null && Number(r.grupo) !== grupoN) return false;
+00709:         if (posN != null && Number(r.pos) !== posN) return false;
+00710:         return true;
+00711:       });
+00712:     },
+00713:     [fMonth, fDay, fDow, fHour, fAnimalGrupo, fPos]
+00714:   );
+00715: 
+00716:   const buildRowsFromDraws = useCallback((draws) => {
+00717:     const list = Array.isArray(draws) ? draws : [];
+00718:     const out = [];
+00719: 
+00720:     for (const d of list) {
+
+####################################################################################################
+ARQUIVO: src\pages\Results\Results.jsx
+TRECHO: linhas 225 até 250
+####################################################################################################
+00225:   "FED",
+00226:   "LOTERIA FEDERAL",
+00227:   "LOTERIA_FEDERAL",
+00228:   "LOT FEDERAL",
+00229:   "LT_FEDERAL",
+00230:   "FED_BR",
+00231: ]);
+00232: 
+00233: const RJ_09H_START_YMD = "2024-01-05";
+00234: const RJ_SATURDAY_1920_START_YMD = "2026-07-18";
+00235: 
+00236: const RJ_EXPECTED_HOURS_REGULAR_DESC = [
+00237:   "21:00",
+00238:   "18:00",
+00239:   "16:00",
+00240:   "14:00",
+00241:   "11:00",
+00242: ];
+00243: 
+00244: const RJ_EXPECTED_HOURS_WEDNESDAY_DESC = [
+00245:   "21:00",
+00246:   "16:00",
+00247:   "14:00",
+00248:   "11:00",
+00249: ];
+00250: 
+
+####################################################################################################
+ARQUIVO: src\pages\Results\Results.jsx
+TRECHO: linhas 590 até 690
+####################################################################################################
+00590: }
+00591: 
+00592: function stopOnly(e) {
+00593:   e.stopPropagation();
+00594: }
+00595: 
+00596: function getExpectedRjHoursDesc(ymd) {
+00597:   const d = ymdToDateLocal(ymd);
+00598:   const dow =
+00599:     d instanceof Date && !Number.isNaN(d.getTime())
+00600:       ? d.getDay()
+00601:       : -1;
+00602: 
+00603:   let out;
+00604: 
+00605:   /*
+00606:    * Domingo:
+00607:    * a PT_RIO possui somente 14h e 16h.
+00608:    */
+00609:   if (dow === 0) {
+00610:     return [...RJ_EXPECTED_HOURS_SUNDAY_DESC];
+00611:   }
+00612: 
+00613:   /*
+00614:    * Quarta-feira:
+00615:    * não existe sorteio das 18h.
+00616:    */
+00617:   if (dow === 3) {
+00618:     out = [...RJ_EXPECTED_HOURS_WEDNESDAY_DESC];
+00619:   }
+00620:   /*
+00621:    * Sábado a partir de 18/07/2026:
+00622:    * 19:20 substitui o antigo horário das 18h.
+00623:    */
+00624:   else if (
+00625:     dow === 6 &&
+00626:     isYMD(ymd) &&
+00627:     ymd >= RJ_SATURDAY_1920_START_YMD
+00628:   ) {
+00629:     out = [
+00630:       "21:00",
+00631:       "19:20",
+00632:       "16:00",
+00633:       "14:00",
+00634:       "11:00",
+00635:     ];
+00636:   } else {
+00637:     out = [...RJ_EXPECTED_HOURS_REGULAR_DESC];
+00638:   }
+00639: 
+00640:   if (
+00641:     isYMD(ymd) &&
+00642:     ymd >= RJ_09H_START_YMD
+00643:   ) {
+00644:     out.push("09:00");
+00645:   }
+00646: 
+00647:   return out;
+00648: }
+00649: 
+00650: function shouldShowExpectedHour(ymd, hour) {
+00651:   const hNum = hourToNum(hour);
+00652:   if (hNum < 0) return true;
+00653: 
+00654:   if (safeStr(ymd) !== todayYMDLocal()) return true;
+00655: 
+00656:   return hNum <= currentHourNumLocal();
+00657: }
+00658: 
+00659: /*
+00660:  * A fonte grava o novo sorteio de sábado da PT_RIO no bucket 19:00,
+00661:  * embora o horário oficial exibido seja 19:20.
+00662:  *
+00663:  * A conversão fica restrita à camada visual da página Resultados para não
+00664:  * alterar filtros, estatísticas, Top3 ou o histórico armazenado no Firestore.
+00665:  */
+00666: function normalizeRjDisplayHour(draw, ymd) {
+00667:   const hour = normalizeHourLike(
+00668:     draw?.close_hour || draw?.closeHour || draw?.hour || draw?.hora || ""
+00669:   );
+00670: 
+00671:   const d = ymdToDateLocal(ymd);
+00672:   const dow =
+00673:     d instanceof Date && !Number.isNaN(d.getTime())
+00674:       ? d.getDay()
+00675:       : -1;
+00676: 
+00677:   if (
+00678:     hour === "19:00" &&
+00679:     dow === 6 &&
+00680:     isYMD(ymd) &&
+00681:     ymd >= RJ_SATURDAY_1920_START_YMD
+00682:   ) {
+00683:     return "19:20";
+00684:   }
+00685: 
+00686:   return hour;
+00687: }
+00688: 
+00689: function normalizeDisplayHourForScope(scopeKey, draw, ymd) {
+00690:   if (scopeKey === SCOPE_NACIONAL) {
+
+####################################################################################################
+ARQUIVO: src\pages\Dashboard\components\FiltersBar.jsx
+TRECHO: linhas 1 até 25
+####################################################################################################
+00001: // src/pages/Dashboard/components/FiltersBar.jsx
+00002: import React, { useMemo, useCallback } from "react";
+00003: 
+00004: /**
+00005:  * FiltersBar (Premium)
+00006:  *
+00007:  * ✅ Loteria:
+00008:  * - filters.loteria: "PT_RIO" | "FEDERAL" | "LOOK" | "NACIONAL"
+00009:  *   (default: "PT_RIO")
+00010:  *
+00011:  * ✅ Horário (domínio próprio por loteria):
+00012:  * - PT_RIO: Todos + 09h/11h/14h/16h/18h/21h
+00013:  * - FEDERAL: Todos + 19h/20h
+00014:  * - LOOK: Todos + 07h/09h/11h/14h/16h/18h/21h/23h
+00015:  * - NACIONAL: Todos + 02h/08h/10h/12h/15h/17h/21h/23h
+00016:  *
+00017:  * ✅ Segurança:
+00018:  * - Ao trocar loteria, reseta filtros sensíveis:
+00019:  *   horario -> "Todos"
+00020:  *   animal  -> "Todos"
+00021:  *   posicao -> "Todos"
+00022:  *
+00023:  * posicaoMode:
+00024:  * - "full" (default): Todos + 1º..7º
+00025:  * - "v1": trava em 1º (desabilita select e lista só 1º)
+
+####################################################################################################
+ARQUIVO: src\pages\Dashboard\components\FiltersBar.jsx
+TRECHO: linhas 215 até 260
+####################################################################################################
+00215:   const defaultOptions = useMemo(() => {
+00216:     const loteriasDefault = [
+00217:       { label: "RJ", value: "PT_RIO" },
+00218:       { label: "FEDERAL", value: "FEDERAL" },
+00219:       { label: "LOOK", value: "LOOK" },
+00220:       { label: "NACIONAL", value: "NACIONAL" },
+00221:     ];
+00222: 
+00223:     const mesesDefault = [
+00224:       "Todos",
+00225:       "Janeiro",
+00226:       "Fevereiro",
+00227:       "Março",
+00228:       "Abril",
+00229:       "Maio",
+00230:       "Junho",
+00231:       "Julho",
+00232:       "Agosto",
+00233:       "Setembro",
+00234:       "Outubro",
+00235:       "Novembro",
+00236:       "Dezembro",
+00237:     ];
+00238: 
+00239:     const diasSemanaDefault = [
+00240:       { label: "Todos", value: "Todos" },
+00241:       { label: "Domingo", value: "Dom" },
+00242:       { label: "Segunda-Feira", value: "Seg" },
+00243:       { label: "Terça-Feira", value: "Ter" },
+00244:       { label: "Quarta-Feira", value: "Qua" },
+00245:       { label: "Quinta-Feira", value: "Qui" },
+00246:       { label: "Sexta-Feira", value: "Sex" },
+00247:       { label: "Sábado", value: "Sáb" },
+00248:     ];
+00249: 
+00250:     // ✅ PT_RIO (domínio fixo)
+00251:     const horariosRJ = [
+00252:       { label: "Todos", value: "Todos" },
+00253:       { label: "09h", value: "09h" },
+00254:       { label: "11h", value: "11h" },
+00255:       { label: "14h", value: "14h" },
+00256:       { label: "16h", value: "16h" },
+00257:       { label: "18h", value: "18h" },
+00258:       { label: "21h", value: "21h" },
+00259:     ];
+00260: 
+
+====================================================================================================
+REFERÊNCIAS EXATAS — 19:00 / 19:20 / 19:30
+====================================================================================================
+
+BUSCA: 19:00
+C:\Users\glaub\palpitaco\src\pages\Results\Results.jsx:660: * A fonte grava o novo sorteio de sábado da PT_RIO no bucket 19:00,
+C:\Users\glaub\palpitaco\src\pages\Results\Results.jsx:678: hour === "19:00" &&
+C:\Users\glaub\palpitaco\src\pages\Statistics\Statistics.jsx:29: "19:00",
+C:\Users\glaub\palpitaco\src\pages\Downloads\Downloads.jsx:678: PT_RIO: ["09:00", "11:00", "14:00", "16:00", "18:00", "19:00", "21:00"],
+C:\Users\glaub\palpitaco\src\pages\Downloads\Downloads.jsx:679: FEDERAL: ["19:00", "20:00"],
+
+BUSCA: 19:20
+C:\Users\glaub\palpitaco\src\pages\Results\Results.jsx:622: * 19:20 substitui o antigo horário das 18h.
+C:\Users\glaub\palpitaco\src\pages\Results\Results.jsx:631: "19:20",
+C:\Users\glaub\palpitaco\src\pages\Results\Results.jsx:661: * embora o horário oficial exibido seja 19:20.
+C:\Users\glaub\palpitaco\src\pages\Results\Results.jsx:683: return "19:20";
+C:\Users\glaub\palpitaco\src\pages\Statistics\Statistics.jsx:20: "19:20",
+
+BUSCA: 19:30
+Nenhuma ocorrência.
+
+BUSCA: 19h
+C:\Users\glaub\palpitaco\src\pages\Dashboard\components\FiltersBar.jsx:13: * - FEDERAL: Todos + 19h/20h
+C:\Users\glaub\palpitaco\src\pages\Dashboard\components\FiltersBar.jsx:264: { label: "19h", value: "19h" },
+C:\Users\glaub\palpitaco\src\pages\Dashboard\components\FiltersBar.jsx:698: // FEDERAL NÃO trava horário — só troca a lista (Todos/19h/20h)
+
+====================================================================================================
+DIAGNÓSTICO CONCLUÍDO.
+Nenhum arquivo foi alterado.
+====================================================================================================

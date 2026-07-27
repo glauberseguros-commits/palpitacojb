@@ -1,0 +1,5292 @@
+====================================================================================================
+TOP3-AUD-02 — NÚCLEO DA AUDITORIA ATUAL
+====================================================================================================
+Arquivo:
+.\src\pages\Top3\top3.engine.js
+
+Data:
+2026-07-23 20:20:41
+
+====================================================================================================
+
+
+====================================================================================================
+PADRÃO: auditTop3Timeline
+====================================================================================================
+
+LINHA: 3898
+    while (pushed < perDezena) {
+      slots.push({ dezena: dz, milhar: "" });
+      pushed += 1;
+    }
+  }
+
+  while (slots.length < N) slots.push({ dezena: "", milhar: "" });
+
+  return { dezenas: dezenasFixas, slots: slots.slice(0, N) };
+}
+
+export function build16MilharesForGrupo(args) {
+  return buildMilharesForGrupo({ ...(args || {}), count: 16 });
+}
+
+export function build20MilharesForGrupo(args) {
+  return buildMilharesForGrupo({ ...(args || {}), count: 20 });
+}
+
+/* =========================
+   TIMELINE DO DIA (CADEIA PREDITIVA)
+========================= */
+
+
+
+export function auditTop3Timeline({
+  timeline,
+  lotteryKey = "",
+}) {
+  const rows = Array.isArray(timeline) ? timeline : [];
+
+  const validated = rows.filter((slot) => {
+    const status = String(slot?.status || "").toLowerCase();
+    return status === "validated" && Number.isFinite(Number(slot?.resultGrupo));
+  });
+
+  const total = validated.length;
+
+  const top1Hits = validated.filter((slot) => {
+    const result = Number(slot.resultGrupo);
+    const first = Number(slot?.top3?.[0]?.grupo);
+    return Number.isFinite(first) && first === result;
+  }).length;
+
+  const top3Hits = validated.filter((slot) => {
+    const result = Number(slot.resultGrupo);
+    return (Array.isArray(slot?.top3) ? slot.top3 : [])
+      .slice(0, 3)
+      .some((item) => Number(item?.grupo) === result);
+  }).length;
+
+  function pct(n, d) {
+    if (!d) return 0;
+    return Number(((Number(n || 0) / Number(d || 1)) * 100).toFixed(2));
+  }
+
+  function groupBy(keyFn) {
+    const map = new Map();
+
+    for (const slot of validated) {
+      const key = keyFn(slot);
+      const current = map.get(key) || {
+        key,
+        total: 0,
+        top1Hits: 0,
+        top3Hits: 0,
+      };
+
+      const result = Number(slot.resultGrupo);
+      const first = Number(slot?.top3?.[0]?.grupo);
+      const picks = Array.isArray(slot?.top3) ? slot.top3.slice(0, 3) : [];
+
+      current.total += 1;
+      if (Number.isFinite(first) && first === result) current.top1Hits += 1;
+      if (picks.some((item) => Number(item?.grupo) === result)) current.top3Hits += 1;
+
+      map.set(key, current);
+    }
+
+    return Array.from(map.values())
+      .map((x) => ({
+        ...x,
+        top1Rate: pct(x.top1Hits, x.total),
+        top3Rate: pct(x.top3Hits, x.total),
+      }))
+      .sort((a, b) => {
+        if (b.top3Rate !== a.top3Rate) return b.top3Rate - a.top3Rate;
+        return b.total - a.total;
+      });
+  }
+
+  return {
+    lotteryKey,
+    total,
+    top1Hits,
+    top3Hits,
+    top1Rate: pct(top1Hits, total),
+    top3Rate: pct(top3Hits, total),
+    byHour: groupBy((slot) => String(slot?.targetHour || "")),
+    byDate: groupBy((slot) => String(slot?.targetYmd || "")),
+    rows: validated.map((slot) => ({
+      ymd: slot.targetYmd,
+      hour: slot.targetHour,
+      baseYmd: slot.baseYmd,
+      baseHour: slot.baseHour,
+      resultGrupo: slot.resultGrupo,
+
+LINHA: 4290
+    new Set(
+      range
+        .map((d) => pickDrawYMD(d))
+        .filter((ymd) => isYMD(ymd))
+    )
+  ).sort();
+
+  const allTimeline = [];
+
+  for (const ymd of dates) {
+    const drawsToday = range.filter((d) => pickDrawYMD(d) === ymd);
+
+    const dayTimeline = buildTimelineForDate({
+      ymd,
+      drawsToday,
+      drawsRange: range,
+      lotteryKey,
+      PT_RIO_SCHEDULE_NORMAL,
+      PT_RIO_SCHEDULE_WED_SAT,
+      FEDERAL_SCHEDULE,
+    });
+
+    allTimeline.push(...(Array.isArray(dayTimeline) ? dayTimeline : []));
+  }
+
+  return auditTop3Timeline({
+    timeline: allTimeline,
+    lotteryKey,
+  });
+}
+
+
+====================================================================================================
+PADRÃO: auditTop3Backtest
+====================================================================================================
+
+LINHA: 4256
+      targetHour: slotHour,
+      baseYmd: pickDrawYMD(baseDraw) || "",
+      baseHour: toHourBucket(pickDrawHour(baseDraw)) || "",
+      top3,
+      resultGrupo: Number.isFinite(Number(resultGrupo)) ? Number(resultGrupo) : null,
+      hit,
+      status: Number.isFinite(Number(resultGrupo)) ? "validated" : "pending",
+      historyStats,
+    });
+
+    if (currentDraw) {
+      chainContextDraws.push(currentDraw);
+    } else {
+      pendingPredictionAlreadyShown = true;
+    }
+  }
+
+  return timeline;
+
+}
+
+export function buildTimelineTop3(args) {
+  return buildTimelineForDate(args || {});
+}
+
+export function auditTop3Backtest({
+  drawsRange,
+  lotteryKey,
+  PT_RIO_SCHEDULE_NORMAL,
+  PT_RIO_SCHEDULE_WED_SAT,
+  FEDERAL_SCHEDULE,
+}) {
+  const range = Array.isArray(drawsRange) ? drawsRange : [];
+  const dates = Array.from(
+    new Set(
+      range
+        .map((d) => pickDrawYMD(d))
+        .filter((ymd) => isYMD(ymd))
+    )
+  ).sort();
+
+  const allTimeline = [];
+
+  for (const ymd of dates) {
+    const drawsToday = range.filter((d) => pickDrawYMD(d) === ymd);
+
+    const dayTimeline = buildTimelineForDate({
+      ymd,
+      drawsToday,
+      drawsRange: range,
+      lotteryKey,
+      PT_RIO_SCHEDULE_NORMAL,
+      PT_RIO_SCHEDULE_WED_SAT,
+      FEDERAL_SCHEDULE,
+    });
+
+    allTimeline.push(...(Array.isArray(dayTimeline) ? dayTimeline : []));
+  }
+
+  return auditTop3Timeline({
+    timeline: allTimeline,
+    lotteryKey,
+  });
+}
+
+
+====================================================================================================
+PADRÃO: buildTimelineForDate
+====================================================================================================
+
+LINHA: 3993
+    top3Hits,
+    top1Rate: pct(top1Hits, total),
+    top3Rate: pct(top3Hits, total),
+    byHour: groupBy((slot) => String(slot?.targetHour || "")),
+    byDate: groupBy((slot) => String(slot?.targetYmd || "")),
+    rows: validated.map((slot) => ({
+      ymd: slot.targetYmd,
+      hour: slot.targetHour,
+      baseYmd: slot.baseYmd,
+      baseHour: slot.baseHour,
+      resultGrupo: slot.resultGrupo,
+      top3: (Array.isArray(slot.top3) ? slot.top3 : [])
+        .slice(0, 3)
+        .map((x) => Number(x?.grupo)),
+      top1Hit:
+        Number(slot?.top3?.[0]?.grupo) === Number(slot.resultGrupo),
+      top3Hit: (Array.isArray(slot.top3) ? slot.top3 : [])
+        .slice(0, 3)
+        .some((x) => Number(x?.grupo) === Number(slot.resultGrupo)),
+      historyStats: slot.historyStats || null,
+    })),
+  };
+}
+
+
+function buildTimelineForDate({
+  ymd,
+  drawsToday,
+  drawsRange,
+  lotteryKey,
+  PT_RIO_SCHEDULE_NORMAL,
+  PT_RIO_SCHEDULE_WED_SAT,
+  FEDERAL_SCHEDULE,
+}) {
+  const targetYmd = safeStr(ymd);
+  const day = Array.isArray(drawsToday) ? [...drawsToday] : [];
+  const range = Array.isArray(drawsRange) ? [...drawsRange] : [];
+
+  if (!isYMD(targetYmd) || !range.length) return [];
+
+  const schedule = getScheduleForLottery({
+    lotteryKey,
+    ymd: targetYmd,
+    PT_RIO_SCHEDULE_NORMAL,
+    PT_RIO_SCHEDULE_WED_SAT,
+    FEDERAL_SCHEDULE,
+  });
+
+  const normalizedSchedule = (Array.isArray(schedule) ? schedule : [])
+    .map(toHourBucket)
+    .filter(Boolean);
+
+  if (!normalizedSchedule.length) return [];
+
+  const daySorted = day
+    .filter((d) => isYMD(pickDrawYMD(d)) && toHourBucket(pickDrawHour(d)))
+    .sort((a, b) => {
+      const ta = ymdHourToTs(pickDrawYMD(a), toHourBucket(pickDrawHour(a)));
+      const tb = ymdHourToTs(pickDrawYMD(b), toHourBucket(pickDrawHour(b)));
+      return ta - tb;
+    });
+
+  const rangeSorted = range
+    .filter((d) => isYMD(pickDrawYMD(d)) && toHourBucket(pickDrawHour(d)))
+    .sort((a, b) => {
+      const ta = ymdHourToTs(pickDrawYMD(a), toHourBucket(pickDrawHour(a)));
+      const tb = ymdHourToTs(pickDrawYMD(b), toHourBucket(pickDrawHour(b)));
+      return ta - tb;
+    });
+
+  const realizedTodayMap = new Map();
+
+  for (const d of daySorted) {
+    const y = pickDrawYMD(d);
+    const h = toHourBucket(pickDrawHour(d));
+    if (!isYMD(y) || !h) continue;
+    if (y !== targetYmd) continue;
+    realizedTodayMap.set(`${y}|${h}`, d);
+  }
+
+
+  const chainContextDraws = [];
+  const timeline = [];
+  let pendingPredictionAlreadyShown = false;
+
+  for (const slotHour of normalizedSchedule) {
+    const currentDraw = realizedTodayMap.get(`${targetYmd}|${slotHour}`) || null;
+    const slotTs = ymdHourToTs(targetYmd, slotHour);
+
+
+    if (!currentDraw && pendingPredictionAlreadyShown) {
+      timeline.push({
+        targetYmd,
+        targetHour: slotHour,
+        baseYmd: "",
+        baseHour: "",
+        top3: [],
+        resultGrupo: null,
+        hit: null,
+        status: "pending",
+      });
+      continue;
+    }
+
+    let baseDraw = null;
+
+
+LINHA: 4253
+
+    timeline.push({
+      targetYmd,
+      targetHour: slotHour,
+      baseYmd: pickDrawYMD(baseDraw) || "",
+      baseHour: toHourBucket(pickDrawHour(baseDraw)) || "",
+      top3,
+      resultGrupo: Number.isFinite(Number(resultGrupo)) ? Number(resultGrupo) : null,
+      hit,
+      status: Number.isFinite(Number(resultGrupo)) ? "validated" : "pending",
+      historyStats,
+    });
+
+    if (currentDraw) {
+      chainContextDraws.push(currentDraw);
+    } else {
+      pendingPredictionAlreadyShown = true;
+    }
+  }
+
+  return timeline;
+
+}
+
+export function buildTimelineTop3(args) {
+  return buildTimelineForDate(args || {});
+}
+
+export function auditTop3Backtest({
+  drawsRange,
+  lotteryKey,
+  PT_RIO_SCHEDULE_NORMAL,
+  PT_RIO_SCHEDULE_WED_SAT,
+  FEDERAL_SCHEDULE,
+}) {
+  const range = Array.isArray(drawsRange) ? drawsRange : [];
+  const dates = Array.from(
+    new Set(
+      range
+        .map((d) => pickDrawYMD(d))
+        .filter((ymd) => isYMD(ymd))
+    )
+  ).sort();
+
+  const allTimeline = [];
+
+  for (const ymd of dates) {
+    const drawsToday = range.filter((d) => pickDrawYMD(d) === ymd);
+
+    const dayTimeline = buildTimelineForDate({
+      ymd,
+      drawsToday,
+      drawsRange: range,
+      lotteryKey,
+      PT_RIO_SCHEDULE_NORMAL,
+      PT_RIO_SCHEDULE_WED_SAT,
+      FEDERAL_SCHEDULE,
+    });
+
+    allTimeline.push(...(Array.isArray(dayTimeline) ? dayTimeline : []));
+  }
+
+  return auditTop3Timeline({
+    timeline: allTimeline,
+    lotteryKey,
+  });
+}
+
+LINHA: 4277
+export function buildTimelineTop3(args) {
+  return buildTimelineForDate(args || {});
+}
+
+export function auditTop3Backtest({
+  drawsRange,
+  lotteryKey,
+  PT_RIO_SCHEDULE_NORMAL,
+  PT_RIO_SCHEDULE_WED_SAT,
+  FEDERAL_SCHEDULE,
+}) {
+  const range = Array.isArray(drawsRange) ? drawsRange : [];
+  const dates = Array.from(
+    new Set(
+      range
+        .map((d) => pickDrawYMD(d))
+        .filter((ymd) => isYMD(ymd))
+    )
+  ).sort();
+
+  const allTimeline = [];
+
+  for (const ymd of dates) {
+    const drawsToday = range.filter((d) => pickDrawYMD(d) === ymd);
+
+    const dayTimeline = buildTimelineForDate({
+      ymd,
+      drawsToday,
+      drawsRange: range,
+      lotteryKey,
+      PT_RIO_SCHEDULE_NORMAL,
+      PT_RIO_SCHEDULE_WED_SAT,
+      FEDERAL_SCHEDULE,
+    });
+
+    allTimeline.push(...(Array.isArray(dayTimeline) ? dayTimeline : []));
+  }
+
+  return auditTop3Timeline({
+    timeline: allTimeline,
+    lotteryKey,
+  });
+}
+
+
+====================================================================================================
+PADRÃO: buildTimelineTop3
+====================================================================================================
+
+LINHA: 4252
+        : null;
+
+    timeline.push({
+      targetYmd,
+      targetHour: slotHour,
+      baseYmd: pickDrawYMD(baseDraw) || "",
+      baseHour: toHourBucket(pickDrawHour(baseDraw)) || "",
+      top3,
+      resultGrupo: Number.isFinite(Number(resultGrupo)) ? Number(resultGrupo) : null,
+      hit,
+      status: Number.isFinite(Number(resultGrupo)) ? "validated" : "pending",
+      historyStats,
+    });
+
+    if (currentDraw) {
+      chainContextDraws.push(currentDraw);
+    } else {
+      pendingPredictionAlreadyShown = true;
+    }
+  }
+
+  return timeline;
+
+}
+
+export function buildTimelineTop3(args) {
+  return buildTimelineForDate(args || {});
+}
+
+export function auditTop3Backtest({
+  drawsRange,
+  lotteryKey,
+  PT_RIO_SCHEDULE_NORMAL,
+  PT_RIO_SCHEDULE_WED_SAT,
+  FEDERAL_SCHEDULE,
+}) {
+  const range = Array.isArray(drawsRange) ? drawsRange : [];
+  const dates = Array.from(
+    new Set(
+      range
+        .map((d) => pickDrawYMD(d))
+        .filter((ymd) => isYMD(ymd))
+    )
+  ).sort();
+
+  const allTimeline = [];
+
+  for (const ymd of dates) {
+    const drawsToday = range.filter((d) => pickDrawYMD(d) === ymd);
+
+    const dayTimeline = buildTimelineForDate({
+      ymd,
+      drawsToday,
+      drawsRange: range,
+      lotteryKey,
+      PT_RIO_SCHEDULE_NORMAL,
+      PT_RIO_SCHEDULE_WED_SAT,
+      FEDERAL_SCHEDULE,
+    });
+
+    allTimeline.push(...(Array.isArray(dayTimeline) ? dayTimeline : []));
+  }
+
+  return auditTop3Timeline({
+    timeline: allTimeline,
+    lotteryKey,
+  });
+}
+
+
+====================================================================================================
+PADRÃO: pickPrize1GrupoFromDraw
+====================================================================================================
+
+LINHA: 152
+
+  return null;
+}
+
+export function pickDrawHour(draw) {
+  return normalizeHourLike(
+    draw?.close_hour || draw?.closeHour || draw?.hour || draw?.hora || ""
+  );
+}
+
+export function pickDrawYMD(draw) {
+  const y =
+    draw?.ymd ||
+    normalizeToYMD(draw?.date) ||
+    normalizeToYMD(draw?.data) ||
+    normalizeToYMD(draw?.dt) ||
+    normalizeToYMD(draw?.draw_date) ||
+    normalizeToYMD(draw?.drawDate) ||
+    normalizeToYMD(draw?.close_date) ||
+    normalizeToYMD(draw?.closeDate) ||
+    null;
+
+  return y;
+}
+
+export function pickPrize1GrupoFromDraw(draw) {
+  const prizes = Array.isArray(draw?.prizes) ? draw.prizes : [];
+  if (prizes.length) {
+    const p1 = prizes.find((p) => guessPrizePos(p) === 1) || null;
+    if (p1) {
+      const g = guessPrizeGrupo(p1);
+      return Number.isFinite(Number(g)) ? Number(g) : null;
+    }
+  }
+
+  const candidates = [
+    draw?.grupo1,
+    draw?.group1,
+    draw?.primeiro_grupo,
+    draw?.first_grupo,
+    draw?.prize1_grupo,
+    draw?.prize1Grupo,
+    draw?.p1_grupo2,
+    draw?.p1Grupo2,
+    draw?.g1,
+    draw?.grupo_1,
+    draw?.grupoPrimeiro,
+  ];
+
+  for (const v of candidates) {
+    if (Number.isFinite(Number(v))) return Number(v);
+  }
+
+  return null;
+}
+
+/* =========================
+   Helpers internos
+========================= */
+
+function safeInt(v, fallback) {
+  const n = Number(v);
+  return Number.isFinite(n) ? n : fallback;
+}
+
+function getDayOfMonth(ymd) {
+  if (!isYMD(ymd)) return NaN;
+  return Number(String(ymd).slice(8, 10));
+}
+
+function ymdHourToTs(ymd, hourBucket) {
+  const y = safeStr(ymd);
+  const h = toHourBucket(hourBucket);
+
+  if (!isYMD(y) || !h) return Number.POSITIVE_INFINITY;
+
+  const mins = hourToInt(h);
+  if (!Number.isFinite(mins) || mins < 0) {
+    return Number.POSITIVE_INFINITY;
+  }
+
+  const [Y, M, D] = y.split("-").map((x) => Number(x));
+  const base = Date.UTC(Y, M - 1, D);
+
+  return base + mins * 60 * 1000;
+}
+
+/* =========================
+   Schedules
+========================= */
+
+const FEDERAL_SUNDAY_START_YMD = "2026-07-19";
+const PT_RIO_SUNDAY_REDUCED_START_YMD = "2026-07-18";
+const FEDERAL_20_REMOVES_PT_RIO_18_START_YMD = "2025-11-03";
+
+/**
+ * Calendário Federal com preservação histórica.
+ *
+ * Até 18/07/2026:
+ * - quarta-feira às 20h;
+ * - sábado às 20h.
+ *
+ * A partir de 19/07/2026:
+ * - quarta-feira às 20h;
+ * - domingo às 11h;
+ * - sábado deixa de ter sorteio Federal.
+
+LINHA: 757
+}
+
+export function countAparicoesByGrupoInDraw(draw) {
+  const counts = new Map();
+  const ps = Array.isArray(draw?.prizes) ? draw.prizes : [];
+  for (const p of ps) {
+    const pos = guessPrizePos(p);
+    if (!Number.isFinite(Number(pos)) || Number(pos) < 1 || Number(pos) > 5) {
+      continue;
+    }
+    const g = guessPrizeGrupo(p);
+    if (!Number.isFinite(Number(g)) || Number(g) <= 0) continue;
+    const gg = Number(g);
+    counts.set(gg, (counts.get(gg) || 0) + 1);
+  }
+  return counts;
+}
+
+function getFirstGrupoFromDraw(draw) {
+  const ps = Array.isArray(draw?.prizes) ? draw.prizes : [];
+  const p1 = ps.find((p) => guessPrizePos(p) === 1) || null;
+  if (p1) {
+    const g = guessPrizeGrupo(p1);
+    return Number.isFinite(Number(g)) ? Number(g) : null;
+  }
+  return pickPrize1GrupoFromDraw(draw);
+}
+
+function getAllPrizePresenceGroups(draw) {
+  const out = [];
+  const ps = Array.isArray(draw?.prizes) ? draw.prizes : [];
+  for (const p of ps) {
+    const pos = guessPrizePos(p);
+    if (!Number.isFinite(Number(pos)) || Number(pos) < 1 || Number(pos) > 5) {
+      continue;
+    }
+    const g = guessPrizeGrupo(p);
+    if (!Number.isFinite(Number(g)) || Number(g) <= 0) continue;
+    out.push({ pos: Number(pos), grupo: Number(g) });
+  }
+  return out.sort((a, b) => a.pos - b.pos);
+}
+
+function buildFreqAndFirstMaps(nextDraw) {
+  const freq = new Map();
+  const firstMap = new Map();
+  const items = getAllPrizePresenceGroups(nextDraw);
+
+  for (const it of items) {
+    freq.set(it.grupo, (freq.get(it.grupo) || 0) + 1);
+    if (it.pos === 1) {
+      firstMap.set(it.grupo, (firstMap.get(it.grupo) || 0) + 1);
+    }
+  }
+
+  return { freq, firstMap };
+}
+
+function mergeMapsAdd(target, source) {
+  for (const [k, v] of source.entries()) {
+    target.set(Number(k), Number(target.get(Number(k)) || 0) + Number(v || 0));
+  }
+}
+
+function probFromFreq(freq, samples, groupsK = TOP3_GROUPS_K) {
+  const k = safeInt(groupsK, 25);
+  const denom = Math.max(1, Number(samples || 0) * 5);
+  const out = new Map();
+
+  for (let g = 1; g <= k; g += 1) {
+    const n = Number(freq.get(g) || 0);
+    out.set(g, n / denom);
+  }
+
+  return out;
+}
+
+function computeStructuralBaseDistribution(
+  draws,
+  lotteryKey,
+  targetHour,
+  targetDow,
+  groupsK = TOP3_GROUPS_K
+) {
+  const list = Array.isArray(draws) ? draws : [];
+  const key = safeStr(lotteryKey).toUpperCase();
+  const target = toHourBucket(targetHour);
+  const k = safeInt(groupsK, 25);
+
+  const freq = new Map();
+  let totalSamples = 0;
+
+  for (const d of list) {
+    const h = toHourBucket(pickDrawHour(d));
+    const y = pickDrawYMD(d);
+    if (!h || !y) continue;
+
+    if (key === "FEDERAL") {
+      if (!isFederalDrawDay(y)) continue;
+      if (Number(getDowKey(y)) !== Number(targetDow)) continue;
+    } else {
+      if (h !== target) continue;
+    }
+
+    const items = getAllPrizePresenceGroups(d);
+    if (!items.length) continue;
+
+LINHA: 3528
+      if (Number(b.score) !== Number(a.score)) {
+        return Number(b.score) - Number(a.score);
+      }
+
+      const ta = ymdHourToTs(a.scene?.ymd, a.scene?.hour);
+      const tb = ymdHourToTs(b.scene?.ymd, b.scene?.hour);
+      return Number(tb || 0) - Number(ta || 0);
+    })
+    .slice(0, Math.max(1, Number(limit || 100)));
+}
+
+
+
+
+function buildSceneHypothesisDistribution(sceneRanking, groupsK = TOP3_GROUPS_K) {
+  const ranking = Array.isArray(sceneRanking) ? sceneRanking : [];
+  const k = safeInt(groupsK, 25);
+
+  const freq = new Map();
+  for (let g = 1; g <= k; g += 1) freq.set(g, 0);
+
+  let totalWeight = 0;
+
+  for (const item of ranking) {
+    const score = Math.max(0, Number(item?.score || 0));
+    const nextGrupo = Number(item?.nextDraw ? pickPrize1GrupoFromDraw(item.nextDraw) : null);
+
+    if (!Number.isFinite(nextGrupo) || nextGrupo < 1 || nextGrupo > k) continue;
+    if (score <= 0) continue;
+
+    freq.set(nextGrupo, Number(freq.get(nextGrupo) || 0) + score);
+    totalWeight += score;
+  }
+
+  const prob = new Map();
+  for (let g = 1; g <= k; g += 1) {
+    prob.set(g, totalWeight > 0 ? Number(freq.get(g) || 0) / totalWeight : 0);
+  }
+
+  return {
+    freq,
+    prob,
+    samples: ranking.length,
+    totalWeight,
+  };
+}
+
+
+/* =========================
+   16/20 milhares (por grupo) — POR TERMINAÇÃO (CORRETO)
+========================= */
+
+function getDezenasFixasFromGrupo(grupo2) {
+  const g = Number(grupo2);
+  if (!Number.isFinite(g) || g < 1 || g > 25) return [];
+
+  const start = (g - 1) * 4 + 1;
+  const out = [];
+
+  for (let i = 0; i < 4; i += 1) {
+    out.push(wrapToDezena2(start + i));
+  }
+
+  return out.filter(Boolean);
+}
+
+
+export function buildMilharesForGrupo({
+  rangeDraws,
+  analysisHourBucket,
+  schedule,
+  grupo2,
+  count = 20,
+  targetYmd = "",
+}) {
+  const list = Array.isArray(rangeDraws) ? rangeDraws : [];
+  const target = toHourBucket(analysisHourBucket);
+  const schSet = scheduleSet(schedule);
+  const targetDay = safeStr(targetYmd);
+  const targetDow = isYMD(targetDay) ? getDowKey(targetDay) : null;
+
+  const N = Number.isFinite(Number(count))
+    ? Math.max(4, Math.trunc(Number(count)))
+    : 20;
+
+  const grupoNum = Number(grupo2);
+
+  if (!Number.isFinite(grupoNum) || grupoNum < 1 || grupoNum > 25 || !list.length) {
+    return { dezenas: [], slots: [] };
+  }
+
+  const dezenasFixas = getDezenasFixasFromGrupo(grupoNum);
+  if (!dezenasFixas.length) return { dezenas: [], slots: [] };
+
+  const perDezena = Math.max(1, Math.ceil(N / dezenasFixas.length));
+  const byMilhar = new Map();
+
+  for (const d of list) {
+    const y = pickDrawYMD(d);
+    const h = toHourBucket(pickDrawHour(d));
+    if (!h) continue;
+
+    const isTargetHour = target && h === target;
+    const isScheduleHour = schSet.size && schSet.has(h);
+    const isSameDow = targetDow !== null && Number(getDowKey(y)) === Number(targetDow);
+    const ts = ymdHourToTs(y, h);
+
+LINHA: 4222
+
+    const computed = computeStatisticalTop3V3({
+      lotteryKey,
+      drawsRange: [...usableHistory, ...usableTodayContext],
+      drawLast: baseDraw,
+      drawsToday: usableTodayContext,
+      PT_RIO_SCHEDULE_NORMAL,
+      PT_RIO_SCHEDULE_WED_SAT,
+      FEDERAL_SCHEDULE,
+      topN: 3,
+      targetYmdOverride: targetYmd,
+      targetHourOverride: slotHour,
+    });
+
+
+    const computedNextYmd = safeStr(computed?.meta?.next?.ymd || "");
+    const computedNextHour = toHourBucket(computed?.meta?.next?.hour || "");
+    const computedForSlot =
+      computedNextYmd === targetYmd && computedNextHour === slotHour;
+
+    const top3 =
+      computedForSlot && Array.isArray(computed?.top)
+        ? computed.top.slice(0, 3)
+        : [];
+
+    const resultGrupo = currentDraw ? pickPrize1GrupoFromDraw(currentDraw) : null;
+
+    const hit =
+      Number.isFinite(Number(resultGrupo)) && top3.length
+        ? top3.some((t) => Number(t?.grupo) === Number(resultGrupo))
+        : null;
+
+    timeline.push({
+      targetYmd,
+      targetHour: slotHour,
+      baseYmd: pickDrawYMD(baseDraw) || "",
+      baseHour: toHourBucket(pickDrawHour(baseDraw)) || "",
+      top3,
+      resultGrupo: Number.isFinite(Number(resultGrupo)) ? Number(resultGrupo) : null,
+      hit,
+      status: Number.isFinite(Number(resultGrupo)) ? "validated" : "pending",
+      historyStats,
+    });
+
+    if (currentDraw) {
+      chainContextDraws.push(currentDraw);
+    } else {
+      pendingPredictionAlreadyShown = true;
+    }
+  }
+
+  return timeline;
+
+}
+
+export function buildTimelineTop3(args) {
+  return buildTimelineForDate(args || {});
+}
+
+export function auditTop3Backtest({
+  drawsRange,
+  lotteryKey,
+  PT_RIO_SCHEDULE_NORMAL,
+  PT_RIO_SCHEDULE_WED_SAT,
+  FEDERAL_SCHEDULE,
+}) {
+  const range = Array.isArray(drawsRange) ? drawsRange : [];
+  const dates = Array.from(
+    new Set(
+      range
+        .map((d) => pickDrawYMD(d))
+        .filter((ymd) => isYMD(ymd))
+    )
+  ).sort();
+
+  const allTimeline = [];
+
+  for (const ymd of dates) {
+    const drawsToday = range.filter((d) => pickDrawYMD(d) === ymd);
+
+    const dayTimeline = buildTimelineForDate({
+      ymd,
+      drawsToday,
+      drawsRange: range,
+      lotteryKey,
+      PT_RIO_SCHEDULE_NORMAL,
+      PT_RIO_SCHEDULE_WED_SAT,
+      FEDERAL_SCHEDULE,
+    });
+
+    allTimeline.push(...(Array.isArray(dayTimeline) ? dayTimeline : []));
+  }
+
+  return auditTop3Timeline({
+    timeline: allTimeline,
+    lotteryKey,
+  });
+}
+
+
+====================================================================================================
+PADRÃO: pickPrize
+====================================================================================================
+
+LINHA: 11
+// src/pages/Top3/top3.engine.js
+import {
+  safeStr,
+  isYMD,
+  normalizeToYMD,
+  addDaysYMD,
+  normalizeHourLike,
+  toHourBucket,
+  hourToInt,
+  getDowKey,
+  pickPrizeMilhar4,
+  getDezena2,
+  getCentena3,
+  milharCompareAsc,
+  wrapToDezena2,
+} from "./top3.formatters";
+
+import { scoreRanking } from "./modules/scoreEngine/scoreEngineV2";
+
+import {
+  TOP3_NEXTDRAW_SCAN_MAX_STEPS,
+  TOP3_NEXTDRAW_SCAN_MAX_DAYS,
+  TOP3_GROUPS_K,
+  TOP3_SMOOTH_ALPHA,
+  TOP3_SCENE_WEIGHT,
+  TOP3_SCENE_SAMPLE_TARGET,
+  TOP3_SCENE_BLEND_SCENE,
+  TOP3_SCENE_BLEND_UNIFORM,
+  PT_RIO_SCHEDULE_SUNDAY,
+  LOOK_SCHEDULE,
+  NACIONAL_SCHEDULE,
+} from "./top3.constants";
+
+function findPreviousValidDraw(draws, currentYmd, currentHour) {
+  const list = Array.isArray(draws) ? draws : [];
+  const targetY = safeStr(currentYmd);
+  const targetH = toHourBucket(currentHour);
+
+  if (!isYMD(targetY) || !targetH) return null;
+
+  const targetTs = ymdHourToTs(targetY, targetH);
+
+  return list
+    .filter((draw) => Array.isArray(draw?.prizes) && draw.prizes.length > 0)
+    .map((draw) => {
+      const y = pickDrawYMD(draw);
+      const h = toHourBucket(pickDrawHour(draw));
+      return { draw, ts: ymdHourToTs(y, h) };
+    })
+    .filter((x) => Number.isFinite(x.ts) && x.ts < targetTs)
+    .sort((a, b) => b.ts - a.ts)[0]?.draw || null;
+}
+
+/* =========================
+   Draw helpers (robustos)
+========================= */
+
+function grupoFromDezena2(dezena2) {
+  const s = safeStr(dezena2);
+  if (!/^\d{2}$/.test(s)) return null;
+
+  const n = Number(s);
+  if (!Number.isFinite(n) || n < 0 || n > 99) return null;
+  if (n === 0) return 25;
+
+  const g = Math.ceil(n / 4);
+  return g >= 1 && g <= 25 ? g : null;
+}
+
+function drawQualityScore(draw) {
+  const prizes = Array.isArray(draw?.prizes) ? draw.prizes : [];
+  const y = pickDrawYMD(draw);
+  const h = toHourBucket(pickDrawHour(draw));
+
+  let score = 0;
+  if (isYMD(y)) score += 20;
+  if (h) score += 20;
+  score += Math.min(10, prizes.length) * 10;
+
+  const hasP1 = prizes.some((p) => guessPrizePos(p) === 1);
+  if (hasP1) score += 15;
+
+  return score;
+}
+
+export function guessPrizePos(p) {
+  const pos = Number.isFinite(Number(p?.position))
+    ? Number(p.position)
+    : Number.isFinite(Number(p?.posicao))
+      ? Number(p.posicao)
+      : Number.isFinite(Number(p?.pos))
+
+LINHA: 119
+          ? Number(p.colocacao)
+          : null;
+
+  return pos;
+}
+
+export function guessPrizeGrupo(p) {
+  const directCandidates = [
+    p?.grupo2,
+    p?.group2,
+    p?.grupo,
+    p?.group,
+    p?.animal_grupo,
+    p?.grupo_animal,
+    p?.grupoAnimal,
+    p?.g,
+  ];
+
+  for (const v of directCandidates) {
+    const g = Number(v);
+    if (Number.isFinite(g) && g >= 1 && g <= 25) {
+      return g;
+    }
+  }
+
+  const milhar4 = pickPrizeMilhar4(p);
+
+  if (milhar4) {
+    const dezena2 = getDezena2(milhar4);
+    const derived = grupoFromDezena2(dezena2);
+
+    if (Number.isFinite(derived)) return derived;
+  }
+
+  return null;
+}
+
+export function pickDrawHour(draw) {
+  return normalizeHourLike(
+    draw?.close_hour || draw?.closeHour || draw?.hour || draw?.hora || ""
+  );
+}
+
+export function pickDrawYMD(draw) {
+  const y =
+    draw?.ymd ||
+    normalizeToYMD(draw?.date) ||
+    normalizeToYMD(draw?.data) ||
+    normalizeToYMD(draw?.dt) ||
+    normalizeToYMD(draw?.draw_date) ||
+    normalizeToYMD(draw?.drawDate) ||
+    normalizeToYMD(draw?.close_date) ||
+    normalizeToYMD(draw?.closeDate) ||
+    null;
+
+  return y;
+}
+
+export function pickPrize1GrupoFromDraw(draw) {
+  const prizes = Array.isArray(draw?.prizes) ? draw.prizes : [];
+  if (prizes.length) {
+    const p1 = prizes.find((p) => guessPrizePos(p) === 1) || null;
+    if (p1) {
+      const g = guessPrizeGrupo(p1);
+      return Number.isFinite(Number(g)) ? Number(g) : null;
+    }
+  }
+
+  const candidates = [
+    draw?.grupo1,
+    draw?.group1,
+    draw?.primeiro_grupo,
+    draw?.first_grupo,
+    draw?.prize1_grupo,
+    draw?.prize1Grupo,
+    draw?.p1_grupo2,
+    draw?.p1Grupo2,
+    draw?.g1,
+    draw?.grupo_1,
+    draw?.grupoPrimeiro,
+  ];
+
+  for (const v of candidates) {
+    if (Number.isFinite(Number(v))) return Number(v);
+  }
+
+  return null;
+}
+
+/* =========================
+   Helpers internos
+========================= */
+
+function safeInt(v, fallback) {
+  const n = Number(v);
+  return Number.isFinite(n) ? n : fallback;
+}
+
+function getDayOfMonth(ymd) {
+  if (!isYMD(ymd)) return NaN;
+  return Number(String(ymd).slice(8, 10));
+}
+
+function ymdHourToTs(ymd, hourBucket) {
+  const y = safeStr(ymd);
+  const h = toHourBucket(hourBucket);
+
+LINHA: 152
+
+  return null;
+}
+
+export function pickDrawHour(draw) {
+  return normalizeHourLike(
+    draw?.close_hour || draw?.closeHour || draw?.hour || draw?.hora || ""
+  );
+}
+
+export function pickDrawYMD(draw) {
+  const y =
+    draw?.ymd ||
+    normalizeToYMD(draw?.date) ||
+    normalizeToYMD(draw?.data) ||
+    normalizeToYMD(draw?.dt) ||
+    normalizeToYMD(draw?.draw_date) ||
+    normalizeToYMD(draw?.drawDate) ||
+    normalizeToYMD(draw?.close_date) ||
+    normalizeToYMD(draw?.closeDate) ||
+    null;
+
+  return y;
+}
+
+export function pickPrize1GrupoFromDraw(draw) {
+  const prizes = Array.isArray(draw?.prizes) ? draw.prizes : [];
+  if (prizes.length) {
+    const p1 = prizes.find((p) => guessPrizePos(p) === 1) || null;
+    if (p1) {
+      const g = guessPrizeGrupo(p1);
+      return Number.isFinite(Number(g)) ? Number(g) : null;
+    }
+  }
+
+  const candidates = [
+    draw?.grupo1,
+    draw?.group1,
+    draw?.primeiro_grupo,
+    draw?.first_grupo,
+    draw?.prize1_grupo,
+    draw?.prize1Grupo,
+    draw?.p1_grupo2,
+    draw?.p1Grupo2,
+    draw?.g1,
+    draw?.grupo_1,
+    draw?.grupoPrimeiro,
+  ];
+
+  for (const v of candidates) {
+    if (Number.isFinite(Number(v))) return Number(v);
+  }
+
+  return null;
+}
+
+/* =========================
+   Helpers internos
+========================= */
+
+function safeInt(v, fallback) {
+  const n = Number(v);
+  return Number.isFinite(n) ? n : fallback;
+}
+
+function getDayOfMonth(ymd) {
+  if (!isYMD(ymd)) return NaN;
+  return Number(String(ymd).slice(8, 10));
+}
+
+function ymdHourToTs(ymd, hourBucket) {
+  const y = safeStr(ymd);
+  const h = toHourBucket(hourBucket);
+
+  if (!isYMD(y) || !h) return Number.POSITIVE_INFINITY;
+
+  const mins = hourToInt(h);
+  if (!Number.isFinite(mins) || mins < 0) {
+    return Number.POSITIVE_INFINITY;
+  }
+
+  const [Y, M, D] = y.split("-").map((x) => Number(x));
+  const base = Date.UTC(Y, M - 1, D);
+
+  return base + mins * 60 * 1000;
+}
+
+/* =========================
+   Schedules
+========================= */
+
+const FEDERAL_SUNDAY_START_YMD = "2026-07-19";
+const PT_RIO_SUNDAY_REDUCED_START_YMD = "2026-07-18";
+const FEDERAL_20_REMOVES_PT_RIO_18_START_YMD = "2025-11-03";
+
+/**
+ * Calendário Federal com preservação histórica.
+ *
+ * Até 18/07/2026:
+ * - quarta-feira às 20h;
+ * - sábado às 20h.
+ *
+ * A partir de 19/07/2026:
+ * - quarta-feira às 20h;
+ * - domingo às 11h;
+ * - sábado deixa de ter sorteio Federal.
+
+LINHA: 757
+}
+
+export function countAparicoesByGrupoInDraw(draw) {
+  const counts = new Map();
+  const ps = Array.isArray(draw?.prizes) ? draw.prizes : [];
+  for (const p of ps) {
+    const pos = guessPrizePos(p);
+    if (!Number.isFinite(Number(pos)) || Number(pos) < 1 || Number(pos) > 5) {
+      continue;
+    }
+    const g = guessPrizeGrupo(p);
+    if (!Number.isFinite(Number(g)) || Number(g) <= 0) continue;
+    const gg = Number(g);
+    counts.set(gg, (counts.get(gg) || 0) + 1);
+  }
+  return counts;
+}
+
+function getFirstGrupoFromDraw(draw) {
+  const ps = Array.isArray(draw?.prizes) ? draw.prizes : [];
+  const p1 = ps.find((p) => guessPrizePos(p) === 1) || null;
+  if (p1) {
+    const g = guessPrizeGrupo(p1);
+    return Number.isFinite(Number(g)) ? Number(g) : null;
+  }
+  return pickPrize1GrupoFromDraw(draw);
+}
+
+function getAllPrizePresenceGroups(draw) {
+  const out = [];
+  const ps = Array.isArray(draw?.prizes) ? draw.prizes : [];
+  for (const p of ps) {
+    const pos = guessPrizePos(p);
+    if (!Number.isFinite(Number(pos)) || Number(pos) < 1 || Number(pos) > 5) {
+      continue;
+    }
+    const g = guessPrizeGrupo(p);
+    if (!Number.isFinite(Number(g)) || Number(g) <= 0) continue;
+    out.push({ pos: Number(pos), grupo: Number(g) });
+  }
+  return out.sort((a, b) => a.pos - b.pos);
+}
+
+function buildFreqAndFirstMaps(nextDraw) {
+  const freq = new Map();
+  const firstMap = new Map();
+  const items = getAllPrizePresenceGroups(nextDraw);
+
+  for (const it of items) {
+    freq.set(it.grupo, (freq.get(it.grupo) || 0) + 1);
+    if (it.pos === 1) {
+      firstMap.set(it.grupo, (firstMap.get(it.grupo) || 0) + 1);
+    }
+  }
+
+  return { freq, firstMap };
+}
+
+function mergeMapsAdd(target, source) {
+  for (const [k, v] of source.entries()) {
+    target.set(Number(k), Number(target.get(Number(k)) || 0) + Number(v || 0));
+  }
+}
+
+function probFromFreq(freq, samples, groupsK = TOP3_GROUPS_K) {
+  const k = safeInt(groupsK, 25);
+  const denom = Math.max(1, Number(samples || 0) * 5);
+  const out = new Map();
+
+  for (let g = 1; g <= k; g += 1) {
+    const n = Number(freq.get(g) || 0);
+    out.set(g, n / denom);
+  }
+
+  return out;
+}
+
+function computeStructuralBaseDistribution(
+  draws,
+  lotteryKey,
+  targetHour,
+  targetDow,
+  groupsK = TOP3_GROUPS_K
+) {
+  const list = Array.isArray(draws) ? draws : [];
+  const key = safeStr(lotteryKey).toUpperCase();
+  const target = toHourBucket(targetHour);
+  const k = safeInt(groupsK, 25);
+
+  const freq = new Map();
+  let totalSamples = 0;
+
+  for (const d of list) {
+    const h = toHourBucket(pickDrawHour(d));
+    const y = pickDrawYMD(d);
+    if (!h || !y) continue;
+
+    if (key === "FEDERAL") {
+      if (!isFederalDrawDay(y)) continue;
+      if (Number(getDowKey(y)) !== Number(targetDow)) continue;
+    } else {
+      if (h !== target) continue;
+    }
+
+    const items = getAllPrizePresenceGroups(d);
+    if (!items.length) continue;
+
+LINHA: 3528
+      if (Number(b.score) !== Number(a.score)) {
+        return Number(b.score) - Number(a.score);
+      }
+
+      const ta = ymdHourToTs(a.scene?.ymd, a.scene?.hour);
+      const tb = ymdHourToTs(b.scene?.ymd, b.scene?.hour);
+      return Number(tb || 0) - Number(ta || 0);
+    })
+    .slice(0, Math.max(1, Number(limit || 100)));
+}
+
+
+
+
+function buildSceneHypothesisDistribution(sceneRanking, groupsK = TOP3_GROUPS_K) {
+  const ranking = Array.isArray(sceneRanking) ? sceneRanking : [];
+  const k = safeInt(groupsK, 25);
+
+  const freq = new Map();
+  for (let g = 1; g <= k; g += 1) freq.set(g, 0);
+
+  let totalWeight = 0;
+
+  for (const item of ranking) {
+    const score = Math.max(0, Number(item?.score || 0));
+    const nextGrupo = Number(item?.nextDraw ? pickPrize1GrupoFromDraw(item.nextDraw) : null);
+
+    if (!Number.isFinite(nextGrupo) || nextGrupo < 1 || nextGrupo > k) continue;
+    if (score <= 0) continue;
+
+    freq.set(nextGrupo, Number(freq.get(nextGrupo) || 0) + score);
+    totalWeight += score;
+  }
+
+  const prob = new Map();
+  for (let g = 1; g <= k; g += 1) {
+    prob.set(g, totalWeight > 0 ? Number(freq.get(g) || 0) / totalWeight : 0);
+  }
+
+  return {
+    freq,
+    prob,
+    samples: ranking.length,
+    totalWeight,
+  };
+}
+
+
+/* =========================
+   16/20 milhares (por grupo) — POR TERMINAÇÃO (CORRETO)
+========================= */
+
+function getDezenasFixasFromGrupo(grupo2) {
+  const g = Number(grupo2);
+  if (!Number.isFinite(g) || g < 1 || g > 25) return [];
+
+  const start = (g - 1) * 4 + 1;
+  const out = [];
+
+  for (let i = 0; i < 4; i += 1) {
+    out.push(wrapToDezena2(start + i));
+  }
+
+  return out.filter(Boolean);
+}
+
+
+export function buildMilharesForGrupo({
+  rangeDraws,
+  analysisHourBucket,
+  schedule,
+  grupo2,
+  count = 20,
+  targetYmd = "",
+}) {
+  const list = Array.isArray(rangeDraws) ? rangeDraws : [];
+  const target = toHourBucket(analysisHourBucket);
+  const schSet = scheduleSet(schedule);
+  const targetDay = safeStr(targetYmd);
+  const targetDow = isYMD(targetDay) ? getDowKey(targetDay) : null;
+
+  const N = Number.isFinite(Number(count))
+    ? Math.max(4, Math.trunc(Number(count)))
+    : 20;
+
+  const grupoNum = Number(grupo2);
+
+  if (!Number.isFinite(grupoNum) || grupoNum < 1 || grupoNum > 25 || !list.length) {
+    return { dezenas: [], slots: [] };
+  }
+
+  const dezenasFixas = getDezenasFixasFromGrupo(grupoNum);
+  if (!dezenasFixas.length) return { dezenas: [], slots: [] };
+
+  const perDezena = Math.max(1, Math.ceil(N / dezenasFixas.length));
+  const byMilhar = new Map();
+
+  for (const d of list) {
+    const y = pickDrawYMD(d);
+    const h = toHourBucket(pickDrawHour(d));
+    if (!h) continue;
+
+    const isTargetHour = target && h === target;
+    const isScheduleHour = schSet.size && schSet.has(h);
+    const isSameDow = targetDow !== null && Number(getDowKey(y)) === Number(targetDow);
+    const ts = ymdHourToTs(y, h);
+
+LINHA: 3619
+  const dezenasFixas = getDezenasFixasFromGrupo(grupoNum);
+  if (!dezenasFixas.length) return { dezenas: [], slots: [] };
+
+  const perDezena = Math.max(1, Math.ceil(N / dezenasFixas.length));
+  const byMilhar = new Map();
+
+  for (const d of list) {
+    const y = pickDrawYMD(d);
+    const h = toHourBucket(pickDrawHour(d));
+    if (!h) continue;
+
+    const isTargetHour = target && h === target;
+    const isScheduleHour = schSet.size && schSet.has(h);
+    const isSameDow = targetDow !== null && Number(getDowKey(y)) === Number(targetDow);
+    const ts = ymdHourToTs(y, h);
+
+    const ps = Array.isArray(d?.prizes) ? d.prizes : [];
+
+    for (const prize of ps) {
+      const pos = Number(guessPrizePos(prize));
+      if (!Number.isFinite(pos) || pos < 1 || pos > 7) continue;
+
+      const g = Number(guessPrizeGrupo(prize));
+      if (g !== grupoNum) continue;
+
+      const m4 = String(pickPrizeMilhar4(prize) || "").replace(/\D+/g, "").padStart(4, "0").slice(-4);
+      if (!/^\d{4}$/.test(m4)) continue;
+
+      const dz = getDezena2(m4);
+      const c3 = getCentena3(m4);
+
+      if (!dz || !c3 || !dezenasFixas.includes(dz)) continue;
+
+      const current = byMilhar.get(m4) || {
+        milhar: m4,
+        dezena: dz,
+        centena: c3,
+        freq: 0,
+        score: 0,
+        targetHits: 0,
+        scheduleHits: 0,
+        sameDowHits: 0,
+        firstPrizeHits: 0,
+        lastTs: 0,
+      };
+
+      let inc = 1;
+
+      if (isTargetHour) {
+        inc += 8;
+        current.targetHits += 1;
+      }
+
+      if (isScheduleHour) {
+        inc += 3;
+        current.scheduleHits += 1;
+      }
+
+      if (isSameDow) {
+        inc += 2;
+        current.sameDowHits += 1;
+      }
+
+      if (pos === 1) {
+        inc += 3;
+        current.firstPrizeHits += 1;
+      } else if (pos <= 3) {
+        inc += 1;
+      }
+
+      current.freq += 1;
+      current.score += inc;
+
+      if (Number.isFinite(ts)) {
+        current.lastTs = Math.max(Number(current.lastTs || 0), ts);
+      }
+
+      byMilhar.set(m4, current);
+    }
+  }
+
+  const ranked = Array.from(byMilhar.values())
+    .map((m) => {
+      const freq = Number(m.freq || 0);
+      const targetHits = Number(m.targetHits || 0);
+      const scheduleHits = Number(m.scheduleHits || 0);
+      const sameDowHits = Number(m.sameDowHits || 0);
+      const firstPrizeHits = Number(m.firstPrizeHits || 0);
+      const recencyBoost = Number(m.lastTs || 0) > 0 ? 1 : 0;
+
+      return {
+        ...m,
+        score:
+          freq * 100 +
+          targetHits * 70 +
+          scheduleHits * 35 +
+          sameDowHits * 25 +
+          firstPrizeHits * 45 +
+          recencyBoost * 5,
+      };
+    })
+    .sort((a, b) => {
+      if (Number(b.score) !== Number(a.score)) return Number(b.score) - Number(a.score);
+      if (Number(b.targetHits) !== Number(a.targetHits)) return Number(b.targetHits) - Number(a.targetHits);
+      if (Number(b.freq) !== Number(a.freq)) return Number(b.freq) - Number(a.freq);
+      if (Number(b.lastTs) !== Number(a.lastTs)) return Number(b.lastTs) - Number(a.lastTs);
+
+LINHA: 4222
+
+    const computed = computeStatisticalTop3V3({
+      lotteryKey,
+      drawsRange: [...usableHistory, ...usableTodayContext],
+      drawLast: baseDraw,
+      drawsToday: usableTodayContext,
+      PT_RIO_SCHEDULE_NORMAL,
+      PT_RIO_SCHEDULE_WED_SAT,
+      FEDERAL_SCHEDULE,
+      topN: 3,
+      targetYmdOverride: targetYmd,
+      targetHourOverride: slotHour,
+    });
+
+
+    const computedNextYmd = safeStr(computed?.meta?.next?.ymd || "");
+    const computedNextHour = toHourBucket(computed?.meta?.next?.hour || "");
+    const computedForSlot =
+      computedNextYmd === targetYmd && computedNextHour === slotHour;
+
+    const top3 =
+      computedForSlot && Array.isArray(computed?.top)
+        ? computed.top.slice(0, 3)
+        : [];
+
+    const resultGrupo = currentDraw ? pickPrize1GrupoFromDraw(currentDraw) : null;
+
+    const hit =
+      Number.isFinite(Number(resultGrupo)) && top3.length
+        ? top3.some((t) => Number(t?.grupo) === Number(resultGrupo))
+        : null;
+
+    timeline.push({
+      targetYmd,
+      targetHour: slotHour,
+      baseYmd: pickDrawYMD(baseDraw) || "",
+      baseHour: toHourBucket(pickDrawHour(baseDraw)) || "",
+      top3,
+      resultGrupo: Number.isFinite(Number(resultGrupo)) ? Number(resultGrupo) : null,
+      hit,
+      status: Number.isFinite(Number(resultGrupo)) ? "validated" : "pending",
+      historyStats,
+    });
+
+    if (currentDraw) {
+      chainContextDraws.push(currentDraw);
+    } else {
+      pendingPredictionAlreadyShown = true;
+    }
+  }
+
+  return timeline;
+
+}
+
+export function buildTimelineTop3(args) {
+  return buildTimelineForDate(args || {});
+}
+
+export function auditTop3Backtest({
+  drawsRange,
+  lotteryKey,
+  PT_RIO_SCHEDULE_NORMAL,
+  PT_RIO_SCHEDULE_WED_SAT,
+  FEDERAL_SCHEDULE,
+}) {
+  const range = Array.isArray(drawsRange) ? drawsRange : [];
+  const dates = Array.from(
+    new Set(
+      range
+        .map((d) => pickDrawYMD(d))
+        .filter((ymd) => isYMD(ymd))
+    )
+  ).sort();
+
+  const allTimeline = [];
+
+  for (const ymd of dates) {
+    const drawsToday = range.filter((d) => pickDrawYMD(d) === ymd);
+
+    const dayTimeline = buildTimelineForDate({
+      ymd,
+      drawsToday,
+      drawsRange: range,
+      lotteryKey,
+      PT_RIO_SCHEDULE_NORMAL,
+      PT_RIO_SCHEDULE_WED_SAT,
+      FEDERAL_SCHEDULE,
+    });
+
+    allTimeline.push(...(Array.isArray(dayTimeline) ? dayTimeline : []));
+  }
+
+  return auditTop3Timeline({
+    timeline: allTimeline,
+    lotteryKey,
+  });
+}
+
+
+====================================================================================================
+PADRÃO: resultGrupo
+====================================================================================================
+
+LINHA: 3906
+  return { dezenas: dezenasFixas, slots: slots.slice(0, N) };
+}
+
+export function build16MilharesForGrupo(args) {
+  return buildMilharesForGrupo({ ...(args || {}), count: 16 });
+}
+
+export function build20MilharesForGrupo(args) {
+  return buildMilharesForGrupo({ ...(args || {}), count: 20 });
+}
+
+/* =========================
+   TIMELINE DO DIA (CADEIA PREDITIVA)
+========================= */
+
+
+
+export function auditTop3Timeline({
+  timeline,
+  lotteryKey = "",
+}) {
+  const rows = Array.isArray(timeline) ? timeline : [];
+
+  const validated = rows.filter((slot) => {
+    const status = String(slot?.status || "").toLowerCase();
+    return status === "validated" && Number.isFinite(Number(slot?.resultGrupo));
+  });
+
+  const total = validated.length;
+
+  const top1Hits = validated.filter((slot) => {
+    const result = Number(slot.resultGrupo);
+    const first = Number(slot?.top3?.[0]?.grupo);
+    return Number.isFinite(first) && first === result;
+  }).length;
+
+  const top3Hits = validated.filter((slot) => {
+    const result = Number(slot.resultGrupo);
+    return (Array.isArray(slot?.top3) ? slot.top3 : [])
+      .slice(0, 3)
+      .some((item) => Number(item?.grupo) === result);
+  }).length;
+
+  function pct(n, d) {
+    if (!d) return 0;
+    return Number(((Number(n || 0) / Number(d || 1)) * 100).toFixed(2));
+  }
+
+  function groupBy(keyFn) {
+    const map = new Map();
+
+    for (const slot of validated) {
+      const key = keyFn(slot);
+      const current = map.get(key) || {
+        key,
+        total: 0,
+        top1Hits: 0,
+        top3Hits: 0,
+      };
+
+      const result = Number(slot.resultGrupo);
+      const first = Number(slot?.top3?.[0]?.grupo);
+      const picks = Array.isArray(slot?.top3) ? slot.top3.slice(0, 3) : [];
+
+      current.total += 1;
+      if (Number.isFinite(first) && first === result) current.top1Hits += 1;
+      if (picks.some((item) => Number(item?.grupo) === result)) current.top3Hits += 1;
+
+      map.set(key, current);
+    }
+
+    return Array.from(map.values())
+      .map((x) => ({
+        ...x,
+        top1Rate: pct(x.top1Hits, x.total),
+        top3Rate: pct(x.top3Hits, x.total),
+      }))
+      .sort((a, b) => {
+        if (b.top3Rate !== a.top3Rate) return b.top3Rate - a.top3Rate;
+        return b.total - a.total;
+      });
+  }
+
+  return {
+    lotteryKey,
+    total,
+    top1Hits,
+    top3Hits,
+    top1Rate: pct(top1Hits, total),
+    top3Rate: pct(top3Hits, total),
+    byHour: groupBy((slot) => String(slot?.targetHour || "")),
+    byDate: groupBy((slot) => String(slot?.targetYmd || "")),
+    rows: validated.map((slot) => ({
+      ymd: slot.targetYmd,
+      hour: slot.targetHour,
+      baseYmd: slot.baseYmd,
+      baseHour: slot.baseHour,
+      resultGrupo: slot.resultGrupo,
+      top3: (Array.isArray(slot.top3) ? slot.top3 : [])
+        .slice(0, 3)
+        .map((x) => Number(x?.grupo)),
+      top1Hit:
+        Number(slot?.top3?.[0]?.grupo) === Number(slot.resultGrupo),
+      top3Hit: (Array.isArray(slot.top3) ? slot.top3 : [])
+        .slice(0, 3)
+        .some((x) => Number(x?.grupo) === Number(slot.resultGrupo)),
+
+LINHA: 3912
+
+export function build20MilharesForGrupo(args) {
+  return buildMilharesForGrupo({ ...(args || {}), count: 20 });
+}
+
+/* =========================
+   TIMELINE DO DIA (CADEIA PREDITIVA)
+========================= */
+
+
+
+export function auditTop3Timeline({
+  timeline,
+  lotteryKey = "",
+}) {
+  const rows = Array.isArray(timeline) ? timeline : [];
+
+  const validated = rows.filter((slot) => {
+    const status = String(slot?.status || "").toLowerCase();
+    return status === "validated" && Number.isFinite(Number(slot?.resultGrupo));
+  });
+
+  const total = validated.length;
+
+  const top1Hits = validated.filter((slot) => {
+    const result = Number(slot.resultGrupo);
+    const first = Number(slot?.top3?.[0]?.grupo);
+    return Number.isFinite(first) && first === result;
+  }).length;
+
+  const top3Hits = validated.filter((slot) => {
+    const result = Number(slot.resultGrupo);
+    return (Array.isArray(slot?.top3) ? slot.top3 : [])
+      .slice(0, 3)
+      .some((item) => Number(item?.grupo) === result);
+  }).length;
+
+  function pct(n, d) {
+    if (!d) return 0;
+    return Number(((Number(n || 0) / Number(d || 1)) * 100).toFixed(2));
+  }
+
+  function groupBy(keyFn) {
+    const map = new Map();
+
+    for (const slot of validated) {
+      const key = keyFn(slot);
+      const current = map.get(key) || {
+        key,
+        total: 0,
+        top1Hits: 0,
+        top3Hits: 0,
+      };
+
+      const result = Number(slot.resultGrupo);
+      const first = Number(slot?.top3?.[0]?.grupo);
+      const picks = Array.isArray(slot?.top3) ? slot.top3.slice(0, 3) : [];
+
+      current.total += 1;
+      if (Number.isFinite(first) && first === result) current.top1Hits += 1;
+      if (picks.some((item) => Number(item?.grupo) === result)) current.top3Hits += 1;
+
+      map.set(key, current);
+    }
+
+    return Array.from(map.values())
+      .map((x) => ({
+        ...x,
+        top1Rate: pct(x.top1Hits, x.total),
+        top3Rate: pct(x.top3Hits, x.total),
+      }))
+      .sort((a, b) => {
+        if (b.top3Rate !== a.top3Rate) return b.top3Rate - a.top3Rate;
+        return b.total - a.total;
+      });
+  }
+
+  return {
+    lotteryKey,
+    total,
+    top1Hits,
+    top3Hits,
+    top1Rate: pct(top1Hits, total),
+    top3Rate: pct(top3Hits, total),
+    byHour: groupBy((slot) => String(slot?.targetHour || "")),
+    byDate: groupBy((slot) => String(slot?.targetYmd || "")),
+    rows: validated.map((slot) => ({
+      ymd: slot.targetYmd,
+      hour: slot.targetHour,
+      baseYmd: slot.baseYmd,
+      baseHour: slot.baseHour,
+      resultGrupo: slot.resultGrupo,
+      top3: (Array.isArray(slot.top3) ? slot.top3 : [])
+        .slice(0, 3)
+        .map((x) => Number(x?.grupo)),
+      top1Hit:
+        Number(slot?.top3?.[0]?.grupo) === Number(slot.resultGrupo),
+      top3Hit: (Array.isArray(slot.top3) ? slot.top3 : [])
+        .slice(0, 3)
+        .some((x) => Number(x?.grupo) === Number(slot.resultGrupo)),
+      historyStats: slot.historyStats || null,
+    })),
+  };
+}
+
+
+
+LINHA: 3918
+   TIMELINE DO DIA (CADEIA PREDITIVA)
+========================= */
+
+
+
+export function auditTop3Timeline({
+  timeline,
+  lotteryKey = "",
+}) {
+  const rows = Array.isArray(timeline) ? timeline : [];
+
+  const validated = rows.filter((slot) => {
+    const status = String(slot?.status || "").toLowerCase();
+    return status === "validated" && Number.isFinite(Number(slot?.resultGrupo));
+  });
+
+  const total = validated.length;
+
+  const top1Hits = validated.filter((slot) => {
+    const result = Number(slot.resultGrupo);
+    const first = Number(slot?.top3?.[0]?.grupo);
+    return Number.isFinite(first) && first === result;
+  }).length;
+
+  const top3Hits = validated.filter((slot) => {
+    const result = Number(slot.resultGrupo);
+    return (Array.isArray(slot?.top3) ? slot.top3 : [])
+      .slice(0, 3)
+      .some((item) => Number(item?.grupo) === result);
+  }).length;
+
+  function pct(n, d) {
+    if (!d) return 0;
+    return Number(((Number(n || 0) / Number(d || 1)) * 100).toFixed(2));
+  }
+
+  function groupBy(keyFn) {
+    const map = new Map();
+
+    for (const slot of validated) {
+      const key = keyFn(slot);
+      const current = map.get(key) || {
+        key,
+        total: 0,
+        top1Hits: 0,
+        top3Hits: 0,
+      };
+
+      const result = Number(slot.resultGrupo);
+      const first = Number(slot?.top3?.[0]?.grupo);
+      const picks = Array.isArray(slot?.top3) ? slot.top3.slice(0, 3) : [];
+
+      current.total += 1;
+      if (Number.isFinite(first) && first === result) current.top1Hits += 1;
+      if (picks.some((item) => Number(item?.grupo) === result)) current.top3Hits += 1;
+
+      map.set(key, current);
+    }
+
+    return Array.from(map.values())
+      .map((x) => ({
+        ...x,
+        top1Rate: pct(x.top1Hits, x.total),
+        top3Rate: pct(x.top3Hits, x.total),
+      }))
+      .sort((a, b) => {
+        if (b.top3Rate !== a.top3Rate) return b.top3Rate - a.top3Rate;
+        return b.total - a.total;
+      });
+  }
+
+  return {
+    lotteryKey,
+    total,
+    top1Hits,
+    top3Hits,
+    top1Rate: pct(top1Hits, total),
+    top3Rate: pct(top3Hits, total),
+    byHour: groupBy((slot) => String(slot?.targetHour || "")),
+    byDate: groupBy((slot) => String(slot?.targetYmd || "")),
+    rows: validated.map((slot) => ({
+      ymd: slot.targetYmd,
+      hour: slot.targetHour,
+      baseYmd: slot.baseYmd,
+      baseHour: slot.baseHour,
+      resultGrupo: slot.resultGrupo,
+      top3: (Array.isArray(slot.top3) ? slot.top3 : [])
+        .slice(0, 3)
+        .map((x) => Number(x?.grupo)),
+      top1Hit:
+        Number(slot?.top3?.[0]?.grupo) === Number(slot.resultGrupo),
+      top3Hit: (Array.isArray(slot.top3) ? slot.top3 : [])
+        .slice(0, 3)
+        .some((x) => Number(x?.grupo) === Number(slot.resultGrupo)),
+      historyStats: slot.historyStats || null,
+    })),
+  };
+}
+
+
+function buildTimelineForDate({
+  ymd,
+  drawsToday,
+  drawsRange,
+  lotteryKey,
+  PT_RIO_SCHEDULE_NORMAL,
+
+LINHA: 3941
+
+  const top3Hits = validated.filter((slot) => {
+    const result = Number(slot.resultGrupo);
+    return (Array.isArray(slot?.top3) ? slot.top3 : [])
+      .slice(0, 3)
+      .some((item) => Number(item?.grupo) === result);
+  }).length;
+
+  function pct(n, d) {
+    if (!d) return 0;
+    return Number(((Number(n || 0) / Number(d || 1)) * 100).toFixed(2));
+  }
+
+  function groupBy(keyFn) {
+    const map = new Map();
+
+    for (const slot of validated) {
+      const key = keyFn(slot);
+      const current = map.get(key) || {
+        key,
+        total: 0,
+        top1Hits: 0,
+        top3Hits: 0,
+      };
+
+      const result = Number(slot.resultGrupo);
+      const first = Number(slot?.top3?.[0]?.grupo);
+      const picks = Array.isArray(slot?.top3) ? slot.top3.slice(0, 3) : [];
+
+      current.total += 1;
+      if (Number.isFinite(first) && first === result) current.top1Hits += 1;
+      if (picks.some((item) => Number(item?.grupo) === result)) current.top3Hits += 1;
+
+      map.set(key, current);
+    }
+
+    return Array.from(map.values())
+      .map((x) => ({
+        ...x,
+        top1Rate: pct(x.top1Hits, x.total),
+        top3Rate: pct(x.top3Hits, x.total),
+      }))
+      .sort((a, b) => {
+        if (b.top3Rate !== a.top3Rate) return b.top3Rate - a.top3Rate;
+        return b.total - a.total;
+      });
+  }
+
+  return {
+    lotteryKey,
+    total,
+    top1Hits,
+    top3Hits,
+    top1Rate: pct(top1Hits, total),
+    top3Rate: pct(top3Hits, total),
+    byHour: groupBy((slot) => String(slot?.targetHour || "")),
+    byDate: groupBy((slot) => String(slot?.targetYmd || "")),
+    rows: validated.map((slot) => ({
+      ymd: slot.targetYmd,
+      hour: slot.targetHour,
+      baseYmd: slot.baseYmd,
+      baseHour: slot.baseHour,
+      resultGrupo: slot.resultGrupo,
+      top3: (Array.isArray(slot.top3) ? slot.top3 : [])
+        .slice(0, 3)
+        .map((x) => Number(x?.grupo)),
+      top1Hit:
+        Number(slot?.top3?.[0]?.grupo) === Number(slot.resultGrupo),
+      top3Hit: (Array.isArray(slot.top3) ? slot.top3 : [])
+        .slice(0, 3)
+        .some((x) => Number(x?.grupo) === Number(slot.resultGrupo)),
+      historyStats: slot.historyStats || null,
+    })),
+  };
+}
+
+
+function buildTimelineForDate({
+  ymd,
+  drawsToday,
+  drawsRange,
+  lotteryKey,
+  PT_RIO_SCHEDULE_NORMAL,
+  PT_RIO_SCHEDULE_WED_SAT,
+  FEDERAL_SCHEDULE,
+}) {
+  const targetYmd = safeStr(ymd);
+  const day = Array.isArray(drawsToday) ? [...drawsToday] : [];
+  const range = Array.isArray(drawsRange) ? [...drawsRange] : [];
+
+  if (!isYMD(targetYmd) || !range.length) return [];
+
+  const schedule = getScheduleForLottery({
+    lotteryKey,
+    ymd: targetYmd,
+    PT_RIO_SCHEDULE_NORMAL,
+    PT_RIO_SCHEDULE_WED_SAT,
+    FEDERAL_SCHEDULE,
+  });
+
+  const normalizedSchedule = (Array.isArray(schedule) ? schedule : [])
+    .map(toHourBucket)
+    .filter(Boolean);
+
+  if (!normalizedSchedule.length) return [];
+
+
+LINHA: 3978
+      .map((x) => ({
+        ...x,
+        top1Rate: pct(x.top1Hits, x.total),
+        top3Rate: pct(x.top3Hits, x.total),
+      }))
+      .sort((a, b) => {
+        if (b.top3Rate !== a.top3Rate) return b.top3Rate - a.top3Rate;
+        return b.total - a.total;
+      });
+  }
+
+  return {
+    lotteryKey,
+    total,
+    top1Hits,
+    top3Hits,
+    top1Rate: pct(top1Hits, total),
+    top3Rate: pct(top3Hits, total),
+    byHour: groupBy((slot) => String(slot?.targetHour || "")),
+    byDate: groupBy((slot) => String(slot?.targetYmd || "")),
+    rows: validated.map((slot) => ({
+      ymd: slot.targetYmd,
+      hour: slot.targetHour,
+      baseYmd: slot.baseYmd,
+      baseHour: slot.baseHour,
+      resultGrupo: slot.resultGrupo,
+      top3: (Array.isArray(slot.top3) ? slot.top3 : [])
+        .slice(0, 3)
+        .map((x) => Number(x?.grupo)),
+      top1Hit:
+        Number(slot?.top3?.[0]?.grupo) === Number(slot.resultGrupo),
+      top3Hit: (Array.isArray(slot.top3) ? slot.top3 : [])
+        .slice(0, 3)
+        .some((x) => Number(x?.grupo) === Number(slot.resultGrupo)),
+      historyStats: slot.historyStats || null,
+    })),
+  };
+}
+
+
+function buildTimelineForDate({
+  ymd,
+  drawsToday,
+  drawsRange,
+  lotteryKey,
+  PT_RIO_SCHEDULE_NORMAL,
+  PT_RIO_SCHEDULE_WED_SAT,
+  FEDERAL_SCHEDULE,
+}) {
+  const targetYmd = safeStr(ymd);
+  const day = Array.isArray(drawsToday) ? [...drawsToday] : [];
+  const range = Array.isArray(drawsRange) ? [...drawsRange] : [];
+
+  if (!isYMD(targetYmd) || !range.length) return [];
+
+  const schedule = getScheduleForLottery({
+    lotteryKey,
+    ymd: targetYmd,
+    PT_RIO_SCHEDULE_NORMAL,
+    PT_RIO_SCHEDULE_WED_SAT,
+    FEDERAL_SCHEDULE,
+  });
+
+  const normalizedSchedule = (Array.isArray(schedule) ? schedule : [])
+    .map(toHourBucket)
+    .filter(Boolean);
+
+  if (!normalizedSchedule.length) return [];
+
+  const daySorted = day
+    .filter((d) => isYMD(pickDrawYMD(d)) && toHourBucket(pickDrawHour(d)))
+    .sort((a, b) => {
+      const ta = ymdHourToTs(pickDrawYMD(a), toHourBucket(pickDrawHour(a)));
+      const tb = ymdHourToTs(pickDrawYMD(b), toHourBucket(pickDrawHour(b)));
+      return ta - tb;
+    });
+
+  const rangeSorted = range
+    .filter((d) => isYMD(pickDrawYMD(d)) && toHourBucket(pickDrawHour(d)))
+    .sort((a, b) => {
+      const ta = ymdHourToTs(pickDrawYMD(a), toHourBucket(pickDrawHour(a)));
+      const tb = ymdHourToTs(pickDrawYMD(b), toHourBucket(pickDrawHour(b)));
+      return ta - tb;
+    });
+
+  const realizedTodayMap = new Map();
+
+  for (const d of daySorted) {
+    const y = pickDrawYMD(d);
+    const h = toHourBucket(pickDrawHour(d));
+    if (!isYMD(y) || !h) continue;
+    if (y !== targetYmd) continue;
+    realizedTodayMap.set(`${y}|${h}`, d);
+  }
+
+
+  const chainContextDraws = [];
+  const timeline = [];
+  let pendingPredictionAlreadyShown = false;
+
+  for (const slotHour of normalizedSchedule) {
+    const currentDraw = realizedTodayMap.get(`${targetYmd}|${slotHour}`) || null;
+    const slotTs = ymdHourToTs(targetYmd, slotHour);
+
+
+    if (!currentDraw && pendingPredictionAlreadyShown) {
+
+LINHA: 3983
+      .sort((a, b) => {
+        if (b.top3Rate !== a.top3Rate) return b.top3Rate - a.top3Rate;
+        return b.total - a.total;
+      });
+  }
+
+  return {
+    lotteryKey,
+    total,
+    top1Hits,
+    top3Hits,
+    top1Rate: pct(top1Hits, total),
+    top3Rate: pct(top3Hits, total),
+    byHour: groupBy((slot) => String(slot?.targetHour || "")),
+    byDate: groupBy((slot) => String(slot?.targetYmd || "")),
+    rows: validated.map((slot) => ({
+      ymd: slot.targetYmd,
+      hour: slot.targetHour,
+      baseYmd: slot.baseYmd,
+      baseHour: slot.baseHour,
+      resultGrupo: slot.resultGrupo,
+      top3: (Array.isArray(slot.top3) ? slot.top3 : [])
+        .slice(0, 3)
+        .map((x) => Number(x?.grupo)),
+      top1Hit:
+        Number(slot?.top3?.[0]?.grupo) === Number(slot.resultGrupo),
+      top3Hit: (Array.isArray(slot.top3) ? slot.top3 : [])
+        .slice(0, 3)
+        .some((x) => Number(x?.grupo) === Number(slot.resultGrupo)),
+      historyStats: slot.historyStats || null,
+    })),
+  };
+}
+
+
+function buildTimelineForDate({
+  ymd,
+  drawsToday,
+  drawsRange,
+  lotteryKey,
+  PT_RIO_SCHEDULE_NORMAL,
+  PT_RIO_SCHEDULE_WED_SAT,
+  FEDERAL_SCHEDULE,
+}) {
+  const targetYmd = safeStr(ymd);
+  const day = Array.isArray(drawsToday) ? [...drawsToday] : [];
+  const range = Array.isArray(drawsRange) ? [...drawsRange] : [];
+
+  if (!isYMD(targetYmd) || !range.length) return [];
+
+  const schedule = getScheduleForLottery({
+    lotteryKey,
+    ymd: targetYmd,
+    PT_RIO_SCHEDULE_NORMAL,
+    PT_RIO_SCHEDULE_WED_SAT,
+    FEDERAL_SCHEDULE,
+  });
+
+  const normalizedSchedule = (Array.isArray(schedule) ? schedule : [])
+    .map(toHourBucket)
+    .filter(Boolean);
+
+  if (!normalizedSchedule.length) return [];
+
+  const daySorted = day
+    .filter((d) => isYMD(pickDrawYMD(d)) && toHourBucket(pickDrawHour(d)))
+    .sort((a, b) => {
+      const ta = ymdHourToTs(pickDrawYMD(a), toHourBucket(pickDrawHour(a)));
+      const tb = ymdHourToTs(pickDrawYMD(b), toHourBucket(pickDrawHour(b)));
+      return ta - tb;
+    });
+
+  const rangeSorted = range
+    .filter((d) => isYMD(pickDrawYMD(d)) && toHourBucket(pickDrawHour(d)))
+    .sort((a, b) => {
+      const ta = ymdHourToTs(pickDrawYMD(a), toHourBucket(pickDrawHour(a)));
+      const tb = ymdHourToTs(pickDrawYMD(b), toHourBucket(pickDrawHour(b)));
+      return ta - tb;
+    });
+
+  const realizedTodayMap = new Map();
+
+  for (const d of daySorted) {
+    const y = pickDrawYMD(d);
+    const h = toHourBucket(pickDrawHour(d));
+    if (!isYMD(y) || !h) continue;
+    if (y !== targetYmd) continue;
+    realizedTodayMap.set(`${y}|${h}`, d);
+  }
+
+
+  const chainContextDraws = [];
+  const timeline = [];
+  let pendingPredictionAlreadyShown = false;
+
+  for (const slotHour of normalizedSchedule) {
+    const currentDraw = realizedTodayMap.get(`${targetYmd}|${slotHour}`) || null;
+    const slotTs = ymdHourToTs(targetYmd, slotHour);
+
+
+    if (!currentDraw && pendingPredictionAlreadyShown) {
+      timeline.push({
+        targetYmd,
+        targetHour: slotHour,
+        baseYmd: "",
+        baseHour: "",
+
+LINHA: 3986
+      });
+  }
+
+  return {
+    lotteryKey,
+    total,
+    top1Hits,
+    top3Hits,
+    top1Rate: pct(top1Hits, total),
+    top3Rate: pct(top3Hits, total),
+    byHour: groupBy((slot) => String(slot?.targetHour || "")),
+    byDate: groupBy((slot) => String(slot?.targetYmd || "")),
+    rows: validated.map((slot) => ({
+      ymd: slot.targetYmd,
+      hour: slot.targetHour,
+      baseYmd: slot.baseYmd,
+      baseHour: slot.baseHour,
+      resultGrupo: slot.resultGrupo,
+      top3: (Array.isArray(slot.top3) ? slot.top3 : [])
+        .slice(0, 3)
+        .map((x) => Number(x?.grupo)),
+      top1Hit:
+        Number(slot?.top3?.[0]?.grupo) === Number(slot.resultGrupo),
+      top3Hit: (Array.isArray(slot.top3) ? slot.top3 : [])
+        .slice(0, 3)
+        .some((x) => Number(x?.grupo) === Number(slot.resultGrupo)),
+      historyStats: slot.historyStats || null,
+    })),
+  };
+}
+
+
+function buildTimelineForDate({
+  ymd,
+  drawsToday,
+  drawsRange,
+  lotteryKey,
+  PT_RIO_SCHEDULE_NORMAL,
+  PT_RIO_SCHEDULE_WED_SAT,
+  FEDERAL_SCHEDULE,
+}) {
+  const targetYmd = safeStr(ymd);
+  const day = Array.isArray(drawsToday) ? [...drawsToday] : [];
+  const range = Array.isArray(drawsRange) ? [...drawsRange] : [];
+
+  if (!isYMD(targetYmd) || !range.length) return [];
+
+  const schedule = getScheduleForLottery({
+    lotteryKey,
+    ymd: targetYmd,
+    PT_RIO_SCHEDULE_NORMAL,
+    PT_RIO_SCHEDULE_WED_SAT,
+    FEDERAL_SCHEDULE,
+  });
+
+  const normalizedSchedule = (Array.isArray(schedule) ? schedule : [])
+    .map(toHourBucket)
+    .filter(Boolean);
+
+  if (!normalizedSchedule.length) return [];
+
+  const daySorted = day
+    .filter((d) => isYMD(pickDrawYMD(d)) && toHourBucket(pickDrawHour(d)))
+    .sort((a, b) => {
+      const ta = ymdHourToTs(pickDrawYMD(a), toHourBucket(pickDrawHour(a)));
+      const tb = ymdHourToTs(pickDrawYMD(b), toHourBucket(pickDrawHour(b)));
+      return ta - tb;
+    });
+
+  const rangeSorted = range
+    .filter((d) => isYMD(pickDrawYMD(d)) && toHourBucket(pickDrawHour(d)))
+    .sort((a, b) => {
+      const ta = ymdHourToTs(pickDrawYMD(a), toHourBucket(pickDrawHour(a)));
+      const tb = ymdHourToTs(pickDrawYMD(b), toHourBucket(pickDrawHour(b)));
+      return ta - tb;
+    });
+
+  const realizedTodayMap = new Map();
+
+  for (const d of daySorted) {
+    const y = pickDrawYMD(d);
+    const h = toHourBucket(pickDrawHour(d));
+    if (!isYMD(y) || !h) continue;
+    if (y !== targetYmd) continue;
+    realizedTodayMap.set(`${y}|${h}`, d);
+  }
+
+
+  const chainContextDraws = [];
+  const timeline = [];
+  let pendingPredictionAlreadyShown = false;
+
+  for (const slotHour of normalizedSchedule) {
+    const currentDraw = realizedTodayMap.get(`${targetYmd}|${slotHour}`) || null;
+    const slotTs = ymdHourToTs(targetYmd, slotHour);
+
+
+    if (!currentDraw && pendingPredictionAlreadyShown) {
+      timeline.push({
+        targetYmd,
+        targetHour: slotHour,
+        baseYmd: "",
+        baseHour: "",
+        top3: [],
+        resultGrupo: null,
+        hit: null,
+
+LINHA: 4065
+  for (const d of daySorted) {
+    const y = pickDrawYMD(d);
+    const h = toHourBucket(pickDrawHour(d));
+    if (!isYMD(y) || !h) continue;
+    if (y !== targetYmd) continue;
+    realizedTodayMap.set(`${y}|${h}`, d);
+  }
+
+
+  const chainContextDraws = [];
+  const timeline = [];
+  let pendingPredictionAlreadyShown = false;
+
+  for (const slotHour of normalizedSchedule) {
+    const currentDraw = realizedTodayMap.get(`${targetYmd}|${slotHour}`) || null;
+    const slotTs = ymdHourToTs(targetYmd, slotHour);
+
+
+    if (!currentDraw && pendingPredictionAlreadyShown) {
+      timeline.push({
+        targetYmd,
+        targetHour: slotHour,
+        baseYmd: "",
+        baseHour: "",
+        top3: [],
+        resultGrupo: null,
+        hit: null,
+        status: "pending",
+      });
+      continue;
+    }
+
+    let baseDraw = null;
+
+    const priorChainDraw = [...chainContextDraws]
+      .filter((d) => {
+        const y = pickDrawYMD(d);
+        const h = toHourBucket(pickDrawHour(d));
+        const ts = ymdHourToTs(y, h);
+        return isYMD(y) && h && Number.isFinite(ts) && ts < slotTs;
+      })
+      .sort((a, b) => {
+        const ta = ymdHourToTs(pickDrawYMD(a), toHourBucket(pickDrawHour(a)));
+        const tb = ymdHourToTs(pickDrawYMD(b), toHourBucket(pickDrawHour(b)));
+        return tb - ta;
+      })[0] || null;
+
+    if (priorChainDraw) baseDraw = priorChainDraw;
+
+    if (!baseDraw) {
+      const prevSameDay = daySorted
+        .filter((d) => {
+          const y = pickDrawYMD(d);
+          const h = toHourBucket(pickDrawHour(d));
+          const ts = ymdHourToTs(y, h);
+          return y === targetYmd && h && Number.isFinite(ts) && ts < slotTs;
+        })
+        .sort((a, b) => {
+          const ta = ymdHourToTs(pickDrawYMD(a), toHourBucket(pickDrawHour(a)));
+          const tb = ymdHourToTs(pickDrawYMD(b), toHourBucket(pickDrawHour(b)));
+          return tb - ta;
+        })[0] || null;
+
+      if (prevSameDay) baseDraw = prevSameDay;
+    }
+
+    if (!baseDraw) {
+      for (let i = rangeSorted.length - 1; i >= 0; i -= 1) {
+        const d = rangeSorted[i];
+        const y = pickDrawYMD(d);
+        const h = toHourBucket(pickDrawHour(d));
+        const ts = ymdHourToTs(y, h);
+
+        if (!Number.isFinite(ts) || ts >= slotTs) continue;
+
+        baseDraw = d;
+        break;
+      }
+    }
+
+    if (!baseDraw) {
+      baseDraw = findPreviousValidDraw(rangeSorted, targetYmd, slotHour);
+    }
+
+    if (!baseDraw) {
+      timeline.push({
+        targetYmd,
+        targetHour: slotHour,
+        baseYmd: "",
+        baseHour: "",
+        top3: [],
+        resultGrupo: null,
+        hit: null,
+        status: "pending",
+      });
+      continue;
+    }
+
+    const baseTs = ymdHourToTs(
+      pickDrawYMD(baseDraw),
+      toHourBucket(pickDrawHour(baseDraw))
+    );
+
+    const usableHistory = rangeSorted.filter((d) => {
+      const ts = ymdHourToTs(
+        pickDrawYMD(d),
+
+LINHA: 4131
+    if (!baseDraw) {
+      for (let i = rangeSorted.length - 1; i >= 0; i -= 1) {
+        const d = rangeSorted[i];
+        const y = pickDrawYMD(d);
+        const h = toHourBucket(pickDrawHour(d));
+        const ts = ymdHourToTs(y, h);
+
+        if (!Number.isFinite(ts) || ts >= slotTs) continue;
+
+        baseDraw = d;
+        break;
+      }
+    }
+
+    if (!baseDraw) {
+      baseDraw = findPreviousValidDraw(rangeSorted, targetYmd, slotHour);
+    }
+
+    if (!baseDraw) {
+      timeline.push({
+        targetYmd,
+        targetHour: slotHour,
+        baseYmd: "",
+        baseHour: "",
+        top3: [],
+        resultGrupo: null,
+        hit: null,
+        status: "pending",
+      });
+      continue;
+    }
+
+    const baseTs = ymdHourToTs(
+      pickDrawYMD(baseDraw),
+      toHourBucket(pickDrawHour(baseDraw))
+    );
+
+    const usableHistory = rangeSorted.filter((d) => {
+      const ts = ymdHourToTs(
+        pickDrawYMD(d),
+        toHourBucket(pickDrawHour(d))
+      );
+      return Number.isFinite(ts) && ts <= baseTs;
+    });
+
+    const historyStats = (() => {
+      const MS_DAY = 24 * 60 * 60 * 1000;
+
+      let d30 = 0;
+      let d90 = 0;
+      let d180 = 0;
+      let d365 = 0;
+
+      for (const historicalDraw of usableHistory) {
+        const historicalTs = ymdHourToTs(
+          pickDrawYMD(historicalDraw),
+          toHourBucket(pickDrawHour(historicalDraw))
+        );
+
+        if (!Number.isFinite(historicalTs)) continue;
+
+        const diffDays = (baseTs - historicalTs) / MS_DAY;
+
+        if (diffDays >= 0 && diffDays <= 30) d30 += 1;
+        if (diffDays >= 0 && diffDays <= 90) d90 += 1;
+        if (diffDays >= 0 && diffDays <= 180) d180 += 1;
+        if (diffDays >= 0 && diffDays <= 365) d365 += 1;
+      }
+
+      return {
+        total: usableHistory.length,
+        d30,
+        d90,
+        d180,
+        d365,
+      };
+    })();
+
+    const usableTodayContext = [...chainContextDraws]
+      .filter((d) => {
+        const ts = ymdHourToTs(
+          pickDrawYMD(d),
+          toHourBucket(pickDrawHour(d))
+        );
+        return Number.isFinite(ts) && ts <= baseTs;
+      })
+      .sort((a, b) => {
+        const ta = ymdHourToTs(pickDrawYMD(a), toHourBucket(pickDrawHour(a)));
+        const tb = ymdHourToTs(pickDrawYMD(b), toHourBucket(pickDrawHour(b)));
+        return ta - tb;
+      });
+
+    const computed = computeStatisticalTop3V3({
+      lotteryKey,
+      drawsRange: [...usableHistory, ...usableTodayContext],
+      drawLast: baseDraw,
+      drawsToday: usableTodayContext,
+      PT_RIO_SCHEDULE_NORMAL,
+      PT_RIO_SCHEDULE_WED_SAT,
+      FEDERAL_SCHEDULE,
+      topN: 3,
+      targetYmdOverride: targetYmd,
+      targetHourOverride: slotHour,
+    });
+
+
+
+LINHA: 4222
+
+    const computed = computeStatisticalTop3V3({
+      lotteryKey,
+      drawsRange: [...usableHistory, ...usableTodayContext],
+      drawLast: baseDraw,
+      drawsToday: usableTodayContext,
+      PT_RIO_SCHEDULE_NORMAL,
+      PT_RIO_SCHEDULE_WED_SAT,
+      FEDERAL_SCHEDULE,
+      topN: 3,
+      targetYmdOverride: targetYmd,
+      targetHourOverride: slotHour,
+    });
+
+
+    const computedNextYmd = safeStr(computed?.meta?.next?.ymd || "");
+    const computedNextHour = toHourBucket(computed?.meta?.next?.hour || "");
+    const computedForSlot =
+      computedNextYmd === targetYmd && computedNextHour === slotHour;
+
+    const top3 =
+      computedForSlot && Array.isArray(computed?.top)
+        ? computed.top.slice(0, 3)
+        : [];
+
+    const resultGrupo = currentDraw ? pickPrize1GrupoFromDraw(currentDraw) : null;
+
+    const hit =
+      Number.isFinite(Number(resultGrupo)) && top3.length
+        ? top3.some((t) => Number(t?.grupo) === Number(resultGrupo))
+        : null;
+
+    timeline.push({
+      targetYmd,
+      targetHour: slotHour,
+      baseYmd: pickDrawYMD(baseDraw) || "",
+      baseHour: toHourBucket(pickDrawHour(baseDraw)) || "",
+      top3,
+      resultGrupo: Number.isFinite(Number(resultGrupo)) ? Number(resultGrupo) : null,
+      hit,
+      status: Number.isFinite(Number(resultGrupo)) ? "validated" : "pending",
+      historyStats,
+    });
+
+    if (currentDraw) {
+      chainContextDraws.push(currentDraw);
+    } else {
+      pendingPredictionAlreadyShown = true;
+    }
+  }
+
+  return timeline;
+
+}
+
+export function buildTimelineTop3(args) {
+  return buildTimelineForDate(args || {});
+}
+
+export function auditTop3Backtest({
+  drawsRange,
+  lotteryKey,
+  PT_RIO_SCHEDULE_NORMAL,
+  PT_RIO_SCHEDULE_WED_SAT,
+  FEDERAL_SCHEDULE,
+}) {
+  const range = Array.isArray(drawsRange) ? drawsRange : [];
+  const dates = Array.from(
+    new Set(
+      range
+        .map((d) => pickDrawYMD(d))
+        .filter((ymd) => isYMD(ymd))
+    )
+  ).sort();
+
+  const allTimeline = [];
+
+  for (const ymd of dates) {
+    const drawsToday = range.filter((d) => pickDrawYMD(d) === ymd);
+
+    const dayTimeline = buildTimelineForDate({
+      ymd,
+      drawsToday,
+      drawsRange: range,
+      lotteryKey,
+      PT_RIO_SCHEDULE_NORMAL,
+      PT_RIO_SCHEDULE_WED_SAT,
+      FEDERAL_SCHEDULE,
+    });
+
+    allTimeline.push(...(Array.isArray(dayTimeline) ? dayTimeline : []));
+  }
+
+  return auditTop3Timeline({
+    timeline: allTimeline,
+    lotteryKey,
+  });
+}
+
+LINHA: 4225
+      drawsRange: [...usableHistory, ...usableTodayContext],
+      drawLast: baseDraw,
+      drawsToday: usableTodayContext,
+      PT_RIO_SCHEDULE_NORMAL,
+      PT_RIO_SCHEDULE_WED_SAT,
+      FEDERAL_SCHEDULE,
+      topN: 3,
+      targetYmdOverride: targetYmd,
+      targetHourOverride: slotHour,
+    });
+
+
+    const computedNextYmd = safeStr(computed?.meta?.next?.ymd || "");
+    const computedNextHour = toHourBucket(computed?.meta?.next?.hour || "");
+    const computedForSlot =
+      computedNextYmd === targetYmd && computedNextHour === slotHour;
+
+    const top3 =
+      computedForSlot && Array.isArray(computed?.top)
+        ? computed.top.slice(0, 3)
+        : [];
+
+    const resultGrupo = currentDraw ? pickPrize1GrupoFromDraw(currentDraw) : null;
+
+    const hit =
+      Number.isFinite(Number(resultGrupo)) && top3.length
+        ? top3.some((t) => Number(t?.grupo) === Number(resultGrupo))
+        : null;
+
+    timeline.push({
+      targetYmd,
+      targetHour: slotHour,
+      baseYmd: pickDrawYMD(baseDraw) || "",
+      baseHour: toHourBucket(pickDrawHour(baseDraw)) || "",
+      top3,
+      resultGrupo: Number.isFinite(Number(resultGrupo)) ? Number(resultGrupo) : null,
+      hit,
+      status: Number.isFinite(Number(resultGrupo)) ? "validated" : "pending",
+      historyStats,
+    });
+
+    if (currentDraw) {
+      chainContextDraws.push(currentDraw);
+    } else {
+      pendingPredictionAlreadyShown = true;
+    }
+  }
+
+  return timeline;
+
+}
+
+export function buildTimelineTop3(args) {
+  return buildTimelineForDate(args || {});
+}
+
+export function auditTop3Backtest({
+  drawsRange,
+  lotteryKey,
+  PT_RIO_SCHEDULE_NORMAL,
+  PT_RIO_SCHEDULE_WED_SAT,
+  FEDERAL_SCHEDULE,
+}) {
+  const range = Array.isArray(drawsRange) ? drawsRange : [];
+  const dates = Array.from(
+    new Set(
+      range
+        .map((d) => pickDrawYMD(d))
+        .filter((ymd) => isYMD(ymd))
+    )
+  ).sort();
+
+  const allTimeline = [];
+
+  for (const ymd of dates) {
+    const drawsToday = range.filter((d) => pickDrawYMD(d) === ymd);
+
+    const dayTimeline = buildTimelineForDate({
+      ymd,
+      drawsToday,
+      drawsRange: range,
+      lotteryKey,
+      PT_RIO_SCHEDULE_NORMAL,
+      PT_RIO_SCHEDULE_WED_SAT,
+      FEDERAL_SCHEDULE,
+    });
+
+    allTimeline.push(...(Array.isArray(dayTimeline) ? dayTimeline : []));
+  }
+
+  return auditTop3Timeline({
+    timeline: allTimeline,
+    lotteryKey,
+  });
+}
+
+LINHA: 4226
+      drawLast: baseDraw,
+      drawsToday: usableTodayContext,
+      PT_RIO_SCHEDULE_NORMAL,
+      PT_RIO_SCHEDULE_WED_SAT,
+      FEDERAL_SCHEDULE,
+      topN: 3,
+      targetYmdOverride: targetYmd,
+      targetHourOverride: slotHour,
+    });
+
+
+    const computedNextYmd = safeStr(computed?.meta?.next?.ymd || "");
+    const computedNextHour = toHourBucket(computed?.meta?.next?.hour || "");
+    const computedForSlot =
+      computedNextYmd === targetYmd && computedNextHour === slotHour;
+
+    const top3 =
+      computedForSlot && Array.isArray(computed?.top)
+        ? computed.top.slice(0, 3)
+        : [];
+
+    const resultGrupo = currentDraw ? pickPrize1GrupoFromDraw(currentDraw) : null;
+
+    const hit =
+      Number.isFinite(Number(resultGrupo)) && top3.length
+        ? top3.some((t) => Number(t?.grupo) === Number(resultGrupo))
+        : null;
+
+    timeline.push({
+      targetYmd,
+      targetHour: slotHour,
+      baseYmd: pickDrawYMD(baseDraw) || "",
+      baseHour: toHourBucket(pickDrawHour(baseDraw)) || "",
+      top3,
+      resultGrupo: Number.isFinite(Number(resultGrupo)) ? Number(resultGrupo) : null,
+      hit,
+      status: Number.isFinite(Number(resultGrupo)) ? "validated" : "pending",
+      historyStats,
+    });
+
+    if (currentDraw) {
+      chainContextDraws.push(currentDraw);
+    } else {
+      pendingPredictionAlreadyShown = true;
+    }
+  }
+
+  return timeline;
+
+}
+
+export function buildTimelineTop3(args) {
+  return buildTimelineForDate(args || {});
+}
+
+export function auditTop3Backtest({
+  drawsRange,
+  lotteryKey,
+  PT_RIO_SCHEDULE_NORMAL,
+  PT_RIO_SCHEDULE_WED_SAT,
+  FEDERAL_SCHEDULE,
+}) {
+  const range = Array.isArray(drawsRange) ? drawsRange : [];
+  const dates = Array.from(
+    new Set(
+      range
+        .map((d) => pickDrawYMD(d))
+        .filter((ymd) => isYMD(ymd))
+    )
+  ).sort();
+
+  const allTimeline = [];
+
+  for (const ymd of dates) {
+    const drawsToday = range.filter((d) => pickDrawYMD(d) === ymd);
+
+    const dayTimeline = buildTimelineForDate({
+      ymd,
+      drawsToday,
+      drawsRange: range,
+      lotteryKey,
+      PT_RIO_SCHEDULE_NORMAL,
+      PT_RIO_SCHEDULE_WED_SAT,
+      FEDERAL_SCHEDULE,
+    });
+
+    allTimeline.push(...(Array.isArray(dayTimeline) ? dayTimeline : []));
+  }
+
+  return auditTop3Timeline({
+    timeline: allTimeline,
+    lotteryKey,
+  });
+}
+
+LINHA: 4235
+
+
+    const computedNextYmd = safeStr(computed?.meta?.next?.ymd || "");
+    const computedNextHour = toHourBucket(computed?.meta?.next?.hour || "");
+    const computedForSlot =
+      computedNextYmd === targetYmd && computedNextHour === slotHour;
+
+    const top3 =
+      computedForSlot && Array.isArray(computed?.top)
+        ? computed.top.slice(0, 3)
+        : [];
+
+    const resultGrupo = currentDraw ? pickPrize1GrupoFromDraw(currentDraw) : null;
+
+    const hit =
+      Number.isFinite(Number(resultGrupo)) && top3.length
+        ? top3.some((t) => Number(t?.grupo) === Number(resultGrupo))
+        : null;
+
+    timeline.push({
+      targetYmd,
+      targetHour: slotHour,
+      baseYmd: pickDrawYMD(baseDraw) || "",
+      baseHour: toHourBucket(pickDrawHour(baseDraw)) || "",
+      top3,
+      resultGrupo: Number.isFinite(Number(resultGrupo)) ? Number(resultGrupo) : null,
+      hit,
+      status: Number.isFinite(Number(resultGrupo)) ? "validated" : "pending",
+      historyStats,
+    });
+
+    if (currentDraw) {
+      chainContextDraws.push(currentDraw);
+    } else {
+      pendingPredictionAlreadyShown = true;
+    }
+  }
+
+  return timeline;
+
+}
+
+export function buildTimelineTop3(args) {
+  return buildTimelineForDate(args || {});
+}
+
+export function auditTop3Backtest({
+  drawsRange,
+  lotteryKey,
+  PT_RIO_SCHEDULE_NORMAL,
+  PT_RIO_SCHEDULE_WED_SAT,
+  FEDERAL_SCHEDULE,
+}) {
+  const range = Array.isArray(drawsRange) ? drawsRange : [];
+  const dates = Array.from(
+    new Set(
+      range
+        .map((d) => pickDrawYMD(d))
+        .filter((ymd) => isYMD(ymd))
+    )
+  ).sort();
+
+  const allTimeline = [];
+
+  for (const ymd of dates) {
+    const drawsToday = range.filter((d) => pickDrawYMD(d) === ymd);
+
+    const dayTimeline = buildTimelineForDate({
+      ymd,
+      drawsToday,
+      drawsRange: range,
+      lotteryKey,
+      PT_RIO_SCHEDULE_NORMAL,
+      PT_RIO_SCHEDULE_WED_SAT,
+      FEDERAL_SCHEDULE,
+    });
+
+    allTimeline.push(...(Array.isArray(dayTimeline) ? dayTimeline : []));
+  }
+
+  return auditTop3Timeline({
+    timeline: allTimeline,
+    lotteryKey,
+  });
+}
+
+LINHA: 4237
+    const computedNextYmd = safeStr(computed?.meta?.next?.ymd || "");
+    const computedNextHour = toHourBucket(computed?.meta?.next?.hour || "");
+    const computedForSlot =
+      computedNextYmd === targetYmd && computedNextHour === slotHour;
+
+    const top3 =
+      computedForSlot && Array.isArray(computed?.top)
+        ? computed.top.slice(0, 3)
+        : [];
+
+    const resultGrupo = currentDraw ? pickPrize1GrupoFromDraw(currentDraw) : null;
+
+    const hit =
+      Number.isFinite(Number(resultGrupo)) && top3.length
+        ? top3.some((t) => Number(t?.grupo) === Number(resultGrupo))
+        : null;
+
+    timeline.push({
+      targetYmd,
+      targetHour: slotHour,
+      baseYmd: pickDrawYMD(baseDraw) || "",
+      baseHour: toHourBucket(pickDrawHour(baseDraw)) || "",
+      top3,
+      resultGrupo: Number.isFinite(Number(resultGrupo)) ? Number(resultGrupo) : null,
+      hit,
+      status: Number.isFinite(Number(resultGrupo)) ? "validated" : "pending",
+      historyStats,
+    });
+
+    if (currentDraw) {
+      chainContextDraws.push(currentDraw);
+    } else {
+      pendingPredictionAlreadyShown = true;
+    }
+  }
+
+  return timeline;
+
+}
+
+export function buildTimelineTop3(args) {
+  return buildTimelineForDate(args || {});
+}
+
+export function auditTop3Backtest({
+  drawsRange,
+  lotteryKey,
+  PT_RIO_SCHEDULE_NORMAL,
+  PT_RIO_SCHEDULE_WED_SAT,
+  FEDERAL_SCHEDULE,
+}) {
+  const range = Array.isArray(drawsRange) ? drawsRange : [];
+  const dates = Array.from(
+    new Set(
+      range
+        .map((d) => pickDrawYMD(d))
+        .filter((ymd) => isYMD(ymd))
+    )
+  ).sort();
+
+  const allTimeline = [];
+
+  for (const ymd of dates) {
+    const drawsToday = range.filter((d) => pickDrawYMD(d) === ymd);
+
+    const dayTimeline = buildTimelineForDate({
+      ymd,
+      drawsToday,
+      drawsRange: range,
+      lotteryKey,
+      PT_RIO_SCHEDULE_NORMAL,
+      PT_RIO_SCHEDULE_WED_SAT,
+      FEDERAL_SCHEDULE,
+    });
+
+    allTimeline.push(...(Array.isArray(dayTimeline) ? dayTimeline : []));
+  }
+
+  return auditTop3Timeline({
+    timeline: allTimeline,
+    lotteryKey,
+  });
+}
+
+
+====================================================================================================
+PADRÃO: timeline
+====================================================================================================
+
+LINHA: 3893
+        firstPrizeHits: item.firstPrizeHits,
+      });
+      pushed += 1;
+    }
+
+    while (pushed < perDezena) {
+      slots.push({ dezena: dz, milhar: "" });
+      pushed += 1;
+    }
+  }
+
+  while (slots.length < N) slots.push({ dezena: "", milhar: "" });
+
+  return { dezenas: dezenasFixas, slots: slots.slice(0, N) };
+}
+
+export function build16MilharesForGrupo(args) {
+  return buildMilharesForGrupo({ ...(args || {}), count: 16 });
+}
+
+export function build20MilharesForGrupo(args) {
+  return buildMilharesForGrupo({ ...(args || {}), count: 20 });
+}
+
+/* =========================
+   TIMELINE DO DIA (CADEIA PREDITIVA)
+========================= */
+
+
+
+export function auditTop3Timeline({
+  timeline,
+  lotteryKey = "",
+}) {
+  const rows = Array.isArray(timeline) ? timeline : [];
+
+  const validated = rows.filter((slot) => {
+    const status = String(slot?.status || "").toLowerCase();
+    return status === "validated" && Number.isFinite(Number(slot?.resultGrupo));
+  });
+
+  const total = validated.length;
+
+  const top1Hits = validated.filter((slot) => {
+    const result = Number(slot.resultGrupo);
+    const first = Number(slot?.top3?.[0]?.grupo);
+    return Number.isFinite(first) && first === result;
+  }).length;
+
+  const top3Hits = validated.filter((slot) => {
+    const result = Number(slot.resultGrupo);
+    return (Array.isArray(slot?.top3) ? slot.top3 : [])
+      .slice(0, 3)
+      .some((item) => Number(item?.grupo) === result);
+  }).length;
+
+  function pct(n, d) {
+    if (!d) return 0;
+    return Number(((Number(n || 0) / Number(d || 1)) * 100).toFixed(2));
+  }
+
+  function groupBy(keyFn) {
+    const map = new Map();
+
+    for (const slot of validated) {
+      const key = keyFn(slot);
+      const current = map.get(key) || {
+        key,
+        total: 0,
+        top1Hits: 0,
+        top3Hits: 0,
+      };
+
+      const result = Number(slot.resultGrupo);
+      const first = Number(slot?.top3?.[0]?.grupo);
+      const picks = Array.isArray(slot?.top3) ? slot.top3.slice(0, 3) : [];
+
+      current.total += 1;
+      if (Number.isFinite(first) && first === result) current.top1Hits += 1;
+      if (picks.some((item) => Number(item?.grupo) === result)) current.top3Hits += 1;
+
+      map.set(key, current);
+    }
+
+    return Array.from(map.values())
+      .map((x) => ({
+        ...x,
+        top1Rate: pct(x.top1Hits, x.total),
+        top3Rate: pct(x.top3Hits, x.total),
+      }))
+      .sort((a, b) => {
+        if (b.top3Rate !== a.top3Rate) return b.top3Rate - a.top3Rate;
+        return b.total - a.total;
+      });
+  }
+
+  return {
+    lotteryKey,
+    total,
+    top1Hits,
+    top3Hits,
+    top1Rate: pct(top1Hits, total),
+    top3Rate: pct(top3Hits, total),
+    byHour: groupBy((slot) => String(slot?.targetHour || "")),
+    byDate: groupBy((slot) => String(slot?.targetYmd || "")),
+    rows: validated.map((slot) => ({
+
+LINHA: 3898
+    while (pushed < perDezena) {
+      slots.push({ dezena: dz, milhar: "" });
+      pushed += 1;
+    }
+  }
+
+  while (slots.length < N) slots.push({ dezena: "", milhar: "" });
+
+  return { dezenas: dezenasFixas, slots: slots.slice(0, N) };
+}
+
+export function build16MilharesForGrupo(args) {
+  return buildMilharesForGrupo({ ...(args || {}), count: 16 });
+}
+
+export function build20MilharesForGrupo(args) {
+  return buildMilharesForGrupo({ ...(args || {}), count: 20 });
+}
+
+/* =========================
+   TIMELINE DO DIA (CADEIA PREDITIVA)
+========================= */
+
+
+
+export function auditTop3Timeline({
+  timeline,
+  lotteryKey = "",
+}) {
+  const rows = Array.isArray(timeline) ? timeline : [];
+
+  const validated = rows.filter((slot) => {
+    const status = String(slot?.status || "").toLowerCase();
+    return status === "validated" && Number.isFinite(Number(slot?.resultGrupo));
+  });
+
+  const total = validated.length;
+
+  const top1Hits = validated.filter((slot) => {
+    const result = Number(slot.resultGrupo);
+    const first = Number(slot?.top3?.[0]?.grupo);
+    return Number.isFinite(first) && first === result;
+  }).length;
+
+  const top3Hits = validated.filter((slot) => {
+    const result = Number(slot.resultGrupo);
+    return (Array.isArray(slot?.top3) ? slot.top3 : [])
+      .slice(0, 3)
+      .some((item) => Number(item?.grupo) === result);
+  }).length;
+
+  function pct(n, d) {
+    if (!d) return 0;
+    return Number(((Number(n || 0) / Number(d || 1)) * 100).toFixed(2));
+  }
+
+  function groupBy(keyFn) {
+    const map = new Map();
+
+    for (const slot of validated) {
+      const key = keyFn(slot);
+      const current = map.get(key) || {
+        key,
+        total: 0,
+        top1Hits: 0,
+        top3Hits: 0,
+      };
+
+      const result = Number(slot.resultGrupo);
+      const first = Number(slot?.top3?.[0]?.grupo);
+      const picks = Array.isArray(slot?.top3) ? slot.top3.slice(0, 3) : [];
+
+      current.total += 1;
+      if (Number.isFinite(first) && first === result) current.top1Hits += 1;
+      if (picks.some((item) => Number(item?.grupo) === result)) current.top3Hits += 1;
+
+      map.set(key, current);
+    }
+
+    return Array.from(map.values())
+      .map((x) => ({
+        ...x,
+        top1Rate: pct(x.top1Hits, x.total),
+        top3Rate: pct(x.top3Hits, x.total),
+      }))
+      .sort((a, b) => {
+        if (b.top3Rate !== a.top3Rate) return b.top3Rate - a.top3Rate;
+        return b.total - a.total;
+      });
+  }
+
+  return {
+    lotteryKey,
+    total,
+    top1Hits,
+    top3Hits,
+    top1Rate: pct(top1Hits, total),
+    top3Rate: pct(top3Hits, total),
+    byHour: groupBy((slot) => String(slot?.targetHour || "")),
+    byDate: groupBy((slot) => String(slot?.targetYmd || "")),
+    rows: validated.map((slot) => ({
+      ymd: slot.targetYmd,
+      hour: slot.targetHour,
+      baseYmd: slot.baseYmd,
+      baseHour: slot.baseHour,
+      resultGrupo: slot.resultGrupo,
+
+LINHA: 3899
+      slots.push({ dezena: dz, milhar: "" });
+      pushed += 1;
+    }
+  }
+
+  while (slots.length < N) slots.push({ dezena: "", milhar: "" });
+
+  return { dezenas: dezenasFixas, slots: slots.slice(0, N) };
+}
+
+export function build16MilharesForGrupo(args) {
+  return buildMilharesForGrupo({ ...(args || {}), count: 16 });
+}
+
+export function build20MilharesForGrupo(args) {
+  return buildMilharesForGrupo({ ...(args || {}), count: 20 });
+}
+
+/* =========================
+   TIMELINE DO DIA (CADEIA PREDITIVA)
+========================= */
+
+
+
+export function auditTop3Timeline({
+  timeline,
+  lotteryKey = "",
+}) {
+  const rows = Array.isArray(timeline) ? timeline : [];
+
+  const validated = rows.filter((slot) => {
+    const status = String(slot?.status || "").toLowerCase();
+    return status === "validated" && Number.isFinite(Number(slot?.resultGrupo));
+  });
+
+  const total = validated.length;
+
+  const top1Hits = validated.filter((slot) => {
+    const result = Number(slot.resultGrupo);
+    const first = Number(slot?.top3?.[0]?.grupo);
+    return Number.isFinite(first) && first === result;
+  }).length;
+
+  const top3Hits = validated.filter((slot) => {
+    const result = Number(slot.resultGrupo);
+    return (Array.isArray(slot?.top3) ? slot.top3 : [])
+      .slice(0, 3)
+      .some((item) => Number(item?.grupo) === result);
+  }).length;
+
+  function pct(n, d) {
+    if (!d) return 0;
+    return Number(((Number(n || 0) / Number(d || 1)) * 100).toFixed(2));
+  }
+
+  function groupBy(keyFn) {
+    const map = new Map();
+
+    for (const slot of validated) {
+      const key = keyFn(slot);
+      const current = map.get(key) || {
+        key,
+        total: 0,
+        top1Hits: 0,
+        top3Hits: 0,
+      };
+
+      const result = Number(slot.resultGrupo);
+      const first = Number(slot?.top3?.[0]?.grupo);
+      const picks = Array.isArray(slot?.top3) ? slot.top3.slice(0, 3) : [];
+
+      current.total += 1;
+      if (Number.isFinite(first) && first === result) current.top1Hits += 1;
+      if (picks.some((item) => Number(item?.grupo) === result)) current.top3Hits += 1;
+
+      map.set(key, current);
+    }
+
+    return Array.from(map.values())
+      .map((x) => ({
+        ...x,
+        top1Rate: pct(x.top1Hits, x.total),
+        top3Rate: pct(x.top3Hits, x.total),
+      }))
+      .sort((a, b) => {
+        if (b.top3Rate !== a.top3Rate) return b.top3Rate - a.top3Rate;
+        return b.total - a.total;
+      });
+  }
+
+  return {
+    lotteryKey,
+    total,
+    top1Hits,
+    top3Hits,
+    top1Rate: pct(top1Hits, total),
+    top3Rate: pct(top3Hits, total),
+    byHour: groupBy((slot) => String(slot?.targetHour || "")),
+    byDate: groupBy((slot) => String(slot?.targetYmd || "")),
+    rows: validated.map((slot) => ({
+      ymd: slot.targetYmd,
+      hour: slot.targetHour,
+      baseYmd: slot.baseYmd,
+      baseHour: slot.baseHour,
+      resultGrupo: slot.resultGrupo,
+      top3: (Array.isArray(slot.top3) ? slot.top3 : [])
+
+LINHA: 3902
+  }
+
+  while (slots.length < N) slots.push({ dezena: "", milhar: "" });
+
+  return { dezenas: dezenasFixas, slots: slots.slice(0, N) };
+}
+
+export function build16MilharesForGrupo(args) {
+  return buildMilharesForGrupo({ ...(args || {}), count: 16 });
+}
+
+export function build20MilharesForGrupo(args) {
+  return buildMilharesForGrupo({ ...(args || {}), count: 20 });
+}
+
+/* =========================
+   TIMELINE DO DIA (CADEIA PREDITIVA)
+========================= */
+
+
+
+export function auditTop3Timeline({
+  timeline,
+  lotteryKey = "",
+}) {
+  const rows = Array.isArray(timeline) ? timeline : [];
+
+  const validated = rows.filter((slot) => {
+    const status = String(slot?.status || "").toLowerCase();
+    return status === "validated" && Number.isFinite(Number(slot?.resultGrupo));
+  });
+
+  const total = validated.length;
+
+  const top1Hits = validated.filter((slot) => {
+    const result = Number(slot.resultGrupo);
+    const first = Number(slot?.top3?.[0]?.grupo);
+    return Number.isFinite(first) && first === result;
+  }).length;
+
+  const top3Hits = validated.filter((slot) => {
+    const result = Number(slot.resultGrupo);
+    return (Array.isArray(slot?.top3) ? slot.top3 : [])
+      .slice(0, 3)
+      .some((item) => Number(item?.grupo) === result);
+  }).length;
+
+  function pct(n, d) {
+    if (!d) return 0;
+    return Number(((Number(n || 0) / Number(d || 1)) * 100).toFixed(2));
+  }
+
+  function groupBy(keyFn) {
+    const map = new Map();
+
+    for (const slot of validated) {
+      const key = keyFn(slot);
+      const current = map.get(key) || {
+        key,
+        total: 0,
+        top1Hits: 0,
+        top3Hits: 0,
+      };
+
+      const result = Number(slot.resultGrupo);
+      const first = Number(slot?.top3?.[0]?.grupo);
+      const picks = Array.isArray(slot?.top3) ? slot.top3.slice(0, 3) : [];
+
+      current.total += 1;
+      if (Number.isFinite(first) && first === result) current.top1Hits += 1;
+      if (picks.some((item) => Number(item?.grupo) === result)) current.top3Hits += 1;
+
+      map.set(key, current);
+    }
+
+    return Array.from(map.values())
+      .map((x) => ({
+        ...x,
+        top1Rate: pct(x.top1Hits, x.total),
+        top3Rate: pct(x.top3Hits, x.total),
+      }))
+      .sort((a, b) => {
+        if (b.top3Rate !== a.top3Rate) return b.top3Rate - a.top3Rate;
+        return b.total - a.total;
+      });
+  }
+
+  return {
+    lotteryKey,
+    total,
+    top1Hits,
+    top3Hits,
+    top1Rate: pct(top1Hits, total),
+    top3Rate: pct(top3Hits, total),
+    byHour: groupBy((slot) => String(slot?.targetHour || "")),
+    byDate: groupBy((slot) => String(slot?.targetYmd || "")),
+    rows: validated.map((slot) => ({
+      ymd: slot.targetYmd,
+      hour: slot.targetHour,
+      baseYmd: slot.baseYmd,
+      baseHour: slot.baseHour,
+      resultGrupo: slot.resultGrupo,
+      top3: (Array.isArray(slot.top3) ? slot.top3 : [])
+        .slice(0, 3)
+        .map((x) => Number(x?.grupo)),
+      top1Hit:
+
+LINHA: 3993
+    top3Hits,
+    top1Rate: pct(top1Hits, total),
+    top3Rate: pct(top3Hits, total),
+    byHour: groupBy((slot) => String(slot?.targetHour || "")),
+    byDate: groupBy((slot) => String(slot?.targetYmd || "")),
+    rows: validated.map((slot) => ({
+      ymd: slot.targetYmd,
+      hour: slot.targetHour,
+      baseYmd: slot.baseYmd,
+      baseHour: slot.baseHour,
+      resultGrupo: slot.resultGrupo,
+      top3: (Array.isArray(slot.top3) ? slot.top3 : [])
+        .slice(0, 3)
+        .map((x) => Number(x?.grupo)),
+      top1Hit:
+        Number(slot?.top3?.[0]?.grupo) === Number(slot.resultGrupo),
+      top3Hit: (Array.isArray(slot.top3) ? slot.top3 : [])
+        .slice(0, 3)
+        .some((x) => Number(x?.grupo) === Number(slot.resultGrupo)),
+      historyStats: slot.historyStats || null,
+    })),
+  };
+}
+
+
+function buildTimelineForDate({
+  ymd,
+  drawsToday,
+  drawsRange,
+  lotteryKey,
+  PT_RIO_SCHEDULE_NORMAL,
+  PT_RIO_SCHEDULE_WED_SAT,
+  FEDERAL_SCHEDULE,
+}) {
+  const targetYmd = safeStr(ymd);
+  const day = Array.isArray(drawsToday) ? [...drawsToday] : [];
+  const range = Array.isArray(drawsRange) ? [...drawsRange] : [];
+
+  if (!isYMD(targetYmd) || !range.length) return [];
+
+  const schedule = getScheduleForLottery({
+    lotteryKey,
+    ymd: targetYmd,
+    PT_RIO_SCHEDULE_NORMAL,
+    PT_RIO_SCHEDULE_WED_SAT,
+    FEDERAL_SCHEDULE,
+  });
+
+  const normalizedSchedule = (Array.isArray(schedule) ? schedule : [])
+    .map(toHourBucket)
+    .filter(Boolean);
+
+  if (!normalizedSchedule.length) return [];
+
+  const daySorted = day
+    .filter((d) => isYMD(pickDrawYMD(d)) && toHourBucket(pickDrawHour(d)))
+    .sort((a, b) => {
+      const ta = ymdHourToTs(pickDrawYMD(a), toHourBucket(pickDrawHour(a)));
+      const tb = ymdHourToTs(pickDrawYMD(b), toHourBucket(pickDrawHour(b)));
+      return ta - tb;
+    });
+
+  const rangeSorted = range
+    .filter((d) => isYMD(pickDrawYMD(d)) && toHourBucket(pickDrawHour(d)))
+    .sort((a, b) => {
+      const ta = ymdHourToTs(pickDrawYMD(a), toHourBucket(pickDrawHour(a)));
+      const tb = ymdHourToTs(pickDrawYMD(b), toHourBucket(pickDrawHour(b)));
+      return ta - tb;
+    });
+
+  const realizedTodayMap = new Map();
+
+  for (const d of daySorted) {
+    const y = pickDrawYMD(d);
+    const h = toHourBucket(pickDrawHour(d));
+    if (!isYMD(y) || !h) continue;
+    if (y !== targetYmd) continue;
+    realizedTodayMap.set(`${y}|${h}`, d);
+  }
+
+
+  const chainContextDraws = [];
+  const timeline = [];
+  let pendingPredictionAlreadyShown = false;
+
+  for (const slotHour of normalizedSchedule) {
+    const currentDraw = realizedTodayMap.get(`${targetYmd}|${slotHour}`) || null;
+    const slotTs = ymdHourToTs(targetYmd, slotHour);
+
+
+    if (!currentDraw && pendingPredictionAlreadyShown) {
+      timeline.push({
+        targetYmd,
+        targetHour: slotHour,
+        baseYmd: "",
+        baseHour: "",
+        top3: [],
+        resultGrupo: null,
+        hit: null,
+        status: "pending",
+      });
+      continue;
+    }
+
+    let baseDraw = null;
+
+
+LINHA: 4050
+      const ta = ymdHourToTs(pickDrawYMD(a), toHourBucket(pickDrawHour(a)));
+      const tb = ymdHourToTs(pickDrawYMD(b), toHourBucket(pickDrawHour(b)));
+      return ta - tb;
+    });
+
+  const rangeSorted = range
+    .filter((d) => isYMD(pickDrawYMD(d)) && toHourBucket(pickDrawHour(d)))
+    .sort((a, b) => {
+      const ta = ymdHourToTs(pickDrawYMD(a), toHourBucket(pickDrawHour(a)));
+      const tb = ymdHourToTs(pickDrawYMD(b), toHourBucket(pickDrawHour(b)));
+      return ta - tb;
+    });
+
+  const realizedTodayMap = new Map();
+
+  for (const d of daySorted) {
+    const y = pickDrawYMD(d);
+    const h = toHourBucket(pickDrawHour(d));
+    if (!isYMD(y) || !h) continue;
+    if (y !== targetYmd) continue;
+    realizedTodayMap.set(`${y}|${h}`, d);
+  }
+
+
+  const chainContextDraws = [];
+  const timeline = [];
+  let pendingPredictionAlreadyShown = false;
+
+  for (const slotHour of normalizedSchedule) {
+    const currentDraw = realizedTodayMap.get(`${targetYmd}|${slotHour}`) || null;
+    const slotTs = ymdHourToTs(targetYmd, slotHour);
+
+
+    if (!currentDraw && pendingPredictionAlreadyShown) {
+      timeline.push({
+        targetYmd,
+        targetHour: slotHour,
+        baseYmd: "",
+        baseHour: "",
+        top3: [],
+        resultGrupo: null,
+        hit: null,
+        status: "pending",
+      });
+      continue;
+    }
+
+    let baseDraw = null;
+
+    const priorChainDraw = [...chainContextDraws]
+      .filter((d) => {
+        const y = pickDrawYMD(d);
+        const h = toHourBucket(pickDrawHour(d));
+        const ts = ymdHourToTs(y, h);
+        return isYMD(y) && h && Number.isFinite(ts) && ts < slotTs;
+      })
+      .sort((a, b) => {
+        const ta = ymdHourToTs(pickDrawYMD(a), toHourBucket(pickDrawHour(a)));
+        const tb = ymdHourToTs(pickDrawYMD(b), toHourBucket(pickDrawHour(b)));
+        return tb - ta;
+      })[0] || null;
+
+    if (priorChainDraw) baseDraw = priorChainDraw;
+
+    if (!baseDraw) {
+      const prevSameDay = daySorted
+        .filter((d) => {
+          const y = pickDrawYMD(d);
+          const h = toHourBucket(pickDrawHour(d));
+          const ts = ymdHourToTs(y, h);
+          return y === targetYmd && h && Number.isFinite(ts) && ts < slotTs;
+        })
+        .sort((a, b) => {
+          const ta = ymdHourToTs(pickDrawYMD(a), toHourBucket(pickDrawHour(a)));
+          const tb = ymdHourToTs(pickDrawYMD(b), toHourBucket(pickDrawHour(b)));
+          return tb - ta;
+        })[0] || null;
+
+      if (prevSameDay) baseDraw = prevSameDay;
+    }
+
+    if (!baseDraw) {
+      for (let i = rangeSorted.length - 1; i >= 0; i -= 1) {
+        const d = rangeSorted[i];
+        const y = pickDrawYMD(d);
+        const h = toHourBucket(pickDrawHour(d));
+        const ts = ymdHourToTs(y, h);
+
+        if (!Number.isFinite(ts) || ts >= slotTs) continue;
+
+        baseDraw = d;
+        break;
+      }
+    }
+
+    if (!baseDraw) {
+      baseDraw = findPreviousValidDraw(rangeSorted, targetYmd, slotHour);
+    }
+
+    if (!baseDraw) {
+      timeline.push({
+        targetYmd,
+        targetHour: slotHour,
+        baseYmd: "",
+        baseHour: "",
+        top3: [],
+
+LINHA: 4059
+      const tb = ymdHourToTs(pickDrawYMD(b), toHourBucket(pickDrawHour(b)));
+      return ta - tb;
+    });
+
+  const realizedTodayMap = new Map();
+
+  for (const d of daySorted) {
+    const y = pickDrawYMD(d);
+    const h = toHourBucket(pickDrawHour(d));
+    if (!isYMD(y) || !h) continue;
+    if (y !== targetYmd) continue;
+    realizedTodayMap.set(`${y}|${h}`, d);
+  }
+
+
+  const chainContextDraws = [];
+  const timeline = [];
+  let pendingPredictionAlreadyShown = false;
+
+  for (const slotHour of normalizedSchedule) {
+    const currentDraw = realizedTodayMap.get(`${targetYmd}|${slotHour}`) || null;
+    const slotTs = ymdHourToTs(targetYmd, slotHour);
+
+
+    if (!currentDraw && pendingPredictionAlreadyShown) {
+      timeline.push({
+        targetYmd,
+        targetHour: slotHour,
+        baseYmd: "",
+        baseHour: "",
+        top3: [],
+        resultGrupo: null,
+        hit: null,
+        status: "pending",
+      });
+      continue;
+    }
+
+    let baseDraw = null;
+
+    const priorChainDraw = [...chainContextDraws]
+      .filter((d) => {
+        const y = pickDrawYMD(d);
+        const h = toHourBucket(pickDrawHour(d));
+        const ts = ymdHourToTs(y, h);
+        return isYMD(y) && h && Number.isFinite(ts) && ts < slotTs;
+      })
+      .sort((a, b) => {
+        const ta = ymdHourToTs(pickDrawYMD(a), toHourBucket(pickDrawHour(a)));
+        const tb = ymdHourToTs(pickDrawYMD(b), toHourBucket(pickDrawHour(b)));
+        return tb - ta;
+      })[0] || null;
+
+    if (priorChainDraw) baseDraw = priorChainDraw;
+
+    if (!baseDraw) {
+      const prevSameDay = daySorted
+        .filter((d) => {
+          const y = pickDrawYMD(d);
+          const h = toHourBucket(pickDrawHour(d));
+          const ts = ymdHourToTs(y, h);
+          return y === targetYmd && h && Number.isFinite(ts) && ts < slotTs;
+        })
+        .sort((a, b) => {
+          const ta = ymdHourToTs(pickDrawYMD(a), toHourBucket(pickDrawHour(a)));
+          const tb = ymdHourToTs(pickDrawYMD(b), toHourBucket(pickDrawHour(b)));
+          return tb - ta;
+        })[0] || null;
+
+      if (prevSameDay) baseDraw = prevSameDay;
+    }
+
+    if (!baseDraw) {
+      for (let i = rangeSorted.length - 1; i >= 0; i -= 1) {
+        const d = rangeSorted[i];
+        const y = pickDrawYMD(d);
+        const h = toHourBucket(pickDrawHour(d));
+        const ts = ymdHourToTs(y, h);
+
+        if (!Number.isFinite(ts) || ts >= slotTs) continue;
+
+        baseDraw = d;
+        break;
+      }
+    }
+
+    if (!baseDraw) {
+      baseDraw = findPreviousValidDraw(rangeSorted, targetYmd, slotHour);
+    }
+
+    if (!baseDraw) {
+      timeline.push({
+        targetYmd,
+        targetHour: slotHour,
+        baseYmd: "",
+        baseHour: "",
+        top3: [],
+        resultGrupo: null,
+        hit: null,
+        status: "pending",
+      });
+      continue;
+    }
+
+    const baseTs = ymdHourToTs(
+      pickDrawYMD(baseDraw),
+
+LINHA: 4125
+          return tb - ta;
+        })[0] || null;
+
+      if (prevSameDay) baseDraw = prevSameDay;
+    }
+
+    if (!baseDraw) {
+      for (let i = rangeSorted.length - 1; i >= 0; i -= 1) {
+        const d = rangeSorted[i];
+        const y = pickDrawYMD(d);
+        const h = toHourBucket(pickDrawHour(d));
+        const ts = ymdHourToTs(y, h);
+
+        if (!Number.isFinite(ts) || ts >= slotTs) continue;
+
+        baseDraw = d;
+        break;
+      }
+    }
+
+    if (!baseDraw) {
+      baseDraw = findPreviousValidDraw(rangeSorted, targetYmd, slotHour);
+    }
+
+    if (!baseDraw) {
+      timeline.push({
+        targetYmd,
+        targetHour: slotHour,
+        baseYmd: "",
+        baseHour: "",
+        top3: [],
+        resultGrupo: null,
+        hit: null,
+        status: "pending",
+      });
+      continue;
+    }
+
+    const baseTs = ymdHourToTs(
+      pickDrawYMD(baseDraw),
+      toHourBucket(pickDrawHour(baseDraw))
+    );
+
+    const usableHistory = rangeSorted.filter((d) => {
+      const ts = ymdHourToTs(
+        pickDrawYMD(d),
+        toHourBucket(pickDrawHour(d))
+      );
+      return Number.isFinite(ts) && ts <= baseTs;
+    });
+
+    const historyStats = (() => {
+      const MS_DAY = 24 * 60 * 60 * 1000;
+
+      let d30 = 0;
+      let d90 = 0;
+      let d180 = 0;
+      let d365 = 0;
+
+      for (const historicalDraw of usableHistory) {
+        const historicalTs = ymdHourToTs(
+          pickDrawYMD(historicalDraw),
+          toHourBucket(pickDrawHour(historicalDraw))
+        );
+
+        if (!Number.isFinite(historicalTs)) continue;
+
+        const diffDays = (baseTs - historicalTs) / MS_DAY;
+
+        if (diffDays >= 0 && diffDays <= 30) d30 += 1;
+        if (diffDays >= 0 && diffDays <= 90) d90 += 1;
+        if (diffDays >= 0 && diffDays <= 180) d180 += 1;
+        if (diffDays >= 0 && diffDays <= 365) d365 += 1;
+      }
+
+      return {
+        total: usableHistory.length,
+        d30,
+        d90,
+        d180,
+        d365,
+      };
+    })();
+
+    const usableTodayContext = [...chainContextDraws]
+      .filter((d) => {
+        const ts = ymdHourToTs(
+          pickDrawYMD(d),
+          toHourBucket(pickDrawHour(d))
+        );
+        return Number.isFinite(ts) && ts <= baseTs;
+      })
+      .sort((a, b) => {
+        const ta = ymdHourToTs(pickDrawYMD(a), toHourBucket(pickDrawHour(a)));
+        const tb = ymdHourToTs(pickDrawYMD(b), toHourBucket(pickDrawHour(b)));
+        return ta - tb;
+      });
+
+    const computed = computeStatisticalTop3V3({
+      lotteryKey,
+      drawsRange: [...usableHistory, ...usableTodayContext],
+      drawLast: baseDraw,
+      drawsToday: usableTodayContext,
+      PT_RIO_SCHEDULE_NORMAL,
+      PT_RIO_SCHEDULE_WED_SAT,
+      FEDERAL_SCHEDULE,
+
+LINHA: 4229
+      PT_RIO_SCHEDULE_WED_SAT,
+      FEDERAL_SCHEDULE,
+      topN: 3,
+      targetYmdOverride: targetYmd,
+      targetHourOverride: slotHour,
+    });
+
+
+    const computedNextYmd = safeStr(computed?.meta?.next?.ymd || "");
+    const computedNextHour = toHourBucket(computed?.meta?.next?.hour || "");
+    const computedForSlot =
+      computedNextYmd === targetYmd && computedNextHour === slotHour;
+
+    const top3 =
+      computedForSlot && Array.isArray(computed?.top)
+        ? computed.top.slice(0, 3)
+        : [];
+
+    const resultGrupo = currentDraw ? pickPrize1GrupoFromDraw(currentDraw) : null;
+
+    const hit =
+      Number.isFinite(Number(resultGrupo)) && top3.length
+        ? top3.some((t) => Number(t?.grupo) === Number(resultGrupo))
+        : null;
+
+    timeline.push({
+      targetYmd,
+      targetHour: slotHour,
+      baseYmd: pickDrawYMD(baseDraw) || "",
+      baseHour: toHourBucket(pickDrawHour(baseDraw)) || "",
+      top3,
+      resultGrupo: Number.isFinite(Number(resultGrupo)) ? Number(resultGrupo) : null,
+      hit,
+      status: Number.isFinite(Number(resultGrupo)) ? "validated" : "pending",
+      historyStats,
+    });
+
+    if (currentDraw) {
+      chainContextDraws.push(currentDraw);
+    } else {
+      pendingPredictionAlreadyShown = true;
+    }
+  }
+
+  return timeline;
+
+}
+
+export function buildTimelineTop3(args) {
+  return buildTimelineForDate(args || {});
+}
+
+export function auditTop3Backtest({
+  drawsRange,
+  lotteryKey,
+  PT_RIO_SCHEDULE_NORMAL,
+  PT_RIO_SCHEDULE_WED_SAT,
+  FEDERAL_SCHEDULE,
+}) {
+  const range = Array.isArray(drawsRange) ? drawsRange : [];
+  const dates = Array.from(
+    new Set(
+      range
+        .map((d) => pickDrawYMD(d))
+        .filter((ymd) => isYMD(ymd))
+    )
+  ).sort();
+
+  const allTimeline = [];
+
+  for (const ymd of dates) {
+    const drawsToday = range.filter((d) => pickDrawYMD(d) === ymd);
+
+    const dayTimeline = buildTimelineForDate({
+      ymd,
+      drawsToday,
+      drawsRange: range,
+      lotteryKey,
+      PT_RIO_SCHEDULE_NORMAL,
+      PT_RIO_SCHEDULE_WED_SAT,
+      FEDERAL_SCHEDULE,
+    });
+
+    allTimeline.push(...(Array.isArray(dayTimeline) ? dayTimeline : []));
+  }
+
+  return auditTop3Timeline({
+    timeline: allTimeline,
+    lotteryKey,
+  });
+}
+
+LINHA: 4248
+
+    const hit =
+      Number.isFinite(Number(resultGrupo)) && top3.length
+        ? top3.some((t) => Number(t?.grupo) === Number(resultGrupo))
+        : null;
+
+    timeline.push({
+      targetYmd,
+      targetHour: slotHour,
+      baseYmd: pickDrawYMD(baseDraw) || "",
+      baseHour: toHourBucket(pickDrawHour(baseDraw)) || "",
+      top3,
+      resultGrupo: Number.isFinite(Number(resultGrupo)) ? Number(resultGrupo) : null,
+      hit,
+      status: Number.isFinite(Number(resultGrupo)) ? "validated" : "pending",
+      historyStats,
+    });
+
+    if (currentDraw) {
+      chainContextDraws.push(currentDraw);
+    } else {
+      pendingPredictionAlreadyShown = true;
+    }
+  }
+
+  return timeline;
+
+}
+
+export function buildTimelineTop3(args) {
+  return buildTimelineForDate(args || {});
+}
+
+export function auditTop3Backtest({
+  drawsRange,
+  lotteryKey,
+  PT_RIO_SCHEDULE_NORMAL,
+  PT_RIO_SCHEDULE_WED_SAT,
+  FEDERAL_SCHEDULE,
+}) {
+  const range = Array.isArray(drawsRange) ? drawsRange : [];
+  const dates = Array.from(
+    new Set(
+      range
+        .map((d) => pickDrawYMD(d))
+        .filter((ymd) => isYMD(ymd))
+    )
+  ).sort();
+
+  const allTimeline = [];
+
+  for (const ymd of dates) {
+    const drawsToday = range.filter((d) => pickDrawYMD(d) === ymd);
+
+    const dayTimeline = buildTimelineForDate({
+      ymd,
+      drawsToday,
+      drawsRange: range,
+      lotteryKey,
+      PT_RIO_SCHEDULE_NORMAL,
+      PT_RIO_SCHEDULE_WED_SAT,
+      FEDERAL_SCHEDULE,
+    });
+
+    allTimeline.push(...(Array.isArray(dayTimeline) ? dayTimeline : []));
+  }
+
+  return auditTop3Timeline({
+    timeline: allTimeline,
+    lotteryKey,
+  });
+}
+
+LINHA: 4252
+        : null;
+
+    timeline.push({
+      targetYmd,
+      targetHour: slotHour,
+      baseYmd: pickDrawYMD(baseDraw) || "",
+      baseHour: toHourBucket(pickDrawHour(baseDraw)) || "",
+      top3,
+      resultGrupo: Number.isFinite(Number(resultGrupo)) ? Number(resultGrupo) : null,
+      hit,
+      status: Number.isFinite(Number(resultGrupo)) ? "validated" : "pending",
+      historyStats,
+    });
+
+    if (currentDraw) {
+      chainContextDraws.push(currentDraw);
+    } else {
+      pendingPredictionAlreadyShown = true;
+    }
+  }
+
+  return timeline;
+
+}
+
+export function buildTimelineTop3(args) {
+  return buildTimelineForDate(args || {});
+}
+
+export function auditTop3Backtest({
+  drawsRange,
+  lotteryKey,
+  PT_RIO_SCHEDULE_NORMAL,
+  PT_RIO_SCHEDULE_WED_SAT,
+  FEDERAL_SCHEDULE,
+}) {
+  const range = Array.isArray(drawsRange) ? drawsRange : [];
+  const dates = Array.from(
+    new Set(
+      range
+        .map((d) => pickDrawYMD(d))
+        .filter((ymd) => isYMD(ymd))
+    )
+  ).sort();
+
+  const allTimeline = [];
+
+  for (const ymd of dates) {
+    const drawsToday = range.filter((d) => pickDrawYMD(d) === ymd);
+
+    const dayTimeline = buildTimelineForDate({
+      ymd,
+      drawsToday,
+      drawsRange: range,
+      lotteryKey,
+      PT_RIO_SCHEDULE_NORMAL,
+      PT_RIO_SCHEDULE_WED_SAT,
+      FEDERAL_SCHEDULE,
+    });
+
+    allTimeline.push(...(Array.isArray(dayTimeline) ? dayTimeline : []));
+  }
+
+  return auditTop3Timeline({
+    timeline: allTimeline,
+    lotteryKey,
+  });
+}
+
+LINHA: 4253
+
+    timeline.push({
+      targetYmd,
+      targetHour: slotHour,
+      baseYmd: pickDrawYMD(baseDraw) || "",
+      baseHour: toHourBucket(pickDrawHour(baseDraw)) || "",
+      top3,
+      resultGrupo: Number.isFinite(Number(resultGrupo)) ? Number(resultGrupo) : null,
+      hit,
+      status: Number.isFinite(Number(resultGrupo)) ? "validated" : "pending",
+      historyStats,
+    });
+
+    if (currentDraw) {
+      chainContextDraws.push(currentDraw);
+    } else {
+      pendingPredictionAlreadyShown = true;
+    }
+  }
+
+  return timeline;
+
+}
+
+export function buildTimelineTop3(args) {
+  return buildTimelineForDate(args || {});
+}
+
+export function auditTop3Backtest({
+  drawsRange,
+  lotteryKey,
+  PT_RIO_SCHEDULE_NORMAL,
+  PT_RIO_SCHEDULE_WED_SAT,
+  FEDERAL_SCHEDULE,
+}) {
+  const range = Array.isArray(drawsRange) ? drawsRange : [];
+  const dates = Array.from(
+    new Set(
+      range
+        .map((d) => pickDrawYMD(d))
+        .filter((ymd) => isYMD(ymd))
+    )
+  ).sort();
+
+  const allTimeline = [];
+
+  for (const ymd of dates) {
+    const drawsToday = range.filter((d) => pickDrawYMD(d) === ymd);
+
+    const dayTimeline = buildTimelineForDate({
+      ymd,
+      drawsToday,
+      drawsRange: range,
+      lotteryKey,
+      PT_RIO_SCHEDULE_NORMAL,
+      PT_RIO_SCHEDULE_WED_SAT,
+      FEDERAL_SCHEDULE,
+    });
+
+    allTimeline.push(...(Array.isArray(dayTimeline) ? dayTimeline : []));
+  }
+
+  return auditTop3Timeline({
+    timeline: allTimeline,
+    lotteryKey,
+  });
+}
+
+LINHA: 4272
+
+  return timeline;
+
+}
+
+export function buildTimelineTop3(args) {
+  return buildTimelineForDate(args || {});
+}
+
+export function auditTop3Backtest({
+  drawsRange,
+  lotteryKey,
+  PT_RIO_SCHEDULE_NORMAL,
+  PT_RIO_SCHEDULE_WED_SAT,
+  FEDERAL_SCHEDULE,
+}) {
+  const range = Array.isArray(drawsRange) ? drawsRange : [];
+  const dates = Array.from(
+    new Set(
+      range
+        .map((d) => pickDrawYMD(d))
+        .filter((ymd) => isYMD(ymd))
+    )
+  ).sort();
+
+  const allTimeline = [];
+
+  for (const ymd of dates) {
+    const drawsToday = range.filter((d) => pickDrawYMD(d) === ymd);
+
+    const dayTimeline = buildTimelineForDate({
+      ymd,
+      drawsToday,
+      drawsRange: range,
+      lotteryKey,
+      PT_RIO_SCHEDULE_NORMAL,
+      PT_RIO_SCHEDULE_WED_SAT,
+      FEDERAL_SCHEDULE,
+    });
+
+    allTimeline.push(...(Array.isArray(dayTimeline) ? dayTimeline : []));
+  }
+
+  return auditTop3Timeline({
+    timeline: allTimeline,
+    lotteryKey,
+  });
+}
+
+LINHA: 4277
+export function buildTimelineTop3(args) {
+  return buildTimelineForDate(args || {});
+}
+
+export function auditTop3Backtest({
+  drawsRange,
+  lotteryKey,
+  PT_RIO_SCHEDULE_NORMAL,
+  PT_RIO_SCHEDULE_WED_SAT,
+  FEDERAL_SCHEDULE,
+}) {
+  const range = Array.isArray(drawsRange) ? drawsRange : [];
+  const dates = Array.from(
+    new Set(
+      range
+        .map((d) => pickDrawYMD(d))
+        .filter((ymd) => isYMD(ymd))
+    )
+  ).sort();
+
+  const allTimeline = [];
+
+  for (const ymd of dates) {
+    const drawsToday = range.filter((d) => pickDrawYMD(d) === ymd);
+
+    const dayTimeline = buildTimelineForDate({
+      ymd,
+      drawsToday,
+      drawsRange: range,
+      lotteryKey,
+      PT_RIO_SCHEDULE_NORMAL,
+      PT_RIO_SCHEDULE_WED_SAT,
+      FEDERAL_SCHEDULE,
+    });
+
+    allTimeline.push(...(Array.isArray(dayTimeline) ? dayTimeline : []));
+  }
+
+  return auditTop3Timeline({
+    timeline: allTimeline,
+    lotteryKey,
+  });
+}
+
+LINHA: 4287
+}) {
+  const range = Array.isArray(drawsRange) ? drawsRange : [];
+  const dates = Array.from(
+    new Set(
+      range
+        .map((d) => pickDrawYMD(d))
+        .filter((ymd) => isYMD(ymd))
+    )
+  ).sort();
+
+  const allTimeline = [];
+
+  for (const ymd of dates) {
+    const drawsToday = range.filter((d) => pickDrawYMD(d) === ymd);
+
+    const dayTimeline = buildTimelineForDate({
+      ymd,
+      drawsToday,
+      drawsRange: range,
+      lotteryKey,
+      PT_RIO_SCHEDULE_NORMAL,
+      PT_RIO_SCHEDULE_WED_SAT,
+      FEDERAL_SCHEDULE,
+    });
+
+    allTimeline.push(...(Array.isArray(dayTimeline) ? dayTimeline : []));
+  }
+
+  return auditTop3Timeline({
+    timeline: allTimeline,
+    lotteryKey,
+  });
+}
+
+LINHA: 4290
+    new Set(
+      range
+        .map((d) => pickDrawYMD(d))
+        .filter((ymd) => isYMD(ymd))
+    )
+  ).sort();
+
+  const allTimeline = [];
+
+  for (const ymd of dates) {
+    const drawsToday = range.filter((d) => pickDrawYMD(d) === ymd);
+
+    const dayTimeline = buildTimelineForDate({
+      ymd,
+      drawsToday,
+      drawsRange: range,
+      lotteryKey,
+      PT_RIO_SCHEDULE_NORMAL,
+      PT_RIO_SCHEDULE_WED_SAT,
+      FEDERAL_SCHEDULE,
+    });
+
+    allTimeline.push(...(Array.isArray(dayTimeline) ? dayTimeline : []));
+  }
+
+  return auditTop3Timeline({
+    timeline: allTimeline,
+    lotteryKey,
+  });
+}
+
+LINHA: 4291
+      range
+        .map((d) => pickDrawYMD(d))
+        .filter((ymd) => isYMD(ymd))
+    )
+  ).sort();
+
+  const allTimeline = [];
+
+  for (const ymd of dates) {
+    const drawsToday = range.filter((d) => pickDrawYMD(d) === ymd);
+
+    const dayTimeline = buildTimelineForDate({
+      ymd,
+      drawsToday,
+      drawsRange: range,
+      lotteryKey,
+      PT_RIO_SCHEDULE_NORMAL,
+      PT_RIO_SCHEDULE_WED_SAT,
+      FEDERAL_SCHEDULE,
+    });
+
+    allTimeline.push(...(Array.isArray(dayTimeline) ? dayTimeline : []));
+  }
+
+  return auditTop3Timeline({
+    timeline: allTimeline,
+    lotteryKey,
+  });
+}
+
+
+====================================================================================================
+PADRÃO: currentDraw
+====================================================================================================
+
+LINHA: 4054
+
+  const rangeSorted = range
+    .filter((d) => isYMD(pickDrawYMD(d)) && toHourBucket(pickDrawHour(d)))
+    .sort((a, b) => {
+      const ta = ymdHourToTs(pickDrawYMD(a), toHourBucket(pickDrawHour(a)));
+      const tb = ymdHourToTs(pickDrawYMD(b), toHourBucket(pickDrawHour(b)));
+      return ta - tb;
+    });
+
+  const realizedTodayMap = new Map();
+
+  for (const d of daySorted) {
+    const y = pickDrawYMD(d);
+    const h = toHourBucket(pickDrawHour(d));
+    if (!isYMD(y) || !h) continue;
+    if (y !== targetYmd) continue;
+    realizedTodayMap.set(`${y}|${h}`, d);
+  }
+
+
+  const chainContextDraws = [];
+  const timeline = [];
+  let pendingPredictionAlreadyShown = false;
+
+  for (const slotHour of normalizedSchedule) {
+    const currentDraw = realizedTodayMap.get(`${targetYmd}|${slotHour}`) || null;
+    const slotTs = ymdHourToTs(targetYmd, slotHour);
+
+
+    if (!currentDraw && pendingPredictionAlreadyShown) {
+      timeline.push({
+        targetYmd,
+        targetHour: slotHour,
+        baseYmd: "",
+        baseHour: "",
+        top3: [],
+        resultGrupo: null,
+        hit: null,
+        status: "pending",
+      });
+      continue;
+    }
+
+    let baseDraw = null;
+
+    const priorChainDraw = [...chainContextDraws]
+      .filter((d) => {
+        const y = pickDrawYMD(d);
+        const h = toHourBucket(pickDrawHour(d));
+        const ts = ymdHourToTs(y, h);
+        return isYMD(y) && h && Number.isFinite(ts) && ts < slotTs;
+      })
+      .sort((a, b) => {
+        const ta = ymdHourToTs(pickDrawYMD(a), toHourBucket(pickDrawHour(a)));
+        const tb = ymdHourToTs(pickDrawYMD(b), toHourBucket(pickDrawHour(b)));
+        return tb - ta;
+      })[0] || null;
+
+    if (priorChainDraw) baseDraw = priorChainDraw;
+
+    if (!baseDraw) {
+      const prevSameDay = daySorted
+        .filter((d) => {
+          const y = pickDrawYMD(d);
+          const h = toHourBucket(pickDrawHour(d));
+          const ts = ymdHourToTs(y, h);
+          return y === targetYmd && h && Number.isFinite(ts) && ts < slotTs;
+        })
+        .sort((a, b) => {
+          const ta = ymdHourToTs(pickDrawYMD(a), toHourBucket(pickDrawHour(a)));
+          const tb = ymdHourToTs(pickDrawYMD(b), toHourBucket(pickDrawHour(b)));
+          return tb - ta;
+        })[0] || null;
+
+      if (prevSameDay) baseDraw = prevSameDay;
+    }
+
+    if (!baseDraw) {
+      for (let i = rangeSorted.length - 1; i >= 0; i -= 1) {
+        const d = rangeSorted[i];
+        const y = pickDrawYMD(d);
+        const h = toHourBucket(pickDrawHour(d));
+        const ts = ymdHourToTs(y, h);
+
+        if (!Number.isFinite(ts) || ts >= slotTs) continue;
+
+        baseDraw = d;
+        break;
+      }
+    }
+
+    if (!baseDraw) {
+      baseDraw = findPreviousValidDraw(rangeSorted, targetYmd, slotHour);
+    }
+
+    if (!baseDraw) {
+      timeline.push({
+        targetYmd,
+        targetHour: slotHour,
+        baseYmd: "",
+        baseHour: "",
+        top3: [],
+        resultGrupo: null,
+        hit: null,
+        status: "pending",
+      });
+
+LINHA: 4058
+      const ta = ymdHourToTs(pickDrawYMD(a), toHourBucket(pickDrawHour(a)));
+      const tb = ymdHourToTs(pickDrawYMD(b), toHourBucket(pickDrawHour(b)));
+      return ta - tb;
+    });
+
+  const realizedTodayMap = new Map();
+
+  for (const d of daySorted) {
+    const y = pickDrawYMD(d);
+    const h = toHourBucket(pickDrawHour(d));
+    if (!isYMD(y) || !h) continue;
+    if (y !== targetYmd) continue;
+    realizedTodayMap.set(`${y}|${h}`, d);
+  }
+
+
+  const chainContextDraws = [];
+  const timeline = [];
+  let pendingPredictionAlreadyShown = false;
+
+  for (const slotHour of normalizedSchedule) {
+    const currentDraw = realizedTodayMap.get(`${targetYmd}|${slotHour}`) || null;
+    const slotTs = ymdHourToTs(targetYmd, slotHour);
+
+
+    if (!currentDraw && pendingPredictionAlreadyShown) {
+      timeline.push({
+        targetYmd,
+        targetHour: slotHour,
+        baseYmd: "",
+        baseHour: "",
+        top3: [],
+        resultGrupo: null,
+        hit: null,
+        status: "pending",
+      });
+      continue;
+    }
+
+    let baseDraw = null;
+
+    const priorChainDraw = [...chainContextDraws]
+      .filter((d) => {
+        const y = pickDrawYMD(d);
+        const h = toHourBucket(pickDrawHour(d));
+        const ts = ymdHourToTs(y, h);
+        return isYMD(y) && h && Number.isFinite(ts) && ts < slotTs;
+      })
+      .sort((a, b) => {
+        const ta = ymdHourToTs(pickDrawYMD(a), toHourBucket(pickDrawHour(a)));
+        const tb = ymdHourToTs(pickDrawYMD(b), toHourBucket(pickDrawHour(b)));
+        return tb - ta;
+      })[0] || null;
+
+    if (priorChainDraw) baseDraw = priorChainDraw;
+
+    if (!baseDraw) {
+      const prevSameDay = daySorted
+        .filter((d) => {
+          const y = pickDrawYMD(d);
+          const h = toHourBucket(pickDrawHour(d));
+          const ts = ymdHourToTs(y, h);
+          return y === targetYmd && h && Number.isFinite(ts) && ts < slotTs;
+        })
+        .sort((a, b) => {
+          const ta = ymdHourToTs(pickDrawYMD(a), toHourBucket(pickDrawHour(a)));
+          const tb = ymdHourToTs(pickDrawYMD(b), toHourBucket(pickDrawHour(b)));
+          return tb - ta;
+        })[0] || null;
+
+      if (prevSameDay) baseDraw = prevSameDay;
+    }
+
+    if (!baseDraw) {
+      for (let i = rangeSorted.length - 1; i >= 0; i -= 1) {
+        const d = rangeSorted[i];
+        const y = pickDrawYMD(d);
+        const h = toHourBucket(pickDrawHour(d));
+        const ts = ymdHourToTs(y, h);
+
+        if (!Number.isFinite(ts) || ts >= slotTs) continue;
+
+        baseDraw = d;
+        break;
+      }
+    }
+
+    if (!baseDraw) {
+      baseDraw = findPreviousValidDraw(rangeSorted, targetYmd, slotHour);
+    }
+
+    if (!baseDraw) {
+      timeline.push({
+        targetYmd,
+        targetHour: slotHour,
+        baseYmd: "",
+        baseHour: "",
+        top3: [],
+        resultGrupo: null,
+        hit: null,
+        status: "pending",
+      });
+      continue;
+    }
+
+    const baseTs = ymdHourToTs(
+
+LINHA: 4222
+
+    const computed = computeStatisticalTop3V3({
+      lotteryKey,
+      drawsRange: [...usableHistory, ...usableTodayContext],
+      drawLast: baseDraw,
+      drawsToday: usableTodayContext,
+      PT_RIO_SCHEDULE_NORMAL,
+      PT_RIO_SCHEDULE_WED_SAT,
+      FEDERAL_SCHEDULE,
+      topN: 3,
+      targetYmdOverride: targetYmd,
+      targetHourOverride: slotHour,
+    });
+
+
+    const computedNextYmd = safeStr(computed?.meta?.next?.ymd || "");
+    const computedNextHour = toHourBucket(computed?.meta?.next?.hour || "");
+    const computedForSlot =
+      computedNextYmd === targetYmd && computedNextHour === slotHour;
+
+    const top3 =
+      computedForSlot && Array.isArray(computed?.top)
+        ? computed.top.slice(0, 3)
+        : [];
+
+    const resultGrupo = currentDraw ? pickPrize1GrupoFromDraw(currentDraw) : null;
+
+    const hit =
+      Number.isFinite(Number(resultGrupo)) && top3.length
+        ? top3.some((t) => Number(t?.grupo) === Number(resultGrupo))
+        : null;
+
+    timeline.push({
+      targetYmd,
+      targetHour: slotHour,
+      baseYmd: pickDrawYMD(baseDraw) || "",
+      baseHour: toHourBucket(pickDrawHour(baseDraw)) || "",
+      top3,
+      resultGrupo: Number.isFinite(Number(resultGrupo)) ? Number(resultGrupo) : null,
+      hit,
+      status: Number.isFinite(Number(resultGrupo)) ? "validated" : "pending",
+      historyStats,
+    });
+
+    if (currentDraw) {
+      chainContextDraws.push(currentDraw);
+    } else {
+      pendingPredictionAlreadyShown = true;
+    }
+  }
+
+  return timeline;
+
+}
+
+export function buildTimelineTop3(args) {
+  return buildTimelineForDate(args || {});
+}
+
+export function auditTop3Backtest({
+  drawsRange,
+  lotteryKey,
+  PT_RIO_SCHEDULE_NORMAL,
+  PT_RIO_SCHEDULE_WED_SAT,
+  FEDERAL_SCHEDULE,
+}) {
+  const range = Array.isArray(drawsRange) ? drawsRange : [];
+  const dates = Array.from(
+    new Set(
+      range
+        .map((d) => pickDrawYMD(d))
+        .filter((ymd) => isYMD(ymd))
+    )
+  ).sort();
+
+  const allTimeline = [];
+
+  for (const ymd of dates) {
+    const drawsToday = range.filter((d) => pickDrawYMD(d) === ymd);
+
+    const dayTimeline = buildTimelineForDate({
+      ymd,
+      drawsToday,
+      drawsRange: range,
+      lotteryKey,
+      PT_RIO_SCHEDULE_NORMAL,
+      PT_RIO_SCHEDULE_WED_SAT,
+      FEDERAL_SCHEDULE,
+    });
+
+    allTimeline.push(...(Array.isArray(dayTimeline) ? dayTimeline : []));
+  }
+
+  return auditTop3Timeline({
+    timeline: allTimeline,
+    lotteryKey,
+  });
+}
+
+LINHA: 4241
+
+    const top3 =
+      computedForSlot && Array.isArray(computed?.top)
+        ? computed.top.slice(0, 3)
+        : [];
+
+    const resultGrupo = currentDraw ? pickPrize1GrupoFromDraw(currentDraw) : null;
+
+    const hit =
+      Number.isFinite(Number(resultGrupo)) && top3.length
+        ? top3.some((t) => Number(t?.grupo) === Number(resultGrupo))
+        : null;
+
+    timeline.push({
+      targetYmd,
+      targetHour: slotHour,
+      baseYmd: pickDrawYMD(baseDraw) || "",
+      baseHour: toHourBucket(pickDrawHour(baseDraw)) || "",
+      top3,
+      resultGrupo: Number.isFinite(Number(resultGrupo)) ? Number(resultGrupo) : null,
+      hit,
+      status: Number.isFinite(Number(resultGrupo)) ? "validated" : "pending",
+      historyStats,
+    });
+
+    if (currentDraw) {
+      chainContextDraws.push(currentDraw);
+    } else {
+      pendingPredictionAlreadyShown = true;
+    }
+  }
+
+  return timeline;
+
+}
+
+export function buildTimelineTop3(args) {
+  return buildTimelineForDate(args || {});
+}
+
+export function auditTop3Backtest({
+  drawsRange,
+  lotteryKey,
+  PT_RIO_SCHEDULE_NORMAL,
+  PT_RIO_SCHEDULE_WED_SAT,
+  FEDERAL_SCHEDULE,
+}) {
+  const range = Array.isArray(drawsRange) ? drawsRange : [];
+  const dates = Array.from(
+    new Set(
+      range
+        .map((d) => pickDrawYMD(d))
+        .filter((ymd) => isYMD(ymd))
+    )
+  ).sort();
+
+  const allTimeline = [];
+
+  for (const ymd of dates) {
+    const drawsToday = range.filter((d) => pickDrawYMD(d) === ymd);
+
+    const dayTimeline = buildTimelineForDate({
+      ymd,
+      drawsToday,
+      drawsRange: range,
+      lotteryKey,
+      PT_RIO_SCHEDULE_NORMAL,
+      PT_RIO_SCHEDULE_WED_SAT,
+      FEDERAL_SCHEDULE,
+    });
+
+    allTimeline.push(...(Array.isArray(dayTimeline) ? dayTimeline : []));
+  }
+
+  return auditTop3Timeline({
+    timeline: allTimeline,
+    lotteryKey,
+  });
+}
+
+LINHA: 4242
+    const top3 =
+      computedForSlot && Array.isArray(computed?.top)
+        ? computed.top.slice(0, 3)
+        : [];
+
+    const resultGrupo = currentDraw ? pickPrize1GrupoFromDraw(currentDraw) : null;
+
+    const hit =
+      Number.isFinite(Number(resultGrupo)) && top3.length
+        ? top3.some((t) => Number(t?.grupo) === Number(resultGrupo))
+        : null;
+
+    timeline.push({
+      targetYmd,
+      targetHour: slotHour,
+      baseYmd: pickDrawYMD(baseDraw) || "",
+      baseHour: toHourBucket(pickDrawHour(baseDraw)) || "",
+      top3,
+      resultGrupo: Number.isFinite(Number(resultGrupo)) ? Number(resultGrupo) : null,
+      hit,
+      status: Number.isFinite(Number(resultGrupo)) ? "validated" : "pending",
+      historyStats,
+    });
+
+    if (currentDraw) {
+      chainContextDraws.push(currentDraw);
+    } else {
+      pendingPredictionAlreadyShown = true;
+    }
+  }
+
+  return timeline;
+
+}
+
+export function buildTimelineTop3(args) {
+  return buildTimelineForDate(args || {});
+}
+
+export function auditTop3Backtest({
+  drawsRange,
+  lotteryKey,
+  PT_RIO_SCHEDULE_NORMAL,
+  PT_RIO_SCHEDULE_WED_SAT,
+  FEDERAL_SCHEDULE,
+}) {
+  const range = Array.isArray(drawsRange) ? drawsRange : [];
+  const dates = Array.from(
+    new Set(
+      range
+        .map((d) => pickDrawYMD(d))
+        .filter((ymd) => isYMD(ymd))
+    )
+  ).sort();
+
+  const allTimeline = [];
+
+  for (const ymd of dates) {
+    const drawsToday = range.filter((d) => pickDrawYMD(d) === ymd);
+
+    const dayTimeline = buildTimelineForDate({
+      ymd,
+      drawsToday,
+      drawsRange: range,
+      lotteryKey,
+      PT_RIO_SCHEDULE_NORMAL,
+      PT_RIO_SCHEDULE_WED_SAT,
+      FEDERAL_SCHEDULE,
+    });
+
+    allTimeline.push(...(Array.isArray(dayTimeline) ? dayTimeline : []));
+  }
+
+  return auditTop3Timeline({
+    timeline: allTimeline,
+    lotteryKey,
+  });
+}
+
+
+====================================================================================================
+PADRÃO: prediction
+====================================================================================================
+
+LINHA: 4051
+      const tb = ymdHourToTs(pickDrawYMD(b), toHourBucket(pickDrawHour(b)));
+      return ta - tb;
+    });
+
+  const rangeSorted = range
+    .filter((d) => isYMD(pickDrawYMD(d)) && toHourBucket(pickDrawHour(d)))
+    .sort((a, b) => {
+      const ta = ymdHourToTs(pickDrawYMD(a), toHourBucket(pickDrawHour(a)));
+      const tb = ymdHourToTs(pickDrawYMD(b), toHourBucket(pickDrawHour(b)));
+      return ta - tb;
+    });
+
+  const realizedTodayMap = new Map();
+
+  for (const d of daySorted) {
+    const y = pickDrawYMD(d);
+    const h = toHourBucket(pickDrawHour(d));
+    if (!isYMD(y) || !h) continue;
+    if (y !== targetYmd) continue;
+    realizedTodayMap.set(`${y}|${h}`, d);
+  }
+
+
+  const chainContextDraws = [];
+  const timeline = [];
+  let pendingPredictionAlreadyShown = false;
+
+  for (const slotHour of normalizedSchedule) {
+    const currentDraw = realizedTodayMap.get(`${targetYmd}|${slotHour}`) || null;
+    const slotTs = ymdHourToTs(targetYmd, slotHour);
+
+
+    if (!currentDraw && pendingPredictionAlreadyShown) {
+      timeline.push({
+        targetYmd,
+        targetHour: slotHour,
+        baseYmd: "",
+        baseHour: "",
+        top3: [],
+        resultGrupo: null,
+        hit: null,
+        status: "pending",
+      });
+      continue;
+    }
+
+    let baseDraw = null;
+
+    const priorChainDraw = [...chainContextDraws]
+      .filter((d) => {
+        const y = pickDrawYMD(d);
+        const h = toHourBucket(pickDrawHour(d));
+        const ts = ymdHourToTs(y, h);
+        return isYMD(y) && h && Number.isFinite(ts) && ts < slotTs;
+      })
+      .sort((a, b) => {
+        const ta = ymdHourToTs(pickDrawYMD(a), toHourBucket(pickDrawHour(a)));
+        const tb = ymdHourToTs(pickDrawYMD(b), toHourBucket(pickDrawHour(b)));
+        return tb - ta;
+      })[0] || null;
+
+    if (priorChainDraw) baseDraw = priorChainDraw;
+
+    if (!baseDraw) {
+      const prevSameDay = daySorted
+        .filter((d) => {
+          const y = pickDrawYMD(d);
+          const h = toHourBucket(pickDrawHour(d));
+          const ts = ymdHourToTs(y, h);
+          return y === targetYmd && h && Number.isFinite(ts) && ts < slotTs;
+        })
+        .sort((a, b) => {
+          const ta = ymdHourToTs(pickDrawYMD(a), toHourBucket(pickDrawHour(a)));
+          const tb = ymdHourToTs(pickDrawYMD(b), toHourBucket(pickDrawHour(b)));
+          return tb - ta;
+        })[0] || null;
+
+      if (prevSameDay) baseDraw = prevSameDay;
+    }
+
+    if (!baseDraw) {
+      for (let i = rangeSorted.length - 1; i >= 0; i -= 1) {
+        const d = rangeSorted[i];
+        const y = pickDrawYMD(d);
+        const h = toHourBucket(pickDrawHour(d));
+        const ts = ymdHourToTs(y, h);
+
+        if (!Number.isFinite(ts) || ts >= slotTs) continue;
+
+        baseDraw = d;
+        break;
+      }
+    }
+
+    if (!baseDraw) {
+      baseDraw = findPreviousValidDraw(rangeSorted, targetYmd, slotHour);
+    }
+
+    if (!baseDraw) {
+      timeline.push({
+        targetYmd,
+        targetHour: slotHour,
+        baseYmd: "",
+        baseHour: "",
+        top3: [],
+        resultGrupo: null,
+
+LINHA: 4058
+      const ta = ymdHourToTs(pickDrawYMD(a), toHourBucket(pickDrawHour(a)));
+      const tb = ymdHourToTs(pickDrawYMD(b), toHourBucket(pickDrawHour(b)));
+      return ta - tb;
+    });
+
+  const realizedTodayMap = new Map();
+
+  for (const d of daySorted) {
+    const y = pickDrawYMD(d);
+    const h = toHourBucket(pickDrawHour(d));
+    if (!isYMD(y) || !h) continue;
+    if (y !== targetYmd) continue;
+    realizedTodayMap.set(`${y}|${h}`, d);
+  }
+
+
+  const chainContextDraws = [];
+  const timeline = [];
+  let pendingPredictionAlreadyShown = false;
+
+  for (const slotHour of normalizedSchedule) {
+    const currentDraw = realizedTodayMap.get(`${targetYmd}|${slotHour}`) || null;
+    const slotTs = ymdHourToTs(targetYmd, slotHour);
+
+
+    if (!currentDraw && pendingPredictionAlreadyShown) {
+      timeline.push({
+        targetYmd,
+        targetHour: slotHour,
+        baseYmd: "",
+        baseHour: "",
+        top3: [],
+        resultGrupo: null,
+        hit: null,
+        status: "pending",
+      });
+      continue;
+    }
+
+    let baseDraw = null;
+
+    const priorChainDraw = [...chainContextDraws]
+      .filter((d) => {
+        const y = pickDrawYMD(d);
+        const h = toHourBucket(pickDrawHour(d));
+        const ts = ymdHourToTs(y, h);
+        return isYMD(y) && h && Number.isFinite(ts) && ts < slotTs;
+      })
+      .sort((a, b) => {
+        const ta = ymdHourToTs(pickDrawYMD(a), toHourBucket(pickDrawHour(a)));
+        const tb = ymdHourToTs(pickDrawYMD(b), toHourBucket(pickDrawHour(b)));
+        return tb - ta;
+      })[0] || null;
+
+    if (priorChainDraw) baseDraw = priorChainDraw;
+
+    if (!baseDraw) {
+      const prevSameDay = daySorted
+        .filter((d) => {
+          const y = pickDrawYMD(d);
+          const h = toHourBucket(pickDrawHour(d));
+          const ts = ymdHourToTs(y, h);
+          return y === targetYmd && h && Number.isFinite(ts) && ts < slotTs;
+        })
+        .sort((a, b) => {
+          const ta = ymdHourToTs(pickDrawYMD(a), toHourBucket(pickDrawHour(a)));
+          const tb = ymdHourToTs(pickDrawYMD(b), toHourBucket(pickDrawHour(b)));
+          return tb - ta;
+        })[0] || null;
+
+      if (prevSameDay) baseDraw = prevSameDay;
+    }
+
+    if (!baseDraw) {
+      for (let i = rangeSorted.length - 1; i >= 0; i -= 1) {
+        const d = rangeSorted[i];
+        const y = pickDrawYMD(d);
+        const h = toHourBucket(pickDrawHour(d));
+        const ts = ymdHourToTs(y, h);
+
+        if (!Number.isFinite(ts) || ts >= slotTs) continue;
+
+        baseDraw = d;
+        break;
+      }
+    }
+
+    if (!baseDraw) {
+      baseDraw = findPreviousValidDraw(rangeSorted, targetYmd, slotHour);
+    }
+
+    if (!baseDraw) {
+      timeline.push({
+        targetYmd,
+        targetHour: slotHour,
+        baseYmd: "",
+        baseHour: "",
+        top3: [],
+        resultGrupo: null,
+        hit: null,
+        status: "pending",
+      });
+      continue;
+    }
+
+    const baseTs = ymdHourToTs(
+
+LINHA: 4244
+        ? computed.top.slice(0, 3)
+        : [];
+
+    const resultGrupo = currentDraw ? pickPrize1GrupoFromDraw(currentDraw) : null;
+
+    const hit =
+      Number.isFinite(Number(resultGrupo)) && top3.length
+        ? top3.some((t) => Number(t?.grupo) === Number(resultGrupo))
+        : null;
+
+    timeline.push({
+      targetYmd,
+      targetHour: slotHour,
+      baseYmd: pickDrawYMD(baseDraw) || "",
+      baseHour: toHourBucket(pickDrawHour(baseDraw)) || "",
+      top3,
+      resultGrupo: Number.isFinite(Number(resultGrupo)) ? Number(resultGrupo) : null,
+      hit,
+      status: Number.isFinite(Number(resultGrupo)) ? "validated" : "pending",
+      historyStats,
+    });
+
+    if (currentDraw) {
+      chainContextDraws.push(currentDraw);
+    } else {
+      pendingPredictionAlreadyShown = true;
+    }
+  }
+
+  return timeline;
+
+}
+
+export function buildTimelineTop3(args) {
+  return buildTimelineForDate(args || {});
+}
+
+export function auditTop3Backtest({
+  drawsRange,
+  lotteryKey,
+  PT_RIO_SCHEDULE_NORMAL,
+  PT_RIO_SCHEDULE_WED_SAT,
+  FEDERAL_SCHEDULE,
+}) {
+  const range = Array.isArray(drawsRange) ? drawsRange : [];
+  const dates = Array.from(
+    new Set(
+      range
+        .map((d) => pickDrawYMD(d))
+        .filter((ymd) => isYMD(ymd))
+    )
+  ).sort();
+
+  const allTimeline = [];
+
+  for (const ymd of dates) {
+    const drawsToday = range.filter((d) => pickDrawYMD(d) === ymd);
+
+    const dayTimeline = buildTimelineForDate({
+      ymd,
+      drawsToday,
+      drawsRange: range,
+      lotteryKey,
+      PT_RIO_SCHEDULE_NORMAL,
+      PT_RIO_SCHEDULE_WED_SAT,
+      FEDERAL_SCHEDULE,
+    });
+
+    allTimeline.push(...(Array.isArray(dayTimeline) ? dayTimeline : []));
+  }
+
+  return auditTop3Timeline({
+    timeline: allTimeline,
+    lotteryKey,
+  });
+}
+
+
+====================================================================================================
+PADRÃO: predictions
+====================================================================================================
+

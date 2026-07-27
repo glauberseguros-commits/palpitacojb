@@ -1,0 +1,125 @@
+L0001: "use strict";
+L0002: 
+L0003: import scoreConfig from "./scoreConfig";
+L0004: import { collectEvidence } from "./evidenceEngine";
+L0005: 
+L0006: /**
+L0007:  * Score Engine V2 inicial
+L0008:  *
+L0009:  * Consome evidências.
+L0010:  * Não aplica regra cega isolada.
+L0011:  */
+L0012: 
+L0013: function normalizeEvidenceValue(value) {
+L0014:   const n = Number(value);
+L0015:   if (!Number.isFinite(n) || n <= 0) return 0;
+L0016:   return n;
+L0017: }
+L0018: 
+L0019: function calculateEvidenceStrength(evidenceList = []) {
+L0020:   const list = Array.isArray(evidenceList) ? evidenceList : [];
+L0021: 
+L0022:   if (!list.length) {
+L0023:     return {
+L0024:       score: 0,
+L0025:       confidence: 0,
+L0026:       reasons: ["Sem evidências suficientes."],
+L0027:       signals: {},
+L0028:     };
+L0029:   }
+L0030: 
+L0031:   const values = list.map((e) => normalizeEvidenceValue(e.value));
+L0032:   const total = values.reduce((acc, v) => acc + v, 0);
+L0033:   const max = Math.max(...values, 1);
+L0034: 
+L0035:   const score = Math.min(100, Math.round((total / max) * 50));
+L0036:   const confidence = Math.min(100, Math.round(score * Math.min(1, list.length / 3)));
+L0037: 
+L0038:   const reasons = list.flatMap((e) => Array.isArray(e.reasons) ? e.reasons : []);
+L0039: 
+L0040:   const signals = {};
+L0041:   for (const e of list) {
+L0042:     signals[e.module] = e.evidence || {};
+L0043:   }
+L0044: 
+L0045:   return {
+L0046:     score,
+L0047:     confidence,
+L0048:     reasons,
+L0049:     signals,
+L0050:   };
+L0051: }
+L0052: 
+L0053: function scoreItem(item = {}, context = {}) {
+L0054:   const collected = collectEvidence({
+L0055:     item,
+L0056:     context,
+L0057:     config: scoreConfig,
+L0058:   });
+L0059: 
+L0060:   const strength = calculateEvidenceStrength(collected.evidence);
+L0061: 
+L0062:   const probability = Math.max(
+L0063:     0,
+L0064:     Math.min(
+L0065:       100,
+L0066:       Number(item.scoreProb || item.rawScoreProb || 0) * 100
+L0067:     )
+L0068:   );
+L0069: 
+L0070:   const finalScore = Math.round(
+L0071:     (strength.score * 0.45) +
+L0072:     (probability * 0.55)
+L0073:   );
+L0074: 
+L0075:   const finalConfidence = Math.round(
+L0076:     (strength.confidence * 0.40) +
+L0077:     (probability * 0.60)
+L0078:   );
+L0079: 
+L0080:   return {
+L0081:     ...item,
+L0082: 
+L0083:     score: finalScore,
+L0084: 
+L0085:     confidence: finalConfidence,
+L0086: 
+L0087:     reasons: [
+L0088:       ...strength.reasons,
+L0089:       `Probabilidade V3: ${probability.toFixed(2)}%`,
+L0090:     ],
+L0091: 
+L0092:     signals: {
+L0093:       ...strength.signals,
+L0094:       probability,
+L0095:     },
+L0096: 
+L0097:     evidenceCount: collected.count,
+L0098: 
+L0099:     evidenceModules: collected.modules,
+L0100:   };
+L0101: }
+L0102: 
+L0103: function scoreRanking(items = [], context = {}) {
+L0104: 
+L0105:   return (Array.isArray(items) ? items : [])
+L0106:     .map(item => scoreItem(item, context))
+L0107:     .sort((a, b) => {
+L0108: 
+L0109:       if (b.score !== a.score)
+L0110:         return b.score - a.score;
+L0111: 
+L0112:       if (b.confidence !== a.confidence)
+L0113:         return b.confidence - a.confidence;
+L0114: 
+L0115:       return (Number(b.scoreProb || 0) - Number(a.scoreProb || 0));
+L0116: 
+L0117:     });
+L0118: 
+L0119: }
+L0120: 
+L0121: export {
+L0122: scoreItem,
+L0123:   scoreRanking,
+L0124:   calculateEvidenceStrength,
+L0125: };

@@ -1,0 +1,107 @@
+
+===== src/pages/Top3/Top3View.jsx =====
+ 165:     .filter((x) => /^\d{4}$/.test(x));
+ 215:   const flat20 = rows.flat().filter(Boolean);
+ 297:       .filter((m) => /^\d{4}$/.test(m));
+ 301:       .filter((c) => /^\d{3}$/.test(c));
+ 336:     () => (Array.isArray(srcs) ? srcs.filter(Boolean) : []),
+ 474:     flat20 = gridRows.flat().filter(Boolean);
+ 491:           milharesBase = slots20.map((x) => x?.milhar).filter(Boolean);
+ 497:             milharesBase = out.slots.map((x) => x?.milhar).filter(Boolean);
+ 502:           milharesBase = slots16.map((x) => x?.milhar).filter(Boolean);
+ 529:     ? item.evidenceModules.filter(Boolean)
+ 604:     .concat(Array.isArray(item?.reasons) ? item.reasons.filter(Boolean) : [])
+ 605:     .filter(Boolean)
+1231:     LOTTERY_OPTIONS,
+1340:   const baseLots = Array.isArray(LOTTERY_OPTIONS) ? LOTTERY_OPTIONS : [];
+1341:   const mustHave = [
+1342:     { value: "PT_RIO", label: "PT_RIO (RJ)" },
+1343:     { value: "FEDERAL", label: "Federal" },
+1344:     { value: "LOOK", label: "LOOK" },
+1345:     { value: "NACIONAL", label: "Nacional" },
+1350:   [...baseLots, ...mustHave].forEach((op) => {
+1362:   const lotOptions = [
+1363:     map.get("PT_RIO"),
+1364:     map.get("FEDERAL"),
+1365:     map.get("LOOK"),
+1366:     map.get("NACIONAL"),
+1367:     ...[...map.values()].filter(
+1370:           "PT_RIO",
+1371:           "FEDERAL",
+1372:           "LOOK",
+1373:           "NACIONAL",
+1380:   ].filter(Boolean);
+1382:   const curLot = String(lotteryKeySafe || "PT_RIO").toUpperCase();
+1394:     .filter((slot) => String(slot?.status || "").toLowerCase() === "validated")
+1413:       .filter(
+1443:                 .filter(Number.isFinite),
+1474:     .filter((slot) => String(slot?.targetYmd || "").trim() === historyAnchorYmd)
+1498:         picks: slotTop3.map((t) => Number(t?.grupo)).filter((g) => Number.isFinite(g)),
+1518:     const validated = historyRows.filter(
+1522:     const exact = validated.filter(
+1526:     const centena = validated.filter(
+1530:     const grupo = validated.filter(
+1534:     const misses = validated.filter(
+2657:               {lotOptions.map((op) => {
+
+===== src/pages/Top3/top3.hooks.js =====
+  16:   LOOKBACK_ALL,
+  17:   LOOKBACK_OPTIONS,
+  18:   LOTTERY_OPTIONS,
+  19:   PT_RIO_SCHEDULE_NORMAL,
+  20:   PT_RIO_SCHEDULE_WED_SAT,
+  21:   FEDERAL_SCHEDULE,
+ 146:     PT_RIO_SCHEDULE_NORMAL,
+ 147:     PT_RIO_SCHEDULE_WED_SAT,
+ 148:     FEDERAL_SCHEDULE,
+ 152:     ? schedule.map(toHourBucket).filter(Boolean)
+ 210:     .filter((d) => isDrawValidForLotterySchedule(d, lotteryKey))
+ 211:     .filter((d) => {
+ 256:     .filter(Boolean);
+ 286:   const DEFAULT_LOTTERY = "PT_RIO";
+ 298:   const [lookback, setLookback] = useState(LOOKBACK_ALL);
+ 372:       PT_RIO_SCHEDULE_NORMAL,
+ 373:       PT_RIO_SCHEDULE_WED_SAT,
+ 374:       FEDERAL_SCHEDULE,
+ 379:     return lotteryKeySafe === "FEDERAL" && !isFederalDrawDay(ymdSafe);
+ 488:         lKey === "FEDERAL" && !isFederalDrawDay(ymdSafe);
+ 508:         PT_RIO_SCHEDULE_NORMAL,
+ 509:         PT_RIO_SCHEDULE_WED_SAT,
+ 510:         FEDERAL_SCHEDULE,
+ 514:         (lKey === "PT_RIO" || lKey === "RJ") &&
+ 523:               .filter((h) => h && h !== "18:00"),
+ 565:           .filter(Boolean);
+ 579:             PT_RIO_SCHEDULE_NORMAL,
+ 580:             PT_RIO_SCHEDULE_WED_SAT,
+ 581:             FEDERAL_SCHEDULE,
+ 608:           PT_RIO_SCHEDULE_NORMAL,
+ 609:           PT_RIO_SCHEDULE_WED_SAT,
+ 610:           FEDERAL_SCHEDULE,
+ 669:         PT_RIO_SCHEDULE_NORMAL,
+ 670:         PT_RIO_SCHEDULE_WED_SAT,
+ 671:         FEDERAL_SCHEDULE,
+ 681:         PT_RIO_SCHEDULE_NORMAL,
+ 682:         PT_RIO_SCHEDULE_WED_SAT,
+ 683:         FEDERAL_SCHEDULE,
+ 759:       if (lookback === LOOKBACK_ALL) {
+ 932:       (lotteryKeySafe === "PT_RIO" || lotteryKeySafe === "RJ") &&
+ 936:       return (Array.isArray(built) ? built : []).filter((slot) => {
+ 970:       .filter((n) => Number.isFinite(n) && n >= 1 && n <= 25)
+1187:     LOOKBACK_ALL,
+1188:     LOOKBACK_OPTIONS,
+1189:     LOTTERY_OPTIONS,
+
+===== src/pages/Top3/top3.constants.js =====
+   3: export const LOOKBACK_ALL = "ALL";
+   5: export const LOOKBACK_OPTIONS = [
+   6:   { value: LOOKBACK_ALL, label: "Todos" },
+  18: export const LOTTERY_OPTIONS = [
+  19:   { key: "PT_RIO", value: "PT_RIO", label: "RJ (PT_RIO)" },
+  20:   { key: "FEDERAL", value: "FEDERAL", label: "Federal" },
+  21:   { key: "LOOK", value: "LOOK", label: "LOOK" },
+  22:   { key: "NACIONAL", value: "NACIONAL", label: "Nacional" },
+  26: export const PT_RIO_SCHEDULE_NORMAL = [
+  35: export const PT_RIO_SCHEDULE_SUNDAY = [
+  43:  * PT_RIO em QUA/SÁB (RJ)
+  48: export const PT_RIO_SCHEDULE_WED_SAT = [
+  58: export const FEDERAL_SCHEDULE = ["20:00"];

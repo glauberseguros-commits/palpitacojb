@@ -1465,9 +1465,28 @@ export async function getKingResultsByRange({
           }
 
           const baseAll = dedupeDrawsLocal(all);
-          const base = hourFilter?.kind
+          console.log("===== KING RANGE DEBUG =====");
+console.log("UF:", uf);
+console.log("closeHour:", closeHour);
+console.log("closeHourBucket:", closeHourBucket);
+console.log("hourFilter:", hourFilter);
+console.log("baseAll:", baseAll.length);
+
+const base = hourFilter?.kind
             ? baseAll.filter((d) => drawPassesHourFilter(d, hourFilter))
             : baseAll;
+
+console.log("base apos filtro:", base.length);
+
+if (baseAll.length) {
+    console.log("primeiro baseAll:", baseAll[0]);
+}
+
+if (base.length) {
+    console.log("primeiro base:", base[0]);
+}
+
+console.log("============================");
 
           let out = dedupeDrawsLocal(sortDrawsLocal(base));
 

@@ -1,0 +1,3100 @@
+Arquivos examinados: 38
+Arquivos com ocorrências: 14
+
+==============================================================================================================
+ARQUIVO: src/pages/Dashboard/Dashboard.jsx
+==============================================================================================================
+
+--- contexto da linha 29 ---
+
+   00004:  * ============================================================
+   00005:  * ✅ Ajuste temporário corrigido:
+   00006:  * - guest/demo continua com acesso liberado no painel
+   00007:  * - login visual "ENTRAR" (sessão local type:user) NÃO aparece mais
+   00008:  *   como convidado/demonstração
+   00009:  * - sessão agora lê type + plan corretamente
+   00010:  * - sem bloqueio de filtros, período, cliques ou ações locais
+   00011:  * ============================================================
+   00012:  */
+   00013: 
+   00014: import React, { useEffect, useMemo, useState, useCallback, useRef } from "react";
+   00015: import "./dashboard.css";
+   00016: import LeftRankingTable from "./components/LeftRankingTable";
+   00017: import FiltersBar from "./components/FiltersBar";
+   00018: import KpiCards from "./components/KpiCards";
+   00019: import ChartsGrid from "./components/ChartsGrid";
+   00020: import DateRangeControl from "./components/DateRangeControl";
+   00021: import { useKingRanking } from "../../hooks/useKingRanking";
+   00022: import {
+   00023:   BICHO_MAP,
+   00024:   getAnimalLabel as getAnimalLabelFromMap,
+   00025:   getImgFromGrupo as getImgFromGrupoFromMap,
+   00026: } from "../../constants/bichoMap";
+   00027: 
+   00028: import { buildPalpiteV2 } from "../../utils/buildPalpites";
+>> 00029: import { getKingBoundsByUf } from "../../services/kingResultsService";
+   00030: import { loadDashboardStatistics } from "./dashboard.snapshot.loader";
+   00031: import { buildRanking } from "../../utils/buildRanking";
+   00032: import { applyScoreEngine } from "../../utils/scoreEngine";
+   00033: import { normalizeToYMD_SP } from "../../utils/ymd";
+   00034: 
+   00035: /* =========================
+   00036:    DATA MODE
+   00037: ========================= */
+   00038: const DATA_MODE = "firestore";
+   00039: const RANKING_JSON_URL = "/data/ranking_current.json";
+   00040: 
+   00041: const ALL_POSITIONS = [1, 2, 3, 4, 5, 6, 7];
+   00042: 
+   00043: /* =========================
+   00044:    Persistência (Dashboard State)
+   00045:    - Não inclui filtros (filtros ficam no App.js)
+   00046: ========================= */
+   00047: const DASH_STATE_KEY_V1 = "pp_dash_state_v1";
+   00048: const DASH_STATE_KEY_BASE = "pp_dash_state_v2"; // versionado + por UF
+   00049: 
+   00050: /* =========================
+   00051:    Sessão / Guest / User
+   00052: ========================= */
+   00053: const ACCOUNT_SESSION_KEY = "pp_session_v1";
+   00054: const SESSION_POLL_MS = 1500;
+   00055: 
+   00056: function safeParseJSON(s) {
+   00057:   try {
+   00058:     const obj = JSON.parse(s);
+   00059:     return obj && typeof obj === "object" ? obj : null;
+   00060:   } catch {
+   00061:     return null;
+   00062:   }
+   00063: }
+   00064: 
+   00065: function loadSessionObj() {
+   00066:   try {
+   00067:     const raw = localStorage.getItem(ACCOUNT_SESSION_KEY);
+   00068:     if (!raw) return null;
+   00069:     const s = String(raw || "").trim();
+   00070:     if (!s.startsWith("{")) return null;
+   00071:     return safeParseJSON(s);
+   00072:   } catch {
+   00073:     return null;
+   00074:   }
+   00075: }
+   00076: 
+   00077: function normalizeSessionPlan(plan) {
+   00078:   const p = String(plan || "").trim().toUpperCase();
+   00079:   if (p === "VIP") return "VIP";
+   00080:   if (p === "PREMIUM") return "PREMIUM";
+   00081:   if (p === "FREE") return "FREE";
+   00082:   return "";
+   00083: }
+
+--- contexto da linha 146 ---
+
+   00121:       s.profile?.plan ??
+   00122:       s.subscription?.plan ??
+   00123:       s.account?.plan ??
+   00124:       s.customClaims?.plan ??
+   00125:       s.claims?.plan ??
+   00126:       s.appData?.plan ??
+   00127:       s.metadata?.plan
+   00128:   );
+   00129: 
+   00130:   if (normalized) return normalized;
+   00131: 
+   00132:   const kind = getSessionKind(s);
+   00133:   if (kind === "guest") return "FREE";
+   00134:   if (kind === "user") return "PREMIUM";
+   00135: 
+   00136:   return "";
+   00137: }
+   00138: 
+   00139: /* =========================
+   00140:    Banner
+   00141: ========================= */
+   00142: const DEFAULT_BANNER_SRC = "/logo/palpitaco-jb.png";
+   00143: 
+   00144: function safeReadJSON(key) {
+   00145:   try {
+>> 00146:     const raw = localStorage.getItem(key);
+   00147:     if (!raw) return null;
+   00148:     return JSON.parse(raw);
+   00149:   } catch {
+   00150:     return null;
+   00151:   }
+   00152: }
+   00153: 
+   00154: function safeWriteJSON(key, obj) {
+   00155:   try {
+   00156:     localStorage.setItem(key, JSON.stringify(obj));
+   00157:   } catch {
+   00158:     // ignore
+   00159:   }
+   00160: }
+   00161: 
+   00162: function isValidGrupo(g) {
+   00163:   const n = Number(g);
+   00164:   return Number.isFinite(n) && n >= 1 && n <= 25;
+   00165: }
+   00166: 
+   00167: function preloadImage(src) {
+   00168:   return new Promise((resolve, reject) => {
+   00169:     if (!src) return reject(new Error("src vazio"));
+   00170:     const img = new Image();
+   00171:     img.onload = () => resolve(true);
+   00172:     img.onerror = () => reject(new Error("falha ao carregar"));
+   00173:     img.src = src;
+   00174:   });
+   00175: }
+   00176: 
+   00177: /* =========================
+   00178:    Helpers (UI -> Bucket)
+   00179: ========================= */
+   00180: 
+   00181: function normalizeHourBucket(h) {
+   00182:   const raw = String(h ?? "").trim();
+   00183:   if (!raw || raw.toLowerCase() === "todos") return null;
+   00184: 
+   00185:   const s = raw.replace(/\s+/g, "").toUpperCase();
+   00186: 
+   00187:   let m = s.match(/^(\d{1,2})(?:H|HS)$/);
+   00188:   if (m) return `${String(m[1]).padStart(2, "0")}h`;
+   00189: 
+   00190:   m = s.match(/^(\d{1,2}):(\d{2})(?::\d{2})?$/);
+   00191:   if (m) return `${String(m[1]).padStart(2, "0")}h`;
+   00192: 
+   00193:   m = s.match(/^(\d{1,2})$/);
+   00194:   if (m) return `${String(m[1]).padStart(2, "0")}h`;
+   00195: 
+   00196:   m = s.match(/(\d{1,2})/);
+   00197:   if (m) {
+   00198:     const hh = Number(m[1]);
+   00199:     if (Number.isFinite(hh) && hh >= 0 && hh <= 23) return `${String(hh).padStart(2, "0")}h`;
+   00200:   }
+
+--- contexto da linha 285 ---
+
+   00260: const MONTH_NAME_TO_MM = {
+   00261:   janeiro: "01",
+   00262:   fevereiro: "02",
+   00263:   março: "03",
+   00264:   marco: "03",
+   00265:   abril: "04",
+   00266:   maio: "05",
+   00267:   junho: "06",
+   00268:   julho: "07",
+   00269:   agosto: "08",
+   00270:   setembro: "09",
+   00271:   outubro: "10",
+   00272:   novembro: "11",
+   00273:   dezembro: "12",
+   00274: };
+   00275: 
+   00276: function ymdToWeekdayShortPT(ymd) {
+   00277:   const m = String(ymd || "").match(/^(\d{4})-(\d{2})-(\d{2})$/);
+   00278:   if (!m) return null;
+   00279: 
+   00280:   const y = Number(m[1]);
+   00281:   const mo = Number(m[2]);
+   00282:   const d = Number(m[3]);
+   00283:   if (!y || !mo || !d) return null;
+   00284: 
+>> 00285:   const dt = new Date(Date.UTC(y, mo - 1, d));
+   00286:   const idx = dt.getUTCDay();
+   00287: 
+   00288:   const arr = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
+   00289:   return arr[idx] || null;
+   00290: }
+   00291: 
+   00292: function normalizeKey(s) {
+   00293:   return String(s || "")
+   00294:     .trim()
+   00295:     .toLowerCase()
+   00296:     .normalize("NFD")
+   00297:     .replace(/[\u0300-\u036f]/g, "")
+   00298:     .replace(/\s+/g, " ");
+   00299: }
+   00300: 
+   00301: function getLabelByGrupo(g) {
+   00302:   const n = Number(g);
+   00303:   if (!Number.isFinite(n) || n < 1 || n > 25) return "";
+   00304:   try {
+   00305:     if (typeof getAnimalLabelFromMap === "function") {
+   00306:       const a = getAnimalLabelFromMap({ grupo: n, animal: "" });
+   00307:       const sa = String(a ?? "").trim();
+   00308:       if (sa) return sa;
+   00309:     }
+   00310:   } catch {}
+   00311:   try {
+   00312:     if (typeof getAnimalLabelFromMap === "function") {
+   00313:       const b = getAnimalLabelFromMap(n);
+   00314:       const sb = String(b ?? "").trim();
+   00315:       if (sb) return sb;
+   00316:     }
+   00317:   } catch {}
+   00318:   return "";
+   00319: }
+   00320: 
+   00321: function safeAnimalLabel({ grupo, animal }) {
+   00322:   try {
+   00323:     if (typeof getAnimalLabelFromMap === "function") {
+   00324:       const out = getAnimalLabelFromMap({ grupo, animal });
+   00325:       const s = String(out ?? "").trim();
+   00326:       if (s) return s;
+   00327:     }
+   00328:   } catch {}
+   00329:   const byGrupo = getLabelByGrupo(grupo);
+   00330:   if (byGrupo) return byGrupo;
+   00331:   return String(animal || "").trim();
+   00332: }
+   00333: 
+   00334: function mapMetaRankingToRows(meta) {
+   00335:   const m = meta && typeof meta === "object" ? meta : null;
+   00336:   if (!m) return [];
+   00337: 
+   00338:   const arr =
+   00339:     (Array.isArray(m.byGrupo) && m.byGrupo) ||
+
+--- contexto da linha 475 ---
+
+   00450:           style={{
+   00451:             border: "1px solid rgba(255,255,255,0.10)",
+   00452:             borderRadius: 14,
+   00453:             background: "rgba(0,0,0,0.35)",
+   00454:             padding: 14,
+   00455:             minHeight: 76,
+   00456:           }}
+   00457:         />
+   00458:       </div>
+   00459:     </div>
+   00460:   );
+   00461: }
+   00462: 
+   00463: function isIndexErrorMessage(err) {
+   00464:   const msg = String(err?.message || err || "").toLowerCase();
+   00465:   return (
+   00466:     msg.includes("failed-precondition") ||
+   00467:     msg.includes("failed_precondition") ||
+   00468:     msg.includes("requires an index") ||
+   00469:     (msg.includes("index") && msg.includes("create")) ||
+   00470:     (msg.includes("índice") && msg.includes("criar")) ||
+   00471:     (msg.includes("indice") && msg.includes("criar"))
+   00472:   );
+   00473: }
+   00474: 
+>> 00475: function clampRangeToBounds(next, minDate, maxDate) {
+   00476:   const f = next?.from;
+   00477:   const t = next?.to;
+   00478: 
+   00479:   if (!isISODate(f) || !isISODate(t)) return null;
+   00480:   if (!minDate || !maxDate) return null;
+   00481:   if (!isISODate(minDate) || !isISODate(maxDate)) return null;
+   00482: 
+   00483:   let from = f < minDate ? minDate : f;
+   00484:   let to = t > maxDate ? maxDate : t;
+   00485: 
+   00486:   if (from > to) to = from;
+   00487:   return { from, to };
+   00488: }
+   00489: 
+   00490: function normalizeLoteriaKey(v) {
+   00491:   const raw = String(v ?? "").trim();
+   00492: 
+   00493:   if (!raw) return "PT_RIO";
+   00494: 
+   00495:   const key = raw
+   00496:     .toLowerCase()
+   00497:     .normalize("NFD")
+   00498:     .replace(/[\u0300-\u036f]/g, "")
+   00499:     .replace(/\s+/g, " ")
+   00500:     .trim();
+   00501: 
+   00502:   if (key === "federal" || key === "fed" || key === "br" || key === "brasil") return "FEDERAL";
+   00503:   if (key === "rj" || key === "rio" || key === "pt_rio" || key === "pt-rio") return "PT_RIO";
+   00504: 
+   00505:   const out = key
+   00506:     .toUpperCase()
+   00507:     .replace(/[^A-Z0-9]+/g, "_")
+   00508:     .replace(/^_+|_+$/g, "");
+   00509: 
+   00510:   return out || "PT_RIO";
+   00511: }
+   00512: 
+   00513: function getDefaultFloorByUf(ufKey) {
+   00514:   const u = String(ufKey || "").trim().toUpperCase();
+   00515: 
+   00516:   if (u === "PT_RIO" || u === "RJ" || u === "RIO" || u === "PT-RIO") {
+   00517:     return "2022-06-07";
+   00518:   }
+   00519: 
+   00520:   if (u === "FEDERAL" || u === "FED" || u === "BR" || u === "BRASIL") {
+   00521:     return "2022-02-08";
+   00522:   }
+   00523: 
+   00524:   return "2022-01-01";
+   00525: }
+   00526: 
+   00527: function getTodayYmdSafe() {
+   00528:   const ymd = normalizeToYMD_SP(new Date());
+   00529:   if (ymd && isISODate(ymd)) return ymd;
+
+--- contexto da linha 665 ---
+
+   00640: ========================= */
+   00641: function makeDashStateKeyV2(ufKey) {
+   00642:   const u = String(ufKey || "").trim().toUpperCase() || "PT_RIO";
+   00643:   return `${DASH_STATE_KEY_BASE}__${u}`;
+   00644: }
+   00645: 
+   00646: function loadDashStateV2(ufKey) {
+   00647:   const KEY = makeDashStateKeyV2(ufKey);
+   00648: 
+   00649:   const v2 = safeReadJSON(KEY);
+   00650:   if (v2 && typeof v2 === "object") return v2;
+   00651: 
+   00652:   const legacyV2 = safeReadJSON(DASH_STATE_KEY_BASE);
+   00653:   if (legacyV2 && typeof legacyV2 === "object") {
+   00654:     const migrated = { ...legacyV2 };
+   00655:     safeWriteJSON(KEY, migrated);
+   00656:     return migrated;
+   00657:   }
+   00658: 
+   00659:   const v1 = safeReadJSON(DASH_STATE_KEY_V1);
+   00660:   if (v1 && typeof v1 === "object") {
+   00661:     const migrated = {
+   00662:       v: 2,
+   00663:       selectedGrupo: v1.selectedGrupo ?? null,
+   00664:       selectedYears: Array.isArray(v1.selectedYears) ? v1.selectedYears : [],
+>> 00665:       dateRange: v1.dateRange ?? null,
+   00666:       dateRangeQuery: v1.dateRangeQuery ?? null,
+   00667:       followMax: v1.followMax ?? true,
+   00668:       lastBoundsMin: v1.lastBoundsMin ?? null,
+   00669:       lastBoundsMax: v1.lastBoundsMax ?? null,
+   00670:     };
+   00671:     safeWriteJSON(KEY, migrated);
+   00672:     return migrated;
+   00673:   }
+   00674: 
+   00675:   return null;
+   00676: }
+   00677: 
+   00678: export default function Dashboard(props) {
+   00679:   const externalFilters = props && typeof props === "object" ? props.filters : null;
+   00680:   const externalSetFilters = props && typeof props === "object" ? props.setFilters : null;
+   00681: 
+   00682:   const fallbackFilters = useMemo(
+   00683:     () => ({
+   00684:       loteria: "PT_RIO",
+   00685:       mes: "Todos",
+   00686:       diaMes: "Todos",
+   00687:       diaSemana: "Todos",
+   00688:       horario: "Todos",
+   00689:       animal: "Todos",
+   00690:       posicao: "Todos",
+   00691:     }),
+   00692:     []
+   00693:   );
+   00694: 
+   00695:   const [, setSessionObj] = useState(() => loadSessionObj());
+   00696:   const [sessionKind, setSessionKind] = useState(() => getSessionKind(loadSessionObj()));
+   00697:   const [, setSessionPlan] = useState(() => getSessionPlan(loadSessionObj()));
+   00698: 
+   00699:   const isGuest = sessionKind === "guest";
+   00700: 
+   00701:   useEffect(() => {
+   00702:     const serializeSession = (sess) => {
+   00703:       try {
+   00704:         return JSON.stringify(sess || null);
+   00705:       } catch {
+   00706:         return "__SERIALIZE_ERROR__";
+   00707:       }
+   00708:     };
+   00709: 
+   00710:     let lastSig = serializeSession(loadSessionObj());
+   00711: 
+   00712:     const refresh = () => {
+   00713:       const sess = loadSessionObj();
+   00714:       const nextSig = serializeSession(sess);
+   00715: 
+   00716:       if (nextSig === lastSig) return;
+   00717: 
+   00718:       lastSig = nextSig;
+   00719:       setSessionObj(sess);
+
+--- contexto da linha 795 ---
+
+   00770:   const isFederal = loteriaKey === "FEDERAL";
+   00771: 
+   00772:   const fedBucket = isFederal ? normalizeHourBucket(filters?.horario) : null;
+   00773:   const locationLabel = isFederal
+   00774:     ? `FEDERAL (Brasil)${fedBucket ? ` — ${fedBucket}` : ""}`
+   00775:     : `${loteriaKey} — Brasil`;
+   00776: 
+   00777:   const uf = loteriaKey;
+   00778: 
+   00779:   const [savedDashState, setSavedDashState] = useState(() => loadDashStateV2(uf));
+   00780: 
+   00781:   useEffect(() => {
+   00782:     setSavedDashState(loadDashStateV2(uf));
+   00783:   }, [uf]);
+   00784: 
+   00785:   const [selectedGrupo, setSelectedGrupo] = useState(() => {
+   00786:     const g = Number(savedDashState?.selectedGrupo);
+   00787:     return Number.isFinite(g) && g >= 1 && g <= 25 ? g : null;
+   00788:   });
+   00789: 
+   00790:   const didInitRangeFromBoundsRef = useRef(false);
+   00791:   const debounceTimerRef = useRef(null);
+   00792: 
+   00793:   const [followMax, setFollowMax] = useState(() => savedDashState?.followMax !== false);
+   00794: 
+>> 00795:   const [dateRange, setDateRange] = useState(() => {
+   00796:     const dr = savedDashState?.dateRange;
+   00797:     if (dr?.from && dr?.to && isISODate(dr.from) && isISODate(dr.to)) {
+   00798:       return { from: dr.from, to: dr.to };
+   00799:     }
+   00800:     return null;
+   00801:   });
+   00802: 
+   00803:   const [dateRangeQuery, setDateRangeQuery] = useState(() => {
+   00804:     const dr = savedDashState?.dateRangeQuery;
+   00805:     if (dr?.from && dr?.to && isISODate(dr.from) && isISODate(dr.to)) {
+   00806:       return { from: dr.from, to: dr.to };
+   00807:     }
+   00808:     return null;
+   00809:   });
+   00810: 
+   00811:   const [selectedYears, setSelectedYears] = useState(() => {
+   00812:     const arr = Array.isArray(savedDashState?.selectedYears) ? savedDashState.selectedYears : [];
+   00813:     return arr.map((y) => Number(y)).filter((y) => Number.isFinite(y));
+   00814:   });
+   00815: 
+   00816:   const [bounds, setBounds] = useState({
+   00817:     loading: DATA_MODE === "firestore",
+   00818:     minDate: null,
+   00819:     maxDate: null,
+   00820:     error: null,
+   00821:   });
+   00822: 
+   00823:   useEffect(() => {
+   00824:     if (isGuest) return;
+   00825: 
+   00826:     const st = loadDashStateV2(uf) || null;
+   00827: 
+   00828:     didInitRangeFromBoundsRef.current = false;
+   00829: 
+   00830:     setSelectedGrupo(() => {
+   00831:       const g = Number(st?.selectedGrupo);
+   00832:       return Number.isFinite(g) && g >= 1 && g <= 25 ? g : null;
+   00833:     });
+   00834: 
+   00835:     setSelectedYears(() => {
+   00836:       const arr = Array.isArray(st?.selectedYears) ? st.selectedYears : [];
+   00837:       return arr.map((y) => Number(y)).filter((y) => Number.isFinite(y));
+   00838:     });
+   00839: 
+   00840:     setFollowMax(() => st?.followMax !== false);
+   00841: 
+   00842:     setDateRange(() => {
+   00843:       const dr = st?.dateRange;
+   00844:       if (dr?.from && dr?.to && isISODate(dr.from) && isISODate(dr.to)) return { from: dr.from, to: dr.to };
+   00845:       return null;
+   00846:     });
+   00847: 
+   00848:     setDateRangeQuery(() => {
+   00849:       const dr = st?.dateRangeQuery;
+
+--- contexto da linha 880 ---
+
+   00855:   }, [uf, isGuest]);
+   00856: 
+   00857:   const [bannerSrc, setBannerSrc] = useState(DEFAULT_BANNER_SRC);
+   00858:   const bannerReqIdRef = useRef(0);
+   00859: 
+   00860:   const restoredRangeRef = useRef({ from: null, to: null });
+   00861:   const restoredQueryRef = useRef({ from: null, to: null });
+   00862: 
+   00863:   useEffect(() => {
+   00864:     restoredRangeRef.current = { from: dateRange?.from || null, to: dateRange?.to || null };
+   00865:   }, [dateRange?.from, dateRange?.to]);
+   00866: 
+   00867:   useEffect(() => {
+   00868:     restoredQueryRef.current = { from: dateRangeQuery?.from || null, to: dateRangeQuery?.to || null };
+   00869:   }, [dateRangeQuery?.from, dateRangeQuery?.to]);
+   00870: 
+   00871:   useEffect(() => {
+   00872:     if (DATA_MODE !== "firestore") return;
+   00873: 
+   00874:     let alive = true;
+   00875: 
+   00876:     (async () => {
+   00877:       const floorByUf = getDefaultFloorByUf(uf);
+   00878:       const todayYmd = getTodayYmdSafe();
+   00879: 
+>> 00880:       let minYmd = floorByUf;
+   00881:       let maxYmd = todayYmd;
+   00882: 
+   00883:       const initRangeIfNeeded = (safeMin, safeMax) => {
+   00884:         if (didInitRangeFromBoundsRef.current) return;
+   00885: 
+   00886:         didInitRangeFromBoundsRef.current = true;
+   00887: 
+   00888:         const rr = restoredRangeRef.current;
+   00889:         const rq = restoredQueryRef.current;
+   00890: 
+   00891:         const hasRestoredRange =
+   00892:           rr?.from && rr?.to && isISODate(rr.from) && isISODate(rr.to);
+   00893: 
+   00894:         const hasRestoredQuery =
+   00895:           rq?.from && rq?.to && isISODate(rq.from) && isISODate(rq.to);
+   00896: 
+   00897:         const savedYearsRaw = Array.isArray(savedDashState?.selectedYears)
+   00898:           ? savedDashState.selectedYears
+   00899:           : [];
+   00900: 
+   00901:         const savedYears = savedYearsRaw
+   00902:           .map((y) => Number(y))
+   00903:           .filter((y) => Number.isFinite(y));
+   00904: 
+   00905:         const hasSavedYears = savedYears.length > 0;
+   00906: 
+   00907:         if (hasRestoredRange && hasRestoredQuery) {
+   00908:           const clamped =
+   00909:             clampRangeToBounds(
+   00910:               { from: rr.from, to: rr.to },
+   00911:               safeMin,
+   00912:               safeMax
+   00913:             ) || { from: safeMin, to: safeMax };
+   00914: 
+   00915:           const shouldExtendToMax = !hasSavedYears && clamped.to < safeMax;
+   00916: 
+   00917:           const fixed = {
+   00918:             from: clamped.from,
+   00919:             to: shouldExtendToMax ? safeMax : clamped.to,
+   00920:           };
+   00921: 
+   00922:           setDateRange(fixed);
+   00923:           setDateRangeQuery(fixed);
+   00924: 
+   00925:           if (shouldExtendToMax) {
+   00926:             setSelectedYears([]);
+   00927:             setFollowMax(true);
+   00928:           }
+   00929: 
+   00930:           return;
+   00931:         }
+   00932: 
+   00933:         const init = { from: safeMin, to: safeMax };
+   00934:         setDateRange(init);
+
+--- contexto da linha 964 ---
+
+   00939: 
+   00940:       try {
+   00941:         setBounds((b) => ({ ...b, loading: true, error: null }));
+   00942: 
+   00943:         const res = await getKingBoundsByUf({ uf });
+   00944:         if (!alive) return;
+   00945: 
+   00946:         const rawMin = String(res?.minYmd ?? res?.minDate ?? "").trim();
+   00947:         const rawMax = String(res?.maxYmd ?? res?.maxDate ?? "").trim();
+   00948: 
+   00949:         const parsedMin = normalizeISO10(rawMin);
+   00950:         const parsedMax = normalizeISO10(rawMax);
+   00951: 
+   00952:         if (parsedMin) minYmd = parsedMin;
+   00953:         if (parsedMax) maxYmd = parsedMax;
+   00954: 
+   00955:         if (isISODate(floorByUf) && (!minYmd || minYmd > floorByUf)) {
+   00956:           minYmd = floorByUf;
+   00957:         }
+   00958: 
+   00959:         if (!maxYmd) maxYmd = todayYmd;
+   00960:         if (minYmd > maxYmd) maxYmd = minYmd;
+   00961: 
+   00962:         setBounds({
+   00963:           loading: false,
+>> 00964:           minDate: minYmd,
+   00965:           maxDate: maxYmd,
+   00966:           error:
+   00967:             res?.ok === false
+   00968:               ? "Bounds remotos inconsistentes. Usando fallback local."
+   00969:               : null,
+   00970:         });
+   00971: 
+   00972:         initRangeIfNeeded(minYmd, maxYmd);
+   00973:       } catch (e) {
+   00974:         if (!alive) return;
+   00975: 
+   00976:         if (minYmd > maxYmd) maxYmd = minYmd;
+   00977: 
+   00978:         setBounds({
+   00979:           loading: false,
+   00980:           minDate: minYmd,
+   00981:           maxDate: maxYmd,
+   00982:           error: `Falha ao obter bounds remotos. Usando fallback local. Detalhe: ${
+   00983:             e?.message || String(e)
+   00984:           }`,
+   00985:         });
+   00986: 
+   00987:         initRangeIfNeeded(minYmd, maxYmd);
+   00988:       }
+   00989:     })();
+   00990: 
+   00991:     return () => {
+   00992:       alive = false;
+   00993:     };
+   00994:   }, [uf, savedDashState]);
+   00995: 
+   00996:   const MIN_DATE = bounds.minDate;
+   00997:   const MAX_DATE = bounds.maxDate;
+   00998:   const boundsReady = !!(MIN_DATE && MAX_DATE && !bounds.loading);
+   00999: 
+   01000:   useEffect(() => {
+   01001:     if (!boundsReady || !MAX_DATE) return;
+   01002: 
+   01003:     const f = dateRange?.from;
+   01004:     const t = dateRange?.to;
+   01005: 
+   01006:     if (!isISODate(f) || !isISODate(t)) {
+   01007:       if (MIN_DATE && MAX_DATE) {
+   01008:         const fix = { from: MIN_DATE, to: MAX_DATE };
+   01009:         setDateRange(fix);
+   01010:         setDateRangeQuery(fix);
+   01011:         setFollowMax(true);
+   01012:       }
+   01013:       return;
+   01014:     }
+   01015: 
+   01016:     const clamped = clampRangeToBounds({ from: f, to: t }, MIN_DATE, MAX_DATE);
+   01017:     if (!clamped) return;
+   01018: 
+
+--- contexto da linha 1602 ---
+
+   01577:         return next;
+   01578:       });
+   01579:     },
+   01580:     [rankingDataGlobalForLabels, setFilters]
+   01581:   );
+   01582: 
+   01583:   const onSelectPosicao = useCallback(
+   01584:     (posNumberString) => {
+   01585:       const raw = String(posNumberString ?? "").trim();
+   01586:       const m = raw.match(/^(\d+)/);
+   01587:       const n = m ? Number(m[1]) : NaN;
+   01588: 
+   01589:       if (!Number.isFinite(n) || n < 1 || n > 7) return;
+   01590:       setFilters((prev) => ({ ...prev, posicao: `${n}º` }));
+   01591:     },
+   01592:     [setFilters]
+   01593:   );
+   01594: 
+   01595:   const boundsMessage = useMemo(() => {
+   01596:     if (bounds.loading) return "Carregando período disponível...";
+   01597:     if (!boundsReady) return bounds.error || "Não foi possível obter bounds reais.";
+   01598:     return null;
+   01599:   }, [bounds.loading, boundsReady, bounds.error]);
+   01600: 
+   01601:   const hasLocalRangeReady = !!(
+>> 01602:     dateRange?.from &&
+   01603:     dateRange?.to &&
+   01604:     isISODate(dateRange.from) &&
+   01605:     isISODate(dateRange.to)
+   01606:   );
+   01607: 
+   01608:   const uiBlockedByBounds =
+   01609:     DATA_MODE === "firestore"
+   01610:       ? !hasLocalRangeReady && !hasQueryableRange && bounds.loading
+   01611:       : false;
+   01612: 
+   01613:   const emptyForRange = useMemo(() => {
+   01614:     if (!dataReady) return false;
+   01615:     if (isAggregatedOnly) return false;
+   01616:     return !hasAnyDrawsView;
+   01617:   }, [dataReady, hasAnyDrawsView, isAggregatedOnly]);
+   01618: 
+   01619:   const indexErrorHint = useMemo(() => {
+   01620:     return (
+   01621:       "Os índices já foram criados e estão como Ativado. Se este erro aparecer, normalmente é um destes cenários:\n" +
+   01622:       "1) Cache/aba antiga: faça Ctrl+Shift+R ou teste em aba anônima.\n" +
+   01623:       "2) Query ainda está batendo em 'date' ou em campo diferente do esperado (ymd/uf/lottery_key/close_hour).\n" +
+   01624:       "3) Algum documento não tem o campo usado no filtro (ex.: ymd ausente em parte da base).\n" +
+   01625:       "4) O filtro de hora está em formato divergente do salvo (ex.: '11h' vs '11:10')."
+   01626:     );
+   01627:   }, []);
+   01628: 
+   01629:   const selectedPosition = useMemo(() => {
+   01630:     const n = Number(String(filters.posicao || "").replace(/\D/g, ""));
+   01631:     return Number.isFinite(n) && n >= 1 && n <= 7 ? n : null;
+   01632:   }, [filters.posicao]);
+   01633: 
+   01634:   useEffect(() => {
+   01635:     const reqId = (bannerReqIdRef.current += 1);
+   01636: 
+   01637:     const run = async () => {
+   01638:       if (!isValidGrupo(selectedGrupo)) {
+   01639:         setBannerSrc(DEFAULT_BANNER_SRC);
+   01640:         return;
+   01641:       }
+   01642: 
+   01643:       const cand128 =
+   01644:         typeof getImgFromGrupoFromMap === "function" ? getImgFromGrupoFromMap(Number(selectedGrupo), 128) : "";
+   01645: 
+   01646:       const candBase =
+   01647:         typeof getImgFromGrupoFromMap === "function" ? getImgFromGrupoFromMap(Number(selectedGrupo)) : "";
+   01648: 
+   01649:       try {
+   01650:         if (cand128) {
+   01651:           await preloadImage(cand128);
+   01652:           if (bannerReqIdRef.current === reqId) setBannerSrc(cand128);
+   01653:           return;
+   01654:         }
+   01655:       } catch {}
+   01656: 
+
+--- contexto da linha 1684 ---
+
+   01659:           await preloadImage(candBase);
+   01660:           if (bannerReqIdRef.current === reqId) setBannerSrc(candBase);
+   01661:           return;
+   01662:         }
+   01663:       } catch {}
+   01664: 
+   01665:       if (bannerReqIdRef.current === reqId) setBannerSrc(DEFAULT_BANNER_SRC);
+   01666:     };
+   01667: 
+   01668:     run();
+   01669:   }, [selectedGrupo]);
+   01670: 
+   01671:   useEffect(() => {
+   01672:     const KEY = makeDashStateKeyV2(uf);
+   01673: 
+   01674:     safeWriteJSON(KEY, {
+   01675:       v: 2,
+   01676:       selectedGrupo,
+   01677:       selectedYears,
+   01678:       dateRange,
+   01679:       dateRangeQuery,
+   01680:       lastBoundsMin: MIN_DATE || null,
+   01681:       lastBoundsMax: MAX_DATE || null,
+   01682:       followMax: followMax !== false,
+   01683:     });
+>> 01684:   }, [uf, selectedGrupo, selectedYears, dateRange, dateRangeQuery, MIN_DATE, MAX_DATE, followMax]);
+   01685: 
+   01686:   const hydratingBox = useMemo(() => {
+   01687:     if (!isHydrating) return null;
+   01688: 
+   01689:     const from = dateFrom || queryDate || MIN_DATE || "";
+   01690:     const to = dateTo || queryDate || MAX_DATE || "";
+   01691: 
+   01692:     return (
+   01693:       <PremiumInfoBox
+   01694:         title="Carregando detalhes do período"
+   01695:         description='Você selecionou um intervalo grande ("Todos"). O sistema está hidratando os prizes para garantir estatística correta.'
+   01696:         extra={`Intervalo: ${from} → ${to}\nAguarde concluir para liberar KPIs, ranking filtrado e gráficos.`}
+   01697:       />
+   01698:     );
+   01699:   }, [isHydrating, dateFrom, dateTo, queryDate, MIN_DATE, MAX_DATE]);
+   01700: 
+   01701:   const aggregatedInfoBox = useMemo(() => {
+   01702:     if (!isAggregatedOnly) return null;
+   01703: 
+   01704:     const from = dateFrom || queryDate || MIN_DATE || "—";
+   01705:     const to = dateTo || queryDate || MAX_DATE || "—";
+   01706: 
+   01707:     return (
+   01708:       <PremiumInfoBox
+   01709:         title="Modo resumo para período grande"
+   01710:         description="O período atual foi carregado em modo agregado para evitar hidratação massiva de prizes e reduzir custo/latência."
+   01711:         extra={`Intervalo: ${from} → ${to}\nKPIs gerais continuam disponíveis.\nRanking, Top 3, gráficos analíticos e palpites exigem detalhamento completo. Para isso, reduza o período ou aplique filtros mais específicos.`}
+   01712:       />
+   01713:     );
+   01714:   }, [isAggregatedOnly, dateFrom, dateTo, queryDate, MIN_DATE, MAX_DATE]);
+   01715: 
+   01716:   const aggregatedNeedsDetailBox = useMemo(() => {
+   01717:     if (!isAggregatedOnly) return null;
+   01718: 
+   01719:     return (
+   01720:       <PremiumInfoBox
+   01721:         title="Detalhamento desativado neste recorte"
+   01722:         description="Neste intervalo grande, o Dashboard não hidrata prizes automaticamente."
+   01723:         extra="Para liberar ranking, Top 3, palpites por grupo e gráficos analíticos, reduza o período selecionado."
+   01724:       />
+   01725:     );
+   01726:   }, [isAggregatedOnly]);
+   01727: 
+   01728:   return (
+   01729:     <div className="dashRoot">
+   01730:       <aside className="dashLeft">
+   01731:         <LeftRankingTable
+   01732:           locationLabel={locationLabel}
+   01733:           loading={loadingEffective && !rankingRowsFromMeta.length && !drawsForUi.length}
+   01734:           error={rankingError}
+   01735:           data={!dataReady ? rankingRowsFromMeta : rankingFinal}
+   01736:           selectedGrupo={selectedGrupo}
+   01737:           onSelectGrupo={onSelectGrupo}
+   01738:           palpitesByGrupo={dataReady ? palpitesByGrupo : {}}
+
+--- contexto da linha 1765 ---
+
+   01740:       </aside>
+   01741: 
+   01742:       <main className="dashMain">
+   01743:         <section className="dashTop" style={{ position: "relative", zIndex: 1 }}>
+   01744:           <div className={`dashBanner ${bannerSrc === DEFAULT_BANNER_SRC ? "dashBanner--brand" : ""}`} style={{ position: "relative", zIndex: 1, pointerEvents: "none" }}>
+   01745:             <img
+   01746:               src={bannerSrc}
+   01747:               alt="Banner"
+   01748:               loading="eager"
+   01749:               decoding="async"
+   01750:               style={{ pointerEvents: "none" }}
+   01751:               onError={() => setBannerSrc(DEFAULT_BANNER_SRC)}
+   01752:             />
+   01753:           </div>
+   01754: 
+   01755:           <div className="dashTopRight" style={{ position: "relative", zIndex: 5, pointerEvents: "auto" }}>
+   01756:             {uiBlockedByBounds ? (
+   01757:               <PremiumTopRightSkeleton message={boundsMessage} />
+   01758:             ) : (
+   01759:               <>
+   01760: 
+   01761:                 {MIN_DATE && MAX_DATE && dateRange ? (
+   01762:                   <div style={{ position: "relative", zIndex: 10, pointerEvents: "auto" }}>
+   01763:                     <div style={{ position: "relative" }}>
+   01764:                       <DateRangeControl
+>> 01765:                         value={dateRange}
+   01766:                         onChange={applyDateRange}
+   01767:                         minDate={MIN_DATE}
+   01768:                         maxDate={MAX_DATE}
+   01769:                         years={yearsAvailable}
+   01770:                         selectedYears={selectedYears}
+   01771:                         onToggleYear={onToggleYear}
+   01772:                         onClearYears={onClearYears}
+   01773:                       />
+   01774:                     </div>
+   01775:                   </div>
+   01776:                 ) : (
+   01777:                   <PremiumInfoBox
+   01778:                     title="Período indisponível"
+   01779:                     description={boundsMessage || "Não foi possível resolver o intervalo de datas."}
+   01780:                     extra="Se isso persistir, valide se todos os docs possuem o campo 'ymd' e se a coleção consultada é a mesma do app."
+   01781:                   />
+   01782:                 )}
+   01783: 
+   01784:                 {isHydrating ? (
+   01785:                   hydratingBox
+   01786:                 ) : isAggregatedOnly ? (
+   01787:                   <>
+   01788:                     {aggregatedInfoBox}
+   01789:                     <KpiCards
+   01790:                       items={kpiItems}
+   01791:                       drawsRaw={dataReady ? drawsForView : []}
+   01792:                       drawsRawGlobal={dataReady ? drawsForUi : []}
+   01793:                       showGlobalAparicoes={true}
+   01794:                       selectedGrupo={selectedGrupo}
+   01795:                       selectedAnimalLabel={filters.animal}
+   01796:                       selectedPosition={selectedPosition}
+   01797:                     />
+   01798:                   </>
+   01799:                 ) : (
+   01800:                   <KpiCards
+   01801:                     items={kpiItems}
+   01802:                     drawsRaw={dataReady ? drawsForView : []}
+   01803:                     drawsRawGlobal={dataReady ? drawsForUi : []}
+   01804:                     showGlobalAparicoes={true}
+   01805:                     selectedGrupo={selectedGrupo}
+   01806:                     selectedAnimalLabel={filters.animal}
+   01807:                     selectedPosition={selectedPosition}
+   01808:                   />
+   01809:                 )}
+   01810:               </>
+   01811:             )}
+   01812:           </div>
+   01813:         </section>
+   01814: 
+   01815:         <section className="dashFilters">
+   01816:           <div style={{ position: "relative" }}>
+   01817:             <FiltersBar filters={filters} onChange={handleFilterChange} options={options} />
+   01818:           </div>
+   01819:         </section>
+
+==============================================================================================================
+ARQUIVO: src/pages/Dashboard/components/ChartsGrid.jsx
+==============================================================================================================
+
+--- contexto da linha 62 ---
+
+   00037: 
+   00038: /** ✅ Normaliza "qualquer data" para YYYY-MM-DD (ou null). */
+   00039: function normalizeToYMD(input) {
+   00040:   if (!input) return null;
+   00041: 
+   00042:   // Firestore Timestamp com toDate()
+   00043:   if (typeof input === "object" && typeof input.toDate === "function") {
+   00044:     const d = input.toDate();
+   00045:     if (d instanceof Date && !Number.isNaN(d.getTime())) {
+   00046:       return `${d.getUTCFullYear()}-${pad2(d.getUTCMonth() + 1)}-${pad2(
+   00047:         d.getUTCDate()
+   00048:       )}`;
+   00049:     }
+   00050:   }
+   00051: 
+   00052:   // Timestamp-like { seconds } / { _seconds }
+   00053:   if (
+   00054:     typeof input === "object" &&
+   00055:     (Number.isFinite(Number(input.seconds)) ||
+   00056:       Number.isFinite(Number(input._seconds)))
+   00057:   ) {
+   00058:     const sec = Number.isFinite(Number(input.seconds))
+   00059:       ? Number(input.seconds)
+   00060:       : Number(input._seconds);
+   00061: 
+>> 00062:     const d = new Date(sec * 1000);
+   00063:     if (!Number.isNaN(d.getTime())) {
+   00064:       return `${d.getUTCFullYear()}-${pad2(d.getUTCMonth() + 1)}-${pad2(
+   00065:         d.getUTCDate()
+   00066:       )}`;
+   00067:     }
+   00068:   }
+   00069: 
+   00070:   // Date
+   00071:   if (input instanceof Date && !Number.isNaN(input.getTime())) {
+   00072:     return `${input.getUTCFullYear()}-${pad2(input.getUTCMonth() + 1)}-${pad2(
+   00073:       input.getUTCDate()
+   00074:     )}`;
+   00075:   }
+   00076: 
+   00077:   const s = String(input).trim();
+   00078:   if (!s) return null;
+   00079: 
+   00080:   // YYYY-MM-DD...
+   00081:   const iso = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+   00082:   if (iso) return `${iso[1]}-${iso[2]}-${iso[3]}`;
+   00083: 
+   00084:   // DD/MM/YYYY
+   00085:   const br = s.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+   00086:   if (br) return `${br[3]}-${br[2]}-${br[1]}`;
+   00087: 
+   00088:   return null;
+   00089: }
+   00090: 
+   00091: /** ✅ Resolve data do draw independente do nome do campo vindo do Firestore/backend */
+   00092: function getDrawDate(draw) {
+   00093:   if (!draw) return null;
+   00094: 
+   00095:   const raw =
+   00096:     draw.date ??
+   00097:     draw.ymd ??
+   00098:     draw.draw_date ??
+   00099:     draw.close_date ??
+   00100:     draw.data ??
+   00101:     draw.dt ??
+   00102:     null;
+   00103: 
+   00104:   return normalizeToYMD(raw);
+   00105: }
+   00106: 
+   00107: /** ✅ Resolve close_hour independente do nome do campo */
+   00108: function getDrawCloseHour(draw) {
+   00109:   if (!draw) return "";
+   00110:   return String(
+   00111:     draw.close_hour ?? draw.closeHour ?? draw.hour ?? draw.hora ?? ""
+   00112:   ).trim();
+   00113: }
+   00114: 
+   00115: /** ✅ Resolve lottery key (quando existir) */
+   00116: function getDrawLotteryKey(draw) {
+
+--- contexto da linha 1244 ---
+
+   01219: 
+   01220:     monthMap.set(m, (monthMap.get(m) || 0) + apar);
+   01221:   }
+   01222: 
+   01223:   const monthDataDisplay = monthOrder.map((m) => ({
+   01224:     label: m,
+   01225:     value: monthMap.get(m) || 0,
+   01226:   }));
+   01227: 
+   01228:   const wdOrder = [
+   01229:     { key: "Dom", label: "domingo" },
+   01230:     { key: "Seg", label: "segunda-feira" },
+   01231:     { key: "Ter", label: "terça-feira" },
+   01232:     { key: "Qua", label: "quarta-feira" },
+   01233:     { key: "Qui", label: "quinta-feira" },
+   01234:     { key: "Sex", label: "sexta-feira" },
+   01235:     { key: "Sáb", label: "sábado" },
+   01236:   ];
+   01237: 
+   01238:   const wdMap = new Map(wdOrder.map((k) => [k.key, 0]));
+   01239: 
+   01240:   for (const d of draws) {
+   01241:     const ymd = getDrawDate(d);
+   01242:     if (!ymd) continue;
+   01243: 
+>> 01244:     const [y, m, dd] = ymd.split("-").map(Number);
+   01245:     if (!y || !m || !dd) continue;
+   01246: 
+   01247:     const dt = new Date(Date.UTC(y, m - 1, dd));
+   01248:     const w = dt.getUTCDay();
+   01249:     const map = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
+   01250:     const wd = map[w] || null;
+   01251:     if (!wd) continue;
+   01252: 
+   01253:     const apar = countAparicoesInDraw(d, {
+   01254:       selectedGrupo: hasSelected ? gSel : null,
+   01255:       selectedPosOrNull,
+   01256:       expectedPositions,
+   01257:     });
+   01258: 
+   01259:     wdMap.set(wd, (wdMap.get(wd) || 0) + apar);
+   01260:   }
+   01261: 
+   01262:   const weekdayData = wdOrder.map((it) => ({
+   01263:     label: it.label,
+   01264:     value: wdMap.get(it.key) || 0,
+   01265:   }));
+   01266: 
+   01267:   const ALLOWED_BUCKETS = ["09h", "11h", "14h", "16h", "18h", "21h"];
+   01268:   const hourMap = new Map(ALLOWED_BUCKETS.map((b) => [b, 0]));
+   01269:   let aparicoesComHoraTotal = 0;
+   01270: 
+   01271:   for (const d of draws) {
+   01272:     const bucket = hhmmToBucket09h(getDrawCloseHour(d));
+   01273:     if (!bucket) continue;
+   01274:     if (!hourMap.has(bucket)) continue;
+   01275: 
+   01276:     const apar = countAparicoesInDraw(d, {
+   01277:       selectedGrupo: hasSelected ? gSel : null,
+   01278:       selectedPosOrNull,
+   01279:       expectedPositions,
+   01280:     });
+   01281: 
+   01282:     hourMap.set(bucket, (hourMap.get(bucket) || 0) + apar);
+   01283:     aparicoesComHoraTotal += apar;
+   01284:   }
+   01285: 
+   01286:   const hourData = ALLOWED_BUCKETS.map((label) => ({
+   01287:     label,
+   01288:     value: hourMap.get(label) || 0,
+   01289:   })).filter((x) => safeNumber(x.value) > 0);
+   01290: 
+   01291:   const hourDataWithTotal =
+   01292:     hourData.length > 0 && aparicoesComHoraTotal > 0
+   01293:       ? [...hourData, { label: "Total", value: aparicoesComHoraTotal }]
+   01294:       : [];
+   01295: 
+   01296:   let posRankingModel = null;
+   01297:   let selectedAnimalLabel = null;
+   01298: 
+
+==============================================================================================================
+ARQUIVO: src/pages/Dashboard/components/DateRangeControl.jsx
+==============================================================================================================
+
+--- contexto da linha 10 ---
+
+   00001: // src/pages/Dashboard/components/DateRangeControl.jsx
+   00002: import React, { useCallback, useMemo, useRef, useState } from "react";
+   00003: 
+   00004: /**
+   00005:  * DateRangeControl (Premium, sem libs) — CONTROLADO DE VERDADE
+   00006:  *
+   00007:  * Regra:
+   00008:  * - NÃO chama onChange() sozinho via useEffect.
+   00009:  * - Só chama onChange() quando o usuário interage (inputs/slider/chips).
+>> 00010:  * - minDate/maxDate devem vir do pai para o SLIDER funcionar bem.
+   00011:  *
+   00012:  * Importante:
+   00013:  * - Inputs de data NÃO dependem de boundsReady (para o calendário nunca “morrer”).
+   00014:  * - Se bounds não existirem, o componente ainda permite selecionar datas e chama onChange.
+   00015:  *
+   00016:  * Ajuste atual:
+   00017:  * - Chips de anos: ✅ 1 linha e ocupa 100% (sem espaço vazio à direita)
+   00018:  * - Compactação vertical (para caber no topo 250px com KPI sem cortar)
+   00019:  *   mantendo o mesmo visual premium.
+   00020:  *
+   00021:  * Fix UX (parece "Todos" + outro ano selecionado):
+   00022:  * - Remove “efeito de seleção” vindo de foco (focus/focus-visible) no chip.
+   00023:  * - Após clicar, o chip dá blur para não ficar marcado.
+   00024:  * - Seleção visual fica SOMENTE pelo chipActive.
+   00025:  *
+   00026:  * ✅ DEMO safe:
+   00027:  * - prop `disabled`: trava inputs / slider / chips / calendário
+   00028:  * - prop `onBlocked(kind)`: callback quando tenta interagir bloqueado
+   00029:  */
+   00030: 
+   00031: function pad2(n) {
+   00032:   return String(n).padStart(2, "0");
+   00033: }
+   00034: 
+   00035: function isISODate(s) {
+   00036:   return /^(\d{4})-(\d{2})-(\d{2})$/.test(String(s || ""));
+   00037: }
+   00038: 
+   00039: function formatBR(iso) {
+   00040:   if (!isISODate(iso)) return "";
+   00041:   const [y, m, d] = iso.split("-");
+   00042:   return `${d}/${m}/${y}`;
+   00043: }
+   00044: 
+   00045: function toUTCDate(iso) {
+   00046:   if (!isISODate(iso)) return null;
+   00047:   const [y, m, d] = iso.split("-").map(Number);
+   00048:   if (!y || !m || !d) return null;
+   00049:   return new Date(Date.UTC(y, m - 1, d));
+   00050: }
+   00051: 
+   00052: function fromUTCDate(dt) {
+   00053:   if (!(dt instanceof Date) || !Number.isFinite(dt.getTime())) return null;
+   00054:   const y = dt.getUTCFullYear();
+   00055:   const m = pad2(dt.getUTCMonth() + 1);
+   00056:   const d = pad2(dt.getUTCDate());
+   00057:   return `${y}-${m}-${d}`;
+   00058: }
+   00059: 
+   00060: function clamp(n, a, b) {
+   00061:   return Math.max(a, Math.min(b, n));
+   00062: }
+   00063: 
+   00064: function clampDateISO(iso, minISO, maxISO) {
+
+--- contexto da linha 130 ---
+
+   00105:   muted: "rgba(255,255,255,0.55)",
+   00106:   rCard: 18,
+   00107:   shadowGlow: "0 0 0 1px rgba(200,178,90,0.10), 0 18px 50px rgba(0,0,0,0.55)",
+   00108:   inputH: 38,
+   00109: };
+   00110: 
+   00111: function CalendarIcon({ size = 18 }) {
+   00112:   return (
+   00113:     <svg width={size} height={size} viewBox="0 0 24 24" fill="none" aria-hidden="true">
+   00114:       <path d="M7 2v2M17 2v2" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+   00115:       <path d="M3.5 9.5h17" stroke="currentColor" strokeWidth="2" strokeLinecap="round" />
+   00116:       <path
+   00117:         d="M6.2 5h11.6c1.49 0 2.2 0.71 2.2 2.2v12.6c0 1.49-0.71 2.2-2.2 2.2H6.2C4.71 22 4 21.29 4 19.8V7.2C4 5.71 4.71 5 6.2 5Z"
+   00118:         stroke="currentColor"
+   00119:         strokeWidth="2"
+   00120:         strokeLinejoin="round"
+   00121:       />
+   00122:     </svg>
+   00123:   );
+   00124: }
+   00125: 
+   00126: export default function DateRangeControl({
+   00127:   value = { from: "", to: "" },
+   00128:   onChange = () => {},
+   00129: 
+>> 00130:   minDate = null,
+   00131:   maxDate = null,
+   00132: 
+   00133:   years = null,
+   00134:   selectedYears = null,
+   00135:   onToggleYear = () => {},
+   00136:   onClearYears = () => {},
+   00137: 
+   00138:   // ✅ DEMO safe
+   00139:   disabled = false,
+   00140:   onBlocked = null,
+   00141: }) {
+   00142:   const fromRef = useRef(null);
+   00143:   const toRef = useRef(null);
+   00144: 
+   00145:   // ✅ qual thumb está "ativo" (para z-index inteligente)
+   00146:   const [activeThumb, setActiveThumb] = useState(null); // "from" | "to" | null
+   00147: 
+   00148:   const minISO = useMemo(() => (isISODate(minDate) ? minDate : null), [minDate]);
+   00149:   const maxISO = useMemo(() => (isISODate(maxDate) ? maxDate : null), [maxDate]);
+   00150:   const boundsReady = !!(minISO && maxISO);
+   00151: 
+   00152:   const rawFrom = isISODate(value?.from) ? value.from : "";
+   00153:   const rawTo = isISODate(value?.to) ? value.to : "";
+   00154: 
+   00155:   const fireBlocked = useCallback(
+   00156:     (kind, e) => {
+   00157:       if (!disabled) return false;
+   00158:       try {
+   00159:         e?.preventDefault?.();
+   00160:         e?.stopPropagation?.();
+   00161:       } catch {}
+   00162:       if (typeof onBlocked === "function") onBlocked(kind);
+   00163:       return true;
+   00164:     },
+   00165:     [disabled, onBlocked]
+   00166:   );
+   00167: 
+   00168:   // fallback visual quando bounds existem (sem auto-commit)
+   00169:   const viewFrom = useMemo(() => {
+   00170:     if (!boundsReady) return rawFrom || "";
+   00171:     if (!rawFrom) return maxISO;
+   00172:     return clampDateISO(rawFrom, minISO, maxISO);
+   00173:   }, [boundsReady, rawFrom, minISO, maxISO]);
+   00174: 
+   00175:   const viewTo = useMemo(() => {
+   00176:     if (!boundsReady) return rawTo || "";
+   00177:     if (!rawTo) return maxISO;
+   00178:     return clampDateISO(rawTo, minISO, maxISO);
+   00179:   }, [boundsReady, rawTo, minISO, maxISO]);
+   00180: 
+   00181:   // normalização (se bounds existem, garante ordem)
+   00182:   const normalized = useMemo(() => {
+   00183:     if (!boundsReady) return { from: rawFrom || "", to: rawTo || "" };
+   00184: 
+
+--- contexto da linha 266 ---
+
+   00241: 
+   00242:       const el = ref?.current;
+   00243:       if (!el) return;
+   00244: 
+   00245:       try {
+   00246:         el.focus({ preventScroll: true });
+   00247:       } catch {
+   00248:         try {
+   00249:           el.focus();
+   00250:         } catch {}
+   00251:       }
+   00252: 
+   00253:       if (typeof el.showPicker === "function") {
+   00254:         try {
+   00255:           el.showPicker();
+   00256:         } catch {}
+   00257:       }
+   00258:     },
+   00259:     [disabled, onBlocked]
+   00260:   );
+   00261: 
+   00262:   // commit que funciona COM ou SEM bounds
+   00263:   const commit = useCallback(
+   00264:     (nextFrom, nextTo) => {
+   00265:       if (disabled) {
+>> 00266:         if (typeof onBlocked === "function") onBlocked("dateRange");
+   00267:         return;
+   00268:       }
+   00269: 
+   00270:       const fCandidate = isISODate(nextFrom) ? nextFrom : normalized.from;
+   00271:       const tCandidate = isISODate(nextTo) ? nextTo : normalized.to;
+   00272: 
+   00273:       // sem bounds: valida ISO e dispara
+   00274:       if (!boundsReady) {
+   00275:         const fOk = isISODate(fCandidate) ? fCandidate : "";
+   00276:         const tOk = isISODate(tCandidate) ? tCandidate : "";
+   00277:         if (!fOk && !tOk) return;
+   00278:         onChange({ from: fOk, to: tOk });
+   00279:         return;
+   00280:       }
+   00281: 
+   00282:       // com bounds: clamp + ordena
+   00283:       const f = clampDateISO(fCandidate, minISO, maxISO);
+   00284:       const t = clampDateISO(tCandidate, minISO, maxISO);
+   00285: 
+   00286:       const fDt = toUTCDate(f);
+   00287:       const tDt = toUTCDate(t);
+   00288:       if (!fDt || !tDt) return;
+   00289: 
+   00290:       if (fDt.getTime() <= tDt.getTime()) onChange({ from: f, to: t });
+   00291:       else onChange({ from: t, to: f });
+   00292:     },
+   00293:     [disabled, onBlocked, boundsReady, onChange, normalized.from, normalized.to, minISO, maxISO]
+   00294:   );
+   00295: 
+   00296:   const onInputFrom = (e) => commit(e.target.value, normalized.to);
+   00297:   const onInputTo = (e) => commit(normalized.from, e.target.value);
+   00298: 
+   00299:   const onSliderFrom = (e) => {
+   00300:     if (disabled) {
+   00301:       if (typeof onBlocked === "function") onBlocked("slider");
+   00302:       return;
+   00303:     }
+   00304:     if (!boundsReady) return;
+   00305:     const nextFrom = Number(e.target.value);
+   00306:     const safeFrom = clamp(nextFrom, 0, toOffset);
+   00307:     commit(addDaysUTC(minISO, safeFrom), normalized.to);
+   00308:   };
+   00309: 
+   00310:   const onSliderTo = (e) => {
+   00311:     if (disabled) {
+   00312:       if (typeof onBlocked === "function") onBlocked("slider");
+   00313:       return;
+   00314:     }
+   00315:     if (!boundsReady) return;
+   00316:     const nextTo = Number(e.target.value);
+   00317:     const safeTo = clamp(nextTo, fromOffset, totalDays);
+   00318:     commit(normalized.from, addDaysUTC(minISO, safeTo));
+   00319:   };
+   00320: 
+
+==============================================================================================================
+ARQUIVO: src/pages/Dashboard/components/KpiCards.jsx
+==============================================================================================================
+
+--- contexto da linha 56 ---
+
+   00031:  */
+   00032: function ymdFromDateUTC(d) {
+   00033:   return `${d.getUTCFullYear()}-${pad2(d.getUTCMonth() + 1)}-${pad2(d.getUTCDate())}`;
+   00034: }
+   00035: 
+   00036: function normalizeToYMD(input) {
+   00037:   if (!input) return null;
+   00038: 
+   00039:   // Firestore Timestamp-like: { toDate() }
+   00040:   if (typeof input === "object" && typeof input.toDate === "function") {
+   00041:     const d = input.toDate();
+   00042:     if (d instanceof Date && !Number.isNaN(d.getTime())) {
+   00043:       return ymdFromDateUTC(d);
+   00044:     }
+   00045:   }
+   00046: 
+   00047:   // Timestamp-like: { seconds } / { _seconds }
+   00048:   if (
+   00049:     typeof input === "object" &&
+   00050:     (Number.isFinite(Number(input.seconds)) || Number.isFinite(Number(input._seconds)))
+   00051:   ) {
+   00052:     const sec = Number.isFinite(Number(input.seconds))
+   00053:       ? Number(input.seconds)
+   00054:       : Number(input._seconds);
+   00055: 
+>> 00056:     const d = new Date(sec * 1000);
+   00057:     if (!Number.isNaN(d.getTime())) {
+   00058:       return ymdFromDateUTC(d);
+   00059:     }
+   00060:   }
+   00061: 
+   00062:   if (input instanceof Date && !Number.isNaN(input.getTime())) {
+   00063:     return ymdFromDateUTC(input);
+   00064:   }
+   00065: 
+   00066:   const s = String(input).trim();
+   00067:   if (!s) return null;
+   00068: 
+   00069:   const iso = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+   00070:   if (iso) return `${iso[1]}-${iso[2]}-${iso[3]}`;
+   00071: 
+   00072:   const br = s.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+   00073:   if (br) return `${br[3]}-${br[2]}-${br[1]}`;
+   00074: 
+   00075:   return null;
+   00076: }
+   00077: 
+   00078: function getDrawDate(draw) {
+   00079:   if (!draw) return null;
+   00080: 
+   00081:   const raw =
+   00082:     draw.date ??
+   00083:     draw.ymd ??
+   00084:     draw.draw_date ??
+   00085:     draw.drawDate ??
+   00086:     draw.close_date ??
+   00087:     draw.data ??
+   00088:     draw.dt ??
+   00089:     draw.day ??
+   00090:     null;
+   00091: 
+   00092:   return normalizeToYMD(raw);
+   00093: }
+   00094: 
+   00095: function isBadValue(v) {
+   00096:   return v === null || v === undefined || v === "" || v === "-" || v === "—";
+   00097: }
+   00098: 
+   00099: /* =========================
+   00100:    Animal KPIs helpers (opcional)
+   00101: ========================= */
+   00102: 
+   00103: function safeNum(v) {
+   00104:   const n = Number(v);
+   00105:   return Number.isFinite(n) ? n : null;
+   00106: }
+   00107: 
+   00108: function getPrizeGrupo(prize) {
+   00109:   if (!prize || typeof prize !== "object") return null;
+   00110:   const n = safeNum(prize.grupo ?? prize.group ?? null);
+
+==============================================================================================================
+ARQUIVO: src/pages/Dashboard/components/Sidebar/AppShell.jsx
+==============================================================================================================
+
+--- contexto da linha 25 ---
+
+   00001: import React, { useEffect, useMemo, useState } from "react";
+   00002: import Icon from "./Icon";
+   00003: import MiniLogo from "./MiniLogo";
+   00004: 
+   00005: import { auth } from "../../../../services/firebase";
+   00006: import { onAuthStateChanged, signOut } from "firebase/auth";
+   00007: 
+   00008: const ROUTES = {
+   00009:   DASHBOARD: "dashboard",
+   00010:   ACCOUNT: "account",
+   00011:   RESULTS: "results",
+   00012:   TOP3: "top3",
+   00013:   LATE: "late",
+   00014:   SEARCH: "search",
+   00015:   PAYMENTS: "payments",
+   00016:   DOWNLOADS: "downloads",
+   00017:   CENTENAS: "centenas",
+   00018: };
+   00019: 
+   00020: const ACCOUNT_SESSION_KEY = "pp_session_v1";
+   00021: const LS_GUEST_ACTIVE_KEY = "pp_guest_active_v1";
+   00022: 
+   00023: const safeReadLS = (k) => {
+   00024:   try {
+>> 00025:     return localStorage.getItem(k);
+   00026:   } catch {
+   00027:     return null;
+   00028:   }
+   00029: };
+   00030: 
+   00031: const safeRemoveLS = (k) => {
+   00032:   try {
+   00033:     localStorage.removeItem(k);
+   00034:   } catch {}
+   00035: };
+   00036: 
+   00037: function normalizePlan(plan) {
+   00038:   const p = String(plan || "").trim().toUpperCase();
+   00039:   if (p === "VIP") return "VIP";
+   00040:   if (p === "PREMIUM") return "PREMIUM";
+   00041:   if (p === "FREE") return "FREE";
+   00042:   return "";
+   00043: }
+   00044: 
+   00045: function readSession() {
+   00046:   const raw = safeReadLS(ACCOUNT_SESSION_KEY);
+   00047:   if (!raw) {
+   00048:     return {
+   00049:       ok: false,
+   00050:       type: "anon",
+   00051:       plan: "",
+   00052:       uid: "",
+   00053:       email: "",
+   00054:       raw: null,
+   00055:     };
+   00056:   }
+   00057: 
+   00058:   try {
+   00059:     const obj = JSON.parse(raw);
+   00060:     const type = String(obj?.type || "").trim().toLowerCase();
+   00061:     const plan = normalizePlan(obj?.plan);
+   00062: 
+   00063:     return {
+   00064:       ok: obj?.ok === true,
+   00065:       type: type || "anon",
+   00066:       plan: type === "guest" ? "FREE" : plan || (type === "user" ? "FREE" : ""),
+   00067:       uid: String(obj?.uid || "").trim(),
+   00068:       email: String(obj?.email || "").trim().toLowerCase(),
+   00069:       raw: obj,
+   00070:     };
+   00071:   } catch {
+   00072:     return {
+   00073:       ok: true,
+   00074:       type: "user",
+   00075:       plan: "FREE",
+   00076:       uid: "",
+   00077:       email: "",
+   00078:       raw: null,
+   00079:     };
+
+==============================================================================================================
+ARQUIVO: src/services/auditKingCounts.js
+==============================================================================================================
+
+--- contexto da linha 152 ---
+
+   00127:  * - ISO "YYYY-MM-DDTHH:mm:ss..."
+   00128:  * - Timestamp-like { seconds }
+   00129:  * - Date
+   00130:  * - Firestore Timestamp (toDate)
+   00131:  */
+   00132: function normalizeToYMD(input) {
+   00133:   if (!input) return null;
+   00134: 
+   00135:   // Firestore Timestamp com toDate()
+   00136:   if (typeof input === "object" && typeof input.toDate === "function") {
+   00137:     const d = input.toDate();
+   00138:     if (d instanceof Date && !Number.isNaN(d.getTime())) {
+   00139:       return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+   00140:     }
+   00141:   }
+   00142: 
+   00143:   // Timestamp-like { seconds } / { _seconds }
+   00144:   if (
+   00145:     typeof input === "object" &&
+   00146:     (Number.isFinite(Number(input.seconds)) || Number.isFinite(Number(input._seconds)))
+   00147:   ) {
+   00148:     const sec = Number.isFinite(Number(input.seconds))
+   00149:       ? Number(input.seconds)
+   00150:       : Number(input._seconds);
+   00151: 
+>> 00152:     const d = new Date(sec * 1000);
+   00153:     if (!Number.isNaN(d.getTime())) {
+   00154:       return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+   00155:     }
+   00156:   }
+   00157: 
+   00158:   // Date
+   00159:   if (input instanceof Date && !Number.isNaN(input.getTime())) {
+   00160:     return `${input.getFullYear()}-${pad2(input.getMonth() + 1)}-${pad2(
+   00161:       input.getDate()
+   00162:     )}`;
+   00163:   }
+   00164: 
+   00165:   const s = String(input).trim();
+   00166:   if (!s) return null;
+   00167: 
+   00168:   // YYYY-MM-DD...
+   00169:   const iso = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+   00170:   if (iso) return `${iso[1]}-${iso[2]}-${iso[3]}`;
+   00171: 
+   00172:   // DD/MM/YYYY
+   00173:   const br = s.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+   00174:   if (br) return `${br[3]}-${br[2]}-${br[1]}`;
+   00175: 
+   00176:   return null;
+   00177: }
+   00178: 
+   00179: /* =========================
+   00180:    ✅ DEDUPE (blindagem anti-duplicidade)
+   00181:    - usa id/drawId quando existir
+   00182:    - fallback: uf/lottery + ymd + close_hour_norm
+   00183:    - se nada existir, NÃO elimina (evita colisão massiva)
+   00184: ========================= */
+   00185: 
+   00186: function dedupeDraws(drawsRaw) {
+   00187:   const arr = Array.isArray(drawsRaw) ? drawsRaw : [];
+   00188:   if (!arr.length) return arr;
+   00189: 
+   00190:   const seen = new Set();
+   00191:   const out = [];
+   00192: 
+   00193:   for (let i = 0; i < arr.length; i += 1) {
+   00194:     const d = arr[i];
+   00195: 
+   00196:     const ymd = normalizeToYMD(extractRawDateFromDraw(d)) || "";
+   00197:     const hh = normalizeHourLike(extractRawCloseHourFromDraw(d)) || "";
+   00198: 
+   00199:     const { uf, lottery } = extractDrawScope(d);
+   00200: 
+   00201:     const idLike =
+   00202:       (d?.drawId != null && String(d.drawId)) ||
+   00203:       (d?.id != null && String(d.id)) ||
+   00204:       "";
+   00205: 
+   00206:     let key = idLike;
+
+==============================================================================================================
+ARQUIVO: src/services/kingResultsService.js
+==============================================================================================================
+
+--- contexto da linha 85 ---
+
+   00060: 
+   00061: const RJ_STATE_CODE = "RJ";
+   00062: const RJ_LOTTERY_KEY = "PT_RIO";
+   00063: 
+   00064: export const FEDERAL_SCOPE_CODE = "FEDERAL";
+   00065: export const FEDERAL_19H_TO_20H_CHANGE_YMD = "2025-11-03";
+   00066: 
+   00067: const FEDERAL_LOTTERY_KEYS = [
+   00068:   "FEDERAL",
+   00069:   "LOTERIA_FEDERAL",
+   00070:   "LT_FEDERAL",
+   00071:   "FED",
+   00072: ];
+   00073: 
+   00074: const FEDERAL_INPUT_ALIASES = new Set([
+   00075:   "FEDERAL",
+   00076:   "LOTERIA FEDERAL",
+   00077:   "LOTERIA_FEDERAL",
+   00078:   "LT FEDERAL",
+   00079:   "LT_FEDERAL",
+   00080:   "FED",
+   00081: ]);
+   00082: 
+   00083: export const FEDERAL_DRAW_DOW = ["WEDNESDAY", "SATURDAY"]; // referência (UI)
+   00084: 
+>> 00085: function applyBoundsFloor(_scopeKey, { minYmd, maxYmd }) {
+   00086:   return { minYmd: minYmd || null, maxYmd: maxYmd || null };
+   00087: }
+   00088: 
+   00089: /**
+   00090:  * ✅ Regra histórica da Federal
+   00091:  * - até 2025-11-02: 19h
+   00092:  * - a partir de 2025-11-03: 20h
+   00093:  */
+   00094: export function getFederalPreferredHourForYmd(ymd) {
+   00095:   const y = String(ymd || "").trim();
+   00096:   if (/^\d{4}-\d{2}-\d{2}$/.test(y) && y >= FEDERAL_19H_TO_20H_CHANGE_YMD) {
+   00097:     return "20:00";
+   00098:   }
+   00099:   return "19:00";
+   00100: }
+   00101: 
+   00102: export function getFederalPreferredBucketForYmd(ymd) {
+   00103:   return getFederalPreferredHourForYmd(ymd) === "20:00" ? "20h" : "19h";
+   00104: }
+   00105: 
+   00106: /**
+   00107:  * Detecta se o usuário está pedindo Federal (por input/alias).
+   00108:  */
+   00109: function isFederalInput(scopeInput) {
+   00110:   const up = String(scopeInput || "").trim().toUpperCase();
+   00111:   if (!up) return false;
+   00112:   if (up === FEDERAL_SCOPE_CODE) return true;
+   00113:   if (FEDERAL_INPUT_ALIASES.has(up)) return true;
+   00114: 
+   00115:   // normaliza espaços/underscores pra captar variações
+   00116:   const compact = up.replace(/[\s_]+/g, " ").trim();
+   00117:   return (
+   00118:     FEDERAL_INPUT_ALIASES.has(compact) ||
+   00119:     FEDERAL_INPUT_ALIASES.has(up.replace(/[\s_]+/g, "_"))
+   00120:   );
+   00121: }
+   00122: 
+   00123: /**
+   00124:  * Resolve qual lottery_key usar quando o usuário passar:
+   00125:  * - "RJ" -> "PT_RIO"
+   00126:  * - "FEDERAL"/aliases -> "FEDERAL" (canônico)
+   00127:  * - outros -> mantém o valor original (compatível com seu app atual)
+   00128:  */
+   00129: function resolveLotteryKeyForQuery(ufInput) {
+   00130:   const uf = String(ufInput || "").trim();
+   00131:   if (!uf) return "";
+   00132:   const up = uf.toUpperCase();
+   00133: 
+   00134:   if (up === RJ_STATE_CODE) return RJ_LOTTERY_KEY;
+   00135:   if (isFederalInput(up)) return FEDERAL_SCOPE_CODE;
+   00136: 
+   00137:   return uf;
+   00138: }
+   00139: 
+
+--- contexto da linha 714 ---
+
+   00689:       ufUp === RJ_STATE_CODE ? RJ_LOTTERY_KEY : resolveLotteryKeyForQuery(ufTrim);
+   00690: 
+   00691:     const { snap, error } = await queryDrawsByField({
+   00692:       fieldName: "lottery_key",
+   00693:       uf: String(lotteryKey).toUpperCase(),
+   00694:       extraWheres,
+   00695:       extraOrderBy,
+   00696:       extraLimit,
+   00697:       policy,
+   00698:     });
+   00699: 
+   00700:     if (!error && snap?.docs?.length) {
+   00701:       return { docs: snap.docs, usedField: "lottery_key", error: null };
+   00702:     }
+   00703:     if (error) return { docs: [], usedField: "lottery_key", error };
+   00704:   }
+   00705: 
+   00706:   return { docs: [], usedField: "none", error: null };
+   00707: }
+   00708: 
+   00709: /* =========================
+   00710:    Bounds (min/max reais)
+   00711: ========================= */
+   00712: 
+   00713: function pickMinMaxFromMapped(mapped) {
+>> 00714:   let minYmd = null;
+   00715:   let maxYmd = null;
+   00716: 
+   00717:   for (const d of mapped) {
+   00718:     const y = d?.ymd || normalizeToYMD(d?.date);
+   00719:     if (!y || !isYMD(y)) continue;
+   00720:     if (!minYmd || y < minYmd) minYmd = y;
+   00721:     if (!maxYmd || y > maxYmd) maxYmd = y;
+   00722:   }
+   00723: 
+   00724:   return { minYmd, maxYmd };
+   00725: }
+   00726: 
+   00727: /**
+   00728:  * ✅ “Prova de vida” do maxYmd sem depender de índice composto nem de docId:
+   00729:  * tenta dias recentes (==) desc até achar pelo menos 1 draw.
+   00730:  */
+   00731: async function probeRecentMaxYmd(uf, lookbackDays = 45) {
+   00732:   const base = utcTodayYmd();
+   00733:   const n = Math.max(3, Math.min(120, Number(lookbackDays) || 45));
+   00734: 
+   00735:   for (let i = 0; i <= n; i += 1) {
+   00736:     const day = addDaysUTCLocal(base, -i);
+   00737:     const { docs, error } = await fetchDrawDocsPreferUf({
+   00738:       uf,
+   00739:       extraWheres: [where("ymd", "==", day)],
+   00740:       policy: "server",
+   00741:       extraLimit: limit(5),
+   00742:     });
+   00743:     if (error) return { ok: false, maxYmd: null, error };
+   00744:     if (docs && docs.length) return { ok: true, maxYmd: day, error: null };
+   00745:   }
+   00746: 
+   00747:   return { ok: false, maxYmd: null, error: null };
+   00748: }
+   00749: 
+   00750: /**
+   00751:  * ✅ API bounds (backend) — fonte única preferencial
+   00752:  */
+   00753: async function fetchBoundsFromApi(ufOrObj) {
+   00754:   const uf = String(extractUfParam(ufOrObj) || "").trim();
+   00755:   if (!uf) return { ok: false, error: new Error("uf vazio") };
+   00756: 
+   00757:   const lot = canonicalScopeKey(uf) || String(uf).trim().toUpperCase();
+   00758:   const url = apiUrl(`/api/bounds?lottery=${encodeURIComponent(lot)}`);
+   00759:   try {
+   00760:     const r = await fetch(url, { method: "GET" });
+   00761:     const j = await r.json().catch(() => null);
+   00762: 
+   00763:     if (!r.ok || !j || !j.ok) {
+   00764:       return {
+   00765:         ok: false,
+   00766:         error: new Error(`bounds api not ok: ${j?.message || r.status}`),
+   00767:         payload: j || null,
+   00768:       };
+
+--- contexto da linha 796 ---
+
+   00771:     const minYmd = String(j.minYmd || "").trim();
+   00772:     const maxYmd = String(j.maxYmd || "").trim();
+   00773:     if (!isYMD(minYmd) || !isYMD(maxYmd)) {
+   00774:       return {
+   00775:         ok: false,
+   00776:         error: new Error("bounds api retornou min/max inválidos"),
+   00777:         payload: j,
+   00778:       };
+   00779:     }
+   00780: 
+   00781:     return {
+   00782:       ok: true,
+   00783:       uf,
+   00784:       lottery: String(j.lottery || lot).trim(),
+   00785:       minYmd,
+   00786:       maxYmd,
+   00787:       minDocId: j.minDocId || null,
+   00788:       maxDocId: j.maxDocId || null,
+   00789:       source: String(j.source || "api_bounds"),
+   00790:     };
+   00791:   } catch (e) {
+   00792:     return { ok: false, error: e };
+   00793:   }
+   00794: }
+   00795: 
+>> 00796: export async function getKingBoundsByUf(ufOrObj) {
+   00797:   const uf = String(extractUfParam(ufOrObj) || "").trim();
+   00798:   if (!uf) throw new Error("Parâmetro obrigatório: uf");
+   00799: 
+   00800:   const apiTry = await fetchBoundsFromApi(ufOrObj);
+   00801:   if (apiTry?.ok) {
+   00802:     const scopeKey = canonicalScopeKey(uf);
+   00803:     const floored = applyBoundsFloor(scopeKey, {
+   00804:       minYmd: apiTry.minYmd,
+   00805:       maxYmd: apiTry.maxYmd,
+   00806:     });
+   00807: 
+   00808:     return {
+   00809:       ok: true,
+   00810:       uf,
+   00811: 
+   00812:       minYmd: floored.minYmd,
+   00813:       maxYmd: floored.maxYmd,
+   00814: 
+   00815:       minDate: floored.minYmd,
+   00816:       maxDate: floored.maxYmd,
+   00817: 
+   00818:       minDocId: apiTry.minDocId || null,
+   00819:       maxDocId: apiTry.maxDocId || null,
+   00820: 
+   00821:       source: `api_bounds:${apiTry.source}`,
+   00822:     };
+   00823:   }
+   00824: 
+   00825:   const SCAN_LIMIT = 50;
+   00826:   const FALLBACK_EDGE_LIMIT = 600;
+   00827: 
+   00828:   let firstTryError = null;
+   00829: 
+   00830:   const DOC_ID = documentId();
+   00831: 
+   00832:   async function sampleEdgesByDocId(fieldName, ufValue) {
+   00833:     const asc = await queryDrawsByField({
+   00834:       fieldName,
+   00835:       uf: ufValue,
+   00836:       extraOrderBy: [orderBy(DOC_ID)],
+   00837:       extraLimit: limit(FALLBACK_EDGE_LIMIT),
+   00838:       policy: "server",
+   00839:     });
+   00840: 
+   00841:     const last = await queryDrawsByField({
+   00842:       fieldName,
+   00843:       uf: ufValue,
+   00844:       extraOrderBy: [orderBy(DOC_ID)],
+   00845:       extraLimit: limitToLast(FALLBACK_EDGE_LIMIT),
+   00846:       policy: "server",
+   00847:     });
+   00848: 
+   00849:     const mappedA = (asc?.snap?.docs || []).map(mapDrawDoc);
+   00850:     const mappedB = (last?.snap?.docs || []).map(mapDrawDoc);
+
+--- contexto da linha 896 ---
+
+   00871:       uf,
+   00872:       extraOrderBy: orderAsc,
+   00873:       extraLimit: limit(SCAN_LIMIT),
+   00874:       policy: "server",
+   00875:     });
+   00876: 
+   00877:     const {
+   00878:       docs: maxDocs,
+   00879:       usedField: usedMax,
+   00880:       error: eMax,
+   00881:     } = await fetchDrawDocsPreferUf({
+   00882:       uf,
+   00883:       extraOrderBy: orderDesc,
+   00884:       extraLimit: limit(SCAN_LIMIT),
+   00885:       policy: "server",
+   00886:     });
+   00887: 
+   00888:     if (eMin || eMax) {
+   00889:       if (!isIndexError(eMin) && !isIndexError(eMax)) firstTryError = eMin || eMax;
+   00890:     }
+   00891: 
+   00892:     if (minDocs.length && maxDocs.length && !eMin && !eMax) {
+   00893:       const mappedMin = minDocs.map(mapDrawDoc);
+   00894:       const mappedMax = maxDocs.map(mapDrawDoc);
+   00895: 
+>> 00896:       const { minYmd } = pickMinMaxFromMapped(mappedMin);
+   00897:       const { maxYmd } = pickMinMaxFromMapped(mappedMax);
+   00898: 
+   00899:       if (minYmd && maxYmd) {
+   00900:         return {
+   00901:           ok: true,
+   00902:           uf,
+   00903:           minYmd,
+   00904:           maxYmd,
+   00905:           minDate: minYmd,
+   00906:           maxDate: maxYmd,
+   00907:           source: `ymd_scan${SCAN_LIMIT}:${usedMin}/${usedMax}`,
+   00908:         };
+   00909:       }
+   00910:     }
+   00911:   }
+   00912: 
+   00913:   const recentProbe = await probeRecentMaxYmd(uf, 60);
+   00914:   const recentMaxYmd = recentProbe?.ok ? recentProbe.maxYmd : null;
+   00915: 
+   00916:   const scopeKeyBounds = canonicalScopeKey(uf);
+   00917:   {
+   00918:     const idxInfo = (() => {
+   00919:       const code = String(firstTryError?.code || "");
+   00920:       const msg = String(firstTryError?.message || "");
+   00921:       if (!code && !msg) return "";
+   00922:       return `:firstTryError=${code || "err"}`;
+   00923:     })();
+   00924: 
+   00925:     const a = await sampleEdgesByDocId("uf", String(uf).toUpperCase());
+   00926: 
+   00927:     const ufUp = String(uf || "").trim().toUpperCase();
+   00928: 
+   00929:     if (!a.ok && isFederalInput(ufUp)) {
+   00930:       for (const lk of FEDERAL_LOTTERY_KEYS) {
+   00931:         const b = await sampleEdgesByDocId("lottery_key", lk);
+   00932:         if (b.ok) {
+   00933:           const mm = pickMinMaxFromMapped(b.merged);
+   00934: 
+   00935:           const maxFixed =
+   00936:             recentMaxYmd && (!mm.maxYmd || recentMaxYmd > mm.maxYmd)
+   00937:               ? recentMaxYmd
+   00938:               : mm.maxYmd;
+   00939: 
+   00940:           const floored = applyBoundsFloor(scopeKeyBounds, {
+   00941:             minYmd: mm.minYmd || null,
+   00942:             maxYmd: maxFixed || null,
+   00943:           });
+   00944: 
+   00945:           return {
+   00946:             ok: !!(floored.minYmd && floored.maxYmd),
+   00947:             uf,
+   00948: 
+   00949:             minYmd: floored.minYmd,
+   00950:             maxYmd: floored.maxYmd,
+
+--- contexto da linha 979 ---
+
+   00954: 
+   00955:             source: `fallback_edges_docId_limit=${FALLBACK_EDGE_LIMIT}:lottery_key(${lk}):sampleCount=${b.merged.length}${
+   00956:               recentMaxYmd ? ":max_probe" : ""
+   00957:             }${idxInfo}`,
+   00958:           };
+   00959:         }
+   00960:       }
+   00961:     }
+   00962: 
+   00963:     const lotteryKey =
+   00964:       ufUp === RJ_STATE_CODE ? RJ_LOTTERY_KEY : resolveLotteryKeyForQuery(uf);
+   00965: 
+   00966:     const b = a.ok
+   00967:       ? null
+   00968:       : await sampleEdgesByDocId("lottery_key", String(lotteryKey).toUpperCase());
+   00969: 
+   00970:     const merged = a.ok ? a.merged : b?.merged || [];
+   00971:     const mm = pickMinMaxFromMapped(merged);
+   00972: 
+   00973:     const maxFixed =
+   00974:       recentMaxYmd && (!mm.maxYmd || recentMaxYmd > mm.maxYmd)
+   00975:         ? recentMaxYmd
+   00976:         : mm.maxYmd;
+   00977: 
+   00978:     const floored = applyBoundsFloor(scopeKeyBounds, {
+>> 00979:       minYmd: mm.minYmd || null,
+   00980:       maxYmd: maxFixed || null,
+   00981:     });
+   00982: 
+   00983:     return {
+   00984:       ok: !!(floored.minYmd && floored.maxYmd),
+   00985:       uf,
+   00986: 
+   00987:       minYmd: floored.minYmd,
+   00988:       maxYmd: floored.maxYmd,
+   00989: 
+   00990:       minDate: floored.minYmd,
+   00991:       maxDate: floored.maxYmd,
+   00992: 
+   00993:       source: `fallback_edges_docId_limit=${FALLBACK_EDGE_LIMIT}:${
+   00994:         a.ok ? "uf" : "lottery_key"
+   00995:       }:sampleCount=${merged.length}${recentMaxYmd ? ":max_probe" : ""}${idxInfo}`,
+   00996:     };
+   00997:   }
+   00998: }
+   00999: 
+   01000: /* =========================
+   01001:    API: Day
+   01002: ========================= */
+   01003: 
+   01004: function buildPrizeSignature(draw) {
+   01005:   const prizes = Array.isArray(draw?.prizes) ? draw.prizes : [];
+   01006:   if (!prizes.length) return "";
+   01007: 
+   01008:   const parts = prizes
+   01009:     .map((p) => {
+   01010:       const pos = Number(p?.position);
+   01011:       const grupo = Number(p?.grupo);
+   01012:       const numero = toPrizeDigitsByPosition(
+   01013:         p?.numero ?? p?.milhar ?? p?.number ?? p?.num ?? p?.valor ?? "",
+   01014:         pos
+   01015:       );
+   01016: 
+   01017:       if (!Number.isFinite(pos) || !Number.isFinite(grupo) || !numero) return "";
+   01018:       return `${pad2(pos)}:${pad2(grupo)}:${numero}`;
+   01019:     })
+   01020:     .filter(Boolean)
+   01021:     .sort();
+   01022: 
+   01023:   return parts.join("|");
+   01024: }
+   01025: 
+   01026: function federalHourPriority(draw) {
+   01027:   const h = normalizeHourLike(
+   01028:     draw?.close_hour || draw?.closeHour || draw?.hour || draw?.hora || ""
+   01029:   );
+   01030:   const ymd = String(draw?.ymd || normalizeToYMD(draw?.date) || "").trim();
+   01031:   const n = hourToNumSafe(h);
+   01032: 
+   01033:   const prefer20h = getFederalPreferredHourForYmd(ymd) === "20:00";
+
+==============================================================================================================
+ARQUIVO: src/services/statisticsEngine.js
+==============================================================================================================
+
+--- contexto da linha 74 ---
+
+   00049:     uf,
+   00050:     dateFrom,
+   00051:     dateTo,
+   00052:     positions,
+   00053:     mode: "detailed",
+   00054:   });
+   00055: 
+   00056:   const built = buildRanking(draws);
+   00057:   const ranking = safeArray(built?.ranking);
+   00058:   const rankingScored = applyScoreEngine(ranking);
+   00059: 
+   00060:   const payload = {
+   00061:     version: 1,
+   00062:     scope,
+   00063:     uf: normalizeUfKey(uf),
+   00064:     from: dateFrom,
+   00065:     to: dateTo,
+   00066:     totalDraws: Number(built?.totalDraws || 0),
+   00067:     uniqueDays: Number(built?.uniqueDays || 0),
+   00068:     totalOcorrencias: Number(built?.totalOcorrencias || 0),
+   00069:     ranking,
+   00070:     rankingScored,
+   00071:     top3: safeArray(rankingScored).slice(0, 3),
+   00072:     integrityIssues: safeArray(built?.integrityIssues),
+   00073:     countMode: built?.countMode || "byPrize",
+>> 00074:     generatedAt: new Date().toISOString(),
+   00075:     updatedAt: serverTimestamp(),
+   00076:   };
+   00077: 
+   00078:   await setDoc(snapshotDocRef(uf, scope), payload, { merge: true });
+   00079: 
+   00080:   return payload;
+   00081: }
+   00082: 
+   00083: export async function ensureStatisticsSnapshot({
+   00084:   uf = "PT_RIO",
+   00085:   dateFrom,
+   00086:   dateTo,
+   00087:   scope = "dashboard_full",
+   00088:   force = false,
+   00089:   positions = null,
+   00090: } = {}) {
+   00091:   const current = await readStatisticsSnapshot({ uf, scope });
+   00092: 
+   00093:   if (!force && current.exists && current.data?.from === dateFrom && current.data?.to === dateTo) {
+   00094:     return {
+   00095:       source: "cache",
+   00096:       data: current.data,
+   00097:     };
+   00098:   }
+   00099: 
+   00100:   const data = await buildStatisticsSnapshot({
+   00101:     uf,
+   00102:     dateFrom,
+   00103:     dateTo,
+   00104:     scope,
+   00105:     positions,
+   00106:   });
+   00107: 
+   00108:   return {
+   00109:     source: "rebuilt",
+   00110:     data,
+   00111:   };
+   00112: }
+
+==============================================================================================================
+ARQUIVO: src/services/statsSignals.js
+==============================================================================================================
+
+--- contexto da linha 81 ---
+
+   00056:   if (input instanceof Date && !Number.isNaN(input.getTime())) {
+   00057:     return `${input.getFullYear()}-${pad2(input.getMonth() + 1)}-${pad2(
+   00058:       input.getDate()
+   00059:     )}`;
+   00060:   }
+   00061: 
+   00062:   // ✅ Timestamp-like / objetos com toDate()
+   00063:   if (typeof input === "object" && typeof input.toDate === "function") {
+   00064:     const d = input.toDate();
+   00065:     if (d instanceof Date && !Number.isNaN(d.getTime())) {
+   00066:       return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(
+   00067:         d.getDate()
+   00068:       )}`;
+   00069:     }
+   00070:   }
+   00071: 
+   00072:   if (
+   00073:     typeof input === "object" &&
+   00074:     (Number.isFinite(Number(input.seconds)) ||
+   00075:       Number.isFinite(Number(input._seconds)))
+   00076:   ) {
+   00077:     const sec = Number.isFinite(Number(input.seconds))
+   00078:       ? Number(input.seconds)
+   00079:       : Number(input._seconds);
+   00080: 
+>> 00081:     const d = new Date(sec * 1000);
+   00082:     if (!Number.isNaN(d.getTime())) {
+   00083:       return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(
+   00084:         d.getDate()
+   00085:       )}`;
+   00086:     }
+   00087:   }
+   00088: 
+   00089:   const s = safeStr(input);
+   00090:   if (!s) return null;
+   00091: 
+   00092:   // ISO com ou sem hora
+   00093:   const iso = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+   00094:   if (iso) return `${iso[1]}-${iso[2]}-${iso[3]}`;
+   00095: 
+   00096:   // BR "dd/mm/yyyy"
+   00097:   const y = brToYMD(s);
+   00098:   if (y) return y;
+   00099: 
+   00100:   return null;
+   00101: }
+   00102: 
+   00103: /* =========================
+   00104:    Horas
+   00105: ========================= */
+   00106: 
+   00107: function normalizeHourLike(value) {
+   00108:   const s0 = safeStr(value);
+   00109:   if (!s0) return "";
+   00110:   const s = s0.replace(/\s+/g, "");
+   00111: 
+   00112:   const mhx = s.match(/^(\d{1,2})(?:h|hs|hr|hrs)$/i);
+   00113:   if (mhx) return `${pad2(mhx[1])}:00`;
+   00114: 
+   00115:   const mISO = s.match(/^(\d{1,2}):(\d{1,2})(?::(\d{1,2}))?$/);
+   00116:   if (mISO) return `${pad2(mISO[1])}:${pad2(mISO[2])}`;
+   00117: 
+   00118:   const mHm = s.match(/^(\d{3,4})$/);
+   00119:   if (mHm) {
+   00120:     const hh = String(mHm[1]).slice(0, -2);
+   00121:     const mm = String(mHm[1]).slice(-2);
+   00122:     if (/^\d{1,2}$/.test(hh) && /^\d{2}$/.test(mm)) {
+   00123:       return `${pad2(hh)}:${mm}`;
+   00124:     }
+   00125:   }
+   00126: 
+   00127:   const m2 = s.match(/^(\d{1,2})$/);
+   00128:   if (m2) return `${pad2(m2[1])}:00`;
+   00129: 
+   00130:   return s0;
+   00131: }
+   00132: 
+   00133: function toHourBucket(hhmm) {
+   00134:   const s = normalizeHourLike(hhmm);
+   00135:   const m = s.match(/^(\d{2}):(\d{2})$/);
+
+--- contexto da linha 255 ---
+
+   00230:   }
+   00231: 
+   00232:   const candidates = [
+   00233:     draw?.grupo1,
+   00234:     draw?.group1,
+   00235:     draw?.primeiro_grupo,
+   00236:     draw?.first_grupo,
+   00237:     draw?.prize1_grupo,
+   00238:     draw?.prize1Grupo,
+   00239:     draw?.p1_grupo2,
+   00240:     draw?.p1Grupo2,
+   00241:     draw?.g1,
+   00242:     draw?.grupo_1,
+   00243:     draw?.grupoPrimeiro,
+   00244:   ];
+   00245: 
+   00246:   for (const v of candidates) {
+   00247:     if (Number.isFinite(Number(v))) return Number(v);
+   00248:   }
+   00249: 
+   00250:   return null;
+   00251: }
+   00252: 
+   00253: function addDaysYMD(ymd, deltaDays) {
+   00254:   if (!isYMD(ymd)) return ymd;
+>> 00255:   const [Y, M, D] = ymd.split("-").map((x) => Number(x));
+   00256:   const dt = new Date(Y, M - 1, D);
+   00257:   dt.setDate(dt.getDate() + Number(deltaDays || 0));
+   00258:   return `${dt.getFullYear()}-${pad2(dt.getMonth() + 1)}-${pad2(dt.getDate())}`;
+   00259: }
+   00260: 
+   00261: function prevHourFromSchedule(schedule, targetHour) {
+   00262:   const sch = Array.isArray(schedule) && schedule.length ? schedule : [];
+   00263:   const t = toHourBucket(targetHour);
+   00264:   const idx = sch.findIndex((h) => toHourBucket(h) === t);
+   00265:   if (idx < 0) return null;
+   00266:   if (idx > 0) return sch[idx - 1];
+   00267:   return null;
+   00268: }
+   00269: 
+   00270: function prob(count, total) {
+   00271:   if (!Number.isFinite(total) || total <= 0) return 0;
+   00272:   return Math.max(0, Math.min(1, Number(count || 0) / total));
+   00273: }
+   00274: 
+   00275: function clamp(x, a, b) {
+   00276:   return Math.max(a, Math.min(b, Number(x || 0)));
+   00277: }
+   00278: 
+   00279: function allGroups25() {
+   00280:   const out = [];
+   00281:   for (let i = 1; i <= 25; i += 1) out.push(i);
+   00282:   return out;
+   00283: }
+   00284: 
+   00285: /**
+   00286:  * Motor principal
+   00287:  */
+   00288: export function computeTop3Signals({
+   00289:   drawsRange,
+   00290:   schedule,
+   00291:   ymdTarget,
+   00292:   hourBucket,
+   00293:   prevGrupo,
+   00294:   weights,
+   00295:   mins,
+   00296: }) {
+   00297:   const list = Array.isArray(drawsRange) ? drawsRange : [];
+   00298:   const schSet = scheduleSet(schedule);
+   00299: 
+   00300:   const target = toHourBucket(hourBucket);
+   00301:   if (!target) {
+   00302:     return { top: [], scored: [], meta: { reason: "no_target_hour" } };
+   00303:   }
+   00304: 
+   00305:   const curYmd = safeStr(ymdTarget);
+   00306:   const curDow = getDowKey(curYmd);
+   00307:   const curDom = getDomNumber(curYmd);
+   00308: 
+   00309:   const prevG = Number.isFinite(Number(prevGrupo)) ? Number(prevGrupo) : null;
+
+==============================================================================================================
+ARQUIVO: src/services/king/king.date.js
+==============================================================================================================
+
+--- contexto da linha 24 ---
+
+   00001: import { normalizeToYMD_SP } from "../../utils/ymd";
+   00002: 
+   00003: export function pad2(n) {
+   00004:   return String(n).padStart(2, "0");
+   00005: }
+   00006: 
+   00007: export function isYMD(s) {
+   00008:   return /^\d{4}-\d{2}-\d{2}$/.test(String(s || "").trim());
+   00009: }
+   00010: 
+   00011: export function ymdToBR(ymd) {
+   00012:   const m = String(ymd || "")
+   00013:     .trim()
+   00014:     .match(/^(\d{4})-(\d{2})-(\d{2})$/);
+   00015:   if (!m) return null;
+   00016:   return `${m[3]}/${m[2]}/${m[1]}`;
+   00017: }
+   00018: 
+   00019: export function normalizeToYMD(input) {
+   00020:   return normalizeToYMD_SP(input);
+   00021: }
+   00022: 
+   00023: export function utcTodayYmd() {
+>> 00024:   const d = new Date();
+   00025:   const y = d.getUTCFullYear();
+   00026:   const m = pad2(d.getUTCMonth() + 1);
+   00027:   const dd = pad2(d.getUTCDate());
+   00028:   return `${y}-${m}-${dd}`;
+   00029: }
+   00030: 
+   00031: export function ymdToUTCDate(ymd) {
+   00032:   const m = String(ymd || "").match(/^(\d{4})-(\d{2})-(\d{2})$/);
+   00033:   if (!m) return null;
+   00034:   return new Date(Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3])));
+   00035: }
+   00036: 
+   00037: export function ymdToUTCDateLocal(ymd) {
+   00038:   return ymdToUTCDate(ymd);
+   00039: }
+   00040: 
+   00041: export function addDaysUTC(ymd, days) {
+   00042:   const dt = ymdToUTCDate(ymd);
+   00043:   if (!dt) return ymd;
+   00044:   dt.setUTCDate(dt.getUTCDate() + Number(days || 0));
+   00045:   return `${dt.getUTCFullYear()}-${pad2(dt.getUTCMonth() + 1)}-${pad2(
+   00046:     dt.getUTCDate()
+   00047:   )}`;
+   00048: }
+   00049: 
+   00050: export function addDaysUTCLocal(ymd, days) {
+   00051:   return addDaysUTC(ymd, days);
+   00052: }
+   00053: 
+   00054: export function daysBetweenInclusiveUTC(a, b) {
+   00055:   const da = ymdToUTCDate(a);
+   00056:   const db = ymdToUTCDate(b);
+   00057:   if (!da || !db) return NaN;
+   00058:   const ms = db.getTime() - da.getTime();
+   00059:   return Math.floor(ms / 86400000) + 1;
+   00060: }
+   00061: 
+   00062: export function daysDiffUTC(fromYmd, toYmd) {
+   00063:   const da = ymdToUTCDate(fromYmd);
+   00064:   const db = ymdToUTCDate(toYmd);
+   00065:   if (!da || !db) return NaN;
+   00066:   const ms = db.getTime() - da.getTime();
+   00067:   return Math.floor(ms / 86400000);
+   00068: }
+   00069: 
+   00070: export function shouldForceFreshServerRead(ymd) {
+   00071:   const today = utcTodayYmd();
+   00072:   const diffToToday = daysDiffUTC(ymd, today);
+   00073:   return Number.isFinite(diffToToday) && diffToToday <= 1;
+   00074: }
+
+==============================================================================================================
+ARQUIVO: src/hooks/useKingRanking.js
+==============================================================================================================
+
+--- contexto da linha 5 ---
+
+   00001: import { useEffect, useMemo, useRef, useState } from "react";
+   00002: import {
+   00003:   getKingResultsByDate,
+   00004:   getKingResultsByRange,
+>> 00005:   getKingBoundsByUf,
+   00006: } from "../services/kingResultsService";
+   00007: import { buildRanking } from "../utils/buildRanking";
+   00008: import { buildPalpite } from "../utils/buildPalpites";
+   00009: import { normalizeToYMD_SP } from "../utils/ymd";
+   00010: 
+   00011: /* =========================
+   00012:    Utils
+   00013: ========================= */
+   00014: 
+   00015: function isIndexErrorMessage(err) {
+   00016:   const msg = String(err?.message || err || "").toLowerCase();
+   00017:   const code = String(err?.code || "").toLowerCase();
+   00018: 
+   00019:   return (
+   00020:     code.includes("failed-precondition") ||
+   00021:     msg.includes("failed_precondition") ||
+   00022:     msg.includes("requires an index") ||
+   00023:     (msg.includes("index") && msg.includes("create")) ||
+   00024:     msg.includes("falta indice") ||
+   00025:     msg.includes("falta índice") ||
+   00026:     msg.includes("falta índice composto") ||
+   00027:     msg.includes("falta indice composto") ||
+   00028:     msg.includes("firestore: falta índice") ||
+   00029:     msg.includes("firestore: falta indice")
+   00030:   );
+   00031: }
+   00032: 
+   00033: function normalizeToYMD(input) {
+   00034:   return normalizeToYMD_SP(input);
+   00035: }
+   00036: 
+   00037: function ymdToNumber(ymd) {
+   00038:   if (!ymd) return NaN;
+   00039:   const m = String(ymd).match(/^(\d{4})-(\d{2})-(\d{2})$/);
+   00040:   if (!m) return NaN;
+   00041:   return Number(`${m[1]}${m[2]}${m[3]}`);
+   00042: }
+   00043: 
+   00044: function dayDiffInclusiveUTC(ymdFrom, ymdTo) {
+   00045:   const toUTC = (ymd) => {
+   00046:     const m = String(ymd).match(/^(\d{4})-(\d{2})-(\d{2})$/);
+   00047:     if (!m) return null;
+   00048:     return new Date(Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3])));
+   00049:   };
+   00050: 
+   00051:   const da = toUTC(ymdFrom);
+   00052:   const db = toUTC(ymdTo);
+   00053:   if (!da || !db) return NaN;
+   00054: 
+   00055:   const ms = db.getTime() - da.getTime();
+   00056:   if (!Number.isFinite(ms)) return NaN;
+   00057: 
+   00058:   return Math.floor(ms / 86400000) + 1;
+   00059: }
+
+--- contexto da linha 202 ---
+
+   00177:   return order.map((k) => byKey.get(k)).filter(Boolean);
+   00178: }
+   00179: 
+   00180: function normalizeDrawForCharts(d) {
+   00181:   const ymd = d?.ymd || normalizeToYMD(getDrawDateRaw(d));
+   00182:   const closeHour = normHHMM(getDrawHourRaw(d));
+   00183:   const prizes = Array.isArray(d?.prizes) ? d.prizes : [];
+   00184: 
+   00185:   return {
+   00186:     ...d,
+   00187:     date: ymd || d?.date || null,
+   00188:     ymd: ymd || null,
+   00189:     close_hour: closeHour || "",
+   00190:     closeHour: closeHour || "",
+   00191:     lottery_code: getDrawLotteryCodeRaw(d) || d?.lottery_code || null,
+   00192:     prizes,
+   00193:   };
+   00194: }
+   00195: 
+   00196: function clampMs(n, min, max) {
+   00197:   const x = Number(n);
+   00198:   if (!Number.isFinite(x)) return min;
+   00199:   return Math.max(min, Math.min(max, x));
+   00200: }
+   00201: 
+>> 00202: function clampYmdToBounds(ymd, minYmd, maxYmd) {
+   00203:   if (!ymd) return null;
+   00204: 
+   00205:   const n = ymdToNumber(ymd);
+   00206:   const a = ymdToNumber(minYmd);
+   00207:   const b = ymdToNumber(maxYmd);
+   00208: 
+   00209:   if (!Number.isFinite(n)) return null;
+   00210: 
+   00211:   if (Number.isFinite(a) && n < a) return minYmd;
+   00212:   if (Number.isFinite(b) && n > b) return maxYmd;
+   00213:   return ymd;
+   00214: }
+   00215: 
+   00216: function clampRangeToBounds(ymdFrom, ymdTo, minYmd, maxYmd) {
+   00217:   let a = ymdFrom || null;
+   00218:   let b = ymdTo || null;
+   00219: 
+   00220:   if (minYmd || maxYmd) {
+   00221:     a = clampYmdToBounds(a, minYmd, maxYmd);
+   00222:     b = clampYmdToBounds(b, minYmd, maxYmd);
+   00223:   }
+   00224: 
+   00225:   const na = ymdToNumber(a);
+   00226:   const nb = ymdToNumber(b);
+   00227:   if (Number.isFinite(na) && Number.isFinite(nb) && na > nb) {
+   00228:     return { ymdFrom: b, ymdTo: a };
+   00229:   }
+   00230: 
+   00231:   return { ymdFrom: a, ymdTo: b };
+   00232: }
+   00233: 
+   00234: function normalizeBucketInput(bucket) {
+   00235:   const s = String(bucket || "").trim();
+   00236:   if (!s) return null;
+   00237:   const m = s.match(/^(\d{1,2})h$/i);
+   00238:   if (m) return `${String(m[1]).padStart(2, "0")}h`;
+   00239:   return s;
+   00240: }
+   00241: 
+   00242: 
+   00243: const BOUNDS_TTL_MS = 10 * 60 * 1000;
+   00244: 
+   00245: function nowMs() {
+   00246:   return Date.now();
+   00247: }
+   00248: 
+   00249: const INITIAL_BOUNDS = {
+   00250:   ok: false,
+   00251:   uf: null,
+   00252:   minYmd: null,
+   00253:   maxYmd: null,
+   00254:   source: "none",
+   00255: };
+   00256: 
+
+--- contexto da linha 332 ---
+
+   00307:       }
+   00308:     };
+   00309:   }, []);
+   00310: 
+   00311:   useEffect(() => {
+   00312:     let mounted = true;
+   00313: 
+   00314:     async function loadBounds() {
+   00315:       const key = String(uf || "").trim();
+   00316:       if (!key) {
+   00317:         if (mounted) setBounds(INITIAL_BOUNDS);
+   00318:         return;
+   00319:       }
+   00320: 
+   00321:       if (boundsCacheRef.current.has(key)) {
+   00322:         const cachedWrap = boundsCacheRef.current.get(key);
+   00323:         const age = nowMs() - Number(cachedWrap?.ts || 0);
+   00324: 
+   00325:         if (cachedWrap?.data && Number.isFinite(age) && age < BOUNDS_TTL_MS) {
+   00326:           if (mounted) setBounds(cachedWrap.data);
+   00327:           return;
+   00328:         }
+   00329:       }
+   00330: 
+   00331:       try {
+>> 00332:         const b = await getKingBoundsByUf({ uf: key });
+   00333:         const safe = {
+   00334:           ok: !!b?.ok,
+   00335:           uf: key,
+   00336:           minYmd: b?.minYmd || null,
+   00337:           maxYmd: b?.maxYmd || null,
+   00338:           source: b?.source || "none",
+   00339:         };
+   00340: 
+   00341:         boundsCacheRef.current.set(key, { ts: nowMs(), data: safe });
+   00342: 
+   00343:         if (mounted) setBounds(safe);
+   00344: 
+   00345:         if (mounted && !safe.ok) {
+   00346:           if (boundsRetryTimerRef.current) clearTimeout(boundsRetryTimerRef.current);
+   00347:           boundsRetryTimerRef.current = setTimeout(() => {
+   00348:             if (mounted) setBoundsRetryTick((t) => t + 1);
+   00349:           }, 10000);
+   00350:         }
+   00351:       } catch {
+   00352:         const safe = {
+   00353:           ok: false,
+   00354:           uf: key,
+   00355:           minYmd: null,
+   00356:           maxYmd: null,
+   00357:           source: "none",
+   00358:         };
+   00359: 
+   00360:         boundsCacheRef.current.set(key, { ts: nowMs(), data: safe });
+   00361: 
+   00362:         if (mounted) setBounds(safe);
+   00363: 
+   00364:         if (boundsRetryTimerRef.current) clearTimeout(boundsRetryTimerRef.current);
+   00365:         boundsRetryTimerRef.current = setTimeout(() => {
+   00366:           if (mounted) setBoundsRetryTick((t) => t + 1);
+   00367:         }, 10000);
+   00368:       }
+   00369:     }
+   00370: 
+   00371:     loadBounds();
+   00372: 
+   00373:     return () => {
+   00374:       mounted = false;
+   00375:       if (boundsRetryTimerRef.current) clearTimeout(boundsRetryTimerRef.current);
+   00376:     };
+   00377:   }, [uf, boundsRetryTick, boundsSoftTick]);
+   00378: 
+   00379:   const ymdDateRaw = useMemo(() => normalizeToYMD(date), [date]);
+   00380:   const ymdFromRaw = useMemo(() => normalizeToYMD(dateFrom), [dateFrom]);
+   00381:   const ymdToRaw = useMemo(() => normalizeToYMD(dateTo), [dateTo]);
+   00382: 
+   00383:   const bucketNorm = useMemo(() => normalizeBucketInput(closeHourBucket), [closeHourBucket]);
+   00384: 
+   00385:   const positionsEffective = useMemo(() => {
+   00386:     return Array.isArray(positions) && positions.length ? positions : null;
+
+--- contexto da linha 419 ---
+
+   00394:   const positionsArrStable = useMemo(
+   00395:     () => normalizePositionsFromKey(positionsInputKey),
+   00396:     [positionsInputKey]
+   00397:   );
+   00398: 
+   00399:   const positionsKey = useMemo(
+   00400:     () => (positionsArrStable ? positionsArrStable.join(",") : ""),
+   00401:     [positionsArrStable]
+   00402:   );
+   00403: 
+   00404:   const hourBucketKey = useMemo(() => String(bucketNorm || ""), [bucketNorm]);
+   00405: 
+   00406:   const ymdDate = useMemo(() => {
+   00407:     return clampYmdToBounds(ymdDateRaw, bounds.minYmd, bounds.maxYmd);
+   00408:   }, [ymdDateRaw, bounds.minYmd, bounds.maxYmd]);
+   00409: 
+   00410:   const { ymdFrom, ymdTo } = useMemo(() => {
+   00411:     const na = ymdToNumber(ymdFromRaw);
+   00412:     const nb = ymdToNumber(ymdToRaw);
+   00413: 
+   00414:     const a0 =
+   00415:       Number.isFinite(na) && Number.isFinite(nb) && na > nb ? ymdToRaw : ymdFromRaw;
+   00416:     const b0 =
+   00417:       Number.isFinite(na) && Number.isFinite(nb) && na > nb ? ymdFromRaw : ymdToRaw;
+   00418: 
+>> 00419:     return clampRangeToBounds(a0, b0, bounds.minYmd, bounds.maxYmd);
+   00420:   }, [ymdFromRaw, ymdToRaw, bounds.minYmd, bounds.maxYmd]);
+   00421: 
+   00422:   const effectiveDayYmd = useMemo(() => {
+   00423:     if (ymdDate) return ymdDate;
+   00424:     if (uf && ymdFrom && ymdTo && ymdFrom === ymdTo) return ymdFrom;
+   00425:     return null;
+   00426:   }, [uf, ymdDate, ymdFrom, ymdTo]);
+   00427: 
+   00428:   const mode = useMemo(() => {
+   00429:     if (uf && ymdFrom && ymdTo && ymdFrom !== ymdTo) return "range";
+   00430:     if (uf && effectiveDayYmd) return "day";
+   00431:     return "none";
+   00432:   }, [uf, ymdFrom, ymdTo, effectiveDayYmd]);
+   00433: 
+   00434:   const rangeDays = useMemo(() => {
+   00435:     if (mode !== "range") return NaN;
+   00436:     return dayDiffInclusiveUTC(ymdFrom, ymdTo);
+   00437:   }, [mode, ymdFrom, ymdTo]);
+   00438: 
+   00439:   const RANGE_FALLBACK_LIMIT_DAYS = 31;
+   00440: 
+   00441:   const [rangeBlocked, setRangeBlocked] = useState(false);
+   00442:   const rangeBlockedKeyRef = useRef("");
+   00443: 
+   00444:   useEffect(() => {
+   00445:     const k = [mode, uf || "", ymdFrom || "", ymdTo || ""].join("|");
+   00446:     if (rangeBlockedKeyRef.current !== k) {
+   00447:       rangeBlockedKeyRef.current = k;
+   00448:       setRangeBlocked(false);
+   00449:     }
+   00450:   }, [mode, uf, ymdFrom, ymdTo]);
+   00451: 
+   00452:   const autoRefreshEnabled = useMemo(() => {
+   00453:     if (mode === "none") return false;
+   00454: 
+   00455:     if (
+   00456:       mode === "range" &&
+   00457:       rangeBlocked &&
+   00458:       Number.isFinite(rangeDays) &&
+   00459:       rangeDays > RANGE_FALLBACK_LIMIT_DAYS
+   00460:     ) {
+   00461:       return false;
+   00462:     }
+   00463: 
+   00464:     if (mode === "day") return true;
+   00465: 
+   00466:     if (!Number.isFinite(rangeDays)) return true;
+   00467: 
+   00468:     const REFRESH_MAX_DAYS = 45;
+   00469:     return rangeDays <= REFRESH_MAX_DAYS;
+   00470:   }, [mode, rangeDays, rangeBlocked]);
+   00471: 
+   00472:   const AUTO_REFRESH_MS = 60000;
+   00473:   const intervalMs = useMemo(() => clampMs(AUTO_REFRESH_MS, 30000, 300000), []);
+
+--- contexto da linha 633 ---
+
+   00608:           if (hasAnyPrize) {
+   00609:             const built = buildRanking(unique);
+   00610:             setData(built.ranking || []);
+   00611: 
+   00612:             const palpiteBuilt = buildPalpite(unique, {
+   00613:               minDraws: 400,
+   00614:               maxDraws: 2000,
+   00615:             });
+   00616: 
+   00617:             setMeta((prev) => ({
+   00618:               ...prev,
+   00619:               top3: built.top3 || [],
+   00620:               totalOcorrencias: Number(built.totalOcorrencias || 0),
+   00621:               totalDraws: unique.length,
+   00622:               mode,
+   00623:               date: mode === "day" ? effectiveDayYmd : null,
+   00624:               dateFrom: mode === "range" ? ymdFrom : null,
+   00625:               dateTo: mode === "range" ? ymdTo : null,
+   00626: 
+   00627:               palpitesByGrupo: palpiteBuilt?.palpitesByGrupo || {},
+   00628:               palpiteSampleDrawsUsed: Number(palpiteBuilt?.sampleDrawsUsed || 0),
+   00629:               palpiteUsedBucket: palpiteBuilt?.usedBucket ?? null,
+   00630: 
+   00631:               bounds: boundsSnapshot,
+   00632:               suggestedRange: {
+>> 00633:                 from: boundsSnapshot?.minYmd || null,
+   00634:                 to: boundsSnapshot?.maxYmd || null,
+   00635:               },
+   00636: 
+   00637:               serviceMode,
+   00638:               hydrating: false,
+   00639:             }));
+   00640:           } else {
+   00641:             setData([]);
+   00642:             setMeta((prev) => ({
+   00643:               ...prev,
+   00644:               top3: [],
+   00645:               totalOcorrencias: 0,
+   00646:               totalDraws: unique.length,
+   00647:               mode,
+   00648:               date: mode === "day" ? effectiveDayYmd : null,
+   00649:               dateFrom: mode === "range" ? ymdFrom : null,
+   00650:               dateTo: mode === "range" ? ymdTo : null,
+   00651: 
+   00652:               palpitesByGrupo: {},
+   00653:               palpiteSampleDrawsUsed: 0,
+   00654:               palpiteUsedBucket: null,
+   00655: 
+   00656:               bounds: boundsSnapshot,
+   00657:               suggestedRange: {
+   00658:                 from: boundsSnapshot?.minYmd || null,
+   00659:                 to: boundsSnapshot?.maxYmd || null,
+   00660:               },
+   00661: 
+   00662:               serviceMode,
+   00663:               hydrating: false,
+   00664:             }));
+   00665:           }
+   00666: 
+   00667:           return;
+   00668:         }
+   00669: 
+   00670:         setData([]);
+   00671:         setMeta((prev) => ({
+   00672:           ...prev,
+   00673:           top3: [],
+   00674:           totalOcorrencias: 0,
+   00675:           totalDraws: unique.length,
+   00676:           mode,
+   00677:           date: null,
+   00678:           dateFrom: mode === "range" ? ymdFrom : null,
+   00679:           dateTo: mode === "range" ? ymdTo : null,
+   00680: 
+   00681:           palpitesByGrupo: {},
+   00682:           palpiteSampleDrawsUsed: 0,
+   00683:           palpiteUsedBucket: null,
+   00684: 
+   00685:           bounds: boundsSnapshot,
+   00686:           suggestedRange: {
+   00687:             from: boundsSnapshot?.minYmd || null,
+
+==============================================================================================================
+ARQUIVO: src/utils/buildPalpites.js
+==============================================================================================================
+
+--- contexto da linha 164 ---
+
+   00139: }
+   00140: 
+   00141: /* =========================
+   00142:    Date / Hour utils
+   00143: ========================= */
+   00144: 
+   00145: function normalizeToYMD(input) {
+   00146:   if (!input) return null;
+   00147: 
+   00148:   // Firestore Timestamp com toDate()
+   00149:   if (typeof input === "object" && typeof input.toDate === "function") {
+   00150:     const d = input.toDate();
+   00151:     if (d instanceof Date && !Number.isNaN(d.getTime())) {
+   00152:       return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+   00153:     }
+   00154:   }
+   00155: 
+   00156:   // Timestamp-like { seconds } / { _seconds }
+   00157:   if (
+   00158:     typeof input === "object" &&
+   00159:     (Number.isFinite(Number(input.seconds)) || Number.isFinite(Number(input._seconds)))
+   00160:   ) {
+   00161:     const sec = Number.isFinite(Number(input.seconds))
+   00162:       ? Number(input.seconds)
+   00163:       : Number(input._seconds);
+>> 00164:     const d = new Date(sec * 1000);
+   00165:     if (!Number.isNaN(d.getTime())) {
+   00166:       return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+   00167:     }
+   00168:   }
+   00169: 
+   00170:   if (input instanceof Date && !Number.isNaN(input.getTime())) {
+   00171:     return `${input.getFullYear()}-${pad2(input.getMonth() + 1)}-${pad2(input.getDate())}`;
+   00172:   }
+   00173: 
+   00174:   const s = String(input).trim();
+   00175:   if (!s) return null;
+   00176: 
+   00177:   const iso = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+   00178:   if (iso) return `${iso[1]}-${iso[2]}-${iso[3]}`;
+   00179: 
+   00180:   const br = s.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+   00181:   if (br) return `${br[3]}-${br[2]}-${br[1]}`;
+   00182: 
+   00183:   return null;
+   00184: }
+   00185: 
+   00186: function getDrawYmd(d) {
+   00187:   return normalizeToYMD(
+   00188:     d?.ymd ?? d?.date ?? d?.draw_date ?? d?.close_date ?? d?.data ?? d?.dt ?? null
+   00189:   );
+   00190: }
+   00191: 
+   00192: function getDrawCloseHour(d) {
+   00193:   return String(d?.close_hour ?? d?.closeHour ?? d?.hour ?? d?.hora ?? "").trim();
+   00194: }
+   00195: 
+   00196: function toHourNum(closeHour) {
+   00197:   const s = String(closeHour || "").trim();
+   00198: 
+   00199:   const mh = s.match(/^(\d{1,2})h$/i);
+   00200:   if (mh) return Number(mh[1]) * 100;
+   00201: 
+   00202:   const m0 = s.match(/^(\d{1,2})$/);
+   00203:   if (m0) return Number(m0[1]) * 100;
+   00204: 
+   00205:   const m = s.match(/^(\d{1,2}):(\d{2})$/);
+   00206:   if (!m) return 0;
+   00207: 
+   00208:   return Number(m[1]) * 100 + Number(m[2]);
+   00209: }
+   00210: 
+   00211: function toHourBucketLabel(closeHour) {
+   00212:   const s = String(closeHour || "").trim();
+   00213:   if (!s) return null;
+   00214: 
+   00215:   const m1 = s.match(/^(\d{1,2})h$/i);
+   00216:   if (m1) return `${pad2(m1[1])}h`;
+   00217: 
+   00218:   const m2 = s.match(/^(\d{1,2}):(\d{1,2})$/);
+
+==============================================================================================================
+ARQUIVO: src/utils/buildRanking.js
+==============================================================================================================
+
+--- contexto da linha 99 ---
+
+   00074:     slug: b.slug || "",
+   00075:     dezenas: Array.isArray(b.dezenas) ? b.dezenas.slice() : [],
+   00076:   };
+   00077: }
+   00078: 
+   00079: function normalizeToYMD(input) {
+   00080:   if (!input) return null;
+   00081: 
+   00082:   // Firestore Timestamp com toDate()
+   00083:   if (typeof input === "object" && typeof input.toDate === "function") {
+   00084:     const d = input.toDate();
+   00085:     if (d instanceof Date && !Number.isNaN(d.getTime())) {
+   00086:       return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+   00087:     }
+   00088:   }
+   00089: 
+   00090:   // Timestamp-like { seconds } / { _seconds }
+   00091:   if (
+   00092:     typeof input === "object" &&
+   00093:     (Number.isFinite(Number(input.seconds)) || Number.isFinite(Number(input._seconds)))
+   00094:   ) {
+   00095:     const sec = Number.isFinite(Number(input.seconds))
+   00096:       ? Number(input.seconds)
+   00097:       : Number(input._seconds);
+   00098: 
+>> 00099:     const d = new Date(sec * 1000);
+   00100:     if (!Number.isNaN(d.getTime())) {
+   00101:       return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+   00102:     }
+   00103:   }
+   00104: 
+   00105:   // Date
+   00106:   if (input instanceof Date && !Number.isNaN(input.getTime())) {
+   00107:     return `${input.getFullYear()}-${pad2(input.getMonth() + 1)}-${pad2(input.getDate())}`;
+   00108:   }
+   00109: 
+   00110:   const s = String(input).trim();
+   00111:   if (!s) return null;
+   00112: 
+   00113:   // YYYY-MM-DD...
+   00114:   const iso = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+   00115:   if (iso) return `${iso[1]}-${iso[2]}-${iso[3]}`;
+   00116: 
+   00117:   // DD/MM/YYYY
+   00118:   const br = s.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+   00119:   if (br) return `${br[3]}-${br[2]}-${br[1]}`;
+   00120: 
+   00121:   return null;
+   00122: }
+   00123: 
+   00124: function getDrawYmdRaw(d) {
+   00125:   if (!d) return null;
+   00126:   return d.date ?? d.ymd ?? d.draw_date ?? d.close_date ?? d.data ?? d.dt ?? null;
+   00127: }
+   00128: 
+   00129: function getDrawHourRaw(d) {
+   00130:   if (!d) return "";
+   00131:   return String(d.close_hour ?? d.closeHour ?? d.hour ?? d.hora ?? "").trim();
+   00132: }
+   00133: 
+   00134: /**
+   00135:  * ✅ DEDUP DE DRAWS (CORREÇÃO CRÍTICA)
+   00136:  * - Prioriza a chave LÓGICA (ymd + close_hour) para eliminar duplicidade real
+   00137:  * - Só cai para id/drawId se NÃO conseguir montar (ymd/hour)
+   00138:  * - Se ainda assim ficar sem chave, usa fallback com índice (não colapsa tudo em "__")
+   00139:  */
+   00140: function dedupeDraws(draws) {
+   00141:   const arr = Array.isArray(draws) ? draws : [];
+   00142:   if (!arr.length) return arr;
+   00143: 
+   00144:   const seen = new Set();
+   00145:   const out = [];
+   00146: 
+   00147:   for (let i = 0; i < arr.length; i += 1) {
+   00148:     const d = arr[i];
+   00149: 
+   00150:     const ymd =
+   00151:       String(d?.ymd || "").trim() ||
+   00152:       normalizeToYMD(getDrawYmdRaw(d)) ||
+   00153:       "";
+
+--- contexto da linha 223 ---
+
+   00198:     if (seen.has(key)) continue;
+   00199:     seen.add(key);
+   00200:     out.push(p);
+   00201:   }
+   00202: 
+   00203:   return out;
+   00204: }
+   00205: 
+   00206: /* =========================
+   00207:    Main
+   00208: ========================= */
+   00209: export function buildRanking(draws, opts = {}) {
+   00210:   // ✅ correção: dedup no nível de draws ANTES de qualquer métrica
+   00211:   const list = dedupeDraws(Array.isArray(draws) ? draws : []);
+   00212: 
+   00213:   // Padrão atual (mantido): conta por prize
+   00214:   const countMode = String(opts.countMode || "byPrize"); // "byPrize" | "byDraw"
+   00215:   const maxIntegrityIssues = Number.isFinite(Number(opts.maxIntegrityIssues))
+   00216:     ? Math.max(0, Number(opts.maxIntegrityIssues))
+   00217:     : 300;
+   00218: 
+   00219:   const totalDraws = list.length;
+   00220: 
+   00221:   // metas de período
+   00222:   const daySet = new Set();
+>> 00223:   let minDate = null;
+   00224:   let maxDate = null;
+   00225: 
+   00226:   for (const d of list) {
+   00227:     const ymd = normalizeToYMD(getDrawYmdRaw(d));
+   00228:     if (!ymd) continue;
+   00229: 
+   00230:     daySet.add(ymd);
+   00231:     if (!minDate || ymd < minDate) minDate = ymd;
+   00232:     if (!maxDate || ymd > maxDate) maxDate = ymd;
+   00233:   }
+   00234: 
+   00235:   const uniqueDays = daySet.size;
+   00236: 
+   00237:   // ranking
+   00238:   const map = new Map();
+   00239:   let totalOcorrencias = 0;
+   00240: 
+   00241:   // auditoria de consistência grupo x animal
+   00242:   const integrityIssues = [];
+   00243: 
+   00244:   for (const draw of list) {
+   00245:     const prizes = dedupePrizes(draw?.prizes);
+   00246: 
+   00247:     // se countMode = byDraw, evitamos contar o mesmo grupo mais de 1x por draw
+   00248:     const countedGroupsThisDraw = countMode === "byDraw" ? new Set() : null;
+   00249: 
+   00250:     for (const prize of prizes) {
+   00251:       const grupoRaw = prize?.grupo ?? prize?.group;
+   00252:       const animalRaw = prize?.animal;
+   00253: 
+   00254:       if (grupoRaw == null) continue;
+   00255: 
+   00256:       const grupoNum = Number(grupoRaw);
+   00257:       if (!Number.isFinite(grupoNum)) continue;
+   00258:       if (grupoNum < 1 || grupoNum > 25) continue;
+   00259: 
+   00260:       if (countedGroupsThisDraw) {
+   00261:         const k = String(grupoNum);
+   00262:         if (countedGroupsThisDraw.has(k)) continue;
+   00263:         countedGroupsThisDraw.add(k);
+   00264:       }
+   00265: 
+   00266:       const official = getOfficialByGrupo(grupoNum);
+   00267:       const grupo = official?.grupo || pad2(grupoNum);
+   00268: 
+   00269:       const animalFromData = animalRaw ? normalizeAnimalLocal(animalRaw) : "";
+   00270:       const animalOfficial = official?.animal || "";
+   00271:       const animalLabel = animalFromData || animalOfficial || "";
+   00272: 
+   00273:       let entry = map.get(grupo);
+   00274:       if (!entry) {
+   00275:         entry = {
+   00276:           grupo,                 // "01".."25" (string)
+   00277:           grupoNum: grupoNum,    // 1..25 (number)
+
+--- contexto da linha 359 ---
+
+   00334:         total: 0,
+   00335:       });
+   00336:     } else {
+   00337:       if (!entry.grupoNum) entry.grupoNum = i;
+   00338:       if (!entry.animal) entry.animal = official?.animal || "";
+   00339:       if (!entry.slug) entry.slug = official?.slug || "";
+   00340:       if ((!entry.dezenas || !entry.dezenas.length) && official?.dezenas?.length) {
+   00341:         entry.dezenas = official.dezenas;
+   00342:       }
+   00343:     }
+   00344:   }
+   00345: 
+   00346:   const ranking = Array.from(map.values()).sort((a, b) => {
+   00347:     const dt = Number(b.total) - Number(a.total);
+   00348:     if (dt !== 0) return dt;
+   00349:     return String(a.grupo).localeCompare(String(b.grupo));
+   00350:   });
+   00351: 
+   00352:   return {
+   00353:     ranking,
+   00354:     top3: ranking.slice(0, 3),
+   00355:     totalOcorrencias,
+   00356:     integrityIssues,
+   00357:     totalDraws,
+   00358:     uniqueDays,
+>> 00359:     minDate,
+   00360:     maxDate,
+   00361: 
+   00362:     // útil para a próxima etapa (definição de regra)
+   00363:     countMode,
+   00364:   };
+   00365: }
+
+==============================================================================================================
+ARQUIVO: src/utils/ymd.js
+==============================================================================================================
+
+--- contexto da linha 21 ---
+
+   00001: // src/utils/ymd.js
+   00002: // ✅ Normalização CANÔNICA de datas (YMD) no frontend
+   00003: // - Converte Date/Timestamp para YMD em America/Sao_Paulo (não depende do timezone do usuário)
+   00004: // - Aceita ISO "YYYY-MM-DD..." e BR "DD/MM/YYYY"
+   00005: 
+   00006: const TZ_SP = "America/Sao_Paulo";
+   00007: 
+   00008: function pad2(n) {
+   00009:   return String(n).padStart(2, "0");
+   00010: }
+   00011: 
+   00012: export function isYMD(s) {
+   00013:   return /^(\d{4})-(\d{2})-(\d{2})$/.test(String(s || "").trim());
+   00014: }
+   00015: 
+   00016: export function dateToYMD_SP(d) {
+   00017:   if (!(d instanceof Date) || Number.isNaN(d.getTime())) return null;
+   00018: 
+   00019:   try {
+   00020:     // en-CA => YYYY-MM-DD
+>> 00021:     const ymd = d.toLocaleDateString("en-CA", { timeZone: TZ_SP });
+   00022:     return isYMD(ymd) ? ymd : null;
+   00023:   } catch {
+   00024:     // fallback (não ideal, mas evita quebra total)
+   00025:     const y = d.getFullYear();
+   00026:     const m = pad2(d.getMonth() + 1);
+   00027:     const dd = pad2(d.getDate());
+   00028:     const ymd = `${y}-${m}-${dd}`;
+   00029:     return isYMD(ymd) ? ymd : null;
+   00030:   }
+   00031: }
+   00032: 
+   00033: export function normalizeToYMD_SP(input) {
+   00034:   if (!input) return null;
+   00035: 
+   00036:   // Firestore Timestamp com toDate()
+   00037:   if (typeof input === "object" && typeof input.toDate === "function") {
+   00038:     const d = input.toDate();
+   00039:     const ymd = dateToYMD_SP(d);
+   00040:     if (ymd) return ymd;
+   00041:   }
+   00042: 
+   00043:   // Timestamp-like { seconds } / { _seconds }
+   00044:   if (
+   00045:     typeof input === "object" &&
+   00046:     (Number.isFinite(Number(input.seconds)) || Number.isFinite(Number(input._seconds)))
+   00047:   ) {
+   00048:     const sec = Number.isFinite(Number(input.seconds)) ? Number(input.seconds) : Number(input._seconds);
+   00049:     const d = new Date(sec * 1000);
+   00050:     const ymd = dateToYMD_SP(d);
+   00051:     if (ymd) return ymd;
+   00052:   }
+   00053: 
+   00054:   // Date
+   00055:   if (input instanceof Date) {
+   00056:     const ymd = dateToYMD_SP(input);
+   00057:     if (ymd) return ymd;
+   00058:   }
+   00059: 
+   00060:   // String
+   00061:   const s = String(input).trim();
+   00062:   if (!s) return null;
+   00063: 
+   00064:   // ISO prefix YYYY-MM-DD...
+   00065:   const iso = s.match(/^(\d{4})-(\d{2})-(\d{2})/);
+   00066:   if (iso) return `${iso[1]}-${iso[2]}-${iso[3]}`;
+   00067: 
+   00068:   // BR DD/MM/YYYY
+   00069:   const br = s.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+   00070:   if (br) return `${br[3]}-${br[2]}-${br[1]}`;
+   00071: 
+   00072:   return null;
+   00073: }
+   00074: 
+   00075: // alias (se você preferir chamar sem sufixo depois)
+

@@ -1,0 +1,3439 @@
+====================================================================================================
+FREQ-FILTRO-02 — SERVIÇO COMPLETO E NORMALIZAÇÃO NACIONAL
+====================================================================================================
+Gerado em: 26/07/2026 00:17:25
+Arquivo confirmado: .\src\services\kingResultsService.js
+Objetivo:
+- analisar o contrato completo de getKingResultsByRange;
+- localizar filtragem por closeHour e closeHourBucket;
+- localizar normalização dos horários :49 da Nacional;
+- identificar o ponto exato da correção da página Frequências.
+====================================================================================================
+
+
+====================================================================================================
+1. ARQUIVO COMPLETO — kingResultsService.js
+====================================================================================================
+
+00001: import { apiUrl } from "../config/apiBase";
+00002: // src/services/kingResultsService.js
+00003: import {
+00004:   collection,
+00005:   query,
+00006:   where,
+00007:   orderBy,
+00008:   limit,
+00009:   limitToLast,
+00010:   documentId,
+00011: } from "firebase/firestore";
+00012: import { db } from "./firebase";
+00013: 
+00014: import { safeGetDocsSmart } from "./king/king.firestore";
+00015: 
+00016: import { cacheGet, cacheSet } from "./king/king.cache";
+00017: 
+00018: import {
+00019:   normalizePositions,
+00020:   isValidGrupo,
+00021:   isValidPosition,
+00022:   toPrizeDigitsByPosition,
+00023:   normalizePrize,
+00024:   sortPrizesByPosition,
+00025:   filterPrizesByPositions,
+00026:   normalizeEmbeddedPrizesForAggregated,
+00027: } from "./king/king.normalize";
+00028: 
+00029: import {
+00030:   pad2,
+00031:   isYMD,
+00032:   ymdToBR,
+00033:   normalizeToYMD,
+00034:   utcTodayYmd,
+00035:   addDaysUTC,
+00036:   addDaysUTCLocal,
+00037:   daysBetweenInclusiveUTC,
+00038:   daysDiffUTC,
+00039:   shouldForceFreshServerRead,
+00040: } from "./king/king.date";
+00041: 
+00042: /* =========================
+00043:    PERF: caches (memória)
+00044: ========================= */
+00045: 
+00046: const PRIZES_CACHE = new Map(); // key -> { ts, data: prizesAllSorted }
+00047: const DRAWS_CACHE = new Map(); // key -> { ts, data: mappedDrawDocs[] }
+00048: 
+00049: // ✅ cache específico para ATRASADOS (Late)
+00050: const LATE_CACHE = new Map(); // key -> { ts, data: lateRows[] }
+00051: 
+00052: // ✅ corte seguro (modo auto) — acima disso, tende a ser "agregado" (sem prizes)
+00053: export const AGGREGATED_AUTO_DAYS = Number.POSITIVE_INFINITY;
+00054: 
+00055: /* =========================
+00056:    Constantes / helpers base
+00057: ========================= */
+00058: 
+00059: const DEFAULT_READ_POLICY = "cache";
+00060: 
+00061: const RJ_STATE_CODE = "RJ";
+00062: const RJ_LOTTERY_KEY = "PT_RIO";
+00063: 
+00064: export const FEDERAL_SCOPE_CODE = "FEDERAL";
+00065: export const FEDERAL_19H_TO_20H_CHANGE_YMD = "2025-11-03";
+00066: 
+00067: const FEDERAL_LOTTERY_KEYS = [
+00068:   "FEDERAL",
+00069:   "LOTERIA_FEDERAL",
+00070:   "LT_FEDERAL",
+00071:   "FED",
+00072: ];
+00073: 
+00074: const FEDERAL_INPUT_ALIASES = new Set([
+00075:   "FEDERAL",
+00076:   "LOTERIA FEDERAL",
+00077:   "LOTERIA_FEDERAL",
+00078:   "LT FEDERAL",
+00079:   "LT_FEDERAL",
+00080:   "FED",
+00081: ]);
+00082: 
+00083: export const FEDERAL_DRAW_DOW = ["WEDNESDAY", "SATURDAY"]; // referência (UI)
+00084: 
+00085: function applyBoundsFloor(_scopeKey, { minYmd, maxYmd }) {
+00086:   return { minYmd: minYmd || null, maxYmd: maxYmd || null };
+00087: }
+00088: 
+00089: /**
+00090:  * ✅ Regra histórica da Federal
+00091:  * - até 2025-11-02: 19h
+00092:  * - a partir de 2025-11-03: 20h
+00093:  */
+00094: export function getFederalPreferredHourForYmd(ymd) {
+00095:   const y = String(ymd || "").trim();
+00096:   if (/^\d{4}-\d{2}-\d{2}$/.test(y) && y >= FEDERAL_19H_TO_20H_CHANGE_YMD) {
+00097:     return "20:00";
+00098:   }
+00099:   return "19:00";
+00100: }
+00101: 
+00102: export function getFederalPreferredBucketForYmd(ymd) {
+00103:   return getFederalPreferredHourForYmd(ymd) === "20:00" ? "20h" : "19h";
+00104: }
+00105: 
+00106: /**
+00107:  * Detecta se o usuário está pedindo Federal (por input/alias).
+00108:  */
+00109: function isFederalInput(scopeInput) {
+00110:   const up = String(scopeInput || "").trim().toUpperCase();
+00111:   if (!up) return false;
+00112:   if (up === FEDERAL_SCOPE_CODE) return true;
+00113:   if (FEDERAL_INPUT_ALIASES.has(up)) return true;
+00114: 
+00115:   // normaliza espaços/underscores pra captar variações
+00116:   const compact = up.replace(/[\s_]+/g, " ").trim();
+00117:   return (
+00118:     FEDERAL_INPUT_ALIASES.has(compact) ||
+00119:     FEDERAL_INPUT_ALIASES.has(up.replace(/[\s_]+/g, "_"))
+00120:   );
+00121: }
+00122: 
+00123: /**
+00124:  * Resolve qual lottery_key usar quando o usuário passar:
+00125:  * - "RJ" -> "PT_RIO"
+00126:  * - "FEDERAL"/aliases -> "FEDERAL" (canônico)
+00127:  * - outros -> mantém o valor original (compatível com seu app atual)
+00128:  */
+00129: function resolveLotteryKeyForQuery(ufInput) {
+00130:   const uf = String(ufInput || "").trim();
+00131:   if (!uf) return "";
+00132:   const up = uf.toUpperCase();
+00133: 
+00134:   if (up === RJ_STATE_CODE) return RJ_LOTTERY_KEY;
+00135:   if (isFederalInput(up)) return FEDERAL_SCOPE_CODE;
+00136: 
+00137:   return uf;
+00138: }
+00139: 
+00140: /**
+00141:  * ✅ Chave canônica para CACHE:
+00142:  * - "RJ" -> "PT_RIO"
+00143:  * - Federal (qualquer alias) -> "FEDERAL"
+00144:  * - outros -> UPPER(TRIM)
+00145:  */
+00146: function canonicalScopeKey(ufInput) {
+00147:   const s = String(ufInput || "").trim();
+00148:   if (!s) return "";
+00149:   const up = s.toUpperCase();
+00150: 
+00151:   if (up === RJ_STATE_CODE) return RJ_LOTTERY_KEY;
+00152:   if (isFederalInput(up)) return FEDERAL_SCOPE_CODE;
+00153: 
+00154:   return up;
+00155: }
+00156: 
+00157: /**
+00158:  * Quando for consultar por campo "uf", adiciona trava de lottery_key para RJ.
+00159:  * Isso elimina o vazamento de Federal para o Rio.
+00160:  */
+00161: function buildRJLockWhereIfNeeded(fieldName, ufInput) {
+00162:   const ufUp = String(ufInput || "").trim().toUpperCase();
+00163:   if (fieldName === "uf" && ufUp === RJ_STATE_CODE) {
+00164:     return [where("lottery_key", "==", RJ_LOTTERY_KEY)];
+00165:   }
+00166:   return [];
+00167: }
+00168: 
+00169: /* =========================
+00170:    ✅ FIX silencioso: normalizar valor do WHERE por campo
+00171: ========================= */
+00172: 
+00173: function normalizeValueForField(fieldName, valueInput) {
+00174:   const s = String(valueInput || "").trim();
+00175:   if (!s) return "";
+00176: 
+00177:   if (fieldName === "uf") {
+00178:     const up = s.toUpperCase();
+00179:     if (isFederalInput(up)) return FEDERAL_SCOPE_CODE;
+00180:     return up;
+00181:   }
+00182: 
+00183:   if (fieldName === "lottery_key") {
+00184:     const up = s.toUpperCase();
+00185:     if (up === RJ_STATE_CODE) return RJ_LOTTERY_KEY; // ✅ PREVENTIVO: RJ -> PT_RIO
+00186:     if (isFederalInput(up)) return FEDERAL_SCOPE_CODE;
+00187:     return up;
+00188:   }
+00189: 
+00190:   return s;
+00191: }
+00192: 
+00193: /* =========================
+00194:    Utils
+00195: ========================= */
+00196: 
+00197: /**
+00198:  * ✅ Normaliza "horário" para HH:MM
+00199:  */
+00200: function normalizeHourLike(value) {
+00201:   const s0 = String(value ?? "").trim();
+00202:   if (!s0) return "";
+00203: 
+00204:   const s = s0.replace(/\s+/g, "");
+00205: 
+00206:   const mhx = s.match(/^(\d{1,2})(?:h|hs|hr|hrs)$/i);
+00207:   if (mhx) return `${pad2(mhx[1])}:00`;
+00208: 
+00209:   const mISO = s.match(/^(\d{1,2}):(\d{1,2})(?::(\d{1,2}))?$/);
+00210:   if (mISO) return `${pad2(mISO[1])}:${pad2(mISO[2])}`;
+00211: 
+00212:   const mHm = s.match(/^(\d{3,4})$/);
+00213:   if (mHm) {
+00214:     const hh = String(mHm[1]).slice(0, -2);
+00215:     const mm = String(mHm[1]).slice(-2);
+00216:     if (/^\d{1,2}$/.test(hh) && /^\d{2}$/.test(mm)) {
+00217:       return `${pad2(hh)}:${mm}`;
+00218:     }
+00219:   }
+00220: 
+00221:   const m2 = s.match(/^(\d{1,2})$/);
+00222:   if (m2) return `${pad2(m2[1])}:00`;
+00223: 
+00224:   return s0.trim();
+00225: }
+00226: 
+00227: function mhxToInt(v) {
+00228:   const n = Number(v);
+00229:   return Number.isFinite(n) ? n : 0;
+00230: }
+00231: 
+00232: /**
+00233:  * ✅ Bucket "09h", "11h"…
+00234:  */
+00235: function toHourBucket(value) {
+00236:   const s = String(value ?? "").trim();
+00237:   if (!s || s.toLowerCase() === "todos") return null;
+00238: 
+00239:   const mh = s.match(/^(\d{1,2})h$/i);
+00240:   if (mh) return `${pad2(mhxToInt(mh[1]))}h`;
+00241: 
+00242:   const m1 = s.match(/^(\d{1,2}):(\d{2})$/);
+00243:   if (m1) return `${pad2(mhxToInt(m1[1]))}h`;
+00244: 
+00245:   const m2 = s.match(/^(\d{1,2})$/);
+00246:   if (m2) return `${pad2(mhxToInt(m2[1]))}h`;
+00247: 
+00248:   const m3 = s.match(/^(\d{1,2}):(\d{2}):(\d{2})$/);
+00249:   if (m3) return `${pad2(mhxToInt(m3[1]))}h`;
+00250: 
+00251:   const m4 = s.match(/^(\d{3,4})$/);
+00252:   if (m4) return `${pad2(mhxToInt(String(m4[1]).slice(0, -2)))}h`;
+00253: 
+00254:   return null;
+00255: }
+00256: 
+00257: /* =========================
+00258:    ✅ FIX DEFINITIVO: filtro de horário (bucket vs exato)
+00259:    - bucket SOMENTE via closeHourBucket
+00260:    - exact  SOMENTE via closeHour
+00261:    (elimina ambiguidade e "filtro fantasma")
+00262: ========================= */
+00263: 
+00264: function resolveHourFilter({ closeHour = null, closeHourBucket = null }) {
+00265:   const bucket = toHourBucket(closeHourBucket);
+00266:   if (bucket) return { kind: "bucket", bucket, hhmm: null };
+00267: 
+00268:   const hhmm = closeHour ? normalizeHourLike(closeHour) : null;
+00269:   if (hhmm) return { kind: "exact", bucket: null, hhmm };
+00270: 
+00271:   return { kind: null, bucket: null, hhmm: null };
+00272: }
+00273: 
+00274: function drawPassesHourFilter(draw, hourFilter) {
+00275:   if (!hourFilter || !hourFilter.kind) return true;
+00276: 
+00277:   const raw =
+00278:     draw?.close_hour ?? draw?.closeHour ?? draw?.hour ?? draw?.hora ?? "";
+00279:   const norm = normalizeHourLike(raw);
+00280: 
+00281:   if (hourFilter.kind === "exact") {
+00282:     return norm === normalizeHourLike(hourFilter.hhmm);
+00283:   }
+00284: 
+00285:   if (hourFilter.kind === "bucket") {
+00286:     return toHourBucket(norm) === toHourBucket(hourFilter.bucket);
+00287:   }
+00288: 
+00289:   return true;
+00290: }
+00291: 
+00292: /* =========================
+00293:    Date utils
+00294: ========================= */
+00295: 
+00296: /* =========================
+00297:    ✅ Guards (evita GRUPO 00)
+00298: ========================= */
+00299: 
+00300: /* =========================
+00301:    ✅ Helpers de parsing (robusto p/ strings tipo "GRUPO 23", "1º")
+00302: ========================= */
+00303: 
+00304: /* =========================
+00305:    ✅ Helpers de dígitos (REGRA GLOBAL 7º = CENTENA)
+00306: ========================= */
+00307: 
+00308: function normalizeLotteryCodeAny(d) {
+00309:   const raw =
+00310:     d?.lottery_code ??
+00311:     d?.lotteryCode ??
+00312:     d?.lot_code ??
+00313:     d?.lotCode ??
+00314:     d?.lot ??
+00315:     d?.code ??
+00316:     null;
+00317:   const up = raw ? String(raw).trim().toUpperCase() : "";
+00318:   return up || "";
+00319: }
+00320: 
+00321: function sortDrawsLocal(draws) {
+00322:   const toNum = (h) => {
+00323:     const s = normalizeHourLike(h);
+00324:     const m = s.match(/^(\d{2}):(\d{2})$/);
+00325:     if (!m) return 0;
+00326:     return Number(m[1]) * 100 + Number(m[2]);
+00327:   };
+00328: 
+00329:   return [...(draws || [])].sort((a, b) => {
+00330:     const ya = String(a?.ymd || "");
+00331:     const yb = String(b?.ymd || "");
+00332:     if (ya !== yb) return ya.localeCompare(yb);
+00333: 
+00334:     const ha = toNum(a?.close_hour);
+00335:     const hb = toNum(b?.close_hour);
+00336:     if (ha !== hb) return ha - hb;
+00337: 
+00338:     const la = normalizeLotteryCodeAny(a);
+00339:     const lb = normalizeLotteryCodeAny(b);
+00340:     if (la !== lb) return la.localeCompare(lb);
+00341: 
+00342:     const ia = String(a?.drawId || a?.id || "");
+00343:     const ib = String(b?.drawId || b?.id || "");
+00344:     return ia.localeCompare(ib);
+00345:   });
+00346: }
+00347: 
+00348: function sortDrawsLocalDesc(draws) {
+00349:   const toNum = (h) => {
+00350:     const s = normalizeHourLike(h);
+00351:     const m = s.match(/^(\d{2}):(\d{2})$/);
+00352:     if (!m) return 0;
+00353:     return Number(m[1]) * 100 + Number(m[2]);
+00354:   };
+00355: 
+00356:   return [...(draws || [])].sort((a, b) => {
+00357:     const ya = String(a?.ymd || "");
+00358:     const yb = String(b?.ymd || "");
+00359:     if (ya !== yb) return yb.localeCompare(ya);
+00360: 
+00361:     const ha = toNum(a?.close_hour);
+00362:     const hb = toNum(b?.close_hour);
+00363:     if (ha !== hb) return hb - ha;
+00364: 
+00365:     const la = normalizeLotteryCodeAny(a);
+00366:     const lb = normalizeLotteryCodeAny(b);
+00367:     if (la !== lb) return lb.localeCompare(la);
+00368: 
+00369:     const ia = String(a?.drawId || a?.id || "");
+00370:     const ib = String(b?.drawId || b?.id || "");
+00371:     return ib.localeCompare(ia);
+00372:   });
+00373: }
+00374: 
+00375: /**
+00376:  * ✅ DEDUPE
+00377:  * - chave lógica: ymd + hour (+ lottery_code quando existir)
+00378:  * - se não houver ymd/hour, cai no id/idx
+00379:  *
+00380:  * ✅ FIX CRÍTICO:
+00381:  * Não colapsar dois draws distintos do mesmo dia/horário com lottery_code diferente.
+00382:  */
+00383: function dedupeDrawsLocal(draws) {
+00384:   const arr = Array.isArray(draws) ? draws : [];
+00385: 
+00386:   const byKey = new Map();
+00387:   const order = [];
+00388: 
+00389:   function score(d) {
+00390:     const prizesLen = Array.isArray(d?.prizes) ? d.prizes.length : 0;
+00391:     const pc = Number.isFinite(Number(d?.prizesCount))
+00392:       ? Number(d.prizesCount)
+00393:       : 0;
+00394:     const hasLogical = !!(d?.ymd && d?.close_hour);
+00395:     return prizesLen * 1_000_000 + pc * 1_000 + (hasLogical ? 10 : 0);
+00396:   }
+00397: 
+00398:   for (let i = 0; i < arr.length; i += 1) {
+00399:     const raw = arr[i] || {};
+00400: 
+00401:     const ymd = raw.ymd || normalizeToYMD(raw.date) || "";
+00402:     const hour = normalizeHourLike(raw.close_hour || raw.closeHour || "");
+00403: 
+00404:     const lotCode = normalizeLotteryCodeAny(raw);
+00405: 
+00406:     const drawId = raw.drawId ?? raw.id ?? raw.__name__ ?? null;
+00407:     const idStr = drawId != null ? String(drawId) : "";
+00408: 
+00409:     const hasLogical = !!(ymd && hour);
+00410: 
+00411:     const key = hasLogical
+00412:       ? lotCode
+00413:         ? `${ymd}__${hour}__${lotCode}`
+00414:         : `${ymd}__${hour}`
+00415:       : `id__${idStr || `idx_${i}`}`;
+00416: 
+00417:     const normalized = {
+00418:       ...raw,
+00419:       ymd: ymd || raw.ymd || null,
+00420:       close_hour: hour || raw.close_hour || raw.closeHour || "",
+00421:       closeHour: hour || raw.closeHour || raw.close_hour || "",
+00422:       lottery_code: lotCode || raw.lottery_code || raw.lotteryCode || null,
+00423:       drawId: raw.drawId || raw.id || raw.__name__ || null,
+00424:       id: raw.id || raw.drawId || raw.__name__ || null,
+00425:     };
+00426: 
+00427:     if (!byKey.has(key)) {
+00428:       byKey.set(key, normalized);
+00429:       order.push(key);
+00430:       continue;
+00431:     }
+00432: 
+00433:     const prev = byKey.get(key);
+00434:     if (score(normalized) > score(prev)) {
+00435:       byKey.set(key, normalized);
+00436:     }
+00437:   }
+00438: 
+00439:   return order.map((k) => byKey.get(k)).filter(Boolean);
+00440: }
+00441: 
+00442: async function mapWithConcurrency(items, limitN, mapper) {
+00443:   const arr = Array.isArray(items) ? items : [];
+00444:   const concurrency = Math.max(1, Number(limitN) || 6);
+00445:   const results = new Array(arr.length);
+00446:   let idx = 0;
+00447: 
+00448:   async function worker() {
+00449:     while (true) {
+00450:       const current = idx;
+00451:       idx += 1;
+00452:       if (current >= arr.length) break;
+00453:       results[current] = await mapper(arr[current], current);
+00454:     }
+00455:   }
+00456: 
+00457:   await Promise.all(
+00458:     Array.from({ length: Math.min(concurrency, arr.length) }, () => worker())
+00459:   );
+00460:   return results;
+00461: }
+00462: 
+00463: /* =========================
+00464:    ✅ Leitura: smart (custo baixo)
+00465: ========================= */
+00466: 
+00467: function isIndexError(error) {
+00468:   const msg = String(error?.message || "").toLowerCase();
+00469:   const code = String(error?.code || "").toLowerCase();
+00470:   return (
+00471:     code.includes("failed-precondition") ||
+00472:     msg.includes("failed_precondition") ||
+00473:     (msg.includes("index") && msg.includes("create")) ||
+00474:     (msg.includes("requires") && msg.includes("index"))
+00475:   );
+00476: }
+00477: 
+00478: function getDocDateRaw(d) {
+00479:   if (!d) return null;
+00480:   return d.ymd ?? d.date ?? d.data ?? d.dt ?? d.draw_date ?? d.close_date ?? null;
+00481: }
+00482: 
+00483: /* =========================
+00484:    Prizes (ROBUSTO + CACHE)
+00485: ========================= */
+00486: 
+00487: function prizesCacheKeyAll(drawId) {
+00488:   return `all::${String(drawId)}`;
+00489: }
+00490: 
+00491: /**
+00492:  * ✅ FIX DEFINITIVO:
+00493:  * Se existir embeddedPrizes mas vier "agregado/incompleto" (sem grupo/posição válidos),
+00494:  * faz fallback e busca a subcollection draws/{id}/prizes.
+00495:  */
+00496: async function fetchPrizesForDraw(drawId, positionsArr, embeddedPrizes) {
+00497:   const drawKey = String(drawId || "").trim();
+00498:   if (!drawKey) return [];
+00499: 
+00500:   if (Array.isArray(embeddedPrizes) && embeddedPrizes.length) {
+00501:     const normalized = embeddedPrizes.map((p, idx) =>
+00502:       normalizePrize(p, p?.prizeId ?? `emb_${idx}`)
+00503:     );
+00504: 
+00505:     const cleaned = normalized.filter(
+00506:       (x) => isValidGrupo(x?.grupo) && isValidPosition(x?.position)
+00507:     );
+00508: 
+00509:     if (cleaned.length) {
+00510:       const allSorted = sortPrizesByPosition(cleaned);
+00511:       return filterPrizesByPositions(allSorted, positionsArr);
+00512:     }
+00513:   }
+00514: 
+00515:   const allKey = prizesCacheKeyAll(drawKey);
+00516:   const cachedAll = cacheGet(PRIZES_CACHE, allKey);
+00517:   if (Array.isArray(cachedAll) && cachedAll.length > 0) {
+00518:     return filterPrizesByPositions(cachedAll, positionsArr);
+00519:   }
+00520: 
+00521:   const prizesCol = collection(db, "draws", drawKey, "prizes");
+00522: 
+00523:   const { snap, error } = await safeGetDocsSmart(prizesCol, { policy: "server" });
+00524:   if (error) throw error;
+00525: 
+00526:   const allRaw = snap.docs.map((d) => normalizePrize(d.data(), d.id));
+00527: 
+00528:   // console.log("DEBUG allRaw:", allRaw);
+00529: 
+00530: const all = allRaw.filter(
+00531:   (x) => isValidGrupo(x?.grupo) && isValidPosition(x?.position)
+00532: );
+00533: 
+00534: // console.log("DEBUG allFiltered:", all);
+00535: 
+00536:   const allSorted = sortPrizesByPosition(all);
+00537:   cacheSet(PRIZES_CACHE, allKey, allSorted);
+00538: 
+00539:   return filterPrizesByPositions(allSorted, positionsArr);
+00540: }
+00541: 
+00542: /* =========================
+00543:    Map Draw
+00544: ========================= */
+00545: 
+00546: function mapDrawDoc(doc) {
+00547:   const d = doc.data();
+00548: 
+00549:   const ymd = d.ymd || normalizeToYMD(getDocDateRaw(d));
+00550:   const hourNorm = normalizeHourLike(
+00551:     d.close_hour ?? d.closeHour ?? d.hour ?? d.hora ?? ""
+00552:   );
+00553: 
+00554:   const embeddedPrizes = Array.isArray(d.prizes) && d.prizes.length > 0 ? d.prizes : null;
+00555: 
+00556:   const ufRaw = d.uf ?? null;
+00557:   const lotteryKeyRaw = d.lottery_key ?? d.lotteryKey ?? d.lottery ?? null;
+00558: 
+00559:   const lotteryCodeRaw =
+00560:     d.lottery_code ??
+00561:     d.lotteryCode ??
+00562:     d.lot_code ??
+00563:     d.lotCode ??
+00564:     d.lot ??
+00565:     d.code ??
+00566:     d.lottery_id ??
+00567:     d.lotteryId ??
+00568:     null;
+00569: 
+00570:   return {
+00571:     drawId: doc.id,
+00572:     id: doc.id,
+00573: 
+00574:     date: d.date ?? d.data ?? d.dt ?? d.draw_date ?? d.close_date ?? null,
+00575:     ymd,
+00576: 
+00577:     close_hour: hourNorm,
+00578:     closeHour: hourNorm,
+00579: 
+00580:     uf: ufRaw,
+00581:     lottery_key: lotteryKeyRaw,
+00582: 
+00583:     lottery_code: lotteryCodeRaw ? String(lotteryCodeRaw).toUpperCase() : null,
+00584: 
+00585:     lottery_name: d.lottery_name ?? d.lotteryName ?? null,
+00586:     lottery_label: d.lottery_label ?? d.lotteryLabel ?? null,
+00587: 
+00588:     prizesCount: d.prizesCount,
+00589:     prizes: embeddedPrizes,
+00590:   };
+00591: }
+00592: 
+00593: /* =========================
+00594:    Compat: uf OU lottery_key
+00595: ========================= */
+00596: 
+00597: function buildUfWhereClauses(fieldName, uf) {
+00598:   const normalized = normalizeValueForField(fieldName, uf);
+00599:   return [where(fieldName, "==", normalized)];
+00600: }
+00601: 
+00602: function normalizeOrderBys(extraOrderBy) {
+00603:   if (!extraOrderBy) return [];
+00604:   return Array.isArray(extraOrderBy)
+00605:     ? extraOrderBy.filter(Boolean)
+00606:     : [extraOrderBy];
+00607: }
+00608: 
+00609: async function queryDrawsByField({
+00610:   fieldName,
+00611:   uf,
+00612:   extraWheres = [],
+00613:   extraOrderBy = null,
+00614:   extraLimit = null,
+00615:   policy = DEFAULT_READ_POLICY,
+00616: }) {
+00617:   const drawsCol = collection(db, "draws");
+00618: 
+00619:   const parts = [
+00620:     drawsCol,
+00621:     ...buildUfWhereClauses(fieldName, uf),
+00622:     ...buildRJLockWhereIfNeeded(fieldName, uf),
+00623:     ...(extraWheres || []),
+00624:   ];
+00625: 
+00626:   const orderBys = normalizeOrderBys(extraOrderBy);
+00627:   for (const ob of orderBys) parts.push(ob);
+00628: 
+00629:   if (extraLimit) parts.push(extraLimit);
+00630: 
+00631:   const qRef = query(...parts);
+00632:   return safeGetDocsSmart(qRef, { policy });
+00633: }
+00634: 
+00635: function extractUfParam(maybeUfOrObj) {
+00636:   if (!maybeUfOrObj) return "";
+00637:   if (typeof maybeUfOrObj === "string") return maybeUfOrObj;
+00638:   if (typeof maybeUfOrObj === "object" && typeof maybeUfOrObj.uf === "string") {
+00639:     return maybeUfOrObj.uf;
+00640:   }
+00641:   return String(maybeUfOrObj || "");
+00642: }
+00643: 
+00644: async function fetchDrawDocsPreferUf({
+00645:   uf,
+00646:   extraWheres = [],
+00647:   extraOrderBy = null,
+00648:   extraLimit = null,
+00649:   policy = DEFAULT_READ_POLICY,
+00650: }) {
+00651:   const ufTrim = String(extractUfParam(uf) || "").trim();
+00652:   const ufUp = ufTrim.toUpperCase();
+00653: 
+00654:   if (isFederalInput(ufUp)) {
+00655:     for (const lk of FEDERAL_LOTTERY_KEYS) {
+00656:       const { snap, error } = await queryDrawsByField({
+00657:         fieldName: "lottery_key",
+00658:         uf: lk,
+00659:         extraWheres,
+00660:         extraOrderBy,
+00661:         extraLimit,
+00662:         policy,
+00663:       });
+00664: 
+00665:       if (error) return { docs: [], usedField: "lottery_key", error };
+00666:       if (snap?.docs?.length) {
+00667:         return { docs: snap.docs, usedField: "lottery_key", error: null };
+00668:       }
+00669:     }
+00670: 
+00671:     return { docs: [], usedField: "lottery_key", error: null };
+00672:   }
+00673: 
+00674:   /*
+00675:    * RJ possui documentos históricos gravados em dois formatos:
+00676:    * - uf == "RJ"
+00677:    * - lottery_key == "PT_RIO"
+00678:    *
+00679:    * Não podemos retornar somente a primeira consulta que encontrar dados,
+00680:    * pois isso elimina horários existentes apenas no outro formato.
+00681:    */
+00682:   if (ufUp === RJ_STATE_CODE || ufUp === RJ_LOTTERY_KEY) {
+00683:     const [byUf, byLotteryKey] = await Promise.all([
+00684:       queryDrawsByField({
+00685:         fieldName: "uf",
+00686:         uf: RJ_STATE_CODE,
+00687:         extraWheres,
+00688:         extraOrderBy,
+00689:         extraLimit,
+00690:         policy,
+00691:       }),
+00692:       queryDrawsByField({
+00693:         fieldName: "lottery_key",
+00694:         uf: RJ_LOTTERY_KEY,
+00695:         extraWheres,
+00696:         extraOrderBy,
+00697:         extraLimit,
+00698:         policy,
+00699:       }),
+00700:     ]);
+00701: 
+00702:     if (byUf.error) {
+00703:       return { docs: [], usedField: "uf+lottery_key", error: byUf.error };
+00704:     }
+00705: 
+00706:     if (byLotteryKey.error) {
+00707:       return {
+00708:         docs: [],
+00709:         usedField: "uf+lottery_key",
+00710:         error: byLotteryKey.error,
+00711:       };
+00712:     }
+00713: 
+00714:     const mergedById = new Map();
+00715: 
+00716:     for (const doc of byUf.snap?.docs || []) {
+00717:       mergedById.set(doc.id, doc);
+00718:     }
+00719: 
+00720:     for (const doc of byLotteryKey.snap?.docs || []) {
+00721:       mergedById.set(doc.id, doc);
+00722:     }
+00723: 
+00724:     return {
+00725:       docs: Array.from(mergedById.values()),
+00726:       usedField: "uf+lottery_key",
+00727:       error: null,
+00728:     };
+00729:   }
+00730: 
+00731:   {
+00732:     const { snap, error } = await queryDrawsByField({
+00733:       fieldName: "uf",
+00734:       uf: ufUp,
+00735:       extraWheres,
+00736:       extraOrderBy,
+00737:       extraLimit,
+00738:       policy,
+00739:     });
+00740: 
+00741:     if (!error && snap?.docs?.length) {
+00742:       return { docs: snap.docs, usedField: "uf", error: null };
+00743:     }
+00744:     if (error) return { docs: [], usedField: "uf", error };
+00745:   }
+00746: 
+00747:   {
+00748:     const lotteryKey = resolveLotteryKeyForQuery(ufTrim);
+00749: 
+00750:     const { snap, error } = await queryDrawsByField({
+00751:       fieldName: "lottery_key",
+00752:       uf: String(lotteryKey).toUpperCase(),
+00753:       extraWheres,
+00754:       extraOrderBy,
+00755:       extraLimit,
+00756:       policy,
+00757:     });
+00758: 
+00759:     if (!error && snap?.docs?.length) {
+00760:       return { docs: snap.docs, usedField: "lottery_key", error: null };
+00761:     }
+00762:     if (error) return { docs: [], usedField: "lottery_key", error };
+00763:   }
+00764: 
+00765:   return { docs: [], usedField: "none", error: null };
+00766: }
+00767: 
+00768: /* =========================
+00769:    Bounds (min/max reais)
+00770: ========================= */
+00771: 
+00772: function pickMinMaxFromMapped(mapped) {
+00773:   let minYmd = null;
+00774:   let maxYmd = null;
+00775: 
+00776:   for (const d of mapped) {
+00777:     const y = d?.ymd || normalizeToYMD(d?.date);
+00778:     if (!y || !isYMD(y)) continue;
+00779:     if (!minYmd || y < minYmd) minYmd = y;
+00780:     if (!maxYmd || y > maxYmd) maxYmd = y;
+00781:   }
+00782: 
+00783:   return { minYmd, maxYmd };
+00784: }
+00785: 
+00786: /**
+00787:  * ✅ “Prova de vida” do maxYmd sem depender de índice composto nem de docId:
+00788:  * tenta dias recentes (==) desc até achar pelo menos 1 draw.
+00789:  */
+00790: async function probeRecentMaxYmd(uf, lookbackDays = 45) {
+00791:   const base = utcTodayYmd();
+00792:   const n = Math.max(3, Math.min(120, Number(lookbackDays) || 45));
+00793: 
+00794:   for (let i = 0; i <= n; i += 1) {
+00795:     const day = addDaysUTCLocal(base, -i);
+00796:     const { docs, error } = await fetchDrawDocsPreferUf({
+00797:       uf,
+00798:       extraWheres: [where("ymd", "==", day)],
+00799:       policy: "server",
+00800:       extraLimit: limit(5),
+00801:     });
+00802:     if (error) return { ok: false, maxYmd: null, error };
+00803:     if (docs && docs.length) return { ok: true, maxYmd: day, error: null };
+00804:   }
+00805: 
+00806:   return { ok: false, maxYmd: null, error: null };
+00807: }
+00808: 
+00809: /**
+00810:  * ✅ API bounds (backend) — fonte única preferencial
+00811:  */
+00812: async function fetchBoundsFromApi(ufOrObj) {
+00813:   const uf = String(extractUfParam(ufOrObj) || "").trim();
+00814:   if (!uf) return { ok: false, error: new Error("uf vazio") };
+00815: 
+00816:   const lot = canonicalScopeKey(uf) || String(uf).trim().toUpperCase();
+00817:   const url = apiUrl(`/api/bounds?lottery=${encodeURIComponent(lot)}`);
+00818:   try {
+00819:     const r = await fetch(url, { method: "GET" });
+00820:     const j = await r.json().catch(() => null);
+00821: 
+00822:     if (!r.ok || !j || !j.ok) {
+00823:       return {
+00824:         ok: false,
+00825:         error: new Error(`bounds api not ok: ${j?.message || r.status}`),
+00826:         payload: j || null,
+00827:       };
+00828:     }
+00829: 
+00830:     const minYmd = String(j.minYmd || "").trim();
+00831:     const maxYmd = String(j.maxYmd || "").trim();
+00832:     if (!isYMD(minYmd) || !isYMD(maxYmd)) {
+00833:       return {
+00834:         ok: false,
+00835:         error: new Error("bounds api retornou min/max inválidos"),
+00836:         payload: j,
+00837:       };
+00838:     }
+00839: 
+00840:     return {
+00841:       ok: true,
+00842:       uf,
+00843:       lottery: String(j.lottery || lot).trim(),
+00844:       minYmd,
+00845:       maxYmd,
+00846:       minDocId: j.minDocId || null,
+00847:       maxDocId: j.maxDocId || null,
+00848:       source: String(j.source || "api_bounds"),
+00849:     };
+00850:   } catch (e) {
+00851:     return { ok: false, error: e };
+00852:   }
+00853: }
+00854: 
+00855: export async function getKingBoundsByUf(ufOrObj) {
+00856:   const uf = String(extractUfParam(ufOrObj) || "").trim();
+00857:   if (!uf) throw new Error("Parâmetro obrigatório: uf");
+00858: 
+00859:   const apiTry = await fetchBoundsFromApi(ufOrObj);
+00860:   if (apiTry?.ok) {
+00861:     const scopeKey = canonicalScopeKey(uf);
+00862:     const floored = applyBoundsFloor(scopeKey, {
+00863:       minYmd: apiTry.minYmd,
+00864:       maxYmd: apiTry.maxYmd,
+00865:     });
+00866: 
+00867:     return {
+00868:       ok: true,
+00869:       uf,
+00870: 
+00871:       minYmd: floored.minYmd,
+00872:       maxYmd: floored.maxYmd,
+00873: 
+00874:       minDate: floored.minYmd,
+00875:       maxDate: floored.maxYmd,
+00876: 
+00877:       minDocId: apiTry.minDocId || null,
+00878:       maxDocId: apiTry.maxDocId || null,
+00879: 
+00880:       source: `api_bounds:${apiTry.source}`,
+00881:     };
+00882:   }
+00883: 
+00884:   const SCAN_LIMIT = 50;
+00885:   const FALLBACK_EDGE_LIMIT = 600;
+00886: 
+00887:   let firstTryError = null;
+00888: 
+00889:   const DOC_ID = documentId();
+00890: 
+00891:   async function sampleEdgesByDocId(fieldName, ufValue) {
+00892:     const asc = await queryDrawsByField({
+00893:       fieldName,
+00894:       uf: ufValue,
+00895:       extraOrderBy: [orderBy(DOC_ID)],
+00896:       extraLimit: limit(FALLBACK_EDGE_LIMIT),
+00897:       policy: "server",
+00898:     });
+00899: 
+00900:     const last = await queryDrawsByField({
+00901:       fieldName,
+00902:       uf: ufValue,
+00903:       extraOrderBy: [orderBy(DOC_ID)],
+00904:       extraLimit: limitToLast(FALLBACK_EDGE_LIMIT),
+00905:       policy: "server",
+00906:     });
+00907: 
+00908:     const mappedA = (asc?.snap?.docs || []).map(mapDrawDoc);
+00909:     const mappedB = (last?.snap?.docs || []).map(mapDrawDoc);
+00910: 
+00911:     const merged = dedupeDrawsLocal([...mappedA, ...mappedB]);
+00912: 
+00913:     return {
+00914:       merged,
+00915:       ok: merged.length > 0,
+00916:       errors: [asc?.error, last?.error].filter(Boolean),
+00917:       sources: [asc?.source, last?.source].filter(Boolean),
+00918:     };
+00919:   }
+00920: 
+00921:   {
+00922:     const orderAsc = [orderBy("ymd", "asc"), orderBy(DOC_ID)];
+00923:     const orderDesc = [orderBy("ymd", "desc"), orderBy(DOC_ID)];
+00924: 
+00925:     const {
+00926:       docs: minDocs,
+00927:       usedField: usedMin,
+00928:       error: eMin,
+00929:     } = await fetchDrawDocsPreferUf({
+00930:       uf,
+00931:       extraOrderBy: orderAsc,
+00932:       extraLimit: limit(SCAN_LIMIT),
+00933:       policy: "server",
+00934:     });
+00935: 
+00936:     const {
+00937:       docs: maxDocs,
+00938:       usedField: usedMax,
+00939:       error: eMax,
+00940:     } = await fetchDrawDocsPreferUf({
+00941:       uf,
+00942:       extraOrderBy: orderDesc,
+00943:       extraLimit: limit(SCAN_LIMIT),
+00944:       policy: "server",
+00945:     });
+00946: 
+00947:     if (eMin || eMax) {
+00948:       if (!isIndexError(eMin) && !isIndexError(eMax)) firstTryError = eMin || eMax;
+00949:     }
+00950: 
+00951:     if (minDocs.length && maxDocs.length && !eMin && !eMax) {
+00952:       const mappedMin = minDocs.map(mapDrawDoc);
+00953:       const mappedMax = maxDocs.map(mapDrawDoc);
+00954: 
+00955:       const { minYmd } = pickMinMaxFromMapped(mappedMin);
+00956:       const { maxYmd } = pickMinMaxFromMapped(mappedMax);
+00957: 
+00958:       if (minYmd && maxYmd) {
+00959:         return {
+00960:           ok: true,
+00961:           uf,
+00962:           minYmd,
+00963:           maxYmd,
+00964:           minDate: minYmd,
+00965:           maxDate: maxYmd,
+00966:           source: `ymd_scan${SCAN_LIMIT}:${usedMin}/${usedMax}`,
+00967:         };
+00968:       }
+00969:     }
+00970:   }
+00971: 
+00972:   const recentProbe = await probeRecentMaxYmd(uf, 60);
+00973:   const recentMaxYmd = recentProbe?.ok ? recentProbe.maxYmd : null;
+00974: 
+00975:   const scopeKeyBounds = canonicalScopeKey(uf);
+00976:   {
+00977:     const idxInfo = (() => {
+00978:       const code = String(firstTryError?.code || "");
+00979:       const msg = String(firstTryError?.message || "");
+00980:       if (!code && !msg) return "";
+00981:       return `:firstTryError=${code || "err"}`;
+00982:     })();
+00983: 
+00984:     const a = await sampleEdgesByDocId("uf", String(uf).toUpperCase());
+00985: 
+00986:     const ufUp = String(uf || "").trim().toUpperCase();
+00987: 
+00988:     if (!a.ok && isFederalInput(ufUp)) {
+00989:       for (const lk of FEDERAL_LOTTERY_KEYS) {
+00990:         const b = await sampleEdgesByDocId("lottery_key", lk);
+00991:         if (b.ok) {
+00992:           const mm = pickMinMaxFromMapped(b.merged);
+00993: 
+00994:           const maxFixed =
+00995:             recentMaxYmd && (!mm.maxYmd || recentMaxYmd > mm.maxYmd)
+00996:               ? recentMaxYmd
+00997:               : mm.maxYmd;
+00998: 
+00999:           const floored = applyBoundsFloor(scopeKeyBounds, {
+01000:             minYmd: mm.minYmd || null,
+01001:             maxYmd: maxFixed || null,
+01002:           });
+01003: 
+01004:           return {
+01005:             ok: !!(floored.minYmd && floored.maxYmd),
+01006:             uf,
+01007: 
+01008:             minYmd: floored.minYmd,
+01009:             maxYmd: floored.maxYmd,
+01010: 
+01011:             minDate: floored.minYmd,
+01012:             maxDate: floored.maxYmd,
+01013: 
+01014:             source: `fallback_edges_docId_limit=${FALLBACK_EDGE_LIMIT}:lottery_key(${lk}):sampleCount=${b.merged.length}${
+01015:               recentMaxYmd ? ":max_probe" : ""
+01016:             }${idxInfo}`,
+01017:           };
+01018:         }
+01019:       }
+01020:     }
+01021: 
+01022:     const lotteryKey =
+01023:       ufUp === RJ_STATE_CODE ? RJ_LOTTERY_KEY : resolveLotteryKeyForQuery(uf);
+01024: 
+01025:     const b = a.ok
+01026:       ? null
+01027:       : await sampleEdgesByDocId("lottery_key", String(lotteryKey).toUpperCase());
+01028: 
+01029:     const merged = a.ok ? a.merged : b?.merged || [];
+01030:     const mm = pickMinMaxFromMapped(merged);
+01031: 
+01032:     const maxFixed =
+01033:       recentMaxYmd && (!mm.maxYmd || recentMaxYmd > mm.maxYmd)
+01034:         ? recentMaxYmd
+01035:         : mm.maxYmd;
+01036: 
+01037:     const floored = applyBoundsFloor(scopeKeyBounds, {
+01038:       minYmd: mm.minYmd || null,
+01039:       maxYmd: maxFixed || null,
+01040:     });
+01041: 
+01042:     return {
+01043:       ok: !!(floored.minYmd && floored.maxYmd),
+01044:       uf,
+01045: 
+01046:       minYmd: floored.minYmd,
+01047:       maxYmd: floored.maxYmd,
+01048: 
+01049:       minDate: floored.minYmd,
+01050:       maxDate: floored.maxYmd,
+01051: 
+01052:       source: `fallback_edges_docId_limit=${FALLBACK_EDGE_LIMIT}:${
+01053:         a.ok ? "uf" : "lottery_key"
+01054:       }:sampleCount=${merged.length}${recentMaxYmd ? ":max_probe" : ""}${idxInfo}`,
+01055:     };
+01056:   }
+01057: }
+01058: 
+01059: /* =========================
+01060:    API: Day
+01061: ========================= */
+01062: 
+01063: function buildPrizeSignature(draw) {
+01064:   const prizes = Array.isArray(draw?.prizes) ? draw.prizes : [];
+01065:   if (!prizes.length) return "";
+01066: 
+01067:   const parts = prizes
+01068:     .map((p) => {
+01069:       const pos = Number(p?.position);
+01070:       const grupo = Number(p?.grupo);
+01071:       const numero = toPrizeDigitsByPosition(
+01072:         p?.numero ?? p?.milhar ?? p?.number ?? p?.num ?? p?.valor ?? "",
+01073:         pos
+01074:       );
+01075: 
+01076:       if (!Number.isFinite(pos) || !Number.isFinite(grupo) || !numero) return "";
+01077:       return `${pad2(pos)}:${pad2(grupo)}:${numero}`;
+01078:     })
+01079:     .filter(Boolean)
+01080:     .sort();
+01081: 
+01082:   return parts.join("|");
+01083: }
+01084: 
+01085: function federalHourPriority(draw) {
+01086:   const h = normalizeHourLike(
+01087:     draw?.close_hour || draw?.closeHour || draw?.hour || draw?.hora || ""
+01088:   );
+01089:   const ymd = String(draw?.ymd || normalizeToYMD(draw?.date) || "").trim();
+01090:   const n = hourToNumSafe(h);
+01091: 
+01092:   const prefer20h = getFederalPreferredHourForYmd(ymd) === "20:00";
+01093: 
+01094:   if (prefer20h) {
+01095:     if (h === "20:00") return 200000 + n;
+01096:     if (h === "19:00") return 190000 + n;
+01097:     return 100000 + n;
+01098:   }
+01099: 
+01100:   if (h === "19:00") return 200000 + n;
+01101:   if (h === "20:00") return 190000 + n;
+01102:   return 100000 + n;
+01103: }
+01104: 
+01105: function pickBetterFederalClone(a, b) {
+01106:   const pa = Number.isFinite(Number(a?.prizesCount))
+01107:     ? Number(a.prizesCount)
+01108:     : Array.isArray(a?.prizes)
+01109:     ? a.prizes.length
+01110:     : 0;
+01111: 
+01112:   const pb = Number.isFinite(Number(b?.prizesCount))
+01113:     ? Number(b.prizesCount)
+01114:     : Array.isArray(b?.prizes)
+01115:     ? b.prizes.length
+01116:     : 0;
+01117: 
+01118:   if (pa !== pb) return pb > pa ? b : a;
+01119: 
+01120:   const ha = federalHourPriority(a);
+01121:   const hb = federalHourPriority(b);
+01122:   if (ha !== hb) return hb > ha ? b : a;
+01123: 
+01124:   const ia = String(a?.drawId || a?.id || "");
+01125:   const ib = String(b?.drawId || b?.id || "");
+01126:   return ib.localeCompare(ia) > 0 ? b : a;
+01127: }
+01128: 
+01129: function collapseFederalDailyCloneDraws(draws) {
+01130:   const arr = Array.isArray(draws) ? draws : [];
+01131:   const byKey = new Map();
+01132: 
+01133:   for (const d of arr) {
+01134:     const ymd = String(d?.ymd || normalizeToYMD(d?.date) || "").trim();
+01135:     const sig = buildPrizeSignature(d);
+01136: 
+01137:     if (!ymd || !sig) {
+01138:       const fallbackKey = `id::${String(
+01139:         d?.drawId || d?.id || Math.random()
+01140:       )}`;
+01141:       if (!byKey.has(fallbackKey)) byKey.set(fallbackKey, d);
+01142:       continue;
+01143:     }
+01144: 
+01145:     const key = `${ymd}__${sig}`;
+01146:     const prev = byKey.get(key);
+01147: 
+01148:     if (!prev) byKey.set(key, d);
+01149:     else byKey.set(key, pickBetterFederalClone(prev, d));
+01150:   }
+01151: 
+01152:   return sortDrawsLocal(Array.from(byKey.values()));
+01153: }
+01154: 
+01155: function drawsCacheKeyDay({ scopeKey, ymd, positionsArr, hourFilter }) {
+01156:   const p = positionsArr && positionsArr.length ? positionsArr.join(",") : "all";
+01157:   const h =
+01158:     hourFilter?.kind === "bucket"
+01159:       ? `bucket:${hourFilter.bucket}`
+01160:       : hourFilter?.kind === "exact"
+01161:       ? `exact:${hourFilter.hhmm}`
+01162:       : "all";
+01163:   return `day::${scopeKey}::${ymd}::pos=${p}::h=${h}`;
+01164: }
+01165: 
+01166: export async function getKingResultsByDate({
+01167:   uf,
+01168:   date,
+01169:   closeHour = null,
+01170:   closeHourBucket = null,
+01171:   positions = null,
+01172: }) {
+01173:   if (!uf || !date) throw new Error("Parâmetros obrigatórios: uf e date");
+01174: 
+01175:   const scopeKey = canonicalScopeKey(uf);
+01176: 
+01177:   const positionsArr = normalizePositions(positions);
+01178:   const ymdDate = normalizeToYMD(date);
+01179:   if (!ymdDate) return [];
+01180: 
+01181:   const hourFilter = resolveHourFilter({ closeHour, closeHourBucket });
+01182: 
+01183:   const dayKey = drawsCacheKeyDay({
+01184:     scopeKey,
+01185:     ymd: ymdDate,
+01186:     positionsArr,
+01187:     hourFilter,
+01188:   });
+01189: 
+01190:   const forceFreshServer = shouldForceFreshServerRead(ymdDate);
+01191:   const allowMemoryCache = !forceFreshServer;
+01192: 
+01193:   if (allowMemoryCache) {
+01194:     const cached = cacheGet(DRAWS_CACHE, dayKey);
+01195:     if (cached) return cached;
+01196:   }
+01197: 
+01198:   const readPolicy = forceFreshServer ? "server" : DEFAULT_READ_POLICY;
+01199: 
+01200:   const docCandidates = [];
+01201: 
+01202:   {
+01203:     const { docs: found, error } = await fetchDrawDocsPreferUf({
+01204:       uf,
+01205:       extraWheres: [where("ymd", "==", ymdDate)],
+01206:       policy: readPolicy,
+01207:     });
+01208:     if (error) throw error;
+01209:     if (found.length) docCandidates.push(...found);
+01210:   }
+01211: 
+01212:   if (!docCandidates.length) {
+01213:     const rawDate = String(date || "").trim();
+01214:     if (rawDate) {
+01215:       const { docs: found, error } = await fetchDrawDocsPreferUf({
+01216:         uf,
+01217:         extraWheres: [where("date", "==", rawDate)],
+01218:         policy: readPolicy,
+01219:       });
+01220:       if (error) throw error;
+01221:       if (found.length) docCandidates.push(...found);
+01222:     }
+01223:   }
+01224: 
+01225:   if (!docCandidates.length) {
+01226:     const { docs: found, error } = await fetchDrawDocsPreferUf({
+01227:       uf,
+01228:       extraWheres: [where("date", "==", ymdDate)],
+01229:       policy: readPolicy,
+01230:     });
+01231:     if (error) throw error;
+01232:     if (found.length) docCandidates.push(...found);
+01233:   }
+01234: 
+01235:   if (!docCandidates.length) {
+01236:     const brDate = ymdToBR(ymdDate);
+01237:     if (brDate) {
+01238:       const { docs: found, error } = await fetchDrawDocsPreferUf({
+01239:         uf,
+01240:         extraWheres: [where("date", "==", brDate)],
+01241:         policy: readPolicy,
+01242:       });
+01243:       if (error) throw error;
+01244:       if (found.length) docCandidates.push(...found);
+01245:     }
+01246:   }
+01247: 
+01248:   if (!docCandidates.length) return [];
+01249: 
+01250:   let baseAll = dedupeDrawsLocal(docCandidates.map(mapDrawDoc));
+01251:   baseAll = baseAll.filter((x) => (x.ymd || normalizeToYMD(x.date)) === ymdDate);
+01252: 
+01253:   const orderedAll = sortDrawsLocal(baseAll);
+01254: 
+01255:   const hydratedAll = await mapWithConcurrency(orderedAll, 6, async (item) => {
+01256:     const prizes = await fetchPrizesForDraw(item.drawId, positionsArr, item.prizes);
+01257:     const pc = Array.isArray(prizes) ? prizes.length : 0;
+01258:     return { ...item, prizes, prizesCount: pc, __mode: "detailed" };
+01259:   });
+01260: 
+01261:   let dayAll = dedupeDrawsLocal(hydratedAll);
+01262: 
+01263: if (scopeKey === FEDERAL_SCOPE_CODE) {
+01264:   dayAll = collapseFederalDailyCloneDraws(dayAll);
+01265: }
+01266: 
+01267:   const base = hourFilter?.kind
+01268:     ? dayAll.filter((d) => drawPassesHourFilter(d, hourFilter))
+01269:     : dayAll;
+01270: 
+01271:   let out = dedupeDrawsLocal(sortDrawsLocal(base));
+01272: 
+01273: if (scopeKey === FEDERAL_SCOPE_CODE) {
+01274:   out = collapseFederalDailyCloneDraws(out);
+01275: }
+01276: 
+01277:   if (allowMemoryCache) {
+01278:     cacheSet(DRAWS_CACHE, dayKey, out);
+01279:   }
+01280: 
+01281:   return out;
+01282: }
+01283: 
+01284: /* =========================
+01285:    API: Range
+01286: ========================= */
+01287: 
+01288: function drawsCacheKeyRange({
+01289:   scopeKey,
+01290:   from,
+01291:   to,
+01292:   positionsArr,
+01293:   hourFilter,
+01294:   mode,
+01295: }) {
+01296:   const p = positionsArr && positionsArr.length ? positionsArr.join(",") : "all";
+01297:   const h =
+01298:     hourFilter?.kind === "bucket"
+01299:       ? `bucket:${hourFilter.bucket}`
+01300:       : hourFilter?.kind === "exact"
+01301:       ? `exact:${hourFilter.hhmm}`
+01302:       : "all";
+01303:   const m = mode ? String(mode) : "detailed";
+01304:   return `range::${scopeKey}::${from}..${to}::pos=${p}::h=${h}::mode=${m}`;
+01305: }
+01306: 
+01307: function chooseRangeConcurrency(drawCount) {
+01308:   if (!Number.isFinite(drawCount)) return 6;
+01309:   if (drawCount <= 50) return 4;
+01310:   if (drawCount <= 300) return 6;
+01311:   if (drawCount <= 1200) return 8;
+01312:   return 10;
+01313: }
+01314: 
+01315: export function decideKingRangeMode({ dateFrom, dateTo, mode = "detailed" }) {
+01316:   const ymdFrom = normalizeToYMD(dateFrom);
+01317:   const ymdTo = normalizeToYMD(dateTo);
+01318:   if (!ymdFrom || !ymdTo) return "detailed";
+01319: 
+01320:   if (mode === "detailed" || mode === "aggregated") return mode;
+01321:   if (mode !== "auto") return "detailed";
+01322: 
+01323:   const days = daysBetweenInclusiveUTC(ymdFrom, ymdTo);
+01324:   if (!Number.isFinite(days) || days <= 0) return "detailed";
+01325:   return "detailed";
+01326: }
+01327: 
+01328: /**
+01329:  * ✅ Fallback barato (SEM prizes): usado quando falta índice composto no RANGE,
+01330:  * ou quando você quer aggregated sem custo de hidratar.
+01331:  */
+01332: async function fetchDrawsDayNoPrizes({ uf, dayYmd }) {
+01333:   const readPolicy = shouldForceFreshServerRead(dayYmd) ? "server" : DEFAULT_READ_POLICY;
+01334: 
+01335:   const { docs, error } = await fetchDrawDocsPreferUf({
+01336:     uf,
+01337:     extraWheres: [where("ymd", "==", dayYmd)],
+01338:     policy: readPolicy,
+01339:   });
+01340:   if (error) throw error;
+01341:   if (!docs || !docs.length) return [];
+01342: 
+01343:   let baseAll = dedupeDrawsLocal(docs.map(mapDrawDoc));
+01344:   baseAll = baseAll.filter((x) => (x.ymd || normalizeToYMD(x.date)) === dayYmd);
+01345: 
+01346:   const ordered = sortDrawsLocal(baseAll);
+01347: 
+01348:   return ordered.map((d) => {
+01349:     const embedded = normalizeEmbeddedPrizesForAggregated(d?.prizes);
+01350:     return {
+01351:       ...d,
+01352:       prizes: embedded,
+01353:       prizesCount: embedded.length || Number(d?.prizesCount || 0),
+01354:       __mode: "aggregated",
+01355:     };
+01356:   });
+01357: }
+01358: 
+01359: export async function getKingResultsByRange({
+01360:   uf,
+01361:   dateFrom,
+01362:   dateTo,
+01363:   closeHour = null,
+01364:   closeHourBucket = null,
+01365:   positions = null,
+01366:   mode = "detailed",
+01367:   readPolicy = DEFAULT_READ_POLICY,
+01368:   bypassCache = false,
+01369: }) {
+01370:   if (!uf || !dateFrom || !dateTo) {
+01371:     throw new Error("Parâmetros obrigatórios: uf, dateFrom, dateTo");
+01372:   }
+01373: 
+01374:   const scopeKey = canonicalScopeKey(uf);
+01375: 
+01376:   const positionsArr = normalizePositions(positions);
+01377: 
+01378:   const ymdFrom = normalizeToYMD(dateFrom);
+01379:   const ymdTo = normalizeToYMD(dateTo);
+01380:   if (!ymdFrom || !ymdTo) return [];
+01381: 
+01382:   const hourFilter = resolveHourFilter({ closeHour, closeHourBucket });
+01383: 
+01384:   const effectiveMode = decideKingRangeMode({
+01385:     dateFrom: ymdFrom,
+01386:     dateTo: ymdTo,
+01387:     mode,
+01388:   });
+01389: 
+01390:   const rangeKey = drawsCacheKeyRange({
+01391:     scopeKey,
+01392:     from: ymdFrom,
+01393:     to: ymdTo,
+01394:     positionsArr,
+01395:     hourFilter,
+01396:     mode: effectiveMode,
+01397:   });
+01398:   if (!bypassCache) {
+01399:     const cached = cacheGet(DRAWS_CACHE, rangeKey);
+01400:     if (cached) return cached;
+01401:   }
+01402: 
+01403:   const DOC_ID = documentId();
+01404:   const rangeOrder = [orderBy("ymd", "asc"), orderBy(DOC_ID)];
+01405: 
+01406:   const { docs, error, usedField } = await fetchDrawDocsPreferUf({
+01407:     uf,
+01408:     extraWheres: [where("ymd", ">=", ymdFrom), where("ymd", "<=", ymdTo)],
+01409:     extraOrderBy: rangeOrder,
+01410:     policy: readPolicy,
+01411:   });
+01412: 
+01413:   if (error) {
+01414:     if (isIndexError(error)) {
+01415:       const days = daysBetweenInclusiveUTC(ymdFrom, ymdTo);
+01416:       const MAX_FALLBACK_DAYS = 31;
+01417: 
+01418:       if (Number.isFinite(days) && days > 0 && days <= MAX_FALLBACK_DAYS) {
+01419:         if (effectiveMode === "aggregated") {
+01420:           const all = [];
+01421:           for (let i = 0; i < days; i += 1) {
+01422:             const day = addDaysUTC(ymdFrom, i);
+01423:             const dayDraws = await fetchDrawsDayNoPrizes({ uf, dayYmd: day });
+01424:             if (dayDraws.length) all.push(...dayDraws);
+01425:           }
+01426: 
+01427:           const baseAll = dedupeDrawsLocal(all);
+01428:           const base = hourFilter?.kind
+01429:             ? baseAll.filter((d) => drawPassesHourFilter(d, hourFilter))
+01430:             : baseAll;
+01431: 
+01432:           let out = dedupeDrawsLocal(sortDrawsLocal(base));
+01433: 
+01434:           if (!bypassCache) {
+01435:       cacheSet(DRAWS_CACHE, rangeKey, out);
+01436:     }
+01437:           return out;
+01438:         }
+01439: 
+01440:         const all = [];
+01441:         for (let i = 0; i < days; i += 1) {
+01442:           const day = addDaysUTC(ymdFrom, i);
+01443:           const dayDraws = await getKingResultsByDate({
+01444:             uf,
+01445:             date: day,
+01446:             closeHour,
+01447:             closeHourBucket,
+01448:             positions: positionsArr,
+01449:           });
+01450:           if (Array.isArray(dayDraws) && dayDraws.length) all.push(...dayDraws);
+01451:         }
+01452: 
+01453:         const baseAll = dedupeDrawsLocal(all);
+01454:         const base = hourFilter?.kind
+01455:           ? baseAll.filter((d) => drawPassesHourFilter(d, hourFilter))
+01456:           : baseAll;
+01457: 
+01458:         let out = dedupeDrawsLocal(sortDrawsLocal(base));
+01459: 
+01460:         if (!bypassCache) {
+01461:       cacheSet(DRAWS_CACHE, rangeKey, out);
+01462:     }
+01463:         return out;
+01464:       }
+01465: 
+01466:       const rawCode = String(error?.code || "");
+01467:       const rawMsg = String(error?.message || "");
+01468: 
+01469:       throw new Error(
+01470:         `Firestore: falta índice composto para RANGE (campo ${usedField} + ymd).\n` +
+01471:           `Crie/valide o índice no console (Collection: draws | Fields: ${usedField} ASC, ymd ASC, __name__ (documentId) ASC).\n` +
+01472:           `Obs: fallback automático só é aplicado para ranges até ${MAX_FALLBACK_DAYS} dias.\n` +
+01473:           (rawCode || rawMsg ? `Detalhe: ${rawCode} ${rawMsg}` : "")
+01474:       );
+01475:     }
+01476: 
+01477:     throw error;
+01478:   }
+01479: 
+01480:   if (!docs || !docs.length) {
+01481:     const days = daysBetweenInclusiveUTC(ymdFrom, ymdTo);
+01482:     const MAX_EMPTY_RANGE_FALLBACK_DAYS = 120;
+01483: 
+01484:     if (
+01485:       Number.isFinite(days) &&
+01486:       days > 0 &&
+01487:       days <= MAX_EMPTY_RANGE_FALLBACK_DAYS
+01488:     ) {
+01489:       if (effectiveMode === "aggregated") {
+01490:         const all = [];
+01491:         for (let i = 0; i < days; i += 1) {
+01492:           const day = addDaysUTC(ymdFrom, i);
+01493:           const dayDraws = await fetchDrawsDayNoPrizes({ uf, dayYmd: day });
+01494:           if (dayDraws.length) all.push(...dayDraws);
+01495:         }
+01496: 
+01497:         const baseAll = dedupeDrawsLocal(all);
+01498:         const base = hourFilter?.kind
+01499:           ? baseAll.filter((d) => drawPassesHourFilter(d, hourFilter))
+01500:           : baseAll;
+01501: 
+01502:         let out = dedupeDrawsLocal(sortDrawsLocal(base));
+01503: 
+01504:         if (!bypassCache) {
+01505:       cacheSet(DRAWS_CACHE, rangeKey, out);
+01506:     }
+01507:         return out;
+01508:       }
+01509: 
+01510:       const all = [];
+01511:       for (let i = 0; i < days; i += 1) {
+01512:         const day = addDaysUTC(ymdFrom, i);
+01513:         const dayDraws = await getKingResultsByDate({
+01514:           uf,
+01515:           date: day,
+01516:           closeHour,
+01517:           closeHourBucket,
+01518:           positions: positionsArr,
+01519:         });
+01520:         if (Array.isArray(dayDraws) && dayDraws.length) all.push(...dayDraws);
+01521:       }
+01522: 
+01523:       const baseAll = dedupeDrawsLocal(all);
+01524:       const base = hourFilter?.kind
+01525:         ? baseAll.filter((d) => drawPassesHourFilter(d, hourFilter))
+01526:         : baseAll;
+01527: 
+01528:       const ordered = sortDrawsLocal(base);
+01529: 
+01530:       const conc = chooseRangeConcurrency(ordered.length);
+01531:       const results = await mapWithConcurrency(ordered, conc, async (item) => {
+01532:         const prizes = await fetchPrizesForDraw(item.drawId, positionsArr, item.prizes);
+01533:         const pc = Array.isArray(prizes) ? prizes.length : 0;
+01534:         return { ...item, prizes, prizesCount: pc, __mode: "detailed" };
+01535:       });
+01536: 
+01537:       const out = dedupeDrawsLocal(results);
+01538:       if (!bypassCache) {
+01539:       cacheSet(DRAWS_CACHE, rangeKey, out);
+01540:     }
+01541:       return out;
+01542:     }
+01543: 
+01544:     return [];
+01545:   }
+01546: 
+01547:   const baseAll = dedupeDrawsLocal(docs.map(mapDrawDoc));
+01548:   const base = hourFilter?.kind
+01549:     ? baseAll.filter((d) => drawPassesHourFilter(d, hourFilter))
+01550:     : baseAll;
+01551: 
+01552:   const ordered = sortDrawsLocal(base);
+01553: 
+01554:   if (effectiveMode === "aggregated") {
+01555:     const out = dedupeDrawsLocal(
+01556:       ordered.map((d) => {
+01557:         const embedded = normalizeEmbeddedPrizesForAggregated(d?.prizes);
+01558:         return {
+01559:           ...d,
+01560:           prizes: embedded,
+01561:           prizesCount: Number.isFinite(Number(d?.prizesCount))
+01562:             ? Number(d.prizesCount)
+01563:             : embedded.length || 0,
+01564:           __mode: "aggregated",
+01565:         };
+01566:       })
+01567:     );
+01568:     if (!bypassCache) {
+01569:       cacheSet(DRAWS_CACHE, rangeKey, out);
+01570:     }
+01571:     return out;
+01572:   }
+01573: 
+01574:   const conc = chooseRangeConcurrency(ordered.length);
+01575: 
+01576:   const results = await mapWithConcurrency(ordered, conc, async (item) => {
+01577:     const prizes = await fetchPrizesForDraw(item.drawId, positionsArr, item.prizes);
+01578:     const pc = Array.isArray(prizes) ? prizes.length : 0;
+01579:     return { ...item, prizes, prizesCount: pc, __mode: "detailed" };
+01580:   });
+01581: 
+01582:   const out = dedupeDrawsLocal(results);
+01583:   if (!bypassCache) {
+01584:       cacheSet(DRAWS_CACHE, rangeKey, out);
+01585:     }
+01586:   return out;
+01587: }
+01588: 
+01589: /* =========================
+01590:    ✅ Hidratação de prizes (para UX no "Todos")
+01591: ========================= */
+01592: 
+01593: export async function hydrateKingDrawsWithPrizes({
+01594:   draws,
+01595:   positions = null,
+01596:   concurrency = null,
+01597: }) {
+01598:   const arr = Array.isArray(draws) ? draws : [];
+01599:   if (!arr.length) return [];
+01600: 
+01601:   const positionsArr = normalizePositions(positions);
+01602: 
+01603:   const conc =
+01604:     Number.isFinite(Number(concurrency)) && Number(concurrency) > 0
+01605:       ? Number(concurrency)
+01606:       : chooseRangeConcurrency(arr.length);
+01607: 
+01608:   const results = await mapWithConcurrency(arr, conc, async (item) => {
+01609:     const prizes = await fetchPrizesForDraw(item.drawId, positionsArr, item.prizes);
+01610:     const pc = Array.isArray(prizes) ? prizes.length : 0;
+01611:     return { ...item, prizes, prizesCount: pc, __mode: "detailed" };
+01612:   });
+01613: 
+01614:   return dedupeDrawsLocal(results);
+01615: }
+01616: 
+01617: /* =========================
+01618:    ✅ ATRASADOS (Late) — 100% baseado na SUA base
+01619: ========================= */
+01620: 
+01621: function normalizeLotteriesList(lotteries) {
+01622:   const arr = Array.isArray(lotteries) ? lotteries : [];
+01623:   const cleaned = arr
+01624:     .map((x) => String(x ?? "").trim().toUpperCase())
+01625:     .filter(Boolean);
+01626:   return cleaned.length ? Array.from(new Set(cleaned)) : null;
+01627: }
+01628: 
+01629: function drawPassesLotteriesFilter(draw, lotteriesArr) {
+01630:   if (!lotteriesArr || !lotteriesArr.length) return true;
+01631: 
+01632:   const identities = [
+01633:     draw?.lottery_key,
+01634:     draw?.lotteryKey,
+01635:     draw?.lottery_code,
+01636:     draw?.lotteryCode,
+01637:     draw?.lot_code,
+01638:     draw?.lotCode,
+01639:     draw?.lot,
+01640:     draw?.code,
+01641:   ]
+01642:     .map((value) => String(value ?? "").trim().toUpperCase())
+01643:     .filter(Boolean);
+01644: 
+01645:   return identities.some((identity) =>
+01646:     lotteriesArr.includes(identity)
+01647:   );
+01648: }
+01649: 
+01650: function lateCacheKey({
+01651:   scopeKey,
+01652:   fromYmd,
+01653:   toYmd,
+01654:   baseYmd,
+01655:   prizePosition,
+01656:   hourFilter,
+01657:   lotteriesArr,
+01658:   chunkDays,
+01659: }) {
+01660:   const h =
+01661:     hourFilter?.kind === "bucket"
+01662:       ? `bucket:${hourFilter.bucket}`
+01663:       : hourFilter?.kind === "exact"
+01664:       ? `exact:${hourFilter.hhmm}`
+01665:       : "all";
+01666:   const lots = lotteriesArr && lotteriesArr.length ? lotteriesArr.join(",") : "all";
+01667:   const cd = Number(chunkDays) || 15;
+01668:   const pos = Number(prizePosition) || 1;
+01669:   return `late::${scopeKey}::${fromYmd}..${toYmd}::base=${baseYmd}::pos=${pos}::h=${h}::lots=${lots}::chunk=${cd}`;
+01670: }
+01671: 
+01672: function hourToNumSafe(hhmm) {
+01673:   const s = normalizeHourLike(hhmm);
+01674:   const m = s.match(/^(\d{2}):(\d{2})$/);
+01675:   if (!m) return Number.POSITIVE_INFINITY;
+01676:   return Number(m[1]) * 100 + Number(m[2]);
+01677: }
+01678: 
+01679: export async function getKingLateByRange({
+01680:   uf,
+01681:   dateFrom,
+01682:   dateTo,
+01683:   baseDate = null,
+01684:   lotteries = null,
+01685:   prizePosition = 1,
+01686:   closeHour = null,
+01687:   closeHourBucket = null,
+01688:   chunkDays = 15,
+01689: }) {
+01690:   if (!uf || !dateFrom || !dateTo) {
+01691:     throw new Error("Parâmetros obrigatórios: uf, dateFrom, dateTo");
+01692:   }
+01693: 
+01694:   const scopeKey = canonicalScopeKey(uf);
+01695: 
+01696:   const fromYmd = normalizeToYMD(dateFrom);
+01697:   const toYmd = normalizeToYMD(dateTo);
+01698:   if (!fromYmd || !toYmd) return [];
+01699: 
+01700:   const baseYmd = normalizeToYMD(baseDate) || toYmd;
+01701: 
+01702:   const hourFilter = resolveHourFilter({ closeHour, closeHourBucket });
+01703:   const lotteriesArr = normalizeLotteriesList(lotteries);
+01704: 
+01705:   const cacheKey = lateCacheKey({
+01706:     scopeKey,
+01707:     fromYmd,
+01708:     toYmd,
+01709:     baseYmd,
+01710:     prizePosition,
+01711:     hourFilter,
+01712:     lotteriesArr,
+01713:     chunkDays,
+01714:   });
+01715: 
+01716:   const cached = cacheGet(LATE_CACHE, cacheKey);
+01717:   if (cached) return cached;
+01718: 
+01719:   const posNum = Number(prizePosition) || 1;
+01720: 
+01721:   const lastSeen = new Map();
+01722: 
+01723:   let cursorTo = toYmd;
+01724:   const chunk = Math.max(3, Math.min(60, Number(chunkDays) || 15));
+01725: 
+01726:   if (cursorTo < fromYmd) {
+01727:     const outEmpty = Array.from({ length: 25 }, (_, i) => ({
+01728:       pos: i + 1,
+01729:       grupo: i + 1,
+01730:       lastYmd: null,
+01731:       lastHour: null,
+01732:       lastDrawId: null,
+01733:       lastLottery: null,
+01734:       atrasoDias: null,
+01735:     }));
+01736:     cacheSet(LATE_CACHE, cacheKey, outEmpty);
+01737:     return outEmpty;
+01738:   }
+01739: 
+01740:   while (cursorTo >= fromYmd && lastSeen.size < 25) {
+01741:     let chunkFrom = addDaysUTC(cursorTo, -(chunk - 1));
+01742:     if (chunkFrom < fromYmd) chunkFrom = fromYmd;
+01743: 
+01744:     const draws = await getKingResultsByRange({
+01745:       uf,
+01746:       dateFrom: chunkFrom,
+01747:       dateTo: cursorTo,
+01748:       closeHour,
+01749:       closeHourBucket,
+01750:       positions: [posNum],
+01751:       mode: "detailed",
+01752:     });
+01753: 
+01754:     const desc = sortDrawsLocalDesc(dedupeDrawsLocal(draws));
+01755: 
+01756:     for (const d of desc) {
+01757:       if (!d) continue;
+01758: 
+01759:       if (hourFilter?.kind && !drawPassesHourFilter(d, hourFilter)) continue;
+01760:       if (lotteriesArr && !drawPassesLotteriesFilter(d, lotteriesArr)) continue;
+01761: 
+01762:       const ymd = d.ymd || normalizeToYMD(d.date);
+01763:       if (!ymd || !isYMD(ymd)) continue;
+01764: 
+01765:       const p = Array.isArray(d.prizes)
+01766:         ? d.prizes.find(
+01767:             (x) => Number(x?.position) === posNum && isValidGrupo(x?.grupo)
+01768:           )
+01769:         : null;
+01770: 
+01771:       const g = Number(p?.grupo);
+01772:       if (!isValidGrupo(g)) continue;
+01773: 
+01774:       if (!lastSeen.has(g)) {
+01775:         lastSeen.set(g, {
+01776:           ymd,
+01777:           hour: d.close_hour || d.closeHour || "",
+01778:           drawId: d.drawId || d.id || null,
+01779:           lottery_code: d.lottery_code || null,
+01780:         });
+01781: 
+01782:         if (lastSeen.size >= 25) break;
+01783:       }
+01784:     }
+01785: 
+01786:     cursorTo = addDaysUTC(chunkFrom, -1);
+01787:   }
+01788: 
+01789:   const rows = [];
+01790:   for (let g = 1; g <= 25; g += 1) {
+01791:     const seen = lastSeen.get(g) || null;
+01792:     const lastYmd = seen?.ymd || null;
+01793:     const diff = lastYmd ? daysDiffUTC(lastYmd, baseYmd) : NaN;
+01794:     const atrasoDias =
+01795:       lastYmd && Number.isFinite(diff) ? Math.max(0, diff) : null;
+01796: 
+01797:     rows.push({
+01798:       pos: 0,
+01799:       grupo: g,
+01800:       lastYmd,
+01801:       lastHour: seen?.hour ? normalizeHourLike(seen.hour) : null,
+01802:       lastDrawId: seen?.drawId || null,
+01803:       lastLottery: seen?.lottery_code || null,
+01804:       atrasoDias,
+01805:     });
+01806:   }
+01807: 
+01808:   const sorted = [...rows].sort((a, b) => {
+01809:     const aa = Number.isFinite(Number(a?.atrasoDias)) ? Number(a.atrasoDias) : -1;
+01810:     const bb = Number.isFinite(Number(b?.atrasoDias)) ? Number(b.atrasoDias) : -1;
+01811:     if (bb !== aa) return bb - aa;
+01812: 
+01813:     const ha = hourToNumSafe(a?.lastHour);
+01814:     const hb = hourToNumSafe(b?.lastHour);
+01815:     if (ha !== hb) return ha - hb;
+01816: 
+01817:     return Number(a?.grupo || 0) - Number(b?.grupo || 0);
+01818:   });
+01819: 
+01820:   const out = sorted.map((r, idx) => ({ ...r, pos: idx + 1 }));
+01821: 
+01822:   cacheSet(LATE_CACHE, cacheKey, out);
+01823:   return out;
+01824: }
+
+====================================================================================================
+2. OCORRÊNCIAS RELACIONADAS A HORÁRIO, NACIONAL E CONSULTA POR INTERVALO
+====================================================================================================
+
+
+----------------------------------------------------------------------------------------------------
+PADRÃO: function getKingResultsByRange
+----------------------------------------------------------------------------------------------------
+C:\Users\glaub\palpitaco\src\services\kingResultsService.js:1359: export async function getKingResultsByRange({
+
+----------------------------------------------------------------------------------------------------
+PADRÃO: const getKingResultsByRange
+----------------------------------------------------------------------------------------------------
+NENHUMA OCORRÊNCIA.
+
+----------------------------------------------------------------------------------------------------
+PADRÃO: export.*getKingResultsByRange
+----------------------------------------------------------------------------------------------------
+C:\Users\glaub\palpitaco\src\services\kingResultsService.js:1359: export async function getKingResultsByRange({
+
+----------------------------------------------------------------------------------------------------
+PADRÃO: closeHourBucket
+----------------------------------------------------------------------------------------------------
+C:\Users\glaub\palpitaco\backend\server.js:445: const closeHourBucket = safeStr(req.query.closeHourBucket || req.query.hour || "");
+C:\Users\glaub\palpitaco\backend\server.js:446: const hourBucket = toHourBucket(closeHourBucket || closeHour);
+C:\Users\glaub\palpitaco\src\dev\runAuditTop3.js:107: closeHourBucket: null,
+C:\Users\glaub\palpitaco\src\hooks\useKingRanking.js:282: closeHourBucket = null,
+C:\Users\glaub\palpitaco\src\hooks\useKingRanking.js:383: const bucketNorm = useMemo(() => normalizeBucketInput(closeHourBucket), [closeHourBucket]);
+C:\Users\glaub\palpitaco\src\pages\Dashboard\Dashboard.jsx:253: d.closeHourBucket ??
+C:\Users\glaub\palpitaco\src\pages\Dashboard\Dashboard.jsx:595: d.closeHourBucket ??
+C:\Users\glaub\palpitaco\src\pages\Dashboard\Dashboard.jsx:1116: closeHourBucket: null,
+C:\Users\glaub\palpitaco\src\pages\Dashboard\Dashboard.jsx:1196: const closeHourBucketLocal = useMemo(() => normalizeHourBucket(filters.horario), [filters.horario]);
+C:\Users\glaub\palpitaco\src\pages\Dashboard\Dashboard.jsx:1290: const wantBucket = closeHourBucketLocal;
+C:\Users\glaub\palpitaco\src\pages\Dashboard\Dashboard.jsx:1362: closeHourBucketLocal,
+C:\Users\glaub\palpitaco\src\pages\Dashboard\Dashboard.jsx:1424: const out = buildPalpiteV2(drawsForView, { closeHourBucket: null });
+C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:409: const selectedCloseHourBucket = useMemo(() => {
+C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:474: closeHourBucket: null,
+C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:562: closeHourBucket: selectedCloseHourBucket || null,
+C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:650: selectedCloseHourBucket,
+C:\Users\glaub\palpitaco\src\pages\Results\Results.jsx:996: closeHourBucket: null,
+C:\Users\glaub\palpitaco\src\pages\Search\Search.jsx:668: const selectedCloseHourBucket = useMemo(() => {
+C:\Users\glaub\palpitaco\src\pages\Search\Search.jsx:758: closeHourBucket: null,
+C:\Users\glaub\palpitaco\src\pages\Search\Search.jsx:759: closeHour: selectedCloseHourBucket ? `${String(selectedCloseHourBucket).slice(0, 2)}:00` : null,
+C:\Users\glaub\palpitaco\src\pages\Search\Search.jsx:777: if (selectedCloseHourBucket) {
+C:\Users\glaub\palpitaco\src\pages\Search\Search.jsx:779: if (b !== selectedCloseHourBucket) continue;
+C:\Users\glaub\palpitaco\src\pages\Search\Search.jsx:894: selectedCloseHourBucket,
+C:\Users\glaub\palpitaco\src\pages\Statistics\Statistics.jsx:909: closeHourBucket: null,
+C:\Users\glaub\palpitaco\src\services\kingResultsService.js:259: - bucket SOMENTE via closeHourBucket
+C:\Users\glaub\palpitaco\src\services\kingResultsService.js:264: function resolveHourFilter({ closeHour = null, closeHourBucket = null }) {
+C:\Users\glaub\palpitaco\src\services\kingResultsService.js:265: const bucket = toHourBucket(closeHourBucket);
+C:\Users\glaub\palpitaco\src\services\kingResultsService.js:1170: closeHourBucket = null,
+C:\Users\glaub\palpitaco\src\services\kingResultsService.js:1181: const hourFilter = resolveHourFilter({ closeHour, closeHourBucket });
+C:\Users\glaub\palpitaco\src\services\kingResultsService.js:1364: closeHourBucket = null,
+C:\Users\glaub\palpitaco\src\services\kingResultsService.js:1382: const hourFilter = resolveHourFilter({ closeHour, closeHourBucket });
+C:\Users\glaub\palpitaco\src\services\kingResultsService.js:1447: closeHourBucket,
+C:\Users\glaub\palpitaco\src\services\kingResultsService.js:1517: closeHourBucket,
+C:\Users\glaub\palpitaco\src\services\kingResultsService.js:1687: closeHourBucket = null,
+C:\Users\glaub\palpitaco\src\services\kingResultsService.js:1702: const hourFilter = resolveHourFilter({ closeHour, closeHourBucket });
+C:\Users\glaub\palpitaco\src\services\kingResultsService.js:1749: closeHourBucket,
+C:\Users\glaub\palpitaco\src\utils\buildPalpites.js:324: * - closeHourBucket: "09h" | "11h" | etc
+C:\Users\glaub\palpitaco\src\utils\buildPalpites.js:329: const closeHourBucket = opts.closeHourBucket ? String(opts.closeHourBucket).trim() : null;
+C:\Users\glaub\palpitaco\src\utils\buildPalpites.js:336: if (closeHourBucket) {
+C:\Users\glaub\palpitaco\src\utils\buildPalpites.js:337: base = base.filter((d) => toHourBucketLabel(getDrawCloseHour(d)) === closeHourBucket);
+C:\Users\glaub\palpitaco\src\utils\buildPalpites.js:416: usedBucket: closeHourBucket || null,
+C:\Users\glaub\palpitaco\src\utils\buildPalpites.js:425: * - closeHourBucket: "09h" | "11h" | etc (opcional)
+C:\Users\glaub\palpitaco\src\utils\buildPalpites.js:432: const closeHourBucket = opts.closeHourBucket ? String(opts.closeHourBucket).trim() : null;
+C:\Users\glaub\palpitaco\src\utils\buildPalpites.js:436: if (closeHourBucket) {
+C:\Users\glaub\palpitaco\src\utils\buildPalpites.js:437: base = base.filter((d) => toHourBucketLabel(getDrawCloseHour(d)) === closeHourBucket);
+C:\Users\glaub\palpitaco\src\utils\buildPalpites.js:523: usedBucket: closeHourBucket || null,
+
+----------------------------------------------------------------------------------------------------
+PADRÃO: closeHour
+----------------------------------------------------------------------------------------------------
+C:\Users\glaub\palpitaco\backend\engine\contextEvidence.js:28: if (ctx.closeHour)
+C:\Users\glaub\palpitaco\backend\engine\contextEvidence.js:29: reasons.push(`Horário: ${ctx.closeHour}`);
+C:\Users\glaub\palpitaco\backend\engine\contextEvidence.js:50: closeHour: context.hour || null,
+C:\Users\glaub\palpitaco\backend\engine\historicalQueryEngine.js:54: if (filters.closeHour) {
+C:\Users\glaub\palpitaco\backend\engine\historicalQueryEngine.js:55: q = q.where("close_hour","==",filters.closeHour);
+C:\Users\glaub\palpitaco\backend\engine\historicalQueryEngine.js:120: closeHour: data.close_hour,
+C:\Users\glaub\palpitaco\backend\engine\predictionModel.js:19: function makePredictionRunId({ lotteryKey, date, closeHour, source = "manual" }) {
+C:\Users\glaub\palpitaco\backend\engine\predictionModel.js:22: const h = String(closeHour || "").trim().replace(":", "");
+C:\Users\glaub\palpitaco\backend\engine\predictionModel.js:31: closeHour,
+C:\Users\glaub\palpitaco\backend\engine\predictionModel.js:40: id: makePredictionRunId({ lotteryKey: lk, date, closeHour, source }),
+C:\Users\glaub\palpitaco\backend\engine\predictionModel.js:44: close_hour: String(closeHour || "").trim() || null,
+C:\Users\glaub\palpitaco\backend\engine\predictionService.js:20: *   closeHour,
+C:\Users\glaub\palpitaco\backend\engine\predictionService.js:32: closeHour: input.closeHour,
+C:\Users\glaub\palpitaco\backend\engine\scoreEngineE08Experimental.js:59: draw?.closeHour ??
+C:\Users\glaub\palpitaco\backend\engine\scoreEngineV4Experimental.js:81: draw?.closeHour ??
+C:\Users\glaub\palpitaco\backend\engine\top3HistoryRepository.js:200: const closeHour = String(
+C:\Users\glaub\palpitaco\backend\engine\top3HistoryRepository.js:202: draw.closeHour ||
+C:\Users\glaub\palpitaco\backend\engine\top3HistoryRepository.js:207: if (!drawId || !ymd || !closeHour) {
+C:\Users\glaub\palpitaco\backend\engine\top3HistoryRepository.js:224: closeHour,
+C:\Users\glaub\palpitaco\backend\engine\top3HistoryRepository.js:241: `${a.ymd}T${a.closeHour}T${a.drawId}`;
+C:\Users\glaub\palpitaco\backend\engine\top3HistoryRepository.js:244: `${b.ymd}T${b.closeHour}T${b.drawId}`;
+C:\Users\glaub\palpitaco\backend\engine\top3HistoryRepository.js:535: h: normalized.closeHour,
+C:\Users\glaub\palpitaco\backend\engine\top3HistoryRepository.js:557: closeHour: row.h,
+C:\Users\glaub\palpitaco\backend\engine\top3PredictionService.js:452: closeHour,
+C:\Users\glaub\palpitaco\backend\engine\top3PredictionService.js:491: analysisHourBucket: closeHour,
+C:\Users\glaub\palpitaco\backend\engine\top3PredictionService.js:539: closeHour,
+C:\Users\glaub\palpitaco\backend\engine\top3PredictionService.js:545: const hour = normalizeHour(closeHour);
+C:\Users\glaub\palpitaco\backend\engine\top3PredictionService.js:753: const closeHour = normalizeHour(input.closeHour);
+C:\Users\glaub\palpitaco\backend\engine\top3PredictionService.js:792: const targetKey = dateHourKey(date, closeHour);
+C:\Users\glaub\palpitaco\backend\engine\top3PredictionService.js:847: targetHourOverride: closeHour,
+C:\Users\glaub\palpitaco\backend\engine\top3PredictionService.js:861: closeHour,
+C:\Users\glaub\palpitaco\backend\engine\top3PredictionService.js:902: targetHour: closeHour,
+C:\Users\glaub\palpitaco\backend\engine\top3PredictionService.js:919: targetHour: closeHour,
+C:\Users\glaub\palpitaco\backend\engine\top3PredictionService.js:939: closeHour,
+C:\Users\glaub\palpitaco\backend\engine\top3PredictionService.js:950: closeHour,
+C:\Users\glaub\palpitaco\backend\routes\pitacoResults.js:218: d?.closeHour ??
+C:\Users\glaub\palpitaco\backend\routes\pitacoResults.js:233: function normalizeCloseHourForLottery(value, lotteryKey) {
+C:\Users\glaub\palpitaco\backend\routes\pitacoResults.js:248: function hourFromCloseHourSlot(closeHour, lotteryKey) {
+C:\Users\glaub\palpitaco\backend\routes\pitacoResults.js:249: const { slot } = normalizeCloseHourForLottery(closeHour, lotteryKey);
+C:\Users\glaub\palpitaco\backend\routes\pitacoResults.js:835: const { raw, slot } = normalizeCloseHourForLottery(cand, lotteryKey);
+C:\Users\glaub\palpitaco\backend\routes\pitacoResults.js:849: const hh = hourFromCloseHourSlot(dr?.close_hour, lotteryKey);
+C:\Users\glaub\palpitaco\backend\routes\pitacoResults.js:940: const { raw, slot } = normalizeCloseHourForLottery(cand, lotteryKey);
+C:\Users\glaub\palpitaco\backend\routes\pitacoResults.js:957: const hh = hourFromCloseHourSlot(dr?.close_hour, lotteryKey);
+C:\Users\glaub\palpitaco\backend\scripts\auditDrawsBoundsAndCounts.js:113: docData?.closeHour ??
+C:\Users\glaub\palpitaco\backend\scripts\auditDrawSlotsRange.js:58: function hourFromCloseHour(closeHour) {
+C:\Users\glaub\palpitaco\backend\scripts\auditDrawSlotsRange.js:59: const s0 = String(closeHour ?? "").trim();
+C:\Users\glaub\palpitaco\backend\scripts\auditDrawSlotsRange.js:666: const hh = hourFromCloseHour(
+C:\Users\glaub\palpitaco\backend\scripts\auditDrawSlotsRange.js:668: d.closeHour ??
+C:\Users\glaub\palpitaco\backend\scripts\auditFederalContent.js:38: function normalizeCloseHourForFederal(value) {
+C:\Users\glaub\palpitaco\backend\scripts\auditFederalContent.js:69: const slot = normalizeCloseHourForFederal(d.close_hour || d.close || d.hour || "");
+C:\Users\glaub\palpitaco\backend\scripts\auditFederalContent.js:111: const slot = normalizeCloseHourForFederal(draw?.close_hour || "");
+C:\Users\glaub\palpitaco\backend\scripts\auditFederalContestContent.js:55: obj?.closeHour ??
+C:\Users\glaub\palpitaco\backend\scripts\auditFederalContestDuplicates.js:65: return safeStr(d.closeHour || d.hour || d.time || d.hora);
+C:\Users\glaub\palpitaco\backend\scripts\auditFederalDateContent.js:65: close_hour: String(d.close_hour || d.closeHour || d.hour || "").trim(),
+C:\Users\glaub\palpitaco\backend\scripts\auditFederalDateContent.js:98: sourceCloseHour: String(source?.close_hour || ""),
+C:\Users\glaub\palpitaco\backend\scripts\auditFederalDateContent.js:133: console.log(`[FEDERAL-DATE] ${d} ${row.status} fonte=${row.sourceCloseHour || "-"} fs=${row.firestoreHours.join(",") || "-"}`);
+C:\Users\glaub\palpitaco\backend\scripts\auditFederalStructure.js:42: close_hour: String(d.close_hour || d.closeHour || d.hour || "").trim(),
+C:\Users\glaub\palpitaco\backend\scripts\auditPtRioContent.js:38: function normalizeCloseHourForPtRio(value) {
+C:\Users\glaub\palpitaco\backend\scripts\auditPtRioContent.js:69: const slot = normalizeCloseHourForPtRio(d.close_hour || d.close || d.hour || "");
+C:\Users\glaub\palpitaco\backend\scripts\auditPtRioContent.js:111: const slot = normalizeCloseHourForPtRio(draw?.close_hour || "");
+C:\Users\glaub\palpitaco\backend\scripts\autoImportToday.js:845: function upsertMissingSlot({ date, slotHour, calendar, closeHourTried, reason, meta }) {
+C:\Users\glaub\palpitaco\backend\scripts\autoImportToday.js:866: closeHourTried: closeHourTried || null,
+C:\Users\glaub\palpitaco\backend\scripts\autoImportToday.js:892: draw.closeHour ||
+C:\Users\glaub\palpitaco\backend\scripts\autoImportToday.js:931: const v = (s && (s.hour || s.close_hour || s.closeHour || s.close || s.slot || s.time || s.close_hour_raw)) ?? "";
+C:\Users\glaub\palpitaco\backend\scripts\autoImportToday.js:947: async function guardPersistedOrCritical({ date, slotHHMM, calendar, closeHourTried, meta }) {
+C:\Users\glaub\palpitaco\backend\scripts\autoImportToday.js:969: closeHourTried,
+C:\Users\glaub\palpitaco\backend\scripts\autoImportToday.js:975: `[BIRTH-GUARD] CRITICAL slot=${slotHHMM} date=${date} calendar=${calendar || "—"} closeTried=${closeHourTried || "—"} reason=${
+C:\Users\glaub\palpitaco\backend\scripts\autoImportToday.js:1401: for (const closeHour of candidates) {
+C:\Users\glaub\palpitaco\backend\scripts\autoImportToday.js:1405: r = await runImport({ date, lotteryKey: LOTTERY, closeHour });
+C:\Users\glaub\palpitaco\backend\scripts\autoImportToday.js:1408: slot.lastResult = { ok: false, error: lastErr, closeHourTried: closeHour };
+C:\Users\glaub\palpitaco\backend\scripts\autoImportToday.js:1410: logLine(`[AUTO] erro no import close=${closeHour}: ${lastErr}`, "ERROR");
+C:\Users\glaub\palpitaco\backend\scripts\autoImportToday.js:1424: closeHourTried: closeHour,
+C:\Users\glaub\palpitaco\backend\scripts\autoImportToday.js:1440: closeHourTried: closeHour,
+C:\Users\glaub\palpitaco\backend\scripts\autoImportToday.js:1448: `[AUTO] api_missing_slot slot=${sched.hour} (${st}) close=${closeHour} -> parando closes candidatos (vai retry depois)`,
+C:\Users\glaub\palpitaco\backend\scripts\autoImportToday.js:1457: slot.lastResult = { ok: true, closeHourTried: closeHour, blocked: true, blockedReason };
+C:\Users\glaub\palpitaco\backend\scripts\autoImportToday.js:1472: closeHourTried: closeHour,
+C:\Users\glaub\palpitaco\backend\scripts\autoImportToday.js:1499: `[AUTO] FEDERAL PROBE mismatch: slot=${sched.hour} close=${closeHour} targetDrawIds=${
+C:\Users\glaub\palpitaco\backend\scripts\autoImportToday.js:1515: logLine(`[AUTO] FS já tem slot=${sched.hour} COMPLETO (close=${closeHour}) -> DONE`, "INFO");
+C:\Users\glaub\palpitaco\backend\scripts\autoImportToday.js:1520: closeHourTried: closeHour,
+C:\Users\glaub\palpitaco\backend\scripts\autoImportToday.js:1524: logLine(`[AUTO] CAPTURADO slot=${sched.hour} (close=${closeHour}) saved=${savedCount} writes=${writeCount} -> DONE`, "INFO");
+C:\Users\glaub\palpitaco\backend\scripts\autoImportToday.js:1529: closeHourTried: closeHour,
+C:\Users\glaub\palpitaco\backend\scripts\autoRepairToday.js:125: closeHour: hour,
+C:\Users\glaub\palpitaco\backend\scripts\checkOneDraw.js:125: const closeHourRaw = String(process.argv[4] || "").trim();
+C:\Users\glaub\palpitaco\backend\scripts\checkOneDraw.js:132: const closeHour = normalizeHHMM(closeHourRaw);
+C:\Users\glaub\palpitaco\backend\scripts\checkOneDraw.js:134: if (!lotteryKey || !isISODateStrict(ymd) || !isHHMM(closeHour)) {
+C:\Users\glaub\palpitaco\backend\scripts\checkOneDraw.js:140: const candidates = closeCandidates(closeHour, tol);
+C:\Users\glaub\palpitaco\backend\scripts\checkOneDraw.js:143: `[CHECK] lottery=${lotteryKey} ymd=${ymd} target=${closeHour} tol=${tol} candidates=${candidates.join(",")}`
+C:\Users\glaub\palpitaco\backend\scripts\checkOneDraw.js:167: `[CHECK] NOT FOUND: lottery=${lotteryKey} ymd=${ymd} close_hour≈${closeHour} (tol=${tol})`
+C:\Users\glaub\palpitaco\backend\scripts\checkOneDraw.js:177: `[CHECK] FOUND ${uniq.size} unique doc(s): lottery=${lotteryKey} ymd=${ymd} close_hour≈${closeHour}`
+C:\Users\glaub\palpitaco\backend\scripts\findDuplicatesDraws.js:148: d.close_hour || d.closeHour || d.hour || d.hora || ""
+C:\Users\glaub\palpitaco\backend\scripts\findDuplicatesDraws.js:158: close_hour: d.close_hour ?? d.closeHour ?? null,
+C:\Users\glaub\palpitaco\backend\scripts\findDuplicatesDraws.js:159: close_hour_raw: d.close_hour_raw ?? d.closeHourRaw ?? null,
+C:\Users\glaub\palpitaco\backend\scripts\fixFederalContestDuplicates.js:65: return safeStr(d.closeHour || d.hour || d.time || d.hora);
+C:\Users\glaub\palpitaco\backend\scripts\fixPtRioContentAudit.js:64: closeHour: slot,
+C:\Users\glaub\palpitaco\backend\scripts\importKingApostas.js:387: function normalizeCloseHourForLottery(value, lotteryKey) {
+C:\Users\glaub\palpitaco\backend\scripts\importKingApostas.js:427: function normalizeDrawCloseHour(draw, lotteryKey) {
+C:\Users\glaub\palpitaco\backend\scripts\importKingApostas.js:428: const base = normalizeCloseHourForLottery(
+C:\Users\glaub\palpitaco\backend\scripts\importKingApostas.js:469: * ✅ Normaliza o parâmetro closeHour (do CLI/scheduler) e evita log enganoso.
+C:\Users\glaub\palpitaco\backend\scripts\importKingApostas.js:472: function normalizeRequestedCloseHour(closeHour, lotteryKey) {
+C:\Users\glaub\palpitaco\backend\scripts\importKingApostas.js:474: const requested = closeHour ? normalizeHHMM(closeHour) : null;
+C:\Users\glaub\palpitaco\backend\scripts\importKingApostas.js:497: const slot = normalizeCloseHourForLottery(requested, lk).slot;
+C:\Users\glaub\palpitaco\backend\scripts\importKingApostas.js:830: async function tryHtmlDetailsFallback({ date, lotteryKey, closeHour }) {
+C:\Users\glaub\palpitaco\backend\scripts\importKingApostas.js:832: const slot = normalizeCloseHourForLottery(closeHour || "", lk).slot;
+C:\Users\glaub\palpitaco\backend\scripts\importKingApostas.js:865: const { slot } = normalizeDrawCloseHour(d, lotteryKey);
+C:\Users\glaub\palpitaco\backend\scripts\importKingApostas.js:898: function summarizeCloseHours(draws, lotteryKey) {
+C:\Users\glaub\palpitaco\backend\scripts\importKingApostas.js:902: const { slot } = normalizeDrawCloseHour(
+C:\Users\glaub\palpitaco\backend\scripts\importKingApostas.js:944: normalizeHHMM(d?.close_hour ?? d?.closeHour ?? d?.horario ?? d?.close ?? "");
+C:\Users\glaub\palpitaco\backend\scripts\importKingApostas.js:946: const summarizeCloseHoursPart = (list) => {
+C:\Users\glaub\palpitaco\backend\scripts\importKingApostas.js:973: const closesPart = summarizeCloseHoursPart(list);
+C:\Users\glaub\palpitaco\backend\scripts\importKingApostas.js:997: const closes = summarizeCloseHours(merged, lk);
+C:\Users\glaub\palpitaco\backend\scripts\importKingApostas.js:1031: const { raw: closeRaw, slot: closeSlot } = normalizeDrawCloseHour(
+C:\Users\glaub\palpitaco\backend\scripts\importKingApostas.js:1092: async function checkSlotCompletion({ date, closeHour, lotteryKey }) {
+C:\Users\glaub\palpitaco\backend\scripts\importKingApostas.js:1095: const targetSlot = normalizeCloseHourForLottery(closeHour || "", lk).slot;
+C:\Users\glaub\palpitaco\backend\scripts\importKingApostas.js:1112: const storedSlot = normalizeCloseHourForLottery(d.close_hour || "", lk).slot;
+C:\Users\glaub\palpitaco\backend\scripts\importKingApostas.js:1134: * closeHour (opcional): se informado, importa SOMENTE draws daquele horário (SLOT).
+C:\Users\glaub\palpitaco\backend\scripts\importKingApostas.js:1137: * - skipIfAlreadyComplete (boolean): se true, e o draw do closeHour já estiver completo no FS,
+C:\Users\glaub\palpitaco\backend\scripts\importKingApostas.js:1143: closeHour = null,
+C:\Users\glaub\palpitaco\backend\scripts\importKingApostas.js:1164: let skippedCloseHour = 0;
+C:\Users\glaub\palpitaco\backend\scripts\importKingApostas.js:1167: // Provas úteis para o scheduler (quando closeHour é informado)
+C:\Users\glaub\palpitaco\backend\scripts\importKingApostas.js:1172: apiReturnedTargetDraws: 0, // draws válidos do closeHour com prizes
+C:\Users\glaub\palpitaco\backend\scripts\importKingApostas.js:1187: const filterClose = closeHour
+C:\Users\glaub\palpitaco\backend\scripts\importKingApostas.js:1188: ? normalizeCloseHourForLottery(closeHour, lk).slot
+C:\Users\glaub\palpitaco\backend\scripts\importKingApostas.js:1191: throw new Error('Parâmetro "closeHour" inválido. Use HH:MM.');
+C:\Users\glaub\palpitaco\backend\scripts\importKingApostas.js:1201: const { raw: closeRaw, slot: closeSlot } = normalizeDrawCloseHour(
+C:\Users\glaub\palpitaco\backend\scripts\importKingApostas.js:1209: skippedCloseHour++;
+C:\Users\glaub\palpitaco\backend\scripts\importKingApostas.js:1246: // Em closeHour: checa “já completo” e, se configurado, pula escrita (por draw)
+C:\Users\glaub\palpitaco\backend\scripts\importKingApostas.js:1352: closeHour: proof.filterClose,
+C:\Users\glaub\palpitaco\backend\scripts\importKingApostas.js:1381: ` | skip_vazio=${skippedEmpty} | skip_invalido=${skippedInvalid} | skip_close=${skippedCloseHour}` +
+C:\Users\glaub\palpitaco\backend\scripts\importKingApostas.js:1403: skippedCloseHour,
+C:\Users\glaub\palpitaco\backend\scripts\importKingApostas.js:1465: async function runImport({ date, lotteryKey = "PT_RIO", closeHour = null } = {}) {
+C:\Users\glaub\palpitaco\backend\scripts\importKingApostas.js:1478: const norm = normalizeRequestedCloseHour(closeHour, lk);
+C:\Users\glaub\palpitaco\backend\scripts\importKingApostas.js:1483: closeHour: norm.slot || null,
+C:\Users\glaub\palpitaco\backend\scripts\importKingApostas.js:1485: requestedCloseHour: norm.requested || null,
+C:\Users\glaub\palpitaco\backend\scripts\importKingApostas.js:1513: skippedCloseHour: 0,
+C:\Users\glaub\palpitaco\backend\scripts\importKingApostas.js:1532: // ✅ closeHour do scheduler: normaliza SEM log enganoso
+C:\Users\glaub\palpitaco\backend\scripts\importKingApostas.js:1533: const norm = normalizeRequestedCloseHour(closeHour, lk);
+C:\Users\glaub\palpitaco\backend\scripts\importKingApostas.js:1535: throw new Error('Parâmetro "closeHour" inválido. Use HH:MM.');
+C:\Users\glaub\palpitaco\backend\scripts\importKingApostas.js:1577: closeHour: normalizedClose,
+C:\Users\glaub\palpitaco\backend\scripts\importKingApostas.js:1578: requestedCloseHour: norm.requested || null,
+C:\Users\glaub\palpitaco\backend\scripts\importKingApostas.js:1604: skippedCloseHour: 0,
+C:\Users\glaub\palpitaco\backend\scripts\importKingApostas.js:1636: // ✅ Se pediram closeHour e ele NÃO existe no dia (close_hours do FETCH), retorna blocked/api_missing_slot
+C:\Users\glaub\palpitaco\backend\scripts\importKingApostas.js:1638: const closes = summarizeCloseHours(
+C:\Users\glaub\palpitaco\backend\scripts\importKingApostas.js:1650: closeHour: normalizedClose,
+C:\Users\glaub\palpitaco\backend\scripts\importKingApostas.js:1681: closeHour: normalizedClose,
+C:\Users\glaub\palpitaco\backend\scripts\importKingApostas.js:1682: requestedCloseHour: norm.requested || null,
+C:\Users\glaub\palpitaco\backend\scripts\importKingApostas.js:1713: skippedCloseHour: 0,
+C:\Users\glaub\palpitaco\backend\scripts\importKingApostas.js:1738: closeHour: normalizedClose,
+C:\Users\glaub\palpitaco\backend\scripts\importKingApostas.js:1755: // ✅ Captured “verdadeiro” (modo closeHour):
+C:\Users\glaub\palpitaco\backend\scripts\importKingApostas.js:1774: closeHour: normalizedClose || null,
+C:\Users\glaub\palpitaco\backend\scripts\importKingApostas.js:1775: requestedCloseHour: norm.requested || null,
+C:\Users\glaub\palpitaco\backend\scripts\importKingApostas.js:1848: closeHour: nextHour,
+C:\Users\glaub\palpitaco\backend\scripts\importKingApostas.js:1947: const closeHour = process.argv[4] || null;
+C:\Users\glaub\palpitaco\backend\scripts\importKingApostas.js:1952: closeHour,
+C:\Users\glaub\palpitaco\backend\scripts\listDrawDuplicates.js:156: d.close_hour || d.closeHour || d.hour || d.hora || ""
+C:\Users\glaub\palpitaco\backend\scripts\listDrawDuplicates.js:166: close_hour: d.close_hour ?? d.closeHour ?? null,
+C:\Users\glaub\palpitaco\backend\scripts\listDrawDuplicates.js:167: close_hour_raw: d.close_hour_raw ?? d.closeHourRaw ?? null,
+C:\Users\glaub\palpitaco\backend\scripts\planBackfillFromAudit.js:39: function hourFromCloseHour(closeHour) {
+C:\Users\glaub\palpitaco\backend\scripts\planBackfillFromAudit.js:40: const s0 = String(closeHour ?? "").trim();
+C:\Users\glaub\palpitaco\backend\scripts\planBackfillFromAudit.js:374: hourFromCloseHour(d?.close_hour ?? d?.closeHour ?? d?.hora ?? d?.hour)
+C:\Users\glaub\palpitaco\backend\scripts\probeKingLotteryIds.js:65: .map((d) => String(d?.close_hour || d?.closeHour || "").trim())
+C:\Users\glaub\palpitaco\backend\scripts\reconcileKingFirestore.js:70: const hour = normHour(draw?.close_hour || draw?.closeHour || draw?.hour || draw?.hora);
+C:\Users\glaub\palpitaco\backend\scripts\repairHistoricalHardGaps.js:39: closeHour: hour,
+C:\Users\glaub\palpitaco\backend\scripts\runBackfillFromPlan.js:250: const closeHour = candidates[idx];
+C:\Users\glaub\palpitaco\backend\scripts\runBackfillFromPlan.js:254: r = await runImportWithTimeout({ date: ymd, lotteryKey: lottery, closeHour });
+C:\Users\glaub\palpitaco\backend\scripts\runBackfillFromPlan.js:257: slotRes.tries.push({ closeHour, ok: false, error: msg });
+C:\Users\glaub\palpitaco\backend\scripts\runBackfillFromPlan.js:258: slotRes.last = { closeHour, ok: false, error: msg };
+C:\Users\glaub\palpitaco\backend\scripts\runBackfillFromPlan.js:260: console.log(`    - close=${closeHour} ERROR: ${msg}`);
+C:\Users\glaub\palpitaco\backend\scripts\runBackfillFromPlan.js:285: closeHour,
+C:\Users\glaub\palpitaco\backend\scripts\runBackfillFromPlan.js:309: closeHour +
+C:\Users\glaub\palpitaco\backend\scripts\runBackfillFromPlan.js:326: closeHour,
+C:\Users\glaub\palpitaco\backend\scripts\runBackfillFromPlan.js:355: `    ✓ close=${closeHour} DONE (${slotRes.doneReason}) saved=${savedCount} writes=${writeCount}`
+C:\Users\glaub\palpitaco\backend\scripts\runBackfillFromPlan.js:370: closeHour,
+C:\Users\glaub\palpitaco\backend\scripts\runBackfillFromPlan.js:377: `    ⚠ close=${closeHour} SLOT_EMPTY (matchedClose=${matchedClose}; valid=0; sem prizes)`
+C:\Users\glaub\palpitaco\backend\scripts\runBackfillFromPlan.js:384: `    - close=${closeHour} NO (captured=${captured} saved=${savedCount} alreadyAny=${alreadyCompleteAny} apiHasPrizes=${apiHasPrizes} matchedClose=${matchedClose})`
+C:\Users\glaub\palpitaco\backend\scripts\testPredictionRun.js:29: closeHour: "14:00",
+C:\Users\glaub\palpitaco\backend\server.js:392: version: "PATCH_CLOSEHOUR_V1",
+C:\Users\glaub\palpitaco\backend\server.js:444: const closeHour = safeStr(req.query.closeHour || "");
+C:\Users\glaub\palpitaco\backend\server.js:445: const closeHourBucket = safeStr(req.query.closeHourBucket || req.query.hour || "");
+C:\Users\glaub\palpitaco\backend\server.js:446: const hourBucket = toHourBucket(closeHourBucket || closeHour);
+C:\Users\glaub\palpitaco\backend\server.js:476: d.close_hour ?? d.closeHour ?? d.hour ?? d.hora ?? ""
+C:\Users\glaub\palpitaco\backend\server.js:576: lastCloseHour: null,
+C:\Users\glaub\palpitaco\backend\server.js:585: const lastSeen = new Map(); // grupo -> { ymd, closeHour, drawId, lottery_code }
+C:\Users\glaub\palpitaco\backend\server.js:602: closeHour: d.close_hour || "",
+C:\Users\glaub\palpitaco\backend\server.js:619: const lastCloseHour = seen?.closeHour ? normalizeHourLike(seen.closeHour) : null;
+C:\Users\glaub\palpitaco\backend\server.js:627: lastCloseHour,
+C:\Users\glaub\palpitaco\backend\server.js:639: const ha = hourToNumSafe(a?.lastCloseHour);
+C:\Users\glaub\palpitaco\backend\server.js:640: const hb = hourToNumSafe(b?.lastCloseHour);
+C:\Users\glaub\palpitaco\backend\server.js:692: // aceita: closeHour, close, hour
+C:\Users\glaub\palpitaco\backend\server.js:693: const closeHourRaw =
+C:\Users\glaub\palpitaco\backend\server.js:694: req.query.closeHour ??
+C:\Users\glaub\palpitaco\backend\server.js:699: const closeHour = closeHourRaw ? String(closeHourRaw).trim() : null;
+C:\Users\glaub\palpitaco\backend\server.js:704: if (closeHour && !isHHMM(closeHour)) {
+C:\Users\glaub\palpitaco\backend\server.js:711: closeHour: closeHour || null,
+C:\Users\glaub\palpitaco\backend\server.js:719: closeHour,
+C:\Users\glaub\palpitaco\backend\server.js:758: const r = await runImport({ date, lotteryKey: lk, closeHour: h });
+C:\Users\glaub\palpitaco\backend\server.js:767: skippedCloseHour: r.skippedCloseHour,
+C:\Users\glaub\palpitaco\src\dev\runAuditTop3.js:106: closeHour: null,
+C:\Users\glaub\palpitaco\src\dev\runAuditTop3.js:107: closeHourBucket: null,
+C:\Users\glaub\palpitaco\src\hooks\useKingRanking.js:94: function toHourBucketLabel(closeHour) {
+C:\Users\glaub\palpitaco\src\hooks\useKingRanking.js:95: const hhmm = normHHMM(closeHour);
+C:\Users\glaub\palpitaco\src\hooks\useKingRanking.js:110: return String(d.close_hour ?? d.closeHour ?? d.hour ?? d.hora ?? "").trim();
+C:\Users\glaub\palpitaco\src\hooks\useKingRanking.js:182: const closeHour = normHHMM(getDrawHourRaw(d));
+C:\Users\glaub\palpitaco\src\hooks\useKingRanking.js:189: close_hour: closeHour || "",
+C:\Users\glaub\palpitaco\src\hooks\useKingRanking.js:190: closeHour: closeHour || "",
+C:\Users\glaub\palpitaco\src\hooks\useKingRanking.js:282: closeHourBucket = null,
+C:\Users\glaub\palpitaco\src\hooks\useKingRanking.js:383: const bucketNorm = useMemo(() => normalizeBucketInput(closeHourBucket), [closeHourBucket]);
+C:\Users\glaub\palpitaco\src\hooks\useKingRanking.js:574: closeHour: null,
+C:\Users\glaub\palpitaco\src\hooks\useKingRanking.js:585: closeHour: null,
+C:\Users\glaub\palpitaco\src\pages\Admin\modules\MilharEngine\MilharEnginePage.jsx:345: closeHour: null,
+C:\Users\glaub\palpitaco\src\pages\Centenas\centenas.utils.js:129: draw?.closeHour,
+C:\Users\glaub\palpitaco\src\pages\Centenas\centenas.utils.js:143: nested?.closeHour,
+C:\Users\glaub\palpitaco\src\pages\Centenas\centenas.utils.js:389: prize?.closeHour,
+C:\Users\glaub\palpitaco\src\pages\Centenas\centenas.utils.js:395: prize?.lotteryCloseHour,
+C:\Users\glaub\palpitaco\src\pages\Centenas\CentenasView.jsx:18: * - cache em memória por (lottery + closeHour + positions)
+C:\Users\glaub\palpitaco\src\pages\Centenas\CentenasView.jsx:275: const directCandidates = [draw?.closeHour, draw?.hour, draw?.horario, draw?.close_hour, draw?.close];
+C:\Users\glaub\palpitaco\src\pages\Centenas\CentenasView.jsx:284: nested?.closeHour,
+C:\Users\glaub\palpitaco\src\pages\Centenas\CentenasView.jsx:516: prize?.closeHour,
+C:\Users\glaub\palpitaco\src\pages\Centenas\CentenasView.jsx:522: prize?.lotteryCloseHour,
+C:\Users\glaub\palpitaco\src\pages\Centenas\CentenasView.jsx:668: const requestedCloseHour = useMemo(
+C:\Users\glaub\palpitaco\src\pages\Centenas\CentenasView.jsx:1098: // ========= build base dataset (cacheado por closeHour) =========
+C:\Users\glaub\palpitaco\src\pages\Centenas\CentenasView.jsx:1103: `::close=${requestedCloseHour || "all"}` +
+C:\Users\glaub\palpitaco\src\pages\Centenas\CentenasView.jsx:1107: requestedCloseHour,
+C:\Users\glaub\palpitaco\src\pages\Centenas\CentenasView.jsx:1154: closeHour:
+C:\Users\glaub\palpitaco\src\pages\Centenas\CentenasView.jsx:1155: requestedCloseHour &&
+C:\Users\glaub\palpitaco\src\pages\Centenas\CentenasView.jsx:1159: ? requestedCloseHour
+C:\Users\glaub\palpitaco\src\pages\Centenas\CentenasView.jsx:1176: requestedCloseHour,
+C:\Users\glaub\palpitaco\src\pages\Centenas\CentenasView.jsx:1236: requestedCloseHour,
+C:\Users\glaub\palpitaco\src\pages\Centenas\CentenasView.jsx:1351: requestedCloseHour,
+C:\Users\glaub\palpitaco\src\pages\Centenas\CentenasView.jsx:1522: requestedCloseHour,
+C:\Users\glaub\palpitaco\src\pages\Centenas\CentenasView.jsx:1595: requestedCloseHour,
+C:\Users\glaub\palpitaco\src\pages\Centenas\CentenasView.jsx:1756: requestedCloseHour,
+C:\Users\glaub\palpitaco\src\pages\Dashboard\components\ChartsGrid.jsx:108: function getDrawCloseHour(draw) {
+C:\Users\glaub\palpitaco\src\pages\Dashboard\components\ChartsGrid.jsx:111: draw.close_hour ?? draw.closeHour ?? draw.hour ?? draw.hora ?? ""
+C:\Users\glaub\palpitaco\src\pages\Dashboard\components\ChartsGrid.jsx:259: const hhmm = normHHMM(getDrawCloseHour(d)) || "";
+C:\Users\glaub\palpitaco\src\pages\Dashboard\components\ChartsGrid.jsx:1272: const bucket = hhmmToBucket09h(getDrawCloseHour(d));
+C:\Users\glaub\palpitaco\src\pages\Dashboard\components\SearchResultsTable.jsx:218: safeStr(r?.closeHour) ||
+C:\Users\glaub\palpitaco\src\pages\Dashboard\Dashboard.jsx:244: function getDrawCloseHour(d) {
+C:\Users\glaub\palpitaco\src\pages\Dashboard\Dashboard.jsx:249: d.closeHourRaw ??
+C:\Users\glaub\palpitaco\src\pages\Dashboard\Dashboard.jsx:251: d.closeHour ??
+C:\Users\glaub\palpitaco\src\pages\Dashboard\Dashboard.jsx:253: d.closeHourBucket ??
+C:\Users\glaub\palpitaco\src\pages\Dashboard\Dashboard.jsx:565: function normalizeCloseHourForKpi(raw) {
+C:\Users\glaub\palpitaco\src\pages\Dashboard\Dashboard.jsx:591: d.closeHour ??
+C:\Users\glaub\palpitaco\src\pages\Dashboard\Dashboard.jsx:593: d.closeHourRaw ??
+C:\Users\glaub\palpitaco\src\pages\Dashboard\Dashboard.jsx:595: d.closeHourBucket ??
+C:\Users\glaub\palpitaco\src\pages\Dashboard\Dashboard.jsx:601: const ch = normalizeCloseHourForKpi(chRaw);
+C:\Users\glaub\palpitaco\src\pages\Dashboard\Dashboard.jsx:1116: closeHourBucket: null,
+C:\Users\glaub\palpitaco\src\pages\Dashboard\Dashboard.jsx:1196: const closeHourBucketLocal = useMemo(() => normalizeHourBucket(filters.horario), [filters.horario]);
+C:\Users\glaub\palpitaco\src\pages\Dashboard\Dashboard.jsx:1290: const wantBucket = closeHourBucketLocal;
+C:\Users\glaub\palpitaco\src\pages\Dashboard\Dashboard.jsx:1321: const b = normalizeHourBucket(getDrawCloseHour(d));
+C:\Users\glaub\palpitaco\src\pages\Dashboard\Dashboard.jsx:1362: closeHourBucketLocal,
+C:\Users\glaub\palpitaco\src\pages\Dashboard\Dashboard.jsx:1424: const out = buildPalpiteV2(drawsForView, { closeHourBucket: null });
+C:\Users\glaub\palpitaco\src\pages\Dashboard\Dashboard.jsx:1441: const b = normalizeHourBucket(getDrawCloseHour(d));
+C:\Users\glaub\palpitaco\src\pages\Downloads\Downloads.jsx:174: return normalizeHourLike(draw?.close_hour || draw?.closeHour || draw?.hour || draw?.hora || "");
+C:\Users\glaub\palpitaco\src\pages\Downloads\Downloads.jsx:805: closeHour: null,
+C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:118: * Converte um label de loteria (closeHour) pra bucket "09h"
+C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:144: * Retorna { ymd, closeHour }.
+C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:146: function pickLatestCloseHour(drawsLike) {
+C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:152: const ch = normalizeHourLike(d?.close_hour || d?.closeHour || d?.hour || d?.hora || "");
+C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:157: best = { ymd: d?.ymd || d?.date || "", closeHour: ch || "" };
+C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:164: // escolhe "mais recente" entre (ymd + closeHour)
+C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:170: const am = hourToMinutes(a?.lastCloseHour || "");
+C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:171: const bm = hourToMinutes(b?.lastCloseHour || "");
+C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:194: lastCloseHour: r?.lastCloseHour ? normalizeHourLike(r.lastCloseHour) : "",
+C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:209: const rec = byGrupo.get(g) || { grupo: g, lastYmd: null, lastCloseHour: "" };
+C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:211: const lastCloseHour = rec?.lastCloseHour ? normalizeHourLike(rec.lastCloseHour) : "";
+C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:218: lastCloseHour,
+C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:229: const ma = hourToMinutes(a.lastCloseHour);
+C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:230: const mb = hourToMinutes(b.lastCloseHour);
+C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:312: { id: "ALL", label: "Todos os horários", closeHour: null },
+C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:313: { id: "09", label: "09h", closeHour: "09:00" },
+C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:314: { id: "11", label: "11h", closeHour: "11:00" },
+C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:315: { id: "14", label: "14h", closeHour: "14:00" },
+C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:316: { id: "16", label: "16h", closeHour: "16:00" },
+C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:317: { id: "18", label: "18h", closeHour: "18:00" },
+C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:318: { id: "21", label: "21h", closeHour: "21:00" },
+C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:322: { id: "ALL", label: "Todos os horários", closeHour: null },
+C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:323: { id: "20", label: "20h", closeHour: "20:00" },
+C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:327: { id: "ALL", label: "Todos os horários", closeHour: null },
+C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:331: { id: "ALL", label: "Todos os horários", closeHour: null },
+C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:359: closeHour: "",
+C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:409: const selectedCloseHourBucket = useMemo(() => {
+C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:410: const raw = selectedHourOption?.closeHour;
+C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:468: if (!maxYmd) return { ymd: "", closeHour: "" };
+C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:473: closeHour: null,
+C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:474: closeHourBucket: null,
+C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:478: const latest = pickLatestCloseHour(dayResult);
+C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:479: if (latest?.ymd && latest?.closeHour) {
+C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:480: return { ymd: String(latest.ymd || maxYmd), closeHour: String(latest.closeHour || "") };
+C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:482: return { ymd: maxYmd, closeHour: "" };
+C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:561: closeHour: null,
+C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:562: closeHourBucket: selectedCloseHourBucket || null,
+C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:570: lastCloseHour: r?.lastHour || r?.lastCloseHour || "",
+C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:590: lastCloseHour: r?.lastCloseHour ? normalizeHourLike(r.lastCloseHour) : "",
+C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:600: const ma = hourToMinutes(a.lastCloseHour);
+C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:601: const mb = hourToMinutes(b.lastCloseHour);
+C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:650: selectedCloseHourBucket,
+C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:728: String(prev?.closeHour || "") !== String(next.closeHour || "");
+C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:764: const h = lastImported?.closeHour ? lastImported.closeHour : "";
+C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:1058: const hh = r.lastCloseHour ? normalizeHourLike(r.lastCloseHour) : "";
+C:\Users\glaub\palpitaco\src\pages\Results\Results.jsx:517: d?.close_hour || d?.closeHour || d?.hour || d?.hora || ""
+C:\Users\glaub\palpitaco\src\pages\Results\Results.jsx:533: const ha = safeStr(a?.close_hour || a?.closeHour || a?.hour || a?.hora);
+C:\Users\glaub\palpitaco\src\pages\Results\Results.jsx:534: const hb = safeStr(b?.close_hour || b?.closeHour || b?.hour || b?.hora);
+C:\Users\glaub\palpitaco\src\pages\Results\Results.jsx:668: draw?.close_hour || draw?.closeHour || draw?.hour || draw?.hora || ""
+C:\Users\glaub\palpitaco\src\pages\Results\Results.jsx:699: draw?.close_hour || draw?.closeHour || draw?.hour || draw?.hora || ""
+C:\Users\glaub\palpitaco\src\pages\Results\Results.jsx:706: draw?.close_hour || draw?.closeHour || draw?.hour || draw?.hora || ""
+C:\Users\glaub\palpitaco\src\pages\Results\Results.jsx:755: a?.__slotHour || a?.close_hour || a?.closeHour || a?.hour || a?.hora
+C:\Users\glaub\palpitaco\src\pages\Results\Results.jsx:758: b?.__slotHour || b?.close_hour || b?.closeHour || b?.hour || b?.hora
+C:\Users\glaub\palpitaco\src\pages\Results\Results.jsx:816: closeHour: hour,
+C:\Users\glaub\palpitaco\src\pages\Results\Results.jsx:830: a?.__slotHour || a?.close_hour || a?.closeHour || a?.hour || a?.hora
+C:\Users\glaub\palpitaco\src\pages\Results\Results.jsx:833: b?.__slotHour || b?.close_hour || b?.closeHour || b?.hour || b?.hora
+C:\Users\glaub\palpitaco\src\pages\Results\Results.jsx:995: closeHour: null,
+C:\Users\glaub\palpitaco\src\pages\Results\Results.jsx:996: closeHourBucket: null,
+C:\Users\glaub\palpitaco\src\pages\Results\Results.jsx:1011: hour: x?.close_hour || x?.closeHour || x?.hour || x?.hora || null,
+C:\Users\glaub\palpitaco\src\pages\Results\Results.jsx:1095: const ha = hourToNum(a?.close_hour || a?.closeHour || a?.hour || a?.hora);
+C:\Users\glaub\palpitaco\src\pages\Results\Results.jsx:1096: const hb = hourToNum(b?.close_hour || b?.closeHour || b?.hour || b?.hora);
+C:\Users\glaub\palpitaco\src\pages\Results\Results.jsx:1962: d?.close_hour || d?.closeHour || d?.hour || d?.hora || ""
+C:\Users\glaub\palpitaco\src\pages\Search\Search.jsx:668: const selectedCloseHourBucket = useMemo(() => {
+C:\Users\glaub\palpitaco\src\pages\Search\Search.jsx:758: closeHourBucket: null,
+C:\Users\glaub\palpitaco\src\pages\Search\Search.jsx:759: closeHour: selectedCloseHourBucket ? `${String(selectedCloseHourBucket).slice(0, 2)}:00` : null,
+C:\Users\glaub\palpitaco\src\pages\Search\Search.jsx:773: const closeRaw = normalizeHourLike(d?.close_hour || d?.closeHour || d?.hour || d?.hora || "");
+C:\Users\glaub\palpitaco\src\pages\Search\Search.jsx:777: if (selectedCloseHourBucket) {
+C:\Users\glaub\palpitaco\src\pages\Search\Search.jsx:779: if (b !== selectedCloseHourBucket) continue;
+C:\Users\glaub\palpitaco\src\pages\Search\Search.jsx:838: const closeHourDisplay = closeBucket || toHourBucket(closeRaw) || closeRaw || "";
+C:\Users\glaub\palpitaco\src\pages\Search\Search.jsx:842: close_hour: closeHourDisplay, // <<<<<< padrão bucket
+C:\Users\glaub\palpitaco\src\pages\Search\Search.jsx:894: selectedCloseHourBucket,
+C:\Users\glaub\palpitaco\src\pages\Statistics\Statistics.jsx:909: closeHourBucket: null,
+C:\Users\glaub\palpitaco\src\pages\Statistics\Statistics.jsx:910: closeHour: selectedHourBucket
+C:\Users\glaub\palpitaco\src\pages\Statistics\Statistics.jsx:936: draw?.closeHour ??
+C:\Users\glaub\palpitaco\src\pages\Top3\modules\scoreEngine\contextEvidence.js:26: if (ctx.closeHour)
+C:\Users\glaub\palpitaco\src\pages\Top3\modules\scoreEngine\contextEvidence.js:27: reasons.push(`Horário: ${ctx.closeHour}`);
+C:\Users\glaub\palpitaco\src\pages\Top3\modules\scoreEngine\contextEvidence.js:48: closeHour: context.hour || null,
+C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js:131: draw?.close_hour || draw?.closeHour || draw?.hour || draw?.hora || ""
+C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js:344: closeHour: null,
+C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js:131: draw?.close_hour || draw?.closeHour || draw?.hour || draw?.hora || ""
+C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js:344: closeHour: null,
+C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.js:136: draw?.close_hour || draw?.closeHour || draw?.hour || draw?.hora || ""
+C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.js:473: closeHour: null,
+C:\Users\glaub\palpitaco\src\services\auditKingCounts.js:60: function extractRawCloseHourFromDraw(d) {
+C:\Users\glaub\palpitaco\src\services\auditKingCounts.js:62: return d.close_hour ?? d.closeHour ?? d.hour ?? d.hora ?? null;
+C:\Users\glaub\palpitaco\src\services\auditKingCounts.js:197: const hh = normalizeHourLike(extractRawCloseHourFromDraw(d)) || "";
+C:\Users\glaub\palpitaco\src\services\auditKingCounts.js:272: const drawHour = normalizeHourLike(extractRawCloseHourFromDraw(d));
+C:\Users\glaub\palpitaco\src\services\auditKingCounts.js:313: close_hour: extractRawCloseHourFromDraw(d) || null,
+C:\Users\glaub\palpitaco\src\services\auditKingCounts.js:398: let invalidCloseHourCount = 0;
+C:\Users\glaub\palpitaco\src\services\auditKingCounts.js:415: const hhmm = normalizeHourLike(extractRawCloseHourFromDraw(d));
+C:\Users\glaub\palpitaco\src\services\auditKingCounts.js:416: if (!hhmm || !isValidHHMM(hhmm)) invalidCloseHourCount += 1;
+C:\Users\glaub\palpitaco\src\services\auditKingCounts.js:464: invalidCloseHourCount,
+C:\Users\glaub\palpitaco\src\services\kingResultsService.js:259: - bucket SOMENTE via closeHourBucket
+C:\Users\glaub\palpitaco\src\services\kingResultsService.js:260: - exact  SOMENTE via closeHour
+C:\Users\glaub\palpitaco\src\services\kingResultsService.js:264: function resolveHourFilter({ closeHour = null, closeHourBucket = null }) {
+C:\Users\glaub\palpitaco\src\services\kingResultsService.js:265: const bucket = toHourBucket(closeHourBucket);
+C:\Users\glaub\palpitaco\src\services\kingResultsService.js:268: const hhmm = closeHour ? normalizeHourLike(closeHour) : null;
+C:\Users\glaub\palpitaco\src\services\kingResultsService.js:278: draw?.close_hour ?? draw?.closeHour ?? draw?.hour ?? draw?.hora ?? "";
+C:\Users\glaub\palpitaco\src\services\kingResultsService.js:402: const hour = normalizeHourLike(raw.close_hour || raw.closeHour || "");
+C:\Users\glaub\palpitaco\src\services\kingResultsService.js:420: close_hour: hour || raw.close_hour || raw.closeHour || "",
+C:\Users\glaub\palpitaco\src\services\kingResultsService.js:421: closeHour: hour || raw.closeHour || raw.close_hour || "",
+C:\Users\glaub\palpitaco\src\services\kingResultsService.js:551: d.close_hour ?? d.closeHour ?? d.hour ?? d.hora ?? ""
+C:\Users\glaub\palpitaco\src\services\kingResultsService.js:578: closeHour: hourNorm,
+C:\Users\glaub\palpitaco\src\services\kingResultsService.js:1087: draw?.close_hour || draw?.closeHour || draw?.hour || draw?.hora || ""
+C:\Users\glaub\palpitaco\src\services\kingResultsService.js:1169: closeHour = null,
+C:\Users\glaub\palpitaco\src\services\kingResultsService.js:1170: closeHourBucket = null,
+C:\Users\glaub\palpitaco\src\services\kingResultsService.js:1181: const hourFilter = resolveHourFilter({ closeHour, closeHourBucket });
+C:\Users\glaub\palpitaco\src\services\kingResultsService.js:1363: closeHour = null,
+C:\Users\glaub\palpitaco\src\services\kingResultsService.js:1364: closeHourBucket = null,
+C:\Users\glaub\palpitaco\src\services\kingResultsService.js:1382: const hourFilter = resolveHourFilter({ closeHour, closeHourBucket });
+C:\Users\glaub\palpitaco\src\services\kingResultsService.js:1446: closeHour,
+C:\Users\glaub\palpitaco\src\services\kingResultsService.js:1447: closeHourBucket,
+C:\Users\glaub\palpitaco\src\services\kingResultsService.js:1516: closeHour,
+C:\Users\glaub\palpitaco\src\services\kingResultsService.js:1517: closeHourBucket,
+C:\Users\glaub\palpitaco\src\services\kingResultsService.js:1686: closeHour = null,
+C:\Users\glaub\palpitaco\src\services\kingResultsService.js:1687: closeHourBucket = null,
+C:\Users\glaub\palpitaco\src\services\kingResultsService.js:1702: const hourFilter = resolveHourFilter({ closeHour, closeHourBucket });
+C:\Users\glaub\palpitaco\src\services\kingResultsService.js:1748: closeHour,
+C:\Users\glaub\palpitaco\src\services\kingResultsService.js:1749: closeHourBucket,
+C:\Users\glaub\palpitaco\src\services\kingResultsService.js:1777: hour: d.close_hour || d.closeHour || "",
+C:\Users\glaub\palpitaco\src\services\statsSignals.js:198: draw?.close_hour || draw?.closeHour || draw?.hour || draw?.hora || ""
+C:\Users\glaub\palpitaco\src\utils\buildPalpites.js:192: function getDrawCloseHour(d) {
+C:\Users\glaub\palpitaco\src\utils\buildPalpites.js:193: return String(d?.close_hour ?? d?.closeHour ?? d?.hour ?? d?.hora ?? "").trim();
+C:\Users\glaub\palpitaco\src\utils\buildPalpites.js:196: function toHourNum(closeHour) {
+C:\Users\glaub\palpitaco\src\utils\buildPalpites.js:197: const s = String(closeHour || "").trim();
+C:\Users\glaub\palpitaco\src\utils\buildPalpites.js:211: function toHourBucketLabel(closeHour) {
+C:\Users\glaub\palpitaco\src\utils\buildPalpites.js:212: const s = String(closeHour || "").trim();
+C:\Users\glaub\palpitaco\src\utils\buildPalpites.js:244: `${getDrawYmd(d) || ""}__${normalizeHourLike(getDrawCloseHour(d) || "")}`;
+C:\Users\glaub\palpitaco\src\utils\buildPalpites.js:260: return toHourNum(normalizeHourLike(getDrawCloseHour(a))) - toHourNum(normalizeHourLike(getDrawCloseHour(b)));
+C:\Users\glaub\palpitaco\src\utils\buildPalpites.js:324: * - closeHourBucket: "09h" | "11h" | etc
+C:\Users\glaub\palpitaco\src\utils\buildPalpites.js:329: const closeHourBucket = opts.closeHourBucket ? String(opts.closeHourBucket).trim() : null;
+C:\Users\glaub\palpitaco\src\utils\buildPalpites.js:336: if (closeHourBucket) {
+C:\Users\glaub\palpitaco\src\utils\buildPalpites.js:337: base = base.filter((d) => toHourBucketLabel(getDrawCloseHour(d)) === closeHourBucket);
+C:\Users\glaub\palpitaco\src\utils\buildPalpites.js:416: usedBucket: closeHourBucket || null,
+C:\Users\glaub\palpitaco\src\utils\buildPalpites.js:425: * - closeHourBucket: "09h" | "11h" | etc (opcional)
+C:\Users\glaub\palpitaco\src\utils\buildPalpites.js:432: const closeHourBucket = opts.closeHourBucket ? String(opts.closeHourBucket).trim() : null;
+C:\Users\glaub\palpitaco\src\utils\buildPalpites.js:436: if (closeHourBucket) {
+C:\Users\glaub\palpitaco\src\utils\buildPalpites.js:437: base = base.filter((d) => toHourBucketLabel(getDrawCloseHour(d)) === closeHourBucket);
+C:\Users\glaub\palpitaco\src\utils\buildPalpites.js:523: usedBucket: closeHourBucket || null,
+C:\Users\glaub\palpitaco\src\utils\buildRanking.js:131: return String(d.close_hour ?? d.closeHour ?? d.hour ?? d.hora ?? "").trim();
+
+----------------------------------------------------------------------------------------------------
+PADRÃO: close_hour
+----------------------------------------------------------------------------------------------------
+C:\Users\glaub\palpitaco\backend\engine\historicalQueryEngine.js:55: q = q.where("close_hour","==",filters.closeHour);
+C:\Users\glaub\palpitaco\backend\engine\historicalQueryEngine.js:120: closeHour: data.close_hour,
+C:\Users\glaub\palpitaco\backend\engine\predictionModel.js:44: close_hour: String(closeHour || "").trim() || null,
+C:\Users\glaub\palpitaco\backend\engine\scoreEngineE08Experimental.js:58: draw?.close_hour ??
+C:\Users\glaub\palpitaco\backend\engine\scoreEngineV4Experimental.js:80: draw?.close_hour ??
+C:\Users\glaub\palpitaco\backend\engine\top3HistoryRepository.js:201: draw.close_hour ||
+C:\Users\glaub\palpitaco\backend\routes\kingDraws.js:64: .map((d) => String(d?.close_hour || "").trim())
+C:\Users\glaub\palpitaco\backend\routes\kingDraws.js:304: close_hour: normalizeHHMM(data.close_hour ?? data.close ?? data.hour),
+C:\Users\glaub\palpitaco\backend\routes\kingDraws.js:309: return cmpHHMM(a.close_hour, b.close_hour);
+C:\Users\glaub\palpitaco\backend\routes\kingDraws.js:316: return cmpHHMM(a.close_hour, b.close_hour);
+C:\Users\glaub\palpitaco\backend\routes\kingDraws.js:328: return inRangeHHMM(d.close_hour, from || "", to || "");
+C:\Users\glaub\palpitaco\backend\routes\pitacoResults.js:210: * Pega o melhor candidato de close_hour em docs legados.
+C:\Users\glaub\palpitaco\backend\routes\pitacoResults.js:215: d?.close_hour ??
+C:\Users\glaub\palpitaco\backend\routes\pitacoResults.js:217: d?.close_hour_raw ??
+C:\Users\glaub\palpitaco\backend\routes\pitacoResults.js:229: * Normaliza close_hour para SLOT (compatível com import):
+C:\Users\glaub\palpitaco\backend\routes\pitacoResults.js:839: close_hour: slot || normalizeHHMM(d.close_hour),
+C:\Users\glaub\palpitaco\backend\routes\pitacoResults.js:840: close_hour_raw: raw || d.close_hour_raw || null,
+C:\Users\glaub\palpitaco\backend\routes\pitacoResults.js:845: drawsNoPrizes.sort((a, b) => cmpHHMM(a.close_hour, b.close_hour));
+C:\Users\glaub\palpitaco\backend\routes\pitacoResults.js:849: const hh = hourFromCloseHourSlot(dr?.close_hour, lotteryKey);
+C:\Users\glaub\palpitaco\backend\routes\pitacoResults.js:855: const a = String(prev.close_hour || "");
+C:\Users\glaub\palpitaco\backend\routes\pitacoResults.js:856: const b = String(dr.close_hour || "");
+C:\Users\glaub\palpitaco\backend\routes\pitacoResults.js:947: close_hour: slot || normalizeHHMM(d.close_hour),
+C:\Users\glaub\palpitaco\backend\routes\pitacoResults.js:948: close_hour_raw: raw || d.close_hour_raw || null,
+C:\Users\glaub\palpitaco\backend\routes\pitacoResults.js:953: draws.sort((a, b) => cmpHHMM(a.close_hour, b.close_hour));
+C:\Users\glaub\palpitaco\backend\routes\pitacoResults.js:957: const hh = hourFromCloseHourSlot(dr?.close_hour, lotteryKey);
+C:\Users\glaub\palpitaco\backend\routes\pitacoResults.js:963: const a = String(prev.close_hour || "");
+C:\Users\glaub\palpitaco\backend\routes\pitacoResults.js:964: const b = String(dr.close_hour || "");
+C:\Users\glaub\palpitaco\backend\routes\receiveResults.js:223: close_hour: close,
+C:\Users\glaub\palpitaco\backend\routes\receiveResults.js:258: close_hour: close,
+C:\Users\glaub\palpitaco\backend\scripts\auditCoverage.js:58: const key=d.ymd+"|"+normHour(d.close_hour||d.hour);
+C:\Users\glaub\palpitaco\backend\scripts\auditDrawsBoundsAndCounts.js:112: docData?.close_hour ??
+C:\Users\glaub\palpitaco\backend\scripts\auditDrawsBoundsAndCounts.js:114: docData?.close_hour_raw ??
+C:\Users\glaub\palpitaco\backend\scripts\auditDrawSlotsRange.js:667: d.close_hour ??
+C:\Users\glaub\palpitaco\backend\scripts\auditDrawSlotsRange.js:669: d.close_hour_raw ??
+C:\Users\glaub\palpitaco\backend\scripts\auditDrawSlotsRange.js:670: d.close_hourRaw ??
+C:\Users\glaub\palpitaco\backend\scripts\auditFastPtRio.js:39: const hour = normHour(d.close_hour || d.hour);
+C:\Users\glaub\palpitaco\backend\scripts\auditFederalContent.js:69: const slot = normalizeCloseHourForFederal(d.close_hour || d.close || d.hour || "");
+C:\Users\glaub\palpitaco\backend\scripts\auditFederalContent.js:111: const slot = normalizeCloseHourForFederal(draw?.close_hour || "");
+C:\Users\glaub\palpitaco\backend\scripts\auditFederalContestContent.js:54: obj?.close_hour ??
+C:\Users\glaub\palpitaco\backend\scripts\auditFederalDateContent.js:65: close_hour: String(d.close_hour || d.closeHour || d.hour || "").trim(),
+C:\Users\glaub\palpitaco\backend\scripts\auditFederalDateContent.js:98: sourceCloseHour: String(source?.close_hour || ""),
+C:\Users\glaub\palpitaco\backend\scripts\auditFederalDateContent.js:100: firestoreHours: fsRows.map((x) => x.close_hour),
+C:\Users\glaub\palpitaco\backend\scripts\auditFederalStructure.js:42: close_hour: String(d.close_hour || d.closeHour || d.hour || "").trim(),
+C:\Users\glaub\palpitaco\backend\scripts\auditFederalStructure.js:81: console.log(`  ${r.id} | hora=${r.close_hour || "-"} | concurso=${r.contest || "-"}`);
+C:\Users\glaub\palpitaco\backend\scripts\auditFederalStructure.js:98: console.log(`  ${r.date} | ${r.id} | hora=${r.close_hour || "-"}`);
+C:\Users\glaub\palpitaco\backend\scripts\auditFederalStructure.js:111: console.log(`  ${r.id} | hora=${r.close_hour || "-"} | concurso=${r.contest || "-"}`);
+C:\Users\glaub\palpitaco\backend\scripts\auditFirestorePtRioRange.js:39: const hour = normHour(d.close_hour || d.hour);
+C:\Users\glaub\palpitaco\backend\scripts\auditHistoricalGaps.js:246: d.close_hour ||
+C:\Users\glaub\palpitaco\backend\scripts\auditHistoricalGaps.js:248: d.close_hour_raw ||
+C:\Users\glaub\palpitaco\backend\scripts\auditPredictionRuns.js:30: close_hour: data.close_hour,
+C:\Users\glaub\palpitaco\backend\scripts\auditPtRioContent.js:69: const slot = normalizeCloseHourForPtRio(d.close_hour || d.close || d.hour || "");
+C:\Users\glaub\palpitaco\backend\scripts\auditPtRioContent.js:111: const slot = normalizeCloseHourForPtRio(draw?.close_hour || "");
+C:\Users\glaub\palpitaco\backend\scripts\auditRealGradePtRio.js:58: const hour = normHour(d.close_hour || d.hour);
+C:\Users\glaub\palpitaco\backend\scripts\auditSpecificDays.js:17: hour: d.close_hour || d.hour,
+C:\Users\glaub\palpitaco\backend\scripts\autoImportToday.js:891: (draw.close_hour ||
+C:\Users\glaub\palpitaco\backend\scripts\autoImportToday.js:897: draw.close_hour_raw)) ??
+C:\Users\glaub\palpitaco\backend\scripts\autoImportToday.js:931: const v = (s && (s.hour || s.close_hour || s.closeHour || s.close || s.slot || s.time || s.close_hour_raw)) ?? "";
+C:\Users\glaub\palpitaco\backend\scripts\autoRepairToday.js:58: close_hour: normalizeHHMM(d.close_hour || d.close || d.hour || ""),
+C:\Users\glaub\palpitaco\backend\scripts\autoRepairToday.js:62: const pt = Array.from(new Set(rows.filter(x => x.lottery_key === "PT_RIO").map(x => x.close_hour).filter(Boolean))).sort();
+C:\Users\glaub\palpitaco\backend\scripts\autoRepairToday.js:63: const fed = Array.from(new Set(rows.filter(x => x.lottery_key === "FEDERAL").map(x => x.close_hour).filter(Boolean))).sort();
+C:\Users\glaub\palpitaco\backend\scripts\checkOneDraw.js:104: const raw = d.close_hour ?? "";
+C:\Users\glaub\palpitaco\backend\scripts\checkOneDraw.js:110: console.log(`[LIST] ${lotteryKey} ${ymd} close_hours (${hours.length}): ${hours.join(", ")}`);
+C:\Users\glaub\palpitaco\backend\scripts\checkOneDraw.js:156: .where("close_hour", "in", chunk)
+C:\Users\glaub\palpitaco\backend\scripts\checkOneDraw.js:167: `[CHECK] NOT FOUND: lottery=${lotteryKey} ymd=${ymd} close_hour≈${closeHour} (tol=${tol})`
+C:\Users\glaub\palpitaco\backend\scripts\checkOneDraw.js:177: `[CHECK] FOUND ${uniq.size} unique doc(s): lottery=${lotteryKey} ymd=${ymd} close_hour≈${closeHour}`
+C:\Users\glaub\palpitaco\backend\scripts\checkOneDraw.js:186: console.log("close_hour:", d.close_hour ?? null);
+C:\Users\glaub\palpitaco\backend\scripts\findDuplicatesDraws.js:148: d.close_hour || d.closeHour || d.hour || d.hora || ""
+C:\Users\glaub\palpitaco\backend\scripts\findDuplicatesDraws.js:158: close_hour: d.close_hour ?? d.closeHour ?? null,
+C:\Users\glaub\palpitaco\backend\scripts\findDuplicatesDraws.js:159: close_hour_raw: d.close_hour_raw ?? d.closeHourRaw ?? null,
+C:\Users\glaub\palpitaco\backend\scripts\findDuplicatesDraws.js:211: d.close_hour,
+C:\Users\glaub\palpitaco\backend\scripts\findDuplicatesDraws.js:217: d.close_hour_raw,
+C:\Users\glaub\palpitaco\backend\scripts\genPtRioCalendarRules.js:82: .select("ymd", "date", "close_hour")
+C:\Users\glaub\palpitaco\backend\scripts\genPtRioCalendarRules.js:93: const h = normalizeHHMM(d.close_hour);
+C:\Users\glaub\palpitaco\backend\scripts\importKingApostas.js:374: * ✅ Normaliza close_hour para SLOT (campo de negócio)
+C:\Users\glaub\palpitaco\backend\scripts\importKingApostas.js:381: *   e NÃO persistimos close_hour_raw (vira "").
+C:\Users\glaub\palpitaco\backend\scripts\importKingApostas.js:404: // Preservamos o horário bruto em close_hour_raw e gravamos HH:00 em close_hour.
+C:\Users\glaub\palpitaco\backend\scripts\importKingApostas.js:414: // ✅ se vier HH:09, é marcação (não minuto real) -> não grava close_hour_raw
+C:\Users\glaub\palpitaco\backend\scripts\importKingApostas.js:429: draw?.close_hour || "",
+C:\Users\glaub\palpitaco\backend\scripts\importKingApostas.js:532: * Observação: a API pode consolidar em 1 draw por close_hour, mesmo havendo múltiplos IDs aqui.
+C:\Users\glaub\palpitaco\backend\scripts\importKingApostas.js:856: * Dedup key: date + close_hour(SLOT) + lottery_id (se existir)
+C:\Users\glaub\palpitaco\backend\scripts\importKingApostas.js:944: normalizeHHMM(d?.close_hour ?? d?.closeHour ?? d?.horario ?? d?.close ?? "");
+C:\Users\glaub\palpitaco\backend\scripts\importKingApostas.js:975: `[FETCH:PART] ${lk} ${date} lotteryId=${lotteryId} draws=${list.length} close_hours=[${closesPart.join(
+C:\Users\glaub\palpitaco\backend\scripts\importKingApostas.js:1006: } close_hours=[${closes.join(", ")}]${errInfo}`
+C:\Users\glaub\palpitaco\backend\scripts\importKingApostas.js:1026: * ✅ Agora usa close_hour SLOT no ID e guarda close_hour_raw (quando fizer sentido).
+C:\Users\glaub\palpitaco\backend\scripts\importKingApostas.js:1043: // e permanece preservado apenas em close_hour_raw.
+C:\Users\glaub\palpitaco\backend\scripts\importKingApostas.js:1086: * - close_hour + lottery_key/lotteryKey filtrados em memória
+C:\Users\glaub\palpitaco\backend\scripts\importKingApostas.js:1089: * - Normaliza o close_hour armazenado (pode existir legado "09:09")
+C:\Users\glaub\palpitaco\backend\scripts\importKingApostas.js:1112: const storedSlot = normalizeCloseHourForLottery(d.close_hour || "", lk).slot;
+C:\Users\glaub\palpitaco\backend\scripts\importKingApostas.js:1284: close_hour: closeSlot,
+C:\Users\glaub\palpitaco\backend\scripts\importKingApostas.js:1292: close_hour_raw: closeRaw || null,
+C:\Users\glaub\palpitaco\backend\scripts\importKingApostas.js:1429: const slot = String(r.close_hour || "").trim();
+C:\Users\glaub\palpitaco\backend\scripts\importKingApostas.js:1636: // ✅ Se pediram closeHour e ele NÃO existe no dia (close_hours do FETCH), retorna blocked/api_missing_slot
+C:\Users\glaub\palpitaco\backend\scripts\importKingApostas.js:1913: : "close_hour_missing",
+C:\Users\glaub\palpitaco\backend\scripts\integrityCheck.js:30: hour: normalizeHour(d.close_hour || d.hour),
+C:\Users\glaub\palpitaco\backend\scripts\lastDrawsFirestore.js:10: .orderBy("close_hour","desc")
+C:\Users\glaub\palpitaco\backend\scripts\lastDrawsFirestore.js:24: hour: d.close_hour,
+C:\Users\glaub\palpitaco\backend\scripts\lintSourceGaps.js:56: .where("close_hour", "==", close)
+C:\Users\glaub\palpitaco\backend\scripts\listDrawDuplicates.js:156: d.close_hour || d.closeHour || d.hour || d.hora || ""
+C:\Users\glaub\palpitaco\backend\scripts\listDrawDuplicates.js:166: close_hour: d.close_hour ?? d.closeHour ?? null,
+C:\Users\glaub\palpitaco\backend\scripts\listDrawDuplicates.js:167: close_hour_raw: d.close_hour_raw ?? d.closeHourRaw ?? null,
+C:\Users\glaub\palpitaco\backend\scripts\listDrawDuplicates.js:219: d.close_hour,
+C:\Users\glaub\palpitaco\backend\scripts\listDrawDuplicates.js:225: d.close_hour_raw,
+C:\Users\glaub\palpitaco\backend\scripts\planBackfillFromAudit.js:374: hourFromCloseHour(d?.close_hour ?? d?.closeHour ?? d?.hora ?? d?.hour)
+C:\Users\glaub\palpitaco\backend\scripts\probeFederalSwitch.js:17: .select("ymd", "date", "close_hour", "close", "close_hour_raw")
+C:\Users\glaub\palpitaco\backend\scripts\probeFederalSwitch.js:26: const ch = hh(d.close_hour || d.close || d.close_hour_raw);
+C:\Users\glaub\palpitaco\backend\scripts\probeKingLotteryIds.js:65: .map((d) => String(d?.close_hour || d?.closeHour || "").trim())
+C:\Users\glaub\palpitaco\backend\scripts\probeKingLotteryIds.js:71: console.log(`[PROBE] id=${id} ok=${ok} draws=${n} close_hours=[${closes.join(", ")}]`);
+C:\Users\glaub\palpitaco\backend\scripts\reconcileKingFirestore.js:48: const hour = normHour(d.close_hour || d.hour);
+C:\Users\glaub\palpitaco\backend\scripts\reconcileKingFirestore.js:70: const hour = normHour(draw?.close_hour || draw?.closeHour || draw?.hour || draw?.hora);
+C:\Users\glaub\palpitaco\backend\scripts\runBackfillFromPlan.js:73: * Gera candidatos de close_hour:
+C:\Users\glaub\palpitaco\backend\server.js:475: const close_hour = normalizeHourLike(
+C:\Users\glaub\palpitaco\backend\server.js:476: d.close_hour ?? d.closeHour ?? d.hour ?? d.hora ?? ""
+C:\Users\glaub\palpitaco\backend\server.js:500: if (toHourBucket(close_hour) !== hourBucket) return;
+C:\Users\glaub\palpitaco\backend\server.js:506: close_hour,
+C:\Users\glaub\palpitaco\backend\server.js:514: draws.sort((a, b) => hourToNumSafe(b.close_hour) - hourToNumSafe(a.close_hour));
+C:\Users\glaub\palpitaco\backend\server.js:602: closeHour: d.close_hour || "",
+C:\Users\glaub\palpitaco\src\hooks\useKingRanking.js:110: return String(d.close_hour ?? d.closeHour ?? d.hour ?? d.hora ?? "").trim();
+C:\Users\glaub\palpitaco\src\hooks\useKingRanking.js:189: close_hour: closeHour || "",
+C:\Users\glaub\palpitaco\src\hooks\useKingRanking.js:599: unique = unique.filter((d) => toHourBucketLabel(d?.close_hour) === bucketNorm);
+C:\Users\glaub\palpitaco\src\pages\Centenas\centenas.utils.js:132: draw?.close_hour,
+C:\Users\glaub\palpitaco\src\pages\Centenas\centenas.utils.js:144: nested?.close_hour,
+C:\Users\glaub\palpitaco\src\pages\Centenas\centenas.utils.js:390: prize?.close_hour,
+C:\Users\glaub\palpitaco\src\pages\Centenas\CentenasView.jsx:29: * - Firestore/King pode salvar close_hour como 21:10 / 11:10 etc.
+C:\Users\glaub\palpitaco\src\pages\Centenas\CentenasView.jsx:275: const directCandidates = [draw?.closeHour, draw?.hour, draw?.horario, draw?.close_hour, draw?.close];
+C:\Users\glaub\palpitaco\src\pages\Centenas\CentenasView.jsx:285: nested?.close_hour,
+C:\Users\glaub\palpitaco\src\pages\Centenas\CentenasView.jsx:517: prize?.close_hour,
+C:\Users\glaub\palpitaco\src\pages\Dashboard\components\ChartsGrid.jsx:107: /** ✅ Resolve close_hour independente do nome do campo */
+C:\Users\glaub\palpitaco\src\pages\Dashboard\components\ChartsGrid.jsx:111: draw.close_hour ?? draw.closeHour ?? draw.hour ?? draw.hora ?? ""
+C:\Users\glaub\palpitaco\src\pages\Dashboard\components\ChartsGrid.jsx:151: /** ✅ Normaliza close_hour para HH:MM */
+C:\Users\glaub\palpitaco\src\pages\Dashboard\components\SearchResultsTable.jsx:217: safeStr(r?.close_hour) ||
+C:\Users\glaub\palpitaco\src\pages\Dashboard\components\SearchResultsTable.jsx:330: const close_hour_raw = pickHour(r);
+C:\Users\glaub\palpitaco\src\pages\Dashboard\components\SearchResultsTable.jsx:331: const close_hour = hourBucketFromAny(close_hour_raw); // ✅ PADRÃO "09h"
+C:\Users\glaub\palpitaco\src\pages\Dashboard\components\SearchResultsTable.jsx:339: close_hour,
+C:\Users\glaub\palpitaco\src\pages\Dashboard\components\SearchResultsTable.jsx:519: const key = `${r.ymd || "x"}-${r.close_hour || "h"}-${r.position ?? "p"}-${r.milhar4 || "n"}-${r.__idx}`;
+C:\Users\glaub\palpitaco\src\pages\Dashboard\components\SearchResultsTable.jsx:524: <td>{r.close_hour || "—"}</td>
+C:\Users\glaub\palpitaco\src\pages\Dashboard\Dashboard.jsx:248: d.close_hour_raw ??
+C:\Users\glaub\palpitaco\src\pages\Dashboard\Dashboard.jsx:250: d.close_hour ??
+C:\Users\glaub\palpitaco\src\pages\Dashboard\Dashboard.jsx:252: d.close_hour_bucket ??
+C:\Users\glaub\palpitaco\src\pages\Dashboard\Dashboard.jsx:590: d.close_hour ??
+C:\Users\glaub\palpitaco\src\pages\Dashboard\Dashboard.jsx:592: d.close_hour_raw ??
+C:\Users\glaub\palpitaco\src\pages\Dashboard\Dashboard.jsx:594: d.close_hour_bucket ??
+C:\Users\glaub\palpitaco\src\pages\Dashboard\Dashboard.jsx:1632: "2) Query ainda está batendo em 'date' ou em campo diferente do esperado (ymd/uf/lottery_key/close_hour).\n" +
+C:\Users\glaub\palpitaco\src\pages\Downloads\Downloads.jsx:174: return normalizeHourLike(draw?.close_hour || draw?.closeHour || draw?.hour || draw?.hora || "");
+C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:23: * - Detecta "último sorteio importado" (maxYmd + maior close_hour do dia)
+C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:24: * - Se mudar maxYmd ou close_hour do último sorteio -> refresh automático
+C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:143: * ✅ Pega a maior close_hour existente em um conjunto de draws
+C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:152: const ch = normalizeHourLike(d?.close_hour || d?.closeHour || d?.hour || d?.hora || "");
+C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:465: * sempre calcula por (maxYmd + maior close_hour do dia), sem depender do prizeMode/lottery selecionada.
+C:\Users\glaub\palpitaco\src\pages\Results\Results.jsx:517: d?.close_hour || d?.closeHour || d?.hour || d?.hora || ""
+C:\Users\glaub\palpitaco\src\pages\Results\Results.jsx:533: const ha = safeStr(a?.close_hour || a?.closeHour || a?.hour || a?.hora);
+C:\Users\glaub\palpitaco\src\pages\Results\Results.jsx:534: const hb = safeStr(b?.close_hour || b?.closeHour || b?.hour || b?.hora);
+C:\Users\glaub\palpitaco\src\pages\Results\Results.jsx:668: draw?.close_hour || draw?.closeHour || draw?.hour || draw?.hora || ""
+C:\Users\glaub\palpitaco\src\pages\Results\Results.jsx:699: draw?.close_hour || draw?.closeHour || draw?.hour || draw?.hora || ""
+C:\Users\glaub\palpitaco\src\pages\Results\Results.jsx:706: draw?.close_hour || draw?.closeHour || draw?.hour || draw?.hora || ""
+C:\Users\glaub\palpitaco\src\pages\Results\Results.jsx:755: a?.__slotHour || a?.close_hour || a?.closeHour || a?.hour || a?.hora
+C:\Users\glaub\palpitaco\src\pages\Results\Results.jsx:758: b?.__slotHour || b?.close_hour || b?.closeHour || b?.hour || b?.hora
+C:\Users\glaub\palpitaco\src\pages\Results\Results.jsx:815: close_hour: hour,
+C:\Users\glaub\palpitaco\src\pages\Results\Results.jsx:830: a?.__slotHour || a?.close_hour || a?.closeHour || a?.hour || a?.hora
+C:\Users\glaub\palpitaco\src\pages\Results\Results.jsx:833: b?.__slotHour || b?.close_hour || b?.closeHour || b?.hour || b?.hora
+C:\Users\glaub\palpitaco\src\pages\Results\Results.jsx:1011: hour: x?.close_hour || x?.closeHour || x?.hour || x?.hora || null,
+C:\Users\glaub\palpitaco\src\pages\Results\Results.jsx:1095: const ha = hourToNum(a?.close_hour || a?.closeHour || a?.hour || a?.hora);
+C:\Users\glaub\palpitaco\src\pages\Results\Results.jsx:1096: const hb = hourToNum(b?.close_hour || b?.closeHour || b?.hour || b?.hora);
+C:\Users\glaub\palpitaco\src\pages\Results\Results.jsx:1962: d?.close_hour || d?.closeHour || d?.hour || d?.hora || ""
+C:\Users\glaub\palpitaco\src\pages\Search\Search.jsx:773: const closeRaw = normalizeHourLike(d?.close_hour || d?.closeHour || d?.hour || d?.hora || "");
+C:\Users\glaub\palpitaco\src\pages\Search\Search.jsx:774: const closeBucket = toHourBucket(closeRaw) || toHourBucket(d?.close_hour_bucket) || null;
+C:\Users\glaub\palpitaco\src\pages\Search\Search.jsx:842: close_hour: closeHourDisplay, // <<<<<< padrão bucket
+C:\Users\glaub\palpitaco\src\pages\Search\Search.jsx:873: const ha = hourRank(a.close_hour);
+C:\Users\glaub\palpitaco\src\pages\Search\Search.jsx:874: const hb = hourRank(b.close_hour);
+C:\Users\glaub\palpitaco\src\pages\Statistics\Statistics.jsx:935: draw?.close_hour ??
+C:\Users\glaub\palpitaco\src\pages\Statistics\Statistics.jsx:939: draw?.close_hour_bucket ??
+C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js:131: draw?.close_hour || draw?.closeHour || draw?.hour || draw?.hora || ""
+C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js:131: draw?.close_hour || draw?.closeHour || draw?.hour || draw?.hora || ""
+C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.js:136: draw?.close_hour || draw?.closeHour || draw?.hour || draw?.hora || ""
+C:\Users\glaub\palpitaco\src\services\auditKingCounts.js:62: return d.close_hour ?? d.closeHour ?? d.hour ?? d.hora ?? null;
+C:\Users\glaub\palpitaco\src\services\auditKingCounts.js:182: - fallback: uf/lottery + ymd + close_hour_norm
+C:\Users\glaub\palpitaco\src\services\auditKingCounts.js:231: *  { date|ymd|..., close_hour|..., prizes: [{ grupo, animal, position? }] }
+C:\Users\glaub\palpitaco\src\services\auditKingCounts.js:271: // normaliza close_hour do draw (se existir)
+C:\Users\glaub\palpitaco\src\services\auditKingCounts.js:313: close_hour: extractRawCloseHourFromDraw(d) || null,
+C:\Users\glaub\palpitaco\src\services\auditKingCounts.js:314: close_hour_norm: drawHour,
+C:\Users\glaub\palpitaco\src\services\kingResultsService.js:278: draw?.close_hour ?? draw?.closeHour ?? draw?.hour ?? draw?.hora ?? "";
+C:\Users\glaub\palpitaco\src\services\kingResultsService.js:334: const ha = toNum(a?.close_hour);
+C:\Users\glaub\palpitaco\src\services\kingResultsService.js:335: const hb = toNum(b?.close_hour);
+C:\Users\glaub\palpitaco\src\services\kingResultsService.js:361: const ha = toNum(a?.close_hour);
+C:\Users\glaub\palpitaco\src\services\kingResultsService.js:362: const hb = toNum(b?.close_hour);
+C:\Users\glaub\palpitaco\src\services\kingResultsService.js:394: const hasLogical = !!(d?.ymd && d?.close_hour);
+C:\Users\glaub\palpitaco\src\services\kingResultsService.js:402: const hour = normalizeHourLike(raw.close_hour || raw.closeHour || "");
+C:\Users\glaub\palpitaco\src\services\kingResultsService.js:420: close_hour: hour || raw.close_hour || raw.closeHour || "",
+C:\Users\glaub\palpitaco\src\services\kingResultsService.js:421: closeHour: hour || raw.closeHour || raw.close_hour || "",
+C:\Users\glaub\palpitaco\src\services\kingResultsService.js:551: d.close_hour ?? d.closeHour ?? d.hour ?? d.hora ?? ""
+C:\Users\glaub\palpitaco\src\services\kingResultsService.js:577: close_hour: hourNorm,
+C:\Users\glaub\palpitaco\src\services\kingResultsService.js:1087: draw?.close_hour || draw?.closeHour || draw?.hour || draw?.hora || ""
+C:\Users\glaub\palpitaco\src\services\kingResultsService.js:1777: hour: d.close_hour || d.closeHour || "",
+C:\Users\glaub\palpitaco\src\services\statsSignals.js:198: draw?.close_hour || draw?.closeHour || draw?.hour || draw?.hora || ""
+C:\Users\glaub\palpitaco\src\utils\buildPalpites.js:193: return String(d?.close_hour ?? d?.closeHour ?? d?.hour ?? d?.hora ?? "").trim();
+C:\Users\glaub\palpitaco\src\utils\buildPalpites.js:231: * - fallback: ymd + close_hour
+C:\Users\glaub\palpitaco\src\utils\buildRanking.js:131: return String(d.close_hour ?? d.closeHour ?? d.hour ?? d.hora ?? "").trim();
+C:\Users\glaub\palpitaco\src\utils\buildRanking.js:136: * - Prioriza a chave LÓGICA (ymd + close_hour) para eliminar duplicidade real
+C:\Users\glaub\palpitaco\src\utils\buildRanking.js:304: close_hour: getDrawHourRaw(draw) || null,
+
+----------------------------------------------------------------------------------------------------
+PADRÃO: requestedCloseHour
+----------------------------------------------------------------------------------------------------
+C:\Users\glaub\palpitaco\backend\scripts\importKingApostas.js:472: function normalizeRequestedCloseHour(closeHour, lotteryKey) {
+C:\Users\glaub\palpitaco\backend\scripts\importKingApostas.js:1478: const norm = normalizeRequestedCloseHour(closeHour, lk);
+C:\Users\glaub\palpitaco\backend\scripts\importKingApostas.js:1485: requestedCloseHour: norm.requested || null,
+C:\Users\glaub\palpitaco\backend\scripts\importKingApostas.js:1533: const norm = normalizeRequestedCloseHour(closeHour, lk);
+C:\Users\glaub\palpitaco\backend\scripts\importKingApostas.js:1578: requestedCloseHour: norm.requested || null,
+C:\Users\glaub\palpitaco\backend\scripts\importKingApostas.js:1682: requestedCloseHour: norm.requested || null,
+C:\Users\glaub\palpitaco\backend\scripts\importKingApostas.js:1775: requestedCloseHour: norm.requested || null,
+C:\Users\glaub\palpitaco\src\pages\Centenas\CentenasView.jsx:668: const requestedCloseHour = useMemo(
+C:\Users\glaub\palpitaco\src\pages\Centenas\CentenasView.jsx:1103: `::close=${requestedCloseHour || "all"}` +
+C:\Users\glaub\palpitaco\src\pages\Centenas\CentenasView.jsx:1107: requestedCloseHour,
+C:\Users\glaub\palpitaco\src\pages\Centenas\CentenasView.jsx:1155: requestedCloseHour &&
+C:\Users\glaub\palpitaco\src\pages\Centenas\CentenasView.jsx:1159: ? requestedCloseHour
+C:\Users\glaub\palpitaco\src\pages\Centenas\CentenasView.jsx:1176: requestedCloseHour,
+C:\Users\glaub\palpitaco\src\pages\Centenas\CentenasView.jsx:1236: requestedCloseHour,
+C:\Users\glaub\palpitaco\src\pages\Centenas\CentenasView.jsx:1351: requestedCloseHour,
+C:\Users\glaub\palpitaco\src\pages\Centenas\CentenasView.jsx:1522: requestedCloseHour,
+C:\Users\glaub\palpitaco\src\pages\Centenas\CentenasView.jsx:1595: requestedCloseHour,
+C:\Users\glaub\palpitaco\src\pages\Centenas\CentenasView.jsx:1756: requestedCloseHour,
+
+----------------------------------------------------------------------------------------------------
+PADRÃO: normalizeCloseHour
+----------------------------------------------------------------------------------------------------
+C:\Users\glaub\palpitaco\backend\routes\pitacoResults.js:233: function normalizeCloseHourForLottery(value, lotteryKey) {
+C:\Users\glaub\palpitaco\backend\routes\pitacoResults.js:249: const { slot } = normalizeCloseHourForLottery(closeHour, lotteryKey);
+C:\Users\glaub\palpitaco\backend\routes\pitacoResults.js:835: const { raw, slot } = normalizeCloseHourForLottery(cand, lotteryKey);
+C:\Users\glaub\palpitaco\backend\routes\pitacoResults.js:940: const { raw, slot } = normalizeCloseHourForLottery(cand, lotteryKey);
+C:\Users\glaub\palpitaco\backend\scripts\auditFederalContent.js:38: function normalizeCloseHourForFederal(value) {
+C:\Users\glaub\palpitaco\backend\scripts\auditFederalContent.js:69: const slot = normalizeCloseHourForFederal(d.close_hour || d.close || d.hour || "");
+C:\Users\glaub\palpitaco\backend\scripts\auditFederalContent.js:111: const slot = normalizeCloseHourForFederal(draw?.close_hour || "");
+C:\Users\glaub\palpitaco\backend\scripts\auditPtRioContent.js:38: function normalizeCloseHourForPtRio(value) {
+C:\Users\glaub\palpitaco\backend\scripts\auditPtRioContent.js:69: const slot = normalizeCloseHourForPtRio(d.close_hour || d.close || d.hour || "");
+C:\Users\glaub\palpitaco\backend\scripts\auditPtRioContent.js:111: const slot = normalizeCloseHourForPtRio(draw?.close_hour || "");
+C:\Users\glaub\palpitaco\backend\scripts\importKingApostas.js:387: function normalizeCloseHourForLottery(value, lotteryKey) {
+C:\Users\glaub\palpitaco\backend\scripts\importKingApostas.js:428: const base = normalizeCloseHourForLottery(
+C:\Users\glaub\palpitaco\backend\scripts\importKingApostas.js:497: const slot = normalizeCloseHourForLottery(requested, lk).slot;
+C:\Users\glaub\palpitaco\backend\scripts\importKingApostas.js:832: const slot = normalizeCloseHourForLottery(closeHour || "", lk).slot;
+C:\Users\glaub\palpitaco\backend\scripts\importKingApostas.js:1095: const targetSlot = normalizeCloseHourForLottery(closeHour || "", lk).slot;
+C:\Users\glaub\palpitaco\backend\scripts\importKingApostas.js:1112: const storedSlot = normalizeCloseHourForLottery(d.close_hour || "", lk).slot;
+C:\Users\glaub\palpitaco\backend\scripts\importKingApostas.js:1188: ? normalizeCloseHourForLottery(closeHour, lk).slot
+C:\Users\glaub\palpitaco\src\pages\Dashboard\Dashboard.jsx:565: function normalizeCloseHourForKpi(raw) {
+C:\Users\glaub\palpitaco\src\pages\Dashboard\Dashboard.jsx:601: const ch = normalizeCloseHourForKpi(chRaw);
+
+----------------------------------------------------------------------------------------------------
+PADRÃO: normalize.*Hour
+----------------------------------------------------------------------------------------------------
+C:\Users\glaub\palpitaco\backend\engine\scoreEngineE08Experimental.js:16: function normalizeHour(value) {
+C:\Users\glaub\palpitaco\backend\engine\scoreEngineE08Experimental.js:57: return normalizeHour(
+C:\Users\glaub\palpitaco\backend\engine\scoreEngineE08Experimental.js:375: normalizeHour(
+C:\Users\glaub\palpitaco\backend\engine\scoreEngineV4Experimental.js:14: function normalizeHour(value) {
+C:\Users\glaub\palpitaco\backend\engine\scoreEngineV4Experimental.js:79: return normalizeHour(
+C:\Users\glaub\palpitaco\backend\engine\scoreEngineV4Experimental.js:365: normalizeHour(
+C:\Users\glaub\palpitaco\backend\engine\top3HistoryRepository.js:535: h: normalized.closeHour,
+C:\Users\glaub\palpitaco\backend\engine\top3PredictionService.js:92: function normalizeHour(value) {
+C:\Users\glaub\palpitaco\backend\engine\top3PredictionService.js:125: return `${ymd}T${normalizeHour(hour)}`;
+C:\Users\glaub\palpitaco\backend\engine\top3PredictionService.js:326: return normalizeHour(value)
+C:\Users\glaub\palpitaco\backend\engine\top3PredictionService.js:351: hourBucket: normalizeHour(hour),
+C:\Users\glaub\palpitaco\backend\engine\top3PredictionService.js:545: const hour = normalizeHour(closeHour);
+C:\Users\glaub\palpitaco\backend\engine\top3PredictionService.js:753: const closeHour = normalizeHour(input.closeHour);
+C:\Users\glaub\palpitaco\backend\engine\top3PredictionService.js:807: normalizeHour(rawHour);
+C:\Users\glaub\palpitaco\backend\engine\top3PredictionService.js:968: normalizeHour,
+C:\Users\glaub\palpitaco\backend\routes\kingDraws.js:304: close_hour: normalizeHHMM(data.close_hour ?? data.close ?? data.hour),
+C:\Users\glaub\palpitaco\backend\routes\pitacoResults.js:233: function normalizeCloseHourForLottery(value, lotteryKey) {
+C:\Users\glaub\palpitaco\backend\routes\pitacoResults.js:249: const { slot } = normalizeCloseHourForLottery(closeHour, lotteryKey);
+C:\Users\glaub\palpitaco\backend\routes\pitacoResults.js:330: function normalizeHourList(arr) {
+C:\Users\glaub\palpitaco\backend\routes\pitacoResults.js:401: const hard = normalizeHourList(scheduleRaw?.hard || scheduleRaw?.expectedHard || []);
+C:\Users\glaub\palpitaco\backend\routes\pitacoResults.js:402: const soft = normalizeHourList(scheduleRaw?.soft || scheduleRaw?.expectedSoft || []);
+C:\Users\glaub\palpitaco\backend\routes\pitacoResults.js:403: const hours = normalizeHourList(scheduleRaw?.hours || []);
+C:\Users\glaub\palpitaco\backend\routes\pitacoResults.js:428: const hard = normalizeHourList(block?.hard || block?.expectedHard || []);
+C:\Users\glaub\palpitaco\backend\routes\pitacoResults.js:429: const soft = normalizeHourList(block?.soft || block?.expectedSoft || []);
+C:\Users\glaub\palpitaco\backend\routes\pitacoResults.js:430: const hours = normalizeHourList(block?.hours || []);
+C:\Users\glaub\palpitaco\backend\routes\pitacoResults.js:436: const hard = normalizeHourList(r?.hard || r?.expectedHard || []);
+C:\Users\glaub\palpitaco\backend\routes\pitacoResults.js:437: const soft = normalizeHourList(r?.soft || r?.expectedSoft || []);
+C:\Users\glaub\palpitaco\backend\routes\pitacoResults.js:438: const hours = normalizeHourList(r?.hours || []);
+C:\Users\glaub\palpitaco\backend\routes\pitacoResults.js:485: removedHard: normalizeHourList(entry),
+C:\Users\glaub\palpitaco\backend\routes\pitacoResults.js:495: removedHard: normalizeHourList(hard),
+C:\Users\glaub\palpitaco\backend\routes\pitacoResults.js:496: removedSoft: normalizeHourList(soft),
+C:\Users\glaub\palpitaco\backend\routes\pitacoResults.js:835: const { raw, slot } = normalizeCloseHourForLottery(cand, lotteryKey);
+C:\Users\glaub\palpitaco\backend\routes\pitacoResults.js:839: close_hour: slot || normalizeHHMM(d.close_hour),
+C:\Users\glaub\palpitaco\backend\routes\pitacoResults.js:940: const { raw, slot } = normalizeCloseHourForLottery(cand, lotteryKey);
+C:\Users\glaub\palpitaco\backend\routes\pitacoResults.js:947: close_hour: slot || normalizeHHMM(d.close_hour),
+C:\Users\glaub\palpitaco\backend\scripts\auditDrawsBoundsAndCounts.js:78: function normalizeHourLike(v) {
+C:\Users\glaub\palpitaco\backend\scripts\auditDrawsBoundsAndCounts.js:111: const h = normalizeHourLike(
+C:\Users\glaub\palpitaco\backend\scripts\auditDrawSlotsRange.js:198: function normalizeHourList(arr) {
+C:\Users\glaub\palpitaco\backend\scripts\auditDrawSlotsRange.js:273: const expectedHard = normalizeHourList(rule.hard);
+C:\Users\glaub\palpitaco\backend\scripts\auditDrawSlotsRange.js:274: const expectedSoft = normalizeHourList(rule.soft);
+C:\Users\glaub\palpitaco\backend\scripts\auditFederalContent.js:38: function normalizeCloseHourForFederal(value) {
+C:\Users\glaub\palpitaco\backend\scripts\auditFederalContent.js:69: const slot = normalizeCloseHourForFederal(d.close_hour || d.close || d.hour || "");
+C:\Users\glaub\palpitaco\backend\scripts\auditFederalContent.js:111: const slot = normalizeCloseHourForFederal(draw?.close_hour || "");
+C:\Users\glaub\palpitaco\backend\scripts\auditHistoricalGaps.js:70: function normalizeHourList(arr) {
+C:\Users\glaub\palpitaco\backend\scripts\auditHistoricalGaps.js:144: hard: normalizeHourList(block.hard || []),
+C:\Users\glaub\palpitaco\backend\scripts\auditHistoricalGaps.js:145: soft: normalizeHourList(block.soft || []),
+C:\Users\glaub\palpitaco\backend\scripts\auditHistoricalGaps.js:155: removedHard: normalizeHourList(entry.removedHard || entry.hard || []),
+C:\Users\glaub\palpitaco\backend\scripts\auditHistoricalGaps.js:156: removedSoft: normalizeHourList(entry.removedSoft || entry.soft || []),
+C:\Users\glaub\palpitaco\backend\scripts\auditPtRioContent.js:38: function normalizeCloseHourForPtRio(value) {
+C:\Users\glaub\palpitaco\backend\scripts\auditPtRioContent.js:69: const slot = normalizeCloseHourForPtRio(d.close_hour || d.close || d.hour || "");
+C:\Users\glaub\palpitaco\backend\scripts\auditPtRioContent.js:111: const slot = normalizeCloseHourForPtRio(draw?.close_hour || "");
+C:\Users\glaub\palpitaco\backend\scripts\autoImportToday.js:452: function normalizeExpectedHour(value) {
+C:\Users\glaub\palpitaco\backend\scripts\autoImportToday.js:506: .map(normalizeExpectedHour)
+C:\Users\glaub\palpitaco\backend\scripts\autoRepairToday.js:58: close_hour: normalizeHHMM(d.close_hour || d.close || d.hour || ""),
+C:\Users\glaub\palpitaco\backend\scripts\backtestTop3Official.js:51: function normalizeHour(value) {
+C:\Users\glaub\palpitaco\backend\scripts\backtestTop3Official.js:70: return `${ymd}T${normalizeHour(hour) || hour}`;
+C:\Users\glaub\palpitaco\backend\scripts\backtestTop3Official.js:986: normalizeHour(targetHour) ||
+C:\Users\glaub\palpitaco\backend\scripts\backtestTop3Official.js:1104: normalizeHour(targetHour) ||
+C:\Users\glaub\palpitaco\backend\scripts\checkOneDraw.js:132: const closeHour = normalizeHHMM(closeHourRaw);
+C:\Users\glaub\palpitaco\backend\scripts\genPtRioCalendarRules.js:93: const h = normalizeHHMM(d.close_hour);
+C:\Users\glaub\palpitaco\backend\scripts\importKingApostas.js:387: function normalizeCloseHourForLottery(value, lotteryKey) {
+C:\Users\glaub\palpitaco\backend\scripts\importKingApostas.js:427: function normalizeDrawCloseHour(draw, lotteryKey) {
+C:\Users\glaub\palpitaco\backend\scripts\importKingApostas.js:428: const base = normalizeCloseHourForLottery(
+C:\Users\glaub\palpitaco\backend\scripts\importKingApostas.js:472: function normalizeRequestedCloseHour(closeHour, lotteryKey) {
+C:\Users\glaub\palpitaco\backend\scripts\importKingApostas.js:474: const requested = closeHour ? normalizeHHMM(closeHour) : null;
+C:\Users\glaub\palpitaco\backend\scripts\importKingApostas.js:497: const slot = normalizeCloseHourForLottery(requested, lk).slot;
+C:\Users\glaub\palpitaco\backend\scripts\importKingApostas.js:832: const slot = normalizeCloseHourForLottery(closeHour || "", lk).slot;
+C:\Users\glaub\palpitaco\backend\scripts\importKingApostas.js:865: const { slot } = normalizeDrawCloseHour(d, lotteryKey);
+C:\Users\glaub\palpitaco\backend\scripts\importKingApostas.js:902: const { slot } = normalizeDrawCloseHour(
+C:\Users\glaub\palpitaco\backend\scripts\importKingApostas.js:944: normalizeHHMM(d?.close_hour ?? d?.closeHour ?? d?.horario ?? d?.close ?? "");
+C:\Users\glaub\palpitaco\backend\scripts\importKingApostas.js:1031: const { raw: closeRaw, slot: closeSlot } = normalizeDrawCloseHour(
+C:\Users\glaub\palpitaco\backend\scripts\importKingApostas.js:1095: const targetSlot = normalizeCloseHourForLottery(closeHour || "", lk).slot;
+C:\Users\glaub\palpitaco\backend\scripts\importKingApostas.js:1112: const storedSlot = normalizeCloseHourForLottery(d.close_hour || "", lk).slot;
+C:\Users\glaub\palpitaco\backend\scripts\importKingApostas.js:1188: ? normalizeCloseHourForLottery(closeHour, lk).slot
+C:\Users\glaub\palpitaco\backend\scripts\importKingApostas.js:1201: const { raw: closeRaw, slot: closeSlot } = normalizeDrawCloseHour(
+C:\Users\glaub\palpitaco\backend\scripts\importKingApostas.js:1478: const norm = normalizeRequestedCloseHour(closeHour, lk);
+C:\Users\glaub\palpitaco\backend\scripts\importKingApostas.js:1533: const norm = normalizeRequestedCloseHour(closeHour, lk);
+C:\Users\glaub\palpitaco\backend\scripts\integrityCheck.js:6: function normalizeHour(v) {
+C:\Users\glaub\palpitaco\backend\scripts\integrityCheck.js:30: hour: normalizeHour(d.close_hour || d.hour),
+C:\Users\glaub\palpitaco\backend\server.js:264: function normalizeHourLike(value) {
+C:\Users\glaub\palpitaco\backend\server.js:311: const s = normalizeHourLike(hhmm);
+C:\Users\glaub\palpitaco\backend\server.js:475: const close_hour = normalizeHourLike(
+C:\Users\glaub\palpitaco\backend\server.js:619: const lastCloseHour = seen?.closeHour ? normalizeHourLike(seen.closeHour) : null;
+C:\Users\glaub\palpitaco\src\hooks\useKingRanking.js:383: const bucketNorm = useMemo(() => normalizeBucketInput(closeHourBucket), [closeHourBucket]);
+C:\Users\glaub\palpitaco\src\pages\Centenas\centenas.utils.js:67: export function normalizeHourLike(value) {
+C:\Users\glaub\palpitaco\src\pages\Centenas\centenas.utils.js:89: const norm = normalizeHourLike(value);
+C:\Users\glaub\palpitaco\src\pages\Centenas\centenas.utils.js:136: const norm = normalizeHourLike(c);
+C:\Users\glaub\palpitaco\src\pages\Centenas\centenas.utils.js:152: const norm = normalizeHourLike(c);
+C:\Users\glaub\palpitaco\src\pages\Centenas\centenas.utils.js:398: const n = normalizeHourLike(c);
+C:\Users\glaub\palpitaco\src\pages\Centenas\CentenasView.jsx:97: function normalizeHourLike(value) {
+C:\Users\glaub\palpitaco\src\pages\Centenas\CentenasView.jsx:119: const norm = normalizeHourLike(value);
+C:\Users\glaub\palpitaco\src\pages\Centenas\CentenasView.jsx:164: const norm = normalizeHourLike(value);
+C:\Users\glaub\palpitaco\src\pages\Centenas\CentenasView.jsx:186: function normalizeOfficialHourForLottery(lotteryKey, value) {
+C:\Users\glaub\palpitaco\src\pages\Centenas\CentenasView.jsx:277: const norm = normalizeHourLike(c);
+C:\Users\glaub\palpitaco\src\pages\Centenas\CentenasView.jsx:293: const norm = normalizeHourLike(c);
+C:\Users\glaub\palpitaco\src\pages\Centenas\CentenasView.jsx:525: const n = normalizeHourLike(c);
+C:\Users\glaub\palpitaco\src\pages\Centenas\CentenasView.jsx:672: : normalizeHourLike(fHorario),
+C:\Users\glaub\palpitaco\src\pages\Centenas\CentenasView.jsx:1042: normalizeOfficialHourForLottery(
+C:\Users\glaub\palpitaco\src\pages\Centenas\CentenasView.jsx:1266: const hourNorm = normalizeHourLike(hrRaw);
+C:\Users\glaub\palpitaco\src\pages\Centenas\CentenasView.jsx:1287: normalizeOfficialHourForLottery(
+C:\Users\glaub\palpitaco\src\pages\Centenas\CentenasView.jsx:1306: const hourNorm = normalizeHourLike(hrRaw);
+C:\Users\glaub\palpitaco\src\pages\Centenas\CentenasView.jsx:1324: normalizeOfficialHourForLottery(
+C:\Users\glaub\palpitaco\src\pages\Dashboard\Dashboard.jsx:182: function normalizeHourBucket(h) {
+C:\Users\glaub\palpitaco\src\pages\Dashboard\Dashboard.jsx:565: function normalizeCloseHourForKpi(raw) {
+C:\Users\glaub\palpitaco\src\pages\Dashboard\Dashboard.jsx:569: const bucket = normalizeHourBucket(s);
+C:\Users\glaub\palpitaco\src\pages\Dashboard\Dashboard.jsx:601: const ch = normalizeCloseHourForKpi(chRaw);
+C:\Users\glaub\palpitaco\src\pages\Dashboard\Dashboard.jsx:781: const fedBucket = isFederal ? normalizeHourBucket(filters?.horario) : null;
+C:\Users\glaub\palpitaco\src\pages\Dashboard\Dashboard.jsx:1196: const closeHourBucketLocal = useMemo(() => normalizeHourBucket(filters.horario), [filters.horario]);
+C:\Users\glaub\palpitaco\src\pages\Dashboard\Dashboard.jsx:1321: const b = normalizeHourBucket(getDrawCloseHour(d));
+C:\Users\glaub\palpitaco\src\pages\Dashboard\Dashboard.jsx:1441: const b = normalizeHourBucket(getDrawCloseHour(d));
+C:\Users\glaub\palpitaco\src\pages\Downloads\Downloads.jsx:40: function normalizeHourLike(value) {
+C:\Users\glaub\palpitaco\src\pages\Downloads\Downloads.jsx:59: const s = normalizeHourLike(hhmm);
+C:\Users\glaub\palpitaco\src\pages\Downloads\Downloads.jsx:174: return normalizeHourLike(draw?.close_hour || draw?.closeHour || draw?.hour || draw?.hora || "");
+C:\Users\glaub\palpitaco\src\pages\Downloads\Downloads.jsx:793: }, [normalizeRange, ufUi, label, fMonth, fDay, fDow, fHour, fAnimalGrupo, fPos]);
+C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:87: function normalizeHourLike(value) {
+C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:108: const s = normalizeHourLike(hhmm);
+C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:122: const hhmm = normalizeHourLike(value);
+C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:152: const ch = normalizeHourLike(d?.close_hour || d?.closeHour || d?.hour || d?.hora || "");
+C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:194: lastCloseHour: r?.lastCloseHour ? normalizeHourLike(r.lastCloseHour) : "",
+C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:211: const lastCloseHour = rec?.lastCloseHour ? normalizeHourLike(rec.lastCloseHour) : "";
+C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:590: lastCloseHour: r?.lastCloseHour ? normalizeHourLike(r.lastCloseHour) : "",
+C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:1058: const hh = r.lastCloseHour ? normalizeHourLike(r.lastCloseHour) : "";
+C:\Users\glaub\palpitaco\src\pages\Results\Results.jsx:114: function normalizeHourLike(value) {
+C:\Users\glaub\palpitaco\src\pages\Results\Results.jsx:135: const s = normalizeHourLike(h);
+C:\Users\glaub\palpitaco\src\pages\Results\Results.jsx:516: const hour = normalizeHourLike(
+C:\Users\glaub\palpitaco\src\pages\Results\Results.jsx:666: function normalizeRjDisplayHour(draw, ymd) {
+C:\Users\glaub\palpitaco\src\pages\Results\Results.jsx:667: const hour = normalizeHourLike(
+C:\Users\glaub\palpitaco\src\pages\Results\Results.jsx:689: function normalizeDisplayHourForScope(scopeKey, draw, ymd) {
+C:\Users\glaub\palpitaco\src\pages\Results\Results.jsx:691: return normalizeNacionalDisplayHour(draw);
+C:\Users\glaub\palpitaco\src\pages\Results\Results.jsx:695: return normalizeRjDisplayHour(draw, ymd);
+C:\Users\glaub\palpitaco\src\pages\Results\Results.jsx:698: return normalizeHourLike(
+C:\Users\glaub\palpitaco\src\pages\Results\Results.jsx:704: function normalizeNacionalDisplayHour(draw) {
+C:\Users\glaub\palpitaco\src\pages\Results\Results.jsx:705: const hour = normalizeHourLike(
+C:\Users\glaub\palpitaco\src\pages\Results\Results.jsx:747: const h = normalizeDisplayHourForScope(scopeKey, d, ymd);
+C:\Users\glaub\palpitaco\src\pages\Results\Results.jsx:823: const h = normalizeDisplayHourForScope(scopeKey, d, ymd);
+C:\Users\glaub\palpitaco\src\pages\Results\Results.jsx:1961: const hour = normalizeHourLike(
+C:\Users\glaub\palpitaco\src\pages\Results\Results.jsx:1966: const displayHour = normalizeDisplayHourForScope(
+C:\Users\glaub\palpitaco\src\pages\Search\Search.jsx:82: function normalizeHourLike(value) {
+C:\Users\glaub\palpitaco\src\pages\Search\Search.jsx:773: const closeRaw = normalizeHourLike(d?.close_hour || d?.closeHour || d?.hour || d?.hora || "");
+C:\Users\glaub\palpitaco\src\pages\Statistics\Statistics.jsx:247: function normalizeHour(value) {
+C:\Users\glaub\palpitaco\src\pages\Statistics\Statistics.jsx:264: const normalized = normalizeHour(value);
+C:\Users\glaub\palpitaco\src\pages\Statistics\Statistics.jsx:934: const drawHour = normalizeHour(
+C:\Users\glaub\palpitaco\src\pages\Top3\__tests__\top3.schedule-transition.test.js:24: function normalizeSchedule(hours) {
+C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js:7: normalizeHourLike,
+C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js:130: return normalizeHourLike(
+C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js:7: normalizeHourLike,
+C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js:130: return normalizeHourLike(
+C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.js:8: normalizeHourLike,
+C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.js:135: return normalizeHourLike(
+C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.js:299: const h = normalizeHourLike(hour);
+C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.js:317: .map(normalizeHourLike)
+C:\Users\glaub\palpitaco\src\pages\Top3\top3.firestore.js:30: function normalizeHour(value) {
+C:\Users\glaub\palpitaco\src\pages\Top3\top3.firestore.js:35: return normalizeHour(value).replace(/\D/g, "").padStart(2, "0");
+C:\Users\glaub\palpitaco\src\pages\Top3\top3.firestore.js:104: const hour = normalizeHour(targetHour);
+C:\Users\glaub\palpitaco\src\pages\Top3\top3.firestore.js:112: normalizeHour(pickDrawHour(draw)) === hour
+C:\Users\glaub\palpitaco\src\pages\Top3\top3.firestore.js:377: const hour = normalizeHour(targetHour);
+C:\Users\glaub\palpitaco\src\pages\Top3\top3.firestore.js:470: .map(normalizeHour)
+C:\Users\glaub\palpitaco\src\pages\Top3\top3.firestore.js:502: return normalizeHour(a?.targetHour).localeCompare(
+C:\Users\glaub\palpitaco\src\pages\Top3\top3.firestore.js:503: normalizeHour(b?.targetHour)
+C:\Users\glaub\palpitaco\src\pages\Top3\top3.formatters.js:164: export function normalizeHourLike(value) {
+C:\Users\glaub\palpitaco\src\pages\Top3\top3.formatters.js:213: const s = normalizeHourLike(hhmm);
+C:\Users\glaub\palpitaco\src\pages\Top3\top3.formatters.js:234: const s = normalizeHourLike(raw);
+C:\Users\glaub\palpitaco\src\pages\Top3\top3.storage.js:170: const normalizedKey = targetKey || makeKey(ymd, hour);
+C:\Users\glaub\palpitaco\src\services\auditKingCounts.js:82: function normalizeHourLike(value) {
+C:\Users\glaub\palpitaco\src\services\auditKingCounts.js:197: const hh = normalizeHourLike(extractRawCloseHourFromDraw(d)) || "";
+C:\Users\glaub\palpitaco\src\services\auditKingCounts.js:252: const rawHourFilter = normalizeHourLike(options?.hour);
+C:\Users\glaub\palpitaco\src\services\auditKingCounts.js:272: const drawHour = normalizeHourLike(extractRawCloseHourFromDraw(d));
+C:\Users\glaub\palpitaco\src\services\auditKingCounts.js:415: const hhmm = normalizeHourLike(extractRawCloseHourFromDraw(d));
+C:\Users\glaub\palpitaco\src\services\kingResultsService.js:200: function normalizeHourLike(value) {
+C:\Users\glaub\palpitaco\src\services\kingResultsService.js:268: const hhmm = closeHour ? normalizeHourLike(closeHour) : null;
+C:\Users\glaub\palpitaco\src\services\kingResultsService.js:279: const norm = normalizeHourLike(raw);
+C:\Users\glaub\palpitaco\src\services\kingResultsService.js:282: return norm === normalizeHourLike(hourFilter.hhmm);
+C:\Users\glaub\palpitaco\src\services\kingResultsService.js:323: const s = normalizeHourLike(h);
+C:\Users\glaub\palpitaco\src\services\kingResultsService.js:350: const s = normalizeHourLike(h);
+C:\Users\glaub\palpitaco\src\services\kingResultsService.js:402: const hour = normalizeHourLike(raw.close_hour || raw.closeHour || "");
+C:\Users\glaub\palpitaco\src\services\kingResultsService.js:550: const hourNorm = normalizeHourLike(
+C:\Users\glaub\palpitaco\src\services\kingResultsService.js:1086: const h = normalizeHourLike(
+C:\Users\glaub\palpitaco\src\services\kingResultsService.js:1673: const s = normalizeHourLike(hhmm);
+C:\Users\glaub\palpitaco\src\services\kingResultsService.js:1801: lastHour: seen?.hour ? normalizeHourLike(seen.hour) : null,
+C:\Users\glaub\palpitaco\src\services\statsSignals.js:107: function normalizeHourLike(value) {
+C:\Users\glaub\palpitaco\src\services\statsSignals.js:134: const s = normalizeHourLike(hhmm);
+C:\Users\glaub\palpitaco\src\services\statsSignals.js:197: return normalizeHourLike(
+C:\Users\glaub\palpitaco\src\utils\buildPalpites.js:56: function normalizeHourLike(value) {
+C:\Users\glaub\palpitaco\src\utils\buildPalpites.js:244: `${getDrawYmd(d) || ""}__${normalizeHourLike(getDrawCloseHour(d) || "")}`;
+C:\Users\glaub\palpitaco\src\utils\buildPalpites.js:260: return toHourNum(normalizeHourLike(getDrawCloseHour(a))) - toHourNum(normalizeHourLike(getDrawCloseHour(b)));
+
+----------------------------------------------------------------------------------------------------
+PADRÃO: NACIONAL
+----------------------------------------------------------------------------------------------------
+C:\Users\glaub\palpitaco\backend\routes\bounds.js:21: if (["NACIONAL", "LT_NACIONAL", "LT-NACIONAL"].includes(s)) {
+C:\Users\glaub\palpitaco\backend\routes\bounds.js:22: return "NACIONAL";
+C:\Users\glaub\palpitaco\backend\routes\pitacoResults.js:80: s === "NACIONAL" ||
+C:\Users\glaub\palpitaco\backend\routes\pitacoResults.js:81: s === "LT_NACIONAL" ||
+C:\Users\glaub\palpitaco\backend\routes\pitacoResults.js:82: s === "LT-NACIONAL" ||
+C:\Users\glaub\palpitaco\backend\routes\pitacoResults.js:83: s === "LT NACIONAL"
+C:\Users\glaub\palpitaco\backend\routes\pitacoResults.js:85: return "NACIONAL";
+C:\Users\glaub\palpitaco\backend\routes\pitacoResults.js:615: hint: "Use: ?date=YYYY-MM-DD&lottery=PT_RIO|FEDERAL|LOOK|NACIONAL  (ou)  ?date=YYYY-MM-DD&uf=RJ|BR",
+C:\Users\glaub\palpitaco\backend\routes\pitacoResults.js:648: error: "lottery inválida: " + lotteryRaw + " (use lottery=PT_RIO|FEDERAL|LOOK|NACIONAL ou aliases RJ|BR)",
+C:\Users\glaub\palpitaco\backend\scripts\autoImportToday.js:170: NACIONAL: [
+C:\Users\glaub\palpitaco\backend\scripts\importKingApostas.js:234: const NACIONAL_STATE_CODE = "BR";
+C:\Users\glaub\palpitaco\backend\scripts\importKingApostas.js:235: const NACIONAL_LOTTERY_KEY = "NACIONAL";
+C:\Users\glaub\palpitaco\backend\scripts\importKingApostas.js:243: if (lk === NACIONAL_LOTTERY_KEY) return NACIONAL_STATE_CODE;
+C:\Users\glaub\palpitaco\backend\scripts\importKingApostas.js:424: * NACIONAL:
+C:\Users\glaub\palpitaco\backend\scripts\importKingApostas.js:445: if (lk !== "NACIONAL") {
+C:\Users\glaub\palpitaco\backend\scripts\importKingApostas.js:538: * - KING_LOTTERIES_NACIONAL="uuid1,uuid2,..."
+C:\Users\glaub\palpitaco\backend\scripts\importKingApostas.js:562: NACIONAL: [
+C:\Users\glaub\palpitaco\backend\scripts\importKingApostas.js:603: const rawNacional = String(
+C:\Users\glaub\palpitaco\backend\scripts\importKingApostas.js:604: process.env.KING_LOTTERIES_NACIONAL || ""
+C:\Users\glaub\palpitaco\backend\scripts\importKingApostas.js:606: if (rawNacional) {
+C:\Users\glaub\palpitaco\backend\scripts\importKingApostas.js:607: const arrNacional = rawNacional
+C:\Users\glaub\palpitaco\backend\scripts\importKingApostas.js:611: if (arrNacional.length) LOTTERIES_BY_KEY.NACIONAL = arrNacional;
+C:\Users\glaub\palpitaco\backend\scripts\importKingApostas.js:627: `NACIONAL lotteries=${counts.NACIONAL}`
+C:\Users\glaub\palpitaco\backend\scripts\runAutoImportHeartbeat.js:11: "NACIONAL",
+C:\Users\glaub\palpitaco\src\constants\schedule.js:22: if (s === "NACIONAL") return "NACIONAL";
+C:\Users\glaub\palpitaco\src\constants\schedule.js:23: if (s === "LT_NACIONAL") return "NACIONAL";
+C:\Users\glaub\palpitaco\src\constants\schedule.js:24: if (s === "LT-NACIONAL") return "NACIONAL";
+C:\Users\glaub\palpitaco\src\constants\schedule.js:63: NACIONAL: Object.freeze([
+C:\Users\glaub\palpitaco\src\pages\Account\Account.jsx:200: // Se vier com +55 / 55 na frente e total BR internacional
+C:\Users\glaub\palpitaco\src\pages\Centenas\CentenasView.jsx:49: NACIONAL: "NACIONAL",
+C:\Users\glaub\palpitaco\src\pages\Centenas\CentenasView.jsx:130: * LOOK e NACIONAL chegam da fonte com horários de fechamento
+C:\Users\glaub\palpitaco\src\pages\Centenas\CentenasView.jsx:134: * - NACIONAL 01:49 -> 02:00
+C:\Users\glaub\palpitaco\src\pages\Centenas\CentenasView.jsx:135: * - NACIONAL 07:49 -> 08:00
+C:\Users\glaub\palpitaco\src\pages\Centenas\CentenasView.jsx:136: * - NACIONAL 22:49 -> 23:00
+C:\Users\glaub\palpitaco\src\pages\Centenas\CentenasView.jsx:151: NACIONAL: Object.freeze([
+C:\Users\glaub\palpitaco\src\pages\Centenas\CentenasView.jsx:244: key !== LOTTERY_KEYS.NACIONAL;
+C:\Users\glaub\palpitaco\src\pages\Centenas\CentenasView.jsx:596: LOTTERY_KEYS.NACIONAL,
+C:\Users\glaub\palpitaco\src\pages\Centenas\CentenasView.jsx:621: id: LOTTERY_KEYS.NACIONAL,
+C:\Users\glaub\palpitaco\src\pages\Centenas\CentenasView.jsx:622: label: "Nacional",
+C:\Users\glaub\palpitaco\src\pages\Centenas\CentenasView.jsx:624: LOTTERY_KEYS.NACIONAL,
+C:\Users\glaub\palpitaco\src\pages\Centenas\CentenasView.jsx:846: LOTTERY_KEYS.NACIONAL
+C:\Users\glaub\palpitaco\src\pages\Centenas\CentenasView.jsx:1150: * LOOK e NACIONAL precisam chegar completas,
+C:\Users\glaub\palpitaco\src\pages\Dashboard\components\FiltersBar.jsx:8: * - filters.loteria: "PT_RIO" | "FEDERAL" | "LOOK" | "NACIONAL"
+C:\Users\glaub\palpitaco\src\pages\Dashboard\components\FiltersBar.jsx:15: * - NACIONAL: Todos + 02h/08h/10h/12h/15h/17h/21h/23h
+C:\Users\glaub\palpitaco\src\pages\Dashboard\components\FiltersBar.jsx:220: { label: "NACIONAL", value: "NACIONAL" },
+C:\Users\glaub\palpitaco\src\pages\Dashboard\components\FiltersBar.jsx:281: // ✅ NACIONAL
+C:\Users\glaub\palpitaco\src\pages\Dashboard\components\FiltersBar.jsx:285: const horariosNACIONAL = [
+C:\Users\glaub\palpitaco\src\pages\Dashboard\components\FiltersBar.jsx:382: NACIONAL: horariosNACIONAL,
+C:\Users\glaub\palpitaco\src\pages\Dashboard\Dashboard.jsx:529: if (u === "NACIONAL") {
+C:\Users\glaub\palpitaco\src\pages\Downloads\Downloads.jsx:192: NACIONAL: "NACIONAL",
+C:\Users\glaub\palpitaco\src\pages\Downloads\Downloads.jsx:207: if (s === "NACIONAL") return "NACIONAL";
+C:\Users\glaub\palpitaco\src\pages\Downloads\Downloads.jsx:681: NACIONAL: ["02:00", "08:00", "10:00", "12:00", "15:00", "17:00", "21:00", "23:00"],
+C:\Users\glaub\palpitaco\src\pages\Downloads\Downloads.jsx:770: : lotteryKey === "NACIONAL"
+C:\Users\glaub\palpitaco\src\pages\Downloads\Downloads.jsx:771: ? "Nacional"
+C:\Users\glaub\palpitaco\src\pages\Downloads\Downloads.jsx:1277: <option value="NACIONAL">Nacional</option>
+C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:303: id: "NACIONAL",
+C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:304: label: "Nacional",
+C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:305: lotteries: ["NACIONAL"],
+C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:306: uf: "NACIONAL",
+C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:330: NACIONAL: [
+C:\Users\glaub\palpitaco\src\pages\Results\Results.jsx:199: const SCOPE_NACIONAL = "NACIONAL";
+C:\Users\glaub\palpitaco\src\pages\Results\Results.jsx:212: const NACIONAL_EXPECTED_HOURS_DESC = [
+C:\Users\glaub\palpitaco\src\pages\Results\Results.jsx:287: s === SCOPE_NACIONAL ||
+C:\Users\glaub\palpitaco\src\pages\Results\Results.jsx:288: compact === "NACIONAL" ||
+C:\Users\glaub\palpitaco\src\pages\Results\Results.jsx:289: compact === "LTNACIONAL"
+C:\Users\glaub\palpitaco\src\pages\Results\Results.jsx:291: return SCOPE_NACIONAL;
+C:\Users\glaub\palpitaco\src\pages\Results\Results.jsx:303: if (up === SCOPE_NACIONAL) return "NACIONAL";
+C:\Users\glaub\palpitaco\src\pages\Results\Results.jsx:690: if (scopeKey === SCOPE_NACIONAL) {
+C:\Users\glaub\palpitaco\src\pages\Results\Results.jsx:691: return normalizeNacionalDisplayHour(draw);
+C:\Users\glaub\palpitaco\src\pages\Results\Results.jsx:704: function normalizeNacionalDisplayHour(draw) {
+C:\Users\glaub\palpitaco\src\pages\Results\Results.jsx:770: } else if (scopeKey === SCOPE_NACIONAL) {
+C:\Users\glaub\palpitaco\src\pages\Results\Results.jsx:771: expectedHours = NACIONAL_EXPECTED_HOURS_DESC;
+C:\Users\glaub\palpitaco\src\pages\Results\Results.jsx:1769: className={scopePillClass(scopeKey === SCOPE_NACIONAL)}
+C:\Users\glaub\palpitaco\src\pages\Results\Results.jsx:1772: setScopeUi(SCOPE_NACIONAL);
+C:\Users\glaub\palpitaco\src\pages\Results\Results.jsx:1774: title="Resultados da Nacional"
+C:\Users\glaub\palpitaco\src\pages\Results\Results.jsx:1776: NACIONAL
+C:\Users\glaub\palpitaco\src\pages\Search\Search.jsx:544: value: "NACIONAL",
+C:\Users\glaub\palpitaco\src\pages\Search\Search.jsx:545: label: "Nacional",
+C:\Users\glaub\palpitaco\src\pages\Statistics\Statistics.jsx:48: value: "NACIONAL",
+C:\Users\glaub\palpitaco\src\pages\Statistics\Statistics.jsx:49: label: "Nacional",
+C:\Users\glaub\palpitaco\src\pages\Top3\__tests__\top3.schedule-transition.test.js:187: test("Nacional usa somente os oito horarios oficiais", () => {
+C:\Users\glaub\palpitaco\src\pages\Top3\__tests__\top3.schedule-transition.test.js:188: const nacional = normalizeSchedule(
+C:\Users\glaub\palpitaco\src\pages\Top3\__tests__\top3.schedule-transition.test.js:189: schedule("NACIONAL", "2026-07-21")
+C:\Users\glaub\palpitaco\src\pages\Top3\__tests__\top3.schedule-transition.test.js:192: expect(nacional).toEqual([
+C:\Users\glaub\palpitaco\src\pages\Top3\__tests__\top3.schedule-transition.test.js:203: expect(nacional).not.toContain("09:00");
+C:\Users\glaub\palpitaco\src\pages\Top3\__tests__\top3.schedule-transition.test.js:206: test("Nacional faz a transicao 23h para 2h do dia seguinte", () => {
+C:\Users\glaub\palpitaco\src\pages\Top3\__tests__\top3.schedule-transition.test.js:209: lotteryKey: "NACIONAL",
+C:\Users\glaub\palpitaco\src\pages\Top3\top3.constants.js:22: { key: "NACIONAL", value: "NACIONAL", label: "Nacional" },
+C:\Users\glaub\palpitaco\src\pages\Top3\top3.constants.js:71: export const NACIONAL_SCHEDULE = [
+C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.js:34: NACIONAL_SCHEDULE,
+C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.js:370: if (key === "NACIONAL") {
+C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.js:371: return [...NACIONAL_SCHEDULE];
+C:\Users\glaub\palpitaco\src\pages\Top3\Top3View.jsx:1721: { value: "NACIONAL", label: "Nacional" },
+C:\Users\glaub\palpitaco\src\pages\Top3\Top3View.jsx:1745: map.get("NACIONAL"),
+C:\Users\glaub\palpitaco\src\pages\Top3\Top3View.jsx:1752: "NACIONAL",
+
+----------------------------------------------------------------------------------------------------
+PADRÃO: 01:49
+----------------------------------------------------------------------------------------------------
+C:\Users\glaub\palpitaco\src\pages\Centenas\CentenasView.jsx:134: * - NACIONAL 01:49 -> 02:00
+C:\Users\glaub\palpitaco\src\pages\Results\Results.jsx:725: case "01:49": return "02:00";
+
+----------------------------------------------------------------------------------------------------
+PADRÃO: 07:49
+----------------------------------------------------------------------------------------------------
+C:\Users\glaub\palpitaco\src\pages\Centenas\CentenasView.jsx:135: * - NACIONAL 07:49 -> 08:00
+C:\Users\glaub\palpitaco\src\pages\Results\Results.jsx:724: case "07:49": return "08:00";
+
+----------------------------------------------------------------------------------------------------
+PADRÃO: 09:49
+----------------------------------------------------------------------------------------------------
+C:\Users\glaub\palpitaco\src\pages\Results\Results.jsx:723: case "09:49": return "10:00";
+
+----------------------------------------------------------------------------------------------------
+PADRÃO: 11:49
+----------------------------------------------------------------------------------------------------
+C:\Users\glaub\palpitaco\src\pages\Results\Results.jsx:722: case "11:49": return "12:00";
+
+----------------------------------------------------------------------------------------------------
+PADRÃO: 14:49
+----------------------------------------------------------------------------------------------------
+C:\Users\glaub\palpitaco\src\pages\Results\Results.jsx:721: case "14:49": return "15:00";
+
+----------------------------------------------------------------------------------------------------
+PADRÃO: 16:49
+----------------------------------------------------------------------------------------------------
+C:\Users\glaub\palpitaco\src\pages\Results\Results.jsx:720: case "16:49": return "17:00";
+
+----------------------------------------------------------------------------------------------------
+PADRÃO: 20:49
+----------------------------------------------------------------------------------------------------
+C:\Users\glaub\palpitaco\src\pages\Results\Results.jsx:719: case "20:49": return "21:00";
+
+----------------------------------------------------------------------------------------------------
+PADRÃO: 22:49
+----------------------------------------------------------------------------------------------------
+C:\Users\glaub\palpitaco\src\pages\Centenas\CentenasView.jsx:136: * - NACIONAL 22:49 -> 23:00
+C:\Users\glaub\palpitaco\src\pages\Results\Results.jsx:718: case "22:49": return "23:00";
+
+----------------------------------------------------------------------------------------------------
+PADRÃO: :49
+----------------------------------------------------------------------------------------------------
+C:\Users\glaub\palpitaco\src\pages\Centenas\CentenasView.jsx:134: * - NACIONAL 01:49 -> 02:00
+C:\Users\glaub\palpitaco\src\pages\Centenas\CentenasView.jsx:135: * - NACIONAL 07:49 -> 08:00
+C:\Users\glaub\palpitaco\src\pages\Centenas\CentenasView.jsx:136: * - NACIONAL 22:49 -> 23:00
+C:\Users\glaub\palpitaco\src\pages\Results\Results.jsx:718: case "22:49": return "23:00";
+C:\Users\glaub\palpitaco\src\pages\Results\Results.jsx:719: case "20:49": return "21:00";
+C:\Users\glaub\palpitaco\src\pages\Results\Results.jsx:720: case "16:49": return "17:00";
+C:\Users\glaub\palpitaco\src\pages\Results\Results.jsx:721: case "14:49": return "15:00";
+C:\Users\glaub\palpitaco\src\pages\Results\Results.jsx:722: case "11:49": return "12:00";
+C:\Users\glaub\palpitaco\src\pages\Results\Results.jsx:723: case "09:49": return "10:00";
+C:\Users\glaub\palpitaco\src\pages\Results\Results.jsx:724: case "07:49": return "08:00";
+C:\Users\glaub\palpitaco\src\pages\Results\Results.jsx:725: case "01:49": return "02:00";
+
+====================================================================================================
+3. IMPORTAÇÕES LOCAIS DO SERVIÇO
+====================================================================================================
+
+
+----------------------------------------------------------------------------------------------------
+ARQUIVO IMPORTADO: C:\Users\glaub\palpitaco\src\config\apiBase.js
+----------------------------------------------------------------------------------------------------
+00001: // src/config/apiBase.js
+00002: 
+00003: function stripTrailingSlashes(u) {
+00004:   return String(u || "").trim().replace(/\/+$/, "");
+00005: }
+00006: 
+00007: function readEnvApiBase() {
+00008:   // CRA
+00009:   try {
+00010:     const v = stripTrailingSlashes(process?.env?.REACT_APP_API_BASE);
+00011:     if (v) return v;
+00012:   } catch {
+00013:     // ignore
+00014:   }
+00015: 
+00016:   // Vite (sem warning no CRA: acesso direto)
+00017:   try {
+00018:     // eslint-disable-next-line no-undef
+00019:     const v = stripTrailingSlashes((process.env.VITE_API_BASE || ""));
+00020:     if (v) return v;
+00021:   } catch {
+00022:     // ignore
+00023:   }
+00024: 
+00025:   // fallback "genérico" (se algum bundle injeta)
+00026:   try {
+00027:     const v = stripTrailingSlashes(
+00028:       process?.env?.API_BASE || process?.env?.PITACO_API_BASE
+00029:     );
+00030:     if (v) return v;
+00031:   } catch {
+00032:     // ignore
+00033:   }
+00034: 
+00035:   return "";
+00036: }
+00037: 
+00038: export function getApiBase() {
+00039:   // 0) runtime override (sem rebuild)
+00040:   if (typeof window !== "undefined") {
+00041:     const runtime = stripTrailingSlashes(window.__API_BASE__);
+00042:     if (runtime) return runtime;
+00043:   }
+00044: 
+00045:   // 1) env (preferencial)
+00046:   const fromEnv = readEnvApiBase();
+00047:   if (fromEnv) return fromEnv;
+00048: 
+00049:   // 2) browser runtime (heurísticas)
+00050:   if (typeof window !== "undefined") {
+00051:     const { hostname, origin, protocol } = window.location || {};
+00052:     const host = String(hostname || "").toLowerCase();
+00053: 
+00054:     // dev local
+00055:     if (host === "localhost" || host === "127.0.0.1") {
+00056:       return "http://127.0.0.1:3333";
+00057:     }
+00058: 
+00059:     // same-origin
+00060:     const sameOrigin = stripTrailingSlashes(origin);
+00061:     if (sameOrigin) return sameOrigin;
+00062: 
+00063:     // fallback seguro
+00064:     const proto = String(protocol || "https:").startsWith("http")
+00065:       ? protocol
+00066:       : "https:";
+00067:     return `${proto}//${host}`;
+00068:   }
+00069: 
+00070:   // 3) fallback (SSR/build)
+00071:   return "https://palpitacojb.onrender.com";
+00072: }
+00073: 
+00074: export function apiUrl(pathname) {
+00075:   const base = getApiBase();
+00076:   const p = String(pathname || "").trim();
+00077: 
+00078:   if (!p) return base;
+00079:   if (/^https?:\/\//i.test(p)) return p;
+00080: 
+00081:   const cleanBase = stripTrailingSlashes(base);
+00082: 
+00083:   if (p.startsWith("/")) return `${cleanBase}${p}`;
+00084:   return `${cleanBase}/${p}`;
+00085: }
+00086: 
+00087: export default getApiBase;
+
+----------------------------------------------------------------------------------------------------
+ARQUIVO IMPORTADO: C:\Users\glaub\palpitaco\src\services\firebase.js
+----------------------------------------------------------------------------------------------------
+00001: // src/services/firebase.js
+00002: import { initializeApp, getApps, getApp } from "firebase/app";
+00003: import { getAuth, setPersistence, browserLocalPersistence } from "firebase/auth";
+00004: import { getFirestore } from "firebase/firestore";
+00005: import { getStorage } from "firebase/storage";
+00006: 
+00007: function envOrFallback(envKey, fallback, label) {
+00008:   const v = String(process.env[envKey] || "").trim();
+00009:   if (v) return v;
+00010: 
+00011:   // ⚠️ Mantém compatibilidade, mas deixa explícito o risco
+00012:   if (typeof window !== "undefined") {
+00013:     // evita poluir testes/SSR
+00014:     console.warn(
+00015:       `[firebase] Variável ${envKey} ausente. Usando fallback embutido para ${label}.`
+00016:     );
+00017:   }
+00018:   return fallback;
+00019: }
+00020: 
+00021: const firebaseConfig = {
+00022:   apiKey: envOrFallback(
+00023:     "REACT_APP_FIREBASE_API_KEY",
+00024:     "AIzaSyBnbxbwpI8XSMVah7ekxAo1Wy0j1C0qUiU",
+00025:     "apiKey"
+00026:   ),
+00027:   authDomain: envOrFallback(
+00028:     "REACT_APP_FIREBASE_AUTH_DOMAIN",
+00029:     "palpitacojb-app.firebaseapp.com",
+00030:     "authDomain"
+00031:   ),
+00032:   projectId: envOrFallback(
+00033:     "REACT_APP_FIREBASE_PROJECT_ID",
+00034:     "palpitacojb-app",
+00035:     "projectId"
+00036:   ),
+00037:   storageBucket: envOrFallback(
+00038:     "REACT_APP_FIREBASE_STORAGE_BUCKET",
+00039:     "palpitacojb-app.appspot.com",
+00040:     "storageBucket"
+00041:   ),
+00042:   messagingSenderId: envOrFallback(
+00043:     "REACT_APP_FIREBASE_MESSAGING_SENDER_ID",
+00044:     "884770900140",
+00045:     "messagingSenderId"
+00046:   ),
+00047:   appId: envOrFallback(
+00048:     "REACT_APP_FIREBASE_APP_ID",
+00049:     "1:884770900140:web:dd7834c1a1fa635ce5f709",
+00050:     "appId"
+00051:   ),
+00052: };
+00053: 
+00054: function getOrInitApp() {
+00055:   const apps = getApps();
+00056: 
+00057:   // ✅ Se já existe qualquer app, usa ele (evita duplicar default + named)
+00058:   if (apps.length) {
+00059:     try {
+00060:       return getApp(); // default, se existir
+00061:     } catch {
+00062:       return apps[0]; // fallback seguro
+00063:     }
+00064:   }
+00065: 
+00066:   // ✅ Inicializa apenas quando não há nenhum app
+00067:   return initializeApp(firebaseConfig);
+00068: }
+00069: 
+00070: export const app = getOrInitApp();
+00071: 
+00072: export const auth = getAuth(app);
+00073: export const db = getFirestore(app);
+00074: export const storage = getStorage(app);
+00075: 
+00076: // ✅ Promise única: garante persistência antes de login (usada no auth.js)
+00077: export const authReady = (async () => {
+00078:   try {
+00079:     if (typeof window === "undefined") return true;
+00080:     await setPersistence(auth, browserLocalPersistence);
+00081:     return true;
+00082:   } catch (err) {
+00083:     console.warn("[firebase] setPersistence falhou; seguindo sem persistência.", err);
+00084:     return false;
+00085:   }
+00086: })();
+00087: 
+00088: export default app;
+
+----------------------------------------------------------------------------------------------------
+ARQUIVO IMPORTADO: C:\Users\glaub\palpitaco\src\services\king\king.firestore.js
+----------------------------------------------------------------------------------------------------
+00001: // src/services/king/king.firestore.js
+00002: // Responsável exclusivamente por acesso ao Firestore.
+00003: 
+00004: import {
+00005:   getDocs,
+00006:   getDocsFromServer,
+00007: } from "firebase/firestore";
+00008: 
+00009: export const KING_FIRESTORE_MODULE_READY = true;
+00010: 
+00011: export async function safeGetDocsSmart(qRef, { policy = "cache" } = {}) {
+00012:   const p = String(policy || "cache").toLowerCase();
+00013: 
+00014:   if (p === "server") {
+00015:     try {
+00016:       const snap = await getDocsFromServer(qRef);
+00017:       return { snap, error: null, source: "server" };
+00018:     } catch (e) {
+00019:       try {
+00020:         const snap = await getDocs(qRef);
+00021:         return { snap, error: null, source: "cache_fallback" };
+00022:       } catch (e2) {
+00023:         return { snap: null, error: e2, source: "error" };
+00024:       }
+00025:     }
+00026:   }
+00027: 
+00028:   try {
+00029:     const snapCache = await getDocs(qRef);
+00030:     if (snapCache?.docs?.length) {
+00031:       return { snap: snapCache, error: null, source: "cache" };
+00032:     }
+00033: 
+00034:     try {
+00035:       const snapServer = await getDocsFromServer(qRef);
+00036:       return { snap: snapServer, error: null, source: "server_fallback" };
+00037:     } catch (_e2) {
+00038:       return { snap: snapCache, error: null, source: "cache_empty" };
+00039:     }
+00040:   } catch (_e) {
+00041:     try {
+00042:       const snap = await getDocsFromServer(qRef);
+00043:       return { snap, error: null, source: "server_after_cache_error" };
+00044:     } catch (e2) {
+00045:       return { snap: null, error: e2, source: "error" };
+00046:     }
+00047:   }
+00048: }
+
+----------------------------------------------------------------------------------------------------
+ARQUIVO IMPORTADO: C:\Users\glaub\palpitaco\src\services\king\king.cache.js
+----------------------------------------------------------------------------------------------------
+00001: export const CACHE_TTL_MS = 10 * 60 * 1000; // 10 min
+00002: 
+00003: export function cacheGet(map, key) {
+00004:   const entry = map.get(key);
+00005:   if (!entry) return null;
+00006: 
+00007:   const ts = Number(entry?.ts || 0);
+00008:   if (!Number.isFinite(ts) || Date.now() - ts > CACHE_TTL_MS) {
+00009:     map.delete(key);
+00010:     return null;
+00011:   }
+00012: 
+00013:   return entry.data ?? null;
+00014: }
+00015: 
+00016: export function cacheSet(map, key, data) {
+00017:   map.set(key, { ts: Date.now(), data });
+00018: }
+
+----------------------------------------------------------------------------------------------------
+ARQUIVO IMPORTADO: C:\Users\glaub\palpitaco\src\services\king\king.normalize.js
+----------------------------------------------------------------------------------------------------
+00001: // src/services/king/king.normalize.js
+00002: // Responsável por normalização, ordenação, dedupe, horários, posições e prizes.
+00003: // Migração controlada: as funções serão movidas gradualmente do kingResultsService.js para cá.
+00004: 
+00005: export const KING_NORMALIZE_MODULE_READY = true;
+00006: 
+00007: export function normalizePositions(positions) {
+00008:   const arr =
+00009:     Array.isArray(positions) && positions.length
+00010:       ? positions
+00011:           .map(Number)
+00012:           .filter((n) => Number.isFinite(n) && n > 0)
+00013:       : null;
+00014: 
+00015:   if (!arr || !arr.length) return null;
+00016:   return Array.from(new Set(arr)).sort((a, b) => a - b);
+00017: }
+00018: 
+00019: export function isValidGrupo(n) {
+00020:   return Number.isFinite(Number(n)) && Number(n) >= 1 && Number(n) <= 25;
+00021: }
+00022: 
+00023: export function isValidPosition(n) {
+00024:   return Number.isFinite(Number(n)) && Number(n) >= 1 && Number(n) <= 10;
+00025: }
+00026: 
+00027: export function extractIntInRange(value, min, max) {
+00028:   if (value === null || value === undefined) return null;
+00029: 
+00030:   if (typeof value === "number" && Number.isFinite(value)) {
+00031:     const n = Math.trunc(value);
+00032:     return n >= min && n <= max ? n : null;
+00033:   }
+00034: 
+00035:   const s = String(value).trim();
+00036:   if (!s) return null;
+00037: 
+00038:   if (/^\d+$/.test(s)) {
+00039:     const n = Number(s);
+00040:     return Number.isFinite(n) && n >= min && n <= max ? n : null;
+00041:   }
+00042: 
+00043:   const m = s.match(/(\d{1,2})/);
+00044:   if (!m) return null;
+00045:   const n = Number(m[1]);
+00046:   return Number.isFinite(n) && n >= min && n <= max ? n : null;
+00047: }
+00048: 
+00049: export function normalizeDigitsOnly(v) {
+00050:   const s = String(v ?? "").trim();
+00051:   if (!s) return "";
+00052:   return s.replace(/\D+/g, "");
+00053: }
+00054: 
+00055: export function prizeWidthByPosition(position) {
+00056:   return Number(position) === 7 ? 3 : 4;
+00057: }
+00058: 
+00059: export function toPrizeDigitsByPosition(input, position) {
+00060:   const digits = normalizeDigitsOnly(input);
+00061:   if (!digits) return null;
+00062: 
+00063:   const w = prizeWidthByPosition(position);
+00064: 
+00065:   if (w === 3) {
+00066:     const last3 = digits.slice(-3).padStart(3, "0");
+00067:     return /^\d{3}$/.test(last3) ? last3 : null;
+00068:   }
+00069: 
+00070:   const last4 = digits.slice(-4).padStart(4, "0");
+00071:   return /^\d{4}$/.test(last4) ? last4 : null;
+00072: }
+00073: 
+00074: export function digitsToDezena2(numStr) {
+00075:   const s = String(numStr || "");
+00076:   if (!/^\d{2,4}$/.test(s)) return null;
+00077:   return s.slice(-2);
+00078: }
+00079: 
+00080: export function digitsToCentena3(numStr) {
+00081:   const s = String(numStr || "");
+00082:   if (!/^\d{3,4}$/.test(s)) return null;
+00083:   return s.slice(-3);
+00084: }
+00085: 
+00086: export function normalizePrize(p, prizeId) {
+00087:   const rawGrupo =
+00088:     p?.grupo ??
+00089:     p?.group ??
+00090:     p?.grupo2 ??
+00091:     p?.group2 ??
+00092:     p?.animal_grupo ??
+00093:     p?.g ??
+00094:     p?.grupo_animal ??
+00095:     p?.grupoAnimal ??
+00096:     null;
+00097: 
+00098:   const rawPos =
+00099:     p?.position ??
+00100:     p?.posicao ??
+00101:     p?.pos ??
+00102:     p?.colocacao ??
+00103:     p?.place ??
+00104:     p?.premio ??
+00105:     p?.prize ??
+00106:     p?.p ??
+00107:     null;
+00108: 
+00109:   const rawMilhar =
+00110:     p?.milhar ??
+00111:     p?.milhar4 ??
+00112:     p?.numero ??
+00113:     p?.number ??
+00114:     p?.num ??
+00115:     p?.valor ??
+00116:     p?.n ??
+00117:     null;
+00118: 
+00119:   const grupo = extractIntInRange(rawGrupo, 1, 25);
+00120:   const position = extractIntInRange(rawPos, 1, 10);
+00121: 
+00122:   const numero = toPrizeDigitsByPosition(rawMilhar, position);
+00123:   const digitsLen = numero ? numero.length : null;
+00124: 
+00125:   const dezena2 = numero ? digitsToDezena2(numero) : null;
+00126:   const centena3 = numero ? digitsToCentena3(numero) : null;
+00127: 
+00128:   const milhar4 = numero && numero.length === 4 ? numero : null;
+00129: 
+00130:   return {
+00131:     prizeId: prizeId ?? p?.prizeId ?? null,
+00132:     ...p,
+00133: 
+00134:     grupo,
+00135:     position,
+00136: 
+00137:     numero: numero || null,
+00138:     digitsLen,
+00139: 
+00140:     milhar4: milhar4 || null,
+00141:     milhar: numero || p?.milhar || null,
+00142: 
+00143:     dezena2: dezena2 || null,
+00144:     centena3: centena3 || null,
+00145: 
+00146:     animal: p?.animal ?? p?.label ?? "",
+00147:   };
+00148: }
+00149: 
+00150: export function sortPrizesByPosition(prizes) {
+00151:   return [...(prizes || [])].sort((a, b) => {
+00152:     const pa = Number.isFinite(Number(a?.position)) ? Number(a.position) : 999;
+00153:     const pb = Number.isFinite(Number(b?.position)) ? Number(b.position) : 999;
+00154:     return pa - pb;
+00155:   });
+00156: }
+00157: 
+00158: export function filterPrizesByPositions(prizesAllSorted, positionsArr) {
+00159:   if (!positionsArr || !positionsArr.length) return prizesAllSorted;
+00160:   const set = new Set(positionsArr.map(Number));
+00161:   return prizesAllSorted.filter((p) => set.has(Number(p.position)));
+00162: }
+00163: 
+00164: export function normalizeEmbeddedPrizesForAggregated(embeddedPrizes) {
+00165:   const arr = Array.isArray(embeddedPrizes) ? embeddedPrizes : [];
+00166:   if (!arr.length) return [];
+00167: 
+00168:   const normalized = arr.map((p, idx) =>
+00169:     normalizePrize(p, p?.prizeId ?? `emb_${idx}`)
+00170:   );
+00171: 
+00172:   return sortPrizesByPosition(
+00173:     normalized.filter(
+00174:       (x) =>
+00175:         isValidPosition(x?.position) &&
+00176:         (
+00177:           isValidGrupo(x?.grupo) ||
+00178:           x?.numero ||
+00179:           x?.milhar ||
+00180:           x?.milhar4 ||
+00181:           x?.dezena2 ||
+00182:           x?.centena3
+00183:         )
+00184:     )
+00185:   );
+00186: }
+
+----------------------------------------------------------------------------------------------------
+ARQUIVO IMPORTADO: C:\Users\glaub\palpitaco\src\services\king\king.date.js
+----------------------------------------------------------------------------------------------------
+00001: import { normalizeToYMD_SP } from "../../utils/ymd";
+00002: 
+00003: export function pad2(n) {
+00004:   return String(n).padStart(2, "0");
+00005: }
+00006: 
+00007: export function isYMD(s) {
+00008:   return /^\d{4}-\d{2}-\d{2}$/.test(String(s || "").trim());
+00009: }
+00010: 
+00011: export function ymdToBR(ymd) {
+00012:   const m = String(ymd || "")
+00013:     .trim()
+00014:     .match(/^(\d{4})-(\d{2})-(\d{2})$/);
+00015:   if (!m) return null;
+00016:   return `${m[3]}/${m[2]}/${m[1]}`;
+00017: }
+00018: 
+00019: export function normalizeToYMD(input) {
+00020:   return normalizeToYMD_SP(input);
+00021: }
+00022: 
+00023: export function utcTodayYmd() {
+00024:   const d = new Date();
+00025:   const y = d.getUTCFullYear();
+00026:   const m = pad2(d.getUTCMonth() + 1);
+00027:   const dd = pad2(d.getUTCDate());
+00028:   return `${y}-${m}-${dd}`;
+00029: }
+00030: 
+00031: export function ymdToUTCDate(ymd) {
+00032:   const m = String(ymd || "").match(/^(\d{4})-(\d{2})-(\d{2})$/);
+00033:   if (!m) return null;
+00034:   return new Date(Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3])));
+00035: }
+00036: 
+00037: export function ymdToUTCDateLocal(ymd) {
+00038:   return ymdToUTCDate(ymd);
+00039: }
+00040: 
+00041: export function addDaysUTC(ymd, days) {
+00042:   const dt = ymdToUTCDate(ymd);
+00043:   if (!dt) return ymd;
+00044:   dt.setUTCDate(dt.getUTCDate() + Number(days || 0));
+00045:   return `${dt.getUTCFullYear()}-${pad2(dt.getUTCMonth() + 1)}-${pad2(
+00046:     dt.getUTCDate()
+00047:   )}`;
+00048: }
+00049: 
+00050: export function addDaysUTCLocal(ymd, days) {
+00051:   return addDaysUTC(ymd, days);
+00052: }
+00053: 
+00054: export function daysBetweenInclusiveUTC(a, b) {
+00055:   const da = ymdToUTCDate(a);
+00056:   const db = ymdToUTCDate(b);
+00057:   if (!da || !db) return NaN;
+00058:   const ms = db.getTime() - da.getTime();
+00059:   return Math.floor(ms / 86400000) + 1;
+00060: }
+00061: 
+00062: export function daysDiffUTC(fromYmd, toYmd) {
+00063:   const da = ymdToUTCDate(fromYmd);
+00064:   const db = ymdToUTCDate(toYmd);
+00065:   if (!da || !db) return NaN;
+00066:   const ms = db.getTime() - da.getTime();
+00067:   return Math.floor(ms / 86400000);
+00068: }
+00069: 
+00070: export function shouldForceFreshServerRead(ymd) {
+00071:   const today = utcTodayYmd();
+00072:   const diffToToday = daysDiffUTC(ymd, today);
+00073:   return Number.isFinite(diffToToday) && diffToToday <= 1;
+00074: }
+
+====================================================================================================
+FIM DA AUDITORIA
+====================================================================================================
+Relatório:
+.\tmp\freq_filtro_02_servico_completo.txt
+====================================================================================================

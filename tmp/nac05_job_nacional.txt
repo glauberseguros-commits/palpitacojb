@@ -1,0 +1,175 @@
+===== NAC-05 — AUDITORIA DO JOB NACIONAL =====
+
+===== JOB NACIONAL =====
+
+      # BRT 18h => UTC 21h
+      - cron: "6-36/5 21 * * 0-6"
+      # BRT 21h => UTC 00h
+      - cron: "6-46/5 0 * * 0-6"
+      # BRT 23h => UTC 02h
+      - cron: "6-36/5 2 * * 0-6"
+  
+      # =========================
+      # NACIONAL — tentativas a cada 5 minutos dentro das janelas
+      # BRT 02h => UTC 05h
+>     - cron: "7-37/5 5 * * 0-6"
+      # BRT 08h => UTC 11h
+
+>     - cron: "7-37/5 11 * * 0-6"
+      # BRT 10h => UTC 13h
+
+>     - cron: "7-37/5 13 * * 0-6"
+      # BRT 12h => UTC 15h
+
+>     - cron: "7-37/5 15 * * 0-6"
+      # BRT 15h => UTC 18h
+
+>     - cron: "7-37/5 18 * * 0-6"
+      # BRT 17h => UTC 20h
+
+>     - cron: "7-37/5 20 * * 0-6"
+      # BRT 21h => UTC 00h
+
+>     - cron: "7-47/5 0 * * 0-6"
+      # BRT 23h => UTC 02h
+
+>     - cron: "7-37/5 2 * * 0-6"
+  
+    workflow_dispatch:
+      inputs:
+        lottery:
+          description: "Qual loteria executar"
+          required: true
+          type: choice
+          options:
+            - PT_RIO
+            - FEDERAL
+            - LOOK
+            - NACIONAL
+  
+  # ✅ Evita sobreposição de runs (você dispara várias vezes por minuto)
+  # - Mantém 1 execução por vez
+  # - Não cancela a run anterior (mais seguro para importação)
+  concurrency:
+    group: auto-import-palpitaco-${{ github.ref }}
+    cancel-in-progress: false
+  
+
+            FIREBASE_ADMIN_SA_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_JSON }}
+            LOTTERY: LOOK
+            FAIL_ON_CRITICAL: "1"
+            AUDIT_WARN_MIN: "20"
+            AUDIT_CRIT_MIN: "60"
+          run: node scripts/autoImportToday.js
+  
+    # ==========================================================
+    # NACIONAL
+    # ==========================================================
+>   run-import-nacional:
+
+>     name: run-import (NACIONAL)
+      runs-on: ubuntu-latest
+      timeout-minutes: 20
+      defaults:
+        run:
+          working-directory: backend
+  
+      if: |
+        (github.event_name == 'schedule' &&
+          (
+
+>           github.event.schedule == '7-37/5 5 * * 0-6' ||
+
+>           github.event.schedule == '7-37/5 11 * * 0-6' ||
+
+>           github.event.schedule == '7-37/5 13 * * 0-6' ||
+
+>           github.event.schedule == '7-37/5 15 * * 0-6' ||
+
+>           github.event.schedule == '7-37/5 18 * * 0-6' ||
+
+>           github.event.schedule == '7-37/5 20 * * 0-6' ||
+
+>           github.event.schedule == '7-47/5 0 * * 0-6' ||
+
+>           github.event.schedule == '7-37/5 2 * * 0-6'
+          )
+        )
+
+>       || (github.event_name == 'workflow_dispatch' && inputs.lottery == 'NACIONAL')
+  
+      steps:
+        - name: Checkout do repositório
+          uses: actions/checkout@v4
+  
+        - name: Setup Node.js
+          uses: actions/setup-node@v4
+          with:
+            node-version: 20
+  
+        - name: Instalar dependências (backend)
+          run: npm ci
+  
+        - name: Rodar importação automática (NACIONAL)
+          env:
+            FIREBASE_ADMIN_SA_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_JSON }}
+
+>           LOTTERY: NACIONAL
+            FAIL_ON_CRITICAL: "1"
+            AUDIT_WARN_MIN: "20"
+            AUDIT_CRIT_MIN: "60"
+          run: node scripts/autoImportToday.js
+
+
+===== ÚLTIMOS RUNS DO GITHUB =====
+
+29760617115 | completed | failure | schedule | Auto Import ÔÇö PalPitaco JB
+29757568251 | completed | failure | schedule | Auto Import ÔÇö PalPitaco JB
+29757543975 | completed | success | schedule | Auto Import ÔÇö PalPitaco JB
+29754344410 | completed | failure | schedule | Auto Import ÔÇö PalPitaco JB
+29750857285 | completed | success | schedule | Auto Import ÔÇö PalPitaco JB
+29750725488 | completed | failure | schedule | Auto Import ÔÇö PalPitaco JB
+29745134222 | completed | failure | schedule | Auto Import ÔÇö PalPitaco JB
+29741746661 | completed | failure | schedule | Auto Import ÔÇö PalPitaco JB
+29719978419 | completed | success | workflow_dispatch | Auto Import ÔÇö PalPitaco JB
+29719783998 | completed | success | workflow_dispatch | Auto Import ÔÇö PalPitaco JB
+29702004199 | completed | failure | schedule | Auto Import ÔÇö PalPitaco JB
+29698036382 | completed | failure | schedule | Auto Import ÔÇö PalPitaco JB
+29692199775 | completed | failure | schedule | Auto Import ÔÇö PalPitaco JB
+29689518084 | completed | failure | schedule | Auto Import ÔÇö PalPitaco JB
+29670714479 | completed | failure | schedule | Auto Import ÔÇö PalPitaco JB
+29665799875 | completed | success | schedule | Auto Import ÔÇö PalPitaco JB
+29665563891 | completed | success | schedule | Auto Import ÔÇö PalPitaco JB
+29663343637 | completed | failure | schedule | Auto Import ÔÇö PalPitaco JB
+29659080013 | completed | failure | schedule | Auto Import ÔÇö PalPitaco JB
+29655072100 | completed | failure | schedule | Auto Import ÔÇö PalPitaco JB
+29649339568 | completed | success | schedule | Auto Import ÔÇö PalPitaco JB
+29646648419 | completed | success | schedule | Auto Import ÔÇö PalPitaco JB
+29627220471 | completed | failure | schedule | Auto Import ÔÇö PalPitaco JB
+29616586162 | completed | failure | schedule | Auto Import ÔÇö PalPitaco JB
+29610317330 | completed | failure | schedule | Auto Import ÔÇö PalPitaco JB
+29603045391 | completed | failure | schedule | Auto Import ÔÇö PalPitaco JB
+29591883213 | completed | failure | schedule | Auto Import ÔÇö PalPitaco JB
+29586063615 | completed | success | schedule | Auto Import ÔÇö PalPitaco JB
+29550549514 | completed | failure | schedule | Auto Import ÔÇö PalPitaco JB
+29538703423 | completed | failure | schedule | Auto Import ÔÇö PalPitaco JB
+29530730239 | completed | failure | schedule | Auto Import ÔÇö PalPitaco JB
+29523136902 | completed | failure | schedule | Auto Import ÔÇö PalPitaco JB
+29512454784 | completed | failure | schedule | Auto Import ÔÇö PalPitaco JB
+29505803572 | completed | failure | schedule | Auto Import ÔÇö PalPitaco JB
+29467084588 | completed | failure | schedule | Auto Import ÔÇö PalPitaco JB
+29459890385 | completed | success | schedule | Auto Import ÔÇö PalPitaco JB
+29459421702 | completed | success | schedule | Auto Import ÔÇö PalPitaco JB
+29455590401 | completed | failure | schedule | Auto Import ÔÇö PalPitaco JB
+29447662915 | completed | failure | schedule | Auto Import ÔÇö PalPitaco JB
+29439856092 | completed | failure | schedule | Auto Import ÔÇö PalPitaco JB
+29429246497 | completed | failure | schedule | Auto Import ÔÇö PalPitaco JB
+29421923920 | completed | success | schedule | Auto Import ÔÇö PalPitaco JB
+29384263010 | completed | failure | schedule | Auto Import ÔÇö PalPitaco JB
+29371952045 | completed | failure | schedule | Auto Import ÔÇö PalPitaco JB
+29370136665 | completed | success | workflow_dispatch | Auto Import ÔÇö PalPitaco JB
+29369995736 | completed | success | workflow_dispatch | Auto Import ÔÇö PalPitaco JB
+29369838970 | completed | success | workflow_dispatch | Auto Import ÔÇö PalPitaco JB
+29365229224 | completed | failure | schedule | Auto Import ÔÇö PalPitaco JB
+29356933441 | completed | failure | schedule | Auto Import ÔÇö PalPitaco JB
+29346228263 | completed | failure | schedule | Auto Import ÔÇö PalPitaco JB

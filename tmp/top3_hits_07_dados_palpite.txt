@@ -1,0 +1,2542 @@
+
+====================================================================================================
+OCORRÊNCIA NA LINHA 47: slot?.resultTop3Milhares
+====================================================================================================
+00040:   );
+00041: 
+00042:   if (persistedMilhar) {
+00043:     return persistedMilhar;
+00044:   }
+00045: 
+00046:   const persistedTop3 = Array.isArray(
+00047:     slot?.resultTop3Milhares
+00048:   )
+00049:     ? slot.resultTop3Milhares
+00050:     : [];
+00051: 
+00052:   const persistedPrimeira = normalizeMilharStr(
+00053:     persistedTop3[0] ?? ""
+00054:   );
+00055: 
+00056:   if (persistedPrimeira) {
+00057:     return persistedPrimeira;
+00058:   }
+00059: 
+00060:   return extractPrizeMilharByPosition(slot, 1);
+00061: }
+00062: 
+00063: function getPrizeGrupoByPosition(slot, position) {
+00064:   const persisted = Array.isArray(
+00065:     slot?.resultTop3Groups
+00066:   )
+
+====================================================================================================
+OCORRÊNCIA NA LINHA 49: ? slot.resultTop3Milhares
+====================================================================================================
+00042:   if (persistedMilhar) {
+00043:     return persistedMilhar;
+00044:   }
+00045: 
+00046:   const persistedTop3 = Array.isArray(
+00047:     slot?.resultTop3Milhares
+00048:   )
+00049:     ? slot.resultTop3Milhares
+00050:     : [];
+00051: 
+00052:   const persistedPrimeira = normalizeMilharStr(
+00053:     persistedTop3[0] ?? ""
+00054:   );
+00055: 
+00056:   if (persistedPrimeira) {
+00057:     return persistedPrimeira;
+00058:   }
+00059: 
+00060:   return extractPrizeMilharByPosition(slot, 1);
+00061: }
+00062: 
+00063: function getPrizeGrupoByPosition(slot, position) {
+00064:   const persisted = Array.isArray(
+00065:     slot?.resultTop3Groups
+00066:   )
+00067:     ? Number(slot.resultTop3Groups[position - 1])
+00068:     : NaN;
+
+====================================================================================================
+OCORRÊNCIA NA LINHA 136: const persistedMilhares = Array.isArray(
+====================================================================================================
+00129:         !Number.isFinite(grupo) ||
+00130:         grupo < 1 ||
+00131:         grupo > 25
+00132:       ) {
+00133:         return null;
+00134:       }
+00135: 
+00136:       const persistedMilhares = Array.isArray(
+00137:         slot?.resultTop3Milhares
+00138:       )
+00139:         ? slot.resultTop3Milhares
+00140:         : [];
+00141: 
+00142:       const milhar =
+00143:         String(
+00144:           persistedMilhares[position - 1] || ""
+00145:         ).replace(/\D/g, "") ||
+00146:         extractPrizeMilharByPosition(slot, position);
+00147: 
+00148:       return {
+00149:         position,
+00150:         grupo,
+00151:         milhar: milhar
+00152:           ? milhar.slice(-4).padStart(4, "0")
+00153:           : "",
+00154:       };
+00155:     })
+
+====================================================================================================
+OCORRÊNCIA NA LINHA 137: slot?.resultTop3Milhares
+====================================================================================================
+00130:         grupo < 1 ||
+00131:         grupo > 25
+00132:       ) {
+00133:         return null;
+00134:       }
+00135: 
+00136:       const persistedMilhares = Array.isArray(
+00137:         slot?.resultTop3Milhares
+00138:       )
+00139:         ? slot.resultTop3Milhares
+00140:         : [];
+00141: 
+00142:       const milhar =
+00143:         String(
+00144:           persistedMilhares[position - 1] || ""
+00145:         ).replace(/\D/g, "") ||
+00146:         extractPrizeMilharByPosition(slot, position);
+00147: 
+00148:       return {
+00149:         position,
+00150:         grupo,
+00151:         milhar: milhar
+00152:           ? milhar.slice(-4).padStart(4, "0")
+00153:           : "",
+00154:       };
+00155:     })
+00156:     .filter(Boolean);
+
+====================================================================================================
+OCORRÊNCIA NA LINHA 139: ? slot.resultTop3Milhares
+====================================================================================================
+00132:       ) {
+00133:         return null;
+00134:       }
+00135: 
+00136:       const persistedMilhares = Array.isArray(
+00137:         slot?.resultTop3Milhares
+00138:       )
+00139:         ? slot.resultTop3Milhares
+00140:         : [];
+00141: 
+00142:       const milhar =
+00143:         String(
+00144:           persistedMilhares[position - 1] || ""
+00145:         ).replace(/\D/g, "") ||
+00146:         extractPrizeMilharByPosition(slot, position);
+00147: 
+00148:       return {
+00149:         position,
+00150:         grupo,
+00151:         milhar: milhar
+00152:           ? milhar.slice(-4).padStart(4, "0")
+00153:           : "",
+00154:       };
+00155:     })
+00156:     .filter(Boolean);
+00157: }
+00158: 
+
+====================================================================================================
+OCORRÊNCIA NA LINHA 144: persistedMilhares[position - 1] || ""
+====================================================================================================
+00137:         slot?.resultTop3Milhares
+00138:       )
+00139:         ? slot.resultTop3Milhares
+00140:         : [];
+00141: 
+00142:       const milhar =
+00143:         String(
+00144:           persistedMilhares[position - 1] || ""
+00145:         ).replace(/\D/g, "") ||
+00146:         extractPrizeMilharByPosition(slot, position);
+00147: 
+00148:       return {
+00149:         position,
+00150:         grupo,
+00151:         milhar: milhar
+00152:           ? milhar.slice(-4).padStart(4, "0")
+00153:           : "",
+00154:       };
+00155:     })
+00156:     .filter(Boolean);
+00157: }
+00158: 
+00159: function podiumMedalFromPosition(position) {
+00160:   if (Number(position) === 1) return "gold";
+00161:   if (Number(position) === 2) return "silver";
+00162:   if (Number(position) === 3) return "bronze";
+00163:   return "";
+
+====================================================================================================
+OCORRÊNCIA NA LINHA 274: function clampColsFromItemMilharesCols(milharesCols, expectedCols = 4, perCol = 5) {
+====================================================================================================
+00267:   for (let i = 0; i < 4; i += 1) {
+00268:     out.push(wrapToDezena2(start + i));
+00269:   }
+00270: 
+00271:   return out;
+00272: }
+00273: 
+00274: function clampColsFromItemMilharesCols(milharesCols, expectedCols = 4, perCol = 5) {
+00275:   const colsArr = Array.isArray(milharesCols) ? milharesCols : [];
+00276:   const out = [];
+00277: 
+00278:   for (let i = 0; i < Math.min(expectedCols, colsArr.length); i += 1) {
+00279:     const dz = String(colsArr[i]?.dezena || "").trim();
+00280:     const items0 = Array.isArray(colsArr[i]?.items) ? colsArr[i].items : [];
+00281: 
+00282:     const items = items0
+00283:       .map(normalizeMilharStr)
+00284:       .map((m) => (m && /^\d{4}$/.test(m) ? m : ""))
+00285:       .slice(0, perCol);
+00286: 
+00287:     while (items.length < perCol) items.push("");
+00288:     out.push({ dezena: dz, items });
+00289:   }
+00290: 
+00291:   while (out.length < expectedCols) {
+00292:     out.push({ dezena: "", items: Array(perCol).fill("") });
+00293:   }
+
+====================================================================================================
+OCORRÊNCIA NA LINHA 275: const colsArr = Array.isArray(milharesCols) ? milharesCols : [];
+====================================================================================================
+00268:     out.push(wrapToDezena2(start + i));
+00269:   }
+00270: 
+00271:   return out;
+00272: }
+00273: 
+00274: function clampColsFromItemMilharesCols(milharesCols, expectedCols = 4, perCol = 5) {
+00275:   const colsArr = Array.isArray(milharesCols) ? milharesCols : [];
+00276:   const out = [];
+00277: 
+00278:   for (let i = 0; i < Math.min(expectedCols, colsArr.length); i += 1) {
+00279:     const dz = String(colsArr[i]?.dezena || "").trim();
+00280:     const items0 = Array.isArray(colsArr[i]?.items) ? colsArr[i].items : [];
+00281: 
+00282:     const items = items0
+00283:       .map(normalizeMilharStr)
+00284:       .map((m) => (m && /^\d{4}$/.test(m) ? m : ""))
+00285:       .slice(0, perCol);
+00286: 
+00287:     while (items.length < perCol) items.push("");
+00288:     out.push({ dezena: dz, items });
+00289:   }
+00290: 
+00291:   while (out.length < expectedCols) {
+00292:     out.push({ dezena: "", items: Array(perCol).fill("") });
+00293:   }
+00294: 
+
+====================================================================================================
+OCORRÊNCIA NA LINHA 298: function build20ByDezena({ grupo, baseMilhares, perCol = 5 }) {
+====================================================================================================
+00291:   while (out.length < expectedCols) {
+00292:     out.push({ dezena: "", items: Array(perCol).fill("") });
+00293:   }
+00294: 
+00295:   return out.slice(0, expectedCols);
+00296: }
+00297: 
+00298: function build20ByDezena({ grupo, baseMilhares, perCol = 5 }) {
+00299:   const g = Number(grupo);
+00300:   const dezenas = getDezenasFixasFromGrupo(g);
+00301: 
+00302:   if (!dezenas.length) {
+00303:     return { dezenas: [], rows: [], flat20: [] };
+00304:   }
+00305: 
+00306:   const input = Array.isArray(baseMilhares) ? baseMilhares : [];
+00307:   const normalized = input
+00308:     .map(normalizeMilharStr)
+00309:     .filter((x) => /^\d{4}$/.test(x));
+00310: 
+00311:   const byDz = new Map();
+00312:   for (const dz of dezenas) byDz.set(dz, []);
+00313: 
+00314:   for (const m4 of normalized) {
+00315:     const dz = dezenaFromMilhar(m4);
+00316:     if (byDz.has(dz)) byDz.get(dz).push(m4);
+00317:   }
+
+====================================================================================================
+OCORRÊNCIA NA LINHA 306: const input = Array.isArray(baseMilhares) ? baseMilhares : [];
+====================================================================================================
+00299:   const g = Number(grupo);
+00300:   const dezenas = getDezenasFixasFromGrupo(g);
+00301: 
+00302:   if (!dezenas.length) {
+00303:     return { dezenas: [], rows: [], flat20: [] };
+00304:   }
+00305: 
+00306:   const input = Array.isArray(baseMilhares) ? baseMilhares : [];
+00307:   const normalized = input
+00308:     .map(normalizeMilharStr)
+00309:     .filter((x) => /^\d{4}$/.test(x));
+00310: 
+00311:   const byDz = new Map();
+00312:   for (const dz of dezenas) byDz.set(dz, []);
+00313: 
+00314:   for (const m4 of normalized) {
+00315:     const dz = dezenaFromMilhar(m4);
+00316:     if (byDz.has(dz)) byDz.get(dz).push(m4);
+00317:   }
+00318: 
+00319:   const seenCent = new Set();
+00320:   const seenMilhar = new Set();
+00321: 
+00322:   const cols = {};
+00323:   for (const dz of dezenas) cols[dz] = [];
+00324: 
+00325:   const tryPush = (dz, m4) => {
+
+====================================================================================================
+OCORRÊNCIA NA LINHA 478: const milhares = (
+====================================================================================================
+00471:       let predictionIndex = 0;
+00472:       predictionIndex < top3.length;
+00473:       predictionIndex += 1
+00474:     ) {
+00475:       const item = top3[predictionIndex];
+00476:       const grupo = Number(item?.grupo);
+00477: 
+00478:       const milhares = (
+00479:         Array.isArray(item?.milhares20)
+00480:           ? item.milhares20
+00481:           : Array.isArray(item?.milhares)
+00482:             ? item.milhares
+00483:             : []
+00484:       )
+00485:         .map(normalizeMilharStr)
+00486:         .filter((value) => /^\d{4}$/.test(value));
+00487: 
+00488:       const centenas = milhares
+00489:         .map((value) => value.slice(-3))
+00490:         .filter((value) => /^\d{3}$/.test(value));
+00491: 
+00492:       const dezenas = milhares
+00493:         .map((value) => value.slice(-2))
+00494:         .filter((value) => /^\d{2}$/.test(value));
+00495: 
+00496:       let type = "miss";
+00497:       let score = 0;
+
+====================================================================================================
+OCORRÊNCIA NA LINHA 479: Array.isArray(item?.milhares20)
+====================================================================================================
+00472:       predictionIndex < top3.length;
+00473:       predictionIndex += 1
+00474:     ) {
+00475:       const item = top3[predictionIndex];
+00476:       const grupo = Number(item?.grupo);
+00477: 
+00478:       const milhares = (
+00479:         Array.isArray(item?.milhares20)
+00480:           ? item.milhares20
+00481:           : Array.isArray(item?.milhares)
+00482:             ? item.milhares
+00483:             : []
+00484:       )
+00485:         .map(normalizeMilharStr)
+00486:         .filter((value) => /^\d{4}$/.test(value));
+00487: 
+00488:       const centenas = milhares
+00489:         .map((value) => value.slice(-3))
+00490:         .filter((value) => /^\d{3}$/.test(value));
+00491: 
+00492:       const dezenas = milhares
+00493:         .map((value) => value.slice(-2))
+00494:         .filter((value) => /^\d{2}$/.test(value));
+00495: 
+00496:       let type = "miss";
+00497:       let score = 0;
+00498:       let matchedValue = "";
+
+====================================================================================================
+OCORRÊNCIA NA LINHA 480: ? item.milhares20
+====================================================================================================
+00473:       predictionIndex += 1
+00474:     ) {
+00475:       const item = top3[predictionIndex];
+00476:       const grupo = Number(item?.grupo);
+00477: 
+00478:       const milhares = (
+00479:         Array.isArray(item?.milhares20)
+00480:           ? item.milhares20
+00481:           : Array.isArray(item?.milhares)
+00482:             ? item.milhares
+00483:             : []
+00484:       )
+00485:         .map(normalizeMilharStr)
+00486:         .filter((value) => /^\d{4}$/.test(value));
+00487: 
+00488:       const centenas = milhares
+00489:         .map((value) => value.slice(-3))
+00490:         .filter((value) => /^\d{3}$/.test(value));
+00491: 
+00492:       const dezenas = milhares
+00493:         .map((value) => value.slice(-2))
+00494:         .filter((value) => /^\d{2}$/.test(value));
+00495: 
+00496:       let type = "miss";
+00497:       let score = 0;
+00498:       let matchedValue = "";
+00499: 
+
+====================================================================================================
+OCORRÊNCIA NA LINHA 481: : Array.isArray(item?.milhares)
+====================================================================================================
+00474:     ) {
+00475:       const item = top3[predictionIndex];
+00476:       const grupo = Number(item?.grupo);
+00477: 
+00478:       const milhares = (
+00479:         Array.isArray(item?.milhares20)
+00480:           ? item.milhares20
+00481:           : Array.isArray(item?.milhares)
+00482:             ? item.milhares
+00483:             : []
+00484:       )
+00485:         .map(normalizeMilharStr)
+00486:         .filter((value) => /^\d{4}$/.test(value));
+00487: 
+00488:       const centenas = milhares
+00489:         .map((value) => value.slice(-3))
+00490:         .filter((value) => /^\d{3}$/.test(value));
+00491: 
+00492:       const dezenas = milhares
+00493:         .map((value) => value.slice(-2))
+00494:         .filter((value) => /^\d{2}$/.test(value));
+00495: 
+00496:       let type = "miss";
+00497:       let score = 0;
+00498:       let matchedValue = "";
+00499: 
+00500:       if (
+
+====================================================================================================
+OCORRÊNCIA NA LINHA 482: ? item.milhares
+====================================================================================================
+00475:       const item = top3[predictionIndex];
+00476:       const grupo = Number(item?.grupo);
+00477: 
+00478:       const milhares = (
+00479:         Array.isArray(item?.milhares20)
+00480:           ? item.milhares20
+00481:           : Array.isArray(item?.milhares)
+00482:             ? item.milhares
+00483:             : []
+00484:       )
+00485:         .map(normalizeMilharStr)
+00486:         .filter((value) => /^\d{4}$/.test(value));
+00487: 
+00488:       const centenas = milhares
+00489:         .map((value) => value.slice(-3))
+00490:         .filter((value) => /^\d{3}$/.test(value));
+00491: 
+00492:       const dezenas = milhares
+00493:         .map((value) => value.slice(-2))
+00494:         .filter((value) => /^\d{2}$/.test(value));
+00495: 
+00496:       let type = "miss";
+00497:       let score = 0;
+00498:       let matchedValue = "";
+00499: 
+00500:       if (
+00501:         milhar &&
+
+====================================================================================================
+OCORRÊNCIA NA LINHA 488: const centenas = milhares
+====================================================================================================
+00481:           : Array.isArray(item?.milhares)
+00482:             ? item.milhares
+00483:             : []
+00484:       )
+00485:         .map(normalizeMilharStr)
+00486:         .filter((value) => /^\d{4}$/.test(value));
+00487: 
+00488:       const centenas = milhares
+00489:         .map((value) => value.slice(-3))
+00490:         .filter((value) => /^\d{3}$/.test(value));
+00491: 
+00492:       const dezenas = milhares
+00493:         .map((value) => value.slice(-2))
+00494:         .filter((value) => /^\d{2}$/.test(value));
+00495: 
+00496:       let type = "miss";
+00497:       let score = 0;
+00498:       let matchedValue = "";
+00499: 
+00500:       if (
+00501:         milhar &&
+00502:         milhares.includes(milhar)
+00503:       ) {
+00504:         type = "hit_exact";
+00505:         score = 100;
+00506:         matchedValue = milhar;
+00507:       } else if (
+
+====================================================================================================
+OCORRÊNCIA NA LINHA 492: const dezenas = milhares
+====================================================================================================
+00485:         .map(normalizeMilharStr)
+00486:         .filter((value) => /^\d{4}$/.test(value));
+00487: 
+00488:       const centenas = milhares
+00489:         .map((value) => value.slice(-3))
+00490:         .filter((value) => /^\d{3}$/.test(value));
+00491: 
+00492:       const dezenas = milhares
+00493:         .map((value) => value.slice(-2))
+00494:         .filter((value) => /^\d{2}$/.test(value));
+00495: 
+00496:       let type = "miss";
+00497:       let score = 0;
+00498:       let matchedValue = "";
+00499: 
+00500:       if (
+00501:         milhar &&
+00502:         milhares.includes(milhar)
+00503:       ) {
+00504:         type = "hit_exact";
+00505:         score = 100;
+00506:         matchedValue = milhar;
+00507:       } else if (
+00508:         centena &&
+00509:         centenas.includes(centena)
+00510:       ) {
+00511:         type = "hit_centena";
+
+====================================================================================================
+OCORRÊNCIA NA LINHA 502: milhares.includes(milhar)
+====================================================================================================
+00495: 
+00496:       let type = "miss";
+00497:       let score = 0;
+00498:       let matchedValue = "";
+00499: 
+00500:       if (
+00501:         milhar &&
+00502:         milhares.includes(milhar)
+00503:       ) {
+00504:         type = "hit_exact";
+00505:         score = 100;
+00506:         matchedValue = milhar;
+00507:       } else if (
+00508:         centena &&
+00509:         centenas.includes(centena)
+00510:       ) {
+00511:         type = "hit_centena";
+00512:         score = 66.67;
+00513:         matchedValue = centena;
+00514:       } else if (
+00515:         dezena &&
+00516:         dezenas.includes(dezena)
+00517:       ) {
+00518:         type = "hit_dezena";
+00519:         score = 33.33;
+00520:         matchedValue = dezena;
+00521:       } else if (
+
+====================================================================================================
+OCORRÊNCIA NA LINHA 509: centenas.includes(centena)
+====================================================================================================
+00502:         milhares.includes(milhar)
+00503:       ) {
+00504:         type = "hit_exact";
+00505:         score = 100;
+00506:         matchedValue = milhar;
+00507:       } else if (
+00508:         centena &&
+00509:         centenas.includes(centena)
+00510:       ) {
+00511:         type = "hit_centena";
+00512:         score = 66.67;
+00513:         matchedValue = centena;
+00514:       } else if (
+00515:         dezena &&
+00516:         dezenas.includes(dezena)
+00517:       ) {
+00518:         type = "hit_dezena";
+00519:         score = 33.33;
+00520:         matchedValue = dezena;
+00521:       } else if (
+00522:         Number.isFinite(grupoNum) &&
+00523:         grupo === grupoNum
+00524:       ) {
+00525:         type = "hit_grupo";
+00526:         score = 33.33;
+00527:         matchedValue = formatGrupo(grupoNum);
+00528:       }
+
+====================================================================================================
+OCORRÊNCIA NA LINHA 652: build16,
+====================================================================================================
+00645:   idx,
+00646:   theme,
+00647:   copiedAllKey,
+00648:   copiedCellKey,
+00649:   setCopiedAllKey,
+00650:   setCopiedCellKey,
+00651:   copyText,
+00652:   build16,
+00653:   buildMilhares,
+00654:   build20,
+00655: }) {
+00656:   const t = theme;
+00657: 
+00658:   const grupoTxt = formatGrupo(item?.grupo);
+00659:   const animal = String(item?.animal || "").trim();
+00660: 
+00661:   const samplesRaw = Number(item?.meta?.samples ?? item?.samples ?? 0);
+00662:   const samples = Number.isFinite(samplesRaw)
+00663:     ? Math.max(0, Math.trunc(samplesRaw))
+00664:     : 0;
+00665: 
+00666:   const freqRaw = Number(item?.freq ?? 0);
+00667:   const freq = Number.isFinite(freqRaw)
+00668:     ? Math.max(0, Math.trunc(freqRaw))
+00669:     : 0;
+00670: 
+00671:   const denom = samples > 0 ? samples * 5 : 0;
+
+====================================================================================================
+OCORRÊNCIA NA LINHA 653: buildMilhares,
+====================================================================================================
+00646:   theme,
+00647:   copiedAllKey,
+00648:   copiedCellKey,
+00649:   setCopiedAllKey,
+00650:   setCopiedCellKey,
+00651:   copyText,
+00652:   build16,
+00653:   buildMilhares,
+00654:   build20,
+00655: }) {
+00656:   const t = theme;
+00657: 
+00658:   const grupoTxt = formatGrupo(item?.grupo);
+00659:   const animal = String(item?.animal || "").trim();
+00660: 
+00661:   const samplesRaw = Number(item?.meta?.samples ?? item?.samples ?? 0);
+00662:   const samples = Number.isFinite(samplesRaw)
+00663:     ? Math.max(0, Math.trunc(samplesRaw))
+00664:     : 0;
+00665: 
+00666:   const freqRaw = Number(item?.freq ?? 0);
+00667:   const freq = Number.isFinite(freqRaw)
+00668:     ? Math.max(0, Math.trunc(freqRaw))
+00669:     : 0;
+00670: 
+00671:   const denom = samples > 0 ? samples * 5 : 0;
+00672:   const derivedScore = denom > 0 ? freq / denom : 0;
+
+====================================================================================================
+OCORRÊNCIA NA LINHA 654: build20,
+====================================================================================================
+00647:   copiedAllKey,
+00648:   copiedCellKey,
+00649:   setCopiedAllKey,
+00650:   setCopiedCellKey,
+00651:   copyText,
+00652:   build16,
+00653:   buildMilhares,
+00654:   build20,
+00655: }) {
+00656:   const t = theme;
+00657: 
+00658:   const grupoTxt = formatGrupo(item?.grupo);
+00659:   const animal = String(item?.animal || "").trim();
+00660: 
+00661:   const samplesRaw = Number(item?.meta?.samples ?? item?.samples ?? 0);
+00662:   const samples = Number.isFinite(samplesRaw)
+00663:     ? Math.max(0, Math.trunc(samplesRaw))
+00664:     : 0;
+00665: 
+00666:   const freqRaw = Number(item?.freq ?? 0);
+00667:   const freq = Number.isFinite(freqRaw)
+00668:     ? Math.max(0, Math.trunc(freqRaw))
+00669:     : 0;
+00670: 
+00671:   const denom = samples > 0 ? samples * 5 : 0;
+00672:   const derivedScore = denom > 0 ? freq / denom : 0;
+00673: 
+
+====================================================================================================
+OCORRÊNCIA NA LINHA 690: Array.isArray(item?.milharesCols) &&
+====================================================================================================
+00683:     Array.isArray(item?.imgIcon) && item.imgIcon.length
+00684:       ? item.imgIcon
+00685:       : Array.isArray(item?.imgBg)
+00686:         ? item.imgBg
+00687:         : [];
+00688: 
+00689:   const hasCols =
+00690:     Array.isArray(item?.milharesCols) &&
+00691:     item.milharesCols.length >= 4 &&
+00692:     Array.isArray(item.milharesCols[0]?.items);
+00693: 
+00694:   let dezenasHeader = [];
+00695:   let gridRows = Array.from({ length: 5 }, () => Array(4).fill(""));
+00696:   let flat20 = [];
+00697: 
+00698:   if (hasCols) {
+00699:     const cols4 = clampColsFromItemMilharesCols(item.milharesCols, 4, 5);
+00700:     dezenasHeader = cols4.map((c) => String(c.dezena || ""));
+00701:     gridRows = Array.from({ length: 5 }, (_, r) =>
+00702:       cols4.map((c) => c.items[r] || "")
+00703:     );
+00704:     flat20 = gridRows.flat().filter(Boolean);
+00705:   } else {
+00706:     let milharesBase = [];
+00707: 
+00708:     const m20 = Array.isArray(item?.milhares20) ? item.milhares20 : null;
+00709:     const mAny = Array.isArray(item?.milhares) ? item.milhares : null;
+
+====================================================================================================
+OCORRÊNCIA NA LINHA 691: item.milharesCols.length >= 4 &&
+====================================================================================================
+00684:       ? item.imgIcon
+00685:       : Array.isArray(item?.imgBg)
+00686:         ? item.imgBg
+00687:         : [];
+00688: 
+00689:   const hasCols =
+00690:     Array.isArray(item?.milharesCols) &&
+00691:     item.milharesCols.length >= 4 &&
+00692:     Array.isArray(item.milharesCols[0]?.items);
+00693: 
+00694:   let dezenasHeader = [];
+00695:   let gridRows = Array.from({ length: 5 }, () => Array(4).fill(""));
+00696:   let flat20 = [];
+00697: 
+00698:   if (hasCols) {
+00699:     const cols4 = clampColsFromItemMilharesCols(item.milharesCols, 4, 5);
+00700:     dezenasHeader = cols4.map((c) => String(c.dezena || ""));
+00701:     gridRows = Array.from({ length: 5 }, (_, r) =>
+00702:       cols4.map((c) => c.items[r] || "")
+00703:     );
+00704:     flat20 = gridRows.flat().filter(Boolean);
+00705:   } else {
+00706:     let milharesBase = [];
+00707: 
+00708:     const m20 = Array.isArray(item?.milhares20) ? item.milhares20 : null;
+00709:     const mAny = Array.isArray(item?.milhares) ? item.milhares : null;
+00710: 
+
+====================================================================================================
+OCORRÊNCIA NA LINHA 692: Array.isArray(item.milharesCols[0]?.items);
+====================================================================================================
+00685:       : Array.isArray(item?.imgBg)
+00686:         ? item.imgBg
+00687:         : [];
+00688: 
+00689:   const hasCols =
+00690:     Array.isArray(item?.milharesCols) &&
+00691:     item.milharesCols.length >= 4 &&
+00692:     Array.isArray(item.milharesCols[0]?.items);
+00693: 
+00694:   let dezenasHeader = [];
+00695:   let gridRows = Array.from({ length: 5 }, () => Array(4).fill(""));
+00696:   let flat20 = [];
+00697: 
+00698:   if (hasCols) {
+00699:     const cols4 = clampColsFromItemMilharesCols(item.milharesCols, 4, 5);
+00700:     dezenasHeader = cols4.map((c) => String(c.dezena || ""));
+00701:     gridRows = Array.from({ length: 5 }, (_, r) =>
+00702:       cols4.map((c) => c.items[r] || "")
+00703:     );
+00704:     flat20 = gridRows.flat().filter(Boolean);
+00705:   } else {
+00706:     let milharesBase = [];
+00707: 
+00708:     const m20 = Array.isArray(item?.milhares20) ? item.milhares20 : null;
+00709:     const mAny = Array.isArray(item?.milhares) ? item.milhares : null;
+00710: 
+00711:     if (m20 && m20.length) milharesBase = m20.slice(0);
+
+====================================================================================================
+OCORRÊNCIA NA LINHA 699: const cols4 = clampColsFromItemMilharesCols(item.milharesCols, 4, 5);
+====================================================================================================
+00692:     Array.isArray(item.milharesCols[0]?.items);
+00693: 
+00694:   let dezenasHeader = [];
+00695:   let gridRows = Array.from({ length: 5 }, () => Array(4).fill(""));
+00696:   let flat20 = [];
+00697: 
+00698:   if (hasCols) {
+00699:     const cols4 = clampColsFromItemMilharesCols(item.milharesCols, 4, 5);
+00700:     dezenasHeader = cols4.map((c) => String(c.dezena || ""));
+00701:     gridRows = Array.from({ length: 5 }, (_, r) =>
+00702:       cols4.map((c) => c.items[r] || "")
+00703:     );
+00704:     flat20 = gridRows.flat().filter(Boolean);
+00705:   } else {
+00706:     let milharesBase = [];
+00707: 
+00708:     const m20 = Array.isArray(item?.milhares20) ? item.milhares20 : null;
+00709:     const mAny = Array.isArray(item?.milhares) ? item.milhares : null;
+00710: 
+00711:     if (m20 && m20.length) milharesBase = m20.slice(0);
+00712:     else if (mAny && mAny.length) milharesBase = mAny.slice(0);
+00713: 
+00714:     if (!milharesBase.length) {
+00715:       const g = Number(item?.grupo);
+00716: 
+00717:       if (Number.isFinite(g) && g > 0) {
+00718:         if (typeof build20 === "function") {
+
+====================================================================================================
+OCORRÊNCIA NA LINHA 706: let milharesBase = [];
+====================================================================================================
+00699:     const cols4 = clampColsFromItemMilharesCols(item.milharesCols, 4, 5);
+00700:     dezenasHeader = cols4.map((c) => String(c.dezena || ""));
+00701:     gridRows = Array.from({ length: 5 }, (_, r) =>
+00702:       cols4.map((c) => c.items[r] || "")
+00703:     );
+00704:     flat20 = gridRows.flat().filter(Boolean);
+00705:   } else {
+00706:     let milharesBase = [];
+00707: 
+00708:     const m20 = Array.isArray(item?.milhares20) ? item.milhares20 : null;
+00709:     const mAny = Array.isArray(item?.milhares) ? item.milhares : null;
+00710: 
+00711:     if (m20 && m20.length) milharesBase = m20.slice(0);
+00712:     else if (mAny && mAny.length) milharesBase = mAny.slice(0);
+00713: 
+00714:     if (!milharesBase.length) {
+00715:       const g = Number(item?.grupo);
+00716: 
+00717:       if (Number.isFinite(g) && g > 0) {
+00718:         if (typeof build20 === "function") {
+00719:           const out20 = build20(g);
+00720:           const slots20 = Array.isArray(out20?.slots) ? out20.slots : [];
+00721:           milharesBase = slots20.map((x) => x?.milhar).filter(Boolean);
+00722:         } else if (typeof buildMilhares === "function") {
+00723:           const out = buildMilhares(g, 20);
+00724:           if (Array.isArray(out)) {
+00725:             milharesBase = out.slice(0);
+
+====================================================================================================
+OCORRÊNCIA NA LINHA 708: const m20 = Array.isArray(item?.milhares20) ? item.milhares20 : null;
+====================================================================================================
+00701:     gridRows = Array.from({ length: 5 }, (_, r) =>
+00702:       cols4.map((c) => c.items[r] || "")
+00703:     );
+00704:     flat20 = gridRows.flat().filter(Boolean);
+00705:   } else {
+00706:     let milharesBase = [];
+00707: 
+00708:     const m20 = Array.isArray(item?.milhares20) ? item.milhares20 : null;
+00709:     const mAny = Array.isArray(item?.milhares) ? item.milhares : null;
+00710: 
+00711:     if (m20 && m20.length) milharesBase = m20.slice(0);
+00712:     else if (mAny && mAny.length) milharesBase = mAny.slice(0);
+00713: 
+00714:     if (!milharesBase.length) {
+00715:       const g = Number(item?.grupo);
+00716: 
+00717:       if (Number.isFinite(g) && g > 0) {
+00718:         if (typeof build20 === "function") {
+00719:           const out20 = build20(g);
+00720:           const slots20 = Array.isArray(out20?.slots) ? out20.slots : [];
+00721:           milharesBase = slots20.map((x) => x?.milhar).filter(Boolean);
+00722:         } else if (typeof buildMilhares === "function") {
+00723:           const out = buildMilhares(g, 20);
+00724:           if (Array.isArray(out)) {
+00725:             milharesBase = out.slice(0);
+00726:           } else if (out && Array.isArray(out.slots)) {
+00727:             milharesBase = out.slots.map((x) => x?.milhar).filter(Boolean);
+
+====================================================================================================
+OCORRÊNCIA NA LINHA 709: const mAny = Array.isArray(item?.milhares) ? item.milhares : null;
+====================================================================================================
+00702:       cols4.map((c) => c.items[r] || "")
+00703:     );
+00704:     flat20 = gridRows.flat().filter(Boolean);
+00705:   } else {
+00706:     let milharesBase = [];
+00707: 
+00708:     const m20 = Array.isArray(item?.milhares20) ? item.milhares20 : null;
+00709:     const mAny = Array.isArray(item?.milhares) ? item.milhares : null;
+00710: 
+00711:     if (m20 && m20.length) milharesBase = m20.slice(0);
+00712:     else if (mAny && mAny.length) milharesBase = mAny.slice(0);
+00713: 
+00714:     if (!milharesBase.length) {
+00715:       const g = Number(item?.grupo);
+00716: 
+00717:       if (Number.isFinite(g) && g > 0) {
+00718:         if (typeof build20 === "function") {
+00719:           const out20 = build20(g);
+00720:           const slots20 = Array.isArray(out20?.slots) ? out20.slots : [];
+00721:           milharesBase = slots20.map((x) => x?.milhar).filter(Boolean);
+00722:         } else if (typeof buildMilhares === "function") {
+00723:           const out = buildMilhares(g, 20);
+00724:           if (Array.isArray(out)) {
+00725:             milharesBase = out.slice(0);
+00726:           } else if (out && Array.isArray(out.slots)) {
+00727:             milharesBase = out.slots.map((x) => x?.milhar).filter(Boolean);
+00728:           }
+
+====================================================================================================
+OCORRÊNCIA NA LINHA 711: if (m20 && m20.length) milharesBase = m20.slice(0);
+====================================================================================================
+00704:     flat20 = gridRows.flat().filter(Boolean);
+00705:   } else {
+00706:     let milharesBase = [];
+00707: 
+00708:     const m20 = Array.isArray(item?.milhares20) ? item.milhares20 : null;
+00709:     const mAny = Array.isArray(item?.milhares) ? item.milhares : null;
+00710: 
+00711:     if (m20 && m20.length) milharesBase = m20.slice(0);
+00712:     else if (mAny && mAny.length) milharesBase = mAny.slice(0);
+00713: 
+00714:     if (!milharesBase.length) {
+00715:       const g = Number(item?.grupo);
+00716: 
+00717:       if (Number.isFinite(g) && g > 0) {
+00718:         if (typeof build20 === "function") {
+00719:           const out20 = build20(g);
+00720:           const slots20 = Array.isArray(out20?.slots) ? out20.slots : [];
+00721:           milharesBase = slots20.map((x) => x?.milhar).filter(Boolean);
+00722:         } else if (typeof buildMilhares === "function") {
+00723:           const out = buildMilhares(g, 20);
+00724:           if (Array.isArray(out)) {
+00725:             milharesBase = out.slice(0);
+00726:           } else if (out && Array.isArray(out.slots)) {
+00727:             milharesBase = out.slots.map((x) => x?.milhar).filter(Boolean);
+00728:           }
+00729:         } else if (typeof build16 === "function") {
+00730:           const out16 = build16(g);
+
+====================================================================================================
+OCORRÊNCIA NA LINHA 712: else if (mAny && mAny.length) milharesBase = mAny.slice(0);
+====================================================================================================
+00705:   } else {
+00706:     let milharesBase = [];
+00707: 
+00708:     const m20 = Array.isArray(item?.milhares20) ? item.milhares20 : null;
+00709:     const mAny = Array.isArray(item?.milhares) ? item.milhares : null;
+00710: 
+00711:     if (m20 && m20.length) milharesBase = m20.slice(0);
+00712:     else if (mAny && mAny.length) milharesBase = mAny.slice(0);
+00713: 
+00714:     if (!milharesBase.length) {
+00715:       const g = Number(item?.grupo);
+00716: 
+00717:       if (Number.isFinite(g) && g > 0) {
+00718:         if (typeof build20 === "function") {
+00719:           const out20 = build20(g);
+00720:           const slots20 = Array.isArray(out20?.slots) ? out20.slots : [];
+00721:           milharesBase = slots20.map((x) => x?.milhar).filter(Boolean);
+00722:         } else if (typeof buildMilhares === "function") {
+00723:           const out = buildMilhares(g, 20);
+00724:           if (Array.isArray(out)) {
+00725:             milharesBase = out.slice(0);
+00726:           } else if (out && Array.isArray(out.slots)) {
+00727:             milharesBase = out.slots.map((x) => x?.milhar).filter(Boolean);
+00728:           }
+00729:         } else if (typeof build16 === "function") {
+00730:           const out16 = build16(g);
+00731:           const slots16 = Array.isArray(out16?.slots) ? out16.slots : [];
+
+====================================================================================================
+OCORRÊNCIA NA LINHA 714: if (!milharesBase.length) {
+====================================================================================================
+00707: 
+00708:     const m20 = Array.isArray(item?.milhares20) ? item.milhares20 : null;
+00709:     const mAny = Array.isArray(item?.milhares) ? item.milhares : null;
+00710: 
+00711:     if (m20 && m20.length) milharesBase = m20.slice(0);
+00712:     else if (mAny && mAny.length) milharesBase = mAny.slice(0);
+00713: 
+00714:     if (!milharesBase.length) {
+00715:       const g = Number(item?.grupo);
+00716: 
+00717:       if (Number.isFinite(g) && g > 0) {
+00718:         if (typeof build20 === "function") {
+00719:           const out20 = build20(g);
+00720:           const slots20 = Array.isArray(out20?.slots) ? out20.slots : [];
+00721:           milharesBase = slots20.map((x) => x?.milhar).filter(Boolean);
+00722:         } else if (typeof buildMilhares === "function") {
+00723:           const out = buildMilhares(g, 20);
+00724:           if (Array.isArray(out)) {
+00725:             milharesBase = out.slice(0);
+00726:           } else if (out && Array.isArray(out.slots)) {
+00727:             milharesBase = out.slots.map((x) => x?.milhar).filter(Boolean);
+00728:           }
+00729:         } else if (typeof build16 === "function") {
+00730:           const out16 = build16(g);
+00731:           const slots16 = Array.isArray(out16?.slots) ? out16.slots : [];
+00732:           milharesBase = slots16.map((x) => x?.milhar).filter(Boolean);
+00733:         }
+
+====================================================================================================
+OCORRÊNCIA NA LINHA 718: if (typeof build20 === "function") {
+====================================================================================================
+00711:     if (m20 && m20.length) milharesBase = m20.slice(0);
+00712:     else if (mAny && mAny.length) milharesBase = mAny.slice(0);
+00713: 
+00714:     if (!milharesBase.length) {
+00715:       const g = Number(item?.grupo);
+00716: 
+00717:       if (Number.isFinite(g) && g > 0) {
+00718:         if (typeof build20 === "function") {
+00719:           const out20 = build20(g);
+00720:           const slots20 = Array.isArray(out20?.slots) ? out20.slots : [];
+00721:           milharesBase = slots20.map((x) => x?.milhar).filter(Boolean);
+00722:         } else if (typeof buildMilhares === "function") {
+00723:           const out = buildMilhares(g, 20);
+00724:           if (Array.isArray(out)) {
+00725:             milharesBase = out.slice(0);
+00726:           } else if (out && Array.isArray(out.slots)) {
+00727:             milharesBase = out.slots.map((x) => x?.milhar).filter(Boolean);
+00728:           }
+00729:         } else if (typeof build16 === "function") {
+00730:           const out16 = build16(g);
+00731:           const slots16 = Array.isArray(out16?.slots) ? out16.slots : [];
+00732:           milharesBase = slots16.map((x) => x?.milhar).filter(Boolean);
+00733:         }
+00734:       }
+00735:     }
+00736: 
+00737:     const grupoNum = Number(item?.grupo);
+
+====================================================================================================
+OCORRÊNCIA NA LINHA 719: const out20 = build20(g);
+====================================================================================================
+00712:     else if (mAny && mAny.length) milharesBase = mAny.slice(0);
+00713: 
+00714:     if (!milharesBase.length) {
+00715:       const g = Number(item?.grupo);
+00716: 
+00717:       if (Number.isFinite(g) && g > 0) {
+00718:         if (typeof build20 === "function") {
+00719:           const out20 = build20(g);
+00720:           const slots20 = Array.isArray(out20?.slots) ? out20.slots : [];
+00721:           milharesBase = slots20.map((x) => x?.milhar).filter(Boolean);
+00722:         } else if (typeof buildMilhares === "function") {
+00723:           const out = buildMilhares(g, 20);
+00724:           if (Array.isArray(out)) {
+00725:             milharesBase = out.slice(0);
+00726:           } else if (out && Array.isArray(out.slots)) {
+00727:             milharesBase = out.slots.map((x) => x?.milhar).filter(Boolean);
+00728:           }
+00729:         } else if (typeof build16 === "function") {
+00730:           const out16 = build16(g);
+00731:           const slots16 = Array.isArray(out16?.slots) ? out16.slots : [];
+00732:           milharesBase = slots16.map((x) => x?.milhar).filter(Boolean);
+00733:         }
+00734:       }
+00735:     }
+00736: 
+00737:     const grupoNum = Number(item?.grupo);
+00738:     const grid = build20ByDezena({
+
+====================================================================================================
+OCORRÊNCIA NA LINHA 721: milharesBase = slots20.map((x) => x?.milhar).filter(Boolean);
+====================================================================================================
+00714:     if (!milharesBase.length) {
+00715:       const g = Number(item?.grupo);
+00716: 
+00717:       if (Number.isFinite(g) && g > 0) {
+00718:         if (typeof build20 === "function") {
+00719:           const out20 = build20(g);
+00720:           const slots20 = Array.isArray(out20?.slots) ? out20.slots : [];
+00721:           milharesBase = slots20.map((x) => x?.milhar).filter(Boolean);
+00722:         } else if (typeof buildMilhares === "function") {
+00723:           const out = buildMilhares(g, 20);
+00724:           if (Array.isArray(out)) {
+00725:             milharesBase = out.slice(0);
+00726:           } else if (out && Array.isArray(out.slots)) {
+00727:             milharesBase = out.slots.map((x) => x?.milhar).filter(Boolean);
+00728:           }
+00729:         } else if (typeof build16 === "function") {
+00730:           const out16 = build16(g);
+00731:           const slots16 = Array.isArray(out16?.slots) ? out16.slots : [];
+00732:           milharesBase = slots16.map((x) => x?.milhar).filter(Boolean);
+00733:         }
+00734:       }
+00735:     }
+00736: 
+00737:     const grupoNum = Number(item?.grupo);
+00738:     const grid = build20ByDezena({
+00739:       grupo: grupoNum,
+00740:       baseMilhares: milharesBase,
+
+====================================================================================================
+OCORRÊNCIA NA LINHA 722: } else if (typeof buildMilhares === "function") {
+====================================================================================================
+00715:       const g = Number(item?.grupo);
+00716: 
+00717:       if (Number.isFinite(g) && g > 0) {
+00718:         if (typeof build20 === "function") {
+00719:           const out20 = build20(g);
+00720:           const slots20 = Array.isArray(out20?.slots) ? out20.slots : [];
+00721:           milharesBase = slots20.map((x) => x?.milhar).filter(Boolean);
+00722:         } else if (typeof buildMilhares === "function") {
+00723:           const out = buildMilhares(g, 20);
+00724:           if (Array.isArray(out)) {
+00725:             milharesBase = out.slice(0);
+00726:           } else if (out && Array.isArray(out.slots)) {
+00727:             milharesBase = out.slots.map((x) => x?.milhar).filter(Boolean);
+00728:           }
+00729:         } else if (typeof build16 === "function") {
+00730:           const out16 = build16(g);
+00731:           const slots16 = Array.isArray(out16?.slots) ? out16.slots : [];
+00732:           milharesBase = slots16.map((x) => x?.milhar).filter(Boolean);
+00733:         }
+00734:       }
+00735:     }
+00736: 
+00737:     const grupoNum = Number(item?.grupo);
+00738:     const grid = build20ByDezena({
+00739:       grupo: grupoNum,
+00740:       baseMilhares: milharesBase,
+00741:       perCol: 5,
+
+====================================================================================================
+OCORRÊNCIA NA LINHA 723: const out = buildMilhares(g, 20);
+====================================================================================================
+00716: 
+00717:       if (Number.isFinite(g) && g > 0) {
+00718:         if (typeof build20 === "function") {
+00719:           const out20 = build20(g);
+00720:           const slots20 = Array.isArray(out20?.slots) ? out20.slots : [];
+00721:           milharesBase = slots20.map((x) => x?.milhar).filter(Boolean);
+00722:         } else if (typeof buildMilhares === "function") {
+00723:           const out = buildMilhares(g, 20);
+00724:           if (Array.isArray(out)) {
+00725:             milharesBase = out.slice(0);
+00726:           } else if (out && Array.isArray(out.slots)) {
+00727:             milharesBase = out.slots.map((x) => x?.milhar).filter(Boolean);
+00728:           }
+00729:         } else if (typeof build16 === "function") {
+00730:           const out16 = build16(g);
+00731:           const slots16 = Array.isArray(out16?.slots) ? out16.slots : [];
+00732:           milharesBase = slots16.map((x) => x?.milhar).filter(Boolean);
+00733:         }
+00734:       }
+00735:     }
+00736: 
+00737:     const grupoNum = Number(item?.grupo);
+00738:     const grid = build20ByDezena({
+00739:       grupo: grupoNum,
+00740:       baseMilhares: milharesBase,
+00741:       perCol: 5,
+00742:     });
+
+====================================================================================================
+OCORRÊNCIA NA LINHA 725: milharesBase = out.slice(0);
+====================================================================================================
+00718:         if (typeof build20 === "function") {
+00719:           const out20 = build20(g);
+00720:           const slots20 = Array.isArray(out20?.slots) ? out20.slots : [];
+00721:           milharesBase = slots20.map((x) => x?.milhar).filter(Boolean);
+00722:         } else if (typeof buildMilhares === "function") {
+00723:           const out = buildMilhares(g, 20);
+00724:           if (Array.isArray(out)) {
+00725:             milharesBase = out.slice(0);
+00726:           } else if (out && Array.isArray(out.slots)) {
+00727:             milharesBase = out.slots.map((x) => x?.milhar).filter(Boolean);
+00728:           }
+00729:         } else if (typeof build16 === "function") {
+00730:           const out16 = build16(g);
+00731:           const slots16 = Array.isArray(out16?.slots) ? out16.slots : [];
+00732:           milharesBase = slots16.map((x) => x?.milhar).filter(Boolean);
+00733:         }
+00734:       }
+00735:     }
+00736: 
+00737:     const grupoNum = Number(item?.grupo);
+00738:     const grid = build20ByDezena({
+00739:       grupo: grupoNum,
+00740:       baseMilhares: milharesBase,
+00741:       perCol: 5,
+00742:     });
+00743: 
+00744:     dezenasHeader = grid.dezenas;
+
+====================================================================================================
+OCORRÊNCIA NA LINHA 727: milharesBase = out.slots.map((x) => x?.milhar).filter(Boolean);
+====================================================================================================
+00720:           const slots20 = Array.isArray(out20?.slots) ? out20.slots : [];
+00721:           milharesBase = slots20.map((x) => x?.milhar).filter(Boolean);
+00722:         } else if (typeof buildMilhares === "function") {
+00723:           const out = buildMilhares(g, 20);
+00724:           if (Array.isArray(out)) {
+00725:             milharesBase = out.slice(0);
+00726:           } else if (out && Array.isArray(out.slots)) {
+00727:             milharesBase = out.slots.map((x) => x?.milhar).filter(Boolean);
+00728:           }
+00729:         } else if (typeof build16 === "function") {
+00730:           const out16 = build16(g);
+00731:           const slots16 = Array.isArray(out16?.slots) ? out16.slots : [];
+00732:           milharesBase = slots16.map((x) => x?.milhar).filter(Boolean);
+00733:         }
+00734:       }
+00735:     }
+00736: 
+00737:     const grupoNum = Number(item?.grupo);
+00738:     const grid = build20ByDezena({
+00739:       grupo: grupoNum,
+00740:       baseMilhares: milharesBase,
+00741:       perCol: 5,
+00742:     });
+00743: 
+00744:     dezenasHeader = grid.dezenas;
+00745:     gridRows = grid.rows;
+00746:     flat20 = grid.flat20;
+
+====================================================================================================
+OCORRÊNCIA NA LINHA 729: } else if (typeof build16 === "function") {
+====================================================================================================
+00722:         } else if (typeof buildMilhares === "function") {
+00723:           const out = buildMilhares(g, 20);
+00724:           if (Array.isArray(out)) {
+00725:             milharesBase = out.slice(0);
+00726:           } else if (out && Array.isArray(out.slots)) {
+00727:             milharesBase = out.slots.map((x) => x?.milhar).filter(Boolean);
+00728:           }
+00729:         } else if (typeof build16 === "function") {
+00730:           const out16 = build16(g);
+00731:           const slots16 = Array.isArray(out16?.slots) ? out16.slots : [];
+00732:           milharesBase = slots16.map((x) => x?.milhar).filter(Boolean);
+00733:         }
+00734:       }
+00735:     }
+00736: 
+00737:     const grupoNum = Number(item?.grupo);
+00738:     const grid = build20ByDezena({
+00739:       grupo: grupoNum,
+00740:       baseMilhares: milharesBase,
+00741:       perCol: 5,
+00742:     });
+00743: 
+00744:     dezenasHeader = grid.dezenas;
+00745:     gridRows = grid.rows;
+00746:     flat20 = grid.flat20;
+00747:   }
+00748: 
+
+====================================================================================================
+OCORRÊNCIA NA LINHA 730: const out16 = build16(g);
+====================================================================================================
+00723:           const out = buildMilhares(g, 20);
+00724:           if (Array.isArray(out)) {
+00725:             milharesBase = out.slice(0);
+00726:           } else if (out && Array.isArray(out.slots)) {
+00727:             milharesBase = out.slots.map((x) => x?.milhar).filter(Boolean);
+00728:           }
+00729:         } else if (typeof build16 === "function") {
+00730:           const out16 = build16(g);
+00731:           const slots16 = Array.isArray(out16?.slots) ? out16.slots : [];
+00732:           milharesBase = slots16.map((x) => x?.milhar).filter(Boolean);
+00733:         }
+00734:       }
+00735:     }
+00736: 
+00737:     const grupoNum = Number(item?.grupo);
+00738:     const grid = build20ByDezena({
+00739:       grupo: grupoNum,
+00740:       baseMilhares: milharesBase,
+00741:       perCol: 5,
+00742:     });
+00743: 
+00744:     dezenasHeader = grid.dezenas;
+00745:     gridRows = grid.rows;
+00746:     flat20 = grid.flat20;
+00747:   }
+00748: 
+00749:   const key = `${String(item?.grupo ?? "g")}__${animal || "x"}__${idx}`;
+
+====================================================================================================
+OCORRÊNCIA NA LINHA 732: milharesBase = slots16.map((x) => x?.milhar).filter(Boolean);
+====================================================================================================
+00725:             milharesBase = out.slice(0);
+00726:           } else if (out && Array.isArray(out.slots)) {
+00727:             milharesBase = out.slots.map((x) => x?.milhar).filter(Boolean);
+00728:           }
+00729:         } else if (typeof build16 === "function") {
+00730:           const out16 = build16(g);
+00731:           const slots16 = Array.isArray(out16?.slots) ? out16.slots : [];
+00732:           milharesBase = slots16.map((x) => x?.milhar).filter(Boolean);
+00733:         }
+00734:       }
+00735:     }
+00736: 
+00737:     const grupoNum = Number(item?.grupo);
+00738:     const grid = build20ByDezena({
+00739:       grupo: grupoNum,
+00740:       baseMilhares: milharesBase,
+00741:       perCol: 5,
+00742:     });
+00743: 
+00744:     dezenasHeader = grid.dezenas;
+00745:     gridRows = grid.rows;
+00746:     flat20 = grid.flat20;
+00747:   }
+00748: 
+00749:   const key = `${String(item?.grupo ?? "g")}__${animal || "x"}__${idx}`;
+00750:   const rank = idx + 1;
+00751:   // TOP3 EQUAL CARD LAYOUT
+
+====================================================================================================
+OCORRÊNCIA NA LINHA 738: const grid = build20ByDezena({
+====================================================================================================
+00731:           const slots16 = Array.isArray(out16?.slots) ? out16.slots : [];
+00732:           milharesBase = slots16.map((x) => x?.milhar).filter(Boolean);
+00733:         }
+00734:       }
+00735:     }
+00736: 
+00737:     const grupoNum = Number(item?.grupo);
+00738:     const grid = build20ByDezena({
+00739:       grupo: grupoNum,
+00740:       baseMilhares: milharesBase,
+00741:       perCol: 5,
+00742:     });
+00743: 
+00744:     dezenasHeader = grid.dezenas;
+00745:     gridRows = grid.rows;
+00746:     flat20 = grid.flat20;
+00747:   }
+00748: 
+00749:   const key = `${String(item?.grupo ?? "g")}__${animal || "x"}__${idx}`;
+00750:   const rank = idx + 1;
+00751:   // TOP3 EQUAL CARD LAYOUT
+00752:   // A hierarquia permanece no ranking, mas os três cards usam a mesma estrutura.
+00753:   const isHero = false;
+00754: 
+00755:   const title =
+00756:     idx === 0 ? "1º MAIS FORTE" : idx === 1 ? "2º MAIS FORTE" : "3º MAIS FORTE";
+00757: 
+
+====================================================================================================
+OCORRÊNCIA NA LINHA 740: baseMilhares: milharesBase,
+====================================================================================================
+00733:         }
+00734:       }
+00735:     }
+00736: 
+00737:     const grupoNum = Number(item?.grupo);
+00738:     const grid = build20ByDezena({
+00739:       grupo: grupoNum,
+00740:       baseMilhares: milharesBase,
+00741:       perCol: 5,
+00742:     });
+00743: 
+00744:     dezenasHeader = grid.dezenas;
+00745:     gridRows = grid.rows;
+00746:     flat20 = grid.flat20;
+00747:   }
+00748: 
+00749:   const key = `${String(item?.grupo ?? "g")}__${animal || "x"}__${idx}`;
+00750:   const rank = idx + 1;
+00751:   // TOP3 EQUAL CARD LAYOUT
+00752:   // A hierarquia permanece no ranking, mas os três cards usam a mesma estrutura.
+00753:   const isHero = false;
+00754: 
+00755:   const title =
+00756:     idx === 0 ? "1º MAIS FORTE" : idx === 1 ? "2º MAIS FORTE" : "3º MAIS FORTE";
+00757: 
+00758:   const engineScore = Number(item?.score ?? 0);
+00759:   const evidenceCount = Number(item?.evidenceCount ?? 0);
+
+====================================================================================================
+OCORRÊNCIA NA LINHA 1189: title="Copiar as 20 milhares"
+====================================================================================================
+01182:             alignItems: "center",
+01183:           }}
+01184:         >
+01185:           <button
+01186:             type="button"
+01187:             onClick={doCopyAll}
+01188:             className="pp-btn"
+01189:             title="Copiar as 20 milhares"
+01190:           >
+01191:             {copiedAllKey === key ? "✅ Copiado" : "📋 Copiar"}
+01192:           </button>
+01193:         </div>
+01194: 
+01195:         {dezenasHeader.length ? (
+01196:           <div className="pp-chipRow">
+01197:             {dezenasHeader.map((dz, i) => (
+01198:               <div key={`${dz}-${i}`} className="pp-chip">
+01199:                 {dz || "—"}
+01200:               </div>
+01201:             ))}
+01202:           </div>
+01203:         ) : null}
+01204: 
+01205:         <div className="pp-gridBox">
+01206:           {gridRows.map((row, rIdx) => (
+01207:             <div key={rIdx} className="pp-row">
+01208:               {row.map((m, cIdx) => {
+
+====================================================================================================
+OCORRÊNCIA NA LINHA 1496: build16,
+====================================================================================================
+01489:   slot,
+01490:   theme,
+01491:   copiedAllKey,
+01492:   copiedCellKey,
+01493:   setCopiedAllKey,
+01494:   setCopiedCellKey,
+01495:   copyText,
+01496:   build16,
+01497:   buildMilhares,
+01498:   build20,
+01499: }) {
+01500:   const t = theme;
+01501:   const slotTop3 = Array.isArray(slot?.top3) ? slot.top3.slice(0, 3) : [];
+01502: 
+01503:   const resultGrupo = getSlotResultGrupo(slot);
+01504:   const hasResult = hasOfficialResult(slot);
+01505:   const resultAnimal =
+01506:     hasResult && Number.isFinite(resultGrupo)
+01507:       ? String(getAnimalLabel(resultGrupo) || "")
+01508:       : "";
+01509: 
+01510:   const officialPodium = getOfficialPodium(slot);
+01511: 
+01512:   const analysis = analyzeTop3Hit(
+01513:     slotTop3,
+01514:     officialPodium
+01515:   );
+
+====================================================================================================
+OCORRÊNCIA NA LINHA 1497: buildMilhares,
+====================================================================================================
+01490:   theme,
+01491:   copiedAllKey,
+01492:   copiedCellKey,
+01493:   setCopiedAllKey,
+01494:   setCopiedCellKey,
+01495:   copyText,
+01496:   build16,
+01497:   buildMilhares,
+01498:   build20,
+01499: }) {
+01500:   const t = theme;
+01501:   const slotTop3 = Array.isArray(slot?.top3) ? slot.top3.slice(0, 3) : [];
+01502: 
+01503:   const resultGrupo = getSlotResultGrupo(slot);
+01504:   const hasResult = hasOfficialResult(slot);
+01505:   const resultAnimal =
+01506:     hasResult && Number.isFinite(resultGrupo)
+01507:       ? String(getAnimalLabel(resultGrupo) || "")
+01508:       : "";
+01509: 
+01510:   const officialPodium = getOfficialPodium(slot);
+01511: 
+01512:   const analysis = analyzeTop3Hit(
+01513:     slotTop3,
+01514:     officialPodium
+01515:   );
+01516: 
+
+====================================================================================================
+OCORRÊNCIA NA LINHA 1498: build20,
+====================================================================================================
+01491:   copiedAllKey,
+01492:   copiedCellKey,
+01493:   setCopiedAllKey,
+01494:   setCopiedCellKey,
+01495:   copyText,
+01496:   build16,
+01497:   buildMilhares,
+01498:   build20,
+01499: }) {
+01500:   const t = theme;
+01501:   const slotTop3 = Array.isArray(slot?.top3) ? slot.top3.slice(0, 3) : [];
+01502: 
+01503:   const resultGrupo = getSlotResultGrupo(slot);
+01504:   const hasResult = hasOfficialResult(slot);
+01505:   const resultAnimal =
+01506:     hasResult && Number.isFinite(resultGrupo)
+01507:       ? String(getAnimalLabel(resultGrupo) || "")
+01508:       : "";
+01509: 
+01510:   const officialPodium = getOfficialPodium(slot);
+01511: 
+01512:   const analysis = analyzeTop3Hit(
+01513:     slotTop3,
+01514:     officialPodium
+01515:   );
+01516: 
+01517:   const status =
+
+====================================================================================================
+OCORRÊNCIA NA LINHA 1621: build16={build16}
+====================================================================================================
+01614:               idx={i}
+01615:               theme={t}
+01616:               copiedAllKey={copiedAllKey}
+01617:               copiedCellKey={copiedCellKey}
+01618:               setCopiedAllKey={setCopiedAllKey}
+01619:               setCopiedCellKey={setCopiedCellKey}
+01620:               copyText={copyText}
+01621:               build16={build16}
+01622:               buildMilhares={buildMilhares}
+01623:               build20={build20}
+01624:             />
+01625:           ))}
+01626:         </div>
+01627:       ) : (
+01628:         <CompactTop3Result
+01629:           slot={slot}
+01630:           status={status}
+01631:           statusLabel={statusLabel}
+01632:           statusDetail={statusDetail}
+01633:           analysis={analysis}
+01634:         />
+01635:       )}
+01636:     </section>
+01637:   );
+01638: }
+01639: 
+01640: export default function Top3View(props) {
+
+====================================================================================================
+OCORRÊNCIA NA LINHA 1622: buildMilhares={buildMilhares}
+====================================================================================================
+01615:               theme={t}
+01616:               copiedAllKey={copiedAllKey}
+01617:               copiedCellKey={copiedCellKey}
+01618:               setCopiedAllKey={setCopiedAllKey}
+01619:               setCopiedCellKey={setCopiedCellKey}
+01620:               copyText={copyText}
+01621:               build16={build16}
+01622:               buildMilhares={buildMilhares}
+01623:               build20={build20}
+01624:             />
+01625:           ))}
+01626:         </div>
+01627:       ) : (
+01628:         <CompactTop3Result
+01629:           slot={slot}
+01630:           status={status}
+01631:           statusLabel={statusLabel}
+01632:           statusDetail={statusDetail}
+01633:           analysis={analysis}
+01634:         />
+01635:       )}
+01636:     </section>
+01637:   );
+01638: }
+01639: 
+01640: export default function Top3View(props) {
+01641:   const {
+
+====================================================================================================
+OCORRÊNCIA NA LINHA 1623: build20={build20}
+====================================================================================================
+01616:               copiedAllKey={copiedAllKey}
+01617:               copiedCellKey={copiedCellKey}
+01618:               setCopiedAllKey={setCopiedAllKey}
+01619:               setCopiedCellKey={setCopiedCellKey}
+01620:               copyText={copyText}
+01621:               build16={build16}
+01622:               buildMilhares={buildMilhares}
+01623:               build20={build20}
+01624:             />
+01625:           ))}
+01626:         </div>
+01627:       ) : (
+01628:         <CompactTop3Result
+01629:           slot={slot}
+01630:           status={status}
+01631:           statusLabel={statusLabel}
+01632:           statusDetail={statusDetail}
+01633:           analysis={analysis}
+01634:         />
+01635:       )}
+01636:     </section>
+01637:   );
+01638: }
+01639: 
+01640: export default function Top3View(props) {
+01641:   const {
+01642:     loading,
+
+====================================================================================================
+OCORRÊNCIA NA LINHA 1656: build16,
+====================================================================================================
+01649:     lastLabel,
+01650:     prevLabel,
+01651:     theme,
+01652:     LOTTERY_OPTIONS,
+01653:     lotteryKeySafe,
+01654:     setLotteryKey,
+01655:     setYmd,
+01656:     build16,
+01657:     buildMilhares,
+01658:     build20,
+01659:     analysisYmd,
+01660:     analysisHourBucket,
+01661:     loadedYmd,
+01662:     ymdSafe,
+01663:     lastHourBucket,
+01664:   } = props || {};
+01665: 
+01666:   // TODO_BACKTEST_REAL
+01667: // Os cards estatísticos deverão consumir auditTop3Backtest()
+01668: // evitando cálculos paralelos na interface.
+01669: //
+01670: // Fase atual:
+01671: // apenas corrigindo nomenclatura para refletir o cálculo existente.
+01672: 
+01673: const list = Array.isArray(top3)
+01674:   ? top3.slice(0, 3)
+01675:   : [];
+
+====================================================================================================
+OCORRÊNCIA NA LINHA 1657: buildMilhares,
+====================================================================================================
+01650:     prevLabel,
+01651:     theme,
+01652:     LOTTERY_OPTIONS,
+01653:     lotteryKeySafe,
+01654:     setLotteryKey,
+01655:     setYmd,
+01656:     build16,
+01657:     buildMilhares,
+01658:     build20,
+01659:     analysisYmd,
+01660:     analysisHourBucket,
+01661:     loadedYmd,
+01662:     ymdSafe,
+01663:     lastHourBucket,
+01664:   } = props || {};
+01665: 
+01666:   // TODO_BACKTEST_REAL
+01667: // Os cards estatísticos deverão consumir auditTop3Backtest()
+01668: // evitando cálculos paralelos na interface.
+01669: //
+01670: // Fase atual:
+01671: // apenas corrigindo nomenclatura para refletir o cálculo existente.
+01672: 
+01673: const list = Array.isArray(top3)
+01674:   ? top3.slice(0, 3)
+01675:   : [];
+01676:   const timeline = (Array.isArray(timelineTop3) ? timelineTop3 : [])
+
+====================================================================================================
+OCORRÊNCIA NA LINHA 1658: build20,
+====================================================================================================
+01651:     theme,
+01652:     LOTTERY_OPTIONS,
+01653:     lotteryKeySafe,
+01654:     setLotteryKey,
+01655:     setYmd,
+01656:     build16,
+01657:     buildMilhares,
+01658:     build20,
+01659:     analysisYmd,
+01660:     analysisHourBucket,
+01661:     loadedYmd,
+01662:     ymdSafe,
+01663:     lastHourBucket,
+01664:   } = props || {};
+01665: 
+01666:   // TODO_BACKTEST_REAL
+01667: // Os cards estatísticos deverão consumir auditTop3Backtest()
+01668: // evitando cálculos paralelos na interface.
+01669: //
+01670: // Fase atual:
+01671: // apenas corrigindo nomenclatura para refletir o cálculo existente.
+01672: 
+01673: const list = Array.isArray(top3)
+01674:   ? top3.slice(0, 3)
+01675:   : [];
+01676:   const timeline = (Array.isArray(timelineTop3) ? timelineTop3 : [])
+01677:   .filter((slot) => {
+
+====================================================================================================
+OCORRÊNCIA NA LINHA 1842: const historyRows = useMemo(() => {
+====================================================================================================
+01835:       return tb.localeCompare(ta);
+01836:     });
+01837: 
+01838:   const fallback = String(realized?.[0]?.targetYmd || "").trim();
+01839:   return isYMD(fallback) ? fallback : "";
+01840: }, [loadedYmd, ymdSafe, timeline]);
+01841: 
+01842:   const historyRows = useMemo(() => {
+01843:     const persistedRows = (
+01844:       Array.isArray(persistedTop3History)
+01845:         ? persistedTop3History
+01846:         : []
+01847:     )
+01848:       .filter(
+01849:         (entry) =>
+01850:           String(entry?.targetYmd || "").trim() ===
+01851:           historyAnchorYmd
+01852:       )
+01853:       .map((entry) => {
+01854:         const snapshot = Array.isArray(entry?.snapshot)
+01855:           ? entry.snapshot.slice(0, 3)
+01856:           : [];
+01857: 
+01858:         const resultGrupo = Number(entry?.resultGrupo);
+01859:         const hasResult =
+01860:           Number.isFinite(resultGrupo) &&
+01861:           resultGrupo >= 1 &&
+
+====================================================================================================
+OCORRÊNCIA NA LINHA 1913: resultTop3Milhares: Array.isArray(
+====================================================================================================
+01906:             entry?.podiumMedal || ""
+01907:           ),
+01908:           resultTop3Groups: Array.isArray(
+01909:             entry?.resultTop3Groups
+01910:           )
+01911:             ? entry.resultTop3Groups
+01912:             : [],
+01913:           resultTop3Milhares: Array.isArray(
+01914:             entry?.resultTop3Milhares
+01915:           )
+01916:             ? entry.resultTop3Milhares
+01917:             : [],
+01918:           matchedGrupo: Number(
+01919:             entry?.matchedGrupo ?? NaN
+01920:           ),
+01921:           matchedMilhar: normalizeMilharStr(
+01922:             entry?.matchedMilhar || ""
+01923:           ),
+01924:           analysis: {
+01925:             type: String(entry?.hitType || ""),
+01926:             score: Number(entry?.hitScore || 0),
+01927:             position: Number(
+01928:               entry?.hitPosition ?? -1
+01929:             ),
+01930:             predictionPosition: Number(
+01931:               entry?.predictionPosition ??
+01932:                 entry?.hitPosition ??
+
+====================================================================================================
+OCORRÊNCIA NA LINHA 1914: entry?.resultTop3Milhares
+====================================================================================================
+01907:           ),
+01908:           resultTop3Groups: Array.isArray(
+01909:             entry?.resultTop3Groups
+01910:           )
+01911:             ? entry.resultTop3Groups
+01912:             : [],
+01913:           resultTop3Milhares: Array.isArray(
+01914:             entry?.resultTop3Milhares
+01915:           )
+01916:             ? entry.resultTop3Milhares
+01917:             : [],
+01918:           matchedGrupo: Number(
+01919:             entry?.matchedGrupo ?? NaN
+01920:           ),
+01921:           matchedMilhar: normalizeMilharStr(
+01922:             entry?.matchedMilhar || ""
+01923:           ),
+01924:           analysis: {
+01925:             type: String(entry?.hitType || ""),
+01926:             score: Number(entry?.hitScore || 0),
+01927:             position: Number(
+01928:               entry?.hitPosition ?? -1
+01929:             ),
+01930:             predictionPosition: Number(
+01931:               entry?.predictionPosition ??
+01932:                 entry?.hitPosition ??
+01933:                 -1
+
+====================================================================================================
+OCORRÊNCIA NA LINHA 1916: ? entry.resultTop3Milhares
+====================================================================================================
+01909:             entry?.resultTop3Groups
+01910:           )
+01911:             ? entry.resultTop3Groups
+01912:             : [],
+01913:           resultTop3Milhares: Array.isArray(
+01914:             entry?.resultTop3Milhares
+01915:           )
+01916:             ? entry.resultTop3Milhares
+01917:             : [],
+01918:           matchedGrupo: Number(
+01919:             entry?.matchedGrupo ?? NaN
+01920:           ),
+01921:           matchedMilhar: normalizeMilharStr(
+01922:             entry?.matchedMilhar || ""
+01923:           ),
+01924:           analysis: {
+01925:             type: String(entry?.hitType || ""),
+01926:             score: Number(entry?.hitScore || 0),
+01927:             position: Number(
+01928:               entry?.hitPosition ?? -1
+01929:             ),
+01930:             predictionPosition: Number(
+01931:               entry?.predictionPosition ??
+01932:                 entry?.hitPosition ??
+01933:                 -1
+01934:             ),
+01935:             resultPosition: Number(
+
+====================================================================================================
+OCORRÊNCIA NA LINHA 2010: resultTop3Milhares: officialPodium.map(
+====================================================================================================
+02003:           animal: hasResult
+02004:             ? getAnimalLabel(resultGrupo)
+02005:             : "",
+02006:           resultMilhar,
+02007:           resultTop3Groups: officialPodium.map(
+02008:             (item) => Number(item?.grupo)
+02009:           ),
+02010:           resultTop3Milhares: officialPodium.map(
+02011:             (item) => String(item?.milhar || "")
+02012:           ),
+02013:           prizes: Array.isArray(slot?.prizes)
+02014:             ? slot.prizes
+02015:             : [],
+02016:           analysis,
+02017:           hit:
+02018:             analysis.type !== "miss" &&
+02019:             analysis.type !== "none",
+02020:           hitType: analysis.type,
+02021:           hitScore: Number(analysis.score || 0),
+02022:           hitPosition: Number(
+02023:             analysis.position ?? -1
+02024:           ),
+02025:         };
+02026:       });
+02027: 
+02028:     // A timeline garante todos os horarios oficiais.
+02029:     // O registro persistido prevalece quando realmente existe.
+
+====================================================================================================
+OCORRÊNCIA NA LINHA 2078: resultTop3Milhares: Array.isArray(
+====================================================================================================
+02071:           "",
+02072:         resultMilhar,
+02073:         resultTop3Groups: Array.isArray(
+02074:           timelineRow?.resultTop3Groups
+02075:         )
+02076:           ? timelineRow.resultTop3Groups
+02077:           : row?.resultTop3Groups || [],
+02078:         resultTop3Milhares: Array.isArray(
+02079:           timelineRow?.resultTop3Milhares
+02080:         )
+02081:           ? timelineRow.resultTop3Milhares
+02082:           : row?.resultTop3Milhares || [],
+02083:         matchedGrupo: Number(
+02084:           analysis?.matchedGrupo ?? NaN
+02085:         ),
+02086:         matchedMilhar: normalizeMilharStr(
+02087:           analysis?.matchedMilhar || ""
+02088:         ),
+02089:         analysis,
+02090:         hit:
+02091:           analysis.type !== "miss" &&
+02092:           analysis.type !== "none",
+02093:         hitType: analysis.type,
+02094:         hitScore: Number(analysis.score || 0),
+02095:         hitPosition: Number(
+02096:           analysis.position ?? -1
+02097:         ),
+
+====================================================================================================
+OCORRÊNCIA NA LINHA 2079: timelineRow?.resultTop3Milhares
+====================================================================================================
+02072:         resultMilhar,
+02073:         resultTop3Groups: Array.isArray(
+02074:           timelineRow?.resultTop3Groups
+02075:         )
+02076:           ? timelineRow.resultTop3Groups
+02077:           : row?.resultTop3Groups || [],
+02078:         resultTop3Milhares: Array.isArray(
+02079:           timelineRow?.resultTop3Milhares
+02080:         )
+02081:           ? timelineRow.resultTop3Milhares
+02082:           : row?.resultTop3Milhares || [],
+02083:         matchedGrupo: Number(
+02084:           analysis?.matchedGrupo ?? NaN
+02085:         ),
+02086:         matchedMilhar: normalizeMilharStr(
+02087:           analysis?.matchedMilhar || ""
+02088:         ),
+02089:         analysis,
+02090:         hit:
+02091:           analysis.type !== "miss" &&
+02092:           analysis.type !== "none",
+02093:         hitType: analysis.type,
+02094:         hitScore: Number(analysis.score || 0),
+02095:         hitPosition: Number(
+02096:           analysis.position ?? -1
+02097:         ),
+02098:       });
+
+====================================================================================================
+OCORRÊNCIA NA LINHA 2081: ? timelineRow.resultTop3Milhares
+====================================================================================================
+02074:           timelineRow?.resultTop3Groups
+02075:         )
+02076:           ? timelineRow.resultTop3Groups
+02077:           : row?.resultTop3Groups || [],
+02078:         resultTop3Milhares: Array.isArray(
+02079:           timelineRow?.resultTop3Milhares
+02080:         )
+02081:           ? timelineRow.resultTop3Milhares
+02082:           : row?.resultTop3Milhares || [],
+02083:         matchedGrupo: Number(
+02084:           analysis?.matchedGrupo ?? NaN
+02085:         ),
+02086:         matchedMilhar: normalizeMilharStr(
+02087:           analysis?.matchedMilhar || ""
+02088:         ),
+02089:         analysis,
+02090:         hit:
+02091:           analysis.type !== "miss" &&
+02092:           analysis.type !== "none",
+02093:         hitType: analysis.type,
+02094:         hitScore: Number(analysis.score || 0),
+02095:         hitPosition: Number(
+02096:           analysis.position ?? -1
+02097:         ),
+02098:       });
+02099:     }
+02100: 
+
+====================================================================================================
+OCORRÊNCIA NA LINHA 2082: : row?.resultTop3Milhares || [],
+====================================================================================================
+02075:         )
+02076:           ? timelineRow.resultTop3Groups
+02077:           : row?.resultTop3Groups || [],
+02078:         resultTop3Milhares: Array.isArray(
+02079:           timelineRow?.resultTop3Milhares
+02080:         )
+02081:           ? timelineRow.resultTop3Milhares
+02082:           : row?.resultTop3Milhares || [],
+02083:         matchedGrupo: Number(
+02084:           analysis?.matchedGrupo ?? NaN
+02085:         ),
+02086:         matchedMilhar: normalizeMilharStr(
+02087:           analysis?.matchedMilhar || ""
+02088:         ),
+02089:         analysis,
+02090:         hit:
+02091:           analysis.type !== "miss" &&
+02092:           analysis.type !== "none",
+02093:         hitType: analysis.type,
+02094:         hitScore: Number(analysis.score || 0),
+02095:         hitPosition: Number(
+02096:           analysis.position ?? -1
+02097:         ),
+02098:       });
+02099:     }
+02100: 
+02101:     const todayYmd = todayYMDLocalView();
+
+====================================================================================================
+OCORRÊNCIA NA LINHA 2161: const validated = historyRows.filter(
+====================================================================================================
+02154:   }, [
+02155:     timeline,
+02156:     historyAnchorYmd,
+02157:     persistedTop3History,
+02158:   ]);
+02159: 
+02160:   const historySummary = useMemo(() => {
+02161:     const validated = historyRows.filter(
+02162:       (item) => item?.result != null
+02163:     );
+02164: 
+02165:     const exact = validated.filter(
+02166:       (item) => item?.hitType === "hit_exact"
+02167:     ).length;
+02168: 
+02169:     const centena = validated.filter(
+02170:       (item) => item?.hitType === "hit_centena"
+02171:     ).length;
+02172: 
+02173:     const grupo = validated.filter(
+02174:       (item) =>
+02175:         item?.hitType === "hit_grupo" ||
+02176:         item?.hitType === "hit_dezena"
+02177:     ).length;
+02178: 
+02179:     const misses = validated.filter(
+02180:       (item) =>
+
+====================================================================================================
+OCORRÊNCIA NA LINHA 2196: total: historyRows.length,
+====================================================================================================
+02189: 
+02190:     const average =
+02191:       validated.length > 0
+02192:         ? totalScore / validated.length
+02193:         : 0;
+02194: 
+02195:     return {
+02196:       total: historyRows.length,
+02197:       validated: validated.length,
+02198:       pending: Math.max(0, historyRows.length - validated.length),
+02199:       exact,
+02200:       centena,
+02201:       grupo,
+02202:       misses,
+02203:       average,
+02204:     };
+02205:   }, [historyRows]);
+02206: 
+02207:   const todayForCalendar = todayYMDLocalView();
+02208:   const selectedHistoryYmd = isYMD(ymdSafe)
+02209:     ? ymdSafe
+02210:     : todayForCalendar;
+02211: 
+02212:   const availableHistoryDates = useMemo(() => {
+02213:     const dates = new Set();
+02214: 
+02215:     (
+
+====================================================================================================
+OCORRÊNCIA NA LINHA 2198: pending: Math.max(0, historyRows.length - validated.length),
+====================================================================================================
+02191:       validated.length > 0
+02192:         ? totalScore / validated.length
+02193:         : 0;
+02194: 
+02195:     return {
+02196:       total: historyRows.length,
+02197:       validated: validated.length,
+02198:       pending: Math.max(0, historyRows.length - validated.length),
+02199:       exact,
+02200:       centena,
+02201:       grupo,
+02202:       misses,
+02203:       average,
+02204:     };
+02205:   }, [historyRows]);
+02206: 
+02207:   const todayForCalendar = todayYMDLocalView();
+02208:   const selectedHistoryYmd = isYMD(ymdSafe)
+02209:     ? ymdSafe
+02210:     : todayForCalendar;
+02211: 
+02212:   const availableHistoryDates = useMemo(() => {
+02213:     const dates = new Set();
+02214: 
+02215:     (
+02216:       Array.isArray(controllerHistoryDates)
+02217:         ? controllerHistoryDates
+
+====================================================================================================
+OCORRÊNCIA NA LINHA 2205: }, [historyRows]);
+====================================================================================================
+02198:       pending: Math.max(0, historyRows.length - validated.length),
+02199:       exact,
+02200:       centena,
+02201:       grupo,
+02202:       misses,
+02203:       average,
+02204:     };
+02205:   }, [historyRows]);
+02206: 
+02207:   const todayForCalendar = todayYMDLocalView();
+02208:   const selectedHistoryYmd = isYMD(ymdSafe)
+02209:     ? ymdSafe
+02210:     : todayForCalendar;
+02211: 
+02212:   const availableHistoryDates = useMemo(() => {
+02213:     const dates = new Set();
+02214: 
+02215:     (
+02216:       Array.isArray(controllerHistoryDates)
+02217:         ? controllerHistoryDates
+02218:         : []
+02219:     ).forEach((date) => {
+02220:       const ymd = String(date || "").trim();
+02221: 
+02222:       if (isYMD(ymd) && ymd <= todayForCalendar) {
+02223:         dates.add(ymd);
+02224:       }
+
+====================================================================================================
+OCORRÊNCIA NA LINHA 3717: build16={build16}
+====================================================================================================
+03710:                 idx={idx}
+03711:                 theme={t}
+03712:                 copiedAllKey={copiedAllKey}
+03713:                 copiedCellKey={copiedCellKey}
+03714:                 setCopiedAllKey={setCopiedAllKey}
+03715:                 setCopiedCellKey={setCopiedCellKey}
+03716:                 copyText={copyText}
+03717:                 build16={build16}
+03718:                 buildMilhares={buildMilhares}
+03719:                 build20={build20}
+03720:               />
+03721:             ))}
+03722:           </section>
+03723:         )}
+03724: 
+03725:         {showDetailedTimeline && timeline.length > 0 ? (
+03726:           <section className="top3-stage">
+03727:             <section className="top3-shell">
+03728:               <div className="top3-header__title">Leitura do dia — Timeline completa</div>
+03729:               <div className="top3-helper">
+03730:                 Cada bloco abaixo mostra o Top3 calculado para o horário alvo, a base usada e o resultado real quando disponível.
+03731:               </div>
+03732:             </section>
+03733: 
+03734:             {timeline.map((slot, idx) => (
+03735:               <TimelineSlot
+03736:                 key={`${String(slot?.targetYmd || "y")}_${String(slot?.targetHour || "h")}_${idx}`}
+
+====================================================================================================
+OCORRÊNCIA NA LINHA 3718: buildMilhares={buildMilhares}
+====================================================================================================
+03711:                 theme={t}
+03712:                 copiedAllKey={copiedAllKey}
+03713:                 copiedCellKey={copiedCellKey}
+03714:                 setCopiedAllKey={setCopiedAllKey}
+03715:                 setCopiedCellKey={setCopiedCellKey}
+03716:                 copyText={copyText}
+03717:                 build16={build16}
+03718:                 buildMilhares={buildMilhares}
+03719:                 build20={build20}
+03720:               />
+03721:             ))}
+03722:           </section>
+03723:         )}
+03724: 
+03725:         {showDetailedTimeline && timeline.length > 0 ? (
+03726:           <section className="top3-stage">
+03727:             <section className="top3-shell">
+03728:               <div className="top3-header__title">Leitura do dia — Timeline completa</div>
+03729:               <div className="top3-helper">
+03730:                 Cada bloco abaixo mostra o Top3 calculado para o horário alvo, a base usada e o resultado real quando disponível.
+03731:               </div>
+03732:             </section>
+03733: 
+03734:             {timeline.map((slot, idx) => (
+03735:               <TimelineSlot
+03736:                 key={`${String(slot?.targetYmd || "y")}_${String(slot?.targetHour || "h")}_${idx}`}
+03737:                 slot={slot}
+
+====================================================================================================
+OCORRÊNCIA NA LINHA 3719: build20={build20}
+====================================================================================================
+03712:                 copiedAllKey={copiedAllKey}
+03713:                 copiedCellKey={copiedCellKey}
+03714:                 setCopiedAllKey={setCopiedAllKey}
+03715:                 setCopiedCellKey={setCopiedCellKey}
+03716:                 copyText={copyText}
+03717:                 build16={build16}
+03718:                 buildMilhares={buildMilhares}
+03719:                 build20={build20}
+03720:               />
+03721:             ))}
+03722:           </section>
+03723:         )}
+03724: 
+03725:         {showDetailedTimeline && timeline.length > 0 ? (
+03726:           <section className="top3-stage">
+03727:             <section className="top3-shell">
+03728:               <div className="top3-header__title">Leitura do dia — Timeline completa</div>
+03729:               <div className="top3-helper">
+03730:                 Cada bloco abaixo mostra o Top3 calculado para o horário alvo, a base usada e o resultado real quando disponível.
+03731:               </div>
+03732:             </section>
+03733: 
+03734:             {timeline.map((slot, idx) => (
+03735:               <TimelineSlot
+03736:                 key={`${String(slot?.targetYmd || "y")}_${String(slot?.targetHour || "h")}_${idx}`}
+03737:                 slot={slot}
+03738:                 theme={t}
+
+====================================================================================================
+OCORRÊNCIA NA LINHA 3744: build16={build16}
+====================================================================================================
+03737:                 slot={slot}
+03738:                 theme={t}
+03739:                 copiedAllKey={copiedAllKey}
+03740:                 copiedCellKey={copiedCellKey}
+03741:                 setCopiedAllKey={setCopiedAllKey}
+03742:                 setCopiedCellKey={setCopiedCellKey}
+03743:                 copyText={copyText}
+03744:                 build16={build16}
+03745:                 buildMilhares={buildMilhares}
+03746:                 build20={build20}
+03747:               />
+03748:             ))}
+03749:           </section>
+03750:         ) : null}
+03751: 
+03752:         <section className="top3-shell">
+03753:           <div className="top3-header__title">
+03754:             Histórico recente {historyAnchorYmd ? `— ${ymdToBR(historyAnchorYmd)}` : ""}
+03755:           </div>
+03756: 
+03757:           <div className="top3-historySummary">
+03758:             <div className="top3-historyMetric">
+03759:               <div className="top3-historyMetric__label">Horários</div>
+03760:               <div className="top3-historyMetric__value">
+03761:                 {historySummary.total}
+03762:               </div>
+03763:             </div>
+
+====================================================================================================
+OCORRÊNCIA NA LINHA 3745: buildMilhares={buildMilhares}
+====================================================================================================
+03738:                 theme={t}
+03739:                 copiedAllKey={copiedAllKey}
+03740:                 copiedCellKey={copiedCellKey}
+03741:                 setCopiedAllKey={setCopiedAllKey}
+03742:                 setCopiedCellKey={setCopiedCellKey}
+03743:                 copyText={copyText}
+03744:                 build16={build16}
+03745:                 buildMilhares={buildMilhares}
+03746:                 build20={build20}
+03747:               />
+03748:             ))}
+03749:           </section>
+03750:         ) : null}
+03751: 
+03752:         <section className="top3-shell">
+03753:           <div className="top3-header__title">
+03754:             Histórico recente {historyAnchorYmd ? `— ${ymdToBR(historyAnchorYmd)}` : ""}
+03755:           </div>
+03756: 
+03757:           <div className="top3-historySummary">
+03758:             <div className="top3-historyMetric">
+03759:               <div className="top3-historyMetric__label">Horários</div>
+03760:               <div className="top3-historyMetric__value">
+03761:                 {historySummary.total}
+03762:               </div>
+03763:             </div>
+03764: 
+
+====================================================================================================
+OCORRÊNCIA NA LINHA 3746: build20={build20}
+====================================================================================================
+03739:                 copiedAllKey={copiedAllKey}
+03740:                 copiedCellKey={copiedCellKey}
+03741:                 setCopiedAllKey={setCopiedAllKey}
+03742:                 setCopiedCellKey={setCopiedCellKey}
+03743:                 copyText={copyText}
+03744:                 build16={build16}
+03745:                 buildMilhares={buildMilhares}
+03746:                 build20={build20}
+03747:               />
+03748:             ))}
+03749:           </section>
+03750:         ) : null}
+03751: 
+03752:         <section className="top3-shell">
+03753:           <div className="top3-header__title">
+03754:             Histórico recente {historyAnchorYmd ? `— ${ymdToBR(historyAnchorYmd)}` : ""}
+03755:           </div>
+03756: 
+03757:           <div className="top3-historySummary">
+03758:             <div className="top3-historyMetric">
+03759:               <div className="top3-historyMetric__label">Horários</div>
+03760:               <div className="top3-historyMetric__value">
+03761:                 {historySummary.total}
+03762:               </div>
+03763:             </div>
+03764: 
+03765:             <div className="top3-historyMetric">
+
+====================================================================================================
+OCORRÊNCIA NA LINHA 3809: {!historyRows.length ? (
+====================================================================================================
+03802:           <div
+03803:             style={{
+03804:               display: "grid",
+03805:               gap: 8,
+03806:               marginTop: 12,
+03807:             }}
+03808:           >
+03809:             {!historyRows.length ? (
+03810:               <div className="top3-empty">
+03811:                 Sem histórico para a data analisada.
+03812:               </div>
+03813:             ) : (
+03814:               historyRows.map((item) => {
+03815:                 const y = String(
+03816:                   item?.target?.ymd || ""
+03817:                 );
+03818: 
+03819:                 const h = String(
+03820:                   item?.target?.hour || ""
+03821:                 );
+03822: 
+03823:                 const top3Items =
+03824:                   Array.isArray(item?.top3) &&
+03825:                   item.top3.length
+03826:                     ? item.top3.slice(0, 3)
+03827:                     : (
+03828:                         Array.isArray(item?.picks)
+
+====================================================================================================
+OCORRÊNCIA NA LINHA 3814: historyRows.map((item) => {
+====================================================================================================
+03807:             }}
+03808:           >
+03809:             {!historyRows.length ? (
+03810:               <div className="top3-empty">
+03811:                 Sem histórico para a data analisada.
+03812:               </div>
+03813:             ) : (
+03814:               historyRows.map((item) => {
+03815:                 const y = String(
+03816:                   item?.target?.ymd || ""
+03817:                 );
+03818: 
+03819:                 const h = String(
+03820:                   item?.target?.hour || ""
+03821:                 );
+03822: 
+03823:                 const top3Items =
+03824:                   Array.isArray(item?.top3) &&
+03825:                   item.top3.length
+03826:                     ? item.top3.slice(0, 3)
+03827:                     : (
+03828:                         Array.isArray(item?.picks)
+03829:                           ? item.picks
+03830:                           : []
+03831:                       )
+03832:                         .slice(0, 3)
+03833:                         .map((grupo) => ({
+
+====================================================================================================
+OCORRÊNCIA NA LINHA 3823: const top3Items =
+====================================================================================================
+03816:                   item?.target?.ymd || ""
+03817:                 );
+03818: 
+03819:                 const h = String(
+03820:                   item?.target?.hour || ""
+03821:                 );
+03822: 
+03823:                 const top3Items =
+03824:                   Array.isArray(item?.top3) &&
+03825:                   item.top3.length
+03826:                     ? item.top3.slice(0, 3)
+03827:                     : (
+03828:                         Array.isArray(item?.picks)
+03829:                           ? item.picks
+03830:                           : []
+03831:                       )
+03832:                         .slice(0, 3)
+03833:                         .map((grupo) => ({
+03834:                           grupo: Number(grupo),
+03835:                           animal:
+03836:                             getAnimalLabel(
+03837:                               Number(grupo)
+03838:                             ) || "",
+03839:                         }));
+03840: 
+03841:                 const resultGrupo = Number(
+03842:                   item?.result ??
+
+====================================================================================================
+OCORRÊNCIA NA LINHA 3824: Array.isArray(item?.top3) &&
+====================================================================================================
+03817:                 );
+03818: 
+03819:                 const h = String(
+03820:                   item?.target?.hour || ""
+03821:                 );
+03822: 
+03823:                 const top3Items =
+03824:                   Array.isArray(item?.top3) &&
+03825:                   item.top3.length
+03826:                     ? item.top3.slice(0, 3)
+03827:                     : (
+03828:                         Array.isArray(item?.picks)
+03829:                           ? item.picks
+03830:                           : []
+03831:                       )
+03832:                         .slice(0, 3)
+03833:                         .map((grupo) => ({
+03834:                           grupo: Number(grupo),
+03835:                           animal:
+03836:                             getAnimalLabel(
+03837:                               Number(grupo)
+03838:                             ) || "",
+03839:                         }));
+03840: 
+03841:                 const resultGrupo = Number(
+03842:                   item?.result ??
+03843:                     item?.grupo ??
+
+====================================================================================================
+OCORRÊNCIA NA LINHA 3873: ?.resultTop3Milhares?.[0] ||
+====================================================================================================
+03866:                     )
+03867:                   : "";
+03868: 
+03869:                 const resultMilhar =
+03870:                   normalizeMilharStr(
+03871:                     item?.resultMilhar ||
+03872:                       item
+03873:                         ?.resultTop3Milhares?.[0] ||
+03874:                       ""
+03875:                   );
+03876: 
+03877:                 const resultCentena =
+03878:                   resultMilhar
+03879:                     ? resultMilhar.slice(-3)
+03880:                     : "";
+03881: 
+03882:                 const resultDezena =
+03883:                   resultMilhar
+03884:                     ? resultMilhar.slice(-2)
+03885:                     : "";
+03886: 
+03887:                 const analysis =
+03888:                   item?.analysis &&
+03889:                   typeof item.analysis ===
+03890:                     "object"
+03891:                     ? item.analysis
+03892:                     : {};
+
+====================================================================================================
+OCORRÊNCIA NA LINHA 3989: item?.resultTop3Milhares?.[
+====================================================================================================
+03982:                   matchedResultGrupoRaw <= 25
+03983:                     ? matchedResultGrupoRaw
+03984:                     : NaN;
+03985: 
+03986:                 const matchedResultMilhar =
+03987:                   matchedOfficialIndex >= 0
+03988:                     ? normalizeMilharStr(
+03989:                         item?.resultTop3Milhares?.[
+03990:                           matchedOfficialIndex
+03991:                         ] ||
+03992:                           item?.matchedMilhar ||
+03993:                           analysis?.matchedMilhar ||
+03994:                           (
+03995:                             resultPosition === 1
+03996:                               ? resultMilhar
+03997:                               : ""
+03998:                           )
+03999:                       )
+04000:                     : "";
+04001: 
+04002:                 const matchedResultCentena =
+04003:                   matchedResultMilhar
+04004:                     ? matchedResultMilhar.slice(-3)
+04005:                     : "";
+04006: 
+04007:                 const matchedResultDezena =
+04008:                   matchedResultMilhar
+
+====================================================================================================
+OCORRÊNCIA NA LINHA 4093: {top3Items.map(
+====================================================================================================
+04086:                           lineHeight: 1.25,
+04087:                           whiteSpace: "nowrap",
+04088:                         }}
+04089:                       >
+04090:                         {ymdToBR(y)} {h}
+04091:                       </div>
+04092: 
+04093:                       {top3Items.map(
+04094:                         (pick, idx) => {
+04095:                           const grupo =
+04096:                             Number(
+04097:                               pick?.grupo
+04098:                             );
+04099: 
+04100:                           const animal =
+04101:                             String(
+04102:                               pick?.animal ||
+04103:                                 getAnimalLabel(
+04104:                                   grupo
+04105:                                 ) ||
+04106:                                 ""
+04107:                             ).trim();
+04108: 
+04109:                           const img =
+04110:                             Number.isFinite(
+04111:                               grupo
+04112:                             )
+
+====================================================================================================
+OCORRÊNCIA NA LINHA 4097: pick?.grupo
+====================================================================================================
+04090:                         {ymdToBR(y)} {h}
+04091:                       </div>
+04092: 
+04093:                       {top3Items.map(
+04094:                         (pick, idx) => {
+04095:                           const grupo =
+04096:                             Number(
+04097:                               pick?.grupo
+04098:                             );
+04099: 
+04100:                           const animal =
+04101:                             String(
+04102:                               pick?.animal ||
+04103:                                 getAnimalLabel(
+04104:                                   grupo
+04105:                                 ) ||
+04106:                                 ""
+04107:                             ).trim();
+04108: 
+04109:                           const img =
+04110:                             Number.isFinite(
+04111:                               grupo
+04112:                             )
+04113:                               ? getImgFromGrupo(
+04114:                                   grupo,
+04115:                                   64
+04116:                                 )
+
+====================================================================================================
+OCORRÊNCIA NA LINHA 4102: pick?.animal ||
+====================================================================================================
+04095:                           const grupo =
+04096:                             Number(
+04097:                               pick?.grupo
+04098:                             );
+04099: 
+04100:                           const animal =
+04101:                             String(
+04102:                               pick?.animal ||
+04103:                                 getAnimalLabel(
+04104:                                   grupo
+04105:                                 ) ||
+04106:                                 ""
+04107:                             ).trim();
+04108: 
+04109:                           const img =
+04110:                             Number.isFinite(
+04111:                               grupo
+04112:                             )
+04113:                               ? getImgFromGrupo(
+04114:                                   grupo,
+04115:                                   64
+04116:                                 )
+04117:                               : "";
+04118: 
+04119:                           const isMatched =
+04120:                             isHit &&
+04121:                             matchedPredictionIndex ===

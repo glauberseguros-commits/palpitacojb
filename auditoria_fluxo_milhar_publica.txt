@@ -1,0 +1,2309 @@
+
+==============================================================================================================
+1. IMPORTAÇÕES E ESTADO DOS FILTROS — CENTENASVIEW
+==============================================================================================================
+00001: // src/pages/Centenas/CentenasView.jsx
+00002: import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+00003: import { getKingBoundsByUf, getKingResultsByRange } from "../../services/kingResultsService";
+00004: import { buildMilharRecommendation } from "./modules/milharProbabilityEngine";
+00005: import {
+00006:   getAnimalLabel as getAnimalLabelFn,
+00007:   getImgFromGrupo as getImgFromGrupoFn,
+00008: } from "../../constants/bichoMap";
+00009: 
+00010: /**
+00011:  * Centenas+ (PREMIUM)
+00012:  * ✅ Performance:
+00013:  * - chunks em paralelo (concorrência controlada)
+00014:  * - cache em memória por (lottery + closeHour + positions)
+00015:  *
+00016:  * ✅ UX:
+00017:  * - persistência de filtros no localStorage (não apaga ao trocar de página)
+00018:  * - status de progresso por chunks
+00019:  *
+00020:  * ✅ Imagem nítida:
+00021:  * - tenta usar getImgFromGrupo(grupo, 128) quando disponível
+00022:  * - tenta "upar" _64/_96 -> _128 no banner e nos cards
+00023:  *
+00024:  * ✅ FIX (Horário):
+00025:  * - Firestore/King pode salvar close_hour como 21:10 / 11:10 etc.
+00026:  * - O filtro "21h" precisa bater por bucket de hora (HH:00), ignorando minutos.
+00027:  *
+00028:  * ✅ FIX (Frequência 0):
+00029:  * - Nem sempre o service devolve draw.prizes dentro de cada draw.
+00030:  * - Alguns retornos vêm com prizes separados (prizesAll / prizesAllSorted).
+00031:  * - Agora: se draw.prizes não existir, agrupamos prizes flat por (ymd + hourBucket).
+00032:  *
+00033:  * ✅ FIX CRÍTICO (rebuild indevido):
+00034:  * - openGrupo não pode entrar nas deps do build.
+00035:  * - abrir/fechar card NÃO deve disparar rebuild do histórico.
+00036:  *
+00037:  * ✅ FIX (stale/flicker):
+00038:  * - builds concorrentes não podem "finalizar UI" do build mais novo no finally.
+00039:  */
+00040: 
+00041: const LOTTERY_KEY = "PT_RIO";
+00042: const FILTERS_LS_KEY = "pp_centenas_filters_v1";
+00043: 
+00044: // tuning
+00045: const CHUNK_DAYS = 45; // manter < 60 para não cair no aggregated
+00046: const CHUNKS_CONCURRENCY = 3;
+00047: 
+00048: function pad2(n) {
+00049:   return String(n).padStart(2, "0");
+00050: }
+00051: function isYMD(s) {
+00052:   return /^\d{4}-\d{2}-\d{2}$/.test(String(s || "").trim());
+00053: }
+00054: function ymdToBR(ymd) {
+00055:   const m = String(ymd || "").trim().match(/^(\d{4})-(\d{2})-(\d{2})$/);
+00056:   if (!m) return "";
+00057:   return `${m[3]}/${m[2]}/${m[1]}`;
+00058: }
+00059: function ymdToUTCDate(ymd) {
+00060:   const m = String(ymd || "").match(/^(\d{4})-(\d{2})-(\d{2})$/);
+00061:   if (!m) return null;
+00062:   return new Date(Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3])));
+00063: }
+00064: function addDaysUTC(ymd, days) {
+00065:   const dt = ymdToUTCDate(ymd);
+00066:   if (!dt) return ymd;
+00067:   dt.setUTCDate(dt.getUTCDate() + Number(days || 0));
+00068:   const y = dt.getUTCFullYear();
+00069:   const m = pad2(dt.getUTCMonth() + 1);
+00070:   const d = pad2(dt.getUTCDate());
+00071:   return `${y}-${m}-${d}`;
+00072: }
+00073: function todayYMDLocal() {
+00074:   const d = new Date();
+00075:   return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+00076: }
+00077: function sortPTBR(a, b) {
+00078:   return String(a).localeCompare(String(b), "pt-BR", { sensitivity: "base" });
+00079: }
+00080: function isTodos(v) {
+00081:   return String(v || "").trim().toLowerCase() === "todos";
+00082: }
+00083: 
+00084: /**
+00085:  * Normaliza "hora" em formato HH:MM (quando possível)
+00086:  */
+00087: function normalizeHourLike(value) {
+00088:   const s0 = String(value ?? "").trim();
+00089:   if (!s0) return "";
+00090:   const s = s0.replace(/\s+/g, "");
+00091: 
+00092:   const mhx = s.match(/^(\d{1,2})(?:h|hs|hr|hrs)$/i);
+00093:   if (mhx) return `${pad2(mhx[1])}:00`;
+00094: 
+00095:   const mISO = s.match(/^(\d{1,2}):(\d{1,2})(?::(\d{1,2}))?$/);
+00096:   if (mISO) return `${pad2(mISO[1])}:${pad2(mISO[2])}`;
+00097: 
+00098:   const m2 = s.match(/^(\d{1,2})$/);
+00099:   if (m2) return `${pad2(m2[1])}:00`;
+00100: 
+00101:   return s0.trim();
+00102: }
+00103: 
+00104: /**
+00105:  * ✅ Bucketiza para HH:00, ignorando minutos/segundos.
+00106:  * Ex: "21:10" -> "21:00", "21h" -> "21:00", "09:00" -> "09:00"
+00107:  */
+00108: function toHourBucketHH00(value) {
+00109:   const norm = normalizeHourLike(value);
+00110:   if (!norm) return "";
+00111:   const m = String(norm).match(/^(\d{2})/);
+00112:   if (!m) return "";
+00113:   const hh = m[1];
+00114:   const n = Number(hh);
+00115:   if (!Number.isFinite(n) || n < 0 || n > 23) return "";
+00116:   return `${hh}:00`;
+00117: }
+00118: 
+00119: function extractHourFromText(text) {
+00120:   const s = String(text ?? "").trim();
+00121:   if (!s) return "";
+00122:   const mh = s.match(/\b(\d{1,2})\s*(?:h|hs|hr|hrs)\b/i);
+00123:   if (mh) return `${pad2(mh[1])}:00`;
+00124:   const mIso = s.match(/\b(\d{1,2}):(\d{2})(?::\d{2})?\b/);
+00125:   if (mIso) return `${pad2(mIso[1])}:${pad2(mIso[2])}`;
+00126:   const mBare = s.match(/(?:^|\D)(\d{1,2})(?:\D|$)/);
+00127:   if (mBare) {
+00128:     const n = Number(mBare[1]);
+00129:     if (Number.isFinite(n) && n >= 0 && n <= 23) return `${pad2(n)}:00`;
+00130:   }
+00131:   return "";
+00132: }
+00133: 
+00134: function pickDrawYmd(draw) {
+00135:   const y =
+00136:     draw?.dateYmd ||
+00137:     draw?.ymd ||
+00138:     draw?.date ||
+00139:     draw?.data ||
+00140:     draw?.day ||
+00141:     draw?.date_ymd ||
+00142:     draw?.drawYmd ||
+00143:     "";
+00144:   return isYMD(y) ? y : "";
+00145: }
+00146: function pickDrawHour(draw) {
+00147:   const directCandidates = [draw?.closeHour, draw?.hour, draw?.horario, draw?.close_hour, draw?.close];
+00148:   for (const c of directCandidates) {
+00149:     const norm = normalizeHourLike(c);
+00150:     if (norm) return norm;
+00151:   }
+00152: 
+00153:   const nested = draw?.lottery || draw?.loteria || draw?.meta || null;
+00154:   if (nested) {
+00155:     const nestedCandidates = [
+00156:       nested?.closeHour,
+00157:       nested?.close_hour,
+00158:       nested?.hour,
+00159:       nested?.horario,
+00160:       nested?.close,
+00161:       nested?.drawHour,
+00162:       nested?.draw_hour,
+00163:     ];
+00164:     for (const c of nestedCandidates) {
+00165:       const norm = normalizeHourLike(c);
+00166:       if (norm) return norm;
+00167:     }
+00168:   }
+00169: 
+00170:   const textCandidates = [
+00171:     draw?.lotteryLabel,
+00172:     draw?.lotteryName,
+00173:     draw?.loteriaLabel,
+00174:     draw?.loteriaName,
+00175:     draw?.label,
+00176:     draw?.name,
+00177:     draw?.title,
+00178:     draw?.descricao,
+00179:     draw?.description,
+00180:     draw?.key,
+
+==============================================================================================================
+2. FILTROS, RECORTE E CARREGAMENTO DA BASE
+==============================================================================================================
+
+--- LINHAS 1 A 48 ---
+00001: // src/pages/Centenas/CentenasView.jsx
+00002: import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+00003: import { getKingBoundsByUf, getKingResultsByRange } from "../../services/kingResultsService";
+00004: import { buildMilharRecommendation } from "./modules/milharProbabilityEngine";
+00005: import {
+00006:   getAnimalLabel as getAnimalLabelFn,
+00007:   getImgFromGrupo as getImgFromGrupoFn,
+00008: } from "../../constants/bichoMap";
+00009: 
+00010: /**
+00011:  * Centenas+ (PREMIUM)
+00012:  * ✅ Performance:
+00013:  * - chunks em paralelo (concorrência controlada)
+00014:  * - cache em memória por (lottery + closeHour + positions)
+00015:  *
+00016:  * ✅ UX:
+00017:  * - persistência de filtros no localStorage (não apaga ao trocar de página)
+00018:  * - status de progresso por chunks
+00019:  *
+00020:  * ✅ Imagem nítida:
+00021:  * - tenta usar getImgFromGrupo(grupo, 128) quando disponível
+00022:  * - tenta "upar" _64/_96 -> _128 no banner e nos cards
+00023:  *
+00024:  * ✅ FIX (Horário):
+00025:  * - Firestore/King pode salvar close_hour como 21:10 / 11:10 etc.
+00026:  * - O filtro "21h" precisa bater por bucket de hora (HH:00), ignorando minutos.
+00027:  *
+00028:  * ✅ FIX (Frequência 0):
+00029:  * - Nem sempre o service devolve draw.prizes dentro de cada draw.
+00030:  * - Alguns retornos vêm com prizes separados (prizesAll / prizesAllSorted).
+00031:  * - Agora: se draw.prizes não existir, agrupamos prizes flat por (ymd + hourBucket).
+00032:  *
+00033:  * ✅ FIX CRÍTICO (rebuild indevido):
+00034:  * - openGrupo não pode entrar nas deps do build.
+00035:  * - abrir/fechar card NÃO deve disparar rebuild do histórico.
+00036:  *
+00037:  * ✅ FIX (stale/flicker):
+00038:  * - builds concorrentes não podem "finalizar UI" do build mais novo no finally.
+00039:  */
+00040: 
+00041: const LOTTERY_KEY = "PT_RIO";
+00042: const FILTERS_LS_KEY = "pp_centenas_filters_v1";
+00043: 
+00044: // tuning
+00045: const CHUNK_DAYS = 45; // manter < 60 para não cair no aggregated
+00046: const CHUNKS_CONCURRENCY = 3;
+00047: 
+00048: function pad2(n) {
+
+--- LINHAS 725 A 788 ---
+00725: 
+00726:     try {
+00727:       if (!boundsReady) {
+00728:         setError("Bounds ainda não carregaram.");
+00729:         return;
+00730:       }
+00731: 
+00732:       const cachedBase = baseCacheRef.current.get(buildBaseKey);
+00733:       let entriesBase = cachedBase?.entries || null;
+00734: 
+00735:       if (!entriesBase) {
+00736:         const chunks = splitRangeIntoChunks(bounds.minYmd, bounds.maxYmd, CHUNK_DAYS);
+00737:         setProgress({ done: 0, total: chunks.length, label: "Carregando histórico..." });
+00738: 
+00739:         const results = await mapWithConcurrency(chunks, CHUNKS_CONCURRENCY, async (ch, idx) => {
+00740:           if (abortedRef.current) return { ok: false, entries: [] };
+00741:           if (buildSeqRef.current !== mySeq) return { ok: false, entries: [] };
+00742: 
+00743:           const res = await getKingResultsByRange({
+00744:             uf: LOTTERY_KEY,
+00745:             dateFrom: ch.from,
+00746:             dateTo: ch.to,
+00747:             closeHour: selectedCloseHour || null,
+00748:             positions: prizePositions,
+00749:             mode: "detailed",
+00750:           });
+00751: 
+00752:           const drawsChunk = normalizeDrawsResult(res);
+00753:           const prizesFlat = normalizePrizesArray(res);
+00754: 
+00755:           const entries = [];
+00756: 
+00757:           // (A) caminho 1: draws vêm hidratados com prizes (quando existir)
+00758:           const coveredKeys = new Set(); // ymd#bucket
+00759:           for (const d of drawsChunk || []) {
+00760:             const ymd = pickDrawYmd(d);
+00761:             if (!ymd) continue;
+00762: 
+00763:             const hrRaw = pickDrawHour(d);
+00764:             const hourNorm = normalizeHourLike(hrRaw);
+00765:             const hourBucket = toHourBucketHH00(hourNorm);
+00766: 
+00767:             const prizes = Array.isArray(d?.prizes) ? d.prizes : null;
+00768:             if (prizes && prizes.length) {
+00769:               const key = `${ymd}#${hourBucket || "??"}`;
+00770:               coveredKeys.add(key);
+00771:               entries.push({ ymd, hourNorm, hourBucket, prizes });
+00772:             }
+00773:           }
+00774: 
+00775:           // (B) caminho 2: COMPLEMENTA usando prizesFlat agrupadas por (ymd + hourBucket)
+00776:           // ✅ Correção: mesmo que A tenha alguns itens, B deve preencher os faltantes
+00777:           if (Array.isArray(prizesFlat) && prizesFlat.length) {
+00778:             const map = new Map(); // key -> { ymd, hourNorm, hourBucket, prizes: [] }
+00779: 
+00780:             for (const p of prizesFlat) {
+00781:               const ymd = pickPrizeYmd(p);
+00782:               if (!ymd) continue;
+00783: 
+00784:               const hrRaw = pickPrizeHour(p);
+00785:               const hourNorm = normalizeHourLike(hrRaw);
+00786:               const hourBucket = toHourBucketHH00(hourNorm);
+00787: 
+00788:               if (selectedCloseHour) {
+
+--- LINHAS 811 A 893 ---
+00811:           return { ok: true, entries };
+00812:         });
+00813: 
+00814:         if (abortedRef.current) return;
+00815:         if (buildSeqRef.current !== mySeq) return;
+00816: 
+00817:         entriesBase = results.flatMap((r) => (r && r.ok ? r.entries : []));
+00818:         baseCacheRef.current.set(buildBaseKey, { entries: entriesBase });
+00819:       }
+00820: 
+00821:       // aplica filtros por draw (data/hora) e junta prizes
+00822:       const prizesAll = [];
+00823:       for (const e of entriesBase || []) {
+00824:         if (!applyDrawFiltersToEntry(e)) continue;
+00825:         const prizes = Array.isArray(e?.prizes) ? e.prizes : [];
+00826:         for (const p of prizes) prizesAll.push(p);
+00827:       }
+00828: 
+00829:       const allPrizes = applyPrizeFilters(prizesAll);
+00830: 
+00831:       const out = [];
+00832:       for (let g = 1; g <= 25; g += 1) {
+00833:         if (!isTodos(fAnimal) && Number(fAnimal) !== g) continue;
+00834: 
+00835:         const grupo2 = pad2(g);
+00836:         const animal = (getAnimalLabel && getAnimalLabel(g)) || "";
+00837: 
+00838:         const imgRaw = tryGetImg(getImgFromGrupo, g, 128) || tryGetImg(getImgFromGrupo, g, 96) || "";
+00839:         const img = upgradeImg(imgRaw, 128);
+00840: 
+00841:         const c40 = centenas40DoGrupo(g);
+00842:         const set40 = new Set(c40);
+00843:         const counts = new Map();
+00844:         const groupPrizes = [];
+00845: 
+00846:         for (const c of c40) counts.set(c, 0);
+00847: 
+00848:         for (const p of allPrizes) {
+00849:           const pg = inferGrupoFromPrize(p);
+00850:           if (pg !== g) continue;
+00851: 
+00852:           groupPrizes.push(p);
+00853: 
+00854:           const c3 = pickCentena3(p);
+00855:           if (!/^\d{3}$/.test(c3)) continue;
+00856:           if (!set40.has(c3)) continue;
+00857: 
+00858:           counts.set(c3, (counts.get(c3) || 0) + 1);
+00859:         }
+00860: 
+00861:         const list40 = c40
+00862:           .map((c) => {
+00863:             const recommendation = buildMilharRecommendation({
+00864:               centena: c,
+00865:               prizes: groupPrizes,
+00866:             });
+00867: 
+00868:             return {
+00869:               centena: c,
+00870:               count: counts.get(c) || 0,
+00871:               milhar: recommendation.ok
+00872:                 ? recommendation.milhar
+00873:                 : null,
+00874:               recommendation,
+00875:             };
+00876:           })
+00877:           .sort((a, b) => {
+00878:             if (b.count !== a.count) return b.count - a.count;
+00879:             return String(a.centena).localeCompare(String(b.centena));
+00880:           });
+00881: 
+00882:         const totalHits = list40.reduce((acc, it) => acc + (Number(it.count) || 0), 0);
+00883:         out.push({ grupo: g, grupo2, animal, img, totalHits, list40 });
+00884:       }
+00885: 
+00886:       out.sort((a, b) => {
+00887:         if (b.totalHits !== a.totalHits) return b.totalHits - a.totalHits;
+00888:         const an = sortPTBR(a.animal, b.animal);
+00889:         if (an !== 0) return an;
+00890:         return a.grupo - b.grupo;
+00891:       });
+00892: 
+00893:       setGroups(out);
+
+==============================================================================================================
+3. FORMAÇÃO DE ALLPRIZES E GROUPPRIZES
+==============================================================================================================
+
+--- LINHAS 248 A 342 ---
+00248:   const candidates = [
+00249:     prize?.milhar4,
+00250:     prize?.milhar,
+00251:     prize?.numero,
+00252:     prize?.number,
+00253:     prize?.num,
+00254:     prize?.n,
+00255:     prize?.valor,
+00256:     prize?.value,
+00257:     prize?.resultado,
+00258:     prize?.result,
+00259:   ];
+00260:   for (const c of candidates) {
+00261:     const d = digitsOnly(c);
+00262:     if (!d) continue;
+00263:     if (d.length >= 4) return d.slice(-4).padStart(4, "0");
+00264:   }
+00265:   return "";
+00266: }
+00267: 
+00268: function pickCentena3(prize) {
+00269:   const direct = [prize?.centena3, prize?.centena, prize?.centena_3, prize?.centena3dig, prize?.c3];
+00270:   for (const c of direct) {
+00271:     const d = digitsOnly(c);
+00272:     if (!d) continue;
+00273:     if (d.length === 3) return d.padStart(3, "0");
+00274:     if (d.length > 3) return d.slice(-3).padStart(3, "0");
+00275:   }
+00276:   const milhar4 = pickMilhar4(prize);
+00277:   if (milhar4 && milhar4.length === 4) return milhar4.slice(1); // ex 3033 -> 033
+00278:   return "";
+00279: }
+00280: 
+00281: function pickDezenaFinal(prize) {
+00282:   const c3 = pickCentena3(prize);
+00283:   if (!/^\d{3}$/.test(c3)) return "";
+00284:   return c3.slice(1);
+00285: }
+00286: 
+00287: function inferGrupoFromPrize(prize) {
+00288:   const gRaw = Number(prize?.grupo ?? prize?.grupo2 ?? prize?.group ?? prize?.grupo_num);
+00289:   if (Number.isFinite(gRaw) && gRaw >= 1 && gRaw <= 25) return gRaw;
+00290: 
+00291:   const dz = pickDezenaFinal(prize);
+00292:   if (!/^\d{2}$/.test(dz)) return null;
+00293: 
+00294:   const d = Number(dz);
+00295:   if (!Number.isFinite(d) || d < 1 || d > 100) return null;
+00296: 
+00297:   return Math.floor((d - 1) / 4) + 1;
+00298: }
+00299: 
+00300: /* ========= posição robusta ========= */
+00301: function pickPrizePositionNumber(prize) {
+00302:   const direct = prize?.position;
+00303:   const nDirect = direct === null || direct === undefined || direct === "" ? NaN : Number(direct);
+00304:   if (Number.isFinite(nDirect) && nDirect > 0) return nDirect;
+00305: 
+00306:   const candidates = [prize?.posicao, prize?.pos, prize?.colocacao, prize?.place, prize?.prizePosition];
+00307:   for (const c of candidates) {
+00308:     const s = String(c ?? "").trim();
+00309:     if (!s) continue;
+00310:     const m = s.match(/(\d{1,2})/);
+00311:     const n = m ? Number(m[1]) : NaN;
+00312:     if (Number.isFinite(n) && n > 0) return n;
+00313:   }
+00314:   return null;
+00315: }
+00316: 
+00317: /* ========= chunking ========= */
+00318: 
+00319: function splitRangeIntoChunks(fromYmd, toYmd, chunkDays = CHUNK_DAYS) {
+00320:   const out = [];
+00321:   if (!isYMD(fromYmd) || !isYMD(toYmd)) return out;
+00322:   if (fromYmd > toYmd) return out;
+00323: 
+00324:   let curFrom = fromYmd;
+00325:   while (curFrom <= toYmd) {
+00326:     const curTo = addDaysUTC(curFrom, chunkDays - 1);
+00327:     const boundedTo = curTo > toYmd ? toYmd : curTo;
+00328:     out.push({ from: curFrom, to: boundedTo });
+00329:     const next = addDaysUTC(boundedTo, 1);
+00330:     if (next <= curFrom) break;
+00331:     curFrom = next;
+00332:   }
+00333:   return out;
+00334: }
+00335: 
+00336: function normalizeDrawsResult(maybe) {
+00337:   if (Array.isArray(maybe)) return maybe;
+00338:   if (Array.isArray(maybe?.draws)) return maybe.draws;
+00339:   if (Array.isArray(maybe?.drawsRaw)) return maybe.drawsRaw;
+00340:   if (Array.isArray(maybe?.data)) return maybe.data;
+00341:   if (Array.isArray(maybe?.results)) return maybe.results;
+00342:   return [];
+
+--- LINHAS 677 A 752 ---
+00677:         const want = toHourBucketHH00(fHorario);
+00678:         const got = toHourBucketHH00(hr);
+00679:         if (!got || got !== want) return false;
+00680:       }
+00681: 
+00682:       return true;
+00683:     },
+00684:     [fMes, fDiaMes, fDiaSemana, fHorario]
+00685:   );
+00686: 
+00687:   // ========= filtros (prize-level) =========
+00688: 
+00689:   const applyPrizeFilters = useCallback(
+00690:     (prizes) => {
+00691:       const out = [];
+00692:       const animalGrupo = !isTodos(fAnimal) ? Number(fAnimal) : null;
+00693:       const pos = !isTodos(fPosicao) ? Number(fPosicao) : null;
+00694: 
+00695:       for (const p of prizes || []) {
+00696:         if (animalGrupo) {
+00697:           const pg = inferGrupoFromPrize(p);
+00698:           if (pg !== animalGrupo) continue;
+00699:         }
+00700:         if (pos) {
+00701:           const pp = pickPrizePositionNumber(p);
+00702:           if (!pp || pp !== pos) continue;
+00703:         }
+00704:         out.push(p);
+00705:       }
+00706:       return out;
+00707:     },
+00708:     [fAnimal, fPosicao]
+00709:   );
+00710: 
+00711:   // ========= build base dataset (cacheado por closeHour) =========
+00712: 
+00713:   const buildBaseKey = useMemo(() => {
+00714:     const h = selectedCloseHour ? normalizeHourLike(selectedCloseHour) : "all";
+00715:     return `${LOTTERY_KEY}::close=${h}::pos=${prizePositions.join(",")}`;
+00716:   }, [selectedCloseHour, prizePositions]);
+00717: 
+00718:   const build = useCallback(async () => {
+00719:     const mySeq = ++buildSeqRef.current;
+00720:     abortedRef.current = false;
+00721: 
+00722:     setLoading(true);
+00723:     setError("");
+00724:     setProgress({ done: 0, total: 0, label: "" });
+00725: 
+00726:     try {
+00727:       if (!boundsReady) {
+00728:         setError("Bounds ainda não carregaram.");
+00729:         return;
+00730:       }
+00731: 
+00732:       const cachedBase = baseCacheRef.current.get(buildBaseKey);
+00733:       let entriesBase = cachedBase?.entries || null;
+00734: 
+00735:       if (!entriesBase) {
+00736:         const chunks = splitRangeIntoChunks(bounds.minYmd, bounds.maxYmd, CHUNK_DAYS);
+00737:         setProgress({ done: 0, total: chunks.length, label: "Carregando histórico..." });
+00738: 
+00739:         const results = await mapWithConcurrency(chunks, CHUNKS_CONCURRENCY, async (ch, idx) => {
+00740:           if (abortedRef.current) return { ok: false, entries: [] };
+00741:           if (buildSeqRef.current !== mySeq) return { ok: false, entries: [] };
+00742: 
+00743:           const res = await getKingResultsByRange({
+00744:             uf: LOTTERY_KEY,
+00745:             dateFrom: ch.from,
+00746:             dateTo: ch.to,
+00747:             closeHour: selectedCloseHour || null,
+00748:             positions: prizePositions,
+00749:             mode: "detailed",
+00750:           });
+00751: 
+00752:           const drawsChunk = normalizeDrawsResult(res);
+
+--- LINHAS 809 A 909 ---
+00809:           }));
+00810: 
+00811:           return { ok: true, entries };
+00812:         });
+00813: 
+00814:         if (abortedRef.current) return;
+00815:         if (buildSeqRef.current !== mySeq) return;
+00816: 
+00817:         entriesBase = results.flatMap((r) => (r && r.ok ? r.entries : []));
+00818:         baseCacheRef.current.set(buildBaseKey, { entries: entriesBase });
+00819:       }
+00820: 
+00821:       // aplica filtros por draw (data/hora) e junta prizes
+00822:       const prizesAll = [];
+00823:       for (const e of entriesBase || []) {
+00824:         if (!applyDrawFiltersToEntry(e)) continue;
+00825:         const prizes = Array.isArray(e?.prizes) ? e.prizes : [];
+00826:         for (const p of prizes) prizesAll.push(p);
+00827:       }
+00828: 
+00829:       const allPrizes = applyPrizeFilters(prizesAll);
+00830: 
+00831:       const out = [];
+00832:       for (let g = 1; g <= 25; g += 1) {
+00833:         if (!isTodos(fAnimal) && Number(fAnimal) !== g) continue;
+00834: 
+00835:         const grupo2 = pad2(g);
+00836:         const animal = (getAnimalLabel && getAnimalLabel(g)) || "";
+00837: 
+00838:         const imgRaw = tryGetImg(getImgFromGrupo, g, 128) || tryGetImg(getImgFromGrupo, g, 96) || "";
+00839:         const img = upgradeImg(imgRaw, 128);
+00840: 
+00841:         const c40 = centenas40DoGrupo(g);
+00842:         const set40 = new Set(c40);
+00843:         const counts = new Map();
+00844:         const groupPrizes = [];
+00845: 
+00846:         for (const c of c40) counts.set(c, 0);
+00847: 
+00848:         for (const p of allPrizes) {
+00849:           const pg = inferGrupoFromPrize(p);
+00850:           if (pg !== g) continue;
+00851: 
+00852:           groupPrizes.push(p);
+00853: 
+00854:           const c3 = pickCentena3(p);
+00855:           if (!/^\d{3}$/.test(c3)) continue;
+00856:           if (!set40.has(c3)) continue;
+00857: 
+00858:           counts.set(c3, (counts.get(c3) || 0) + 1);
+00859:         }
+00860: 
+00861:         const list40 = c40
+00862:           .map((c) => {
+00863:             const recommendation = buildMilharRecommendation({
+00864:               centena: c,
+00865:               prizes: groupPrizes,
+00866:             });
+00867: 
+00868:             return {
+00869:               centena: c,
+00870:               count: counts.get(c) || 0,
+00871:               milhar: recommendation.ok
+00872:                 ? recommendation.milhar
+00873:                 : null,
+00874:               recommendation,
+00875:             };
+00876:           })
+00877:           .sort((a, b) => {
+00878:             if (b.count !== a.count) return b.count - a.count;
+00879:             return String(a.centena).localeCompare(String(b.centena));
+00880:           });
+00881: 
+00882:         const totalHits = list40.reduce((acc, it) => acc + (Number(it.count) || 0), 0);
+00883:         out.push({ grupo: g, grupo2, animal, img, totalHits, list40 });
+00884:       }
+00885: 
+00886:       out.sort((a, b) => {
+00887:         if (b.totalHits !== a.totalHits) return b.totalHits - a.totalHits;
+00888:         const an = sortPTBR(a.animal, b.animal);
+00889:         if (an !== 0) return an;
+00890:         return a.grupo - b.grupo;
+00891:       });
+00892: 
+00893:       setGroups(out);
+00894: 
+00895:       // ✅ NÃO usa openGrupo (state) como dep: usa ref
+00896:       const openWanted = !isTodos(fAnimal) ? Number(fAnimal) : Number(openGrupoRef.current);
+00897: 
+00898:       if (Number.isFinite(openWanted) && out.find((x) => x.grupo === openWanted)) {
+00899:         setOpenGrupo(openWanted);
+00900:       } else if (out[0]?.grupo) {
+00901:         setOpenGrupo(out[0].grupo);
+00902:       }
+00903:     } catch (e) {
+00904:       setError(String(e?.message || e));
+00905:     } finally {
+00906:       // ✅ FIX: só finaliza UI se ainda for o build atual
+00907:       if (!abortedRef.current && buildSeqRef.current === mySeq) {
+00908:         setLoading(false);
+00909:         setProgress((p) => ({ ...p, label: "" }));
+
+==============================================================================================================
+4. FORMAÇÃO DA LISTA DAS 40 CENTENAS
+==============================================================================================================
+
+--- LINHAS 1 A 74 ---
+00001: // src/pages/Centenas/CentenasView.jsx
+00002: import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+00003: import { getKingBoundsByUf, getKingResultsByRange } from "../../services/kingResultsService";
+00004: import { buildMilharRecommendation } from "./modules/milharProbabilityEngine";
+00005: import {
+00006:   getAnimalLabel as getAnimalLabelFn,
+00007:   getImgFromGrupo as getImgFromGrupoFn,
+00008: } from "../../constants/bichoMap";
+00009: 
+00010: /**
+00011:  * Centenas+ (PREMIUM)
+00012:  * ✅ Performance:
+00013:  * - chunks em paralelo (concorrência controlada)
+00014:  * - cache em memória por (lottery + closeHour + positions)
+00015:  *
+00016:  * ✅ UX:
+00017:  * - persistência de filtros no localStorage (não apaga ao trocar de página)
+00018:  * - status de progresso por chunks
+00019:  *
+00020:  * ✅ Imagem nítida:
+00021:  * - tenta usar getImgFromGrupo(grupo, 128) quando disponível
+00022:  * - tenta "upar" _64/_96 -> _128 no banner e nos cards
+00023:  *
+00024:  * ✅ FIX (Horário):
+00025:  * - Firestore/King pode salvar close_hour como 21:10 / 11:10 etc.
+00026:  * - O filtro "21h" precisa bater por bucket de hora (HH:00), ignorando minutos.
+00027:  *
+00028:  * ✅ FIX (Frequência 0):
+00029:  * - Nem sempre o service devolve draw.prizes dentro de cada draw.
+00030:  * - Alguns retornos vêm com prizes separados (prizesAll / prizesAllSorted).
+00031:  * - Agora: se draw.prizes não existir, agrupamos prizes flat por (ymd + hourBucket).
+00032:  *
+00033:  * ✅ FIX CRÍTICO (rebuild indevido):
+00034:  * - openGrupo não pode entrar nas deps do build.
+00035:  * - abrir/fechar card NÃO deve disparar rebuild do histórico.
+00036:  *
+00037:  * ✅ FIX (stale/flicker):
+00038:  * - builds concorrentes não podem "finalizar UI" do build mais novo no finally.
+00039:  */
+00040: 
+00041: const LOTTERY_KEY = "PT_RIO";
+00042: const FILTERS_LS_KEY = "pp_centenas_filters_v1";
+00043: 
+00044: // tuning
+00045: const CHUNK_DAYS = 45; // manter < 60 para não cair no aggregated
+00046: const CHUNKS_CONCURRENCY = 3;
+00047: 
+00048: function pad2(n) {
+00049:   return String(n).padStart(2, "0");
+00050: }
+00051: function isYMD(s) {
+00052:   return /^\d{4}-\d{2}-\d{2}$/.test(String(s || "").trim());
+00053: }
+00054: function ymdToBR(ymd) {
+00055:   const m = String(ymd || "").trim().match(/^(\d{4})-(\d{2})-(\d{2})$/);
+00056:   if (!m) return "";
+00057:   return `${m[3]}/${m[2]}/${m[1]}`;
+00058: }
+00059: function ymdToUTCDate(ymd) {
+00060:   const m = String(ymd || "").match(/^(\d{4})-(\d{2})-(\d{2})$/);
+00061:   if (!m) return null;
+00062:   return new Date(Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3])));
+00063: }
+00064: function addDaysUTC(ymd, days) {
+00065:   const dt = ymdToUTCDate(ymd);
+00066:   if (!dt) return ymd;
+00067:   dt.setUTCDate(dt.getUTCDate() + Number(days || 0));
+00068:   const y = dt.getUTCFullYear();
+00069:   const m = pad2(dt.getUTCMonth() + 1);
+00070:   const d = pad2(dt.getUTCDate());
+00071:   return `${y}-${m}-${d}`;
+00072: }
+00073: function todayYMDLocal() {
+00074:   const d = new Date();
+
+--- LINHAS 836 A 956 ---
+00836:         const animal = (getAnimalLabel && getAnimalLabel(g)) || "";
+00837: 
+00838:         const imgRaw = tryGetImg(getImgFromGrupo, g, 128) || tryGetImg(getImgFromGrupo, g, 96) || "";
+00839:         const img = upgradeImg(imgRaw, 128);
+00840: 
+00841:         const c40 = centenas40DoGrupo(g);
+00842:         const set40 = new Set(c40);
+00843:         const counts = new Map();
+00844:         const groupPrizes = [];
+00845: 
+00846:         for (const c of c40) counts.set(c, 0);
+00847: 
+00848:         for (const p of allPrizes) {
+00849:           const pg = inferGrupoFromPrize(p);
+00850:           if (pg !== g) continue;
+00851: 
+00852:           groupPrizes.push(p);
+00853: 
+00854:           const c3 = pickCentena3(p);
+00855:           if (!/^\d{3}$/.test(c3)) continue;
+00856:           if (!set40.has(c3)) continue;
+00857: 
+00858:           counts.set(c3, (counts.get(c3) || 0) + 1);
+00859:         }
+00860: 
+00861:         const list40 = c40
+00862:           .map((c) => {
+00863:             const recommendation = buildMilharRecommendation({
+00864:               centena: c,
+00865:               prizes: groupPrizes,
+00866:             });
+00867: 
+00868:             return {
+00869:               centena: c,
+00870:               count: counts.get(c) || 0,
+00871:               milhar: recommendation.ok
+00872:                 ? recommendation.milhar
+00873:                 : null,
+00874:               recommendation,
+00875:             };
+00876:           })
+00877:           .sort((a, b) => {
+00878:             if (b.count !== a.count) return b.count - a.count;
+00879:             return String(a.centena).localeCompare(String(b.centena));
+00880:           });
+00881: 
+00882:         const totalHits = list40.reduce((acc, it) => acc + (Number(it.count) || 0), 0);
+00883:         out.push({ grupo: g, grupo2, animal, img, totalHits, list40 });
+00884:       }
+00885: 
+00886:       out.sort((a, b) => {
+00887:         if (b.totalHits !== a.totalHits) return b.totalHits - a.totalHits;
+00888:         const an = sortPTBR(a.animal, b.animal);
+00889:         if (an !== 0) return an;
+00890:         return a.grupo - b.grupo;
+00891:       });
+00892: 
+00893:       setGroups(out);
+00894: 
+00895:       // ✅ NÃO usa openGrupo (state) como dep: usa ref
+00896:       const openWanted = !isTodos(fAnimal) ? Number(fAnimal) : Number(openGrupoRef.current);
+00897: 
+00898:       if (Number.isFinite(openWanted) && out.find((x) => x.grupo === openWanted)) {
+00899:         setOpenGrupo(openWanted);
+00900:       } else if (out[0]?.grupo) {
+00901:         setOpenGrupo(out[0].grupo);
+00902:       }
+00903:     } catch (e) {
+00904:       setError(String(e?.message || e));
+00905:     } finally {
+00906:       // ✅ FIX: só finaliza UI se ainda for o build atual
+00907:       if (!abortedRef.current && buildSeqRef.current === mySeq) {
+00908:         setLoading(false);
+00909:         setProgress((p) => ({ ...p, label: "" }));
+00910:       }
+00911:     }
+00912:   }, [
+00913:     boundsReady,
+00914:     bounds?.minYmd,
+00915:     bounds?.maxYmd,
+00916:     selectedCloseHour,
+00917:     prizePositions,
+00918:     buildBaseKey,
+00919:     applyDrawFiltersToEntry,
+00920:     applyPrizeFilters,
+00921:     getAnimalLabel,
+00922:     getImgFromGrupo,
+00923:     fAnimal,
+00924:   ]);
+00925: 
+00926:   useEffect(() => {
+00927:     if (!boundsReady) return;
+00928:     build();
+00929:     // eslint-disable-next-line react-hooks/exhaustive-deps
+00930:   }, [boundsReady]);
+00931: 
+00932:   useEffect(() => {
+00933:     if (!boundsReady) return;
+00934:     if (autoTimerRef.current) clearTimeout(autoTimerRef.current);
+00935:     autoTimerRef.current = setTimeout(() => build(), 220);
+00936:     return () => {
+00937:       if (autoTimerRef.current) clearTimeout(autoTimerRef.current);
+00938:     };
+00939:   }, [boundsReady, build, fMes, fDiaMes, fDiaSemana, fHorario, fAnimal, fPosicao, lotteryOptId]);
+00940: 
+00941:   useEffect(() => {
+00942:     return () => {
+00943:       abortedRef.current = true;
+00944:       // ✅ cleanup extra
+00945:       if (autoTimerRef.current) clearTimeout(autoTimerRef.current);
+00946:     };
+00947:   }, []);
+00948: 
+00949:   const subtitle = useMemo(() => {
+00950:     const lotTxt = selectedLottery?.label || "Todas as loterias";
+00951:     const rangeTxt =
+00952:       boundsReady && bounds?.minYmd && bounds?.maxYmd ? `${ymdToBR(bounds.minYmd)} até ${ymdToBR(bounds.maxYmd)}` : "";
+00953:     return `Frequência das 40 centenas · Prêmio 1º ao 7º · ${lotTxt} · Loteria ${LOTTERY_KEY}${
+00954:       rangeTxt ? ` · Período ${rangeTxt}` : ""
+00955:     }`;
+00956:   }, [selectedLottery, boundsReady, bounds?.minYmd, bounds?.maxYmd]);
+
+==============================================================================================================
+5. ORDENAÇÃO, DESEMPATE E ANTIGUIDADE DAS CENTENAS
+==============================================================================================================
+
+--- LINHAS 56 A 133 ---
+00056:   if (!m) return "";
+00057:   return `${m[3]}/${m[2]}/${m[1]}`;
+00058: }
+00059: function ymdToUTCDate(ymd) {
+00060:   const m = String(ymd || "").match(/^(\d{4})-(\d{2})-(\d{2})$/);
+00061:   if (!m) return null;
+00062:   return new Date(Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3])));
+00063: }
+00064: function addDaysUTC(ymd, days) {
+00065:   const dt = ymdToUTCDate(ymd);
+00066:   if (!dt) return ymd;
+00067:   dt.setUTCDate(dt.getUTCDate() + Number(days || 0));
+00068:   const y = dt.getUTCFullYear();
+00069:   const m = pad2(dt.getUTCMonth() + 1);
+00070:   const d = pad2(dt.getUTCDate());
+00071:   return `${y}-${m}-${d}`;
+00072: }
+00073: function todayYMDLocal() {
+00074:   const d = new Date();
+00075:   return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+00076: }
+00077: function sortPTBR(a, b) {
+00078:   return String(a).localeCompare(String(b), "pt-BR", { sensitivity: "base" });
+00079: }
+00080: function isTodos(v) {
+00081:   return String(v || "").trim().toLowerCase() === "todos";
+00082: }
+00083: 
+00084: /**
+00085:  * Normaliza "hora" em formato HH:MM (quando possível)
+00086:  */
+00087: function normalizeHourLike(value) {
+00088:   const s0 = String(value ?? "").trim();
+00089:   if (!s0) return "";
+00090:   const s = s0.replace(/\s+/g, "");
+00091: 
+00092:   const mhx = s.match(/^(\d{1,2})(?:h|hs|hr|hrs)$/i);
+00093:   if (mhx) return `${pad2(mhx[1])}:00`;
+00094: 
+00095:   const mISO = s.match(/^(\d{1,2}):(\d{1,2})(?::(\d{1,2}))?$/);
+00096:   if (mISO) return `${pad2(mISO[1])}:${pad2(mISO[2])}`;
+00097: 
+00098:   const m2 = s.match(/^(\d{1,2})$/);
+00099:   if (m2) return `${pad2(m2[1])}:00`;
+00100: 
+00101:   return s0.trim();
+00102: }
+00103: 
+00104: /**
+00105:  * ✅ Bucketiza para HH:00, ignorando minutos/segundos.
+00106:  * Ex: "21:10" -> "21:00", "21h" -> "21:00", "09:00" -> "09:00"
+00107:  */
+00108: function toHourBucketHH00(value) {
+00109:   const norm = normalizeHourLike(value);
+00110:   if (!norm) return "";
+00111:   const m = String(norm).match(/^(\d{2})/);
+00112:   if (!m) return "";
+00113:   const hh = m[1];
+00114:   const n = Number(hh);
+00115:   if (!Number.isFinite(n) || n < 0 || n > 23) return "";
+00116:   return `${hh}:00`;
+00117: }
+00118: 
+00119: function extractHourFromText(text) {
+00120:   const s = String(text ?? "").trim();
+00121:   if (!s) return "";
+00122:   const mh = s.match(/\b(\d{1,2})\s*(?:h|hs|hr|hrs)\b/i);
+00123:   if (mh) return `${pad2(mh[1])}:00`;
+00124:   const mIso = s.match(/\b(\d{1,2}):(\d{2})(?::\d{2})?\b/);
+00125:   if (mIso) return `${pad2(mIso[1])}:${pad2(mIso[2])}`;
+00126:   const mBare = s.match(/(?:^|\D)(\d{1,2})(?:\D|$)/);
+00127:   if (mBare) {
+00128:     const n = Number(mBare[1]);
+00129:     if (Number.isFinite(n) && n >= 0 && n <= 23) return `${pad2(n)}:00`;
+00130:   }
+00131:   return "";
+00132: }
+00133: 
+
+--- LINHAS 856 A 934 ---
+00856:           if (!set40.has(c3)) continue;
+00857: 
+00858:           counts.set(c3, (counts.get(c3) || 0) + 1);
+00859:         }
+00860: 
+00861:         const list40 = c40
+00862:           .map((c) => {
+00863:             const recommendation = buildMilharRecommendation({
+00864:               centena: c,
+00865:               prizes: groupPrizes,
+00866:             });
+00867: 
+00868:             return {
+00869:               centena: c,
+00870:               count: counts.get(c) || 0,
+00871:               milhar: recommendation.ok
+00872:                 ? recommendation.milhar
+00873:                 : null,
+00874:               recommendation,
+00875:             };
+00876:           })
+00877:           .sort((a, b) => {
+00878:             if (b.count !== a.count) return b.count - a.count;
+00879:             return String(a.centena).localeCompare(String(b.centena));
+00880:           });
+00881: 
+00882:         const totalHits = list40.reduce((acc, it) => acc + (Number(it.count) || 0), 0);
+00883:         out.push({ grupo: g, grupo2, animal, img, totalHits, list40 });
+00884:       }
+00885: 
+00886:       out.sort((a, b) => {
+00887:         if (b.totalHits !== a.totalHits) return b.totalHits - a.totalHits;
+00888:         const an = sortPTBR(a.animal, b.animal);
+00889:         if (an !== 0) return an;
+00890:         return a.grupo - b.grupo;
+00891:       });
+00892: 
+00893:       setGroups(out);
+00894: 
+00895:       // ✅ NÃO usa openGrupo (state) como dep: usa ref
+00896:       const openWanted = !isTodos(fAnimal) ? Number(fAnimal) : Number(openGrupoRef.current);
+00897: 
+00898:       if (Number.isFinite(openWanted) && out.find((x) => x.grupo === openWanted)) {
+00899:         setOpenGrupo(openWanted);
+00900:       } else if (out[0]?.grupo) {
+00901:         setOpenGrupo(out[0].grupo);
+00902:       }
+00903:     } catch (e) {
+00904:       setError(String(e?.message || e));
+00905:     } finally {
+00906:       // ✅ FIX: só finaliza UI se ainda for o build atual
+00907:       if (!abortedRef.current && buildSeqRef.current === mySeq) {
+00908:         setLoading(false);
+00909:         setProgress((p) => ({ ...p, label: "" }));
+00910:       }
+00911:     }
+00912:   }, [
+00913:     boundsReady,
+00914:     bounds?.minYmd,
+00915:     bounds?.maxYmd,
+00916:     selectedCloseHour,
+00917:     prizePositions,
+00918:     buildBaseKey,
+00919:     applyDrawFiltersToEntry,
+00920:     applyPrizeFilters,
+00921:     getAnimalLabel,
+00922:     getImgFromGrupo,
+00923:     fAnimal,
+00924:   ]);
+00925: 
+00926:   useEffect(() => {
+00927:     if (!boundsReady) return;
+00928:     build();
+00929:     // eslint-disable-next-line react-hooks/exhaustive-deps
+00930:   }, [boundsReady]);
+00931: 
+00932:   useEffect(() => {
+00933:     if (!boundsReady) return;
+00934:     if (autoTimerRef.current) clearTimeout(autoTimerRef.current);
+
+==============================================================================================================
+6. TABELA, COPIAR E APOSTAR
+==============================================================================================================
+
+--- LINHAS 390 A 458 ---
+00390:     prize?.hour,
+00391:     prize?.horario,
+00392:     prize?.drawHour,
+00393:     prize?.draw_hour,
+00394:     prize?.lotteryCloseHour,
+00395:   ];
+00396:   for (const c of candidates) {
+00397:     const n = normalizeHourLike(c);
+00398:     if (n) return n;
+00399:   }
+00400:   const textCandidates = [prize?.lotteryLabel, prize?.loteriaLabel, prize?.label, prize?.name, prize?.title];
+00401:   for (const t of textCandidates) {
+00402:     const ex = extractHourFromText(t);
+00403:     if (ex) return ex;
+00404:   }
+00405:   return "";
+00406: }
+00407: 
+00408: /* ========= milhar palpite ========= */
+00409: 
+00410: function digitFromKey(key) {
+00411:   const s = String(key || "");
+00412:   let h = 0;
+00413:   for (let i = 0; i < s.length; i += 1) h = (h * 31 + s.charCodeAt(i)) >>> 0;
+00414:   return String(h % 10);
+00415: }
+00416: 
+00417: 
+00418: /* ========= utils: concorrência ========= */
+00419: 
+00420: async function mapWithConcurrency(items, limitN, mapper) {
+00421:   const arr = Array.isArray(items) ? items : [];
+00422:   const concurrency = Math.max(1, Number(limitN) || 3);
+00423:   const results = new Array(arr.length);
+00424:   let idx = 0;
+00425: 
+00426:   async function worker() {
+00427:     while (idx < arr.length) {
+00428:       const current = idx++;
+00429:       results[current] = await mapper(arr[current], current);
+00430:     }
+00431:   }
+00432: 
+00433:   await Promise.all(Array.from({ length: Math.min(concurrency, arr.length) }, worker));
+00434:   return results;
+00435: }
+00436: 
+00437: /* ========= imagem: tentar _128 ========= */
+00438: 
+00439: function upgradeImg(src, target = 128) {
+00440:   const s = String(src || "").trim();
+00441:   if (!s) return "";
+00442:   return s.replace(/_(64|96|128)\.(png|jpg|jpeg|webp)$/i, `_${target}.$2`);
+00443: }
+00444: 
+00445: function tryGetImg(getImgFromGrupo, grupo, size) {
+00446:   try {
+00447:     const v = getImgFromGrupo?.(grupo, size);
+00448:     if (v) return String(v);
+00449:   } catch {}
+00450:   try {
+00451:     const v2 = getImgFromGrupo?.(grupo);
+00452:     if (v2) return String(v2);
+00453:   } catch {}
+00454:   return "";
+00455: }
+00456: 
+00457: /* ========= King URL helper ========= */
+00458: function buildKingGuessUrlFromPalpites(palpites4) {
+
+--- LINHAS 1366 A 1565 ---
+01366:       .cx0_mono{
+01367:         font-variant-numeric:tabular-nums;
+01368:         font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+01369:         letter-spacing:0.3px;
+01370:         font-weight:900;
+01371:       }
+01372:       .cx0_count b{ color:#caa64b; }
+01373: 
+01374:       @media (max-width: 820px){
+01375:         .cx0_row{ grid-template-columns: 70px 110px 110px 1fr; }
+01376:       }
+01377:     `;
+01378:   }, []);
+01379: 
+01380:   const [sendingKing, setSendingKing] = useState(false);
+01381:   const [copiedMilhares, setCopiedMilhares] = useState(false);
+01382: 
+01383: 
+01384:   const handleCopyMilhares = async () => {
+01385:     if (!groups || !groups.length) return;
+01386: 
+01387:     const targetGrupo =
+01388:       (Number.isFinite(Number(openGrupo)) && Number(openGrupo)) ||
+01389:       (Number.isFinite(Number(bannerGrupo)) && Number(bannerGrupo)) ||
+01390:       Number(groups?.[0]?.grupo || 0);
+01391: 
+01392:     const grupoAtual =
+01393:       groups.find((g) => Number(g.grupo) === Number(targetGrupo)) || null;
+01394: 
+01395:     if (!grupoAtual) return;
+01396: 
+01397: const rows = showOnlyHits
+01398:       ? (grupoAtual.list40 || []).filter((x) => (Number(x.count) || 0) > 0)
+01399:       : grupoAtual.list40 || [];
+01400: 
+01401:     const milhares = rows
+01402:       .map((it) => String(it?.milhar || "").trim())
+01403:       .filter((milhar) => /^\d{4}$/.test(milhar));
+01404: 
+01405:     try {
+01406:       await navigator.clipboard.writeText(milhares.join("\n"));
+01407:       setCopiedMilhares(true);
+01408:       setTimeout(() => setCopiedMilhares(false), 2000);
+01409:     } catch (e) {
+01410:       console.error(e);
+01411:       alert("Não foi possível copiar as milhares.");
+01412:     }
+01413:   };
+01414: 
+01415: 
+01416:   const handleEnviarKing = async () => {
+01417:     if (sendingKing) return;
+01418:     if (!groups || !groups.length) return;
+01419: 
+01420:     // escolhe o grupo ativo: openGrupo > bannerGrupo > primeiro
+01421:     const targetGrupo =
+01422:       (Number.isFinite(Number(openGrupo)) && Number(openGrupo)) ||
+01423:       (Number.isFinite(Number(bannerGrupo)) && Number(bannerGrupo)) ||
+01424:       Number(groups?.[0]?.grupo || 0);
+01425: 
+01426:     const grupoAtual = groups.find((g) => Number(g.grupo) === Number(targetGrupo)) || null;
+01427:     if (!grupoAtual) return;
+01428: 
+01429:     setSendingKing(true);
+01430: 
+01431:     try {
+01432:       // respeita o toggle "Mostrar só ocorridas"
+01433:       const rows = showOnlyHits
+01434:         ? (grupoAtual.list40 || []).filter((x) => (Number(x.count) || 0) > 0)
+01435:         : grupoAtual.list40 || [];
+01436: 
+01437:       // 1 palpite por linha (compatível com a King)
+01438:       const milhares = rows
+01439:         .map((it) => String(it?.milhar || "").trim())
+01440:         .filter((milhar) => /^\d{4}$/.test(milhar));
+01441: 
+01442:       const texto = milhares.join("\n");
+01443:       const url = buildKingGuessUrlFromPalpites(milhares);
+01444: 
+01445:       setKingText(texto);
+01446:       setKingUrl(url);
+01447: 
+01448:       // tenta abrir direto (fluxo automático)
+01449:       const w = window.open(url, "_blank", "noopener,noreferrer");
+01450:       if (w && !w.closed) {
+01451:         // sucesso: não precisa modal
+01452:         setKingModalOpen(false);
+01453:         setKingCopyOk(true);
+01454:         return;
+01455:       }
+01456: 
+01457:       // fallback: popup bloqueado -> abre modal com copiar/abrir
+01458:       let ok = false;
+01459:       try {
+01460:         await navigator.clipboard.writeText(texto);
+01461:         ok = true;
+01462:       } catch {
+01463:         ok = false;
+01464:       }
+01465:       setKingCopyOk(ok);
+01466:       setKingModalOpen(true);
+01467:     } catch (e) {
+01468:       console.error(e);
+01469:       setKingCopyOk(false);
+01470:       setKingModalOpen(true);
+01471:     } finally {
+01472:       setSendingKing(false);
+01473:     }
+01474:   };
+01475: 
+01476:   const progressPct = useMemo(() => {
+01477:     const total = Number(progress?.total || 0);
+01478:     const done = Number(progress?.done || 0);
+01479:     if (!total) return 0;
+01480:     return Math.max(0, Math.min(100, Math.round((done / total) * 100)));
+01481:   }, [progress]);
+01482: 
+01483:   return (
+01484:     <div className="cx0_wrap">
+01485:       <style>{css}</style>
+01486: 
+01487:       {kingModalOpen ? (
+01488:         <div className="cx0_modalBackdrop" role="dialog" aria-modal="true">
+01489:           <div className="cx0_modal">
+01490:             <h3>Enviar para a KING</h3>
+01491: 
+01492:             <div className="cx0_modalOk">
+01493:               {kingCopyOk ? "✅ Palpites copiados / URL pronta" : "⚠️ Popup bloqueado — use COPIAR ou ABRIR KING"}
+01494:             </div>
+01495: 
+01496:             <p>
+01497:               O King vai abrir em <b>/bet/guess</b> já com os palpites no <b>link</b>.
+01498:               <br />
+01499:               Se o Tampermonkey estiver instalado, ele <b>digita tudo sozinho</b>.
+01500:             </p>
+01501: 
+01502:             {!kingCopyOk ? <textarea className="cx0_textarea" value={kingText} readOnly /> : null}
+01503: 
+01504:             <div className="cx0_modalBtns">
+01505:               <button
+01506:                 className="cx0_modalBtn"
+01507:                 type="button"
+01508:                 onClick={async () => {
+01509:                   try {
+01510:                     await navigator.clipboard.writeText(kingText || "");
+01511:                     setKingCopyOk(true);
+01512:                   } catch {}
+01513:                 }}
+01514:               >
+01515:                 COPIAR PALPITES
+01516:               </button>
+01517: 
+01518:               <button
+01519:                 className="cx0_modalBtn"
+01520:                 type="button"
+01521:                 onClick={() => {
+01522:                   const u = kingUrl || "https://app.kingapostas.com/bet/guess";
+01523:                   window.location.assign(u);
+01524:                 }}
+01525:               >
+01526:                 ABRIR KING
+01527:               </button>
+01528: 
+01529:               <button className="cx0_modalBtn2" type="button" onClick={() => setKingModalOpen(false)}>
+01530:                 Fechar
+01531:               </button>
+01532:             </div>
+01533:           </div>
+01534:         </div>
+01535:       ) : null}
+01536: 
+01537:       <div>
+01538:         <h1 className="cx0_title">CENTENAS +</h1>
+01539:         <div className="cx0_sub">{subtitle}</div>
+01540:       </div>
+01541: 
+01542:       <div className="cx0_filters">
+01543:         <div className="cx0_fItem">
+01544:           <div className="cx0_fLab">Mês</div>
+01545:           <div className="cx0_selWrap">
+01546:             <select className="cx0_sel" value={fMes} onChange={(e) => setFMes(String(e.target.value || "Todos"))}>
+01547:               {mesOptions.map((o) => (
+01548:                 <option key={o.v} value={o.v}>
+01549:                   {o.label}
+01550:                 </option>
+01551:               ))}
+01552:             </select>
+01553:             <div className="cx0_chev" />
+01554:           </div>
+01555:         </div>
+01556: 
+01557:         <div className="cx0_fItem">
+01558:           <div className="cx0_fLab">Dia do Mês</div>
+01559:           <div className="cx0_selWrap">
+01560:             <select className="cx0_sel" value={fDiaMes} onChange={(e) => setFDiaMes(String(e.target.value || "Todos"))}>
+01561:               {diaMesOptions.map((o) => (
+01562:                 <option key={o.v} value={o.v}>
+01563:                   {o.label}
+01564:                 </option>
+01565:               ))}
+
+--- LINHAS 1719 A 1813 ---
+01719:                   {isOpen ? (
+01720:                     <div className="cx0_body">
+01721:                       <div className="cx0_bodyTop">
+01722:                         <div>
+01723:                           Mostrando <b>{rows.length}</b> de <b>40</b>
+01724:                         </div>
+01725: 
+01726:                         <div
+01727:                           style={{
+01728:                             display: "flex",
+01729:                             gap: 8,
+01730:                             flexWrap: "wrap",
+01731:                             alignItems: "center",
+01732:                           }}
+01733:                         >
+01734:                           <button
+01735:                             className="cx0_toggle"
+01736:                             type="button"
+01737:                             onClick={handleCopyMilhares}
+01738:                           >
+01739:                             {copiedMilhares ? "✅ Copiado" : "📋 Copiar"}
+01740:                           </button>
+01741: 
+01742:                           <button
+01743:                             className="cx0_toggle"
+01744:                             type="button"
+01745:                             onClick={handleEnviarKing}
+01746:                             disabled={sendingKing}
+01747:                           >
+01748:                             {sendingKing ? "Enviando..." : "🎯 Apostar"}
+01749:                           </button>
+01750: 
+01751:                           <button
+01752:                             className="cx0_toggle"
+01753:                             type="button"
+01754:                             onClick={() => setShowOnlyHits((v) => !v)}
+01755:                           >
+01756:                             {showOnlyHits ? "Todas" : "Ocorridas"}
+01757:                           </button>
+01758:                         </div>
+01759:                       </div>
+01760: 
+01761:                       <div className="cx0_tbl">
+01762:                         <div className="cx0_row cx0_headRow">
+01763:                           <div>Posição</div>
+01764:                           <div>Centena</div>
+01765:                           <div>Frequência</div>
+01766:                           <div>Milhar Palpite</div>
+01767:                         </div>
+01768: 
+01769:                         <div className="cx0_scroll">
+01770:                           {(rows || []).map((it, idx) => {
+01771:                             const posTxt = `${idx + 1}º`;
+01772:                             const milhar = String(it?.milhar || "").trim();
+01773:                             const milharPalpite = milhar;
+01774:                             return (
+01775:                               <div className="cx0_row" key={`${g.grupo}-${it.centena}`}>
+01776:                                 <div style={{ color: "rgba(233,233,233,0.70)" }}>{posTxt}</div>
+01777:                                 <div className="cx0_mono">{it.centena}</div>
+01778:                                 <div className="cx0_count">
+01779:                                   <b>{it.count}</b>
+01780:                                 </div>
+01781:                                 <div className="cx0_mono">{milharPalpite}</div>
+01782:                               </div>
+01783:                             );
+01784:                           })}
+01785: 
+01786:                           {!rows || !rows.length ? (
+01787:                             <div className="cx0_row">
+01788:                               <div
+01789:                                 style={{
+01790:                                   gridColumn: "1 / -1",
+01791:                                   textAlign: "left",
+01792:                                   padding: 12,
+01793:                                   color: "rgba(233,233,233,0.70)",
+01794:                                 }}
+01795:                               >
+01796:                                 Nenhuma centena com ocorrência para os filtros atuais. Use “Mostrar todas (40)” para ver também as
+01797:                                 zeros.
+01798:                               </div>
+01799:                             </div>
+01800:                           ) : null}
+01801:                         </div>
+01802:                       </div>
+01803:                     </div>
+01804:                   ) : null}
+01805:                 </div>
+01806:               );
+01807:             })}
+01808:           </div>
+01809:         </div>
+01810:       </div>
+01811:     </div>
+01812:   );
+01813: }
+
+==============================================================================================================
+7. MOTOR COMPLETO — CONSTANTES, PESOS E HELPERS
+==============================================================================================================
+00001: // src/pages/Centenas/modules/milharProbabilityEngine.js
+00002: 
+00003: /*
+00004: ==========================================================
+00005: Motor Probabilístico de Milhares — V1
+00006: ==========================================================
+00007: 
+00008: Contrato:
+00009: - recebe uma centena de 3 dígitos;
+00010: - recebe os prêmios do recorte já filtrado;
+00011: - avalia os 10 prefixos possíveis (0 a 9);
+00012: - retorna uma única milhar vencedora;
+00013: - não altera nem repete as centenas;
+00014: - não depende de React ou da interface.
+00015: 
+00016: Score V1:
+00017: - 55% frequência exata da milhar;
+00018: - 25% força do prefixo na mesma dezena;
+00019: - 10% força geral do prefixo no recorte;
+00020: - 10% recência da milhar exata.
+00021: */
+00022: 
+00023: const DEFAULT_WEIGHTS = Object.freeze({
+00024:   exactFrequency: 0.55,
+00025:   prefixSameDezena: 0.25,
+00026:   prefixOverall: 0.10,
+00027:   exactRecency: 0.10,
+00028: });
+00029: 
+00030: function digitsOnly(value) {
+00031:   return String(value ?? "").replace(/\D+/g, "");
+00032: }
+00033: 
+00034: export function normalizeCentena3(value) {
+00035:   const digits = digitsOnly(value);
+00036:   if (!digits) return "";
+00037: 
+00038:   return digits.slice(-3).padStart(3, "0");
+00039: }
+00040: 
+00041: export function normalizeMilhar4(value) {
+00042:   const digits = digitsOnly(value);
+00043:   if (!digits) return "";
+00044: 
+00045:   return digits.slice(-4).padStart(4, "0");
+00046: }
+00047: 
+00048: export function pickMilharFromPrize(prize) {
+00049:   if (!prize || typeof prize !== "object") return "";
+00050: 
+00051:   const candidates = [
+00052:     prize.milhar4,
+00053:     prize.milhar,
+00054:     prize.numero,
+00055:     prize.number,
+00056:     prize.num,
+00057:     prize.n,
+00058:     prize.valor,
+00059:     prize.value,
+00060:     prize.resultado,
+00061:     prize.result,
+00062:     prize.raw,
+00063:   ];
+00064: 
+00065:   for (const candidate of candidates) {
+00066:     const milhar = normalizeMilhar4(candidate);
+00067:     if (milhar) return milhar;
+00068:   }
+00069: 
+00070:   return "";
+00071: }
+00072: 
+00073: export function buildMilharCandidates(centena) {
+00074:   const centena3 = normalizeCentena3(centena);
+00075:   if (!centena3) return [];
+00076: 
+00077:   return Array.from({ length: 10 }, (_, prefix) => ({
+00078:     prefix: String(prefix),
+00079:     centena: centena3,
+00080:     milhar: `${prefix}${centena3}`,
+00081:   }));
+00082: }
+00083: 
+00084: function normalizeRatio(value, maxValue) {
+00085:   const n = Number(value) || 0;
+00086:   const max = Number(maxValue) || 0;
+00087: 
+00088:   if (max <= 0) return 0;
+00089:   return Math.max(0, Math.min(1, n / max));
+00090: }
+00091: 
+00092: function normalizeWeights(customWeights = {}) {
+00093:   const merged = {
+00094:     ...DEFAULT_WEIGHTS,
+00095:     ...(customWeights && typeof customWeights === "object"
+00096:       ? customWeights
+00097:       : {}),
+00098:   };
+00099: 
+00100:   const keys = Object.keys(DEFAULT_WEIGHTS);
+00101:   const total = keys.reduce(
+00102:     (sum, key) => sum + Math.max(0, Number(merged[key]) || 0),
+00103:     0
+00104:   );
+00105: 
+00106:   if (total <= 0) return { ...DEFAULT_WEIGHTS };
+00107: 
+00108:   return keys.reduce((out, key) => {
+00109:     out[key] = Math.max(0, Number(merged[key]) || 0) / total;
+00110:     return out;
+00111:   }, {});
+00112: }
+00113: 
+00114: export function rankMilharCandidates({
+00115:   centena,
+00116:   prizes = [],
+00117:   weights = DEFAULT_WEIGHTS,
+00118: } = {}) {
+00119:   const centena3 = normalizeCentena3(centena);
+00120:   const candidates = buildMilharCandidates(centena3);
+00121: 
+00122:   if (!centena3 || !candidates.length) return [];
+00123: 
+00124:   const dezena = centena3.slice(-2);
+00125:   const rows = [];
+00126: 
+00127:   for (let index = 0; index < prizes.length; index += 1) {
+00128:     const milhar = pickMilharFromPrize(prizes[index]);
+00129:     if (!milhar) continue;
+00130: 
+00131:     rows.push({
+00132:       milhar,
+00133:       prefix: milhar.slice(0, 1),
+00134:       centena: milhar.slice(-3),
+00135:       dezena: milhar.slice(-2),
+00136:       sequence: index + 1,
+00137:     });
+00138:   }
+00139: 
+00140:   const totalRows = rows.length;
+00141: 
+00142:   // Sem evidência histórica, não produz recomendação arbitrária.
+00143:   if (totalRows === 0) return [];
+00144: 
+00145:   const exactCount = new Map();
+00146:   const exactLastSeen = new Map();
+00147:   const prefixSameDezenaCount = new Map();
+00148:   const prefixOverallCount = new Map();
+00149: 
+00150:   for (const row of rows) {
+00151:     exactCount.set(row.milhar, (exactCount.get(row.milhar) || 0) + 1);
+00152:     exactLastSeen.set(row.milhar, row.sequence);
+00153: 
+00154:     prefixOverallCount.set(
+00155:       row.prefix,
+00156:       (prefixOverallCount.get(row.prefix) || 0) + 1
+00157:     );
+00158: 
+00159:     if (row.dezena === dezena) {
+00160:       prefixSameDezenaCount.set(
+00161:         row.prefix,
+00162:         (prefixSameDezenaCount.get(row.prefix) || 0) + 1
+00163:       );
+00164:     }
+00165:   }
+00166: 
+00167:   const maxExact = Math.max(
+00168:     0,
+00169:     ...candidates.map((candidate) => exactCount.get(candidate.milhar) || 0)
+00170:   );
+00171: 
+00172:   const maxPrefixSameDezena = Math.max(
+00173:     0,
+00174:     ...candidates.map(
+00175:       (candidate) => prefixSameDezenaCount.get(candidate.prefix) || 0
+00176:     )
+00177:   );
+00178: 
+00179:   const maxPrefixOverall = Math.max(
+00180:     0,
+00181:     ...candidates.map(
+00182:       (candidate) => prefixOverallCount.get(candidate.prefix) || 0
+00183:     )
+00184:   );
+00185: 
+00186:   const normalizedWeights = normalizeWeights(weights);
+00187: 
+00188:   const ranking = candidates.map((candidate) => {
+00189:     const countExact = exactCount.get(candidate.milhar) || 0;
+00190:     const countPrefixSameDezena =
+00191:       prefixSameDezenaCount.get(candidate.prefix) || 0;
+00192:     const countPrefixOverall =
+00193:       prefixOverallCount.get(candidate.prefix) || 0;
+00194:     const lastSeen = exactLastSeen.get(candidate.milhar) || 0;
+00195: 
+00196:     const exactFrequency = normalizeRatio(countExact, maxExact);
+00197:     const prefixSameDezena = normalizeRatio(
+00198:       countPrefixSameDezena,
+00199:       maxPrefixSameDezena
+00200:     );
+00201:     const prefixOverall = normalizeRatio(
+00202:       countPrefixOverall,
+00203:       maxPrefixOverall
+00204:     );
+00205:     const exactRecency = normalizeRatio(lastSeen, totalRows);
+00206: 
+00207:     const score =
+00208:       exactFrequency * normalizedWeights.exactFrequency +
+00209:       prefixSameDezena * normalizedWeights.prefixSameDezena +
+00210:       prefixOverall * normalizedWeights.prefixOverall +
+00211:       exactRecency * normalizedWeights.exactRecency;
+00212: 
+00213:     return {
+00214:       ...candidate,
+00215:       score: Number((score * 100).toFixed(4)),
+00216:       evidence: {
+00217:         exactFrequency: {
+00218:           count: countExact,
+00219:           normalized: Number(exactFrequency.toFixed(6)),
+00220:         },
+00221:         prefixSameDezena: {
+00222:           count: countPrefixSameDezena,
+00223:           normalized: Number(prefixSameDezena.toFixed(6)),
+00224:         },
+00225:         prefixOverall: {
+00226:           count: countPrefixOverall,
+00227:           normalized: Number(prefixOverall.toFixed(6)),
+00228:         },
+00229:         exactRecency: {
+00230:           lastSeen,
+00231:           totalRows,
+00232:           normalized: Number(exactRecency.toFixed(6)),
+00233:         },
+00234:       },
+00235:     };
+00236:   });
+00237: 
+00238:   ranking.sort((a, b) => {
+00239:     if (b.score !== a.score) return b.score - a.score;
+00240: 
+00241:     const aExact = a.evidence.exactFrequency.count;
+00242:     const bExact = b.evidence.exactFrequency.count;
+00243:     if (bExact !== aExact) return bExact - aExact;
+00244: 
+00245:     const aSame = a.evidence.prefixSameDezena.count;
+00246:     const bSame = b.evidence.prefixSameDezena.count;
+00247:     if (bSame !== aSame) return bSame - aSame;
+00248: 
+00249:     const aOverall = a.evidence.prefixOverall.count;
+00250:     const bOverall = b.evidence.prefixOverall.count;
+00251:     if (bOverall !== aOverall) return bOverall - aOverall;
+00252: 
+00253:     const aLastSeen = a.evidence.exactRecency.lastSeen;
+00254:     const bLastSeen = b.evidence.exactRecency.lastSeen;
+00255:     if (bLastSeen !== aLastSeen) return bLastSeen - aLastSeen;
+00256: 
+00257:     return Number(a.prefix) - Number(b.prefix);
+00258:   });
+00259: 
+00260:   return ranking.map((item, index) => ({
+00261:     position: index + 1,
+00262:     ...item,
+00263:   }));
+00264: }
+00265: 
+00266: export function chooseBestMilhar(args = {}) {
+00267:   const ranking = rankMilharCandidates(args);
+00268: 
+00269:   return {
+00270:     centena: normalizeCentena3(args.centena),
+00271:     winner: ranking[0] || null,
+00272:     ranking,
+00273:     sampleSize: Array.isArray(args.prizes) ? args.prizes.length : 0,
+00274:     weights: normalizeWeights(args.weights),
+00275:     model: "MILHAR_PROBABILITY_V2",
+00276:   };
+00277: }
+00278: /*
+00279: ==========================================================
+00280: Recomendação consolidada — V2
+00281: ==========================================================
+00282: 
+00283: Esta função será a futura fonte única para:
+00284: 
+00285: - exibição na tabela;
+00286: - botão Copiar;
+00287: - envio para aposta.
+00288: 
+00289: Ela ainda não está conectada à interface.
+00290: */
+00291: 
+00292: function classifySampleQuality(sampleSize) {
+00293:   const n = Number(sampleSize) || 0;
+00294: 
+00295:   if (n <= 0) return "none";
+00296:   if (n < 30) return "low";
+00297:   if (n < 100) return "medium";
+00298:   return "high";
+00299: }
+00300: 
+00301: export function buildMilharRecommendation(args = {}) {
+00302:   const result = chooseBestMilhar(args);
+00303:   const winner = result?.winner || null;
+00304:   const sampleSize = Number(result?.sampleSize || 0);
+00305: 
+00306:   if (!winner) {
+00307:     return {
+00308:       ok: false,
+00309:       status: "insufficient_evidence",
+00310:       model: "MILHAR_PROBABILITY_V2",
+00311:       centena: normalizeCentena3(args?.centena),
+00312:       milhar: null,
+00313:       prefixo: null,
+00314:       score: 0,
+00315:       confidence: 0,
+00316:       sampleSize,
+00317:       sampleQuality: classifySampleQuality(sampleSize),
+00318:       evidence: null,
+00319:       alternatives: [],
+00320:     };
+00321:   }
+00322: 
+00323:   const alternatives = (result.ranking || [])
+00324:     .slice(0, 3)
+00325:     .map((item) => ({
+00326:       position: item.position,
+00327:       milhar: item.milhar,
+00328:       prefixo: item.prefix,
+00329:       score: item.score,
+00330:     }));
+00331: 
+00332:   return {
+00333:     ok: true,
+00334:     status: "recommended",
+00335:     model: "MILHAR_PROBABILITY_V2",
+00336: 
+00337:     centena: result.centena,
+00338:     milhar: winner.milhar,
+00339:     prefixo: winner.prefix,
+00340: 
+00341:     score: winner.score,
+00342:     confidence: Number((winner.score / 100).toFixed(6)),
+00343: 
+00344:     sampleSize,
+00345:     sampleQuality: classifySampleQuality(sampleSize),
+00346: 
+00347:     evidence: {
+00348:       exactFrequency: {
+00349:         count: Number(
+00350:           winner?.evidence?.exactFrequency?.count || 0
+00351:         ),
+00352:         normalized: Number(
+00353:           winner?.evidence?.exactFrequency?.normalized || 0
+00354:         ),
+00355:       },
+00356: 
+00357:       prefixSameDezena: {
+00358:         count: Number(
+00359:           winner?.evidence?.prefixSameDezena?.count || 0
+00360:         ),
+00361:         normalized: Number(
+00362:           winner?.evidence?.prefixSameDezena?.normalized || 0
+00363:         ),
+00364:       },
+00365: 
+00366:       prefixOverall: {
+00367:         count: Number(
+00368:           winner?.evidence?.prefixOverall?.count || 0
+00369:         ),
+00370:         normalized: Number(
+00371:           winner?.evidence?.prefixOverall?.normalized || 0
+00372:         ),
+00373:       },
+00374: 
+00375:       exactRecency: {
+00376:         lastSeen: Number(
+00377:           winner?.evidence?.exactRecency?.lastSeen || 0
+00378:         ),
+00379:         totalRows: Number(
+00380:           winner?.evidence?.exactRecency?.totalRows || 0
+00381:         ),
+00382:         normalized: Number(
+00383:           winner?.evidence?.exactRecency?.normalized || 0
+00384:         ),
+00385:       },
+00386:     },
+00387: 
+00388:     alternatives,
+00389:   };
+00390: }
+00391: /*
+00392: ==========================================================
+00393: Auditoria interna do Motor de Milhares
+00394: ==========================================================
+00395: 
+00396: Uso exclusivo das áreas administrativas e de desenvolvimento.
+00397: 
+00398: Esta saída não deve ser consumida pela interface pública.
+00399: */
+00400: 
+00401: function auditEvidence(item) {
+00402:   if (!item) return null;
+00403: 
+00404:   return {
+00405:     exactFrequency: {
+00406:       count: Number(
+00407:         item?.evidence?.exactFrequency?.count || 0
+00408:       ),
+00409:       normalized: Number(
+00410:         item?.evidence?.exactFrequency?.normalized || 0
+00411:       ),
+00412:     },
+00413: 
+00414:     prefixSameDezena: {
+00415:       count: Number(
+00416:         item?.evidence?.prefixSameDezena?.count || 0
+00417:       ),
+00418:       normalized: Number(
+00419:         item?.evidence?.prefixSameDezena?.normalized || 0
+00420:       ),
+00421:     },
+00422: 
+00423:     prefixOverall: {
+00424:       count: Number(
+00425:         item?.evidence?.prefixOverall?.count || 0
+00426:       ),
+00427:       normalized: Number(
+00428:         item?.evidence?.prefixOverall?.normalized || 0
+00429:       ),
+00430:     },
+00431: 
+00432:     exactRecency: {
+00433:       lastSeen: Number(
+00434:         item?.evidence?.exactRecency?.lastSeen || 0
+00435:       ),
+00436:       totalRows: Number(
+00437:         item?.evidence?.exactRecency?.totalRows || 0
+00438:       ),
+00439:       normalized: Number(
+00440:         item?.evidence?.exactRecency?.normalized || 0
+00441:       ),
+00442:     },
+00443:   };
+00444: }
+00445: 
+00446: function auditCandidate(item) {
+00447:   return {
+00448:     position: Number(item?.position || 0),
+00449:     prefixo: String(item?.prefix ?? ""),
+00450:     milhar: String(item?.milhar || ""),
+00451:     score: Number(item?.score || 0),
+00452:     evidence: auditEvidence(item),
+00453:   };
+00454: }
+00455: 
+00456: export function buildMilharAudit(args = {}) {
+00457:   const result = chooseBestMilhar(args);
+00458:   const recommendation = buildMilharRecommendation(args);
+00459: 
+00460:   const ranking = Array.isArray(result?.ranking)
+00461:     ? result.ranking.map(auditCandidate)
+00462:     : [];
+00463: 
+00464:   const winner = ranking[0] || null;
+00465:   const runnerUp = ranking[1] || null;
+00466: 
+00467:   const scoreGap =
+00468:     winner && runnerUp
+00469:       ? Number(
+00470:           (
+00471:             Number(winner.score || 0) -
+00472:             Number(runnerUp.score || 0)
+00473:           ).toFixed(6)
+00474:         )
+00475:       : 0;
+00476: 
+00477:   return {
+00478:     scope: "internal_developer_only",
+00479:     publicExposureAllowed: false,
+00480: 
+00481:     ok: recommendation.ok === true,
+00482:     status: recommendation.status,
+00483: 
+00484:     model: String(
+00485:       recommendation.model ||
+00486:       result?.model ||
+00487:       "MILHAR_PROBABILITY_V2"
+00488:     ),
+00489: 
+00490:     centena: recommendation.centena,
+00491:     selectedMilhar: recommendation.milhar,
+00492:     selectedPrefixo: recommendation.prefixo,
+00493: 
+00494:     score: Number(recommendation.score || 0),
+00495:     confidence: Number(recommendation.confidence || 0),
+00496:     scoreGap,
+00497: 
+00498:     sample: {
+00499:       size: Number(recommendation.sampleSize || 0),
+00500:       quality: String(
+00501:         recommendation.sampleQuality || "none"
+00502:       ),
+00503:     },
+00504: 
+00505:     weights: {
+00506:       ...(result?.weights || {}),
+00507:     },
+00508: 
+00509:     winner,
+00510:     runnerUp,
+00511:     ranking,
+00512: 
+00513:     alternatives: Array.isArray(
+00514:       recommendation.alternatives
+00515:     )
+00516:       ? recommendation.alternatives.map((item) => ({
+00517:           position: Number(item?.position || 0),
+00518:           milhar: String(item?.milhar || ""),
+00519:           prefixo: String(item?.prefixo ?? ""),
+00520:           score: Number(item?.score || 0),
+00521:         }))
+00522:       : [],
+00523:   };
+00524: }
+
+==============================================================================================================
+8. BUSCA OBJETIVA POR SINAIS DINÂMICOS NO MOTOR
+==============================================================================================================
+
+--- LINHAS 10 A 45 ---
+00010: - recebe os prêmios do recorte já filtrado;
+00011: - avalia os 10 prefixos possíveis (0 a 9);
+00012: - retorna uma única milhar vencedora;
+00013: - não altera nem repete as centenas;
+00014: - não depende de React ou da interface.
+00015: 
+00016: Score V1:
+00017: - 55% frequência exata da milhar;
+00018: - 25% força do prefixo na mesma dezena;
+00019: - 10% força geral do prefixo no recorte;
+00020: - 10% recência da milhar exata.
+00021: */
+00022: 
+00023: const DEFAULT_WEIGHTS = Object.freeze({
+00024:   exactFrequency: 0.55,
+00025:   prefixSameDezena: 0.25,
+00026:   prefixOverall: 0.10,
+00027:   exactRecency: 0.10,
+00028: });
+00029: 
+00030: function digitsOnly(value) {
+00031:   return String(value ?? "").replace(/\D+/g, "");
+00032: }
+00033: 
+00034: export function normalizeCentena3(value) {
+00035:   const digits = digitsOnly(value);
+00036:   if (!digits) return "";
+00037: 
+00038:   return digits.slice(-3).padStart(3, "0");
+00039: }
+00040: 
+00041: export function normalizeMilhar4(value) {
+00042:   const digits = digitsOnly(value);
+00043:   if (!digits) return "";
+00044: 
+00045:   return digits.slice(-4).padStart(4, "0");
+
+--- LINHAS 84 A 135 ---
+00084: function normalizeRatio(value, maxValue) {
+00085:   const n = Number(value) || 0;
+00086:   const max = Number(maxValue) || 0;
+00087: 
+00088:   if (max <= 0) return 0;
+00089:   return Math.max(0, Math.min(1, n / max));
+00090: }
+00091: 
+00092: function normalizeWeights(customWeights = {}) {
+00093:   const merged = {
+00094:     ...DEFAULT_WEIGHTS,
+00095:     ...(customWeights && typeof customWeights === "object"
+00096:       ? customWeights
+00097:       : {}),
+00098:   };
+00099: 
+00100:   const keys = Object.keys(DEFAULT_WEIGHTS);
+00101:   const total = keys.reduce(
+00102:     (sum, key) => sum + Math.max(0, Number(merged[key]) || 0),
+00103:     0
+00104:   );
+00105: 
+00106:   if (total <= 0) return { ...DEFAULT_WEIGHTS };
+00107: 
+00108:   return keys.reduce((out, key) => {
+00109:     out[key] = Math.max(0, Number(merged[key]) || 0) / total;
+00110:     return out;
+00111:   }, {});
+00112: }
+00113: 
+00114: export function rankMilharCandidates({
+00115:   centena,
+00116:   prizes = [],
+00117:   weights = DEFAULT_WEIGHTS,
+00118: } = {}) {
+00119:   const centena3 = normalizeCentena3(centena);
+00120:   const candidates = buildMilharCandidates(centena3);
+00121: 
+00122:   if (!centena3 || !candidates.length) return [];
+00123: 
+00124:   const dezena = centena3.slice(-2);
+00125:   const rows = [];
+00126: 
+00127:   for (let index = 0; index < prizes.length; index += 1) {
+00128:     const milhar = pickMilharFromPrize(prizes[index]);
+00129:     if (!milhar) continue;
+00130: 
+00131:     rows.push({
+00132:       milhar,
+00133:       prefix: milhar.slice(0, 1),
+00134:       centena: milhar.slice(-3),
+00135:       dezena: milhar.slice(-2),
+
+--- LINHAS 178 A 292 ---
+00178: 
+00179:   const maxPrefixOverall = Math.max(
+00180:     0,
+00181:     ...candidates.map(
+00182:       (candidate) => prefixOverallCount.get(candidate.prefix) || 0
+00183:     )
+00184:   );
+00185: 
+00186:   const normalizedWeights = normalizeWeights(weights);
+00187: 
+00188:   const ranking = candidates.map((candidate) => {
+00189:     const countExact = exactCount.get(candidate.milhar) || 0;
+00190:     const countPrefixSameDezena =
+00191:       prefixSameDezenaCount.get(candidate.prefix) || 0;
+00192:     const countPrefixOverall =
+00193:       prefixOverallCount.get(candidate.prefix) || 0;
+00194:     const lastSeen = exactLastSeen.get(candidate.milhar) || 0;
+00195: 
+00196:     const exactFrequency = normalizeRatio(countExact, maxExact);
+00197:     const prefixSameDezena = normalizeRatio(
+00198:       countPrefixSameDezena,
+00199:       maxPrefixSameDezena
+00200:     );
+00201:     const prefixOverall = normalizeRatio(
+00202:       countPrefixOverall,
+00203:       maxPrefixOverall
+00204:     );
+00205:     const exactRecency = normalizeRatio(lastSeen, totalRows);
+00206: 
+00207:     const score =
+00208:       exactFrequency * normalizedWeights.exactFrequency +
+00209:       prefixSameDezena * normalizedWeights.prefixSameDezena +
+00210:       prefixOverall * normalizedWeights.prefixOverall +
+00211:       exactRecency * normalizedWeights.exactRecency;
+00212: 
+00213:     return {
+00214:       ...candidate,
+00215:       score: Number((score * 100).toFixed(4)),
+00216:       evidence: {
+00217:         exactFrequency: {
+00218:           count: countExact,
+00219:           normalized: Number(exactFrequency.toFixed(6)),
+00220:         },
+00221:         prefixSameDezena: {
+00222:           count: countPrefixSameDezena,
+00223:           normalized: Number(prefixSameDezena.toFixed(6)),
+00224:         },
+00225:         prefixOverall: {
+00226:           count: countPrefixOverall,
+00227:           normalized: Number(prefixOverall.toFixed(6)),
+00228:         },
+00229:         exactRecency: {
+00230:           lastSeen,
+00231:           totalRows,
+00232:           normalized: Number(exactRecency.toFixed(6)),
+00233:         },
+00234:       },
+00235:     };
+00236:   });
+00237: 
+00238:   ranking.sort((a, b) => {
+00239:     if (b.score !== a.score) return b.score - a.score;
+00240: 
+00241:     const aExact = a.evidence.exactFrequency.count;
+00242:     const bExact = b.evidence.exactFrequency.count;
+00243:     if (bExact !== aExact) return bExact - aExact;
+00244: 
+00245:     const aSame = a.evidence.prefixSameDezena.count;
+00246:     const bSame = b.evidence.prefixSameDezena.count;
+00247:     if (bSame !== aSame) return bSame - aSame;
+00248: 
+00249:     const aOverall = a.evidence.prefixOverall.count;
+00250:     const bOverall = b.evidence.prefixOverall.count;
+00251:     if (bOverall !== aOverall) return bOverall - aOverall;
+00252: 
+00253:     const aLastSeen = a.evidence.exactRecency.lastSeen;
+00254:     const bLastSeen = b.evidence.exactRecency.lastSeen;
+00255:     if (bLastSeen !== aLastSeen) return bLastSeen - aLastSeen;
+00256: 
+00257:     return Number(a.prefix) - Number(b.prefix);
+00258:   });
+00259: 
+00260:   return ranking.map((item, index) => ({
+00261:     position: index + 1,
+00262:     ...item,
+00263:   }));
+00264: }
+00265: 
+00266: export function chooseBestMilhar(args = {}) {
+00267:   const ranking = rankMilharCandidates(args);
+00268: 
+00269:   return {
+00270:     centena: normalizeCentena3(args.centena),
+00271:     winner: ranking[0] || null,
+00272:     ranking,
+00273:     sampleSize: Array.isArray(args.prizes) ? args.prizes.length : 0,
+00274:     weights: normalizeWeights(args.weights),
+00275:     model: "MILHAR_PROBABILITY_V2",
+00276:   };
+00277: }
+00278: /*
+00279: ==========================================================
+00280: Recomendação consolidada — V2
+00281: ==========================================================
+00282: 
+00283: Esta função será a futura fonte única para:
+00284: 
+00285: - exibição na tabela;
+00286: - botão Copiar;
+00287: - envio para aposta.
+00288: 
+00289: Ela ainda não está conectada à interface.
+00290: */
+00291: 
+00292: function classifySampleQuality(sampleSize) {
+
+--- LINHAS 318 A 344 ---
+00318:       evidence: null,
+00319:       alternatives: [],
+00320:     };
+00321:   }
+00322: 
+00323:   const alternatives = (result.ranking || [])
+00324:     .slice(0, 3)
+00325:     .map((item) => ({
+00326:       position: item.position,
+00327:       milhar: item.milhar,
+00328:       prefixo: item.prefix,
+00329:       score: item.score,
+00330:     }));
+00331: 
+00332:   return {
+00333:     ok: true,
+00334:     status: "recommended",
+00335:     model: "MILHAR_PROBABILITY_V2",
+00336: 
+00337:     centena: result.centena,
+00338:     milhar: winner.milhar,
+00339:     prefixo: winner.prefix,
+00340: 
+00341:     score: winner.score,
+00342:     confidence: Number((winner.score / 100).toFixed(6)),
+00343: 
+00344:     sampleSize,
+
+--- LINHAS 367 A 401 ---
+00367:         count: Number(
+00368:           winner?.evidence?.prefixOverall?.count || 0
+00369:         ),
+00370:         normalized: Number(
+00371:           winner?.evidence?.prefixOverall?.normalized || 0
+00372:         ),
+00373:       },
+00374: 
+00375:       exactRecency: {
+00376:         lastSeen: Number(
+00377:           winner?.evidence?.exactRecency?.lastSeen || 0
+00378:         ),
+00379:         totalRows: Number(
+00380:           winner?.evidence?.exactRecency?.totalRows || 0
+00381:         ),
+00382:         normalized: Number(
+00383:           winner?.evidence?.exactRecency?.normalized || 0
+00384:         ),
+00385:       },
+00386:     },
+00387: 
+00388:     alternatives,
+00389:   };
+00390: }
+00391: /*
+00392: ==========================================================
+00393: Auditoria interna do Motor de Milhares
+00394: ==========================================================
+00395: 
+00396: Uso exclusivo das áreas administrativas e de desenvolvimento.
+00397: 
+00398: Esta saída não deve ser consumida pela interface pública.
+00399: */
+00400: 
+00401: function auditEvidence(item) {
+
+--- LINHAS 424 A 466 ---
+00424:       count: Number(
+00425:         item?.evidence?.prefixOverall?.count || 0
+00426:       ),
+00427:       normalized: Number(
+00428:         item?.evidence?.prefixOverall?.normalized || 0
+00429:       ),
+00430:     },
+00431: 
+00432:     exactRecency: {
+00433:       lastSeen: Number(
+00434:         item?.evidence?.exactRecency?.lastSeen || 0
+00435:       ),
+00436:       totalRows: Number(
+00437:         item?.evidence?.exactRecency?.totalRows || 0
+00438:       ),
+00439:       normalized: Number(
+00440:         item?.evidence?.exactRecency?.normalized || 0
+00441:       ),
+00442:     },
+00443:   };
+00444: }
+00445: 
+00446: function auditCandidate(item) {
+00447:   return {
+00448:     position: Number(item?.position || 0),
+00449:     prefixo: String(item?.prefix ?? ""),
+00450:     milhar: String(item?.milhar || ""),
+00451:     score: Number(item?.score || 0),
+00452:     evidence: auditEvidence(item),
+00453:   };
+00454: }
+00455: 
+00456: export function buildMilharAudit(args = {}) {
+00457:   const result = chooseBestMilhar(args);
+00458:   const recommendation = buildMilharRecommendation(args);
+00459: 
+00460:   const ranking = Array.isArray(result?.ranking)
+00461:     ? result.ranking.map(auditCandidate)
+00462:     : [];
+00463: 
+00464:   const winner = ranking[0] || null;
+00465:   const runnerUp = ranking[1] || null;
+00466: 
+
+--- LINHAS 497 A 524 ---
+00497: 
+00498:     sample: {
+00499:       size: Number(recommendation.sampleSize || 0),
+00500:       quality: String(
+00501:         recommendation.sampleQuality || "none"
+00502:       ),
+00503:     },
+00504: 
+00505:     weights: {
+00506:       ...(result?.weights || {}),
+00507:     },
+00508: 
+00509:     winner,
+00510:     runnerUp,
+00511:     ranking,
+00512: 
+00513:     alternatives: Array.isArray(
+00514:       recommendation.alternatives
+00515:     )
+00516:       ? recommendation.alternatives.map((item) => ({
+00517:           position: Number(item?.position || 0),
+00518:           milhar: String(item?.milhar || ""),
+00519:           prefixo: String(item?.prefixo ?? ""),
+00520:           score: Number(item?.score || 0),
+00521:         }))
+00522:       : [],
+00523:   };
+00524: }
+
+==============================================================================================================
+9. RESUMO AUTOMÁTICO
+==============================================================================================================
+Página chama buildMilharRecommendation: SIM
+Motor recebe dia da semana explicitamente: NÃO
+Motor recebe horário explicitamente: NÃO
+Motor recebe posição explicitamente: SIM
+Motor possui frequência exata: SIM
+Motor possui frequência do prefixo/dezena: SIM
+Motor possui frequência geral do prefixo: SIM
+Motor possui recência: SIM
+Motor possui ausência explícita: NÃO
+Motor possui força do dia explícita: NÃO

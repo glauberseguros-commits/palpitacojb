@@ -1,0 +1,168 @@
+========================================================================================
+E08.18 - CASOS DECISIVOS DETALHADOS
+========================================================================================
+
+RESUMO GERAL
+----------------------------------------------------------------------------------------
+GAIN : 4
+LOSS : 6
+TOTAL: 10
+
+RESUMO POR HORÁRIO
+----------------------------------------------------------------------------------------
+11:00: GAIN=0 | LOSS=2 | DELTA=-2
+14:00: GAIN=1 | LOSS=1 | DELTA=+0
+16:00: GAIN=2 | LOSS=0 | DELTA=+2
+18:00: GAIN=0 | LOSS=1 | DELTA=-1
+21:00: GAIN=1 | LOSS=2 | DELTA=-1
+
+========================================================================================
+CASO DECISIVO 01 — GAIN
+========================================================================================
+caseKey             : 2022-07-21|16:00
+date                : 2022-07-21
+hour                : 16:00
+actualGroup         : 16
+baselineGroups      : [5, 16, 1]
+experimentalGroups  : [16, 1, 5]
+baselineTop1Hit     : False
+experimentalTop1Hit : True
+baselineTop3Hit     : True
+experimentalTop3Hit : True
+outcome             : GAIN
+
+========================================================================================
+CASO DECISIVO 02 — LOSS
+========================================================================================
+caseKey             : 2022-08-04|18:00
+date                : 2022-08-04
+hour                : 18:00
+actualGroup         : 1
+baselineGroups      : [1, 7, 15]
+experimentalGroups  : [7, 15, 1]
+baselineTop1Hit     : True
+experimentalTop1Hit : False
+baselineTop3Hit     : True
+experimentalTop3Hit : True
+outcome             : LOSS
+
+========================================================================================
+CASO DECISIVO 03 — GAIN
+========================================================================================
+caseKey             : 2022-08-09|14:00
+date                : 2022-08-09
+hour                : 14:00
+actualGroup         : 5
+baselineGroups      : [4, 5, 11]
+experimentalGroups  : [5, 4, 11]
+baselineTop1Hit     : False
+experimentalTop1Hit : True
+baselineTop3Hit     : True
+experimentalTop3Hit : True
+outcome             : GAIN
+
+========================================================================================
+CASO DECISIVO 04 — LOSS
+========================================================================================
+caseKey             : 2022-08-15|21:00
+date                : 2022-08-15
+hour                : 21:00
+actualGroup         : 14
+baselineGroups      : [14, 7, 5]
+experimentalGroups  : [7, 14, 5]
+baselineTop1Hit     : True
+experimentalTop1Hit : False
+baselineTop3Hit     : True
+experimentalTop3Hit : True
+outcome             : LOSS
+
+========================================================================================
+CASO DECISIVO 05 — LOSS
+========================================================================================
+caseKey             : 2022-08-16|11:00
+date                : 2022-08-16
+hour                : 11:00
+actualGroup         : 16
+baselineGroups      : [16, 20, 8]
+experimentalGroups  : [20, 8, 16]
+baselineTop1Hit     : True
+experimentalTop1Hit : False
+baselineTop3Hit     : True
+experimentalTop3Hit : True
+outcome             : LOSS
+
+========================================================================================
+CASO DECISIVO 06 — LOSS
+========================================================================================
+caseKey             : 2022-09-14|21:00
+date                : 2022-09-14
+hour                : 21:00
+actualGroup         : 14
+baselineGroups      : [14, 3, 7]
+experimentalGroups  : [3, 14, 7]
+baselineTop1Hit     : True
+experimentalTop1Hit : False
+baselineTop3Hit     : True
+experimentalTop3Hit : True
+outcome             : LOSS
+
+========================================================================================
+CASO DECISIVO 07 — GAIN
+========================================================================================
+caseKey             : 2022-09-28|16:00
+date                : 2022-09-28
+hour                : 16:00
+actualGroup         : 16
+baselineGroups      : [6, 3, 16]
+experimentalGroups  : [16, 6, 3]
+baselineTop1Hit     : False
+experimentalTop1Hit : True
+baselineTop3Hit     : True
+experimentalTop3Hit : True
+outcome             : GAIN
+
+========================================================================================
+CASO DECISIVO 08 — LOSS
+========================================================================================
+caseKey             : 2022-09-30|14:00
+date                : 2022-09-30
+hour                : 14:00
+actualGroup         : 1
+baselineGroups      : [1, 5, 18]
+experimentalGroups  : [5, 1, 18]
+baselineTop1Hit     : True
+experimentalTop1Hit : False
+baselineTop3Hit     : True
+experimentalTop3Hit : True
+outcome             : LOSS
+
+========================================================================================
+CASO DECISIVO 09 — GAIN
+========================================================================================
+caseKey             : 2022-10-03|21:00
+date                : 2022-10-03
+hour                : 21:00
+actualGroup         : 3
+baselineGroups      : [14, 5, 3]
+experimentalGroups  : [3, 14, 5]
+baselineTop1Hit     : False
+experimentalTop1Hit : True
+baselineTop3Hit     : True
+experimentalTop3Hit : True
+outcome             : GAIN
+
+========================================================================================
+CASO DECISIVO 10 — LOSS
+========================================================================================
+caseKey             : 2022-10-05|11:00
+date                : 2022-10-05
+hour                : 11:00
+actualGroup         : 20
+baselineGroups      : [20, 1, 25]
+experimentalGroups  : [1, 20, 25]
+baselineTop1Hit     : True
+experimentalTop1Hit : False
+baselineTop3Hit     : True
+experimentalTop3Hit : True
+outcome             : LOSS
+

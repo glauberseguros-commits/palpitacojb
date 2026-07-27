@@ -1,0 +1,514 @@
+===== NAC-06 — COMPARAÇÃO RESULTS x DASHBOARD =====
+
+============================================================
+PADRÃO: collection\(
+============================================================
+fatal: command line, 'collection\(': Unmatched ( or \(
+
+============================================================
+PADRÃO: query\(
+============================================================
+fatal: command line, 'query\(': Unmatched ( or \(
+
+============================================================
+PADRÃO: where\(
+============================================================
+fatal: command line, 'where\(': Unmatched ( or \(
+
+============================================================
+PADRÃO: orderBy\(
+============================================================
+fatal: command line, 'orderBy\(': Unmatched ( or \(
+
+============================================================
+PADRÃO: draw_date
+============================================================
+backend/routes/bounds.js:116:        d?.date ?? d?.data ?? d?.dt ?? d?.draw_date ?? d?.close_date
+src/pages/Dashboard/Dashboard.jsx:239:  const raw = d.date ?? d.ymd ?? d.draw_date ?? d.close_date ?? d.data ?? d.dt ?? null;
+src/pages/Dashboard/components/ChartsGrid.jsx:98:    draw.draw_date ??
+src/pages/Dashboard/components/KpiCards.jsx:84:    draw.draw_date ??
+src/services/auditKingCounts.js:47:    d.draw_date ??
+src/services/kingResultsService.js:480:  return d.ymd ?? d.date ?? d.data ?? d.dt ?? d.draw_date ?? d.close_date ?? null;
+src/services/kingResultsService.js:574:    date: d.date ?? d.data ?? d.dt ?? d.draw_date ?? d.close_date ?? null,
+
+============================================================
+PADRÃO: drawDate
+============================================================
+src/pages/Dashboard/Dashboard.jsx:237:function getDrawDate(d) {
+src/pages/Dashboard/Dashboard.jsx:586:  const ymd = getDrawDate(d);
+src/pages/Dashboard/Dashboard.jsx:1305:        const ymd = getDrawDate(d);
+src/pages/Dashboard/Dashboard.jsx:1550:    const dias = new Set(uniqDraws.map((d) => getDrawDate(d)).filter(Boolean)).size;
+src/pages/Dashboard/components/ChartsGrid.jsx:92:function getDrawDate(draw) {
+src/pages/Dashboard/components/ChartsGrid.jsx:258:    const ymd = getDrawDate(d) || "";
+src/pages/Dashboard/components/ChartsGrid.jsx:1177:    const ymd = getDrawDate(d);
+src/pages/Dashboard/components/ChartsGrid.jsx:1210:    const ymd = getDrawDate(d);
+src/pages/Dashboard/components/ChartsGrid.jsx:1241:    const ymd = getDrawDate(d);
+src/pages/Dashboard/components/KpiCards.jsx:78:function getDrawDate(draw) {
+src/pages/Dashboard/components/KpiCards.jsx:85:    draw.drawDate ??
+src/pages/Dashboard/components/KpiCards.jsx:175:      const ymd = getDrawDate(d);
+src/pages/Dashboard/components/KpiCards.jsx:216:      const ymd = getDrawDate(d);
+src/services/auditKingCounts.js:48:    d.drawDate ??
+
+============================================================
+PADRÃO: close_hour
+============================================================
+backend/routes/kingDraws.js:64:    .map((d) => String(d?.close_hour || "").trim())
+backend/routes/kingDraws.js:304:    close_hour: normalizeHHMM(data.close_hour ?? data.close ?? data.hour),
+backend/routes/kingDraws.js:309:  return cmpHHMM(a.close_hour, b.close_hour);
+backend/routes/kingDraws.js:316:  return cmpHHMM(a.close_hour, b.close_hour);
+backend/routes/kingDraws.js:328:    return inRangeHHMM(d.close_hour, from || "", to || "");
+backend/routes/pitacoResults.js:210: * Pega o melhor candidato de close_hour em docs legados.
+backend/routes/pitacoResults.js:215:      d?.close_hour ??
+backend/routes/pitacoResults.js:217:      d?.close_hour_raw ??
+backend/routes/pitacoResults.js:229: * Normaliza close_hour para SLOT (compat├¡vel com import):
+backend/routes/pitacoResults.js:839:          close_hour: slot || normalizeHHMM(d.close_hour),
+backend/routes/pitacoResults.js:840:          close_hour_raw: raw || d.close_hour_raw || null,
+backend/routes/pitacoResults.js:845:      drawsNoPrizes.sort((a, b) => cmpHHMM(a.close_hour, b.close_hour));
+backend/routes/pitacoResults.js:849:        const hh = hourFromCloseHourSlot(dr?.close_hour, lotteryKey);
+backend/routes/pitacoResults.js:855:          const a = String(prev.close_hour || "");
+backend/routes/pitacoResults.js:856:          const b = String(dr.close_hour || "");
+backend/routes/pitacoResults.js:947:        close_hour: slot || normalizeHHMM(d.close_hour),
+backend/routes/pitacoResults.js:948:        close_hour_raw: raw || d.close_hour_raw || null,
+backend/routes/pitacoResults.js:953:    draws.sort((a, b) => cmpHHMM(a.close_hour, b.close_hour));
+backend/routes/pitacoResults.js:957:      const hh = hourFromCloseHourSlot(dr?.close_hour, lotteryKey);
+backend/routes/pitacoResults.js:963:        const a = String(prev.close_hour || "");
+backend/routes/pitacoResults.js:964:        const b = String(dr.close_hour || "");
+backend/routes/receiveResults.js:223:        close_hour: close,
+backend/routes/receiveResults.js:258:      close_hour: close,
+src/pages/Dashboard/Dashboard.jsx:247:    d.close_hour_raw ??
+src/pages/Dashboard/Dashboard.jsx:249:    d.close_hour ??
+src/pages/Dashboard/Dashboard.jsx:251:    d.close_hour_bucket ??
+src/pages/Dashboard/Dashboard.jsx:589:    d.close_hour ??
+src/pages/Dashboard/Dashboard.jsx:591:    d.close_hour_raw ??
+src/pages/Dashboard/Dashboard.jsx:593:    d.close_hour_bucket ??
+src/pages/Dashboard/Dashboard.jsx:1631:      "2) Query ainda est├í batendo em 'date' ou em campo diferente do esperado (ymd/uf/lottery_key/close_hour).\n" +
+src/pages/Dashboard/components/ChartsGrid.jsx:107:/** Ô£à Resolve close_hour independente do nome do campo */
+src/pages/Dashboard/components/ChartsGrid.jsx:111:    draw.close_hour ?? draw.closeHour ?? draw.hour ?? draw.hora ?? ""
+src/pages/Dashboard/components/ChartsGrid.jsx:151:/** Ô£à Normaliza close_hour para HH:MM */
+src/pages/Dashboard/components/SearchResultsTable.jsx:217:    safeStr(r?.close_hour) ||
+src/pages/Dashboard/components/SearchResultsTable.jsx:330:      const close_hour_raw = pickHour(r);
+src/pages/Dashboard/components/SearchResultsTable.jsx:331:      const close_hour = hourBucketFromAny(close_hour_raw); // Ô£à PADR├âO "09h"
+src/pages/Dashboard/components/SearchResultsTable.jsx:339:        close_hour,
+src/pages/Dashboard/components/SearchResultsTable.jsx:519:                  const key = `${r.ymd || "x"}-${r.close_hour || "h"}-${r.position ?? "p"}-${r.milhar4 || "n"}-${r.__idx}`;
+src/pages/Dashboard/components/SearchResultsTable.jsx:524:                      <td>{r.close_hour || "ÔÇö"}</td>
+src/pages/Results/Results.jsx:494:    d?.close_hour || d?.closeHour || d?.hour || d?.hora || ""
+src/pages/Results/Results.jsx:510:  const ha = safeStr(a?.close_hour || a?.closeHour || a?.hour || a?.hora);
+src/pages/Results/Results.jsx:511:  const hb = safeStr(b?.close_hour || b?.closeHour || b?.hour || b?.hora);
+src/pages/Results/Results.jsx:604:      d?.close_hour || d?.closeHour || d?.hour || d?.hora || ""
+src/pages/Results/Results.jsx:613:        a?.__slotHour || a?.close_hour || a?.closeHour || a?.hour || a?.hora
+src/pages/Results/Results.jsx:616:        b?.__slotHour || b?.close_hour || b?.closeHour || b?.hour || b?.hora
+src/pages/Results/Results.jsx:646:      close_hour: hour,
+src/pages/Results/Results.jsx:654:      d?.close_hour || d?.closeHour || d?.hour || d?.hora || ""
+src/pages/Results/Results.jsx:661:      a?.__slotHour || a?.close_hour || a?.closeHour || a?.hour || a?.hora
+src/pages/Results/Results.jsx:664:      b?.__slotHour || b?.close_hour || b?.closeHour || b?.hour || b?.hora
+src/pages/Results/Results.jsx:842:          hour: x?.close_hour || x?.closeHour || x?.hour || x?.hora || null,
+src/pages/Results/Results.jsx:915:      const ha = hourToNum(a?.close_hour || a?.closeHour || a?.hour || a?.hora);
+src/pages/Results/Results.jsx:916:      const hb = hourToNum(b?.close_hour || b?.closeHour || b?.hour || b?.hora);
+src/pages/Results/Results.jsx:1782:                      d?.close_hour || d?.closeHour || d?.hour || d?.hora || ""
+src/services/auditKingCounts.js:62:  return d.close_hour ?? d.closeHour ?? d.hour ?? d.hora ?? null;
+src/services/auditKingCounts.js:182:   - fallback: uf/lottery + ymd + close_hour_norm
+src/services/auditKingCounts.js:231: *  { date|ymd|..., close_hour|..., prizes: [{ grupo, animal, position? }] }
+src/services/auditKingCounts.js:271:    // normaliza close_hour do draw (se existir)
+src/services/auditKingCounts.js:313:          close_hour: extractRawCloseHourFromDraw(d) || null,
+src/services/auditKingCounts.js:314:          close_hour_norm: drawHour,
+src/services/kingResultsService.js:278:    draw?.close_hour ?? draw?.closeHour ?? draw?.hour ?? draw?.hora ?? "";
+src/services/kingResultsService.js:334:    const ha = toNum(a?.close_hour);
+src/services/kingResultsService.js:335:    const hb = toNum(b?.close_hour);
+src/services/kingResultsService.js:361:    const ha = toNum(a?.close_hour);
+src/services/kingResultsService.js:362:    const hb = toNum(b?.close_hour);
+src/services/kingResultsService.js:394:    const hasLogical = !!(d?.ymd && d?.close_hour);
+src/services/kingResultsService.js:402:    const hour = normalizeHourLike(raw.close_hour || raw.closeHour || "");
+src/services/kingResultsService.js:420:      close_hour: hour || raw.close_hour || raw.closeHour || "",
+src/services/kingResultsService.js:421:      closeHour: hour || raw.closeHour || raw.close_hour || "",
+src/services/kingResultsService.js:551:    d.close_hour ?? d.closeHour ?? d.hour ?? d.hora ?? ""
+src/services/kingResultsService.js:577:    close_hour: hourNorm,
+src/services/kingResultsService.js:1028:    draw?.close_hour || draw?.closeHour || draw?.hour || draw?.hora || ""
+src/services/kingResultsService.js:1704:          hour: d.close_hour || d.closeHour || "",
+src/services/statsSignals.js:198:    draw?.close_hour || draw?.closeHour || draw?.hour || draw?.hora || ""
+
+============================================================
+PADRÃO: closeHour
+============================================================
+backend/routes/pitacoResults.js:218:      d?.closeHour ??
+backend/routes/pitacoResults.js:233:function normalizeCloseHourForLottery(value, lotteryKey) {
+backend/routes/pitacoResults.js:248:function hourFromCloseHourSlot(closeHour, lotteryKey) {
+backend/routes/pitacoResults.js:249:  const { slot } = normalizeCloseHourForLottery(closeHour, lotteryKey);
+backend/routes/pitacoResults.js:835:        const { raw, slot } = normalizeCloseHourForLottery(cand, lotteryKey);
+backend/routes/pitacoResults.js:849:        const hh = hourFromCloseHourSlot(dr?.close_hour, lotteryKey);
+backend/routes/pitacoResults.js:940:      const { raw, slot } = normalizeCloseHourForLottery(cand, lotteryKey);
+backend/routes/pitacoResults.js:957:      const hh = hourFromCloseHourSlot(dr?.close_hour, lotteryKey);
+src/pages/Dashboard/Dashboard.jsx:243:function getDrawCloseHour(d) {
+src/pages/Dashboard/Dashboard.jsx:248:    d.closeHourRaw ??
+src/pages/Dashboard/Dashboard.jsx:250:    d.closeHour ??
+src/pages/Dashboard/Dashboard.jsx:252:    d.closeHourBucket ??
+src/pages/Dashboard/Dashboard.jsx:564:function normalizeCloseHourForKpi(raw) {
+src/pages/Dashboard/Dashboard.jsx:590:    d.closeHour ??
+src/pages/Dashboard/Dashboard.jsx:592:    d.closeHourRaw ??
+src/pages/Dashboard/Dashboard.jsx:594:    d.closeHourBucket ??
+src/pages/Dashboard/Dashboard.jsx:600:  const ch = normalizeCloseHourForKpi(chRaw);
+src/pages/Dashboard/Dashboard.jsx:1115:    closeHourBucket: null,
+src/pages/Dashboard/Dashboard.jsx:1195:  const closeHourBucketLocal = useMemo(() => normalizeHourBucket(filters.horario), [filters.horario]);
+src/pages/Dashboard/Dashboard.jsx:1289:    const wantBucket = closeHourBucketLocal;
+src/pages/Dashboard/Dashboard.jsx:1320:          const b = normalizeHourBucket(getDrawCloseHour(d));
+src/pages/Dashboard/Dashboard.jsx:1361:    closeHourBucketLocal,
+src/pages/Dashboard/Dashboard.jsx:1423:      const out = buildPalpiteV2(drawsForView, { closeHourBucket: null });
+src/pages/Dashboard/Dashboard.jsx:1440:        const b = normalizeHourBucket(getDrawCloseHour(d));
+src/pages/Dashboard/components/ChartsGrid.jsx:108:function getDrawCloseHour(draw) {
+src/pages/Dashboard/components/ChartsGrid.jsx:111:    draw.close_hour ?? draw.closeHour ?? draw.hour ?? draw.hora ?? ""
+src/pages/Dashboard/components/ChartsGrid.jsx:259:    const hhmm = normHHMM(getDrawCloseHour(d)) || "";
+src/pages/Dashboard/components/ChartsGrid.jsx:1272:    const bucket = hhmmToBucket09h(getDrawCloseHour(d));
+src/pages/Dashboard/components/SearchResultsTable.jsx:218:    safeStr(r?.closeHour) ||
+src/pages/Results/Results.jsx:494:    d?.close_hour || d?.closeHour || d?.hour || d?.hora || ""
+src/pages/Results/Results.jsx:510:  const ha = safeStr(a?.close_hour || a?.closeHour || a?.hour || a?.hora);
+src/pages/Results/Results.jsx:511:  const hb = safeStr(b?.close_hour || b?.closeHour || b?.hour || b?.hora);
+src/pages/Results/Results.jsx:604:      d?.close_hour || d?.closeHour || d?.hour || d?.hora || ""
+src/pages/Results/Results.jsx:613:        a?.__slotHour || a?.close_hour || a?.closeHour || a?.hour || a?.hora
+src/pages/Results/Results.jsx:616:        b?.__slotHour || b?.close_hour || b?.closeHour || b?.hour || b?.hora
+src/pages/Results/Results.jsx:647:      closeHour: hour,
+src/pages/Results/Results.jsx:654:      d?.close_hour || d?.closeHour || d?.hour || d?.hora || ""
+src/pages/Results/Results.jsx:661:      a?.__slotHour || a?.close_hour || a?.closeHour || a?.hour || a?.hora
+src/pages/Results/Results.jsx:664:      b?.__slotHour || b?.close_hour || b?.closeHour || b?.hour || b?.hora
+src/pages/Results/Results.jsx:826:        closeHour: null,
+src/pages/Results/Results.jsx:827:        closeHourBucket: null,
+src/pages/Results/Results.jsx:842:          hour: x?.close_hour || x?.closeHour || x?.hour || x?.hora || null,
+src/pages/Results/Results.jsx:915:      const ha = hourToNum(a?.close_hour || a?.closeHour || a?.hour || a?.hora);
+src/pages/Results/Results.jsx:916:      const hb = hourToNum(b?.close_hour || b?.closeHour || b?.hour || b?.hora);
+src/pages/Results/Results.jsx:1782:                      d?.close_hour || d?.closeHour || d?.hour || d?.hora || ""
+src/services/auditKingCounts.js:60:function extractRawCloseHourFromDraw(d) {
+src/services/auditKingCounts.js:62:  return d.close_hour ?? d.closeHour ?? d.hour ?? d.hora ?? null;
+src/services/auditKingCounts.js:197:    const hh = normalizeHourLike(extractRawCloseHourFromDraw(d)) || "";
+src/services/auditKingCounts.js:272:    const drawHour = normalizeHourLike(extractRawCloseHourFromDraw(d));
+src/services/auditKingCounts.js:313:          close_hour: extractRawCloseHourFromDraw(d) || null,
+src/services/auditKingCounts.js:398:  let invalidCloseHourCount = 0;
+src/services/auditKingCounts.js:415:    const hhmm = normalizeHourLike(extractRawCloseHourFromDraw(d));
+src/services/auditKingCounts.js:416:    if (!hhmm || !isValidHHMM(hhmm)) invalidCloseHourCount += 1;
+src/services/auditKingCounts.js:464:      invalidCloseHourCount,
+src/services/kingResultsService.js:259:   - bucket SOMENTE via closeHourBucket
+src/services/kingResultsService.js:260:   - exact  SOMENTE via closeHour
+src/services/kingResultsService.js:264:function resolveHourFilter({ closeHour = null, closeHourBucket = null }) {
+src/services/kingResultsService.js:265:  const bucket = toHourBucket(closeHourBucket);
+src/services/kingResultsService.js:268:  const hhmm = closeHour ? normalizeHourLike(closeHour) : null;
+src/services/kingResultsService.js:278:    draw?.close_hour ?? draw?.closeHour ?? draw?.hour ?? draw?.hora ?? "";
+src/services/kingResultsService.js:402:    const hour = normalizeHourLike(raw.close_hour || raw.closeHour || "");
+src/services/kingResultsService.js:420:      close_hour: hour || raw.close_hour || raw.closeHour || "",
+src/services/kingResultsService.js:421:      closeHour: hour || raw.closeHour || raw.close_hour || "",
+src/services/kingResultsService.js:551:    d.close_hour ?? d.closeHour ?? d.hour ?? d.hora ?? ""
+src/services/kingResultsService.js:578:    closeHour: hourNorm,
+src/services/kingResultsService.js:1028:    draw?.close_hour || draw?.closeHour || draw?.hour || draw?.hora || ""
+src/services/kingResultsService.js:1110:  closeHour = null,
+src/services/kingResultsService.js:1111:  closeHourBucket = null,
+src/services/kingResultsService.js:1122:  const hourFilter = resolveHourFilter({ closeHour, closeHourBucket });
+src/services/kingResultsService.js:1304:  closeHour = null,
+src/services/kingResultsService.js:1305:  closeHourBucket = null,
+src/services/kingResultsService.js:1323:  const hourFilter = resolveHourFilter({ closeHour, closeHourBucket });
+src/services/kingResultsService.js:1387:            closeHour,
+src/services/kingResultsService.js:1388:            closeHourBucket,
+src/services/kingResultsService.js:1457:          closeHour,
+src/services/kingResultsService.js:1458:          closeHourBucket,
+src/services/kingResultsService.js:1613:  closeHour = null,
+src/services/kingResultsService.js:1614:  closeHourBucket = null,
+src/services/kingResultsService.js:1629:  const hourFilter = resolveHourFilter({ closeHour, closeHourBucket });
+src/services/kingResultsService.js:1675:      closeHour,
+src/services/kingResultsService.js:1676:      closeHourBucket,
+src/services/kingResultsService.js:1704:          hour: d.close_hour || d.closeHour || "",
+src/services/statsSignals.js:198:    draw?.close_hour || draw?.closeHour || draw?.hour || draw?.hora || ""
+
+============================================================
+PADRÃO: weekday
+============================================================
+src/pages/Dashboard/Dashboard.jsx:276:function ymdToWeekdayShortPT(ymd) {
+src/pages/Dashboard/Dashboard.jsx:1315:          const wd = ymdToWeekdayShortPT(ymd);
+src/pages/Dashboard/components/ChartsGrid.jsx:1262:  const weekdayData = wdOrder.map((it) => ({
+src/pages/Dashboard/components/ChartsGrid.jsx:1332:    weekdayData,
+src/pages/Dashboard/components/ChartsGrid.jsx:1434:                data={stats.weekdayData}
+
+============================================================
+PADRÃO: dayOfWeek
+============================================================
+
+============================================================
+PADRÃO: lottery
+============================================================
+backend/routes/bounds.js:9:   LOTTERY NORMALIZATION
+backend/routes/bounds.js:12:function normalizeLotteryKey(v) {
+backend/routes/bounds.js:148:async function tryBoundsByField(db, lotteryKey, field, scanLimit = 50) {
+backend/routes/bounds.js:151:  const base = db.collection("draws").where("lottery_key", "==", lotteryKey);
+backend/routes/bounds.js:168:      source: `where(lottery_key)+orderBy(${field})+docId(scan=${scanLimit})`,
+backend/routes/bounds.js:192:    source: `where(lottery_key)+orderBy(${field})+docId(scan=${scanLimit})`,
+backend/routes/bounds.js:202:async function fallbackBoundsByDocIdEdges(db, lotteryKey, edgeLimit) {
+backend/routes/bounds.js:205:  const base = db.collection("draws").where("lottery_key", "==", lotteryKey);
+backend/routes/bounds.js:229:async function computeBounds(db, lotteryKey, opts = {}) {
+backend/routes/bounds.js:230:  const lk = normalizeLotteryKey(lotteryKey);
+backend/routes/bounds.js:272:  const lottery = normalizeLotteryKey(req.query.lottery || req.query.uf);
+backend/routes/bounds.js:274:  if (!lottery) {
+backend/routes/bounds.js:277:      error: "invalid_lottery",
+backend/routes/bounds.js:292:    const { lk, result, warn } = await computeBounds(db, lottery, {
+backend/routes/bounds.js:299:      lottery: lk,
+backend/routes/bounds.js:324:module.exports.normalizeLotteryKey = normalizeLotteryKey;
+backend/routes/kingDraws.js:13:function normalizeLotteryKey(v) {
+backend/routes/kingDraws.js:25:function getExpectedHours(lottery, date, hasFederal) {
+backend/routes/kingDraws.js:26:  if (lottery !== "PT_RIO") return [];
+backend/routes/kingDraws.js:50:function checkDrawIntegrity(draws, lottery, date, hasFederal) {
+backend/routes/kingDraws.js:51:  const expectedHours = getExpectedHours(lottery, date, hasFederal);
+backend/routes/kingDraws.js:72:      `[DRAW ALERT] ${lottery} ${date} missing=${missing.join(", ")} extra=${extra.join(", ")} hasFederal=${hasFederal ? "1" : "0"}`
+backend/routes/kingDraws.js:167:function getLotteryFromQuery(req) {
+backend/routes/kingDraws.js:168:  return normalizeLotteryKey(req.query.lotteryKey ?? req.query.lottery ?? req.query.uf);
+backend/routes/kingDraws.js:319:function applyLotteryFilter(draws, lottery) {
+backend/routes/kingDraws.js:321:    (d) => upTrim(d.lottery_key) === lottery
+backend/routes/kingDraws.js:334:    (d) => upTrim(d.lottery_key) === "FEDERAL"
+backend/routes/kingDraws.js:348:function requireLotteryOr400(lottery, res) {
+backend/routes/kingDraws.js:349:  if (!lottery) {
+backend/routes/kingDraws.js:352:      error: "Par├ómetro inv├ílido: lottery (use RJ/PT_RIO ou FED/FEDERAL)",
+backend/routes/kingDraws.js:367:    const lottery = getLotteryFromQuery(req);
+backend/routes/kingDraws.js:385:    if (!requireLotteryOr400(lottery, res)) return;
+backend/routes/kingDraws.js:405:    const byLottery = applyLotteryFilter(rawDraws, lottery).sort(sortDrawsByHourOnly);
+backend/routes/kingDraws.js:406:    const drawsWindow = applyHourWindow(byLottery, from || "", to || "");
+backend/routes/kingDraws.js:409:    const integrity = checkDrawIntegrity(draws, lottery, date, hasFederal);
+backend/routes/kingDraws.js:415:      lottery,
+backend/routes/kingDraws.js:438:    const lottery = getLotteryFromQuery(req);
+backend/routes/kingDraws.js:440:    if (!requireLotteryOr400(lottery, res)) return;
+backend/routes/kingDraws.js:459:    const byLottery = applyLotteryFilter(rawDraws, lottery).sort(sortDrawsByHourOnly);
+backend/routes/kingDraws.js:460:    const drawsWindow = applyHourWindow(byLottery, win.from || "", win.to || "");
+backend/routes/kingDraws.js:463:    const integrity = checkDrawIntegrity(draws, lottery, date, hasFederal);
+backend/routes/kingDraws.js:470:      lottery,
+backend/routes/kingDraws.js:488:    const lottery = getLotteryFromQuery(req);
+backend/routes/kingDraws.js:490:    if (!requireLotteryOr400(lottery, res)) return;
+backend/routes/kingDraws.js:520:    const byLottery = applyLotteryFilter(rawDraws, lottery).sort(sortDrawsByDateThenHour);
+backend/routes/kingDraws.js:521:    const drawsWindow = applyHourWindow(byLottery, win.from || "", win.to || "");
+backend/routes/kingDraws.js:525:    if (lottery === "PT_RIO") {
+backend/routes/kingDraws.js:553:        groupedIntegrity[ymd] = checkDrawIntegrity(dayFiltered, lottery, ymd, hasFederal);
+backend/routes/kingDraws.js:563:      lottery,
+backend/routes/pitacoResults.js:70:   LOTTERY KEY NORMALIZATION
+backend/routes/pitacoResults.js:73:function normalizeLotteryKey(v) {
+backend/routes/pitacoResults.js:233:function normalizeCloseHourForLottery(value, lotteryKey) {
+backend/routes/pitacoResults.js:234:  const lk = upTrim(lotteryKey || "");
+backend/routes/pitacoResults.js:248:function hourFromCloseHourSlot(closeHour, lotteryKey) {
+backend/routes/pitacoResults.js:249:  const { slot } = normalizeCloseHourForLottery(closeHour, lotteryKey);
+backend/routes/pitacoResults.js:280:function readDayStatusMap(lottery, opts) {
+backend/routes/pitacoResults.js:281:  const key = upTrim(lottery || "PT_RIO") || "PT_RIO";
+backend/routes/pitacoResults.js:409:function getExpectedForDate(lotteryKey, ymd, include09FromYmdDefault) {
+backend/routes/pitacoResults.js:410:  const p = path.join(DEFAULT_SCHEDULE_DIR, `${lotteryKey}.json`);
+backend/routes/pitacoResults.js:443:  if (lotteryKey === "PT_RIO") {
+backend/routes/pitacoResults.js:457:function readGapsMap(lottery, opts) {
+backend/routes/pitacoResults.js:458:  const key = upTrim(lottery || "PT_RIO") || "PT_RIO";
+backend/routes/pitacoResults.js:500:function getGapsForDate(lotteryKey, ymd, opts) {
+backend/routes/pitacoResults.js:501:  const map = readGapsMap(lotteryKey, opts);
+backend/routes/pitacoResults.js:610:  if ((req.query.lotteryKey != null || req.query.lottery != null) && req.query.uf != null) {
+backend/routes/pitacoResults.js:614:        "Par├ómetros conflitantes: quando 'lottery' (ou 'lotteryKey') ├® informado, 'uf' ├® ignorado. Remova 'uf' ou use apenas 'uf=RJ|BR' (legado).",
+backend/routes/pitacoResults.js:615:      hint: "Use: ?date=YYYY-MM-DD&lottery=PT_RIO|FEDERAL|LOOK|NACIONAL  (ou)  ?date=YYYY-MM-DD&uf=RJ|BR",
+backend/routes/pitacoResults.js:623:  const lotteryParam = req.query.lotteryKey ?? req.query.lottery ?? null;
+backend/routes/pitacoResults.js:624:  const legacyLottery = lotteryParam == null ? req.query.uf : null;
+backend/routes/pitacoResults.js:626:  const lotteryRaw = String(lotteryParam ?? legacyLottery ?? "").trim();
+backend/routes/pitacoResults.js:627:  const lotteryKey = normalizeLotteryKey(lotteryRaw);
+backend/routes/pitacoResults.js:631:    const lottery = lotteryKey;
+backend/routes/pitacoResults.js:644:    if (!lotteryRaw) return res.status(400).json({ ok: false, error: "lottery obrigat├│rio" });
+backend/routes/pitacoResults.js:645:    if (!lottery) {
+backend/routes/pitacoResults.js:648:        error: "lottery inv├ílida: " + lotteryRaw + " (use lottery=PT_RIO|FEDERAL|LOOK|NACIONAL ou aliases RJ|BR)",
+backend/routes/pitacoResults.js:657:        lottery,
+backend/routes/pitacoResults.js:671:    const dayStatusMap = readDayStatusMap(lottery, { reload: reloadDayStatus });
+backend/routes/pitacoResults.js:680:      const lkSnake = upTrim(d.lottery_key || "");
+backend/routes/pitacoResults.js:681:      const lkCamel = upTrim(d.lotteryKey || "");
+backend/routes/pitacoResults.js:682:      return lkSnake === lotteryKey || lkCamel === lotteryKey;
+backend/routes/pitacoResults.js:690:          lottery,
+backend/routes/pitacoResults.js:710:      lottery,
+backend/routes/pitacoResults.js:727:    if (lottery === "PT_RIO") {
+backend/routes/pitacoResults.js:809:    const gaps = getGapsForDate(lottery, date, { reload: reloadGaps });
+backend/routes/pitacoResults.js:835:        const { raw, slot } = normalizeCloseHourForLottery(cand, lotteryKey);
+backend/routes/pitacoResults.js:849:        const hh = hourFromCloseHourSlot(dr?.close_hour, lotteryKey);
+backend/routes/pitacoResults.js:915:        lottery,
+backend/routes/pitacoResults.js:940:      const { raw, slot } = normalizeCloseHourForLottery(cand, lotteryKey);
+backend/routes/pitacoResults.js:957:      const hh = hourFromCloseHourSlot(dr?.close_hour, lotteryKey);
+backend/routes/pitacoResults.js:1023:      lottery,
+backend/routes/receiveResults.js:77:function normalizeLotteryKey(v) {
+backend/routes/receiveResults.js:168:    const lottery = normalizeLotteryKey(body.lottery);
+backend/routes/receiveResults.js:173:    if (!lottery) {
+backend/routes/receiveResults.js:176:        error: "lottery_invalid",
+backend/routes/receiveResults.js:215:    const drawId = `${lottery}__${date}__${hhmm}__RECEIVE`;
+backend/routes/receiveResults.js:222:        lottery_key: lottery,
+backend/routes/receiveResults.js:256:      lottery,
+src/pages/Dashboard/Dashboard.jsx:602:  const uf = String(ufKey ?? d.uf ?? d.lottery_key ?? d.lotteryKey ?? "")
+src/pages/Dashboard/Dashboard.jsx:608:  const drawId = String(d.drawId ?? d.draw_id ?? d.lottery_id ?? d.id ?? "").trim();
+src/pages/Dashboard/Dashboard.jsx:774:    () => normalizeLoteriaKey(filters?.lotteryKey || filters?.loteria || filters?.uf),
+src/pages/Dashboard/Dashboard.jsx:775:    [filters?.lotteryKey, filters?.loteria, filters?.uf]
+src/pages/Dashboard/Dashboard.jsx:1245:      if (name === "loteria" || name === "lotteryKey" || name === "uf") {
+src/pages/Dashboard/Dashboard.jsx:1631:      "2) Query ainda est├í batendo em 'date' ou em campo diferente do esperado (ymd/uf/lottery_key/close_hour).\n" +
+src/pages/Dashboard/components/ChartsGrid.jsx:115:/** Ô£à Resolve lottery key (quando existir) */
+src/pages/Dashboard/components/ChartsGrid.jsx:116:function getDrawLotteryKey(draw) {
+src/pages/Dashboard/components/ChartsGrid.jsx:119:    draw.lottery_key ??
+src/pages/Dashboard/components/ChartsGrid.jsx:120:      draw.lotteryKey ??
+src/pages/Dashboard/components/ChartsGrid.jsx:121:      draw.lottery ??
+src/pages/Dashboard/components/ChartsGrid.jsx:123:      draw.lotteryId ??
+src/pages/Dashboard/components/ChartsGrid.jsx:260:    const lot = getDrawLotteryKey(d) || "";
+src/pages/Results/Results.jsx:919:      const la = safeStr(a?.lottery_code || a?.lotteryCode || "");
+src/pages/Results/Results.jsx:920:      const lb = safeStr(b?.lottery_code || b?.lotteryCode || "");
+src/services/auditKingCounts.js:69:  if (!d) return { uf: "", lottery: "" };
+src/services/auditKingCounts.js:71:  const lottery = String(d.lottery_key ?? d.lotteryKey ?? d.lottery ?? "").trim();
+src/services/auditKingCounts.js:72:  return { uf, lottery };
+src/services/auditKingCounts.js:182:   - fallback: uf/lottery + ymd + close_hour_norm
+src/services/auditKingCounts.js:199:    const { uf, lottery } = extractDrawScope(d);
+src/services/auditKingCounts.js:210:      const scope = `${uf || ""}__${lottery || ""}`.trim();
+src/services/kingResultsService.js:62:const RJ_LOTTERY_KEY = "PT_RIO";
+src/services/kingResultsService.js:67:const FEDERAL_LOTTERY_KEYS = [
+src/services/kingResultsService.js:124: * Resolve qual lottery_key usar quando o usu├írio passar:
+src/services/kingResultsService.js:129:function resolveLotteryKeyForQuery(ufInput) {
+src/services/kingResultsService.js:134:  if (up === RJ_STATE_CODE) return RJ_LOTTERY_KEY;
+src/services/kingResultsService.js:151:  if (up === RJ_STATE_CODE) return RJ_LOTTERY_KEY;
+src/services/kingResultsService.js:158: * Quando for consultar por campo "uf", adiciona trava de lottery_key para RJ.
+src/services/kingResultsService.js:164:    return [where("lottery_key", "==", RJ_LOTTERY_KEY)];
+src/services/kingResultsService.js:183:  if (fieldName === "lottery_key") {
+src/services/kingResultsService.js:185:    if (up === RJ_STATE_CODE) return RJ_LOTTERY_KEY; // Ô£à PREVENTIVO: RJ -> PT_RIO
+src/services/kingResultsService.js:308:function normalizeLotteryCodeAny(d) {
+src/services/kingResultsService.js:310:    d?.lottery_code ??
+src/services/kingResultsService.js:311:    d?.lotteryCode ??
+src/services/kingResultsService.js:338:    const la = normalizeLotteryCodeAny(a);
+src/services/kingResultsService.js:339:    const lb = normalizeLotteryCodeAny(b);
+src/services/kingResultsService.js:365:    const la = normalizeLotteryCodeAny(a);
+src/services/kingResultsService.js:366:    const lb = normalizeLotteryCodeAny(b);
+src/services/kingResultsService.js:377: * - chave l├│gica: ymd + hour (+ lottery_code quando existir)
+src/services/kingResultsService.js:381: * N├úo colapsar dois draws distintos do mesmo dia/hor├írio com lottery_code diferente.
+src/services/kingResultsService.js:404:    const lotCode = normalizeLotteryCodeAny(raw);
+src/services/kingResultsService.js:422:      lottery_code: lotCode || raw.lottery_code || raw.lotteryCode || null,
+src/services/kingResultsService.js:557:  const lotteryKeyRaw = d.lottery_key ?? d.lotteryKey ?? d.lottery ?? null;
+src/services/kingResultsService.js:559:  const lotteryCodeRaw =
+src/services/kingResultsService.js:560:    d.lottery_code ??
+src/services/kingResultsService.js:561:    d.lotteryCode ??
+src/services/kingResultsService.js:566:    d.lottery_id ??
+src/services/kingResultsService.js:567:    d.lotteryId ??
+src/services/kingResultsService.js:581:    lottery_key: lotteryKeyRaw,
+src/services/kingResultsService.js:583:    lottery_code: lotteryCodeRaw ? String(lotteryCodeRaw).toUpperCase() : null,
+src/services/kingResultsService.js:591:   Compat: uf OU lottery_key
+src/services/kingResultsService.js:652:    for (const lk of FEDERAL_LOTTERY_KEYS) {
+src/services/kingResultsService.js:654:        fieldName: "lottery_key",
+src/services/kingResultsService.js:662:      if (error) return { docs: [], usedField: "lottery_key", error };
+src/services/kingResultsService.js:664:        return { docs: snap.docs, usedField: "lottery_key", error: null };
+src/services/kingResultsService.js:668:    return { docs: [], usedField: "lottery_key", error: null };
+src/services/kingResultsService.js:688:    const lotteryKey =
+src/services/kingResultsService.js:689:      ufUp === RJ_STATE_CODE ? RJ_LOTTERY_KEY : resolveLotteryKeyForQuery(ufTrim);
+src/services/kingResultsService.js:692:      fieldName: "lottery_key",
+src/services/kingResultsService.js:693:      uf: String(lotteryKey).toUpperCase(),
+src/services/kingResultsService.js:701:      return { docs: snap.docs, usedField: "lottery_key", error: null };
+src/services/kingResultsService.js:703:    if (error) return { docs: [], usedField: "lottery_key", error };
+src/services/kingResultsService.js:758:  const url = apiUrl(`/api/bounds?lottery=${encodeURIComponent(lot)}`);
+src/services/kingResultsService.js:784:      lottery: String(j.lottery || lot).trim(),
+src/services/kingResultsService.js:930:      for (const lk of FEDERAL_LOTTERY_KEYS) {
+src/services/kingResultsService.js:931:        const b = await sampleEdgesByDocId("lottery_key", lk);
+src/services/kingResultsService.js:955:            source: `fallback_edges_docId_limit=${FALLBACK_EDGE_LIMIT}:lottery_key(${lk}):sampleCount=${b.merged.length}${
+src/services/kingResultsService.js:963:    const lotteryKey =
+src/services/kingResultsService.js:964:      ufUp === RJ_STATE_CODE ? RJ_LOTTERY_KEY : resolveLotteryKeyForQuery(uf);
+src/services/kingResultsService.js:968:      : await sampleEdgesByDocId("lottery_key", String(lotteryKey).toUpperCase());
+src/services/kingResultsService.js:994:        a.ok ? "uf" : "lottery_key"
+src/services/kingResultsService.js:1572:  const code = String(draw?.lottery_code ?? "").trim().toUpperCase();
+src/services/kingResultsService.js:1660:      lastLottery: null,
+src/services/kingResultsService.js:1706:          lottery_code: d.lottery_code || null,
+src/services/kingResultsService.js:1730:      lastLottery: seen?.lottery_code || null,
+
+============================================================
+PADRÃO: lottery_name
+============================================================
+
+============================================================
+PADRÃO: NACIONAL
+============================================================
+backend/routes/bounds.js:21:  if (["NACIONAL", "LT_NACIONAL", "LT-NACIONAL"].includes(s)) {
+backend/routes/bounds.js:22:    return "NACIONAL";
+backend/routes/pitacoResults.js:80:    s === "NACIONAL" ||
+backend/routes/pitacoResults.js:81:    s === "LT_NACIONAL" ||
+backend/routes/pitacoResults.js:82:    s === "LT-NACIONAL" ||
+backend/routes/pitacoResults.js:83:    s === "LT NACIONAL"
+backend/routes/pitacoResults.js:85:    return "NACIONAL";
+backend/routes/pitacoResults.js:615:      hint: "Use: ?date=YYYY-MM-DD&lottery=PT_RIO|FEDERAL|LOOK|NACIONAL  (ou)  ?date=YYYY-MM-DD&uf=RJ|BR",
+backend/routes/pitacoResults.js:648:        error: "lottery inv├ílida: " + lotteryRaw + " (use lottery=PT_RIO|FEDERAL|LOOK|NACIONAL ou aliases RJ|BR)",
+src/pages/Dashboard/Dashboard.jsx:528:  if (u === "NACIONAL") {
+src/pages/Dashboard/components/FiltersBar.jsx:8: * - filters.loteria: "PT_RIO" | "FEDERAL" | "LOOK" | "NACIONAL"
+src/pages/Dashboard/components/FiltersBar.jsx:15: * - NACIONAL: Todos + 02h/08h/10h/12h/15h/17h/21h/23h
+src/pages/Dashboard/components/FiltersBar.jsx:220:      { label: "NACIONAL", value: "NACIONAL" },
+src/pages/Dashboard/components/FiltersBar.jsx:281:    // Ô£à NACIONAL
+src/pages/Dashboard/components/FiltersBar.jsx:282:    const horariosNACIONAL = [
+src/pages/Dashboard/components/FiltersBar.jsx:379:      NACIONAL: horariosNACIONAL,
+src/pages/Results/Results.jsx:196:const SCOPE_NACIONAL = "NACIONAL";
+src/pages/Results/Results.jsx:209:const NACIONAL_EXPECTED_HOURS_DESC = [
+src/pages/Results/Results.jsx:264:    s === SCOPE_NACIONAL ||
+src/pages/Results/Results.jsx:265:    compact === "NACIONAL" ||
+src/pages/Results/Results.jsx:266:    compact === "LTNACIONAL"
+src/pages/Results/Results.jsx:268:    return SCOPE_NACIONAL;
+src/pages/Results/Results.jsx:280:  if (up === SCOPE_NACIONAL) return "NACIONAL";
+src/pages/Results/Results.jsx:628:  } else if (scopeKey === SCOPE_NACIONAL) {
+src/pages/Results/Results.jsx:629:    expectedHours = NACIONAL_EXPECTED_HOURS_DESC;
+src/pages/Results/Results.jsx:1589:                className={scopePillClass(scopeKey === SCOPE_NACIONAL)}
+src/pages/Results/Results.jsx:1592:                  setScopeUi(SCOPE_NACIONAL);
+src/pages/Results/Results.jsx:1594:                title="Resultados da Nacional"
+src/pages/Results/Results.jsx:1596:                NACIONAL
+
+============================================================
+PADRÃO: results
+============================================================
+backend/routes/kingDraws.js:234:  const results = new Array(arr.length);
+backend/routes/kingDraws.js:242:      results[current] = await mapper(arr[current], current);
+backend/routes/kingDraws.js:250:  return results;
+backend/routes/kingDraws.js:430:router.get("/results/day", redirect308("/draws/day"));
+backend/routes/kingDraws.js:431:router.get("/results/range", redirect308("/draws/range"));
+backend/routes/pitacoResults.js:515:  const results = new Array(arr.length);
+backend/routes/pitacoResults.js:523:      results[current] = await mapper(arr[current], current);
+backend/routes/pitacoResults.js:530:  return results;
+backend/routes/pitacoResults.js:609:router.get("/results", async (req, res) => {
+backend/routes/pitacoResults.js:795:        console.log("[pitaco/results][capToday]", {
+backend/routes/pitacoResults.js:805:        console.log("[pitaco/results][capToday] debug error", e?.message || e);
+backend/routes/receiveResults.js:122:  const required = String(process.env.RECEIVE_RESULTS_TOKEN || "").trim();
+backend/routes/receiveResults.js:159:router.post("/receive_results", async (req, res) => {
+backend/routes/receiveResults.js:171:    const results = Array.isArray(body.results) ? body.results : null;
+backend/routes/receiveResults.js:194:    if (!results || !results.length) {
+backend/routes/receiveResults.js:197:        error: "results_required",
+backend/routes/receiveResults.js:201:    const normalizedRows = results
+backend/routes/receiveResults.js:209:        error: "results_invalid",
+backend/routes/receiveResults.js:225:        provider: "receive_results",
+src/pages/Dashboard/Dashboard.jsx:29:import { getKingBoundsByUf } from "../../services/kingResultsService";
+src/pages/Dashboard/components/SearchResultsTable.jsx:1:// src/pages/Dashboard/components/SearchResultsTable.jsx
+src/pages/Dashboard/components/SearchResultsTable.jsx:291:export default function SearchResultsTable({
+src/pages/Dashboard/components/Sidebar/AppShell.jsx:11:  RESULTS: "results",
+src/pages/Dashboard/components/Sidebar/AppShell.jsx:465:    { key: ROUTES.RESULTS, icon: "calendar", title: "Resultados" },
+src/pages/Results/Results.jsx:1:// src/pages/Results/Results.jsx
+src/pages/Results/Results.jsx:6:  getKingResultsByDate,
+src/pages/Results/Results.jsx:7:  getKingResultsByRange,
+src/pages/Results/Results.jsx:8:} from "../../services/kingResultsService";
+src/pages/Results/Results.jsx:683:export default function Results() {
+src/pages/Results/Results.jsx:711:    queryKey: ["results", "bounds", scopeKey],
+src/pages/Results/Results.jsx:790:    queryKey: ["results", "calendar-marks", scopeKey, calendarMonthYmd],
+src/pages/Results/Results.jsx:798:      const out = await getKingResultsByRange({
+src/pages/Results/Results.jsx:816:  const dayResultsQuery = useQuery({
+src/pages/Results/Results.jsx:817:    queryKey: ["results", "day", scopeKey, ymdClamped],
+src/pages/Results/Results.jsx:823:      const out = await getKingResultsByDate({
+src/pages/Results/Results.jsx:834:      console.log("[RESULTS_DEBUG]", {
+src/pages/Results/Results.jsx:860:  const loading = dayResultsQuery.isLoading && !Array.isArray(dayResultsQuery.data);
+src/pages/Results/Results.jsx:863:    dayResultsQuery.error?.message ||
+src/pages/Results/Results.jsx:870:    return Array.isArray(dayResultsQuery.data) ? dayResultsQuery.data : [];
+src/pages/Results/Results.jsx:871:  }, [dayResultsQuery.data]);
+src/pages/Results/Results.jsx:976:      dayResultsQuery.refetch(),
+src/pages/Results/Results.jsx:1734:                dayResultsQuery.isFetching
+src/pages/Results/Results.jsx:1739:              dayResultsQuery.isFetching
+src/services/king/king.normalize.js:3:// Migra├º├úo controlada: as fun├º├Áes ser├úo movidas gradualmente do kingResultsService.js para c├í.
+src/services/kingResultsService.js:2:// src/services/kingResultsService.js
+src/services/kingResultsService.js:445:  const results = new Array(arr.length);
+src/services/kingResultsService.js:453:      results[current] = await mapper(arr[current], current);
+src/services/kingResultsService.js:460:  return results;
+src/services/kingResultsService.js:1107:export async function getKingResultsByDate({
+src/services/kingResultsService.js:1300:export async function getKingResultsByRange({
+src/services/kingResultsService.js:1384:          const dayDraws = await getKingResultsByDate({
+src/services/kingResultsService.js:1454:        const dayDraws = await getKingResultsByDate({
+src/services/kingResultsService.js:1472:      const results = await mapWithConcurrency(ordered, conc, async (item) => {
+src/services/kingResultsService.js:1478:      const out = dedupeDrawsLocal(results);
+src/services/kingResultsService.js:1517:  const results = await mapWithConcurrency(ordered, conc, async (item) => {
+src/services/kingResultsService.js:1523:  const out = dedupeDrawsLocal(results);
+src/services/kingResultsService.js:1549:  const results = await mapWithConcurrency(arr, conc, async (item) => {
+src/services/kingResultsService.js:1555:  return dedupeDrawsLocal(results);
+src/services/kingResultsService.js:1671:    const draws = await getKingResultsByRange({
+src/services/statisticsEngine.js:3:import { getKingResultsByRange } from "./kingResultsService";
+src/services/statisticsEngine.js:48:  const draws = await getKingResultsByRange({
+
+============================================================
+PADRÃO: pitacoResults
+============================================================
+
+============================================================
+PADRÃO: kingDraws
+============================================================
+src/services/kingResultsService.js:1534:export async function hydrateKingDrawsWithPrizes({

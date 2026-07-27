@@ -1,0 +1,1329 @@
+===== ARQUIVOS E TRECHOS DE AUTENTICAÇÃO =====
+
+--- .\backend ---
+
+===== C:\Users\glaub\palpitaco\backend\engine\drawRepository.js =====
+LINHA 97: const DOC_ID = admin.firestore.FieldPath.documentId();
+      Math.min(50, Number(prizeConcurrency || 24))
+    );
+  
+    const admin = require("firebase-admin");
+>>   const DOC_ID = admin.firestore.FieldPath.documentId();
+  
+    const draws = [];
+    let lastDoc = null;
+    let page = 0;
+  
+    while (draws.length < safeMaxDraws) {
+      page += 1;
+  
+
+LINHA 179: const DOC_ID = admin.firestore.FieldPath.documentId();
+    const db = getAdminDb();
+    const lk = normalizeLottery(lottery);
+  
+    const admin = require("firebase-admin");
+>>   const DOC_ID = admin.firestore.FieldPath.documentId();
+  
+    const draws = [];
+    let lastDoc = null;
+    let page = 0;
+  
+    while (true) {
+      page++;
+  
+
+
+===== C:\Users\glaub\palpitaco\backend\engine\snapshotManager.js =====
+LINHA 23: const DOC_ID = admin.firestore.FieldPath.documentId();
+      };
+    }
+  
+    const admin = require("firebase-admin");
+>>   const DOC_ID = admin.firestore.FieldPath.documentId();
+  
+    const snap = await db
+      .collection("draws")
+      .where("lottery_key", "==", String(lottery).toUpperCase())
+      .orderBy(DOC_ID, "asc")
+      .startAfter(String(lastProcessedDrawId))
+      .limit(limit)
+      .get();
+
+
+===== C:\Users\glaub\palpitaco\backend\engine\statisticsEngine.js =====
+LINHA 47: updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    const payload = {
+      ...data,
+      uf: normalizeUfKey(uf),
+      scope,
+>>     updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+    };
+  
+    await snapshotRef(db, uf, scope).set(payload, { merge: true });
+  
+    return payload;
+  }
+  
+  module.exports = {
+
+
+===== C:\Users\glaub\palpitaco\backend\routes\bounds.js =====
+LINHA 149: const DOC_ID = admin.firestore.FieldPath.documentId();
+     BOUNDS BY FIELD
+  ====================================================== */
+  
+  async function tryBoundsByField(db, lotteryKey, field, scanLimit = 50) {
+>>   const DOC_ID = admin.firestore.FieldPath.documentId();
+  
+    const base = db.collection("draws").where("lottery_key", "==", lotteryKey);
+  
+    const ascSnap = await base
+      .orderBy(field, "asc")
+      .orderBy(DOC_ID, "asc")
+      .limit(scanLimit)
+      .get();
+
+LINHA 203: const DOC_ID = admin.firestore.FieldPath.documentId();
+     FALLBACK
+  ====================================================== */
+  
+  async function fallbackBoundsByDocIdEdges(db, lotteryKey, edgeLimit) {
+>>   const DOC_ID = admin.firestore.FieldPath.documentId();
+  
+    const base = db.collection("draws").where("lottery_key", "==", lotteryKey);
+  
+    const ascSnap = await base.orderBy(DOC_ID, "asc").limit(edgeLimit).get();
+    const descSnap = await base.orderBy(DOC_ID, "asc").limitToLast(edgeLimit).get();
+  
+    const merged = [...ascSnap.docs, ...descSnap.docs];
+  
+
+
+===== C:\Users\glaub\palpitaco\backend\scripts\maintenance\backfillYmdDraws.js =====
+LINHA 218: let q = col.orderBy(admin.firestore.FieldPath.documentId()).limit(PAGE);
+  
+    while (true) {
+      if (args.limit && processed >= args.limit) break;
+  
+>>     let q = col.orderBy(admin.firestore.FieldPath.documentId()).limit(PAGE);
+      if (lastDoc) q = q.startAfter(lastDoc);
+  
+      const snap = await q.get();
+      if (snap.empty) break;
+  
+      const writes = [];
+  
+      for (const doc of snap.docs) {
+
+
+===== C:\Users\glaub\palpitaco\backend\scripts\auditBounds.js =====
+LINHA 134: const DOC_ID = admin.firestore.FieldPath.documentId();
+    );
+  }
+  
+  async function tryBoundsByField(db, lotteryKey, field, scanLimit = 50) {
+>>   const DOC_ID = admin.firestore.FieldPath.documentId();
+    const base = db.collection("draws").where("lottery_key", "==", lotteryKey);
+  
+    const ascSnap = await base
+      .orderBy(field, "asc")
+      .orderBy(DOC_ID, "asc")
+      .limit(scanLimit)
+      .get();
+  
+
+LINHA 183: const DOC_ID = admin.firestore.FieldPath.documentId();
+    };
+  }
+  
+  async function fallbackBoundsByDocIdEdges(db, lotteryKey, edgeLimit) {
+>>   const DOC_ID = admin.firestore.FieldPath.documentId();
+    const base = db.collection("draws").where("lottery_key", "==", lotteryKey);
+  
+    const ascSnap = await base.orderBy(DOC_ID, "asc").limit(edgeLimit).get();
+    const descSnap = await base.orderBy(DOC_ID, "asc").limitToLast(edgeLimit).get();
+  
+    const merged = [...ascSnap.docs, ...descSnap.docs];
+    const { minYmd, maxYmd } = pickMinMaxFromDocs(merged);
+  
+
+
+===== C:\Users\glaub\palpitaco\backend\scripts\auditDbDateRange.js =====
+LINHA 113: const DOC_ID = admin.firestore.FieldPath.documentId();
+   * - Busca N docs DESC e pega o primeiro que vira ISO válido
+   * - Inclui desempate por docId (estável)
+   */
+  async function tryBoundsByField(db, lotteryKey, field, scanLimit = 50) {
+>>   const DOC_ID = admin.firestore.FieldPath.documentId();
+  
+    const base = db.collection("draws").where("lottery_key", "==", lotteryKey);
+  
+    const ascSnap = await base
+      .orderBy(field, "asc")
+      .orderBy(DOC_ID, "asc")
+      .limit(scanLimit)
+      .get();
+
+LINHA 163: const DOC_ID = admin.firestore.FieldPath.documentId();
+    };
+  }
+  
+  async function fallbackBoundsByDocIdEdges(db, lotteryKey, edgeLimit) {
+>>   const DOC_ID = admin.firestore.FieldPath.documentId();
+    const base = db.collection("draws").where("lottery_key", "==", lotteryKey);
+  
+    const ascSnap = await base.orderBy(DOC_ID, "asc").limit(edgeLimit).get();
+    const descSnap = await base.orderBy(DOC_ID, "asc").limitToLast(edgeLimit).get();
+  
+    const merged = [...ascSnap.docs, ...descSnap.docs];
+    const { minYmd, maxYmd } = pickMinMaxFromDocs(merged);
+  
+
+
+===== C:\Users\glaub\palpitaco\backend\scripts\auditDbDateRangeNoIndex.js =====
+LINHA 144: const DOC_ID = admin.firestore.FieldPath.documentId();
+    db,
+    fieldName,
+    { lotteryKey = null, scanLimit = 50 } = {}
+  ) {
+>>   const DOC_ID = admin.firestore.FieldPath.documentId();
+  
+    let base = db.collection("draws");
+    if (lotteryKey) {
+      base = base.where(
+        "lottery_key",
+        "==",
+        String(lotteryKey).trim().toUpperCase()
+      );
+
+LINHA 183: const DOC_ID = admin.firestore.FieldPath.documentId();
+    };
+  }
+  
+  async function fallbackBoundsByDocIdEdges(db, edgeLimit, { lotteryKey = null } = {}) {
+>>   const DOC_ID = admin.firestore.FieldPath.documentId();
+  
+    let base = db.collection("draws");
+    if (lotteryKey) {
+      base = base.where(
+        "lottery_key",
+        "==",
+        String(lotteryKey).trim().toUpperCase()
+      );
+
+
+===== C:\Users\glaub\palpitaco\backend\scripts\auditDrawsBoundsAndCounts.js =====
+LINHA 39: // Firestore Timestamp (admin.firestore.Timestamp)
+  
+  function normalizeToYMD(input, timeZone = "America/Sao_Paulo") {
+    if (!input) return null;
+  
+>>   // Firestore Timestamp (admin.firestore.Timestamp)
+    if (typeof input === "object" && typeof input.toDate === "function") {
+      const d = input.toDate();
+      const ymd = formatDateToYMDInTZ(d, timeZone);
+      if (ymd) return ymd;
+    }
+  
+    // objetos {seconds} / {_seconds}
+    if (
+
+LINHA 173: const DOC_ID = admin.firestore.FieldPath.documentId();
+      if (!isIndexError(e)) throw e;
+    }
+  
+    // 2) fallback sem índice: pagina por docId e filtra em memória
+>>   const DOC_ID = admin.firestore.FieldPath.documentId();
+    let q = db.collection("draws");
+    if (lot) q = q.where("lottery_key", "==", lot);
+    q = q.orderBy(DOC_ID, "asc");
+  
+    let last = null;
+    const out = [];
+  
+    for (let page = 1; page <= maxPages; page++) {
+
+
+===== C:\Users\glaub\palpitaco\backend\scripts\auditFederalContestDuplicates.js =====
+LINHA 6: const current = String(process.env.GOOGLE_APPLICATION_CREDENTIALS || "").trim();
+  const path = require("path");
+  
+  (function ensureGoogleCredentials() {
+    try {
+>>     const current = String(process.env.GOOGLE_APPLICATION_CREDENTIALS || "").trim();
+  
+      if (current && fs.existsSync(current)) return;
+  
+      if (current) {
+        try {
+          delete process.env.GOOGLE_APPLICATION_CREDENTIALS;
+        } catch {
+          process.env.GOOGLE_APPLICATION_CREDENTIALS = "";
+
+LINHA 12: delete process.env.GOOGLE_APPLICATION_CREDENTIALS;
+      if (current && fs.existsSync(current)) return;
+  
+      if (current) {
+        try {
+>>         delete process.env.GOOGLE_APPLICATION_CREDENTIALS;
+        } catch {
+          process.env.GOOGLE_APPLICATION_CREDENTIALS = "";
+        }
+      }
+  
+      const tryPickFromDir = (dir) => {
+        try {
+          const entries = fs.readdirSync(dir);
+
+LINHA 14: process.env.GOOGLE_APPLICATION_CREDENTIALS = "";
+      if (current) {
+        try {
+          delete process.env.GOOGLE_APPLICATION_CREDENTIALS;
+        } catch {
+>>         process.env.GOOGLE_APPLICATION_CREDENTIALS = "";
+        }
+      }
+  
+      const tryPickFromDir = (dir) => {
+        try {
+          const entries = fs.readdirSync(dir);
+          const hits = entries
+            .filter((f) => /^palpitacojb-app-firebase-adminsdk-.*\.json$/i.test(f))
+
+LINHA 45: process.env.GOOGLE_APPLICATION_CREDENTIALS = hit;
+  
+      for (const dir of dirs) {
+        const hit = tryPickFromDir(dir);
+        if (hit) {
+>>         process.env.GOOGLE_APPLICATION_CREDENTIALS = hit;
+          return;
+        }
+      }
+    } catch {}
+  })();
+  
+  const admin = require("firebase-admin");
+  const START = process.argv[2] || "2022-06-08";
+
+LINHA 104: admin.initializeApp();
+  
+  
+  async function main() {
+    if (!admin.apps.length) {
+>>     admin.initializeApp();
+    }
+  
+    const db = admin.firestore();
+  
+    const snap = await db.collection("draws").get();
+  
+    const docs = [];
+  
+
+LINHA 107: const db = admin.firestore();
+    if (!admin.apps.length) {
+      admin.initializeApp();
+    }
+  
+>>   const db = admin.firestore();
+  
+    const snap = await db.collection("draws").get();
+  
+    const docs = [];
+  
+    snap.forEach((doc) => {
+      const data = doc.data() || {};
+      const lotteryKey = safeStr(data.lottery_key || data.lotteryKey).toUpperCase();
+
+
+===== C:\Users\glaub\palpitaco\backend\scripts\findDuplicatesDraws.js =====
+LINHA 129: .orderBy(admin.firestore.FieldPath.documentId())
+  
+      while (true) {
+        let q = col
+          .orderBy("ymd")
+>>         .orderBy(admin.firestore.FieldPath.documentId())
+          .limit(500);
+  
+        if (lastYmd !== null && lastId !== null) q = q.startAfter(lastYmd, lastId);
+  
+        const snap = await q.get();
+        if (snap.empty) break;
+  
+        for (const doc of snap.docs) {
+
+
+===== C:\Users\glaub\palpitaco\backend\scripts\fixFederalContestDuplicates.js =====
+LINHA 6: const current = String(process.env.GOOGLE_APPLICATION_CREDENTIALS || "").trim();
+  const path = require("path");
+  
+  (function ensureGoogleCredentials() {
+    try {
+>>     const current = String(process.env.GOOGLE_APPLICATION_CREDENTIALS || "").trim();
+  
+      if (current && fs.existsSync(current)) return;
+  
+      if (current) {
+        try {
+          delete process.env.GOOGLE_APPLICATION_CREDENTIALS;
+        } catch {
+          process.env.GOOGLE_APPLICATION_CREDENTIALS = "";
+
+LINHA 12: delete process.env.GOOGLE_APPLICATION_CREDENTIALS;
+      if (current && fs.existsSync(current)) return;
+  
+      if (current) {
+        try {
+>>         delete process.env.GOOGLE_APPLICATION_CREDENTIALS;
+        } catch {
+          process.env.GOOGLE_APPLICATION_CREDENTIALS = "";
+        }
+      }
+  
+      const tryPickFromDir = (dir) => {
+        try {
+          const entries = fs.readdirSync(dir);
+
+LINHA 14: process.env.GOOGLE_APPLICATION_CREDENTIALS = "";
+      if (current) {
+        try {
+          delete process.env.GOOGLE_APPLICATION_CREDENTIALS;
+        } catch {
+>>         process.env.GOOGLE_APPLICATION_CREDENTIALS = "";
+        }
+      }
+  
+      const tryPickFromDir = (dir) => {
+        try {
+          const entries = fs.readdirSync(dir);
+          const hits = entries
+            .filter((f) => /^palpitacojb-app-firebase-adminsdk-.*\.json$/i.test(f))
+
+LINHA 45: process.env.GOOGLE_APPLICATION_CREDENTIALS = hit;
+  
+      for (const dir of dirs) {
+        const hit = tryPickFromDir(dir);
+        if (hit) {
+>>         process.env.GOOGLE_APPLICATION_CREDENTIALS = hit;
+          return;
+        }
+      }
+    } catch {}
+  })();
+  
+  const admin = require("firebase-admin");
+  const START = process.argv[2] || "2022-06-08";
+
+LINHA 95: admin.initializeApp();
+  }
+  
+  async function main() {
+    if (!admin.apps.length) {
+>>     admin.initializeApp();
+    }
+  
+    const db = admin.firestore();
+  
+    const snap = await db.collection("draws").get();
+  
+    const docs = [];
+  
+
+LINHA 98: const db = admin.firestore();
+    if (!admin.apps.length) {
+      admin.initializeApp();
+    }
+  
+>>   const db = admin.firestore();
+  
+    const snap = await db.collection("draws").get();
+  
+    const docs = [];
+  
+    snap.forEach((doc) => {
+      const data = doc.data() || {};
+      const lotteryKey = safeStr(data.lottery_key || data.lotteryKey).toUpperCase();
+
+
+===== C:\Users\glaub\palpitaco\backend\scripts\importKingApostas.js =====
+LINHA 59: * - GOOGLE_APPLICATION_CREDENTIALS estiver ausente, OU
+  })();
+  
+  /**
+   * Resolve automaticamente credenciais se:
+>>  * - GOOGLE_APPLICATION_CREDENTIALS estiver ausente, OU
+   * - estiver apontando para um arquivo inexistente.
+   *
+   * Mantém compatível com seu fluxo local (Windows) e com Cloud (ADC).
+   */
+  (function ensureGoogleCredentials() {
+    try {
+      const current = String(process.env.GOOGLE_APPLICATION_CREDENTIALS || "").trim();
+  
+
+LINHA 66: const current = String(process.env.GOOGLE_APPLICATION_CREDENTIALS || "").trim();
+   * Mantém compatível com seu fluxo local (Windows) e com Cloud (ADC).
+   */
+  (function ensureGoogleCredentials() {
+    try {
+>>     const current = String(process.env.GOOGLE_APPLICATION_CREDENTIALS || "").trim();
+  
+      // se já está OK, não mexe
+      if (current) {
+        try {
+          if (fs.existsSync(current) && fs.lstatSync(current).isFile()) return;
+        } catch {
+          // segue para fallback
+        }
+
+LINHA 80: delete process.env.GOOGLE_APPLICATION_CREDENTIALS;
+  
+      // se existe mas está inválida, remove para permitir fallback (ADC)
+      if (current) {
+        try {
+>>         delete process.env.GOOGLE_APPLICATION_CREDENTIALS;
+        } catch {
+          process.env.GOOGLE_APPLICATION_CREDENTIALS = "";
+        }
+      }
+  
+      const tryPickFromDir = (dir) => {
+        try {
+          if (!dir || !fs.existsSync(dir)) return null;
+
+LINHA 82: process.env.GOOGLE_APPLICATION_CREDENTIALS = "";
+      if (current) {
+        try {
+          delete process.env.GOOGLE_APPLICATION_CREDENTIALS;
+        } catch {
+>>         process.env.GOOGLE_APPLICATION_CREDENTIALS = "";
+        }
+      }
+  
+      const tryPickFromDir = (dir) => {
+        try {
+          if (!dir || !fs.existsSync(dir)) return null;
+  
+          const entries = fs.readdirSync(dir);
+
+LINHA 121: process.env.GOOGLE_APPLICATION_CREDENTIALS = cwdPick;
+  
+      // 1) tenta no CWD
+      const cwdPick = tryPickFromDir(process.cwd());
+      if (cwdPick) {
+>>       process.env.GOOGLE_APPLICATION_CREDENTIALS = cwdPick;
+        return;
+      }
+  
+      // 2) tenta subir alguns níveis
+      const up1 = path.resolve(__dirname, "..", "..", ".."); // .../archive_backend
+      const up2 = path.resolve(__dirname, "..", "..", "..", ".."); // .../palpitaco (provável)
+      const pick1 = tryPickFromDir(up2) || tryPickFromDir(up1);
+  
+
+LINHA 131: process.env.GOOGLE_APPLICATION_CREDENTIALS = pick1;
+      const up2 = path.resolve(__dirname, "..", "..", "..", ".."); // .../palpitaco (provável)
+      const pick1 = tryPickFromDir(up2) || tryPickFromDir(up1);
+  
+      if (pick1) {
+>>       process.env.GOOGLE_APPLICATION_CREDENTIALS = pick1;
+        return;
+      }
+    } catch {
+      // silencioso por design
+    }
+  })();
+  
+  /**
+
+LINHA 1257: importedAt: admin.firestore.FieldValue.serverTimestamp(),
+          // (PT_RIO HH:09 vira "", então cai em null)
+          close_hour_raw: closeRaw || null,
+  
+          prizesCount: prizes.length,
+>>         importedAt: admin.firestore.FieldValue.serverTimestamp(),
+        },
+        { merge: true }
+      );
+      ops++;
+      totalDrawsUpserted++;
+      if (isNewDraw) totalDrawsSaved++;
+  
+      if (filterClose) proof.targetWriteCount += 1;
+
+
+===== C:\Users\glaub\palpitaco\backend\scripts\listDrawDuplicates.js =====
+LINHA 122: if (!admin.apps.length) admin.initializeApp();
+      if (from && to && from > to) {
+        throw new Error(`intervalo inválido: from (${from}) > to (${to})`);
+      }
+  
+>>     if (!admin.apps.length) admin.initializeApp();
+      const db = admin.firestore();
+      const col = db.collection("draws");
+  
+      let scanned = 0;
+      let lastYmd = null;
+      let lastId = null;
+  
+      const buckets = new Map();
+
+LINHA 123: const db = admin.firestore();
+        throw new Error(`intervalo inválido: from (${from}) > to (${to})`);
+      }
+  
+      if (!admin.apps.length) admin.initializeApp();
+>>     const db = admin.firestore();
+      const col = db.collection("draws");
+  
+      let scanned = 0;
+      let lastYmd = null;
+      let lastId = null;
+  
+      const buckets = new Map();
+  
+
+LINHA 135: .orderBy(admin.firestore.FieldPath.documentId())
+  
+      while (true) {
+        let q = col
+          .orderBy("ymd")
+>>         .orderBy(admin.firestore.FieldPath.documentId())
+          .limit(500);
+  
+        if (lastYmd !== null && lastId !== null) {
+          q = q.startAfter(lastYmd, lastId);
+        }
+  
+        const snap = await q.get();
+        if (snap.empty) break;
+
+
+===== C:\Users\glaub\palpitaco\backend\service\firebaseAdmin.js =====
+LINHA 98: function isValidServiceAccount(sa) {
+    }
+    return sa;
+  }
+  
+>> function isValidServiceAccount(sa) {
+    if (!sa || typeof sa !== "object") return false;
+  
+    return (
+      typeof sa.project_id === "string" &&
+      typeof sa.client_email === "string" &&
+      typeof sa.private_key === "string" &&
+      sa.client_email.includes("@") &&
+      sa.private_key.includes("BEGIN PRIVATE KEY") &&
+
+LINHA 112: * Procura candidatos comuns quando GOOGLE_APPLICATION_CREDENTIALS está errado.
+    );
+  }
+  
+  /**
+>>  * Procura candidatos comuns quando GOOGLE_APPLICATION_CREDENTIALS está errado.
+   * - backend/*.json com "firebase-adminsdk" no nome
+   * - backend/serviceAccount*.json
+   * - backend/serviceAccount.json
+   * - <repo>/_secrets/palpitaco/firebase-admin.json (se existir)
+   */
+  function findCredentialCandidates() {
+    const candidates = new Set();
+  
+
+LINHA 114: * - backend/serviceAccount*.json
+  
+  /**
+   * Procura candidatos comuns quando GOOGLE_APPLICATION_CREDENTIALS está errado.
+   * - backend/*.json com "firebase-adminsdk" no nome
+>>  * - backend/serviceAccount*.json
+   * - backend/serviceAccount.json
+   * - <repo>/_secrets/palpitaco/firebase-admin.json (se existir)
+   */
+  function findCredentialCandidates() {
+    const candidates = new Set();
+  
+    const backendDir = path.resolve(__dirname, ".."); // .../backend
+    const repoDir = path.resolve(backendDir, ".."); // .../palpitaco
+
+LINHA 115: * - backend/serviceAccount.json
+  /**
+   * Procura candidatos comuns quando GOOGLE_APPLICATION_CREDENTIALS está errado.
+   * - backend/*.json com "firebase-adminsdk" no nome
+   * - backend/serviceAccount*.json
+>>  * - backend/serviceAccount.json
+   * - <repo>/_secrets/palpitaco/firebase-admin.json (se existir)
+   */
+  function findCredentialCandidates() {
+    const candidates = new Set();
+  
+    const backendDir = path.resolve(__dirname, ".."); // .../backend
+    const repoDir = path.resolve(backendDir, ".."); // .../palpitaco
+  
+
+LINHA 135: if (lower.includes("firebase-adminsdk") || lower.startsWith("serviceaccount")) {
+  
+        if (!lower.endsWith(".json")) continue;
+  
+        // padrões comuns
+>>       if (lower.includes("firebase-adminsdk") || lower.startsWith("serviceaccount")) {
+          candidates.add(path.join(backendDir, name));
+        }
+        if (lower === "serviceaccount.json") {
+          candidates.add(path.join(backendDir, name));
+        }
+      }
+    } catch {
+      // ignora
+
+LINHA 138: if (lower === "serviceaccount.json") {
+        // padrões comuns
+        if (lower.includes("firebase-adminsdk") || lower.startsWith("serviceaccount")) {
+          candidates.add(path.join(backendDir, name));
+        }
+>>       if (lower === "serviceaccount.json") {
+          candidates.add(path.join(backendDir, name));
+        }
+      }
+    } catch {
+      // ignora
+    }
+  
+    // 2) _secrets/palpitaco/firebase-admin.json
+
+LINHA 159: const rawEnv = String(process.env.GOOGLE_APPLICATION_CREDENTIALS || "").trim();
+    return Array.from(candidates).sort((a, b) => String(a).localeCompare(String(b)));
+  }
+  
+  function resolveCredentialsPath() {
+>>   const rawEnv = String(process.env.GOOGLE_APPLICATION_CREDENTIALS || "").trim();
+    if (!rawEnv) return null;
+  
+    // remove aspas externas
+    let p = rawEnv.replace(/^['"]|['"]$/g, "").trim();
+  
+    // normaliza separadores
+    p = path.normalize(p);
+  
+
+LINHA 190: process.env.GOOGLE_APPLICATION_CREDENTIALS = auto;
+  
+      // Se achou exatamente 1, usa automaticamente (evita travar dev)
+      if (found.length === 1) {
+        const auto = found[0];
+>>       process.env.GOOGLE_APPLICATION_CREDENTIALS = auto;
+        console.warn(
+          "[WARN] GOOGLE_APPLICATION_CREDENTIALS inválido. Usando automaticamente:",
+          auto
+        );
+        return auto;
+      }
+  
+      const hint =
+
+LINHA 192: "[WARN] GOOGLE_APPLICATION_CREDENTIALS inválido. Usando automaticamente:",
+      if (found.length === 1) {
+        const auto = found[0];
+        process.env.GOOGLE_APPLICATION_CREDENTIALS = auto;
+        console.warn(
+>>         "[WARN] GOOGLE_APPLICATION_CREDENTIALS inválido. Usando automaticamente:",
+          auto
+        );
+        return auto;
+      }
+  
+      const hint =
+        found.length === 0
+          ? "Nenhum JSON candidato encontrado em backend/ ou _secrets."
+
+LINHA 207: `GOOGLE_APPLICATION_CREDENTIALS aponta para caminho inexistente:\n${p}\n\n` +
+      const list =
+        found.length > 0 ? "\nCandidatos:\n- " + found.join("\n- ") : "";
+  
+      fail(
+>>       `GOOGLE_APPLICATION_CREDENTIALS aponta para caminho inexistente:\n${p}\n\n` +
+          `${hint}${list}\n\n` +
+          `✅ Ajuste no .env.local, exemplo:\n` +
+          `GOOGLE_APPLICATION_CREDENTIALS=C:\\Users\\glaub\\palpitaco\\backend\\SEU_ARQUIVO.json`
+      );
+    }
+  
+    return p;
+  }
+
+LINHA 210: `GOOGLE_APPLICATION_CREDENTIALS=C:\\Users\\glaub\\palpitaco\\backend\\SEU_ARQUIVO.json`
+      fail(
+        `GOOGLE_APPLICATION_CREDENTIALS aponta para caminho inexistente:\n${p}\n\n` +
+          `${hint}${list}\n\n` +
+          `✅ Ajuste no .env.local, exemplo:\n` +
+>>         `GOOGLE_APPLICATION_CREDENTIALS=C:\\Users\\glaub\\palpitaco\\backend\\SEU_ARQUIVO.json`
+      );
+    }
+  
+    return p;
+  }
+  
+  function readServiceAccountFromEnv() {
+    if (process.env.FIREBASE_ADMIN_SA_JSON) {
+
+LINHA 217: function readServiceAccountFromEnv() {
+  
+    return p;
+  }
+  
+>> function readServiceAccountFromEnv() {
+    if (process.env.FIREBASE_ADMIN_SA_JSON) {
+      const sa = safeJsonParse(process.env.FIREBASE_ADMIN_SA_JSON);
+      if (!sa) fail("FIREBASE_ADMIN_SA_JSON existe, mas NÃO é JSON válido.");
+  
+      normalizePrivateKey(sa);
+      if (!isValidServiceAccount(sa)) {
+        fail("FIREBASE_ADMIN_SA_JSON é JSON, mas NÃO é um service account válido.");
+      }
+
+LINHA 218: if (process.env.FIREBASE_ADMIN_SA_JSON) {
+    return p;
+  }
+  
+  function readServiceAccountFromEnv() {
+>>   if (process.env.FIREBASE_ADMIN_SA_JSON) {
+      const sa = safeJsonParse(process.env.FIREBASE_ADMIN_SA_JSON);
+      if (!sa) fail("FIREBASE_ADMIN_SA_JSON existe, mas NÃO é JSON válido.");
+  
+      normalizePrivateKey(sa);
+      if (!isValidServiceAccount(sa)) {
+        fail("FIREBASE_ADMIN_SA_JSON é JSON, mas NÃO é um service account válido.");
+      }
+      return sa;
+
+LINHA 219: const sa = safeJsonParse(process.env.FIREBASE_ADMIN_SA_JSON);
+  }
+  
+  function readServiceAccountFromEnv() {
+    if (process.env.FIREBASE_ADMIN_SA_JSON) {
+>>     const sa = safeJsonParse(process.env.FIREBASE_ADMIN_SA_JSON);
+      if (!sa) fail("FIREBASE_ADMIN_SA_JSON existe, mas NÃO é JSON válido.");
+  
+      normalizePrivateKey(sa);
+      if (!isValidServiceAccount(sa)) {
+        fail("FIREBASE_ADMIN_SA_JSON é JSON, mas NÃO é um service account válido.");
+      }
+      return sa;
+    }
+
+LINHA 220: if (!sa) fail("FIREBASE_ADMIN_SA_JSON existe, mas NÃO é JSON válido.");
+  
+  function readServiceAccountFromEnv() {
+    if (process.env.FIREBASE_ADMIN_SA_JSON) {
+      const sa = safeJsonParse(process.env.FIREBASE_ADMIN_SA_JSON);
+>>     if (!sa) fail("FIREBASE_ADMIN_SA_JSON existe, mas NÃO é JSON válido.");
+  
+      normalizePrivateKey(sa);
+      if (!isValidServiceAccount(sa)) {
+        fail("FIREBASE_ADMIN_SA_JSON é JSON, mas NÃO é um service account válido.");
+      }
+      return sa;
+    }
+  
+
+LINHA 223: if (!isValidServiceAccount(sa)) {
+      const sa = safeJsonParse(process.env.FIREBASE_ADMIN_SA_JSON);
+      if (!sa) fail("FIREBASE_ADMIN_SA_JSON existe, mas NÃO é JSON válido.");
+  
+      normalizePrivateKey(sa);
+>>     if (!isValidServiceAccount(sa)) {
+        fail("FIREBASE_ADMIN_SA_JSON é JSON, mas NÃO é um service account válido.");
+      }
+      return sa;
+    }
+  
+    if (process.env.FIREBASE_ADMIN_SA_BASE64) {
+      let decoded;
+      try {
+
+LINHA 224: fail("FIREBASE_ADMIN_SA_JSON é JSON, mas NÃO é um service account válido.");
+      if (!sa) fail("FIREBASE_ADMIN_SA_JSON existe, mas NÃO é JSON válido.");
+  
+      normalizePrivateKey(sa);
+      if (!isValidServiceAccount(sa)) {
+>>       fail("FIREBASE_ADMIN_SA_JSON é JSON, mas NÃO é um service account válido.");
+      }
+      return sa;
+    }
+  
+    if (process.env.FIREBASE_ADMIN_SA_BASE64) {
+      let decoded;
+      try {
+        decoded = Buffer.from(
+
+LINHA 229: if (process.env.FIREBASE_ADMIN_SA_BASE64) {
+      }
+      return sa;
+    }
+  
+>>   if (process.env.FIREBASE_ADMIN_SA_BASE64) {
+      let decoded;
+      try {
+        decoded = Buffer.from(
+          String(process.env.FIREBASE_ADMIN_SA_BASE64),
+          "base64"
+        ).toString("utf8");
+      } catch {
+        fail("FIREBASE_ADMIN_SA_BASE64 não é base64 válido.");
+
+LINHA 233: String(process.env.FIREBASE_ADMIN_SA_BASE64),
+    if (process.env.FIREBASE_ADMIN_SA_BASE64) {
+      let decoded;
+      try {
+        decoded = Buffer.from(
+>>         String(process.env.FIREBASE_ADMIN_SA_BASE64),
+          "base64"
+        ).toString("utf8");
+      } catch {
+        fail("FIREBASE_ADMIN_SA_BASE64 não é base64 válido.");
+      }
+  
+      const sa = safeJsonParse(decoded);
+      if (!sa) fail("FIREBASE_ADMIN_SA_BASE64 decodificou, mas NÃO virou JSON.");
+
+LINHA 237: fail("FIREBASE_ADMIN_SA_BASE64 não é base64 válido.");
+          String(process.env.FIREBASE_ADMIN_SA_BASE64),
+          "base64"
+        ).toString("utf8");
+      } catch {
+>>       fail("FIREBASE_ADMIN_SA_BASE64 não é base64 válido.");
+      }
+  
+      const sa = safeJsonParse(decoded);
+      if (!sa) fail("FIREBASE_ADMIN_SA_BASE64 decodificou, mas NÃO virou JSON.");
+  
+      normalizePrivateKey(sa);
+      if (!isValidServiceAccount(sa)) {
+        fail("FIREBASE_ADMIN_SA_BASE64 é JSON, mas NÃO é um service account válido.");
+
+LINHA 241: if (!sa) fail("FIREBASE_ADMIN_SA_BASE64 decodificou, mas NÃO virou JSON.");
+        fail("FIREBASE_ADMIN_SA_BASE64 não é base64 válido.");
+      }
+  
+      const sa = safeJsonParse(decoded);
+>>     if (!sa) fail("FIREBASE_ADMIN_SA_BASE64 decodificou, mas NÃO virou JSON.");
+  
+      normalizePrivateKey(sa);
+      if (!isValidServiceAccount(sa)) {
+        fail("FIREBASE_ADMIN_SA_BASE64 é JSON, mas NÃO é um service account válido.");
+      }
+      return sa;
+    }
+  
+
+LINHA 244: if (!isValidServiceAccount(sa)) {
+      const sa = safeJsonParse(decoded);
+      if (!sa) fail("FIREBASE_ADMIN_SA_BASE64 decodificou, mas NÃO virou JSON.");
+  
+      normalizePrivateKey(sa);
+>>     if (!isValidServiceAccount(sa)) {
+        fail("FIREBASE_ADMIN_SA_BASE64 é JSON, mas NÃO é um service account válido.");
+      }
+      return sa;
+    }
+  
+    return null;
+  }
+  
+
+LINHA 245: fail("FIREBASE_ADMIN_SA_BASE64 é JSON, mas NÃO é um service account válido.");
+      if (!sa) fail("FIREBASE_ADMIN_SA_BASE64 decodificou, mas NÃO virou JSON.");
+  
+      normalizePrivateKey(sa);
+      if (!isValidServiceAccount(sa)) {
+>>       fail("FIREBASE_ADMIN_SA_BASE64 é JSON, mas NÃO é um service account válido.");
+      }
+      return sa;
+    }
+  
+    return null;
+  }
+  
+  /**
+
+LINHA 280: const saFromEnv = readServiceAccountFromEnv();
+      _initialized = true;
+      return admin;
+    }
+  
+>>   const saFromEnv = readServiceAccountFromEnv();
+    if (saFromEnv) {
+      ensureProjectEnv(saFromEnv.project_id);
+  
+      admin.initializeApp({
+        credential: admin.credential.cert(saFromEnv),
+        projectId: saFromEnv.project_id,
+      });
+  
+
+LINHA 284: admin.initializeApp({
+    const saFromEnv = readServiceAccountFromEnv();
+    if (saFromEnv) {
+      ensureProjectEnv(saFromEnv.project_id);
+  
+>>     admin.initializeApp({
+        credential: admin.credential.cert(saFromEnv),
+        projectId: saFromEnv.project_id,
+      });
+  
+      _initialized = true;
+      return admin;
+    }
+  
+
+LINHA 285: credential: admin.credential.cert(saFromEnv),
+    if (saFromEnv) {
+      ensureProjectEnv(saFromEnv.project_id);
+  
+      admin.initializeApp({
+>>       credential: admin.credential.cert(saFromEnv),
+        projectId: saFromEnv.project_id,
+      });
+  
+      _initialized = true;
+      return admin;
+    }
+  
+    if (process.env.GOOGLE_APPLICATION_CREDENTIALS) {
+
+LINHA 293: if (process.env.GOOGLE_APPLICATION_CREDENTIALS) {
+      _initialized = true;
+      return admin;
+    }
+  
+>>   if (process.env.GOOGLE_APPLICATION_CREDENTIALS) {
+      const p = resolveCredentialsPath();
+      const json = readJsonFileOrFail(p, "Service account file");
+      normalizePrivateKey(json);
+  
+      if (!isValidServiceAccount(json)) {
+        fail(`Service account inválido no arquivo:\n${p}`);
+      }
+  
+
+LINHA 298: if (!isValidServiceAccount(json)) {
+      const p = resolveCredentialsPath();
+      const json = readJsonFileOrFail(p, "Service account file");
+      normalizePrivateKey(json);
+  
+>>     if (!isValidServiceAccount(json)) {
+        fail(`Service account inválido no arquivo:\n${p}`);
+      }
+  
+      ensureProjectEnv(json.project_id);
+  
+      admin.initializeApp({
+        credential: admin.credential.cert(json),
+        projectId: json.project_id,
+
+LINHA 304: admin.initializeApp({
+      }
+  
+      ensureProjectEnv(json.project_id);
+  
+>>     admin.initializeApp({
+        credential: admin.credential.cert(json),
+        projectId: json.project_id,
+      });
+  
+      _initialized = true;
+      return admin;
+    }
+  
+
+LINHA 305: credential: admin.credential.cert(json),
+  
+      ensureProjectEnv(json.project_id);
+  
+      admin.initializeApp({
+>>       credential: admin.credential.cert(json),
+        projectId: json.project_id,
+      });
+  
+      _initialized = true;
+      return admin;
+    }
+  
+    // ADC só se NÃO houver nenhuma tentativa de credencial
+
+LINHA 315: admin.initializeApp({
+    }
+  
+    // ADC só se NÃO houver nenhuma tentativa de credencial
+    try {
+>>     admin.initializeApp({
+        credential: admin.credential.applicationDefault(),
+      });
+      _initialized = true;
+      return admin;
+    } catch (e) {
+      fail(
+        "Nenhuma credencial válida encontrada.\n" +
+          "Use UMA opção:\n" +
+
+LINHA 316: credential: admin.credential.applicationDefault(),
+  
+    // ADC só se NÃO houver nenhuma tentativa de credencial
+    try {
+      admin.initializeApp({
+>>       credential: admin.credential.applicationDefault(),
+      });
+      _initialized = true;
+      return admin;
+    } catch (e) {
+      fail(
+        "Nenhuma credencial válida encontrada.\n" +
+          "Use UMA opção:\n" +
+          "- FIREBASE_ADMIN_SA_JSON\n" +
+
+LINHA 324: "- FIREBASE_ADMIN_SA_JSON\n" +
+    } catch (e) {
+      fail(
+        "Nenhuma credencial válida encontrada.\n" +
+          "Use UMA opção:\n" +
+>>         "- FIREBASE_ADMIN_SA_JSON\n" +
+          "- FIREBASE_ADMIN_SA_BASE64\n" +
+          "- GOOGLE_APPLICATION_CREDENTIALS\n\n" +
+          (e?.message || "")
+      );
+    }
+  }
+  
+  function getDb(forceNew = false) {
+
+LINHA 325: "- FIREBASE_ADMIN_SA_BASE64\n" +
+      fail(
+        "Nenhuma credencial válida encontrada.\n" +
+          "Use UMA opção:\n" +
+          "- FIREBASE_ADMIN_SA_JSON\n" +
+>>         "- FIREBASE_ADMIN_SA_BASE64\n" +
+          "- GOOGLE_APPLICATION_CREDENTIALS\n\n" +
+          (e?.message || "")
+      );
+    }
+  }
+  
+  function getDb(forceNew = false) {
+    if (_db && !forceNew) return _db;
+
+LINHA 326: "- GOOGLE_APPLICATION_CREDENTIALS\n\n" +
+        "Nenhuma credencial válida encontrada.\n" +
+          "Use UMA opção:\n" +
+          "- FIREBASE_ADMIN_SA_JSON\n" +
+          "- FIREBASE_ADMIN_SA_BASE64\n" +
+>>         "- GOOGLE_APPLICATION_CREDENTIALS\n\n" +
+          (e?.message || "")
+      );
+    }
+  }
+  
+  function getDb(forceNew = false) {
+    if (_db && !forceNew) return _db;
+  
+
+LINHA 336: _db = admin.firestore();
+  function getDb(forceNew = false) {
+    if (_db && !forceNew) return _db;
+  
+    initAdmin();
+>>   _db = admin.firestore();
+    return _db;
+  }
+  
+  /* =========================
+     Exports (compat)
+  ========================= */
+  
+  const exportsObj = {
+
+
+===== C:\Users\glaub\palpitaco\backend\server.js =====
+LINHA 201: const json = process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON;
+  const { initAdmin } = require("./service/firebaseAdmin");
+  
+  (function bootAdmin() {
+    try {
+>>     const json = process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON;
+      if (json && !process.env.GOOGLE_APPLICATION_CREDENTIALS) {
+        const tmp = path.join(__dirname, ".gcp_sa.json");
+        fs.writeFileSync(tmp, json, "utf8");
+        process.env.GOOGLE_APPLICATION_CREDENTIALS = tmp;
+        console.log("[INFO] Service Account JSON gravado em:", tmp);
+      }
+    } catch (e) {
+      console.warn("[WARN] Falha ao preparar cred JSON:", e?.message || e);
+
+LINHA 202: if (json && !process.env.GOOGLE_APPLICATION_CREDENTIALS) {
+  
+  (function bootAdmin() {
+    try {
+      const json = process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON;
+>>     if (json && !process.env.GOOGLE_APPLICATION_CREDENTIALS) {
+        const tmp = path.join(__dirname, ".gcp_sa.json");
+        fs.writeFileSync(tmp, json, "utf8");
+        process.env.GOOGLE_APPLICATION_CREDENTIALS = tmp;
+        console.log("[INFO] Service Account JSON gravado em:", tmp);
+      }
+    } catch (e) {
+      console.warn("[WARN] Falha ao preparar cred JSON:", e?.message || e);
+    }
+
+LINHA 205: process.env.GOOGLE_APPLICATION_CREDENTIALS = tmp;
+      const json = process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON;
+      if (json && !process.env.GOOGLE_APPLICATION_CREDENTIALS) {
+        const tmp = path.join(__dirname, ".gcp_sa.json");
+        fs.writeFileSync(tmp, json, "utf8");
+>>       process.env.GOOGLE_APPLICATION_CREDENTIALS = tmp;
+        console.log("[INFO] Service Account JSON gravado em:", tmp);
+      }
+    } catch (e) {
+      console.warn("[WARN] Falha ao preparar cred JSON:", e?.message || e);
+    }
+  
+    const credPath = process.env.GOOGLE_APPLICATION_CREDENTIALS || "";
+    if (!credPath) {
+
+LINHA 212: const credPath = process.env.GOOGLE_APPLICATION_CREDENTIALS || "";
+    } catch (e) {
+      console.warn("[WARN] Falha ao preparar cred JSON:", e?.message || e);
+    }
+  
+>>   const credPath = process.env.GOOGLE_APPLICATION_CREDENTIALS || "";
+    if (!credPath) {
+      console.warn("[WARN] GOOGLE_APPLICATION_CREDENTIALS não definido. Admin SDK pode falhar.");
+    } else {
+      console.log("[INFO] GOOGLE_APPLICATION_CREDENTIALS:", credPath);
+    }
+  
+    try {
+      initAdmin();
+
+LINHA 214: console.warn("[WARN] GOOGLE_APPLICATION_CREDENTIALS não definido. Admin SDK pode falhar.");
+    }
+  
+    const credPath = process.env.GOOGLE_APPLICATION_CREDENTIALS || "";
+    if (!credPath) {
+>>     console.warn("[WARN] GOOGLE_APPLICATION_CREDENTIALS não definido. Admin SDK pode falhar.");
+    } else {
+      console.log("[INFO] GOOGLE_APPLICATION_CREDENTIALS:", credPath);
+    }
+  
+    try {
+      initAdmin();
+      console.log("[OK] Firebase Admin inicializado (applicationDefault).");
+    } catch (e) {
+
+LINHA 216: console.log("[INFO] GOOGLE_APPLICATION_CREDENTIALS:", credPath);
+    const credPath = process.env.GOOGLE_APPLICATION_CREDENTIALS || "";
+    if (!credPath) {
+      console.warn("[WARN] GOOGLE_APPLICATION_CREDENTIALS não definido. Admin SDK pode falhar.");
+    } else {
+>>     console.log("[INFO] GOOGLE_APPLICATION_CREDENTIALS:", credPath);
+    }
+  
+    try {
+      initAdmin();
+      console.log("[OK] Firebase Admin inicializado (applicationDefault).");
+    } catch (e) {
+      console.error("[ERR] Falha ao inicializar Firebase Admin:", e);
+    }
+
+LINHA 221: console.log("[OK] Firebase Admin inicializado (applicationDefault).");
+    }
+  
+    try {
+      initAdmin();
+>>     console.log("[OK] Firebase Admin inicializado (applicationDefault).");
+    } catch (e) {
+      console.error("[ERR] Falha ao inicializar Firebase Admin:", e);
+    }
+  })();
+  
+  /* =========================
+     UTILS (datas/horas)
+  ========================= */
+
+LINHA 427: const db = admin.firestore();
+  
+  app.get("/api/lates", async (req, res) => {
+    try {
+      const admin = require("firebase-admin");
+>>     const db = admin.firestore();
+  
+      const lottery = getLotteryFromReq(req);
+  
+      // regra RJ/PT_RIO (lock)
+      const RJ_LOCK_LOTTERY_KEY = "PT_RIO";
+      const RJ_LOCK_UF = "RJ";
+      const targetLotteryKey = lottery === "RJ" ? RJ_LOCK_LOTTERY_KEY : lottery;
+  
+
+
+--- .\scripts ---
+
+--- .\src ---
+
+===== C:\Users\glaub\palpitaco\src\services\firebase.js =====
+LINHA 2: import { initializeApp, getApps, getApp } from "firebase/app";
+  // src/services/firebase.js
+>> import { initializeApp, getApps, getApp } from "firebase/app";
+  import { getAuth, setPersistence, browserLocalPersistence } from "firebase/auth";
+  import { getFirestore } from "firebase/firestore";
+  import { getStorage } from "firebase/storage";
+  
+  function envOrFallback(envKey, fallback, label) {
+    const v = String(process.env[envKey] || "").trim();
+    if (v) return v;
+  
+
+LINHA 4: import { getFirestore } from "firebase/firestore";
+  // src/services/firebase.js
+  import { initializeApp, getApps, getApp } from "firebase/app";
+  import { getAuth, setPersistence, browserLocalPersistence } from "firebase/auth";
+>> import { getFirestore } from "firebase/firestore";
+  import { getStorage } from "firebase/storage";
+  
+  function envOrFallback(envKey, fallback, label) {
+    const v = String(process.env[envKey] || "").trim();
+    if (v) return v;
+  
+    // ⚠️ Mantém compatibilidade, mas deixa explícito o risco
+    if (typeof window !== "undefined") {
+
+LINHA 67: return initializeApp(firebaseConfig);
+      }
+    }
+  
+    // ✅ Inicializa apenas quando não há nenhum app
+>>   return initializeApp(firebaseConfig);
+  }
+  
+  export const app = getOrInitApp();
+  
+  export const auth = getAuth(app);
+  export const db = getFirestore(app);
+  export const storage = getStorage(app);
+  
+
+LINHA 73: export const db = getFirestore(app);
+  
+  export const app = getOrInitApp();
+  
+  export const auth = getAuth(app);
+>> export const db = getFirestore(app);
+  export const storage = getStorage(app);
+  
+  // ✅ Promise única: garante persistência antes de login (usada no auth.js)
+  export const authReady = (async () => {
+    try {
+      if (typeof window === "undefined") return true;
+      await setPersistence(auth, browserLocalPersistence);
+      return true;
+
+
+===== VARIÁVEIS DISPONÍVEIS — SOMENTE NOMES, SEM VALORES =====

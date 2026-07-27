@@ -1,0 +1,162 @@
+0233956 fix: tornar importa├º├úo autom├ítica resiliente
+Reconciliar resultados	Instalar depend├¬ncias	2026-07-21T16:26:12.0567416Z 22 vulnerabilities (1 low, 13 moderate, 5 high, 3 critical)
+Reconciliar resultados	Importar hoje e reconciliar ontem	´╗┐2026-07-21T16:26:12.0821937Z ##[group]Run set +e
+Reconciliar resultados	Importar hoje e reconciliar ontem	2026-07-21T16:26:12.0822307Z ^[[36;1mset +e^[[0m
+Reconciliar resultados	Importar hoje e reconciliar ontem	2026-07-21T16:26:12.0822620Z ^[[36;1m^[[0m
+Reconciliar resultados	Importar hoje e reconciliar ontem	2026-07-21T16:26:12.0822869Z ^[[36;1mrequested="LOOK"^[[0m
+Reconciliar resultados	Importar hoje e reconciliar ontem	2026-07-21T16:26:12.0823152Z ^[[36;1m^[[0m
+Reconciliar resultados	Importar hoje e reconciliar ontem	2026-07-21T16:26:12.0823949Z ^[[36;1mif [[ "workflow_dispatch" == "workflow_dispatch" && "$requested" != "ALL" ]]; then^[[0m
+Reconciliar resultados	Importar hoje e reconciliar ontem	2026-07-21T16:26:12.0824481Z ^[[36;1m  lotteries="$requested"^[[0m
+Reconciliar resultados	Importar hoje e reconciliar ontem	2026-07-21T16:26:12.0824795Z ^[[36;1melse^[[0m
+Reconciliar resultados	Importar hoje e reconciliar ontem	2026-07-21T16:26:12.0825097Z ^[[36;1m  lotteries="PT_RIO FEDERAL LOOK NACIONAL"^[[0m
+Reconciliar resultados	Importar hoje e reconciliar ontem	2026-07-21T16:26:12.0825466Z ^[[36;1mfi^[[0m
+Reconciliar resultados	Importar hoje e reconciliar ontem	2026-07-21T16:26:12.0825707Z ^[[36;1m^[[0m
+Reconciliar resultados	Importar hoje e reconciliar ontem	2026-07-21T16:26:12.0826342Z ^[[36;1myesterday="$(TZ=America/Sao_Paulo date -d 'yesterday' +%F)"^[[0m
+Reconciliar resultados	Importar hoje e reconciliar ontem	2026-07-21T16:26:12.0826764Z ^[[36;1moverall=0^[[0m
+Reconciliar resultados	Importar hoje e reconciliar ontem	2026-07-21T16:26:12.0827030Z ^[[36;1m^[[0m
+Reconciliar resultados	Importar hoje e reconciliar ontem	2026-07-21T16:26:12.0827350Z ^[[36;1mrun_import() ***^[[0m
+Reconciliar resultados	Importar hoje e reconciliar ontem	2026-07-21T16:26:12.0827669Z ^[[36;1m  local lottery="$1"^[[0m
+Reconciliar resultados	Importar hoje e reconciliar ontem	2026-07-21T16:26:12.0827974Z ^[[36;1m  local period="$2"^[[0m
+Reconciliar resultados	Importar hoje e reconciliar ontem	2026-07-21T16:26:12.0828268Z ^[[36;1m  shift 2^[[0m
+Reconciliar resultados	Importar hoje e reconciliar ontem	2026-07-21T16:26:12.0828558Z ^[[36;1m^[[0m
+Reconciliar resultados	Importar hoje e reconciliar ontem	2026-07-21T16:26:12.0828813Z ^[[36;1m  echo ""^[[0m
+Reconciliar resultados	Importar hoje e reconciliar ontem	2026-07-21T16:26:12.0829131Z ^[[36;1m  echo "=================================================="^[[0m
+Reconciliar resultados	Importar hoje e reconciliar ontem	2026-07-21T16:26:12.0829574Z ^[[36;1m  echo "LOTTERY=$lottery | PERIOD=$period"^[[0m
+Reconciliar resultados	Importar hoje e reconciliar ontem	2026-07-21T16:26:12.0829984Z ^[[36;1m  echo "=================================================="^[[0m
+Reconciliar resultados	Importar hoje e reconciliar ontem	2026-07-21T16:26:12.0830352Z ^[[36;1m^[[0m
+Reconciliar resultados	Importar hoje e reconciliar ontem	2026-07-21T16:26:12.0830688Z ^[[36;1m  env LOTTERY="$lottery" "$@" node scripts/autoImportToday.js^[[0m
+Reconciliar resultados	Importar hoje e reconciliar ontem	2026-07-21T16:26:12.0831115Z ^[[36;1m  local code=$?^[[0m
+Reconciliar resultados	Importar hoje e reconciliar ontem	2026-07-21T16:26:12.0831386Z ^[[36;1m^[[0m
+Reconciliar resultados	Importar hoje e reconciliar ontem	2026-07-21T16:26:12.0831650Z ^[[36;1m  if [[ $code -ne 0 ]]; then^[[0m
+Reconciliar resultados	Importar hoje e reconciliar ontem	2026-07-21T16:26:12.0832083Z ^[[36;1m    echo "::error::Falha LOTTERY=$lottery PERIOD=$period EXIT=$code"^[[0m
+Reconciliar resultados	Importar hoje e reconciliar ontem	2026-07-21T16:26:12.0832519Z ^[[36;1m    overall=1^[[0m
+Reconciliar resultados	Importar hoje e reconciliar ontem	2026-07-21T16:26:12.0832792Z ^[[36;1m  fi^[[0m
+Reconciliar resultados	Importar hoje e reconciliar ontem	2026-07-21T16:26:12.0833049Z ^[[36;1m***^[[0m
+Reconciliar resultados	Importar hoje e reconciliar ontem	2026-07-21T16:26:12.0833291Z ^[[36;1m^[[0m
+Reconciliar resultados	Importar hoje e reconciliar ontem	2026-07-21T16:26:12.0833905Z ^[[36;1mfor lottery in $lotteries; do^[[0m
+Reconciliar resultados	Importar hoje e reconciliar ontem	2026-07-21T16:26:12.0834287Z ^[[36;1m  run_import "$lottery" "TODAY"^[[0m
+Reconciliar resultados	Importar hoje e reconciliar ontem	2026-07-21T16:26:12.0834608Z ^[[36;1mdone^[[0m
+Reconciliar resultados	Importar hoje e reconciliar ontem	2026-07-21T16:26:12.0834858Z ^[[36;1m^[[0m
+Reconciliar resultados	Importar hoje e reconciliar ontem	2026-07-21T16:26:12.0835108Z ^[[36;1mfor lottery in $lotteries; do^[[0m
+Reconciliar resultados	Importar hoje e reconciliar ontem	2026-07-21T16:26:12.0835432Z ^[[36;1m  run_import \^[[0m
+Reconciliar resultados	Importar hoje e reconciliar ontem	2026-07-21T16:26:12.0835716Z ^[[36;1m    "$lottery" \^[[0m
+Reconciliar resultados	Importar hoje e reconciliar ontem	2026-07-21T16:26:12.0836017Z ^[[36;1m    "YESTERDAY:$yesterday" \^[[0m
+Reconciliar resultados	Importar hoje e reconciliar ontem	2026-07-21T16:26:12.0836346Z ^[[36;1m    DATE="$yesterday" \^[[0m
+Reconciliar resultados	Importar hoje e reconciliar ontem	2026-07-21T16:26:12.0836652Z ^[[36;1m    NOW_HM="23:59"^[[0m
+Reconciliar resultados	Importar hoje e reconciliar ontem	2026-07-21T16:26:12.0836938Z ^[[36;1mdone^[[0m
+Reconciliar resultados	Importar hoje e reconciliar ontem	2026-07-21T16:26:12.0837188Z ^[[36;1m^[[0m
+Reconciliar resultados	Importar hoje e reconciliar ontem	2026-07-21T16:26:12.0837431Z ^[[36;1mexit $overall^[[0m
+Reconciliar resultados	Importar hoje e reconciliar ontem	2026-07-21T16:26:12.0899904Z shell: /usr/bin/bash --noprofile --norc -e -o pipefail ***0***
+Reconciliar resultados	Importar hoje e reconciliar ontem	2026-07-21T16:26:12.0900355Z env:
+Reconciliar resultados	Importar hoje e reconciliar ontem	2026-07-21T16:26:12.0900620Z   TZ: America/Sao_Paulo
+Reconciliar resultados	Importar hoje e reconciliar ontem	2026-07-21T16:26:12.0900982Z   PITACO_API_BASE: https://api.palpitacojb.com.br
+Reconciliar resultados	Importar hoje e reconciliar ontem	2026-07-21T16:26:12.0911030Z   FIREBASE_ADMIN_SA_JSON: ***
+Reconciliar resultados	Importar hoje e reconciliar ontem	
+Reconciliar resultados	Importar hoje e reconciliar ontem	2026-07-21T16:26:12.0911389Z   FAIL_ON_CRITICAL: 1
+Reconciliar resultados	Importar hoje e reconciliar ontem	2026-07-21T16:26:12.0911668Z   AUDIT_WARN_MIN: 20
+Reconciliar resultados	Importar hoje e reconciliar ontem	2026-07-21T16:26:12.0911941Z   AUDIT_CRIT_MIN: 60
+Reconciliar resultados	Importar hoje e reconciliar ontem	2026-07-21T16:26:12.0912220Z   CATCHUP_MAX_AFTER_END_MIN: 1440
+Reconciliar resultados	Importar hoje e reconciliar ontem	2026-07-21T16:26:12.0912534Z ##[endgroup]
+Reconciliar resultados	Importar hoje e reconciliar ontem	2026-07-21T16:26:12.1010542Z 
+Reconciliar resultados	Importar hoje e reconciliar ontem	2026-07-21T16:26:12.1011050Z ==================================================
+Reconciliar resultados	Importar hoje e reconciliar ontem	2026-07-21T16:26:12.1011608Z LOTTERY=LOOK | PERIOD=TODAY
+Reconciliar resultados	Importar hoje e reconciliar ontem	2026-07-21T16:26:12.1012112Z ==================================================
+Reconciliar resultados	Importar hoje e reconciliar ontem	2026-07-21T16:26:12.3029604Z [CFG] PITACO_API_BASE efetivo => https://api.palpitacojb.com.br
+Reconciliar resultados	Importar hoje e reconciliar ontem	2026-07-21T16:26:27.3892218Z [AUTO] CATCH-UP p├│s-release 2026-07-21 slot=07:00 (HARD) releaseAt=07:29 window=07:05~07:35 (fora da janela)
+Reconciliar resultados	Importar hoje e reconciliar ontem	2026-07-21T16:26:27.3898097Z [AUTO] tentando 2026-07-21 slot=07:00 (HARD) window=07:05-07:35 closes=07:00,07:01,07:02,07:09,07:10,07:11
+Reconciliar resultados	Importar hoje e reconciliar ontem	2026-07-21T16:26:28.6204060Z [FETCH] LOOK 2026-07-21 per-lottery=8 -> merged_draws=3 close_hours=[07:00, 09:00, 11:00]
+Reconciliar resultados	Importar hoje e reconciliar ontem	2026-07-21T16:26:30.5418179Z [IMPORT] API draws=3 | match_close=1 | validos=1 | draws_upserted=0 | draws_novos=0 | prizes_upserted=0 | prizes_novos=0 | skip_vazio=0 | skip_invalido=0 | skip_close=2 | skip_complete=1 | CHECK_EXISTENCE=OFF | uf=GO lottery_key=LOOK | expected=1 complete=1 slotDocs=1 apiTargets=1
+Reconciliar resultados	Importar hoje e reconciliar ontem	2026-07-21T16:26:32.3064910Z [TOP3] P├ígina 1 | 2026-01-23 at├® 2026-07-22 | limite=250
+Reconciliar resultados	Importar hoje e reconciliar ontem	2026-07-21T16:26:36.8933936Z [TOP3] P├ígina 1: 250 draws | total=250
+Reconciliar resultados	Importar hoje e reconciliar ontem	2026-07-21T16:26:36.8943603Z [TOP3] P├ígina 2 | 2026-01-23 at├® 2026-07-22 | limite=250
+Reconciliar resultados	Importar hoje e reconciliar ontem	2026-07-21T16:26:40.3289450Z [TOP3] P├ígina 2: 250 draws | total=500
+Reconciliar resultados	Importar hoje e reconciliar ontem	2026-07-21T16:26:40.3292733Z [TOP3] P├ígina 3 | 2026-01-23 at├® 2026-07-22 | limite=250
+Reconciliar resultados	Importar hoje e reconciliar ontem	2026-07-21T16:26:43.7163085Z [TOP3] P├ígina 3: 250 draws | total=750
+Reconciliar resultados	Importar hoje e reconciliar ontem	2026-07-21T16:26:43.7165615Z [TOP3] P├ígina 4 | 2026-01-23 at├® 2026-07-22 | limite=250
+Reconciliar resultados	Importar hoje e reconciliar ontem	2026-07-21T16:26:46.9634157Z [TOP3] P├ígina 4: 250 draws | total=1000
+Reconciliar resultados	Importar hoje e reconciliar ontem	2026-07-21T16:26:46.9638801Z [TOP3] P├ígina 5 | 2026-01-23 at├® 2026-07-22 | limite=200
+Reconciliar resultados	Importar hoje e reconciliar ontem	2026-07-21T16:26:50.3126973Z [TOP3] P├ígina 5: 200 draws | total=1200
+Reconciliar resultados	Importar hoje e reconciliar ontem	2026-07-21T16:26:51.4685431Z [TOP3 AUTO] OK | LOOK | importado=2026-07-21 07:00 | pr├│ximo=2026-07-22 09:00
+Reconciliar resultados	Importar hoje e reconciliar ontem	2026-07-21T16:26:51.4692519Z [AUTO] FS j├í tem slot=07:00 COMPLETO (close=07:00) -> DONE
+Reconciliar resultados	Importar hoje e reconciliar ontem	2026-07-21T16:26:51.4698181Z [AUTO] CATCH-UP p├│s-release 2026-07-21 slot=09:00 (HARD) releaseAt=09:29 window=09:05~09:35 (fora da janela)
+Reconciliar resultados	Importar hoje e reconciliar ontem	2026-07-21T16:26:51.4702054Z [AUTO] tentando 2026-07-21 slot=09:00 (HARD) window=09:05-09:35 closes=09:00,09:01,09:02,09:09,09:10,09:11
+Reconciliar resultados	Importar hoje e reconciliar ontem	2026-07-21T16:26:52.7927406Z [FETCH] LOOK 2026-07-21 per-lottery=8 -> merged_draws=3 close_hours=[07:00, 09:00, 11:00]
+Reconciliar resultados	Importar hoje e reconciliar ontem	2026-07-21T16:26:53.4365705Z [IMPORT] API draws=3 | match_close=1 | validos=1 | draws_upserted=1 | draws_novos=0 | prizes_upserted=7 | prizes_novos=0 | skip_vazio=0 | skip_invalido=0 | skip_close=2 | skip_complete=0 | CHECK_EXISTENCE=OFF | uf=GO lottery_key=LOOK | expected=1 complete=1 slotDocs=1 apiTargets=1
+Reconciliar resultados	Importar hoje e reconciliar ontem	2026-07-21T16:26:53.7442462Z [TOP3] P├ígina 1 | 2026-01-22 at├® 2026-07-21 | limite=250
+Reconciliar resultados	Importar hoje e reconciliar ontem	2026-07-21T16:26:57.2102637Z [TOP3] P├ígina 1: 250 draws | total=250
+Reconciliar resultados	Importar hoje e reconciliar ontem	2026-07-21T16:26:57.2106957Z [TOP3] P├ígina 2 | 2026-01-22 at├® 2026-07-21 | limite=250
+Reconciliar resultados	Importar hoje e reconciliar ontem	2026-07-21T16:27:00.6784960Z [TOP3] P├ígina 2: 250 draws | total=500
+Reconciliar resultados	Importar hoje e reconciliar ontem	2026-07-21T16:27:00.6787769Z [TOP3] P├ígina 3 | 2026-01-22 at├® 2026-07-21 | limite=250
+Reconciliar resultados	Importar hoje e reconciliar ontem	2026-07-21T16:27:03.9544242Z [TOP3] P├ígina 3: 250 draws | total=750
+Reconciliar resultados	Importar hoje e reconciliar ontem	2026-07-21T16:27:03.9546105Z [TOP3] P├ígina 4 | 2026-01-22 at├® 2026-07-21 | limite=250
+Reconciliar resultados	Importar hoje e reconciliar ontem	2026-07-21T16:27:07.3092402Z [TOP3] P├ígina 4: 250 draws | total=1000
+Reconciliar resultados	Importar hoje e reconciliar ontem	2026-07-21T16:27:07.3096342Z [TOP3] P├ígina 5 | 2026-01-22 at├® 2026-07-21 | limite=200
+Reconciliar resultados	Importar hoje e reconciliar ontem	2026-07-21T16:27:10.0177602Z [TOP3] P├ígina 5: 200 draws | total=1200
+Reconciliar resultados	Importar hoje e reconciliar ontem	2026-07-21T16:27:11.1155698Z [TOP3 AUTO] OK | LOOK | importado=2026-07-21 09:00 | pr├│ximo=2026-07-21 11:00
+Reconciliar resultados	Importar hoje e reconciliar ontem	2026-07-21T16:27:11.1164545Z [AUTO] FS j├í tem slot=09:00 COMPLETO (close=09:00) -> DONE
+Reconciliar resultados	Importar hoje e reconciliar ontem	2026-07-21T16:27:11.1168658Z [AUTO] CATCH-UP p├│s-release 2026-07-21 slot=11:00 (HARD) releaseAt=11:29 window=11:05~11:35 (fora da janela)
+Reconciliar resultados	Importar hoje e reconciliar ontem	2026-07-21T16:27:11.1172630Z [AUTO] tentando 2026-07-21 slot=11:00 (HARD) window=11:05-11:35 closes=11:00,11:01,11:02,11:09,11:10,11:11
+Reconciliar resultados	Importar hoje e reconciliar ontem	2026-07-21T16:27:12.2952983Z [FETCH] LOOK 2026-07-21 per-lottery=8 -> merged_draws=3 close_hours=[07:00, 09:00, 11:00]
+Reconciliar resultados	Importar hoje e reconciliar ontem	2026-07-21T16:27:12.7966243Z [IMPORT] API draws=3 | match_close=1 | validos=1 | draws_upserted=0 | draws_novos=0 | prizes_upserted=0 | prizes_novos=0 | skip_vazio=0 | skip_invalido=0 | skip_close=2 | skip_complete=1 | CHECK_EXISTENCE=OFF | uf=GO lottery_key=LOOK | expected=1 complete=1 slotDocs=1 apiTargets=1
+Reconciliar resultados	Importar hoje e reconciliar ontem	2026-07-21T16:27:13.0983761Z [TOP3] P├ígina 1 | 2026-01-22 at├® 2026-07-21 | limite=250
+Reconciliar resultados	Importar hoje e reconciliar ontem	2026-07-21T16:27:16.4483259Z [TOP3] P├ígina 1: 250 draws | total=250
+Reconciliar resultados	Importar hoje e reconciliar ontem	2026-07-21T16:27:16.4487110Z [TOP3] P├ígina 2 | 2026-01-22 at├® 2026-07-21 | limite=250
+Reconciliar resultados	Importar hoje e reconciliar ontem	2026-07-21T16:27:19.8065291Z [TOP3] P├ígina 2: 250 draws | total=500
+Reconciliar resultados	Importar hoje e reconciliar ontem	2026-07-21T16:27:19.8094810Z [TOP3] P├ígina 3 | 2026-01-22 at├® 2026-07-21 | limite=250
+Reconciliar resultados	Importar hoje e reconciliar ontem	2026-07-21T16:27:23.2256404Z [TOP3] P├ígina 3: 250 draws | total=750
+Reconciliar resultados	Importar hoje e reconciliar ontem	2026-07-21T16:27:23.2258323Z [TOP3] P├ígina 4 | 2026-01-22 at├® 2026-07-21 | limite=250
+Reconciliar resultados	Importar hoje e reconciliar ontem	2026-07-21T16:27:26.7739701Z [TOP3] P├ígina 4: 250 draws | total=1000
+Reconciliar resultados	Importar hoje e reconciliar ontem	2026-07-21T16:27:26.7741847Z [TOP3] P├ígina 5 | 2026-01-22 at├® 2026-07-21 | limite=200
+Reconciliar resultados	Importar hoje e reconciliar ontem	2026-07-21T16:27:29.4264881Z [TOP3] P├ígina 5: 200 draws | total=1200
+Reconciliar resultados	Importar hoje e reconciliar ontem	2026-07-21T16:27:30.5253315Z [TOP3 AUTO] OK | LOOK | importado=2026-07-21 11:00 | pr├│ximo=2026-07-21 14:00
+Reconciliar resultados	Importar hoje e reconciliar ontem	2026-07-21T16:27:30.5265950Z [AUTO] FS j├í tem slot=11:00 COMPLETO (close=11:00) -> DONE
+Reconciliar resultados	Importar hoje e reconciliar ontem	2026-07-21T16:27:30.5276804Z [AUDIT] OK (sem furos HARD acima de 20 min) softLate=0
+Reconciliar resultados	Importar hoje e reconciliar ontem	2026-07-21T16:27:30.5441392Z 
+Reconciliar resultados	Importar hoje e reconciliar ontem	2026-07-21T16:27:30.5442297Z ==================================================
+Reconciliar resultados	Importar hoje e reconciliar ontem	2026-07-21T16:27:30.5443012Z LOTTERY=LOOK | PERIOD=YESTERDAY:2026-07-20
+Reconciliar resultados	Importar hoje e reconciliar ontem	2026-07-21T16:27:30.5444004Z ==================================================
+Reconciliar resultados	Importar hoje e reconciliar ontem	2026-07-21T16:27:30.7416786Z [CFG] PITACO_API_BASE efetivo => https://api.palpitacojb.com.br
+Reconciliar resultados	Importar hoje e reconciliar ontem	2026-07-21T16:27:30.7576733Z [TIME] NOW_HM override ativo => 23:59 (America/Sao_Paulo)
+Reconciliar resultados	Importar hoje e reconciliar ontem	2026-07-21T16:27:34.0218001Z [STATE-SYNC] backend confirmou slot=07:00 presente -> DONE
+Reconciliar resultados	Importar hoje e reconciliar ontem	2026-07-21T16:27:34.0219248Z [STATE-SYNC] backend confirmou slot=09:00 presente -> DONE
+Reconciliar resultados	Importar hoje e reconciliar ontem	2026-07-21T16:27:34.0221318Z [STATE-SYNC] backend confirmou slot=11:00 presente -> DONE
+Reconciliar resultados	Importar hoje e reconciliar ontem	2026-07-21T16:27:34.0223032Z [STATE-SYNC] backend confirmou slot=14:00 presente -> DONE
+Reconciliar resultados	Importar hoje e reconciliar ontem	2026-07-21T16:27:34.0226096Z [STATE-SYNC] backend confirmou slot=16:00 presente -> DONE
+Reconciliar resultados	Importar hoje e reconciliar ontem	2026-07-21T16:27:34.0227895Z [STATE-SYNC] backend confirmou slot=18:00 presente -> DONE
+Reconciliar resultados	Importar hoje e reconciliar ontem	2026-07-21T16:27:34.0232875Z [STATE-SYNC] slots reconciliados pelo backend=6
+Reconciliar resultados	Importar hoje e reconciliar ontem	2026-07-21T16:27:34.0239525Z [AUTO] CATCH-UP p├│s-release 2026-07-20 slot=21:00 (HARD) releaseAt=21:05 window=21:05~21:45 (fora da janela)
+Reconciliar resultados	Importar hoje e reconciliar ontem	2026-07-21T16:27:34.0244845Z [AUTO] tentando 2026-07-20 slot=21:00 (HARD) window=21:05-21:45 closes=21:00,21:01,21:02,21:09,21:10,21:11
+Reconciliar resultados	Importar hoje e reconciliar ontem	2026-07-21T16:27:35.3957529Z [FETCH] LOOK 2026-07-20 per-lottery=8 -> merged_draws=8 close_hours=[07:00, 09:00, 11:00, 14:00, 16:00, 18:00, 21:00, 23:00]
+Reconciliar resultados	Importar hoje e reconciliar ontem	2026-07-21T16:27:37.4318806Z [IMPORT] API draws=8 | match_close=1 | validos=1 | draws_upserted=1 | draws_novos=0 | prizes_upserted=7 | prizes_novos=0 | skip_vazio=0 | skip_invalido=0 | skip_close=7 | skip_complete=0 | CHECK_EXISTENCE=OFF | uf=GO lottery_key=LOOK | expected=1 complete=1 slotDocs=1 apiTargets=1
+Reconciliar resultados	Importar hoje e reconciliar ontem	2026-07-21T16:27:38.4382821Z [TOP3] P├ígina 1 | 2026-01-22 at├® 2026-07-21 | limite=250
+Reconciliar resultados	Importar hoje e reconciliar ontem	2026-07-21T16:27:42.9271144Z [TOP3] P├ígina 1: 250 draws | total=250
+Reconciliar resultados	Importar hoje e reconciliar ontem	2026-07-21T16:27:42.9280615Z [TOP3] P├ígina 2 | 2026-01-22 at├® 2026-07-21 | limite=250
+Reconciliar resultados	Importar hoje e reconciliar ontem	2026-07-21T16:27:46.3007094Z [TOP3] P├ígina 2: 250 draws | total=500
+Reconciliar resultados	Importar hoje e reconciliar ontem	2026-07-21T16:27:46.3011046Z [TOP3] P├ígina 3 | 2026-01-22 at├® 2026-07-21 | limite=250
+Reconciliar resultados	Importar hoje e reconciliar ontem	2026-07-21T16:27:49.7201120Z [TOP3] P├ígina 3: 250 draws | total=750
+Reconciliar resultados	Importar hoje e reconciliar ontem	2026-07-21T16:27:49.7205819Z [TOP3] P├ígina 4 | 2026-01-22 at├® 2026-07-21 | limite=250
+Reconciliar resultados	Importar hoje e reconciliar ontem	2026-07-21T16:27:53.1934549Z [TOP3] P├ígina 4: 250 draws | total=1000
+Reconciliar resultados	Importar hoje e reconciliar ontem	2026-07-21T16:27:53.1939353Z [TOP3] P├ígina 5 | 2026-01-22 at├® 2026-07-21 | limite=200
+Reconciliar resultados	Importar hoje e reconciliar ontem	2026-07-21T16:27:56.0907554Z [TOP3] P├ígina 5: 200 draws | total=1200
+Reconciliar resultados	Importar hoje e reconciliar ontem	2026-07-21T16:27:57.2208876Z [TOP3 AUTO] OK | LOOK | importado=2026-07-20 21:00 | pr├│ximo=2026-07-21 09:00
+Reconciliar resultados	Importar hoje e reconciliar ontem	2026-07-21T16:27:57.2221041Z [AUTO] FS j├í tem slot=21:00 COMPLETO (close=21:00) -> DONE
+Reconciliar resultados	Importar hoje e reconciliar ontem	2026-07-21T16:27:57.2227432Z [AUTO] CATCH-UP p├│s-release 2026-07-20 slot=23:00 (HARD) releaseAt=23:29 window=23:05~23:35 (fora da janela)
+Reconciliar resultados	Importar hoje e reconciliar ontem	2026-07-21T16:27:57.2232502Z [AUTO] tentando 2026-07-20 slot=23:00 (HARD) window=23:05-23:35 closes=23:00,23:01,23:02,23:09,23:10,23:11
+Reconciliar resultados	Importar hoje e reconciliar ontem	2026-07-21T16:27:58.4289576Z [FETCH] LOOK 2026-07-20 per-lottery=8 -> merged_draws=8 close_hours=[07:00, 09:00, 11:00, 14:00, 16:00, 18:00, 21:00, 23:00]
+Reconciliar resultados	Importar hoje e reconciliar ontem	2026-07-21T16:27:59.2000557Z [IMPORT] API draws=8 | match_close=1 | validos=1 | draws_upserted=1 | draws_novos=0 | prizes_upserted=7 | prizes_novos=0 | skip_vazio=0 | skip_invalido=0 | skip_close=7 | skip_complete=0 | CHECK_EXISTENCE=OFF | uf=GO lottery_key=LOOK | expected=1 complete=1 slotDocs=1 apiTargets=1
+Reconciliar resultados	Importar hoje e reconciliar ontem	2026-07-21T16:27:59.4968842Z [TOP3] P├ígina 1 | 2026-01-22 at├® 2026-07-21 | limite=250
+Reconciliar resultados	Importar hoje e reconciliar ontem	2026-07-21T16:28:02.9601925Z [TOP3] P├ígina 1: 250 draws | total=250
+Reconciliar resultados	Importar hoje e reconciliar ontem	2026-07-21T16:28:02.9605076Z [TOP3] P├ígina 2 | 2026-01-22 at├® 2026-07-21 | limite=250
+Reconciliar resultados	Importar hoje e reconciliar ontem	2026-07-21T16:28:06.2337662Z [TOP3] P├ígina 2: 250 draws | total=500
+Reconciliar resultados	Importar hoje e reconciliar ontem	2026-07-21T16:28:06.2340080Z [TOP3] P├ígina 3 | 2026-01-22 at├® 2026-07-21 | limite=250
+Reconciliar resultados	Importar hoje e reconciliar ontem	2026-07-21T16:28:09.5492100Z [TOP3] P├ígina 3: 250 draws | total=750
+Reconciliar resultados	Importar hoje e reconciliar ontem	2026-07-21T16:28:09.5496185Z [TOP3] P├ígina 4 | 2026-01-22 at├® 2026-07-21 | limite=250
+Reconciliar resultados	Importar hoje e reconciliar ontem	2026-07-21T16:28:12.7697288Z [TOP3] P├ígina 4: 250 draws | total=1000
+Reconciliar resultados	Importar hoje e reconciliar ontem	2026-07-21T16:28:12.7699945Z [TOP3] P├ígina 5 | 2026-01-22 at├® 2026-07-21 | limite=200
+Reconciliar resultados	Importar hoje e reconciliar ontem	2026-07-21T16:28:15.7055042Z [TOP3] P├ígina 5: 200 draws | total=1200
+Reconciliar resultados	Importar hoje e reconciliar ontem	2026-07-21T16:28:16.8735476Z [TOP3 AUTO] OK | LOOK | importado=2026-07-20 23:00 | pr├│ximo=2026-07-21 09:00
+Reconciliar resultados	Importar hoje e reconciliar ontem	2026-07-21T16:28:16.8743874Z [AUTO] FS j├í tem slot=23:00 COMPLETO (close=23:00) -> DONE
+Reconciliar resultados	Importar hoje e reconciliar ontem	2026-07-21T16:28:16.8747578Z [ALERT] NOW_HM ativo => suprimindo alertas HARD retroativos (modo teste)
+Reconciliar resultados	Importar hoje e reconciliar ontem	2026-07-21T16:28:16.8755134Z [AUDIT] OK (sem furos HARD acima de 20 min) softLate=0
+Reconciliar resultados	Importar hoje e reconciliar ontem	2026-07-21T16:28:16.8757992Z [AUTO] DIA COMPLETO (2026-07-20) ÔÇö slots conclu├¡dos
+[{"conclusion":"success","createdAt":"2026-07-21T16:25:56Z","databaseId":29848552600,"event":"workflow_dispatch","headSha":"02339561031ab08962172dd017a3a7d24074ca88","status":"completed","updatedAt":"2026-07-21T16:28:20Z","url":"https://github.com/glauberseguros-commits/palpitacojb/actions/runs/29848552600"}]

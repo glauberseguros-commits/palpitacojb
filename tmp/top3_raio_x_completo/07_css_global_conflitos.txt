@@ -1,0 +1,1181 @@
+.\src\pages\Top3\Top3View.jsx-1776-          border-color: rgba(201,168,62,0.40);
+.\src\pages\Top3\Top3View.jsx-1777-          box-shadow: 0 10px 24px rgba(0,0,0,0.35);
+.\src\pages\Top3\Top3View.jsx-1778-        }
+.\src\pages\Top3\Top3View.jsx-1779-
+.\src\pages\Top3\Top3View.jsx-1780-        .pp-tab[data-active="1"]{
+.\src\pages\Top3\Top3View.jsx-1781-          background: rgba(201,168,62,0.16);
+.\src\pages\Top3\Top3View.jsx-1782-          border: 1px solid rgba(201,168,62,0.45);
+.\src\pages\Top3\Top3View.jsx-1783-          color: rgba(255,255,255,0.94);
+.\src\pages\Top3\Top3View.jsx-1784-        }
+.\src\pages\Top3\Top3View.jsx-1785-
+.\src\pages\Top3\Top3View.jsx:1786:        .top3-metaGrid,
+.\src\pages\Top3\Top3View.jsx:1787:        .timeline-slot__metaGrid{
+.\src\pages\Top3\Top3View.jsx-1788-          display: grid;
+.\src\pages\Top3\Top3View.jsx-1789-          grid-template-columns: repeat(3, minmax(0, 1fr));
+.\src\pages\Top3\Top3View.jsx-1790-          gap: 10px;
+.\src\pages\Top3\Top3View.jsx-1791-        }
+.\src\pages\Top3\Top3View.jsx-1792-
+.\src\pages\Top3\Top3View.jsx-1793-        .top3-metaItem{
+.\src\pages\Top3\Top3View.jsx-1794-          background: rgba(255,255,255,0.025);
+.\src\pages\Top3\Top3View.jsx-1795-          border: 1px solid rgba(255,255,255,0.08);
+.\src\pages\Top3\Top3View.jsx-1796-          border-radius: 14px;
+.\src\pages\Top3\Top3View.jsx-1797-          padding: 10px 12px;
+--
+.\src\pages\Top3\Top3View.jsx-1809-        }
+.\src\pages\Top3\Top3View.jsx-1810-
+.\src\pages\Top3\Top3View.jsx-1811-        .top3-metaItem__value{
+.\src\pages\Top3\Top3View.jsx-1812-          color: var(--top3-text);
+.\src\pages\Top3\Top3View.jsx-1813-          font-size: 13px;
+.\src\pages\Top3\Top3View.jsx-1814-          font-weight: 800;
+.\src\pages\Top3\Top3View.jsx-1815-          line-height: 1.35;
+.\src\pages\Top3\Top3View.jsx-1816-          word-break: break-word;
+.\src\pages\Top3\Top3View.jsx-1817-        }
+.\src\pages\Top3\Top3View.jsx-1818-
+.\src\pages\Top3\Top3View.jsx:1819:        .top3-stage{
+.\src\pages\Top3\Top3View.jsx-1820-          display: grid;
+.\src\pages\Top3\Top3View.jsx-1821-          gap: 16px;
+.\src\pages\Top3\Top3View.jsx-1822-        }
+.\src\pages\Top3\Top3View.jsx-1823-
+.\src\pages\Top3\Top3View.jsx:1824:        .top3-heroWrap{
+.\src\pages\Top3\Top3View.jsx-1825-          width: 100%;
+.\src\pages\Top3\Top3View.jsx-1826-          max-width: 1120px;
+.\src\pages\Top3\Top3View.jsx-1827-          margin: 0 auto;
+.\src\pages\Top3\Top3View.jsx-1828-        }
+.\src\pages\Top3\Top3View.jsx-1829-
+.\src\pages\Top3\Top3View.jsx:1830:        .top3-secondaryRow{
+.\src\pages\Top3\Top3View.jsx-1831-          width: 100%;
+.\src\pages\Top3\Top3View.jsx-1832-          max-width: 1120px;
+.\src\pages\Top3\Top3View.jsx-1833-          margin: 0 auto;
+.\src\pages\Top3\Top3View.jsx-1834-          display: grid;
+.\src\pages\Top3\Top3View.jsx-1835-          grid-template-columns: repeat(2, minmax(0, 1fr));
+.\src\pages\Top3\Top3View.jsx-1836-          gap: 16px;
+.\src\pages\Top3\Top3View.jsx-1837-          align-items: start;
+.\src\pages\Top3\Top3View.jsx-1838-          justify-content: center;
+.\src\pages\Top3\Top3View.jsx-1839-        }
+.\src\pages\Top3\Top3View.jsx-1840-
+.\src\pages\Top3\Top3View.jsx:1841:        .timeline-slot__cards{
+.\src\pages\Top3\Top3View.jsx-1842-          width: 100%;
+.\src\pages\Top3\Top3View.jsx-1843-          display: grid;
+.\src\pages\Top3\Top3View.jsx-1844-          grid-template-columns: repeat(3, minmax(0, 1fr));
+.\src\pages\Top3\Top3View.jsx-1845-          gap: 14px;
+.\src\pages\Top3\Top3View.jsx-1846-          align-items: start;
+.\src\pages\Top3\Top3View.jsx-1847-        }
+.\src\pages\Top3\Top3View.jsx-1848-
+.\src\pages\Top3\Top3View.jsx-1849-        .timeline-compact{
+.\src\pages\Top3\Top3View.jsx-1850-          margin-top: 2px;
+.\src\pages\Top3\Top3View.jsx-1851-        }
+--
+.\src\pages\Top3\Top3View.jsx-2021-          border-color: rgba(201,168,62,0.35);
+.\src\pages\Top3\Top3View.jsx-2022-        }
+.\src\pages\Top3\Top3View.jsx-2023-
+.\src\pages\Top3\Top3View.jsx-2024-        .timeline-compact__performanceText{
+.\src\pages\Top3\Top3View.jsx-2025-          font-size: 14px;
+.\src\pages\Top3\Top3View.jsx-2026-          font-weight: 900;
+.\src\pages\Top3\Top3View.jsx-2027-          line-height: 1.4;
+.\src\pages\Top3\Top3View.jsx-2028-          color: var(--top3-text);
+.\src\pages\Top3\Top3View.jsx-2029-        }
+.\src\pages\Top3\Top3View.jsx-2030-
+.\src\pages\Top3\Top3View.jsx:2031:        .timeline-slot__header{
+.\src\pages\Top3\Top3View.jsx-2032-          display:flex;
+.\src\pages\Top3\Top3View.jsx-2033-          align-items:flex-start;
+.\src\pages\Top3\Top3View.jsx-2034-          justify-content:space-between;
+.\src\pages\Top3\Top3View.jsx-2035-          gap:14px;
+.\src\pages\Top3\Top3View.jsx-2036-          margin-bottom: 14px;
+.\src\pages\Top3\Top3View.jsx-2037-        }
+.\src\pages\Top3\Top3View.jsx-2038-
+.\src\pages\Top3\Top3View.jsx:2039:        .timeline-slot__title{
+.\src\pages\Top3\Top3View.jsx-2040-          font-weight: 1000;
+.\src\pages\Top3\Top3View.jsx-2041-          font-size: 22px;
+.\src\pages\Top3\Top3View.jsx-2042-          letter-spacing: 0.2px;
+.\src\pages\Top3\Top3View.jsx-2043-          line-height: 1;
+.\src\pages\Top3\Top3View.jsx-2044-        }
+.\src\pages\Top3\Top3View.jsx-2045-
+.\src\pages\Top3\Top3View.jsx:2046:        .timeline-slot__badge{
+.\src\pages\Top3\Top3View.jsx-2047-          border-radius: 999px;
+.\src\pages\Top3\Top3View.jsx-2048-          padding: 10px 14px;
+.\src\pages\Top3\Top3View.jsx-2049-          font-weight: 1000;
+.\src\pages\Top3\Top3View.jsx-2050-          font-size: 12px;
+.\src\pages\Top3\Top3View.jsx-2051-          letter-spacing: 0.55px;
+.\src\pages\Top3\Top3View.jsx-2052-          border: 1px solid rgba(255,255,255,0.14);
+.\src\pages\Top3\Top3View.jsx-2053-          white-space: nowrap;
+.\src\pages\Top3\Top3View.jsx-2054-          box-shadow: 0 10px 24px rgba(0,0,0,0.28);
+.\src\pages\Top3\Top3View.jsx-2055-        }
+.\src\pages\Top3\Top3View.jsx-2056-
+.\src\pages\Top3\Top3View.jsx:2057:        .timeline-slot__badge--hit{
+.\src\pages\Top3\Top3View.jsx-2058-          background: rgba(38, 180, 90, 0.18);
+.\src\pages\Top3\Top3View.jsx-2059-          color: #b8ffd0;
+.\src\pages\Top3\Top3View.jsx-2060-          border-color: rgba(38, 180, 90, 0.35);
+.\src\pages\Top3\Top3View.jsx-2061-        }
+.\src\pages\Top3\Top3View.jsx-2062-
+.\src\pages\Top3\Top3View.jsx:2063:        .timeline-slot__badge--miss{
+.\src\pages\Top3\Top3View.jsx-2064-          background: rgba(220, 70, 70, 0.18);
+.\src\pages\Top3\Top3View.jsx-2065-          color: #ffd0d0;
+.\src\pages\Top3\Top3View.jsx-2066-          border-color: rgba(220, 70, 70, 0.35);
+.\src\pages\Top3\Top3View.jsx-2067-        }
+.\src\pages\Top3\Top3View.jsx-2068-
+.\src\pages\Top3\Top3View.jsx:2069:        .timeline-slot__badge--pending{
+.\src\pages\Top3\Top3View.jsx-2070-          background: rgba(201,168,62,0.16);
+.\src\pages\Top3\Top3View.jsx-2071-          color: rgba(255,255,255,0.92);
+.\src\pages\Top3\Top3View.jsx-2072-          border-color: rgba(201,168,62,0.35);
+.\src\pages\Top3\Top3View.jsx-2073-        }
+.\src\pages\Top3\Top3View.jsx-2074-
+.\src\pages\Top3\Top3View.jsx:2075:        .timeline-slot__resultBox{
+.\src\pages\Top3\Top3View.jsx-2076-          margin-top: 12px;
+.\src\pages\Top3\Top3View.jsx-2077-          display:flex;
+.\src\pages\Top3\Top3View.jsx-2078-          align-items:center;
+.\src\pages\Top3\Top3View.jsx-2079-          gap:14px;
+.\src\pages\Top3\Top3View.jsx-2080-          padding: 12px 14px;
+.\src\pages\Top3\Top3View.jsx-2081-          border-radius: 16px;
+.\src\pages\Top3\Top3View.jsx-2082-          background:
+.\src\pages\Top3\Top3View.jsx-2083-            linear-gradient(180deg, rgba(201,168,62,0.08), rgba(255,255,255,0.02)),
+.\src\pages\Top3\Top3View.jsx-2084-            rgba(255,255,255,0.03);
+.\src\pages\Top3\Top3View.jsx-2085-          border: 1px solid rgba(255,255,255,0.09);
+.\src\pages\Top3\Top3View.jsx-2086-          box-shadow: inset 0 0 0 1px rgba(255,255,255,0.02);
+.\src\pages\Top3\Top3View.jsx-2087-        }
+.\src\pages\Top3\Top3View.jsx-2088-
+.\src\pages\Top3\Top3View.jsx:2089:        .timeline-slot__resultText{
+.\src\pages\Top3\Top3View.jsx-2090-          display:grid;
+.\src\pages\Top3\Top3View.jsx-2091-          gap:2px;
+.\src\pages\Top3\Top3View.jsx-2092-        }
+.\src\pages\Top3\Top3View.jsx-2093-
+.\src\pages\Top3\Top3View.jsx:2094:        .timeline-slot__resultGroup{
+.\src\pages\Top3\Top3View.jsx-2095-          font-weight: 1000;
+.\src\pages\Top3\Top3View.jsx-2096-          font-size: 18px;
+.\src\pages\Top3\Top3View.jsx-2097-          line-height: 1;
+.\src\pages\Top3\Top3View.jsx-2098-        }
+.\src\pages\Top3\Top3View.jsx-2099-
+.\src\pages\Top3\Top3View.jsx:2100:        .timeline-slot__resultAnimal{
+.\src\pages\Top3\Top3View.jsx-2101-          font-size: 12px;
+.\src\pages\Top3\Top3View.jsx-2102-          color: var(--top3-muted);
+.\src\pages\Top3\Top3View.jsx-2103-          text-transform: uppercase;
+.\src\pages\Top3\Top3View.jsx-2104-          letter-spacing: 0.6px;
+.\src\pages\Top3\Top3View.jsx-2105-        }
+.\src\pages\Top3\Top3View.jsx-2106-
+.\src\pages\Top3\Top3View.jsx:2107:        .timeline-slot__insightBox{
+.\src\pages\Top3\Top3View.jsx-2108-          margin-top: 12px;
+.\src\pages\Top3\Top3View.jsx-2109-          padding: 14px 16px;
+.\src\pages\Top3\Top3View.jsx-2110-          border-radius: 16px;
+.\src\pages\Top3\Top3View.jsx-2111-          background:
+.\src\pages\Top3\Top3View.jsx-2112-            linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.015)),
+.\src\pages\Top3\Top3View.jsx-2113-            rgba(255,255,255,0.025);
+.\src\pages\Top3\Top3View.jsx-2114-          border: 1px solid rgba(255,255,255,0.08);
+.\src\pages\Top3\Top3View.jsx-2115-          display: grid;
+.\src\pages\Top3\Top3View.jsx-2116-          gap: 6px;
+.\src\pages\Top3\Top3View.jsx-2117-        }
+.\src\pages\Top3\Top3View.jsx-2118-
+.\src\pages\Top3\Top3View.jsx:2119:        .timeline-slot__insightTitle{
+.\src\pages\Top3\Top3View.jsx-2120-          font-size: 11px;
+.\src\pages\Top3\Top3View.jsx-2121-          font-weight: 1000;
+.\src\pages\Top3\Top3View.jsx-2122-          letter-spacing: 1px;
+.\src\pages\Top3\Top3View.jsx-2123-          text-transform: uppercase;
+.\src\pages\Top3\Top3View.jsx-2124-          color: var(--top3-accent);
+.\src\pages\Top3\Top3View.jsx-2125-        }
+.\src\pages\Top3\Top3View.jsx-2126-
+.\src\pages\Top3\Top3View.jsx:2127:        .timeline-slot__insightText{
+.\src\pages\Top3\Top3View.jsx-2128-          font-size: 14px;
+.\src\pages\Top3\Top3View.jsx-2129-          font-weight: 900;
+.\src\pages\Top3\Top3View.jsx-2130-          line-height: 1.4;
+.\src\pages\Top3\Top3View.jsx-2131-          color: var(--top3-text);
+.\src\pages\Top3\Top3View.jsx-2132-        }
+.\src\pages\Top3\Top3View.jsx-2133-
+.\src\pages\Top3\Top3View.jsx:2134:        .top3-card{
+.\src\pages\Top3\Top3View.jsx-2135-          position: relative;
+.\src\pages\Top3\Top3View.jsx-2136-          background:
+.\src\pages\Top3\Top3View.jsx-2137-            radial-gradient(1100px 280px at 50% 0%, rgba(201,168,62,0.08), transparent 55%),
+.\src\pages\Top3\Top3View.jsx-2138-            linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.00)),
+.\src\pages\Top3\Top3View.jsx-2139-            var(--top3-panel);
+.\src\pages\Top3\Top3View.jsx-2140-          border: 1px solid var(--top3-border);
+.\src\pages\Top3\Top3View.jsx-2141-          border-radius: 20px;
+.\src\pages\Top3\Top3View.jsx-2142-          padding: 16px;
+.\src\pages\Top3\Top3View.jsx-2143-          display: grid;
+.\src\pages\Top3\Top3View.jsx-2144-          gap: 14px;
+.\src\pages\Top3\Top3View.jsx-2145-          box-shadow:
+.\src\pages\Top3\Top3View.jsx-2146-            0 18px 44px rgba(0,0,0,0.30),
+.\src\pages\Top3\Top3View.jsx-2147-            inset 0 0 0 1px rgba(255,255,255,0.03);
+.\src\pages\Top3\Top3View.jsx-2148-          overflow: hidden;
+.\src\pages\Top3\Top3View.jsx-2149-        }
+.\src\pages\Top3\Top3View.jsx-2150-
+.\src\pages\Top3\Top3View.jsx:2151:        .top3-card::after{
+.\src\pages\Top3\Top3View.jsx-2152-          content: "";
+.\src\pages\Top3\Top3View.jsx-2153-          position: absolute;
+.\src\pages\Top3\Top3View.jsx-2154-          inset: 0;
+.\src\pages\Top3\Top3View.jsx-2155-          border-radius: inherit;
+.\src\pages\Top3\Top3View.jsx-2156-          pointer-events: none;
+.\src\pages\Top3\Top3View.jsx-2157-          box-shadow: inset 0 0 0 1px rgba(201,168,62,0.05);
+.\src\pages\Top3\Top3View.jsx-2158-        }
+.\src\pages\Top3\Top3View.jsx-2159-
+.\src\pages\Top3\Top3View.jsx:2160:        .top3-card--hero{
+.\src\pages\Top3\Top3View.jsx-2161-          padding: 18px;
+.\src\pages\Top3\Top3View.jsx-2162-        }
+.\src\pages\Top3\Top3View.jsx-2163-
+.\src\pages\Top3\Top3View.jsx:2164:        .top3-card__topline{
+.\src\pages\Top3\Top3View.jsx-2165-          display:flex;
+.\src\pages\Top3\Top3View.jsx-2166-          align-items:center;
+.\src\pages\Top3\Top3View.jsx-2167-          gap:10px;
+.\src\pages\Top3\Top3View.jsx-2168-        }
+.\src\pages\Top3\Top3View.jsx-2169-
+.\src\pages\Top3\Top3View.jsx-2170-        .top3-rankBadge{
+.\src\pages\Top3\Top3View.jsx-2171-          width: 30px;
+.\src\pages\Top3\Top3View.jsx-2172-          height: 30px;
+.\src\pages\Top3\Top3View.jsx-2173-          border-radius: 10px;
+.\src\pages\Top3\Top3View.jsx-2174-          display: grid;
+.\src\pages\Top3\Top3View.jsx-2175-          place-items: center;
+.\src\pages\Top3\Top3View.jsx-2176-          background: rgba(201,168,62,0.15);
+.\src\pages\Top3\Top3View.jsx-2177-          border: 1px solid rgba(201,168,62,0.35);
+.\src\pages\Top3\Top3View.jsx-2178-          font-weight: 950;
+.\src\pages\Top3\Top3View.jsx-2179-          color: var(--top3-accent);
+.\src\pages\Top3\Top3View.jsx-2180-          flex: 0 0 auto;
+.\src\pages\Top3\Top3View.jsx-2181-        }
+.\src\pages\Top3\Top3View.jsx-2182-
+.\src\pages\Top3\Top3View.jsx:2183:        .top3-card__label{
+.\src\pages\Top3\Top3View.jsx-2184-          font-weight: 950;
+.\src\pages\Top3\Top3View.jsx-2185-          letter-spacing: 0.4px;
+.\src\pages\Top3\Top3View.jsx-2186-          font-size: 14px;
+.\src\pages\Top3\Top3View.jsx-2187-        }
+.\src\pages\Top3\Top3View.jsx-2188-
+.\src\pages\Top3\Top3View.jsx:2189:        .top3-card__summary{
+.\src\pages\Top3\Top3View.jsx-2190-          display:grid;
+.\src\pages\Top3\Top3View.jsx-2191-          grid-template-columns: minmax(0, 1fr) 170px;
+.\src\pages\Top3\Top3View.jsx-2192-          gap: 14px;
+.\src\pages\Top3\Top3View.jsx-2193-          align-items: center;
+.\src\pages\Top3\Top3View.jsx-2194-        }
+.\src\pages\Top3\Top3View.jsx-2195-
+.\src\pages\Top3\Top3View.jsx:2196:        .top3-card--hero .top3-card__summary{
+.\src\pages\Top3\Top3View.jsx-2197-          grid-template-columns: minmax(0, 1fr) 190px;
+.\src\pages\Top3\Top3View.jsx-2198-        }
+.\src\pages\Top3\Top3View.jsx-2199-
+.\src\pages\Top3\Top3View.jsx:2200:        .top3-card__identity{
+.\src\pages\Top3\Top3View.jsx-2201-          display:flex;
+.\src\pages\Top3\Top3View.jsx-2202-          align-items:center;
+.\src\pages\Top3\Top3View.jsx-2203-          gap:14px;
+.\src\pages\Top3\Top3View.jsx-2204-          min-width: 0;
+.\src\pages\Top3\Top3View.jsx-2205-        }
+.\src\pages\Top3\Top3View.jsx-2206-
+.\src\pages\Top3\Top3View.jsx:2207:        .top3-card__identityText{
+.\src\pages\Top3\Top3View.jsx-2208-          display:grid;
+.\src\pages\Top3\Top3View.jsx-2209-          gap: 6px;
+.\src\pages\Top3\Top3View.jsx-2210-          min-width: 0;
+.\src\pages\Top3\Top3View.jsx-2211-        }
+.\src\pages\Top3\Top3View.jsx-2212-
+.\src\pages\Top3\Top3View.jsx:2213:        .top3-card__group{
+.\src\pages\Top3\Top3View.jsx-2214-          font-size: 11px;
+.\src\pages\Top3\Top3View.jsx-2215-          color: var(--top3-muted);
+.\src\pages\Top3\Top3View.jsx-2216-          font-weight: 900;
+.\src\pages\Top3\Top3View.jsx-2217-          letter-spacing: 1px;
+.\src\pages\Top3\Top3View.jsx-2218-        }
+.\src\pages\Top3\Top3View.jsx-2219-
+.\src\pages\Top3\Top3View.jsx:2220:        .top3-card__animal{
+.\src\pages\Top3\Top3View.jsx-2221-          font-size: 24px;
+.\src\pages\Top3\Top3View.jsx-2222-          font-weight: 950;
+.\src\pages\Top3\Top3View.jsx-2223-          letter-spacing: 0.6px;
+.\src\pages\Top3\Top3View.jsx-2224-          line-height: 1.05;
+.\src\pages\Top3\Top3View.jsx-2225-          word-break: break-word;
+.\src\pages\Top3\Top3View.jsx-2226-        }
+.\src\pages\Top3\Top3View.jsx-2227-
+.\src\pages\Top3\Top3View.jsx:2228:        .top3-card--secondary .top3-card__animal{
+.\src\pages\Top3\Top3View.jsx-2229-          font-size: 20px;
+.\src\pages\Top3\Top3View.jsx-2230-        }
+.\src\pages\Top3\Top3View.jsx-2231-
+.\src\pages\Top3\Top3View.jsx:2232:        .top3-card__confidence{
+.\src\pages\Top3\Top3View.jsx-2233-          justify-self: end;
+.\src\pages\Top3\Top3View.jsx-2234-          width: 100%;
+.\src\pages\Top3\Top3View.jsx-2235-          max-width: 190px;
+.\src\pages\Top3\Top3View.jsx-2236-          text-align: right;
+.\src\pages\Top3\Top3View.jsx-2237-          display:grid;
+.\src\pages\Top3\Top3View.jsx-2238-          gap: 6px;
+.\src\pages\Top3\Top3View.jsx-2239-        }
+.\src\pages\Top3\Top3View.jsx-2240-
+.\src\pages\Top3\Top3View.jsx:2241:        .top3-card__confidenceLabel{
+.\src\pages\Top3\Top3View.jsx-2242-          color: var(--top3-muted);
+.\src\pages\Top3\Top3View.jsx-2243-          font-size: 11px;
+.\src\pages\Top3\Top3View.jsx-2244-          font-weight: 900;
+.\src\pages\Top3\Top3View.jsx-2245-          letter-spacing: 0.9px;
+.\src\pages\Top3\Top3View.jsx-2246-        }
+.\src\pages\Top3\Top3View.jsx-2247-
+.\src\pages\Top3\Top3View.jsx:2248:        .top3-card__confidenceValue{
+.\src\pages\Top3\Top3View.jsx-2249-          font-size: 30px;
+.\src\pages\Top3\Top3View.jsx-2250-          font-weight: 950;
+.\src\pages\Top3\Top3View.jsx-2251-          color: var(--top3-accent);
+.\src\pages\Top3\Top3View.jsx-2252-          line-height: 1;
+.\src\pages\Top3\Top3View.jsx-2253-        }
+.\src\pages\Top3\Top3View.jsx-2254-
+.\src\pages\Top3\Top3View.jsx:2255:        .top3-card--secondary .top3-card__confidenceValue{
+.\src\pages\Top3\Top3View.jsx-2256-          font-size: 26px;
+.\src\pages\Top3\Top3View.jsx-2257-        }
+.\src\pages\Top3\Top3View.jsx-2258-
+.\src\pages\Top3\Top3View.jsx:2259:        .top3-card__confidenceBar{
+.\src\pages\Top3\Top3View.jsx-2260-          height: 7px;
+.\src\pages\Top3\Top3View.jsx-2261-          border-radius: 999px;
+.\src\pages\Top3\Top3View.jsx-2262-          background: rgba(255,255,255,0.10);
+.\src\pages\Top3\Top3View.jsx-2263-          overflow: hidden;
+.\src\pages\Top3\Top3View.jsx-2264-        }
+.\src\pages\Top3\Top3View.jsx-2265-
+.\src\pages\Top3\Top3View.jsx:2266:        .top3-card__confidenceBarFill{
+.\src\pages\Top3\Top3View.jsx-2267-          height: 100%;
+.\src\pages\Top3\Top3View.jsx-2268-          border-radius: inherit;
+.\src\pages\Top3\Top3View.jsx-2269-          opacity: 0.78;
+.\src\pages\Top3\Top3View.jsx-2270-        }
+.\src\pages\Top3\Top3View.jsx-2271-
+.\src\pages\Top3\Top3View.jsx:2272:        .top3-card__body{
+.\src\pages\Top3\Top3View.jsx-2273-          border-top: 1px solid rgba(255,255,255,0.07);
+.\src\pages\Top3\Top3View.jsx-2274-          padding-top: 12px;
+.\src\pages\Top3\Top3View.jsx-2275-          display:grid;
+.\src\pages\Top3\Top3View.jsx-2276-          gap: 10px;
+.\src\pages\Top3\Top3View.jsx-2277-        }
+.\src\pages\Top3\Top3View.jsx-2278-
+.\src\pages\Top3\Top3View.jsx:2279:        .top3-card__actions{
+.\src\pages\Top3\Top3View.jsx-2280-          display:flex;
+.\src\pages\Top3\Top3View.jsx-2281-          align-items:center;
+.\src\pages\Top3\Top3View.jsx-2282-          justify-content:space-between;
+.\src\pages\Top3\Top3View.jsx-2283-          gap:12px;
+.\src\pages\Top3\Top3View.jsx-2284-        }
+.\src\pages\Top3\Top3View.jsx-2285-
+.\src\pages\Top3\Top3View.jsx:2286:        .top3-card__sectionTitle{
+.\src\pages\Top3\Top3View.jsx-2287-          font-weight: 900;
+.\src\pages\Top3\Top3View.jsx-2288-          font-size: 13px;
+.\src\pages\Top3\Top3View.jsx-2289-          color: rgba(255,255,255,0.92);
+.\src\pages\Top3\Top3View.jsx-2290-          letter-spacing: 0.2px;
+.\src\pages\Top3\Top3View.jsx-2291-        }
+.\src\pages\Top3\Top3View.jsx-2292-
+.\src\pages\Top3\Top3View.jsx-2293-        .pp-btn{
+.\src\pages\Top3\Top3View.jsx-2294-          border-radius: 999px;
+.\src\pages\Top3\Top3View.jsx-2295-          padding: 9px 12px;
+.\src\pages\Top3\Top3View.jsx-2296-          background: rgba(201,168,62,0.16);
+--
+.\src\pages\Top3\Top3View.jsx-2508-          font-size:10px;
+.\src\pages\Top3\Top3View.jsx-2509-          color: var(--top3-muted);
+.\src\pages\Top3\Top3View.jsx-2510-          text-transform: uppercase;
+.\src\pages\Top3\Top3View.jsx-2511-          white-space: nowrap;
+.\src\pages\Top3\Top3View.jsx-2512-          overflow: hidden;
+.\src\pages\Top3\Top3View.jsx-2513-          text-overflow: ellipsis;
+.\src\pages\Top3\Top3View.jsx-2514-          letter-spacing: 0.5px;
+.\src\pages\Top3\Top3View.jsx-2515-        }
+.\src\pages\Top3\Top3View.jsx-2516-
+.\src\pages\Top3\Top3View.jsx-2517-        @media (max-width: 1180px){
+.\src\pages\Top3\Top3View.jsx:2518:          .top3-secondaryRow{
+.\src\pages\Top3\Top3View.jsx-2519-            max-width: 980px;
+.\src\pages\Top3\Top3View.jsx-2520-          }
+.\src\pages\Top3\Top3View.jsx-2521-
+.\src\pages\Top3\Top3View.jsx:2522:          .timeline-slot__cards{
+.\src\pages\Top3\Top3View.jsx-2523-            grid-template-columns: 1fr;
+.\src\pages\Top3\Top3View.jsx-2524-          }
+.\src\pages\Top3\Top3View.jsx-2525-
+.\src\pages\Top3\Top3View.jsx-2526-          .timeline-compact__grid{
+.\src\pages\Top3\Top3View.jsx-2527-            grid-template-columns: 1fr;
+.\src\pages\Top3\Top3View.jsx-2528-          }
+.\src\pages\Top3\Top3View.jsx-2529-
+.\src\pages\Top3\Top3View.jsx-2530-          .timeline-compact__predictions{
+.\src\pages\Top3\Top3View.jsx-2531-            grid-template-columns: 1fr;
+.\src\pages\Top3\Top3View.jsx-2532-          }
+--
+.\src\pages\Top3\Top3View.jsx-2535-        @media (max-width: 980px){
+.\src\pages\Top3\Top3View.jsx-2536-          .top3-page{
+.\src\pages\Top3\Top3View.jsx-2537-            gap: 14px;
+.\src\pages\Top3\Top3View.jsx-2538-          }
+.\src\pages\Top3\Top3View.jsx-2539-
+.\src\pages\Top3\Top3View.jsx-2540-          .top3-shell{
+.\src\pages\Top3\Top3View.jsx-2541-            padding: 14px;
+.\src\pages\Top3\Top3View.jsx-2542-            border-radius: 18px;
+.\src\pages\Top3\Top3View.jsx-2543-          }
+.\src\pages\Top3\Top3View.jsx-2544-
+.\src\pages\Top3\Top3View.jsx:2545:          .top3-metaGrid,
+.\src\pages\Top3\Top3View.jsx:2546:          .timeline-slot__metaGrid{
+.\src\pages\Top3\Top3View.jsx-2547-            grid-template-columns: 1fr 1fr;
+.\src\pages\Top3\Top3View.jsx-2548-          }
+.\src\pages\Top3\Top3View.jsx-2549-
+.\src\pages\Top3\Top3View.jsx:2550:          .top3-heroWrap,
+.\src\pages\Top3\Top3View.jsx:2551:          .top3-secondaryRow{
+.\src\pages\Top3\Top3View.jsx-2552-            max-width: none;
+.\src\pages\Top3\Top3View.jsx-2553-          }
+.\src\pages\Top3\Top3View.jsx-2554-
+.\src\pages\Top3\Top3View.jsx:2555:          .top3-secondaryRow{
+.\src\pages\Top3\Top3View.jsx-2556-            grid-template-columns: 1fr;
+.\src\pages\Top3\Top3View.jsx-2557-            gap: 14px;
+.\src\pages\Top3\Top3View.jsx-2558-          }
+.\src\pages\Top3\Top3View.jsx-2559-
+.\src\pages\Top3\Top3View.jsx:2560:          .top3-card,
+.\src\pages\Top3\Top3View.jsx:2561:          .top3-card--hero{
+.\src\pages\Top3\Top3View.jsx-2562-            padding: 14px;
+.\src\pages\Top3\Top3View.jsx-2563-            border-radius: 18px;
+.\src\pages\Top3\Top3View.jsx-2564-          }
+.\src\pages\Top3\Top3View.jsx-2565-
+.\src\pages\Top3\Top3View.jsx:2566:          .top3-card__summary,
+.\src\pages\Top3\Top3View.jsx:2567:          .top3-card--hero .top3-card__summary{
+.\src\pages\Top3\Top3View.jsx-2568-            grid-template-columns: 1fr;
+.\src\pages\Top3\Top3View.jsx-2569-            gap: 12px;
+.\src\pages\Top3\Top3View.jsx-2570-          }
+.\src\pages\Top3\Top3View.jsx-2571-
+.\src\pages\Top3\Top3View.jsx:2572:          .top3-card__confidence{
+.\src\pages\Top3\Top3View.jsx-2573-            justify-self: stretch;
+.\src\pages\Top3\Top3View.jsx-2574-            text-align: left;
+.\src\pages\Top3\Top3View.jsx-2575-            max-width: none;
+.\src\pages\Top3\Top3View.jsx-2576-          }
+.\src\pages\Top3\Top3View.jsx-2577-
+.\src\pages\Top3\Top3View.jsx:2578:          .top3-card__confidenceValue{
+.\src\pages\Top3\Top3View.jsx-2579-            font-size: 28px;
+.\src\pages\Top3\Top3View.jsx-2580-          }
+.\src\pages\Top3\Top3View.jsx-2581-
+.\src\pages\Top3\Top3View.jsx:2582:          .top3-card__actions{
+.\src\pages\Top3\Top3View.jsx-2583-            align-items: stretch;
+.\src\pages\Top3\Top3View.jsx-2584-            flex-direction: column;
+.\src\pages\Top3\Top3View.jsx-2585-          }
+.\src\pages\Top3\Top3View.jsx-2586-
+.\src\pages\Top3\Top3View.jsx-2587-          .pp-btn{
+.\src\pages\Top3\Top3View.jsx-2588-            width: 100%;
+.\src\pages\Top3\Top3View.jsx-2589-          }
+.\src\pages\Top3\Top3View.jsx-2590-
+.\src\pages\Top3\Top3View.jsx-2591-          .top3-historyToolbar{
+.\src\pages\Top3\Top3View.jsx-2592-            grid-template-columns: 1fr 1fr;
+--
+.\src\pages\Top3\Top3View.jsx-2598-
+.\src\pages\Top3\Top3View.jsx-2599-          .top3-historySummary{
+.\src\pages\Top3\Top3View.jsx-2600-            grid-template-columns: repeat(3, minmax(0, 1fr));
+.\src\pages\Top3\Top3View.jsx-2601-          }
+.\src\pages\Top3\Top3View.jsx-2602-
+.\src\pages\Top3\Top3View.jsx-2603-          .top3-historyRow{
+.\src\pages\Top3\Top3View.jsx-2604-            grid-template-columns: 1fr;
+.\src\pages\Top3\Top3View.jsx-2605-            align-items:start;
+.\src\pages\Top3\Top3View.jsx-2606-          }
+.\src\pages\Top3\Top3View.jsx-2607-
+.\src\pages\Top3\Top3View.jsx:2608:          .timeline-slot__header{
+.\src\pages\Top3\Top3View.jsx-2609-            flex-direction: column;
+.\src\pages\Top3\Top3View.jsx-2610-            align-items: flex-start;
+.\src\pages\Top3\Top3View.jsx-2611-          }
+.\src\pages\Top3\Top3View.jsx-2612-        }
+.\src\pages\Top3\Top3View.jsx-2613-
+.\src\pages\Top3\Top3View.jsx-2614-        @media (max-width: 640px){
+.\src\pages\Top3\Top3View.jsx-2615-          .timeline-compact__pick{
+.\src\pages\Top3\Top3View.jsx-2616-            grid-template-columns: 26px 40px minmax(0, 1fr);
+.\src\pages\Top3\Top3View.jsx-2617-            gap: 8px;
+.\src\pages\Top3\Top3View.jsx-2618-            padding: 8px;
+--
+.\src\pages\Top3\Top3View.jsx-2639-          .top3-page{
+.\src\pages\Top3\Top3View.jsx-2640-            gap: 12px;
+.\src\pages\Top3\Top3View.jsx-2641-          }
+.\src\pages\Top3\Top3View.jsx-2642-
+.\src\pages\Top3\Top3View.jsx-2643-          .top3-shell{
+.\src\pages\Top3\Top3View.jsx-2644-            padding: 12px;
+.\src\pages\Top3\Top3View.jsx-2645-            border-radius: 16px;
+.\src\pages\Top3\Top3View.jsx-2646-          }
+.\src\pages\Top3\Top3View.jsx-2647-
+.\src\pages\Top3\Top3View.jsx-2648-          .top3-header__title,
+.\src\pages\Top3\Top3View.jsx:2649:          .timeline-slot__title{
+.\src\pages\Top3\Top3View.jsx-2650-            font-size: 17px;
+.\src\pages\Top3\Top3View.jsx-2651-          }
+.\src\pages\Top3\Top3View.jsx-2652-
+.\src\pages\Top3\Top3View.jsx:2653:          .top3-card__topline{
+.\src\pages\Top3\Top3View.jsx-2654-            gap: 8px;
+.\src\pages\Top3\Top3View.jsx-2655-          }
+.\src\pages\Top3\Top3View.jsx-2656-
+.\src\pages\Top3\Top3View.jsx-2657-          .top3-rankBadge{
+.\src\pages\Top3\Top3View.jsx-2658-            width: 28px;
+.\src\pages\Top3\Top3View.jsx-2659-            height: 28px;
+.\src\pages\Top3\Top3View.jsx-2660-            border-radius: 9px;
+.\src\pages\Top3\Top3View.jsx-2661-          }
+.\src\pages\Top3\Top3View.jsx-2662-
+.\src\pages\Top3\Top3View.jsx:2663:          .top3-card__identity{
+.\src\pages\Top3\Top3View.jsx-2664-            gap: 10px;
+.\src\pages\Top3\Top3View.jsx-2665-            align-items: center;
+.\src\pages\Top3\Top3View.jsx-2666-          }
+.\src\pages\Top3\Top3View.jsx-2667-
+.\src\pages\Top3\Top3View.jsx:2668:          .top3-card__animal{
+.\src\pages\Top3\Top3View.jsx-2669-            font-size: 18px;
+.\src\pages\Top3\Top3View.jsx-2670-            letter-spacing: 0.35px;
+.\src\pages\Top3\Top3View.jsx-2671-          }
+.\src\pages\Top3\Top3View.jsx-2672-
+.\src\pages\Top3\Top3View.jsx:2673:          .top3-card--secondary .top3-card__animal{
+.\src\pages\Top3\Top3View.jsx-2674-            font-size: 18px;
+.\src\pages\Top3\Top3View.jsx-2675-          }
+.\src\pages\Top3\Top3View.jsx-2676-
+.\src\pages\Top3\Top3View.jsx:2677:          .top3-card__confidenceValue,
+.\src\pages\Top3\Top3View.jsx:2678:          .top3-card--secondary .top3-card__confidenceValue{
+.\src\pages\Top3\Top3View.jsx-2679-            font-size: 24px;
+.\src\pages\Top3\Top3View.jsx-2680-          }
+.\src\pages\Top3\Top3View.jsx-2681-
+.\src\pages\Top3\Top3View.jsx-2682-          .pp-chipRow{
+.\src\pages\Top3\Top3View.jsx-2683-            grid-template-columns: repeat(2, minmax(0, 1fr));
+.\src\pages\Top3\Top3View.jsx-2684-          }
+.\src\pages\Top3\Top3View.jsx-2685-
+.\src\pages\Top3\Top3View.jsx-2686-          .pp-row{
+.\src\pages\Top3\Top3View.jsx-2687-            grid-template-columns: repeat(2, minmax(0, 1fr));
+.\src\pages\Top3\Top3View.jsx-2688-          }
+--
+.\src\pages\Top3\Top3View.jsx-2693-            letter-spacing: 1px;
+.\src\pages\Top3\Top3View.jsx-2694-          }
+.\src\pages\Top3\Top3View.jsx-2695-
+.\src\pages\Top3\Top3View.jsx-2696-          .pp-copiedBadge{
+.\src\pages\Top3\Top3View.jsx-2697-            right: 6px;
+.\src\pages\Top3\Top3View.jsx-2698-            top: 6px;
+.\src\pages\Top3\Top3View.jsx-2699-            font-size: 9px;
+.\src\pages\Top3\Top3View.jsx-2700-            padding: 3px 6px;
+.\src\pages\Top3\Top3View.jsx-2701-          }
+.\src\pages\Top3\Top3View.jsx-2702-
+.\src\pages\Top3\Top3View.jsx:2703:          .top3-metaGrid,
+.\src\pages\Top3\Top3View.jsx:2704:          .timeline-slot__metaGrid{
+.\src\pages\Top3\Top3View.jsx-2705-            grid-template-columns: 1fr;
+.\src\pages\Top3\Top3View.jsx-2706-          }
+.\src\pages\Top3\Top3View.jsx-2707-
+.\src\pages\Top3\Top3View.jsx-2708-          .top3-historyToolbar{
+.\src\pages\Top3\Top3View.jsx-2709-            grid-template-columns: 1fr 1fr;
+.\src\pages\Top3\Top3View.jsx-2710-          }
+.\src\pages\Top3\Top3View.jsx-2711-
+.\src\pages\Top3\Top3View.jsx-2712-          .top3-historySummary{
+.\src\pages\Top3\Top3View.jsx-2713-            grid-template-columns: repeat(2, minmax(0, 1fr));
+.\src\pages\Top3\Top3View.jsx-2714-          }
+.\src\pages\Top3\Top3View.jsx-2715-        }
+.\src\pages\Top3\Top3View.jsx-2716-
+.\src\pages\Top3\Top3View.jsx-2717-        @media (max-width: 420px){
+.\src\pages\Top3\Top3View.jsx-2718-          .top3-shell{
+.\src\pages\Top3\Top3View.jsx-2719-            padding: 10px;
+.\src\pages\Top3\Top3View.jsx-2720-          }
+.\src\pages\Top3\Top3View.jsx-2721-
+.\src\pages\Top3\Top3View.jsx:2722:          .top3-card,
+.\src\pages\Top3\Top3View.jsx:2723:          .top3-card--hero{
+.\src\pages\Top3\Top3View.jsx-2724-            padding: 12px;
+.\src\pages\Top3\Top3View.jsx-2725-          }
+.\src\pages\Top3\Top3View.jsx-2726-
+.\src\pages\Top3\Top3View.jsx:2727:          .top3-card__group{
+.\src\pages\Top3\Top3View.jsx-2728-            font-size: 10px;
+.\src\pages\Top3\Top3View.jsx-2729-          }
+.\src\pages\Top3\Top3View.jsx-2730-
+.\src\pages\Top3\Top3View.jsx:2731:          .top3-card__animal{
+.\src\pages\Top3\Top3View.jsx-2732-            font-size: 16px;
+.\src\pages\Top3\Top3View.jsx-2733-          }
+.\src\pages\Top3\Top3View.jsx-2734-
+.\src\pages\Top3\Top3View.jsx:2735:          .top3-card__confidenceValue{
+.\src\pages\Top3\Top3View.jsx-2736-            font-size: 22px;
+.\src\pages\Top3\Top3View.jsx-2737-          }
+.\src\pages\Top3\Top3View.jsx-2738-
+.\src\pages\Top3\Top3View.jsx-2739-          .pp-gridBox{
+.\src\pages\Top3\Top3View.jsx-2740-            padding: 10px;
+.\src\pages\Top3\Top3View.jsx-2741-            gap: 7px;
+.\src\pages\Top3\Top3View.jsx-2742-          }
+.\src\pages\Top3\Top3View.jsx-2743-
+.\src\pages\Top3\Top3View.jsx-2744-          .pp-row,
+.\src\pages\Top3\Top3View.jsx-2745-          .pp-chipRow{
+.\src\pages\Top3\Top3View.jsx-2746-            gap: 8px;
+.\src\pages\Top3\Top3View.jsx-2747-          }
+.\src\pages\Top3\Top3View.jsx-2748-        }
+.\src\pages\Top3\Top3View.jsx-2749-
+.\src\pages\Top3\Top3View.jsx-2750-        /* TOP3 PREMIUM CRLF */
+.\src\pages\Top3\Top3View.jsx:2751:        .top3-stage--predictions,
+.\src\pages\Top3\Top3View.jsx:2752:        .top3-stage--loading{
+.\src\pages\Top3\Top3View.jsx-2753-          grid-template-columns: repeat(3, minmax(0, 1fr));
+.\src\pages\Top3\Top3View.jsx-2754-          align-items: stretch;
+.\src\pages\Top3\Top3View.jsx-2755-        }
+.\src\pages\Top3\Top3View.jsx-2756-
+.\src\pages\Top3\Top3View.jsx:2757:        .top3-stage--predictions > .top3-card,
+.\src\pages\Top3\Top3View.jsx:2758:        .top3-stage--loading > .top3-card{
+.\src\pages\Top3\Top3View.jsx-2759-          width: 100%;
+.\src\pages\Top3\Top3View.jsx-2760-          min-width: 0;
+.\src\pages\Top3\Top3View.jsx-2761-          height: 100%;
+.\src\pages\Top3\Top3View.jsx-2762-        }
+.\src\pages\Top3\Top3View.jsx-2763-
+.\src\pages\Top3\Top3View.jsx-2764-        .top3-loadingCard{
+.\src\pages\Top3\Top3View.jsx-2765-          display: grid;
+.\src\pages\Top3\Top3View.jsx-2766-          align-content: start;
+.\src\pages\Top3\Top3View.jsx-2767-          gap: 16px;
+.\src\pages\Top3\Top3View.jsx-2768-          min-height: 330px;
+--
+.\src\pages\Top3\Top3View.jsx-2840-          border-radius: 14px;
+.\src\pages\Top3\Top3View.jsx-2841-        }
+.\src\pages\Top3\Top3View.jsx-2842-
+.\src\pages\Top3\Top3View.jsx-2843-        @keyframes top3PremiumSkeleton{
+.\src\pages\Top3\Top3View.jsx-2844-          100%{
+.\src\pages\Top3\Top3View.jsx-2845-            transform: translateX(100%);
+.\src\pages\Top3\Top3View.jsx-2846-          }
+.\src\pages\Top3\Top3View.jsx-2847-        }
+.\src\pages\Top3\Top3View.jsx-2848-
+.\src\pages\Top3\Top3View.jsx-2849-        @media (max-width: 980px){
+.\src\pages\Top3\Top3View.jsx:2850:          .top3-stage--predictions,
+.\src\pages\Top3\Top3View.jsx:2851:          .top3-stage--loading{
+.\src\pages\Top3\Top3View.jsx-2852-            grid-template-columns: repeat(2, minmax(0, 1fr));
+.\src\pages\Top3\Top3View.jsx-2853-          }
+.\src\pages\Top3\Top3View.jsx-2854-
+.\src\pages\Top3\Top3View.jsx:2855:          .top3-stage--predictions > .top3-card:first-child{
+.\src\pages\Top3\Top3View.jsx-2856-            grid-column: 1 / -1;
+.\src\pages\Top3\Top3View.jsx-2857-          }
+.\src\pages\Top3\Top3View.jsx-2858-        }
+.\src\pages\Top3\Top3View.jsx-2859-
+.\src\pages\Top3\Top3View.jsx-2860-        @media (max-width: 640px){
+.\src\pages\Top3\Top3View.jsx:2861:          .top3-stage--predictions,
+.\src\pages\Top3\Top3View.jsx:2862:          .top3-stage--loading{
+.\src\pages\Top3\Top3View.jsx-2863-            grid-template-columns: 1fr;
+.\src\pages\Top3\Top3View.jsx-2864-          }
+.\src\pages\Top3\Top3View.jsx-2865-
+.\src\pages\Top3\Top3View.jsx:2866:          .top3-stage--predictions > .top3-card:first-child{
+.\src\pages\Top3\Top3View.jsx-2867-            grid-column: auto;
+.\src\pages\Top3\Top3View.jsx-2868-          }
+.\src\pages\Top3\Top3View.jsx-2869-
+.\src\pages\Top3\Top3View.jsx:2870:          .top3-card__actions{
+.\src\pages\Top3\Top3View.jsx-2871-            display: grid;
+.\src\pages\Top3\Top3View.jsx-2872-            grid-template-columns: repeat(2, minmax(0, 1fr));
+.\src\pages\Top3\Top3View.jsx-2873-          }
+.\src\pages\Top3\Top3View.jsx-2874-
+.\src\pages\Top3\Top3View.jsx:2875:          .top3-card__actions .pp-btn{
+.\src\pages\Top3\Top3View.jsx-2876-            width: 100%;
+.\src\pages\Top3\Top3View.jsx-2877-            min-width: 0;
+.\src\pages\Top3\Top3View.jsx-2878-          }
+.\src\pages\Top3\Top3View.jsx-2879-
+.\src\pages\Top3\Top3View.jsx:2880:          .top3-metaGrid{
+.\src\pages\Top3\Top3View.jsx-2881-            grid-template-columns: repeat(2, minmax(0, 1fr));
+.\src\pages\Top3\Top3View.jsx-2882-          }
+.\src\pages\Top3\Top3View.jsx-2883-
+.\src\pages\Top3\Top3View.jsx:2884:          .timeline-slot__metaGrid{
+.\src\pages\Top3\Top3View.jsx-2885-            grid-template-columns: 1fr;
+.\src\pages\Top3\Top3View.jsx-2886-          }
+.\src\pages\Top3\Top3View.jsx-2887-        }
+.\src\pages\Top3\Top3View.jsx-2888-
+.\src\pages\Top3\Top3View.jsx-2889-        @media (max-width: 420px){
+.\src\pages\Top3\Top3View.jsx:2890:          .top3-card__actions,
+.\src\pages\Top3\Top3View.jsx:2891:          .top3-metaGrid{
+.\src\pages\Top3\Top3View.jsx-2892-            grid-template-columns: 1fr;
+.\src\pages\Top3\Top3View.jsx-2893-          }
+.\src\pages\Top3\Top3View.jsx-2894-        }
+.\src\pages\Top3\Top3View.jsx-2895-
+.\src\pages\Top3\Top3View.jsx-2896-        @media (prefers-reduced-motion: reduce){
+.\src\pages\Top3\Top3View.jsx-2897-          .top3-skeleton::after{
+.\src\pages\Top3\Top3View.jsx-2898-            animation: none;
+.\src\pages\Top3\Top3View.jsx-2899-          }
+.\src\pages\Top3\Top3View.jsx-2900-        }
+.\src\pages\Top3\Top3View.jsx-2901-
+--
+.\src\pages\Top3\Top3View.premium.backup.jsx-1243-          border-color: rgba(201,168,62,0.40);
+.\src\pages\Top3\Top3View.premium.backup.jsx-1244-          box-shadow: 0 10px 24px rgba(0,0,0,0.35);
+.\src\pages\Top3\Top3View.premium.backup.jsx-1245-        }
+.\src\pages\Top3\Top3View.premium.backup.jsx-1246-
+.\src\pages\Top3\Top3View.premium.backup.jsx-1247-        .pp-tab[data-active="1"]{
+.\src\pages\Top3\Top3View.premium.backup.jsx-1248-          background: rgba(201,168,62,0.16);
+.\src\pages\Top3\Top3View.premium.backup.jsx-1249-          border: 1px solid rgba(201,168,62,0.45);
+.\src\pages\Top3\Top3View.premium.backup.jsx-1250-          color: rgba(255,255,255,0.94);
+.\src\pages\Top3\Top3View.premium.backup.jsx-1251-        }
+.\src\pages\Top3\Top3View.premium.backup.jsx-1252-
+.\src\pages\Top3\Top3View.premium.backup.jsx:1253:        .top3-metaGrid,
+.\src\pages\Top3\Top3View.premium.backup.jsx:1254:        .timeline-slot__metaGrid{
+.\src\pages\Top3\Top3View.premium.backup.jsx-1255-          display: grid;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1256-          grid-template-columns: repeat(3, minmax(0, 1fr));
+.\src\pages\Top3\Top3View.premium.backup.jsx-1257-          gap: 10px;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1258-        }
+.\src\pages\Top3\Top3View.premium.backup.jsx-1259-
+.\src\pages\Top3\Top3View.premium.backup.jsx-1260-        .top3-metaItem{
+.\src\pages\Top3\Top3View.premium.backup.jsx-1261-          background: rgba(255,255,255,0.025);
+.\src\pages\Top3\Top3View.premium.backup.jsx-1262-          border: 1px solid rgba(255,255,255,0.08);
+.\src\pages\Top3\Top3View.premium.backup.jsx-1263-          border-radius: 14px;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1264-          padding: 10px 12px;
+--
+.\src\pages\Top3\Top3View.premium.backup.jsx-1276-        }
+.\src\pages\Top3\Top3View.premium.backup.jsx-1277-
+.\src\pages\Top3\Top3View.premium.backup.jsx-1278-        .top3-metaItem__value{
+.\src\pages\Top3\Top3View.premium.backup.jsx-1279-          color: var(--top3-text);
+.\src\pages\Top3\Top3View.premium.backup.jsx-1280-          font-size: 13px;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1281-          font-weight: 800;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1282-          line-height: 1.35;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1283-          word-break: break-word;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1284-        }
+.\src\pages\Top3\Top3View.premium.backup.jsx-1285-
+.\src\pages\Top3\Top3View.premium.backup.jsx:1286:        .top3-stage{
+.\src\pages\Top3\Top3View.premium.backup.jsx-1287-          display: grid;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1288-          gap: 16px;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1289-        }
+.\src\pages\Top3\Top3View.premium.backup.jsx-1290-
+.\src\pages\Top3\Top3View.premium.backup.jsx:1291:        .top3-heroWrap{
+.\src\pages\Top3\Top3View.premium.backup.jsx-1292-          width: 100%;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1293-          max-width: 1120px;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1294-          margin: 0 auto;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1295-        }
+.\src\pages\Top3\Top3View.premium.backup.jsx-1296-
+.\src\pages\Top3\Top3View.premium.backup.jsx:1297:        .top3-secondaryRow{
+.\src\pages\Top3\Top3View.premium.backup.jsx-1298-          width: 100%;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1299-          max-width: 1120px;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1300-          margin: 0 auto;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1301-          display: grid;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1302-          grid-template-columns: repeat(2, minmax(0, 1fr));
+.\src\pages\Top3\Top3View.premium.backup.jsx-1303-          gap: 16px;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1304-          align-items: start;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1305-          justify-content: center;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1306-        }
+.\src\pages\Top3\Top3View.premium.backup.jsx-1307-
+.\src\pages\Top3\Top3View.premium.backup.jsx:1308:        .timeline-slot__cards{
+.\src\pages\Top3\Top3View.premium.backup.jsx-1309-          width: 100%;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1310-          display: grid;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1311-          grid-template-columns: repeat(3, minmax(0, 1fr));
+.\src\pages\Top3\Top3View.premium.backup.jsx-1312-          gap: 14px;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1313-          align-items: start;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1314-        }
+.\src\pages\Top3\Top3View.premium.backup.jsx-1315-
+.\src\pages\Top3\Top3View.premium.backup.jsx-1316-        .timeline-compact{
+.\src\pages\Top3\Top3View.premium.backup.jsx-1317-          margin-top: 2px;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1318-        }
+--
+.\src\pages\Top3\Top3View.premium.backup.jsx-1488-          border-color: rgba(201,168,62,0.35);
+.\src\pages\Top3\Top3View.premium.backup.jsx-1489-        }
+.\src\pages\Top3\Top3View.premium.backup.jsx-1490-
+.\src\pages\Top3\Top3View.premium.backup.jsx-1491-        .timeline-compact__performanceText{
+.\src\pages\Top3\Top3View.premium.backup.jsx-1492-          font-size: 14px;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1493-          font-weight: 900;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1494-          line-height: 1.4;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1495-          color: var(--top3-text);
+.\src\pages\Top3\Top3View.premium.backup.jsx-1496-        }
+.\src\pages\Top3\Top3View.premium.backup.jsx-1497-
+.\src\pages\Top3\Top3View.premium.backup.jsx:1498:        .timeline-slot__header{
+.\src\pages\Top3\Top3View.premium.backup.jsx-1499-          display:flex;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1500-          align-items:flex-start;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1501-          justify-content:space-between;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1502-          gap:14px;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1503-          margin-bottom: 14px;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1504-        }
+.\src\pages\Top3\Top3View.premium.backup.jsx-1505-
+.\src\pages\Top3\Top3View.premium.backup.jsx:1506:        .timeline-slot__title{
+.\src\pages\Top3\Top3View.premium.backup.jsx-1507-          font-weight: 1000;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1508-          font-size: 22px;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1509-          letter-spacing: 0.2px;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1510-          line-height: 1;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1511-        }
+.\src\pages\Top3\Top3View.premium.backup.jsx-1512-
+.\src\pages\Top3\Top3View.premium.backup.jsx:1513:        .timeline-slot__badge{
+.\src\pages\Top3\Top3View.premium.backup.jsx-1514-          border-radius: 999px;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1515-          padding: 10px 14px;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1516-          font-weight: 1000;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1517-          font-size: 12px;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1518-          letter-spacing: 0.55px;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1519-          border: 1px solid rgba(255,255,255,0.14);
+.\src\pages\Top3\Top3View.premium.backup.jsx-1520-          white-space: nowrap;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1521-          box-shadow: 0 10px 24px rgba(0,0,0,0.28);
+.\src\pages\Top3\Top3View.premium.backup.jsx-1522-        }
+.\src\pages\Top3\Top3View.premium.backup.jsx-1523-
+.\src\pages\Top3\Top3View.premium.backup.jsx:1524:        .timeline-slot__badge--hit{
+.\src\pages\Top3\Top3View.premium.backup.jsx-1525-          background: rgba(38, 180, 90, 0.18);
+.\src\pages\Top3\Top3View.premium.backup.jsx-1526-          color: #b8ffd0;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1527-          border-color: rgba(38, 180, 90, 0.35);
+.\src\pages\Top3\Top3View.premium.backup.jsx-1528-        }
+.\src\pages\Top3\Top3View.premium.backup.jsx-1529-
+.\src\pages\Top3\Top3View.premium.backup.jsx:1530:        .timeline-slot__badge--miss{
+.\src\pages\Top3\Top3View.premium.backup.jsx-1531-          background: rgba(220, 70, 70, 0.18);
+.\src\pages\Top3\Top3View.premium.backup.jsx-1532-          color: #ffd0d0;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1533-          border-color: rgba(220, 70, 70, 0.35);
+.\src\pages\Top3\Top3View.premium.backup.jsx-1534-        }
+.\src\pages\Top3\Top3View.premium.backup.jsx-1535-
+.\src\pages\Top3\Top3View.premium.backup.jsx:1536:        .timeline-slot__badge--pending{
+.\src\pages\Top3\Top3View.premium.backup.jsx-1537-          background: rgba(201,168,62,0.16);
+.\src\pages\Top3\Top3View.premium.backup.jsx-1538-          color: rgba(255,255,255,0.92);
+.\src\pages\Top3\Top3View.premium.backup.jsx-1539-          border-color: rgba(201,168,62,0.35);
+.\src\pages\Top3\Top3View.premium.backup.jsx-1540-        }
+.\src\pages\Top3\Top3View.premium.backup.jsx-1541-
+.\src\pages\Top3\Top3View.premium.backup.jsx:1542:        .timeline-slot__resultBox{
+.\src\pages\Top3\Top3View.premium.backup.jsx-1543-          margin-top: 12px;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1544-          display:flex;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1545-          align-items:center;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1546-          gap:14px;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1547-          padding: 12px 14px;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1548-          border-radius: 16px;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1549-          background:
+.\src\pages\Top3\Top3View.premium.backup.jsx-1550-            linear-gradient(180deg, rgba(201,168,62,0.08), rgba(255,255,255,0.02)),
+.\src\pages\Top3\Top3View.premium.backup.jsx-1551-            rgba(255,255,255,0.03);
+.\src\pages\Top3\Top3View.premium.backup.jsx-1552-          border: 1px solid rgba(255,255,255,0.09);
+.\src\pages\Top3\Top3View.premium.backup.jsx-1553-          box-shadow: inset 0 0 0 1px rgba(255,255,255,0.02);
+.\src\pages\Top3\Top3View.premium.backup.jsx-1554-        }
+.\src\pages\Top3\Top3View.premium.backup.jsx-1555-
+.\src\pages\Top3\Top3View.premium.backup.jsx:1556:        .timeline-slot__resultText{
+.\src\pages\Top3\Top3View.premium.backup.jsx-1557-          display:grid;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1558-          gap:2px;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1559-        }
+.\src\pages\Top3\Top3View.premium.backup.jsx-1560-
+.\src\pages\Top3\Top3View.premium.backup.jsx:1561:        .timeline-slot__resultGroup{
+.\src\pages\Top3\Top3View.premium.backup.jsx-1562-          font-weight: 1000;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1563-          font-size: 18px;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1564-          line-height: 1;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1565-        }
+.\src\pages\Top3\Top3View.premium.backup.jsx-1566-
+.\src\pages\Top3\Top3View.premium.backup.jsx:1567:        .timeline-slot__resultAnimal{
+.\src\pages\Top3\Top3View.premium.backup.jsx-1568-          font-size: 12px;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1569-          color: var(--top3-muted);
+.\src\pages\Top3\Top3View.premium.backup.jsx-1570-          text-transform: uppercase;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1571-          letter-spacing: 0.6px;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1572-        }
+.\src\pages\Top3\Top3View.premium.backup.jsx-1573-
+.\src\pages\Top3\Top3View.premium.backup.jsx:1574:        .timeline-slot__insightBox{
+.\src\pages\Top3\Top3View.premium.backup.jsx-1575-          margin-top: 12px;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1576-          padding: 14px 16px;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1577-          border-radius: 16px;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1578-          background:
+.\src\pages\Top3\Top3View.premium.backup.jsx-1579-            linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.015)),
+.\src\pages\Top3\Top3View.premium.backup.jsx-1580-            rgba(255,255,255,0.025);
+.\src\pages\Top3\Top3View.premium.backup.jsx-1581-          border: 1px solid rgba(255,255,255,0.08);
+.\src\pages\Top3\Top3View.premium.backup.jsx-1582-          display: grid;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1583-          gap: 6px;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1584-        }
+.\src\pages\Top3\Top3View.premium.backup.jsx-1585-
+.\src\pages\Top3\Top3View.premium.backup.jsx:1586:        .timeline-slot__insightTitle{
+.\src\pages\Top3\Top3View.premium.backup.jsx-1587-          font-size: 11px;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1588-          font-weight: 1000;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1589-          letter-spacing: 1px;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1590-          text-transform: uppercase;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1591-          color: var(--top3-accent);
+.\src\pages\Top3\Top3View.premium.backup.jsx-1592-        }
+.\src\pages\Top3\Top3View.premium.backup.jsx-1593-
+.\src\pages\Top3\Top3View.premium.backup.jsx:1594:        .timeline-slot__insightText{
+.\src\pages\Top3\Top3View.premium.backup.jsx-1595-          font-size: 14px;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1596-          font-weight: 900;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1597-          line-height: 1.4;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1598-          color: var(--top3-text);
+.\src\pages\Top3\Top3View.premium.backup.jsx-1599-        }
+.\src\pages\Top3\Top3View.premium.backup.jsx-1600-
+.\src\pages\Top3\Top3View.premium.backup.jsx:1601:        .top3-card{
+.\src\pages\Top3\Top3View.premium.backup.jsx-1602-          position: relative;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1603-          background:
+.\src\pages\Top3\Top3View.premium.backup.jsx-1604-            radial-gradient(1100px 280px at 50% 0%, rgba(201,168,62,0.08), transparent 55%),
+.\src\pages\Top3\Top3View.premium.backup.jsx-1605-            linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.00)),
+.\src\pages\Top3\Top3View.premium.backup.jsx-1606-            var(--top3-panel);
+.\src\pages\Top3\Top3View.premium.backup.jsx-1607-          border: 1px solid var(--top3-border);
+.\src\pages\Top3\Top3View.premium.backup.jsx-1608-          border-radius: 20px;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1609-          padding: 16px;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1610-          display: grid;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1611-          gap: 14px;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1612-          box-shadow:
+.\src\pages\Top3\Top3View.premium.backup.jsx-1613-            0 18px 44px rgba(0,0,0,0.30),
+.\src\pages\Top3\Top3View.premium.backup.jsx-1614-            inset 0 0 0 1px rgba(255,255,255,0.03);
+.\src\pages\Top3\Top3View.premium.backup.jsx-1615-          overflow: hidden;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1616-        }
+.\src\pages\Top3\Top3View.premium.backup.jsx-1617-
+.\src\pages\Top3\Top3View.premium.backup.jsx:1618:        .top3-card::after{
+.\src\pages\Top3\Top3View.premium.backup.jsx-1619-          content: "";
+.\src\pages\Top3\Top3View.premium.backup.jsx-1620-          position: absolute;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1621-          inset: 0;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1622-          border-radius: inherit;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1623-          pointer-events: none;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1624-          box-shadow: inset 0 0 0 1px rgba(201,168,62,0.05);
+.\src\pages\Top3\Top3View.premium.backup.jsx-1625-        }
+.\src\pages\Top3\Top3View.premium.backup.jsx-1626-
+.\src\pages\Top3\Top3View.premium.backup.jsx:1627:        .top3-card--hero{
+.\src\pages\Top3\Top3View.premium.backup.jsx-1628-          padding: 18px;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1629-        }
+.\src\pages\Top3\Top3View.premium.backup.jsx-1630-
+.\src\pages\Top3\Top3View.premium.backup.jsx:1631:        .top3-card__topline{
+.\src\pages\Top3\Top3View.premium.backup.jsx-1632-          display:flex;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1633-          align-items:center;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1634-          gap:10px;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1635-        }
+.\src\pages\Top3\Top3View.premium.backup.jsx-1636-
+.\src\pages\Top3\Top3View.premium.backup.jsx-1637-        .top3-rankBadge{
+.\src\pages\Top3\Top3View.premium.backup.jsx-1638-          width: 30px;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1639-          height: 30px;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1640-          border-radius: 10px;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1641-          display: grid;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1642-          place-items: center;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1643-          background: rgba(201,168,62,0.15);
+.\src\pages\Top3\Top3View.premium.backup.jsx-1644-          border: 1px solid rgba(201,168,62,0.35);
+.\src\pages\Top3\Top3View.premium.backup.jsx-1645-          font-weight: 950;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1646-          color: var(--top3-accent);
+.\src\pages\Top3\Top3View.premium.backup.jsx-1647-          flex: 0 0 auto;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1648-        }
+.\src\pages\Top3\Top3View.premium.backup.jsx-1649-
+.\src\pages\Top3\Top3View.premium.backup.jsx:1650:        .top3-card__label{
+.\src\pages\Top3\Top3View.premium.backup.jsx-1651-          font-weight: 950;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1652-          letter-spacing: 0.4px;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1653-          font-size: 14px;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1654-        }
+.\src\pages\Top3\Top3View.premium.backup.jsx-1655-
+.\src\pages\Top3\Top3View.premium.backup.jsx:1656:        .top3-card__summary{
+.\src\pages\Top3\Top3View.premium.backup.jsx-1657-          display:grid;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1658-          grid-template-columns: minmax(0, 1fr) 170px;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1659-          gap: 14px;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1660-          align-items: center;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1661-        }
+.\src\pages\Top3\Top3View.premium.backup.jsx-1662-
+.\src\pages\Top3\Top3View.premium.backup.jsx:1663:        .top3-card--hero .top3-card__summary{
+.\src\pages\Top3\Top3View.premium.backup.jsx-1664-          grid-template-columns: minmax(0, 1fr) 190px;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1665-        }
+.\src\pages\Top3\Top3View.premium.backup.jsx-1666-
+.\src\pages\Top3\Top3View.premium.backup.jsx:1667:        .top3-card__identity{
+.\src\pages\Top3\Top3View.premium.backup.jsx-1668-          display:flex;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1669-          align-items:center;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1670-          gap:14px;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1671-          min-width: 0;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1672-        }
+.\src\pages\Top3\Top3View.premium.backup.jsx-1673-
+.\src\pages\Top3\Top3View.premium.backup.jsx:1674:        .top3-card__identityText{
+.\src\pages\Top3\Top3View.premium.backup.jsx-1675-          display:grid;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1676-          gap: 6px;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1677-          min-width: 0;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1678-        }
+.\src\pages\Top3\Top3View.premium.backup.jsx-1679-
+.\src\pages\Top3\Top3View.premium.backup.jsx:1680:        .top3-card__group{
+.\src\pages\Top3\Top3View.premium.backup.jsx-1681-          font-size: 11px;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1682-          color: var(--top3-muted);
+.\src\pages\Top3\Top3View.premium.backup.jsx-1683-          font-weight: 900;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1684-          letter-spacing: 1px;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1685-        }
+.\src\pages\Top3\Top3View.premium.backup.jsx-1686-
+.\src\pages\Top3\Top3View.premium.backup.jsx:1687:        .top3-card__animal{
+.\src\pages\Top3\Top3View.premium.backup.jsx-1688-          font-size: 24px;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1689-          font-weight: 950;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1690-          letter-spacing: 0.6px;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1691-          line-height: 1.05;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1692-          word-break: break-word;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1693-        }
+.\src\pages\Top3\Top3View.premium.backup.jsx-1694-
+.\src\pages\Top3\Top3View.premium.backup.jsx:1695:        .top3-card--secondary .top3-card__animal{
+.\src\pages\Top3\Top3View.premium.backup.jsx-1696-          font-size: 20px;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1697-        }
+.\src\pages\Top3\Top3View.premium.backup.jsx-1698-
+.\src\pages\Top3\Top3View.premium.backup.jsx:1699:        .top3-card__confidence{
+.\src\pages\Top3\Top3View.premium.backup.jsx-1700-          justify-self: end;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1701-          width: 100%;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1702-          max-width: 190px;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1703-          text-align: right;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1704-          display:grid;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1705-          gap: 6px;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1706-        }
+.\src\pages\Top3\Top3View.premium.backup.jsx-1707-
+.\src\pages\Top3\Top3View.premium.backup.jsx:1708:        .top3-card__confidenceLabel{
+.\src\pages\Top3\Top3View.premium.backup.jsx-1709-          color: var(--top3-muted);
+.\src\pages\Top3\Top3View.premium.backup.jsx-1710-          font-size: 11px;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1711-          font-weight: 900;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1712-          letter-spacing: 0.9px;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1713-        }
+.\src\pages\Top3\Top3View.premium.backup.jsx-1714-
+.\src\pages\Top3\Top3View.premium.backup.jsx:1715:        .top3-card__confidenceValue{
+.\src\pages\Top3\Top3View.premium.backup.jsx-1716-          font-size: 30px;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1717-          font-weight: 950;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1718-          color: var(--top3-accent);
+.\src\pages\Top3\Top3View.premium.backup.jsx-1719-          line-height: 1;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1720-        }
+.\src\pages\Top3\Top3View.premium.backup.jsx-1721-
+.\src\pages\Top3\Top3View.premium.backup.jsx:1722:        .top3-card--secondary .top3-card__confidenceValue{
+.\src\pages\Top3\Top3View.premium.backup.jsx-1723-          font-size: 26px;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1724-        }
+.\src\pages\Top3\Top3View.premium.backup.jsx-1725-
+.\src\pages\Top3\Top3View.premium.backup.jsx:1726:        .top3-card__confidenceBar{
+.\src\pages\Top3\Top3View.premium.backup.jsx-1727-          height: 7px;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1728-          border-radius: 999px;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1729-          background: rgba(255,255,255,0.10);
+.\src\pages\Top3\Top3View.premium.backup.jsx-1730-          overflow: hidden;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1731-        }
+.\src\pages\Top3\Top3View.premium.backup.jsx-1732-
+.\src\pages\Top3\Top3View.premium.backup.jsx:1733:        .top3-card__confidenceBarFill{
+.\src\pages\Top3\Top3View.premium.backup.jsx-1734-          height: 100%;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1735-          border-radius: inherit;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1736-          opacity: 0.78;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1737-        }
+.\src\pages\Top3\Top3View.premium.backup.jsx-1738-
+.\src\pages\Top3\Top3View.premium.backup.jsx:1739:        .top3-card__body{
+.\src\pages\Top3\Top3View.premium.backup.jsx-1740-          border-top: 1px solid rgba(255,255,255,0.07);
+.\src\pages\Top3\Top3View.premium.backup.jsx-1741-          padding-top: 12px;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1742-          display:grid;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1743-          gap: 10px;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1744-        }
+.\src\pages\Top3\Top3View.premium.backup.jsx-1745-
+.\src\pages\Top3\Top3View.premium.backup.jsx:1746:        .top3-card__actions{
+.\src\pages\Top3\Top3View.premium.backup.jsx-1747-          display:flex;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1748-          align-items:center;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1749-          justify-content:space-between;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1750-          gap:12px;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1751-        }
+.\src\pages\Top3\Top3View.premium.backup.jsx-1752-
+.\src\pages\Top3\Top3View.premium.backup.jsx:1753:        .top3-card__sectionTitle{
+.\src\pages\Top3\Top3View.premium.backup.jsx-1754-          font-weight: 900;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1755-          font-size: 13px;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1756-          color: rgba(255,255,255,0.92);
+.\src\pages\Top3\Top3View.premium.backup.jsx-1757-          letter-spacing: 0.2px;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1758-        }
+.\src\pages\Top3\Top3View.premium.backup.jsx-1759-
+.\src\pages\Top3\Top3View.premium.backup.jsx-1760-        .pp-btn{
+.\src\pages\Top3\Top3View.premium.backup.jsx-1761-          border-radius: 999px;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1762-          padding: 9px 12px;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1763-          background: rgba(201,168,62,0.16);
+--
+.\src\pages\Top3\Top3View.premium.backup.jsx-1924-          font-size:10px;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1925-          color: var(--top3-muted);
+.\src\pages\Top3\Top3View.premium.backup.jsx-1926-          text-transform: uppercase;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1927-          white-space: nowrap;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1928-          overflow: hidden;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1929-          text-overflow: ellipsis;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1930-          letter-spacing: 0.5px;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1931-        }
+.\src\pages\Top3\Top3View.premium.backup.jsx-1932-
+.\src\pages\Top3\Top3View.premium.backup.jsx-1933-        @media (max-width: 1180px){
+.\src\pages\Top3\Top3View.premium.backup.jsx:1934:          .top3-secondaryRow{
+.\src\pages\Top3\Top3View.premium.backup.jsx-1935-            max-width: 980px;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1936-          }
+.\src\pages\Top3\Top3View.premium.backup.jsx-1937-
+.\src\pages\Top3\Top3View.premium.backup.jsx:1938:          .timeline-slot__cards{
+.\src\pages\Top3\Top3View.premium.backup.jsx-1939-            grid-template-columns: 1fr;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1940-          }
+.\src\pages\Top3\Top3View.premium.backup.jsx-1941-
+.\src\pages\Top3\Top3View.premium.backup.jsx-1942-          .timeline-compact__grid{
+.\src\pages\Top3\Top3View.premium.backup.jsx-1943-            grid-template-columns: 1fr;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1944-          }
+.\src\pages\Top3\Top3View.premium.backup.jsx-1945-
+.\src\pages\Top3\Top3View.premium.backup.jsx-1946-          .timeline-compact__predictions{
+.\src\pages\Top3\Top3View.premium.backup.jsx-1947-            grid-template-columns: 1fr;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1948-          }
+--
+.\src\pages\Top3\Top3View.premium.backup.jsx-1951-        @media (max-width: 980px){
+.\src\pages\Top3\Top3View.premium.backup.jsx-1952-          .top3-page{
+.\src\pages\Top3\Top3View.premium.backup.jsx-1953-            gap: 14px;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1954-          }
+.\src\pages\Top3\Top3View.premium.backup.jsx-1955-
+.\src\pages\Top3\Top3View.premium.backup.jsx-1956-          .top3-shell{
+.\src\pages\Top3\Top3View.premium.backup.jsx-1957-            padding: 14px;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1958-            border-radius: 18px;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1959-          }
+.\src\pages\Top3\Top3View.premium.backup.jsx-1960-
+.\src\pages\Top3\Top3View.premium.backup.jsx:1961:          .top3-metaGrid,
+.\src\pages\Top3\Top3View.premium.backup.jsx:1962:          .timeline-slot__metaGrid{
+.\src\pages\Top3\Top3View.premium.backup.jsx-1963-            grid-template-columns: 1fr 1fr;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1964-          }
+.\src\pages\Top3\Top3View.premium.backup.jsx-1965-
+.\src\pages\Top3\Top3View.premium.backup.jsx:1966:          .top3-heroWrap,
+.\src\pages\Top3\Top3View.premium.backup.jsx:1967:          .top3-secondaryRow{
+.\src\pages\Top3\Top3View.premium.backup.jsx-1968-            max-width: none;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1969-          }
+.\src\pages\Top3\Top3View.premium.backup.jsx-1970-
+.\src\pages\Top3\Top3View.premium.backup.jsx:1971:          .top3-secondaryRow{
+.\src\pages\Top3\Top3View.premium.backup.jsx-1972-            grid-template-columns: 1fr;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1973-            gap: 14px;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1974-          }
+.\src\pages\Top3\Top3View.premium.backup.jsx-1975-
+.\src\pages\Top3\Top3View.premium.backup.jsx:1976:          .top3-card,
+.\src\pages\Top3\Top3View.premium.backup.jsx:1977:          .top3-card--hero{
+.\src\pages\Top3\Top3View.premium.backup.jsx-1978-            padding: 14px;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1979-            border-radius: 18px;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1980-          }
+.\src\pages\Top3\Top3View.premium.backup.jsx-1981-
+.\src\pages\Top3\Top3View.premium.backup.jsx:1982:          .top3-card__summary,
+.\src\pages\Top3\Top3View.premium.backup.jsx:1983:          .top3-card--hero .top3-card__summary{
+.\src\pages\Top3\Top3View.premium.backup.jsx-1984-            grid-template-columns: 1fr;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1985-            gap: 12px;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1986-          }
+.\src\pages\Top3\Top3View.premium.backup.jsx-1987-
+.\src\pages\Top3\Top3View.premium.backup.jsx:1988:          .top3-card__confidence{
+.\src\pages\Top3\Top3View.premium.backup.jsx-1989-            justify-self: stretch;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1990-            text-align: left;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1991-            max-width: none;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1992-          }
+.\src\pages\Top3\Top3View.premium.backup.jsx-1993-
+.\src\pages\Top3\Top3View.premium.backup.jsx:1994:          .top3-card__confidenceValue{
+.\src\pages\Top3\Top3View.premium.backup.jsx-1995-            font-size: 28px;
+.\src\pages\Top3\Top3View.premium.backup.jsx-1996-          }
+.\src\pages\Top3\Top3View.premium.backup.jsx-1997-
+.\src\pages\Top3\Top3View.premium.backup.jsx:1998:          .top3-card__actions{
+.\src\pages\Top3\Top3View.premium.backup.jsx-1999-            align-items: stretch;
+.\src\pages\Top3\Top3View.premium.backup.jsx-2000-            flex-direction: column;
+.\src\pages\Top3\Top3View.premium.backup.jsx-2001-          }
+.\src\pages\Top3\Top3View.premium.backup.jsx-2002-
+.\src\pages\Top3\Top3View.premium.backup.jsx-2003-          .pp-btn{
+.\src\pages\Top3\Top3View.premium.backup.jsx-2004-            width: 100%;
+.\src\pages\Top3\Top3View.premium.backup.jsx-2005-          }
+.\src\pages\Top3\Top3View.premium.backup.jsx-2006-
+.\src\pages\Top3\Top3View.premium.backup.jsx-2007-          .top3-historyRow{
+.\src\pages\Top3\Top3View.premium.backup.jsx-2008-            grid-template-columns: 1fr;
+.\src\pages\Top3\Top3View.premium.backup.jsx-2009-            align-items:start;
+.\src\pages\Top3\Top3View.premium.backup.jsx-2010-          }
+.\src\pages\Top3\Top3View.premium.backup.jsx-2011-
+.\src\pages\Top3\Top3View.premium.backup.jsx:2012:          .timeline-slot__header{
+.\src\pages\Top3\Top3View.premium.backup.jsx-2013-            flex-direction: column;
+.\src\pages\Top3\Top3View.premium.backup.jsx-2014-            align-items: flex-start;
+.\src\pages\Top3\Top3View.premium.backup.jsx-2015-          }
+.\src\pages\Top3\Top3View.premium.backup.jsx-2016-        }
+.\src\pages\Top3\Top3View.premium.backup.jsx-2017-
+.\src\pages\Top3\Top3View.premium.backup.jsx-2018-        @media (max-width: 640px){
+.\src\pages\Top3\Top3View.premium.backup.jsx-2019-          .timeline-compact__pick{
+.\src\pages\Top3\Top3View.premium.backup.jsx-2020-            grid-template-columns: 26px 40px minmax(0, 1fr);
+.\src\pages\Top3\Top3View.premium.backup.jsx-2021-            gap: 8px;
+.\src\pages\Top3\Top3View.premium.backup.jsx-2022-            padding: 8px;
+--
+.\src\pages\Top3\Top3View.premium.backup.jsx-2043-          .top3-page{
+.\src\pages\Top3\Top3View.premium.backup.jsx-2044-            gap: 12px;
+.\src\pages\Top3\Top3View.premium.backup.jsx-2045-          }
+.\src\pages\Top3\Top3View.premium.backup.jsx-2046-
+.\src\pages\Top3\Top3View.premium.backup.jsx-2047-          .top3-shell{
+.\src\pages\Top3\Top3View.premium.backup.jsx-2048-            padding: 12px;
+.\src\pages\Top3\Top3View.premium.backup.jsx-2049-            border-radius: 16px;
+.\src\pages\Top3\Top3View.premium.backup.jsx-2050-          }
+.\src\pages\Top3\Top3View.premium.backup.jsx-2051-
+.\src\pages\Top3\Top3View.premium.backup.jsx-2052-          .top3-header__title,
+.\src\pages\Top3\Top3View.premium.backup.jsx:2053:          .timeline-slot__title{
+.\src\pages\Top3\Top3View.premium.backup.jsx-2054-            font-size: 17px;
+.\src\pages\Top3\Top3View.premium.backup.jsx-2055-          }
+.\src\pages\Top3\Top3View.premium.backup.jsx-2056-
+.\src\pages\Top3\Top3View.premium.backup.jsx:2057:          .top3-card__topline{
+.\src\pages\Top3\Top3View.premium.backup.jsx-2058-            gap: 8px;
+.\src\pages\Top3\Top3View.premium.backup.jsx-2059-          }
+.\src\pages\Top3\Top3View.premium.backup.jsx-2060-
+.\src\pages\Top3\Top3View.premium.backup.jsx-2061-          .top3-rankBadge{
+.\src\pages\Top3\Top3View.premium.backup.jsx-2062-            width: 28px;
+.\src\pages\Top3\Top3View.premium.backup.jsx-2063-            height: 28px;
+.\src\pages\Top3\Top3View.premium.backup.jsx-2064-            border-radius: 9px;
+.\src\pages\Top3\Top3View.premium.backup.jsx-2065-          }
+.\src\pages\Top3\Top3View.premium.backup.jsx-2066-
+.\src\pages\Top3\Top3View.premium.backup.jsx:2067:          .top3-card__identity{
+.\src\pages\Top3\Top3View.premium.backup.jsx-2068-            gap: 10px;
+.\src\pages\Top3\Top3View.premium.backup.jsx-2069-            align-items: center;
+.\src\pages\Top3\Top3View.premium.backup.jsx-2070-          }
+.\src\pages\Top3\Top3View.premium.backup.jsx-2071-
+.\src\pages\Top3\Top3View.premium.backup.jsx:2072:          .top3-card__animal{
+.\src\pages\Top3\Top3View.premium.backup.jsx-2073-            font-size: 18px;
+.\src\pages\Top3\Top3View.premium.backup.jsx-2074-            letter-spacing: 0.35px;
+.\src\pages\Top3\Top3View.premium.backup.jsx-2075-          }
+.\src\pages\Top3\Top3View.premium.backup.jsx-2076-
+.\src\pages\Top3\Top3View.premium.backup.jsx:2077:          .top3-card--secondary .top3-card__animal{
+.\src\pages\Top3\Top3View.premium.backup.jsx-2078-            font-size: 18px;
+.\src\pages\Top3\Top3View.premium.backup.jsx-2079-          }
+.\src\pages\Top3\Top3View.premium.backup.jsx-2080-
+.\src\pages\Top3\Top3View.premium.backup.jsx:2081:          .top3-card__confidenceValue,
+.\src\pages\Top3\Top3View.premium.backup.jsx:2082:          .top3-card--secondary .top3-card__confidenceValue{
+.\src\pages\Top3\Top3View.premium.backup.jsx-2083-            font-size: 24px;
+.\src\pages\Top3\Top3View.premium.backup.jsx-2084-          }
+.\src\pages\Top3\Top3View.premium.backup.jsx-2085-
+.\src\pages\Top3\Top3View.premium.backup.jsx-2086-          .pp-chipRow{
+.\src\pages\Top3\Top3View.premium.backup.jsx-2087-            grid-template-columns: repeat(2, minmax(0, 1fr));
+.\src\pages\Top3\Top3View.premium.backup.jsx-2088-          }
+.\src\pages\Top3\Top3View.premium.backup.jsx-2089-
+.\src\pages\Top3\Top3View.premium.backup.jsx-2090-          .pp-row{
+.\src\pages\Top3\Top3View.premium.backup.jsx-2091-            grid-template-columns: repeat(2, minmax(0, 1fr));
+.\src\pages\Top3\Top3View.premium.backup.jsx-2092-          }
+--
+.\src\pages\Top3\Top3View.premium.backup.jsx-2097-            letter-spacing: 1px;
+.\src\pages\Top3\Top3View.premium.backup.jsx-2098-          }
+.\src\pages\Top3\Top3View.premium.backup.jsx-2099-
+.\src\pages\Top3\Top3View.premium.backup.jsx-2100-          .pp-copiedBadge{
+.\src\pages\Top3\Top3View.premium.backup.jsx-2101-            right: 6px;
+.\src\pages\Top3\Top3View.premium.backup.jsx-2102-            top: 6px;
+.\src\pages\Top3\Top3View.premium.backup.jsx-2103-            font-size: 9px;
+.\src\pages\Top3\Top3View.premium.backup.jsx-2104-            padding: 3px 6px;
+.\src\pages\Top3\Top3View.premium.backup.jsx-2105-          }
+.\src\pages\Top3\Top3View.premium.backup.jsx-2106-
+.\src\pages\Top3\Top3View.premium.backup.jsx:2107:          .top3-metaGrid,
+.\src\pages\Top3\Top3View.premium.backup.jsx:2108:          .timeline-slot__metaGrid{
+.\src\pages\Top3\Top3View.premium.backup.jsx-2109-            grid-template-columns: 1fr;
+.\src\pages\Top3\Top3View.premium.backup.jsx-2110-          }
+.\src\pages\Top3\Top3View.premium.backup.jsx-2111-        }
+.\src\pages\Top3\Top3View.premium.backup.jsx-2112-
+.\src\pages\Top3\Top3View.premium.backup.jsx-2113-        @media (max-width: 420px){
+.\src\pages\Top3\Top3View.premium.backup.jsx-2114-          .top3-shell{
+.\src\pages\Top3\Top3View.premium.backup.jsx-2115-            padding: 10px;
+.\src\pages\Top3\Top3View.premium.backup.jsx-2116-          }
+.\src\pages\Top3\Top3View.premium.backup.jsx-2117-
+.\src\pages\Top3\Top3View.premium.backup.jsx:2118:          .top3-card,
+.\src\pages\Top3\Top3View.premium.backup.jsx:2119:          .top3-card--hero{
+.\src\pages\Top3\Top3View.premium.backup.jsx-2120-            padding: 12px;
+.\src\pages\Top3\Top3View.premium.backup.jsx-2121-          }
+.\src\pages\Top3\Top3View.premium.backup.jsx-2122-
+.\src\pages\Top3\Top3View.premium.backup.jsx:2123:          .top3-card__group{
+.\src\pages\Top3\Top3View.premium.backup.jsx-2124-            font-size: 10px;
+.\src\pages\Top3\Top3View.premium.backup.jsx-2125-          }
+.\src\pages\Top3\Top3View.premium.backup.jsx-2126-
+.\src\pages\Top3\Top3View.premium.backup.jsx:2127:          .top3-card__animal{
+.\src\pages\Top3\Top3View.premium.backup.jsx-2128-            font-size: 16px;
+.\src\pages\Top3\Top3View.premium.backup.jsx-2129-          }
+.\src\pages\Top3\Top3View.premium.backup.jsx-2130-
+.\src\pages\Top3\Top3View.premium.backup.jsx:2131:          .top3-card__confidenceValue{
+.\src\pages\Top3\Top3View.premium.backup.jsx-2132-            font-size: 22px;
+.\src\pages\Top3\Top3View.premium.backup.jsx-2133-          }
+.\src\pages\Top3\Top3View.premium.backup.jsx-2134-
+.\src\pages\Top3\Top3View.premium.backup.jsx-2135-          .pp-gridBox{
+.\src\pages\Top3\Top3View.premium.backup.jsx-2136-            padding: 10px;
+.\src\pages\Top3\Top3View.premium.backup.jsx-2137-            gap: 7px;
+.\src\pages\Top3\Top3View.premium.backup.jsx-2138-          }
+.\src\pages\Top3\Top3View.premium.backup.jsx-2139-
+.\src\pages\Top3\Top3View.premium.backup.jsx-2140-          .pp-row,
+.\src\pages\Top3\Top3View.premium.backup.jsx-2141-          .pp-chipRow{

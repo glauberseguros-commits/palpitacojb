@@ -1,0 +1,1623 @@
+====================================================================================================
+TOP3-UNI-02 — PREPARAÇÃO DA UNIFICAÇÃO
+====================================================================================================
+
+
+ARQUIVO:
+src\pages\Centenas\modules\milharProbabilityEngine.js
+
+LINHA:
+333
+
+    position: index + 1,
+    ...item,
+  }));
+}
+
+>>> export function chooseBestMilhar(args = {}) {
+  const ranking = rankMilharCandidates(args);
+
+  return {
+    centena: normalizeCentena3(args.centena),
+    winner: ranking[0] || null,
+    ranking,
+    sampleSize: (() => {
+      const centena3 = normalizeCentena3(args.centena);
+
+      const currentCount = Array.isArray(args.prizes)
+        ? args.prizes.reduce((total, prize) => {
+            const milhar = pickMilharFromPrize(prize);
+
+
+ARQUIVO:
+src\pages\Centenas\modules\milharProbabilityEngine.js
+
+LINHA:
+396
+
+  if (n < 100) return "medium";
+  return "high";
+}
+
+export function buildMilharRecommendation(args = {}) {
+>>>   const result = chooseBestMilhar(args);
+  const winner = result?.winner || null;
+  const sampleSize = Number(result?.sampleSize || 0);
+
+  if (!winner) {
+    return {
+      ok: false,
+      status: "insufficient_evidence",
+      model: "MILHAR_PROBABILITY_V2",
+      centena: normalizeCentena3(args?.centena),
+      milhar: null,
+      prefixo: null,
+      score: 0,
+
+
+ARQUIVO:
+src\pages\Centenas\modules\milharProbabilityEngine.js
+
+LINHA:
+674
+
+    evidence: auditEvidence(item),
+  };
+}
+
+export function buildMilharAudit(args = {}) {
+>>>   const result = chooseBestMilhar(args);
+  const recommendation = buildMilharRecommendation(args);
+
+  const ranking = Array.isArray(result?.ranking)
+    ? result.ranking.map(auditCandidate)
+    : [];
+
+  const winner = ranking[0] || null;
+  const runnerUp = ranking[1] || null;
+
+  const scoreGap =
+    winner && runnerUp
+      ? Number(
+
+  C:\Users\glaub\palpitaco\src\pages\Top3\__tests__\top3.public-api.node.test.js:3:import * as publicApi from "../top3.public-api";
+  C:\Users\glaub\palpitaco\src\pages\Top3\__tests__\top3.public-api.node.test.js:4:
+  C:\Users\glaub\palpitaco\src\pages\Top3\__tests__\top3.public-api.node.test.js:5:const EXPECTED_EXPORTS = [
+  C:\Users\glaub\palpitaco\src\pages\Top3\__tests__\top3.public-api.node.test.js:6:  "auditTop3Backtest",
+  C:\Users\glaub\palpitaco\src\pages\Top3\__tests__\top3.public-api.node.test.js:7:  "auditTop3Timeline",
+> C:\Users\glaub\palpitaco\src\pages\Top3\__tests__\top3.public-api.node.test.js:8:  "build16MilharesForGrupo",
+  C:\Users\glaub\palpitaco\src\pages\Top3\__tests__\top3.public-api.node.test.js:9:  "build20MilharesForGrupo",
+  C:\Users\glaub\palpitaco\src\pages\Top3\__tests__\top3.public-api.node.test.js:10:  "buildContextEvidence",
+  C:\Users\glaub\palpitaco\src\pages\Top3\__tests__\top3.public-api.node.test.js:11:  "buildFrequencyEvidence",
+> C:\Users\glaub\palpitaco\src\pages\Top3\__tests__\top3.public-api.node.test.js:12:  "buildMilharesForGrupo",
+  C:\Users\glaub\palpitaco\src\pages\Top3\__tests__\top3.public-api.node.test.js:13:  "buildTimelineTop3",
+  C:\Users\glaub\palpitaco\src\pages\Top3\__tests__\top3.public-api.node.test.js:14:  "calculateEvidenceStrength",
+  C:\Users\glaub\palpitaco\src\pages\Top3\__tests__\top3.public-api.node.test.js:15:  "collectEvidence",
+  C:\Users\glaub\palpitaco\src\pages\Top3\__tests__\top3.public-api.node.test.js:16:  "computeConditionalNextTop3",
+  C:\Users\glaub\palpitaco\src\pages\Top3\__tests__\top3.public-api.node.test.js:17:  "computeConditionalNextTop3V2",
+  C:\Users\glaub\palpitaco\src\pages\Top3\__tests__\top3.public-api.node.test.js:18:  "computeLastSeenByGrupo",
+  C:\Users\glaub\palpitaco\src\pages\Top3\__tests__\top3.public-api.node.test.js:19:  "computeStatisticalTop3V3",
+  C:\Users\glaub\palpitaco\src\pages\Top3\__tests__\top3.public-api.node.test.js:20:  "countAparicoesByGrupoInDraw",
+  C:\Users\glaub\palpitaco\src\pages\Top3\__tests__\top3.public-api.node.test.js:21:  "getNextSlotForLottery",
+  C:\Users\glaub\palpitaco\src\pages\Top3\__tests__\top3.public-api.node.test.js:22:  "getPtRioScheduleForYmd",
+  C:\Users\glaub\palpitaco\src\pages\Top3\__tests__\top3.public-api.node.test.js:23:  "getScheduleForLottery",
+  C:\Users\glaub\palpitaco\src\pages\Top3\__tests__\top3.public-api.node.test.js:24:  "guessPrizeGrupo",
+  C:\Users\glaub\palpitaco\src\pages\Top3\__tests__\top3.public-api.node.test.js:25:  "guessPrizePos",
+  C:\Users\glaub\palpitaco\src\pages\Top3\__tests__\top3.public-api.node.test.js:26:  "indexDrawsByYmdHour",
+  C:\Users\glaub\palpitaco\src\pages\Top3\__tests__\top3.public-api.node.test.js:27:  "isFederalDrawDay",
+  C:\Users\glaub\palpitaco\src\pages\Top3\__tests__\top3.public-api.node.test.js:28:  "isHourInSchedule",
+  C:\Users\glaub\palpitaco\src\pages\Top3\__tests__\top3.public-api.node.test.js:29:  "pickDrawHour",
+  C:\Users\glaub\palpitaco\src\pages\Top3\__tests__\top3.public-api.node.test.js:30:  "pickDrawYMD",
+  C:\Users\glaub\palpitaco\src\pages\Top3\__tests__\top3.public-api.node.test.js:31:  "pickPrize1GrupoFromDraw",
+  C:\Users\glaub\palpitaco\src\pages\Top3\__tests__\top3.public-api.node.test.js:32:  "scheduleSet",
+  C:\Users\glaub\palpitaco\src\pages\Top3\modules\top3.timeline.js:6:  FEDERAL_SCHEDULE,
+  C:\Users\glaub\palpitaco\src\pages\Top3\modules\top3.timeline.js:7:} from "../top3.constants";
+  C:\Users\glaub\palpitaco\src\pages\Top3\modules\top3.timeline.js:8:
+  C:\Users\glaub\palpitaco\src\pages\Top3\modules\top3.timeline.js:9:import {
+  C:\Users\glaub\palpitaco\src\pages\Top3\modules\top3.timeline.js:10:  getScheduleForLottery,
+> C:\Users\glaub\palpitaco\src\pages\Top3\modules\top3.timeline.js:11:  buildMilharesForGrupo,
+  C:\Users\glaub\palpitaco\src\pages\Top3\modules\top3.timeline.js:12:  buildTimelineTop3,
+  C:\Users\glaub\palpitaco\src\pages\Top3\modules\top3.timeline.js:13:  auditTop3Timeline,
+  C:\Users\glaub\palpitaco\src\pages\Top3\modules\top3.timeline.js:14:} from "../top3.engine";
+  C:\Users\glaub\palpitaco\src\pages\Top3\modules\top3.timeline.js:15:
+  C:\Users\glaub\palpitaco\src\pages\Top3\modules\top3.timeline.js:16:import { getAnimalLabel, getImgFromGrupo } from "../../../constants/bichoMap";
+  C:\Users\glaub\palpitaco\src\pages\Top3\modules\top3.timeline.js:17:
+  C:\Users\glaub\palpitaco\src\pages\Top3\modules\top3.timeline.js:18:function clampProb(v) {
+  C:\Users\glaub\palpitaco\src\pages\Top3\modules\top3.timeline.js:19:  const n = Number(v);
+  C:\Users\glaub\palpitaco\src\pages\Top3\modules\top3.timeline.js:20:  if (!Number.isFinite(n)) return 0;
+  C:\Users\glaub\palpitaco\src\pages\Top3\modules\top3.timeline.js:21:  if (n > 1) return Math.max(0, Math.min(1, n / 100));
+  C:\Users\glaub\palpitaco\src\pages\Top3\modules\top3.timeline.js:22:  return Math.max(0, Math.min(1, n));
+  C:\Users\glaub\palpitaco\src\pages\Top3\modules\top3.timeline.js:23:}
+  C:\Users\glaub\palpitaco\src\pages\Top3\modules\top3.timeline.js:24:
+  C:\Users\glaub\palpitaco\src\pages\Top3\modules\top3.timeline.js:25:function resolveProbValue(x) {
+  C:\Users\glaub\palpitaco\src\pages\Top3\modules\top3.timeline.js:26:  return clampProb(x?.scoreProb ?? x?.prob ?? x?.probCond ?? 0);
+  C:\Users\glaub\palpitaco\src\pages\Top3\modules\top3.timeline.js:27:}
+  C:\Users\glaub\palpitaco\src\pages\Top3\modules\top3.timeline.js:28:
+  C:\Users\glaub\palpitaco\src\pages\Top3\modules\top3.timeline.js:29:function normalizeMilhar4(v) {
+  C:\Users\glaub\palpitaco\src\pages\Top3\modules\top3.timeline.js:30:  const dig = String(v || "").replace(/\D+/g, "");
+  C:\Users\glaub\palpitaco\src\pages\Top3\modules\top3.timeline.js:31:  if (!dig) return "";
+  C:\Users\glaub\palpitaco\src\pages\Top3\modules\top3.timeline.js:198:        const cacheKey = [g, slotYmd, slotHour].join("|");
+  C:\Users\glaub\palpitaco\src\pages\Top3\modules\top3.timeline.js:199:
+  C:\Users\glaub\palpitaco\src\pages\Top3\modules\top3.timeline.js:200:        let out = milharesCache.get(cacheKey);
+  C:\Users\glaub\palpitaco\src\pages\Top3\modules\top3.timeline.js:201:
+  C:\Users\glaub\palpitaco\src\pages\Top3\modules\top3.timeline.js:202:        if (!out) {
+> C:\Users\glaub\palpitaco\src\pages\Top3\modules\top3.timeline.js:203:          out = buildMilharesForGrupo({
+  C:\Users\glaub\palpitaco\src\pages\Top3\modules\top3.timeline.js:204:            rangeDraws: range,
+  C:\Users\glaub\palpitaco\src\pages\Top3\modules\top3.timeline.js:205:            analysisHourBucket: slotHour,
+  C:\Users\glaub\palpitaco\src\pages\Top3\modules\top3.timeline.js:206:            schedule: getScheduleForLottery({
+  C:\Users\glaub\palpitaco\src\pages\Top3\modules\top3.timeline.js:207:              lotteryKey: lotteryKeySafe,
+  C:\Users\glaub\palpitaco\src\pages\Top3\modules\top3.timeline.js:208:              ymd: slotYmd,
+  C:\Users\glaub\palpitaco\src\pages\Top3\modules\top3.timeline.js:209:              PT_RIO_SCHEDULE_NORMAL,
+  C:\Users\glaub\palpitaco\src\pages\Top3\modules\top3.timeline.js:210:              PT_RIO_SCHEDULE_WED_SAT,
+  C:\Users\glaub\palpitaco\src\pages\Top3\modules\top3.timeline.js:211:              FEDERAL_SCHEDULE,
+  C:\Users\glaub\palpitaco\src\pages\Top3\modules\top3.timeline.js:212:            }),
+  C:\Users\glaub\palpitaco\src\pages\Top3\modules\top3.timeline.js:213:            grupo2: g,
+  C:\Users\glaub\palpitaco\src\pages\Top3\modules\top3.timeline.js:214:            count: 20,
+  C:\Users\glaub\palpitaco\src\pages\Top3\modules\top3.timeline.js:215:            targetYmd: slotYmd,
+  C:\Users\glaub\palpitaco\src\pages\Top3\modules\top3.timeline.js:216:          });
+  C:\Users\glaub\palpitaco\src\pages\Top3\modules\top3.timeline.js:217:
+  C:\Users\glaub\palpitaco\src\pages\Top3\modules\top3.timeline.js:218:          milharesCache.set(cacheKey, out);
+  C:\Users\glaub\palpitaco\src\pages\Top3\modules\top3.timeline.js:219:        }
+  C:\Users\glaub\palpitaco\src\pages\Top3\modules\top3.timeline.js:220:
+  C:\Users\glaub\palpitaco\src\pages\Top3\modules\top3.timeline.js:221:        const milharesCols = build4ColsFromEngineOut(out, 4, 5);
+  C:\Users\glaub\palpitaco\src\pages\Top3\modules\top3.timeline.js:222:        const milhares20 = milharesCols.flatMap((c) => c.items).slice(0, 20);
+  C:\Users\glaub\palpitaco\src\pages\Top3\modules\top3.timeline.js:223:
+  C:\Users\glaub\palpitaco\src\pages\Top3\modules\top3.viewmodel.js:1:import { safeStr, toHourBucket } from "../top3.formatters";
+> C:\Users\glaub\palpitaco\src\pages\Top3\modules\top3.viewmodel.js:2:import { buildMilharesForGrupo } from "../top3.engine";
+  C:\Users\glaub\palpitaco\src\pages\Top3\modules\top3.viewmodel.js:3:import { getAnimalLabel, getImgFromGrupo } from "../../../constants/bichoMap";
+  C:\Users\glaub\palpitaco\src\pages\Top3\modules\top3.viewmodel.js:4:
+  C:\Users\glaub\palpitaco\src\pages\Top3\modules\top3.viewmodel.js:5:export function clampTop3Prob(v) {
+  C:\Users\glaub\palpitaco\src\pages\Top3\modules\top3.viewmodel.js:6:  const n = Number(v);
+  C:\Users\glaub\palpitaco\src\pages\Top3\modules\top3.viewmodel.js:7:  if (!Number.isFinite(n)) return 0;
+  C:\Users\glaub\palpitaco\src\pages\Top3\modules\top3.viewmodel.js:8:  if (n > 1) return Math.max(0, Math.min(1, n / 100));
+  C:\Users\glaub\palpitaco\src\pages\Top3\modules\top3.viewmodel.js:9:  return Math.max(0, Math.min(1, n));
+  C:\Users\glaub\palpitaco\src\pages\Top3\modules\top3.viewmodel.js:10:}
+  C:\Users\glaub\palpitaco\src\pages\Top3\modules\top3.viewmodel.js:11:
+  C:\Users\glaub\palpitaco\src\pages\Top3\modules\top3.viewmodel.js:12:export function resolveTop3ProbValue(x) {
+  C:\Users\glaub\palpitaco\src\pages\Top3\modules\top3.viewmodel.js:13:  return clampTop3Prob(x?.scoreProb ?? x?.prob ?? x?.probCond ?? 0);
+  C:\Users\glaub\palpitaco\src\pages\Top3\modules\top3.viewmodel.js:14:}
+  C:\Users\glaub\palpitaco\src\pages\Top3\modules\top3.viewmodel.js:15:
+  C:\Users\glaub\palpitaco\src\pages\Top3\modules\top3.viewmodel.js:16:export function normalizeTop3Milhar4(v) {
+  C:\Users\glaub\palpitaco\src\pages\Top3\modules\top3.viewmodel.js:17:  const dig = String(v || "").replace(/\D+/g, "");
+  C:\Users\glaub\palpitaco\src\pages\Top3\modules\top3.viewmodel.js:18:  if (!dig) return "";
+  C:\Users\glaub\palpitaco\src\pages\Top3\modules\top3.viewmodel.js:19:  return dig.length >= 4 ? dig.slice(-4) : dig.padStart(4, "0");
+  C:\Users\glaub\palpitaco\src\pages\Top3\modules\top3.viewmodel.js:20:}
+  C:\Users\glaub\palpitaco\src\pages\Top3\modules\top3.viewmodel.js:21:
+  C:\Users\glaub\palpitaco\src\pages\Top3\modules\top3.viewmodel.js:22:export function buildTop3MilharesCols(out, expectedCols = 4, perCol = 5) {
+  C:\Users\glaub\palpitaco\src\pages\Top3\modules\top3.viewmodel.js:121:  const cacheKey = `${g}|${nextY}|${nextH}|${safeAnalysisHour}`;
+  C:\Users\glaub\palpitaco\src\pages\Top3\modules\top3.viewmodel.js:122:
+  C:\Users\glaub\palpitaco\src\pages\Top3\modules\top3.viewmodel.js:123:  let out = milharesCache?.get?.(cacheKey);
+  C:\Users\glaub\palpitaco\src\pages\Top3\modules\top3.viewmodel.js:124:
+  C:\Users\glaub\palpitaco\src\pages\Top3\modules\top3.viewmodel.js:125:  if (!out) {
+> C:\Users\glaub\palpitaco\src\pages\Top3\modules\top3.viewmodel.js:126:    out = buildMilharesForGrupo({
+  C:\Users\glaub\palpitaco\src\pages\Top3\modules\top3.viewmodel.js:127:      rangeDraws,
+  C:\Users\glaub\palpitaco\src\pages\Top3\modules\top3.viewmodel.js:128:      analysisHourBucket: safeAnalysisHour,
+  C:\Users\glaub\palpitaco\src\pages\Top3\modules\top3.viewmodel.js:129:      schedule,
+  C:\Users\glaub\palpitaco\src\pages\Top3\modules\top3.viewmodel.js:130:      grupo2: g,
+  C:\Users\glaub\palpitaco\src\pages\Top3\modules\top3.viewmodel.js:131:      count: 20,
+  C:\Users\glaub\palpitaco\src\pages\Top3\modules\top3.viewmodel.js:132:      targetYmd: nextY,
+  C:\Users\glaub\palpitaco\src\pages\Top3\modules\top3.viewmodel.js:133:    });
+  C:\Users\glaub\palpitaco\src\pages\Top3\modules\top3.viewmodel.js:134:
+  C:\Users\glaub\palpitaco\src\pages\Top3\modules\top3.viewmodel.js:135:    milharesCache?.set?.(cacheKey, out);
+  C:\Users\glaub\palpitaco\src\pages\Top3\modules\top3.viewmodel.js:136:  }
+  C:\Users\glaub\palpitaco\src\pages\Top3\modules\top3.viewmodel.js:137:
+  C:\Users\glaub\palpitaco\src\pages\Top3\modules\top3.viewmodel.js:138:  const milharesCols = buildTop3MilharesCols(out, 4, 5);
+  C:\Users\glaub\palpitaco\src\pages\Top3\modules\top3.viewmodel.js:139:  const milhares20 = milharesCols.flatMap((c) => c.items).slice(0, 20);
+  C:\Users\glaub\palpitaco\src\pages\Top3\modules\top3.viewmodel.js:140:
+  C:\Users\glaub\palpitaco\src\pages\Top3\modules\top3.viewmodel.js:141:  const prob = resolveTop3ProbValue(item);
+  C:\Users\glaub\palpitaco\src\pages\Top3\modules\top3.viewmodel.js:142:
+  C:\Users\glaub\palpitaco\src\pages\Top3\modules\top3.viewmodel.js:143:  const bgPrimary = normalizeTop3ImgSrc(
+  C:\Users\glaub\palpitaco\src\pages\Top3\modules\top3.viewmodel.js:144:    safeStr(getImgFromGrupo?.(g, 512) || getImgFromGrupo?.(g) || ""),
+  C:\Users\glaub\palpitaco\src\pages\Top3\modules\top3.viewmodel.js:145:    publicBase
+  C:\Users\glaub\palpitaco\src\pages\Top3\modules\top3.viewmodel.js:146:  );
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js:3507:
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js:3508:  return out.filter(Boolean);
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js:3509:}
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js:3510:
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js:3511:
+> C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js:3512:export function buildMilharesForGrupo({
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js:3513:  rangeDraws,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js:3514:  analysisHourBucket,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js:3515:  schedule,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js:3516:  grupo2,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js:3517:  count = 20,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js:3518:  targetYmd = "",
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js:3519:}) {
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js:3520:  const list = Array.isArray(rangeDraws) ? rangeDraws : [];
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js:3521:  const target = toHourBucket(analysisHourBucket);
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js:3522:  const schSet = scheduleSet(schedule);
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js:3523:  const targetDay = safeStr(targetYmd);
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js:3524:  const targetDow = isYMD(targetDay) ? getDowKey(targetDay) : null;
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js:3525:
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js:3526:  const N = Number.isFinite(Number(count))
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js:3527:    ? Math.max(4, Math.trunc(Number(count)))
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js:3528:    : 20;
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js:3529:
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js:3530:  const grupoNum = Number(grupo2);
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js:3531:
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js:3532:  if (!Number.isFinite(grupoNum) || grupoNum < 1 || grupoNum > 25 || !list.length) {
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js:3821:  while (slots.length < N) slots.push({ dezena: "", milhar: "" });
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js:3822:
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js:3823:  return { dezenas: dezenasFixas, slots: slots.slice(0, N) };
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js:3824:}
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js:3825:
+> C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js:3826:export function build16MilharesForGrupo(args) {
+> C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js:3827:  return buildMilharesForGrupo({ ...(args || {}), count: 16 });
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js:3828:}
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js:3829:
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js:3830:export function build20MilharesForGrupo(args) {
+> C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js:3831:  return buildMilharesForGrupo({ ...(args || {}), count: 20 });
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js:3832:}
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js:3833:
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js:3834:/* =========================
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js:3835:   TIMELINE DO DIA (CADEIA PREDITIVA)
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js:3836:========================= */
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js:3837:
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js:3838:
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js:3839:
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js:3840:export function auditTop3Timeline({
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js:3841:  timeline,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js:3842:  lotteryKey = "",
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js:3843:}) {
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js:3844:  const rows = Array.isArray(timeline) ? timeline : [];
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js:3845:
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js:3846:  const validated = rows.filter((slot) => {
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js:3847:    const status = String(slot?.status || "").toLowerCase();
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js:3848:    return status === "validated" && Number.isFinite(Number(slot?.resultGrupo));
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js:3849:  });
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js:3850:
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js:3851:  const total = validated.length;
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js:3507:
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js:3508:  return out.filter(Boolean);
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js:3509:}
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js:3510:
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js:3511:
+> C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js:3512:export function buildMilharesForGrupo({
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js:3513:  rangeDraws,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js:3514:  analysisHourBucket,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js:3515:  schedule,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js:3516:  grupo2,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js:3517:  count = 20,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js:3518:  targetYmd = "",
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js:3519:}) {
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js:3520:  const list = Array.isArray(rangeDraws) ? rangeDraws : [];
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js:3521:  const target = toHourBucket(analysisHourBucket);
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js:3522:  const schSet = scheduleSet(schedule);
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js:3523:  const targetDay = safeStr(targetYmd);
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js:3524:  const targetDow = isYMD(targetDay) ? getDowKey(targetDay) : null;
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js:3525:
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js:3526:  const N = Number.isFinite(Number(count))
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js:3527:    ? Math.max(4, Math.trunc(Number(count)))
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js:3528:    : 20;
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js:3529:
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js:3530:  const grupoNum = Number(grupo2);
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js:3531:
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js:3532:  if (!Number.isFinite(grupoNum) || grupoNum < 1 || grupoNum > 25 || !list.length) {
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js:3821:  while (slots.length < N) slots.push({ dezena: "", milhar: "" });
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js:3822:
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js:3823:  return { dezenas: dezenasFixas, slots: slots.slice(0, N) };
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js:3824:}
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js:3825:
+> C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js:3826:export function build16MilharesForGrupo(args) {
+> C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js:3827:  return buildMilharesForGrupo({ ...(args || {}), count: 16 });
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js:3828:}
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js:3829:
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js:3830:export function build20MilharesForGrupo(args) {
+> C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js:3831:  return buildMilharesForGrupo({ ...(args || {}), count: 20 });
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js:3832:}
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js:3833:
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js:3834:/* =========================
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js:3835:   TIMELINE DO DIA (CADEIA PREDITIVA)
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js:3836:========================= */
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js:3837:
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js:3838:
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js:3839:
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js:3840:export function auditTop3Timeline({
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js:3841:  timeline,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js:3842:  lotteryKey = "",
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js:3843:}) {
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js:3844:  const rows = Array.isArray(timeline) ? timeline : [];
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js:3845:
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js:3846:  const validated = rows.filter((slot) => {
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js:3847:    const status = String(slot?.status || "").toLowerCase();
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js:3848:    return status === "validated" && Number.isFinite(Number(slot?.resultGrupo));
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js:3849:  });
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js:3850:
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js:3851:  const total = validated.length;
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.js:3610:
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.js:3611:  return out.filter(Boolean);
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.js:3612:}
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.js:3613:
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.js:3614:
+> C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.js:3615:export function buildMilharesForGrupo({
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.js:3616:  rangeDraws,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.js:3617:  analysisHourBucket,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.js:3618:  schedule,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.js:3619:  grupo2,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.js:3620:  count = 20,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.js:3621:  targetYmd = "",
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.js:3622:}) {
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.js:3623:  const list = Array.isArray(rangeDraws) ? rangeDraws : [];
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.js:3624:  const target = toHourBucket(analysisHourBucket);
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.js:3625:  const schSet = scheduleSet(schedule);
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.js:3626:  const targetDay = safeStr(targetYmd);
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.js:3627:  const targetDow = isYMD(targetDay) ? getDowKey(targetDay) : null;
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.js:3628:
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.js:3629:  const N = Number.isFinite(Number(count))
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.js:3630:    ? Math.max(4, Math.trunc(Number(count)))
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.js:3631:    : 20;
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.js:3632:
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.js:3633:  const grupoNum = Number(grupo2);
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.js:3634:
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.js:3635:  if (!Number.isFinite(grupoNum) || grupoNum < 1 || grupoNum > 25 || !list.length) {
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.js:3924:  while (slots.length < N) slots.push({ dezena: "", milhar: "" });
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.js:3925:
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.js:3926:  return { dezenas: dezenasFixas, slots: slots.slice(0, N) };
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.js:3927:}
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.js:3928:
+> C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.js:3929:export function build16MilharesForGrupo(args) {
+> C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.js:3930:  return buildMilharesForGrupo({ ...(args || {}), count: 16 });
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.js:3931:}
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.js:3932:
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.js:3933:export function build20MilharesForGrupo(args) {
+> C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.js:3934:  return buildMilharesForGrupo({ ...(args || {}), count: 20 });
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.js:3935:}
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.js:3936:
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.js:3937:/* =========================
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.js:3938:   TIMELINE DO DIA (CADEIA PREDITIVA)
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.js:3939:========================= */
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.js:3940:
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.js:3941:
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.js:3942:
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.js:3943:export function auditTop3Timeline({
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.js:3944:  timeline,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.js:3945:  lotteryKey = "",
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.js:3946:}) {
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.js:3947:  const rows = Array.isArray(timeline) ? timeline : [];
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.js:3948:
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.js:3949:  const validated = rows.filter((slot) => {
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.js:3950:    const status = String(slot?.status || "").toLowerCase();
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.js:3951:
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.js:3952:    return (
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.js:3953:      status === "validated" &&
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.js:3954:      Number.isFinite(Number(slot?.resultGrupo))
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:26:  findLastDrawInList,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:27:  pickDrawHour,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:28:  pickDrawYMD,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:29:  pickPrize1GrupoFromDraw,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:30:  getPreviousDrawRobust,
+> C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:31:  build16MilharesForGrupo,
+> C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:32:  buildMilharesForGrupo,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:33:  getNextSlotForLottery,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:34:  isFederalDrawDay,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:35:} from "./top3.engine";
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:36:
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:37:import { lotteryLabel } from "./top3.selectors";
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:38:
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:39:import {
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:40:  registerPrediction,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:41:  reconcilePendingTop3Log,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:42:  ensureDayTimeline,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:43:} from "./top3.storage";
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:44:
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:45:import {
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:46:  saveTop3PredictionSnapshot,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:47:  loadTop3PredictionDay,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:48:  reconcileTop3PredictionDay,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:49:} from "./top3.firestore";
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:50:
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:51:import {
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:52:  getKingResultsByDate,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:985:
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:986:      if (cached) {
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:987:        return cached;
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:988:      }
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:989:
+> C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:990:      const generated = buildMilharesForGrupo({
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:991:        rangeDraws,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:992:        analysisHourBucket,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:993:        schedule,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:994:        grupo2,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:995:        count,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:996:        targetYmd: target,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:997:      });
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:998:
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:999:      milharesCacheRef.current.set(cacheKey, generated);
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1000:
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1001:      return generated;
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1002:    },
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1003:    [
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1004:      rangeDraws,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1005:      analysisHourBucket,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1006:      schedule,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1007:      scheduleKey,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1008:      analysisYmd,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1009:      lotteryKeySafe,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1010:    ]
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.public-api.js:18:  buildTimelineTop3,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.public-api.js:19:  auditTop3Timeline,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.public-api.js:20:  auditTop3Backtest,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.public-api.js:21:
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.public-api.js:22:  // Milhares
+> C:\Users\glaub\palpitaco\src\pages\Top3\top3.public-api.js:23:  buildMilharesForGrupo,
+> C:\Users\glaub\palpitaco\src\pages\Top3\top3.public-api.js:24:  build16MilharesForGrupo,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.public-api.js:25:  build20MilharesForGrupo,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.public-api.js:26:
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.public-api.js:27:  // Agenda e slots
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.public-api.js:28:  getScheduleForLottery,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.public-api.js:29:  getPtRioScheduleForYmd,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.public-api.js:30:  getNextSlotForLottery,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.public-api.js:31:  isFederalDrawDay,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.public-api.js:32:  isHourInSchedule,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.public-api.js:33:  scheduleSet,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.public-api.js:34:
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.public-api.js:35:  // Normalização e leitura de resultados
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.public-api.js:36:  pickDrawHour,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.public-api.js:37:  pickDrawYMD,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.public-api.js:38:  pickPrize1GrupoFromDraw,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.public-api.js:39:  guessPrizeGrupo,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.public-api.js:40:  guessPrizePos,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.public-api.js:41:
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.public-api.js:42:  // Índices e utilitários públicos
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.public-api.js:43:  indexDrawsByYmdHour,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.public-api.js:44:  computeLastSeenByGrupo,
+On branch main
+Your branch is up to date with 'origin/main'.
+
+Changes not staged for commit:
+  (use "git add <file>..." to update what will be committed)
+  (use "git restore <file>..." to discard changes in working directory)
+	modified:   backend/scripts/autoImportToday.js
+	modified:   src/pages/Top3/modules/scoreEngine/scoreEngineV2.js
+
+Untracked files:
+  (use "git add <file>..." to include in what will be committed)
+	auditoria_api_github_cron_21h30.txt
+	auditoria_automacao_resultados_pc_desligado.txt
+	auditoria_backtest_top3_base.txt
+	auditoria_byHour.txt
+	auditoria_causa_18h_2026-07-11.txt
+	auditoria_cirurgica_21h30.txt
+	auditoria_comparativa_milhar_v2_v3.txt
+	auditoria_contexto_probabilistico_milhar.txt
+	auditoria_decisores_calendario_pt_rio.txt
+	auditoria_docsDay.txt
+	auditoria_docs_2026-07-11.txt
+	auditoria_estado_scheduler.txt
+	auditoria_estado_workflow_github.txt
+	auditoria_estrutural_auto_import.txt
+	auditoria_execucoes_falhas_auto_import.txt
+	auditoria_execucoes_reais_auto_import_21h.txt
+	auditoria_falha_real_auto_import.txt
+	auditoria_firestore_PT_RIO_2026-07-11.txt
+	auditoria_fluxo_milhar_publica.txt
+	auditoria_fluxo_real_auto_import.txt
+	auditoria_fluxo_slot_auto_import.txt
+	auditoria_fluxo_status_slot.txt
+	auditoria_fonte_backtest_milhar.txt
+	auditoria_historico_cron_21h30.txt
+	auditoria_integracao_federal20_runtime.txt
+	auditoria_janelas_slot_21h30.txt
+	auditoria_logica_autoImportToday.txt
+	auditoria_motor_milhar_v2.txt
+	auditoria_origem_drawsNoPrizes.txt
+	auditoria_origem_presentHours.txt
+	auditoria_pre_backtest_milhar.txt
+	auditoria_regra_federal20_remove_rj18.txt
+	auditoria_return_api_results.txt
+	auditoria_runImport_completa.txt
+	auditoria_runImport_excecoes.txt
+	auditoria_runs_21h30_janelas_utc.txt
+	auditoria_runs_reais_21h30_github.txt
+	auditoria_top3_base_2026-07-09.txt
+	auditoria_top3_estrutura_completa.txt
+	auditoria_top3_fluxo_real.txt
+	auditoria_top3_slot_2026-07-09.txt
+	auditoria_workflows_importacao.txt
+	autoImportToday_completo.txt
+	backend/engine/scoreEngineE08Experimental.js
+	backend/engine/scoreEngineV4Experimental.js
+	backend/scripts/auditTop3E08DifferencesExperimental.js
+	backend/scripts/backtestTop3AblationExperimental.js
+	backend/scripts/backtestTop3E07Experimental.js
+	backend/scripts/backtestTop3E08Experimental.js
+	inventario_pt_rio_hardcoded.txt
+	src/pages/Top3/__tests__/top3.schedule-calendar-rules.node.test.js
+	tmp/App.before_perf03b.jsx
+	tmp/App.before_perf03e.jsx
+	tmp/App.before_perf03f.jsx
+	tmp/App.before_perf03g.jsx
+	tmp/App.before_perf03i.jsx
+	tmp/CentenasView.before_cnt_hor_04.jsx
+	tmp/Dashboard.before_fed19.jsx
+	tmp/Dashboard.before_fed21.jsx
+	tmp/FRQ06_Statistics_completo.txt
+	tmp/FRQ09_1_fluxo_real_copia.txt
+	tmp/FRQ10_Statistics_atual_completo.txt
+	tmp/FiltersBar.before_nac31.jsx
+	tmp/Late.before-atp06.jsx
+	tmp/Late.before-atp07.jsx
+	tmp/Late.before-atp08.jsx
+	tmp/PERF-TOP3-50_motor_completo.zip
+	tmp/Results.before-lkn189.jsx
+	tmp/Results.before-lkn190.jsx
+	tmp/Results.before-lkn31_1.jsx
+	tmp/Results.before-nat11.jsx
+	tmp/Search.before-federal-19h.jsx
+	tmp/Search.before-lotteries.jsx
+	tmp/Search.jsx.txt
+	tmp/TOP3_BACKTEST_JSON_STRUCTURE.txt
+	tmp/TOP3_BASELINE_AUDITORIA_FINAL_2026-07-17.md
+	tmp/TOP3_BASELINE_METRICAS_OFICIAIS.json
+	tmp/TOP3_BASELINE_METRICAS_OFICIAIS.txt
+	tmp/TOP3_PRE_V4_PATH_AUDIT.txt
+	tmp/TOP3_RETORNO_BACKTEST_AUDITORIA.txt
+	tmp/TOP3_V3_INJECTION_EQUIVALENCE.json
+	tmp/TOP3_V3_INJECTION_EQUIVALENCE.txt
+	tmp/TOP3_V3_INJECTION_EQUIVALENCE_REAL.json
+	tmp/TOP3_V3_INJECTION_EQUIVALENCE_REAL.txt
+	tmp/TOP3_V4_PONTO_DE_INTEGRACAO.txt
+	tmp/Top3View.before_loterias_linha_unica.jsx
+	tmp/Top3View.before_remove_hero_visual.jsx
+	tmp/arch01_auditoria_arquitetural.txt
+	tmp/arch02_mapa_normalizacao_horarios.txt
+	tmp/arch03_arquivos_completos_normalizacao.txt
+	tmp/arch03_inventario_refatoracao.txt
+	tmp/arch04_dependencias_normalizacao.txt
+	tmp/arch05_inventario_refatoracao.txt
+	tmp/arch06_arquivos_completos_loterias.txt
+	tmp/atp01_filtros_atrasados_audit.txt
+	tmp/atp02_componente_atrasados.txt
+	tmp/atp03_late_blocos_exatos.txt
+	tmp/atp04_getKingLateByRange_contract.txt
+	tmp/atp05_late_build.log
+	tmp/atp05_late_implementation.log
+	tmp/atp09_late_git_log.txt
+	tmp/atp09_origem_seletor_antigo_atrasados.txt
+	tmp/atrasados_look_raio_x.zip
+	tmp/atrasados_look_raio_x/
+	tmp/audit_nacional_2026_05_06.js
+	tmp/audit_nacional_firestore.js
+	tmp/audit_nacional_schedule_boundaries.js
+	tmp/audit_nacional_schedule_transition.js
+	tmp/audit_results_pt_rio_18h_19h.txt
+	tmp/audit_v4_predictive_telemetry.js
+	tmp/auditoria_auth_ampla.txt
+	tmp/auditoria_auth_top3.txt
+	tmp/auditoria_backend_top3_pipeline.txt
+	tmp/auditoria_cirurgica_listeners_top3.txt
+	tmp/auditoria_estrutural_auto_import/
+	tmp/auditoria_execucoes_falhas_auto_import/
+	tmp/auditoria_firestore_listeners.txt
+	tmp/auditoria_fluxo_carregamento_top3.txt
+	tmp/auditoria_performance_bootstrap.txt
+	tmp/auditoria_results_federal_datas.txt
+	tmp/auditoria_top3_firestore_core.txt
+	tmp/auditoria_top3_historico_sobrescrito.txt
+	tmp/auditoria_top3_persistencia_historico.txt
+	tmp/auditoria_top3_schedule_origem.txt
+	tmp/aut01_look_missing_schedules.txt
+	tmp/aut02_look_logs/
+	tmp/aut03_autoImportToday_full.txt
+	tmp/aut04_autoImportToday_lines_1_240.txt
+	tmp/aut05_backup/
+	tmp/aut06_look_final_validation.txt
+	tmp/aut08_schedule_diagnostic.txt
+	tmp/aut09_new_commit_schedule_check.txt
+	tmp/aut10_schedule_reactivation.txt
+	tmp/aut11_after_reactivation_check.txt
+	tmp/aut11b_correct_schedule_window.txt
+	tmp/aut12a_new_head_audit.txt
+	tmp/aut12b_auto-import.before.yml
+	tmp/aut12b_explicit_cron_publish.txt
+	tmp/aut13c_cron_proof.txt
+	tmp/aut13d_second_explicit_window.txt
+	tmp/aut14_cron_and_production_gaps.txt
+	tmp/aut15_exact_missing_results.txt
+	tmp/aut15_look_2026-07-21_1400.log
+	tmp/aut15_nacional_2026-07-21_1000.log
+	tmp/aut16_scheduler_architecture_inventory.txt
+	tmp/aut16b_scheduler_config_short.txt
+	tmp/aut17_nacional_15h_recovery.txt
+	tmp/aut17_nacional_2026-07-21_1500.log
+	tmp/aut18_render_scheduler_publish.txt
+	tmp/auto-import.before.LKN148.yml
+	tmp/autoImportToday.before.LKN146.js
+	tmp/autoImportToday_para_correcao.txt
+	tmp/auto_import_failure_29365229224.txt
+	tmp/backend_prediction_pipeline.txt
+	tmp/backtestTop3AblationExperimental.before_telemetry.js
+	tmp/backtestTop3E07Experimental.before-e07-2a-repair.js
+	tmp/backtestTop3E07Experimental.before-e07-2a.js
+	tmp/backtestTop3E08Experimental.before_full.js
+	tmp/backtestTop3E08Experimental.before_shared_snapshot.js
+	tmp/backup_atp05_late/
+	tmp/backup_cen_v3_02_20260724_163724/
+	tmp/backup_centenas_federal_scope_20260715_224348/
+	tmp/backup_centenas_lottery_20260715_210718/
+	tmp/backup_centenas_performance_20260715_221100/
+	tmp/backup_centenas_stale_20260715_215026/
+	tmp/backup_centenas_v3_20260724_162030/
+	tmp/backup_top3_core_commit1_20260715_125156/
+	tmp/backup_top3_effects_20260715_234759/
+	tmp/backup_top3_firestore_20260714_232456/
+	tmp/backup_top3_historico_20260714_225544/
+	tmp/backup_tpp01_04/
+	tmp/backup_tpp01_04b/
+	tmp/bet_remove_01/
+	tmp/bet_remove_01_resultado.txt
+	tmp/bootstrapTop3History_auditoria.txt
+	tmp/bootstrap_commit_audit.txt
+	tmp/bootstrap_startup_audit.txt
+	tmp/busca_federal_horarios.txt
+	tmp/busca_loterias_implementacao.txt
+	tmp/busca_loterias_raio_x.zip
+	tmp/busca_loterias_raio_x/
+	tmp/capture_v4_real_input.js
+	tmp/cen_build_06_warnings.txt
+	tmp/cen_filtro_01_diagnostico_completo.txt
+	tmp/cen_filtro_02_codigo_real.txt
+	tmp/cen_filtro_03_backup_20260724_150921/
+	tmp/cen_filtro_03_patch.py
+	tmp/cen_filtro_03_resultado.txt
+	tmp/cen_filtro_04_ambiente_testes.txt
+	tmp/cen_filtro_05_publicacao.txt
+	tmp/cen_flt_01_auditoria_completa.txt
+	tmp/cen_flt_02_backup_20260724_150229/
+	tmp/cen_flt_02_build.log
+	tmp/cen_flt_02_codigo_real.txt
+	tmp/cen_flt_02_patch.py
+	tmp/cen_pub_01_build.txt
+	tmp/cen_pub_02_publicacao.txt
+	tmp/cen_uni_01_diagnostico_completo.txt
+	tmp/cen_uni_02_auditoria_completa.txt
+	tmp/cen_v3_02_patch.py
+	tmp/cen_v3_04_auditoria.txt
+	tmp/centenas_auditoria_filtro_loteria.txt
+	tmp/centenas_build_auditoria.txt
+	tmp/centenas_contrato_king_performance.txt
+	tmp/centenas_federal_scope_build_20260715_224348.log
+	tmp/centenas_filtro_loteria_direcionado.txt
+	tmp/centenas_performance_auditoria.txt
+	tmp/centenas_performance_build_20260715_221100.log
+	tmp/centenas_schedule_audit.txt
+	tmp/centenas_stale_build_20260715_215026.log
+	tmp/cleanup_nacional_legacy.js
+	tmp/cleanup_nacional_legacy_batched.js
+	tmp/cloud05_scheduler_job.txt
+	tmp/cloud06_auto_import_job.txt
+	tmp/cloud07_loterias_processadas.txt
+	tmp/cloud08_scheduler_21h_update.txt
+	tmp/cnt_hor_02_rio_vs_loterias.txt
+	tmp/cnt_hor_03_centenas_frontend_flow.txt
+	tmp/cnt_hor_04a_anchors.txt
+	tmp/collectEvidence_audit.txt
+	tmp/commit3_prediction_contract.txt
+	tmp/commit4_top3_service_contracts.txt
+	tmp/computeStatisticalTop3V3_full.txt
+	tmp/computeStatisticalTop3V3_locations.txt
+	tmp/computeStatisticalTop3V3_locations_focused.txt
+	tmp/computeStatisticalTop3V3_ranked_return_3025_3150.txt
+	tmp/computeStatisticalTop3V3_return_final_3140_3225.txt
+	tmp/cost01_firestore_reads_audit.txt
+	tmp/cost02_top3_full_pipeline.txt
+	tmp/cost03_integridade_snapshots_backend.txt
+	tmp/cost04_frontend_historical_calls.txt
+	tmp/cost05_callers_criticos.txt
+	tmp/cost06_consumidores_criticos_completos.txt
+	tmp/cost07_centenas_hour_filter_diagnostic.txt
+	tmp/cost09_firestore_baseline.txt
+	tmp/cost09b_post_deploy_status.txt
+	tmp/dat01_bounds_look_nacional.txt
+	tmp/dat02_floor_look_nacional.txt
+	tmp/dat04_post_deploy_validation.txt
+	tmp/dat06_minymd_consumers.txt
+	tmp/dat07_nacional_max_date_diagnostic.txt
+	tmp/diagnostico_timeout_top3_producao.txt
+	tmp/diagnostico_useeffects_top3.txt
+	tmp/down_01b_downloads.txt
+	tmp/down_02_backup_20260724_154912/
+	tmp/down_02_build.log
+	tmp/down_02_patch.py
+	tmp/down_02_resultado.txt
+	tmp/drawRepository_consumers.txt
+	tmp/dwn03_backup_20260724_172027/
+	tmp/dwn03_patch.py
+	tmp/dwn03_resultado.txt
+	tmp/dwn_aud_01_filtro_loterias.txt
+	tmp/dwn_aud_02_king_results_service_completo.txt
+	tmp/e07_comparison_PT_RIO_full.json
+	tmp/e07_comparison_PT_RIO_full.txt
+	tmp/e07_comparison_PT_RIO_full_console.log
+	tmp/e07_comparison_PT_RIO_limit_100.json
+	tmp/e07_comparison_PT_RIO_limit_100.txt
+	tmp/e07_preparation_report.txt
+	tmp/e07_transition_structure_audit.txt
+	tmp/e07_transition_structure_audit_console_safe.txt
+	tmp/e08_audit_integration.txt
+	tmp/e08_case_audit_console.txt
+	tmp/e08_case_divergence_audit.txt
+	tmp/e08_comparison_PT_RIO_full.json
+	tmp/e08_comparison_PT_RIO_full.txt
+	tmp/e08_comparison_PT_RIO_full_console.log
+	tmp/e08_comparison_PT_RIO_limit_100.json
+	tmp/e08_comparison_PT_RIO_limit_100.txt
+	tmp/e08_comparison_PT_RIO_limit_100_console.log
+	tmp/e08_computeStatisticalTop3_audit.txt
+	tmp/e08_consolidated_analysis.txt
+	tmp/e08_decisive_cases_analysis.txt
+	tmp/e08_decisive_cases_detailed.json
+	tmp/e08_decisive_cases_detailed.txt
+	tmp/e08_decisive_cases_raw_full.txt
+	tmp/e08_difference_capability.txt
+	tmp/e08_differences_limit_500.json
+	tmp/e08_differences_limit_500.txt
+	tmp/e08_differences_limit_7406_console.log
+	tmp/e08_drawsRange_origin_audit.txt
+	tmp/e08_final_report.md
+	tmp/e08_full_shared_snapshot_console.log
+	tmp/e08_gain_loss_matrix.txt
+	tmp/e08_history_builder_audit.txt
+	tmp/e08_hour_mechanism_audit.txt
+	tmp/e08_json_structure.txt
+	tmp/e08_limit_500_reconciliation.txt
+	tmp/e08_limit_audit.txt
+	tmp/e08_origin_audit.txt
+	tmp/e08_shared_snapshot_plan.txt
+	tmp/e08_snapshot_strategy.txt
+	tmp/e08_v3_reranking_preparation.txt
+	tmp/e09_e08_contract.txt
+	tmp/e09_preparation_report.txt
+	tmp/fed01_data_inicial_federal.txt
+	tmp/fed02_minYmd_origin.txt
+	tmp/fed03_applyBoundsFloor.txt
+	tmp/fed04_api_bounds_origin.txt
+	tmp/fed05_backend_api_location.txt
+	tmp/fed07_1_backend_bounds.txt
+	tmp/fed07_backend_bounds.txt
+	tmp/fed08_federal_firestore_min_ymd.txt
+	tmp/fed09_production_bounds_api.txt
+	tmp/fed10_dashboard_minymd_flow.txt
+	tmp/fed11_period_display_trace.txt
+	tmp/fed12_period_card_origin.txt
+	tmp/fed13_period_component.txt
+	tmp/fed14_snapshot_consumers.txt
+	tmp/fed15_dashboard_consumers.txt
+	tmp/fed15_floor_audit.txt
+	tmp/fed16_dashboard_card.txt
+	tmp/fed17_final_period_consumer.txt
+	tmp/fed18_dashboard_page.txt
+	tmp/fed19_floor_fix.txt
+	tmp/fed20_build_validation.log
+	tmp/fed21_kpi_filter_fix.txt
+	tmp/federal_api.json
+	tmp/federal_position_contract.txt
+	tmp/federal_position_filter.txt
+	tmp/fetchPrizesForDraw_auditoria.txt
+	tmp/fix_app_statistics_duplicate.cjs
+	tmp/formato_payload_import.txt
+	tmp/frq01_refactor_statistics_to_frequency.cjs
+	tmp/frq01_refactor_statistics_to_frequency.txt
+	tmp/frq02_fix_prize_number.cjs
+	tmp/frq02b_fix_prize_number.cjs
+	tmp/frq03_copy_button.cjs
+	tmp/frq04_dynamic_kpi.cjs
+	tmp/frq07_1_backup_20260722_183721/
+	tmp/frq07_1_fix_patch.py
+	tmp/frq07_2_backup_20260722_184149/
+	tmp/frq07_2_fix_tbody.py
+	tmp/frq07_backup_20260722_183312/
+	tmp/frq07_ineditas.cjs
+	tmp/frq08_1_deploy_definitivo.txt
+	tmp/frq08_1_statistics_commit.jsx
+	tmp/frq08_deploy_audit.txt
+	tmp/frq09_2_backup_20260722_195232/
+	tmp/frq09_2_copy_feedback.py
+	tmp/frq09_backup_20260722_194429/
+	tmp/frq09_backup_20260722_194640/
+	tmp/frq09_copy_feedback.py
+	tmp/frq10_1_backup_20260722_201426/
+	tmp/frq10_1_format_kpi.py
+	tmp/frq11_1_backup_20260722_203131/
+	tmp/frq11_1_kpi_display.py
+	tmp/frq12_backup_20260722_203759/
+	tmp/frq13_backup_20260722_205243/
+	tmp/frq13_card_mais_frequente.py
+	tmp/frq14_backup_20260722_210558/
+	tmp/frq14_mobile_responsive.py
+	tmp/frq_aud_01_contagem_real_sorteios.txt
+	tmp/fsc01_unbounded_lottery_query.txt
+	tmp/fsc02_read_consumers.txt
+	tmp/fsc03_real_read_consumer.txt
+	tmp/fsc04_final_read_origin.txt
+	tmp/fsh01_firestore_hours_pt_rio_vs_look.mjs
+	tmp/fsh01_firestore_hours_pt_rio_vs_look.txt
+	tmp/fsh02_firestore_hours_range.mjs
+	tmp/fsh02_firestore_hours_range.txt
+	tmp/gcp01_readonly_audit.txt
+	tmp/gcp02_isolated_configuration.txt
+	tmp/gcp03_cost_protection.txt
+	tmp/gcp04_alerts_and_apis.txt
+	tmp/gcp05_cloud_run_inputs.txt
+	tmp/gcp06_pt_rio_1920_confirmation.txt
+	tmp/gcp07_backup/
+	tmp/gcp07_patch.js
+	tmp/gcp07_pt_rio_saturday_19h.txt
+	tmp/gcp08_container_preparation.txt
+	tmp/gcp08_heartbeat_dry_run.txt
+	tmp/gcp09_build_context/
+	tmp/gcp09_cloud_run_job.txt
+	tmp/gcp09_cloudbuild.yaml
+	tmp/gcp09_committed_backend.zip
+	tmp/gcp10_exact_schedulers.txt
+	tmp/gcp10a_new_head_validation.txt
+	tmp/gcp10b_exact_schedulers.txt
+	tmp/gcp10c2_scheduler_identity_rest.txt
+	tmp/gcp10c3_scheduler_identity_diagnostic.txt
+	tmp/gcp10c_scheduler_service_identity.txt
+	tmp/gcp10d_schedulers_and_test.txt
+	tmp/gcp10e_natural_scheduler_proof.txt
+	tmp/gcp10f_natural_execution.txt
+	tmp/gcp10g_controlled_scheduler_test.txt
+	tmp/gcp10h_correct_controlled_validation.txt
+	tmp/gcp10i_natural_execution_proof.txt
+	tmp/gcp10j_auto-import.before.yml
+	tmp/gcp10j_disable_github_schedule.txt
+	tmp/git01_auditoria_pendencias.txt
+	tmp/git02_inventario_arquivos_novos.txt
+	tmp/github_runs_auto_import_21h.json
+	tmp/github_runs_pt_rio_2026-07-13_21h.json
+	tmp/hist01_history_version_diagnostic.txt
+	tmp/importKingApostas.before-lkn03.js
+	tmp/importKingApostas.before-lkn04.js
+	tmp/importKingApostas.before-lkn164.js
+	tmp/importKingApostas.before_lkn08.js
+	tmp/importKingApostas.before_lkn11.js
+	tmp/importKingApostas.before_lkn89.js
+	tmp/importKingApostas.before_lkn91.js
+	tmp/inspectLook16h.js
+	tmp/inspect_backtest_return.js
+	tmp/inspect_prizes_structure.js
+	tmp/inspect_v4_snapshot.js
+	tmp/krs01_getKingResultsByRange_audit.txt
+	tmp/late01_codigo_completo.txt
+	tmp/late01_console.txt
+	tmp/late02_fluxo_exato.txt
+	tmp/late03_caminho_ativo.txt
+	tmp/late04_filter_confirmation.txt
+	tmp/late05_kingResultsService.before.js
+	tmp/late05b_kingResultsService.before.js
+	tmp/late06_current_filter_audit.txt
+	tmp/late07_production_deploy.txt
+	tmp/late08_base_date_audit.txt
+	tmp/late09_Late.before.jsx
+	tmp/late09_reference_date_fix.txt
+	tmp/late10_deploy_federal.txt
+	tmp/lkn01_auditoria_look_nacional.txt
+	tmp/lkn02_bloqueio_look_nacional.txt
+	tmp/lkn05_importador_mapeado.txt
+	tmp/lkn06_funcoes_reais.txt
+	tmp/lkn07_fluxo_look_nacional.txt
+	tmp/lkn08_patch_result.txt
+	tmp/lkn09_import_look_2026-07-18.log
+	tmp/lkn100_workflows.txt
+	tmp/lkn101_deploy_infrastructure.txt
+	tmp/lkn102_vercel_deploy.txt
+	tmp/lkn103_vercel_inspect.txt
+	tmp/lkn104_vercel_metadata.json
+	tmp/lkn105_public_validation.txt
+	tmp/lkn106_backend_production_audit.txt
+	tmp/lkn107_nacional_producao.txt
+	tmp/lkn108_pitaco_results_route.txt
+	tmp/lkn109_support_look_nacional_api.txt
+	tmp/lkn10_import_nacional_2026-07-18.log
+	tmp/lkn111_pitacoResults.before.js
+	tmp/lkn111_result.txt
+	tmp/lkn112_commit_push.txt
+	tmp/lkn114_nacional_hours_validation.txt
+	tmp/lkn115_origem_horarios_nacional.txt
+	tmp/lkn116_nacional_raw.json
+	tmp/lkn116_nacional_raw_summary.txt
+	tmp/lkn117_trace_normalize_drawhour.txt
+	tmp/lkn118_build_drawref_import_audit.txt
+	tmp/lkn119_mapeamento_real_importadores.txt
+	tmp/lkn120.js
+	tmp/lkn120_firestore_draws_lookup.log
+	tmp/lkn120b.js
+	tmp/lkn120b_firestore_draws_lookup.log
+	tmp/lkn123.js
+	tmp/lkn123_firestore.log
+	tmp/lkn124.js
+	tmp/lkn124_firestore_sem_indice.log
+	tmp/lkn125_import_flow.txt
+	tmp/lkn126_normalize_functions.txt
+	tmp/lkn127_git_history_normalization.txt
+	tmp/lkn128_reimport_nacional.log
+	tmp/lkn129_importadores_intervalo.txt
+	tmp/lkn12_permanent_uuid_validation.log
+	tmp/lkn130_importKingRange_audit.txt
+	tmp/lkn131_statistics_mindate.txt
+	tmp/lkn132_statistics_endpoint.txt
+	tmp/lkn133_top3_history_metadata.txt
+	tmp/lkn134_frontend_periodo.txt
+	tmp/lkn135_datefrom_callers.txt
+	tmp/lkn136_dashboard_endpoints.txt
+	tmp/lkn137_api_bounds_audit.txt
+	tmp/lkn138_applyBoundsFloor.txt
+	tmp/lkn139_applyBoundsFloor_definition.txt
+	tmp/lkn13_lotteries_structure.txt
+	tmp/lkn140_api_bounds_endpoint.txt
+	tmp/lkn140b_api_bounds_endpoint.txt
+	tmp/lkn141_api_configuration.txt
+	tmp/lkn142_automation_all_lotteries.txt
+	tmp/lkn143_auto_import_yml.txt
+	tmp/lkn144_autoimport_schedules.txt
+	tmp/lkn145_look_nacional_hours_map.txt
+	tmp/lkn147_validate_schedules.txt
+	tmp/lkn149_validation_report.txt
+	tmp/lkn14_patch.log
+	tmp/lkn151_git_status.txt
+	tmp/lkn154_workflow_remote_validation.txt
+	tmp/lkn155_last_workflow_log.txt
+	tmp/lkn15_final_validation.log
+	tmp/lkn161_nacional_0149_normalization.txt
+	tmp/lkn162_look_automation_2026-07-20.txt
+	tmp/lkn163_actions_logs/
+	tmp/lkn164_look_reimport/
+	tmp/lkn164_validation.txt
+	tmp/lkn16_git_audit.log
+	tmp/lkn170_look_reconciliation.log
+	tmp/lkn172_look_historical_gaps.log
+	tmp/lkn173_reconcile_look_2026.log
+	tmp/lkn179_results_hour_mapping.txt
+	tmp/lkn182_deploy_configuration.txt
+	tmp/lkn184_vercel_deploy_status.txt
+	tmp/lkn185_nacional_draw_occurrences.txt
+	tmp/lkn185_vercel_alias_comparison.txt
+	tmp/lkn188_results_cards_pipeline.txt
+	tmp/lkn18_post_push.log
+	tmp/lkn18_post_push_validation.log
+	tmp/lkn21_frontend_look_nacional_audit.txt
+	tmp/lkn21_frontend_look_nacional_console.log
+	tmp/lkn22_frontend_integration_console.log
+	tmp/lkn22_frontend_integration_map.txt
+	tmp/lkn23_1_final_implementation_cut.txt
+	tmp/lkn23_2_remaining_integration_points.txt
+	tmp/lkn23_exact_integration_points.txt
+	tmp/lkn24_1_look_nacional_keys_hours.json
+	tmp/lkn24_1_look_nacional_keys_hours.txt
+	tmp/lkn24_backup/
+	tmp/lkn24_baseline.txt
+	tmp/lkn25_0_structural_patch.json
+	tmp/lkn25_0_structural_patch.txt
+	tmp/lkn25_1_selector_audit.txt
+	tmp/lkn25_2_backup/
+	tmp/lkn25_2_selectors_patch.json
+	tmp/lkn25_2_selectors_patch.txt
+	tmp/lkn25_3_results_hooks_audit.json
+	tmp/lkn25_3_results_hooks_audit.txt
+	tmp/lkn25_4_schedule_engine_audit.txt
+	tmp/lkn25_backup/
+	tmp/lkn26_1_build_errors_audit.txt
+	tmp/lkn26_2_fix.log
+	tmp/lkn26_3_build.log
+	tmp/lkn26_build.log
+	tmp/lkn27_results_final_audit.txt
+	tmp/lkn28_results_structure.txt
+	tmp/lkn29_results_backup/
+	tmp/lkn29_results_build.log
+	tmp/lkn29_results_patch.log
+	tmp/lkn30_build.log
+	tmp/lkn30_restore_isFederal.log
+	tmp/lkn31_1_build.log
+	tmp/lkn31_1_fix.log
+	tmp/lkn32_2_predeploy_audit.txt
+	tmp/lkn32_predeploy_audit.txt
+	tmp/lkn34_frontend_hosting_audit.txt
+	tmp/lkn34_production_index.html
+	tmp/lkn34_render_index.html
+	tmp/lkn35_vercel_audit.txt
+	tmp/lkn37_vercel_failed_deploy.log
+	tmp/lkn38_selectedLottery_context.txt
+	tmp/lkn39_late_build.log
+	tmp/lkn40_push_deploy.log
+	tmp/lkn41_dashboard_top3_schedule_audit.txt
+	tmp/lkn42_schedule_consumers.txt
+	tmp/lkn43_schedule_refactor_blocks.txt
+	tmp/lkn44_backup/
+	tmp/lkn44_build.log
+	tmp/lkn44_top3_schedule_validation.txt
+	tmp/lkn44_top3_tests.log
+	tmp/lkn45_top3_test_environment.txt
+	tmp/lkn46_backup/
+	tmp/lkn46_jest.log
+	tmp/lkn48_schedule_flow.txt
+	tmp/lkn49_git_status.txt
+	tmp/lkn49_schedule_core_exact.txt
+	tmp/lkn50_2_calendar_patch.log
+	tmp/lkn50_backup/
+	tmp/lkn50_rule_usage.txt
+	tmp/lkn51_1_node_esm_environment.txt
+	tmp/lkn51_import_audit.txt
+	tmp/lkn52_jest_validation.txt
+	tmp/lkn53_calendar_exact_source.txt
+	tmp/lkn55_duplicate_function_scan.txt
+	tmp/lkn56_calendar_validation.log
+	tmp/lkn57_hour_format_diagnostic.txt
+	tmp/lkn58_normalization_functions.txt
+	tmp/lkn60_lottery_filters_audit.txt
+	tmp/lkn61_dashboard_lotteries_audit.txt
+	tmp/lkn62_look_nacional_schedules_audit.txt
+	tmp/lkn63_dashboard_official_schedule_patch.txt
+	tmp/lkn64_revert_lkn63.txt
+	tmp/lkn65_filtersbar_git_status_audit.txt
+	tmp/lkn67_filtersbar_audit.txt
+	tmp/lkn68_schedule_source_audit.txt
+	tmp/lkn69_FiltersBar_before.jsx
+	tmp/lkn69_dashboard_lotteries_patch.txt
+	tmp/lkn70_build_dashboard.log
+	tmp/lkn71_update_browserslist.log
+	tmp/lkn73_filtersbar_diff.log
+	tmp/lkn74_dashboard_push.log
+	tmp/lkn76_nacional_hour_mapping.txt
+	tmp/lkn76_nacional_hour_mapping_console.log
+	tmp/lkn77_nacional_importer_mapping.txt
+	tmp/lkn77_nacional_importer_mapping_console.log
+	tmp/lkn78_importKingApostas_closehour.txt
+	tmp/lkn80_normalizeCloseHourForLottery.txt
+	tmp/lkn81_fetchKingResults.txt
+	tmp/lkn82_mergeAndDedupDraws.txt
+	tmp/lkn83_raw_api_payload_nacional.cjs
+	tmp/lkn83b_exports.cjs
+	tmp/lkn83b_exports.txt
+	tmp/lkn84_raw_api_payload_nacional.cjs
+	tmp/lkn84_raw_api_payload_nacional.txt
+	tmp/lkn84b_raw_api_nacional.cjs
+	tmp/lkn84b_raw_api_nacional_console.txt
+	tmp/lkn85_pre_patch_nacional.txt
+	tmp/lkn86_preview_patch_nacional.txt
+	tmp/lkn87_normalize_calls_audit.txt
+	tmp/lkn88_patch_proposto.txt
+	tmp/lkn90_anchor_exact_audit.txt
+	tmp/lkn91_patch_result.txt
+	tmp/lkn92_patch_applied_audit.txt
+	tmp/lkn93_direct_call_audit.txt
+	tmp/lkn94_normalization_test.js
+	tmp/lkn94_normalization_test_result.txt
+	tmp/lkn95_real_payload_result.txt
+	tmp/lkn95_real_payload_test.js
+	tmp/lkn96_final_diff_audit.txt
+	tmp/lkn99_deploy_audit.txt
+	tmp/look_2026-07-21_16h_firestore.txt
+	tmp/look_21h_23h_07h_diagnostico.txt
+	tmp/look_21h_23h_07h_prova_real.txt
+	tmp/look_aud_01_workflows_crons_runs.txt
+	tmp/look_aud_02_firestore_21h.txt
+	tmp/look_aud_03_firestore_fonte_21h.txt
+	tmp/look_aud_04_cloud_scheduler_run.txt
+	tmp/look_aud_04_fix.ps1
+	tmp/look_auto_01_21h_23h.txt
+	tmp/look_auto_01_import_21h.log
+	tmp/look_auto_02_container_top3_map.txt
+	tmp/look_firebase_admin_backend.txt
+	tmp/look_firestore_check.js
+	tmp/look_fix_01_import_21h.txt
+	tmp/look_nacional_historico/
+	tmp/look_top3_chamadas_validacao.txt
+	tmp/look_top3_codigo_real.txt
+	tmp/look_top3_contrato_resultados.txt
+	tmp/look_top3_diagnostico.txt
+	tmp/look_top3_formato_draws.txt
+	tmp/look_top3_origem_g07_2026-07-21.txt
+	tmp/look_top3_pos_deploy_7f30d86.txt
+	tmp/look_top3_revalidacao_real.txt
+	tmp/look_top3_test_runner.txt
+	tmp/look_validacao_23h_07h.txt
+	tmp/manual_import_federal_2026-07-19_1100.log
+	tmp/manual_import_look_nacional_2026-07-19.log
+	tmp/manual_import_nacional_2026-07-20_0200.log
+	tmp/manual_import_pt_rio_1920.log
+	tmp/manual_import_pt_rio_2026-07-18_1920.log
+	tmp/nac01_nacional_2026-07-20_diagnostic.txt
+	tmp/nac03_github_queue_audit.txt
+	tmp/nac03_github_runs.json
+	tmp/nac04_nacional_logs.txt
+	tmp/nac05_job_nacional.txt
+	tmp/nac06_results_vs_dashboard.txt
+	tmp/nac07_importKingApostas.backup.js
+	tmp/nac07_nacional_2026-07-20/
+	tmp/nac09_top3_nacional_audit.txt
+	tmp/nac10_top3_schedule_functions.txt
+	tmp/nac11_top3_schedule_functions.txt
+	tmp/nac12_computeStatisticalTop3V3.txt
+	tmp/nac13_top3_schedule_origin.txt
+	tmp/nac14_nacional_federal_fix_audit.txt
+	tmp/nac15_nacional_schedule_audit.txt
+	tmp/nac16_import_hour_mapping.txt
+	tmp/nac17_statistics_engine.txt
+	tmp/nac18_dashboard_draws_pipeline.txt
+	tmp/nac19_hour_filter.txt
+	tmp/nac20_mapDrawDoc.txt
+	tmp/nac21_compare_draw_fields.txt
+	tmp/nac22_firestore_compare.js
+	tmp/nac22_firestore_compare.txt
+	tmp/nac23_firebase_auth_audit.txt
+	tmp/nac26_firestore_hours_audit.js
+	tmp/nac26_firestore_hours_audit.txt
+	tmp/nac27_hour_filter_trace.txt
+	tmp/nac29_hour_options.txt
+	tmp/nac30_filtersbar_nacional_hours.txt
+	tmp/nac31_nacional_hour_mapping.txt
+	tmp/nac32_drawsforview.txt
+	tmp/nac33_get_draw_close_hour.txt
+	tmp/nac34_dashboard_draw_mapping.txt
+	tmp/nac35_dashboard_fluxo_completo.txt
+	tmp/nac36_dashboard_fluxo_restante.txt
+	tmp/nac37_useKingRanking_audit.txt
+	tmp/nac38_getKingResultsByRange_audit.txt
+	tmp/nac40_close_hour_values.txt
+	tmp/nac43_1_firebase_admin_audit.txt
+	tmp/nac44_predeploy_audit.txt
+	tmp/nac46_localizar_correcao_funcional.txt
+	tmp/nac47_dashboard_diff_publicacao.txt
+	tmp/nac48_publicacao_nacional.log
+	tmp/nac50_nacional_horario_todos.txt
+	tmp/nac51_drawsForUi_trace.txt
+	tmp/nac52_useKingRanking_audit.txt
+	tmp/nac53_draw_source_audit.txt
+	tmp/nac54_lottery_key_resolution.txt
+	tmp/nacional_2026-07-20/
+	tmp/nacional_2026_05_06.txt
+	tmp/nacional_cleanup_legacy.txt
+	tmp/nacional_cleanup_legacy_batched.txt
+	tmp/nacional_firestore_2025-03-27.txt
+	tmp/nacional_legacy_backup.json
+	tmp/nacional_legacy_backup_2026-07-20T23-25-04-832Z.json
+	tmp/nacional_restore_legacy.txt
+	tmp/nacional_schedule_boundaries.txt
+	tmp/nacional_schedule_transition.txt
+	tmp/nacional_validation_after_cleanup.txt
+	tmp/nat08_diagnostico_2026-07-22_08h.txt
+	tmp/nat09_exibicao_nacional_08h.txt
+	tmp/nat10_results_pipeline.txt
+	tmp/nat11_results_auto_refresh.log
+	tmp/nat_10_01_diagnostico_nacional_10h.txt
+	tmp/nat_late_10_auditoria.txt
+	tmp/nat_late_11_resultado.txt
+	tmp/nat_late_11_scheduler_antes.txt
+	tmp/nat_late_12_restauracao.txt
+	tmp/nat_late_13_entrypoint_parametros.txt
+	tmp/nat_late_14_disparadores_nacional.txt
+	tmp/nat_late_15_entrypoint_real.txt
+	tmp/nat_sched_02_configuracao_real.txt
+	tmp/nat_sched_03_grade_completa.txt
+	tmp/nat_sched_04_correcao_validacao.txt
+	tmp/nat_sched_05_validacao_final.txt
+	tmp/nat_sched_06_permissao_overrides.txt
+	tmp/patchTop3Premium.js
+	tmp/patchTop3PremiumV2.js
+	tmp/patch_top3_loterias_linha_unica.js
+	tmp/patch_top3_premium_crlf.js
+	tmp/patch_top3_premium_final.js
+	tmp/patch_top3_remove_hero_visual.js
+	tmp/perf01_page_opening_audit.txt
+	tmp/perf02b_loading_audit.txt
+	tmp/perf03c_app_completo.txt
+	tmp/perf03d_exports_resolvecomponent.txt
+	tmp/perf03g_lazy_loading_result.txt
+	tmp/perf03h_app_imports.txt
+	tmp/perf03i_lazy_loading_result.txt
+	tmp/perf_backtest01.txt
+	tmp/perf_imp_02_backup_20260724_003610/
+	tmp/perf_imp_04_backup_20260724_003821/
+	tmp/perf_top3_01_mapeamento_completo.txt
+	tmp/perf_top3_02_arquivos.txt
+	tmp/perf_top3_03_repository_engine.txt
+	tmp/perf_top3_04_backup_20260724_005814/
+	tmp/perf_top3_04_patch.py
+	tmp/perf_top3_04_status.txt
+	tmp/perf_top3_05_args_parser.txt
+	tmp/perf_top3_05_runtime.txt
+	tmp/perf_top3_06_runtime_completo.txt
+	tmp/perf_top3_07_codigo_completo.txt
+	tmp/perf_top3_08_profile.js
+	tmp/perf_top3_08_profile.txt
+	tmp/perf_top3_09_history_repository.txt
+	tmp/perf_top3_10_patch.py
+	tmp/perf_top3_12_history_breakdown.js
+	tmp/perf_top3_12_history_breakdown.txt
+	tmp/perf_top3_13_flow_analysis.txt
+	tmp/perf_top3_14_history_payload.js
+	tmp/perf_top3_14_history_payload.txt
+	tmp/perf_top3_15_backup_20260724_013039/
+	tmp/perf_top3_15_migrate.js
+	tmp/perf_top3_15_patch.py
+	tmp/perf_top3_15_result.txt
+	tmp/perf_top3_15_validate.js
+	tmp/perf_top3_16_backup_20260724_013702/
+	tmp/perf_top3_16_patch.py
+	tmp/perf_top3_16_result.txt
+	tmp/perf_top3_17_fix_patch.py
+	tmp/perf_top3_17_result.txt
+	tmp/perf_top3_18_fix_patch.py
+	tmp/perf_top3_18_result.txt
+	tmp/perf_top3_19_result.txt
+	tmp/perf_top3_20_backup_20260724_014809/
+	tmp/perf_top3_20_patch.py
+	tmp/perf_top3_20_result.txt
+	tmp/perf_top3_21_result.txt
+	tmp/perf_top3_22_diagnostico_git.txt
+	tmp/perf_top3_23_result.txt
+	tmp/perf_top3_24_publicacao.txt
+	tmp/perf_top3_25_prova_final.txt
+	tmp/perf_top3_26_checklist_arquivos.txt
+	tmp/perf_top3_27_profile/
+	tmp/perf_top3_28_compare/
+	tmp/perf_top3_29_erros.txt
+	tmp/perf_top3_30_chaves_historico.txt
+	tmp/perf_top3_31_firestore/
+	tmp/perf_top3_32_bootstrap_oficial.txt
+	tmp/perf_top3_33_bootstrap_completo.txt
+	tmp/perf_top3_34_dry_run/
+	tmp/perf_top3_35_commit/
+	tmp/perf_top3_36_migracao_compacta.txt
+	tmp/perf_top3_37_compact_dry_run/
+	tmp/perf_top3_38_fragmentacao_compacta.txt
+	tmp/perf_top3_39_arquivos_completos.txt
+	tmp/perf_top3_40_baseline_quatro_loterias.txt
+	tmp/perf_top3_40_runs/
+	tmp/perf_top3_41_assinaturas.txt
+	tmp/perf_top3_41_console.txt
+	tmp/perf_top3_41_data/
+	tmp/perf_top3_41_signatures.js
+	tmp/perf_top3_42_motor_atual_completo.txt
+	tmp/perf_top3_43_backup_20260724_104413/
+	tmp/perf_top3_43_cache_layer_probability.txt
+	tmp/perf_top3_43_console.log
+	tmp/perf_top3_43_data/
+	tmp/perf_top3_43_patch.py
+	tmp/perf_top3_44_layer_probability_auditoria.txt
+	tmp/perf_top3_45_backup_20260724_110338/
+	tmp/perf_top3_45_compare.py
+	tmp/perf_top3_45_original/
+	tmp/perf_top3_45_original_console.log
+	tmp/perf_top3_45_otimizado/
+	tmp/perf_top3_45_otimizado_console.log
+	tmp/perf_top3_45_patch.py
+	tmp/perf_top3_45_primeira_divergencia_nacional.txt
+	tmp/perf_top3_46_analisar.py
+	tmp/perf_top3_46_backup_20260724_111827/
+	tmp/perf_top3_46_benchmark_original_x_otimizado.txt
+	tmp/perf_top3_46_patch.py
+	tmp/perf_top3_46_work/
+	tmp/perf_top3_47_patch.py
+	tmp/perf_top3_49_diagnostico_buildHistoricalSceneRanking.txt
+	tmp/perf_top3_50/
+	tmp/perf_top3_51_harness_benchmark.txt
+	tmp/perf_top3_52_patch.py
+	tmp/perf_top3_52_work/
+	tmp/perf_top3_53_profile_scene_ranking.txt
+	tmp/perf_top3_53_work/
+	tmp/perf_top3_54_scene_reuse.txt
+	tmp/perf_top3_55_buildSceneFromDraw.txt
+	tmp/perf_top3_55_extract.py
+	tmp/predictionService_integration.txt
+	tmp/predictive_frequency_integrated.js
+	tmp/predictive_frequency_integrated.json
+	tmp/predictive_frequency_summary.json
+	tmp/predictive_frequency_test.js
+	tmp/predictive_frequency_test.json
+	tmp/quality_baseline_top3/
+	tmp/reconcile_falso_ok_contexto.txt
+	tmp/report_experimental_frequency.js
+	tmp/res32_backup_20260723_132627/
+	tmp/res32_patch.py
+	tmp/res36_backup_20260723_140544/
+	tmp/res36_patch.py
+	tmp/res39_firestore_verification.txt
+	tmp/res39_logs/
+	tmp/res39_reimport_summary.txt
+	tmp/res39_verify.js
+	tmp/res40_backup_20260723_143552/
+	tmp/res40_fix_results_schedule.py
+	tmp/res41_backup_20260723_144105/
+	tmp/res41_fix_1920.py
+	tmp/res45_backup_20260723_162316/
+	tmp/res45_resultados_19h20.txt
+	tmp/res51_backup_20260723_171615/
+	tmp/res51_build.log
+	tmp/res51_patch.py
+	tmp/res_aud_33_dependencia_horarios_pt_rio.txt
+	tmp/res_aud_34_import_flow.txt
+	tmp/res_aud_35_fluxo_results_completo.txt
+	tmp/res_aud_37_cards_pipeline.txt
+	tmp/res_aud_38_firestore_cards.js
+	tmp/res_aud_38_firestore_cards.txt
+	tmp/res_aud_42_pt_rio_1807.js
+	tmp/res_aud_42_pt_rio_1807.txt
+	tmp/res_aud_43_importador_19h20_completo.txt
+	tmp/res_aud_44_king_service_horarios.txt
+	tmp/res_aud_46_cards_vazios.txt
+	tmp/res_aud_47_king_fonte_2026_07_23.txt
+	tmp/res_aud_48_cards_vazios_sabado_18h.js
+	tmp/res_aud_48_cards_vazios_sabado_18h.txt
+	tmp/res_aud_48_execucao.log
+	tmp/res_aud_49_results_completo_cards_vazios.txt
+	tmp/res_aud_50_bloco_exato_results.txt
+	tmp/restore_nacional_legacy.js
+	tmp/results_debug_hours.txt
+	tmp/rkg01_mapeamento_pagina_ranking.txt
+	tmp/rkg02_menu_sidebar_completo.txt
+	tmp/rkg03_backup_20260722_165830/
+	tmp/rkg04_app_completo_e_diff.txt
+	tmp/rkg05_backup_20260722_170332/
+	tmp/rkg07b_backup_20260722_171618/
+	tmp/rkg08_backup_20260722_171841/
+	tmp/rkg08_backup_20260722_171851/
+	tmp/rkg08_patch_statistics.cjs
+	tmp/schedule.js.txt
+	tmp/scoreEngineV2_full_audit.txt
+	tmp/scoreEngineV4Experimental.before-e07.js
+	tmp/snapshot_consumption_map.txt
+	tmp/statisticsEngine_consumidores.txt
+	tmp/summarize_predictive_frequency.js
+	tmp/top3.engine.before-lkn50_2.js
+	tmp/top3.engine.before-tpp04-13.js
+	tmp/top3.engine.before_lkn54.js
+	tmp/top3.engine.before_lkn54_1.js
+	tmp/top3.engine.before_lkn56.js
+	tmp/top3.engine.before_lkn59.js
+	tmp/top3.firestore_antes_auth_20260715_000009.js
+	tmp/top3.hooks.before_lkn59.js
+	tmp/top3.hooks_antes_diagnostico_save_20260715_114546.js
+	tmp/top3.schedule-transition.before_lkn54_1.test.js
+	tmp/top3.schedule-transition.before_lkn56.test.js
+	tmp/top3.schedule-transition.before_lkn59.test.js
+	tmp/top3_ablation_topn_audit.txt
+	tmp/top3_arch_01_dependencias.txt
+	tmp/top3_arch_02_codigo_integral.txt
+	tmp/top3_aud_01_estrutura_completa.txt
+	tmp/top3_aud_01_performance_historico.txt
+	tmp/top3_aud_02_nucleo_auditoria.txt
+	tmp/top3_aud_03_relatorio_v1.txt
+	tmp/top3_aud_05_backup_20260723_204730/
+	tmp/top3_aud_05_patch.py
+	tmp/top3_aud_06_backup_20260723_205208/
+	tmp/top3_aud_06_diff.txt
+	tmp/top3_aud_06_patch.py
+	tmp/top3_aud_08_backtest_oficial_completo.txt
+	tmp/top3_aud_09_backup_20260723_212230/
+	tmp/top3_aud_09_diff.txt
+	tmp/top3_aud_09_patch.py
+	tmp/top3_aud_10_backtest/
+	tmp/top3_auto_01_diagnostico.txt
+	tmp/top3_auto_02_container_build_completo.txt
+	tmp/top3_backend_entrypoints.txt
+	tmp/top3_backend_ponto_de_integracao.txt
+	tmp/top3_backend_ranking_flow.txt
+	tmp/top3_baseline_backtest_map.txt
+	tmp/top3_baselines_20260723_230825/
+	tmp/top3_bloqueio_real.txt
+	tmp/top3_commit1_auditoria_precisa.txt
+	tmp/top3_commit1_purificacao.json
+	tmp/top3_commit1_validacao_final.txt
+	tmp/top3_effects_build_20260715_234759.log
+	tmp/top3_evidence_audit.txt
+	tmp/top3_evidence_audit_focused.txt
+	tmp/top3_extract_readiness.txt
+	tmp/top3_firestore_persistencia.txt
+	tmp/top3_fluxo_execucao.txt
+	tmp/top3_historico_arquivos_completos.txt
+	tmp/top3_history_bootstrap_commit.log
+	tmp/top3_history_bootstrap_validation.json
+	tmp/top3_history_reader_map.txt
+	tmp/top3_history_repository_audit.txt
+	tmp/top3_history_update_hook.txt
+	tmp/top3_hit_01_localizacao.txt
+	tmp/top3_hit_02_historico_recente.txt
+	tmp/top3_hit_03_Top3View_completo.txt
+	tmp/top3_hit_04_resultMilhar_fluxo.txt
+	tmp/top3_hit_05_mapeamento_exibicao.txt
+	tmp/top3_hit_05b_mapeamento_restrito.txt
+	tmp/top3_hit_06_top3_firestore_completo.txt
+	tmp/top3_hit_07_backup/
+	tmp/top3_hit_10_fluxo_completo.txt
+	tmp/top3_img_01_diagnostico_imagem.txt
+	tmp/top3_img_02_build_real.txt
+	tmp/top3_img_03_dependencias_top3.txt
+	tmp/top3_img_04_localizar_script_build.txt
+	tmp/top3_instrumentation/
+	tmp/top3_integracao_milhares_backend.txt
+	tmp/top3_last_draw_schedule_audit.txt
+	tmp/top3_method_02_backup_20260724_000129/
+	tmp/top3_method_02_build.log
+	tmp/top3_method_02_patch.py
+	tmp/top3_method_validation_20260723_222152/
+	tmp/top3_motor_backend_compatibilidade.txt
+	tmp/top3_motor_backend_compatibilidade_pos_commit1.txt
+	tmp/top3_motor_consumidores_reais.txt
+	tmp/top3_node_smoke_pos_commit1.txt
+	tmp/top3_official_backtest_full.json
+	tmp/top3_official_backtest_full.txt
+	tmp/top3_official_backtest_full_console.log
+	tmp/top3_official_backtest_limit_100.json
+	tmp/top3_official_backtest_limit_100.txt
+	tmp/top3_official_backtest_limit_100_console.log
+	tmp/top3_official_backtest_pt_rio_full.json
+	tmp/top3_official_backtest_pt_rio_full.txt
+	tmp/top3_official_backtest_pt_rio_limit_10.json
+	tmp/top3_official_backtest_pt_rio_limit_10.txt
+	tmp/top3_perf_01_build.txt
+	tmp/top3_perf_01_coleta_completa.txt
+	tmp/top3_perf_02_hook.txt
+	tmp/top3_perf_aud_01_completo.txt
+	tmp/top3_perf_aud_02_fluxo_real.txt
+	tmp/top3_perf_aud_03_runtime.js
+	tmp/top3_performance_4_loterias_20260724_001858/
+	tmp/top3_pre_v4_path_audit.py
+	tmp/top3_premium_analysis/
+	tmp/top3_premium_backup_crlf/
+	tmp/top3_premium_backup_final/
+	tmp/top3_premium_backup_v2/
+	tmp/top3_premium_blocos_atuais.txt
+	tmp/top3_premium_codigo_completo/
+	tmp/top3_pub_01_resultado.txt
+	tmp/top3_pub_02_publicacao.txt
+	tmp/top3_public_api_grafo_node.txt
+	tmp/top3_raio_x_completo.zip
+	tmp/top3_raio_x_completo/
+	tmp/top3_rankingScored_origem.txt
+	tmp/top3_ref_01_preparacao.txt
+	tmp/top3_ref_02_backup_20260724_184122/
+	tmp/top3_ref_02_build.log
+	tmp/top3_ref_02_patch.py
+	tmp/top3_ref_02_resultado.txt
+	tmp/top3_ref_03_diagnostico_recomputacoes.txt
+	tmp/top3_ref_04_backup_20260724_190101/
+	tmp/top3_ref_04_build.log
+	tmp/top3_ref_04_patch.py
+	tmp/top3_ref_04_resultado.txt
+	tmp/top3_ref_backup_20260724_183657/
+	tmp/top3_runImport_contract.txt
+	tmp/top3_rx_01_raio_x_completo.txt
+	tmp/top3_rx_02_backup_20260723_190601/
+	tmp/top3_rx_02_patch.py
+	tmp/top3_score_01_auditoria.txt
+	tmp/top3_seletor_loterias_mobile.txt
+	tmp/top3_snapshot_infraestrutura_existente.txt
+	tmp/top3_statistical_significance.json
+	tmp/top3_statistical_significance.txt
+	tmp/top3_statistical_significance_console.log
+	tmp/top3_transition_19h_audit.txt
+	tmp/top3_uni_01_diagnostico.txt
+	tmp/top3_uni_02_preparacao.txt
+	tmp/top3_v1_baseline_backup_20260723_221517.js
+	tmp/top3_v4_structural_map.txt
+	tmp/top3_validate_v3_injection.js
+	tmp/top3_validate_v3_injection_real.js
+	tmp/tpp01_03_backtest_active_modules_audit.txt
+	tmp/tpp01_04_harness_console.log
+	tmp/tpp01_04_harness_validation.json
+	tmp/tpp01_04_harness_validation.txt
+	tmp/tpp01_04b_console.log
+	tmp/tpp01_04b_inspect_return.js
+	tmp/tpp01_04b_raw_backtest_result.json
+	tmp/tpp01_04b_repair_report.txt
+	tmp/tpp01_04b_return_schema.txt
+	tmp/tpp01_official_ablation_inventory.txt
+	tmp/tpp01_v3_real_ablation_blueprint.txt
+	tmp/tpp02_01_A01_console.log
+	tmp/tpp02_01_A01_sem_frequency.json
+	tmp/tpp02_01_A01_sem_frequency.txt
+	tmp/tpp02_02_A02_console.log
+	tmp/tpp02_02_A02_sem_context.json
+	tmp/tpp02_02_A02_sem_context.txt
+	tmp/tpp02_03_A00_500_console.log
+	tmp/tpp02_03_A01_500_console.log
+	tmp/tpp02_03_A02_500_console.log
+	tmp/tpp02_03_resumo_500.txt
+	tmp/tpp03_01_case_payload_mapping.js
+	tmp/tpp03_01_case_payload_mapping.json
+	tmp/tpp03_01_case_payload_mapping.txt
+	tmp/tpp03_02_telemetry_mapping.js
+	tmp/tpp03_02_telemetry_mapping.txt
+	tmp/tpp03_03_telemetry_control_audit.py
+	tmp/tpp03_03_telemetry_control_audit.txt
+	tmp/tpp03_04_variant_execution_flow.txt
+	tmp/tpp03_06_telemetry_runs/
+	tmp/tpp03_06_telemetry_runs_console.log
+	tmp/tpp03_07_case_by_case_comparison.json
+	tmp/tpp03_07_case_by_case_comparison.txt
+	tmp/tpp03_07_changed_cases.csv
+	tmp/tpp03_07_compare_telemetry.js
+	tmp/tpp03_07_console.log
+	tmp/tpp03_08_ablation_runtime_path.py
+	tmp/tpp03_08_ablation_runtime_path.txt
+	tmp/tpp03_09_ablation_real_locations.py
+	tmp/tpp03_09_ablation_real_locations.txt
+	tmp/tpp04_01_camelo_weekday_divergence.py
+	tmp/tpp04_01_camelo_weekday_divergence.txt
+	tmp/tpp04_02_layer_first_origin.txt
+	tmp/tpp04_02_weekday_card_origin.py
+	tmp/tpp04_02_weekday_card_origin.txt
+	tmp/tpp04_03_dow_firstcount_origin.py
+	tmp/tpp04_03_dow_firstcount_origin.txt
+	tmp/tpp04_04_layer_first_builder.txt
+	tmp/tpp04_04b_layer_first_builder.py
+	tmp/tpp04_04b_layer_first_builder.txt
+	tmp/tpp04_05_critical_functions.txt
+	tmp/tpp04_06_dashboard_counter_origin.txt
+	tmp/tpp04_07_detailmap_keys.txt
+	tmp/tpp04_08_meta_explain_details.txt
+	tmp/tpp04_09_detailmap_origin.txt
+	tmp/tpp04_12_dashboard_top3_weekday_source.txt
+	tmp/tpp04_14_three_rankings_audit.txt
+	tmp/tpp04_15_weekday_card_data_flow.txt
+	tmp/tpp04_16_engine_transition_audit.txt
+	tmp/tpp04_17_core_functions.txt
+	tmp/tpp04_17b_core_functions_full.txt
+	tmp/tpp04_18_schedule_definitions_audit.txt
+	tmp/tpp04_19_getPtRioScheduleForYmd.txt
+	tmp/tpp04_20_schedule_constants.txt
+	tmp/tpp04_21_schedule_fix_report.txt
+	tmp/tpp04_21_top3.engine.before.js
+	tmp/tpp04_22_transition_validation.log
+	tmp/tpp04_26_prediction_origin.txt
+	tmp/tpp04_27_nextslot_hook_context.txt
+	tmp/tpp04_29_hook_schedule_fix.txt
+	tmp/tpp04_29_top3.hooks.before.js
+	tmp/tpp04_31_hook_patch_report.txt
+	tmp/tpp04_31_top3.hooks.before.js
+	tmp/tpp04_32_history_schedule_audit.txt
+	tmp/tpp04_33_schedule_origin_audit.txt
+	tmp/tpp04_34_getScheduleForLottery.txt
+	tmp/tpp04_origem_contagem_semana.txt
+	tmp/tpp05_01_top3_lotteries_audit.txt
+	tmp/tpp05_02_top3_tabs_component.txt
+	tmp/tpp05_03_top3_visual_components.txt
+	tmp/tpp05_04_lotoptions_origin.txt
+	tmp/tpp05_05_baselots_musthave.txt
+	tmp/tpp05_06_lottery_options_origin.txt
+	tmp/tpp05_10_validate_lottery_options.log
+	tmp/tpp05_11_top3_filters.txt
+	tmp/tpp05_13_build.log
+	tmp/tpp05_16_top3_api_calls.txt
+	tmp/tpp05_17_load_and_loader.txt
+	tmp/tpp_fd_01_federal_domingo_11h.txt
+	tmp/tpp_fd_02_estado_federal_1907.txt
+	tmp/tpp_fd_03_backup_20260721_144615/
+	tmp/tpp_fd_03_build.log
+	tmp/tpp_fd_03_patch.js
+	tmp/tpp_fd_03b_build.log
+	tmp/tpp_fd_03b_import_federal_1907.log
+	tmp/tpp_fd_03d_import.log
+	tmp/tpp_fd_03d_patch_canonical_id.js
+	tmp/tpp_ln_01_top3_look_nacional.txt
+	tmp/tpp_ln_02_diff_e_service.txt
+	tmp/tpp_ln_03_backup_20260721_135908/
+	tmp/tpp_ln_03_correcao.log
+	tmp/tpp_ln_04_backup_20260721_141528/
+	tmp/tpp_ln_04_correcao_publicacao.log
+	tmp/v4_frequency_by_hour_report.json
+	tmp/v4_frequency_by_hour_test.js
+	tmp/v4_frequency_hour_weekday_report.json
+	tmp/v4_frequency_hour_weekday_test.js
+	tmp/v4_frequency_hour_windows_report.json
+	tmp/v4_frequency_hour_windows_test.js
+	tmp/v4_frequency_report.json
+	tmp/v4_group_recency_by_hour_validation_report.json
+	tmp/v4_group_recency_by_hour_validation_test.js
+	tmp/v4_group_recency_report.json
+	tmp/v4_group_recency_test.js
+	tmp/v4_input_audit.js
+	tmp/v4_input_audit.txt
+	tmp/v4_predictive_telemetry_audit.json
+	tmp/v4_prizes_report.json
+	tmp/v4_real_input_snapshot.json
+	tmp/v4_snapshot_report.json
+	tmp/validate_nacional_after_cleanup.js
+	tmp/validate_v4_wrapper.js
+	trecho_return_api.txt
+
+no changes added to commit (use "git add" and/or "git commit -a")
+79ca9d97e6276290f9dfc35a303f25804f2bf5c9

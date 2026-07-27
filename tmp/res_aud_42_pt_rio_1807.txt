@@ -1,0 +1,364 @@
+====================================================================================================
+RES-AUD-42 — FIRESTORE PT_RIO 18/07/2026
+====================================================================================================
+
+Executado em: 2026-07-23T17:51:36.593Z
+Nenhum arquivo de código ou dado foi alterado.
+
+CONSULTA: ymd == 2026-07-18 | encontrados=22 | ok=true
+CONSULTA: date == 2026-07-18 | encontrados=22 | ok=true
+CONSULTA: date == 18/07/2026 | encontrados=0 | ok=true
+
+DOCUMENTOS ÚNICOS PT_RIO: 6
+
+----------------------------------------------------------------------------------------------------
+DOCUMENTO: PT_RIO__2026-07-18__09-00__c168d9b3-97b7-42dc-a332-7815edaa51e2
+----------------------------------------------------------------------------------------------------
+{
+  "id": "PT_RIO__2026-07-18__09-00__c168d9b3-97b7-42dc-a332-7815edaa51e2",
+  "ymd": "2026-07-18",
+  "date": "2026-07-18",
+  "uf": "RJ",
+  "lottery_key": "PT_RIO",
+  "lottery_name": "LT PT RIO 09HS",
+  "close_hour": "09:00",
+  "close_hour_raw": null,
+  "hourPicked": "09:00",
+  "prizesCountField": 7,
+  "prizesSubcollection": 7,
+  "prizeError": null,
+  "firstPrize": {
+    "id": "p01",
+    "dezena": "12",
+    "milhar": "4212",
+    "centena": "212",
+    "grupo": 3,
+    "animal": "Burro",
+    "raw": "4212",
+    "position": 1
+  },
+  "lastPrize": {
+    "id": "p07",
+    "dezena": "46",
+    "milhar": "0246",
+    "centena": "246",
+    "grupo": 12,
+    "animal": "Elefante",
+    "raw": "246",
+    "position": 7
+  }
+}
+
+----------------------------------------------------------------------------------------------------
+DOCUMENTO: PT_RIO__2026-07-18__11-00__cbac7c11-e733-400b-ba4d-2dfe0cba4272
+----------------------------------------------------------------------------------------------------
+{
+  "id": "PT_RIO__2026-07-18__11-00__cbac7c11-e733-400b-ba4d-2dfe0cba4272",
+  "ymd": "2026-07-18",
+  "date": "2026-07-18",
+  "uf": "RJ",
+  "lottery_key": "PT_RIO",
+  "lottery_name": "LT PT RIO 11HS",
+  "close_hour": "11:00",
+  "close_hour_raw": "11:12",
+  "hourPicked": "11:00",
+  "prizesCountField": 7,
+  "prizesSubcollection": 7,
+  "prizeError": null,
+  "firstPrize": {
+    "id": "p01",
+    "dezena": "87",
+    "milhar": "4687",
+    "centena": "687",
+    "grupo": 22,
+    "animal": "Tigre",
+    "raw": "4687",
+    "position": 1
+  },
+  "lastPrize": {
+    "id": "p07",
+    "dezena": "33",
+    "milhar": "0333",
+    "centena": "333",
+    "grupo": 9,
+    "animal": "Cobra",
+    "raw": "333",
+    "position": 7
+  }
+}
+
+----------------------------------------------------------------------------------------------------
+DOCUMENTO: PT_RIO__2026-07-18__14-00__98352455-8fd3-447d-ab3d-701dc3f7865f
+----------------------------------------------------------------------------------------------------
+{
+  "id": "PT_RIO__2026-07-18__14-00__98352455-8fd3-447d-ab3d-701dc3f7865f",
+  "ymd": "2026-07-18",
+  "date": "2026-07-18",
+  "uf": "RJ",
+  "lottery_key": "PT_RIO",
+  "lottery_name": "LT PT RIO 14HS",
+  "close_hour": "14:00",
+  "close_hour_raw": "14:12",
+  "hourPicked": "14:00",
+  "prizesCountField": 7,
+  "prizesSubcollection": 7,
+  "prizeError": null,
+  "firstPrize": {
+    "id": "p01",
+    "dezena": "28",
+    "milhar": "5428",
+    "centena": "428",
+    "grupo": 7,
+    "animal": "Carneiro",
+    "raw": "5428",
+    "position": 1
+  },
+  "lastPrize": {
+    "id": "p07",
+    "dezena": "00",
+    "milhar": "0100",
+    "centena": "100",
+    "grupo": 25,
+    "animal": "Vaca",
+    "raw": "100",
+    "position": 7
+  }
+}
+
+----------------------------------------------------------------------------------------------------
+DOCUMENTO: PT_RIO__2026-07-18__16-00__76c127b7-8157-46b6-a64a-ec7ed1574c9f
+----------------------------------------------------------------------------------------------------
+{
+  "id": "PT_RIO__2026-07-18__16-00__76c127b7-8157-46b6-a64a-ec7ed1574c9f",
+  "ymd": "2026-07-18",
+  "date": "2026-07-18",
+  "uf": "RJ",
+  "lottery_key": "PT_RIO",
+  "lottery_name": "LT PT RIO 16HS",
+  "close_hour": "16:00",
+  "close_hour_raw": "16:12",
+  "hourPicked": "16:00",
+  "prizesCountField": 7,
+  "prizesSubcollection": 7,
+  "prizeError": null,
+  "firstPrize": {
+    "id": "p01",
+    "dezena": "44",
+    "milhar": "4744",
+    "centena": "744",
+    "grupo": 11,
+    "animal": "Cavalo",
+    "raw": "4744",
+    "position": 1
+  },
+  "lastPrize": {
+    "id": "p07",
+    "dezena": "81",
+    "milhar": "0681",
+    "centena": "681",
+    "grupo": 21,
+    "animal": "Touro",
+    "raw": "681",
+    "position": 7
+  }
+}
+
+----------------------------------------------------------------------------------------------------
+DOCUMENTO: PT_RIO__2026-07-18__19-00__8290329b-aac0-4a6a-9649-5feb6182cf4f
+----------------------------------------------------------------------------------------------------
+{
+  "id": "PT_RIO__2026-07-18__19-00__8290329b-aac0-4a6a-9649-5feb6182cf4f",
+  "ymd": "2026-07-18",
+  "date": "2026-07-18",
+  "uf": "RJ",
+  "lottery_key": "PT_RIO",
+  "lottery_name": "LT PT RIO 18HS",
+  "close_hour": "19:00",
+  "close_hour_raw": null,
+  "hourPicked": "19:00",
+  "prizesCountField": 7,
+  "prizesSubcollection": 7,
+  "prizeError": null,
+  "firstPrize": {
+    "id": "p01",
+    "dezena": "77",
+    "milhar": "2977",
+    "centena": "977",
+    "grupo": 20,
+    "animal": "Peru",
+    "raw": "2977",
+    "position": 1
+  },
+  "lastPrize": {
+    "id": "p07",
+    "dezena": "12",
+    "milhar": "0112",
+    "centena": "112",
+    "grupo": 3,
+    "animal": "Burro",
+    "raw": "112",
+    "position": 7
+  }
+}
+
+----------------------------------------------------------------------------------------------------
+DOCUMENTO: PT_RIO__2026-07-18__21-00__d5123f7e-629d-43e9-a8fb-1385ff1cba45
+----------------------------------------------------------------------------------------------------
+{
+  "id": "PT_RIO__2026-07-18__21-00__d5123f7e-629d-43e9-a8fb-1385ff1cba45",
+  "ymd": "2026-07-18",
+  "date": "2026-07-18",
+  "uf": "RJ",
+  "lottery_key": "PT_RIO",
+  "lottery_name": "LT PT RIO 21HS",
+  "close_hour": "21:00",
+  "close_hour_raw": "21:12",
+  "hourPicked": "21:00",
+  "prizesCountField": 7,
+  "prizesSubcollection": 7,
+  "prizeError": null,
+  "firstPrize": {
+    "id": "p01",
+    "dezena": "64",
+    "milhar": "5364",
+    "centena": "364",
+    "grupo": 16,
+    "animal": "Leão",
+    "raw": "5364",
+    "position": 1
+  },
+  "lastPrize": {
+    "id": "p07",
+    "dezena": "16",
+    "milhar": "0516",
+    "centena": "516",
+    "grupo": 4,
+    "animal": "Borboleta",
+    "raw": "516",
+    "position": 7
+  }
+}
+
+====================================================================================================
+RESUMO POR HORÁRIO
+====================================================================================================
+{
+  "09:00": {
+    "documents": 1,
+    "documentsWithPrizes": 1,
+    "totalPrizes": 7,
+    "ids": [
+      "PT_RIO__2026-07-18__09-00__c168d9b3-97b7-42dc-a332-7815edaa51e2"
+    ],
+    "closeHourRawValues": [],
+    "lotteryNames": [
+      "LT PT RIO 09HS"
+    ]
+  },
+  "11:00": {
+    "documents": 1,
+    "documentsWithPrizes": 1,
+    "totalPrizes": 7,
+    "ids": [
+      "PT_RIO__2026-07-18__11-00__cbac7c11-e733-400b-ba4d-2dfe0cba4272"
+    ],
+    "closeHourRawValues": [
+      "11:12"
+    ],
+    "lotteryNames": [
+      "LT PT RIO 11HS"
+    ]
+  },
+  "14:00": {
+    "documents": 1,
+    "documentsWithPrizes": 1,
+    "totalPrizes": 7,
+    "ids": [
+      "PT_RIO__2026-07-18__14-00__98352455-8fd3-447d-ab3d-701dc3f7865f"
+    ],
+    "closeHourRawValues": [
+      "14:12"
+    ],
+    "lotteryNames": [
+      "LT PT RIO 14HS"
+    ]
+  },
+  "16:00": {
+    "documents": 1,
+    "documentsWithPrizes": 1,
+    "totalPrizes": 7,
+    "ids": [
+      "PT_RIO__2026-07-18__16-00__76c127b7-8157-46b6-a64a-ec7ed1574c9f"
+    ],
+    "closeHourRawValues": [
+      "16:12"
+    ],
+    "lotteryNames": [
+      "LT PT RIO 16HS"
+    ]
+  },
+  "19:00": {
+    "documents": 1,
+    "documentsWithPrizes": 1,
+    "totalPrizes": 7,
+    "ids": [
+      "PT_RIO__2026-07-18__19-00__8290329b-aac0-4a6a-9649-5feb6182cf4f"
+    ],
+    "closeHourRawValues": [],
+    "lotteryNames": [
+      "LT PT RIO 18HS"
+    ]
+  },
+  "21:00": {
+    "documents": 1,
+    "documentsWithPrizes": 1,
+    "totalPrizes": 7,
+    "ids": [
+      "PT_RIO__2026-07-18__21-00__d5123f7e-629d-43e9-a8fb-1385ff1cba45"
+    ],
+    "closeHourRawValues": [
+      "21:12"
+    ],
+    "lotteryNames": [
+      "LT PT RIO 21HS"
+    ]
+  }
+}
+
+====================================================================================================
+MATRIZ DOS HORÁRIOS CRÍTICOS
+====================================================================================================
+18:00 => NENHUM DOCUMENTO ENCONTRADO
+19:00 => [
+  {
+    "storedHour": "19:00",
+    "documents": 1,
+    "documentsWithPrizes": 1,
+    "totalPrizes": 7,
+    "ids": [
+      "PT_RIO__2026-07-18__19-00__8290329b-aac0-4a6a-9649-5feb6182cf4f"
+    ],
+    "closeHourRawValues": [],
+    "lotteryNames": [
+      "LT PT RIO 18HS"
+    ]
+  }
+]
+19:20 => NENHUM DOCUMENTO ENCONTRADO
+21:00 => [
+  {
+    "storedHour": "21:00",
+    "documents": 1,
+    "documentsWithPrizes": 1,
+    "totalPrizes": 7,
+    "ids": [
+      "PT_RIO__2026-07-18__21-00__d5123f7e-629d-43e9-a8fb-1385ff1cba45"
+    ],
+    "closeHourRawValues": [
+      "21:12"
+    ],
+    "lotteryNames": [
+      "LT PT RIO 21HS"
+    ]
+  }
+]

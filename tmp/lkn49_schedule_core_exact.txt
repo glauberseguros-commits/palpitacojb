@@ -1,0 +1,287 @@
+===== NÚCLEO EXATO DO CALENDÁRIO TOP3 =====
+
+====================================================================================================
+toHourBucket
+====================================================================================================
+NÃO ENCONTRADO
+
+====================================================================================================
+isFederalDrawDay
+====================================================================================================
+LINHAS: 232 até 243
+
+00232: export function isFederalDrawDay(ymd) {
+00233:   const y = safeStr(ymd);
+00234:   if (!y) return false;
+00235: 
+00236:   const dow = Number(getDowKey(y));
+00237: 
+00238:   if (y >= FEDERAL_SUNDAY_START_YMD) {
+00239:     return dow === 0 || dow === 3;
+00240:   }
+00241: 
+00242:   return dow === 3 || dow === 6;
+00243: }
+
+====================================================================================================
+getFederalScheduleForYmd
+====================================================================================================
+LINHAS: 245 até 273
+
+00245: function getFederalScheduleForYmd(ymd, FEDERAL_SCHEDULE) {
+00246:   const y = safeStr(ymd);
+00247: 
+00248:   if (!y || !isFederalDrawDay(y)) {
+00249:     return [];
+00250:   }
+00251: 
+00252:   const dow = Number(getDowKey(y));
+00253: 
+00254:   if (y >= FEDERAL_SUNDAY_START_YMD && dow === 0) {
+00255:     return ["11:00"];
+00256:   }
+00257: 
+00258:   const historical = Array.isArray(FEDERAL_SCHEDULE)
+00259:     ? FEDERAL_SCHEDULE
+00260:     : [];
+00261: 
+00262:   const normalized = historical
+00263:     .map(toHourBucket)
+00264:     .filter(Boolean);
+00265: 
+00266:   if (normalized.includes("20:00")) {
+00267:     return ["20:00"];
+00268:   }
+00269: 
+00270:   return normalized.length
+00271:     ? normalized
+00272:     : ["20:00"];
+00273: }
+
+====================================================================================================
+getPtRioScheduleForYmd
+====================================================================================================
+LINHAS: 279 até 330
+
+00279: export function getPtRioScheduleForYmd(
+00280:   ymd,
+00281:   PT_RIO_SCHEDULE_NORMAL,
+00282:   PT_RIO_SCHEDULE_WED_SAT
+00283: ) {
+00284:   const y = safeStr(ymd);
+00285:   const dow = Number(getDowKey(y));
+00286: 
+00287:   if (dow === 0) {
+00288:     const sundaySchedule = Array.isArray(PT_RIO_SCHEDULE_SUNDAY)
+00289:       ? [...PT_RIO_SCHEDULE_SUNDAY]
+00290:       : [];
+00291: 
+00292:     if (y >= PT_RIO_SUNDAY_REDUCED_START_YMD) {
+00293:       return sundaySchedule.filter((hour) => {
+00294:         const h = toHourBucket(hour);
+00295: 
+00296:         return h !== "09:00" && h !== "11:00";
+00297:       });
+00298:     }
+00299: 
+00300:     return sundaySchedule;
+00301:   }
+00302: 
+00303:   if (dow === 3 || dow === 6) {
+00304:     const baseSchedule = Array.isArray(PT_RIO_SCHEDULE_WED_SAT)
+00305:       ? [...PT_RIO_SCHEDULE_WED_SAT]
+00306:       : [];
+00307: 
+00308:     const federalRemovedRio18 =
+00309:       y >= FEDERAL_20_REMOVES_PT_RIO_18_START_YMD &&
+00310:       (
+00311:         dow === 3 ||
+00312:         (
+00313:           dow === 6 &&
+00314:           y < PT_RIO_SUNDAY_REDUCED_START_YMD
+00315:         )
+00316:       );
+00317: 
+00318:     if (federalRemovedRio18) {
+00319:       return baseSchedule.filter(
+00320:         (hour) => toHourBucket(hour) !== "18:00"
+00321:       );
+00322:     }
+00323: 
+00324:     return baseSchedule;
+00325:   }
+00326: 
+00327:   return Array.isArray(PT_RIO_SCHEDULE_NORMAL)
+00328:     ? [...PT_RIO_SCHEDULE_NORMAL]
+00329:     : [];
+00330: }
+
+====================================================================================================
+getScheduleForLottery
+====================================================================================================
+LINHAS: 332 até 353
+
+00332: export function getScheduleForLottery({
+00333:   lotteryKey,
+00334:   ymd,
+00335:   PT_RIO_SCHEDULE_NORMAL,
+00336:   PT_RIO_SCHEDULE_WED_SAT,
+00337:   FEDERAL_SCHEDULE,
+00338: }) {
+00339:   const key = safeStr(lotteryKey).toUpperCase();
+00340: 
+00341:   if (key === "FEDERAL") {
+00342:     return getFederalScheduleForYmd(
+00343:       ymd,
+00344:       FEDERAL_SCHEDULE
+00345:     );
+00346:   }
+00347: 
+00348:   return getPtRioScheduleForYmd(
+00349:     ymd,
+00350:     PT_RIO_SCHEDULE_NORMAL,
+00351:     PT_RIO_SCHEDULE_WED_SAT
+00352:   );
+00353: }
+
+====================================================================================================
+getNextSlotForLottery
+====================================================================================================
+LINHAS: 470 até 534
+
+00470: export function getNextSlotForLottery({
+00471:   lotteryKey,
+00472:   ymd,
+00473:   hourBucket,
+00474:   PT_RIO_SCHEDULE_NORMAL,
+00475:   PT_RIO_SCHEDULE_WED_SAT,
+00476:   FEDERAL_SCHEDULE,
+00477:   maxForwardDays = 21,
+00478: }) {
+00479:   const key = safeStr(lotteryKey).toUpperCase();
+00480:   const y0 = safeStr(ymd);
+00481:   const h0 = toHourBucket(hourBucket);
+00482: 
+00483:   if (!isYMD(y0) || !safeStr(h0)) return { ymd: "", hour: "" };
+00484: 
+00485:   if (key === "FEDERAL") {
+00486:     for (let i = 1; i <= maxForwardDays; i += 1) {
+00487:       const day = addDaysYMD(y0, i);
+00488:       const sch = getScheduleForLottery({
+00489:         lotteryKey: key,
+00490:         ymd: day,
+00491:         PT_RIO_SCHEDULE_NORMAL,
+00492:         PT_RIO_SCHEDULE_WED_SAT,
+00493:         FEDERAL_SCHEDULE,
+00494:       });
+00495:       if (Array.isArray(sch) && sch.length) {
+00496:         return { ymd: day, hour: toHourBucket(sch[0]) };
+00497:       }
+00498:     }
+00499:     return { ymd: "", hour: "" };
+00500:   }
+00501: 
+00502:   const sch0 = getScheduleForLottery({
+00503:     lotteryKey: key,
+00504:     ymd: y0,
+00505:     hourBucket: h0,
+00506:     PT_RIO_SCHEDULE_NORMAL,
+00507:     PT_RIO_SCHEDULE_WED_SAT,
+00508:     FEDERAL_SCHEDULE,
+00509:   });
+00510: 
+00511:   const idx = (Array.isArray(sch0) ? sch0 : []).findIndex(
+00512:     (x) => toHourBucket(x) === h0
+00513:   );
+00514: 
+00515:   if (idx >= 0 && idx < sch0.length - 1) {
+00516:     return { ymd: y0, hour: toHourBucket(sch0[idx + 1]) };
+00517:   }
+00518: 
+00519:   for (let i = 1; i <= maxForwardDays; i += 1) {
+00520:     const day = addDaysYMD(y0, i);
+00521:     const sch = getScheduleForLottery({
+00522:       lotteryKey: key,
+00523:       ymd: day,
+00524:       PT_RIO_SCHEDULE_NORMAL,
+00525:       PT_RIO_SCHEDULE_WED_SAT,
+00526:       FEDERAL_SCHEDULE,
+00527:     });
+00528:     if (Array.isArray(sch) && sch.length) {
+00529:       return { ymd: day, hour: toHourBucket(sch[0]) };
+00530:     }
+00531:   }
+00532: 
+00533:   return { ymd: "", hour: "" };
+00534: }
+
+====================================================================================================
+CONSTANTES E HORÁRIOS REFERENCIADOS
+====================================================================================================
+
+--------------------------------------------------------------------------------
+00020:   { key: "FEDERAL", value: "FEDERAL", label: "Federal" },
+00021: ];
+00022: 
+00023: // Grades
+00024: export const PT_RIO_SCHEDULE_NORMAL = [
+00025:   "09:00",
+00026:   "11:00",
+00027:   "14:00",
+00028:   "16:00",
+00029:   "18:00",
+00030:   "21:00",
+00031: ];
+00032: 
+
+--------------------------------------------------------------------------------
+00029:   "18:00",
+00030:   "21:00",
+00031: ];
+00032: 
+00033: export const PT_RIO_SCHEDULE_SUNDAY = [
+00034:   "09:00",
+00035:   "11:00",
+00036:   "14:00",
+00037:   "16:00",
+00038: ];
+00039: 
+00040: /**
+00041:  * PT_RIO em QUA/SÁB (RJ)
+
+--------------------------------------------------------------------------------
+00042:  * Mantém 18:00 porque existem ocorrências históricas nesse horário.
+00043:  * A ausência eventual do sorteio deve ser tratada pelo motor/dados reais,
+00044:  * não pela exclusão rígida da grade.
+00045:  */
+00046: export const PT_RIO_SCHEDULE_WED_SAT = [
+00047:   "09:00",
+00048:   "11:00",
+00049:   "14:00",
+00050:   "16:00",
+00051:   "18:00",
+00052:   "21:00",
+00053: ];
+00054: 
+
+--------------------------------------------------------------------------------
+00052:   "21:00",
+00053: ];
+00054: 
+00055: // Federal: travado em 20h
+00056: export const FEDERAL_SCHEDULE = ["20:00"];
+00057: 
+00058: /* =========================
+00059:    Parâmetros do motor TOP3
+00060: ========================= */
+00061: 
+00062: export const TOP3_SMOOTH_ALPHA = 1;
+00063: export const TOP3_SHRINK_M = 40;
+00064: 
+
+====================================================================================================
+STATUS GIT DOS ARQUIVOS TOP3
+====================================================================================================
+
+ M src/pages/Top3/top3.engine.js
+?? src/pages/Top3/__tests__/top3.schedule-transition.test.js

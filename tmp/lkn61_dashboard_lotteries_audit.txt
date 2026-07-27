@@ -1,0 +1,1241 @@
+===== AUDITORIA DO DASHBOARD =====
+
+
+######## src/pages/Dashboard/components/FiltersBar.jsx ########
+
+[LINHAS 1-71]
+00001: // src/pages/Dashboard/components/FiltersBar.jsx
+00002: import React, { useMemo, useCallback } from "react";
+00003: 
+00004: /**
+00005:  * FiltersBar (Premium)
+00006:  *
+00007:  * ✅ Loteria:
+00008:  * - filters.loteria: "PT_RIO" | "FEDERAL" (default: "PT_RIO")
+00009:  *
+00010:  * ✅ Horário (domínio fixo por loteria):
+00011:  * - PT_RIO: Todos + 09h/11h/14h/16h/18h/21h
+00012:  * - FEDERAL: Todos + 19h/20h
+00013:  *
+00014:  * ✅ Segurança:
+00015:  * - Ao trocar loteria, reseta filtros sensíveis:
+00016:  *   horario -> "Todos"
+00017:  *   animal  -> "Todos"
+00018:  *   posicao -> "Todos"
+00019:  *
+00020:  * posicaoMode:
+00021:  * - "full" (default): Todos + 1º..7º
+00022:  * - "v1": trava em 1º (desabilita select e lista só 1º)
+00023:  *
+00024:  * posicoesFromOptionsMode:
+00025:  * - "ignore" (default): IGNORA options.posicoes (posição é domínio fixo)
+00026:  * - "respect": respeita options.posicoes se vier (com fallback seguro)
+00027:  *
+00028:  * Extras (freeze-safe):
+00029:  * - disabledAll: trava todos selects (útil para modo DEMO)
+00030:  * - onBlocked: callback quando usuário tenta interagir enquanto bloqueado
+00031:  */
+00032: 
+00033: function normalizeValue(v, fallback = "Todos") {
+00034:   const s = String(v ?? "").trim();
+00035:   return s ? s : fallback;
+00036: }
+00037: 
+00038: function sortPTBR(a, b) {
+00039:   return String(a).localeCompare(String(b), "pt-BR", { sensitivity: "base" });
+00040: }
+00041: 
+00042: function normalizeLoteriaInput(v) {
+00043:   const raw = String(v ?? "").trim();
+00044:   if (!raw) return "PT_RIO";
+00045: 
+00046:   const key = raw
+00047:     .toLowerCase()
+00048:     .normalize("NFD")
+00049:     .replace(/[\u0300-\u036f]/g, "")
+00050:     .replace(/\s+/g, " ")
+00051:     .trim();
+00052: 
+00053:   if (key === "federal" || key === "fed" || key === "br" || key === "brasil")
+00054:     return "FEDERAL";
+00055:   if (key === "rj" || key === "rio" || key === "pt_rio" || key === "pt-rio")
+00056:     return "PT_RIO";
+00057: 
+00058:   const out = key
+00059:     .toUpperCase()
+00060:     .replace(/[^A-Z0-9]+/g, "_")
+00061:     .replace(/^_+|_+$/g, "");
+00062: 
+00063:   return out || "PT_RIO";
+00064: }
+00065: 
+00066: /** Normaliza posição para "1º..7º" ou "Todos" */
+00067: function normalizePosicaoInput(v) {
+00068:   const s = String(v ?? "").trim();
+00069:   if (!s) return "Todos";
+00070:   if (s.toLowerCase() === "todos") return "Todos";
+00071: 
+
+[LINHAS 185-225]
+00185:   inputH: 44,
+00186:   selGoldA: "rgba(200,178,90,0.95)",
+00187:   selGoldB: "rgba(184,158,71,0.95)",
+00188:   selGoldSoft: "rgba(200,178,90,0.55)",
+00189: };
+00190: 
+00191: export default function FiltersBar({
+00192:   filters = {
+00193:     loteria: "PT_RIO",
+00194:     mes: "Todos",
+00195:     diaMes: "Todos",
+00196:     diaSemana: "Todos",
+00197:     horario: "Todos",
+00198:     animal: "Todos",
+00199:     posicao: "Todos",
+00200:   },
+00201:   onChange = () => {},
+00202:   options = {},
+00203:   posicaoMode = "full",
+00204:   posicoesFromOptionsMode = "ignore",
+00205:   disabledAll = false,
+00206:   onBlocked = null,
+00207: }) {
+00208:   const loteria = useMemo(
+00209:     () => normalizeLoteriaInput(filters?.loteria),
+00210:     [filters?.loteria]
+00211:   );
+00212:   const isFederal = loteria === "FEDERAL";
+00213: 
+00214:   const defaultOptions = useMemo(() => {
+00215:     const loteriasDefault = [
+00216:       { label: "RJ", value: "PT_RIO" },
+00217:       { label: "FEDERAL", value: "FEDERAL" },
+00218:     ];
+00219: 
+00220:     const mesesDefault = [
+00221:       "Todos",
+00222:       "Janeiro",
+00223:       "Fevereiro",
+00224:       "Março",
+00225:       "Abril",
+
+[LINHAS 239-267]
+00239:       { label: "Segunda-Feira", value: "Seg" },
+00240:       { label: "Terça-Feira", value: "Ter" },
+00241:       { label: "Quarta-Feira", value: "Qua" },
+00242:       { label: "Quinta-Feira", value: "Qui" },
+00243:       { label: "Sexta-Feira", value: "Sex" },
+00244:       { label: "Sábado", value: "Sáb" },
+00245:     ];
+00246: 
+00247:     // ✅ PT_RIO (domínio fixo)
+00248:     const horariosRJ = [
+00249:       { label: "Todos", value: "Todos" },
+00250:       { label: "09h", value: "09h" },
+00251:       { label: "11h", value: "11h" },
+00252:       { label: "14h", value: "14h" },
+00253:       { label: "16h", value: "16h" },
+00254:       { label: "18h", value: "18h" },
+00255:       { label: "21h", value: "21h" },
+00256:     ];
+00257: 
+00258:     // ✅ FEDERAL (Todos/19h/20h)
+00259:     const horariosFED = [
+00260:       { label: "Todos", value: "Todos" },
+00261:       { label: "19h", value: "19h" },
+00262:       { label: "20h", value: "20h" },
+00263:     ];
+00264: 
+00265:     const posicoesDefaultFull = [
+00266:       { label: "Todos", value: "Todos" },
+00267:       { label: "1º", value: "1º" },
+
+[LINHAS 296-392]
+00296:       return arr
+00297:         .map((x) => {
+00298:           const v = normalizeValue(x, "");
+00299:           return v ? { label: v, value: v } : null;
+00300:         })
+00301:         .filter(Boolean);
+00302:     };
+00303: 
+00304:     // aceita string OU {value,label} em options.animais
+00305:     const animais =
+00306:       Array.isArray(options.animais) && options.animais.length
+00307:         ? (() => {
+00308:             const cleaned = options.animais
+00309:               .map((x) => {
+00310:                 if (x && typeof x === "object")
+00311:                   return String(x.value ?? x.label ?? "").trim();
+00312:                 return String(x ?? "").trim();
+00313:               })
+00314:               .filter(Boolean)
+00315:               .filter((x) => x.toLowerCase() !== "todos");
+00316: 
+00317:             const uniq = Array.from(new Set(cleaned));
+00318:             uniq.sort(sortPTBR);
+00319:             return ["Todos", ...uniq];
+00320:           })()
+00321:         : ["Todos"];
+00322: 
+00323:     // aceita string OU {value,label} em options.diasMes + dedup
+00324:     const diasMes =
+00325:       Array.isArray(options.diasMes) && options.diasMes.length
+00326:         ? (() => {
+00327:             const cleaned = options.diasMes
+00328:               .map((x) => {
+00329:                 if (x && typeof x === "object")
+00330:                   return String(x.value ?? x.label ?? "").trim();
+00331:                 return String(x ?? "").trim();
+00332:               })
+00333:               .filter(Boolean)
+00334:               .filter((x) => x.toLowerCase() !== "todos");
+00335:             const uniq = Array.from(new Set(cleaned));
+00336:             return ["Todos", ...uniq];
+00337:           })()
+00338:         : ["Todos", ...Array.from({ length: 31 }, (_, i) => String(i + 1))];
+00339: 
+00340:     const diasSemanaFromParent =
+00341:       Array.isArray(options.diasSemana) && options.diasSemana.length
+00342:         ? normalizeLabelValueList(options.diasSemana, diasSemanaDefault)
+00343:         : diasSemanaDefault;
+00344: 
+00345:     // ✅ horário depende da loteria (PT_RIO x FEDERAL)
+00346:     const horarios = isFederal ? horariosFED : horariosRJ;
+00347: 
+00348:     const posicoesFromParent =
+00349:       posicoesFromOptionsMode === "respect" &&
+00350:       Array.isArray(options.posicoes) &&
+00351:       options.posicoes.length
+00352:         ? normalizeLabelValueList(options.posicoes, posicoesDefaultFull)
+00353:         : null;
+00354: 
+00355:     const posicoes =
+00356:       posicoesFromParent ||
+00357:       (posicaoMode === "v1" ? posicoesDefaultV1 : posicoesDefaultFull);
+00358: 
+00359:     const meses =
+00360:       Array.isArray(options.meses) && options.meses.length
+00361:         ? (() => {
+00362:             const cleaned = options.meses
+00363:               .map((x) => {
+00364:                 if (x && typeof x === "object")
+00365:                   return String(x.value ?? x.label ?? "").trim();
+00366:                 return String(x ?? "").trim();
+00367:               })
+00368:               .filter(Boolean)
+00369:               .filter((x) => x.toLowerCase() !== "todos");
+00370:             const uniq = Array.from(new Set(cleaned));
+00371:             return ["Todos", ...uniq];
+00372:           })()
+00373:         : mesesDefault;
+00374: 
+00375:     return {
+00376:       loterias: loteriasDefault,
+00377:       meses,
+00378:       diasMes,
+00379:       diasSemana: diasSemanaFromParent,
+00380:       horarios,
+00381:       animais,
+00382:       posicoes,
+00383:     };
+00384:   }, [options, posicaoMode, posicoesFromOptionsMode, isFederal]);
+00385: 
+00386:   const ui = {
+00387:     bar: {
+00388:       border: `1px solid ${PP.strokeStrong}`,
+00389:       borderRadius: PP.rCard,
+00390:       background: `linear-gradient(180deg, ${PP.surface}, ${PP.surface2})`,
+00391:       padding: 12,
+00392:       boxShadow: PP.shadowGlow,
+
+[LINHAS 395-411]
+00395:     },
+00396:     grid: {
+00397:       display: "grid",
+00398:       gridTemplateColumns: "repeat(12, minmax(0, 1fr))",
+00399:       gap: 10,
+00400:       alignItems: "end",
+00401:       minWidth: 0,
+00402:     },
+00403:     spanLoteria: { gridColumn: "span 2", minWidth: 0 },
+00404:     spanMes: { gridColumn: "span 2", minWidth: 0 },
+00405:     spanDiaMes: { gridColumn: "span 2", minWidth: 0 },
+00406:     spanDiaSemana: { gridColumn: "span 3", minWidth: 0 },
+00407:     spanHorario: { gridColumn: "span 1", minWidth: 0 },
+00408:     spanAnimal: { gridColumn: "span 1", minWidth: 0 },
+00409:     spanPosicao: { gridColumn: "span 1", minWidth: 0 },
+00410:     item: { display: "grid", gap: 7, minWidth: 0 },
+00411:     label: {
+
+[LINHAS 462-488]
+00462:       pointerEvents: "none",
+00463:       opacity: 0.9,
+00464:     },
+00465:     styleTag: `
+00466:       .pp_filters_grid * { box-sizing: border-box; }
+00467: 
+00468:       @media (max-width: 1200px){
+00469:         .pp_filters_grid{ grid-template-columns: repeat(8, minmax(0, 1fr)); }
+00470:         .pp_f_loteria{ grid-column: span 2 !important; }
+00471:         .pp_f_mes{ grid-column: span 2 !important; }
+00472:         .pp_f_diaMes{ grid-column: span 2 !important; }
+00473:         .pp_f_diaSemana{ grid-column: span 4 !important; }
+00474:         .pp_f_horario{ grid-column: span 2 !important; }
+00475:         .pp_f_animal{ grid-column: span 2 !important; }
+00476:         .pp_f_posicao{ grid-column: span 2 !important; }
+00477:       }
+00478:       @media (max-width: 760px){
+00479:         .pp_filters_grid{ grid-template-columns: repeat(4, minmax(0, 1fr)); }
+00480:         .pp_f_loteria,
+00481:         .pp_f_mes,
+00482:         .pp_f_diaMes,
+00483:         .pp_f_diaSemana,
+00484:         .pp_f_horario,
+00485:         .pp_f_animal,
+00486:         .pp_f_posicao{ grid-column: span 4 !important; }
+00487:       }
+00488: 
+
+[LINHAS 532-551]
+00532: 
+00533:   const handleChange = useCallback(
+00534:     (name, next) => {
+00535:       if (disabledAll) {
+00536:         if (typeof onBlocked === "function") onBlocked(name);
+00537:         return;
+00538:       }
+00539: 
+00540:       // ✅ Troca loteria: normaliza e reseta filtros sensíveis SEMPRE
+00541:       if (name === "loteria") {
+00542:         const nextLot = normalizeLoteriaInput(next);
+00543:         onChange("loteria", nextLot);
+00544: 
+00545:         // reset para evitar “estatística inválida” por estado anterior
+00546:         onChange("horario", "Todos");
+00547:         onChange("animal", "Todos");
+00548:         onChange("posicao", "Todos");
+00549: 
+00550:         return;
+00551:       }
+
+[LINHAS 580-604]
+00580:     disabled = false,
+00581:     forceValue = null,
+00582:   }) => {
+00583:     const normalizeFn =
+00584:       name === "posicao"
+00585:         ? normalizePosicaoInput
+00586:         : name === "diaSemana"
+00587:         ? normalizeDiaSemanaInput
+00588:         : name === "loteria"
+00589:         ? normalizeLoteriaInput
+00590:         : null;
+00591: 
+00592:     const normalizedValue = ensureValueInList({
+00593:       value,
+00594:       list,
+00595:       forceValue,
+00596:       fallback: name === "loteria" ? "PT_RIO" : "Todos",
+00597:       normalizeFn,
+00598:     });
+00599: 
+00600:     const isObjList =
+00601:       Array.isArray(list) && list.length && typeof list[0] === "object" && list[0];
+00602: 
+00603:     const finalDisabled = !!disabledAll || !!disabled;
+00604: 
+
+[LINHAS 651-736]
+00651: 
+00652:             <span aria-hidden="true" style={ui.caret} />
+00653:           </div>
+00654:         </div>
+00655:       </div>
+00656:     );
+00657:   };
+00658: 
+00659:   // FEDERAL NÃO trava horário — só troca a lista (Todos/19h/20h)
+00660:   const horarioForcedValue = null;
+00661:   const horarioDisabled = false;
+00662: 
+00663:   return (
+00664:     <div style={ui.bar}>
+00665:       <style>{ui.styleTag}</style>
+00666: 
+00667:       <div className="pp_filters_grid" style={ui.grid}>
+00668:         <Item
+00669:           label="Loteria"
+00670:           name="loteria"
+00671:           value={loteria}
+00672:           list={defaultOptions.loterias}
+00673:           wrapClassName="pp_f_loteria"
+00674:           wrapStyle={ui.spanLoteria}
+00675:         />
+00676: 
+00677:         <Item
+00678:           label="Mês"
+00679:           name="mes"
+00680:           value={filters.mes}
+00681:           list={defaultOptions.meses}
+00682:           wrapClassName="pp_f_mes"
+00683:           wrapStyle={ui.spanMes}
+00684:         />
+00685: 
+00686:         <Item
+00687:           label="Dia do Mês"
+00688:           name="diaMes"
+00689:           value={filters.diaMes}
+00690:           list={defaultOptions.diasMes}
+00691:           wrapClassName="pp_f_diaMes"
+00692:           wrapStyle={ui.spanDiaMes}
+00693:         />
+00694: 
+00695:         <Item
+00696:           label="Dia da Semana"
+00697:           name="diaSemana"
+00698:           value={filters.diaSemana}
+00699:           list={defaultOptions.diasSemana}
+00700:           wrapClassName="pp_f_diaSemana"
+00701:           wrapStyle={ui.spanDiaSemana}
+00702:         />
+00703: 
+00704:         <Item
+00705:           label="Horário"
+00706:           name="horario"
+00707:           value={filters.horario}
+00708:           list={defaultOptions.horarios}
+00709:           wrapClassName="pp_f_horario"
+00710:           wrapStyle={ui.spanHorario}
+00711:           disabled={horarioDisabled}
+00712:           forceValue={horarioForcedValue}
+00713:         />
+00714: 
+00715:         <Item
+00716:           label="Animal"
+00717:           name="animal"
+00718:           value={filters.animal}
+00719:           list={defaultOptions.animais}
+00720:           wrapClassName="pp_f_animal"
+00721:           wrapStyle={ui.spanAnimal}
+00722:         />
+00723: 
+00724:         <Item
+00725:           label="Posição"
+00726:           name="posicao"
+00727:           value={filters.posicao}
+00728:           list={defaultOptions.posicoes}
+00729:           wrapClassName="pp_f_posicao"
+00730:           wrapStyle={ui.spanPosicao}
+00731:           disabled={lockPosicaoV1}
+00732:           forceValue={posicaoForcedValue}
+00733:         />
+00734:       </div>
+00735:     </div>
+00736:   );
+
+
+######## src/pages/Dashboard/Dashboard.jsx ########
+
+[LINHAS 482-528]
+00482: 
+00483:   let from = f < minDate ? minDate : f;
+00484:   let to = t > maxDate ? maxDate : t;
+00485: 
+00486:   if (from > to) to = from;
+00487:   return { from, to };
+00488: }
+00489: 
+00490: function normalizeLoteriaKey(v) {
+00491:   const raw = String(v ?? "").trim();
+00492: 
+00493:   if (!raw) return "PT_RIO";
+00494: 
+00495:   const key = raw
+00496:     .toLowerCase()
+00497:     .normalize("NFD")
+00498:     .replace(/[\u0300-\u036f]/g, "")
+00499:     .replace(/\s+/g, " ")
+00500:     .trim();
+00501: 
+00502:   if (key === "federal" || key === "fed" || key === "br" || key === "brasil") return "FEDERAL";
+00503:   if (key === "rj" || key === "rio" || key === "pt_rio" || key === "pt-rio") return "PT_RIO";
+00504: 
+00505:   const out = key
+00506:     .toUpperCase()
+00507:     .replace(/[^A-Z0-9]+/g, "_")
+00508:     .replace(/^_+|_+$/g, "");
+00509: 
+00510:   return out || "PT_RIO";
+00511: }
+00512: 
+00513: function getDefaultFloorByUf(ufKey) {
+00514:   const u = String(ufKey || "").trim().toUpperCase();
+00515: 
+00516:   if (u === "PT_RIO" || u === "RJ" || u === "RIO" || u === "PT-RIO") {
+00517:     return "2022-06-07";
+00518:   }
+00519: 
+00520:   if (u === "FEDERAL" || u === "FED" || u === "BR" || u === "BRASIL") {
+00521:     return "2022-02-08";
+00522:   }
+00523: 
+00524:   return "2022-01-01";
+00525: }
+00526: 
+00527: function getTodayYmdSafe() {
+00528:   const ymd = normalizeToYMD_SP(new Date());
+
+[LINHAS 586-602]
+00586:     d.closeHourBucket ??
+00587:     d.slot ??
+00588:     d.hour ??
+00589:     d.hora ??
+00590:     "";
+00591: 
+00592:   const ch = normalizeCloseHourForKpi(chRaw);
+00593: 
+00594:   const uf = String(ufKey ?? d.uf ?? d.lottery_key ?? d.lotteryKey ?? "")
+00595:     .trim()
+00596:     .toUpperCase() || "UF";
+00597: 
+00598:   if (ymd && ch) return `UF__${uf}__${ymd}__${ch}`;
+00599: 
+00600:   const drawId = String(d.drawId ?? d.draw_id ?? d.lottery_id ?? d.id ?? "").trim();
+00601:   if (drawId) return `UF__${uf}__DRAWID__${drawId}`;
+00602: 
+
+[LINHAS 634-650]
+00634:   for (let y = a; y <= b; y++) out.push(y);
+00635:   return out;
+00636: }
+00637: 
+00638: /* =========================
+00639:    ✅ Persistência por UF
+00640: ========================= */
+00641: function makeDashStateKeyV2(ufKey) {
+00642:   const u = String(ufKey || "").trim().toUpperCase() || "PT_RIO";
+00643:   return `${DASH_STATE_KEY_BASE}__${u}`;
+00644: }
+00645: 
+00646: function loadDashStateV2(ufKey) {
+00647:   const KEY = makeDashStateKeyV2(ufKey);
+00648: 
+00649:   const v2 = safeReadJSON(KEY);
+00650:   if (v2 && typeof v2 === "object") return v2;
+
+[LINHAS 672-692]
+00672:     return migrated;
+00673:   }
+00674: 
+00675:   return null;
+00676: }
+00677: 
+00678: export default function Dashboard(props) {
+00679:   const externalFilters = props && typeof props === "object" ? props.filters : null;
+00680:   const externalSetFilters = props && typeof props === "object" ? props.setFilters : null;
+00681: 
+00682:   const fallbackFilters = useMemo(
+00683:     () => ({
+00684:       loteria: "PT_RIO",
+00685:       mes: "Todos",
+00686:       diaMes: "Todos",
+00687:       diaSemana: "Todos",
+00688:       horario: "Todos",
+00689:       animal: "Todos",
+00690:       posicao: "Todos",
+00691:     }),
+00692:     []
+
+[LINHAS 752-785]
+00752:   const rawFilters = useMemo(() => {
+00753:     return externalFilters && typeof externalFilters === "object" ? externalFilters : fallbackFilters;
+00754:   }, [externalFilters, fallbackFilters]);
+00755: 
+00756:   const filters = useMemo(() => {
+00757:     return { ...fallbackFilters, ...rawFilters };
+00758:   }, [rawFilters, fallbackFilters]);
+00759: 
+00760:   const noopSetFilters = useCallback(() => {}, []);
+00761:   const setFilters = useMemo(() => {
+00762:     return typeof externalSetFilters === "function" ? externalSetFilters : noopSetFilters;
+00763:   }, [externalSetFilters, noopSetFilters]);
+00764: 
+00765:   const loteriaKey = useMemo(
+00766:     () => normalizeLoteriaKey(filters?.lotteryKey || filters?.loteria || filters?.uf),
+00767:     [filters?.lotteryKey, filters?.loteria, filters?.uf]
+00768:   );
+00769: 
+00770:   const isFederal = loteriaKey === "FEDERAL";
+00771: 
+00772:   const fedBucket = isFederal ? normalizeHourBucket(filters?.horario) : null;
+00773:   const locationLabel = isFederal
+00774:     ? `FEDERAL (Brasil)${fedBucket ? ` — ${fedBucket}` : ""}`
+00775:     : `${loteriaKey} — Brasil`;
+00776: 
+00777:   const uf = loteriaKey;
+00778: 
+00779:   const [savedDashState, setSavedDashState] = useState(() => loadDashStateV2(uf));
+00780: 
+00781:   useEffect(() => {
+00782:     setSavedDashState(loadDashStateV2(uf));
+00783:   }, [uf]);
+00784: 
+00785:   const [selectedGrupo, setSelectedGrupo] = useState(() => {
+
+[LINHAS 1213-1269]
+01213:   useEffect(() => {
+01214:     const prev = String(lastUfRef.current || "");
+01215:     const next = String(uf || "");
+01216:     if (prev && next && prev !== next) {
+01217:       setSelectedGrupo(null);
+01218:       setSelectedYears([]);
+01219:       setFollowMax(true);
+01220: 
+01221:       setFilters((p) => ({
+01222:         ...p,
+01223:         horario: "Todos",
+01224:         animal: "Todos",
+01225:         posicao: "Todos",
+01226:       }));
+01227: 
+01228:       setDateRange(null);
+01229:       setDateRangeQuery(null);
+01230:       didInitRangeFromBoundsRef.current = false;
+01231:     }
+01232:     lastUfRef.current = next;
+01233:   }, [uf, setFilters]);
+01234: 
+01235:   const handleFilterChange = useCallback(
+01236:     (name, value) => {
+01237:       if (name === "loteria" || name === "lotteryKey" || name === "uf") {
+01238:         setFilters((prev) => ({
+01239:           ...prev,
+01240:           [name]: value,
+01241:           horario: "Todos",
+01242:           animal: "Todos",
+01243:           posicao: "Todos",
+01244:         }));
+01245:         setSelectedGrupo(null);
+01246:         setSelectedYears([]);
+01247:         setFollowMax(true);
+01248:         setDateRange(null);
+01249:         setDateRangeQuery(null);
+01250:         didInitRangeFromBoundsRef.current = false;
+01251:         return;
+01252:       }
+01253: 
+01254:       setFilters((prev) => ({ ...prev, [name]: value }));
+01255: 
+01256:       if (name === "animal") {
+01257:         const g = findGrupoByAnimalLabel(value);
+01258:         setSelectedGrupo(g);
+01259:       }
+01260:     },
+01261:     [findGrupoByAnimalLabel, setFilters]
+01262:   );
+01263: 
+01264:   const drawsForView = useMemo(() => {
+01265:     if (!dataReady) return [];
+01266: 
+01267:     const list = Array.isArray(drawsForUi) ? drawsForUi : [];
+01268:     if (!list.length) return [];
+01269: 
+
+[LINHAS 1414-1450]
+01414:     try {
+01415:       const out = buildPalpiteV2(drawsForView, { closeHourBucket: null });
+01416:       return out?.palpitesByGrupo && typeof out.palpitesByGrupo === "object" ? out.palpitesByGrupo : {};
+01417:     } catch {
+01418:       return {};
+01419:     }
+01420:   }, [drawsForView, dataReady, hasAnyDrawsView, isAggregatedOnly]);
+01421: 
+01422:   const options = useMemo(() => {
+01423:     const animais = ["Todos"];
+01424:     for (let g = 1; g <= 25; g += 1) {
+01425:       const lbl = getLabelByGrupo(g);
+01426:       animais.push(lbl || `Grupo ${pad2(g)}`);
+01427:     }
+01428: 
+01429:     const baseBuckets = new Set();
+01430:     if (Array.isArray(drawsForUi) && drawsForUi.length) {
+01431:       for (const d of drawsForUi) {
+01432:         const b = normalizeHourBucket(getDrawCloseHour(d));
+01433:         if (b) baseBuckets.add(b);
+01434:       }
+01435:     }
+01436: 
+01437:     if (isFederal) {
+01438:       baseBuckets.add("19h");
+01439:       baseBuckets.add("20h");
+01440:     }
+01441: 
+01442:     const horarios = Array.from(baseBuckets)
+01443:       .sort((a, b) => a.localeCompare(b))
+01444:       .map((b) => ({ label: b, value: b }));
+01445: 
+01446:     const diasSemana = [
+01447:       { label: "Todos", value: "Todos" },
+01448:       { label: "Domingo", value: "Dom" },
+01449:       { label: "Segunda-Feira", value: "Seg" },
+01450:       { label: "Terça-Feira", value: "Ter" },
+
+[LINHAS 1462-1482]
+01462:       { label: "4º", value: "4º" },
+01463:       { label: "5º", value: "5º" },
+01464:       { label: "6º", value: "6º" },
+01465:       { label: "7º", value: "7º" },
+01466:     ];
+01467: 
+01468:     return {
+01469:       animais,
+01470:       horarios: [{ label: "Todos", value: "Todos" }, ...horarios],
+01471:       diasSemana,
+01472:       posicoes,
+01473:     };
+01474:   }, [drawsForUi, isFederal]);
+01475: 
+01476:   const yearsAvailable = useMemo(() => {
+01477:     return buildYearsAvailable(MIN_DATE, MAX_DATE);
+01478:   }, [MIN_DATE, MAX_DATE]);
+01479: 
+01480:   const applyAllYearsFull = useCallback(() => {
+01481:     if (!MIN_DATE || !MAX_DATE) return;
+01482:     setSelectedYears([]);
+
+[LINHAS 1548-1600]
+01548:     ];
+01549:   }, [dataReady, drawsForUi, uf]);
+01550: 
+01551:   const onSelectGrupo = useCallback(
+01552:     (grupoNum) => {
+01553:       const g = Number(grupoNum);
+01554:       if (!Number.isFinite(g) || g < 1 || g > 25) {
+01555:         setSelectedGrupo(null);
+01556:         setFilters((prev) => ({ ...prev, animal: "Todos" }));
+01557:         return;
+01558:       }
+01559: 
+01560:       setSelectedGrupo((prev) => {
+01561:         const next = prev === g ? null : g;
+01562: 
+01563:         if (!next) {
+01564:           setFilters((p) => ({ ...p, animal: "Todos" }));
+01565:         } else {
+01566:           const row = Array.isArray(rankingDataGlobalForLabels)
+01567:             ? rankingDataGlobalForLabels.find((r) => Number(String(r?.grupo || "").replace(/^0/, "")) === next)
+01568:             : null;
+01569: 
+01570:           const label = safeAnimalLabel({ grupo: next, animal: row?.animal || "" });
+01571:           setFilters((p) => ({
+01572:             ...p,
+01573:             animal: label || getLabelByGrupo(next) || "Todos",
+01574:           }));
+01575:         }
+01576: 
+01577:         return next;
+01578:       });
+01579:     },
+01580:     [rankingDataGlobalForLabels, setFilters]
+01581:   );
+01582: 
+01583:   const onSelectPosicao = useCallback(
+01584:     (posNumberString) => {
+01585:       const raw = String(posNumberString ?? "").trim();
+01586:       const m = raw.match(/^(\d+)/);
+01587:       const n = m ? Number(m[1]) : NaN;
+01588: 
+01589:       if (!Number.isFinite(n) || n < 1 || n > 7) return;
+01590:       setFilters((prev) => ({ ...prev, posicao: `${n}º` }));
+01591:     },
+01592:     [setFilters]
+01593:   );
+01594: 
+01595:   const boundsMessage = useMemo(() => {
+01596:     if (bounds.loading) return "Carregando período disponível...";
+01597:     if (!boundsReady) return bounds.error || "Não foi possível obter bounds reais.";
+01598:     return null;
+01599:   }, [bounds.loading, boundsReady, bounds.error]);
+01600: 
+
+[LINHAS 1809-1825]
+01809:                 )}
+01810:               </>
+01811:             )}
+01812:           </div>
+01813:         </section>
+01814: 
+01815:         <section className="dashFilters">
+01816:           <div style={{ position: "relative" }}>
+01817:             <FiltersBar filters={filters} onChange={handleFilterChange} options={options} />
+01818:           </div>
+01819:         </section>
+01820: 
+01821:         <section className="dashCharts">
+01822:           {uiBlockedByBounds ? (
+01823:             <PremiumInfoBox
+01824:               title="Painel inicializando período"
+01825:               description="O sistema ainda está resolvendo o intervalo oficial da base. Assim que o range local estiver disponível, o painel libera o conteúdo."
+
+
+######## src/App.jsx ########
+
+[LINHAS 200-249]
+00200: 
+00201:   safeRemoveLS(LS_GUEST_ACTIVE_KEY);
+00202: }
+00203: 
+00204: /* =========================
+00205:    Dashboard filters (persist)
+00206: ========================= */
+00207: 
+00208: function normalizeLoteriaInput(v) {
+00209:   const raw = String(v ?? "").trim();
+00210:   if (!raw) return "PT_RIO";
+00211: 
+00212:   const key = raw
+00213:     .toLowerCase()
+00214:     .normalize("NFD")
+00215:     .replace(/[\u0300-\u036f]/g, "")
+00216:     .replace(/\s+/g, " ")
+00217:     .trim();
+00218: 
+00219:   if (key === "federal" || key === "fed" || key === "br" || key === "brasil") {
+00220:     return "FEDERAL";
+00221:   }
+00222: 
+00223:   if (key === "rj" || key === "rio" || key === "pt_rio" || key === "pt-rio") {
+00224:     return "PT_RIO";
+00225:   }
+00226: 
+00227:   const out = key
+00228:     .toUpperCase()
+00229:     .replace(/[^A-Z0-9]+/g, "_")
+00230:     .replace(/^_+|_+$/g, "");
+00231: 
+00232:   return out || "PT_RIO";
+00233: }
+00234: 
+00235: function loteriaToLotteryKey(loteria) {
+00236:   return normalizeLoteriaInput(loteria);
+00237: }
+00238: 
+00239: function getDefaultDashboardFilters() {
+00240:   return {
+00241:     loteria: "PT_RIO",
+00242:     mes: "Todos",
+00243:     diaMes: "Todos",
+00244:     diaSemana: "Todos",
+00245:     horario: "Todos",
+00246:     animal: "Todos",
+00247:     posicao: "Todos",
+00248:   };
+00249: }
+
+[LINHAS 251-279]
+00251: function loadDashboardFilters() {
+00252:   const raw = safeReadLS(DASH_FILTERS_KEY);
+00253:   if (!raw) return getDefaultDashboardFilters();
+00254: 
+00255:   const obj = safeParseJson(raw);
+00256:   if (!obj || typeof obj !== "object") return getDefaultDashboardFilters();
+00257: 
+00258:   const base = getDefaultDashboardFilters();
+00259:   const loteria = normalizeLoteriaInput(obj.loteria);
+00260: 
+00261:   const horario =
+00262:     loteria === "FEDERAL"
+00263:       ? obj.horario === "Todos" || obj.horario === "19h" || obj.horario === "20h"
+00264:         ? obj.horario
+00265:         : "Todos"
+00266:       : typeof obj.horario === "string"
+00267:       ? obj.horario
+00268:       : base.horario;
+00269: 
+00270:   return {
+00271:     loteria,
+00272:     mes: typeof obj.mes === "string" ? obj.mes : base.mes,
+00273:     diaMes: typeof obj.diaMes === "string" ? obj.diaMes : base.diaMes,
+00274:     diaSemana: typeof obj.diaSemana === "string" ? obj.diaSemana : base.diaSemana,
+00275:     horario,
+00276:     animal: typeof obj.animal === "string" ? obj.animal : base.animal,
+00277:     posicao: typeof obj.posicao === "string" ? obj.posicao : base.posicao,
+00278:   };
+00279: }
+
+[LINHAS 517-548]
+00517:       unsub?.();
+00518:     };
+00519:   }, [adminMode]);
+00520: 
+00521:   const [dashboardFilters, setDashboardFilters] = useState(() => loadDashboardFilters());
+00522:   const [, setSessionTick] = useState(0);
+00523: 
+00524:   useEffect(() => {
+00525:     const lot = normalizeLoteriaInput(dashboardFilters?.loteria);
+00526: 
+00527:     if (lot === "FEDERAL") {
+00528:       const h = String(dashboardFilters?.horario || "");
+00529:       if (h !== "Todos" && h !== "19h" && h !== "20h") {
+00530:         setDashboardFilters((prev) => ({ ...prev, horario: "Todos" }));
+00531:       } else if (dashboardFilters?.loteria !== "FEDERAL") {
+00532:         setDashboardFilters((prev) => ({ ...prev, loteria: "FEDERAL" }));
+00533:       }
+00534:       return;
+00535:     }
+00536: 
+00537:     if (dashboardFilters?.loteria !== lot) {
+00538:       setDashboardFilters((prev) => ({ ...prev, loteria: lot }));
+00539:     }
+00540:   }, [dashboardFilters?.loteria, dashboardFilters?.horario]);
+00541: 
+00542:   useEffect(() => {
+00543:     safeWriteLS(DASH_FILTERS_KEY, JSON.stringify(dashboardFilters));
+00544:   }, [dashboardFilters]);
+00545: 
+00546:   useEffect(() => {
+00547:     const bump = () => setSessionTick((v) => v + 1);
+00548: 
+
+[LINHAS 669-687]
+00669:         return <Payments />;
+00670:       case ROUTES.DOWNLOADS:
+00671:         return <Downloads />;
+00672:       default:
+00673:         return (
+00674:           <Dashboard
+00675:             filters={{
+00676:               ...dashboardFilters,
+00677:               lotteryKey: loteriaToLotteryKey(dashboardFilters?.loteria),
+00678:             }}
+00679:             setFilters={setDashboardFilters}
+00680:           />
+00681:         );
+00682:     }
+00683:   };
+00684: 
+00685:   if (adminMode) {
+00686:     return (
+00687:       <ErrorBoundary>
+
+[LINHAS 749-767]
+00749: 
+00750:   return (
+00751:     <ErrorBoundary>
+00752:       <AppShell active={currentScreen} onNavigate={goToScreen} onLogout={logout}>
+00753:         {currentScreen === ROUTES.DASHBOARD ? (
+00754:           <Dashboard
+00755:             filters={{
+00756:               ...dashboardFilters,
+00757:               lotteryKey: loteriaToLotteryKey(dashboardFilters?.loteria),
+00758:             }}
+00759:             setFilters={setDashboardFilters}
+00760:           />
+00761:         ) : (
+00762:           renderScreen(currentScreen)
+00763:         )}
+00764:       </AppShell>
+00765:       <BuildStamp />
+00766:     </ErrorBoundary>
+00767:   );
+
+
+===== DEFINIÇÕES EXATAS DAS LISTAS =====
+
+--- src/pages/Dashboard/components/FiltersBar.jsx ---
+
+[LOTERIAS_DEFAULT]
+const loteriasDefault = [
+      { label: "RJ", value: "PT_RIO" },
+      { label: "FEDERAL", value: "FEDERAL" },
+    ];
+
+[HORARIOS_RJ]
+const horariosRJ = [
+      { label: "Todos", value: "Todos" },
+      { label: "09h", value: "09h" },
+      { label: "11h", value: "11h" },
+      { label: "14h", value: "14h" },
+      { label: "16h", value: "16h" },
+      { label: "18h", value: "18h" },
+      { label: "21h", value: "21h" },
+    ];
+
+[HORARIOS_FED]
+const horariosFED = [
+      { label: "Todos", value: "Todos" },
+      { label: "19h", value: "19h" },
+      { label: "20h", value: "20h" },
+    ];
+
+[NORMALIZE_LOTERIA]
+function normalizeLoteriaInput(v) {
+  const raw = String(v ?? "").trim();
+  if (!raw) return "PT_RIO";
+
+  const key = raw
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  if (key === "federal" || key === "fed" || key === "br" || key === "brasil")
+    return "FEDERAL";
+  if (key === "rj" || key === "rio" || key === "pt_rio" || key === "pt-rio")
+    return "PT_RIO";
+
+  const out = key
+    .toUpperCase()
+    .replace(/[^A-Z0-9]+/g, "_")
+    .replace(/^_+|_+$/g, "");
+
+  return out || "PT_RIO";
+}
+
+--- src/pages/Dashboard/Dashboard.jsx ---
+(SEM DEFINIÇÕES EXTRAÍDAS)
+
+--- src/App.jsx ---
+
+[NORMALIZE_LOTERIA]
+function normalizeLoteriaInput(v) {
+  const raw = String(v ?? "").trim();
+  if (!raw) return "PT_RIO";
+
+  const key = raw
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  if (key === "federal" || key === "fed" || key === "br" || key === "brasil") {
+    return "FEDERAL";
+  }
+
+  if (key === "rj" || key === "rio" || key === "pt_rio" || key === "pt-rio") {
+    return "PT_RIO";
+  }
+
+  const out = key
+    .toUpperCase()
+    .replace(/[^A-Z0-9]+/g, "_")
+    .replace(/^_+|_+$/g, "");
+
+  return out || "PT_RIO";
+}
+
+
+===== BUSCA GLOBAL DE LOOK/NACIONAL NO DASHBOARD =====
+src/App.jsx-205-   Dashboard filters (persist)
+src/App.jsx-206-========================= */
+src/App.jsx-207-
+src/App.jsx-208-function normalizeLoteriaInput(v) {
+src/App.jsx-209-  const raw = String(v ?? "").trim();
+src/App.jsx:210:  if (!raw) return "PT_RIO";
+src/App.jsx-211-
+src/App.jsx-212-  const key = raw
+src/App.jsx-213-    .toLowerCase()
+src/App.jsx-214-    .normalize("NFD")
+src/App.jsx-215-    .replace(/[\u0300-\u036f]/g, "")
+src/App.jsx-216-    .replace(/\s+/g, " ")
+src/App.jsx-217-    .trim();
+src/App.jsx-218-
+src/App.jsx-219-  if (key === "federal" || key === "fed" || key === "br" || key === "brasil") {
+src/App.jsx:220:    return "FEDERAL";
+src/App.jsx-221-  }
+src/App.jsx-222-
+src/App.jsx-223-  if (key === "rj" || key === "rio" || key === "pt_rio" || key === "pt-rio") {
+src/App.jsx:224:    return "PT_RIO";
+src/App.jsx-225-  }
+src/App.jsx-226-
+src/App.jsx-227-  const out = key
+src/App.jsx-228-    .toUpperCase()
+src/App.jsx-229-    .replace(/[^A-Z0-9]+/g, "_")
+src/App.jsx-230-    .replace(/^_+|_+$/g, "");
+src/App.jsx-231-
+src/App.jsx:232:  return out || "PT_RIO";
+src/App.jsx-233-}
+src/App.jsx-234-
+src/App.jsx-235-function loteriaToLotteryKey(loteria) {
+src/App.jsx-236-  return normalizeLoteriaInput(loteria);
+src/App.jsx-237-}
+src/App.jsx-238-
+src/App.jsx-239-function getDefaultDashboardFilters() {
+src/App.jsx-240-  return {
+src/App.jsx:241:    loteria: "PT_RIO",
+src/App.jsx-242-    mes: "Todos",
+src/App.jsx-243-    diaMes: "Todos",
+src/App.jsx-244-    diaSemana: "Todos",
+src/App.jsx-245-    horario: "Todos",
+src/App.jsx-246-    animal: "Todos",
+--
+src/App.jsx-257-
+src/App.jsx-258-  const base = getDefaultDashboardFilters();
+src/App.jsx-259-  const loteria = normalizeLoteriaInput(obj.loteria);
+src/App.jsx-260-
+src/App.jsx-261-  const horario =
+src/App.jsx:262:    loteria === "FEDERAL"
+src/App.jsx-263-      ? obj.horario === "Todos" || obj.horario === "19h" || obj.horario === "20h"
+src/App.jsx-264-        ? obj.horario
+src/App.jsx-265-        : "Todos"
+src/App.jsx-266-      : typeof obj.horario === "string"
+src/App.jsx-267-      ? obj.horario
+--
+src/App.jsx-522-  const [, setSessionTick] = useState(0);
+src/App.jsx-523-
+src/App.jsx-524-  useEffect(() => {
+src/App.jsx-525-    const lot = normalizeLoteriaInput(dashboardFilters?.loteria);
+src/App.jsx-526-
+src/App.jsx:527:    if (lot === "FEDERAL") {
+src/App.jsx-528-      const h = String(dashboardFilters?.horario || "");
+src/App.jsx-529-      if (h !== "Todos" && h !== "19h" && h !== "20h") {
+src/App.jsx-530-        setDashboardFilters((prev) => ({ ...prev, horario: "Todos" }));
+src/App.jsx:531:      } else if (dashboardFilters?.loteria !== "FEDERAL") {
+src/App.jsx:532:        setDashboardFilters((prev) => ({ ...prev, loteria: "FEDERAL" }));
+src/App.jsx-533-      }
+src/App.jsx-534-      return;
+src/App.jsx-535-    }
+src/App.jsx-536-
+src/App.jsx-537-    if (dashboardFilters?.loteria !== lot) {
+--
+src/pages/Dashboard/components/FiltersBar.jsx-3-
+src/pages/Dashboard/components/FiltersBar.jsx-4-/**
+src/pages/Dashboard/components/FiltersBar.jsx-5- * FiltersBar (Premium)
+src/pages/Dashboard/components/FiltersBar.jsx-6- *
+src/pages/Dashboard/components/FiltersBar.jsx-7- * ✅ Loteria:
+src/pages/Dashboard/components/FiltersBar.jsx:8: * - filters.loteria: "PT_RIO" | "FEDERAL" (default: "PT_RIO")
+src/pages/Dashboard/components/FiltersBar.jsx-9- *
+src/pages/Dashboard/components/FiltersBar.jsx-10- * ✅ Horário (domínio fixo por loteria):
+src/pages/Dashboard/components/FiltersBar.jsx:11: * - PT_RIO: Todos + 09h/11h/14h/16h/18h/21h
+src/pages/Dashboard/components/FiltersBar.jsx:12: * - FEDERAL: Todos + 19h/20h
+src/pages/Dashboard/components/FiltersBar.jsx-13- *
+src/pages/Dashboard/components/FiltersBar.jsx-14- * ✅ Segurança:
+src/pages/Dashboard/components/FiltersBar.jsx-15- * - Ao trocar loteria, reseta filtros sensíveis:
+src/pages/Dashboard/components/FiltersBar.jsx-16- *   horario -> "Todos"
+src/pages/Dashboard/components/FiltersBar.jsx-17- *   animal  -> "Todos"
+--
+src/pages/Dashboard/components/FiltersBar.jsx-39-  return String(a).localeCompare(String(b), "pt-BR", { sensitivity: "base" });
+src/pages/Dashboard/components/FiltersBar.jsx-40-}
+src/pages/Dashboard/components/FiltersBar.jsx-41-
+src/pages/Dashboard/components/FiltersBar.jsx-42-function normalizeLoteriaInput(v) {
+src/pages/Dashboard/components/FiltersBar.jsx-43-  const raw = String(v ?? "").trim();
+src/pages/Dashboard/components/FiltersBar.jsx:44:  if (!raw) return "PT_RIO";
+src/pages/Dashboard/components/FiltersBar.jsx-45-
+src/pages/Dashboard/components/FiltersBar.jsx-46-  const key = raw
+src/pages/Dashboard/components/FiltersBar.jsx-47-    .toLowerCase()
+src/pages/Dashboard/components/FiltersBar.jsx-48-    .normalize("NFD")
+src/pages/Dashboard/components/FiltersBar.jsx-49-    .replace(/[\u0300-\u036f]/g, "")
+src/pages/Dashboard/components/FiltersBar.jsx-50-    .replace(/\s+/g, " ")
+src/pages/Dashboard/components/FiltersBar.jsx-51-    .trim();
+src/pages/Dashboard/components/FiltersBar.jsx-52-
+src/pages/Dashboard/components/FiltersBar.jsx-53-  if (key === "federal" || key === "fed" || key === "br" || key === "brasil")
+src/pages/Dashboard/components/FiltersBar.jsx:54:    return "FEDERAL";
+src/pages/Dashboard/components/FiltersBar.jsx-55-  if (key === "rj" || key === "rio" || key === "pt_rio" || key === "pt-rio")
+src/pages/Dashboard/components/FiltersBar.jsx:56:    return "PT_RIO";
+src/pages/Dashboard/components/FiltersBar.jsx-57-
+src/pages/Dashboard/components/FiltersBar.jsx-58-  const out = key
+src/pages/Dashboard/components/FiltersBar.jsx-59-    .toUpperCase()
+src/pages/Dashboard/components/FiltersBar.jsx-60-    .replace(/[^A-Z0-9]+/g, "_")
+src/pages/Dashboard/components/FiltersBar.jsx-61-    .replace(/^_+|_+$/g, "");
+src/pages/Dashboard/components/FiltersBar.jsx-62-
+src/pages/Dashboard/components/FiltersBar.jsx:63:  return out || "PT_RIO";
+src/pages/Dashboard/components/FiltersBar.jsx-64-}
+src/pages/Dashboard/components/FiltersBar.jsx-65-
+src/pages/Dashboard/components/FiltersBar.jsx-66-/** Normaliza posição para "1º..7º" ou "Todos" */
+src/pages/Dashboard/components/FiltersBar.jsx-67-function normalizePosicaoInput(v) {
+src/pages/Dashboard/components/FiltersBar.jsx-68-  const s = String(v ?? "").trim();
+--
+src/pages/Dashboard/components/FiltersBar.jsx-188-  selGoldSoft: "rgba(200,178,90,0.55)",
+src/pages/Dashboard/components/FiltersBar.jsx-189-};
+src/pages/Dashboard/components/FiltersBar.jsx-190-
+src/pages/Dashboard/components/FiltersBar.jsx-191-export default function FiltersBar({
+src/pages/Dashboard/components/FiltersBar.jsx-192-  filters = {
+src/pages/Dashboard/components/FiltersBar.jsx:193:    loteria: "PT_RIO",
+src/pages/Dashboard/components/FiltersBar.jsx-194-    mes: "Todos",
+src/pages/Dashboard/components/FiltersBar.jsx-195-    diaMes: "Todos",
+src/pages/Dashboard/components/FiltersBar.jsx-196-    diaSemana: "Todos",
+src/pages/Dashboard/components/FiltersBar.jsx-197-    horario: "Todos",
+src/pages/Dashboard/components/FiltersBar.jsx-198-    animal: "Todos",
+--
+src/pages/Dashboard/components/FiltersBar.jsx-207-}) {
+src/pages/Dashboard/components/FiltersBar.jsx-208-  const loteria = useMemo(
+src/pages/Dashboard/components/FiltersBar.jsx-209-    () => normalizeLoteriaInput(filters?.loteria),
+src/pages/Dashboard/components/FiltersBar.jsx-210-    [filters?.loteria]
+src/pages/Dashboard/components/FiltersBar.jsx-211-  );
+src/pages/Dashboard/components/FiltersBar.jsx:212:  const isFederal = loteria === "FEDERAL";
+src/pages/Dashboard/components/FiltersBar.jsx-213-
+src/pages/Dashboard/components/FiltersBar.jsx-214-  const defaultOptions = useMemo(() => {
+src/pages/Dashboard/components/FiltersBar.jsx-215-    const loteriasDefault = [
+src/pages/Dashboard/components/FiltersBar.jsx:216:      { label: "RJ", value: "PT_RIO" },
+src/pages/Dashboard/components/FiltersBar.jsx:217:      { label: "FEDERAL", value: "FEDERAL" },
+src/pages/Dashboard/components/FiltersBar.jsx-218-    ];
+src/pages/Dashboard/components/FiltersBar.jsx-219-
+src/pages/Dashboard/components/FiltersBar.jsx-220-    const mesesDefault = [
+src/pages/Dashboard/components/FiltersBar.jsx-221-      "Todos",
+src/pages/Dashboard/components/FiltersBar.jsx-222-      "Janeiro",
+--
+src/pages/Dashboard/components/FiltersBar.jsx-242-      { label: "Quinta-Feira", value: "Qui" },
+src/pages/Dashboard/components/FiltersBar.jsx-243-      { label: "Sexta-Feira", value: "Sex" },
+src/pages/Dashboard/components/FiltersBar.jsx-244-      { label: "Sábado", value: "Sáb" },
+src/pages/Dashboard/components/FiltersBar.jsx-245-    ];
+src/pages/Dashboard/components/FiltersBar.jsx-246-
+src/pages/Dashboard/components/FiltersBar.jsx:247:    // ✅ PT_RIO (domínio fixo)
+src/pages/Dashboard/components/FiltersBar.jsx-248-    const horariosRJ = [
+src/pages/Dashboard/components/FiltersBar.jsx-249-      { label: "Todos", value: "Todos" },
+src/pages/Dashboard/components/FiltersBar.jsx-250-      { label: "09h", value: "09h" },
+src/pages/Dashboard/components/FiltersBar.jsx-251-      { label: "11h", value: "11h" },
+src/pages/Dashboard/components/FiltersBar.jsx-252-      { label: "14h", value: "14h" },
+src/pages/Dashboard/components/FiltersBar.jsx-253-      { label: "16h", value: "16h" },
+src/pages/Dashboard/components/FiltersBar.jsx-254-      { label: "18h", value: "18h" },
+src/pages/Dashboard/components/FiltersBar.jsx-255-      { label: "21h", value: "21h" },
+src/pages/Dashboard/components/FiltersBar.jsx-256-    ];
+src/pages/Dashboard/components/FiltersBar.jsx-257-
+src/pages/Dashboard/components/FiltersBar.jsx:258:    // ✅ FEDERAL (Todos/19h/20h)
+src/pages/Dashboard/components/FiltersBar.jsx-259-    const horariosFED = [
+src/pages/Dashboard/components/FiltersBar.jsx-260-      { label: "Todos", value: "Todos" },
+src/pages/Dashboard/components/FiltersBar.jsx-261-      { label: "19h", value: "19h" },
+src/pages/Dashboard/components/FiltersBar.jsx-262-      { label: "20h", value: "20h" },
+src/pages/Dashboard/components/FiltersBar.jsx-263-    ];
+--
+src/pages/Dashboard/components/FiltersBar.jsx-340-    const diasSemanaFromParent =
+src/pages/Dashboard/components/FiltersBar.jsx-341-      Array.isArray(options.diasSemana) && options.diasSemana.length
+src/pages/Dashboard/components/FiltersBar.jsx-342-        ? normalizeLabelValueList(options.diasSemana, diasSemanaDefault)
+src/pages/Dashboard/components/FiltersBar.jsx-343-        : diasSemanaDefault;
+src/pages/Dashboard/components/FiltersBar.jsx-344-
+src/pages/Dashboard/components/FiltersBar.jsx:345:    // ✅ horário depende da loteria (PT_RIO x FEDERAL)
+src/pages/Dashboard/components/FiltersBar.jsx-346-    const horarios = isFederal ? horariosFED : horariosRJ;
+src/pages/Dashboard/components/FiltersBar.jsx-347-
+src/pages/Dashboard/components/FiltersBar.jsx-348-    const posicoesFromParent =
+src/pages/Dashboard/components/FiltersBar.jsx-349-      posicoesFromOptionsMode === "respect" &&
+src/pages/Dashboard/components/FiltersBar.jsx-350-      Array.isArray(options.posicoes) &&
+--
+src/pages/Dashboard/components/FiltersBar.jsx-591-
+src/pages/Dashboard/components/FiltersBar.jsx-592-    const normalizedValue = ensureValueInList({
+src/pages/Dashboard/components/FiltersBar.jsx-593-      value,
+src/pages/Dashboard/components/FiltersBar.jsx-594-      list,
+src/pages/Dashboard/components/FiltersBar.jsx-595-      forceValue,
+src/pages/Dashboard/components/FiltersBar.jsx:596:      fallback: name === "loteria" ? "PT_RIO" : "Todos",
+src/pages/Dashboard/components/FiltersBar.jsx-597-      normalizeFn,
+src/pages/Dashboard/components/FiltersBar.jsx-598-    });
+src/pages/Dashboard/components/FiltersBar.jsx-599-
+src/pages/Dashboard/components/FiltersBar.jsx-600-    const isObjList =
+src/pages/Dashboard/components/FiltersBar.jsx-601-      Array.isArray(list) && list.length && typeof list[0] === "object" && list[0];
+--
+src/pages/Dashboard/components/FiltersBar.jsx-654-        </div>
+src/pages/Dashboard/components/FiltersBar.jsx-655-      </div>
+src/pages/Dashboard/components/FiltersBar.jsx-656-    );
+src/pages/Dashboard/components/FiltersBar.jsx-657-  };
+src/pages/Dashboard/components/FiltersBar.jsx-658-
+src/pages/Dashboard/components/FiltersBar.jsx:659:  // FEDERAL NÃO trava horário — só troca a lista (Todos/19h/20h)
+src/pages/Dashboard/components/FiltersBar.jsx-660-  const horarioForcedValue = null;
+src/pages/Dashboard/components/FiltersBar.jsx-661-  const horarioDisabled = false;
+src/pages/Dashboard/components/FiltersBar.jsx-662-
+src/pages/Dashboard/components/FiltersBar.jsx-663-  return (
+src/pages/Dashboard/components/FiltersBar.jsx-664-    <div style={ui.bar}>
+
+
+===== ESTADO ATUAL DO GIT =====
+(SEM ALTERAÇÕES NESTES ARQUIVOS)

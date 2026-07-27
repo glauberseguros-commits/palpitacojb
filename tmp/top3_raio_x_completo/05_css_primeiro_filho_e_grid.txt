@@ -1,0 +1,1659 @@
+254-    }
+255-  }
+256-
+257-  return NaN;
+258-}
+259-
+260-function hasOfficialResult(slot) {
+261-  const grupo = getSlotResultGrupo(slot);
+262-  if (Number.isFinite(grupo) && grupo >= 1 && grupo <= 25) return true;
+263-
+264-  const milhar = extractResultMilhar(slot);
+265-  return /^\d{4}$/.test(milhar);
+266-}
+267-
+268-function analyzeTop3Hit(top3, resultGrupo, resultMilhar) {
+269-  if (!Array.isArray(top3) || !top3.length) {
+270:    return { type: "none", score: 0, position: -1, matchedValue: "" };
+271-  }
+272-
+273-  const grupoNum = Number(resultGrupo);
+274-  const milhar = normalizeMilharStr(resultMilhar);
+275-  const centena = milhar ? milhar.slice(-3) : "";
+276-
+277-  const hasGrupo = Number.isFinite(grupoNum) && grupoNum >= 1 && grupoNum <= 25;
+278-  const hasMilhar = /^\d{4}$/.test(milhar);
+279-
+280-  if (!hasGrupo && !hasMilhar) {
+281:    return { type: "none", score: 0, position: -1, matchedValue: "" };
+282-  }
+283-
+284:  let best = { type: "miss", score: 0, position: -1, matchedValue: "" };
+285-
+286-  top3.forEach((item, idx) => {
+287-    const g = Number(item?.grupo);
+288-
+289-    const milharesRaw = Array.isArray(item?.milhares20)
+290-      ? item.milhares20
+291-      : Array.isArray(item?.milhares)
+292-        ? item.milhares
+293-        : [];
+294-
+295-    const milhares = milharesRaw
+296-      .map((m) => normalizeMilharStr(m))
+297-      .filter((m) => /^\d{4}$/.test(m));
+298-
+299-    const centenas = milhares
+300-      .map((m) => centenaFromMilhar(m))
+--
+309-      type = "hit_exact";
+310-      matchedValue = milhar;
+311-    } else if (centena && centenas.includes(centena)) {
+312-      score = 66.67;
+313-      type = "hit_centena";
+314-      matchedValue = centena;
+315-    } else if (hasGrupo && g === grupoNum) {
+316-      score = 33.33;
+317-      type = "hit_grupo";
+318-      matchedValue = hasMilhar ? milhar.slice(-2) : formatGrupo(grupoNum);
+319-    }
+320-
+321-    if (score > best.score) {
+322-      best = {
+323-        type,
+324-        score,
+325:        position: idx + 1,
+326-        matchedValue,
+327-      };
+328-    }
+329-  });
+330-
+331-  return best;
+332-}
+333-
+334-function ImgWithFallback({ srcs, alt, size = 84, style }) {
+335-  const list = useMemo(
+336-    () => (Array.isArray(srcs) ? srcs.filter(Boolean) : []),
+337-    [srcs]
+338-  );
+339-
+340-  const [i, setI] = useState(0);
+341-  const listKey = useMemo(() => list.join("|"), [list]);
+342-
+343-  useEffect(() => {
+344-    setI(0);
+345-  }, [listKey]);
+346-
+347-  const src = list[i] || "";
+348-
+349-  const onError = () => {
+350-    setI((prev) => (prev < list.length - 1 ? prev + 1 : prev));
+351-  };
+352-
+353-  return (
+354-    <div
+355-      style={{
+356:        width: size,
+357-        height: size,
+358-        borderRadius: 16,
+359-        border: "1px solid rgba(201,168,62,0.36)",
+360-        background:
+361-          "linear-gradient(180deg, rgba(255,255,255,0.04), rgba(0,0,0,0.28))",
+362:        display: "grid",
+363-        placeItems: "center",
+364:        overflow: "hidden",
+365-        boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.04)",
+366-        ...style,
+367-      }}
+368-    >
+369-      {src ? (
+370-        <img
+371-          src={src}
+372-          alt={alt || ""}
+373-          width={size}
+374-          height={size}
+375-          onError={onError}
+376-          style={{
+377:            width: "100%",
+378-            height: "100%",
+379-            objectFit: "cover",
+380:            display: "block",
+381-            imageRendering: "auto",
+382-          }}
+383-        />
+384-      ) : (
+385-        <div style={{ color: "rgba(255,255,255,0.55)", fontSize: 12 }}>
+386-          sem imagem
+387-        </div>
+388-      )}
+389-    </div>
+390-  );
+391-}
+392-
+393-
+394-function getWeekdayNameBR(ymd) {
+395-  const s = String(ymd || "").trim();
+396-  const m = s.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+--
+705-          />
+706-
+707-          <div className="top3-card__identityText">
+708-            <div className="top3-card__group">GRUPO {grupoTxt}</div>
+709-            <div className="top3-card__animal">
+710-              {animal ? animal.toUpperCase() : "ÔÇö"}
+711-            </div>
+712-          </div>
+713-        </div>
+714-
+715-        <div className="top3-card__confidence">
+716-          <div className="top3-card__confidenceLabel">CONFIAN├çA</div>
+717-          <div className="top3-card__confidenceValue">{pct.toFixed(2)}%</div>
+718-          <div className="top3-card__confidenceBar">
+719-            <div
+720-              className="top3-card__confidenceBarFill"
+721:              style={{ width: `${pct}%`, background: t.accent }}
+722-            />
+723-          </div>
+724-        </div>
+725-      </div>
+726-
+727-      <div
+728-        className="top3-card__engine top3-card__engine--premium"
+729-        style={{
+730-          borderTop: "1px solid rgba(212,175,55,0.22)",
+731-          paddingTop: 14,
+732:          display: "grid",
+733-          gridTemplateColumns: isHero ? "300px minmax(0, 1fr)" : "1fr",
+734-          gap: 14,
+735-          alignItems: "stretch",
+736-        }}
+737-      >
+738-        {isHero ? (
+739-          <div
+740-            style={{
+741-              border: "1px solid rgba(212,175,55,0.30)",
+742-              borderRadius: 18,
+743-              padding: 14,
+744-              background:
+745-                "radial-gradient(circle at 50% 0%, rgba(212,175,55,0.18), rgba(0,0,0,0.12) 48%, rgba(0,0,0,0.28))",
+746-              boxShadow: "0 18px 45px rgba(0,0,0,0.32)",
+747-            }}
+748-          >
+749:            <div style={{ display: "grid", gap: 12 }}>
+750:              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+751-                <div className="top3-rankBadge">{rank}</div>
+752-                <div className="top3-card__label">Ô¡É {title}</div>
+753-              </div>
+754-
+755-              <div
+756-                style={{
+757-                  borderRadius: 16,
+758:                  overflow: "hidden",
+759-                  border: "1px solid rgba(212,175,55,0.35)",
+760-                  minHeight: 180,
+761:                  display: "none",
+762-                  placeItems: "center",
+763-                  background: "rgba(0,0,0,0.28)",
+764-                }}
+765-              >
+766-                <ImgWithFallback
+767-                  srcs={iconSrcs}
+768-                  alt={animal ? animal : `G${grupoTxt}`}
+769-                  size={168}
+770-                  style={{ borderRadius: 14 }}
+771-                />
+772-              </div>
+773-
+774-              <div>
+775-                <div className="top3-card__group">GRUPO {grupoTxt}</div>
+776-                <div className="top3-card__animal">
+777-                  {animal ? animal.toUpperCase() : "ÔÇö"}
+--
+792-                    fontSize: 42,
+793-                    fontWeight: 900,
+794-                    letterSpacing: 1,
+795-                    color: t.accent,
+796-                    lineHeight: 1,
+797-                  }}
+798-                >
+799-                  {displayScore}
+800-                  <span style={{ color: "rgba(255,255,255,0.78)", fontSize: 24 }}>
+801-                    /100
+802-                  </span>
+803-                </div>
+804-
+805-                <div className="top3-card__confidenceBar" style={{ marginTop: 12 }}>
+806-                  <div
+807-                    className="top3-card__confidenceBarFill"
+808:                    style={{ width: `${scoreBarPct}%`, background: t.accent }}
+809-                  />
+810-                </div>
+811-              </div>
+812-
+813-              <div
+814-                style={{
+815:                  display: "grid",
+816-                  gridTemplateColumns: "1fr 1fr",
+817-                  gap: 8,
+818-                }}
+819-              >
+820-                <div className="top3-metaItem">
+821-                  <div className="top3-metaItem__label">For├ºa</div>
+822-                  <div className="top3-metaItem__value">{premiumForceLabel}</div>
+823-                </div>
+824-
+825-                <div className="top3-metaItem">
+826-                  <div className="top3-metaItem__label">Confiabilidade</div>
+827-                  <div className="top3-metaItem__value">{premiumReliabilityLabel}</div>
+828-                </div>
+829-              </div>
+830-            </div>
+831-          </div>
+832-        ) : null}
+833-
+834-        <div
+835-          style={{
+836-            border: "1px solid rgba(212,175,55,0.22)",
+837-            borderRadius: 18,
+838-            padding: 14,
+839-            background:
+840-              "linear-gradient(180deg, rgba(255,255,255,0.035), rgba(255,255,255,0.012))",
+841-          }}
+842-        >
+843-          <div
+844-            style={{
+845:              display: "grid",
+846-              gridTemplateColumns: isHero
+847-                ? "repeat(3, minmax(0, 1fr))"
+848-                : "1fr",
+849-              gap: 10,
+850-            }}
+851-          >
+852-            <div className="top3-metaItem">
+853-              <div className="top3-metaItem__label">­ƒôè Base estat├¡stica</div>
+854-              <div className="top3-metaItem__value">
+855-                {periodFrom && periodTo
+856-                  ? `${ymdToBR(periodFrom)} ÔåÆ ${ymdToBR(periodTo)}`
+857-                  : `${samples} sorteios`}
+858-              </div>
+859-            </div>
+860-
+861-            <div className="top3-metaItem">
+--
+903-            <div className="top3-metaItem">
+904-              <div className="top3-metaItem__label">­ƒÄ» Frequ├¬ncia hist├│rica da transi├º├úo</div>
+905-              <div className="top3-metaItem__value">
+906-                {transitionFirst > 0 && transitionSamples > 0
+907-                  ? `${transitionFirst} ocorr├¬ncias em ${transitionSamples} transi├º├Áes`
+908-                  : "Em apura├º├úo"}
+909-              </div>
+910-            </div>
+911-          </div>
+912-
+913-          <div
+914-            style={{
+915-              marginTop: 12,
+916-              border: "1px solid rgba(212,175,55,0.20)",
+917-              borderRadius: 14,
+918-              padding: 12,
+919:              display: "flex",
+920-              gap: 10,
+921-              alignItems: "center",
+922-              background: "rgba(212,175,55,0.055)",
+923-            }}
+924-          >
+925-            <div style={{ fontSize: 26 }}>Ô¡É</div>
+926-            <div>
+927-              <div
+928-                style={{
+929-                  color: t.accent,
+930-                  fontWeight: 900,
+931-                  textTransform: "uppercase",
+932-                }}
+933-              >
+934-                Score ÔÇö confian├ºa da an├ílise
+935-              </div>
+936-              <div style={{ color: "rgba(255,255,255,0.82)", fontSize: 13 }}>
+937-                {displayScore}/100 ┬À {visibleEvidenceCount} evid├¬ncias estat├¡sticas ┬À {trendLabel}
+938-              </div>
+939-            </div>
+940-          </div>
+941-        </div>
+942-      </div>
+943-
+944-      <div className="top3-card__body">
+945-        <div
+946-          className="top3-card__actions"
+947-          style={{
+948:            display: "grid",
+949-            gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
+950-            gap: 8,
+951-            alignItems: "center",
+952-          }}
+953-        >
+954-          <div aria-hidden="true"></div>
+955-          <div aria-hidden="true"></div>
+956-
+957-          <button
+958-            type="button"
+959-            onClick={doCopyAll}
+960-            className="pp-btn"
+961-            title="Copiar as 20 milhares"
+962:            style={{ width: "100%" }}
+963-          >
+964-            {copiedAllKey === key ? "Ô£à Copiado" : "­ƒôï Copiar"}
+965-          </button>
+966-
+967-          <button
+968-            type="button"
+969-            className="pp-btn"
+970-            title="Integra├º├úo autom├ítica com banca (em desenvolvimento)"
+971-            onClick={() => {
+972-              alert("Em breve voc├¬ poder├í enviar automaticamente estas milhares para a banca.");
+973-            }}
+974:            style={{ width: "100%" }}
+975-          >
+976-            ­ƒÄ» Apostar
+977-          </button>
+978-        </div>
+979-
+980-        {dezenasHeader.length ? (
+981-          <div className="pp-chipRow">
+982-            {dezenasHeader.map((dz, i) => (
+983-              <div key={`${dz}-${i}`} className="pp-chip">
+984-                {dz || "ÔÇö"}
+985-              </div>
+986-            ))}
+987-          </div>
+988-        ) : null}
+989-
+990-        <div className="pp-gridBox">
+--
+1450-                  ""
+1451-              )
+1452-            : "",
+1453-          resultMilhar: String(
+1454-            entry?.resultMilhar || ""
+1455-          ),
+1456-          hit:
+1457-            Number(entry?.hitScore || 0) > 0,
+1458-          hitType: String(entry?.hitType || ""),
+1459-          hitScore: Number(entry?.hitScore || 0),
+1460-          hitPosition: Number(
+1461-            entry?.hitPosition ?? -1
+1462-          ),
+1463-          analysis: {
+1464-            type: String(entry?.hitType || ""),
+1465-            score: Number(entry?.hitScore || 0),
+1466:            position: Number(
+1467-              entry?.hitPosition ?? -1
+1468-            ),
+1469-            matchedValue: String(
+1470-              entry?.matchedValue || ""
+1471-            ),
+1472-          },
+1473-        };
+1474-      });
+1475-
+1476-    const timelineRows = (
+1477-      Array.isArray(timeline) ? timeline : []
+1478-    )
+1479-      .filter(
+1480-        (slot) =>
+1481-          String(slot?.targetYmd || "").trim() ===
+1482-          historyAnchorYmd
+--
+1676-    <div
+1677-      style={{
+1678-        padding: 16,
+1679-        color: t.text,
+1680-        background: t.bg,
+1681-        minHeight: "100%",
+1682-        "--top3-bg": t.bg,
+1683-        "--top3-panel": t.panel,
+1684-        "--top3-border": t.border,
+1685-        "--top3-text": t.text,
+1686-        "--top3-muted": t.muted,
+1687-        "--top3-accent": t.accent,
+1688-      }}
+1689-    >
+1690-      <style>{`
+1691-        .top3-page{
+1692:          width: 100%;
+1693:          max-width: 1380px;
+1694-          margin: 0 auto;
+1695:          display: grid;
+1696-          gap: 18px;
+1697-        }
+1698-
+1699-        .top3-shell{
+1700-          background:
+1701-            linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.00)),
+1702-            var(--top3-panel);
+1703-          border: 1px solid var(--top3-border);
+1704-          border-radius: 20px;
+1705-          padding: 18px;
+1706-          box-shadow:
+1707-            0 20px 50px rgba(0,0,0,0.34),
+1708-            inset 0 0 0 1px rgba(255,255,255,0.03);
+1709-        }
+1710-
+1711-        .top3-header{
+1712:          display:grid;
+1713-          gap:14px;
+1714-        }
+1715-
+1716-        .top3-header__title{
+1717-          font-weight: 950;
+1718-          font-size: 18px;
+1719-          letter-spacing: 0.2px;
+1720-        }
+1721-
+1722-        .top3-context{
+1723:          display:grid;
+1724-          gap:6px;
+1725-          color: rgba(255,255,255,0.92);
+1726-          font-size: 13px;
+1727-          line-height: 1.35;
+1728-        }
+1729-
+1730-        .top3-context b{
+1731-          color: rgba(255,255,255,0.98);
+1732-        }
+1733-
+1734-        .top3-helper{
+1735-          color: var(--top3-muted);
+1736-          font-size: 13px;
+1737-          line-height: 1.4;
+1738-        }
+1739-
+1740-        /* TOP3 LOTTERY TABS SINGLE ROW */
+1741-        .pp-tabs{
+1742:          display:flex;
+1743-          gap:8px;
+1744-          flex-wrap:nowrap;
+1745-          align-items:center;
+1746:          max-width:100%;
+1747-          margin-top:2px;
+1748:          overflow-x:auto;
+1749:          overflow-y:hidden;
+1750:          scrollbar-width:none;
+1751:          -webkit-overflow-scrolling:touch;
+1752-        }
+1753-
+1754-        .pp-tabs::-webkit-scrollbar{
+1755:          display:none;
+1756-        }
+1757-
+1758-        .pp-tabs > *{
+1759-          flex:0 0 auto;
+1760-        }
+1761-
+1762-        .pp-tab{
+1763-          border-radius: 999px;
+1764-          padding: 8px 12px;
+1765-          background: rgba(0,0,0,0.35);
+1766-          border: 1px solid rgba(255,255,255,0.12);
+1767-          color: rgba(255,255,255,0.88);
+1768-          font-weight: 900;
+1769-          cursor: pointer;
+1770-          transition: transform .12s ease, box-shadow .18s ease, background .18s ease, border-color .18s ease;
+1771-          white-space: nowrap;
+1772-        }
+1773-
+1774-        .pp-tab:hover{
+1775-          transform: translateY(-1px);
+1776-          border-color: rgba(201,168,62,0.40);
+1777-          box-shadow: 0 10px 24px rgba(0,0,0,0.35);
+1778-        }
+1779-
+1780-        .pp-tab[data-active="1"]{
+1781-          background: rgba(201,168,62,0.16);
+1782-          border: 1px solid rgba(201,168,62,0.45);
+1783-          color: rgba(255,255,255,0.94);
+1784-        }
+1785-
+1786-        .top3-metaGrid,
+1787-        .timeline-slot__metaGrid{
+1788:          display: grid;
+1789:          grid-template-columns: repeat(3, minmax(0, 1fr));
+1790-          gap: 10px;
+1791-        }
+1792-
+1793-        .top3-metaItem{
+1794-          background: rgba(255,255,255,0.025);
+1795-          border: 1px solid rgba(255,255,255,0.08);
+1796-          border-radius: 14px;
+1797-          padding: 10px 12px;
+1798:          display: grid;
+1799-          gap: 4px;
+1800:          min-width: 0;
+1801-        }
+1802-
+1803-        .top3-metaItem__label{
+1804-          color: var(--top3-muted);
+1805-          font-size: 11px;
+1806-          font-weight: 900;
+1807-          letter-spacing: 0.9px;
+1808-          text-transform: uppercase;
+1809-        }
+1810-
+1811-        .top3-metaItem__value{
+1812-          color: var(--top3-text);
+1813-          font-size: 13px;
+1814-          font-weight: 800;
+1815-          line-height: 1.35;
+1816-          word-break: break-word;
+1817-        }
+1818-
+1819-        .top3-stage{
+1820:          display: grid;
+1821-          gap: 16px;
+1822-        }
+1823-
+1824-        .top3-heroWrap{
+1825:          width: 100%;
+1826:          max-width: 1120px;
+1827-          margin: 0 auto;
+1828-        }
+1829-
+1830-        .top3-secondaryRow{
+1831:          width: 100%;
+1832:          max-width: 1120px;
+1833-          margin: 0 auto;
+1834:          display: grid;
+1835:          grid-template-columns: repeat(2, minmax(0, 1fr));
+1836-          gap: 16px;
+1837-          align-items: start;
+1838-          justify-content: center;
+1839-        }
+1840-
+1841-        .timeline-slot__cards{
+1842:          width: 100%;
+1843:          display: grid;
+1844:          grid-template-columns: repeat(3, minmax(0, 1fr));
+1845-          gap: 14px;
+1846-          align-items: start;
+1847-        }
+1848-
+1849-        .timeline-compact{
+1850-          margin-top: 2px;
+1851-        }
+1852-
+1853-        .timeline-compact__grid{
+1854:          display: grid;
+1855:          grid-template-columns: minmax(0, 1.7fr) minmax(220px, 0.8fr) minmax(240px, 1fr);
+1856-          gap: 12px;
+1857-          align-items: stretch;
+1858-        }
+1859-
+1860-        .timeline-compact__predictions,
+1861-        .timeline-compact__result,
+1862-        .timeline-compact__performance{
+1863-          border: 1px solid rgba(255,255,255,0.10);
+1864-          background: rgba(255,255,255,0.025);
+1865-          border-radius: 16px;
+1866-          padding: 12px;
+1867:          min-width: 0;
+1868-          transition: all 0.2s ease;
+1869-        }
+1870-
+1871-        .timeline-compact__performanceBadge--miss ~ *{
+1872-          opacity: 0.92;
+1873-        }
+1874-
+1875-        .timeline-compact__predictions{
+1876:          display: grid;
+1877:          grid-template-columns: repeat(3, minmax(0, 1fr));
+1878-          gap: 10px;
+1879-        }
+1880-
+1881-        .timeline-compact__pick{
+1882:          display: grid;
+1883:          grid-template-columns: 28px 44px minmax(0, 1fr);
+1884-          gap: 10px;
+1885-          align-items: center;
+1886:          min-width: 0;
+1887-          padding: 8px;
+1888-          border-radius: 14px;
+1889-          background:
+1890-            linear-gradient(180deg, rgba(201,168,62,0.08), rgba(255,255,255,0.02)),
+1891-            rgba(255,255,255,0.02);
+1892-          border: 1px solid rgba(201,168,62,0.14);
+1893-        }
+1894-
+1895-        .timeline-compact__pickRank{
+1896:          width: 28px;
+1897-          height: 28px;
+1898:          display: grid;
+1899-          place-items: center;
+1900-          border-radius: 9px;
+1901-          background: rgba(201,168,62,0.16);
+1902-          border: 1px solid rgba(201,168,62,0.30);
+1903-          color: var(--top3-accent);
+1904-          font-size: 12px;
+1905-          font-weight: 1000;
+1906-        }
+1907-
+1908-        .timeline-compact__pickText{
+1909:          display: grid;
+1910-          gap: 2px;
+1911:          min-width: 0;
+1912-        }
+1913-
+1914-        .timeline-compact__pickGroup{
+1915-          font-size: 11px;
+1916-          font-weight: 900;
+1917-          color: var(--top3-muted);
+1918-          letter-spacing: 0.6px;
+1919-        }
+1920-
+1921-        .timeline-compact__pickAnimal{
+1922-          font-size: 15px;
+1923-          font-weight: 1000;
+1924-          color: var(--top3-text);
+1925-          text-transform: uppercase;
+1926-          line-height: 1.05;
+1927-          word-break: break-word;
+1928-        }
+1929-
+1930-        .timeline-compact__result{
+1931:          display: grid;
+1932-          gap: 10px;
+1933-          align-content: start;
+1934-        }
+1935-
+1936-        .timeline-compact__resultLabel{
+1937-          font-size: 11px;
+1938-          font-weight: 1000;
+1939-          letter-spacing: 0.9px;
+1940-          text-transform: uppercase;
+1941-          color: var(--top3-muted);
+1942-        }
+1943-
+1944-        .timeline-compact__resultBox{
+1945:          display: flex;
+1946-          align-items: center;
+1947-          gap: 12px;
+1948:          min-width: 0;
+1949-          padding: 10px 12px;
+1950-          border-radius: 14px;
+1951-          background:
+1952-            linear-gradient(180deg, rgba(201,168,62,0.10), rgba(255,255,255,0.02)),
+1953-            rgba(255,255,255,0.04);
+1954-          border: 1px solid rgba(201,168,62,0.18);
+1955-          box-shadow: 0 8px 20px rgba(0,0,0,0.35);
+1956-        }
+1957-
+1958-        .timeline-compact__resultText{
+1959:          display: grid;
+1960-          gap: 2px;
+1961:          min-width: 0;
+1962-        }
+1963-
+1964-        .timeline-compact__resultGroup{
+1965-          font-size: 20px;
+1966-          font-weight: 1000;
+1967-          line-height: 1;
+1968-          color: var(--top3-accent);
+1969-          text-shadow: 0 0 8px rgba(201,168,62,0.35);
+1970-        }
+1971-
+1972-        .timeline-compact__resultAnimal{
+1973-          font-size: 12px;
+1974-          color: var(--top3-muted);
+1975-          text-transform: uppercase;
+1976-          letter-spacing: 0.5px;
+1977-        }
+1978-
+1979-        .timeline-compact__resultPending{
+1980-          font-size: 14px;
+1981-          font-weight: 1000;
+1982-          color: var(--top3-muted);
+1983-        }
+1984-
+1985-        .timeline-compact__performance{
+1986:          display: grid;
+1987-          gap: 10px;
+1988-          align-content: start;
+1989-        }
+1990-
+1991-        .timeline-compact__performanceBadge{
+1992:          width: fit-content;
+1993:          max-width: 100%;
+1994-          border-radius: 999px;
+1995-          padding: 10px 14px;
+1996-          font-size: 12px;
+1997-          font-weight: 1000;
+1998-          letter-spacing: 0.6px;
+1999-          border: 1px solid rgba(255,255,255,0.16);
+2000-          box-shadow: 0 12px 28px rgba(0,0,0,0.35);
+2001-          white-space: nowrap;
+2002-        }
+2003-
+2004-        .timeline-compact__performanceBadge--hit{
+2005-          background: linear-gradient(180deg, rgba(201,168,62,0.28), rgba(201,168,62,0.12));
+2006-          color: #fff4c4;
+2007-          border-color: rgba(201,168,62,0.5);
+2008-          box-shadow: 0 0 16px rgba(201,168,62,0.35);
+2009-        }
+--
+2016-        }
+2017-
+2018-        .timeline-compact__performanceBadge--pending{
+2019-          background: rgba(201,168,62,0.16);
+2020-          color: rgba(255,255,255,0.92);
+2021-          border-color: rgba(201,168,62,0.35);
+2022-        }
+2023-
+2024-        .timeline-compact__performanceText{
+2025-          font-size: 14px;
+2026-          font-weight: 900;
+2027-          line-height: 1.4;
+2028-          color: var(--top3-text);
+2029-        }
+2030-
+2031-        .timeline-slot__header{
+2032:          display:flex;
+2033-          align-items:flex-start;
+2034-          justify-content:space-between;
+2035-          gap:14px;
+2036-          margin-bottom: 14px;
+2037-        }
+2038-
+2039-        .timeline-slot__title{
+2040-          font-weight: 1000;
+2041-          font-size: 22px;
+2042-          letter-spacing: 0.2px;
+2043-          line-height: 1;
+2044-        }
+2045-
+2046-        .timeline-slot__badge{
+2047-          border-radius: 999px;
+2048-          padding: 10px 14px;
+--
+2061-        }
+2062-
+2063-        .timeline-slot__badge--miss{
+2064-          background: rgba(220, 70, 70, 0.18);
+2065-          color: #ffd0d0;
+2066-          border-color: rgba(220, 70, 70, 0.35);
+2067-        }
+2068-
+2069-        .timeline-slot__badge--pending{
+2070-          background: rgba(201,168,62,0.16);
+2071-          color: rgba(255,255,255,0.92);
+2072-          border-color: rgba(201,168,62,0.35);
+2073-        }
+2074-
+2075-        .timeline-slot__resultBox{
+2076-          margin-top: 12px;
+2077:          display:flex;
+2078-          align-items:center;
+2079-          gap:14px;
+2080-          padding: 12px 14px;
+2081-          border-radius: 16px;
+2082-          background:
+2083-            linear-gradient(180deg, rgba(201,168,62,0.08), rgba(255,255,255,0.02)),
+2084-            rgba(255,255,255,0.03);
+2085-          border: 1px solid rgba(255,255,255,0.09);
+2086-          box-shadow: inset 0 0 0 1px rgba(255,255,255,0.02);
+2087-        }
+2088-
+2089-        .timeline-slot__resultText{
+2090:          display:grid;
+2091-          gap:2px;
+2092-        }
+2093-
+2094-        .timeline-slot__resultGroup{
+2095-          font-weight: 1000;
+2096-          font-size: 18px;
+2097-          line-height: 1;
+2098-        }
+2099-
+2100-        .timeline-slot__resultAnimal{
+2101-          font-size: 12px;
+2102-          color: var(--top3-muted);
+2103-          text-transform: uppercase;
+2104-          letter-spacing: 0.6px;
+2105-        }
+2106-
+2107-        .timeline-slot__insightBox{
+2108-          margin-top: 12px;
+2109-          padding: 14px 16px;
+2110-          border-radius: 16px;
+2111-          background:
+2112-            linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.015)),
+2113-            rgba(255,255,255,0.025);
+2114-          border: 1px solid rgba(255,255,255,0.08);
+2115:          display: grid;
+2116-          gap: 6px;
+2117-        }
+2118-
+2119-        .timeline-slot__insightTitle{
+2120-          font-size: 11px;
+2121-          font-weight: 1000;
+2122-          letter-spacing: 1px;
+2123-          text-transform: uppercase;
+2124-          color: var(--top3-accent);
+2125-        }
+2126-
+2127-        .timeline-slot__insightText{
+2128-          font-size: 14px;
+2129-          font-weight: 900;
+2130-          line-height: 1.4;
+2131-          color: var(--top3-text);
+2132-        }
+2133-
+2134-        .top3-card{
+2135:          position: relative;
+2136-          background:
+2137-            radial-gradient(1100px 280px at 50% 0%, rgba(201,168,62,0.08), transparent 55%),
+2138-            linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.00)),
+2139-            var(--top3-panel);
+2140-          border: 1px solid var(--top3-border);
+2141-          border-radius: 20px;
+2142-          padding: 16px;
+2143:          display: grid;
+2144-          gap: 14px;
+2145-          box-shadow:
+2146-            0 18px 44px rgba(0,0,0,0.30),
+2147-            inset 0 0 0 1px rgba(255,255,255,0.03);
+2148:          overflow: hidden;
+2149-        }
+2150-
+2151-        .top3-card::after{
+2152-          content: "";
+2153:          position: absolute;
+2154-          inset: 0;
+2155-          border-radius: inherit;
+2156-          pointer-events: none;
+2157-          box-shadow: inset 0 0 0 1px rgba(201,168,62,0.05);
+2158-        }
+2159-
+2160-        .top3-card--hero{
+2161-          padding: 18px;
+2162-        }
+2163-
+2164-        .top3-card__topline{
+2165:          display:flex;
+2166-          align-items:center;
+2167-          gap:10px;
+2168-        }
+2169-
+2170-        .top3-rankBadge{
+2171:          width: 30px;
+2172-          height: 30px;
+2173-          border-radius: 10px;
+2174:          display: grid;
+2175-          place-items: center;
+2176-          background: rgba(201,168,62,0.15);
+2177-          border: 1px solid rgba(201,168,62,0.35);
+2178-          font-weight: 950;
+2179-          color: var(--top3-accent);
+2180-          flex: 0 0 auto;
+2181-        }
+2182-
+2183-        .top3-card__label{
+2184-          font-weight: 950;
+2185-          letter-spacing: 0.4px;
+2186-          font-size: 14px;
+2187-        }
+2188-
+2189-        .top3-card__summary{
+2190:          display:grid;
+2191:          grid-template-columns: minmax(0, 1fr) 170px;
+2192-          gap: 14px;
+2193-          align-items: center;
+2194-        }
+2195-
+2196-        .top3-card--hero .top3-card__summary{
+2197:          grid-template-columns: minmax(0, 1fr) 190px;
+2198-        }
+2199-
+2200-        .top3-card__identity{
+2201:          display:flex;
+2202-          align-items:center;
+2203-          gap:14px;
+2204:          min-width: 0;
+2205-        }
+2206-
+2207-        .top3-card__identityText{
+2208:          display:grid;
+2209-          gap: 6px;
+2210:          min-width: 0;
+2211-        }
+2212-
+2213-        .top3-card__group{
+2214-          font-size: 11px;
+2215-          color: var(--top3-muted);
+2216-          font-weight: 900;
+2217-          letter-spacing: 1px;
+2218-        }
+2219-
+2220-        .top3-card__animal{
+2221-          font-size: 24px;
+2222-          font-weight: 950;
+2223-          letter-spacing: 0.6px;
+2224-          line-height: 1.05;
+2225-          word-break: break-word;
+2226-        }
+2227-
+2228-        .top3-card--secondary .top3-card__animal{
+2229-          font-size: 20px;
+2230-        }
+2231-
+2232-        .top3-card__confidence{
+2233-          justify-self: end;
+2234:          width: 100%;
+2235:          max-width: 190px;
+2236-          text-align: right;
+2237:          display:grid;
+2238-          gap: 6px;
+2239-        }
+2240-
+2241-        .top3-card__confidenceLabel{
+2242-          color: var(--top3-muted);
+2243-          font-size: 11px;
+2244-          font-weight: 900;
+2245-          letter-spacing: 0.9px;
+2246-        }
+2247-
+2248-        .top3-card__confidenceValue{
+2249-          font-size: 30px;
+2250-          font-weight: 950;
+2251-          color: var(--top3-accent);
+2252-          line-height: 1;
+2253-        }
+2254-
+2255-        .top3-card--secondary .top3-card__confidenceValue{
+2256-          font-size: 26px;
+2257-        }
+2258-
+2259-        .top3-card__confidenceBar{
+2260-          height: 7px;
+2261-          border-radius: 999px;
+2262-          background: rgba(255,255,255,0.10);
+2263:          overflow: hidden;
+2264-        }
+2265-
+2266-        .top3-card__confidenceBarFill{
+2267-          height: 100%;
+2268-          border-radius: inherit;
+2269-          opacity: 0.78;
+2270-        }
+2271-
+2272-        .top3-card__body{
+2273-          border-top: 1px solid rgba(255,255,255,0.07);
+2274-          padding-top: 12px;
+2275:          display:grid;
+2276-          gap: 10px;
+2277-        }
+2278-
+2279-        .top3-card__actions{
+2280:          display:flex;
+2281-          align-items:center;
+2282-          justify-content:space-between;
+2283-          gap:12px;
+2284-        }
+2285-
+2286-        .top3-card__sectionTitle{
+2287-          font-weight: 900;
+2288-          font-size: 13px;
+2289-          color: rgba(255,255,255,0.92);
+2290-          letter-spacing: 0.2px;
+2291-        }
+2292-
+2293-        .pp-btn{
+2294-          border-radius: 999px;
+2295-          padding: 9px 12px;
+2296-          background: rgba(201,168,62,0.16);
+--
+2302-          transition: transform .12s ease, box-shadow .18s ease, background .18s ease, border-color .18s ease;
+2303-          box-shadow: 0 0 0 rgba(201,168,62,0.0);
+2304-        }
+2305-
+2306-        .pp-btn:hover{
+2307-          transform: translateY(-1px);
+2308-          background: rgba(201,168,62,0.22);
+2309-          border-color: rgba(201,168,62,0.48);
+2310-          box-shadow: 0 10px 24px rgba(0,0,0,0.35), 0 0 0 1px rgba(201,168,62,0.10);
+2311-        }
+2312-
+2313-        .pp-btn:active{
+2314-          transform: translateY(0px);
+2315-        }
+2316-
+2317-        .pp-chipRow{
+2318:          display:grid;
+2319:          grid-template-columns: repeat(4, minmax(0, 1fr));
+2320-          gap: 10px;
+2321-          margin-top: 2px;
+2322-        }
+2323-
+2324-        .pp-chip{
+2325:          display:flex;
+2326-          justify-content:center;
+2327-          align-items:center;
+2328-          min-height: 28px;
+2329-          border-radius: 999px;
+2330-          font-size: 12px;
+2331-          font-weight: 950;
+2332-          letter-spacing: 1.4px;
+2333-          color: rgba(255,255,255,0.90);
+2334-          background: linear-gradient(180deg, rgba(201,168,62,0.22), rgba(201,168,62,0.10));
+2335-          border: 1px solid rgba(201,168,62,0.35);
+2336-          box-shadow: 0 10px 26px rgba(0,0,0,0.25);
+2337-        }
+2338-
+2339-        .pp-gridBox{
+2340:          position: relative;
+2341:          display: grid;
+2342-          gap: 8px;
+2343-          padding: 12px;
+2344-          border-radius: 16px;
+2345-          background: radial-gradient(1200px 260px at 50% 0%, rgba(201,168,62,0.10), rgba(0,0,0,0.28));
+2346-          border: 1px solid rgba(201,168,62,0.22);
+2347:          overflow: hidden;
+2348-        }
+2349-
+2350-        .pp-gridBox:before{
+2351-          content:"";
+2352:          position:absolute;
+2353-          inset:-120px -60px auto -60px;
+2354-          height:160px;
+2355-          background: radial-gradient(closest-side, rgba(201,168,62,0.14), rgba(201,168,62,0.0));
+2356-          pointer-events:none;
+2357-          filter: blur(1px);
+2358-        }
+2359-
+2360-        .pp-row{
+2361:          display:grid;
+2362:          grid-template-columns: repeat(4, minmax(0, 1fr));
+2363-          gap: 10px;
+2364-        }
+2365-
+2366-        .pp-pill{
+2367:          position: relative;
+2368-          padding: 11px 10px;
+2369-          border-radius: 14px;
+2370-          text-align:center;
+2371-          font-weight: 1000;
+2372-          letter-spacing: 1.4px;
+2373-          color: rgba(255,255,255,0.92);
+2374-          user-select: text;
+2375-          transition: transform .10s ease, box-shadow .18s ease, background .18s ease, border-color .18s ease, opacity .18s ease;
+2376-          background: linear-gradient(180deg, rgba(201,168,62,0.14), rgba(201,168,62,0.08));
+2377-          border: 1px solid rgba(201,168,62,0.28);
+2378-          box-shadow: 0 10px 26px rgba(0,0,0,0.24);
+2379:          min-width: 0;
+2380-        }
+2381-
+2382-        .pp-pill[data-empty="1"]{
+2383-          opacity: .30;
+2384-          cursor: default;
+2385-          box-shadow: none;
+2386-        }
+2387-
+2388-        .pp-pill:not([data-empty="1"]){
+2389-          cursor:pointer;
+2390-        }
+2391-
+2392-        .pp-pill:not([data-empty="1"]):hover{
+2393-          transform: translateY(-1px);
+2394-          border-color: rgba(201,168,62,0.52);
+2395-          background: linear-gradient(180deg, rgba(201,168,62,0.22), rgba(201,168,62,0.10));
+2396-          box-shadow: 0 16px 34px rgba(0,0,0,0.34), 0 0 0 1px rgba(201,168,62,0.10);
+2397-        }
+2398-
+2399-        .pp-pill:not([data-empty="1"]):active{
+2400-          transform: translateY(0px);
+2401-        }
+2402-
+2403-        .pp-copiedBadge{
+2404:          position:absolute;
+2405-          right: 8px;
+2406-          top: 8px;
+2407-          font-size: 10px;
+2408-          font-weight: 900;
+2409-          color: rgba(0,0,0,0.92);
+2410-          background: rgba(201,168,62,0.92);
+2411-          padding: 4px 7px;
+2412-          border-radius: 999px;
+2413-          box-shadow: 0 10px 20px rgba(0,0,0,0.35);
+2414-        }
+2415-
+2416-        .top3-empty{
+2417-          color: var(--top3-muted);
+2418-          padding: 6px 0;
+2419-        }
+2420-
+2421-        .top3-error{
+2422-          color: #ff6b6b;
+2423-          font-weight: 800;
+2424-          padding: 6px 0;
+2425-        }
+2426-
+2427-        .top3-historyToolbar{
+2428:          display: grid;
+2429:          grid-template-columns: auto minmax(190px, 260px) auto auto;
+2430-          gap: 10px;
+2431-          align-items: center;
+2432-          margin-top: 14px;
+2433-        }
+2434-
+2435-        .top3-historyDate{
+2436:          width: 100%;
+2437-          min-height: 42px;
+2438-          border-radius: 12px;
+2439-          border: 1px solid rgba(201,168,62,0.35);
+2440-          background: rgba(0,0,0,0.38);
+2441-          color: var(--top3-text);
+2442-          padding: 9px 12px;
+2443-          font-size: 14px;
+2444-          font-weight: 900;
+2445-          color-scheme: dark;
+2446-        }
+2447-
+2448-        .top3-historySummary{
+2449:          display: grid;
+2450:          grid-template-columns: repeat(6, minmax(0, 1fr));
+2451-          gap: 10px;
+2452-          margin-top: 14px;
+2453-        }
+2454-
+2455-        .top3-historyMetric{
+2456-          border-radius: 14px;
+2457-          border: 1px solid rgba(255,255,255,0.08);
+2458-          background: rgba(255,255,255,0.025);
+2459-          padding: 11px 12px;
+2460:          display: grid;
+2461-          gap: 4px;
+2462-        }
+2463-
+2464-        .top3-historyMetric__label{
+2465-          color: var(--top3-muted);
+2466-          font-size: 10px;
+2467-          font-weight: 900;
+2468-          letter-spacing: 0.8px;
+2469-          text-transform: uppercase;
+2470-        }
+2471-
+2472-        .top3-historyMetric__value{
+2473-          color: var(--top3-text);
+2474-          font-size: 18px;
+2475-          font-weight: 1000;
+2476-        }
+2477-
+2478-        .top3-historyRow{
+2479:          display:grid;
+2480:          grid-template-columns: 160px 1fr 220px 56px;
+2481-          align-items:center;
+2482-          gap: 10px;
+2483-          padding: 8px 10px;
+2484-          border-radius: 12px;
+2485-          background: rgba(255,255,255,0.03);
+2486-          border: 1px solid rgba(255,255,255,0.06);
+2487-          font-size: 12px;
+2488-        }
+2489-
+2490-        .top3-historyResult{
+2491:          display:flex;
+2492-          align-items:center;
+2493-          gap:10px;
+2494:          min-width:0;
+2495-        }
+2496-
+2497-        .top3-historyResultText{
+2498:          display:grid;
+2499-          gap:2px;
+2500:          min-width:0;
+2501-        }
+2502-
+2503-        .top3-historyResultGroup{
+2504-          font-weight:900;
+2505-        }
+2506-
+2507-        .top3-historyResultAnimal{
+2508-          font-size:10px;
+2509-          color: var(--top3-muted);
+2510-          text-transform: uppercase;
+2511-          white-space: nowrap;
+2512:          overflow: hidden;
+2513:          text-overflow: ellipsis;
+2514-          letter-spacing: 0.5px;
+2515-        }
+2516-
+2517:        @media (max-width: 1180px){
+2518-          .top3-secondaryRow{
+2519:            max-width: 980px;
+2520-          }
+2521-
+2522-          .timeline-slot__cards{
+2523:            grid-template-columns: 1fr;
+2524-          }
+2525-
+2526-          .timeline-compact__grid{
+2527:            grid-template-columns: 1fr;
+2528-          }
+2529-
+2530-          .timeline-compact__predictions{
+2531:            grid-template-columns: 1fr;
+2532-          }
+2533-        }
+2534-
+2535:        @media (max-width: 980px){
+2536-          .top3-page{
+2537-            gap: 14px;
+2538-          }
+2539-
+2540-          .top3-shell{
+2541-            padding: 14px;
+2542-            border-radius: 18px;
+2543-          }
+2544-
+2545-          .top3-metaGrid,
+2546-          .timeline-slot__metaGrid{
+2547:            grid-template-columns: 1fr 1fr;
+2548-          }
+2549-
+2550-          .top3-heroWrap,
+2551-          .top3-secondaryRow{
+2552:            max-width: none;
+2553-          }
+2554-
+2555-          .top3-secondaryRow{
+2556:            grid-template-columns: 1fr;
+2557-            gap: 14px;
+2558-          }
+2559-
+2560-          .top3-card,
+2561-          .top3-card--hero{
+2562-            padding: 14px;
+2563-            border-radius: 18px;
+2564-          }
+2565-
+2566-          .top3-card__summary,
+2567-          .top3-card--hero .top3-card__summary{
+2568:            grid-template-columns: 1fr;
+2569-            gap: 12px;
+2570-          }
+2571-
+2572-          .top3-card__confidence{
+2573-            justify-self: stretch;
+2574-            text-align: left;
+2575:            max-width: none;
+2576-          }
+2577-
+2578-          .top3-card__confidenceValue{
+2579-            font-size: 28px;
+2580-          }
+2581-
+2582-          .top3-card__actions{
+2583-            align-items: stretch;
+2584-            flex-direction: column;
+2585-          }
+2586-
+2587-          .pp-btn{
+2588:            width: 100%;
+2589-          }
+2590-
+2591-          .top3-historyToolbar{
+2592:            grid-template-columns: 1fr 1fr;
+2593-          }
+2594-
+2595-          .top3-historyDate{
+2596:            grid-column: 1 / -1;
+2597-          }
+2598-
+2599-          .top3-historySummary{
+2600:            grid-template-columns: repeat(3, minmax(0, 1fr));
+2601-          }
+2602-
+2603-          .top3-historyRow{
+2604:            grid-template-columns: 1fr;
+2605-            align-items:start;
+2606-          }
+2607-
+2608-          .timeline-slot__header{
+2609-            flex-direction: column;
+2610-            align-items: flex-start;
+2611-          }
+2612-        }
+2613-
+2614:        @media (max-width: 640px){
+2615-          .timeline-compact__pick{
+2616:            grid-template-columns: 26px 40px minmax(0, 1fr);
+2617-            gap: 8px;
+2618-            padding: 8px;
+2619-          }
+2620-
+2621-          .timeline-compact__pickRank{
+2622:            width: 26px;
+2623-            height: 26px;
+2624-            border-radius: 8px;
+2625-          }
+2626-
+2627-          .timeline-compact__pickAnimal{
+2628-            font-size: 14px;
+2629-          }
+2630-
+2631-          .timeline-compact__resultGroup{
+2632-            font-size: 16px;
+2633-          }
+2634-
+2635-          .timeline-compact__performanceText{
+2636-            font-size: 13px;
+2637-          }
+2638-
+--
+2642-
+2643-          .top3-shell{
+2644-            padding: 12px;
+2645-            border-radius: 16px;
+2646-          }
+2647-
+2648-          .top3-header__title,
+2649-          .timeline-slot__title{
+2650-            font-size: 17px;
+2651-          }
+2652-
+2653-          .top3-card__topline{
+2654-            gap: 8px;
+2655-          }
+2656-
+2657-          .top3-rankBadge{
+2658:            width: 28px;
+2659-            height: 28px;
+2660-            border-radius: 9px;
+2661-          }
+2662-
+2663-          .top3-card__identity{
+2664-            gap: 10px;
+2665-            align-items: center;
+2666-          }
+2667-
+2668-          .top3-card__animal{
+2669-            font-size: 18px;
+2670-            letter-spacing: 0.35px;
+2671-          }
+2672-
+2673-          .top3-card--secondary .top3-card__animal{
+2674-            font-size: 18px;
+2675-          }
+2676-
+2677-          .top3-card__confidenceValue,
+2678-          .top3-card--secondary .top3-card__confidenceValue{
+2679-            font-size: 24px;
+2680-          }
+2681-
+2682-          .pp-chipRow{
+2683:            grid-template-columns: repeat(2, minmax(0, 1fr));
+2684-          }
+2685-
+2686-          .pp-row{
+2687:            grid-template-columns: repeat(2, minmax(0, 1fr));
+2688-          }
+2689-
+2690-          .pp-pill{
+2691-            padding: 10px 8px;
+2692-            font-size: 13px;
+2693-            letter-spacing: 1px;
+2694-          }
+2695-
+2696-          .pp-copiedBadge{
+2697-            right: 6px;
+2698-            top: 6px;
+2699-            font-size: 9px;
+2700-            padding: 3px 6px;
+2701-          }
+2702-
+2703-          .top3-metaGrid,
+2704-          .timeline-slot__metaGrid{
+2705:            grid-template-columns: 1fr;
+2706-          }
+2707-
+2708-          .top3-historyToolbar{
+2709:            grid-template-columns: 1fr 1fr;
+2710-          }
+2711-
+2712-          .top3-historySummary{
+2713:            grid-template-columns: repeat(2, minmax(0, 1fr));
+2714-          }
+2715-        }
+2716-
+2717:        @media (max-width: 420px){
+2718-          .top3-shell{
+2719-            padding: 10px;
+2720-          }
+2721-
+2722-          .top3-card,
+2723-          .top3-card--hero{
+2724-            padding: 12px;
+2725-          }
+2726-
+2727-          .top3-card__group{
+2728-            font-size: 10px;
+2729-          }
+2730-
+2731-          .top3-card__animal{
+2732-            font-size: 16px;
+2733-          }
+--
+2737-          }
+2738-
+2739-          .pp-gridBox{
+2740-            padding: 10px;
+2741-            gap: 7px;
+2742-          }
+2743-
+2744-          .pp-row,
+2745-          .pp-chipRow{
+2746-            gap: 8px;
+2747-          }
+2748-        }
+2749-
+2750-        /* TOP3 PREMIUM CRLF */
+2751-        .top3-stage--predictions,
+2752-        .top3-stage--loading{
+2753:          grid-template-columns: repeat(3, minmax(0, 1fr));
+2754-          align-items: stretch;
+2755-        }
+2756-
+2757-        .top3-stage--predictions > .top3-card,
+2758-        .top3-stage--loading > .top3-card{
+2759:          width: 100%;
+2760:          min-width: 0;
+2761-          height: 100%;
+2762-        }
+2763-
+2764-        .top3-loadingCard{
+2765:          display: grid;
+2766-          align-content: start;
+2767-          gap: 16px;
+2768-          min-height: 330px;
+2769-        }
+2770-
+2771-        .top3-loadingCard__header,
+2772-        .top3-loadingCard__identity{
+2773:          display: flex;
+2774-          align-items: center;
+2775-          gap: 12px;
+2776-        }
+2777-
+2778-        .top3-loadingCard__lines{
+2779:          display: grid;
+2780-          flex: 1;
+2781:          min-width: 0;
+2782-          gap: 10px;
+2783-        }
+2784-
+2785-        .top3-skeleton{
+2786:          position: relative;
+2787:          display: block;
+2788:          overflow: hidden;
+2789:          max-width: 100%;
+2790-          border-radius: 999px;
+2791-          background: rgba(255,255,255,0.08);
+2792-        }
+2793-
+2794-        .top3-skeleton::after{
+2795-          content: "";
+2796:          position: absolute;
+2797-          inset: 0;
+2798-          transform: translateX(-100%);
+2799-          background: linear-gradient(
+2800-            90deg,
+2801-            transparent,
+2802-            rgba(201,168,62,0.22),
+2803-            transparent
+2804-          );
+2805-          animation: top3PremiumSkeleton 1.2s infinite;
+2806-        }
+2807-
+2808-        .top3-skeleton--badge{
+2809:          width: 30px;
+2810-          height: 30px;
+2811-          flex: 0 0 auto;
+2812-          border-radius: 9px;
+2813-        }
+2814-
+2815-        .top3-skeleton--title{
+2816:          width: 120px;
+2817-          height: 14px;
+2818-        }
+2819-
+2820-        .top3-skeleton--image{
+2821:          width: 62px;
+2822-          height: 62px;
+2823-          flex: 0 0 auto;
+2824-          border-radius: 16px;
+2825-        }
+2826-
+2827-        .top3-skeleton--short{
+2828:          width: min(125px, 55%);
+2829-          height: 13px;
+2830-        }
+2831-
+2832-        .top3-skeleton--animal{
+2833:          width: min(185px, 82%);
+2834-          height: 24px;
+2835-        }
+2836-
+2837-        .top3-skeleton--block{
+2838:          width: 100%;
+2839-          height: 76px;
+2840-          border-radius: 14px;
+2841-        }
+2842-
+2843-        @keyframes top3PremiumSkeleton{
+2844-          100%{
+2845-            transform: translateX(100%);
+2846-          }
+2847-        }
+2848-
+2849:        @media (max-width: 980px){
+2850-          .top3-stage--predictions,
+2851-          .top3-stage--loading{
+2852:            grid-template-columns: repeat(2, minmax(0, 1fr));
+2853-          }
+2854-
+2855:          .top3-stage--predictions > .top3-card:first-child{
+2856:            grid-column: 1 / -1;
+2857-          }
+2858-        }
+2859-
+2860:        @media (max-width: 640px){
+2861-          .top3-stage--predictions,
+2862-          .top3-stage--loading{
+2863:            grid-template-columns: 1fr;
+2864-          }
+2865-
+2866:          .top3-stage--predictions > .top3-card:first-child{
+2867:            grid-column: auto;
+2868-          }
+2869-
+2870-          .top3-card__actions{
+2871:            display: grid;
+2872:            grid-template-columns: repeat(2, minmax(0, 1fr));
+2873-          }
+2874-
+2875-          .top3-card__actions .pp-btn{
+2876:            width: 100%;
+2877:            min-width: 0;
+2878-          }
+2879-
+2880-          .top3-metaGrid{
+2881:            grid-template-columns: repeat(2, minmax(0, 1fr));
+2882-          }
+2883-
+2884-          .timeline-slot__metaGrid{
+2885:            grid-template-columns: 1fr;
+2886-          }
+2887-        }
+2888-
+2889:        @media (max-width: 420px){
+2890-          .top3-card__actions,
+2891-          .top3-metaGrid{
+2892:            grid-template-columns: 1fr;
+2893-          }
+2894-        }
+2895-
+2896-        @media (prefers-reduced-motion: reduce){
+2897-          .top3-skeleton::after{
+2898-            animation: none;
+2899-          }
+2900-        }
+2901-
+2902-
+2903:        @media (max-width: 640px){
+2904-          .pp-tabs{
+2905-            gap:6px;
+2906-          }
+2907-
+2908-          .pp-tab{
+2909-            padding:8px 10px;
+2910-            font-size:13px;
+2911-          }
+2912-        }
+2913-
+2914-      `}</style>
+2915-
+2916-      <div className="top3-page">
+2917-        <section className="top3-shell">
+2918-          <div className="top3-header">
+2919-            <div className="top3-header__title">TOP3 ÔÇö Pr├│ximo sorteio</div>
+--
+3148-
+3149-            <div className="top3-historyMetric">
+3150-              <div className="top3-historyMetric__label">Milhar</div>
+3151-              <div className="top3-historyMetric__value">
+3152-                {historySummary.exact}
+3153-              </div>
+3154-            </div>
+3155-
+3156-            <div className="top3-historyMetric">
+3157-              <div className="top3-historyMetric__label">├ìndice m├®dio</div>
+3158-              <div className="top3-historyMetric__value">
+3159-                {historySummary.average.toFixed(2)}%
+3160-              </div>
+3161-            </div>
+3162-          </div>
+3163-
+3164:          <div style={{ display: "grid", gap: 10, marginTop: 12 }}>
+3165-            {!historyRows.length ? (
+3166-              <div className="top3-empty">Sem hist├│rico para a data analisada.</div>
+3167-            ) : (
+3168-              historyRows.map((item) => {
+3169-                const y = String(item?.target?.ymd || "");
+3170-                const h = String(item?.target?.hour || "");
+3171-
+3172-                const picks = Array.isArray(item?.picks) && item.picks.length
+3173-  ? item.picks.map((g) => formatGrupo(g)).join(" - ")
+3174-  : Array.isArray(item?.top3)
+3175-    ? item.top3.map((t) => formatGrupo(t?.grupo)).join(" - ")
+3176-    : "--- - --- - ---";
+3177-
+3178-                const resultGrupo = Number(
+3179-                  item?.result ?? item?.grupo ?? item?.prizes?.[0]?.grupo
+3180-                );

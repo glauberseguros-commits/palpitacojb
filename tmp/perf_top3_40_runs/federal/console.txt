@@ -1,0 +1,65 @@
+
+====================================
+TOP3 OFFICIAL BACKTEST
+====================================
+
+Loteria............: FEDERAL
+Limite.............: 100
+Hist├│rico m├¡nimo...: 100
+Per├¡odo............: in├¡cio at├® fim
+Telemetria.........: DESATIVADA
+
+[BACKTEST] 25/100 | avaliados=25 | erros=0
+[BACKTEST] 50/100 | avaliados=50 | erros=0
+[BACKTEST] 75/100 | avaliados=75 | erros=0
+[BACKTEST] 100/100 | avaliados=100 | erros=0
+
+==============================================
+TOP3 OFFICIAL BACKTEST
+==============================================
+
+Loteria.............: FEDERAL
+Engine..............: top3_statistical_v3
+Hist├│rico carregado.: 416
+Casos eleg├¡veis.....: 316
+Casos avaliados.....: 100
+Casos ignorados.....: 0
+Erros...............: 0
+Per├¡odo hist├│rico...: 2022-06-08 at├® 2026-07-22
+Per├¡odo avaliado....: 2023-06-03 at├® 2024-05-25
+TOP1................: 5 (5.00%)
+TOP3 no 1┬║ pr├¬mio...: 16 (16.00%)
+Acerto no 1┬║ pr├¬mio.: 16 (16.00%)
+Acerto no 2┬║ pr├¬mio.: 14 (14.00%)
+Acerto no 3┬║ pr├¬mio.: 8 (8.00%)
+Algum acerto 1┬║-3┬║..: 34 (34.00%)
+Posi├º├Áes atingidas..: 38
+M├®dia posi├º├Áes/caso.: 0.3800
+Palpites atingidos..: 36
+M├®dia palpites/caso.: 0.3600
+Tempo total.........: 4155 ms
+
+POR HOR├üRIO
+19:00    avaliados=  100 | TOP1=   5.00% | 1┬║=  16.00% | 2┬║=  14.00% | 3┬║=   8.00% | QUALQUER=  34.00% | erros=0
+
+POR DIA DA SEMANA
+3   avaliados=   46 | TOP1=   6.52% | 1┬║=  19.57% | 2┬║=  19.57% | 3┬║=   8.70% | QUALQUER=  43.48% | erros=0
+4   avaliados=    2 | TOP1=   0.00% | 1┬║=  50.00% | 2┬║=   0.00% | 3┬║=   0.00% | QUALQUER=  50.00% | erros=0
+6   avaliados=   52 | TOP1=   3.85% | 1┬║=  11.54% | 2┬║=   9.62% | 3┬║=   7.69% | QUALQUER=  25.00% | erros=0
+
+POR M├èS
+2023-06 avaliados=    8 | TOP1=  12.50% | 1┬║=  25.00% | 2┬║=   0.00% | 3┬║=  12.50% | QUALQUER=  37.50% | erros=0
+2023-07 avaliados=    9 | TOP1=  11.11% | 1┬║=  22.22% | 2┬║=   0.00% | 3┬║=   0.00% | QUALQUER=  22.22% | erros=0
+2023-08 avaliados=    9 | TOP1=   0.00% | 1┬║=   0.00% | 2┬║=  44.44% | 3┬║=  11.11% | QUALQUER=  44.44% | erros=0
+2023-09 avaliados=    9 | TOP1=   0.00% | 1┬║=  22.22% | 2┬║=   0.00% | 3┬║=   0.00% | QUALQUER=  22.22% | erros=0
+2023-10 avaliados=    8 | TOP1=  12.50% | 1┬║=  37.50% | 2┬║=  25.00% | 3┬║=  25.00% | QUALQUER=  62.50% | erros=0
+2023-11 avaliados=    9 | TOP1=  11.11% | 1┬║=  33.33% | 2┬║=   0.00% | 3┬║=  11.11% | QUALQUER=  44.44% | erros=0
+2023-12 avaliados=    7 | TOP1=   0.00% | 1┬║=   0.00% | 2┬║=  14.29% | 3┬║=  14.29% | QUALQUER=  28.57% | erros=0
+2024-01 avaliados=    9 | TOP1=   0.00% | 1┬║=  11.11% | 2┬║=  11.11% | 3┬║=   0.00% | QUALQUER=  22.22% | erros=0
+2024-02 avaliados=    7 | TOP1=   0.00% | 1┬║=  14.29% | 2┬║=  42.86% | 3┬║=   0.00% | QUALQUER=  42.86% | erros=0
+2024-03 avaliados=    9 | TOP1=  11.11% | 1┬║=  11.11% | 2┬║=   0.00% | 3┬║=   0.00% | QUALQUER=  11.11% | erros=0
+2024-04 avaliados=    8 | TOP1=   0.00% | 1┬║=   0.00% | 2┬║=  12.50% | 3┬║=  12.50% | QUALQUER=  25.00% | erros=0
+2024-05 avaliados=    8 | TOP1=   0.00% | 1┬║=  12.50% | 2┬║=  25.00% | 3┬║=  12.50% | QUALQUER=  50.00% | erros=0
+
+JSON: C:\Users\glaub\palpitaco\tmp\perf_top3_40_runs\federal\top3_official_backtest_federal_limit_100.json
+TXT : C:\Users\glaub\palpitaco\tmp\perf_top3_40_runs\federal\top3_official_backtest_federal_limit_100.txt

@@ -1,0 +1,1388 @@
+====================================================================================================
+TOP3-PERF-02 — EXTRAÇÃO COMPLETA DO FLUXO DE CARREGAMENTO
+====================================================================================================
+Gerado em: 25/07/2026 22:58:07
+====================================================================================================
+
+====================================================================================================
+HOOK PRINCIPAL — LOAD, RESULTADOS, BASE, HISTÓRICO E FINALIZAÇÃO
+ARQUIVO: .\src\pages\Top3\top3.hooks.js
+LINHAS: 420 até 900
+TOTAL DO ARQUIVO: 1451
+====================================================================================================
+
+00420 | 
+00421 |     return `G${String(g).padStart(2, "0")}${
+00422 |       animal ? " • " + animal.toUpperCase() : ""
+00423 |     }${when ? " • " + when : ""}`;
+00424 |   }, [prevInfo]);
+00425 | 
+00426 |   const lastLabel = useMemo(() => {
+00427 |     if (!lastInfo?.lastGrupo) return "—";
+00428 | 
+00429 |     const g = Number(lastInfo.lastGrupo);
+00430 |     const animal = safeStr(lastInfo.lastAnimal || getAnimalLabel?.(g) || "");
+00431 | 
+00432 |     const when =
+00433 |       lastInfo?.lastYmd && lastInfo?.lastHour
+00434 |         ? `${ymdToBR(lastInfo.lastYmd)} ${lastInfo.lastHour}`
+00435 |         : "";
+00436 | 
+00437 |     return `G${String(g).padStart(2, "0")}${
+00438 |       animal ? " • " + animal.toUpperCase() : ""
+00439 |     }${when ? " • " + when : ""}`;
+00440 |   }, [lastInfo]);
+00441 | 
+00442 |   const resetStateForNoData = useCallback(() => {
+00443 |     analyticsCacheRef.current = { key: "", value: emptyAnalytics() };
+00444 | 
+00445 |     setLoadedYmd("");
+00446 |     setLastHourBucket("");
+00447 |     setTargetHourBucket("");
+00448 |     setTargetYmd("");
+00449 |     setSkipPtRio18ByFederal(false);
+00450 |     setBaseDrawState(null);
+00451 | 
+00452 |     setLastInfo({
+00453 |       lastYmd: "",
+00454 |       lastHour: "",
+00455 |       lastGrupo: null,
+00456 |       lastAnimal: "",
+00457 |     });
+00458 | 
+00459 |     setPrevInfo({
+00460 |       prevYmd: "",
+00461 |       prevHour: "",
+00462 |       prevGrupo: null,
+00463 |       prevAnimal: "",
+00464 |       source: "none",
+00465 |     });
+00466 | 
+00467 |     setRangeInfo({ from: "", to: "" });
+00468 |     setRangeDraws([]);
+00469 |     setTodayDraws([]);
+00470 |   }, []);
+00471 | 
+00472 |   const load = useCallback(async () => {
+00473 |     const lKey = safeStr(lotteryKeySafe).toUpperCase();
+00474 |     if (!lKey || !isYMD(ymdSafe)) return;
+00475 | 
+00476 |     setLoading(true);
+00477 |     setLoadingStage({ today: true, range: false });
+00478 |     setError("");
+00479 |     setSecondaryReady(false);
+00480 | 
+00481 |     // Impede exibir resultados pertencentes à consulta anterior.
+00482 |     resetStateForNoData();
+00483 | 
+00484 |     const currentRequestId = ++requestIdRef.current;
+00485 | 
+00486 |     try {
+00487 |       const ufResolved = lKey;
+00488 | 
+00489 |       let minDate = "";
+00490 |       let maxDate = "";
+00491 | 
+00492 |       const cached = boundsCacheRef.current.get(ufResolved);
+00493 | 
+00494 |       if (cached) {
+00495 |         minDate = cached.minDate;
+00496 |         maxDate = cached.maxDate;
+00497 |       } else {
+00498 |         const b = await getKingBoundsByUf({ uf: ufResolved });
+00499 | 
+00500 |         const bMin = safeStr(b?.minYmd || b?.minDate || "");
+00501 |         const bMax = safeStr(b?.maxYmd || b?.maxDate || "");
+00502 | 
+00503 |         if (isYMD(bMin)) minDate = bMin;
+00504 |         if (isYMD(bMax)) maxDate = bMax;
+00505 | 
+00506 |         boundsCacheRef.current.set(ufResolved, { minDate, maxDate });
+00507 |       }
+00508 | 
+00509 |       const selectedFederalNonDrawDay =
+00510 |         lKey === "FEDERAL" && !isFederalDrawDay(ymdSafe);
+00511 | 
+00512 |       const effectiveYmd =
+00513 |         selectedFederalNonDrawDay && isYMD(maxDate) ? maxDate : ymdSafe;
+00514 | 
+00515 |       const today =
+00516 |         (await getKingResultsByDate({
+00517 |           uf: ufResolved,
+00518 |           date: effectiveYmd,
+00519 |         })) || [];
+00520 | 
+00521 |       if (requestIdRef.current !== currentRequestId) return;
+00522 | 
+00523 |       setLoadedYmd(effectiveYmd);
+00524 |       setTodayDraws(today);
+00525 | 
+00526 |       let todaySchedule = getScheduleForLottery({
+00527 |         lotteryKey: lKey,
+00528 |         ymd: effectiveYmd,
+00529 |         PT_RIO_SCHEDULE_NORMAL,
+00530 |         PT_RIO_SCHEDULE_WED_SAT,
+00531 |         FEDERAL_SCHEDULE,
+00532 |       });
+00533 | 
+00534 |       const shouldSkipPtRio18 =
+00535 |         (lKey === "PT_RIO" || lKey === "RJ") &&
+00536 |         isFederalDrawDay(effectiveYmd) &&
+00537 |         String(effectiveYmd || "").trim() >= "2025-11-03";
+00538 | 
+00539 |       if (shouldSkipPtRio18) {
+00540 |         todaySchedule = Array.from(
+00541 |           new Set([
+00542 |             ...(Array.isArray(todaySchedule) ? todaySchedule : [])
+00543 |               .map(toHourBucket)
+00544 |               .filter((h) => h && h !== "18:00"),
+00545 |             "19:00",
+00546 |           ])
+00547 |         ).sort((a, b) => {
+00548 |           const [ah, am] = String(a).split(":").map(Number);
+00549 |           const [bh, bm] = String(b).split(":").map(Number);
+00550 | 
+00551 |           return ah * 60 + am - (bh * 60 + bm);
+00552 |         });
+00553 |       }
+00554 | 
+00555 |       setSkipPtRio18ByFederal(Boolean(shouldSkipPtRio18));
+00556 | 
+00557 |       if (!Array.isArray(todaySchedule) || !todaySchedule.length) {
+00558 |         resetStateForNoData();
+00559 |         setError("Não há grade de sorteio válida para esta data/loteria.");
+00560 |         return;
+00561 |       }
+00562 | 
+00563 |       const todayLast = findLastDrawInList(today, todaySchedule);
+00564 | 
+00565 |       let baseDraw = null;
+00566 |       let baseY = "";
+00567 |       let baseH = "";
+00568 |       let baseGrupo = null;
+00569 |       let baseAnimal = "";
+00570 |       let resolvedTargetY = "";
+00571 |       let resolvedTargetH = "";
+00572 |       let resolvedPrev = {
+00573 |         draw: null,
+00574 |         ymd: "",
+00575 |         hour: "",
+00576 |         source: "none",
+00577 |       };
+00578 | 
+00579 |       if (todayLast) {
+00580 |         baseDraw = todayLast;
+00581 |         baseY = pickDrawYMD(todayLast) || effectiveYmd;
+00582 |         baseH = toHourBucket(pickDrawHour(todayLast));
+00583 | 
+00584 |         const effectiveTodaySchedule = (Array.isArray(todaySchedule) ? todaySchedule : [])
+00585 |           .map(toHourBucket)
+00586 |           .filter(Boolean);
+00587 | 
+00588 |         const baseIdx = baseY === effectiveYmd
+00589 |           ? effectiveTodaySchedule.indexOf(baseH)
+00590 |           : -1;
+00591 | 
+00592 |         if (baseIdx >= 0 && baseIdx < effectiveTodaySchedule.length - 1) {
+00593 |           resolvedTargetY = effectiveYmd;
+00594 |           resolvedTargetH = effectiveTodaySchedule[baseIdx + 1];
+00595 |         } else {
+00596 |           const nextSlot = getNextSlotForLottery({
+00597 |             lotteryKey: lKey,
+00598 |             ymd: baseY,
+00599 |             hourBucket: baseH,
+00600 |             PT_RIO_SCHEDULE_NORMAL,
+00601 |             PT_RIO_SCHEDULE_WED_SAT,
+00602 |             FEDERAL_SCHEDULE,
+00603 |           });
+00604 | 
+00605 |           resolvedTargetY = safeStr(nextSlot?.ymd || "");
+00606 |           resolvedTargetH = toHourBucket(nextSlot?.hour || "");
+00607 |         }
+00608 |       } else {
+00609 |         const firstHourToday = toHourBucket(todaySchedule?.[0]);
+00610 | 
+00611 |         if (!firstHourToday) {
+00612 |           resetStateForNoData();
+00613 |           setError(
+00614 |             "Não foi possível determinar o primeiro horário válido para esta loteria."
+00615 |           );
+00616 |           return;
+00617 |         }
+00618 | 
+00619 |         resolvedTargetY = effectiveYmd;
+00620 |         resolvedTargetH = firstHourToday;
+00621 | 
+00622 |         const previousForFirstSlot = await getPreviousDrawRobust({
+00623 |           getKingResultsByDate,
+00624 |           lotteryKey: lKey,
+00625 |           ymdTarget: effectiveYmd,
+00626 |           targetHourBucket: firstHourToday,
+00627 |           todayDraws: today,
+00628 |           schedule: todaySchedule,
+00629 |           PT_RIO_SCHEDULE_NORMAL,
+00630 |           PT_RIO_SCHEDULE_WED_SAT,
+00631 |           FEDERAL_SCHEDULE,
+00632 |         });
+00633 | 
+00634 |         const previousResolved = previousForFirstSlot?.draw
+00635 |           ? previousForFirstSlot
+00636 |           : await fallbackBaseSearch({
+00637 |               getKingResultsByRange,
+00638 |               findLatestHistoricalBaseDraw,
+00639 |               addDaysYMD,
+00640 |               minDate,
+00641 |               lotteryKey: lKey,
+00642 |               targetYmd: effectiveYmd,
+00643 |               targetHourBucket: firstHourToday,
+00644 |               uf: ufResolved,
+00645 |             });
+00646 | 
+00647 |         if (!previousResolved?.draw) {
+00648 |           resetStateForNoData();
+00649 |           setError(
+00650 |             "Não foi possível localizar a base anterior ao primeiro sorteio do dia."
+00651 |           );
+00652 |           return;
+00653 |         }
+00654 | 
+00655 |         baseDraw = previousResolved.draw;
+00656 |         baseY = safeStr(previousResolved.ymd);
+00657 |         baseH = toHourBucket(previousResolved.hour);
+00658 |       }
+00659 | 
+00660 |       baseGrupo = pickPrize1GrupoFromDraw(baseDraw);
+00661 |       baseAnimal = baseGrupo ? safeStr(getAnimalLabel(baseGrupo)) : "";
+00662 | 
+00663 |       if (
+00664 |         !baseDraw ||
+00665 |         !isYMD(baseY) ||
+00666 |         !baseH ||
+00667 |         !Number.isFinite(Number(baseGrupo)) ||
+00668 |         Number(baseGrupo) < 1 ||
+00669 |         Number(baseGrupo) > 25 ||
+00670 |         !isYMD(resolvedTargetY) ||
+00671 |         !resolvedTargetH
+00672 |       ) {
+00673 |         resetStateForNoData();
+00674 |         setError("Base ou alvo inválido para cálculo do TOP3.");
+00675 |         return;
+00676 |       }
+00677 | 
+00678 |       const baseDayDraws =
+00679 |         baseY === effectiveYmd
+00680 |           ? today
+00681 |           : (await getKingResultsByDate({
+00682 |               uf: ufResolved,
+00683 |               date: baseY,
+00684 |             })) || [];
+00685 | 
+00686 |       const baseDaySchedule = getScheduleForLottery({
+00687 |         lotteryKey: lKey,
+00688 |         ymd: baseY,
+00689 |         PT_RIO_SCHEDULE_NORMAL,
+00690 |         PT_RIO_SCHEDULE_WED_SAT,
+00691 |         FEDERAL_SCHEDULE,
+00692 |       });
+00693 | 
+00694 |       resolvedPrev = await getPreviousDrawRobust({
+00695 |         getKingResultsByDate,
+00696 |         lotteryKey: lKey,
+00697 |         ymdTarget: baseY,
+00698 |         targetHourBucket: baseH,
+00699 |         todayDraws: baseDayDraws,
+00700 |         schedule: baseDaySchedule,
+00701 |         PT_RIO_SCHEDULE_NORMAL,
+00702 |         PT_RIO_SCHEDULE_WED_SAT,
+00703 |         FEDERAL_SCHEDULE,
+00704 |       });
+00705 | 
+00706 |       if (!resolvedPrev?.draw) {
+00707 |         resolvedPrev = await fallbackBaseSearch({
+00708 |           getKingResultsByRange,
+00709 |           findLatestHistoricalBaseDraw,
+00710 |           addDaysYMD,
+00711 |           minDate,
+00712 |           lotteryKey: lKey,
+00713 |           targetYmd: baseY,
+00714 |           targetHourBucket: baseH,
+00715 |           uf: ufResolved,
+00716 |         });
+00717 |       }
+00718 | 
+00719 |       if (requestIdRef.current !== currentRequestId) return;
+00720 | 
+00721 |       setBaseDrawState(baseDraw);
+00722 |       setLastHourBucket(baseH);
+00723 |       setTargetYmd(resolvedTargetY);
+00724 |       setTargetHourBucket(resolvedTargetH);
+00725 | 
+00726 |       if (debugTop3) console.log(
+00727 |         "[TOP3 STATE]",
+00728 |         JSON.stringify(
+00729 |           {
+00730 |             loadedYmd: effectiveYmd,
+00731 | 
+00732 |             baseYmd: baseY,
+00733 |             baseHour: baseH,
+00734 |             baseGrupo,
+00735 | 
+00736 |             targetYmd: resolvedTargetY,
+00737 |             targetHour: resolvedTargetH,
+00738 | 
+00739 |             previousYmd: resolvedPrev?.ymd || "",
+00740 |             previousHour: resolvedPrev?.hour || "",
+00741 |             previousSource: resolvedPrev?.source || "",
+00742 | 
+00743 |             todayDraws: Array.isArray(today) ? today.length : 0,
+00744 |           },
+00745 |           null,
+00746 |           2
+00747 |         )
+00748 |       );
+00749 | 
+00750 |       setLastInfo({
+00751 |         lastYmd: baseY,
+00752 |         lastHour: baseH,
+00753 |         lastGrupo: Number(baseGrupo),
+00754 |         lastAnimal: baseAnimal,
+00755 |       });
+00756 | 
+00757 |       if (resolvedPrev?.draw) {
+00758 |         const gPrev = pickPrize1GrupoFromDraw(resolvedPrev.draw);
+00759 | 
+00760 |         setPrevInfo({
+00761 |           prevYmd: resolvedPrev.ymd || "",
+00762 |           prevHour: toHourBucket(resolvedPrev.hour) || "",
+00763 |           prevGrupo: Number.isFinite(Number(gPrev)) ? Number(gPrev) : null,
+00764 |           prevAnimal: gPrev ? safeStr(getAnimalLabel(gPrev)) : "",
+00765 |           source: resolvedPrev.source || "none",
+00766 |         });
+00767 |       } else {
+00768 |         setPrevInfo({
+00769 |           prevYmd: "",
+00770 |           prevHour: "",
+00771 |           prevGrupo: null,
+00772 |           prevAnimal: "",
+00773 |           source: "none",
+00774 |         });
+00775 |       }
+00776 | 
+00777 |       let rangeFrom = "";
+00778 | 
+00779 |       if (lookback === LOOKBACK_ALL) {
+00780 |         rangeFrom = minDate || addDaysYMD(baseY, -240);
+00781 |       } else {
+00782 |         const days = Math.max(1, Number(lookback || 30));
+00783 |         rangeFrom = addDaysYMD(baseY, -(days - 1));
+00784 |       }
+00785 | 
+00786 |       const rangeTo = baseY;
+00787 | 
+00788 |       setRangeInfo({ from: rangeFrom, to: rangeTo });
+00789 |       setLoadingStage({ today: false, range: true });
+00790 | 
+00791 |       const histRaw = await loadHistoryRange({
+00792 |         getKingResultsByRange,
+00793 |         uf: ufResolved,
+00794 |         dateFrom: rangeFrom,
+00795 |         dateTo: rangeTo,
+00796 |         readPolicy: "cache",
+00797 |       });
+00798 | 
+00799 |       if (requestIdRef.current !== currentRequestId) return;
+00800 | 
+00801 |       const hist = mergeBaseIntoRange(histRaw, baseDraw);
+00802 | 
+00803 |       if (debugTop3) console.log(
+00804 |         "[TOP3 HISTORY]",
+00805 |         JSON.stringify(
+00806 |           {
+00807 |             period: {
+00808 |               from: rangeFrom,
+00809 |               to: rangeTo,
+00810 |             },
+00811 | 
+00812 |             firestoreDraws: Array.isArray(histRaw)
+00813 |               ? histRaw.length
+00814 |               : 0,
+00815 | 
+00816 |             mergedDraws: Array.isArray(hist)
+00817 |               ? hist.length
+00818 |               : 0,
+00819 | 
+00820 |             baseIncluded: Array.isArray(hist)
+00821 |               ? hist.some(
+00822 |                   (d) =>
+00823 |                     drawKey(d) === drawKey(baseDraw)
+00824 |                 )
+00825 |               : false,
+00826 | 
+00827 |             firstDraw:
+00828 |               Array.isArray(hist) && hist.length
+00829 |                 ? {
+00830 |                     ymd: pickDrawYMD(hist[0]),
+00831 |                     hour: toHourBucket(pickDrawHour(hist[0])),
+00832 |                   }
+00833 |                 : null,
+00834 | 
+00835 |             lastDraw:
+00836 |               Array.isArray(hist) && hist.length
+00837 |                 ? {
+00838 |                     ymd: pickDrawYMD(hist[hist.length - 1]),
+00839 |                     hour: toHourBucket(
+00840 |                       pickDrawHour(hist[hist.length - 1])
+00841 |                     ),
+00842 |                   }
+00843 |                 : null,
+00844 |           },
+00845 |           null,
+00846 |           2
+00847 |         )
+00848 |       );
+00849 | 
+00850 |       setRangeDraws(hist);
+00851 |     } catch (e) {
+00852 |       if (requestIdRef.current === currentRequestId) {
+00853 |         setError(String(e?.message || e || "Falha ao carregar dados do TOP3."));
+00854 |         setBaseDrawState(null);
+00855 |       }
+00856 |     } finally {
+00857 |       if (requestIdRef.current === currentRequestId) {
+00858 |         setLoadingStage({ today: false, range: false });
+00859 |         setLoading(false);
+00860 |       }
+00861 |     }
+00862 |   }, [lotteryKeySafe, ymdSafe, lookback, resetStateForNoData]);
+00863 | 
+00864 |   useEffect(() => {
+00865 |     debugTop3Effect("01_load", {
+00866 |       lotteryKey: lotteryKeySafe,
+00867 |       ymd: ymdSafe,
+00868 |       lookback,
+00869 |     });
+00870 | 
+00871 |     load();
+00872 |   }, [load]);
+00873 | 
+00874 |   useEffect(() => {
+00875 |     if (
+00876 |       loading ||
+00877 |       !baseDrawState ||
+00878 |       !Array.isArray(rangeDraws) ||
+00879 |       !rangeDraws.length
+00880 |     ) {
+00881 |       setSecondaryReady(false);
+00882 |       return undefined;
+00883 |     }
+00884 | 
+00885 |     let cancelled = false;
+00886 |     let idleId = null;
+00887 |     let timeoutId = null;
+00888 | 
+00889 |     const activateSecondaryPipeline = () => {
+00890 |       if (!cancelled) {
+00891 |         setSecondaryReady(true);
+00892 |       }
+00893 |     };
+00894 | 
+00895 |     if (
+00896 |       typeof window !== "undefined" &&
+00897 |       typeof window.requestIdleCallback === "function"
+00898 |     ) {
+00899 |       idleId = window.requestIdleCallback(
+00900 |         activateSecondaryPipeline,
+
+====================================================================================================
+EFEITOS APÓS O LOAD
+ARQUIVO: .\src\pages\Top3\top3.hooks.js
+LINHAS: 900 até 990
+TOTAL DO ARQUIVO: 1451
+====================================================================================================
+
+00900 |         activateSecondaryPipeline,
+00901 |         { timeout: 300 }
+00902 |       );
+00903 |     } else {
+00904 |       timeoutId = setTimeout(activateSecondaryPipeline, 0);
+00905 |     }
+00906 | 
+00907 |     return () => {
+00908 |       cancelled = true;
+00909 | 
+00910 |       if (
+00911 |         idleId != null &&
+00912 |         typeof window !== "undefined" &&
+00913 |         typeof window.cancelIdleCallback === "function"
+00914 |       ) {
+00915 |         window.cancelIdleCallback(idleId);
+00916 |       }
+00917 | 
+00918 |       if (timeoutId != null) {
+00919 |         clearTimeout(timeoutId);
+00920 |       }
+00921 |     };
+00922 |   }, [loading, baseDrawState, rangeDraws]);
+00923 | 
+00924 |   useEffect(() => {
+00925 |     debugTop3Effect("02_ensure_timeline", {
+00926 |       lotteryKey: lotteryKeySafe,
+00927 |       timelineYmd,
+00928 |     });
+00929 | 
+00930 |     ensureDayTimeline({
+00931 |       ymd: timelineYmd,
+00932 |       lotteryKey: lotteryKeySafe,
+00933 |     });
+00934 |   }, [timelineYmd, lotteryKeySafe]);
+00935 | 
+00936 |   const analytics = useMemo(() => {
+00937 |     return computeTop3Analytics({
+00938 |       rangeDraws,
+00939 |       baseDrawState,
+00940 |       analyticsCacheRef,
+00941 |       lotteryKeySafe,
+00942 |       lookback,
+00943 |       rangeInfo,
+00944 |       todayDraws,
+00945 |       sanitizeHistoricalDraws,
+00946 |       targetYmd: analysisYmd,
+00947 |       targetHourBucket: analysisHourBucket,
+00948 |     });
+00949 |   }, [
+00950 |     rangeDraws,
+00951 |     baseDrawState,
+00952 |     lotteryKeySafe,
+00953 |     lookback,
+00954 |     rangeInfo,
+00955 |     todayDraws,
+00956 |     analysisYmd,
+00957 |     analysisHourBucket,
+00958 |   ]);
+00959 | 
+00960 |   useEffect(() => {
+00961 |     milharesCacheRef.current.clear();
+00962 |   }, [
+00963 |     rangeDraws,
+00964 |     analysisHourBucket,
+00965 |     scheduleKey,
+00966 |     analysisYmd,
+00967 |     lotteryKeySafe,
+00968 |   ]);
+00969 | 
+00970 |   const buildMilharesCached = useCallback(
+00971 |     ({ grupo2, count, targetYmd }) => {
+00972 |       const grupo = Number(grupo2);
+00973 |       const target = isYMD(targetYmd) ? targetYmd : analysisYmd;
+00974 | 
+00975 |       const cacheKey = [
+00976 |         lotteryKeySafe,
+00977 |         analysisHourBucket,
+00978 |         scheduleKey,
+00979 |         target,
+00980 |         Number(count),
+00981 |         Number.isFinite(grupo) ? grupo : "",
+00982 |       ].join("|");
+00983 | 
+00984 |       const cached = milharesCacheRef.current.get(cacheKey);
+00985 | 
+00986 |       if (cached) {
+00987 |         return cached;
+00988 |       }
+00989 | 
+00990 |       const generated = buildMilharesForGrupo({
+
+====================================================================================================
+MILHARES, SNAPSHOTS E HISTÓRICO DO CALENDÁRIO
+ARQUIVO: .\src\pages\Top3\top3.hooks.js
+LINHAS: 1060 até 1305
+TOTAL DO ARQUIVO: 1451
+====================================================================================================
+
+01060 |       analysisYmd,
+01061 |       publicBase: String(process.env.PUBLIC_URL || "").trim(),
+01062 |     });
+01063 | 
+01064 |     if (
+01065 |       (lotteryKeySafe === "PT_RIO" || lotteryKeySafe === "RJ") &&
+01066 |       skipPtRio18ByFederal &&
+01067 |       isYMD(timelineYmd)
+01068 |     ) {
+01069 |       return (Array.isArray(built) ? built : []).filter((slot) => {
+01070 |         const y = String(slot?.targetYmd || "").trim();
+01071 |         const h = toHourBucket(slot?.targetHour || "");
+01072 |         return !(y === timelineYmd && h === "18:00");
+01073 |       });
+01074 |     }
+01075 | 
+01076 |     return built;
+01077 |   }, [
+01078 |     todayDraws,
+01079 |     rangeDraws,
+01080 |     lotteryKeySafe,
+01081 |     timelineYmd,
+01082 |     analysisYmd,
+01083 |     skipPtRio18ByFederal,
+01084 |     secondaryReady,
+01085 |   ]);
+01086 | 
+01087 |   useEffect(() => {
+01088 |     debugTop3Effect("03_save_prediction", {
+01089 |       lotteryKey: lotteryKeySafe,
+01090 |       analysisYmd,
+01091 |       analysisHourBucket,
+01092 |       top3Length: Array.isArray(top3)
+01093 |         ? top3.length
+01094 |         : -1,
+01095 |     });
+01096 | 
+01097 |     if (!analysisYmd || !analysisHourBucket) return;
+01098 |     if (!Array.isArray(top3) || !top3.length) return;
+01099 |     if (!isFutureTarget(analysisYmd, analysisHourBucket)) return;
+01100 | 
+01101 |     const targetKey = makeTargetKey(analysisYmd, analysisHourBucket);
+01102 |     const picks = top3
+01103 |       .map((x) => Number(x?.grupo))
+01104 |       .filter((n) => Number.isFinite(n) && n >= 1 && n <= 25)
+01105 |       .slice(0, 3);
+01106 | 
+01107 |     if (!targetKey || !picks.length) return;
+01108 | 
+01109 |     const saveRunKey = [
+01110 |       lotteryKeySafe,
+01111 |       targetKey,
+01112 |       picks.join(","),
+01113 |     ].join("|");
+01114 | 
+01115 |     if (top3SaveRunKeys.has(saveRunKey)) return;
+01116 | 
+01117 |     top3SaveRunKeys.add(saveRunKey);
+01118 | 
+01119 |     const snapshot = top3.map((item, index) => ({
+01120 |       rank: index + 1,
+01121 |       grupo: Number(item?.grupo),
+01122 |       animal: safeStr(item?.animal || ""),
+01123 |       prob: Number(item?.prob || 0),
+01124 |       probPct: Number(item?.probPct || 0),
+01125 |       milhares20: Array.isArray(item?.milhares20)
+01126 |         ? item.milhares20.slice(0, 20)
+01127 |         : [],
+01128 |       milharesCols: Array.isArray(item?.milharesCols)
+01129 |         ? item.milharesCols
+01130 |         : [],
+01131 |       meta: item?.meta || null,
+01132 |     }));
+01133 | 
+01134 |     const engineVersion =
+01135 |       safeStr(top3?.[0]?.meta?.explain?.engine) ||
+01136 |       safeStr(top3?.[0]?.meta?.scenario) ||
+01137 |       "V3_STATISTICAL";
+01138 | 
+01139 |     registerPrediction({
+01140 |       targetKey,
+01141 |       targetYmd: analysisYmd,
+01142 |       targetHour: analysisHourBucket,
+01143 |       picks,
+01144 |       snapshot,
+01145 |       engineVersion,
+01146 |     });
+01147 | 
+01148 |     saveTop3PredictionSnapshot({
+01149 |       lotteryKey: lotteryKeySafe,
+01150 |       targetYmd: analysisYmd,
+01151 |       targetHour: analysisHourBucket,
+01152 |       picks,
+01153 |       snapshot,
+01154 |       engineVersion,
+01155 |     })
+01156 |       .then((result) => {
+01157 |         const diagnostic = {
+01158 |           at: new Date().toISOString(),
+01159 |           lotteryKey: lotteryKeySafe,
+01160 |           targetYmd: analysisYmd,
+01161 |           targetHour: analysisHourBucket,
+01162 |           picks,
+01163 |           result: result || null,
+01164 |         };
+01165 | 
+01166 |         try {
+01167 |           window.localStorage.setItem(
+01168 |             "top3_firestore_last_save",
+01169 |             JSON.stringify(diagnostic)
+01170 |           );
+01171 | 
+01172 |           window.__TOP3_FIRESTORE_LAST_SAVE__ = diagnostic;
+01173 |         } catch {}
+01174 | 
+01175 |         if (!result?.ok) {
+01176 |           top3SaveRunKeys.delete(saveRunKey);
+01177 | 
+01178 |           console.error(
+01179 |             "[TOP3 FIRESTORE SAVE FAILED]",
+01180 |             diagnostic
+01181 |           );
+01182 |         } else {
+01183 |           console.info(
+01184 |             "[TOP3 FIRESTORE SAVE OK]",
+01185 |             diagnostic
+01186 |           );
+01187 |         }
+01188 |       })
+01189 |       .catch((error) => {
+01190 |         top3SaveRunKeys.delete(saveRunKey);
+01191 | 
+01192 |         const diagnostic = {
+01193 |           at: new Date().toISOString(),
+01194 |           lotteryKey: lotteryKeySafe,
+01195 |           targetYmd: analysisYmd,
+01196 |           targetHour: analysisHourBucket,
+01197 |           picks,
+01198 |           error: String(error?.message || error || ""),
+01199 |         };
+01200 | 
+01201 |         try {
+01202 |           window.localStorage.setItem(
+01203 |             "top3_firestore_last_save",
+01204 |             JSON.stringify(diagnostic)
+01205 |           );
+01206 | 
+01207 |           window.__TOP3_FIRESTORE_LAST_SAVE__ = diagnostic;
+01208 |         } catch {}
+01209 | 
+01210 |         console.error(
+01211 |           "[TOP3 FIRESTORE SAVE EXCEPTION]",
+01212 |           diagnostic
+01213 |         );
+01214 |       });
+01215 |   }, [
+01216 |     analysisYmd,
+01217 |     analysisHourBucket,
+01218 |     top3,
+01219 |     lotteryKeySafe,
+01220 |     debugTop3,
+01221 |   ]);
+01222 | 
+01223 |   useEffect(() => {
+01224 |     const persistedSchedule = scheduleKey
+01225 |       ? scheduleKey.split("|").filter(Boolean)
+01226 |       : [];
+01227 | 
+01228 |     debugTop3Effect("04_load_persisted_history", {
+01229 |       lotteryKey: lotteryKeySafe,
+01230 |       timelineYmd,
+01231 |       scheduleLength: persistedSchedule.length,
+01232 |       secondaryReady,
+01233 |     });
+01234 | 
+01235 |     if (!secondaryReady) {
+01236 |       setPersistedTop3History([]);
+01237 |       return undefined;
+01238 |     }
+01239 | 
+01240 |     let alive = true;
+01241 | 
+01242 |     async function loadPersistedHistory() {
+01243 |       if (!isYMD(timelineYmd)) {
+01244 |         if (alive) setPersistedTop3History([]);
+01245 |         return;
+01246 |       }
+01247 | 
+01248 |       try {
+01249 |         const history = await loadTop3PredictionDay({
+01250 |           lotteryKey: lotteryKeySafe,
+01251 |           targetYmd: timelineYmd,
+01252 |           schedule: persistedSchedule,
+01253 |         });
+01254 | 
+01255 |         if (alive) {
+01256 |           setPersistedTop3History(
+01257 |             Array.isArray(history) ? history : []
+01258 |           );
+01259 |         }
+01260 |       } catch {
+01261 |         if (alive) setPersistedTop3History([]);
+01262 |       }
+01263 |     }
+01264 | 
+01265 |     loadPersistedHistory();
+01266 | 
+01267 |     return () => {
+01268 |       alive = false;
+01269 |     };
+01270 |   }, [
+01271 |     lotteryKeySafe,
+01272 |     timelineYmd,
+01273 |     scheduleKey,
+01274 |     secondaryReady,
+01275 |   ]);
+01276 | 
+01277 |   useEffect(() => {
+01278 |     const persistedSchedule = scheduleKey
+01279 |       ? scheduleKey.split("|").filter(Boolean)
+01280 |       : [];
+01281 | 
+01282 |     debugTop3Effect("05_reconcile_history", {
+01283 |       lotteryKey: lotteryKeySafe,
+01284 |       timelineYmd,
+01285 |       scheduleLength: persistedSchedule.length,
+01286 |       todayDrawsLength: Array.isArray(todayDraws)
+01287 |         ? todayDraws.length
+01288 |         : -1,
+01289 |       rangeDrawsLength: Array.isArray(rangeDraws)
+01290 |         ? rangeDraws.length
+01291 |         : -1,
+01292 |       loading,
+01293 |       secondaryReady,
+01294 |     });
+01295 | 
+01296 |     if (!secondaryReady) return;
+01297 |     if (loading) return;
+01298 |     if (!isYMD(timelineYmd)) return;
+01299 |     if (!(todayDraws?.length || rangeDraws?.length)) return;
+01300 | 
+01301 |     const drawMap = new Map();
+01302 | 
+01303 |     for (const draw of [
+01304 |       ...(Array.isArray(rangeDraws) ? rangeDraws : []),
+01305 |       ...(Array.isArray(todayDraws) ? todayDraws : []),
+
+====================================================================================================
+FIRESTORE — SALVAMENTO E LEITURA DOS SNAPSHOTS TOP3
+ARQUIVO: .\src\pages\Top3\top3.firestore.js
+LINHAS: 330 até 560
+TOTAL DO ARQUIVO: 665
+====================================================================================================
+
+00330 | 
+00331 |   return {
+00332 |     hitType: "miss",
+00333 |     hitScore: 0,
+00334 |     hitPosition: -1,
+00335 |     predictionPosition: -1,
+00336 |     resultPosition: -1,
+00337 |     podiumMedal: "",
+00338 |     matchedValue: "",
+00339 |     matchedGrupo: null,
+00340 |     matchedMilhar: "",
+00341 |     matchedAnimal: "",
+00342 |   };
+00343 | }
+00344 | 
+00345 | export async function saveTop3PredictionSnapshot({
+00346 |   lotteryKey,
+00347 |   targetYmd,
+00348 |   targetHour,
+00349 |   picks,
+00350 |   snapshot,
+00351 |   engineVersion,
+00352 | }) {
+00353 |   let user = null;
+00354 | 
+00355 |   try {
+00356 |     user = await loginAnonymous();
+00357 |   } catch (error) {
+00358 |     return {
+00359 |       ok: false,
+00360 |       skipped: true,
+00361 |       reason: "AUTH_FAILED",
+00362 |       error: String(error?.message || error || ""),
+00363 |     };
+00364 |   }
+00365 | 
+00366 |   if (!user?.uid) {
+00367 |     return {
+00368 |       ok: false,
+00369 |       skipped: true,
+00370 |       reason: "AUTH_REQUIRED",
+00371 |     };
+00372 |   }
+00373 | 
+00374 |   const lottery = normalizeLotteryKey(lotteryKey);
+00375 |   const ymd = safeStr(targetYmd);
+00376 |   const hour = normalizeHour(targetHour);
+00377 |   const ref = predictionRef({
+00378 |     lotteryKey: lottery,
+00379 |     targetYmd: ymd,
+00380 |     targetHour: hour,
+00381 |   });
+00382 | 
+00383 |   if (!ref || !isYMD(ymd) || !hour) {
+00384 |     return {
+00385 |       ok: false,
+00386 |       skipped: true,
+00387 |       reason: "INVALID_TARGET",
+00388 |     };
+00389 |   }
+00390 | 
+00391 |   const normalizedSnapshot = normalizeSnapshot(snapshot);
+00392 | 
+00393 |   if (!normalizedSnapshot.length) {
+00394 |     return {
+00395 |       ok: false,
+00396 |       skipped: true,
+00397 |       reason: "EMPTY_SNAPSHOT",
+00398 |     };
+00399 |   }
+00400 | 
+00401 |   const normalizedPicks = Array.from(
+00402 |     new Set(
+00403 |       (Array.isArray(picks) ? picks : [])
+00404 |         .map(Number)
+00405 |         .filter((value) => value >= 1 && value <= 25)
+00406 |     )
+00407 |   ).slice(0, 3);
+00408 | 
+00409 |   const now = Date.now();
+00410 | 
+00411 |   const payload = cleanFirestoreValue({
+00412 |     id: ref.id,
+00413 |     lotteryKey: lottery,
+00414 |     targetYmd: ymd,
+00415 |     targetHour: hour,
+00416 |     targetKey: `${ymd}_${hour}`,
+00417 |     picks: normalizedPicks,
+00418 |     snapshot: normalizedSnapshot,
+00419 |     engineVersion: safeStr(engineVersion || "V3_STATISTICAL"),
+00420 |     status: "predicted",
+00421 |     resultGrupo: null,
+00422 |     resultMilhar: "",
+00423 |     resultAnimal: "",
+00424 |     hitType: "",
+00425 |     hitScore: 0,
+00426 |     hitPosition: -1,
+00427 |     matchedValue: "",
+00428 |     createdAt: now,
+00429 |     updatedAt: now,
+00430 |     createdBy: user.uid,
+00431 |   });
+00432 | 
+00433 |   const result = await runTransaction(db, async (transaction) => {
+00434 |     const current = await transaction.get(ref);
+00435 | 
+00436 |     if (current.exists()) {
+00437 |       return {
+00438 |         ok: true,
+00439 |         created: false,
+00440 |         existing: true,
+00441 |       };
+00442 |     }
+00443 | 
+00444 |     transaction.set(ref, payload);
+00445 | 
+00446 |     return {
+00447 |       ok: true,
+00448 |       created: true,
+00449 |       existing: false,
+00450 |     };
+00451 |   });
+00452 | 
+00453 |   return result;
+00454 | }
+00455 | 
+00456 | export async function loadTop3PredictionDay({
+00457 |   lotteryKey,
+00458 |   targetYmd,
+00459 |   schedule,
+00460 | }) {
+00461 |   const lottery = normalizeLotteryKey(lotteryKey);
+00462 |   const ymd = safeStr(targetYmd);
+00463 | 
+00464 |   if (!isYMD(ymd)) return [];
+00465 | 
+00466 |   const hours = Array.from(
+00467 |     new Set(
+00468 |       (Array.isArray(schedule) ? schedule : [])
+00469 |         .map(normalizeHour)
+00470 |         .filter(Boolean)
+00471 |     )
+00472 |   );
+00473 | 
+00474 |   const snapshots = await Promise.all(
+00475 |     hours.map(async (hour) => {
+00476 |       const ref = predictionRef({
+00477 |         lotteryKey: lottery,
+00478 |         targetYmd: ymd,
+00479 |         targetHour: hour,
+00480 |       });
+00481 | 
+00482 |       if (!ref) return null;
+00483 | 
+00484 |       try {
+00485 |         const snap = await getDoc(ref);
+00486 |         if (!snap.exists()) return null;
+00487 | 
+00488 |         return {
+00489 |           id: snap.id,
+00490 |           ...snap.data(),
+00491 |         };
+00492 |       } catch {
+00493 |         return null;
+00494 |       }
+00495 |     })
+00496 |   );
+00497 | 
+00498 |   return snapshots
+00499 |     .filter(Boolean)
+00500 |     .sort((a, b) => {
+00501 |       return normalizeHour(a?.targetHour).localeCompare(
+00502 |         normalizeHour(b?.targetHour)
+00503 |       );
+00504 |     });
+00505 | }
+00506 | 
+00507 | export async function reconcileTop3PredictionDay({
+00508 |   lotteryKey,
+00509 |   targetYmd,
+00510 |   schedule,
+00511 |   draws,
+00512 | }) {
+00513 |   let user = null;
+00514 | 
+00515 |   try {
+00516 |     user = await loginAnonymous();
+00517 |   } catch (error) {
+00518 |     return {
+00519 |       ok: false,
+00520 |       skipped: true,
+00521 |       reason: "AUTH_FAILED",
+00522 |       error: String(error?.message || error || ""),
+00523 |     };
+00524 |   }
+00525 | 
+00526 |   if (!user?.uid) {
+00527 |     return {
+00528 |       ok: false,
+00529 |       skipped: true,
+00530 |       reason: "AUTH_REQUIRED",
+00531 |     };
+00532 |   }
+00533 | 
+00534 |   const history = await loadTop3PredictionDay({
+00535 |     lotteryKey,
+00536 |     targetYmd,
+00537 |     schedule,
+00538 |   });
+00539 | 
+00540 |   const lottery = normalizeLotteryKey(lotteryKey);
+00541 |   let updated = 0;
+00542 |   const reconciledHistory = [];
+00543 | 
+00544 |   for (const entry of history) {
+00545 |     if (!entry) continue;
+00546 | 
+00547 |     const realDraw = findDrawForTarget({
+00548 |       draws,
+00549 |       targetYmd: entry?.targetYmd,
+00550 |       targetHour: entry?.targetHour,
+00551 |     });
+00552 | 
+00553 |     if (!realDraw) {
+00554 |       reconciledHistory.push(entry);
+00555 |       continue;
+00556 |     }
+00557 | 
+00558 |     const officialPodium =
+00559 |       extractOfficialPodium(realDraw);
+00560 | 
+
+====================================================================================================
+ENGINE — CONSULTA DE RESULTADOS
+ARQUIVO: .\src\pages\Top3\top3.engine.js
+LINHAS: 420 até 510
+TOTAL DO ARQUIVO: 4683
+====================================================================================================
+
+00420 | 
+00421 |   return candidates.length ? candidates[0].d : null;
+00422 | }
+00423 | 
+00424 | export async function getPreviousDrawRobust({
+00425 |   getKingResultsByDate,
+00426 |   lotteryKey,
+00427 |   ymdTarget,
+00428 |   targetHourBucket,
+00429 |   todayDraws,
+00430 |   schedule,
+00431 |   maxBackDays = 10,
+00432 |   PT_RIO_SCHEDULE_NORMAL,
+00433 |   PT_RIO_SCHEDULE_WED_SAT,
+00434 |   FEDERAL_SCHEDULE,
+00435 | }) {
+00436 |   const prevSameDay = findPrevDrawBeforeTargetInSameDay(
+00437 |     todayDraws,
+00438 |     targetHourBucket,
+00439 |     schedule
+00440 |   );
+00441 | 
+00442 |   if (prevSameDay) {
+00443 |     return {
+00444 |       draw: prevSameDay,
+00445 |       ymd: pickDrawYMD(prevSameDay) || ymdTarget,
+00446 |       hour: toHourBucket(pickDrawHour(prevSameDay)),
+00447 |       source: "same_day",
+00448 |     };
+00449 |   }
+00450 | 
+00451 |   for (let i = 1; i <= maxBackDays; i += 1) {
+00452 |     const day = addDaysYMD(ymdTarget, -i);
+00453 | 
+00454 |     const daySchedule = getScheduleForLottery({
+00455 |       lotteryKey,
+00456 |       ymd: day,
+00457 |       PT_RIO_SCHEDULE_NORMAL,
+00458 |       PT_RIO_SCHEDULE_WED_SAT,
+00459 |       FEDERAL_SCHEDULE,
+00460 |     });
+00461 | 
+00462 |     if (
+00463 |       safeStr(lotteryKey).toUpperCase() === "FEDERAL" &&
+00464 |       !daySchedule.length
+00465 |     ) {
+00466 |       continue;
+00467 |     }
+00468 | 
+00469 |     const out = await getKingResultsByDate({
+00470 |       uf: lotteryKey,
+00471 |       date: day,
+00472 |       closeHour: null,
+00473 |       positions: null,
+00474 |       readPolicy: "server",
+00475 |     });
+00476 | 
+00477 |     const last = findLastDrawInList(out, daySchedule);
+00478 |     if (last) {
+00479 |       return {
+00480 |         draw: last,
+00481 |         ymd: pickDrawYMD(last) || day,
+00482 |         hour: toHourBucket(pickDrawHour(last)),
+00483 |         source: "prev_day",
+00484 |       };
+00485 |     }
+00486 |   }
+00487 | 
+00488 |   return { draw: null, ymd: "", hour: "", source: "none" };
+00489 | }
+00490 | 
+00491 | /* =========================
+00492 |    Próximo sorteio (slot válido)
+00493 | ========================= */
+00494 | 
+00495 | export function getNextSlotForLottery({
+00496 |   lotteryKey,
+00497 |   ymd,
+00498 |   hourBucket,
+00499 |   PT_RIO_SCHEDULE_NORMAL,
+00500 |   PT_RIO_SCHEDULE_WED_SAT,
+00501 |   FEDERAL_SCHEDULE,
+00502 |   maxForwardDays = 21,
+00503 | }) {
+00504 |   const key = safeStr(lotteryKey).toUpperCase();
+00505 |   const y0 = safeStr(ymd);
+00506 |   const h0 = toHourBucket(hourBucket);
+00507 | 
+00508 |   if (!isYMD(y0) || !safeStr(h0)) return { ymd: "", hour: "" };
+00509 | 
+00510 |   if (key === "FEDERAL") {
+
+====================================================================================================
+VIEW — EFEITOS E ESTADOS DE CARREGAMENTO
+ARQUIVO: .\src\pages\Top3\Top3View.jsx
+LINHAS: 1620 até 1720
+TOTAL DO ARQUIVO: 4247
+====================================================================================================
+
+01620 |   // TODO_BACKTEST_REAL
+01621 | // Os cards estatísticos deverão consumir auditTop3Backtest()
+01622 | // evitando cálculos paralelos na interface.
+01623 | //
+01624 | // Fase atual:
+01625 | // apenas corrigindo nomenclatura para refletir o cálculo existente.
+01626 | 
+01627 | const list = Array.isArray(top3)
+01628 |   ? top3.slice(0, 3)
+01629 |   : [];
+01630 |   const timeline = (Array.isArray(timelineTop3) ? timelineTop3 : [])
+01631 |   .slice()
+01632 |   .sort((a, b) => {
+01633 |     const ta = `${a?.targetYmd || ""} ${a?.targetHour || ""}`;
+01634 |     const tb = `${b?.targetYmd || ""} ${b?.targetHour || ""}`;
+01635 |     return ta.localeCompare(tb);
+01636 |   });
+01637 | 
+01638 |   const showDetailedTimeline = false;
+01639 | 
+01640 |   const meta = useMemo(() => {
+01641 |     const last = lastLabel || "—";
+01642 |     const prev = prevLabel || "—";
+01643 |     const layer = cleanLayerText(layerMetaText || "—");
+01644 |     return { last, prev, layer };
+01645 |   }, [lastLabel, prevLabel, layerMetaText]);
+01646 | 
+01647 |   const headerBase = useMemo(() => meta.last || "—", [meta.last]);
+01648 | 
+01649 |   const headerForecast = useMemo(() => {
+01650 |     return formatYmdHour(analysisYmd, analysisHourBucket);
+01651 |   }, [analysisYmd, analysisHourBucket]);
+01652 | 
+01653 |   const headerTransition = useMemo(() => {
+01654 |     const from = String(lastHourBucket || "").trim();
+01655 |     const to = String(analysisHourBucket || "").trim();
+01656 |     if (from && to) return `${from} → ${to}`;
+01657 |     return "—";
+01658 |   }, [lastHourBucket, analysisHourBucket]);
+01659 | 
+01660 |   const t = theme || {
+01661 |     bg: "#050505",
+01662 |     panel: "rgba(0,0,0,0.55)",
+01663 |     border: "rgba(255,255,255,0.18)",
+01664 |     text: "rgba(255,255,255,0.92)",
+01665 |     muted: "rgba(255,255,255,0.72)",
+01666 |     accent: "rgba(201,168,62,0.92)",
+01667 |   };
+01668 | 
+01669 |   const [copiedAllKey, setCopiedAllKey] = useState("");
+01670 |   const [copiedCellKey, setCopiedCellKey] = useState("");
+01671 | 
+01672 | 
+01673 |   useEffect(() => {
+01674 |     if (!copiedAllKey) return;
+01675 |     const id = setTimeout(() => setCopiedAllKey(""), 900);
+01676 |     return () => clearTimeout(id);
+01677 |   }, [copiedAllKey]);
+01678 | 
+01679 |   useEffect(() => {
+01680 |     if (!copiedCellKey) return;
+01681 |     const id = setTimeout(() => setCopiedCellKey(""), 750);
+01682 |     return () => clearTimeout(id);
+01683 |   }, [copiedCellKey]);
+01684 | 
+01685 |   const copyText = useCallback(async (txt) => {
+01686 |     const s = String(txt || "").trim();
+01687 |     if (!s) return false;
+01688 | 
+01689 |     try {
+01690 |       if (typeof navigator !== "undefined" && navigator?.clipboard?.writeText) {
+01691 |         await navigator.clipboard.writeText(s);
+01692 |         return true;
+01693 |       }
+01694 |     } catch {}
+01695 | 
+01696 |     try {
+01697 |       if (typeof document === "undefined") return false;
+01698 | 
+01699 |       const ta = document.createElement("textarea");
+01700 |       ta.value = s;
+01701 |       ta.style.position = "fixed";
+01702 |       ta.style.left = "-9999px";
+01703 |       ta.style.top = "0";
+01704 |       document.body.appendChild(ta);
+01705 |       ta.focus();
+01706 |       ta.select();
+01707 |       document.execCommand("copy");
+01708 |       document.body.removeChild(ta);
+01709 |       return true;
+01710 |     } catch {
+01711 |       return false;
+01712 |     }
+01713 |   }, []);
+01714 | 
+01715 |   const baseLots = Array.isArray(LOTTERY_OPTIONS) ? LOTTERY_OPTIONS : [];
+01716 |   const mustHave = [
+01717 |     { value: "PT_RIO", label: "RJ" },
+01718 |     { value: "FEDERAL", label: "Federal" },
+01719 |     { value: "LOOK", label: "LOOK" },
+01720 |     { value: "NACIONAL", label: "Nacional" },
+
+====================================================================================================
+VIEW — NAVEGAÇÃO DO HISTÓRICO
+ARQUIVO: .\src\pages\Top3\Top3View.jsx
+LINHAS: 2040 até 2125
+TOTAL DO ARQUIVO: 4247
+====================================================================================================
+
+02040 |     const centena = validated.filter(
+02041 |       (item) => item?.hitType === "hit_centena"
+02042 |     ).length;
+02043 | 
+02044 |     const grupo = validated.filter(
+02045 |       (item) => item?.hitType === "hit_grupo"
+02046 |     ).length;
+02047 | 
+02048 |     const misses = validated.filter(
+02049 |       (item) =>
+02050 |         item?.hitType === "miss" ||
+02051 |         item?.hitType === "none"
+02052 |     ).length;
+02053 | 
+02054 |     const totalScore = validated.reduce(
+02055 |       (sum, item) => sum + Number(item?.hitScore || 0),
+02056 |       0
+02057 |     );
+02058 | 
+02059 |     const average =
+02060 |       validated.length > 0
+02061 |         ? totalScore / validated.length
+02062 |         : 0;
+02063 | 
+02064 |     return {
+02065 |       total: historyRows.length,
+02066 |       validated: validated.length,
+02067 |       pending: Math.max(0, historyRows.length - validated.length),
+02068 |       exact,
+02069 |       centena,
+02070 |       grupo,
+02071 |       misses,
+02072 |       average,
+02073 |     };
+02074 |   }, [historyRows]);
+02075 | 
+02076 |   const todayForCalendar = todayYMDLocalView();
+02077 |   const selectedHistoryYmd = isYMD(ymdSafe)
+02078 |     ? ymdSafe
+02079 |     : todayForCalendar;
+02080 | 
+02081 |   const canGoNext =
+02082 |     isYMD(selectedHistoryYmd) &&
+02083 |     selectedHistoryYmd < todayForCalendar;
+02084 | 
+02085 |   const goToHistoryDate = useCallback(
+02086 |     (nextYmd) => {
+02087 |       if (!isYMD(nextYmd)) return;
+02088 |       if (typeof setYmd !== "function") return;
+02089 |       setYmd(nextYmd);
+02090 |     },
+02091 |     [setYmd]
+02092 |   );
+02093 | 
+02094 |   return (
+02095 |     <div
+02096 |       style={{
+02097 |         padding: 16,
+02098 |         color: t.text,
+02099 |         background: t.bg,
+02100 |         minHeight: "100%",
+02101 |         "--top3-bg": t.bg,
+02102 |         "--top3-panel": t.panel,
+02103 |         "--top3-border": t.border,
+02104 |         "--top3-text": t.text,
+02105 |         "--top3-muted": t.muted,
+02106 |         "--top3-accent": t.accent,
+02107 |       }}
+02108 |     >
+02109 |       <style>{`
+02110 |         .top3-page{
+02111 |           width: 100%;
+02112 |           max-width: 1380px;
+02113 |           margin: 0 auto;
+02114 |           display: grid;
+02115 |           gap: 18px;
+02116 |         }
+02117 | 
+02118 |         .top3-shell{
+02119 |           background:
+02120 |             linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.00)),
+02121 |             var(--top3-panel);
+02122 |           border: 1px solid var(--top3-border);
+02123 |           border-radius: 20px;
+02124 |           padding: 18px;
+02125 |           box-shadow:

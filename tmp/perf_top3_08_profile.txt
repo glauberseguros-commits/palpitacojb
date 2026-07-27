@@ -1,0 +1,35 @@
+[PROFILE:METADATA] took=1012ms
+[PROFILE:HISTORY-LOAD] draws=7533 | took=5732ms
+[PROFILE:COMPUTE] draws=7533 | took=591ms
+[PROFILE:MILHARES] grupo=3 | draws=7533 | took=72ms
+[PROFILE:MILHARES] grupo=14 | draws=7533 | took=74ms
+[PROFILE:MILHARES] grupo=23 | draws=7533 | took=65ms
+
+===== PERF-TOP3-08 ÔÇö RESUMO =====
+{
+  "ok": true,
+  "metadataMs": 1012,
+  "fullHistoryMs": 5732,
+  "computeTop3Ms": 591,
+  "milharesTotalMs": 211,
+  "milharesCalls": [
+    {
+      "grupo": 3,
+      "historyDraws": 7533,
+      "tookMs": 72
+    },
+    {
+      "grupo": 14,
+      "historyDraws": 7533,
+      "tookMs": 74
+    },
+    {
+      "grupo": 23,
+      "historyDraws": 7533,
+      "tookMs": 65
+    }
+  ],
+  "totalMs": 7576,
+  "predictions": 3,
+  "publicSnapshot": 3
+}

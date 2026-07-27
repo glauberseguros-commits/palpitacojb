@@ -1,0 +1,1704 @@
+==========================================================================================
+src\App.jsx
+==========================================================================================
+Linha   299  getDoc(
+Linha   459  useEffect(
+Linha   468  useEffect(
+Linha   474  useEffect(
+Linha   477  return () =>
+Linha   483  useEffect(
+Linha   515  return () =>
+Linha   524  useEffect(
+Linha   542  useEffect(
+Linha   546  useEffect(
+Linha   567  return () =>
+Linha   589  useEffect(
+Linha   616  useEffect(
+==========================================================================================
+src\hooks\useKingRanking.js
+==========================================================================================
+Linha   301  useEffect(
+Linha   304  return () =>
+Linha   311  useEffect(
+Linha   373  return () =>
+Linha   444  useEffect(
+Linha   509  useEffect(
+Linha   517  return () =>
+Linha   520  useEffect(
+Linha   533  return () =>
+Linha   541  useEffect(
+Linha   731  return () =>
+Linha   741  return () =>
+==========================================================================================
+src\pages\Account\account.hooks.js
+==========================================================================================
+Linha    19  useEffect(
+Linha    25  return () =>
+Linha    73  useEffect(
+Linha    74  return () =>
+==========================================================================================
+src\pages\Account\Account.jsx
+==========================================================================================
+Linha   220  query(
+Linha   221  collection(
+Linha   222  where(
+Linha   223  limit(
+Linha   225  getDocs(
+Linha   238  query(
+Linha   239  collection(
+Linha   240  where(
+Linha   241  limit(
+Linha   243  getDocs(
+Linha   304  useEffect(
+Linha   431  return () =>
+==========================================================================================
+src\pages\Account\account.profile.service.js
+==========================================================================================
+Linha   120  getDoc(
+Linha   255  getDoc(
+==========================================================================================
+src\pages\Account\LoginVisual.jsx
+==========================================================================================
+Linha    27  useEffect(
+==========================================================================================
+src\pages\Admin\AdminLogin.jsx
+==========================================================================================
+Linha    70  getDoc(
+Linha    98  useEffect(
+Linha   101  return () =>
+Linha   106  useEffect(
+Linha   148  return () =>
+==========================================================================================
+src\pages\Centenas\CentenasView.jsx
+==========================================================================================
+Linha   567  useEffect(
+Linha   609  useEffect(
+Linha   629  useEffect(
+Linha   648  return () =>
+Linha   719  useEffect(
+Linha   751  useEffect(
+Linha   865  return () =>
+Linha  1270  useEffect(
+Linha  1274  return () =>
+Linha  1279  useEffect(
+Linha  1280  return () =>
+==========================================================================================
+src\pages\Dashboard\components\SearchResultsTable.jsx
+==========================================================================================
+Linha   161  useEffect(
+==========================================================================================
+src\pages\Dashboard\components\Sidebar\AppShell.jsx
+==========================================================================================
+Linha    88  useEffect(
+Linha    91  return () =>
+Linha   107  useEffect(
+Linha   112  useEffect(
+Linha   141  return () =>
+Linha   144  useEffect(
+Linha   158  return () =>
+Linha   168  useEffect(
+Linha   184  return () =>
+Linha   190  useEffect(
+Linha   198  return () =>
+==========================================================================================
+src\pages\Dashboard\Dashboard.jsx
+==========================================================================================
+Linha   701  useEffect(
+Linha   744  return () =>
+Linha   781  useEffect(
+Linha   823  useEffect(
+Linha   863  useEffect(
+Linha   867  useEffect(
+Linha   871  useEffect(
+Linha   991  return () =>
+Linha  1000  useEffect(
+Linha  1025  useEffect(
+Linha  1069  useEffect(
+Linha  1070  return () =>
+Linha  1120  useEffect(
+Linha  1155  return () =>
+Linha  1213  useEffect(
+Linha  1634  useEffect(
+Linha  1671  useEffect(
+==========================================================================================
+src\pages\Downloads\Downloads.jsx
+==========================================================================================
+Linha   575  useEffect(
+Linha   605  return () =>
+Linha   612  useEffect(
+==========================================================================================
+src\pages\Late\Late.jsx
+==========================================================================================
+Linha   322  useEffect(
+Linha   556  useEffect(
+Linha   569  return () =>
+Linha   576  useEffect(
+Linha   586  useEffect(
+Linha   593  useEffect(
+Linha   629  return () =>
+Linha   635  useEffect(
+Linha   636  return () =>
+==========================================================================================
+src\pages\Results\Results.jsx
+==========================================================================================
+Linha   692  useEffect(
+Linha   729  useEffect(
+Linha   829  useEffect(
+Linha   846  return () =>
+Linha   852  useEffect(
+Linha   877  useEffect(
+==========================================================================================
+src\pages\Search\Search.jsx
+==========================================================================================
+Linha   412  useEffect(
+Linha   534  useEffect(
+Linha   536  return () =>
+Linha   544  useEffect(
+Linha   576  return () =>
+==========================================================================================
+src\pages\Top3\top3.firestore.js
+==========================================================================================
+Linha   209  onSnapshot(
+Linha   349  getDoc(
+==========================================================================================
+src\pages\Top3\top3.hooks.js
+==========================================================================================
+Linha   827  useEffect(
+Linha   831  useEffect(
+Linha   925  useEffect(
+Linha   967  onSnapshot(
+Linha  1038  useEffect(
+Linha  1066  return () =>
+Linha  1077  useEffect(
+==========================================================================================
+src\pages\Top3\Top3View.jsx
+==========================================================================================
+Linha   343  useEffect(
+Linha  1298  useEffect(
+Linha  1301  return () =>
+Linha  1304  useEffect(
+Linha  1307  return () =>
+==========================================================================================
+src\pages\Top3\Top3View.premium.backup.jsx
+==========================================================================================
+Linha   306  useEffect(
+Linha  1033  useEffect(
+Linha  1036  return () =>
+Linha  1039  useEffect(
+Linha  1042  return () =>
+==========================================================================================
+src\services\king\king.firestore.js
+==========================================================================================
+Linha    20  getDocs(
+Linha    29  getDocs(
+==========================================================================================
+src\services\kingResultsService.js
+==========================================================================================
+Linha   164  where(
+Linha   521  collection(
+Linha   596  where(
+Linha   614  collection(
+Linha   628  query(
+Linha   739  where(
+Linha   741  limit(
+Linha   836  orderBy(
+Linha   837  limit(
+Linha   844  orderBy(
+Linha   863  orderBy(
+Linha   863  orderBy(
+Linha   864  orderBy(
+Linha   864  orderBy(
+Linha   873  limit(
+Linha   884  limit(
+Linha  1146  where(
+Linha  1158  where(
+Linha  1169  where(
+Linha  1181  where(
+Linha  1278  where(
+Linha  1345  orderBy(
+Linha  1345  orderBy(
+Linha  1349  where(
+Linha  1349  where(
+==========================================================================================
+src\services\planService.js
+==========================================================================================
+Linha   105  getDoc(
+Linha   184  getDoc(
+Linha   239  getDoc(
+==========================================================================================
+src\services\statisticsEngine.js
+==========================================================================================
+Linha    22  getDoc(
+==========================================================================================
+backend\engine\drawRepository.js
+==========================================================================================
+Linha    20  collection(
+Linha   113  collection(
+Linha   114  where(
+Linha   115  where(
+Linha   116  where(
+Linha   117  orderBy(
+Linha   118  orderBy(
+Linha   119  limit(
+Linha   189  collection(
+Linha   190  where(
+Linha   191  orderBy(
+Linha   192  orderBy(
+Linha   193  limit(
+==========================================================================================
+backend\engine\historicalQueryEngine.js
+==========================================================================================
+Linha    51  collection(
+Linha    52  where(
+Linha    55  where(
+Linha    87  collection(
+Linha    90  where(
+==========================================================================================
+backend\engine\predictionRepository.js
+==========================================================================================
+Linha    17  collection(
+Linha    37  collection(
+Linha    39  collection(
+Linha    56  collection(
+Linha    58  collection(
+Linha    78  collection(
+==========================================================================================
+backend\engine\snapshotManager.js
+==========================================================================================
+Linha    26  collection(
+Linha    27  where(
+Linha    28  orderBy(
+Linha    30  limit(
+==========================================================================================
+backend\engine\snapshotMetadata.js
+==========================================================================================
+Linha     7  collection(
+Linha     9  collection(
+==========================================================================================
+backend\engine\statisticsEngine.js
+==========================================================================================
+Linha    19  collection(
+Linha    21  collection(
+==========================================================================================
+backend\engine\top3HistoryRepository.js
+==========================================================================================
+Linha    70  collection(
+Linha    83  collection(
+Linha    95  collection(
+Linha   408  collection(
+==========================================================================================
+backend\engine\top3HistorySync.js
+==========================================================================================
+Linha    50  collection(
+Linha    93  collection(
+Linha   103  collection(
+Linha   104  where(
+Linha   105  where(
+==========================================================================================
+backend\node_modules\@babel\core\lib\config\config-chain.js
+==========================================================================================
+Linha   201  return () =>
+Linha   216  return () =>
+==========================================================================================
+backend\node_modules\@babel\core\lib\config\printer.js
+==========================================================================================
+Linha    85  return () =>
+==========================================================================================
+backend\node_modules\@babel\core\node_modules\debug\src\browser.js
+==========================================================================================
+Linha    15  return () =>
+==========================================================================================
+backend\node_modules\@babel\parser\lib\index.js
+==========================================================================================
+Linha  7034  return () =>
+==========================================================================================
+backend\node_modules\@babel\traverse\node_modules\debug\src\browser.js
+==========================================================================================
+Linha    15  return () =>
+==========================================================================================
+backend\node_modules\@firebase\component\dist\esm\index.esm.js
+==========================================================================================
+Linha   264  return () =>
+==========================================================================================
+backend\node_modules\@firebase\component\dist\index.cjs.js
+==========================================================================================
+Linha   268  return () =>
+==========================================================================================
+backend\node_modules\@firebase\database\dist\index.cjs.js
+==========================================================================================
+Linha  6477  limit(
+Linha  9162  query(
+Linha 12341  limit(
+Linha 12851  return () =>
+Linha 12854  return () =>
+Linha 12911  return () =>
+Linha 12914  return () =>
+Linha 12954  return () =>
+Linha 12984  unsubscribe
+Linha 13445  query(
+==========================================================================================
+backend\node_modules\@firebase\database\dist\index.esm.js
+==========================================================================================
+Linha  6473  limit(
+Linha  9158  query(
+Linha 12337  limit(
+Linha 12847  return () =>
+Linha 12850  return () =>
+Linha 12907  return () =>
+Linha 12910  return () =>
+Linha 12950  return () =>
+Linha 12980  unsubscribe
+Linha 13441  query(
+==========================================================================================
+backend\node_modules\@firebase\database\dist\index.node.cjs.js
+==========================================================================================
+Linha  6485  limit(
+Linha  9170  query(
+Linha 12349  limit(
+Linha 12859  return () =>
+Linha 12862  return () =>
+Linha 12919  return () =>
+Linha 12922  return () =>
+Linha 12962  return () =>
+Linha 12992  unsubscribe
+Linha 13453  query(
+==========================================================================================
+backend\node_modules\@firebase\database\dist\index.standalone.js
+==========================================================================================
+Linha  6482  limit(
+Linha  9167  query(
+Linha 12346  limit(
+Linha 12856  return () =>
+Linha 12859  return () =>
+Linha 12916  return () =>
+Linha 12919  return () =>
+Linha 12959  return () =>
+Linha 12989  unsubscribe
+Linha 13450  query(
+==========================================================================================
+backend\node_modules\@firebase\database\dist\internal.d.ts
+==========================================================================================
+Linha  1194  unsubscribe
+Linha  1211  unsubscribe
+Linha  1240  unsubscribe
+Linha  1266  unsubscribe
+Linha  1297  unsubscribe
+Linha  1327  unsubscribe
+Linha  1354  unsubscribe
+Linha  1386  unsubscribe
+Linha  1414  unsubscribe
+Linha  1439  unsubscribe
+Linha  1469  unsubscribe
+Linha  1501  unsubscribe
+Linha  1530  unsubscribe
+Linha  1666  unsubscribe
+Linha  1694  unsubscribe
+Linha  1719  unsubscribe
+Linha  2061  query(
+Linha  2940  query(
+==========================================================================================
+backend\node_modules\@firebase\database\dist\node-esm\index.node.esm.js
+==========================================================================================
+Linha  6477  limit(
+Linha  9162  query(
+Linha 12341  limit(
+Linha 12851  return () =>
+Linha 12854  return () =>
+Linha 12911  return () =>
+Linha 12914  return () =>
+Linha 12954  return () =>
+Linha 12984  unsubscribe
+Linha 13445  query(
+==========================================================================================
+backend\node_modules\@firebase\database\dist\node-esm\src\api\Reference_impl.d.ts
+==========================================================================================
+Linha   435  unsubscribe
+Linha   462  unsubscribe
+Linha   486  unsubscribe
+Linha   515  unsubscribe
+Linha   543  unsubscribe
+Linha   568  unsubscribe
+Linha   598  unsubscribe
+Linha   627  unsubscribe
+Linha   653  unsubscribe
+Linha   684  unsubscribe
+Linha   711  unsubscribe
+Linha   735  unsubscribe
+Linha   764  unsubscribe
+Linha   795  unsubscribe
+Linha   823  unsubscribe
+Linha   865  unsubscribe
+Linha  1100  query(
+==========================================================================================
+backend\node_modules\@firebase\database\dist\node-esm\src\core\view\View.d.ts
+==========================================================================================
+Linha    42  query(
+==========================================================================================
+backend\node_modules\@firebase\database\dist\private.d.ts
+==========================================================================================
+Linha  1178  unsubscribe
+Linha  1195  unsubscribe
+Linha  1224  unsubscribe
+Linha  1250  unsubscribe
+Linha  1281  unsubscribe
+Linha  1311  unsubscribe
+Linha  1338  unsubscribe
+Linha  1370  unsubscribe
+Linha  1398  unsubscribe
+Linha  1423  unsubscribe
+Linha  1453  unsubscribe
+Linha  1485  unsubscribe
+Linha  1514  unsubscribe
+Linha  1650  unsubscribe
+Linha  1678  unsubscribe
+Linha  1703  unsubscribe
+Linha  2045  query(
+Linha  2802  query(
+==========================================================================================
+backend\node_modules\@firebase\database\dist\public.d.ts
+==========================================================================================
+Linha   424  unsubscribe
+Linha   440  unsubscribe
+Linha   468  unsubscribe
+Linha   493  unsubscribe
+Linha   523  unsubscribe
+Linha   552  unsubscribe
+Linha   578  unsubscribe
+Linha   609  unsubscribe
+Linha   636  unsubscribe
+Linha   660  unsubscribe
+Linha   689  unsubscribe
+Linha   720  unsubscribe
+Linha   748  unsubscribe
+Linha   878  unsubscribe
+Linha   905  unsubscribe
+Linha   929  unsubscribe
+Linha  1104  query(
+==========================================================================================
+backend\node_modules\@firebase\database\dist\src\api\Reference_impl.d.ts
+==========================================================================================
+Linha   435  unsubscribe
+Linha   462  unsubscribe
+Linha   486  unsubscribe
+Linha   515  unsubscribe
+Linha   543  unsubscribe
+Linha   568  unsubscribe
+Linha   598  unsubscribe
+Linha   627  unsubscribe
+Linha   653  unsubscribe
+Linha   684  unsubscribe
+Linha   711  unsubscribe
+Linha   735  unsubscribe
+Linha   764  unsubscribe
+Linha   795  unsubscribe
+Linha   823  unsubscribe
+Linha   865  unsubscribe
+Linha  1100  query(
+==========================================================================================
+backend\node_modules\@firebase\database\dist\src\core\view\View.d.ts
+==========================================================================================
+Linha    42  query(
+==========================================================================================
+backend\node_modules\@firebase\database-compat\dist\database-compat\src\index.d.ts
+==========================================================================================
+Linha    63  query(
+==========================================================================================
+backend\node_modules\@firebase\database-compat\dist\index.esm.js
+==========================================================================================
+Linha   446  query(
+Linha   453  query(
+Linha   460  query(
+Linha   467  query(
+Linha   474  query(
+Linha   481  query(
+Linha   485  query(
+Linha   489  query(
+Linha   493  query(
+Linha   497  query(
+Linha   505  query(
+==========================================================================================
+backend\node_modules\@firebase\database-compat\dist\index.js
+==========================================================================================
+Linha   452  query(
+Linha   459  query(
+Linha   466  query(
+Linha   473  query(
+Linha   480  query(
+Linha   487  query(
+Linha   491  query(
+Linha   495  query(
+Linha   499  query(
+Linha   503  query(
+Linha   511  query(
+==========================================================================================
+backend\node_modules\@firebase\database-compat\dist\index.standalone.js
+==========================================================================================
+Linha 11403  limit(
+Linha 14088  query(
+Linha 17267  limit(
+Linha 17777  return () =>
+Linha 17780  return () =>
+Linha 17837  return () =>
+Linha 17840  return () =>
+Linha 17880  return () =>
+Linha 17910  unsubscribe
+Linha 18371  query(
+==========================================================================================
+backend\node_modules\@firebase\database-compat\dist\node-esm\index.js
+==========================================================================================
+Linha   446  query(
+Linha   453  query(
+Linha   460  query(
+Linha   467  query(
+Linha   474  query(
+Linha   481  query(
+Linha   485  query(
+Linha   489  query(
+Linha   493  query(
+Linha   497  query(
+Linha   505  query(
+==========================================================================================
+backend\node_modules\@firebase\util\dist\index.cjs.js
+==========================================================================================
+Linha  1820  unsubscribe
+Linha  1891  unsubscribe
+Linha  1916  unsubscribe
+Linha  1917  unsubscribe
+Linha  1939  unsubscribe
+==========================================================================================
+backend\node_modules\@firebase\util\dist\index.esm.js
+==========================================================================================
+Linha  1816  unsubscribe
+Linha  1887  unsubscribe
+Linha  1912  unsubscribe
+Linha  1913  unsubscribe
+Linha  1935  unsubscribe
+==========================================================================================
+backend\node_modules\@firebase\util\dist\index.node.cjs.js
+==========================================================================================
+Linha  1820  unsubscribe
+Linha  1891  unsubscribe
+Linha  1916  unsubscribe
+Linha  1917  unsubscribe
+Linha  1939  unsubscribe
+==========================================================================================
+backend\node_modules\@firebase\util\dist\node-esm\index.node.esm.js
+==========================================================================================
+Linha  1816  unsubscribe
+Linha  1887  unsubscribe
+Linha  1912  unsubscribe
+Linha  1913  unsubscribe
+Linha  1935  unsubscribe
+==========================================================================================
+backend\node_modules\@google-cloud\firestore\build\src\bulk-writer.d.ts
+==========================================================================================
+Linha   257  collection(
+==========================================================================================
+backend\node_modules\@google-cloud\firestore\build\src\bulk-writer.js
+==========================================================================================
+Linha   411  collection(
+Linha   489  collection(
+==========================================================================================
+backend\node_modules\@google-cloud\firestore\build\src\bundle.js
+==========================================================================================
+Linha    47  collection(
+==========================================================================================
+backend\node_modules\@google-cloud\firestore\build\src\collection-group.js
+==========================================================================================
+Linha    72  orderBy(
+==========================================================================================
+backend\node_modules\@google-cloud\firestore\build\src\document-change.d.ts
+==========================================================================================
+Linha    50  collection(
+Linha    50  where(
+Linha    53  onSnapshot(
+Linha    53  unsubscribe
+Linha    60  unsubscribe
+Linha    73  collection(
+Linha    73  where(
+Linha    75  onSnapshot(
+Linha    75  unsubscribe
+Linha    82  unsubscribe
+Linha    97  collection(
+Linha    97  where(
+Linha   100  onSnapshot(
+Linha   100  unsubscribe
+Linha   112  unsubscribe
+Linha   128  collection(
+Linha   128  where(
+Linha   131  onSnapshot(
+Linha   131  unsubscribe
+Linha   143  unsubscribe
+==========================================================================================
+backend\node_modules\@google-cloud\firestore\build\src\document-change.js
+==========================================================================================
+Linha    51  collection(
+Linha    51  where(
+Linha    54  onSnapshot(
+Linha    54  unsubscribe
+Linha    61  unsubscribe
+Linha    76  collection(
+Linha    76  where(
+Linha    78  onSnapshot(
+Linha    78  unsubscribe
+Linha    85  unsubscribe
+Linha   102  collection(
+Linha   102  where(
+Linha   105  onSnapshot(
+Linha   105  unsubscribe
+Linha   117  unsubscribe
+Linha   135  collection(
+Linha   135  where(
+Linha   138  onSnapshot(
+Linha   138  unsubscribe
+Linha   150  unsubscribe
+==========================================================================================
+backend\node_modules\@google-cloud\firestore\build\src\document.d.ts
+==========================================================================================
+Linha   339  collection(
+Linha   358  collection(
+Linha   375  collection(
+==========================================================================================
+backend\node_modules\@google-cloud\firestore\build\src\document.js
+==========================================================================================
+Linha   477  collection(
+Linha   498  collection(
+Linha   517  collection(
+==========================================================================================
+backend\node_modules\@google-cloud\firestore\build\src\filter.d.ts
+==========================================================================================
+Linha    27  where(
+Linha    42  collection(
+Linha    44  where(
+Linha    44  where(
+Linha    51  where(
+Linha    57  where(
+Linha    69  collection(
+Linha    72  where(
+Linha    72  where(
+Linha    74  where(
+Linha    87  where(
+Linha    99  collection(
+Linha   102  where(
+Linha   102  where(
+Linha   104  where(
+==========================================================================================
+backend\node_modules\@google-cloud\firestore\build\src\filter.js
+==========================================================================================
+Linha    29  where(
+Linha    44  collection(
+Linha    46  where(
+Linha    46  where(
+Linha    53  where(
+Linha    61  where(
+Linha    73  collection(
+Linha    76  where(
+Linha    76  where(
+Linha    78  where(
+Linha    93  where(
+Linha   105  collection(
+Linha   108  where(
+Linha   108  where(
+Linha   110  where(
+==========================================================================================
+backend\node_modules\@google-cloud\firestore\build\src\index.d.ts
+==========================================================================================
+Linha   111  collection(
+Linha   426  onSnapshot(
+Linha   426  onSnapshot(
+Linha   427  onSnapshot(
+Linha   493  collection(
+Linha   501  collection(
+Linha   519  where(
+Linha   763  unsubscribe
+Linha   772  unsubscribe
+==========================================================================================
+backend\node_modules\@google-cloud\firestore\build\src\index.js
+==========================================================================================
+Linha   171  collection(
+Linha   403  onSnapshot(
+Linha   403  onSnapshot(
+Linha   404  onSnapshot(
+Linha   716  collection(
+Linha   724  collection(
+Linha   749  where(
+Linha  1053  unsubscribe
+Linha  1064  unsubscribe
+Linha  1157  onSnapshot(
+Linha  1157  unsubscribe
+==========================================================================================
+backend\node_modules\@google-cloud\firestore\build\src\path.d.ts
+==========================================================================================
+Linha   330  collection(
+Linha   333  where(
+==========================================================================================
+backend\node_modules\@google-cloud\firestore\build\src\path.js
+==========================================================================================
+Linha   502  collection(
+Linha   505  where(
+==========================================================================================
+backend\node_modules\@google-cloud\firestore\build\src\query-partition.d.ts
+==========================================================================================
+Linha    35  orderBy(
+Linha    62  orderBy(
+==========================================================================================
+backend\node_modules\@google-cloud\firestore\build\src\query-partition.js
+==========================================================================================
+Linha    52  orderBy(
+Linha    84  orderBy(
+==========================================================================================
+backend\node_modules\@google-cloud\firestore\build\src\recursive-delete.js
+==========================================================================================
+Linha   136  limit(
+Linha   168  limit(
+Linha   179  where(
+Linha   180  where(
+==========================================================================================
+backend\node_modules\@google-cloud\firestore\build\src\reference\aggregate-query-snapshot.d.ts
+==========================================================================================
+Linha    36  query(
+==========================================================================================
+backend\node_modules\@google-cloud\firestore\build\src\reference\aggregate-query-snapshot.js
+==========================================================================================
+Linha    38  query(
+==========================================================================================
+backend\node_modules\@google-cloud\firestore\build\src\reference\aggregate-query.d.ts
+==========================================================================================
+Linha    42  query(
+==========================================================================================
+backend\node_modules\@google-cloud\firestore\build\src\reference\aggregate-query.js
+==========================================================================================
+Linha    59  query(
+==========================================================================================
+backend\node_modules\@google-cloud\firestore\build\src\reference\collection-reference.d.ts
+==========================================================================================
+Linha    52  collection(
+Linha    67  collection(
+Linha    83  collection(
+Linha    94  onSnapshot(
+Linha   102  collection(
+Linha   133  collection(
+==========================================================================================
+backend\node_modules\@google-cloud\firestore\build\src\reference\collection-reference.js
+==========================================================================================
+Linha    62  collection(
+Linha    79  collection(
+Linha   100  collection(
+Linha   113  onSnapshot(
+Linha   121  collection(
+Linha   172  collection(
+Linha   205  collection(
+Linha   267  collection(
+==========================================================================================
+backend\node_modules\@google-cloud\firestore\build\src\reference\constants.d.ts
+==========================================================================================
+Linha    19  orderBy(
+Linha    29  where(
+==========================================================================================
+backend\node_modules\@google-cloud\firestore\build\src\reference\constants.js
+==========================================================================================
+Linha    20  orderBy(
+Linha    31  where(
+==========================================================================================
+backend\node_modules\@google-cloud\firestore\build\src\reference\document-reference.d.ts
+==========================================================================================
+Linha    81  collection(
+Linha   100  collection(
+Linha   117  collection(
+Linha   143  where(
+Linha   180  collection(
+Linha   184  collection(
+Linha   215  collection(
+Linha   295  unsubscribe
+Linha   302  onSnapshot(
+Linha   302  unsubscribe
+Linha   311  unsubscribe
+Linha   314  onSnapshot(
+==========================================================================================
+backend\node_modules\@google-cloud\firestore\build\src\reference\document-reference.js
+==========================================================================================
+Linha    83  collection(
+Linha   104  collection(
+Linha   123  collection(
+Linha   153  where(
+Linha   196  collection(
+Linha   200  collection(
+Linha   240  collection(
+Linha   259  collection(
+Linha   405  unsubscribe
+Linha   412  onSnapshot(
+Linha   412  unsubscribe
+Linha   421  unsubscribe
+Linha   424  onSnapshot(
+Linha   428  onSnapshot(
+Linha   501  collection(
+==========================================================================================
+backend\node_modules\@google-cloud\firestore\build\src\reference\query-snapshot.d.ts
+==========================================================================================
+Linha    54  onSnapshot(
+Linha    63  collection(
+Linha    63  where(
+Linha    65  limit(
+Linha    74  query(
+Linha    84  collection(
+Linha    84  where(
+Linha   104  collection(
+Linha   104  where(
+Linha   123  collection(
+Linha   123  where(
+Linha   139  collection(
+Linha   139  where(
+Linha   157  collection(
+Linha   157  where(
+Linha   159  onSnapshot(
+Linha   180  collection(
+Linha   180  where(
+==========================================================================================
+backend\node_modules\@google-cloud\firestore\build\src\reference\query-snapshot.js
+==========================================================================================
+Linha    57  onSnapshot(
+Linha    66  collection(
+Linha    66  where(
+Linha    68  limit(
+Linha    77  query(
+Linha    89  collection(
+Linha    89  where(
+Linha   116  collection(
+Linha   116  where(
+Linha   137  collection(
+Linha   137  where(
+Linha   155  collection(
+Linha   155  where(
+Linha   175  collection(
+Linha   175  where(
+Linha   177  onSnapshot(
+Linha   205  collection(
+Linha   205  where(
+==========================================================================================
+backend\node_modules\@google-cloud\firestore\build\src\reference\query-util.js
+==========================================================================================
+Linha   235  limit(
+==========================================================================================
+backend\node_modules\@google-cloud\firestore\build\src\reference\query.d.ts
+==========================================================================================
+Linha   106  collection(
+Linha   133  collection(
+Linha   135  where(
+Linha   142  where(
+Linha   155  collection(
+Linha   157  where(
+Linha   157  where(
+Linha   157  where(
+Linha   165  where(
+Linha   187  onSnapshot(
+Linha   198  collection(
+Linha   202  where(
+Linha   224  collection(
+Linha   224  where(
+Linha   226  orderBy(
+Linha   233  orderBy(
+Linha   246  collection(
+Linha   246  where(
+Linha   248  limit(
+Linha   255  limit(
+Linha   270  collection(
+Linha   270  where(
+Linha   292  collection(
+Linha   292  where(
+Linha   294  limit(
+Linha   478  collection(
+Linha   480  orderBy(
+Linha   501  collection(
+Linha   503  orderBy(
+Linha   523  collection(
+Linha   525  orderBy(
+Linha   545  collection(
+Linha   547  orderBy(
+Linha   564  collection(
+Linha   564  where(
+Linha   603  collection(
+Linha   603  where(
+Linha   626  collection(
+Linha   626  where(
+Linha   707  unsubscribe
+Linha   712  collection(
+Linha   712  where(
+Linha   714  onSnapshot(
+Linha   714  unsubscribe
+Linha   721  unsubscribe
+Linha   724  onSnapshot(
+==========================================================================================
+backend\node_modules\@google-cloud\firestore\build\src\reference\query.js
+==========================================================================================
+Linha    94  orderBy(
+Linha    94  where(
+Linha   113  collection(
+Linha   124  where(
+Linha   130  where(
+Linha   133  where(
+Linha   207  onSnapshot(
+Linha   218  collection(
+Linha   222  where(
+Linha   263  collection(
+Linha   263  where(
+Linha   265  orderBy(
+Linha   272  orderBy(
+Linha   276  orderBy(
+Linha   297  collection(
+Linha   297  where(
+Linha   299  limit(
+Linha   306  limit(
+Linha   328  collection(
+Linha   328  where(
+Linha   354  collection(
+Linha   354  where(
+Linha   356  limit(
+Linha   546  orderBy(
+Linha   624  collection(
+Linha   626  orderBy(
+Linha   653  collection(
+Linha   655  orderBy(
+Linha   681  collection(
+Linha   683  orderBy(
+Linha   709  collection(
+Linha   711  orderBy(
+Linha   734  collection(
+Linha   734  where(
+Linha   795  collection(
+Linha   795  where(
+Linha   820  collection(
+Linha   820  where(
+Linha   897  orderBy(
+Linha  1026  unsubscribe
+Linha  1031  collection(
+Linha  1031  where(
+Linha  1033  onSnapshot(
+Linha  1033  unsubscribe
+Linha  1040  unsubscribe
+Linha  1043  onSnapshot(
+Linha  1047  onSnapshot(
+Linha  1123  collection(
+==========================================================================================
+backend\node_modules\@google-cloud\firestore\build\src\reference\types.d.ts
+==========================================================================================
+Linha    50  onSnapshot(
+Linha    56  onSnapshot(
+Linha    62  onSnapshot(
+==========================================================================================
+backend\node_modules\@google-cloud\firestore\build\src\reference\types.js
+==========================================================================================
+Linha    29  onSnapshot(
+Linha    35  onSnapshot(
+Linha    41  onSnapshot(
+==========================================================================================
+backend\node_modules\@google-cloud\firestore\build\src\reference\vector-query-snapshot.d.ts
+==========================================================================================
+Linha    57  collection(
+Linha    57  where(
+Linha    69  query(
+Linha    77  collection(
+Linha    96  collection(
+Linha   114  collection(
+Linha   128  collection(
+Linha   147  collection(
+Linha   171  collection(
+==========================================================================================
+backend\node_modules\@google-cloud\firestore\build\src\reference\vector-query-snapshot.js
+==========================================================================================
+Linha    60  collection(
+Linha    60  where(
+Linha    72  query(
+Linha    82  collection(
+Linha   108  collection(
+Linha   128  collection(
+Linha   144  collection(
+Linha   165  collection(
+Linha   196  collection(
+==========================================================================================
+backend\node_modules\@google-cloud\firestore\build\src\reference\vector-query.d.ts
+==========================================================================================
+Linha    48  query(
+==========================================================================================
+backend\node_modules\@google-cloud\firestore\build\src\reference\vector-query.js
+==========================================================================================
+Linha    42  query(
+==========================================================================================
+backend\node_modules\@google-cloud\firestore\build\src\v1\firestore_client.js
+==========================================================================================
+Linha   247  return () =>
+==========================================================================================
+backend\node_modules\@google-cloud\firestore\build\src\watch.d.ts
+==========================================================================================
+Linha    45  onSnapshot(
+Linha    74  unsubscribe
+Linha   156  unsubscribe
+Linha   159  onSnapshot(
+==========================================================================================
+backend\node_modules\@google-cloud\firestore\build\src\watch.js
+==========================================================================================
+Linha    86  unsubscribe
+Linha   146  unsubscribe
+Linha   149  onSnapshot(
+Linha   157  unsubscribe
+Linha   165  unsubscribe
+==========================================================================================
+backend\node_modules\@google-cloud\firestore\build\src\write-batch.d.ts
+==========================================================================================
+Linha   126  collection(
+==========================================================================================
+backend\node_modules\@google-cloud\firestore\build\src\write-batch.js
+==========================================================================================
+Linha   143  collection(
+==========================================================================================
+backend\node_modules\@google-cloud\firestore\types\firestore.d.ts
+==========================================================================================
+Linha   459  onSnapshot(
+Linha   459  onSnapshot(
+Linha   460  onSnapshot(
+Linha   549  collection(
+Linha   719  collection(
+Linha  1435  collection(
+Linha  1543  unsubscribe
+Linha  1546  onSnapshot(
+Linha  1687  orderBy(
+Linha  1693  where(
+Linha  1738  where(
+Linha  1755  where(
+Linha  1769  orderBy(
+Linha  1784  limit(
+Linha  1818  onSnapshot(
+Linha  1961  collection(
+Linha  1961  where(
+Linha  1990  unsubscribe
+Linha  1993  onSnapshot(
+Linha  2351  onSnapshot(
+Linha  3070  where(
+Linha  3086  collection(
+Linha  3088  where(
+Linha  3088  where(
+Linha  3095  where(
+Linha  3106  where(
+Linha  3118  collection(
+Linha  3121  where(
+Linha  3121  where(
+Linha  3123  where(
+Linha  3137  where(
+Linha  3149  collection(
+Linha  3152  where(
+Linha  3152  where(
+Linha  3154  where(
+==========================================================================================
+backend\node_modules\@google-cloud\paginator\build\src\index.d.ts
+==========================================================================================
+Linha    51  query(
+Linha    52  query(
+Linha    57  query(
+==========================================================================================
+backend\node_modules\@google-cloud\paginator\build\src\index.js
+==========================================================================================
+Linha    33  query(
+Linha    34  query(
+Linha    39  query(
+==========================================================================================
+backend\node_modules\@google-cloud\storage\build\cjs\src\bucket.js
+==========================================================================================
+Linha  1531  limit(
+Linha  3525  limit(
+==========================================================================================
+backend\node_modules\@google-cloud\storage\build\cjs\src\transfer-manager.js
+==========================================================================================
+Linha   406  limit(
+Linha   493  limit(
+Linha   561  limit(
+Linha   663  limit(
+==========================================================================================
+backend\node_modules\@google-cloud\storage\build\esm\src\bucket.js
+==========================================================================================
+Linha  1492  limit(
+Linha  3486  limit(
+==========================================================================================
+backend\node_modules\@google-cloud\storage\build\esm\src\transfer-manager.js
+==========================================================================================
+Linha   366  limit(
+Linha   453  limit(
+Linha   521  limit(
+Linha   623  limit(
+==========================================================================================
+backend\node_modules\@grpc\grpc-js\build\src\internal-channel.js
+==========================================================================================
+Linha   102  return () =>
+==========================================================================================
+backend\node_modules\@grpc\grpc-js\src\internal-channel.ts
+==========================================================================================
+Linha   174  return () =>
+==========================================================================================
+backend\node_modules\@opentelemetry\api\build\esnext\internal\semver.js
+==========================================================================================
+Linha    40  return () =>
+==========================================================================================
+backend\node_modules\@opentelemetry\api\build\src\internal\semver.js
+==========================================================================================
+Linha    43  return () =>
+==========================================================================================
+backend\node_modules\@types\express\index.d.ts
+==========================================================================================
+Linha    61  query(
+==========================================================================================
+backend\node_modules\@types\express-serve-static-core\index.d.ts
+==========================================================================================
+Linha   284  unsubscribe
+Linha   336  unsubscribe
+==========================================================================================
+backend\node_modules\@types\node\diagnostics_channel.d.ts
+==========================================================================================
+Linha    91  unsubscribe
+Linha    98  unsubscribe
+Linha   210  unsubscribe
+Linha   213  unsubscribe
+Linha   217  unsubscribe
+Linha   389  unsubscribe
+Linha   390  unsubscribe
+Linha   398  unsubscribe
+Linha   419  unsubscribe
+Linha   421  unsubscribe
+==========================================================================================
+backend\node_modules\@types\node\events.d.ts
+==========================================================================================
+Linha   383  unsubscribe
+==========================================================================================
+backend\node_modules\axios\dist\axios.js
+==========================================================================================
+Linha  2965  unsubscribe
+Linha  3133  unsubscribe
+Linha  3142  unsubscribe
+Linha  3142  unsubscribe
+Linha  3147  unsubscribe
+Linha  3147  unsubscribe
+Linha  3156  unsubscribe
+Linha  3157  unsubscribe
+Linha  3543  unsubscribe
+Linha  3552  unsubscribe
+Linha  3552  unsubscribe
+Linha  3553  unsubscribe
+Linha  3605  unsubscribe
+Linha  3614  unsubscribe
+Linha  3614  unsubscribe
+Linha  3622  unsubscribe
+Linha  3622  unsubscribe
+Linha  3639  unsubscribe
+Linha  3639  unsubscribe
+Linha  4193  unsubscribe
+Linha  4239  unsubscribe
+Linha  4240  unsubscribe
+Linha  4258  unsubscribe
+Linha  4259  unsubscribe
+==========================================================================================
+backend\node_modules\axios\dist\axios.min.js
+==========================================================================================
+Linha     2  unsubscribe
+Linha     2  unsubscribe
+Linha     2  unsubscribe
+Linha     2  unsubscribe
+Linha     2  unsubscribe
+Linha     2  unsubscribe
+Linha     2  unsubscribe
+Linha     2  unsubscribe
+Linha     2  unsubscribe
+Linha     2  unsubscribe
+==========================================================================================
+backend\node_modules\axios\dist\esm\axios.js
+==========================================================================================
+Linha  2489  unsubscribe
+Linha  2674  unsubscribe
+Linha  2685  unsubscribe
+Linha  2690  unsubscribe
+Linha  2690  unsubscribe
+Linha  2700  unsubscribe
+Linha  2700  unsubscribe
+Linha  2933  unsubscribe
+Linha  2933  unsubscribe
+Linha  2934  unsubscribe
+Linha  2990  unsubscribe
+Linha  3007  unsubscribe
+Linha  3007  unsubscribe
+Linha  3017  unsubscribe
+Linha  3017  unsubscribe
+Linha  3030  unsubscribe
+Linha  3030  unsubscribe
+Linha  3634  unsubscribe
+Linha  3681  unsubscribe
+Linha  3700  unsubscribe
+Linha  3700  unsubscribe
+==========================================================================================
+backend\node_modules\axios\dist\esm\axios.min.js
+==========================================================================================
+Linha     2  unsubscribe
+Linha     2  unsubscribe
+Linha     2  unsubscribe
+Linha     2  unsubscribe
+Linha     2  unsubscribe
+Linha     2  unsubscribe
+Linha     2  unsubscribe
+Linha     2  unsubscribe
+Linha     2  unsubscribe
+Linha     2  unsubscribe
+==========================================================================================
+backend\node_modules\axios\lib\adapters\fetch.js
+==========================================================================================
+Linha   149  unsubscribe
+Linha   149  unsubscribe
+Linha   150  unsubscribe
+Linha   206  unsubscribe
+Linha   223  unsubscribe
+Linha   223  unsubscribe
+Linha   233  unsubscribe
+Linha   233  unsubscribe
+Linha   246  unsubscribe
+Linha   246  unsubscribe
+==========================================================================================
+backend\node_modules\axios\lib\adapters\http.js
+==========================================================================================
+Linha   364  unsubscribe
+==========================================================================================
+backend\node_modules\axios\lib\adapters\xhr.js
+==========================================================================================
+Linha    28  unsubscribe
+==========================================================================================
+backend\node_modules\axios\lib\cancel\CancelToken.js
+==========================================================================================
+Linha    48  unsubscribe
+Linha    95  unsubscribe
+Linha   114  unsubscribe
+Linha   114  unsubscribe
+==========================================================================================
+backend\node_modules\axios\lib\helpers\composeSignals.js
+==========================================================================================
+Linha    16  unsubscribe
+Linha    27  unsubscribe
+Linha    32  unsubscribe
+Linha    32  unsubscribe
+Linha    42  unsubscribe
+Linha    42  unsubscribe
+==========================================================================================
+backend\node_modules\express\lib\application.js
+==========================================================================================
+Linha   151  query(
+==========================================================================================
+backend\node_modules\express\lib\middleware\query.js
+==========================================================================================
+Linha    25  query(
+Linha    39  query(
+==========================================================================================
+backend\node_modules\fast-xml-parser\src\ignoreAttributes.js
+==========================================================================================
+Linha    17  return () =>
+==========================================================================================
+backend\node_modules\firebase-admin\lib\firestore\firestore-internal.d.ts
+==========================================================================================
+Linha    33  onSnapshot(
+==========================================================================================
+backend\node_modules\firebase-admin\lib\messaging\messaging-api.d.ts
+==========================================================================================
+Linha   851  unsubscribe
+==========================================================================================
+backend\node_modules\firebase-admin\lib\messaging\messaging.d.ts
+==========================================================================================
+Linha   105  unsubscribe
+Linha   121  unsubscribe
+Linha   124  unsubscribe
+Linha   127  unsubscribe
+Linha   128  unsubscribe
+Linha   131  unsubscribe
+Linha   133  unsubscribe
+Linha   139  unsubscribe
+==========================================================================================
+backend\node_modules\firebase-admin\lib\messaging\messaging.js
+==========================================================================================
+Linha   277  unsubscribe
+Linha   295  unsubscribe
+Linha   298  unsubscribe
+Linha   301  unsubscribe
+Linha   302  unsubscribe
+Linha   305  unsubscribe
+Linha   307  unsubscribe
+Linha   308  unsubscribe
+Linha   330  unsubscribe
+==========================================================================================
+backend\node_modules\google-gax\build\src\fallback.js
+==========================================================================================
+Linha   322  return () =>
+Linha   327  return () =>
+==========================================================================================
+backend\node_modules\google-logging-utils\build\src\logging-utils.js
+==========================================================================================
+Linha   185  return () =>
+==========================================================================================
+backend\node_modules\http-proxy-agent\node_modules\debug\src\browser.js
+==========================================================================================
+Linha    15  return () =>
+==========================================================================================
+backend\node_modules\https-proxy-agent\node_modules\debug\src\browser.js
+==========================================================================================
+Linha    15  return () =>
+==========================================================================================
+backend\node_modules\jwks-rsa\node_modules\debug\src\browser.js
+==========================================================================================
+Linha    15  return () =>
+==========================================================================================
+backend\node_modules\methods\index.js
+==========================================================================================
+Linha    64  unsubscribe
+==========================================================================================
+backend\node_modules\p-locate\index.js
+==========================================================================================
+Linha    26  limit(
+==========================================================================================
+backend\node_modules\teeny-request\node_modules\debug\src\browser.js
+==========================================================================================
+Linha    15  return () =>
+==========================================================================================
+backend\routes\bounds.js
+==========================================================================================
+Linha   145  collection(
+Linha   145  where(
+Linha   148  orderBy(
+Linha   149  orderBy(
+Linha   150  limit(
+Linha   154  orderBy(
+Linha   155  orderBy(
+Linha   156  limit(
+Linha   162  orderBy(
+Linha   162  where(
+Linha   186  orderBy(
+Linha   186  where(
+Linha   199  collection(
+Linha   199  where(
+Linha   201  limit(
+Linha   201  orderBy(
+Linha   202  orderBy(
+==========================================================================================
+backend\routes\kingDraws.js
+==========================================================================================
+Linha   219  collection(
+Linha   219  where(
+Linha   220  collection(
+Linha   220  where(
+Linha   268  collection(
+Linha   270  collection(
+Linha   271  orderBy(
+Linha   281  limit(
+Linha   513  collection(
+Linha   514  where(
+Linha   515  where(
+Linha   516  orderBy(
+==========================================================================================
+backend\routes\pitacoResults.js
+==========================================================================================
+Linha   252  collection(
+Linha   252  where(
+Linha   253  collection(
+Linha   253  where(
+Linha   933  collection(
+Linha   933  orderBy(
+==========================================================================================
+backend\routes\receiveResults.js
+==========================================================================================
+Linha   216  collection(
+Linha   234  collection(
+==========================================================================================
+backend\scripts\auditBounds.js
+==========================================================================================
+Linha   135  collection(
+Linha   135  where(
+Linha   138  orderBy(
+Linha   139  orderBy(
+Linha   140  limit(
+Linha   144  orderBy(
+Linha   145  orderBy(
+Linha   146  limit(
+Linha   152  orderBy(
+Linha   152  where(
+Linha   174  orderBy(
+Linha   174  where(
+Linha   184  collection(
+Linha   184  where(
+Linha   186  limit(
+Linha   186  orderBy(
+Linha   187  orderBy(
+==========================================================================================
+backend\scripts\auditCoverage.js
+==========================================================================================
+Linha    48  collection(
+Linha    49  where(
+Linha    60  collection(
+==========================================================================================
+backend\scripts\auditDbDateRange.js
+==========================================================================================
+Linha   115  collection(
+Linha   115  where(
+Linha   118  orderBy(
+Linha   119  orderBy(
+Linha   120  limit(
+Linha   124  orderBy(
+Linha   125  orderBy(
+Linha   126  limit(
+Linha   132  orderBy(
+Linha   132  where(
+Linha   154  orderBy(
+Linha   154  where(
+Linha   164  collection(
+Linha   164  where(
+Linha   166  limit(
+Linha   166  orderBy(
+Linha   167  orderBy(
+==========================================================================================
+backend\scripts\auditDbDateRangeNoIndex.js
+==========================================================================================
+Linha   134  limit(
+Linha   137  where(
+Linha   146  collection(
+Linha   148  where(
+Linha   156  orderBy(
+Linha   157  orderBy(
+Linha   158  limit(
+Linha   162  orderBy(
+Linha   163  orderBy(
+Linha   164  limit(
+Linha   178  orderBy(
+Linha   178  where(
+Linha   185  collection(
+Linha   187  where(
+Linha   194  limit(
+Linha   194  orderBy(
+Linha   195  orderBy(
+Linha   210  where(
+Linha   250  orderBy(
+Linha   271  orderBy(
+==========================================================================================
+backend\scripts\auditDrawsBoundsAndCounts.js
+==========================================================================================
+Linha   160  collection(
+Linha   161  where(
+Linha   162  where(
+Linha   163  where(
+Linha   167  where(
+Linha   167  where(
+Linha   174  collection(
+Linha   175  where(
+Linha   176  orderBy(
+Linha   182  limit(
+==========================================================================================
+backend\scripts\auditDrawSlotsRange.js
+==========================================================================================
+Linha   655  collection(
+Linha   656  where(
+Linha   657  where(
+==========================================================================================
+backend\scripts\auditFastPtRio.js
+==========================================================================================
+Linha    29  collection(
+Linha    30  where(
+==========================================================================================
+backend\scripts\auditFederalCompleteness.js
+==========================================================================================
+Linha    27  collection(
+Linha    28  where(
+Linha    29  orderBy(
+Linha    42  collection(
+==========================================================================================
+backend\scripts\auditFederalContent.js
+==========================================================================================
+Linha    60  collection(
+Linha    60  where(
+Linha    72  collection(
+==========================================================================================
+backend\scripts\auditFederalContestContent.js
+==========================================================================================
+Linha    91  collection(
+Linha    99  collection(
+==========================================================================================
+backend\scripts\auditFederalContestDuplicates.js
+==========================================================================================
+Linha   109  collection(
+==========================================================================================
+backend\scripts\auditFederalDateContent.js
+==========================================================================================
+Linha    45  collection(
+Linha    45  where(
+Linha    53  collection(
+==========================================================================================
+backend\scripts\auditFederalStructure.js
+==========================================================================================
+Linha    30  collection(
+==========================================================================================
+backend\scripts\auditFirestorePtRioRange.js
+==========================================================================================
+Linha    31  collection(
+Linha    31  where(
+Linha    42  collection(
+==========================================================================================
+backend\scripts\auditHistoricalGaps.js
+==========================================================================================
+Linha   185  collection(
+Linha   185  where(
+Linha   186  collection(
+Linha   186  where(
+==========================================================================================
+backend\scripts\auditPredictionRuns.js
+==========================================================================================
+Linha    10  collection(
+Linha    11  limit(
+Linha    36  collection(
+==========================================================================================
+backend\scripts\auditPtRioContent.js
+==========================================================================================
+Linha    60  collection(
+Linha    60  where(
+Linha    72  collection(
+==========================================================================================
+backend\scripts\auditRealGradePtRio.js
+==========================================================================================
+Linha    48  collection(
+Linha    49  where(
+==========================================================================================
+backend\scripts\auditSpecificDays.js
+==========================================================================================
+Linha     4  collection(
+Linha     4  where(
+Linha    10  collection(
+Linha    10  orderBy(
+==========================================================================================
+backend\scripts\autoRepairToday.js
+==========================================================================================
+Linha    52  collection(
+Linha    52  where(
+==========================================================================================
+backend\scripts\checkOneDraw.js
+==========================================================================================
+Linha    91  collection(
+Linha    92  where(
+Linha    93  where(
+Linha   115  collection(
+Linha   115  limit(
+Linha   153  collection(
+Linha   154  where(
+Linha   155  where(
+Linha   156  where(
+Linha   157  limit(
+==========================================================================================
+backend\scripts\findDuplicatesDraws.js
+==========================================================================================
+Linha   118  collection(
+Linha   128  orderBy(
+Linha   129  orderBy(
+Linha   130  limit(
+==========================================================================================
+backend\scripts\fixFederalContestDuplicates.js
+==========================================================================================
+Linha   100  collection(
+Linha   211  collection(
+==========================================================================================
+backend\scripts\fixLegacyIdDuplicates.js
+==========================================================================================
+Linha    39  collection(
+Linha    49  where(
+Linha    50  where(
+Linha    51  where(
+==========================================================================================
+backend\scripts\fixMinuteVariantDuplicates.js
+==========================================================================================
+Linha    33  orderBy(
+Linha    34  orderBy(
+Linha    35  limit(
+Linha    72  collection(
+==========================================================================================
+backend\scripts\fixPtRioContentAudit.js
+==========================================================================================
+Linha    26  collection(
+Linha    28  collection(
+==========================================================================================
+backend\scripts\fixReceiveDuplicates.js
+==========================================================================================
+Linha    38  collection(
+Linha    46  where(
+Linha    47  where(
+Linha    48  where(
+==========================================================================================
+backend\scripts\genPtRioCalendarRules.js
+==========================================================================================
+Linha    80  collection(
+Linha    81  where(
+==========================================================================================
+backend\scripts\importKingApostas.js
+==========================================================================================
+Linha   899  collection(
+Linha   926  collection(
+Linha   926  limit(
+Linha   949  collection(
+Linha   949  where(
+Linha  1158  collection(
+Linha  1270  collection(
+Linha  1270  where(
+==========================================================================================
+backend\scripts\inspectDrawSchema.js
+==========================================================================================
+Linha    10  collection(
+Linha    11  limit(
+Linha    44  collection(
+Linha    44  limit(
+==========================================================================================
+backend\scripts\integrityCheck.js
+==========================================================================================
+Linha    15  collection(
+Linha    16  where(
+Linha    17  where(
+Linha    26  collection(
+==========================================================================================
+backend\scripts\lastDrawsFirestore.js
+==========================================================================================
+Linha     8  collection(
+Linha     9  orderBy(
+Linha    10  orderBy(
+Linha    11  limit(
+==========================================================================================
+backend\scripts\lintSourceGaps.js
+==========================================================================================
+Linha    53  collection(
+Linha    54  where(
+Linha    55  where(
+Linha    56  where(
+Linha    57  limit(
+==========================================================================================
+backend\scripts\listDrawDuplicates.js
+==========================================================================================
+Linha   124  collection(
+Linha   134  orderBy(
+Linha   135  orderBy(
+Linha   136  limit(
+==========================================================================================
+backend\scripts\maintenance\backfillYmdDraws.js
+==========================================================================================
+Linha   192  collection(
+Linha   218  limit(
+Linha   218  orderBy(
+==========================================================================================
+backend\scripts\probeFederalSwitch.js
+==========================================================================================
+Linha    15  collection(
+Linha    16  where(
+==========================================================================================
+backend\scripts\reconcileKingFirestore.js
+==========================================================================================
+Linha    39  collection(
+Linha    40  where(
+Linha    41  where(
+Linha    49  collection(
+==========================================================================================
+backend\server.js
+==========================================================================================
+Linha   469  collection(
+Linha   469  where(
+Linha   529  collection(
+Linha   531  collection(
+Linha   532  where(
+Linha   533  limit(

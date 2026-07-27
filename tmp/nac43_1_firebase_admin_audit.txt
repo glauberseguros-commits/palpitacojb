@@ -1,0 +1,227 @@
+===== NAC-43.1 — FIREBASE ADMIN E COLEÇÕES =====
+
+DATA: 2026-07-20 17:18:58
+RAIZ: C:\Users\glaub\palpitaco
+
+================================================================================
+PADRÃO: firebase-admin
+================================================================================
+backend\engine\drawRepository.js:96: const admin = require("firebase-admin");
+backend\engine\drawRepository.js:178: const admin = require("firebase-admin");
+backend\engine\snapshotManager.js:22: const admin = require("firebase-admin");
+backend\scripts\auditFederalContestDuplicates.js:22: .filter((f) => /^palpitacojb-app-firebase-adminsdk-.*\.json$/i.test(f))
+backend\scripts\auditFederalContestDuplicates.js:52: const admin = require("firebase-admin");
+backend\scripts\fixFederalContestDuplicates.js:22: .filter((f) => /^palpitacojb-app-firebase-adminsdk-.*\.json$/i.test(f))
+backend\scripts\fixFederalContestDuplicates.js:52: const admin = require("firebase-admin");
+backend\scripts\importKingApostas.js:92: .filter((f) => /^palpitacojb-app-firebase-adminsdk-.*\.json$/i.test(f))
+backend\scripts\listDrawDuplicates.js:5: const admin = require("firebase-admin");
+backend\secrets\serviceAccount.json:6: "client_email": "firebase-adminsdk-fbsvc@palpitacojb-app.iam.gserviceaccount.com",
+backend\secrets\serviceAccount.json:11: "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/firebase-adminsdk-fbsvc%40palpitacojb-app.iam.gserviceaccount.com",
+backend\service\firebaseAdmin.js:6: const admin = require("firebase-admin");
+backend\service\firebaseAdmin.js:113: * - backend/*.json com "firebase-adminsdk" no nome
+backend\service\firebaseAdmin.js:116: * - <repo>/_secrets/palpitaco/firebase-admin.json (se existir)
+backend\service\firebaseAdmin.js:135: if (lower.includes("firebase-adminsdk") || lower.startsWith("serviceaccount")) {
+backend\service\firebaseAdmin.js:146: // 2) _secrets/palpitaco/firebase-admin.json
+backend\service\firebaseAdmin.js:148: const p = path.join(repoDir, "_secrets", "palpitaco", "firebase-admin.json");
+backend\package-lock.json:16: "firebase-admin": "^13.6.0"
+backend\package-lock.json:1653: "node_modules/firebase-admin": {
+backend\package-lock.json:1655: "resolved": "https://registry.npmjs.org/firebase-admin/-/firebase-admin-13.6.0.tgz",
+backend\package.json:16: "firebase-admin": "^13.6.0"
+backend\server.js:426: const admin = require("firebase-admin");
+
+================================================================================
+PADRÃO: admin.initializeApp
+================================================================================
+backend\scripts\auditFederalContestDuplicates.js:104: admin.initializeApp();
+backend\scripts\fixFederalContestDuplicates.js:95: admin.initializeApp();
+backend\scripts\listDrawDuplicates.js:122: if (!admin.apps.length) admin.initializeApp();
+backend\service\firebaseAdmin.js:284: admin.initializeApp({
+backend\service\firebaseAdmin.js:304: admin.initializeApp({
+backend\service\firebaseAdmin.js:315: admin.initializeApp({
+
+================================================================================
+PADRÃO: applicationDefault
+================================================================================
+backend\service\firebaseAdmin.js:316: credential: admin.credential.applicationDefault(),
+backend\server.js:221: console.log("[OK] Firebase Admin inicializado (applicationDefault).");
+
+================================================================================
+PADRÃO: cert(
+================================================================================
+backend\service\firebaseAdmin.js:285: credential: admin.credential.cert(saFromEnv),
+backend\service\firebaseAdmin.js:305: credential: admin.credential.cert(json),
+
+================================================================================
+PADRÃO: GOOGLE_APPLICATION_CREDENTIALS
+================================================================================
+backend\scripts\auditFederalContestDuplicates.js:6: const current = String(process.env.GOOGLE_APPLICATION_CREDENTIALS || "").trim();
+backend\scripts\auditFederalContestDuplicates.js:12: delete process.env.GOOGLE_APPLICATION_CREDENTIALS;
+backend\scripts\auditFederalContestDuplicates.js:14: process.env.GOOGLE_APPLICATION_CREDENTIALS = "";
+backend\scripts\auditFederalContestDuplicates.js:45: process.env.GOOGLE_APPLICATION_CREDENTIALS = hit;
+backend\scripts\fixFederalContestDuplicates.js:6: const current = String(process.env.GOOGLE_APPLICATION_CREDENTIALS || "").trim();
+backend\scripts\fixFederalContestDuplicates.js:12: delete process.env.GOOGLE_APPLICATION_CREDENTIALS;
+backend\scripts\fixFederalContestDuplicates.js:14: process.env.GOOGLE_APPLICATION_CREDENTIALS = "";
+backend\scripts\fixFederalContestDuplicates.js:45: process.env.GOOGLE_APPLICATION_CREDENTIALS = hit;
+backend\scripts\importKingApostas.js:59: * - GOOGLE_APPLICATION_CREDENTIALS estiver ausente, OU
+backend\scripts\importKingApostas.js:66: const current = String(process.env.GOOGLE_APPLICATION_CREDENTIALS || "").trim();
+backend\scripts\importKingApostas.js:80: delete process.env.GOOGLE_APPLICATION_CREDENTIALS;
+backend\scripts\importKingApostas.js:82: process.env.GOOGLE_APPLICATION_CREDENTIALS = "";
+backend\scripts\importKingApostas.js:121: process.env.GOOGLE_APPLICATION_CREDENTIALS = cwdPick;
+backend\scripts\importKingApostas.js:131: process.env.GOOGLE_APPLICATION_CREDENTIALS = pick1;
+backend\service\firebaseAdmin.js:112: * Procura candidatos comuns quando GOOGLE_APPLICATION_CREDENTIALS está errado.
+backend\service\firebaseAdmin.js:159: const rawEnv = String(process.env.GOOGLE_APPLICATION_CREDENTIALS || "").trim();
+backend\service\firebaseAdmin.js:190: process.env.GOOGLE_APPLICATION_CREDENTIALS = auto;
+backend\service\firebaseAdmin.js:192: "[WARN] GOOGLE_APPLICATION_CREDENTIALS inválido. Usando automaticamente:",
+backend\service\firebaseAdmin.js:207: `GOOGLE_APPLICATION_CREDENTIALS aponta para caminho inexistente:\n${p}\n\n` +
+backend\service\firebaseAdmin.js:210: `GOOGLE_APPLICATION_CREDENTIALS=C:\\Users\\glaub\\palpitaco\\backend\\SEU_ARQUIVO.json`
+backend\service\firebaseAdmin.js:293: if (process.env.GOOGLE_APPLICATION_CREDENTIALS) {
+backend\service\firebaseAdmin.js:326: "- GOOGLE_APPLICATION_CREDENTIALS\n\n" +
+backend\server.js:201: const json = process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON;
+backend\server.js:202: if (json && !process.env.GOOGLE_APPLICATION_CREDENTIALS) {
+backend\server.js:205: process.env.GOOGLE_APPLICATION_CREDENTIALS = tmp;
+backend\server.js:212: const credPath = process.env.GOOGLE_APPLICATION_CREDENTIALS || "";
+backend\server.js:214: console.warn("[WARN] GOOGLE_APPLICATION_CREDENTIALS não definido. Admin SDK pode falhar.");
+backend\server.js:216: console.log("[INFO] GOOGLE_APPLICATION_CREDENTIALS:", credPath);
+
+================================================================================
+PADRÃO: FIREBASE_SERVICE_ACCOUNT
+================================================================================
+NÃO ENCONTRADO
+
+================================================================================
+PADRÃO: serviceAccount
+================================================================================
+backend\secrets\serviceAccount.json:6: "client_email": "firebase-adminsdk-fbsvc@palpitacojb-app.iam.gserviceaccount.com",
+backend\secrets\serviceAccount.json:11: "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/firebase-adminsdk-fbsvc%40palpitacojb-app.iam.gserviceaccount.com",
+backend\service\firebaseAdmin.js:98: function isValidServiceAccount(sa) {
+backend\service\firebaseAdmin.js:114: * - backend/serviceAccount*.json
+backend\service\firebaseAdmin.js:115: * - backend/serviceAccount.json
+backend\service\firebaseAdmin.js:135: if (lower.includes("firebase-adminsdk") || lower.startsWith("serviceaccount")) {
+backend\service\firebaseAdmin.js:138: if (lower === "serviceaccount.json") {
+backend\service\firebaseAdmin.js:217: function readServiceAccountFromEnv() {
+backend\service\firebaseAdmin.js:223: if (!isValidServiceAccount(sa)) {
+backend\service\firebaseAdmin.js:244: if (!isValidServiceAccount(sa)) {
+backend\service\firebaseAdmin.js:280: const saFromEnv = readServiceAccountFromEnv();
+backend\service\firebaseAdmin.js:298: if (!isValidServiceAccount(json)) {
+
+================================================================================
+PADRÃO: .collection("draws")
+================================================================================
+backend\engine\drawRepository.js:113: .collection("draws")
+backend\engine\drawRepository.js:189: .collection("draws")
+backend\engine\historicalQueryEngine.js:51: let q = db.collection("draws")
+backend\engine\snapshotManager.js:26: .collection("draws")
+backend\engine\top3HistorySync.js:93: .collection("draws")
+backend\engine\top3HistorySync.js:103: .collection("draws")
+backend\routes\bounds.js:151: const base = db.collection("draws").where("lottery_key", "==", lotteryKey);
+backend\routes\bounds.js:205: const base = db.collection("draws").where("lottery_key", "==", lotteryKey);
+backend\routes\kingDraws.js:219: db.collection("draws").where("ymd", "==", ymd).get(),
+backend\routes\kingDraws.js:220: db.collection("draws").where("date", "==", ymd).get(),
+backend\routes\kingDraws.js:268: .collection("draws")
+backend\routes\kingDraws.js:513: .collection("draws")
+backend\routes\pitacoResults.js:261: db.collection("draws").where("date", "==", date).get(),
+backend\routes\pitacoResults.js:262: db.collection("draws").where("ymd", "==", date).get(),
+backend\routes\receiveResults.js:216: const drawRef = db.collection("draws").doc(drawId);
+backend\scripts\maintenance\backfillYmdDraws.js:192: const col = db.collection("draws");
+backend\scripts\auditBounds.js:135: const base = db.collection("draws").where("lottery_key", "==", lotteryKey);
+backend\scripts\auditBounds.js:184: const base = db.collection("draws").where("lottery_key", "==", lotteryKey);
+backend\scripts\auditCoverage.js:48: const snap=await db.collection("draws")
+backend\scripts\auditDbDateRange.js:115: const base = db.collection("draws").where("lottery_key", "==", lotteryKey);
+backend\scripts\auditDbDateRange.js:164: const base = db.collection("draws").where("lottery_key", "==", lotteryKey);
+backend\scripts\auditDbDateRangeNoIndex.js:146: let base = db.collection("draws");
+backend\scripts\auditDbDateRangeNoIndex.js:185: let base = db.collection("draws");
+backend\scripts\auditDrawsBoundsAndCounts.js:160: let q = db.collection("draws");
+backend\scripts\auditDrawsBoundsAndCounts.js:174: let q = db.collection("draws");
+backend\scripts\auditDrawSlotsRange.js:655: .collection("draws")
+backend\scripts\auditFastPtRio.js:29: .collection("draws")
+backend\scripts\auditFederalCompleteness.js:27: .collection("draws")
+backend\scripts\auditFederalContent.js:60: const snap = await db.collection("draws").where("date", "==", date).get();
+backend\scripts\auditFederalContestContent.js:91: const snap = await db.collection("draws").get();
+backend\scripts\auditFederalContestDuplicates.js:109: const snap = await db.collection("draws").get();
+backend\scripts\auditFederalDateContent.js:45: const snap = await db.collection("draws").where("date", "==", date).get();
+backend\scripts\auditFederalStructure.js:30: const snap = await db.collection("draws").get();
+backend\scripts\auditFirestorePtRioRange.js:31: const snap = await db.collection("draws").where("ymd", "==", ymd).get();
+backend\scripts\auditHistoricalGaps.js:185: db.collection("draws").where("date", "==", ymd).get(),
+backend\scripts\auditHistoricalGaps.js:186: db.collection("draws").where("ymd", "==", ymd).get(),
+backend\scripts\auditPtRioContent.js:60: const snap = await db.collection("draws").where("date", "==", date).get();
+backend\scripts\auditRealGradePtRio.js:48: .collection("draws")
+backend\scripts\auditSpecificDays.js:4: const snap = await db.collection("draws").where("ymd", "==", ymd).get();
+backend\scripts\autoRepairToday.js:52: const snap = await db.collection("draws").where("ymd", "==", ymd).get();
+backend\scripts\checkOneDraw.js:91: .collection("draws")
+backend\scripts\checkOneDraw.js:153: .collection("draws")
+backend\scripts\findDuplicatesDraws.js:118: const col = db.collection("draws");
+backend\scripts\fixFederalContestDuplicates.js:100: const snap = await db.collection("draws").get();
+backend\scripts\fixLegacyIdDuplicates.js:39: const col = db.collection("draws");
+backend\scripts\fixMinuteVariantDuplicates.js:72: const col = db.collection("draws");
+backend\scripts\fixPtRioContentAudit.js:26: const ref = db.collection("draws").doc(drawId);
+backend\scripts\fixReceiveDuplicates.js:38: const col = db.collection("draws");
+backend\scripts\genPtRioCalendarRules.js:80: .collection("draws")
+backend\scripts\importKingApostas.js:1011: const drawRef = db.collection("draws").doc(drawId);
+backend\scripts\importKingApostas.js:1061: const snap = await db.collection("draws").where("date", "==", date).get();
+backend\scripts\importKingApostas.js:1382: const snap = await db.collection("draws").where("date", "==", date).get();
+backend\scripts\inspectDrawSchema.js:10: .collection("draws")
+backend\scripts\integrityCheck.js:15: .collection("draws")
+backend\scripts\lastDrawsFirestore.js:8: .collection("draws")
+backend\scripts\lintSourceGaps.js:53: .collection("draws")
+backend\scripts\listDrawDuplicates.js:124: const col = db.collection("draws");
+backend\scripts\probeFederalSwitch.js:15: const snap = await db.collection("draws")
+backend\scripts\reconcileKingFirestore.js:39: .collection("draws")
+backend\server.js:469: const snap = await db.collection("draws").where("ymd", "==", dayYmd).get();
+backend\server.js:529: .collection("draws")
+scripts\checkIntegrity.js:94: const snap = await db.collection("draws").where("ymd", "==", ymd).get();
+scripts\checkIntegrityRange.js:104: const snap = await db.collection("draws").where("ymd", "==", ymd).get();
+scripts\checkIntegrityRange.js:289: const minSnap = await db.collection("draws")
+scripts\checkIntegrityRange.js:294: const maxSnap = await db.collection("draws")
+scripts\checkMissingDraws.js:35: .collection("draws")
+scripts\checkYesterdayIntegrity.js:140: const snap = await db.collection("draws").where("ymd", "==", ymd).get();
+scripts\debugDraw21Admin.js:7: const drawRef = db.collection("draws").doc(DRAW_ID);
+scripts\insertMissingDraw.js:27: const ref = db.collection("draws").doc(docId);
+scripts\insertMissingDrawPrizes.js:18: const drawRef = db.collection("draws").doc(DRAW_ID);
+
+================================================================================
+PADRÃO: .collection('draws')
+================================================================================
+NÃO ENCONTRADO
+
+================================================================================
+PADRÃO: .collection("results")
+================================================================================
+NÃO ENCONTRADO
+
+================================================================================
+PADRÃO: .collection('results')
+================================================================================
+NÃO ENCONTRADO
+
+================================================================================
+PADRÃO: collection(db, "draws")
+================================================================================
+src\services\kingResultsService.js:614: const drawsCol = collection(db, "draws");
+
+================================================================================
+PADRÃO: collection(db, 'draws')
+================================================================================
+NÃO ENCONTRADO
+
+================================================================================
+PADRÃO: collection(db, "results")
+================================================================================
+NÃO ENCONTRADO
+
+================================================================================
+PADRÃO: collection(db, 'results')
+================================================================================
+NÃO ENCONTRADO
+
+================================================================================
+ARQUIVOS COM NOMES RELACIONADOS A FIREBASE/CREDENCIAIS
+================================================================================
+backend\secrets\serviceAccount.json
+backend\service\firebaseAdmin.js
+scripts\debugDraw21Admin.js
+src\pages\Admin\Admin.css
+src\pages\Admin\Admin.jsx
+src\pages\Admin\adminKeys.js
+src\pages\Admin\AdminLogin.css
+src\pages\Admin\AdminLogin.jsx
+src\services\firebase.js

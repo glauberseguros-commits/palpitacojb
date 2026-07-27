@@ -1,0 +1,1327 @@
+===== LKN-02 — BLOQUEIO LOOK/NACIONAL =====
+
+Arquivo: .\backend\scripts\importKingApostas.js
+Data: 2026-07-18 20:13:12
+
+===== OCORRÊNCIAS =====
+
+Line    : 189
+Pattern : LOTTERY
+Text    : * ✅ fetch por lottery (robusto contra “cap” da API quando manda muitos lotteries[]).
+
+Line    : 191
+Pattern : LOTTERY
+Text    : * - KING_FETCH_PER_LOTTERY=0 => volta ao modo antigo (1 request com todos lotteries[])
+
+Line    : 193
+Pattern : LOTTERY
+Text    : const FETCH_PER_LOTTERY =
+
+Line    : 194
+Pattern : LOTTERY
+Text    : String(process.env.KING_FETCH_PER_LOTTERY || "").trim() === "0" ? false : true;
+
+Line    : 196
+Pattern : LOTTERY
+Text    : // ✅ Debug do fetch (log por lotteryId)
+
+Line    : 200
+Pattern : FEDERAL
+Text    : // ✅ Debug leve do override FEDERAL
+
+Line    : 212
+Pattern : LOTTERY
+Text    : * ✅ Regras de negócio: UF x lottery_key
+
+Line    : 216
+Pattern : LOTTERY
+Text    : * - lottery_key identifica a loteria/fonte (ex.: PT_RIO)
+
+Line    : 216
+Pattern : PT_RIO
+Text    : * - lottery_key identifica a loteria/fonte (ex.: PT_RIO)
+
+Line    : 219
+Pattern : PT_RIO
+Text    : * Se uf ficar "PT_RIO", o bounds por UF quebra.
+
+Line    : 222
+Pattern : LOTTERY
+Text    : const RJ_LOTTERY_KEY = "PT_RIO";
+
+Line    : 222
+Pattern : PT_RIO
+Text    : const RJ_LOTTERY_KEY = "PT_RIO";
+
+Line    : 224
+Pattern : FEDERAL
+Text    : const FEDERAL_STATE_CODE = "BR";
+
+Line    : 225
+Pattern : FEDERAL
+Text    : const FEDERAL_LOTTERY_KEY = "FEDERAL";
+
+Line    : 225
+Pattern : LOTTERY
+Text    : const FEDERAL_LOTTERY_KEY = "FEDERAL";
+
+Line    : 227
+Pattern : LOTTERY
+Text    : function resolveUfFromLotteryKey(lotteryKey) {
+
+Line    : 228
+Pattern : LOTTERY
+Text    : const lk = String(lotteryKey || "").trim().toUpperCase();
+
+Line    : 230
+Pattern : LOTTERY
+Text    : if (lk === RJ_LOTTERY_KEY) return RJ_STATE_CODE;
+
+Line    : 231
+Pattern : FEDERAL
+Text    : if (lk === FEDERAL_LOTTERY_KEY) return FEDERAL_STATE_CODE;
+
+Line    : 231
+Pattern : LOTTERY
+Text    : if (lk === FEDERAL_LOTTERY_KEY) return FEDERAL_STATE_CODE;
+
+Line    : 362
+Pattern : PT_RIO
+Text    : * - Para PT_RIO: força minutos = 00 (09:09 -> 09:00)
+
+Line    : 366
+Pattern : PT_RIO
+Text    : * - A API do PT_RIO costuma devolver HH:09 como "marcação" e NÃO um minuto real.
+
+Line    : 367
+Pattern : PT_RIO
+Text    : * - Portanto, para PT_RIO, se raw terminar em ":09", tratamos como "sem minuto real"
+
+Line    : 371
+Pattern : PT_RIO
+Text    : * - raw: HH:MM (normalizado) OU "" quando for "sintético" (PT_RIO HH:09)
+
+Line    : 374
+Pattern : LOTTERY
+Text    : function normalizeCloseHourForLottery(value, lotteryKey) {
+
+Line    : 375
+Pattern : LOTTERY
+Text    : const lk = String(lotteryKey || "").trim().toUpperCase();
+
+Line    : 379
+Pattern : FEDERAL
+Text    : // ✅ FEDERAL: slot de negócio é sempre 20:00, mas preserva o raw
+
+Line    : 380
+Pattern : FEDERAL
+Text    : if (lk === "FEDERAL") {
+
+Line    : 384
+Pattern : PT_RIO
+Text    : if (lk === "PT_RIO") {
+
+Line    : 398
+Pattern : FEDERAL
+Text    : * - Para FEDERAL: qualquer coisa vira slot=20:00, mas mantemos "requested" para log.
+
+Line    : 400
+Pattern : LOTTERY
+Text    : function normalizeRequestedCloseHour(closeHour, lotteryKey) {
+
+Line    : 401
+Pattern : LOTTERY
+Text    : const lk = String(lotteryKey || "").trim().toUpperCase();
+
+Line    : 412
+Pattern : FEDERAL
+Text    : // FEDERAL: slot único 20:00 (não fingir que o usuário pediu 20:00)
+
+Line    : 413
+Pattern : FEDERAL
+Text    : if (lk === "FEDERAL") {
+
+Line    : 415
+Pattern : FEDERAL
+Text    : const note = requested !== slot ? `FEDERAL_slot_fixed(${requested}->${slot})` : null;
+
+Line    : 419
+Pattern : LOTTERY
+Text    : // outros: normalização normal por lotteryKey (PT_RIO min->00 etc.)
+
+Line    : 419
+Pattern : PT_RIO
+Text    : // outros: normalização normal por lotteryKey (PT_RIO min->00 etc.)
+
+Line    : 420
+Pattern : LOTTERY
+Text    : const slot = normalizeCloseHourForLottery(requested, lk).slot;
+
+Line    : 437
+Pattern : LOTTERY
+Text    : function pickLotteryId(draw) {
+
+Line    : 439
+Pattern : LOTTERY
+Text    : draw?.lottery_id,
+
+Line    : 440
+Pattern : LOTTERY
+Text    : draw?.lotteryId,
+
+Line    : 441
+Pattern : LOTTERY
+Text    : draw?.lottery_uuid,
+
+Line    : 442
+Pattern : LOTTERY
+Text    : draw?.lotteryUuid,
+
+Line    : 443
+Pattern : LOTTERY
+Text    : draw?.lottery,
+
+Line    : 444
+Pattern : LOTTERY
+Text    : draw?.lottery_key,
+
+Line    : 458
+Pattern : PT_RIO
+Text    : * - KING_LOTTERIES_PT_RIO="uuid1,uuid2,..."
+
+Line    : 459
+Pattern : FEDERAL
+Text    : * - KING_LOTTERIES_FEDERAL="uuid1,uuid2,..."
+
+Line    : 462
+Pattern : PT_RIO
+Text    : PT_RIO: [
+
+Line    : 470
+Pattern : FEDERAL
+Text    : FEDERAL: [],
+
+Line    : 473
+Pattern : LOTTERY
+Text    : (function applyLotteryOverridesFromEnv() {
+
+Line    : 475
+Pattern : PT_RIO
+Text    : const rawRio = String(process.env.KING_LOTTERIES_PT_RIO || "").trim();
+
+Line    : 481
+Pattern : PT_RIO
+Text    : if (arr.length) LOTTERIES_BY_KEY.PT_RIO = arr;
+
+Line    : 484
+Pattern : FEDERAL
+Text    : const rawFed = String(process.env.KING_LOTTERIES_FEDERAL || "").trim();
+
+Line    : 490
+Pattern : FEDERAL
+Text    : if (arrF.length) LOTTERIES_BY_KEY.FEDERAL = arrF;
+
+Line    : 495
+Pattern : FEDERAL
+Text    : const nFed = Array.isArray(LOTTERIES_BY_KEY.FEDERAL)
+
+Line    : 496
+Pattern : FEDERAL
+Text    : ? LOTTERIES_BY_KEY.FEDERAL.length
+
+Line    : 498
+Pattern : PT_RIO
+Text    : const nRio = Array.isArray(LOTTERIES_BY_KEY.PT_RIO)
+
+Line    : 499
+Pattern : PT_RIO
+Text    : ? LOTTERIES_BY_KEY.PT_RIO.length
+
+Line    : 501
+Pattern : FEDERAL
+Text    : console.log(`[OVERRIDE] PT_RIO lotteries=${nRio} | FEDERAL lotteries=${nFed}`);
+
+Line    : 501
+Pattern : PT_RIO
+Text    : console.log(`[OVERRIDE] PT_RIO lotteries=${nRio} | FEDERAL lotteries=${nFed}`);
+
+Line    : 508
+Pattern : LOTTERY
+Text    : function buildResultsUrl({ date, lotteryKey, lotteryId = null }) {
+
+Line    : 510
+Pattern : LOTTERY
+Text    : const lk = String(lotteryKey || "").trim().toUpperCase();
+
+Line    : 514
+Pattern : FEDERAL
+Text    : if (lk === "FEDERAL") {
+
+Line    : 516
+Pattern : FEDERAL
+Text    : `FEDERAL sem lotteryIds. Defina KING_LOTTERIES_FEDERAL="uuid1,uuid2,..." (ex.: o UUID do draw FEDERAL 20HS).`
+
+Line    : 516
+Pattern : LOTTERY
+Text    : `FEDERAL sem lotteryIds. Defina KING_LOTTERIES_FEDERAL="uuid1,uuid2,..." (ex.: o UUID do draw FEDERAL 20HS).`
+
+Line    : 519
+Pattern : LOTTERY
+Text    : throw new Error(`lotteryKey inválida: ${lk}`);
+
+Line    : 525
+Pattern : LOTTERY
+Text    : // ✅ se lotteryId for fornecido -> 1 request por lottery
+
+Line    : 526
+Pattern : LOTTERY
+Text    : if (lotteryId) {
+
+Line    : 527
+Pattern : LOTTERY
+Text    : params.append("lotteries[]", lotteryId);
+
+Line    : 603
+Pattern : PT_RIO
+Text    : DETAILS (HTML) fallback — PT_RIO 18h
+
+Line    : 605
+Pattern : LOTTERY
+Text    : function buildDetailsUrl({ date, lotteryKey }) {
+
+Line    : 606
+Pattern : LOTTERY
+Text    : const lk = String(lotteryKey || "").trim().toUpperCase();
+
+Line    : 608
+Pattern : LOTTERY
+Text    : // ✅ bate com o print: lottery=PT+RIO
+
+Line    : 609
+Pattern : PT_RIO
+Text    : const lot = lk === "PT_RIO" ? "PT RIO" : lk.replace(/_/g, " ");
+
+Line    : 612
+Pattern : LOTTERY
+Text    : "lottery=" +
+
+Line    : 702
+Pattern : LOTTERY
+Text    : async function tryHtmlDetailsFallback({ date, lotteryKey, closeHour }) {
+
+Line    : 703
+Pattern : LOTTERY
+Text    : const lk = String(lotteryKey || "").trim().toUpperCase();
+
+Line    : 704
+Pattern : LOTTERY
+Text    : const slot = normalizeCloseHourForLottery(closeHour || "", lk).slot;
+
+Line    : 707
+Pattern : PT_RIO
+Text    : // por enquanto: só PT_RIO 18:00 (não altera outros horários)
+
+Line    : 708
+Pattern : PT_RIO
+Text    : if (!(lk === "PT_RIO" && slot === "18:00")) {
+
+Line    : 712
+Pattern : LOTTERY
+Text    : const url = buildDetailsUrl({ date, lotteryKey: lk });
+
+Line    : 728
+Pattern : LOTTERY
+Text    : * Dedup key: date + close_hour(SLOT) + lottery_id (se existir)
+
+Line    : 730
+Pattern : LOTTERY
+Text    : function mergeAndDedupDraws(arrays, lotteryKey) {
+
+Line    : 737
+Pattern : LOTTERY
+Text    : const { slot } = normalizeCloseHourForLottery(d?.close_hour || "", lotteryKey);
+
+Line    : 740
+Pattern : LOTTERY
+Text    : pickLotteryId(d) ||
+
+Line    : 741
+Pattern : LOTTERY
+Text    : String(d?.lottery_name || d?.name || "").trim() ||
+
+Line    : 770
+Pattern : LOTTERY
+Text    : function summarizeCloseHours(draws, lotteryKey) {
+
+Line    : 773
+Pattern : LOTTERY
+Text    : const { slot } = normalizeCloseHourForLottery(d?.close_hour || "", lotteryKey);
+
+Line    : 781
+Pattern : LOTTERY
+Text    : * - Por default faz 1 request por lotteryId e mescla (evita “cap”/consolidação do endpoint)
+
+Line    : 782
+Pattern : LOTTERY
+Text    : * - Se KING_FETCH_PER_LOTTERY=0 -> faz 1 request único (modo antigo)
+
+Line    : 784
+Pattern : LOTTERY
+Text    : async function fetchKingResults({ date, lotteryKey }) {
+
+Line    : 785
+Pattern : LOTTERY
+Text    : const lk = String(lotteryKey || "").trim().toUpperCase();
+
+Line    : 788
+Pattern : FEDERAL
+Text    : if (lk === "FEDERAL") {
+
+Line    : 790
+Pattern : FEDERAL
+Text    : `FEDERAL sem lotteryIds. Defina KING_LOTTERIES_FEDERAL="uuid1,uuid2,..." para habilitar fetch.`
+
+Line    : 790
+Pattern : LOTTERY
+Text    : `FEDERAL sem lotteryIds. Defina KING_LOTTERIES_FEDERAL="uuid1,uuid2,..." para habilitar fetch.`
+
+Line    : 793
+Pattern : LOTTERY
+Text    : throw new Error(`lotteryKey inválida: ${lk}`);
+
+Line    : 796
+Pattern : LOTTERY
+Text    : if (!FETCH_PER_LOTTERY) {
+
+Line    : 797
+Pattern : LOTTERY
+Text    : const url = buildResultsUrl({ date, lotteryKey: lk });
+
+Line    : 801
+Pattern : LOTTERY
+Text    : // ✅ 1 request por lottery (sequencial: mais estável e respeita rate-limit)
+
+Line    : 818
+Pattern : LOTTERY
+Text    : for (const lotteryId of lotteries) {
+
+Line    : 819
+Pattern : LOTTERY
+Text    : const url = buildResultsUrl({ date, lotteryKey: lk, lotteryId });
+
+Line    : 824
+Pattern : LOTTERY
+Text    : // ✅ carimba o UUID do request em cada draw (a API nem sempre retorna lottery_id)
+
+Line    : 828
+Pattern : LOTTERY
+Text    : lottery_id: d?.lottery_id || lotteryId,
+
+Line    : 829
+Pattern : LOTTERY
+Text    : lotteryId: d?.lotteryId || lotteryId,
+
+Line    : 838
+Pattern : LOTTERY
+Text    : `[FETCH:PART] ${lk} ${date} lotteryId=${lotteryId} draws=${list.length} close_hours=[${closesPart.join(
+
+Line    : 848
+Pattern : LOTTERY
+Text    : errors.push({ lotteryId, msg });
+
+Line    : 851
+Pattern : LOTTERY
+Text    : `[FETCH:PART] ${lk} ${date} lotteryId=${lotteryId} ERROR=${msg} (seguindo...)`
+
+Line    : 863
+Pattern : LOTTERY
+Text    : ? ` errors=${errors.length} ids=[${errors.map((x) => x.lotteryId).join(",")}]`
+
+Line    : 867
+Pattern : LOTTERY
+Text    : `[FETCH] ${lk} ${date} per-lottery=${lotteries.length} -> merged_draws=${
+
+Line    : 891
+Pattern : LOTTERY
+Text    : function buildDrawRef({ draw, lotteryKey }) {
+
+Line    : 894
+Pattern : LOTTERY
+Text    : const { raw: closeRaw, slot: closeSlot } = normalizeCloseHourForLottery(
+
+Line    : 896
+Pattern : LOTTERY
+Text    : lotteryKey
+
+Line    : 899
+Pattern : LOTTERY
+Text    : const lotteryName = String(draw?.lottery_name || draw?.name || "SEM_NOME").trim();
+
+Line    : 901
+Pattern : LOTTERY
+Text    : const lotteryIdFromDraw = pickLotteryId(draw);
+
+Line    : 902
+Pattern : LOTTERY
+Text    : const lotteryIdPart = safeIdPart(lotteryIdFromDraw || lotteryName);
+
+Line    : 905
+Pattern : LOTTERY
+Text    : const drawId = `${safeIdPart(lotteryKey)}__${date}__${safeIdPart(
+
+Line    : 907
+Pattern : LOTTERY
+Text    : )}__${lotteryIdPart}`;
+
+Line    : 916
+Pattern : LOTTERY
+Text    : lotteryName,
+
+Line    : 917
+Pattern : LOTTERY
+Text    : lotteryIdFromDraw,
+
+Line    : 945
+Pattern : LOTTERY
+Text    : * - close_hour + lottery_key/lotteryKey filtrados em memória
+
+Line    : 951
+Pattern : LOTTERY
+Text    : async function checkSlotCompletion({ date, closeHour, lotteryKey }) {
+
+Line    : 953
+Pattern : LOTTERY
+Text    : const lk = String(lotteryKey || "").trim().toUpperCase();
+
+Line    : 954
+Pattern : LOTTERY
+Text    : const targetSlot = normalizeCloseHourForLottery(closeHour || "", lk).slot;
+
+Line    : 965
+Pattern : LOTTERY
+Text    : const lkSnake = String(d.lottery_key || "").trim().toUpperCase();
+
+Line    : 966
+Pattern : LOTTERY
+Text    : const lkCamel = String(d.lotteryKey || "").trim().toUpperCase();
+
+Line    : 971
+Pattern : LOTTERY
+Text    : const storedSlot = normalizeCloseHourForLottery(d.close_hour || "", lk).slot;
+
+Line    : 1001
+Pattern : LOTTERY
+Text    : lotteryKey,
+
+Line    : 1005
+Pattern : LOTTERY
+Text    : const lk = String(lotteryKey || "").trim().toUpperCase();
+
+Line    : 1006
+Pattern : LOTTERY
+Text    : const uf = resolveUfFromLotteryKey(lk); // ✅ UF correta (ex.: RJ)
+
+Line    : 1047
+Pattern : LOTTERY
+Text    : ? normalizeCloseHourForLottery(closeHour, lk).slot
+
+Line    : 1060
+Pattern : LOTTERY
+Text    : const { raw: closeRaw, slot: closeSlot } = normalizeCloseHourForLottery(
+
+Line    : 1098
+Pattern : LOTTERY
+Text    : const { drawId, drawRef, lotteryName, lotteryIdFromDraw } = buildDrawRef({
+
+Line    : 1100
+Pattern : LOTTERY
+Text    : lotteryKey: lk,
+
+Line    : 1133
+Pattern : LOTTERY
+Text    : lottery_key: lk,
+
+Line    : 1135
+Pattern : LOTTERY
+Text    : lottery_name: lotteryName,
+
+Line    : 1136
+Pattern : LOTTERY
+Text    : lottery_id: lotteryIdFromDraw || null,
+
+Line    : 1150
+Pattern : PT_RIO
+Text    : // (PT_RIO HH:09 vira "", então cai em null)
+
+Line    : 1212
+Pattern : LOTTERY
+Text    : lotteryKey: lk,
+
+Line    : 1243
+Pattern : LOTTERY
+Text    : ` | uf=${uf || "NULL"} lottery_key=${lk}` +
+
+Line    : 1270
+Pattern : LOTTERY
+Text    : * ✅ Cleanup automático: remove docs legados (lottery_id null) quando existe doc UUID no mesmo date+slot.
+
+Line    : 1274
+Pattern : LOTTERY
+Text    : async function cleanupLegacyDrawsForDate({ date, lotteryKey }) {
+
+Line    : 1275
+Pattern : LOTTERY
+Text    : const lk = String(lotteryKey || "").trim().toUpperCase();
+
+Line    : 1283
+Pattern : LOTTERY
+Text    : (r) => String(r.lottery_key || "").trim().toUpperCase() === lk
+
+Line    : 1300
+Pattern : LOTTERY
+Text    : const hasUuid = arr.some((x) => x.lottery_id && String(x.lottery_id).includes("-"));
+
+Line    : 1303
+Pattern : LOTTERY
+Text    : const leg = arr.filter((x) => !x.lottery_id);
+
+Line    : 1324
+Pattern : LOTTERY
+Text    : async function runImport({ date, lotteryKey = "PT_RIO", closeHour = null } = {}) {
+
+Line    : 1324
+Pattern : PT_RIO
+Text    : async function runImport({ date, lotteryKey = "PT_RIO", closeHour = null } = {}) {
+
+Line    : 1324
+Pattern : runImport
+Text    : async function runImport({ date, lotteryKey = "PT_RIO", closeHour = null } = {}) {
+
+Line    : 1329
+Pattern : LOTTERY
+Text    : const lk = String(lotteryKey || "").trim().toUpperCase();
+
+Line    : 1331
+Pattern : LOTTERY
+Text    : throw new Error(`Parâmetro "lotteryKey" inválida: ${lk}`);
+
+Line    : 1340
+Pattern : LOTTERY
+Text    : lotteryKey: lk,
+
+Line    : 1400
+Pattern : PT_RIO
+Text    : // ✅ SOFT OVERRIDE: PT_RIO 18:00 fora do calendário (controlado por env)
+
+Line    : 1402
+Pattern : PT_RIO
+Text    : lk === "PT_RIO" &&
+
+Line    : 1404
+Pattern : PT_RIO
+Text    : String(process.env.PT_RIO_SOFT_OVERRIDE_18 || "1").trim() === "1";
+
+Line    : 1406
+Pattern : PT_RIO
+Text    : // ✅ GATE POR CALENDÁRIO (PT_RIO)
+
+Line    : 1407
+Pattern : PT_RIO
+Text    : if (normalizedClose && lk === "PT_RIO") {
+
+Line    : 1415
+Pattern : PT_RIO
+Text    : "[CAL-OVERRIDE] PT_RIO " +
+
+Line    : 1426
+Pattern : LOTTERY
+Text    : lotteryKey: lk,
+
+Line    : 1477
+Pattern : LOTTERY
+Text    : let payload = await fetchKingResults({ date, lotteryKey: lk });
+
+Line    : 1492
+Pattern : LOTTERY
+Text    : lotteryKey: lk,
+
+Line    : 1522
+Pattern : LOTTERY
+Text    : lotteryKey: lk,
+
+Line    : 1578
+Pattern : LOTTERY
+Text    : lotteryKey: lk,
+
+Line    : 1610
+Pattern : LOTTERY
+Text    : lotteryKey: lk,
+
+Line    : 1659
+Pattern : LOTTERY
+Text    : lotteryKey: lk,
+
+Line    : 1677
+Pattern : LOTTERY
+Text    : lotteryKey: lk,
+
+Line    : 1760
+Pattern : LOTTERY
+Text    : const lotteryKey = process.argv[3] || "PT_RIO";
+
+Line    : 1760
+Pattern : PT_RIO
+Text    : const lotteryKey = process.argv[3] || "PT_RIO";
+
+Line    : 1765
+Pattern : FEDERAL
+Text    : "Uso: node backend/scripts/importKingApostas.js YYYY-MM-DD [PT_RIO|FEDERAL] [HH:MM]"
+
+Line    : 1765
+Pattern : PT_RIO
+Text    : "Uso: node backend/scripts/importKingApostas.js YYYY-MM-DD [PT_RIO|FEDERAL] [HH:MM]"
+
+Line    : 1769
+Pattern : LOTTERY
+Text    : const lk = String(lotteryKey || "").trim().toUpperCase();
+
+Line    : 1772
+Pattern : FEDERAL
+Text    : "Uso: node backend/scripts/importKingApostas.js YYYY-MM-DD [PT_RIO|FEDERAL] [HH:MM]"
+
+Line    : 1772
+Pattern : PT_RIO
+Text    : "Uso: node backend/scripts/importKingApostas.js YYYY-MM-DD [PT_RIO|FEDERAL] [HH:MM]"
+
+Line    : 1788
+Pattern : FEDERAL
+Text    : "Uso: node backend/scripts/importKingApostas.js YYYY-MM-DD [PT_RIO|FEDERAL] [HH:MM]"
+
+Line    : 1788
+Pattern : PT_RIO
+Text    : "Uso: node backend/scripts/importKingApostas.js YYYY-MM-DD [PT_RIO|FEDERAL] [HH:MM]"
+
+Line    : 1807
+Pattern : LOTTERY
+Text    : let payload = await fetchKingResults({ date, lotteryKey: lk });
+
+Line    : 1826
+Pattern : LOTTERY
+Text    : lotteryKey: lk,
+
+Line    : 1847
+Pattern : LOTTERY
+Text    : lotteryKey: lk,
+
+Line    : 1857
+Pattern : LOTTERY
+Text    : // ✅ cleanup automático de legado (somente quando per-lottery está ON)
+
+Line    : 1858
+Pattern : LOTTERY
+Text    : if (FETCH_PER_LOTTERY) {
+
+Line    : 1860
+Pattern : LOTTERY
+Text    : const c = await cleanupLegacyDrawsForDate({ date, lotteryKey: lk });
+
+Line    : 1880
+Pattern : runImport
+Text    : runImport,
+
+
+
+============================================================
+CONTEXTO DA LINHA 430 — LINHAS 395 ATÉ 475
+============================================================
+      395: 
+      396: /**
+      397:  * ✅ Normaliza o parâmetro closeHour (do CLI/scheduler) e evita log enganoso.
+      398:  * - Para FEDERAL: qualquer coisa vira slot=20:00, mas mantemos "requested" para log.
+      399:  */
+      400: function normalizeRequestedCloseHour(closeHour, lotteryKey) {
+      401:   const lk = String(lotteryKey || "").trim().toUpperCase();
+      402:   const requested = closeHour ? normalizeHHMM(closeHour) : null;
+      403:   const requestedIsValid = requested ? isHHMM(requested) : false;
+      404: 
+      405:   if (!requested) {
+      406:     return { requested: null, slot: null, note: null };
+      407:   }
+      408:   if (!requestedIsValid) {
+      409:     return { requested, slot: null, note: "invalid" };
+      410:   }
+      411: 
+      412:   // FEDERAL: slot único 20:00 (não fingir que o usuário pediu 20:00)
+      413:   if (lk === "FEDERAL") {
+      414:     const slot = "20:00";
+      415:     const note = requested !== slot ? `FEDERAL_slot_fixed(${requested}->${slot})` : null;
+      416:     return { requested, slot, note };
+      417:   }
+      418: 
+      419:   // outros: normalização normal por lotteryKey (PT_RIO min->00 etc.)
+      420:   const slot = normalizeCloseHourForLottery(requested, lk).slot;
+      421:   return { requested, slot: slot || null, note: null };
+      422: }
+      423: 
+      424: /**
+      425:  * Sanitiza string para docId do Firestore.
+      426:  */
+      427: function safeIdPart(input) {
+      428:   const s = String(input ?? "").trim();
+      429:   if (!s) return "NA";
+>>>   430:   return s
+      431:     .replace(/\s+/g, "_")
+      432:     .replace(/[\/\\?#\[\]]/g, "_")
+      433:     .replace(/:+/g, "-")
+      434:     .slice(0, 80);
+      435: }
+      436: 
+      437: function pickLotteryId(draw) {
+      438:   const candidates = [
+      439:     draw?.lottery_id,
+      440:     draw?.lotteryId,
+      441:     draw?.lottery_uuid,
+      442:     draw?.lotteryUuid,
+      443:     draw?.lottery,
+      444:     draw?.lottery_key,
+      445:   ];
+      446:   for (const c of candidates) {
+      447:     const s = String(c ?? "").trim();
+      448:     if (s) return s;
+      449:   }
+      450:   return null;
+      451: }
+      452: 
+      453: /**
+      454:  * Loterias (IDs) capturadas do Network.
+      455:  * Observação: a API pode consolidar em 1 draw por close_hour, mesmo havendo múltiplos IDs aqui.
+      456:  *
+      457:  * ✅ Agora aceita override via ENV:
+      458:  * - KING_LOTTERIES_PT_RIO="uuid1,uuid2,..."
+      459:  * - KING_LOTTERIES_FEDERAL="uuid1,uuid2,..."
+      460:  */
+      461: const LOTTERIES_BY_KEY = {
+      462:   PT_RIO: [
+      463:     "c168d9b3-97b7-42dc-a332-7815edaa51e2",
+      464:     "cbac7c11-e733-400b-ba4d-2dfe0cba4272",
+      465:     "98352455-8fd3-447d-ab3d-701dc3f7865f",
+      466:     "76c127b7-8157-46b6-a64a-ec7ed1574c9f",
+      467:     "8290329b-aac0-4a6a-9649-5feb6182cf4f",
+      468:     "d5123f7e-629d-43e9-a8fb-1385ff1cba45",
+      469:   ],
+      470:   FEDERAL: [],
+      471: };
+      472: 
+      473: (function applyLotteryOverridesFromEnv() {
+      474:   try {
+      475:     const rawRio = String(process.env.KING_LOTTERIES_PT_RIO || "").trim();
+
+============================================================
+CONTEXTO DA LINHA 454 — LINHAS 419 ATÉ 499
+============================================================
+      419:   // outros: normalização normal por lotteryKey (PT_RIO min->00 etc.)
+      420:   const slot = normalizeCloseHourForLottery(requested, lk).slot;
+      421:   return { requested, slot: slot || null, note: null };
+      422: }
+      423: 
+      424: /**
+      425:  * Sanitiza string para docId do Firestore.
+      426:  */
+      427: function safeIdPart(input) {
+      428:   const s = String(input ?? "").trim();
+      429:   if (!s) return "NA";
+      430:   return s
+      431:     .replace(/\s+/g, "_")
+      432:     .replace(/[\/\\?#\[\]]/g, "_")
+      433:     .replace(/:+/g, "-")
+      434:     .slice(0, 80);
+      435: }
+      436: 
+      437: function pickLotteryId(draw) {
+      438:   const candidates = [
+      439:     draw?.lottery_id,
+      440:     draw?.lotteryId,
+      441:     draw?.lottery_uuid,
+      442:     draw?.lotteryUuid,
+      443:     draw?.lottery,
+      444:     draw?.lottery_key,
+      445:   ];
+      446:   for (const c of candidates) {
+      447:     const s = String(c ?? "").trim();
+      448:     if (s) return s;
+      449:   }
+      450:   return null;
+      451: }
+      452: 
+      453: /**
+>>>   454:  * Loterias (IDs) capturadas do Network.
+      455:  * Observação: a API pode consolidar em 1 draw por close_hour, mesmo havendo múltiplos IDs aqui.
+      456:  *
+      457:  * ✅ Agora aceita override via ENV:
+      458:  * - KING_LOTTERIES_PT_RIO="uuid1,uuid2,..."
+      459:  * - KING_LOTTERIES_FEDERAL="uuid1,uuid2,..."
+      460:  */
+      461: const LOTTERIES_BY_KEY = {
+      462:   PT_RIO: [
+      463:     "c168d9b3-97b7-42dc-a332-7815edaa51e2",
+      464:     "cbac7c11-e733-400b-ba4d-2dfe0cba4272",
+      465:     "98352455-8fd3-447d-ab3d-701dc3f7865f",
+      466:     "76c127b7-8157-46b6-a64a-ec7ed1574c9f",
+      467:     "8290329b-aac0-4a6a-9649-5feb6182cf4f",
+      468:     "d5123f7e-629d-43e9-a8fb-1385ff1cba45",
+      469:   ],
+      470:   FEDERAL: [],
+      471: };
+      472: 
+      473: (function applyLotteryOverridesFromEnv() {
+      474:   try {
+      475:     const rawRio = String(process.env.KING_LOTTERIES_PT_RIO || "").trim();
+      476:     if (rawRio) {
+      477:       const arr = rawRio
+      478:         .split(",")
+      479:         .map((s) => String(s || "").trim())
+      480:         .filter(Boolean);
+      481:       if (arr.length) LOTTERIES_BY_KEY.PT_RIO = arr;
+      482:     }
+      483: 
+      484:     const rawFed = String(process.env.KING_LOTTERIES_FEDERAL || "").trim();
+      485:     if (rawFed) {
+      486:       const arrF = rawFed
+      487:         .split(",")
+      488:         .map((x) => String(x || "").trim())
+      489:         .filter(Boolean);
+      490:       if (arrF.length) LOTTERIES_BY_KEY.FEDERAL = arrF;
+      491:     }
+      492: 
+      493:     // debug leve (único, no lugar certo)
+      494:     if (KING_OVERRIDE_DEBUG) {
+      495:       const nFed = Array.isArray(LOTTERIES_BY_KEY.FEDERAL)
+      496:         ? LOTTERIES_BY_KEY.FEDERAL.length
+      497:         : 0;
+      498:       const nRio = Array.isArray(LOTTERIES_BY_KEY.PT_RIO)
+      499:         ? LOTTERIES_BY_KEY.PT_RIO.length
+
+============================================================
+CONTEXTO DA LINHA 1250 — LINHAS 1215 ATÉ 1295
+============================================================
+     1215:       proof.slotDocsFound = docs;
+     1216:       proof.alreadyCompleteCount = complete;
+     1217:       proof.alreadyCompleteAny = complete > 0;
+     1218:       proof.alreadyCompleteAll = complete >= proof.expectedTargets;
+     1219:     } else {
+     1220:       proof.slotDocsFound = 0;
+     1221:       proof.alreadyCompleteCount = 0;
+     1222:       proof.alreadyCompleteAny = false;
+     1223:       proof.alreadyCompleteAll = false;
+     1224:     }
+     1225: 
+     1226:     // savedCount “forte” para o scheduler:
+     1227:     if (!proof.apiHasPrizes) {
+     1228:       proof.targetSavedCount = 0;
+     1229:     } else if (skipIfAlreadyComplete && proof.alreadyCompleteAll) {
+     1230:       proof.targetSavedCount = 0;
+     1231:     } else {
+     1232:       proof.targetSavedCount = proof.targetWriteCount;
+     1233:     }
+     1234:   }
+     1235: 
+     1236:   console.log(
+     1237:     `[IMPORT] API draws=${totalDrawsFromApi} | match_close=${totalDrawsMatchedClose} | validos=${totalDrawsValid}` +
+     1238:       ` | draws_upserted=${totalDrawsUpserted} | draws_novos=${totalDrawsSaved}` +
+     1239:       ` | prizes_upserted=${totalPrizesUpserted} | prizes_novos=${totalPrizesSaved}` +
+     1240:       ` | skip_vazio=${skippedEmpty} | skip_invalido=${skippedInvalid} | skip_close=${skippedCloseHour}` +
+     1241:       ` | skip_complete=${skippedAlreadyComplete}` +
+     1242:       ` | CHECK_EXISTENCE=${CHECK_EXISTENCE ? "ON" : "OFF"}` +
+     1243:       ` | uf=${uf || "NULL"} lottery_key=${lk}` +
+     1244:       (proof.filterClose
+     1245:         ? ` | expected=${proof.expectedTargets} complete=${proof.alreadyCompleteCount} slotDocs=${proof.slotDocsFound} apiTargets=${proof.apiReturnedTargetDraws}`
+     1246:         : "")
+     1247:   );
+     1248: 
+     1249:   return {
+>>>  1250:     totalDrawsFromApi,
+     1251:     totalDrawsMatchedClose,
+     1252:     totalDrawsValid,
+     1253: 
+     1254:     totalDrawsSaved,
+     1255:     totalDrawsUpserted,
+     1256: 
+     1257:     totalPrizesSaved,
+     1258:     totalPrizesUpserted,
+     1259: 
+     1260:     skippedEmpty,
+     1261:     skippedInvalid,
+     1262:     skippedCloseHour,
+     1263:     skippedAlreadyComplete,
+     1264: 
+     1265:     proof,
+     1266:   };
+     1267: }
+     1268: 
+     1269: /**
+     1270:  * ✅ Cleanup automático: remove docs legados (lottery_id null) quando existe doc UUID no mesmo date+slot.
+     1271:  * - Usa query mínima por date (sem índice composto)
+     1272:  * - Seguro: só apaga legado se existe UUID no slot
+     1273:  */
+     1274: async function cleanupLegacyDrawsForDate({ date, lotteryKey }) {
+     1275:   const lk = String(lotteryKey || "").trim().toUpperCase();
+     1276:   if (!date || !isISODate(date) || !lk)
+     1277:     return { ok: false, deleted: 0, slots: 0, reason: "bad_args" };
+     1278: 
+     1279:   const snap = await db.collection("draws").where("date", "==", date).get();
+     1280:   const rows = snap.docs.map((doc) => ({ ref: doc.ref, id: doc.id, ...doc.data() }));
+     1281: 
+     1282:   const mine = rows.filter(
+     1283:     (r) => String(r.lottery_key || "").trim().toUpperCase() === lk
+     1284:   );
+     1285: 
+     1286:   const bySlot = new Map();
+     1287:   for (const r of mine) {
+     1288:     const slot = String(r.close_hour || "").trim();
+     1289:     if (!slot) continue;
+     1290:     if (!bySlot.has(slot)) bySlot.set(slot, []);
+     1291:     bySlot.get(slot).push(r);
+     1292:   }
+     1293: 
+     1294:   let deleted = 0;
+     1295:   let slots = 0;
+
+============================================================
+CONTEXTO DA LINHA 1280 — LINHAS 1245 ATÉ 1325
+============================================================
+     1245:         ? ` | expected=${proof.expectedTargets} complete=${proof.alreadyCompleteCount} slotDocs=${proof.slotDocsFound} apiTargets=${proof.apiReturnedTargetDraws}`
+     1246:         : "")
+     1247:   );
+     1248: 
+     1249:   return {
+     1250:     totalDrawsFromApi,
+     1251:     totalDrawsMatchedClose,
+     1252:     totalDrawsValid,
+     1253: 
+     1254:     totalDrawsSaved,
+     1255:     totalDrawsUpserted,
+     1256: 
+     1257:     totalPrizesSaved,
+     1258:     totalPrizesUpserted,
+     1259: 
+     1260:     skippedEmpty,
+     1261:     skippedInvalid,
+     1262:     skippedCloseHour,
+     1263:     skippedAlreadyComplete,
+     1264: 
+     1265:     proof,
+     1266:   };
+     1267: }
+     1268: 
+     1269: /**
+     1270:  * ✅ Cleanup automático: remove docs legados (lottery_id null) quando existe doc UUID no mesmo date+slot.
+     1271:  * - Usa query mínima por date (sem índice composto)
+     1272:  * - Seguro: só apaga legado se existe UUID no slot
+     1273:  */
+     1274: async function cleanupLegacyDrawsForDate({ date, lotteryKey }) {
+     1275:   const lk = String(lotteryKey || "").trim().toUpperCase();
+     1276:   if (!date || !isISODate(date) || !lk)
+     1277:     return { ok: false, deleted: 0, slots: 0, reason: "bad_args" };
+     1278: 
+     1279:   const snap = await db.collection("draws").where("date", "==", date).get();
+>>>  1280:   const rows = snap.docs.map((doc) => ({ ref: doc.ref, id: doc.id, ...doc.data() }));
+     1281: 
+     1282:   const mine = rows.filter(
+     1283:     (r) => String(r.lottery_key || "").trim().toUpperCase() === lk
+     1284:   );
+     1285: 
+     1286:   const bySlot = new Map();
+     1287:   for (const r of mine) {
+     1288:     const slot = String(r.close_hour || "").trim();
+     1289:     if (!slot) continue;
+     1290:     if (!bySlot.has(slot)) bySlot.set(slot, []);
+     1291:     bySlot.get(slot).push(r);
+     1292:   }
+     1293: 
+     1294:   let deleted = 0;
+     1295:   let slots = 0;
+     1296:   let batch = db.batch();
+     1297:   let ops = 0;
+     1298: 
+     1299:   for (const [slot, arr] of bySlot.entries()) {
+     1300:     const hasUuid = arr.some((x) => x.lottery_id && String(x.lottery_id).includes("-"));
+     1301:     if (!hasUuid) continue;
+     1302: 
+     1303:     const leg = arr.filter((x) => !x.lottery_id);
+     1304:     if (!leg.length) continue;
+     1305: 
+     1306:     for (const d of leg) {
+     1307:       batch.delete(d.ref);
+     1308:       deleted += 1;
+     1309:       ops += 1;
+     1310:       if (ops >= 450) {
+     1311:         await batch.commit();
+     1312:         batch = db.batch();
+     1313:         ops = 0;
+     1314:       }
+     1315:     }
+     1316:     slots += 1;
+     1317:   }
+     1318: 
+     1319:   if (ops > 0) await batch.commit();
+     1320: 
+     1321:   return { ok: true, deleted, slots };
+     1322: }
+     1323: 
+     1324: async function runImport({ date, lotteryKey = "PT_RIO", closeHour = null } = {}) {
+     1325:   if (!date || !isISODate(date)) {
+
+============================================================
+CONTEXTO DA LINHA 1300 — LINHAS 1265 ATÉ 1345
+============================================================
+     1265:     proof,
+     1266:   };
+     1267: }
+     1268: 
+     1269: /**
+     1270:  * ✅ Cleanup automático: remove docs legados (lottery_id null) quando existe doc UUID no mesmo date+slot.
+     1271:  * - Usa query mínima por date (sem índice composto)
+     1272:  * - Seguro: só apaga legado se existe UUID no slot
+     1273:  */
+     1274: async function cleanupLegacyDrawsForDate({ date, lotteryKey }) {
+     1275:   const lk = String(lotteryKey || "").trim().toUpperCase();
+     1276:   if (!date || !isISODate(date) || !lk)
+     1277:     return { ok: false, deleted: 0, slots: 0, reason: "bad_args" };
+     1278: 
+     1279:   const snap = await db.collection("draws").where("date", "==", date).get();
+     1280:   const rows = snap.docs.map((doc) => ({ ref: doc.ref, id: doc.id, ...doc.data() }));
+     1281: 
+     1282:   const mine = rows.filter(
+     1283:     (r) => String(r.lottery_key || "").trim().toUpperCase() === lk
+     1284:   );
+     1285: 
+     1286:   const bySlot = new Map();
+     1287:   for (const r of mine) {
+     1288:     const slot = String(r.close_hour || "").trim();
+     1289:     if (!slot) continue;
+     1290:     if (!bySlot.has(slot)) bySlot.set(slot, []);
+     1291:     bySlot.get(slot).push(r);
+     1292:   }
+     1293: 
+     1294:   let deleted = 0;
+     1295:   let slots = 0;
+     1296:   let batch = db.batch();
+     1297:   let ops = 0;
+     1298: 
+     1299:   for (const [slot, arr] of bySlot.entries()) {
+>>>  1300:     const hasUuid = arr.some((x) => x.lottery_id && String(x.lottery_id).includes("-"));
+     1301:     if (!hasUuid) continue;
+     1302: 
+     1303:     const leg = arr.filter((x) => !x.lottery_id);
+     1304:     if (!leg.length) continue;
+     1305: 
+     1306:     for (const d of leg) {
+     1307:       batch.delete(d.ref);
+     1308:       deleted += 1;
+     1309:       ops += 1;
+     1310:       if (ops >= 450) {
+     1311:         await batch.commit();
+     1312:         batch = db.batch();
+     1313:         ops = 0;
+     1314:       }
+     1315:     }
+     1316:     slots += 1;
+     1317:   }
+     1318: 
+     1319:   if (ops > 0) await batch.commit();
+     1320: 
+     1321:   return { ok: true, deleted, slots };
+     1322: }
+     1323: 
+     1324: async function runImport({ date, lotteryKey = "PT_RIO", closeHour = null } = {}) {
+     1325:   if (!date || !isISODate(date)) {
+     1326:     throw new Error('Parâmetro "date" inválido. Use YYYY-MM-DD.');
+     1327:   }
+     1328: 
+     1329:   const lk = String(lotteryKey || "").trim().toUpperCase();
+     1330:   if (!lk || !LOTTERIES_BY_KEY[lk]) {
+     1331:     throw new Error(`Parâmetro "lotteryKey" inválida: ${lk}`);
+     1332:   }
+     1333: 
+     1334:   // ✅ BLINDAGEM: nunca importar data futura (evita “sujar” FS por engano)
+     1335:   const todayBR = todayYMDLocal();
+     1336:   if (!ALLOW_FUTURE_DATE && isFutureISODate(date)) {
+     1337:     const norm = normalizeRequestedCloseHour(closeHour, lk);
+     1338:     return {
+     1339:       ok: true,
+     1340:       lotteryKey: lk,
+     1341:       date,
+     1342:       closeHour: norm.slot || null,
+     1343: 
+     1344:       requestedCloseHour: norm.requested || null,
+     1345: 
+
+============================================================
+CONTEXTO DA LINHA 1331 — LINHAS 1296 ATÉ 1376
+============================================================
+     1296:   let batch = db.batch();
+     1297:   let ops = 0;
+     1298: 
+     1299:   for (const [slot, arr] of bySlot.entries()) {
+     1300:     const hasUuid = arr.some((x) => x.lottery_id && String(x.lottery_id).includes("-"));
+     1301:     if (!hasUuid) continue;
+     1302: 
+     1303:     const leg = arr.filter((x) => !x.lottery_id);
+     1304:     if (!leg.length) continue;
+     1305: 
+     1306:     for (const d of leg) {
+     1307:       batch.delete(d.ref);
+     1308:       deleted += 1;
+     1309:       ops += 1;
+     1310:       if (ops >= 450) {
+     1311:         await batch.commit();
+     1312:         batch = db.batch();
+     1313:         ops = 0;
+     1314:       }
+     1315:     }
+     1316:     slots += 1;
+     1317:   }
+     1318: 
+     1319:   if (ops > 0) await batch.commit();
+     1320: 
+     1321:   return { ok: true, deleted, slots };
+     1322: }
+     1323: 
+     1324: async function runImport({ date, lotteryKey = "PT_RIO", closeHour = null } = {}) {
+     1325:   if (!date || !isISODate(date)) {
+     1326:     throw new Error('Parâmetro "date" inválido. Use YYYY-MM-DD.');
+     1327:   }
+     1328: 
+     1329:   const lk = String(lotteryKey || "").trim().toUpperCase();
+     1330:   if (!lk || !LOTTERIES_BY_KEY[lk]) {
+>>>  1331:     throw new Error(`Parâmetro "lotteryKey" inválida: ${lk}`);
+     1332:   }
+     1333: 
+     1334:   // ✅ BLINDAGEM: nunca importar data futura (evita “sujar” FS por engano)
+     1335:   const todayBR = todayYMDLocal();
+     1336:   if (!ALLOW_FUTURE_DATE && isFutureISODate(date)) {
+     1337:     const norm = normalizeRequestedCloseHour(closeHour, lk);
+     1338:     return {
+     1339:       ok: true,
+     1340:       lotteryKey: lk,
+     1341:       date,
+     1342:       closeHour: norm.slot || null,
+     1343: 
+     1344:       requestedCloseHour: norm.requested || null,
+     1345: 
+     1346:       blocked: true,
+     1347:       blockedReason: "future_date",
+     1348:       todayBR,
+     1349: 
+     1350:       captured: false,
+     1351:       apiHasPrizes: null,
+     1352:       alreadyCompleteAny: null,
+     1353:       alreadyCompleteAll: null,
+     1354:       expectedTargets: null,
+     1355:       alreadyCompleteCount: null,
+     1356:       slotDocsFound: null,
+     1357:       apiReturnedTargetDraws: null,
+     1358:       savedCount: null,
+     1359:       writeCount: null,
+     1360:       targetDrawIds: null,
+     1361:       tookMs: 0,
+     1362: 
+     1363:       totalDrawsFromApi: 0,
+     1364:       totalDrawsMatchedClose: 0,
+     1365:       totalDrawsValid: 0,
+     1366:       totalDrawsSaved: 0,
+     1367:       totalDrawsUpserted: 0,
+     1368:       totalPrizesSaved: 0,
+     1369:       totalPrizesUpserted: 0,
+     1370:       skippedEmpty: 0,
+     1371:       skippedInvalid: 0,
+     1372:       skippedCloseHour: 0,
+     1373:       skippedAlreadyComplete: 0,
+     1374:       proof: {
+     1375:         filterClose: norm.slot || null,
+     1376:         apiHasPrizes: false,
+
+============================================================
+CONTEXTO DA LINHA 1360 — LINHAS 1325 ATÉ 1405
+============================================================
+     1325:   if (!date || !isISODate(date)) {
+     1326:     throw new Error('Parâmetro "date" inválido. Use YYYY-MM-DD.');
+     1327:   }
+     1328: 
+     1329:   const lk = String(lotteryKey || "").trim().toUpperCase();
+     1330:   if (!lk || !LOTTERIES_BY_KEY[lk]) {
+     1331:     throw new Error(`Parâmetro "lotteryKey" inválida: ${lk}`);
+     1332:   }
+     1333: 
+     1334:   // ✅ BLINDAGEM: nunca importar data futura (evita “sujar” FS por engano)
+     1335:   const todayBR = todayYMDLocal();
+     1336:   if (!ALLOW_FUTURE_DATE && isFutureISODate(date)) {
+     1337:     const norm = normalizeRequestedCloseHour(closeHour, lk);
+     1338:     return {
+     1339:       ok: true,
+     1340:       lotteryKey: lk,
+     1341:       date,
+     1342:       closeHour: norm.slot || null,
+     1343: 
+     1344:       requestedCloseHour: norm.requested || null,
+     1345: 
+     1346:       blocked: true,
+     1347:       blockedReason: "future_date",
+     1348:       todayBR,
+     1349: 
+     1350:       captured: false,
+     1351:       apiHasPrizes: null,
+     1352:       alreadyCompleteAny: null,
+     1353:       alreadyCompleteAll: null,
+     1354:       expectedTargets: null,
+     1355:       alreadyCompleteCount: null,
+     1356:       slotDocsFound: null,
+     1357:       apiReturnedTargetDraws: null,
+     1358:       savedCount: null,
+     1359:       writeCount: null,
+>>>  1360:       targetDrawIds: null,
+     1361:       tookMs: 0,
+     1362: 
+     1363:       totalDrawsFromApi: 0,
+     1364:       totalDrawsMatchedClose: 0,
+     1365:       totalDrawsValid: 0,
+     1366:       totalDrawsSaved: 0,
+     1367:       totalDrawsUpserted: 0,
+     1368:       totalPrizesSaved: 0,
+     1369:       totalPrizesUpserted: 0,
+     1370:       skippedEmpty: 0,
+     1371:       skippedInvalid: 0,
+     1372:       skippedCloseHour: 0,
+     1373:       skippedAlreadyComplete: 0,
+     1374:       proof: {
+     1375:         filterClose: norm.slot || null,
+     1376:         apiHasPrizes: false,
+     1377:         apiReturnedTargetDraws: 0,
+     1378:         targetDrawIds: [],
+     1379:         inferredDate: null,
+     1380:         expectedTargets: 0,
+     1381:         slotDocsFound: 0,
+     1382:         alreadyCompleteCount: 0,
+     1383:         alreadyCompleteAny: false,
+     1384:         alreadyCompleteAll: false,
+     1385:         targetWriteCount: 0,
+     1386:         targetSavedCount: 0,
+     1387:       },
+     1388:     };
+     1389:   }
+     1390: 
+     1391:   // ✅ closeHour do scheduler: normaliza SEM log enganoso
+     1392:   const norm = normalizeRequestedCloseHour(closeHour, lk);
+     1393:   if (norm.note === "invalid") {
+     1394:     throw new Error('Parâmetro "closeHour" inválido. Use HH:MM.');
+     1395:   }
+     1396:   const normalizedClose = norm.slot || null;
+     1397: 
+     1398:   const startedAt = Date.now();
+     1399: 
+     1400:   // ✅ SOFT OVERRIDE: PT_RIO 18:00 fora do calendário (controlado por env)
+     1401:   const allowSoftOverride18 =
+     1402:     lk === "PT_RIO" &&
+     1403:     normalizedClose === "18:00" &&
+     1404:     String(process.env.PT_RIO_SOFT_OVERRIDE_18 || "1").trim() === "1";
+     1405: 

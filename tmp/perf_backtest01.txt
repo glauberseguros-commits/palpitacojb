@@ -1,0 +1,254 @@
+
+================================================================================
+BUSCA: bootstrapStatus
+================================================================================
+C:\Users\glaub\palpitaco\backend\engine\top3HistorySync.js:194: bootstrapStatus: "stale",
+C:\Users\glaub\palpitaco\backend\engine\top3HistorySync.js:268: metadata?.bootstrapStatus !== "complete"
+C:\Users\glaub\palpitaco\backend\engine\top3HistorySync.js:335: bootstrapStatus: "complete",
+C:\Users\glaub\palpitaco\backend\engine\top3PredictionService.js:203: metadata?.bootstrapStatus === "complete";
+C:\Users\glaub\palpitaco\backend\engine\top3PredictionService.js:882: historyBootstrapStatus:
+C:\Users\glaub\palpitaco\backend\engine\top3PredictionService.js:883: historyMetadata?.bootstrapStatus || null,
+C:\Users\glaub\palpitaco\backend\engine\top3PredictionService.js:903: historyBootstrapStatus:
+C:\Users\glaub\palpitaco\backend\engine\top3PredictionService.js:904: historyMetadata?.bootstrapStatus || null,
+C:\Users\glaub\palpitaco\backend\scripts\backtestTop3Official.js:829: metadata?.bootstrapStatus !==
+C:\Users\glaub\palpitaco\backend\scripts\backtestTop3Official.js:1341: bootstrapStatus:
+C:\Users\glaub\palpitaco\backend\scripts\backtestTop3Official.js:1342: metadata?.bootstrapStatus ||
+C:\Users\glaub\palpitaco\backend\workers\bootstrapTop3History.js:299: bootstrapStatus:
+
+================================================================================
+BUSCA: runBacktest
+================================================================================
+
+================================================================================
+BUSCA: backtest
+================================================================================
+C:\Users\glaub\palpitaco\backend\scripts\auditTop3E08DifferencesExperimental.js:7: runOfficialBacktest,
+C:\Users\glaub\palpitaco\backend\scripts\auditTop3E08DifferencesExperimental.js:8: } = require("./backtestTop3Official");
+C:\Users\glaub\palpitaco\backend\scripts\auditTop3E08DifferencesExperimental.js:178: await runOfficialBacktest(
+C:\Users\glaub\palpitaco\backend\scripts\auditTop3E08DifferencesExperimental.js:189: await runOfficialBacktest(
+C:\Users\glaub\palpitaco\backend\scripts\backtestTop3AblationExperimental.js:16: runOfficialBacktest,
+C:\Users\glaub\palpitaco\backend\scripts\backtestTop3AblationExperimental.js:17: } = require("./backtestTop3Official");
+C:\Users\glaub\palpitaco\backend\scripts\backtestTop3AblationExperimental.js:426: return await runOfficialBacktest(
+C:\Users\glaub\palpitaco\backend\scripts\backtestTop3E07Experimental.js:7: runOfficialBacktest,
+C:\Users\glaub\palpitaco\backend\scripts\backtestTop3E07Experimental.js:8: } = require("./backtestTop3Official");
+C:\Users\glaub\palpitaco\backend\scripts\backtestTop3E07Experimental.js:139: "E07 - BACKTEST COMPARATIVO"
+C:\Users\glaub\palpitaco\backend\scripts\backtestTop3E07Experimental.js:163: await runOfficialBacktest(
+C:\Users\glaub\palpitaco\backend\scripts\backtestTop3E07Experimental.js:173: await runOfficialBacktest(
+C:\Users\glaub\palpitaco\backend\scripts\backtestTop3E08Experimental.js:7: runOfficialBacktest,
+C:\Users\glaub\palpitaco\backend\scripts\backtestTop3E08Experimental.js:8: } = require("./backtestTop3Official");
+C:\Users\glaub\palpitaco\backend\scripts\backtestTop3E08Experimental.js:111: "E08 - BACKTEST DE RERANKING"
+C:\Users\glaub\palpitaco\backend\scripts\backtestTop3E08Experimental.js:163: await runOfficialBacktest(
+C:\Users\glaub\palpitaco\backend\scripts\backtestTop3E08Experimental.js:174: await runOfficialBacktest(
+C:\Users\glaub\palpitaco\backend\scripts\backtestTop3Official.js:646: "TOP3 OFFICIAL BACKTEST"
+C:\Users\glaub\palpitaco\backend\scripts\backtestTop3Official.js:774: async function runOfficialBacktest(
+C:\Users\glaub\palpitaco\backend\scripts\backtestTop3Official.js:1270: `[BACKTEST] ${done}/${selectedIndexes.length} | avaliados=${globalBucket.evaluated} | erros=${globalBucket.errors}`
+C:\Users\glaub\palpitaco\backend\scripts\backtestTop3Official.js:1369: "TOP3 OFFICIAL BACKTEST"
+C:\Users\glaub\palpitaco\backend\scripts\backtestTop3Official.js:1400: await runOfficialBacktest(
+C:\Users\glaub\palpitaco\backend\scripts\backtestTop3Official.js:1427: `top3_official_backtest_${suffix}.json`
+C:\Users\glaub\palpitaco\backend\scripts\backtestTop3Official.js:1432: `top3_official_backtest_${suffix}.txt`
+C:\Users\glaub\palpitaco\backend\scripts\backtestTop3Official.js:1487: runOfficialBacktest,
+C:\Users\glaub\palpitaco\src\dev\runAuditTop3.js:9: auditTop3Backtest,
+C:\Users\glaub\palpitaco\src\dev\runAuditTop3.js:59: console.log("[BACKTEST TOP3] ALVO EXCLUSIVO: GRUPO DO 1º PRÊMIO");
+C:\Users\glaub\palpitaco\src\dev\runAuditTop3.js:60: console.log("[BACKTEST TOP3] Os três itens são candidatos ao 1º prêmio.");
+C:\Users\glaub\palpitaco\src\dev\runAuditTop3.js:93: console.log("[BACKTEST TOP3] Base disponível:", minDate, "até", maxDate);
+C:\Users\glaub\palpitaco\src\dev\runAuditTop3.js:94: console.log("[BACKTEST TOP3] Período auditado:", dateFrom, "até", dateTo);
+C:\Users\glaub\palpitaco\src\dev\runAuditTop3.js:96: "[BACKTEST TOP3] Leitura:",
+C:\Users\glaub\palpitaco\src\dev\runAuditTop3.js:116: console.log("[BACKTEST TOP3] Sorteios carregados:", draws.length);
+C:\Users\glaub\palpitaco\src\dev\runAuditTop3.js:117: console.log("[BACKTEST TOP3] Dias com resultados:", countUniqueDays(draws));
+C:\Users\glaub\palpitaco\src\dev\runAuditTop3.js:123: const report = auditTop3Backtest({
+C:\Users\glaub\palpitaco\src\dev\runAuditTop3.js:206: console.log("[BACKTEST TOP3] RESULTADO");
+C:\Users\glaub\palpitaco\src\dev\runAuditTop3.js:211: console.log("[BACKTEST TOP3] HISTÓRICO UTILIZADO");
+C:\Users\glaub\palpitaco\src\dev\runAuditTop3.js:215: console.log("[BACKTEST TOP3] Tempo total:", elapsedSeconds, "segundos");
+C:\Users\glaub\palpitaco\src\dev\runAuditTop3.js:221: console.log("[BACKTEST TOP3] Auditoria concluída.");
+C:\Users\glaub\palpitaco\src\dev\runAuditTop3.js:224: console.error("[BACKTEST TOP3] FALHA:", error);
+C:\Users\glaub\palpitaco\src\pages\Admin\Admin.jsx:25: key: "backtests",
+C:\Users\glaub\palpitaco\src\pages\Admin\Admin.jsx:27: title: "Backtests",
+C:\Users\glaub\palpitaco\src\pages\Admin\Admin.jsx:124: interna. Backtests, métricas, logs e auditorias reais ainda não
+C:\Users\glaub\palpitaco\src\pages\Admin\AdminLogin.jsx:262: backtests e ferramentas internas.
+C:\Users\glaub\palpitaco\src\pages\Top3\__tests__\top3.backtest.layers.test.js:153: test("backtest TOP3 PT_RIO - camadas e transições", async () => {
+C:\Users\glaub\palpitaco\src\pages\Top3\__tests__\top3.backtest.layers.test.js:285: console.log("\n================ BACKTEST TOP3 PT_RIO (CAMADAS) ================");
+C:\Users\glaub\palpitaco\src\pages\Top3\__tests__\top3.backtest.test.js:164: test("backtest TOP3 PT_RIO - últimos 180 dias", async () => {
+C:\Users\glaub\palpitaco\src\pages\Top3\__tests__\top3.backtest.test.js:279: console.log("\n================ BACKTEST TOP3 PT_RIO ================");
+C:\Users\glaub\palpitaco\src\pages\Top3\__tests__\top3.public-api.node.test.js:6: "auditTop3Backtest",
+C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js:4163: export function auditTop3Backtest({
+C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js:4163: export function auditTop3Backtest({
+C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.js:4517: export function auditTop3Backtest({
+C:\Users\glaub\palpitaco\src\pages\Top3\top3.public-api.js:20: auditTop3Backtest,
+C:\Users\glaub\palpitaco\src\pages\Top3\Top3View.jsx:1247: // TODO_BACKTEST_REAL
+C:\Users\glaub\palpitaco\src\pages\Top3\Top3View.jsx:1248: // Os cards estatísticos deverão consumir auditTop3Backtest()
+
+================================================================================
+BUSCA: scoreEngineUnified
+================================================================================
+C:\Users\glaub\palpitaco\backend\engine\scoreEngineE08Experimental.js:5: } = require("./scoreEngineUnified");
+C:\Users\glaub\palpitaco\backend\engine\scoreEngineV4Experimental.js:5: } = require("./scoreEngineUnified");
+C:\Users\glaub\palpitaco\backend\engine\top3PredictionService.js:15: } = require("./scoreEngineUnified");
+C:\Users\glaub\palpitaco\backend\scripts\backtestTop3Official.js:14: } = require("../engine/scoreEngineUnified");
+C:\Users\glaub\palpitaco\backend\scripts\importKingApostas.js:166: } = require("../engine/scoreEngineUnified");
+
+================================================================================
+BUSCA: scoreEngine
+================================================================================
+C:\Users\glaub\palpitaco\backend\engine\bootstrapSnapshot.js:8: const { applyScoreEngine } = require("../../src/utils/scoreEngine");
+C:\Users\glaub\palpitaco\backend\engine\bootstrapSnapshot.js:25: const rankingScored = applyScoreEngine(ranking);
+C:\Users\glaub\palpitaco\backend\engine\hypothesisEngine.js:9: * pontuadas pelo ScoreEngineV2.
+C:\Users\glaub\palpitaco\backend\engine\scoreEngineE08Experimental.js:5: } = require("./scoreEngineUnified");
+C:\Users\glaub\palpitaco\backend\engine\scoreEngineV4Experimental.js:5: } = require("./scoreEngineUnified");
+C:\Users\glaub\palpitaco\backend\engine\top3PredictionService.js:15: } = require("./scoreEngineUnified");
+C:\Users\glaub\palpitaco\backend\scripts\auditTop3E08DifferencesExperimental.js:12: } = require("../engine/scoreEngineE08Experimental");
+C:\Users\glaub\palpitaco\backend\scripts\backtestTop3E07Experimental.js:12: } = require("../engine/scoreEngineV4Experimental");
+C:\Users\glaub\palpitaco\backend\scripts\backtestTop3E08Experimental.js:12: } = require("../engine/scoreEngineE08Experimental");
+C:\Users\glaub\palpitaco\backend\scripts\backtestTop3Official.js:14: } = require("../engine/scoreEngineUnified");
+C:\Users\glaub\palpitaco\backend\scripts\importKingApostas.js:166: } = require("../engine/scoreEngineUnified");
+C:\Users\glaub\palpitaco\backend\scripts\testPredictionRun.js:5: // O ScoreEngineV1 será descontinuado após a integração completa.
+C:\Users\glaub\palpitaco\backend\scripts\testPredictionRun.js:8: // O ScoreEngineV1 será descontinuado após a integração completa.
+C:\Users\glaub\palpitaco\backend\scripts\testPredictionRun.js:9: const { rankingToPredictions } = require("../engine/scoreEngineV1");
+fied");
+C:\Users\glaub\palpitaco\backend\engine\top3PredictionService.js:15: } = require("./scoreEngineUnified");
+C:\Users\glaub\palpitaco\src\pages\Dashboard\Dashboard.jsx:32: import { applyScoreEngine } from "../../utils/scoreEngine";
+C:\Users\glaub\palpitaco\src\pages\Dashboard\Dashboard.jsx:1416: return applyScoreEngine(base);
+C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js:18: import { scoreRanking } from "./modules/scoreEngine/scoreEngineV2";
+C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js:18: import { scoreRanking } from "./modules/scoreEngine/scoreEngineV2";
+C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.js:18: import { scoreRanking } from "./modules/scoreEngine/scoreEngineV2";
+C:\Users\glaub\palpitaco\src\pages\Top3\top3.public-api.js:52: } from "./modules/scoreEngine/scoreEngineV2";
+C:\Users\glaub\palpitaco\src\pages\Top3\top3.public-api.js:56: } from "./modules/scoreEngine/evidenceEngine";
+C:\Users\glaub\palpitaco\src\pages\Top3\top3.public-api.js:60: } from "./modules/scoreEngine/contextEvidence";
+C:\Users\glaub\palpitaco\src\pages\Top3\top3.public-api.js:64: } from "./modules/scoreEngine/frequencyEvidence";
+C:\Users\glaub\palpitaco\src\services\statisticsEngine.js:5: import { applyScoreEngine } from "../utils/scoreEngine";
+C:\Users\glaub\palpitaco\src\services\statisticsEngine.js:58: const rankingScored = applyScoreEngine(ranking);
+C:\Users\glaub\palpitaco\src\utils\scoreEngine.js:1: export function applyScoreEngine(ranking = [], opts = {}) {
+
+================================================================================
+BUSCA: performance
+================================================================================
+C:\Users\glaub\palpitaco\backend\node_modules\@babel\parser\typings\babel-parser.d.ts:166: * It can provide up to 30% performance improvement when the input code has many comments.
+C:\Users\glaub\palpitaco\backend\node_modules\@firebase\database\dist\node-esm\src\api\Reference_impl.d.ts:1029: * them via the .indexOn rule in your Security Rules for better performance. See
+C:\Users\glaub\palpitaco\backend\node_modules\@firebase\database\dist\node-esm\index.node.esm.js:3393: `${indexPath} to your security rules for better performance.`);
+C:\Users\glaub\palpitaco\backend\node_modules\@firebase\database\dist\node-esm\index.node.esm.js:13294: * them via the .indexOn rule in your Security Rules for better performance. See
+C:\Users\glaub\palpitaco\backend\node_modules\@firebase\database\dist\src\api\Reference_impl.d.ts:1029: * them via the .indexOn rule in your Security Rules for better performance. See
+C:\Users\glaub\palpitaco\backend\node_modules\@firebase\database\dist\index.cjs.js:3393: `${indexPath} to your security rules for better performance.`);
+C:\Users\glaub\palpitaco\backend\node_modules\@firebase\database\dist\index.cjs.js:13294: * them via the .indexOn rule in your Security Rules for better performance. See
+C:\Users\glaub\palpitaco\backend\node_modules\@firebase\database\dist\index.esm.js:3389: `${indexPath} to your security rules for better performance.`);
+C:\Users\glaub\palpitaco\backend\node_modules\@firebase\database\dist\index.esm.js:13290: * them via the .indexOn rule in your Security Rules for better performance. See
+C:\Users\glaub\palpitaco\backend\node_modules\@firebase\database\dist\index.node.cjs.js:3401: `${indexPath} to your security rules for better performance.`);
+C:\Users\glaub\palpitaco\backend\node_modules\@firebase\database\dist\index.node.cjs.js:13302: * them via the .indexOn rule in your Security Rules for better performance. See
+C:\Users\glaub\palpitaco\backend\node_modules\@firebase\database\dist\index.standalone.js:3398: `${indexPath} to your security rules for better performance.`);
+C:\Users\glaub\palpitaco\backend\node_modules\@firebase\database\dist\index.standalone.js:13299: * them via the .indexOn rule in your Security Rules for better performance. See
+C:\Users\glaub\palpitaco\backend\node_modules\@firebase\database\dist\internal.d.ts:1752: * them via the .indexOn rule in your Security Rules for better performance. See
+C:\Users\glaub\palpitaco\backend\node_modules\@firebase\database\dist\private.d.ts:1736: * them via the .indexOn rule in your Security Rules for better performance. See
+C:\Users\glaub\palpitaco\backend\node_modules\@firebase\database\dist\public.d.ts:961: * them via the .indexOn rule in your Security Rules for better performance. See
+C:\Users\glaub\palpitaco\backend\node_modules\@firebase\database-compat\dist\index.standalone.js:3772: const name$9 = "@firebase/performance";
+C:\Users\glaub\palpitaco\backend\node_modules\@firebase\database-compat\dist\index.standalone.js:3774: const name$8 = "@firebase/performance-compat";
+C:\Users\glaub\palpitaco\backend\node_modules\@firebase\database-compat\dist\index.standalone.js:8319: `${indexPath} to your security rules for better performance.`);
+C:\Users\glaub\palpitaco\backend\node_modules\@firebase\database-compat\dist\index.standalone.js:18220: * them via the .indexOn rule in your Security Rules for better performance. See
+C:\Users\glaub\palpitaco\backend\node_modules\@firebase\util\dist\node-esm\src\sha1.d.ts:27: * Performance:
+C:\Users\glaub\palpitaco\backend\node_modules\@firebase\util\dist\node-esm\index.node.esm.js:1562: * Performance:
+C:\Users\glaub\palpitaco\backend\node_modules\@firebase\util\dist\src\sha1.d.ts:27: * Performance:
+C:\Users\glaub\palpitaco\backend\node_modules\@firebase\util\dist\index.cjs.js:1566: * Performance:
+C:\Users\glaub\palpitaco\backend\node_modules\@firebase\util\dist\index.esm.js:1562: * Performance:
+C:\Users\glaub\palpitaco\backend\node_modules\@firebase\util\dist\index.node.cjs.js:1566: * Performance:
+C:\Users\glaub\palpitaco\backend\node_modules\@firebase\util\dist\utiC:\Users\glaub\palpitaco\backend\scripts\auditTop3E08DifferencesExperimental.js:7: runOfficialBacktest,
+C:\Users\glaub\palpitaco\backend\scripts\auditTop3E08DifferencesExperimental.js:8: } = require("./backtestTop3Official");
+C:\Users\glaub\palpitaco\backend\scripts\auditTop3E08DifferencesExperimental.js:178: await runOfficialBacktest(
+C:\Users\glaub\palpitaco\backend\scripts\auditTop3E08DifferencesExperimental.js:189: await runOfficialBacktest(
+C:\Users\glaub\palpitaco\backend\scripts\auditTop3E08DifferencesExperimental.js:12: } = require("../engine/scoreEngineE08Experimental");
+C:\Users\glaub\palpitaco\backend\scripts\backtestTop3AblationExperimental.js:16: runOfficialBacktest,
+C:\Users\glaub\palpitaco\backend\scripts\backtestTop3AblationExperimental.js:17: } = require("./backtestTop3Official");
+C:\Users\glaub\palpitaco\backend\scripts\backtestTop3AblationExperimental.js:426: return await runOfficialBacktest(
+C:\Users\glaub\palpitaco\backend\scripts\backtestTop3E07Experimental.js:7: runOfficialBacktest,
+C:\Users\glaub\palpitaco\backend\scripts\backtestTop3E07Experimental.js:8: } = require("./backtestTop3Official");
+C:\Users\glaub\palpitaco\backend\scripts\backtestTop3E07Experimental.js:139: "E07 - BACKTEST COMPARATIVO"
+C:\Users\glaub\palpitaco\backend\scripts\backtestTop3E07Experimental.js:163: await runOfficialBacktest(
+C:\Users\glaub\palpitaco\backend\scripts\backtestTop3E07Experimental.js:173: await runOfficialBacktest(
+C:\Users\glaub\palpitaco\backend\scripts\backtestTop3E07Experimental.js:12: } = require("../engine/scoreEngineV4Experimental");
+C:\Users\glaub\palpitaco\backend\scripts\backtestTop3E08Experimental.js:7: runOfficialBacktest,
+C:\Users\glaub\palpitaco\backend\scripts\backtestTop3E08Experimental.js:8: } = require("./backtestTop3Official");
+C:\Users\glaub\palpitaco\backend\scripts\backtestTop3E08Experimental.js:111: "E08 - BACKTEST DE RERANKING"
+C:\Users\glaub\palpitaco\backend\scripts\backtestTop3E08Experimental.js:163: await runOfficialBacktest(
+C:\Users\glaub\palpitaco\backend\scripts\backtestTop3E08Experimental.js:174: await runOfficialBacktest(
+C:\Users\glaub\palpitaco\backend\scripts\backtestTop3E08Experimental.js:12: } = require("../engine/scoreEngineE08Experimental");
+C:\Users\glaub\palpitaco\backend\scripts\backtestTop3Official.js:829: metadata?.bootstrapStatus !==
+C:\Users\glaub\palpitaco\backend\scripts\backtestTop3Official.js:1341: bootstrapStatus:
+C:\Users\glaub\palpitaco\backend\scripts\backtestTop3Official.js:1342: metadata?.bootstrapStatus ||
+C:\Users\glaub\palpitaco\backend\scripts\backtestTop3Official.js:646: "TOP3 OFFICIAL BACKTEST"
+C:\Users\glaub\palpitaco\backend\scripts\backtestTop3Official.js:774: async function runOfficialBacktest(
+C:\Users\glaub\palpitaco\backend\scripts\backtestTop3Official.js:1270: `[BACKTEST] ${done}/${selectedIndexes.length} | avaliados=${globalBucket.evaluated} | erros=${globalBucket.errors}`
+C:\Users\glaub\palpitaco\backend\scripts\backtestTop3Official.js:1369: "TOP3 OFFICIAL BACKTEST"
+C:\Users\glaub\palpitaco\backend\scripts\backtestTop3Official.js:1400: await runOfficialBacktest(
+C:\Users\glaub\palpitaco\backend\scripts\backtestTop3Official.js:1427: `top3_official_backtest_${suffix}.json`
+C:\Users\glaub\palpitaco\backend\scripts\backtestTop3Official.js:1432: `top3_official_backtest_${suffix}.txt`
+C:\Users\glaub\palpitaco\backend\scripts\backtestTop3Official.js:1487: runOfficialBacktest,
+C:\Users\glaub\palpitaco\backend\scripts\backtestTop3Official.js:14: } = require("../engine/scoreEngineUnified");
+C:\Users\glaub\palpitaco\backend\scripts\backtestTop3Official.js:14: } = require("../engine/scoreEngineUnified");
+C:\Users\glaub\palpitaco\backend\scripts\importKingApostas.js:166: } = require("../engine/scoreEngineUnified");
+C:\Users\glaub\palpitaco\backend\scripts\importKingApostas.js:166: } = require("../engine/scoreEngineUnified");
+C:\Users\glaub\palpitaco\backend\scripts\testPredictionRun.js:5: // O ScoreEngineV1 será descontinuado após a integração completa.
+C:\Users\glaub\palpitaco\backend\scripts\testPredictionRun.js:8: // O ScoreEngineV1 será descontinuado após a integração completa.
+C:\Users\glaub\palpitaco\backend\scripts\testPredictionRun.js:9: const { rankingToPredictions } = require("../engine/scoreEngineV1");
+C:\Users\glaub\palpitaco\backend\workers\bootstrapTop3History.js:299: bootstrapStatus:
+C:\Users\glaub\palpitaco\src\dev\runAuditTop3.js:9: auditTop3Backtest,
+C:\Users\glaub\palpitaco\src\dev\runAuditTop3.js:59: console.log("[BACKTEST TOP3] ALVO EXCLUSIVO: GRUPO DO 1º PRÊMIO");
+C:\Users\glaub\palpitaco\src\dev\runAuditTop3.js:60: console.log("[BACKTEST TOP3] Os três itens são candidatos ao 1º prêmio.");
+C:\Users\glaub\palpitaco\src\dev\runAuditTop3.js:93: console.log("[BACKTEST TOP3] Base disponível:", minDate, "até", maxDate);
+C:\Users\glaub\palpitaco\src\dev\runAuditTop3.js:94: console.log("[BACKTEST TOP3] Período auditado:", dateFrom, "até", dateTo);
+C:\Users\glaub\palpitaco\src\dev\runAuditTop3.js:96: "[BACKTEST TOP3] Leitura:",
+C:\Users\glaub\palpitaco\src\dev\runAuditTop3.js:116: console.log("[BACKTEST TOP3] Sorteios carregados:", draws.length);
+C:\Users\glaub\palpitaco\src\dev\runAuditTop3.js:117: console.log("[BACKTEST TOP3] Dias com resultados:", countUniqueDays(draws));
+C:\Users\glaub\palpitaco\src\dev\runAuditTop3.js:123: const report = auditTop3Backtest({
+C:\Users\glaub\palpitaco\src\dev\runAuditTop3.js:206: console.log("[BACKTEST TOP3] RESULTADO");
+C:\Users\glaub\palpitaco\src\dev\runAuditTop3.js:211: console.log("[BACKTEST TOP3] HISTÓRICO UTILIZADO");
+C:\Users\glaub\palpitaco\src\dev\runAuditTop3.js:215: console.log("[BACKTEST TOP3] Tempo total:", elapsedSeconds, "segundos");
+C:\Users\glaub\palpitaco\src\dev\runAuditTop3.js:221: console.log("[BACKTEST TOP3] Auditoria concluída.");
+C:\Users\glaub\palpitaco\src\dev\runAuditTop3.js:224: console.error("[BACKTEST TOP3] FALHA:", error);
+C:\Users\glaub\palpitaco\src\pages\Admin\Admin.jsx:25: key: "backtests",
+C:\Users\glaub\palpitaco\src\pages\Admin\Admin.jsx:27: title: "Backtests",
+C:\Users\glaub\palpitaco\src\pages\Admin\Admin.jsx:124: interna. Backtests, métricas, logs e auditorias reais ainda não
+C:\Users\glaub\palpitaco\src\pages\Admin\AdminLogin.jsx:262: backtests e ferramentas internas.
+C:\Users\glaub\palpitaco\src\pages\Centenas\CentenasView.jsx:15: * ✅ Performance:
+C:\Users\glaub\palpitaco\src\pages\Dashboard\Dashboard.jsx:32: import { applyScoreEngine } from "../../utils/scoreEngine";
+C:\Users\glaub\palpitaco\src\pages\Dashboard\Dashboard.jsx:1416: return applyScoreEngine(base);
+C:\Users\glaub\palpitaco\src\pages\Top3\__tests__\top3.backtest.layers.test.js:153: test("backtest TOP3 PT_RIO - camadas e transições", async () => {
+C:\Users\glaub\palpitaco\src\pages\Top3\__tests__\top3.backtest.layers.test.js:285: console.log("\n================ BACKTEST TOP3 PT_RIO (CAMADAS) ================");
+C:\Users\glaub\palpitaco\src\pages\Top3\__tests__\top3.backtest.test.js:164: test("backtest TOP3 PT_RIO - últimos 180 dias", async () => {
+C:\Users\glaub\palpitaco\src\pages\Top3\__tests__\top3.backtest.test.js:279: console.log("\n================ BACKTEST TOP3 PT_RIO ================");
+C:\Users\glaub\palpitaco\src\pages\Top3\__tests__\top3.public-api.node.test.js:6: "auditTop3Backtest",
+C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js:4163: export function auditTop3Backtest({
+C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js:18: import { scoreRanking } from "./modules/scoreEngine/scoreEngineV2";
+C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js:4163: export function auditTop3Backtest({
+C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js:18: import { scoreRanking } from "./modules/scoreEngine/scoreEngineV2";
+C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.js:4517: export function auditTop3Backtest({
+C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.js:18: import { scoreRanking } from "./modules/scoreEngine/scoreEngineV2";
+C:\Users\glaub\palpitaco\src\pages\Top3\top3.public-api.js:20: auditTop3Backtest,
+C:\Users\glaub\palpitaco\src\pages\Top3\top3.public-api.js:52: } from "./modules/scoreEngine/scoreEngineV2";
+C:\Users\glaub\palpitaco\src\pages\Top3\top3.public-api.js:56: } from "./modules/scoreEngine/evidenceEngine";
+C:\Users\glaub\palpitaco\src\pages\Top3\top3.public-api.js:60: } from "./modules/scoreEngine/contextEvidence";
+C:\Users\glaub\palpitaco\src\pages\Top3\top3.public-api.js:64: } from "./modules/scoreEngine/frequencyEvidence";
+C:\Users\glaub\palpitaco\src\pages\Top3\Top3View.jsx:1247: // TODO_BACKTEST_REAL
+C:\Users\glaub\palpitaco\src\pages\Top3\Top3View.jsx:1248: // Os cards estatísticos deverão consumir auditTop3Backtest()
+C:\Users\glaub\palpitaco\src\pages\Top3\Top3View.jsx:1084: <div className="timeline-compact__performance">
+C:\Users\glaub\palpitaco\src\pages\Top3\Top3View.jsx:1086: className={`timeline-compact__performanceBadge timeline-compact__performanceBadge--${status}`}
+C:\Users\glaub\palpitaco\src\pages\Top3\Top3View.jsx:1090: <div className="timeline-compact__performanceText">{statusDetail}</div>
+C:\Users\glaub\palpitaco\src\pages\Top3\Top3View.jsx:1864: .timeline-compact__performance{
+C:\Users\glaub\palpitaco\src\pages\Top3\Top3View.jsx:1873: .timeline-compact__performanceBadge--miss ~ *{
+C:\Users\glaub\palpitaco\src\pages\Top3\Top3View.jsx:1987: .timeline-compact__performance{
+C:\Users\glaub\palpitaco\src\pages\Top3\Top3View.jsx:1993: .timeline-compact__performanceBadge{
+C:\Users\glaub\palpitaco\src\pages\Top3\Top3View.jsx:2006: .timeline-compact__performanceBadge--hit{
+C:\Users\glaub\palpitaco\src\pages\Top3\Top3View.jsx:2013: .timeline-compact__performanceBadge--miss{
+C:\Users\glaub\palpitaco\src\pages\Top3\Top3View.jsx:2020: .timeline-compact__performanceBadge--pending{
+C:\Users\glaub\palpitaco\src\pages\Top3\Top3View.jsx:2026: .timeline-compact__performanceText{
+C:\Users\glaub\palpitaco\src\pages\Top3\Top3View.jsx:2637: .timeline-compact__performanceText{
+C:\Users\glaub\palpitaco\src\pages\Top3\Top3View.premium.backup.jsx:820: <div className="timeline-compact__performance">
+C:\Users\glaub\palpitaco\src\pages\Top3\Top3View.premium.backup.jsx:822: className={`timeline-compact__performanceBadge timeline-compact__performanceBadge--${status}`}
+C:\Users\glaub\palpitaco\src\pages\Top3\Top3View.premium.backup.jsx:826: <div className="timeline-compact__performanceText">{statusDetail}</div>
+C:\Users\glaub\palpitaco\src\pages\Top3\Top3View.premium.backup.jsx:1329: .timeline-compact__performance{
+C:\Users\glaub\palpitaco\src\pages\Top3\Top3View.premium.backup.jsx:1338: .timeline-compact__performanceBadge--miss ~ *{
+C:\Users\glaub\palpitaco\src\pages\Top3\Top3View.premium.backup.jsx:1452: .timeline-compact__performance{
+C:\Users\glaub\palpitaco\src\pages\Top3\Top3View.premium.backup.jsx:1458: .timeline-compact__performanceBadge{
+C:\Users\glaub\palpitaco\src\pages\Top3\Top3View.premium.backup.jsx:1471: .timeline-compact__performanceBadge--hit{
+C:\Users\glaub\palpitaco\src\pages\Top3\Top3View.premium.backup.jsx:1478: .timeline-compact__performanceBadge--miss{
+C:\Users\glaub\palpitaco\src\pages\Top3\Top3View.premium.backup.jsx:1485: .timeline-compact__performanceBadge--pending{
+C:\Users\glaub\palpitaco\src\pages\Top3\Top3View.premium.backup.jsx:1491: .timeline-compact__performanceText{
+C:\Users\glaub\palpitaco\src\pages\Top3\Top3View.premium.backup.jsx:2039: .timeline-compact__performanceText{
+C:\Users\glaub\palpitaco\src\services\statisticsEngine.js:5: import { applyScoreEngine } from "../utils/scoreEngine";
+C:\Users\glaub\palpitaco\src\services\statisticsEngine.js:58: const rankingScored = applyScoreEngine(ranking);
+C:\Users\glaub\palpitaco\src\utils\scoreEngine.js:1: export function applyScoreEngine(ranking = [], opts = {}) {

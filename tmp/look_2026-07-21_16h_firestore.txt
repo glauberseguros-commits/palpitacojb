@@ -1,0 +1,3673 @@
+===== HEAD E STATUS =====
+e046882 fix(top3): priorizar resultado oficial no hist├│rico
+ M backend/scripts/backtestTop3Official.js
+ M src/pages/Top3/modules/scoreEngine/scoreEngineV2.js
+?? auditoria_api_github_cron_21h30.txt
+?? auditoria_automacao_resultados_pc_desligado.txt
+?? auditoria_backtest_top3_base.txt
+?? auditoria_byHour.txt
+?? auditoria_causa_18h_2026-07-11.txt
+?? auditoria_cirurgica_21h30.txt
+?? auditoria_comparativa_milhar_v2_v3.txt
+?? auditoria_contexto_probabilistico_milhar.txt
+?? auditoria_decisores_calendario_pt_rio.txt
+?? auditoria_docsDay.txt
+?? auditoria_docs_2026-07-11.txt
+?? auditoria_estado_scheduler.txt
+?? auditoria_estado_workflow_github.txt
+?? auditoria_estrutural_auto_import.txt
+?? auditoria_execucoes_falhas_auto_import.txt
+?? auditoria_execucoes_reais_auto_import_21h.txt
+?? auditoria_falha_real_auto_import.txt
+?? auditoria_firestore_PT_RIO_2026-07-11.txt
+?? auditoria_fluxo_milhar_publica.txt
+?? auditoria_fluxo_real_auto_import.txt
+?? auditoria_fluxo_slot_auto_import.txt
+?? auditoria_fluxo_status_slot.txt
+?? auditoria_fonte_backtest_milhar.txt
+?? auditoria_historico_cron_21h30.txt
+?? auditoria_integracao_federal20_runtime.txt
+?? auditoria_janelas_slot_21h30.txt
+?? auditoria_logica_autoImportToday.txt
+?? auditoria_motor_milhar_v2.txt
+?? auditoria_origem_drawsNoPrizes.txt
+?? auditoria_origem_presentHours.txt
+?? auditoria_pre_backtest_milhar.txt
+?? auditoria_regra_federal20_remove_rj18.txt
+?? auditoria_return_api_results.txt
+?? auditoria_runImport_completa.txt
+?? auditoria_runImport_excecoes.txt
+?? auditoria_runs_21h30_janelas_utc.txt
+?? auditoria_runs_reais_21h30_github.txt
+?? auditoria_top3_base_2026-07-09.txt
+?? auditoria_top3_estrutura_completa.txt
+?? auditoria_top3_fluxo_real.txt
+?? auditoria_top3_slot_2026-07-09.txt
+?? auditoria_workflows_importacao.txt
+?? autoImportToday_completo.txt
+?? backend/engine/scoreEngineE08Experimental.js
+?? backend/engine/scoreEngineV4Experimental.js
+?? backend/scripts/auditTop3E08DifferencesExperimental.js
+?? backend/scripts/backtestTop3AblationExperimental.js
+?? backend/scripts/backtestTop3E07Experimental.js
+?? backend/scripts/backtestTop3E08Experimental.js
+?? inventario_pt_rio_hardcoded.txt
+?? src/pages/Centenas/__tests__/milharProbabilityEngineV3.test.js
+?? src/pages/Centenas/modules/milharProbabilityEngineV3.js
+?? src/pages/Top3/__tests__/top3.schedule-calendar-rules.node.test.js
+?? tmp/Dashboard.before_fed19.jsx
+?? tmp/Dashboard.before_fed21.jsx
+?? tmp/FiltersBar.before_nac31.jsx
+?? tmp/Late.before-atp06.jsx
+?? tmp/Late.before-atp07.jsx
+?? tmp/Late.before-atp08.jsx
+?? tmp/Results.before-lkn189.jsx
+?? tmp/Results.before-lkn190.jsx
+?? tmp/Results.before-lkn31_1.jsx
+?? tmp/TOP3_BACKTEST_JSON_STRUCTURE.txt
+?? tmp/TOP3_BASELINE_AUDITORIA_FINAL_2026-07-17.md
+?? tmp/TOP3_BASELINE_METRICAS_OFICIAIS.json
+?? tmp/TOP3_BASELINE_METRICAS_OFICIAIS.txt
+?? tmp/TOP3_PRE_V4_PATH_AUDIT.txt
+?? tmp/TOP3_RETORNO_BACKTEST_AUDITORIA.txt
+?? tmp/TOP3_V3_INJECTION_EQUIVALENCE.json
+?? tmp/TOP3_V3_INJECTION_EQUIVALENCE.txt
+?? tmp/TOP3_V3_INJECTION_EQUIVALENCE_REAL.json
+?? tmp/TOP3_V3_INJECTION_EQUIVALENCE_REAL.txt
+?? tmp/TOP3_V4_PONTO_DE_INTEGRACAO.txt
+?? tmp/atp01_filtros_atrasados_audit.txt
+?? tmp/atp02_componente_atrasados.txt
+?? tmp/atp03_late_blocos_exatos.txt
+?? tmp/atp04_getKingLateByRange_contract.txt
+?? tmp/atp05_late_build.log
+?? tmp/atp05_late_implementation.log
+?? tmp/atp09_late_git_log.txt
+?? tmp/atp09_origem_seletor_antigo_atrasados.txt
+?? tmp/audit_nacional_2026_05_06.js
+?? tmp/audit_nacional_firestore.js
+?? tmp/audit_nacional_schedule_boundaries.js
+?? tmp/audit_nacional_schedule_transition.js
+?? tmp/audit_results_pt_rio_18h_19h.txt
+?? tmp/audit_v4_predictive_telemetry.js
+?? tmp/auditoria_auth_ampla.txt
+?? tmp/auditoria_auth_top3.txt
+?? tmp/auditoria_backend_top3_pipeline.txt
+?? tmp/auditoria_cirurgica_listeners_top3.txt
+?? tmp/auditoria_estrutural_auto_import/
+?? tmp/auditoria_execucoes_falhas_auto_import/
+?? tmp/auditoria_firestore_listeners.txt
+?? tmp/auditoria_fluxo_carregamento_top3.txt
+?? tmp/auditoria_performance_bootstrap.txt
+?? tmp/auditoria_results_federal_datas.txt
+?? tmp/auditoria_top3_firestore_core.txt
+?? tmp/auditoria_top3_historico_sobrescrito.txt
+?? tmp/auditoria_top3_persistencia_historico.txt
+?? tmp/auditoria_top3_schedule_origem.txt
+?? tmp/aut01_look_missing_schedules.txt
+?? tmp/aut02_look_logs/
+?? tmp/aut03_autoImportToday_full.txt
+?? tmp/aut04_autoImportToday_lines_1_240.txt
+?? tmp/aut05_backup/
+?? tmp/aut06_look_final_validation.txt
+?? tmp/aut08_schedule_diagnostic.txt
+?? tmp/aut09_new_commit_schedule_check.txt
+?? tmp/aut10_schedule_reactivation.txt
+?? tmp/aut11_after_reactivation_check.txt
+?? tmp/aut11b_correct_schedule_window.txt
+?? tmp/aut12a_new_head_audit.txt
+?? tmp/aut12b_auto-import.before.yml
+?? tmp/aut12b_explicit_cron_publish.txt
+?? tmp/aut13c_cron_proof.txt
+?? tmp/aut13d_second_explicit_window.txt
+?? tmp/aut14_cron_and_production_gaps.txt
+?? tmp/aut15_exact_missing_results.txt
+?? tmp/aut15_look_2026-07-21_1400.log
+?? tmp/aut15_nacional_2026-07-21_1000.log
+?? tmp/aut16_scheduler_architecture_inventory.txt
+?? tmp/aut16b_scheduler_config_short.txt
+?? tmp/aut17_nacional_15h_recovery.txt
+?? tmp/aut17_nacional_2026-07-21_1500.log
+?? tmp/aut18_render_scheduler_publish.txt
+?? tmp/auto-import.before.LKN148.yml
+?? tmp/autoImportToday.before.LKN146.js
+?? tmp/autoImportToday_para_correcao.txt
+?? tmp/auto_import_failure_29365229224.txt
+?? tmp/backend_prediction_pipeline.txt
+?? tmp/backtestTop3AblationExperimental.before_telemetry.js
+?? tmp/backtestTop3E07Experimental.before-e07-2a-repair.js
+?? tmp/backtestTop3E07Experimental.before-e07-2a.js
+?? tmp/backtestTop3E08Experimental.before_full.js
+?? tmp/backtestTop3E08Experimental.before_shared_snapshot.js
+?? tmp/backup_atp05_late/
+?? tmp/backup_centenas_federal_scope_20260715_224348/
+?? tmp/backup_centenas_lottery_20260715_210718/
+?? tmp/backup_centenas_performance_20260715_221100/
+?? tmp/backup_centenas_stale_20260715_215026/
+?? tmp/backup_top3_core_commit1_20260715_125156/
+?? tmp/backup_top3_effects_20260715_234759/
+?? tmp/backup_top3_firestore_20260714_232456/
+?? tmp/backup_top3_historico_20260714_225544/
+?? tmp/backup_tpp01_04/
+?? tmp/backup_tpp01_04b/
+?? tmp/bootstrapTop3History_auditoria.txt
+?? tmp/bootstrap_commit_audit.txt
+?? tmp/bootstrap_startup_audit.txt
+?? tmp/capture_v4_real_input.js
+?? tmp/centenas_auditoria_filtro_loteria.txt
+?? tmp/centenas_build_auditoria.txt
+?? tmp/centenas_contrato_king_performance.txt
+?? tmp/centenas_federal_scope_build_20260715_224348.log
+?? tmp/centenas_filtro_loteria_direcionado.txt
+?? tmp/centenas_performance_auditoria.txt
+?? tmp/centenas_performance_build_20260715_221100.log
+?? tmp/centenas_stale_build_20260715_215026.log
+?? tmp/cleanup_nacional_legacy.js
+?? tmp/cleanup_nacional_legacy_batched.js
+?? tmp/collectEvidence_audit.txt
+?? tmp/commit3_prediction_contract.txt
+?? tmp/commit4_top3_service_contracts.txt
+?? tmp/computeStatisticalTop3V3_full.txt
+?? tmp/computeStatisticalTop3V3_locations.txt
+?? tmp/computeStatisticalTop3V3_locations_focused.txt
+?? tmp/computeStatisticalTop3V3_ranked_return_3025_3150.txt
+?? tmp/computeStatisticalTop3V3_return_final_3140_3225.txt
+?? tmp/dat01_bounds_look_nacional.txt
+?? tmp/dat02_floor_look_nacional.txt
+?? tmp/dat04_post_deploy_validation.txt
+?? tmp/dat06_minymd_consumers.txt
+?? tmp/dat07_nacional_max_date_diagnostic.txt
+?? tmp/diagnostico_timeout_top3_producao.txt
+?? tmp/diagnostico_useeffects_top3.txt
+?? tmp/drawRepository_consumers.txt
+?? tmp/e07_comparison_PT_RIO_full.json
+?? tmp/e07_comparison_PT_RIO_full.txt
+?? tmp/e07_comparison_PT_RIO_full_console.log
+?? tmp/e07_comparison_PT_RIO_limit_100.json
+?? tmp/e07_comparison_PT_RIO_limit_100.txt
+?? tmp/e07_preparation_report.txt
+?? tmp/e07_transition_structure_audit.txt
+?? tmp/e07_transition_structure_audit_console_safe.txt
+?? tmp/e08_audit_integration.txt
+?? tmp/e08_case_audit_console.txt
+?? tmp/e08_case_divergence_audit.txt
+?? tmp/e08_comparison_PT_RIO_full.json
+?? tmp/e08_comparison_PT_RIO_full.txt
+?? tmp/e08_comparison_PT_RIO_full_console.log
+?? tmp/e08_comparison_PT_RIO_limit_100.json
+?? tmp/e08_comparison_PT_RIO_limit_100.txt
+?? tmp/e08_comparison_PT_RIO_limit_100_console.log
+?? tmp/e08_computeStatisticalTop3_audit.txt
+?? tmp/e08_consolidated_analysis.txt
+?? tmp/e08_decisive_cases_analysis.txt
+?? tmp/e08_decisive_cases_detailed.json
+?? tmp/e08_decisive_cases_detailed.txt
+?? tmp/e08_decisive_cases_raw_full.txt
+?? tmp/e08_difference_capability.txt
+?? tmp/e08_differences_limit_500.json
+?? tmp/e08_differences_limit_500.txt
+?? tmp/e08_differences_limit_7406_console.log
+?? tmp/e08_drawsRange_origin_audit.txt
+?? tmp/e08_final_report.md
+?? tmp/e08_full_shared_snapshot_console.log
+?? tmp/e08_gain_loss_matrix.txt
+?? tmp/e08_history_builder_audit.txt
+?? tmp/e08_hour_mechanism_audit.txt
+?? tmp/e08_json_structure.txt
+?? tmp/e08_limit_500_reconciliation.txt
+?? tmp/e08_limit_audit.txt
+?? tmp/e08_origin_audit.txt
+?? tmp/e08_shared_snapshot_plan.txt
+?? tmp/e08_snapshot_strategy.txt
+?? tmp/e08_v3_reranking_preparation.txt
+?? tmp/e09_e08_contract.txt
+?? tmp/e09_preparation_report.txt
+?? tmp/fed01_data_inicial_federal.txt
+?? tmp/fed02_minYmd_origin.txt
+?? tmp/fed03_applyBoundsFloor.txt
+?? tmp/fed04_api_bounds_origin.txt
+?? tmp/fed05_backend_api_location.txt
+?? tmp/fed07_1_backend_bounds.txt
+?? tmp/fed07_backend_bounds.txt
+?? tmp/fed08_federal_firestore_min_ymd.txt
+?? tmp/fed09_production_bounds_api.txt
+?? tmp/fed10_dashboard_minymd_flow.txt
+?? tmp/fed11_period_display_trace.txt
+?? tmp/fed12_period_card_origin.txt
+?? tmp/fed13_period_component.txt
+?? tmp/fed14_snapshot_consumers.txt
+?? tmp/fed15_dashboard_consumers.txt
+?? tmp/fed15_floor_audit.txt
+?? tmp/fed16_dashboard_card.txt
+?? tmp/fed17_final_period_consumer.txt
+?? tmp/fed18_dashboard_page.txt
+?? tmp/fed19_floor_fix.txt
+?? tmp/fed20_build_validation.log
+?? tmp/fed21_kpi_filter_fix.txt
+?? tmp/federal_api.json
+?? tmp/federal_position_contract.txt
+?? tmp/federal_position_filter.txt
+?? tmp/fetchPrizesForDraw_auditoria.txt
+?? tmp/formato_payload_import.txt
+?? tmp/fsc01_unbounded_lottery_query.txt
+?? tmp/fsc02_read_consumers.txt
+?? tmp/fsc03_real_read_consumer.txt
+?? tmp/fsc04_final_read_origin.txt
+?? tmp/gcp01_readonly_audit.txt
+?? tmp/gcp02_isolated_configuration.txt
+?? tmp/gcp03_cost_protection.txt
+?? tmp/gcp04_alerts_and_apis.txt
+?? tmp/gcp05_cloud_run_inputs.txt
+?? tmp/gcp06_pt_rio_1920_confirmation.txt
+?? tmp/gcp07_backup/
+?? tmp/gcp07_patch.js
+?? tmp/gcp07_pt_rio_saturday_19h.txt
+?? tmp/gcp08_container_preparation.txt
+?? tmp/gcp08_heartbeat_dry_run.txt
+?? tmp/gcp09_build_context/
+?? tmp/gcp09_cloud_run_job.txt
+?? tmp/gcp09_cloudbuild.yaml
+?? tmp/gcp09_committed_backend.zip
+?? tmp/gcp10_exact_schedulers.txt
+?? tmp/gcp10a_new_head_validation.txt
+?? tmp/gcp10b_exact_schedulers.txt
+?? tmp/gcp10c2_scheduler_identity_rest.txt
+?? tmp/gcp10c3_scheduler_identity_diagnostic.txt
+?? tmp/gcp10c_scheduler_service_identity.txt
+?? tmp/gcp10d_schedulers_and_test.txt
+?? tmp/gcp10e_natural_scheduler_proof.txt
+?? tmp/gcp10f_natural_execution.txt
+?? tmp/gcp10g_controlled_scheduler_test.txt
+?? tmp/github_runs_auto_import_21h.json
+?? tmp/github_runs_pt_rio_2026-07-13_21h.json
+?? tmp/importKingApostas.before-lkn03.js
+?? tmp/importKingApostas.before-lkn04.js
+?? tmp/importKingApostas.before-lkn164.js
+?? tmp/importKingApostas.before_lkn08.js
+?? tmp/importKingApostas.before_lkn11.js
+?? tmp/importKingApostas.before_lkn89.js
+?? tmp/importKingApostas.before_lkn91.js
+?? tmp/inspect_backtest_return.js
+?? tmp/inspect_prizes_structure.js
+?? tmp/inspect_v4_snapshot.js
+?? tmp/lkn01_auditoria_look_nacional.txt
+?? tmp/lkn02_bloqueio_look_nacional.txt
+?? tmp/lkn05_importador_mapeado.txt
+?? tmp/lkn06_funcoes_reais.txt
+?? tmp/lkn07_fluxo_look_nacional.txt
+?? tmp/lkn08_patch_result.txt
+?? tmp/lkn09_import_look_2026-07-18.log
+?? tmp/lkn100_workflows.txt
+?? tmp/lkn101_deploy_infrastructure.txt
+?? tmp/lkn102_vercel_deploy.txt
+?? tmp/lkn103_vercel_inspect.txt
+?? tmp/lkn104_vercel_metadata.json
+?? tmp/lkn105_public_validation.txt
+?? tmp/lkn106_backend_production_audit.txt
+?? tmp/lkn107_nacional_producao.txt
+?? tmp/lkn108_pitaco_results_route.txt
+?? tmp/lkn109_support_look_nacional_api.txt
+?? tmp/lkn10_import_nacional_2026-07-18.log
+?? tmp/lkn111_pitacoResults.before.js
+?? tmp/lkn111_result.txt
+?? tmp/lkn112_commit_push.txt
+?? tmp/lkn114_nacional_hours_validation.txt
+?? tmp/lkn115_origem_horarios_nacional.txt
+?? tmp/lkn116_nacional_raw.json
+?? tmp/lkn116_nacional_raw_summary.txt
+?? tmp/lkn117_trace_normalize_drawhour.txt
+?? tmp/lkn118_build_drawref_import_audit.txt
+?? tmp/lkn119_mapeamento_real_importadores.txt
+?? tmp/lkn120.js
+?? tmp/lkn120_firestore_draws_lookup.log
+?? tmp/lkn120b.js
+?? tmp/lkn120b_firestore_draws_lookup.log
+?? tmp/lkn123.js
+?? tmp/lkn123_firestore.log
+?? tmp/lkn124.js
+?? tmp/lkn124_firestore_sem_indice.log
+?? tmp/lkn125_import_flow.txt
+?? tmp/lkn126_normalize_functions.txt
+?? tmp/lkn127_git_history_normalization.txt
+?? tmp/lkn128_reimport_nacional.log
+?? tmp/lkn129_importadores_intervalo.txt
+?? tmp/lkn12_permanent_uuid_validation.log
+?? tmp/lkn130_importKingRange_audit.txt
+?? tmp/lkn131_statistics_mindate.txt
+?? tmp/lkn132_statistics_endpoint.txt
+?? tmp/lkn133_top3_history_metadata.txt
+?? tmp/lkn134_frontend_periodo.txt
+?? tmp/lkn135_datefrom_callers.txt
+?? tmp/lkn136_dashboard_endpoints.txt
+?? tmp/lkn137_api_bounds_audit.txt
+?? tmp/lkn138_applyBoundsFloor.txt
+?? tmp/lkn139_applyBoundsFloor_definition.txt
+?? tmp/lkn13_lotteries_structure.txt
+?? tmp/lkn140_api_bounds_endpoint.txt
+?? tmp/lkn140b_api_bounds_endpoint.txt
+?? tmp/lkn141_api_configuration.txt
+?? tmp/lkn142_automation_all_lotteries.txt
+?? tmp/lkn143_auto_import_yml.txt
+?? tmp/lkn144_autoimport_schedules.txt
+?? tmp/lkn145_look_nacional_hours_map.txt
+?? tmp/lkn147_validate_schedules.txt
+?? tmp/lkn149_validation_report.txt
+?? tmp/lkn14_patch.log
+?? tmp/lkn151_git_status.txt
+?? tmp/lkn154_workflow_remote_validation.txt
+?? tmp/lkn155_last_workflow_log.txt
+?? tmp/lkn15_final_validation.log
+?? tmp/lkn161_nacional_0149_normalization.txt
+?? tmp/lkn162_look_automation_2026-07-20.txt
+?? tmp/lkn163_actions_logs/
+?? tmp/lkn164_look_reimport/
+?? tmp/lkn164_validation.txt
+?? tmp/lkn16_git_audit.log
+?? tmp/lkn170_look_reconciliation.log
+?? tmp/lkn172_look_historical_gaps.log
+?? tmp/lkn173_reconcile_look_2026.log
+?? tmp/lkn179_results_hour_mapping.txt
+?? tmp/lkn182_deploy_configuration.txt
+?? tmp/lkn184_vercel_deploy_status.txt
+?? tmp/lkn185_nacional_draw_occurrences.txt
+?? tmp/lkn185_vercel_alias_comparison.txt
+?? tmp/lkn188_results_cards_pipeline.txt
+?? tmp/lkn18_post_push.log
+?? tmp/lkn18_post_push_validation.log
+?? tmp/lkn21_frontend_look_nacional_audit.txt
+?? tmp/lkn21_frontend_look_nacional_console.log
+?? tmp/lkn22_frontend_integration_console.log
+?? tmp/lkn22_frontend_integration_map.txt
+?? tmp/lkn23_1_final_implementation_cut.txt
+?? tmp/lkn23_2_remaining_integration_points.txt
+?? tmp/lkn23_exact_integration_points.txt
+?? tmp/lkn24_1_look_nacional_keys_hours.json
+?? tmp/lkn24_1_look_nacional_keys_hours.txt
+?? tmp/lkn24_backup/
+?? tmp/lkn24_baseline.txt
+?? tmp/lkn25_0_structural_patch.json
+?? tmp/lkn25_0_structural_patch.txt
+?? tmp/lkn25_1_selector_audit.txt
+?? tmp/lkn25_2_backup/
+?? tmp/lkn25_2_selectors_patch.json
+?? tmp/lkn25_2_selectors_patch.txt
+?? tmp/lkn25_3_results_hooks_audit.json
+?? tmp/lkn25_3_results_hooks_audit.txt
+?? tmp/lkn25_4_schedule_engine_audit.txt
+?? tmp/lkn25_backup/
+?? tmp/lkn26_1_build_errors_audit.txt
+?? tmp/lkn26_2_fix.log
+?? tmp/lkn26_3_build.log
+?? tmp/lkn26_build.log
+?? tmp/lkn27_results_final_audit.txt
+?? tmp/lkn28_results_structure.txt
+?? tmp/lkn29_results_backup/
+?? tmp/lkn29_results_build.log
+?? tmp/lkn29_results_patch.log
+?? tmp/lkn30_build.log
+?? tmp/lkn30_restore_isFederal.log
+?? tmp/lkn31_1_build.log
+?? tmp/lkn31_1_fix.log
+?? tmp/lkn32_2_predeploy_audit.txt
+?? tmp/lkn32_predeploy_audit.txt
+?? tmp/lkn34_frontend_hosting_audit.txt
+?? tmp/lkn34_production_index.html
+?? tmp/lkn34_render_index.html
+?? tmp/lkn35_vercel_audit.txt
+?? tmp/lkn37_vercel_failed_deploy.log
+?? tmp/lkn38_selectedLottery_context.txt
+?? tmp/lkn39_late_build.log
+?? tmp/lkn40_push_deploy.log
+?? tmp/lkn41_dashboard_top3_schedule_audit.txt
+?? tmp/lkn42_schedule_consumers.txt
+?? tmp/lkn43_schedule_refactor_blocks.txt
+?? tmp/lkn44_backup/
+?? tmp/lkn44_build.log
+?? tmp/lkn44_top3_schedule_validation.txt
+?? tmp/lkn44_top3_tests.log
+?? tmp/lkn45_top3_test_environment.txt
+?? tmp/lkn46_backup/
+?? tmp/lkn46_jest.log
+?? tmp/lkn48_schedule_flow.txt
+?? tmp/lkn49_git_status.txt
+?? tmp/lkn49_schedule_core_exact.txt
+?? tmp/lkn50_2_calendar_patch.log
+?? tmp/lkn50_backup/
+?? tmp/lkn50_rule_usage.txt
+?? tmp/lkn51_1_node_esm_environment.txt
+?? tmp/lkn51_import_audit.txt
+?? tmp/lkn52_jest_validation.txt
+?? tmp/lkn53_calendar_exact_source.txt
+?? tmp/lkn55_duplicate_function_scan.txt
+?? tmp/lkn56_calendar_validation.log
+?? tmp/lkn57_hour_format_diagnostic.txt
+?? tmp/lkn58_normalization_functions.txt
+?? tmp/lkn60_lottery_filters_audit.txt
+?? tmp/lkn61_dashboard_lotteries_audit.txt
+?? tmp/lkn62_look_nacional_schedules_audit.txt
+?? tmp/lkn63_dashboard_official_schedule_patch.txt
+?? tmp/lkn64_revert_lkn63.txt
+?? tmp/lkn65_filtersbar_git_status_audit.txt
+?? tmp/lkn67_filtersbar_audit.txt
+?? tmp/lkn68_schedule_source_audit.txt
+?? tmp/lkn69_FiltersBar_before.jsx
+?? tmp/lkn69_dashboard_lotteries_patch.txt
+?? tmp/lkn70_build_dashboard.log
+?? tmp/lkn71_update_browserslist.log
+?? tmp/lkn73_filtersbar_diff.log
+?? tmp/lkn74_dashboard_push.log
+?? tmp/lkn76_nacional_hour_mapping.txt
+?? tmp/lkn76_nacional_hour_mapping_console.log
+?? tmp/lkn77_nacional_importer_mapping.txt
+?? tmp/lkn77_nacional_importer_mapping_console.log
+?? tmp/lkn78_importKingApostas_closehour.txt
+?? tmp/lkn80_normalizeCloseHourForLottery.txt
+?? tmp/lkn81_fetchKingResults.txt
+?? tmp/lkn82_mergeAndDedupDraws.txt
+?? tmp/lkn83_raw_api_payload_nacional.cjs
+?? tmp/lkn83b_exports.cjs
+?? tmp/lkn83b_exports.txt
+?? tmp/lkn84_raw_api_payload_nacional.cjs
+?? tmp/lkn84_raw_api_payload_nacional.txt
+?? tmp/lkn84b_raw_api_nacional.cjs
+?? tmp/lkn84b_raw_api_nacional_console.txt
+?? tmp/lkn85_pre_patch_nacional.txt
+?? tmp/lkn86_preview_patch_nacional.txt
+?? tmp/lkn87_normalize_calls_audit.txt
+?? tmp/lkn88_patch_proposto.txt
+?? tmp/lkn90_anchor_exact_audit.txt
+?? tmp/lkn91_patch_result.txt
+?? tmp/lkn92_patch_applied_audit.txt
+?? tmp/lkn93_direct_call_audit.txt
+?? tmp/lkn94_normalization_test.js
+?? tmp/lkn94_normalization_test_result.txt
+?? tmp/lkn95_real_payload_result.txt
+?? tmp/lkn95_real_payload_test.js
+?? tmp/lkn96_final_diff_audit.txt
+?? tmp/lkn99_deploy_audit.txt
+?? tmp/look_nacional_historico/
+?? tmp/look_top3_chamadas_validacao.txt
+?? tmp/look_top3_codigo_real.txt
+?? tmp/look_top3_contrato_resultados.txt
+?? tmp/look_top3_diagnostico.txt
+?? tmp/look_top3_formato_draws.txt
+?? tmp/look_top3_origem_g07_2026-07-21.txt
+?? tmp/look_top3_pos_deploy_7f30d86.txt
+?? tmp/look_top3_revalidacao_real.txt
+?? tmp/look_top3_test_runner.txt
+?? tmp/manual_import_federal_2026-07-19_1100.log
+?? tmp/manual_import_look_nacional_2026-07-19.log
+?? tmp/manual_import_nacional_2026-07-20_0200.log
+?? tmp/manual_import_pt_rio_1920.log
+?? tmp/manual_import_pt_rio_2026-07-18_1920.log
+?? tmp/nac01_nacional_2026-07-20_diagnostic.txt
+?? tmp/nac03_github_queue_audit.txt
+?? tmp/nac03_github_runs.json
+?? tmp/nac04_nacional_logs.txt
+?? tmp/nac05_job_nacional.txt
+?? tmp/nac06_results_vs_dashboard.txt
+?? tmp/nac07_importKingApostas.backup.js
+?? tmp/nac07_nacional_2026-07-20/
+?? tmp/nac09_top3_nacional_audit.txt
+?? tmp/nac10_top3_schedule_functions.txt
+?? tmp/nac11_top3_schedule_functions.txt
+?? tmp/nac12_computeStatisticalTop3V3.txt
+?? tmp/nac13_top3_schedule_origin.txt
+?? tmp/nac14_nacional_federal_fix_audit.txt
+?? tmp/nac15_nacional_schedule_audit.txt
+?? tmp/nac16_import_hour_mapping.txt
+?? tmp/nac17_statistics_engine.txt
+?? tmp/nac18_dashboard_draws_pipeline.txt
+?? tmp/nac19_hour_filter.txt
+?? tmp/nac20_mapDrawDoc.txt
+?? tmp/nac21_compare_draw_fields.txt
+?? tmp/nac22_firestore_compare.js
+?? tmp/nac22_firestore_compare.txt
+?? tmp/nac23_firebase_auth_audit.txt
+?? tmp/nac26_firestore_hours_audit.js
+?? tmp/nac26_firestore_hours_audit.txt
+?? tmp/nac27_hour_filter_trace.txt
+?? tmp/nac29_hour_options.txt
+?? tmp/nac30_filtersbar_nacional_hours.txt
+?? tmp/nac31_nacional_hour_mapping.txt
+?? tmp/nac32_drawsforview.txt
+?? tmp/nac33_get_draw_close_hour.txt
+?? tmp/nac34_dashboard_draw_mapping.txt
+?? tmp/nac35_dashboard_fluxo_completo.txt
+?? tmp/nac36_dashboard_fluxo_restante.txt
+?? tmp/nac37_useKingRanking_audit.txt
+?? tmp/nac38_getKingResultsByRange_audit.txt
+?? tmp/nac40_close_hour_values.txt
+?? tmp/nac43_1_firebase_admin_audit.txt
+?? tmp/nac44_predeploy_audit.txt
+?? tmp/nac46_localizar_correcao_funcional.txt
+?? tmp/nac47_dashboard_diff_publicacao.txt
+?? tmp/nac48_publicacao_nacional.log
+?? tmp/nac50_nacional_horario_todos.txt
+?? tmp/nac51_drawsForUi_trace.txt
+?? tmp/nac52_useKingRanking_audit.txt
+?? tmp/nac53_draw_source_audit.txt
+?? tmp/nac54_lottery_key_resolution.txt
+?? tmp/nacional_2026-07-20/
+?? tmp/nacional_2026_05_06.txt
+?? tmp/nacional_cleanup_legacy.txt
+?? tmp/nacional_cleanup_legacy_batched.txt
+?? tmp/nacional_firestore_2025-03-27.txt
+?? tmp/nacional_legacy_backup.json
+?? tmp/nacional_legacy_backup_2026-07-20T23-25-04-832Z.json
+?? tmp/nacional_restore_legacy.txt
+?? tmp/nacional_schedule_boundaries.txt
+?? tmp/nacional_schedule_transition.txt
+?? tmp/nacional_validation_after_cleanup.txt
+?? tmp/predictionService_integration.txt
+?? tmp/predictive_frequency_integrated.js
+?? tmp/predictive_frequency_integrated.json
+?? tmp/predictive_frequency_summary.json
+?? tmp/predictive_frequency_test.js
+?? tmp/predictive_frequency_test.json
+?? tmp/quality_baseline_top3/
+?? tmp/reconcile_falso_ok_contexto.txt
+?? tmp/report_experimental_frequency.js
+?? tmp/restore_nacional_legacy.js
+?? tmp/results_debug_hours.txt
+?? tmp/scoreEngineV2_full_audit.txt
+?? tmp/scoreEngineV4Experimental.before-e07.js
+?? tmp/snapshot_consumption_map.txt
+?? tmp/statisticsEngine_consumidores.txt
+?? tmp/summarize_predictive_frequency.js
+?? tmp/top3.engine.before-lkn50_2.js
+?? tmp/top3.engine.before-tpp04-13.js
+?? tmp/top3.engine.before_lkn54.js
+?? tmp/top3.engine.before_lkn54_1.js
+?? tmp/top3.engine.before_lkn56.js
+?? tmp/top3.engine.before_lkn59.js
+?? tmp/top3.firestore_antes_auth_20260715_000009.js
+?? tmp/top3.hooks.before_lkn59.js
+?? tmp/top3.hooks_antes_diagnostico_save_20260715_114546.js
+?? tmp/top3.schedule-transition.before_lkn54_1.test.js
+?? tmp/top3.schedule-transition.before_lkn56.test.js
+?? tmp/top3.schedule-transition.before_lkn59.test.js
+?? tmp/top3_ablation_topn_audit.txt
+?? tmp/top3_backend_entrypoints.txt
+?? tmp/top3_backend_ponto_de_integracao.txt
+?? tmp/top3_backend_ranking_flow.txt
+?? tmp/top3_baseline_backtest_map.txt
+?? tmp/top3_bloqueio_real.txt
+?? tmp/top3_commit1_auditoria_precisa.txt
+?? tmp/top3_commit1_purificacao.json
+?? tmp/top3_commit1_validacao_final.txt
+?? tmp/top3_effects_build_20260715_234759.log
+?? tmp/top3_evidence_audit.txt
+?? tmp/top3_evidence_audit_focused.txt
+?? tmp/top3_extract_readiness.txt
+?? tmp/top3_firestore_persistencia.txt
+?? tmp/top3_fluxo_execucao.txt
+?? tmp/top3_historico_arquivos_completos.txt
+?? tmp/top3_history_bootstrap_commit.log
+?? tmp/top3_history_bootstrap_validation.json
+?? tmp/top3_history_reader_map.txt
+?? tmp/top3_history_update_hook.txt
+?? tmp/top3_instrumentation/
+?? tmp/top3_integracao_milhares_backend.txt
+?? tmp/top3_last_draw_schedule_audit.txt
+?? tmp/top3_motor_backend_compatibilidade.txt
+?? tmp/top3_motor_backend_compatibilidade_pos_commit1.txt
+?? tmp/top3_motor_consumidores_reais.txt
+?? tmp/top3_node_smoke_pos_commit1.txt
+?? tmp/top3_official_backtest_full.json
+?? tmp/top3_official_backtest_full.txt
+?? tmp/top3_official_backtest_full_console.log
+?? tmp/top3_official_backtest_limit_100.json
+?? tmp/top3_official_backtest_limit_100.txt
+?? tmp/top3_official_backtest_limit_100_console.log
+?? tmp/top3_pre_v4_path_audit.py
+?? tmp/top3_public_api_grafo_node.txt
+?? tmp/top3_rankingScored_origem.txt
+?? tmp/top3_runImport_contract.txt
+?? tmp/top3_snapshot_infraestrutura_existente.txt
+?? tmp/top3_statistical_significance.json
+?? tmp/top3_statistical_significance.txt
+?? tmp/top3_statistical_significance_console.log
+?? tmp/top3_transition_19h_audit.txt
+?? tmp/top3_v4_structural_map.txt
+?? tmp/top3_validate_v3_injection.js
+?? tmp/top3_validate_v3_injection_real.js
+?? tmp/tpp01_03_backtest_active_modules_audit.txt
+?? tmp/tpp01_04_harness_console.log
+?? tmp/tpp01_04_harness_validation.json
+?? tmp/tpp01_04_harness_validation.txt
+?? tmp/tpp01_04b_console.log
+?? tmp/tpp01_04b_inspect_return.js
+?? tmp/tpp01_04b_raw_backtest_result.json
+?? tmp/tpp01_04b_repair_report.txt
+?? tmp/tpp01_04b_return_schema.txt
+?? tmp/tpp01_official_ablation_inventory.txt
+?? tmp/tpp01_v3_real_ablation_blueprint.txt
+?? tmp/tpp02_01_A01_console.log
+?? tmp/tpp02_01_A01_sem_frequency.json
+?? tmp/tpp02_01_A01_sem_frequency.txt
+?? tmp/tpp02_02_A02_console.log
+?? tmp/tpp02_02_A02_sem_context.json
+?? tmp/tpp02_02_A02_sem_context.txt
+?? tmp/tpp02_03_A00_500_console.log
+?? tmp/tpp02_03_A01_500_console.log
+?? tmp/tpp02_03_A02_500_console.log
+?? tmp/tpp02_03_resumo_500.txt
+?? tmp/tpp03_01_case_payload_mapping.js
+?? tmp/tpp03_01_case_payload_mapping.json
+?? tmp/tpp03_01_case_payload_mapping.txt
+?? tmp/tpp03_02_telemetry_mapping.js
+?? tmp/tpp03_02_telemetry_mapping.txt
+?? tmp/tpp03_03_telemetry_control_audit.py
+?? tmp/tpp03_03_telemetry_control_audit.txt
+?? tmp/tpp03_04_variant_execution_flow.txt
+?? tmp/tpp03_06_telemetry_runs/
+?? tmp/tpp03_06_telemetry_runs_console.log
+?? tmp/tpp03_07_case_by_case_comparison.json
+?? tmp/tpp03_07_case_by_case_comparison.txt
+?? tmp/tpp03_07_changed_cases.csv
+?? tmp/tpp03_07_compare_telemetry.js
+?? tmp/tpp03_07_console.log
+?? tmp/tpp03_08_ablation_runtime_path.py
+?? tmp/tpp03_08_ablation_runtime_path.txt
+?? tmp/tpp03_09_ablation_real_locations.py
+?? tmp/tpp03_09_ablation_real_locations.txt
+?? tmp/tpp04_01_camelo_weekday_divergence.py
+?? tmp/tpp04_01_camelo_weekday_divergence.txt
+?? tmp/tpp04_02_layer_first_origin.txt
+?? tmp/tpp04_02_weekday_card_origin.py
+?? tmp/tpp04_02_weekday_card_origin.txt
+?? tmp/tpp04_03_dow_firstcount_origin.py
+?? tmp/tpp04_03_dow_firstcount_origin.txt
+?? tmp/tpp04_04_layer_first_builder.txt
+?? tmp/tpp04_04b_layer_first_builder.py
+?? tmp/tpp04_04b_layer_first_builder.txt
+?? tmp/tpp04_05_critical_functions.txt
+?? tmp/tpp04_06_dashboard_counter_origin.txt
+?? tmp/tpp04_07_detailmap_keys.txt
+?? tmp/tpp04_08_meta_explain_details.txt
+?? tmp/tpp04_09_detailmap_origin.txt
+?? tmp/tpp04_12_dashboard_top3_weekday_source.txt
+?? tmp/tpp04_14_three_rankings_audit.txt
+?? tmp/tpp04_15_weekday_card_data_flow.txt
+?? tmp/tpp04_16_engine_transition_audit.txt
+?? tmp/tpp04_17_core_functions.txt
+?? tmp/tpp04_17b_core_functions_full.txt
+?? tmp/tpp04_18_schedule_definitions_audit.txt
+?? tmp/tpp04_19_getPtRioScheduleForYmd.txt
+?? tmp/tpp04_20_schedule_constants.txt
+?? tmp/tpp04_21_schedule_fix_report.txt
+?? tmp/tpp04_21_top3.engine.before.js
+?? tmp/tpp04_22_transition_validation.log
+?? tmp/tpp04_26_prediction_origin.txt
+?? tmp/tpp04_27_nextslot_hook_context.txt
+?? tmp/tpp04_29_hook_schedule_fix.txt
+?? tmp/tpp04_29_top3.hooks.before.js
+?? tmp/tpp04_31_hook_patch_report.txt
+?? tmp/tpp04_31_top3.hooks.before.js
+?? tmp/tpp04_32_history_schedule_audit.txt
+?? tmp/tpp04_33_schedule_origin_audit.txt
+?? tmp/tpp04_34_getScheduleForLottery.txt
+?? tmp/tpp04_origem_contagem_semana.txt
+?? tmp/tpp05_01_top3_lotteries_audit.txt
+?? tmp/tpp05_02_top3_tabs_component.txt
+?? tmp/tpp05_03_top3_visual_components.txt
+?? tmp/tpp05_04_lotoptions_origin.txt
+?? tmp/tpp05_05_baselots_musthave.txt
+?? tmp/tpp05_06_lottery_options_origin.txt
+?? tmp/tpp05_10_validate_lottery_options.log
+?? tmp/tpp05_11_top3_filters.txt
+?? tmp/tpp05_13_build.log
+?? tmp/tpp05_16_top3_api_calls.txt
+?? tmp/tpp05_17_load_and_loader.txt
+?? tmp/tpp_fd_01_federal_domingo_11h.txt
+?? tmp/tpp_fd_02_estado_federal_1907.txt
+?? tmp/tpp_fd_03_backup_20260721_144615/
+?? tmp/tpp_fd_03_build.log
+?? tmp/tpp_fd_03_patch.js
+?? tmp/tpp_fd_03b_build.log
+?? tmp/tpp_fd_03b_import_federal_1907.log
+?? tmp/tpp_fd_03d_import.log
+?? tmp/tpp_fd_03d_patch_canonical_id.js
+?? tmp/tpp_ln_01_top3_look_nacional.txt
+?? tmp/tpp_ln_02_diff_e_service.txt
+?? tmp/tpp_ln_03_backup_20260721_135908/
+?? tmp/tpp_ln_03_correcao.log
+?? tmp/tpp_ln_04_backup_20260721_141528/
+?? tmp/tpp_ln_04_correcao_publicacao.log
+?? tmp/v4_frequency_by_hour_report.json
+?? tmp/v4_frequency_by_hour_test.js
+?? tmp/v4_frequency_hour_weekday_report.json
+?? tmp/v4_frequency_hour_weekday_test.js
+?? tmp/v4_frequency_hour_windows_report.json
+?? tmp/v4_frequency_hour_windows_test.js
+?? tmp/v4_frequency_report.json
+?? tmp/v4_group_recency_by_hour_validation_report.json
+?? tmp/v4_group_recency_by_hour_validation_test.js
+?? tmp/v4_group_recency_report.json
+?? tmp/v4_group_recency_test.js
+?? tmp/v4_input_audit.js
+?? tmp/v4_input_audit.txt
+?? tmp/v4_predictive_telemetry_audit.json
+?? tmp/v4_prizes_report.json
+?? tmp/v4_real_input_snapshot.json
+?? tmp/v4_snapshot_report.json
+?? tmp/validate_nacional_after_cleanup.js
+?? tmp/validate_v4_wrapper.js
+?? trecho_return_api.txt
+
+===== FUNÇÕES E CAMPOS DISPONÍVEIS =====
+26-  normalizeEmbeddedPrizesForAggregated,
+27-} from "./king/king.normalize";
+28-
+29-import {
+30-  pad2,
+31-  isYMD,
+32-  ymdToBR,
+33-  normalizeToYMD,
+34-  utcTodayYmd,
+35-  addDaysUTC,
+36-  addDaysUTCLocal,
+37-  daysBetweenInclusiveUTC,
+38-  daysDiffUTC,
+39-  shouldForceFreshServerRead,
+40-} from "./king/king.date";
+41-
+42-/* =========================
+43-   PERF: caches (mem├│ria)
+44-========================= */
+45-
+46:const PRIZES_CACHE = new Map(); // key -> { ts, data: prizesAllSorted }
+47-const DRAWS_CACHE = new Map(); // key -> { ts, data: mappedDrawDocs[] }
+48-
+49-// Ô£à cache espec├¡fico para ATRASADOS (Late)
+50-const LATE_CACHE = new Map(); // key -> { ts, data: lateRows[] }
+51-
+52:// Ô£à corte seguro (modo auto) ÔÇö acima disso, tende a ser "agregado" (sem prizes)
+53-export const AGGREGATED_AUTO_DAYS = Number.POSITIVE_INFINITY;
+54-
+55-/* =========================
+56-   Constantes / helpers base
+57-========================= */
+58-
+59-const DEFAULT_READ_POLICY = "cache";
+60-
+61-const RJ_STATE_CODE = "RJ";
+62-const RJ_LOTTERY_KEY = "PT_RIO";
+63-
+64-export const FEDERAL_SCOPE_CODE = "FEDERAL";
+65-export const FEDERAL_19H_TO_20H_CHANGE_YMD = "2025-11-03";
+66-
+67-const FEDERAL_LOTTERY_KEYS = [
+68-  "FEDERAL",
+69-  "LOTERIA_FEDERAL",
+70-  "LT_FEDERAL",
+71-  "FED",
+72-];
+73-
+74-const FEDERAL_INPUT_ALIASES = new Set([
+75-  "FEDERAL",
+76-  "LOTERIA FEDERAL",
+77-  "LOTERIA_FEDERAL",
+78-  "LT FEDERAL",
+79-  "LT_FEDERAL",
+80-  "FED",
+81-]);
+82-
+83-export const FEDERAL_DRAW_DOW = ["WEDNESDAY", "SATURDAY"]; // refer├¬ncia (UI)
+84-
+85-function applyBoundsFloor(_scopeKey, { minYmd, maxYmd }) {
+86-  return { minYmd: minYmd || null, maxYmd: maxYmd || null };
+87-}
+--
+104-}
+105-
+106-/**
+107- * Detecta se o usu├írio est├í pedindo Federal (por input/alias).
+108- */
+109-function isFederalInput(scopeInput) {
+110-  const up = String(scopeInput || "").trim().toUpperCase();
+111-  if (!up) return false;
+112-  if (up === FEDERAL_SCOPE_CODE) return true;
+113-  if (FEDERAL_INPUT_ALIASES.has(up)) return true;
+114-
+115-  // normaliza espa├ºos/underscores pra captar varia├º├Áes
+116-  const compact = up.replace(/[\s_]+/g, " ").trim();
+117-  return (
+118-    FEDERAL_INPUT_ALIASES.has(compact) ||
+119-    FEDERAL_INPUT_ALIASES.has(up.replace(/[\s_]+/g, "_"))
+120-  );
+121-}
+122-
+123-/**
+124: * Resolve qual lottery_key usar quando o usu├írio passar:
+125- * - "RJ" -> "PT_RIO"
+126- * - "FEDERAL"/aliases -> "FEDERAL" (can├┤nico)
+127- * - outros -> mant├®m o valor original (compat├¡vel com seu app atual)
+128- */
+129-function resolveLotteryKeyForQuery(ufInput) {
+130-  const uf = String(ufInput || "").trim();
+131-  if (!uf) return "";
+132-  const up = uf.toUpperCase();
+133-
+134-  if (up === RJ_STATE_CODE) return RJ_LOTTERY_KEY;
+135-  if (isFederalInput(up)) return FEDERAL_SCOPE_CODE;
+136-
+137-  return uf;
+138-}
+139-
+140-/**
+141- * Ô£à Chave can├┤nica para CACHE:
+142- * - "RJ" -> "PT_RIO"
+143- * - Federal (qualquer alias) -> "FEDERAL"
+144- * - outros -> UPPER(TRIM)
+145- */
+146-function canonicalScopeKey(ufInput) {
+147-  const s = String(ufInput || "").trim();
+148-  if (!s) return "";
+149-  const up = s.toUpperCase();
+150-
+151-  if (up === RJ_STATE_CODE) return RJ_LOTTERY_KEY;
+152-  if (isFederalInput(up)) return FEDERAL_SCOPE_CODE;
+153-
+154-  return up;
+155-}
+156-
+157-/**
+158: * Quando for consultar por campo "uf", adiciona trava de lottery_key para RJ.
+159- * Isso elimina o vazamento de Federal para o Rio.
+160- */
+161-function buildRJLockWhereIfNeeded(fieldName, ufInput) {
+162-  const ufUp = String(ufInput || "").trim().toUpperCase();
+163-  if (fieldName === "uf" && ufUp === RJ_STATE_CODE) {
+164:    return [where("lottery_key", "==", RJ_LOTTERY_KEY)];
+165-  }
+166-  return [];
+167-}
+168-
+169-/* =========================
+170-   Ô£à FIX silencioso: normalizar valor do WHERE por campo
+171-========================= */
+172-
+173-function normalizeValueForField(fieldName, valueInput) {
+174-  const s = String(valueInput || "").trim();
+175-  if (!s) return "";
+176-
+177-  if (fieldName === "uf") {
+178-    const up = s.toUpperCase();
+179-    if (isFederalInput(up)) return FEDERAL_SCOPE_CODE;
+180-    return up;
+181-  }
+182-
+183:  if (fieldName === "lottery_key") {
+184-    const up = s.toUpperCase();
+185-    if (up === RJ_STATE_CODE) return RJ_LOTTERY_KEY; // Ô£à PREVENTIVO: RJ -> PT_RIO
+186-    if (isFederalInput(up)) return FEDERAL_SCOPE_CODE;
+187-    return up;
+188-  }
+189-
+190-  return s;
+191-}
+192-
+193-/* =========================
+194-   Utils
+195-========================= */
+196-
+197-/**
+198- * Ô£à Normaliza "hor├írio" para HH:MM
+199- */
+200-function normalizeHourLike(value) {
+201-  const s0 = String(value ?? "").trim();
+202-  if (!s0) return "";
+203-
+204-  const s = s0.replace(/\s+/g, "");
+205-
+206-  const mhx = s.match(/^(\d{1,2})(?:h|hs|hr|hrs)$/i);
+207-  if (mhx) return `${pad2(mhx[1])}:00`;
+208-
+209-  const mISO = s.match(/^(\d{1,2}):(\d{1,2})(?::(\d{1,2}))?$/);
+210-  if (mISO) return `${pad2(mISO[1])}:${pad2(mISO[2])}`;
+211-
+212-  const mHm = s.match(/^(\d{3,4})$/);
+213-  if (mHm) {
+214-    const hh = String(mHm[1]).slice(0, -2);
+215-    const mm = String(mHm[1]).slice(-2);
+216-    if (/^\d{1,2}$/.test(hh) && /^\d{2}$/.test(mm)) {
+217-      return `${pad2(hh)}:${mm}`;
+218-    }
+--
+370-    const ib = String(b?.drawId || b?.id || "");
+371-    return ib.localeCompare(ia);
+372-  });
+373-}
+374-
+375-/**
+376- * Ô£à DEDUPE
+377- * - chave l├│gica: ymd + hour (+ lottery_code quando existir)
+378- * - se n├úo houver ymd/hour, cai no id/idx
+379- *
+380- * Ô£à FIX CR├ìTICO:
+381- * N├úo colapsar dois draws distintos do mesmo dia/hor├írio com lottery_code diferente.
+382- */
+383-function dedupeDrawsLocal(draws) {
+384-  const arr = Array.isArray(draws) ? draws : [];
+385-
+386-  const byKey = new Map();
+387-  const order = [];
+388-
+389-  function score(d) {
+390:    const prizesLen = Array.isArray(d?.prizes) ? d.prizes.length : 0;
+391:    const pc = Number.isFinite(Number(d?.prizesCount))
+392:      ? Number(d.prizesCount)
+393-      : 0;
+394-    const hasLogical = !!(d?.ymd && d?.close_hour);
+395:    return prizesLen * 1_000_000 + pc * 1_000 + (hasLogical ? 10 : 0);
+396-  }
+397-
+398-  for (let i = 0; i < arr.length; i += 1) {
+399-    const raw = arr[i] || {};
+400-
+401-    const ymd = raw.ymd || normalizeToYMD(raw.date) || "";
+402-    const hour = normalizeHourLike(raw.close_hour || raw.closeHour || "");
+403-
+404-    const lotCode = normalizeLotteryCodeAny(raw);
+405-
+406-    const drawId = raw.drawId ?? raw.id ?? raw.__name__ ?? null;
+407-    const idStr = drawId != null ? String(drawId) : "";
+408-
+409-    const hasLogical = !!(ymd && hour);
+410-
+411-    const key = hasLogical
+412-      ? lotCode
+413-        ? `${ymd}__${hour}__${lotCode}`
+414-        : `${ymd}__${hour}`
+415-      : `id__${idStr || `idx_${i}`}`;
+416-
+417-    const normalized = {
+418-      ...raw,
+419-      ymd: ymd || raw.ymd || null,
+420-      close_hour: hour || raw.close_hour || raw.closeHour || "",
+421-      closeHour: hour || raw.closeHour || raw.close_hour || "",
+422-      lottery_code: lotCode || raw.lottery_code || raw.lotteryCode || null,
+423-      drawId: raw.drawId || raw.id || raw.__name__ || null,
+424-      id: raw.id || raw.drawId || raw.__name__ || null,
+425-    };
+426-
+427-    if (!byKey.has(key)) {
+428-      byKey.set(key, normalized);
+429-      order.push(key);
+430-      continue;
+--
+467-function isIndexError(error) {
+468-  const msg = String(error?.message || "").toLowerCase();
+469-  const code = String(error?.code || "").toLowerCase();
+470-  return (
+471-    code.includes("failed-precondition") ||
+472-    msg.includes("failed_precondition") ||
+473-    (msg.includes("index") && msg.includes("create")) ||
+474-    (msg.includes("requires") && msg.includes("index"))
+475-  );
+476-}
+477-
+478-function getDocDateRaw(d) {
+479-  if (!d) return null;
+480-  return d.ymd ?? d.date ?? d.data ?? d.dt ?? d.draw_date ?? d.close_date ?? null;
+481-}
+482-
+483-/* =========================
+484-   Prizes (ROBUSTO + CACHE)
+485-========================= */
+486-
+487:function prizesCacheKeyAll(drawId) {
+488-  return `all::${String(drawId)}`;
+489-}
+490-
+491-/**
+492- * Ô£à FIX DEFINITIVO:
+493- * Se existir embeddedPrizes mas vier "agregado/incompleto" (sem grupo/posi├º├úo v├ílidos),
+494: * faz fallback e busca a subcollection draws/{id}/prizes.
+495- */
+496-async function fetchPrizesForDraw(drawId, positionsArr, embeddedPrizes) {
+497-  const drawKey = String(drawId || "").trim();
+498-  if (!drawKey) return [];
+499-
+500-  if (Array.isArray(embeddedPrizes) && embeddedPrizes.length) {
+501-    const normalized = embeddedPrizes.map((p, idx) =>
+502-      normalizePrize(p, p?.prizeId ?? `emb_${idx}`)
+503-    );
+504-
+505-    const cleaned = normalized.filter(
+506-      (x) => isValidGrupo(x?.grupo) && isValidPosition(x?.position)
+507-    );
+508-
+509-    if (cleaned.length) {
+510-      const allSorted = sortPrizesByPosition(cleaned);
+511-      return filterPrizesByPositions(allSorted, positionsArr);
+512-    }
+513-  }
+514-
+515:  const allKey = prizesCacheKeyAll(drawKey);
+516-  const cachedAll = cacheGet(PRIZES_CACHE, allKey);
+517-  if (Array.isArray(cachedAll) && cachedAll.length > 0) {
+518-    return filterPrizesByPositions(cachedAll, positionsArr);
+519-  }
+520-
+521:  const prizesCol = collection(db, "draws", drawKey, "prizes");
+522-
+523:  const { snap, error } = await safeGetDocsSmart(prizesCol, { policy: "server" });
+524-  if (error) throw error;
+525-
+526-  const allRaw = snap.docs.map((d) => normalizePrize(d.data(), d.id));
+527-
+528-  // console.log("DEBUG allRaw:", allRaw);
+529-
+530-const all = allRaw.filter(
+531-  (x) => isValidGrupo(x?.grupo) && isValidPosition(x?.position)
+532-);
+533-
+534-// console.log("DEBUG allFiltered:", all);
+535-
+536-  const allSorted = sortPrizesByPosition(all);
+537-  cacheSet(PRIZES_CACHE, allKey, allSorted);
+538-
+539-  return filterPrizesByPositions(allSorted, positionsArr);
+540-}
+541-
+542-/* =========================
+543-   Map Draw
+544-========================= */
+545-
+546-function mapDrawDoc(doc) {
+547-  const d = doc.data();
+548-
+549-  const ymd = d.ymd || normalizeToYMD(getDocDateRaw(d));
+550-  const hourNorm = normalizeHourLike(
+551-    d.close_hour ?? d.closeHour ?? d.hour ?? d.hora ?? ""
+552-  );
+553-
+554:  const embeddedPrizes = Array.isArray(d.prizes) && d.prizes.length > 0 ? d.prizes : null;
+555-
+556-  const ufRaw = d.uf ?? null;
+557:  const lotteryKeyRaw = d.lottery_key ?? d.lotteryKey ?? d.lottery ?? null;
+558-
+559-  const lotteryCodeRaw =
+560-    d.lottery_code ??
+561-    d.lotteryCode ??
+562-    d.lot_code ??
+563-    d.lotCode ??
+564-    d.lot ??
+565-    d.code ??
+566-    d.lottery_id ??
+567-    d.lotteryId ??
+568-    null;
+569-
+570-  return {
+571-    drawId: doc.id,
+572-    id: doc.id,
+573-
+574-    date: d.date ?? d.data ?? d.dt ?? d.draw_date ?? d.close_date ?? null,
+575-    ymd,
+576-
+577-    close_hour: hourNorm,
+578-    closeHour: hourNorm,
+579-
+580-    uf: ufRaw,
+581:    lottery_key: lotteryKeyRaw,
+582-
+583-    lottery_code: lotteryCodeRaw ? String(lotteryCodeRaw).toUpperCase() : null,
+584-
+585-    lottery_name: d.lottery_name ?? d.lotteryName ?? null,
+586-    lottery_label: d.lottery_label ?? d.lotteryLabel ?? null,
+587-
+588:    prizesCount: d.prizesCount,
+589:    prizes: embeddedPrizes,
+590-  };
+591-}
+592-
+593-/* =========================
+594:   Compat: uf OU lottery_key
+595-========================= */
+596-
+597-function buildUfWhereClauses(fieldName, uf) {
+598-  const normalized = normalizeValueForField(fieldName, uf);
+599-  return [where(fieldName, "==", normalized)];
+600-}
+601-
+602-function normalizeOrderBys(extraOrderBy) {
+603-  if (!extraOrderBy) return [];
+604-  return Array.isArray(extraOrderBy)
+605-    ? extraOrderBy.filter(Boolean)
+606-    : [extraOrderBy];
+607-}
+608-
+609-async function queryDrawsByField({
+610-  fieldName,
+611-  uf,
+612-  extraWheres = [],
+613-  extraOrderBy = null,
+614-  extraLimit = null,
+615-  policy = DEFAULT_READ_POLICY,
+616-}) {
+617:  const drawsCol = collection(db, "draws");
+618-
+619-  const parts = [
+620-    drawsCol,
+621-    ...buildUfWhereClauses(fieldName, uf),
+622-    ...buildRJLockWhereIfNeeded(fieldName, uf),
+623-    ...(extraWheres || []),
+624-  ];
+625-
+626-  const orderBys = normalizeOrderBys(extraOrderBy);
+627-  for (const ob of orderBys) parts.push(ob);
+628-
+629-  if (extraLimit) parts.push(extraLimit);
+630-
+631-  const qRef = query(...parts);
+632-  return safeGetDocsSmart(qRef, { policy });
+633-}
+634-
+635-function extractUfParam(maybeUfOrObj) {
+636-  if (!maybeUfOrObj) return "";
+637-  if (typeof maybeUfOrObj === "string") return maybeUfOrObj;
+638-  if (typeof maybeUfOrObj === "object" && typeof maybeUfOrObj.uf === "string") {
+639-    return maybeUfOrObj.uf;
+640-  }
+641-  return String(maybeUfOrObj || "");
+642-}
+643-
+644-async function fetchDrawDocsPreferUf({
+645-  uf,
+646-  extraWheres = [],
+647-  extraOrderBy = null,
+648-  extraLimit = null,
+649-  policy = DEFAULT_READ_POLICY,
+650-}) {
+651-  const ufTrim = String(extractUfParam(uf) || "").trim();
+652-  const ufUp = ufTrim.toUpperCase();
+653-
+654-  if (isFederalInput(ufUp)) {
+655-    for (const lk of FEDERAL_LOTTERY_KEYS) {
+656-      const { snap, error } = await queryDrawsByField({
+657:        fieldName: "lottery_key",
+658-        uf: lk,
+659-        extraWheres,
+660-        extraOrderBy,
+661-        extraLimit,
+662-        policy,
+663-      });
+664-
+665:      if (error) return { docs: [], usedField: "lottery_key", error };
+666-      if (snap?.docs?.length) {
+667:        return { docs: snap.docs, usedField: "lottery_key", error: null };
+668-      }
+669-    }
+670-
+671:    return { docs: [], usedField: "lottery_key", error: null };
+672-  }
+673-
+674-  {
+675-    const { snap, error } = await queryDrawsByField({
+676-      fieldName: "uf",
+677-      uf: ufUp,
+678-      extraWheres,
+679-      extraOrderBy,
+680-      extraLimit,
+681-      policy,
+682-    });
+683-
+684-    if (!error && snap?.docs?.length) {
+685-      return { docs: snap.docs, usedField: "uf", error: null };
+686-    }
+687-    if (error) return { docs: [], usedField: "uf", error };
+688-  }
+689-
+690-  {
+691-    const lotteryKey =
+692-      ufUp === RJ_STATE_CODE ? RJ_LOTTERY_KEY : resolveLotteryKeyForQuery(ufTrim);
+693-
+694-    const { snap, error } = await queryDrawsByField({
+695:      fieldName: "lottery_key",
+696-      uf: String(lotteryKey).toUpperCase(),
+697-      extraWheres,
+698-      extraOrderBy,
+699-      extraLimit,
+700-      policy,
+701-    });
+702-
+703-    if (!error && snap?.docs?.length) {
+704:      return { docs: snap.docs, usedField: "lottery_key", error: null };
+705-    }
+706:    if (error) return { docs: [], usedField: "lottery_key", error };
+707-  }
+708-
+709-  return { docs: [], usedField: "none", error: null };
+710-}
+711-
+712-/* =========================
+713-   Bounds (min/max reais)
+714-========================= */
+715-
+716-function pickMinMaxFromMapped(mapped) {
+717-  let minYmd = null;
+718-  let maxYmd = null;
+719-
+720-  for (const d of mapped) {
+721-    const y = d?.ymd || normalizeToYMD(d?.date);
+722-    if (!y || !isYMD(y)) continue;
+723-    if (!minYmd || y < minYmd) minYmd = y;
+724-    if (!maxYmd || y > maxYmd) maxYmd = y;
+725-  }
+726-
+727-  return { minYmd, maxYmd };
+728-}
+729-
+730-/**
+731- * Ô£à ÔÇ£Prova de vidaÔÇØ do maxYmd sem depender de ├¡ndice composto nem de docId:
+732- * tenta dias recentes (==) desc at├® achar pelo menos 1 draw.
+733- */
+734-async function probeRecentMaxYmd(uf, lookbackDays = 45) {
+735-  const base = utcTodayYmd();
+736-  const n = Math.max(3, Math.min(120, Number(lookbackDays) || 45));
+737-
+738-  for (let i = 0; i <= n; i += 1) {
+739-    const day = addDaysUTCLocal(base, -i);
+740-    const { docs, error } = await fetchDrawDocsPreferUf({
+741-      uf,
+--
+914-  }
+915-
+916-  const recentProbe = await probeRecentMaxYmd(uf, 60);
+917-  const recentMaxYmd = recentProbe?.ok ? recentProbe.maxYmd : null;
+918-
+919-  const scopeKeyBounds = canonicalScopeKey(uf);
+920-  {
+921-    const idxInfo = (() => {
+922-      const code = String(firstTryError?.code || "");
+923-      const msg = String(firstTryError?.message || "");
+924-      if (!code && !msg) return "";
+925-      return `:firstTryError=${code || "err"}`;
+926-    })();
+927-
+928-    const a = await sampleEdgesByDocId("uf", String(uf).toUpperCase());
+929-
+930-    const ufUp = String(uf || "").trim().toUpperCase();
+931-
+932-    if (!a.ok && isFederalInput(ufUp)) {
+933-      for (const lk of FEDERAL_LOTTERY_KEYS) {
+934:        const b = await sampleEdgesByDocId("lottery_key", lk);
+935-        if (b.ok) {
+936-          const mm = pickMinMaxFromMapped(b.merged);
+937-
+938-          const maxFixed =
+939-            recentMaxYmd && (!mm.maxYmd || recentMaxYmd > mm.maxYmd)
+940-              ? recentMaxYmd
+941-              : mm.maxYmd;
+942-
+943-          const floored = applyBoundsFloor(scopeKeyBounds, {
+944-            minYmd: mm.minYmd || null,
+945-            maxYmd: maxFixed || null,
+946-          });
+947-
+948-          return {
+949-            ok: !!(floored.minYmd && floored.maxYmd),
+950-            uf,
+951-
+952-            minYmd: floored.minYmd,
+953-            maxYmd: floored.maxYmd,
+954-
+955-            minDate: floored.minYmd,
+956-            maxDate: floored.maxYmd,
+957-
+958:            source: `fallback_edges_docId_limit=${FALLBACK_EDGE_LIMIT}:lottery_key(${lk}):sampleCount=${b.merged.length}${
+959-              recentMaxYmd ? ":max_probe" : ""
+960-            }${idxInfo}`,
+961-          };
+962-        }
+963-      }
+964-    }
+965-
+966-    const lotteryKey =
+967-      ufUp === RJ_STATE_CODE ? RJ_LOTTERY_KEY : resolveLotteryKeyForQuery(uf);
+968-
+969-    const b = a.ok
+970-      ? null
+971:      : await sampleEdgesByDocId("lottery_key", String(lotteryKey).toUpperCase());
+972-
+973-    const merged = a.ok ? a.merged : b?.merged || [];
+974-    const mm = pickMinMaxFromMapped(merged);
+975-
+976-    const maxFixed =
+977-      recentMaxYmd && (!mm.maxYmd || recentMaxYmd > mm.maxYmd)
+978-        ? recentMaxYmd
+979-        : mm.maxYmd;
+980-
+981-    const floored = applyBoundsFloor(scopeKeyBounds, {
+982-      minYmd: mm.minYmd || null,
+983-      maxYmd: maxFixed || null,
+984-    });
+985-
+986-    return {
+987-      ok: !!(floored.minYmd && floored.maxYmd),
+988-      uf,
+989-
+990-      minYmd: floored.minYmd,
+991-      maxYmd: floored.maxYmd,
+992-
+993-      minDate: floored.minYmd,
+994-      maxDate: floored.maxYmd,
+995-
+996-      source: `fallback_edges_docId_limit=${FALLBACK_EDGE_LIMIT}:${
+997:        a.ok ? "uf" : "lottery_key"
+998-      }:sampleCount=${merged.length}${recentMaxYmd ? ":max_probe" : ""}${idxInfo}`,
+999-    };
+1000-  }
+1001-}
+1002-
+1003-/* =========================
+1004-   API: Day
+1005-========================= */
+1006-
+1007-function buildPrizeSignature(draw) {
+1008:  const prizes = Array.isArray(draw?.prizes) ? draw.prizes : [];
+1009:  if (!prizes.length) return "";
+1010-
+1011:  const parts = prizes
+1012-    .map((p) => {
+1013-      const pos = Number(p?.position);
+1014-      const grupo = Number(p?.grupo);
+1015-      const numero = toPrizeDigitsByPosition(
+1016-        p?.numero ?? p?.milhar ?? p?.number ?? p?.num ?? p?.valor ?? "",
+1017-        pos
+1018-      );
+1019-
+1020-      if (!Number.isFinite(pos) || !Number.isFinite(grupo) || !numero) return "";
+1021-      return `${pad2(pos)}:${pad2(grupo)}:${numero}`;
+1022-    })
+1023-    .filter(Boolean)
+1024-    .sort();
+1025-
+1026-  return parts.join("|");
+1027-}
+1028-
+1029-function federalHourPriority(draw) {
+1030-  const h = normalizeHourLike(
+1031-    draw?.close_hour || draw?.closeHour || draw?.hour || draw?.hora || ""
+1032-  );
+1033-  const ymd = String(draw?.ymd || normalizeToYMD(draw?.date) || "").trim();
+1034-  const n = hourToNumSafe(h);
+1035-
+1036-  const prefer20h = getFederalPreferredHourForYmd(ymd) === "20:00";
+1037-
+1038-  if (prefer20h) {
+1039-    if (h === "20:00") return 200000 + n;
+1040-    if (h === "19:00") return 190000 + n;
+1041-    return 100000 + n;
+1042-  }
+1043-
+1044-  if (h === "19:00") return 200000 + n;
+1045-  if (h === "20:00") return 190000 + n;
+1046-  return 100000 + n;
+1047-}
+1048-
+1049-function pickBetterFederalClone(a, b) {
+1050:  const pa = Number.isFinite(Number(a?.prizesCount))
+1051:    ? Number(a.prizesCount)
+1052:    : Array.isArray(a?.prizes)
+1053:    ? a.prizes.length
+1054-    : 0;
+1055-
+1056:  const pb = Number.isFinite(Number(b?.prizesCount))
+1057:    ? Number(b.prizesCount)
+1058:    : Array.isArray(b?.prizes)
+1059:    ? b.prizes.length
+1060-    : 0;
+1061-
+1062-  if (pa !== pb) return pb > pa ? b : a;
+1063-
+1064-  const ha = federalHourPriority(a);
+1065-  const hb = federalHourPriority(b);
+1066-  if (ha !== hb) return hb > ha ? b : a;
+1067-
+1068-  const ia = String(a?.drawId || a?.id || "");
+1069-  const ib = String(b?.drawId || b?.id || "");
+1070-  return ib.localeCompare(ia) > 0 ? b : a;
+1071-}
+1072-
+1073-function collapseFederalDailyCloneDraws(draws) {
+1074-  const arr = Array.isArray(draws) ? draws : [];
+1075-  const byKey = new Map();
+1076-
+1077-  for (const d of arr) {
+1078-    const ymd = String(d?.ymd || normalizeToYMD(d?.date) || "").trim();
+1079-    const sig = buildPrizeSignature(d);
+1080-
+1081-    if (!ymd || !sig) {
+1082-      const fallbackKey = `id::${String(
+1083-        d?.drawId || d?.id || Math.random()
+1084-      )}`;
+1085-      if (!byKey.has(fallbackKey)) byKey.set(fallbackKey, d);
+1086-      continue;
+1087-    }
+1088-
+1089-    const key = `${ymd}__${sig}`;
+1090-    const prev = byKey.get(key);
+1091-
+1092-    if (!prev) byKey.set(key, d);
+1093-    else byKey.set(key, pickBetterFederalClone(prev, d));
+1094-  }
+1095-
+1096-  return sortDrawsLocal(Array.from(byKey.values()));
+1097-}
+1098-
+1099-function drawsCacheKeyDay({ scopeKey, ymd, positionsArr, hourFilter }) {
+1100-  const p = positionsArr && positionsArr.length ? positionsArr.join(",") : "all";
+1101-  const h =
+1102-    hourFilter?.kind === "bucket"
+1103-      ? `bucket:${hourFilter.bucket}`
+1104-      : hourFilter?.kind === "exact"
+1105-      ? `exact:${hourFilter.hhmm}`
+1106-      : "all";
+1107-  return `day::${scopeKey}::${ymd}::pos=${p}::h=${h}`;
+1108-}
+1109-
+1110:export async function getKingResultsByDate({
+1111-  uf,
+1112-  date,
+1113-  closeHour = null,
+1114-  closeHourBucket = null,
+1115-  positions = null,
+1116-}) {
+1117-  if (!uf || !date) throw new Error("Par├ómetros obrigat├│rios: uf e date");
+1118-
+1119-  const scopeKey = canonicalScopeKey(uf);
+1120-
+1121-  const positionsArr = normalizePositions(positions);
+1122-  const ymdDate = normalizeToYMD(date);
+1123-  if (!ymdDate) return [];
+1124-
+1125-  const hourFilter = resolveHourFilter({ closeHour, closeHourBucket });
+1126-
+1127-  const dayKey = drawsCacheKeyDay({
+1128-    scopeKey,
+1129-    ymd: ymdDate,
+1130-    positionsArr,
+1131-    hourFilter,
+1132-  });
+1133-
+1134-  const forceFreshServer = shouldForceFreshServerRead(ymdDate);
+1135-  const allowMemoryCache = !forceFreshServer;
+1136-
+1137-  if (allowMemoryCache) {
+1138-    const cached = cacheGet(DRAWS_CACHE, dayKey);
+1139-    if (cached) return cached;
+1140-  }
+1141-
+1142-  const readPolicy = forceFreshServer ? "server" : DEFAULT_READ_POLICY;
+1143-
+1144-  const docCandidates = [];
+1145-
+--
+1180-    const brDate = ymdToBR(ymdDate);
+1181-    if (brDate) {
+1182-      const { docs: found, error } = await fetchDrawDocsPreferUf({
+1183-        uf,
+1184-        extraWheres: [where("date", "==", brDate)],
+1185-        policy: readPolicy,
+1186-      });
+1187-      if (error) throw error;
+1188-      if (found.length) docCandidates.push(...found);
+1189-    }
+1190-  }
+1191-
+1192-  if (!docCandidates.length) return [];
+1193-
+1194-  let baseAll = dedupeDrawsLocal(docCandidates.map(mapDrawDoc));
+1195-  baseAll = baseAll.filter((x) => (x.ymd || normalizeToYMD(x.date)) === ymdDate);
+1196-
+1197-  const orderedAll = sortDrawsLocal(baseAll);
+1198-
+1199-  const hydratedAll = await mapWithConcurrency(orderedAll, 6, async (item) => {
+1200:    const prizes = await fetchPrizesForDraw(item.drawId, positionsArr, item.prizes);
+1201:    const pc = Array.isArray(prizes) ? prizes.length : 0;
+1202:    return { ...item, prizes, prizesCount: pc, __mode: "detailed" };
+1203-  });
+1204-
+1205-  let dayAll = dedupeDrawsLocal(hydratedAll);
+1206-
+1207-if (scopeKey === FEDERAL_SCOPE_CODE) {
+1208-  dayAll = collapseFederalDailyCloneDraws(dayAll);
+1209-}
+1210-
+1211-  const base = hourFilter?.kind
+1212-    ? dayAll.filter((d) => drawPassesHourFilter(d, hourFilter))
+1213-    : dayAll;
+1214-
+1215-  let out = dedupeDrawsLocal(sortDrawsLocal(base));
+1216-
+1217-if (scopeKey === FEDERAL_SCOPE_CODE) {
+1218-  out = collapseFederalDailyCloneDraws(out);
+1219-}
+1220-
+1221-  if (allowMemoryCache) {
+1222-    cacheSet(DRAWS_CACHE, dayKey, out);
+1223-  }
+1224-
+1225-  return out;
+1226-}
+1227-
+1228-/* =========================
+1229-   API: Range
+1230-========================= */
+1231-
+1232-function drawsCacheKeyRange({
+1233-  scopeKey,
+1234-  from,
+1235-  to,
+1236-  positionsArr,
+1237-  hourFilter,
+--
+1253-  if (drawCount <= 50) return 4;
+1254-  if (drawCount <= 300) return 6;
+1255-  if (drawCount <= 1200) return 8;
+1256-  return 10;
+1257-}
+1258-
+1259-export function decideKingRangeMode({ dateFrom, dateTo, mode = "detailed" }) {
+1260-  const ymdFrom = normalizeToYMD(dateFrom);
+1261-  const ymdTo = normalizeToYMD(dateTo);
+1262-  if (!ymdFrom || !ymdTo) return "detailed";
+1263-
+1264-  if (mode === "detailed" || mode === "aggregated") return mode;
+1265-  if (mode !== "auto") return "detailed";
+1266-
+1267-  const days = daysBetweenInclusiveUTC(ymdFrom, ymdTo);
+1268-  if (!Number.isFinite(days) || days <= 0) return "detailed";
+1269-  return "detailed";
+1270-}
+1271-
+1272-/**
+1273: * Ô£à Fallback barato (SEM prizes): usado quando falta ├¡ndice composto no RANGE,
+1274- * ou quando voc├¬ quer aggregated sem custo de hidratar.
+1275- */
+1276-async function fetchDrawsDayNoPrizes({ uf, dayYmd }) {
+1277-  const readPolicy = shouldForceFreshServerRead(dayYmd) ? "server" : DEFAULT_READ_POLICY;
+1278-
+1279-  const { docs, error } = await fetchDrawDocsPreferUf({
+1280-    uf,
+1281-    extraWheres: [where("ymd", "==", dayYmd)],
+1282-    policy: readPolicy,
+1283-  });
+1284-  if (error) throw error;
+1285-  if (!docs || !docs.length) return [];
+1286-
+1287-  let baseAll = dedupeDrawsLocal(docs.map(mapDrawDoc));
+1288-  baseAll = baseAll.filter((x) => (x.ymd || normalizeToYMD(x.date)) === dayYmd);
+1289-
+1290-  const ordered = sortDrawsLocal(baseAll);
+1291-
+1292-  return ordered.map((d) => {
+1293:    const embedded = normalizeEmbeddedPrizesForAggregated(d?.prizes);
+1294-    return {
+1295-      ...d,
+1296:      prizes: embedded,
+1297:      prizesCount: embedded.length || Number(d?.prizesCount || 0),
+1298-      __mode: "aggregated",
+1299-    };
+1300-  });
+1301-}
+1302-
+1303-export async function getKingResultsByRange({
+1304-  uf,
+1305-  dateFrom,
+1306-  dateTo,
+1307-  closeHour = null,
+1308-  closeHourBucket = null,
+1309-  positions = null,
+1310-  mode = "detailed",
+1311-  readPolicy = DEFAULT_READ_POLICY,
+1312-  bypassCache = false,
+1313-}) {
+1314-  if (!uf || !dateFrom || !dateTo) {
+1315-    throw new Error("Par├ómetros obrigat├│rios: uf, dateFrom, dateTo");
+1316-  }
+1317-
+1318-  const scopeKey = canonicalScopeKey(uf);
+1319-
+1320-  const positionsArr = normalizePositions(positions);
+1321-
+1322-  const ymdFrom = normalizeToYMD(dateFrom);
+1323-  const ymdTo = normalizeToYMD(dateTo);
+1324-  if (!ymdFrom || !ymdTo) return [];
+1325-
+1326-  const hourFilter = resolveHourFilter({ closeHour, closeHourBucket });
+1327-
+1328-  const effectiveMode = decideKingRangeMode({
+1329-    dateFrom: ymdFrom,
+1330-    dateTo: ymdTo,
+1331-    mode,
+1332-  });
+--
+1367-            const dayDraws = await fetchDrawsDayNoPrizes({ uf, dayYmd: day });
+1368-            if (dayDraws.length) all.push(...dayDraws);
+1369-          }
+1370-
+1371-          const baseAll = dedupeDrawsLocal(all);
+1372-          const base = hourFilter?.kind
+1373-            ? baseAll.filter((d) => drawPassesHourFilter(d, hourFilter))
+1374-            : baseAll;
+1375-
+1376-          let out = dedupeDrawsLocal(sortDrawsLocal(base));
+1377-
+1378-          if (!bypassCache) {
+1379-      cacheSet(DRAWS_CACHE, rangeKey, out);
+1380-    }
+1381-          return out;
+1382-        }
+1383-
+1384-        const all = [];
+1385-        for (let i = 0; i < days; i += 1) {
+1386-          const day = addDaysUTC(ymdFrom, i);
+1387:          const dayDraws = await getKingResultsByDate({
+1388-            uf,
+1389-            date: day,
+1390-            closeHour,
+1391-            closeHourBucket,
+1392-            positions: positionsArr,
+1393-          });
+1394-          if (Array.isArray(dayDraws) && dayDraws.length) all.push(...dayDraws);
+1395-        }
+1396-
+1397-        const baseAll = dedupeDrawsLocal(all);
+1398-        const base = hourFilter?.kind
+1399-          ? baseAll.filter((d) => drawPassesHourFilter(d, hourFilter))
+1400-          : baseAll;
+1401-
+1402-        let out = dedupeDrawsLocal(sortDrawsLocal(base));
+1403-
+1404-        if (!bypassCache) {
+1405-      cacheSet(DRAWS_CACHE, rangeKey, out);
+1406-    }
+1407-        return out;
+1408-      }
+1409-
+1410-      const rawCode = String(error?.code || "");
+1411-      const rawMsg = String(error?.message || "");
+1412-
+1413-      throw new Error(
+1414-        `Firestore: falta ├¡ndice composto para RANGE (campo ${usedField} + ymd).\n` +
+1415-          `Crie/valide o ├¡ndice no console (Collection: draws | Fields: ${usedField} ASC, ymd ASC, __name__ (documentId) ASC).\n` +
+1416-          `Obs: fallback autom├ítico s├│ ├® aplicado para ranges at├® ${MAX_FALLBACK_DAYS} dias.\n` +
+1417-          (rawCode || rawMsg ? `Detalhe: ${rawCode} ${rawMsg}` : "")
+1418-      );
+1419-    }
+1420-
+1421-    throw error;
+1422-  }
+--
+1437-          const dayDraws = await fetchDrawsDayNoPrizes({ uf, dayYmd: day });
+1438-          if (dayDraws.length) all.push(...dayDraws);
+1439-        }
+1440-
+1441-        const baseAll = dedupeDrawsLocal(all);
+1442-        const base = hourFilter?.kind
+1443-          ? baseAll.filter((d) => drawPassesHourFilter(d, hourFilter))
+1444-          : baseAll;
+1445-
+1446-        let out = dedupeDrawsLocal(sortDrawsLocal(base));
+1447-
+1448-        if (!bypassCache) {
+1449-      cacheSet(DRAWS_CACHE, rangeKey, out);
+1450-    }
+1451-        return out;
+1452-      }
+1453-
+1454-      const all = [];
+1455-      for (let i = 0; i < days; i += 1) {
+1456-        const day = addDaysUTC(ymdFrom, i);
+1457:        const dayDraws = await getKingResultsByDate({
+1458-          uf,
+1459-          date: day,
+1460-          closeHour,
+1461-          closeHourBucket,
+1462-          positions: positionsArr,
+1463-        });
+1464-        if (Array.isArray(dayDraws) && dayDraws.length) all.push(...dayDraws);
+1465-      }
+1466-
+1467-      const baseAll = dedupeDrawsLocal(all);
+1468-      const base = hourFilter?.kind
+1469-        ? baseAll.filter((d) => drawPassesHourFilter(d, hourFilter))
+1470-        : baseAll;
+1471-
+1472-      const ordered = sortDrawsLocal(base);
+1473-
+1474-      const conc = chooseRangeConcurrency(ordered.length);
+1475-      const results = await mapWithConcurrency(ordered, conc, async (item) => {
+1476:        const prizes = await fetchPrizesForDraw(item.drawId, positionsArr, item.prizes);
+1477:        const pc = Array.isArray(prizes) ? prizes.length : 0;
+1478:        return { ...item, prizes, prizesCount: pc, __mode: "detailed" };
+1479-      });
+1480-
+1481-      const out = dedupeDrawsLocal(results);
+1482-      if (!bypassCache) {
+1483-      cacheSet(DRAWS_CACHE, rangeKey, out);
+1484-    }
+1485-      return out;
+1486-    }
+1487-
+1488-    return [];
+1489-  }
+1490-
+1491-  const baseAll = dedupeDrawsLocal(docs.map(mapDrawDoc));
+1492-  const base = hourFilter?.kind
+1493-    ? baseAll.filter((d) => drawPassesHourFilter(d, hourFilter))
+1494-    : baseAll;
+1495-
+1496-  const ordered = sortDrawsLocal(base);
+1497-
+1498-  if (effectiveMode === "aggregated") {
+1499-    const out = dedupeDrawsLocal(
+1500-      ordered.map((d) => {
+1501:        const embedded = normalizeEmbeddedPrizesForAggregated(d?.prizes);
+1502-        return {
+1503-          ...d,
+1504:          prizes: embedded,
+1505:          prizesCount: Number.isFinite(Number(d?.prizesCount))
+1506:            ? Number(d.prizesCount)
+1507-            : embedded.length || 0,
+1508-          __mode: "aggregated",
+1509-        };
+1510-      })
+1511-    );
+1512-    if (!bypassCache) {
+1513-      cacheSet(DRAWS_CACHE, rangeKey, out);
+1514-    }
+1515-    return out;
+1516-  }
+1517-
+1518-  const conc = chooseRangeConcurrency(ordered.length);
+1519-
+1520-  const results = await mapWithConcurrency(ordered, conc, async (item) => {
+1521:    const prizes = await fetchPrizesForDraw(item.drawId, positionsArr, item.prizes);
+1522:    const pc = Array.isArray(prizes) ? prizes.length : 0;
+1523:    return { ...item, prizes, prizesCount: pc, __mode: "detailed" };
+1524-  });
+1525-
+1526-  const out = dedupeDrawsLocal(results);
+1527-  if (!bypassCache) {
+1528-      cacheSet(DRAWS_CACHE, rangeKey, out);
+1529-    }
+1530-  return out;
+1531-}
+1532-
+1533-/* =========================
+1534:   Ô£à Hidrata├º├úo de prizes (para UX no "Todos")
+1535-========================= */
+1536-
+1537-export async function hydrateKingDrawsWithPrizes({
+1538-  draws,
+1539-  positions = null,
+1540-  concurrency = null,
+1541-}) {
+1542-  const arr = Array.isArray(draws) ? draws : [];
+1543-  if (!arr.length) return [];
+1544-
+1545-  const positionsArr = normalizePositions(positions);
+1546-
+1547-  const conc =
+1548-    Number.isFinite(Number(concurrency)) && Number(concurrency) > 0
+1549-      ? Number(concurrency)
+1550-      : chooseRangeConcurrency(arr.length);
+1551-
+1552-  const results = await mapWithConcurrency(arr, conc, async (item) => {
+1553:    const prizes = await fetchPrizesForDraw(item.drawId, positionsArr, item.prizes);
+1554:    const pc = Array.isArray(prizes) ? prizes.length : 0;
+1555:    return { ...item, prizes, prizesCount: pc, __mode: "detailed" };
+1556-  });
+1557-
+1558-  return dedupeDrawsLocal(results);
+1559-}
+1560-
+1561-/* =========================
+1562-   Ô£à ATRASADOS (Late) ÔÇö 100% baseado na SUA base
+1563-========================= */
+1564-
+1565-function normalizeLotteriesList(lotteries) {
+1566-  const arr = Array.isArray(lotteries) ? lotteries : [];
+1567-  const cleaned = arr
+1568-    .map((x) => String(x ?? "").trim().toUpperCase())
+1569-    .filter(Boolean);
+1570-  return cleaned.length ? Array.from(new Set(cleaned)) : null;
+1571-}
+1572-
+1573-function drawPassesLotteriesFilter(draw, lotteriesArr) {
+1574-  if (!lotteriesArr || !lotteriesArr.length) return true;
+1575-  const code = String(draw?.lottery_code ?? "").trim().toUpperCase();
+1576-  if (!code) return false;
+1577-  return lotteriesArr.includes(code);
+1578-}
+1579-
+1580-function lateCacheKey({
+1581-  scopeKey,
+1582-  fromYmd,
+1583-  toYmd,
+1584-  baseYmd,
+1585-  prizePosition,
+1586-  hourFilter,
+1587-  lotteriesArr,
+1588-  chunkDays,
+1589-}) {
+1590-  const h =
+--
+1675-      uf,
+1676-      dateFrom: chunkFrom,
+1677-      dateTo: cursorTo,
+1678-      closeHour,
+1679-      closeHourBucket,
+1680-      positions: [posNum],
+1681-      mode: "detailed",
+1682-    });
+1683-
+1684-    const desc = sortDrawsLocalDesc(dedupeDrawsLocal(draws));
+1685-
+1686-    for (const d of desc) {
+1687-      if (!d) continue;
+1688-
+1689-      if (hourFilter?.kind && !drawPassesHourFilter(d, hourFilter)) continue;
+1690-      if (lotteriesArr && !drawPassesLotteriesFilter(d, lotteriesArr)) continue;
+1691-
+1692-      const ymd = d.ymd || normalizeToYMD(d.date);
+1693-      if (!ymd || !isYMD(ymd)) continue;
+1694-
+1695:      const p = Array.isArray(d.prizes)
+1696:        ? d.prizes.find(
+1697-            (x) => Number(x?.position) === posNum && isValidGrupo(x?.grupo)
+1698-          )
+1699-        : null;
+1700-
+1701-      const g = p?.grupo;
+1702-      if (!isValidGrupo(g)) continue;
+1703-
+1704-      if (!lastSeen.has(g)) {
+1705-        lastSeen.set(g, {
+1706-          ymd,
+1707-          hour: d.close_hour || d.closeHour || "",
+1708-          drawId: d.drawId || d.id || null,
+1709-          lottery_code: d.lottery_code || null,
+1710-        });
+1711-
+1712-        if (lastSeen.size >= 25) break;
+1713-      }
+1714-    }
+1715-
+1716-    cursorTo = addDaysUTC(chunkFrom, -1);
+1717-  }
+1718-
+1719-  const rows = [];
+1720-  for (let g = 1; g <= 25; g += 1) {
+1721-    const seen = lastSeen.get(g) || null;
+1722-    const lastYmd = seen?.ymd || null;
+1723-    const diff = lastYmd ? daysDiffUTC(lastYmd, baseYmd) : NaN;
+1724-    const atrasoDias =
+1725-      lastYmd && Number.isFinite(diff) ? Math.max(0, diff) : null;
+1726-
+1727-    rows.push({
+1728-      pos: 0,
+1729-      grupo: g,
+1730-      lastYmd,
+1731-      lastHour: seen?.hour ? normalizeHourLike(seen.hour) : null,
+
+===== ARQUIVO COMPLETO =====
+import { apiUrl } from "../config/apiBase";
+// src/services/kingResultsService.js
+import {
+  collection,
+  query,
+  where,
+  orderBy,
+  limit,
+  limitToLast,
+  documentId,
+} from "firebase/firestore";
+import { db } from "./firebase";
+
+import { safeGetDocsSmart } from "./king/king.firestore";
+
+import { cacheGet, cacheSet } from "./king/king.cache";
+
+import {
+  normalizePositions,
+  isValidGrupo,
+  isValidPosition,
+  toPrizeDigitsByPosition,
+  normalizePrize,
+  sortPrizesByPosition,
+  filterPrizesByPositions,
+  normalizeEmbeddedPrizesForAggregated,
+} from "./king/king.normalize";
+
+import {
+  pad2,
+  isYMD,
+  ymdToBR,
+  normalizeToYMD,
+  utcTodayYmd,
+  addDaysUTC,
+  addDaysUTCLocal,
+  daysBetweenInclusiveUTC,
+  daysDiffUTC,
+  shouldForceFreshServerRead,
+} from "./king/king.date";
+
+/* =========================
+   PERF: caches (memória)
+========================= */
+
+const PRIZES_CACHE = new Map(); // key -> { ts, data: prizesAllSorted }
+const DRAWS_CACHE = new Map(); // key -> { ts, data: mappedDrawDocs[] }
+
+// ✅ cache específico para ATRASADOS (Late)
+const LATE_CACHE = new Map(); // key -> { ts, data: lateRows[] }
+
+// ✅ corte seguro (modo auto) — acima disso, tende a ser "agregado" (sem prizes)
+export const AGGREGATED_AUTO_DAYS = Number.POSITIVE_INFINITY;
+
+/* =========================
+   Constantes / helpers base
+========================= */
+
+const DEFAULT_READ_POLICY = "cache";
+
+const RJ_STATE_CODE = "RJ";
+const RJ_LOTTERY_KEY = "PT_RIO";
+
+export const FEDERAL_SCOPE_CODE = "FEDERAL";
+export const FEDERAL_19H_TO_20H_CHANGE_YMD = "2025-11-03";
+
+const FEDERAL_LOTTERY_KEYS = [
+  "FEDERAL",
+  "LOTERIA_FEDERAL",
+  "LT_FEDERAL",
+  "FED",
+];
+
+const FEDERAL_INPUT_ALIASES = new Set([
+  "FEDERAL",
+  "LOTERIA FEDERAL",
+  "LOTERIA_FEDERAL",
+  "LT FEDERAL",
+  "LT_FEDERAL",
+  "FED",
+]);
+
+export const FEDERAL_DRAW_DOW = ["WEDNESDAY", "SATURDAY"]; // referência (UI)
+
+function applyBoundsFloor(_scopeKey, { minYmd, maxYmd }) {
+  return { minYmd: minYmd || null, maxYmd: maxYmd || null };
+}
+
+/**
+ * ✅ Regra histórica da Federal
+ * - até 2025-11-02: 19h
+ * - a partir de 2025-11-03: 20h
+ */
+export function getFederalPreferredHourForYmd(ymd) {
+  const y = String(ymd || "").trim();
+  if (/^\d{4}-\d{2}-\d{2}$/.test(y) && y >= FEDERAL_19H_TO_20H_CHANGE_YMD) {
+    return "20:00";
+  }
+  return "19:00";
+}
+
+export function getFederalPreferredBucketForYmd(ymd) {
+  return getFederalPreferredHourForYmd(ymd) === "20:00" ? "20h" : "19h";
+}
+
+/**
+ * Detecta se o usuário está pedindo Federal (por input/alias).
+ */
+function isFederalInput(scopeInput) {
+  const up = String(scopeInput || "").trim().toUpperCase();
+  if (!up) return false;
+  if (up === FEDERAL_SCOPE_CODE) return true;
+  if (FEDERAL_INPUT_ALIASES.has(up)) return true;
+
+  // normaliza espaços/underscores pra captar variações
+  const compact = up.replace(/[\s_]+/g, " ").trim();
+  return (
+    FEDERAL_INPUT_ALIASES.has(compact) ||
+    FEDERAL_INPUT_ALIASES.has(up.replace(/[\s_]+/g, "_"))
+  );
+}
+
+/**
+ * Resolve qual lottery_key usar quando o usuário passar:
+ * - "RJ" -> "PT_RIO"
+ * - "FEDERAL"/aliases -> "FEDERAL" (canônico)
+ * - outros -> mantém o valor original (compatível com seu app atual)
+ */
+function resolveLotteryKeyForQuery(ufInput) {
+  const uf = String(ufInput || "").trim();
+  if (!uf) return "";
+  const up = uf.toUpperCase();
+
+  if (up === RJ_STATE_CODE) return RJ_LOTTERY_KEY;
+  if (isFederalInput(up)) return FEDERAL_SCOPE_CODE;
+
+  return uf;
+}
+
+/**
+ * ✅ Chave canônica para CACHE:
+ * - "RJ" -> "PT_RIO"
+ * - Federal (qualquer alias) -> "FEDERAL"
+ * - outros -> UPPER(TRIM)
+ */
+function canonicalScopeKey(ufInput) {
+  const s = String(ufInput || "").trim();
+  if (!s) return "";
+  const up = s.toUpperCase();
+
+  if (up === RJ_STATE_CODE) return RJ_LOTTERY_KEY;
+  if (isFederalInput(up)) return FEDERAL_SCOPE_CODE;
+
+  return up;
+}
+
+/**
+ * Quando for consultar por campo "uf", adiciona trava de lottery_key para RJ.
+ * Isso elimina o vazamento de Federal para o Rio.
+ */
+function buildRJLockWhereIfNeeded(fieldName, ufInput) {
+  const ufUp = String(ufInput || "").trim().toUpperCase();
+  if (fieldName === "uf" && ufUp === RJ_STATE_CODE) {
+    return [where("lottery_key", "==", RJ_LOTTERY_KEY)];
+  }
+  return [];
+}
+
+/* =========================
+   ✅ FIX silencioso: normalizar valor do WHERE por campo
+========================= */
+
+function normalizeValueForField(fieldName, valueInput) {
+  const s = String(valueInput || "").trim();
+  if (!s) return "";
+
+  if (fieldName === "uf") {
+    const up = s.toUpperCase();
+    if (isFederalInput(up)) return FEDERAL_SCOPE_CODE;
+    return up;
+  }
+
+  if (fieldName === "lottery_key") {
+    const up = s.toUpperCase();
+    if (up === RJ_STATE_CODE) return RJ_LOTTERY_KEY; // ✅ PREVENTIVO: RJ -> PT_RIO
+    if (isFederalInput(up)) return FEDERAL_SCOPE_CODE;
+    return up;
+  }
+
+  return s;
+}
+
+/* =========================
+   Utils
+========================= */
+
+/**
+ * ✅ Normaliza "horário" para HH:MM
+ */
+function normalizeHourLike(value) {
+  const s0 = String(value ?? "").trim();
+  if (!s0) return "";
+
+  const s = s0.replace(/\s+/g, "");
+
+  const mhx = s.match(/^(\d{1,2})(?:h|hs|hr|hrs)$/i);
+  if (mhx) return `${pad2(mhx[1])}:00`;
+
+  const mISO = s.match(/^(\d{1,2}):(\d{1,2})(?::(\d{1,2}))?$/);
+  if (mISO) return `${pad2(mISO[1])}:${pad2(mISO[2])}`;
+
+  const mHm = s.match(/^(\d{3,4})$/);
+  if (mHm) {
+    const hh = String(mHm[1]).slice(0, -2);
+    const mm = String(mHm[1]).slice(-2);
+    if (/^\d{1,2}$/.test(hh) && /^\d{2}$/.test(mm)) {
+      return `${pad2(hh)}:${mm}`;
+    }
+  }
+
+  const m2 = s.match(/^(\d{1,2})$/);
+  if (m2) return `${pad2(m2[1])}:00`;
+
+  return s0.trim();
+}
+
+function mhxToInt(v) {
+  const n = Number(v);
+  return Number.isFinite(n) ? n : 0;
+}
+
+/**
+ * ✅ Bucket "09h", "11h"…
+ */
+function toHourBucket(value) {
+  const s = String(value ?? "").trim();
+  if (!s || s.toLowerCase() === "todos") return null;
+
+  const mh = s.match(/^(\d{1,2})h$/i);
+  if (mh) return `${pad2(mhxToInt(mh[1]))}h`;
+
+  const m1 = s.match(/^(\d{1,2}):(\d{2})$/);
+  if (m1) return `${pad2(mhxToInt(m1[1]))}h`;
+
+  const m2 = s.match(/^(\d{1,2})$/);
+  if (m2) return `${pad2(mhxToInt(m2[1]))}h`;
+
+  const m3 = s.match(/^(\d{1,2}):(\d{2}):(\d{2})$/);
+  if (m3) return `${pad2(mhxToInt(m3[1]))}h`;
+
+  const m4 = s.match(/^(\d{3,4})$/);
+  if (m4) return `${pad2(mhxToInt(String(m4[1]).slice(0, -2)))}h`;
+
+  return null;
+}
+
+/* =========================
+   ✅ FIX DEFINITIVO: filtro de horário (bucket vs exato)
+   - bucket SOMENTE via closeHourBucket
+   - exact  SOMENTE via closeHour
+   (elimina ambiguidade e "filtro fantasma")
+========================= */
+
+function resolveHourFilter({ closeHour = null, closeHourBucket = null }) {
+  const bucket = toHourBucket(closeHourBucket);
+  if (bucket) return { kind: "bucket", bucket, hhmm: null };
+
+  const hhmm = closeHour ? normalizeHourLike(closeHour) : null;
+  if (hhmm) return { kind: "exact", bucket: null, hhmm };
+
+  return { kind: null, bucket: null, hhmm: null };
+}
+
+function drawPassesHourFilter(draw, hourFilter) {
+  if (!hourFilter || !hourFilter.kind) return true;
+
+  const raw =
+    draw?.close_hour ?? draw?.closeHour ?? draw?.hour ?? draw?.hora ?? "";
+  const norm = normalizeHourLike(raw);
+
+  if (hourFilter.kind === "exact") {
+    return norm === normalizeHourLike(hourFilter.hhmm);
+  }
+
+  if (hourFilter.kind === "bucket") {
+    return toHourBucket(norm) === toHourBucket(hourFilter.bucket);
+  }
+
+  return true;
+}
+
+/* =========================
+   Date utils
+========================= */
+
+/* =========================
+   ✅ Guards (evita GRUPO 00)
+========================= */
+
+/* =========================
+   ✅ Helpers de parsing (robusto p/ strings tipo "GRUPO 23", "1º")
+========================= */
+
+/* =========================
+   ✅ Helpers de dígitos (REGRA GLOBAL 7º = CENTENA)
+========================= */
+
+function normalizeLotteryCodeAny(d) {
+  const raw =
+    d?.lottery_code ??
+    d?.lotteryCode ??
+    d?.lot_code ??
+    d?.lotCode ??
+    d?.lot ??
+    d?.code ??
+    null;
+  const up = raw ? String(raw).trim().toUpperCase() : "";
+  return up || "";
+}
+
+function sortDrawsLocal(draws) {
+  const toNum = (h) => {
+    const s = normalizeHourLike(h);
+    const m = s.match(/^(\d{2}):(\d{2})$/);
+    if (!m) return 0;
+    return Number(m[1]) * 100 + Number(m[2]);
+  };
+
+  return [...(draws || [])].sort((a, b) => {
+    const ya = String(a?.ymd || "");
+    const yb = String(b?.ymd || "");
+    if (ya !== yb) return ya.localeCompare(yb);
+
+    const ha = toNum(a?.close_hour);
+    const hb = toNum(b?.close_hour);
+    if (ha !== hb) return ha - hb;
+
+    const la = normalizeLotteryCodeAny(a);
+    const lb = normalizeLotteryCodeAny(b);
+    if (la !== lb) return la.localeCompare(lb);
+
+    const ia = String(a?.drawId || a?.id || "");
+    const ib = String(b?.drawId || b?.id || "");
+    return ia.localeCompare(ib);
+  });
+}
+
+function sortDrawsLocalDesc(draws) {
+  const toNum = (h) => {
+    const s = normalizeHourLike(h);
+    const m = s.match(/^(\d{2}):(\d{2})$/);
+    if (!m) return 0;
+    return Number(m[1]) * 100 + Number(m[2]);
+  };
+
+  return [...(draws || [])].sort((a, b) => {
+    const ya = String(a?.ymd || "");
+    const yb = String(b?.ymd || "");
+    if (ya !== yb) return yb.localeCompare(ya);
+
+    const ha = toNum(a?.close_hour);
+    const hb = toNum(b?.close_hour);
+    if (ha !== hb) return hb - ha;
+
+    const la = normalizeLotteryCodeAny(a);
+    const lb = normalizeLotteryCodeAny(b);
+    if (la !== lb) return lb.localeCompare(la);
+
+    const ia = String(a?.drawId || a?.id || "");
+    const ib = String(b?.drawId || b?.id || "");
+    return ib.localeCompare(ia);
+  });
+}
+
+/**
+ * ✅ DEDUPE
+ * - chave lógica: ymd + hour (+ lottery_code quando existir)
+ * - se não houver ymd/hour, cai no id/idx
+ *
+ * ✅ FIX CRÍTICO:
+ * Não colapsar dois draws distintos do mesmo dia/horário com lottery_code diferente.
+ */
+function dedupeDrawsLocal(draws) {
+  const arr = Array.isArray(draws) ? draws : [];
+
+  const byKey = new Map();
+  const order = [];
+
+  function score(d) {
+    const prizesLen = Array.isArray(d?.prizes) ? d.prizes.length : 0;
+    const pc = Number.isFinite(Number(d?.prizesCount))
+      ? Number(d.prizesCount)
+      : 0;
+    const hasLogical = !!(d?.ymd && d?.close_hour);
+    return prizesLen * 1_000_000 + pc * 1_000 + (hasLogical ? 10 : 0);
+  }
+
+  for (let i = 0; i < arr.length; i += 1) {
+    const raw = arr[i] || {};
+
+    const ymd = raw.ymd || normalizeToYMD(raw.date) || "";
+    const hour = normalizeHourLike(raw.close_hour || raw.closeHour || "");
+
+    const lotCode = normalizeLotteryCodeAny(raw);
+
+    const drawId = raw.drawId ?? raw.id ?? raw.__name__ ?? null;
+    const idStr = drawId != null ? String(drawId) : "";
+
+    const hasLogical = !!(ymd && hour);
+
+    const key = hasLogical
+      ? lotCode
+        ? `${ymd}__${hour}__${lotCode}`
+        : `${ymd}__${hour}`
+      : `id__${idStr || `idx_${i}`}`;
+
+    const normalized = {
+      ...raw,
+      ymd: ymd || raw.ymd || null,
+      close_hour: hour || raw.close_hour || raw.closeHour || "",
+      closeHour: hour || raw.closeHour || raw.close_hour || "",
+      lottery_code: lotCode || raw.lottery_code || raw.lotteryCode || null,
+      drawId: raw.drawId || raw.id || raw.__name__ || null,
+      id: raw.id || raw.drawId || raw.__name__ || null,
+    };
+
+    if (!byKey.has(key)) {
+      byKey.set(key, normalized);
+      order.push(key);
+      continue;
+    }
+
+    const prev = byKey.get(key);
+    if (score(normalized) > score(prev)) {
+      byKey.set(key, normalized);
+    }
+  }
+
+  return order.map((k) => byKey.get(k)).filter(Boolean);
+}
+
+async function mapWithConcurrency(items, limitN, mapper) {
+  const arr = Array.isArray(items) ? items : [];
+  const concurrency = Math.max(1, Number(limitN) || 6);
+  const results = new Array(arr.length);
+  let idx = 0;
+
+  async function worker() {
+    while (true) {
+      const current = idx;
+      idx += 1;
+      if (current >= arr.length) break;
+      results[current] = await mapper(arr[current], current);
+    }
+  }
+
+  await Promise.all(
+    Array.from({ length: Math.min(concurrency, arr.length) }, () => worker())
+  );
+  return results;
+}
+
+/* =========================
+   ✅ Leitura: smart (custo baixo)
+========================= */
+
+function isIndexError(error) {
+  const msg = String(error?.message || "").toLowerCase();
+  const code = String(error?.code || "").toLowerCase();
+  return (
+    code.includes("failed-precondition") ||
+    msg.includes("failed_precondition") ||
+    (msg.includes("index") && msg.includes("create")) ||
+    (msg.includes("requires") && msg.includes("index"))
+  );
+}
+
+function getDocDateRaw(d) {
+  if (!d) return null;
+  return d.ymd ?? d.date ?? d.data ?? d.dt ?? d.draw_date ?? d.close_date ?? null;
+}
+
+/* =========================
+   Prizes (ROBUSTO + CACHE)
+========================= */
+
+function prizesCacheKeyAll(drawId) {
+  return `all::${String(drawId)}`;
+}
+
+/**
+ * ✅ FIX DEFINITIVO:
+ * Se existir embeddedPrizes mas vier "agregado/incompleto" (sem grupo/posição válidos),
+ * faz fallback e busca a subcollection draws/{id}/prizes.
+ */
+async function fetchPrizesForDraw(drawId, positionsArr, embeddedPrizes) {
+  const drawKey = String(drawId || "").trim();
+  if (!drawKey) return [];
+
+  if (Array.isArray(embeddedPrizes) && embeddedPrizes.length) {
+    const normalized = embeddedPrizes.map((p, idx) =>
+      normalizePrize(p, p?.prizeId ?? `emb_${idx}`)
+    );
+
+    const cleaned = normalized.filter(
+      (x) => isValidGrupo(x?.grupo) && isValidPosition(x?.position)
+    );
+
+    if (cleaned.length) {
+      const allSorted = sortPrizesByPosition(cleaned);
+      return filterPrizesByPositions(allSorted, positionsArr);
+    }
+  }
+
+  const allKey = prizesCacheKeyAll(drawKey);
+  const cachedAll = cacheGet(PRIZES_CACHE, allKey);
+  if (Array.isArray(cachedAll) && cachedAll.length > 0) {
+    return filterPrizesByPositions(cachedAll, positionsArr);
+  }
+
+  const prizesCol = collection(db, "draws", drawKey, "prizes");
+
+  const { snap, error } = await safeGetDocsSmart(prizesCol, { policy: "server" });
+  if (error) throw error;
+
+  const allRaw = snap.docs.map((d) => normalizePrize(d.data(), d.id));
+
+  // console.log("DEBUG allRaw:", allRaw);
+
+const all = allRaw.filter(
+  (x) => isValidGrupo(x?.grupo) && isValidPosition(x?.position)
+);
+
+// console.log("DEBUG allFiltered:", all);
+
+  const allSorted = sortPrizesByPosition(all);
+  cacheSet(PRIZES_CACHE, allKey, allSorted);
+
+  return filterPrizesByPositions(allSorted, positionsArr);
+}
+
+/* =========================
+   Map Draw
+========================= */
+
+function mapDrawDoc(doc) {
+  const d = doc.data();
+
+  const ymd = d.ymd || normalizeToYMD(getDocDateRaw(d));
+  const hourNorm = normalizeHourLike(
+    d.close_hour ?? d.closeHour ?? d.hour ?? d.hora ?? ""
+  );
+
+  const embeddedPrizes = Array.isArray(d.prizes) && d.prizes.length > 0 ? d.prizes : null;
+
+  const ufRaw = d.uf ?? null;
+  const lotteryKeyRaw = d.lottery_key ?? d.lotteryKey ?? d.lottery ?? null;
+
+  const lotteryCodeRaw =
+    d.lottery_code ??
+    d.lotteryCode ??
+    d.lot_code ??
+    d.lotCode ??
+    d.lot ??
+    d.code ??
+    d.lottery_id ??
+    d.lotteryId ??
+    null;
+
+  return {
+    drawId: doc.id,
+    id: doc.id,
+
+    date: d.date ?? d.data ?? d.dt ?? d.draw_date ?? d.close_date ?? null,
+    ymd,
+
+    close_hour: hourNorm,
+    closeHour: hourNorm,
+
+    uf: ufRaw,
+    lottery_key: lotteryKeyRaw,
+
+    lottery_code: lotteryCodeRaw ? String(lotteryCodeRaw).toUpperCase() : null,
+
+    lottery_name: d.lottery_name ?? d.lotteryName ?? null,
+    lottery_label: d.lottery_label ?? d.lotteryLabel ?? null,
+
+    prizesCount: d.prizesCount,
+    prizes: embeddedPrizes,
+  };
+}
+
+/* =========================
+   Compat: uf OU lottery_key
+========================= */
+
+function buildUfWhereClauses(fieldName, uf) {
+  const normalized = normalizeValueForField(fieldName, uf);
+  return [where(fieldName, "==", normalized)];
+}
+
+function normalizeOrderBys(extraOrderBy) {
+  if (!extraOrderBy) return [];
+  return Array.isArray(extraOrderBy)
+    ? extraOrderBy.filter(Boolean)
+    : [extraOrderBy];
+}
+
+async function queryDrawsByField({
+  fieldName,
+  uf,
+  extraWheres = [],
+  extraOrderBy = null,
+  extraLimit = null,
+  policy = DEFAULT_READ_POLICY,
+}) {
+  const drawsCol = collection(db, "draws");
+
+  const parts = [
+    drawsCol,
+    ...buildUfWhereClauses(fieldName, uf),
+    ...buildRJLockWhereIfNeeded(fieldName, uf),
+    ...(extraWheres || []),
+  ];
+
+  const orderBys = normalizeOrderBys(extraOrderBy);
+  for (const ob of orderBys) parts.push(ob);
+
+  if (extraLimit) parts.push(extraLimit);
+
+  const qRef = query(...parts);
+  return safeGetDocsSmart(qRef, { policy });
+}
+
+function extractUfParam(maybeUfOrObj) {
+  if (!maybeUfOrObj) return "";
+  if (typeof maybeUfOrObj === "string") return maybeUfOrObj;
+  if (typeof maybeUfOrObj === "object" && typeof maybeUfOrObj.uf === "string") {
+    return maybeUfOrObj.uf;
+  }
+  return String(maybeUfOrObj || "");
+}
+
+async function fetchDrawDocsPreferUf({
+  uf,
+  extraWheres = [],
+  extraOrderBy = null,
+  extraLimit = null,
+  policy = DEFAULT_READ_POLICY,
+}) {
+  const ufTrim = String(extractUfParam(uf) || "").trim();
+  const ufUp = ufTrim.toUpperCase();
+
+  if (isFederalInput(ufUp)) {
+    for (const lk of FEDERAL_LOTTERY_KEYS) {
+      const { snap, error } = await queryDrawsByField({
+        fieldName: "lottery_key",
+        uf: lk,
+        extraWheres,
+        extraOrderBy,
+        extraLimit,
+        policy,
+      });
+
+      if (error) return { docs: [], usedField: "lottery_key", error };
+      if (snap?.docs?.length) {
+        return { docs: snap.docs, usedField: "lottery_key", error: null };
+      }
+    }
+
+    return { docs: [], usedField: "lottery_key", error: null };
+  }
+
+  {
+    const { snap, error } = await queryDrawsByField({
+      fieldName: "uf",
+      uf: ufUp,
+      extraWheres,
+      extraOrderBy,
+      extraLimit,
+      policy,
+    });
+
+    if (!error && snap?.docs?.length) {
+      return { docs: snap.docs, usedField: "uf", error: null };
+    }
+    if (error) return { docs: [], usedField: "uf", error };
+  }
+
+  {
+    const lotteryKey =
+      ufUp === RJ_STATE_CODE ? RJ_LOTTERY_KEY : resolveLotteryKeyForQuery(ufTrim);
+
+    const { snap, error } = await queryDrawsByField({
+      fieldName: "lottery_key",
+      uf: String(lotteryKey).toUpperCase(),
+      extraWheres,
+      extraOrderBy,
+      extraLimit,
+      policy,
+    });
+
+    if (!error && snap?.docs?.length) {
+      return { docs: snap.docs, usedField: "lottery_key", error: null };
+    }
+    if (error) return { docs: [], usedField: "lottery_key", error };
+  }
+
+  return { docs: [], usedField: "none", error: null };
+}
+
+/* =========================
+   Bounds (min/max reais)
+========================= */
+
+function pickMinMaxFromMapped(mapped) {
+  let minYmd = null;
+  let maxYmd = null;
+
+  for (const d of mapped) {
+    const y = d?.ymd || normalizeToYMD(d?.date);
+    if (!y || !isYMD(y)) continue;
+    if (!minYmd || y < minYmd) minYmd = y;
+    if (!maxYmd || y > maxYmd) maxYmd = y;
+  }
+
+  return { minYmd, maxYmd };
+}
+
+/**
+ * ✅ “Prova de vida” do maxYmd sem depender de índice composto nem de docId:
+ * tenta dias recentes (==) desc até achar pelo menos 1 draw.
+ */
+async function probeRecentMaxYmd(uf, lookbackDays = 45) {
+  const base = utcTodayYmd();
+  const n = Math.max(3, Math.min(120, Number(lookbackDays) || 45));
+
+  for (let i = 0; i <= n; i += 1) {
+    const day = addDaysUTCLocal(base, -i);
+    const { docs, error } = await fetchDrawDocsPreferUf({
+      uf,
+      extraWheres: [where("ymd", "==", day)],
+      policy: "server",
+      extraLimit: limit(5),
+    });
+    if (error) return { ok: false, maxYmd: null, error };
+    if (docs && docs.length) return { ok: true, maxYmd: day, error: null };
+  }
+
+  return { ok: false, maxYmd: null, error: null };
+}
+
+/**
+ * ✅ API bounds (backend) — fonte única preferencial
+ */
+async function fetchBoundsFromApi(ufOrObj) {
+  const uf = String(extractUfParam(ufOrObj) || "").trim();
+  if (!uf) return { ok: false, error: new Error("uf vazio") };
+
+  const lot = canonicalScopeKey(uf) || String(uf).trim().toUpperCase();
+  const url = apiUrl(`/api/bounds?lottery=${encodeURIComponent(lot)}`);
+  try {
+    const r = await fetch(url, { method: "GET" });
+    const j = await r.json().catch(() => null);
+
+    if (!r.ok || !j || !j.ok) {
+      return {
+        ok: false,
+        error: new Error(`bounds api not ok: ${j?.message || r.status}`),
+        payload: j || null,
+      };
+    }
+
+    const minYmd = String(j.minYmd || "").trim();
+    const maxYmd = String(j.maxYmd || "").trim();
+    if (!isYMD(minYmd) || !isYMD(maxYmd)) {
+      return {
+        ok: false,
+        error: new Error("bounds api retornou min/max inválidos"),
+        payload: j,
+      };
+    }
+
+    return {
+      ok: true,
+      uf,
+      lottery: String(j.lottery || lot).trim(),
+      minYmd,
+      maxYmd,
+      minDocId: j.minDocId || null,
+      maxDocId: j.maxDocId || null,
+      source: String(j.source || "api_bounds"),
+    };
+  } catch (e) {
+    return { ok: false, error: e };
+  }
+}
+
+export async function getKingBoundsByUf(ufOrObj) {
+  const uf = String(extractUfParam(ufOrObj) || "").trim();
+  if (!uf) throw new Error("Parâmetro obrigatório: uf");
+
+  const apiTry = await fetchBoundsFromApi(ufOrObj);
+  if (apiTry?.ok) {
+    const scopeKey = canonicalScopeKey(uf);
+    const floored = applyBoundsFloor(scopeKey, {
+      minYmd: apiTry.minYmd,
+      maxYmd: apiTry.maxYmd,
+    });
+
+    return {
+      ok: true,
+      uf,
+
+      minYmd: floored.minYmd,
+      maxYmd: floored.maxYmd,
+
+      minDate: floored.minYmd,
+      maxDate: floored.maxYmd,
+
+      minDocId: apiTry.minDocId || null,
+      maxDocId: apiTry.maxDocId || null,
+
+      source: `api_bounds:${apiTry.source}`,
+    };
+  }
+
+  const SCAN_LIMIT = 50;
+  const FALLBACK_EDGE_LIMIT = 600;
+
+  let firstTryError = null;
+
+  const DOC_ID = documentId();
+
+  async function sampleEdgesByDocId(fieldName, ufValue) {
+    const asc = await queryDrawsByField({
+      fieldName,
+      uf: ufValue,
+      extraOrderBy: [orderBy(DOC_ID)],
+      extraLimit: limit(FALLBACK_EDGE_LIMIT),
+      policy: "server",
+    });
+
+    const last = await queryDrawsByField({
+      fieldName,
+      uf: ufValue,
+      extraOrderBy: [orderBy(DOC_ID)],
+      extraLimit: limitToLast(FALLBACK_EDGE_LIMIT),
+      policy: "server",
+    });
+
+    const mappedA = (asc?.snap?.docs || []).map(mapDrawDoc);
+    const mappedB = (last?.snap?.docs || []).map(mapDrawDoc);
+
+    const merged = dedupeDrawsLocal([...mappedA, ...mappedB]);
+
+    return {
+      merged,
+      ok: merged.length > 0,
+      errors: [asc?.error, last?.error].filter(Boolean),
+      sources: [asc?.source, last?.source].filter(Boolean),
+    };
+  }
+
+  {
+    const orderAsc = [orderBy("ymd", "asc"), orderBy(DOC_ID)];
+    const orderDesc = [orderBy("ymd", "desc"), orderBy(DOC_ID)];
+
+    const {
+      docs: minDocs,
+      usedField: usedMin,
+      error: eMin,
+    } = await fetchDrawDocsPreferUf({
+      uf,
+      extraOrderBy: orderAsc,
+      extraLimit: limit(SCAN_LIMIT),
+      policy: "server",
+    });
+
+    const {
+      docs: maxDocs,
+      usedField: usedMax,
+      error: eMax,
+    } = await fetchDrawDocsPreferUf({
+      uf,
+      extraOrderBy: orderDesc,
+      extraLimit: limit(SCAN_LIMIT),
+      policy: "server",
+    });
+
+    if (eMin || eMax) {
+      if (!isIndexError(eMin) && !isIndexError(eMax)) firstTryError = eMin || eMax;
+    }
+
+    if (minDocs.length && maxDocs.length && !eMin && !eMax) {
+      const mappedMin = minDocs.map(mapDrawDoc);
+      const mappedMax = maxDocs.map(mapDrawDoc);
+
+      const { minYmd } = pickMinMaxFromMapped(mappedMin);
+      const { maxYmd } = pickMinMaxFromMapped(mappedMax);
+
+      if (minYmd && maxYmd) {
+        return {
+          ok: true,
+          uf,
+          minYmd,
+          maxYmd,
+          minDate: minYmd,
+          maxDate: maxYmd,
+          source: `ymd_scan${SCAN_LIMIT}:${usedMin}/${usedMax}`,
+        };
+      }
+    }
+  }
+
+  const recentProbe = await probeRecentMaxYmd(uf, 60);
+  const recentMaxYmd = recentProbe?.ok ? recentProbe.maxYmd : null;
+
+  const scopeKeyBounds = canonicalScopeKey(uf);
+  {
+    const idxInfo = (() => {
+      const code = String(firstTryError?.code || "");
+      const msg = String(firstTryError?.message || "");
+      if (!code && !msg) return "";
+      return `:firstTryError=${code || "err"}`;
+    })();
+
+    const a = await sampleEdgesByDocId("uf", String(uf).toUpperCase());
+
+    const ufUp = String(uf || "").trim().toUpperCase();
+
+    if (!a.ok && isFederalInput(ufUp)) {
+      for (const lk of FEDERAL_LOTTERY_KEYS) {
+        const b = await sampleEdgesByDocId("lottery_key", lk);
+        if (b.ok) {
+          const mm = pickMinMaxFromMapped(b.merged);
+
+          const maxFixed =
+            recentMaxYmd && (!mm.maxYmd || recentMaxYmd > mm.maxYmd)
+              ? recentMaxYmd
+              : mm.maxYmd;
+
+          const floored = applyBoundsFloor(scopeKeyBounds, {
+            minYmd: mm.minYmd || null,
+            maxYmd: maxFixed || null,
+          });
+
+          return {
+            ok: !!(floored.minYmd && floored.maxYmd),
+            uf,
+
+            minYmd: floored.minYmd,
+            maxYmd: floored.maxYmd,
+
+            minDate: floored.minYmd,
+            maxDate: floored.maxYmd,
+
+            source: `fallback_edges_docId_limit=${FALLBACK_EDGE_LIMIT}:lottery_key(${lk}):sampleCount=${b.merged.length}${
+              recentMaxYmd ? ":max_probe" : ""
+            }${idxInfo}`,
+          };
+        }
+      }
+    }
+
+    const lotteryKey =
+      ufUp === RJ_STATE_CODE ? RJ_LOTTERY_KEY : resolveLotteryKeyForQuery(uf);
+
+    const b = a.ok
+      ? null
+      : await sampleEdgesByDocId("lottery_key", String(lotteryKey).toUpperCase());
+
+    const merged = a.ok ? a.merged : b?.merged || [];
+    const mm = pickMinMaxFromMapped(merged);
+
+    const maxFixed =
+      recentMaxYmd && (!mm.maxYmd || recentMaxYmd > mm.maxYmd)
+        ? recentMaxYmd
+        : mm.maxYmd;
+
+    const floored = applyBoundsFloor(scopeKeyBounds, {
+      minYmd: mm.minYmd || null,
+      maxYmd: maxFixed || null,
+    });
+
+    return {
+      ok: !!(floored.minYmd && floored.maxYmd),
+      uf,
+
+      minYmd: floored.minYmd,
+      maxYmd: floored.maxYmd,
+
+      minDate: floored.minYmd,
+      maxDate: floored.maxYmd,
+
+      source: `fallback_edges_docId_limit=${FALLBACK_EDGE_LIMIT}:${
+        a.ok ? "uf" : "lottery_key"
+      }:sampleCount=${merged.length}${recentMaxYmd ? ":max_probe" : ""}${idxInfo}`,
+    };
+  }
+}
+
+/* =========================
+   API: Day
+========================= */
+
+function buildPrizeSignature(draw) {
+  const prizes = Array.isArray(draw?.prizes) ? draw.prizes : [];
+  if (!prizes.length) return "";
+
+  const parts = prizes
+    .map((p) => {
+      const pos = Number(p?.position);
+      const grupo = Number(p?.grupo);
+      const numero = toPrizeDigitsByPosition(
+        p?.numero ?? p?.milhar ?? p?.number ?? p?.num ?? p?.valor ?? "",
+        pos
+      );
+
+      if (!Number.isFinite(pos) || !Number.isFinite(grupo) || !numero) return "";
+      return `${pad2(pos)}:${pad2(grupo)}:${numero}`;
+    })
+    .filter(Boolean)
+    .sort();
+
+  return parts.join("|");
+}
+
+function federalHourPriority(draw) {
+  const h = normalizeHourLike(
+    draw?.close_hour || draw?.closeHour || draw?.hour || draw?.hora || ""
+  );
+  const ymd = String(draw?.ymd || normalizeToYMD(draw?.date) || "").trim();
+  const n = hourToNumSafe(h);
+
+  const prefer20h = getFederalPreferredHourForYmd(ymd) === "20:00";
+
+  if (prefer20h) {
+    if (h === "20:00") return 200000 + n;
+    if (h === "19:00") return 190000 + n;
+    return 100000 + n;
+  }
+
+  if (h === "19:00") return 200000 + n;
+  if (h === "20:00") return 190000 + n;
+  return 100000 + n;
+}
+
+function pickBetterFederalClone(a, b) {
+  const pa = Number.isFinite(Number(a?.prizesCount))
+    ? Number(a.prizesCount)
+    : Array.isArray(a?.prizes)
+    ? a.prizes.length
+    : 0;
+
+  const pb = Number.isFinite(Number(b?.prizesCount))
+    ? Number(b.prizesCount)
+    : Array.isArray(b?.prizes)
+    ? b.prizes.length
+    : 0;
+
+  if (pa !== pb) return pb > pa ? b : a;
+
+  const ha = federalHourPriority(a);
+  const hb = federalHourPriority(b);
+  if (ha !== hb) return hb > ha ? b : a;
+
+  const ia = String(a?.drawId || a?.id || "");
+  const ib = String(b?.drawId || b?.id || "");
+  return ib.localeCompare(ia) > 0 ? b : a;
+}
+
+function collapseFederalDailyCloneDraws(draws) {
+  const arr = Array.isArray(draws) ? draws : [];
+  const byKey = new Map();
+
+  for (const d of arr) {
+    const ymd = String(d?.ymd || normalizeToYMD(d?.date) || "").trim();
+    const sig = buildPrizeSignature(d);
+
+    if (!ymd || !sig) {
+      const fallbackKey = `id::${String(
+        d?.drawId || d?.id || Math.random()
+      )}`;
+      if (!byKey.has(fallbackKey)) byKey.set(fallbackKey, d);
+      continue;
+    }
+
+    const key = `${ymd}__${sig}`;
+    const prev = byKey.get(key);
+
+    if (!prev) byKey.set(key, d);
+    else byKey.set(key, pickBetterFederalClone(prev, d));
+  }
+
+  return sortDrawsLocal(Array.from(byKey.values()));
+}
+
+function drawsCacheKeyDay({ scopeKey, ymd, positionsArr, hourFilter }) {
+  const p = positionsArr && positionsArr.length ? positionsArr.join(",") : "all";
+  const h =
+    hourFilter?.kind === "bucket"
+      ? `bucket:${hourFilter.bucket}`
+      : hourFilter?.kind === "exact"
+      ? `exact:${hourFilter.hhmm}`
+      : "all";
+  return `day::${scopeKey}::${ymd}::pos=${p}::h=${h}`;
+}
+
+export async function getKingResultsByDate({
+  uf,
+  date,
+  closeHour = null,
+  closeHourBucket = null,
+  positions = null,
+}) {
+  if (!uf || !date) throw new Error("Parâmetros obrigatórios: uf e date");
+
+  const scopeKey = canonicalScopeKey(uf);
+
+  const positionsArr = normalizePositions(positions);
+  const ymdDate = normalizeToYMD(date);
+  if (!ymdDate) return [];
+
+  const hourFilter = resolveHourFilter({ closeHour, closeHourBucket });
+
+  const dayKey = drawsCacheKeyDay({
+    scopeKey,
+    ymd: ymdDate,
+    positionsArr,
+    hourFilter,
+  });
+
+  const forceFreshServer = shouldForceFreshServerRead(ymdDate);
+  const allowMemoryCache = !forceFreshServer;
+
+  if (allowMemoryCache) {
+    const cached = cacheGet(DRAWS_CACHE, dayKey);
+    if (cached) return cached;
+  }
+
+  const readPolicy = forceFreshServer ? "server" : DEFAULT_READ_POLICY;
+
+  const docCandidates = [];
+
+  {
+    const { docs: found, error } = await fetchDrawDocsPreferUf({
+      uf,
+      extraWheres: [where("ymd", "==", ymdDate)],
+      policy: readPolicy,
+    });
+    if (error) throw error;
+    if (found.length) docCandidates.push(...found);
+  }
+
+  if (!docCandidates.length) {
+    const rawDate = String(date || "").trim();
+    if (rawDate) {
+      const { docs: found, error } = await fetchDrawDocsPreferUf({
+        uf,
+        extraWheres: [where("date", "==", rawDate)],
+        policy: readPolicy,
+      });
+      if (error) throw error;
+      if (found.length) docCandidates.push(...found);
+    }
+  }
+
+  if (!docCandidates.length) {
+    const { docs: found, error } = await fetchDrawDocsPreferUf({
+      uf,
+      extraWheres: [where("date", "==", ymdDate)],
+      policy: readPolicy,
+    });
+    if (error) throw error;
+    if (found.length) docCandidates.push(...found);
+  }
+
+  if (!docCandidates.length) {
+    const brDate = ymdToBR(ymdDate);
+    if (brDate) {
+      const { docs: found, error } = await fetchDrawDocsPreferUf({
+        uf,
+        extraWheres: [where("date", "==", brDate)],
+        policy: readPolicy,
+      });
+      if (error) throw error;
+      if (found.length) docCandidates.push(...found);
+    }
+  }
+
+  if (!docCandidates.length) return [];
+
+  let baseAll = dedupeDrawsLocal(docCandidates.map(mapDrawDoc));
+  baseAll = baseAll.filter((x) => (x.ymd || normalizeToYMD(x.date)) === ymdDate);
+
+  const orderedAll = sortDrawsLocal(baseAll);
+
+  const hydratedAll = await mapWithConcurrency(orderedAll, 6, async (item) => {
+    const prizes = await fetchPrizesForDraw(item.drawId, positionsArr, item.prizes);
+    const pc = Array.isArray(prizes) ? prizes.length : 0;
+    return { ...item, prizes, prizesCount: pc, __mode: "detailed" };
+  });
+
+  let dayAll = dedupeDrawsLocal(hydratedAll);
+
+if (scopeKey === FEDERAL_SCOPE_CODE) {
+  dayAll = collapseFederalDailyCloneDraws(dayAll);
+}
+
+  const base = hourFilter?.kind
+    ? dayAll.filter((d) => drawPassesHourFilter(d, hourFilter))
+    : dayAll;
+
+  let out = dedupeDrawsLocal(sortDrawsLocal(base));
+
+if (scopeKey === FEDERAL_SCOPE_CODE) {
+  out = collapseFederalDailyCloneDraws(out);
+}
+
+  if (allowMemoryCache) {
+    cacheSet(DRAWS_CACHE, dayKey, out);
+  }
+
+  return out;
+}
+
+/* =========================
+   API: Range
+========================= */
+
+function drawsCacheKeyRange({
+  scopeKey,
+  from,
+  to,
+  positionsArr,
+  hourFilter,
+  mode,
+}) {
+  const p = positionsArr && positionsArr.length ? positionsArr.join(",") : "all";
+  const h =
+    hourFilter?.kind === "bucket"
+      ? `bucket:${hourFilter.bucket}`
+      : hourFilter?.kind === "exact"
+      ? `exact:${hourFilter.hhmm}`
+      : "all";
+  const m = mode ? String(mode) : "detailed";
+  return `range::${scopeKey}::${from}..${to}::pos=${p}::h=${h}::mode=${m}`;
+}
+
+function chooseRangeConcurrency(drawCount) {
+  if (!Number.isFinite(drawCount)) return 6;
+  if (drawCount <= 50) return 4;
+  if (drawCount <= 300) return 6;
+  if (drawCount <= 1200) return 8;
+  return 10;
+}
+
+export function decideKingRangeMode({ dateFrom, dateTo, mode = "detailed" }) {
+  const ymdFrom = normalizeToYMD(dateFrom);
+  const ymdTo = normalizeToYMD(dateTo);
+  if (!ymdFrom || !ymdTo) return "detailed";
+
+  if (mode === "detailed" || mode === "aggregated") return mode;
+  if (mode !== "auto") return "detailed";
+
+  const days = daysBetweenInclusiveUTC(ymdFrom, ymdTo);
+  if (!Number.isFinite(days) || days <= 0) return "detailed";
+  return "detailed";
+}
+
+/**
+ * ✅ Fallback barato (SEM prizes): usado quando falta índice composto no RANGE,
+ * ou quando você quer aggregated sem custo de hidratar.
+ */
+async function fetchDrawsDayNoPrizes({ uf, dayYmd }) {
+  const readPolicy = shouldForceFreshServerRead(dayYmd) ? "server" : DEFAULT_READ_POLICY;
+
+  const { docs, error } = await fetchDrawDocsPreferUf({
+    uf,
+    extraWheres: [where("ymd", "==", dayYmd)],
+    policy: readPolicy,
+  });
+  if (error) throw error;
+  if (!docs || !docs.length) return [];
+
+  let baseAll = dedupeDrawsLocal(docs.map(mapDrawDoc));
+  baseAll = baseAll.filter((x) => (x.ymd || normalizeToYMD(x.date)) === dayYmd);
+
+  const ordered = sortDrawsLocal(baseAll);
+
+  return ordered.map((d) => {
+    const embedded = normalizeEmbeddedPrizesForAggregated(d?.prizes);
+    return {
+      ...d,
+      prizes: embedded,
+      prizesCount: embedded.length || Number(d?.prizesCount || 0),
+      __mode: "aggregated",
+    };
+  });
+}
+
+export async function getKingResultsByRange({
+  uf,
+  dateFrom,
+  dateTo,
+  closeHour = null,
+  closeHourBucket = null,
+  positions = null,
+  mode = "detailed",
+  readPolicy = DEFAULT_READ_POLICY,
+  bypassCache = false,
+}) {
+  if (!uf || !dateFrom || !dateTo) {
+    throw new Error("Parâmetros obrigatórios: uf, dateFrom, dateTo");
+  }
+
+  const scopeKey = canonicalScopeKey(uf);
+
+  const positionsArr = normalizePositions(positions);
+
+  const ymdFrom = normalizeToYMD(dateFrom);
+  const ymdTo = normalizeToYMD(dateTo);
+  if (!ymdFrom || !ymdTo) return [];
+
+  const hourFilter = resolveHourFilter({ closeHour, closeHourBucket });
+
+  const effectiveMode = decideKingRangeMode({
+    dateFrom: ymdFrom,
+    dateTo: ymdTo,
+    mode,
+  });
+
+  const rangeKey = drawsCacheKeyRange({
+    scopeKey,
+    from: ymdFrom,
+    to: ymdTo,
+    positionsArr,
+    hourFilter,
+    mode: effectiveMode,
+  });
+  if (!bypassCache) {
+    const cached = cacheGet(DRAWS_CACHE, rangeKey);
+    if (cached) return cached;
+  }
+
+  const DOC_ID = documentId();
+  const rangeOrder = [orderBy("ymd", "asc"), orderBy(DOC_ID)];
+
+  const { docs, error, usedField } = await fetchDrawDocsPreferUf({
+    uf,
+    extraWheres: [where("ymd", ">=", ymdFrom), where("ymd", "<=", ymdTo)],
+    extraOrderBy: rangeOrder,
+    policy: readPolicy,
+  });
+
+  if (error) {
+    if (isIndexError(error)) {
+      const days = daysBetweenInclusiveUTC(ymdFrom, ymdTo);
+      const MAX_FALLBACK_DAYS = 31;
+
+      if (Number.isFinite(days) && days > 0 && days <= MAX_FALLBACK_DAYS) {
+        if (effectiveMode === "aggregated") {
+          const all = [];
+          for (let i = 0; i < days; i += 1) {
+            const day = addDaysUTC(ymdFrom, i);
+            const dayDraws = await fetchDrawsDayNoPrizes({ uf, dayYmd: day });
+            if (dayDraws.length) all.push(...dayDraws);
+          }
+
+          const baseAll = dedupeDrawsLocal(all);
+          const base = hourFilter?.kind
+            ? baseAll.filter((d) => drawPassesHourFilter(d, hourFilter))
+            : baseAll;
+
+          let out = dedupeDrawsLocal(sortDrawsLocal(base));
+
+          if (!bypassCache) {
+      cacheSet(DRAWS_CACHE, rangeKey, out);
+    }
+          return out;
+        }
+
+        const all = [];
+        for (let i = 0; i < days; i += 1) {
+          const day = addDaysUTC(ymdFrom, i);
+          const dayDraws = await getKingResultsByDate({
+            uf,
+            date: day,
+            closeHour,
+            closeHourBucket,
+            positions: positionsArr,
+          });
+          if (Array.isArray(dayDraws) && dayDraws.length) all.push(...dayDraws);
+        }
+
+        const baseAll = dedupeDrawsLocal(all);
+        const base = hourFilter?.kind
+          ? baseAll.filter((d) => drawPassesHourFilter(d, hourFilter))
+          : baseAll;
+
+        let out = dedupeDrawsLocal(sortDrawsLocal(base));
+
+        if (!bypassCache) {
+      cacheSet(DRAWS_CACHE, rangeKey, out);
+    }
+        return out;
+      }
+
+      const rawCode = String(error?.code || "");
+      const rawMsg = String(error?.message || "");
+
+      throw new Error(
+        `Firestore: falta índice composto para RANGE (campo ${usedField} + ymd).\n` +
+          `Crie/valide o índice no console (Collection: draws | Fields: ${usedField} ASC, ymd ASC, __name__ (documentId) ASC).\n` +
+          `Obs: fallback automático só é aplicado para ranges até ${MAX_FALLBACK_DAYS} dias.\n` +
+          (rawCode || rawMsg ? `Detalhe: ${rawCode} ${rawMsg}` : "")
+      );
+    }
+
+    throw error;
+  }
+
+  if (!docs || !docs.length) {
+    const days = daysBetweenInclusiveUTC(ymdFrom, ymdTo);
+    const MAX_EMPTY_RANGE_FALLBACK_DAYS = 120;
+
+    if (
+      Number.isFinite(days) &&
+      days > 0 &&
+      days <= MAX_EMPTY_RANGE_FALLBACK_DAYS
+    ) {
+      if (effectiveMode === "aggregated") {
+        const all = [];
+        for (let i = 0; i < days; i += 1) {
+          const day = addDaysUTC(ymdFrom, i);
+          const dayDraws = await fetchDrawsDayNoPrizes({ uf, dayYmd: day });
+          if (dayDraws.length) all.push(...dayDraws);
+        }
+
+        const baseAll = dedupeDrawsLocal(all);
+        const base = hourFilter?.kind
+          ? baseAll.filter((d) => drawPassesHourFilter(d, hourFilter))
+          : baseAll;
+
+        let out = dedupeDrawsLocal(sortDrawsLocal(base));
+
+        if (!bypassCache) {
+      cacheSet(DRAWS_CACHE, rangeKey, out);
+    }
+        return out;
+      }
+
+      const all = [];
+      for (let i = 0; i < days; i += 1) {
+        const day = addDaysUTC(ymdFrom, i);
+        const dayDraws = await getKingResultsByDate({
+          uf,
+          date: day,
+          closeHour,
+          closeHourBucket,
+          positions: positionsArr,
+        });
+        if (Array.isArray(dayDraws) && dayDraws.length) all.push(...dayDraws);
+      }
+
+      const baseAll = dedupeDrawsLocal(all);
+      const base = hourFilter?.kind
+        ? baseAll.filter((d) => drawPassesHourFilter(d, hourFilter))
+        : baseAll;
+
+      const ordered = sortDrawsLocal(base);
+
+      const conc = chooseRangeConcurrency(ordered.length);
+      const results = await mapWithConcurrency(ordered, conc, async (item) => {
+        const prizes = await fetchPrizesForDraw(item.drawId, positionsArr, item.prizes);
+        const pc = Array.isArray(prizes) ? prizes.length : 0;
+        return { ...item, prizes, prizesCount: pc, __mode: "detailed" };
+      });
+
+      const out = dedupeDrawsLocal(results);
+      if (!bypassCache) {
+      cacheSet(DRAWS_CACHE, rangeKey, out);
+    }
+      return out;
+    }
+
+    return [];
+  }
+
+  const baseAll = dedupeDrawsLocal(docs.map(mapDrawDoc));
+  const base = hourFilter?.kind
+    ? baseAll.filter((d) => drawPassesHourFilter(d, hourFilter))
+    : baseAll;
+
+  const ordered = sortDrawsLocal(base);
+
+  if (effectiveMode === "aggregated") {
+    const out = dedupeDrawsLocal(
+      ordered.map((d) => {
+        const embedded = normalizeEmbeddedPrizesForAggregated(d?.prizes);
+        return {
+          ...d,
+          prizes: embedded,
+          prizesCount: Number.isFinite(Number(d?.prizesCount))
+            ? Number(d.prizesCount)
+            : embedded.length || 0,
+          __mode: "aggregated",
+        };
+      })
+    );
+    if (!bypassCache) {
+      cacheSet(DRAWS_CACHE, rangeKey, out);
+    }
+    return out;
+  }
+
+  const conc = chooseRangeConcurrency(ordered.length);
+
+  const results = await mapWithConcurrency(ordered, conc, async (item) => {
+    const prizes = await fetchPrizesForDraw(item.drawId, positionsArr, item.prizes);
+    const pc = Array.isArray(prizes) ? prizes.length : 0;
+    return { ...item, prizes, prizesCount: pc, __mode: "detailed" };
+  });
+
+  const out = dedupeDrawsLocal(results);
+  if (!bypassCache) {
+      cacheSet(DRAWS_CACHE, rangeKey, out);
+    }
+  return out;
+}
+
+/* =========================
+   ✅ Hidratação de prizes (para UX no "Todos")
+========================= */
+
+export async function hydrateKingDrawsWithPrizes({
+  draws,
+  positions = null,
+  concurrency = null,
+}) {
+  const arr = Array.isArray(draws) ? draws : [];
+  if (!arr.length) return [];
+
+  const positionsArr = normalizePositions(positions);
+
+  const conc =
+    Number.isFinite(Number(concurrency)) && Number(concurrency) > 0
+      ? Number(concurrency)
+      : chooseRangeConcurrency(arr.length);
+
+  const results = await mapWithConcurrency(arr, conc, async (item) => {
+    const prizes = await fetchPrizesForDraw(item.drawId, positionsArr, item.prizes);
+    const pc = Array.isArray(prizes) ? prizes.length : 0;
+    return { ...item, prizes, prizesCount: pc, __mode: "detailed" };
+  });
+
+  return dedupeDrawsLocal(results);
+}
+
+/* =========================
+   ✅ ATRASADOS (Late) — 100% baseado na SUA base
+========================= */
+
+function normalizeLotteriesList(lotteries) {
+  const arr = Array.isArray(lotteries) ? lotteries : [];
+  const cleaned = arr
+    .map((x) => String(x ?? "").trim().toUpperCase())
+    .filter(Boolean);
+  return cleaned.length ? Array.from(new Set(cleaned)) : null;
+}
+
+function drawPassesLotteriesFilter(draw, lotteriesArr) {
+  if (!lotteriesArr || !lotteriesArr.length) return true;
+  const code = String(draw?.lottery_code ?? "").trim().toUpperCase();
+  if (!code) return false;
+  return lotteriesArr.includes(code);
+}
+
+function lateCacheKey({
+  scopeKey,
+  fromYmd,
+  toYmd,
+  baseYmd,
+  prizePosition,
+  hourFilter,
+  lotteriesArr,
+  chunkDays,
+}) {
+  const h =
+    hourFilter?.kind === "bucket"
+      ? `bucket:${hourFilter.bucket}`
+      : hourFilter?.kind === "exact"
+      ? `exact:${hourFilter.hhmm}`
+      : "all";
+  const lots = lotteriesArr && lotteriesArr.length ? lotteriesArr.join(",") : "all";
+  const cd = Number(chunkDays) || 15;
+  const pos = Number(prizePosition) || 1;
+  return `late::${scopeKey}::${fromYmd}..${toYmd}::base=${baseYmd}::pos=${pos}::h=${h}::lots=${lots}::chunk=${cd}`;
+}
+
+function hourToNumSafe(hhmm) {
+  const s = normalizeHourLike(hhmm);
+  const m = s.match(/^(\d{2}):(\d{2})$/);
+  if (!m) return Number.POSITIVE_INFINITY;
+  return Number(m[1]) * 100 + Number(m[2]);
+}
+
+export async function getKingLateByRange({
+  uf,
+  dateFrom,
+  dateTo,
+  baseDate = null,
+  lotteries = null,
+  prizePosition = 1,
+  closeHour = null,
+  closeHourBucket = null,
+  chunkDays = 15,
+}) {
+  if (!uf || !dateFrom || !dateTo) {
+    throw new Error("Parâmetros obrigatórios: uf, dateFrom, dateTo");
+  }
+
+  const scopeKey = canonicalScopeKey(uf);
+
+  const fromYmd = normalizeToYMD(dateFrom);
+  const toYmd = normalizeToYMD(dateTo);
+  if (!fromYmd || !toYmd) return [];
+
+  const baseYmd = normalizeToYMD(baseDate) || toYmd;
+
+  const hourFilter = resolveHourFilter({ closeHour, closeHourBucket });
+  const lotteriesArr = normalizeLotteriesList(lotteries);
+
+  const cacheKey = lateCacheKey({
+    scopeKey,
+    fromYmd,
+    toYmd,
+    baseYmd,
+    prizePosition,
+    hourFilter,
+    lotteriesArr,
+    chunkDays,
+  });
+
+  const cached = cacheGet(LATE_CACHE, cacheKey);
+  if (cached) return cached;
+
+  const posNum = Number(prizePosition) || 1;
+
+  const lastSeen = new Map();
+
+  let cursorTo = toYmd;
+  const chunk = Math.max(3, Math.min(60, Number(chunkDays) || 15));
+
+  if (cursorTo < fromYmd) {
+    const outEmpty = Array.from({ length: 25 }, (_, i) => ({
+      pos: i + 1,
+      grupo: i + 1,
+      lastYmd: null,
+      lastHour: null,
+      lastDrawId: null,
+      lastLottery: null,
+      atrasoDias: null,
+    }));
+    cacheSet(LATE_CACHE, cacheKey, outEmpty);
+    return outEmpty;
+  }
+
+  while (cursorTo >= fromYmd && lastSeen.size < 25) {
+    let chunkFrom = addDaysUTC(cursorTo, -(chunk - 1));
+    if (chunkFrom < fromYmd) chunkFrom = fromYmd;
+
+    const draws = await getKingResultsByRange({
+      uf,
+      dateFrom: chunkFrom,
+      dateTo: cursorTo,
+      closeHour,
+      closeHourBucket,
+      positions: [posNum],
+      mode: "detailed",
+    });
+
+    const desc = sortDrawsLocalDesc(dedupeDrawsLocal(draws));
+
+    for (const d of desc) {
+      if (!d) continue;
+
+      if (hourFilter?.kind && !drawPassesHourFilter(d, hourFilter)) continue;
+      if (lotteriesArr && !drawPassesLotteriesFilter(d, lotteriesArr)) continue;
+
+      const ymd = d.ymd || normalizeToYMD(d.date);
+      if (!ymd || !isYMD(ymd)) continue;
+
+      const p = Array.isArray(d.prizes)
+        ? d.prizes.find(
+            (x) => Number(x?.position) === posNum && isValidGrupo(x?.grupo)
+          )
+        : null;
+
+      const g = p?.grupo;
+      if (!isValidGrupo(g)) continue;
+
+      if (!lastSeen.has(g)) {
+        lastSeen.set(g, {
+          ymd,
+          hour: d.close_hour || d.closeHour || "",
+          drawId: d.drawId || d.id || null,
+          lottery_code: d.lottery_code || null,
+        });
+
+        if (lastSeen.size >= 25) break;
+      }
+    }
+
+    cursorTo = addDaysUTC(chunkFrom, -1);
+  }
+
+  const rows = [];
+  for (let g = 1; g <= 25; g += 1) {
+    const seen = lastSeen.get(g) || null;
+    const lastYmd = seen?.ymd || null;
+    const diff = lastYmd ? daysDiffUTC(lastYmd, baseYmd) : NaN;
+    const atrasoDias =
+      lastYmd && Number.isFinite(diff) ? Math.max(0, diff) : null;
+
+    rows.push({
+      pos: 0,
+      grupo: g,
+      lastYmd,
+      lastHour: seen?.hour ? normalizeHourLike(seen.hour) : null,
+      lastDrawId: seen?.drawId || null,
+      lastLottery: seen?.lottery_code || null,
+      atrasoDias,
+    });
+  }
+
+  const sorted = [...rows].sort((a, b) => {
+    const aa = Number.isFinite(Number(a?.atrasoDias)) ? Number(a.atrasoDias) : -1;
+    const bb = Number.isFinite(Number(b?.atrasoDias)) ? Number(b.atrasoDias) : -1;
+    if (bb !== aa) return bb - aa;
+
+    const ha = hourToNumSafe(a?.lastHour);
+    const hb = hourToNumSafe(b?.lastHour);
+    if (ha !== hb) return ha - hb;
+
+    return Number(a?.grupo || 0) - Number(b?.grupo || 0);
+  });
+
+  const out = sorted.map((r, idx) => ({ ...r, pos: idx + 1 }));
+
+  cacheSet(LATE_CACHE, cacheKey, out);
+  return out;
+}

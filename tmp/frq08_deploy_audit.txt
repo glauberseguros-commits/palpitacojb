@@ -1,0 +1,21 @@
+====================================================================================================
+FRQ-08 — AUDITORIA DO DEPLOY DA PÁGINA FREQUÊNCIAS
+====================================================================================================
+Data: 22/07/2026 18:47:15
+Commit esperado: a5bc1e2
+
+===== 1. HEAD LOCAL =====
+HEAD local: a5bc1e24d1a4547df605cb10eed6fce0b627e45d
+Último commit: a5bc1e2 feat: adiciona progresso e milhares ineditas
+
+===== 2. HEAD REMOTO =====
+HEAD remoto: a5bc1e24d1a4547df605cb10eed6fce0b627e45d
+Último commit remoto: a5bc1e2 feat: adiciona progresso e milhares ineditas
+
+Local e remoto confirmados no commit esperado.
+
+===== 3. CONFIRMAÇÃO DO CÓDIGO NO COMMIT =====
+Carregando resultados... => 1
+rankingView === "ineditas" => 3
+Mais frequentes => 2
+Milhares inéditas => 0

@@ -1,0 +1,165 @@
+
+  backend\engine\scoreEngineUnified.js:85:  )(input);
+  backend\engine\scoreEngineUnified.js:86:}
+  backend\engine\scoreEngineUnified.js:87:
+> backend\engine\scoreEngineUnified.js:88:function computeStatisticalTop3V3(input = {}) {
+  backend\engine\scoreEngineUnified.js:89:  const api = loadTop3PublicApi();
+  backend\engine\scoreEngineUnified.js:90:
+  backend\engine\scoreEngineUnified.js:91:  return assertFunction(
+  backend\engine\scoreEngineUnified.js:92:    api,
+> backend\engine\scoreEngineUnified.js:93:    "computeStatisticalTop3V3"
+  backend\engine\scoreEngineUnified.js:94:  )(input);
+  backend\engine\scoreEngineUnified.js:95:}
+  backend\engine\scoreEngineUnified.js:96:
+  backend\engine\scoreEngineUnified.js:97:module.exports = {
+  backend\engine\scoreEngineUnified.js:98:  loadTop3PublicApi,
+  backend\engine\scoreEngineUnified.js:99:  getTop3Capabilities,
+  backend\engine\scoreEngineUnified.js:100:  computeConditionalNextTop3,
+  backend\engine\scoreEngineUnified.js:101:  computeConditionalNextTop3V2,
+> backend\engine\scoreEngineUnified.js:102:  computeStatisticalTop3V3,
+  backend\engine\scoreEngineUnified.js:103:};
+  backend\engine\top3PredictionService.js:10:} = require("./top3HistoryRepository");
+  backend\engine\top3PredictionService.js:11:
+  backend\engine\top3PredictionService.js:12:const {
+> backend\engine\top3PredictionService.js:13:  computeStatisticalTop3V3,
+  backend\engine\top3PredictionService.js:14:  loadTop3PublicApi,
+  backend\engine\top3PredictionService.js:15:} = require("./scoreEngineUnified");
+  backend\engine\top3PredictionService.js:16:
+  backend\engine\top3PredictionService.js:17:const {
+  backend\engine\top3PredictionService.js:18:  createPredictionRun,
+  backend\engine\top3PredictionService.js:19:} = require("./predictionService");
+  backend\engine\top3PredictionService.js:20:
+  backend\engine\top3PredictionService.js:21:const {
+  backend\engine\top3PredictionService.js:754:
+  backend\engine\top3PredictionService.js:755:  const computeTop3 =
+  backend\engine\top3PredictionService.js:756:    dependencies.computeTop3 ||
+> backend\engine\top3PredictionService.js:757:    computeStatisticalTop3V3;
+  backend\engine\top3PredictionService.js:758:
+  backend\engine\top3PredictionService.js:759:  const persistRun =
+  backend\engine\top3PredictionService.js:760:    dependencies.persistRun ||
+  backend\engine\top3PredictionService.js:761:    createPredictionRun;
+  backend\engine\top3PredictionService.js:762:
+  backend\engine\top3PredictionService.js:763:  const publicApi =
+  backend\engine\top3PredictionService.js:764:    dependencies.publicApi ||
+  backend\engine\top3PredictionService.js:765:    loadTop3PublicApi();
+  backend\scripts\backtestTop3Official.js:9:} = require("../engine/top3HistoryRepository");
+  backend\scripts\backtestTop3Official.js:10:
+  backend\scripts\backtestTop3Official.js:11:const {
+> backend\scripts\backtestTop3Official.js:12:  computeStatisticalTop3V3,
+  backend\scripts\backtestTop3Official.js:13:  loadTop3PublicApi,
+  backend\scripts\backtestTop3Official.js:14:} = require("../engine/scoreEngineUnified");
+  backend\scripts\backtestTop3Official.js:15:
+  backend\scripts\backtestTop3Official.js:16:const PT_RIO_SCHEDULE_NORMAL = [
+  backend\scripts\backtestTop3Official.js:17:  "09:00",
+  backend\scripts\backtestTop3Official.js:18:  "11:00",
+  backend\scripts\backtestTop3Official.js:19:  "14:00",
+  backend\scripts\backtestTop3Official.js:20:  "16:00",
+  backend\scripts\backtestTop3Official.js:513:
+  backend\scripts\backtestTop3Official.js:514:  const computeTop3 =
+  backend\scripts\backtestTop3Official.js:515:    dependencies.computeTop3 ||
+> backend\scripts\backtestTop3Official.js:516:    computeStatisticalTop3V3;
+  backend\scripts\backtestTop3Official.js:517:
+  backend\scripts\backtestTop3Official.js:518:  const history = sortDraws(
+  backend\scripts\backtestTop3Official.js:519:    await loadHistory(
+  backend\scripts\backtestTop3Official.js:520:      lotteryKey,
+  backend\scripts\backtestTop3Official.js:521:      dependencies.historyDependencies || {}
+  backend\scripts\backtestTop3Official.js:522:    ),
+  backend\scripts\backtestTop3Official.js:523:    publicApi
+  backend\scripts\backtestTop3Official.js:524:  );
+  src\pages\Top3\top3.engine.js:15:  wrapToDezena2,
+  src\pages\Top3\top3.engine.js:16:} from "./top3.formatters";
+  src\pages\Top3\top3.engine.js:17:
+> src\pages\Top3\top3.engine.js:18:import { scoreRanking } from "./modules/scoreEngine/scoreEngineV2";
+  src\pages\Top3\top3.engine.js:19:
+  src\pages\Top3\top3.engine.js:20:import {
+  src\pages\Top3\top3.engine.js:21:  TOP3_NEXTDRAW_SCAN_MAX_STEPS,
+  src\pages\Top3\top3.engine.js:22:  TOP3_NEXTDRAW_SCAN_MAX_DAYS,
+  src\pages\Top3\top3.engine.js:23:  TOP3_GROUPS_K,
+  src\pages\Top3\top3.engine.js:24:  TOP3_SMOOTH_ALPHA,
+  src\pages\Top3\top3.engine.js:25:  TOP3_SCENE_WEIGHT,
+  src\pages\Top3\top3.engine.js:26:  TOP3_SCENE_SAMPLE_TARGET,
+  src\pages\Top3\top3.engine.js:2831:  return Math.max(0, Math.min(1, n / lim));
+  src\pages\Top3\top3.engine.js:2832:}
+  src\pages\Top3\top3.engine.js:2833:
+> src\pages\Top3\top3.engine.js:2834:export function computeStatisticalTop3V3({
+  src\pages\Top3\top3.engine.js:2835:  lotteryKey,
+  src\pages\Top3\top3.engine.js:2836:  drawsRange,
+  src\pages\Top3\top3.engine.js:2837:  drawLast,
+  src\pages\Top3\top3.engine.js:2838:  PT_RIO_SCHEDULE_NORMAL,
+  src\pages\Top3\top3.engine.js:2839:  PT_RIO_SCHEDULE_WED_SAT,
+  src\pages\Top3\top3.engine.js:2840:  FEDERAL_SCHEDULE,
+  src\pages\Top3\top3.engine.js:2841:  topN = 3,
+  src\pages\Top3\top3.engine.js:2842:  targetYmdOverride = "",
+  src\pages\Top3\top3.engine.js:3060:    })
+  src\pages\Top3\top3.engine.js:3061:    .slice(0, Math.max(1, Number(topN || 3)));
+  src\pages\Top3\top3.engine.js:3062:
+> src\pages\Top3\top3.engine.js:3063:  const rankedScored = scoreRanking(
+  src\pages\Top3\top3.engine.js:3064:    ranked,
+  src\pages\Top3\top3.engine.js:3065:    {
+  src\pages\Top3\top3.engine.js:3066:      lotteryKey,
+  src\pages\Top3\top3.engine.js:3067:      targetYmd: targetY,
+  src\pages\Top3\top3.engine.js:3068:      targetHour: targetH,
+  src\pages\Top3\top3.engine.js:3069:      previousGroup: prevGrupo,
+  src\pages\Top3\top3.engine.js:3070:      totalDraws: history.length,
+  src\pages\Top3\top3.engine.js:3071:    }
+  src\pages\Top3\top3.engine.js:4069:        return ta - tb;
+  src\pages\Top3\top3.engine.js:4070:      });
+  src\pages\Top3\top3.engine.js:4071:
+> src\pages\Top3\top3.engine.js:4072:    const computed = computeStatisticalTop3V3({
+  src\pages\Top3\top3.engine.js:4073:      lotteryKey,
+  src\pages\Top3\top3.engine.js:4074:      drawsRange: [...usableHistory, ...usableTodayContext],
+  src\pages\Top3\top3.engine.js:4075:      drawLast: baseDraw,
+  src\pages\Top3\top3.engine.js:4076:      drawsToday: usableTodayContext,
+  src\pages\Top3\top3.engine.js:4077:      PT_RIO_SCHEDULE_NORMAL,
+  src\pages\Top3\top3.engine.js:4078:      PT_RIO_SCHEDULE_WED_SAT,
+  src\pages\Top3\top3.engine.js:4079:      FEDERAL_SCHEDULE,
+  src\pages\Top3\top3.engine.js:4080:      topN: 3,
+  src\pages\Top3\top3.public-api.js:12:  // Predição principal
+  src\pages\Top3\top3.public-api.js:13:  computeConditionalNextTop3,
+  src\pages\Top3\top3.public-api.js:14:  computeConditionalNextTop3V2,
+> src\pages\Top3\top3.public-api.js:15:  computeStatisticalTop3V3,
+  src\pages\Top3\top3.public-api.js:16:
+  src\pages\Top3\top3.public-api.js:17:  // Timeline e auditoria
+  src\pages\Top3\top3.public-api.js:18:  buildTimelineTop3,
+  src\pages\Top3\top3.public-api.js:19:  auditTop3Timeline,
+  src\pages\Top3\top3.public-api.js:20:  auditTop3Backtest,
+  src\pages\Top3\top3.public-api.js:21:
+  src\pages\Top3\top3.public-api.js:22:  // Milhares
+  src\pages\Top3\top3.public-api.js:23:  buildMilharesForGrupo,
+  src\pages\Top3\top3.public-api.js:46:} from "./top3.engine";
+  src\pages\Top3\top3.public-api.js:47:
+  src\pages\Top3\top3.public-api.js:48:export {
+> src\pages\Top3\top3.public-api.js:49:  scoreRanking,
+  src\pages\Top3\top3.public-api.js:50:  scoreItem,
+  src\pages\Top3\top3.public-api.js:51:  calculateEvidenceStrength,
+  src\pages\Top3\top3.public-api.js:52:} from "./modules/scoreEngine/scoreEngineV2";
+  src\pages\Top3\top3.public-api.js:53:
+  src\pages\Top3\top3.public-api.js:54:export {
+  src\pages\Top3\top3.public-api.js:55:  collectEvidence,
+  src\pages\Top3\top3.public-api.js:56:} from "./modules/scoreEngine/evidenceEngine";
+  src\pages\Top3\top3.public-api.js:57:
+  src\pages\Top3\modules\top3.analytics.js:10:  pickDrawHour,
+  src\pages\Top3\modules\top3.analytics.js:11:  pickDrawYMD,
+  src\pages\Top3\modules\top3.analytics.js:12:  pickPrize1GrupoFromDraw,
+> src\pages\Top3\modules\top3.analytics.js:13:  computeStatisticalTop3V3,
+  src\pages\Top3\modules\top3.analytics.js:14:} from "../top3.engine";
+  src\pages\Top3\modules\top3.analytics.js:15:
+  src\pages\Top3\modules\top3.analytics.js:16:function emptyAnalytics() {
+  src\pages\Top3\modules\top3.analytics.js:17:  return { top: [], meta: null };
+  src\pages\Top3\modules\top3.analytics.js:18:}
+  src\pages\Top3\modules\top3.analytics.js:19:
+  src\pages\Top3\modules\top3.analytics.js:20:function safeCacheRef(ref) {
+  src\pages\Top3\modules\top3.analytics.js:21:  if (!ref || typeof ref !== "object") {
+  src\pages\Top3\modules\top3.analytics.js:190:  }
+  src\pages\Top3\modules\top3.analytics.js:191:
+  src\pages\Top3\modules\top3.analytics.js:192:  const computed =
+> src\pages\Top3\modules\top3.analytics.js:193:    computeStatisticalTop3V3({
+  src\pages\Top3\modules\top3.analytics.js:194:      lotteryKey,
+  src\pages\Top3\modules\top3.analytics.js:195:      drawsRange: safeHistoricalList,
+  src\pages\Top3\modules\top3.analytics.js:196:      drawLast,
+  src\pages\Top3\modules\top3.analytics.js:197:      drawsToday: Array.isArray(todayDraws) ? todayDraws : [],
+  src\pages\Top3\modules\top3.analytics.js:198:      PT_RIO_SCHEDULE_NORMAL,
+  src\pages\Top3\modules\top3.analytics.js:199:      PT_RIO_SCHEDULE_WED_SAT,
+  src\pages\Top3\modules\top3.analytics.js:200:      FEDERAL_SCHEDULE,
+  src\pages\Top3\modules\top3.analytics.js:201:      topN: 3,
+

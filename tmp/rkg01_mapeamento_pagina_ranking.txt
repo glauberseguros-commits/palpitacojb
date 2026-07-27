@@ -1,0 +1,4415 @@
+
+
+==============================================================================================================
+1. HEAD ATUAL DO PROJETO
+==============================================================================================================
+ M backend/scripts/backtestTop3Official.js
+ M src/pages/Top3/modules/scoreEngine/scoreEngineV2.js
+?? auditoria_api_github_cron_21h30.txt
+?? auditoria_automacao_resultados_pc_desligado.txt
+?? auditoria_backtest_top3_base.txt
+?? auditoria_byHour.txt
+?? auditoria_causa_18h_2026-07-11.txt
+?? auditoria_cirurgica_21h30.txt
+?? auditoria_comparativa_milhar_v2_v3.txt
+?? auditoria_contexto_probabilistico_milhar.txt
+?? auditoria_decisores_calendario_pt_rio.txt
+?? auditoria_docsDay.txt
+?? auditoria_docs_2026-07-11.txt
+?? auditoria_estado_scheduler.txt
+?? auditoria_estado_workflow_github.txt
+?? auditoria_estrutural_auto_import.txt
+?? auditoria_execucoes_falhas_auto_import.txt
+?? auditoria_execucoes_reais_auto_import_21h.txt
+?? auditoria_falha_real_auto_import.txt
+?? auditoria_firestore_PT_RIO_2026-07-11.txt
+?? auditoria_fluxo_milhar_publica.txt
+?? auditoria_fluxo_real_auto_import.txt
+?? auditoria_fluxo_slot_auto_import.txt
+?? auditoria_fluxo_status_slot.txt
+?? auditoria_fonte_backtest_milhar.txt
+?? auditoria_historico_cron_21h30.txt
+?? auditoria_integracao_federal20_runtime.txt
+?? auditoria_janelas_slot_21h30.txt
+?? auditoria_logica_autoImportToday.txt
+?? auditoria_motor_milhar_v2.txt
+?? auditoria_origem_drawsNoPrizes.txt
+?? auditoria_origem_presentHours.txt
+?? auditoria_pre_backtest_milhar.txt
+?? auditoria_regra_federal20_remove_rj18.txt
+?? auditoria_return_api_results.txt
+?? auditoria_runImport_completa.txt
+?? auditoria_runImport_excecoes.txt
+?? auditoria_runs_21h30_janelas_utc.txt
+?? auditoria_runs_reais_21h30_github.txt
+?? auditoria_top3_base_2026-07-09.txt
+?? auditoria_top3_estrutura_completa.txt
+?? auditoria_top3_fluxo_real.txt
+?? auditoria_top3_slot_2026-07-09.txt
+?? auditoria_workflows_importacao.txt
+?? autoImportToday_completo.txt
+?? backend/engine/scoreEngineE08Experimental.js
+?? backend/engine/scoreEngineV4Experimental.js
+?? backend/scripts/auditTop3E08DifferencesExperimental.js
+?? backend/scripts/backtestTop3AblationExperimental.js
+?? backend/scripts/backtestTop3E07Experimental.js
+?? backend/scripts/backtestTop3E08Experimental.js
+?? inventario_pt_rio_hardcoded.txt
+?? src/pages/Centenas/__tests__/milharProbabilityEngineV3.test.js
+?? src/pages/Centenas/modules/milharProbabilityEngineV3.js
+?? src/pages/Top3/__tests__/top3.schedule-calendar-rules.node.test.js
+?? tmp/App.before_perf03b.jsx
+?? tmp/App.before_perf03e.jsx
+?? tmp/App.before_perf03f.jsx
+?? tmp/App.before_perf03g.jsx
+?? tmp/App.before_perf03i.jsx
+?? tmp/CentenasView.before_cnt_hor_04.jsx
+?? tmp/Dashboard.before_fed19.jsx
+?? tmp/Dashboard.before_fed21.jsx
+?? tmp/FiltersBar.before_nac31.jsx
+?? tmp/Late.before-atp06.jsx
+?? tmp/Late.before-atp07.jsx
+?? tmp/Late.before-atp08.jsx
+?? tmp/Results.before-lkn189.jsx
+?? tmp/Results.before-lkn190.jsx
+?? tmp/Results.before-lkn31_1.jsx
+?? tmp/Results.before-nat11.jsx
+?? tmp/Search.before-federal-19h.jsx
+?? tmp/Search.before-lotteries.jsx
+?? tmp/Search.jsx.txt
+?? tmp/TOP3_BACKTEST_JSON_STRUCTURE.txt
+?? tmp/TOP3_BASELINE_AUDITORIA_FINAL_2026-07-17.md
+?? tmp/TOP3_BASELINE_METRICAS_OFICIAIS.json
+?? tmp/TOP3_BASELINE_METRICAS_OFICIAIS.txt
+?? tmp/TOP3_PRE_V4_PATH_AUDIT.txt
+?? tmp/TOP3_RETORNO_BACKTEST_AUDITORIA.txt
+?? tmp/TOP3_V3_INJECTION_EQUIVALENCE.json
+?? tmp/TOP3_V3_INJECTION_EQUIVALENCE.txt
+?? tmp/TOP3_V3_INJECTION_EQUIVALENCE_REAL.json
+?? tmp/TOP3_V3_INJECTION_EQUIVALENCE_REAL.txt
+?? tmp/TOP3_V4_PONTO_DE_INTEGRACAO.txt
+?? tmp/Top3View.before_loterias_linha_unica.jsx
+?? tmp/Top3View.before_remove_hero_visual.jsx
+?? tmp/atp01_filtros_atrasados_audit.txt
+?? tmp/atp02_componente_atrasados.txt
+?? tmp/atp03_late_blocos_exatos.txt
+?? tmp/atp04_getKingLateByRange_contract.txt
+?? tmp/atp05_late_build.log
+?? tmp/atp05_late_implementation.log
+?? tmp/atp09_late_git_log.txt
+?? tmp/atp09_origem_seletor_antigo_atrasados.txt
+?? tmp/atrasados_look_raio_x.zip
+?? tmp/atrasados_look_raio_x/
+?? tmp/audit_nacional_2026_05_06.js
+?? tmp/audit_nacional_firestore.js
+?? tmp/audit_nacional_schedule_boundaries.js
+?? tmp/audit_nacional_schedule_transition.js
+?? tmp/audit_results_pt_rio_18h_19h.txt
+?? tmp/audit_v4_predictive_telemetry.js
+?? tmp/auditoria_auth_ampla.txt
+?? tmp/auditoria_auth_top3.txt
+?? tmp/auditoria_backend_top3_pipeline.txt
+?? tmp/auditoria_cirurgica_listeners_top3.txt
+?? tmp/auditoria_estrutural_auto_import/
+?? tmp/auditoria_execucoes_falhas_auto_import/
+?? tmp/auditoria_firestore_listeners.txt
+?? tmp/auditoria_fluxo_carregamento_top3.txt
+?? tmp/auditoria_performance_bootstrap.txt
+?? tmp/auditoria_results_federal_datas.txt
+?? tmp/auditoria_top3_firestore_core.txt
+?? tmp/auditoria_top3_historico_sobrescrito.txt
+?? tmp/auditoria_top3_persistencia_historico.txt
+?? tmp/auditoria_top3_schedule_origem.txt
+?? tmp/aut01_look_missing_schedules.txt
+?? tmp/aut02_look_logs/
+?? tmp/aut03_autoImportToday_full.txt
+?? tmp/aut04_autoImportToday_lines_1_240.txt
+?? tmp/aut05_backup/
+?? tmp/aut06_look_final_validation.txt
+?? tmp/aut08_schedule_diagnostic.txt
+?? tmp/aut09_new_commit_schedule_check.txt
+?? tmp/aut10_schedule_reactivation.txt
+?? tmp/aut11_after_reactivation_check.txt
+?? tmp/aut11b_correct_schedule_window.txt
+?? tmp/aut12a_new_head_audit.txt
+?? tmp/aut12b_auto-import.before.yml
+?? tmp/aut12b_explicit_cron_publish.txt
+?? tmp/aut13c_cron_proof.txt
+?? tmp/aut13d_second_explicit_window.txt
+?? tmp/aut14_cron_and_production_gaps.txt
+?? tmp/aut15_exact_missing_results.txt
+?? tmp/aut15_look_2026-07-21_1400.log
+?? tmp/aut15_nacional_2026-07-21_1000.log
+?? tmp/aut16_scheduler_architecture_inventory.txt
+?? tmp/aut16b_scheduler_config_short.txt
+?? tmp/aut17_nacional_15h_recovery.txt
+?? tmp/aut17_nacional_2026-07-21_1500.log
+?? tmp/aut18_render_scheduler_publish.txt
+?? tmp/auto-import.before.LKN148.yml
+?? tmp/autoImportToday.before.LKN146.js
+?? tmp/autoImportToday_para_correcao.txt
+?? tmp/auto_import_failure_29365229224.txt
+?? tmp/backend_prediction_pipeline.txt
+?? tmp/backtestTop3AblationExperimental.before_telemetry.js
+?? tmp/backtestTop3E07Experimental.before-e07-2a-repair.js
+?? tmp/backtestTop3E07Experimental.before-e07-2a.js
+?? tmp/backtestTop3E08Experimental.before_full.js
+?? tmp/backtestTop3E08Experimental.before_shared_snapshot.js
+?? tmp/backup_atp05_late/
+?? tmp/backup_centenas_federal_scope_20260715_224348/
+?? tmp/backup_centenas_lottery_20260715_210718/
+?? tmp/backup_centenas_performance_20260715_221100/
+?? tmp/backup_centenas_stale_20260715_215026/
+?? tmp/backup_top3_core_commit1_20260715_125156/
+?? tmp/backup_top3_effects_20260715_234759/
+?? tmp/backup_top3_firestore_20260714_232456/
+?? tmp/backup_top3_historico_20260714_225544/
+?? tmp/backup_tpp01_04/
+?? tmp/backup_tpp01_04b/
+?? tmp/bootstrapTop3History_auditoria.txt
+?? tmp/bootstrap_commit_audit.txt
+?? tmp/bootstrap_startup_audit.txt
+?? tmp/busca_federal_horarios.txt
+?? tmp/busca_loterias_implementacao.txt
+?? tmp/busca_loterias_raio_x.zip
+?? tmp/busca_loterias_raio_x/
+?? tmp/capture_v4_real_input.js
+?? tmp/centenas_auditoria_filtro_loteria.txt
+?? tmp/centenas_build_auditoria.txt
+?? tmp/centenas_contrato_king_performance.txt
+?? tmp/centenas_federal_scope_build_20260715_224348.log
+?? tmp/centenas_filtro_loteria_direcionado.txt
+?? tmp/centenas_performance_auditoria.txt
+?? tmp/centenas_performance_build_20260715_221100.log
+?? tmp/centenas_schedule_audit.txt
+?? tmp/centenas_stale_build_20260715_215026.log
+?? tmp/cleanup_nacional_legacy.js
+?? tmp/cleanup_nacional_legacy_batched.js
+?? tmp/cnt_hor_02_rio_vs_loterias.txt
+?? tmp/cnt_hor_03_centenas_frontend_flow.txt
+?? tmp/cnt_hor_04a_anchors.txt
+?? tmp/collectEvidence_audit.txt
+?? tmp/commit3_prediction_contract.txt
+?? tmp/commit4_top3_service_contracts.txt
+?? tmp/computeStatisticalTop3V3_full.txt
+?? tmp/computeStatisticalTop3V3_locations.txt
+?? tmp/computeStatisticalTop3V3_locations_focused.txt
+?? tmp/computeStatisticalTop3V3_ranked_return_3025_3150.txt
+?? tmp/computeStatisticalTop3V3_return_final_3140_3225.txt
+?? tmp/cost01_firestore_reads_audit.txt
+?? tmp/cost02_top3_full_pipeline.txt
+?? tmp/cost03_integridade_snapshots_backend.txt
+?? tmp/cost04_frontend_historical_calls.txt
+?? tmp/cost05_callers_criticos.txt
+?? tmp/cost06_consumidores_criticos_completos.txt
+?? tmp/cost07_centenas_hour_filter_diagnostic.txt
+?? tmp/cost09_firestore_baseline.txt
+?? tmp/cost09b_post_deploy_status.txt
+?? tmp/dat01_bounds_look_nacional.txt
+?? tmp/dat02_floor_look_nacional.txt
+?? tmp/dat04_post_deploy_validation.txt
+?? tmp/dat06_minymd_consumers.txt
+?? tmp/dat07_nacional_max_date_diagnostic.txt
+?? tmp/diagnostico_timeout_top3_producao.txt
+?? tmp/diagnostico_useeffects_top3.txt
+?? tmp/drawRepository_consumers.txt
+?? tmp/e07_comparison_PT_RIO_full.json
+?? tmp/e07_comparison_PT_RIO_full.txt
+?? tmp/e07_comparison_PT_RIO_full_console.log
+?? tmp/e07_comparison_PT_RIO_limit_100.json
+?? tmp/e07_comparison_PT_RIO_limit_100.txt
+?? tmp/e07_preparation_report.txt
+?? tmp/e07_transition_structure_audit.txt
+?? tmp/e07_transition_structure_audit_console_safe.txt
+?? tmp/e08_audit_integration.txt
+?? tmp/e08_case_audit_console.txt
+?? tmp/e08_case_divergence_audit.txt
+?? tmp/e08_comparison_PT_RIO_full.json
+?? tmp/e08_comparison_PT_RIO_full.txt
+?? tmp/e08_comparison_PT_RIO_full_console.log
+?? tmp/e08_comparison_PT_RIO_limit_100.json
+?? tmp/e08_comparison_PT_RIO_limit_100.txt
+?? tmp/e08_comparison_PT_RIO_limit_100_console.log
+?? tmp/e08_computeStatisticalTop3_audit.txt
+?? tmp/e08_consolidated_analysis.txt
+?? tmp/e08_decisive_cases_analysis.txt
+?? tmp/e08_decisive_cases_detailed.json
+?? tmp/e08_decisive_cases_detailed.txt
+?? tmp/e08_decisive_cases_raw_full.txt
+?? tmp/e08_difference_capability.txt
+?? tmp/e08_differences_limit_500.json
+?? tmp/e08_differences_limit_500.txt
+?? tmp/e08_differences_limit_7406_console.log
+?? tmp/e08_drawsRange_origin_audit.txt
+?? tmp/e08_final_report.md
+?? tmp/e08_full_shared_snapshot_console.log
+?? tmp/e08_gain_loss_matrix.txt
+?? tmp/e08_history_builder_audit.txt
+?? tmp/e08_hour_mechanism_audit.txt
+?? tmp/e08_json_structure.txt
+?? tmp/e08_limit_500_reconciliation.txt
+?? tmp/e08_limit_audit.txt
+?? tmp/e08_origin_audit.txt
+?? tmp/e08_shared_snapshot_plan.txt
+?? tmp/e08_snapshot_strategy.txt
+?? tmp/e08_v3_reranking_preparation.txt
+?? tmp/e09_e08_contract.txt
+?? tmp/e09_preparation_report.txt
+?? tmp/fed01_data_inicial_federal.txt
+?? tmp/fed02_minYmd_origin.txt
+?? tmp/fed03_applyBoundsFloor.txt
+?? tmp/fed04_api_bounds_origin.txt
+?? tmp/fed05_backend_api_location.txt
+?? tmp/fed07_1_backend_bounds.txt
+?? tmp/fed07_backend_bounds.txt
+?? tmp/fed08_federal_firestore_min_ymd.txt
+?? tmp/fed09_production_bounds_api.txt
+?? tmp/fed10_dashboard_minymd_flow.txt
+?? tmp/fed11_period_display_trace.txt
+?? tmp/fed12_period_card_origin.txt
+?? tmp/fed13_period_component.txt
+?? tmp/fed14_snapshot_consumers.txt
+?? tmp/fed15_dashboard_consumers.txt
+?? tmp/fed15_floor_audit.txt
+?? tmp/fed16_dashboard_card.txt
+?? tmp/fed17_final_period_consumer.txt
+?? tmp/fed18_dashboard_page.txt
+?? tmp/fed19_floor_fix.txt
+?? tmp/fed20_build_validation.log
+?? tmp/fed21_kpi_filter_fix.txt
+?? tmp/federal_api.json
+?? tmp/federal_position_contract.txt
+?? tmp/federal_position_filter.txt
+?? tmp/fetchPrizesForDraw_auditoria.txt
+?? tmp/formato_payload_import.txt
+?? tmp/fsc01_unbounded_lottery_query.txt
+?? tmp/fsc02_read_consumers.txt
+?? tmp/fsc03_real_read_consumer.txt
+?? tmp/fsc04_final_read_origin.txt
+?? tmp/fsh01_firestore_hours_pt_rio_vs_look.mjs
+?? tmp/fsh01_firestore_hours_pt_rio_vs_look.txt
+?? tmp/fsh02_firestore_hours_range.mjs
+?? tmp/fsh02_firestore_hours_range.txt
+?? tmp/gcp01_readonly_audit.txt
+?? tmp/gcp02_isolated_configuration.txt
+?? tmp/gcp03_cost_protection.txt
+?? tmp/gcp04_alerts_and_apis.txt
+?? tmp/gcp05_cloud_run_inputs.txt
+?? tmp/gcp06_pt_rio_1920_confirmation.txt
+?? tmp/gcp07_backup/
+?? tmp/gcp07_patch.js
+?? tmp/gcp07_pt_rio_saturday_19h.txt
+?? tmp/gcp08_container_preparation.txt
+?? tmp/gcp08_heartbeat_dry_run.txt
+?? tmp/gcp09_build_context/
+?? tmp/gcp09_cloud_run_job.txt
+?? tmp/gcp09_cloudbuild.yaml
+?? tmp/gcp09_committed_backend.zip
+?? tmp/gcp10_exact_schedulers.txt
+?? tmp/gcp10a_new_head_validation.txt
+?? tmp/gcp10b_exact_schedulers.txt
+?? tmp/gcp10c2_scheduler_identity_rest.txt
+?? tmp/gcp10c3_scheduler_identity_diagnostic.txt
+?? tmp/gcp10c_scheduler_service_identity.txt
+?? tmp/gcp10d_schedulers_and_test.txt
+?? tmp/gcp10e_natural_scheduler_proof.txt
+?? tmp/gcp10f_natural_execution.txt
+?? tmp/gcp10g_controlled_scheduler_test.txt
+?? tmp/gcp10h_correct_controlled_validation.txt
+?? tmp/gcp10i_natural_execution_proof.txt
+?? tmp/gcp10j_auto-import.before.yml
+?? tmp/gcp10j_disable_github_schedule.txt
+?? tmp/git01_auditoria_pendencias.txt
+?? tmp/git02_inventario_arquivos_novos.txt
+?? tmp/github_runs_auto_import_21h.json
+?? tmp/github_runs_pt_rio_2026-07-13_21h.json
+?? tmp/hist01_history_version_diagnostic.txt
+?? tmp/importKingApostas.before-lkn03.js
+?? tmp/importKingApostas.before-lkn04.js
+?? tmp/importKingApostas.before-lkn164.js
+?? tmp/importKingApostas.before_lkn08.js
+?? tmp/importKingApostas.before_lkn11.js
+?? tmp/importKingApostas.before_lkn89.js
+?? tmp/importKingApostas.before_lkn91.js
+?? tmp/inspectLook16h.js
+?? tmp/inspect_backtest_return.js
+?? tmp/inspect_prizes_structure.js
+?? tmp/inspect_v4_snapshot.js
+?? tmp/krs01_getKingResultsByRange_audit.txt
+?? tmp/late01_codigo_completo.txt
+?? tmp/late01_console.txt
+?? tmp/late02_fluxo_exato.txt
+?? tmp/late03_caminho_ativo.txt
+?? tmp/late04_filter_confirmation.txt
+?? tmp/late05_kingResultsService.before.js
+?? tmp/late05b_kingResultsService.before.js
+?? tmp/late06_current_filter_audit.txt
+?? tmp/late07_production_deploy.txt
+?? tmp/late08_base_date_audit.txt
+?? tmp/late09_Late.before.jsx
+?? tmp/late09_reference_date_fix.txt
+?? tmp/late10_deploy_federal.txt
+?? tmp/lkn01_auditoria_look_nacional.txt
+?? tmp/lkn02_bloqueio_look_nacional.txt
+?? tmp/lkn05_importador_mapeado.txt
+?? tmp/lkn06_funcoes_reais.txt
+?? tmp/lkn07_fluxo_look_nacional.txt
+?? tmp/lkn08_patch_result.txt
+?? tmp/lkn09_import_look_2026-07-18.log
+?? tmp/lkn100_workflows.txt
+?? tmp/lkn101_deploy_infrastructure.txt
+?? tmp/lkn102_vercel_deploy.txt
+?? tmp/lkn103_vercel_inspect.txt
+?? tmp/lkn104_vercel_metadata.json
+?? tmp/lkn105_public_validation.txt
+?? tmp/lkn106_backend_production_audit.txt
+?? tmp/lkn107_nacional_producao.txt
+?? tmp/lkn108_pitaco_results_route.txt
+?? tmp/lkn109_support_look_nacional_api.txt
+?? tmp/lkn10_import_nacional_2026-07-18.log
+?? tmp/lkn111_pitacoResults.before.js
+?? tmp/lkn111_result.txt
+?? tmp/lkn112_commit_push.txt
+?? tmp/lkn114_nacional_hours_validation.txt
+?? tmp/lkn115_origem_horarios_nacional.txt
+?? tmp/lkn116_nacional_raw.json
+?? tmp/lkn116_nacional_raw_summary.txt
+?? tmp/lkn117_trace_normalize_drawhour.txt
+?? tmp/lkn118_build_drawref_import_audit.txt
+?? tmp/lkn119_mapeamento_real_importadores.txt
+?? tmp/lkn120.js
+?? tmp/lkn120_firestore_draws_lookup.log
+?? tmp/lkn120b.js
+?? tmp/lkn120b_firestore_draws_lookup.log
+?? tmp/lkn123.js
+?? tmp/lkn123_firestore.log
+?? tmp/lkn124.js
+?? tmp/lkn124_firestore_sem_indice.log
+?? tmp/lkn125_import_flow.txt
+?? tmp/lkn126_normalize_functions.txt
+?? tmp/lkn127_git_history_normalization.txt
+?? tmp/lkn128_reimport_nacional.log
+?? tmp/lkn129_importadores_intervalo.txt
+?? tmp/lkn12_permanent_uuid_validation.log
+?? tmp/lkn130_importKingRange_audit.txt
+?? tmp/lkn131_statistics_mindate.txt
+?? tmp/lkn132_statistics_endpoint.txt
+?? tmp/lkn133_top3_history_metadata.txt
+?? tmp/lkn134_frontend_periodo.txt
+?? tmp/lkn135_datefrom_callers.txt
+?? tmp/lkn136_dashboard_endpoints.txt
+?? tmp/lkn137_api_bounds_audit.txt
+?? tmp/lkn138_applyBoundsFloor.txt
+?? tmp/lkn139_applyBoundsFloor_definition.txt
+?? tmp/lkn13_lotteries_structure.txt
+?? tmp/lkn140_api_bounds_endpoint.txt
+?? tmp/lkn140b_api_bounds_endpoint.txt
+?? tmp/lkn141_api_configuration.txt
+?? tmp/lkn142_automation_all_lotteries.txt
+?? tmp/lkn143_auto_import_yml.txt
+?? tmp/lkn144_autoimport_schedules.txt
+?? tmp/lkn145_look_nacional_hours_map.txt
+?? tmp/lkn147_validate_schedules.txt
+?? tmp/lkn149_validation_report.txt
+?? tmp/lkn14_patch.log
+?? tmp/lkn151_git_status.txt
+?? tmp/lkn154_workflow_remote_validation.txt
+?? tmp/lkn155_last_workflow_log.txt
+?? tmp/lkn15_final_validation.log
+?? tmp/lkn161_nacional_0149_normalization.txt
+?? tmp/lkn162_look_automation_2026-07-20.txt
+?? tmp/lkn163_actions_logs/
+?? tmp/lkn164_look_reimport/
+?? tmp/lkn164_validation.txt
+?? tmp/lkn16_git_audit.log
+?? tmp/lkn170_look_reconciliation.log
+?? tmp/lkn172_look_historical_gaps.log
+?? tmp/lkn173_reconcile_look_2026.log
+?? tmp/lkn179_results_hour_mapping.txt
+?? tmp/lkn182_deploy_configuration.txt
+?? tmp/lkn184_vercel_deploy_status.txt
+?? tmp/lkn185_nacional_draw_occurrences.txt
+?? tmp/lkn185_vercel_alias_comparison.txt
+?? tmp/lkn188_results_cards_pipeline.txt
+?? tmp/lkn18_post_push.log
+?? tmp/lkn18_post_push_validation.log
+?? tmp/lkn21_frontend_look_nacional_audit.txt
+?? tmp/lkn21_frontend_look_nacional_console.log
+?? tmp/lkn22_frontend_integration_console.log
+?? tmp/lkn22_frontend_integration_map.txt
+?? tmp/lkn23_1_final_implementation_cut.txt
+?? tmp/lkn23_2_remaining_integration_points.txt
+?? tmp/lkn23_exact_integration_points.txt
+?? tmp/lkn24_1_look_nacional_keys_hours.json
+?? tmp/lkn24_1_look_nacional_keys_hours.txt
+?? tmp/lkn24_backup/
+?? tmp/lkn24_baseline.txt
+?? tmp/lkn25_0_structural_patch.json
+?? tmp/lkn25_0_structural_patch.txt
+?? tmp/lkn25_1_selector_audit.txt
+?? tmp/lkn25_2_backup/
+?? tmp/lkn25_2_selectors_patch.json
+?? tmp/lkn25_2_selectors_patch.txt
+?? tmp/lkn25_3_results_hooks_audit.json
+?? tmp/lkn25_3_results_hooks_audit.txt
+?? tmp/lkn25_4_schedule_engine_audit.txt
+?? tmp/lkn25_backup/
+?? tmp/lkn26_1_build_errors_audit.txt
+?? tmp/lkn26_2_fix.log
+?? tmp/lkn26_3_build.log
+?? tmp/lkn26_build.log
+?? tmp/lkn27_results_final_audit.txt
+?? tmp/lkn28_results_structure.txt
+?? tmp/lkn29_results_backup/
+?? tmp/lkn29_results_build.log
+?? tmp/lkn29_results_patch.log
+?? tmp/lkn30_build.log
+?? tmp/lkn30_restore_isFederal.log
+?? tmp/lkn31_1_build.log
+?? tmp/lkn31_1_fix.log
+?? tmp/lkn32_2_predeploy_audit.txt
+?? tmp/lkn32_predeploy_audit.txt
+?? tmp/lkn34_frontend_hosting_audit.txt
+?? tmp/lkn34_production_index.html
+?? tmp/lkn34_render_index.html
+?? tmp/lkn35_vercel_audit.txt
+?? tmp/lkn37_vercel_failed_deploy.log
+?? tmp/lkn38_selectedLottery_context.txt
+?? tmp/lkn39_late_build.log
+?? tmp/lkn40_push_deploy.log
+?? tmp/lkn41_dashboard_top3_schedule_audit.txt
+?? tmp/lkn42_schedule_consumers.txt
+?? tmp/lkn43_schedule_refactor_blocks.txt
+?? tmp/lkn44_backup/
+?? tmp/lkn44_build.log
+?? tmp/lkn44_top3_schedule_validation.txt
+?? tmp/lkn44_top3_tests.log
+?? tmp/lkn45_top3_test_environment.txt
+?? tmp/lkn46_backup/
+?? tmp/lkn46_jest.log
+?? tmp/lkn48_schedule_flow.txt
+?? tmp/lkn49_git_status.txt
+?? tmp/lkn49_schedule_core_exact.txt
+?? tmp/lkn50_2_calendar_patch.log
+?? tmp/lkn50_backup/
+?? tmp/lkn50_rule_usage.txt
+?? tmp/lkn51_1_node_esm_environment.txt
+?? tmp/lkn51_import_audit.txt
+?? tmp/lkn52_jest_validation.txt
+?? tmp/lkn53_calendar_exact_source.txt
+?? tmp/lkn55_duplicate_function_scan.txt
+?? tmp/lkn56_calendar_validation.log
+?? tmp/lkn57_hour_format_diagnostic.txt
+?? tmp/lkn58_normalization_functions.txt
+?? tmp/lkn60_lottery_filters_audit.txt
+?? tmp/lkn61_dashboard_lotteries_audit.txt
+?? tmp/lkn62_look_nacional_schedules_audit.txt
+?? tmp/lkn63_dashboard_official_schedule_patch.txt
+?? tmp/lkn64_revert_lkn63.txt
+?? tmp/lkn65_filtersbar_git_status_audit.txt
+?? tmp/lkn67_filtersbar_audit.txt
+?? tmp/lkn68_schedule_source_audit.txt
+?? tmp/lkn69_FiltersBar_before.jsx
+?? tmp/lkn69_dashboard_lotteries_patch.txt
+?? tmp/lkn70_build_dashboard.log
+?? tmp/lkn71_update_browserslist.log
+?? tmp/lkn73_filtersbar_diff.log
+?? tmp/lkn74_dashboard_push.log
+?? tmp/lkn76_nacional_hour_mapping.txt
+?? tmp/lkn76_nacional_hour_mapping_console.log
+?? tmp/lkn77_nacional_importer_mapping.txt
+?? tmp/lkn77_nacional_importer_mapping_console.log
+?? tmp/lkn78_importKingApostas_closehour.txt
+?? tmp/lkn80_normalizeCloseHourForLottery.txt
+?? tmp/lkn81_fetchKingResults.txt
+?? tmp/lkn82_mergeAndDedupDraws.txt
+?? tmp/lkn83_raw_api_payload_nacional.cjs
+?? tmp/lkn83b_exports.cjs
+?? tmp/lkn83b_exports.txt
+?? tmp/lkn84_raw_api_payload_nacional.cjs
+?? tmp/lkn84_raw_api_payload_nacional.txt
+?? tmp/lkn84b_raw_api_nacional.cjs
+?? tmp/lkn84b_raw_api_nacional_console.txt
+?? tmp/lkn85_pre_patch_nacional.txt
+?? tmp/lkn86_preview_patch_nacional.txt
+?? tmp/lkn87_normalize_calls_audit.txt
+?? tmp/lkn88_patch_proposto.txt
+?? tmp/lkn90_anchor_exact_audit.txt
+?? tmp/lkn91_patch_result.txt
+?? tmp/lkn92_patch_applied_audit.txt
+?? tmp/lkn93_direct_call_audit.txt
+?? tmp/lkn94_normalization_test.js
+?? tmp/lkn94_normalization_test_result.txt
+?? tmp/lkn95_real_payload_result.txt
+?? tmp/lkn95_real_payload_test.js
+?? tmp/lkn96_final_diff_audit.txt
+?? tmp/lkn99_deploy_audit.txt
+?? tmp/look_2026-07-21_16h_firestore.txt
+?? tmp/look_21h_23h_07h_diagnostico.txt
+?? tmp/look_21h_23h_07h_prova_real.txt
+?? tmp/look_auto_01_21h_23h.txt
+?? tmp/look_auto_01_import_21h.log
+?? tmp/look_auto_02_container_top3_map.txt
+?? tmp/look_firebase_admin_backend.txt
+?? tmp/look_nacional_historico/
+?? tmp/look_top3_chamadas_validacao.txt
+?? tmp/look_top3_codigo_real.txt
+?? tmp/look_top3_contrato_resultados.txt
+?? tmp/look_top3_diagnostico.txt
+?? tmp/look_top3_formato_draws.txt
+?? tmp/look_top3_origem_g07_2026-07-21.txt
+?? tmp/look_top3_pos_deploy_7f30d86.txt
+?? tmp/look_top3_revalidacao_real.txt
+?? tmp/look_top3_test_runner.txt
+?? tmp/look_validacao_23h_07h.txt
+?? tmp/manual_import_federal_2026-07-19_1100.log
+?? tmp/manual_import_look_nacional_2026-07-19.log
+?? tmp/manual_import_nacional_2026-07-20_0200.log
+?? tmp/manual_import_pt_rio_1920.log
+?? tmp/manual_import_pt_rio_2026-07-18_1920.log
+?? tmp/nac01_nacional_2026-07-20_diagnostic.txt
+?? tmp/nac03_github_queue_audit.txt
+?? tmp/nac03_github_runs.json
+?? tmp/nac04_nacional_logs.txt
+?? tmp/nac05_job_nacional.txt
+?? tmp/nac06_results_vs_dashboard.txt
+?? tmp/nac07_importKingApostas.backup.js
+?? tmp/nac07_nacional_2026-07-20/
+?? tmp/nac09_top3_nacional_audit.txt
+?? tmp/nac10_top3_schedule_functions.txt
+?? tmp/nac11_top3_schedule_functions.txt
+?? tmp/nac12_computeStatisticalTop3V3.txt
+?? tmp/nac13_top3_schedule_origin.txt
+?? tmp/nac14_nacional_federal_fix_audit.txt
+?? tmp/nac15_nacional_schedule_audit.txt
+?? tmp/nac16_import_hour_mapping.txt
+?? tmp/nac17_statistics_engine.txt
+?? tmp/nac18_dashboard_draws_pipeline.txt
+?? tmp/nac19_hour_filter.txt
+?? tmp/nac20_mapDrawDoc.txt
+?? tmp/nac21_compare_draw_fields.txt
+?? tmp/nac22_firestore_compare.js
+?? tmp/nac22_firestore_compare.txt
+?? tmp/nac23_firebase_auth_audit.txt
+?? tmp/nac26_firestore_hours_audit.js
+?? tmp/nac26_firestore_hours_audit.txt
+?? tmp/nac27_hour_filter_trace.txt
+?? tmp/nac29_hour_options.txt
+?? tmp/nac30_filtersbar_nacional_hours.txt
+?? tmp/nac31_nacional_hour_mapping.txt
+?? tmp/nac32_drawsforview.txt
+?? tmp/nac33_get_draw_close_hour.txt
+?? tmp/nac34_dashboard_draw_mapping.txt
+?? tmp/nac35_dashboard_fluxo_completo.txt
+?? tmp/nac36_dashboard_fluxo_restante.txt
+?? tmp/nac37_useKingRanking_audit.txt
+?? tmp/nac38_getKingResultsByRange_audit.txt
+?? tmp/nac40_close_hour_values.txt
+?? tmp/nac43_1_firebase_admin_audit.txt
+?? tmp/nac44_predeploy_audit.txt
+?? tmp/nac46_localizar_correcao_funcional.txt
+?? tmp/nac47_dashboard_diff_publicacao.txt
+?? tmp/nac48_publicacao_nacional.log
+?? tmp/nac50_nacional_horario_todos.txt
+?? tmp/nac51_drawsForUi_trace.txt
+?? tmp/nac52_useKingRanking_audit.txt
+?? tmp/nac53_draw_source_audit.txt
+?? tmp/nac54_lottery_key_resolution.txt
+?? tmp/nacional_2026-07-20/
+?? tmp/nacional_2026_05_06.txt
+?? tmp/nacional_cleanup_legacy.txt
+?? tmp/nacional_cleanup_legacy_batched.txt
+?? tmp/nacional_firestore_2025-03-27.txt
+?? tmp/nacional_legacy_backup.json
+?? tmp/nacional_legacy_backup_2026-07-20T23-25-04-832Z.json
+?? tmp/nacional_restore_legacy.txt
+?? tmp/nacional_schedule_boundaries.txt
+?? tmp/nacional_schedule_transition.txt
+?? tmp/nacional_validation_after_cleanup.txt
+?? tmp/nat08_diagnostico_2026-07-22_08h.txt
+?? tmp/nat09_exibicao_nacional_08h.txt
+?? tmp/nat10_results_pipeline.txt
+?? tmp/nat11_results_auto_refresh.log
+?? tmp/patchTop3Premium.js
+?? tmp/patchTop3PremiumV2.js
+?? tmp/patch_top3_loterias_linha_unica.js
+?? tmp/patch_top3_premium_crlf.js
+?? tmp/patch_top3_premium_final.js
+?? tmp/patch_top3_remove_hero_visual.js
+?? tmp/perf01_page_opening_audit.txt
+?? tmp/perf02b_loading_audit.txt
+?? tmp/perf03c_app_completo.txt
+?? tmp/perf03d_exports_resolvecomponent.txt
+?? tmp/perf03g_lazy_loading_result.txt
+?? tmp/perf03h_app_imports.txt
+?? tmp/perf03i_lazy_loading_result.txt
+?? tmp/predictionService_integration.txt
+?? tmp/predictive_frequency_integrated.js
+?? tmp/predictive_frequency_integrated.json
+?? tmp/predictive_frequency_summary.json
+?? tmp/predictive_frequency_test.js
+?? tmp/predictive_frequency_test.json
+?? tmp/quality_baseline_top3/
+?? tmp/reconcile_falso_ok_contexto.txt
+?? tmp/report_experimental_frequency.js
+?? tmp/restore_nacional_legacy.js
+?? tmp/results_debug_hours.txt
+?? tmp/rkg01_mapeamento_pagina_ranking.txt
+?? tmp/schedule.js.txt
+?? tmp/scoreEngineV2_full_audit.txt
+?? tmp/scoreEngineV4Experimental.before-e07.js
+?? tmp/snapshot_consumption_map.txt
+?? tmp/statisticsEngine_consumidores.txt
+?? tmp/summarize_predictive_frequency.js
+?? tmp/top3.engine.before-lkn50_2.js
+?? tmp/top3.engine.before-tpp04-13.js
+?? tmp/top3.engine.before_lkn54.js
+?? tmp/top3.engine.before_lkn54_1.js
+?? tmp/top3.engine.before_lkn56.js
+?? tmp/top3.engine.before_lkn59.js
+?? tmp/top3.firestore_antes_auth_20260715_000009.js
+?? tmp/top3.hooks.before_lkn59.js
+?? tmp/top3.hooks_antes_diagnostico_save_20260715_114546.js
+?? tmp/top3.schedule-transition.before_lkn54_1.test.js
+?? tmp/top3.schedule-transition.before_lkn56.test.js
+?? tmp/top3.schedule-transition.before_lkn59.test.js
+?? tmp/top3_ablation_topn_audit.txt
+?? tmp/top3_backend_entrypoints.txt
+?? tmp/top3_backend_ponto_de_integracao.txt
+?? tmp/top3_backend_ranking_flow.txt
+?? tmp/top3_baseline_backtest_map.txt
+?? tmp/top3_bloqueio_real.txt
+?? tmp/top3_commit1_auditoria_precisa.txt
+?? tmp/top3_commit1_purificacao.json
+?? tmp/top3_commit1_validacao_final.txt
+?? tmp/top3_effects_build_20260715_234759.log
+?? tmp/top3_evidence_audit.txt
+?? tmp/top3_evidence_audit_focused.txt
+?? tmp/top3_extract_readiness.txt
+?? tmp/top3_firestore_persistencia.txt
+?? tmp/top3_fluxo_execucao.txt
+?? tmp/top3_historico_arquivos_completos.txt
+?? tmp/top3_history_bootstrap_commit.log
+?? tmp/top3_history_bootstrap_validation.json
+?? tmp/top3_history_reader_map.txt
+?? tmp/top3_history_update_hook.txt
+?? tmp/top3_hit_01_localizacao.txt
+?? tmp/top3_instrumentation/
+?? tmp/top3_integracao_milhares_backend.txt
+?? tmp/top3_last_draw_schedule_audit.txt
+?? tmp/top3_motor_backend_compatibilidade.txt
+?? tmp/top3_motor_backend_compatibilidade_pos_commit1.txt
+?? tmp/top3_motor_consumidores_reais.txt
+?? tmp/top3_node_smoke_pos_commit1.txt
+?? tmp/top3_official_backtest_full.json
+?? tmp/top3_official_backtest_full.txt
+?? tmp/top3_official_backtest_full_console.log
+?? tmp/top3_official_backtest_limit_100.json
+?? tmp/top3_official_backtest_limit_100.txt
+?? tmp/top3_official_backtest_limit_100_console.log
+?? tmp/top3_pre_v4_path_audit.py
+?? tmp/top3_premium_analysis/
+?? tmp/top3_premium_backup_crlf/
+?? tmp/top3_premium_backup_final/
+?? tmp/top3_premium_backup_v2/
+?? tmp/top3_premium_blocos_atuais.txt
+?? tmp/top3_premium_codigo_completo/
+?? tmp/top3_public_api_grafo_node.txt
+?? tmp/top3_raio_x_completo.zip
+?? tmp/top3_raio_x_completo/
+?? tmp/top3_rankingScored_origem.txt
+?? tmp/top3_runImport_contract.txt
+?? tmp/top3_seletor_loterias_mobile.txt
+?? tmp/top3_snapshot_infraestrutura_existente.txt
+?? tmp/top3_statistical_significance.json
+?? tmp/top3_statistical_significance.txt
+?? tmp/top3_statistical_significance_console.log
+?? tmp/top3_transition_19h_audit.txt
+?? tmp/top3_v4_structural_map.txt
+?? tmp/top3_validate_v3_injection.js
+?? tmp/top3_validate_v3_injection_real.js
+?? tmp/tpp01_03_backtest_active_modules_audit.txt
+?? tmp/tpp01_04_harness_console.log
+?? tmp/tpp01_04_harness_validation.json
+?? tmp/tpp01_04_harness_validation.txt
+?? tmp/tpp01_04b_console.log
+?? tmp/tpp01_04b_inspect_return.js
+?? tmp/tpp01_04b_raw_backtest_result.json
+?? tmp/tpp01_04b_repair_report.txt
+?? tmp/tpp01_04b_return_schema.txt
+?? tmp/tpp01_official_ablation_inventory.txt
+?? tmp/tpp01_v3_real_ablation_blueprint.txt
+?? tmp/tpp02_01_A01_console.log
+?? tmp/tpp02_01_A01_sem_frequency.json
+?? tmp/tpp02_01_A01_sem_frequency.txt
+?? tmp/tpp02_02_A02_console.log
+?? tmp/tpp02_02_A02_sem_context.json
+?? tmp/tpp02_02_A02_sem_context.txt
+?? tmp/tpp02_03_A00_500_console.log
+?? tmp/tpp02_03_A01_500_console.log
+?? tmp/tpp02_03_A02_500_console.log
+?? tmp/tpp02_03_resumo_500.txt
+?? tmp/tpp03_01_case_payload_mapping.js
+?? tmp/tpp03_01_case_payload_mapping.json
+?? tmp/tpp03_01_case_payload_mapping.txt
+?? tmp/tpp03_02_telemetry_mapping.js
+?? tmp/tpp03_02_telemetry_mapping.txt
+?? tmp/tpp03_03_telemetry_control_audit.py
+?? tmp/tpp03_03_telemetry_control_audit.txt
+?? tmp/tpp03_04_variant_execution_flow.txt
+?? tmp/tpp03_06_telemetry_runs/
+?? tmp/tpp03_06_telemetry_runs_console.log
+?? tmp/tpp03_07_case_by_case_comparison.json
+?? tmp/tpp03_07_case_by_case_comparison.txt
+?? tmp/tpp03_07_changed_cases.csv
+?? tmp/tpp03_07_compare_telemetry.js
+?? tmp/tpp03_07_console.log
+?? tmp/tpp03_08_ablation_runtime_path.py
+?? tmp/tpp03_08_ablation_runtime_path.txt
+?? tmp/tpp03_09_ablation_real_locations.py
+?? tmp/tpp03_09_ablation_real_locations.txt
+?? tmp/tpp04_01_camelo_weekday_divergence.py
+?? tmp/tpp04_01_camelo_weekday_divergence.txt
+?? tmp/tpp04_02_layer_first_origin.txt
+?? tmp/tpp04_02_weekday_card_origin.py
+?? tmp/tpp04_02_weekday_card_origin.txt
+?? tmp/tpp04_03_dow_firstcount_origin.py
+?? tmp/tpp04_03_dow_firstcount_origin.txt
+?? tmp/tpp04_04_layer_first_builder.txt
+?? tmp/tpp04_04b_layer_first_builder.py
+?? tmp/tpp04_04b_layer_first_builder.txt
+?? tmp/tpp04_05_critical_functions.txt
+?? tmp/tpp04_06_dashboard_counter_origin.txt
+?? tmp/tpp04_07_detailmap_keys.txt
+?? tmp/tpp04_08_meta_explain_details.txt
+?? tmp/tpp04_09_detailmap_origin.txt
+?? tmp/tpp04_12_dashboard_top3_weekday_source.txt
+?? tmp/tpp04_14_three_rankings_audit.txt
+?? tmp/tpp04_15_weekday_card_data_flow.txt
+?? tmp/tpp04_16_engine_transition_audit.txt
+?? tmp/tpp04_17_core_functions.txt
+?? tmp/tpp04_17b_core_functions_full.txt
+?? tmp/tpp04_18_schedule_definitions_audit.txt
+?? tmp/tpp04_19_getPtRioScheduleForYmd.txt
+?? tmp/tpp04_20_schedule_constants.txt
+?? tmp/tpp04_21_schedule_fix_report.txt
+?? tmp/tpp04_21_top3.engine.before.js
+?? tmp/tpp04_22_transition_validation.log
+?? tmp/tpp04_26_prediction_origin.txt
+?? tmp/tpp04_27_nextslot_hook_context.txt
+?? tmp/tpp04_29_hook_schedule_fix.txt
+?? tmp/tpp04_29_top3.hooks.before.js
+?? tmp/tpp04_31_hook_patch_report.txt
+?? tmp/tpp04_31_top3.hooks.before.js
+?? tmp/tpp04_32_history_schedule_audit.txt
+?? tmp/tpp04_33_schedule_origin_audit.txt
+?? tmp/tpp04_34_getScheduleForLottery.txt
+?? tmp/tpp04_origem_contagem_semana.txt
+?? tmp/tpp05_01_top3_lotteries_audit.txt
+?? tmp/tpp05_02_top3_tabs_component.txt
+?? tmp/tpp05_03_top3_visual_components.txt
+?? tmp/tpp05_04_lotoptions_origin.txt
+?? tmp/tpp05_05_baselots_musthave.txt
+?? tmp/tpp05_06_lottery_options_origin.txt
+?? tmp/tpp05_10_validate_lottery_options.log
+?? tmp/tpp05_11_top3_filters.txt
+?? tmp/tpp05_13_build.log
+?? tmp/tpp05_16_top3_api_calls.txt
+?? tmp/tpp05_17_load_and_loader.txt
+?? tmp/tpp_fd_01_federal_domingo_11h.txt
+?? tmp/tpp_fd_02_estado_federal_1907.txt
+?? tmp/tpp_fd_03_backup_20260721_144615/
+?? tmp/tpp_fd_03_build.log
+?? tmp/tpp_fd_03_patch.js
+?? tmp/tpp_fd_03b_build.log
+?? tmp/tpp_fd_03b_import_federal_1907.log
+?? tmp/tpp_fd_03d_import.log
+?? tmp/tpp_fd_03d_patch_canonical_id.js
+?? tmp/tpp_ln_01_top3_look_nacional.txt
+?? tmp/tpp_ln_02_diff_e_service.txt
+?? tmp/tpp_ln_03_backup_20260721_135908/
+?? tmp/tpp_ln_03_correcao.log
+?? tmp/tpp_ln_04_backup_20260721_141528/
+?? tmp/tpp_ln_04_correcao_publicacao.log
+?? tmp/v4_frequency_by_hour_report.json
+?? tmp/v4_frequency_by_hour_test.js
+?? tmp/v4_frequency_hour_weekday_report.json
+?? tmp/v4_frequency_hour_weekday_test.js
+?? tmp/v4_frequency_hour_windows_report.json
+?? tmp/v4_frequency_hour_windows_test.js
+?? tmp/v4_frequency_report.json
+?? tmp/v4_group_recency_by_hour_validation_report.json
+?? tmp/v4_group_recency_by_hour_validation_test.js
+?? tmp/v4_group_recency_report.json
+?? tmp/v4_group_recency_test.js
+?? tmp/v4_input_audit.js
+?? tmp/v4_input_audit.txt
+?? tmp/v4_predictive_telemetry_audit.json
+?? tmp/v4_prizes_report.json
+?? tmp/v4_real_input_snapshot.json
+?? tmp/v4_snapshot_report.json
+?? tmp/validate_nacional_after_cleanup.js
+?? tmp/validate_v4_wrapper.js
+?? trecho_return_api.txt
+51669e7 perf: implementar lazy loading nas p├íginas secund├írias
+
+
+
+==============================================================================================================
+2. PACKAGE.JSON
+==============================================================================================================
+{
+  "name": "palpitaco",
+  "version": "0.1.0",
+  "private": true,
+  "dependencies": {
+    "@tanstack/react-query": "^5.91.0",
+    "axios": "^1.13.2",
+    "crypto-js": "^4.2.0",
+    "firebase": "^12.7.0",
+    "jspdf": "^4.0.0",
+    "jspdf-autotable": "^5.0.7",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "react-router-dom": "^7.13.0",
+    "react-scripts": "5.0.1",
+    "react-tsparticles": "^2.12.2",
+    "recharts": "^3.0.2",
+    "web-vitals": "^5.0.3",
+    "xlsx": "^0.18.5"
+  },
+  "scripts": {
+    "backend:server": "node backend/server.js",
+    "stats:update": "node backend/workers/updateStatistics.js",
+    "dev": "react-scripts start",
+    "auto:pt_rio": "node backend/scripts/autoImportToday.js",
+    "build": "react-scripts build",
+    "eject": "react-scripts eject",
+    "test": "react-scripts test",
+    "start": "react-scripts start",
+    "auto:federal": "powershell -NoProfile -Command \"$env:LOTTERY='FEDERAL'; node backend/scripts/autoImportToday.js\"",
+    "vitenode:import": "powershell -ExecutionPolicy Bypass -File .\\tools\\run-vitenode.ps1 -Entry",
+    "build:vercel": "REACT_APP_BUILD_SHA=$VERCEL_GIT_COMMIT_SHA REACT_APP_BUILD_REF=$VERCEL_GIT_COMMIT_REF REACT_APP_BUILD_TIME=$VERCEL_BUILD_TIME react-scripts build"
+  },
+  "eslintConfig": {
+    "extends": [
+      "react-app",
+      "react-app/jest"
+    ]
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  },
+  "devDependencies": {
+    "firebase-admin": "^13.6.1",
+    "playwright": "^1.58.1"
+  }
+  
+}
+
+
+
+
+
+
+==============================================================================================================
+3. ESTRUTURA DE SRC/PAGES
+==============================================================================================================
+
+FullName
+--------
+C:\Users\glaub\palpitaco\src\pages\Account\account.avatar.service.js
+C:\Users\glaub\palpitaco\src\pages\Account\account.constants.js
+C:\Users\glaub\palpitaco\src\pages\Account\account.formatters.js
+C:\Users\glaub\palpitaco\src\pages\Account\account.guestStorage.js
+C:\Users\glaub\palpitaco\src\pages\Account\account.hooks.js
+C:\Users\glaub\palpitaco\src\pages\Account\Account.jsx
+C:\Users\glaub\palpitaco\src\pages\Account\account.profile.service.js
+C:\Users\glaub\palpitaco\src\pages\Account\account.session.js
+C:\Users\glaub\palpitaco\src\pages\Account\account.ui.js
+C:\Users\glaub\palpitaco\src\pages\Account\AccountView.jsx
+C:\Users\glaub\palpitaco\src\pages\Account\LoginVisual.jsx
+C:\Users\glaub\palpitaco\src\pages\Admin\Admin.css
+C:\Users\glaub\palpitaco\src\pages\Admin\Admin.jsx
+C:\Users\glaub\palpitaco\src\pages\Admin\adminKeys.js
+C:\Users\glaub\palpitaco\src\pages\Admin\AdminLogin.css
+C:\Users\glaub\palpitaco\src\pages\Admin\AdminLogin.jsx
+C:\Users\glaub\palpitaco\src\pages\Admin\modules\MilharEngine\engine.api.js
+C:\Users\glaub\palpitaco\src\pages\Admin\modules\MilharEngine\engine.info.js
+C:\Users\glaub\palpitaco\src\pages\Admin\modules\MilharEngine\MilharEnginePage.jsx
+C:\Users\glaub\palpitaco\src\pages\Centenas\centenas.css
+C:\Users\glaub\palpitaco\src\pages\Centenas\Centenas.jsx
+C:\Users\glaub\palpitaco\src\pages\Centenas\centenas.styles.js
+C:\Users\glaub\palpitaco\src\pages\Centenas\centenas.utils.js
+C:\Users\glaub\palpitaco\src\pages\Centenas\CentenasPage.jsx
+C:\Users\glaub\palpitaco\src\pages\Centenas\CentenasView.jsx
+C:\Users\glaub\palpitaco\src\pages\Centenas\index.js
+C:\Users\glaub\palpitaco\src\pages\Centenas\modules\milharProbabilityEngine.js
+C:\Users\glaub\palpitaco\src\pages\Centenas\modules\milharProbabilityEngineV3.js
+C:\Users\glaub\palpitaco\src\pages\Centenas\__tests__\milharProbabilityEngine.test.js
+C:\Users\glaub\palpitaco\src\pages\Centenas\__tests__\milharProbabilityEngineV3.test.js
+C:\Users\glaub\palpitaco\src\pages\Dashboard\dashboard.css
+C:\Users\glaub\palpitaco\src\pages\Dashboard\Dashboard.jsx
+C:\Users\glaub\palpitaco\src\pages\Dashboard\dashboard.snapshot.loader.js
+C:\Users\glaub\palpitaco\src\pages\Dashboard\components\ChartsGrid.jsx
+C:\Users\glaub\palpitaco\src\pages\Dashboard\components\DateRangeControl.jsx
+C:\Users\glaub\palpitaco\src\pages\Dashboard\components\FiltersBar.jsx
+C:\Users\glaub\palpitaco\src\pages\Dashboard\components\HeaderInfo.jsx
+C:\Users\glaub\palpitaco\src\pages\Dashboard\components\KpiCards.jsx
+C:\Users\glaub\palpitaco\src\pages\Dashboard\components\LeftRankingTable.jsx
+C:\Users\glaub\palpitaco\src\pages\Dashboard\components\SearchInput.jsx
+C:\Users\glaub\palpitaco\src\pages\Dashboard\components\SearchResultsTable.jsx
+C:\Users\glaub\palpitaco\src\pages\Dashboard\components\SearchSummary.jsx
+C:\Users\glaub\palpitaco\src\pages\Dashboard\components\Sidebar\AppShell.jsx
+C:\Users\glaub\palpitaco\src\pages\Dashboard\components\Sidebar\Icon.jsx
+C:\Users\glaub\palpitaco\src\pages\Dashboard\components\Sidebar\index.js
+C:\Users\glaub\palpitaco\src\pages\Dashboard\components\Sidebar\MiniLogo.jsx
+C:\Users\glaub\palpitaco\src\pages\Downloads\Downloads.jsx
+C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx
+C:\Users\glaub\palpitaco\src\pages\Payments\Payments.jsx
+C:\Users\glaub\palpitaco\src\pages\Results\Results.jsx
+C:\Users\glaub\palpitaco\src\pages\Search\Search.jsx
+C:\Users\glaub\palpitaco\src\pages\Top3\top3.chain.js
+C:\Users\glaub\palpitaco\src\pages\Top3\top3.constants.js
+C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js
+C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js
+C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.js
+C:\Users\glaub\palpitaco\src\pages\Top3\top3.firestore.js
+C:\Users\glaub\palpitaco\src\pages\Top3\top3.formatters.js
+C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js
+C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js.bak_transition19_20260718_205016
+C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js.bak_transition19_20260718_205053
+C:\Users\glaub\palpitaco\src\pages\Top3\top3.images.js
+C:\Users\glaub\palpitaco\src\pages\Top3\Top3.jsx
+C:\Users\glaub\palpitaco\src\pages\Top3\top3.public-api.js
+C:\Users\glaub\palpitaco\src\pages\Top3\top3.selectors.js
+C:\Users\glaub\palpitaco\src\pages\Top3\top3.storage.js
+C:\Users\glaub\palpitaco\src\pages\Top3\Top3View.jsx
+C:\Users\glaub\palpitaco\src\pages\Top3\Top3View.jsx.bak_history_from_timeline_20260326_131646
+C:\Users\glaub\palpitaco\src\pages\Top3\Top3View.premium.backup.jsx
+C:\Users\glaub\palpitaco\src\pages\Top3\modules\top3.analytics.js
+C:\Users\glaub\palpitaco\src\pages\Top3\modules\top3.loader.js
+C:\Users\glaub\palpitaco\src\pages\Top3\modules\top3.prediction.js
+C:\Users\glaub\palpitaco\src\pages\Top3\modules\top3.state.js
+C:\Users\glaub\palpitaco\src\pages\Top3\modules\top3.timeline.js
+C:\Users\glaub\palpitaco\src\pages\Top3\modules\top3.viewmodel.js
+C:\Users\glaub\palpitaco\src\pages\Top3\modules\scoreEngine\contextEvidence.js
+C:\Users\glaub\palpitaco\src\pages\Top3\modules\scoreEngine\evidenceEngine.js
+C:\Users\glaub\palpitaco\src\pages\Top3\modules\scoreEngine\frequencyEvidence.js
+C:\Users\glaub\palpitaco\src\pages\Top3\modules\scoreEngine\scoreConfig.js
+C:\Users\glaub\palpitaco\src\pages\Top3\modules\scoreEngine\scoreEngineV2.backup.js
+C:\Users\glaub\palpitaco\src\pages\Top3\modules\scoreEngine\scoreEngineV2.js
+C:\Users\glaub\palpitaco\src\pages\Top3\__tests__\top3.backtest.layers.test.js
+C:\Users\glaub\palpitaco\src\pages\Top3\__tests__\top3.backtest.test.js
+C:\Users\glaub\palpitaco\src\pages\Top3\__tests__\top3.public-api.node.test.js
+C:\Users\glaub\palpitaco\src\pages\Top3\__tests__\top3.schedule-calendar-rules.node.test.js
+C:\Users\glaub\palpitaco\src\pages\Top3\__tests__\top3.schedule-transition.test.js
+
+
+
+
+==============================================================================================================
+4. ARQUIVOS RELACIONADOS À PÁGINA SEARCH/BUSCA
+==============================================================================================================
+
+FullName
+--------
+C:\Users\glaub\palpitaco\src\pages\Dashboard\components\SearchInput.jsx
+C:\Users\glaub\palpitaco\src\pages\Dashboard\components\SearchResultsTable.jsx
+C:\Users\glaub\palpitaco\src\pages\Dashboard\components\SearchSummary.jsx
+C:\Users\glaub\palpitaco\src\pages\Search\Search.jsx
+
+
+
+
+==============================================================================================================
+ARQUIVO COMPLETO: C:\Users\glaub\palpitaco\src\pages\Dashboard\components\SearchInput.jsx
+==============================================================================================================
+// src/pages/Dashboard/components/SearchInput.jsx
+import React, { useMemo, useRef, useState, useCallback } from "react";
+
+function normalizeDigitsOnly(v) {
+  return String(v ?? "").replace(/\D+/g, "");
+}
+
+function buildSlots(digits) {
+  const d = String(digits || "").slice(0, 4);
+  const len = d.length;
+
+  // antes de 2 dígitos: só mostra “vazio” (bolinhas)
+  if (len < 2) return ["", "", "", ""];
+
+  const slots = ["", "", "", ""];
+
+  // 2 dígitos = dezena (últimos 2) => **DD
+  if (len === 2) {
+    slots[0] = "*";
+    slots[1] = "*";
+    slots[2] = d[0];
+    slots[3] = d[1];
+    return slots;
+  }
+
+  // 3 dígitos = centena (últimos 3) => *DDD
+  if (len === 3) {
+    slots[0] = "*";
+    slots[1] = d[0];
+    slots[2] = d[1];
+    slots[3] = d[2];
+    return slots;
+  }
+
+  // 4 dígitos = milhar => DDDD
+  slots[0] = d[0];
+  slots[1] = d[1];
+  slots[2] = d[2];
+  slots[3] = d[3];
+  return slots;
+}
+
+export default function SearchInput({
+  value,
+  onChange,
+  loading,
+  actions,
+  onSubmit, // Enter dispara Buscar
+  // ✅ novo: dados para “Ocorrências” e “Consulta”
+  totalMatches = 0,
+  queryInfo,
+}) {
+  const inputRef = useRef(null);
+  const [focused, setFocused] = useState(false);
+
+  const digits = useMemo(() => normalizeDigitsOnly(value).slice(0, 4), [value]);
+
+  const hint = useMemo(() => {
+    if (digits.length < 2)
+      return "Digite 2, 3 ou 4 dígitos (ex: 00 / 000 / 0000)";
+    if (digits.length === 2) return "Modo: Dezena (últimos 2 dígitos)";
+    if (digits.length === 3) return "Modo: Centena (últimos 3 dígitos)";
+    return "Modo: Milhar (4 dígitos)";
+  }, [digits]);
+
+  const slots = useMemo(() => buildSlots(digits), [digits]);
+
+  const canSubmit = useMemo(() => digits.length >= 2 && !loading, [digits, loading]);
+
+  const focusInput = useCallback(() => {
+    if (loading) return;
+    inputRef.current?.focus();
+  }, [loading]);
+
+  const trySubmit = useCallback(() => {
+    if (!onSubmit) return;
+    if (!canSubmit) return;
+    onSubmit();
+  }, [onSubmit, canSubmit]);
+
+  const consultaLabel = useMemo(() => {
+    const lbl = String(queryInfo?.label || "").trim();
+    return lbl ? lbl : "—";
+  }, [queryInfo]);
+
+  // ✅ box “ativo” coerente com DD / DDD / DDDD: sempre o último quando >=2 dígitos
+  const activeIndex = useMemo(() => {
+    if (!focused) return -1;
+    return digits.length >= 2 ? 3 : 0;
+  }, [focused, digits.length]);
+
+  return (
+    <div className="ppSearchInput">
+      <style>{`
+        .ppSearchInput{
+          border-radius:18px;
+          border:1px solid rgba(202,166,75,0.16);
+          background:rgba(0,0,0,0.35);
+          box-shadow:0 20px 60px rgba(0,0,0,0.35);
+          padding:12px;
+          display:flex;
+          flex-direction:column;
+          gap:10px;
+          min-height:120px;
+          min-width:0;
+        }
+
+        .ppSearchInput .ttl{
+          font-size:12px;
+          font-weight:900;
+          letter-spacing:0.4px;
+          text-transform:uppercase;
+          color:rgba(233,233,233,0.85);
+          text-align:center;
+        }
+
+        .ppInputTopRow{
+          display:flex;
+          align-items:center;
+          justify-content:space-between;
+          gap:12px;
+          width:100%;
+          min-width:0;
+        }
+
+        .ppInputCenter{
+          flex:1 1 auto;
+          min-width:0;
+          display:flex;
+          align-items:center;
+          justify-content:center;
+        }
+
+        .ppInputActionsIn{
+          flex:0 0 auto;
+          display:flex;
+          align-items:center;
+          justify-content:flex-end;
+          gap:10px;
+          padding-left:6px;
+          min-width:0;
+        }
+
+        .ppBoxesWrap{
+          position:relative;
+          display:flex;
+          align-items:center;
+          justify-content:center;
+          outline:none;
+          min-width:0;
+          cursor:pointer;
+        }
+
+        .ppBoxesWrap[aria-disabled="true"]{
+          cursor:not-allowed;
+          opacity:0.75;
+          filter:grayscale(0.12);
+        }
+
+        .ppHiddenInput{
+          position:absolute;
+          inset:0;
+          opacity:0;
+          width:100%;
+          height:100%;
+          border:none;
+          outline:none;
+          caret-color:transparent;
+        }
+
+        .ppBoxes{
+          display:flex;
+          gap:10px;
+          user-select:none;
+        }
+
+        .ppBox{
+          width:clamp(44px, 4.2vw, 54px);
+          height:clamp(44px, 4.2vw, 54px);
+          border-radius:14px;
+          display:flex;
+          align-items:center;
+          justify-content:center;
+          border:1px solid rgba(202,166,75,0.22);
+          background:rgba(0,0,0,0.55);
+          box-shadow:0 12px 34px rgba(0,0,0,0.30);
+          font-size:clamp(18px, 1.6vw, 20px);
+          font-weight:900;
+          color:#e9e9e9;
+          transition:all 0.12s ease;
+        }
+
+        .ppBox.muted{
+          color:rgba(233,233,233,0.38);
+        }
+
+        .ppBoxesWrap.isFocused .ppBox{
+          border-color:rgba(202,166,75,0.55);
+          background:rgba(0,0,0,0.65);
+        }
+
+        .ppBox.active{
+          transform:translateY(-1px);
+          border-color:rgba(202,166,75,0.85);
+          box-shadow:0 14px 40px rgba(0,0,0,0.38);
+        }
+
+        .ppSearchInput .hint{
+          font-size:11px;
+          color:rgba(233,233,233,0.70);
+          line-height:1.25;
+          text-align:center;
+        }
+
+        .ppSearchInput .hint b{
+          color:#caa64b;
+          font-weight:900;
+        }
+
+        .ppInputMiniKpis{
+          display:flex;
+          align-items:baseline;
+          justify-content:space-between;
+          gap:12px;
+          padding-top:2px;
+          min-width:0;
+        }
+        .ppMiniCol{
+          display:flex;
+          flex-direction:column;
+          gap:2px;
+          min-width:0;
+          flex:1 1 0;
+        }
+        .ppMiniT{
+          font-size:10px;
+          color:rgba(233,233,233,0.62);
+          text-transform:uppercase;
+          letter-spacing:0.6px;
+        }
+        .ppMiniV{
+          font-size:13px;
+          font-weight:900;
+          color:rgba(233,233,233,0.92);
+          white-space:nowrap;
+          overflow:hidden;
+          text-overflow:ellipsis;
+          max-width:100%;
+        }
+        .ppMiniV b{ color:#caa64b; }
+
+        @media (max-width: 900px){
+          .ppInputTopRow{
+            flex-direction:column;
+            align-items:stretch;
+          }
+          .ppInputActionsIn{
+            justify-content:center;
+            padding-left:0;
+          }
+          .ppInputMiniKpis{
+            flex-direction:column;
+            align-items:center;
+            text-align:center;
+          }
+          .ppMiniCol{
+            width:100%;
+            align-items:center;
+            text-align:center;
+          }
+        }
+      `}</style>
+
+      <div className="ttl">Digite a dezena / centena / milhar</div>
+
+      <div className="ppInputTopRow">
+        <div className="ppInputCenter">
+          <div
+            className={["ppBoxesWrap", focused ? "isFocused" : ""].join(" ")}
+            onClick={focusInput}
+            role="button"
+            // ✅ IMPORTANTE: não deixa o wrapper virar foco via TAB (senão digitar não entra)
+            tabIndex={-1}
+            aria-disabled={loading ? "true" : "false"}
+            aria-label="Digite a dezena, centena ou milhar"
+          >
+            <input
+              ref={inputRef}
+              className="ppHiddenInput"
+              value={digits}
+              onChange={(e) => {
+                const v = normalizeDigitsOnly(e.target.value || "").slice(0, 4);
+                if (typeof onChange === "function") onChange(v);
+              }}
+              inputMode="numeric"
+              pattern="[0-9]*"
+              autoComplete="off"
+              disabled={!!loading}
+              onFocus={() => setFocused(true)}
+              onBlur={() => setFocused(false)}
+              onKeyDown={(e) => {
+                if (e.key === "Enter") {
+                  e.preventDefault();
+                  trySubmit();
+                }
+              }}
+            />
+
+            <div className="ppBoxes">
+              {slots.map((ch, idx) => {
+                const isActive = activeIndex === idx;
+                const isMuted = ch === "";
+                const display = ch === "" ? "•" : ch;
+
+                return (
+                  <div
+                    key={idx}
+                    className={[
+                      "ppBox",
+                      isMuted ? "muted" : "",
+                      isActive ? "active" : "",
+                    ].join(" ")}
+                  >
+                    {display}
+                  </div>
+                );
+              })}
+            </div>
+          </div>
+        </div>
+
+        {actions ? <div className="ppInputActionsIn">{actions}</div> : null}
+      </div>
+
+      <div className="ppInputMiniKpis">
+        <div className="ppMiniCol">
+          <div className="ppMiniT">Ocorrências</div>
+          <div className="ppMiniV">
+            <b>{Number(totalMatches || 0)}</b>
+          </div>
+        </div>
+
+        <div className="ppMiniCol" style={{ textAlign: "right", alignItems: "flex-end" }}>
+          <div className="ppMiniT">Consulta</div>
+          <div className="ppMiniV" title={consultaLabel}>
+            <b>{consultaLabel}</b>
+          </div>
+        </div>
+      </div>
+
+      <div className="hint">
+        {hint} {loading ? <b> · buscando...</b> : null}
+      </div>
+    </div>
+  );
+}
+
+
+
+==============================================================================================================
+ARQUIVO COMPLETO: C:\Users\glaub\palpitaco\src\pages\Dashboard\components\SearchResultsTable.jsx
+==============================================================================================================
+// src/pages/Dashboard/components/SearchResultsTable.jsx
+import React, { useMemo, useState, useCallback, useEffect } from "react";
+import {
+  getImgFromGrupo as getImgFromGrupoFn,
+  getAnimalLabel as getAnimalLabelFn,
+} from "../../../constants/bichoMap";
+
+function pad2(n) {
+  return String(n).padStart(2, "0");
+}
+
+function ymdToBR(ymd) {
+  const m = String(ymd || "")
+    .trim()
+    .match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!m) return "";
+  return `${m[3]}/${m[2]}/${m[1]}`;
+}
+
+function safeStr(v) {
+  return String(v ?? "").trim();
+}
+
+function isYMD(s) {
+  return /^\d{4}-\d{2}-\d{2}$/.test(String(s || "").trim());
+}
+
+/* =========================
+   Hora: padronizar para bucket "09h", "11h"...
+========================= */
+function hourBucketFromAny(value) {
+  const s0 = safeStr(value);
+  if (!s0) return "";
+
+  const s = s0.replace(/\s+/g, "");
+
+  // "11h", "11hs", "11hr"...
+  const mh = s.match(/^(\d{1,2})(?:h|hs|hr|hrs)$/i);
+  if (mh) return `${pad2(mh[1])}h`;
+
+  // "11:10" ou "11:00" ou "11:10:00"
+  const mISO = s.match(/^(\d{1,2}):(\d{2})(?::(\d{2}))?$/);
+  if (mISO) return `${pad2(mISO[1])}h`;
+
+  // "11"
+  const m2 = s.match(/^(\d{1,2})$/);
+  if (m2) return `${pad2(m2[1])}h`;
+
+  return s0; // fallback (não deveria)
+}
+
+/**
+ * ✅ Base URL para assets do public/
+ * - CRA: process.env.PUBLIC_URL
+ * - fallback: "" (raiz)
+ */
+function publicBase() {
+  const b = String(process.env.PUBLIC_URL || "").trim();
+  return b && b !== "/" ? b : "";
+}
+
+/**
+ * ✅ Normaliza caminhos de imagem para o React (public/)
+ */
+function normalizeImgSrc(src) {
+  const s = safeStr(src);
+  if (!s) return "";
+
+  if (/^https?:\/\//i.test(s)) return s;
+
+  const base = publicBase();
+
+  if (s.startsWith("/")) return `${base}${s}`;
+
+  if (s.startsWith("public/")) return `${base}/${s.slice("public/".length)}`;
+  if (s.startsWith("img/")) return `${base}/${s}`;
+
+  return `${base}/${s}`;
+}
+
+function swapSizeInPath(path, fromSize, toSize) {
+  // troca "_96." por "_128." etc
+  return path.replace(new RegExp(`_${fromSize}(?=\\.)`, "g"), `_${toSize}`);
+}
+
+function ensureSizeVariants(baseNoQuery) {
+  const out = [];
+
+  // se já tem _64/_96/_128 no nome, tenta os outros
+  const has64 = /_64\./.test(baseNoQuery);
+  const has96 = /_96\./.test(baseNoQuery);
+  const has128 = /_128\./.test(baseNoQuery);
+
+  if (has96) {
+    out.push(swapSizeInPath(baseNoQuery, 96, 128));
+    out.push(swapSizeInPath(baseNoQuery, 96, 64));
+  }
+  if (has128) {
+    out.push(swapSizeInPath(baseNoQuery, 128, 96));
+    out.push(swapSizeInPath(baseNoQuery, 128, 64));
+  }
+  if (has64) {
+    out.push(swapSizeInPath(baseNoQuery, 64, 96));
+    out.push(swapSizeInPath(baseNoQuery, 64, 128));
+  }
+
+  // se NÃO tiver size no nome, tenta inserir antes da extensão
+  if (!has64 && !has96 && !has128) {
+    const m = baseNoQuery.match(/^(.*)\.(png|PNG|jpg|jpeg)$/);
+    if (m) {
+      const stem = m[1];
+      const ext = m[2];
+      out.push(`${stem}_96.${ext}`);
+      out.push(`${stem}_128.${ext}`);
+      out.push(`${stem}_64.${ext}`);
+    }
+  }
+
+  return out;
+}
+
+function makeImgVariants(src) {
+  const current = normalizeImgSrc(src);
+  if (!current) return [];
+
+  const baseNoQuery = current.split("?")[0];
+  const out = [];
+
+  // principal
+  out.push(baseNoQuery);
+
+  // variações de size (muito comum o erro ser pedir _96 e existir _128)
+  out.push(...ensureSizeVariants(baseNoQuery));
+
+  // alterna case/extensão
+  if (baseNoQuery.match(/\.png$/)) out.push(baseNoQuery.replace(/\.png$/, ".PNG"));
+  if (baseNoQuery.match(/\.PNG$/)) out.push(baseNoQuery.replace(/\.PNG$/, ".png"));
+
+  // tenta jpg/jpeg
+  out.push(baseNoQuery.replace(/\.(png|PNG)$/i, ".jpg"));
+  out.push(baseNoQuery.replace(/\.(png|PNG|jpg)$/i, ".jpeg"));
+
+  // também troca extensão nas variantes de size (caso stem exista só em jpg etc)
+  const extra = [];
+  for (const p of out) {
+    extra.push(p.replace(/\.(png|PNG)$/i, ".jpg"));
+    extra.push(p.replace(/\.(png|PNG|jpg)$/i, ".jpeg"));
+    if (p.match(/\.png$/)) extra.push(p.replace(/\.png$/, ".PNG"));
+    if (p.match(/\.PNG$/)) extra.push(p.replace(/\.PNG$/, ".png"));
+  }
+
+  return Array.from(new Set([...out, ...extra].filter(Boolean)));
+}
+
+function RowImg({ variants, alt, fallbackText }) {
+  const [failed, setFailed] = useState(false);
+
+  const primary = variants?.[0] || "";
+
+  // ✅ quando variants muda (nova linha/grupo), reseta o fallback
+  useEffect(() => {
+    setFailed(false);
+  }, [primary]); // muda o "principal" => reseta
+
+  if (!Array.isArray(variants) || !variants.length || failed) {
+    return <div className="imgFallback">{fallbackText || "—"}</div>;
+  }
+
+  return (
+    <img
+      key={variants[0]} // ✅ força reset do <img> ao trocar a imagem base
+      src={variants[0]}
+      alt={alt}
+      loading="lazy"
+      data-try="0"
+      onError={(e) => {
+        const imgEl = e.currentTarget;
+        const i = Number(imgEl.dataset.try || "0");
+        const next = variants[i + 1];
+
+        if (next) {
+          imgEl.dataset.try = String(i + 1);
+          imgEl.src = next;
+        } else {
+          setFailed(true);
+        }
+      }}
+    />
+  );
+}
+/* =========================
+   Normalização de row (compat)
+========================= */
+
+function pickGrupo(r) {
+  const g =
+    r?.grupo ??
+    r?.grupo2 ??
+    r?.group ??
+    r?.group2 ??
+    r?.animal_grupo ??
+    r?.animalGrupo ??
+    null;
+
+  const n = Number(String(g ?? "").replace(/^0+/, "") || "");
+  return Number.isFinite(n) ? n : null;
+}
+
+function pickPos(r) {
+  const p = r?.position ?? r?.pos ?? r?.posicao ?? r?.colocacao ?? null;
+  const n = Number(p);
+  return Number.isFinite(n) ? n : null;
+}
+
+function pickHour(r) {
+  return (
+    safeStr(r?.close_hour) ||
+    safeStr(r?.closeHour) ||
+    safeStr(r?.hour) ||
+    safeStr(r?.hora) ||
+    ""
+  );
+}
+
+function pickYmd(r) {
+  const y =
+    safeStr(r?.ymd) ||
+    safeStr(r?.dateYmd) ||
+    safeStr(r?.date) ||
+    safeStr(r?.data) ||
+    "";
+  return isYMD(y) ? y : "";
+}
+
+function pickMilhar4(r) {
+  const v =
+    r?.milhar4 ??
+    r?.milhar ??
+    r?.numero ??
+    r?.number ??
+    r?.num ??
+    r?.valor ??
+    r?.n ??
+    "";
+  const digits = safeStr(v).replace(/\D+/g, "");
+  if (!digits) return "";
+  const last4 = digits.slice(-4).padStart(4, "0");
+  return /^\d{4}$/.test(last4) ? last4 : "";
+}
+
+function resolveAnimalLabelCompat(fn, grupo) {
+  if (typeof fn !== "function") return "";
+  const g = Number(grupo);
+  if (!Number.isFinite(g)) return "";
+
+  try {
+    const a = fn({ grupo: g, animal: "" });
+    const s = safeStr(a);
+    if (s) return s;
+  } catch {}
+
+  try {
+    const b = fn(g);
+    const s = safeStr(b);
+    if (s) return s;
+  } catch {}
+
+  return "";
+}
+
+function resolveImgCompat(fn, grupo) {
+  if (typeof fn !== "function") return "";
+  const g = Number(grupo);
+  if (!Number.isFinite(g)) return "";
+
+  try {
+    const a = fn(g, 96);
+    const s = safeStr(a);
+    if (s) return s;
+  } catch {}
+
+  try {
+    const b = fn(g);
+    const s = safeStr(b);
+    if (s) return s;
+  } catch {}
+
+  return "";
+}
+
+export default function SearchResultsTable({
+  rows,
+  data,
+  matches,
+  getAnimalLabel,
+  getImgFromGrupo,
+}) {
+  const safeRows = useMemo(() => {
+    const src = Array.isArray(rows)
+      ? rows
+      : Array.isArray(data)
+      ? data
+      : Array.isArray(matches)
+      ? matches
+      : [];
+    return src;
+  }, [rows, data, matches]);
+
+  const resolveAnimalLabel = useCallback(
+    (grupo) => {
+      const fn = typeof getAnimalLabel === "function" ? getAnimalLabel : getAnimalLabelFn;
+      return resolveAnimalLabelCompat(fn, grupo);
+    },
+    [getAnimalLabel]
+  );
+
+  const resolveImg = useCallback(
+    (grupo) => {
+      const fn = typeof getImgFromGrupo === "function" ? getImgFromGrupo : getImgFromGrupoFn;
+      return resolveImgCompat(fn, grupo);
+    },
+    [getImgFromGrupo]
+  );
+
+  const normalized = useMemo(() => {
+    return safeRows.map((r, idx) => {
+      const grupo = pickGrupo(r);
+      const position = pickPos(r);
+      const ymd = pickYmd(r);
+      const close_hour_raw = pickHour(r);
+      const close_hour = hourBucketFromAny(close_hour_raw); // ✅ PADRÃO "09h"
+
+      const milhar4 = safeStr(r?.milhar4) || pickMilhar4(r);
+
+      return {
+        __idx: idx,
+        __raw: r,
+        ymd,
+        close_hour,
+        position,
+        grupo,
+        milhar4,
+      };
+    });
+  }, [safeRows]);
+
+  return (
+    <div className="ppSearchTableWrap">
+      <style>{`
+        .ppSearchTableWrap{
+          border-radius:18px;
+          border:1px solid rgba(202,166,75,0.16);
+          background:rgba(0,0,0,0.35);
+          box-shadow:0 20px 60px rgba(0,0,0,0.35);
+          overflow:hidden;
+          flex:1 1 auto;
+          min-height:0;
+          min-width:0;
+          display:flex;
+          flex-direction:column;
+        }
+
+        .ppSearchTableHead{
+          padding:10px 12px;
+          border-bottom:1px solid rgba(255,255,255,0.06);
+          font-size:10px;
+          color:rgba(233,233,233,0.68);
+          text-transform:uppercase;
+          letter-spacing:0.6px;
+          display:flex;
+          justify-content:space-between;
+          align-items:center;
+          flex:0 0 auto;
+          min-width:0;
+        }
+
+        .ppSearchTableBody{
+          overflow:auto;
+          min-height:0;
+          padding:10px 10px 12px;
+          flex:1 1 auto;
+          min-width:0;
+        }
+
+        .ppTable{
+          width:100%;
+          display:flex;
+          justify-content:center;
+          min-width:0;
+        }
+
+        /* ✅ CRÍTICO: aqui está o fix do "corte"
+           - container permite scroll horizontal quando a largura não couber
+           - tabela tem min-width (não encolhe até cortar colunas)
+        */
+        .ppTableInner{
+          width: 100%;
+          max-width: 980px;      /* ✅ cresce quando tem espaço */
+          min-width: 0;
+          border-radius:14px;
+          overflow:auto;          /* ✅ scroll horizontal/vertical interno do "inner" */
+          border:1px solid rgba(255,255,255,0.06);
+          background:rgba(0,0,0,0.18);
+        }
+
+        table{
+          width:100%;
+          min-width:820px;       /* ✅ mantém layout original como mínimo */
+          border-collapse:collapse;
+          table-layout:fixed;
+        }
+
+        thead th{
+          position:sticky; top:0; z-index:2;
+          background:rgba(0,0,0,0.76);
+          backdrop-filter:blur(8px);
+          border-bottom:1px solid rgba(255,255,255,0.08);
+          padding:8px 8px;
+          font-size:10px;
+          color:rgba(233,233,233,0.72);
+          text-transform:uppercase;
+          letter-spacing:0.6px;
+          white-space:nowrap;
+          text-align:center;
+        }
+
+        tbody td{
+          padding:7px 8px;
+          border-bottom:1px solid rgba(255,255,255,0.06);
+          font-size:12px;
+          color:rgba(233,233,233,0.92);
+          white-space:nowrap;
+          overflow:hidden;
+          text-overflow:ellipsis;
+          text-align:center;
+        }
+
+        tbody tr:hover td{ background:rgba(202,166,75,0.06); }
+
+        .num{
+          font-weight:900;
+          letter-spacing:0.6px;
+          font-variant-numeric: tabular-nums;
+        }
+        .gold{ color:#caa64b; font-weight:900; }
+
+        .imgCell{
+          display:flex;
+          align-items:center;
+          justify-content:center;
+        }
+        .imgFrame{
+          width:38px;
+          height:38px;
+          border-radius:10px;
+          border:1px solid rgba(202,166,75,0.48);
+          background:rgba(0,0,0,0.55);
+          box-shadow:0 10px 26px rgba(0,0,0,0.35);
+          overflow:hidden;
+          display:flex;
+          align-items:center;
+          justify-content:center;
+          flex: 0 0 auto;
+        }
+        .imgFrame img{
+          width:100%;
+          height:100%;
+          object-fit:cover;
+          display:block;
+        }
+        .imgFallback{
+          font-size:10px;
+          color:rgba(233,233,233,0.75);
+          font-weight:900;
+          letter-spacing:0.4px;
+        }
+
+        /* ✅ BICHO perto da imagem e com leitura melhor */
+        td.bicho{
+          text-align:left;
+          padding-left:10px;
+          font-weight:900;
+          letter-spacing:0.3px;
+        }
+      `}</style>
+
+      <div className="ppSearchTableHead">
+        <div>Resultados (aparições)</div>
+        <div>
+          Total: <span className="gold">{normalized.length}</span>
+        </div>
+      </div>
+
+      <div className="ppSearchTableBody">
+        <div className="ppTable">
+          <div className="ppTableInner">
+            <table>
+              <thead>
+                <tr>
+                  <th style={{ width: 110 }}>Data</th>
+                  <th style={{ width: 90 }}>Horário</th>
+                  <th style={{ width: 90 }}>Posição</th>
+                  <th style={{ width: 120 }}>Número</th>
+                  <th style={{ width: 140 }}>Grupo</th>
+                  <th style={{ width: 90 }}>Imagem</th>
+                  <th style={{ width: 180 }}>Bicho</th>
+                </tr>
+              </thead>
+
+              <tbody>
+                {normalized.map((r) => {
+                  const g = r.grupo;
+                  const hasGrupo = Number.isFinite(g) && g >= 1 && g <= 25;
+
+                  const animal = hasGrupo ? resolveAnimalLabel(g) : "";
+                  const img0raw = hasGrupo ? resolveImg(g) : "";
+                  const variants = hasGrupo ? makeImgVariants(img0raw) : [];
+
+                  const key = `${r.ymd || "x"}-${r.close_hour || "h"}-${r.position ?? "p"}-${r.milhar4 || "n"}-${r.__idx}`;
+
+                  return (
+                    <tr key={key}>
+                      <td>{r.ymd ? ymdToBR(r.ymd) : "—"}</td>
+                      <td>{r.close_hour || "—"}</td>
+                      <td>{r.position ? `${r.position}º` : "—"}</td>
+                      <td className="num">{r.milhar4 || "—"}</td>
+                      <td className="gold">{hasGrupo ? `GRUPO ${pad2(g)}` : "—"}</td>
+
+                      <td className="imgCell">
+                        <div
+                          className="imgFrame"
+                          title={
+                            variants[0]
+                              ? `src: ${variants[0]}`
+                              : hasGrupo
+                              ? `Grupo ${pad2(g)}`
+                              : ""
+                          }
+                        >
+                          <RowImg
+                            variants={variants}
+                            alt={animal || (hasGrupo ? `Grupo ${pad2(g)}` : "—")}
+                            fallbackText={hasGrupo ? `G${pad2(g)}` : "—"}
+                          />
+                        </div>
+                      </td>
+
+                      <td className="bicho" title={animal || ""}>
+                        {animal || "—"}
+                      </td>
+                    </tr>
+                  );
+                })}
+
+                {!normalized.length ? (
+                  <tr>
+                    <td
+                      colSpan={7}
+                      style={{
+                        padding: 14,
+                        textAlign: "center",
+                        color: "rgba(233,233,233,0.70)",
+                      }}
+                    >
+                      Nenhum resultado (digite 2, 3 ou 4 dígitos).
+                    </td>
+                  </tr>
+                ) : null}
+              </tbody>
+            </table>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+
+
+
+
+
+
+==============================================================================================================
+ARQUIVO COMPLETO: C:\Users\glaub\palpitaco\src\pages\Dashboard\components\SearchSummary.jsx
+==============================================================================================================
+// src/pages/Search/components/SearchSummary.jsx
+import React, { useMemo } from "react";
+
+function ymdToBR(ymd) {
+  const m = String(ymd || "").trim().match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (!m) return "";
+  return `${m[3]}/${m[2]}/${m[1]}`;
+}
+
+function safeInt(v) {
+  const n = Number(v);
+  if (!Number.isFinite(n)) return 0;
+  return Math.max(0, Math.trunc(n));
+}
+
+function fmtIntPT(v) {
+  const n = safeInt(v);
+  try {
+    return new Intl.NumberFormat("pt-BR", { maximumFractionDigits: 0 }).format(n);
+  } catch {
+    return String(n);
+  }
+}
+
+function safeStr(v) {
+  return String(v ?? "").trim();
+}
+
+export default function SearchSummary({ queryInfo, totalMatches, meta, filters }) {
+  const qLabel = useMemo(() => {
+    const s = safeStr(queryInfo?.label);
+    return s ? s : "—";
+  }, [queryInfo]);
+
+  const modeLabel = useMemo(() => {
+    if (queryInfo?.kind === "dezena") return "Dezena";
+    if (queryInfo?.kind === "centena") return "Centena";
+    if (queryInfo?.kind === "milhar") return "Milhar";
+    return "—";
+  }, [queryInfo]);
+
+  const period = useMemo(() => {
+    const from = filters?.from ? ymdToBR(filters.from) : "";
+    const to = filters?.to ? ymdToBR(filters.to) : "";
+    return from && to ? `${from} → ${to}` : "—";
+  }, [filters]);
+
+  const kpiMatches = useMemo(() => fmtIntPT(totalMatches), [totalMatches]);
+
+  const draws = useMemo(() => fmtIntPT(meta?.draws), [meta?.draws]);
+  const prizes = useMemo(() => fmtIntPT(meta?.prizes), [meta?.prizes]);
+
+  return (
+    <div className="ppSearchSummary">
+      <style>{`
+        .ppSearchSummary{
+          border-radius:18px;
+          border:1px solid rgba(202,166,75,0.16);
+          background:rgba(0,0,0,0.35);
+          box-shadow:0 20px 60px rgba(0,0,0,0.35);
+          padding:12px;
+          display:flex;
+          flex-direction:column;
+          gap:10px;
+          min-height:110px;
+          min-width:0;
+        }
+
+        .ppSearchSummary .kpi{
+          display:flex;
+          align-items:baseline;
+          justify-content:space-between;
+          gap:10px;
+          min-width:0;
+        }
+
+        .ppSearchSummary .kpi .big{
+          font-size:20px;
+          font-weight:900;
+          letter-spacing:0.3px;
+          font-variant-numeric: tabular-nums;
+          font-feature-settings: "tnum" 1, "lnum" 1;
+          line-height: 1.05;
+        }
+        .ppSearchSummary .kpi .big b{ color:#caa64b; }
+
+        .ppSearchSummary .kpi .lbl{
+          font-size:10px;
+          color:rgba(233,233,233,0.65);
+          text-transform:uppercase;
+          letter-spacing:0.6px;
+          margin-bottom: 3px;
+        }
+
+        .ppSearchSummary .grid{
+          display:grid;
+          grid-template-columns:1fr 1fr;
+          gap:8px 12px;
+          min-width:0;
+        }
+
+        .ppSearchSummary .it{
+          min-width:0;
+        }
+
+        .ppSearchSummary .it .t{
+          font-size:10px;
+          color:rgba(233,233,233,0.62);
+          text-transform:uppercase;
+          letter-spacing:0.6px;
+          margin-bottom:2px;
+        }
+
+        .ppSearchSummary .it .v{
+          font-size:12px;
+          font-weight:900;
+          color:rgba(233,233,233,0.90);
+          white-space:nowrap;
+          overflow:hidden;
+          text-overflow:ellipsis;
+          min-width:0;
+          font-variant-numeric: tabular-nums;
+          font-feature-settings: "tnum" 1, "lnum" 1;
+        }
+        .ppSearchSummary .it .v b{ color:#caa64b; }
+
+        /* ✅ Responsivo: vira 1 coluna para não cortar */
+        @media (max-width: 720px){
+          .ppSearchSummary .grid{
+            grid-template-columns: 1fr;
+          }
+        }
+      `}</style>
+
+      <div className="kpi">
+        <div style={{ minWidth: 0 }}>
+          <div className="lbl">Ocorrências</div>
+          <div className="big">
+            <b>{kpiMatches}</b>
+          </div>
+        </div>
+
+        <div style={{ textAlign: "right", minWidth: 0 }}>
+          <div className="lbl">Tipo</div>
+          <div className="big" style={{ fontSize: 14 }} title={modeLabel}>
+            {modeLabel}
+          </div>
+        </div>
+      </div>
+
+      <div className="grid">
+        <div className="it">
+          <div className="t">Consulta</div>
+          <div className="v" title={qLabel}>
+            <b>{qLabel}</b>
+          </div>
+        </div>
+
+        <div className="it">
+          <div className="t">Período</div>
+          <div className="v" title={period}>
+            {period}
+          </div>
+        </div>
+
+        <div className="it">
+          <div className="t">Draws</div>
+          <div className="v">{draws}</div>
+        </div>
+
+        <div className="it">
+          <div className="t">Prizes filtrados</div>
+          <div className="v">{prizes}</div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+
+
+
+
+==============================================================================================================
+ARQUIVO COMPLETO: C:\Users\glaub\palpitaco\src\pages\Search\Search.jsx
+==============================================================================================================
+// src/pages/Search/Search.jsx
+import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+import { getKingBoundsByUf, getKingResultsByRange } from "../../services/kingResultsService";
+import {
+  getAnimalLabel as getAnimalLabelFn,
+  getImgFromGrupo as getImgFromGrupoFn,
+} from "../../constants/bichoMap";
+import SearchResultsTable from "../Dashboard/components/SearchResultsTable";
+
+/**
+ * Search — Premium (SEM índice)
+ * - 2 dígitos => dezena (últimos 2)  ✅ preserva zero à esquerda
+ * - 3 dígitos => centena (últimos 3) ✅ preserva zero à esquerda
+ * - 4 dígitos => milhar (4)         ✅ preserva zero à esquerda
+ *
+ * ✅ REGRA GLOBAL DO PROJETO:
+ * - 7º prêmio = CENTENA (3 dígitos) e NÃO pode virar 4 dígitos.
+ * - Nenhum zero à esquerda pode ser ignorado.
+ *
+ * ✅ UI:
+ * - Mantém apenas 1 card, com 1 bloco: "OCORRÊNCIAS"
+ *
+ * ✅ PERF:
+ * - Busca em chunks maiores (60 dias) + concorrência limitada
+ * - Renderiza resultados de forma incremental
+ */
+
+function pad2(n) {
+  return String(n).padStart(2, "0");
+}
+
+function safeStr(v) {
+  return String(v ?? "").trim();
+}
+
+function isYMD(s) {
+  return /^\d{4}-\d{2}-\d{2}$/.test(String(s || "").trim());
+}
+
+/* =========================
+   Bounds helpers (robusto)
+========================= */
+
+function normalizeBoundsResponse(b) {
+  const minRaw = safeStr(b?.minYmd || b?.minDate || b?.min || "");
+  const maxRaw = safeStr(b?.maxYmd || b?.maxDate || b?.max || "");
+  const minYmd = isYMD(minRaw) ? minRaw : null;
+  const maxYmd = isYMD(maxRaw) ? maxRaw : null;
+  return { minYmd, maxYmd, source: safeStr(b?.source || "") };
+}
+
+function clampYmd(ymd, minYmd, maxYmd) {
+  const d = safeStr(ymd);
+  if (!isYMD(d)) return "";
+  let out = d;
+
+  const min = safeStr(minYmd);
+  const max = safeStr(maxYmd);
+
+  if (isYMD(min) && out < min) out = min;
+  if (isYMD(max) && out > max) out = max;
+
+  return out;
+}
+
+function normalizeDigitsOnly(v) {
+  return String(v ?? "").replace(/\D+/g, "");
+}
+
+/**
+ * ✅ Extrai os ÚLTIMOS N dígitos e preserva zero à esquerda.
+ * - Não converte para Number em nenhum momento.
+ */
+function extractLastNDigits(v, n) {
+  const digits = normalizeDigitsOnly(v);
+  if (!digits) return null;
+  const last = digits.slice(-n).padStart(n, "0");
+  const re = new RegExp(`^\\d{${n}}$`);
+  return re.test(last) ? last : null;
+}
+
+function normalizeHourLike(value) {
+  const s0 = String(value ?? "").trim();
+  if (!s0) return "";
+  const s = s0.replace(/\s+/g, "");
+
+  const mhx = s.match(/^(\d{1,2})(?:h|hs|hr|hrs)$/i);
+  if (mhx) return `${pad2(mhx[1])}:00`;
+
+  const mISO = s.match(/^(\d{1,2}):(\d{1,2})(?::(\d{1,2}))?$/);
+  if (mISO) return `${pad2(mISO[1])}:${pad2(mISO[2])}`;
+
+  const m2 = s.match(/^(\d{1,2})$/);
+  if (m2) return `${pad2(m2[1])}:00`;
+
+  return s0.trim();
+}
+
+// Bucket "09h", "11h"…
+function toHourBucket(value) {
+  const s = String(value ?? "").trim();
+  if (!s || s.toLowerCase() === "todos") return null;
+
+  const mh = s.match(/^(\d{1,2})h$/i);
+  if (mh) return `${pad2(mh[1])}h`;
+
+  const m1 = s.match(/^(\d{1,2}):(\d{2})$/);
+  if (m1) return `${pad2(m1[1])}h`;
+
+  const m2 = s.match(/^(\d{1,2})$/);
+  if (m2) return `${pad2(m2[1])}h`;
+
+  const m3 = s.match(/^(\d{1,2}):(\d{2}):(\d{2})$/);
+  if (m3) return `${pad2(m3[1])}h`;
+
+  return null;
+}
+
+// Dia da semana por UTC
+function dowFromYmdUTC(ymd) {
+  if (!isYMD(ymd)) return "";
+  const [y, m, d] = ymd.split("-").map((x) => Number(x));
+  const dt = new Date(Date.UTC(y, m - 1, d));
+  const dow = dt.getUTCDay();
+  const labels = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
+  return labels[dow] || "";
+}
+
+function monthLabelPTBR(ymd) {
+  if (!isYMD(ymd)) return "";
+  const mm = Number(ymd.slice(5, 7));
+  const labels = ["", "Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"];
+  return labels[mm] || "";
+}
+
+function normalizeYmdAny(v) {
+  const s = safeStr(v);
+  if (!s) return "";
+  if (isYMD(s)) return s;
+
+  const m = s.match(/^(\d{4}-\d{2}-\d{2})/);
+  if (m && isYMD(m[1])) return m[1];
+
+  const br = s.match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+  if (br) return `${br[3]}-${br[2]}-${br[1]}`;
+
+  return "";
+}
+
+function buildQueryInfo(rawQuery) {
+  const digits = normalizeDigitsOnly(rawQuery).slice(-4);
+  const len0 = digits.length;
+
+  if (len0 < 2) return { digits, len: len0, kind: "vazio" };
+  if (len0 === 2) return { digits, len: 2, kind: "dezena" };
+  if (len0 === 3) return { digits, len: 3, kind: "centena" };
+  return { digits, len: 4, kind: "milhar" };
+}
+
+/* =========================
+   Range helpers (chunk)
+========================= */
+
+function ymdToUtcDate(ymd) {
+  if (!isYMD(ymd)) return null;
+  const [y, m, d] = ymd.split("-").map((x) => Number(x));
+  const dt = new Date(Date.UTC(y, m - 1, d));
+  return Number.isNaN(dt.getTime()) ? null : dt;
+}
+
+function utcDateToYmd(dt) {
+  const y = dt.getUTCFullYear();
+  const m = pad2(dt.getUTCMonth() + 1);
+  const d = pad2(dt.getUTCDate());
+  return `${y}-${m}-${d}`;
+}
+
+function addDaysUtc(ymd, days) {
+  const dt = ymdToUtcDate(ymd);
+  if (!dt) return null;
+  dt.setUTCDate(dt.getUTCDate() + Number(days || 0));
+  return utcDateToYmd(dt);
+}
+
+function splitRangeYmd(from, to, chunkDays = 60) {
+  if (!isYMD(from) || !isYMD(to)) return [];
+  if (from > to) return [];
+
+  const out = [];
+  let cur = from;
+
+  while (cur <= to) {
+    const endCandidate = addDaysUtc(cur, chunkDays - 1);
+    const end = endCandidate && endCandidate < to ? endCandidate : to;
+    out.push({ from: cur, to: end });
+    const next = addDaysUtc(end, 1);
+    if (!next) break;
+    cur = next;
+  }
+  return out;
+}
+
+/* =========================
+   prizes fallback (compat)
+========================= */
+
+function pickFromMany(obj, keys) {
+  for (const k of keys) {
+    const v = obj?.[k];
+    if (v !== undefined && v !== null && String(v).trim() !== "") return v;
+  }
+  return null;
+}
+
+function pickFromArrayLike(arr, idx1based) {
+  if (!Array.isArray(arr)) return null;
+  const i = Number(idx1based) - 1;
+  if (i < 0 || i >= arr.length) return null;
+  return arr[i];
+}
+
+/**
+ * ✅ Extrai número do prêmio por POSIÇÃO respeitando regra global:
+ * - pos 7 => centena (3 dígitos)
+ * - demais => milhar (4 dígitos)
+ */
+function pickPrizeDigits(draw, pos) {
+  const i = Number(pos);
+  const wantLen = i === 7 ? 3 : 4;
+
+  const directKeys = [
+    `p${i}`,
+    `p_${i}`,
+    `premio${i}`,
+    `premio_${i}`,
+    `milhar${i}`,
+    `milhar_${i}`,
+    `numero${i}`,
+    `numero_${i}`,
+    `resultado${i}`,
+    `resultado_${i}`,
+    `res${i}`,
+    `res_${i}`,
+    i === 7 ? `centena3` : `milhar4`,
+  ];
+
+  const vDirect = pickFromMany(draw, directKeys);
+  const lDirect = extractLastNDigits(vDirect, wantLen);
+  if (lDirect) return lDirect;
+
+  const arrays = [draw?.p, draw?.ps, draw?.premios, draw?.resultados, draw?.numbers, draw?.numeros, draw?.milhares];
+  for (const a of arrays) {
+    const v = pickFromArrayLike(a, i);
+    const l = extractLastNDigits(v, wantLen);
+    if (l) return l;
+  }
+
+  const dicts = [draw?.premios, draw?.resultado, draw?.resultados, draw?.p];
+  for (const d of dicts) {
+    if (d && typeof d === "object" && !Array.isArray(d)) {
+      const v = d?.[String(i)] ?? d?.[i];
+      const l = extractLastNDigits(v, wantLen);
+      if (l) return l;
+    }
+  }
+
+  const payload = draw?.raw || draw?.data || draw?.payload || draw?.doc || draw?.original || null;
+
+  if (payload && typeof payload === "object") {
+    const v = pickFromMany(payload, directKeys);
+    const l = extractLastNDigits(v, wantLen);
+    if (l) return l;
+
+    const payloadArrays = [payload?.p, payload?.premios, payload?.resultados, payload?.numbers];
+    for (const a of payloadArrays) {
+      const vv = pickFromArrayLike(a, i);
+      const ll = extractLastNDigits(vv, wantLen);
+      if (ll) return ll;
+    }
+  }
+
+  return null;
+}
+
+function pickPrizeGrupo(draw, pos) {
+  const i = Number(pos);
+
+  const directKeys = [
+    `grupo${i}`,
+    `grupo_${i}`,
+    `grupo2${i}`,
+    `grupo2_${i}`,
+    `bicho${i}`,
+    `bicho_${i}`,
+    `animal_grupo${i}`,
+    `animal_grupo_${i}`,
+  ];
+
+  const vDirect = pickFromMany(draw, directKeys);
+  const nDirect = Number(vDirect);
+  if (Number.isFinite(nDirect)) return nDirect;
+
+  const arrays = [draw?.grupos, draw?.grupo, draw?.grupo2, draw?.bichos, draw?.animais];
+  for (const a of arrays) {
+    const v = pickFromArrayLike(a, i);
+    const n = Number(v);
+    if (Number.isFinite(n)) return n;
+  }
+
+  const dicts = [draw?.grupos, draw?.grupo, draw?.grupo2, draw?.bichos];
+  for (const d of dicts) {
+    if (d && typeof d === "object" && !Array.isArray(d)) {
+      const v = d?.[String(i)] ?? d?.[i];
+      const n = Number(v);
+      if (Number.isFinite(n)) return n;
+    }
+  }
+
+  const payload = draw?.raw || draw?.data || draw?.payload || draw?.doc || draw?.original || null;
+
+  if (payload && typeof payload === "object") {
+    const v = pickFromMany(payload, directKeys);
+    const n = Number(v);
+    if (Number.isFinite(n)) return n;
+
+    const payloadArrays = [payload?.grupos, payload?.grupo, payload?.grupo2, payload?.bichos];
+    for (const a of payloadArrays) {
+      const vv = pickFromArrayLike(a, i);
+      const nn = Number(vv);
+      if (Number.isFinite(nn)) return nn;
+    }
+  }
+
+  return null;
+}
+
+function pickPrizeFromDrawByPos(draw, pos) {
+  const i = Number(pos);
+  const digits = pickPrizeDigits(draw, i);
+  const grupo = pickPrizeGrupo(draw, i);
+
+  if (!digits && !Number.isFinite(Number(grupo))) return null;
+
+  return {
+    position: i,
+    grupo: Number.isFinite(Number(grupo)) ? Number(grupo) : null,
+    numero: digits,
+    milhar4: digits && digits.length === 4 ? digits : null,
+    centena3: digits && digits.length === 3 ? digits : null,
+    milhar: digits && digits.length === 4 ? digits : null,
+  };
+}
+
+function ensurePrizes(draw) {
+  const arr = Array.isArray(draw?.prizes) ? draw.prizes : [];
+  if (arr.length) return arr;
+
+  const out = [];
+  for (let pos = 1; pos <= 7; pos += 1) {
+    const p = pickPrizeFromDrawByPos(draw, pos);
+    if (p) out.push(p);
+  }
+  return out;
+}
+
+function normalizeDrawsResponse(res) {
+  if (Array.isArray(res)) return res;
+  const cand = res?.draws ?? res?.results ?? res?.data ?? res?.items ?? res?.docs ?? res?.rows ?? null;
+  return Array.isArray(cand) ? cand : [];
+}
+
+/* =========================
+   UI: input premium (overlay só nos slots)
+========================= */
+
+function buildSlots(digits) {
+  const d = String(digits || "").slice(0, 4);
+  const len = d.length;
+
+  if (len < 2) return ["", "", "", ""];
+
+  const slots = ["", "", "", ""];
+
+  if (len === 2) {
+    slots[0] = "*";
+    slots[1] = "*";
+    slots[2] = d[0];
+    slots[3] = d[1];
+    return slots;
+  }
+
+  if (len === 3) {
+    slots[0] = "*";
+    slots[1] = d[0];
+    slots[2] = d[1];
+    slots[3] = d[2];
+    return slots;
+  }
+
+  slots[0] = d[0];
+  slots[1] = d[1];
+  slots[2] = d[2];
+  slots[3] = d[3];
+  return slots;
+}
+
+function SearchDigitsInput({ value, onChange, loading, onBuscar, onLimpar, canSearch, showLimpar }) {
+  const digits = normalizeDigitsOnly(value).slice(0, 4);
+  const slots = useMemo(() => buildSlots(digits), [digits]);
+  const inputRef = useRef(null);
+
+  useEffect(() => {
+    inputRef.current?.focus();
+  }, []);
+
+  const handleKeyDown = useCallback(
+    (e) => {
+      const k = e.key;
+
+      // ✅ ENTER: buscar
+      if (k === "Enter") {
+        e.preventDefault();
+        e.stopPropagation();
+        if (!loading && canSearch) onBuscar?.();
+        return;
+      }
+
+      // ✅ ESC: limpar (atalho premium)
+      if (k === "Escape") {
+        e.preventDefault();
+        e.stopPropagation();
+        if (!loading && showLimpar) onLimpar?.();
+      }
+    },
+    [loading, canSearch, onBuscar, showLimpar, onLimpar]
+  );
+
+  return (
+    <div className="ppDigitsRoot" role="group" aria-label="Consulta de dezena/centena/milhar">
+      <div className="ppDigitsTitle">Digite a dezena / centena / milhar</div>
+
+      <div className="ppDigitsCapture" onMouseDown={() => inputRef.current?.focus()}>
+        <input
+          ref={inputRef}
+          className="ppDigitsOverlayInput"
+          inputMode="numeric"
+          autoComplete="off"
+          value={digits}
+          onChange={(e) => onChange(normalizeDigitsOnly(e.target.value).slice(0, 4))}
+          onKeyDown={handleKeyDown}
+          aria-label="Digite 2, 3 ou 4 dígitos"
+        />
+
+        <div className="ppDigitsSlots" aria-hidden="true">
+          {slots.map((ch, idx) => (
+            <div key={idx} className="ppDigitsSlot">
+              {ch ? <span className="ppDigitsChar">{ch}</span> : <span className="ppDigitsDot">•</span>}
+            </div>
+          ))}
+        </div>
+      </div>
+
+      <div className="ppDigitsHint">Digite 2, 3 ou 4 dígitos (ex: 00 / 000 / 0000)</div>
+
+      <div className="ppDigitsActions">
+        <button
+          type="button"
+          className="ppBtn ppBtnPrimary"
+          onClick={onBuscar}
+          disabled={!canSearch}
+          title={canSearch ? "Buscar" : "Digite 2, 3 ou 4 dígitos"}
+        >
+          {loading ? "Buscando..." : "Buscar"}
+        </button>
+
+        <button
+          type="button"
+          className="ppBtn"
+          onClick={onLimpar}
+          disabled={!showLimpar || loading}
+          title="Limpar busca"
+        >
+          Limpar
+        </button>
+      </div>
+    </div>
+  );
+}
+
+/* =========================
+   Pool (concorrência limitada)
+========================= */
+
+async function runPool(items, worker, concurrency = 3) {
+  const queue = [...items];
+  const runners = Array.from({ length: Math.max(1, concurrency) }, async () => {
+    while (queue.length) {
+      const it = queue.shift();
+      // eslint-disable-next-line no-await-in-loop
+      await worker(it);
+    }
+  });
+  await Promise.all(runners);
+}
+
+const SEARCH_LOTTERIES = Object.freeze([
+  Object.freeze({
+    value: "PT_RIO",
+    label: "Rio de Janeiro",
+    hours: Object.freeze([
+      "09:00",
+      "11:00",
+      "14:00",
+      "16:00",
+      "18:00",
+      "19:20",
+      "21:00",
+    ]),
+  }),
+  Object.freeze({
+    value: "FEDERAL",
+    label: "Federal",
+    hours: Object.freeze([
+      "11:00",
+      "19:00",
+      "20:00",
+    ]),
+  }),
+  Object.freeze({
+    value: "LOOK",
+    label: "LOOK",
+    hours: Object.freeze([
+      "07:00",
+      "09:00",
+      "11:00",
+      "14:00",
+      "16:00",
+      "18:00",
+      "21:00",
+      "23:00",
+    ]),
+  }),
+  Object.freeze({
+    value: "NACIONAL",
+    label: "Nacional",
+    hours: Object.freeze([
+      "02:00",
+      "08:00",
+      "10:00",
+      "12:00",
+      "15:00",
+      "17:00",
+      "21:00",
+      "23:00",
+    ]),
+  }),
+]);
+
+export default function Search() {
+  const [lotteryKey, setLotteryKey] = useState("PT_RIO");
+  const LOTTERY_KEY = lotteryKey;
+
+  const selectedLottery = useMemo(
+    () =>
+      SEARCH_LOTTERIES.find((lottery) => lottery.value === lotteryKey) ||
+      SEARCH_LOTTERIES[0],
+    [lotteryKey]
+  );
+
+  const lotteryHours = selectedLottery.hours;
+
+  const getAnimalLabel = useMemo(() => getAnimalLabelFn, []);
+  const getImgFromGrupo = useMemo(() => getImgFromGrupoFn, []);
+
+  const [bounds, setBounds] = useState({ minYmd: null, maxYmd: null, source: "" });
+  const boundsReady = !!(bounds?.minYmd && bounds?.maxYmd);
+
+  const [range, setRange] = useState({ from: "", to: "" });
+
+  const [mes, setMes] = useState("Todos");
+  const [diaMes, setDiaMes] = useState("Todos");
+  const [diaSemana, setDiaSemana] = useState("Todos");
+  const [horario, setHorario] = useState("Todos");
+  const [animal, setAnimal] = useState("Todos");
+  const [posicao, setPosicao] = useState("Todos");
+
+  const [queryDraft, setQueryDraft] = useState("");
+
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState("");
+  const [matches, setMatches] = useState([]);
+
+  const runIdRef = useRef(0);
+  const abortedRef = useRef(false);
+  const mountedRef = useRef(true);
+
+  useEffect(() => {
+    mountedRef.current = true;
+    return () => {
+      mountedRef.current = false;
+      abortedRef.current = true;
+      runIdRef.current += 1;
+    };
+  }, []);
+
+  // Bounds
+  useEffect(() => {
+    let alive = true;
+
+    (async () => {
+      setError("");
+      setBounds({ minYmd: null, maxYmd: null, source: "" });
+
+      try {
+        const b = await getKingBoundsByUf({ uf: LOTTERY_KEY });
+        if (!alive) return;
+
+        const nb = normalizeBoundsResponse(b);
+        const minYmd = nb.minYmd;
+        const maxYmd = nb.maxYmd;
+
+        setBounds({ minYmd, maxYmd, source: nb.source || "" });
+
+        if (minYmd && maxYmd) {
+          // mantém o range atual, mas clamp dentro do bounds
+          setRange((r) => ({
+            from: clampYmd(r?.from || minYmd, minYmd, maxYmd) || minYmd,
+            to: clampYmd(r?.to || maxYmd, minYmd, maxYmd) || maxYmd,
+          }));
+        } else {
+          setError(`Bounds não encontrados para "${LOTTERY_KEY}". Fonte: ${String(nb.source || "")}`);
+        }
+      } catch (e) {
+        if (!alive) return;
+        setError(String(e?.message || e));
+      }
+    })();
+
+    return () => {
+      alive = false;
+    };
+  }, [LOTTERY_KEY]);
+
+  const onLotteryChange = useCallback((nextLottery) => {
+    const validLottery = SEARCH_LOTTERIES.some(
+      (lottery) => lottery.value === nextLottery
+    );
+
+    if (!validLottery || nextLottery === lotteryKey) return;
+
+    abortedRef.current = true;
+    runIdRef.current += 1;
+
+    setLoading(false);
+    setError("");
+    setMatches([]);
+    setHorario("Todos");
+    setRange({ from: "", to: "" });
+    setLotteryKey(nextLottery);
+  }, [lotteryKey]);
+
+  const animalOptions = useMemo(() => {
+    const out = ["Todos"];
+    for (let g = 1; g <= 25; g += 1) out.push(getAnimalLabel(g) || `Grupo ${pad2(g)}`);
+    return out;
+  }, [getAnimalLabel]);
+
+  const selectedCloseHourBucket = useMemo(() => {
+    if (!horario || horario === "Todos") return null;
+    return toHourBucket(horario);
+  }, [horario]);
+
+  const selectedPositions = useMemo(() => {
+    if (!posicao || posicao === "Todos") return null;
+    const n = Number(String(posicao).replace(/\D+/g, ""));
+    if (Number.isFinite(n) && n >= 1 && n <= 7) return [n];
+    return null;
+  }, [posicao]);
+
+  const selectedGrupoFromAnimal = useMemo(() => {
+    if (!animal || animal === "Todos") return null;
+    for (let g = 1; g <= 25; g += 1) {
+      const lbl = getAnimalLabel(g) || "";
+      if (String(lbl).toUpperCase() === String(animal).toUpperCase()) return g;
+    }
+    return null;
+  }, [animal, getAnimalLabel]);
+
+  const safeRange = useMemo(() => {
+    const from = isYMD(range?.from) ? range.from : bounds?.minYmd || "";
+    const to = isYMD(range?.to) ? range.to : bounds?.maxYmd || "";
+    return { from, to };
+  }, [range, bounds]);
+
+  const runSearch = useCallback(async () => {
+    const runId = (runIdRef.current += 1);
+    abortedRef.current = false;
+
+    const safeOk = () => mountedRef.current && runIdRef.current === runId && !abortedRef.current;
+
+    const safeSet = (fn) => {
+      if (!safeOk()) return false;
+      fn();
+      return true;
+    };
+
+    safeSet(() => {
+      setLoading(true);
+      setError("");
+      setMatches([]);
+    });
+
+    try {
+      if (!boundsReady) {
+        safeSet(() => setError("Bounds ainda não carregaram."));
+        return;
+      }
+
+      const { from, to } = safeRange;
+      if (!isYMD(from) || !isYMD(to)) {
+        safeSet(() => setError("Intervalo inválido."));
+        return;
+      }
+
+      const qi = buildQueryInfo(queryDraft);
+      if (qi.len < 2) {
+        safeSet(() => setMatches([]));
+        return;
+      }
+
+      // ✅ chunk maior = menos chamadas
+      const chunks = splitRangeYmd(from, to, 60);
+      if (!chunks.length) {
+        safeSet(() => setError("Intervalo inválido (chunks vazios)."));
+        return;
+      }
+
+      const qDigits = String(qi.digits || "");
+      const qLen = qi.len;
+      const q4 = qLen === 4 ? qDigits.slice(0, 4).padStart(4, "0") : null;
+
+      let allHits = [];
+
+      const pushHitsIncremental = (newHits) => {
+        if (!newHits.length) return;
+        allHits = allHits.concat(newHits);
+        // atualiza incrementalmente sem travar a UI
+        safeSet(() => setMatches([...allHits]));
+      };
+
+      const worker = async (ch) => {
+        if (!safeOk()) return;
+
+        const res = await getKingResultsByRange({
+          uf: LOTTERY_KEY,
+          dateFrom: ch.from,
+          dateTo: ch.to,
+          closeHourBucket: null,
+          closeHour: selectedCloseHourBucket ? `${String(selectedCloseHourBucket).slice(0, 2)}:00` : null,
+          positions: selectedPositions || null,
+          mode: "detailed",
+        });
+
+        if (!safeOk()) return;
+
+        const drawsArr = normalizeDrawsResponse(res);
+        const chunkHits = [];
+
+        for (const d of drawsArr) {
+          const ymd = normalizeYmdAny(d?.ymd || d?.dateYmd || d?.date || d?.data || "");
+          if (!isYMD(ymd)) continue;
+
+          const closeRaw = normalizeHourLike(d?.close_hour || d?.closeHour || d?.hour || d?.hora || "");
+          const closeBucket = toHourBucket(closeRaw) || toHourBucket(d?.close_hour_bucket) || null;
+
+          // ✅ filtro por bucket (se selecionado)
+          if (selectedCloseHourBucket) {
+            const b = closeBucket || toHourBucket(closeRaw);
+            if (b !== selectedCloseHourBucket) continue;
+          }
+
+          const prizes = ensurePrizes(d);
+
+          for (const p of prizes) {
+            const grupo = Number(p?.grupo);
+            const position = Number(p?.position);
+
+            const wantLen = position === 7 ? 3 : 4;
+
+            const prizeDigits =
+              (wantLen === 3
+                ? extractLastNDigits(p?.centena3, 3) ||
+                  extractLastNDigits(p?.numero, 3) ||
+                  extractLastNDigits(p?.milhar, 3) ||
+                  extractLastNDigits(p?.milhar4, 3)
+                : extractLastNDigits(p?.milhar4, 4) ||
+                  extractLastNDigits(p?.milhar, 4) ||
+                  extractLastNDigits(p?.numero, 4) ||
+                  extractLastNDigits(p?.number, 4) ||
+                  extractLastNDigits(p?.num, 4) ||
+                  extractLastNDigits(p?.valor, 4) ||
+                  extractLastNDigits(p?.n, 4)) || null;
+
+            // filtros locais
+            if (mes && mes !== "Todos") {
+              if (monthLabelPTBR(ymd) !== mes) continue;
+            }
+            if (diaMes && diaMes !== "Todos") {
+              const dd = Number(ymd.slice(8, 10));
+              if (String(dd) !== String(diaMes)) continue;
+            }
+            if (diaSemana && diaSemana !== "Todos") {
+              if (dowFromYmdUTC(ymd) !== diaSemana) continue;
+            }
+            if (selectedGrupoFromAnimal != null) {
+              if (Number(grupo) !== Number(selectedGrupoFromAnimal)) continue;
+            }
+            if (Array.isArray(selectedPositions) && selectedPositions.length) {
+              if (!selectedPositions.includes(Number(position))) continue;
+            }
+
+            if (!prizeDigits) continue;
+
+            if (qLen === 2) {
+              if (prizeDigits.slice(-2) !== qDigits) continue;
+            } else if (qLen === 3) {
+              if (prizeDigits.length === 3) {
+                if (prizeDigits !== qDigits) continue;
+              } else {
+                if (prizeDigits.slice(-3) !== qDigits) continue;
+              }
+            } else {
+              if (prizeDigits.length !== 4) continue; // impede 7º
+              if (prizeDigits !== q4) continue;
+            }
+
+            // ✅ Hora exibida = bucket padrão (09h/11h/14h…)
+            const closeHourDisplay = closeBucket || toHourBucket(closeRaw) || closeRaw || "";
+
+            chunkHits.push({
+              ymd,
+              close_hour: closeHourDisplay, // <<<<<< padrão bucket
+              position: Number.isFinite(position) ? position : null,
+              grupo: Number.isFinite(grupo) ? grupo : null,
+              numero: prizeDigits,
+              milhar4: prizeDigits.length === 4 ? prizeDigits : null,
+              centena3: prizeDigits.length === 3 ? prizeDigits : null,
+              raw: p,
+              draw: d,
+            });
+          }
+        }
+
+        pushHitsIncremental(chunkHits);
+      };
+
+      // ✅ concorrência limitada (ajuste: 3 ou 4)
+      await runPool(chunks, worker, 3);
+
+      if (!safeOk()) return;
+
+      // ordena no final
+      const hourRank = (h) => {
+        const m = String(h || "").match(/^(\d{2})/);
+        return m ? Number(m[1]) : 99;
+      };
+
+      allHits.sort((a, b) => {
+        const ya = String(a.ymd || "");
+        const yb = String(b.ymd || "");
+        if (ya !== yb) return yb.localeCompare(ya);
+
+        const ha = hourRank(a.close_hour);
+        const hb = hourRank(b.close_hour);
+        if (ha !== hb) return hb - ha;
+
+        const pa = a.position ?? 99;
+        const pb = b.position ?? 99;
+        return pa - pb;
+      });
+
+      safeSet(() => setMatches([...allHits]));
+    } catch (e) {
+      safeSet(() => setError(String(e?.message || e)));
+    } finally {
+      if (!mountedRef.current) return;
+      if (runIdRef.current !== runId) return;
+      setLoading(false);
+    }
+  }, [
+    LOTTERY_KEY,
+    boundsReady,
+    safeRange,
+    selectedCloseHourBucket,
+    selectedPositions,
+    mes,
+    diaMes,
+    diaSemana,
+    selectedGrupoFromAnimal,
+    queryDraft,
+  ]);
+
+  const onClickLimpar = useCallback(() => {
+    abortedRef.current = true;
+    runIdRef.current += 1;
+
+    setLoading(false);
+    setError("");
+    setQueryDraft("");
+    setMatches([]);
+  }, []);
+
+  const canSearch = useMemo(() => boundsReady && !loading && buildQueryInfo(queryDraft).len >= 2, [
+    boundsReady,
+    loading,
+    queryDraft,
+  ]);
+
+  const showLimpar = useMemo(() => normalizeDigitsOnly(queryDraft).length > 0 || matches.length > 0, [
+    queryDraft,
+    matches.length,
+  ]);
+
+  return (
+    <div className="ppSearch">
+      <style>{`
+        .ppSearch{
+          width:100%;
+          height:calc(100vh - 24px);
+          padding:14px 14px 10px;
+          color:#e9e9e9;
+          display:flex;
+          flex-direction:column;
+          gap:12px;
+          overflow:hidden;
+          min-height:0;
+        }
+
+        .ppSearchPanel{
+          border-radius:18px;
+          border:1px solid rgba(202,166,75,0.16);
+          background:
+            radial-gradient(1000px 500px at 20% 0%, rgba(202,166,75,0.08), transparent 55%),
+            radial-gradient(900px 500px at 85% 20%, rgba(255,255,255,0.05), transparent 50%),
+            rgba(0,0,0,0.45);
+          box-shadow:0 20px 60px rgba(0,0,0,0.45);
+          overflow:hidden;
+          flex:1 1 auto;
+          min-height:0;
+          display:flex;
+          flex-direction:column;
+        }
+
+        .ppSearchControls{
+          display:flex;
+          flex-wrap:wrap;
+          align-items:center;
+          justify-content:center;
+          gap:10px;
+          padding:12px;
+          border-bottom:1px solid rgba(255,255,255,0.06);
+        }
+
+        .ppCtl{
+          display:inline-flex; align-items:center; gap:8px;
+          padding:6px 10px;
+          border-radius:999px;
+          background:rgba(0,0,0,0.55);
+          border:1px solid rgba(202,166,75,0.18);
+          box-shadow:0 10px 30px rgba(0,0,0,0.35);
+        }
+        .ppCtl label{ font-size:10px; color:rgba(233,233,233,0.62); }
+        .ppCtl select, .ppCtl input[type="date"]{
+          background:transparent; border:none; outline:none;
+          color:#e9e9e9; font-weight:900; font-size:12px;
+        }
+        .ppCtl select option{ background:#0b0b0b; color:#e9e9e9; }
+
+        .ppErr{
+          margin:0 12px 12px;
+          padding:9px 11px; border-radius:12px;
+          border:1px solid rgba(255,80,80,0.25);
+          background:rgba(255,80,80,0.08);
+          color:rgba(255,220,220,0.92);
+          white-space:pre-wrap;
+          font-size:12px;
+        }
+
+        .ppSearchBody{
+          padding:12px;
+          display:flex;
+          flex-direction:column;
+          gap:12px;
+          min-height:0;
+          flex:1 1 auto;
+          overflow:hidden;
+        }
+
+        .ppTopRow{
+          display:flex;
+          gap:12px;
+          flex-wrap:wrap;
+          align-items:stretch;
+        }
+
+        .ppLeftCard{
+          flex:1 1 680px;
+          min-width:360px;
+          border-radius:18px;
+          border:1px solid rgba(202,166,75,0.18);
+          background:linear-gradient(180deg, rgba(0,0,0,0.62), rgba(0,0,0,0.44));
+          box-shadow:0 18px 50px rgba(0,0,0,0.38);
+          overflow:hidden;
+        }
+
+        .ppLeftCardBody{
+          padding:14px;
+        }
+
+        .ppDigitsRoot{
+          display:flex;
+          flex-direction:column;
+          align-items:center;
+          gap:10px;
+          padding:10px 8px 6px;
+          border-radius:14px;
+          border:1px solid rgba(202,166,75,0.14);
+          background:rgba(0,0,0,0.35);
+          box-shadow:0 16px 40px rgba(0,0,0,0.35);
+          position:relative;
+        }
+
+        .ppDigitsTitle{
+          font-size:12px;
+          font-weight:950;
+          letter-spacing:0.8px;
+          text-transform:uppercase;
+          color:rgba(233,233,233,0.9);
+        }
+
+        .ppDigitsCapture{
+          position:relative;
+          display:flex;
+          align-items:center;
+          justify-content:center;
+        }
+
+        .ppDigitsOverlayInput{
+          position:absolute;
+          inset:0;
+          width:100%;
+          height:100%;
+          opacity:0;
+          border:none;
+          outline:none;
+          background:transparent;
+          color:transparent;
+          caret-color:transparent;
+          pointer-events:auto;
+        }
+
+        .ppDigitsSlots{
+          display:flex;
+          gap:10px;
+          align-items:center;
+          justify-content:center;
+          padding:2px 0;
+        }
+
+        .ppDigitsSlot{
+          width:46px;
+          height:46px;
+          border-radius:12px;
+          border:1px solid rgba(202,166,75,0.22);
+          background:rgba(0,0,0,0.55);
+          box-shadow:0 14px 34px rgba(0,0,0,0.32);
+          display:flex;
+          align-items:center;
+          justify-content:center;
+          user-select:none;
+        }
+
+        .ppDigitsDot{
+          opacity:0.35;
+          font-size:18px;
+          transform:translateY(-1px);
+        }
+
+        .ppDigitsChar{
+          font-size:18px;
+          font-weight:950;
+          letter-spacing:0.6px;
+        }
+
+        .ppDigitsHint{
+          font-size:12px;
+          opacity:0.65;
+        }
+
+        .ppDigitsActions{
+          position:relative;
+          z-index:5;
+          display:flex;
+          gap:10px;
+          justify-content:center;
+          padding-top:6px;
+        }
+
+        .ppOccRow{
+          margin-top:12px;
+          padding-top:12px;
+          border-top:1px solid rgba(255,255,255,0.06);
+          display:flex;
+          align-items:center;
+          justify-content:flex-start;
+          gap:10px;
+        }
+        .ppOccLabel{
+          font-size:10px;
+          letter-spacing:0.7px;
+          text-transform:uppercase;
+          color:rgba(233,233,233,0.62);
+          font-weight:900;
+        }
+        .ppOccValue{
+          font-size:18px;
+          font-weight:950;
+          color:#caa64b;
+          letter-spacing:0.2px;
+        }
+
+        .ppBtn{
+          cursor:pointer; border-radius:999px; padding:10px 14px;
+          font-weight:900; font-size:12px; letter-spacing:0.4px;
+          background:rgba(0,0,0,0.60); color:#e9e9e9;
+          border:1px solid rgba(202,166,75,0.30);
+          box-shadow:0 12px 34px rgba(0,0,0,0.35);
+          transition:transform 0.08s ease, border-color 0.12s ease, background 0.12s ease;
+          line-height:1;
+          white-space:nowrap;
+        }
+        .ppBtn:hover{ transform:translateY(-1px); border-color:rgba(202,166,75,0.55); background:rgba(0,0,0,0.72); }
+        .ppBtn:disabled{ opacity:0.55; cursor:not-allowed; transform:none; }
+
+        .ppBtnPrimary{
+          background:rgba(202,166,75,0.14);
+          border:1px solid rgba(202,166,75,0.50);
+        }
+        .ppBtnPrimary:hover{
+          background:rgba(202,166,75,0.20);
+          border-color:rgba(202,166,75,0.70);
+        }
+      `}</style>
+
+      <div className="ppSearchPanel">
+        <div className="ppSearchControls">
+          <div className="ppCtl">
+            <label>Loteria</label>
+            <select
+              value={lotteryKey}
+              onChange={(e) => onLotteryChange(String(e.target.value || "PT_RIO"))}
+              disabled={loading}
+            >
+              {SEARCH_LOTTERIES.map((lottery) => (
+                <option key={lottery.value} value={lottery.value}>
+                  {lottery.label}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="ppCtl">
+            <label>De</label>
+            <input
+              type="date"
+              value={safeRange.from}
+              min={bounds?.minYmd || undefined}
+              max={bounds?.maxYmd || undefined}
+              onChange={(e) => setRange((r) => ({ ...r, from: String(e.target.value || "") }))}
+            />
+          </div>
+
+          <div className="ppCtl">
+            <label>Até</label>
+            <input
+              type="date"
+              value={safeRange.to}
+              min={bounds?.minYmd || undefined}
+              max={bounds?.maxYmd || undefined}
+              onChange={(e) => setRange((r) => ({ ...r, to: String(e.target.value || "") }))}
+            />
+          </div>
+
+          <div className="ppCtl">
+            <label>Mês</label>
+            <select value={mes} onChange={(e) => setMes(String(e.target.value || "Todos"))}>
+              {["Todos", "Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"].map((x) => (
+                <option key={x} value={x}>
+                  {x}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="ppCtl">
+            <label>Dia</label>
+            <select value={diaMes} onChange={(e) => setDiaMes(String(e.target.value || "Todos"))}>
+              {["Todos", ...Array.from({ length: 31 }, (_, i) => String(i + 1))].map((x) => (
+                <option key={x} value={x}>
+                  {x}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="ppCtl">
+            <label>Semana</label>
+            <select value={diaSemana} onChange={(e) => setDiaSemana(String(e.target.value || "Todos"))}>
+              {["Todos", "Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"].map((x) => (
+                <option key={x} value={x}>
+                  {x}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="ppCtl">
+            <label>Horário</label>
+            <select value={horario} onChange={(e) => setHorario(String(e.target.value || "Todos"))}>
+              {["Todos", ...lotteryHours].map((x) => (
+                <option key={x} value={x}>
+                  {x}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="ppCtl">
+            <label>Animal</label>
+            <select value={animal} onChange={(e) => setAnimal(String(e.target.value || "Todos"))}>
+              {animalOptions.map((x) => (
+                <option key={x} value={x}>
+                  {x}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          <div className="ppCtl">
+            <label>Posição</label>
+            <select value={posicao} onChange={(e) => setPosicao(String(e.target.value || "Todos"))}>
+              {["Todos", "1º", "2º", "3º", "4º", "5º", "6º", "7º"].map((x) => (
+                <option key={x} value={x}>
+                  {x}
+                </option>
+              ))}
+            </select>
+          </div>
+        </div>
+
+        {error ? <div className="ppErr">{error}</div> : null}
+
+        <div className="ppSearchBody">
+          <div className="ppTopRow">
+            <div className="ppLeftCard">
+              <div className="ppLeftCardBody">
+                <SearchDigitsInput
+                  value={queryDraft}
+                  onChange={setQueryDraft}
+                  loading={loading}
+                  canSearch={canSearch}
+                  showLimpar={showLimpar}
+                  onBuscar={runSearch}
+                  onLimpar={onClickLimpar}
+                />
+
+                <div className="ppOccRow">
+                  <div className="ppOccLabel">Ocorrências</div>
+                  <div className="ppOccValue">{String(matches.length)}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <SearchResultsTable rows={matches} getAnimalLabel={getAnimalLabel} getImgFromGrupo={getImgFromGrupo} />
+        </div>
+      </div>
+    </div>
+  );
+}
+
+
+
+==============================================================================================================
+5. ARQUIVOS PROVÁVEIS DE ROTAS
+==============================================================================================================
+
+FullName
+--------
+C:\Users\glaub\palpitaco\src\App.jsx
+
+
+
+
+==============================================================================================================
+ARQUIVO COMPLETO DE ROTA: C:\Users\glaub\palpitaco\src\App.jsx
+==============================================================================================================
+import React, { lazy, Suspense, useEffect, useMemo, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
+
+import DashboardMod from "./pages/Dashboard/Dashboard";
+import AccountMod from "./pages/Account/Account";
+
+// ✅ Admin
+
+// ✅ Páginas placeholder
+
+// ✅ página de Centenas
+
+// ✅ AppShell
+import AppShellMod from "./pages/Dashboard/components/Sidebar/AppShell";
+
+// ✅ Firebase (Admin real / Auth real)
+import { auth, db } from "./services/firebase";
+import { onAuthStateChanged, signOut } from "firebase/auth";
+import { doc, getDoc } from "firebase/firestore";
+
+const Results = lazy(() => import("./pages/Results/Results"));
+const Top3 = lazy(() => import("./pages/Top3/Top3"));
+const Late = lazy(() => import("./pages/Late/Late"));
+const Search = lazy(() => import("./pages/Search/Search"));
+const Admin = lazy(() => import("./pages/Admin/Admin"));
+const AdminLogin = lazy(() => import("./pages/Admin/AdminLogin"));
+const Payments = lazy(() => import("./pages/Payments/Payments"));
+const Downloads = lazy(() => import("./pages/Downloads/Downloads"));
+const Centenas = lazy(() => import("./pages/Centenas/Centenas"));
+
+
+const STORAGE_KEY = "palpitaco_screen_v2";
+const ACCOUNT_SESSION_KEY = "pp_session_v1";
+const LS_GUEST_ACTIVE_KEY = "pp_guest_active_v1";
+
+// ✅ Persistência de filtros do Dashboard
+const DASH_FILTERS_KEY = "pp_dashboard_filters_v1";
+
+/* =========================
+   ✅ Build stamp (Vercel)
+========================= */
+const BUILD_SHA = String(process.env.REACT_APP_BUILD_SHA || "").trim();
+const BUILD_REF = String(process.env.REACT_APP_BUILD_REF || "").trim();
+const BUILD_TIME = String(process.env.REACT_APP_BUILD_TIME || "").trim();
+
+/* =========================
+   Admin (hash gate)
+========================= */
+const ADMIN_HASH = "#admin";
+
+const ROUTES = {
+  LOGIN: "login",
+  DASHBOARD: "dashboard",
+  ACCOUNT: "account",
+  RESULTS: "results",
+  TOP3: "top3",
+  LATE: "late",
+  SEARCH: "search",
+  PAYMENTS: "payments",
+  DOWNLOADS: "downloads",
+  CENTENAS: "centenas",
+};
+
+function safeReadLS(key) {
+  try {
+    return localStorage.getItem(key);
+  } catch {
+    return null;
+  }
+}
+
+function safeWriteLS(key, value) {
+  try {
+    localStorage.setItem(key, value);
+  } catch {}
+}
+
+function safeRemoveLS(key) {
+  try {
+    localStorage.removeItem(key);
+  } catch {}
+}
+
+function safeParseJson(raw) {
+  try {
+    return JSON.parse(raw);
+  } catch {
+    return null;
+  }
+}
+
+function normalizeRoute(saved) {
+  if (!saved) return null;
+  return Object.values(ROUTES).includes(saved) ? saved : null;
+}
+
+/**
+ * ✅ Resolve default/named de forma robusta
+ */
+function resolveComponent(mod, name) {
+  const c = mod?.default ?? mod;
+
+  const isProbablyReactComponent =
+    typeof c === "function" ||
+    (c && typeof c === "object" && String(c.$$typeof || "").includes("react."));
+
+  if (!isProbablyReactComponent) {
+    console.error(`[IMPORT INVALID] ${name} veio inválido:`, c, " | import raw:", mod);
+  }
+
+  return c;
+}
+
+/* =========================
+   Sessão (estrita)
+========================= */
+
+function normalizePlan(plan) {
+  const p = String(plan || "").trim().toUpperCase();
+  if (p === "VIP") return "VIP";
+  if (p === "PREMIUM") return "PREMIUM";
+  if (p === "FREE") return "FREE";
+  return "";
+}
+
+function loadSessionObj() {
+  const raw = safeReadLS(ACCOUNT_SESSION_KEY);
+  if (!raw) return null;
+
+  const s = String(raw || "").trim();
+  if (!s || !s.startsWith("{")) return null;
+
+  const obj = safeParseJson(s);
+  if (!obj || typeof obj !== "object") return null;
+
+  const type = String(obj.type || "").trim().toLowerCase();
+  const uid = String(obj.uid || "").trim();
+  const email = String(obj.email || "").trim().toLowerCase();
+  const ok = obj.ok === true;
+  const plan = normalizePlan(
+    obj.plan ??
+      obj.profile?.plan ??
+      obj.subscription?.plan ??
+      obj.account?.plan ??
+      obj.customClaims?.plan ??
+      obj.claims?.plan ??
+      obj.appData?.plan ??
+      obj.metadata?.plan
+  );
+
+  if (!ok) return null;
+
+  if (type === "guest") {
+    return {
+      ok: true,
+      type: "guest",
+      plan: plan || "FREE",
+      uid: "",
+      email: "",
+      raw: obj,
+    };
+  }
+
+  if (type === "user" && uid) {
+    return {
+      ok: true,
+      type: "user",
+      plan: plan || "PREMIUM",
+      uid,
+      email,
+      raw: obj,
+    };
+  }
+
+  if (uid || email) {
+    return {
+      ok: true,
+      type: "user",
+      plan: plan || "PREMIUM",
+      uid,
+      email,
+      raw: obj,
+    };
+  }
+
+  return null;
+}
+
+function getSessionKind(sess) {
+  const s = sess || loadSessionObj();
+  if (!s || s.ok !== true) return "anon";
+  return s.type === "guest" ? "guest" : s.type === "user" ? "user" : "anon";
+}
+
+function cleanupLegacyGuestFlagIfNeeded() {
+  const sess = loadSessionObj();
+  const guestFlag = safeReadLS(LS_GUEST_ACTIVE_KEY);
+
+  if (!guestFlag) return;
+
+  if (sess?.type === "guest") return;
+
+  safeRemoveLS(LS_GUEST_ACTIVE_KEY);
+}
+
+/* =========================
+   Dashboard filters (persist)
+========================= */
+
+function normalizeLoteriaInput(v) {
+  const raw = String(v ?? "").trim();
+  if (!raw) return "PT_RIO";
+
+  const key = raw
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  if (key === "federal" || key === "fed" || key === "br" || key === "brasil") {
+    return "FEDERAL";
+  }
+
+  if (key === "rj" || key === "rio" || key === "pt_rio" || key === "pt-rio") {
+    return "PT_RIO";
+  }
+
+  const out = key
+    .toUpperCase()
+    .replace(/[^A-Z0-9]+/g, "_")
+    .replace(/^_+|_+$/g, "");
+
+  return out || "PT_RIO";
+}
+
+function loteriaToLotteryKey(loteria) {
+  return normalizeLoteriaInput(loteria);
+}
+
+function getDefaultDashboardFilters() {
+  return {
+    loteria: "PT_RIO",
+    mes: "Todos",
+    diaMes: "Todos",
+    diaSemana: "Todos",
+    horario: "Todos",
+    animal: "Todos",
+    posicao: "Todos",
+  };
+}
+
+function loadDashboardFilters() {
+  const raw = safeReadLS(DASH_FILTERS_KEY);
+  if (!raw) return getDefaultDashboardFilters();
+
+  const obj = safeParseJson(raw);
+  if (!obj || typeof obj !== "object") return getDefaultDashboardFilters();
+
+  const base = getDefaultDashboardFilters();
+  const loteria = normalizeLoteriaInput(obj.loteria);
+
+  const horario =
+    loteria === "FEDERAL"
+      ? obj.horario === "Todos" || obj.horario === "19h" || obj.horario === "20h"
+        ? obj.horario
+        : "Todos"
+      : typeof obj.horario === "string"
+      ? obj.horario
+      : base.horario;
+
+  return {
+    loteria,
+    mes: typeof obj.mes === "string" ? obj.mes : base.mes,
+    diaMes: typeof obj.diaMes === "string" ? obj.diaMes : base.diaMes,
+    diaSemana: typeof obj.diaSemana === "string" ? obj.diaSemana : base.diaSemana,
+    horario,
+    animal: typeof obj.animal === "string" ? obj.animal : base.animal,
+    posicao: typeof obj.posicao === "string" ? obj.posicao : base.posicao,
+  };
+}
+
+/* =========================
+   Admin helpers
+========================= */
+
+function isAdminHashNow() {
+  try {
+    const h = String(window.location.hash || "").trim();
+    return h === ADMIN_HASH || h.startsWith(`${ADMIN_HASH}?`);
+  } catch {
+    return false;
+  }
+}
+
+async function isUidAdmin(uid) {
+  const u = String(uid || "").trim();
+  if (!u) return false;
+  try {
+    const ref = doc(db, "admins", u);
+    const snap = await getDoc(ref);
+    if (!snap.exists()) return false;
+    const data = snap.data() || {};
+    return data.active !== false;
+  } catch {
+    return false;
+  }
+}
+
+class ErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false, err: null };
+  }
+
+  static getDerivedStateFromError(error) {
+    return { hasError: true, err: error };
+  }
+
+  componentDidCatch(error, info) {
+    console.error("App ErrorBoundary caught:", error, info);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      const msg =
+        this.state.err?.message || String(this.state.err || "Erro desconhecido");
+      return (
+        <div
+          style={{
+            minHeight: "100vh",
+            background: "#050505",
+            color: "rgba(255,255,255,0.92)",
+            padding: 18,
+            fontFamily:
+              "system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif",
+          }}
+        >
+          <div style={{ fontWeight: 900, marginBottom: 8 }}>
+            Falha ao renderizar a aplicação
+          </div>
+          <div style={{ opacity: 0.85, whiteSpace: "pre-wrap", lineHeight: 1.35 }}>
+            {msg}
+          </div>
+        </div>
+      );
+    }
+
+    return this.props.children;
+  }
+}
+
+/* =========================
+   URL helpers
+========================= */
+
+function cleanPathname(p) {
+  const s = String(p || "").trim();
+  if (!s) return "/";
+  return s.startsWith("/") ? s : `/${s}`;
+}
+
+function screenToPath(screen) {
+  switch (screen) {
+    case ROUTES.LOGIN:
+      return "/login";
+    case ROUTES.DASHBOARD:
+      return "/";
+    case ROUTES.ACCOUNT:
+      return "/account";
+    case ROUTES.RESULTS:
+      return "/results";
+    case ROUTES.TOP3:
+      return "/top3";
+    case ROUTES.LATE:
+      return "/late";
+    case ROUTES.SEARCH:
+      return "/search";
+    case ROUTES.PAYMENTS:
+      return "/payments";
+    case ROUTES.DOWNLOADS:
+      return "/downloads";
+    case ROUTES.CENTENAS:
+      return "/centenas";
+    default:
+      return "/";
+  }
+}
+
+function pathToScreen(pathname) {
+  const p = cleanPathname(pathname).toLowerCase();
+
+  if (p === "/" || p === "/dashboard") return ROUTES.DASHBOARD;
+  if (p === "/login") return ROUTES.LOGIN;
+  if (p === "/account") return ROUTES.ACCOUNT;
+  if (p === "/results") return ROUTES.RESULTS;
+  if (p === "/top3") return ROUTES.TOP3;
+  if (p === "/late") return ROUTES.LATE;
+  if (p === "/search") return ROUTES.SEARCH;
+  if (p === "/payments") return ROUTES.PAYMENTS;
+  if (p === "/downloads") return ROUTES.DOWNLOADS;
+  if (p === "/centenas") return ROUTES.CENTENAS;
+
+  return null;
+}
+
+function BuildStamp() {
+  const shaShort = BUILD_SHA ? BUILD_SHA.slice(0, 7) : "";
+  const ref = BUILD_REF || "";
+  const tm = BUILD_TIME || "";
+  const text = shaShort
+    ? `build ${shaShort}${ref ? ` · ${ref}` : ""}${tm ? ` · ${tm}` : ""}`
+    : "";
+
+  if (!shaShort) return null;
+
+  return (
+    <div
+      style={{
+        position: "fixed",
+        left: 10,
+        bottom: 10,
+        zIndex: 99999,
+        padding: "7px 10px",
+        borderRadius: 999,
+        background: "rgba(0,0,0,0.62)",
+        border: "1px solid rgba(202,166,75,0.28)",
+        color: "rgba(233,233,233,0.88)",
+        fontSize: 11,
+        fontWeight: 900,
+        letterSpacing: 0.2,
+        boxShadow: "0 14px 40px rgba(0,0,0,0.40)",
+        userSelect: "text",
+      }}
+      title={`SHA=${BUILD_SHA}${ref ? ` | ref=${ref}` : ""}${tm ? ` | time=${tm}` : ""}`}
+    >
+      {text}
+    </div>
+  );
+}
+
+
+function AppLoading() {
+  return (
+    <div
+      role="status"
+      aria-live="polite"
+      style={{
+        minHeight: "100vh",
+        background: "#050505",
+        color: "rgba(255,255,255,0.85)",
+        display: "grid",
+        placeItems: "center",
+        padding: 18,
+        fontFamily:
+          "system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif",
+      }}
+    >
+      Carregando...
+    </div>
+  );
+}
+
+export default function App() {
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  const Dashboard = useMemo(() => resolveComponent(DashboardMod, "Dashboard"), []);
+  const Account = useMemo(() => resolveComponent(AccountMod, "Account"), []);
+
+  const AppShell = useMemo(() => resolveComponent(AppShellMod, "AppShell"), []);
+
+
+  useEffect(() => {
+    console.log("[PALPITACO BUILD]", {
+      sha: BUILD_SHA || "(none)",
+      ref: BUILD_REF || "(none)",
+      time: BUILD_TIME || "(none)",
+      href: typeof window !== "undefined" ? window.location.href : "",
+    });
+  }, []);
+
+  useEffect(() => {
+    cleanupLegacyGuestFlagIfNeeded();
+  }, []);
+
+  const [adminMode, setAdminMode] = useState(() => isAdminHashNow());
+
+  useEffect(() => {
+    const onHash = () => setAdminMode(isAdminHashNow());
+    window.addEventListener("hashchange", onHash);
+    return () => window.removeEventListener("hashchange", onHash);
+  }, []);
+
+  const [adminAuthed, setAdminAuthed] = useState(false);
+  const [adminBooting, setAdminBooting] = useState(false);
+
+  useEffect(() => {
+    if (!adminMode) return;
+
+    let alive = true;
+    setAdminBooting(true);
+    setAdminAuthed(false);
+
+    const unsub = onAuthStateChanged(auth, async (user) => {
+      if (!alive) return;
+
+      if (!user?.uid) {
+        setAdminAuthed(false);
+        setAdminBooting(false);
+        return;
+      }
+
+      const ok = await isUidAdmin(user.uid);
+      if (!alive) return;
+
+      if (!ok) {
+        try {
+          await signOut(auth);
+        } catch {}
+        setAdminAuthed(false);
+        setAdminBooting(false);
+        return;
+      }
+
+      setAdminAuthed(true);
+      setAdminBooting(false);
+    });
+
+    return () => {
+      alive = false;
+      unsub?.();
+    };
+  }, [adminMode]);
+
+  const [dashboardFilters, setDashboardFilters] = useState(() => loadDashboardFilters());
+  const [, setSessionTick] = useState(0);
+
+  useEffect(() => {
+    const lot = normalizeLoteriaInput(dashboardFilters?.loteria);
+
+    if (lot === "FEDERAL") {
+      const h = String(dashboardFilters?.horario || "");
+      if (h !== "Todos" && h !== "19h" && h !== "20h") {
+        setDashboardFilters((prev) => ({ ...prev, horario: "Todos" }));
+      } else if (dashboardFilters?.loteria !== "FEDERAL") {
+        setDashboardFilters((prev) => ({ ...prev, loteria: "FEDERAL" }));
+      }
+      return;
+    }
+
+    if (dashboardFilters?.loteria !== lot) {
+      setDashboardFilters((prev) => ({ ...prev, loteria: lot }));
+    }
+  }, [dashboardFilters?.loteria, dashboardFilters?.horario]);
+
+  useEffect(() => {
+    safeWriteLS(DASH_FILTERS_KEY, JSON.stringify(dashboardFilters));
+  }, [dashboardFilters]);
+
+  useEffect(() => {
+    const bump = () => setSessionTick((v) => v + 1);
+
+    const onStorage = (e) => {
+      if (!e) return;
+      if (e.key === ACCOUNT_SESSION_KEY || e.key === LS_GUEST_ACTIVE_KEY) {
+        bump();
+      }
+    };
+
+    const onSessionChanged = () => bump();
+    const onFocus = () => bump();
+    const onVis = () => {
+      if (document.visibilityState === "visible") bump();
+    };
+
+    window.addEventListener("storage", onStorage);
+    window.addEventListener("pp_session_changed", onSessionChanged);
+    window.addEventListener("focus", onFocus);
+    document.addEventListener("visibilitychange", onVis);
+
+    return () => {
+      window.removeEventListener("storage", onStorage);
+      window.removeEventListener("pp_session_changed", onSessionChanged);
+      window.removeEventListener("focus", onFocus);
+      document.removeEventListener("visibilitychange", onVis);
+    };
+  }, []);
+
+  const sessionObj = loadSessionObj();
+
+  const sessionKind = useMemo(() => getSessionKind(sessionObj), [sessionObj]);
+
+  const currentScreen = useMemo(() => {
+    const byPath = pathToScreen(location?.pathname);
+    if (byPath) return byPath;
+
+    const saved = normalizeRoute(safeReadLS(STORAGE_KEY));
+    if (saved && saved !== ROUTES.LOGIN) return saved;
+
+    return sessionObj ? ROUTES.DASHBOARD : ROUTES.LOGIN;
+  }, [location?.pathname, sessionObj]);
+
+  useEffect(() => {
+    if (adminMode) return;
+
+    const pathScreen = pathToScreen(location?.pathname);
+    const hasSession = !!sessionObj;
+    const curPath = cleanPathname(location?.pathname);
+
+    if (!hasSession) {
+      if (curPath !== "/login") {
+        navigate("/login", { replace: true });
+      }
+      return;
+    }
+
+    if (curPath === "/login") {
+      navigate("/", { replace: true });
+      return;
+    }
+
+    if (!pathScreen) {
+      const saved = normalizeRoute(safeReadLS(STORAGE_KEY));
+      navigate(screenToPath(saved && saved !== ROUTES.LOGIN ? saved : ROUTES.DASHBOARD), {
+        replace: true,
+      });
+    }
+  }, [adminMode, location?.pathname, navigate, sessionObj]);
+
+  useEffect(() => {
+    if (adminMode) return;
+    if (currentScreen && currentScreen !== ROUTES.LOGIN) {
+      safeWriteLS(STORAGE_KEY, currentScreen);
+    }
+  }, [adminMode, currentScreen]);
+
+  const goToScreen = (nextScreen) => {
+    const path = screenToPath(nextScreen);
+    const cur = cleanPathname(location?.pathname);
+    if (cur !== path) {
+      navigate(path);
+    }
+  };
+
+  const logout = async () => {
+    safeRemoveLS(STORAGE_KEY);
+    safeRemoveLS(ACCOUNT_SESSION_KEY);
+    safeRemoveLS(LS_GUEST_ACTIVE_KEY);
+    safeRemoveLS(DASH_FILTERS_KEY);
+
+    try {
+      window.dispatchEvent(new Event("pp_session_changed"));
+    } catch {}
+
+    try {
+      await signOut(auth);
+    } catch {}
+
+    navigate("/login", { replace: true });
+  };
+
+  const handleAuthenticated = () => {
+    cleanupLegacyGuestFlagIfNeeded();
+    safeWriteLS(STORAGE_KEY, ROUTES.DASHBOARD);
+    navigate("/", { replace: true });
+  };
+
+  const renderScreen = (s) => {
+    switch (s) {
+      case ROUTES.ACCOUNT:
+        return <Account onAuthenticated={() => {}} />;
+      case ROUTES.RESULTS:
+        return <Results />;
+      case ROUTES.TOP3:
+        return <Top3 />;
+      case ROUTES.LATE:
+        return <Late />;
+      case ROUTES.SEARCH:
+        return <Search />;
+      case ROUTES.CENTENAS:
+        return <Centenas />;
+      case ROUTES.PAYMENTS:
+        return <Payments />;
+      case ROUTES.DOWNLOADS:
+        return <Downloads />;
+      default:
+        return (
+          <Dashboard
+            filters={{
+              ...dashboardFilters,
+              lotteryKey: loteriaToLotteryKey(dashboardFilters?.loteria),
+            }}
+            setFilters={setDashboardFilters}
+          />
+        );
+    }
+  };
+
+  if (adminMode) {
+    return (
+      <ErrorBoundary>
+        <Suspense fallback={<AppLoading />}>
+        {adminBooting ? (
+          <div
+            style={{
+              minHeight: "100vh",
+              background: "#050505",
+              color: "rgba(255,255,255,0.85)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              fontFamily:
+                "system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif",
+              padding: 18,
+            }}
+          >
+            Carregando Admin...
+          </div>
+        ) : adminAuthed ? (
+          <Admin
+            onExit={() => {
+              try {
+                window.location.hash = "";
+              } catch {}
+            }}
+            onLogout={async () => {
+              try {
+                await signOut(auth);
+              } catch {}
+              setAdminAuthed(false);
+              try {
+                window.location.hash = "";
+              } catch {}
+            }}
+          />
+        ) : (
+          <AdminLogin
+            onCancel={() => {
+              try {
+                window.location.hash = "";
+              } catch {}
+            }}
+            onAuthed={() => {
+              setAdminAuthed(true);
+            }}
+          />
+        )}
+        <BuildStamp />
+              </Suspense>
+      </ErrorBoundary>
+    );
+  }
+
+  if (sessionKind === "anon") {
+    return (
+      <ErrorBoundary>
+        <Suspense fallback={<AppLoading />}>
+        <Account
+          onClose={() => {}}
+          onAuthenticated={handleAuthenticated}
+        />
+        <BuildStamp />
+              </Suspense>
+      </ErrorBoundary>
+    );
+  }
+
+  return (
+    <ErrorBoundary>
+        <Suspense fallback={<AppLoading />}>
+      <AppShell active={currentScreen} onNavigate={goToScreen} onLogout={logout}>
+        {currentScreen === ROUTES.DASHBOARD ? (
+          <Dashboard
+            filters={{
+              ...dashboardFilters,
+              lotteryKey: loteriaToLotteryKey(dashboardFilters?.loteria),
+            }}
+            setFilters={setDashboardFilters}
+          />
+        ) : (
+          renderScreen(currentScreen)
+        )}
+      </AppShell>
+      <BuildStamp />
+            </Suspense>
+      </ErrorBoundary>
+  );
+}
+
+
+
+==============================================================================================================
+6. ARQUIVOS PROVÁVEIS DO MENU/SIDEBAR
+==============================================================================================================
+
+
+
+==============================================================================================================
+7. REFERÊNCIAS À ROTA /SEARCH
+==============================================================================================================
+
+Path                                 LineNumber Line
+----                                 ---------- ----
+C:\Users\glaub\palpitaco\src\App.jsx        378       return "/search";
+C:\Users\glaub\palpitaco\src\App.jsx        399   if (p === "/search") return ROUTES.SEARCH;
+
+
+
+
+==============================================================================================================
+8. SERVIÇOS, HOOKS E CONSULTAS UTILIZADOS PELA BUSCA
+==============================================================================================================
+
+Path                                                                           LineNumber Line
+----                                                                           ---------- ----
+C:\Users\glaub\palpitaco\src\pages\Dashboard\components\SearchInput.jsx               145           position:relative;
+C:\Users\glaub\palpitaco\src\pages\Dashboard\components\SearchInput.jsx               161           position:absolute;
+C:\Users\glaub\palpitaco\src\pages\Dashboard\components\SearchResultsTable.jsx          1 // src/pages/Dashboard/components/SearchResultsTable.jsx
+C:\Users\glaub\palpitaco\src\pages\Dashboard\components\SearchResultsTable.jsx          5   getAnimalLabel as getAnimalLabelFn,
+C:\Users\glaub\palpitaco\src\pages\Dashboard\components\SearchResultsTable.jsx        201     r?.animal_grupo ??
+C:\Users\glaub\palpitaco\src\pages\Dashboard\components\SearchResultsTable.jsx        202     r?.animalGrupo ??
+C:\Users\glaub\palpitaco\src\pages\Dashboard\components\SearchResultsTable.jsx        210   const p = r?.position ?? r?.pos ?? r?.posicao ?? r?.colocacao ?? null;
+C:\Users\glaub\palpitaco\src\pages\Dashboard\components\SearchResultsTable.jsx        251 function resolveAnimalLabelCompat(fn, grupo) {
+C:\Users\glaub\palpitaco\src\pages\Dashboard\components\SearchResultsTable.jsx        257     const a = fn({ grupo: g, animal: "" });
+C:\Users\glaub\palpitaco\src\pages\Dashboard\components\SearchResultsTable.jsx        291 export default function SearchResultsTable({
+C:\Users\glaub\palpitaco\src\pages\Dashboard\components\SearchResultsTable.jsx        295   getAnimalLabel,
+C:\Users\glaub\palpitaco\src\pages\Dashboard\components\SearchResultsTable.jsx        309   const resolveAnimalLabel = useCallback(
+C:\Users\glaub\palpitaco\src\pages\Dashboard\components\SearchResultsTable.jsx        311       const fn = typeof getAnimalLabel === "function" ? getAnimalLabel : getAnimalLabelFn;
+C:\Users\glaub\palpitaco\src\pages\Dashboard\components\SearchResultsTable.jsx        312       return resolveAnimalLabelCompat(fn, grupo);
+C:\Users\glaub\palpitaco\src\pages\Dashboard\components\SearchResultsTable.jsx        314     [getAnimalLabel]
+C:\Users\glaub\palpitaco\src\pages\Dashboard\components\SearchResultsTable.jsx        328       const position = pickPos(r);
+C:\Users\glaub\palpitaco\src\pages\Dashboard\components\SearchResultsTable.jsx        340         position,
+C:\Users\glaub\palpitaco\src\pages\Dashboard\components\SearchResultsTable.jsx        414           position:sticky; top:0; z-index:2;
+C:\Users\glaub\palpitaco\src\pages\Dashboard\components\SearchResultsTable.jsx        488         <div>Resultados (aparições)</div>
+C:\Users\glaub\palpitaco\src\pages\Dashboard\components\SearchResultsTable.jsx        515                   const animal = hasGrupo ? resolveAnimalLabel(g) : "";
+C:\Users\glaub\palpitaco\src\pages\Dashboard\components\SearchResultsTable.jsx        519                   const key = `${r.ymd || "x"}-${r.close_hour || "h"}-${r.position ?? "p"}-${r.milhar4 || "n"}-${r.__idx}`;
+C:\Users\glaub\palpitaco\src\pages\Dashboard\components\SearchResultsTable.jsx        525                       <td>{r.position ? `${r.position}º` : "—"}</td>
+C:\Users\glaub\palpitaco\src\pages\Dashboard\components\SearchResultsTable.jsx        542                             alt={animal || (hasGrupo ? `Grupo ${pad2(g)}` : "—")}
+C:\Users\glaub\palpitaco\src\pages\Dashboard\components\SearchResultsTable.jsx        548                       <td className="bicho" title={animal || ""}>
+C:\Users\glaub\palpitaco\src\pages\Dashboard\components\SearchResultsTable.jsx        549                         {animal || "—"}
+C:\Users\glaub\palpitaco\src\pages\Dashboard\components\SearchResultsTable.jsx        565                       Nenhum resultado (digite 2, 3 ou 4 dígitos).
+C:\Users\glaub\palpitaco\src\pages\Search\Search.jsx                                    3 import { getKingBoundsByUf, getKingResultsByRange } from "../../services/kingResultsService";
+C:\Users\glaub\palpitaco\src\pages\Search\Search.jsx                                    5   getAnimalLabel as getAnimalLabelFn,
+C:\Users\glaub\palpitaco\src\pages\Search\Search.jsx                                    8 import SearchResultsTable from "../Dashboard/components/SearchResultsTable";
+C:\Users\glaub\palpitaco\src\pages\Search\Search.jsx                                   25  * - Renderiza resultados de forma incremental
+C:\Users\glaub\palpitaco\src\pages\Search\Search.jsx                                  240     `resultado${i}`,
+C:\Users\glaub\palpitaco\src\pages\Search\Search.jsx                                  241     `resultado_${i}`,
+C:\Users\glaub\palpitaco\src\pages\Search\Search.jsx                                  251   const arrays = [draw?.p, draw?.ps, draw?.premios, draw?.resultados, draw?.numbers, draw?.numeros, draw?.milhares];
+C:\Users\glaub\palpitaco\src\pages\Search\Search.jsx                                  258   const dicts = [draw?.premios, draw?.resultado, draw?.resultados, draw?.p];
+C:\Users\glaub\palpitaco\src\pages\Search\Search.jsx                                  274     const payloadArrays = [payload?.p, payload?.premios, payload?.resultados, payload?.numbers];
+C:\Users\glaub\palpitaco\src\pages\Search\Search.jsx                                  295     `animal_grupo${i}`,
+C:\Users\glaub\palpitaco\src\pages\Search\Search.jsx                                  296     `animal_grupo_${i}`,
+C:\Users\glaub\palpitaco\src\pages\Search\Search.jsx                                  345     position: i,
+C:\Users\glaub\palpitaco\src\pages\Search\Search.jsx                                  368   const cand = res?.draws ?? res?.results ?? res?.data ?? res?.items ?? res?.docs ?? res?.rows ?? null;
+C:\Users\glaub\palpitaco\src\pages\Search\Search.jsx                                  560   const [lotteryKey, setLotteryKey] = useState("PT_RIO");
+C:\Users\glaub\palpitaco\src\pages\Search\Search.jsx                                  561   const LOTTERY_KEY = lotteryKey;
+C:\Users\glaub\palpitaco\src\pages\Search\Search.jsx                                  563   const selectedLottery = useMemo(
+C:\Users\glaub\palpitaco\src\pages\Search\Search.jsx                                  565       SEARCH_LOTTERIES.find((lottery) => lottery.value === lotteryKey) ||
+C:\Users\glaub\palpitaco\src\pages\Search\Search.jsx                                  567     [lotteryKey]
+C:\Users\glaub\palpitaco\src\pages\Search\Search.jsx                                  570   const lotteryHours = selectedLottery.hours;
+C:\Users\glaub\palpitaco\src\pages\Search\Search.jsx                                  572   const getAnimalLabel = useMemo(() => getAnimalLabelFn, []);
+C:\Users\glaub\palpitaco\src\pages\Search\Search.jsx                                  584   const [animal, setAnimal] = useState("Todos");
+C:\Users\glaub\palpitaco\src\pages\Search\Search.jsx                                  615         const b = await getKingBoundsByUf({ uf: LOTTERY_KEY });
+C:\Users\glaub\palpitaco\src\pages\Search\Search.jsx                                  631           setError(`Bounds não encontrados para "${LOTTERY_KEY}". Fonte: ${String(nb.source || "")}`);
+C:\Users\glaub\palpitaco\src\pages\Search\Search.jsx                                  642   }, [LOTTERY_KEY]);
+C:\Users\glaub\palpitaco\src\pages\Search\Search.jsx                                  644   const onLotteryChange = useCallback((nextLottery) => {
+C:\Users\glaub\palpitaco\src\pages\Search\Search.jsx                                  645     const validLottery = SEARCH_LOTTERIES.some(
+C:\Users\glaub\palpitaco\src\pages\Search\Search.jsx                                  646       (lottery) => lottery.value === nextLottery
+C:\Users\glaub\palpitaco\src\pages\Search\Search.jsx                                  649     if (!validLottery || nextLottery === lotteryKey) return;
+C:\Users\glaub\palpitaco\src\pages\Search\Search.jsx                                  659     setLotteryKey(nextLottery);
+C:\Users\glaub\palpitaco\src\pages\Search\Search.jsx                                  660   }, [lotteryKey]);
+C:\Users\glaub\palpitaco\src\pages\Search\Search.jsx                                  662   const animalOptions = useMemo(() => {
+C:\Users\glaub\palpitaco\src\pages\Search\Search.jsx                                  664     for (let g = 1; g <= 25; g += 1) out.push(getAnimalLabel(g) || `Grupo ${pad2(g)}`);
+C:\Users\glaub\palpitaco\src\pages\Search\Search.jsx                                  666   }, [getAnimalLabel]);
+C:\Users\glaub\palpitaco\src\pages\Search\Search.jsx                                  673   const selectedPositions = useMemo(() => {
+C:\Users\glaub\palpitaco\src\pages\Search\Search.jsx                                  680   const selectedGrupoFromAnimal = useMemo(() => {
+C:\Users\glaub\palpitaco\src\pages\Search\Search.jsx                                  681     if (!animal || animal === "Todos") return null;
+C:\Users\glaub\palpitaco\src\pages\Search\Search.jsx                                  683       const lbl = getAnimalLabel(g) || "";
+C:\Users\glaub\palpitaco\src\pages\Search\Search.jsx                                  684       if (String(lbl).toUpperCase() === String(animal).toUpperCase()) return g;
+C:\Users\glaub\palpitaco\src\pages\Search\Search.jsx                                  687   }, [animal, getAnimalLabel]);
+C:\Users\glaub\palpitaco\src\pages\Search\Search.jsx                                  754         const res = await getKingResultsByRange({
+C:\Users\glaub\palpitaco\src\pages\Search\Search.jsx                                  755           uf: LOTTERY_KEY,
+C:\Users\glaub\palpitaco\src\pages\Search\Search.jsx                                  760           positions: selectedPositions || null,
+C:\Users\glaub\palpitaco\src\pages\Search\Search.jsx                                  786             const position = Number(p?.position);
+C:\Users\glaub\palpitaco\src\pages\Search\Search.jsx                                  788             const wantLen = position === 7 ? 3 : 4;
+C:\Users\glaub\palpitaco\src\pages\Search\Search.jsx                                  815             if (selectedGrupoFromAnimal != null) {
+C:\Users\glaub\palpitaco\src\pages\Search\Search.jsx                                  816               if (Number(grupo) !== Number(selectedGrupoFromAnimal)) continue;
+C:\Users\glaub\palpitaco\src\pages\Search\Search.jsx                                  818             if (Array.isArray(selectedPositions) && selectedPositions.length) {
+C:\Users\glaub\palpitaco\src\pages\Search\Search.jsx                                  819               if (!selectedPositions.includes(Number(position))) continue;
+C:\Users\glaub\palpitaco\src\pages\Search\Search.jsx                                  843               position: Number.isFinite(position) ? position : null,
+C:\Users\glaub\palpitaco\src\pages\Search\Search.jsx                                  877         const pa = a.position ?? 99;
+C:\Users\glaub\palpitaco\src\pages\Search\Search.jsx                                  878         const pb = b.position ?? 99;
+C:\Users\glaub\palpitaco\src\pages\Search\Search.jsx                                  891     LOTTERY_KEY,
+C:\Users\glaub\palpitaco\src\pages\Search\Search.jsx                                  895     selectedPositions,
+C:\Users\glaub\palpitaco\src\pages\Search\Search.jsx                                  899     selectedGrupoFromAnimal,
+C:\Users\glaub\palpitaco\src\pages\Search\Search.jsx                                 1030           position:relative;
+C:\Users\glaub\palpitaco\src\pages\Search\Search.jsx                                 1042           position:relative;
+C:\Users\glaub\palpitaco\src\pages\Search\Search.jsx                                 1049           position:absolute;
+C:\Users\glaub\palpitaco\src\pages\Search\Search.jsx                                 1101           position:relative;
+C:\Users\glaub\palpitaco\src\pages\Search\Search.jsx                                 1160               value={lotteryKey}
+C:\Users\glaub\palpitaco\src\pages\Search\Search.jsx                                 1161               onChange={(e) => onLotteryChange(String(e.target.value || "PT_RIO"))}
+C:\Users\glaub\palpitaco\src\pages\Search\Search.jsx                                 1164               {SEARCH_LOTTERIES.map((lottery) => (
+C:\Users\glaub\palpitaco\src\pages\Search\Search.jsx                                 1165                 <option key={lottery.value} value={lottery.value}>
+C:\Users\glaub\palpitaco\src\pages\Search\Search.jsx                                 1166                   {lottery.label}
+C:\Users\glaub\palpitaco\src\pages\Search\Search.jsx                                 1230               {["Todos", ...lotteryHours].map((x) => (
+C:\Users\glaub\palpitaco\src\pages\Search\Search.jsx                                 1239             <label>Animal</label>
+C:\Users\glaub\palpitaco\src\pages\Search\Search.jsx                                 1240             <select value={animal} onChange={(e) => setAnimal(String(e.target.value || "Todos"))}>
+C:\Users\glaub\palpitaco\src\pages\Search\Search.jsx                                 1241               {animalOptions.map((x) => (
+C:\Users\glaub\palpitaco\src\pages\Search\Search.jsx                                 1285           <SearchResultsTable rows={matches} getAnimalLabel={getAnimalLabel} getImgFromGrupo={getImgFromGrupo} />
+
+
+
+
+==============================================================================================================
+9. COMPONENTES DE FILTRO EXISTENTES
+==============================================================================================================
+
+FullName
+--------
+C:\Users\glaub\palpitaco\src\pages\Dashboard\components\DateRangeControl.jsx
+C:\Users\glaub\palpitaco\src\pages\Dashboard\components\FiltersBar.jsx
+C:\Users\glaub\palpitaco\src\pages\Top3\top3.selectors.js
+C:\Users\glaub\palpitaco\src\services\validateRanking.js
+C:\Users\glaub\palpitaco\src\services\king\king.date.js
+
+
+
+
+==============================================================================================================
+10. TAMANHO DO RELATÓRIO
+==============================================================================================================
+
+FullName                                                         Length LastWriteTime
+--------                                                         ------ -------------
+C:\Users\glaub\palpitaco\tmp\rkg01_mapeamento_pagina_ranking.txt 149676 22/07/2026 16:48:36
+
+

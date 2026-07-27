@@ -1,0 +1,119 @@
+====================================================================================================
+src\App.jsx
+====================================================================================================
+Linha   490   onAuthStateChanged(
+Linha    27   firebase/auth
+====================================================================================================
+src\pages\Account\Account.jsx
+====================================================================================================
+Linha   307   onAuthStateChanged(
+Linha   540   currentUser
+Linha   599   currentUser
+Linha   665   currentUser
+Linha   540   auth.currentUser
+Linha   599   auth.currentUser
+Linha   665   auth.currentUser
+Linha    13   firebase/auth
+====================================================================================================
+src\pages\Admin\AdminLogin.jsx
+====================================================================================================
+Linha   113   currentUser
+Linha   113   currentUser
+Linha   115   currentUser
+Linha   121   currentUser
+Linha   113   auth.currentUser
+Linha     6   firebase/auth
+====================================================================================================
+src\pages\Dashboard\components\Sidebar\AppShell.jsx
+====================================================================================================
+Linha   113   onAuthStateChanged(
+Linha     6   firebase/auth
+====================================================================================================
+src\pages\Top3\top3.firestore.js
+====================================================================================================
+Linha     9   loginAnonym
+Linha   220   loginAnonym
+Linha   380   loginAnonym
+====================================================================================================
+src\services\auth.js
+====================================================================================================
+Linha     2   signInAnonymously
+Linha    36   signInAnonymously
+Linha    65   onAuthStateChanged(
+Linha    31   currentUser
+Linha    32   currentUser
+Linha    31   auth.currentUser
+Linha    32   auth.currentUser
+Linha    18   ensureAuth
+Linha    28   ensureAuth
+Linha    48   ensureAuth
+Linha    27   loginAnonym
+Linha     5   firebase/auth
+====================================================================================================
+src\services\firebase.js
+====================================================================================================
+Linha    72   getAuth(
+Linha     3   firebase/auth
+====================================================================================================
+backend\node_modules\@firebase\database\dist\internal.d.ts
+====================================================================================================
+Linha    14   firebase/auth
+Linha    15   firebase/auth
+====================================================================================================
+backend\node_modules\@firebase\database\dist\node-esm\src\api\Database.d.ts
+====================================================================================================
+Linha    19   firebase/auth
+====================================================================================================
+backend\node_modules\@firebase\database\dist\node-esm\src\core\AuthTokenProvider.d.ts
+====================================================================================================
+Linha    18   firebase/auth
+====================================================================================================
+backend\node_modules\@firebase\database\dist\node-esm\src\internal\index.d.ts
+====================================================================================================
+Linha    19   firebase/auth
+====================================================================================================
+backend\node_modules\@firebase\database\dist\private.d.ts
+====================================================================================================
+Linha    14   firebase/auth
+Linha    15   firebase/auth
+====================================================================================================
+backend\node_modules\@firebase\database\dist\src\api\Database.d.ts
+====================================================================================================
+Linha    19   firebase/auth
+====================================================================================================
+backend\node_modules\@firebase\database\dist\src\core\AuthTokenProvider.d.ts
+====================================================================================================
+Linha    18   firebase/auth
+====================================================================================================
+backend\node_modules\@firebase\database\dist\src\internal\index.d.ts
+====================================================================================================
+Linha    19   firebase/auth
+====================================================================================================
+backend\node_modules\@firebase\database-compat\dist\database-compat\src\api\internal.d.ts
+====================================================================================================
+Linha    19   firebase/auth
+====================================================================================================
+backend\node_modules\@firebase\database-compat\dist\index.standalone.js
+====================================================================================================
+Linha  3750   firebase/auth
+Linha  3752   firebase/auth
+====================================================================================================
+backend\node_modules\@firebase\database-compat\dist\node-esm\database-compat\src\api\internal.d.ts
+====================================================================================================
+Linha    19   firebase/auth
+====================================================================================================
+backend\node_modules\firebase-admin\lib\auth\index.d.ts
+====================================================================================================
+Linha    28   getAuth(
+Linha    29   getAuth(
+Linha    35   getAuth(
+Linha    41   getAuth(
+Linha    45   getAuth(
+====================================================================================================
+backend\node_modules\firebase-admin\lib\auth\index.js
+====================================================================================================
+Linha    32   getAuth(
+Linha    33   getAuth(
+Linha    39   getAuth(
+Linha    45   getAuth(
+Linha    49   getAuth(

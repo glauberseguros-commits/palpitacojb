@@ -1,0 +1,1284 @@
+21/07/2026 13:29:25 -03:00
+0233956 fix: tornar importa├º├úo autom├ítica resiliente
+ M backend/scripts/backtestTop3Official.js
+ M src/pages/Top3/Top3View.jsx
+ M src/pages/Top3/modules/scoreEngine/scoreEngineV2.js
+ M src/pages/Top3/top3.engine.js
+?? auditoria_api_github_cron_21h30.txt
+?? auditoria_automacao_resultados_pc_desligado.txt
+?? auditoria_backtest_top3_base.txt
+?? auditoria_byHour.txt
+?? auditoria_causa_18h_2026-07-11.txt
+?? auditoria_cirurgica_21h30.txt
+?? auditoria_comparativa_milhar_v2_v3.txt
+?? auditoria_contexto_probabilistico_milhar.txt
+?? auditoria_decisores_calendario_pt_rio.txt
+?? auditoria_docsDay.txt
+?? auditoria_docs_2026-07-11.txt
+?? auditoria_estado_scheduler.txt
+?? auditoria_estado_workflow_github.txt
+?? auditoria_estrutural_auto_import.txt
+?? auditoria_execucoes_falhas_auto_import.txt
+?? auditoria_execucoes_reais_auto_import_21h.txt
+?? auditoria_falha_real_auto_import.txt
+?? auditoria_firestore_PT_RIO_2026-07-11.txt
+?? auditoria_fluxo_milhar_publica.txt
+?? auditoria_fluxo_real_auto_import.txt
+?? auditoria_fluxo_slot_auto_import.txt
+?? auditoria_fluxo_status_slot.txt
+?? auditoria_fonte_backtest_milhar.txt
+?? auditoria_historico_cron_21h30.txt
+?? auditoria_integracao_federal20_runtime.txt
+?? auditoria_janelas_slot_21h30.txt
+?? auditoria_logica_autoImportToday.txt
+?? auditoria_motor_milhar_v2.txt
+?? auditoria_origem_drawsNoPrizes.txt
+?? auditoria_origem_presentHours.txt
+?? auditoria_pre_backtest_milhar.txt
+?? auditoria_regra_federal20_remove_rj18.txt
+?? auditoria_return_api_results.txt
+?? auditoria_runImport_completa.txt
+?? auditoria_runImport_excecoes.txt
+?? auditoria_runs_21h30_janelas_utc.txt
+?? auditoria_runs_reais_21h30_github.txt
+?? auditoria_top3_base_2026-07-09.txt
+?? auditoria_top3_estrutura_completa.txt
+?? auditoria_top3_fluxo_real.txt
+?? auditoria_top3_slot_2026-07-09.txt
+?? auditoria_workflows_importacao.txt
+?? autoImportToday_completo.txt
+?? backend/engine/scoreEngineE08Experimental.js
+?? backend/engine/scoreEngineV4Experimental.js
+?? backend/scripts/auditTop3E08DifferencesExperimental.js
+?? backend/scripts/backtestTop3AblationExperimental.js
+?? backend/scripts/backtestTop3E07Experimental.js
+?? backend/scripts/backtestTop3E08Experimental.js
+?? inventario_pt_rio_hardcoded.txt
+?? src/pages/Centenas/__tests__/milharProbabilityEngineV3.test.js
+?? src/pages/Centenas/modules/milharProbabilityEngineV3.js
+?? src/pages/Top3/__tests__/top3.schedule-calendar-rules.node.test.js
+?? src/pages/Top3/__tests__/top3.schedule-transition.test.js
+?? tmp/Dashboard.before_fed19.jsx
+?? tmp/Dashboard.before_fed21.jsx
+?? tmp/FiltersBar.before_nac31.jsx
+?? tmp/Late.before-atp06.jsx
+?? tmp/Late.before-atp07.jsx
+?? tmp/Late.before-atp08.jsx
+?? tmp/Results.before-lkn189.jsx
+?? tmp/Results.before-lkn190.jsx
+?? tmp/Results.before-lkn31_1.jsx
+?? tmp/TOP3_BACKTEST_JSON_STRUCTURE.txt
+?? tmp/TOP3_BASELINE_AUDITORIA_FINAL_2026-07-17.md
+?? tmp/TOP3_BASELINE_METRICAS_OFICIAIS.json
+?? tmp/TOP3_BASELINE_METRICAS_OFICIAIS.txt
+?? tmp/TOP3_PRE_V4_PATH_AUDIT.txt
+?? tmp/TOP3_RETORNO_BACKTEST_AUDITORIA.txt
+?? tmp/TOP3_V3_INJECTION_EQUIVALENCE.json
+?? tmp/TOP3_V3_INJECTION_EQUIVALENCE.txt
+?? tmp/TOP3_V3_INJECTION_EQUIVALENCE_REAL.json
+?? tmp/TOP3_V3_INJECTION_EQUIVALENCE_REAL.txt
+?? tmp/TOP3_V4_PONTO_DE_INTEGRACAO.txt
+?? tmp/atp01_filtros_atrasados_audit.txt
+?? tmp/atp02_componente_atrasados.txt
+?? tmp/atp03_late_blocos_exatos.txt
+?? tmp/atp04_getKingLateByRange_contract.txt
+?? tmp/atp05_late_build.log
+?? tmp/atp05_late_implementation.log
+?? tmp/atp09_late_git_log.txt
+?? tmp/atp09_origem_seletor_antigo_atrasados.txt
+?? tmp/audit_nacional_2026_05_06.js
+?? tmp/audit_nacional_firestore.js
+?? tmp/audit_nacional_schedule_boundaries.js
+?? tmp/audit_nacional_schedule_transition.js
+?? tmp/audit_results_pt_rio_18h_19h.txt
+?? tmp/audit_v4_predictive_telemetry.js
+?? tmp/auditoria_auth_ampla.txt
+?? tmp/auditoria_auth_top3.txt
+?? tmp/auditoria_backend_top3_pipeline.txt
+?? tmp/auditoria_cirurgica_listeners_top3.txt
+?? tmp/auditoria_estrutural_auto_import/
+?? tmp/auditoria_execucoes_falhas_auto_import/
+?? tmp/auditoria_firestore_listeners.txt
+?? tmp/auditoria_fluxo_carregamento_top3.txt
+?? tmp/auditoria_performance_bootstrap.txt
+?? tmp/auditoria_results_federal_datas.txt
+?? tmp/auditoria_top3_firestore_core.txt
+?? tmp/auditoria_top3_historico_sobrescrito.txt
+?? tmp/auditoria_top3_persistencia_historico.txt
+?? tmp/auditoria_top3_schedule_origem.txt
+?? tmp/aut01_look_missing_schedules.txt
+?? tmp/aut02_look_logs/
+?? tmp/aut03_autoImportToday_full.txt
+?? tmp/aut04_autoImportToday_lines_1_240.txt
+?? tmp/aut05_backup/
+?? tmp/auto-import.before.LKN148.yml
+?? tmp/autoImportToday.before.LKN146.js
+?? tmp/autoImportToday_para_correcao.txt
+?? tmp/auto_import_failure_29365229224.txt
+?? tmp/backend_prediction_pipeline.txt
+?? tmp/backtestTop3AblationExperimental.before_telemetry.js
+?? tmp/backtestTop3E07Experimental.before-e07-2a-repair.js
+?? tmp/backtestTop3E07Experimental.before-e07-2a.js
+?? tmp/backtestTop3E08Experimental.before_full.js
+?? tmp/backtestTop3E08Experimental.before_shared_snapshot.js
+?? tmp/backup_atp05_late/
+?? tmp/backup_centenas_federal_scope_20260715_224348/
+?? tmp/backup_centenas_lottery_20260715_210718/
+?? tmp/backup_centenas_performance_20260715_221100/
+?? tmp/backup_centenas_stale_20260715_215026/
+?? tmp/backup_top3_core_commit1_20260715_125156/
+?? tmp/backup_top3_effects_20260715_234759/
+?? tmp/backup_top3_firestore_20260714_232456/
+?? tmp/backup_top3_historico_20260714_225544/
+?? tmp/backup_tpp01_04/
+?? tmp/backup_tpp01_04b/
+?? tmp/bootstrapTop3History_auditoria.txt
+?? tmp/bootstrap_commit_audit.txt
+?? tmp/bootstrap_startup_audit.txt
+?? tmp/capture_v4_real_input.js
+?? tmp/centenas_auditoria_filtro_loteria.txt
+?? tmp/centenas_build_auditoria.txt
+?? tmp/centenas_contrato_king_performance.txt
+?? tmp/centenas_federal_scope_build_20260715_224348.log
+?? tmp/centenas_filtro_loteria_direcionado.txt
+?? tmp/centenas_performance_auditoria.txt
+?? tmp/centenas_performance_build_20260715_221100.log
+?? tmp/centenas_stale_build_20260715_215026.log
+?? tmp/cleanup_nacional_legacy.js
+?? tmp/cleanup_nacional_legacy_batched.js
+?? tmp/collectEvidence_audit.txt
+?? tmp/commit3_prediction_contract.txt
+?? tmp/commit4_top3_service_contracts.txt
+?? tmp/computeStatisticalTop3V3_full.txt
+?? tmp/computeStatisticalTop3V3_locations.txt
+?? tmp/computeStatisticalTop3V3_locations_focused.txt
+?? tmp/computeStatisticalTop3V3_ranked_return_3025_3150.txt
+?? tmp/computeStatisticalTop3V3_return_final_3140_3225.txt
+?? tmp/dat01_bounds_look_nacional.txt
+?? tmp/dat02_floor_look_nacional.txt
+?? tmp/dat04_post_deploy_validation.txt
+?? tmp/dat06_minymd_consumers.txt
+?? tmp/dat07_nacional_max_date_diagnostic.txt
+?? tmp/diagnostico_timeout_top3_producao.txt
+?? tmp/diagnostico_useeffects_top3.txt
+?? tmp/drawRepository_consumers.txt
+?? tmp/e07_comparison_PT_RIO_full.json
+?? tmp/e07_comparison_PT_RIO_full.txt
+?? tmp/e07_comparison_PT_RIO_full_console.log
+?? tmp/e07_comparison_PT_RIO_limit_100.json
+?? tmp/e07_comparison_PT_RIO_limit_100.txt
+?? tmp/e07_preparation_report.txt
+?? tmp/e07_transition_structure_audit.txt
+?? tmp/e07_transition_structure_audit_console_safe.txt
+?? tmp/e08_audit_integration.txt
+?? tmp/e08_case_audit_console.txt
+?? tmp/e08_case_divergence_audit.txt
+?? tmp/e08_comparison_PT_RIO_full.json
+?? tmp/e08_comparison_PT_RIO_full.txt
+?? tmp/e08_comparison_PT_RIO_full_console.log
+?? tmp/e08_comparison_PT_RIO_limit_100.json
+?? tmp/e08_comparison_PT_RIO_limit_100.txt
+?? tmp/e08_comparison_PT_RIO_limit_100_console.log
+?? tmp/e08_computeStatisticalTop3_audit.txt
+?? tmp/e08_consolidated_analysis.txt
+?? tmp/e08_decisive_cases_analysis.txt
+?? tmp/e08_decisive_cases_detailed.json
+?? tmp/e08_decisive_cases_detailed.txt
+?? tmp/e08_decisive_cases_raw_full.txt
+?? tmp/e08_difference_capability.txt
+?? tmp/e08_differences_limit_500.json
+?? tmp/e08_differences_limit_500.txt
+?? tmp/e08_differences_limit_7406_console.log
+?? tmp/e08_drawsRange_origin_audit.txt
+?? tmp/e08_final_report.md
+?? tmp/e08_full_shared_snapshot_console.log
+?? tmp/e08_gain_loss_matrix.txt
+?? tmp/e08_history_builder_audit.txt
+?? tmp/e08_hour_mechanism_audit.txt
+?? tmp/e08_json_structure.txt
+?? tmp/e08_limit_500_reconciliation.txt
+?? tmp/e08_limit_audit.txt
+?? tmp/e08_origin_audit.txt
+?? tmp/e08_shared_snapshot_plan.txt
+?? tmp/e08_snapshot_strategy.txt
+?? tmp/e08_v3_reranking_preparation.txt
+?? tmp/e09_e08_contract.txt
+?? tmp/e09_preparation_report.txt
+?? tmp/fed01_data_inicial_federal.txt
+?? tmp/fed02_minYmd_origin.txt
+?? tmp/fed03_applyBoundsFloor.txt
+?? tmp/fed04_api_bounds_origin.txt
+?? tmp/fed05_backend_api_location.txt
+?? tmp/fed07_1_backend_bounds.txt
+?? tmp/fed07_backend_bounds.txt
+?? tmp/fed08_federal_firestore_min_ymd.txt
+?? tmp/fed09_production_bounds_api.txt
+?? tmp/fed10_dashboard_minymd_flow.txt
+?? tmp/fed11_period_display_trace.txt
+?? tmp/fed12_period_card_origin.txt
+?? tmp/fed13_period_component.txt
+?? tmp/fed14_snapshot_consumers.txt
+?? tmp/fed15_dashboard_consumers.txt
+?? tmp/fed15_floor_audit.txt
+?? tmp/fed16_dashboard_card.txt
+?? tmp/fed17_final_period_consumer.txt
+?? tmp/fed18_dashboard_page.txt
+?? tmp/fed19_floor_fix.txt
+?? tmp/fed20_build_validation.log
+?? tmp/fed21_kpi_filter_fix.txt
+?? tmp/federal_api.json
+?? tmp/federal_position_contract.txt
+?? tmp/federal_position_filter.txt
+?? tmp/fetchPrizesForDraw_auditoria.txt
+?? tmp/formato_payload_import.txt
+?? tmp/github_runs_auto_import_21h.json
+?? tmp/github_runs_pt_rio_2026-07-13_21h.json
+?? tmp/importKingApostas.before-lkn03.js
+?? tmp/importKingApostas.before-lkn04.js
+?? tmp/importKingApostas.before-lkn164.js
+?? tmp/importKingApostas.before_lkn08.js
+?? tmp/importKingApostas.before_lkn11.js
+?? tmp/importKingApostas.before_lkn89.js
+?? tmp/importKingApostas.before_lkn91.js
+?? tmp/inspect_backtest_return.js
+?? tmp/inspect_prizes_structure.js
+?? tmp/inspect_v4_snapshot.js
+?? tmp/lkn01_auditoria_look_nacional.txt
+?? tmp/lkn02_bloqueio_look_nacional.txt
+?? tmp/lkn05_importador_mapeado.txt
+?? tmp/lkn06_funcoes_reais.txt
+?? tmp/lkn07_fluxo_look_nacional.txt
+?? tmp/lkn08_patch_result.txt
+?? tmp/lkn09_import_look_2026-07-18.log
+?? tmp/lkn100_workflows.txt
+?? tmp/lkn101_deploy_infrastructure.txt
+?? tmp/lkn102_vercel_deploy.txt
+?? tmp/lkn103_vercel_inspect.txt
+?? tmp/lkn104_vercel_metadata.json
+?? tmp/lkn105_public_validation.txt
+?? tmp/lkn106_backend_production_audit.txt
+?? tmp/lkn107_nacional_producao.txt
+?? tmp/lkn108_pitaco_results_route.txt
+?? tmp/lkn109_support_look_nacional_api.txt
+?? tmp/lkn10_import_nacional_2026-07-18.log
+?? tmp/lkn111_pitacoResults.before.js
+?? tmp/lkn111_result.txt
+?? tmp/lkn112_commit_push.txt
+?? tmp/lkn114_nacional_hours_validation.txt
+?? tmp/lkn115_origem_horarios_nacional.txt
+?? tmp/lkn116_nacional_raw.json
+?? tmp/lkn116_nacional_raw_summary.txt
+?? tmp/lkn117_trace_normalize_drawhour.txt
+?? tmp/lkn118_build_drawref_import_audit.txt
+?? tmp/lkn119_mapeamento_real_importadores.txt
+?? tmp/lkn120.js
+?? tmp/lkn120_firestore_draws_lookup.log
+?? tmp/lkn120b.js
+?? tmp/lkn120b_firestore_draws_lookup.log
+?? tmp/lkn123.js
+?? tmp/lkn123_firestore.log
+?? tmp/lkn124.js
+?? tmp/lkn124_firestore_sem_indice.log
+?? tmp/lkn125_import_flow.txt
+?? tmp/lkn126_normalize_functions.txt
+?? tmp/lkn127_git_history_normalization.txt
+?? tmp/lkn128_reimport_nacional.log
+?? tmp/lkn129_importadores_intervalo.txt
+?? tmp/lkn12_permanent_uuid_validation.log
+?? tmp/lkn130_importKingRange_audit.txt
+?? tmp/lkn131_statistics_mindate.txt
+?? tmp/lkn132_statistics_endpoint.txt
+?? tmp/lkn133_top3_history_metadata.txt
+?? tmp/lkn134_frontend_periodo.txt
+?? tmp/lkn135_datefrom_callers.txt
+?? tmp/lkn136_dashboard_endpoints.txt
+?? tmp/lkn137_api_bounds_audit.txt
+?? tmp/lkn138_applyBoundsFloor.txt
+?? tmp/lkn139_applyBoundsFloor_definition.txt
+?? tmp/lkn13_lotteries_structure.txt
+?? tmp/lkn140_api_bounds_endpoint.txt
+?? tmp/lkn140b_api_bounds_endpoint.txt
+?? tmp/lkn141_api_configuration.txt
+?? tmp/lkn142_automation_all_lotteries.txt
+?? tmp/lkn143_auto_import_yml.txt
+?? tmp/lkn144_autoimport_schedules.txt
+?? tmp/lkn145_look_nacional_hours_map.txt
+?? tmp/lkn147_validate_schedules.txt
+?? tmp/lkn149_validation_report.txt
+?? tmp/lkn14_patch.log
+?? tmp/lkn151_git_status.txt
+?? tmp/lkn154_workflow_remote_validation.txt
+?? tmp/lkn155_last_workflow_log.txt
+?? tmp/lkn15_final_validation.log
+?? tmp/lkn161_nacional_0149_normalization.txt
+?? tmp/lkn162_look_automation_2026-07-20.txt
+?? tmp/lkn163_actions_logs/
+?? tmp/lkn164_look_reimport/
+?? tmp/lkn164_validation.txt
+?? tmp/lkn16_git_audit.log
+?? tmp/lkn170_look_reconciliation.log
+?? tmp/lkn172_look_historical_gaps.log
+?? tmp/lkn173_reconcile_look_2026.log
+?? tmp/lkn179_results_hour_mapping.txt
+?? tmp/lkn182_deploy_configuration.txt
+?? tmp/lkn184_vercel_deploy_status.txt
+?? tmp/lkn185_nacional_draw_occurrences.txt
+?? tmp/lkn185_vercel_alias_comparison.txt
+?? tmp/lkn188_results_cards_pipeline.txt
+?? tmp/lkn18_post_push.log
+?? tmp/lkn18_post_push_validation.log
+?? tmp/lkn21_frontend_look_nacional_audit.txt
+?? tmp/lkn21_frontend_look_nacional_console.log
+?? tmp/lkn22_frontend_integration_console.log
+?? tmp/lkn22_frontend_integration_map.txt
+?? tmp/lkn23_1_final_implementation_cut.txt
+?? tmp/lkn23_2_remaining_integration_points.txt
+?? tmp/lkn23_exact_integration_points.txt
+?? tmp/lkn24_1_look_nacional_keys_hours.json
+?? tmp/lkn24_1_look_nacional_keys_hours.txt
+?? tmp/lkn24_backup/
+?? tmp/lkn24_baseline.txt
+?? tmp/lkn25_0_structural_patch.json
+?? tmp/lkn25_0_structural_patch.txt
+?? tmp/lkn25_1_selector_audit.txt
+?? tmp/lkn25_2_backup/
+?? tmp/lkn25_2_selectors_patch.json
+?? tmp/lkn25_2_selectors_patch.txt
+?? tmp/lkn25_3_results_hooks_audit.json
+?? tmp/lkn25_3_results_hooks_audit.txt
+?? tmp/lkn25_4_schedule_engine_audit.txt
+?? tmp/lkn25_backup/
+?? tmp/lkn26_1_build_errors_audit.txt
+?? tmp/lkn26_2_fix.log
+?? tmp/lkn26_3_build.log
+?? tmp/lkn26_build.log
+?? tmp/lkn27_results_final_audit.txt
+?? tmp/lkn28_results_structure.txt
+?? tmp/lkn29_results_backup/
+?? tmp/lkn29_results_build.log
+?? tmp/lkn29_results_patch.log
+?? tmp/lkn30_build.log
+?? tmp/lkn30_restore_isFederal.log
+?? tmp/lkn31_1_build.log
+?? tmp/lkn31_1_fix.log
+?? tmp/lkn32_2_predeploy_audit.txt
+?? tmp/lkn32_predeploy_audit.txt
+?? tmp/lkn34_frontend_hosting_audit.txt
+?? tmp/lkn34_production_index.html
+?? tmp/lkn34_render_index.html
+?? tmp/lkn35_vercel_audit.txt
+?? tmp/lkn37_vercel_failed_deploy.log
+?? tmp/lkn38_selectedLottery_context.txt
+?? tmp/lkn39_late_build.log
+?? tmp/lkn40_push_deploy.log
+?? tmp/lkn41_dashboard_top3_schedule_audit.txt
+?? tmp/lkn42_schedule_consumers.txt
+?? tmp/lkn43_schedule_refactor_blocks.txt
+?? tmp/lkn44_backup/
+?? tmp/lkn44_build.log
+?? tmp/lkn44_top3_schedule_validation.txt
+?? tmp/lkn44_top3_tests.log
+?? tmp/lkn45_top3_test_environment.txt
+?? tmp/lkn46_backup/
+?? tmp/lkn46_jest.log
+?? tmp/lkn48_schedule_flow.txt
+?? tmp/lkn49_git_status.txt
+?? tmp/lkn49_schedule_core_exact.txt
+?? tmp/lkn50_2_calendar_patch.log
+?? tmp/lkn50_backup/
+?? tmp/lkn50_rule_usage.txt
+?? tmp/lkn51_1_node_esm_environment.txt
+?? tmp/lkn51_import_audit.txt
+?? tmp/lkn52_jest_validation.txt
+?? tmp/lkn53_calendar_exact_source.txt
+?? tmp/lkn55_duplicate_function_scan.txt
+?? tmp/lkn56_calendar_validation.log
+?? tmp/lkn57_hour_format_diagnostic.txt
+?? tmp/lkn58_normalization_functions.txt
+?? tmp/lkn60_lottery_filters_audit.txt
+?? tmp/lkn61_dashboard_lotteries_audit.txt
+?? tmp/lkn62_look_nacional_schedules_audit.txt
+?? tmp/lkn63_dashboard_official_schedule_patch.txt
+?? tmp/lkn64_revert_lkn63.txt
+?? tmp/lkn65_filtersbar_git_status_audit.txt
+?? tmp/lkn67_filtersbar_audit.txt
+?? tmp/lkn68_schedule_source_audit.txt
+?? tmp/lkn69_FiltersBar_before.jsx
+?? tmp/lkn69_dashboard_lotteries_patch.txt
+?? tmp/lkn70_build_dashboard.log
+?? tmp/lkn71_update_browserslist.log
+?? tmp/lkn73_filtersbar_diff.log
+?? tmp/lkn74_dashboard_push.log
+?? tmp/lkn76_nacional_hour_mapping.txt
+?? tmp/lkn76_nacional_hour_mapping_console.log
+?? tmp/lkn77_nacional_importer_mapping.txt
+?? tmp/lkn77_nacional_importer_mapping_console.log
+?? tmp/lkn78_importKingApostas_closehour.txt
+?? tmp/lkn80_normalizeCloseHourForLottery.txt
+?? tmp/lkn81_fetchKingResults.txt
+?? tmp/lkn82_mergeAndDedupDraws.txt
+?? tmp/lkn83_raw_api_payload_nacional.cjs
+?? tmp/lkn83b_exports.cjs
+?? tmp/lkn83b_exports.txt
+?? tmp/lkn84_raw_api_payload_nacional.cjs
+?? tmp/lkn84_raw_api_payload_nacional.txt
+?? tmp/lkn84b_raw_api_nacional.cjs
+?? tmp/lkn84b_raw_api_nacional_console.txt
+?? tmp/lkn85_pre_patch_nacional.txt
+?? tmp/lkn86_preview_patch_nacional.txt
+?? tmp/lkn87_normalize_calls_audit.txt
+?? tmp/lkn88_patch_proposto.txt
+?? tmp/lkn90_anchor_exact_audit.txt
+?? tmp/lkn91_patch_result.txt
+?? tmp/lkn92_patch_applied_audit.txt
+?? tmp/lkn93_direct_call_audit.txt
+?? tmp/lkn94_normalization_test.js
+?? tmp/lkn94_normalization_test_result.txt
+?? tmp/lkn95_real_payload_result.txt
+?? tmp/lkn95_real_payload_test.js
+?? tmp/lkn96_final_diff_audit.txt
+?? tmp/lkn99_deploy_audit.txt
+?? tmp/look_nacional_historico/
+?? tmp/manual_import_federal_2026-07-19_1100.log
+?? tmp/manual_import_look_nacional_2026-07-19.log
+?? tmp/manual_import_nacional_2026-07-20_0200.log
+?? tmp/manual_import_pt_rio_1920.log
+?? tmp/manual_import_pt_rio_2026-07-18_1920.log
+?? tmp/nac01_nacional_2026-07-20_diagnostic.txt
+?? tmp/nac03_github_queue_audit.txt
+?? tmp/nac03_github_runs.json
+?? tmp/nac04_nacional_logs.txt
+?? tmp/nac05_job_nacional.txt
+?? tmp/nac06_results_vs_dashboard.txt
+?? tmp/nac07_importKingApostas.backup.js
+?? tmp/nac07_nacional_2026-07-20/
+?? tmp/nac09_top3_nacional_audit.txt
+?? tmp/nac10_top3_schedule_functions.txt
+?? tmp/nac11_top3_schedule_functions.txt
+?? tmp/nac12_computeStatisticalTop3V3.txt
+?? tmp/nac13_top3_schedule_origin.txt
+?? tmp/nac14_nacional_federal_fix_audit.txt
+?? tmp/nac15_nacional_schedule_audit.txt
+?? tmp/nac16_import_hour_mapping.txt
+?? tmp/nac17_statistics_engine.txt
+?? tmp/nac18_dashboard_draws_pipeline.txt
+?? tmp/nac19_hour_filter.txt
+?? tmp/nac20_mapDrawDoc.txt
+?? tmp/nac21_compare_draw_fields.txt
+?? tmp/nac22_firestore_compare.js
+?? tmp/nac22_firestore_compare.txt
+?? tmp/nac23_firebase_auth_audit.txt
+?? tmp/nac26_firestore_hours_audit.js
+?? tmp/nac26_firestore_hours_audit.txt
+?? tmp/nac27_hour_filter_trace.txt
+?? tmp/nac29_hour_options.txt
+?? tmp/nac30_filtersbar_nacional_hours.txt
+?? tmp/nac31_nacional_hour_mapping.txt
+?? tmp/nac32_drawsforview.txt
+?? tmp/nac33_get_draw_close_hour.txt
+?? tmp/nac34_dashboard_draw_mapping.txt
+?? tmp/nac35_dashboard_fluxo_completo.txt
+?? tmp/nac36_dashboard_fluxo_restante.txt
+?? tmp/nac37_useKingRanking_audit.txt
+?? tmp/nac38_getKingResultsByRange_audit.txt
+?? tmp/nac40_close_hour_values.txt
+?? tmp/nac43_1_firebase_admin_audit.txt
+?? tmp/nac44_predeploy_audit.txt
+?? tmp/nac46_localizar_correcao_funcional.txt
+?? tmp/nac47_dashboard_diff_publicacao.txt
+?? tmp/nac48_publicacao_nacional.log
+?? tmp/nac50_nacional_horario_todos.txt
+?? tmp/nac51_drawsForUi_trace.txt
+?? tmp/nac52_useKingRanking_audit.txt
+?? tmp/nac53_draw_source_audit.txt
+?? tmp/nac54_lottery_key_resolution.txt
+?? tmp/nacional_2026-07-20/
+?? tmp/nacional_2026_05_06.txt
+?? tmp/nacional_cleanup_legacy.txt
+?? tmp/nacional_cleanup_legacy_batched.txt
+?? tmp/nacional_firestore_2025-03-27.txt
+?? tmp/nacional_legacy_backup.json
+?? tmp/nacional_legacy_backup_2026-07-20T23-25-04-832Z.json
+?? tmp/nacional_restore_legacy.txt
+?? tmp/nacional_schedule_boundaries.txt
+?? tmp/nacional_schedule_transition.txt
+?? tmp/nacional_validation_after_cleanup.txt
+?? tmp/predictionService_integration.txt
+?? tmp/predictive_frequency_integrated.js
+?? tmp/predictive_frequency_integrated.json
+?? tmp/predictive_frequency_summary.json
+?? tmp/predictive_frequency_test.js
+?? tmp/predictive_frequency_test.json
+?? tmp/quality_baseline_top3/
+?? tmp/reconcile_falso_ok_contexto.txt
+?? tmp/report_experimental_frequency.js
+?? tmp/restore_nacional_legacy.js
+?? tmp/results_debug_hours.txt
+?? tmp/scoreEngineV2_full_audit.txt
+?? tmp/scoreEngineV4Experimental.before-e07.js
+?? tmp/snapshot_consumption_map.txt
+?? tmp/statisticsEngine_consumidores.txt
+?? tmp/summarize_predictive_frequency.js
+?? tmp/top3.engine.before-lkn50_2.js
+?? tmp/top3.engine.before-tpp04-13.js
+?? tmp/top3.engine.before_lkn54.js
+?? tmp/top3.engine.before_lkn54_1.js
+?? tmp/top3.engine.before_lkn56.js
+?? tmp/top3.engine.before_lkn59.js
+?? tmp/top3.firestore_antes_auth_20260715_000009.js
+?? tmp/top3.hooks.before_lkn59.js
+?? tmp/top3.hooks_antes_diagnostico_save_20260715_114546.js
+?? tmp/top3.schedule-transition.before_lkn54_1.test.js
+?? tmp/top3.schedule-transition.before_lkn56.test.js
+?? tmp/top3.schedule-transition.before_lkn59.test.js
+?? tmp/top3_ablation_topn_audit.txt
+?? tmp/top3_backend_entrypoints.txt
+?? tmp/top3_backend_ponto_de_integracao.txt
+?? tmp/top3_backend_ranking_flow.txt
+?? tmp/top3_baseline_backtest_map.txt
+?? tmp/top3_bloqueio_real.txt
+?? tmp/top3_commit1_auditoria_precisa.txt
+?? tmp/top3_commit1_purificacao.json
+?? tmp/top3_commit1_validacao_final.txt
+?? tmp/top3_effects_build_20260715_234759.log
+?? tmp/top3_evidence_audit.txt
+?? tmp/top3_evidence_audit_focused.txt
+?? tmp/top3_extract_readiness.txt
+?? tmp/top3_firestore_persistencia.txt
+?? tmp/top3_fluxo_execucao.txt
+?? tmp/top3_historico_arquivos_completos.txt
+?? tmp/top3_history_bootstrap_commit.log
+?? tmp/top3_history_bootstrap_validation.json
+?? tmp/top3_history_reader_map.txt
+?? tmp/top3_history_update_hook.txt
+?? tmp/top3_instrumentation/
+?? tmp/top3_integracao_milhares_backend.txt
+?? tmp/top3_last_draw_schedule_audit.txt
+?? tmp/top3_motor_backend_compatibilidade.txt
+?? tmp/top3_motor_backend_compatibilidade_pos_commit1.txt
+?? tmp/top3_motor_consumidores_reais.txt
+?? tmp/top3_node_smoke_pos_commit1.txt
+?? tmp/top3_official_backtest_full.json
+?? tmp/top3_official_backtest_full.txt
+?? tmp/top3_official_backtest_full_console.log
+?? tmp/top3_official_backtest_limit_100.json
+?? tmp/top3_official_backtest_limit_100.txt
+?? tmp/top3_official_backtest_limit_100_console.log
+?? tmp/top3_pre_v4_path_audit.py
+?? tmp/top3_public_api_grafo_node.txt
+?? tmp/top3_rankingScored_origem.txt
+?? tmp/top3_runImport_contract.txt
+?? tmp/top3_snapshot_infraestrutura_existente.txt
+?? tmp/top3_statistical_significance.json
+?? tmp/top3_statistical_significance.txt
+?? tmp/top3_statistical_significance_console.log
+?? tmp/top3_transition_19h_audit.txt
+?? tmp/top3_v4_structural_map.txt
+?? tmp/top3_validate_v3_injection.js
+?? tmp/top3_validate_v3_injection_real.js
+?? tmp/tpp01_03_backtest_active_modules_audit.txt
+?? tmp/tpp01_04_harness_console.log
+?? tmp/tpp01_04_harness_validation.json
+?? tmp/tpp01_04_harness_validation.txt
+?? tmp/tpp01_04b_console.log
+?? tmp/tpp01_04b_inspect_return.js
+?? tmp/tpp01_04b_raw_backtest_result.json
+?? tmp/tpp01_04b_repair_report.txt
+?? tmp/tpp01_04b_return_schema.txt
+?? tmp/tpp01_official_ablation_inventory.txt
+?? tmp/tpp01_v3_real_ablation_blueprint.txt
+?? tmp/tpp02_01_A01_console.log
+?? tmp/tpp02_01_A01_sem_frequency.json
+?? tmp/tpp02_01_A01_sem_frequency.txt
+?? tmp/tpp02_02_A02_console.log
+?? tmp/tpp02_02_A02_sem_context.json
+?? tmp/tpp02_02_A02_sem_context.txt
+?? tmp/tpp02_03_A00_500_console.log
+?? tmp/tpp02_03_A01_500_console.log
+?? tmp/tpp02_03_A02_500_console.log
+?? tmp/tpp02_03_resumo_500.txt
+?? tmp/tpp03_01_case_payload_mapping.js
+?? tmp/tpp03_01_case_payload_mapping.json
+?? tmp/tpp03_01_case_payload_mapping.txt
+?? tmp/tpp03_02_telemetry_mapping.js
+?? tmp/tpp03_02_telemetry_mapping.txt
+?? tmp/tpp03_03_telemetry_control_audit.py
+?? tmp/tpp03_03_telemetry_control_audit.txt
+?? tmp/tpp03_04_variant_execution_flow.txt
+?? tmp/tpp03_06_telemetry_runs/
+?? tmp/tpp03_06_telemetry_runs_console.log
+?? tmp/tpp03_07_case_by_case_comparison.json
+?? tmp/tpp03_07_case_by_case_comparison.txt
+?? tmp/tpp03_07_changed_cases.csv
+?? tmp/tpp03_07_compare_telemetry.js
+?? tmp/tpp03_07_console.log
+?? tmp/tpp03_08_ablation_runtime_path.py
+?? tmp/tpp03_08_ablation_runtime_path.txt
+?? tmp/tpp03_09_ablation_real_locations.py
+?? tmp/tpp03_09_ablation_real_locations.txt
+?? tmp/tpp04_01_camelo_weekday_divergence.py
+?? tmp/tpp04_01_camelo_weekday_divergence.txt
+?? tmp/tpp04_02_layer_first_origin.txt
+?? tmp/tpp04_02_weekday_card_origin.py
+?? tmp/tpp04_02_weekday_card_origin.txt
+?? tmp/tpp04_03_dow_firstcount_origin.py
+?? tmp/tpp04_03_dow_firstcount_origin.txt
+?? tmp/tpp04_04_layer_first_builder.txt
+?? tmp/tpp04_04b_layer_first_builder.py
+?? tmp/tpp04_04b_layer_first_builder.txt
+?? tmp/tpp04_05_critical_functions.txt
+?? tmp/tpp04_06_dashboard_counter_origin.txt
+?? tmp/tpp04_07_detailmap_keys.txt
+?? tmp/tpp04_08_meta_explain_details.txt
+?? tmp/tpp04_09_detailmap_origin.txt
+?? tmp/tpp04_12_dashboard_top3_weekday_source.txt
+?? tmp/tpp04_14_three_rankings_audit.txt
+?? tmp/tpp04_15_weekday_card_data_flow.txt
+?? tmp/tpp04_16_engine_transition_audit.txt
+?? tmp/tpp04_17_core_functions.txt
+?? tmp/tpp04_17b_core_functions_full.txt
+?? tmp/tpp04_18_schedule_definitions_audit.txt
+?? tmp/tpp04_19_getPtRioScheduleForYmd.txt
+?? tmp/tpp04_20_schedule_constants.txt
+?? tmp/tpp04_21_schedule_fix_report.txt
+?? tmp/tpp04_21_top3.engine.before.js
+?? tmp/tpp04_22_transition_validation.log
+?? tmp/tpp04_26_prediction_origin.txt
+?? tmp/tpp04_27_nextslot_hook_context.txt
+?? tmp/tpp04_29_hook_schedule_fix.txt
+?? tmp/tpp04_29_top3.hooks.before.js
+?? tmp/tpp04_31_hook_patch_report.txt
+?? tmp/tpp04_31_top3.hooks.before.js
+?? tmp/tpp04_32_history_schedule_audit.txt
+?? tmp/tpp04_33_schedule_origin_audit.txt
+?? tmp/tpp04_34_getScheduleForLottery.txt
+?? tmp/tpp04_origem_contagem_semana.txt
+?? tmp/tpp05_01_top3_lotteries_audit.txt
+?? tmp/tpp05_02_top3_tabs_component.txt
+?? tmp/tpp05_03_top3_visual_components.txt
+?? tmp/tpp05_04_lotoptions_origin.txt
+?? tmp/tpp05_05_baselots_musthave.txt
+?? tmp/tpp05_06_lottery_options_origin.txt
+?? tmp/tpp05_10_validate_lottery_options.log
+?? tmp/tpp05_11_top3_filters.txt
+?? tmp/tpp05_13_build.log
+?? tmp/tpp05_16_top3_api_calls.txt
+?? tmp/tpp05_17_load_and_loader.txt
+?? tmp/v4_frequency_by_hour_report.json
+?? tmp/v4_frequency_by_hour_test.js
+?? tmp/v4_frequency_hour_weekday_report.json
+?? tmp/v4_frequency_hour_weekday_test.js
+?? tmp/v4_frequency_hour_windows_report.json
+?? tmp/v4_frequency_hour_windows_test.js
+?? tmp/v4_frequency_report.json
+?? tmp/v4_group_recency_by_hour_validation_report.json
+?? tmp/v4_group_recency_by_hour_validation_test.js
+?? tmp/v4_group_recency_report.json
+?? tmp/v4_group_recency_test.js
+?? tmp/v4_input_audit.js
+?? tmp/v4_input_audit.txt
+?? tmp/v4_predictive_telemetry_audit.json
+?? tmp/v4_prizes_report.json
+?? tmp/v4_real_input_snapshot.json
+?? tmp/v4_snapshot_report.json
+?? tmp/validate_nacional_after_cleanup.js
+?? tmp/validate_v4_wrapper.js
+?? trecho_return_api.txt
+main
+
+Name                       Length LastWriteTime
+----                       ------ -------------
+auto-import.yml              3080 21/07/2026 13:24:46
+auto-maintain-backfill.yml   3025 13/07/2026 11:50:35
+
+name: Auto Import — PalPitaco JB
+
+on:
+  schedule:
+    # Heartbeat resiliente a cada 10 minutos:
+    # UTC 00h–02h = BRT 21h–23h
+    # UTC 05h = BRT 02h
+    # UTC 10h–23h = BRT 07h–20h
+    #
+    # Um único gatilho evita colisões entre loterias.
+    # Minutos fora do início da hora reduzem atrasos do GitHub Actions.
+    - cron: "3-53/10 0-2,5,10-23 * * *"
+
+  workflow_dispatch:
+    inputs:
+      lottery:
+        description: "Qual loteria executar"
+        required: true
+        default: "ALL"
+        type: choice
+        options:
+          - ALL
+          - PT_RIO
+          - FEDERAL
+          - LOOK
+          - NACIONAL
+
+# Mantém somente uma execução ativa e uma pendente.
+# Cada execução reconcilia todas as loterias e recupera slots anteriores.
+concurrency:
+  group: auto-import-heartbeat-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+env:
+  TZ: America/Sao_Paulo
+  PITACO_API_BASE: ${{ vars.PITACO_API_BASE }}
+
+jobs:
+  reconcile-results:
+    name: Reconciliar resultados
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    defaults:
+      run:
+        working-directory: backend
+
+    steps:
+      - name: Checkout do repositório
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Instalar dependências
+        run: npm ci
+
+      - name: Importar hoje e reconciliar ontem
+        shell: bash
+        env:
+          FIREBASE_ADMIN_SA_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_JSON }}
+          FAIL_ON_CRITICAL: "1"
+          AUDIT_WARN_MIN: "20"
+          AUDIT_CRIT_MIN: "60"
+          CATCHUP_MAX_AFTER_END_MIN: "1440"
+        run: |
+          set +e
+
+          requested="${{ inputs.lottery }}"
+
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" && "$requested" != "ALL" ]]; then
+            lotteries="$requested"
+          else
+            lotteries="PT_RIO FEDERAL LOOK NACIONAL"
+          fi
+
+          yesterday="$(TZ=America/Sao_Paulo date -d 'yesterday' +%F)"
+          overall=0
+
+          run_import() {
+            local lottery="$1"
+            local period="$2"
+            shift 2
+
+            echo ""
+            echo "=================================================="
+            echo "LOTTERY=$lottery | PERIOD=$period"
+            echo "=================================================="
+
+            env LOTTERY="$lottery" "$@" node scripts/autoImportToday.js
+            local code=$?
+
+            if [[ $code -ne 0 ]]; then
+              echo "::error::Falha LOTTERY=$lottery PERIOD=$period EXIT=$code"
+              overall=1
+            fi
+          }
+
+          for lottery in $lotteries; do
+            run_import "$lottery" "TODAY"
+          done
+
+          for lottery in $lotteries; do
+            run_import \
+              "$lottery" \
+              "YESTERDAY:$yesterday" \
+              DATE="$yesterday" \
+              NOW_HM="23:59"
+          done
+
+          exit $overall
+
+name: Auto Maintain Backfill (PT_RIO)
+
+on:
+  workflow_dispatch:
+    inputs:
+      days:
+        description: "Janela de auditoria (dias)"
+        required: true
+        default: "60"
+      limitDays:
+        description: "Limite de dias por execução de backfill"
+        required: true
+        default: "14"
+  schedule:
+    # Domingo 06:15 (BRT = UTC-3) => 09:15 UTC
+    - cron: "15 9 * * 0"
+
+concurrency:
+  group: autopitaco-maintain-backfill
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  maintain:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    env:
+      TZ: America/Sao_Paulo
+      PITACO_API_BASE: ${{ vars.PITACO_API_BASE }}
+      # ✅ robusto no Actions (sem quebra de newline)
+      FIREBASE_ADMIN_SA_BASE64: ${{ secrets.FIREBASE_ADMIN_SA_BASE64 }}
+
+      # ✅ garante projectId pro Firestore (evita "Unable to detect a Project Id")
+      GOOGLE_CLOUD_PROJECT: palpitacojb-app
+      GCLOUD_PROJECT: palpitacojb-app
+
+      # Defaults (schedule)
+      DAYS_DEFAULT: "60"
+      LIMIT_DAYS_DEFAULT: "14"
+
+      # 🔒 Guardrails CI
+      MAX_DAYS: "60"
+      MAX_LIMIT_DAYS: "14"
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Setup Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: "npm"
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Install deps (backend)
+        working-directory: backend
+        run: npm ci
+
+      - name: Guardrails (validate inputs)
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          DAYS="${{ github.event_name == 'workflow_dispatch' && inputs.days || env.DAYS_DEFAULT }}"
+          LIMIT_DAYS="${{ github.event_name == 'workflow_dispatch' && inputs.limitDays || env.LIMIT_DAYS_DEFAULT }}"
+
+          is_int() { [[ "$1" =~ ^[0-9]+$ ]]; }
+
+          if ! is_int "$DAYS"; then
+            echo "::error::Input 'days' inválido (precisa ser inteiro). Recebido: $DAYS"
+            exit 1
+          fi
+
+          if ! is_int "$LIMIT_DAYS"; then
+            echo "::error::Input 'limitDays' inválido (precisa ser inteiro). Recebido: $LIMIT_DAYS"
+            exit 1
+          fi
+
+          if (( DAYS > ${MAX_DAYS} )); then
+            echo "::error::Guardrail: days=$DAYS excede MAX_DAYS=${MAX_DAYS}. Use <= ${MAX_DAYS}."
+            exit 1
+          fi
+
+          if (( LIMIT_DAYS > ${MAX_LIMIT_DAYS} )); then
+            echo "::error::Guardrail: limitDays=$LIMIT_DAYS excede MAX_LIMIT_DAYS=${MAX_LIMIT_DAYS}. Use <= ${MAX_LIMIT_DAYS}."
+            exit 1
+          fi
+
+          echo "DAYS=$DAYS" >> "$GITHUB_ENV"
+          echo "LIMIT_DAYS=$LIMIT_DAYS" >> "$GITHUB_ENV"
+
+          echo "Resolved inputs:"
+          echo "  DAYS=$DAYS"
+          echo "  LIMIT_DAYS=$LIMIT_DAYS"
+
+      - name: Run autoMaintainBackfill (PT_RIO)
+        run: node backend/scripts/autoMaintainBackfill.js --lottery=PT_RIO --days=${{ env.DAYS }} --limitDays=${{ env.LIMIT_DAYS }} --baseMins=0,9 --tolMin=2 --baseUrl="${{ vars.PITACO_API_BASE }}"
+
+.\src\hooks\useKingRanking.js:297:  const [boundsRetryTick, setBoundsRetryTick] = useState(0);
+.\src\hooks\useKingRanking.js:298:  const boundsRetryTimerRef = useRef(null);
+.\src\hooks\useKingRanking.js:346:          if (boundsRetryTimerRef.current) clearTimeout(boundsRetryTimerRef.current);
+.\src\hooks\useKingRanking.js:347:          boundsRetryTimerRef.current = setTimeout(() => {
+.\src\hooks\useKingRanking.js:348:            if (mounted) setBoundsRetryTick((t) => t + 1);
+.\src\hooks\useKingRanking.js:364:        if (boundsRetryTimerRef.current) clearTimeout(boundsRetryTimerRef.current);
+.\src\hooks\useKingRanking.js:365:        boundsRetryTimerRef.current = setTimeout(() => {
+.\src\hooks\useKingRanking.js:366:          if (mounted) setBoundsRetryTick((t) => t + 1);
+.\src\hooks\useKingRanking.js:375:      if (boundsRetryTimerRef.current) clearTimeout(boundsRetryTimerRef.current);
+.\src\hooks\useKingRanking.js:377:  }, [uf, boundsRetryTick, boundsSoftTick]);
+.\backend\package-lock.json:390:      "integrity": "sha512-JPgcXKCuO+CWqGDnigBtvo09HeBs5u/Ktc2GaFj2m01hLarbxthLNm7Fk8iOP1aqAtXV+fnnGj7U28xmk7IwVA==",
+.\backend\package-lock.json:538:        "async-retry": "^1.3.3",
+.\backend\package-lock.json:546:        "retry-request": "^7.0.0",
+.\backend\package-lock.json:1017:    "node_modules/async-retry": {
+.\backend\package-lock.json:1019:      "resolved": "https://registry.npmjs.org/async-retry/-/async-retry-1.3.3.tgz",
+.\backend\package-lock.json:1024:        "retry": "0.13.1"
+.\backend\package-lock.json:1575:      "integrity": "sha512-f3qQ9oQy9j2AhBe/H9VC91wLmKBCCU/gDOnKNAYG5hswO7BLKj09Hc5HYNz9cGI++xlpDCIgDaitVs03ATR84Q==",
+.\backend\package-lock.json:1882:        "retry-request": "^7.0.0",
+.\backend\package-lock.json:2500:      "integrity": "sha512-sPU4uV7dYlvtWJxwwxHD0PuihVNiE7TyAbQ5SWxDCB9mUYvOgroQOwYQQOKPJ8CIbE+1ETVlOoK1UC2nU3gYvg==",
+.\backend\package-lock.json:2848:    "node_modules/retry": {
+.\backend\package-lock.json:2850:      "resolved": "https://registry.npmjs.org/retry/-/retry-0.13.1.tgz",
+.\backend\package-lock.json:2858:    "node_modules/retry-request": {
+.\backend\package-lock.json:2860:      "resolved": "https://registry.npmjs.org/retry-request/-/retry-request-7.0.2.tgz",
+.\backend\routes\kingDraws.js:33:    return ["09:00", "11:00", "14:00", "16:00"];
+.\backend\routes\kingDraws.js:37:  const expected = ["09:00", "11:00", "14:00", "16:00"];
+.\backend\routes\kingDraws.js:39:  // 21h existe fora domingo
+.\backend\routes\kingDraws.js:40:  expected.push("21:00");
+.\src\constants\schedule.js:19:  if (s === "LOOK") return "LOOK";
+.\src\constants\schedule.js:20:  if (s === "GO") return "LOOK";
+.\src\constants\schedule.js:43:    "09:00",
+.\src\constants\schedule.js:48:    "21:00",
+.\src\constants\schedule.js:53:  LOOK: Object.freeze([
+.\src\constants\schedule.js:55:    "09:00",
+.\src\constants\schedule.js:60:    "21:00",
+.\src\constants\schedule.js:61:    "23:00",
+.\src\constants\schedule.js:70:    "21:00",
+.\src\constants\schedule.js:71:    "23:00",
+.\src\constants\bichoMap.js:169:   Lookups
+.\backend\routes\bounds.js:19:  if (["LOOK", "GO"].includes(s)) return "LOOK";
+.\src\utils\buildPalpites.js:324: * - closeHourBucket: "09h" | "11h" | etc
+.\src\utils\buildPalpites.js:425: * - closeHourBucket: "09h" | "11h" | etc (opcional)
+.\backend\server.js:451:    const PROBE_LOOKBACK_DAYS = 60;
+.\backend\server.js:547:    async function probeRecentMaxYmd(lookbackDays = 60) {
+.\backend\server.js:549:      const n = Math.max(3, Math.min(180, Number(lookbackDays) || 60));
+.\backend\server.js:559:    const scanStartYmd = baseYmd || (await probeRecentMaxYmd(PROBE_LOOKBACK_DAYS));
+.\backend\server.js:581:        note: "Sem draws recentes no lookback. Informe baseDate=YYYY-MM-DD para for├ºar.",
+.\backend\server.js:586:    const MAX_LOOKBACK_DAYS = 370;
+.\backend\server.js:589:    for (let iter = 0; iter < MAX_LOOKBACK_DAYS && lastSeen.size < 25; iter += 1) {
+.\backend\server.js:666:      probeLookbackDays: PROBE_LOOKBACK_DAYS,
+.\backend\server.js:669:        maxLookbackDays: MAX_LOOKBACK_DAYS,
+.\backend\routes\pitacoResults.js:78:  if (s === "LOOK" || s === "GO") return "LOOK";
+.\backend\routes\pitacoResults.js:615:      hint: "Use: ?date=YYYY-MM-DD&lottery=PT_RIO|FEDERAL|LOOK|NACIONAL  (ou)  ?date=YYYY-MM-DD&uf=RJ|BR",
+.\backend\routes\pitacoResults.js:648:        error: "lottery inv├ílida: " + lotteryRaw + " (use lottery=PT_RIO|FEDERAL|LOOK|NACIONAL ou aliases RJ|BR)",
+.\src\pages\Dashboard\Dashboard.jsx:524:  if (u === "LOOK") {
+.\src\services\statsSignals.js:22:   - hourBucket: "09:00" etc (alvo efetivo da an├ílise)
+.\src\services\statsSignals.js:382:      : "21:00") || "21:00";
+.\src\services\kingResultsService.js:99:  return "19:00";
+.\src\services\kingResultsService.js:233: * Ô£à Bucket "09h", "11h"ÔÇª
+.\src\services\kingResultsService.js:734:async function probeRecentMaxYmd(uf, lookbackDays = 45) {
+.\src\services\kingResultsService.js:736:  const n = Math.max(3, Math.min(120, Number(lookbackDays) || 45));
+.\src\services\kingResultsService.js:1040:    if (h === "19:00") return 190000 + n;
+.\src\services\kingResultsService.js:1044:  if (h === "19:00") return 200000 + n;
+.\src\pages\Top3\__tests__\top3.schedule-transition.test.js:96:      "09:00",
+.\src\pages\Top3\__tests__\top3.schedule-transition.test.js:114:    expect(result).not.toContain("19:00");
+.\src\pages\Top3\__tests__\top3.schedule-transition.test.js:119:      "09:00",
+.\src\pages\Top3\__tests__\top3.schedule-transition.test.js:123:      "19:00",
+.\src\pages\Top3\__tests__\top3.schedule-transition.test.js:124:      "21:00",
+.\src\pages\Top3\__tests__\top3.schedule-transition.test.js:130:      "09:00",
+.\src\pages\Top3\__tests__\top3.schedule-transition.test.js:134:      "19:00",
+.\src\pages\Top3\__tests__\top3.schedule-transition.test.js:135:      "21:00",
+.\src\pages\Top3\__tests__\top3.schedule-transition.test.js:143:    expect(result).not.toContain("19:00");
+.\src\pages\Top3\__tests__\top3.schedule-transition.test.js:150:    expect(result).not.toContain("19:00");
+.\src\pages\Dashboard\components\Sidebar\Icon.jsx:101:          d="M8 21h8M10 15h4"
+.\src\pages\Dashboard\components\Sidebar\Icon.jsx:169:        <path d="M4 21h16" stroke={stroke} strokeWidth="2" strokeLinecap="round" />
+.\src\pages\Top3\__tests__\top3.schedule-calendar-rules.node.test.js:89:      "09:00",
+.\src\pages\Top3\__tests__\top3.schedule-calendar-rules.node.test.js:94:      "21:00",
+.\src\pages\Top3\__tests__\top3.schedule-calendar-rules.node.test.js:103:      "09:00",
+.\src\pages\Top3\__tests__\top3.schedule-calendar-rules.node.test.js:108:      "21:00",
+.\src\pages\Top3\__tests__\top3.schedule-calendar-rules.node.test.js:117:      "09:00",
+.\src\pages\Top3\__tests__\top3.schedule-calendar-rules.node.test.js:122:      "21:00",
+.\src\pages\Top3\__tests__\top3.schedule-calendar-rules.node.test.js:131:      "09:00",
+.\src\pages\Top3\__tests__\top3.schedule-calendar-rules.node.test.js:135:      "19:00",
+.\src\pages\Top3\__tests__\top3.schedule-calendar-rules.node.test.js:136:      "21:00",
+.\src\pages\Top3\__tests__\top3.public-api.node.test.js:61:        ["09h", "11h", "14h"],
+.\src\pages\Dashboard\components\SearchResultsTable.jsx:29:   Hora: padronizar para bucket "09h", "11h"...
+.\src\pages\Dashboard\components\SearchResultsTable.jsx:331:      const close_hour = hourBucketFromAny(close_hour_raw); // Ô£à PADR├âO "09h"
+.\backend\engine\top3PredictionService.js:26:  "09:00",
+.\backend\engine\top3PredictionService.js:31:  "21:00",
+.\backend\engine\top3PredictionService.js:35:  "09:00",
+.\backend\engine\top3PredictionService.js:39:  "21:00",
+.\backend\engine\top3PredictionService.js:230:          lookbackDays: null,
+.\backend\engine\top3PredictionService.js:249:  const lookbackDays = Math.max(
+.\backend\engine\top3PredictionService.js:253:      Number(input.lookbackDays || 180)
+.\backend\engine\top3PredictionService.js:267:    lookbackDays
+.\backend\engine\top3PredictionService.js:285:    lookbackDays,
+.\backend\engine\top3PredictionService.js:781:    lookbackDays,
+.\backend\engine\top3PredictionService.js:886:    lookbackDays,
+.\backend\engine\top3PredictionService.js:907:    lookbackDays,
+.\src\pages\Dashboard\components\FiltersBar.jsx:8: * - filters.loteria: "PT_RIO" | "FEDERAL" | "LOOK" | "NACIONAL"
+.\src\pages\Dashboard\components\FiltersBar.jsx:12: * - PT_RIO: Todos + 09h/11h/14h/16h/18h/21h
+.\src\pages\Dashboard\components\FiltersBar.jsx:14: * - LOOK: Todos + 07h/09h/11h/14h/16h/18h/21h/23h
+.\src\pages\Dashboard\components\FiltersBar.jsx:15: * - NACIONAL: Todos + 02h/08h/10h/12h/15h/17h/21h/23h
+.\src\pages\Dashboard\components\FiltersBar.jsx:219:      { label: "LOOK", value: "LOOK" },
+.\src\pages\Dashboard\components\FiltersBar.jsx:253:      { label: "09h", value: "09h" },
+.\src\pages\Dashboard\components\FiltersBar.jsx:258:      { label: "21h", value: "21h" },
+.\src\pages\Dashboard\components\FiltersBar.jsx:268:    // Ô£à LOOK
+.\src\pages\Dashboard\components\FiltersBar.jsx:269:    const horariosLOOK = [
+.\src\pages\Dashboard\components\FiltersBar.jsx:272:      { label: "09h", value: "09h" },
+.\src\pages\Dashboard\components\FiltersBar.jsx:277:      { label: "21h", value: "21h" },
+.\src\pages\Dashboard\components\FiltersBar.jsx:278:      { label: "23h", value: "23h" },
+.\src\pages\Dashboard\components\FiltersBar.jsx:289:      { label: "10h", value: "09h" },
+.\src\pages\Dashboard\components\FiltersBar.jsx:293:      { label: "21h", value: "20h" },
+.\src\pages\Dashboard\components\FiltersBar.jsx:294:      { label: "23h", value: "22h" },
+.\src\pages\Dashboard\components\FiltersBar.jsx:381:      LOOK: horariosLOOK,
+.\src\pages\Top3\Top3View.jsx:1344:    { value: "LOOK", label: "LOOK" },
+.\src\pages\Top3\Top3View.jsx:1365:    map.get("LOOK"),
+.\src\pages\Top3\Top3View.jsx:1372:          "LOOK",
+.\src\pages\Dashboard\components\ChartsGrid.jsx:158:  // "09:00h" / "09:00"
+.\src\pages\Dashboard\components\ChartsGrid.jsx:166:  // "09h00" / "9h00" / "09h00m"
+.\src\pages\Dashboard\components\ChartsGrid.jsx:174:  // "9h" / "09h" / "09hs"
+.\src\pages\Dashboard\components\ChartsGrid.jsx:185:/** Ô£à Mapeia HH:MM -> BUCKET "09h" etc. */
+.\src\pages\Dashboard\components\ChartsGrid.jsx:186:function hhmmToBucket09h(value) {
+.\src\pages\Dashboard\components\ChartsGrid.jsx:1267:  const ALLOWED_BUCKETS = ["09h", "11h", "14h", "16h", "18h", "21h"];
+.\src\pages\Dashboard\components\ChartsGrid.jsx:1272:    const bucket = hhmmToBucket09h(getDrawCloseHour(d));
+.\src\services\auditKingCounts.js:103: * Valida se est├í em formato HH:MM (00..23:00..59)
+.\backend\scripts\auditRealGradePtRio.js:28:    hours = ["09:00", "11:00", "14:00", "16:00"];
+.\backend\scripts\auditRealGradePtRio.js:30:    hours = ["09:00", "11:00", "14:00", "16:00", "18:00"];
+.\backend\scripts\auditRealGradePtRio.js:32:    hours = ["09:00", "11:00", "14:00", "16:00", "18:00", "21:00"];
+.\backend\scripts\auditOfficialSource.js:35:  if (wd === 0) return ["09:00", "11:00", "14:00", "16:00"];
+.\backend\scripts\auditOfficialSource.js:39:    return ["09:00", "11:00", "14:00", "16:00", "21:00"];
+.\backend\scripts\auditOfficialSource.js:43:  return ["09:00", "11:00", "14:00", "16:00", "18:00", "21:00"];
+.\src\pages\Top3\top3.hooks.js:16:  LOOKBACK_ALL,
+.\src\pages\Top3\top3.hooks.js:17:  LOOKBACK_OPTIONS,
+.\src\pages\Top3\top3.hooks.js:298:  const [lookback, setLookback] = useState(LOOKBACK_ALL);
+.\src\pages\Top3\top3.hooks.js:524:            "19:00",
+.\src\pages\Top3\top3.hooks.js:759:      if (lookback === LOOKBACK_ALL) {
+.\src\pages\Top3\top3.hooks.js:762:        const days = Math.max(1, Number(lookback || 30));
+.\src\pages\Top3\top3.hooks.js:842:  }, [lotteryKeySafe, ymdSafe, lookback, resetStateForNoData]);
+.\src\pages\Top3\top3.hooks.js:848:      lookback,
+.\src\pages\Top3\top3.hooks.js:872:      lookback,
+.\src\pages\Top3\top3.hooks.js:883:    lookback,
+.\src\pages\Top3\top3.hooks.js:1187:    LOOKBACK_ALL,
+.\src\pages\Top3\top3.hooks.js:1188:    LOOKBACK_OPTIONS,
+.\src\pages\Top3\top3.hooks.js:1194:    lookback,
+.\src\pages\Top3\top3.hooks.js:1219:    setLookback,
+.\backend\scripts\auditFirestorePtRioRange.js:8:const EXPECTED = ["09:00", "11:00", "14:00", "16:00", "18:00", "21:00"];
+.\src\pages\Top3\top3.engine.js:316:      if (!transitionedSchedule.includes("19:00")) {
+.\src\pages\Top3\top3.engine.js:317:        transitionedSchedule.push("19:00");
+.\src\pages\Centenas\__tests__\milharProbabilityEngineV3.test.js:55:        hour: "09:00",
+.\src\pages\Centenas\__tests__\milharProbabilityEngineV3.test.js:137:          hour: "09:00",
+.\src\pages\Centenas\__tests__\milharProbabilityEngineV3.test.js:145:      targetHour: "09:00",
+.\backend\scripts\auditFastPtRio.js:8:const EXPECTED = ["09:00", "11:00", "14:00", "16:00", "18:00", "21:00"];
+.\src\pages\Top3\top3.constants.js:3:export const LOOKBACK_ALL = "ALL";
+.\src\pages\Top3\top3.constants.js:5:export const LOOKBACK_OPTIONS = [
+.\src\pages\Top3\top3.constants.js:6:  { value: LOOKBACK_ALL, label: "Todos" },
+.\src\pages\Top3\top3.constants.js:21:  { key: "LOOK", value: "LOOK", label: "LOOK" },
+.\src\pages\Top3\top3.constants.js:27:  "09:00",
+.\src\pages\Top3\top3.constants.js:32:  "21:00",
+.\src\pages\Top3\top3.constants.js:36:  "09:00",
+.\src\pages\Top3\top3.constants.js:49:  "09:00",
+.\src\pages\Top3\top3.constants.js:54:  "21:00",
+.\backend\scripts\auditDrawSlotsRange.js:55: * aceita "11:09", "11:09:00", "11h", "11hs", "11", "09-09", "09hs", etc.
+.\src\pages\Centenas\CentenasView.jsx:29: * - O filtro "21h" precisa bater por bucket de hora (HH:00), ignorando minutos.
+.\src\pages\Centenas\CentenasView.jsx:47:  LOOK: "LOOK",
+.\src\pages\Centenas\CentenasView.jsx:115: * Ex: "21:10" -> "21:00", "21h" -> "21:00", "09:00" -> "09:00"
+.\src\pages\Centenas\CentenasView.jsx:487:          LOTTERY_KEYS.LOOK,
+.\src\pages\Centenas\CentenasView.jsx:506:        id: LOTTERY_KEYS.LOOK,
+.\src\pages\Centenas\CentenasView.jsx:507:        label: "LOOK",
+.\src\pages\Centenas\CentenasView.jsx:509:          LOTTERY_KEYS.LOOK,
+.\src\pages\Centenas\CentenasView.jsx:693:      "09:00",
+.\src\pages\Centenas\CentenasView.jsx:698:      "21:00",
+.\src\pages\Centenas\CentenasView.jsx:726:        LOTTERY_KEYS.LOOK
+.\src\pages\Centenas\CentenasView.jsx:731:        "09:00",
+.\src\pages\Centenas\CentenasView.jsx:736:        "21:00",
+.\src\pages\Centenas\CentenasView.jsx:737:        "23:00"
+.\src\pages\Centenas\CentenasView.jsx:753:        "21:00",
+.\src\pages\Centenas\CentenasView.jsx:754:        "23:00"
+.\backend\scripts\auditCoverage.js:25:    return ["09:00","11:00","14:00","16:00"];
+.\backend\scripts\auditCoverage.js:29:    return ["09:00","11:00","14:00","16:00","21:00"];
+.\backend\scripts\auditCoverage.js:33:    return ["09:00","11:00","14:00","16:00","21:00"];
+.\backend\scripts\auditCoverage.js:35:  return ["09:00","11:00","14:00","16:00","18:00","21:00"];
+.\src\pages\Centenas\centenas.utils.js:86: * Ex: "21:10" -> "21:00", "21h" -> "21:00", "09:00" -> "09:00"
+.\backend\scripts\importKingApostas.js:178: * Retry HTTP simples (evita falhas intermitentes/429)
+.\backend\scripts\importKingApostas.js:180:const HTTP_RETRIES = Number.isFinite(Number(process.env.HTTP_RETRIES))
+.\backend\scripts\importKingApostas.js:181:  ? Math.max(0, Number(process.env.HTTP_RETRIES))
+.\backend\scripts\importKingApostas.js:184:const HTTP_RETRY_BASE_MS = Number.isFinite(Number(process.env.HTTP_RETRY_BASE_MS))
+.\backend\scripts\importKingApostas.js:185:  ? Math.max(50, Number(process.env.HTTP_RETRY_BASE_MS))
+.\backend\scripts\importKingApostas.js:227:const LOOK_STATE_CODE = "GO";
+.\backend\scripts\importKingApostas.js:228:const LOOK_LOTTERY_KEY = "LOOK";
+.\backend\scripts\importKingApostas.js:238:  if (lk === LOOK_LOTTERY_KEY) return LOOK_STATE_CODE;
+.\backend\scripts\importKingApostas.js:371: * - Para PT_RIO: for├ºa minutos = 00 (09:09 -> 09:00)
+.\backend\scripts\importKingApostas.js:393:  // LOOK:
+.\backend\scripts\importKingApostas.js:397:  if (lk === "LOOK") {
+.\backend\scripts\importKingApostas.js:514: * - KING_LOTTERIES_LOOK="uuid1,uuid2,..."
+.\backend\scripts\importKingApostas.js:527:    LOOK: [
+.\backend\scripts\importKingApostas.js:569:    const rawLook = String(process.env.KING_LOTTERIES_LOOK || "").trim();
+.\backend\scripts\importKingApostas.js:570:    if (rawLook) {
+.\backend\scripts\importKingApostas.js:571:      const arrLook = rawLook
+.\backend\scripts\importKingApostas.js:575:      if (arrLook.length) LOTTERIES_BY_KEY.LOOK = arrLook;
+.\backend\scripts\importKingApostas.js:601:          `LOOK lotteries=${counts.LOOK} | ` +
+.\backend\scripts\importKingApostas.js:643:function shouldRetryAxiosError(err) {
+.\backend\scripts\importKingApostas.js:669:  for (let attempt = 0; attempt <= HTTP_RETRIES; attempt++) {
+.\backend\scripts\importKingApostas.js:689:      const canRetry = attempt < HTTP_RETRIES && shouldRetryAxiosError(e);
+.\backend\scripts\importKingApostas.js:690:      if (!canRetry) break;
+.\backend\scripts\importKingApostas.js:692:      const backoff = HTTP_RETRY_BASE_MS * Math.pow(2, attempt);
+.\backend\scripts\importKingApostas.js:694:        `[HTTP] tentativa ${attempt + 1}/${HTTP_RETRIES + 1} falhou (${
+.\backend\scripts\importKingApostas.js:696:        }). retry em ${backoff}ms...`
+.\backend\scripts\importKingApostas.js:726:  for (let attempt = 0; attempt <= HTTP_RETRIES; attempt++) {
+.\backend\scripts\importKingApostas.js:744:      const canRetry = attempt < HTTP_RETRIES && shouldRetryAxiosError(e);
+.\backend\scripts\importKingApostas.js:745:      if (!canRetry) break;
+.\backend\scripts\importKingApostas.js:747:      const backoff = HTTP_RETRY_BASE_MS * Math.pow(2, attempt);
+.\backend\scripts\importKingApostas.js:749:        `[HTTP] tentativa ${attempt + 1}/${HTTP_RETRIES + 1} (HTML) falhou (${
+.\backend\scripts\importKingApostas.js:751:        }). retry em ${backoff}ms...`
+.\backend\scripts\importKingApostas.js:1082:      // Ô£à compara por SLOT normalizado (pega legado "09:09" como "09:00")
+.\backend\scripts\importKingApostas.js:1877:      "Uso: node backend/scripts/importKingApostas.js YYYY-MM-DD [PT_RIO|FEDERAL|LOOK|NACIONAL] [HH:MM]"
+.\backend\scripts\importKingApostas.js:1884:      "Uso: node backend/scripts/importKingApostas.js YYYY-MM-DD [PT_RIO|FEDERAL|LOOK|NACIONAL] [HH:MM]"
+.\backend\scripts\importKingApostas.js:1900:      "Uso: node backend/scripts/importKingApostas.js YYYY-MM-DD [PT_RIO|FEDERAL|LOOK|NACIONAL] [HH:MM]"
+.\backend\engine\contextEvidence.js:60:        lookback: normalize(context.lookback),
+.\backend\scripts\genPtRioCalendarRules.js:9:  const HOURS = ["09:00", "11:00", "14:00", "16:00", "18:00", "21:00"];
+.\backend\scripts\runBackfillFromPlan.js:60: * aceita "09", "9", "09:00", 9, etc -> "HH"
+.\backend\scripts\fixReceiveDuplicates.js:51:    // Monta set de ids para lookup r├ípido
+.\backend\scripts\fixReceiveDuplicates.js:72:      // fazemos lookup no conjunto local (idSet).
+.\src\pages\Search\Search.jsx:99:// Bucket "09h", "11h"ÔÇª
+.\src\pages\Search\Search.jsx:756:            // Ô£à Hora exibida = bucket padr├úo (09h/11h/14hÔÇª)
+.\src\pages\Search\Search.jsx:1134:              {["Todos", "09:00", "11:00", "14:00", "16:00", "18:00", "21:00"].map((x) => (
+.\backend\scripts\repairHistoricalHardGaps.js:6:  { date: "2024-02-25", hours: ["09:00"] },
+.\backend\scripts\repairHistoricalHardGaps.js:7:  { date: "2024-03-03", hours: ["09:00"] },
+.\backend\scripts\repairHistoricalHardGaps.js:8:  { date: "2024-03-10", hours: ["09:00"] },
+.\backend\scripts\repairHistoricalHardGaps.js:9:  { date: "2024-03-17", hours: ["09:00"] },
+.\backend\scripts\repairHistoricalHardGaps.js:10:  { date: "2024-03-24", hours: ["09:00"] },
+.\backend\scripts\repairHistoricalHardGaps.js:11:  { date: "2024-03-31", hours: ["09:00"] },
+.\backend\scripts\repairHistoricalHardGaps.js:12:  { date: "2024-04-07", hours: ["09:00"] },
+.\backend\scripts\repairHistoricalHardGaps.js:13:  { date: "2026-03-18", hours: ["21:00"] },
+.\backend\scripts\repairHistoricalHardGaps.js:14:  { date: "2026-03-24", hours: ["14:00", "16:00", "18:00", "21:00"] },
+.\src\pages\Top3\modules\top3.state.js:3:export function useTop3State({ defaultLottery, defaultYmd, defaultLookback }) {
+.\src\pages\Top3\modules\top3.state.js:12:  const [lookback, setLookback] = useState(Number(defaultLookback) || 120);
+.\src\pages\Top3\modules\top3.state.js:55:    lookback,
+.\src\pages\Top3\modules\top3.state.js:56:    setLookback,
+.\src\pages\Results\Results.jsx:197:const SCOPE_LOOK = "LOOK";
+.\src\pages\Results\Results.jsx:200:const LOOK_EXPECTED_HOURS_DESC = [
+.\src\pages\Results\Results.jsx:201:  "23:00",
+.\src\pages\Results\Results.jsx:202:  "21:00",
+.\src\pages\Results\Results.jsx:207:  "09:00",
+.\src\pages\Results\Results.jsx:212:  "23:00",
+.\src\pages\Results\Results.jsx:213:  "21:00",
+.\src\pages\Results\Results.jsx:232:const RJ_09H_START_YMD = "2024-01-05";
+.\src\pages\Results\Results.jsx:233:const RJ_EXPECTED_HOURS_BASE_DESC = ["21:00", "18:00", "16:00", "14:00", "11:00"];
+.\src\pages\Results\Results.jsx:261:  if (s === SCOPE_LOOK || compact === "LOOK" || compact === "GO") {
+.\src\pages\Results\Results.jsx:262:    return SCOPE_LOOK;
+.\src\pages\Results\Results.jsx:281:  if (up === SCOPE_LOOK) return "LOOK";
+.\src\pages\Results\Results.jsx:584:  if (isYMD(ymd) && ymd >= RJ_09H_START_YMD) {
+.\src\pages\Results\Results.jsx:585:    out.push("09:00");
+.\src\pages\Results\Results.jsx:615:    case "22:49": return "23:00";
+.\src\pages\Results\Results.jsx:616:    case "20:49": return "21:00";
+.\src\pages\Results\Results.jsx:624:    case "22:50": return "23:00";
+.\src\pages\Results\Results.jsx:625:    case "19:50": return "21:00";
+.\src\pages\Results\Results.jsx:670:  } else if (scopeKey === SCOPE_LOOK) {
+.\src\pages\Results\Results.jsx:671:    expectedHours = LOOK_EXPECTED_HOURS_DESC;
+.\src\pages\Results\Results.jsx:1625:                className={scopePillClass(scopeKey === SCOPE_LOOK)}
+.\src\pages\Results\Results.jsx:1628:                  setScopeUi(SCOPE_LOOK);
+.\src\pages\Results\Results.jsx:1630:                title="Resultados da LOOK"
+.\src\pages\Results\Results.jsx:1632:                LOOK
+.\backend\scripts\ptRioCalendar.js:304:    opcional: ["09:00"],
+.\backend\scripts\ptRioCalendar.js:305:    rara: ["18:00", "21:00"],
+.\src\pages\Top3\modules\top3.analytics.js:100:  lookback,
+.\src\pages\Top3\modules\top3.analytics.js:171:    lookback,
+.\backend\scripts\probeFederalSwitch.js:31:    if (ymd && ch === "19:00") {
+.\backend\scripts\planBackfillFromAudit.js:36: * aceita "11:09", "11:09:00", "11h", "11hs", "11", "09-09", "09hs", etc.
+.\backend\scripts\planBackfillFromAudit.js:75:function looksLikeAuditJson(j) {
+.\backend\scripts\planBackfillFromAudit.js:155:      if (!looksLikeAuditJson(j)) continue;
+.\backend\scripts\planBackfillFromAudit.js:184: * fetch JSON com timeout + retry
+.\backend\scripts\planBackfillFromAudit.js:187: * - FETCH_RETRIES (default 2)
+.\backend\scripts\planBackfillFromAudit.js:188: * - FETCH_RETRY_DELAY_MS (default 600)
+.\backend\scripts\planBackfillFromAudit.js:194:  const RETRIES = envInt("FETCH_RETRIES", 2);
+.\backend\scripts\planBackfillFromAudit.js:195:  const DELAY_MS = envInt("FETCH_RETRY_DELAY_MS", 600);
+.\backend\scripts\planBackfillFromAudit.js:197:  const maxAttempts = 1 + Math.max(0, RETRIES);
+.\backend\scripts\planBackfillFromAudit.js:237:      // retry
+.\backend\scripts\planBackfillFromAudit.js:308:  if (!looksLikeAuditJson(audit)) {
+.\backend\scripts\backtestTop3Official.js:17:  "09:00",
+.\backend\scripts\backtestTop3Official.js:22:  "21:00",
+.\backend\scripts\backtestTop3Official.js:26:  "09:00",
+.\backend\scripts\backtestTop3Official.js:31:  "21:00",
+.\backend\scripts\backtestTop3Official.js:35:  "19:00",
+.\src\pages\Late\Late.jsx:84: * "09h" / "09HS" / "9" / "09:10" -> "09:00" ou "09:10"
+.\src\pages\Late\Late.jsx:104: * Converte "09:00" -> 540
+.\src\pages\Late\Late.jsx:117: * Converte um label de loteria (closeHour) pra bucket "09h"
+.\src\pages\Late\Late.jsx:118: * Aceita "09:00" / "09h" / "09HS" / "9" etc.
+.\src\pages\Late\Late.jsx:192:        // Ô£à normaliza aqui (evita ÔÇ£09h/09HS/9ÔÇØ)
+.\src\pages\Late\Late.jsx:296:    id: "LOOK",
+.\src\pages\Late\Late.jsx:297:    label: "LOOK",
+.\src\pages\Late\Late.jsx:298:    lotteries: ["LOOK"],
+.\src\pages\Late\Late.jsx:312:    { id: "09", label: "09h", closeHour: "09:00" },
+.\src\pages\Late\Late.jsx:317:    { id: "21", label: "21h", closeHour: "21:00" },
+.\src\pages\Late\Late.jsx:325:  LOOK: [
+.\src\pages\Late\Late.jsx:388:  // Ô£à bucket "09h" etc (prefer├¡vel pra bater na base)
+.\backend\scripts\autoRepairToday.js:43:  if (dow === 0) return ["09:00", "11:00", "14:00", "16:00"];
+.\backend\scripts\autoRepairToday.js:45:  const expected = ["09:00", "11:00", "14:00", "16:00", "21:00"];
+.\src\pages\Downloads\Downloads.jsx:660:    const base = ["ALL", "09:00", "11:00", "14:00", "16:00", "18:00", "21:00"];
+.\backend\scripts\autoImportToday.js:132:    { hour: "09:00", windowStart: "09:05", releaseAt: "09:29", windowEnd: "09:35" },
+.\backend\scripts\autoImportToday.js:137:    // 21h: janela longa
+.\backend\scripts\autoImportToday.js:138:    { hour: "21:00", windowStart: "21:05", releaseAt: "21:05", windowEnd: "21:45" },
+.\backend\scripts\autoImportToday.js:142:  // - 19:00 = PROBE (SOFT)
+.\backend\scripts\autoImportToday.js:145:    { hour: "19:00", windowStart: "18:50", releaseAt: "19:00", windowEnd: "19:20" }, // PROBE (SOFT)
+.\backend\scripts\autoImportToday.js:149:  LOOK: [
+.\backend\scripts\autoImportToday.js:151:    { hour: "09:00", windowStart: "09:05", releaseAt: "09:29", windowEnd: "09:35" },
+.\backend\scripts\autoImportToday.js:156:    { hour: "21:00", windowStart: "21:05", releaseAt: "21:05", windowEnd: "21:45" },
+.\backend\scripts\autoImportToday.js:157:    { hour: "23:00", windowStart: "23:05", releaseAt: "23:29", windowEnd: "23:35" },
+.\backend\scripts\autoImportToday.js:167:    { hour: "21:00", windowStart: "21:05", releaseAt: "21:05", windowEnd: "21:45" },
+.\backend\scripts\autoImportToday.js:168:    { hour: "23:00", windowStart: "23:05", releaseAt: "23:29", windowEnd: "23:35" },
+.\backend\scripts\autoImportToday.js:396:  // PT_RIO 21h pode sair como fechamento de 21:30.
+.\backend\scripts\autoImportToday.js:398:  if (LOTTERY === "PT_RIO" && s === "21:00") {
+.\backend\scripts\autoImportToday.js:400:      "21:00", "21:01", "21:02",
+.\backend\scripts\autoImportToday.js:523:        hh === "21:00"
+.\backend\scripts\autoImportToday.js:597: * - demais dias: 19:00 = SOFT (PROBE), 20:00 = HARD (padr├úo)
+.\backend\scripts\autoImportToday.js:613:    if (sched.hour === "19:00") {
+.\backend\scripts\autoImportToday.js:830:function drawLooksLikeSlot(draw, slotHH) {
+.\backend\scripts\autoImportToday.js:869:    const foundInDraws = draws.some((d) => drawLooksLikeSlot(d, slotHHMM));
+.\backend\scripts\autoImportToday.js:1369:            note: "no_draw_for_slot|no_draw_for_slot_calendar (will retry)",
+.\backend\scripts\autoImportToday.js:1373:          logLine(`[AUTO] ${blockedReason} slot=${sched.hour} (${st}) -> mantendo PENDENTE p/ retry`, "INFO");
+.\backend\scripts\autoImportToday.js:1385:            note: "api_missing_slot (stop candidates; will retry later)",
+.\backend\scripts\autoImportToday.js:1390:            `[AUTO] api_missing_slot slot=${sched.hour} (${st}) close=${closeHour} -> parando closes candidatos (vai retry depois)`,
+.\src\pages\Top3\modules\scoreEngine\contextEvidence.js:60:        lookback: normalize(context.lookback),
+.\backend\scripts\lintSourceGaps.js:30:  // aceita 21, "21", "21h", "21:00", "21:30" -> "21"
+.\backend\scripts\importKingRange.js:76:const IMPORT_RETRIES = Number.isFinite(Number(process.env.IMPORT_RETRIES))
+.\backend\scripts\importKingRange.js:77:  ? Number(process.env.IMPORT_RETRIES)
+.\backend\scripts\importKingRange.js:78:  : 2; // total tentativas = 1 + retries
+.\backend\scripts\importKingRange.js:80:const IMPORT_RETRY_DELAY_MS = Number.isFinite(
+.\backend\scripts\importKingRange.js:81:  Number(process.env.IMPORT_RETRY_DELAY_MS)
+.\backend\scripts\importKingRange.js:83:  ? Number(process.env.IMPORT_RETRY_DELAY_MS)
+.\backend\scripts\importKingRange.js:201: * Runner por dia (com retry/timeout)
+.\backend\scripts\importKingRange.js:205:  const maxAttempts = 1 + Math.max(0, IMPORT_RETRIES);
+.\backend\scripts\importKingRange.js:211:        : `[RETRY ${attempt}/${maxAttempts}] ${date} (${lotteryKey})`;
+.\backend\scripts\importKingRange.js:241:      if (IMPORT_RETRY_DELAY_MS > 0) {
+.\backend\scripts\importKingRange.js:243:          `[AGUARDA] ${IMPORT_RETRY_DELAY_MS}ms antes de tentar novamente...`
+.\backend\scripts\importKingRange.js:245:        sleepMs(IMPORT_RETRY_DELAY_MS);
+.\backend\scripts\importKingRange.js:301:        "  IMPORT_RETRIES=2\n" +
+.\backend\scripts\importKingRange.js:302:        "  IMPORT_RETRY_DELAY_MS=1500"
+.\backend\scripts\importKingRange.js:350:      ` | timeout=${IMPORT_TIMEOUT_MS}ms retries=${IMPORT_RETRIES} delay=${IMPORT_RETRY_DELAY_MS}ms`
+.\backend\scripts\importKingRange.js:387:      `Dica: rode um range menor s├│ nessas datas (ou aumente IMPORT_TIMEOUT_MS / IMPORT_RETRIES).`
+.\src\index.jsx:24:      retry: 1,
+.\src\index.jsx:32:      retry: 0,
+.\backend\scripts\importKingApostas.js.safe_patch_20260324_130240:165: * Retry HTTP simples (evita falhas intermitentes/429)
+.\backend\scripts\importKingApostas.js.safe_patch_20260324_130240:167:const HTTP_RETRIES = Number.isFinite(Number(process.env.HTTP_RETRIES))
+.\backend\scripts\importKingApostas.js.safe_patch_20260324_130240:168:  ? Math.max(0, Number(process.env.HTTP_RETRIES))
+.\backend\scripts\importKingApostas.js.safe_patch_20260324_130240:171:const HTTP_RETRY_BASE_MS = Number.isFinite(Number(process.env.HTTP_RETRY_BASE_MS))
+.\backend\scripts\importKingApostas.js.safe_patch_20260324_130240:172:  ? Math.max(50, Number(process.env.HTTP_RETRY_BASE_MS))
+.\backend\scripts\importKingApostas.js.safe_patch_20260324_130240:349: * - Para PT_RIO: for├ºa minutos = 00 (09:09 -> 09:00)
+.\backend\scripts\importKingApostas.js.safe_patch_20260324_130240:527:function shouldRetryAxiosError(err) {
+.\backend\scripts\importKingApostas.js.safe_patch_20260324_130240:553:  for (let attempt = 0; attempt <= HTTP_RETRIES; attempt++) {
+.\backend\scripts\importKingApostas.js.safe_patch_20260324_130240:573:      const canRetry = attempt < HTTP_RETRIES && shouldRetryAxiosError(e);
+.\backend\scripts\importKingApostas.js.safe_patch_20260324_130240:574:      if (!canRetry) break;
+.\backend\scripts\importKingApostas.js.safe_patch_20260324_130240:576:      const backoff = HTTP_RETRY_BASE_MS * Math.pow(2, attempt);
+.\backend\scripts\importKingApostas.js.safe_patch_20260324_130240:578:        `[HTTP] tentativa ${attempt + 1}/${HTTP_RETRIES + 1} falhou (${
+.\backend\scripts\importKingApostas.js.safe_patch_20260324_130240:580:        }). retry em ${backoff}ms...`
+.\backend\scripts\importKingApostas.js.safe_patch_20260324_130240:610:  for (let attempt = 0; attempt <= HTTP_RETRIES; attempt++) {
+.\backend\scripts\importKingApostas.js.safe_patch_20260324_130240:628:      const canRetry = attempt < HTTP_RETRIES && shouldRetryAxiosError(e);
+.\backend\scripts\importKingApostas.js.safe_patch_20260324_130240:629:      if (!canRetry) break;
+.\backend\scripts\importKingApostas.js.safe_patch_20260324_130240:631:      const backoff = HTTP_RETRY_BASE_MS * Math.pow(2, attempt);
+.\backend\scripts\importKingApostas.js.safe_patch_20260324_130240:633:        `[HTTP] tentativa ${attempt + 1}/${HTTP_RETRIES + 1} (HTML) falhou (${
+.\backend\scripts\importKingApostas.js.safe_patch_20260324_130240:635:        }). retry em ${backoff}ms...`
+.\backend\scripts\importKingApostas.js.safe_patch_20260324_130240:957:      // Ô£à compara por SLOT normalizado (pega legado "09:09" como "09:00")
+.\backend\routes\receiveResults.js:43:// aceita "21", "21h", "21:0", "21:00"
+github.com
+  Ô£ô Logged in to github.com account glauberseguros-commits (keyring)
+  - Active account: true
+  - Git operations protocol: https
+  - Token: gho_************************************
+  - Token scopes: 'gist', 'read:org', 'repo', 'workflow'
+Auto Import ÔÇö PalPitaco JB	active	224287043
+Auto Maintain Backfill (PT_RIO)	active	228982009
+[{"conclusion":"success","createdAt":"2026-07-21T16:25:56Z","databaseId":29848552600,"event":"workflow_dispatch","headSha":"02339561031ab08962172dd017a3a7d24074ca88","status":"completed","updatedAt":"2026-07-21T16:28:20Z","url":"https://github.com/glauberseguros-commits/palpitacojb/actions/runs/29848552600","workflowName":"Auto Import ÔÇö PalPitaco JB"},{"conclusion":"failure","createdAt":"2026-07-21T15:49:39Z","databaseId":29845791547,"event":"schedule","headSha":"01d2f27d4a420c024c8585aea9949a202b04ab50","status":"completed","updatedAt":"2026-07-21T15:51:00Z","url":"https://github.com/glauberseguros-commits/palpitacojb/actions/runs/29845791547","workflowName":"Auto Import ÔÇö PalPitaco JB"},{"conclusion":"failure","createdAt":"2026-07-21T15:49:26Z","databaseId":29845775037,"event":"schedule","headSha":"01d2f27d4a420c024c8585aea9949a202b04ab50","status":"completed","updatedAt":"2026-07-21T15:50:22Z","url":"https://github.com/glauberseguros-commits/palpitacojb/actions/runs/29845775037","workflowName":"Auto Import ÔÇö PalPitaco JB"},{"conclusion":"failure","createdAt":"2026-07-21T15:08:14Z","databaseId":29842523676,"event":"schedule","headSha":"01d2f27d4a420c024c8585aea9949a202b04ab50","status":"completed","updatedAt":"2026-07-21T15:09:05Z","url":"https://github.com/glauberseguros-commits/palpitacojb/actions/runs/29842523676","workflowName":"Auto Import ÔÇö PalPitaco JB"},{"conclusion":"success","createdAt":"2026-07-21T14:16:52Z","databaseId":29838349026,"event":"schedule","headSha":"01d2f27d4a420c024c8585aea9949a202b04ab50","status":"completed","updatedAt":"2026-07-21T14:17:14Z","url":"https://github.com/glauberseguros-commits/palpitacojb/actions/runs/29838349026","workflowName":"Auto Import ÔÇö PalPitaco JB"},{"conclusion":"failure","createdAt":"2026-07-21T14:14:22Z","databaseId":29838153527,"event":"schedule","headSha":"01d2f27d4a420c024c8585aea9949a202b04ab50","status":"completed","updatedAt":"2026-07-21T14:15:00Z","url":"https://github.com/glauberseguros-commits/palpitacojb/actions/runs/29838153527","workflowName":"Auto Import ÔÇö PalPitaco JB"},{"conclusion":"failure","createdAt":"2026-07-21T12:25:52Z","databaseId":29830056934,"event":"schedule","headSha":"01d2f27d4a420c024c8585aea9949a202b04ab50","status":"completed","updatedAt":"2026-07-21T12:26:56Z","url":"https://github.com/glauberseguros-commits/palpitacojb/actions/runs/29830056934","workflowName":"Auto Import ÔÇö PalPitaco JB"},{"conclusion":"success","createdAt":"2026-07-21T11:48:26Z","databaseId":29827549300,"event":"schedule","headSha":"01d2f27d4a420c024c8585aea9949a202b04ab50","status":"completed","updatedAt":"2026-07-21T11:49:23Z","url":"https://github.com/glauberseguros-commits/palpitacojb/actions/runs/29827549300","workflowName":"Auto Import ÔÇö PalPitaco JB"},{"conclusion":"failure","createdAt":"2026-07-21T07:39:09Z","databaseId":29811240483,"event":"schedule","headSha":"01d2f27d4a420c024c8585aea9949a202b04ab50","status":"completed","updatedAt":"2026-07-21T07:39:40Z","url":"https://github.com/glauberseguros-commits/palpitacojb/actions/runs/29811240483","workflowName":"Auto Import ÔÇö PalPitaco JB"},{"conclusion":"success","createdAt":"2026-07-21T05:28:28Z","databaseId":29804091494,"event":"schedule","headSha":"01d2f27d4a420c024c8585aea9949a202b04ab50","status":"completed","updatedAt":"2026-07-21T05:29:20Z","url":"https://github.com/glauberseguros-commits/palpitacojb/actions/runs/29804091494","workflowName":"Auto Import ÔÇö PalPitaco JB"},{"conclusion":"success","createdAt":"2026-07-21T05:28:09Z","databaseId":29804076672,"event":"schedule","headSha":"01d2f27d4a420c024c8585aea9949a202b04ab50","status":"completed","updatedAt":"2026-07-21T05:29:00Z","url":"https://github.com/glauberseguros-commits/palpitacojb/actions/runs/29804076672","workflowName":"Auto Import ÔÇö PalPitaco JB"},{"conclusion":"success","createdAt":"2026-07-21T03:36:12Z","databaseId":29798958336,"event":"schedule","headSha":"01d2f27d4a420c024c8585aea9949a202b04ab50","status":"completed","updatedAt":"2026-07-21T03:36:34Z","url":"https://github.com/glauberseguros-commits/palpitacojb/actions/runs/29798958336","workflowName":"Auto Import ÔÇö PalPitaco JB"},{"conclusion":"success","createdAt":"2026-07-21T03:35:18Z","databaseId":29798919744,"event":"schedule","headSha":"01d2f27d4a420c024c8585aea9949a202b04ab50","status":"completed","updatedAt":"2026-07-21T03:35:50Z","url":"https://github.com/glauberseguros-commits/palpitacojb/actions/runs/29798919744","workflowName":"Auto Import ÔÇö PalPitaco JB"},{"conclusion":"failure","createdAt":"2026-07-21T02:44:07Z","databaseId":29796612364,"event":"schedule","headSha":"01d2f27d4a420c024c8585aea9949a202b04ab50","status":"completed","updatedAt":"2026-07-21T02:44:48Z","url":"https://github.com/glauberseguros-commits/palpitacojb/actions/runs/29796612364","workflowName":"Auto Import ÔÇö PalPitaco JB"},{"conclusion":"success","createdAt":"2026-07-20T22:08:46Z","databaseId":29782873970,"event":"schedule","headSha":"d4f136706a3c1e918dbb9ce7ce388eff70051c7a","status":"completed","updatedAt":"2026-07-20T22:09:09Z","url":"https://github.com/glauberseguros-commits/palpitacojb/actions/runs/29782873970","workflowName":"Auto Import ÔÇö PalPitaco JB"},{"conclusion":"failure","createdAt":"2026-07-20T22:04:51Z","databaseId":29782633590,"event":"schedule","headSha":"d4f136706a3c1e918dbb9ce7ce388eff70051c7a","status":"completed","updatedAt":"2026-07-20T22:05:23Z","url":"https://github.com/glauberseguros-commits/palpitacojb/actions/runs/29782633590","workflowName":"Auto Import ÔÇö PalPitaco JB"},{"conclusion":"failure","createdAt":"2026-07-20T21:18:43Z","databaseId":29779678355,"event":"schedule","headSha":"d4f136706a3c1e918dbb9ce7ce388eff70051c7a","status":"completed","updatedAt":"2026-07-20T21:19:52Z","url":"https://github.com/glauberseguros-commits/palpitacojb/actions/runs/29779678355","workflowName":"Auto Import ÔÇö PalPitaco JB"},{"conclusion":"failure","createdAt":"2026-07-20T20:37:01Z","databaseId":29776864014,"event":"schedule","headSha":"a1213cb77c082239287f535bdf24603b6efaf441","status":"completed","updatedAt":"2026-07-20T20:37:25Z","url":"https://github.com/glauberseguros-commits/palpitacojb/actions/runs/29776864014","workflowName":"Auto Import ÔÇö PalPitaco JB"},{"conclusion":"failure","createdAt":"2026-07-20T20:26:27Z","databaseId":29776128100,"event":"schedule","headSha":"a1213cb77c082239287f535bdf24603b6efaf441","status":"completed","updatedAt":"2026-07-20T20:27:22Z","url":"https://github.com/glauberseguros-commits/palpitacojb/actions/runs/29776128100","workflowName":"Auto Import ÔÇö PalPitaco JB"},{"conclusion":"failure","createdAt":"2026-07-20T19:54:20Z","databaseId":29773882094,"event":"schedule","headSha":"a1213cb77c082239287f535bdf24603b6efaf441","status":"completed","updatedAt":"2026-07-20T19:55:13Z","url":"https://github.com/glauberseguros-commits/palpitacojb/actions/runs/29773882094","workflowName":"Auto Import ÔÇö PalPitaco JB"},{"conclusion":"success","createdAt":"2026-07-20T19:02:16Z","databaseId":29770316211,"event":"schedule","headSha":"a1213cb77c082239287f535bdf24603b6efaf441","status":"completed","updatedAt":"2026-07-20T19:02:38Z","url":"https://github.com/glauberseguros-commits/palpitacojb/actions/runs/29770316211","workflowName":"Auto Import ÔÇö PalPitaco JB"},{"conclusion":"failure","createdAt":"2026-07-20T19:00:18Z","databaseId":29770173019,"event":"schedule","headSha":"a1213cb77c082239287f535bdf24603b6efaf441","status":"completed","updatedAt":"2026-07-20T19:00:50Z","url":"https://github.com/glauberseguros-commits/palpitacojb/actions/runs/29770173019","workflowName":"Auto Import ÔÇö PalPitaco JB"},{"conclusion":"failure","createdAt":"2026-07-20T16:40:39Z","databaseId":29760617115,"event":"schedule","headSha":"f0a2541838eec893da0b33118b7118dae40ab1e0","status":"completed","updatedAt":"2026-07-20T16:41:03Z","url":"https://github.com/glauberseguros-commits/palpitacojb/actions/runs/29760617115","workflowName":"Auto Import ÔÇö PalPitaco JB"},{"conclusion":"failure","createdAt":"2026-07-20T15:58:39Z","databaseId":29757568251,"event":"schedule","headSha":"0f61643c1e2ac6881721807ff4917cd4d1210166","status":"completed","updatedAt":"2026-07-20T15:58:59Z","url":"https://github.com/glauberseguros-commits/palpitacojb/actions/runs/29757568251","workflowName":"Auto Import ÔÇö PalPitaco JB"},{"conclusion":"success","createdAt":"2026-07-20T15:58:18Z","databaseId":29757543975,"event":"schedule","headSha":"0f61643c1e2ac6881721807ff4917cd4d1210166","status":"completed","updatedAt":"2026-07-20T15:58:37Z","url":"https://github.com/glauberseguros-commits/palpitacojb/actions/runs/29757543975","workflowName":"Auto Import ÔÇö PalPitaco JB"},{"conclusion":"failure","createdAt":"2026-07-20T15:15:28Z","databaseId":29754344410,"event":"schedule","headSha":"6a4b49afbf925cbeedecf00a6abcbd86c48823b0","status":"completed","updatedAt":"2026-07-20T15:16:01Z","url":"https://github.com/glauberseguros-commits/palpitacojb/actions/runs/29754344410","workflowName":"Auto Import ÔÇö PalPitaco JB"},{"conclusion":"success","createdAt":"2026-07-20T14:29:26Z","databaseId":29750857285,"event":"schedule","headSha":"6a4b49afbf925cbeedecf00a6abcbd86c48823b0","status":"completed","updatedAt":"2026-07-20T14:29:49Z","url":"https://github.com/glauberseguros-commits/palpitacojb/actions/runs/29750857285","workflowName":"Auto Import ÔÇö PalPitaco JB"},{"conclusion":"failure","createdAt":"2026-07-20T14:27:36Z","databaseId":29750725488,"event":"schedule","headSha":"6a4b49afbf925cbeedecf00a6abcbd86c48823b0","status":"completed","updatedAt":"2026-07-20T14:28:11Z","url":"https://github.com/glauberseguros-commits/palpitacojb/actions/runs/29750725488","workflowName":"Auto Import ÔÇö PalPitaco JB"},{"conclusion":"failure","createdAt":"2026-07-20T13:10:48Z","databaseId":29745134222,"event":"schedule","headSha":"6a4b49afbf925cbeedecf00a6abcbd86c48823b0","status":"completed","updatedAt":"2026-07-20T13:11:21Z","url":"https://github.com/glauberseguros-commits/palpitacojb/actions/runs/29745134222","workflowName":"Auto Import ÔÇö PalPitaco JB"},{"conclusion":"failure","createdAt":"2026-07-20T12:18:58Z","databaseId":29741746661,"event":"schedule","headSha":"6a4b49afbf925cbeedecf00a6abcbd86c48823b0","status":"completed","updatedAt":"2026-07-20T12:19:35Z","url":"https://github.com/glauberseguros-commits/palpitacojb/actions/runs/29741746661","workflowName":"Auto Import ÔÇö PalPitaco JB"},{"conclusion":"success","createdAt":"2026-07-20T05:48:02Z","databaseId":29719978419,"event":"workflow_dispatch","headSha":"6a4b49afbf925cbeedecf00a6abcbd86c48823b0","status":"completed","updatedAt":"2026-07-20T05:48:19Z","url":"https://github.com/glauberseguros-commits/palpitacojb/actions/runs/29719978419","workflowName":"Auto Import ÔÇö PalPitaco JB"},{"conclusion":"success","createdAt":"2026-07-20T05:43:20Z","databaseId":29719783998,"event":"workflow_dispatch","headSha":"6a4b49afbf925cbeedecf00a6abcbd86c48823b0","status":"completed","updatedAt":"2026-07-20T05:43:41Z","url":"https://github.com/glauberseguros-commits/palpitacojb/actions/runs/29719783998","workflowName":"Auto Import ÔÇö PalPitaco JB"},{"conclusion":"failure","createdAt":"2026-07-19T20:10:17Z","databaseId":29702004199,"event":"schedule","headSha":"87a176784e6da201121cc6c6b2b83ef28b4fb9e1","status":"completed","updatedAt":"2026-07-19T20:11:13Z","url":"https://github.com/glauberseguros-commits/palpitacojb/actions/runs/29702004199","workflowName":"Auto Import ÔÇö PalPitaco JB"},{"conclusion":"failure","createdAt":"2026-07-19T18:03:29Z","databaseId":29698036382,"event":"schedule","headSha":"87a176784e6da201121cc6c6b2b83ef28b4fb9e1","status":"completed","updatedAt":"2026-07-19T18:04:27Z","url":"https://github.com/glauberseguros-commits/palpitacojb/actions/runs/29698036382","workflowName":"Auto Import ÔÇö PalPitaco JB"},{"conclusion":"failure","createdAt":"2026-07-19T15:07:26Z","databaseId":29692199775,"event":"schedule","headSha":"942b5f4de8617cb762ed9b1e4664e22c16a2ed36","status":"completed","updatedAt":"2026-07-19T15:08:10Z","url":"https://github.com/glauberseguros-commits/palpitacojb/actions/runs/29692199775","workflowName":"Auto Import ÔÇö PalPitaco JB"},{"conclusion":"failure","createdAt":"2026-07-19T13:46:17Z","databaseId":29689518084,"event":"schedule","headSha":"942b5f4de8617cb762ed9b1e4664e22c16a2ed36","status":"completed","updatedAt":"2026-07-19T13:47:02Z","url":"https://github.com/glauberseguros-commits/palpitacojb/actions/runs/29689518084","workflowName":"Auto Import ÔÇö PalPitaco JB"},{"conclusion":"failure","createdAt":"2026-07-19T10:42:40Z","databaseId":29683819661,"event":"schedule","headSha":"942b5f4de8617cb762ed9b1e4664e22c16a2ed36","status":"completed","updatedAt":"2026-07-19T10:42:57Z","url":"https://github.com/glauberseguros-commits/palpitacojb/actions/runs/29683819661","workflowName":"Auto Maintain Backfill (PT_RIO)"},{"conclusion":"failure","createdAt":"2026-07-19T02:46:33Z","databaseId":29670714479,"event":"schedule","headSha":"942b5f4de8617cb762ed9b1e4664e22c16a2ed36","status":"completed","updatedAt":"2026-07-19T02:47:15Z","url":"https://github.com/glauberseguros-commits/palpitacojb/actions/runs/29670714479","workflowName":"Auto Import ÔÇö PalPitaco JB"},{"conclusion":"success","createdAt":"2026-07-18T23:46:08Z","databaseId":29665799875,"event":"schedule","headSha":"350c13ea2ce4304c82f6b3db2b6b9ddbbdaee295","status":"completed","updatedAt":"2026-07-18T23:46:31Z","url":"https://github.com/glauberseguros-commits/palpitacojb/actions/runs/29665799875","workflowName":"Auto Import ÔÇö PalPitaco JB"},{"conclusion":"success","createdAt":"2026-07-18T23:38:00Z","databaseId":29665563891,"event":"schedule","headSha":"350c13ea2ce4304c82f6b3db2b6b9ddbbdaee295","status":"completed","updatedAt":"2026-07-18T23:38:34Z","url":"https://github.com/glauberseguros-commits/palpitacojb/actions/runs/29665563891","workflowName":"Auto Import ÔÇö PalPitaco JB"},{"conclusion":"failure","createdAt":"2026-07-18T22:22:57Z","databaseId":29663343637,"event":"schedule","headSha":"abfc8e60bc4746c3a620f808e2bae9fab1a85e21","status":"completed","updatedAt":"2026-07-18T22:23:40Z","url":"https://github.com/glauberseguros-commits/palpitacojb/actions/runs/29663343637","workflowName":"Auto Import ÔÇö PalPitaco JB"},{"conclusion":"failure","createdAt":"2026-07-18T20:06:50Z","databaseId":29659080013,"event":"schedule","headSha":"abfc8e60bc4746c3a620f808e2bae9fab1a85e21","status":"completed","updatedAt":"2026-07-18T20:07:50Z","url":"https://github.com/glauberseguros-commits/palpitacojb/actions/runs/29659080013","workflowName":"Auto Import ÔÇö PalPitaco JB"},{"conclusion":"failure","createdAt":"2026-07-18T18:02:07Z","databaseId":29655072100,"event":"schedule","headSha":"abfc8e60bc4746c3a620f808e2bae9fab1a85e21","status":"completed","updatedAt":"2026-07-18T18:03:09Z","url":"https://github.com/glauberseguros-commits/palpitacojb/actions/runs/29655072100","workflowName":"Auto Import ÔÇö PalPitaco JB"},{"conclusion":"success","createdAt":"2026-07-18T15:06:42Z","databaseId":29649339568,"event":"schedule","headSha":"abfc8e60bc4746c3a620f808e2bae9fab1a85e21","status":"completed","updatedAt":"2026-07-18T15:07:06Z","url":"https://github.com/glauberseguros-commits/palpitacojb/actions/runs/29649339568","workflowName":"Auto Import ÔÇö PalPitaco JB"},{"conclusion":"success","createdAt":"2026-07-18T13:42:33Z","databaseId":29646648419,"event":"schedule","headSha":"abfc8e60bc4746c3a620f808e2bae9fab1a85e21","status":"completed","updatedAt":"2026-07-18T13:43:32Z","url":"https://github.com/glauberseguros-commits/palpitacojb/actions/runs/29646648419","workflowName":"Auto Import ÔÇö PalPitaco JB"},{"conclusion":"failure","createdAt":"2026-07-18T02:32:17Z","databaseId":29627220471,"event":"schedule","headSha":"abfc8e60bc4746c3a620f808e2bae9fab1a85e21","status":"completed","updatedAt":"2026-07-18T02:33:00Z","url":"https://github.com/glauberseguros-commits/palpitacojb/actions/runs/29627220471","workflowName":"Auto Import ÔÇö PalPitaco JB"},{"conclusion":"failure","createdAt":"2026-07-17T22:01:27Z","databaseId":29616586162,"event":"schedule","headSha":"abfc8e60bc4746c3a620f808e2bae9fab1a85e21","status":"completed","updatedAt":"2026-07-17T22:02:18Z","url":"https://github.com/glauberseguros-commits/palpitacojb/actions/runs/29616586162","workflowName":"Auto Import ÔÇö PalPitaco JB"},{"conclusion":"failure","createdAt":"2026-07-17T20:11:51Z","databaseId":29610317330,"event":"schedule","headSha":"abfc8e60bc4746c3a620f808e2bae9fab1a85e21","status":"completed","updatedAt":"2026-07-17T20:12:44Z","url":"https://github.com/glauberseguros-commits/palpitacojb/actions/runs/29610317330","workflowName":"Auto Import ÔÇö PalPitaco JB"},{"conclusion":"failure","createdAt":"2026-07-17T18:13:49Z","databaseId":29603045391,"event":"schedule","headSha":"abfc8e60bc4746c3a620f808e2bae9fab1a85e21","status":"completed","updatedAt":"2026-07-17T18:14:49Z","url":"https://github.com/glauberseguros-commits/palpitacojb/actions/runs/29603045391","workflowName":"Auto Import ÔÇö PalPitaco JB"},{"conclusion":"failure","createdAt":"2026-07-17T15:23:08Z","databaseId":29591883213,"event":"schedule","headSha":"abfc8e60bc4746c3a620f808e2bae9fab1a85e21","status":"completed","updatedAt":"2026-07-17T15:24:20Z","url":"https://github.com/glauberseguros-commits/palpitacojb/actions/runs/29591883213","workflowName":"Auto Import ÔÇö PalPitaco JB"}]

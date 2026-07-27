@@ -1,0 +1,791 @@
+========================================================================================================================
+TERNO-GRUPO-02 — 02_top3_entrada_estado_loader.txt
+Gerado em: 26/07/2026 19:01:44
+========================================================================================================================
+
+########################################################################################################################
+ARQUIVO COMPLETO: .\src\pages\Top3\Top3.jsx
+########################################################################################################################
+00001: // src/pages/Top3/Top3.jsx
+00002: import React from "react";
+00003: import { useTop3Controller } from "./top3.hooks";
+00004: import Top3View from "./Top3View";
+00005: 
+00006: export default function Top3() {
+00007:   const c = useTop3Controller();
+00008:   return <Top3View {...c} />;
+00009: }
+
+########################################################################################################################
+ARQUIVO COMPLETO: .\src\pages\Top3\top3.constants.js
+########################################################################################################################
+00001: // src/pages/Top3/top3.constants.js
+00002: 
+00003: export const LOOKBACK_ALL = "ALL";
+00004: 
+00005: export const LOOKBACK_OPTIONS = [
+00006:   { value: LOOKBACK_ALL, label: "Todos" },
+00007:   { value: 180, label: "180 dias" },
+00008:   { value: 150, label: "150 dias" },
+00009:   { value: 120, label: "120 dias" },
+00010:   { value: 90, label: "90 dias" },
+00011:   { value: 60, label: "60 dias" },
+00012:   { value: 30, label: "30 dias" },
+00013:   { value: 21, label: "21 dias" },
+00014:   { value: 14, label: "14 dias" },
+00015:   { value: 7, label: "7 dias" },
+00016: ];
+00017: 
+00018: export const LOTTERY_OPTIONS = [
+00019:   { key: "PT_RIO", value: "PT_RIO", label: "RJ (PT_RIO)" },
+00020:   { key: "FEDERAL", value: "FEDERAL", label: "Federal" },
+00021:   { key: "LOOK", value: "LOOK", label: "LOOK" },
+00022:   { key: "NACIONAL", value: "NACIONAL", label: "Nacional" },
+00023: ];
+00024: 
+00025: // Grades
+00026: export const PT_RIO_SCHEDULE_NORMAL = [
+00027:   "09:00",
+00028:   "11:00",
+00029:   "14:00",
+00030:   "16:00",
+00031:   "18:00",
+00032:   "21:00",
+00033: ];
+00034: 
+00035: export const PT_RIO_SCHEDULE_SUNDAY = [
+00036:   "09:00",
+00037:   "11:00",
+00038:   "14:00",
+00039:   "16:00",
+00040: ];
+00041: 
+00042: /**
+00043:  * PT_RIO em QUA/SÁB (RJ)
+00044:  * Mantém 18:00 porque existem ocorrências históricas nesse horário.
+00045:  * A ausência eventual do sorteio deve ser tratada pelo motor/dados reais,
+00046:  * não pela exclusão rígida da grade.
+00047:  */
+00048: export const PT_RIO_SCHEDULE_WED_SAT = [
+00049:   "09:00",
+00050:   "11:00",
+00051:   "14:00",
+00052:   "16:00",
+00053:   "18:00",
+00054:   "21:00",
+00055: ];
+00056: 
+00057: // Federal: travado em 20h
+00058: export const FEDERAL_SCHEDULE = ["20:00"];
+00059: 
+00060: export const LOOK_SCHEDULE = [
+00061:   "07:00",
+00062:   "09:00",
+00063:   "11:00",
+00064:   "14:00",
+00065:   "16:00",
+00066:   "18:00",
+00067:   "21:00",
+00068:   "23:00",
+00069: ];
+00070: 
+00071: export const NACIONAL_SCHEDULE = [
+00072:   "02:00",
+00073:   "08:00",
+00074:   "10:00",
+00075:   "12:00",
+00076:   "15:00",
+00077:   "17:00",
+00078:   "21:00",
+00079:   "23:00",
+00080: ];
+00081: 
+00082: /* =========================
+00083:    Parâmetros do motor TOP3
+00084: ========================= */
+00085: 
+00086: export const TOP3_SMOOTH_ALPHA = 1;
+00087: export const TOP3_SHRINK_M = 40;
+00088: 
+00089: export const TOP3_NEXTDRAW_SCAN_MAX_STEPS = 18;
+00090: export const TOP3_NEXTDRAW_SCAN_MAX_DAYS = 7;
+00091: 
+00092: export const TOP3_GROUPS_K = 25;
+00093: 
+00094: /* =========================
+00095:    Calibração Estatística
+00096: ========================= */
+00097: 
+00098: export const TOP3_SCENE_WEIGHT = 0.06;
+00099: export const TOP3_SCENE_SAMPLE_TARGET = 60;
+00100: export const TOP3_SCENE_BLEND_SCENE = 0.55;
+00101: export const TOP3_SCENE_BLEND_UNIFORM = 0.45;
+
+########################################################################################################################
+ARQUIVO COMPLETO: .\src\pages\Top3\top3.formatters.js
+########################################################################################################################
+00001: // src/pages/Top3/top3.formatters.js
+00002: 
+00003: /* =========================
+00004:    Helpers puros (datas/horas/texto)
+00005: ========================= */
+00006: 
+00007: export function pad2(n) {
+00008:   return String(n).padStart(2, "0");
+00009: }
+00010: 
+00011: export function safeStr(v) {
+00012:   return String(v ?? "").trim();
+00013: }
+00014: 
+00015: export function isYMD(s) {
+00016:   const str = String(s || "").trim();
+00017:   const m = str.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+00018:   if (!m) return false;
+00019: 
+00020:   const y = Number(m[1]);
+00021:   const mo = Number(m[2]);
+00022:   const d = Number(m[3]);
+00023: 
+00024:   const dt = new Date(Date.UTC(y, mo - 1, d));
+00025:   return (
+00026:     dt.getUTCFullYear() === y &&
+00027:     dt.getUTCMonth() === mo - 1 &&
+00028:     dt.getUTCDate() === d
+00029:   );
+00030: }
+00031: 
+00032: export function ymdToBR(ymd) {
+00033:   const m = String(ymd || "")
+00034:     .trim()
+00035:     .match(/^(\d{4})-(\d{2})-(\d{2})$/);
+00036:   if (!m) return safeStr(ymd);
+00037:   return `${m[3]}/${m[2]}/${m[1]}`;
+00038: }
+00039: 
+00040: export function brToYMD(br) {
+00041:   const m = String(br || "")
+00042:     .trim()
+00043:     .match(/^(\d{2})\/(\d{2})\/(\d{4})$/);
+00044:   if (!m) return null;
+00045: 
+00046:   const ymd = `${m[3]}-${m[2]}-${m[1]}`;
+00047:   return isYMD(ymd) ? ymd : null;
+00048: }
+00049: 
+00050: function dateToLocalYMD(d) {
+00051:   if (!(d instanceof Date) || Number.isNaN(d.getTime())) return null;
+00052: 
+00053:   const ymd = `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(
+00054:     d.getDate()
+00055:   )}`;
+00056: 
+00057:   return isYMD(ymd) ? ymd : null;
+00058: }
+00059: 
+00060: export function normalizeToYMD(input) {
+00061:   if (input == null) return null;
+00062: 
+00063:   if (typeof input === "object" && typeof input.toDate === "function") {
+00064:     return dateToLocalYMD(input.toDate());
+00065:   }
+00066: 
+00067:   if (
+00068:     typeof input === "object" &&
+00069:     (Number.isFinite(Number(input.seconds)) ||
+00070:       Number.isFinite(Number(input._seconds)))
+00071:   ) {
+00072:     const sec = Number.isFinite(Number(input.seconds))
+00073:       ? Number(input.seconds)
+00074:       : Number(input._seconds);
+00075: 
+00076:     return dateToLocalYMD(new Date(sec * 1000));
+00077:   }
+00078: 
+00079:   if (input instanceof Date) {
+00080:     return dateToLocalYMD(input);
+00081:   }
+00082: 
+00083:   if (typeof input === "number" && Number.isFinite(input)) {
+00084:     const ms = input > 1e12 ? input : input * 1000;
+00085:     return dateToLocalYMD(new Date(ms));
+00086:   }
+00087: 
+00088:   const s = safeStr(input);
+00089:   if (!s) return null;
+00090: 
+00091:   if (/^\d{10,13}$/.test(s)) {
+00092:     const n = Number(s);
+00093:     const ms = s.length >= 13 ? n : n * 1000;
+00094:     return dateToLocalYMD(new Date(ms));
+00095:   }
+00096: 
+00097:   const isoFull = s.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+00098:   if (isoFull) {
+00099:     const ymd = `${isoFull[1]}-${isoFull[2]}-${isoFull[3]}`;
+00100:     return isYMD(ymd) ? ymd : null;
+00101:   }
+00102: 
+00103:   const isoPrefix = s.match(/^(\d{4})-(\d{2})-(\d{2})[T\s]/);
+00104:   if (isoPrefix) {
+00105:     const ymd = `${isoPrefix[1]}-${isoPrefix[2]}-${isoPrefix[3]}`;
+00106:     return isYMD(ymd) ? ymd : null;
+00107:   }
+00108: 
+00109:   const isoSlash = s.match(/^(\d{4})\/(\d{2})\/(\d{2})(?:\D.*)?$/);
+00110:   if (isoSlash) {
+00111:     const ymd = `${isoSlash[1]}-${isoSlash[2]}-${isoSlash[3]}`;
+00112:     return isYMD(ymd) ? ymd : null;
+00113:   }
+00114: 
+00115:   const compact = s.match(/^(\d{4})(\d{2})(\d{2})$/);
+00116:   if (compact) {
+00117:     const ymd = `${compact[1]}-${compact[2]}-${compact[3]}`;
+00118:     return isYMD(ymd) ? ymd : null;
+00119:   }
+00120: 
+00121:   const y = brToYMD(s);
+00122:   if (y) return y;
+00123: 
+00124:   return null;
+00125: }
+00126: 
+00127: export function todayYMDLocal() {
+00128:   const d = new Date();
+00129:   return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+00130: }
+00131: 
+00132: export function addDaysYMD(ymd, deltaDays) {
+00133:   const y = safeStr(ymd);
+00134:   if (!isYMD(y)) return y;
+00135: 
+00136:   const [Y, M, D] = y.split("-").map((x) => Number(x));
+00137:   const base = Date.UTC(Y, M - 1, D);
+00138:   const dt = new Date(base);
+00139: 
+00140:   dt.setUTCDate(dt.getUTCDate() + Number(deltaDays || 0));
+00141: 
+00142:   return `${dt.getUTCFullYear()}-${pad2(dt.getUTCMonth() + 1)}-${pad2(
+00143:     dt.getUTCDate()
+00144:   )}`;
+00145: }
+00146: 
+00147: function isValidHourMinute(hh, mm) {
+00148:   const h = Number(hh);
+00149:   const m = Number(mm);
+00150: 
+00151:   return (
+00152:     Number.isFinite(h) &&
+00153:     Number.isFinite(m) &&
+00154:     h >= 0 &&
+00155:     h <= 23 &&
+00156:     m >= 0 &&
+00157:     m <= 59
+00158:   );
+00159: }
+00160: 
+00161: /**
+00162:  * Normaliza diversos formatos para "HH:MM".
+00163:  */
+00164: export function normalizeHourLike(value) {
+00165:   const s0 = safeStr(value);
+00166:   if (!s0) return "";
+00167: 
+00168:   const s = s0
+00169:     .replace(/\s+/g, "")
+00170:     .replace(/[–—]/g, "-")
+00171:     .toLowerCase();
+00172: 
+00173:   const mhx = s.match(/^(\d{1,2})(?:h|hs|hr|hrs)$/i);
+00174:   if (mhx) {
+00175:     const hh = Number(mhx[1]);
+00176:     return isValidHourMinute(hh, 0) ? `${pad2(hh)}:00` : "";
+00177:   }
+00178: 
+00179:   const mhm = s.match(/^(\d{1,2})(?:h|hs|hr|hrs)(\d{1,2})$/i);
+00180:   if (mhm) {
+00181:     const hh = Number(mhm[1]);
+00182:     const mm = Number(mhm[2]);
+00183:     return isValidHourMinute(hh, mm) ? `${pad2(hh)}:${pad2(mm)}` : "";
+00184:   }
+00185: 
+00186:   const mISO = s.match(/^(\d{1,2}):(\d{1,2})(?::(\d{1,2}))?$/);
+00187:   if (mISO) {
+00188:     const hh = Number(mISO[1]);
+00189:     const mm = Number(mISO[2]);
+00190:     return isValidHourMinute(hh, mm) ? `${pad2(hh)}:${pad2(mm)}` : "";
+00191:   }
+00192: 
+00193:   const mDot = s.match(/^(\d{1,2})\.(\d{1,2})$/);
+00194:   if (mDot) {
+00195:     const hh = Number(mDot[1]);
+00196:     const mm = Number(mDot[2]);
+00197:     return isValidHourMinute(hh, mm) ? `${pad2(hh)}:${pad2(mm)}` : "";
+00198:   }
+00199: 
+00200:   const m2 = s.match(/^(\d{1,2})$/);
+00201:   if (m2) {
+00202:     const hh = Number(m2[1]);
+00203:     return isValidHourMinute(hh, 0) ? `${pad2(hh)}:00` : "";
+00204:   }
+00205: 
+00206:   return "";
+00207: }
+00208: 
+00209: /**
+00210:  * BUCKET CANÔNICO DO PROJETO: "HHh".
+00211:  */
+00212: export function toHourBucket(hhmm) {
+00213:   const s = normalizeHourLike(hhmm);
+00214:   if (!s) return "";
+00215: 
+00216:   const m = s.match(/^(\d{2}):(\d{2})$/);
+00217:   if (!m) return "";
+00218: 
+00219:   const hh = Number(m[1]);
+00220:   const mm = Number(m[2]);
+00221: 
+00222:   if (!isValidHourMinute(hh, mm)) return "";
+00223: 
+00224:   return `${pad2(hh)}h`;
+00225: }
+00226: 
+00227: /**
+00228:  * Converte hora em minutos.
+00229:  */
+00230: export function hourToInt(hhmm) {
+00231:   const raw = safeStr(hhmm);
+00232:   if (!raw) return -1;
+00233: 
+00234:   const s = normalizeHourLike(raw);
+00235:   const m = safeStr(s).match(/^(\d{2}):(\d{2})$/);
+00236: 
+00237:   if (m) {
+00238:     const hh = Number(m[1]);
+00239:     const mm = Number(m[2]);
+00240: 
+00241:     if (!isValidHourMinute(hh, mm)) return -1;
+00242: 
+00243:     return hh * 60 + mm;
+00244:   }
+00245: 
+00246:   const b = safeStr(raw).match(/^(\d{1,2})h$/i);
+00247:   if (b) {
+00248:     const hh = Number(b[1]);
+00249:     return isValidHourMinute(hh, 0) ? hh * 60 : -1;
+00250:   }
+00251: 
+00252:   return -1;
+00253: }
+00254: 
+00255: export function getDowKey(ymd) {
+00256:   const y = safeStr(ymd);
+00257:   if (!isYMD(y)) return NaN;
+00258: 
+00259:   const [Y, M, D] = y.split("-").map((x) => Number(x));
+00260:   const dt = new Date(Date.UTC(Y, M - 1, D));
+00261: 
+00262:   return dt.getUTCDay(); // 0=dom ... 3=qua ... 6=sáb
+00263: }
+00264: 
+00265: /* =========================
+00266:    Milhar helpers (TOP3)
+00267: ========================= */
+00268: 
+00269: export function pickPrizeMilhar4(p) {
+00270:   const raw =
+00271:     p?.milhar ??
+00272:     p?.milhar4 ??
+00273:     p?.numero ??
+00274:     p?.number ??
+00275:     p?.mil ??
+00276:     p?.num ??
+00277:     p?.valor ??
+00278:     "";
+00279: 
+00280:   const digits = safeStr(raw).replace(/\D+/g, "");
+00281:   if (!digits) return null;
+00282: 
+00283:   const last4 = digits.slice(-4).padStart(4, "0");
+00284:   return /^\d{4}$/.test(last4) ? last4 : null;
+00285: }
+00286: 
+00287: export function getDezena2(milhar4) {
+00288:   const s = safeStr(milhar4);
+00289:   if (!/^\d{4}$/.test(s)) return null;
+00290:   return s.slice(2, 4);
+00291: }
+00292: 
+00293: export function getCentena3(milhar4) {
+00294:   const s = safeStr(milhar4);
+00295:   if (!/^\d{4}$/.test(s)) return null;
+00296:   return s.slice(1, 4);
+00297: }
+00298: 
+00299: export function milharCompareAsc(a, b) {
+00300:   return String(a).localeCompare(String(b), "en", { numeric: true });
+00301: }
+00302: 
+00303: export function dezenaCompareAsc(a, b) {
+00304:   return String(a).localeCompare(String(b), "en", { numeric: true });
+00305: }
+00306: 
+00307: export function milharCompareByCentenaAsc(a, b) {
+00308:   const ca = getCentena3(a);
+00309:   const cb = getCentena3(b);
+00310: 
+00311:   if (ca && cb && ca !== cb) {
+00312:     return String(ca).localeCompare(String(cb), "en", { numeric: true });
+00313:   }
+00314: 
+00315:   return milharCompareAsc(a, b);
+00316: }
+00317: 
+00318: /**
+00319:  * Wrap cíclico de 2 dígitos para montagem de grupos.
+00320:  */
+00321: export function wrapToDezena2(n) {
+00322:   const x = Number(n);
+00323:   if (!Number.isFinite(x)) return null;
+00324: 
+00325:   const d = ((x % 100) + 100) % 100;
+00326:   return pad2(d);
+00327: }
+00328: 
+00329: /**
+00330:  * Dezenas de um grupo (1..25) no padrão do bicho.
+00331:  */
+00332: export function dezenasFromGrupo(grupo) {
+00333:   const g = Number(grupo);
+00334:   if (!Number.isFinite(g) || g < 1 || g > 25) return [];
+00335: 
+00336:   const start = (g - 1) * 4 + 1;
+00337: 
+00338:   return [0, 1, 2, 3]
+00339:     .map((i) => wrapToDezena2(start + i))
+00340:     .filter(Boolean);
+00341: }
+
+########################################################################################################################
+ARQUIVO COMPLETO: .\src\pages\Top3\top3.selectors.js
+########################################################################################################################
+00001: import { pad2, safeStr } from "./top3.formatters";
+00002: 
+00003: function publicBase() {
+00004:   const b = String(process.env.PUBLIC_URL || "").trim();
+00005:   return b && b !== "/" ? b.replace(/\/+$/, "") : "";
+00006: }
+00007: 
+00008: function joinPublic(base, path) {
+00009:   if (!path) return "";
+00010: 
+00011:   const p = path.startsWith("/") ? path : `/${path}`;
+00012: 
+00013:   if (!base) return p;
+00014: 
+00015:   return `${base}${p}`;
+00016: }
+00017: 
+00018: export function normalizeImgSrc(src) {
+00019:   const s0 = safeStr(src);
+00020:   if (!s0) return "";
+00021: 
+00022:   if (/^(https?:)?\/\//i.test(s0)) return s0;
+00023:   if (/^(data:|blob:)/i.test(s0)) return s0;
+00024: 
+00025:   const base = publicBase();
+00026: 
+00027:   let s = s0;
+00028: 
+00029:   s = s.replace(/^(\.\/)+/, "");
+00030:   s = s.replace(/^(\.\.\/)+/, "");
+00031: 
+00032:   if (base) {
+00033:     if (s === base) return s;
+00034:     if (s.startsWith(base + "/")) return s;
+00035:   }
+00036: 
+00037:   if (s.startsWith("/")) return joinPublic(base, s);
+00038:   if (s.startsWith("public/")) return joinPublic(base, s.slice("public/".length));
+00039: 
+00040:   return joinPublic(base, s);
+00041: }
+00042: 
+00043: function slugifyLabel(label) {
+00044:   const l = safeStr(label);
+00045:   if (!l) return "";
+00046: 
+00047:   return l
+00048:     .normalize("NFD")
+00049:     .replace(/[\u0300-\u036f]/g, "")
+00050:     .toLowerCase()
+00051:     .replace(/[^a-z0-9]+/g, "_")
+00052:     .replace(/^_+|_+$/g, "");
+00053: }
+00054: 
+00055: function stripQuery(url) {
+00056:   const s = safeStr(url);
+00057:   if (!s) return "";
+00058: 
+00059:   const q = s.indexOf("?");
+00060:   const h = s.indexOf("#");
+00061: 
+00062:   const cut =
+00063:     q >= 0 && h >= 0
+00064:       ? Math.min(q, h)
+00065:       : q >= 0
+00066:         ? q
+00067:         : h >= 0
+00068:           ? h
+00069:           : -1;
+00070: 
+00071:   return cut >= 0 ? s.slice(0, cut) : s;
+00072: }
+00073: 
+00074: function addCacheBust(url, token = "v=1") {
+00075:   const s = safeStr(url);
+00076:   if (!s) return "";
+00077: 
+00078:   return s.includes("?") ? `${s}&${token}` : `${s}?${token}`;
+00079: }
+00080: 
+00081: function pushExtensionVariants(out, clean) {
+00082:   const s = safeStr(clean);
+00083:   if (!s) return;
+00084: 
+00085:   out.push(s);
+00086: 
+00087:   const m = s.match(/\.(png|jpg|jpeg|webp)$/i);
+00088:   if (!m) return;
+00089: 
+00090:   const base = s.slice(0, -m[0].length);
+00091: 
+00092:   out.push(`${base}.png`);
+00093:   out.push(`${base}.jpg`);
+00094:   out.push(`${base}.jpeg`);
+00095:   out.push(`${base}.webp`);
+00096: }
+00097: 
+00098: export function makeImgVariantsFromGrupo({
+00099:   grupo,
+00100:   size,
+00101:   getImgFromGrupo,
+00102:   getAnimalLabel,
+00103: }) {
+00104:   const g = Number(grupo);
+00105: 
+00106:   if (!Number.isFinite(g) || g < 1 || g > 25) return [];
+00107: 
+00108:   const s = Math.max(1, Number(size) || 96);
+00109: 
+00110:   const base = publicBase();
+00111:   const g2 = pad2(g);
+00112: 
+00113:   const label = safeStr(getAnimalLabel?.(g) || "");
+00114:   const slug = slugifyLabel(label);
+00115: 
+00116:   const primary = normalizeImgSrc(
+00117:     getImgFromGrupo?.(g, s) || getImgFromGrupo?.(g) || ""
+00118:   );
+00119: 
+00120:   const seeds = [
+00121:     primary,
+00122: 
+00123:     slug ? joinPublic(base, `img/${slug}_${s}.png`) : "",
+00124:     slug ? joinPublic(base, `img/${slug}_${s}.jpg`) : "",
+00125:     slug ? joinPublic(base, `img/${slug}_${s}.jpeg`) : "",
+00126:     slug ? joinPublic(base, `img/${slug}_${s}.webp`) : "",
+00127: 
+00128:     joinPublic(base, `img/g${g2}_${s}.png`),
+00129:     joinPublic(base, `img/g${g2}_${s}.jpg`),
+00130:     joinPublic(base, `img/g${g2}_${s}.jpeg`),
+00131:     joinPublic(base, `img/g${g2}_${s}.webp`),
+00132:   ].filter(Boolean);
+00133: 
+00134:   const out = [];
+00135: 
+00136:   for (const seed of seeds) {
+00137:     const original = safeStr(seed);
+00138:     if (!original) continue;
+00139: 
+00140:     out.push(original);
+00141: 
+00142:     const clean = stripQuery(original);
+00143:     if (!clean) continue;
+00144: 
+00145:     pushExtensionVariants(out, clean);
+00146: 
+00147:     out.push(addCacheBust(clean, "v=1"));
+00148:   }
+00149: 
+00150:   return Array.from(new Set(out.filter(Boolean)));
+00151: }
+00152: 
+00153: export function lotteryLabel(lotteryKey) {
+00154:   const k = safeStr(lotteryKey).toUpperCase();
+00155: 
+00156:   if (k === "FEDERAL") return "FEDERAL (20h • qua/sáb)";
+00157:   if (k === "PT_RIO") return "RIO (PT_RIO)";
+00158: 
+00159:   return k || "—";
+00160: }
+
+########################################################################################################################
+ARQUIVO COMPLETO: .\src\pages\Top3\modules\top3.state.js
+########################################################################################################################
+00001: import { useRef, useState } from "react";
+00002: 
+00003: export function useTop3State({ defaultLottery, defaultYmd, defaultLookback }) {
+00004:   const requestIdRef = useRef(0);
+00005:   const boundsCacheRef = useRef(new Map());
+00006:   const analyticsCacheRef = useRef({ key: "", value: { top: [], meta: null } });
+00007: 
+00008:   const [lotteryKey, setLotteryKey] = useState(
+00009:     String(defaultLottery || "").trim().toUpperCase()
+00010:   );
+00011:   const [ymd, setYmd] = useState(() => String(defaultYmd || "").trim());
+00012:   const [lookback, setLookback] = useState(Number(defaultLookback) || 120);
+00013: 
+00014:   const [loading, setLoading] = useState(false);
+00015:   const [loadingStage, setLoadingStage] = useState({
+00016:     today: false,
+00017:     range: false,
+00018:   });
+00019:   const [error, setError] = useState("");
+00020: 
+00021:   const [rangeDraws, setRangeDraws] = useState([]);
+00022:   const [todayDraws, setTodayDraws] = useState([]);
+00023:   const [rangeInfo, setRangeInfo] = useState({ from: "", to: "" });
+00024: 
+00025:   const [lastHourBucket, setLastHourBucket] = useState("");
+00026:   const [targetHourBucket, setTargetHourBucket] = useState("");
+00027:   const [targetYmd, setTargetYmd] = useState("");
+00028: 
+00029:   const [lastInfo, setLastInfo] = useState({
+00030:     lastYmd: "",
+00031:     lastHour: "",
+00032:     lastGrupo: null,
+00033:     lastAnimal: "",
+00034:   });
+00035: 
+00036:   const [prevInfo, setPrevInfo] = useState({
+00037:     prevYmd: "",
+00038:     prevHour: "",
+00039:     prevGrupo: null,
+00040:     prevAnimal: "",
+00041:     source: "none",
+00042:   });
+00043: 
+00044:   const [baseDrawState, setBaseDrawState] = useState(null);
+00045: 
+00046:   return {
+00047:     requestIdRef,
+00048:     boundsCacheRef,
+00049:     analyticsCacheRef,
+00050: 
+00051:     lotteryKey,
+00052:     setLotteryKey,
+00053:     ymd,
+00054:     setYmd,
+00055:     lookback,
+00056:     setLookback,
+00057: 
+00058:     loading,
+00059:     setLoading,
+00060:     loadingStage,
+00061:     setLoadingStage,
+00062:     error,
+00063:     setError,
+00064: 
+00065:     rangeDraws,
+00066:     setRangeDraws,
+00067:     todayDraws,
+00068:     setTodayDraws,
+00069:     rangeInfo,
+00070:     setRangeInfo,
+00071: 
+00072:     lastHourBucket,
+00073:     setLastHourBucket,
+00074:     targetHourBucket,
+00075:     setTargetHourBucket,
+00076:     targetYmd,
+00077:     setTargetYmd,
+00078: 
+00079:     lastInfo,
+00080:     setLastInfo,
+00081:     prevInfo,
+00082:     setPrevInfo,
+00083: 
+00084:     baseDrawState,
+00085:     setBaseDrawState,
+00086:   };
+00087: }
+
+########################################################################################################################
+ARQUIVO COMPLETO: .\src\pages\Top3\modules\top3.loader.js
+########################################################################################################################
+00001: export async function fallbackBaseSearch({
+00002:   getKingResultsByRange,
+00003:   findLatestHistoricalBaseDraw,
+00004:   addDaysYMD,
+00005:   minDate,
+00006:   lotteryKey,
+00007:   targetYmd,
+00008:   targetHourBucket,
+00009:   uf,
+00010: }) {
+00011:   const key = String(lotteryKey || "").trim().toUpperCase();
+00012:   const safeUf = String(uf || "").trim().toUpperCase();
+00013:   const safeTargetYmd = String(targetYmd || "").trim();
+00014:   const safeTargetHour = String(targetHourBucket || "").trim();
+00015: 
+00016:   if (!safeTargetYmd || !safeTargetHour || !safeUf) {
+00017:     return { draw: null, ymd: "", hour: "", source: "none" };
+00018:   }
+00019: 
+00020:   const searchFrom =
+00021:     String(minDate || "").trim() ||
+00022:     (key === "FEDERAL"
+00023:       ? addDaysYMD(safeTargetYmd, -240)
+00024:       : addDaysYMD(safeTargetYmd, -90));
+00025: 
+00026:   const hist =
+00027:     (await getKingResultsByRange({
+00028:       uf: safeUf,
+00029:       dateFrom: searchFrom,
+00030:       dateTo: safeTargetYmd,
+00031:       mode: "detailed",
+00032:       readPolicy: "cache",
+00033:     })) || [];
+00034: 
+00035:   return findLatestHistoricalBaseDraw({
+00036:     draws: hist,
+00037:     lotteryKey: key,
+00038:     targetYmd: safeTargetYmd,
+00039:     targetHourBucket: safeTargetHour,
+00040:   });
+00041: }
+00042: 
+00043: export async function loadHistoryRange({
+00044:   getKingResultsByRange,
+00045:   uf,
+00046:   dateFrom,
+00047:   dateTo,
+00048:   readPolicy = "cache",
+00049: }) {
+00050:   const safeUf = String(uf || "").trim().toUpperCase();
+00051:   const safeDateFrom = String(dateFrom || "").trim();
+00052:   const safeDateTo = String(dateTo || "").trim();
+00053: 
+00054:   if (!safeUf || !safeDateFrom || !safeDateTo) return [];
+00055: 
+00056:   return (
+00057:     (await getKingResultsByRange({
+00058:       uf: safeUf,
+00059:       dateFrom: safeDateFrom,
+00060:       dateTo: safeDateTo,
+00061:       mode: "detailed",
+00062:       readPolicy,
+00063:     })) || []
+00064:   );
+00065: }

@@ -1,0 +1,1769 @@
+======================================================================================================================
+TPP-04.04B - ORIGEM REAL DE layer.first
+======================================================================================================================
+
+Arquivos examinados: 216
+Arquivos relevantes: 5
+
+----------------------------------------------------------------------------------------------------------------------
+ARQUIVO 1: src/pages/Top3/top3.engine.js
+----------------------------------------------------------------------------------------------------------------------
+PADRÕES: first.get, firstCount, layer declaration, layer.first, layers declaration, prizePresence
+
+### BLOCO 1 — LINHAS 936 A 1125
+     936 |       match: (ctx) =>
+     937 |         ctx.prevHour === prevHour &&
+     938 |         ctx.prevGrupo === prevGrupo &&
+     939 |         ctx.targetHour === targetHour,
+     940 |     },
+     941 |     {
+     942 |       key: "DOM_TARGET",
+     943 |       label: "dia do mês + alvo",
+     944 |       minSamples: LAYER_MIN_SAMPLES.DOM_TARGET,
+     945 |       match: (ctx) =>
+     946 |         ctx.targetDayOfMonth === targetDayOfMonth &&
+     947 |         ctx.targetHour === targetHour,
+     948 |     },
+     949 |     {
+     950 |       key: "DOW_TARGET",
+     951 |       label: "dia da semana + alvo",
+     952 |       minSamples: LAYER_MIN_SAMPLES.DOW_TARGET,
+     953 |       match: (ctx) =>
+     954 |         ctx.targetDow === targetDow &&
+     955 |         ctx.targetHour === targetHour,
+     956 |     },
+     957 |     {
+     958 |       key: "TARGET_ONLY",
+     959 |       label: "alvo geral",
+     960 |       minSamples: LAYER_MIN_SAMPLES.TARGET_ONLY,
+     961 |       match: (ctx) => ctx.targetHour === targetHour,
+     962 |     },
+     963 |   ];
+     964 | }
+     965 | 
+     966 | function buildConditionalLayerDistribution({
+     967 |   lotteryKey,
+     968 |   drawsRange,
+     969 |   targetHour,
+     970 |   targetDow,
+     971 |   targetDayOfMonth,
+     972 |   prevHour,
+     973 |   prevGrupo,
+     974 |   PT_RIO_SCHEDULE_NORMAL,
+     975 |   PT_RIO_SCHEDULE_WED_SAT,
+     976 |   FEDERAL_SCHEDULE,
+     977 | }) {
+     978 |   const list = Array.isArray(drawsRange) ? drawsRange : [];
+     979 |   const drawsIndex = indexDrawsByYmdHour(list);
+     980 | 
+>>   981 |   const layers = buildLayerConfigs({
+     982 |     lotteryKey,
+     983 |     targetDayOfMonth,
+     984 |     targetDow,
+     985 |     prevHour,
+     986 |     prevGrupo,
+     987 |     targetHour,
+     988 |   });
+     989 | 
+     990 |   const layerResults = layers.map((layer) => ({
+     991 |     key: layer.key,
+     992 |     label: layer.label,
+     993 |     minSamples: layer.minSamples,
+     994 |     samples: 0,
+     995 |     freq: new Map(),
+     996 |     firstFreq: new Map(),
+     997 |     matchingDraws: [],
+     998 |   }));
+     999 | 
+    1000 |   for (const d of list) {
+    1001 |     const prevY = pickDrawYMD(d);
+    1002 |     const prevH = toHourBucket(pickDrawHour(d));
+    1003 |     if (!isYMD(prevY) || !prevH) continue;
+    1004 | 
+    1005 |     const prevG = getFirstGrupoFromDraw(d);
+    1006 |     if (!Number.isFinite(Number(prevG)) || Number(prevG) <= 0) continue;
+    1007 | 
+    1008 |     const ns = getNextSlotForLottery({
+    1009 |       lotteryKey,
+    1010 |       ymd: prevY,
+    1011 |       hourBucket: prevH,
+    1012 |       PT_RIO_SCHEDULE_NORMAL,
+    1013 |       PT_RIO_SCHEDULE_WED_SAT,
+    1014 |       FEDERAL_SCHEDULE,
+    1015 |     });
+    1016 | 
+    1017 |     if (!ns?.ymd || !ns?.hour) continue;
+    1018 | 
+    1019 |     const found = findNextExistingDrawFromSlot({
+    1020 |       lotteryKey,
+    1021 |       startSlot: { ymd: ns.ymd, hour: ns.hour },
+    1022 |       drawsIndex,
+    1023 |       PT_RIO_SCHEDULE_NORMAL,
+    1024 |       PT_RIO_SCHEDULE_WED_SAT,
+    1025 |       FEDERAL_SCHEDULE,
+    1026 |     });
+    1027 | 
+    1028 |     const nextDraw = found?.draw || null;
+    1029 |     const nextSlot = found?.slot || null;
+    1030 |     if (!nextDraw || !nextSlot?.ymd || !nextSlot?.hour) continue;
+    1031 | 
+    1032 |     const ctx = {
+    1033 |       prevYmd: prevY,
+    1034 |       prevHour: prevH,
+    1035 |       prevGrupo: Number(prevG),
+    1036 |       targetYmd: safeStr(nextSlot.ymd),
+    1037 |       targetHour: toHourBucket(nextSlot.hour),
+    1038 |       targetDow: getDowKey(nextSlot.ymd),
+    1039 |       targetDayOfMonth: getDayOfMonth(nextSlot.ymd),
+    1040 |     };
+    1041 | 
+    1042 |     const nextMaps = buildFreqAndFirstMaps(nextDraw);
+    1043 | 
+    1044 |     for (let i = 0; i < layers.length; i += 1) {
+>>  1045 |       const layer = layers[i];
+    1046 |       if (!layer.match(ctx)) continue;
+    1047 | 
+    1048 |       layerResults[i].samples += 1;
+    1049 |       layerResults[i].matchingDraws.push(nextDraw);
+    1050 |       mergeMapsAdd(layerResults[i].freq, nextMaps.freq);
+    1051 |       mergeMapsAdd(layerResults[i].firstFreq, nextMaps.firstMap);
+    1052 |     }
+    1053 |   }
+    1054 | 
+    1055 |   let chosen =
+    1056 |     layerResults.find((x) => x.samples >= x.minSamples && x.freq.size > 0) ||
+    1057 |     layerResults.find((x) => x.samples > 0 && x.freq.size > 0) ||
+    1058 |     null;
+    1059 | 
+    1060 |   if (!chosen) {
+    1061 |     chosen = {
+    1062 |       key: "NONE",
+    1063 |       label: "sem amostra",
+    1064 |       minSamples: 0,
+    1065 |       samples: 0,
+    1066 |       freq: new Map(),
+    1067 |       firstFreq: new Map(),
+    1068 |       matchingDraws: [],
+    1069 |     };
+    1070 |   }
+    1071 | 
+    1072 |   return {
+    1073 |     chosen,
+    1074 |     layers: layerResults,
+    1075 |   };
+    1076 | }
+    1077 | 
+    1078 | /* =========================
+    1079 |    Motor principal V1
+    1080 | ========================= */
+    1081 | 
+    1082 | export function computeConditionalNextTop3({
+    1083 |   lotteryKey,
+    1084 |   drawsRange,
+    1085 |   drawLast,
+    1086 |   PT_RIO_SCHEDULE_NORMAL,
+    1087 |   PT_RIO_SCHEDULE_WED_SAT,
+    1088 |   FEDERAL_SCHEDULE,
+    1089 |   topN = 3,
+    1090 |   targetYmdOverride = "",
+    1091 |   targetHourOverride = "",
+    1092 | }) {
+    1093 |   const list = Array.isArray(drawsRange) ? drawsRange : [];
+    1094 |   if (!list.length || !drawLast) {
+    1095 |     return { top: [], meta: null };
+    1096 |   }
+    1097 | 
+    1098 |   const key = safeStr(lotteryKey).toUpperCase();
+    1099 | 
+    1100 |   const lastY = pickDrawYMD(drawLast);
+    1101 |   const lastH = toHourBucket(pickDrawHour(drawLast));
+    1102 |   const prevGrupo = getFirstGrupoFromDraw(drawLast);
+    1103 | 
+    1104 |   if (
+    1105 |     !isYMD(lastY) ||
+    1106 |     !lastH ||
+    1107 |     !Number.isFinite(Number(prevGrupo)) ||
+    1108 |     Number(prevGrupo) <= 0
+    1109 |   ) {
+    1110 |     return { top: [], meta: null };
+    1111 |   }
+    1112 | 
+    1113 |   const nextSlot = getNextSlotForLottery({
+    1114 |     lotteryKey,
+    1115 |     ymd: lastY,
+    1116 |     hourBucket: lastH,
+    1117 |     PT_RIO_SCHEDULE_NORMAL,
+    1118 |     PT_RIO_SCHEDULE_WED_SAT,
+    1119 |     FEDERAL_SCHEDULE,
+    1120 |   });
+    1121 | 
+    1122 |   const forcedTargetY = safeStr(targetYmdOverride);
+    1123 |   const forcedTargetH = toHourBucket(targetHourOverride);
+    1124 | 
+    1125 |   const targetY = isYMD(forcedTargetY) && forcedTargetH
+
+### BLOCO 2 — LINHAS 2853 A 3187
+    2853 | 
+    2854 |   if (
+    2855 |     !isYMD(lastY) ||
+    2856 |     !lastH ||
+    2857 |     !Number.isFinite(Number(prevGrupo)) ||
+    2858 |     Number(prevGrupo) < 1 ||
+    2859 |     Number(prevGrupo) > TOP3_GROUPS_K
+    2860 |   ) {
+    2861 |     return { top: [], meta: null };
+    2862 |   }
+    2863 | 
+    2864 |   const nextSlot = getNextSlotForLottery({
+    2865 |     lotteryKey: key,
+    2866 |     ymd: lastY,
+    2867 |     hourBucket: lastH,
+    2868 |     PT_RIO_SCHEDULE_NORMAL,
+    2869 |     PT_RIO_SCHEDULE_WED_SAT,
+    2870 |     FEDERAL_SCHEDULE,
+    2871 |   });
+    2872 | 
+    2873 |   const forcedTargetY = safeStr(targetYmdOverride);
+    2874 |   const forcedTargetH = toHourBucket(targetHourOverride);
+    2875 | 
+    2876 |   const targetY = isYMD(forcedTargetY) && forcedTargetH
+    2877 |     ? forcedTargetY
+    2878 |     : safeStr(nextSlot?.ymd);
+    2879 | 
+    2880 |   const targetH = isYMD(forcedTargetY) && forcedTargetH
+    2881 |     ? forcedTargetH
+    2882 |     : toHourBucket(nextSlot?.hour);
+    2883 |   const targetDow = getDowKey(targetY);
+    2884 |   const targetDayOfMonth = getDayOfMonth(targetY);
+    2885 |   const targetTs = ymdHourToTs(targetY, targetH);
+    2886 | 
+    2887 |   if (!isYMD(targetY) || !targetH || !Number.isFinite(Number(targetDow))) {
+    2888 |     return { top: [], meta: null };
+    2889 |   }
+    2890 | 
+    2891 |   const history = list.filter((d) => {
+    2892 |     const y = pickDrawYMD(d);
+    2893 |     const h = toHourBucket(pickDrawHour(d));
+    2894 |     const ts = ymdHourToTs(y, h);
+    2895 |     return isYMD(y) && h && Number.isFinite(ts) && ts < targetTs;
+    2896 |   });
+    2897 | 
+>>  2898 |   const layers = {
+>>  2899 |     hour: { label: `frequência no horário ${targetH}`, samples: 0, first: emptyGroupMap(), prizePresence: emptyGroupMap(), weight: 0.33 },
+>>  2900 |     dowHour: { label: `frequência no dia da semana + horário`, samples: 0, first: emptyGroupMap(), prizePresence: emptyGroupMap(), weight: 0.27 },
+>>  2901 |     dayMonth: { label: `frequência no dia ${String(targetDayOfMonth).padStart(2, "0")}`, samples: 0, first: emptyGroupMap(), prizePresence: emptyGroupMap(), weight: 0.04 },
+>>  2902 |     transition: { label: `transição G${String(prevGrupo).padStart(2, "0")} @ ${lastH} → ${targetH}`, samples: 0, first: emptyGroupMap(), prizePresence: emptyGroupMap(), weight: 0.26 },
+>>  2903 |     recent: { label: `recência comparável`, samples: 0, first: emptyGroupMap(), prizePresence: emptyGroupMap(), weight: 0.10 },
+    2904 |   };
+    2905 | 
+    2906 |   for (const d of history) {
+    2907 |     const y = pickDrawYMD(d);
+    2908 |     const h = toHourBucket(pickDrawHour(d));
+    2909 |     const dow = getDowKey(y);
+    2910 |     const dom = getDayOfMonth(y);
+    2911 |     const g1 = getFirstGrupoFromDraw(d);
+    2912 |     const prizePresenceSet = getPrizePresenceGroupSet(d);
+    2913 | 
+    2914 |     const addToLayer = (layer) => {
+    2915 |       layer.samples += 1;
+>>  2916 |       incMap(layer.first, g1, 1);
+>>  2917 |       for (const g of prizePresenceSet) incMap(layer.prizePresence, g, 1);
+    2918 |     };
+    2919 | 
+    2920 |     if (h === targetH) addToLayer(layers.hour);
+    2921 |     if (h === targetH && Number(dow) === Number(targetDow)) addToLayer(layers.dowHour);
+    2922 |     if (Number(dom) === Number(targetDayOfMonth)) addToLayer(layers.dayMonth);
+    2923 |   }
+    2924 | 
+    2925 |   const indexed = indexDrawsByYmdHour(history);
+    2926 | 
+    2927 |   for (const prev of history) {
+    2928 |     const py = pickDrawYMD(prev);
+    2929 |     const ph = toHourBucket(pickDrawHour(prev));
+    2930 |     const pg = getFirstGrupoFromDraw(prev);
+    2931 | 
+    2932 |     if (!isYMD(py) || !ph || Number(pg) !== Number(prevGrupo)) continue;
+    2933 | 
+    2934 |     const ns = getNextSlotForLottery({
+    2935 |       lotteryKey: key,
+    2936 |       ymd: py,
+    2937 |       hourBucket: ph,
+    2938 |       PT_RIO_SCHEDULE_NORMAL,
+    2939 |       PT_RIO_SCHEDULE_WED_SAT,
+    2940 |       FEDERAL_SCHEDULE,
+    2941 |     });
+    2942 | 
+    2943 |     if (toHourBucket(ns?.hour) !== targetH) continue;
+    2944 |     if (ph !== lastH) continue;
+    2945 | 
+    2946 |     const nextDraw = indexed.get(`${safeStr(ns?.ymd)}|${toHourBucket(ns?.hour)}`) || null;
+    2947 |     if (!nextDraw) continue;
+    2948 | 
+    2949 |     const g1 = getFirstGrupoFromDraw(nextDraw);
+    2950 |     const prizePresenceSet = getPrizePresenceGroupSet(nextDraw);
+    2951 | 
+    2952 |     layers.transition.samples += 1;
+    2953 |     incMap(layers.transition.first, g1, 1);
+>>  2954 |     for (const g of prizePresenceSet) incMap(layers.transition.prizePresence, g, 1);
+    2955 |   }
+    2956 | 
+    2957 |   const recentComparable = history
+    2958 |     .filter((d) => {
+    2959 |       const y = pickDrawYMD(d);
+    2960 |       const h = toHourBucket(pickDrawHour(d));
+    2961 |       return h === targetH && Number(getDowKey(y)) === Number(targetDow);
+    2962 |     })
+    2963 |     .slice(-20);
+    2964 | 
+    2965 |   for (const d of recentComparable) {
+    2966 |     const g1 = getFirstGrupoFromDraw(d);
+    2967 |     const prizePresenceSet = getPrizePresenceGroupSet(d);
+    2968 | 
+    2969 |     layers.recent.samples += 1;
+    2970 |     incMap(layers.recent.first, g1, 1);
+>>  2971 |     for (const g of prizePresenceSet) incMap(layers.recent.prizePresence, g, 1);
+    2972 |   }
+    2973 | 
+    2974 |   const currentScene = buildSceneFromDraw(drawLast);
+    2975 |   const sceneRanking = buildHistoricalSceneRanking(history, currentScene, 80);
+    2976 |   const sceneHypothesis = buildSceneHypothesisDistribution(sceneRanking, TOP3_GROUPS_K);
+    2977 |   const sceneWeight =
+    2978 |     sampleConfidence(sceneHypothesis?.samples || 0, TOP3_SCENE_SAMPLE_TARGET) *
+    2979 |     TOP3_SCENE_WEIGHT;
+    2980 | 
+    2981 | 
+    2982 |   const activeWeights = {};
+    2983 |   let totalWeight = 0;
+    2984 | 
+    2985 |   for (const [keyLayer, layer] of Object.entries(layers)) {
+    2986 |     const conf =
+    2987 |       keyLayer === "transition"
+    2988 |         ? sampleConfidence(layer.samples, 8)
+    2989 |         : keyLayer === "recent"
+    2990 |           ? sampleConfidence(layer.samples, 12)
+    2991 |           : sampleConfidence(layer.samples, 30);
+    2992 | 
+    2993 |     const w = layer.samples > 0 ? layer.weight * conf : 0;
+    2994 |     activeWeights[keyLayer] = w;
+    2995 |     totalWeight += w;
+    2996 |   }
+    2997 | 
+    2998 |   if (totalWeight <= 0) {
+    2999 |     activeWeights.hour = 1;
+    3000 |     totalWeight = 1;
+    3001 |   }
+    3002 | 
+    3003 |   for (const keyLayer of Object.keys(activeWeights)) {
+    3004 |     activeWeights[keyLayer] = activeWeights[keyLayer] / totalWeight;
+    3005 |   }
+    3006 | 
+    3007 |   const ranked = Array.from({ length: safeInt(TOP3_GROUPS_K, 25) }, (_, idx) => {
+    3008 |     const grupo = idx + 1;
+    3009 | 
+    3010 |     let scoreProb = 0;
+    3011 |     const details = {};
+    3012 | 
+    3013 |     for (const [keyLayer, layer] of Object.entries(layers)) {
+>>  3014 |       const pFirst = Number(layerProbability(layer.first, layer.samples).get(grupo) || 0);
+>>  3015 |       const pPrizePresence = Number(layerProbability(layer.prizePresence, layer.samples).get(grupo) || 0);
+    3016 | 
+    3017 |       const pLayer = (pFirst * 0.92) + (pPrizePresence * 0.08);
+    3018 |       const w = Number(activeWeights[keyLayer] || 0);
+    3019 | 
+    3020 |       scoreProb += pLayer * w;
+    3021 | 
+    3022 |       details[keyLayer] = {
+    3023 |         label: layer.label,
+    3024 |         samples: layer.samples,
+>>  3025 |         firstCount: Number(layer.first.get(grupo) || 0),
+>>  3026 |         top3Count: Number(layer.prizePresence.get(grupo) || 0),
+    3027 |         probability: pLayer,
+    3028 |         weight: w,
+    3029 |       };
+    3030 |     }
+    3031 | 
+    3032 |     const pSceneRaw = Number(sceneHypothesis?.prob?.get?.(grupo) || 0);
+    3033 |     const pScene =
+    3034 |       (pSceneRaw * TOP3_SCENE_BLEND_SCENE) +
+    3035 |       ((1 / TOP3_GROUPS_K) * TOP3_SCENE_BLEND_UNIFORM);
+    3036 | 
+    3037 |     if (sceneWeight > 0) {
+    3038 |       scoreProb = (scoreProb * (1 - sceneWeight)) + (pScene * sceneWeight);
+    3039 |     }
+    3040 | 
+    3041 |     details.scene = {
+    3042 |       label: "analogia histórica de cena",
+    3043 |       samples: Number(sceneHypothesis?.samples || 0),
+>>  3044 |       firstCount: Number(sceneHypothesis?.freq?.get?.(grupo) || 0),
+    3045 |       top3Count: 0,
+    3046 |       probability: pScene,
+    3047 |       weight: sceneWeight,
+    3048 |     };
+    3049 | 
+    3050 |     return {
+    3051 |       grupo,
+    3052 |       scoreProb,
+    3053 |       score: scoreProb * 1000,
+    3054 |       details,
+    3055 |     };
+    3056 |   })
+    3057 |     .sort((a, b) => {
+    3058 |       if (b.score !== a.score) return b.score - a.score;
+    3059 |       return a.grupo - b.grupo;
+    3060 |     })
+    3061 |     .slice(0, Math.max(1, Number(topN || 3)));
+    3062 | 
+    3063 |   const rankedScored = scoreRanking(
+    3064 |     ranked,
+    3065 |     {
+    3066 |       lotteryKey,
+    3067 |       targetYmd: targetY,
+    3068 |       targetHour: targetH,
+    3069 |       previousGroup: prevGrupo,
+    3070 |       totalDraws: history.length,
+    3071 |     }
+    3072 |   );
+    3073 | 
+    3074 |   const top = rankedScored.map((x, idx) => {
+    3075 |     const g2 = String(x.grupo).padStart(2, "0");
+    3076 |     const rawScoreProb = Number(x.scoreProb || 0);
+    3077 | 
+    3078 |     const strongest = Object.values(x.details)
+    3079 |       .filter((d) => Number(d.probability || 0) > 0)
+    3080 |       .sort((a, b) => (b.probability * b.weight) - (a.probability * a.weight))
+    3081 |       .slice(0, 3);
+    3082 | 
+    3083 |     return {
+    3084 |       rank: idx + 1,
+    3085 |       title:
+    3086 |         idx === 0
+    3087 |           ? "Mais provável"
+    3088 |           : idx === 1
+    3089 |             ? "2º mais provável"
+    3090 |             : "3º mais provável",
+    3091 |       grupo: x.grupo,
+    3092 |       scoreProb: Number(rawScoreProb || 0),
+    3093 |       rawScoreProb: Number(rawScoreProb || 0),
+    3094 |       probCond: Number(x.details.transition?.probability || 0),
+    3095 |       probBase: Number(x.details.hour?.probability || 0),
+    3096 |       lateBonus: 0,
+>>  3097 |       freq: Number(x.details.hour?.firstCount || 0),
+>>  3098 |       freqCond: Number(x.details.transition?.firstCount || 0),
+>>  3099 |       freqBase: Number(x.details.hour?.firstCount || 0),
+    3100 |       freqZeroWhy: "",
+    3101 |       reasons: [
+    3102 |         `Motor: V3_STATISTICAL`,
+    3103 |         `Alvo: ${targetY} ${targetH} | DOW=${targetDow} | dia=${String(targetDayOfMonth).padStart(2, "0")}`,
+    3104 |         `Base: G${String(prevGrupo).padStart(2, "0")} @ ${lastH}`,
+    3105 |         `Probabilidade final G${g2}: ${(Number(rawScoreProb || 0) * 100).toFixed(2)}%`,
+    3106 |         ...strongest.map((d) =>
+>>  3107 |           `${d.label}: ${d.firstCount}x em 1º | ${d.top3Count}x no TOP3 | amostras=${d.samples} | peso=${(d.weight * 100).toFixed(0)}%`
+    3108 |         ),
+    3109 |       ],
+    3110 |       meta: {
+    3111 |         trigger: {
+    3112 |           ymd: lastY,
+    3113 |           hour: lastH,
+    3114 |           grupo: Number(prevGrupo),
+    3115 |         },
+    3116 |         next: {
+    3117 |           ymd: safeStr(targetY),
+    3118 |           hour: safeStr(targetH),
+    3119 |         },
+    3120 |         samples: history.length,
+    3121 |         period: {
+    3122 |           from: pickDrawYMD(history[0]) || "",
+    3123 |           to: pickDrawYMD(history[history.length - 1]) || "",
+    3124 |         },
+    3125 |         scenario: "V3_STATISTICAL",
+    3126 |         explain: {
+    3127 |           engine: "V3_STATISTICAL",
+    3128 |           targetDow,
+    3129 |           targetDayOfMonth,
+    3130 |           prevHour: lastH,
+    3131 |           prevGrupo: Number(prevGrupo),
+    3132 |           activeWeights,
+    3133 |           scene: {
+    3134 |             samples: Number(sceneHypothesis?.samples || 0),
+    3135 |             totalWeight: Number(sceneHypothesis?.totalWeight || 0),
+    3136 |             weight: Number(sceneWeight || 0),
+    3137 |             currentSignature: currentScene?.signature || "",
+    3138 |           },
+    3139 |           layers: Object.fromEntries(
+    3140 |             Object.entries(layers).map(([k, v]) => [
+    3141 |               k,
+    3142 |               {
+    3143 |                 label: v.label,
+    3144 |                 samples: v.samples,
+    3145 |                 weight: activeWeights[k],
+    3146 |               },
+    3147 |             ])
+    3148 |           ),
+    3149 |           details: x.details,
+    3150 |         },
+    3151 |       },
+    3152 |     };
+    3153 |   });
+    3154 | 
+    3155 |   return {
+    3156 |     top,
+    3157 |     meta: {
+    3158 |       trigger: {
+    3159 |         ymd: lastY,
+    3160 |         hour: lastH,
+    3161 |         grupo: Number(prevGrupo),
+    3162 |       },
+    3163 |       next: {
+    3164 |         ymd: safeStr(targetY),
+    3165 |         hour: safeStr(targetH),
+    3166 |       },
+    3167 |       samples: history.length,
+    3168 |       scenario: "V3_STATISTICAL",
+    3169 |       explain: {
+    3170 |         engine: "V3_STATISTICAL",
+    3171 |         targetDow,
+    3172 |         targetDayOfMonth,
+    3173 |         prevHour: lastH,
+    3174 |         prevGrupo: Number(prevGrupo),
+    3175 |         activeWeights,
+    3176 |         layers: Object.fromEntries(
+    3177 |           Object.entries(layers).map(([k, v]) => [
+    3178 |             k,
+    3179 |             {
+    3180 |               label: v.label,
+    3181 |               samples: v.samples,
+    3182 |               weight: activeWeights[k],
+    3183 |             },
+    3184 |           ])
+    3185 |         ),
+    3186 |       },
+    3187 |     },
+
+----------------------------------------------------------------------------------------------------------------------
+ARQUIVO 2: src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js
+----------------------------------------------------------------------------------------------------------------------
+PADRÕES: first.get, firstCount, layer declaration, layer.first, layers declaration
+
+### BLOCO 1 — LINHAS 961 A 1016
+     961 |       match: (ctx) => ctx.targetHour === targetHour,
+     962 |     },
+     963 |   ];
+     964 | }
+     965 | 
+     966 | function buildConditionalLayerDistribution({
+     967 |   lotteryKey,
+     968 |   drawsRange,
+     969 |   targetHour,
+     970 |   targetDow,
+     971 |   targetDayOfMonth,
+     972 |   prevHour,
+     973 |   prevGrupo,
+     974 |   PT_RIO_SCHEDULE_NORMAL,
+     975 |   PT_RIO_SCHEDULE_WED_SAT,
+     976 |   FEDERAL_SCHEDULE,
+     977 | }) {
+     978 |   const list = Array.isArray(drawsRange) ? drawsRange : [];
+     979 |   const drawsIndex = indexDrawsByYmdHour(list);
+     980 | 
+>>   981 |   const layers = buildLayerConfigs({
+     982 |     lotteryKey,
+     983 |     targetDayOfMonth,
+     984 |     targetDow,
+     985 |     prevHour,
+     986 |     prevGrupo,
+     987 |     targetHour,
+     988 |   });
+     989 | 
+     990 |   const layerResults = layers.map((layer) => ({
+     991 |     key: layer.key,
+     992 |     label: layer.label,
+     993 |     minSamples: layer.minSamples,
+     994 |     samples: 0,
+     995 |     freq: new Map(),
+     996 |     firstFreq: new Map(),
+     997 |     matchingDraws: [],
+     998 |   }));
+     999 | 
+    1000 |   for (const d of list) {
+    1001 |     const prevY = pickDrawYMD(d);
+    1002 |     const prevH = toHourBucket(pickDrawHour(d));
+    1003 |     if (!isYMD(prevY) || !prevH) continue;
+    1004 | 
+    1005 |     const prevG = getFirstGrupoFromDraw(d);
+    1006 |     if (!Number.isFinite(Number(prevG)) || Number(prevG) <= 0) continue;
+    1007 | 
+    1008 |     const ns = getNextSlotForLottery({
+    1009 |       lotteryKey,
+    1010 |       ymd: prevY,
+    1011 |       hourBucket: prevH,
+    1012 |       PT_RIO_SCHEDULE_NORMAL,
+    1013 |       PT_RIO_SCHEDULE_WED_SAT,
+    1014 |       FEDERAL_SCHEDULE,
+    1015 |     });
+    1016 | 
+
+### BLOCO 2 — LINHAS 1025 A 1080
+    1025 |       FEDERAL_SCHEDULE,
+    1026 |     });
+    1027 | 
+    1028 |     const nextDraw = found?.draw || null;
+    1029 |     const nextSlot = found?.slot || null;
+    1030 |     if (!nextDraw || !nextSlot?.ymd || !nextSlot?.hour) continue;
+    1031 | 
+    1032 |     const ctx = {
+    1033 |       prevYmd: prevY,
+    1034 |       prevHour: prevH,
+    1035 |       prevGrupo: Number(prevG),
+    1036 |       targetYmd: safeStr(nextSlot.ymd),
+    1037 |       targetHour: toHourBucket(nextSlot.hour),
+    1038 |       targetDow: getDowKey(nextSlot.ymd),
+    1039 |       targetDayOfMonth: getDayOfMonth(nextSlot.ymd),
+    1040 |     };
+    1041 | 
+    1042 |     const nextMaps = buildFreqAndFirstMaps(nextDraw);
+    1043 | 
+    1044 |     for (let i = 0; i < layers.length; i += 1) {
+>>  1045 |       const layer = layers[i];
+    1046 |       if (!layer.match(ctx)) continue;
+    1047 | 
+    1048 |       layerResults[i].samples += 1;
+    1049 |       layerResults[i].matchingDraws.push(nextDraw);
+    1050 |       mergeMapsAdd(layerResults[i].freq, nextMaps.freq);
+    1051 |       mergeMapsAdd(layerResults[i].firstFreq, nextMaps.firstMap);
+    1052 |     }
+    1053 |   }
+    1054 | 
+    1055 |   let chosen =
+    1056 |     layerResults.find((x) => x.samples >= x.minSamples && x.freq.size > 0) ||
+    1057 |     layerResults.find((x) => x.samples > 0 && x.freq.size > 0) ||
+    1058 |     null;
+    1059 | 
+    1060 |   if (!chosen) {
+    1061 |     chosen = {
+    1062 |       key: "NONE",
+    1063 |       label: "sem amostra",
+    1064 |       minSamples: 0,
+    1065 |       samples: 0,
+    1066 |       freq: new Map(),
+    1067 |       firstFreq: new Map(),
+    1068 |       matchingDraws: [],
+    1069 |     };
+    1070 |   }
+    1071 | 
+    1072 |   return {
+    1073 |     chosen,
+    1074 |     layers: layerResults,
+    1075 |   };
+    1076 | }
+    1077 | 
+    1078 | /* =========================
+    1079 |    Motor principal V1
+    1080 | ========================= */
+
+### BLOCO 3 — LINHAS 2924 A 2997
+    2924 |     : safeStr(nextSlot?.ymd);
+    2925 | 
+    2926 |   const targetH = isYMD(forcedTargetY) && forcedTargetH
+    2927 |     ? forcedTargetH
+    2928 |     : toHourBucket(nextSlot?.hour);
+    2929 |   const targetDow = getDowKey(targetY);
+    2930 |   const targetDayOfMonth = getDayOfMonth(targetY);
+    2931 |   const targetTs = ymdHourToTs(targetY, targetH);
+    2932 | 
+    2933 |   if (!isYMD(targetY) || !targetH || !Number.isFinite(Number(targetDow))) {
+    2934 |     return { top: [], meta: null };
+    2935 |   }
+    2936 | 
+    2937 |   const history = list.filter((d) => {
+    2938 |     const y = pickDrawYMD(d);
+    2939 |     const h = toHourBucket(pickDrawHour(d));
+    2940 |     const ts = ymdHourToTs(y, h);
+    2941 |     return isYMD(y) && h && Number.isFinite(ts) && ts < targetTs;
+    2942 |   });
+    2943 | 
+>>  2944 |   const layers = {
+    2945 |     hour: { label: `frequência no horário ${targetH}`, samples: 0, first: emptyGroupMap(), top5: emptyGroupMap(), weight: 0.33 },
+    2946 |     dowHour: { label: `frequência no dia da semana + horário`, samples: 0, first: emptyGroupMap(), top5: emptyGroupMap(), weight: 0.27 },
+    2947 |     dayMonth: { label: `frequência no dia ${String(targetDayOfMonth).padStart(2, "0")}`, samples: 0, first: emptyGroupMap(), top5: emptyGroupMap(), weight: 0.04 },
+    2948 |     transition: { label: `transição G${String(prevGrupo).padStart(2, "0")} @ ${lastH} → ${targetH}`, samples: 0, first: emptyGroupMap(), top5: emptyGroupMap(), weight: 0.26 },
+    2949 |     recent: { label: `recência comparável`, samples: 0, first: emptyGroupMap(), top5: emptyGroupMap(), weight: 0.10 },
+    2950 |   };
+    2951 | 
+    2952 |   for (const d of history) {
+    2953 |     const y = pickDrawYMD(d);
+    2954 |     const h = toHourBucket(pickDrawHour(d));
+    2955 |     const dow = getDowKey(y);
+    2956 |     const dom = getDayOfMonth(y);
+    2957 |     const g1 = getFirstGrupoFromDraw(d);
+    2958 |     const top5Set = getTop5GroupSet(d);
+    2959 | 
+    2960 |     const addToLayer = (layer) => {
+    2961 |       layer.samples += 1;
+>>  2962 |       incMap(layer.first, g1, 1);
+    2963 |       for (const g of top5Set) incMap(layer.top5, g, 1);
+    2964 |     };
+    2965 | 
+    2966 |     if (h === targetH) addToLayer(layers.hour);
+    2967 |     if (h === targetH && Number(dow) === Number(targetDow)) addToLayer(layers.dowHour);
+    2968 |     if (Number(dom) === Number(targetDayOfMonth)) addToLayer(layers.dayMonth);
+    2969 |   }
+    2970 | 
+    2971 |   const indexed = indexDrawsByYmdHour(history);
+    2972 | 
+    2973 |   for (const prev of history) {
+    2974 |     const py = pickDrawYMD(prev);
+    2975 |     const ph = toHourBucket(pickDrawHour(prev));
+    2976 |     const pg = getFirstGrupoFromDraw(prev);
+    2977 | 
+    2978 |     if (!isYMD(py) || !ph || Number(pg) !== Number(prevGrupo)) continue;
+    2979 | 
+    2980 |     const ns = getNextSlotForLottery({
+    2981 |       lotteryKey: key,
+    2982 |       ymd: py,
+    2983 |       hourBucket: ph,
+    2984 |       PT_RIO_SCHEDULE_NORMAL,
+    2985 |       PT_RIO_SCHEDULE_WED_SAT,
+    2986 |       FEDERAL_SCHEDULE,
+    2987 |     });
+    2988 | 
+    2989 |     if (toHourBucket(ns?.hour) !== targetH) continue;
+    2990 |     if (ph !== lastH) continue;
+    2991 | 
+    2992 |     const nextDraw = indexed.get(`${safeStr(ns?.ymd)}|${toHourBucket(ns?.hour)}`) || null;
+    2993 |     if (!nextDraw) continue;
+    2994 | 
+    2995 |     const g1 = getFirstGrupoFromDraw(nextDraw);
+    2996 |     const top5Set = getTop5GroupSet(nextDraw);
+    2997 | 
+
+### BLOCO 4 — LINHAS 3026 A 3188
+    3026 | 
+    3027 | 
+    3028 |   const activeWeights = {};
+    3029 |   let totalWeight = 0;
+    3030 | 
+    3031 |   for (const [keyLayer, layer] of Object.entries(layers)) {
+    3032 |     const conf =
+    3033 |       keyLayer === "transition"
+    3034 |         ? sampleConfidence(layer.samples, 8)
+    3035 |         : keyLayer === "recent"
+    3036 |           ? sampleConfidence(layer.samples, 12)
+    3037 |           : sampleConfidence(layer.samples, 30);
+    3038 | 
+    3039 |     const w = layer.samples > 0 ? layer.weight * conf : 0;
+    3040 |     activeWeights[keyLayer] = w;
+    3041 |     totalWeight += w;
+    3042 |   }
+    3043 | 
+    3044 |   if (totalWeight <= 0) {
+    3045 |     activeWeights.hour = 1;
+    3046 |     totalWeight = 1;
+    3047 |   }
+    3048 | 
+    3049 |   for (const keyLayer of Object.keys(activeWeights)) {
+    3050 |     activeWeights[keyLayer] = activeWeights[keyLayer] / totalWeight;
+    3051 |   }
+    3052 | 
+    3053 |   const ranked = Array.from({ length: safeInt(TOP3_GROUPS_K, 25) }, (_, idx) => {
+    3054 |     const grupo = idx + 1;
+    3055 | 
+    3056 |     let scoreProb = 0;
+    3057 |     const details = {};
+    3058 | 
+    3059 |     for (const [keyLayer, layer] of Object.entries(layers)) {
+>>  3060 |       const pFirst = Number(layerProbability(layer.first, layer.samples).get(grupo) || 0);
+    3061 |       const pTop5 = Number(layerProbability(layer.top5, layer.samples).get(grupo) || 0);
+    3062 | 
+    3063 |       const pLayer = (pFirst * 0.75) + (pTop5 * 0.25);
+    3064 |       const w = Number(activeWeights[keyLayer] || 0);
+    3065 | 
+    3066 |       scoreProb += pLayer * w;
+    3067 | 
+    3068 |       details[keyLayer] = {
+    3069 |         label: layer.label,
+    3070 |         samples: layer.samples,
+>>  3071 |         firstCount: Number(layer.first.get(grupo) || 0),
+    3072 |         top3Count: Number(layer.top5.get(grupo) || 0),
+    3073 |         probability: pLayer,
+    3074 |         weight: w,
+    3075 |       };
+    3076 |     }
+    3077 | 
+    3078 |     const pSceneRaw = Number(sceneHypothesis?.prob?.get?.(grupo) || 0);
+    3079 |     const pScene =
+    3080 |       (pSceneRaw * TOP3_SCENE_BLEND_SCENE) +
+    3081 |       ((1 / TOP3_GROUPS_K) * TOP3_SCENE_BLEND_UNIFORM);
+    3082 | 
+    3083 |     if (sceneWeight > 0) {
+    3084 |       scoreProb = (scoreProb * (1 - sceneWeight)) + (pScene * sceneWeight);
+    3085 |     }
+    3086 | 
+    3087 |     details.scene = {
+    3088 |       label: "analogia histórica de cena",
+    3089 |       samples: Number(sceneHypothesis?.samples || 0),
+>>  3090 |       firstCount: Number(sceneHypothesis?.freq?.get?.(grupo) || 0),
+    3091 |       top3Count: 0,
+    3092 |       probability: pScene,
+    3093 |       weight: sceneWeight,
+    3094 |     };
+    3095 | 
+    3096 |     return {
+    3097 |       grupo,
+    3098 |       scoreProb,
+    3099 |       score: scoreProb * 1000,
+    3100 |       details,
+    3101 |     };
+    3102 |   })
+    3103 |     .sort((a, b) => {
+    3104 |       if (b.score !== a.score) return b.score - a.score;
+    3105 |       return a.grupo - b.grupo;
+    3106 |     })
+    3107 |     .slice(0, Math.max(1, Number(topN || 3)));
+    3108 | 
+    3109 |   const rankedScored = scoreRanking(
+    3110 |     ranked,
+    3111 |     {
+    3112 |       lotteryKey,
+    3113 |       targetYmd: targetY,
+    3114 |       targetHour: targetH,
+    3115 |       previousGroup: prevGrupo,
+    3116 |       totalDraws: history.length,
+    3117 |     }
+    3118 |   );
+    3119 | 
+    3120 |   const top = rankedScored.map((x, idx) => {
+    3121 |     const g2 = String(x.grupo).padStart(2, "0");
+    3122 |     const rawScoreProb = Number(x.scoreProb || 0);
+    3123 | 
+    3124 |     const strongest = Object.values(x.details)
+    3125 |       .filter((d) => Number(d.probability || 0) > 0)
+    3126 |       .sort((a, b) => (b.probability * b.weight) - (a.probability * a.weight))
+    3127 |       .slice(0, 3);
+    3128 | 
+    3129 |     return {
+    3130 |       rank: idx + 1,
+    3131 |       title:
+    3132 |         idx === 0
+    3133 |           ? "Mais provável"
+    3134 |           : idx === 1
+    3135 |             ? "2º mais provável"
+    3136 |             : "3º mais provável",
+    3137 |       grupo: x.grupo,
+    3138 |       scoreProb: Number(rawScoreProb || 0),
+    3139 |       rawScoreProb: Number(rawScoreProb || 0),
+    3140 |       probCond: Number(x.details.transition?.probability || 0),
+    3141 |       probBase: Number(x.details.hour?.probability || 0),
+    3142 |       lateBonus: 0,
+>>  3143 |       freq: Number(x.details.hour?.firstCount || 0),
+>>  3144 |       freqCond: Number(x.details.transition?.firstCount || 0),
+>>  3145 |       freqBase: Number(x.details.hour?.firstCount || 0),
+    3146 |       freqZeroWhy: "",
+    3147 |       reasons: [
+    3148 |         `Motor: V3_STATISTICAL`,
+    3149 |         `Alvo: ${targetY} ${targetH} | DOW=${targetDow} | dia=${String(targetDayOfMonth).padStart(2, "0")}`,
+    3150 |         `Base: G${String(prevGrupo).padStart(2, "0")} @ ${lastH}`,
+    3151 |         `Probabilidade final G${g2}: ${(Number(rawScoreProb || 0) * 100).toFixed(2)}%`,
+    3152 |         ...strongest.map((d) =>
+>>  3153 |           `${d.label}: ${d.firstCount}x em 1º | ${d.top3Count}x no TOP3 | amostras=${d.samples} | peso=${(d.weight * 100).toFixed(0)}%`
+    3154 |         ),
+    3155 |       ],
+    3156 |       meta: {
+    3157 |         trigger: {
+    3158 |           ymd: lastY,
+    3159 |           hour: lastH,
+    3160 |           grupo: Number(prevGrupo),
+    3161 |         },
+    3162 |         next: {
+    3163 |           ymd: safeStr(targetY),
+    3164 |           hour: safeStr(targetH),
+    3165 |         },
+    3166 |         samples: history.length,
+    3167 |         period: {
+    3168 |           from: pickDrawYMD(history[0]) || "",
+    3169 |           to: pickDrawYMD(history[history.length - 1]) || "",
+    3170 |         },
+    3171 |         scenario: "V3_STATISTICAL",
+    3172 |         explain: {
+    3173 |           engine: "V3_STATISTICAL",
+    3174 |           targetDow,
+    3175 |           targetDayOfMonth,
+    3176 |           prevHour: lastH,
+    3177 |           prevGrupo: Number(prevGrupo),
+    3178 |           activeWeights,
+    3179 |           scene: {
+    3180 |             samples: Number(sceneHypothesis?.samples || 0),
+    3181 |             totalWeight: Number(sceneHypothesis?.totalWeight || 0),
+    3182 |             weight: Number(sceneWeight || 0),
+    3183 |             currentSignature: currentScene?.signature || "",
+    3184 |           },
+    3185 |           layers: Object.fromEntries(
+    3186 |             Object.entries(layers).map(([k, v]) => [
+    3187 |               k,
+    3188 |               {
+
+----------------------------------------------------------------------------------------------------------------------
+ARQUIVO 3: src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js
+----------------------------------------------------------------------------------------------------------------------
+PADRÕES: first.get, firstCount, layer declaration, layer.first, layers declaration
+
+### BLOCO 1 — LINHAS 961 A 1016
+     961 |       match: (ctx) => ctx.targetHour === targetHour,
+     962 |     },
+     963 |   ];
+     964 | }
+     965 | 
+     966 | function buildConditionalLayerDistribution({
+     967 |   lotteryKey,
+     968 |   drawsRange,
+     969 |   targetHour,
+     970 |   targetDow,
+     971 |   targetDayOfMonth,
+     972 |   prevHour,
+     973 |   prevGrupo,
+     974 |   PT_RIO_SCHEDULE_NORMAL,
+     975 |   PT_RIO_SCHEDULE_WED_SAT,
+     976 |   FEDERAL_SCHEDULE,
+     977 | }) {
+     978 |   const list = Array.isArray(drawsRange) ? drawsRange : [];
+     979 |   const drawsIndex = indexDrawsByYmdHour(list);
+     980 | 
+>>   981 |   const layers = buildLayerConfigs({
+     982 |     lotteryKey,
+     983 |     targetDayOfMonth,
+     984 |     targetDow,
+     985 |     prevHour,
+     986 |     prevGrupo,
+     987 |     targetHour,
+     988 |   });
+     989 | 
+     990 |   const layerResults = layers.map((layer) => ({
+     991 |     key: layer.key,
+     992 |     label: layer.label,
+     993 |     minSamples: layer.minSamples,
+     994 |     samples: 0,
+     995 |     freq: new Map(),
+     996 |     firstFreq: new Map(),
+     997 |     matchingDraws: [],
+     998 |   }));
+     999 | 
+    1000 |   for (const d of list) {
+    1001 |     const prevY = pickDrawYMD(d);
+    1002 |     const prevH = toHourBucket(pickDrawHour(d));
+    1003 |     if (!isYMD(prevY) || !prevH) continue;
+    1004 | 
+    1005 |     const prevG = getFirstGrupoFromDraw(d);
+    1006 |     if (!Number.isFinite(Number(prevG)) || Number(prevG) <= 0) continue;
+    1007 | 
+    1008 |     const ns = getNextSlotForLottery({
+    1009 |       lotteryKey,
+    1010 |       ymd: prevY,
+    1011 |       hourBucket: prevH,
+    1012 |       PT_RIO_SCHEDULE_NORMAL,
+    1013 |       PT_RIO_SCHEDULE_WED_SAT,
+    1014 |       FEDERAL_SCHEDULE,
+    1015 |     });
+    1016 | 
+
+### BLOCO 2 — LINHAS 1025 A 1080
+    1025 |       FEDERAL_SCHEDULE,
+    1026 |     });
+    1027 | 
+    1028 |     const nextDraw = found?.draw || null;
+    1029 |     const nextSlot = found?.slot || null;
+    1030 |     if (!nextDraw || !nextSlot?.ymd || !nextSlot?.hour) continue;
+    1031 | 
+    1032 |     const ctx = {
+    1033 |       prevYmd: prevY,
+    1034 |       prevHour: prevH,
+    1035 |       prevGrupo: Number(prevG),
+    1036 |       targetYmd: safeStr(nextSlot.ymd),
+    1037 |       targetHour: toHourBucket(nextSlot.hour),
+    1038 |       targetDow: getDowKey(nextSlot.ymd),
+    1039 |       targetDayOfMonth: getDayOfMonth(nextSlot.ymd),
+    1040 |     };
+    1041 | 
+    1042 |     const nextMaps = buildFreqAndFirstMaps(nextDraw);
+    1043 | 
+    1044 |     for (let i = 0; i < layers.length; i += 1) {
+>>  1045 |       const layer = layers[i];
+    1046 |       if (!layer.match(ctx)) continue;
+    1047 | 
+    1048 |       layerResults[i].samples += 1;
+    1049 |       layerResults[i].matchingDraws.push(nextDraw);
+    1050 |       mergeMapsAdd(layerResults[i].freq, nextMaps.freq);
+    1051 |       mergeMapsAdd(layerResults[i].firstFreq, nextMaps.firstMap);
+    1052 |     }
+    1053 |   }
+    1054 | 
+    1055 |   let chosen =
+    1056 |     layerResults.find((x) => x.samples >= x.minSamples && x.freq.size > 0) ||
+    1057 |     layerResults.find((x) => x.samples > 0 && x.freq.size > 0) ||
+    1058 |     null;
+    1059 | 
+    1060 |   if (!chosen) {
+    1061 |     chosen = {
+    1062 |       key: "NONE",
+    1063 |       label: "sem amostra",
+    1064 |       minSamples: 0,
+    1065 |       samples: 0,
+    1066 |       freq: new Map(),
+    1067 |       firstFreq: new Map(),
+    1068 |       matchingDraws: [],
+    1069 |     };
+    1070 |   }
+    1071 | 
+    1072 |   return {
+    1073 |     chosen,
+    1074 |     layers: layerResults,
+    1075 |   };
+    1076 | }
+    1077 | 
+    1078 | /* =========================
+    1079 |    Motor principal V1
+    1080 | ========================= */
+
+### BLOCO 3 — LINHAS 2924 A 2997
+    2924 |     : safeStr(nextSlot?.ymd);
+    2925 | 
+    2926 |   const targetH = isYMD(forcedTargetY) && forcedTargetH
+    2927 |     ? forcedTargetH
+    2928 |     : toHourBucket(nextSlot?.hour);
+    2929 |   const targetDow = getDowKey(targetY);
+    2930 |   const targetDayOfMonth = getDayOfMonth(targetY);
+    2931 |   const targetTs = ymdHourToTs(targetY, targetH);
+    2932 | 
+    2933 |   if (!isYMD(targetY) || !targetH || !Number.isFinite(Number(targetDow))) {
+    2934 |     return { top: [], meta: null };
+    2935 |   }
+    2936 | 
+    2937 |   const history = list.filter((d) => {
+    2938 |     const y = pickDrawYMD(d);
+    2939 |     const h = toHourBucket(pickDrawHour(d));
+    2940 |     const ts = ymdHourToTs(y, h);
+    2941 |     return isYMD(y) && h && Number.isFinite(ts) && ts < targetTs;
+    2942 |   });
+    2943 | 
+>>  2944 |   const layers = {
+    2945 |     hour: { label: `frequência no horário ${targetH}`, samples: 0, first: emptyGroupMap(), top5: emptyGroupMap(), weight: 0.33 },
+    2946 |     dowHour: { label: `frequência no dia da semana + horário`, samples: 0, first: emptyGroupMap(), top5: emptyGroupMap(), weight: 0.27 },
+    2947 |     dayMonth: { label: `frequência no dia ${String(targetDayOfMonth).padStart(2, "0")}`, samples: 0, first: emptyGroupMap(), top5: emptyGroupMap(), weight: 0.04 },
+    2948 |     transition: { label: `transição G${String(prevGrupo).padStart(2, "0")} @ ${lastH} → ${targetH}`, samples: 0, first: emptyGroupMap(), top5: emptyGroupMap(), weight: 0.26 },
+    2949 |     recent: { label: `recência comparável`, samples: 0, first: emptyGroupMap(), top5: emptyGroupMap(), weight: 0.10 },
+    2950 |   };
+    2951 | 
+    2952 |   for (const d of history) {
+    2953 |     const y = pickDrawYMD(d);
+    2954 |     const h = toHourBucket(pickDrawHour(d));
+    2955 |     const dow = getDowKey(y);
+    2956 |     const dom = getDayOfMonth(y);
+    2957 |     const g1 = getFirstGrupoFromDraw(d);
+    2958 |     const top5Set = getTop5GroupSet(d);
+    2959 | 
+    2960 |     const addToLayer = (layer) => {
+    2961 |       layer.samples += 1;
+>>  2962 |       incMap(layer.first, g1, 1);
+    2963 |       for (const g of top5Set) incMap(layer.top5, g, 1);
+    2964 |     };
+    2965 | 
+    2966 |     if (h === targetH) addToLayer(layers.hour);
+    2967 |     if (h === targetH && Number(dow) === Number(targetDow)) addToLayer(layers.dowHour);
+    2968 |     if (Number(dom) === Number(targetDayOfMonth)) addToLayer(layers.dayMonth);
+    2969 |   }
+    2970 | 
+    2971 |   const indexed = indexDrawsByYmdHour(history);
+    2972 | 
+    2973 |   for (const prev of history) {
+    2974 |     const py = pickDrawYMD(prev);
+    2975 |     const ph = toHourBucket(pickDrawHour(prev));
+    2976 |     const pg = getFirstGrupoFromDraw(prev);
+    2977 | 
+    2978 |     if (!isYMD(py) || !ph || Number(pg) !== Number(prevGrupo)) continue;
+    2979 | 
+    2980 |     const ns = getNextSlotForLottery({
+    2981 |       lotteryKey: key,
+    2982 |       ymd: py,
+    2983 |       hourBucket: ph,
+    2984 |       PT_RIO_SCHEDULE_NORMAL,
+    2985 |       PT_RIO_SCHEDULE_WED_SAT,
+    2986 |       FEDERAL_SCHEDULE,
+    2987 |     });
+    2988 | 
+    2989 |     if (toHourBucket(ns?.hour) !== targetH) continue;
+    2990 |     if (ph !== lastH) continue;
+    2991 | 
+    2992 |     const nextDraw = indexed.get(`${safeStr(ns?.ymd)}|${toHourBucket(ns?.hour)}`) || null;
+    2993 |     if (!nextDraw) continue;
+    2994 | 
+    2995 |     const g1 = getFirstGrupoFromDraw(nextDraw);
+    2996 |     const top5Set = getTop5GroupSet(nextDraw);
+    2997 | 
+
+### BLOCO 4 — LINHAS 3026 A 3188
+    3026 | 
+    3027 | 
+    3028 |   const activeWeights = {};
+    3029 |   let totalWeight = 0;
+    3030 | 
+    3031 |   for (const [keyLayer, layer] of Object.entries(layers)) {
+    3032 |     const conf =
+    3033 |       keyLayer === "transition"
+    3034 |         ? sampleConfidence(layer.samples, 8)
+    3035 |         : keyLayer === "recent"
+    3036 |           ? sampleConfidence(layer.samples, 12)
+    3037 |           : sampleConfidence(layer.samples, 30);
+    3038 | 
+    3039 |     const w = layer.samples > 0 ? layer.weight * conf : 0;
+    3040 |     activeWeights[keyLayer] = w;
+    3041 |     totalWeight += w;
+    3042 |   }
+    3043 | 
+    3044 |   if (totalWeight <= 0) {
+    3045 |     activeWeights.hour = 1;
+    3046 |     totalWeight = 1;
+    3047 |   }
+    3048 | 
+    3049 |   for (const keyLayer of Object.keys(activeWeights)) {
+    3050 |     activeWeights[keyLayer] = activeWeights[keyLayer] / totalWeight;
+    3051 |   }
+    3052 | 
+    3053 |   const ranked = Array.from({ length: safeInt(TOP3_GROUPS_K, 25) }, (_, idx) => {
+    3054 |     const grupo = idx + 1;
+    3055 | 
+    3056 |     let scoreProb = 0;
+    3057 |     const details = {};
+    3058 | 
+    3059 |     for (const [keyLayer, layer] of Object.entries(layers)) {
+>>  3060 |       const pFirst = Number(layerProbability(layer.first, layer.samples).get(grupo) || 0);
+    3061 |       const pTop5 = Number(layerProbability(layer.top5, layer.samples).get(grupo) || 0);
+    3062 | 
+    3063 |       const pLayer = (pFirst * 0.75) + (pTop5 * 0.25);
+    3064 |       const w = Number(activeWeights[keyLayer] || 0);
+    3065 | 
+    3066 |       scoreProb += pLayer * w;
+    3067 | 
+    3068 |       details[keyLayer] = {
+    3069 |         label: layer.label,
+    3070 |         samples: layer.samples,
+>>  3071 |         firstCount: Number(layer.first.get(grupo) || 0),
+    3072 |         top3Count: Number(layer.top5.get(grupo) || 0),
+    3073 |         probability: pLayer,
+    3074 |         weight: w,
+    3075 |       };
+    3076 |     }
+    3077 | 
+    3078 |     const pSceneRaw = Number(sceneHypothesis?.prob?.get?.(grupo) || 0);
+    3079 |     const pScene =
+    3080 |       (pSceneRaw * TOP3_SCENE_BLEND_SCENE) +
+    3081 |       ((1 / TOP3_GROUPS_K) * TOP3_SCENE_BLEND_UNIFORM);
+    3082 | 
+    3083 |     if (sceneWeight > 0) {
+    3084 |       scoreProb = (scoreProb * (1 - sceneWeight)) + (pScene * sceneWeight);
+    3085 |     }
+    3086 | 
+    3087 |     details.scene = {
+    3088 |       label: "analogia histórica de cena",
+    3089 |       samples: Number(sceneHypothesis?.samples || 0),
+>>  3090 |       firstCount: Number(sceneHypothesis?.freq?.get?.(grupo) || 0),
+    3091 |       top3Count: 0,
+    3092 |       probability: pScene,
+    3093 |       weight: sceneWeight,
+    3094 |     };
+    3095 | 
+    3096 |     return {
+    3097 |       grupo,
+    3098 |       scoreProb,
+    3099 |       score: scoreProb * 1000,
+    3100 |       details,
+    3101 |     };
+    3102 |   })
+    3103 |     .sort((a, b) => {
+    3104 |       if (b.score !== a.score) return b.score - a.score;
+    3105 |       return a.grupo - b.grupo;
+    3106 |     })
+    3107 |     .slice(0, Math.max(1, Number(topN || 3)));
+    3108 | 
+    3109 |   const rankedScored = scoreRanking(
+    3110 |     ranked,
+    3111 |     {
+    3112 |       lotteryKey,
+    3113 |       targetYmd: targetY,
+    3114 |       targetHour: targetH,
+    3115 |       previousGroup: prevGrupo,
+    3116 |       totalDraws: history.length,
+    3117 |     }
+    3118 |   );
+    3119 | 
+    3120 |   const top = rankedScored.map((x, idx) => {
+    3121 |     const g2 = String(x.grupo).padStart(2, "0");
+    3122 |     const rawScoreProb = Number(x.scoreProb || 0);
+    3123 | 
+    3124 |     const strongest = Object.values(x.details)
+    3125 |       .filter((d) => Number(d.probability || 0) > 0)
+    3126 |       .sort((a, b) => (b.probability * b.weight) - (a.probability * a.weight))
+    3127 |       .slice(0, 3);
+    3128 | 
+    3129 |     return {
+    3130 |       rank: idx + 1,
+    3131 |       title:
+    3132 |         idx === 0
+    3133 |           ? "Mais provável"
+    3134 |           : idx === 1
+    3135 |             ? "2º mais provável"
+    3136 |             : "3º mais provável",
+    3137 |       grupo: x.grupo,
+    3138 |       scoreProb: Number(rawScoreProb || 0),
+    3139 |       rawScoreProb: Number(rawScoreProb || 0),
+    3140 |       probCond: Number(x.details.transition?.probability || 0),
+    3141 |       probBase: Number(x.details.hour?.probability || 0),
+    3142 |       lateBonus: 0,
+>>  3143 |       freq: Number(x.details.hour?.firstCount || 0),
+>>  3144 |       freqCond: Number(x.details.transition?.firstCount || 0),
+>>  3145 |       freqBase: Number(x.details.hour?.firstCount || 0),
+    3146 |       freqZeroWhy: "",
+    3147 |       reasons: [
+    3148 |         `Motor: V3_STATISTICAL`,
+    3149 |         `Alvo: ${targetY} ${targetH} | DOW=${targetDow} | dia=${String(targetDayOfMonth).padStart(2, "0")}`,
+    3150 |         `Base: G${String(prevGrupo).padStart(2, "0")} @ ${lastH}`,
+    3151 |         `Probabilidade final G${g2}: ${(Number(rawScoreProb || 0) * 100).toFixed(2)}%`,
+    3152 |         ...strongest.map((d) =>
+>>  3153 |           `${d.label}: ${d.firstCount}x em 1º | ${d.top3Count}x no TOP3 | amostras=${d.samples} | peso=${(d.weight * 100).toFixed(0)}%`
+    3154 |         ),
+    3155 |       ],
+    3156 |       meta: {
+    3157 |         trigger: {
+    3158 |           ymd: lastY,
+    3159 |           hour: lastH,
+    3160 |           grupo: Number(prevGrupo),
+    3161 |         },
+    3162 |         next: {
+    3163 |           ymd: safeStr(targetY),
+    3164 |           hour: safeStr(targetH),
+    3165 |         },
+    3166 |         samples: history.length,
+    3167 |         period: {
+    3168 |           from: pickDrawYMD(history[0]) || "",
+    3169 |           to: pickDrawYMD(history[history.length - 1]) || "",
+    3170 |         },
+    3171 |         scenario: "V3_STATISTICAL",
+    3172 |         explain: {
+    3173 |           engine: "V3_STATISTICAL",
+    3174 |           targetDow,
+    3175 |           targetDayOfMonth,
+    3176 |           prevHour: lastH,
+    3177 |           prevGrupo: Number(prevGrupo),
+    3178 |           activeWeights,
+    3179 |           scene: {
+    3180 |             samples: Number(sceneHypothesis?.samples || 0),
+    3181 |             totalWeight: Number(sceneHypothesis?.totalWeight || 0),
+    3182 |             weight: Number(sceneWeight || 0),
+    3183 |             currentSignature: currentScene?.signature || "",
+    3184 |           },
+    3185 |           layers: Object.fromEntries(
+    3186 |             Object.entries(layers).map(([k, v]) => [
+    3187 |               k,
+    3188 |               {
+
+----------------------------------------------------------------------------------------------------------------------
+ARQUIVO 4: src/pages/Top3/Top3View.jsx
+----------------------------------------------------------------------------------------------------------------------
+PADRÕES: firstCount, layer declaration
+
+### BLOCO 1 — LINHAS 544 A 622
+     544 |   const periodTo = String(item?.meta?.period?.to || "").trim();
+     545 | 
+     546 |   const periodLabel =
+     547 |     periodFrom && periodTo
+     548 |       ? `Período analisado: ${ymdToBR(periodFrom)} até ${ymdToBR(periodTo)}`
+     549 |       : samples > 0
+     550 |         ? `Amostra analisada: ${samples} sorteios`
+     551 |         : "";
+     552 | 
+     553 |   const baseGrupo = formatGrupo(item?.meta?.trigger?.grupo);
+     554 |   const baseHour = String(item?.meta?.trigger?.hour || "").trim();
+     555 |   const targetHour = String(item?.meta?.next?.hour || "").trim();
+     556 | 
+     557 |   const smartReasons = [];
+     558 | 
+     559 |   if (periodLabel) {
+     560 |     smartReasons.push(periodLabel);
+     561 |   }
+     562 | 
+     563 |   if (transitionDetail) {
+>>   564 |     const first = Number(transitionDetail.firstCount || 0);
+     565 |     const top5 = Number(transitionDetail.top3Count || 0);
+     566 |     const amostras = Number(transitionDetail.samples || 0);
+     567 | 
+     568 |     smartReasons.push(
+     569 |       `Após G${baseGrupo} às ${baseHour}, G${grupoTxt} apareceu ${first}x em 1º e ${top5}x no TOP3 para o alvo ${targetHour}.`
+     570 |     );
+     571 | 
+     572 |     if (amostras > 0) {
+     573 |       smartReasons.push(`Cenários de transição avaliados: ${amostras}.`);
+     574 |     }
+     575 |   }
+     576 | 
+     577 |   if (hourDetail) {
+>>   578 |     const first = Number(hourDetail.firstCount || 0);
+     579 |     const top5 = Number(hourDetail.top3Count || 0);
+     580 | 
+     581 |     smartReasons.push(
+     582 |       `No horário ${targetHour}, G${grupoTxt} apareceu ${first}x em 1º e ${top5}x no TOP3.`
+     583 |     );
+     584 |   }
+     585 | 
+     586 |   if (dowDetail) {
+>>   587 |     const first = Number(dowDetail.firstCount || 0);
+     588 |     const top5 = Number(dowDetail.top3Count || 0);
+     589 | 
+     590 |     smartReasons.push(
+     591 |       `No mesmo dia da semana, G${grupoTxt} apareceu ${first}x em 1º e ${top5}x no TOP3.`
+     592 |     );
+     593 |   }
+     594 | 
+     595 |   if (sceneDetail && Number(sceneDetail.samples || 0) > 0) {
+     596 |     smartReasons.push(
+     597 |       `Cenários semelhantes encontrados: ${Number(sceneDetail.samples || 0)}.`
+     598 |     );
+     599 |   }
+     600 | 
+     601 |   smartReasons.push(`Probabilidade final do G${grupoTxt}: ${pct.toFixed(2)}%.`);
+     602 | 
+     603 |   const evidenceReasons = smartReasons
+     604 |     .concat(Array.isArray(item?.reasons) ? item.reasons.filter(Boolean) : [])
+     605 |     .filter(Boolean)
+     606 |     .slice(0, 7);
+     607 | 
+     608 |   const visibleEvidenceCount = Math.max(
+     609 |     evidenceCount || 0,
+     610 |     evidenceModules.length || 0,
+     611 |     evidenceReasons.length || 0
+     612 |   );
+     613 | 
+     614 |   const trendLabel =
+     615 |     engineScore >= pct
+     616 |       ? "TENDÊNCIA POSITIVA"
+     617 |       : "TENDÊNCIA NEUTRA";
+     618 | 
+     619 |   const displayScore = Math.round(
+     620 |     Math.max(
+     621 |       1,
+     622 |       Math.min(
+
+### BLOCO 2 — LINHAS 628 A 688
+     628 |     )
+     629 |   );
+     630 | 
+     631 |   const scoreBarPct = Math.max(4, Math.min(100, displayScore));
+     632 | 
+     633 |   const baseAnimalName =
+     634 |     typeof getAnimalLabel === "function"
+     635 |       ? String(getAnimalLabel(Number(item?.meta?.trigger?.grupo)) || "").trim()
+     636 |       : "";
+     637 | 
+     638 |   const baseLabel = baseAnimalName
+     639 |     ? `${baseAnimalName} (G${baseGrupo})`
+     640 |     : `G${baseGrupo}`;
+     641 | 
+     642 |   const targetLabel = animal
+     643 |     ? `${animal} (G${grupoTxt})`
+     644 |     : `G${grupoTxt}`;
+     645 | 
+     646 |   const targetWeekdayName = getWeekdayNameBR(item?.meta?.next?.ymd || item?.targetYmd || "");
+     647 | 
+>>   648 |   const transitionFirst = Number(transitionDetail?.firstCount || 0);
+     649 |   const transitionTop3 = Number(transitionDetail?.top3Count || transitionDetail?.top5Count || 0);
+     650 |   const transitionSamples = Number(transitionDetail?.samples || 0);
+     651 | 
+>>   652 |   const hourFirst = Number(hourDetail?.firstCount || 0);
+>>   653 |   const dowFirst = Number(dowDetail?.firstCount || 0);
+     654 |   const sceneSamples = Number(sceneDetail?.samples || 0);
+     655 | 
+     656 |   const premiumForceLabel =
+     657 |     displayScore >= 90
+     658 |       ? "MUITO FORTE"
+     659 |       : displayScore >= 75
+     660 |         ? "FORTE"
+     661 |         : displayScore >= 60
+     662 |           ? "MODERADA"
+     663 |           : "BAIXA";
+     664 | 
+     665 |   const premiumReliabilityLabel =
+     666 |     displayScore >= 85
+     667 |       ? "ALTA"
+     668 |       : displayScore >= 70
+     669 |         ? "MÉDIA"
+     670 |         : visibleEvidenceCount > 0
+     671 |           ? "EM FORMAÇÃO"
+     672 |           : "SEM EVIDÊNCIAS";
+     673 | 
+     674 |   const doCopyAll = async () => {
+     675 |     const payload = flat20.join(" ").trim();
+     676 |     if (!payload) return;
+     677 | 
+     678 |     const ok = await copyText(payload);
+     679 |     if (ok) setCopiedAllKey(key);
+     680 |   };
+     681 | 
+     682 |   const doCopyOne = async (m, rIdx, cIdx) => {
+     683 |     const mm = normalizeMilharStr(m);
+     684 |     if (!mm) return;
+     685 | 
+     686 |     const ok = await copyText(mm);
+     687 |     if (ok) setCopiedCellKey(`${key}__${rIdx}__${cIdx}`);
+     688 |   };
+
+### BLOCO 3 — LINHAS 1248 A 1303
+    1248 | //
+    1249 | // Fase atual:
+    1250 | // apenas corrigindo nomenclatura para refletir o cálculo existente.
+    1251 | 
+    1252 | const list = Array.isArray(top3)
+    1253 |   ? top3.slice(0, 3)
+    1254 |   : [];
+    1255 |   const timeline = (Array.isArray(timelineTop3) ? timelineTop3 : [])
+    1256 |   .slice()
+    1257 |   .sort((a, b) => {
+    1258 |     const ta = `${a?.targetYmd || ""} ${a?.targetHour || ""}`;
+    1259 |     const tb = `${b?.targetYmd || ""} ${b?.targetHour || ""}`;
+    1260 |     return ta.localeCompare(tb);
+    1261 |   });
+    1262 | 
+    1263 |   const showDetailedTimeline = false;
+    1264 | 
+    1265 |   const meta = useMemo(() => {
+    1266 |     const last = lastLabel || "—";
+    1267 |     const prev = prevLabel || "—";
+>>  1268 |     const layer = cleanLayerText(layerMetaText || "—");
+    1269 |     return { last, prev, layer };
+    1270 |   }, [lastLabel, prevLabel, layerMetaText]);
+    1271 | 
+    1272 |   const headerBase = useMemo(() => meta.last || "—", [meta.last]);
+    1273 | 
+    1274 |   const headerForecast = useMemo(() => {
+    1275 |     return formatYmdHour(analysisYmd, analysisHourBucket);
+    1276 |   }, [analysisYmd, analysisHourBucket]);
+    1277 | 
+    1278 |   const headerTransition = useMemo(() => {
+    1279 |     const from = String(lastHourBucket || "").trim();
+    1280 |     const to = String(analysisHourBucket || "").trim();
+    1281 |     if (from && to) return `${from} → ${to}`;
+    1282 |     return "—";
+    1283 |   }, [lastHourBucket, analysisHourBucket]);
+    1284 | 
+    1285 |   const t = theme || {
+    1286 |     bg: "#050505",
+    1287 |     panel: "rgba(0,0,0,0.55)",
+    1288 |     border: "rgba(255,255,255,0.18)",
+    1289 |     text: "rgba(255,255,255,0.92)",
+    1290 |     muted: "rgba(255,255,255,0.72)",
+    1291 |     accent: "rgba(201,168,62,0.92)",
+    1292 |   };
+    1293 | 
+    1294 |   const [copiedAllKey, setCopiedAllKey] = useState("");
+    1295 |   const [copiedCellKey, setCopiedCellKey] = useState("");
+    1296 | 
+    1297 | 
+    1298 |   useEffect(() => {
+    1299 |     if (!copiedAllKey) return;
+    1300 |     const id = setTimeout(() => setCopiedAllKey(""), 900);
+    1301 |     return () => clearTimeout(id);
+    1302 |   }, [copiedAllKey]);
+    1303 | 
+
+----------------------------------------------------------------------------------------------------------------------
+ARQUIVO 5: src/pages/Top3/Top3View.premium.backup.jsx
+----------------------------------------------------------------------------------------------------------------------
+PADRÕES: firstCount, layer declaration
+
+### BLOCO 1 — LINHAS 488 A 566
+     488 |   const periodTo = String(item?.meta?.period?.to || "").trim();
+     489 | 
+     490 |   const periodLabel =
+     491 |     periodFrom && periodTo
+     492 |       ? `Período analisado: ${ymdToBR(periodFrom)} até ${ymdToBR(periodTo)}`
+     493 |       : samples > 0
+     494 |         ? `Amostra analisada: ${samples} sorteios`
+     495 |         : "";
+     496 | 
+     497 |   const baseGrupo = formatGrupo(item?.meta?.trigger?.grupo);
+     498 |   const baseHour = String(item?.meta?.trigger?.hour || "").trim();
+     499 |   const targetHour = String(item?.meta?.next?.hour || "").trim();
+     500 | 
+     501 |   const smartReasons = [];
+     502 | 
+     503 |   if (periodLabel) {
+     504 |     smartReasons.push(periodLabel);
+     505 |   }
+     506 | 
+     507 |   if (transitionDetail) {
+>>   508 |     const first = Number(transitionDetail.firstCount || 0);
+     509 |     const top5 = Number(transitionDetail.top3Count || 0);
+     510 |     const amostras = Number(transitionDetail.samples || 0);
+     511 | 
+     512 |     smartReasons.push(
+     513 |       `Após G${baseGrupo} às ${baseHour}, G${grupoTxt} apareceu ${first}x em 1º e ${top5}x no TOP3 para o alvo ${targetHour}.`
+     514 |     );
+     515 | 
+     516 |     if (amostras > 0) {
+     517 |       smartReasons.push(`Cenários de transição avaliados: ${amostras}.`);
+     518 |     }
+     519 |   }
+     520 | 
+     521 |   if (hourDetail) {
+>>   522 |     const first = Number(hourDetail.firstCount || 0);
+     523 |     const top5 = Number(hourDetail.top3Count || 0);
+     524 | 
+     525 |     smartReasons.push(
+     526 |       `No horário ${targetHour}, G${grupoTxt} apareceu ${first}x em 1º e ${top5}x no TOP3.`
+     527 |     );
+     528 |   }
+     529 | 
+     530 |   if (dowDetail) {
+>>   531 |     const first = Number(dowDetail.firstCount || 0);
+     532 |     const top5 = Number(dowDetail.top3Count || 0);
+     533 | 
+     534 |     smartReasons.push(
+     535 |       `No mesmo dia da semana, G${grupoTxt} apareceu ${first}x em 1º e ${top5}x no TOP3.`
+     536 |     );
+     537 |   }
+     538 | 
+     539 |   if (sceneDetail && Number(sceneDetail.samples || 0) > 0) {
+     540 |     smartReasons.push(
+     541 |       `Cenários semelhantes encontrados: ${Number(sceneDetail.samples || 0)}.`
+     542 |     );
+     543 |   }
+     544 | 
+     545 |   smartReasons.push(`Probabilidade final do G${grupoTxt}: ${pct.toFixed(2)}%.`);
+     546 | 
+     547 |   const evidenceReasons = smartReasons
+     548 |     .concat(Array.isArray(item?.reasons) ? item.reasons.filter(Boolean) : [])
+     549 |     .filter(Boolean)
+     550 |     .slice(0, 7);
+     551 | 
+     552 |   const visibleEvidenceCount = Math.max(
+     553 |     evidenceCount || 0,
+     554 |     evidenceModules.length || 0,
+     555 |     evidenceReasons.length || 0
+     556 |   );
+     557 | 
+     558 |   const strengthLabel =
+     559 |     engineConfidence >= 75
+     560 |       ? "FORÇA ALTA"
+     561 |       : engineConfidence >= 50
+     562 |         ? "FORÇA MÉDIA"
+     563 |         : "FORÇA MODERADA";
+     564 | 
+     565 |   const reliabilityLabel =
+     566 |     engineConfidence >= 75
+
+### BLOCO 2 — LINHAS 983 A 1038
+     983 |     String(slot?.targetHour || "").trim() === String(analysisHourBucket || "").trim()
+     984 |   ) || null;
+     985 | }, [timelineTop3, analysisYmd, analysisHourBucket]);
+     986 | 
+     987 | const list = Array.isArray(forecastSlot?.top3)
+     988 |   ? forecastSlot.top3.slice(0, 3)
+     989 |   : [];
+     990 |   const timeline = (Array.isArray(timelineTop3) ? timelineTop3 : [])
+     991 |   .slice()
+     992 |   .sort((a, b) => {
+     993 |     const ta = `${a?.targetYmd || ""} ${a?.targetHour || ""}`;
+     994 |     const tb = `${b?.targetYmd || ""} ${b?.targetHour || ""}`;
+     995 |     return ta.localeCompare(tb);
+     996 |   });
+     997 | 
+     998 |   const showDetailedTimeline = false;
+     999 | 
+    1000 |   const meta = useMemo(() => {
+    1001 |     const last = lastLabel || "—";
+    1002 |     const prev = prevLabel || "—";
+>>  1003 |     const layer = cleanLayerText(layerMetaText || "—");
+    1004 |     return { last, prev, layer };
+    1005 |   }, [lastLabel, prevLabel, layerMetaText]);
+    1006 | 
+    1007 |   const headerBase = useMemo(() => meta.last || "—", [meta.last]);
+    1008 | 
+    1009 |   const headerForecast = useMemo(() => {
+    1010 |     return formatYmdHour(analysisYmd, analysisHourBucket);
+    1011 |   }, [analysisYmd, analysisHourBucket]);
+    1012 | 
+    1013 |   const headerTransition = useMemo(() => {
+    1014 |     const from = String(lastHourBucket || "").trim();
+    1015 |     const to = String(analysisHourBucket || "").trim();
+    1016 |     if (from && to) return `${from} → ${to}`;
+    1017 |     return "—";
+    1018 |   }, [lastHourBucket, analysisHourBucket]);
+    1019 | 
+    1020 |   const t = theme || {
+    1021 |     bg: "#050505",
+    1022 |     panel: "rgba(0,0,0,0.55)",
+    1023 |     border: "rgba(255,255,255,0.18)",
+    1024 |     text: "rgba(255,255,255,0.92)",
+    1025 |     muted: "rgba(255,255,255,0.72)",
+    1026 |     accent: "rgba(201,168,62,0.92)",
+    1027 |   };
+    1028 | 
+    1029 |   const [copiedAllKey, setCopiedAllKey] = useState("");
+    1030 |   const [copiedCellKey, setCopiedCellKey] = useState("");
+    1031 | 
+    1032 | 
+    1033 |   useEffect(() => {
+    1034 |     if (!copiedAllKey) return;
+    1035 |     const id = setTimeout(() => setCopiedAllKey(""), 900);
+    1036 |     return () => clearTimeout(id);
+    1037 |   }, [copiedAllKey]);
+    1038 | 
+
+======================================================================================================================
+RESUMO DIRETO
+======================================================================================================================
+
+layer.first: 9 ocorrência(s)
+  - src/pages/Top3/top3.engine.js:2916
+    incMap(layer.first, g1, 1);
+  - src/pages/Top3/top3.engine.js:3014
+    const pFirst = Number(layerProbability(layer.first, layer.samples).get(grupo) || 0);
+  - src/pages/Top3/top3.engine.js:3025
+    firstCount: Number(layer.first.get(grupo) || 0),
+  - src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:2962
+    incMap(layer.first, g1, 1);
+  - src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:3060
+    const pFirst = Number(layerProbability(layer.first, layer.samples).get(grupo) || 0);
+  - src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:3071
+    firstCount: Number(layer.first.get(grupo) || 0),
+  - src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:2962
+    incMap(layer.first, g1, 1);
+  - src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:3060
+    const pFirst = Number(layerProbability(layer.first, layer.samples).get(grupo) || 0);
+  - src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:3071
+    firstCount: Number(layer.first.get(grupo) || 0),
+
+first.get: 3 ocorrência(s)
+  - src/pages/Top3/top3.engine.js:3025
+    firstCount: Number(layer.first.get(grupo) || 0),
+  - src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:3071
+    firstCount: Number(layer.first.get(grupo) || 0),
+  - src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:3071
+    firstCount: Number(layer.first.get(grupo) || 0),
+
+prizePresence: 10 ocorrência(s)
+  - src/pages/Top3/top3.engine.js:2899
+    hour: { label: `frequência no horário ${targetH}`, samples: 0, first: emptyGroupMap(), prizePresence: emptyGroupMap(), weight: 0.33 },
+  - src/pages/Top3/top3.engine.js:2900
+    dowHour: { label: `frequência no dia da semana + horário`, samples: 0, first: emptyGroupMap(), prizePresence: emptyGroupMap(), weight: 0.27 },
+  - src/pages/Top3/top3.engine.js:2901
+    dayMonth: { label: `frequência no dia ${String(targetDayOfMonth).padStart(2, "0")}`, samples: 0, first: emptyGroupMap(), prizePresence: emptyGroupMap(), weight: 0.04 },
+  - src/pages/Top3/top3.engine.js:2902
+    transition: { label: `transição G${String(prevGrupo).padStart(2, "0")} @ ${lastH} → ${targetH}`, samples: 0, first: emptyGroupMap(), prizePresence: emptyGroupMap(), weight: 0.26 },
+  - src/pages/Top3/top3.engine.js:2903
+    recent: { label: `recência comparável`, samples: 0, first: emptyGroupMap(), prizePresence: emptyGroupMap(), weight: 0.10 },
+  - src/pages/Top3/top3.engine.js:2917
+    for (const g of prizePresenceSet) incMap(layer.prizePresence, g, 1);
+  - src/pages/Top3/top3.engine.js:2954
+    for (const g of prizePresenceSet) incMap(layers.transition.prizePresence, g, 1);
+  - src/pages/Top3/top3.engine.js:2971
+    for (const g of prizePresenceSet) incMap(layers.recent.prizePresence, g, 1);
+  - src/pages/Top3/top3.engine.js:3015
+    const pPrizePresence = Number(layerProbability(layer.prizePresence, layer.samples).get(grupo) || 0);
+  - src/pages/Top3/top3.engine.js:3026
+    top3Count: Number(layer.prizePresence.get(grupo) || 0),
+
+layers declaration: 6 ocorrência(s)
+  - src/pages/Top3/top3.engine.js:981
+    const layers = buildLayerConfigs({
+  - src/pages/Top3/top3.engine.js:2898
+    const layers = {
+  - src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:981
+    const layers = buildLayerConfigs({
+  - src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:2944
+    const layers = {
+  - src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:981
+    const layers = buildLayerConfigs({
+  - src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:2944
+    const layers = {
+
+layer declaration: 5 ocorrência(s)
+  - src/pages/Top3/top3.engine.js:1045
+    const layer = layers[i];
+  - src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:1045
+    const layer = layers[i];
+  - src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:1045
+    const layer = layers[i];
+  - src/pages/Top3/Top3View.jsx:1268
+    const layer = cleanLayerText(layerMetaText || "—");
+  - src/pages/Top3/Top3View.premium.backup.jsx:1003
+    const layer = cleanLayerText(layerMetaText || "—");
+
+firstCount: 27 ocorrência(s)
+  - src/pages/Top3/top3.engine.js:3025
+    firstCount: Number(layer.first.get(grupo) || 0),
+  - src/pages/Top3/top3.engine.js:3044
+    firstCount: Number(sceneHypothesis?.freq?.get?.(grupo) || 0),
+  - src/pages/Top3/top3.engine.js:3097
+    freq: Number(x.details.hour?.firstCount || 0),
+  - src/pages/Top3/top3.engine.js:3098
+    freqCond: Number(x.details.transition?.firstCount || 0),
+  - src/pages/Top3/top3.engine.js:3099
+    freqBase: Number(x.details.hour?.firstCount || 0),
+  - src/pages/Top3/top3.engine.js:3107
+    `${d.label}: ${d.firstCount}x em 1º | ${d.top3Count}x no TOP3 | amostras=${d.samples} | peso=${(d.weight * 100).toFixed(0)}%`
+  - src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:3071
+    firstCount: Number(layer.first.get(grupo) || 0),
+  - src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:3090
+    firstCount: Number(sceneHypothesis?.freq?.get?.(grupo) || 0),
+  - src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:3143
+    freq: Number(x.details.hour?.firstCount || 0),
+  - src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:3144
+    freqCond: Number(x.details.transition?.firstCount || 0),
+  - src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:3145
+    freqBase: Number(x.details.hour?.firstCount || 0),
+  - src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:3153
+    `${d.label}: ${d.firstCount}x em 1º | ${d.top3Count}x no TOP3 | amostras=${d.samples} | peso=${(d.weight * 100).toFixed(0)}%`
+  - src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:3071
+    firstCount: Number(layer.first.get(grupo) || 0),
+  - src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:3090
+    firstCount: Number(sceneHypothesis?.freq?.get?.(grupo) || 0),
+  - src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:3143
+    freq: Number(x.details.hour?.firstCount || 0),
+  - src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:3144
+    freqCond: Number(x.details.transition?.firstCount || 0),
+  - src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:3145
+    freqBase: Number(x.details.hour?.firstCount || 0),
+  - src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:3153
+    `${d.label}: ${d.firstCount}x em 1º | ${d.top3Count}x no TOP3 | amostras=${d.samples} | peso=${(d.weight * 100).toFixed(0)}%`
+  - src/pages/Top3/Top3View.jsx:564
+    const first = Number(transitionDetail.firstCount || 0);
+  - src/pages/Top3/Top3View.jsx:578
+    const first = Number(hourDetail.firstCount || 0);
+  - src/pages/Top3/Top3View.jsx:587
+    const first = Number(dowDetail.firstCount || 0);
+  - src/pages/Top3/Top3View.jsx:648
+    const transitionFirst = Number(transitionDetail?.firstCount || 0);
+  - src/pages/Top3/Top3View.jsx:652
+    const hourFirst = Number(hourDetail?.firstCount || 0);
+  - src/pages/Top3/Top3View.jsx:653
+    const dowFirst = Number(dowDetail?.firstCount || 0);
+  - src/pages/Top3/Top3View.premium.backup.jsx:508
+    const first = Number(transitionDetail.firstCount || 0);
+  - src/pages/Top3/Top3View.premium.backup.jsx:522
+    const first = Number(hourDetail.firstCount || 0);
+  - src/pages/Top3/Top3View.premium.backup.jsx:531
+    const first = Number(dowDetail.firstCount || 0);
+
+======================================================================================================================
+CRITÉRIO DE CONCLUSÃO
+======================================================================================================================
+
+O relatório deve permitir identificar:
+1. Onde a propriedade first é criada.
+2. Onde first.set(...) incrementa os grupos.
+3. Como a camada dow seleciona os registros históricos.
+4. Se há filtro simultâneo de horário.
+5. Se o grupo é normalizado corretamente.
+6. Por que o Camelo retorna zero no Top3.
+
+Nenhum arquivo funcional alterado.
+Nenhum commit.
+Nenhum deploy.
+Produção inalterada.
+======================================================================================================================

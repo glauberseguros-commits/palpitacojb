@@ -1,0 +1,792 @@
+====================================================================
+ARQUIVO: backend/engine/scoreEngineE08Experimental.js
+====================================================================
+Tamanho: 8.48 KB
+Última alteração: 07/18/2026 09:14:18
+
+----- PRIMEIRAS 80 LINHAS -----
+"use strict";
+
+const {
+  computeStatisticalTop3V3,
+} = require("./scoreEngineUnified");
+
+const GROUPS_K = 25;
+const LAPLACE_ALPHA = 1;
+
+function safeArray(value) {
+  return Array.isArray(value)
+    ? value
+    : [];
+}
+
+function normalizeHour(value) {
+  const raw = String(
+    value ?? ""
+  ).trim();
+
+  if (!raw) {
+    return "";
+  }
+
+  const match = raw.match(
+    /^(\d{1,2})(?::?(\d{2}))?/
+  );
+
+  if (!match) {
+    return "";
+  }
+
+  const hour = Number(match[1]);
+  const minute = Number(
+    match[2] || 0
+  );
+
+  if (
+    !Number.isFinite(hour) ||
+    hour < 0 ||
+    hour > 23 ||
+    !Number.isFinite(minute) ||
+    minute < 0 ||
+    minute > 59
+  ) {
+    return "";
+  }
+
+  return (
+    String(hour).padStart(2, "0") +
+    ":" +
+    String(minute).padStart(2, "0")
+  );
+}
+
+function pickDrawHour(draw) {
+  return normalizeHour(
+    draw?.close_hour ??
+    draw?.closeHour ??
+    draw?.hour ??
+    draw?.hora
+  );
+}
+
+function groupFromDezena(value) {
+  const digits = String(
+    value ?? ""
+  )
+    .replace(/\D+/g, "")
+    .padStart(2, "0")
+    .slice(-2);
+
+  if (!/^\d{2}$/.test(digits)) {
+    return null;
+  }
+
+  const rawDezena = Number(digits);
+
+  if (!Number.isFinite(rawDezena)) {
+    return null;
+
+====================================================================
+ARQUIVO: backend/engine/scoreEngineV4Experimental.js
+====================================================================
+Tamanho: 13.08 KB
+Última alteração: 07/17/2026 22:10:08
+
+----- PRIMEIRAS 80 LINHAS -----
+"use strict";
+
+const {
+  computeStatisticalTop3V3,
+} = require("./scoreEngineUnified");
+
+const GROUPS_K = 25;
+const LAPLACE_ALPHA = 1;
+
+function safeArray(value) {
+  return Array.isArray(value) ? value : [];
+}
+
+function normalizeHour(value) {
+  const raw = String(value ?? "").trim();
+
+  if (!raw) {
+    return "";
+  }
+
+  const match = raw.match(/^(\d{1,2})(?::?(\d{2}))?/);
+
+  if (!match) {
+    return "";
+  }
+
+  const hour = Number(match[1]);
+  const minute = Number(match[2] || 0);
+
+  if (
+    !Number.isFinite(hour) ||
+    hour < 0 ||
+    hour > 23 ||
+    !Number.isFinite(minute) ||
+    minute < 0 ||
+    minute > 59
+  ) {
+    return "";
+  }
+
+  return `${String(hour).padStart(2, "0")}:${String(minute).padStart(2, "0")}`;
+}
+
+function normalizeYmd(value) {
+  const raw = String(value ?? "").trim();
+
+  const isoMatch = raw.match(
+    /^(\d{4})-(\d{2})-(\d{2})/
+  );
+
+  if (isoMatch) {
+    return `${isoMatch[1]}-${isoMatch[2]}-${isoMatch[3]}`;
+  }
+
+  const brMatch = raw.match(
+    /^(\d{2})\/(\d{2})\/(\d{4})/
+  );
+
+  if (brMatch) {
+    return `${brMatch[3]}-${brMatch[2]}-${brMatch[1]}`;
+  }
+
+  return "";
+}
+
+function pickDrawYmd(draw) {
+  return normalizeYmd(
+    draw?.ymd ??
+    draw?.date ??
+    draw?.data ??
+    draw?.draw_date ??
+    draw?.drawDate ??
+    draw?.close_date ??
+    draw?.closeDate
+  );
+}
+
+function pickDrawHour(draw) {
+  return normalizeHour(
+    draw?.close_hour ??
+
+====================================================================
+ARQUIVO: backend/scripts/auditTop3E08DifferencesExperimental.js
+====================================================================
+Tamanho: 9.94 KB
+Última alteração: 07/18/2026 15:07:14
+
+----- PRIMEIRAS 80 LINHAS -----
+"use strict";
+
+const fs = require("fs");
+const path = require("path");
+
+const {
+  runOfficialBacktest,
+} = require("./backtestTop3Official");
+
+const {
+  computeStatisticalTop3E08Experimental,
+} = require("../engine/scoreEngineE08Experimental");
+
+const {
+  readFullHistory,
+  readMetadata,
+} = require("../engine/top3HistoryRepository");
+
+function safeArray(value) {
+  return Array.isArray(value)
+    ? value
+    : [];
+}
+
+function normalizeGroup(value) {
+  const number = Number(value);
+
+  return (
+    Number.isFinite(number) &&
+    number >= 1 &&
+    number <= 25
+  )
+    ? number
+    : null;
+}
+
+function makeCaseKey(item) {
+  const ymd =
+    String(
+      item?.target?.ymd ?? ""
+    ).trim();
+
+  const hour =
+    String(
+      item?.target?.hour ?? ""
+    ).trim();
+
+  return `${ymd}|${hour}`;
+}
+
+function formatGroups(groups) {
+  return safeArray(groups)
+    .map(normalizeGroup)
+    .filter(Number.isFinite)
+    .map(
+      (group) =>
+        `G${String(group).padStart(2, "0")}`
+    )
+    .join(" > ");
+}
+
+function orderChanged(
+  baselineGroups,
+  experimentalGroups
+) {
+  const a =
+    safeArray(baselineGroups)
+      .map(normalizeGroup)
+      .filter(Number.isFinite);
+
+  const b =
+    safeArray(experimentalGroups)
+      .map(normalizeGroup)
+      .filter(Number.isFinite);
+
+  return (
+    a.length !== b.length ||
+    a.some(
+      (value, index) =>
+        value !== b[index]
+
+====================================================================
+ARQUIVO: backend/scripts/backtestTop3AblationExperimental.js
+====================================================================
+Tamanho: 12.2 KB
+Última alteração: 07/18/2026 16:45:59
+
+----- PRIMEIRAS 80 LINHAS -----
+"use strict";
+
+/**
+ * TPP-01.04
+ *
+ * Harness experimental para medir a contribuição dos
+ * módulos frequency e context no reranqueamento oficial.
+ *
+ * Este arquivo não é utilizado pela produção.
+ */
+
+const fs = require("fs");
+const path = require("path");
+
+const {
+  runOfficialBacktest,
+} = require("./backtestTop3Official");
+
+const VALID_VARIANTS = new Map([
+  ["A00", "BASELINE_COMPLETO"],
+  ["BASELINE", "BASELINE_COMPLETO"],
+  ["BASELINE_COMPLETO", "BASELINE_COMPLETO"],
+
+  ["A01", "SEM_FREQUENCY"],
+  ["SEM_FREQUENCY", "SEM_FREQUENCY"],
+
+  ["A02", "SEM_CONTEXT"],
+  ["SEM_CONTEXT", "SEM_CONTEXT"],
+]);
+
+function parseStringFlag(
+  args,
+  name,
+  fallback = null
+) {
+  const prefix = `--${name}=`;
+
+  const match = args.find(
+    (arg) => String(arg).startsWith(prefix)
+  );
+
+  if (!match) return fallback;
+
+  return String(match)
+    .slice(prefix.length)
+    .trim();
+}
+
+function parseIntegerFlag(
+  args,
+  name,
+  fallback = null
+) {
+  const raw = parseStringFlag(
+    args,
+    name,
+    null
+  );
+
+  if (
+    raw == null ||
+    raw === ""
+  ) {
+    return fallback;
+  }
+
+  const value = Number(raw);
+
+  if (
+    !Number.isInteger(value) ||
+    value <= 0
+  ) {
+    throw new Error(
+      `Parâmetro --${name} inválido.`
+    );
+  }
+
+  return value;
+}
+
+
+====================================================================
+ARQUIVO: backend/scripts/backtestTop3E07Experimental.js
+====================================================================
+Tamanho: 6.94 KB
+Última alteração: 07/17/2026 22:17:04
+
+----- PRIMEIRAS 80 LINHAS -----
+"use strict";
+
+const fs = require("fs");
+const path = require("path");
+
+const {
+  runOfficialBacktest,
+} = require("./backtestTop3Official");
+
+const {
+  computeStatisticalTop3V4Experimental,
+} = require("../engine/scoreEngineV4Experimental");
+
+function parseIntegerFlag(
+  flags,
+  name,
+  fallback
+) {
+  const prefix = `--${name}=`;
+
+  const raw = flags.find(
+    (flag) =>
+      String(flag).startsWith(prefix)
+  );
+
+  if (!raw) {
+    return fallback;
+  }
+
+  const value = Number(
+    String(raw).slice(
+      prefix.length
+    )
+  );
+
+  return Number.isFinite(value)
+    ? value
+    : fallback;
+}
+
+function parseStringFlag(
+  flags,
+  name,
+  fallback = null
+) {
+  const prefix = `--${name}=`;
+
+  const raw = flags.find(
+    (flag) =>
+      String(flag).startsWith(prefix)
+  );
+
+  return raw
+    ? String(raw).slice(
+        prefix.length
+      )
+    : fallback;
+}
+
+function percent(value) {
+  const number = Number(value || 0);
+
+  return `${number.toFixed(4)}%`;
+}
+
+async function main() {
+  const argv =
+    process.argv.slice(2);
+
+  const lotteryKey =
+    String(
+      argv[0] || "PT_RIO"
+    )
+      .trim()
+      .toUpperCase();
+
+  const flags =
+    argv.slice(1);
+
+  const limit =
+
+====================================================================
+ARQUIVO: backend/scripts/backtestTop3E08Experimental.js
+====================================================================
+Tamanho: 8.75 KB
+Última alteração: 07/18/2026 13:25:17
+
+----- PRIMEIRAS 80 LINHAS -----
+"use strict";
+
+const fs = require("fs");
+const path = require("path");
+
+const {
+  runOfficialBacktest,
+} = require("./backtestTop3Official");
+
+const {
+  computeStatisticalTop3E08Experimental,
+} = require("../engine/scoreEngineE08Experimental");
+
+const {
+  readFullHistory,
+  readMetadata,
+} = require("../engine/top3HistoryRepository");
+
+function parseIntegerFlag(
+  flags,
+  name,
+  fallback
+) {
+  const prefix = `--${name}=`;
+
+  const raw = flags.find(
+    (flag) =>
+      String(flag).startsWith(prefix)
+  );
+
+  if (!raw) {
+    return fallback;
+  }
+
+  const value = Number(
+    String(raw).slice(
+      prefix.length
+    )
+  );
+
+  return Number.isFinite(value)
+    ? value
+    : fallback;
+}
+
+function percent(value) {
+  return (
+    `${Number(value || 0).toFixed(4)}%`
+  );
+}
+
+function signed(value) {
+  const number = Number(value || 0);
+
+  return number > 0
+    ? `+${number}`
+    : String(number);
+}
+
+async function main() {
+  const argv =
+    process.argv.slice(2);
+
+  const lotteryKey =
+    String(
+      argv[0] || "PT_RIO"
+    )
+      .trim()
+      .toUpperCase();
+
+  const flags =
+    argv.slice(1);
+
+  const limit =
+    parseIntegerFlag(
+      flags,
+      "limit",
+      0
+    );
+
+
+====================================================================
+ARQUIVO: src/pages/Centenas/__tests__/milharProbabilityEngineV3.test.js
+====================================================================
+Tamanho: 3.68 KB
+Última alteração: 07/14/2026 11:33:35
+
+----- PRIMEIRAS 80 LINHAS -----
+import {
+  buildMilharCandidatesV3,
+  buildMilharRecommendationV3,
+  flattenDrawsForMilharV3,
+  rankMilharCandidatesV3,
+} from "../modules/milharProbabilityEngineV3";
+
+function draw({
+  ymd,
+  hour,
+  prizes,
+}) {
+  return {
+    ymd,
+    date: ymd,
+    closeHour: hour,
+    prizes,
+  };
+}
+
+function prize(milhar, position = 1) {
+  return {
+    milhar,
+    position,
+  };
+}
+
+describe("Motor probabilístico de milhares V3", () => {
+  test("gera exatamente as dez candidatas da centena", () => {
+    const candidates =
+      buildMilharCandidatesV3("619");
+
+    expect(candidates).toHaveLength(10);
+
+    expect(
+      candidates.map((item) => item.milhar)
+    ).toEqual([
+      "0619",
+      "1619",
+      "2619",
+      "3619",
+      "4619",
+      "5619",
+      "6619",
+      "7619",
+      "8619",
+      "9619",
+    ]);
+  });
+
+  test("normaliza prêmios de três dígitos", () => {
+    const rows = flattenDrawsForMilharV3([
+      draw({
+        ymd: "2026-07-01",
+        hour: "09:00",
+        prizes: [
+          prize("763", 7),
+        ],
+      }),
+    ]);
+
+    expect(rows).toHaveLength(1);
+    expect(rows[0].milhar).toBe("0763");
+    expect(rows[0].centena).toBe("763");
+  });
+
+  test("horário e posição podem superar frequência histórica geral", () => {
+    const draws = [
+      draw({
+        ymd: "2026-06-01",
+        hour: "11:00",
+        prizes: [
+          prize("2619", 2),
+        ],
+      }),
+
+      draw({
+        ymd: "2026-06-02",
+        hour: "11:00",
+        prizes: [
+
+====================================================================
+ARQUIVO: src/pages/Centenas/modules/milharProbabilityEngineV3.js
+====================================================================
+Tamanho: 14.01 KB
+Última alteração: 07/14/2026 11:33:35
+
+----- PRIMEIRAS 80 LINHAS -----
+/*
+===============================================================================
+Motor Probabilístico de Milhares — V3
+===============================================================================
+
+Objetivos:
+
+- preservar integralmente a centena solicitada;
+- gerar sempre as 10 milhares candidatas;
+- utilizar contexto temporal real;
+- não depender de diversificação artificial;
+- não depender de React;
+- manter resultado determinístico;
+- aceitar sorteios completos, e não apenas prêmios achatados.
+
+Fatores padrão:
+
+- 30% frequência exata histórica;
+- 18% frequência no horário-alvo;
+- 14% frequência no dia da semana-alvo;
+- 12% frequência na posição-alvo;
+- 12% tendência recente;
+- 10% recência cronológica;
+- 4% força recente do prefixo.
+
+O prefixo é apenas sinal complementar.
+*/
+
+const DEFAULT_WEIGHTS_V3 = Object.freeze({
+  exactFrequency: 0.30,
+  hourFrequency: 0.18,
+  weekdayFrequency: 0.14,
+  positionFrequency: 0.12,
+  recentTrend: 0.12,
+  chronologicalRecency: 0.10,
+  recentPrefixStrength: 0.04,
+});
+
+const DEFAULT_RECENT_WINDOW = 120;
+
+function digitsOnly(value) {
+  return String(value ?? "").replace(/\D+/g, "");
+}
+
+function safeNumber(value, fallback = 0) {
+  const parsed = Number(value);
+
+  return Number.isFinite(parsed)
+    ? parsed
+    : fallback;
+}
+
+function firstValue(object, keys) {
+  for (const key of keys) {
+    const value = object?.[key];
+
+    if (
+      value !== undefined &&
+      value !== null &&
+      String(value).trim() !== ""
+    ) {
+      return value;
+    }
+  }
+
+  return "";
+}
+
+export function normalizeCentena3V3(value) {
+  const digits = digitsOnly(value);
+
+  if (!digits) return "";
+
+  return digits.slice(-3).padStart(3, "0");
+}
+
+export function normalizeMilhar4V3(value) {
+  const digits = digitsOnly(value);
+
+  if (!digits) return "";
+
+====================================================================
+ARQUIVO: src/pages/Top3/__tests__/top3.schedule-calendar-rules.node.test.js
+====================================================================
+Tamanho: 2.54 KB
+Última alteração: 07/19/2026 17:13:02
+
+----- PRIMEIRAS 80 LINHAS -----
+import test from "node:test";
+import assert from "node:assert/strict";
+
+import {
+  getScheduleForLottery,
+  isFederalDrawDay,
+} from "../top3.engine.js";
+
+import {
+  FEDERAL_SCHEDULE,
+  PT_RIO_SCHEDULE_NORMAL,
+  PT_RIO_SCHEDULE_WED_SAT,
+} from "../top3.constants.js";
+
+function schedule(lotteryKey, ymd) {
+  return getScheduleForLottery({
+    lotteryKey,
+    ymd,
+    PT_RIO_SCHEDULE_NORMAL,
+    PT_RIO_SCHEDULE_WED_SAT,
+    FEDERAL_SCHEDULE,
+  });
+}
+
+test("Federal histórica: quarta-feira às 20h", () => {
+  assert.equal(
+    isFederalDrawDay("2026-07-15"),
+    true
+  );
+
+  assert.deepEqual(
+    schedule("FEDERAL", "2026-07-15"),
+    ["20:00"]
+  );
+});
+
+test("Federal histórica: sábado às 20h até 18/07/2026", () => {
+  assert.equal(
+    isFederalDrawDay("2026-07-18"),
+    true
+  );
+
+  assert.deepEqual(
+    schedule("FEDERAL", "2026-07-18"),
+    ["20:00"]
+  );
+});
+
+test("Federal nova: domingo às 11h desde 19/07/2026", () => {
+  assert.equal(
+    isFederalDrawDay("2026-07-19"),
+    true
+  );
+
+  assert.deepEqual(
+    schedule("FEDERAL", "2026-07-19"),
+    ["11:00"]
+  );
+});
+
+test("Federal nova: quarta-feira continua às 20h", () => {
+  assert.equal(
+    isFederalDrawDay("2026-07-22"),
+    true
+  );
+
+  assert.deepEqual(
+    schedule("FEDERAL", "2026-07-22"),
+    ["20:00"]
+  );
+});
+
+test("Federal nova: sábado deixa de ter sorteio", () => {
+  assert.equal(
+    isFederalDrawDay("2026-07-25"),
+    false
+  );
+
+  assert.deepEqual(
+    schedule("FEDERAL", "2026-07-25"),
+

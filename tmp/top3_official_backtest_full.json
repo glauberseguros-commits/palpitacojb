@@ -1,0 +1,549 @@
+{
+  "ok": true,
+  "lotteryKey": "PT_RIO",
+  "engine": "top3_statistical_v3",
+  "historySource": "snapshot",
+  "historyLoaded": 7508,
+  "eligibleCases": 7408,
+  "selectedCases": 7408,
+  "skipped": 0,
+  "minHistory": 100,
+  "limit": null,
+  "historyPeriod": {
+    "from": "2022-06-07",
+    "to": "2026-07-18"
+  },
+  "evaluationPeriod": {
+    "from": "2022-06-29",
+    "to": "2026-07-18"
+  },
+  "global": {
+    "evaluated": 7408,
+    "top1Hits": 321,
+    "top3Hits": 913,
+    "errors": 0,
+    "top1Rate": 4.3332,
+    "top3Rate": 12.3245
+  },
+  "byHour": {
+    "16:00": {
+      "evaluated": 1465,
+      "top1Hits": 53,
+      "top3Hits": 189,
+      "errors": 0,
+      "top1Rate": 3.6177,
+      "top3Rate": 12.901
+    },
+    "21:00": {
+      "evaluated": 1251,
+      "top1Hits": 75,
+      "top3Hits": 170,
+      "errors": 0,
+      "top1Rate": 5.9952,
+      "top3Rate": 13.5891
+    },
+    "11:00": {
+      "evaluated": 1465,
+      "top1Hits": 69,
+      "top3Hits": 175,
+      "errors": 0,
+      "top1Rate": 4.7099,
+      "top3Rate": 11.9454
+    },
+    "14:00": {
+      "evaluated": 1466,
+      "top1Hits": 65,
+      "top3Hits": 178,
+      "errors": 0,
+      "top1Rate": 4.4338,
+      "top3Rate": 12.1419
+    },
+    "18:00": {
+      "evaluated": 849,
+      "top1Hits": 30,
+      "top3Hits": 101,
+      "errors": 0,
+      "top1Rate": 3.5336,
+      "top3Rate": 11.8963
+    },
+    "09:00": {
+      "evaluated": 912,
+      "top1Hits": 29,
+      "top3Hits": 100,
+      "errors": 0,
+      "top1Rate": 3.1798,
+      "top3Rate": 10.9649
+    }
+  },
+  "byWeekday": {
+    "0": {
+      "evaluated": 744,
+      "top1Hits": 17,
+      "top3Hits": 68,
+      "errors": 0,
+      "top1Rate": 2.2849,
+      "top3Rate": 9.1398
+    },
+    "1": {
+      "evaluated": 1178,
+      "top1Hits": 48,
+      "top3Hits": 150,
+      "errors": 0,
+      "top1Rate": 4.0747,
+      "top3Rate": 12.7334
+    },
+    "2": {
+      "evaluated": 1181,
+      "top1Hits": 52,
+      "top3Hits": 148,
+      "errors": 0,
+      "top1Rate": 4.403,
+      "top3Rate": 12.5318
+    },
+    "3": {
+      "evaluated": 976,
+      "top1Hits": 40,
+      "top3Hits": 121,
+      "errors": 0,
+      "top1Rate": 4.0984,
+      "top3Rate": 12.3975
+    },
+    "4": {
+      "evaluated": 1169,
+      "top1Hits": 61,
+      "top3Hits": 150,
+      "errors": 0,
+      "top1Rate": 5.2181,
+      "top3Rate": 12.8315
+    },
+    "5": {
+      "evaluated": 1178,
+      "top1Hits": 58,
+      "top3Hits": 161,
+      "errors": 0,
+      "top1Rate": 4.9236,
+      "top3Rate": 13.6672
+    },
+    "6": {
+      "evaluated": 982,
+      "top1Hits": 45,
+      "top3Hits": 115,
+      "errors": 0,
+      "top1Rate": 4.5825,
+      "top3Rate": 11.7108
+    }
+  },
+  "byMonth": {
+    "2022-06": {
+      "evaluated": 7,
+      "top1Hits": 0,
+      "top3Hits": 1,
+      "errors": 0,
+      "top1Rate": 0,
+      "top3Rate": 14.2857
+    },
+    "2022-07": {
+      "evaluated": 136,
+      "top1Hits": 8,
+      "top3Hits": 18,
+      "errors": 0,
+      "top1Rate": 5.8824,
+      "top3Rate": 13.2353
+    },
+    "2022-08": {
+      "evaluated": 138,
+      "top1Hits": 8,
+      "top3Hits": 16,
+      "errors": 0,
+      "top1Rate": 5.7971,
+      "top3Rate": 11.5942
+    },
+    "2022-09": {
+      "evaluated": 132,
+      "top1Hits": 8,
+      "top3Hits": 19,
+      "errors": 0,
+      "top1Rate": 6.0606,
+      "top3Rate": 14.3939
+    },
+    "2022-10": {
+      "evaluated": 131,
+      "top1Hits": 9,
+      "top3Hits": 22,
+      "errors": 0,
+      "top1Rate": 6.8702,
+      "top3Rate": 16.7939
+    },
+    "2022-11": {
+      "evaluated": 126,
+      "top1Hits": 10,
+      "top3Hits": 20,
+      "errors": 0,
+      "top1Rate": 7.9365,
+      "top3Rate": 15.873
+    },
+    "2022-12": {
+      "evaluated": 133,
+      "top1Hits": 4,
+      "top3Hits": 13,
+      "errors": 0,
+      "top1Rate": 3.0075,
+      "top3Rate": 9.7744
+    },
+    "2023-01": {
+      "evaluated": 134,
+      "top1Hits": 9,
+      "top3Hits": 15,
+      "errors": 0,
+      "top1Rate": 6.7164,
+      "top3Rate": 11.194
+    },
+    "2023-02": {
+      "evaluated": 125,
+      "top1Hits": 6,
+      "top3Hits": 17,
+      "errors": 0,
+      "top1Rate": 4.8,
+      "top3Rate": 13.6
+    },
+    "2023-03": {
+      "evaluated": 138,
+      "top1Hits": 4,
+      "top3Hits": 20,
+      "errors": 0,
+      "top1Rate": 2.8986,
+      "top3Rate": 14.4928
+    },
+    "2023-04": {
+      "evaluated": 126,
+      "top1Hits": 3,
+      "top3Hits": 14,
+      "errors": 0,
+      "top1Rate": 2.381,
+      "top3Rate": 11.1111
+    },
+    "2023-05": {
+      "evaluated": 138,
+      "top1Hits": 9,
+      "top3Hits": 19,
+      "errors": 0,
+      "top1Rate": 6.5217,
+      "top3Rate": 13.7681
+    },
+    "2023-06": {
+      "evaluated": 134,
+      "top1Hits": 12,
+      "top3Hits": 25,
+      "errors": 0,
+      "top1Rate": 8.9552,
+      "top3Rate": 18.6567
+    },
+    "2023-07": {
+      "evaluated": 136,
+      "top1Hits": 8,
+      "top3Hits": 22,
+      "errors": 0,
+      "top1Rate": 5.8824,
+      "top3Rate": 16.1765
+    },
+    "2023-08": {
+      "evaluated": 138,
+      "top1Hits": 5,
+      "top3Hits": 15,
+      "errors": 0,
+      "top1Rate": 3.6232,
+      "top3Rate": 10.8696
+    },
+    "2023-09": {
+      "evaluated": 133,
+      "top1Hits": 8,
+      "top3Hits": 19,
+      "errors": 0,
+      "top1Rate": 6.015,
+      "top3Rate": 14.2857
+    },
+    "2023-10": {
+      "evaluated": 137,
+      "top1Hits": 4,
+      "top3Hits": 17,
+      "errors": 0,
+      "top1Rate": 2.9197,
+      "top3Rate": 12.4088
+    },
+    "2023-11": {
+      "evaluated": 128,
+      "top1Hits": 6,
+      "top3Hits": 19,
+      "errors": 0,
+      "top1Rate": 4.6875,
+      "top3Rate": 14.8438
+    },
+    "2023-12": {
+      "evaluated": 133,
+      "top1Hits": 4,
+      "top3Hits": 12,
+      "errors": 0,
+      "top1Rate": 3.0075,
+      "top3Rate": 9.0226
+    },
+    "2024-01": {
+      "evaluated": 160,
+      "top1Hits": 6,
+      "top3Hits": 18,
+      "errors": 0,
+      "top1Rate": 3.75,
+      "top3Rate": 11.25
+    },
+    "2024-02": {
+      "evaluated": 158,
+      "top1Hits": 6,
+      "top3Hits": 19,
+      "errors": 0,
+      "top1Rate": 3.7975,
+      "top3Rate": 12.0253
+    },
+    "2024-03": {
+      "evaluated": 156,
+      "top1Hits": 3,
+      "top3Hits": 13,
+      "errors": 0,
+      "top1Rate": 1.9231,
+      "top3Rate": 8.3333
+    },
+    "2024-04": {
+      "evaluated": 163,
+      "top1Hits": 4,
+      "top3Hits": 15,
+      "errors": 0,
+      "top1Rate": 2.454,
+      "top3Rate": 9.2025
+    },
+    "2024-05": {
+      "evaluated": 170,
+      "top1Hits": 6,
+      "top3Hits": 18,
+      "errors": 0,
+      "top1Rate": 3.5294,
+      "top3Rate": 10.5882
+    },
+    "2024-06": {
+      "evaluated": 161,
+      "top1Hits": 9,
+      "top3Hits": 25,
+      "errors": 0,
+      "top1Rate": 5.5901,
+      "top3Rate": 15.528
+    },
+    "2024-07": {
+      "evaluated": 169,
+      "top1Hits": 10,
+      "top3Hits": 18,
+      "errors": 0,
+      "top1Rate": 5.9172,
+      "top3Rate": 10.6509
+    },
+    "2024-08": {
+      "evaluated": 169,
+      "top1Hits": 5,
+      "top3Hits": 19,
+      "errors": 0,
+      "top1Rate": 2.9586,
+      "top3Rate": 11.2426
+    },
+    "2024-09": {
+      "evaluated": 162,
+      "top1Hits": 3,
+      "top3Hits": 14,
+      "errors": 0,
+      "top1Rate": 1.8519,
+      "top3Rate": 8.642
+    },
+    "2024-10": {
+      "evaluated": 165,
+      "top1Hits": 9,
+      "top3Hits": 18,
+      "errors": 0,
+      "top1Rate": 5.4545,
+      "top3Rate": 10.9091
+    },
+    "2024-11": {
+      "evaluated": 163,
+      "top1Hits": 9,
+      "top3Hits": 26,
+      "errors": 0,
+      "top1Rate": 5.5215,
+      "top3Rate": 15.9509
+    },
+    "2024-12": {
+      "evaluated": 160,
+      "top1Hits": 7,
+      "top3Hits": 23,
+      "errors": 0,
+      "top1Rate": 4.375,
+      "top3Rate": 14.375
+    },
+    "2025-01": {
+      "evaluated": 164,
+      "top1Hits": 6,
+      "top3Hits": 25,
+      "errors": 0,
+      "top1Rate": 3.6585,
+      "top3Rate": 15.2439
+    },
+    "2025-02": {
+      "evaluated": 152,
+      "top1Hits": 2,
+      "top3Hits": 13,
+      "errors": 0,
+      "top1Rate": 1.3158,
+      "top3Rate": 8.5526
+    },
+    "2025-03": {
+      "evaluated": 168,
+      "top1Hits": 5,
+      "top3Hits": 21,
+      "errors": 0,
+      "top1Rate": 2.9762,
+      "top3Rate": 12.5
+    },
+    "2025-04": {
+      "evaluated": 164,
+      "top1Hits": 7,
+      "top3Hits": 12,
+      "errors": 0,
+      "top1Rate": 4.2683,
+      "top3Rate": 7.3171
+    },
+    "2025-05": {
+      "evaluated": 169,
+      "top1Hits": 10,
+      "top3Hits": 23,
+      "errors": 0,
+      "top1Rate": 5.9172,
+      "top3Rate": 13.6095
+    },
+    "2025-06": {
+      "evaluated": 162,
+      "top1Hits": 3,
+      "top3Hits": 16,
+      "errors": 0,
+      "top1Rate": 1.8519,
+      "top3Rate": 9.8765
+    },
+    "2025-07": {
+      "evaluated": 169,
+      "top1Hits": 8,
+      "top3Hits": 21,
+      "errors": 0,
+      "top1Rate": 4.7337,
+      "top3Rate": 12.426
+    },
+    "2025-08": {
+      "evaluated": 167,
+      "top1Hits": 6,
+      "top3Hits": 19,
+      "errors": 0,
+      "top1Rate": 3.5928,
+      "top3Rate": 11.3772
+    },
+    "2025-09": {
+      "evaluated": 164,
+      "top1Hits": 6,
+      "top3Hits": 18,
+      "errors": 0,
+      "top1Rate": 3.6585,
+      "top3Rate": 10.9756
+    },
+    "2025-10": {
+      "evaluated": 169,
+      "top1Hits": 6,
+      "top3Hits": 17,
+      "errors": 0,
+      "top1Rate": 3.5503,
+      "top3Rate": 10.0592
+    },
+    "2025-11": {
+      "evaluated": 161,
+      "top1Hits": 6,
+      "top3Hits": 19,
+      "errors": 0,
+      "top1Rate": 3.7267,
+      "top3Rate": 11.8012
+    },
+    "2025-12": {
+      "evaluated": 163,
+      "top1Hits": 5,
+      "top3Hits": 16,
+      "errors": 0,
+      "top1Rate": 3.0675,
+      "top3Rate": 9.816
+    },
+    "2026-01": {
+      "evaluated": 163,
+      "top1Hits": 9,
+      "top3Hits": 20,
+      "errors": 0,
+      "top1Rate": 5.5215,
+      "top3Rate": 12.2699
+    },
+    "2026-02": {
+      "evaluated": 153,
+      "top1Hits": 9,
+      "top3Hits": 23,
+      "errors": 0,
+      "top1Rate": 5.8824,
+      "top3Rate": 15.0327
+    },
+    "2026-03": {
+      "evaluated": 169,
+      "top1Hits": 9,
+      "top3Hits": 30,
+      "errors": 0,
+      "top1Rate": 5.3254,
+      "top3Rate": 17.7515
+    },
+    "2026-04": {
+      "evaluated": 164,
+      "top1Hits": 6,
+      "top3Hits": 18,
+      "errors": 0,
+      "top1Rate": 3.6585,
+      "top3Rate": 10.9756
+    },
+    "2026-05": {
+      "evaluated": 167,
+      "top1Hits": 6,
+      "top3Hits": 21,
+      "errors": 0,
+      "top1Rate": 3.5928,
+      "top3Rate": 12.5749
+    },
+    "2026-06": {
+      "evaluated": 164,
+      "top1Hits": 5,
+      "top3Hits": 17,
+      "errors": 0,
+      "top1Rate": 3.0488,
+      "top3Rate": 10.3659
+    },
+    "2026-07": {
+      "evaluated": 97,
+      "top1Hits": 5,
+      "top3Hits": 15,
+      "errors": 0,
+      "top1Rate": 5.1546,
+      "top3Rate": 15.4639
+    }
+  },
+  "telemetry": {
+    "enabled": false,
+    "schemaVersion": 1,
+    "cases": []
+  },
+  "metadata": {
+    "bootstrapStatus": "complete",
+    "totalStored": 7508,
+    "lastProcessedDrawId": "PT_RIO__2026-07-18__16-00__76c127b7-8157-46b6-a64a-ec7ed1574c9f"
+  },
+  "tookMs": 3182626
+}

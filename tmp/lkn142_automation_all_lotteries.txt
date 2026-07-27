@@ -1,0 +1,439 @@
+
+===== .github\workflows\auto-import.yml =====
+    4:   schedule:
+    6:     # PT_RIO (RJ) — janelas BRT (UTC-3) convertidas p/ UTC
+    7:     # BRT 09:05–09:31 => UTC 12:05–12:31
+    8:     - cron: "5-31 12 * * 0-6"
+    9:     # BRT 11:05–11:31 => UTC 14:05–14:31
+   10:     - cron: "5-31 14 * * 0-6"
+   11:     # BRT 14:05–14:31 => UTC 17:05–17:31
+   12:     - cron: "5-31 17 * * 0-6"
+   13:     # BRT 16:05–16:31 => UTC 19:05–19:31
+   14:     - cron: "5-31 19 * * 0-6"
+   16:     # BRT 18:05–18:31 => UTC 21:05–21:31 (SEG, TER, QUI, SEX)
+   17:     - cron: "5-31 21 * * 1,2,4,5"
+   19:     # BRT 18:35 (one-shot) => UTC 21:35 (QUA e SÁB)
+   20:     - cron: "35 21 * * 3,6"
+   22:     # BRT 21:05–21:45 => UTC 0:05–0:45 (vira o dia no UTC; TER–DOM)
+   24:     - cron: "5-45 0 * * 0,2-6"
+   27:     # FEDERAL — Quarta e Sábado — janela BRT 19:49–20:10
+   28:     # BRT 19:49–19:59 => UTC 22:49–22:59
+   29:     - cron: "49-59 22 * * 3,6"
+   30:     # BRT 20:00–20:10 => UTC 23:00–23:10
+   31:     - cron: "0-10 23 * * 3,6"
+   33:   workflow_dispatch:
+   35:       lottery:
+   40:           - PT_RIO
+   41:           - FEDERAL
+   55:   TZ: America/Sao_Paulo
+   60:   # PT_RIO
+   63:     name: run-import (PT_RIO)
+   71:     # - em schedule, exceto quando for o schedule específico do FEDERAL
+   72:     # - ou manual quando input=PT_RIO
+   74:       (github.event_name == 'schedule' &&
+   75:         github.event.schedule != '49-59 22 * * 3,6' &&
+   76:         github.event.schedule != '0-10 23 * * 3,6'
+   78:       || (github.event_name == 'workflow_dispatch' && inputs.lottery == 'PT_RIO')
+   92:       - name: Rodar importação automática (PT_RIO)
+   97:           LOTTERY: PT_RIO
+  104:         run: node scripts/autoImportToday.js
+  107:   # FEDERAL
+  109:   run-import-federal:
+  110:     name: run-import (FEDERAL)
+  118:     # - em schedule, SOMENTE nas duas regras do FEDERAL
+  119:     # - ou manual quando input=FEDERAL
+  121:       (github.event_name == 'schedule' &&
+  122:         (github.event.schedule == '49-59 22 * * 3,6' || github.event.schedule == '0-10 23 * * 3,6')
+  124:       || (github.event_name == 'workflow_dispatch' && inputs.lottery == 'FEDERAL')
+  138:       - name: Rodar importação automática (FEDERAL)
+  143:           LOTTERY: FEDERAL
+  149:         run: node scripts/autoImportToday.js
+
+===== .github\workflows\auto-maintain-backfill.yml =====
+    1: name: Auto Maintain Backfill (PT_RIO)
+    4:   workflow_dispatch:
+   14:   schedule:
+   15:     # Domingo 06:15 (BRT = UTC-3) => 09:15 UTC
+   16:     - cron: "15 9 * * 0"
+   30:       TZ: America/Sao_Paulo
+   39:       # Defaults (schedule)
+   67:           DAYS="${{ github.event_name == 'workflow_dispatch' && inputs.days || env.DAYS_DEFAULT }}"
+   68:           LIMIT_DAYS="${{ github.event_name == 'workflow_dispatch' && inputs.limitDays || env.LIMIT_DAYS_DEFAULT }}"
+   99:       - name: Run autoMaintainBackfill (PT_RIO)
+  100:         run: node backend/scripts/autoMaintainBackfill.js --lottery=PT_RIO --days=${{ env.DAYS }} --limitDays=${{ env.LIMIT_DAYS }} --baseMins=0,9 --tolMin=2 --baseUrl="${{ vars.PITACO_API_BASE }}"
+
+===== backend\scripts\autoImportToday.js =====
+    8:    DOW seguro para YYYY-MM-DD (independe de timezone)
+    9:    - calcula como UTC do próprio dia
+   17:   return new Date(Date.UTC(y, mo, d)).getUTCDay();
+   20: const { runImport } = require("./importKingApostas");
+   23: // ✅ LOTTERY parametrizável por env (default PT_RIO)
+   24: const LOTTERY = String(process.env.LOTTERY || "PT_RIO").trim().toUpperCase() || "PT_RIO";
+   29: const LOG_FILE = path.join(LOG_DIR, `autoImportToday-${LOTTERY}.log`);
+   32: const LOCK_FILE = path.join(LOG_DIR, `autoImport-${LOTTERY}.lock`);
+   43: // Default 90 (reduz spam em cron fora da janela)
+   46: // ✅ PROBE/SOFT da FEDERAL: limite de tentativas por slot/dia (anti-spam)
+   47: // default 2 (tenta 2 ticks e para, mesmo que o cron rode mais vezes)
+   48: const FEDERAL_SOFT_MAX_TRIES_PER_DAY = Number(process.env.FEDERAL_SOFT_MAX_TRIES_PER_DAY || 2);
+   77:  * ✅ Cache do DayStatus (evita bater no backend a cada tick do cron)
+   83: function dayStatusCacheFile(dateYMD, lottery = LOTTERY) {
+   85:     String(lottery || LOTTERY)
+   87:       .toUpperCase() || LOTTERY;
+  113: async function fetchDayStatusCached({ date, lottery }) {
+  114:   const f = dayStatusCacheFile(date, lottery);
+  122:   const value = await fetchDayStatusFromBackend({ date, lottery });
+  128:    Schedules (por loteria)
+  130: const SCHEDULES = {
+  131:   PT_RIO: [
+  141:   // FEDERAL
+  144:   FEDERAL: [
+  150: const SCHEDULE = Array.isArray(SCHEDULES[LOTTERY]) ? SCHEDULES[LOTTERY] : SCHEDULES.PT_RIO;
+  162:       timeZone: "America/Sao_Paulo",
+  186:   const line = `[${tsLocal()}] [${level}] [${LOTTERY}] ${msg}\n`;
+  205:       timeZone: "America/Sao_Paulo",
+  231:       timeZone: "America/Sao_Paulo",
+  274:   return path.join(LOG_DIR, `autoImportState-${LOTTERY}-${date}.json`);
+  279:   for (const s of SCHEDULE) {
+  320:   for (const s of SCHEDULE) {
+  354:   for (const sched of SCHEDULE) {
+  374:   // PT_RIO 21h pode sair como fechamento de 21:30.
+  376:   if (LOTTERY === "PT_RIO" && s === "21:00") {
+  402:    FEDERAL PROBE: valida se o resultado pertence ao horário do slot
+  403:    - usa targetDrawIds no formato: FEDERAL__YYYY-MM-DD__20-00__uuid
+  459: function hasFederal20Scheduled(dayStatus) {
+  484: function buildTodaySlotStatusMapPT_RIO(
+  487:   { federal20Exists = false } = {}
+  495:   for (const sched of SCHEDULE) {
+  527:       { federal20Exists }
+  534:       `[CAL] PT_RIO 18:00 OFF: ` +
+  536:         `reason=FEDERAL_20_SCHEDULED`,
+  545:   for (const sched of SCHEDULE) {
+  559:     `[CAL] PT_RIO resolved: ` +
+  562:       `federal20=${federal20Exists ? "1" : "0"} ` +
+  573:  * FEDERAL (robusto / independente de expectedHard do backend):
+  578: function buildTodaySlotStatusMapFEDERAL({ dateYMD, dow, ds }) {
+  585:   for (const sched of SCHEDULE) {
+  606:     `[CAL] FEDERAL fixed: date=${dateYMD} dow=${dow} => 19:SOFT(PROBE) 20:HARD | backend expectedHard=[${expectedHard.join(
+  615: function slotWindow(schedule) {
+  616:   const ws = parseHHMM(schedule.windowStart);
+  617:   const ra = parseHHMM(schedule.releaseAt);
+  618:   const we = parseHHMM(schedule.windowEnd);
+  621:     const { h } = parseHH(schedule.hour);
+  640:     startLabel: schedule.windowStart,
+  641:     releaseLabel: schedule.releaseAt,
+  642:     endLabel: schedule.windowEnd,
+  666:       JSON.stringify({ pid: process.pid, at: new Date().toISOString(), lottery: LOTTERY }, null, 2)
+  683: async function fetchDayStatusFromBackend({ date, lottery }) {
+  686:     const u = `${base}/api/pitaco/results?date=${encodeURIComponent(String(date || "").trim())}&lottery=${encodeURIComponent(
+  687:       String(lottery || "").trim()
+  693:       headers: { "User-Agent": "palpitaco-autoImportToday" },
+  706:       // ✅ debug (não é fonte da verdade pro FEDERAL fixed)
+  723:   for (const sched of SCHEDULE) {
+  756:   return path.join(LOG_DIR, `missingSlots-${LOTTERY}-${ym}.json`);
+  774:       lottery: LOTTERY,
+  808: function drawLooksLikeSlot(draw, slotHH) {
+  835:     const u = `${base}/api/pitaco/results?date=${encodeURIComponent(date)}&lottery=${encodeURIComponent(LOTTERY)}`;
+  840:       headers: { "User-Agent": "palpitaco-autoImportToday" },
+  847:     const foundInDraws = draws.some((d) => drawLooksLikeSlot(d, slotHHMM));
+  941:   for (const sched of SCHEDULE) {
+  980:   return path.join(LOG_DIR, `auditCritical-${LOTTERY}-${dateYMD}.json`);
+  989:   for (const sched of SCHEDULE) {
+ 1034:     lottery: LOTTERY,
+ 1056:   for (const sched of SCHEDULE) {
+ 1114:     logLine(`[TIME] NOW_HM override ativo => ${pad2(now.h)}:${pad2(now.m)} (America/Sao_Paulo)`, "INFO");
+ 1131:     const ds = await fetchDayStatusCached({ date, lottery: LOTTERY });
+ 1135:     if (LOTTERY === "PT_RIO") {
+ 1136:       const federalDayStatus =
+ 1139:           lottery: "FEDERAL",
+ 1142:       const federal20Exists =
+ 1143:         hasFederal20Scheduled(
+ 1144:           federalDayStatus
+ 1147:       if (!federalDayStatus) {
+ 1149:           `[CAL] FEDERAL dayStatus indisponível: ` +
+ 1150:             `date=${date}; mantendo regra PT_RIO base`,
+ 1155:           `[CAL] FEDERAL schedule: ` +
+ 1157:             `has20=${federal20Exists ? "1" : "0"} ` +
+ 1159:               federalDayStatus.expectedHard || []
+ 1162:               federalDayStatus.expectedSoft || []
+ 1169:         buildTodaySlotStatusMapPT_RIO(
+ 1172:           { federal20Exists }
+ 1174:     } else if (LOTTERY === "FEDERAL") {
+ 1176:         buildTodaySlotStatusMapFEDERAL({
+ 1184:       for (const sched of SCHEDULE) {
+ 1193:     // Antes de auditar, sincroniza o state local com a fonte real.
+ 1225:     for (const sched of SCHEDULE) {
+ 1235:         slot.naReason = LOTTERY === "FEDERAL" && dow === 0 ? "FEDERAL_DOMINGO_OFF" : "NAO_APLICA";
+ 1264:     for (const sched of SCHEDULE) {
+ 1273:       // ✅ anti-spam: PROBE/SOFT da FEDERAL para depois de N tentativas/dia
+ 1274:       if (LOTTERY === "FEDERAL" && st === "SOFT") {
+ 1276:         if (Number.isFinite(FEDERAL_SOFT_MAX_TRIES_PER_DAY) && FEDERAL_SOFT_MAX_TRIES_PER_DAY > 0) {
+ 1277:           if (tries >= FEDERAL_SOFT_MAX_TRIES_PER_DAY) {
+ 1325:           r = await runImport({ date, lotteryKey: LOTTERY, closeHour });
+ 1406:         // ✅ FEDERAL PROBE (SOFT): não marca DONE se o resultado não for do horário do slot
+ 1407:         if (LOTTERY === "FEDERAL" && st === "SOFT") {
+ 1419:               `[AUTO] FEDERAL PROBE mismatch: slot=${sched.hour} close=${closeHour} targetDrawIds=${
+
+===== backend\scripts\importKingApostas.js =====
+    4:  * importKingApostas.js
+  189:  * ✅ fetch por lottery (robusto contra “cap” da API quando manda muitos lotteries[]).
+  191:  * - KING_FETCH_PER_LOTTERY=0 => volta ao modo antigo (1 request com todos lotteries[])
+  193: const FETCH_PER_LOTTERY =
+  194:   String(process.env.KING_FETCH_PER_LOTTERY || "").trim() === "0" ? false : true;
+  196: // ✅ Debug do fetch (log por lotteryId)
+  200: // ✅ Debug leve do override FEDERAL
+  212:  * ✅ Regras de negócio: UF x lottery_key
+  216:  * - lottery_key identifica a loteria/fonte (ex.: PT_RIO)
+  219:  * Se uf ficar "PT_RIO", o bounds por UF quebra.
+  222: const RJ_LOTTERY_KEY = "PT_RIO";
+  224: const FEDERAL_STATE_CODE = "BR";
+  225: const FEDERAL_LOTTERY_KEY = "FEDERAL";
+  227: const LOOK_STATE_CODE = "GO";
+  228: const LOOK_LOTTERY_KEY = "LOOK";
+  230: const NACIONAL_STATE_CODE = "BR";
+  231: const NACIONAL_LOTTERY_KEY = "NACIONAL";
+  233: function resolveUfFromLotteryKey(lotteryKey) {
+  234:   const lk = String(lotteryKey || "").trim().toUpperCase();
+  236:   if (lk === RJ_LOTTERY_KEY) return RJ_STATE_CODE;
+  237:   if (lk === FEDERAL_LOTTERY_KEY) return FEDERAL_STATE_CODE;
+  238:   if (lk === LOOK_LOTTERY_KEY) return LOOK_STATE_CODE;
+  239:   if (lk === NACIONAL_LOTTERY_KEY) return NACIONAL_STATE_CODE;
+  261:       timeZone: "America/Sao_Paulo",
+  371:  * - Para PT_RIO: força minutos = 00 (09:09 -> 09:00)
+  375:  * - A API do PT_RIO costuma devolver HH:09 como "marcação" e NÃO um minuto real.
+  376:  * - Portanto, para PT_RIO, se raw terminar em ":09", tratamos como "sem minuto real"
+  380:  * - raw: HH:MM (normalizado) OU "" quando for "sintético" (PT_RIO HH:09)
+  383: function normalizeCloseHourForLottery(value, lotteryKey) {
+  384:   const lk = String(lotteryKey || "").trim().toUpperCase();
+  388:   // ✅ FEDERAL: slot de negócio é sempre 20:00, mas preserva o raw
+  389:   if (lk === "FEDERAL") {
+  393:   if (lk === "PT_RIO") {
+  407:  * NACIONAL:
+  408:  * usa lottery_name para obter o horário oficial do sorteio.
+  410: function normalizeDrawCloseHour(draw, lotteryKey) {
+  411:   const base = normalizeCloseHourForLottery(
+  413:     lotteryKey
+  416:   const lk = String(lotteryKey || "").trim().toUpperCase();
+  418:   if (lk !== "NACIONAL") {
+  422:   const lotteryName = String(
+  423:     draw?.lottery_name ||
+  428:   const m = lotteryName.match(/(\d{1,2})\s*HS/i);
+  442:  * ✅ Normaliza o parâmetro closeHour (do CLI/scheduler) e evita log enganoso.
+  443:  * - Para FEDERAL: qualquer coisa vira slot=20:00, mas mantemos "requested" para log.
+  445: function normalizeRequestedCloseHour(closeHour, lotteryKey) {
+  446:   const lk = String(lotteryKey || "").trim().toUpperCase();
+  457:   // FEDERAL: slot único 20:00 (não fingir que o usuário pediu 20:00)
+  458:   if (lk === "FEDERAL") {
+  460:     const note = requested !== slot ? `FEDERAL_slot_fixed(${requested}->${slot})` : null;
+  464:   // outros: normalização normal por lotteryKey (PT_RIO min->00 etc.)
+  465:   const slot = normalizeCloseHourForLottery(requested, lk).slot;
+  482: function pickLotteryId(draw) {
+  484:     draw?.lottery_id,
+  485:     draw?.lotteryId,
+  486:     draw?.lottery_uuid,
+  487:     draw?.lotteryUuid,
+  488:     draw?.lottery,
+  489:     draw?.lottery_key,
+  503:  * - KING_LOTTERIES_PT_RIO="uuid1,uuid2,..."
+  504:  * - KING_LOTTERIES_FEDERAL="uuid1,uuid2,..."
+  505:  * - KING_LOTTERIES_LOOK="uuid1,uuid2,..."
+  506:  * - KING_LOTTERIES_NACIONAL="uuid1,uuid2,..."
+  509:   PT_RIO: [
+  517:   FEDERAL: [],
+  518:     LOOK: [
+  528:     NACIONAL: [
+  540: (function applyLotteryOverridesFromEnv() {
+  542:     const rawRio = String(process.env.KING_LOTTERIES_PT_RIO || "").trim();
+  548:       if (arr.length) LOTTERIES_BY_KEY.PT_RIO = arr;
+  551:     const rawFed = String(process.env.KING_LOTTERIES_FEDERAL || "").trim();
+  557:       if (arrF.length) LOTTERIES_BY_KEY.FEDERAL = arrF;
+  560:     const rawLook = String(process.env.KING_LOTTERIES_LOOK || "").trim();
+  561:     if (rawLook) {
+  562:       const arrLook = rawLook
+  566:       if (arrLook.length) LOTTERIES_BY_KEY.LOOK = arrLook;
+  569:     const rawNacional = String(
+  570:       process.env.KING_LOTTERIES_NACIONAL || ""
+  572:     if (rawNacional) {
+  573:       const arrNacional = rawNacional
+  577:       if (arrNacional.length) LOTTERIES_BY_KEY.NACIONAL = arrNacional;
+  590:         `[OVERRIDE] PT_RIO lotteries=${counts.PT_RIO} | ` +
+  591:           `FEDERAL lotteries=${counts.FEDERAL} | ` +
+  592:           `LOOK lotteries=${counts.LOOK} | ` +
+  593:           `NACIONAL lotteries=${counts.NACIONAL}`
+  601: function buildResultsUrl({ date, lotteryKey, lotteryId = null }) {
+  603:   const lk = String(lotteryKey || "").trim().toUpperCase();
+  609:         `${lk} sem lotteryIds. Defina KING_LOTTERIES_${lk}="uuid1,uuid2,...".`
+  613:     throw new Error(`lotteryKey inválida: ${lk}`);
+  619:   // ✅ se lotteryId for fornecido -> 1 request por lottery
+  620:   if (lotteryId) {
+  621:     params.append("lotteries[]", lotteryId);
+  697:    DETAILS (HTML) fallback — PT_RIO 18h
+  699: function buildDetailsUrl({ date, lotteryKey }) {
+  700:   const lk = String(lotteryKey || "").trim().toUpperCase();
+  702:   // ✅ bate com o print: lottery=PT+RIO
+  703:   const lot = lk === "PT_RIO" ? "PT RIO" : lk.replace(/_/g, " ");
+  706:     "lottery=" +
+  796: async function tryHtmlDetailsFallback({ date, lotteryKey, closeHour }) {
+  797:   const lk = String(lotteryKey || "").trim().toUpperCase();
+  798:   const slot = normalizeCloseHourForLottery(closeHour || "", lk).slot;
+  801:   // por enquanto: só PT_RIO 18:00 (não altera outros horários)
+  802:   if (!(lk === "PT_RIO" && slot === "18:00")) {
+  806:   const url = buildDetailsUrl({ date, lotteryKey: lk });
+  822:  * Dedup key: date + close_hour(SLOT) + lottery_id (se existir)
+  824: function mergeAndDedupDraws(arrays, lotteryKey) {
+  831:       const { slot } = normalizeDrawCloseHour(d, lotteryKey);
+  834:         pickLotteryId(d) ||
+  835:         String(d?.lottery_name || d?.name || "").trim() ||
+  864: function summarizeCloseHours(draws, lotteryKey) {
+  867:     const { slot } = normalizeCloseHourForLottery(d?.close_hour || "", lotteryKey);
+  875:  * - Por default faz 1 request por lotteryId e mescla (evita “cap”/consolidação do endpoint)
+  876:  * - Se KING_FETCH_PER_LOTTERY=0 -> faz 1 request único (modo antigo)
+  878: async function fetchKingResults({ date, lotteryKey }) {
+  879:   const lk = String(lotteryKey || "").trim().toUpperCase();
+  884:         `${lk} sem lotteryIds. Defina KING_LOTTERIES_${lk}="uuid1,uuid2,..." para habilitar o fetch.`
+  888:     throw new Error(`lotteryKey inválida: ${lk}`);
+  891:   if (!FETCH_PER_LOTTERY) {
+  892:     const url = buildResultsUrl({ date, lotteryKey: lk });
+  896:   // ✅ 1 request por lottery (sequencial: mais estável e respeita rate-limit)
+  913:   for (const lotteryId of lotteries) {
+  914:     const url = buildResultsUrl({ date, lotteryKey: lk, lotteryId });
+  919:       // ✅ carimba o UUID do request em cada draw (a API nem sempre retorna lottery_id)
+  923:           lottery_id: d?.lottery_id || lotteryId,
+  924:           lotteryId: d?.lotteryId || lotteryId,
+  933:           `[FETCH:PART] ${lk} ${date} lotteryId=${lotteryId} draws=${list.length} close_hours=[${closesPart.join(
+  943:       errors.push({ lotteryId, msg });
+  946:         `[FETCH:PART] ${lk} ${date} lotteryId=${lotteryId} ERROR=${msg} (seguindo...)`
+  958:       ? ` errors=${errors.length} ids=[${errors.map((x) => x.lotteryId).join(",")}]`
+  962:     `[FETCH] ${lk} ${date} per-lottery=${lotteries.length} -> merged_draws=${
+  986: function buildDrawRef({ draw, lotteryKey }) {
+  991:     lotteryKey
+  994:   const lotteryName = String(draw?.lottery_name || draw?.name || "SEM_NOME").trim();
+  996:   const lotteryIdFromDraw = pickLotteryId(draw);
+  997:   const lotteryIdPart = safeIdPart(lotteryIdFromDraw || lotteryName);
+ 1000:   const drawId = `${safeIdPart(lotteryKey)}__${date}__${safeIdPart(
+ 1002:   )}__${lotteryIdPart}`;
+ 1011:     lotteryName,
+ 1012:     lotteryIdFromDraw,
+ 1040:  * - close_hour + lottery_key/lotteryKey filtrados em memória
+ 1046: async function checkSlotCompletion({ date, closeHour, lotteryKey }) {
+ 1048:     const lk = String(lotteryKey || "").trim().toUpperCase();
+ 1049:     const targetSlot = normalizeCloseHourForLottery(closeHour || "", lk).slot;
+ 1060:       const lkSnake = String(d.lottery_key || "").trim().toUpperCase();
+ 1061:       const lkCamel = String(d.lotteryKey || "").trim().toUpperCase();
+ 1066:       const storedSlot = normalizeCloseHourForLottery(d.close_hour || "", lk).slot;
+ 1096:   lotteryKey,
+ 1100:   const lk = String(lotteryKey || "").trim().toUpperCase();
+ 1101:   const uf = resolveUfFromLotteryKey(lk); // ✅ UF correta (ex.: RJ)
+ 1121:   // Provas úteis para o scheduler (quando closeHour é informado)
+ 1142:     ? normalizeCloseHourForLottery(closeHour, lk).slot
+ 1193:     const { drawId, drawRef, lotteryName, lotteryIdFromDraw } = buildDrawRef({
+ 1195:       lotteryKey: lk,
+ 1228:         lottery_key: lk,
+ 1230:         lottery_name: lotteryName,
+ 1231:         lottery_id: lotteryIdFromDraw || null,
+ 1245:         // (PT_RIO HH:09 vira "", então cai em null)
+ 1307:         lotteryKey: lk,
+ 1321:     // savedCount “forte” para o scheduler:
+ 1338:       ` | uf=${uf || "NULL"} lottery_key=${lk}` +
+ 1365:  * ✅ Cleanup automático: remove docs legados (lottery_id null) quando existe doc UUID no mesmo date+slot.
+ 1369: async function cleanupLegacyDrawsForDate({ date, lotteryKey }) {
+ 1370:   const lk = String(lotteryKey || "").trim().toUpperCase();
+ 1378:     (r) => String(r.lottery_key || "").trim().toUpperCase() === lk
+ 1395:     const hasUuid = arr.some((x) => x.lottery_id && String(x.lottery_id).includes("-"));
+ 1398:     const leg = arr.filter((x) => !x.lottery_id);
+ 1419: async function runImport({ date, lotteryKey = "PT_RIO", closeHour = null } = {}) {
+ 1424:   const lk = String(lotteryKey || "").trim().toUpperCase();
+ 1426:     throw new Error(`Parâmetro "lotteryKey" inválida: ${lk}`);
+ 1435:       lotteryKey: lk,
+ 1486:   // ✅ closeHour do scheduler: normaliza SEM log enganoso
+ 1495:   // ✅ SOFT OVERRIDE: PT_RIO 18:00 fora do calendário (controlado por env)
+ 1497:     lk === "PT_RIO" &&
+ 1499:     String(process.env.PT_RIO_SOFT_OVERRIDE_18 || "1").trim() === "1";
+ 1501:   // ✅ GATE POR CALENDÁRIO (PT_RIO)
+ 1502:   if (normalizedClose && lk === "PT_RIO") {
+ 1510:             "[CAL-OVERRIDE] PT_RIO " +
+ 1521:           lotteryKey: lk,
+ 1572:   let payload = await fetchKingResults({ date, lotteryKey: lk });
+ 1587:           lotteryKey: lk,
+ 1617:         lotteryKey: lk,
+ 1673:     lotteryKey: lk,
+ 1675:     skipIfAlreadyComplete: Boolean(normalizedClose), // scheduler: evita regravar
+ 1705:     lotteryKey: lk,
+ 1754:           lotteryKey: lk,
+ 1772:             lotteryKey: lk,
+ 1855:   const lotteryKey = process.argv[3] || "PT_RIO";
+ 1860:       "Uso: node backend/scripts/importKingApostas.js YYYY-MM-DD [PT_RIO|FEDERAL|LOOK|NACIONAL] [HH:MM]"
+ 1864:   const lk = String(lotteryKey || "").trim().toUpperCase();
+ 1867:       "Uso: node backend/scripts/importKingApostas.js YYYY-MM-DD [PT_RIO|FEDERAL|LOOK|NACIONAL] [HH:MM]"
+ 1883:       "Uso: node backend/scripts/importKingApostas.js YYYY-MM-DD [PT_RIO|FEDERAL|LOOK|NACIONAL] [HH:MM]"
+ 1902:   let payload = await fetchKingResults({ date, lotteryKey: lk });
+ 1921:           lotteryKey: lk,
+ 1942:     lotteryKey: lk,
+ 1952:   // ✅ cleanup automático de legado (somente quando per-lottery está ON)
+ 1953:   if (FETCH_PER_LOTTERY) {
+ 1955:       const c = await cleanupLegacyDrawsForDate({ date, lotteryKey: lk });
+
+===== backend\server.js =====
+    5:    LOTTERY KEY NORMALIZATION
+    8: function normalizeLotteryKey(v) {
+   10:   if (s === "RJ") return "PT_RIO";
+   11:   if (s === "RIO") return "PT_RIO";
+   12:   if (s === "PT-RIO") return "PT_RIO";
+   13:   return s || "PT_RIO";
+   16: function getLotteryFromReq(req, fallback = "PT_RIO") {
+   17:   return normalizeLotteryKey(
+   18:     req?.query?.lotteryKey || req?.query?.lottery || req?.query?.uf || fallback
+  250:       timeZone: "America/Sao_Paulo",
+  317: function ymdToUTCDate(ymd) {
+  320:   return new Date(Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3])));
+  323: function addDaysUTC(ymd, days) {
+  324:   const dt = ymdToUTCDate(ymd);
+  326:   dt.setUTCDate(dt.getUTCDate() + Number(days || 0));
+  327:   return `${dt.getUTCFullYear()}-${pad2(dt.getUTCMonth() + 1)}-${pad2(dt.getUTCDate())}`;
+  330: function daysDiffUTC(fromYmd, toYmd) {
+  331:   const da = ymdToUTCDate(fromYmd);
+  332:   const db = ymdToUTCDate(toYmd);
+  388:   const lk = getLotteryFromReq(req);
+  397:     lotteryKey: lk,
+  429:     const lottery = getLotteryFromReq(req);
+  431:     // regra RJ/PT_RIO (lock)
+  432:     const RJ_LOCK_LOTTERY_KEY = "PT_RIO";
+  434:     const targetLotteryKey = lottery === "RJ" ? RJ_LOCK_LOTTERY_KEY : lottery;
+  451:     const PROBE_LOOKBACK_DAYS = 60;
+  479:         const lottery_key = safeStr(
+  480:           d.lottery_key ?? d.lotteryKey ?? d.lottery ?? ""
+  482:         const lottery_code = safeStr(
+  483:           d.lottery_code ??
+  484:             d.lotteryCode ??
+  492:         if (targetLotteryKey === RJ_LOCK_LOTTERY_KEY) {
+  493:           if (lottery_key && lottery_key !== RJ_LOCK_LOTTERY_KEY) return;
+  496:           if (lottery_key && lottery_key !== targetLotteryKey) return;
+  508:           lottery_key,
+  509:           lottery_code: lottery_code || null,
+  547:     async function probeRecentMaxYmd(lookbackDays = 60) {
+  549:       const n = Math.max(3, Math.min(180, Number(lookbackDays) || 60));
+  552:         const day = addDaysUTC(base, -i);
+  559:     const scanStartYmd = baseYmd || (await probeRecentMaxYmd(PROBE_LOOKBACK_DAYS));
+  564:         lottery: lottery,
+  579:           lastLottery: null,
+  581:         note: "Sem draws recentes no lookback. Informe baseDate=YYYY-MM-DD para forçar.",
+  585:     const lastSeen = new Map(); // grupo -> { ymd, closeHour, drawId, lottery_code }
+  586:     const MAX_LOOKBACK_DAYS = 370;
+  589:     for (let iter = 0; iter < MAX_LOOKBACK_DAYS && lastSeen.size < 25; iter += 1) {
+  604:             lottery_code: d.lottery_code || null,
+  612:       cursor = addDaysUTC(cursor, -1);
+  620:       const diff = lastYmd ? daysDiffUTC(lastYmd, baseDateYmd) : NaN;
+  630:         lastLottery: seen?.lottery_code || null,
+  655:       lottery: targetLotteryKey,
+  666:       probeLookbackDays: PROBE_LOOKBACK_DAYS,
+  669:         maxLookbackDays: MAX_LOOKBACK_DAYS,
+  685: const { runImport } = require("./scripts/importKingApostas");
+  690:     const lk = getLotteryFromReq(req);
+  710:       lotteryKey: lk,
+  717:       lotteryKey: lk,
+  730:     const lk = getLotteryFromReq(req);
+  758:       const r = await runImport({ date, lotteryKey: lk, closeHour: h });
+  782:       lotteryKey: lk,
+
+===== package.json =====
+   25:     "auto:pt_rio": "node backend/scripts/autoImportToday.js",
+   30:     "auto:federal": "powershell -NoProfile -Command \"$env:LOTTERY='FEDERAL'; node backend/scripts/autoImportToday.js\"",

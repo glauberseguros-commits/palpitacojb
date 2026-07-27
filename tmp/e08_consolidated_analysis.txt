@@ -1,0 +1,50 @@
+================================================
+E08.9 - CONSOLIDAÇÃO TÉCNICA
+SEM NOVO BACKTEST
+================================================
+
+BENCHMARK INTEGRAL
+Casos avaliados........: 7406
+V3 TOP1................: 321
+E08 TOP1...............: 333
+Delta TOP1.............: +12
+V3 TOP3................: 913
+E08 TOP3...............: 913
+Delta TOP3.............: +0
+
+AUDITORIA DETALHADA - 500 CASOS
+Casos avaliados........: 500
+Ordem alterada.........: 179 (35.80%)
+Ganhos TOP1............: 4
+Perdas TOP1............: 6
+Neutros................: 169
+Saldo TOP1.............: -2
+Casos decisivos........: 10
+Decisivos/mudanças.....: 5.59%
+Ganhos/mudanças........: 2.23%
+Perdas/mudanças........: 3.35%
+
+AUDITORIA POR HORÁRIO - AMOSTRA
+11:00 | mudanças=44 | ganhos=0 | perdas=2 | neutros=42 | saldo=-2
+14:00 | mudanças=36 | ganhos=1 | perdas=1 | neutros=34 | saldo=+0
+16:00 | mudanças=40 | ganhos=2 | perdas=0 | neutros=38 | saldo=+2
+18:00 | mudanças=24 | ganhos=0 | perdas=1 | neutros=23 | saldo=-1
+21:00 | mudanças=35 | ganhos=1 | perdas=2 | neutros=32 | saldo=-1
+
+DELTA INTEGRAL POR HORÁRIO
+09:00 | V3=29 | E08=27 | delta=-2
+11:00 | V3=69 | E08=58 | delta=-11
+14:00 | V3=65 | E08=69 | delta=+4
+16:00 | V3=53 | E08=63 | delta=+10
+18:00 | V3=30 | E08=37 | delta=+7
+21:00 | V3=75 | E08=79 | delta=+4
+
+CONCLUSÃO
+1. O E08 melhorou o TOP1 no período integral.
+2. O conjunto TOP3 permaneceu preservado.
+3. A amostra detalhada de 500 casos apresentou comportamento instável.
+4. A maioria das reordenações foi neutra para o TOP1.
+5. Não há evidência suficiente para criar uma regra seletiva por grupo.
+6. O horário 16h merece investigação futura, mas não implementação isolada.
+7. O E08 deve permanecer experimental até validação adicional.
+8. Não é recomendado criar o E09 neste momento.

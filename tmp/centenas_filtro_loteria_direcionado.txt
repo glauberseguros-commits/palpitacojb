@@ -1,0 +1,657 @@
+===== AUDITORIA DIRECIONADA — FILTRO LOTERIA CENTENAS+ =====
+
+Arquivos relevantes encontrados: 4
+
+================================================================================================
+ARQUIVO: src\pages\Centenas\__tests__\milharProbabilityEngineV3.test.js
+CATEGORIAS: close_hour
+================================================================================================
+
+--- LINHAS 6 A 30 ---
+       6: } from "../modules/milharProbabilityEngineV3";
+       7: 
+       8: function draw({
+       9:   ymd,
+      10:   hour,
+      11:   prizes,
+      12: }) {
+      13:   return {
+      14:     ymd,
+      15:     date: ymd,
+>>    16:     closeHour: hour,
+      17:     prizes,
+      18:   };
+      19: }
+      20: 
+      21: function prize(milhar, position = 1) {
+      22:   return {
+      23:     milhar,
+      24:     position,
+      25:   };
+      26: }
+      27: 
+      28: describe("Motor probabilístico de milhares V3", () => {
+      29:   test("gera exatamente as dez candidatas da centena", () => {
+      30:     const candidates =
+
+================================================================================================
+ARQUIVO: src\pages\Centenas\centenas.utils.js
+CATEGORIAS: lottery_options, close_hour
+================================================================================================
+
+--- LINHAS 119 A 175 ---
+     119:     draw?.data ||
+     120:     draw?.day ||
+     121:     draw?.date_ymd ||
+     122:     draw?.drawYmd ||
+     123:     "";
+     124:   return isYMD(y) ? y : "";
+     125: }
+     126: 
+     127: export function pickDrawHour(draw) {
+     128:   const directCandidates = [
+>>   129:     draw?.closeHour,
+     130:     draw?.hour,
+     131:     draw?.horario,
+     132:     draw?.close_hour,
+     133:     draw?.close,
+     134:   ];
+     135:   for (const c of directCandidates) {
+     136:     const norm = normalizeHourLike(c);
+     137:     if (norm) return norm;
+     138:   }
+     139: 
+>>   140:   const nested = draw?.lottery || draw?.loteria || draw?.meta || null;
+     141:   if (nested) {
+     142:     const nestedCandidates = [
+>>   143:       nested?.closeHour,
+     144:       nested?.close_hour,
+     145:       nested?.hour,
+     146:       nested?.horario,
+     147:       nested?.close,
+     148:       nested?.drawHour,
+     149:       nested?.draw_hour,
+     150:     ];
+     151:     for (const c of nestedCandidates) {
+     152:       const norm = normalizeHourLike(c);
+     153:       if (norm) return norm;
+     154:     }
+     155:   }
+     156: 
+     157:   const textCandidates = [
+>>   158:     draw?.lotteryLabel,
+>>   159:     draw?.lotteryName,
+>>   160:     draw?.loteriaLabel,
+>>   161:     draw?.loteriaName,
+     162:     draw?.label,
+     163:     draw?.name,
+     164:     draw?.title,
+     165:     draw?.descricao,
+     166:     draw?.description,
+     167:     draw?.key,
+     168:     nested?.label,
+     169:     nested?.name,
+     170:     nested?.title,
+     171:     nested?.key,
+     172:   ];
+     173:   for (const t of textCandidates) {
+     174:     const ex = extractHourFromText(t);
+     175:     if (ex) return ex;
+
+--- LINHAS 379 A 415 ---
+     379:   ];
+     380:   for (const c of candidates) {
+     381:     const s = String(c ?? "").trim();
+     382:     if (isYMD(s)) return s;
+     383:   }
+     384:   return "";
+     385: }
+     386: 
+     387: export function pickPrizeHour(prize) {
+     388:   const candidates = [
+>>   389:     prize?.closeHour,
+     390:     prize?.close_hour,
+     391:     prize?.hour,
+     392:     prize?.horario,
+     393:     prize?.drawHour,
+     394:     prize?.draw_hour,
+>>   395:     prize?.lotteryCloseHour,
+     396:   ];
+     397:   for (const c of candidates) {
+     398:     const n = normalizeHourLike(c);
+     399:     if (n) return n;
+     400:   }
+>>   401:   const textCandidates = [prize?.lotteryLabel, prize?.loteriaLabel, prize?.label, prize?.name, prize?.title];
+     402:   for (const t of textCandidates) {
+     403:     const ex = extractHourFromText(t);
+     404:     if (ex) return ex;
+     405:   }
+     406:   return "";
+     407: }
+     408: 
+     409: /* ========= milhar palpite ========= */
+     410: 
+     411: export function digitFromKey(key) {
+     412:   const s = String(key || "");
+     413:   let h = 0;
+     414:   for (let i = 0; i < s.length; i += 1) h = (h * 31 + s.charCodeAt(i)) >>> 0;
+     415:   return String(h % 10);
+
+================================================================================================
+ARQUIVO: src\pages\Centenas\CentenasView.jsx
+CATEGORIAS: rotulo_todas_loterias, extracao_pt_rio, pt_rio, lottery_key, selected_lottery, lottery_options, close_hour
+================================================================================================
+
+--- LINHAS 7 A 31 ---
+       7: } from "./modules/milharProbabilityEngine";
+       8: import {
+       9:   getAnimalLabel as getAnimalLabelFn,
+      10:   getImgFromGrupo as getImgFromGrupoFn,
+      11: } from "../../constants/bichoMap";
+      12: 
+      13: /**
+      14:  * Centenas+ (PREMIUM)
+      15:  * ✅ Performance:
+      16:  * - chunks em paralelo (concorrência controlada)
+>>    17:  * - cache em memória por (lottery + closeHour + positions)
+      18:  *
+      19:  * ✅ UX:
+      20:  * - persistência de filtros no localStorage (não apaga ao trocar de página)
+      21:  * - status de progresso por chunks
+      22:  *
+      23:  * ✅ Imagem nítida:
+      24:  * - tenta usar getImgFromGrupo(grupo, 128) quando disponível
+      25:  * - tenta "upar" _64/_96 -> _128 no banner e nos cards
+      26:  *
+      27:  * ✅ FIX (Horário):
+      28:  * - Firestore/King pode salvar close_hour como 21:10 / 11:10 etc.
+      29:  * - O filtro "21h" precisa bater por bucket de hora (HH:00), ignorando minutos.
+      30:  *
+      31:  * ✅ FIX (Frequência 0):
+
+--- LINHAS 34 A 58 ---
+      34:  * - Agora: se draw.prizes não existir, agrupamos prizes flat por (ymd + hourBucket).
+      35:  *
+      36:  * ✅ FIX CRÍTICO (rebuild indevido):
+      37:  * - openGrupo não pode entrar nas deps do build.
+      38:  * - abrir/fechar card NÃO deve disparar rebuild do histórico.
+      39:  *
+      40:  * ✅ FIX (stale/flicker):
+      41:  * - builds concorrentes não podem "finalizar UI" do build mais novo no finally.
+      42:  */
+      43: 
+>>    44: const LOTTERY_KEY = "PT_RIO";
+      45: const FILTERS_LS_KEY = "pp_centenas_filters_v1";
+      46: 
+      47: // tuning
+      48: const CHUNK_DAYS = 45; // manter < 60 para não cair no aggregated
+      49: const CHUNKS_CONCURRENCY = 3;
+      50: 
+      51: function pad2(n) {
+      52:   return String(n).padStart(2, "0");
+      53: }
+      54: function isYMD(s) {
+      55:   return /^\d{4}-\d{2}-\d{2}$/.test(String(s || "").trim());
+      56: }
+      57: function ymdToBR(ymd) {
+      58:   const m = String(ymd || "").trim().match(/^(\d{4})-(\d{2})-(\d{2})$/);
+
+--- LINHAS 140 A 191 ---
+     140:     draw?.ymd ||
+     141:     draw?.date ||
+     142:     draw?.data ||
+     143:     draw?.day ||
+     144:     draw?.date_ymd ||
+     145:     draw?.drawYmd ||
+     146:     "";
+     147:   return isYMD(y) ? y : "";
+     148: }
+     149: function pickDrawHour(draw) {
+>>   150:   const directCandidates = [draw?.closeHour, draw?.hour, draw?.horario, draw?.close_hour, draw?.close];
+     151:   for (const c of directCandidates) {
+     152:     const norm = normalizeHourLike(c);
+     153:     if (norm) return norm;
+     154:   }
+     155: 
+>>   156:   const nested = draw?.lottery || draw?.loteria || draw?.meta || null;
+     157:   if (nested) {
+     158:     const nestedCandidates = [
+>>   159:       nested?.closeHour,
+     160:       nested?.close_hour,
+     161:       nested?.hour,
+     162:       nested?.horario,
+     163:       nested?.close,
+     164:       nested?.drawHour,
+     165:       nested?.draw_hour,
+     166:     ];
+     167:     for (const c of nestedCandidates) {
+     168:       const norm = normalizeHourLike(c);
+     169:       if (norm) return norm;
+     170:     }
+     171:   }
+     172: 
+     173:   const textCandidates = [
+>>   174:     draw?.lotteryLabel,
+>>   175:     draw?.lotteryName,
+>>   176:     draw?.loteriaLabel,
+>>   177:     draw?.loteriaName,
+     178:     draw?.label,
+     179:     draw?.name,
+     180:     draw?.title,
+     181:     draw?.descricao,
+     182:     draw?.description,
+     183:     draw?.key,
+     184:     nested?.label,
+     185:     nested?.name,
+     186:     nested?.title,
+     187:     nested?.key,
+     188:   ];
+     189:   for (const t of textCandidates) {
+     190:     const ex = extractHourFromText(t);
+     191:     if (ex) return ex;
+
+--- LINHAS 381 A 417 ---
+     381:   ];
+     382:   for (const c of candidates) {
+     383:     const s = String(c ?? "").trim();
+     384:     if (isYMD(s)) return s;
+     385:   }
+     386:   return "";
+     387: }
+     388: 
+     389: function pickPrizeHour(prize) {
+     390:   const candidates = [
+>>   391:     prize?.closeHour,
+     392:     prize?.close_hour,
+     393:     prize?.hour,
+     394:     prize?.horario,
+     395:     prize?.drawHour,
+     396:     prize?.draw_hour,
+>>   397:     prize?.lotteryCloseHour,
+     398:   ];
+     399:   for (const c of candidates) {
+     400:     const n = normalizeHourLike(c);
+     401:     if (n) return n;
+     402:   }
+>>   403:   const textCandidates = [prize?.lotteryLabel, prize?.loteriaLabel, prize?.label, prize?.name, prize?.title];
+     404:   for (const t of textCandidates) {
+     405:     const ex = extractHourFromText(t);
+     406:     if (ex) return ex;
+     407:   }
+     408:   return "";
+     409: }
+     410: 
+     411: /* ========= milhar palpite ========= */
+     412: 
+     413: function digitFromKey(key) {
+     414:   const s = String(key || "");
+     415:   let h = 0;
+     416:   for (let i = 0; i < s.length; i += 1) h = (h * 31 + s.charCodeAt(i)) >>> 0;
+     417:   return String(h % 10);
+
+--- LINHAS 463 A 502 ---
+     463:     .map((x) => String(x || "").trim())
+     464:     .filter(Boolean);
+     465: 
+     466:   const payload = encodeURIComponent(list.join(","));
+     467: 
+     468:   // usando querystring (envia pro servidor)
+     469:   return `https://app.kingapostas.com/bet/guess?pp=${payload}`;
+     470: }
+     471: 
+     472: export default function CentenasView() {
+>>   473:   const LOTTERY_OPTIONS = useMemo(
+     474:     () => [
+>>   475:       { id: "ALL", label: "Todas as loterias", closeHour: null },
+>>   476:       { id: "09", label: "LT PT RIO 09HS", closeHour: "09:00" },
+>>   477:       { id: "11", label: "LT PT RIO 11HS", closeHour: "11:00" },
+>>   478:       { id: "14", label: "LT PT RIO 14HS", closeHour: "14:00" },
+>>   479:       { id: "16", label: "LT PT RIO 16HS", closeHour: "16:00" },
+>>   480:       { id: "18", label: "LT PT RIO 18HS", closeHour: "18:00" },
+>>   481:       { id: "21", label: "LT PT RIO 21HS", closeHour: "21:00" },
+     482:     ],
+     483:     []
+     484:   );
+     485: 
+     486:   const prizePositions = useMemo(() => [1, 2, 3, 4, 5, 6, 7], []);
+     487: // filtros
+>>   488:   const [lotteryOptId, setLotteryOptId] = useState("ALL");
+     489:   const [fMes, setFMes] = useState("Todos");
+     490:   const [fDiaMes, setFDiaMes] = useState("Todos");
+     491:   const [fDiaSemana, setFDiaSemana] = useState("Todos");
+     492:   const [fHorario, setFHorario] = useState("Todos");
+     493:   const [fAnimal, setFAnimal] = useState("Todos");
+     494:   const [fPosicao, setFPosicao] = useState("Todos");
+     495:   const [showOnlyHits, setShowOnlyHits] = useState(false);
+     496: 
+     497:   // bounds
+     498:   const [bounds, setBounds] = useState({ minYmd: null, maxYmd: null, source: "" });
+     499:   const [loadingBounds, setLoadingBounds] = useState(false);
+     500: 
+     501:   // data
+     502:   const [loading, setLoading] = useState(false);
+
+--- LINHAS 521 A 598 ---
+     521:   const abortedRef = useRef(false);
+     522:   const buildSeqRef = useRef(0);
+     523:   const autoTimerRef = useRef(null);
+     524: 
+     525:   const getAnimalLabel = useMemo(() => getAnimalLabelFn, []);
+     526:   const getImgFromGrupo = useMemo(() => getImgFromGrupoFn, []);
+     527: 
+     528:   // cache em memória
+     529:   const baseCacheRef = useRef(new Map());
+     530: 
+>>   531:   const selectedLottery = useMemo(
+>>   532:     () => LOTTERY_OPTIONS.find((x) => x.id === lotteryOptId) || LOTTERY_OPTIONS[0],
+>>   533:     [lotteryOptId, LOTTERY_OPTIONS]
+     534:   );
+     535: 
+>>   536:   const selectedCloseHour = useMemo(() => {
+>>   537:     return selectedLottery?.closeHour ? normalizeHourLike(selectedLottery.closeHour) : null;
+>>   538:   }, [selectedLottery]);
+     539: 
+     540:   const boundsReady = !!(bounds?.minYmd && bounds?.maxYmd);
+     541: 
+     542:   // ========= persistência de filtros =========
+     543: 
+     544:   useEffect(() => {
+     545:     try {
+     546:       const raw = localStorage.getItem(FILTERS_LS_KEY);
+     547:       if (raw) {
+     548:         const saved = JSON.parse(raw);
+     549:         if (saved && typeof saved === "object") {
+>>   550:           if (saved.lotteryOptId) setLotteryOptId(String(saved.lotteryOptId));
+     551:           if (saved.fMes) setFMes(String(saved.fMes));
+     552:           if (saved.fDiaMes) setFDiaMes(String(saved.fDiaMes));
+     553:           if (saved.fDiaSemana) setFDiaSemana(String(saved.fDiaSemana));
+     554:           if (saved.fHorario) setFHorario(String(saved.fHorario));
+     555:           if (saved.fAnimal) setFAnimal(String(saved.fAnimal));
+     556:           if (saved.fPosicao) setFPosicao(String(saved.fPosicao));
+     557:           if (typeof saved.showOnlyHits === "boolean") setShowOnlyHits(saved.showOnlyHits);
+     558:           if (Number.isFinite(Number(saved.openGrupo))) setOpenGrupo(Number(saved.openGrupo));
+     559:         }
+     560:       }
+     561:     } catch {}
+     562:   }, []);
+     563: 
+     564:   useEffect(() => {
+     565:     const t = setTimeout(() => {
+     566:       try {
+     567:         localStorage.setItem(
+     568:           FILTERS_LS_KEY,
+     569:           JSON.stringify({
+>>   570:             lotteryOptId,
+     571:             fMes,
+     572:             fDiaMes,
+     573:             fDiaSemana,
+     574:             fHorario,
+     575:             fAnimal,
+     576:             fPosicao,
+     577:             showOnlyHits,
+     578:             openGrupo,
+     579:           })
+     580:         );
+     581:       } catch {}
+     582:     }, 150);
+     583:     return () => clearTimeout(t);
+>>   584:   }, [lotteryOptId, fMes, fDiaMes, fDiaSemana, fHorario, fAnimal, fPosicao, showOnlyHits, openGrupo]);
+     585: 
+     586:   // ========= options =========
+     587: 
+     588:   const mesOptions = useMemo(() => {
+     589:     const out = [{ v: "Todos", label: "Todos" }];
+     590:     for (let m = 1; m <= 12; m += 1) out.push({ v: String(m), label: monthNamePTBR(m) });
+     591:     return out;
+     592:   }, []);
+     593: 
+     594:   const diaMesOptions = useMemo(() => {
+     595:     const out = [{ v: "Todos", label: "Todos" }];
+     596:     for (let d = 1; d <= 31; d += 1) out.push({ v: String(d), label: pad2(d) });
+     597:     return out;
+     598:   }, []);
+
+--- LINHAS 627 A 651 ---
+     627:   }, []);
+     628: 
+     629:   // ========= bounds =========
+     630: 
+     631:   useEffect(() => {
+     632:     let alive = true;
+     633:     (async () => {
+     634:       setLoadingBounds(true);
+     635:       setError("");
+     636:       try {
+>>   637:         const b = await getKingBoundsByUf({ uf: LOTTERY_KEY });
+     638:         if (!alive) return;
+     639:         setBounds({
+     640:           minYmd: b?.minYmd || null,
+     641:           maxYmd: b?.maxYmd || null,
+     642:           source: b?.source || "",
+     643:         });
+     644:       } catch (e) {
+     645:         if (!alive) return;
+     646:         setError(String(e?.message || e));
+     647:       } finally {
+     648:         if (alive) setLoadingBounds(false);
+     649:       }
+     650:     })();
+     651: 
+
+--- LINHAS 704 A 733 ---
+     704:           const pp = pickPrizePositionNumber(p);
+     705:           if (!pp || pp !== pos) continue;
+     706:         }
+     707:         out.push(p);
+     708:       }
+     709:       return out;
+     710:     },
+     711:     [fAnimal, fPosicao]
+     712:   );
+     713: 
+>>   714:   // ========= build base dataset (cacheado por closeHour) =========
+     715: 
+     716:   const buildBaseKey = useMemo(() => {
+>>   717:     const h = selectedCloseHour ? normalizeHourLike(selectedCloseHour) : "all";
+>>   718:     return `${LOTTERY_KEY}::close=${h}::pos=${prizePositions.join(",")}`;
+>>   719:   }, [selectedCloseHour, prizePositions]);
+     720: 
+     721:   const build = useCallback(async () => {
+     722:     const mySeq = ++buildSeqRef.current;
+     723:     abortedRef.current = false;
+     724: 
+     725:     setLoading(true);
+     726:     setError("");
+     727:     setProgress({ done: 0, total: 0, label: "" });
+     728: 
+     729:     try {
+     730:       if (!boundsReady) {
+     731:         setError("Bounds ainda não carregaram.");
+     732:         return;
+     733:       }
+
+--- LINHAS 737 A 764 ---
+     737: 
+     738:       if (!entriesBase) {
+     739:         const chunks = splitRangeIntoChunks(bounds.minYmd, bounds.maxYmd, CHUNK_DAYS);
+     740:         setProgress({ done: 0, total: chunks.length, label: "Carregando histórico..." });
+     741: 
+     742:         const results = await mapWithConcurrency(chunks, CHUNKS_CONCURRENCY, async (ch, idx) => {
+     743:           if (abortedRef.current) return { ok: false, entries: [] };
+     744:           if (buildSeqRef.current !== mySeq) return { ok: false, entries: [] };
+     745: 
+     746:           const res = await getKingResultsByRange({
+>>   747:             uf: LOTTERY_KEY,
+     748:             dateFrom: ch.from,
+     749:             dateTo: ch.to,
+>>   750:             closeHour: selectedCloseHour || null,
+     751:             positions: prizePositions,
+     752:             mode: "detailed",
+     753:           });
+     754: 
+     755:           const drawsChunk = normalizeDrawsResult(res);
+     756:           const prizesFlat = normalizePrizesArray(res);
+     757: 
+     758:           const entries = [];
+     759: 
+     760:           // (A) caminho 1: draws vêm hidratados com prizes (quando existir)
+     761:           const coveredKeys = new Set(); // ymd#bucket
+     762:           for (const d of drawsChunk || []) {
+     763:             const ymd = pickDrawYmd(d);
+     764:             if (!ymd) continue;
+
+--- LINHAS 781 A 806 ---
+     781:             const map = new Map(); // key -> { ymd, hourNorm, hourBucket, prizes: [] }
+     782: 
+     783:             for (const p of prizesFlat) {
+     784:               const ymd = pickPrizeYmd(p);
+     785:               if (!ymd) continue;
+     786: 
+     787:               const hrRaw = pickPrizeHour(p);
+     788:               const hourNorm = normalizeHourLike(hrRaw);
+     789:               const hourBucket = toHourBucketHH00(hourNorm);
+     790: 
+>>   791:               if (selectedCloseHour) {
+>>   792:                 const want = toHourBucketHH00(selectedCloseHour);
+     793:                 if (want && hourBucket && hourBucket !== want) continue;
+     794:               }
+     795: 
+     796:               const key = `${ymd}#${hourBucket || "??"}`;
+     797:               if (!map.has(key)) map.set(key, { ymd, hourNorm, hourBucket, prizes: [] });
+     798:               map.get(key).prizes.push(p);
+     799:             }
+     800: 
+     801:             // adiciona SOMENTE as chaves não cobertas por draws hidratados
+     802:             for (const [key, val] of map.entries()) {
+     803:               if (coveredKeys.has(key)) continue;
+     804:               if (val?.prizes?.length) entries.push(val);
+     805:             }
+     806:           }
+
+--- LINHAS 957 A 1021 ---
+     957:       // ✅ FIX: só finaliza UI se ainda for o build atual
+     958:       if (!abortedRef.current && buildSeqRef.current === mySeq) {
+     959:         setLoading(false);
+     960:         setProgress((p) => ({ ...p, label: "" }));
+     961:       }
+     962:     }
+     963:   }, [
+     964:     boundsReady,
+     965:     bounds?.minYmd,
+     966:     bounds?.maxYmd,
+>>   967:     selectedCloseHour,
+     968:     prizePositions,
+     969:     buildBaseKey,
+     970:     applyDrawFiltersToEntry,
+     971:     applyPrizeFilters,
+     972:     getAnimalLabel,
+     973:     getImgFromGrupo,
+     974:     fAnimal,
+     975:   ]);
+     976: 
+     977:   useEffect(() => {
+     978:     if (!boundsReady) return;
+     979:     build();
+     980:     // eslint-disable-next-line react-hooks/exhaustive-deps
+     981:   }, [boundsReady]);
+     982: 
+     983:   useEffect(() => {
+     984:     if (!boundsReady) return;
+     985:     if (autoTimerRef.current) clearTimeout(autoTimerRef.current);
+     986:     autoTimerRef.current = setTimeout(() => build(), 220);
+     987:     return () => {
+     988:       if (autoTimerRef.current) clearTimeout(autoTimerRef.current);
+     989:     };
+>>   990:   }, [boundsReady, build, fMes, fDiaMes, fDiaSemana, fHorario, fAnimal, fPosicao, lotteryOptId]);
+     991: 
+     992:   useEffect(() => {
+     993:     return () => {
+     994:       abortedRef.current = true;
+     995:       // ✅ cleanup extra
+     996:       if (autoTimerRef.current) clearTimeout(autoTimerRef.current);
+     997:     };
+     998:   }, []);
+     999: 
+    1000:   const subtitle = useMemo(() => {
+>>  1001:     const lotTxt = selectedLottery?.label || "Todas as loterias";
+    1002:     const rangeTxt =
+    1003:       boundsReady && bounds?.minYmd && bounds?.maxYmd ? `${ymdToBR(bounds.minYmd)} até ${ymdToBR(bounds.maxYmd)}` : "";
+>>  1004:     return `Frequência das 40 centenas · Prêmio 1º ao 7º · ${lotTxt} · Loteria ${LOTTERY_KEY}${
+    1005:       rangeTxt ? ` · Período ${rangeTxt}` : ""
+    1006:     }`;
+>>  1007:   }, [selectedLottery, boundsReady, bounds?.minYmd, bounds?.maxYmd]);
+    1008: 
+    1009:   const bannerGrupo = useMemo(() => {
+    1010:     if (!isTodos(fAnimal)) {
+    1011:       const g = Number(fAnimal);
+    1012:       if (Number.isFinite(g) && g >= 1 && g <= 25) return g;
+    1013:     }
+    1014:     if (openGrupo) return Number(openGrupo);
+    1015:     return Number(groups?.[0]?.grupo || 1);
+    1016:   }, [fAnimal, openGrupo, groups]);
+    1017: 
+    1018:   const bannerImg = useMemo(() => {
+    1019:     const raw =
+    1020:       tryGetImg(getImgFromGrupo, bannerGrupo, 128) ||
+    1021:       tryGetImg(getImgFromGrupo, bannerGrupo, 96) ||
+
+--- LINHAS 1686 A 1712 ---
+    1686:                 </option>
+    1687:               ))}
+    1688:             </select>
+    1689:             <div className="cx0_chev" />
+    1690:           </div>
+    1691:         </div>
+    1692:       </div>
+    1693: 
+    1694:       <div className="cx0_controls">
+    1695:         <div className="cx0_chip">
+>>  1696:           <label>Loterias</label>
+>>  1697:           <select value={lotteryOptId} onChange={(e) => setLotteryOptId(String(e.target.value || "ALL"))}>
+>>  1698:             {LOTTERY_OPTIONS.map((x) => (
+    1699:               <option key={x.id} value={x.id}>
+    1700:                 {x.label}
+    1701:               </option>
+    1702:             ))}
+    1703:           </select>
+    1704:         </div>
+    1705: 
+    1706:         <button className="cx0_btn" onClick={build} disabled={loading || loadingBounds || !boundsReady}>
+    1707:           {loading ? "Carregando..." : "Atualizar"}
+    1708:         </button>
+    1709: 
+    1710:       </div>
+    1711: 
+    1712:       {loading && progress?.total ? (
+
+================================================================================================
+ARQUIVO: src\pages\Centenas\modules\milharProbabilityEngineV3.js
+CATEGORIAS: close_hour
+================================================================================================
+
+--- LINHAS 151 A 175 ---
+     151:       "resultDate",
+     152:       "data",
+     153:       "dataSorteio",
+     154:     ])
+     155:   );
+     156: }
+     157: 
+     158: function drawHour(draw) {
+     159:   return normalizeHourV3(
+     160:     firstValue(draw, [
+>>   161:       "closeHour",
+     162:       "close_hour",
+     163:       "hour",
+     164:       "drawHour",
+     165:       "horario",
+     166:       "time",
+     167:     ])
+     168:   );
+     169: }
+     170: 
+     171: function prizeMilhar(prize) {
+     172:   return normalizeMilhar4V3(
+     173:     firstValue(prize, [
+     174:       "milhar4",
+     175:       "milhar",

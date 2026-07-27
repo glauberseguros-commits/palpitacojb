@@ -1,0 +1,2613 @@
+
+==============================================================================================================
+1. WORKFLOW AUTO-IMPORT COMPLETO
+==============================================================================================================
+00001: name: Auto Import — PalPitaco JB
+00002: 
+00003: on:
+00004:   schedule:
+00005:     # =========================
+00006:     # PT_RIO (RJ) — janelas BRT (UTC-3) convertidas p/ UTC
+00007:     # BRT 09:05–09:31 => UTC 12:05–12:31
+00008:     - cron: "5-31 12 * * 0-6"
+00009:     # BRT 11:05–11:31 => UTC 14:05–14:31
+00010:     - cron: "5-31 14 * * 0-6"
+00011:     # BRT 14:05–14:31 => UTC 17:05–17:31
+00012:     - cron: "5-31 17 * * 0-6"
+00013:     # BRT 16:05–16:31 => UTC 19:05–19:31
+00014:     - cron: "5-31 19 * * 0-6"
+00015: 
+00016:     # BRT 18:05–18:31 => UTC 21:05–21:31 (SEG, TER, QUI, SEX)
+00017:     - cron: "5-31 21 * * 1,2,4,5"
+00018: 
+00019:     # BRT 18:35 (one-shot) => UTC 21:35 (QUA e SÁB)
+00020:     - cron: "35 21 * * 3,6"
+00021: 
+00022:     # BRT 21:05–21:45 => UTC 0:05–0:45 (vira o dia no UTC; TER–DOM)
+00023:     # (Isso representa SEG–SÁB em BRT)
+00024:     - cron: "5-45 0 * * 0,2-6"
+00025: 
+00026:     # =========================
+00027:     # FEDERAL — Quarta e Sábado — janela BRT 19:49–20:10
+00028:     # BRT 19:49–19:59 => UTC 22:49–22:59
+00029:     - cron: "49-59 22 * * 3,6"
+00030:     # BRT 20:00–20:10 => UTC 23:00–23:10
+00031:     - cron: "0-10 23 * * 3,6"
+00032: 
+00033:   workflow_dispatch:
+00034:     inputs:
+00035:       lottery:
+00036:         description: "Qual loteria executar"
+00037:         required: true
+00038:         type: choice
+00039:         options:
+00040:           - PT_RIO
+00041:           - FEDERAL
+00042: 
+00043: # ✅ Evita sobreposição de runs (você dispara várias vezes por minuto)
+00044: # - Mantém 1 execução por vez
+00045: # - Não cancela a run anterior (mais seguro para importação)
+00046: concurrency:
+00047:   group: auto-import-palpitaco-${{ github.ref }}
+00048:   cancel-in-progress: false
+00049: 
+00050: permissions:
+00051:   contents: read
+00052: 
+00053: # Garante que o Node rode em BRT (importante para regras de janela/slot no script)
+00054: env:
+00055:   TZ: America/Sao_Paulo
+00056:   PITACO_API_BASE: ${{ vars.PITACO_API_BASE }}
+00057: 
+00058: jobs:
+00059:   # ==========================================================
+00060:   # PT_RIO
+00061:   # ==========================================================
+00062:   run-import-pt-rio:
+00063:     name: run-import (PT_RIO)
+00064:     runs-on: ubuntu-latest
+00065:     timeout-minutes: 20
+00066:     defaults:
+00067:       run:
+00068:         working-directory: backend
+00069: 
+00070:     # Roda:
+00071:     # - em schedule, exceto quando for o schedule específico do FEDERAL
+00072:     # - ou manual quando input=PT_RIO
+00073:     if: |
+00074:       (github.event_name == 'schedule' &&
+00075:         github.event.schedule != '49-59 22 * * 3,6' &&
+00076:         github.event.schedule != '0-10 23 * * 3,6'
+00077:       )
+00078:       || (github.event_name == 'workflow_dispatch' && inputs.lottery == 'PT_RIO')
+00079: 
+00080:     steps:
+00081:       - name: Checkout do repositório
+00082:         uses: actions/checkout@v4
+00083: 
+00084:       - name: Setup Node.js
+00085:         uses: actions/setup-node@v4
+00086:         with:
+00087:           node-version: 20
+00088: 
+00089:       - name: Instalar dependências (backend)
+00090:         run: npm ci
+00091: 
+00092:       - name: Rodar importação automática (PT_RIO)
+00093:         env:
+00094:           # ✅ nome correto que o firebaseAdmin.js lê
+00095:           FIREBASE_ADMIN_SA_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_JSON }}
+00096: 
+00097:           LOTTERY: PT_RIO
+00098: 
+00099:           # ✅ ALERTA REAL (auditoria)
+00100:           # - Se houver furo CRÍTICO, o job falha (run vermelha)
+00101:           FAIL_ON_CRITICAL: "1"
+00102:           AUDIT_WARN_MIN: "20"
+00103:           AUDIT_CRIT_MIN: "60"
+00104:         run: node scripts/autoImportToday.js
+00105: 
+00106:   # ==========================================================
+00107:   # FEDERAL
+00108:   # ==========================================================
+00109:   run-import-federal:
+00110:     name: run-import (FEDERAL)
+00111:     runs-on: ubuntu-latest
+00112:     timeout-minutes: 20
+00113:     defaults:
+00114:       run:
+00115:         working-directory: backend
+00116: 
+00117:     # Roda:
+00118:     # - em schedule, SOMENTE nas duas regras do FEDERAL
+00119:     # - ou manual quando input=FEDERAL
+00120:     if: |
+00121:       (github.event_name == 'schedule' &&
+00122:         (github.event.schedule == '49-59 22 * * 3,6' || github.event.schedule == '0-10 23 * * 3,6')
+00123:       )
+00124:       || (github.event_name == 'workflow_dispatch' && inputs.lottery == 'FEDERAL')
+00125: 
+00126:     steps:
+00127:       - name: Checkout do repositório
+00128:         uses: actions/checkout@v4
+00129: 
+00130:       - name: Setup Node.js
+00131:         uses: actions/setup-node@v4
+00132:         with:
+00133:           node-version: 20
+00134: 
+00135:       - name: Instalar dependências (backend)
+00136:         run: npm ci
+00137: 
+00138:       - name: Rodar importação automática (FEDERAL)
+00139:         env:
+00140:           # ✅ nome correto que o firebaseAdmin.js lê
+00141:           FIREBASE_ADMIN_SA_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_JSON }}
+00142: 
+00143:           LOTTERY: FEDERAL
+00144: 
+00145:           # ✅ ALERTA REAL (auditoria)
+00146:           FAIL_ON_CRITICAL: "1"
+00147:           AUDIT_WARN_MIN: "20"
+00148:           AUDIT_CRIT_MIN: "60"
+00149:         run: node scripts/autoImportToday.js
+
+==============================================================================================================
+2. CRONS ENCONTRADOS E CONVERSÃO UTC → BRASÍLIA
+==============================================================================================================
+Linha 8: cron UTC = 5-31 12 * * 0-6
+  Expressão com faixa ou formato composto; revisar manualmente.
+Linha 10: cron UTC = 5-31 14 * * 0-6
+  Expressão com faixa ou formato composto; revisar manualmente.
+Linha 12: cron UTC = 5-31 17 * * 0-6
+  Expressão com faixa ou formato composto; revisar manualmente.
+Linha 14: cron UTC = 5-31 19 * * 0-6
+  Expressão com faixa ou formato composto; revisar manualmente.
+Linha 17: cron UTC = 5-31 21 * * 1,2,4,5
+  Expressão com faixa ou formato composto; revisar manualmente.
+Linha 20: cron UTC = 35 21 * * 3,6
+  21:35 UTC = 18:35 Brasília
+Linha 24: cron UTC = 5-45 0 * * 0,2-6
+  Expressão com faixa ou formato composto; revisar manualmente.
+Linha 29: cron UTC = 49-59 22 * * 3,6
+  Expressão com faixa ou formato composto; revisar manualmente.
+Linha 31: cron UTC = 0-10 23 * * 3,6
+  Expressão com faixa ou formato composto; revisar manualmente.
+
+==============================================================================================================
+3. JANELA CONFIGURADA PARA O SLOT DAS 21H
+==============================================================================================================
+
+--- LINHAS 29 A 71 ---
+00029: 
+00030: // Lock para evitar concorrência (por loteria)
+00031: const LOCK_FILE = path.join(LOG_DIR, `autoImport-${LOTTERY}.lock`);
+00032: 
+00033: // TTL do lock (ambientes locais). Em GitHub Actions, o workspace é isolado por execução.
+00034: const LOCK_TTL_MS = 90 * 1000; // 1m30s
+00035: 
+00036: // Auditoria: thresholds (minutos)
+00037: const WARN_AFTER_MIN = Number(process.env.AUDIT_WARN_MIN || 20);
+00038: const CRIT_AFTER_MIN = Number(process.env.AUDIT_CRIT_MIN || 60);
+00039: const FAIL_ON_CRITICAL = String(process.env.FAIL_ON_CRITICAL || "0").trim() === "1";
+00040: 
+00041: // ✅ Limite de catch-up pós-janela (minutos após windowEnd)
+00042: // Default 90 (reduz spam em cron fora da janela)
+00043: const CATCHUP_MAX_AFTER_END_MIN = Number(process.env.CATCHUP_MAX_AFTER_END_MIN || 90);
+00044: 
+00045: // ✅ PROBE/SOFT da FEDERAL: limite de tentativas por slot/dia (anti-spam)
+00046: // default 2 (tenta 2 ticks e para, mesmo que o cron rode mais vezes)
+00047: const FEDERAL_SOFT_MAX_TRIES_PER_DAY = Number(process.env.FEDERAL_SOFT_MAX_TRIES_PER_DAY || 2);
+00048: 
+00049: /**
+00050:  * ✅ Base URL do backend (pra ler dayStatus sem duplicar regra)
+00051:  * - Local default: http://127.0.0.1:3333
+00052:  * - Override: PITACO_API_BASE="https://seu-dominio"
+00053:  */
+00054: let PITACO_API_BASE = String(process.env.PITACO_API_BASE || "http://127.0.0.1:3333").trim();
+00055: 
+00056: // ✅ hardening: se vier "localhost:3334" (ou 3333 errado), cai automaticamente pro backend local padrão
+00057: try {
+00058:   const u = new URL(PITACO_API_BASE);
+00059:   const host = String(u.hostname || "").toLowerCase();
+00060:   const port = String(u.port || "");
+00061:   if ((host === "localhost" || host === "127.0.0.1") && port === "3334") {
+00062:     PITACO_API_BASE = "http://127.0.0.1:3333";
+00063:   }
+00064: } catch {}
+00065: 
+00066: // ✅ log da base efetiva (ajuda a detectar env poluído)
+00067: try {
+00068:   const eff = PITACO_API_BASE;
+00069:   if (!globalThis.__PITACO_API_BASE_LOGGED__) {
+00070:     globalThis.__PITACO_API_BASE_LOGGED__ = true;
+00071:     console.log(`[CFG] PITACO_API_BASE efetivo => ${eff}`);
+
+--- LINHAS 111 A 167 ---
+00111:   }
+00112: 
+00113:   const value = await fetchDayStatusFromBackend({ date, lottery });
+00114:   writeJsonSafeFile(f, { atMs: nowMs, iso: new Date().toISOString(), value });
+00115:   return value;
+00116: }
+00117: 
+00118: /* =========================
+00119:    Schedules (por loteria)
+00120: ========================= */
+00121: const SCHEDULES = {
+00122:   PT_RIO: [
+00123:     { hour: "09:00", windowStart: "09:05", releaseAt: "09:29", windowEnd: "09:35" },
+00124:     { hour: "11:00", windowStart: "11:05", releaseAt: "11:29", windowEnd: "11:35" },
+00125:     { hour: "14:00", windowStart: "14:05", releaseAt: "14:29", windowEnd: "14:35" },
+00126:     { hour: "16:00", windowStart: "16:05", releaseAt: "16:29", windowEnd: "16:35" },
+00127:     { hour: "18:00", windowStart: "18:05", releaseAt: "18:29", windowEnd: "18:35" },
+00128:     // 21h: janela longa
+00129:     { hour: "21:00", windowStart: "21:05", releaseAt: "21:05", windowEnd: "21:45" },
+00130:   ],
+00131: 
+00132:   // FEDERAL
+00133:   // - 19:00 = PROBE (SOFT)
+00134:   // - 20:00 = HARD (padrão)
+00135:   FEDERAL: [
+00136:     { hour: "19:00", windowStart: "18:50", releaseAt: "19:00", windowEnd: "19:20" }, // PROBE (SOFT)
+00137:     { hour: "20:00", windowStart: "19:50", releaseAt: "20:00", windowEnd: "20:20" }, // HARD
+00138:   ],
+00139: };
+00140: 
+00141: const SCHEDULE = Array.isArray(SCHEDULES[LOTTERY]) ? SCHEDULES[LOTTERY] : SCHEDULES.PT_RIO;
+00142: 
+00143: /* =========================
+00144:    Utils
+00145: ========================= */
+00146: function ensureLogDir() {
+00147:   if (!fs.existsSync(LOG_DIR)) fs.mkdirSync(LOG_DIR, { recursive: true });
+00148: }
+00149: 
+00150: function tsLocal() {
+00151:   try {
+00152:     const fmt = new Intl.DateTimeFormat("pt-BR", {
+00153:       timeZone: "America/Sao_Paulo",
+00154:       year: "numeric",
+00155:       month: "2-digit",
+00156:       day: "2-digit",
+00157:       hour: "2-digit",
+00158:       minute: "2-digit",
+00159:       second: "2-digit",
+00160:       hour12: false,
+00161:     });
+00162:     return fmt.format(new Date()).replace(",", "");
+00163:   } catch {
+00164:     const d = new Date();
+00165:     const yyyy = d.getFullYear();
+00166:     const mm = String(d.getMonth() + 1).padStart(2, "0");
+00167:     const dd = String(d.getDate()).padStart(2, "0");
+
+--- LINHAS 353 A 401 ---
+00353:   }
+00354: 
+00355:   if (hardCount === 0) return false;
+00356:   return true;
+00357: }
+00358: 
+00359: /**
+00360:  * Gera closes candidatos (tolerância de minutos)
+00361:  */
+00362: function closeCandidates(hhmm) {
+00363:   const s = String(hhmm || "").trim();
+00364: 
+00365:   // PT_RIO 21h pode sair como fechamento de 21:30.
+00366:   // Mantém os closes históricos e adiciona a faixa 21:29~21:32.
+00367:   if (LOTTERY === "PT_RIO" && s === "21:00") {
+00368:     return [
+00369:       "21:00", "21:01", "21:02",
+00370:       "21:09", "21:10", "21:11",
+00371:       "21:29", "21:30", "21:31", "21:32"
+00372:     ];
+00373:   }
+00374: 
+00375:   const parsed = parseHH(s);
+00376:   if (!parsed) return [];
+00377:   const { h } = parsed;
+00378: 
+00379:   const out = new Set();
+00380:   const bases = [0, 9];
+00381:   const deltas = [0, 1, 2];
+00382: 
+00383:   for (const base of bases) {
+00384:     for (const d of deltas) {
+00385:       const mm = base + d;
+00386:       if (mm >= 0 && mm <= 59) out.add(`${pad2(h)}:${pad2(mm)}`);
+00387:     }
+00388:   }
+00389:   return Array.from(out);
+00390: }
+00391: 
+00392: /* =========================
+00393:    FEDERAL PROBE: valida se o resultado pertence ao horário do slot
+00394:    - usa targetDrawIds no formato: FEDERAL__YYYY-MM-DD__20-00__uuid
+00395: ========================= */
+00396: function slotHourKey(slotHHMM) {
+00397:   const hh = String(slotHHMM || "").slice(0, 2);
+00398:   const mm = String(slotHHMM || "").slice(3, 5);
+00399:   if (!/^\d{2}$/.test(hh) || !/^\d{2}$/.test(mm)) return "";
+00400:   return hh + "-" + mm; // ex: "19-00"
+00401: }
+
+--- LINHAS 413 A 455 ---
+00413: ========================= */
+00414: function buildTodaySlotStatusMapPT_RIO(dateYMD, dow) {
+00415:   const map = new Map();
+00416: 
+00417:   const isSunday = dow === 0;
+00418:   const isWed = dow === 3;
+00419:   const isSat = dow === 6;
+00420: 
+00421:   for (const sched of SCHEDULE) {
+00422:     const hh = sched.hour;
+00423: 
+00424:     if (isSunday) {
+00425:       if (hh === "18:00" || hh === "21:00") map.set(hh, "OFF");
+00426:       else map.set(hh, "HARD");
+00427:       continue;
+00428:     }
+00429: 
+00430:     if (isWed || isSat) {
+00431:       if (hh === "18:00") map.set(hh, "SOFT");
+00432:       else map.set(hh, "HARD");
+00433:       continue;
+00434:     }
+00435: 
+00436:     map.set(hh, "HARD");
+00437:   }
+00438: 
+00439:   if (isSunday) {
+00440:     logLine(`[CAL] PT_RIO domingo: date=${dateYMD} dow=${dow} => HARD=[09,11,14,16] OFF=[18,21]`, "INFO");
+00441:   } else if (isWed || isSat) {
+00442:     logLine(`[CAL] PT_RIO qua/sab: date=${dateYMD} dow=${dow} => HARD=[09,11,14,16,21] SOFT=[18]`, "INFO");
+00443:   } else {
+00444:     logLine(`[CAL] PT_RIO seg-sex: date=${dateYMD} dow=${dow} => HARD=[09,11,14,16,18,21]`, "INFO");
+00445:   }
+00446: 
+00447:   return map;
+00448: }
+00449: 
+00450: /**
+00451:  * FEDERAL (robusto / independente de expectedHard do backend):
+00452:  * - domingo: OFF
+00453:  * - demais dias: 19:00 = SOFT (PROBE), 20:00 = HARD (padrão)
+00454:  * Obs: ainda logamos expectedHard/expectedSoft como debug, mas não usamos como "fonte da verdade".
+00455:  */
+
+--- LINHAS 482 A 550 ---
+00482: 
+00483:   logLine(
+00484:     `[CAL] FEDERAL fixed: date=${dateYMD} dow=${dow} => 19:SOFT(PROBE) 20:HARD | backend expectedHard=[${expectedHard.join(
+00485:       ","
+00486:     )}] expectedSoft=[${expectedSoft.join(",")}]`,
+00487:     "INFO"
+00488:   );
+00489: 
+00490:   return map;
+00491: }
+00492: 
+00493: function slotWindow(schedule) {
+00494:   const ws = parseHHMM(schedule.windowStart);
+00495:   const ra = parseHHMM(schedule.releaseAt);
+00496:   const we = parseHHMM(schedule.windowEnd);
+00497: 
+00498:   if (!ws || !ra || !we) {
+00499:     const { h } = parseHH(schedule.hour);
+00500:     return {
+00501:       start: toMin(h, 5),
+00502:       release: toMin(h, 29),
+00503:       end: toMin(h, 31),
+00504:       startLabel: `${pad2(h)}:05`,
+00505:       releaseLabel: `${pad2(h)}:29`,
+00506:       endLabel: `${pad2(h)}:31`,
+00507:     };
+00508:   }
+00509: 
+00510:   const start = toMin(ws.h, ws.m);
+00511:   const release = toMin(ra.h, ra.m);
+00512:   const end = toMin(we.h, we.m);
+00513: 
+00514:   return {
+00515:     start,
+00516:     release,
+00517:     end,
+00518:     startLabel: schedule.windowStart,
+00519:     releaseLabel: schedule.releaseAt,
+00520:     endLabel: schedule.windowEnd,
+00521:   };
+00522: }
+00523: 
+00524: /* =========================
+00525:    Lock (anti-concorrência)
+00526: ========================= */
+00527: function acquireLock() {
+00528:   ensureLogDir();
+00529: 
+00530:   if (fs.existsSync(LOCK_FILE)) {
+00531:     try {
+00532:       const st = fs.statSync(LOCK_FILE);
+00533:       const age = Date.now() - st.mtimeMs;
+00534:       if (age < LOCK_TTL_MS) return { ok: false, reason: "LOCK_ATIVO" };
+00535:       fs.unlinkSync(LOCK_FILE);
+00536:     } catch {
+00537:       return { ok: false, reason: "LOCK_INACESSIVEL" };
+00538:     }
+00539:   }
+00540: 
+00541:   try {
+00542:     fs.writeFileSync(
+00543:       LOCK_FILE,
+00544:       JSON.stringify({ pid: process.pid, at: new Date().toISOString(), lottery: LOTTERY }, null, 2)
+00545:     );
+00546:     return { ok: true };
+00547:   } catch {
+00548:     return { ok: false, reason: "NAO_FOI_POSSIVEL_CRIAR_LOCK" };
+00549:   }
+00550: }
+
+--- LINHAS 877 A 920 ---
+00877:     if (slotState.na) continue;
+00878:     if (slotState.done) continue;
+00879: 
+00880:     const w = slotWindow(sched);
+00881: 
+00882:     if (nowMin < w.release) continue;
+00883:     const since = nowMin - w.release;
+00884: 
+00885:     const item = {
+00886:       slot: sched.hour,
+00887:       calendar: st,
+00888:       rule: "window",
+00889:       releaseAt: w.releaseLabel,
+00890:       windowEnd: w.endLabel,
+00891:       sinceMinutes: since,
+00892:       tries: Number(slotState.tries || 0),
+00893:       lastTryISO: slotState.lastTryISO || null,
+00894:       lastResult: slotState.lastResult || null,
+00895:     };
+00896: 
+00897:     if (isSoft) {
+00898:       if (since >= WARN_AFTER_MIN) softLate.push(item);
+00899:       continue;
+00900:     }
+00901: 
+00902:     if (since >= CRIT_AFTER_MIN) critical.push(item);
+00903:     else if (since >= WARN_AFTER_MIN) warning.push(item);
+00904:   }
+00905: 
+00906:   let status = "ok";
+00907:   if (critical.length) status = "critical";
+00908:   else if (warning.length) status = "warning";
+00909: 
+00910:   return {
+00911:     ok: true,
+00912:     lottery: LOTTERY,
+00913:     date,
+00914:     todayBR,
+00915:     isoNow,
+00916:     dow,
+00917:     thresholds: { warnAfterMin: WARN_AFTER_MIN, critAfterMin: CRIT_AFTER_MIN },
+00918:     status,
+00919:     criticalCount: critical.length,
+00920:     warningCount: warning.length,
+
+--- LINHAS 944 A 986 ---
+00944:     const st = statusMap.get(sched.hour) || "OFF";
+00945:     if (st !== "HARD") continue;
+00946: 
+00947:     const w = slotWindow(sched);
+00948:     if (nowMin < w.release) continue;
+00949: 
+00950:     const since = nowMin - w.release;
+00951: 
+00952:     if (nowMin > w.end && !slot.alertMissedWindow) {
+00953:       slot.alertMissedWindow = true;
+00954:       touched = true;
+00955:       logLine(
+00956:         `[ALERT] HARD slot perdeu janela: date=${date} slot=${sched.hour} releaseAt=${w.releaseLabel} windowEnd=${w.endLabel} tries=${slot.tries || 0}`,
+00957:         "ERROR"
+00958:       );
+00959:     }
+00960: 
+00961:     if (since >= CRIT_AFTER_MIN && !slot.alertCritical) {
+00962:       slot.alertCritical = true;
+00963:       touched = true;
+00964:       logLine(
+00965:         `[ALERT] HARD slot CRITICAL: date=${date} slot=${sched.hour} since=${since}min (>=${CRIT_AFTER_MIN}) tries=${slot.tries || 0}`,
+00966:         "ERROR"
+00967:       );
+00968:     }
+00969:   }
+00970: 
+00971:   return touched;
+00972: }
+00973: 
+00974: /* =========================
+00975:    Main
+00976: ========================= */
+00977: async function main() {
+00978:   const envDate = String(process.env.DATE || "").trim();
+00979:   const date = envDate && isISODate(envDate) ? envDate : todayYMDInSaoPaulo();
+00980: 
+00981:   if (isFutureISODate(date)) {
+00982:     const todayBR = todayYMDInSaoPaulo();
+00983:     logLine(`[GUARD] FUTURE_DATE_BLOCKED date=${date} todayBR=${todayBR} (não vamos importar)`, "ERROR");
+00984:     process.exit(2);
+00985:     return;
+00986:   }
+
+--- LINHAS 1117 A 1159 ---
+01117:       if (!inWindow) {
+01118:         if (!afterRelease) continue;
+01119: 
+01120:         const extraCatchup = st === "SOFT" ? Math.max(CATCHUP_MAX_AFTER_END_MIN, 360) : CATCHUP_MAX_AFTER_END_MIN;
+01121:         const catchupLimit = w.end + extraCatchup;
+01122:         if (nowMin > catchupLimit) continue;
+01123: 
+01124:         const key = `${date}::${sched.hour}`;
+01125:         if (catchupTried.has(key)) continue;
+01126:         catchupTried.add(key);
+01127: 
+01128:         logLine(
+01129:           `[AUTO] CATCH-UP pós-release ${date} slot=${sched.hour} (${st}) releaseAt=${w.releaseLabel} window=${w.startLabel}~${w.endLabel} (fora da janela)`,
+01130:           "INFO"
+01131:         );
+01132:       }
+01133: 
+01134:       if (!afterRelease) continue;
+01135: 
+01136:       slot.tries = (slot.tries || 0) + 1;
+01137:       slot.lastTryISO = isoNow;
+01138: 
+01139:       const candidates = st === "SOFT" ? [sched.hour] : closeCandidates(sched.hour);
+01140:       slot.lastTriedCloses = candidates;
+01141:       saveState(date, state);
+01142: 
+01143:       logLine(
+01144:         `[AUTO] tentando ${date} slot=${sched.hour} (${st}) window=${w.startLabel}-${w.endLabel} closes=${candidates.join(",")}`,
+01145:         "INFO"
+01146:       );
+01147: 
+01148:       let lastErr = null;
+01149: 
+01150:       for (const closeHour of candidates) {
+01151:         let r = null;
+01152: 
+01153:         try {
+01154:           r = await runImport({ date, lotteryKey: LOTTERY, closeHour });
+01155:         } catch (e) {
+01156:           lastErr = e?.message || String(e);
+01157:           slot.lastResult = { ok: false, error: lastErr, closeHourTried: closeHour };
+01158:           saveState(date, state);
+01159:           logLine(`[AUTO] erro no import close=${closeHour}: ${lastErr}`, "ERROR");
+
+==============================================================================================================
+4. RETENTATIVAS, ESPERA E POLLING
+==============================================================================================================
+
+--- LINHAS 31 A 75 ---
+00031: const LOCK_FILE = path.join(LOG_DIR, `autoImport-${LOTTERY}.lock`);
+00032: 
+00033: // TTL do lock (ambientes locais). Em GitHub Actions, o workspace é isolado por execução.
+00034: const LOCK_TTL_MS = 90 * 1000; // 1m30s
+00035: 
+00036: // Auditoria: thresholds (minutos)
+00037: const WARN_AFTER_MIN = Number(process.env.AUDIT_WARN_MIN || 20);
+00038: const CRIT_AFTER_MIN = Number(process.env.AUDIT_CRIT_MIN || 60);
+00039: const FAIL_ON_CRITICAL = String(process.env.FAIL_ON_CRITICAL || "0").trim() === "1";
+00040: 
+00041: // ✅ Limite de catch-up pós-janela (minutos após windowEnd)
+00042: // Default 90 (reduz spam em cron fora da janela)
+00043: const CATCHUP_MAX_AFTER_END_MIN = Number(process.env.CATCHUP_MAX_AFTER_END_MIN || 90);
+00044: 
+00045: // ✅ PROBE/SOFT da FEDERAL: limite de tentativas por slot/dia (anti-spam)
+00046: // default 2 (tenta 2 ticks e para, mesmo que o cron rode mais vezes)
+00047: const FEDERAL_SOFT_MAX_TRIES_PER_DAY = Number(process.env.FEDERAL_SOFT_MAX_TRIES_PER_DAY || 2);
+00048: 
+00049: /**
+00050:  * ✅ Base URL do backend (pra ler dayStatus sem duplicar regra)
+00051:  * - Local default: http://127.0.0.1:3333
+00052:  * - Override: PITACO_API_BASE="https://seu-dominio"
+00053:  */
+00054: let PITACO_API_BASE = String(process.env.PITACO_API_BASE || "http://127.0.0.1:3333").trim();
+00055: 
+00056: // ✅ hardening: se vier "localhost:3334" (ou 3333 errado), cai automaticamente pro backend local padrão
+00057: try {
+00058:   const u = new URL(PITACO_API_BASE);
+00059:   const host = String(u.hostname || "").toLowerCase();
+00060:   const port = String(u.port || "");
+00061:   if ((host === "localhost" || host === "127.0.0.1") && port === "3334") {
+00062:     PITACO_API_BASE = "http://127.0.0.1:3333";
+00063:   }
+00064: } catch {}
+00065: 
+00066: // ✅ log da base efetiva (ajuda a detectar env poluído)
+00067: try {
+00068:   const eff = PITACO_API_BASE;
+00069:   if (!globalThis.__PITACO_API_BASE_LOGGED__) {
+00070:     globalThis.__PITACO_API_BASE_LOGGED__ = true;
+00071:     console.log(`[CFG] PITACO_API_BASE efetivo => ${eff}`);
+00072:   }
+00073: } catch {}
+00074: 
+00075: /**
+
+--- LINHAS 113 A 167 ---
+00113:   const value = await fetchDayStatusFromBackend({ date, lottery });
+00114:   writeJsonSafeFile(f, { atMs: nowMs, iso: new Date().toISOString(), value });
+00115:   return value;
+00116: }
+00117: 
+00118: /* =========================
+00119:    Schedules (por loteria)
+00120: ========================= */
+00121: const SCHEDULES = {
+00122:   PT_RIO: [
+00123:     { hour: "09:00", windowStart: "09:05", releaseAt: "09:29", windowEnd: "09:35" },
+00124:     { hour: "11:00", windowStart: "11:05", releaseAt: "11:29", windowEnd: "11:35" },
+00125:     { hour: "14:00", windowStart: "14:05", releaseAt: "14:29", windowEnd: "14:35" },
+00126:     { hour: "16:00", windowStart: "16:05", releaseAt: "16:29", windowEnd: "16:35" },
+00127:     { hour: "18:00", windowStart: "18:05", releaseAt: "18:29", windowEnd: "18:35" },
+00128:     // 21h: janela longa
+00129:     { hour: "21:00", windowStart: "21:05", releaseAt: "21:05", windowEnd: "21:45" },
+00130:   ],
+00131: 
+00132:   // FEDERAL
+00133:   // - 19:00 = PROBE (SOFT)
+00134:   // - 20:00 = HARD (padrão)
+00135:   FEDERAL: [
+00136:     { hour: "19:00", windowStart: "18:50", releaseAt: "19:00", windowEnd: "19:20" }, // PROBE (SOFT)
+00137:     { hour: "20:00", windowStart: "19:50", releaseAt: "20:00", windowEnd: "20:20" }, // HARD
+00138:   ],
+00139: };
+00140: 
+00141: const SCHEDULE = Array.isArray(SCHEDULES[LOTTERY]) ? SCHEDULES[LOTTERY] : SCHEDULES.PT_RIO;
+00142: 
+00143: /* =========================
+00144:    Utils
+00145: ========================= */
+00146: function ensureLogDir() {
+00147:   if (!fs.existsSync(LOG_DIR)) fs.mkdirSync(LOG_DIR, { recursive: true });
+00148: }
+00149: 
+00150: function tsLocal() {
+00151:   try {
+00152:     const fmt = new Intl.DateTimeFormat("pt-BR", {
+00153:       timeZone: "America/Sao_Paulo",
+00154:       year: "numeric",
+00155:       month: "2-digit",
+00156:       day: "2-digit",
+00157:       hour: "2-digit",
+00158:       minute: "2-digit",
+00159:       second: "2-digit",
+00160:       hour12: false,
+00161:     });
+00162:     return fmt.format(new Date()).replace(",", "");
+00163:   } catch {
+00164:     const d = new Date();
+00165:     const yyyy = d.getFullYear();
+00166:     const mm = String(d.getMonth() + 1).padStart(2, "0");
+00167:     const dd = String(d.getDate()).padStart(2, "0");
+
+--- LINHAS 486 A 550 ---
+00486:     )}] expectedSoft=[${expectedSoft.join(",")}]`,
+00487:     "INFO"
+00488:   );
+00489: 
+00490:   return map;
+00491: }
+00492: 
+00493: function slotWindow(schedule) {
+00494:   const ws = parseHHMM(schedule.windowStart);
+00495:   const ra = parseHHMM(schedule.releaseAt);
+00496:   const we = parseHHMM(schedule.windowEnd);
+00497: 
+00498:   if (!ws || !ra || !we) {
+00499:     const { h } = parseHH(schedule.hour);
+00500:     return {
+00501:       start: toMin(h, 5),
+00502:       release: toMin(h, 29),
+00503:       end: toMin(h, 31),
+00504:       startLabel: `${pad2(h)}:05`,
+00505:       releaseLabel: `${pad2(h)}:29`,
+00506:       endLabel: `${pad2(h)}:31`,
+00507:     };
+00508:   }
+00509: 
+00510:   const start = toMin(ws.h, ws.m);
+00511:   const release = toMin(ra.h, ra.m);
+00512:   const end = toMin(we.h, we.m);
+00513: 
+00514:   return {
+00515:     start,
+00516:     release,
+00517:     end,
+00518:     startLabel: schedule.windowStart,
+00519:     releaseLabel: schedule.releaseAt,
+00520:     endLabel: schedule.windowEnd,
+00521:   };
+00522: }
+00523: 
+00524: /* =========================
+00525:    Lock (anti-concorrência)
+00526: ========================= */
+00527: function acquireLock() {
+00528:   ensureLogDir();
+00529: 
+00530:   if (fs.existsSync(LOCK_FILE)) {
+00531:     try {
+00532:       const st = fs.statSync(LOCK_FILE);
+00533:       const age = Date.now() - st.mtimeMs;
+00534:       if (age < LOCK_TTL_MS) return { ok: false, reason: "LOCK_ATIVO" };
+00535:       fs.unlinkSync(LOCK_FILE);
+00536:     } catch {
+00537:       return { ok: false, reason: "LOCK_INACESSIVEL" };
+00538:     }
+00539:   }
+00540: 
+00541:   try {
+00542:     fs.writeFileSync(
+00543:       LOCK_FILE,
+00544:       JSON.stringify({ pid: process.pid, at: new Date().toISOString(), lottery: LOTTERY }, null, 2)
+00545:     );
+00546:     return { ok: true };
+00547:   } catch {
+00548:     return { ok: false, reason: "NAO_FOI_POSSIVEL_CRIAR_LOCK" };
+00549:   }
+00550: }
+
+--- LINHAS 880 A 920 ---
+00880:     const w = slotWindow(sched);
+00881: 
+00882:     if (nowMin < w.release) continue;
+00883:     const since = nowMin - w.release;
+00884: 
+00885:     const item = {
+00886:       slot: sched.hour,
+00887:       calendar: st,
+00888:       rule: "window",
+00889:       releaseAt: w.releaseLabel,
+00890:       windowEnd: w.endLabel,
+00891:       sinceMinutes: since,
+00892:       tries: Number(slotState.tries || 0),
+00893:       lastTryISO: slotState.lastTryISO || null,
+00894:       lastResult: slotState.lastResult || null,
+00895:     };
+00896: 
+00897:     if (isSoft) {
+00898:       if (since >= WARN_AFTER_MIN) softLate.push(item);
+00899:       continue;
+00900:     }
+00901: 
+00902:     if (since >= CRIT_AFTER_MIN) critical.push(item);
+00903:     else if (since >= WARN_AFTER_MIN) warning.push(item);
+00904:   }
+00905: 
+00906:   let status = "ok";
+00907:   if (critical.length) status = "critical";
+00908:   else if (warning.length) status = "warning";
+00909: 
+00910:   return {
+00911:     ok: true,
+00912:     lottery: LOTTERY,
+00913:     date,
+00914:     todayBR,
+00915:     isoNow,
+00916:     dow,
+00917:     thresholds: { warnAfterMin: WARN_AFTER_MIN, critAfterMin: CRIT_AFTER_MIN },
+00918:     status,
+00919:     criticalCount: critical.length,
+00920:     warningCount: warning.length,
+
+--- LINHAS 946 A 986 ---
+00946: 
+00947:     const w = slotWindow(sched);
+00948:     if (nowMin < w.release) continue;
+00949: 
+00950:     const since = nowMin - w.release;
+00951: 
+00952:     if (nowMin > w.end && !slot.alertMissedWindow) {
+00953:       slot.alertMissedWindow = true;
+00954:       touched = true;
+00955:       logLine(
+00956:         `[ALERT] HARD slot perdeu janela: date=${date} slot=${sched.hour} releaseAt=${w.releaseLabel} windowEnd=${w.endLabel} tries=${slot.tries || 0}`,
+00957:         "ERROR"
+00958:       );
+00959:     }
+00960: 
+00961:     if (since >= CRIT_AFTER_MIN && !slot.alertCritical) {
+00962:       slot.alertCritical = true;
+00963:       touched = true;
+00964:       logLine(
+00965:         `[ALERT] HARD slot CRITICAL: date=${date} slot=${sched.hour} since=${since}min (>=${CRIT_AFTER_MIN}) tries=${slot.tries || 0}`,
+00966:         "ERROR"
+00967:       );
+00968:     }
+00969:   }
+00970: 
+00971:   return touched;
+00972: }
+00973: 
+00974: /* =========================
+00975:    Main
+00976: ========================= */
+00977: async function main() {
+00978:   const envDate = String(process.env.DATE || "").trim();
+00979:   const date = envDate && isISODate(envDate) ? envDate : todayYMDInSaoPaulo();
+00980: 
+00981:   if (isFutureISODate(date)) {
+00982:     const todayBR = todayYMDInSaoPaulo();
+00983:     logLine(`[GUARD] FUTURE_DATE_BLOCKED date=${date} todayBR=${todayBR} (não vamos importar)`, "ERROR");
+00984:     process.exit(2);
+00985:     return;
+00986:   }
+
+--- LINHAS 1092 A 1132 ---
+01092:     // 2) Processa slots aplicáveis (HARD/SOFT)
+01093:     for (const sched of SCHEDULE) {
+01094:       const slot = state[sched.hour];
+01095:       if (!slot) continue;
+01096:       if (slot.done) continue;
+01097: 
+01098:       const st = statusMap.get(sched.hour) || "OFF";
+01099:       const applies = st === "HARD" || st === "SOFT";
+01100:       if (!applies) continue;
+01101: 
+01102:       // ✅ anti-spam: PROBE/SOFT da FEDERAL para depois de N tentativas/dia
+01103:       if (LOTTERY === "FEDERAL" && st === "SOFT") {
+01104:         const tries = Number(slot.tries || 0);
+01105:         if (Number.isFinite(FEDERAL_SOFT_MAX_TRIES_PER_DAY) && FEDERAL_SOFT_MAX_TRIES_PER_DAY > 0) {
+01106:           if (tries >= FEDERAL_SOFT_MAX_TRIES_PER_DAY) {
+01107:             continue;
+01108:           }
+01109:         }
+01110:       }
+01111: 
+01112:       const w = slotWindow(sched);
+01113: 
+01114:       const inWindow = !(nowMin < w.start || nowMin > w.end);
+01115:       const afterRelease = nowMin >= w.start;
+01116: 
+01117:       if (!inWindow) {
+01118:         if (!afterRelease) continue;
+01119: 
+01120:         const extraCatchup = st === "SOFT" ? Math.max(CATCHUP_MAX_AFTER_END_MIN, 360) : CATCHUP_MAX_AFTER_END_MIN;
+01121:         const catchupLimit = w.end + extraCatchup;
+01122:         if (nowMin > catchupLimit) continue;
+01123: 
+01124:         const key = `${date}::${sched.hour}`;
+01125:         if (catchupTried.has(key)) continue;
+01126:         catchupTried.add(key);
+01127: 
+01128:         logLine(
+01129:           `[AUTO] CATCH-UP pós-release ${date} slot=${sched.hour} (${st}) releaseAt=${w.releaseLabel} window=${w.startLabel}~${w.endLabel} (fora da janela)`,
+01130:           "INFO"
+01131:         );
+01132:       }
+
+--- LINHAS 1166 A 1227 ---
+01166:           r &&
+01167:           r.blocked === true &&
+01168:           (blockedReason === "no_draw_for_slot" || blockedReason === "no_draw_for_slot_calendar")
+01169:         ) {
+01170:           slot.lastResult = {
+01171:             ...(slot.lastResult || {}),
+01172:             ok: true,
+01173:             closeHourTried: closeHour,
+01174:             blocked: true,
+01175:             blockedReason,
+01176:             note: "no_draw_for_slot|no_draw_for_slot_calendar (will retry)",
+01177:           };
+01178:           saveState(date, state);
+01179: 
+01180:           logLine(`[AUTO] ${blockedReason} slot=${sched.hour} (${st}) -> mantendo PENDENTE p/ retry`, "INFO");
+01181:           didSomething = true;
+01182:           break;
+01183:         }
+01184: 
+01185:         if (r && r.blocked === true && blockedReason === "api_missing_slot") {
+01186:           slot.lastResult = {
+01187:             ...(slot.lastResult || {}),
+01188:             ok: true,
+01189:             closeHourTried: closeHour,
+01190:             blocked: true,
+01191:             blockedReason,
+01192:             note: "api_missing_slot (stop candidates; will retry later)",
+01193:           };
+01194:           saveState(date, state);
+01195: 
+01196:           logLine(
+01197:             `[AUTO] api_missing_slot slot=${sched.hour} (${st}) close=${closeHour} -> parando closes candidatos (vai retry depois)`,
+01198:             "INFO"
+01199:           );
+01200: 
+01201:           didSomething = true;
+01202:           break;
+01203:         }
+01204: 
+01205:         if (r && r.blocked === true && blockedReason === "future_date") {
+01206:           slot.lastResult = { ok: true, closeHourTried: closeHour, blocked: true, blockedReason };
+01207:           saveState(date, state);
+01208:           logLine(`[AUTO] future_date bloqueado pelo import (defensivo). date=${date} slot=${sched.hour}`, "ERROR");
+01209:           didSomething = true;
+01210:           break;
+01211:         }
+01212: 
+01213:         const savedCount = Number.isFinite(Number(r?.savedCount)) ? Number(r.savedCount) : 0;
+01214:         const writeCount = Number.isFinite(Number(r?.writeCount)) ? Number(r.writeCount) : 0;
+01215: 
+01216:         const alreadyCompleteAll = Boolean(r?.alreadyCompleteAll);
+01217:         const captured = Boolean(r?.captured);
+01218: 
+01219:         slot.lastResult = {
+01220:           ok: true,
+01221:           closeHourTried: closeHour,
+01222:           captured,
+01223:           alreadyCompleteAll,
+01224:           savedCount,
+01225:           writeCount,
+01226:           apiHasPrizes: r?.apiHasPrizes ?? null,
+01227:           targetDrawIds: r?.targetDrawIds ?? null,
+
+==============================================================================================================
+5. TRATAMENTO QUANDO A FONTE AINDA NÃO PUBLICOU
+==============================================================================================================
+
+--- LINHAS 306 A 375 ---
+00306:     safeWriteJson(f, init);
+00307:     return init;
+00308:   }
+00309: 
+00310:   const migrated = defaultState();
+00311:   for (const s of SCHEDULE) {
+00312:     const v = parsed?.[s.hour];
+00313: 
+00314:     if (typeof v === "boolean") {
+00315:       migrated[s.hour].done = v;
+00316:       continue;
+00317:     }
+00318: 
+00319:     if (v && typeof v === "object") {
+00320:       migrated[s.hour] = {
+00321:         ...migrated[s.hour],
+00322:         done: Boolean(v.done),
+00323:         tries: Number.isFinite(Number(v.tries)) ? Number(v.tries) : 0,
+00324:         lastTryISO: typeof v.lastTryISO === "string" ? v.lastTryISO : null,
+00325:         lastResult: v.lastResult ?? null,
+00326:         lastTriedCloses: Array.isArray(v.lastTriedCloses) ? v.lastTriedCloses : null,
+00327:         na: Boolean(v.na),
+00328:         naReason: typeof v.naReason === "string" ? v.naReason : null,
+00329:         alertMissedWindow: Boolean(v.alertMissedWindow),
+00330:         alertCritical: Boolean(v.alertCritical),
+00331:       };
+00332:     }
+00333:   }
+00334: 
+00335:   return migrated;
+00336: }
+00337: 
+00338: function saveState(date, state) {
+00339:   safeWriteJson(stateFile(date), state);
+00340: }
+00341: 
+00342: function isAllDoneHardOnly(state, statusMap) {
+00343:   let hardCount = 0;
+00344: 
+00345:   for (const sched of SCHEDULE) {
+00346:     const st = statusMap.get(sched.hour) || "OFF";
+00347:     if (st !== "HARD") continue;
+00348: 
+00349:     hardCount += 1;
+00350:     if (!state[sched.hour] || state[sched.hour].done !== true) {
+00351:       return false;
+00352:     }
+00353:   }
+00354: 
+00355:   if (hardCount === 0) return false;
+00356:   return true;
+00357: }
+00358: 
+00359: /**
+00360:  * Gera closes candidatos (tolerância de minutos)
+00361:  */
+00362: function closeCandidates(hhmm) {
+00363:   const s = String(hhmm || "").trim();
+00364: 
+00365:   // PT_RIO 21h pode sair como fechamento de 21:30.
+00366:   // Mantém os closes históricos e adiciona a faixa 21:29~21:32.
+00367:   if (LOTTERY === "PT_RIO" && s === "21:00") {
+00368:     return [
+00369:       "21:00", "21:01", "21:02",
+00370:       "21:09", "21:10", "21:11",
+00371:       "21:29", "21:30", "21:31", "21:32"
+00372:     ];
+00373:   }
+00374: 
+00375:   const parsed = parseHH(s);
+
+--- LINHAS 383 A 504 ---
+00383:   for (const base of bases) {
+00384:     for (const d of deltas) {
+00385:       const mm = base + d;
+00386:       if (mm >= 0 && mm <= 59) out.add(`${pad2(h)}:${pad2(mm)}`);
+00387:     }
+00388:   }
+00389:   return Array.from(out);
+00390: }
+00391: 
+00392: /* =========================
+00393:    FEDERAL PROBE: valida se o resultado pertence ao horário do slot
+00394:    - usa targetDrawIds no formato: FEDERAL__YYYY-MM-DD__20-00__uuid
+00395: ========================= */
+00396: function slotHourKey(slotHHMM) {
+00397:   const hh = String(slotHHMM || "").slice(0, 2);
+00398:   const mm = String(slotHHMM || "").slice(3, 5);
+00399:   if (!/^\d{2}$/.test(hh) || !/^\d{2}$/.test(mm)) return "";
+00400:   return hh + "-" + mm; // ex: "19-00"
+00401: }
+00402: 
+00403: function resultMatchesSlotHour(r, slotHHMM) {
+00404:   const key = slotHourKey(slotHHMM);
+00405:   if (!key) return true; // se não dá pra inferir, não bloqueia
+00406:   const ids = Array.isArray(r && r.targetDrawIds) ? r.targetDrawIds.map(String) : [];
+00407:   if (ids.length === 0) return true; // sem id, não bloqueia
+00408:   return ids.some((id) => String(id).includes("__" + key + "__"));
+00409: }
+00410: 
+00411: /* =========================
+00412:    Regras de aplicabilidade
+00413: ========================= */
+00414: function buildTodaySlotStatusMapPT_RIO(dateYMD, dow) {
+00415:   const map = new Map();
+00416: 
+00417:   const isSunday = dow === 0;
+00418:   const isWed = dow === 3;
+00419:   const isSat = dow === 6;
+00420: 
+00421:   for (const sched of SCHEDULE) {
+00422:     const hh = sched.hour;
+00423: 
+00424:     if (isSunday) {
+00425:       if (hh === "18:00" || hh === "21:00") map.set(hh, "OFF");
+00426:       else map.set(hh, "HARD");
+00427:       continue;
+00428:     }
+00429: 
+00430:     if (isWed || isSat) {
+00431:       if (hh === "18:00") map.set(hh, "SOFT");
+00432:       else map.set(hh, "HARD");
+00433:       continue;
+00434:     }
+00435: 
+00436:     map.set(hh, "HARD");
+00437:   }
+00438: 
+00439:   if (isSunday) {
+00440:     logLine(`[CAL] PT_RIO domingo: date=${dateYMD} dow=${dow} => HARD=[09,11,14,16] OFF=[18,21]`, "INFO");
+00441:   } else if (isWed || isSat) {
+00442:     logLine(`[CAL] PT_RIO qua/sab: date=${dateYMD} dow=${dow} => HARD=[09,11,14,16,21] SOFT=[18]`, "INFO");
+00443:   } else {
+00444:     logLine(`[CAL] PT_RIO seg-sex: date=${dateYMD} dow=${dow} => HARD=[09,11,14,16,18,21]`, "INFO");
+00445:   }
+00446: 
+00447:   return map;
+00448: }
+00449: 
+00450: /**
+00451:  * FEDERAL (robusto / independente de expectedHard do backend):
+00452:  * - domingo: OFF
+00453:  * - demais dias: 19:00 = SOFT (PROBE), 20:00 = HARD (padrão)
+00454:  * Obs: ainda logamos expectedHard/expectedSoft como debug, mas não usamos como "fonte da verdade".
+00455:  */
+00456: function buildTodaySlotStatusMapFEDERAL({ dateYMD, dow, ds }) {
+00457:   const map = new Map();
+00458:   const isSunday = dow === 0;
+00459: 
+00460:   const expectedHard = Array.isArray(ds?.expectedHard) ? ds.expectedHard.map(String) : [];
+00461:   const expectedSoft = Array.isArray(ds?.expectedSoft) ? ds.expectedSoft.map(String) : [];
+00462: 
+00463:   for (const sched of SCHEDULE) {
+00464:     if (isSunday) {
+00465:       map.set(sched.hour, "OFF");
+00466:       continue;
+00467:     }
+00468: 
+00469:     if (sched.hour === "19:00") {
+00470:       map.set(sched.hour, "SOFT");
+00471:       continue;
+00472:     }
+00473: 
+00474:     if (sched.hour === "20:00") {
+00475:       map.set(sched.hour, "HARD");
+00476:       continue;
+00477:     }
+00478: 
+00479:     // fallback (caso adicionem mais slots no futuro)
+00480:     map.set(sched.hour, "SOFT");
+00481:   }
+00482: 
+00483:   logLine(
+00484:     `[CAL] FEDERAL fixed: date=${dateYMD} dow=${dow} => 19:SOFT(PROBE) 20:HARD | backend expectedHard=[${expectedHard.join(
+00485:       ","
+00486:     )}] expectedSoft=[${expectedSoft.join(",")}]`,
+00487:     "INFO"
+00488:   );
+00489: 
+00490:   return map;
+00491: }
+00492: 
+00493: function slotWindow(schedule) {
+00494:   const ws = parseHHMM(schedule.windowStart);
+00495:   const ra = parseHHMM(schedule.releaseAt);
+00496:   const we = parseHHMM(schedule.windowEnd);
+00497: 
+00498:   if (!ws || !ra || !we) {
+00499:     const { h } = parseHH(schedule.hour);
+00500:     return {
+00501:       start: toMin(h, 5),
+00502:       release: toMin(h, 29),
+00503:       end: toMin(h, 31),
+00504:       startLabel: `${pad2(h)}:05`,
+
+--- LINHAS 560 A 598 ---
+00560: ========================= */
+00561: async function fetchDayStatusFromBackend({ date, lottery }) {
+00562:   try {
+00563:     const base = PITACO_API_BASE.replace(/\/+$/, "");
+00564:     const u = `${base}/api/pitaco/results?date=${encodeURIComponent(String(date || "").trim())}&lottery=${encodeURIComponent(
+00565:       String(lottery || "").trim()
+00566:     )}`;
+00567: 
+00568:     const res = await axios.get(u, {
+00569:       timeout: 15000,
+00570:       validateStatus: (s) => s >= 200 && s < 400,
+00571:       headers: { "User-Agent": "palpitaco-autoImportToday" },
+00572:     });
+00573: 
+00574:     const j = res && res.data ? res.data : null;
+00575:     if (!j || typeof j !== "object") return null;
+00576: 
+00577:     return {
+00578:       ok: Boolean(j.ok),
+00579:       dayStatus: String(j.dayStatus || "").trim(),
+00580:       blocked: Boolean(j.blocked),
+00581:       blockedReason: String(j.blockedReason || "").trim(),
+00582:       count: Number.isFinite(Number(j.count)) ? Number(j.count) : null,
+00583: 
+00584:       // ✅ debug (não é fonte da verdade pro FEDERAL fixed)
+00585:       expectedHard: Array.isArray(j.expectedHard) ? j.expectedHard.map(String) : [],
+00586:       expectedSoft: Array.isArray(j.expectedSoft) ? j.expectedSoft.map(String) : [],
+00587:       presentHours: Array.isArray(j.presentHours) ? j.presentHours.map(String) : [],
+00588: 
+00589:       // debug útil
+00590:       slotsSummary: j.slotsSummary ?? null,
+00591:       slots: Array.isArray(j.slots) ? j.slots : [],
+00592:     };
+00593:   } catch {
+00594:     return null;
+00595:   }
+00596: }
+00597: 
+00598: function applyHolidayNoDrawToState({ state, statusMap, isoNow }) {
+
+--- LINHAS 601 A 647 ---
+00601:   for (const sched of SCHEDULE) {
+00602:     let slot = state?.[sched.hour];
+00603: 
+00604:     if (!slot) {
+00605:       slot = { hour: sched.hour, done: false, na: false, tries: 0 };
+00606:       state[sched.hour] = slot;
+00607:     }
+00608: 
+00609:     const st = statusMap.get(sched.hour) || "OFF";
+00610:     const applies = st === "HARD" || st === "SOFT";
+00611:     if (!applies) continue;
+00612: 
+00613:     if (slot.done && slot.na && slot.naReason === "HOLIDAY_NO_DRAW") continue;
+00614: 
+00615:     slot.done = true;
+00616:     slot.na = true;
+00617:     slot.naReason = "HOLIDAY_NO_DRAW";
+00618:     slot.lastTryISO = isoNow;
+00619:     slot.lastResult = { ok: true, skipped: true, reason: "HOLIDAY_NO_DRAW" };
+00620:     touched += 1;
+00621:   }
+00622: 
+00623:   return touched;
+00624: }
+00625: 
+00626: /* =========================
+00627:    Verificação de persistência (BIRTH-GUARD)
+00628:    (mantido como no seu arquivo)
+00629: ========================= */
+00630: const VERIFY_PERSISTED = String(process.env.VERIFY_PERSISTED || "1").trim() === "1";
+00631: 
+00632: function missingSlotsMonthFile(dateYMD) {
+00633:   const ym = String(dateYMD || "").slice(0, 7);
+00634:   return path.join(LOG_DIR, `missingSlots-${LOTTERY}-${ym}.json`);
+00635: }
+00636: 
+00637: function readJsonSafe(p) {
+00638:   try {
+00639:     if (!fs.existsSync(p)) return null;
+00640:     return JSON.parse(fs.readFileSync(p, "utf8"));
+00641:   } catch {
+00642:     return null;
+00643:   }
+00644: }
+00645: 
+00646: function upsertMissingSlot({ date, slotHour, calendar, closeHourTried, reason, meta }) {
+00647:   ensureLogDir();
+
+--- LINHAS 707 A 787 ---
+00707:   return false;
+00708: }
+00709: 
+00710: async function verifySlotPersistedViaBackend({ date, slotHHMM }) {
+00711:   try {
+00712:     const base = PITACO_API_BASE.replace(/\/+$/, "");
+00713:     const u = `${base}/api/pitaco/results?date=${encodeURIComponent(date)}&lottery=${encodeURIComponent(LOTTERY)}`;
+00714: 
+00715:     const res = await axios.get(u, {
+00716:       timeout: 15000,
+00717:       validateStatus: (s) => s >= 200 && s < 400,
+00718:       headers: { "User-Agent": "palpitaco-autoImportToday" },
+00719:     });
+00720: 
+00721:     const j = res && res.data ? res.data : null;
+00722:     if (!j || typeof j !== "object") return { ok: false, reason: "BAD_JSON" };
+00723: 
+00724:     const draws = Array.isArray(j.draws) ? j.draws : [];
+00725:     const foundInDraws = draws.some((d) => drawLooksLikeSlot(d, slotHHMM));
+00726:     if (foundInDraws) return { ok: true, where: "draws", drawsCount: draws.length };
+00727: 
+00728:     const slots = Array.isArray(j.slots) ? j.slots : [];
+00729:     const hh = hhFromSlotHHMM(slotHHMM);
+00730: 
+00731:     const foundInSlots = slots.some((s) => {
+00732:       const v = (s && (s.hour || s.close_hour || s.closeHour || s.close || s.slot || s.time || s.close_hour_raw)) ?? "";
+00733:       const t = String(v).trim();
+00734:       return t.startsWith(hh);
+00735:     });
+00736: 
+00737:     if (foundInSlots) return { ok: true, where: "slots", slotsCount: slots.length };
+00738: 
+00739:     return { ok: false, reason: "NOT_FOUND", drawsCount: draws.length, slotsCount: slots.length };
+00740:   } catch (e) {
+00741:     const code = e?.code || e?.cause?.code || "";
+00742:     const msg = e?.message || e?.cause?.message || String(e);
+00743:     const r = code ? `${code}:${msg}` : msg;
+00744:     return { ok: false, reason: `EX:${r}` };
+00745:   }
+00746: }
+00747: 
+00748: async function guardPersistedOrCritical({ date, slotHHMM, calendar, closeHourTried, meta }) {
+00749:   if (!VERIFY_PERSISTED) return { ok: true, skipped: true };
+00750: 
+00751:   if (meta && (meta.mode === "ALREADY_COMPLETE" || meta.mode === "NO_DRAW")) {
+00752:     return { ok: true, skipped: true, reason: `SKIP_${meta.mode}` };
+00753:   }
+00754: 
+00755:   if (meta && meta.mode === "CAPTURE_WRITE") {
+00756:     const sc = Number.isFinite(Number(meta.savedCount)) ? Number(meta.savedCount) : 0;
+00757:     const wc = Number.isFinite(Number(meta.writeCount)) ? Number(meta.writeCount) : 0;
+00758:     if (sc > 0 || wc > 0) {
+00759:       return { ok: true, verified: true, where: "import_return", skippedBackend: true };
+00760:     }
+00761:   }
+00762: 
+00763:   const v = await verifySlotPersistedViaBackend({ date, slotHHMM });
+00764:   if (v.ok) return { ok: true, verified: true, where: v.where };
+00765: 
+00766:   const file = upsertMissingSlot({
+00767:     date,
+00768:     slotHour: slotHHMM,
+00769:     calendar,
+00770:     closeHourTried,
+00771:     reason: v.reason || "NOT_PERSISTED",
+00772:     meta: { verify: v, ...(meta || {}) },
+00773:   });
+00774: 
+00775:   logLine(
+00776:     `[BIRTH-GUARD] CRITICAL slot=${slotHHMM} date=${date} calendar=${calendar || "—"} closeTried=${closeHourTried || "—"} reason=${
+00777:       v.reason || "NOT_PERSISTED"
+00778:     } file=${path.basename(file)}`,
+00779:     "ERROR"
+00780:   );
+00781: 
+00782:   if (FAIL_ON_CRITICAL) process.exitCode = 2;
+00783: 
+00784:   return { ok: false, verified: false, reason: v.reason || "NOT_PERSISTED", file };
+00785: }
+00786: 
+00787: /**
+
+--- LINHAS 811 A 855 ---
+00811:       })
+00812:       .filter(Boolean)
+00813:   );
+00814: 
+00815:   if (!presentHours.size) return 0;
+00816: 
+00817:   let touched = 0;
+00818: 
+00819:   for (const sched of SCHEDULE) {
+00820:     const slot = state?.[sched.hour];
+00821:     if (!slot || slot.done || slot.na) continue;
+00822: 
+00823:     const calendar = statusMap.get(sched.hour) || "OFF";
+00824:     if (calendar !== "HARD" && calendar !== "SOFT") continue;
+00825: 
+00826:     const hour = String(sched.hour || "").slice(0, 2);
+00827:     if (!presentHours.has(hour)) continue;
+00828: 
+00829:     slot.done = true;
+00830:     slot.na = false;
+00831:     slot.naReason = null;
+00832:     slot.lastTryISO = slot.lastTryISO || isoNow;
+00833:     slot.lastResult = {
+00834:       ...(slot.lastResult || {}),
+00835:       ok: true,
+00836:       reconciledFromBackend: true,
+00837:       reason: "BACKEND_PRESENT_HOUR",
+00838:       presentHour: hour,
+00839:     };
+00840:     slot.alertMissedWindow = false;
+00841:     slot.alertCritical = false;
+00842: 
+00843:     touched += 1;
+00844: 
+00845:     logLine(
+00846:       `[STATE-SYNC] backend confirmou slot=${sched.hour} presente -> DONE`,
+00847:       "INFO"
+00848:     );
+00849:   }
+00850: 
+00851:   return touched;
+00852: }
+00853: 
+00854: /* =========================
+00855:    Auditoria de Furos (warning/critical)
+
+--- LINHAS 859 A 927 ---
+00859: }
+00860: 
+00861: function buildAuditReport({ date, nowMin, isoNow, dow, statusMap, state }) {
+00862:   const todayBR = todayYMDInSaoPaulo();
+00863:   const critical = [];
+00864:   const warning = [];
+00865:   const softLate = [];
+00866: 
+00867:   for (const sched of SCHEDULE) {
+00868:     const slotState = state?.[sched.hour];
+00869:     if (!slotState) continue;
+00870: 
+00871:     const st = statusMap.get(sched.hour) || "OFF";
+00872:     const isHard = st === "HARD";
+00873:     const isSoft = st === "SOFT";
+00874:     const applies = isHard || isSoft;
+00875:     if (!applies) continue;
+00876: 
+00877:     if (slotState.na) continue;
+00878:     if (slotState.done) continue;
+00879: 
+00880:     const w = slotWindow(sched);
+00881: 
+00882:     if (nowMin < w.release) continue;
+00883:     const since = nowMin - w.release;
+00884: 
+00885:     const item = {
+00886:       slot: sched.hour,
+00887:       calendar: st,
+00888:       rule: "window",
+00889:       releaseAt: w.releaseLabel,
+00890:       windowEnd: w.endLabel,
+00891:       sinceMinutes: since,
+00892:       tries: Number(slotState.tries || 0),
+00893:       lastTryISO: slotState.lastTryISO || null,
+00894:       lastResult: slotState.lastResult || null,
+00895:     };
+00896: 
+00897:     if (isSoft) {
+00898:       if (since >= WARN_AFTER_MIN) softLate.push(item);
+00899:       continue;
+00900:     }
+00901: 
+00902:     if (since >= CRIT_AFTER_MIN) critical.push(item);
+00903:     else if (since >= WARN_AFTER_MIN) warning.push(item);
+00904:   }
+00905: 
+00906:   let status = "ok";
+00907:   if (critical.length) status = "critical";
+00908:   else if (warning.length) status = "warning";
+00909: 
+00910:   return {
+00911:     ok: true,
+00912:     lottery: LOTTERY,
+00913:     date,
+00914:     todayBR,
+00915:     isoNow,
+00916:     dow,
+00917:     thresholds: { warnAfterMin: WARN_AFTER_MIN, critAfterMin: CRIT_AFTER_MIN },
+00918:     status,
+00919:     criticalCount: critical.length,
+00920:     warningCount: warning.length,
+00921:     softLateCount: softLate.length,
+00922:     critical,
+00923:     warning,
+00924:     softLate,
+00925:   };
+00926: }
+00927: 
+
+--- LINHAS 932 A 976 ---
+00932:   let touched = false;
+00933: 
+00934:   for (const sched of SCHEDULE) {
+00935:     let slot = state?.[sched.hour];
+00936: 
+00937:     if (!slot) {
+00938:       slot = { hour: sched.hour, done: false, na: false, tries: 0 };
+00939:       state[sched.hour] = slot;
+00940:     }
+00941: 
+00942:     if (slot.done || slot.na) continue;
+00943: 
+00944:     const st = statusMap.get(sched.hour) || "OFF";
+00945:     if (st !== "HARD") continue;
+00946: 
+00947:     const w = slotWindow(sched);
+00948:     if (nowMin < w.release) continue;
+00949: 
+00950:     const since = nowMin - w.release;
+00951: 
+00952:     if (nowMin > w.end && !slot.alertMissedWindow) {
+00953:       slot.alertMissedWindow = true;
+00954:       touched = true;
+00955:       logLine(
+00956:         `[ALERT] HARD slot perdeu janela: date=${date} slot=${sched.hour} releaseAt=${w.releaseLabel} windowEnd=${w.endLabel} tries=${slot.tries || 0}`,
+00957:         "ERROR"
+00958:       );
+00959:     }
+00960: 
+00961:     if (since >= CRIT_AFTER_MIN && !slot.alertCritical) {
+00962:       slot.alertCritical = true;
+00963:       touched = true;
+00964:       logLine(
+00965:         `[ALERT] HARD slot CRITICAL: date=${date} slot=${sched.hour} since=${since}min (>=${CRIT_AFTER_MIN}) tries=${slot.tries || 0}`,
+00966:         "ERROR"
+00967:       );
+00968:     }
+00969:   }
+00970: 
+00971:   return touched;
+00972: }
+00973: 
+00974: /* =========================
+00975:    Main
+00976: ========================= */
+
+--- LINHAS 1038 A 1188 ---
+01038:     // ✅ Se o dia já está completo, gera audit e encerra
+01039:     if (isAllDoneHardOnly(state, statusMap)) {
+01040:       try {
+01041:         const report = buildAuditReport({ date, nowMin, isoNow: new Date().toISOString(), dow, statusMap, state });
+01042:         if (isNowHmOverrideActive()) {
+01043:           report.status = "ok";
+01044:           report.note = "NOW_HM override ativo: audit retroativo neutralizado (informativo).";
+01045:         }
+01046:         safeWriteJson(auditOutFile(date), report);
+01047:       } catch {}
+01048:       logLine(`[AUTO] DIA COMPLETO (${date}) — slots concluídos (skip import)`, "INFO");
+01049:       return;
+01050:     }
+01051: 
+01052:     // 1) Marca N/A slots OFF
+01053:     let stateTouched = false;
+01054:     for (const sched of SCHEDULE) {
+01055:       const slot = state[sched.hour];
+01056:       if (!slot) continue;
+01057: 
+01058:       const st = statusMap.get(sched.hour) || "OFF";
+01059:       const applies = st === "HARD" || st === "SOFT";
+01060: 
+01061:       if (!applies && !slot.done) {
+01062:         slot.done = true;
+01063:         slot.na = true;
+01064:         slot.naReason = LOTTERY === "FEDERAL" && dow === 0 ? "FEDERAL_DOMINGO_OFF" : "NAO_APLICA";
+01065:         slot.lastTryISO = isoNow;
+01066:         slot.lastResult = { ok: true, skipped: true, reason: slot.naReason };
+01067:         stateTouched = true;
+01068:         logLine(`[AUTO] N/A slot=${sched.hour} (${slot.naReason}) -> DONE`, "INFO");
+01069:       }
+01070:     }
+01071:     if (stateTouched) saveState(date, state);
+01072: 
+01073:     // 1.5) DayStatus guard: feriado sem sorteio
+01074:     if (ds && ds.blocked && String(ds.dayStatus || "") === "holiday_no_draw") {
+01075:       const touched = applyHolidayNoDrawToState({ state, statusMap, isoNow });
+01076:       if (touched > 0) saveState(date, state);
+01077: 
+01078:       try {
+01079:         const report = buildAuditReport({ date, nowMin, isoNow: new Date().toISOString(), dow, statusMap, state });
+01080:         safeWriteJson(auditOutFile(date), report);
+01081:       } catch {}
+01082: 
+01083:       logLine(
+01084:         `[DAY_STATUS] holiday_no_draw confirmado (blockedReason=${ds.blockedReason || "—"}). Slots aplicáveis -> N/A. Encerrando.`,
+01085:         "INFO"
+01086:       );
+01087:       return;
+01088:     }
+01089: 
+01090:     let didSomething = false;
+01091: 
+01092:     // 2) Processa slots aplicáveis (HARD/SOFT)
+01093:     for (const sched of SCHEDULE) {
+01094:       const slot = state[sched.hour];
+01095:       if (!slot) continue;
+01096:       if (slot.done) continue;
+01097: 
+01098:       const st = statusMap.get(sched.hour) || "OFF";
+01099:       const applies = st === "HARD" || st === "SOFT";
+01100:       if (!applies) continue;
+01101: 
+01102:       // ✅ anti-spam: PROBE/SOFT da FEDERAL para depois de N tentativas/dia
+01103:       if (LOTTERY === "FEDERAL" && st === "SOFT") {
+01104:         const tries = Number(slot.tries || 0);
+01105:         if (Number.isFinite(FEDERAL_SOFT_MAX_TRIES_PER_DAY) && FEDERAL_SOFT_MAX_TRIES_PER_DAY > 0) {
+01106:           if (tries >= FEDERAL_SOFT_MAX_TRIES_PER_DAY) {
+01107:             continue;
+01108:           }
+01109:         }
+01110:       }
+01111: 
+01112:       const w = slotWindow(sched);
+01113: 
+01114:       const inWindow = !(nowMin < w.start || nowMin > w.end);
+01115:       const afterRelease = nowMin >= w.start;
+01116: 
+01117:       if (!inWindow) {
+01118:         if (!afterRelease) continue;
+01119: 
+01120:         const extraCatchup = st === "SOFT" ? Math.max(CATCHUP_MAX_AFTER_END_MIN, 360) : CATCHUP_MAX_AFTER_END_MIN;
+01121:         const catchupLimit = w.end + extraCatchup;
+01122:         if (nowMin > catchupLimit) continue;
+01123: 
+01124:         const key = `${date}::${sched.hour}`;
+01125:         if (catchupTried.has(key)) continue;
+01126:         catchupTried.add(key);
+01127: 
+01128:         logLine(
+01129:           `[AUTO] CATCH-UP pós-release ${date} slot=${sched.hour} (${st}) releaseAt=${w.releaseLabel} window=${w.startLabel}~${w.endLabel} (fora da janela)`,
+01130:           "INFO"
+01131:         );
+01132:       }
+01133: 
+01134:       if (!afterRelease) continue;
+01135: 
+01136:       slot.tries = (slot.tries || 0) + 1;
+01137:       slot.lastTryISO = isoNow;
+01138: 
+01139:       const candidates = st === "SOFT" ? [sched.hour] : closeCandidates(sched.hour);
+01140:       slot.lastTriedCloses = candidates;
+01141:       saveState(date, state);
+01142: 
+01143:       logLine(
+01144:         `[AUTO] tentando ${date} slot=${sched.hour} (${st}) window=${w.startLabel}-${w.endLabel} closes=${candidates.join(",")}`,
+01145:         "INFO"
+01146:       );
+01147: 
+01148:       let lastErr = null;
+01149: 
+01150:       for (const closeHour of candidates) {
+01151:         let r = null;
+01152: 
+01153:         try {
+01154:           r = await runImport({ date, lotteryKey: LOTTERY, closeHour });
+01155:         } catch (e) {
+01156:           lastErr = e?.message || String(e);
+01157:           slot.lastResult = { ok: false, error: lastErr, closeHourTried: closeHour };
+01158:           saveState(date, state);
+01159:           logLine(`[AUTO] erro no import close=${closeHour}: ${lastErr}`, "ERROR");
+01160:           continue;
+01161:         }
+01162: 
+01163:         const blockedReason = String(r?.blockedReason || "").trim();
+01164: 
+01165:         if (
+01166:           r &&
+01167:           r.blocked === true &&
+01168:           (blockedReason === "no_draw_for_slot" || blockedReason === "no_draw_for_slot_calendar")
+01169:         ) {
+01170:           slot.lastResult = {
+01171:             ...(slot.lastResult || {}),
+01172:             ok: true,
+01173:             closeHourTried: closeHour,
+01174:             blocked: true,
+01175:             blockedReason,
+01176:             note: "no_draw_for_slot|no_draw_for_slot_calendar (will retry)",
+01177:           };
+01178:           saveState(date, state);
+01179: 
+01180:           logLine(`[AUTO] ${blockedReason} slot=${sched.hour} (${st}) -> mantendo PENDENTE p/ retry`, "INFO");
+01181:           didSomething = true;
+01182:           break;
+01183:         }
+01184: 
+01185:         if (r && r.blocked === true && blockedReason === "api_missing_slot") {
+01186:           slot.lastResult = {
+01187:             ...(slot.lastResult || {}),
+01188:             ok: true,
+
+--- LINHAS 1216 A 1254 ---
+01216:         const alreadyCompleteAll = Boolean(r?.alreadyCompleteAll);
+01217:         const captured = Boolean(r?.captured);
+01218: 
+01219:         slot.lastResult = {
+01220:           ok: true,
+01221:           closeHourTried: closeHour,
+01222:           captured,
+01223:           alreadyCompleteAll,
+01224:           savedCount,
+01225:           writeCount,
+01226:           apiHasPrizes: r?.apiHasPrizes ?? null,
+01227:           targetDrawIds: r?.targetDrawIds ?? null,
+01228:           tookMs: r?.tookMs ?? null,
+01229:         };
+01230:         saveState(date, state);
+01231: 
+01232:         let doneByAlreadyComplete = alreadyCompleteAll === true;
+01233:         let doneByCaptureWrite = captured === true && (savedCount > 0 || writeCount > 0);
+01234: 
+01235:         // ✅ FEDERAL PROBE (SOFT): não marca DONE se o resultado não for do horário do slot
+01236:         if (LOTTERY === "FEDERAL" && st === "SOFT") {
+01237:           if (!resultMatchesSlotHour(r, sched.hour)) {
+01238:             doneByAlreadyComplete = false;
+01239:             doneByCaptureWrite = false;
+01240: 
+01241:             slot.lastResult = {
+01242:               ...(slot.lastResult || {}),
+01243:               note: "probe_result_mismatch_slot_hour (kept pending)",
+01244:             };
+01245:             saveState(date, state);
+01246: 
+01247:             logLine(
+01248:               `[AUTO] FEDERAL PROBE mismatch: slot=${sched.hour} close=${closeHour} targetDrawIds=${
+01249:                 Array.isArray(r && r.targetDrawIds) ? r.targetDrawIds.join(",") : "—"
+01250:               } -> mantendo PENDENTE`,
+01251:               "INFO"
+01252:             );
+01253: 
+01254:             didSomething = true;
+
+==============================================================================================================
+6. PERSISTÊNCIA NO FIRESTORE
+==============================================================================================================
+
+--- LINHAS 85 A 144 ---
+00085: 
+00086: function readJsonSafeFile(p) {
+00087:   try {
+00088:     if (!fs.existsSync(p)) return null;
+00089:     return JSON.parse(fs.readFileSync(p, "utf8"));
+00090:   } catch {
+00091:     return null;
+00092:   }
+00093: }
+00094: 
+00095: function writeJsonSafeFile(p, obj) {
+00096:   try {
+00097:     ensureLogDir();
+00098:     const tmp = `${p}.tmp`;
+00099:     fs.writeFileSync(tmp, JSON.stringify(obj, null, 2));
+00100:     fs.renameSync(tmp, p);
+00101:   } catch {}
+00102: }
+00103: 
+00104: async function fetchDayStatusCached({ date, lottery }) {
+00105:   const f = dayStatusCacheFile(date);
+00106:   const nowMs = Date.now();
+00107:   const cached = readJsonSafeFile(f);
+00108: 
+00109:   if (cached && cached.atMs && nowMs - Number(cached.atMs) < DAYSTATUS_CACHE_TTL_SEC * 1000) {
+00110:     return cached.value || null;
+00111:   }
+00112: 
+00113:   const value = await fetchDayStatusFromBackend({ date, lottery });
+00114:   writeJsonSafeFile(f, { atMs: nowMs, iso: new Date().toISOString(), value });
+00115:   return value;
+00116: }
+00117: 
+00118: /* =========================
+00119:    Schedules (por loteria)
+00120: ========================= */
+00121: const SCHEDULES = {
+00122:   PT_RIO: [
+00123:     { hour: "09:00", windowStart: "09:05", releaseAt: "09:29", windowEnd: "09:35" },
+00124:     { hour: "11:00", windowStart: "11:05", releaseAt: "11:29", windowEnd: "11:35" },
+00125:     { hour: "14:00", windowStart: "14:05", releaseAt: "14:29", windowEnd: "14:35" },
+00126:     { hour: "16:00", windowStart: "16:05", releaseAt: "16:29", windowEnd: "16:35" },
+00127:     { hour: "18:00", windowStart: "18:05", releaseAt: "18:29", windowEnd: "18:35" },
+00128:     // 21h: janela longa
+00129:     { hour: "21:00", windowStart: "21:05", releaseAt: "21:05", windowEnd: "21:45" },
+00130:   ],
+00131: 
+00132:   // FEDERAL
+00133:   // - 19:00 = PROBE (SOFT)
+00134:   // - 20:00 = HARD (padrão)
+00135:   FEDERAL: [
+00136:     { hour: "19:00", windowStart: "18:50", releaseAt: "19:00", windowEnd: "19:20" }, // PROBE (SOFT)
+00137:     { hour: "20:00", windowStart: "19:50", releaseAt: "20:00", windowEnd: "20:20" }, // HARD
+00138:   ],
+00139: };
+00140: 
+00141: const SCHEDULE = Array.isArray(SCHEDULES[LOTTERY]) ? SCHEDULES[LOTTERY] : SCHEDULES.PT_RIO;
+00142: 
+00143: /* =========================
+00144:    Utils
+
+--- LINHAS 276 A 409 ---
+00276:       lastTriedCloses: null,
+00277:       na: false,
+00278:       naReason: null,
+00279:       alertMissedWindow: false,
+00280:       alertCritical: false,
+00281:     };
+00282:   }
+00283:   return init;
+00284: }
+00285: 
+00286: function safeWriteJson(filePath, obj) {
+00287:   ensureLogDir();
+00288:   const tmp = `${filePath}.tmp`;
+00289:   fs.writeFileSync(tmp, JSON.stringify(obj, null, 2));
+00290:   fs.renameSync(tmp, filePath);
+00291: }
+00292: 
+00293: function loadState(date) {
+00294:   const f = stateFile(date);
+00295:   if (!fs.existsSync(f)) {
+00296:     const init = defaultState();
+00297:     safeWriteJson(f, init);
+00298:     return init;
+00299:   }
+00300: 
+00301:   let parsed = null;
+00302:   try {
+00303:     parsed = JSON.parse(fs.readFileSync(f, "utf8"));
+00304:   } catch {
+00305:     const init = defaultState();
+00306:     safeWriteJson(f, init);
+00307:     return init;
+00308:   }
+00309: 
+00310:   const migrated = defaultState();
+00311:   for (const s of SCHEDULE) {
+00312:     const v = parsed?.[s.hour];
+00313: 
+00314:     if (typeof v === "boolean") {
+00315:       migrated[s.hour].done = v;
+00316:       continue;
+00317:     }
+00318: 
+00319:     if (v && typeof v === "object") {
+00320:       migrated[s.hour] = {
+00321:         ...migrated[s.hour],
+00322:         done: Boolean(v.done),
+00323:         tries: Number.isFinite(Number(v.tries)) ? Number(v.tries) : 0,
+00324:         lastTryISO: typeof v.lastTryISO === "string" ? v.lastTryISO : null,
+00325:         lastResult: v.lastResult ?? null,
+00326:         lastTriedCloses: Array.isArray(v.lastTriedCloses) ? v.lastTriedCloses : null,
+00327:         na: Boolean(v.na),
+00328:         naReason: typeof v.naReason === "string" ? v.naReason : null,
+00329:         alertMissedWindow: Boolean(v.alertMissedWindow),
+00330:         alertCritical: Boolean(v.alertCritical),
+00331:       };
+00332:     }
+00333:   }
+00334: 
+00335:   return migrated;
+00336: }
+00337: 
+00338: function saveState(date, state) {
+00339:   safeWriteJson(stateFile(date), state);
+00340: }
+00341: 
+00342: function isAllDoneHardOnly(state, statusMap) {
+00343:   let hardCount = 0;
+00344: 
+00345:   for (const sched of SCHEDULE) {
+00346:     const st = statusMap.get(sched.hour) || "OFF";
+00347:     if (st !== "HARD") continue;
+00348: 
+00349:     hardCount += 1;
+00350:     if (!state[sched.hour] || state[sched.hour].done !== true) {
+00351:       return false;
+00352:     }
+00353:   }
+00354: 
+00355:   if (hardCount === 0) return false;
+00356:   return true;
+00357: }
+00358: 
+00359: /**
+00360:  * Gera closes candidatos (tolerância de minutos)
+00361:  */
+00362: function closeCandidates(hhmm) {
+00363:   const s = String(hhmm || "").trim();
+00364: 
+00365:   // PT_RIO 21h pode sair como fechamento de 21:30.
+00366:   // Mantém os closes históricos e adiciona a faixa 21:29~21:32.
+00367:   if (LOTTERY === "PT_RIO" && s === "21:00") {
+00368:     return [
+00369:       "21:00", "21:01", "21:02",
+00370:       "21:09", "21:10", "21:11",
+00371:       "21:29", "21:30", "21:31", "21:32"
+00372:     ];
+00373:   }
+00374: 
+00375:   const parsed = parseHH(s);
+00376:   if (!parsed) return [];
+00377:   const { h } = parsed;
+00378: 
+00379:   const out = new Set();
+00380:   const bases = [0, 9];
+00381:   const deltas = [0, 1, 2];
+00382: 
+00383:   for (const base of bases) {
+00384:     for (const d of deltas) {
+00385:       const mm = base + d;
+00386:       if (mm >= 0 && mm <= 59) out.add(`${pad2(h)}:${pad2(mm)}`);
+00387:     }
+00388:   }
+00389:   return Array.from(out);
+00390: }
+00391: 
+00392: /* =========================
+00393:    FEDERAL PROBE: valida se o resultado pertence ao horário do slot
+00394:    - usa targetDrawIds no formato: FEDERAL__YYYY-MM-DD__20-00__uuid
+00395: ========================= */
+00396: function slotHourKey(slotHHMM) {
+00397:   const hh = String(slotHHMM || "").slice(0, 2);
+00398:   const mm = String(slotHHMM || "").slice(3, 5);
+00399:   if (!/^\d{2}$/.test(hh) || !/^\d{2}$/.test(mm)) return "";
+00400:   return hh + "-" + mm; // ex: "19-00"
+00401: }
+00402: 
+00403: function resultMatchesSlotHour(r, slotHHMM) {
+00404:   const key = slotHourKey(slotHHMM);
+00405:   if (!key) return true; // se não dá pra inferir, não bloqueia
+00406:   const ids = Array.isArray(r && r.targetDrawIds) ? r.targetDrawIds.map(String) : [];
+00407:   if (ids.length === 0) return true; // sem id, não bloqueia
+00408:   return ids.some((id) => String(id).includes("__" + key + "__"));
+00409: }
+
+--- LINHAS 415 A 510 ---
+00415:   const map = new Map();
+00416: 
+00417:   const isSunday = dow === 0;
+00418:   const isWed = dow === 3;
+00419:   const isSat = dow === 6;
+00420: 
+00421:   for (const sched of SCHEDULE) {
+00422:     const hh = sched.hour;
+00423: 
+00424:     if (isSunday) {
+00425:       if (hh === "18:00" || hh === "21:00") map.set(hh, "OFF");
+00426:       else map.set(hh, "HARD");
+00427:       continue;
+00428:     }
+00429: 
+00430:     if (isWed || isSat) {
+00431:       if (hh === "18:00") map.set(hh, "SOFT");
+00432:       else map.set(hh, "HARD");
+00433:       continue;
+00434:     }
+00435: 
+00436:     map.set(hh, "HARD");
+00437:   }
+00438: 
+00439:   if (isSunday) {
+00440:     logLine(`[CAL] PT_RIO domingo: date=${dateYMD} dow=${dow} => HARD=[09,11,14,16] OFF=[18,21]`, "INFO");
+00441:   } else if (isWed || isSat) {
+00442:     logLine(`[CAL] PT_RIO qua/sab: date=${dateYMD} dow=${dow} => HARD=[09,11,14,16,21] SOFT=[18]`, "INFO");
+00443:   } else {
+00444:     logLine(`[CAL] PT_RIO seg-sex: date=${dateYMD} dow=${dow} => HARD=[09,11,14,16,18,21]`, "INFO");
+00445:   }
+00446: 
+00447:   return map;
+00448: }
+00449: 
+00450: /**
+00451:  * FEDERAL (robusto / independente de expectedHard do backend):
+00452:  * - domingo: OFF
+00453:  * - demais dias: 19:00 = SOFT (PROBE), 20:00 = HARD (padrão)
+00454:  * Obs: ainda logamos expectedHard/expectedSoft como debug, mas não usamos como "fonte da verdade".
+00455:  */
+00456: function buildTodaySlotStatusMapFEDERAL({ dateYMD, dow, ds }) {
+00457:   const map = new Map();
+00458:   const isSunday = dow === 0;
+00459: 
+00460:   const expectedHard = Array.isArray(ds?.expectedHard) ? ds.expectedHard.map(String) : [];
+00461:   const expectedSoft = Array.isArray(ds?.expectedSoft) ? ds.expectedSoft.map(String) : [];
+00462: 
+00463:   for (const sched of SCHEDULE) {
+00464:     if (isSunday) {
+00465:       map.set(sched.hour, "OFF");
+00466:       continue;
+00467:     }
+00468: 
+00469:     if (sched.hour === "19:00") {
+00470:       map.set(sched.hour, "SOFT");
+00471:       continue;
+00472:     }
+00473: 
+00474:     if (sched.hour === "20:00") {
+00475:       map.set(sched.hour, "HARD");
+00476:       continue;
+00477:     }
+00478: 
+00479:     // fallback (caso adicionem mais slots no futuro)
+00480:     map.set(sched.hour, "SOFT");
+00481:   }
+00482: 
+00483:   logLine(
+00484:     `[CAL] FEDERAL fixed: date=${dateYMD} dow=${dow} => 19:SOFT(PROBE) 20:HARD | backend expectedHard=[${expectedHard.join(
+00485:       ","
+00486:     )}] expectedSoft=[${expectedSoft.join(",")}]`,
+00487:     "INFO"
+00488:   );
+00489: 
+00490:   return map;
+00491: }
+00492: 
+00493: function slotWindow(schedule) {
+00494:   const ws = parseHHMM(schedule.windowStart);
+00495:   const ra = parseHHMM(schedule.releaseAt);
+00496:   const we = parseHHMM(schedule.windowEnd);
+00497: 
+00498:   if (!ws || !ra || !we) {
+00499:     const { h } = parseHH(schedule.hour);
+00500:     return {
+00501:       start: toMin(h, 5),
+00502:       release: toMin(h, 29),
+00503:       end: toMin(h, 31),
+00504:       startLabel: `${pad2(h)}:05`,
+00505:       releaseLabel: `${pad2(h)}:29`,
+00506:       endLabel: `${pad2(h)}:31`,
+00507:     };
+00508:   }
+00509: 
+00510:   const start = toMin(ws.h, ws.m);
+
+--- LINHAS 532 A 572 ---
+00532:       const st = fs.statSync(LOCK_FILE);
+00533:       const age = Date.now() - st.mtimeMs;
+00534:       if (age < LOCK_TTL_MS) return { ok: false, reason: "LOCK_ATIVO" };
+00535:       fs.unlinkSync(LOCK_FILE);
+00536:     } catch {
+00537:       return { ok: false, reason: "LOCK_INACESSIVEL" };
+00538:     }
+00539:   }
+00540: 
+00541:   try {
+00542:     fs.writeFileSync(
+00543:       LOCK_FILE,
+00544:       JSON.stringify({ pid: process.pid, at: new Date().toISOString(), lottery: LOTTERY }, null, 2)
+00545:     );
+00546:     return { ok: true };
+00547:   } catch {
+00548:     return { ok: false, reason: "NAO_FOI_POSSIVEL_CRIAR_LOCK" };
+00549:   }
+00550: }
+00551: 
+00552: function releaseLock() {
+00553:   try {
+00554:     if (fs.existsSync(LOCK_FILE)) fs.unlinkSync(LOCK_FILE);
+00555:   } catch {}
+00556: }
+00557: 
+00558: /* =========================
+00559:    DayStatus guard + agenda dinâmica
+00560: ========================= */
+00561: async function fetchDayStatusFromBackend({ date, lottery }) {
+00562:   try {
+00563:     const base = PITACO_API_BASE.replace(/\/+$/, "");
+00564:     const u = `${base}/api/pitaco/results?date=${encodeURIComponent(String(date || "").trim())}&lottery=${encodeURIComponent(
+00565:       String(lottery || "").trim()
+00566:     )}`;
+00567: 
+00568:     const res = await axios.get(u, {
+00569:       timeout: 15000,
+00570:       validateStatus: (s) => s >= 200 && s < 400,
+00571:       headers: { "User-Agent": "palpitaco-autoImportToday" },
+00572:     });
+
+--- LINHAS 617 A 831 ---
+00617:     slot.naReason = "HOLIDAY_NO_DRAW";
+00618:     slot.lastTryISO = isoNow;
+00619:     slot.lastResult = { ok: true, skipped: true, reason: "HOLIDAY_NO_DRAW" };
+00620:     touched += 1;
+00621:   }
+00622: 
+00623:   return touched;
+00624: }
+00625: 
+00626: /* =========================
+00627:    Verificação de persistência (BIRTH-GUARD)
+00628:    (mantido como no seu arquivo)
+00629: ========================= */
+00630: const VERIFY_PERSISTED = String(process.env.VERIFY_PERSISTED || "1").trim() === "1";
+00631: 
+00632: function missingSlotsMonthFile(dateYMD) {
+00633:   const ym = String(dateYMD || "").slice(0, 7);
+00634:   return path.join(LOG_DIR, `missingSlots-${LOTTERY}-${ym}.json`);
+00635: }
+00636: 
+00637: function readJsonSafe(p) {
+00638:   try {
+00639:     if (!fs.existsSync(p)) return null;
+00640:     return JSON.parse(fs.readFileSync(p, "utf8"));
+00641:   } catch {
+00642:     return null;
+00643:   }
+00644: }
+00645: 
+00646: function upsertMissingSlot({ date, slotHour, calendar, closeHourTried, reason, meta }) {
+00647:   ensureLogDir();
+00648:   const file = missingSlotsMonthFile(date);
+00649:   const j =
+00650:     readJsonSafe(file) || {
+00651:       ok: true,
+00652:       lottery: LOTTERY,
+00653:       month: String(date).slice(0, 7),
+00654:       items: {},
+00655:     };
+00656: 
+00657:   const key = `${date}::${slotHour}`;
+00658:   if (!j.items || typeof j.items !== "object") j.items = {};
+00659: 
+00660:   const prev = j.items[key] && typeof j.items[key] === "object" ? j.items[key] : null;
+00661:   const now = new Date().toISOString();
+00662: 
+00663:   j.items[key] = {
+00664:     date,
+00665:     slotHour,
+00666:     calendar: calendar || null,
+00667:     closeHourTried: closeHourTried || null,
+00668:     firstSeenISO: prev?.firstSeenISO || now,
+00669:     lastSeenISO: now,
+00670:     hits: (prev?.hits || 0) + 1,
+00671:     reason: reason || "NOT_PERSISTED",
+00672:     meta: meta || null,
+00673:   };
+00674: 
+00675:   safeWriteJson(file, j);
+00676:   return file;
+00677: }
+00678: 
+00679: function hhFromSlotHHMM(slotHHMM) {
+00680:   const s = String(slotHHMM || "").trim();
+00681:   if (/^\d{2}:\d{2}$/.test(s)) return s.slice(0, 2);
+00682:   if (/^\d{2}$/.test(s)) return s;
+00683:   return "";
+00684: }
+00685: 
+00686: function drawLooksLikeSlot(draw, slotHH) {
+00687:   const hh = hhFromSlotHHMM(slotHH);
+00688:   if (!hh) return false;
+00689: 
+00690:   const v =
+00691:     (draw &&
+00692:       (draw.close_hour ||
+00693:         draw.closeHour ||
+00694:         draw.close ||
+00695:         draw.hour ||
+00696:         draw.slot ||
+00697:         draw.time ||
+00698:         draw.close_hour_raw)) ??
+00699:     "";
+00700:   const s = String(v).trim();
+00701: 
+00702:   if (s.startsWith(hh)) return true;
+00703:   if (s.startsWith(`${hh}:`)) return true;
+00704:   if (s === hh) return true;
+00705:   if (s === `${hh}h`) return true;
+00706: 
+00707:   return false;
+00708: }
+00709: 
+00710: async function verifySlotPersistedViaBackend({ date, slotHHMM }) {
+00711:   try {
+00712:     const base = PITACO_API_BASE.replace(/\/+$/, "");
+00713:     const u = `${base}/api/pitaco/results?date=${encodeURIComponent(date)}&lottery=${encodeURIComponent(LOTTERY)}`;
+00714: 
+00715:     const res = await axios.get(u, {
+00716:       timeout: 15000,
+00717:       validateStatus: (s) => s >= 200 && s < 400,
+00718:       headers: { "User-Agent": "palpitaco-autoImportToday" },
+00719:     });
+00720: 
+00721:     const j = res && res.data ? res.data : null;
+00722:     if (!j || typeof j !== "object") return { ok: false, reason: "BAD_JSON" };
+00723: 
+00724:     const draws = Array.isArray(j.draws) ? j.draws : [];
+00725:     const foundInDraws = draws.some((d) => drawLooksLikeSlot(d, slotHHMM));
+00726:     if (foundInDraws) return { ok: true, where: "draws", drawsCount: draws.length };
+00727: 
+00728:     const slots = Array.isArray(j.slots) ? j.slots : [];
+00729:     const hh = hhFromSlotHHMM(slotHHMM);
+00730: 
+00731:     const foundInSlots = slots.some((s) => {
+00732:       const v = (s && (s.hour || s.close_hour || s.closeHour || s.close || s.slot || s.time || s.close_hour_raw)) ?? "";
+00733:       const t = String(v).trim();
+00734:       return t.startsWith(hh);
+00735:     });
+00736: 
+00737:     if (foundInSlots) return { ok: true, where: "slots", slotsCount: slots.length };
+00738: 
+00739:     return { ok: false, reason: "NOT_FOUND", drawsCount: draws.length, slotsCount: slots.length };
+00740:   } catch (e) {
+00741:     const code = e?.code || e?.cause?.code || "";
+00742:     const msg = e?.message || e?.cause?.message || String(e);
+00743:     const r = code ? `${code}:${msg}` : msg;
+00744:     return { ok: false, reason: `EX:${r}` };
+00745:   }
+00746: }
+00747: 
+00748: async function guardPersistedOrCritical({ date, slotHHMM, calendar, closeHourTried, meta }) {
+00749:   if (!VERIFY_PERSISTED) return { ok: true, skipped: true };
+00750: 
+00751:   if (meta && (meta.mode === "ALREADY_COMPLETE" || meta.mode === "NO_DRAW")) {
+00752:     return { ok: true, skipped: true, reason: `SKIP_${meta.mode}` };
+00753:   }
+00754: 
+00755:   if (meta && meta.mode === "CAPTURE_WRITE") {
+00756:     const sc = Number.isFinite(Number(meta.savedCount)) ? Number(meta.savedCount) : 0;
+00757:     const wc = Number.isFinite(Number(meta.writeCount)) ? Number(meta.writeCount) : 0;
+00758:     if (sc > 0 || wc > 0) {
+00759:       return { ok: true, verified: true, where: "import_return", skippedBackend: true };
+00760:     }
+00761:   }
+00762: 
+00763:   const v = await verifySlotPersistedViaBackend({ date, slotHHMM });
+00764:   if (v.ok) return { ok: true, verified: true, where: v.where };
+00765: 
+00766:   const file = upsertMissingSlot({
+00767:     date,
+00768:     slotHour: slotHHMM,
+00769:     calendar,
+00770:     closeHourTried,
+00771:     reason: v.reason || "NOT_PERSISTED",
+00772:     meta: { verify: v, ...(meta || {}) },
+00773:   });
+00774: 
+00775:   logLine(
+00776:     `[BIRTH-GUARD] CRITICAL slot=${slotHHMM} date=${date} calendar=${calendar || "—"} closeTried=${closeHourTried || "—"} reason=${
+00777:       v.reason || "NOT_PERSISTED"
+00778:     } file=${path.basename(file)}`,
+00779:     "ERROR"
+00780:   );
+00781: 
+00782:   if (FAIL_ON_CRITICAL) process.exitCode = 2;
+00783: 
+00784:   return { ok: false, verified: false, reason: v.reason || "NOT_PERSISTED", file };
+00785: }
+00786: 
+00787: /**
+00788:  * Reconcilia o state temporário do runner com os horários
+00789:  * realmente presentes no backend/Firestore.
+00790:  */
+00791: function syncStateFromBackendSnapshot({
+00792:   state,
+00793:   statusMap,
+00794:   daySnapshot,
+00795:   isoNow,
+00796: }) {
+00797:   const rawPresentHours = Array.isArray(daySnapshot?.presentHours)
+00798:     ? daySnapshot.presentHours
+00799:     : [];
+00800: 
+00801:   const presentHours = new Set(
+00802:     rawPresentHours
+00803:       .map((value) => {
+00804:         const match = String(value ?? "").trim().match(/(\d{1,2})/);
+00805:         if (!match) return "";
+00806: 
+00807:         const hour = Number(match[1]);
+00808:         if (!Number.isFinite(hour) || hour < 0 || hour > 23) return "";
+00809: 
+00810:         return pad2(hour);
+00811:       })
+00812:       .filter(Boolean)
+00813:   );
+00814: 
+00815:   if (!presentHours.size) return 0;
+00816: 
+00817:   let touched = 0;
+00818: 
+00819:   for (const sched of SCHEDULE) {
+00820:     const slot = state?.[sched.hour];
+00821:     if (!slot || slot.done || slot.na) continue;
+00822: 
+00823:     const calendar = statusMap.get(sched.hour) || "OFF";
+00824:     if (calendar !== "HARD" && calendar !== "SOFT") continue;
+00825: 
+00826:     const hour = String(sched.hour || "").slice(0, 2);
+00827:     if (!presentHours.has(hour)) continue;
+00828: 
+00829:     slot.done = true;
+00830:     slot.na = false;
+00831:     slot.naReason = null;
+
+--- LINHAS 986 A 1110 ---
+00986:   }
+00987: 
+00988:   const now = nowHMInSaoPaulo();
+00989:   const nowMin = toMin(now.h, now.m);
+00990: 
+00991:   if (String(process.env.NOW_HM || "").trim()) {
+00992:     logLine(`[TIME] NOW_HM override ativo => ${pad2(now.h)}:${pad2(now.m)} (America/Sao_Paulo)`, "INFO");
+00993:   }
+00994: 
+00995:   const dow = dowFromYMD(date);
+00996:   const catchupTried = new Set();
+00997: 
+00998:   const lock = acquireLock();
+00999:   if (!lock.ok) {
+01000:     logLine(`[AUTO] abortado: ${lock.reason}`, "INFO");
+01001:     return;
+01002:   }
+01003: 
+01004:   try {
+01005:     const state = loadState(date);
+01006:     const isoNow = new Date().toISOString();
+01007: 
+01008:     // ✅ Buscar DS cedo (cache)
+01009:     const ds = await fetchDayStatusCached({ date, lottery: LOTTERY });
+01010: 
+01011:     let statusMap = null;
+01012:     if (LOTTERY === "PT_RIO") {
+01013:       statusMap = buildTodaySlotStatusMapPT_RIO(date, dow);
+01014:     } else if (LOTTERY === "FEDERAL") {
+01015:       statusMap = buildTodaySlotStatusMapFEDERAL({ dateYMD: date, dow, ds });
+01016:     } else {
+01017:       statusMap = new Map();
+01018:       for (const sched of SCHEDULE) statusMap.set(sched.hour, "HARD");
+01019:     }
+01020: 
+01021:     // O workspace do GitHub Actions é novo a cada execução.
+01022:     // Antes de auditar, sincroniza o state local com a fonte real.
+01023:     const syncedFromBackend = syncStateFromBackendSnapshot({
+01024:       state,
+01025:       statusMap,
+01026:       daySnapshot: ds,
+01027:       isoNow,
+01028:     });
+01029: 
+01030:     if (syncedFromBackend > 0) {
+01031:       saveState(date, state);
+01032:       logLine(
+01033:         `[STATE-SYNC] slots reconciliados pelo backend=${syncedFromBackend}`,
+01034:         "INFO"
+01035:       );
+01036:     }
+01037: 
+01038:     // ✅ Se o dia já está completo, gera audit e encerra
+01039:     if (isAllDoneHardOnly(state, statusMap)) {
+01040:       try {
+01041:         const report = buildAuditReport({ date, nowMin, isoNow: new Date().toISOString(), dow, statusMap, state });
+01042:         if (isNowHmOverrideActive()) {
+01043:           report.status = "ok";
+01044:           report.note = "NOW_HM override ativo: audit retroativo neutralizado (informativo).";
+01045:         }
+01046:         safeWriteJson(auditOutFile(date), report);
+01047:       } catch {}
+01048:       logLine(`[AUTO] DIA COMPLETO (${date}) — slots concluídos (skip import)`, "INFO");
+01049:       return;
+01050:     }
+01051: 
+01052:     // 1) Marca N/A slots OFF
+01053:     let stateTouched = false;
+01054:     for (const sched of SCHEDULE) {
+01055:       const slot = state[sched.hour];
+01056:       if (!slot) continue;
+01057: 
+01058:       const st = statusMap.get(sched.hour) || "OFF";
+01059:       const applies = st === "HARD" || st === "SOFT";
+01060: 
+01061:       if (!applies && !slot.done) {
+01062:         slot.done = true;
+01063:         slot.na = true;
+01064:         slot.naReason = LOTTERY === "FEDERAL" && dow === 0 ? "FEDERAL_DOMINGO_OFF" : "NAO_APLICA";
+01065:         slot.lastTryISO = isoNow;
+01066:         slot.lastResult = { ok: true, skipped: true, reason: slot.naReason };
+01067:         stateTouched = true;
+01068:         logLine(`[AUTO] N/A slot=${sched.hour} (${slot.naReason}) -> DONE`, "INFO");
+01069:       }
+01070:     }
+01071:     if (stateTouched) saveState(date, state);
+01072: 
+01073:     // 1.5) DayStatus guard: feriado sem sorteio
+01074:     if (ds && ds.blocked && String(ds.dayStatus || "") === "holiday_no_draw") {
+01075:       const touched = applyHolidayNoDrawToState({ state, statusMap, isoNow });
+01076:       if (touched > 0) saveState(date, state);
+01077: 
+01078:       try {
+01079:         const report = buildAuditReport({ date, nowMin, isoNow: new Date().toISOString(), dow, statusMap, state });
+01080:         safeWriteJson(auditOutFile(date), report);
+01081:       } catch {}
+01082: 
+01083:       logLine(
+01084:         `[DAY_STATUS] holiday_no_draw confirmado (blockedReason=${ds.blockedReason || "—"}). Slots aplicáveis -> N/A. Encerrando.`,
+01085:         "INFO"
+01086:       );
+01087:       return;
+01088:     }
+01089: 
+01090:     let didSomething = false;
+01091: 
+01092:     // 2) Processa slots aplicáveis (HARD/SOFT)
+01093:     for (const sched of SCHEDULE) {
+01094:       const slot = state[sched.hour];
+01095:       if (!slot) continue;
+01096:       if (slot.done) continue;
+01097: 
+01098:       const st = statusMap.get(sched.hour) || "OFF";
+01099:       const applies = st === "HARD" || st === "SOFT";
+01100:       if (!applies) continue;
+01101: 
+01102:       // ✅ anti-spam: PROBE/SOFT da FEDERAL para depois de N tentativas/dia
+01103:       if (LOTTERY === "FEDERAL" && st === "SOFT") {
+01104:         const tries = Number(slot.tries || 0);
+01105:         if (Number.isFinite(FEDERAL_SOFT_MAX_TRIES_PER_DAY) && FEDERAL_SOFT_MAX_TRIES_PER_DAY > 0) {
+01106:           if (tries >= FEDERAL_SOFT_MAX_TRIES_PER_DAY) {
+01107:             continue;
+01108:           }
+01109:         }
+01110:       }
+
+--- LINHAS 1131 A 1347 ---
+01131:         );
+01132:       }
+01133: 
+01134:       if (!afterRelease) continue;
+01135: 
+01136:       slot.tries = (slot.tries || 0) + 1;
+01137:       slot.lastTryISO = isoNow;
+01138: 
+01139:       const candidates = st === "SOFT" ? [sched.hour] : closeCandidates(sched.hour);
+01140:       slot.lastTriedCloses = candidates;
+01141:       saveState(date, state);
+01142: 
+01143:       logLine(
+01144:         `[AUTO] tentando ${date} slot=${sched.hour} (${st}) window=${w.startLabel}-${w.endLabel} closes=${candidates.join(",")}`,
+01145:         "INFO"
+01146:       );
+01147: 
+01148:       let lastErr = null;
+01149: 
+01150:       for (const closeHour of candidates) {
+01151:         let r = null;
+01152: 
+01153:         try {
+01154:           r = await runImport({ date, lotteryKey: LOTTERY, closeHour });
+01155:         } catch (e) {
+01156:           lastErr = e?.message || String(e);
+01157:           slot.lastResult = { ok: false, error: lastErr, closeHourTried: closeHour };
+01158:           saveState(date, state);
+01159:           logLine(`[AUTO] erro no import close=${closeHour}: ${lastErr}`, "ERROR");
+01160:           continue;
+01161:         }
+01162: 
+01163:         const blockedReason = String(r?.blockedReason || "").trim();
+01164: 
+01165:         if (
+01166:           r &&
+01167:           r.blocked === true &&
+01168:           (blockedReason === "no_draw_for_slot" || blockedReason === "no_draw_for_slot_calendar")
+01169:         ) {
+01170:           slot.lastResult = {
+01171:             ...(slot.lastResult || {}),
+01172:             ok: true,
+01173:             closeHourTried: closeHour,
+01174:             blocked: true,
+01175:             blockedReason,
+01176:             note: "no_draw_for_slot|no_draw_for_slot_calendar (will retry)",
+01177:           };
+01178:           saveState(date, state);
+01179: 
+01180:           logLine(`[AUTO] ${blockedReason} slot=${sched.hour} (${st}) -> mantendo PENDENTE p/ retry`, "INFO");
+01181:           didSomething = true;
+01182:           break;
+01183:         }
+01184: 
+01185:         if (r && r.blocked === true && blockedReason === "api_missing_slot") {
+01186:           slot.lastResult = {
+01187:             ...(slot.lastResult || {}),
+01188:             ok: true,
+01189:             closeHourTried: closeHour,
+01190:             blocked: true,
+01191:             blockedReason,
+01192:             note: "api_missing_slot (stop candidates; will retry later)",
+01193:           };
+01194:           saveState(date, state);
+01195: 
+01196:           logLine(
+01197:             `[AUTO] api_missing_slot slot=${sched.hour} (${st}) close=${closeHour} -> parando closes candidatos (vai retry depois)`,
+01198:             "INFO"
+01199:           );
+01200: 
+01201:           didSomething = true;
+01202:           break;
+01203:         }
+01204: 
+01205:         if (r && r.blocked === true && blockedReason === "future_date") {
+01206:           slot.lastResult = { ok: true, closeHourTried: closeHour, blocked: true, blockedReason };
+01207:           saveState(date, state);
+01208:           logLine(`[AUTO] future_date bloqueado pelo import (defensivo). date=${date} slot=${sched.hour}`, "ERROR");
+01209:           didSomething = true;
+01210:           break;
+01211:         }
+01212: 
+01213:         const savedCount = Number.isFinite(Number(r?.savedCount)) ? Number(r.savedCount) : 0;
+01214:         const writeCount = Number.isFinite(Number(r?.writeCount)) ? Number(r.writeCount) : 0;
+01215: 
+01216:         const alreadyCompleteAll = Boolean(r?.alreadyCompleteAll);
+01217:         const captured = Boolean(r?.captured);
+01218: 
+01219:         slot.lastResult = {
+01220:           ok: true,
+01221:           closeHourTried: closeHour,
+01222:           captured,
+01223:           alreadyCompleteAll,
+01224:           savedCount,
+01225:           writeCount,
+01226:           apiHasPrizes: r?.apiHasPrizes ?? null,
+01227:           targetDrawIds: r?.targetDrawIds ?? null,
+01228:           tookMs: r?.tookMs ?? null,
+01229:         };
+01230:         saveState(date, state);
+01231: 
+01232:         let doneByAlreadyComplete = alreadyCompleteAll === true;
+01233:         let doneByCaptureWrite = captured === true && (savedCount > 0 || writeCount > 0);
+01234: 
+01235:         // ✅ FEDERAL PROBE (SOFT): não marca DONE se o resultado não for do horário do slot
+01236:         if (LOTTERY === "FEDERAL" && st === "SOFT") {
+01237:           if (!resultMatchesSlotHour(r, sched.hour)) {
+01238:             doneByAlreadyComplete = false;
+01239:             doneByCaptureWrite = false;
+01240: 
+01241:             slot.lastResult = {
+01242:               ...(slot.lastResult || {}),
+01243:               note: "probe_result_mismatch_slot_hour (kept pending)",
+01244:             };
+01245:             saveState(date, state);
+01246: 
+01247:             logLine(
+01248:               `[AUTO] FEDERAL PROBE mismatch: slot=${sched.hour} close=${closeHour} targetDrawIds=${
+01249:                 Array.isArray(r && r.targetDrawIds) ? r.targetDrawIds.join(",") : "—"
+01250:               } -> mantendo PENDENTE`,
+01251:               "INFO"
+01252:             );
+01253: 
+01254:             didSomething = true;
+01255:             break; // SOFT tem 1 candidate, encerra loop
+01256:           }
+01257:         }
+01258: 
+01259:         if (doneByAlreadyComplete || doneByCaptureWrite) {
+01260:           slot.done = true;
+01261:           saveState(date, state);
+01262: 
+01263:           if (doneByAlreadyComplete) {
+01264:             logLine(`[AUTO] FS já tem slot=${sched.hour} COMPLETO (close=${closeHour}) -> DONE`, "INFO");
+01265:             await guardPersistedOrCritical({
+01266:               date,
+01267:               slotHHMM: sched.hour,
+01268:               calendar: st,
+01269:               closeHourTried: closeHour,
+01270:               meta: { mode: "ALREADY_COMPLETE", alreadyCompleteAll: true },
+01271:             });
+01272:           } else {
+01273:             logLine(`[AUTO] CAPTURADO slot=${sched.hour} (close=${closeHour}) saved=${savedCount} writes=${writeCount} -> DONE`, "INFO");
+01274:             await guardPersistedOrCritical({
+01275:               date,
+01276:               slotHHMM: sched.hour,
+01277:               calendar: st,
+01278:               closeHourTried: closeHour,
+01279:               meta: { mode: "CAPTURE_WRITE", savedCount, writeCount, captured: true },
+01280:             });
+01281:           }
+01282: 
+01283:           didSomething = true;
+01284:           break;
+01285:         }
+01286:       }
+01287: 
+01288:       if (!slot.done) {
+01289:         if (lastErr) {
+01290:           logLine(`[AUTO] falhou slot=${sched.hour} (erros em closes candidatos)`, "ERROR");
+01291:           didSomething = true;
+01292:         } else {
+01293:           logLine(`[AUTO] ainda indisponível slot=${sched.hour} (nenhum close candidato capturou)`, "INFO");
+01294:         }
+01295:       }
+01296:     }
+01297: 
+01298:     // 2.5) ALERTAS HARD (anti-spam)
+01299:     try {
+01300:       const isTestNowHm = isNowHmOverrideActive();
+01301:       if (!isTestNowHm) {
+01302:         const touchedAlerts = emitHardAlertsIfNeeded({ date, nowMin, state, statusMap });
+01303:         if (touchedAlerts) saveState(date, state);
+01304:       } else {
+01305:         logLine(`[ALERT] NOW_HM ativo => suprimindo alertas HARD retroativos (modo teste)`, "INFO");
+01306:       }
+01307:     } catch {}
+01308: 
+01309:     // 3) Auditoria pós-execução
+01310:     try {
+01311:       const report = buildAuditReport({ date, nowMin, isoNow: new Date().toISOString(), dow, statusMap, state });
+01312: 
+01313:       if (isNowHmOverrideActive()) {
+01314:         report.status = "ok";
+01315:         report.note = "NOW_HM override ativo: audit retroativo neutralizado (informativo).";
+01316:       }
+01317:       safeWriteJson(auditOutFile(date), report);
+01318: 
+01319:       if (report.status === "critical") {
+01320:         logLine(
+01321:           `[AUDIT] CRITICAL missing=${report.criticalCount} warning=${report.warningCount} softLate=${report.softLateCount} (relatório salvo em ${path.basename(
+01322:             auditOutFile(date)
+01323:           )})`,
+01324:           "ERROR"
+01325:         );
+01326:         if (FAIL_ON_CRITICAL) {
+01327:           logLine(`[AUDIT] FAIL_ON_CRITICAL=1 => exit(2)`, "ERROR");
+01328:           process.exitCode = 2;
+01329:         }
+01330:       } else if (report.status === "warning") {
+01331:         logLine(
+01332:           `[AUDIT] WARNING missing=${report.warningCount} softLate=${report.softLateCount} (relatório salvo em ${path.basename(
+01333:             auditOutFile(date)
+01334:           )})`,
+01335:           "INFO"
+01336:         );
+01337:       } else {
+01338:         logLine(`[AUDIT] OK (sem furos HARD acima de ${WARN_AFTER_MIN} min) softLate=${report.softLateCount}`, "INFO");
+01339:       }
+01340:     } catch (e) {
+01341:       logLine(`[AUDIT] erro ao gerar relatório: ${e?.message || e}`, "ERROR");
+01342:     }
+01343: 
+01344:     if (isAllDoneHardOnly(state, statusMap)) logLine(`[AUTO] DIA COMPLETO (${date}) — slots concluídos`, "INFO");
+01345:     else if (!didSomething) logLine(`[AUTO] nada para fazer agora (${date})`, "INFO");
+01346:   } finally {
+01347:     releaseLock();
+
+==============================================================================================================
+7. RESUMO AUTOMÁTICO
+==============================================================================================================
+Workflow possui schedule: SIM
+Workflow possui execução manual: SIM
+Script reconhece 21:30: SIM
+Janela das 21h começa antes de 21:30: SIM
+Janela das 21h termina em 21:45: SIM
+Há lógica explícita de retentativa: SIM
+Há espera entre tentativas: NÃO
+
+==============================================================================================================
+8. CRITÉRIOS DA AUDITORIA
+==============================================================================================================
+O sorteio identificado como slot 21h ocorre por volta de 21:30.
+Uma tentativa anterior a 21:30 pode legitimamente encontrar fonte vazia.
+A automação deve executar após 21:30 e manter retentativas posteriores.
+A janela deve tolerar atraso de publicação da fonte.
+A ausência na primeira tentativa não pode encerrar definitivamente o processamento.
+O computador local não pode participar da execução necessária.

@@ -1,0 +1,304 @@
+==============================================================================================================
+CONSUMIDORES REAIS DO MOTOR TOP3
+==============================================================================================================
+
+--------------------------------------------------------------------------------------------------------------
+src/pages/Top3/__tests__/top3.backtest.layers.test.js  [TOP3_FRONTEND]
+--------------------------------------------------------------------------------------------------------------
+
+Linha 2 | Padrões: computeConditionalNextTop3
+        1: import {
+>>>     2:   computeConditionalNextTop3,
+        3:   getNextSlotForLottery,
+        4:   findNextExistingDrawFromSlot,
+        5:   indexDrawsByYmdHour,
+        6:   pickDrawYMD,
+        7:   pickDrawHour,
+        8:   guessPrizePos,
+
+Linha 220 | Padrões: computeConditionalNextTop3
+      214:     const nextDrawKey = drawKey(nextDraw);
+      215: 
+      216:     if (historyLastKey === nextDrawKey) {
+      217:       throw new Error(`Vazamento de futuro no histórico: ${nextDrawKey}`);
+      218:     }
+      219: 
+>>>   220:     const computed = computeConditionalNextTop3({
+      221:       lotteryKey: "PT_RIO",
+      222:       drawsRange: history,
+      223:       drawLast,
+      224:       PT_RIO_SCHEDULE_NORMAL,
+      225:       PT_RIO_SCHEDULE_WED_SAT,
+      226:       FEDERAL_SCHEDULE,
+
+--------------------------------------------------------------------------------------------------------------
+src/pages/Top3/__tests__/top3.backtest.test.js  [TOP3_FRONTEND]
+--------------------------------------------------------------------------------------------------------------
+
+Linha 2 | Padrões: computeConditionalNextTop3
+        1: import {
+>>>     2:   computeConditionalNextTop3,
+        3:   getNextSlotForLottery,
+        4:   findNextExistingDrawFromSlot,
+        5:   indexDrawsByYmdHour,
+        6:   pickDrawYMD,
+        7:   pickDrawHour,
+        8:   guessPrizePos,
+
+Linha 228 | Padrões: computeConditionalNextTop3
+      222:     if (!nextDraw) continue;
+      223: 
+      224:     if (drawKey(history[history.length - 1]) === drawKey(nextDraw)) {
+      225:       throw new Error(`Vazamento de futuro no histórico: ${drawKey(nextDraw)}`);
+      226:     }
+      227: 
+>>>   228:     const computed = computeConditionalNextTop3({
+      229:       lotteryKey: "PT_RIO",
+      230:       drawsRange: history,
+      231:       drawLast,
+      232:       PT_RIO_SCHEDULE_NORMAL,
+      233:       PT_RIO_SCHEDULE_WED_SAT,
+      234:       FEDERAL_SCHEDULE,
+
+--------------------------------------------------------------------------------------------------------------
+src/pages/Top3/__tests__/top3.public-api.node.test.js  [TOP3_FRONTEND]
+--------------------------------------------------------------------------------------------------------------
+
+Linha 3 | Padrões: top3.public-api
+        1: /** @jest-environment node */
+        2: 
+>>>     3: import * as publicApi from "../top3.public-api";
+        4: 
+        5: const EXPECTED_EXPORTS = [
+        6:   "auditTop3Backtest",
+        7:   "auditTop3Timeline",
+        8:   "build16MilharesForGrupo",
+        9:   "build20MilharesForGrupo",
+
+Linha 16 | Padrões: computeConditionalNextTop3
+       10:   "buildContextEvidence",
+       11:   "buildFrequencyEvidence",
+       12:   "buildMilharesForGrupo",
+       13:   "buildTimelineTop3",
+       14:   "calculateEvidenceStrength",
+       15:   "collectEvidence",
+>>>    16:   "computeConditionalNextTop3",
+       17:   "computeConditionalNextTop3V2",
+       18:   "computeLastSeenByGrupo",
+       19:   "computeStatisticalTop3V3",
+       20:   "countAparicoesByGrupoInDraw",
+       21:   "getNextSlotForLottery",
+       22:   "getPtRioScheduleForYmd",
+
+Linha 17 | Padrões: computeConditionalNextTop3, computeConditionalNextTop3V2
+       11:   "buildFrequencyEvidence",
+       12:   "buildMilharesForGrupo",
+       13:   "buildTimelineTop3",
+       14:   "calculateEvidenceStrength",
+       15:   "collectEvidence",
+       16:   "computeConditionalNextTop3",
+>>>    17:   "computeConditionalNextTop3V2",
+       18:   "computeLastSeenByGrupo",
+       19:   "computeStatisticalTop3V3",
+       20:   "countAparicoesByGrupoInDraw",
+       21:   "getNextSlotForLottery",
+       22:   "getPtRioScheduleForYmd",
+       23:   "getScheduleForLottery",
+
+Linha 19 | Padrões: computeStatisticalTop3V3
+       13:   "buildTimelineTop3",
+       14:   "calculateEvidenceStrength",
+       15:   "collectEvidence",
+       16:   "computeConditionalNextTop3",
+       17:   "computeConditionalNextTop3V2",
+       18:   "computeLastSeenByGrupo",
+>>>    19:   "computeStatisticalTop3V3",
+       20:   "countAparicoesByGrupoInDraw",
+       21:   "getNextSlotForLottery",
+       22:   "getPtRioScheduleForYmd",
+       23:   "getScheduleForLottery",
+       24:   "guessPrizeGrupo",
+       25:   "guessPrizePos",
+
+--------------------------------------------------------------------------------------------------------------
+src/pages/Top3/modules/top3.analytics.js  [TOP3_FRONTEND]
+--------------------------------------------------------------------------------------------------------------
+
+Linha 13 | Padrões: computeStatisticalTop3V3
+        7: } from "../top3.constants";
+        8: 
+        9: import {
+       10:   pickDrawHour,
+       11:   pickDrawYMD,
+       12:   pickPrize1GrupoFromDraw,
+>>>    13:   computeStatisticalTop3V3,
+       14: } from "../top3.engine";
+       15: 
+       16: function emptyAnalytics() {
+       17:   return { top: [], meta: null };
+       18: }
+       19: 
+
+Linha 193 | Padrões: computeStatisticalTop3V3
+      187: 
+      188:   if (cacheRef.current?.key === cacheKey) {
+      189:     return cacheRef.current.value || emptyAnalytics();
+      190:   }
+      191: 
+      192:   const computed =
+>>>   193:     computeStatisticalTop3V3({
+      194:       lotteryKey,
+      195:       drawsRange: safeHistoricalList,
+      196:       drawLast,
+      197:       drawsToday: Array.isArray(todayDraws) ? todayDraws : [],
+      198:       PT_RIO_SCHEDULE_NORMAL,
+      199:       PT_RIO_SCHEDULE_WED_SAT,
+
+--------------------------------------------------------------------------------------------------------------
+src/pages/Top3/top3.engine.js  [TOP3_FRONTEND]
+--------------------------------------------------------------------------------------------------------------
+
+Linha 1082 | Padrões: computeConditionalNextTop3
+     1076: }
+     1077: 
+     1078: /* =========================
+     1079:    Motor principal V1
+     1080: ========================= */
+     1081: 
+>>>  1082: export function computeConditionalNextTop3({
+     1083:   lotteryKey,
+     1084:   drawsRange,
+     1085:   drawLast,
+     1086:   PT_RIO_SCHEDULE_NORMAL,
+     1087:   PT_RIO_SCHEDULE_WED_SAT,
+     1088:   FEDERAL_SCHEDULE,
+
+Linha 2202 | Padrões: computeConditionalNextTop3, computeConditionalNextTop3V2
+     2196: }
+     2197: 
+     2198: /* =========================
+     2199:    Motor principal V2 (FOCO = BICHO)
+     2200: ========================= */
+     2201: 
+>>>  2202: export function computeConditionalNextTop3V2({
+     2203:   lotteryKey,
+     2204:   drawsRange,
+     2205:   drawLast,
+     2206:   drawsToday,
+     2207:   PT_RIO_SCHEDULE_NORMAL,
+     2208:   PT_RIO_SCHEDULE_WED_SAT,
+
+Linha 2834 | Padrões: computeStatisticalTop3V3
+     2828: function sampleConfidence(samples, fullAt = 30) {
+     2829:   const n = Number(samples || 0);
+     2830:   const lim = Math.max(1, Number(fullAt || 30));
+     2831:   return Math.max(0, Math.min(1, n / lim));
+     2832: }
+     2833: 
+>>>  2834: export function computeStatisticalTop3V3({
+     2835:   lotteryKey,
+     2836:   drawsRange,
+     2837:   drawLast,
+     2838:   PT_RIO_SCHEDULE_NORMAL,
+     2839:   PT_RIO_SCHEDULE_WED_SAT,
+     2840:   FEDERAL_SCHEDULE,
+
+Linha 4072 | Padrões: computeStatisticalTop3V3
+     4066:       .sort((a, b) => {
+     4067:         const ta = ymdHourToTs(pickDrawYMD(a), toHourBucket(pickDrawHour(a)));
+     4068:         const tb = ymdHourToTs(pickDrawYMD(b), toHourBucket(pickDrawHour(b)));
+     4069:         return ta - tb;
+     4070:       });
+     4071: 
+>>>  4072:     const computed = computeStatisticalTop3V3({
+     4073:       lotteryKey,
+     4074:       drawsRange: [...usableHistory, ...usableTodayContext],
+     4075:       drawLast: baseDraw,
+     4076:       drawsToday: usableTodayContext,
+     4077:       PT_RIO_SCHEDULE_NORMAL,
+     4078:       PT_RIO_SCHEDULE_WED_SAT,
+
+--------------------------------------------------------------------------------------------------------------
+src/pages/Top3/top3.public-api.js  [TOP3_FRONTEND]
+--------------------------------------------------------------------------------------------------------------
+
+Linha 1 | Padrões: top3.public-api
+>>>     1: // src/pages/Top3/top3.public-api.js
+        2: //
+        3: // Contrato público e estável do núcleo TOP3.
+        4: //
+        5: // Regras:
+        6: // - não contém lógica própria;
+        7: // - não acessa navegador, React, Firebase ou armazenamento;
+
+Linha 13 | Padrões: computeConditionalNextTop3
+        7: // - não acessa navegador, React, Firebase ou armazenamento;
+        8: // - não expõe helpers internos do motor;
+        9: // - deve ser o único ponto de entrada compartilhado por consumidores externos.
+       10: 
+       11: export {
+       12:   // Predição principal
+>>>    13:   computeConditionalNextTop3,
+       14:   computeConditionalNextTop3V2,
+       15:   computeStatisticalTop3V3,
+       16: 
+       17:   // Timeline e auditoria
+       18:   buildTimelineTop3,
+       19:   auditTop3Timeline,
+
+Linha 14 | Padrões: computeConditionalNextTop3, computeConditionalNextTop3V2
+        8: // - não expõe helpers internos do motor;
+        9: // - deve ser o único ponto de entrada compartilhado por consumidores externos.
+       10: 
+       11: export {
+       12:   // Predição principal
+       13:   computeConditionalNextTop3,
+>>>    14:   computeConditionalNextTop3V2,
+       15:   computeStatisticalTop3V3,
+       16: 
+       17:   // Timeline e auditoria
+       18:   buildTimelineTop3,
+       19:   auditTop3Timeline,
+       20:   auditTop3Backtest,
+
+Linha 15 | Padrões: computeStatisticalTop3V3
+        9: // - deve ser o único ponto de entrada compartilhado por consumidores externos.
+       10: 
+       11: export {
+       12:   // Predição principal
+       13:   computeConditionalNextTop3,
+       14:   computeConditionalNextTop3V2,
+>>>    15:   computeStatisticalTop3V3,
+       16: 
+       17:   // Timeline e auditoria
+       18:   buildTimelineTop3,
+       19:   auditTop3Timeline,
+       20:   auditTop3Backtest,
+       21: 
+
+==============================================================================================================
+RESUMO DOS ARQUIVOS ATIVOS
+==============================================================================================================
+TOP3_FRONTEND: 6 arquivo(s)
+Total de arquivos ativos com referências: 6
+Total de ocorrências ativas: 18
+
+==============================================================================================================
+BACKUPS E ARTEFATOS IGNORADOS NA DECISÃO
+==============================================================================================================
+- src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js (4 ocorrência(s))
+- src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js (4 ocorrência(s))
+- tmp/backup_top3_core_commit1_20260715_125156/__tests__/top3.backtest.layers.test.js (2 ocorrência(s))
+- tmp/backup_top3_core_commit1_20260715_125156/__tests__/top3.backtest.test.js (2 ocorrência(s))
+- tmp/backup_top3_core_commit1_20260715_125156/modules/top3.analytics.js (2 ocorrência(s))
+- tmp/backup_top3_core_commit1_20260715_125156/top3.engine.before-history-stats-20260710_111832.js (4 ocorrência(s))
+- tmp/backup_top3_core_commit1_20260715_125156/top3.engine.before-history-stats-20260710_112326.js (4 ocorrência(s))
+- tmp/backup_top3_core_commit1_20260715_125156/top3.engine.js (4 ocorrência(s))
+
+==============================================================================================================
+CONCLUSÃO AUTOMÁTICA
+==============================================================================================================
+Nenhum consumidor ativo foi encontrado no backend.
+O motor TOP3 aparenta ser executado apenas no frontend.
+Nesse cenário, o próximo passo será criar uma capacidade nova no backend, não substituir uma existente.
+Consumidores ativos no frontend: 6

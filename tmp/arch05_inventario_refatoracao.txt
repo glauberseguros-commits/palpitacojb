@@ -1,0 +1,1095 @@
+====================================================================================================
+ARCH-05R — INVENTÁRIO DEFINITIVO PARA REFATORAÇÃO
+====================================================================================================
+Gerado em: 24/07/2026 17:45:55
+Raízes analisadas:
+- backend
+- src
+
+Arquivos-fonte analisados: 200
+====================================================================================================
+
+
+====================================================================================================
+PADRÃO: normalizeLotteryKey
+====================================================================================================
+
+ARQUIVO: C:\Users\glaub\palpitaco\backend\engine\top3HistoryRepository.js
+OCORRÊNCIAS: 15
+  Linha 17: function normalizeLotteryKey(value) {
+  Linha 87: .doc(normalizeLotteryKey(lotteryKey));
+  Linha 225: lotteryKey: normalizeLotteryKey(
+  Linha 284: lotteryKey: normalizeLotteryKey(
+  Linha 299: lotteryKey: normalizeLotteryKey(
+  Linha 317: const key = normalizeLotteryKey(lotteryKey);
+  Linha 411: const key = normalizeLotteryKey(lotteryKey);
+  Linha 439: const key = normalizeLotteryKey(lotteryKey);
+  Linha 466: const key = normalizeLotteryKey(lotteryKey);
+  Linha 571: const key = normalizeLotteryKey(lotteryKey);
+  Linha 593: const key = normalizeLotteryKey(lotteryKey);
+  Linha 621: const key = normalizeLotteryKey(lotteryKey);
+  Linha 662: const key = normalizeLotteryKey(lotteryKey);
+  Linha 748: const key = normalizeLotteryKey(lotteryKey);
+  Linha 890: normalizeLotteryKey,
+
+ARQUIVO: C:\Users\glaub\palpitaco\backend\engine\top3PredictionService.js
+OCORRÊNCIAS: 5
+  Linha 74: function normalizeLotteryKey(value) {
+  Linha 349: lotteryKey: normalizeLotteryKey(lotteryKey),
+  Linha 382: if (normalizeLotteryKey(lotteryKey) === "FEDERAL") {
+  Linha 544: const lottery = normalizeLotteryKey(lotteryKey);
+  Linha 748: const lotteryKey = normalizeLotteryKey(
+
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Top3\top3.firestore.js
+OCORRÊNCIAS: 5
+  Linha 25: function normalizeLotteryKey(value) {
+  Linha 38: const lottery = normalizeLotteryKey(lotteryKey);
+  Linha 237: const lottery = normalizeLotteryKey(lotteryKey);
+  Linha 324: const lottery = normalizeLotteryKey(lotteryKey);
+  Linha 403: const lottery = normalizeLotteryKey(lotteryKey);
+
+ARQUIVO: C:\Users\glaub\palpitaco\backend\engine\predictionModel.js
+OCORRÊNCIAS: 4
+  Linha 8: function normalizeLotteryKey(value) {
+  Linha 20: const lk = normalizeLotteryKey(lotteryKey);
+  Linha 37: const lk = normalizeLotteryKey(lotteryKey);
+  Linha 90: normalizeLotteryKey,
+
+ARQUIVO: C:\Users\glaub\palpitaco\backend\engine\top3HistorySync.js
+OCORRÊNCIAS: 4
+  Linha 23: function normalizeLotteryKey(value) {
+  Linha 76: const lotteryKey = normalizeLotteryKey(
+  Linha 133: const drawLotteryKey = normalizeLotteryKey(
+  Linha 233: const lotteryKey = normalizeLotteryKey(
+
+ARQUIVO: C:\Users\glaub\palpitaco\backend\routes\bounds.js
+OCORRÊNCIAS: 4
+  Linha 12: function normalizeLotteryKey(v) {
+  Linha 230: const lk = normalizeLotteryKey(lotteryKey);
+  Linha 272: const lottery = normalizeLotteryKey(req.query.lottery || req.query.uf);
+  Linha 324: module.exports.normalizeLotteryKey = normalizeLotteryKey;
+
+ARQUIVO: C:\Users\glaub\palpitaco\backend\scripts\planBackfillFromAudit.js
+OCORRÊNCIAS: 4
+  Linha 24: function normalizeLotteryKey(v, fallback = "PT_RIO") {
+  Linha 85: if (byJson) return normalizeLotteryKey(byJson, "");
+  Linha 128: const L = normalizeLotteryKey(lottery, "PT_RIO");
+  Linha 268: const lottery = normalizeLotteryKey(lotteryRaw, "");
+
+ARQUIVO: C:\Users\glaub\palpitaco\backend\scripts\backtestTop3Official.js
+OCORRÊNCIAS: 3
+  Linha 45: function normalizeLotteryKey(value) {
+  Linha 185: const lotteryKey = normalizeLotteryKey(
+  Linha 781: normalizeLotteryKey(
+
+ARQUIVO: C:\Users\glaub\palpitaco\backend\scripts\findDuplicatesDraws.js
+OCORRÊNCIAS: 3
+  Linha 28: function normalizeLotteryKey(v, fallback = "") {
+  Linha 109: const lottery = normalizeLotteryKey(arg("lottery", "PT_RIO"), "PT_RIO");
+  Linha 144: const lk = normalizeLotteryKey(d.lottery_key || d.lotteryKey || d.lottery || "", "");
+
+ARQUIVO: C:\Users\glaub\palpitaco\backend\scripts\listDrawDuplicates.js
+OCORRÊNCIAS: 3
+  Linha 25: function normalizeLotteryKey(v, fallback = "") {
+  Linha 108: const lottery = normalizeLotteryKey(arg("lottery", "PT_RIO"), "PT_RIO");
+  Linha 152: const lk = normalizeLotteryKey(d.lottery_key || d.lotteryKey || d.lottery || "", "");
+
+ARQUIVO: C:\Users\glaub\palpitaco\backend\workers\bootstrapTop3History.js
+OCORRÊNCIAS: 3
+  Linha 8: normalizeLotteryKey,
+  Linha 77: const key = normalizeLotteryKey(
+  Linha 180: normalizeLotteryKey(
+
+ARQUIVO: C:\Users\glaub\palpitaco\backend\routes\kingDraws.js
+OCORRÊNCIAS: 2
+  Linha 13: function normalizeLotteryKey(v) {
+  Linha 168: return normalizeLotteryKey(req.query.lotteryKey ?? req.query.lottery ?? req.query.uf);
+
+ARQUIVO: C:\Users\glaub\palpitaco\backend\routes\pitacoResults.js
+OCORRÊNCIAS: 2
+  Linha 73: function normalizeLotteryKey(v) {
+  Linha 627: const lotteryKey = normalizeLotteryKey(lotteryRaw);
+
+ARQUIVO: C:\Users\glaub\palpitaco\backend\routes\receiveResults.js
+OCORRÊNCIAS: 2
+  Linha 77: function normalizeLotteryKey(v) {
+  Linha 168: const lottery = normalizeLotteryKey(body.lottery);
+
+ARQUIVO: C:\Users\glaub\palpitaco\backend\scripts\lintSourceGaps.js
+OCORRÊNCIAS: 2
+  Linha 7: function normalizeLotteryKey(v) {
+  Linha 65: const lotteryKey = normalizeLotteryKey(lotteryArg);
+
+ARQUIVO: C:\Users\glaub\palpitaco\backend\server.js
+OCORRÊNCIAS: 2
+  Linha 8: function normalizeLotteryKey(v) {
+  Linha 17: return normalizeLotteryKey(
+
+ARQUIVO: C:\Users\glaub\palpitaco\src\constants\schedule.js
+OCORRÊNCIAS: 2
+  Linha 7: function normalizeLotteryKey(v) {
+  Linha 79: const key = normalizeLotteryKey(lottery);
+
+====================================================================================================
+PADRÃO: normalizeLottery
+====================================================================================================
+
+ARQUIVO: C:\Users\glaub\palpitaco\backend\engine\top3HistoryRepository.js
+OCORRÊNCIAS: 15
+  Linha 17: function normalizeLotteryKey(value) {
+  Linha 87: .doc(normalizeLotteryKey(lotteryKey));
+  Linha 225: lotteryKey: normalizeLotteryKey(
+  Linha 284: lotteryKey: normalizeLotteryKey(
+  Linha 299: lotteryKey: normalizeLotteryKey(
+  Linha 317: const key = normalizeLotteryKey(lotteryKey);
+  Linha 411: const key = normalizeLotteryKey(lotteryKey);
+  Linha 439: const key = normalizeLotteryKey(lotteryKey);
+  Linha 466: const key = normalizeLotteryKey(lotteryKey);
+  Linha 571: const key = normalizeLotteryKey(lotteryKey);
+  Linha 593: const key = normalizeLotteryKey(lotteryKey);
+  Linha 621: const key = normalizeLotteryKey(lotteryKey);
+  Linha 662: const key = normalizeLotteryKey(lotteryKey);
+  Linha 748: const key = normalizeLotteryKey(lotteryKey);
+  Linha 890: normalizeLotteryKey,
+
+ARQUIVO: C:\Users\glaub\palpitaco\src\services\kingResultsService.js
+OCORRÊNCIAS: 6
+  Linha 308: function normalizeLotteryCodeAny(d) {
+  Linha 338: const la = normalizeLotteryCodeAny(a);
+  Linha 339: const lb = normalizeLotteryCodeAny(b);
+  Linha 365: const la = normalizeLotteryCodeAny(a);
+  Linha 366: const lb = normalizeLotteryCodeAny(b);
+  Linha 404: const lotCode = normalizeLotteryCodeAny(raw);
+
+ARQUIVO: C:\Users\glaub\palpitaco\backend\engine\top3PredictionService.js
+OCORRÊNCIAS: 5
+  Linha 74: function normalizeLotteryKey(value) {
+  Linha 349: lotteryKey: normalizeLotteryKey(lotteryKey),
+  Linha 382: if (normalizeLotteryKey(lotteryKey) === "FEDERAL") {
+  Linha 544: const lottery = normalizeLotteryKey(lotteryKey);
+  Linha 748: const lotteryKey = normalizeLotteryKey(
+
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Top3\top3.firestore.js
+OCORRÊNCIAS: 5
+  Linha 25: function normalizeLotteryKey(value) {
+  Linha 38: const lottery = normalizeLotteryKey(lotteryKey);
+  Linha 237: const lottery = normalizeLotteryKey(lotteryKey);
+  Linha 324: const lottery = normalizeLotteryKey(lotteryKey);
+  Linha 403: const lottery = normalizeLotteryKey(lotteryKey);
+
+ARQUIVO: C:\Users\glaub\palpitaco\backend\engine\predictionModel.js
+OCORRÊNCIAS: 4
+  Linha 8: function normalizeLotteryKey(value) {
+  Linha 20: const lk = normalizeLotteryKey(lotteryKey);
+  Linha 37: const lk = normalizeLotteryKey(lotteryKey);
+  Linha 90: normalizeLotteryKey,
+
+ARQUIVO: C:\Users\glaub\palpitaco\backend\engine\top3HistorySync.js
+OCORRÊNCIAS: 4
+  Linha 23: function normalizeLotteryKey(value) {
+  Linha 76: const lotteryKey = normalizeLotteryKey(
+  Linha 133: const drawLotteryKey = normalizeLotteryKey(
+  Linha 233: const lotteryKey = normalizeLotteryKey(
+
+ARQUIVO: C:\Users\glaub\palpitaco\backend\routes\bounds.js
+OCORRÊNCIAS: 4
+  Linha 12: function normalizeLotteryKey(v) {
+  Linha 230: const lk = normalizeLotteryKey(lotteryKey);
+  Linha 272: const lottery = normalizeLotteryKey(req.query.lottery || req.query.uf);
+  Linha 324: module.exports.normalizeLotteryKey = normalizeLotteryKey;
+
+ARQUIVO: C:\Users\glaub\palpitaco\backend\scripts\planBackfillFromAudit.js
+OCORRÊNCIAS: 4
+  Linha 24: function normalizeLotteryKey(v, fallback = "PT_RIO") {
+  Linha 85: if (byJson) return normalizeLotteryKey(byJson, "");
+  Linha 128: const L = normalizeLotteryKey(lottery, "PT_RIO");
+  Linha 268: const lottery = normalizeLotteryKey(lotteryRaw, "");
+
+ARQUIVO: C:\Users\glaub\palpitaco\backend\engine\drawRepository.js
+OCORRÊNCIAS: 3
+  Linha 5: function normalizeLottery(lottery) {
+  Linha 64: const lk = normalizeLottery(lottery);
+  Linha 176: const lk = normalizeLottery(lottery);
+
+ARQUIVO: C:\Users\glaub\palpitaco\backend\scripts\backtestTop3Official.js
+OCORRÊNCIAS: 3
+  Linha 45: function normalizeLotteryKey(value) {
+  Linha 185: const lotteryKey = normalizeLotteryKey(
+  Linha 781: normalizeLotteryKey(
+
+ARQUIVO: C:\Users\glaub\palpitaco\backend\scripts\findDuplicatesDraws.js
+OCORRÊNCIAS: 3
+  Linha 28: function normalizeLotteryKey(v, fallback = "") {
+  Linha 109: const lottery = normalizeLotteryKey(arg("lottery", "PT_RIO"), "PT_RIO");
+  Linha 144: const lk = normalizeLotteryKey(d.lottery_key || d.lotteryKey || d.lottery || "", "");
+
+ARQUIVO: C:\Users\glaub\palpitaco\backend\scripts\listDrawDuplicates.js
+OCORRÊNCIAS: 3
+  Linha 25: function normalizeLotteryKey(v, fallback = "") {
+  Linha 108: const lottery = normalizeLotteryKey(arg("lottery", "PT_RIO"), "PT_RIO");
+  Linha 152: const lk = normalizeLotteryKey(d.lottery_key || d.lotteryKey || d.lottery || "", "");
+
+ARQUIVO: C:\Users\glaub\palpitaco\backend\workers\bootstrapTop3History.js
+OCORRÊNCIAS: 3
+  Linha 8: normalizeLotteryKey,
+  Linha 77: const key = normalizeLotteryKey(
+  Linha 180: normalizeLotteryKey(
+
+ARQUIVO: C:\Users\glaub\palpitaco\backend\routes\kingDraws.js
+OCORRÊNCIAS: 2
+  Linha 13: function normalizeLotteryKey(v) {
+  Linha 168: return normalizeLotteryKey(req.query.lotteryKey ?? req.query.lottery ?? req.query.uf);
+
+ARQUIVO: C:\Users\glaub\palpitaco\backend\routes\pitacoResults.js
+OCORRÊNCIAS: 2
+  Linha 73: function normalizeLotteryKey(v) {
+  Linha 627: const lotteryKey = normalizeLotteryKey(lotteryRaw);
+
+ARQUIVO: C:\Users\glaub\palpitaco\backend\routes\receiveResults.js
+OCORRÊNCIAS: 2
+  Linha 77: function normalizeLotteryKey(v) {
+  Linha 168: const lottery = normalizeLotteryKey(body.lottery);
+
+ARQUIVO: C:\Users\glaub\palpitaco\backend\scripts\lintSourceGaps.js
+OCORRÊNCIAS: 2
+  Linha 7: function normalizeLotteryKey(v) {
+  Linha 65: const lotteryKey = normalizeLotteryKey(lotteryArg);
+
+ARQUIVO: C:\Users\glaub\palpitaco\backend\server.js
+OCORRÊNCIAS: 2
+  Linha 8: function normalizeLotteryKey(v) {
+  Linha 17: return normalizeLotteryKey(
+
+ARQUIVO: C:\Users\glaub\palpitaco\src\constants\schedule.js
+OCORRÊNCIAS: 2
+  Linha 7: function normalizeLotteryKey(v) {
+  Linha 79: const key = normalizeLotteryKey(lottery);
+
+====================================================================================================
+PADRÃO: normalizeHourLike
+====================================================================================================
+
+ARQUIVO: C:\Users\glaub\palpitaco\src\services\kingResultsService.js
+OCORRÊNCIAS: 11
+  Linha 200: function normalizeHourLike(value) {
+  Linha 268: const hhmm = closeHour ? normalizeHourLike(closeHour) : null;
+  Linha 279: const norm = normalizeHourLike(raw);
+  Linha 282: return norm === normalizeHourLike(hourFilter.hhmm);
+  Linha 323: const s = normalizeHourLike(h);
+  Linha 350: const s = normalizeHourLike(h);
+  Linha 402: const hour = normalizeHourLike(raw.close_hour || raw.closeHour || "");
+  Linha 550: const hourNorm = normalizeHourLike(
+  Linha 1086: const h = normalizeHourLike(
+  Linha 1673: const s = normalizeHourLike(hhmm);
+  Linha 1801: lastHour: seen?.hour ? normalizeHourLike(seen.hour) : null,
+
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Centenas\CentenasView.jsx
+OCORRÊNCIAS: 9
+  Linha 96: function normalizeHourLike(value) {
+  Linha 118: const norm = normalizeHourLike(value);
+  Linha 163: const norm = normalizeHourLike(value);
+  Linha 276: const norm = normalizeHourLike(c);
+  Linha 292: const norm = normalizeHourLike(c);
+  Linha 524: const n = normalizeHourLike(c);
+  Linha 671: : normalizeHourLike(fHorario),
+  Linha 1265: const hourNorm = normalizeHourLike(hrRaw);
+  Linha 1305: const hourNorm = normalizeHourLike(hrRaw);
+
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx
+OCORRÊNCIAS: 8
+  Linha 86: function normalizeHourLike(value) {
+  Linha 107: const s = normalizeHourLike(hhmm);
+  Linha 121: const hhmm = normalizeHourLike(value);
+  Linha 151: const ch = normalizeHourLike(d?.close_hour || d?.closeHour || d?.hour || d?.hora || "");
+  Linha 193: lastCloseHour: r?.lastCloseHour ? normalizeHourLike(r.lastCloseHour) : "",
+  Linha 210: const lastCloseHour = rec?.lastCloseHour ? normalizeHourLike(rec.lastCloseHour) : "";
+  Linha 589: lastCloseHour: r?.lastCloseHour ? normalizeHourLike(r.lastCloseHour) : "",
+  Linha 1057: const hh = r.lastCloseHour ? normalizeHourLike(r.lastCloseHour) : "";
+
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Results\Results.jsx
+OCORRÊNCIAS: 7
+  Linha 113: function normalizeHourLike(value) {
+  Linha 134: const s = normalizeHourLike(h);
+  Linha 515: const hour = normalizeHourLike(
+  Linha 666: const hour = normalizeHourLike(
+  Linha 697: return normalizeHourLike(
+  Linha 704: const hour = normalizeHourLike(
+  Linha 1960: const hour = normalizeHourLike(
+
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Centenas\centenas.utils.js
+OCORRÊNCIAS: 5
+  Linha 67: export function normalizeHourLike(value) {
+  Linha 89: const norm = normalizeHourLike(value);
+  Linha 136: const norm = normalizeHourLike(c);
+  Linha 152: const norm = normalizeHourLike(c);
+  Linha 398: const n = normalizeHourLike(c);
+
+ARQUIVO: C:\Users\glaub\palpitaco\src\services\auditKingCounts.js
+OCORRÊNCIAS: 5
+  Linha 82: function normalizeHourLike(value) {
+  Linha 197: const hh = normalizeHourLike(extractRawCloseHourFromDraw(d)) || "";
+  Linha 252: const rawHourFilter = normalizeHourLike(options?.hour);
+  Linha 272: const drawHour = normalizeHourLike(extractRawCloseHourFromDraw(d));
+  Linha 415: const hhmm = normalizeHourLike(extractRawCloseHourFromDraw(d));
+
+ARQUIVO: C:\Users\glaub\palpitaco\backend\server.js
+OCORRÊNCIAS: 4
+  Linha 264: function normalizeHourLike(value) {
+  Linha 311: const s = normalizeHourLike(hhmm);
+  Linha 475: const close_hour = normalizeHourLike(
+  Linha 619: const lastCloseHour = seen?.closeHour ? normalizeHourLike(seen.closeHour) : null;
+
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.js
+OCORRÊNCIAS: 4
+  Linha 7: normalizeHourLike,
+  Linha 132: return normalizeHourLike(
+  Linha 296: const h = normalizeHourLike(hour);
+  Linha 314: .map(normalizeHourLike)
+
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Downloads\Downloads.jsx
+OCORRÊNCIAS: 3
+  Linha 40: function normalizeHourLike(value) {
+  Linha 59: const s = normalizeHourLike(hhmm);
+  Linha 174: return normalizeHourLike(draw?.close_hour || draw?.closeHour || draw?.hour || draw?.hora || "");
+
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Top3\top3.formatters.js
+OCORRÊNCIAS: 3
+  Linha 164: export function normalizeHourLike(value) {
+  Linha 213: const s = normalizeHourLike(hhmm);
+  Linha 234: const s = normalizeHourLike(raw);
+
+ARQUIVO: C:\Users\glaub\palpitaco\src\services\statsSignals.js
+OCORRÊNCIAS: 3
+  Linha 107: function normalizeHourLike(value) {
+  Linha 134: const s = normalizeHourLike(hhmm);
+  Linha 197: return normalizeHourLike(
+
+ARQUIVO: C:\Users\glaub\palpitaco\src\utils\buildPalpites.js
+OCORRÊNCIAS: 3
+  Linha 56: function normalizeHourLike(value) {
+  Linha 244: `${getDrawYmd(d) || ""}__${normalizeHourLike(getDrawCloseHour(d) || "")}`;
+  Linha 260: return toHourNum(normalizeHourLike(getDrawCloseHour(a))) - toHourNum(normalizeHourLike(getDrawCloseHour(b)));
+
+ARQUIVO: C:\Users\glaub\palpitaco\backend\scripts\auditDrawsBoundsAndCounts.js
+OCORRÊNCIAS: 2
+  Linha 78: function normalizeHourLike(v) {
+  Linha 111: const h = normalizeHourLike(
+
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Search\Search.jsx
+OCORRÊNCIAS: 2
+  Linha 82: function normalizeHourLike(value) {
+  Linha 773: const closeRaw = normalizeHourLike(d?.close_hour || d?.closeHour || d?.hour || d?.hora || "");
+
+====================================================================================================
+PADRÃO: normalizeHour
+====================================================================================================
+
+ARQUIVO: C:\Users\glaub\palpitaco\backend\routes\pitacoResults.js
+OCORRÊNCIAS: 13
+  Linha 330: function normalizeHourList(arr) {
+  Linha 401: const hard = normalizeHourList(scheduleRaw?.hard || scheduleRaw?.expectedHard || []);
+  Linha 402: const soft = normalizeHourList(scheduleRaw?.soft || scheduleRaw?.expectedSoft || []);
+  Linha 403: const hours = normalizeHourList(scheduleRaw?.hours || []);
+  Linha 428: const hard = normalizeHourList(block?.hard || block?.expectedHard || []);
+  Linha 429: const soft = normalizeHourList(block?.soft || block?.expectedSoft || []);
+  Linha 430: const hours = normalizeHourList(block?.hours || []);
+  Linha 436: const hard = normalizeHourList(r?.hard || r?.expectedHard || []);
+  Linha 437: const soft = normalizeHourList(r?.soft || r?.expectedSoft || []);
+  Linha 438: const hours = normalizeHourList(r?.hours || []);
+  Linha 485: removedHard: normalizeHourList(entry),
+  Linha 495: removedHard: normalizeHourList(hard),
+  Linha 496: removedSoft: normalizeHourList(soft),
+
+ARQUIVO: C:\Users\glaub\palpitaco\src\services\kingResultsService.js
+OCORRÊNCIAS: 11
+  Linha 200: function normalizeHourLike(value) {
+  Linha 268: const hhmm = closeHour ? normalizeHourLike(closeHour) : null;
+  Linha 279: const norm = normalizeHourLike(raw);
+  Linha 282: return norm === normalizeHourLike(hourFilter.hhmm);
+  Linha 323: const s = normalizeHourLike(h);
+  Linha 350: const s = normalizeHourLike(h);
+  Linha 402: const hour = normalizeHourLike(raw.close_hour || raw.closeHour || "");
+  Linha 550: const hourNorm = normalizeHourLike(
+  Linha 1086: const h = normalizeHourLike(
+  Linha 1673: const s = normalizeHourLike(hhmm);
+  Linha 1801: lastHour: seen?.hour ? normalizeHourLike(seen.hour) : null,
+
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Centenas\CentenasView.jsx
+OCORRÊNCIAS: 9
+  Linha 96: function normalizeHourLike(value) {
+  Linha 118: const norm = normalizeHourLike(value);
+  Linha 163: const norm = normalizeHourLike(value);
+  Linha 276: const norm = normalizeHourLike(c);
+  Linha 292: const norm = normalizeHourLike(c);
+  Linha 524: const n = normalizeHourLike(c);
+  Linha 671: : normalizeHourLike(fHorario),
+  Linha 1265: const hourNorm = normalizeHourLike(hrRaw);
+  Linha 1305: const hourNorm = normalizeHourLike(hrRaw);
+
+ARQUIVO: C:\Users\glaub\palpitaco\backend\engine\top3PredictionService.js
+OCORRÊNCIAS: 8
+  Linha 92: function normalizeHour(value) {
+  Linha 125: return `${ymd}T${normalizeHour(hour)}`;
+  Linha 326: return normalizeHour(value)
+  Linha 351: hourBucket: normalizeHour(hour),
+  Linha 545: const hour = normalizeHour(closeHour);
+  Linha 753: const closeHour = normalizeHour(input.closeHour);
+  Linha 807: normalizeHour(rawHour);
+  Linha 968: normalizeHour,
+
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx
+OCORRÊNCIAS: 8
+  Linha 86: function normalizeHourLike(value) {
+  Linha 107: const s = normalizeHourLike(hhmm);
+  Linha 121: const hhmm = normalizeHourLike(value);
+  Linha 151: const ch = normalizeHourLike(d?.close_hour || d?.closeHour || d?.hour || d?.hora || "");
+  Linha 193: lastCloseHour: r?.lastCloseHour ? normalizeHourLike(r.lastCloseHour) : "",
+  Linha 210: const lastCloseHour = rec?.lastCloseHour ? normalizeHourLike(rec.lastCloseHour) : "";
+  Linha 589: lastCloseHour: r?.lastCloseHour ? normalizeHourLike(r.lastCloseHour) : "",
+  Linha 1057: const hh = r.lastCloseHour ? normalizeHourLike(r.lastCloseHour) : "";
+
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Top3\top3.firestore.js
+OCORRÊNCIAS: 8
+  Linha 29: function normalizeHour(value) {
+  Linha 34: return normalizeHour(value).replace(/\D/g, "").padStart(2, "0");
+  Linha 103: const hour = normalizeHour(targetHour);
+  Linha 111: normalizeHour(pickDrawHour(draw)) === hour
+  Linha 239: const hour = normalizeHour(targetHour);
+  Linha 332: .map(normalizeHour)
+  Linha 364: return normalizeHour(a?.targetHour).localeCompare(
+  Linha 365: normalizeHour(b?.targetHour)
+
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Results\Results.jsx
+OCORRÊNCIAS: 7
+  Linha 113: function normalizeHourLike(value) {
+  Linha 134: const s = normalizeHourLike(h);
+  Linha 515: const hour = normalizeHourLike(
+  Linha 666: const hour = normalizeHourLike(
+  Linha 697: return normalizeHourLike(
+  Linha 704: const hour = normalizeHourLike(
+  Linha 1960: const hour = normalizeHourLike(
+
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Dashboard\Dashboard.jsx
+OCORRÊNCIAS: 6
+  Linha 181: function normalizeHourBucket(h) {
+  Linha 568: const bucket = normalizeHourBucket(s);
+  Linha 780: const fedBucket = isFederal ? normalizeHourBucket(filters?.horario) : null;
+  Linha 1195: const closeHourBucketLocal = useMemo(() => normalizeHourBucket(filters.horario), [filters.horario]);
+  Linha 1320: const b = normalizeHourBucket(getDrawCloseHour(d));
+  Linha 1440: const b = normalizeHourBucket(getDrawCloseHour(d));
+
+ARQUIVO: C:\Users\glaub\palpitaco\backend\scripts\auditHistoricalGaps.js
+OCORRÊNCIAS: 5
+  Linha 70: function normalizeHourList(arr) {
+  Linha 144: hard: normalizeHourList(block.hard || []),
+  Linha 145: soft: normalizeHourList(block.soft || []),
+  Linha 155: removedHard: normalizeHourList(entry.removedHard || entry.hard || []),
+  Linha 156: removedSoft: normalizeHourList(entry.removedSoft || entry.soft || []),
+
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Centenas\centenas.utils.js
+OCORRÊNCIAS: 5
+  Linha 67: export function normalizeHourLike(value) {
+  Linha 89: const norm = normalizeHourLike(value);
+  Linha 136: const norm = normalizeHourLike(c);
+  Linha 152: const norm = normalizeHourLike(c);
+  Linha 398: const n = normalizeHourLike(c);
+
+ARQUIVO: C:\Users\glaub\palpitaco\src\services\auditKingCounts.js
+OCORRÊNCIAS: 5
+  Linha 82: function normalizeHourLike(value) {
+  Linha 197: const hh = normalizeHourLike(extractRawCloseHourFromDraw(d)) || "";
+  Linha 252: const rawHourFilter = normalizeHourLike(options?.hour);
+  Linha 272: const drawHour = normalizeHourLike(extractRawCloseHourFromDraw(d));
+  Linha 415: const hhmm = normalizeHourLike(extractRawCloseHourFromDraw(d));
+
+ARQUIVO: C:\Users\glaub\palpitaco\backend\scripts\backtestTop3Official.js
+OCORRÊNCIAS: 4
+  Linha 51: function normalizeHour(value) {
+  Linha 70: return `${ymd}T${normalizeHour(hour) || hour}`;
+  Linha 986: normalizeHour(targetHour) ||
+  Linha 1104: normalizeHour(targetHour) ||
+
+ARQUIVO: C:\Users\glaub\palpitaco\backend\server.js
+OCORRÊNCIAS: 4
+  Linha 264: function normalizeHourLike(value) {
+  Linha 311: const s = normalizeHourLike(hhmm);
+  Linha 475: const close_hour = normalizeHourLike(
+  Linha 619: const lastCloseHour = seen?.closeHour ? normalizeHourLike(seen.closeHour) : null;
+
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.js
+OCORRÊNCIAS: 4
+  Linha 7: normalizeHourLike,
+  Linha 132: return normalizeHourLike(
+  Linha 296: const h = normalizeHourLike(hour);
+  Linha 314: .map(normalizeHourLike)
+
+ARQUIVO: C:\Users\glaub\palpitaco\backend\engine\scoreEngineE08Experimental.js
+OCORRÊNCIAS: 3
+  Linha 16: function normalizeHour(value) {
+  Linha 57: return normalizeHour(
+  Linha 375: normalizeHour(
+
+ARQUIVO: C:\Users\glaub\palpitaco\backend\engine\scoreEngineV4Experimental.js
+OCORRÊNCIAS: 3
+  Linha 14: function normalizeHour(value) {
+  Linha 79: return normalizeHour(
+  Linha 365: normalizeHour(
+
+ARQUIVO: C:\Users\glaub\palpitaco\backend\scripts\auditDrawSlotsRange.js
+OCORRÊNCIAS: 3
+  Linha 198: function normalizeHourList(arr) {
+  Linha 273: const expectedHard = normalizeHourList(rule.hard);
+  Linha 274: const expectedSoft = normalizeHourList(rule.soft);
+
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Downloads\Downloads.jsx
+OCORRÊNCIAS: 3
+  Linha 40: function normalizeHourLike(value) {
+  Linha 59: const s = normalizeHourLike(hhmm);
+  Linha 174: return normalizeHourLike(draw?.close_hour || draw?.closeHour || draw?.hour || draw?.hora || "");
+
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Statistics\Statistics.jsx
+OCORRÊNCIAS: 3
+  Linha 247: function normalizeHour(value) {
+  Linha 264: const normalized = normalizeHour(value);
+  Linha 934: const drawHour = normalizeHour(
+
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Top3\top3.formatters.js
+OCORRÊNCIAS: 3
+  Linha 164: export function normalizeHourLike(value) {
+  Linha 213: const s = normalizeHourLike(hhmm);
+  Linha 234: const s = normalizeHourLike(raw);
+
+ARQUIVO: C:\Users\glaub\palpitaco\src\services\statsSignals.js
+OCORRÊNCIAS: 3
+  Linha 107: function normalizeHourLike(value) {
+  Linha 134: const s = normalizeHourLike(hhmm);
+  Linha 197: return normalizeHourLike(
+
+ARQUIVO: C:\Users\glaub\palpitaco\src\utils\buildPalpites.js
+OCORRÊNCIAS: 3
+  Linha 56: function normalizeHourLike(value) {
+  Linha 244: `${getDrawYmd(d) || ""}__${normalizeHourLike(getDrawCloseHour(d) || "")}`;
+  Linha 260: return toHourNum(normalizeHourLike(getDrawCloseHour(a))) - toHourNum(normalizeHourLike(getDrawCloseHour(b)));
+
+ARQUIVO: C:\Users\glaub\palpitaco\backend\scripts\auditDrawsBoundsAndCounts.js
+OCORRÊNCIAS: 2
+  Linha 78: function normalizeHourLike(v) {
+  Linha 111: const h = normalizeHourLike(
+
+ARQUIVO: C:\Users\glaub\palpitaco\backend\scripts\integrityCheck.js
+OCORRÊNCIAS: 2
+  Linha 6: function normalizeHour(v) {
+  Linha 30: hour: normalizeHour(d.close_hour || d.hour),
+
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Search\Search.jsx
+OCORRÊNCIAS: 2
+  Linha 82: function normalizeHourLike(value) {
+  Linha 773: const closeRaw = normalizeHourLike(d?.close_hour || d?.closeHour || d?.hour || d?.hora || "");
+
+====================================================================================================
+PADRÃO: normalizeYmd
+====================================================================================================
+
+ARQUIVO: C:\Users\glaub\palpitaco\backend\engine\top3PredictionService.js
+OCORRÊNCIAS: 4
+  Linha 80: function normalizeYmd(value) {
+  Linha 350: ymd: normalizeYmd(ymd),
+  Linha 372: ymd: normalizeYmd(resolved?.ymd),
+  Linha 752: const date = normalizeYmd(input.date);
+
+ARQUIVO: C:\Users\glaub\palpitaco\backend\engine\scoreEngineV4Experimental.js
+OCORRÊNCIAS: 3
+  Linha 44: function normalizeYmd(value) {
+  Linha 67: return normalizeYmd(
+  Linha 580: ymd: normalizeYmd(
+
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Statistics\Statistics.jsx
+OCORRÊNCIAS: 3
+  Linha 117: function normalizeYmd(value) {
+  Linha 132: const ymd = normalizeYmd(value);
+  Linha 924: const ymd = normalizeYmd(
+
+ARQUIVO: C:\Users\glaub\palpitaco\backend\engine\top3HistoryRepository.js
+OCORRÊNCIAS: 2
+  Linha 51: function normalizeYmd(value) {
+  Linha 195: const ymd = normalizeYmd(
+
+ARQUIVO: C:\Users\glaub\palpitaco\backend\scripts\genPtRioCalendarRules.js
+OCORRÊNCIAS: 2
+  Linha 65: function normalizeYMD(v) {
+  Linha 92: const ymd = normalizeYMD(d.ymd) || normalizeYMD(d.date);
+
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Search\Search.jsx
+OCORRÊNCIAS: 2
+  Linha 136: function normalizeYmdAny(v) {
+  Linha 770: const ymd = normalizeYmdAny(d?.ymd || d?.dateYmd || d?.date || d?.data || "");
+
+====================================================================================================
+PADRÃO: normalizePrize
+====================================================================================================
+
+ARQUIVO: C:\Users\glaub\palpitaco\backend\engine\top3HistoryRepository.js
+OCORRÊNCIAS: 4
+  Linha 152: function normalizePrize(prize = {}) {
+  Linha 212: .map(normalizePrize)
+  Linha 490: const normalized = normalizePrize(prize);
+  Linha 515: return normalizePrize({
+
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Centenas\CentenasView.jsx
+OCORRÊNCIAS: 4
+  Linha 475: function normalizePrizesArray(res) {
+  Linha 1169: normalizePrizesArray(res);
+  Linha 1224: normalizePrizesArray(res)
+  Linha 1243: normalizePrizesArray(res).length,
+
+ARQUIVO: C:\Users\glaub\palpitaco\src\services\kingResultsService.js
+OCORRÊNCIAS: 3
+  Linha 23: normalizePrize,
+  Linha 502: normalizePrize(p, p?.prizeId ?? `emb_${idx}`)
+  Linha 526: const allRaw = snap.docs.map((d) => normalizePrize(d.data(), d.id));
+
+ARQUIVO: C:\Users\glaub\palpitaco\backend\scripts\importKingApostas.js
+OCORRÊNCIAS: 2
+  Linha 330: function normalizePrize(raw) {
+  Linha 1306: const n = normalizePrize(p.value);
+
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Statistics\Statistics.jsx
+OCORRÊNCIAS: 2
+  Linha 457: function normalizePrize(prize, fallbackPosition) {
+  Linha 511: normalizePrize(prize, index + 1)
+
+ARQUIVO: C:\Users\glaub\palpitaco\src\services\king\king.normalize.js
+OCORRÊNCIAS: 2
+  Linha 86: export function normalizePrize(p, prizeId) {
+  Linha 169: normalizePrize(p, p?.prizeId ?? `emb_${idx}`)
+
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Centenas\centenas.utils.js
+OCORRÊNCIAS: 1
+  Linha 349: export function normalizePrizesArray(res) {
+
+====================================================================================================
+PADRÃO: normalizeDraw
+====================================================================================================
+
+ARQUIVO: C:\Users\glaub\palpitaco\backend\engine\top3HistoryRepository.js
+OCORRÊNCIAS: 5
+  Linha 188: function normalizeDraw(draw = {}) {
+  Linha 254: const draw = normalizeDraw(raw);
+  Linha 526: const normalized = normalizeDraw(draw);
+  Linha 553: return normalizeDraw({
+  Linha 893: normalizeDraw,
+
+ARQUIVO: C:\Users\glaub\palpitaco\backend\scripts\importKingApostas.js
+OCORRÊNCIAS: 5
+  Linha 427: function normalizeDrawCloseHour(draw, lotteryKey) {
+  Linha 865: const { slot } = normalizeDrawCloseHour(d, lotteryKey);
+  Linha 902: const { slot } = normalizeDrawCloseHour(
+  Linha 1031: const { raw: closeRaw, slot: closeSlot } = normalizeDrawCloseHour(
+  Linha 1201: const { raw: closeRaw, slot: closeSlot } = normalizeDrawCloseHour(
+
+ARQUIVO: C:\Users\glaub\palpitaco\backend\routes\kingDraws.js
+OCORRÊNCIAS: 4
+  Linha 299: function normalizeDrawDoc(doc) {
+  Linha 402: const rawDraws = docs.map(normalizeDrawDoc);
+  Linha 456: const rawDraws = docs.map(normalizeDrawDoc);
+  Linha 519: const rawDraws = snap.docs.map(normalizeDrawDoc);
+
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Centenas\CentenasView.jsx
+OCORRÊNCIAS: 4
+  Linha 463: function normalizeDrawsResult(maybe) {
+  Linha 1166: normalizeDrawsResult(res);
+  Linha 1210: normalizeDrawsResult(res)
+  Linha 1241: normalizeDrawsResult(res).length,
+
+ARQUIVO: C:\Users\glaub\palpitaco\backend\workers\bootstrapTop3History.js
+OCORRÊNCIAS: 2
+  Linha 9: normalizeDraw,
+  Linha 43: const draw = normalizeDraw(rawDraw);
+
+ARQUIVO: C:\Users\glaub\palpitaco\src\hooks\useKingRanking.js
+OCORRÊNCIAS: 2
+  Linha 180: function normalizeDrawForCharts(d) {
+  Linha 596: let unique = dedupeDrawsLogicalPreferBest(draws).map(normalizeDrawForCharts);
+
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Admin\modules\MilharEngine\MilharEnginePage.jsx
+OCORRÊNCIAS: 2
+  Linha 134: function normalizeDraws(raw) {
+  Linha 168: for (const draw of normalizeDraws(raw)) {
+
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Search\Search.jsx
+OCORRÊNCIAS: 2
+  Linha 366: function normalizeDrawsResponse(res) {
+  Linha 766: const drawsArr = normalizeDrawsResponse(res);
+
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Statistics\Statistics.jsx
+OCORRÊNCIAS: 2
+  Linha 307: function normalizeDrawsResponse(response) {
+  Linha 921: const draws = normalizeDrawsResponse(response);
+
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Centenas\centenas.utils.js
+OCORRÊNCIAS: 1
+  Linha 337: export function normalizeDrawsResult(maybe) {
+
+====================================================================================================
+PADRÃO: normalizeDate
+====================================================================================================
+SEM OCORRÊNCIAS
+
+====================================================================================================
+PADRÃO: normalizeResult
+====================================================================================================
+
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Top3\top3.storage.js
+OCORRÊNCIAS: 5
+  Linha 66: function normalizeResult(resultValue) {
+  Linha 81: const result = normalizeResult(entry?.result);
+  Linha 228: const result = normalizeResult(resultGrupo);
+  Linha 294: const result = normalizeResult(pickPrize1GrupoFromDraw(real));
+  Linha 342: const result = normalizeResult(prev?.result);
+
+ARQUIVO: C:\Users\glaub\palpitaco\backend\routes\receiveResults.js
+OCORRÊNCIAS: 2
+  Linha 135: function normalizeResultRow(r) {
+  Linha 202: .map(normalizeResultRow)
+
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.js
+OCORRÊNCIAS: 2
+  Linha 3966: function normalizeResultTop3(slot) {
+  Linha 4012: const resultTop3 = normalizeResultTop3(slot);
+
+====================================================================================================
+ARQUIVOS COM MAIOR CONCENTRAÇÃO DE NORMALIZAÇÕES
+====================================================================================================
+  69 | C:\Users\glaub\palpitaco\backend\engine\top3HistoryRepository.js
+  60 | C:\Users\glaub\palpitaco\backend\scripts\importKingApostas.js
+  58 | C:\Users\glaub\palpitaco\src\services\kingResultsService.js
+  44 | C:\Users\glaub\palpitaco\src\pages\Centenas\modules\milharProbabilityEngine.js
+  43 | C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.js
+  30 | C:\Users\glaub\palpitaco\src\pages\Dashboard\Dashboard.jsx
+  29 | C:\Users\glaub\palpitaco\src\pages\Top3\top3.storage.js
+  28 | C:\Users\glaub\palpitaco\src\pages\Dashboard\components\FiltersBar.jsx
+  28 | C:\Users\glaub\palpitaco\src\pages\Results\Results.jsx
+  27 | C:\Users\glaub\palpitaco\backend\routes\pitacoResults.js
+  27 | C:\Users\glaub\palpitaco\src\pages\Centenas\modules\milharProbabilityEngineV3.js
+  26 | C:\Users\glaub\palpitaco\backend\engine\top3PredictionService.js
+  26 | C:\Users\glaub\palpitaco\src\pages\Centenas\CentenasView.jsx
+  25 | C:\Users\glaub\palpitaco\src\pages\Admin\modules\MilharEngine\MilharEnginePage.jsx
+  25 | C:\Users\glaub\palpitaco\src\pages\Top3\top3.firestore.js
+  23 | C:\Users\glaub\palpitaco\src\pages\Downloads\Downloads.jsx
+  21 | C:\Users\glaub\palpitaco\src\pages\Account\account.profile.service.js
+  20 | C:\Users\glaub\palpitaco\src\pages\Statistics\Statistics.jsx
+  17 | C:\Users\glaub\palpitaco\src\pages\Account\Account.jsx
+  17 | C:\Users\glaub\palpitaco\src\pages\Dashboard\components\DateRangeControl.jsx
+  17 | C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx
+  16 | C:\Users\glaub\palpitaco\src\services\auditKingCounts.js
+  15 | C:\Users\glaub\palpitaco\backend\workers\bootstrapTop3History.js
+  15 | C:\Users\glaub\palpitaco\src\hooks\useKingRanking.js
+  14 | C:\Users\glaub\palpitaco\backend\scripts\ptRioCalendar.js
+  14 | C:\Users\glaub\palpitaco\src\pages\Search\Search.jsx
+  12 | C:\Users\glaub\palpitaco\backend\routes\kingDraws.js
+  12 | C:\Users\glaub\palpitaco\src\pages\Top3\Top3View.jsx
+  11 | C:\Users\glaub\palpitaco\src\services\planService.js
+  10 | C:\Users\glaub\palpitaco\src\App.jsx
+  10 | C:\Users\glaub\palpitaco\src\services\king\king.normalize.js
+   9 | C:\Users\glaub\palpitaco\backend\routes\receiveResults.js
+   9 | C:\Users\glaub\palpitaco\src\utils\buildPalpites.js
+   8 | C:\Users\glaub\palpitaco\backend\routes\bounds.js
+   8 | C:\Users\glaub\palpitaco\backend\scripts\backtestTop3AblationExperimental.js
+   8 | C:\Users\glaub\palpitaco\src\pages\Admin\AdminLogin.jsx
+   8 | C:\Users\glaub\palpitaco\src\utils\buildRanking.js
+   7 | C:\Users\glaub\palpitaco\backend\engine\drawRepository.js
+   7 | C:\Users\glaub\palpitaco\backend\scripts\auditHistoricalGaps.js
+   7 | C:\Users\glaub\palpitaco\backend\scripts\auditTop3E08DifferencesExperimental.js
+   7 | C:\Users\glaub\palpitaco\backend\scripts\backtestTop3Official.js
+   7 | C:\Users\glaub\palpitaco\src\constants\bichoMap.js
+   7 | C:\Users\glaub\palpitaco\src\pages\Centenas\centenas.utils.js
+   7 | C:\Users\glaub\palpitaco\src\pages\Top3\__tests__\top3.schedule-transition.test.js
+   6 | C:\Users\glaub\palpitaco\backend\engine\frequencyEvidence.js
+   6 | C:\Users\glaub\palpitaco\backend\engine\hypothesisEngine.js
+   6 | C:\Users\glaub\palpitaco\backend\engine\scoreEngineV4Experimental.js
+   6 | C:\Users\glaub\palpitaco\backend\scripts\federalCalendar.test.js
+   6 | C:\Users\glaub\palpitaco\backend\scripts\planBackfillFromAudit.js
+   6 | C:\Users\glaub\palpitaco\backend\server.js
+
+====================================================================================================
+DEFINIÇÕES PROVÁVEIS DE FUNÇÕES
+====================================================================================================
+C:\Users\glaub\palpitaco\backend\engine\contextEvidence.js:11: function normalize(value) {
+C:\Users\glaub\palpitaco\backend\engine\drawRepository.js:5: function normalizeLottery(lottery) {
+C:\Users\glaub\palpitaco\backend\engine\drawRepository.js:9: function normalizeGrupo(v) {
+C:\Users\glaub\palpitaco\backend\engine\drawRepository.js:14: function normalizePosition(v) {
+C:\Users\glaub\palpitaco\backend\engine\frequencyEvidence.js:12: function normalize(value) {
+C:\Users\glaub\palpitaco\backend\engine\frequencyEvidence.js:22: function normalizePercent(value) {
+C:\Users\glaub\palpitaco\backend\engine\historicalQueryEngine.js:5: function normalizeWeekday(value) {
+C:\Users\glaub\palpitaco\backend\engine\hypothesisEngine.js:12: function normalize(value) {
+C:\Users\glaub\palpitaco\backend\engine\predictionModel.js:8: function normalizeLotteryKey(value) {
+C:\Users\glaub\palpitaco\backend\engine\scoreEngineE08Experimental.js:16: function normalizeHour(value) {
+C:\Users\glaub\palpitaco\backend\engine\scoreEngineV2.js:13: function normalizeEvidenceValue(value) {
+C:\Users\glaub\palpitaco\backend\engine\scoreEngineV4Experimental.js:14: function normalizeHour(value) {
+C:\Users\glaub\palpitaco\backend\engine\scoreEngineV4Experimental.js:44: function normalizeYmd(value) {
+C:\Users\glaub\palpitaco\backend\engine\statisticsEngine.js:13: function normalizeUfKey(uf) {
+C:\Users\glaub\palpitaco\backend\engine\top3HistoryRepository.js:17: function normalizeLotteryKey(value) {
+C:\Users\glaub\palpitaco\backend\engine\top3HistoryRepository.js:31: function normalizeYearMonth(value) {
+C:\Users\glaub\palpitaco\backend\engine\top3HistoryRepository.js:51: function normalizeYmd(value) {
+C:\Users\glaub\palpitaco\backend\engine\top3HistoryRepository.js:61: function normalizeYear(value) {
+C:\Users\glaub\palpitaco\backend\engine\top3HistoryRepository.js:152: function normalizePrize(prize = {}) {
+C:\Users\glaub\palpitaco\backend\engine\top3HistoryRepository.js:188: function normalizeDraw(draw = {}) {
+C:\Users\glaub\palpitaco\backend\engine\top3HistoryRepository.js:320: const normalizedDraws = deduplicateDraws(
+C:\Users\glaub\palpitaco\backend\engine\top3HistoryRepository.js:490: const normalized = normalizePrize(prize);
+C:\Users\glaub\palpitaco\backend\engine\top3HistoryRepository.js:526: const normalized = normalizeDraw(draw);
+C:\Users\glaub\palpitaco\backend\engine\top3HistoryRepository.js:622: const normalizedYear = normalizeYear(year);
+C:\Users\glaub\palpitaco\backend\engine\top3HistoryRepository.js:663: const normalizedYear = normalizeYear(year);
+C:\Users\glaub\palpitaco\backend\engine\top3HistoryRepository.js:665: const normalizedDraws = deduplicateDraws(
+C:\Users\glaub\palpitaco\backend\engine\top3HistorySync.js:23: function normalizeLotteryKey(value) {
+C:\Users\glaub\palpitaco\backend\engine\top3PredictionService.js:74: function normalizeLotteryKey(value) {
+C:\Users\glaub\palpitaco\backend\engine\top3PredictionService.js:80: function normalizeYmd(value) {
+C:\Users\glaub\palpitaco\backend\engine\top3PredictionService.js:92: function normalizeHour(value) {
+C:\Users\glaub\palpitaco\backend\engine\top3PredictionService.js:149: function normalizeHistorySource(value) {
+C:\Users\glaub\palpitaco\backend\engine\top3PredictionService.js:312: function normalizePublicMilhar(value) {
+C:\Users\glaub\palpitaco\backend\engine\top3PredictionService.js:551: const normalizedSnapshot =
+C:\Users\glaub\palpitaco\backend\routes\bounds.js:12: function normalizeLotteryKey(v) {
+C:\Users\glaub\palpitaco\backend\routes\bounds.js:54: function normalizeToYMD(input) {
+C:\Users\glaub\palpitaco\backend\routes\kingDraws.js:13: function normalizeLotteryKey(v) {
+C:\Users\glaub\palpitaco\backend\routes\kingDraws.js:113: function normalizeHHMM(value) {
+C:\Users\glaub\palpitaco\backend\routes\kingDraws.js:299: function normalizeDrawDoc(doc) {
+C:\Users\glaub\palpitaco\backend\routes\pitacoResults.js:73: function normalizeLotteryKey(v) {
+C:\Users\glaub\palpitaco\backend\routes\pitacoResults.js:124: function normalizeHHMM(value) {
+C:\Users\glaub\palpitaco\backend\routes\pitacoResults.js:233: function normalizeCloseHourForLottery(value, lotteryKey) {
+C:\Users\glaub\palpitaco\backend\routes\pitacoResults.js:330: function normalizeHourList(arr) {
+C:\Users\glaub\palpitaco\backend\routes\pitacoResults.js:482: function normalizeGapEntry(entry) {
+C:\Users\glaub\palpitaco\backend\routes\pitacoResults.js:768: const normalized =
+C:\Users\glaub\palpitaco\backend\routes\receiveResults.js:44: function normalizeHHMM(value) {
+C:\Users\glaub\palpitaco\backend\routes\receiveResults.js:77: function normalizeLotteryKey(v) {
+C:\Users\glaub\palpitaco\backend\routes\receiveResults.js:135: function normalizeResultRow(r) {
+C:\Users\glaub\palpitaco\backend\routes\receiveResults.js:201: const normalizedRows = results
+C:\Users\glaub\palpitaco\backend\scripts\auditBounds.js:51: function normalizeToYMD(input) {
+C:\Users\glaub\palpitaco\backend\scripts\auditDbDateRange.js:23: function normalizeToYMD(input) {
+C:\Users\glaub\palpitaco\backend\scripts\auditDbDateRangeNoIndex.js:22: function normalizeToYMD(input) {
+C:\Users\glaub\palpitaco\backend\scripts\auditDrawsBoundsAndCounts.js:36: function normalizeToYMD(input, timeZone = "America/Sao_Paulo") {
+C:\Users\glaub\palpitaco\backend\scripts\auditDrawsBoundsAndCounts.js:78: function normalizeHourLike(v) {
+C:\Users\glaub\palpitaco\backend\scripts\auditDrawSlotsRange.js:198: function normalizeHourList(arr) {
+C:\Users\glaub\palpitaco\backend\scripts\auditFederalContent.js:22: function normalizeHHMM(value) {
+C:\Users\glaub\palpitaco\backend\scripts\auditFederalContent.js:38: function normalizeCloseHourForFederal(value) {
+C:\Users\glaub\palpitaco\backend\scripts\auditFederalContestDuplicates.js:79: const normalized = prizes
+C:\Users\glaub\palpitaco\backend\scripts\auditHistoricalGaps.js:70: function normalizeHourList(arr) {
+C:\Users\glaub\palpitaco\backend\scripts\auditHistoricalGaps.js:165: function normalizeSlot(close) {
+C:\Users\glaub\palpitaco\backend\scripts\auditPtRioContent.js:22: function normalizeHHMM(value) {
+C:\Users\glaub\palpitaco\backend\scripts\auditPtRioContent.js:38: function normalizeCloseHourForPtRio(value) {
+C:\Users\glaub\palpitaco\backend\scripts\auditTop3E08DifferencesExperimental.js:25: function normalizeGroup(value) {
+C:\Users\glaub\palpitaco\backend\scripts\autoImportToday.js:452: function normalizeExpectedHour(value) {
+C:\Users\glaub\palpitaco\backend\scripts\autoRepairToday.js:25: function normalizeHHMM(v) {
+C:\Users\glaub\palpitaco\backend\scripts\backtestTop3AblationExperimental.js:81: function normalizeVariant(value) {
+C:\Users\glaub\palpitaco\backend\scripts\backtestTop3AblationExperimental.js:88: const normalized =
+C:\Users\glaub\palpitaco\backend\scripts\backtestTop3AblationExperimental.js:116: function normalizeMetricBucket(
+C:\Users\glaub\palpitaco\backend\scripts\backtestTop3Official.js:45: function normalizeLotteryKey(value) {
+C:\Users\glaub\palpitaco\backend\scripts\backtestTop3Official.js:51: function normalizeHour(value) {
+C:\Users\glaub\palpitaco\backend\scripts\checkOneDraw.js:34: function normalizeHHMM(value) {
+C:\Users\glaub\palpitaco\backend\scripts\federalCalendar.js:51: function normalizeFederalRequestedSlot(value) {
+C:\Users\glaub\palpitaco\backend\scripts\federalCalendar.js:65: function normalizeFederalSourceSlot({
+C:\Users\glaub\palpitaco\backend\scripts\findDuplicatesDraws.js:28: function normalizeLotteryKey(v, fallback = "") {
+C:\Users\glaub\palpitaco\backend\scripts\genPtRioCalendarRules.js:44: function normalizeHHMM(value) {
+C:\Users\glaub\palpitaco\backend\scripts\genPtRioCalendarRules.js:65: function normalizeYMD(v) {
+C:\Users\glaub\palpitaco\backend\scripts\importKingApostas.js:330: function normalizePrize(raw) {
+C:\Users\glaub\palpitaco\backend\scripts\importKingApostas.js:351: function normalizeHHMM(value) {
+C:\Users\glaub\palpitaco\backend\scripts\importKingApostas.js:387: function normalizeCloseHourForLottery(value, lotteryKey) {
+C:\Users\glaub\palpitaco\backend\scripts\importKingApostas.js:427: function normalizeDrawCloseHour(draw, lotteryKey) {
+C:\Users\glaub\palpitaco\backend\scripts\importKingApostas.js:472: function normalizeRequestedCloseHour(closeHour, lotteryKey) {
+C:\Users\glaub\palpitaco\backend\scripts\importKingApostas.js:1537: const normalizedClose = norm.slot || null;
+C:\Users\glaub\palpitaco\backend\scripts\integrityCheck.js:6: function normalizeHour(v) {
+C:\Users\glaub\palpitaco\backend\scripts\lintSourceGaps.js:7: function normalizeLotteryKey(v) {
+C:\Users\glaub\palpitaco\backend\scripts\listDrawDuplicates.js:25: function normalizeLotteryKey(v, fallback = "") {
+C:\Users\glaub\palpitaco\backend\scripts\maintenance\backfillYmdDraws.js:72: function normalizeToYMD(input) {
+C:\Users\glaub\palpitaco\backend\scripts\planBackfillFromAudit.js:24: function normalizeLotteryKey(v, fallback = "PT_RIO") {
+C:\Users\glaub\palpitaco\backend\scripts\planBackfillFromAudit.js:340: const normalizedMissing = rawMissing
+C:\Users\glaub\palpitaco\backend\scripts\ptRioCalendar.js:42: function normalizeHHMM(v) {
+C:\Users\glaub\palpitaco\backend\scripts\ptRioCalendar.js:148: function normalizeSlots(arr) {
+C:\Users\glaub\palpitaco\backend\scripts\ptRioCalendar.js:170: function normalizeOptions(options) {
+C:\Users\glaub\palpitaco\backend\scripts\ptRioCalendar.js:271: const normalizedOptions = normalizeOptions(options);
+C:\Users\glaub\palpitaco\backend\scripts\runBackfillFromPlan.js:62: function normalizeHH(raw) {
+C:\Users\glaub\palpitaco\backend\server.js:8: function normalizeLotteryKey(v) {
+C:\Users\glaub\palpitaco\backend\server.js:264: function normalizeHourLike(value) {
+C:\Users\glaub\palpitaco\backend\service\firebaseAdmin.js:90: function normalizePrivateKey(sa) {
+C:\Users\glaub\palpitaco\backend\workers\bootstrapTop3History.js:58: const normalized = new Map();
+C:\Users\glaub\palpitaco\backend\workers\bootstrapTop3History.js:81: const normalizedDraws = deduplicateDraws(
+C:\Users\glaub\palpitaco\src\App.jsx:94: function normalizeRoute(saved) {
+C:\Users\glaub\palpitaco\src\App.jsx:120: function normalizePlan(plan) {
+C:\Users\glaub\palpitaco\src\App.jsx:212: function normalizeLoteriaInput(v) {
+C:\Users\glaub\palpitaco\src\constants\bichoMap.js:24: export function normalizeAnimal(value) {
+C:\Users\glaub\palpitaco\src\constants\bichoMap.js:266: function normalizeAllowedSize(size) {
+C:\Users\glaub\palpitaco\src\constants\schedule.js:7: function normalizeLotteryKey(v) {
+C:\Users\glaub\palpitaco\src\hooks\useKingRanking.js:33: function normalizeToYMD(input) {
+C:\Users\glaub\palpitaco\src\hooks\useKingRanking.js:61: function normalizePositionsFromKey(positionsInputKey) {
+C:\Users\glaub\palpitaco\src\hooks\useKingRanking.js:180: function normalizeDrawForCharts(d) {
+C:\Users\glaub\palpitaco\src\hooks\useKingRanking.js:234: function normalizeBucketInput(bucket) {
+C:\Users\glaub\palpitaco\src\pages\Account\account.formatters.js:51: export function normalizePhoneDigits(v) {
+C:\Users\glaub\palpitaco\src\pages\Account\Account.jsx:75: function normalizePlan(planRaw) {
+C:\Users\glaub\palpitaco\src\pages\Account\Account.jsx:187: function normalizeLoginToEmail(loginRaw) {
+C:\Users\glaub\palpitaco\src\pages\Account\Account.jsx:191: function normalizeLoginToPhoneCandidates(loginRaw) {
+C:\Users\glaub\palpitaco\src\pages\Account\account.profile.service.js:48: function normalizePlan(v) {
+C:\Users\glaub\palpitaco\src\pages\Account\account.profile.service.js:55: function normalizeIsoString(v) {
+C:\Users\glaub\palpitaco\src\pages\Account\account.profile.service.js:196: const normalizedPlan = normalizePlan(data.plan);
+C:\Users\glaub\palpitaco\src\pages\Account\account.profile.service.js:197: const normalizedLifetime = data.isLifetime === true;
+C:\Users\glaub\palpitaco\src\pages\Account\account.profile.service.js:198: const normalizedPlanStartAt = normalizeIsoString(data.planStartAt);
+C:\Users\glaub\palpitaco\src\pages\Account\account.profile.service.js:199: const normalizedPlanEndAt = normalizeIsoString(data.planEndAt);
+C:\Users\glaub\palpitaco\src\pages\Account\account.session.js:66: function normalizePlan(plan) {
+C:\Users\glaub\palpitaco\src\pages\Account\account.session.js:88: const normalized = normalizePlan(candidate);
+C:\Users\glaub\palpitaco\src\pages\Admin\AdminLogin.jsx:25: function normalizeEmail(value) {
+C:\Users\glaub\palpitaco\src\pages\Admin\AdminLogin.jsx:58: const normalizedUid = String(uid || "").trim();
+C:\Users\glaub\palpitaco\src\pages\Admin\AdminLogin.jsx:160: const normalizedEmail =
+C:\Users\glaub\palpitaco\src\pages\Admin\modules\MilharEngine\MilharEnginePage.jsx:89: const normalized = String(
+C:\Users\glaub\palpitaco\src\pages\Admin\modules\MilharEngine\MilharEnginePage.jsx:101: function normalizeBounds(raw) {
+C:\Users\glaub\palpitaco\src\pages\Admin\modules\MilharEngine\MilharEnginePage.jsx:134: function normalizeDraws(raw) {
+C:\Users\glaub\palpitaco\src\pages\Admin\modules\MilharEngine\MilharEnginePage.jsx:146: function normalizeFlatPrizes(raw) {
+C:\Users\glaub\palpitaco\src\pages\Admin\modules\MilharEngine\MilharEnginePage.jsx:218: const normalized = String(centena || "")
+C:\Users\glaub\palpitaco\src\pages\Admin\modules\MilharEngine\MilharEnginePage.jsx:460: const normalized = String(centena || "")
+C:\Users\glaub\palpitaco\src\pages\Centenas\centenas.utils.js:67: export function normalizeHourLike(value) {
+C:\Users\glaub\palpitaco\src\pages\Centenas\centenas.utils.js:337: export function normalizeDrawsResult(maybe) {
+C:\Users\glaub\palpitaco\src\pages\Centenas\centenas.utils.js:349: export function normalizePrizesArray(res) {
+C:\Users\glaub\palpitaco\src\pages\Centenas\CentenasView.jsx:96: function normalizeHourLike(value) {
+C:\Users\glaub\palpitaco\src\pages\Centenas\CentenasView.jsx:185: function normalizeOfficialHourForLottery(lotteryKey, value) {
+C:\Users\glaub\palpitaco\src\pages\Centenas\CentenasView.jsx:187: const normalizedLotteryKey = String(lotteryKey || "")
+C:\Users\glaub\palpitaco\src\pages\Centenas\CentenasView.jsx:463: function normalizeDrawsResult(maybe) {
+C:\Users\glaub\palpitaco\src\pages\Centenas\CentenasView.jsx:475: function normalizePrizesArray(res) {
+C:\Users\glaub\palpitaco\src\pages\Centenas\modules\milharProbabilityEngine.js:34: export function normalizeCentena3(value) {
+C:\Users\glaub\palpitaco\src\pages\Centenas\modules\milharProbabilityEngine.js:41: export function normalizeMilhar4(value) {
+C:\Users\glaub\palpitaco\src\pages\Centenas\modules\milharProbabilityEngine.js:84: function normalizeRatio(value, maxValue) {
+C:\Users\glaub\palpitaco\src\pages\Centenas\modules\milharProbabilityEngine.js:92: function normalizeWeights(customWeights = {}) {
+C:\Users\glaub\palpitaco\src\pages\Centenas\modules\milharProbabilityEngine.js:255: const normalizedWeights = normalizeWeights(weights);
+C:\Users\glaub\palpitaco\src\pages\Centenas\modules\milharProbabilityEngineV3.js:47: export function normalizeCentena3V3(value) {
+C:\Users\glaub\palpitaco\src\pages\Centenas\modules\milharProbabilityEngineV3.js:53: export function normalizeMilhar4V3(value) {
+C:\Users\glaub\palpitaco\src\pages\Centenas\modules\milharProbabilityEngineV3.js:121: function normalizeWeights(weights = {}) {
+C:\Users\glaub\palpitaco\src\pages\Centenas\modules\milharProbabilityEngineV3.js:154: function normalizeRatio(value, maximum) {
+C:\Users\glaub\palpitaco\src\pages\Centenas\modules\milharProbabilityEngineV3.js:319: const normalizedWeights = normalizeWeights(weights);
+C:\Users\glaub\palpitaco\src\pages\Dashboard\components\ChartsGrid.jsx:39: function normalizeToYMD(input) {
+C:\Users\glaub\palpitaco\src\pages\Dashboard\components\ChartsGrid.jsx:301: function normalizePosFilter(filters) {
+C:\Users\glaub\palpitaco\src\pages\Dashboard\components\DateRangeControl.jsx:182: const normalized = useMemo(() => {
+C:\Users\glaub\palpitaco\src\pages\Dashboard\components\FiltersBar.jsx:36: function normalizeValue(v, fallback = "Todos") {
+C:\Users\glaub\palpitaco\src\pages\Dashboard\components\FiltersBar.jsx:45: function normalizeLoteriaInput(v) {
+C:\Users\glaub\palpitaco\src\pages\Dashboard\components\FiltersBar.jsx:70: function normalizePosicaoInput(v) {
+C:\Users\glaub\palpitaco\src\pages\Dashboard\components\FiltersBar.jsx:85: function normalizeDiaSemanaInput(v) {
+C:\Users\glaub\palpitaco\src\pages\Dashboard\components\FiltersBar.jsx:310: const normalizeLabelValueList = (arr, fallback) => {
+C:\Users\glaub\palpitaco\src\pages\Dashboard\components\FiltersBar.jsx:622: const normalizeFn =
+C:\Users\glaub\palpitaco\src\pages\Dashboard\components\FiltersBar.jsx:631: const normalizedValue = ensureValueInList({
+C:\Users\glaub\palpitaco\src\pages\Dashboard\components\KpiCards.jsx:36: function normalizeToYMD(input) {
+C:\Users\glaub\palpitaco\src\pages\Dashboard\components\LeftRankingTable.jsx:66: function normalizeGrupoNumber(v) {
+C:\Users\glaub\palpitaco\src\pages\Dashboard\components\SearchInput.jsx:4: function normalizeDigitsOnly(v) {
+C:\Users\glaub\palpitaco\src\pages\Dashboard\components\SearchResultsTable.jsx:65: function normalizeImgSrc(src) {
+C:\Users\glaub\palpitaco\src\pages\Dashboard\components\SearchResultsTable.jsx:325: const normalized = useMemo(() => {
+C:\Users\glaub\palpitaco\src\pages\Dashboard\components\Sidebar\AppShell.jsx:38: function normalizePlan(plan) {
+C:\Users\glaub\palpitaco\src\pages\Dashboard\Dashboard.jsx:77: function normalizeSessionPlan(plan) {
+C:\Users\glaub\palpitaco\src\pages\Dashboard\Dashboard.jsx:119: const normalized = normalizeSessionPlan(
+C:\Users\glaub\palpitaco\src\pages\Dashboard\Dashboard.jsx:181: function normalizeHourBucket(h) {
+C:\Users\glaub\palpitaco\src\pages\Dashboard\Dashboard.jsx:205: function normalizePositions(pos) {
+C:\Users\glaub\palpitaco\src\pages\Dashboard\Dashboard.jsx:226: function normalizeISO10(v) {
+C:\Users\glaub\palpitaco\src\pages\Dashboard\Dashboard.jsx:233: function normalizeToYMD(input) {
+C:\Users\glaub\palpitaco\src\pages\Dashboard\Dashboard.jsx:292: function normalizeKey(s) {
+C:\Users\glaub\palpitaco\src\pages\Dashboard\Dashboard.jsx:490: function normalizeLoteriaKey(v) {
+C:\Users\glaub\palpitaco\src\pages\Dashboard\Dashboard.jsx:564: function normalizeCloseHourForKpi(raw) {
+C:\Users\glaub\palpitaco\src\pages\Downloads\Downloads.jsx:40: function normalizeHourLike(value) {
+C:\Users\glaub\palpitaco\src\pages\Downloads\Downloads.jsx:65: function normalizeToYMD(input) {
+C:\Users\glaub\palpitaco\src\pages\Downloads\Downloads.jsx:195: function normalizeUfToQueryKey(input) {
+C:\Users\glaub\palpitaco\src\pages\Downloads\Downloads.jsx:229: function normalizeRangeWithBounds(fromIn, toIn, minDate, maxDate) {
+C:\Users\glaub\palpitaco\src\pages\Downloads\Downloads.jsx:642: const normalizeRange = useCallback(() => {
+C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:86: function normalizeHourLike(value) {
+C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:258: function normalizeSingleDateWithBounds(dateIn, minYmd, maxYmd) {
+C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:274: function normalizeBoundsResponse(b) {
+C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:687: const normalized = normalizeSingleDateWithBounds(
+C:\Users\glaub\palpitaco\src\pages\Results\Results.jsx:113: function normalizeHourLike(value) {
+C:\Users\glaub\palpitaco\src\pages\Results\Results.jsx:156: function normalizeBoundsResponse(b) {
+C:\Users\glaub\palpitaco\src\pages\Results\Results.jsx:178: function normalizeSingleDateWithBounds(dateIn, minYmd, maxYmd) {
+C:\Users\glaub\palpitaco\src\pages\Results\Results.jsx:267: function normalizeScopeInput(input) {
+C:\Users\glaub\palpitaco\src\pages\Results\Results.jsx:418: function normalizeImgSrc(src) {
+C:\Users\glaub\palpitaco\src\pages\Results\Results.jsx:665: function normalizeRjDisplayHour(draw, ymd) {
+C:\Users\glaub\palpitaco\src\pages\Results\Results.jsx:688: function normalizeDisplayHourForScope(scopeKey, draw, ymd) {
+C:\Users\glaub\palpitaco\src\pages\Results\Results.jsx:703: function normalizeNacionalDisplayHour(draw) {
+C:\Users\glaub\palpitaco\src\pages\Results\Results.jsx:935: const normalized = normalizeSingleDateWithBounds(
+C:\Users\glaub\palpitaco\src\pages\Search\Search.jsx:44: function normalizeBoundsResponse(b) {
+C:\Users\glaub\palpitaco\src\pages\Search\Search.jsx:66: function normalizeDigitsOnly(v) {
+C:\Users\glaub\palpitaco\src\pages\Search\Search.jsx:82: function normalizeHourLike(value) {
+C:\Users\glaub\palpitaco\src\pages\Search\Search.jsx:136: function normalizeYmdAny(v) {
+C:\Users\glaub\palpitaco\src\pages\Search\Search.jsx:366: function normalizeDrawsResponse(res) {
+C:\Users\glaub\palpitaco\src\pages\Statistics\Statistics.jsx:117: function normalizeYmd(value) {
+C:\Users\glaub\palpitaco\src\pages\Statistics\Statistics.jsx:139: function normalizeBoundsResponse(value) {
+C:\Users\glaub\palpitaco\src\pages\Statistics\Statistics.jsx:247: function normalizeHour(value) {
+C:\Users\glaub\palpitaco\src\pages\Statistics\Statistics.jsx:264: const normalized = normalizeHour(value);
+C:\Users\glaub\palpitaco\src\pages\Statistics\Statistics.jsx:307: function normalizeDrawsResponse(response) {
+C:\Users\glaub\palpitaco\src\pages\Statistics\Statistics.jsx:457: function normalizePrize(prize, fallbackPosition) {
+C:\Users\glaub\palpitaco\src\pages\Statistics\Statistics.jsx:590: const normalizedDezena = dezena === 0 ? 100 : dezena;
+C:\Users\glaub\palpitaco\src\pages\Statistics\Statistics.jsx:741: const normalized = normalizeBoundsResponse(response);
+C:\Users\glaub\palpitaco\src\pages\Top3\__tests__\top3.schedule-transition.test.js:24: function normalizeSchedule(hours) {
+C:\Users\glaub\palpitaco\src\pages\Top3\modules\scoreEngine\contextEvidence.js:11: function normalize(value) {
+C:\Users\glaub\palpitaco\src\pages\Top3\modules\scoreEngine\frequencyEvidence.js:11: function normalize(value) {
+C:\Users\glaub\palpitaco\src\pages\Top3\modules\scoreEngine\frequencyEvidence.js:21: function normalizePercent(value) {
+C:\Users\glaub\palpitaco\src\pages\Top3\modules\scoreEngine\scoreEngineV2.js:85: function normalizeEvidenceValue(value) {
+C:\Users\glaub\palpitaco\src\pages\Top3\modules\top3.timeline.js:29: function normalizeMilhar4(v) {
+C:\Users\glaub\palpitaco\src\pages\Top3\modules\top3.timeline.js:58: function normalizeImgSrc(src, publicBase = "") {
+C:\Users\glaub\palpitaco\src\pages\Top3\modules\top3.viewmodel.js:16: export function normalizeTop3Milhar4(v) {
+C:\Users\glaub\palpitaco\src\pages\Top3\modules\top3.viewmodel.js:45: export function normalizeTop3ImgSrc(src, publicBase = "") {
+C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.js:264: const normalized = historical
+C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.js:978: function normalizeMetric(value, maxValue) {
+C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.js:2054: function normalizeWeights(weights) {
+C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.js:3966: function normalizeResultTop3(slot) {
+C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.js:3971: const normalized = source
+C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.js:4255: const normalizedSchedule = (Array.isArray(schedule) ? schedule : [])
+C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.js:4467: const normalizedResultGrupo =
+C:\Users\glaub\palpitaco\src\pages\Top3\top3.firestore.js:25: function normalizeLotteryKey(value) {
+C:\Users\glaub\palpitaco\src\pages\Top3\top3.firestore.js:29: function normalizeHour(value) {
+C:\Users\glaub\palpitaco\src\pages\Top3\top3.firestore.js:68: function normalizeMilhar(value) {
+C:\Users\glaub\palpitaco\src\pages\Top3\top3.firestore.js:116: function normalizeSnapshot(snapshot) {
+C:\Users\glaub\palpitaco\src\pages\Top3\top3.firestore.js:254: const normalizedSnapshot = normalizeSnapshot(snapshot);
+C:\Users\glaub\palpitaco\src\pages\Top3\top3.firestore.js:264: const normalizedPicks = Array.from(
+C:\Users\glaub\palpitaco\src\pages\Top3\top3.formatters.js:60: export function normalizeToYMD(input) {
+C:\Users\glaub\palpitaco\src\pages\Top3\top3.formatters.js:164: export function normalizeHourLike(value) {
+C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:154: const normalizedSchedule = Array.isArray(schedule)
+C:\Users\glaub\palpitaco\src\pages\Top3\top3.images.js:3: export function normalizeImgSrc(src) {
+C:\Users\glaub\palpitaco\src\pages\Top3\top3.selectors.js:18: export function normalizeImgSrc(src) {
+C:\Users\glaub\palpitaco\src\pages\Top3\top3.storage.js:56: function normalizePicks(picks) {
+C:\Users\glaub\palpitaco\src\pages\Top3\top3.storage.js:66: function normalizeResult(resultValue) {
+C:\Users\glaub\palpitaco\src\pages\Top3\top3.storage.js:71: function normalizeLogEntry(entry) {
+C:\Users\glaub\palpitaco\src\pages\Top3\top3.storage.js:122: function normalizeAndDedupeLog(log) {
+C:\Users\glaub\palpitaco\src\pages\Top3\top3.storage.js:155: const normalized = normalizeAndDedupeLog(log).slice(-200);
+C:\Users\glaub\palpitaco\src\pages\Top3\top3.storage.js:170: const normalizedKey = targetKey || makeKey(ymd, hour);
+C:\Users\glaub\palpitaco\src\pages\Top3\top3.storage.js:174: const normalizedPicks = normalizePicks(picks);
+C:\Users\glaub\palpitaco\src\pages\Top3\top3.storage.js:227: const normalizedTargetKey = safeStr(targetKey);
+C:\Users\glaub\palpitaco\src\pages\Top3\Top3View.jsx:35: function normalizeMilharStr(v) {
+C:\Users\glaub\palpitaco\src\pages\Top3\Top3View.jsx:163: const normalized = input
+C:\Users\glaub\palpitaco\src\services\auditKingCounts.js:82: function normalizeHourLike(value) {
+C:\Users\glaub\palpitaco\src\services\auditKingCounts.js:132: function normalizeToYMD(input) {
+C:\Users\glaub\palpitaco\src\services\king\king.date.js:19: export function normalizeToYMD(input) {
+C:\Users\glaub\palpitaco\src\services\king\king.normalize.js:7: export function normalizePositions(positions) {
+C:\Users\glaub\palpitaco\src\services\king\king.normalize.js:49: export function normalizeDigitsOnly(v) {
+C:\Users\glaub\palpitaco\src\services\king\king.normalize.js:86: export function normalizePrize(p, prizeId) {
+C:\Users\glaub\palpitaco\src\services\king\king.normalize.js:164: export function normalizeEmbeddedPrizesForAggregated(embeddedPrizes) {
+C:\Users\glaub\palpitaco\src\services\king\king.normalize.js:168: const normalized = arr.map((p, idx) =>
+C:\Users\glaub\palpitaco\src\services\kingResultsService.js:173: function normalizeValueForField(fieldName, valueInput) {
+C:\Users\glaub\palpitaco\src\services\kingResultsService.js:200: function normalizeHourLike(value) {
+C:\Users\glaub\palpitaco\src\services\kingResultsService.js:308: function normalizeLotteryCodeAny(d) {
+C:\Users\glaub\palpitaco\src\services\kingResultsService.js:417: const normalized = {
+C:\Users\glaub\palpitaco\src\services\kingResultsService.js:501: const normalized = embeddedPrizes.map((p, idx) =>
+C:\Users\glaub\palpitaco\src\services\kingResultsService.js:598: const normalized = normalizeValueForField(fieldName, uf);
+C:\Users\glaub\palpitaco\src\services\kingResultsService.js:602: function normalizeOrderBys(extraOrderBy) {
+C:\Users\glaub\palpitaco\src\services\kingResultsService.js:1621: function normalizeLotteriesList(lotteries) {
+C:\Users\glaub\palpitaco\src\services\planService.js:43: function normalizeTier(tierRaw) {
+C:\Users\glaub\palpitaco\src\services\planService.js:49: function normalizePlan(plan) {
+C:\Users\glaub\palpitaco\src\services\planService.js:62: function normalizeProvider(v) {
+C:\Users\glaub\palpitaco\src\services\planService.js:68: function normalizePaymentId(v) {
+C:\Users\glaub\palpitaco\src\services\statisticsEngine.js:11: function normalizeUfKey(uf) {
+C:\Users\glaub\palpitaco\src\services\statsSignals.js:53: function normalizeToYMD(input) {
+C:\Users\glaub\palpitaco\src\services\statsSignals.js:107: function normalizeHourLike(value) {
+C:\Users\glaub\palpitaco\src\services\validateRanking.js:21: function normalizeGrupo(g) {
+C:\Users\glaub\palpitaco\src\utils\buildPalpites.js:56: function normalizeHourLike(value) {
+C:\Users\glaub\palpitaco\src\utils\buildPalpites.js:73: function normalizeDigitsOnly(v) {
+C:\Users\glaub\palpitaco\src\utils\buildPalpites.js:145: function normalizeToYMD(input) {
+C:\Users\glaub\palpitaco\src\utils\buildRanking.js:54: function normalizeAnimalLocal(a) {
+C:\Users\glaub\palpitaco\src\utils\buildRanking.js:79: function normalizeToYMD(input) {
+C:\Users\glaub\palpitaco\src\utils\userIdentity.js:3: export function normalizeDigitsOnly(v) {
+C:\Users\glaub\palpitaco\src\utils\userIdentity.js:7: export function normalizeCpfDigits(cpf) {
+C:\Users\glaub\palpitaco\src\utils\ymd.js:33: export function normalizeToYMD_SP(input) {
+C:\Users\glaub\palpitaco\src\utils\ymd.js:76: export const normalizeToYMD = normalizeToYMD_SP;
+
+====================================================================================================
+RESUMO
+====================================================================================================
+STATUS: OK
+ARQUIVOS ANALISADOS: 200
+ALTERAÇÕES DE CÓDIGO: NENHUMA

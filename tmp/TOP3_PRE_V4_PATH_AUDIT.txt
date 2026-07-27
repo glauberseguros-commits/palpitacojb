@@ -1,0 +1,136 @@
+AUDITORIA PRÉ-V4 — CAMINHOS E PONTOS DE INTEGRAÇÃO
+
+Raiz confirmada: C:\Users\glaub\palpitaco
+
+==============================================================================
+1. ARQUIVOS CONFIRMADOS
+==============================================================================
+backtest         | OK | C:\Users\glaub\palpitaco\backend\scripts\backtestTop3Official.js
+unified          | OK | C:\Users\glaub\palpitaco\backend\engine\scoreEngineUnified.js
+score_v2         | OK | C:\Users\glaub\palpitaco\backend\engine\scoreEngineV2.js
+top3_engine      | OK | C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.js
+public_api       | OK | C:\Users\glaub\palpitaco\src\pages\Top3\top3.public-api.js
+
+==============================================================================
+2. EXPORTS IDENTIFICADOS
+==============================================================================
+
+[backtest]
+  - buildTextReport
+  - finalizeBucket
+  - getFirstPrizeGroup
+  - getPredictionGroups
+  - parseBooleanFlag
+  - parseCliArgs
+  - runOfficialBacktest
+  - sortDraws
+
+[unified]
+  - computeConditionalNextTop3
+  - computeConditionalNextTop3V2
+  - computeStatisticalTop3V3
+  - getTop3Capabilities
+  - loadTop3PublicApi
+
+[score_v2]
+  - calculateEvidenceStrength
+  - scoreItem
+  - scoreRanking
+
+[top3_engine]
+  Nenhum export CommonJS simples identificado.
+
+[public_api]
+  Nenhum export CommonJS simples identificado.
+
+==============================================================================
+3. PONTO DE INJEÇÃO DO BACKTEST
+==============================================================================
+   12:   computeStatisticalTop3V3,
+  218:     telemetry: parseBooleanFlag(
+  220:       "telemetry",
+  490: async function runOfficialBacktest(
+  492:   dependencies = {}
+  503:     dependencies.publicApi ||
+  507:     dependencies.readFullHistory ||
+  511:     dependencies.readMetadata ||
+  514:   const computeTop3 =
+  515:     dependencies.computeTop3 ||
+  516:     computeStatisticalTop3V3;
+  521:       dependencies.historyDependencies || {}
+  535:       dependencies.historyDependencies || {}
+  542:     dependencies.allowIncompleteSnapshot !== true &&
+  622:   const telemetryCases = [];
+  703:         computeTop3({
+  740:       if (options.telemetry === true) {
+  745:         telemetryCases.push({
+  858:         dependencies.onCaseError
+  860:         dependencies.onCaseError({
+  927:     telemetry:
+  928:       options.telemetry === true
+  932:             cases: telemetryCases,
+  992:     options.telemetry
+  999:     await runOfficialBacktest(
+ 1080:   runOfficialBacktest,
+
+==============================================================================
+4. FUNÇÕES CENTRAIS DO V3
+==============================================================================
+
+[unified]
+   88: function computeStatisticalTop3V3(input = {}) {
+   97: module.exports = {
+
+[top3_engine]
+ 2834: export function computeStatisticalTop3V3({
+
+[public_api]
+  Nenhuma assinatura central localizada.
+
+==============================================================================
+5. TELEMETRIA DISPONÍVEL
+==============================================================================
+  218:     telemetry: parseBooleanFlag(
+  220:       "telemetry",
+  287:   const candidates =
+  292:   return candidates
+  622:   const telemetryCases = [];
+  649:     const actualGroup =
+  666:       actualGroup == null ||
+  718:       const predictionGroups =
+  724:         predictionGroups.length < 3
+  732:         predictionGroups[0] ===
+  733:         actualGroup;
+  736:         predictionGroups.includes(
+  737:           actualGroup
+  740:       if (options.telemetry === true) {
+  745:         telemetryCases.push({
+  768:           actual: {
+  769:             group: actualGroup,
+  771:           prediction: {
+  772:             groups: predictionGroups,
+  776:           candidates: computedTop
+  927:     telemetry:
+  928:       options.telemetry === true
+  931:             schemaVersion: 1,
+  932:             cases: telemetryCases,
+  936:             schemaVersion: 1,
+  992:     options.telemetry
+
+==============================================================================
+6. POSSÍVEIS NOMES DE ARQUIVO PARA O V4
+==============================================================================
+LIVRE      | backend\engine\scoreEngineV4Experimental.js
+LIVRE      | backend\engine\scoreEngineExperimental.js
+LIVRE      | backend\engine\top3V4Experimental.js
+
+==============================================================================
+7. CONCLUSÃO TÉCNICA
+==============================================================================
+Ponto de injeção localizado: SIM
+V3 exportado pelo motor unificado: SIM
+Arquivos obrigatórios confirmados: SIM
+
+Próxima ação permitida após esta auditoria:
+criar o motor V4 experimental em arquivo isolado,
+sem substituir ou modificar o V3 oficial.

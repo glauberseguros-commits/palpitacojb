@@ -1,0 +1,15 @@
+[OVERRIDE] PT_RIO lotteries=6 | FEDERAL lotteries=1 | LOOK lotteries=0 | NACIONAL lotteries=8
+STEP 1/3 Buscando API: NACIONAL 2026-07-18
+[FETCH:PART] NACIONAL 2026-07-18 lotteryId=6c2b52ec-d613-4383-9c07-ff5ac7e04611 draws=1 close_hours=[01:49]
+[FETCH:PART] NACIONAL 2026-07-18 lotteryId=76a3feee-faa6-4b6c-aae5-656fd6af7b6b draws=1 close_hours=[07:49]
+[FETCH:PART] NACIONAL 2026-07-18 lotteryId=4dda728b-bbd9-43eb-a17b-acf968b1eca0 draws=1 close_hours=[09:49]
+[FETCH:PART] NACIONAL 2026-07-18 lotteryId=8efc7c5a-8883-48a3-ab7f-cf3d0f7eebd4 draws=1 close_hours=[11:49]
+[FETCH:PART] NACIONAL 2026-07-18 lotteryId=3bafbe99-632b-4445-9b73-12e78ee45283 draws=1 close_hours=[14:49]
+[FETCH:PART] NACIONAL 2026-07-18 lotteryId=87db8fb6-8718-49c3-b739-96eec085e09d draws=1 close_hours=[16:49]
+[FETCH:PART] NACIONAL 2026-07-18 lotteryId=1eebc22a-890e-4598-86b5-6fda7e04ca4b draws=1 close_hours=[20:49]
+[FETCH:PART] NACIONAL 2026-07-18 lotteryId=2a424135-9b6a-4415-8a57-15e0d3abd736 draws=0 close_hours=[]
+[FETCH] NACIONAL 2026-07-18 per-lottery=8 -> merged_draws=7 close_hours=[01:49, 07:49, 09:49, 11:49, 14:49, 16:49, 20:49]
+STEP 2/3 Processando 7 draws retornados pela API...
+[IMPORT] API draws=7 | match_close=7 | validos=7 | draws_upserted=7 | draws_novos=0 | prizes_upserted=49 | prizes_novos=0 | skip_vazio=0 | skip_invalido=0 | skip_close=0 | skip_complete=0 | CHECK_EXISTENCE=OFF | uf=BR lottery_key=NACIONAL
+STEP 3/3 OK. Import conclu├¡do: NACIONAL 2026-07-18
+[CLEANUP] NACIONAL 2026-07-18 slots=0 deleted=0

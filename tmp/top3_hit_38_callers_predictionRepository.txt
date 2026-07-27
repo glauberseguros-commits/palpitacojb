@@ -1,0 +1,868 @@
+====================================================================================================
+TOP3-HIT-38 — CHAMADAS AO predictionRepository
+====================================================================================================
+
+====================================================================================================
+ARQUIVO: C:\Users\glaub\palpitaco\backend\engine\predictionService.js
+====================================================================================================
+00001: "use strict";
+00002: 
+00003: const {
+00004:   buildPredictionRun,
+00005:   buildPrediction,
+00006: } = require("./predictionModel");
+00007: 
+00008: const {
+00009:   savePredictionRun,
+00010:   savePredictions,
+00011: } = require("./predictionRepository");
+00012: 
+00013: /**
+00014:  * Cria uma execução completa de previsão.
+00015:  *
+00016:  * Entrada:
+00017:  * {
+00018:  *   lotteryKey,
+00019:  *   date,
+00020:  *   closeHour,
+00021:  *   source,
+00022:  *   algorithm,
+00023:  *   metadata,
+00024:  *   predictions:[]
+00025:  * }
+00026:  */
+00027: async function createPredictionRun(input = {}) {
+00028: 
+00029:   const run = buildPredictionRun({
+00030:     lotteryKey: input.lotteryKey,
+00031:     date: input.date,
+00032:     closeHour: input.closeHour,
+00033:     source: input.source,
+00034:     algorithm: input.algorithm,
+00035:     metadata: input.metadata,
+00036:   });
+00037: 
+00038:   await savePredictionRun(run);
+00039: 
+00040:   const rows = (input.predictions || []).map((p) =>
+00041:     buildPrediction({
+00042:       runId: run.id,
+----------------------------------------------------------------------------------------------------
+
+====================================================================================================
+ARQUIVO: C:\Users\glaub\palpitaco\backend\engine\predictionService.js
+====================================================================================================
+00001: "use strict";
+00002: 
+00003: const {
+00004:   buildPredictionRun,
+00005:   buildPrediction,
+00006: } = require("./predictionModel");
+00007: 
+00008: const {
+00009:   savePredictionRun,
+00010:   savePredictions,
+00011: } = require("./predictionRepository");
+00012: 
+00013: /**
+00014:  * Cria uma execução completa de previsão.
+00015:  *
+00016:  * Entrada:
+00017:  * {
+00018:  *   lotteryKey,
+00019:  *   date,
+00020:  *   closeHour,
+00021:  *   source,
+00022:  *   algorithm,
+00023:  *   metadata,
+00024:  *   predictions:[]
+00025:  * }
+00026:  */
+00027: async function createPredictionRun(input = {}) {
+00028: 
+00029:   const run = buildPredictionRun({
+00030:     lotteryKey: input.lotteryKey,
+00031:     date: input.date,
+00032:     closeHour: input.closeHour,
+00033:     source: input.source,
+00034:     algorithm: input.algorithm,
+00035:     metadata: input.metadata,
+00036:   });
+00037: 
+00038:   await savePredictionRun(run);
+00039: 
+00040:   const rows = (input.predictions || []).map((p) =>
+00041:     buildPrediction({
+00042:       runId: run.id,
+----------------------------------------------------------------------------------------------------
+
+====================================================================================================
+ARQUIVO: C:\Users\glaub\palpitaco\backend\engine\predictionService.js
+====================================================================================================
+00001: "use strict";
+00002: 
+00003: const {
+00004:   buildPredictionRun,
+00005:   buildPrediction,
+00006: } = require("./predictionModel");
+00007: 
+00008: const {
+00009:   savePredictionRun,
+00010:   savePredictions,
+00011: } = require("./predictionRepository");
+00012: 
+00013: /**
+00014:  * Cria uma execução completa de previsão.
+00015:  *
+00016:  * Entrada:
+00017:  * {
+00018:  *   lotteryKey,
+00019:  *   date,
+00020:  *   closeHour,
+00021:  *   source,
+00022:  *   algorithm,
+00023:  *   metadata,
+00024:  *   predictions:[]
+00025:  * }
+00026:  */
+00027: async function createPredictionRun(input = {}) {
+00028: 
+00029:   const run = buildPredictionRun({
+00030:     lotteryKey: input.lotteryKey,
+00031:     date: input.date,
+00032:     closeHour: input.closeHour,
+00033:     source: input.source,
+00034:     algorithm: input.algorithm,
+00035:     metadata: input.metadata,
+00036:   });
+00037: 
+00038:   await savePredictionRun(run);
+00039: 
+00040:   const rows = (input.predictions || []).map((p) =>
+00041:     buildPrediction({
+00042:       runId: run.id,
+----------------------------------------------------------------------------------------------------
+
+====================================================================================================
+ARQUIVO: C:\Users\glaub\palpitaco\backend\engine\predictionService.js
+====================================================================================================
+00001: "use strict";
+00002: 
+00003: const {
+00004:   buildPredictionRun,
+00005:   buildPrediction,
+00006: } = require("./predictionModel");
+00007: 
+00008: const {
+00009:   savePredictionRun,
+00010:   savePredictions,
+00011: } = require("./predictionRepository");
+00012: 
+00013: /**
+00014:  * Cria uma execução completa de previsão.
+00015:  *
+00016:  * Entrada:
+00017:  * {
+00018:  *   lotteryKey,
+00019:  *   date,
+00020:  *   closeHour,
+00021:  *   source,
+00022:  *   algorithm,
+00023:  *   metadata,
+00024:  *   predictions:[]
+00025:  * }
+00026:  */
+00027: async function createPredictionRun(input = {}) {
+00028: 
+00029:   const run = buildPredictionRun({
+00030:     lotteryKey: input.lotteryKey,
+00031:     date: input.date,
+00032:     closeHour: input.closeHour,
+00033:     source: input.source,
+00034:     algorithm: input.algorithm,
+00035:     metadata: input.metadata,
+00036:   });
+00037: 
+00038:   await savePredictionRun(run);
+00039: 
+00040:   const rows = (input.predictions || []).map((p) =>
+00041:     buildPrediction({
+00042:       runId: run.id,
+----------------------------------------------------------------------------------------------------
+
+====================================================================================================
+ARQUIVO: C:\Users\glaub\palpitaco\backend\engine\scoreEngineV1.js
+====================================================================================================
+00001: "use strict";
+00002: 
+00003: const ANIMALS = {
+00004:   "01": "Avestruz",
+00005:   "02": "Águia",
+00006:   "03": "Burro",
+00007:   "04": "Borboleta",
+00008:   "05": "Cachorro",
+00009:   "06": "Cabra",
+00010:   "07": "Carneiro",
+00011:   "08": "Camelo",
+00012:   "09": "Cobra",
+00013:   "10": "Coelho",
+00014:   "11": "Cavalo",
+00015:   "12": "Elefante",
+00016:   "13": "Galo",
+00017:   "14": "Gato",
+00018:   "15": "Jacaré",
+00019:   "16": "Leão",
+00020:   "17": "Macaco",
+00021:   "18": "Porco",
+00022:   "19": "Pavão",
+00023:   "20": "Peru",
+00024:   "21": "Touro",
+00025:   "22": "Tigre",
+00026:   "23": "Urso",
+00027:   "24": "Veado",
+00028:   "25": "Vaca",
+00029: };
+00030: 
+00031: function pad2(n) {
+00032:   return String(n).padStart(2, "0");
+00033: }
+00034: 
+00035: function toNum(v) {
+00036:   const n = Number(v);
+00037:   return Number.isFinite(n) ? n : 0;
+00038: }
+00039: 
+00040: function rankingToPredictions(ranking = [], opts = {}) {
+00041:   const limit = Math.max(1, Number(opts.limit || 10));
+00042: 
+----------------------------------------------------------------------------------------------------
+
+====================================================================================================
+ARQUIVO: C:\Users\glaub\palpitaco\backend\engine\top3PredictionService.js
+====================================================================================================
+00001: "use strict";
+00002: 
+00003: const {
+00004:   fetchDrawsWithPrizesByRange,
+00005: } = require("./drawRepository");
+00006: 
+00007: const {
+00008:   readFullHistory,
+00009:   readMetadata,
+00010: } = require("./top3HistoryRepository");
+00011: 
+00012: const {
+00013:   computeStatisticalTop3V3,
+00014:   loadTop3PublicApi,
+00015: } = require("./scoreEngineUnified");
+00016: 
+00017: const {
+00018:   createPredictionRun,
+00019: } = require("./predictionService");
+00020: 
+00021: const {
+00022:   getDb,
+00023: } = require("../service/firebaseAdmin");
+00024: 
+00025: const PT_RIO_SCHEDULE_NORMAL = [
+00026:   "09:00",
+00027:   "11:00",
+00028:   "14:00",
+00029:   "16:00",
+00030:   "18:00",
+00031:   "21:00",
+00032: ];
+00033: 
+00034: const PT_RIO_SCHEDULE_WED_SAT = [
+00035:   "09:00",
+00036:   "11:00",
+00037:   "14:00",
+00038:   "16:00",
+00039:   "21:00",
+00040: ];
+00041: 
+00042: const FEDERAL_SCHEDULE = [
+----------------------------------------------------------------------------------------------------
+
+====================================================================================================
+ARQUIVO: C:\Users\glaub\palpitaco\backend\engine\top3PredictionService.js
+====================================================================================================
+00001: "use strict";
+00002: 
+00003: const {
+00004:   fetchDrawsWithPrizesByRange,
+00005: } = require("./drawRepository");
+00006: 
+00007: const {
+00008:   readFullHistory,
+00009:   readMetadata,
+00010: } = require("./top3HistoryRepository");
+00011: 
+00012: const {
+00013:   computeStatisticalTop3V3,
+00014:   loadTop3PublicApi,
+00015: } = require("./scoreEngineUnified");
+00016: 
+00017: const {
+00018:   createPredictionRun,
+00019: } = require("./predictionService");
+00020: 
+00021: const {
+00022:   getDb,
+00023: } = require("../service/firebaseAdmin");
+00024: 
+00025: const PT_RIO_SCHEDULE_NORMAL = [
+00026:   "09:00",
+00027:   "11:00",
+00028:   "14:00",
+00029:   "16:00",
+00030:   "18:00",
+00031:   "21:00",
+00032: ];
+00033: 
+00034: const PT_RIO_SCHEDULE_WED_SAT = [
+00035:   "09:00",
+00036:   "11:00",
+00037:   "14:00",
+00038:   "16:00",
+00039:   "21:00",
+00040: ];
+00041: 
+00042: const FEDERAL_SCHEDULE = [
+----------------------------------------------------------------------------------------------------
+
+====================================================================================================
+ARQUIVO: C:\Users\glaub\palpitaco\backend\routes\predictions.js
+====================================================================================================
+00001: "use strict";
+00002: 
+00003: const express = require("express");
+00004: 
+00005: const router = express.Router();
+00006: 
+00007: const {
+00008:     createPredictionRun,
+00009: } = require("../engine/predictionService");
+00010: 
+00011: const {
+00012:     createTop3PredictionRun,
+00013: } = require("../engine/top3PredictionService");
+00014: 
+00015: /**
+00016:  * POST /api/predictions/run
+00017:  *
+00018:  * Executa uma previsão e grava o resultado.
+00019:  */
+00020: 
+00021: router.post("/run", async (req, res) => {
+00022: 
+00023:     try {
+00024: 
+00025:         const result = await createPredictionRun(req.body || {});
+00026: 
+00027:         res.json({
+00028: 
+00029:             ok: true,
+00030: 
+00031:             run: result.run,
+00032: 
+00033:             predictions: result.predictions,
+00034: 
+00035:         });
+00036: 
+00037:     } catch (err) {
+00038: 
+00039:         console.error(err);
+00040: 
+00041:         res.status(500).json({
+00042: 
+----------------------------------------------------------------------------------------------------
+
+====================================================================================================
+ARQUIVO: C:\Users\glaub\palpitaco\backend\scripts\auditPredictionRuns.js
+====================================================================================================
+00001: "use strict";
+00002: 
+00003: const { getDb } = require("../service/firebaseAdmin");
+00004: 
+00005: async function main() {
+00006: 
+00007:   const db = getDb();
+00008: 
+00009:   const runs = await db
+00010:     .collection("prediction_runs")
+00011:     .limit(10)
+00012:     .get();
+00013: 
+00014:   console.log("");
+00015:   console.log("==================================");
+00016:   console.log("PREDICTION RUNS");
+00017:   console.log("==================================");
+00018:   console.log("Total encontrados:", runs.size);
+00019: 
+00020:   for (const doc of runs.docs) {
+00021: 
+00022:     console.log("");
+00023:     console.log(doc.id);
+00024: 
+00025:     const data = doc.data() || {};
+00026: 
+00027:     console.log({
+00028:       lottery_key: data.lottery_key,
+00029:       date: data.date,
+00030:       close_hour: data.close_hour,
+00031:       algorithm: data.algorithm,
+00032:       status: data.status,
+00033:     });
+00034: 
+00035:     const preds = await doc.ref
+00036:       .collection("predictions")
+00037:       .get();
+00038: 
+00039:     console.log("Predictions:", preds.size);
+00040: 
+00041:     for (const p of preds.docs.slice(0,3)) {
+00042: 
+----------------------------------------------------------------------------------------------------
+
+====================================================================================================
+ARQUIVO: C:\Users\glaub\palpitaco\backend\scripts\auditPredictionRuns.js
+====================================================================================================
+00001: "use strict";
+00002: 
+00003: const { getDb } = require("../service/firebaseAdmin");
+00004: 
+00005: async function main() {
+00006: 
+00007:   const db = getDb();
+00008: 
+00009:   const runs = await db
+00010:     .collection("prediction_runs")
+00011:     .limit(10)
+00012:     .get();
+00013: 
+00014:   console.log("");
+00015:   console.log("==================================");
+00016:   console.log("PREDICTION RUNS");
+00017:   console.log("==================================");
+00018:   console.log("Total encontrados:", runs.size);
+00019: 
+00020:   for (const doc of runs.docs) {
+00021: 
+00022:     console.log("");
+00023:     console.log(doc.id);
+00024: 
+00025:     const data = doc.data() || {};
+00026: 
+00027:     console.log({
+00028:       lottery_key: data.lottery_key,
+00029:       date: data.date,
+00030:       close_hour: data.close_hour,
+00031:       algorithm: data.algorithm,
+00032:       status: data.status,
+00033:     });
+00034: 
+00035:     const preds = await doc.ref
+00036:       .collection("predictions")
+00037:       .get();
+00038: 
+00039:     console.log("Predictions:", preds.size);
+00040: 
+00041:     for (const p of preds.docs.slice(0,3)) {
+00042: 
+----------------------------------------------------------------------------------------------------
+
+====================================================================================================
+ARQUIVO: C:\Users\glaub\palpitaco\backend\scripts\backtestTop3Official.js
+====================================================================================================
+00001: "use strict";
+00002: 
+00003: const fs = require("fs");
+00004: const path = require("path");
+00005: 
+00006: const {
+00007:   readFullHistory,
+00008:   readMetadata,
+00009: } = require("../engine/top3HistoryRepository");
+00010: 
+00011: const {
+00012:   computeStatisticalTop3V3,
+00013:   loadTop3PublicApi,
+00014: } = require("../engine/scoreEngineUnified");
+00015: 
+00016: const PT_RIO_SCHEDULE_NORMAL = [
+00017:   "09:00",
+00018:   "11:00",
+00019:   "14:00",
+00020:   "16:00",
+00021:   "18:00",
+00022:   "21:00",
+00023: ];
+00024: 
+00025: const PT_RIO_SCHEDULE_WED_SAT = [
+00026:   "09:00",
+00027:   "11:00",
+00028:   "14:00",
+00029:   "16:00",
+00030:   "18:00",
+00031:   "21:00",
+00032: ];
+00033: 
+00034: const FEDERAL_SCHEDULE = [
+00035:   "19:00",
+00036:   "20:00",
+00037: ];
+00038: 
+00039: function safeArray(value) {
+00040:   return Array.isArray(value)
+00041:     ? value
+00042:     : [];
+----------------------------------------------------------------------------------------------------
+
+====================================================================================================
+ARQUIVO: C:\Users\glaub\palpitaco\backend\scripts\importKingApostas.js
+====================================================================================================
+00001: "use strict";
+00002: 
+00003: /**
+00004:  * importKingApostas.js
+00005:  * (topo limpo automaticamente — removido bloco corrompido com \n e \)
+00006:  */
+00007: const fs = require("fs");
+00008: const path = require("path");
+00009: const axios = require("axios");
+00010: const {
+00011:   normalizeFederalRequestedSlot,
+00012:   normalizeFederalSourceSlot,
+00013: } = require("./federalCalendar");
+00014: 
+00015: /**
+00016:  * =========================
+00017:  * ENV helpers
+00018:  * =========================
+00019:  */
+00020: 
+00021: /**
+00022:  * Carrega variáveis do backend/.env.local (se existir)
+00023:  * Observação: só define se a env ainda não estiver definida no processo.
+00024:  */
+00025: (function loadEnvLocal() {
+00026:   try {
+00027:     const envPath = path.join(__dirname, "..", ".env.local");
+00028:     if (!fs.existsSync(envPath)) return;
+00029: 
+00030:     let raw = fs.readFileSync(envPath, "utf8");
+00031:     raw = raw.replace(/^\uFEFF/, ""); // remove BOM invisível
+00032: 
+00033:     raw.split(/\r?\n/).forEach((line) => {
+00034:       let s = String(line || "").trim();
+00035:       if (!s || s.startsWith("#")) return;
+00036: 
+00037:       // suporta "export KEY=VAL"
+00038:       if (/^export\s+/i.test(s)) s = s.replace(/^export\s+/i, "").trim();
+00039: 
+00040:       const i = s.indexOf("=");
+00041:       if (i <= 0) return;
+00042: 
+----------------------------------------------------------------------------------------------------
+
+====================================================================================================
+ARQUIVO: C:\Users\glaub\palpitaco\backend\scripts\testPredictionRun.js
+====================================================================================================
+00001: "use strict";
+00002: 
+00003: // TODO:
+00004: // Migrar este script para utilizar o Score Engine unificado.
+00005: // O ScoreEngineV1 será descontinuado após a integração completa.
+00006: // TODO:
+00007: // Migrar este script para utilizar o Score Engine unificado.
+00008: // O ScoreEngineV1 será descontinuado após a integração completa.
+00009: const { rankingToPredictions } = require("../engine/scoreEngineV1");
+00010: const { createPredictionRun } = require("../engine/predictionService");
+00011: 
+00012: async function main() {
+00013: 
+00014:   const ranking = [
+00015:     { grupo: "16", animal: "Leão", total: 42 },
+00016:     { grupo: "19", animal: "Pavão", total: 31 },
+00017:     { grupo: "07", animal: "Carneiro", total: 18 },
+00018:     { grupo: "03", animal: "Burro", total: 15 },
+00019:     { grupo: "09", animal: "Cobra", total: 12 }
+00020:   ];
+00021: 
+00022:   const predictions = rankingToPredictions(ranking, {
+00023:     limit: 5,
+00024:   });
+00025: 
+00026:   const result = await createPredictionRun({
+00027:     lotteryKey: "PT_RIO",
+00028:     date: "2026-07-04",
+00029:     closeHour: "14:00",
+00030:     source: "integration-test",
+00031:     algorithm: "score_engine_unified_preview",
+00032:     metadata: {
+00033:       version: 2,
+00034:       createdBy: "integration-test"
+00035:     },
+00036:     predictions,
+00037:   });
+00038: 
+00039:   console.log("==================================");
+00040:   console.log("Prediction Run gravado com sucesso");
+00041:   console.log("==================================");
+00042:   console.log(result.run.id);
+----------------------------------------------------------------------------------------------------
+
+====================================================================================================
+ARQUIVO: C:\Users\glaub\palpitaco\backend\server.js
+====================================================================================================
+00001: const { validateEnv } = require("./utils/validateEnv.js");
+00002: "use strict";
+00003: 
+00004: /* =========================
+00005:    LOTTERY KEY NORMALIZATION
+00006: ========================= */
+00007: 
+00008: function normalizeLotteryKey(v) {
+00009:   const s = String(v || "").trim().toUpperCase();
+00010:   if (s === "RJ") return "PT_RIO";
+00011:   if (s === "RIO") return "PT_RIO";
+00012:   if (s === "PT-RIO") return "PT_RIO";
+00013:   return s || "PT_RIO";
+00014: }
+00015: 
+00016: function getLotteryFromReq(req, fallback = "PT_RIO") {
+00017:   return normalizeLotteryKey(
+00018:     req?.query?.lotteryKey || req?.query?.lottery || req?.query?.uf || fallback
+00019:   );
+00020: }
+00021: 
+00022: /* =========================
+00023:    ENV loader (.env.local) — sem dotenv
+00024: ========================= */
+00025: 
+00026: const fs = require("fs");
+00027: const path = require("path");
+00028: 
+00029: function parseEnvValue(val) {
+00030:   let v = String(val ?? "").trim();
+00031: 
+00032:   // remove aspas se vier "3333" ou '3333'
+00033:   if (
+00034:     (v.startsWith('"') && v.endsWith('"')) ||
+00035:     (v.startsWith("'") && v.endsWith("'"))
+00036:   ) {
+00037:     v = v.slice(1, -1);
+00038:   }
+00039: 
+00040:   // remove comentários inline: KEY=val # comment
+00041:   v = v.replace(/\s+#.*$/, "").trim();
+00042:   return v;
+----------------------------------------------------------------------------------------------------
+
+====================================================================================================
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Top3\modules\top3.prediction.js
+====================================================================================================
+00001: function clampProb(v) {
+00002:   const n = Number(v);
+00003: 
+00004:   if (!Number.isFinite(n)) return 0;
+00005:   if (n > 1) return Math.max(0, Math.min(1, n / 100));
+00006: 
+00007:   return Math.max(0, Math.min(1, n));
+00008: }
+00009: 
+00010: function isValidGrupo(g) {
+00011:   const n = Number(g);
+00012:   return Number.isFinite(n) && n >= 1 && n <= 25;
+00013: }
+00014: 
+00015: export function buildTop3Predictions({
+00016:   analytics,
+00017:   build20,
+00018:   safeStr,
+00019:   toHourBucket,
+00020:   getAnimalLabel,
+00021:   build4ColsFromEngineOut,
+00022:   resolveProbValue,
+00023:   getGrupoImgSrc,
+00024:   buildResultStyleImgVariants,
+00025: }) {
+00026:   const arr = Array.isArray(analytics?.top) ? analytics.top : [];
+00027:   const milharesCache = new Map();
+00028: 
+00029:   return arr
+00030:     .filter((x) => isValidGrupo(x?.grupo))
+00031:     .slice(0, 3)
+00032:     .map((x) => {
+00033:       const g = Number(x.grupo);
+00034:       const animal = safeStr(getAnimalLabel(g) || "");
+00035: 
+00036:       const nextY = safeStr(x?.meta?.next?.ymd || "");
+00037:       const nextH = toHourBucket
+00038:         ? toHourBucket(x?.meta?.next?.hour || "")
+00039:         : safeStr(x?.meta?.next?.hour || "");
+00040: 
+00041:       const cacheKey = `${g}|${nextY}|${nextH}`;
+00042: 
+----------------------------------------------------------------------------------------------------
+
+====================================================================================================
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.js
+====================================================================================================
+00001: /* eslint-disable no-unused-vars */
+00002: // src/pages/Top3/top3.engine.js
+00003: import {
+00004:   safeStr,
+00005:   isYMD,
+00006:   normalizeToYMD,
+00007:   addDaysYMD,
+00008:   normalizeHourLike,
+00009:   toHourBucket,
+00010:   hourToInt,
+00011:   getDowKey,
+00012:   pickPrizeMilhar4,
+00013:   getDezena2,
+00014:   getCentena3,
+00015:   milharCompareAsc,
+00016:   wrapToDezena2,
+00017: } from "./top3.formatters";
+00018: 
+00019: import { scoreRanking } from "./modules/scoreEngine/scoreEngineV2";
+00020: 
+00021: import { chooseBestMilhar } from "../../shared/predictiveMilharEngine";
+00022: 
+00023: import {
+00024:   TOP3_NEXTDRAW_SCAN_MAX_STEPS,
+00025:   TOP3_NEXTDRAW_SCAN_MAX_DAYS,
+00026:   TOP3_GROUPS_K,
+00027:   TOP3_SMOOTH_ALPHA,
+00028:   TOP3_SCENE_WEIGHT,
+00029:   TOP3_SCENE_SAMPLE_TARGET,
+00030:   TOP3_SCENE_BLEND_SCENE,
+00031:   TOP3_SCENE_BLEND_UNIFORM,
+00032:   PT_RIO_SCHEDULE_SUNDAY,
+00033:   LOOK_SCHEDULE,
+00034:   NACIONAL_SCHEDULE,
+00035: } from "./top3.constants";
+00036: 
+00037: function findPreviousValidDraw(draws, currentYmd, currentHour) {
+00038:   const list = Array.isArray(draws) ? draws : [];
+00039:   const targetY = safeStr(currentYmd);
+00040:   const targetH = toHourBucket(currentHour);
+00041: 
+00042:   if (!isYMD(targetY) || !targetH) return null;
+----------------------------------------------------------------------------------------------------
+
+====================================================================================================
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Top3\top3.firestore.js
+====================================================================================================
+00001: /* eslint-disable no-unused-vars */
+00002: import {
+00003:   doc,
+00004:   getDoc,
+00005:   runTransaction,
+00006:   setDoc,
+00007: } from "firebase/firestore";
+00008: 
+00009: import { db } from "../../services/firebase";
+00010: import { loginAnonymous } from "../../services/auth";
+00011: 
+00012: import {
+00013:   safeStr,
+00014:   isYMD,
+00015:   toHourBucket,
+00016: } from "./top3.formatters";
+00017: 
+00018: import {
+00019:   pickDrawYMD,
+00020:   pickDrawHour,
+00021:   pickPrize1GrupoFromDraw,
+00022: } from "./top3.engine";
+00023: 
+00024: const COLLECTION = "top3_predictions";
+00025: 
+00026: function normalizeLotteryKey(value) {
+00027:   return safeStr(value).toUpperCase() || "PT_RIO";
+00028: }
+00029: 
+00030: function normalizeHour(value) {
+00031:   return toHourBucket(value) || "";
+00032: }
+00033: 
+00034: function hourCode(value) {
+00035:   return normalizeHour(value).replace(/\D/g, "").padStart(2, "0");
+00036: }
+00037: 
+00038: function makePredictionId({ lotteryKey, targetYmd, targetHour }) {
+00039:   const lottery = normalizeLotteryKey(lotteryKey);
+00040:   const ymd = safeStr(targetYmd);
+00041:   const hour = hourCode(targetHour);
+00042: 
+----------------------------------------------------------------------------------------------------
+
+====================================================================================================
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js
+====================================================================================================
+00001: /* eslint-disable no-unused-vars, react-hooks/exhaustive-deps */
+00002: import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+00003: 
+00004: import {
+00005:   safeStr,
+00006:   isYMD,
+00007:   ymdToBR,
+00008:   normalizeToYMD,
+00009:   todayYMDLocal,
+00010:   addDaysYMD,
+00011:   toHourBucket,
+00012:   hourToInt,
+00013:   getCentena3,
+00014: } from "./top3.formatters";
+00015: 
+00016: import {
+00017:   LOOKBACK_ALL,
+00018:   LOOKBACK_OPTIONS,
+00019:   LOTTERY_OPTIONS,
+00020:   PT_RIO_SCHEDULE_NORMAL,
+00021:   PT_RIO_SCHEDULE_WED_SAT,
+00022:   FEDERAL_SCHEDULE,
+00023: } from "./top3.constants";
+00024: 
+00025: import {
+00026:   getScheduleForLottery,
+00027:   findLastDrawInList,
+00028:   pickDrawHour,
+00029:   pickDrawYMD,
+00030:   pickPrize1GrupoFromDraw,
+00031:   getPreviousDrawRobust,
+00032:   build16MilharesForGrupo,
+00033:   buildMilharesForGrupo,
+00034:   getNextSlotForLottery,
+00035:   isFederalDrawDay,
+00036: } from "./top3.engine";
+00037: 
+00038: import { lotteryLabel } from "./top3.selectors";
+00039: 
+00040: import {
+00041:   registerPrediction,
+00042:   reconcilePendingTop3Log,
+----------------------------------------------------------------------------------------------------
+
+====================================================================================================
+ARQUIVO: C:\Users\glaub\palpitaco\src\services\predictionService.js
+====================================================================================================
+00001: import api from "./api";
+00002: 
+00003: /**
+00004:  * Executa uma previsão utilizando o Score Engine do backend.
+00005:  */
+00006: export async function runPrediction(payload = {}) {
+00007: 
+00008:   const { data } = await api.post(
+00009:     "/predictions/run",
+00010:     payload
+00011:   );
+00012: 
+00013:   return data;
+00014: }
+----------------------------------------------------------------------------------------------------

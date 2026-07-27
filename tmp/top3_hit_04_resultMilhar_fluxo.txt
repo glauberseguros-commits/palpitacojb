@@ -1,0 +1,2904 @@
+====================================================================
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Top3\top3.firestore.js
+LINHA: 142
+TERMO: resultMilhar
+====================================================================
+
+      return (
+        Number.isFinite(item.grupo) &&
+        item.grupo >= 1 &&
+        item.grupo <= 25
+      );
+    });
+}
+
+>>> function analyzeSnapshotHit(snapshot, resultGrupo, resultMilhar) {
+  const top3 = Array.isArray(snapshot) ? snapshot.slice(0, 3) : [];
+  const grupo = Number(resultGrupo);
+  const milhar = normalizeMilhar(resultMilhar);
+  const centena = milhar ? milhar.slice(-3) : "";
+
+  let best = {
+    hitType: "miss",
+    hitScore: 0,
+    hitPosition: -1,
+    matchedValue: "",
+  };
+
+
+====================================================================
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Top3\top3.firestore.js
+LINHA: 145
+TERMO: resultMilhar
+====================================================================
+
+        item.grupo <= 25
+      );
+    });
+}
+
+function analyzeSnapshotHit(snapshot, resultGrupo, resultMilhar) {
+  const top3 = Array.isArray(snapshot) ? snapshot.slice(0, 3) : [];
+  const grupo = Number(resultGrupo);
+>>>   const milhar = normalizeMilhar(resultMilhar);
+  const centena = milhar ? milhar.slice(-3) : "";
+
+  let best = {
+    hitType: "miss",
+    hitScore: 0,
+    hitPosition: -1,
+    matchedValue: "",
+  };
+
+  top3.forEach((item, index) => {
+    const itemGrupo = Number(item?.grupo);
+
+
+====================================================================
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Top3\top3.firestore.js
+LINHA: 149
+TERMO: hitType
+====================================================================
+
+
+function analyzeSnapshotHit(snapshot, resultGrupo, resultMilhar) {
+  const top3 = Array.isArray(snapshot) ? snapshot.slice(0, 3) : [];
+  const grupo = Number(resultGrupo);
+  const milhar = normalizeMilhar(resultMilhar);
+  const centena = milhar ? milhar.slice(-3) : "";
+
+  let best = {
+>>>     hitType: "miss",
+    hitScore: 0,
+    hitPosition: -1,
+    matchedValue: "",
+  };
+
+  top3.forEach((item, index) => {
+    const itemGrupo = Number(item?.grupo);
+
+    const milhares = (Array.isArray(item?.milhares20)
+      ? item.milhares20
+      : []
+    )
+
+====================================================================
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Top3\top3.firestore.js
+LINHA: 150
+TERMO: hitScore
+====================================================================
+
+function analyzeSnapshotHit(snapshot, resultGrupo, resultMilhar) {
+  const top3 = Array.isArray(snapshot) ? snapshot.slice(0, 3) : [];
+  const grupo = Number(resultGrupo);
+  const milhar = normalizeMilhar(resultMilhar);
+  const centena = milhar ? milhar.slice(-3) : "";
+
+  let best = {
+    hitType: "miss",
+>>>     hitScore: 0,
+    hitPosition: -1,
+    matchedValue: "",
+  };
+
+  top3.forEach((item, index) => {
+    const itemGrupo = Number(item?.grupo);
+
+    const milhares = (Array.isArray(item?.milhares20)
+      ? item.milhares20
+      : []
+    )
+      .map(normalizeMilhar)
+
+====================================================================
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Top3\top3.firestore.js
+LINHA: 152
+TERMO: matchedValue
+====================================================================
+
+  const grupo = Number(resultGrupo);
+  const milhar = normalizeMilhar(resultMilhar);
+  const centena = milhar ? milhar.slice(-3) : "";
+
+  let best = {
+    hitType: "miss",
+    hitScore: 0,
+    hitPosition: -1,
+>>>     matchedValue: "",
+  };
+
+  top3.forEach((item, index) => {
+    const itemGrupo = Number(item?.grupo);
+
+    const milhares = (Array.isArray(item?.milhares20)
+      ? item.milhares20
+      : []
+    )
+      .map(normalizeMilhar)
+      .filter(Boolean);
+
+
+====================================================================
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Top3\top3.firestore.js
+LINHA: 169
+TERMO: hitType
+====================================================================
+
+    )
+      .map(normalizeMilhar)
+      .filter(Boolean);
+
+    const centenas = milhares.map((value) => value.slice(-3));
+
+    if (milhar && milhares.includes(milhar)) {
+      best = {
+>>>         hitType: "hit_exact",
+        hitScore: 100,
+        hitPosition: index + 1,
+        matchedValue: milhar,
+      };
+      return;
+    }
+
+    if (
+      best.hitScore < 66.67 &&
+      centena &&
+      centenas.includes(centena)
+    ) {
+
+====================================================================
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Top3\top3.firestore.js
+LINHA: 170
+TERMO: hitScore
+====================================================================
+
+      .map(normalizeMilhar)
+      .filter(Boolean);
+
+    const centenas = milhares.map((value) => value.slice(-3));
+
+    if (milhar && milhares.includes(milhar)) {
+      best = {
+        hitType: "hit_exact",
+>>>         hitScore: 100,
+        hitPosition: index + 1,
+        matchedValue: milhar,
+      };
+      return;
+    }
+
+    if (
+      best.hitScore < 66.67 &&
+      centena &&
+      centenas.includes(centena)
+    ) {
+      best = {
+
+====================================================================
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Top3\top3.firestore.js
+LINHA: 172
+TERMO: matchedValue
+====================================================================
+
+
+    const centenas = milhares.map((value) => value.slice(-3));
+
+    if (milhar && milhares.includes(milhar)) {
+      best = {
+        hitType: "hit_exact",
+        hitScore: 100,
+        hitPosition: index + 1,
+>>>         matchedValue: milhar,
+      };
+      return;
+    }
+
+    if (
+      best.hitScore < 66.67 &&
+      centena &&
+      centenas.includes(centena)
+    ) {
+      best = {
+        hitType: "hit_centena",
+        hitScore: 66.67,
+
+====================================================================
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Top3\top3.firestore.js
+LINHA: 178
+TERMO: hitScore
+====================================================================
+
+        hitScore: 100,
+        hitPosition: index + 1,
+        matchedValue: milhar,
+      };
+      return;
+    }
+
+    if (
+>>>       best.hitScore < 66.67 &&
+      centena &&
+      centenas.includes(centena)
+    ) {
+      best = {
+        hitType: "hit_centena",
+        hitScore: 66.67,
+        hitPosition: index + 1,
+        matchedValue: centena,
+      };
+      return;
+    }
+
+
+====================================================================
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Top3\top3.firestore.js
+LINHA: 183
+TERMO: hitType
+====================================================================
+
+    }
+
+    if (
+      best.hitScore < 66.67 &&
+      centena &&
+      centenas.includes(centena)
+    ) {
+      best = {
+>>>         hitType: "hit_centena",
+        hitScore: 66.67,
+        hitPosition: index + 1,
+        matchedValue: centena,
+      };
+      return;
+    }
+
+    if (
+      best.hitScore < 33.33 &&
+      Number.isFinite(grupo) &&
+      itemGrupo === grupo
+    ) {
+
+====================================================================
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Top3\top3.firestore.js
+LINHA: 184
+TERMO: hitScore
+====================================================================
+
+
+    if (
+      best.hitScore < 66.67 &&
+      centena &&
+      centenas.includes(centena)
+    ) {
+      best = {
+        hitType: "hit_centena",
+>>>         hitScore: 66.67,
+        hitPosition: index + 1,
+        matchedValue: centena,
+      };
+      return;
+    }
+
+    if (
+      best.hitScore < 33.33 &&
+      Number.isFinite(grupo) &&
+      itemGrupo === grupo
+    ) {
+      best = {
+
+====================================================================
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Top3\top3.firestore.js
+LINHA: 186
+TERMO: matchedValue
+====================================================================
+
+      best.hitScore < 66.67 &&
+      centena &&
+      centenas.includes(centena)
+    ) {
+      best = {
+        hitType: "hit_centena",
+        hitScore: 66.67,
+        hitPosition: index + 1,
+>>>         matchedValue: centena,
+      };
+      return;
+    }
+
+    if (
+      best.hitScore < 33.33 &&
+      Number.isFinite(grupo) &&
+      itemGrupo === grupo
+    ) {
+      best = {
+        hitType: "hit_grupo",
+        hitScore: 33.33,
+
+====================================================================
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Top3\top3.firestore.js
+LINHA: 192
+TERMO: hitScore
+====================================================================
+
+        hitScore: 66.67,
+        hitPosition: index + 1,
+        matchedValue: centena,
+      };
+      return;
+    }
+
+    if (
+>>>       best.hitScore < 33.33 &&
+      Number.isFinite(grupo) &&
+      itemGrupo === grupo
+    ) {
+      best = {
+        hitType: "hit_grupo",
+        hitScore: 33.33,
+        hitPosition: index + 1,
+        matchedValue: milhar ? milhar.slice(-2) : String(grupo),
+      };
+    }
+  });
+
+
+====================================================================
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Top3\top3.firestore.js
+LINHA: 197
+TERMO: hitType
+====================================================================
+
+    }
+
+    if (
+      best.hitScore < 33.33 &&
+      Number.isFinite(grupo) &&
+      itemGrupo === grupo
+    ) {
+      best = {
+>>>         hitType: "hit_grupo",
+        hitScore: 33.33,
+        hitPosition: index + 1,
+        matchedValue: milhar ? milhar.slice(-2) : String(grupo),
+      };
+    }
+  });
+
+  return best;
+}
+
+export async function saveTop3PredictionSnapshot({
+  lotteryKey,
+
+====================================================================
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Top3\top3.firestore.js
+LINHA: 198
+TERMO: hitScore
+====================================================================
+
+
+    if (
+      best.hitScore < 33.33 &&
+      Number.isFinite(grupo) &&
+      itemGrupo === grupo
+    ) {
+      best = {
+        hitType: "hit_grupo",
+>>>         hitScore: 33.33,
+        hitPosition: index + 1,
+        matchedValue: milhar ? milhar.slice(-2) : String(grupo),
+      };
+    }
+  });
+
+  return best;
+}
+
+export async function saveTop3PredictionSnapshot({
+  lotteryKey,
+  targetYmd,
+
+====================================================================
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Top3\top3.firestore.js
+LINHA: 200
+TERMO: matchedValue
+====================================================================
+
+      best.hitScore < 33.33 &&
+      Number.isFinite(grupo) &&
+      itemGrupo === grupo
+    ) {
+      best = {
+        hitType: "hit_grupo",
+        hitScore: 33.33,
+        hitPosition: index + 1,
+>>>         matchedValue: milhar ? milhar.slice(-2) : String(grupo),
+      };
+    }
+  });
+
+  return best;
+}
+
+export async function saveTop3PredictionSnapshot({
+  lotteryKey,
+  targetYmd,
+  targetHour,
+  picks,
+
+====================================================================
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Top3\top3.firestore.js
+LINHA: 285
+TERMO: resultMilhar
+====================================================================
+
+    targetYmd: ymd,
+    targetHour: hour,
+    targetKey: `${ymd}_${hour}`,
+    picks: normalizedPicks,
+    snapshot: normalizedSnapshot,
+    engineVersion: safeStr(engineVersion || "V3_STATISTICAL"),
+    status: "predicted",
+    resultGrupo: null,
+>>>     resultMilhar: "",
+    resultAnimal: "",
+    hitType: "",
+    hitScore: 0,
+    hitPosition: -1,
+    matchedValue: "",
+    createdAt: now,
+    updatedAt: now,
+    createdBy: user.uid,
+  });
+
+  const result = await runTransaction(db, async (transaction) => {
+    const current = await transaction.get(ref);
+
+====================================================================
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Top3\top3.firestore.js
+LINHA: 287
+TERMO: hitType
+====================================================================
+
+    targetKey: `${ymd}_${hour}`,
+    picks: normalizedPicks,
+    snapshot: normalizedSnapshot,
+    engineVersion: safeStr(engineVersion || "V3_STATISTICAL"),
+    status: "predicted",
+    resultGrupo: null,
+    resultMilhar: "",
+    resultAnimal: "",
+>>>     hitType: "",
+    hitScore: 0,
+    hitPosition: -1,
+    matchedValue: "",
+    createdAt: now,
+    updatedAt: now,
+    createdBy: user.uid,
+  });
+
+  const result = await runTransaction(db, async (transaction) => {
+    const current = await transaction.get(ref);
+
+    if (current.exists()) {
+
+====================================================================
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Top3\top3.firestore.js
+LINHA: 288
+TERMO: hitScore
+====================================================================
+
+    picks: normalizedPicks,
+    snapshot: normalizedSnapshot,
+    engineVersion: safeStr(engineVersion || "V3_STATISTICAL"),
+    status: "predicted",
+    resultGrupo: null,
+    resultMilhar: "",
+    resultAnimal: "",
+    hitType: "",
+>>>     hitScore: 0,
+    hitPosition: -1,
+    matchedValue: "",
+    createdAt: now,
+    updatedAt: now,
+    createdBy: user.uid,
+  });
+
+  const result = await runTransaction(db, async (transaction) => {
+    const current = await transaction.get(ref);
+
+    if (current.exists()) {
+      return {
+
+====================================================================
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Top3\top3.firestore.js
+LINHA: 290
+TERMO: matchedValue
+====================================================================
+
+    engineVersion: safeStr(engineVersion || "V3_STATISTICAL"),
+    status: "predicted",
+    resultGrupo: null,
+    resultMilhar: "",
+    resultAnimal: "",
+    hitType: "",
+    hitScore: 0,
+    hitPosition: -1,
+>>>     matchedValue: "",
+    createdAt: now,
+    updatedAt: now,
+    createdBy: user.uid,
+  });
+
+  const result = await runTransaction(db, async (transaction) => {
+    const current = await transaction.get(ref);
+
+    if (current.exists()) {
+      return {
+        ok: true,
+        created: false,
+
+====================================================================
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Top3\top3.firestore.js
+LINHA: 429
+TERMO: resultMilhar
+====================================================================
+
+    if (
+      !Number.isFinite(resultGrupo) ||
+      resultGrupo < 1 ||
+      resultGrupo > 25
+    ) {
+      continue;
+    }
+
+>>>     const resultMilhar = extractPrize1Milhar(realDraw);
+    const savedLottery = safeStr(
+      entry?.resultLotteryKey
+    ).toUpperCase();
+    const savedGrupo = Number(entry?.resultGrupo);
+    const savedMilhar = normalizeMilhar(entry?.resultMilhar);
+
+    const alreadyMatchesRealResult =
+      entry?.status === "validated" &&
+      savedLottery === lottery &&
+      savedGrupo === resultGrupo &&
+      savedMilhar === resultMilhar;
+
+
+====================================================================
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Top3\top3.firestore.js
+LINHA: 434
+TERMO: resultMilhar
+====================================================================
+
+      continue;
+    }
+
+    const resultMilhar = extractPrize1Milhar(realDraw);
+    const savedLottery = safeStr(
+      entry?.resultLotteryKey
+    ).toUpperCase();
+    const savedGrupo = Number(entry?.resultGrupo);
+>>>     const savedMilhar = normalizeMilhar(entry?.resultMilhar);
+
+    const alreadyMatchesRealResult =
+      entry?.status === "validated" &&
+      savedLottery === lottery &&
+      savedGrupo === resultGrupo &&
+      savedMilhar === resultMilhar;
+
+    if (alreadyMatchesRealResult) {
+      continue;
+    }
+
+    const analysis = analyzeSnapshotHit(
+
+====================================================================
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Top3\top3.firestore.js
+LINHA: 440
+TERMO: resultMilhar
+====================================================================
+
+    ).toUpperCase();
+    const savedGrupo = Number(entry?.resultGrupo);
+    const savedMilhar = normalizeMilhar(entry?.resultMilhar);
+
+    const alreadyMatchesRealResult =
+      entry?.status === "validated" &&
+      savedLottery === lottery &&
+      savedGrupo === resultGrupo &&
+>>>       savedMilhar === resultMilhar;
+
+    if (alreadyMatchesRealResult) {
+      continue;
+    }
+
+    const analysis = analyzeSnapshotHit(
+      entry?.snapshot,
+      resultGrupo,
+      resultMilhar
+    );
+
+    const ref = doc(db, COLLECTION, entry.id);
+
+====================================================================
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Top3\top3.firestore.js
+LINHA: 449
+TERMO: resultMilhar
+====================================================================
+
+
+    if (alreadyMatchesRealResult) {
+      continue;
+    }
+
+    const analysis = analyzeSnapshotHit(
+      entry?.snapshot,
+      resultGrupo,
+>>>       resultMilhar
+    );
+
+    const ref = doc(db, COLLECTION, entry.id);
+    const now = Date.now();
+
+    await setDoc(
+      ref,
+      {
+        resultGrupo,
+        resultMilhar,
+        resultLotteryKey: lottery,
+        resultAnimal: safeStr(
+
+====================================================================
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Top3\top3.firestore.js
+LINHA: 459
+TERMO: resultMilhar
+====================================================================
+
+
+    const ref = doc(db, COLLECTION, entry.id);
+    const now = Date.now();
+
+    await setDoc(
+      ref,
+      {
+        resultGrupo,
+>>>         resultMilhar,
+        resultLotteryKey: lottery,
+        resultAnimal: safeStr(
+          extractPrize1(realDraw)?.animal || ""
+        ),
+        hitType: analysis.hitType,
+        hitScore: analysis.hitScore,
+        hitPosition: analysis.hitPosition,
+        matchedValue: analysis.matchedValue,
+        validatedAt: now,
+        validatedBy: user.uid,
+        updatedAt: now,
+        status: "validated",
+
+====================================================================
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Top3\top3.firestore.js
+LINHA: 464
+TERMO: hitType
+====================================================================
+
+      ref,
+      {
+        resultGrupo,
+        resultMilhar,
+        resultLotteryKey: lottery,
+        resultAnimal: safeStr(
+          extractPrize1(realDraw)?.animal || ""
+        ),
+>>>         hitType: analysis.hitType,
+        hitScore: analysis.hitScore,
+        hitPosition: analysis.hitPosition,
+        matchedValue: analysis.matchedValue,
+        validatedAt: now,
+        validatedBy: user.uid,
+        updatedAt: now,
+        status: "validated",
+      },
+      { merge: true }
+    );
+
+    updated += 1;
+
+====================================================================
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Top3\top3.firestore.js
+LINHA: 465
+TERMO: hitScore
+====================================================================
+
+      {
+        resultGrupo,
+        resultMilhar,
+        resultLotteryKey: lottery,
+        resultAnimal: safeStr(
+          extractPrize1(realDraw)?.animal || ""
+        ),
+        hitType: analysis.hitType,
+>>>         hitScore: analysis.hitScore,
+        hitPosition: analysis.hitPosition,
+        matchedValue: analysis.matchedValue,
+        validatedAt: now,
+        validatedBy: user.uid,
+        updatedAt: now,
+        status: "validated",
+      },
+      { merge: true }
+    );
+
+    updated += 1;
+  }
+
+====================================================================
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Top3\top3.firestore.js
+LINHA: 467
+TERMO: matchedValue
+====================================================================
+
+        resultMilhar,
+        resultLotteryKey: lottery,
+        resultAnimal: safeStr(
+          extractPrize1(realDraw)?.animal || ""
+        ),
+        hitType: analysis.hitType,
+        hitScore: analysis.hitScore,
+        hitPosition: analysis.hitPosition,
+>>>         matchedValue: analysis.matchedValue,
+        validatedAt: now,
+        validatedBy: user.uid,
+        updatedAt: now,
+        status: "validated",
+      },
+      { merge: true }
+    );
+
+    updated += 1;
+  }
+
+  return {
+
+====================================================================
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js
+LINHA: 333
+TERMO: persistedTop3History
+====================================================================
+
+    prevYmd: "",
+    prevHour: "",
+    prevGrupo: null,
+    prevAnimal: "",
+    source: "none",
+  });
+
+  const [baseDrawState, setBaseDrawState] = useState(null);
+>>>   const [persistedTop3History, setPersistedTop3History] = useState([]);
+
+  const lotteryKeySafe = useMemo(
+    () => safeStr(lotteryKey).toUpperCase() || DEFAULT_LOTTERY,
+    [lotteryKey]
+  );
+
+  const ymdSafe = useMemo(() => {
+    const y = normalizeToYMD(ymd);
+    return y && isYMD(y) ? y : todayYMDLocal();
+  }, [ymd]);
+
+  const dateBR = useMemo(() => ymdToBR(ymdSafe), [ymdSafe]);
+
+====================================================================
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js
+LINHA: 1093
+TERMO: persistedTop3History
+====================================================================
+
+        ? rangeDraws.length
+        : -1,
+    });
+
+    let alive = true;
+
+    async function loadPersistedHistory() {
+      if (!isYMD(timelineYmd)) {
+>>>         if (alive) setPersistedTop3History([]);
+        return;
+      }
+
+      try {
+        const history = await loadTop3PredictionDay({
+          lotteryKey: lotteryKeySafe,
+          targetYmd: timelineYmd,
+          schedule,
+        });
+
+        if (alive) {
+          setPersistedTop3History(
+
+====================================================================
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js
+LINHA: 1105
+TERMO: persistedTop3History
+====================================================================
+
+      try {
+        const history = await loadTop3PredictionDay({
+          lotteryKey: lotteryKeySafe,
+          targetYmd: timelineYmd,
+          schedule,
+        });
+
+        if (alive) {
+>>>           setPersistedTop3History(
+            Array.isArray(history) ? history : []
+          );
+        }
+      } catch {
+        if (alive) setPersistedTop3History([]);
+      }
+    }
+
+    loadPersistedHistory();
+
+    return () => {
+      alive = false;
+
+====================================================================
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js
+LINHA: 1110
+TERMO: persistedTop3History
+====================================================================
+
+        });
+
+        if (alive) {
+          setPersistedTop3History(
+            Array.isArray(history) ? history : []
+          );
+        }
+      } catch {
+>>>         if (alive) setPersistedTop3History([]);
+      }
+    }
+
+    loadPersistedHistory();
+
+    return () => {
+      alive = false;
+    };
+  }, [
+    lotteryKeySafe,
+    timelineYmd,
+    schedule,
+
+====================================================================
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js
+LINHA: 1167
+TERMO: persistedTop3History
+====================================================================
+
+    })
+      .then(async () => {
+        const history = await loadTop3PredictionDay({
+          lotteryKey: lotteryKeySafe,
+          targetYmd: timelineYmd,
+          schedule,
+        });
+
+>>>         setPersistedTop3History(
+          Array.isArray(history) ? history : []
+        );
+      })
+      .catch((error) => {
+        if (debugTop3) {
+          console.warn("[TOP3 FIRESTORE RECONCILE]", error);
+        }
+      });
+  }, [
+    todayDraws,
+    rangeDraws,
+    lotteryKeySafe,
+
+====================================================================
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js
+LINHA: 1214
+TERMO: persistedTop3History
+====================================================================
+
+    analysisYmd,
+
+    prevLabel,
+    lastLabel,
+    layerMetaText,
+
+    top3,
+    timelineTop3,
+>>>     persistedTop3History,
+
+    setLotteryKey,
+    setYmd,
+    setLookback,
+    load,
+
+    safeStr,
+    lotteryLabel,
+
+    build16: (grupo2) =>
+      build16MilharesForGrupo({
+        rangeDraws,
+
+====================================================================
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Top3\Top3View.jsx
+LINHA: 5
+TERMO: resultMilhar
+====================================================================
+
+// src/pages/Top3/Top3View.jsx
+import React, { useMemo, useState, useCallback, useEffect } from "react";
+import { getAnimalLabel, getImgFromGrupo } from "../../constants/bichoMap";
+
+>>> function extractResultMilhar(slot) {
+  if (!slot || !Array.isArray(slot.prizes)) return "";
+
+  const p1 = slot.prizes.find((p) => Number(p.position) === 1);
+  if (!p1) return "";
+
+  const num = String(
+    p1.numero ||
+      p1.milhar ||
+      p1.number ||
+      p1.valor ||
+      ""
+  ).replace(/\D/g, "");
+
+====================================================================
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Top3\Top3View.jsx
+LINHA: 264
+TERMO: resultMilhar
+====================================================================
+
+
+  return NaN;
+}
+
+function hasOfficialResult(slot) {
+  const grupo = getSlotResultGrupo(slot);
+  if (Number.isFinite(grupo) && grupo >= 1 && grupo <= 25) return true;
+
+>>>   const milhar = extractResultMilhar(slot);
+  return /^\d{4}$/.test(milhar);
+}
+
+function analyzeTop3Hit(top3, resultGrupo, resultMilhar) {
+  if (!Array.isArray(top3) || !top3.length) {
+    return { type: "none", score: 0, position: -1, matchedValue: "" };
+  }
+
+  const grupoNum = Number(resultGrupo);
+  const milhar = normalizeMilharStr(resultMilhar);
+  const centena = milhar ? milhar.slice(-3) : "";
+
+
+====================================================================
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Top3\Top3View.jsx
+LINHA: 268
+TERMO: resultMilhar
+====================================================================
+
+function hasOfficialResult(slot) {
+  const grupo = getSlotResultGrupo(slot);
+  if (Number.isFinite(grupo) && grupo >= 1 && grupo <= 25) return true;
+
+  const milhar = extractResultMilhar(slot);
+  return /^\d{4}$/.test(milhar);
+}
+
+>>> function analyzeTop3Hit(top3, resultGrupo, resultMilhar) {
+  if (!Array.isArray(top3) || !top3.length) {
+    return { type: "none", score: 0, position: -1, matchedValue: "" };
+  }
+
+  const grupoNum = Number(resultGrupo);
+  const milhar = normalizeMilharStr(resultMilhar);
+  const centena = milhar ? milhar.slice(-3) : "";
+
+  const hasGrupo = Number.isFinite(grupoNum) && grupoNum >= 1 && grupoNum <= 25;
+  const hasMilhar = /^\d{4}$/.test(milhar);
+
+  if (!hasGrupo && !hasMilhar) {
+
+====================================================================
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Top3\Top3View.jsx
+LINHA: 270
+TERMO: matchedValue
+====================================================================
+
+  if (Number.isFinite(grupo) && grupo >= 1 && grupo <= 25) return true;
+
+  const milhar = extractResultMilhar(slot);
+  return /^\d{4}$/.test(milhar);
+}
+
+function analyzeTop3Hit(top3, resultGrupo, resultMilhar) {
+  if (!Array.isArray(top3) || !top3.length) {
+>>>     return { type: "none", score: 0, position: -1, matchedValue: "" };
+  }
+
+  const grupoNum = Number(resultGrupo);
+  const milhar = normalizeMilharStr(resultMilhar);
+  const centena = milhar ? milhar.slice(-3) : "";
+
+  const hasGrupo = Number.isFinite(grupoNum) && grupoNum >= 1 && grupoNum <= 25;
+  const hasMilhar = /^\d{4}$/.test(milhar);
+
+  if (!hasGrupo && !hasMilhar) {
+    return { type: "none", score: 0, position: -1, matchedValue: "" };
+  }
+
+====================================================================
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Top3\Top3View.jsx
+LINHA: 274
+TERMO: resultMilhar
+====================================================================
+
+}
+
+function analyzeTop3Hit(top3, resultGrupo, resultMilhar) {
+  if (!Array.isArray(top3) || !top3.length) {
+    return { type: "none", score: 0, position: -1, matchedValue: "" };
+  }
+
+  const grupoNum = Number(resultGrupo);
+>>>   const milhar = normalizeMilharStr(resultMilhar);
+  const centena = milhar ? milhar.slice(-3) : "";
+
+  const hasGrupo = Number.isFinite(grupoNum) && grupoNum >= 1 && grupoNum <= 25;
+  const hasMilhar = /^\d{4}$/.test(milhar);
+
+  if (!hasGrupo && !hasMilhar) {
+    return { type: "none", score: 0, position: -1, matchedValue: "" };
+  }
+
+  let best = { type: "miss", score: 0, position: -1, matchedValue: "" };
+
+  top3.forEach((item, idx) => {
+
+====================================================================
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Top3\Top3View.jsx
+LINHA: 281
+TERMO: matchedValue
+====================================================================
+
+  const grupoNum = Number(resultGrupo);
+  const milhar = normalizeMilharStr(resultMilhar);
+  const centena = milhar ? milhar.slice(-3) : "";
+
+  const hasGrupo = Number.isFinite(grupoNum) && grupoNum >= 1 && grupoNum <= 25;
+  const hasMilhar = /^\d{4}$/.test(milhar);
+
+  if (!hasGrupo && !hasMilhar) {
+>>>     return { type: "none", score: 0, position: -1, matchedValue: "" };
+  }
+
+  let best = { type: "miss", score: 0, position: -1, matchedValue: "" };
+
+  top3.forEach((item, idx) => {
+    const g = Number(item?.grupo);
+
+    const milharesRaw = Array.isArray(item?.milhares20)
+      ? item.milhares20
+      : Array.isArray(item?.milhares)
+        ? item.milhares
+        : [];
+
+====================================================================
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Top3\Top3View.jsx
+LINHA: 284
+TERMO: matchedValue
+====================================================================
+
+
+  const hasGrupo = Number.isFinite(grupoNum) && grupoNum >= 1 && grupoNum <= 25;
+  const hasMilhar = /^\d{4}$/.test(milhar);
+
+  if (!hasGrupo && !hasMilhar) {
+    return { type: "none", score: 0, position: -1, matchedValue: "" };
+  }
+
+>>>   let best = { type: "miss", score: 0, position: -1, matchedValue: "" };
+
+  top3.forEach((item, idx) => {
+    const g = Number(item?.grupo);
+
+    const milharesRaw = Array.isArray(item?.milhares20)
+      ? item.milhares20
+      : Array.isArray(item?.milhares)
+        ? item.milhares
+        : [];
+
+    const milhares = milharesRaw
+      .map((m) => normalizeMilharStr(m))
+
+====================================================================
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Top3\Top3View.jsx
+LINHA: 305
+TERMO: matchedValue
+====================================================================
+
+      .filter((m) => /^\d{4}$/.test(m));
+
+    const centenas = milhares
+      .map((m) => centenaFromMilhar(m))
+      .filter((c) => /^\d{3}$/.test(c));
+
+    let score = 0;
+    let type = "miss";
+>>>     let matchedValue = "";
+
+    if (hasMilhar && milhares.includes(milhar)) {
+      score = 100;
+      type = "hit_exact";
+      matchedValue = milhar;
+    } else if (centena && centenas.includes(centena)) {
+      score = 66.67;
+      type = "hit_centena";
+      matchedValue = centena;
+    } else if (hasGrupo && g === grupoNum) {
+      score = 33.33;
+      type = "hit_grupo";
+
+====================================================================
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Top3\Top3View.jsx
+LINHA: 310
+TERMO: matchedValue
+====================================================================
+
+
+    let score = 0;
+    let type = "miss";
+    let matchedValue = "";
+
+    if (hasMilhar && milhares.includes(milhar)) {
+      score = 100;
+      type = "hit_exact";
+>>>       matchedValue = milhar;
+    } else if (centena && centenas.includes(centena)) {
+      score = 66.67;
+      type = "hit_centena";
+      matchedValue = centena;
+    } else if (hasGrupo && g === grupoNum) {
+      score = 33.33;
+      type = "hit_grupo";
+      matchedValue = hasMilhar ? milhar.slice(-2) : formatGrupo(grupoNum);
+    }
+
+    if (score > best.score) {
+      best = {
+
+====================================================================
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Top3\Top3View.jsx
+LINHA: 314
+TERMO: matchedValue
+====================================================================
+
+
+    if (hasMilhar && milhares.includes(milhar)) {
+      score = 100;
+      type = "hit_exact";
+      matchedValue = milhar;
+    } else if (centena && centenas.includes(centena)) {
+      score = 66.67;
+      type = "hit_centena";
+>>>       matchedValue = centena;
+    } else if (hasGrupo && g === grupoNum) {
+      score = 33.33;
+      type = "hit_grupo";
+      matchedValue = hasMilhar ? milhar.slice(-2) : formatGrupo(grupoNum);
+    }
+
+    if (score > best.score) {
+      best = {
+        type,
+        score,
+        position: idx + 1,
+        matchedValue,
+
+====================================================================
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Top3\Top3View.jsx
+LINHA: 318
+TERMO: matchedValue
+====================================================================
+
+      matchedValue = milhar;
+    } else if (centena && centenas.includes(centena)) {
+      score = 66.67;
+      type = "hit_centena";
+      matchedValue = centena;
+    } else if (hasGrupo && g === grupoNum) {
+      score = 33.33;
+      type = "hit_grupo";
+>>>       matchedValue = hasMilhar ? milhar.slice(-2) : formatGrupo(grupoNum);
+    }
+
+    if (score > best.score) {
+      best = {
+        type,
+        score,
+        position: idx + 1,
+        matchedValue,
+      };
+    }
+  });
+
+
+====================================================================
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Top3\Top3View.jsx
+LINHA: 326
+TERMO: matchedValue
+====================================================================
+
+      matchedValue = hasMilhar ? milhar.slice(-2) : formatGrupo(grupoNum);
+    }
+
+    if (score > best.score) {
+      best = {
+        type,
+        score,
+        position: idx + 1,
+>>>         matchedValue,
+      };
+    }
+  });
+
+  return best;
+}
+
+function ImgWithFallback({ srcs, alt, size = 84, style }) {
+  const list = useMemo(
+    () => (Array.isArray(srcs) ? srcs.filter(Boolean) : []),
+    [srcs]
+  );
+
+====================================================================
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Top3\Top3View.jsx
+LINHA: 1122
+TERMO: resultMilhar
+====================================================================
+
+  const resultAnimal =
+    hasResult && Number.isFinite(resultGrupo)
+      ? String(getAnimalLabel(resultGrupo) || "")
+      : "";
+
+  const analysis = analyzeTop3Hit(
+    slotTop3,
+    resultGrupo,
+>>>     extractResultMilhar(slot)
+  );
+
+  const status =
+    !hasResult
+      ? "pending"
+      : analysis.type === "miss"
+        ? "miss"
+        : "hit";
+
+  const statusLabel =
+    !hasResult
+      ? "⏳ PENDENTE"
+
+====================================================================
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Top3\Top3View.jsx
+LINHA: 1227
+TERMO: persistedTop3History
+====================================================================
+
+  );
+}
+
+export default function Top3View(props) {
+  const {
+    loading,
+    error,
+    timelineTop3,
+>>>     persistedTop3History,
+    top3,
+    layerMetaText,
+    lastLabel,
+    prevLabel,
+    theme,
+    LOTTERY_OPTIONS,
+    lotteryKeySafe,
+    setLotteryKey,
+    setYmd,
+    build16,
+    buildMilhares,
+    build20,
+
+====================================================================
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Top3\Top3View.jsx
+LINHA: 1412
+TERMO: persistedTop3History
+====================================================================
+
+    });
+
+  const fallback = String(realized?.[0]?.targetYmd || "").trim();
+  return isYMD(fallback) ? fallback : "";
+}, [loadedYmd, ymdSafe, timeline]);
+
+  const historyRows = useMemo(() => {
+    const persistedRows = (
+>>>       Array.isArray(persistedTop3History)
+        ? persistedTop3History
+        : []
+    )
+      .filter(
+        (entry) =>
+          String(entry?.targetYmd || "").trim() ===
+          historyAnchorYmd
+      )
+      .map((entry) => {
+        const snapshot = Array.isArray(entry?.snapshot)
+          ? entry.snapshot.slice(0, 3)
+          : [];
+
+====================================================================
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Top3\Top3View.jsx
+LINHA: 1413
+TERMO: persistedTop3History
+====================================================================
+
+
+  const fallback = String(realized?.[0]?.targetYmd || "").trim();
+  return isYMD(fallback) ? fallback : "";
+}, [loadedYmd, ymdSafe, timeline]);
+
+  const historyRows = useMemo(() => {
+    const persistedRows = (
+      Array.isArray(persistedTop3History)
+>>>         ? persistedTop3History
+        : []
+    )
+      .filter(
+        (entry) =>
+          String(entry?.targetYmd || "").trim() ===
+          historyAnchorYmd
+      )
+      .map((entry) => {
+        const snapshot = Array.isArray(entry?.snapshot)
+          ? entry.snapshot.slice(0, 3)
+          : [];
+
+
+====================================================================
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Top3\Top3View.jsx
+LINHA: 1455
+TERMO: resultMilhar
+====================================================================
+
+          grupo: hasResult ? resultGrupo : null,
+          animal: hasResult
+            ? String(
+                entry?.resultAnimal ||
+                  getAnimalLabel(resultGrupo) ||
+                  ""
+              )
+            : "",
+>>>           resultMilhar: String(
+            entry?.resultMilhar || ""
+          ),
+          hit:
+            Number(entry?.hitScore || 0) > 0,
+          hitType: String(entry?.hitType || ""),
+          hitScore: Number(entry?.hitScore || 0),
+          hitPosition: Number(
+            entry?.hitPosition ?? -1
+          ),
+          analysis: {
+            type: String(entry?.hitType || ""),
+            score: Number(entry?.hitScore || 0),
+
+====================================================================
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Top3\Top3View.jsx
+LINHA: 1456
+TERMO: resultMilhar
+====================================================================
+
+          animal: hasResult
+            ? String(
+                entry?.resultAnimal ||
+                  getAnimalLabel(resultGrupo) ||
+                  ""
+              )
+            : "",
+          resultMilhar: String(
+>>>             entry?.resultMilhar || ""
+          ),
+          hit:
+            Number(entry?.hitScore || 0) > 0,
+          hitType: String(entry?.hitType || ""),
+          hitScore: Number(entry?.hitScore || 0),
+          hitPosition: Number(
+            entry?.hitPosition ?? -1
+          ),
+          analysis: {
+            type: String(entry?.hitType || ""),
+            score: Number(entry?.hitScore || 0),
+            position: Number(
+
+====================================================================
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Top3\Top3View.jsx
+LINHA: 1459
+TERMO: hitScore
+====================================================================
+
+                  getAnimalLabel(resultGrupo) ||
+                  ""
+              )
+            : "",
+          resultMilhar: String(
+            entry?.resultMilhar || ""
+          ),
+          hit:
+>>>             Number(entry?.hitScore || 0) > 0,
+          hitType: String(entry?.hitType || ""),
+          hitScore: Number(entry?.hitScore || 0),
+          hitPosition: Number(
+            entry?.hitPosition ?? -1
+          ),
+          analysis: {
+            type: String(entry?.hitType || ""),
+            score: Number(entry?.hitScore || 0),
+            position: Number(
+              entry?.hitPosition ?? -1
+            ),
+            matchedValue: String(
+
+====================================================================
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Top3\Top3View.jsx
+LINHA: 1460
+TERMO: hitType
+====================================================================
+
+                  ""
+              )
+            : "",
+          resultMilhar: String(
+            entry?.resultMilhar || ""
+          ),
+          hit:
+            Number(entry?.hitScore || 0) > 0,
+>>>           hitType: String(entry?.hitType || ""),
+          hitScore: Number(entry?.hitScore || 0),
+          hitPosition: Number(
+            entry?.hitPosition ?? -1
+          ),
+          analysis: {
+            type: String(entry?.hitType || ""),
+            score: Number(entry?.hitScore || 0),
+            position: Number(
+              entry?.hitPosition ?? -1
+            ),
+            matchedValue: String(
+              entry?.matchedValue || ""
+
+====================================================================
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Top3\Top3View.jsx
+LINHA: 1461
+TERMO: hitScore
+====================================================================
+
+              )
+            : "",
+          resultMilhar: String(
+            entry?.resultMilhar || ""
+          ),
+          hit:
+            Number(entry?.hitScore || 0) > 0,
+          hitType: String(entry?.hitType || ""),
+>>>           hitScore: Number(entry?.hitScore || 0),
+          hitPosition: Number(
+            entry?.hitPosition ?? -1
+          ),
+          analysis: {
+            type: String(entry?.hitType || ""),
+            score: Number(entry?.hitScore || 0),
+            position: Number(
+              entry?.hitPosition ?? -1
+            ),
+            matchedValue: String(
+              entry?.matchedValue || ""
+            ),
+
+====================================================================
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Top3\Top3View.jsx
+LINHA: 1466
+TERMO: hitType
+====================================================================
+
+          hit:
+            Number(entry?.hitScore || 0) > 0,
+          hitType: String(entry?.hitType || ""),
+          hitScore: Number(entry?.hitScore || 0),
+          hitPosition: Number(
+            entry?.hitPosition ?? -1
+          ),
+          analysis: {
+>>>             type: String(entry?.hitType || ""),
+            score: Number(entry?.hitScore || 0),
+            position: Number(
+              entry?.hitPosition ?? -1
+            ),
+            matchedValue: String(
+              entry?.matchedValue || ""
+            ),
+          },
+        };
+      });
+
+    const timelineRows = (
+
+====================================================================
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Top3\Top3View.jsx
+LINHA: 1467
+TERMO: hitScore
+====================================================================
+
+            Number(entry?.hitScore || 0) > 0,
+          hitType: String(entry?.hitType || ""),
+          hitScore: Number(entry?.hitScore || 0),
+          hitPosition: Number(
+            entry?.hitPosition ?? -1
+          ),
+          analysis: {
+            type: String(entry?.hitType || ""),
+>>>             score: Number(entry?.hitScore || 0),
+            position: Number(
+              entry?.hitPosition ?? -1
+            ),
+            matchedValue: String(
+              entry?.matchedValue || ""
+            ),
+          },
+        };
+      });
+
+    const timelineRows = (
+      Array.isArray(timeline) ? timeline : []
+
+====================================================================
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Top3\Top3View.jsx
+LINHA: 1471
+TERMO: matchedValue
+====================================================================
+
+            entry?.hitPosition ?? -1
+          ),
+          analysis: {
+            type: String(entry?.hitType || ""),
+            score: Number(entry?.hitScore || 0),
+            position: Number(
+              entry?.hitPosition ?? -1
+            ),
+>>>             matchedValue: String(
+              entry?.matchedValue || ""
+            ),
+          },
+        };
+      });
+
+    const timelineRows = (
+      Array.isArray(timeline) ? timeline : []
+    )
+      .filter(
+        (slot) =>
+          String(slot?.targetYmd || "").trim() ===
+
+====================================================================
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Top3\Top3View.jsx
+LINHA: 1472
+TERMO: matchedValue
+====================================================================
+
+          ),
+          analysis: {
+            type: String(entry?.hitType || ""),
+            score: Number(entry?.hitScore || 0),
+            position: Number(
+              entry?.hitPosition ?? -1
+            ),
+            matchedValue: String(
+>>>               entry?.matchedValue || ""
+            ),
+          },
+        };
+      });
+
+    const timelineRows = (
+      Array.isArray(timeline) ? timeline : []
+    )
+      .filter(
+        (slot) =>
+          String(slot?.targetYmd || "").trim() ===
+          historyAnchorYmd
+
+====================================================================
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Top3\Top3View.jsx
+LINHA: 1498
+TERMO: resultMilhar
+====================================================================
+
+
+        const resultGrupo = getSlotResultGrupo(slot);
+
+        const hasResult =
+          Number.isFinite(resultGrupo) &&
+          resultGrupo >= 1 &&
+          resultGrupo <= 25;
+
+>>>         const resultMilhar =
+          extractResultMilhar(slot);
+
+        const analysis = analyzeTop3Hit(
+          slotTop3,
+          resultGrupo,
+          resultMilhar
+        );
+
+        return {
+          targetKey:
+            `${String(slot?.targetYmd || "")}` +
+            `__${String(slot?.targetHour || "")}`,
+
+====================================================================
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Top3\Top3View.jsx
+LINHA: 1499
+TERMO: resultMilhar
+====================================================================
+
+        const resultGrupo = getSlotResultGrupo(slot);
+
+        const hasResult =
+          Number.isFinite(resultGrupo) &&
+          resultGrupo >= 1 &&
+          resultGrupo <= 25;
+
+        const resultMilhar =
+>>>           extractResultMilhar(slot);
+
+        const analysis = analyzeTop3Hit(
+          slotTop3,
+          resultGrupo,
+          resultMilhar
+        );
+
+        return {
+          targetKey:
+            `${String(slot?.targetYmd || "")}` +
+            `__${String(slot?.targetHour || "")}`,
+          target: {
+
+====================================================================
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Top3\Top3View.jsx
+LINHA: 1504
+TERMO: resultMilhar
+====================================================================
+
+          resultGrupo <= 25;
+
+        const resultMilhar =
+          extractResultMilhar(slot);
+
+        const analysis = analyzeTop3Hit(
+          slotTop3,
+          resultGrupo,
+>>>           resultMilhar
+        );
+
+        return {
+          targetKey:
+            `${String(slot?.targetYmd || "")}` +
+            `__${String(slot?.targetHour || "")}`,
+          target: {
+            ymd: String(slot?.targetYmd || ""),
+            hour: String(slot?.targetHour || ""),
+          },
+          picks: slotTop3
+            .map((item) => Number(item?.grupo))
+
+====================================================================
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Top3\Top3View.jsx
+LINHA: 1528
+TERMO: resultMilhar
+====================================================================
+
+            ? Number(resultGrupo)
+            : null,
+          grupo: hasResult
+            ? Number(resultGrupo)
+            : null,
+          animal: hasResult
+            ? getAnimalLabel(resultGrupo)
+            : "",
+>>>           resultMilhar,
+          analysis,
+          hit:
+            analysis.type !== "miss" &&
+            analysis.type !== "none",
+          hitType: analysis.type,
+          hitScore: Number(analysis.score || 0),
+          hitPosition: Number(
+            analysis.position ?? -1
+          ),
+        };
+      });
+
+
+====================================================================
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Top3\Top3View.jsx
+LINHA: 1533
+TERMO: hitType
+====================================================================
+
+          animal: hasResult
+            ? getAnimalLabel(resultGrupo)
+            : "",
+          resultMilhar,
+          analysis,
+          hit:
+            analysis.type !== "miss" &&
+            analysis.type !== "none",
+>>>           hitType: analysis.type,
+          hitScore: Number(analysis.score || 0),
+          hitPosition: Number(
+            analysis.position ?? -1
+          ),
+        };
+      });
+
+    // A timeline garante todos os horarios oficiais.
+    // O registro persistido prevalece quando realmente existe.
+    const rowsByTarget = new Map();
+
+    for (const row of timelineRows) {
+
+====================================================================
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Top3\Top3View.jsx
+LINHA: 1534
+TERMO: hitScore
+====================================================================
+
+            ? getAnimalLabel(resultGrupo)
+            : "",
+          resultMilhar,
+          analysis,
+          hit:
+            analysis.type !== "miss" &&
+            analysis.type !== "none",
+          hitType: analysis.type,
+>>>           hitScore: Number(analysis.score || 0),
+          hitPosition: Number(
+            analysis.position ?? -1
+          ),
+        };
+      });
+
+    // A timeline garante todos os horarios oficiais.
+    // O registro persistido prevalece quando realmente existe.
+    const rowsByTarget = new Map();
+
+    for (const row of timelineRows) {
+      const key =
+
+====================================================================
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Top3\Top3View.jsx
+LINHA: 1566
+TERMO: resultMilhar
+====================================================================
+
+      const timelineRow = rowsByTarget.get(key);
+
+      if (!timelineRow || timelineRow?.result == null) {
+        rowsByTarget.set(key, row);
+        continue;
+      }
+
+      const resultGrupo = Number(timelineRow.result);
+>>>       const resultMilhar = String(
+        timelineRow?.resultMilhar || ""
+      );
+
+      const analysis = analyzeTop3Hit(
+        row?.top3,
+        resultGrupo,
+        resultMilhar
+      );
+
+      rowsByTarget.set(key, {
+        ...row,
+        result: resultGrupo,
+
+====================================================================
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Top3\Top3View.jsx
+LINHA: 1567
+TERMO: resultMilhar
+====================================================================
+
+
+      if (!timelineRow || timelineRow?.result == null) {
+        rowsByTarget.set(key, row);
+        continue;
+      }
+
+      const resultGrupo = Number(timelineRow.result);
+      const resultMilhar = String(
+>>>         timelineRow?.resultMilhar || ""
+      );
+
+      const analysis = analyzeTop3Hit(
+        row?.top3,
+        resultGrupo,
+        resultMilhar
+      );
+
+      rowsByTarget.set(key, {
+        ...row,
+        result: resultGrupo,
+        grupo: resultGrupo,
+
+====================================================================
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Top3\Top3View.jsx
+LINHA: 1573
+TERMO: resultMilhar
+====================================================================
+
+      const resultGrupo = Number(timelineRow.result);
+      const resultMilhar = String(
+        timelineRow?.resultMilhar || ""
+      );
+
+      const analysis = analyzeTop3Hit(
+        row?.top3,
+        resultGrupo,
+>>>         resultMilhar
+      );
+
+      rowsByTarget.set(key, {
+        ...row,
+        result: resultGrupo,
+        grupo: resultGrupo,
+        animal:
+          timelineRow?.animal ||
+          getAnimalLabel(resultGrupo) ||
+          "",
+        resultMilhar,
+        analysis,
+
+====================================================================
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Top3\Top3View.jsx
+LINHA: 1584
+TERMO: resultMilhar
+====================================================================
+
+      rowsByTarget.set(key, {
+        ...row,
+        result: resultGrupo,
+        grupo: resultGrupo,
+        animal:
+          timelineRow?.animal ||
+          getAnimalLabel(resultGrupo) ||
+          "",
+>>>         resultMilhar,
+        analysis,
+        hit:
+          analysis.type !== "miss" &&
+          analysis.type !== "none",
+        hitType: analysis.type,
+        hitScore: Number(analysis.score || 0),
+        hitPosition: Number(
+          analysis.position ?? -1
+        ),
+      });
+    }
+
+
+====================================================================
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Top3\Top3View.jsx
+LINHA: 1589
+TERMO: hitType
+====================================================================
+
+          timelineRow?.animal ||
+          getAnimalLabel(resultGrupo) ||
+          "",
+        resultMilhar,
+        analysis,
+        hit:
+          analysis.type !== "miss" &&
+          analysis.type !== "none",
+>>>         hitType: analysis.type,
+        hitScore: Number(analysis.score || 0),
+        hitPosition: Number(
+          analysis.position ?? -1
+        ),
+      });
+    }
+
+    return Array.from(rowsByTarget.values())
+      .sort((a, b) => {
+        const ah = hourBucketToSortValue(
+          a?.target?.hour
+        );
+
+====================================================================
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Top3\Top3View.jsx
+LINHA: 1590
+TERMO: hitScore
+====================================================================
+
+          getAnimalLabel(resultGrupo) ||
+          "",
+        resultMilhar,
+        analysis,
+        hit:
+          analysis.type !== "miss" &&
+          analysis.type !== "none",
+        hitType: analysis.type,
+>>>         hitScore: Number(analysis.score || 0),
+        hitPosition: Number(
+          analysis.position ?? -1
+        ),
+      });
+    }
+
+    return Array.from(rowsByTarget.values())
+      .sort((a, b) => {
+        const ah = hourBucketToSortValue(
+          a?.target?.hour
+        );
+        const bh = hourBucketToSortValue(
+
+====================================================================
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Top3\Top3View.jsx
+LINHA: 1611
+TERMO: persistedTop3History
+====================================================================
+
+          b?.target?.hour
+        );
+
+        return ah - bh;
+      });
+  }, [
+    timeline,
+    historyAnchorYmd,
+>>>     persistedTop3History,
+  ]);
+
+  const historySummary = useMemo(() => {
+    const validated = historyRows.filter(
+      (item) => item?.result != null
+    );
+
+    const exact = validated.filter(
+      (item) => item?.hitType === "hit_exact"
+    ).length;
+
+    const centena = validated.filter(
+
+====================================================================
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Top3\Top3View.jsx
+LINHA: 1620
+TERMO: hitType
+====================================================================
+
+  ]);
+
+  const historySummary = useMemo(() => {
+    const validated = historyRows.filter(
+      (item) => item?.result != null
+    );
+
+    const exact = validated.filter(
+>>>       (item) => item?.hitType === "hit_exact"
+    ).length;
+
+    const centena = validated.filter(
+      (item) => item?.hitType === "hit_centena"
+    ).length;
+
+    const grupo = validated.filter(
+      (item) => item?.hitType === "hit_grupo"
+    ).length;
+
+    const misses = validated.filter(
+      (item) =>
+
+====================================================================
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Top3\Top3View.jsx
+LINHA: 1624
+TERMO: hitType
+====================================================================
+
+      (item) => item?.result != null
+    );
+
+    const exact = validated.filter(
+      (item) => item?.hitType === "hit_exact"
+    ).length;
+
+    const centena = validated.filter(
+>>>       (item) => item?.hitType === "hit_centena"
+    ).length;
+
+    const grupo = validated.filter(
+      (item) => item?.hitType === "hit_grupo"
+    ).length;
+
+    const misses = validated.filter(
+      (item) =>
+        item?.hitType === "miss" ||
+        item?.hitType === "none"
+    ).length;
+
+
+====================================================================
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Top3\Top3View.jsx
+LINHA: 1628
+TERMO: hitType
+====================================================================
+
+      (item) => item?.hitType === "hit_exact"
+    ).length;
+
+    const centena = validated.filter(
+      (item) => item?.hitType === "hit_centena"
+    ).length;
+
+    const grupo = validated.filter(
+>>>       (item) => item?.hitType === "hit_grupo"
+    ).length;
+
+    const misses = validated.filter(
+      (item) =>
+        item?.hitType === "miss" ||
+        item?.hitType === "none"
+    ).length;
+
+    const totalScore = validated.reduce(
+      (sum, item) => sum + Number(item?.hitScore || 0),
+      0
+    );
+
+====================================================================
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Top3\Top3View.jsx
+LINHA: 1633
+TERMO: hitType
+====================================================================
+
+    ).length;
+
+    const grupo = validated.filter(
+      (item) => item?.hitType === "hit_grupo"
+    ).length;
+
+    const misses = validated.filter(
+      (item) =>
+>>>         item?.hitType === "miss" ||
+        item?.hitType === "none"
+    ).length;
+
+    const totalScore = validated.reduce(
+      (sum, item) => sum + Number(item?.hitScore || 0),
+      0
+    );
+
+    const average =
+      validated.length > 0
+        ? totalScore / validated.length
+        : 0;
+
+====================================================================
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Top3\Top3View.jsx
+LINHA: 1634
+TERMO: hitType
+====================================================================
+
+
+    const grupo = validated.filter(
+      (item) => item?.hitType === "hit_grupo"
+    ).length;
+
+    const misses = validated.filter(
+      (item) =>
+        item?.hitType === "miss" ||
+>>>         item?.hitType === "none"
+    ).length;
+
+    const totalScore = validated.reduce(
+      (sum, item) => sum + Number(item?.hitScore || 0),
+      0
+    );
+
+    const average =
+      validated.length > 0
+        ? totalScore / validated.length
+        : 0;
+
+
+====================================================================
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Top3\Top3View.jsx
+LINHA: 1638
+TERMO: hitScore
+====================================================================
+
+
+    const misses = validated.filter(
+      (item) =>
+        item?.hitType === "miss" ||
+        item?.hitType === "none"
+    ).length;
+
+    const totalScore = validated.reduce(
+>>>       (sum, item) => sum + Number(item?.hitScore || 0),
+      0
+    );
+
+    const average =
+      validated.length > 0
+        ? totalScore / validated.length
+        : 0;
+
+    return {
+      total: historyRows.length,
+      validated: validated.length,
+      pending: Math.max(0, historyRows.length - validated.length),
+
+====================================================================
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Top3\Top3View.jsx
+LINHA: 3193
+TERMO: hitType
+====================================================================
+
+
+                const resultAnimal = hasResult
+                  ? (item?.animal || getAnimalLabel(resultGrupo))
+                  : "";
+                const resultImg = hasResult
+                  ? getImgFromGrupo(resultGrupo, 64)
+                  : "";
+
+>>>                 const hitType = String(item?.hitType || item?.analysis?.type || "").trim();
+                const matchedValue = String(item?.analysis?.matchedValue || "").trim();
+
+                const hitMark = !hasResult
+                  ? "⏳"
+                  : hitType === "hit_exact"
+                    ? `🏆 100% · Milhar ${matchedValue || "—"}`
+                    : hitType === "hit_centena"
+                      ? `✅✅ 66,67% · Centena ${matchedValue || "—"}`
+                      : hitType === "hit_grupo"
+                        ? `✅ 33,33% · Dezena ${matchedValue || "—"}`
+                        : "❌ 0%";
+
+
+====================================================================
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Top3\Top3View.jsx
+LINHA: 3194
+TERMO: matchedValue
+====================================================================
+
+                const resultAnimal = hasResult
+                  ? (item?.animal || getAnimalLabel(resultGrupo))
+                  : "";
+                const resultImg = hasResult
+                  ? getImgFromGrupo(resultGrupo, 64)
+                  : "";
+
+                const hitType = String(item?.hitType || item?.analysis?.type || "").trim();
+>>>                 const matchedValue = String(item?.analysis?.matchedValue || "").trim();
+
+                const hitMark = !hasResult
+                  ? "⏳"
+                  : hitType === "hit_exact"
+                    ? `🏆 100% · Milhar ${matchedValue || "—"}`
+                    : hitType === "hit_centena"
+                      ? `✅✅ 66,67% · Centena ${matchedValue || "—"}`
+                      : hitType === "hit_grupo"
+                        ? `✅ 33,33% · Dezena ${matchedValue || "—"}`
+                        : "❌ 0%";
+
+                return (
+
+====================================================================
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Top3\Top3View.jsx
+LINHA: 3198
+TERMO: hitType
+====================================================================
+
+                  ? getImgFromGrupo(resultGrupo, 64)
+                  : "";
+
+                const hitType = String(item?.hitType || item?.analysis?.type || "").trim();
+                const matchedValue = String(item?.analysis?.matchedValue || "").trim();
+
+                const hitMark = !hasResult
+                  ? "⏳"
+>>>                   : hitType === "hit_exact"
+                    ? `🏆 100% · Milhar ${matchedValue || "—"}`
+                    : hitType === "hit_centena"
+                      ? `✅✅ 66,67% · Centena ${matchedValue || "—"}`
+                      : hitType === "hit_grupo"
+                        ? `✅ 33,33% · Dezena ${matchedValue || "—"}`
+                        : "❌ 0%";
+
+                return (
+                  <div
+                    key={String(item?.targetKey || `${y}_${h}`)}
+                    className="top3-historyRow"
+                  >
+
+====================================================================
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Top3\Top3View.jsx
+LINHA: 3199
+TERMO: matchedValue
+====================================================================
+
+                  : "";
+
+                const hitType = String(item?.hitType || item?.analysis?.type || "").trim();
+                const matchedValue = String(item?.analysis?.matchedValue || "").trim();
+
+                const hitMark = !hasResult
+                  ? "⏳"
+                  : hitType === "hit_exact"
+>>>                     ? `🏆 100% · Milhar ${matchedValue || "—"}`
+                    : hitType === "hit_centena"
+                      ? `✅✅ 66,67% · Centena ${matchedValue || "—"}`
+                      : hitType === "hit_grupo"
+                        ? `✅ 33,33% · Dezena ${matchedValue || "—"}`
+                        : "❌ 0%";
+
+                return (
+                  <div
+                    key={String(item?.targetKey || `${y}_${h}`)}
+                    className="top3-historyRow"
+                  >
+                    <div style={{ fontWeight: 800 }}>
+
+====================================================================
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Top3\Top3View.jsx
+LINHA: 3200
+TERMO: hitType
+====================================================================
+
+
+                const hitType = String(item?.hitType || item?.analysis?.type || "").trim();
+                const matchedValue = String(item?.analysis?.matchedValue || "").trim();
+
+                const hitMark = !hasResult
+                  ? "⏳"
+                  : hitType === "hit_exact"
+                    ? `🏆 100% · Milhar ${matchedValue || "—"}`
+>>>                     : hitType === "hit_centena"
+                      ? `✅✅ 66,67% · Centena ${matchedValue || "—"}`
+                      : hitType === "hit_grupo"
+                        ? `✅ 33,33% · Dezena ${matchedValue || "—"}`
+                        : "❌ 0%";
+
+                return (
+                  <div
+                    key={String(item?.targetKey || `${y}_${h}`)}
+                    className="top3-historyRow"
+                  >
+                    <div style={{ fontWeight: 800 }}>
+                      {ymdToBR(y)} {h}
+
+====================================================================
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Top3\Top3View.jsx
+LINHA: 3201
+TERMO: matchedValue
+====================================================================
+
+                const hitType = String(item?.hitType || item?.analysis?.type || "").trim();
+                const matchedValue = String(item?.analysis?.matchedValue || "").trim();
+
+                const hitMark = !hasResult
+                  ? "⏳"
+                  : hitType === "hit_exact"
+                    ? `🏆 100% · Milhar ${matchedValue || "—"}`
+                    : hitType === "hit_centena"
+>>>                       ? `✅✅ 66,67% · Centena ${matchedValue || "—"}`
+                      : hitType === "hit_grupo"
+                        ? `✅ 33,33% · Dezena ${matchedValue || "—"}`
+                        : "❌ 0%";
+
+                return (
+                  <div
+                    key={String(item?.targetKey || `${y}_${h}`)}
+                    className="top3-historyRow"
+                  >
+                    <div style={{ fontWeight: 800 }}>
+                      {ymdToBR(y)} {h}
+                    </div>
+
+====================================================================
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Top3\Top3View.jsx
+LINHA: 3202
+TERMO: hitType
+====================================================================
+
+                const matchedValue = String(item?.analysis?.matchedValue || "").trim();
+
+                const hitMark = !hasResult
+                  ? "⏳"
+                  : hitType === "hit_exact"
+                    ? `🏆 100% · Milhar ${matchedValue || "—"}`
+                    : hitType === "hit_centena"
+                      ? `✅✅ 66,67% · Centena ${matchedValue || "—"}`
+>>>                       : hitType === "hit_grupo"
+                        ? `✅ 33,33% · Dezena ${matchedValue || "—"}`
+                        : "❌ 0%";
+
+                return (
+                  <div
+                    key={String(item?.targetKey || `${y}_${h}`)}
+                    className="top3-historyRow"
+                  >
+                    <div style={{ fontWeight: 800 }}>
+                      {ymdToBR(y)} {h}
+                    </div>
+
+
+====================================================================
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Top3\Top3View.jsx
+LINHA: 3203
+TERMO: matchedValue
+====================================================================
+
+
+                const hitMark = !hasResult
+                  ? "⏳"
+                  : hitType === "hit_exact"
+                    ? `🏆 100% · Milhar ${matchedValue || "—"}`
+                    : hitType === "hit_centena"
+                      ? `✅✅ 66,67% · Centena ${matchedValue || "—"}`
+                      : hitType === "hit_grupo"
+>>>                         ? `✅ 33,33% · Dezena ${matchedValue || "—"}`
+                        : "❌ 0%";
+
+                return (
+                  <div
+                    key={String(item?.targetKey || `${y}_${h}`)}
+                    className="top3-historyRow"
+                  >
+                    <div style={{ fontWeight: 800 }}>
+                      {ymdToBR(y)} {h}
+                    </div>
+
+                    <div style={{ letterSpacing: 1 }}>
+
+====================================================================
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Top3\Top3View.premium.backup.jsx
+LINHA: 5
+TERMO: resultMilhar
+====================================================================
+
+// src/pages/Top3/Top3View.jsx
+import React, { useMemo, useState, useCallback, useEffect } from "react";
+import { getAnimalLabel, getImgFromGrupo } from "../../constants/bichoMap";
+
+>>> function extractResultMilhar(slot) {
+  if (!slot || !Array.isArray(slot.prizes)) return "";
+
+  const p1 = slot.prizes.find((p) => Number(p.position) === 1);
+  if (!p1) return "";
+
+  const num = String(
+    p1.numero ||
+      p1.milhar ||
+      p1.number ||
+      p1.valor ||
+      ""
+  ).replace(/\D/g, "");
+
+====================================================================
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Top3\Top3View.premium.backup.jsx
+LINHA: 238
+TERMO: resultMilhar
+====================================================================
+
+
+  return NaN;
+}
+
+function hasOfficialResult(slot) {
+  const grupo = getSlotResultGrupo(slot);
+  if (Number.isFinite(grupo) && grupo >= 1 && grupo <= 25) return true;
+
+>>>   const milhar = extractResultMilhar(slot);
+  return /^\d{4}$/.test(milhar);
+}
+
+function analyzeTop3Hit(top3, resultGrupo, resultMilhar) {
+  if (!Array.isArray(top3) || !top3.length) {
+    return { type: "none", score: 0, position: -1 };
+  }
+
+  const grupoNum = Number(resultGrupo);
+  const milhar = normalizeMilharStr(resultMilhar);
+  const centena = milhar ? milhar.slice(-3) : "";
+
+
+====================================================================
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Top3\Top3View.premium.backup.jsx
+LINHA: 242
+TERMO: resultMilhar
+====================================================================
+
+function hasOfficialResult(slot) {
+  const grupo = getSlotResultGrupo(slot);
+  if (Number.isFinite(grupo) && grupo >= 1 && grupo <= 25) return true;
+
+  const milhar = extractResultMilhar(slot);
+  return /^\d{4}$/.test(milhar);
+}
+
+>>> function analyzeTop3Hit(top3, resultGrupo, resultMilhar) {
+  if (!Array.isArray(top3) || !top3.length) {
+    return { type: "none", score: 0, position: -1 };
+  }
+
+  const grupoNum = Number(resultGrupo);
+  const milhar = normalizeMilharStr(resultMilhar);
+  const centena = milhar ? milhar.slice(-3) : "";
+
+  const hasGrupo = Number.isFinite(grupoNum) && grupoNum >= 1 && grupoNum <= 25;
+  const hasMilhar = /^\d{4}$/.test(milhar);
+
+  if (!hasGrupo && !hasMilhar) {
+
+====================================================================
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Top3\Top3View.premium.backup.jsx
+LINHA: 248
+TERMO: resultMilhar
+====================================================================
+
+}
+
+function analyzeTop3Hit(top3, resultGrupo, resultMilhar) {
+  if (!Array.isArray(top3) || !top3.length) {
+    return { type: "none", score: 0, position: -1 };
+  }
+
+  const grupoNum = Number(resultGrupo);
+>>>   const milhar = normalizeMilharStr(resultMilhar);
+  const centena = milhar ? milhar.slice(-3) : "";
+
+  const hasGrupo = Number.isFinite(grupoNum) && grupoNum >= 1 && grupoNum <= 25;
+  const hasMilhar = /^\d{4}$/.test(milhar);
+
+  if (!hasGrupo && !hasMilhar) {
+    return { type: "none", score: 0, position: -1 };
+  }
+
+  let best = { type: "miss", score: 0, position: -1 };
+
+  top3.forEach((item, idx) => {
+
+====================================================================
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Top3\Top3View.premium.backup.jsx
+LINHA: 858
+TERMO: resultMilhar
+====================================================================
+
+  const resultAnimal =
+    hasResult && Number.isFinite(resultGrupo)
+      ? String(getAnimalLabel(resultGrupo) || "")
+      : "";
+
+  const analysis = analyzeTop3Hit(
+    slotTop3,
+    resultGrupo,
+>>>     extractResultMilhar(slot)
+  );
+
+  const status =
+    !hasResult
+      ? "pending"
+      : analysis.type === "miss"
+        ? "miss"
+        : "hit";
+
+  const statusLabel =
+    !hasResult
+      ? "⏳ PENDENTE"
+
+====================================================================
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Top3\Top3View.premium.backup.jsx
+LINHA: 1138
+TERMO: resultMilhar
+====================================================================
+
+      const slotTop3 = Array.isArray(slot?.top3) ? slot.top3.slice(0, 3) : [];
+      const resultGrupo = getSlotResultGrupo(slot);
+      const hasResult =
+        Number.isFinite(resultGrupo) && resultGrupo >= 1 && resultGrupo <= 25;
+
+      const analysis = analyzeTop3Hit(
+        slotTop3,
+        resultGrupo,
+>>>         extractResultMilhar(slot)
+      );
+
+      return {
+        targetKey: `${String(slot?.targetYmd || "")}__${String(slot?.targetHour || "")}`,
+        target: {
+          ymd: String(slot?.targetYmd || ""),
+          hour: String(slot?.targetHour || ""),
+        },
+        picks: slotTop3.map((t) => Number(t?.grupo)).filter((g) => Number.isFinite(g)),
+        top3: slotTop3,
+        result: hasResult ? Number(resultGrupo) : null,
+        grupo: hasResult ? Number(resultGrupo) : null,
+
+====================================================================
+ARQUIVO: C:\Users\glaub\palpitaco\backend\engine\top3PredictionService.js
+LINHA: 598
+TERMO: resultMilhar
+====================================================================
+
+      `${hourCode}h`,
+    targetKey:
+      `${date}_${hourCode}h`,
+    picks,
+    snapshot: normalizedSnapshot,
+    engineVersion,
+    status: "predicted",
+    resultGrupo: null,
+>>>     resultMilhar: "",
+    resultAnimal: "",
+    hitType: "",
+    hitScore: 0,
+    hitPosition: -1,
+    matchedValue: "",
+    createdAt: now,
+    updatedAt: now,
+    createdBy: source,
+    source,
+  };
+
+  return database.runTransaction(
+
+====================================================================
+ARQUIVO: C:\Users\glaub\palpitaco\backend\engine\top3PredictionService.js
+LINHA: 600
+TERMO: hitType
+====================================================================
+
+      `${date}_${hourCode}h`,
+    picks,
+    snapshot: normalizedSnapshot,
+    engineVersion,
+    status: "predicted",
+    resultGrupo: null,
+    resultMilhar: "",
+    resultAnimal: "",
+>>>     hitType: "",
+    hitScore: 0,
+    hitPosition: -1,
+    matchedValue: "",
+    createdAt: now,
+    updatedAt: now,
+    createdBy: source,
+    source,
+  };
+
+  return database.runTransaction(
+    async (transaction) => {
+      const current =
+
+====================================================================
+ARQUIVO: C:\Users\glaub\palpitaco\backend\engine\top3PredictionService.js
+LINHA: 601
+TERMO: hitScore
+====================================================================
+
+    picks,
+    snapshot: normalizedSnapshot,
+    engineVersion,
+    status: "predicted",
+    resultGrupo: null,
+    resultMilhar: "",
+    resultAnimal: "",
+    hitType: "",
+>>>     hitScore: 0,
+    hitPosition: -1,
+    matchedValue: "",
+    createdAt: now,
+    updatedAt: now,
+    createdBy: source,
+    source,
+  };
+
+  return database.runTransaction(
+    async (transaction) => {
+      const current =
+        await transaction.get(ref);
+
+====================================================================
+ARQUIVO: C:\Users\glaub\palpitaco\backend\engine\top3PredictionService.js
+LINHA: 603
+TERMO: matchedValue
+====================================================================
+
+    engineVersion,
+    status: "predicted",
+    resultGrupo: null,
+    resultMilhar: "",
+    resultAnimal: "",
+    hitType: "",
+    hitScore: 0,
+    hitPosition: -1,
+>>>     matchedValue: "",
+    createdAt: now,
+    updatedAt: now,
+    createdBy: source,
+    source,
+  };
+
+  return database.runTransaction(
+    async (transaction) => {
+      const current =
+        await transaction.get(ref);
+
+      if (!current.exists) {
+
+====================================================================
+ARQUIVO: C:\Users\glaub\palpitaco\backend\engine\top3PredictionService.js
+LINHA: 657
+TERMO: resultMilhar
+====================================================================
+
+      const updatedPayload = {
+        ...payload,
+        createdAt:
+          currentData.createdAt ||
+          payload.createdAt,
+        updatedAt: Date.now(),
+        resultGrupo:
+          currentData.resultGrupo ?? null,
+>>>         resultMilhar:
+          currentData.resultMilhar || "",
+        resultAnimal:
+          currentData.resultAnimal || "",
+        hitType:
+          currentData.hitType || "",
+        hitScore:
+          Number(currentData.hitScore || 0),
+        hitPosition:
+          Number.isFinite(
+            Number(currentData.hitPosition)
+          )
+            ? Number(currentData.hitPosition)
+
+====================================================================
+ARQUIVO: C:\Users\glaub\palpitaco\backend\engine\top3PredictionService.js
+LINHA: 658
+TERMO: resultMilhar
+====================================================================
+
+        ...payload,
+        createdAt:
+          currentData.createdAt ||
+          payload.createdAt,
+        updatedAt: Date.now(),
+        resultGrupo:
+          currentData.resultGrupo ?? null,
+        resultMilhar:
+>>>           currentData.resultMilhar || "",
+        resultAnimal:
+          currentData.resultAnimal || "",
+        hitType:
+          currentData.hitType || "",
+        hitScore:
+          Number(currentData.hitScore || 0),
+        hitPosition:
+          Number.isFinite(
+            Number(currentData.hitPosition)
+          )
+            ? Number(currentData.hitPosition)
+            : -1,
+
+====================================================================
+ARQUIVO: C:\Users\glaub\palpitaco\backend\engine\top3PredictionService.js
+LINHA: 661
+TERMO: hitType
+====================================================================
+
+          payload.createdAt,
+        updatedAt: Date.now(),
+        resultGrupo:
+          currentData.resultGrupo ?? null,
+        resultMilhar:
+          currentData.resultMilhar || "",
+        resultAnimal:
+          currentData.resultAnimal || "",
+>>>         hitType:
+          currentData.hitType || "",
+        hitScore:
+          Number(currentData.hitScore || 0),
+        hitPosition:
+          Number.isFinite(
+            Number(currentData.hitPosition)
+          )
+            ? Number(currentData.hitPosition)
+            : -1,
+        matchedValue:
+          currentData.matchedValue || "",
+      };
+
+====================================================================
+ARQUIVO: C:\Users\glaub\palpitaco\backend\engine\top3PredictionService.js
+LINHA: 662
+TERMO: hitType
+====================================================================
+
+        updatedAt: Date.now(),
+        resultGrupo:
+          currentData.resultGrupo ?? null,
+        resultMilhar:
+          currentData.resultMilhar || "",
+        resultAnimal:
+          currentData.resultAnimal || "",
+        hitType:
+>>>           currentData.hitType || "",
+        hitScore:
+          Number(currentData.hitScore || 0),
+        hitPosition:
+          Number.isFinite(
+            Number(currentData.hitPosition)
+          )
+            ? Number(currentData.hitPosition)
+            : -1,
+        matchedValue:
+          currentData.matchedValue || "",
+      };
+
+
+====================================================================
+ARQUIVO: C:\Users\glaub\palpitaco\backend\engine\top3PredictionService.js
+LINHA: 663
+TERMO: hitScore
+====================================================================
+
+        resultGrupo:
+          currentData.resultGrupo ?? null,
+        resultMilhar:
+          currentData.resultMilhar || "",
+        resultAnimal:
+          currentData.resultAnimal || "",
+        hitType:
+          currentData.hitType || "",
+>>>         hitScore:
+          Number(currentData.hitScore || 0),
+        hitPosition:
+          Number.isFinite(
+            Number(currentData.hitPosition)
+          )
+            ? Number(currentData.hitPosition)
+            : -1,
+        matchedValue:
+          currentData.matchedValue || "",
+      };
+
+      transaction.set(
+
+====================================================================
+ARQUIVO: C:\Users\glaub\palpitaco\backend\engine\top3PredictionService.js
+LINHA: 664
+TERMO: hitScore
+====================================================================
+
+          currentData.resultGrupo ?? null,
+        resultMilhar:
+          currentData.resultMilhar || "",
+        resultAnimal:
+          currentData.resultAnimal || "",
+        hitType:
+          currentData.hitType || "",
+        hitScore:
+>>>           Number(currentData.hitScore || 0),
+        hitPosition:
+          Number.isFinite(
+            Number(currentData.hitPosition)
+          )
+            ? Number(currentData.hitPosition)
+            : -1,
+        matchedValue:
+          currentData.matchedValue || "",
+      };
+
+      transaction.set(
+        ref,
+
+====================================================================
+ARQUIVO: C:\Users\glaub\palpitaco\backend\engine\top3PredictionService.js
+LINHA: 671
+TERMO: matchedValue
+====================================================================
+
+        hitScore:
+          Number(currentData.hitScore || 0),
+        hitPosition:
+          Number.isFinite(
+            Number(currentData.hitPosition)
+          )
+            ? Number(currentData.hitPosition)
+            : -1,
+>>>         matchedValue:
+          currentData.matchedValue || "",
+      };
+
+      transaction.set(
+        ref,
+        updatedPayload,
+        { merge: true }
+      );
+
+      return {
+        ok: true,
+        created: false,
+
+====================================================================
+ARQUIVO: C:\Users\glaub\palpitaco\backend\engine\top3PredictionService.js
+LINHA: 672
+TERMO: matchedValue
+====================================================================
+
+          Number(currentData.hitScore || 0),
+        hitPosition:
+          Number.isFinite(
+            Number(currentData.hitPosition)
+          )
+            ? Number(currentData.hitPosition)
+            : -1,
+        matchedValue:
+>>>           currentData.matchedValue || "",
+      };
+
+      transaction.set(
+        ref,
+        updatedPayload,
+        { merge: true }
+      );
+
+      return {
+        ok: true,
+        created: false,
+        updated: true,
+

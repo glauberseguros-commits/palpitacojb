@@ -1,0 +1,166 @@
+====================================================================================================
+src/services/kingResultsService.js
+====================================================================================================
+
+   45: 
+   46: const PRIZES_CACHE = new Map(); // key -> { ts, data: prizesAllSorted }
+   47: const DRAWS_CACHE = new Map(); // key -> { ts, data: mappedDrawDocs[] }
+   48: 
+   49: // ✅ cache específico para ATRASADOS (Late)
+   50: const LATE_CACHE = new Map(); // key -> { ts, data: lateRows[] }
+   51: 
+   52: // ✅ corte seguro (modo auto) — acima disso, tende a ser "agregado" (sem prizes)
+   53: export const AGGREGATED_AUTO_DAYS = Number.POSITIVE_INFINITY;
+   54: 
+   55: /* =========================
+   56:    Constantes / helpers base
+   57: ========================= */
+   58: 
+   59: const DEFAULT_READ_POLICY = "cache";
+   60: 
+   61: const RJ_STATE_CODE = "RJ";
+   62: const RJ_LOTTERY_KEY = "PT_RIO";
+   63: 
+   64: export const FEDERAL_SCOPE_CODE = "FEDERAL";
+   65: export const FEDERAL_19H_TO_20H_CHANGE_YMD = "2025-11-03";
+   66: 
+   67: const FEDERAL_LOTTERY_KEYS = [
+   68:   "FEDERAL",
+   69:   "LOTERIA_FEDERAL",
+   70:   "LT_FEDERAL",
+   71:   "FED",
+   72: ];
+   73: 
+   74: const FEDERAL_INPUT_ALIASES = new Set([
+   75:   "FEDERAL",
+   76:   "LOTERIA FEDERAL",
+   77:   "LOTERIA_FEDERAL",
+   78:   "LT FEDERAL",
+   79:   "LT_FEDERAL",
+   80:   "FED",
+   81: ]);
+   82: 
+   83: export const FEDERAL_DRAW_DOW = ["WEDNESDAY", "SATURDAY"]; // referência (UI)
+   84: 
+   85: function applyBoundsFloor(_scopeKey, { minYmd, maxYmd }) {
+   86:   return { minYmd: minYmd || null, maxYmd: maxYmd || null };
+   87: }
+   88: 
+   89: /**
+   90:  * ✅ Regra histórica da Federal
+   91:  * - até 2025-11-02: 19h
+   92:  * - a partir de 2025-11-03: 20h
+   93:  */
+   94: export function getFederalPreferredHourForYmd(ymd) {
+   95:   const y = String(ymd || "").trim();
+   96:   if (/^\d{4}-\d{2}-\d{2}$/.test(y) && y >= FEDERAL_19H_TO_20H_CHANGE_YMD) {
+   97:     return "20:00";
+   98:   }
+   99:   return "19:00";
+  100: }
+  101: 
+  102: export function getFederalPreferredBucketForYmd(ymd) {
+  103:   return getFederalPreferredHourForYmd(ymd) === "20:00" ? "20h" : "19h";
+  104: }
+  105: 
+  106: /**
+  107:  * Detecta se o usuário está pedindo Federal (por input/alias).
+  108:  */
+  109: function isFederalInput(scopeInput) {
+  110:   const up = String(scopeInput || "").trim().toUpperCase();
+  111:   if (!up) return false;
+  112:   if (up === FEDERAL_SCOPE_CODE) return true;
+  113:   if (FEDERAL_INPUT_ALIASES.has(up)) return true;
+  114: 
+  115:   // normaliza espaços/underscores pra captar variações
+  116:   const compact = up.replace(/[\s_]+/g, " ").trim();
+  117:   return (
+  118:     FEDERAL_INPUT_ALIASES.has(compact) ||
+  119:     FEDERAL_INPUT_ALIASES.has(up.replace(/[\s_]+/g, "_"))
+  120:   );
+  121: }
+  122: 
+  123: /**
+  124:  * Resolve qual lottery_key usar quando o usuário passar:
+  125:  * - "RJ" -> "PT_RIO"
+  126:  * - "FEDERAL"/aliases -> "FEDERAL" (canônico)
+  127:  * - outros -> mantém o valor original (compatível com seu app atual)
+  128:  */
+  129: function resolveLotteryKeyForQuery(ufInput) {
+  130:   const uf = String(ufInput || "").trim();
+  131:   if (!uf) return "";
+  132:   const up = uf.toUpperCase();
+  133: 
+  134:   if (up === RJ_STATE_CODE) return RJ_LOTTERY_KEY;
+  135:   if (isFederalInput(up)) return FEDERAL_SCOPE_CODE;
+  136: 
+  137:   return uf;
+  138: }
+  139: 
+  140: /**
+  141:  * ✅ Chave canônica para CACHE:
+  142:  * - "RJ" -> "PT_RIO"
+  143:  * - Federal (qualquer alias) -> "FEDERAL"
+  144:  * - outros -> UPPER(TRIM)
+  145:  */
+  146: function canonicalScopeKey(ufInput) {
+  147:   const s = String(ufInput || "").trim();
+  148:   if (!s) return "";
+  149:   const up = s.toUpperCase();
+  150: 
+  151:   if (up === RJ_STATE_CODE) return RJ_LOTTERY_KEY;
+  152:   if (isFederalInput(up)) return FEDERAL_SCOPE_CODE;
+  153: 
+  154:   return up;
+  155: }
+  156: 
+  157: /**
+  158:  * Quando for consultar por campo "uf", adiciona trava de lottery_key para RJ.
+  159:  * Isso elimina o vazamento de Federal para o Rio.
+  160:  */
+  161: function buildRJLockWhereIfNeeded(fieldName, ufInput) {
+  162:   const ufUp = String(ufInput || "").trim().toUpperCase();
+  163:   if (fieldName === "uf" && ufUp === RJ_STATE_CODE) {
+  164:     return [where("lottery_key", "==", RJ_LOTTERY_KEY)];
+  165:   }
+  166:   return [];
+  167: }
+  168: 
+  169: /* =========================
+  170:    ✅ FIX silencioso: normalizar valor do WHERE por campo
+  171: ========================= */
+  172: 
+  173: function normalizeValueForField(fieldName, valueInput) {
+  174:   const s = String(valueInput || "").trim();
+  175:   if (!s) return "";
+  176: 
+  177:   if (fieldName === "uf") {
+  178:     const up = s.toUpperCase();
+  179:     if (isFederalInput(up)) return FEDERAL_SCOPE_CODE;
+  180:     return up;
+  181:   }
+  182: 
+  183:   if (fieldName === "lottery_key") {
+  184:     const up = s.toUpperCase();
+  185:     if (up === RJ_STATE_CODE) return RJ_LOTTERY_KEY; // ✅ PREVENTIVO: RJ -> PT_RIO
+  186:     if (isFederalInput(up)) return FEDERAL_SCOPE_CODE;
+  187:     return up;
+  188:   }
+  189: 
+  190:   return s;
+  191: }
+  192: 
+  193: /* =========================
+  194:    Utils
+  195: ========================= */
+  196: 
+  197: /**
+  198:  * ✅ Normaliza "horário" para HH:MM
+  199:  */
+  200: function normalizeHourLike(value) {
+  201:   const s0 = String(value ?? "").trim();
+  202:   if (!s0) return "";
+  203: 
+  204:   const s = s0.replace(/\s+/g, "");
+
+

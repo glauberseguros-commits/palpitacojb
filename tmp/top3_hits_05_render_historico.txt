@@ -1,0 +1,411 @@
+03890:                     "object"
+03891:                     ? item.analysis
+03892:                     : {};
+03893: 
+03894:                 const predictionPosition =
+03895:                   Number(
+03896:                     analysis?.position ??
+03897:                       analysis
+03898:                         ?.predictionPosition ??
+03899:                       item
+03900:                         ?.predictionPosition ??
+03901:                       item?.hitPosition ??
+03902:                       -1
+03903:                   );
+03904: 
+03905:                 const matchedPredictionIndex =
+03906:                   Number.isFinite(
+03907:                     predictionPosition
+03908:                   ) &&
+03909:                   predictionPosition >= 1
+03910:                     ? predictionPosition - 1
+03911:                     : -1;
+03912: 
+03913:                 const resultPosition = Number(
+03914:                   analysis?.resultPosition ??
+03915:                     item?.resultPosition ??
+03916:                     -1
+03917:                 );
+03918: 
+03919:                 const hitType = String(
+03920:                   analysis?.type ??
+03921:                     analysis?.hitType ??
+03922:                     item?.hitType ??
+03923:                     ""
+03924:                 )
+03925:                   .trim()
+03926:                   .toLowerCase();
+03927: 
+03928:                 const isHit =
+03929:                   hasResult &&
+03930:                   matchedPredictionIndex >= 0;
+03931: 
+03932:                 const medal =
+03933:                   resultPosition === 1
+03934:                     ? "🥇"
+03935:                     : resultPosition === 2
+03936:                       ? "🥈"
+03937:                       : resultPosition === 3
+03938:                         ? "🥉"
+03939:                         : "";
+03940: 
+03941:                 const prizeColor =
+03942:                   resultPosition === 1
+03943:                     ? "#d4af37"
+03944:                     : resultPosition === 2
+03945:                       ? "#c0c0c0"
+03946:                       : resultPosition === 3
+03947:                         ? "#cd7f32"
+03948:                         : "#d4af37";
+03949: 
+03950:                 const prizeGlow =
+03951:                   resultPosition === 1
+03952:                     ? "rgba(212,175,55,0.58)"
+03953:                     : resultPosition === 2
+03954:                       ? "rgba(192,192,192,0.46)"
+03955:                       : resultPosition === 3
+03956:                         ? "rgba(205,127,50,0.50)"
+03957:                         : "rgba(212,175,55,0.38)";
+03958: 
+03959:                 const matchedOfficialIndex =
+03960:                   resultPosition >= 1 &&
+03961:                   resultPosition <= 3
+03962:                     ? resultPosition - 1
+03963:                     : -1;
+03964: 
+03965:                 const matchedResultGrupoRaw =
+03966:                   matchedOfficialIndex >= 0
+03967:                     ? Number(
+03968:                         item?.resultTop3Groups?.[
+03969:                           matchedOfficialIndex
+03970:                         ] ??
+03971:                           item?.matchedGrupo ??
+03972:                           analysis?.matchedGrupo ??
+03973:                           NaN
+03974:                       )
+03975:                     : NaN;
+03976: 
+03977:                 const matchedResultGrupo =
+03978:                   Number.isFinite(
+03979:                     matchedResultGrupoRaw
+03980:                   ) &&
+03981:                   matchedResultGrupoRaw >= 1 &&
+03982:                   matchedResultGrupoRaw <= 25
+03983:                     ? matchedResultGrupoRaw
+03984:                     : NaN;
+03985: 
+03986:                 const matchedResultMilhar =
+03987:                   matchedOfficialIndex >= 0
+03988:                     ? normalizeMilharStr(
+03989:                         item?.resultTop3Milhares?.[
+03990:                           matchedOfficialIndex
+03991:                         ] ||
+03992:                           item?.matchedMilhar ||
+03993:                           analysis?.matchedMilhar ||
+03994:                           (
+03995:                             resultPosition === 1
+03996:                               ? resultMilhar
+03997:                               : ""
+03998:                           )
+03999:                       )
+04000:                     : "";
+04001: 
+04002:                 const matchedResultCentena =
+04003:                   matchedResultMilhar
+04004:                     ? matchedResultMilhar.slice(-3)
+04005:                     : "";
+04006: 
+04007:                 const matchedResultDezena =
+04008:                   matchedResultMilhar
+04009:                     ? matchedResultMilhar.slice(-2)
+04010:                     : "";
+04011: 
+04012:                 const hasExactHit =
+04013:                   hitType === "hit_exact";
+04014: 
+04015:                 const hasCentenaHit =
+04016:                   hitType === "hit_centena" ||
+04017:                   hasExactHit;
+04018: 
+04019:                 const hasDezenaHit =
+04020:                   hitType === "hit_dezena" ||
+04021:                   hasCentenaHit ||
+04022:                   hasExactHit;
+04023: 
+04024:                 const hitGrupo =
+04025:                   isHit &&
+04026:                   Number.isFinite(
+04027:                     matchedResultGrupo
+04028:                   )
+04029:                     ? formatGrupo(
+04030:                         matchedResultGrupo
+04031:                       )
+04032:                     : "";
+04033: 
+04034:                 const hitDezena =
+04035:                   isHit &&
+04036:                   hasDezenaHit
+04037:                     ? matchedResultDezena
+04038:                     : "";
+04039: 
+04040:                 const hitCentena =
+04041:                   isHit &&
+04042:                   hasCentenaHit
+04043:                     ? matchedResultCentena
+04044:                     : "";
+04045: 
+04046:                 const hitMilhar =
+04047:                   isHit &&
+04048:                   hasExactHit
+04049:                     ? matchedResultMilhar
+04050:                     : "";
+04051: 
+04052:                 return (
+04053:                   <div
+04054:                     key={String(
+04055:                       item?.targetKey ||
+04056:                         `${y}_${h}`
+04057:                     )}
+04058:                     style={{
+04059:                       width: "100%",
+04060:                       overflowX: "auto",
+04061:                       border:
+04062:                         "1px solid rgba(255,255,255,0.08)",
+04063:                       borderRadius: 12,
+04064:                       background:
+04065:                         "rgba(255,255,255,0.025)",
+04066:                     }}
+04067:                   >
+04068:                     <div
+04069:                       style={{
+04070:                         display: "grid",
+04071:                         gridTemplateColumns:
+04072:                           "minmax(118px, 1.1fr) repeat(3, minmax(62px, 0.55fr)) minmax(138px, 0.95fr) minmax(165px, 1.1fr)",
+04073:                         alignItems: "center",
+04074:                         gap: 10,
+04075:                         minWidth: 760,
+04076:                         padding: "10px 12px",
+04077:                       }}
+04078:                     >
+04079:                       <div
+04080:                         style={{
+04081:                           fontSize: 12,
+04082:                           fontWeight: 900,
+04083:                           lineHeight: 1.25,
+04084:                           whiteSpace: "nowrap",
+04085:                         }}
+04086:                       >
+04087:                         {ymdToBR(y)} {h}
+04088:                       </div>
+04089: 
+04090:                       {top3Items.map(
+04091:                         (pick, idx) => {
+04092:                           const grupo =
+04093:                             Number(
+04094:                               pick?.grupo
+04095:                             );
+04096: 
+04097:                           const animal =
+04098:                             String(
+04099:                               pick?.animal ||
+04100:                                 getAnimalLabel(
+04101:                                   grupo
+04102:                                 ) ||
+04103:                                 ""
+04104:                             ).trim();
+04105: 
+04106:                           const img =
+04107:                             Number.isFinite(
+04108:                               grupo
+04109:                             )
+04110:                               ? getImgFromGrupo(
+04111:                                   grupo,
+04112:                                   64
+04113:                                 )
+04114:                               : "";
+04115: 
+04116:                           const isMatched =
+04117:                             isHit &&
+04118:                             matchedPredictionIndex ===
+04119:                               idx;
+04120: 
+04121:                           return (
+04122:                             <div
+04123:                               key={`${y}_${h}_${idx}_${grupo}`}
+04124:                               style={{
+04125:                                 display: "grid",
+04126:                                 gridTemplateRows:
+04127:                                   "46px 18px",
+04128:                                 justifyItems:
+04129:                                   "center",
+04130:                                 alignItems:
+04131:                                   "center",
+04132:                                 minWidth: 0,
+04133:                               }}
+04134:                               title={`${
+04135:                                 animal ||
+04136:                                 "Animal"
+04137:                               } — G${formatGrupo(
+04138:                                 grupo
+04139:                               )}`}
+04140:                             >
+04141:                               <div
+04142:                                 style={{
+04143:                                   position:
+04144:                                     "relative",
+04145:                                   display:
+04146:                                     "flex",
+04147:                                   alignItems:
+04148:                                     "center",
+04149:                                   justifyContent:
+04150:                                     "center",
+04151:                                 }}
+04152:                               >
+04153:                                 <ImgWithFallback
+04154:                                   srcs={
+04155:                                     img
+04156:                                       ? [img]
+04157:                                       : []
+04158:                                   }
+04159:                                   alt={
+04160:                                     animal ||
+04161:                                     `G${formatGrupo(
+04162:                                       grupo
+04163:                                     )}`
+04164:                                   }
+04165:                                   size={40}
+04166:                                   style={{
+04167:                                     borderRadius: 9,
+04168:                                     border: isMatched
+04169:                                       ? `4px solid ${prizeColor}`
+04170:                                       : "1px solid rgba(201,168,62,0.36)",
+04171:                                     boxShadow: isMatched
+04172:                                       ? `0 0 17px ${prizeGlow}`
+04173:                                       : "none",
+04174:                                   }}
+04175:                                 />
+04176: 
+04177:                                 {isMatched &&
+04178:                                 medal ? (
+04179:                                   <span
+04180:                                     aria-label="Palpite acertado"
+04181:                                     style={{
+04182:                                       position:
+04183:                                         "absolute",
+04184:                                       top: -14,
+04185:                                       right: -19,
+04186:                                       zIndex: 3,
+04187:                                       fontSize: 27,
+04188:                                       lineHeight: 1,
+04189:                                       filter:
+04190:                                         "drop-shadow(0 2px 4px rgba(0,0,0,0.95))",
+04191:                                     }}
+04192:                                   >
+04193:                                     {medal}
+04194:                                   </span>
+04195:                                 ) : null}
+04196:                               </div>
+04197: 
+04198:                               <div
+04199:                                 style={{
+04200:                                   fontSize: 12,
+04201:                                   fontWeight: 900,
+04202:                                   lineHeight: 1,
+04203:                                   whiteSpace:
+04204:                                     "nowrap",
+04205:                                   color: isMatched
+04206:                                     ? prizeColor
+04207:                                     : "inherit",
+04208:                                 }}
+04209:                               >
+04210:                                 G
+04211:                                 {formatGrupo(
+04212:                                   grupo
+04213:                                 )}
+04214:                               </div>
+04215:                             </div>
+04216:                           );
+04217:                         }
+04218:                       )}
+04219: 
+04220:                       <div
+04221:                         style={{
+04222:                           minHeight: 70,
+04223:                           display: "grid",
+04224:                           alignContent: "center",
+04225:                           gap: 4,
+04226:                           padding: "7px 10px",
+04227:                           borderRadius: 11,
+04228:                           border: isHit
+04229:                             ? `2px solid ${prizeColor}`
+04230:                             : "1px solid rgba(255,255,255,0.10)",
+04231:                           background: isHit
+04232:                             ? `linear-gradient(180deg, ${prizeGlow}, rgba(0,0,0,0.20))`
+04233:                             : "rgba(255,255,255,0.02)",
+04234:                           boxShadow: isHit
+04235:                             ? `0 0 13px ${prizeGlow}`
+04236:                             : "none",
+04237:                         }}
+04238:                       >
+04239:                         {!hasResult ? (
+04240:                           <div
+04241:                             style={{
+04242:                               textAlign: "center",
+04243:                               fontSize: 10,
+04244:                               fontWeight: 900,
+04245:                             }}
+04246:                           >
+04247:                             ⏳ PENDENTE
+04248:                           </div>
+04249:                         ) : isHit ? (
+04250:                           <>
+04251:                             <div
+04252:                               style={{
+04253:                                 textAlign: "center",
+04254:                                 color: prizeColor,
+04255:                                 fontSize: 11,
+04256:                                 fontWeight: 1000,
+04257:                                 letterSpacing: 0.6,
+04258:                               }}
+04259:                             >
+04260:                               ACERTO
+04261:                             </div>
+04262: 
+04263:                             <div
+04264:                               style={{
+04265:                                 display: "grid",
+04266:                                 gridTemplateColumns:
+04267:                                   "1fr auto",
+04268:                                 gap: "2px 8px",
+04269:                                 fontSize: 10,
+04270:                                 lineHeight: 1.2,
+04271:                               }}
+04272:                             >
+04273:                               <span>Grupo</span>
+04274:                               <strong>
+04275:                                 {hitGrupo || "—"}
+04276:                               </strong>
+04277: 
+04278:                               <span>Dezena</span>
+04279:                               <strong>
+04280:                                 {hitDezena || "—"}
+04281:                               </strong>
+04282: 
+04283:                               <span>Centena</span>
+04284:                               <strong>
+04285:                                 {hitCentena || "—"}
+04286:                               </strong>
+04287: 
+04288:                               <span>Milhar</span>
+04289:                               <strong>
+04290:                                 {hitMilhar || "—"}
+04291:                               </strong>
+04292:                             </div>
+04293:                           </>
+04294:                         ) : (
+04295:                           <div
+04296:                             style={{
+04297:                               textAlign: "center",
+04298:                               fontSize: 10,
+04299:                               fontWeight: 900,
+04300:                               color:

@@ -1,0 +1,29 @@
+====================================================================================================
+TOP3-HIT-02 ÔÇö AUDITORIA DO DADO REAL 25/07/2026 09H
+====================================================================================================
+Projeto: palpitacojb-app
+Data: 2026-07-25
+Hor├írio: 09:00
+
+====================================================================================================
+1. DOCUMENTO PERSISTIDO DO TOP3
+====================================================================================================
+
+ERRO NA AUDITORIA:
+Error: Could not load the default credentials. Browse to https://cloud.google.com/docs/authentication/getting-started for more information.
+    at GoogleAuth.getApplicationDefaultAsync (C:\Users\glaub\palpitaco\node_modules\google-auth-library\build\src\auth\googleauth.js:287:15)
+    at async GoogleAuth._GoogleAuth_determineClient (C:\Users\glaub\palpitaco\node_modules\google-auth-library\build\src\auth\googleauth.js:834:32)
+    at async GoogleAuth.getClient (C:\Users\glaub\palpitaco\node_modules\google-auth-library\build\src\auth\googleauth.js:698:20)
+    at async GrpcClient._getCredentials (C:\Users\glaub\palpitaco\node_modules\google-gax\build\src\grpc.js:145:24)
+    at async GrpcClient.createStub (C:\Users\glaub\palpitaco\node_modules\google-gax\build\src\grpc.js:318:23)
+Caused by: Error
+    at C:\Users\glaub\palpitaco\node_modules\@google-cloud\firestore\build\src\index.js:1040:27
+    at C:\Users\glaub\palpitaco\node_modules\@google-cloud\firestore\build\src\telemetry\enabled-trace-util.js:110:30
+    at NoopContextManager.with (C:\Users\glaub\palpitaco\node_modules\@opentelemetry\api\build\src\context\NoopContextManager.js:25:19)
+    at ContextAPI.with (C:\Users\glaub\palpitaco\node_modules\@opentelemetry\api\build\src\api\context.js:60:46)
+    at NoopTracer.startActiveSpan (C:\Users\glaub\palpitaco\node_modules\@opentelemetry\api\build\src\trace\NoopTracer.js:65:31)
+    at ProxyTracer.startActiveSpan (C:\Users\glaub\palpitaco\node_modules\@opentelemetry\api\build\src\trace\ProxyTracer.js:36:24)
+    at EnabledTraceUtil.startActiveSpan (C:\Users\glaub\palpitaco\node_modules\@google-cloud\firestore\build\src\telemetry\enabled-trace-util.js:102:28)
+    at Firestore.getAll (C:\Users\glaub\palpitaco\node_modules\@google-cloud\firestore\build\src\index.js:1031:32)
+    at C:\Users\glaub\palpitaco\node_modules\@google-cloud\firestore\build\src\reference\document-reference.js:182:36
+    at C:\Users\glaub\palpitaco\node_modules\@google-cloud\firestore\build\src\telemetry\enabled-trace-util.js:110:30

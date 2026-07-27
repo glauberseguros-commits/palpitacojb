@@ -1,0 +1,451 @@
+====================================================================================================
+MAPA DA LEITURA DO HISTÓRICO NO TOP3
+====================================================================================================
+
+Linha 4
+    1: "use strict";
+    2: 
+    3: const {
+    4:   fetchDrawsWithPrizesByRange,
+    5: } = require("./drawRepository");
+    6: 
+    7: const {
+    8:   computeStatisticalTop3V3,
+    9:   loadTop3PublicApi,
+   10: } = require("./scoreEngineUnified");
+   11: 
+   12: const {
+   13:   createPredictionRun,
+   14: } = require("./predictionService");
+
+Linha 225
+  220:   const date = normalizeYmd(input.date);
+  221:   const closeHour = normalizeHour(input.closeHour);
+  222: 
+  223:   const fetchDraws =
+  224:     dependencies.fetchDraws ||
+  225:     fetchDrawsWithPrizesByRange;
+  226: 
+  227:   const computeTop3 =
+  228:     dependencies.computeTop3 ||
+  229:     computeStatisticalTop3V3;
+  230: 
+  231:   const persistRun =
+  232:     dependencies.persistRun ||
+  233:     createPredictionRun;
+  234: 
+  235:   const publicApi =
+
+Linha 239
+  234: 
+  235:   const publicApi =
+  236:     dependencies.publicApi ||
+  237:     loadTop3PublicApi();
+  238: 
+  239:   const lookbackDays = Math.max(
+  240:     30,
+  241:     Math.min(
+  242:       1460,
+  243:       Number(input.lookbackDays || 180)
+  244:     )
+  245:   );
+  246: 
+  247:   const maxDraws = Math.max(
+  248:     100,
+  249:     Math.min(
+
+Linha 243
+  238: 
+  239:   const lookbackDays = Math.max(
+  240:     30,
+  241:     Math.min(
+  242:       1460,
+  243:       Number(input.lookbackDays || 180)
+  244:     )
+  245:   );
+  246: 
+  247:   const maxDraws = Math.max(
+  248:     100,
+  249:     Math.min(
+  250:       5000,
+  251:       Number(input.maxDraws || 1200)
+  252:     )
+  253:   );
+
+Linha 247
+  242:       1460,
+  243:       Number(input.lookbackDays || 180)
+  244:     )
+  245:   );
+  246: 
+  247:   const maxDraws = Math.max(
+  248:     100,
+  249:     Math.min(
+  250:       5000,
+  251:       Number(input.maxDraws || 1200)
+  252:     )
+  253:   );
+  254: 
+  255:   const startYmd = subtractDaysYmd(
+  256:     date,
+  257:     lookbackDays
+
+Linha 251
+  246: 
+  247:   const maxDraws = Math.max(
+  248:     100,
+  249:     Math.min(
+  250:       5000,
+  251:       Number(input.maxDraws || 1200)
+  252:     )
+  253:   );
+  254: 
+  255:   const startYmd = subtractDaysYmd(
+  256:     date,
+  257:     lookbackDays
+  258:   );
+  259: 
+  260:   const rawDraws = await fetchDraws({
+  261:     lottery: lotteryKey,
+
+Linha 255
+  250:       5000,
+  251:       Number(input.maxDraws || 1200)
+  252:     )
+  253:   );
+  254: 
+  255:   const startYmd = subtractDaysYmd(
+  256:     date,
+  257:     lookbackDays
+  258:   );
+  259: 
+  260:   const rawDraws = await fetchDraws({
+  261:     lottery: lotteryKey,
+  262:     startYmd,
+  263:     endYmd: date,
+  264:     pageSize: Number(input.pageSize || 250),
+  265:     maxDraws,
+
+Linha 257
+  252:     )
+  253:   );
+  254: 
+  255:   const startYmd = subtractDaysYmd(
+  256:     date,
+  257:     lookbackDays
+  258:   );
+  259: 
+  260:   const rawDraws = await fetchDraws({
+  261:     lottery: lotteryKey,
+  262:     startYmd,
+  263:     endYmd: date,
+  264:     pageSize: Number(input.pageSize || 250),
+  265:     maxDraws,
+  266:     prizeConcurrency: Number(
+  267:       input.prizeConcurrency || 24
+
+Linha 262
+  257:     lookbackDays
+  258:   );
+  259: 
+  260:   const rawDraws = await fetchDraws({
+  261:     lottery: lotteryKey,
+  262:     startYmd,
+  263:     endYmd: date,
+  264:     pageSize: Number(input.pageSize || 250),
+  265:     maxDraws,
+  266:     prizeConcurrency: Number(
+  267:       input.prizeConcurrency || 24
+  268:     ),
+  269:   });
+  270: 
+  271:   const allDraws = extractDraws(rawDraws);
+  272: 
+
+Linha 265
+  260:   const rawDraws = await fetchDraws({
+  261:     lottery: lotteryKey,
+  262:     startYmd,
+  263:     endYmd: date,
+  264:     pageSize: Number(input.pageSize || 250),
+  265:     maxDraws,
+  266:     prizeConcurrency: Number(
+  267:       input.prizeConcurrency || 24
+  268:     ),
+  269:   });
+  270: 
+  271:   const allDraws = extractDraws(rawDraws);
+  272: 
+  273:   if (!allDraws.length) {
+  274:     throw new Error(
+  275:       `Nenhum resultado encontrado para ${lotteryKey}.`
+
+Linha 281
+  276:     );
+  277:   }
+  278: 
+  279:   const targetKey = dateHourKey(date, closeHour);
+  280: 
+  281:   const history = allDraws
+  282:     .filter((draw) => {
+  283:       const ymd = publicApi.pickDrawYMD(draw);
+  284:       const hour = publicApi.pickDrawHour(draw);
+  285: 
+  286:       if (!ymd || !hour) {
+  287:         return false;
+  288:       }
+  289: 
+  290:       return dateHourKey(ymd, hour) < targetKey;
+  291:     })
+
+Linha 306
+  301:       );
+  302: 
+  303:       return aKey.localeCompare(bKey);
+  304:     });
+  305: 
+  306:   if (!history.length) {
+  307:     throw new Error(
+  308:       "Não existe histórico anterior ao horário solicitado."
+  309:     );
+  310:   }
+  311: 
+  312:   const drawLast = history[history.length - 1];
+  313: 
+  314:   const drawsToday = history.filter(
+  315:     (draw) => publicApi.pickDrawYMD(draw) === date
+  316:   );
+
+Linha 312
+  307:     throw new Error(
+  308:       "Não existe histórico anterior ao horário solicitado."
+  309:     );
+  310:   }
+  311: 
+  312:   const drawLast = history[history.length - 1];
+  313: 
+  314:   const drawsToday = history.filter(
+  315:     (draw) => publicApi.pickDrawYMD(draw) === date
+  316:   );
+  317: 
+  318:   const computed = computeTop3({
+  319:     lotteryKey,
+  320:     drawsRange: history,
+  321:     drawLast,
+  322:     PT_RIO_SCHEDULE_NORMAL,
+
+Linha 314
+  309:     );
+  310:   }
+  311: 
+  312:   const drawLast = history[history.length - 1];
+  313: 
+  314:   const drawsToday = history.filter(
+  315:     (draw) => publicApi.pickDrawYMD(draw) === date
+  316:   );
+  317: 
+  318:   const computed = computeTop3({
+  319:     lotteryKey,
+  320:     drawsRange: history,
+  321:     drawLast,
+  322:     PT_RIO_SCHEDULE_NORMAL,
+  323:     PT_RIO_SCHEDULE_WED_SAT,
+  324:     FEDERAL_SCHEDULE,
+
+Linha 320
+  315:     (draw) => publicApi.pickDrawYMD(draw) === date
+  316:   );
+  317: 
+  318:   const computed = computeTop3({
+  319:     lotteryKey,
+  320:     drawsRange: history,
+  321:     drawLast,
+  322:     PT_RIO_SCHEDULE_NORMAL,
+  323:     PT_RIO_SCHEDULE_WED_SAT,
+  324:     FEDERAL_SCHEDULE,
+  325:     topN: 3,
+  326:     targetYmdOverride: date,
+  327:     targetHourOverride: closeHour,
+  328:   });
+  329: 
+  330:   const predictions = mapTop3ToPredictions(
+
+Linha 343
+  338:   }
+  339: 
+  340:   const metadata = {
+  341:     ...(input.metadata || {}),
+  342:     engine: "top3_statistical_v3",
+  343:     historyDraws: history.length,
+  344:     drawsToday: drawsToday.length,
+  345:     lookbackDays,
+  346:     maxDraws,
+  347:     startYmd,
+  348:     lastDrawYmd:
+  349:       publicApi.pickDrawYMD(drawLast) || null,
+  350:     lastDrawHour:
+  351:       publicApi.pickDrawHour(drawLast) || null,
+  352:     targetYmd: date,
+  353:     targetHour: closeHour,
+
+Linha 344
+  339: 
+  340:   const metadata = {
+  341:     ...(input.metadata || {}),
+  342:     engine: "top3_statistical_v3",
+  343:     historyDraws: history.length,
+  344:     drawsToday: drawsToday.length,
+  345:     lookbackDays,
+  346:     maxDraws,
+  347:     startYmd,
+  348:     lastDrawYmd:
+  349:       publicApi.pickDrawYMD(drawLast) || null,
+  350:     lastDrawHour:
+  351:       publicApi.pickDrawHour(drawLast) || null,
+  352:     targetYmd: date,
+  353:     targetHour: closeHour,
+  354:     engineMeta: computed?.meta || null,
+
+Linha 345
+  340:   const metadata = {
+  341:     ...(input.metadata || {}),
+  342:     engine: "top3_statistical_v3",
+  343:     historyDraws: history.length,
+  344:     drawsToday: drawsToday.length,
+  345:     lookbackDays,
+  346:     maxDraws,
+  347:     startYmd,
+  348:     lastDrawYmd:
+  349:       publicApi.pickDrawYMD(drawLast) || null,
+  350:     lastDrawHour:
+  351:       publicApi.pickDrawHour(drawLast) || null,
+  352:     targetYmd: date,
+  353:     targetHour: closeHour,
+  354:     engineMeta: computed?.meta || null,
+  355:   };
+
+Linha 346
+  341:     ...(input.metadata || {}),
+  342:     engine: "top3_statistical_v3",
+  343:     historyDraws: history.length,
+  344:     drawsToday: drawsToday.length,
+  345:     lookbackDays,
+  346:     maxDraws,
+  347:     startYmd,
+  348:     lastDrawYmd:
+  349:       publicApi.pickDrawYMD(drawLast) || null,
+  350:     lastDrawHour:
+  351:       publicApi.pickDrawHour(drawLast) || null,
+  352:     targetYmd: date,
+  353:     targetHour: closeHour,
+  354:     engineMeta: computed?.meta || null,
+  355:   };
+  356: 
+
+Linha 347
+  342:     engine: "top3_statistical_v3",
+  343:     historyDraws: history.length,
+  344:     drawsToday: drawsToday.length,
+  345:     lookbackDays,
+  346:     maxDraws,
+  347:     startYmd,
+  348:     lastDrawYmd:
+  349:       publicApi.pickDrawYMD(drawLast) || null,
+  350:     lastDrawHour:
+  351:       publicApi.pickDrawHour(drawLast) || null,
+  352:     targetYmd: date,
+  353:     targetHour: closeHour,
+  354:     engineMeta: computed?.meta || null,
+  355:   };
+  356: 
+  357:   const engine = {
+
+Linha 359
+  354:     engineMeta: computed?.meta || null,
+  355:   };
+  356: 
+  357:   const engine = {
+  358:     name: "top3_statistical_v3",
+  359:     historyDraws: history.length,
+  360:     drawsToday: drawsToday.length,
+  361:     lookbackDays,
+  362:     maxDraws,
+  363:     startYmd,
+  364:     targetYmd: date,
+  365:     targetHour: closeHour,
+  366:     meta: computed?.meta || null,
+  367:   };
+  368: 
+  369:   if (input.dryRun === true) {
+
+Linha 360
+  355:   };
+  356: 
+  357:   const engine = {
+  358:     name: "top3_statistical_v3",
+  359:     historyDraws: history.length,
+  360:     drawsToday: drawsToday.length,
+  361:     lookbackDays,
+  362:     maxDraws,
+  363:     startYmd,
+  364:     targetYmd: date,
+  365:     targetHour: closeHour,
+  366:     meta: computed?.meta || null,
+  367:   };
+  368: 
+  369:   if (input.dryRun === true) {
+  370:     return {
+
+Linha 361
+  356: 
+  357:   const engine = {
+  358:     name: "top3_statistical_v3",
+  359:     historyDraws: history.length,
+  360:     drawsToday: drawsToday.length,
+  361:     lookbackDays,
+  362:     maxDraws,
+  363:     startYmd,
+  364:     targetYmd: date,
+  365:     targetHour: closeHour,
+  366:     meta: computed?.meta || null,
+  367:   };
+  368: 
+  369:   if (input.dryRun === true) {
+  370:     return {
+  371:       run: null,
+
+Linha 362
+  357:   const engine = {
+  358:     name: "top3_statistical_v3",
+  359:     historyDraws: history.length,
+  360:     drawsToday: drawsToday.length,
+  361:     lookbackDays,
+  362:     maxDraws,
+  363:     startYmd,
+  364:     targetYmd: date,
+  365:     targetHour: closeHour,
+  366:     meta: computed?.meta || null,
+  367:   };
+  368: 
+  369:   if (input.dryRun === true) {
+  370:     return {
+  371:       run: null,
+  372:       predictions,
+
+Linha 363
+  358:     name: "top3_statistical_v3",
+  359:     historyDraws: history.length,
+  360:     drawsToday: drawsToday.length,
+  361:     lookbackDays,
+  362:     maxDraws,
+  363:     startYmd,
+  364:     targetYmd: date,
+  365:     targetHour: closeHour,
+  366:     meta: computed?.meta || null,
+  367:   };
+  368: 
+  369:   if (input.dryRun === true) {
+  370:     return {
+  371:       run: null,
+  372:       predictions,
+  373:       engine,

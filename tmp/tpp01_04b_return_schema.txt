@@ -1,0 +1,106 @@
+========================================================================================================================
+TPP-01.04B - ESTRUTURA REAL DO RETORNO
+========================================================================================================================
+
+Tipo raiz: object
+Chaves raiz: ok, lotteryKey, engine, historySource, historyLoaded, eligibleCases, selectedCases, skipped, minHistory, limit, historyPeriod, evaluationPeriod, global, byHour, byWeekday, byMonth, telemetry, metadata, tookMs
+
+CAMINHOS RELEVANTES
+------------------------------------------------------------------------------------------------------------------------
+result.evaluationPeriod | type=object | value=
+result.evaluationPeriod.from | type=string | value="2022-06-29"
+result.evaluationPeriod.to | type=string | value="2022-07-21"
+result.global | type=object | value=
+result.global.evaluated | type=number | value=100
+result.global.top1Hits | type=number | value=6
+result.global.top3Hits | type=number | value=13
+result.global.errors | type=number | value=0
+result.global.top1Rate | type=number | value=6
+result.global.top3Rate | type=number | value=13
+result.byHour.16:00.evaluated | type=number | value=23
+result.byHour.16:00.top1Hits | type=number | value=0
+result.byHour.16:00.top3Hits | type=number | value=2
+result.byHour.16:00.errors | type=number | value=0
+result.byHour.16:00.top1Rate | type=number | value=0
+result.byHour.16:00.top3Rate | type=number | value=8.6957
+result.byHour.21:00.evaluated | type=number | value=20
+result.byHour.21:00.top1Hits | type=number | value=2
+result.byHour.21:00.top3Hits | type=number | value=2
+result.byHour.21:00.errors | type=number | value=0
+result.byHour.21:00.top1Rate | type=number | value=10
+result.byHour.21:00.top3Rate | type=number | value=10
+result.byHour.11:00.evaluated | type=number | value=22
+result.byHour.11:00.top1Hits | type=number | value=1
+result.byHour.11:00.top3Hits | type=number | value=1
+result.byHour.11:00.errors | type=number | value=0
+result.byHour.11:00.top1Rate | type=number | value=4.5455
+result.byHour.11:00.top3Rate | type=number | value=4.5455
+result.byHour.14:00.evaluated | type=number | value=22
+result.byHour.14:00.top1Hits | type=number | value=2
+result.byHour.14:00.top3Hits | type=number | value=5
+result.byHour.14:00.errors | type=number | value=0
+result.byHour.14:00.top1Rate | type=number | value=9.0909
+result.byHour.14:00.top3Rate | type=number | value=22.7273
+result.byHour.18:00.evaluated | type=number | value=13
+result.byHour.18:00.top1Hits | type=number | value=1
+result.byHour.18:00.top3Hits | type=number | value=3
+result.byHour.18:00.errors | type=number | value=0
+result.byHour.18:00.top1Rate | type=number | value=7.6923
+result.byHour.18:00.top3Rate | type=number | value=23.0769
+result.byWeekday.0.evaluated | type=number | value=9
+result.byWeekday.0.top1Hits | type=number | value=0
+result.byWeekday.0.top3Hits | type=number | value=0
+result.byWeekday.0.errors | type=number | value=0
+result.byWeekday.0.top1Rate | type=number | value=0
+result.byWeekday.0.top3Rate | type=number | value=0
+result.byWeekday.1.evaluated | type=number | value=15
+result.byWeekday.1.top1Hits | type=number | value=1
+result.byWeekday.1.top3Hits | type=number | value=2
+result.byWeekday.1.errors | type=number | value=0
+result.byWeekday.1.top1Rate | type=number | value=6.6667
+result.byWeekday.1.top3Rate | type=number | value=13.3333
+result.byWeekday.2.evaluated | type=number | value=15
+result.byWeekday.2.top1Hits | type=number | value=2
+result.byWeekday.2.top3Hits | type=number | value=2
+result.byWeekday.2.errors | type=number | value=0
+result.byWeekday.2.top1Rate | type=number | value=13.3333
+result.byWeekday.2.top3Rate | type=number | value=13.3333
+result.byWeekday.3.evaluated | type=number | value=14
+result.byWeekday.3.top1Hits | type=number | value=0
+result.byWeekday.3.top3Hits | type=number | value=0
+result.byWeekday.3.errors | type=number | value=0
+result.byWeekday.3.top1Rate | type=number | value=0
+result.byWeekday.3.top3Rate | type=number | value=0
+result.byWeekday.4.evaluated | type=number | value=20
+result.byWeekday.4.top1Hits | type=number | value=2
+result.byWeekday.4.top3Hits | type=number | value=4
+result.byWeekday.4.errors | type=number | value=0
+result.byWeekday.4.top1Rate | type=number | value=10
+result.byWeekday.4.top3Rate | type=number | value=20
+result.byWeekday.5.evaluated | type=number | value=15
+result.byWeekday.5.top1Hits | type=number | value=0
+result.byWeekday.5.top3Hits | type=number | value=2
+result.byWeekday.5.errors | type=number | value=0
+result.byWeekday.5.top1Rate | type=number | value=0
+result.byWeekday.5.top3Rate | type=number | value=13.3333
+result.byWeekday.6.evaluated | type=number | value=12
+result.byWeekday.6.top1Hits | type=number | value=1
+result.byWeekday.6.top3Hits | type=number | value=3
+result.byWeekday.6.errors | type=number | value=0
+result.byWeekday.6.top1Rate | type=number | value=8.3333
+result.byWeekday.6.top3Rate | type=number | value=25
+result.byMonth.2022-06.evaluated | type=number | value=7
+result.byMonth.2022-06.top1Hits | type=number | value=0
+result.byMonth.2022-06.top3Hits | type=number | value=1
+result.byMonth.2022-06.errors | type=number | value=0
+result.byMonth.2022-06.top1Rate | type=number | value=0
+result.byMonth.2022-06.top3Rate | type=number | value=14.2857
+result.byMonth.2022-07.evaluated | type=number | value=93
+result.byMonth.2022-07.top1Hits | type=number | value=6
+result.byMonth.2022-07.top3Hits | type=number | value=12
+result.byMonth.2022-07.errors | type=number | value=0
+result.byMonth.2022-07.top1Rate | type=number | value=6.4516
+result.byMonth.2022-07.top3Rate | type=number | value=12.9032
+result.metadata.totalStored | type=number | value=7507
+
+JSON bruto: C:\Users\glaub\palpitaco\tmp\tpp01_04b_raw_backtest_result.json

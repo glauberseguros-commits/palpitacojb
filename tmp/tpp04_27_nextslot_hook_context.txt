@@ -1,0 +1,86 @@
+0540: 
+0541:       setSkipPtRio18ByFederal(Boolean(shouldSkipPtRio18));
+0542: 
+0543:       if (!Array.isArray(todaySchedule) || !todaySchedule.length) {
+0544:         resetStateForNoData();
+0545:         setError("Não há grade de sorteio válida para esta data/loteria.");
+0546:         return;
+0547:       }
+0548: 
+0549:       const todayLast = findLastDrawInList(today, todaySchedule);
+0550: 
+0551:       let baseDraw = null;
+0552:       let baseY = "";
+0553:       let baseH = "";
+0554:       let baseGrupo = null;
+0555:       let baseAnimal = "";
+0556:       let resolvedTargetY = "";
+0557:       let resolvedTargetH = "";
+0558:       let resolvedPrev = {
+0559:         draw: null,
+0560:         ymd: "",
+0561:         hour: "",
+0562:         source: "none",
+0563:       };
+0564: 
+0565:       if (todayLast) {
+0566:         baseDraw = todayLast;
+0567:         baseY = pickDrawYMD(todayLast) || effectiveYmd;
+0568:         baseH = toHourBucket(pickDrawHour(todayLast));
+0569: 
+0570:         const effectiveTodaySchedule = (Array.isArray(todaySchedule) ? todaySchedule : [])
+0571:           .map(toHourBucket)
+0572:           .filter(Boolean);
+0573: 
+0574:         const baseIdx = baseY === effectiveYmd
+0575:           ? effectiveTodaySchedule.indexOf(baseH)
+0576:           : -1;
+0577: 
+0578:         if (baseIdx >= 0 && baseIdx < effectiveTodaySchedule.length - 1) {
+0579:           resolvedTargetY = effectiveYmd;
+0580:           resolvedTargetH = effectiveTodaySchedule[baseIdx + 1];
+0581:         } else {
+0582:           const nextSlot = getNextSlotForLottery({
+0583:             lotteryKey: lKey,
+0584:             ymd: baseY,
+0585:             hourBucket: baseH,
+0586:             PT_RIO_SCHEDULE_NORMAL,
+0587:             PT_RIO_SCHEDULE_WED_SAT,
+0588:             FEDERAL_SCHEDULE,
+0589:           });
+0590: 
+0591:           resolvedTargetY = safeStr(nextSlot?.ymd || "");
+0592:           resolvedTargetH = toHourBucket(nextSlot?.hour || "");
+0593:         }
+0594:       } else {
+0595:         const firstHourToday = toHourBucket(todaySchedule?.[0]);
+0596: 
+0597:         if (!firstHourToday) {
+0598:           resetStateForNoData();
+0599:           setError(
+0600:             "Não foi possível determinar o primeiro horário válido para esta loteria."
+0601:           );
+0602:           return;
+0603:         }
+0604: 
+0605:         resolvedTargetY = effectiveYmd;
+0606:         resolvedTargetH = firstHourToday;
+0607: 
+0608:         const previousForFirstSlot = await getPreviousDrawRobust({
+0609:           getKingResultsByDate,
+0610:           lotteryKey: lKey,
+0611:           ymdTarget: effectiveYmd,
+0612:           targetHourBucket: firstHourToday,
+0613:           todayDraws: today,
+0614:           schedule: todaySchedule,
+0615:           PT_RIO_SCHEDULE_NORMAL,
+0616:           PT_RIO_SCHEDULE_WED_SAT,
+0617:           FEDERAL_SCHEDULE,
+0618:         });
+0619: 
+0620:         const previousResolved = previousForFirstSlot?.draw
+0621:           ? previousForFirstSlot
+0622:           : await fallbackBaseSearch({
+0623:               getKingResultsByRange,
+0624:               findLatestHistoricalBaseDraw,
+0625:               addDaysYMD,

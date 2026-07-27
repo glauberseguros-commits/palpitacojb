@@ -1,0 +1,1622 @@
+====================================================================================================
+PERF-TOP3-39 — ARQUIVOS COMPLETOS PARA IMPLEMENTAÇÃO
+====================================================================================================
+Data: 2026-07-24 10:17:08
+HEAD: 28d88bf9000215e8fbf3ea782224bbc4188b038c
+Branch: main
+
+Objetivo:
+- exportar somente os dois arquivos que precisarão ser alterados;
+- preservar conteúdo e numeração integral;
+- não alterar código nem Firestore.
+====================================================================================================
+
+----------------------------------------------------------------------------------------------------
+ARQUIVO: .\backend\engine\top3HistoryRepository.js
+SHA256: F50DF4586B21C77859AC8066E80A8167D89680635CCE78A34979A9A04D3B9088
+LINHAS: 913
+----------------------------------------------------------------------------------------------------
+    1: "use strict";
+    2: 
+    3: const {
+    4:   getDb,
+    5: } = require("../service/firebaseAdmin");
+    6: 
+    7: const ROOT_COLLECTION = "top3_history";
+    8: const MONTHS_COLLECTION = "months";
+    9: const METADATA_COLLECTION = "metadata";
+   10: const CURRENT_METADATA_DOC = "current";
+   11: const SCHEMA_VERSION = 1;
+   12: 
+   13: const COMPACT_COLLECTION = "compact_years";
+   14: const COMPACT_MANIFEST_DOC = "__manifest";
+   15: const COMPACT_SCHEMA_VERSION = 1;
+   16: 
+   17: function normalizeLotteryKey(value) {
+   18:   const key = String(value || "PT_RIO")
+   19:     .trim()
+   20:     .toUpperCase();
+   21: 
+   22:   if (!key) {
+   23:     throw new Error(
+   24:       "lotteryKey obrigatório."
+   25:     );
+   26:   }
+   27: 
+   28:   return key;
+   29: }
+   30: 
+   31: function normalizeYearMonth(value) {
+   32:   const yearMonth = String(value || "").trim();
+   33: 
+   34:   if (!/^\d{4}-\d{2}$/.test(yearMonth)) {
+   35:     throw new Error(
+   36:       "yearMonth inválido. Utilize YYYY-MM."
+   37:     );
+   38:   }
+   39: 
+   40:   const month = Number(yearMonth.slice(5, 7));
+   41: 
+   42:   if (month < 1 || month > 12) {
+   43:     throw new Error(
+   44:       "Mês inválido em yearMonth."
+   45:     );
+   46:   }
+   47: 
+   48:   return yearMonth;
+   49: }
+   50: 
+   51: function normalizeYmd(value) {
+   52:   const ymd = String(value || "").trim();
+   53: 
+   54:   if (!/^\d{4}-\d{2}-\d{2}$/.test(ymd)) {
+   55:     return null;
+   56:   }
+   57: 
+   58:   return ymd;
+   59: }
+   60: 
+   61: function normalizeYear(value) {
+   62:   const year = String(value || "").trim();
+   63: 
+   64:   if (!/^\d{4}$/.test(year)) {
+   65:     throw new Error(
+   66:       "year inválido. Utilize YYYY."
+   67:     );
+   68:   }
+   69: 
+   70:   return year;
+   71: }
+   72: 
+   73: function resolveDb(dependencies = {}) {
+   74:   if (dependencies.db) {
+   75:     return dependencies.db;
+   76:   }
+   77: 
+   78:   return getDb();
+   79: }
+   80: 
+   81: function historyRootRef(
+   82:   database,
+   83:   lotteryKey
+   84: ) {
+   85:   return database
+   86:     .collection(ROOT_COLLECTION)
+   87:     .doc(normalizeLotteryKey(lotteryKey));
+   88: }
+   89: 
+   90: function historyMonthRef(
+   91:   database,
+   92:   lotteryKey,
+   93:   yearMonth
+   94: ) {
+   95:   return historyRootRef(
+   96:     database,
+   97:     lotteryKey
+   98:   )
+   99:     .collection(MONTHS_COLLECTION)
+  100:     .doc(normalizeYearMonth(yearMonth));
+  101: }
+  102: 
+  103: function metadataRef(
+  104:   database,
+  105:   lotteryKey
+  106: ) {
+  107:   return historyRootRef(
+  108:     database,
+  109:     lotteryKey
+  110:   )
+  111:     .collection(METADATA_COLLECTION)
+  112:     .doc(CURRENT_METADATA_DOC);
+  113: }
+  114: 
+  115: function compactCollectionRef(
+  116:   database,
+  117:   lotteryKey
+  118: ) {
+  119:   return historyRootRef(
+  120:     database,
+  121:     lotteryKey
+  122:   ).collection(COMPACT_COLLECTION);
+  123: }
+  124: 
+  125: function compactYearRef(
+  126:   database,
+  127:   lotteryKey,
+  128:   year
+  129: ) {
+  130:   return compactCollectionRef(
+  131:     database,
+  132:     lotteryKey
+  133:   ).doc(normalizeYear(year));
+  134: }
+  135: 
+  136: function compactManifestRef(
+  137:   database,
+  138:   lotteryKey
+  139: ) {
+  140:   return compactCollectionRef(
+  141:     database,
+  142:     lotteryKey
+  143:   ).doc(COMPACT_MANIFEST_DOC);
+  144: }
+  145: 
+  146: function safeArray(value) {
+  147:   return Array.isArray(value)
+  148:     ? value
+  149:     : [];
+  150: }
+  151: 
+  152: function normalizePrize(prize = {}) {
+  153:   const position = Number(prize.position);
+  154:   const grupo = Number(prize.grupo);
+  155: 
+  156:   if (
+  157:     !Number.isFinite(position) ||
+  158:     position < 1 ||
+  159:     position > 10 ||
+  160:     !Number.isFinite(grupo) ||
+  161:     grupo < 1 ||
+  162:     grupo > 25
+  163:   ) {
+  164:     return null;
+  165:   }
+  166: 
+  167:   return {
+  168:     id: prize.id
+  169:       ? String(prize.id)
+  170:       : null,
+  171:     position,
+  172:     grupo,
+  173:     milhar:
+  174:       prize.milhar != null
+  175:         ? String(prize.milhar).padStart(4, "0")
+  176:         : null,
+  177:     centena:
+  178:       prize.centena != null
+  179:         ? String(prize.centena).padStart(3, "0")
+  180:         : null,
+  181:     dezena:
+  182:       prize.dezena != null
+  183:         ? String(prize.dezena).padStart(2, "0")
+  184:         : null,
+  185:   };
+  186: }
+  187: 
+  188: function normalizeDraw(draw = {}) {
+  189:   const drawId = String(
+  190:     draw.drawId ||
+  191:     draw.id ||
+  192:     ""
+  193:   ).trim();
+  194: 
+  195:   const ymd = normalizeYmd(
+  196:     draw.ymd ||
+  197:     draw.date
+  198:   );
+  199: 
+  200:   const closeHour = String(
+  201:     draw.close_hour ||
+  202:     draw.closeHour ||
+  203:     draw.hour ||
+  204:     ""
+  205:   ).trim();
+  206: 
+  207:   if (!drawId || !ymd || !closeHour) {
+  208:     return null;
+  209:   }
+  210: 
+  211:   const prizes = safeArray(draw.prizes)
+  212:     .map(normalizePrize)
+  213:     .filter(Boolean)
+  214:     .sort(
+  215:       (a, b) =>
+  216:         Number(a.position) -
+  217:         Number(b.position)
+  218:     );
+  219: 
+  220:   return {
+  221:     drawId,
+  222:     id: drawId,
+  223:     ymd,
+  224:     closeHour,
+  225:     lotteryKey: normalizeLotteryKey(
+  226:       draw.lottery_key ||
+  227:       draw.lotteryKey ||
+  228:       "PT_RIO"
+  229:     ),
+  230:     lotteryCode:
+  231:       draw.lottery_code ||
+  232:       draw.lotteryCode ||
+  233:       null,
+  234:     prizes,
+  235:   };
+  236: }
+  237: 
+  238: function sortDraws(draws = []) {
+  239:   return [...draws].sort((a, b) => {
+  240:     const aKey =
+  241:       `${a.ymd}T${a.closeHour}T${a.drawId}`;
+  242: 
+  243:     const bKey =
+  244:       `${b.ymd}T${b.closeHour}T${b.drawId}`;
+  245: 
+  246:     return aKey.localeCompare(bKey);
+  247:   });
+  248: }
+  249: 
+  250: function deduplicateDraws(draws = []) {
+  251:   const map = new Map();
+  252: 
+  253:   for (const raw of safeArray(draws)) {
+  254:     const draw = normalizeDraw(raw);
+  255: 
+  256:     if (!draw) {
+  257:       continue;
+  258:     }
+  259: 
+  260:     map.set(draw.drawId, draw);
+  261:   }
+  262: 
+  263:   return sortDraws(
+  264:     Array.from(map.values())
+  265:   );
+  266: }
+  267: 
+  268: async function readHistoryMonth(
+  269:   lotteryKey,
+  270:   yearMonth,
+  271:   dependencies = {}
+  272: ) {
+  273:   const database = resolveDb(dependencies);
+  274: 
+  275:   const snap = await historyMonthRef(
+  276:     database,
+  277:     lotteryKey,
+  278:     yearMonth
+  279:   ).get();
+  280: 
+  281:   if (!snap.exists) {
+  282:     return {
+  283:       exists: false,
+  284:       lotteryKey: normalizeLotteryKey(
+  285:         lotteryKey
+  286:       ),
+  287:       yearMonth: normalizeYearMonth(
+  288:         yearMonth
+  289:       ),
+  290:       draws: [],
+  291:       data: null,
+  292:     };
+  293:   }
+  294: 
+  295:   const data = snap.data() || {};
+  296: 
+  297:   return {
+  298:     exists: true,
+  299:     lotteryKey: normalizeLotteryKey(
+  300:       lotteryKey
+  301:     ),
+  302:     yearMonth: normalizeYearMonth(
+  303:       yearMonth
+  304:     ),
+  305:     draws: deduplicateDraws(data.draws),
+  306:     data,
+  307:   };
+  308: }
+  309: 
+  310: async function writeHistoryMonth(
+  311:   lotteryKey,
+  312:   yearMonth,
+  313:   draws,
+  314:   dependencies = {}
+  315: ) {
+  316:   const database = resolveDb(dependencies);
+  317:   const key = normalizeLotteryKey(lotteryKey);
+  318:   const month = normalizeYearMonth(yearMonth);
+  319: 
+  320:   const normalizedDraws = deduplicateDraws(
+  321:     draws
+  322:   ).filter(
+  323:     (draw) =>
+  324:       draw.ymd.slice(0, 7) === month
+  325:   );
+  326: 
+  327:   const firstDraw =
+  328:     normalizedDraws[0] || null;
+  329: 
+  330:   const lastDraw =
+  331:     normalizedDraws[
+  332:       normalizedDraws.length - 1
+  333:     ] || null;
+  334: 
+  335:   const payload = {
+  336:     schemaVersion: SCHEMA_VERSION,
+  337:     lotteryKey: key,
+  338:     yearMonth: month,
+  339:     drawCount: normalizedDraws.length,
+  340:     firstYmd: firstDraw?.ymd || null,
+  341:     lastYmd: lastDraw?.ymd || null,
+  342:     firstDrawId:
+  343:       firstDraw?.drawId || null,
+  344:     lastDrawId:
+  345:       lastDraw?.drawId || null,
+  346:     draws: normalizedDraws,
+  347:     updatedAt: new Date(),
+  348:   };
+  349: 
+  350:   await historyMonthRef(
+  351:     database,
+  352:     key,
+  353:     month
+  354:   ).set(
+  355:     payload,
+  356:     {
+  357:       merge: false,
+  358:     }
+  359:   );
+  360: 
+  361:   return payload;
+  362: }
+  363: 
+  364: async function upsertHistoryMonth(
+  365:   lotteryKey,
+  366:   yearMonth,
+  367:   newDraws,
+  368:   dependencies = {}
+  369: ) {
+  370:   const current = await readHistoryMonth(
+  371:     lotteryKey,
+  372:     yearMonth,
+  373:     dependencies
+  374:   );
+  375: 
+  376:   const merged = deduplicateDraws([
+  377:     ...current.draws,
+  378:     ...safeArray(newDraws),
+  379:   ]);
+  380: 
+  381:   const payload = await writeHistoryMonth(
+  382:     lotteryKey,
+  383:     yearMonth,
+  384:     merged,
+  385:     dependencies
+  386:   );
+  387: 
+  388:   return {
+  389:     ...payload,
+  390:     previousDrawCount: current.draws.length,
+  391:     previousFirstYmd:
+  392:       current.draws[0]?.ymd || null,
+  393:     previousLastYmd:
+  394:       current.draws[
+  395:         current.draws.length - 1
+  396:       ]?.ymd || null,
+  397:     previousFirstDrawId:
+  398:       current.draws[0]?.drawId || null,
+  399:     previousLastDrawId:
+  400:       current.draws[
+  401:         current.draws.length - 1
+  402:       ]?.drawId || null,
+  403:   };
+  404: }
+  405: 
+  406: async function readMetadata(
+  407:   lotteryKey,
+  408:   dependencies = {}
+  409: ) {
+  410:   const database = resolveDb(dependencies);
+  411:   const key = normalizeLotteryKey(lotteryKey);
+  412: 
+  413:   const snap = await metadataRef(
+  414:     database,
+  415:     key
+  416:   ).get();
+  417: 
+  418:   if (!snap.exists) {
+  419:     return {
+  420:       exists: false,
+  421:       lotteryKey: key,
+  422:       data: null,
+  423:     };
+  424:   }
+  425: 
+  426:   return {
+  427:     exists: true,
+  428:     lotteryKey: key,
+  429:     data: snap.data() || {},
+  430:   };
+  431: }
+  432: 
+  433: async function writeMetadata(
+  434:   lotteryKey,
+  435:   metadata = {},
+  436:   dependencies = {}
+  437: ) {
+  438:   const database = resolveDb(dependencies);
+  439:   const key = normalizeLotteryKey(lotteryKey);
+  440: 
+  441:   const payload = {
+  442:     ...metadata,
+  443:     schemaVersion: SCHEMA_VERSION,
+  444:     lotteryKey: key,
+  445:     updatedAt: new Date(),
+  446:   };
+  447: 
+  448:   await metadataRef(
+  449:     database,
+  450:     key
+  451:   ).set(
+  452:     payload,
+  453:     {
+  454:       merge: true,
+  455:     }
+  456:   );
+  457: 
+  458:   return payload;
+  459: }
+  460: 
+  461: async function listHistoryMonths(
+  462:   lotteryKey,
+  463:   dependencies = {}
+  464: ) {
+  465:   const database = resolveDb(dependencies);
+  466:   const key = normalizeLotteryKey(lotteryKey);
+  467: 
+  468:   const snap = await historyRootRef(
+  469:     database,
+  470:     key
+  471:   )
+  472:     .collection(MONTHS_COLLECTION)
+  473:     .get();
+  474: 
+  475:   return snap.docs
+  476:     .map((doc) => ({
+  477:       id: doc.id,
+  478:       ...(doc.data() || {}),
+  479:     }))
+  480:     .sort(
+  481:       (a, b) =>
+  482:         String(a.yearMonth || a.id)
+  483:           .localeCompare(
+  484:             String(b.yearMonth || b.id)
+  485:           )
+  486:     );
+  487: }
+  488: 
+  489: function encodeCompactPrize(prize = {}) {
+  490:   const normalized = normalizePrize(prize);
+  491: 
+  492:   if (!normalized) {
+  493:     return null;
+  494:   }
+  495: 
+  496:   return {
+  497:     i: normalized.id,
+  498:     o: normalized.position,
+  499:     g: normalized.grupo,
+  500:     m: normalized.milhar,
+  501:     c: normalized.centena,
+  502:     d: normalized.dezena,
+  503:   };
+  504: }
+  505: 
+  506: function decodeCompactPrize(row) {
+  507:   if (
+  508:     !row ||
+  509:     typeof row !== "object" ||
+  510:     Array.isArray(row)
+  511:   ) {
+  512:     return null;
+  513:   }
+  514: 
+  515:   return normalizePrize({
+  516:     id: row.i,
+  517:     position: row.o,
+  518:     grupo: row.g,
+  519:     milhar: row.m,
+  520:     centena: row.c,
+  521:     dezena: row.d,
+  522:   });
+  523: }
+  524: 
+  525: function encodeCompactDraw(draw = {}) {
+  526:   const normalized = normalizeDraw(draw);
+  527: 
+  528:   if (!normalized) {
+  529:     return null;
+  530:   }
+  531: 
+  532:   return {
+  533:     d: normalized.drawId,
+  534:     y: normalized.ymd,
+  535:     h: normalized.closeHour,
+  536:     k: normalized.lotteryKey,
+  537:     c: normalized.lotteryCode,
+  538:     p: safeArray(normalized.prizes)
+  539:       .map(encodeCompactPrize)
+  540:       .filter(Boolean),
+  541:   };
+  542: }
+  543: 
+  544: function decodeCompactDraw(row) {
+  545:   if (
+  546:     !row ||
+  547:     typeof row !== "object" ||
+  548:     Array.isArray(row)
+  549:   ) {
+  550:     return null;
+  551:   }
+  552: 
+  553:   return normalizeDraw({
+  554:     drawId: row.d,
+  555:     id: row.d,
+  556:     ymd: row.y,
+  557:     closeHour: row.h,
+  558:     lotteryKey: row.k,
+  559:     lotteryCode: row.c,
+  560:     prizes: safeArray(row.p)
+  561:       .map(decodeCompactPrize)
+  562:       .filter(Boolean),
+  563:   });
+  564: }
+  565: 
+  566: async function readCompactManifest(
+  567:   lotteryKey,
+  568:   dependencies = {}
+  569: ) {
+  570:   const database = resolveDb(dependencies);
+  571:   const key = normalizeLotteryKey(lotteryKey);
+  572: 
+  573:   const snap = await compactManifestRef(
+  574:     database,
+  575:     key
+  576:   ).get();
+  577: 
+  578:   return {
+  579:     exists: snap.exists,
+  580:     lotteryKey: key,
+  581:     data: snap.exists
+  582:       ? snap.data() || {}
+  583:       : null,
+  584:   };
+  585: }
+  586: 
+  587: async function writeCompactManifest(
+  588:   lotteryKey,
+  589:   metadata = {},
+  590:   dependencies = {}
+  591: ) {
+  592:   const database = resolveDb(dependencies);
+  593:   const key = normalizeLotteryKey(lotteryKey);
+  594: 
+  595:   const payload = {
+  596:     ...metadata,
+  597:     schemaVersion: COMPACT_SCHEMA_VERSION,
+  598:     lotteryKey: key,
+  599:     updatedAt: new Date(),
+  600:   };
+  601: 
+  602:   await compactManifestRef(
+  603:     database,
+  604:     key
+  605:   ).set(
+  606:     payload,
+  607:     {
+  608:       merge: true,
+  609:     }
+  610:   );
+  611: 
+  612:   return payload;
+  613: }
+  614: 
+  615: async function readCompactHistoryYear(
+  616:   lotteryKey,
+  617:   year,
+  618:   dependencies = {}
+  619: ) {
+  620:   const database = resolveDb(dependencies);
+  621:   const key = normalizeLotteryKey(lotteryKey);
+  622:   const normalizedYear = normalizeYear(year);
+  623: 
+  624:   const snap = await compactYearRef(
+  625:     database,
+  626:     key,
+  627:     normalizedYear
+  628:   ).get();
+  629: 
+  630:   if (!snap.exists) {
+  631:     return {
+  632:       exists: false,
+  633:       lotteryKey: key,
+  634:       year: normalizedYear,
+  635:       draws: [],
+  636:       data: null,
+  637:     };
+  638:   }
+  639: 
+  640:   const data = snap.data() || {};
+  641: 
+  642:   return {
+  643:     exists: true,
+  644:     lotteryKey: key,
+  645:     year: normalizedYear,
+  646:     draws: deduplicateDraws(
+  647:       safeArray(data.rows)
+  648:         .map(decodeCompactDraw)
+  649:         .filter(Boolean)
+  650:     ),
+  651:     data,
+  652:   };
+  653: }
+  654: 
+  655: async function writeCompactHistoryYear(
+  656:   lotteryKey,
+  657:   year,
+  658:   draws,
+  659:   dependencies = {}
+  660: ) {
+  661:   const database = resolveDb(dependencies);
+  662:   const key = normalizeLotteryKey(lotteryKey);
+  663:   const normalizedYear = normalizeYear(year);
+  664: 
+  665:   const normalizedDraws = deduplicateDraws(
+  666:     draws
+  667:   ).filter(
+  668:     (draw) =>
+  669:       draw.ymd.slice(0, 4) === normalizedYear
+  670:   );
+  671: 
+  672:   const first =
+  673:     normalizedDraws[0] || null;
+  674: 
+  675:   const last =
+  676:     normalizedDraws[
+  677:       normalizedDraws.length - 1
+  678:     ] || null;
+  679: 
+  680:   const payload = {
+  681:     schemaVersion: COMPACT_SCHEMA_VERSION,
+  682:     lotteryKey: key,
+  683:     year: normalizedYear,
+  684:     drawCount: normalizedDraws.length,
+  685:     firstYmd: first?.ymd || null,
+  686:     lastYmd: last?.ymd || null,
+  687:     firstDrawId:
+  688:       first?.drawId || null,
+  689:     lastDrawId:
+  690:       last?.drawId || null,
+  691:     rows: normalizedDraws
+  692:       .map(encodeCompactDraw)
+  693:       .filter(Boolean),
+  694:     updatedAt: new Date(),
+  695:   };
+  696: 
+  697:   await compactYearRef(
+  698:     database,
+  699:     key,
+  700:     normalizedYear
+  701:   ).set(
+  702:     payload,
+  703:     {
+  704:       merge: false,
+  705:     }
+  706:   );
+  707: 
+  708:   return payload;
+  709: }
+  710: 
+  711: async function upsertCompactHistoryYear(
+  712:   lotteryKey,
+  713:   year,
+  714:   newDraws,
+  715:   dependencies = {}
+  716: ) {
+  717:   const current =
+  718:     await readCompactHistoryYear(
+  719:       lotteryKey,
+  720:       year,
+  721:       dependencies
+  722:     );
+  723: 
+  724:   const merged = deduplicateDraws([
+  725:     ...current.draws,
+  726:     ...safeArray(newDraws),
+  727:   ]);
+  728: 
+  729:   const payload =
+  730:     await writeCompactHistoryYear(
+  731:       lotteryKey,
+  732:       year,
+  733:       merged,
+  734:       dependencies
+  735:     );
+  736: 
+  737:   return {
+  738:     ...payload,
+  739:     previousDrawCount:
+  740:       current.draws.length,
+  741:   };
+  742: }
+  743: 
+  744: async function readCompactFullHistory(
+  745:   lotteryKey,
+  746:   dependencies = {}
+  747: ) {
+  748:   const key = normalizeLotteryKey(lotteryKey);
+  749: 
+  750:   const manifestResult =
+  751:     await readCompactManifest(
+  752:       key,
+  753:       dependencies
+  754:     );
+  755: 
+  756:   const manifest =
+  757:     manifestResult?.data || null;
+  758: 
+  759:   if (
+  760:     manifestResult?.exists !== true ||
+  761:     manifest?.status !== "complete"
+  762:   ) {
+  763:     return [];
+  764:   }
+  765: 
+  766:   const years = safeArray(
+  767:     manifest.years
+  768:   )
+  769:     .map((year) =>
+  770:       String(year || "").trim()
+  771:     )
+  772:     .filter(
+  773:       (year) =>
+  774:         /^\d{4}$/.test(year)
+  775:     )
+  776:     .sort();
+  777: 
+  778:   if (!years.length) {
+  779:     return [];
+  780:   }
+  781: 
+  782:   const yearlyResults =
+  783:     await Promise.all(
+  784:       years.map(
+  785:         (year) =>
+  786:           readCompactHistoryYear(
+  787:             key,
+  788:             year,
+  789:             dependencies
+  790:           )
+  791:       )
+  792:     );
+  793: 
+  794:   if (
+  795:     yearlyResults.some(
+  796:       (result) =>
+  797:         result.exists !== true
+  798:     )
+  799:   ) {
+  800:     throw new Error(
+  801:       "Snapshot compacto possui ano ausente."
+  802:     );
+  803:   }
+  804: 
+  805:   const draws = deduplicateDraws(
+  806:     yearlyResults.flatMap(
+  807:       (result) =>
+  808:         result.draws
+  809:     )
+  810:   );
+  811: 
+  812:   const expectedTotal = Number(
+  813:     manifest.totalDraws || 0
+  814:   );
+  815: 
+  816:   if (
+  817:     expectedTotal > 0 &&
+  818:     draws.length !== expectedTotal
+  819:   ) {
+  820:     throw new Error(
+  821:       "Snapshot compacto inconsistente: " +
+  822:       `esperado=${expectedTotal}; ` +
+  823:       `carregado=${draws.length}.`
+  824:     );
+  825:   }
+  826: 
+  827:   return draws;
+  828: }
+  829: 
+  830: async function readLegacyFullHistory(
+  831:   lotteryKey,
+  832:   dependencies = {}
+  833: ) {
+  834:   const months = await listHistoryMonths(
+  835:     lotteryKey,
+  836:     dependencies
+  837:   );
+  838: 
+  839:   const draws = [];
+  840: 
+  841:   for (const month of months) {
+  842:     draws.push(
+  843:       ...safeArray(month.draws)
+  844:     );
+  845:   }
+  846: 
+  847:   return deduplicateDraws(draws);
+  848: }
+  849: 
+  850: async function readFullHistory(
+  851:   lotteryKey,
+  852:   dependencies = {}
+  853: ) {
+  854:   if (
+  855:     dependencies.forceLegacy !== true
+  856:   ) {
+  857:     try {
+  858:       const compact =
+  859:         await readCompactFullHistory(
+  860:           lotteryKey,
+  861:           dependencies
+  862:         );
+  863: 
+  864:       if (compact.length) {
+  865:         return compact;
+  866:       }
+  867:     } catch (error) {
+  868:       console.warn(
+  869:         "[TOP3-HISTORY] Snapshot compacto indisponível; " +
+  870:         "usando histórico mensal:",
+  871:         error?.message || error
+  872:       );
+  873:     }
+  874:   }
+  875: 
+  876:   return readLegacyFullHistory(
+  877:     lotteryKey,
+  878:     dependencies
+  879:   );
+  880: }
+  881: 
+  882: module.exports = {
+  883:   ROOT_COLLECTION,
+  884:   MONTHS_COLLECTION,
+  885:   METADATA_COLLECTION,
+  886:   SCHEMA_VERSION,
+  887:   COMPACT_COLLECTION,
+  888:   COMPACT_MANIFEST_DOC,
+  889:   COMPACT_SCHEMA_VERSION,
+  890:   normalizeLotteryKey,
+  891:   normalizeYearMonth,
+  892:   normalizeYear,
+  893:   normalizeDraw,
+  894:   deduplicateDraws,
+  895:   readHistoryMonth,
+  896:   writeHistoryMonth,
+  897:   upsertHistoryMonth,
+  898:   readMetadata,
+  899:   writeMetadata,
+  900:   listHistoryMonths,
+  901:   encodeCompactPrize,
+  902:   decodeCompactPrize,
+  903:   encodeCompactDraw,
+  904:   decodeCompactDraw,
+  905:   readCompactManifest,
+  906:   writeCompactManifest,
+  907:   readCompactHistoryYear,
+  908:   writeCompactHistoryYear,
+  909:   upsertCompactHistoryYear,
+  910:   readCompactFullHistory,
+  911:   readLegacyFullHistory,
+  912:   readFullHistory,
+  913: };
+
+----------------------------------------------------------------------------------------------------
+ARQUIVO: .\backend\engine\top3HistorySync.js
+SHA256: CE2A21D01F10EB0C4149C9746DF59D38331EFDD34348E2FDB4D247655BD17CF1
+LINHAS: 674
+----------------------------------------------------------------------------------------------------
+    1: "use strict";
+    2: 
+    3: const {
+    4:   getDb,
+    5: } = require("../service/firebaseAdmin");
+    6: 
+    7: const {
+    8:   readMetadata,
+    9:   writeMetadata,
+   10:   upsertHistoryMonth,
+   11:   deduplicateDraws,
+   12:   readCompactManifest,
+   13:   writeCompactManifest,
+   14:   upsertCompactHistoryYear,
+   15: } = require("./top3HistoryRepository");
+   16: 
+   17: function safeArray(value) {
+   18:   return Array.isArray(value)
+   19:     ? value
+   20:     : [];
+   21: }
+   22: 
+   23: function normalizeLotteryKey(value) {
+   24:   return String(value || "PT_RIO")
+   25:     .trim()
+   26:     .toUpperCase() || "PT_RIO";
+   27: }
+   28: 
+   29: function validYmd(value) {
+   30:   const ymd = String(value || "").trim();
+   31: 
+   32:   return /^\d{4}-\d{2}-\d{2}$/.test(ymd)
+   33:     ? ymd
+   34:     : null;
+   35: }
+   36: 
+   37: function resolveDb(dependencies = {}) {
+   38:   return dependencies.db || getDb();
+   39: }
+   40: 
+   41: async function readDrawWithPrizes(
+   42:   database,
+   43:   drawDoc
+   44: ) {
+   45:   if (!drawDoc || !drawDoc.exists) {
+   46:     return null;
+   47:   }
+   48: 
+   49:   const data = drawDoc.data() || {};
+   50: 
+   51:   const prizesSnap = await drawDoc.ref
+   52:     .collection("prizes")
+   53:     .get();
+   54: 
+   55:   const prizes = prizesSnap.docs.map(
+   56:     (doc) => ({
+   57:       id: doc.id,
+   58:       ...(doc.data() || {}),
+   59:     })
+   60:   );
+   61: 
+   62:   return {
+   63:     id: drawDoc.id,
+   64:     drawId: drawDoc.id,
+   65:     ...data,
+   66:     prizes,
+   67:   };
+   68: }
+   69: 
+   70: async function loadImportedDraws(
+   71:   importResult = {},
+   72:   dependencies = {}
+   73: ) {
+   74:   const database = resolveDb(dependencies);
+   75: 
+   76:   const lotteryKey = normalizeLotteryKey(
+   77:     importResult.lotteryKey
+   78:   );
+   79: 
+   80:   const date = validYmd(
+   81:     importResult.date
+   82:   );
+   83: 
+   84:   const targetDrawIds = safeArray(
+   85:     importResult.targetDrawIds
+   86:   )
+   87:     .map((value) => String(value || "").trim())
+   88:     .filter(Boolean);
+   89: 
+   90:   const docs = [];
+   91: 
+   92:   if (targetDrawIds.length) {
+   93:     const snapshots = await Promise.all(
+   94:       targetDrawIds.map(
+   95:         (drawId) =>
+   96:           database
+   97:             .collection("draws")
+   98:             .doc(drawId)
+   99:             .get()
+  100:       )
+  101:     );
+  102: 
+  103:     docs.push(
+  104:       ...snapshots.filter(
+  105:         (snap) => snap.exists
+  106:       )
+  107:     );
+  108:   } else if (date) {
+  109:     const snap = await database
+  110:       .collection("draws")
+  111:       .where("lottery_key", "==", lotteryKey)
+  112:       .where("ymd", "==", date)
+  113:       .get();
+  114: 
+  115:     docs.push(...snap.docs);
+  116:   }
+  117: 
+  118:   const loadedDraws = await Promise.all(
+  119:     docs.map(
+  120:       (doc) =>
+  121:         readDrawWithPrizes(
+  122:           database,
+  123:           doc
+  124:         )
+  125:     )
+  126:   );
+  127: 
+  128:   const draws = loadedDraws.filter((draw) => {
+  129:     if (!draw) {
+  130:       return false;
+  131:     }
+  132: 
+  133:     const drawLotteryKey = normalizeLotteryKey(
+  134:       draw.lottery_key ||
+  135:       draw.lotteryKey
+  136:     );
+  137: 
+  138:     if (drawLotteryKey !== lotteryKey) {
+  139:       return false;
+  140:     }
+  141: 
+  142:     if (
+  143:       date &&
+  144:       String(draw.ymd || draw.date || "") !== date
+  145:     ) {
+  146:       return false;
+  147:     }
+  148: 
+  149:     return true;
+  150:   });
+  151: 
+  152:   return deduplicateDraws(draws);
+  153: }
+  154: 
+  155: function summarizeMonths(months = []) {
+  156:   const ordered = [...safeArray(months)]
+  157:     .sort((a, b) =>
+  158:       String(a.yearMonth || a.id)
+  159:         .localeCompare(
+  160:           String(b.yearMonth || b.id)
+  161:         )
+  162:     );
+  163: 
+  164:   const allDraws = deduplicateDraws(
+  165:     ordered.flatMap(
+  166:       (month) =>
+  167:         safeArray(month.draws)
+  168:     )
+  169:   );
+  170: 
+  171:   const first = allDraws[0] || null;
+  172:   const last =
+  173:     allDraws[allDraws.length - 1] || null;
+  174: 
+  175:   return {
+  176:     totalDraws: allDraws.length,
+  177:     monthCount: ordered.length,
+  178:     months: ordered.map(
+  179:       (month) =>
+  180:         month.yearMonth || month.id
+  181:     ),
+  182:     firstYmd: first?.ymd || null,
+  183:     lastYmd: last?.ymd || null,
+  184:     firstDrawId:
+  185:       first?.drawId || null,
+  186:     lastDrawId:
+  187:       last?.drawId || null,
+  188:   };
+  189: }
+  190: 
+  191: async function markHistoryStale(
+  192:   lotteryKey,
+  193:   error,
+  194:   dependencies = {}
+  195: ) {
+  196:   const saveMetadata =
+  197:     dependencies.writeMetadata ||
+  198:     writeMetadata;
+  199: 
+  200:   try {
+  201:     await saveMetadata(
+  202:       lotteryKey,
+  203:       {
+  204:         bootstrapStatus: "stale",
+  205:         staleReason:
+  206:           String(
+  207:             error?.message ||
+  208:             error ||
+  209:             "incremental_sync_failed"
+  210:           ),
+  211:         staleAt:
+  212:           new Date().toISOString(),
+  213:       },
+  214:       dependencies.repositoryDependencies || {}
+  215:     );
+  216: 
+  217:     return true;
+  218:   } catch (metadataError) {
+  219:     console.error(
+  220:       "[TOP3-HISTORY] Falha também ao marcar snapshot como stale:",
+  221:       metadataError?.message ||
+  222:       metadataError
+  223:     );
+  224: 
+  225:     return false;
+  226:   }
+  227: }
+  228: 
+  229: async function syncImportedResultToTop3History(
+  230:   importResult = {},
+  231:   dependencies = {}
+  232: ) {
+  233:   const lotteryKey = normalizeLotteryKey(
+  234:     importResult.lotteryKey
+  235:   );
+  236: 
+  237:   const loadMetadata =
+  238:     dependencies.readMetadata ||
+  239:     readMetadata;
+  240: 
+  241:   const saveMonth =
+  242:     dependencies.upsertHistoryMonth ||
+  243:     upsertHistoryMonth;
+  244: 
+  245:   const saveMetadata =
+  246:     dependencies.writeMetadata ||
+  247:     writeMetadata;
+  248: 
+  249:   const loadCompactManifest =
+  250:     dependencies.readCompactManifest ||
+  251:     readCompactManifest;
+  252: 
+  253:   const saveCompactManifest =
+  254:     dependencies.writeCompactManifest ||
+  255:     writeCompactManifest;
+  256: 
+  257:   const saveCompactYear =
+  258:     dependencies.upsertCompactHistoryYear ||
+  259:     upsertCompactHistoryYear;
+  260: 
+  261:   try {
+  262:     if (
+  263:       importResult.blocked === true ||
+  264:       !validYmd(importResult.date)
+  265:     ) {
+  266:       return {
+  267:         ok: true,
+  268:         skipped: true,
+  269:         reason:
+  270:           importResult.blocked === true
+  271:             ? "import_blocked"
+  272:             : "invalid_date",
+  273:       };
+  274:     }
+  275: 
+  276:     const metadataResult = await loadMetadata(
+  277:       lotteryKey,
+  278:       dependencies.repositoryDependencies || {}
+  279:     );
+  280: 
+  281:     const metadata =
+  282:       metadataResult?.data || null;
+  283: 
+  284:     const compactManifestResult =
+  285:       await loadCompactManifest(
+  286:         lotteryKey,
+  287:         dependencies.repositoryDependencies || {}
+  288:       );
+  289: 
+  290:     const compactManifest =
+  291:       compactManifestResult?.data || null;
+  292: 
+  293:     const compactReady =
+  294:       compactManifestResult?.exists === true &&
+  295:       compactManifest?.status === "complete";
+  296: 
+  297:     if (
+  298:       metadataResult?.exists !== true ||
+  299:       metadata?.bootstrapStatus !== "complete"
+  300:     ) {
+  301:       return {
+  302:         ok: true,
+  303:         skipped: true,
+  304:         reason: "bootstrap_not_complete",
+  305:       };
+  306:     }
+  307: 
+  308:     const draws = await (
+  309:       dependencies.loadImportedDraws ||
+  310:       loadImportedDraws
+  311:     )(
+  312:       importResult,
+  313:       dependencies
+  314:     );
+  315: 
+  316:     if (!draws.length) {
+  317:       return {
+  318:         ok: true,
+  319:         skipped: true,
+  320:         reason: "no_draws_found",
+  321:       };
+  322:     }
+  323: 
+  324:     const byMonth = new Map();
+  325: 
+  326:     for (const draw of draws) {
+  327:       const yearMonth = draw.ymd.slice(0, 7);
+  328: 
+  329:       if (!byMonth.has(yearMonth)) {
+  330:         byMonth.set(yearMonth, []);
+  331:       }
+  332: 
+  333:       byMonth.get(yearMonth).push(draw);
+  334:     }
+  335: 
+  336:     const updatedMonths = [];
+  337: 
+  338:     for (
+  339:       const [yearMonth, monthDraws]
+  340:       of byMonth.entries()
+  341:     ) {
+  342:       const payload = await saveMonth(
+  343:         lotteryKey,
+  344:         yearMonth,
+  345:         monthDraws,
+  346:         dependencies.repositoryDependencies || {}
+  347:       );
+  348: 
+  349:       updatedMonths.push({
+  350:         yearMonth,
+  351:         drawCount:
+  352:           Number(payload?.drawCount || 0),
+  353:         previousDrawCount:
+  354:           Number(
+  355:             payload?.previousDrawCount || 0
+  356:           ),
+  357:         firstYmd:
+  358:           payload?.firstYmd || null,
+  359:         lastYmd:
+  360:           payload?.lastYmd || null,
+  361:         firstDrawId:
+  362:           payload?.firstDrawId || null,
+  363:         lastDrawId:
+  364:           payload?.lastDrawId || null,
+  365:       });
+  366:     }
+  367: 
+  368:     const metadataMonths = safeArray(
+  369:       metadata?.months
+  370:     )
+  371:       .map((value) =>
+  372:         String(value || "").trim()
+  373:       )
+  374:       .filter(Boolean);
+  375: 
+  376:     const monthSet = new Set(
+  377:       metadataMonths
+  378:     );
+  379: 
+  380:     for (const item of updatedMonths) {
+  381:       monthSet.add(item.yearMonth);
+  382:     }
+  383: 
+  384:     const orderedMonths =
+  385:       Array.from(monthSet).sort();
+  386: 
+  387:     const totalDelta =
+  388:       updatedMonths.reduce(
+  389:         (total, item) =>
+  390:           total +
+  391:           Number(item.drawCount || 0) -
+  392:           Number(
+  393:             item.previousDrawCount || 0
+  394:           ),
+  395:         0
+  396:       );
+  397: 
+  398:     const totalDraws = Math.max(
+  399:       0,
+  400:       Number(metadata?.totalDraws || 0) +
+  401:       totalDelta
+  402:     );
+  403: 
+  404:     const firstCandidates = [
+  405:       metadata?.firstYmd
+  406:         ? {
+  407:             ymd: metadata.firstYmd,
+  408:             drawId:
+  409:               metadata.firstDrawId || null,
+  410:           }
+  411:         : null,
+  412:       ...updatedMonths.map((item) =>
+  413:         item.firstYmd
+  414:           ? {
+  415:               ymd: item.firstYmd,
+  416:               drawId:
+  417:                 item.firstDrawId || null,
+  418:             }
+  419:           : null
+  420:       ),
+  421:     ]
+  422:       .filter(Boolean)
+  423:       .sort((a, b) =>
+  424:         String(a.ymd)
+  425:           .localeCompare(String(b.ymd))
+  426:       );
+  427: 
+  428:     const lastCandidates = [
+  429:       metadata?.lastYmd
+  430:         ? {
+  431:             ymd: metadata.lastYmd,
+  432:             drawId:
+  433:               metadata.lastDrawId || null,
+  434:           }
+  435:         : null,
+  436:       ...updatedMonths.map((item) =>
+  437:         item.lastYmd
+  438:           ? {
+  439:               ymd: item.lastYmd,
+  440:               drawId:
+  441:                 item.lastDrawId || null,
+  442:             }
+  443:           : null
+  444:       ),
+  445:     ]
+  446:       .filter(Boolean)
+  447:       .sort((a, b) =>
+  448:         String(a.ymd)
+  449:           .localeCompare(String(b.ymd))
+  450:       );
+  451: 
+  452:     const first =
+  453:       firstCandidates[0] || null;
+  454: 
+  455:     const last =
+  456:       lastCandidates[
+  457:         lastCandidates.length - 1
+  458:       ] || null;
+  459: 
+  460:     const summary = {
+  461:       totalDraws,
+  462:       monthCount:
+  463:         orderedMonths.length,
+  464:       months:
+  465:         orderedMonths,
+  466:       firstYmd:
+  467:         first?.ymd || null,
+  468:       lastYmd:
+  469:         last?.ymd || null,
+  470:       firstDrawId:
+  471:         first?.drawId || null,
+  472:       lastDrawId:
+  473:         last?.drawId || null,
+  474:     };
+  475: 
+  476:     let compactUpdated = false;
+  477:     let compactError = null;
+  478:     const updatedCompactYears = [];
+  479: 
+  480:     if (compactReady) {
+  481:       try {
+  482:         const byYear = new Map();
+  483: 
+  484:         for (const draw of draws) {
+  485:           const year = draw.ymd.slice(0, 4);
+  486: 
+  487:           if (!byYear.has(year)) {
+  488:             byYear.set(year, []);
+  489:           }
+  490: 
+  491:           byYear.get(year).push(draw);
+  492:         }
+  493: 
+  494:         for (
+  495:           const [year, yearDraws]
+  496:           of byYear.entries()
+  497:         ) {
+  498:           const payload =
+  499:             await saveCompactYear(
+  500:               lotteryKey,
+  501:               year,
+  502:               yearDraws,
+  503:               dependencies.repositoryDependencies || {}
+  504:             );
+  505: 
+  506:           updatedCompactYears.push({
+  507:             year,
+  508:             drawCount:
+  509:               Number(payload?.drawCount || 0),
+  510:             previousDrawCount:
+  511:               Number(
+  512:                 payload?.previousDrawCount || 0
+  513:               ),
+  514:           });
+  515:         }
+  516: 
+  517:         const compactYears = Array.from(
+  518:           new Set(
+  519:             orderedMonths.map(
+  520:               (month) =>
+  521:                 String(month).slice(0, 4)
+  522:             )
+  523:           )
+  524:         ).sort();
+  525: 
+  526:         await saveCompactManifest(
+  527:           lotteryKey,
+  528:           {
+  529:             status: "complete",
+  530:             totalDraws:
+  531:               summary.totalDraws,
+  532:             yearCount:
+  533:               compactYears.length,
+  534:             years:
+  535:               compactYears,
+  536:             firstYmd:
+  537:               summary.firstYmd,
+  538:             lastYmd:
+  539:               summary.lastYmd,
+  540:             firstDrawId:
+  541:               summary.firstDrawId,
+  542:             lastDrawId:
+  543:               summary.lastDrawId,
+  544:             source:
+  545:               "bootstrap_plus_incremental",
+  546:             incrementalUpdatedAt:
+  547:               new Date().toISOString(),
+  548:             staleReason: null,
+  549:             staleAt: null,
+  550:           },
+  551:           dependencies.repositoryDependencies || {}
+  552:         );
+  553: 
+  554:         compactUpdated = true;
+  555:       } catch (error) {
+  556:         compactError = String(
+  557:           error?.message ||
+  558:           error ||
+  559:           "compact_incremental_failed"
+  560:         );
+  561: 
+  562:         console.warn(
+  563:           "[TOP3-HISTORY] Compacto incremental falhou; " +
+  564:           "a leitura mensal continuará disponível:",
+  565:           compactError
+  566:         );
+  567: 
+  568:         try {
+  569:           await saveCompactManifest(
+  570:             lotteryKey,
+  571:             {
+  572:               status: "stale",
+  573:               staleReason:
+  574:                 compactError,
+  575:               staleAt:
+  576:                 new Date().toISOString(),
+  577:             },
+  578:             dependencies.repositoryDependencies || {}
+  579:           );
+  580:         } catch (manifestError) {
+  581:           console.warn(
+  582:             "[TOP3-HISTORY] Falha ao marcar compacto como stale:",
+  583:             manifestError?.message ||
+  584:             manifestError
+  585:           );
+  586:         }
+  587:       }
+  588:     }
+  589: 
+  590:     await saveMetadata(
+  591:       lotteryKey,
+  592:       {
+  593:         bootstrapStatus: "complete",
+  594:         incrementalUpdatedAt:
+  595:           new Date().toISOString(),
+  596:         totalDraws:
+  597:           summary.totalDraws,
+  598:         monthCount:
+  599:           summary.monthCount,
+  600:         months:
+  601:           summary.months,
+  602:         firstYmd:
+  603:           summary.firstYmd,
+  604:         lastYmd:
+  605:           summary.lastYmd,
+  606:         firstDrawId:
+  607:           summary.firstDrawId,
+  608:         lastDrawId:
+  609:           summary.lastDrawId,
+  610:         lastProcessedDrawId:
+  611:           summary.lastDrawId,
+  612:         staleReason: null,
+  613:         staleAt: null,
+  614:         source:
+  615:           "bootstrap_plus_incremental",
+  616:       },
+  617:       dependencies.repositoryDependencies || {}
+  618:     );
+  619: 
+  620:     console.log(
+  621:       `[TOP3-HISTORY] Incremental OK | ${lotteryKey} | ` +
+  622:       `draws=${draws.length} | meses=${updatedMonths
+  623:         .map((item) => item.yearMonth)
+  624:         .join(",")}`
+  625:     );
+  626: 
+  627:     return {
+  628:       ok: true,
+  629:       skipped: false,
+  630:       lotteryKey,
+  631:       importedDraws: draws.length,
+  632:       updatedMonths,
+  633:       compactReady,
+  634:       compactUpdated,
+  635:       compactError,
+  636:       updatedCompactYears,
+  637:       ...summary,
+  638:     };
+  639:   } catch (error) {
+  640:     console.error(
+  641:       "[TOP3-HISTORY] Incremental falhou:",
+  642:       error?.stack ||
+  643:       error?.message ||
+  644:       error
+  645:     );
+  646: 
+  647:     const markedStale = await markHistoryStale(
+  648:       lotteryKey,
+  649:       error,
+  650:       dependencies
+  651:     );
+  652: 
+  653:     return {
+  654:       ok: false,
+  655:       skipped: false,
+  656:       lotteryKey,
+  657:       markedStale,
+  658:       error:
+  659:         String(
+  660:           error?.message ||
+  661:           error ||
+  662:           "incremental_sync_failed"
+  663:         ),
+  664:     };
+  665:   }
+  666: }
+  667: 
+  668: module.exports = {
+  669:   readDrawWithPrizes,
+  670:   loadImportedDraws,
+  671:   summarizeMonths,
+  672:   markHistoryStale,
+  673:   syncImportedResultToTop3History,
+  674: };
+
+====================================================================================================
+RESULTADO
+====================================================================================================
+Exportação concluída.
+
+Nenhum código foi alterado.
+Nenhuma gravação no Firestore foi realizada.
+Nenhum commit foi criado.
+Nenhum push foi executado.
+====================================================================================================

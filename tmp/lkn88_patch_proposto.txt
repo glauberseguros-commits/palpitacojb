@@ -1,0 +1,110 @@
+
+================================================================================
+PATCH PROPOSTO
+================================================================================
+
+1) ADICIONAR NOVA FUNÇÃO
+
+function normalizeDrawCloseHour(draw, lotteryKey) {
+
+  const base = normalizeCloseHourForLottery(
+      draw?.close_hour || "",
+      lotteryKey
+  );
+
+  const lk = String(lotteryKey || "").trim().toUpperCase();
+
+  if (lk !== "NACIONAL") {
+      return base;
+  }
+
+  const lotteryName = String(
+      draw?.lottery_name ||
+      draw?.name ||
+      ""
+  );
+
+  const match = lotteryName.match(/(\d{2})\s*HS/i);
+
+  if (!match) {
+      return base;
+  }
+
+  return {
+      raw: base.raw,
+      slot: `${match[1]}:00`
+  };
+}
+
+================================================================================
+2) SUBSTITUIR APENAS ESTES 3 PONTOS
+================================================================================
+
+A)
+
+mergeAndDedupDraws()
+
+DE:
+
+normalizeCloseHourForLottery(
+    d?.close_hour || "",
+    lotteryKey
+)
+
+PARA:
+
+normalizeDrawCloseHour(
+    d,
+    lotteryKey
+)
+
+--------------------------------------------------------------------------------
+
+B)
+
+buildDrawRef()
+
+DE:
+
+normalizeCloseHourForLottery(
+    draw?.close_hour || "",
+    lotteryKey
+)
+
+PARA:
+
+normalizeDrawCloseHour(
+    draw,
+    lotteryKey
+)
+
+--------------------------------------------------------------------------------
+
+C)
+
+importFromPayload()
+
+DE:
+
+normalizeCloseHourForLottery(
+    draw?.close_hour || "",
+    lk
+)
+
+PARA:
+
+normalizeDrawCloseHour(
+    draw,
+    lk
+)
+
+================================================================================
+3) NÃO ALTERAR
+================================================================================
+
+- normalizeCloseHourForLottery()
+- normalizeRequestedCloseHour()
+- checkSlotCompletion()
+- summarizeCloseHours()
+- tryHtmlDetailsFallback()
+

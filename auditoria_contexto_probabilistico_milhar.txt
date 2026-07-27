@@ -1,0 +1,292 @@
+OK: import via vite-node -> file:///C:/Users/glaub/palpitaco/tmp/auditMilharProbabilityContext.js
+
+====================================================================================================
+1. JANELA CONSULTADA
+====================================================================================================
+Início: 2026-05-15
+Fim: 2026-07-13
+Sorteios retornados: 323
+
+====================================================================================================
+2. CAMPOS DOS SORTEIOS
+====================================================================================================
+323x => __mode | closeHour | close_hour | date | drawId | id | lottery_code | lottery_key | prizes | prizesCount | uf | ymd
+
+====================================================================================================
+3. CAMPOS DOS PRÊMIOS
+====================================================================================================
+Prêmios encontrados: 2261
+2261x => animal | centena | centena3 | dezena | dezena2 | digitsLen | grupo | milhar | milhar4 | numero | position | prizeId | raw
+
+====================================================================================================
+4. DISPONIBILIDADE DOS CAMPOS
+====================================================================================================
+milhar: 2261/2261 (100.00%)
+dataNoPremio: 0/2261 (0.00%)
+horarioNoPremio: 0/2261 (0.00%)
+posicao: 2261/2261 (100.00%)
+grupo: 2261/2261 (100.00%)
+
+====================================================================================================
+5. CONTEXTO TEMPORAL DO SORTEIO
+====================================================================================================
+Sorteios com data: 323/323
+Sorteios com horário: 323/323
+
+====================================================================================================
+6. ORDEM DA BASE
+====================================================================================================
+Total de inversões: 0
+
+====================================================================================================
+7. AMOSTRA REAL
+====================================================================================================
+
+SORTEIO 2026-05-15 | 09:00
+{
+  "drawId": "PT_RIO__2026-05-15__09-00__c168d9b3-97b7-42dc-a332-7815edaa51e2",
+  "id": "PT_RIO__2026-05-15__09-00__c168d9b3-97b7-42dc-a332-7815edaa51e2",
+  "date": "2026-05-15",
+  "ymd": "2026-05-15",
+  "close_hour": "09:00",
+  "closeHour": "09:00",
+  "uf": "RJ",
+  "lottery_key": "PT_RIO",
+  "lottery_code": "C168D9B3-97B7-42DC-A332-7815EDAA51E2",
+  "prizesCount": 7,
+  "prizes": [
+    {
+      "prizeId": "p01",
+      "milhar": "7689",
+      "grupo": 23,
+      "centena": "689",
+      "position": 1,
+      "raw": "7689",
+      "animal": "Urso",
+      "dezena": "89",
+      "numero": "7689",
+      "digitsLen": 4,
+      "milhar4": "7689",
+      "dezena2": "89",
+      "centena3": "689"
+    },
+    {
+      "prizeId": "p02",
+      "position": 2,
+      "raw": "8757",
+      "dezena": "57",
+      "animal": "Jacaré",
+      "grupo": 15,
+      "milhar": "8757",
+      "centena": "757",
+      "numero": "8757",
+      "digitsLen": 4,
+      "milhar4": "8757",
+      "dezena2": "57",
+      "centena3": "757"
+    },
+    {
+      "prizeId": "p03",
+      "milhar": "0770",
+      "grupo": 18,
+      "centena": "770",
+      "raw": "0770",
+      "dezena": "70",
+      "animal": "Porco",
+      "position": 3,
+      "numero": "0770",
+      "digitsLen": 4,
+      "milhar4": "0770",
+      "dezena2": "70",
+      "centena3": "770"
+    },
+    {
+      "prizeId": "p04",
+      "milhar": "8316",
+      "grupo": 4,
+      "centena": "316",
+      "position": 4,
+      "raw": "8316",
+      "animal": "Borboleta",
+      "dezena": "16",
+      "numero": "8316",
+      "digitsLen": 4,
+      "milhar4": "8316",
+      "dezena2": "16",
+      "centena3": "316"
+    },
+    {
+      "prizeId": "p05",
+      "raw": "6238",
+      "animal": "Coelho",
+      "dezena": "38",
+      "position": 5,
+      "milhar": "6238",
+      "grupo": 10,
+      "centena": "238",
+      "numero": "6238",
+      "digitsLen": 4,
+      "milhar4": "6238",
+      "dezena2": "38",
+      "centena3": "238"
+    },
+    {
+      "prizeId": "p06",
+      "position": 6,
+      "dezena": "70",
+      "animal": "Porco",
+      "raw": "1770",
+      "centena": "770",
+      "milhar": "1770",
+      "grupo": 18,
+      "numero": "1770",
+      "digitsLen": 4,
+      "milhar4": "1770",
+      "dezena2": "70",
+      "centena3": "770"
+    },
+    {
+      "prizeId": "p07",
+      "position": 7,
+      "raw": "332",
+      "dezena": "32",
+      "animal": "Camelo",
+      "milhar": "332",
+      "grupo": 8,
+      "centena": "332",
+      "numero": "332",
+      "digitsLen": 3,
+      "milhar4": null,
+      "dezena2": "32",
+      "centena3": "332"
+    }
+  ],
+  "__mode": "detailed"
+}
+
+SORTEIO 2026-05-15 | 11:00
+{
+  "drawId": "PT_RIO__2026-05-15__11-00__cbac7c11-e733-400b-ba4d-2dfe0cba4272",
+  "id": "PT_RIO__2026-05-15__11-00__cbac7c11-e733-400b-ba4d-2dfe0cba4272",
+  "date": "2026-05-15",
+  "ymd": "2026-05-15",
+  "close_hour": "11:00",
+  "closeHour": "11:00",
+  "uf": "RJ",
+  "lottery_key": "PT_RIO",
+  "lottery_code": "CBAC7C11-E733-400B-BA4D-2DFE0CBA4272",
+  "prizesCount": 7,
+  "prizes": [
+    {
+      "prizeId": "p01",
+      "milhar": "9205",
+      "grupo": 2,
+      "centena": "205",
+      "position": 1,
+      "raw": "9205",
+      "dezena": "05",
+      "animal": "Águia",
+      "numero": "9205",
+      "digitsLen": 4,
+      "milhar4": "9205",
+      "dezena2": "05",
+      "centena3": "205"
+    },
+    {
+      "prizeId": "p02",
+      "milhar": "8448",
+      "grupo": 12,
+      "centena": "448",
+      "raw": "8448",
+      "animal": "Elefante",
+      "dezena": "48",
+      "position": 2,
+      "numero": "8448",
+      "digitsLen": 4,
+      "milhar4": "8448",
+      "dezena2": "48",
+      "centena3": "448"
+    },
+    {
+      "prizeId": "p03",
+      "position": 3,
+      "dezena": "94",
+      "animal": "Veado",
+      "raw": "0794",
+      "centena": "794",
+      "grupo": 24,
+      "milhar": "0794",
+      "numero": "0794",
+      "digitsLen": 4,
+      "milhar4": "0794",
+      "dezena2": "94",
+      "centena3": "794"
+    },
+    {
+      "prizeId": "p04",
+      "position": 4,
+      "raw": "4543",
+      "dezena": "43",
+      "animal": "Cavalo",
+      "grupo": 11,
+      "milhar": "4543",
+      "centena": "543",
+      "numero": "4543",
+      "digitsLen": 4,
+      "milhar4": "4543",
+      "dezena2": "43",
+      "centena3": "543"
+    },
+    {
+      "prizeId": "p05",
+      "centena": "865",
+      "grupo": 17,
+      "milhar": "9865",
+      "dezena": "65",
+      "animal": "Macaco",
+      "raw": "9865",
+      "position": 5,
+      "numero": "9865",
+      "digitsLen": 4,
+      "milhar4": "9865",
+      "dezena2": "65",
+      "centena3": "865"
+    },
+    {
+      "prizeId": "p06",
+      "milhar": "2855",
+      "grupo": 14,
+      "centena": "855",
+      "position": 6,
+      "raw": "2855",
+      "dezena": "55",
+      "animal": "Gato",
+      "numero": "2855",
+      "digitsLen": 4,
+      "milhar4": "2855",
+      "dezena2": "55",
+      "centena3": "855"
+    },
+    {
+      "prizeId": "p07",
+      "animal": "Leão",
+      "dezena": "63",
+      "raw": "763",
+      "position": 7,
+      "centena": "763",
+      "milhar": "763",
+      "grupo": 16,
+      "numero": "763",
+      "digitsLen": 3,
+      "milhar4": null,
+      "dezena2": "63",
+      "centena3": "763"
+    }
+  ],
+  "__mode": "detailed"
+}
+
+====================================================================================================
+8. DECISÃO TÉCNICA
+====================================================================================================
+É POSSÍVEL construir o V3 com contexto temporal real.

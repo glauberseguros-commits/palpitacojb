@@ -1,0 +1,242 @@
+====================================================================================================
+NAT-LATE-10 — AUDITORIA COMPLETA
+Gerado em: 07/24/2026 10:47:05
+====================================================================================================
+
+===== HEAD =====
+28d88bf perf(top3): add compact Firestore history snapshot
+
+===== CLOUD SCHEDULER =====
+ID                               LOCATION            SCHEDULE (TZ)                                    TARGET_TYPE  STATE
+palpitaco-daily-reconciliation   southamerica-east1  15 0 * * * (America/Sao_Paulo)                   HTTP         ENABLED
+palpitaco-pt-rio-saturday-19h    southamerica-east1  23,33 19 * * 6 (America/Sao_Paulo)               HTTP         ENABLED
+palpitaco-standard-windows       southamerica-east1  32,42 2,7-12,14-18,23 * * * (America/Sao_Paulo)  HTTP         ENABLED
+palpitaco-federal-wednesday-20h  southamerica-east1  3,13 20 * * 3 (America/Sao_Paulo)                HTTP         ENABLED
+palpitaco-federal-sunday-11h     southamerica-east1  8,18 11 * * 0 (America/Sao_Paulo)                HTTP         ENABLED
+palpitaco-21h-windows            southamerica-east1  8,18,28,38,48,58 21 * * * (America/Sao_Paulo)    HTTP         ENABLED
+
+===== CLOUD RUN JOBS =====
+   JOB                    REGION              LAST RUN AT              CREATED                  CREATED BY
++  palpitaco-auto-import  southamerica-east1  2026-07-24 13:42:05 UTC  2026-07-21 20:41:29 UTC  glauber.seguros@gmail.com
+
+===== ÚLTIMAS EXECUÇÕES =====
+TIMESTAMP                    SEVERITY  TEXT_PAYLOAD
+2026-07-24T13:42:32.950407Z  INFO
+2026-07-24T13:42:25.534443Z  INFO      Container called exit(0).
+2026-07-24T13:42:25.477467Z            [HEARTBEAT] FINAL=SUCCESS
+2026-07-24T13:42:25.477458Z            [HEARTBEAT] OK LOTTERY=NACIONAL
+2026-07-24T13:42:25.470040Z            [AUTO] nada para fazer agora (2026-07-24)
+2026-07-24T13:42:25.469672Z            [AUDIT] OK (sem furos HARD acima de 20 min) softLate=0
+2026-07-24T13:42:25.467795Z            [STATE-SYNC] slots reconciliados pelo backend=3
+2026-07-24T13:42:25.466612Z            [STATE-SYNC] backend confirmou slot=10:00 presente -> DONE
+2026-07-24T13:42:25.466501Z            [STATE-SYNC] backend confirmou slot=08:00 presente -> DONE
+2026-07-24T13:42:25.466050Z            [STATE-SYNC] backend confirmou slot=02:00 presente -> DONE
+2026-07-24T13:42:23.778532Z            [CFG] PITACO_API_BASE efetivo => https://api.palpitacojb.com.br
+2026-07-24T13:42:23.440534Z            LOTTERY=NACIONAL | PERIOD=TODAY | DATE=2026-07-24
+2026-07-24T13:42:23.440485Z            [HEARTBEAT] OK LOTTERY=LOOK
+2026-07-24T13:42:23.433329Z            [AUTO] nada para fazer agora (2026-07-24)
+2026-07-24T13:42:23.433006Z            [AUDIT] OK (sem furos HARD acima de 20 min) softLate=0
+2026-07-24T13:42:23.431352Z            [STATE-SYNC] slots reconciliados pelo backend=2
+2026-07-24T13:42:23.430623Z            [STATE-SYNC] backend confirmou slot=09:00 presente -> DONE
+2026-07-24T13:42:23.430309Z            [STATE-SYNC] backend confirmou slot=07:00 presente -> DONE
+2026-07-24T13:42:21.672832Z            [CFG] PITACO_API_BASE efetivo => https://api.palpitacojb.com.br
+2026-07-24T13:42:21.276780Z            LOTTERY=LOOK | PERIOD=TODAY | DATE=2026-07-24
+2026-07-24T13:42:21.276671Z            [HEARTBEAT] OK LOTTERY=FEDERAL
+2026-07-24T13:42:21.257575Z            [AUTO] nada para fazer agora (2026-07-24)
+2026-07-24T13:42:21.257311Z            [AUDIT] OK (sem furos HARD acima de 20 min) softLate=0
+2026-07-24T13:42:21.255854Z            [AUTO] N/A slot=20:00 (FEDERAL_FORA_DA_GRADE) -> DONE
+2026-07-24T13:42:21.255630Z            [AUTO] N/A slot=19:00 (FEDERAL_FORA_DA_GRADE) -> DONE
+2026-07-24T13:42:21.253127Z            [AUTO] N/A slot=11:00 (FEDERAL_FORA_DA_GRADE) -> DONE
+2026-07-24T13:42:21.252323Z            [CAL] FEDERAL official: date=2026-07-24 dow=5 hard=[] | backend expectedHard=[] expectedSoft=[]
+2026-07-24T13:42:21.221833Z            [CFG] PITACO_API_BASE efetivo => https://api.palpitacojb.com.br
+2026-07-24T13:42:20.857315Z            LOTTERY=FEDERAL | PERIOD=TODAY | DATE=2026-07-24
+2026-07-24T13:42:20.857302Z            [HEARTBEAT] OK LOTTERY=PT_RIO
+2026-07-24T13:42:20.849886Z            [AUTO] nada para fazer agora (2026-07-24)
+2026-07-24T13:42:20.849635Z            [AUDIT] OK (sem furos HARD acima de 20 min) softLate=0
+2026-07-24T13:42:20.848228Z            [AUTO] N/A slot=19:00 (NAO_APLICA) -> DONE
+2026-07-24T13:42:20.847904Z            [STATE-SYNC] slots reconciliados pelo backend=1
+2026-07-24T13:42:20.847199Z            [STATE-SYNC] backend confirmou slot=09:00 presente -> DONE
+2026-07-24T13:42:20.846782Z            [CAL] PT_RIO resolved: date=2026-07-24 dow=5 saturday19=0 federal20=0 HARD=[09:00,11:00,14:00,16:00,18:00,21:00] SOFT=[] OFF=[19:00]
+2026-07-24T13:42:20.845141Z            [CAL] FEDERAL schedule: date=2026-07-24 has20=0 expectedHard=[] expectedSoft=[]
+2026-07-24T13:42:18.021325Z            [CFG] PITACO_API_BASE efetivo => https://api.palpitacojb.com.br
+2026-07-24T13:42:17.103141Z            LOTTERY=PT_RIO | PERIOD=TODAY | DATE=2026-07-24
+2026-07-24T13:42:17.103113Z            [HEARTBEAT] START local=10:42 date=2026-07-24 period=TODAY
+2026-07-24T13:33:03.697884Z  INFO
+2026-07-24T13:33:00.314299Z  INFO      Container called exit(0).
+2026-07-24T13:33:00.255100Z            [HEARTBEAT] FINAL=SUCCESS
+2026-07-24T13:33:00.255087Z            [HEARTBEAT] OK LOTTERY=NACIONAL
+2026-07-24T13:33:00.190008Z            [AUDIT] OK (sem furos HARD acima de 20 min) softLate=0
+2026-07-24T13:33:00.187966Z            [AUTO] FS j? tem slot=10:00 COMPLETO (close=10:00) -> DONE
+2026-07-24T13:33:00.186172Z                at async main (/app/scripts/autoImportToday.js:1405:15)
+2026-07-24T13:33:00.186168Z                at runImport (/app/scripts/importKingApostas.js:1796:25)
+2026-07-24T13:33:00.186163Z                at loadTop3PublicApi (/app/engine/scoreEngineUnified.js:45:15)
+2026-07-24T13:33:00.186159Z                at require (node:internal/modules/helpers:147:16)
+2026-07-24T13:33:00.186155Z                at Module.require (node:internal/modules/cjs/loader:1527:12)
+2026-07-24T13:33:00.186150Z                at wrapModuleLoad (node:internal/modules/cjs/loader:254:19)
+2026-07-24T13:33:00.186146Z                at Function._load (node:internal/modules/cjs/loader:1216:25)
+2026-07-24T13:33:00.186141Z                at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1045:22)
+2026-07-24T13:33:00.186137Z                at defaultResolveImpl (node:internal/modules/cjs/loader:1040:19)
+2026-07-24T13:33:00.186132Z                at Function._resolveFilename (node:internal/modules/cjs/loader:1430:15)
+2026-07-24T13:33:00.186126Z            - /app/scripts/autoImportToday.js
+2026-07-24T13:33:00.186123Z            - /app/scripts/importKingApostas.js
+2026-07-24T13:33:00.186117Z            - /app/engine/top3PredictionService.js
+2026-07-24T13:33:00.186112Z            - /app/engine/scoreEngineUnified.js
+2026-07-24T13:33:00.186106Z            Require stack:
+2026-07-24T13:33:00.186083Z            [TOP3 AUTO] falhou: Error: Cannot find module '../../src/pages/Top3/top3.public-api.js'
+2026-07-24T13:32:59.801608Z            [TOP3-HISTORY] Incremental OK | NACIONAL | draws=1 | meses=2026-07
+2026-07-24T13:32:55.425871Z            [IMPORT] API draws=3 | match_close=1 | validos=1 | draws_upserted=1 | draws_novos=0 | prizes_upserted=7 | prizes_novos=0 | skip_vazio=0 | skip_invalido=0 | skip_close=2 | skip_complete=0 | CHECK_EXISTENCE=OFF | uf=BR lottery_key=NACIONAL | expected=1 complete=1 slotDocs=1 apiTargets=1
+2026-07-24T13:32:54.664323Z            [FETCH] NACIONAL 2026-07-24 per-lottery=8 -> merged_draws=3 close_hours=[02:00, 08:00, 10:00]
+2026-07-24T13:32:54.539024Z            [AUTO] tentando 2026-07-24 slot=10:00 (HARD) window=10:05-10:35 closes=10:00,10:01,10:02,10:09,10:10,10:11
+2026-07-24T13:32:54.537999Z            [STATE-SYNC] slots reconciliados pelo backend=2
+2026-07-24T13:32:54.537550Z            [STATE-SYNC] backend confirmou slot=08:00 presente -> DONE
+2026-07-24T13:32:54.537446Z            [STATE-SYNC] backend confirmou slot=02:00 presente -> DONE
+2026-07-24T13:32:53.956898Z            [CFG] PITACO_API_BASE efetivo => https://api.palpitacojb.com.br
+2026-07-24T13:32:53.567895Z            LOTTERY=NACIONAL | PERIOD=TODAY | DATE=2026-07-24
+2026-07-24T13:32:53.567879Z            [HEARTBEAT] OK LOTTERY=LOOK
+2026-07-24T13:32:53.560214Z            [AUTO] nada para fazer agora (2026-07-24)
+2026-07-24T13:32:53.559891Z            [AUDIT] OK (sem furos HARD acima de 20 min) softLate=0
+2026-07-24T13:32:53.558231Z            [STATE-SYNC] slots reconciliados pelo backend=2
+2026-07-24T13:32:53.557714Z            [STATE-SYNC] backend confirmou slot=09:00 presente -> DONE
+2026-07-24T13:32:53.557522Z            [STATE-SYNC] backend confirmou slot=07:00 presente -> DONE
+2026-07-24T13:32:49.950203Z            [CFG] PITACO_API_BASE efetivo => https://api.palpitacojb.com.br
+2026-07-24T13:32:49.564553Z            LOTTERY=LOOK | PERIOD=TODAY | DATE=2026-07-24
+2026-07-24T13:32:49.564413Z            [HEARTBEAT] OK LOTTERY=FEDERAL
+2026-07-24T13:32:49.553288Z            [AUTO] nada para fazer agora (2026-07-24)
+2026-07-24T13:32:49.552863Z            [AUDIT] OK (sem furos HARD acima de 20 min) softLate=0
+2026-07-24T13:32:49.551144Z            [AUTO] N/A slot=20:00 (FEDERAL_FORA_DA_GRADE) -> DONE
+2026-07-24T13:32:49.550942Z            [AUTO] N/A slot=19:00 (FEDERAL_FORA_DA_GRADE) -> DONE
+2026-07-24T13:32:49.550650Z            [AUTO] N/A slot=11:00 (FEDERAL_FORA_DA_GRADE) -> DONE
+2026-07-24T13:32:49.550112Z            [CAL] FEDERAL official: date=2026-07-24 dow=5 hard=[] | backend expectedHard=[] expectedSoft=[]
+2026-07-24T13:32:49.509865Z            [CFG] PITACO_API_BASE efetivo => https://api.palpitacojb.com.br
+2026-07-24T13:32:49.123Z               LOTTERY=FEDERAL | PERIOD=TODAY | DATE=2026-07-24
+2026-07-24T13:32:49.122889Z            [HEARTBEAT] OK LOTTERY=PT_RIO
+2026-07-24T13:32:49.105196Z            [AUDIT] OK (sem furos HARD acima de 20 min) softLate=0
+2026-07-24T13:32:49.103217Z            [AUTO] FS j? tem slot=09:00 COMPLETO (close=09:00) -> DONE
+2026-07-24T13:32:49.076697Z                at async main (/app/scripts/autoImportToday.js:1405:15)
+2026-07-24T13:32:49.076691Z                at runImport (/app/scripts/importKingApostas.js:1796:25)
+2026-07-24T13:32:49.076686Z                at loadTop3PublicApi (/app/engine/scoreEngineUnified.js:45:15)
+2026-07-24T13:32:49.076681Z                at require (node:internal/modules/helpers:147:16)
+2026-07-24T13:32:49.076675Z                at Module.require (node:internal/modules/cjs/loader:1527:12)
+2026-07-24T13:32:49.076670Z                at wrapModuleLoad (node:internal/modules/cjs/loader:254:19)
+2026-07-24T13:32:49.076664Z                at Function._load (node:internal/modules/cjs/loader:1216:25)
+2026-07-24T13:32:49.076659Z                at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1045:22)
+2026-07-24T13:32:49.076655Z                at defaultResolveImpl (node:internal/modules/cjs/loader:1040:19)
+2026-07-24T13:32:49.076649Z                at Function._resolveFilename (node:internal/modules/cjs/loader:1430:15)
+2026-07-24T13:32:49.076642Z            - /app/scripts/autoImportToday.js
+2026-07-24T13:32:49.076637Z            - /app/scripts/importKingApostas.js
+2026-07-24T13:32:49.076632Z            - /app/engine/top3PredictionService.js
+2026-07-24T13:32:49.076626Z            - /app/engine/scoreEngineUnified.js
+2026-07-24T13:32:49.076620Z            Require stack:
+2026-07-24T13:32:49.076605Z            [TOP3 AUTO] falhou: Error: Cannot find module '../../src/pages/Top3/top3.public-api.js'
+2026-07-24T13:32:48.635121Z            [TOP3-HISTORY] Incremental OK | PT_RIO | draws=1 | meses=2026-07
+2026-07-24T13:32:45.058825Z            [IMPORT] API draws=1 | match_close=1 | validos=1 | draws_upserted=0 | draws_novos=0 | prizes_upserted=0 | prizes_novos=0 | skip_vazio=0 | skip_invalido=0 | skip_close=0 | skip_complete=1 | CHECK_EXISTENCE=OFF | uf=RJ lottery_key=PT_RIO | expected=1 complete=1 slotDocs=1 apiTargets=1
+2026-07-24T13:32:43.903649Z            [FETCH] PT_RIO 2026-07-24 per-lottery=6 -> merged_draws=1 close_hours=[09:00]
+2026-07-24T13:32:43.765377Z            [AUTO] tentando 2026-07-24 slot=09:00 (HARD) window=09:05-09:35 closes=09:00,09:01,09:02,09:09,09:10,09:11
+2026-07-24T13:32:43.764508Z            [AUTO] CATCH-UP p?s-release 2026-07-24 slot=09:00 (HARD) releaseAt=09:29 window=09:05~09:35 (fora da janela)
+2026-07-24T13:32:43.763675Z            [AUTO] N/A slot=19:00 (NAO_APLICA) -> DONE
+2026-07-24T13:32:43.762997Z            [CAL] PT_RIO resolved: date=2026-07-24 dow=5 saturday19=0 federal20=0 HARD=[09:00,11:00,14:00,16:00,18:00,21:00] SOFT=[] OFF=[19:00]
+2026-07-24T13:32:43.760668Z            [CAL] FEDERAL dayStatus indispon?vel: date=2026-07-24; mantendo regra PT_RIO base
+2026-07-24T13:32:13.659575Z            [CFG] PITACO_API_BASE efetivo => https://api.palpitacojb.com.br
+2026-07-24T13:32:12.536813Z            LOTTERY=PT_RIO | PERIOD=TODAY | DATE=2026-07-24
+2026-07-24T13:32:12.536787Z            [HEARTBEAT] START local=10:32 date=2026-07-24 period=TODAY
+2026-07-24T12:42:32.855629Z  INFO
+2026-07-24T12:42:23.237753Z  INFO      Container called exit(0).
+2026-07-24T12:42:23.193894Z            [HEARTBEAT] FINAL=SUCCESS
+2026-07-24T12:42:23.193886Z            [HEARTBEAT] OK LOTTERY=NACIONAL
+2026-07-24T12:42:23.187016Z            [AUTO] nada para fazer agora (2026-07-24)
+2026-07-24T12:42:23.186561Z            [AUDIT] OK (sem furos HARD acima de 20 min) softLate=0
+2026-07-24T12:42:23.185049Z            [STATE-SYNC] slots reconciliados pelo backend=2
+2026-07-24T12:42:23.184480Z            [STATE-SYNC] backend confirmou slot=08:00 presente -> DONE
+2026-07-24T12:42:23.184296Z            [STATE-SYNC] backend confirmou slot=02:00 presente -> DONE
+2026-07-24T12:42:21.519260Z            [CFG] PITACO_API_BASE efetivo => https://api.palpitacojb.com.br
+2026-07-24T12:42:21.183602Z            LOTTERY=NACIONAL | PERIOD=TODAY | DATE=2026-07-24
+2026-07-24T12:42:21.183588Z            [HEARTBEAT] OK LOTTERY=LOOK
+2026-07-24T12:42:21.176450Z            [AUTO] nada para fazer agora (2026-07-24)
+2026-07-24T12:42:21.176217Z            [AUDIT] OK (sem furos HARD acima de 20 min) softLate=0
+2026-07-24T12:42:21.174271Z            [STATE-SYNC] slots reconciliados pelo backend=2
+2026-07-24T12:42:21.173571Z            [STATE-SYNC] backend confirmou slot=09:00 presente -> DONE
+2026-07-24T12:42:21.173147Z            [STATE-SYNC] backend confirmou slot=07:00 presente -> DONE
+2026-07-24T12:42:19.212001Z            [CFG] PITACO_API_BASE efetivo => https://api.palpitacojb.com.br
+2026-07-24T12:42:18.811614Z            LOTTERY=LOOK | PERIOD=TODAY | DATE=2026-07-24
+2026-07-24T12:42:18.811254Z            [HEARTBEAT] OK LOTTERY=FEDERAL
+2026-07-24T12:42:18.799974Z            [AUTO] nada para fazer agora (2026-07-24)
+2026-07-24T12:42:18.799584Z            [AUDIT] OK (sem furos HARD acima de 20 min) softLate=0
+2026-07-24T12:42:18.798066Z            [AUTO] N/A slot=20:00 (FEDERAL_FORA_DA_GRADE) -> DONE
+2026-07-24T12:42:18.797722Z            [AUTO] N/A slot=19:00 (FEDERAL_FORA_DA_GRADE) -> DONE
+2026-07-24T12:42:18.797436Z            [AUTO] N/A slot=11:00 (FEDERAL_FORA_DA_GRADE) -> DONE
+2026-07-24T12:42:18.796888Z            [CAL] FEDERAL official: date=2026-07-24 dow=5 hard=[] | backend expectedHard=[] expectedSoft=[]
+2026-07-24T12:42:18.768142Z            [CFG] PITACO_API_BASE efetivo => https://api.palpitacojb.com.br
+2026-07-24T12:42:18.365979Z            LOTTERY=FEDERAL | PERIOD=TODAY | DATE=2026-07-24
+2026-07-24T12:42:18.365856Z            [HEARTBEAT] OK LOTTERY=PT_RIO
+2026-07-24T12:42:18.358618Z            [AUTO] nada para fazer agora (2026-07-24)
+2026-07-24T12:42:18.358316Z            [AUDIT] OK (sem furos HARD acima de 20 min) softLate=0
+2026-07-24T12:42:18.356616Z            [AUTO] N/A slot=19:00 (NAO_APLICA) -> DONE
+2026-07-24T12:42:18.356374Z            [STATE-SYNC] slots reconciliados pelo backend=1
+2026-07-24T12:42:18.355360Z            [STATE-SYNC] backend confirmou slot=09:00 presente -> DONE
+2026-07-24T12:42:18.354825Z            [CAL] PT_RIO resolved: date=2026-07-24 dow=5 saturday19=0 federal20=0 HARD=[09:00,11:00,14:00,16:00,18:00,21:00] SOFT=[] OFF=[19:00]
+2026-07-24T12:42:18.352899Z            [CAL] FEDERAL schedule: date=2026-07-24 has20=0 expectedHard=[] expectedSoft=[]
+2026-07-24T12:42:15.825323Z            [CFG] PITACO_API_BASE efetivo => https://api.palpitacojb.com.br
+2026-07-24T12:42:14.881838Z            LOTTERY=PT_RIO | PERIOD=TODAY | DATE=2026-07-24
+2026-07-24T12:42:14.881806Z            [HEARTBEAT] START local=09:42 date=2026-07-24 period=TODAY
+2026-07-24T12:32:57.304164Z  INFO
+2026-07-24T12:32:52.955255Z  INFO      Container called exit(0).
+2026-07-24T12:32:52.925726Z            [HEARTBEAT] FINAL=SUCCESS
+2026-07-24T12:32:52.925718Z            [HEARTBEAT] OK LOTTERY=NACIONAL
+2026-07-24T12:32:52.919104Z            [AUTO] nada para fazer agora (2026-07-24)
+2026-07-24T12:32:52.918881Z            [AUDIT] OK (sem furos HARD acima de 20 min) softLate=0
+2026-07-24T12:32:52.917426Z            [STATE-SYNC] slots reconciliados pelo backend=2
+2026-07-24T12:32:52.916919Z            [STATE-SYNC] backend confirmou slot=08:00 presente -> DONE
+2026-07-24T12:32:52.916742Z            [STATE-SYNC] backend confirmou slot=02:00 presente -> DONE
+2026-07-24T12:32:52.257992Z            [CFG] PITACO_API_BASE efetivo => https://api.palpitacojb.com.br
+2026-07-24T12:32:51.909026Z            LOTTERY=NACIONAL | PERIOD=TODAY | DATE=2026-07-24
+2026-07-24T12:32:51.908942Z            [HEARTBEAT] OK LOTTERY=LOOK
+2026-07-24T12:32:51.896738Z            [AUDIT] OK (sem furos HARD acima de 20 min) softLate=0
+2026-07-24T12:32:51.895424Z            [AUTO] FS j? tem slot=09:00 COMPLETO (close=09:00) -> DONE
+2026-07-24T12:32:51.894507Z                at process.processTicksAndRejections (node:internal/process/task_queues:103:5)
+2026-07-24T12:32:51.894502Z                at runImport (/app/scripts/importKingApostas.js:1796:25)
+2026-07-24T12:32:51.894497Z                at loadTop3PublicApi (/app/engine/scoreEngineUnified.js:45:15)
+2026-07-24T12:32:51.894492Z                at require (node:internal/modules/helpers:147:16)
+2026-07-24T12:32:51.894487Z                at Module.require (node:internal/modules/cjs/loader:1527:12)
+2026-07-24T12:32:51.894482Z                at wrapModuleLoad (node:internal/modules/cjs/loader:254:19)
+2026-07-24T12:32:51.894476Z                at Function._load (node:internal/modules/cjs/loader:1216:25)
+2026-07-24T12:32:51.894470Z                at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1045:22)
+2026-07-24T12:32:51.894465Z                at defaultResolveImpl (node:internal/modules/cjs/loader:1040:19)
+2026-07-24T12:32:51.894460Z                at Function._resolveFilename (node:internal/modules/cjs/loader:1430:15)
+2026-07-24T12:32:51.894452Z            - /app/scripts/autoImportToday.js
+2026-07-24T12:32:51.894447Z            - /app/scripts/importKingApostas.js
+2026-07-24T12:32:51.894441Z            - /app/engine/top3PredictionService.js
+2026-07-24T12:32:51.894435Z            - /app/engine/scoreEngineUnified.js
+2026-07-24T12:32:51.894429Z            Require stack:
+2026-07-24T12:32:51.894415Z            [TOP3 AUTO] falhou: Error: Cannot find module '../../src/pages/Top3/top3.public-api.js'
+2026-07-24T12:32:51.668118Z            [IMPORT] API draws=2 | match_close=1 | validos=1 | draws_upserted=1 | draws_novos=0 | prizes_upserted=7 | prizes_novos=0 | skip_vazio=0 | skip_invalido=0 | skip_close=1 | skip_complete=0 | CHECK_EXISTENCE=OFF | uf=GO lottery_key=LOOK | expected=1 complete=1 slotDocs=1 apiTargets=1
+2026-07-24T12:32:50.973563Z            [FETCH] LOOK 2026-07-24 per-lottery=8 -> merged_draws=2 close_hours=[07:00, 09:00]
+2026-07-24T12:32:50.849888Z            [AUTO] tentando 2026-07-24 slot=09:00 (HARD) window=09:05-09:35 closes=09:00,09:01,09:02,09:09,09:10,09:11
+2026-07-24T12:32:50.849092Z            [STATE-SYNC] slots reconciliados pelo backend=1
+2026-07-24T12:32:50.848660Z            [STATE-SYNC] backend confirmou slot=07:00 presente -> DONE
+2026-07-24T12:32:50.010042Z            [CFG] PITACO_API_BASE efetivo => https://api.palpitacojb.com.br
+2026-07-24T12:32:49.618646Z            LOTTERY=LOOK | PERIOD=TODAY | DATE=2026-07-24
+2026-07-24T12:32:49.618597Z            [HEARTBEAT] OK LOTTERY=FEDERAL
+2026-07-24T12:32:49.598952Z            [AUTO] nada para fazer agora (2026-07-24)
+2026-07-24T12:32:49.598585Z            [AUDIT] OK (sem furos HARD acima de 20 min) softLate=0
+2026-07-24T12:32:49.597151Z            [AUTO] N/A slot=20:00 (FEDERAL_FORA_DA_GRADE) -> DONE
+2026-07-24T12:32:49.596912Z            [AUTO] N/A slot=19:00 (FEDERAL_FORA_DA_GRADE) -> DONE
+2026-07-24T12:32:49.596676Z            [AUTO] N/A slot=11:00 (FEDERAL_FORA_DA_GRADE) -> DONE
+
+===== CLOUD SCHEDULER LOGS =====
+TIMESTAMP                       SEVERITY  TEXT_PAYLOAD
+2026-07-24T13:42:11.556448081Z  INFO
+2026-07-24T13:42:10.926143177Z  INFO
+2026-07-24T13:32:11.430303713Z  INFO
+2026-07-24T13:32:11.421248685Z  INFO
+2026-07-24T12:42:09.942661346Z  INFO
+2026-07-24T12:42:09.445895019Z  INFO
+2026-07-24T12:32:11.061026099Z  INFO
+2026-07-24T12:32:11.043299408Z  INFO
+2026-07-24T11:42:09.220874627Z  INFO
+2026-07-24T11:42:09.119011335Z  INFO
+2026-07-24T11:32:10.669563765Z  INFO
+2026-07-24T11:32:10.056508262Z  INFO
+2026-07-24T10:42:08.183878933Z  INFO
+2026-07-24T10:42:07.601155248Z  INFO
+2026-07-24T10:32:07.817897917Z  INFO
+2026-07-24T10:32:07.620204Z     INFO

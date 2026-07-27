@@ -1,0 +1,4 @@
+LKN-63 revertido.
+
+Arquivo restaurado:
+src/pages/Dashboard/components/FiltersBar.jsx

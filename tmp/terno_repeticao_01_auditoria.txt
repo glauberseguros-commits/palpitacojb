@@ -1,0 +1,3298 @@
+
+========================================================================================================================
+ARQUIVO: .\src\pages\TernoGrupo\modules\ternoGrupo.generator.js
+========================================================================================================================
+
+>>> PADRÃO: GROUP_MIN (linha 11)
+00004: 
+00005: export const TERNO_GRUPO_MIN_QUANTITY = 1;
+00006: export const TERNO_GRUPO_MAX_QUANTITY = 2300;
+00007: 
+00008: export const TERNO_GRUPO_RANKING_VERSION =
+00009:   "TERNO_GRUPO_V3_HISTORICAL_COMBINATION";
+00010: 
+00011: const GROUP_MIN = 1;
+00012: const GROUP_MAX = 25;
+00013: const RECENT_WINDOW = 120;
+00014: 
+00015: function normalizeGrupo(value) {
+00016:   const grupo = Number(value);
+00017: 
+00018:   if (
+00019:     !Number.isInteger(grupo) ||
+00020:     grupo < GROUP_MIN ||
+00021:     grupo > GROUP_MAX
+00022:   ) {
+00023:     return null;
+00024:   }
+
+>>> PADRÃO: GROUP_MIN (linha 20)
+00013: const RECENT_WINDOW = 120;
+00014: 
+00015: function normalizeGrupo(value) {
+00016:   const grupo = Number(value);
+00017: 
+00018:   if (
+00019:     !Number.isInteger(grupo) ||
+00020:     grupo < GROUP_MIN ||
+00021:     grupo > GROUP_MAX
+00022:   ) {
+00023:     return null;
+00024:   }
+00025: 
+00026:   return grupo;
+00027: }
+00028: 
+00029: function normalizeHour(value) {
+00030:   const text = String(value ?? "")
+00031:     .trim()
+00032:     .toLowerCase();
+00033: 
+
+>>> PADRÃO: GROUP_MIN (linha 716)
+00709: 
+00710:   const normalization =
+00711:     buildNormalization(stats);
+00712: 
+00713:   const combinations = [];
+00714: 
+00715:   for (
+00716:     let first = GROUP_MIN;
+00717:     first <= GROUP_MAX - 2;
+00718:     first += 1
+00719:   ) {
+00720:     for (
+00721:       let second = first + 1;
+00722:       second <= GROUP_MAX - 1;
+00723:       second += 1
+00724:     ) {
+00725:       for (
+00726:         let third = second + 1;
+00727:         third <= GROUP_MAX;
+00728:         third += 1
+00729:       ) {
+
+>>> PADRÃO: GROUP_MAX (linha 12)
+00005: export const TERNO_GRUPO_MIN_QUANTITY = 1;
+00006: export const TERNO_GRUPO_MAX_QUANTITY = 2300;
+00007: 
+00008: export const TERNO_GRUPO_RANKING_VERSION =
+00009:   "TERNO_GRUPO_V3_HISTORICAL_COMBINATION";
+00010: 
+00011: const GROUP_MIN = 1;
+00012: const GROUP_MAX = 25;
+00013: const RECENT_WINDOW = 120;
+00014: 
+00015: function normalizeGrupo(value) {
+00016:   const grupo = Number(value);
+00017: 
+00018:   if (
+00019:     !Number.isInteger(grupo) ||
+00020:     grupo < GROUP_MIN ||
+00021:     grupo > GROUP_MAX
+00022:   ) {
+00023:     return null;
+00024:   }
+00025: 
+
+>>> PADRÃO: GROUP_MAX (linha 21)
+00014: 
+00015: function normalizeGrupo(value) {
+00016:   const grupo = Number(value);
+00017: 
+00018:   if (
+00019:     !Number.isInteger(grupo) ||
+00020:     grupo < GROUP_MIN ||
+00021:     grupo > GROUP_MAX
+00022:   ) {
+00023:     return null;
+00024:   }
+00025: 
+00026:   return grupo;
+00027: }
+00028: 
+00029: function normalizeHour(value) {
+00030:   const text = String(value ?? "")
+00031:     .trim()
+00032:     .toLowerCase();
+00033: 
+00034:   if (!text) return "";
+
+>>> PADRÃO: GROUP_MAX (linha 717)
+00710:   const normalization =
+00711:     buildNormalization(stats);
+00712: 
+00713:   const combinations = [];
+00714: 
+00715:   for (
+00716:     let first = GROUP_MIN;
+00717:     first <= GROUP_MAX - 2;
+00718:     first += 1
+00719:   ) {
+00720:     for (
+00721:       let second = first + 1;
+00722:       second <= GROUP_MAX - 1;
+00723:       second += 1
+00724:     ) {
+00725:       for (
+00726:         let third = second + 1;
+00727:         third <= GROUP_MAX;
+00728:         third += 1
+00729:       ) {
+00730:         const grupos = [
+
+>>> PADRÃO: GROUP_MAX (linha 722)
+00715:   for (
+00716:     let first = GROUP_MIN;
+00717:     first <= GROUP_MAX - 2;
+00718:     first += 1
+00719:   ) {
+00720:     for (
+00721:       let second = first + 1;
+00722:       second <= GROUP_MAX - 1;
+00723:       second += 1
+00724:     ) {
+00725:       for (
+00726:         let third = second + 1;
+00727:         third <= GROUP_MAX;
+00728:         third += 1
+00729:       ) {
+00730:         const grupos = [
+00731:           first,
+00732:           second,
+00733:           third,
+00734:         ];
+00735: 
+
+>>> PADRÃO: GROUP_MAX (linha 727)
+00720:     for (
+00721:       let second = first + 1;
+00722:       second <= GROUP_MAX - 1;
+00723:       second += 1
+00724:     ) {
+00725:       for (
+00726:         let third = second + 1;
+00727:         third <= GROUP_MAX;
+00728:         third += 1
+00729:       ) {
+00730:         const grupos = [
+00731:           first,
+00732:           second,
+00733:           third,
+00734:         ];
+00735: 
+00736:         const evidence =
+00737:           calculateCombinationEvidence({
+00738:             grupos,
+00739:             analyticsMap,
+00740:             stats,
+
+>>> PADRÃO: buildAllCombinations (linha 696)
+00689:         pairKeys.map((key) =>
+00690:           getMapValue(stats.pair, key)
+00691:         ),
+00692:     },
+00693:   };
+00694: }
+00695: 
+00696: function buildAllCombinations({
+00697:   analytics,
+00698:   historicalDraws,
+00699:   targetHour,
+00700: }) {
+00701:   const analyticsMap =
+00702:     buildAnalyticsMap(analytics);
+00703: 
+00704:   const stats = buildHistoricalStats({
+00705:     historicalDraws,
+00706:     targetHour:
+00707:       normalizeHour(targetHour),
+00708:   });
+00709: 
+
+>>> PADRÃO: buildAllCombinations (linha 819)
+00812:   seedGroups,
+00813:   historicalDraws,
+00814:   targetHour,
+00815: }) {
+00816:   const {
+00817:     combinations,
+00818:     stats,
+00819:   } = buildAllCombinations({
+00820:     analytics,
+00821:     historicalDraws,
+00822:     targetHour,
+00823:   });
+00824: 
+00825:   const ranked =
+00826:     applyRelativeStrength(
+00827:       combinations
+00828:     );
+00829: 
+00830:   ranked.sort((a, b) => {
+00831:     if (
+00832:       b.rawScore !== a.rawScore
+
+>>> PADRÃO: calculateCombinationEvidence (linha 496)
+00489:     targetHourTripleMax:
+00490:       getMapMaximum(
+00491:         stats.targetHourTriple
+00492:       ),
+00493:   };
+00494: }
+00495: 
+00496: function calculateCombinationEvidence({
+00497:   grupos,
+00498:   analyticsMap,
+00499:   stats,
+00500:   normalization,
+00501: }) {
+00502:   const [first, second, third] = grupos;
+00503: 
+00504:   const groupKeys = grupos.map(String);
+00505: 
+00506:   const pairKeys = [
+00507:     pairKey(first, second),
+00508:     pairKey(first, third),
+00509:     pairKey(second, third),
+
+>>> PADRÃO: calculateCombinationEvidence (linha 737)
+00730:         const grupos = [
+00731:           first,
+00732:           second,
+00733:           third,
+00734:         ];
+00735: 
+00736:         const evidence =
+00737:           calculateCombinationEvidence({
+00738:             grupos,
+00739:             analyticsMap,
+00740:             stats,
+00741:             normalization,
+00742:           });
+00743: 
+00744:         combinations.push({
+00745:           key: tripleKey(grupos),
+00746:           grupos,
+00747:           items: grupos.map((grupo) => ({
+00748:             grupo,
+00749:             analyticsScore:
+00750:               Number(
+
+>>> PADRÃO: extractTop5Groups (linha 2)
+00001: import {
+00002:   extractTop5Groups,
+00003: } from "../ternoGrupo.public-api";
+00004: 
+00005: export const TERNO_GRUPO_MIN_QUANTITY = 1;
+00006: export const TERNO_GRUPO_MAX_QUANTITY = 2300;
+00007: 
+00008: export const TERNO_GRUPO_RANKING_VERSION =
+00009:   "TERNO_GRUPO_V3_HISTORICAL_COMBINATION";
+00010: 
+00011: const GROUP_MIN = 1;
+00012: const GROUP_MAX = 25;
+00013: const RECENT_WINDOW = 120;
+00014: 
+00015: function normalizeGrupo(value) {
+
+>>> PADRÃO: extractTop5Groups (linha 176)
+00169:   return maximum;
+00170: }
+00171: 
+00172: function uniqueTop5Groups(draw) {
+00173:   const seen = new Set();
+00174:   const groups = [];
+00175: 
+00176:   for (const item of extractTop5Groups(draw)) {
+00177:     const grupo = normalizeGrupo(item?.grupo);
+00178: 
+00179:     if (
+00180:       grupo == null ||
+00181:       seen.has(grupo)
+00182:     ) {
+00183:       continue;
+00184:     }
+00185: 
+00186:     seen.add(grupo);
+00187:     groups.push(grupo);
+00188:   }
+00189: 
+
+>>> PADRÃO: buildHistoricalStats (linha 280)
+00273:           );
+00274:         }
+00275:       }
+00276:     }
+00277:   }
+00278: }
+00279: 
+00280: function buildHistoricalStats({
+00281:   historicalDraws,
+00282:   targetHour,
+00283: }) {
+00284:   const stats = createEmptyHistoricalStats();
+00285: 
+00286:   const draws = Array.isArray(historicalDraws)
+00287:     ? historicalDraws.filter(Boolean)
+00288:     : [];
+00289: 
+00290:   stats.drawCount = draws.length;
+00291: 
+00292:   const recentStart = Math.max(
+00293:     0,
+
+>>> PADRÃO: buildHistoricalStats (linha 704)
+00697:   analytics,
+00698:   historicalDraws,
+00699:   targetHour,
+00700: }) {
+00701:   const analyticsMap =
+00702:     buildAnalyticsMap(analytics);
+00703: 
+00704:   const stats = buildHistoricalStats({
+00705:     historicalDraws,
+00706:     targetHour:
+00707:       normalizeHour(targetHour),
+00708:   });
+00709: 
+00710:   const normalization =
+00711:     buildNormalization(stats);
+00712: 
+00713:   const combinations = [];
+00714: 
+00715:   for (
+00716:     let first = GROUP_MIN;
+00717:     first <= GROUP_MAX - 2;
+
+>>> PADRÃO: applyRelativeStrength (linha 770)
+00763: 
+00764:   return {
+00765:     combinations,
+00766:     stats,
+00767:   };
+00768: }
+00769: 
+00770: function applyRelativeStrength(
+00771:   combinations
+00772: ) {
+00773:   const scores = combinations
+00774:     .map((item) =>
+00775:       Number(item?.rawScore || 0)
+00776:     )
+00777:     .filter(Number.isFinite);
+00778: 
+00779:   const minimum = scores.length
+00780:     ? Math.min(...scores)
+00781:     : 0;
+00782: 
+00783:   const maximum = scores.length
+
+>>> PADRÃO: applyRelativeStrength (linha 826)
+00819:   } = buildAllCombinations({
+00820:     analytics,
+00821:     historicalDraws,
+00822:     targetHour,
+00823:   });
+00824: 
+00825:   const ranked =
+00826:     applyRelativeStrength(
+00827:       combinations
+00828:     );
+00829: 
+00830:   ranked.sort((a, b) => {
+00831:     if (
+00832:       b.rawScore !== a.rawScore
+00833:     ) {
+00834:       return (
+00835:         b.rawScore - a.rawScore
+00836:       );
+00837:     }
+00838: 
+00839:     const bTriple =
+
+>>> PADRÃO: buildAllTernosGrupo (linha 810)
+00803: 
+00804:       rawEvidencePct:
+00805:         clamp01(item.rawScore) * 100,
+00806:     };
+00807:   });
+00808: }
+00809: 
+00810: export function buildAllTernosGrupo({
+00811:   analytics,
+00812:   seedGroups,
+00813:   historicalDraws,
+00814:   targetHour,
+00815: }) {
+00816:   const {
+00817:     combinations,
+00818:     stats,
+00819:   } = buildAllCombinations({
+00820:     analytics,
+00821:     historicalDraws,
+00822:     targetHour,
+00823:   });
+
+>>> PADRÃO: validationRule (linha 870)
+00863: 
+00864:       engineVersion:
+00865:         TERNO_GRUPO_RANKING_VERSION,
+00866: 
+00867:       scoreType:
+00868:         "RELATIVE_STRENGTH_INDEX",
+00869: 
+00870:       validationRule:
+00871:         "3_GROUPS_IN_TOP5",
+00872: 
+00873:       orderMatters: false,
+00874: 
+00875:       historicalMeta: {
+00876:         drawCount:
+00877:           stats.drawCount,
+00878: 
+00879:         usableDrawCount:
+00880:           stats.usableDrawCount,
+00881: 
+00882:         targetHourDrawCount:
+00883:           stats.targetHourDrawCount,
+
+>>> PADRÃO: orderMatters (linha 873)
+00866: 
+00867:       scoreType:
+00868:         "RELATIVE_STRENGTH_INDEX",
+00869: 
+00870:       validationRule:
+00871:         "3_GROUPS_IN_TOP5",
+00872: 
+00873:       orderMatters: false,
+00874: 
+00875:       historicalMeta: {
+00876:         drawCount:
+00877:           stats.drawCount,
+00878: 
+00879:         usableDrawCount:
+00880:           stats.usableDrawCount,
+00881: 
+00882:         targetHourDrawCount:
+00883:           stats.targetHourDrawCount,
+00884: 
+00885:         recentWindow:
+00886:           RECENT_WINDOW,
+
+>>> PADRÃO: grupos (linha 497)
+00490:       getMapMaximum(
+00491:         stats.targetHourTriple
+00492:       ),
+00493:   };
+00494: }
+00495: 
+00496: function calculateCombinationEvidence({
+00497:   grupos,
+00498:   analyticsMap,
+00499:   stats,
+00500:   normalization,
+00501: }) {
+00502:   const [first, second, third] = grupos;
+00503: 
+00504:   const groupKeys = grupos.map(String);
+00505: 
+00506:   const pairKeys = [
+00507:     pairKey(first, second),
+00508:     pairKey(first, third),
+00509:     pairKey(second, third),
+00510:   ];
+
+>>> PADRÃO: grupos (linha 502)
+00495: 
+00496: function calculateCombinationEvidence({
+00497:   grupos,
+00498:   analyticsMap,
+00499:   stats,
+00500:   normalization,
+00501: }) {
+00502:   const [first, second, third] = grupos;
+00503: 
+00504:   const groupKeys = grupos.map(String);
+00505: 
+00506:   const pairKeys = [
+00507:     pairKey(first, second),
+00508:     pairKey(first, third),
+00509:     pairKey(second, third),
+00510:   ];
+00511: 
+00512:   const combinationKey =
+00513:     tripleKey(grupos);
+00514: 
+00515:   const individualHistorical =
+
+>>> PADRÃO: grupos (linha 504)
+00497:   grupos,
+00498:   analyticsMap,
+00499:   stats,
+00500:   normalization,
+00501: }) {
+00502:   const [first, second, third] = grupos;
+00503: 
+00504:   const groupKeys = grupos.map(String);
+00505: 
+00506:   const pairKeys = [
+00507:     pairKey(first, second),
+00508:     pairKey(first, third),
+00509:     pairKey(second, third),
+00510:   ];
+00511: 
+00512:   const combinationKey =
+00513:     tripleKey(grupos);
+00514: 
+00515:   const individualHistorical =
+00516:     groupKeys.map((key) =>
+00517:       normalizedMapValue(
+
+>>> PADRÃO: grupos (linha 513)
+00506:   const pairKeys = [
+00507:     pairKey(first, second),
+00508:     pairKey(first, third),
+00509:     pairKey(second, third),
+00510:   ];
+00511: 
+00512:   const combinationKey =
+00513:     tripleKey(grupos);
+00514: 
+00515:   const individualHistorical =
+00516:     groupKeys.map((key) =>
+00517:       normalizedMapValue(
+00518:         stats.individual,
+00519:         key,
+00520:         normalization.individualMax
+00521:       )
+00522:     );
+00523: 
+00524:   const individualRecent =
+00525:     groupKeys.map((key) =>
+00526:       normalizedMapValue(
+
+>>> PADRÃO: grupos (linha 543)
+00536:         stats.targetHourIndividual,
+00537:         key,
+00538:         normalization.targetHourIndividualMax
+00539:       )
+00540:     );
+00541: 
+00542:   const analyticsSignals =
+00543:     grupos.map((grupo) =>
+00544:       Number(analyticsMap.get(grupo) || 0)
+00545:     );
+00546: 
+00547:   const pairHistorical =
+00548:     pairKeys.map((key) =>
+00549:       normalizedMapValue(
+00550:         stats.pair,
+00551:         key,
+00552:         normalization.pairMax
+00553:       )
+00554:     );
+00555: 
+00556:   const pairRecent =
+
+>>> PADRÃO: grupos (linha 730)
+00723:       second += 1
+00724:     ) {
+00725:       for (
+00726:         let third = second + 1;
+00727:         third <= GROUP_MAX;
+00728:         third += 1
+00729:       ) {
+00730:         const grupos = [
+00731:           first,
+00732:           second,
+00733:           third,
+00734:         ];
+00735: 
+00736:         const evidence =
+00737:           calculateCombinationEvidence({
+00738:             grupos,
+00739:             analyticsMap,
+00740:             stats,
+00741:             normalization,
+00742:           });
+00743: 
+
+>>> PADRÃO: grupos (linha 738)
+00731:           first,
+00732:           second,
+00733:           third,
+00734:         ];
+00735: 
+00736:         const evidence =
+00737:           calculateCombinationEvidence({
+00738:             grupos,
+00739:             analyticsMap,
+00740:             stats,
+00741:             normalization,
+00742:           });
+00743: 
+00744:         combinations.push({
+00745:           key: tripleKey(grupos),
+00746:           grupos,
+00747:           items: grupos.map((grupo) => ({
+00748:             grupo,
+00749:             analyticsScore:
+00750:               Number(
+00751:                 analyticsMap.get(grupo) || 0
+
+>>> PADRÃO: grupos (linha 745)
+00738:             grupos,
+00739:             analyticsMap,
+00740:             stats,
+00741:             normalization,
+00742:           });
+00743: 
+00744:         combinations.push({
+00745:           key: tripleKey(grupos),
+00746:           grupos,
+00747:           items: grupos.map((grupo) => ({
+00748:             grupo,
+00749:             analyticsScore:
+00750:               Number(
+00751:                 analyticsMap.get(grupo) || 0
+00752:               ),
+00753:           })),
+00754:           rawScore: evidence.rawScore,
+00755:           components:
+00756:             evidence.components,
+00757:           occurrences:
+00758:             evidence.occurrences,
+
+>>> PADRÃO: grupos (linha 746)
+00739:             analyticsMap,
+00740:             stats,
+00741:             normalization,
+00742:           });
+00743: 
+00744:         combinations.push({
+00745:           key: tripleKey(grupos),
+00746:           grupos,
+00747:           items: grupos.map((grupo) => ({
+00748:             grupo,
+00749:             analyticsScore:
+00750:               Number(
+00751:                 analyticsMap.get(grupo) || 0
+00752:               ),
+00753:           })),
+00754:           rawScore: evidence.rawScore,
+00755:           components:
+00756:             evidence.components,
+00757:           occurrences:
+00758:             evidence.occurrences,
+00759:         });
+
+>>> PADRÃO: grupos (linha 747)
+00740:             stats,
+00741:             normalization,
+00742:           });
+00743: 
+00744:         combinations.push({
+00745:           key: tripleKey(grupos),
+00746:           grupos,
+00747:           items: grupos.map((grupo) => ({
+00748:             grupo,
+00749:             analyticsScore:
+00750:               Number(
+00751:                 analyticsMap.get(grupo) || 0
+00752:               ),
+00753:           })),
+00754:           rawScore: evidence.rawScore,
+00755:           components:
+00756:             evidence.components,
+00757:           occurrences:
+00758:             evidence.occurrences,
+00759:         });
+00760:       }
+
+>>> PADRÃO: top5 (linha 2)
+00001: import {
+00002:   extractTop5Groups,
+00003: } from "../ternoGrupo.public-api";
+00004: 
+00005: export const TERNO_GRUPO_MIN_QUANTITY = 1;
+00006: export const TERNO_GRUPO_MAX_QUANTITY = 2300;
+00007: 
+00008: export const TERNO_GRUPO_RANKING_VERSION =
+00009:   "TERNO_GRUPO_V3_HISTORICAL_COMBINATION";
+00010: 
+00011: const GROUP_MIN = 1;
+00012: const GROUP_MAX = 25;
+00013: const RECENT_WINDOW = 120;
+00014: 
+00015: function normalizeGrupo(value) {
+
+>>> PADRÃO: top5 (linha 172)
+00165:       maximum = number;
+00166:     }
+00167:   }
+00168: 
+00169:   return maximum;
+00170: }
+00171: 
+00172: function uniqueTop5Groups(draw) {
+00173:   const seen = new Set();
+00174:   const groups = [];
+00175: 
+00176:   for (const item of extractTop5Groups(draw)) {
+00177:     const grupo = normalizeGrupo(item?.grupo);
+00178: 
+00179:     if (
+00180:       grupo == null ||
+00181:       seen.has(grupo)
+00182:     ) {
+00183:       continue;
+00184:     }
+00185: 
+
+>>> PADRÃO: top5 (linha 176)
+00169:   return maximum;
+00170: }
+00171: 
+00172: function uniqueTop5Groups(draw) {
+00173:   const seen = new Set();
+00174:   const groups = [];
+00175: 
+00176:   for (const item of extractTop5Groups(draw)) {
+00177:     const grupo = normalizeGrupo(item?.grupo);
+00178: 
+00179:     if (
+00180:       grupo == null ||
+00181:       seen.has(grupo)
+00182:     ) {
+00183:       continue;
+00184:     }
+00185: 
+00186:     seen.add(grupo);
+00187:     groups.push(grupo);
+00188:   }
+00189: 
+
+>>> PADRÃO: top5 (linha 298)
+00291: 
+00292:   const recentStart = Math.max(
+00293:     0,
+00294:     draws.length - RECENT_WINDOW
+00295:   );
+00296: 
+00297:   draws.forEach((draw, index) => {
+00298:     const groups = uniqueTop5Groups(draw);
+00299: 
+00300:     if (groups.length < 3) {
+00301:       return;
+00302:     }
+00303: 
+00304:     stats.usableDrawCount += 1;
+00305: 
+00306:     registerGroups({
+00307:       groups,
+00308:       individualMap: stats.individual,
+00309:       pairMap: stats.pair,
+00310:       tripleMap: stats.triple,
+00311:     });
+
+>>> PADRÃO: top5 (linha 871)
+00864:       engineVersion:
+00865:         TERNO_GRUPO_RANKING_VERSION,
+00866: 
+00867:       scoreType:
+00868:         "RELATIVE_STRENGTH_INDEX",
+00869: 
+00870:       validationRule:
+00871:         "3_GROUPS_IN_TOP5",
+00872: 
+00873:       orderMatters: false,
+00874: 
+00875:       historicalMeta: {
+00876:         drawCount:
+00877:           stats.drawCount,
+00878: 
+00879:         usableDrawCount:
+00880:           stats.usableDrawCount,
+00881: 
+00882:         targetHourDrawCount:
+00883:           stats.targetHourDrawCount,
+00884: 
+
+>>> PADRÃO: pair (linha 133)
+00126:       return normalizeProbability(number);
+00127:     }
+00128:   }
+00129: 
+00130:   return 0;
+00131: }
+00132: 
+00133: function pairKey(first, second) {
+00134:   return [first, second]
+00135:     .sort((a, b) => a - b)
+00136:     .join("-");
+00137: }
+00138: 
+00139: function tripleKey(values) {
+00140:   return [...values]
+00141:     .sort((a, b) => a - b)
+00142:     .join("-");
+00143: }
+00144: 
+00145: function incrementMap(map, key, amount = 1) {
+00146:   if (!key) return;
+
+>>> PADRÃO: pair (linha 200)
+00193: function createEmptyHistoricalStats() {
+00194:   return {
+00195:     drawCount: 0,
+00196:     usableDrawCount: 0,
+00197:     targetHourDrawCount: 0,
+00198: 
+00199:     individual: new Map(),
+00200:     pair: new Map(),
+00201:     triple: new Map(),
+00202: 
+00203:     recentIndividual: new Map(),
+00204:     recentPair: new Map(),
+00205:     recentTriple: new Map(),
+00206: 
+00207:     targetHourIndividual: new Map(),
+00208:     targetHourPair: new Map(),
+00209:     targetHourTriple: new Map(),
+00210:   };
+00211: }
+00212: 
+00213: function registerGroups({
+
+>>> PADRÃO: pair (linha 204)
+00197:     targetHourDrawCount: 0,
+00198: 
+00199:     individual: new Map(),
+00200:     pair: new Map(),
+00201:     triple: new Map(),
+00202: 
+00203:     recentIndividual: new Map(),
+00204:     recentPair: new Map(),
+00205:     recentTriple: new Map(),
+00206: 
+00207:     targetHourIndividual: new Map(),
+00208:     targetHourPair: new Map(),
+00209:     targetHourTriple: new Map(),
+00210:   };
+00211: }
+00212: 
+00213: function registerGroups({
+00214:   groups,
+00215:   individualMap,
+00216:   pairMap,
+00217:   tripleMap,
+
+>>> PADRÃO: pair (linha 208)
+00201:     triple: new Map(),
+00202: 
+00203:     recentIndividual: new Map(),
+00204:     recentPair: new Map(),
+00205:     recentTriple: new Map(),
+00206: 
+00207:     targetHourIndividual: new Map(),
+00208:     targetHourPair: new Map(),
+00209:     targetHourTriple: new Map(),
+00210:   };
+00211: }
+00212: 
+00213: function registerGroups({
+00214:   groups,
+00215:   individualMap,
+00216:   pairMap,
+00217:   tripleMap,
+00218:   weight = 1,
+00219: }) {
+00220:   for (const grupo of groups) {
+00221:     incrementMap(
+
+>>> PADRÃO: pair (linha 216)
+00209:     targetHourTriple: new Map(),
+00210:   };
+00211: }
+00212: 
+00213: function registerGroups({
+00214:   groups,
+00215:   individualMap,
+00216:   pairMap,
+00217:   tripleMap,
+00218:   weight = 1,
+00219: }) {
+00220:   for (const grupo of groups) {
+00221:     incrementMap(
+00222:       individualMap,
+00223:       String(grupo),
+00224:       weight
+00225:     );
+00226:   }
+00227: 
+00228:   for (
+00229:     let first = 0;
+
+>>> PADRÃO: pair (linha 239)
+00232:   ) {
+00233:     for (
+00234:       let second = first + 1;
+00235:       second < groups.length;
+00236:       second += 1
+00237:     ) {
+00238:       incrementMap(
+00239:         pairMap,
+00240:         pairKey(
+00241:           groups[first],
+00242:           groups[second]
+00243:         ),
+00244:         weight
+00245:       );
+00246:     }
+00247:   }
+00248: 
+00249:   if (groups.length >= 3) {
+00250:     for (
+00251:       let first = 0;
+00252:       first < groups.length - 2;
+
+>>> PADRÃO: pair (linha 240)
+00233:     for (
+00234:       let second = first + 1;
+00235:       second < groups.length;
+00236:       second += 1
+00237:     ) {
+00238:       incrementMap(
+00239:         pairMap,
+00240:         pairKey(
+00241:           groups[first],
+00242:           groups[second]
+00243:         ),
+00244:         weight
+00245:       );
+00246:     }
+00247:   }
+00248: 
+00249:   if (groups.length >= 3) {
+00250:     for (
+00251:       let first = 0;
+00252:       first < groups.length - 2;
+00253:       first += 1
+
+>>> PADRÃO: pair (linha 309)
+00302:     }
+00303: 
+00304:     stats.usableDrawCount += 1;
+00305: 
+00306:     registerGroups({
+00307:       groups,
+00308:       individualMap: stats.individual,
+00309:       pairMap: stats.pair,
+00310:       tripleMap: stats.triple,
+00311:     });
+00312: 
+00313:     if (index >= recentStart) {
+00314:       const recentPosition =
+00315:         index - recentStart + 1;
+00316: 
+00317:       const recentLength =
+00318:         draws.length - recentStart;
+00319: 
+00320:       const recencyWeight =
+00321:         recentLength > 1
+00322:           ? 0.65 +
+
+>>> PADRÃO: pair (linha 332)
+00325:                 (recentLength - 1))
+00326:           : 1;
+00327: 
+00328:       registerGroups({
+00329:         groups,
+00330:         individualMap:
+00331:           stats.recentIndividual,
+00332:         pairMap: stats.recentPair,
+00333:         tripleMap: stats.recentTriple,
+00334:         weight: recencyWeight,
+00335:       });
+00336:     }
+00337: 
+00338:     const drawHour = extractDrawHour(draw);
+00339: 
+00340:     if (
+00341:       targetHour &&
+00342:       drawHour === targetHour
+00343:     ) {
+00344:       stats.targetHourDrawCount += 1;
+00345: 
+
+>>> PADRÃO: pair (linha 350)
+00343:     ) {
+00344:       stats.targetHourDrawCount += 1;
+00345: 
+00346:       registerGroups({
+00347:         groups,
+00348:         individualMap:
+00349:           stats.targetHourIndividual,
+00350:         pairMap: stats.targetHourPair,
+00351:         tripleMap:
+00352:           stats.targetHourTriple,
+00353:       });
+00354:     }
+00355:   });
+00356: 
+00357:   return stats;
+00358: }
+00359: 
+00360: function buildAnalyticsMap(analytics) {
+00361:   const map = new Map();
+00362: 
+00363:   const source = Array.isArray(
+
+>>> PADRÃO: pair (linha 460)
+00453: }
+00454: 
+00455: function buildNormalization(stats) {
+00456:   return {
+00457:     individualMax:
+00458:       getMapMaximum(stats.individual),
+00459: 
+00460:     pairMax:
+00461:       getMapMaximum(stats.pair),
+00462: 
+00463:     tripleMax:
+00464:       getMapMaximum(stats.triple),
+00465: 
+00466:     recentIndividualMax:
+00467:       getMapMaximum(
+00468:         stats.recentIndividual
+00469:       ),
+00470: 
+00471:     recentPairMax:
+00472:       getMapMaximum(stats.recentPair),
+00473: 
+
+>>> PADRÃO: pair (linha 461)
+00454: 
+00455: function buildNormalization(stats) {
+00456:   return {
+00457:     individualMax:
+00458:       getMapMaximum(stats.individual),
+00459: 
+00460:     pairMax:
+00461:       getMapMaximum(stats.pair),
+00462: 
+00463:     tripleMax:
+00464:       getMapMaximum(stats.triple),
+00465: 
+00466:     recentIndividualMax:
+00467:       getMapMaximum(
+00468:         stats.recentIndividual
+00469:       ),
+00470: 
+00471:     recentPairMax:
+00472:       getMapMaximum(stats.recentPair),
+00473: 
+00474:     recentTripleMax:
+
+>>> PADRÃO: pair (linha 471)
+00464:       getMapMaximum(stats.triple),
+00465: 
+00466:     recentIndividualMax:
+00467:       getMapMaximum(
+00468:         stats.recentIndividual
+00469:       ),
+00470: 
+00471:     recentPairMax:
+00472:       getMapMaximum(stats.recentPair),
+00473: 
+00474:     recentTripleMax:
+00475:       getMapMaximum(
+00476:         stats.recentTriple
+00477:       ),
+00478: 
+00479:     targetHourIndividualMax:
+00480:       getMapMaximum(
+00481:         stats.targetHourIndividual
+00482:       ),
+00483: 
+00484:     targetHourPairMax:
+
+>>> PADRÃO: pair (linha 472)
+00465: 
+00466:     recentIndividualMax:
+00467:       getMapMaximum(
+00468:         stats.recentIndividual
+00469:       ),
+00470: 
+00471:     recentPairMax:
+00472:       getMapMaximum(stats.recentPair),
+00473: 
+00474:     recentTripleMax:
+00475:       getMapMaximum(
+00476:         stats.recentTriple
+00477:       ),
+00478: 
+00479:     targetHourIndividualMax:
+00480:       getMapMaximum(
+00481:         stats.targetHourIndividual
+00482:       ),
+00483: 
+00484:     targetHourPairMax:
+00485:       getMapMaximum(
+
+>>> PADRÃO: pair (linha 484)
+00477:       ),
+00478: 
+00479:     targetHourIndividualMax:
+00480:       getMapMaximum(
+00481:         stats.targetHourIndividual
+00482:       ),
+00483: 
+00484:     targetHourPairMax:
+00485:       getMapMaximum(
+00486:         stats.targetHourPair
+00487:       ),
+00488: 
+00489:     targetHourTripleMax:
+00490:       getMapMaximum(
+00491:         stats.targetHourTriple
+00492:       ),
+00493:   };
+00494: }
+00495: 
+00496: function calculateCombinationEvidence({
+00497:   grupos,
+
+>>> PADRÃO: pair (linha 486)
+00479:     targetHourIndividualMax:
+00480:       getMapMaximum(
+00481:         stats.targetHourIndividual
+00482:       ),
+00483: 
+00484:     targetHourPairMax:
+00485:       getMapMaximum(
+00486:         stats.targetHourPair
+00487:       ),
+00488: 
+00489:     targetHourTripleMax:
+00490:       getMapMaximum(
+00491:         stats.targetHourTriple
+00492:       ),
+00493:   };
+00494: }
+00495: 
+00496: function calculateCombinationEvidence({
+00497:   grupos,
+00498:   analyticsMap,
+00499:   stats,
+
+>>> PADRÃO: pair (linha 506)
+00499:   stats,
+00500:   normalization,
+00501: }) {
+00502:   const [first, second, third] = grupos;
+00503: 
+00504:   const groupKeys = grupos.map(String);
+00505: 
+00506:   const pairKeys = [
+00507:     pairKey(first, second),
+00508:     pairKey(first, third),
+00509:     pairKey(second, third),
+00510:   ];
+00511: 
+00512:   const combinationKey =
+00513:     tripleKey(grupos);
+00514: 
+00515:   const individualHistorical =
+00516:     groupKeys.map((key) =>
+00517:       normalizedMapValue(
+00518:         stats.individual,
+00519:         key,
+
+>>> PADRÃO: pair (linha 507)
+00500:   normalization,
+00501: }) {
+00502:   const [first, second, third] = grupos;
+00503: 
+00504:   const groupKeys = grupos.map(String);
+00505: 
+00506:   const pairKeys = [
+00507:     pairKey(first, second),
+00508:     pairKey(first, third),
+00509:     pairKey(second, third),
+00510:   ];
+00511: 
+00512:   const combinationKey =
+00513:     tripleKey(grupos);
+00514: 
+00515:   const individualHistorical =
+00516:     groupKeys.map((key) =>
+00517:       normalizedMapValue(
+00518:         stats.individual,
+00519:         key,
+00520:         normalization.individualMax
+
+>>> PADRÃO: pair (linha 508)
+00501: }) {
+00502:   const [first, second, third] = grupos;
+00503: 
+00504:   const groupKeys = grupos.map(String);
+00505: 
+00506:   const pairKeys = [
+00507:     pairKey(first, second),
+00508:     pairKey(first, third),
+00509:     pairKey(second, third),
+00510:   ];
+00511: 
+00512:   const combinationKey =
+00513:     tripleKey(grupos);
+00514: 
+00515:   const individualHistorical =
+00516:     groupKeys.map((key) =>
+00517:       normalizedMapValue(
+00518:         stats.individual,
+00519:         key,
+00520:         normalization.individualMax
+00521:       )
+
+>>> PADRÃO: pair (linha 509)
+00502:   const [first, second, third] = grupos;
+00503: 
+00504:   const groupKeys = grupos.map(String);
+00505: 
+00506:   const pairKeys = [
+00507:     pairKey(first, second),
+00508:     pairKey(first, third),
+00509:     pairKey(second, third),
+00510:   ];
+00511: 
+00512:   const combinationKey =
+00513:     tripleKey(grupos);
+00514: 
+00515:   const individualHistorical =
+00516:     groupKeys.map((key) =>
+00517:       normalizedMapValue(
+00518:         stats.individual,
+00519:         key,
+00520:         normalization.individualMax
+00521:       )
+00522:     );
+
+>>> PADRÃO: pair (linha 547)
+00540:     );
+00541: 
+00542:   const analyticsSignals =
+00543:     grupos.map((grupo) =>
+00544:       Number(analyticsMap.get(grupo) || 0)
+00545:     );
+00546: 
+00547:   const pairHistorical =
+00548:     pairKeys.map((key) =>
+00549:       normalizedMapValue(
+00550:         stats.pair,
+00551:         key,
+00552:         normalization.pairMax
+00553:       )
+00554:     );
+00555: 
+00556:   const pairRecent =
+00557:     pairKeys.map((key) =>
+00558:       normalizedMapValue(
+00559:         stats.recentPair,
+00560:         key,
+
+>>> PADRÃO: pair (linha 548)
+00541: 
+00542:   const analyticsSignals =
+00543:     grupos.map((grupo) =>
+00544:       Number(analyticsMap.get(grupo) || 0)
+00545:     );
+00546: 
+00547:   const pairHistorical =
+00548:     pairKeys.map((key) =>
+00549:       normalizedMapValue(
+00550:         stats.pair,
+00551:         key,
+00552:         normalization.pairMax
+00553:       )
+00554:     );
+00555: 
+00556:   const pairRecent =
+00557:     pairKeys.map((key) =>
+00558:       normalizedMapValue(
+00559:         stats.recentPair,
+00560:         key,
+00561:         normalization.recentPairMax
+
+>>> PADRÃO: pair (linha 550)
+00543:     grupos.map((grupo) =>
+00544:       Number(analyticsMap.get(grupo) || 0)
+00545:     );
+00546: 
+00547:   const pairHistorical =
+00548:     pairKeys.map((key) =>
+00549:       normalizedMapValue(
+00550:         stats.pair,
+00551:         key,
+00552:         normalization.pairMax
+00553:       )
+00554:     );
+00555: 
+00556:   const pairRecent =
+00557:     pairKeys.map((key) =>
+00558:       normalizedMapValue(
+00559:         stats.recentPair,
+00560:         key,
+00561:         normalization.recentPairMax
+00562:       )
+00563:     );
+
+>>> PADRÃO: pair (linha 552)
+00545:     );
+00546: 
+00547:   const pairHistorical =
+00548:     pairKeys.map((key) =>
+00549:       normalizedMapValue(
+00550:         stats.pair,
+00551:         key,
+00552:         normalization.pairMax
+00553:       )
+00554:     );
+00555: 
+00556:   const pairRecent =
+00557:     pairKeys.map((key) =>
+00558:       normalizedMapValue(
+00559:         stats.recentPair,
+00560:         key,
+00561:         normalization.recentPairMax
+00562:       )
+00563:     );
+00564: 
+00565:   const pairTargetHour =
+
+>>> PADRÃO: pair (linha 556)
+00549:       normalizedMapValue(
+00550:         stats.pair,
+00551:         key,
+00552:         normalization.pairMax
+00553:       )
+00554:     );
+00555: 
+00556:   const pairRecent =
+00557:     pairKeys.map((key) =>
+00558:       normalizedMapValue(
+00559:         stats.recentPair,
+00560:         key,
+00561:         normalization.recentPairMax
+00562:       )
+00563:     );
+00564: 
+00565:   const pairTargetHour =
+00566:     pairKeys.map((key) =>
+00567:       normalizedMapValue(
+00568:         stats.targetHourPair,
+00569:         key,
+
+>>> PADRÃO: pair (linha 557)
+00550:         stats.pair,
+00551:         key,
+00552:         normalization.pairMax
+00553:       )
+00554:     );
+00555: 
+00556:   const pairRecent =
+00557:     pairKeys.map((key) =>
+00558:       normalizedMapValue(
+00559:         stats.recentPair,
+00560:         key,
+00561:         normalization.recentPairMax
+00562:       )
+00563:     );
+00564: 
+00565:   const pairTargetHour =
+00566:     pairKeys.map((key) =>
+00567:       normalizedMapValue(
+00568:         stats.targetHourPair,
+00569:         key,
+00570:         normalization.targetHourPairMax
+
+>>> PADRÃO: pair (linha 559)
+00552:         normalization.pairMax
+00553:       )
+00554:     );
+00555: 
+00556:   const pairRecent =
+00557:     pairKeys.map((key) =>
+00558:       normalizedMapValue(
+00559:         stats.recentPair,
+00560:         key,
+00561:         normalization.recentPairMax
+00562:       )
+00563:     );
+00564: 
+00565:   const pairTargetHour =
+00566:     pairKeys.map((key) =>
+00567:       normalizedMapValue(
+00568:         stats.targetHourPair,
+00569:         key,
+00570:         normalization.targetHourPairMax
+00571:       )
+00572:     );
+
+>>> PADRÃO: pair (linha 561)
+00554:     );
+00555: 
+00556:   const pairRecent =
+00557:     pairKeys.map((key) =>
+00558:       normalizedMapValue(
+00559:         stats.recentPair,
+00560:         key,
+00561:         normalization.recentPairMax
+00562:       )
+00563:     );
+00564: 
+00565:   const pairTargetHour =
+00566:     pairKeys.map((key) =>
+00567:       normalizedMapValue(
+00568:         stats.targetHourPair,
+00569:         key,
+00570:         normalization.targetHourPairMax
+00571:       )
+00572:     );
+00573: 
+00574:   const tripleHistorical =
+
+>>> PADRÃO: pair (linha 565)
+00558:       normalizedMapValue(
+00559:         stats.recentPair,
+00560:         key,
+00561:         normalization.recentPairMax
+00562:       )
+00563:     );
+00564: 
+00565:   const pairTargetHour =
+00566:     pairKeys.map((key) =>
+00567:       normalizedMapValue(
+00568:         stats.targetHourPair,
+00569:         key,
+00570:         normalization.targetHourPairMax
+00571:       )
+00572:     );
+00573: 
+00574:   const tripleHistorical =
+00575:     normalizedMapValue(
+00576:       stats.triple,
+00577:       combinationKey,
+00578:       normalization.tripleMax
+
+>>> PADRÃO: pair (linha 566)
+00559:         stats.recentPair,
+00560:         key,
+00561:         normalization.recentPairMax
+00562:       )
+00563:     );
+00564: 
+00565:   const pairTargetHour =
+00566:     pairKeys.map((key) =>
+00567:       normalizedMapValue(
+00568:         stats.targetHourPair,
+00569:         key,
+00570:         normalization.targetHourPairMax
+00571:       )
+00572:     );
+00573: 
+00574:   const tripleHistorical =
+00575:     normalizedMapValue(
+00576:       stats.triple,
+00577:       combinationKey,
+00578:       normalization.tripleMax
+00579:     );
+
+>>> PADRÃO: pair (linha 568)
+00561:         normalization.recentPairMax
+00562:       )
+00563:     );
+00564: 
+00565:   const pairTargetHour =
+00566:     pairKeys.map((key) =>
+00567:       normalizedMapValue(
+00568:         stats.targetHourPair,
+00569:         key,
+00570:         normalization.targetHourPairMax
+00571:       )
+00572:     );
+00573: 
+00574:   const tripleHistorical =
+00575:     normalizedMapValue(
+00576:       stats.triple,
+00577:       combinationKey,
+00578:       normalization.tripleMax
+00579:     );
+00580: 
+00581:   const tripleRecent =
+
+>>> PADRÃO: pair (linha 570)
+00563:     );
+00564: 
+00565:   const pairTargetHour =
+00566:     pairKeys.map((key) =>
+00567:       normalizedMapValue(
+00568:         stats.targetHourPair,
+00569:         key,
+00570:         normalization.targetHourPairMax
+00571:       )
+00572:     );
+00573: 
+00574:   const tripleHistorical =
+00575:     normalizedMapValue(
+00576:       stats.triple,
+00577:       combinationKey,
+00578:       normalization.tripleMax
+00579:     );
+00580: 
+00581:   const tripleRecent =
+00582:     normalizedMapValue(
+00583:       stats.recentTriple,
+
+>>> PADRÃO: pair (linha 601)
+00594: 
+00595:   const individualStrength =
+00596:     harmonicMean([
+00597:       average(individualHistorical),
+00598:       average(individualRecent),
+00599:     ]);
+00600: 
+00601:   const pairStrength =
+00602:     harmonicMean([
+00603:       average(pairHistorical),
+00604:       average(pairRecent),
+00605:     ]);
+00606: 
+00607:   const tripleStrength =
+00608:     tripleHistorical * 0.65 +
+00609:     tripleRecent * 0.35;
+00610: 
+00611:   const targetHourStrength =
+00612:     stats.targetHourDrawCount > 0
+00613:       ? (
+00614:           average(
+
+>>> PADRÃO: pair (linha 603)
+00596:     harmonicMean([
+00597:       average(individualHistorical),
+00598:       average(individualRecent),
+00599:     ]);
+00600: 
+00601:   const pairStrength =
+00602:     harmonicMean([
+00603:       average(pairHistorical),
+00604:       average(pairRecent),
+00605:     ]);
+00606: 
+00607:   const tripleStrength =
+00608:     tripleHistorical * 0.65 +
+00609:     tripleRecent * 0.35;
+00610: 
+00611:   const targetHourStrength =
+00612:     stats.targetHourDrawCount > 0
+00613:       ? (
+00614:           average(
+00615:             individualTargetHour
+00616:           ) *
+
+>>> PADRÃO: pair (linha 604)
+00597:       average(individualHistorical),
+00598:       average(individualRecent),
+00599:     ]);
+00600: 
+00601:   const pairStrength =
+00602:     harmonicMean([
+00603:       average(pairHistorical),
+00604:       average(pairRecent),
+00605:     ]);
+00606: 
+00607:   const tripleStrength =
+00608:     tripleHistorical * 0.65 +
+00609:     tripleRecent * 0.35;
+00610: 
+00611:   const targetHourStrength =
+00612:     stats.targetHourDrawCount > 0
+00613:       ? (
+00614:           average(
+00615:             individualTargetHour
+00616:           ) *
+00617:             0.35 +
+
+>>> PADRÃO: pair (linha 618)
+00611:   const targetHourStrength =
+00612:     stats.targetHourDrawCount > 0
+00613:       ? (
+00614:           average(
+00615:             individualTargetHour
+00616:           ) *
+00617:             0.35 +
+00618:           average(pairTargetHour) *
+00619:             0.4 +
+00620:           tripleTargetHour * 0.25
+00621:         )
+00622:       : 0;
+00623: 
+00624:   const analyticsStrength =
+00625:     analyticsSignals.some(
+00626:       (value) => value > 0
+00627:     )
+00628:       ? harmonicMean(
+00629:           analyticsSignals.map(
+00630:             (value) =>
+00631:               value > 0
+
+>>> PADRÃO: pair (linha 651)
+00644:     );
+00645: 
+00646:   const balance =
+00647:     1 - clamp01(individualSpread);
+00648: 
+00649:   const evidenceScore =
+00650:     individualStrength * 0.26 +
+00651:     pairStrength * 0.3 +
+00652:     tripleStrength * 0.24 +
+00653:     targetHourStrength * 0.12 +
+00654:     analyticsStrength * 0.06 +
+00655:     balance * 0.02;
+00656: 
+00657:   return {
+00658:     rawScore: clamp01(evidenceScore),
+00659: 
+00660:     components: {
+00661:       individualStrength,
+00662:       pairStrength,
+00663:       tripleStrength,
+00664:       targetHourStrength,
+
+>>> PADRÃO: pair (linha 662)
+00655:     balance * 0.02;
+00656: 
+00657:   return {
+00658:     rawScore: clamp01(evidenceScore),
+00659: 
+00660:     components: {
+00661:       individualStrength,
+00662:       pairStrength,
+00663:       tripleStrength,
+00664:       targetHourStrength,
+00665:       analyticsStrength,
+00666:       balance,
+00667:     },
+00668: 
+00669:     occurrences: {
+00670:       tripleHistorical:
+00671:         getMapValue(
+00672:           stats.triple,
+00673:           combinationKey
+00674:         ),
+00675: 
+
+>>> PADRÃO: pair (linha 688)
+00681: 
+00682:       tripleTargetHour:
+00683:         getMapValue(
+00684:           stats.targetHourTriple,
+00685:           combinationKey
+00686:         ),
+00687: 
+00688:       pairHistorical:
+00689:         pairKeys.map((key) =>
+00690:           getMapValue(stats.pair, key)
+00691:         ),
+00692:     },
+00693:   };
+00694: }
+00695: 
+00696: function buildAllCombinations({
+00697:   analytics,
+00698:   historicalDraws,
+00699:   targetHour,
+00700: }) {
+00701:   const analyticsMap =
+
+>>> PADRÃO: pair (linha 689)
+00682:       tripleTargetHour:
+00683:         getMapValue(
+00684:           stats.targetHourTriple,
+00685:           combinationKey
+00686:         ),
+00687: 
+00688:       pairHistorical:
+00689:         pairKeys.map((key) =>
+00690:           getMapValue(stats.pair, key)
+00691:         ),
+00692:     },
+00693:   };
+00694: }
+00695: 
+00696: function buildAllCombinations({
+00697:   analytics,
+00698:   historicalDraws,
+00699:   targetHour,
+00700: }) {
+00701:   const analyticsMap =
+00702:     buildAnalyticsMap(analytics);
+
+>>> PADRÃO: pair (linha 690)
+00683:         getMapValue(
+00684:           stats.targetHourTriple,
+00685:           combinationKey
+00686:         ),
+00687: 
+00688:       pairHistorical:
+00689:         pairKeys.map((key) =>
+00690:           getMapValue(stats.pair, key)
+00691:         ),
+00692:     },
+00693:   };
+00694: }
+00695: 
+00696: function buildAllCombinations({
+00697:   analytics,
+00698:   historicalDraws,
+00699:   targetHour,
+00700: }) {
+00701:   const analyticsMap =
+00702:     buildAnalyticsMap(analytics);
+00703: 
+
+>>> PADRÃO: triple (linha 139)
+00132: 
+00133: function pairKey(first, second) {
+00134:   return [first, second]
+00135:     .sort((a, b) => a - b)
+00136:     .join("-");
+00137: }
+00138: 
+00139: function tripleKey(values) {
+00140:   return [...values]
+00141:     .sort((a, b) => a - b)
+00142:     .join("-");
+00143: }
+00144: 
+00145: function incrementMap(map, key, amount = 1) {
+00146:   if (!key) return;
+00147: 
+00148:   map.set(
+00149:     key,
+00150:     Number(map.get(key) || 0) + amount
+00151:   );
+00152: }
+
+>>> PADRÃO: triple (linha 201)
+00194:   return {
+00195:     drawCount: 0,
+00196:     usableDrawCount: 0,
+00197:     targetHourDrawCount: 0,
+00198: 
+00199:     individual: new Map(),
+00200:     pair: new Map(),
+00201:     triple: new Map(),
+00202: 
+00203:     recentIndividual: new Map(),
+00204:     recentPair: new Map(),
+00205:     recentTriple: new Map(),
+00206: 
+00207:     targetHourIndividual: new Map(),
+00208:     targetHourPair: new Map(),
+00209:     targetHourTriple: new Map(),
+00210:   };
+00211: }
+00212: 
+00213: function registerGroups({
+00214:   groups,
+
+>>> PADRÃO: triple (linha 205)
+00198: 
+00199:     individual: new Map(),
+00200:     pair: new Map(),
+00201:     triple: new Map(),
+00202: 
+00203:     recentIndividual: new Map(),
+00204:     recentPair: new Map(),
+00205:     recentTriple: new Map(),
+00206: 
+00207:     targetHourIndividual: new Map(),
+00208:     targetHourPair: new Map(),
+00209:     targetHourTriple: new Map(),
+00210:   };
+00211: }
+00212: 
+00213: function registerGroups({
+00214:   groups,
+00215:   individualMap,
+00216:   pairMap,
+00217:   tripleMap,
+00218:   weight = 1,
+
+>>> PADRÃO: triple (linha 209)
+00202: 
+00203:     recentIndividual: new Map(),
+00204:     recentPair: new Map(),
+00205:     recentTriple: new Map(),
+00206: 
+00207:     targetHourIndividual: new Map(),
+00208:     targetHourPair: new Map(),
+00209:     targetHourTriple: new Map(),
+00210:   };
+00211: }
+00212: 
+00213: function registerGroups({
+00214:   groups,
+00215:   individualMap,
+00216:   pairMap,
+00217:   tripleMap,
+00218:   weight = 1,
+00219: }) {
+00220:   for (const grupo of groups) {
+00221:     incrementMap(
+00222:       individualMap,
+
+>>> PADRÃO: triple (linha 217)
+00210:   };
+00211: }
+00212: 
+00213: function registerGroups({
+00214:   groups,
+00215:   individualMap,
+00216:   pairMap,
+00217:   tripleMap,
+00218:   weight = 1,
+00219: }) {
+00220:   for (const grupo of groups) {
+00221:     incrementMap(
+00222:       individualMap,
+00223:       String(grupo),
+00224:       weight
+00225:     );
+00226:   }
+00227: 
+00228:   for (
+00229:     let first = 0;
+00230:     first < groups.length - 1;
+
+>>> PADRÃO: triple (linha 266)
+00259:       ) {
+00260:         for (
+00261:           let third = second + 1;
+00262:           third < groups.length;
+00263:           third += 1
+00264:         ) {
+00265:           incrementMap(
+00266:             tripleMap,
+00267:             tripleKey([
+00268:               groups[first],
+00269:               groups[second],
+00270:               groups[third],
+00271:             ]),
+00272:             weight
+00273:           );
+00274:         }
+00275:       }
+00276:     }
+00277:   }
+00278: }
+00279: 
+
+>>> PADRÃO: triple (linha 267)
+00260:         for (
+00261:           let third = second + 1;
+00262:           third < groups.length;
+00263:           third += 1
+00264:         ) {
+00265:           incrementMap(
+00266:             tripleMap,
+00267:             tripleKey([
+00268:               groups[first],
+00269:               groups[second],
+00270:               groups[third],
+00271:             ]),
+00272:             weight
+00273:           );
+00274:         }
+00275:       }
+00276:     }
+00277:   }
+00278: }
+00279: 
+00280: function buildHistoricalStats({
+
+>>> PADRÃO: triple (linha 310)
+00303: 
+00304:     stats.usableDrawCount += 1;
+00305: 
+00306:     registerGroups({
+00307:       groups,
+00308:       individualMap: stats.individual,
+00309:       pairMap: stats.pair,
+00310:       tripleMap: stats.triple,
+00311:     });
+00312: 
+00313:     if (index >= recentStart) {
+00314:       const recentPosition =
+00315:         index - recentStart + 1;
+00316: 
+00317:       const recentLength =
+00318:         draws.length - recentStart;
+00319: 
+00320:       const recencyWeight =
+00321:         recentLength > 1
+00322:           ? 0.65 +
+00323:             0.35 *
+
+>>> PADRÃO: triple (linha 333)
+00326:           : 1;
+00327: 
+00328:       registerGroups({
+00329:         groups,
+00330:         individualMap:
+00331:           stats.recentIndividual,
+00332:         pairMap: stats.recentPair,
+00333:         tripleMap: stats.recentTriple,
+00334:         weight: recencyWeight,
+00335:       });
+00336:     }
+00337: 
+00338:     const drawHour = extractDrawHour(draw);
+00339: 
+00340:     if (
+00341:       targetHour &&
+00342:       drawHour === targetHour
+00343:     ) {
+00344:       stats.targetHourDrawCount += 1;
+00345: 
+00346:       registerGroups({
+
+>>> PADRÃO: triple (linha 351)
+00344:       stats.targetHourDrawCount += 1;
+00345: 
+00346:       registerGroups({
+00347:         groups,
+00348:         individualMap:
+00349:           stats.targetHourIndividual,
+00350:         pairMap: stats.targetHourPair,
+00351:         tripleMap:
+00352:           stats.targetHourTriple,
+00353:       });
+00354:     }
+00355:   });
+00356: 
+00357:   return stats;
+00358: }
+00359: 
+00360: function buildAnalyticsMap(analytics) {
+00361:   const map = new Map();
+00362: 
+00363:   const source = Array.isArray(
+00364:     analytics?.top
+
+>>> PADRÃO: triple (linha 352)
+00345: 
+00346:       registerGroups({
+00347:         groups,
+00348:         individualMap:
+00349:           stats.targetHourIndividual,
+00350:         pairMap: stats.targetHourPair,
+00351:         tripleMap:
+00352:           stats.targetHourTriple,
+00353:       });
+00354:     }
+00355:   });
+00356: 
+00357:   return stats;
+00358: }
+00359: 
+00360: function buildAnalyticsMap(analytics) {
+00361:   const map = new Map();
+00362: 
+00363:   const source = Array.isArray(
+00364:     analytics?.top
+00365:   )
+
+>>> PADRÃO: triple (linha 463)
+00456:   return {
+00457:     individualMax:
+00458:       getMapMaximum(stats.individual),
+00459: 
+00460:     pairMax:
+00461:       getMapMaximum(stats.pair),
+00462: 
+00463:     tripleMax:
+00464:       getMapMaximum(stats.triple),
+00465: 
+00466:     recentIndividualMax:
+00467:       getMapMaximum(
+00468:         stats.recentIndividual
+00469:       ),
+00470: 
+00471:     recentPairMax:
+00472:       getMapMaximum(stats.recentPair),
+00473: 
+00474:     recentTripleMax:
+00475:       getMapMaximum(
+00476:         stats.recentTriple
+
+>>> PADRÃO: triple (linha 464)
+00457:     individualMax:
+00458:       getMapMaximum(stats.individual),
+00459: 
+00460:     pairMax:
+00461:       getMapMaximum(stats.pair),
+00462: 
+00463:     tripleMax:
+00464:       getMapMaximum(stats.triple),
+00465: 
+00466:     recentIndividualMax:
+00467:       getMapMaximum(
+00468:         stats.recentIndividual
+00469:       ),
+00470: 
+00471:     recentPairMax:
+00472:       getMapMaximum(stats.recentPair),
+00473: 
+00474:     recentTripleMax:
+00475:       getMapMaximum(
+00476:         stats.recentTriple
+00477:       ),
+
+>>> PADRÃO: triple (linha 474)
+00467:       getMapMaximum(
+00468:         stats.recentIndividual
+00469:       ),
+00470: 
+00471:     recentPairMax:
+00472:       getMapMaximum(stats.recentPair),
+00473: 
+00474:     recentTripleMax:
+00475:       getMapMaximum(
+00476:         stats.recentTriple
+00477:       ),
+00478: 
+00479:     targetHourIndividualMax:
+00480:       getMapMaximum(
+00481:         stats.targetHourIndividual
+00482:       ),
+00483: 
+00484:     targetHourPairMax:
+00485:       getMapMaximum(
+00486:         stats.targetHourPair
+00487:       ),
+
+>>> PADRÃO: triple (linha 476)
+00469:       ),
+00470: 
+00471:     recentPairMax:
+00472:       getMapMaximum(stats.recentPair),
+00473: 
+00474:     recentTripleMax:
+00475:       getMapMaximum(
+00476:         stats.recentTriple
+00477:       ),
+00478: 
+00479:     targetHourIndividualMax:
+00480:       getMapMaximum(
+00481:         stats.targetHourIndividual
+00482:       ),
+00483: 
+00484:     targetHourPairMax:
+00485:       getMapMaximum(
+00486:         stats.targetHourPair
+00487:       ),
+00488: 
+00489:     targetHourTripleMax:
+
+>>> PADRÃO: triple (linha 489)
+00482:       ),
+00483: 
+00484:     targetHourPairMax:
+00485:       getMapMaximum(
+00486:         stats.targetHourPair
+00487:       ),
+00488: 
+00489:     targetHourTripleMax:
+00490:       getMapMaximum(
+00491:         stats.targetHourTriple
+00492:       ),
+00493:   };
+00494: }
+00495: 
+00496: function calculateCombinationEvidence({
+00497:   grupos,
+00498:   analyticsMap,
+00499:   stats,
+00500:   normalization,
+00501: }) {
+00502:   const [first, second, third] = grupos;
+
+>>> PADRÃO: triple (linha 491)
+00484:     targetHourPairMax:
+00485:       getMapMaximum(
+00486:         stats.targetHourPair
+00487:       ),
+00488: 
+00489:     targetHourTripleMax:
+00490:       getMapMaximum(
+00491:         stats.targetHourTriple
+00492:       ),
+00493:   };
+00494: }
+00495: 
+00496: function calculateCombinationEvidence({
+00497:   grupos,
+00498:   analyticsMap,
+00499:   stats,
+00500:   normalization,
+00501: }) {
+00502:   const [first, second, third] = grupos;
+00503: 
+00504:   const groupKeys = grupos.map(String);
+
+>>> PADRÃO: triple (linha 513)
+00506:   const pairKeys = [
+00507:     pairKey(first, second),
+00508:     pairKey(first, third),
+00509:     pairKey(second, third),
+00510:   ];
+00511: 
+00512:   const combinationKey =
+00513:     tripleKey(grupos);
+00514: 
+00515:   const individualHistorical =
+00516:     groupKeys.map((key) =>
+00517:       normalizedMapValue(
+00518:         stats.individual,
+00519:         key,
+00520:         normalization.individualMax
+00521:       )
+00522:     );
+00523: 
+00524:   const individualRecent =
+00525:     groupKeys.map((key) =>
+00526:       normalizedMapValue(
+
+>>> PADRÃO: triple (linha 574)
+00567:       normalizedMapValue(
+00568:         stats.targetHourPair,
+00569:         key,
+00570:         normalization.targetHourPairMax
+00571:       )
+00572:     );
+00573: 
+00574:   const tripleHistorical =
+00575:     normalizedMapValue(
+00576:       stats.triple,
+00577:       combinationKey,
+00578:       normalization.tripleMax
+00579:     );
+00580: 
+00581:   const tripleRecent =
+00582:     normalizedMapValue(
+00583:       stats.recentTriple,
+00584:       combinationKey,
+00585:       normalization.recentTripleMax
+00586:     );
+00587: 
+
+>>> PADRÃO: triple (linha 576)
+00569:         key,
+00570:         normalization.targetHourPairMax
+00571:       )
+00572:     );
+00573: 
+00574:   const tripleHistorical =
+00575:     normalizedMapValue(
+00576:       stats.triple,
+00577:       combinationKey,
+00578:       normalization.tripleMax
+00579:     );
+00580: 
+00581:   const tripleRecent =
+00582:     normalizedMapValue(
+00583:       stats.recentTriple,
+00584:       combinationKey,
+00585:       normalization.recentTripleMax
+00586:     );
+00587: 
+00588:   const tripleTargetHour =
+00589:     normalizedMapValue(
+
+>>> PADRÃO: triple (linha 578)
+00571:       )
+00572:     );
+00573: 
+00574:   const tripleHistorical =
+00575:     normalizedMapValue(
+00576:       stats.triple,
+00577:       combinationKey,
+00578:       normalization.tripleMax
+00579:     );
+00580: 
+00581:   const tripleRecent =
+00582:     normalizedMapValue(
+00583:       stats.recentTriple,
+00584:       combinationKey,
+00585:       normalization.recentTripleMax
+00586:     );
+00587: 
+00588:   const tripleTargetHour =
+00589:     normalizedMapValue(
+00590:       stats.targetHourTriple,
+00591:       combinationKey,
+
+>>> PADRÃO: triple (linha 581)
+00574:   const tripleHistorical =
+00575:     normalizedMapValue(
+00576:       stats.triple,
+00577:       combinationKey,
+00578:       normalization.tripleMax
+00579:     );
+00580: 
+00581:   const tripleRecent =
+00582:     normalizedMapValue(
+00583:       stats.recentTriple,
+00584:       combinationKey,
+00585:       normalization.recentTripleMax
+00586:     );
+00587: 
+00588:   const tripleTargetHour =
+00589:     normalizedMapValue(
+00590:       stats.targetHourTriple,
+00591:       combinationKey,
+00592:       normalization.targetHourTripleMax
+00593:     );
+00594: 
+
+>>> PADRÃO: triple (linha 583)
+00576:       stats.triple,
+00577:       combinationKey,
+00578:       normalization.tripleMax
+00579:     );
+00580: 
+00581:   const tripleRecent =
+00582:     normalizedMapValue(
+00583:       stats.recentTriple,
+00584:       combinationKey,
+00585:       normalization.recentTripleMax
+00586:     );
+00587: 
+00588:   const tripleTargetHour =
+00589:     normalizedMapValue(
+00590:       stats.targetHourTriple,
+00591:       combinationKey,
+00592:       normalization.targetHourTripleMax
+00593:     );
+00594: 
+00595:   const individualStrength =
+00596:     harmonicMean([
+
+>>> PADRÃO: triple (linha 585)
+00578:       normalization.tripleMax
+00579:     );
+00580: 
+00581:   const tripleRecent =
+00582:     normalizedMapValue(
+00583:       stats.recentTriple,
+00584:       combinationKey,
+00585:       normalization.recentTripleMax
+00586:     );
+00587: 
+00588:   const tripleTargetHour =
+00589:     normalizedMapValue(
+00590:       stats.targetHourTriple,
+00591:       combinationKey,
+00592:       normalization.targetHourTripleMax
+00593:     );
+00594: 
+00595:   const individualStrength =
+00596:     harmonicMean([
+00597:       average(individualHistorical),
+00598:       average(individualRecent),
+
+>>> PADRÃO: triple (linha 588)
+00581:   const tripleRecent =
+00582:     normalizedMapValue(
+00583:       stats.recentTriple,
+00584:       combinationKey,
+00585:       normalization.recentTripleMax
+00586:     );
+00587: 
+00588:   const tripleTargetHour =
+00589:     normalizedMapValue(
+00590:       stats.targetHourTriple,
+00591:       combinationKey,
+00592:       normalization.targetHourTripleMax
+00593:     );
+00594: 
+00595:   const individualStrength =
+00596:     harmonicMean([
+00597:       average(individualHistorical),
+00598:       average(individualRecent),
+00599:     ]);
+00600: 
+00601:   const pairStrength =
+
+>>> PADRÃO: triple (linha 590)
+00583:       stats.recentTriple,
+00584:       combinationKey,
+00585:       normalization.recentTripleMax
+00586:     );
+00587: 
+00588:   const tripleTargetHour =
+00589:     normalizedMapValue(
+00590:       stats.targetHourTriple,
+00591:       combinationKey,
+00592:       normalization.targetHourTripleMax
+00593:     );
+00594: 
+00595:   const individualStrength =
+00596:     harmonicMean([
+00597:       average(individualHistorical),
+00598:       average(individualRecent),
+00599:     ]);
+00600: 
+00601:   const pairStrength =
+00602:     harmonicMean([
+00603:       average(pairHistorical),
+
+>>> PADRÃO: triple (linha 592)
+00585:       normalization.recentTripleMax
+00586:     );
+00587: 
+00588:   const tripleTargetHour =
+00589:     normalizedMapValue(
+00590:       stats.targetHourTriple,
+00591:       combinationKey,
+00592:       normalization.targetHourTripleMax
+00593:     );
+00594: 
+00595:   const individualStrength =
+00596:     harmonicMean([
+00597:       average(individualHistorical),
+00598:       average(individualRecent),
+00599:     ]);
+00600: 
+00601:   const pairStrength =
+00602:     harmonicMean([
+00603:       average(pairHistorical),
+00604:       average(pairRecent),
+00605:     ]);
+
+>>> PADRÃO: triple (linha 607)
+00600: 
+00601:   const pairStrength =
+00602:     harmonicMean([
+00603:       average(pairHistorical),
+00604:       average(pairRecent),
+00605:     ]);
+00606: 
+00607:   const tripleStrength =
+00608:     tripleHistorical * 0.65 +
+00609:     tripleRecent * 0.35;
+00610: 
+00611:   const targetHourStrength =
+00612:     stats.targetHourDrawCount > 0
+00613:       ? (
+00614:           average(
+00615:             individualTargetHour
+00616:           ) *
+00617:             0.35 +
+00618:           average(pairTargetHour) *
+00619:             0.4 +
+00620:           tripleTargetHour * 0.25
+
+>>> PADRÃO: triple (linha 608)
+00601:   const pairStrength =
+00602:     harmonicMean([
+00603:       average(pairHistorical),
+00604:       average(pairRecent),
+00605:     ]);
+00606: 
+00607:   const tripleStrength =
+00608:     tripleHistorical * 0.65 +
+00609:     tripleRecent * 0.35;
+00610: 
+00611:   const targetHourStrength =
+00612:     stats.targetHourDrawCount > 0
+00613:       ? (
+00614:           average(
+00615:             individualTargetHour
+00616:           ) *
+00617:             0.35 +
+00618:           average(pairTargetHour) *
+00619:             0.4 +
+00620:           tripleTargetHour * 0.25
+00621:         )
+
+>>> PADRÃO: triple (linha 609)
+00602:     harmonicMean([
+00603:       average(pairHistorical),
+00604:       average(pairRecent),
+00605:     ]);
+00606: 
+00607:   const tripleStrength =
+00608:     tripleHistorical * 0.65 +
+00609:     tripleRecent * 0.35;
+00610: 
+00611:   const targetHourStrength =
+00612:     stats.targetHourDrawCount > 0
+00613:       ? (
+00614:           average(
+00615:             individualTargetHour
+00616:           ) *
+00617:             0.35 +
+00618:           average(pairTargetHour) *
+00619:             0.4 +
+00620:           tripleTargetHour * 0.25
+00621:         )
+00622:       : 0;
+
+>>> PADRÃO: triple (linha 620)
+00613:       ? (
+00614:           average(
+00615:             individualTargetHour
+00616:           ) *
+00617:             0.35 +
+00618:           average(pairTargetHour) *
+00619:             0.4 +
+00620:           tripleTargetHour * 0.25
+00621:         )
+00622:       : 0;
+00623: 
+00624:   const analyticsStrength =
+00625:     analyticsSignals.some(
+00626:       (value) => value > 0
+00627:     )
+00628:       ? harmonicMean(
+00629:           analyticsSignals.map(
+00630:             (value) =>
+00631:               value > 0
+00632:                 ? value
+00633:                 : 0.08
+
+>>> PADRÃO: triple (linha 652)
+00645: 
+00646:   const balance =
+00647:     1 - clamp01(individualSpread);
+00648: 
+00649:   const evidenceScore =
+00650:     individualStrength * 0.26 +
+00651:     pairStrength * 0.3 +
+00652:     tripleStrength * 0.24 +
+00653:     targetHourStrength * 0.12 +
+00654:     analyticsStrength * 0.06 +
+00655:     balance * 0.02;
+00656: 
+00657:   return {
+00658:     rawScore: clamp01(evidenceScore),
+00659: 
+00660:     components: {
+00661:       individualStrength,
+00662:       pairStrength,
+00663:       tripleStrength,
+00664:       targetHourStrength,
+00665:       analyticsStrength,
+
+>>> PADRÃO: triple (linha 663)
+00656: 
+00657:   return {
+00658:     rawScore: clamp01(evidenceScore),
+00659: 
+00660:     components: {
+00661:       individualStrength,
+00662:       pairStrength,
+00663:       tripleStrength,
+00664:       targetHourStrength,
+00665:       analyticsStrength,
+00666:       balance,
+00667:     },
+00668: 
+00669:     occurrences: {
+00670:       tripleHistorical:
+00671:         getMapValue(
+00672:           stats.triple,
+00673:           combinationKey
+00674:         ),
+00675: 
+00676:       tripleRecent:
+
+>>> PADRÃO: triple (linha 670)
+00663:       tripleStrength,
+00664:       targetHourStrength,
+00665:       analyticsStrength,
+00666:       balance,
+00667:     },
+00668: 
+00669:     occurrences: {
+00670:       tripleHistorical:
+00671:         getMapValue(
+00672:           stats.triple,
+00673:           combinationKey
+00674:         ),
+00675: 
+00676:       tripleRecent:
+00677:         getMapValue(
+00678:           stats.recentTriple,
+00679:           combinationKey
+00680:         ),
+00681: 
+00682:       tripleTargetHour:
+00683:         getMapValue(
+
+>>> PADRÃO: triple (linha 672)
+00665:       analyticsStrength,
+00666:       balance,
+00667:     },
+00668: 
+00669:     occurrences: {
+00670:       tripleHistorical:
+00671:         getMapValue(
+00672:           stats.triple,
+00673:           combinationKey
+00674:         ),
+00675: 
+00676:       tripleRecent:
+00677:         getMapValue(
+00678:           stats.recentTriple,
+00679:           combinationKey
+00680:         ),
+00681: 
+00682:       tripleTargetHour:
+00683:         getMapValue(
+00684:           stats.targetHourTriple,
+00685:           combinationKey
+
+>>> PADRÃO: triple (linha 676)
+00669:     occurrences: {
+00670:       tripleHistorical:
+00671:         getMapValue(
+00672:           stats.triple,
+00673:           combinationKey
+00674:         ),
+00675: 
+00676:       tripleRecent:
+00677:         getMapValue(
+00678:           stats.recentTriple,
+00679:           combinationKey
+00680:         ),
+00681: 
+00682:       tripleTargetHour:
+00683:         getMapValue(
+00684:           stats.targetHourTriple,
+00685:           combinationKey
+00686:         ),
+00687: 
+00688:       pairHistorical:
+00689:         pairKeys.map((key) =>
+
+>>> PADRÃO: triple (linha 678)
+00671:         getMapValue(
+00672:           stats.triple,
+00673:           combinationKey
+00674:         ),
+00675: 
+00676:       tripleRecent:
+00677:         getMapValue(
+00678:           stats.recentTriple,
+00679:           combinationKey
+00680:         ),
+00681: 
+00682:       tripleTargetHour:
+00683:         getMapValue(
+00684:           stats.targetHourTriple,
+00685:           combinationKey
+00686:         ),
+00687: 
+00688:       pairHistorical:
+00689:         pairKeys.map((key) =>
+00690:           getMapValue(stats.pair, key)
+00691:         ),
+
+>>> PADRÃO: triple (linha 682)
+00675: 
+00676:       tripleRecent:
+00677:         getMapValue(
+00678:           stats.recentTriple,
+00679:           combinationKey
+00680:         ),
+00681: 
+00682:       tripleTargetHour:
+00683:         getMapValue(
+00684:           stats.targetHourTriple,
+00685:           combinationKey
+00686:         ),
+00687: 
+00688:       pairHistorical:
+00689:         pairKeys.map((key) =>
+00690:           getMapValue(stats.pair, key)
+00691:         ),
+00692:     },
+00693:   };
+00694: }
+00695: 
+
+>>> PADRÃO: triple (linha 684)
+00677:         getMapValue(
+00678:           stats.recentTriple,
+00679:           combinationKey
+00680:         ),
+00681: 
+00682:       tripleTargetHour:
+00683:         getMapValue(
+00684:           stats.targetHourTriple,
+00685:           combinationKey
+00686:         ),
+00687: 
+00688:       pairHistorical:
+00689:         pairKeys.map((key) =>
+00690:           getMapValue(stats.pair, key)
+00691:         ),
+00692:     },
+00693:   };
+00694: }
+00695: 
+00696: function buildAllCombinations({
+00697:   analytics,
+
+>>> PADRÃO: triple (linha 745)
+00738:             grupos,
+00739:             analyticsMap,
+00740:             stats,
+00741:             normalization,
+00742:           });
+00743: 
+00744:         combinations.push({
+00745:           key: tripleKey(grupos),
+00746:           grupos,
+00747:           items: grupos.map((grupo) => ({
+00748:             grupo,
+00749:             analyticsScore:
+00750:               Number(
+00751:                 analyticsMap.get(grupo) || 0
+00752:               ),
+00753:           })),
+00754:           rawScore: evidence.rawScore,
+00755:           components:
+00756:             evidence.components,
+00757:           occurrences:
+00758:             evidence.occurrences,
+
+>>> PADRÃO: triple (linha 839)
+00832:       b.rawScore !== a.rawScore
+00833:     ) {
+00834:       return (
+00835:         b.rawScore - a.rawScore
+00836:       );
+00837:     }
+00838: 
+00839:     const bTriple =
+00840:       Number(
+00841:         b?.occurrences
+00842:           ?.tripleHistorical || 0
+00843:       );
+00844: 
+00845:     const aTriple =
+00846:       Number(
+00847:         a?.occurrences
+00848:           ?.tripleHistorical || 0
+00849:       );
+00850: 
+00851:     if (bTriple !== aTriple) {
+00852:       return bTriple - aTriple;
+
+>>> PADRÃO: triple (linha 842)
+00835:         b.rawScore - a.rawScore
+00836:       );
+00837:     }
+00838: 
+00839:     const bTriple =
+00840:       Number(
+00841:         b?.occurrences
+00842:           ?.tripleHistorical || 0
+00843:       );
+00844: 
+00845:     const aTriple =
+00846:       Number(
+00847:         a?.occurrences
+00848:           ?.tripleHistorical || 0
+00849:       );
+00850: 
+00851:     if (bTriple !== aTriple) {
+00852:       return bTriple - aTriple;
+00853:     }
+00854: 
+00855:     return a.key.localeCompare(b.key);
+
+>>> PADRÃO: triple (linha 845)
+00838: 
+00839:     const bTriple =
+00840:       Number(
+00841:         b?.occurrences
+00842:           ?.tripleHistorical || 0
+00843:       );
+00844: 
+00845:     const aTriple =
+00846:       Number(
+00847:         a?.occurrences
+00848:           ?.tripleHistorical || 0
+00849:       );
+00850: 
+00851:     if (bTriple !== aTriple) {
+00852:       return bTriple - aTriple;
+00853:     }
+00854: 
+00855:     return a.key.localeCompare(b.key);
+00856:   });
+00857: 
+00858:   return ranked.map(
+
+>>> PADRÃO: triple (linha 848)
+00841:         b?.occurrences
+00842:           ?.tripleHistorical || 0
+00843:       );
+00844: 
+00845:     const aTriple =
+00846:       Number(
+00847:         a?.occurrences
+00848:           ?.tripleHistorical || 0
+00849:       );
+00850: 
+00851:     if (bTriple !== aTriple) {
+00852:       return bTriple - aTriple;
+00853:     }
+00854: 
+00855:     return a.key.localeCompare(b.key);
+00856:   });
+00857: 
+00858:   return ranked.map(
+00859:     (combination, index) => ({
+00860:       ...combination,
+00861: 
+
+>>> PADRÃO: triple (linha 851)
+00844: 
+00845:     const aTriple =
+00846:       Number(
+00847:         a?.occurrences
+00848:           ?.tripleHistorical || 0
+00849:       );
+00850: 
+00851:     if (bTriple !== aTriple) {
+00852:       return bTriple - aTriple;
+00853:     }
+00854: 
+00855:     return a.key.localeCompare(b.key);
+00856:   });
+00857: 
+00858:   return ranked.map(
+00859:     (combination, index) => ({
+00860:       ...combination,
+00861: 
+00862:       rank: index + 1,
+00863: 
+00864:       engineVersion:
+
+>>> PADRÃO: triple (linha 852)
+00845:     const aTriple =
+00846:       Number(
+00847:         a?.occurrences
+00848:           ?.tripleHistorical || 0
+00849:       );
+00850: 
+00851:     if (bTriple !== aTriple) {
+00852:       return bTriple - aTriple;
+00853:     }
+00854: 
+00855:     return a.key.localeCompare(b.key);
+00856:   });
+00857: 
+00858:   return ranked.map(
+00859:     (combination, index) => ({
+00860:       ...combination,
+00861: 
+00862:       rank: index + 1,
+00863: 
+00864:       engineVersion:
+00865:         TERNO_GRUPO_RANKING_VERSION,
+
+========================================================================================================================
+ARQUIVO: .\src\pages\TernoGrupo\top3.hooks.js
+========================================================================================================================
+
+>>> PADRÃO: top5 (linha 1445)
+01438:         : [],
+01439:       meta: item?.meta || null,
+01440:     }));
+01441: 
+01442:     const engineVersion =
+01443:       safeStr(top3?.[0]?.meta?.explain?.engine) ||
+01444:       safeStr(top3?.[0]?.meta?.scenario) ||
+01445:       "TERNO_GRUPO_V1_TOP5";
+01446: 
+01447:     registerPrediction({
+01448:       targetKey,
+01449:       targetYmd: analysisYmd,
+01450:       targetHour: analysisHourBucket,
+01451:       picks,
+01452:       snapshot,
+01453:       engineVersion,
+01454:     });
+01455: 
+01456:     saveTop3PredictionSnapshot({
+01457:       lotteryKey: lotteryKeySafe,
+01458:       targetYmd: analysisYmd,
+
+========================================================================================================================
+ARQUIVO: .\src\pages\TernoGrupo\TernoGrupoView.jsx
+========================================================================================================================
+
+>>> PADRÃO: buildAllTernosGrupo (linha 13)
+00006: 
+00007: import {
+00008:   getAnimalLabel,
+00009:   getImgFromGrupo,
+00010: } from "../../constants/bichoMap";
+00011: 
+00012: import {
+00013:   buildAllTernosGrupo,
+00014:   TERNO_GRUPO_MAX_QUANTITY,
+00015:   TERNO_GRUPO_MIN_QUANTITY,
+00016:   validateTernoQuantity,
+00017: } from "./modules/ternoGrupo.generator";
+00018: 
+00019: import "./TernoGrupo.css";
+00020: 
+00021: function formatGrupo(grupo) {
+00022:   const number = Number(grupo);
+00023: 
+00024:   if (
+00025:     !Number.isFinite(number) ||
+00026:     number < 1 ||
+
+>>> PADRÃO: buildAllTernosGrupo (linha 261)
+00254:     );
+00255: 
+00256:     return Array.from(map.values());
+00257:   }, [LOTTERY_OPTIONS]);
+00258: 
+00259:   const allTernos = useMemo(
+00260:     () =>
+00261:       buildAllTernosGrupo({
+00262:         analytics,
+00263:         seedGroups: top3,
+00264:         historicalDraws: [
+00265:           ...(Array.isArray(rangeDraws)
+00266:             ? rangeDraws
+00267:             : []),
+00268:           ...(Array.isArray(todayDraws)
+00269:             ? todayDraws
+00270:             : []),
+00271:         ],
+00272:         targetHour: analysisHourBucket,
+00273:       }),
+00274:     [
+
+>>> PADRÃO: visibleTernos (linha 283)
+00276:       top3,
+00277:       rangeDraws,
+00278:       todayDraws,
+00279:       analysisHourBucket,
+00280:     ]
+00281:   );
+00282: 
+00283:   const visibleTernos = useMemo(
+00284:     () =>
+00285:       allTernos.slice(
+00286:         0,
+00287:         generatedQuantity
+00288:       ),
+00289:     [allTernos, generatedQuantity]
+00290:   );
+00291: 
+00292:   useEffect(() => {
+00293:     setQuantityInput("1");
+00294:     setGeneratedQuantity(1);
+00295:     setQuantityError("");
+00296:     setCopyStatus("idle");
+
+>>> PADRÃO: visibleTernos (linha 357)
+00350:       formatDateBR(analysisYmd),
+00351:       analysisHourBucket || "",
+00352:     ]
+00353:       .filter(Boolean)
+00354:       .join(" • ");
+00355: 
+00356:     const quantityLabel =
+00357:       visibleTernos.length === 1
+00358:         ? "1 terno"
+00359:         : `${visibleTernos.length} ternos`;
+00360: 
+00361:     const header = [
+00362:       "TERNO DE GRUPO",
+00363:       `Loteria: ${lotteryLabel}`,
+00364:       `Previsão: ${predictionLabel}`,
+00365:       `Quantidade: ${quantityLabel}`,
+00366:     ];
+00367: 
+00368:     const blocks = visibleTernos.map(
+00369:       (terno) => {
+00370:         const score = Number(
+
+>>> PADRÃO: visibleTernos (linha 359)
+00352:     ]
+00353:       .filter(Boolean)
+00354:       .join(" • ");
+00355: 
+00356:     const quantityLabel =
+00357:       visibleTernos.length === 1
+00358:         ? "1 terno"
+00359:         : `${visibleTernos.length} ternos`;
+00360: 
+00361:     const header = [
+00362:       "TERNO DE GRUPO",
+00363:       `Loteria: ${lotteryLabel}`,
+00364:       `Previsão: ${predictionLabel}`,
+00365:       `Quantidade: ${quantityLabel}`,
+00366:     ];
+00367: 
+00368:     const blocks = visibleTernos.map(
+00369:       (terno) => {
+00370:         const score = Number(
+00371:           terno?.scorePct || 0
+00372:         ).toLocaleString("pt-BR", {
+
+>>> PADRÃO: visibleTernos (linha 368)
+00361:     const header = [
+00362:       "TERNO DE GRUPO",
+00363:       `Loteria: ${lotteryLabel}`,
+00364:       `Previsão: ${predictionLabel}`,
+00365:       `Quantidade: ${quantityLabel}`,
+00366:     ];
+00367: 
+00368:     const blocks = visibleTernos.map(
+00369:       (terno) => {
+00370:         const score = Number(
+00371:           terno?.scorePct || 0
+00372:         ).toLocaleString("pt-BR", {
+00373:           minimumFractionDigits: 2,
+00374:           maximumFractionDigits: 2,
+00375:         });
+00376: 
+00377:         const animals = (
+00378:           Array.isArray(terno?.grupos)
+00379:             ? terno.grupos
+00380:             : []
+00381:         ).map((grupo) => {
+
+>>> PADRÃO: visibleTernos (linha 451)
+00444:       throw new Error(
+00445:         "Falha ao copiar os ternos."
+00446:       );
+00447:     }
+00448:   };
+00449: 
+00450:   const handleCopyTernos = async () => {
+00451:     if (!visibleTernos.length) {
+00452:       return;
+00453:     }
+00454: 
+00455:     const text = buildCopyText();
+00456: 
+00457:     try {
+00458:       if (
+00459:         navigator?.clipboard &&
+00460:         window?.isSecureContext
+00461:       ) {
+00462:         await navigator.clipboard.writeText(
+00463:           text
+00464:         );
+
+>>> PADRÃO: visibleTernos (linha 715)
+00708: 
+00709:         <section className="terno-grupo-results">
+00710:           <header className="terno-grupo-results__header">
+00711:             <div>
+00712:               <span>Resultado gerado</span>
+00713: 
+00714:               <strong>
+00715:                 {visibleTernos.length}
+00716:                 {visibleTernos.length === 1
+00717:                   ? " terno"
+00718:                   : " ternos"}
+00719:               </strong>
+00720:             </div>
+00721: 
+00722:             <div className="terno-grupo-results__actions">
+00723:               <div className="terno-grupo-results__lottery">
+00724:                 <span>Loteria</span>
+00725: 
+00726:                 <strong>
+00727:                   {resolveLotteryLabel(
+00728:                     lotteryKeySafe
+
+>>> PADRÃO: visibleTernos (linha 716)
+00709:         <section className="terno-grupo-results">
+00710:           <header className="terno-grupo-results__header">
+00711:             <div>
+00712:               <span>Resultado gerado</span>
+00713: 
+00714:               <strong>
+00715:                 {visibleTernos.length}
+00716:                 {visibleTernos.length === 1
+00717:                   ? " terno"
+00718:                   : " ternos"}
+00719:               </strong>
+00720:             </div>
+00721: 
+00722:             <div className="terno-grupo-results__actions">
+00723:               <div className="terno-grupo-results__lottery">
+00724:                 <span>Loteria</span>
+00725: 
+00726:                 <strong>
+00727:                   {resolveLotteryLabel(
+00728:                     lotteryKeySafe
+00729:                   )}
+
+>>> PADRÃO: visibleTernos (linha 747)
+00740:                   copyStatus === "error"
+00741:                     ? "terno-grupo-copy--error"
+00742:                     : ""
+00743:                 }`}
+00744:                 onClick={handleCopyTernos}
+00745:                 disabled={
+00746:                   loading ||
+00747:                   !visibleTernos.length
+00748:                 }
+00749:               >
+00750:                 {copyStatus === "copied"
+00751:                   ? "COPIADO!"
+00752:                   : copyStatus === "error"
+00753:                     ? "ERRO AO COPIAR"
+00754:                     : "COPIAR TERNOS"}
+00755:               </button>
+00756:             </div>
+00757:           </header>
+00758: 
+00759:           {loading ? (
+00760:             <div className="terno-grupo-loading">
+
+>>> PADRÃO: visibleTernos (linha 763)
+00756:             </div>
+00757:           </header>
+00758: 
+00759:           {loading ? (
+00760:             <div className="terno-grupo-loading">
+00761:               Analisando a base estatística...
+00762:             </div>
+00763:           ) : visibleTernos.length ? (
+00764:             <div className="terno-grupo-list">
+00765:               {visibleTernos.map(
+00766:                 (terno) => (
+00767:                   <TernoCard
+00768:                     key={terno.key}
+00769:                     terno={terno}
+00770:                   />
+00771:                 )
+00772:               )}
+00773:             </div>
+00774:           ) : (
+00775:             <div className="terno-grupo-empty">
+00776:               Nenhum terno disponível para
+
+>>> PADRÃO: visibleTernos (linha 765)
+00758: 
+00759:           {loading ? (
+00760:             <div className="terno-grupo-loading">
+00761:               Analisando a base estatística...
+00762:             </div>
+00763:           ) : visibleTernos.length ? (
+00764:             <div className="terno-grupo-list">
+00765:               {visibleTernos.map(
+00766:                 (terno) => (
+00767:                   <TernoCard
+00768:                     key={terno.key}
+00769:                     terno={terno}
+00770:                   />
+00771:                 )
+00772:               )}
+00773:             </div>
+00774:           ) : (
+00775:             <div className="terno-grupo-empty">
+00776:               Nenhum terno disponível para
+00777:               os filtros selecionados.
+00778:             </div>
+
+>>> PADRÃO: grupos (linha 126)
+00119:           <strong>
+00120:             {terno.scorePct.toFixed(2)}%
+00121:           </strong>
+00122:         </div>
+00123:       </header>
+00124: 
+00125:       <div className="terno-grupo-card__animals">
+00126:         {terno.grupos.map((grupo) => {
+00127:           const animal = String(
+00128:             getAnimalLabel(grupo) || ""
+00129:           ).trim();
+00130: 
+00131:           return (
+00132:             <div
+00133:               key={`${terno.key}-${grupo}`}
+00134:               className="terno-grupo-animal"
+00135:             >
+00136:               <AnimalImage
+00137:                 grupo={grupo}
+00138:                 animal={animal}
+00139:               />
+
+>>> PADRÃO: grupos (linha 157)
+00150:             </div>
+00151:           );
+00152:         })}
+00153:       </div>
+00154: 
+00155:       <footer className="terno-grupo-card__footer">
+00156:         <span>
+00157:           3 grupos distintos
+00158:         </span>
+00159: 
+00160:         <span>
+00161:           Ordem irrelevante
+00162:         </span>
+00163: 
+00164:         <span>
+00165:           Acerto: 3 grupos no TOP5
+00166:         </span>
+00167:       </footer>
+00168:     </article>
+00169:   );
+00170: }
+
+>>> PADRÃO: grupos (linha 165)
+00158:         </span>
+00159: 
+00160:         <span>
+00161:           Ordem irrelevante
+00162:         </span>
+00163: 
+00164:         <span>
+00165:           Acerto: 3 grupos no TOP5
+00166:         </span>
+00167:       </footer>
+00168:     </article>
+00169:   );
+00170: }
+00171: 
+00172: export default function TernoGrupoView(
+00173:   props
+00174: ) {
+00175:   const {
+00176:     loading,
+00177:     error,
+00178:     analytics,
+
+>>> PADRÃO: grupos (linha 378)
+00371:           terno?.scorePct || 0
+00372:         ).toLocaleString("pt-BR", {
+00373:           minimumFractionDigits: 2,
+00374:           maximumFractionDigits: 2,
+00375:         });
+00376: 
+00377:         const animals = (
+00378:           Array.isArray(terno?.grupos)
+00379:             ? terno.grupos
+00380:             : []
+00381:         ).map((grupo) => {
+00382:           const animal = String(
+00383:             getAnimalLabel(grupo) || "—"
+00384:           )
+00385:             .trim()
+00386:             .toUpperCase();
+00387: 
+00388:           return `${formatGrupo(
+00389:             grupo
+00390:           )} - ${animal}`;
+00391:         });
+
+>>> PADRÃO: grupos (linha 379)
+00372:         ).toLocaleString("pt-BR", {
+00373:           minimumFractionDigits: 2,
+00374:           maximumFractionDigits: 2,
+00375:         });
+00376: 
+00377:         const animals = (
+00378:           Array.isArray(terno?.grupos)
+00379:             ? terno.grupos
+00380:             : []
+00381:         ).map((grupo) => {
+00382:           const animal = String(
+00383:             getAnimalLabel(grupo) || "—"
+00384:           )
+00385:             .trim()
+00386:             .toUpperCase();
+00387: 
+00388:           return `${formatGrupo(
+00389:             grupo
+00390:           )} - ${animal}`;
+00391:         });
+00392: 
+
+>>> PADRÃO: grupos (linha 504)
+00497:             <div className="terno-grupo-eyebrow">
+00498:               PALPITACO JB
+00499:             </div>
+00500: 
+00501:             <h1>Terno de Grupo</h1>
+00502: 
+00503:             <p>
+00504:               Gere combinações de três grupos
+00505:               classificadas da maior para a
+00506:               menor força estatística.
+00507:             </p>
+00508:           </div>
+00509: 
+00510:           <div className="terno-grupo-hero__limit">
+00511:             <strong>2.300</strong>
+00512:             <span>
+00513:               combinações possíveis
+00514:             </span>
+00515:           </div>
+00516:         </section>
+00517: 
+
+>>> PADRÃO: top5 (linha 165)
+00158:         </span>
+00159: 
+00160:         <span>
+00161:           Ordem irrelevante
+00162:         </span>
+00163: 
+00164:         <span>
+00165:           Acerto: 3 grupos no TOP5
+00166:         </span>
+00167:       </footer>
+00168:     </article>
+00169:   );
+00170: }
+00171: 
+00172: export default function TernoGrupoView(
+00173:   props
+00174: ) {
+00175:   const {
+00176:     loading,
+00177:     error,
+00178:     analytics,
+
+========================================================================================================================
+OBJETIVO DA AUDITORIA
+========================================================================================================================
+1. Confirmar onde as 2.300 combinações são geradas.
+2. Identificar onde restringe grupos distintos.
+3. Identificar onde validar multiplicidade (2x e 3x).
+4. Preparar arquitetura para Motor Tradicional e Motor Repetição coexistirem.
+5. Garantir que o motor atual permaneça inalterado.

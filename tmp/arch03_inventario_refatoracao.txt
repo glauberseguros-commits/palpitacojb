@@ -1,0 +1,516 @@
+====================================================================================================
+ARCH-03 — INVENTÁRIO PARA REFATORAÇÃO
+====================================================================================================
+Gerado em: 24/07/2026 17:36:55
+====================================================================================================
+
+
+====================================================================================================
+FUNÇÃO: normalizeLotteryKey
+====================================================================================================
+C:\Users\glaub\palpitaco\backend\engine\predictionModel.js:8
+C:\Users\glaub\palpitaco\backend\engine\predictionModel.js:20
+C:\Users\glaub\palpitaco\backend\engine\predictionModel.js:37
+C:\Users\glaub\palpitaco\backend\engine\predictionModel.js:90
+C:\Users\glaub\palpitaco\backend\engine\top3HistoryRepository.js:17
+C:\Users\glaub\palpitaco\backend\engine\top3HistoryRepository.js:87
+C:\Users\glaub\palpitaco\backend\engine\top3HistoryRepository.js:225
+C:\Users\glaub\palpitaco\backend\engine\top3HistoryRepository.js:284
+C:\Users\glaub\palpitaco\backend\engine\top3HistoryRepository.js:299
+C:\Users\glaub\palpitaco\backend\engine\top3HistoryRepository.js:317
+C:\Users\glaub\palpitaco\backend\engine\top3HistoryRepository.js:411
+C:\Users\glaub\palpitaco\backend\engine\top3HistoryRepository.js:439
+C:\Users\glaub\palpitaco\backend\engine\top3HistoryRepository.js:466
+C:\Users\glaub\palpitaco\backend\engine\top3HistoryRepository.js:571
+C:\Users\glaub\palpitaco\backend\engine\top3HistoryRepository.js:593
+C:\Users\glaub\palpitaco\backend\engine\top3HistoryRepository.js:621
+C:\Users\glaub\palpitaco\backend\engine\top3HistoryRepository.js:662
+C:\Users\glaub\palpitaco\backend\engine\top3HistoryRepository.js:748
+C:\Users\glaub\palpitaco\backend\engine\top3HistoryRepository.js:890
+C:\Users\glaub\palpitaco\backend\engine\top3HistorySync.js:23
+C:\Users\glaub\palpitaco\backend\engine\top3HistorySync.js:76
+C:\Users\glaub\palpitaco\backend\engine\top3HistorySync.js:133
+C:\Users\glaub\palpitaco\backend\engine\top3HistorySync.js:233
+C:\Users\glaub\palpitaco\backend\engine\top3PredictionService.js:74
+C:\Users\glaub\palpitaco\backend\engine\top3PredictionService.js:349
+C:\Users\glaub\palpitaco\backend\engine\top3PredictionService.js:382
+C:\Users\glaub\palpitaco\backend\engine\top3PredictionService.js:544
+C:\Users\glaub\palpitaco\backend\engine\top3PredictionService.js:748
+C:\Users\glaub\palpitaco\backend\routes\bounds.js:12
+C:\Users\glaub\palpitaco\backend\routes\bounds.js:230
+C:\Users\glaub\palpitaco\backend\routes\bounds.js:272
+C:\Users\glaub\palpitaco\backend\routes\bounds.js:324
+C:\Users\glaub\palpitaco\backend\routes\kingDraws.js:13
+C:\Users\glaub\palpitaco\backend\routes\kingDraws.js:168
+C:\Users\glaub\palpitaco\backend\routes\pitacoResults.js:73
+C:\Users\glaub\palpitaco\backend\routes\pitacoResults.js:627
+C:\Users\glaub\palpitaco\backend\routes\receiveResults.js:77
+C:\Users\glaub\palpitaco\backend\routes\receiveResults.js:168
+C:\Users\glaub\palpitaco\backend\scripts\backtestTop3Official.js:45
+C:\Users\glaub\palpitaco\backend\scripts\backtestTop3Official.js:185
+C:\Users\glaub\palpitaco\backend\scripts\backtestTop3Official.js:781
+C:\Users\glaub\palpitaco\backend\scripts\findDuplicatesDraws.js:28
+C:\Users\glaub\palpitaco\backend\scripts\findDuplicatesDraws.js:109
+C:\Users\glaub\palpitaco\backend\scripts\findDuplicatesDraws.js:144
+C:\Users\glaub\palpitaco\backend\scripts\lintSourceGaps.js:7
+C:\Users\glaub\palpitaco\backend\scripts\lintSourceGaps.js:65
+C:\Users\glaub\palpitaco\backend\scripts\listDrawDuplicates.js:25
+C:\Users\glaub\palpitaco\backend\scripts\listDrawDuplicates.js:108
+C:\Users\glaub\palpitaco\backend\scripts\listDrawDuplicates.js:152
+C:\Users\glaub\palpitaco\backend\scripts\planBackfillFromAudit.js:24
+C:\Users\glaub\palpitaco\backend\scripts\planBackfillFromAudit.js:85
+C:\Users\glaub\palpitaco\backend\scripts\planBackfillFromAudit.js:128
+C:\Users\glaub\palpitaco\backend\scripts\planBackfillFromAudit.js:268
+C:\Users\glaub\palpitaco\backend\server.js:8
+C:\Users\glaub\palpitaco\backend\server.js:17
+C:\Users\glaub\palpitaco\backend\workers\bootstrapTop3History.js:8
+C:\Users\glaub\palpitaco\backend\workers\bootstrapTop3History.js:77
+C:\Users\glaub\palpitaco\backend\workers\bootstrapTop3History.js:180
+C:\Users\glaub\palpitaco\src\constants\schedule.js:7
+C:\Users\glaub\palpitaco\src\constants\schedule.js:79
+C:\Users\glaub\palpitaco\src\pages\Top3\top3.firestore.js:25
+C:\Users\glaub\palpitaco\src\pages\Top3\top3.firestore.js:38
+C:\Users\glaub\palpitaco\src\pages\Top3\top3.firestore.js:237
+C:\Users\glaub\palpitaco\src\pages\Top3\top3.firestore.js:324
+C:\Users\glaub\palpitaco\src\pages\Top3\top3.firestore.js:403
+
+====================================================================================================
+FUNÇÃO: normalizeLottery
+====================================================================================================
+C:\Users\glaub\palpitaco\backend\engine\drawRepository.js:5
+C:\Users\glaub\palpitaco\backend\engine\drawRepository.js:64
+C:\Users\glaub\palpitaco\backend\engine\drawRepository.js:176
+C:\Users\glaub\palpitaco\backend\engine\predictionModel.js:8
+C:\Users\glaub\palpitaco\backend\engine\predictionModel.js:20
+C:\Users\glaub\palpitaco\backend\engine\predictionModel.js:37
+C:\Users\glaub\palpitaco\backend\engine\predictionModel.js:90
+C:\Users\glaub\palpitaco\backend\engine\top3HistoryRepository.js:17
+C:\Users\glaub\palpitaco\backend\engine\top3HistoryRepository.js:87
+C:\Users\glaub\palpitaco\backend\engine\top3HistoryRepository.js:225
+C:\Users\glaub\palpitaco\backend\engine\top3HistoryRepository.js:284
+C:\Users\glaub\palpitaco\backend\engine\top3HistoryRepository.js:299
+C:\Users\glaub\palpitaco\backend\engine\top3HistoryRepository.js:317
+C:\Users\glaub\palpitaco\backend\engine\top3HistoryRepository.js:411
+C:\Users\glaub\palpitaco\backend\engine\top3HistoryRepository.js:439
+C:\Users\glaub\palpitaco\backend\engine\top3HistoryRepository.js:466
+C:\Users\glaub\palpitaco\backend\engine\top3HistoryRepository.js:571
+C:\Users\glaub\palpitaco\backend\engine\top3HistoryRepository.js:593
+C:\Users\glaub\palpitaco\backend\engine\top3HistoryRepository.js:621
+C:\Users\glaub\palpitaco\backend\engine\top3HistoryRepository.js:662
+C:\Users\glaub\palpitaco\backend\engine\top3HistoryRepository.js:748
+C:\Users\glaub\palpitaco\backend\engine\top3HistoryRepository.js:890
+C:\Users\glaub\palpitaco\backend\engine\top3HistorySync.js:23
+C:\Users\glaub\palpitaco\backend\engine\top3HistorySync.js:76
+C:\Users\glaub\palpitaco\backend\engine\top3HistorySync.js:133
+C:\Users\glaub\palpitaco\backend\engine\top3HistorySync.js:233
+C:\Users\glaub\palpitaco\backend\engine\top3PredictionService.js:74
+C:\Users\glaub\palpitaco\backend\engine\top3PredictionService.js:349
+C:\Users\glaub\palpitaco\backend\engine\top3PredictionService.js:382
+C:\Users\glaub\palpitaco\backend\engine\top3PredictionService.js:544
+C:\Users\glaub\palpitaco\backend\engine\top3PredictionService.js:748
+C:\Users\glaub\palpitaco\backend\routes\bounds.js:12
+C:\Users\glaub\palpitaco\backend\routes\bounds.js:230
+C:\Users\glaub\palpitaco\backend\routes\bounds.js:272
+C:\Users\glaub\palpitaco\backend\routes\bounds.js:324
+C:\Users\glaub\palpitaco\backend\routes\kingDraws.js:13
+C:\Users\glaub\palpitaco\backend\routes\kingDraws.js:168
+C:\Users\glaub\palpitaco\backend\routes\pitacoResults.js:73
+C:\Users\glaub\palpitaco\backend\routes\pitacoResults.js:627
+C:\Users\glaub\palpitaco\backend\routes\receiveResults.js:77
+C:\Users\glaub\palpitaco\backend\routes\receiveResults.js:168
+C:\Users\glaub\palpitaco\backend\scripts\backtestTop3Official.js:45
+C:\Users\glaub\palpitaco\backend\scripts\backtestTop3Official.js:185
+C:\Users\glaub\palpitaco\backend\scripts\backtestTop3Official.js:781
+C:\Users\glaub\palpitaco\backend\scripts\findDuplicatesDraws.js:28
+C:\Users\glaub\palpitaco\backend\scripts\findDuplicatesDraws.js:109
+C:\Users\glaub\palpitaco\backend\scripts\findDuplicatesDraws.js:144
+C:\Users\glaub\palpitaco\backend\scripts\lintSourceGaps.js:7
+C:\Users\glaub\palpitaco\backend\scripts\lintSourceGaps.js:65
+C:\Users\glaub\palpitaco\backend\scripts\listDrawDuplicates.js:25
+C:\Users\glaub\palpitaco\backend\scripts\listDrawDuplicates.js:108
+C:\Users\glaub\palpitaco\backend\scripts\listDrawDuplicates.js:152
+C:\Users\glaub\palpitaco\backend\scripts\planBackfillFromAudit.js:24
+C:\Users\glaub\palpitaco\backend\scripts\planBackfillFromAudit.js:85
+C:\Users\glaub\palpitaco\backend\scripts\planBackfillFromAudit.js:128
+C:\Users\glaub\palpitaco\backend\scripts\planBackfillFromAudit.js:268
+C:\Users\glaub\palpitaco\backend\server.js:8
+C:\Users\glaub\palpitaco\backend\server.js:17
+C:\Users\glaub\palpitaco\backend\workers\bootstrapTop3History.js:8
+C:\Users\glaub\palpitaco\backend\workers\bootstrapTop3History.js:77
+C:\Users\glaub\palpitaco\backend\workers\bootstrapTop3History.js:180
+C:\Users\glaub\palpitaco\src\constants\schedule.js:7
+C:\Users\glaub\palpitaco\src\constants\schedule.js:79
+C:\Users\glaub\palpitaco\src\pages\Top3\top3.firestore.js:25
+C:\Users\glaub\palpitaco\src\pages\Top3\top3.firestore.js:38
+C:\Users\glaub\palpitaco\src\pages\Top3\top3.firestore.js:237
+C:\Users\glaub\palpitaco\src\pages\Top3\top3.firestore.js:324
+C:\Users\glaub\palpitaco\src\pages\Top3\top3.firestore.js:403
+C:\Users\glaub\palpitaco\src\services\kingResultsService.js:308
+C:\Users\glaub\palpitaco\src\services\kingResultsService.js:338
+C:\Users\glaub\palpitaco\src\services\kingResultsService.js:339
+C:\Users\glaub\palpitaco\src\services\kingResultsService.js:365
+C:\Users\glaub\palpitaco\src\services\kingResultsService.js:366
+C:\Users\glaub\palpitaco\src\services\kingResultsService.js:404
+
+====================================================================================================
+FUNÇÃO: normalizeHourLike
+====================================================================================================
+C:\Users\glaub\palpitaco\backend\scripts\auditDrawsBoundsAndCounts.js:78
+C:\Users\glaub\palpitaco\backend\scripts\auditDrawsBoundsAndCounts.js:111
+C:\Users\glaub\palpitaco\backend\server.js:264
+C:\Users\glaub\palpitaco\backend\server.js:311
+C:\Users\glaub\palpitaco\backend\server.js:475
+C:\Users\glaub\palpitaco\backend\server.js:619
+C:\Users\glaub\palpitaco\src\pages\Centenas\centenas.utils.js:67
+C:\Users\glaub\palpitaco\src\pages\Centenas\centenas.utils.js:89
+C:\Users\glaub\palpitaco\src\pages\Centenas\centenas.utils.js:136
+C:\Users\glaub\palpitaco\src\pages\Centenas\centenas.utils.js:152
+C:\Users\glaub\palpitaco\src\pages\Centenas\centenas.utils.js:398
+C:\Users\glaub\palpitaco\src\pages\Centenas\CentenasView.jsx:96
+C:\Users\glaub\palpitaco\src\pages\Centenas\CentenasView.jsx:118
+C:\Users\glaub\palpitaco\src\pages\Centenas\CentenasView.jsx:163
+C:\Users\glaub\palpitaco\src\pages\Centenas\CentenasView.jsx:276
+C:\Users\glaub\palpitaco\src\pages\Centenas\CentenasView.jsx:292
+C:\Users\glaub\palpitaco\src\pages\Centenas\CentenasView.jsx:524
+C:\Users\glaub\palpitaco\src\pages\Centenas\CentenasView.jsx:671
+C:\Users\glaub\palpitaco\src\pages\Centenas\CentenasView.jsx:1265
+C:\Users\glaub\palpitaco\src\pages\Centenas\CentenasView.jsx:1305
+C:\Users\glaub\palpitaco\src\pages\Downloads\Downloads.jsx:40
+C:\Users\glaub\palpitaco\src\pages\Downloads\Downloads.jsx:59
+C:\Users\glaub\palpitaco\src\pages\Downloads\Downloads.jsx:174
+C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:86
+C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:107
+C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:121
+C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:151
+C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:193
+C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:210
+C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:589
+C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:1057
+C:\Users\glaub\palpitaco\src\pages\Results\Results.jsx:113
+C:\Users\glaub\palpitaco\src\pages\Results\Results.jsx:134
+C:\Users\glaub\palpitaco\src\pages\Results\Results.jsx:515
+C:\Users\glaub\palpitaco\src\pages\Results\Results.jsx:666
+C:\Users\glaub\palpitaco\src\pages\Results\Results.jsx:697
+C:\Users\glaub\palpitaco\src\pages\Results\Results.jsx:704
+C:\Users\glaub\palpitaco\src\pages\Results\Results.jsx:1960
+C:\Users\glaub\palpitaco\src\pages\Search\Search.jsx:82
+C:\Users\glaub\palpitaco\src\pages\Search\Search.jsx:773
+C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js:7
+C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js:130
+C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js:7
+C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js:130
+C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.js:7
+C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.js:132
+C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.js:296
+C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.js:314
+C:\Users\glaub\palpitaco\src\pages\Top3\top3.formatters.js:164
+C:\Users\glaub\palpitaco\src\pages\Top3\top3.formatters.js:213
+C:\Users\glaub\palpitaco\src\pages\Top3\top3.formatters.js:234
+C:\Users\glaub\palpitaco\src\services\auditKingCounts.js:82
+C:\Users\glaub\palpitaco\src\services\auditKingCounts.js:197
+C:\Users\glaub\palpitaco\src\services\auditKingCounts.js:252
+C:\Users\glaub\palpitaco\src\services\auditKingCounts.js:272
+C:\Users\glaub\palpitaco\src\services\auditKingCounts.js:415
+C:\Users\glaub\palpitaco\src\services\kingResultsService.js:200
+C:\Users\glaub\palpitaco\src\services\kingResultsService.js:268
+C:\Users\glaub\palpitaco\src\services\kingResultsService.js:279
+C:\Users\glaub\palpitaco\src\services\kingResultsService.js:282
+C:\Users\glaub\palpitaco\src\services\kingResultsService.js:323
+C:\Users\glaub\palpitaco\src\services\kingResultsService.js:350
+C:\Users\glaub\palpitaco\src\services\kingResultsService.js:402
+C:\Users\glaub\palpitaco\src\services\kingResultsService.js:550
+C:\Users\glaub\palpitaco\src\services\kingResultsService.js:1086
+C:\Users\glaub\palpitaco\src\services\kingResultsService.js:1673
+C:\Users\glaub\palpitaco\src\services\kingResultsService.js:1801
+C:\Users\glaub\palpitaco\src\services\statsSignals.js:107
+C:\Users\glaub\palpitaco\src\services\statsSignals.js:134
+C:\Users\glaub\palpitaco\src\services\statsSignals.js:197
+C:\Users\glaub\palpitaco\src\utils\buildPalpites.js:56
+C:\Users\glaub\palpitaco\src\utils\buildPalpites.js:244
+C:\Users\glaub\palpitaco\src\utils\buildPalpites.js:260
+
+====================================================================================================
+FUNÇÃO: normalizeHour
+====================================================================================================
+C:\Users\glaub\palpitaco\backend\engine\scoreEngineE08Experimental.js:16
+C:\Users\glaub\palpitaco\backend\engine\scoreEngineE08Experimental.js:57
+C:\Users\glaub\palpitaco\backend\engine\scoreEngineE08Experimental.js:375
+C:\Users\glaub\palpitaco\backend\engine\scoreEngineV4Experimental.js:14
+C:\Users\glaub\palpitaco\backend\engine\scoreEngineV4Experimental.js:79
+C:\Users\glaub\palpitaco\backend\engine\scoreEngineV4Experimental.js:365
+C:\Users\glaub\palpitaco\backend\engine\top3PredictionService.js:92
+C:\Users\glaub\palpitaco\backend\engine\top3PredictionService.js:125
+C:\Users\glaub\palpitaco\backend\engine\top3PredictionService.js:326
+C:\Users\glaub\palpitaco\backend\engine\top3PredictionService.js:351
+C:\Users\glaub\palpitaco\backend\engine\top3PredictionService.js:545
+C:\Users\glaub\palpitaco\backend\engine\top3PredictionService.js:753
+C:\Users\glaub\palpitaco\backend\engine\top3PredictionService.js:807
+C:\Users\glaub\palpitaco\backend\engine\top3PredictionService.js:968
+C:\Users\glaub\palpitaco\backend\routes\pitacoResults.js:330
+C:\Users\glaub\palpitaco\backend\routes\pitacoResults.js:401
+C:\Users\glaub\palpitaco\backend\routes\pitacoResults.js:402
+C:\Users\glaub\palpitaco\backend\routes\pitacoResults.js:403
+C:\Users\glaub\palpitaco\backend\routes\pitacoResults.js:428
+C:\Users\glaub\palpitaco\backend\routes\pitacoResults.js:429
+C:\Users\glaub\palpitaco\backend\routes\pitacoResults.js:430
+C:\Users\glaub\palpitaco\backend\routes\pitacoResults.js:436
+C:\Users\glaub\palpitaco\backend\routes\pitacoResults.js:437
+C:\Users\glaub\palpitaco\backend\routes\pitacoResults.js:438
+C:\Users\glaub\palpitaco\backend\routes\pitacoResults.js:485
+C:\Users\glaub\palpitaco\backend\routes\pitacoResults.js:495
+C:\Users\glaub\palpitaco\backend\routes\pitacoResults.js:496
+C:\Users\glaub\palpitaco\backend\scripts\auditDrawsBoundsAndCounts.js:78
+C:\Users\glaub\palpitaco\backend\scripts\auditDrawsBoundsAndCounts.js:111
+C:\Users\glaub\palpitaco\backend\scripts\auditDrawSlotsRange.js:198
+C:\Users\glaub\palpitaco\backend\scripts\auditDrawSlotsRange.js:273
+C:\Users\glaub\palpitaco\backend\scripts\auditDrawSlotsRange.js:274
+C:\Users\glaub\palpitaco\backend\scripts\auditHistoricalGaps.js:70
+C:\Users\glaub\palpitaco\backend\scripts\auditHistoricalGaps.js:144
+C:\Users\glaub\palpitaco\backend\scripts\auditHistoricalGaps.js:145
+C:\Users\glaub\palpitaco\backend\scripts\auditHistoricalGaps.js:155
+C:\Users\glaub\palpitaco\backend\scripts\auditHistoricalGaps.js:156
+C:\Users\glaub\palpitaco\backend\scripts\backtestTop3Official.js:51
+C:\Users\glaub\palpitaco\backend\scripts\backtestTop3Official.js:70
+C:\Users\glaub\palpitaco\backend\scripts\backtestTop3Official.js:986
+C:\Users\glaub\palpitaco\backend\scripts\backtestTop3Official.js:1104
+C:\Users\glaub\palpitaco\backend\scripts\integrityCheck.js:6
+C:\Users\glaub\palpitaco\backend\scripts\integrityCheck.js:30
+C:\Users\glaub\palpitaco\backend\server.js:264
+C:\Users\glaub\palpitaco\backend\server.js:311
+C:\Users\glaub\palpitaco\backend\server.js:475
+C:\Users\glaub\palpitaco\backend\server.js:619
+C:\Users\glaub\palpitaco\src\pages\Centenas\centenas.utils.js:67
+C:\Users\glaub\palpitaco\src\pages\Centenas\centenas.utils.js:89
+C:\Users\glaub\palpitaco\src\pages\Centenas\centenas.utils.js:136
+C:\Users\glaub\palpitaco\src\pages\Centenas\centenas.utils.js:152
+C:\Users\glaub\palpitaco\src\pages\Centenas\centenas.utils.js:398
+C:\Users\glaub\palpitaco\src\pages\Centenas\CentenasView.jsx:96
+C:\Users\glaub\palpitaco\src\pages\Centenas\CentenasView.jsx:118
+C:\Users\glaub\palpitaco\src\pages\Centenas\CentenasView.jsx:163
+C:\Users\glaub\palpitaco\src\pages\Centenas\CentenasView.jsx:276
+C:\Users\glaub\palpitaco\src\pages\Centenas\CentenasView.jsx:292
+C:\Users\glaub\palpitaco\src\pages\Centenas\CentenasView.jsx:524
+C:\Users\glaub\palpitaco\src\pages\Centenas\CentenasView.jsx:671
+C:\Users\glaub\palpitaco\src\pages\Centenas\CentenasView.jsx:1265
+C:\Users\glaub\palpitaco\src\pages\Centenas\CentenasView.jsx:1305
+C:\Users\glaub\palpitaco\src\pages\Dashboard\Dashboard.jsx:181
+C:\Users\glaub\palpitaco\src\pages\Dashboard\Dashboard.jsx:568
+C:\Users\glaub\palpitaco\src\pages\Dashboard\Dashboard.jsx:780
+C:\Users\glaub\palpitaco\src\pages\Dashboard\Dashboard.jsx:1195
+C:\Users\glaub\palpitaco\src\pages\Dashboard\Dashboard.jsx:1320
+C:\Users\glaub\palpitaco\src\pages\Dashboard\Dashboard.jsx:1440
+C:\Users\glaub\palpitaco\src\pages\Downloads\Downloads.jsx:40
+C:\Users\glaub\palpitaco\src\pages\Downloads\Downloads.jsx:59
+C:\Users\glaub\palpitaco\src\pages\Downloads\Downloads.jsx:174
+C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:86
+C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:107
+C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:121
+C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:151
+C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:193
+C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:210
+C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:589
+C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:1057
+C:\Users\glaub\palpitaco\src\pages\Results\Results.jsx:113
+C:\Users\glaub\palpitaco\src\pages\Results\Results.jsx:134
+C:\Users\glaub\palpitaco\src\pages\Results\Results.jsx:515
+C:\Users\glaub\palpitaco\src\pages\Results\Results.jsx:666
+C:\Users\glaub\palpitaco\src\pages\Results\Results.jsx:697
+C:\Users\glaub\palpitaco\src\pages\Results\Results.jsx:704
+C:\Users\glaub\palpitaco\src\pages\Results\Results.jsx:1960
+C:\Users\glaub\palpitaco\src\pages\Search\Search.jsx:82
+C:\Users\glaub\palpitaco\src\pages\Search\Search.jsx:773
+C:\Users\glaub\palpitaco\src\pages\Statistics\Statistics.jsx:247
+C:\Users\glaub\palpitaco\src\pages\Statistics\Statistics.jsx:264
+C:\Users\glaub\palpitaco\src\pages\Statistics\Statistics.jsx:934
+C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js:7
+C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js:130
+C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js:7
+C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js:130
+C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.js:7
+C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.js:132
+C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.js:296
+C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.js:314
+C:\Users\glaub\palpitaco\src\pages\Top3\top3.firestore.js:29
+C:\Users\glaub\palpitaco\src\pages\Top3\top3.firestore.js:34
+C:\Users\glaub\palpitaco\src\pages\Top3\top3.firestore.js:103
+C:\Users\glaub\palpitaco\src\pages\Top3\top3.firestore.js:111
+C:\Users\glaub\palpitaco\src\pages\Top3\top3.firestore.js:239
+C:\Users\glaub\palpitaco\src\pages\Top3\top3.firestore.js:332
+C:\Users\glaub\palpitaco\src\pages\Top3\top3.firestore.js:364
+C:\Users\glaub\palpitaco\src\pages\Top3\top3.firestore.js:365
+C:\Users\glaub\palpitaco\src\pages\Top3\top3.formatters.js:164
+C:\Users\glaub\palpitaco\src\pages\Top3\top3.formatters.js:213
+C:\Users\glaub\palpitaco\src\pages\Top3\top3.formatters.js:234
+C:\Users\glaub\palpitaco\src\services\auditKingCounts.js:82
+C:\Users\glaub\palpitaco\src\services\auditKingCounts.js:197
+C:\Users\glaub\palpitaco\src\services\auditKingCounts.js:252
+C:\Users\glaub\palpitaco\src\services\auditKingCounts.js:272
+C:\Users\glaub\palpitaco\src\services\auditKingCounts.js:415
+C:\Users\glaub\palpitaco\src\services\kingResultsService.js:200
+C:\Users\glaub\palpitaco\src\services\kingResultsService.js:268
+C:\Users\glaub\palpitaco\src\services\kingResultsService.js:279
+C:\Users\glaub\palpitaco\src\services\kingResultsService.js:282
+C:\Users\glaub\palpitaco\src\services\kingResultsService.js:323
+C:\Users\glaub\palpitaco\src\services\kingResultsService.js:350
+C:\Users\glaub\palpitaco\src\services\kingResultsService.js:402
+C:\Users\glaub\palpitaco\src\services\kingResultsService.js:550
+C:\Users\glaub\palpitaco\src\services\kingResultsService.js:1086
+C:\Users\glaub\palpitaco\src\services\kingResultsService.js:1673
+C:\Users\glaub\palpitaco\src\services\kingResultsService.js:1801
+C:\Users\glaub\palpitaco\src\services\statsSignals.js:107
+C:\Users\glaub\palpitaco\src\services\statsSignals.js:134
+C:\Users\glaub\palpitaco\src\services\statsSignals.js:197
+C:\Users\glaub\palpitaco\src\utils\buildPalpites.js:56
+C:\Users\glaub\palpitaco\src\utils\buildPalpites.js:244
+C:\Users\glaub\palpitaco\src\utils\buildPalpites.js:260
+
+====================================================================================================
+FUNÇÃO: normalizeYmd
+====================================================================================================
+C:\Users\glaub\palpitaco\backend\engine\scoreEngineV4Experimental.js:44
+C:\Users\glaub\palpitaco\backend\engine\scoreEngineV4Experimental.js:67
+C:\Users\glaub\palpitaco\backend\engine\scoreEngineV4Experimental.js:580
+C:\Users\glaub\palpitaco\backend\engine\top3HistoryRepository.js:51
+C:\Users\glaub\palpitaco\backend\engine\top3HistoryRepository.js:195
+C:\Users\glaub\palpitaco\backend\engine\top3PredictionService.js:80
+C:\Users\glaub\palpitaco\backend\engine\top3PredictionService.js:350
+C:\Users\glaub\palpitaco\backend\engine\top3PredictionService.js:372
+C:\Users\glaub\palpitaco\backend\engine\top3PredictionService.js:752
+C:\Users\glaub\palpitaco\backend\scripts\genPtRioCalendarRules.js:65
+C:\Users\glaub\palpitaco\backend\scripts\genPtRioCalendarRules.js:92
+C:\Users\glaub\palpitaco\src\pages\Search\Search.jsx:136
+C:\Users\glaub\palpitaco\src\pages\Search\Search.jsx:770
+C:\Users\glaub\palpitaco\src\pages\Statistics\Statistics.jsx:117
+C:\Users\glaub\palpitaco\src\pages\Statistics\Statistics.jsx:132
+C:\Users\glaub\palpitaco\src\pages\Statistics\Statistics.jsx:924
+
+====================================================================================================
+FUNÇÃO: normalizePrize
+====================================================================================================
+C:\Users\glaub\palpitaco\backend\engine\top3HistoryRepository.js:152
+C:\Users\glaub\palpitaco\backend\engine\top3HistoryRepository.js:212
+C:\Users\glaub\palpitaco\backend\engine\top3HistoryRepository.js:490
+C:\Users\glaub\palpitaco\backend\engine\top3HistoryRepository.js:515
+C:\Users\glaub\palpitaco\backend\scripts\importKingApostas.js:330
+C:\Users\glaub\palpitaco\backend\scripts\importKingApostas.js:1306
+C:\Users\glaub\palpitaco\src\pages\Centenas\centenas.utils.js:349
+C:\Users\glaub\palpitaco\src\pages\Centenas\CentenasView.jsx:475
+C:\Users\glaub\palpitaco\src\pages\Centenas\CentenasView.jsx:1169
+C:\Users\glaub\palpitaco\src\pages\Centenas\CentenasView.jsx:1224
+C:\Users\glaub\palpitaco\src\pages\Centenas\CentenasView.jsx:1243
+C:\Users\glaub\palpitaco\src\pages\Statistics\Statistics.jsx:457
+C:\Users\glaub\palpitaco\src\pages\Statistics\Statistics.jsx:511
+C:\Users\glaub\palpitaco\src\services\king\king.normalize.js:86
+C:\Users\glaub\palpitaco\src\services\king\king.normalize.js:169
+C:\Users\glaub\palpitaco\src\services\kingResultsService.js:23
+C:\Users\glaub\palpitaco\src\services\kingResultsService.js:502
+C:\Users\glaub\palpitaco\src\services\kingResultsService.js:526
+
+====================================================================================================
+FUNÇÃO: normalizeDraw
+====================================================================================================
+C:\Users\glaub\palpitaco\backend\engine\top3HistoryRepository.js:188
+C:\Users\glaub\palpitaco\backend\engine\top3HistoryRepository.js:254
+C:\Users\glaub\palpitaco\backend\engine\top3HistoryRepository.js:526
+C:\Users\glaub\palpitaco\backend\engine\top3HistoryRepository.js:553
+C:\Users\glaub\palpitaco\backend\engine\top3HistoryRepository.js:893
+C:\Users\glaub\palpitaco\backend\routes\kingDraws.js:299
+C:\Users\glaub\palpitaco\backend\routes\kingDraws.js:402
+C:\Users\glaub\palpitaco\backend\routes\kingDraws.js:456
+C:\Users\glaub\palpitaco\backend\routes\kingDraws.js:519
+C:\Users\glaub\palpitaco\backend\scripts\importKingApostas.js:427
+C:\Users\glaub\palpitaco\backend\scripts\importKingApostas.js:865
+C:\Users\glaub\palpitaco\backend\scripts\importKingApostas.js:902
+C:\Users\glaub\palpitaco\backend\scripts\importKingApostas.js:1031
+C:\Users\glaub\palpitaco\backend\scripts\importKingApostas.js:1201
+C:\Users\glaub\palpitaco\backend\workers\bootstrapTop3History.js:9
+C:\Users\glaub\palpitaco\backend\workers\bootstrapTop3History.js:43
+C:\Users\glaub\palpitaco\src\hooks\useKingRanking.js:180
+C:\Users\glaub\palpitaco\src\hooks\useKingRanking.js:596
+C:\Users\glaub\palpitaco\src\pages\Admin\modules\MilharEngine\MilharEnginePage.jsx:134
+C:\Users\glaub\palpitaco\src\pages\Admin\modules\MilharEngine\MilharEnginePage.jsx:168
+C:\Users\glaub\palpitaco\src\pages\Centenas\centenas.utils.js:337
+C:\Users\glaub\palpitaco\src\pages\Centenas\CentenasView.jsx:463
+C:\Users\glaub\palpitaco\src\pages\Centenas\CentenasView.jsx:1166
+C:\Users\glaub\palpitaco\src\pages\Centenas\CentenasView.jsx:1210
+C:\Users\glaub\palpitaco\src\pages\Centenas\CentenasView.jsx:1241
+C:\Users\glaub\palpitaco\src\pages\Search\Search.jsx:366
+C:\Users\glaub\palpitaco\src\pages\Search\Search.jsx:766
+C:\Users\glaub\palpitaco\src\pages\Statistics\Statistics.jsx:307
+C:\Users\glaub\palpitaco\src\pages\Statistics\Statistics.jsx:921
+
+====================================================================================================
+FUNÇÃO: normalizeDate
+====================================================================================================
+
+====================================================================================================
+FUNÇÃO: normalizeResult
+====================================================================================================
+C:\Users\glaub\palpitaco\backend\routes\receiveResults.js:135
+C:\Users\glaub\palpitaco\backend\routes\receiveResults.js:202
+C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.js:3966
+C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.js:4012
+C:\Users\glaub\palpitaco\src\pages\Top3\top3.storage.js:66
+C:\Users\glaub\palpitaco\src\pages\Top3\top3.storage.js:81
+C:\Users\glaub\palpitaco\src\pages\Top3\top3.storage.js:228
+C:\Users\glaub\palpitaco\src\pages\Top3\top3.storage.js:294
+C:\Users\glaub\palpitaco\src\pages\Top3\top3.storage.js:342
+
+====================================================================================================
+ARQUIVOS COM MAIOR CONCENTRAÇÃO DE NORMALIZAÇÕES
+====================================================================================================
+
+Arquivo                                                                                     Qtde
+-------                                                                                     ----
+C:\Users\glaub\palpitaco\backend\engine\top3HistoryRepository.js                              69
+C:\Users\glaub\palpitaco\backend\scripts\importKingApostas.js                                 60
+C:\Users\glaub\palpitaco\src\services\kingResultsService.js                                   58
+C:\Users\glaub\palpitaco\src\pages\Centenas\modules\milharProbabilityEngine.js                44
+C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.js                                        43
+C:\Users\glaub\palpitaco\src\pages\Dashboard\Dashboard.jsx                                    30
+C:\Users\glaub\palpitaco\src\pages\Top3\top3.storage.js                                       29
+C:\Users\glaub\palpitaco\src\pages\Dashboard\components\FiltersBar.jsx                        28
+C:\Users\glaub\palpitaco\src\pages\Results\Results.jsx                                        28
+C:\Users\glaub\palpitaco\backend\routes\pitacoResults.js                                      27
+C:\Users\glaub\palpitaco\src\pages\Centenas\modules\milharProbabilityEngineV3.js              27
+C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js   26
+C:\Users\glaub\palpitaco\backend\engine\top3PredictionService.js                              26
+C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js   26
+C:\Users\glaub\palpitaco\src\pages\Centenas\CentenasView.jsx                                  26
+C:\Users\glaub\palpitaco\backend\node_modules\@firebase\component\dist\index.cjs.js           25
+C:\Users\glaub\palpitaco\src\pages\Top3\top3.firestore.js                                     25
+C:\Users\glaub\palpitaco\src\pages\Admin\modules\MilharEngine\MilharEnginePage.jsx            25
+C:\Users\glaub\palpitaco\backend\node_modules\@firebase\component\dist\esm\index.esm.js       25
+C:\Users\glaub\palpitaco\src\pages\Downloads\Downloads.jsx                                    23
+C:\Users\glaub\palpitaco\src\pages\Account\account.profile.service.js                         21
+C:\Users\glaub\palpitaco\backend\node_modules\@babel\parser\lib\index.js                      21
+C:\Users\glaub\palpitaco\src\pages\Statistics\Statistics.jsx                                  20
+C:\Users\glaub\palpitaco\backend\node_modules\axios\dist\axios.js                             20
+C:\Users\glaub\palpitaco\backend\node_modules\axios\dist\esm\axios.js                         19
+C:\Users\glaub\palpitaco\backend\node_modules\browserslist\index.js                           18
+C:\Users\glaub\palpitaco\src\pages\Dashboard\components\DateRangeControl.jsx                  17
+C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx                                              17
+C:\Users\glaub\palpitaco\src\pages\Account\Account.jsx                                        17
+C:\Users\glaub\palpitaco\src\services\auditKingCounts.js                                      16
+C:\Users\glaub\palpitaco\backend\node_modules\yargs\build\lib\usage.js                        16
+C:\Users\glaub\palpitaco\backend\workers\bootstrapTop3History.js                              15
+C:\Users\glaub\palpitaco\src\hooks\useKingRanking.js                                          15
+C:\Users\glaub\palpitaco\backend\node_modules\axios\lib\core\AxiosHeaders.js                  15
+C:\Users\glaub\palpitaco\src\pages\Search\Search.jsx                                          14
+C:\Users\glaub\palpitaco\backend\scripts\ptRioCalendar.js                                     14
+C:\Users\glaub\palpitaco\backend\node_modules\@grpc\grpc-js\src\metadata.ts                   12
+C:\Users\glaub\palpitaco\backend\node_modules\protobufjs\dist\light\protobuf.js               12
+C:\Users\glaub\palpitaco\backend\node_modules\protobufjs\dist\protobuf.js                     12
+C:\Users\glaub\palpitaco\src\pages\Top3\Top3View.jsx                                          12
+C:\Users\glaub\palpitaco\backend\node_modules\@grpc\grpc-js\build\src\metadata.js             12
+C:\Users\glaub\palpitaco\backend\node_modules\@protobufjs\path\index.js                       12
+C:\Users\glaub\palpitaco\backend\routes\kingDraws.js                                          12
+C:\Users\glaub\palpitaco\backend\node_modules\yargs-parser\build\lib\yargs-parser.js          12
+C:\Users\glaub\palpitaco\src\services\planService.js                                          11
+C:\Users\glaub\palpitaco\backend\node_modules\type-is\index.js                                11
+C:\Users\glaub\palpitaco\backend\node_modules\send\index.js                                   11
+C:\Users\glaub\palpitaco\src\pages\Top3\Top3View.premium.backup.jsx                           11
+C:\Users\glaub\palpitaco\backend\node_modules\browserslist\node.js                            10
+C:\Users\glaub\palpitaco\src\App.jsx                                                          10
+
+

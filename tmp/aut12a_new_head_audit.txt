@@ -1,0 +1,208 @@
+5bdde81 (HEAD -> main, origin/main, origin/HEAD) fix(top3): corrige grades e hist├│rico de LOOK e Nacional
+0233956 fix: tornar importa├º├úo autom├ítica resiliente
+01d2f27 LKN-190 - Remove duplicacao dos cards da Nacional
+dfbb591 LKN-187 - Corrige horarios historicos da Nacional
+d6f2215 LKN-180 - Corrige mapeamento historico de horarios da Nacional
+9793b23 fix(results): normalize LOOK/NACIONAL hourly slots
+cf8d073 fix(look): normalize source minutes to hourly slots
+d4f1367 fix(dashboard): corrigir mapeamento dos hor├írios da Nacional
+Commit: 5bdde817236293cc0ab44d68e18dd3bbdaba0ab6
+Autor: Glauber Oliveira <glauber.seguros@gmail.com>
+Data: 2026-07-21T14:16:31-03:00
+Committer: Glauber Oliveira <glauber.seguros@gmail.com>
+Data commit: 2026-07-21T14:16:31-03:00
+Mensagem: fix(top3): corrige grades e hist├│rico de LOOK e Nacional
+M	src/pages/Top3/Top3View.jsx
+A	src/pages/Top3/__tests__/top3.schedule-transition.test.js
+M	src/pages/Top3/modules/top3.timeline.js
+M	src/pages/Top3/top3.constants.js
+M	src/pages/Top3/top3.engine.js
+5bdde81 fix(top3): corrige grades e hist├│rico de LOOK e Nacional
+ src/pages/Top3/Top3View.jsx                        | 203 +++++++++++++------
+ .../__tests__/top3.schedule-transition.test.js     | 222 +++++++++++++++++++++
+ src/pages/Top3/modules/top3.timeline.js            |   4 +-
+ src/pages/Top3/top3.constants.js                   |  22 ++
+ src/pages/Top3/top3.engine.js                      | 145 ++++++++++++--
+ 5 files changed, 508 insertions(+), 88 deletions(-)
+name: Auto Import — PalPitaco JB
+
+on:
+  schedule:
+    # Heartbeat resiliente a cada 10 minutos:
+    # UTC 00h–02h = BRT 21h–23h
+    # UTC 05h = BRT 02h
+    # UTC 10h–23h = BRT 07h–20h
+    #
+    # Um único gatilho evita colisões entre loterias.
+    # Minutos fora do início da hora reduzem atrasos do GitHub Actions.
+    - cron: "3-53/10 0-2,5,10-23 * * *"
+
+  workflow_dispatch:
+    inputs:
+      lottery:
+        description: "Qual loteria executar"
+        required: true
+        default: "ALL"
+        type: choice
+        options:
+          - ALL
+          - PT_RIO
+          - FEDERAL
+          - LOOK
+          - NACIONAL
+
+# Mantém somente uma execução ativa e uma pendente.
+# Cada execução reconcilia todas as loterias e recupera slots anteriores.
+concurrency:
+  group: auto-import-heartbeat-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+env:
+  TZ: America/Sao_Paulo
+  PITACO_API_BASE: ${{ vars.PITACO_API_BASE }}
+
+jobs:
+  reconcile-results:
+    name: Reconciliar resultados
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    defaults:
+      run:
+        working-directory: backend
+
+    steps:
+      - name: Checkout do repositório
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Instalar dependências
+        run: npm ci
+
+      - name: Importar hoje e reconciliar ontem
+        shell: bash
+        env:
+          FIREBASE_ADMIN_SA_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_JSON }}
+          FAIL_ON_CRITICAL: "1"
+          AUDIT_WARN_MIN: "20"
+          AUDIT_CRIT_MIN: "60"
+          CATCHUP_MAX_AFTER_END_MIN: "1440"
+        run: |
+          set +e
+
+          requested="${{ inputs.lottery }}"
+
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" && "$requested" != "ALL" ]]; then
+            lotteries="$requested"
+          else
+            lotteries="PT_RIO FEDERAL LOOK NACIONAL"
+          fi
+
+          yesterday="$(TZ=America/Sao_Paulo date -d 'yesterday' +%F)"
+          overall=0
+
+          run_import() {
+            local lottery="$1"
+            local period="$2"
+            shift 2
+
+            echo ""
+            echo "=================================================="
+            echo "LOTTERY=$lottery | PERIOD=$period"
+            echo "=================================================="
+
+            env LOTTERY="$lottery" "$@" node scripts/autoImportToday.js
+            local code=$?
+
+            if [[ $code -ne 0 ]]; then
+              echo "::error::Falha LOTTERY=$lottery PERIOD=$period EXIT=$code"
+              overall=1
+            fi
+          }
+
+          for lottery in $lotteries; do
+            run_import "$lottery" "TODAY"
+          done
+
+          for lottery in $lotteries; do
+            run_import \
+              "$lottery" \
+              "YESTERDAY:$yesterday" \
+              DATE="$yesterday" \
+              NOW_HM="23:59"
+          done
+
+          exit $overall
+
+ databaseId event             status    conclusion createdAt
+ ---------- -----             ------    ---------- ---------
+29848552600 workflow_dispatch completed success    21/07/202
+                                                   6
+                                                   16:25:56
+29845791547 schedule          completed failure    21/07/202
+                                                   6
+                                                   15:49:39
+29845775037 schedule          completed failure    21/07/202
+                                                   6
+                                                   15:49:26
+29842523676 schedule          completed failure    21/07/202
+                                                   6
+                                                   15:08:14
+29838349026 schedule          completed success    21/07/202
+                                                   6
+                                                   14:16:52
+29838153527 schedule          completed failure    21/07/202
+                                                   6
+                                                   14:14:22
+29830056934 schedule          completed failure    21/07/202
+                                                   6
+                                                   12:25:52
+29827549300 schedule          completed success    21/07/202
+                                                   6
+                                                   11:48:26
+29811240483 schedule          completed failure    21/07/202
+                                                   6
+                                                   07:39:09
+29804091494 schedule          completed success    21/07/202
+                                                   6
+                                                   05:28:28
+29804076672 schedule          completed success    21/07/202
+                                                   6
+                                                   05:28:09
+29798958336 schedule          completed success    21/07/202
+                                                   6
+                                                   03:36:12
+29798919744 schedule          completed success    21/07/202
+                                                   6
+                                                   03:35:18
+29796612364 schedule          completed failure    21/07/202
+                                                   6
+                                                   02:44:07
+29782873970 schedule          completed success    20/07/202
+                                                   6
+                                                   22:08:46
+29782633590 schedule          completed failure    20/07/202
+                                                   6
+                                                   22:04:51
+29779678355 schedule          completed failure    20/07/202
+                                                   6
+                                                   21:18:43
+29776864014 schedule          completed failure    20/07/202
+                                                   6
+                                                   20:37:01
+29776128100 schedule          completed failure    20/07/202
+                                                   6
+                                                   20:26:27
+29773882094 schedule          completed failure    20/07/202
+                                                   6
+                                                   19:54:20
+

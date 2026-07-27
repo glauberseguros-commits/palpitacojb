@@ -1,0 +1,289 @@
+====================================================================================================
+NAT-SCHED-06 — CORRIGIR PERMISSÃO DE OVERRIDES DA NACIONAL
+====================================================================================================
+
+1. CONCEDENDO run.jobs.runWithOverrides
+----------------------------------------------------------------------------------------------------
+Updated IAM policy for job [palpitaco-auto-import].
+bindings:
+- members:
+  - serviceAccount:palpitaco-scheduler@palpitacojb-app.iam.gserviceaccount.com
+  role: roles/run.invoker
+- members:
+  - serviceAccount:palpitaco-scheduler@palpitacojb-app.iam.gserviceaccount.com
+  role: roles/run.jobsExecutorWithOverrides
+etag: BwZXXNUuvfc=
+version: 1
+
+2. IAM DO CLOUD RUN JOB APÓS A CORREÇÃO
+----------------------------------------------------------------------------------------------------
+bindings:
+- members:
+  - serviceAccount:palpitaco-scheduler@palpitacojb-app.iam.gserviceaccount.com
+  role: roles/run.invoker
+- members:
+  - serviceAccount:palpitaco-scheduler@palpitacojb-app.iam.gserviceaccount.com
+  role: roles/run.jobsExecutorWithOverrides
+
+OK: roles/run.jobsExecutorWithOverrides confirmado.
+
+3. ESTADO DO SCHEDULER ANTES DO TESTE
+----------------------------------------------------------------------------------------------------
+httpTarget:
+  oauthToken:
+    serviceAccountEmail: palpitaco-scheduler@palpitacojb-app.iam.gserviceaccount.com
+lastAttemptTime: '2026-07-24T15:10:02.286910Z'
+name: projects/palpitacojb-app/locations/southamerica-east1/jobs/palpitaco-nacional-windows
+schedule: 5,10,15 2,8,10,12,15,17,21,23 * * *
+scheduleTime: '2026-07-24T15:15:01.565290Z'
+state: ENABLED
+status:
+  code: 7
+timeZone: America/Sao_Paulo
+
+4. EXECUTANDO TESTE MANUAL
+----------------------------------------------------------------------------------------------------
+Início UTC: 2026-07-24T15:14:51Z
+
+Aguardando 75 segundos para criação e conclusão da execução...
+
+5. ESTADO DO SCHEDULER APÓS O TESTE
+----------------------------------------------------------------------------------------------------
+lastAttemptTime: '2026-07-24T15:15:01.774639Z'
+name: projects/palpitacojb-app/locations/southamerica-east1/jobs/palpitaco-nacional-windows
+schedule: 5,10,15 2,8,10,12,15,17,21,23 * * *
+scheduleTime: '2026-07-24T18:05:01.565290Z'
+state: ENABLED
+status: {}
+timeZone: America/Sao_Paulo
+
+6. EXECUÇÕES DO CLOUD RUN CRIADAS APÓS O TESTE
+----------------------------------------------------------------------------------------------------
+NAME                         START_TIME                   COMPLETION_TIME              TYPE       STATUS
+palpitaco-auto-import-4fgck  2026-07-24T15:15:06.208018Z  2026-07-24T15:16:00.849674Z  Completed  True
+palpitaco-auto-import-c6sbw  2026-07-24T15:15:00.207377Z  2026-07-24T15:16:00.846043Z  Completed  True
+palpitaco-auto-import-qgwfm  2026-07-24T14:42:07.790710Z  2026-07-24T14:42:24.591713Z  Completed  True
+palpitaco-auto-import-5s22k  2026-07-24T14:32:03.636482Z  2026-07-24T14:32:51.926490Z  Completed  True
+palpitaco-auto-import-dn468  2026-07-24T13:42:08.966144Z  2026-07-24T13:42:28.616613Z  Completed  True
+palpitaco-auto-import-mcn44  2026-07-24T13:32:08.855217Z  2026-07-24T13:33:03.560971Z  Completed  True
+palpitaco-auto-import-hh4zq  2026-07-24T12:42:08.318135Z  2026-07-24T12:42:27.719972Z  Completed  True
+palpitaco-auto-import-zplj4  2026-07-24T12:32:08.073744Z  2026-07-24T12:32:56.263640Z  Completed  True
+palpitaco-auto-import-wrxsz  2026-07-24T11:42:07.531749Z  2026-07-24T11:42:26.462183Z  Completed  True
+palpitaco-auto-import-72zp9  2026-07-24T11:32:07.462608Z  2026-07-24T11:32:27.467639Z  Completed  True
+
+7. LOGS APÓS O TESTE
+----------------------------------------------------------------------------------------------------
+2026-07-24T15:15:09.402294Z		[HEARTBEAT] START local=12:15 date=2026-07-24 period=TODAY
+2026-07-24T15:15:09.402317Z		LOTTERY=PT_RIO | PERIOD=TODAY | DATE=2026-07-24
+2026-07-24T15:15:10.425450Z		[CFG] PITACO_API_BASE efetivo => https://api.palpitacojb.com.br
+2026-07-24T15:15:14.158188Z		[HEARTBEAT] START local=12:15 date=2026-07-24 period=TODAY
+2026-07-24T15:15:14.158222Z		LOTTERY=PT_RIO | PERIOD=TODAY | DATE=2026-07-24
+2026-07-24T15:15:15.083727Z		[CFG] PITACO_API_BASE efetivo => https://api.palpitacojb.com.br
+2026-07-24T15:15:36.110105Z		[CAL] FEDERAL schedule: date=2026-07-24 has20=0 expectedHard=[] expectedSoft=[]
+2026-07-24T15:15:36.111469Z		[CAL] PT_RIO resolved: date=2026-07-24 dow=5 saturday19=0 federal20=0 HARD=[09:00,11:00,14:00,16:00,18:00,21:00] SOFT=[] OFF=[19:00]
+2026-07-24T15:15:36.111851Z		[AUTO] N/A slot=19:00 (NAO_APLICA) -> DONE
+2026-07-24T15:15:36.112491Z		[AUTO] CATCH-UP p?s-release 2026-07-24 slot=09:00 (HARD) releaseAt=09:29 window=09:05~09:35 (fora da janela)
+2026-07-24T15:15:36.112939Z		[AUTO] tentando 2026-07-24 slot=09:00 (HARD) window=09:05-09:35 closes=09:00,09:01,09:02,09:09,09:10,09:11
+2026-07-24T15:15:36.116720Z		[CAL] FEDERAL schedule: date=2026-07-24 has20=0 expectedHard=[] expectedSoft=[]
+2026-07-24T15:15:36.118548Z		[CAL] PT_RIO resolved: date=2026-07-24 dow=5 saturday19=0 federal20=0 HARD=[09:00,11:00,14:00,16:00,18:00,21:00] SOFT=[] OFF=[19:00]
+2026-07-24T15:15:36.118976Z		[AUTO] N/A slot=19:00 (NAO_APLICA) -> DONE
+2026-07-24T15:15:36.119789Z		[AUTO] CATCH-UP p?s-release 2026-07-24 slot=09:00 (HARD) releaseAt=09:29 window=09:05~09:35 (fora da janela)
+2026-07-24T15:15:36.120712Z		[AUTO] tentando 2026-07-24 slot=09:00 (HARD) window=09:05-09:35 closes=09:00,09:01,09:02,09:09,09:10,09:11
+2026-07-24T15:15:36.219892Z		[FETCH] PT_RIO 2026-07-24 per-lottery=6 -> merged_draws=2 close_hours=[09:00, 11:00]
+2026-07-24T15:15:36.227540Z		[FETCH] PT_RIO 2026-07-24 per-lottery=6 -> merged_draws=2 close_hours=[09:00, 11:00]
+2026-07-24T15:15:37.226690Z		[IMPORT] API draws=2 | match_close=1 | validos=1 | draws_upserted=0 | draws_novos=0 | prizes_upserted=0 | prizes_novos=0 | skip_vazio=0 | skip_invalido=0 | skip_close=1 | skip_complete=1 | CHECK_EXISTENCE=OFF | uf=RJ lottery_key=PT_RIO | expected=1 complete=1 slotDocs=1 apiTargets=1
+2026-07-24T15:15:37.428734Z		[IMPORT] API draws=2 | match_close=1 | validos=1 | draws_upserted=0 | draws_novos=0 | prizes_upserted=0 | prizes_novos=0 | skip_vazio=0 | skip_invalido=0 | skip_close=1 | skip_complete=1 | CHECK_EXISTENCE=OFF | uf=RJ lottery_key=PT_RIO | expected=1 complete=1 slotDocs=1 apiTargets=1
+2026-07-24T15:15:40.840012Z		[TOP3-HISTORY] Incremental OK | PT_RIO | draws=1 | meses=2026-07
+2026-07-24T15:15:41.015738Z		[TOP3-HISTORY] Incremental OK | PT_RIO | draws=1 | meses=2026-07
+2026-07-24T15:15:41.263523Z		[TOP3 AUTO] falhou: Error: Cannot find module '../../src/pages/Top3/top3.public-api.js'
+2026-07-24T15:15:41.263546Z		Require stack:
+2026-07-24T15:15:41.263551Z		- /app/engine/scoreEngineUnified.js
+2026-07-24T15:15:41.263556Z		- /app/engine/top3PredictionService.js
+2026-07-24T15:15:41.263560Z		- /app/scripts/importKingApostas.js
+2026-07-24T15:15:41.263564Z		- /app/scripts/autoImportToday.js
+2026-07-24T15:15:41.263569Z		    at Function._resolveFilename (node:internal/modules/cjs/loader:1430:15)
+2026-07-24T15:15:41.263573Z		    at defaultResolveImpl (node:internal/modules/cjs/loader:1040:19)
+2026-07-24T15:15:41.263576Z		    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1045:22)
+2026-07-24T15:15:41.263580Z		    at Function._load (node:internal/modules/cjs/loader:1216:25)
+2026-07-24T15:15:41.263585Z		    at wrapModuleLoad (node:internal/modules/cjs/loader:254:19)
+2026-07-24T15:15:41.263588Z		    at Module.require (node:internal/modules/cjs/loader:1527:12)
+2026-07-24T15:15:41.263592Z		    at require (node:internal/modules/helpers:147:16)
+2026-07-24T15:15:41.263596Z		    at loadTop3PublicApi (/app/engine/scoreEngineUnified.js:45:15)
+2026-07-24T15:15:41.263599Z		    at runImport (/app/scripts/importKingApostas.js:1796:25)
+2026-07-24T15:15:41.263603Z		    at async main (/app/scripts/autoImportToday.js:1405:15)
+2026-07-24T15:15:41.264420Z		[AUTO] FS j? tem slot=09:00 COMPLETO (close=09:00) -> DONE
+2026-07-24T15:15:41.264935Z		[AUTO] CATCH-UP p?s-release 2026-07-24 slot=11:00 (HARD) releaseAt=11:29 window=11:05~11:35 (fora da janela)
+2026-07-24T15:15:41.265483Z		[AUTO] tentando 2026-07-24 slot=11:00 (HARD) window=11:05-11:35 closes=11:00,11:01,11:02,11:09,11:10,11:11
+2026-07-24T15:15:41.357977Z		[FETCH] PT_RIO 2026-07-24 per-lottery=6 -> merged_draws=2 close_hours=[09:00, 11:00]
+2026-07-24T15:15:41.456998Z		[IMPORT] API draws=2 | match_close=1 | validos=1 | draws_upserted=0 | draws_novos=0 | prizes_upserted=0 | prizes_novos=0 | skip_vazio=0 | skip_invalido=0 | skip_close=1 | skip_complete=1 | CHECK_EXISTENCE=OFF | uf=RJ lottery_key=PT_RIO | expected=1 complete=1 slotDocs=1 apiTargets=1
+2026-07-24T15:15:41.508856Z		[TOP3 AUTO] falhou: Error: Cannot find module '../../src/pages/Top3/top3.public-api.js'
+2026-07-24T15:15:41.508886Z		Require stack:
+2026-07-24T15:15:41.508893Z		- /app/engine/scoreEngineUnified.js
+2026-07-24T15:15:41.508900Z		- /app/engine/top3PredictionService.js
+2026-07-24T15:15:41.508905Z		- /app/scripts/importKingApostas.js
+2026-07-24T15:15:41.508910Z		- /app/scripts/autoImportToday.js
+2026-07-24T15:15:41.508917Z		    at Function._resolveFilename (node:internal/modules/cjs/loader:1430:15)
+2026-07-24T15:15:41.508923Z		    at defaultResolveImpl (node:internal/modules/cjs/loader:1040:19)
+2026-07-24T15:15:41.508928Z		    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1045:22)
+2026-07-24T15:15:41.508934Z		    at Function._load (node:internal/modules/cjs/loader:1216:25)
+2026-07-24T15:15:41.508940Z		    at wrapModuleLoad (node:internal/modules/cjs/loader:254:19)
+2026-07-24T15:15:41.508945Z		    at Module.require (node:internal/modules/cjs/loader:1527:12)
+2026-07-24T15:15:41.508951Z		    at require (node:internal/modules/helpers:147:16)
+2026-07-24T15:15:41.508957Z		    at loadTop3PublicApi (/app/engine/scoreEngineUnified.js:45:15)
+2026-07-24T15:15:41.508962Z		    at runImport (/app/scripts/importKingApostas.js:1796:25)
+2026-07-24T15:15:41.508968Z		    at async main (/app/scripts/autoImportToday.js:1405:15)
+2026-07-24T15:15:41.535108Z		[AUTO] FS j? tem slot=09:00 COMPLETO (close=09:00) -> DONE
+2026-07-24T15:15:41.535785Z		[AUTO] CATCH-UP p?s-release 2026-07-24 slot=11:00 (HARD) releaseAt=11:29 window=11:05~11:35 (fora da janela)
+2026-07-24T15:15:41.536459Z		[AUTO] tentando 2026-07-24 slot=11:00 (HARD) window=11:05-11:35 closes=11:00,11:01,11:02,11:09,11:10,11:11
+2026-07-24T15:15:41.634180Z		[FETCH] PT_RIO 2026-07-24 per-lottery=6 -> merged_draws=2 close_hours=[09:00, 11:00]
+2026-07-24T15:15:41.720524Z		[IMPORT] API draws=2 | match_close=1 | validos=1 | draws_upserted=0 | draws_novos=0 | prizes_upserted=0 | prizes_novos=0 | skip_vazio=0 | skip_invalido=0 | skip_close=1 | skip_complete=1 | CHECK_EXISTENCE=OFF | uf=RJ lottery_key=PT_RIO | expected=1 complete=1 slotDocs=1 apiTargets=1
+2026-07-24T15:15:44.473766Z		[TOP3-HISTORY] Incremental OK | PT_RIO | draws=1 | meses=2026-07
+2026-07-24T15:15:44.474064Z		[TOP3 AUTO] falhou: Error: Cannot find module '../../src/pages/Top3/top3.public-api.js'
+2026-07-24T15:15:44.474078Z		Require stack:
+2026-07-24T15:15:44.474083Z		- /app/engine/scoreEngineUnified.js
+2026-07-24T15:15:44.474086Z		- /app/engine/top3PredictionService.js
+2026-07-24T15:15:44.474091Z		- /app/scripts/importKingApostas.js
+2026-07-24T15:15:44.474094Z		- /app/scripts/autoImportToday.js
+2026-07-24T15:15:44.474099Z		    at Function._resolveFilename (node:internal/modules/cjs/loader:1430:15)
+2026-07-24T15:15:44.474103Z		    at defaultResolveImpl (node:internal/modules/cjs/loader:1040:19)
+2026-07-24T15:15:44.474106Z		    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1045:22)
+2026-07-24T15:15:44.474110Z		    at Function._load (node:internal/modules/cjs/loader:1216:25)
+2026-07-24T15:15:44.474113Z		    at wrapModuleLoad (node:internal/modules/cjs/loader:254:19)
+2026-07-24T15:15:44.474117Z		    at Module.require (node:internal/modules/cjs/loader:1527:12)
+2026-07-24T15:15:44.474120Z		    at require (node:internal/modules/helpers:147:16)
+2026-07-24T15:15:44.474123Z		    at loadTop3PublicApi (/app/engine/scoreEngineUnified.js:45:15)
+2026-07-24T15:15:44.474126Z		    at runImport (/app/scripts/importKingApostas.js:1796:25)
+2026-07-24T15:15:44.474130Z		    at async main (/app/scripts/autoImportToday.js:1405:15)
+2026-07-24T15:15:44.474858Z		[AUTO] FS j? tem slot=11:00 COMPLETO (close=11:00) -> DONE
+2026-07-24T15:15:44.477870Z		[TOP3-HISTORY] Incremental OK | PT_RIO | draws=1 | meses=2026-07
+2026-07-24T15:15:44.478345Z		[TOP3 AUTO] falhou: Error: Cannot find module '../../src/pages/Top3/top3.public-api.js'
+2026-07-24T15:15:44.478360Z		Require stack:
+2026-07-24T15:15:44.478367Z		- /app/engine/scoreEngineUnified.js
+2026-07-24T15:15:44.478373Z		- /app/engine/top3PredictionService.js
+2026-07-24T15:15:44.478379Z		- /app/scripts/importKingApostas.js
+2026-07-24T15:15:44.478385Z		- /app/scripts/autoImportToday.js
+2026-07-24T15:15:44.478399Z		    at Function._resolveFilename (node:internal/modules/cjs/loader:1430:15)
+2026-07-24T15:15:44.478404Z		    at defaultResolveImpl (node:internal/modules/cjs/loader:1040:19)
+2026-07-24T15:15:44.478409Z		    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1045:22)
+2026-07-24T15:15:44.478415Z		    at Function._load (node:internal/modules/cjs/loader:1216:25)
+2026-07-24T15:15:44.478420Z		    at wrapModuleLoad (node:internal/modules/cjs/loader:254:19)
+2026-07-24T15:15:44.478426Z		    at Module.require (node:internal/modules/cjs/loader:1527:12)
+2026-07-24T15:15:44.478431Z		    at require (node:internal/modules/helpers:147:16)
+2026-07-24T15:15:44.478437Z		    at loadTop3PublicApi (/app/engine/scoreEngineUnified.js:45:15)
+2026-07-24T15:15:44.478441Z		    at runImport (/app/scripts/importKingApostas.js:1796:25)
+2026-07-24T15:15:44.478446Z		    at async main (/app/scripts/autoImportToday.js:1405:15)
+2026-07-24T15:15:44.479508Z		[AUTO] FS j? tem slot=11:00 COMPLETO (close=11:00) -> DONE
+2026-07-24T15:15:44.481488Z		[AUDIT] OK (sem furos HARD acima de 20 min) softLate=0
+2026-07-24T15:15:44.500832Z		[HEARTBEAT] OK LOTTERY=PT_RIO
+2026-07-24T15:15:44.500922Z		LOTTERY=FEDERAL | PERIOD=TODAY | DATE=2026-07-24
+2026-07-24T15:15:44.571227Z		[AUDIT] OK (sem furos HARD acima de 20 min) softLate=0
+2026-07-24T15:15:44.590452Z		[HEARTBEAT] OK LOTTERY=PT_RIO
+2026-07-24T15:15:44.590490Z		LOTTERY=FEDERAL | PERIOD=TODAY | DATE=2026-07-24
+2026-07-24T15:15:44.879756Z		[CFG] PITACO_API_BASE efetivo => https://api.palpitacojb.com.br
+2026-07-24T15:15:44.908245Z		[CAL] FEDERAL official: date=2026-07-24 dow=5 hard=[] | backend expectedHard=[] expectedSoft=[]
+2026-07-24T15:15:44.908661Z		[AUTO] N/A slot=11:00 (FEDERAL_FORA_DA_GRADE) -> DONE
+2026-07-24T15:15:44.909027Z		[AUTO] N/A slot=19:00 (FEDERAL_FORA_DA_GRADE) -> DONE
+2026-07-24T15:15:44.909301Z		[AUTO] N/A slot=20:00 (FEDERAL_FORA_DA_GRADE) -> DONE
+2026-07-24T15:15:44.910634Z		[AUDIT] OK (sem furos HARD acima de 20 min) softLate=0
+2026-07-24T15:15:44.910980Z		[AUTO] nada para fazer agora (2026-07-24)
+2026-07-24T15:15:44.922722Z		[CFG] PITACO_API_BASE efetivo => https://api.palpitacojb.com.br
+2026-07-24T15:15:44.945424Z		[HEARTBEAT] OK LOTTERY=FEDERAL
+2026-07-24T15:15:44.945546Z		LOTTERY=LOOK | PERIOD=TODAY | DATE=2026-07-24
+2026-07-24T15:15:44.970733Z		[CAL] FEDERAL official: date=2026-07-24 dow=5 hard=[] | backend expectedHard=[] expectedSoft=[]
+2026-07-24T15:15:44.971165Z		[AUTO] N/A slot=11:00 (FEDERAL_FORA_DA_GRADE) -> DONE
+2026-07-24T15:15:44.971339Z		[AUTO] N/A slot=19:00 (FEDERAL_FORA_DA_GRADE) -> DONE
+2026-07-24T15:15:44.971555Z		[AUTO] N/A slot=20:00 (FEDERAL_FORA_DA_GRADE) -> DONE
+2026-07-24T15:15:44.972702Z		[AUDIT] OK (sem furos HARD acima de 20 min) softLate=0
+2026-07-24T15:15:44.972906Z		[AUTO] nada para fazer agora (2026-07-24)
+2026-07-24T15:15:44.979913Z		[HEARTBEAT] OK LOTTERY=FEDERAL
+2026-07-24T15:15:44.980Z		LOTTERY=LOOK | PERIOD=TODAY | DATE=2026-07-24
+2026-07-24T15:15:45.307027Z		[CFG] PITACO_API_BASE efetivo => https://api.palpitacojb.com.br
+2026-07-24T15:15:45.309532Z		[CFG] PITACO_API_BASE efetivo => https://api.palpitacojb.com.br
+2026-07-24T15:15:47.106948Z		[STATE-SYNC] backend confirmou slot=07:00 presente -> DONE
+2026-07-24T15:15:47.107169Z		[STATE-SYNC] backend confirmou slot=09:00 presente -> DONE
+2026-07-24T15:15:47.107320Z		[STATE-SYNC] backend confirmou slot=11:00 presente -> DONE
+2026-07-24T15:15:47.107846Z		[STATE-SYNC] slots reconciliados pelo backend=3
+2026-07-24T15:15:47.109509Z		[AUDIT] OK (sem furos HARD acima de 20 min) softLate=0
+2026-07-24T15:15:47.109804Z		[AUTO] nada para fazer agora (2026-07-24)
+2026-07-24T15:15:47.116839Z		[HEARTBEAT] OK LOTTERY=LOOK
+2026-07-24T15:15:47.116873Z		LOTTERY=NACIONAL | PERIOD=TODAY | DATE=2026-07-24
+2026-07-24T15:15:47.171131Z		[STATE-SYNC] backend confirmou slot=07:00 presente -> DONE
+2026-07-24T15:15:47.171304Z		[STATE-SYNC] backend confirmou slot=09:00 presente -> DONE
+2026-07-24T15:15:47.171672Z		[STATE-SYNC] backend confirmou slot=11:00 presente -> DONE
+2026-07-24T15:15:47.172116Z		[STATE-SYNC] slots reconciliados pelo backend=3
+2026-07-24T15:15:47.173413Z		[AUDIT] OK (sem furos HARD acima de 20 min) softLate=0
+2026-07-24T15:15:47.173692Z		[AUTO] nada para fazer agora (2026-07-24)
+2026-07-24T15:15:47.178916Z		[HEARTBEAT] OK LOTTERY=LOOK
+2026-07-24T15:15:47.178925Z		LOTTERY=NACIONAL | PERIOD=TODAY | DATE=2026-07-24
+2026-07-24T15:15:47.495005Z		[CFG] PITACO_API_BASE efetivo => https://api.palpitacojb.com.br
+2026-07-24T15:15:47.512959Z		[CFG] PITACO_API_BASE efetivo => https://api.palpitacojb.com.br
+2026-07-24T15:15:48.833735Z		[STATE-SYNC] backend confirmou slot=02:00 presente -> DONE
+2026-07-24T15:15:48.834042Z		[STATE-SYNC] backend confirmou slot=08:00 presente -> DONE
+2026-07-24T15:15:48.834318Z		[STATE-SYNC] backend confirmou slot=10:00 presente -> DONE
+2026-07-24T15:15:48.834911Z		[STATE-SYNC] slots reconciliados pelo backend=3
+2026-07-24T15:15:48.836119Z		[AUTO] tentando 2026-07-24 slot=12:00 (HARD) window=12:05-12:35 closes=12:00,12:01,12:02,12:09,12:10,12:11
+2026-07-24T15:15:48.890518Z		[STATE-SYNC] backend confirmou slot=02:00 presente -> DONE
+2026-07-24T15:15:48.890664Z		[STATE-SYNC] backend confirmou slot=08:00 presente -> DONE
+2026-07-24T15:15:48.890893Z		[STATE-SYNC] backend confirmou slot=10:00 presente -> DONE
+2026-07-24T15:15:48.891264Z		[STATE-SYNC] slots reconciliados pelo backend=3
+2026-07-24T15:15:48.892005Z		[AUTO] tentando 2026-07-24 slot=12:00 (HARD) window=12:05-12:35 closes=12:00,12:01,12:02,12:09,12:10,12:11
+2026-07-24T15:15:48.975531Z		[FETCH] NACIONAL 2026-07-24 per-lottery=8 -> merged_draws=4 close_hours=[02:00, 08:00, 10:00, 12:00]
+2026-07-24T15:15:49.031978Z		[FETCH] NACIONAL 2026-07-24 per-lottery=8 -> merged_draws=4 close_hours=[02:00, 08:00, 10:00, 12:00]
+2026-07-24T15:15:49.560316Z		[IMPORT] API draws=4 | match_close=1 | validos=1 | draws_upserted=1 | draws_novos=0 | prizes_upserted=7 | prizes_novos=0 | skip_vazio=0 | skip_invalido=0 | skip_close=3 | skip_complete=0 | CHECK_EXISTENCE=OFF | uf=BR lottery_key=NACIONAL | expected=1 complete=1 slotDocs=1 apiTargets=1
+2026-07-24T15:15:49.698946Z		[IMPORT] API draws=4 | match_close=1 | validos=1 | draws_upserted=0 | draws_novos=0 | prizes_upserted=0 | prizes_novos=0 | skip_vazio=0 | skip_invalido=0 | skip_close=3 | skip_complete=1 | CHECK_EXISTENCE=OFF | uf=BR lottery_key=NACIONAL | expected=1 complete=1 slotDocs=1 apiTargets=1
+2026-07-24T15:15:54.404199Z		[TOP3-HISTORY] Incremental OK | NACIONAL | draws=1 | meses=2026-07
+2026-07-24T15:15:54.497578Z		[TOP3-HISTORY] Incremental OK | NACIONAL | draws=1 | meses=2026-07
+2026-07-24T15:15:54.740791Z		[TOP3 AUTO] falhou: Error: Cannot find module '../../src/pages/Top3/top3.public-api.js'
+2026-07-24T15:15:54.740805Z		Require stack:
+2026-07-24T15:15:54.740809Z		- /app/engine/scoreEngineUnified.js
+2026-07-24T15:15:54.740814Z		- /app/engine/top3PredictionService.js
+2026-07-24T15:15:54.740819Z		- /app/scripts/importKingApostas.js
+2026-07-24T15:15:54.740823Z		- /app/scripts/autoImportToday.js
+2026-07-24T15:15:54.740829Z		    at Function._resolveFilename (node:internal/modules/cjs/loader:1430:15)
+2026-07-24T15:15:54.740833Z		    at defaultResolveImpl (node:internal/modules/cjs/loader:1040:19)
+2026-07-24T15:15:54.740837Z		    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1045:22)
+2026-07-24T15:15:54.740841Z		    at Function._load (node:internal/modules/cjs/loader:1216:25)
+2026-07-24T15:15:54.740846Z		    at wrapModuleLoad (node:internal/modules/cjs/loader:254:19)
+2026-07-24T15:15:54.740850Z		    at Module.require (node:internal/modules/cjs/loader:1527:12)
+2026-07-24T15:15:54.740854Z		    at require (node:internal/modules/helpers:147:16)
+2026-07-24T15:15:54.740859Z		    at loadTop3PublicApi (/app/engine/scoreEngineUnified.js:45:15)
+2026-07-24T15:15:54.740863Z		    at runImport (/app/scripts/importKingApostas.js:1796:25)
+2026-07-24T15:15:54.740868Z		    at async main (/app/scripts/autoImportToday.js:1405:15)
+2026-07-24T15:15:54.742218Z		[AUTO] FS j? tem slot=12:00 COMPLETO (close=12:00) -> DONE
+2026-07-24T15:15:54.744623Z		[AUDIT] OK (sem furos HARD acima de 20 min) softLate=0
+2026-07-24T15:15:54.766140Z		[HEARTBEAT] OK LOTTERY=NACIONAL
+2026-07-24T15:15:54.766156Z		[HEARTBEAT] FINAL=SUCCESS
+2026-07-24T15:15:54.789139Z	INFO	Container called exit(0).
+2026-07-24T15:15:54.800083Z		[TOP3 AUTO] falhou: Error: Cannot find module '../../src/pages/Top3/top3.public-api.js'
+2026-07-24T15:15:54.800098Z		Require stack:
+2026-07-24T15:15:54.800103Z		- /app/engine/scoreEngineUnified.js
+2026-07-24T15:15:54.800107Z		- /app/engine/top3PredictionService.js
+2026-07-24T15:15:54.800110Z		- /app/scripts/importKingApostas.js
+2026-07-24T15:15:54.800114Z		- /app/scripts/autoImportToday.js
+2026-07-24T15:15:54.800119Z		    at Function._resolveFilename (node:internal/modules/cjs/loader:1430:15)
+2026-07-24T15:15:54.800123Z		    at defaultResolveImpl (node:internal/modules/cjs/loader:1040:19)
+2026-07-24T15:15:54.800126Z		    at resolveForCJSWithHooks (node:internal/modules/cjs/loader:1045:22)
+2026-07-24T15:15:54.800131Z		    at Function._load (node:internal/modules/cjs/loader:1216:25)
+2026-07-24T15:15:54.800134Z		    at wrapModuleLoad (node:internal/modules/cjs/loader:254:19)
+2026-07-24T15:15:54.800138Z		    at Module.require (node:internal/modules/cjs/loader:1527:12)
+2026-07-24T15:15:54.800141Z		    at require (node:internal/modules/helpers:147:16)
+2026-07-24T15:15:54.800145Z		    at loadTop3PublicApi (/app/engine/scoreEngineUnified.js:45:15)
+2026-07-24T15:15:54.800149Z		    at runImport (/app/scripts/importKingApostas.js:1796:25)
+2026-07-24T15:15:54.800152Z		    at async main (/app/scripts/autoImportToday.js:1405:15)
+2026-07-24T15:15:54.800981Z		[AUTO] FS j? tem slot=12:00 COMPLETO (close=12:00) -> DONE
+2026-07-24T15:15:54.802358Z		[AUDIT] OK (sem furos HARD acima de 20 min) softLate=0
+2026-07-24T15:15:54.879136Z		[HEARTBEAT] OK LOTTERY=NACIONAL
+2026-07-24T15:15:54.879148Z		[HEARTBEAT] FINAL=SUCCESS
+2026-07-24T15:15:54.936378Z	INFO	Container called exit(0).
+2026-07-24T15:16:00.977770Z	INFO	
+2026-07-24T15:16:01.303087Z	INFO	
+
+8. RESULTADO AUTOMÁTICO
+----------------------------------------------------------------------------------------------------
+OK -> Scheduler sem status code 7
+OK -> Nova execução do Cloud Run encontrada
+OK -> LOTTERY=NACIONAL encontrado nos logs
+OK -> Execução concluída com sucesso
+
+VALIDAÇÃO 100% OK.
+A grade exclusiva da Nacional está funcionando com overrides.

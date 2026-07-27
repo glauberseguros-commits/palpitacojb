@@ -1,0 +1,229 @@
+==========================================================================================
+USEEFFECTS ENCONTRADOS
+==========================================================================================
+
+useEffect #01 -> linha 827
+useEffect #02 -> linha 831
+useEffect #03 -> linha 925
+useEffect #04 -> linha 1038
+useEffect #05 -> linha 1077
+
+==========================================================================================
+DEPENDÊNCIAS
+==========================================================================================
+
+
+------ useEffect #01 ------
+  827:   useEffect(() => {
+  828:     load();
+  829:   }, [load]);
+  830: 
+  831:   useEffect(() => {
+  832:     ensureDayTimeline({
+  833:       ymd: timelineYmd,
+  834:       lotteryKey: lotteryKeySafe,
+  835:     });
+  836:   }, [timelineYmd, lotteryKeySafe]);
+  837: 
+  838:   const analytics = useMemo(() => {
+  839:     return computeTop3Analytics({
+  840:       rangeDraws,
+  841:       baseDrawState,
+  842:       analyticsCacheRef,
+  843:       lotteryKeySafe,
+  844:       lookback,
+  845:       rangeInfo,
+  846:       todayDraws,
+  847:       sanitizeHistoricalDraws,
+  848:       targetYmd: analysisYmd,
+  849:       targetHourBucket: analysisHourBucket,
+  850:     });
+  851:   }, [
+  852:     rangeDraws,
+  853:     baseDrawState,
+  854:     lotteryKeySafe,
+  855:     lookback,
+  856:     rangeInfo,
+  857:     todayDraws,
+  858:     analysisYmd,
+  859:     analysisHourBucket,
+  860:   ]);
+  861: 
+  862:   const build20 = useCallback(
+  863:     (grupo2, item = null) => {
+  864:       return buildMilharesForGrupo({
+  865:         rangeDraws,
+  866:         analysisHourBucket,
+  867:         schedule,
+
+------ useEffect #02 ------
+  831:   useEffect(() => {
+  832:     ensureDayTimeline({
+  833:       ymd: timelineYmd,
+  834:       lotteryKey: lotteryKeySafe,
+  835:     });
+  836:   }, [timelineYmd, lotteryKeySafe]);
+  837: 
+  838:   const analytics = useMemo(() => {
+  839:     return computeTop3Analytics({
+  840:       rangeDraws,
+  841:       baseDrawState,
+  842:       analyticsCacheRef,
+  843:       lotteryKeySafe,
+  844:       lookback,
+  845:       rangeInfo,
+  846:       todayDraws,
+  847:       sanitizeHistoricalDraws,
+  848:       targetYmd: analysisYmd,
+  849:       targetHourBucket: analysisHourBucket,
+  850:     });
+  851:   }, [
+  852:     rangeDraws,
+  853:     baseDrawState,
+  854:     lotteryKeySafe,
+  855:     lookback,
+  856:     rangeInfo,
+  857:     todayDraws,
+  858:     analysisYmd,
+  859:     analysisHourBucket,
+  860:   ]);
+  861: 
+  862:   const build20 = useCallback(
+  863:     (grupo2, item = null) => {
+  864:       return buildMilharesForGrupo({
+  865:         rangeDraws,
+  866:         analysisHourBucket,
+  867:         schedule,
+  868:         grupo2,
+  869:         count: 20,
+  870:         targetYmd: item?.meta?.next?.ymd || analysisYmd,
+  871:       });
+
+------ useEffect #03 ------
+  925:   useEffect(() => {
+  926:     if (!analysisYmd || !analysisHourBucket) return;
+  927:     if (!Array.isArray(top3) || !top3.length) return;
+  928:     if (!isFutureTarget(analysisYmd, analysisHourBucket)) return;
+  929: 
+  930:     const targetKey = makeTargetKey(analysisYmd, analysisHourBucket);
+  931:     const picks = top3
+  932:       .map((x) => Number(x?.grupo))
+  933:       .filter((n) => Number.isFinite(n) && n >= 1 && n <= 25)
+  934:       .slice(0, 3);
+  935: 
+  936:     if (!targetKey || !picks.length) return;
+  937: 
+  938:     const snapshot = top3.map((item, index) => ({
+  939:       rank: index + 1,
+  940:       grupo: Number(item?.grupo),
+  941:       animal: safeStr(item?.animal || ""),
+  942:       prob: Number(item?.prob || 0),
+  943:       probPct: Number(item?.probPct || 0),
+  944:       milhares20: Array.isArray(item?.milhares20)
+  945:         ? item.milhares20.slice(0, 20)
+  946:         : [],
+  947:       milharesCols: Array.isArray(item?.milharesCols)
+  948:         ? item.milharesCols
+  949:         : [],
+  950:       meta: item?.meta || null,
+  951:     }));
+  952: 
+  953:     const engineVersion =
+  954:       safeStr(top3?.[0]?.meta?.explain?.engine) ||
+  955:       safeStr(top3?.[0]?.meta?.scenario) ||
+  956:       "V3_STATISTICAL";
+  957: 
+  958:     registerPrediction({
+  959:       targetKey,
+  960:       targetYmd: analysisYmd,
+  961:       targetHour: analysisHourBucket,
+  962:       picks,
+  963:       snapshot,
+  964:       engineVersion,
+  965:     });
+
+------ useEffect #04 ------
+ 1038:   useEffect(() => {
+ 1039:     let alive = true;
+ 1040: 
+ 1041:     async function loadPersistedHistory() {
+ 1042:       if (!isYMD(timelineYmd)) {
+ 1043:         if (alive) setPersistedTop3History([]);
+ 1044:         return;
+ 1045:       }
+ 1046: 
+ 1047:       try {
+ 1048:         const history = await loadTop3PredictionDay({
+ 1049:           lotteryKey: lotteryKeySafe,
+ 1050:           targetYmd: timelineYmd,
+ 1051:           schedule,
+ 1052:         });
+ 1053: 
+ 1054:         if (alive) {
+ 1055:           setPersistedTop3History(
+ 1056:             Array.isArray(history) ? history : []
+ 1057:           );
+ 1058:         }
+ 1059:       } catch {
+ 1060:         if (alive) setPersistedTop3History([]);
+ 1061:       }
+ 1062:     }
+ 1063: 
+ 1064:     loadPersistedHistory();
+ 1065: 
+ 1066:     return () => {
+ 1067:       alive = false;
+ 1068:     };
+ 1069:   }, [
+ 1070:     lotteryKeySafe,
+ 1071:     timelineYmd,
+ 1072:     schedule,
+ 1073:     todayDraws,
+ 1074:     rangeDraws,
+ 1075:   ]);
+ 1076: 
+ 1077:   useEffect(() => {
+ 1078:     if (!(todayDraws?.length || rangeDraws?.length)) return;
+
+------ useEffect #05 ------
+ 1077:   useEffect(() => {
+ 1078:     if (!(todayDraws?.length || rangeDraws?.length)) return;
+ 1079: 
+ 1080:     const allDraws = [
+ 1081:       ...(Array.isArray(rangeDraws) ? rangeDraws : []),
+ 1082:       ...(Array.isArray(todayDraws) ? todayDraws : []),
+ 1083:     ];
+ 1084: 
+ 1085:     reconcilePendingTop3Log({
+ 1086:       todayDraws: Array.isArray(todayDraws) ? todayDraws : [],
+ 1087:       rangeDraws: Array.isArray(rangeDraws) ? rangeDraws : [],
+ 1088:     });
+ 1089: 
+ 1090:     reconcileTop3PredictionDay({
+ 1091:       lotteryKey: lotteryKeySafe,
+ 1092:       targetYmd: timelineYmd,
+ 1093:       schedule,
+ 1094:       draws: allDraws,
+ 1095:     })
+ 1096:       .then(async () => {
+ 1097:         const history = await loadTop3PredictionDay({
+ 1098:           lotteryKey: lotteryKeySafe,
+ 1099:           targetYmd: timelineYmd,
+ 1100:           schedule,
+ 1101:         });
+ 1102: 
+ 1103:         setPersistedTop3History(
+ 1104:           Array.isArray(history) ? history : []
+ 1105:         );
+ 1106:       })
+ 1107:       .catch((error) => {
+ 1108:         if (debugTop3) {
+ 1109:           console.warn("[TOP3 FIRESTORE RECONCILE]", error);
+ 1110:         }
+ 1111:       });
+ 1112:   }, [
+ 1113:     todayDraws,
+ 1114:     rangeDraws,
+ 1115:     lotteryKeySafe,
+ 1116:     timelineYmd,
+ 1117:     schedule,

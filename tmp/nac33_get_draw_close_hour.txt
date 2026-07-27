@@ -1,0 +1,39 @@
+  237: function getDrawDate(d) {
+  238:   if (!d) return null;
+  239:   const raw = d.date ?? d.ymd ?? d.draw_date ?? d.close_date ?? d.data ?? d.dt ?? null;
+  240:   return normalizeToYMD(raw);
+  241: }
+  242: 
+  243: function getDrawCloseHour(d) {
+  244:   if (!d) return "";
+  245: 
+  246:   const cand =
+  247:     d.close_hour_raw ??
+  248:     d.closeHourRaw ??
+  249:     d.close_hour ??
+  250:     d.closeHour ??
+  251:     d.close_hour_bucket ??
+  252:     d.closeHourBucket ??
+  253:     d.hour ??
+  254:     d.hora ??
+  255:     "";
+  256: 
+  257:   return String(cand ?? "").trim();
+  258: }
+  259: 
+  260: const MONTH_NAME_TO_MM = {
+  261:   janeiro: "01",
+  262:   fevereiro: "02",
+  263:   março: "03",
+  264:   marco: "03",
+  265:   abril: "04",
+  266:   maio: "05",
+  267:   junho: "06",
+  268:   julho: "07",
+  269:   agosto: "08",
+  270:   setembro: "09",
+  271:   outubro: "10",
+  272:   novembro: "11",
+  273:   dezembro: "12",
+  274: };
+  275: 

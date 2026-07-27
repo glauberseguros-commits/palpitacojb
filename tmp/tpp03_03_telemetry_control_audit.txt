@@ -1,0 +1,442 @@
+==============================================================================================================
+TPP-03.03 - AUDITORIA DO CONTROLE DE TELEMETRIA
+==============================================================================================================
+
+Arquivo: C:\Users\glaub\palpitaco\backend\scripts\backtestTop3Official.js
+Total de linhas: 1081
+
+--------------------------------------------------------------------------------------------------------------
+POSS═VEIS OPÃıES LOCALIZADAS PRËXIMAS └ TELEMETRIA
+--------------------------------------------------------------------------------------------------------------
+- from
+- limit
+- minHistory
+- outputDir
+- telemetry
+- to
+
+--------------------------------------------------------------------------------------------------------------
+BLOCOS DE CËDIGO RELACIONADOS └ TELEMETRIA
+--------------------------------------------------------------------------------------------------------------
+
+### BLOCO 1 ù LINHAS 206 A 238
+  206 |       null
+  207 |     ),
+  208 |     to: parseStringFlag(
+  209 |       flags,
+  210 |       "to",
+  211 |       null
+  212 |     ),
+  213 |     outputDir: parseStringFlag(
+  214 |       flags,
+  215 |       "output-dir",
+  216 |       "tmp"
+  217 |     ),
+  218 |     telemetry: parseBooleanFlag(
+  219 |       flags,
+  220 |       "telemetry",
+  221 |       false
+  222 |     ),
+  223 |   };
+  224 | }
+  225 | 
+  226 | function sortDraws(draws = [], publicApi) {
+  227 |   return [...safeArray(draws)]
+  228 |     .filter(Boolean)
+  229 |     .sort((a, b) => {
+  230 |       const aYmd =
+  231 |         publicApi.pickDrawYMD(a) || "";
+  232 | 
+  233 |       const bYmd =
+  234 |         publicApi.pickDrawYMD(b) || "";
+  235 | 
+  236 |       const aHour =
+  237 |         publicApi.pickDrawHour(a) || "";
+  238 | 
+
+### BLOCO 2 ù LINHAS 486 A 516
+  486 | 
+  487 |   return lines.join("\n");
+  488 | }
+  489 | 
+  490 | async function runOfficialBacktest(
+  491 |   options = {},
+  492 |   dependencies = {}
+  493 | ) {
+  494 |   const startedAt = Date.now();
+  495 | 
+  496 |   const lotteryKey =
+  497 |     normalizeLotteryKey(
+  498 |       options.lotteryKey ||
+  499 |       "PT_RIO"
+  500 |     );
+  501 | 
+  502 |   const publicApi =
+  503 |     dependencies.publicApi ||
+  504 |     loadTop3PublicApi();
+  505 | 
+  506 |   const loadHistory =
+  507 |     dependencies.readFullHistory ||
+  508 |     readFullHistory;
+  509 | 
+  510 |   const loadMetadata =
+  511 |     dependencies.readMetadata ||
+  512 |     readMetadata;
+  513 | 
+  514 |   const computeTop3 =
+  515 |     dependencies.computeTop3 ||
+  516 |     computeStatisticalTop3V3;
+
+### BLOCO 3 ù LINHAS 543 A 580
+  543 |     (
+  544 |       metadataResult?.exists !== true ||
+  545 |       metadata?.bootstrapStatus !==
+  546 |         "complete"
+  547 |     )
+  548 |   ) {
+  549 |     throw new Error(
+  550 |       "Hist¾rico TOP3 nÒo estß marcado como completo."
+  551 |     );
+  552 |   }
+  553 | 
+  554 |   const minHistory = Number(
+  555 |     options.minHistory || 100
+  556 |   );
+  557 | 
+  558 |   const from =
+  559 |     options.from || null;
+  560 | 
+  561 |   const to =
+  562 |     options.to || null;
+  563 | 
+  564 |   const eligibleIndexes = [];
+  565 | 
+  566 |   for (
+  567 |     let index = minHistory;
+  568 |     index < history.length;
+  569 |     index += 1
+  570 |   ) {
+  571 |     const draw = history[index];
+  572 | 
+  573 |     const ymd =
+  574 |       publicApi.pickDrawYMD(draw);
+  575 | 
+  576 |     const hour =
+  577 |       publicApi.pickDrawHour(draw);
+  578 | 
+  579 |     if (!ymd || !hour) {
+  580 |       continue;
+
+### BLOCO 4 ù LINHAS 592 A 640
+  592 |       getFirstPrizeGroup(
+  593 |         draw,
+  594 |         publicApi
+  595 |       ) == null
+  596 |     ) {
+  597 |       continue;
+  598 |     }
+  599 | 
+  600 |     eligibleIndexes.push(index);
+  601 |   }
+  602 | 
+  603 |   const selectedIndexes =
+  604 |     options.limit
+  605 |       ? eligibleIndexes.slice(
+  606 |           0,
+  607 |           Number(options.limit)
+  608 |         )
+  609 |       : eligibleIndexes;
+  610 | 
+  611 |   const globalBucket = {
+  612 |     evaluated: 0,
+  613 |     top1Hits: 0,
+  614 |     top3Hits: 0,
+  615 |     errors: 0,
+  616 |   };
+  617 | 
+  618 |   const byHour = {};
+  619 |   const byWeekday = {};
+  620 |   const byMonth = {};
+  621 | 
+  622 |   const telemetryCases = [];
+  623 | 
+  624 |   let skipped = 0;
+  625 |   let evaluationFrom = null;
+  626 |   let evaluationTo = null;
+  627 | 
+  628 |   for (
+  629 |     let position = 0;
+  630 |     position < selectedIndexes.length;
+  631 |     position += 1
+  632 |   ) {
+  633 |     const index =
+  634 |       selectedIndexes[position];
+  635 | 
+  636 |     const targetDraw =
+  637 |       history[index];
+  638 | 
+  639 |     const targetYmd =
+  640 |       publicApi.pickDrawYMD(
+
+### BLOCO 5 ù LINHAS 724 A 764
+  724 |         predictionGroups.length < 3
+  725 |       ) {
+  726 |         throw new Error(
+  727 |           "Motor retornou menos de 3 grupos."
+  728 |         );
+  729 |       }
+  730 | 
+  731 |       const top1Hit =
+  732 |         predictionGroups[0] ===
+  733 |         actualGroup;
+  734 | 
+  735 |       const top3Hit =
+  736 |         predictionGroups.includes(
+  737 |           actualGroup
+  738 |         );
+  739 | 
+  740 |       if (options.telemetry === true) {
+  741 |         const computedTop = safeArray(
+  742 |           computed?.top
+  743 |         );
+  744 | 
+  745 |         telemetryCases.push({
+  746 |           caseNumber: position + 1,
+  747 |           historyIndex: index,
+  748 |           target: {
+  749 |             ymd: targetYmd,
+  750 |             hour:
+  751 |               normalizeHour(targetHour) ||
+  752 |               targetHour,
+  753 |             weekday,
+  754 |             month,
+  755 |           },
+  756 |           history: {
+  757 |             availableBefore:
+  758 |               historyBefore.length,
+  759 |             lastDrawYmd:
+  760 |               publicApi.pickDrawYMD(
+  761 |                 drawLast
+  762 |               ) || null,
+  763 |             lastDrawHour:
+  764 |               publicApi.pickDrawHour(
+
+### BLOCO 6 ù LINHAS 860 A 955
+  860 |         dependencies.onCaseError({
+  861 |           index,
+  862 |           targetYmd,
+  863 |           targetHour,
+  864 |           error,
+  865 |         });
+  866 |       }
+  867 |     }
+  868 | 
+  869 |     const done = position + 1;
+  870 | 
+  871 |     if (
+  872 |       options.progress !== false &&
+  873 |       (
+  874 |         done % 25 === 0 ||
+  875 |         done === selectedIndexes.length
+  876 |       )
+  877 |     ) {
+  878 |       console.log(
+  879 |         `[BACKTEST] ${done}/${selectedIndexes.length} | avaliados=${globalBucket.evaluated} | erros=${globalBucket.errors}`
+  880 |       );
+  881 |     }
+  882 |   }
+  883 | 
+  884 |   const result = {
+  885 |     ok: true,
+  886 |     lotteryKey,
+  887 |     engine:
+  888 |       "top3_statistical_v3",
+  889 |     historySource:
+  890 |       "snapshot",
+  891 |     historyLoaded:
+  892 |       history.length,
+  893 |     eligibleCases:
+  894 |       eligibleIndexes.length,
+  895 |     selectedCases:
+  896 |       selectedIndexes.length,
+  897 |     skipped,
+  898 |     minHistory,
+  899 |     limit:
+  900 |       options.limit || null,
+  901 |     historyPeriod: {
+  902 |       from:
+  903 |         publicApi.pickDrawYMD(
+  904 |           history[0]
+  905 |         ) || null,
+  906 |       to:
+  907 |         publicApi.pickDrawYMD(
+  908 |           history[
+  909 |             history.length - 1
+  910 |           ]
+  911 |         ) || null,
+  912 |     },
+  913 |     evaluationPeriod: {
+  914 |       from: evaluationFrom,
+  915 |       to: evaluationTo,
+  916 |     },
+  917 |     global:
+  918 |       finalizeBucket(
+  919 |         globalBucket
+  920 |       ),
+  921 |     byHour:
+  922 |       finalizeMap(byHour),
+  923 |     byWeekday:
+  924 |       finalizeMap(byWeekday),
+  925 |     byMonth:
+  926 |       finalizeMap(byMonth),
+  927 |     telemetry:
+  928 |       options.telemetry === true
+  929 |         ? {
+  930 |             enabled: true,
+  931 |             schemaVersion: 1,
+  932 |             cases: telemetryCases,
+  933 |           }
+  934 |         : {
+  935 |             enabled: false,
+  936 |             schemaVersion: 1,
+  937 |             cases: [],
+  938 |           },
+  939 |     metadata: {
+  940 |       bootstrapStatus:
+  941 |         metadata?.bootstrapStatus ||
+  942 |         null,
+  943 |       totalStored:
+  944 |         Number(
+  945 |           metadata?.totalDraws || 0
+  946 |         ) || null,
+  947 |       lastProcessedDrawId:
+  948 |         metadata?.lastProcessedDrawId ||
+  949 |         null,
+  950 |     },
+  951 |     tookMs:
+  952 |       Date.now() - startedAt,
+  953 |   };
+  954 | 
+  955 |   return result;
+
+### BLOCO 7 ù LINHAS 964 A 1034
+  964 |   console.log(
+  965 |     "===================================="
+  966 |   );
+  967 |   console.log(
+  968 |     "TOP3 OFFICIAL BACKTEST"
+  969 |   );
+  970 |   console.log(
+  971 |     "===================================="
+  972 |   );
+  973 |   console.log("");
+  974 |   console.log(
+  975 |     "Loteria............:",
+  976 |     options.lotteryKey
+  977 |   );
+  978 |   console.log(
+  979 |     "Limite.............:",
+  980 |     options.limit || "TODOS"
+  981 |   );
+  982 |   console.log(
+  983 |     "Hist¾rico mÝnimo...:",
+  984 |     options.minHistory
+  985 |   );
+  986 |   console.log(
+  987 |     "PerÝodo............:",
+  988 |     `${options.from || "inÝcio"} atÚ ${options.to || "fim"}`
+  989 |   );
+  990 |   console.log(
+  991 |     "Telemetria.........:",
+  992 |     options.telemetry
+  993 |       ? "ATIVA"
+  994 |       : "DESATIVADA"
+  995 |   );
+  996 |   console.log("");
+  997 | 
+  998 |   const result =
+  999 |     await runOfficialBacktest(
+ 1000 |       options
+ 1001 |     );
+ 1002 | 
+ 1003 |   const outputDir = path.resolve(
+ 1004 |     options.outputDir
+ 1005 |   );
+ 1006 | 
+ 1007 |   fs.mkdirSync(
+ 1008 |     outputDir,
+ 1009 |     {
+ 1010 |       recursive: true,
+ 1011 |     }
+ 1012 |   );
+ 1013 | 
+ 1014 |   const suffix =
+ 1015 |     options.limit
+ 1016 |       ? `limit_${options.limit}`
+ 1017 |       : "full";
+ 1018 | 
+ 1019 |   const jsonPath = path.join(
+ 1020 |     outputDir,
+ 1021 |     `top3_official_backtest_${suffix}.json`
+ 1022 |   );
+ 1023 | 
+ 1024 |   const txtPath = path.join(
+ 1025 |     outputDir,
+ 1026 |     `top3_official_backtest_${suffix}.txt`
+ 1027 |   );
+ 1028 | 
+ 1029 |   fs.writeFileSync(
+ 1030 |     jsonPath,
+ 1031 |     JSON.stringify(
+ 1032 |       result,
+ 1033 |       null,
+ 1034 |       2
+
+--------------------------------------------------------------------------------------------------------------
+LINHAS EXATAS COM TERMOS RELEVANTES
+--------------------------------------------------------------------------------------------------------------
+  218 |     telemetry: parseBooleanFlag(
+  220 |       "telemetry",
+  498 |       options.lotteryKey ||
+  555 |     options.minHistory || 100
+  559 |     options.from || null;
+  562 |     options.to || null;
+  604 |     options.limit
+  607 |           Number(options.limit)
+  622 |   const telemetryCases = [];
+  736 |         predictionGroups.includes(
+  740 |       if (options.telemetry === true) {
+  745 |         telemetryCases.push({
+  746 |           caseNumber: position + 1,
+  872 |       options.progress !== false &&
+  893 |     eligibleCases:
+  895 |     selectedCases:
+  900 |       options.limit || null,
+  927 |     telemetry:
+  928 |       options.telemetry === true
+  930 |             enabled: true,
+  931 |             schemaVersion: 1,
+  932 |             cases: telemetryCases,
+  935 |             enabled: false,
+  936 |             schemaVersion: 1,
+  937 |             cases: [],
+  976 |     options.lotteryKey
+  980 |     options.limit || "TODOS"
+  984 |     options.minHistory
+  988 |     `${options.from || "inÝcio"} atÚ ${options.to || "fim"}`
+  992 |     options.telemetry
+ 1004 |     options.outputDir
+ 1015 |     options.limit
+ 1016 |       ? `limit_${options.limit}`
+
+--------------------------------------------------------------------------------------------------------------
+OBJETIVO DA PRËXIMA ETAPA
+--------------------------------------------------------------------------------------------------------------
+Identificar a opþÒo oficial que ativa telemetry.cases, sem alterar o motor Top3.
+Depois disso, executar A00, A01 e A02 com telemetria habilitada e comparar os mesmos 500 casos.
+
+Nenhuma alteraþÒo realizada.
+Nenhum commit.
+Nenhum deploy.
+ProduþÒo inalterada.
+==============================================================================================================

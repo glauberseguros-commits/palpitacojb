@@ -1,0 +1,28 @@
+
+===== 1. CONFIRMANDO FONTES INTACTAS =====
+FONTES_INTACTAS
+
+===== 2. CORRIGINDO SEGUNDA ÂNCORA =====
+SECOND_ANCHOR_FIXED
+
+===== 3. APLICANDO PATCH =====
+PATCH_OK
+
+===== 4. VALIDANDO SINTAXE =====
+
+===== 5. VALIDANDO EXPORTS =====
+EXPORTS_OK
+
+===== 6. DIFF RESUMIDO =====
+warning: in the working copy of 'backend/engine/top3HistoryRepository.js', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'backend/engine/top3HistorySync.js', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'backend/engine/top3HistoryRepository.js', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'backend/engine/top3HistorySync.js', LF will be replaced by CRLF the next time Git touches it
+ backend/engine/top3HistoryRepository.js | 429 +++++++++++++++++++++++++++++++-
+ backend/engine/top3HistorySync.js       | 146 +++++++++++
+ 2 files changed, 574 insertions(+), 1 deletion(-)
+ M backend/engine/top3HistoryRepository.js
+ M backend/engine/top3HistorySync.js
+
+===== PERF-TOP3-18 VALIDADO =====
+Patch aplicado. Nenhuma migração ou publicação foi executada.

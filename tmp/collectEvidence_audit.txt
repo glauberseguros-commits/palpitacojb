@@ -1,0 +1,289 @@
+==================================================================
+ARQUIVO: .\src\pages\Top3\modules\scoreEngine\evidenceEngine.js
+==================================================================
+
+  src\pages\Top3\modules\scoreEngine\evidenceEngine.js:1:"use strict";
+  src\pages\Top3\modules\scoreEngine\evidenceEngine.js:2:
+> src\pages\Top3\modules\scoreEngine\evidenceEngine.js:3:import { buildFrequencyEvidence } from "./frequencyEvidence";
+> src\pages\Top3\modules\scoreEngine\evidenceEngine.js:4:import { buildContextEvidence } from "./contextEvidence";
+  src\pages\Top3\modules\scoreEngine\evidenceEngine.js:5:
+  src\pages\Top3\modules\scoreEngine\evidenceEngine.js:6:/**
+> src\pages\Top3\modules\scoreEngine\evidenceEngine.js:7: * Evidence Engine
+  src\pages\Top3\modules\scoreEngine\evidenceEngine.js:8: *
+  src\pages\Top3\modules\scoreEngine\evidenceEngine.js:9: * Centraliza todos os módulos de evidência.
+  src\pages\Top3\modules\scoreEngine\evidenceEngine.js:10: * Cada módulo produz fatos; nenhum decide o resultado.
+  src\pages\Top3\modules\scoreEngine\evidenceEngine.js:11: */
+  src\pages\Top3\modules\scoreEngine\evidenceEngine.js:12:
+> src\pages\Top3\modules\scoreEngine\evidenceEngine.js:13:const MODULES = {
+> src\pages\Top3\modules\scoreEngine\evidenceEngine.js:14:  frequency: buildFrequencyEvidence,
+> src\pages\Top3\modules\scoreEngine\evidenceEngine.js:15:  context: buildContextEvidence,
+  src\pages\Top3\modules\scoreEngine\evidenceEngine.js:16:};
+  src\pages\Top3\modules\scoreEngine\evidenceEngine.js:17:
+> src\pages\Top3\modules\scoreEngine\evidenceEngine.js:18:function collectEvidence({
+  src\pages\Top3\modules\scoreEngine\evidenceEngine.js:19:  item = {},
+  src\pages\Top3\modules\scoreEngine\evidenceEngine.js:20:  context = {},
+  src\pages\Top3\modules\scoreEngine\evidenceEngine.js:21:  config = {},
+  src\pages\Top3\modules\scoreEngine\evidenceEngine.js:22:} = {}) {
+  src\pages\Top3\modules\scoreEngine\evidenceEngine.js:23:
+> src\pages\Top3\modules\scoreEngine\evidenceEngine.js:24:  const evidence = [];
+> src\pages\Top3\modules\scoreEngine\evidenceEngine.js:25:  const enabled = config.evidenceModules || {};
+  src\pages\Top3\modules\scoreEngine\evidenceEngine.js:26:
+> src\pages\Top3\modules\scoreEngine\evidenceEngine.js:27:  for (const [name, builder] of Object.entries(MODULES)) {
+  src\pages\Top3\modules\scoreEngine\evidenceEngine.js:28:
+  src\pages\Top3\modules\scoreEngine\evidenceEngine.js:29:    if (!enabled[name]?.enabled) {
+  src\pages\Top3\modules\scoreEngine\evidenceEngine.js:30:      continue;
+  src\pages\Top3\modules\scoreEngine\evidenceEngine.js:31:    }
+  src\pages\Top3\modules\scoreEngine\evidenceEngine.js:32:
+  src\pages\Top3\modules\scoreEngine\evidenceEngine.js:33:    try {
+  src\pages\Top3\modules\scoreEngine\evidenceEngine.js:34:
+  src\pages\Top3\modules\scoreEngine\evidenceEngine.js:35:      const result = builder(item, context);
+  src\pages\Top3\modules\scoreEngine\evidenceEngine.js:36:
+  src\pages\Top3\modules\scoreEngine\evidenceEngine.js:37:      if (result) {
+> src\pages\Top3\modules\scoreEngine\evidenceEngine.js:38:        evidence.push(result);
+  src\pages\Top3\modules\scoreEngine\evidenceEngine.js:39:      }
+  src\pages\Top3\modules\scoreEngine\evidenceEngine.js:40:
+  src\pages\Top3\modules\scoreEngine\evidenceEngine.js:41:    } catch (err) {
+  src\pages\Top3\modules\scoreEngine\evidenceEngine.js:42:
+> src\pages\Top3\modules\scoreEngine\evidenceEngine.js:43:      evidence.push({
+  src\pages\Top3\modules\scoreEngine\evidenceEngine.js:44:        module: name,
+  src\pages\Top3\modules\scoreEngine\evidenceEngine.js:45:        error: true,
+  src\pages\Top3\modules\scoreEngine\evidenceEngine.js:46:        message: err.message,
+  src\pages\Top3\modules\scoreEngine\evidenceEngine.js:47:      });
+  src\pages\Top3\modules\scoreEngine\evidenceEngine.js:48:
+  src\pages\Top3\modules\scoreEngine\evidenceEngine.js:49:    }
+  src\pages\Top3\modules\scoreEngine\evidenceEngine.js:50:
+  src\pages\Top3\modules\scoreEngine\evidenceEngine.js:51:  }
+  src\pages\Top3\modules\scoreEngine\evidenceEngine.js:52:
+> src\pages\Top3\modules\scoreEngine\evidenceEngine.js:53:  return {
+  src\pages\Top3\modules\scoreEngine\evidenceEngine.js:54:
+> src\pages\Top3\modules\scoreEngine\evidenceEngine.js:55:    count: evidence.filter(e => !e.error).length,
+  src\pages\Top3\modules\scoreEngine\evidenceEngine.js:56:
+> src\pages\Top3\modules\scoreEngine\evidenceEngine.js:57:    modules: evidence
+  src\pages\Top3\modules\scoreEngine\evidenceEngine.js:58:      .filter(e => !e.error)
+  src\pages\Top3\modules\scoreEngine\evidenceEngine.js:59:      .map(e => e.module),
+  src\pages\Top3\modules\scoreEngine\evidenceEngine.js:60:
+> src\pages\Top3\modules\scoreEngine\evidenceEngine.js:61:    evidence,
+  src\pages\Top3\modules\scoreEngine\evidenceEngine.js:62:
+  src\pages\Top3\modules\scoreEngine\evidenceEngine.js:63:  };
+  src\pages\Top3\modules\scoreEngine\evidenceEngine.js:64:
+  src\pages\Top3\modules\scoreEngine\evidenceEngine.js:65:}
+  src\pages\Top3\modules\scoreEngine\evidenceEngine.js:66:
+  src\pages\Top3\modules\scoreEngine\evidenceEngine.js:67:export {
+> src\pages\Top3\modules\scoreEngine\evidenceEngine.js:68:collectEvidence,
+  src\pages\Top3\modules\scoreEngine\evidenceEngine.js:69:};
+==================================================================
+ARQUIVO: .\src\pages\Top3\modules\scoreEngine\frequencyEvidence.js
+==================================================================
+  src\pages\Top3\modules\scoreEngine\frequencyEvidence.js:1:"use strict";
+  src\pages\Top3\modules\scoreEngine\frequencyEvidence.js:2:
+  src\pages\Top3\modules\scoreEngine\frequencyEvidence.js:3:/**
+> src\pages\Top3\modules\scoreEngine\frequencyEvidence.js:4: * Frequency Evidence V2
+  src\pages\Top3\modules\scoreEngine\frequencyEvidence.js:5: *
+  src\pages\Top3\modules\scoreEngine\frequencyEvidence.js:6: * Responsabilidade:
+  src\pages\Top3\modules\scoreEngine\frequencyEvidence.js:7: * Produzir evidências relacionadas à frequência.
+  src\pages\Top3\modules\scoreEngine\frequencyEvidence.js:8: * Não calcula score.
+  src\pages\Top3\modules\scoreEngine\frequencyEvidence.js:9: */
+  src\pages\Top3\modules\scoreEngine\frequencyEvidence.js:10:
+  src\pages\Top3\modules\scoreEngine\frequencyEvidence.js:11:function normalize(value) {
+  src\pages\Top3\modules\scoreEngine\frequencyEvidence.js:12:  const n = Number(value);
+  src\pages\Top3\modules\scoreEngine\frequencyEvidence.js:13:
+  src\pages\Top3\modules\scoreEngine\frequencyEvidence.js:14:  if (!Number.isFinite(n) || n < 0) {
+> src\pages\Top3\modules\scoreEngine\frequencyEvidence.js:15:    return 0;
+  src\pages\Top3\modules\scoreEngine\frequencyEvidence.js:16:  }
+  src\pages\Top3\modules\scoreEngine\frequencyEvidence.js:17:
+> src\pages\Top3\modules\scoreEngine\frequencyEvidence.js:18:  return n;
+  src\pages\Top3\modules\scoreEngine\frequencyEvidence.js:19:}
+  src\pages\Top3\modules\scoreEngine\frequencyEvidence.js:20:
+  src\pages\Top3\modules\scoreEngine\frequencyEvidence.js:21:function normalizePercent(value) {
+  src\pages\Top3\modules\scoreEngine\frequencyEvidence.js:22:  const n = Number(value);
+  src\pages\Top3\modules\scoreEngine\frequencyEvidence.js:23:
+  src\pages\Top3\modules\scoreEngine\frequencyEvidence.js:24:  if (!Number.isFinite(n) || n < 0) {
+> src\pages\Top3\modules\scoreEngine\frequencyEvidence.js:25:    return 0;
+  src\pages\Top3\modules\scoreEngine\frequencyEvidence.js:26:  }
+  src\pages\Top3\modules\scoreEngine\frequencyEvidence.js:27:
+> src\pages\Top3\modules\scoreEngine\frequencyEvidence.js:28:  return Math.min(100, n);
+  src\pages\Top3\modules\scoreEngine\frequencyEvidence.js:29:}
+  src\pages\Top3\modules\scoreEngine\frequencyEvidence.js:30:
+  src\pages\Top3\modules\scoreEngine\frequencyEvidence.js:31:function classifyFrequency(percent) {
+> src\pages\Top3\modules\scoreEngine\frequencyEvidence.js:32:  if (percent >= 70) return "very_high";
+> src\pages\Top3\modules\scoreEngine\frequencyEvidence.js:33:  if (percent >= 50) return "high";
+> src\pages\Top3\modules\scoreEngine\frequencyEvidence.js:34:  if (percent >= 30) return "medium";
+> src\pages\Top3\modules\scoreEngine\frequencyEvidence.js:35:  if (percent >= 15) return "low";
+> src\pages\Top3\modules\scoreEngine\frequencyEvidence.js:36:  return "very_low";
+  src\pages\Top3\modules\scoreEngine\frequencyEvidence.js:37:}
+  src\pages\Top3\modules\scoreEngine\frequencyEvidence.js:38:
+  src\pages\Top3\modules\scoreEngine\frequencyEvidence.js:39:function buildReasons(frequency, percent, level) {
+  src\pages\Top3\modules\scoreEngine\frequencyEvidence.js:40:  const reasons = [];
+  src\pages\Top3\modules\scoreEngine\frequencyEvidence.js:41:
+  src\pages\Top3\modules\scoreEngine\frequencyEvidence.js:42:  reasons.push(`Frequência histórica: ${frequency}`);
+  src\pages\Top3\modules\scoreEngine\frequencyEvidence.js:43:
+  src\pages\Top3\modules\scoreEngine\frequencyEvidence.js:44:  if (percent > 0) {
+  src\pages\Top3\modules\scoreEngine\frequencyEvidence.js:45:    reasons.push(`Participação: ${percent.toFixed(1)}%`);
+  src\pages\Top3\modules\scoreEngine\frequencyEvidence.js:46:  }
+  src\pages\Top3\modules\scoreEngine\frequencyEvidence.js:47:
+  src\pages\Top3\modules\scoreEngine\frequencyEvidence.js:48:  switch (level) {
+  src\pages\Top3\modules\scoreEngine\frequencyEvidence.js:64:
+  src\pages\Top3\modules\scoreEngine\frequencyEvidence.js:65:    default:
+  src\pages\Top3\modules\scoreEngine\frequencyEvidence.js:66:      reasons.push("Pouca evidência de frequência.");
+  src\pages\Top3\modules\scoreEngine\frequencyEvidence.js:67:  }
+  src\pages\Top3\modules\scoreEngine\frequencyEvidence.js:68:
+> src\pages\Top3\modules\scoreEngine\frequencyEvidence.js:69:  return reasons;
+  src\pages\Top3\modules\scoreEngine\frequencyEvidence.js:70:}
+  src\pages\Top3\modules\scoreEngine\frequencyEvidence.js:71:
+> src\pages\Top3\modules\scoreEngine\frequencyEvidence.js:72:function buildFrequencyEvidence(item = {}, context = {}) {
+  src\pages\Top3\modules\scoreEngine\frequencyEvidence.js:73:  const frequency = normalize(
+  src\pages\Top3\modules\scoreEngine\frequencyEvidence.js:74:    item.frequency ??
+  src\pages\Top3\modules\scoreEngine\frequencyEvidence.js:75:    item.total ??
+> src\pages\Top3\modules\scoreEngine\frequencyEvidence.js:76:    item.count ??
+  src\pages\Top3\modules\scoreEngine\frequencyEvidence.js:77:    item.appearances
+  src\pages\Top3\modules\scoreEngine\frequencyEvidence.js:78:  );
+  src\pages\Top3\modules\scoreEngine\frequencyEvidence.js:79:
+  src\pages\Top3\modules\scoreEngine\frequencyEvidence.js:80:  const totalUniverse = normalize(
+  src\pages\Top3\modules\scoreEngine\frequencyEvidence.js:81:    context.totalDraws ??
+  src\pages\Top3\modules\scoreEngine\frequencyEvidence.js:82:    context.windowSize ??
+  src\pages\Top3\modules\scoreEngine\frequencyEvidence.js:83:    context.sampleSize
+  src\pages\Top3\modules\scoreEngine\frequencyEvidence.js:84:  );
+  src\pages\Top3\modules\scoreEngine\frequencyEvidence.js:85:
+  src\pages\Top3\modules\scoreEngine\frequencyEvidence.js:86:  const percent =
+  src\pages\Top3\modules\scoreEngine\frequencyEvidence.js:87:    totalUniverse > 0
+  src\pages\Top3\modules\scoreEngine\frequencyEvidence.js:88:      ? normalizePercent((frequency / totalUniverse) * 100)
+  src\pages\Top3\modules\scoreEngine\frequencyEvidence.js:91:          item.frequencyRate
+  src\pages\Top3\modules\scoreEngine\frequencyEvidence.js:92:        );
+  src\pages\Top3\modules\scoreEngine\frequencyEvidence.js:93:
+  src\pages\Top3\modules\scoreEngine\frequencyEvidence.js:94:  const level = classifyFrequency(percent);
+  src\pages\Top3\modules\scoreEngine\frequencyEvidence.js:95:
+> src\pages\Top3\modules\scoreEngine\frequencyEvidence.js:96:  return {
+  src\pages\Top3\modules\scoreEngine\frequencyEvidence.js:97:    module: "frequency",
+  src\pages\Top3\modules\scoreEngine\frequencyEvidence.js:98:
+  src\pages\Top3\modules\scoreEngine\frequencyEvidence.js:99:    value: percent,
+  src\pages\Top3\modules\scoreEngine\frequencyEvidence.js:100:
+> src\pages\Top3\modules\scoreEngine\frequencyEvidence.js:101:    evidence: {
+  src\pages\Top3\modules\scoreEngine\frequencyEvidence.js:102:      frequency,
+  src\pages\Top3\modules\scoreEngine\frequencyEvidence.js:103:      percent,
+  src\pages\Top3\modules\scoreEngine\frequencyEvidence.js:104:      level,
+  src\pages\Top3\modules\scoreEngine\frequencyEvidence.js:105:      totalUniverse,
+  src\pages\Top3\modules\scoreEngine\frequencyEvidence.js:106:
+  src\pages\Top3\modules\scoreEngine\frequencyEvidence.js:107:      window: context.window || null,
+  src\pages\Top3\modules\scoreEngine\frequencyEvidence.js:108:      lotteryKey: context.lotteryKey || null,
+  src\pages\Top3\modules\scoreEngine\frequencyEvidence.js:109:      position: context.position || null,
+  src\pages\Top3\modules\scoreEngine\frequencyEvidence.js:110:      weekday: context.weekday || null,
+  src\pages\Top3\modules\scoreEngine\frequencyEvidence.js:111:      hour: context.hour || null,
+  src\pages\Top3\modules\scoreEngine\frequencyEvidence.js:112:    },
+  src\pages\Top3\modules\scoreEngine\frequencyEvidence.js:113:
+  src\pages\Top3\modules\scoreEngine\frequencyEvidence.js:114:    reasons: buildReasons(frequency, percent, level),
+  src\pages\Top3\modules\scoreEngine\frequencyEvidence.js:115:  };
+  src\pages\Top3\modules\scoreEngine\frequencyEvidence.js:116:}
+  src\pages\Top3\modules\scoreEngine\frequencyEvidence.js:117:
+  src\pages\Top3\modules\scoreEngine\frequencyEvidence.js:118:export {
+> src\pages\Top3\modules\scoreEngine\frequencyEvidence.js:119:buildFrequencyEvidence,
+  src\pages\Top3\modules\scoreEngine\frequencyEvidence.js:120:};
+==================================================================
+ARQUIVO: .\src\pages\Top3\modules\scoreEngine\contextEvidence.js
+==================================================================
+  src\pages\Top3\modules\scoreEngine\contextEvidence.js:1:"use strict";
+  src\pages\Top3\modules\scoreEngine\contextEvidence.js:2:
+  src\pages\Top3\modules\scoreEngine\contextEvidence.js:3:/**
+> src\pages\Top3\modules\scoreEngine\contextEvidence.js:4: * Context Evidence V2
+  src\pages\Top3\modules\scoreEngine\contextEvidence.js:5: *
+  src\pages\Top3\modules\scoreEngine\contextEvidence.js:6: * Responsabilidade:
+  src\pages\Top3\modules\scoreEngine\contextEvidence.js:7: * Produzir evidências do contexto do sorteio.
+  src\pages\Top3\modules\scoreEngine\contextEvidence.js:8: * Não calcula score.
+  src\pages\Top3\modules\scoreEngine\contextEvidence.js:9: */
+  src\pages\Top3\modules\scoreEngine\contextEvidence.js:10:
+  src\pages\Top3\modules\scoreEngine\contextEvidence.js:11:function normalize(value) {
+  src\pages\Top3\modules\scoreEngine\contextEvidence.js:12:    const n = Number(value);
+> src\pages\Top3\modules\scoreEngine\contextEvidence.js:13:    return Number.isFinite(n) ? n : null;
+  src\pages\Top3\modules\scoreEngine\contextEvidence.js:14:}
+  src\pages\Top3\modules\scoreEngine\contextEvidence.js:15:
+  src\pages\Top3\modules\scoreEngine\contextEvidence.js:16:function buildReasons(ctx) {
+  src\pages\Top3\modules\scoreEngine\contextEvidence.js:17:
+  src\pages\Top3\modules\scoreEngine\contextEvidence.js:18:    const reasons = [];
+  src\pages\Top3\modules\scoreEngine\contextEvidence.js:19:
+  src\pages\Top3\modules\scoreEngine\contextEvidence.js:20:    reasons.push("Contexto histórico identificado.");
+  src\pages\Top3\modules\scoreEngine\contextEvidence.js:21:
+  src\pages\Top3\modules\scoreEngine\contextEvidence.js:22:    if (ctx.lotteryKey)
+  src\pages\Top3\modules\scoreEngine\contextEvidence.js:23:        reasons.push(`Loteria: ${ctx.lotteryKey}`);
+  src\pages\Top3\modules\scoreEngine\contextEvidence.js:24:
+  src\pages\Top3\modules\scoreEngine\contextEvidence.js:25:    if (ctx.weekday)
+  src\pages\Top3\modules\scoreEngine\contextEvidence.js:32:        reasons.push(`Grupo anterior: ${ctx.previousGroup}`);
+  src\pages\Top3\modules\scoreEngine\contextEvidence.js:33:
+  src\pages\Top3\modules\scoreEngine\contextEvidence.js:34:    if (ctx.previousAnimal)
+  src\pages\Top3\modules\scoreEngine\contextEvidence.js:35:        reasons.push(`Animal anterior: ${ctx.previousAnimal}`);
+  src\pages\Top3\modules\scoreEngine\contextEvidence.js:36:
+> src\pages\Top3\modules\scoreEngine\contextEvidence.js:37:    return reasons;
+  src\pages\Top3\modules\scoreEngine\contextEvidence.js:38:}
+  src\pages\Top3\modules\scoreEngine\contextEvidence.js:39:
+> src\pages\Top3\modules\scoreEngine\contextEvidence.js:40:function buildContextEvidence(item = {}, context = {}) {
+  src\pages\Top3\modules\scoreEngine\contextEvidence.js:41:
+> src\pages\Top3\modules\scoreEngine\contextEvidence.js:42:    const evidence = {
+  src\pages\Top3\modules\scoreEngine\contextEvidence.js:43:
+  src\pages\Top3\modules\scoreEngine\contextEvidence.js:44:        lotteryKey: context.lotteryKey || null,
+  src\pages\Top3\modules\scoreEngine\contextEvidence.js:45:
+  src\pages\Top3\modules\scoreEngine\contextEvidence.js:46:        ymd: context.ymd || null,
+  src\pages\Top3\modules\scoreEngine\contextEvidence.js:47:
+  src\pages\Top3\modules\scoreEngine\contextEvidence.js:48:        weekday: context.weekday || null,
+  src\pages\Top3\modules\scoreEngine\contextEvidence.js:49:
+  src\pages\Top3\modules\scoreEngine\contextEvidence.js:50:        closeHour: context.hour || null,
+  src\pages\Top3\modules\scoreEngine\contextEvidence.js:51:
+  src\pages\Top3\modules\scoreEngine\contextEvidence.js:52:        prize: normalize(context.prize),
+  src\pages\Top3\modules\scoreEngine\contextEvidence.js:53:
+  src\pages\Top3\modules\scoreEngine\contextEvidence.js:54:        previousAnimal: context.previousAnimal || null,
+  src\pages\Top3\modules\scoreEngine\contextEvidence.js:61:
+  src\pages\Top3\modules\scoreEngine\contextEvidence.js:62:        window: normalize(context.window),
+  src\pages\Top3\modules\scoreEngine\contextEvidence.js:63:
+  src\pages\Top3\modules\scoreEngine\contextEvidence.js:64:    };
+  src\pages\Top3\modules\scoreEngine\contextEvidence.js:65:
+> src\pages\Top3\modules\scoreEngine\contextEvidence.js:66:    return {
+  src\pages\Top3\modules\scoreEngine\contextEvidence.js:67:
+  src\pages\Top3\modules\scoreEngine\contextEvidence.js:68:        module: "context",
+  src\pages\Top3\modules\scoreEngine\contextEvidence.js:69:
+  src\pages\Top3\modules\scoreEngine\contextEvidence.js:70:        value: 1,
+  src\pages\Top3\modules\scoreEngine\contextEvidence.js:71:
+> src\pages\Top3\modules\scoreEngine\contextEvidence.js:72:        evidence,
+  src\pages\Top3\modules\scoreEngine\contextEvidence.js:73:
+> src\pages\Top3\modules\scoreEngine\contextEvidence.js:74:        reasons: buildReasons(evidence),
+  src\pages\Top3\modules\scoreEngine\contextEvidence.js:75:
+  src\pages\Top3\modules\scoreEngine\contextEvidence.js:76:    };
+  src\pages\Top3\modules\scoreEngine\contextEvidence.js:77:
+  src\pages\Top3\modules\scoreEngine\contextEvidence.js:78:}
+  src\pages\Top3\modules\scoreEngine\contextEvidence.js:79:
+  src\pages\Top3\modules\scoreEngine\contextEvidence.js:80:export {
+> src\pages\Top3\modules\scoreEngine\contextEvidence.js:81:buildContextEvidence,
+  src\pages\Top3\modules\scoreEngine\contextEvidence.js:82:};
+==================================================================
+ARQUIVO: .\src\pages\Top3\modules\scoreEngine\scoreConfig.js
+==================================================================
+  src\pages\Top3\modules\scoreEngine\scoreConfig.js:1:"use strict";
+  src\pages\Top3\modules\scoreEngine\scoreConfig.js:2:
+  src\pages\Top3\modules\scoreEngine\scoreConfig.js:3:const scoreConfig = {
+  src\pages\Top3\modules\scoreEngine\scoreConfig.js:4:  version: "2.2.0",
+  src\pages\Top3\modules\scoreEngine\scoreConfig.js:5:
+> src\pages\Top3\modules\scoreEngine\scoreConfig.js:6:  evidenceModules: {
+  src\pages\Top3\modules\scoreEngine\scoreConfig.js:7:    frequency: {
+  src\pages\Top3\modules\scoreEngine\scoreConfig.js:8:      enabled: true,
+  src\pages\Top3\modules\scoreEngine\scoreConfig.js:9:      weight: 1.0,
+  src\pages\Top3\modules\scoreEngine\scoreConfig.js:10:      description: "Frequência histórica."
+  src\pages\Top3\modules\scoreEngine\scoreConfig.js:11:    },
+  src\pages\Top3\modules\scoreEngine\scoreConfig.js:12:
+  src\pages\Top3\modules\scoreEngine\scoreConfig.js:13:    context: {
+  src\pages\Top3\modules\scoreEngine\scoreConfig.js:14:      enabled: true,
+  src\pages\Top3\modules\scoreEngine\scoreConfig.js:15:      weight: 0.8,
+  src\pages\Top3\modules\scoreEngine\scoreConfig.js:16:      description: "Contexto do sorteio."
+  src\pages\Top3\modules\scoreEngine\scoreConfig.js:17:    },
+  src\pages\Top3\modules\scoreEngine\scoreConfig.js:18:
+  src\pages\Top3\modules\scoreEngine\scoreConfig.js:67:  },
+  src\pages\Top3\modules\scoreEngine\scoreConfig.js:68:
+  src\pages\Top3\modules\scoreEngine\scoreConfig.js:69:  scoring: {
+  src\pages\Top3\modules\scoreEngine\scoreConfig.js:70:    maxScore: 100,
+  src\pages\Top3\modules\scoreEngine\scoreConfig.js:71:    normalize: true,
+> src\pages\Top3\modules\scoreEngine\scoreConfig.js:72:    minimumEvidence: 2
+  src\pages\Top3\modules\scoreEngine\scoreConfig.js:73:  },
+  src\pages\Top3\modules\scoreEngine\scoreConfig.js:74:
+  src\pages\Top3\modules\scoreEngine\scoreConfig.js:75:  learning: {
+  src\pages\Top3\modules\scoreEngine\scoreConfig.js:76:    enabled: false,
+  src\pages\Top3\modules\scoreEngine\scoreConfig.js:77:    autoAdjust: false
+  src\pages\Top3\modules\scoreEngine\scoreConfig.js:78:  }
+  src\pages\Top3\modules\scoreEngine\scoreConfig.js:79:};
+  src\pages\Top3\modules\scoreEngine\scoreConfig.js:80:
+  src\pages\Top3\modules\scoreEngine\scoreConfig.js:81:export default scoreConfig;
+

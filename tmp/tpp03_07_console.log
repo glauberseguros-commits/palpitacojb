@@ -1,0 +1,74 @@
+==========================================================================================
+TPP-03.07 - COMPARA├ç├âO DEFINITIVA CASO A CASO
+==========================================================================================
+
+CONTROLES DE INTEGRIDADE
+------------------------------------------------------------------------------------------
+A00 x A01 ÔÇö baselines equivalentes: SIM (diferen├ºas=0)
+A00 x A02 ÔÇö baselines equivalentes: SIM (diferen├ºas=0)
+A00 preservou o ranking oficial: SIM
+
+------------------------------------------------------------------------------------------
+A00 ÔÇö BASELINE_COMPLETO
+------------------------------------------------------------------------------------------
+Total de casos.....................: 500
+Casos totalmente id├¬nticos.........: 500
+Casos com alguma diferen├ºa.........: 0
+Top1 alterado.......................: 0
+Ordem exata do Top3 alterada........: 0
+Composi├º├úo do Top3 alterada.........: 0
+Somente ordem alterada..............: 0
+Grupos que entraram no Top3.........: 0
+Grupos que sa├¡ram do Top3...........: 0
+Melhorias no acerto Top1............: 0
+Regress├Áes no acerto Top1...........: 0
+Melhorias no acerto Top3............: 0
+Regress├Áes no acerto Top3...........: 0
+Mudan├ºas sem impacto nos acertos....: 0
+Casos com altera├º├úo de score/rank...: 0
+
+------------------------------------------------------------------------------------------
+A01 ÔÇö SEM_FREQUENCY
+------------------------------------------------------------------------------------------
+Total de casos.....................: 500
+Casos totalmente id├¬nticos.........: 500
+Casos com alguma diferen├ºa.........: 0
+Top1 alterado.......................: 0
+Ordem exata do Top3 alterada........: 0
+Composi├º├úo do Top3 alterada.........: 0
+Somente ordem alterada..............: 0
+Grupos que entraram no Top3.........: 0
+Grupos que sa├¡ram do Top3...........: 0
+Melhorias no acerto Top1............: 0
+Regress├Áes no acerto Top1...........: 0
+Melhorias no acerto Top3............: 0
+Regress├Áes no acerto Top3...........: 0
+Mudan├ºas sem impacto nos acertos....: 0
+Casos com altera├º├úo de score/rank...: 0
+
+------------------------------------------------------------------------------------------
+A02 ÔÇö SEM_CONTEXT
+------------------------------------------------------------------------------------------
+Total de casos.....................: 500
+Casos totalmente id├¬nticos.........: 500
+Casos com alguma diferen├ºa.........: 0
+Top1 alterado.......................: 0
+Ordem exata do Top3 alterada........: 0
+Composi├º├úo do Top3 alterada.........: 0
+Somente ordem alterada..............: 0
+Grupos que entraram no Top3.........: 0
+Grupos que sa├¡ram do Top3...........: 0
+Melhorias no acerto Top1............: 0
+Regress├Áes no acerto Top1...........: 0
+Melhorias no acerto Top3............: 0
+Regress├Áes no acerto Top3...........: 0
+Mudan├ºas sem impacto nos acertos....: 0
+Casos com altera├º├úo de score/rank...: 0
+
+==========================================================================================
+STATUS DE INTEGRIDADE: OK
+==========================================================================================
+
+JSON detalhado: C:\Users\glaub\palpitaco\tmp\tpp03_07_case_by_case_comparison.json
+TXT resumido..: C:\Users\glaub\palpitaco\tmp\tpp03_07_case_by_case_comparison.txt
+CSV diferen├ºas: C:\Users\glaub\palpitaco\tmp\tpp03_07_changed_cases.csv

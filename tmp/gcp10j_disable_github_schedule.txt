@@ -1,0 +1,146 @@
+warning: in the working copy of '.github/workflows/auto-import.yml', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of '.github/workflows/auto-import.yml', LF will be replaced by CRLF the next time Git touches it
+diff --git a/.github/workflows/auto-import.yml b/.github/workflows/auto-import.yml
+index a673184..1f92a76 100644
+--- a/.github/workflows/auto-import.yml
++++ b/.github/workflows/auto-import.yml
+@@ -1,21 +1,8 @@
+ name: Auto Import ÔÇö PalPitaco JB
+ 
+ on:
+-  schedule:
+-    # Heartbeat resiliente a cada 10 minutos:
+-    # UTC 00hÔÇô02h = BRT 21hÔÇô23h
+-    # UTC 05h = BRT 02h
+-    # UTC 10hÔÇô23h = BRT 07hÔÇô20h
+-    #
+-    # Um ├║nico gatilho evita colis├Áes entre loterias.
+-    # Minutos fora do in├¡cio da hora reduzem atrasos do GitHub Actions.
+-    - cron: "3 0-2,5,10-23 * * *"
+-    - cron: "13 0-2,5,10-23 * * *"
+-    - cron: "23 0-2,5,10-23 * * *"
+-    - cron: "33 0-2,5,10-23 * * *"
+-    - cron: "43 0-2,5,10-23 * * *"
+-    - cron: "53 0-2,5,10-23 * * *"
+-
++  # Automatic scheduling migrated to Google Cloud Scheduler.
++  # This workflow remains available only for manual execution.
+   workflow_dispatch:
+     inputs:
+       lottery:
+warning: in the working copy of '.github/workflows/auto-import.yml', LF will be replaced by CRLF the next time Git touches it
+.github/workflows/auto-import.yml
+[main 27350ab] chore: migrar agendamento autom├ítico para Google Cloud
+ 1 file changed, 2 insertions(+), 15 deletions(-)
+To https://github.com/glauberseguros-commits/palpitacojb.git
+   e046882..27350ab  main -> main
+name: Auto Import ÔÇö PalPitaco JB
+
+on:
+  # Automatic scheduling migrated to Google Cloud Scheduler.
+  # This workflow remains available only for manual execution.
+  workflow_dispatch:
+    inputs:
+      lottery:
+        description: "Qual loteria executar"
+        required: true
+        default: "ALL"
+        type: choice
+        options:
+          - ALL
+          - PT_RIO
+          - FEDERAL
+          - LOOK
+          - NACIONAL
+
+# Mant├®m somente uma execu├º├úo ativa e uma pendente.
+# Cada execu├º├úo reconcilia todas as loterias e recupera slots anteriores.
+concurrency:
+  group: auto-import-heartbeat-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+env:
+  TZ: America/Sao_Paulo
+  PITACO_API_BASE: ${{ vars.PITACO_API_BASE }}
+
+jobs:
+  reconcile-results:
+    name: Reconciliar resultados
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    defaults:
+      run:
+        working-directory: backend
+
+    steps:
+      - name: Checkout do reposit├│rio
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Instalar depend├¬ncias
+        run: npm ci
+
+      - name: Importar hoje e reconciliar ontem
+        shell: bash
+        env:
+          FIREBASE_ADMIN_SA_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_JSON }}
+          FAIL_ON_CRITICAL: "1"
+          AUDIT_WARN_MIN: "20"
+          AUDIT_CRIT_MIN: "60"
+          CATCHUP_MAX_AFTER_END_MIN: "1440"
+        run: |
+          set +e
+
+          requested="${{ inputs.lottery }}"
+
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" && "$requested" != "ALL" ]]; then
+            lotteries="$requested"
+          else
+            lotteries="PT_RIO FEDERAL LOOK NACIONAL"
+          fi
+
+          yesterday="$(TZ=America/Sao_Paulo date -d 'yesterday' +%F)"
+          overall=0
+
+          run_import() {
+            local lottery="$1"
+            local period="$2"
+            shift 2
+
+            echo ""
+            echo "=================================================="
+            echo "LOTTERY=$lottery | PERIOD=$period"
+            echo "=================================================="
+
+            env LOTTERY="$lottery" "$@" node scripts/autoImportToday.js
+            local code=$?
+
+            if [[ $code -ne 0 ]]; then
+              echo "::error::Falha LOTTERY=$lottery PERIOD=$period EXIT=$code"
+              overall=1
+            fi
+          }
+
+          for lottery in $lotteries; do
+            run_import "$lottery" "TODAY"
+          done
+
+          for lottery in $lotteries; do
+            run_import \
+              "$lottery" \
+              "YESTERDAY:$yesterday" \
+              DATE="$yesterday" \
+              NOW_HM="23:59"
+          done
+
+          exit $overall

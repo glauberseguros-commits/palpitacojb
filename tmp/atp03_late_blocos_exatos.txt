@@ -1,0 +1,1800 @@
+===== ATP-03 — EXTRAÇÃO CIRÚRGICA DO LATE.JSX =====
+
+Arquivo: src/pages/Late/Late.jsx
+Total de linhas: 956
+
+IMPORTS_E_CONSTANTES: 24 ocorrência(s)
+COMPONENTE: 1 ocorrência(s)
+ESTADOS: 15 ocorrência(s)
+CONSULTA_ATRASADOS: 57 ocorrência(s)
+FILTROS_INTERFACE: 43 ocorrência(s)
+DADOS_FILTRADOS: 17 ocorrência(s)
+CSS_E_LAYOUT: 3 ocorrência(s)
+
+===== BLOCOS COMPLETOS RELEVANTES =====
+
+====================================================================================================
+BLOCO 01 — LINHAS 1 A 46
+====================================================================================================
+00001: // src/pages/Late/Late.jsx
+00002: import React, { useEffect, useMemo, useRef, useState, useCallback } from "react";
+00003: import {
+00004:   getKingBoundsByUf,
+00005:   getKingResultsByDate,
+00006:   getKingLateByRange,
+00007: } from "../../services/kingResultsService";
+00008: import {
+00009:   getAnimalLabel as getAnimalLabelFn,
+00010:   getImgFromGrupo as getImgFromGrupoFn,
+00011: } from "../../constants/bichoMap";
+00012: 
+00013: /**
+00014:  * Late (Atrasados) — Premium
+00015:  *
+00016:  * ✅ 100% em cima da SUA base:
+00017:  * - Usa getKingLateByRange() (varre histórico interno com prizes)
+00018:  * - NÃO chama nada externo
+00019:  *
+00020:  * ✅ Atualiza por SORTEIO:
+00021:  * - Rebusca bounds periodicamente (maxYmd atualiza quando entra sorteio novo)
+00022:  * - Detecta "último sorteio importado" (maxYmd + maior close_hour do dia)
+00023:  * - Se mudar maxYmd ou close_hour do último sorteio -> refresh automático
+00024:  *
+00025:  * ✅ IMPORTANTE (SEU PROJETO):
+00026:  * - Consultas devem usar UF="RJ" (com trava interna para PT_RIO)
+00027:  */
+00028: 
+00029: function pad2(n) {
+00030:   return String(n).padStart(2, "0");
+00031: }
+00032: 
+00033: function safeStr(v) {
+00034:   return String(v ?? "").trim();
+00035: }
+00036: 
+00037: function todayYMDLocal() {
+00038:   const d = new Date();
+00039:   return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+00040: }
+00041: 
+00042: function isYMD(s) {
+00043:   return /^\d{4}-\d{2}-\d{2}$/.test(String(s || "").trim());
+00044: }
+00045: 
+00046: function ymdToBR(ymd) {
+
+====================================================================================================
+BLOCO 02 — LINHAS 95 A 249
+====================================================================================================
+00095:   if (mISO) return `${pad2(mISO[1])}:${pad2(mISO[2])}`;
+00096: 
+00097:   const m2 = s.match(/^(\d{1,2})$/);
+00098:   if (m2) return `${pad2(m2[1])}:00`;
+00099: 
+00100:   return s0.trim();
+00101: }
+00102: 
+00103: /**
+00104:  * Converte "09:00" -> 540
+00105:  */
+00106: function hourToMinutes(hhmm) {
+00107:   const s = normalizeHourLike(hhmm);
+00108:   const m = String(s).match(/^(\d{2}):(\d{2})$/);
+00109:   if (!m) return null;
+00110:   const hh = Number(m[1]);
+00111:   const mm = Number(m[2]);
+00112:   if (!Number.isFinite(hh) || !Number.isFinite(mm)) return null;
+00113:   return hh * 60 + mm;
+00114: }
+00115: 
+00116: /**
+00117:  * Converte um label de loteria (closeHour) pra bucket "09h"
+00118:  * Aceita "09:00" / "09h" / "09HS" / "9" etc.
+00119:  */
+00120: function toHourBucket(value) {
+00121:   const hhmm = normalizeHourLike(value);
+00122:   const m = String(hhmm).match(/^(\d{2}):/);
+00123:   if (!m) return null;
+00124:   return `${m[1]}h`;
+00125: }
+00126: 
+00127: /**
+00128:  * ✅ Extrai array de draws de qualquer retorno comum do service
+00129:  */
+00130: function unwrapDraws(maybe) {
+00131:   if (Array.isArray(maybe)) return maybe;
+00132:   if (maybe && typeof maybe === "object") {
+00133:     if (Array.isArray(maybe.drawsRaw)) return maybe.drawsRaw;
+00134:     if (Array.isArray(maybe.draws)) return maybe.draws;
+00135:     if (Array.isArray(maybe.rows)) return maybe.rows;
+00136:     if (Array.isArray(maybe.data)) return maybe.data;
+00137:   }
+00138:   return [];
+00139: }
+00140: 
+00141: /**
+00142:  * ✅ Pega a maior close_hour existente em um conjunto de draws
+00143:  * Retorna { ymd, closeHour }.
+00144:  */
+00145: function pickLatestCloseHour(drawsLike) {
+00146:   const arr = unwrapDraws(drawsLike);
+00147:   let best = null;
+00148:   let bestMin = -1;
+00149: 
+00150:   for (const d of arr) {
+00151:     const ch = normalizeHourLike(d?.close_hour || d?.closeHour || d?.hour || d?.hora || "");
+00152:     const min = hourToMinutes(ch);
+00153:     if (min == null) continue;
+00154:     if (min > bestMin) {
+00155:       bestMin = min;
+00156:       best = { ymd: d?.ymd || d?.date || "", closeHour: ch || "" };
+00157:     }
+00158:   }
+00159: 
+00160:   return best;
+00161: }
+00162: 
+00163: // escolhe "mais recente" entre (ymd + closeHour)
+00164: function isMoreRecent(a, b) {
+00165:   const ay = String(a?.lastYmd || "");
+00166:   const by = String(b?.lastYmd || "");
+00167:   if (ay && by && ay !== by) return ay > by;
+00168: 
+00169:   const am = hourToMinutes(a?.lastCloseHour || "");
+00170:   const bm = hourToMinutes(b?.lastCloseHour || "");
+00171:   if (am != null && bm != null && am !== bm) return am > bm;
+00172: 
+00173:   if (ay && !by) return true;
+00174:   if (!ay && by) return false;
+00175: 
+00176:   return false;
+00177: }
+00178: 
+00179: // merge de múltiplas consultas (ex: 1º ao 5º) => pega a última aparição mais recente por grupo
+00180: function mergeLateLists(lists, baseYmd) {
+00181:   const byGrupo = new Map();
+00182: 
+00183:   for (const list of lists) {
+00184:     const arr = Array.isArray(list) ? list : [];
+00185:     for (const r of arr) {
+00186:       const g = Number(r?.grupo);
+00187:       if (!isValidGrupo(g)) continue;
+00188: 
+00189:       const candidate = {
+00190:         grupo: g,
+00191:         lastYmd: r?.lastYmd || null,
+00192:         // ✅ normaliza aqui (evita “09h/09HS/9”)
+00193:         lastCloseHour: r?.lastCloseHour ? normalizeHourLike(r.lastCloseHour) : "",
+00194:       };
+00195: 
+00196:       if (!byGrupo.has(g)) {
+00197:         byGrupo.set(g, candidate);
+00198:         continue;
+00199:       }
+00200: 
+00201:       const prev = byGrupo.get(g);
+00202:       if (isMoreRecent(candidate, prev)) byGrupo.set(g, candidate);
+00203:     }
+00204:   }
+00205: 
+00206:   const out = [];
+00207:   for (let g = 1; g <= 25; g += 1) {
+00208:     const rec = byGrupo.get(g) || { grupo: g, lastYmd: null, lastCloseHour: "" };
+00209:     const lastYmd = rec?.lastYmd || null;
+00210:     const lastCloseHour = rec?.lastCloseHour ? normalizeHourLike(rec.lastCloseHour) : "";
+00211:     const daysLate = lastYmd ? diffDaysUTC(lastYmd, baseYmd) : null;
+00212: 
+00213:     out.push({
+00214:       grupo: g,
+00215:       grupo2: toGrupo2(g),
+00216:       lastYmd,
+00217:       lastCloseHour,
+00218:       daysLate,
+00219:     });
+00220:   }
+00221: 
+00222:   // ordenação: atraso desc, depois hora asc, depois grupo asc
+00223:   out.sort((a, b) => {
+00224:     const aa = a.daysLate == null ? 999999 : a.daysLate;
+00225:     const bb = b.daysLate == null ? 999999 : b.daysLate;
+00226:     if (bb !== aa) return bb - aa;
+00227: 
+00228:     const ma = hourToMinutes(a.lastCloseHour);
+00229:     const mb = hourToMinutes(b.lastCloseHour);
+00230:     if (ma != null && mb != null && ma !== mb) return ma - mb;
+00231:     if (ma == null && mb != null) return 1;
+00232:     if (ma != null && mb == null) return -1;
+00233: 
+00234:     return a.grupo - b.grupo;
+00235:   });
+00236: 
+00237:   return out.map((r, idx) => ({ ...r, pos: idx + 1 }));
+00238: }
+00239: 
+00240: /* =========================
+00241:    ✅ Bounds helpers (FIX UI)
+00242: ========================= */
+00243: 
+00244: function clampYmd(ymd, minYmd, maxYmd) {
+00245:   const d = safeStr(ymd);
+00246:   if (!isYMD(d)) return null;
+00247: 
+00248:   let out = d;
+00249:   const min = safeStr(minYmd);
+
+====================================================================================================
+BLOCO 03 — LINHAS 270 A 364
+====================================================================================================
+00270: 
+00271: /* =========================
+00272:    ✅ Bounds normalize (PATCH)
+00273: ========================= */
+00274: function normalizeBoundsResponse(b) {
+00275:   const minRaw = safeStr(b?.minYmd || b?.minDate || b?.min || "");
+00276:   const maxRaw = safeStr(b?.maxYmd || b?.maxDate || b?.max || "");
+00277:   const minYmd = isYMD(minRaw) ? minRaw : null;
+00278:   const maxYmd = isYMD(maxRaw) ? maxRaw : null;
+00279:   return { minYmd, maxYmd, source: safeStr(b?.source || "") };
+00280: }
+00281: 
+00282: export default function Late() {
+00283:   const UF_CODE = "RJ";
+00284:   const LOTTERY_DISPLAY = "PT_RIO";
+00285: 
+00286:   const LOTTERY_OPTIONS = useMemo(
+00287:     () => [
+00288:       { id: "ALL", label: "Todas as loterias", closeHour: null },
+00289:       { id: "09", label: "LT PT RIO 09HS", closeHour: "09h" },
+00290:       { id: "11", label: "LT PT RIO 11HS", closeHour: "11h" },
+00291:       { id: "14", label: "LT PT RIO 14HS", closeHour: "14h" },
+00292:       { id: "16", label: "LT PT RIO 16HS", closeHour: "16h" },
+00293:       { id: "18", label: "LT PT RIO 18HS", closeHour: "18h" },
+00294:       { id: "21", label: "LT PT RIO 21HS", closeHour: "21h" },
+00295:     ],
+00296:     []
+00297:   );
+00298: 
+00299:   // UI
+00300:   const [lotteryOptId, setLotteryOptId] = useState("ALL");
+00301:   const [kind, setKind] = useState("grupo");
+00302:   const [prizeMode, setPrizeMode] = useState("1");
+00303:   const [dateYmd, setDateYmd] = useState(todayYMDLocal());
+00304: 
+00305:   // Data
+00306:   const [bounds, setBounds] = useState({
+00307:     minYmd: null,
+00308:     maxYmd: null,
+00309:     source: "",
+00310:   });
+00311:   const [loading, setLoading] = useState(false);
+00312:   const [error, setError] = useState("");
+00313:   const [rows, setRows] = useState([]);
+00314: 
+00315:   // Último sorteio importado (INDEPENDENTE do prizeMode / filtro)
+00316:   const [lastImported, setLastImported] = useState({
+00317:     ymd: "",
+00318:     closeHour: "",
+00319:   });
+00320: 
+00321:   const lastImportedRef = useRef(lastImported);
+00322:   useEffect(() => {
+00323:     lastImportedRef.current = lastImported;
+00324:   }, [lastImported]);
+00325: 
+00326:   const [meta, setMeta] = useState({
+00327:     effectiveTargetYmd: "",
+00328:   });
+00329: 
+00330:   const abortedRef = useRef(false);
+00331:   const pollRef = useRef(null);
+00332: 
+00333:   const selectedLottery = useMemo(() => {
+00334:     return LOTTERY_OPTIONS.find((x) => x.id === lotteryOptId) || LOTTERY_OPTIONS[0];
+00335:   }, [lotteryOptId, LOTTERY_OPTIONS]);
+00336: 
+00337:   // ✅ bucket "09h" etc (preferível pra bater na base)
+00338:   const selectedCloseHourBucket = useMemo(() => {
+00339:     const raw = selectedLottery?.closeHour;
+00340:     if (!raw) return null;
+00341:     return String(raw).includes("h") ? String(raw).trim() : toHourBucket(raw);
+00342:   }, [selectedLottery]);
+00343: 
+00344:   const prizePositions = useMemo(() => {
+00345:     if (prizeMode === "1-5") return [1, 2, 3, 4, 5];
+00346:     const n = Number(prizeMode);
+00347:     if (Number.isFinite(n) && n >= 1 && n <= 5) return [n];
+00348:     return [1];
+00349:   }, [prizeMode]);
+00350: 
+00351:   const boundsReady = !!(bounds?.minYmd && bounds?.maxYmd);
+00352: 
+00353:   // ✅ label e img robustos (assinam variações)
+00354:   const safeGetAnimalLabel = useCallback((grupoNum) => {
+00355:     const g = Number(grupoNum);
+00356:     if (!Number.isFinite(g)) return "";
+00357:     try {
+00358:       if (typeof getAnimalLabelFn === "function") {
+00359:         const a1 = getAnimalLabelFn({ grupo: g, animal: "" });
+00360:         const s1 = String(a1 ?? "").trim();
+00361:         if (s1) return s1;
+00362:       }
+00363:     } catch {}
+00364:     try {
+
+====================================================================================================
+BLOCO 04 — LINHAS 385 A 697
+====================================================================================================
+00385:         const base = String(getImgFromGrupoFn(g) || "").trim();
+00386:         if (base) return base;
+00387:       }
+00388:     } catch {}
+00389:     return "";
+00390:   }, []);
+00391: 
+00392:   /**
+00393:    * ✅ ÚLTIMO SORTEIO IMPORTADO:
+00394:    * sempre calcula por (maxYmd + maior close_hour do dia), sem depender do prizeMode/lottery selecionada.
+00395:    */
+00396:   async function fetchLastImportedFromMaxYmd(maxYmd) {
+00397:     if (!maxYmd) return { ymd: "", closeHour: "" };
+00398: 
+00399:     const dayResult = await getKingResultsByDate({
+00400:       uf: UF_CODE,
+00401:       date: maxYmd,
+00402:       closeHour: null,
+00403:       closeHourBucket: null,
+00404:       positions: [1],
+00405:     });
+00406: 
+00407:     const latest = pickLatestCloseHour(dayResult);
+00408:     if (latest?.ymd && latest?.closeHour) {
+00409:       return { ymd: String(latest.ymd || maxYmd), closeHour: String(latest.closeHour || "") };
+00410:     }
+00411:     return { ymd: maxYmd, closeHour: "" };
+00412:   }
+00413: 
+00414:   async function refreshBoundsAndLastDraw() {
+00415:     const b = await getKingBoundsByUf({ uf: UF_CODE });
+00416: 
+00417:     // ✅ PATCH: aceita minDate/maxDate também
+00418:     const nb = normalizeBoundsResponse(b);
+00419:     const minYmd = nb.minYmd;
+00420:     const maxYmd = nb.maxYmd;
+00421: 
+00422:     setBounds({ minYmd, maxYmd, source: nb.source });
+00423: 
+00424:     if (maxYmd) {
+00425:       const li = await fetchLastImportedFromMaxYmd(maxYmd);
+00426:       setLastImported(li);
+00427:     }
+00428: 
+00429:     return { minYmd, maxYmd };
+00430:   }
+00431: 
+00432:   function getEffectiveTargetYmd(targetYmd, effBounds) {
+00433:     const minYmd = effBounds?.minYmd || null;
+00434:     const maxYmd = effBounds?.maxYmd || null;
+00435: 
+00436:     if (!minYmd || !maxYmd || !isYMD(targetYmd)) {
+00437:       return { effective: targetYmd, note: "" };
+00438:     }
+00439: 
+00440:     if (targetYmd < minYmd)
+00441:       return { effective: minYmd, note: `Data fora do bounds. Usando ${ymdToBR(minYmd)}.` };
+00442:     if (targetYmd > maxYmd)
+00443:       return { effective: maxYmd, note: `Data fora do bounds. Usando ${ymdToBR(maxYmd)}.` };
+00444: 
+00445:     return { effective: targetYmd, note: "" };
+00446:   }
+00447: 
+00448:   async function buildLateList({ targetYmd, effBounds }) {
+00449:     const { effective: safeTarget, note } = getEffectiveTargetYmd(targetYmd, effBounds);
+00450:     if (note) setError(note);
+00451: 
+00452:     const minYmd = effBounds?.minYmd || null;
+00453:     if (!minYmd) {
+00454:       return { rows: [], meta: { effectiveTargetYmd: safeTarget } };
+00455:     }
+00456: 
+00457:     // 1) Consulta atrasados por posição (1 ou várias) via SUA base
+00458:     const lists = [];
+00459:     for (const pos of prizePositions) {
+00460:       const list = await getKingLateByRange({
+00461:         uf: UF_CODE,
+00462:         dateFrom: minYmd,
+00463:         dateTo: safeTarget,
+00464:         baseDate: safeTarget,
+00465:         prizePosition: pos,
+00466: 
+00467:         closeHour: null,
+00468:         closeHourBucket: selectedCloseHourBucket || null,
+00469: 
+00470:         chunkDays: 15,
+00471:       });
+00472: 
+00473:       const mapped = (Array.isArray(list) ? list : []).map((r) => ({
+00474:         grupo: Number(r?.grupo),
+00475:         lastYmd: r?.lastYmd || null,
+00476:         lastCloseHour: r?.lastHour || r?.lastCloseHour || "",
+00477:       }));
+00478: 
+00479:       lists.push(mapped);
+00480:     }
+00481: 
+00482:     // 2) Merge (1-5) e cálculo de daysLate
+00483:     const merged = mergeLateLists(lists, safeTarget);
+00484: 
+00485:     // 3) Injeta label/imagem
+00486:     const out = merged.map((r) => {
+00487:       const g = Number(r?.grupo);
+00488:       const animalLabel = safeGetAnimalLabel(g) || "";
+00489:       const img = safeGetImg(g) || "";
+00490:       return {
+00491:         ...r,
+00492:         grupo: g,
+00493:         grupo2: toGrupo2(g),
+00494:         animal: animalLabel,
+00495:         img,
+00496:         lastCloseHour: r?.lastCloseHour ? normalizeHourLike(r.lastCloseHour) : "",
+00497:       };
+00498:     });
+00499: 
+00500:     // 4) desempate com animal (estável e bonito)
+00501:     out.sort((a, b) => {
+00502:       const aa = a.daysLate == null ? 999999 : a.daysLate;
+00503:       const bb = b.daysLate == null ? 999999 : b.daysLate;
+00504:       if (bb !== aa) return bb - aa;
+00505: 
+00506:       const ma = hourToMinutes(a.lastCloseHour);
+00507:       const mb = hourToMinutes(b.lastCloseHour);
+00508:       if (ma != null && mb != null && ma !== mb) return ma - mb;
+00509:       if (ma == null && mb != null) return 1;
+00510:       if (ma != null && mb == null) return -1;
+00511: 
+00512:       const an = sortPTBR(a.animal, b.animal);
+00513:       if (an !== 0) return an;
+00514: 
+00515:       return a.grupo - b.grupo;
+00516:     });
+00517: 
+00518:     const finalRows = out.map((r, idx) => ({ ...r, pos: idx + 1 }));
+00519: 
+00520:     return { rows: finalRows, meta: { effectiveTargetYmd: safeTarget } };
+00521:   }
+00522: 
+00523:   const refresh = useCallback(
+00524:     async ({ silent = false } = {}) => {
+00525:       abortedRef.current = false;
+00526:       if (!silent) {
+00527:         setLoading(true);
+00528:         setError("");
+00529:       }
+00530: 
+00531:       try {
+00532:         // ✅ trava e retorna (não roda consulta com kind inválido)
+00533:         if (kind !== "grupo") {
+00534:           setError("Por enquanto, o modo ativo é apenas: Grupo (os demais entram na próxima etapa).");
+00535:           setKind("grupo");
+00536:           return;
+00537:         }
+00538: 
+00539:         const effBounds = await refreshBoundsAndLastDraw();
+00540:         const result = await buildLateList({ targetYmd: dateYmd, effBounds });
+00541:         if (abortedRef.current) return;
+00542: 
+00543:         setRows(result.rows);
+00544:         setMeta({ effectiveTargetYmd: result.meta.effectiveTargetYmd });
+00545:       } catch (e) {
+00546:         if (abortedRef.current) return;
+00547:         if (!silent) setError(String(e?.message || e));
+00548:       } finally {
+00549:         if (!abortedRef.current && !silent) setLoading(false);
+00550:       }
+00551:     },
+00552:     [dateYmd, kind, prizePositions, selectedCloseHourBucket] // eslint-disable-line react-hooks/exhaustive-deps
+00553:   );
+00554: 
+00555:   // primeiro load
+00556:   useEffect(() => {
+00557:     let alive = true;
+00558:     (async () => {
+00559:       setError("");
+00560:       try {
+00561:         await refreshBoundsAndLastDraw();
+00562:         if (!alive) return;
+00563:       } catch (e) {
+00564:         if (!alive) return;
+00565:         setError(String(e?.message || e));
+00566:       }
+00567:     })();
+00568: 
+00569:     return () => {
+00570:       alive = false;
+00571:     };
+00572:     // eslint-disable-next-line react-hooks/exhaustive-deps
+00573:   }, []);
+00574: 
+00575:   // ✅ FIX: clampa a data da UI quando bounds chega/atualiza (evita UI fora do range)
+00576:   useEffect(() => {
+00577:     const minYmd = bounds?.minYmd;
+00578:     const maxYmd = bounds?.maxYmd;
+00579:     if (!isYMD(minYmd) || !isYMD(maxYmd)) return;
+00580: 
+00581:     const normalized = normalizeSingleDateWithBounds(dateYmd, minYmd, maxYmd);
+00582:     if (normalized && normalized !== dateYmd) setDateYmd(normalized);
+00583:   }, [bounds?.minYmd, bounds?.maxYmd, dateYmd]);
+00584: 
+00585:   // refresh quando muda filtros/data
+00586:   useEffect(() => {
+00587:     if (!boundsReady) return;
+00588:     refresh();
+00589:     // eslint-disable-next-line react-hooks/exhaustive-deps
+00590:   }, [boundsReady, dateYmd, prizeMode, lotteryOptId]);
+00591: 
+00592:   // polling: atualiza quando entrar sorteio novo
+00593:   useEffect(() => {
+00594:     if (pollRef.current) clearInterval(pollRef.current);
+00595: 
+00596:     pollRef.current = setInterval(async () => {
+00597:       if (abortedRef.current) return;
+00598: 
+00599:       try {
+00600:         const prev = lastImportedRef.current;
+00601: 
+00602:         const b = await getKingBoundsByUf({ uf: UF_CODE });
+00603:         const nb = normalizeBoundsResponse(b);
+00604:         const maxYmd = nb.maxYmd || "";
+00605:         if (!maxYmd) return;
+00606: 
+00607:         const next = await fetchLastImportedFromMaxYmd(maxYmd);
+00608: 
+00609:         const changed =
+00610:           String(prev?.ymd || "") !== String(next.ymd || "") ||
+00611:           String(prev?.closeHour || "") !== String(next.closeHour || "");
+00612: 
+00613:         if (changed) {
+00614:           setLastImported(next);
+00615: 
+00616:           setBounds((old) => ({
+00617:             minYmd: old?.minYmd ?? nb.minYmd ?? null,
+00618:             maxYmd: nb.maxYmd ?? old?.maxYmd ?? null,
+00619:             source: nb.source || old?.source || "",
+00620:           }));
+00621: 
+00622:           await refresh({ silent: true });
+00623:         }
+00624:       } catch {
+00625:         // silencioso
+00626:       }
+00627:     }, 60000);
+00628: 
+00629:     return () => {
+00630:       if (pollRef.current) clearInterval(pollRef.current);
+00631:     };
+00632:     // eslint-disable-next-line react-hooks/exhaustive-deps
+00633:   }, [refresh]);
+00634: 
+00635:   useEffect(() => {
+00636:     return () => {
+00637:       abortedRef.current = true;
+00638:       if (pollRef.current) clearInterval(pollRef.current);
+00639:     };
+00640:   }, []);
+00641: 
+00642:   const titleDateBR = useMemo(() => ymdToBR(dateYmd), [dateYmd]);
+00643:   const effectiveDateBR = useMemo(() => ymdToBR(meta?.effectiveTargetYmd || ""), [meta?.effectiveTargetYmd]);
+00644: 
+00645:   const lastImportedBR = useMemo(() => {
+00646:     const d = lastImported?.ymd ? ymdToBR(lastImported.ymd) : "";
+00647:     const h = lastImported?.closeHour ? lastImported.closeHour : "";
+00648:     return d ? (h ? `${d} ${h}` : d) : "";
+00649:   }, [lastImported]);
+00650: 
+00651:   // ✅ handler clamped (date input)
+00652:   const onChangeDate = useCallback(
+00653:     (raw) => {
+00654:       const minYmd = bounds?.minYmd;
+00655:       const maxYmd = bounds?.maxYmd;
+00656:       const next = normalizeSingleDateWithBounds(String(raw || ""), minYmd, maxYmd);
+00657:       setDateYmd(next);
+00658:     },
+00659:     [bounds?.minYmd, bounds?.maxYmd]
+00660:   );
+00661: 
+00662:   return (
+00663:     <div className="ppLate">
+00664:       <style>{`
+00665:         .ppLate{
+00666:           width:100%;
+00667:           height:calc(100vh - 24px);
+00668:           padding:14px 14px 10px;
+00669:           color:#e9e9e9;
+00670:           display:flex;
+00671:           flex-direction:column;
+00672:           gap:10px;
+00673:           overflow:hidden;
+00674:           min-height:0;
+00675:         }
+00676: 
+00677:         .ppLateHeader{ display:grid; grid-template-columns:1fr; gap:8px; flex:0 0 auto; }
+00678: 
+00679:         .ppLateTitleWrap{ display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; }
+00680:         .ppLateTitle{ font-size:20px; font-weight:800; letter-spacing:0.6px; text-transform:uppercase; text-align:center; margin:0; line-height:1.05; }
+00681:         .ppLateSubtitle{ font-size:11px; color:rgba(233,233,233,0.72); text-align:center; line-height:1.15; }
+00682:         .ppLateSubtitle b{ color:#caa64b; font-weight:800; }
+00683: 
+00684:         .ppLateControls{ display:flex; justify-content:center; align-items:center; gap:8px; flex-wrap:wrap; }
+00685:         .ppCtl{ display:inline-flex; align-items:center; gap:8px; padding:6px 9px; border-radius:999px; background:rgba(0,0,0,0.55); border:1px solid rgba(202,166,75,0.18); box-shadow:0 10px 30px rgba(0,0,0,0.35); }
+00686:         .ppCtl label{ font-size:10px; color:rgba(233,233,233,0.62); }
+00687:         .ppCtl select, .ppCtl input[type="date"]{ background:transparent; border:none; outline:none; color:#e9e9e9; font-weight:800; font-size:12px; }
+00688:         .ppCtl select option{ background:#0b0b0b; color:#e9e9e9; }
+00689: 
+00690:         .ppBtn{
+00691:           cursor:pointer; border-radius:999px; padding:7px 12px;
+00692:           font-weight:900; font-size:12px; letter-spacing:0.4px;
+00693:           background:rgba(0,0,0,0.6); color:#e9e9e9;
+00694:           border:1px solid rgba(202,166,75,0.30);
+00695:           box-shadow:0 12px 34px rgba(0,0,0,0.35);
+00696:           transition:transform 0.08s ease, border-color 0.12s ease, background 0.12s ease;
+00697:         }
+
+====================================================================================================
+BLOCO 05 — LINHAS 783 A 917
+====================================================================================================
+00783:           align-items:center;
+00784:           justify-content:center;
+00785:           overflow:hidden;
+00786:         }
+00787:         .ppImg img{ width:100%; height:100%; object-fit:cover; display:block; }
+00788: 
+00789:         .ppGrupo{ font-weight:900; letter-spacing:0.4px; color:#e9e9e9; }
+00790:         .ppAnimal{ width:150px; max-width:150px; font-weight:800; color:rgba(233,233,233,0.92); }
+00791:         .ppLast{ width:130px; text-align:center; color:rgba(233,233,233,0.72); font-weight:700; }
+00792:         .ppDays{ width:118px; font-weight:900; text-align:center; letter-spacing:0.2px; }
+00793:         .ppDays b{ color:#caa64b; }
+00794: 
+00795:         @media (max-width:1100px){
+00796:           .ppLate{ padding:12px 12px 10px; }
+00797:           .ppLateTable{ width:100%; }
+00798:           .ppAnimal{ width:140px; max-width:140px; }
+00799:         }
+00800:       `}</style>
+00801: 
+00802:       <div className="ppLateHeader">
+00803:         <div className="ppLateTitleWrap">
+00804:           <h1 className="ppLateTitle">Atrasados</h1>
+00805: 
+00806:           <div className="ppLateSubtitle">
+00807:             Leitura de atraso por <b>Grupo</b> · Prêmio{" "}
+00808:             <b>{prizeMode === "1-5" ? "1º ao 5º" : `${prizeMode}º`}</b> · Data{" "}
+00809:             <b>{titleDateBR}</b> · <b>{selectedLottery?.label}</b> · Loteria{" "}
+00810:             <b>{LOTTERY_DISPLAY}</b>
+00811:             {meta?.effectiveTargetYmd && meta.effectiveTargetYmd !== dateYmd ? (
+00812:               <>
+00813:                 {" · "}
+00814:                 Data efetiva <b>{effectiveDateBR}</b>
+00815:               </>
+00816:             ) : null}
+00817:             {lastImportedBR ? (
+00818:               <>
+00819:                 {" · "}
+00820:                 Último sorteio importado <b>{lastImportedBR}</b>
+00821:               </>
+00822:             ) : null}
+00823:           </div>
+00824:         </div>
+00825: 
+00826:         <div className="ppLateControls">
+00827:           <div className="ppCtl">
+00828:             <label>Loterias</label>
+00829:             <select value={lotteryOptId} onChange={(e) => setLotteryOptId(String(e.target.value || "ALL"))}>
+00830:               {LOTTERY_OPTIONS.map((x) => (
+00831:                 <option key={x.id} value={x.id}>
+00832:                   {x.label}
+00833:                 </option>
+00834:               ))}
+00835:             </select>
+00836:           </div>
+00837: 
+00838:           <div className="ppCtl">
+00839:             <label>Tipo</label>
+00840:             <select value={kind} onChange={(e) => setKind(String(e.target.value || "grupo"))}>
+00841:               <option value="grupo">Grupo</option>
+00842:               <option value="milhar" disabled>Milhar</option>
+00843:               <option value="centena" disabled>Centena</option>
+00844:               <option value="dezena" disabled>Dezena</option>
+00845:               <option value="unidade" disabled>Unidade</option>
+00846:             </select>
+00847:           </div>
+00848: 
+00849:           <div className="ppCtl">
+00850:             <label>Prêmio</label>
+00851:             <select value={prizeMode} onChange={(e) => setPrizeMode(String(e.target.value || "1"))}>
+00852:               <option value="1">1º Prêmio</option>
+00853:               <option value="2">2º Prêmio</option>
+00854:               <option value="3">3º Prêmio</option>
+00855:               <option value="4">4º Prêmio</option>
+00856:               <option value="5">5º Prêmio</option>
+00857:               <option value="1-5">1º ao 5º Prêmio</option>
+00858:             </select>
+00859:           </div>
+00860: 
+00861:           <div className="ppCtl">
+00862:             <label>Data</label>
+00863:             <input
+00864:               type="date"
+00865:               value={dateYmd}
+00866:               min={bounds?.minYmd || undefined}
+00867:               max={bounds?.maxYmd || undefined}
+00868:               onChange={(e) => onChangeDate(e.target.value || todayYMDLocal())}
+00869:             />
+00870:           </div>
+00871: 
+00872:           <button className="ppBtn" onClick={() => refresh()} disabled={loading || !boundsReady}>
+00873:             {loading ? "Carregando..." : "Atualizar"}
+00874:           </button>
+00875:         </div>
+00876:       </div>
+00877: 
+00878:       {error ? <div className="ppErr">{error}</div> : null}
+00879: 
+00880:       <div className="ppLatePanel">
+00881:         <div className="ppLateTableWrap">
+00882:           <table className="ppLateTable">
+00883:             <thead>
+00884:               <tr>
+00885:                 <th style={{ width: 58 }}>Posição</th>
+00886:                 <th style={{ width: 66 }}>Imagem</th>
+00887:                 <th style={{ width: 150 }}>Grupo</th>
+00888:                 <th style={{ width: 150 }}>Bicho</th>
+00889:                 <th style={{ width: 130 }}>Última Aparição</th>
+00890:                 <th style={{ width: 118 }}>Atraso (DIAS)</th>
+00891:               </tr>
+00892:             </thead>
+00893: 
+00894:             <tbody>
+00895:               {(rows || []).map((r, idx) => {
+00896:                 const lastBR = r.lastYmd ? ymdToBR(r.lastYmd) : "—";
+00897:                 const hh = r.lastCloseHour ? normalizeHourLike(r.lastCloseHour) : "";
+00898:                 const lastLabel = lastBR === "—" ? "—" : (hh ? `${lastBR} ${hh}` : lastBR);
+00899: 
+00900:                 const days = r.daysLate == null ? "—" : String(r.daysLate);
+00901: 
+00902:                 return (
+00903:                   <tr key={`g${r.grupo}`}>
+00904:                     <td className="ppPos">{idx + 1}º</td>
+00905: 
+00906:                     <td className="ppImgCell">
+00907:                       <span className="ppImg" title={`Grupo ${r.grupo2} · ${r.animal}`}>
+00908:                         {r.img ? <img src={r.img} alt={r.animal} /> : null}
+00909:                       </span>
+00910:                     </td>
+00911: 
+00912:                     <td>
+00913:                       <span className="ppGrupo">GRUPO {r.grupo2}</span>
+00914:                     </td>
+00915: 
+00916:                     <td className="ppAnimal" title={r.animal || ""}>
+00917:                       {r.animal || "—"}
+
+====================================================================================================
+BLOCO 06 — LINHAS 923 A 955
+====================================================================================================
+00923:                       {r.daysLate == null ? (
+00924:                         "—"
+00925:                       ) : (
+00926:                         <>
+00927:                           <b>{days}</b> dias
+00928:                         </>
+00929:                       )}
+00930:                     </td>
+00931:                   </tr>
+00932:                 );
+00933:               })}
+00934: 
+00935:               {!loading && (!rows || !rows.length) ? (
+00936:                 <tr>
+00937:                   <td
+00938:                     colSpan={6}
+00939:                     style={{
+00940:                       padding: 14,
+00941:                       textAlign: "center",
+00942:                       color: "rgba(233,233,233,0.7)",
+00943:                       whiteSpace: "normal",
+00944:                     }}
+00945:                   >
+00946:                     Sem dados para exibir.
+00947:                   </td>
+00948:                 </tr>
+00949:               ) : null}
+00950:             </tbody>
+00951:           </table>
+00952:         </div>
+00953:       </div>
+00954:     </div>
+00955:   );
+
+===== FUNÇÕES COMPLETAS MAIS IMPORTANTES =====
+
+----------------------------------------------------------------------------------------------------
+FUNÇÃO/PONTO INICIADO NA LINHA 120
+----------------------------------------------------------------------------------------------------
+00117:  * Converte um label de loteria (closeHour) pra bucket "09h"
+00118:  * Aceita "09:00" / "09h" / "09HS" / "9" etc.
+00119:  */
+00120: function toHourBucket(value) {
+00121:   const hhmm = normalizeHourLike(value);
+00122:   const m = String(hhmm).match(/^(\d{2}):/);
+00123:   if (!m) return null;
+00124:   return `${m[1]}h`;
+00125: }
+00126: 
+00127: /**
+00128:  * ✅ Extrai array de draws de qualquer retorno comum do service
+00129:  */
+00130: function unwrapDraws(maybe) {
+00131:   if (Array.isArray(maybe)) return maybe;
+00132:   if (maybe && typeof maybe === "object") {
+00133:     if (Array.isArray(maybe.drawsRaw)) return maybe.drawsRaw;
+00134:     if (Array.isArray(maybe.draws)) return maybe.draws;
+00135:     if (Array.isArray(maybe.rows)) return maybe.rows;
+00136:     if (Array.isArray(maybe.data)) return maybe.data;
+00137:   }
+00138:   return [];
+00139: }
+00140: 
+00141: /**
+00142:  * ✅ Pega a maior close_hour existente em um conjunto de draws
+00143:  * Retorna { ymd, closeHour }.
+00144:  */
+00145: function pickLatestCloseHour(drawsLike) {
+00146:   const arr = unwrapDraws(drawsLike);
+00147:   let best = null;
+00148:   let bestMin = -1;
+00149: 
+00150:   for (const d of arr) {
+00151:     const ch = normalizeHourLike(d?.close_hour || d?.closeHour || d?.hour || d?.hora || "");
+00152:     const min = hourToMinutes(ch);
+00153:     if (min == null) continue;
+00154:     if (min > bestMin) {
+00155:       bestMin = min;
+00156:       best = { ymd: d?.ymd || d?.date || "", closeHour: ch || "" };
+00157:     }
+00158:   }
+00159: 
+00160:   return best;
+00161: }
+00162: 
+00163: // escolhe "mais recente" entre (ymd + closeHour)
+00164: function isMoreRecent(a, b) {
+00165:   const ay = String(a?.lastYmd || "");
+00166:   const by = String(b?.lastYmd || "");
+00167:   if (ay && by && ay !== by) return ay > by;
+00168: 
+00169:   const am = hourToMinutes(a?.lastCloseHour || "");
+00170:   const bm = hourToMinutes(b?.lastCloseHour || "");
+00171:   if (am != null && bm != null && am !== bm) return am > bm;
+00172: 
+00173:   if (ay && !by) return true;
+00174:   if (!ay && by) return false;
+00175: 
+00176:   return false;
+00177: }
+00178: 
+00179: // merge de múltiplas consultas (ex: 1º ao 5º) => pega a última aparição mais recente por grupo
+00180: function mergeLateLists(lists, baseYmd) {
+00181:   const byGrupo = new Map();
+00182: 
+00183:   for (const list of lists) {
+00184:     const arr = Array.isArray(list) ? list : [];
+00185:     for (const r of arr) {
+00186:       const g = Number(r?.grupo);
+00187:       if (!isValidGrupo(g)) continue;
+00188: 
+00189:       const candidate = {
+00190:         grupo: g,
+00191:         lastYmd: r?.lastYmd || null,
+00192:         // ✅ normaliza aqui (evita “09h/09HS/9”)
+00193:         lastCloseHour: r?.lastCloseHour ? normalizeHourLike(r.lastCloseHour) : "",
+00194:       };
+00195: 
+00196:       if (!byGrupo.has(g)) {
+00197:         byGrupo.set(g, candidate);
+00198:         continue;
+00199:       }
+00200: 
+00201:       const prev = byGrupo.get(g);
+00202:       if (isMoreRecent(candidate, prev)) byGrupo.set(g, candidate);
+00203:     }
+00204:   }
+00205: 
+00206:   const out = [];
+00207:   for (let g = 1; g <= 25; g += 1) {
+00208:     const rec = byGrupo.get(g) || { grupo: g, lastYmd: null, lastCloseHour: "" };
+00209:     const lastYmd = rec?.lastYmd || null;
+00210:     const lastCloseHour = rec?.lastCloseHour ? normalizeHourLike(rec.lastCloseHour) : "";
+
+----------------------------------------------------------------------------------------------------
+FUNÇÃO/PONTO INICIADO NA LINHA 145
+----------------------------------------------------------------------------------------------------
+00142:  * ✅ Pega a maior close_hour existente em um conjunto de draws
+00143:  * Retorna { ymd, closeHour }.
+00144:  */
+00145: function pickLatestCloseHour(drawsLike) {
+00146:   const arr = unwrapDraws(drawsLike);
+00147:   let best = null;
+00148:   let bestMin = -1;
+00149: 
+00150:   for (const d of arr) {
+00151:     const ch = normalizeHourLike(d?.close_hour || d?.closeHour || d?.hour || d?.hora || "");
+00152:     const min = hourToMinutes(ch);
+00153:     if (min == null) continue;
+00154:     if (min > bestMin) {
+00155:       bestMin = min;
+00156:       best = { ymd: d?.ymd || d?.date || "", closeHour: ch || "" };
+00157:     }
+00158:   }
+00159: 
+00160:   return best;
+00161: }
+00162: 
+00163: // escolhe "mais recente" entre (ymd + closeHour)
+00164: function isMoreRecent(a, b) {
+00165:   const ay = String(a?.lastYmd || "");
+00166:   const by = String(b?.lastYmd || "");
+00167:   if (ay && by && ay !== by) return ay > by;
+00168: 
+00169:   const am = hourToMinutes(a?.lastCloseHour || "");
+00170:   const bm = hourToMinutes(b?.lastCloseHour || "");
+00171:   if (am != null && bm != null && am !== bm) return am > bm;
+00172: 
+00173:   if (ay && !by) return true;
+00174:   if (!ay && by) return false;
+00175: 
+00176:   return false;
+00177: }
+00178: 
+00179: // merge de múltiplas consultas (ex: 1º ao 5º) => pega a última aparição mais recente por grupo
+00180: function mergeLateLists(lists, baseYmd) {
+00181:   const byGrupo = new Map();
+00182: 
+00183:   for (const list of lists) {
+00184:     const arr = Array.isArray(list) ? list : [];
+00185:     for (const r of arr) {
+00186:       const g = Number(r?.grupo);
+00187:       if (!isValidGrupo(g)) continue;
+00188: 
+00189:       const candidate = {
+00190:         grupo: g,
+00191:         lastYmd: r?.lastYmd || null,
+00192:         // ✅ normaliza aqui (evita “09h/09HS/9”)
+00193:         lastCloseHour: r?.lastCloseHour ? normalizeHourLike(r.lastCloseHour) : "",
+00194:       };
+00195: 
+00196:       if (!byGrupo.has(g)) {
+00197:         byGrupo.set(g, candidate);
+00198:         continue;
+00199:       }
+00200: 
+00201:       const prev = byGrupo.get(g);
+00202:       if (isMoreRecent(candidate, prev)) byGrupo.set(g, candidate);
+00203:     }
+00204:   }
+00205: 
+00206:   const out = [];
+00207:   for (let g = 1; g <= 25; g += 1) {
+00208:     const rec = byGrupo.get(g) || { grupo: g, lastYmd: null, lastCloseHour: "" };
+00209:     const lastYmd = rec?.lastYmd || null;
+00210:     const lastCloseHour = rec?.lastCloseHour ? normalizeHourLike(rec.lastCloseHour) : "";
+00211:     const daysLate = lastYmd ? diffDaysUTC(lastYmd, baseYmd) : null;
+00212: 
+00213:     out.push({
+00214:       grupo: g,
+00215:       grupo2: toGrupo2(g),
+00216:       lastYmd,
+00217:       lastCloseHour,
+00218:       daysLate,
+00219:     });
+00220:   }
+00221: 
+00222:   // ordenação: atraso desc, depois hora asc, depois grupo asc
+00223:   out.sort((a, b) => {
+00224:     const aa = a.daysLate == null ? 999999 : a.daysLate;
+00225:     const bb = b.daysLate == null ? 999999 : b.daysLate;
+00226:     if (bb !== aa) return bb - aa;
+00227: 
+00228:     const ma = hourToMinutes(a.lastCloseHour);
+00229:     const mb = hourToMinutes(b.lastCloseHour);
+00230:     if (ma != null && mb != null && ma !== mb) return ma - mb;
+00231:     if (ma == null && mb != null) return 1;
+00232:     if (ma != null && mb == null) return -1;
+00233: 
+00234:     return a.grupo - b.grupo;
+00235:   });
+
+----------------------------------------------------------------------------------------------------
+FUNÇÃO/PONTO INICIADO NA LINHA 180
+----------------------------------------------------------------------------------------------------
+00177: }
+00178: 
+00179: // merge de múltiplas consultas (ex: 1º ao 5º) => pega a última aparição mais recente por grupo
+00180: function mergeLateLists(lists, baseYmd) {
+00181:   const byGrupo = new Map();
+00182: 
+00183:   for (const list of lists) {
+00184:     const arr = Array.isArray(list) ? list : [];
+00185:     for (const r of arr) {
+00186:       const g = Number(r?.grupo);
+00187:       if (!isValidGrupo(g)) continue;
+00188: 
+00189:       const candidate = {
+00190:         grupo: g,
+00191:         lastYmd: r?.lastYmd || null,
+00192:         // ✅ normaliza aqui (evita “09h/09HS/9”)
+00193:         lastCloseHour: r?.lastCloseHour ? normalizeHourLike(r.lastCloseHour) : "",
+00194:       };
+00195: 
+00196:       if (!byGrupo.has(g)) {
+00197:         byGrupo.set(g, candidate);
+00198:         continue;
+00199:       }
+00200: 
+00201:       const prev = byGrupo.get(g);
+00202:       if (isMoreRecent(candidate, prev)) byGrupo.set(g, candidate);
+00203:     }
+00204:   }
+00205: 
+00206:   const out = [];
+00207:   for (let g = 1; g <= 25; g += 1) {
+00208:     const rec = byGrupo.get(g) || { grupo: g, lastYmd: null, lastCloseHour: "" };
+00209:     const lastYmd = rec?.lastYmd || null;
+00210:     const lastCloseHour = rec?.lastCloseHour ? normalizeHourLike(rec.lastCloseHour) : "";
+00211:     const daysLate = lastYmd ? diffDaysUTC(lastYmd, baseYmd) : null;
+00212: 
+00213:     out.push({
+00214:       grupo: g,
+00215:       grupo2: toGrupo2(g),
+00216:       lastYmd,
+00217:       lastCloseHour,
+00218:       daysLate,
+00219:     });
+00220:   }
+00221: 
+00222:   // ordenação: atraso desc, depois hora asc, depois grupo asc
+00223:   out.sort((a, b) => {
+00224:     const aa = a.daysLate == null ? 999999 : a.daysLate;
+00225:     const bb = b.daysLate == null ? 999999 : b.daysLate;
+00226:     if (bb !== aa) return bb - aa;
+00227: 
+00228:     const ma = hourToMinutes(a.lastCloseHour);
+00229:     const mb = hourToMinutes(b.lastCloseHour);
+00230:     if (ma != null && mb != null && ma !== mb) return ma - mb;
+00231:     if (ma == null && mb != null) return 1;
+00232:     if (ma != null && mb == null) return -1;
+00233: 
+00234:     return a.grupo - b.grupo;
+00235:   });
+00236: 
+00237:   return out.map((r, idx) => ({ ...r, pos: idx + 1 }));
+00238: }
+00239: 
+00240: /* =========================
+00241:    ✅ Bounds helpers (FIX UI)
+00242: ========================= */
+00243: 
+00244: function clampYmd(ymd, minYmd, maxYmd) {
+00245:   const d = safeStr(ymd);
+00246:   if (!isYMD(d)) return null;
+00247: 
+00248:   let out = d;
+00249:   const min = safeStr(minYmd);
+00250:   const max = safeStr(maxYmd);
+00251: 
+00252:   if (isYMD(min) && out < min) out = min;
+00253:   if (isYMD(max) && out > max) out = max;
+00254: 
+00255:   return out;
+00256: }
+00257: 
+00258: function normalizeSingleDateWithBounds(dateIn, minYmd, maxYmd) {
+00259:   const d = clampYmd(dateIn, minYmd, maxYmd);
+00260:   if (d) return d;
+00261: 
+00262:   const fallback =
+00263:     clampYmd(todayYMDLocal(), minYmd, maxYmd) ||
+00264:     (isYMD(maxYmd) ? maxYmd : null) ||
+00265:     (isYMD(minYmd) ? minYmd : null) ||
+00266:     todayYMDLocal();
+00267: 
+00268:   return fallback;
+00269: }
+00270: 
+
+----------------------------------------------------------------------------------------------------
+FUNÇÃO/PONTO INICIADO NA LINHA 354
+----------------------------------------------------------------------------------------------------
+00351:   const boundsReady = !!(bounds?.minYmd && bounds?.maxYmd);
+00352: 
+00353:   // ✅ label e img robustos (assinam variações)
+00354:   const safeGetAnimalLabel = useCallback((grupoNum) => {
+00355:     const g = Number(grupoNum);
+00356:     if (!Number.isFinite(g)) return "";
+00357:     try {
+00358:       if (typeof getAnimalLabelFn === "function") {
+00359:         const a1 = getAnimalLabelFn({ grupo: g, animal: "" });
+00360:         const s1 = String(a1 ?? "").trim();
+00361:         if (s1) return s1;
+00362:       }
+00363:     } catch {}
+00364:     try {
+00365:       if (typeof getAnimalLabelFn === "function") {
+00366:         const a2 = getAnimalLabelFn(g);
+00367:         const s2 = String(a2 ?? "").trim();
+00368:         if (s2) return s2;
+00369:       }
+00370:     } catch {}
+00371:     return "";
+00372:   }, []);
+00373: 
+00374:   const safeGetImg = useCallback((grupoNum) => {
+00375:     const g = Number(grupoNum);
+00376:     if (!Number.isFinite(g)) return "";
+00377:     try {
+00378:       if (typeof getImgFromGrupoFn === "function") {
+00379:         const c128 = String(getImgFromGrupoFn(g, 128) || "").trim();
+00380:         if (c128) return c128;
+00381:         const c96 = String(getImgFromGrupoFn(g, 96) || "").trim();
+00382:         if (c96) return c96;
+00383:         const c64 = String(getImgFromGrupoFn(g, 64) || "").trim();
+00384:         if (c64) return c64;
+00385:         const base = String(getImgFromGrupoFn(g) || "").trim();
+00386:         if (base) return base;
+00387:       }
+00388:     } catch {}
+00389:     return "";
+00390:   }, []);
+00391: 
+00392:   /**
+00393:    * ✅ ÚLTIMO SORTEIO IMPORTADO:
+00394:    * sempre calcula por (maxYmd + maior close_hour do dia), sem depender do prizeMode/lottery selecionada.
+00395:    */
+00396:   async function fetchLastImportedFromMaxYmd(maxYmd) {
+00397:     if (!maxYmd) return { ymd: "", closeHour: "" };
+00398: 
+00399:     const dayResult = await getKingResultsByDate({
+00400:       uf: UF_CODE,
+00401:       date: maxYmd,
+00402:       closeHour: null,
+00403:       closeHourBucket: null,
+00404:       positions: [1],
+00405:     });
+00406: 
+00407:     const latest = pickLatestCloseHour(dayResult);
+00408:     if (latest?.ymd && latest?.closeHour) {
+00409:       return { ymd: String(latest.ymd || maxYmd), closeHour: String(latest.closeHour || "") };
+00410:     }
+00411:     return { ymd: maxYmd, closeHour: "" };
+00412:   }
+00413: 
+00414:   async function refreshBoundsAndLastDraw() {
+00415:     const b = await getKingBoundsByUf({ uf: UF_CODE });
+00416: 
+00417:     // ✅ PATCH: aceita minDate/maxDate também
+00418:     const nb = normalizeBoundsResponse(b);
+00419:     const minYmd = nb.minYmd;
+00420:     const maxYmd = nb.maxYmd;
+00421: 
+00422:     setBounds({ minYmd, maxYmd, source: nb.source });
+00423: 
+00424:     if (maxYmd) {
+00425:       const li = await fetchLastImportedFromMaxYmd(maxYmd);
+00426:       setLastImported(li);
+00427:     }
+00428: 
+00429:     return { minYmd, maxYmd };
+00430:   }
+00431: 
+00432:   function getEffectiveTargetYmd(targetYmd, effBounds) {
+00433:     const minYmd = effBounds?.minYmd || null;
+00434:     const maxYmd = effBounds?.maxYmd || null;
+00435: 
+00436:     if (!minYmd || !maxYmd || !isYMD(targetYmd)) {
+00437:       return { effective: targetYmd, note: "" };
+00438:     }
+00439: 
+00440:     if (targetYmd < minYmd)
+00441:       return { effective: minYmd, note: `Data fora do bounds. Usando ${ymdToBR(minYmd)}.` };
+00442:     if (targetYmd > maxYmd)
+00443:       return { effective: maxYmd, note: `Data fora do bounds. Usando ${ymdToBR(maxYmd)}.` };
+00444: 
+
+----------------------------------------------------------------------------------------------------
+FUNÇÃO/PONTO INICIADO NA LINHA 374
+----------------------------------------------------------------------------------------------------
+00371:     return "";
+00372:   }, []);
+00373: 
+00374:   const safeGetImg = useCallback((grupoNum) => {
+00375:     const g = Number(grupoNum);
+00376:     if (!Number.isFinite(g)) return "";
+00377:     try {
+00378:       if (typeof getImgFromGrupoFn === "function") {
+00379:         const c128 = String(getImgFromGrupoFn(g, 128) || "").trim();
+00380:         if (c128) return c128;
+00381:         const c96 = String(getImgFromGrupoFn(g, 96) || "").trim();
+00382:         if (c96) return c96;
+00383:         const c64 = String(getImgFromGrupoFn(g, 64) || "").trim();
+00384:         if (c64) return c64;
+00385:         const base = String(getImgFromGrupoFn(g) || "").trim();
+00386:         if (base) return base;
+00387:       }
+00388:     } catch {}
+00389:     return "";
+00390:   }, []);
+00391: 
+00392:   /**
+00393:    * ✅ ÚLTIMO SORTEIO IMPORTADO:
+00394:    * sempre calcula por (maxYmd + maior close_hour do dia), sem depender do prizeMode/lottery selecionada.
+00395:    */
+00396:   async function fetchLastImportedFromMaxYmd(maxYmd) {
+00397:     if (!maxYmd) return { ymd: "", closeHour: "" };
+00398: 
+00399:     const dayResult = await getKingResultsByDate({
+00400:       uf: UF_CODE,
+00401:       date: maxYmd,
+00402:       closeHour: null,
+00403:       closeHourBucket: null,
+00404:       positions: [1],
+00405:     });
+00406: 
+00407:     const latest = pickLatestCloseHour(dayResult);
+00408:     if (latest?.ymd && latest?.closeHour) {
+00409:       return { ymd: String(latest.ymd || maxYmd), closeHour: String(latest.closeHour || "") };
+00410:     }
+00411:     return { ymd: maxYmd, closeHour: "" };
+00412:   }
+00413: 
+00414:   async function refreshBoundsAndLastDraw() {
+00415:     const b = await getKingBoundsByUf({ uf: UF_CODE });
+00416: 
+00417:     // ✅ PATCH: aceita minDate/maxDate também
+00418:     const nb = normalizeBoundsResponse(b);
+00419:     const minYmd = nb.minYmd;
+00420:     const maxYmd = nb.maxYmd;
+00421: 
+00422:     setBounds({ minYmd, maxYmd, source: nb.source });
+00423: 
+00424:     if (maxYmd) {
+00425:       const li = await fetchLastImportedFromMaxYmd(maxYmd);
+00426:       setLastImported(li);
+00427:     }
+00428: 
+00429:     return { minYmd, maxYmd };
+00430:   }
+00431: 
+00432:   function getEffectiveTargetYmd(targetYmd, effBounds) {
+00433:     const minYmd = effBounds?.minYmd || null;
+00434:     const maxYmd = effBounds?.maxYmd || null;
+00435: 
+00436:     if (!minYmd || !maxYmd || !isYMD(targetYmd)) {
+00437:       return { effective: targetYmd, note: "" };
+00438:     }
+00439: 
+00440:     if (targetYmd < minYmd)
+00441:       return { effective: minYmd, note: `Data fora do bounds. Usando ${ymdToBR(minYmd)}.` };
+00442:     if (targetYmd > maxYmd)
+00443:       return { effective: maxYmd, note: `Data fora do bounds. Usando ${ymdToBR(maxYmd)}.` };
+00444: 
+00445:     return { effective: targetYmd, note: "" };
+00446:   }
+00447: 
+00448:   async function buildLateList({ targetYmd, effBounds }) {
+00449:     const { effective: safeTarget, note } = getEffectiveTargetYmd(targetYmd, effBounds);
+00450:     if (note) setError(note);
+00451: 
+00452:     const minYmd = effBounds?.minYmd || null;
+00453:     if (!minYmd) {
+00454:       return { rows: [], meta: { effectiveTargetYmd: safeTarget } };
+00455:     }
+00456: 
+00457:     // 1) Consulta atrasados por posição (1 ou várias) via SUA base
+00458:     const lists = [];
+00459:     for (const pos of prizePositions) {
+00460:       const list = await getKingLateByRange({
+00461:         uf: UF_CODE,
+00462:         dateFrom: minYmd,
+00463:         dateTo: safeTarget,
+00464:         baseDate: safeTarget,
+
+----------------------------------------------------------------------------------------------------
+FUNÇÃO/PONTO INICIADO NA LINHA 396
+----------------------------------------------------------------------------------------------------
+00393:    * ✅ ÚLTIMO SORTEIO IMPORTADO:
+00394:    * sempre calcula por (maxYmd + maior close_hour do dia), sem depender do prizeMode/lottery selecionada.
+00395:    */
+00396:   async function fetchLastImportedFromMaxYmd(maxYmd) {
+00397:     if (!maxYmd) return { ymd: "", closeHour: "" };
+00398: 
+00399:     const dayResult = await getKingResultsByDate({
+00400:       uf: UF_CODE,
+00401:       date: maxYmd,
+00402:       closeHour: null,
+00403:       closeHourBucket: null,
+00404:       positions: [1],
+00405:     });
+00406: 
+00407:     const latest = pickLatestCloseHour(dayResult);
+00408:     if (latest?.ymd && latest?.closeHour) {
+00409:       return { ymd: String(latest.ymd || maxYmd), closeHour: String(latest.closeHour || "") };
+00410:     }
+00411:     return { ymd: maxYmd, closeHour: "" };
+00412:   }
+00413: 
+00414:   async function refreshBoundsAndLastDraw() {
+00415:     const b = await getKingBoundsByUf({ uf: UF_CODE });
+00416: 
+00417:     // ✅ PATCH: aceita minDate/maxDate também
+00418:     const nb = normalizeBoundsResponse(b);
+00419:     const minYmd = nb.minYmd;
+00420:     const maxYmd = nb.maxYmd;
+00421: 
+00422:     setBounds({ minYmd, maxYmd, source: nb.source });
+00423: 
+00424:     if (maxYmd) {
+00425:       const li = await fetchLastImportedFromMaxYmd(maxYmd);
+00426:       setLastImported(li);
+00427:     }
+00428: 
+00429:     return { minYmd, maxYmd };
+00430:   }
+00431: 
+00432:   function getEffectiveTargetYmd(targetYmd, effBounds) {
+00433:     const minYmd = effBounds?.minYmd || null;
+00434:     const maxYmd = effBounds?.maxYmd || null;
+00435: 
+00436:     if (!minYmd || !maxYmd || !isYMD(targetYmd)) {
+00437:       return { effective: targetYmd, note: "" };
+00438:     }
+00439: 
+00440:     if (targetYmd < minYmd)
+00441:       return { effective: minYmd, note: `Data fora do bounds. Usando ${ymdToBR(minYmd)}.` };
+00442:     if (targetYmd > maxYmd)
+00443:       return { effective: maxYmd, note: `Data fora do bounds. Usando ${ymdToBR(maxYmd)}.` };
+00444: 
+00445:     return { effective: targetYmd, note: "" };
+00446:   }
+00447: 
+00448:   async function buildLateList({ targetYmd, effBounds }) {
+00449:     const { effective: safeTarget, note } = getEffectiveTargetYmd(targetYmd, effBounds);
+00450:     if (note) setError(note);
+00451: 
+00452:     const minYmd = effBounds?.minYmd || null;
+00453:     if (!minYmd) {
+00454:       return { rows: [], meta: { effectiveTargetYmd: safeTarget } };
+00455:     }
+00456: 
+00457:     // 1) Consulta atrasados por posição (1 ou várias) via SUA base
+00458:     const lists = [];
+00459:     for (const pos of prizePositions) {
+00460:       const list = await getKingLateByRange({
+00461:         uf: UF_CODE,
+00462:         dateFrom: minYmd,
+00463:         dateTo: safeTarget,
+00464:         baseDate: safeTarget,
+00465:         prizePosition: pos,
+00466: 
+00467:         closeHour: null,
+00468:         closeHourBucket: selectedCloseHourBucket || null,
+00469: 
+00470:         chunkDays: 15,
+00471:       });
+00472: 
+00473:       const mapped = (Array.isArray(list) ? list : []).map((r) => ({
+00474:         grupo: Number(r?.grupo),
+00475:         lastYmd: r?.lastYmd || null,
+00476:         lastCloseHour: r?.lastHour || r?.lastCloseHour || "",
+00477:       }));
+00478: 
+00479:       lists.push(mapped);
+00480:     }
+00481: 
+00482:     // 2) Merge (1-5) e cálculo de daysLate
+00483:     const merged = mergeLateLists(lists, safeTarget);
+00484: 
+00485:     // 3) Injeta label/imagem
+00486:     const out = merged.map((r) => {
+
+----------------------------------------------------------------------------------------------------
+FUNÇÃO/PONTO INICIADO NA LINHA 414
+----------------------------------------------------------------------------------------------------
+00411:     return { ymd: maxYmd, closeHour: "" };
+00412:   }
+00413: 
+00414:   async function refreshBoundsAndLastDraw() {
+00415:     const b = await getKingBoundsByUf({ uf: UF_CODE });
+00416: 
+00417:     // ✅ PATCH: aceita minDate/maxDate também
+00418:     const nb = normalizeBoundsResponse(b);
+00419:     const minYmd = nb.minYmd;
+00420:     const maxYmd = nb.maxYmd;
+00421: 
+00422:     setBounds({ minYmd, maxYmd, source: nb.source });
+00423: 
+00424:     if (maxYmd) {
+00425:       const li = await fetchLastImportedFromMaxYmd(maxYmd);
+00426:       setLastImported(li);
+00427:     }
+00428: 
+00429:     return { minYmd, maxYmd };
+00430:   }
+00431: 
+00432:   function getEffectiveTargetYmd(targetYmd, effBounds) {
+00433:     const minYmd = effBounds?.minYmd || null;
+00434:     const maxYmd = effBounds?.maxYmd || null;
+00435: 
+00436:     if (!minYmd || !maxYmd || !isYMD(targetYmd)) {
+00437:       return { effective: targetYmd, note: "" };
+00438:     }
+00439: 
+00440:     if (targetYmd < minYmd)
+00441:       return { effective: minYmd, note: `Data fora do bounds. Usando ${ymdToBR(minYmd)}.` };
+00442:     if (targetYmd > maxYmd)
+00443:       return { effective: maxYmd, note: `Data fora do bounds. Usando ${ymdToBR(maxYmd)}.` };
+00444: 
+00445:     return { effective: targetYmd, note: "" };
+00446:   }
+00447: 
+00448:   async function buildLateList({ targetYmd, effBounds }) {
+00449:     const { effective: safeTarget, note } = getEffectiveTargetYmd(targetYmd, effBounds);
+00450:     if (note) setError(note);
+00451: 
+00452:     const minYmd = effBounds?.minYmd || null;
+00453:     if (!minYmd) {
+00454:       return { rows: [], meta: { effectiveTargetYmd: safeTarget } };
+00455:     }
+00456: 
+00457:     // 1) Consulta atrasados por posição (1 ou várias) via SUA base
+00458:     const lists = [];
+00459:     for (const pos of prizePositions) {
+00460:       const list = await getKingLateByRange({
+00461:         uf: UF_CODE,
+00462:         dateFrom: minYmd,
+00463:         dateTo: safeTarget,
+00464:         baseDate: safeTarget,
+00465:         prizePosition: pos,
+00466: 
+00467:         closeHour: null,
+00468:         closeHourBucket: selectedCloseHourBucket || null,
+00469: 
+00470:         chunkDays: 15,
+00471:       });
+00472: 
+00473:       const mapped = (Array.isArray(list) ? list : []).map((r) => ({
+00474:         grupo: Number(r?.grupo),
+00475:         lastYmd: r?.lastYmd || null,
+00476:         lastCloseHour: r?.lastHour || r?.lastCloseHour || "",
+00477:       }));
+00478: 
+00479:       lists.push(mapped);
+00480:     }
+00481: 
+00482:     // 2) Merge (1-5) e cálculo de daysLate
+00483:     const merged = mergeLateLists(lists, safeTarget);
+00484: 
+00485:     // 3) Injeta label/imagem
+00486:     const out = merged.map((r) => {
+00487:       const g = Number(r?.grupo);
+00488:       const animalLabel = safeGetAnimalLabel(g) || "";
+00489:       const img = safeGetImg(g) || "";
+00490:       return {
+00491:         ...r,
+00492:         grupo: g,
+00493:         grupo2: toGrupo2(g),
+00494:         animal: animalLabel,
+00495:         img,
+00496:         lastCloseHour: r?.lastCloseHour ? normalizeHourLike(r.lastCloseHour) : "",
+00497:       };
+00498:     });
+00499: 
+00500:     // 4) desempate com animal (estável e bonito)
+00501:     out.sort((a, b) => {
+00502:       const aa = a.daysLate == null ? 999999 : a.daysLate;
+00503:       const bb = b.daysLate == null ? 999999 : b.daysLate;
+00504:       if (bb !== aa) return bb - aa;
+
+----------------------------------------------------------------------------------------------------
+FUNÇÃO/PONTO INICIADO NA LINHA 448
+----------------------------------------------------------------------------------------------------
+00445:     return { effective: targetYmd, note: "" };
+00446:   }
+00447: 
+00448:   async function buildLateList({ targetYmd, effBounds }) {
+00449:     const { effective: safeTarget, note } = getEffectiveTargetYmd(targetYmd, effBounds);
+00450:     if (note) setError(note);
+00451: 
+00452:     const minYmd = effBounds?.minYmd || null;
+00453:     if (!minYmd) {
+00454:       return { rows: [], meta: { effectiveTargetYmd: safeTarget } };
+00455:     }
+00456: 
+00457:     // 1) Consulta atrasados por posição (1 ou várias) via SUA base
+00458:     const lists = [];
+00459:     for (const pos of prizePositions) {
+00460:       const list = await getKingLateByRange({
+00461:         uf: UF_CODE,
+00462:         dateFrom: minYmd,
+00463:         dateTo: safeTarget,
+00464:         baseDate: safeTarget,
+00465:         prizePosition: pos,
+00466: 
+00467:         closeHour: null,
+00468:         closeHourBucket: selectedCloseHourBucket || null,
+00469: 
+00470:         chunkDays: 15,
+00471:       });
+00472: 
+00473:       const mapped = (Array.isArray(list) ? list : []).map((r) => ({
+00474:         grupo: Number(r?.grupo),
+00475:         lastYmd: r?.lastYmd || null,
+00476:         lastCloseHour: r?.lastHour || r?.lastCloseHour || "",
+00477:       }));
+00478: 
+00479:       lists.push(mapped);
+00480:     }
+00481: 
+00482:     // 2) Merge (1-5) e cálculo de daysLate
+00483:     const merged = mergeLateLists(lists, safeTarget);
+00484: 
+00485:     // 3) Injeta label/imagem
+00486:     const out = merged.map((r) => {
+00487:       const g = Number(r?.grupo);
+00488:       const animalLabel = safeGetAnimalLabel(g) || "";
+00489:       const img = safeGetImg(g) || "";
+00490:       return {
+00491:         ...r,
+00492:         grupo: g,
+00493:         grupo2: toGrupo2(g),
+00494:         animal: animalLabel,
+00495:         img,
+00496:         lastCloseHour: r?.lastCloseHour ? normalizeHourLike(r.lastCloseHour) : "",
+00497:       };
+00498:     });
+00499: 
+00500:     // 4) desempate com animal (estável e bonito)
+00501:     out.sort((a, b) => {
+00502:       const aa = a.daysLate == null ? 999999 : a.daysLate;
+00503:       const bb = b.daysLate == null ? 999999 : b.daysLate;
+00504:       if (bb !== aa) return bb - aa;
+00505: 
+00506:       const ma = hourToMinutes(a.lastCloseHour);
+00507:       const mb = hourToMinutes(b.lastCloseHour);
+00508:       if (ma != null && mb != null && ma !== mb) return ma - mb;
+00509:       if (ma == null && mb != null) return 1;
+00510:       if (ma != null && mb == null) return -1;
+00511: 
+00512:       const an = sortPTBR(a.animal, b.animal);
+00513:       if (an !== 0) return an;
+00514: 
+00515:       return a.grupo - b.grupo;
+00516:     });
+00517: 
+00518:     const finalRows = out.map((r, idx) => ({ ...r, pos: idx + 1 }));
+00519: 
+00520:     return { rows: finalRows, meta: { effectiveTargetYmd: safeTarget } };
+00521:   }
+00522: 
+00523:   const refresh = useCallback(
+00524:     async ({ silent = false } = {}) => {
+00525:       abortedRef.current = false;
+00526:       if (!silent) {
+00527:         setLoading(true);
+00528:         setError("");
+00529:       }
+00530: 
+00531:       try {
+00532:         // ✅ trava e retorna (não roda consulta com kind inválido)
+00533:         if (kind !== "grupo") {
+00534:           setError("Por enquanto, o modo ativo é apenas: Grupo (os demais entram na próxima etapa).");
+00535:           setKind("grupo");
+00536:           return;
+00537:         }
+00538: 
+
+----------------------------------------------------------------------------------------------------
+FUNÇÃO/PONTO INICIADO NA LINHA 523
+----------------------------------------------------------------------------------------------------
+00520:     return { rows: finalRows, meta: { effectiveTargetYmd: safeTarget } };
+00521:   }
+00522: 
+00523:   const refresh = useCallback(
+00524:     async ({ silent = false } = {}) => {
+00525:       abortedRef.current = false;
+00526:       if (!silent) {
+00527:         setLoading(true);
+00528:         setError("");
+00529:       }
+00530: 
+00531:       try {
+00532:         // ✅ trava e retorna (não roda consulta com kind inválido)
+00533:         if (kind !== "grupo") {
+00534:           setError("Por enquanto, o modo ativo é apenas: Grupo (os demais entram na próxima etapa).");
+00535:           setKind("grupo");
+00536:           return;
+00537:         }
+00538: 
+00539:         const effBounds = await refreshBoundsAndLastDraw();
+00540:         const result = await buildLateList({ targetYmd: dateYmd, effBounds });
+00541:         if (abortedRef.current) return;
+00542: 
+00543:         setRows(result.rows);
+00544:         setMeta({ effectiveTargetYmd: result.meta.effectiveTargetYmd });
+00545:       } catch (e) {
+00546:         if (abortedRef.current) return;
+00547:         if (!silent) setError(String(e?.message || e));
+00548:       } finally {
+00549:         if (!abortedRef.current && !silent) setLoading(false);
+00550:       }
+00551:     },
+00552:     [dateYmd, kind, prizePositions, selectedCloseHourBucket] // eslint-disable-line react-hooks/exhaustive-deps
+00553:   );
+00554: 
+00555:   // primeiro load
+00556:   useEffect(() => {
+00557:     let alive = true;
+00558:     (async () => {
+00559:       setError("");
+00560:       try {
+00561:         await refreshBoundsAndLastDraw();
+00562:         if (!alive) return;
+00563:       } catch (e) {
+00564:         if (!alive) return;
+00565:         setError(String(e?.message || e));
+00566:       }
+00567:     })();
+00568: 
+00569:     return () => {
+00570:       alive = false;
+00571:     };
+00572:     // eslint-disable-next-line react-hooks/exhaustive-deps
+00573:   }, []);
+00574: 
+00575:   // ✅ FIX: clampa a data da UI quando bounds chega/atualiza (evita UI fora do range)
+00576:   useEffect(() => {
+00577:     const minYmd = bounds?.minYmd;
+00578:     const maxYmd = bounds?.maxYmd;
+00579:     if (!isYMD(minYmd) || !isYMD(maxYmd)) return;
+00580: 
+00581:     const normalized = normalizeSingleDateWithBounds(dateYmd, minYmd, maxYmd);
+00582:     if (normalized && normalized !== dateYmd) setDateYmd(normalized);
+00583:   }, [bounds?.minYmd, bounds?.maxYmd, dateYmd]);
+00584: 
+00585:   // refresh quando muda filtros/data
+00586:   useEffect(() => {
+00587:     if (!boundsReady) return;
+00588:     refresh();
+00589:     // eslint-disable-next-line react-hooks/exhaustive-deps
+00590:   }, [boundsReady, dateYmd, prizeMode, lotteryOptId]);
+00591: 
+00592:   // polling: atualiza quando entrar sorteio novo
+00593:   useEffect(() => {
+00594:     if (pollRef.current) clearInterval(pollRef.current);
+00595: 
+00596:     pollRef.current = setInterval(async () => {
+00597:       if (abortedRef.current) return;
+00598: 
+00599:       try {
+00600:         const prev = lastImportedRef.current;
+00601: 
+00602:         const b = await getKingBoundsByUf({ uf: UF_CODE });
+00603:         const nb = normalizeBoundsResponse(b);
+00604:         const maxYmd = nb.maxYmd || "";
+00605:         if (!maxYmd) return;
+00606: 
+00607:         const next = await fetchLastImportedFromMaxYmd(maxYmd);
+00608: 
+00609:         const changed =
+00610:           String(prev?.ymd || "") !== String(next.ymd || "") ||
+00611:           String(prev?.closeHour || "") !== String(next.closeHour || "");
+00612: 
+00613:         if (changed) {
+
+----------------------------------------------------------------------------------------------------
+FUNÇÃO/PONTO INICIADO NA LINHA 652
+----------------------------------------------------------------------------------------------------
+00649:   }, [lastImported]);
+00650: 
+00651:   // ✅ handler clamped (date input)
+00652:   const onChangeDate = useCallback(
+00653:     (raw) => {
+00654:       const minYmd = bounds?.minYmd;
+00655:       const maxYmd = bounds?.maxYmd;
+00656:       const next = normalizeSingleDateWithBounds(String(raw || ""), minYmd, maxYmd);
+00657:       setDateYmd(next);
+00658:     },
+00659:     [bounds?.minYmd, bounds?.maxYmd]
+00660:   );
+00661: 
+00662:   return (
+00663:     <div className="ppLate">
+00664:       <style>{`
+00665:         .ppLate{
+00666:           width:100%;
+00667:           height:calc(100vh - 24px);
+00668:           padding:14px 14px 10px;
+00669:           color:#e9e9e9;
+00670:           display:flex;
+00671:           flex-direction:column;
+00672:           gap:10px;
+00673:           overflow:hidden;
+00674:           min-height:0;
+00675:         }
+00676: 
+00677:         .ppLateHeader{ display:grid; grid-template-columns:1fr; gap:8px; flex:0 0 auto; }
+00678: 
+00679:         .ppLateTitleWrap{ display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; }
+00680:         .ppLateTitle{ font-size:20px; font-weight:800; letter-spacing:0.6px; text-transform:uppercase; text-align:center; margin:0; line-height:1.05; }
+00681:         .ppLateSubtitle{ font-size:11px; color:rgba(233,233,233,0.72); text-align:center; line-height:1.15; }
+00682:         .ppLateSubtitle b{ color:#caa64b; font-weight:800; }
+00683: 
+00684:         .ppLateControls{ display:flex; justify-content:center; align-items:center; gap:8px; flex-wrap:wrap; }
+00685:         .ppCtl{ display:inline-flex; align-items:center; gap:8px; padding:6px 9px; border-radius:999px; background:rgba(0,0,0,0.55); border:1px solid rgba(202,166,75,0.18); box-shadow:0 10px 30px rgba(0,0,0,0.35); }
+00686:         .ppCtl label{ font-size:10px; color:rgba(233,233,233,0.62); }
+00687:         .ppCtl select, .ppCtl input[type="date"]{ background:transparent; border:none; outline:none; color:#e9e9e9; font-weight:800; font-size:12px; }
+00688:         .ppCtl select option{ background:#0b0b0b; color:#e9e9e9; }
+00689: 
+00690:         .ppBtn{
+00691:           cursor:pointer; border-radius:999px; padding:7px 12px;
+00692:           font-weight:900; font-size:12px; letter-spacing:0.4px;
+00693:           background:rgba(0,0,0,0.6); color:#e9e9e9;
+00694:           border:1px solid rgba(202,166,75,0.30);
+00695:           box-shadow:0 12px 34px rgba(0,0,0,0.35);
+00696:           transition:transform 0.08s ease, border-color 0.12s ease, background 0.12s ease;
+00697:         }
+00698:         .ppBtn:hover{ transform:translateY(-1px); border-color:rgba(202,166,75,0.55); background:rgba(0,0,0,0.72); }
+00699:         .ppBtn:disabled{ opacity:0.55; cursor:not-allowed; transform:none; }
+00700: 
+00701:         .ppErr{
+00702:           padding:9px 11px; border-radius:12px;
+00703:           border:1px solid rgba(255,80,80,0.25);
+00704:           background:rgba(255,80,80,0.08);
+00705:           color:rgba(255,220,220,0.92);
+00706:           white-space:pre-wrap;
+00707:           font-size:12px;
+00708:           flex:0 0 auto;
+00709:         }
+00710: 
+00711:         .ppLatePanel{
+00712:           border-radius:18px;
+00713:           border:1px solid rgba(202,166,75,0.16);
+00714:           background:radial-gradient(1000px 500px at 20% 0%, rgba(202,166,75,0.08), transparent 55%),
+00715:                      radial-gradient(900px 500px at 85% 20%, rgba(255,255,255,0.05), transparent 50%),
+00716:                      rgba(0,0,0,0.45);
+00717:           box-shadow:0 20px 60px rgba(0,0,0,0.45);
+00718:           overflow:hidden;
+00719:           flex:1 1 auto;
+00720:           min-height:0;
+00721:           display:flex;
+00722:           flex-direction:column;
+00723:         }
+00724: 
+00725:         .ppLateTableWrap{
+00726:           width:100%;
+00727:           flex:1 1 auto;
+00728:           min-height:0;
+00729:           overflow:auto;
+00730:           display:flex;
+00731:           justify-content:center;
+00732:           padding:0 6px;
+00733:         }
+00734: 
+00735:         .ppLateTable{
+00736:           border-collapse:collapse;
+00737:           table-layout:fixed;
+00738:           width:min(860px, 100%);
+00739:           margin:0 auto;
+00740:         }
+00741: 
+00742:         .ppLateTable thead th,
+
+
+RELATÓRIO SALVO EM: C:\Users\glaub\palpitaco\tmp\atp03_late_blocos_exatos.txt

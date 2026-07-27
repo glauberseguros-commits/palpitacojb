@@ -1,0 +1,3 @@
+98a1bbb fix(top3): keep lottery tabs on one mobile row
+ src/pages/Top3/Top3View.jsx | 38 ++++++++++++++++++++++++++++++++++----
+ 1 file changed, 34 insertions(+), 4 deletions(-)

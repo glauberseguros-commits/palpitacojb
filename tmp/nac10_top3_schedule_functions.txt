@@ -1,0 +1,38 @@
+================================================================================
+getScheduleForLottery
+================================================================================
+export function getScheduleForLottery({
+  lotteryKey,
+  ymd,
+  PT_RIO_SCHEDULE_NORMAL,
+  PT_RIO_SCHEDULE_WED_SAT,
+  FEDERAL_SCHEDULE,
+}
+
+================================================================================
+getNextSlotForLottery
+================================================================================
+export function getNextSlotForLottery({
+  lotteryKey,
+  ymd,
+  hourBucket,
+  PT_RIO_SCHEDULE_NORMAL,
+  PT_RIO_SCHEDULE_WED_SAT,
+  FEDERAL_SCHEDULE,
+  maxForwardDays = 21,
+}
+
+================================================================================
+buildTimelineTop3
+================================================================================
+export function buildTimelineTop3(args) {
+  return buildTimelineForDate(args || {});
+}
+
+================================================================================
+auditTop3Timeline
+================================================================================
+export function auditTop3Timeline({
+  timeline,
+  lotteryKey = "",
+}

@@ -1,0 +1,5143 @@
+====================================================================================================
+RES-AUD-35 — FLUXO COMPLETO DA PÁGINA RESULTADOS
+====================================================================================================
+
+Executado em: 23/07/2026 14:00:12
+
+Objetivo:
+Analisar o fluxo completo que consulta, agrupa e exibe cada resultado em seu próprio horário.
+
+Nenhum arquivo será alterado.
+
+Arquivos encontrados: 3
+
+
+####################################################################################################
+ARQUIVO COMPLETO: C:\Users\glaub\palpitaco\backend\routes\pitacoResults.js
+####################################################################################################
+"use strict";
+
+const { isPtRio18Expected } = require("../scripts/ptRioCalendar");
+
+const express = require("express");
+const fs = require("fs");
+const path = require("path");
+const { getDb } = require("../service/firebaseAdmin");
+
+const router = express.Router();
+
+/* =========================
+   TIME (America/Sao_Paulo)
+========================= */
+
+function todayYMDInSaoPaulo() {
+  try {
+    const parts = new Intl.DateTimeFormat("en-CA", {
+      timeZone: "America/Sao_Paulo",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    }).formatToParts(new Date());
+    const y = parts.find((p) => p.type === "year")?.value || "1970";
+    const m = parts.find((p) => p.type === "month")?.value || "01";
+    const d = parts.find((p) => p.type === "day")?.value || "01";
+    return `${y}-${m}-${d}`;
+  } catch {
+    const d = new Date();
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, "0");
+    const dd = String(d.getDate()).padStart(2, "0");
+    return `${y}-${m}-${dd}`;
+  }
+}
+
+function nowMinutesInSaoPaulo() {
+  try {
+    const parts = new Intl.DateTimeFormat("en-GB", {
+      timeZone: "America/Sao_Paulo",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+    }).formatToParts(new Date());
+
+    const hh = Number(parts.find((p) => p.type === "hour")?.value || "0");
+    const mm = Number(parts.find((p) => p.type === "minute")?.value || "0");
+    if (!Number.isFinite(hh) || !Number.isFinite(mm)) return 0;
+    return hh * 60 + mm;
+  } catch {
+    const d = new Date();
+    return d.getHours() * 60 + d.getMinutes();
+  }
+}
+
+function hourToMinutes(hh) {
+  const n = Number(String(hh ?? "").trim());
+  if (!Number.isFinite(n)) return NaN;
+  return n * 60;
+}
+
+function isSlotPublishedToday(hh, nowMin, graceMin) {
+  const hm = hourToMinutes(hh);
+  if (!Number.isFinite(hm)) return false;
+  const g = Number.isFinite(graceMin) ? graceMin : 25;
+  return nowMin >= hm + g;
+}
+
+/* =========================
+   LOTTERY KEY NORMALIZATION
+========================= */
+
+function normalizeLotteryKey(v) {
+  const s = String(v ?? "").trim().toUpperCase();
+
+  if (s === "RJ" || s === "RIO" || s === "PT-RIO" || s === "PT_RIO") return "PT_RIO";
+  if (s === "FED" || s === "FEDERAL" || s === "BR") return "FEDERAL";
+  if (s === "LOOK" || s === "GO") return "LOOK";
+  if (
+    s === "NACIONAL" ||
+    s === "LT_NACIONAL" ||
+    s === "LT-NACIONAL" ||
+    s === "LT NACIONAL"
+  ) {
+    return "NACIONAL";
+  }
+
+  return "";
+}
+
+/* =========================
+   HELPERS
+========================= */
+
+function isISODate(s) {
+  const str = String(s || "").trim();
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(str)) return false;
+
+  const [y, m, d] = str.split("-").map(Number);
+  const dt = new Date(Date.UTC(y, m - 1, d));
+
+  return (
+    dt.getUTCFullYear() === y &&
+    dt.getUTCMonth() === m - 1 &&
+    dt.getUTCDate() === d
+  );
+}
+
+function isHHMM(s) {
+  const str = String(s || "").trim();
+  const m = str.match(/^(\d{2}):(\d{2})$/);
+  if (!m) return false;
+
+  const hh = Number(m[1]);
+  const mm = Number(m[2]);
+
+  return hh >= 0 && hh <= 23 && mm >= 0 && mm <= 59;
+}
+
+function pad2(n) {
+  return String(n).padStart(2, "0");
+}
+
+function normalizeHHMM(value) {
+  const s = String(value ?? "").trim();
+  if (!s) return "";
+
+  if (isHHMM(s)) return s;
+
+  const m1 = s.match(/^(\d{1,2})h$/i);
+  if (m1) {
+    const hh = Number(m1[1]);
+    if (hh >= 0 && hh <= 23) return `${pad2(hh)}:00`;
+    return "";
+  }
+
+  const m2 = s.match(/^(\d{1,2})$/);
+  if (m2) {
+    const hh = Number(m2[1]);
+    if (hh >= 0 && hh <= 23) return `${pad2(hh)}:00`;
+    return "";
+  }
+
+  const m3 = s.match(/^(\d{1,2}):(\d{1,2})$/);
+  if (m3) {
+    const hh = Number(m3[1]);
+    const mm = Number(m3[2]);
+    if (hh >= 0 && hh <= 23 && mm >= 0 && mm <= 59) {
+      return `${pad2(hh)}:${pad2(mm)}`;
+    }
+    return "";
+  }
+
+  return "";
+}
+
+function upTrim(v) {
+  return String(v ?? "").trim().toUpperCase();
+}
+
+function cmpHHMM(a, b) {
+  return String(a || "").localeCompare(String(b || ""));
+}
+
+function parseBool01(v) {
+  const s = String(v ?? "").trim().toLowerCase();
+  return s === "1" || s === "true" || s === "yes" || s === "y";
+}
+
+function parsePosInt(v, def, min, max) {
+  const s = String(v ?? "").trim();
+  if (!s) return def;
+
+  const n = Number(s);
+  if (!Number.isFinite(n)) return def;
+
+  const i = Math.trunc(n);
+  if (Number.isFinite(min) && i < min) return min;
+  if (Number.isFinite(max) && i > max) return max;
+  return i;
+}
+
+function uniqSorted(arr) {
+  return Array.from(new Set((Array.isArray(arr) ? arr : []).filter(Boolean))).sort();
+}
+
+function setDiff(a, bSet) {
+  const out = [];
+  for (const v of Array.isArray(a) ? a : []) {
+    if (!bSet.has(v)) out.push(v);
+  }
+  return out;
+}
+
+function intersectToSet(a, bSet) {
+  const out = new Set();
+  for (const v of Array.isArray(a) ? a : []) {
+    if (bSet.has(v)) out.add(v);
+  }
+  return out;
+}
+
+function isFutureISODate(ymd) {
+  if (!isISODate(ymd)) return false;
+  const todayBR = todayYMDInSaoPaulo();
+  return String(ymd) > String(todayBR);
+}
+
+/**
+ * Pega o melhor candidato de close_hour em docs legados.
+ */
+function getCloseCandidate(d) {
+  try {
+    const v =
+      d?.close_hour ??
+      d?.close ??
+      d?.close_hour_raw ??
+      d?.closeHour ??
+      d?.horario ??
+      d?.hour ??
+      "";
+    return String(v ?? "").trim();
+  } catch {
+    return "";
+  }
+}
+
+/**
+ * Normaliza close_hour para SLOT (compatível com import):
+ * - PT_RIO: HH:09 => slot HH:00
+ * - outros: preserva HH:MM
+ */
+function normalizeCloseHourForLottery(value, lotteryKey) {
+  const lk = upTrim(lotteryKey || "");
+  const raw0 = normalizeHHMM(value);
+  if (!raw0 || !isHHMM(raw0)) return { raw: "", slot: "" };
+
+  if (lk === "PT_RIO") {
+    const hh = raw0.slice(0, 2);
+    const mm = raw0.slice(3, 5);
+    const raw = mm === "09" ? "" : raw0;
+    return { raw, slot: `${hh}:00` };
+  }
+
+  return { raw: raw0, slot: raw0 };
+}
+
+function hourFromCloseHourSlot(closeHour, lotteryKey) {
+  const { slot } = normalizeCloseHourForLottery(closeHour, lotteryKey);
+  const s0 = String(slot ?? "").trim();
+  if (!s0) return null;
+  const m = s0.match(/(\d{1,2})/);
+  if (!m) return null;
+  const hh = Number(m[1]);
+  if (!Number.isFinite(hh) || hh < 0 || hh > 23) return null;
+  return pad2(hh);
+}
+
+async function fetchDayDrawDocs(db, date) {
+  const [snapDate, snapYmd] = await Promise.all([
+    db.collection("draws").where("date", "==", date).get(),
+    db.collection("draws").where("ymd", "==", date).get(),
+  ]);
+
+  const byId = new Map();
+
+  for (const doc of snapDate.docs) byId.set(doc.id, doc);
+  for (const doc of snapYmd.docs) byId.set(doc.id, doc);
+
+  return Array.from(byId.values());
+}
+
+/* =========================
+   Day Status cache
+========================= */
+
+const _dayStatusCache = new Map();
+const DAY_STATUS_TTL_MS = 60_000;
+
+function readDayStatusMap(lottery, opts) {
+  const key = upTrim(lottery || "PT_RIO") || "PT_RIO";
+  const reload = !!(opts && opts.reload);
+
+  const cached = _dayStatusCache.get(key);
+  if (!reload && cached && Date.now() - cached.loadedAt < DAY_STATUS_TTL_MS) {
+    return cached.map;
+  }
+
+  const p = path.join(__dirname, "..", "data", "day_status", `${key}.json`);
+  let map = {};
+  try {
+    if (fs.existsSync(p)) {
+      const raw = fs.readFileSync(p, "utf8");
+      const j = raw ? JSON.parse(raw) : {};
+      if (j && typeof j === "object") map = j;
+    }
+  } catch {
+    map = {};
+  }
+
+  _dayStatusCache.set(key, { loadedAt: Date.now(), map });
+  return map;
+}
+
+function shouldBlockDayStatus(dayStatus, strict) {
+  if (dayStatus === "holiday_no_draw") return true;
+  if (dayStatus === "incomplete") return true;
+  if (strict && dayStatus === "partial_hard") return true;
+  return false;
+}
+
+/* =========================
+   SLOT SCHEDULE
+========================= */
+
+const DEFAULT_SCHEDULE_DIR = path.join(__dirname, "..", "data", "slot_schedule");
+const DEFAULT_GAPS_DIR = path.join(__dirname, "..", "data", "source_gaps");
+
+function safeReadJson(p, fallback) {
+  try {
+    if (!fs.existsSync(p)) return fallback;
+    const raw = fs.readFileSync(p, "utf8");
+    const j = JSON.parse(raw || "{}");
+    return j && typeof j === "object" ? j : fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+function normalizeHourList(arr) {
+  const out = [];
+  const seen = new Set();
+  for (const v of Array.isArray(arr) ? arr : []) {
+    const m = String(v ?? "").match(/\d{1,2}/);
+    if (!m) continue;
+    const hh = pad2(Number(m[0]));
+    const n = Number(hh);
+    if (!Number.isFinite(n) || n < 0 || n > 23) continue;
+    if (!seen.has(hh)) {
+      seen.add(hh);
+      out.push(hh);
+    }
+  }
+  return out.sort();
+}
+
+function shouldInclude09ForDate(ymd, include09FromYmd) {
+  if (include09FromYmd && isISODate(include09FromYmd)) return ymd >= include09FromYmd;
+  return false;
+}
+
+function expectedHoursPT_RIO_FALLBACK(ymd, include09FromYmd) {
+  const d = new Date(`${ymd}T12:00:00-03:00`);
+  const dow = d.getDay();
+
+  const has09 = shouldInclude09ForDate(ymd, include09FromYmd);
+
+  const hardWeek = ["11", "14", "16", "18", "21"];
+  const hardSun = ["11", "14", "16"];
+
+  const hard = [];
+  const soft = [];
+
+  if (dow === 0) {
+    hard.push(...hardSun);
+    if (has09) soft.push("09");
+    return { hard, soft, mode: "fallback", scheduleFile: false };
+  }
+
+  if (has09) hard.push("09");
+  hard.push(...hardWeek);
+
+  return { hard, soft, mode: "fallback", scheduleFile: false };
+}
+
+function pickRangeForDate(ranges, ymd) {
+  for (const r of Array.isArray(ranges) ? ranges : []) {
+    const from0 = String(r?.from || "").trim();
+    const to0 = String(r?.to || "").trim();
+
+    const hasFrom = isISODate(from0);
+    const hasTo = isISODate(to0);
+
+    if (!hasFrom && !hasTo) return r;
+
+    if (!hasFrom && hasTo) {
+      if (ymd <= to0) return r;
+      continue;
+    }
+    if (hasFrom && !hasTo) {
+      if (ymd >= from0) return r;
+      continue;
+    }
+
+    if (hasFrom && hasTo && ymd >= from0 && ymd <= to0) return r;
+  }
+  return null;
+}
+
+function parseScheduleGlobal(scheduleRaw) {
+  const hard = normalizeHourList(scheduleRaw?.hard || scheduleRaw?.expectedHard || []);
+  const soft = normalizeHourList(scheduleRaw?.soft || scheduleRaw?.expectedSoft || []);
+  const hours = normalizeHourList(scheduleRaw?.hours || []);
+  if (hours.length) return { hard: hours, soft: [], mode: "schedule", scheduleFile: true };
+  if (hard.length || soft.length) return { hard, soft, mode: "schedule", scheduleFile: true };
+  return null;
+}
+
+function getExpectedForDate(lotteryKey, ymd, include09FromYmdDefault) {
+  const p = path.join(DEFAULT_SCHEDULE_DIR, `${lotteryKey}.json`);
+  const scheduleRaw = safeReadJson(p, null);
+  const scheduleFile = !!scheduleRaw;
+
+  if (scheduleRaw) {
+    const global = parseScheduleGlobal(scheduleRaw);
+    if (global && (global.hard.length || global.soft.length)) return global;
+  }
+
+  const ranges = Array.isArray(scheduleRaw) ? scheduleRaw : scheduleRaw?.ranges;
+  const r = pickRangeForDate(ranges, ymd);
+
+  if (r) {
+    if (r.dow && typeof r.dow === "object") {
+      const d = new Date(String(ymd) + "T12:00:00-03:00");
+      const dow = String(d.getDay());
+      const block = r.dow[dow] || r.dow[Number(dow)] || null;
+
+      const hard = normalizeHourList(block?.hard || block?.expectedHard || []);
+      const soft = normalizeHourList(block?.soft || block?.expectedSoft || []);
+      const hours = normalizeHourList(block?.hours || []);
+
+      if (hours.length) return { hard: hours, soft: [], mode: "schedule", scheduleFile: true };
+      return { hard, soft, mode: "schedule", scheduleFile: true };
+    }
+
+    const hard = normalizeHourList(r?.hard || r?.expectedHard || []);
+    const soft = normalizeHourList(r?.soft || r?.expectedSoft || []);
+    const hours = normalizeHourList(r?.hours || []);
+    if (hours.length) return { hard: hours, soft: [], mode: "schedule", scheduleFile: true };
+    return { hard, soft, mode: "schedule", scheduleFile: true };
+  }
+
+  if (lotteryKey === "PT_RIO") {
+    return expectedHoursPT_RIO_FALLBACK(ymd, include09FromYmdDefault || "2024-01-05");
+  }
+
+  return { hard: [], soft: [], mode: "none", scheduleFile };
+}
+
+/* =========================
+   SOURCE GAPS
+========================= */
+
+const _gapsCache = new Map();
+const GAPS_TTL_MS = 60_000;
+
+function readGapsMap(lottery, opts) {
+  const key = upTrim(lottery || "PT_RIO") || "PT_RIO";
+  const reload = !!(opts && opts.reload);
+
+  const cached = _gapsCache.get(key);
+  if (!reload && cached && Date.now() - cached.loadedAt < GAPS_TTL_MS) {
+    return cached.map;
+  }
+
+  const p = path.join(DEFAULT_GAPS_DIR, `${key}.json`);
+  let map = {};
+  try {
+    if (fs.existsSync(p)) {
+      const raw = fs.readFileSync(p, "utf8");
+      const j = raw ? JSON.parse(raw) : {};
+      if (j && typeof j === "object") map = j;
+    }
+  } catch {
+    map = {};
+  }
+
+  _gapsCache.set(key, { loadedAt: Date.now(), map });
+  return map;
+}
+
+function normalizeGapEntry(entry) {
+  if (Array.isArray(entry)) {
+    return {
+      removedHard: normalizeHourList(entry),
+      removedSoft: [],
+    };
+  }
+
+  const obj = entry && typeof entry === "object" ? entry : {};
+  const hard = obj.removedHard || obj.removeHard || obj.hard || obj.expectedRemovedHard || [];
+  const soft = obj.removedSoft || obj.removeSoft || obj.soft || obj.expectedRemovedSoft || [];
+
+  return {
+    removedHard: normalizeHourList(hard),
+    removedSoft: normalizeHourList(soft),
+  };
+}
+
+function getGapsForDate(lotteryKey, ymd, opts) {
+  const map = readGapsMap(lotteryKey, opts);
+  const entry = map?.gapsByDay?.[ymd] ?? map?.[ymd];
+
+  if (!entry) return { removedHard: [], removedSoft: [] };
+  return normalizeGapEntry(entry);
+}
+
+/* =========================
+   CONCURRENCY
+========================= */
+
+async function mapWithConcurrency(items, limitN, mapper) {
+  const arr = Array.isArray(items) ? items : [];
+  const concurrency = Math.max(1, Number(limitN) || 6);
+  const results = new Array(arr.length);
+  let idx = 0;
+
+  async function worker() {
+    while (true) {
+      const current = idx;
+      idx += 1;
+      if (current >= arr.length) break;
+      results[current] = await mapper(arr[current], current);
+    }
+  }
+
+  await Promise.all(
+    Array.from({ length: Math.min(concurrency, arr.length) }, () => worker())
+  );
+  return results;
+}
+
+/* =========================
+   ROUTE
+========================= */
+
+function buildCalendarStatus({ slotsSummary, blocked = false, blockedReason = "", isToday = false }) {
+  const expected = Number(slotsSummary?.expectedTotal || 0);
+  const found = Number(slotsSummary?.foundTotal || 0);
+  const missing = Number(slotsSummary?.missingTotal || 0);
+
+  let status = "empty";
+  if (blocked) status = blockedReason === "future_date" ? "future" : "blocked";
+  else if (isToday && missing > 0) status = "pending";
+  else if (expected > 0 && missing === 0) status = "complete";
+  else if (found > 0 && missing > 0) status = "partial";
+  else if (expected > 0 && found === 0) status = "empty";
+
+  return {
+    status,
+    expected,
+    found,
+    missing,
+    completionPct: Number(slotsSummary?.completionPct ?? 0),
+  };
+}
+
+function buildSlots(opts) {
+  const {
+    scheduleAll,
+    byHour,
+    baseSoft,
+    removedHardApplied,
+    removedSoftApplied,
+    expectedHard,
+    expectedSoft,
+    expectedHardPublished,
+    expectedSoftPublished,
+    capToday,
+    isToday,
+    nowMinBR,
+    slotGraceMin,
+  } = opts || {};
+
+  return (Array.isArray(scheduleAll) ? scheduleAll : []).map((hh) => {
+    const draw = byHour?.get ? byHour.get(hh) || null : null;
+
+    const isSoft = Array.isArray(baseSoft) && baseSoft.includes(hh);
+    const kind = isSoft ? "soft" : "hard";
+
+    if (removedHardApplied?.has?.(hh) || removedSoftApplied?.has?.(hh)) {
+      return { hour: hh, kind, status: "gap", reason: "source_gap", draw: null };
+    }
+
+    if (draw) return { hour: hh, kind, status: "valid", draw };
+
+    if (
+      capToday &&
+      isToday &&
+      ((expectedHard && expectedHard.includes(hh)) || (expectedSoft && expectedSoft.includes(hh)))
+    ) {
+      const published = isSlotPublishedToday(hh, nowMinBR, slotGraceMin);
+      if (!published) {
+        return { hour: hh, kind, status: "future", reason: "not_yet_published", draw: null };
+      }
+    }
+
+    if (expectedHardPublished && expectedHardPublished.includes(hh)) {
+      return { hour: hh, kind: "hard", status: "missing", draw: null };
+    }
+    if (expectedSoftPublished && expectedSoftPublished.includes(hh)) {
+      return { hour: hh, kind: "soft", status: "soft_missing", draw: null };
+    }
+
+    return { hour: hh, kind, status: "gap", reason: "not_expected", draw: null };
+  });
+}
+
+router.get("/results", async (req, res) => {
+  if ((req.query.lotteryKey != null || req.query.lottery != null) && req.query.uf != null) {
+    return res.status(400).json({
+      ok: false,
+      error:
+        "Parâmetros conflitantes: quando 'lottery' (ou 'lotteryKey') é informado, 'uf' é ignorado. Remova 'uf' ou use apenas 'uf=RJ|BR' (legado).",
+      hint: "Use: ?date=YYYY-MM-DD&lottery=PT_RIO|FEDERAL|LOOK|NACIONAL  (ou)  ?date=YYYY-MM-DD&uf=RJ|BR",
+    });
+  }
+
+  const slotGraceMin = parsePosInt(req.query.slotGraceMin, 25, 0, 240);
+  const noCapToday = parseBool01(req.query.noCapToday);
+  const capToday = !noCapToday;
+
+  const lotteryParam = req.query.lotteryKey ?? req.query.lottery ?? null;
+  const legacyLottery = lotteryParam == null ? req.query.uf : null;
+
+  const lotteryRaw = String(lotteryParam ?? legacyLottery ?? "").trim();
+  const lotteryKey = normalizeLotteryKey(lotteryRaw);
+
+  try {
+    const date = String(req.query.date || "").trim();
+    const lottery = lotteryKey;
+    const strict = parseBool01(req.query.strict);
+    const reloadDayStatus = parseBool01(req.query.reloadDayStatus);
+    const reloadGaps = parseBool01(req.query.reloadGaps);
+
+    const includePrizes =
+      req.query.includePrizes == null ? true : parseBool01(req.query.includePrizes);
+    const limitDocs = parsePosInt(req.query.limitDocs, 120, 20, 500);
+
+    if (!date) return res.status(400).json({ ok: false, error: "date obrigatório" });
+    if (!isISODate(date)) {
+      return res.status(400).json({ ok: false, error: "date inválido (use YYYY-MM-DD)" });
+    }
+    if (!lotteryRaw) return res.status(400).json({ ok: false, error: "lottery obrigatório" });
+    if (!lottery) {
+      return res.status(400).json({
+        ok: false,
+        error: "lottery inválida: " + lotteryRaw + " (use lottery=PT_RIO|FEDERAL|LOOK|NACIONAL ou aliases RJ|BR)",
+      });
+    }
+
+    if (isFutureISODate(date)) {
+      const todayBR = todayYMDInSaoPaulo();
+      return res.json({
+        ok: true,
+        date,
+        lottery,
+        strict,
+        includePrizes,
+        limitDocs,
+        dayStatus: "",
+        blocked: true,
+        blockedReason: "future_date",
+        todayBR,
+        count: 0,
+        draws: [],
+        slots: [],
+      });
+    }
+
+    const dayStatusMap = readDayStatusMap(lottery, { reload: reloadDayStatus });
+    const dayStatus = String(dayStatusMap?.[date] || "").trim();
+
+    const db = getDb();
+
+    const docsDay = await fetchDayDrawDocs(db, date);
+
+    const docsAll = docsDay.filter((doc) => {
+      const d = doc.data() || {};
+      const lkSnake = upTrim(d.lottery_key || "");
+      const lkCamel = upTrim(d.lotteryKey || "");
+      return lkSnake === lotteryKey || lkCamel === lotteryKey;
+    });
+
+    if (dayStatus && shouldBlockDayStatus(dayStatus, strict)) {
+      if (!docsAll.length) {
+        return res.json({
+          ok: true,
+          date,
+          lottery,
+          strict,
+          includePrizes,
+          limitDocs,
+          dayStatus,
+          blocked: true,
+          blockedReason: "day_status_confirmed_no_docs",
+          count: 0,
+          draws: [],
+          slots: [],
+        });
+      }
+    }
+
+    const docsFound = docsAll.length;
+    const docs = docsAll.slice(0, limitDocs);
+    const docsCapped = docs.length !== docsFound;
+
+    const include09FromDefault = "2024-01-05";
+    const expectedBase = getExpectedForDate(
+      lottery,
+      date,
+      include09FromDefault
+    );
+
+    let baseHard = Array.isArray(expectedBase?.hard)
+      ? [...expectedBase.hard]
+      : [];
+
+    let baseSoft = Array.isArray(expectedBase?.soft)
+      ? [...expectedBase.soft]
+      : [];
+
+    let federal20Exists = false;
+    let ptRio18Expected = true;
+    let operationalRulesApplied = [];
+
+    if (lottery === "PT_RIO") {
+      const federalExpectedBase =
+        getExpectedForDate(
+          "FEDERAL",
+          date,
+          include09FromDefault
+        );
+
+      const federalExpectedHours = [
+        ...(Array.isArray(
+          federalExpectedBase?.hard
+        )
+          ? federalExpectedBase.hard
+          : []),
+        ...(Array.isArray(
+          federalExpectedBase?.soft
+        )
+          ? federalExpectedBase.soft
+          : []),
+      ]
+        .map((value) =>
+          String(value ?? "")
+            .trim()
+            .replace(/:00$/, "")
+            .replace(/h$/i, "")
+            .padStart(2, "0")
+        )
+        .filter(Boolean);
+
+      federal20Exists =
+        federalExpectedHours.includes("20");
+
+      ptRio18Expected =
+        isPtRio18Expected(
+          date,
+          { federal20Exists }
+        );
+
+      if (!ptRio18Expected) {
+        const remove18 = (hours) =>
+          hours.filter((value) => {
+            const normalized =
+              String(value ?? "")
+                .trim()
+                .replace(/:00$/, "")
+                .replace(/h$/i, "")
+                .padStart(2, "0");
+
+            return normalized !== "18";
+          });
+
+        baseHard = remove18(baseHard);
+        baseSoft = remove18(baseSoft);
+
+        operationalRulesApplied.push(
+          "FEDERAL_20_REMOVES_PT_RIO_18"
+        );
+      }
+    }
+
+    const todayBR = todayYMDInSaoPaulo();
+    const isToday = date === todayBR;
+    const nowMinBR = nowMinutesInSaoPaulo();
+
+    if (process.env.NODE_ENV === "development") {
+      try {
+        const dbg18 = isSlotPublishedToday("18", nowMinBR, slotGraceMin);
+        const dbg21 = isSlotPublishedToday("21", nowMinBR, slotGraceMin);
+        console.log("[pitaco/results][capToday]", {
+          date,
+          todayBR,
+          isToday,
+          nowMinBR,
+          slotGraceMin,
+          dbg18,
+          dbg21,
+        });
+      } catch (e) {
+        console.log("[pitaco/results][capToday] debug error", e?.message || e);
+      }
+    }
+
+    const gaps = getGapsForDate(lottery, date, { reload: reloadGaps });
+    const removedHardSet = new Set(gaps.removedHard || []);
+    const removedSoftSet = new Set(gaps.removedSoft || []);
+
+    const scheduleAll = uniqSorted([...baseHard, ...baseSoft]);
+
+    const expectedHard = setDiff(baseHard, removedHardSet);
+    const expectedSoft = setDiff(baseSoft, removedSoftSet);
+
+    const expectedHardPublished =
+      capToday && isToday
+        ? expectedHard.filter((hh) => isSlotPublishedToday(hh, nowMinBR, slotGraceMin))
+        : expectedHard;
+
+    const expectedSoftPublished =
+      capToday && isToday
+        ? expectedSoft.filter((hh) => isSlotPublishedToday(hh, nowMinBR, slotGraceMin))
+        : expectedSoft;
+
+    const removedHardApplied = intersectToSet(baseHard, removedHardSet);
+    const removedSoftApplied = intersectToSet(baseSoft, removedSoftSet);
+
+    if (!includePrizes) {
+      const drawsNoPrizes = docs.map((doc) => {
+        const d = doc.data() || {};
+        const cand = getCloseCandidate(d);
+        const { raw, slot } = normalizeCloseHourForLottery(cand, lotteryKey);
+        return {
+          id: doc.id,
+          ...d,
+          close_hour: slot || normalizeHHMM(d.close_hour),
+          close_hour_raw: raw || d.close_hour_raw || null,
+          prizesCount: typeof d.prizesCount !== "undefined" ? d.prizesCount : undefined,
+        };
+      });
+
+      drawsNoPrizes.sort((a, b) => cmpHHMM(a.close_hour, b.close_hour));
+
+      const byHour = new Map();
+      for (const dr of drawsNoPrizes) {
+        const hh = hourFromCloseHourSlot(dr?.close_hour, lotteryKey);
+        if (!hh) continue;
+        const prev = byHour.get(hh);
+        if (!prev) {
+          byHour.set(hh, dr);
+        } else {
+          const a = String(prev.close_hour || "");
+          const b = String(dr.close_hour || "");
+          if (b && (!a || b < a)) byHour.set(hh, dr);
+        }
+      }
+
+      const presentHours = uniqSorted(Array.from(byHour.keys()));
+
+      const slots = buildSlots({
+        scheduleAll,
+        byHour,
+        baseSoft,
+        removedHardApplied,
+        removedSoftApplied,
+        expectedHard,
+        expectedSoft,
+        federal20Exists,
+        ptRio18Expected,
+        operationalRulesApplied,
+        expectedHardPublished,
+        expectedSoftPublished,
+        capToday,
+        isToday,
+        nowMinBR,
+        slotGraceMin,
+      });
+
+      const slotsSummary = {
+        mode: expectedBase?.mode || "none",
+        scheduleFile: !!expectedBase?.scheduleFile,
+        scheduleHard: baseHard.length,
+        scheduleSoft: baseSoft.length,
+        scheduleAll: scheduleAll.length,
+        expectedHard: expectedHard.length,
+        expectedSoft: expectedSoft.length,
+        expectedTotal: expectedHard.length + expectedSoft.length,
+        presentHours: presentHours.length,
+        foundTotal: presentHours.length,
+        removedHard: removedHardApplied.size,
+        removedSoft: removedSoftApplied.size,
+        missingHard: slots.filter((s) => s.status === "missing").length,
+        missingSoft: slots.filter((s) => s.status === "soft_missing").length,
+        missingTotal:
+          slots.filter((s) => s.status === "missing").length +
+          slots.filter((s) => s.status === "soft_missing").length,
+        completionPct:
+          expectedHard.length + expectedSoft.length
+            ? Number(
+                (
+                  (presentHours.length /
+                    (expectedHard.length + expectedSoft.length)) *
+                  100
+                ).toFixed(1)
+              )
+            : 100,
+      };
+
+      return res.json({
+        ok: true,
+        date,
+        lottery,
+        strict,
+        includePrizes,
+        limitDocs,
+        docsFound,
+        docsCapped,
+        dayStatus,
+        blocked: false,
+        count: drawsNoPrizes.length,
+        draws: drawsNoPrizes,
+        expectedHard,
+        expectedSoft,
+        federal20Exists,
+        ptRio18Expected,
+        operationalRulesApplied,
+        presentHours,
+        slotsSummary,
+        calendarStatus: buildCalendarStatus({ slotsSummary, blocked: false, isToday }),
+        slots,
+      });
+    }
+
+    const draws = await mapWithConcurrency(docs, 6, async (doc) => {
+      const d = doc.data() || {};
+      const cand = getCloseCandidate(d);
+      const { raw, slot } = normalizeCloseHourForLottery(cand, lotteryKey);
+
+      const prizesSnap = await doc.ref.collection("prizes").orderBy("position", "asc").get();
+
+      return {
+        id: doc.id,
+        ...d,
+        close_hour: slot || normalizeHHMM(d.close_hour),
+        close_hour_raw: raw || d.close_hour_raw || null,
+        prizes: prizesSnap.docs.map((p) => p.data()),
+      };
+    });
+
+    draws.sort((a, b) => cmpHHMM(a.close_hour, b.close_hour));
+
+    const byHour = new Map();
+    for (const dr of draws) {
+      const hh = hourFromCloseHourSlot(dr?.close_hour, lotteryKey);
+      if (!hh) continue;
+      const prev = byHour.get(hh);
+      if (!prev) {
+        byHour.set(hh, dr);
+      } else {
+        const a = String(prev.close_hour || "");
+        const b = String(dr.close_hour || "");
+        if (b && (!a || b < a)) byHour.set(hh, dr);
+      }
+    }
+
+    const presentHours = uniqSorted(Array.from(byHour.keys()));
+
+    const slots = buildSlots({
+      scheduleAll,
+      byHour,
+      baseSoft,
+      removedHardApplied,
+      removedSoftApplied,
+      expectedHard,
+      expectedSoft,
+      federal20Exists,
+      ptRio18Expected,
+      operationalRulesApplied,
+      expectedHardPublished,
+      expectedSoftPublished,
+      capToday,
+      isToday,
+      nowMinBR,
+      slotGraceMin,
+    });
+
+    const slotsSummary = {
+      mode: expectedBase?.mode || "none",
+      scheduleFile: !!expectedBase?.scheduleFile,
+      scheduleHard: baseHard.length,
+      scheduleSoft: baseSoft.length,
+      scheduleAll: scheduleAll.length,
+      expectedHard: expectedHard.length,
+      expectedSoft: expectedSoft.length,
+      expectedTotal: expectedHard.length + expectedSoft.length,
+      presentHours: presentHours.length,
+      foundTotal: presentHours.length,
+      removedHard: removedHardApplied.size,
+      removedSoft: removedSoftApplied.size,
+      missingHard: slots.filter((s) => s.status === "missing").length,
+      missingSoft: slots.filter((s) => s.status === "soft_missing").length,
+      missingTotal:
+        slots.filter((s) => s.status === "missing").length +
+        slots.filter((s) => s.status === "soft_missing").length,
+      completionPct:
+        expectedHard.length + expectedSoft.length
+          ? Number(
+              (
+                (presentHours.length /
+                  (expectedHard.length + expectedSoft.length)) *
+                100
+              ).toFixed(1)
+            )
+          : 100,
+    };
+
+    return res.json({
+      ok: true,
+      date,
+      lottery,
+      strict,
+      includePrizes,
+      limitDocs,
+      docsFound,
+      docsCapped,
+      dayStatus,
+      blocked: false,
+      count: draws.length,
+      draws,
+      expectedHard,
+      expectedSoft,
+      federal20Exists,
+      ptRio18Expected,
+      operationalRulesApplied,
+      presentHours,
+      slotsSummary,
+      calendarStatus: buildCalendarStatus({ slotsSummary, blocked: false, isToday }),
+      slots,
+    });
+  } catch (e) {
+    return res.status(500).json({ ok: false, error: e?.message || "erro" });
+  }
+});
+
+module.exports = router;
+
+####################################################################################################
+ARQUIVO COMPLETO: C:\Users\glaub\palpitaco\src\pages\Results\Results.jsx
+####################################################################################################
+// src/pages/Results/Results.jsx
+import React, { useEffect, useMemo, useRef, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
+import {
+  getKingBoundsByUf,
+  getKingResultsByDate,
+  getKingResultsByRange,
+} from "../../services/kingResultsService";
+import {
+  getAnimalLabel,
+  getImgFromGrupo,
+  getSlugByGrupo,
+} from "../../constants/bichoMap";
+
+/* =========================
+   Helpers (locais e robustos)
+========================= */
+
+function pad2(n) {
+  return String(n).padStart(2, "0");
+}
+
+function safeStr(v) {
+  return String(v ?? "").trim();
+}
+
+function isYMD(s) {
+  return /^\d{4}-\d{2}-\d{2}$/.test(String(s || "").trim());
+}
+
+function ymdToBR(ymd) {
+  const m = String(ymd || "")
+    .trim()
+    .match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!m) return safeStr(ymd);
+  return `${m[3]}/${m[2]}/${m[1]}`;
+}
+
+function nowLocal() {
+  return new Date();
+}
+
+function todayYMDLocal() {
+  const d = nowLocal();
+  return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+}
+
+function currentHourNumLocal() {
+  const d = nowLocal();
+  return d.getHours() * 100 + d.getMinutes();
+}
+
+function ymdToDateLocal(ymd) {
+  const m = String(ymd || "")
+    .trim()
+    .match(/^(\d{4})-(\d{2})-(\d{2})$/);
+  if (!m) return null;
+  return new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]), 12, 0, 0);
+}
+
+function dateToYMDLocal(d) {
+  if (!(d instanceof Date) || Number.isNaN(d.getTime())) return "";
+  return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+}
+
+function startOfMonthYMD(ymd) {
+  const d = ymdToDateLocal(ymd);
+  if (!d) return todayYMDLocal().slice(0, 8) + "01";
+  d.setDate(1);
+  return dateToYMDLocal(d);
+}
+
+function endOfMonthYMD(ymd) {
+  const d = ymdToDateLocal(ymd);
+  if (!d) return todayYMDLocal();
+  d.setMonth(d.getMonth() + 1, 0);
+  return dateToYMDLocal(d);
+}
+
+function shiftMonthYMD(ymd, deltaMonths) {
+  const d = ymdToDateLocal(startOfMonthYMD(ymd));
+  if (!d) return startOfMonthYMD(todayYMDLocal());
+  d.setMonth(d.getMonth() + Number(deltaMonths || 0), 1);
+  return dateToYMDLocal(d);
+}
+
+function monthTitleBR(ymd) {
+  const d = ymdToDateLocal(startOfMonthYMD(ymd));
+  if (!d) return "";
+  const s = d.toLocaleDateString("pt-BR", { month: "long", year: "numeric" });
+  return s.charAt(0).toUpperCase() + s.slice(1);
+}
+
+function buildCalendarCells(monthYmd) {
+  const first = ymdToDateLocal(startOfMonthYMD(monthYmd));
+  if (!first) return [];
+
+  const start = new Date(first);
+  start.setDate(first.getDate() - first.getDay());
+
+  return Array.from({ length: 42 }, (_, idx) => {
+    const d = new Date(start);
+    d.setDate(start.getDate() + idx);
+    const ymd = dateToYMDLocal(d);
+    return {
+      ymd,
+      day: d.getDate(),
+      inMonth: d.getMonth() === first.getMonth(),
+    };
+  });
+}
+
+function normalizeHourLike(value) {
+  const s0 = safeStr(value);
+  if (!s0) return "";
+
+  const s = s0.replace(/\s+/g, "");
+
+  const mhx = s.match(/^(\d{1,2})(?:h|hs|hr|hrs)$/i);
+  if (mhx) return `${pad2(mhx[1])}:00`;
+
+  const mISO = s.match(/^(\d{1,2}):(\d{1,2})(?::(\d{1,2}))?$/);
+  if (mISO) {
+    return `${pad2(mISO[1])}:00`;
+  }
+
+  const m2 = s.match(/^(\d{1,2})$/);
+  if (m2) return `${pad2(m2[1])}:00`;
+
+  return s0;
+}
+
+function hourToNum(h) {
+  const s = normalizeHourLike(h);
+  const m = s.match(/^(\d{2}):(\d{2})$/);
+  if (!m) return -1;
+  return Number(m[1]) * 100 + Number(m[2]);
+}
+
+function unwrapDraws(maybe) {
+  if (Array.isArray(maybe)) return maybe;
+  if (maybe && typeof maybe === "object") {
+    if (Array.isArray(maybe.drawsRaw)) return maybe.drawsRaw;
+    if (Array.isArray(maybe.draws)) return maybe.draws;
+    if (Array.isArray(maybe.rows)) return maybe.rows;
+    if (Array.isArray(maybe.data)) return maybe.data;
+    if (maybe.result && Array.isArray(maybe.result)) return maybe.result;
+  }
+  return [];
+}
+
+/* =========================
+   Bounds
+========================= */
+
+function normalizeBoundsResponse(b) {
+  const minRaw = safeStr(b?.minYmd || b?.minDate || b?.min || "");
+  const maxRaw = safeStr(b?.maxYmd || b?.maxDate || b?.max || "");
+  const minYmd = isYMD(minRaw) ? minRaw : null;
+  const maxYmd = isYMD(maxRaw) ? maxRaw : null;
+  return { minYmd, maxYmd, source: safeStr(b?.source || "") };
+}
+
+function clampYmd(ymd, minYmd, maxYmd) {
+  const d = safeStr(ymd);
+  if (!isYMD(d)) return null;
+
+  let out = d;
+  const min = safeStr(minYmd);
+  const max = safeStr(maxYmd);
+
+  if (isYMD(min) && out < min) out = min;
+  if (isYMD(max) && out > max) out = max;
+
+  return out;
+}
+
+function normalizeSingleDateWithBounds(dateIn, minYmd, maxYmd) {
+  const d = clampYmd(dateIn, minYmd, maxYmd);
+  if (d) return d;
+
+  const fallback =
+    clampYmd(todayYMDLocal(), minYmd, maxYmd) ||
+    (isYMD(maxYmd) ? maxYmd : null) ||
+    (isYMD(minYmd) ? minYmd : null) ||
+    todayYMDLocal();
+
+  return fallback;
+}
+
+/* =========================
+   Escopos
+========================= */
+
+const SCOPE_RJ = "RJ";
+const SCOPE_FEDERAL = "FEDERAL";
+const SCOPE_LOOK = "LOOK";
+const SCOPE_NACIONAL = "NACIONAL";
+
+const LOOK_EXPECTED_HOURS_DESC = [
+  "23:00",
+  "21:00",
+  "18:00",
+  "16:00",
+  "14:00",
+  "11:00",
+  "09:00",
+  "07:00",
+];
+
+const NACIONAL_EXPECTED_HOURS_DESC = [
+  "23:00",
+  "21:00",
+  "17:00",
+  "15:00",
+  "12:00",
+  "10:00",
+  "08:00",
+  "02:00",
+];
+
+const FEDERAL_INPUT_ALIASES = new Set([
+  "FEDERAL",
+  "FED",
+  "LOTERIA FEDERAL",
+  "LOTERIA_FEDERAL",
+  "LOT FEDERAL",
+  "LT_FEDERAL",
+  "FED_BR",
+]);
+
+const RJ_09H_START_YMD = "2024-01-05";
+const RJ_EXPECTED_HOURS_BASE_DESC = ["21:00", "18:00", "16:00", "14:00", "11:00"];
+
+function isFederalInput(scope) {
+  const up = safeStr(scope).toUpperCase();
+  if (!up) return false;
+  if (up === SCOPE_FEDERAL) return true;
+  if (FEDERAL_INPUT_ALIASES.has(up)) return true;
+  const compact = up.replace(/[\s_]+/g, " ").trim();
+  if (FEDERAL_INPUT_ALIASES.has(compact)) return true;
+  const unders = up.replace(/[\s_]+/g, "_");
+  if (FEDERAL_INPUT_ALIASES.has(unders)) return true;
+  return false;
+}
+
+function normalizeScopeInput(input) {
+  const s = safeStr(input).toUpperCase();
+  if (!s) return SCOPE_RJ;
+
+  const compact = s.replace(/[\s_-]+/g, "");
+
+  if (s === SCOPE_RJ || compact === "PTRIO" || compact === "RIO") {
+    return SCOPE_RJ;
+  }
+
+  if (isFederalInput(s)) {
+    return SCOPE_FEDERAL;
+  }
+
+  if (s === SCOPE_LOOK || compact === "LOOK" || compact === "GO") {
+    return SCOPE_LOOK;
+  }
+
+  if (
+    s === SCOPE_NACIONAL ||
+    compact === "NACIONAL" ||
+    compact === "LTNACIONAL"
+  ) {
+    return SCOPE_NACIONAL;
+  }
+
+  return s;
+}
+
+function scopeDisplayName(scope) {
+  const up = normalizeScopeInput(scope);
+
+  if (up === SCOPE_RJ) return "RIO DE JANEIRO";
+  if (up === SCOPE_FEDERAL) return "FEDERAL";
+  if (up === SCOPE_LOOK) return "LOOK";
+  if (up === SCOPE_NACIONAL) return "NACIONAL";
+
+  return up;
+}
+
+/* =========================
+   prizeNumber
+========================= */
+
+function guessPrizeNumber(p) {
+  if (!p) return "";
+
+  const direct = safeStr(p?.numero);
+  if (direct) return direct;
+
+  const candidates = [
+    p?.milhar,
+    p?.milhares,
+    p?.m,
+    p?.number,
+    p?.num,
+    p?.n,
+    p?.value,
+    p?.valor,
+    p?.resultado,
+    p?.result,
+    p?.premio,
+    p?.premiation,
+  ];
+
+  for (const c of candidates) {
+    const s = safeStr(c);
+    if (!s) continue;
+    const digits = s.replace(/\D+/g, "");
+    return digits || s;
+  }
+
+  if (Array.isArray(p?.numbers) && p.numbers.length) {
+    const s = safeStr(p.numbers[0]);
+    const digits = s.replace(/\D+/g, "");
+    return digits || s;
+  }
+
+  return "";
+}
+
+function guessPrizeAnimal(p) {
+  return safeStr(p?.animal || p?.label || p?.bicho || "");
+}
+
+function guessPrizeGrupo(p) {
+  const g = Number.isFinite(Number(p?.grupo))
+    ? Number(p.grupo)
+    : Number.isFinite(Number(p?.group))
+    ? Number(p.group)
+    : Number.isFinite(Number(p?.grupo2))
+    ? Number(p.grupo2)
+    : Number.isFinite(Number(p?.group2))
+    ? Number(p.group2)
+    : null;
+  return g;
+}
+
+function guessPrizePos(p) {
+  const pos = Number.isFinite(Number(p?.position))
+    ? Number(p.position)
+    : Number.isFinite(Number(p?.posicao))
+    ? Number(p.posicao)
+    : Number.isFinite(Number(p?.pos))
+    ? Number(p.pos)
+    : null;
+  return pos;
+}
+
+/* =========================
+   Label robusto
+========================= */
+
+function safeGetAnimalLabel(grupo, animalFallback) {
+  const g = Number(grupo);
+  if (!Number.isFinite(g)) return safeStr(animalFallback || "");
+
+  try {
+    const a1 = getAnimalLabel({
+      grupo: g,
+      animal: safeStr(animalFallback || ""),
+    });
+    const s1 = safeStr(a1);
+    if (s1) return s1;
+  } catch {}
+
+  try {
+    const a2 = getAnimalLabel(g);
+    const s2 = safeStr(a2);
+    if (s2) return s2;
+  } catch {}
+
+  return safeStr(animalFallback || "");
+}
+
+/* =========================
+   Imagens
+========================= */
+
+function publicBase() {
+  try {
+    const viteBase =
+      typeof import.meta !== "undefined" ? import.meta.env?.BASE_URL : "";
+    const vb = String(viteBase || "").trim();
+    if (vb) return vb.endsWith("/") ? vb.slice(0, -1) : vb;
+  } catch {}
+
+  const b = String(process.env.PUBLIC_URL || "").trim();
+  return b && b !== "/" ? b : "";
+}
+
+function normalizeImgSrc(src) {
+  const s = safeStr(src);
+  if (!s) return "";
+
+  if (/^https?:\/\//i.test(s)) return s;
+
+  const base = publicBase();
+
+  if (s.startsWith("/")) return `${base}${s}`;
+  if (s.startsWith("public/")) return `${base}/${s.slice("public/".length)}`;
+  if (s.startsWith("img/")) return `${base}/${s}`;
+
+  return `${base}/${s}`;
+}
+
+function makeImgVariantsFromGrupo(grupo, size) {
+  const g = Number(grupo);
+  if (!Number.isFinite(g) || g <= 0) return [];
+
+  const s = Number(size) || 96;
+  const g2 = pad2(g);
+  const slug = safeStr(getSlugByGrupo(g));
+  if (!slug) return [];
+
+  const primary = normalizeImgSrc(getImgFromGrupo(g, s));
+
+  const base = publicBase();
+  const sizedName = `${base}/assets/animals/animais_${s}_png/${g2}_${slug}_${s}.png`;
+
+  const seeds = [primary, sizedName].filter(Boolean);
+
+  const out = [];
+  for (const seed of seeds) {
+    const clean = String(seed).split("?")[0];
+    if (!clean) continue;
+
+    out.push(clean);
+
+    if (clean.match(/\.png$/)) out.push(clean.replace(/\.png$/, ".PNG"));
+    if (clean.match(/\.PNG$/)) out.push(clean.replace(/\.PNG$/, ".png"));
+
+    out.push(clean.replace(/\.(png|PNG)$/i, ".jpg"));
+    out.push(clean.replace(/\.(png|PNG|jpg)$/i, ".jpeg"));
+  }
+
+  return Array.from(new Set(out.filter(Boolean)));
+}
+
+function RowImg({ variants, alt, fallbackText }) {
+  const [failed, setFailed] = useState(false);
+
+  if (!variants.length || failed) {
+    return <div className="pp_imgFallback">{fallbackText || "—"}</div>;
+  }
+
+  return (
+    <img
+      className="pp_img"
+      src={variants[0]}
+      alt={alt}
+      loading="lazy"
+      data-try="0"
+      onError={(e) => {
+        const imgEl = e.currentTarget;
+        const i = Number(imgEl.dataset.try || "0");
+        const next = variants[i + 1];
+
+        if (next) {
+          imgEl.dataset.try = String(i + 1);
+          imgEl.src = next;
+        } else {
+          setFailed(true);
+        }
+      }}
+    />
+  );
+}
+
+function resolveAnimalUI(prize) {
+  const grupo = guessPrizeGrupo(prize);
+  const animalRaw = guessPrizeAnimal(prize);
+
+  if (grupo) {
+    const label = safeGetAnimalLabel(grupo, animalRaw);
+    const variants = makeImgVariantsFromGrupo(grupo, 96);
+    return { grupo, label, imgVariants: variants };
+  }
+
+  const label = animalRaw ? animalRaw : "";
+  return { grupo: null, label, imgVariants: [] };
+}
+
+/* =========================
+   Dedup de draws
+========================= */
+
+function drawKeyForDedup(d, scopeKey, ymd) {
+  const hour = normalizeHourLike(
+    d?.close_hour || d?.closeHour || d?.hour || d?.hora || ""
+  );
+  if (hour) return `HOUR:${scopeKey}|${ymd}|${hour}`;
+  const id = safeStr(d?.drawId || d?.id || "");
+  return `ID:${scopeKey}|${ymd}|${id || "?"}`;
+}
+
+function countPrizes(d) {
+  return Array.isArray(d?.prizes) ? d.prizes.length : 0;
+}
+
+function pickBetterDraw(a, b) {
+  const pa = countPrizes(a);
+  const pb = countPrizes(b);
+  if (pa !== pb) return pb > pa ? b : a;
+
+  const ha = safeStr(a?.close_hour || a?.closeHour || a?.hour || a?.hora);
+  const hb = safeStr(b?.close_hour || b?.closeHour || b?.hour || b?.hora);
+  if (!!hb !== !!ha) return hb ? b : a;
+
+  return a;
+}
+
+function dedupeDraws(list, scopeKey, ymd) {
+  const arr = Array.isArray(list) ? list : [];
+  const map = new Map();
+
+  for (const d of arr) {
+    const k = drawKeyForDedup(d, scopeKey, ymd);
+    const prev = map.get(k);
+    if (!prev) map.set(k, d);
+    else map.set(k, pickBetterDraw(prev, d));
+  }
+
+  return Array.from(map.values());
+}
+
+/* =========================
+   UI helpers
+========================= */
+
+function prizeRankClass(pos) {
+  if (pos === 1) return "isP1";
+  if (pos === 2) return "isP2";
+  if (pos === 3) return "isP3";
+  return "";
+}
+
+function formatPrizeNumberByPos(value, pos) {
+  const s = safeStr(value);
+  if (!s) return "";
+
+  const digits = s.replace(/\D+/g, "");
+  if (!digits) return s;
+
+  if (pos === 7) {
+    return digits.slice(-3);
+  }
+
+  return digits.slice(-4).padStart(4, "0");
+}
+
+function prizeLabelByPos(pos) {
+  return pos === 7 ? "CENTENA" : "MILHAR";
+}
+
+function scopePillClass(active) {
+  return active ? "pp_pill isActive" : "pp_pill";
+}
+
+function stopEvt(e) {
+  e.preventDefault();
+  e.stopPropagation();
+}
+
+function stopOnly(e) {
+  e.stopPropagation();
+}
+
+function getExpectedRjHoursDesc(ymd) {
+  const d = ymdToDateLocal(ymd);
+  const dow = d instanceof Date && !Number.isNaN(d.getTime()) ? d.getDay() : -1;
+
+  const out =
+    dow === 0
+      ? ["16:00", "14:00", "11:00"]
+      : [...RJ_EXPECTED_HOURS_BASE_DESC];
+
+  if (isYMD(ymd) && ymd >= RJ_09H_START_YMD) {
+    out.push("09:00");
+  }
+
+  return out;
+}
+
+function shouldShowExpectedHour(ymd, hour) {
+  const hNum = hourToNum(hour);
+  if (hNum < 0) return true;
+
+  if (safeStr(ymd) !== todayYMDLocal()) return true;
+
+  return hNum <= currentHourNumLocal();
+}
+
+
+function normalizeNacionalDisplayHour(draw) {
+  const hour = normalizeHourLike(
+    draw?.close_hour || draw?.closeHour || draw?.hour || draw?.hora || ""
+  );
+
+  const lotteryName = safeStr(draw?.lottery_name).toUpperCase();
+
+  const m = lotteryName.match(/(\d{2})\s*HS?/);
+
+  if (m) {
+    return `${m[1]}:00`;
+  }
+
+  switch (hour) {
+    case "22:49": return "23:00";
+    case "20:49": return "21:00";
+    case "16:49": return "17:00";
+    case "14:49": return "15:00";
+    case "11:49": return "12:00";
+    case "09:49": return "10:00";
+    case "07:49": return "08:00";
+    case "01:49": return "02:00";
+
+    case "22:50": return "23:00";
+    case "19:50": return "21:00";
+    case "16:50": return "17:00";
+    case "14:50": return "15:00";
+    case "11:50": return "12:00";
+    case "09:50": return "10:00";
+    case "07:50": return "08:00";
+    case "01:50": return "02:00";
+
+    default:
+      return hour;
+  }
+}
+
+
+function buildExpectedDrawsForScope(scopeKey, orderedDraws, ymd) {
+  const list = Array.isArray(orderedDraws) ? orderedDraws : [];
+  const byHour = new Map();
+
+  for (const d of list) {
+    const h =
+      scopeKey === SCOPE_NACIONAL
+        ? normalizeNacionalDisplayHour(d)
+        : normalizeHourLike(
+            d?.close_hour || d?.closeHour || d?.hour || d?.hora || ""
+          );
+    if (!h) continue;
+    if (!byHour.has(h)) byHour.set(h, d);
+  }
+
+  if (scopeKey === SCOPE_FEDERAL) {
+    return [...list].sort((a, b) => {
+      const ha = hourToNum(
+        a?.__slotHour || a?.close_hour || a?.closeHour || a?.hour || a?.hora
+      );
+      const hb = hourToNum(
+        b?.__slotHour || b?.close_hour || b?.closeHour || b?.hour || b?.hora
+      );
+      return hb - ha;
+    });
+  }
+
+  let expectedHours = [];
+
+  if (scopeKey === SCOPE_RJ) {
+    expectedHours = getExpectedRjHoursDesc(ymd);
+  } else if (scopeKey === SCOPE_LOOK) {
+    expectedHours = LOOK_EXPECTED_HOURS_DESC;
+  } else if (scopeKey === SCOPE_NACIONAL) {
+    expectedHours = NACIONAL_EXPECTED_HOURS_DESC;
+  }
+
+  const visibleExpectedHours = expectedHours.filter((hour) =>
+    shouldShowExpectedHour(ymd, hour)
+  );
+
+  const result = visibleExpectedHours.map((hour) => {
+    const found = byHour.get(hour);
+    if (found) return found;
+
+    return {
+      __placeholder: true,
+      __slotHour: hour,
+      __placeholderKind: "compact",
+      drawId: `placeholder_${scopeKey}_${hour}`,
+      id: `placeholder_${scopeKey}_${hour}`,
+      close_hour: hour,
+      closeHour: hour,
+      prizes: [],
+    };
+  });
+
+  const extraActual = list.filter((d) => {
+    const h =
+      scopeKey === SCOPE_NACIONAL
+        ? normalizeNacionalDisplayHour(d)
+        : normalizeHourLike(
+            d?.close_hour || d?.closeHour || d?.hour || d?.hora || ""
+          );
+
+    return h && !visibleExpectedHours.includes(h);
+  });
+
+  return [...result, ...extraActual].sort((a, b) => {
+    const ha = hourToNum(
+      a?.__slotHour || a?.close_hour || a?.closeHour || a?.hour || a?.hora
+    );
+    const hb = hourToNum(
+      b?.__slotHour || b?.close_hour || b?.closeHour || b?.hour || b?.hora
+    );
+    return hb - ha;
+  });
+}
+
+function monthDaysWithDraws(draws) {
+  const out = new Set();
+  for (const d of Array.isArray(draws) ? draws : []) {
+    const y = safeStr(d?.ymd || d?.date || "");
+    if (isYMD(y)) out.add(y);
+  }
+  return out;
+}
+
+/* =========================
+   Page
+========================= */
+
+export default function Results() {
+  const DEFAULT_SCOPE = SCOPE_RJ;
+
+  const [scopeUi, setScopeUi] = useState(DEFAULT_SCOPE);
+  const [ymd, setYmd] = useState(() => todayYMDLocal());
+
+  const [showAll, setShowAll] = useState(true);
+  const [needsToggle, setNeedsToggle] = useState(false);
+
+  const [calendarOpen, setCalendarOpen] = useState(false);
+  const [calendarMonthYmd, setCalendarMonthYmd] = useState(() =>
+    startOfMonthYMD(todayYMDLocal())
+  );
+
+  const centerRef = useRef(null);
+  const calendarRef = useRef(null);
+  const previousScopeRef = useRef(DEFAULT_SCOPE);
+
+  const scopeKey = useMemo(() => normalizeScopeInput(scopeUi), [scopeUi]);
+  const isFederal = useMemo(() => isFederalInput(scopeKey), [scopeKey]);
+  const label = useMemo(() => scopeDisplayName(scopeKey), [scopeKey]);
+
+  const ymdSafe = useMemo(() => {
+    const s = safeStr(ymd);
+    return isYMD(s) ? s : todayYMDLocal();
+  }, [ymd]);
+
+  const boundsQuery = useQuery({
+    queryKey: ["results", "bounds", scopeKey],
+    queryFn: async () => {
+      const b = await getKingBoundsByUf({ uf: scopeKey });
+      return normalizeBoundsResponse(b);
+    },
+    staleTime: 30 * 60 * 1000,
+    gcTime: 2 * 60 * 60 * 1000,
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+  });
+
+  const effectiveBounds = useMemo(() => {
+    const minYmd = boundsQuery.data?.minYmd || null;
+    const maxYmd = boundsQuery.data?.maxYmd || null;
+    return { minYmd, maxYmd };
+  }, [boundsQuery.data?.minYmd, boundsQuery.data?.maxYmd]);
+
+  const ymdClamped = useMemo(() => {
+    const minYmd = effectiveBounds?.minYmd;
+    const maxYmd = effectiveBounds?.maxYmd;
+    if (!isYMD(minYmd) && !isYMD(maxYmd)) return ymdSafe;
+    return normalizeSingleDateWithBounds(ymdSafe, minYmd, maxYmd);
+  }, [ymdSafe, effectiveBounds?.minYmd, effectiveBounds?.maxYmd]);
+
+  const dateBR = useMemo(() => ymdToBR(ymdClamped), [ymdClamped]);
+
+  const calendarCells = useMemo(
+    () => buildCalendarCells(calendarMonthYmd),
+    [calendarMonthYmd]
+  );
+
+  const calendarTitle = useMemo(
+    () => monthTitleBR(calendarMonthYmd),
+    [calendarMonthYmd]
+  );
+
+  useEffect(() => {
+    const previousScope = previousScopeRef.current;
+    const changedScope = previousScope !== scopeKey;
+    previousScopeRef.current = scopeKey;
+
+    if (changedScope) {
+      setCalendarOpen(false);
+      setShowAll(true);
+    }
+
+    if (!isYMD(effectiveBounds?.minYmd) && !isYMD(effectiveBounds?.maxYmd)) return;
+
+    if (changedScope && isFederal && isYMD(effectiveBounds?.maxYmd)) {
+      if (ymd !== effectiveBounds.maxYmd) {
+        setYmd(effectiveBounds.maxYmd);
+      }
+      return;
+    }
+
+    const normalized = normalizeSingleDateWithBounds(
+      ymdSafe,
+      effectiveBounds?.minYmd,
+      effectiveBounds?.maxYmd
+    );
+
+    if (normalized && normalized !== ymd) {
+      setYmd(normalized);
+    }
+  }, [
+    scopeKey,
+    isFederal,
+    effectiveBounds?.minYmd,
+    effectiveBounds?.maxYmd,
+    ymd,
+    ymdSafe,
+  ]);
+
+  useEffect(() => {
+    setCalendarMonthYmd(startOfMonthYMD(ymdClamped));
+  }, [ymdClamped]);
+
+  const calendarMarksQuery = useQuery({
+    queryKey: ["results", "calendar-marks", scopeKey, calendarMonthYmd],
+    enabled:
+      isYMD(startOfMonthYMD(calendarMonthYmd)) &&
+      isYMD(endOfMonthYMD(calendarMonthYmd)),
+    queryFn: async () => {
+      const from = startOfMonthYMD(calendarMonthYmd);
+      const to = endOfMonthYMD(calendarMonthYmd);
+
+      const out = await getKingResultsByRange({
+        uf: scopeKey,
+        dateFrom: from,
+        dateTo: to,
+        positions: [1, 2, 3, 4, 5, 6, 7],
+        mode: "aggregated",
+      });
+
+      return Array.from(monthDaysWithDraws(out)).sort();
+    },
+    staleTime: 30 * 60 * 1000,
+    gcTime: 2 * 60 * 60 * 1000,
+    placeholderData: (prev) => prev ?? [],
+    refetchOnMount: false,
+    refetchOnWindowFocus: false,
+    refetchOnReconnect: false,
+  });
+
+  const dayResultsQuery = useQuery({
+    queryKey: ["results", "day", scopeKey, ymdClamped],
+    enabled: !!safeStr(scopeKey) && isYMD(ymdClamped),
+    queryFn: async () => {
+      const sKey = safeStr(scopeKey);
+      const d = safeStr(ymdClamped);
+
+      const out = await getKingResultsByDate({
+        uf: sKey,
+        date: d,
+        closeHour: null,
+        closeHourBucket: null,
+        positions: [1, 2, 3, 4, 5, 6, 7],
+      });
+
+      const list = unwrapDraws(out);
+      const deduped = dedupeDraws(list, sKey, d);
+
+      console.log("[RESULTS_DEBUG]", {
+        scope: sKey,
+        date: d,
+        rawLen: Array.isArray(out) ? out.length : null,
+        listLen: Array.isArray(list) ? list.length : null,
+        dedupedLen: Array.isArray(deduped) ? deduped.length : null,
+        hours: deduped.map((x) => ({
+          id: x?.drawId || x?.id || null,
+          hour: x?.close_hour || x?.closeHour || x?.hour || x?.hora || null,
+          ymd: x?.ymd || x?.date || null,
+          prizesLen: Array.isArray(x?.prizes) ? x.prizes.length : null,
+          prizesCount: x?.prizesCount ?? null,
+          placeholder: !!x?.__placeholder,
+        })),
+      });
+
+      return deduped;
+    },
+    staleTime: ymdClamped === todayYMDLocal() ? 30 * 1000 : 10 * 60 * 1000,
+    gcTime: 2 * 60 * 60 * 1000,
+    placeholderData: (prev) => prev ?? [],
+
+    // Resultados do dia atual podem entrar depois que a tela já foi aberta.
+    // Faz nova leitura periódica somente para hoje, sem gerar consultas
+    // desnecessárias ao navegar por datas históricas.
+    refetchInterval:
+      ymdClamped === todayYMDLocal()
+        ? 60 * 1000
+        : false,
+    refetchIntervalInBackground: false,
+
+    // Ao retornar para a tela ou recuperar a conexão, busca o estado real.
+    refetchOnMount: true,
+    refetchOnWindowFocus: true,
+    refetchOnReconnect: true,
+  });
+
+  const loading = dayResultsQuery.isLoading && !Array.isArray(dayResultsQuery.data);
+
+  const error = safeStr(
+    dayResultsQuery.error?.message ||
+      boundsQuery.error?.message ||
+      calendarMarksQuery.error?.message ||
+      ""
+  );
+
+  const draws = useMemo(() => {
+    return Array.isArray(dayResultsQuery.data) ? dayResultsQuery.data : [];
+  }, [dayResultsQuery.data]);
+
+  const calendarMarkedYmds = useMemo(() => {
+    return Array.isArray(calendarMarksQuery.data) ? calendarMarksQuery.data : [];
+  }, [calendarMarksQuery.data]);
+
+  const calendarMarkedSet = useMemo(
+    () => new Set(calendarMarkedYmds),
+    [calendarMarkedYmds]
+  );
+
+  const calendarLoading =
+    calendarMarksQuery.isFetching && !Array.isArray(calendarMarksQuery.data);
+
+  useEffect(() => {
+    function onDocPointerDown(e) {
+      if (!calendarOpen) return;
+      if (calendarRef.current && !calendarRef.current.contains(e.target)) {
+        setCalendarOpen(false);
+      }
+    }
+
+    function onDocKeyDown(e) {
+      if (e.key === "Escape") {
+        setCalendarOpen(false);
+      }
+    }
+
+    document.addEventListener("mousedown", onDocPointerDown);
+    document.addEventListener("keydown", onDocKeyDown);
+
+    return () => {
+      document.removeEventListener("mousedown", onDocPointerDown);
+      document.removeEventListener("keydown", onDocKeyDown);
+    };
+  }, [calendarOpen]);
+
+  useEffect(() => {
+    setShowAll(true);
+  }, [scopeKey, ymdClamped]);
+
+  const drawsOrdered = useMemo(() => {
+    const list = Array.isArray(draws) ? draws : [];
+    return [...list].sort((a, b) => {
+      const ha = hourToNum(a?.close_hour || a?.closeHour || a?.hour || a?.hora);
+      const hb = hourToNum(b?.close_hour || b?.closeHour || b?.hour || b?.hora);
+      if (ha !== hb) return hb - ha;
+
+      const la = safeStr(a?.lottery_code || a?.lotteryCode || "");
+      const lb = safeStr(b?.lottery_code || b?.lotteryCode || "");
+      if (la !== lb) return lb.localeCompare(la);
+
+      const ia = safeStr(a?.drawId || a?.id || "");
+      const ib = safeStr(b?.drawId || b?.id || "");
+      return ib.localeCompare(ia);
+    });
+  }, [draws]);
+
+  const drawsDisplayBase = useMemo(() => {
+    return buildExpectedDrawsForScope(scopeKey, drawsOrdered, ymdClamped);
+  }, [scopeKey, drawsOrdered, ymdClamped]);
+
+  useEffect(() => {
+    setNeedsToggle(drawsDisplayBase.length > 6);
+  }, [drawsDisplayBase.length]);
+
+  const drawsForView = useMemo(() => {
+    if (!drawsDisplayBase.length) return [];
+    if (!needsToggle) return drawsDisplayBase;
+    if (showAll) return drawsDisplayBase;
+    return drawsDisplayBase.slice(0, 6);
+  }, [drawsDisplayBase, needsToggle, showAll]);
+
+  const canGoPrevMonth = useMemo(() => {
+    if (!isYMD(effectiveBounds?.minYmd)) return true;
+    return (
+      shiftMonthYMD(calendarMonthYmd, -1) >=
+      startOfMonthYMD(effectiveBounds.minYmd)
+    );
+  }, [calendarMonthYmd, effectiveBounds?.minYmd]);
+
+  const canGoNextMonth = useMemo(() => {
+    if (!isYMD(effectiveBounds?.maxYmd)) return true;
+    return (
+      shiftMonthYMD(calendarMonthYmd, 1) <=
+      startOfMonthYMD(effectiveBounds.maxYmd)
+    );
+  }, [calendarMonthYmd, effectiveBounds?.maxYmd]);
+
+  function handleSelectYmd(nextYmd) {
+    if (!isYMD(nextYmd)) return;
+    const bounded = normalizeSingleDateWithBounds(
+      nextYmd,
+      effectiveBounds?.minYmd,
+      effectiveBounds?.maxYmd
+    );
+    setYmd(bounded);
+    setCalendarOpen(false);
+  }
+
+  async function handleRefresh(e) {
+    stopEvt(e);
+    await Promise.allSettled([
+      boundsQuery.refetch(),
+      calendarMarksQuery.refetch(),
+      dayResultsQuery.refetch(),
+    ]);
+  }
+
+  const styles = useMemo(() => {
+    return `
+      :root{
+        --pp-border: rgba(255,255,255,0.10);
+        --pp-gold: rgba(201,168,62,0.92);
+        --pp-text: rgba(255,255,255,0.92);
+      }
+
+      .pp_wrap{
+        height: 100dvh;
+        min-height: 100vh;
+        padding: 14px;
+        overflow: hidden;
+        min-width: 0;
+        box-sizing: border-box;
+      }
+
+      .pp_shell{
+        height: calc(100dvh - 28px);
+        border: 1px solid var(--pp-border);
+        border-radius: 18px;
+        background:
+          radial-gradient(1000px 520px at 10% 0%, rgba(201,168,62,0.10), transparent 60%),
+          radial-gradient(900px 500px at 90% 10%, rgba(201,168,62,0.08), transparent 62%),
+          rgba(0,0,0,0.40);
+        box-shadow: 0 16px 48px rgba(0,0,0,0.55);
+        padding: 10px;
+        display: grid;
+        grid-template-rows: auto 1fr;
+        gap: 10px;
+        overflow: hidden;
+        min-width: 0;
+      }
+
+      .pp_header{
+        display:flex;
+        align-items:flex-start;
+        justify-content:space-between;
+        gap:12px;
+        min-width:0;
+      }
+
+      .pp_title{
+        font-size:16px;
+        font-weight:1100;
+        letter-spacing:0.35px;
+        color: var(--pp-text);
+        line-height:1.1;
+      }
+
+      .pp_gold{ color: var(--pp-gold); }
+
+      .pp_controls{
+        display:flex;
+        align-items:flex-start;
+        gap:8px;
+        flex-wrap:wrap;
+        justify-content:flex-end;
+        position: relative;
+      }
+
+      .pp_btn{
+        height:34px;
+        border-radius: 12px;
+        border: 1px solid rgba(255,255,255,0.10);
+        background: rgba(255,255,255,0.06);
+        color: var(--pp-text);
+        font-weight: 1100;
+        letter-spacing:0.2px;
+        padding: 0 14px;
+        cursor:pointer;
+        white-space:nowrap;
+        font-size: 12px;
+        box-sizing: border-box;
+      }
+      .pp_btn:hover{ background: rgba(255,255,255,0.08); }
+      .pp_btn:disabled{
+        opacity: 0.55;
+        cursor: not-allowed;
+      }
+
+      .pp_pills{
+        display:flex;
+        gap: 6px;
+        align-items:center;
+        flex-wrap: wrap;
+      }
+
+      .pp_pill{
+        height: 34px;
+        border-radius: 999px;
+        border: 1px solid rgba(255,255,255,0.10);
+        background: rgba(255,255,255,0.06);
+        color: rgba(255,255,255,0.90);
+        padding: 0 12px;
+        font-weight: 1200;
+        letter-spacing: 0.35px;
+        cursor: pointer;
+        font-size: 12px;
+        user-select: none;
+      }
+      .pp_pill:hover{ background: rgba(255,255,255,0.08); }
+
+      .pp_pill.isActive{
+        border-color: rgba(201,168,62,0.36);
+        background: rgba(201,168,62,0.12);
+        color: rgba(201,168,62,0.98);
+      }
+
+      .pp_body{
+        min-width:0;
+        min-height:0;
+        overflow: auto;
+        padding-right: 2px;
+        display: flex;
+        justify-content: center;
+        align-items: stretch;
+      }
+
+      .pp_center{
+        width: 100%;
+        max-width: 980px;
+        height: 100%;
+        display: grid;
+        grid-template-rows: auto auto 1fr;
+        gap: 10px;
+        min-height: 0;
+        min-width: 0;
+      }
+
+      .pp_state{
+        border: 1px solid rgba(255,255,255,0.10);
+        border-radius: 16px;
+        background: rgba(0,0,0,0.26);
+        padding: 12px 14px;
+        font-weight: 850;
+        color: rgba(255,255,255,0.92);
+      }
+
+      .pp_topbar{
+        display:flex;
+        align-items:center;
+        justify-content:flex-end;
+        gap: 10px;
+        min-width:0;
+      }
+
+      .pp_grid2{
+        display:grid;
+        grid-template-columns: repeat(2, minmax(0, 460px));
+        justify-content: center;
+        gap: 12px;
+        min-width:0;
+        align-content: start;
+        padding-bottom: 14px;
+      }
+
+      .pp_card{
+        position: relative;
+        border-radius: 18px;
+        overflow: hidden;
+        border: 1px solid rgba(255,255,255,0.12);
+        background: rgba(10,10,10,0.34);
+        box-shadow: 0 14px 34px rgba(0,0,0,0.48);
+      }
+
+      .pp_card::before{
+        content:"";
+        position:absolute;
+        inset:0;
+        pointer-events:none;
+        background:
+          linear-gradient(180deg, rgba(201,168,62,0.20), transparent 38%),
+          radial-gradient(800px 380px at 15% 0%, rgba(201,168,62,0.16), transparent 62%),
+          radial-gradient(700px 360px at 85% 10%, rgba(201,168,62,0.10), transparent 64%);
+      }
+
+      .pp_card::after{
+        content:"";
+        position:absolute;
+        inset:0;
+        pointer-events:none;
+        background:
+          linear-gradient(180deg, rgba(0,0,0,0.32) 0%, rgba(0,0,0,0.55) 55%, rgba(0,0,0,0.74) 100%);
+      }
+
+      .pp_cardInner{ position: relative; z-index: 1; }
+
+      .pp_cardHead{
+        padding: 10px 12px;
+        border-bottom: 1px solid rgba(255,255,255,0.10);
+        display:flex;
+        align-items:center;
+        justify-content:space-between;
+        gap: 10px;
+      }
+
+      .pp_headLeft{
+        display:flex;
+        flex-direction:column;
+        gap: 2px;
+        min-width:0;
+      }
+
+      .pp_headTitle{
+        font-weight: 1100;
+        letter-spacing: 0.55px;
+        color: rgba(255,255,255,0.92);
+        text-transform: uppercase;
+        font-size: 11px;
+        white-space: nowrap;
+        overflow:hidden;
+        text-overflow: ellipsis;
+      }
+
+      .pp_headSub{
+        font-weight: 900;
+        color: rgba(255,255,255,0.62);
+        font-size: 11px;
+      }
+
+      .pp_headPill{
+        border: 1px solid rgba(201,168,62,0.32);
+        background: rgba(201,168,62,0.12);
+        color: rgba(201,168,62,0.96);
+        font-weight: 1100;
+        letter-spacing: 0.3px;
+        font-size: 12px;
+        padding: 6px 10px;
+        border-radius: 999px;
+        white-space: nowrap;
+      }
+
+      .pp_rows{ display:grid; }
+
+      .pp_row{
+        display:grid;
+        grid-template-columns: 58px 1fr 110px;
+        gap: 10px;
+        align-items:center;
+        padding: 10px 12px;
+        border-bottom: 1px solid rgba(255,255,255,0.08);
+        min-width: 0;
+      }
+      .pp_row:last-child{ border-bottom:0; }
+
+      .pp_posBadge{
+        width: 46px;
+        height: 34px;
+        border-radius: 12px;
+        border: 1px solid rgba(255,255,255,0.12);
+        background: rgba(255,255,255,0.06);
+        display:flex;
+        align-items:center;
+        justify-content:center;
+        font-weight: 1200;
+        letter-spacing: 0.4px;
+        color: rgba(255,255,255,0.90);
+        font-size: 12px;
+        user-select: none;
+      }
+
+      .pp_posBadge.isP1,
+      .pp_posBadge.isP2,
+      .pp_posBadge.isP3{
+        border-color: rgba(201,168,62,0.36);
+        background: rgba(201,168,62,0.12);
+        color: rgba(201,168,62,0.98);
+      }
+
+      .pp_mid{
+        display:flex;
+        align-items:center;
+        gap: 10px;
+        min-width: 0;
+      }
+
+      .pp_imgFrame{
+        width: 42px;
+        height: 42px;
+        border-radius: 14px;
+        border: 1px solid rgba(201,168,62,0.26);
+        background: rgba(0,0,0,0.22);
+        display:grid;
+        place-items:center;
+        overflow:hidden;
+        flex: 0 0 auto;
+      }
+
+      .pp_img{
+        width: 32px;
+        height: 32px;
+        object-fit: contain;
+        display:block;
+      }
+
+      .pp_imgFallback{
+        font-size: 10px;
+        font-weight: 1200;
+        color: rgba(201,168,62,0.88);
+        letter-spacing: 0.3px;
+        line-height: 1;
+      }
+
+      .pp_textBlock{
+        min-width: 0;
+        display:flex;
+        flex-direction:column;
+        gap: 2px;
+      }
+
+      .pp_group{
+        color: rgba(255,255,255,0.65);
+        font-weight: 950;
+        text-transform: uppercase;
+        white-space: nowrap;
+        font-size: 11px;
+        overflow:hidden;
+        text-overflow:ellipsis;
+      }
+
+      .pp_animal{
+        color: rgba(255,255,255,0.94);
+        font-weight: 1200;
+        text-transform: uppercase;
+        white-space: nowrap;
+        overflow: hidden;
+        text-overflow: ellipsis;
+        font-size: 13px;
+        letter-spacing: 0.35px;
+      }
+
+      .pp_num{
+        display:flex;
+        align-items:center;
+        justify-content:flex-end;
+        gap: 8px;
+        white-space: nowrap;
+        min-width: 0;
+        font-variant-numeric: tabular-nums;
+      }
+
+      .pp_numValue{
+        font-weight: 1300;
+        font-size: 18px;
+        letter-spacing: 1px;
+        color: rgba(255,255,255,0.95);
+      }
+
+      .pp_numHint{
+        color: rgba(201,168,62,0.92);
+        font-weight: 1100;
+        font-size: 11px;
+        letter-spacing: 0.25px;
+        border: 1px solid rgba(201,168,62,0.28);
+        background: rgba(201,168,62,0.10);
+        padding: 4px 8px;
+        border-radius: 999px;
+      }
+
+      .pp_row:hover{ background: rgba(255,255,255,0.03); }
+
+      .pp_dateWrap{
+        position: relative;
+        min-width: 170px;
+      }
+
+      .pp_dateBtn{
+        min-width: 170px;
+        display: inline-flex;
+        align-items: center;
+        justify-content: center;
+        gap: 8px;
+      }
+
+      .pp_calendarPop{
+        position:absolute;
+        top: calc(100% + 8px);
+        right: 0;
+        z-index: 50;
+        width: 290px;
+        border-radius: 18px;
+        border: 1px solid rgba(255,255,255,0.12);
+        background:
+          linear-gradient(180deg, rgba(201,168,62,0.12), transparent 24%),
+          rgba(8,8,8,0.96);
+        box-shadow: 0 18px 48px rgba(0,0,0,0.55);
+        padding: 12px;
+        backdrop-filter: blur(10px);
+      }
+
+      .pp_calHead{
+        display:flex;
+        align-items:center;
+        justify-content:space-between;
+        gap:8px;
+        margin-bottom: 10px;
+      }
+
+      .pp_calTitle{
+        color: rgba(255,255,255,0.94);
+        font-weight: 1100;
+        letter-spacing: 0.2px;
+        text-transform: capitalize;
+        font-size: 14px;
+      }
+
+      .pp_calNav{
+        width: 30px;
+        height: 30px;
+        border-radius: 10px;
+        border: 1px solid rgba(255,255,255,0.10);
+        background: rgba(255,255,255,0.05);
+        color: rgba(255,255,255,0.92);
+        cursor: pointer;
+        font-size: 16px;
+      }
+
+      .pp_calNav:disabled{
+        opacity: 0.28;
+        cursor: not-allowed;
+      }
+
+      .pp_calWeek{
+        display:grid;
+        grid-template-columns: repeat(7, 1fr);
+        gap: 6px;
+        margin-bottom: 6px;
+      }
+
+      .pp_calWeekItem{
+        text-align:center;
+        color: rgba(255,255,255,0.55);
+        font-size: 11px;
+        font-weight: 1100;
+        padding: 4px 0;
+      }
+
+      .pp_calGrid{
+        display:grid;
+        grid-template-columns: repeat(7, 1fr);
+        gap: 6px;
+      }
+
+      .pp_calDay{
+        height: 34px;
+        border-radius: 10px;
+        border: 1px solid rgba(255,255,255,0.08);
+        background: rgba(255,255,255,0.03);
+        color: rgba(255,255,255,0.88);
+        cursor: pointer;
+        font-weight: 1000;
+        font-size: 12px;
+        position: relative;
+      }
+
+      .pp_calDay:hover{
+        background: rgba(255,255,255,0.08);
+      }
+
+      .pp_calDay.isMuted{
+        color: rgba(255,255,255,0.34);
+      }
+
+      .pp_calDay.isDisabled{
+        opacity: 0.24;
+        cursor: not-allowed;
+      }
+
+      .pp_calDay.isMarked{
+        border-color: rgba(201,168,62,0.34);
+        background: rgba(201,168,62,0.10);
+        color: rgba(255,244,207,0.98);
+      }
+
+      .pp_calDay.isSelected{
+        border-color: rgba(201,168,62,0.70);
+        background: rgba(201,168,62,0.24);
+        box-shadow: inset 0 0 0 1px rgba(201,168,62,0.18);
+      }
+
+      .pp_calDay.isToday{
+        outline: 1px solid rgba(255,255,255,0.26);
+        outline-offset: -1px;
+      }
+
+      .pp_calDay.isLastDraw{
+        box-shadow:
+          inset 0 0 0 1px rgba(255,215,120,0.24),
+          0 0 0 1px rgba(201,168,62,0.14);
+      }
+
+      .pp_calDot{
+        position:absolute;
+        left:50%;
+        bottom:4px;
+        transform:translateX(-50%);
+        width: 6px;
+        height: 6px;
+        border-radius: 999px;
+        background: rgba(201,168,62,0.96);
+      }
+
+      .pp_calFoot{
+        display:flex;
+        align-items:center;
+        justify-content:space-between;
+        gap:10px;
+        margin-top: 10px;
+        padding-top: 10px;
+        border-top: 1px solid rgba(255,255,255,0.08);
+      }
+
+      .pp_calLegend{
+        color: rgba(255,255,255,0.64);
+        font-size: 11px;
+        font-weight: 900;
+      }
+
+      .pp_calLegend strong{
+        color: rgba(255,244,207,0.98);
+        font-weight: 1100;
+      }
+
+      .pp_calMini{
+        color: rgba(255,255,255,0.52);
+        font-size: 11px;
+        font-weight: 900;
+      }
+
+      @media (max-width: 980px){
+        .pp_grid2{ grid-template-columns: 1fr; }
+      }
+
+      @media (max-width: 620px){
+        .pp_header{ flex-direction: column; align-items: stretch; }
+        .pp_controls{ justify-content:flex-start; }
+        .pp_btn, .pp_dateWrap{ width:100%; min-width:0; }
+        .pp_dateBtn{ width: 100%; }
+        .pp_calendarPop{
+          width: min(100vw - 64px, 320px);
+          right: auto;
+          left: 0;
+        }
+        .pp_topbar{
+          flex-direction: column;
+          align-items: stretch;
+        }
+        .pp_row{ grid-template-columns: 56px 1fr 104px; padding: 10px 10px; }
+        .pp_numValue{ font-size: 17px; }
+      }
+    `;
+  }, []);
+
+  return (
+    <div className="pp_wrap">
+      <style>{styles}</style>
+
+      <div className="pp_shell">
+        <div className="pp_header">
+          <div style={{ minWidth: 0 }}>
+            <div className="pp_title">Resultados</div>
+          </div>
+
+          <div
+            className="pp_controls"
+            onClick={stopOnly}
+            onMouseDown={stopOnly}
+            onTouchStart={stopOnly}
+          >
+            <div className="pp_pills" aria-label="Escopo">
+              <button
+                type="button"
+                className={scopePillClass(scopeKey === SCOPE_RJ)}
+                onClick={(e) => {
+                  stopEvt(e);
+                  setScopeUi(SCOPE_RJ);
+                }}
+                title="Resultados do Rio de Janeiro"
+              >
+                RJ
+              </button>
+
+              <button
+                type="button"
+                className={scopePillClass(scopeKey === SCOPE_FEDERAL)}
+                onClick={(e) => {
+                  stopEvt(e);
+                  setScopeUi(SCOPE_FEDERAL);
+                }}
+                title="Resultados da Federal"
+              >
+                FEDERAL
+              </button>
+
+              <button
+                type="button"
+                className={scopePillClass(scopeKey === SCOPE_LOOK)}
+                onClick={(e) => {
+                  stopEvt(e);
+                  setScopeUi(SCOPE_LOOK);
+                }}
+                title="Resultados da LOOK"
+              >
+                LOOK
+              </button>
+
+              <button
+                type="button"
+                className={scopePillClass(scopeKey === SCOPE_NACIONAL)}
+                onClick={(e) => {
+                  stopEvt(e);
+                  setScopeUi(SCOPE_NACIONAL);
+                }}
+                title="Resultados da Nacional"
+              >
+                NACIONAL
+              </button>
+            </div>
+
+            <div className="pp_dateWrap" ref={calendarRef}>
+              <button
+                type="button"
+                className="pp_btn pp_dateBtn"
+                title="Calendário"
+                aria-label={`Selecionar data. Atual: ${dateBR}`}
+                onClick={(e) => {
+                  stopEvt(e);
+                  setCalendarOpen((v) => !v);
+                }}
+              >
+                <span aria-hidden="true">📅</span>
+                <span>{dateBR}</span>
+              </button>
+
+              {calendarOpen ? (
+                <div
+                  className="pp_calendarPop"
+                  onClick={stopOnly}
+                  onMouseDown={stopOnly}
+                >
+                  <div className="pp_calHead">
+                    <button
+                      type="button"
+                      className="pp_calNav"
+                      disabled={!canGoPrevMonth}
+                      onClick={(e) => {
+                        stopEvt(e);
+                        if (canGoPrevMonth) {
+                          setCalendarMonthYmd((v) => shiftMonthYMD(v, -1));
+                        }
+                      }}
+                      aria-label="Mês anterior"
+                    >
+                      ‹
+                    </button>
+
+                    <div className="pp_calTitle">{calendarTitle}</div>
+
+                    <button
+                      type="button"
+                      className="pp_calNav"
+                      disabled={!canGoNextMonth}
+                      onClick={(e) => {
+                        stopEvt(e);
+                        if (canGoNextMonth) {
+                          setCalendarMonthYmd((v) => shiftMonthYMD(v, 1));
+                        }
+                      }}
+                      aria-label="Próximo mês"
+                    >
+                      ›
+                    </button>
+                  </div>
+
+                  <div className="pp_calWeek">
+                    {["D", "S", "T", "Q", "Q", "S", "S"].map((w, idx) => (
+                      <div key={`${w}_${idx}`} className="pp_calWeekItem">
+                        {w}
+                      </div>
+                    ))}
+                  </div>
+
+                  <div className="pp_calGrid">
+                    {calendarCells.map((cell) => {
+                      const disabled =
+                        (isYMD(effectiveBounds?.minYmd) &&
+                          cell.ymd < effectiveBounds.minYmd) ||
+                        (isYMD(effectiveBounds?.maxYmd) &&
+                          cell.ymd > effectiveBounds.maxYmd);
+
+                      const isMarked = calendarMarkedSet.has(cell.ymd);
+                      const isSelected = cell.ymd === ymdClamped;
+                      const isToday = cell.ymd === todayYMDLocal();
+                      const isLastDraw =
+                        isFederal && cell.ymd === effectiveBounds?.maxYmd;
+
+                      const cls = [
+                        "pp_calDay",
+                        !cell.inMonth ? "isMuted" : "",
+                        disabled ? "isDisabled" : "",
+                        isMarked ? "isMarked" : "",
+                        isSelected ? "isSelected" : "",
+                        isToday ? "isToday" : "",
+                        isLastDraw ? "isLastDraw" : "",
+                      ]
+                        .filter(Boolean)
+                        .join(" ");
+
+                      return (
+                        <button
+                          key={cell.ymd}
+                          type="button"
+                          className={cls}
+                          disabled={disabled}
+                          onClick={(e) => {
+                            stopEvt(e);
+                            if (!disabled) handleSelectYmd(cell.ymd);
+                          }}
+                          title={ymdToBR(cell.ymd)}
+                        >
+                          {cell.day}
+                          {isMarked ? (
+                            <span className="pp_calDot" aria-hidden="true" />
+                          ) : null}
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  <div className="pp_calFoot">
+                    <div className="pp_calLegend">
+                      <strong>•</strong> dia com sorteio
+                    </div>
+                    <div className="pp_calMini">
+                      {calendarLoading
+                        ? "Lendo mês…"
+                        : isFederal && isYMD(effectiveBounds?.maxYmd)
+                        ? `Último: ${ymdToBR(effectiveBounds.maxYmd)}`
+                        : ""}
+                    </div>
+                  </div>
+                </div>
+              ) : null}
+            </div>
+
+            <button
+              className="pp_btn"
+              onClick={handleRefresh}
+              type="button"
+              title="Atualizar"
+              disabled={
+                boundsQuery.isFetching ||
+                calendarMarksQuery.isFetching ||
+                dayResultsQuery.isFetching
+              }
+            >
+              {boundsQuery.isFetching ||
+              calendarMarksQuery.isFetching ||
+              dayResultsQuery.isFetching
+                ? "Atualizando..."
+                : "Atualizar"}
+            </button>
+          </div>
+        </div>
+
+        <div className="pp_body">
+          <div className="pp_center" ref={centerRef}>
+            {loading ? (
+              <div className="pp_state">Carregando…</div>
+            ) : error ? (
+              <div className="pp_state">
+                <div style={{ fontWeight: 1100, marginBottom: 6 }}>Erro</div>
+                <div style={{ opacity: 0.9, whiteSpace: "pre-wrap" }}>{error}</div>
+              </div>
+            ) : drawsDisplayBase.length === 0 ? (
+              <div className="pp_state">
+                Nenhum resultado para{" "}
+                <span className="pp_gold">{label || DEFAULT_SCOPE}</span> em{" "}
+                <span className="pp_gold">{dateBR}</span>
+              </div>
+            ) : (
+              <>
+                <div className="pp_topbar">
+                  {needsToggle ? (
+                    <button
+                      className="pp_btn"
+                      type="button"
+                      onClick={(e) => {
+                        stopEvt(e);
+                        setShowAll((v) => !v);
+                      }}
+                      title={showAll ? "Ver menos" : "Ver mais"}
+                    >
+                      {showAll ? "Ver menos" : "Ver mais"}
+                    </button>
+                  ) : null}
+                </div>
+
+                <div className="pp_grid2">
+                  {drawsForView.map((d, idx) => {
+                    const hour = normalizeHourLike(
+                      d?.close_hour || d?.closeHour || d?.hour || d?.hora || ""
+                    );
+                    const id = safeStr(d?.drawId || d?.id || `idx_${idx}`);
+                    const prizesRaw = Array.isArray(d?.prizes) ? d.prizes : [];
+                    const displayHour =
+  scopeKey === SCOPE_NACIONAL
+    ? normalizeNacionalDisplayHour(d)
+    : hour;
+
+const hs = displayHour
+  ? `${displayHour.slice(0,2)}HS`
+  : "—";
+
+                    const byPos = new Map();
+                    for (const p of prizesRaw) {
+                      const pos = guessPrizePos(p);
+                      if (!pos) continue;
+                      if (!byPos.has(pos)) byPos.set(pos, p);
+                    }
+
+                    const rows = Array.from({ length: 7 }, (_, i) => {
+                      const posWanted = i + 1;
+                      const p = byPos.get(posWanted) || null;
+
+                      const { grupo, label: animalLabelRaw, imgVariants } = p
+                        ? resolveAnimalUI(p)
+                        : { grupo: null, label: "", imgVariants: [] };
+
+                      const numero = p ? guessPrizeNumber(p) : "";
+
+                      return {
+                        pos: posWanted,
+                        grupo,
+                        animalLabel: safeStr(animalLabelRaw),
+                        imgVariants,
+                        numero,
+                      };
+                    });
+
+                    return (
+                      <div key={`${id}_${idx}`} className="pp_card">
+                        <div className="pp_cardInner">
+                          <div className="pp_cardHead">
+                            <div className="pp_headLeft">
+                              <div className="pp_headTitle">{`Resultado • ${label}`}</div>
+                              <div className="pp_headSub">{dateBR}</div>
+                            </div>
+
+                            <div className="pp_headPill">{hs}</div>
+                          </div>
+
+                          <div className="pp_rows">
+                            {rows.map((r) => {
+                              const gtxt = r.grupo ? `G${pad2(r.grupo)}` : "—";
+                              const numFmt = r.numero
+                                ? formatPrizeNumberByPos(r.numero, r.pos)
+                                : "";
+
+                              return (
+                                <div key={`${id}_pos_${r.pos}`} className="pp_row">
+                                  <div className={`pp_posBadge ${prizeRankClass(r.pos)}`}>
+                                    {`${r.pos}º`}
+                                  </div>
+
+                                  <div className="pp_mid">
+                                    <div className="pp_imgFrame" aria-hidden="true">
+                                      <RowImg
+                                        variants={r.imgVariants || []}
+                                        alt={
+                                          r.animalLabel
+                                            ? `Bicho ${r.animalLabel}`
+                                            : "Bicho"
+                                        }
+                                        fallbackText={gtxt}
+                                      />
+                                    </div>
+
+                                    <div className="pp_textBlock">
+                                      <div className="pp_group">
+                                        {r.grupo ? `GRUPO ${pad2(r.grupo)}` : "GRUPO —"}
+                                      </div>
+                                      <div className="pp_animal">
+                                        {r.animalLabel
+                                          ? r.animalLabel.toUpperCase()
+                                          : "—"}
+                                      </div>
+                                    </div>
+                                  </div>
+
+                                  <div className="pp_num">
+                                    {r.numero ? (
+                                      <>
+                                        <span className="pp_numHint">
+                                          {prizeLabelByPos(r.pos)}
+                                        </span>
+                                        <span className="pp_numValue">{numFmt}</span>
+                                      </>
+                                    ) : (
+                                      <span
+                                        className="pp_numValue"
+                                        style={{ opacity: 0.55 }}
+                                      >
+                                        —
+                                      </span>
+                                    )}
+                                  </div>
+                                </div>
+                              );
+                            })}
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              </>
+            )}
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+
+
+
+####################################################################################################
+ARQUIVO COMPLETO: C:\Users\glaub\palpitaco\src\services\kingResultsService.js
+####################################################################################################
+import { apiUrl } from "../config/apiBase";
+// src/services/kingResultsService.js
+import {
+  collection,
+  query,
+  where,
+  orderBy,
+  limit,
+  limitToLast,
+  documentId,
+} from "firebase/firestore";
+import { db } from "./firebase";
+
+import { safeGetDocsSmart } from "./king/king.firestore";
+
+import { cacheGet, cacheSet } from "./king/king.cache";
+
+import {
+  normalizePositions,
+  isValidGrupo,
+  isValidPosition,
+  toPrizeDigitsByPosition,
+  normalizePrize,
+  sortPrizesByPosition,
+  filterPrizesByPositions,
+  normalizeEmbeddedPrizesForAggregated,
+} from "./king/king.normalize";
+
+import {
+  pad2,
+  isYMD,
+  ymdToBR,
+  normalizeToYMD,
+  utcTodayYmd,
+  addDaysUTC,
+  addDaysUTCLocal,
+  daysBetweenInclusiveUTC,
+  daysDiffUTC,
+  shouldForceFreshServerRead,
+} from "./king/king.date";
+
+/* =========================
+   PERF: caches (memória)
+========================= */
+
+const PRIZES_CACHE = new Map(); // key -> { ts, data: prizesAllSorted }
+const DRAWS_CACHE = new Map(); // key -> { ts, data: mappedDrawDocs[] }
+
+// ✅ cache específico para ATRASADOS (Late)
+const LATE_CACHE = new Map(); // key -> { ts, data: lateRows[] }
+
+// ✅ corte seguro (modo auto) — acima disso, tende a ser "agregado" (sem prizes)
+export const AGGREGATED_AUTO_DAYS = Number.POSITIVE_INFINITY;
+
+/* =========================
+   Constantes / helpers base
+========================= */
+
+const DEFAULT_READ_POLICY = "cache";
+
+const RJ_STATE_CODE = "RJ";
+const RJ_LOTTERY_KEY = "PT_RIO";
+
+export const FEDERAL_SCOPE_CODE = "FEDERAL";
+export const FEDERAL_19H_TO_20H_CHANGE_YMD = "2025-11-03";
+
+const FEDERAL_LOTTERY_KEYS = [
+  "FEDERAL",
+  "LOTERIA_FEDERAL",
+  "LT_FEDERAL",
+  "FED",
+];
+
+const FEDERAL_INPUT_ALIASES = new Set([
+  "FEDERAL",
+  "LOTERIA FEDERAL",
+  "LOTERIA_FEDERAL",
+  "LT FEDERAL",
+  "LT_FEDERAL",
+  "FED",
+]);
+
+export const FEDERAL_DRAW_DOW = ["WEDNESDAY", "SATURDAY"]; // referência (UI)
+
+function applyBoundsFloor(_scopeKey, { minYmd, maxYmd }) {
+  return { minYmd: minYmd || null, maxYmd: maxYmd || null };
+}
+
+/**
+ * ✅ Regra histórica da Federal
+ * - até 2025-11-02: 19h
+ * - a partir de 2025-11-03: 20h
+ */
+export function getFederalPreferredHourForYmd(ymd) {
+  const y = String(ymd || "").trim();
+  if (/^\d{4}-\d{2}-\d{2}$/.test(y) && y >= FEDERAL_19H_TO_20H_CHANGE_YMD) {
+    return "20:00";
+  }
+  return "19:00";
+}
+
+export function getFederalPreferredBucketForYmd(ymd) {
+  return getFederalPreferredHourForYmd(ymd) === "20:00" ? "20h" : "19h";
+}
+
+/**
+ * Detecta se o usuário está pedindo Federal (por input/alias).
+ */
+function isFederalInput(scopeInput) {
+  const up = String(scopeInput || "").trim().toUpperCase();
+  if (!up) return false;
+  if (up === FEDERAL_SCOPE_CODE) return true;
+  if (FEDERAL_INPUT_ALIASES.has(up)) return true;
+
+  // normaliza espaços/underscores pra captar variações
+  const compact = up.replace(/[\s_]+/g, " ").trim();
+  return (
+    FEDERAL_INPUT_ALIASES.has(compact) ||
+    FEDERAL_INPUT_ALIASES.has(up.replace(/[\s_]+/g, "_"))
+  );
+}
+
+/**
+ * Resolve qual lottery_key usar quando o usuário passar:
+ * - "RJ" -> "PT_RIO"
+ * - "FEDERAL"/aliases -> "FEDERAL" (canônico)
+ * - outros -> mantém o valor original (compatível com seu app atual)
+ */
+function resolveLotteryKeyForQuery(ufInput) {
+  const uf = String(ufInput || "").trim();
+  if (!uf) return "";
+  const up = uf.toUpperCase();
+
+  if (up === RJ_STATE_CODE) return RJ_LOTTERY_KEY;
+  if (isFederalInput(up)) return FEDERAL_SCOPE_CODE;
+
+  return uf;
+}
+
+/**
+ * ✅ Chave canônica para CACHE:
+ * - "RJ" -> "PT_RIO"
+ * - Federal (qualquer alias) -> "FEDERAL"
+ * - outros -> UPPER(TRIM)
+ */
+function canonicalScopeKey(ufInput) {
+  const s = String(ufInput || "").trim();
+  if (!s) return "";
+  const up = s.toUpperCase();
+
+  if (up === RJ_STATE_CODE) return RJ_LOTTERY_KEY;
+  if (isFederalInput(up)) return FEDERAL_SCOPE_CODE;
+
+  return up;
+}
+
+/**
+ * Quando for consultar por campo "uf", adiciona trava de lottery_key para RJ.
+ * Isso elimina o vazamento de Federal para o Rio.
+ */
+function buildRJLockWhereIfNeeded(fieldName, ufInput) {
+  const ufUp = String(ufInput || "").trim().toUpperCase();
+  if (fieldName === "uf" && ufUp === RJ_STATE_CODE) {
+    return [where("lottery_key", "==", RJ_LOTTERY_KEY)];
+  }
+  return [];
+}
+
+/* =========================
+   ✅ FIX silencioso: normalizar valor do WHERE por campo
+========================= */
+
+function normalizeValueForField(fieldName, valueInput) {
+  const s = String(valueInput || "").trim();
+  if (!s) return "";
+
+  if (fieldName === "uf") {
+    const up = s.toUpperCase();
+    if (isFederalInput(up)) return FEDERAL_SCOPE_CODE;
+    return up;
+  }
+
+  if (fieldName === "lottery_key") {
+    const up = s.toUpperCase();
+    if (up === RJ_STATE_CODE) return RJ_LOTTERY_KEY; // ✅ PREVENTIVO: RJ -> PT_RIO
+    if (isFederalInput(up)) return FEDERAL_SCOPE_CODE;
+    return up;
+  }
+
+  return s;
+}
+
+/* =========================
+   Utils
+========================= */
+
+/**
+ * ✅ Normaliza "horário" para HH:MM
+ */
+function normalizeHourLike(value) {
+  const s0 = String(value ?? "").trim();
+  if (!s0) return "";
+
+  const s = s0.replace(/\s+/g, "");
+
+  const mhx = s.match(/^(\d{1,2})(?:h|hs|hr|hrs)$/i);
+  if (mhx) return `${pad2(mhx[1])}:00`;
+
+  const mISO = s.match(/^(\d{1,2}):(\d{1,2})(?::(\d{1,2}))?$/);
+  if (mISO) return `${pad2(mISO[1])}:${pad2(mISO[2])}`;
+
+  const mHm = s.match(/^(\d{3,4})$/);
+  if (mHm) {
+    const hh = String(mHm[1]).slice(0, -2);
+    const mm = String(mHm[1]).slice(-2);
+    if (/^\d{1,2}$/.test(hh) && /^\d{2}$/.test(mm)) {
+      return `${pad2(hh)}:${mm}`;
+    }
+  }
+
+  const m2 = s.match(/^(\d{1,2})$/);
+  if (m2) return `${pad2(m2[1])}:00`;
+
+  return s0.trim();
+}
+
+function mhxToInt(v) {
+  const n = Number(v);
+  return Number.isFinite(n) ? n : 0;
+}
+
+/**
+ * ✅ Bucket "09h", "11h"…
+ */
+function toHourBucket(value) {
+  const s = String(value ?? "").trim();
+  if (!s || s.toLowerCase() === "todos") return null;
+
+  const mh = s.match(/^(\d{1,2})h$/i);
+  if (mh) return `${pad2(mhxToInt(mh[1]))}h`;
+
+  const m1 = s.match(/^(\d{1,2}):(\d{2})$/);
+  if (m1) return `${pad2(mhxToInt(m1[1]))}h`;
+
+  const m2 = s.match(/^(\d{1,2})$/);
+  if (m2) return `${pad2(mhxToInt(m2[1]))}h`;
+
+  const m3 = s.match(/^(\d{1,2}):(\d{2}):(\d{2})$/);
+  if (m3) return `${pad2(mhxToInt(m3[1]))}h`;
+
+  const m4 = s.match(/^(\d{3,4})$/);
+  if (m4) return `${pad2(mhxToInt(String(m4[1]).slice(0, -2)))}h`;
+
+  return null;
+}
+
+/* =========================
+   ✅ FIX DEFINITIVO: filtro de horário (bucket vs exato)
+   - bucket SOMENTE via closeHourBucket
+   - exact  SOMENTE via closeHour
+   (elimina ambiguidade e "filtro fantasma")
+========================= */
+
+function resolveHourFilter({ closeHour = null, closeHourBucket = null }) {
+  const bucket = toHourBucket(closeHourBucket);
+  if (bucket) return { kind: "bucket", bucket, hhmm: null };
+
+  const hhmm = closeHour ? normalizeHourLike(closeHour) : null;
+  if (hhmm) return { kind: "exact", bucket: null, hhmm };
+
+  return { kind: null, bucket: null, hhmm: null };
+}
+
+function drawPassesHourFilter(draw, hourFilter) {
+  if (!hourFilter || !hourFilter.kind) return true;
+
+  const raw =
+    draw?.close_hour ?? draw?.closeHour ?? draw?.hour ?? draw?.hora ?? "";
+  const norm = normalizeHourLike(raw);
+
+  if (hourFilter.kind === "exact") {
+    return norm === normalizeHourLike(hourFilter.hhmm);
+  }
+
+  if (hourFilter.kind === "bucket") {
+    return toHourBucket(norm) === toHourBucket(hourFilter.bucket);
+  }
+
+  return true;
+}
+
+/* =========================
+   Date utils
+========================= */
+
+/* =========================
+   ✅ Guards (evita GRUPO 00)
+========================= */
+
+/* =========================
+   ✅ Helpers de parsing (robusto p/ strings tipo "GRUPO 23", "1º")
+========================= */
+
+/* =========================
+   ✅ Helpers de dígitos (REGRA GLOBAL 7º = CENTENA)
+========================= */
+
+function normalizeLotteryCodeAny(d) {
+  const raw =
+    d?.lottery_code ??
+    d?.lotteryCode ??
+    d?.lot_code ??
+    d?.lotCode ??
+    d?.lot ??
+    d?.code ??
+    null;
+  const up = raw ? String(raw).trim().toUpperCase() : "";
+  return up || "";
+}
+
+function sortDrawsLocal(draws) {
+  const toNum = (h) => {
+    const s = normalizeHourLike(h);
+    const m = s.match(/^(\d{2}):(\d{2})$/);
+    if (!m) return 0;
+    return Number(m[1]) * 100 + Number(m[2]);
+  };
+
+  return [...(draws || [])].sort((a, b) => {
+    const ya = String(a?.ymd || "");
+    const yb = String(b?.ymd || "");
+    if (ya !== yb) return ya.localeCompare(yb);
+
+    const ha = toNum(a?.close_hour);
+    const hb = toNum(b?.close_hour);
+    if (ha !== hb) return ha - hb;
+
+    const la = normalizeLotteryCodeAny(a);
+    const lb = normalizeLotteryCodeAny(b);
+    if (la !== lb) return la.localeCompare(lb);
+
+    const ia = String(a?.drawId || a?.id || "");
+    const ib = String(b?.drawId || b?.id || "");
+    return ia.localeCompare(ib);
+  });
+}
+
+function sortDrawsLocalDesc(draws) {
+  const toNum = (h) => {
+    const s = normalizeHourLike(h);
+    const m = s.match(/^(\d{2}):(\d{2})$/);
+    if (!m) return 0;
+    return Number(m[1]) * 100 + Number(m[2]);
+  };
+
+  return [...(draws || [])].sort((a, b) => {
+    const ya = String(a?.ymd || "");
+    const yb = String(b?.ymd || "");
+    if (ya !== yb) return yb.localeCompare(ya);
+
+    const ha = toNum(a?.close_hour);
+    const hb = toNum(b?.close_hour);
+    if (ha !== hb) return hb - ha;
+
+    const la = normalizeLotteryCodeAny(a);
+    const lb = normalizeLotteryCodeAny(b);
+    if (la !== lb) return lb.localeCompare(la);
+
+    const ia = String(a?.drawId || a?.id || "");
+    const ib = String(b?.drawId || b?.id || "");
+    return ib.localeCompare(ia);
+  });
+}
+
+/**
+ * ✅ DEDUPE
+ * - chave lógica: ymd + hour (+ lottery_code quando existir)
+ * - se não houver ymd/hour, cai no id/idx
+ *
+ * ✅ FIX CRÍTICO:
+ * Não colapsar dois draws distintos do mesmo dia/horário com lottery_code diferente.
+ */
+function dedupeDrawsLocal(draws) {
+  const arr = Array.isArray(draws) ? draws : [];
+
+  const byKey = new Map();
+  const order = [];
+
+  function score(d) {
+    const prizesLen = Array.isArray(d?.prizes) ? d.prizes.length : 0;
+    const pc = Number.isFinite(Number(d?.prizesCount))
+      ? Number(d.prizesCount)
+      : 0;
+    const hasLogical = !!(d?.ymd && d?.close_hour);
+    return prizesLen * 1_000_000 + pc * 1_000 + (hasLogical ? 10 : 0);
+  }
+
+  for (let i = 0; i < arr.length; i += 1) {
+    const raw = arr[i] || {};
+
+    const ymd = raw.ymd || normalizeToYMD(raw.date) || "";
+    const hour = normalizeHourLike(raw.close_hour || raw.closeHour || "");
+
+    const lotCode = normalizeLotteryCodeAny(raw);
+
+    const drawId = raw.drawId ?? raw.id ?? raw.__name__ ?? null;
+    const idStr = drawId != null ? String(drawId) : "";
+
+    const hasLogical = !!(ymd && hour);
+
+    const key = hasLogical
+      ? lotCode
+        ? `${ymd}__${hour}__${lotCode}`
+        : `${ymd}__${hour}`
+      : `id__${idStr || `idx_${i}`}`;
+
+    const normalized = {
+      ...raw,
+      ymd: ymd || raw.ymd || null,
+      close_hour: hour || raw.close_hour || raw.closeHour || "",
+      closeHour: hour || raw.closeHour || raw.close_hour || "",
+      lottery_code: lotCode || raw.lottery_code || raw.lotteryCode || null,
+      drawId: raw.drawId || raw.id || raw.__name__ || null,
+      id: raw.id || raw.drawId || raw.__name__ || null,
+    };
+
+    if (!byKey.has(key)) {
+      byKey.set(key, normalized);
+      order.push(key);
+      continue;
+    }
+
+    const prev = byKey.get(key);
+    if (score(normalized) > score(prev)) {
+      byKey.set(key, normalized);
+    }
+  }
+
+  return order.map((k) => byKey.get(k)).filter(Boolean);
+}
+
+async function mapWithConcurrency(items, limitN, mapper) {
+  const arr = Array.isArray(items) ? items : [];
+  const concurrency = Math.max(1, Number(limitN) || 6);
+  const results = new Array(arr.length);
+  let idx = 0;
+
+  async function worker() {
+    while (true) {
+      const current = idx;
+      idx += 1;
+      if (current >= arr.length) break;
+      results[current] = await mapper(arr[current], current);
+    }
+  }
+
+  await Promise.all(
+    Array.from({ length: Math.min(concurrency, arr.length) }, () => worker())
+  );
+  return results;
+}
+
+/* =========================
+   ✅ Leitura: smart (custo baixo)
+========================= */
+
+function isIndexError(error) {
+  const msg = String(error?.message || "").toLowerCase();
+  const code = String(error?.code || "").toLowerCase();
+  return (
+    code.includes("failed-precondition") ||
+    msg.includes("failed_precondition") ||
+    (msg.includes("index") && msg.includes("create")) ||
+    (msg.includes("requires") && msg.includes("index"))
+  );
+}
+
+function getDocDateRaw(d) {
+  if (!d) return null;
+  return d.ymd ?? d.date ?? d.data ?? d.dt ?? d.draw_date ?? d.close_date ?? null;
+}
+
+/* =========================
+   Prizes (ROBUSTO + CACHE)
+========================= */
+
+function prizesCacheKeyAll(drawId) {
+  return `all::${String(drawId)}`;
+}
+
+/**
+ * ✅ FIX DEFINITIVO:
+ * Se existir embeddedPrizes mas vier "agregado/incompleto" (sem grupo/posição válidos),
+ * faz fallback e busca a subcollection draws/{id}/prizes.
+ */
+async function fetchPrizesForDraw(drawId, positionsArr, embeddedPrizes) {
+  const drawKey = String(drawId || "").trim();
+  if (!drawKey) return [];
+
+  if (Array.isArray(embeddedPrizes) && embeddedPrizes.length) {
+    const normalized = embeddedPrizes.map((p, idx) =>
+      normalizePrize(p, p?.prizeId ?? `emb_${idx}`)
+    );
+
+    const cleaned = normalized.filter(
+      (x) => isValidGrupo(x?.grupo) && isValidPosition(x?.position)
+    );
+
+    if (cleaned.length) {
+      const allSorted = sortPrizesByPosition(cleaned);
+      return filterPrizesByPositions(allSorted, positionsArr);
+    }
+  }
+
+  const allKey = prizesCacheKeyAll(drawKey);
+  const cachedAll = cacheGet(PRIZES_CACHE, allKey);
+  if (Array.isArray(cachedAll) && cachedAll.length > 0) {
+    return filterPrizesByPositions(cachedAll, positionsArr);
+  }
+
+  const prizesCol = collection(db, "draws", drawKey, "prizes");
+
+  const { snap, error } = await safeGetDocsSmart(prizesCol, { policy: "server" });
+  if (error) throw error;
+
+  const allRaw = snap.docs.map((d) => normalizePrize(d.data(), d.id));
+
+  // console.log("DEBUG allRaw:", allRaw);
+
+const all = allRaw.filter(
+  (x) => isValidGrupo(x?.grupo) && isValidPosition(x?.position)
+);
+
+// console.log("DEBUG allFiltered:", all);
+
+  const allSorted = sortPrizesByPosition(all);
+  cacheSet(PRIZES_CACHE, allKey, allSorted);
+
+  return filterPrizesByPositions(allSorted, positionsArr);
+}
+
+/* =========================
+   Map Draw
+========================= */
+
+function mapDrawDoc(doc) {
+  const d = doc.data();
+
+  const ymd = d.ymd || normalizeToYMD(getDocDateRaw(d));
+  const hourNorm = normalizeHourLike(
+    d.close_hour ?? d.closeHour ?? d.hour ?? d.hora ?? ""
+  );
+
+  const embeddedPrizes = Array.isArray(d.prizes) && d.prizes.length > 0 ? d.prizes : null;
+
+  const ufRaw = d.uf ?? null;
+  const lotteryKeyRaw = d.lottery_key ?? d.lotteryKey ?? d.lottery ?? null;
+
+  const lotteryCodeRaw =
+    d.lottery_code ??
+    d.lotteryCode ??
+    d.lot_code ??
+    d.lotCode ??
+    d.lot ??
+    d.code ??
+    d.lottery_id ??
+    d.lotteryId ??
+    null;
+
+  return {
+    drawId: doc.id,
+    id: doc.id,
+
+    date: d.date ?? d.data ?? d.dt ?? d.draw_date ?? d.close_date ?? null,
+    ymd,
+
+    close_hour: hourNorm,
+    closeHour: hourNorm,
+
+    uf: ufRaw,
+    lottery_key: lotteryKeyRaw,
+
+    lottery_code: lotteryCodeRaw ? String(lotteryCodeRaw).toUpperCase() : null,
+
+    lottery_name: d.lottery_name ?? d.lotteryName ?? null,
+    lottery_label: d.lottery_label ?? d.lotteryLabel ?? null,
+
+    prizesCount: d.prizesCount,
+    prizes: embeddedPrizes,
+  };
+}
+
+/* =========================
+   Compat: uf OU lottery_key
+========================= */
+
+function buildUfWhereClauses(fieldName, uf) {
+  const normalized = normalizeValueForField(fieldName, uf);
+  return [where(fieldName, "==", normalized)];
+}
+
+function normalizeOrderBys(extraOrderBy) {
+  if (!extraOrderBy) return [];
+  return Array.isArray(extraOrderBy)
+    ? extraOrderBy.filter(Boolean)
+    : [extraOrderBy];
+}
+
+async function queryDrawsByField({
+  fieldName,
+  uf,
+  extraWheres = [],
+  extraOrderBy = null,
+  extraLimit = null,
+  policy = DEFAULT_READ_POLICY,
+}) {
+  const drawsCol = collection(db, "draws");
+
+  const parts = [
+    drawsCol,
+    ...buildUfWhereClauses(fieldName, uf),
+    ...buildRJLockWhereIfNeeded(fieldName, uf),
+    ...(extraWheres || []),
+  ];
+
+  const orderBys = normalizeOrderBys(extraOrderBy);
+  for (const ob of orderBys) parts.push(ob);
+
+  if (extraLimit) parts.push(extraLimit);
+
+  const qRef = query(...parts);
+  return safeGetDocsSmart(qRef, { policy });
+}
+
+function extractUfParam(maybeUfOrObj) {
+  if (!maybeUfOrObj) return "";
+  if (typeof maybeUfOrObj === "string") return maybeUfOrObj;
+  if (typeof maybeUfOrObj === "object" && typeof maybeUfOrObj.uf === "string") {
+    return maybeUfOrObj.uf;
+  }
+  return String(maybeUfOrObj || "");
+}
+
+async function fetchDrawDocsPreferUf({
+  uf,
+  extraWheres = [],
+  extraOrderBy = null,
+  extraLimit = null,
+  policy = DEFAULT_READ_POLICY,
+}) {
+  const ufTrim = String(extractUfParam(uf) || "").trim();
+  const ufUp = ufTrim.toUpperCase();
+
+  if (isFederalInput(ufUp)) {
+    for (const lk of FEDERAL_LOTTERY_KEYS) {
+      const { snap, error } = await queryDrawsByField({
+        fieldName: "lottery_key",
+        uf: lk,
+        extraWheres,
+        extraOrderBy,
+        extraLimit,
+        policy,
+      });
+
+      if (error) return { docs: [], usedField: "lottery_key", error };
+      if (snap?.docs?.length) {
+        return { docs: snap.docs, usedField: "lottery_key", error: null };
+      }
+    }
+
+    return { docs: [], usedField: "lottery_key", error: null };
+  }
+
+  {
+    const { snap, error } = await queryDrawsByField({
+      fieldName: "uf",
+      uf: ufUp,
+      extraWheres,
+      extraOrderBy,
+      extraLimit,
+      policy,
+    });
+
+    if (!error && snap?.docs?.length) {
+      return { docs: snap.docs, usedField: "uf", error: null };
+    }
+    if (error) return { docs: [], usedField: "uf", error };
+  }
+
+  {
+    const lotteryKey =
+      ufUp === RJ_STATE_CODE ? RJ_LOTTERY_KEY : resolveLotteryKeyForQuery(ufTrim);
+
+    const { snap, error } = await queryDrawsByField({
+      fieldName: "lottery_key",
+      uf: String(lotteryKey).toUpperCase(),
+      extraWheres,
+      extraOrderBy,
+      extraLimit,
+      policy,
+    });
+
+    if (!error && snap?.docs?.length) {
+      return { docs: snap.docs, usedField: "lottery_key", error: null };
+    }
+    if (error) return { docs: [], usedField: "lottery_key", error };
+  }
+
+  return { docs: [], usedField: "none", error: null };
+}
+
+/* =========================
+   Bounds (min/max reais)
+========================= */
+
+function pickMinMaxFromMapped(mapped) {
+  let minYmd = null;
+  let maxYmd = null;
+
+  for (const d of mapped) {
+    const y = d?.ymd || normalizeToYMD(d?.date);
+    if (!y || !isYMD(y)) continue;
+    if (!minYmd || y < minYmd) minYmd = y;
+    if (!maxYmd || y > maxYmd) maxYmd = y;
+  }
+
+  return { minYmd, maxYmd };
+}
+
+/**
+ * ✅ “Prova de vida” do maxYmd sem depender de índice composto nem de docId:
+ * tenta dias recentes (==) desc até achar pelo menos 1 draw.
+ */
+async function probeRecentMaxYmd(uf, lookbackDays = 45) {
+  const base = utcTodayYmd();
+  const n = Math.max(3, Math.min(120, Number(lookbackDays) || 45));
+
+  for (let i = 0; i <= n; i += 1) {
+    const day = addDaysUTCLocal(base, -i);
+    const { docs, error } = await fetchDrawDocsPreferUf({
+      uf,
+      extraWheres: [where("ymd", "==", day)],
+      policy: "server",
+      extraLimit: limit(5),
+    });
+    if (error) return { ok: false, maxYmd: null, error };
+    if (docs && docs.length) return { ok: true, maxYmd: day, error: null };
+  }
+
+  return { ok: false, maxYmd: null, error: null };
+}
+
+/**
+ * ✅ API bounds (backend) — fonte única preferencial
+ */
+async function fetchBoundsFromApi(ufOrObj) {
+  const uf = String(extractUfParam(ufOrObj) || "").trim();
+  if (!uf) return { ok: false, error: new Error("uf vazio") };
+
+  const lot = canonicalScopeKey(uf) || String(uf).trim().toUpperCase();
+  const url = apiUrl(`/api/bounds?lottery=${encodeURIComponent(lot)}`);
+  try {
+    const r = await fetch(url, { method: "GET" });
+    const j = await r.json().catch(() => null);
+
+    if (!r.ok || !j || !j.ok) {
+      return {
+        ok: false,
+        error: new Error(`bounds api not ok: ${j?.message || r.status}`),
+        payload: j || null,
+      };
+    }
+
+    const minYmd = String(j.minYmd || "").trim();
+    const maxYmd = String(j.maxYmd || "").trim();
+    if (!isYMD(minYmd) || !isYMD(maxYmd)) {
+      return {
+        ok: false,
+        error: new Error("bounds api retornou min/max inválidos"),
+        payload: j,
+      };
+    }
+
+    return {
+      ok: true,
+      uf,
+      lottery: String(j.lottery || lot).trim(),
+      minYmd,
+      maxYmd,
+      minDocId: j.minDocId || null,
+      maxDocId: j.maxDocId || null,
+      source: String(j.source || "api_bounds"),
+    };
+  } catch (e) {
+    return { ok: false, error: e };
+  }
+}
+
+export async function getKingBoundsByUf(ufOrObj) {
+  const uf = String(extractUfParam(ufOrObj) || "").trim();
+  if (!uf) throw new Error("Parâmetro obrigatório: uf");
+
+  const apiTry = await fetchBoundsFromApi(ufOrObj);
+  if (apiTry?.ok) {
+    const scopeKey = canonicalScopeKey(uf);
+    const floored = applyBoundsFloor(scopeKey, {
+      minYmd: apiTry.minYmd,
+      maxYmd: apiTry.maxYmd,
+    });
+
+    return {
+      ok: true,
+      uf,
+
+      minYmd: floored.minYmd,
+      maxYmd: floored.maxYmd,
+
+      minDate: floored.minYmd,
+      maxDate: floored.maxYmd,
+
+      minDocId: apiTry.minDocId || null,
+      maxDocId: apiTry.maxDocId || null,
+
+      source: `api_bounds:${apiTry.source}`,
+    };
+  }
+
+  const SCAN_LIMIT = 50;
+  const FALLBACK_EDGE_LIMIT = 600;
+
+  let firstTryError = null;
+
+  const DOC_ID = documentId();
+
+  async function sampleEdgesByDocId(fieldName, ufValue) {
+    const asc = await queryDrawsByField({
+      fieldName,
+      uf: ufValue,
+      extraOrderBy: [orderBy(DOC_ID)],
+      extraLimit: limit(FALLBACK_EDGE_LIMIT),
+      policy: "server",
+    });
+
+    const last = await queryDrawsByField({
+      fieldName,
+      uf: ufValue,
+      extraOrderBy: [orderBy(DOC_ID)],
+      extraLimit: limitToLast(FALLBACK_EDGE_LIMIT),
+      policy: "server",
+    });
+
+    const mappedA = (asc?.snap?.docs || []).map(mapDrawDoc);
+    const mappedB = (last?.snap?.docs || []).map(mapDrawDoc);
+
+    const merged = dedupeDrawsLocal([...mappedA, ...mappedB]);
+
+    return {
+      merged,
+      ok: merged.length > 0,
+      errors: [asc?.error, last?.error].filter(Boolean),
+      sources: [asc?.source, last?.source].filter(Boolean),
+    };
+  }
+
+  {
+    const orderAsc = [orderBy("ymd", "asc"), orderBy(DOC_ID)];
+    const orderDesc = [orderBy("ymd", "desc"), orderBy(DOC_ID)];
+
+    const {
+      docs: minDocs,
+      usedField: usedMin,
+      error: eMin,
+    } = await fetchDrawDocsPreferUf({
+      uf,
+      extraOrderBy: orderAsc,
+      extraLimit: limit(SCAN_LIMIT),
+      policy: "server",
+    });
+
+    const {
+      docs: maxDocs,
+      usedField: usedMax,
+      error: eMax,
+    } = await fetchDrawDocsPreferUf({
+      uf,
+      extraOrderBy: orderDesc,
+      extraLimit: limit(SCAN_LIMIT),
+      policy: "server",
+    });
+
+    if (eMin || eMax) {
+      if (!isIndexError(eMin) && !isIndexError(eMax)) firstTryError = eMin || eMax;
+    }
+
+    if (minDocs.length && maxDocs.length && !eMin && !eMax) {
+      const mappedMin = minDocs.map(mapDrawDoc);
+      const mappedMax = maxDocs.map(mapDrawDoc);
+
+      const { minYmd } = pickMinMaxFromMapped(mappedMin);
+      const { maxYmd } = pickMinMaxFromMapped(mappedMax);
+
+      if (minYmd && maxYmd) {
+        return {
+          ok: true,
+          uf,
+          minYmd,
+          maxYmd,
+          minDate: minYmd,
+          maxDate: maxYmd,
+          source: `ymd_scan${SCAN_LIMIT}:${usedMin}/${usedMax}`,
+        };
+      }
+    }
+  }
+
+  const recentProbe = await probeRecentMaxYmd(uf, 60);
+  const recentMaxYmd = recentProbe?.ok ? recentProbe.maxYmd : null;
+
+  const scopeKeyBounds = canonicalScopeKey(uf);
+  {
+    const idxInfo = (() => {
+      const code = String(firstTryError?.code || "");
+      const msg = String(firstTryError?.message || "");
+      if (!code && !msg) return "";
+      return `:firstTryError=${code || "err"}`;
+    })();
+
+    const a = await sampleEdgesByDocId("uf", String(uf).toUpperCase());
+
+    const ufUp = String(uf || "").trim().toUpperCase();
+
+    if (!a.ok && isFederalInput(ufUp)) {
+      for (const lk of FEDERAL_LOTTERY_KEYS) {
+        const b = await sampleEdgesByDocId("lottery_key", lk);
+        if (b.ok) {
+          const mm = pickMinMaxFromMapped(b.merged);
+
+          const maxFixed =
+            recentMaxYmd && (!mm.maxYmd || recentMaxYmd > mm.maxYmd)
+              ? recentMaxYmd
+              : mm.maxYmd;
+
+          const floored = applyBoundsFloor(scopeKeyBounds, {
+            minYmd: mm.minYmd || null,
+            maxYmd: maxFixed || null,
+          });
+
+          return {
+            ok: !!(floored.minYmd && floored.maxYmd),
+            uf,
+
+            minYmd: floored.minYmd,
+            maxYmd: floored.maxYmd,
+
+            minDate: floored.minYmd,
+            maxDate: floored.maxYmd,
+
+            source: `fallback_edges_docId_limit=${FALLBACK_EDGE_LIMIT}:lottery_key(${lk}):sampleCount=${b.merged.length}${
+              recentMaxYmd ? ":max_probe" : ""
+            }${idxInfo}`,
+          };
+        }
+      }
+    }
+
+    const lotteryKey =
+      ufUp === RJ_STATE_CODE ? RJ_LOTTERY_KEY : resolveLotteryKeyForQuery(uf);
+
+    const b = a.ok
+      ? null
+      : await sampleEdgesByDocId("lottery_key", String(lotteryKey).toUpperCase());
+
+    const merged = a.ok ? a.merged : b?.merged || [];
+    const mm = pickMinMaxFromMapped(merged);
+
+    const maxFixed =
+      recentMaxYmd && (!mm.maxYmd || recentMaxYmd > mm.maxYmd)
+        ? recentMaxYmd
+        : mm.maxYmd;
+
+    const floored = applyBoundsFloor(scopeKeyBounds, {
+      minYmd: mm.minYmd || null,
+      maxYmd: maxFixed || null,
+    });
+
+    return {
+      ok: !!(floored.minYmd && floored.maxYmd),
+      uf,
+
+      minYmd: floored.minYmd,
+      maxYmd: floored.maxYmd,
+
+      minDate: floored.minYmd,
+      maxDate: floored.maxYmd,
+
+      source: `fallback_edges_docId_limit=${FALLBACK_EDGE_LIMIT}:${
+        a.ok ? "uf" : "lottery_key"
+      }:sampleCount=${merged.length}${recentMaxYmd ? ":max_probe" : ""}${idxInfo}`,
+    };
+  }
+}
+
+/* =========================
+   API: Day
+========================= */
+
+function buildPrizeSignature(draw) {
+  const prizes = Array.isArray(draw?.prizes) ? draw.prizes : [];
+  if (!prizes.length) return "";
+
+  const parts = prizes
+    .map((p) => {
+      const pos = Number(p?.position);
+      const grupo = Number(p?.grupo);
+      const numero = toPrizeDigitsByPosition(
+        p?.numero ?? p?.milhar ?? p?.number ?? p?.num ?? p?.valor ?? "",
+        pos
+      );
+
+      if (!Number.isFinite(pos) || !Number.isFinite(grupo) || !numero) return "";
+      return `${pad2(pos)}:${pad2(grupo)}:${numero}`;
+    })
+    .filter(Boolean)
+    .sort();
+
+  return parts.join("|");
+}
+
+function federalHourPriority(draw) {
+  const h = normalizeHourLike(
+    draw?.close_hour || draw?.closeHour || draw?.hour || draw?.hora || ""
+  );
+  const ymd = String(draw?.ymd || normalizeToYMD(draw?.date) || "").trim();
+  const n = hourToNumSafe(h);
+
+  const prefer20h = getFederalPreferredHourForYmd(ymd) === "20:00";
+
+  if (prefer20h) {
+    if (h === "20:00") return 200000 + n;
+    if (h === "19:00") return 190000 + n;
+    return 100000 + n;
+  }
+
+  if (h === "19:00") return 200000 + n;
+  if (h === "20:00") return 190000 + n;
+  return 100000 + n;
+}
+
+function pickBetterFederalClone(a, b) {
+  const pa = Number.isFinite(Number(a?.prizesCount))
+    ? Number(a.prizesCount)
+    : Array.isArray(a?.prizes)
+    ? a.prizes.length
+    : 0;
+
+  const pb = Number.isFinite(Number(b?.prizesCount))
+    ? Number(b.prizesCount)
+    : Array.isArray(b?.prizes)
+    ? b.prizes.length
+    : 0;
+
+  if (pa !== pb) return pb > pa ? b : a;
+
+  const ha = federalHourPriority(a);
+  const hb = federalHourPriority(b);
+  if (ha !== hb) return hb > ha ? b : a;
+
+  const ia = String(a?.drawId || a?.id || "");
+  const ib = String(b?.drawId || b?.id || "");
+  return ib.localeCompare(ia) > 0 ? b : a;
+}
+
+function collapseFederalDailyCloneDraws(draws) {
+  const arr = Array.isArray(draws) ? draws : [];
+  const byKey = new Map();
+
+  for (const d of arr) {
+    const ymd = String(d?.ymd || normalizeToYMD(d?.date) || "").trim();
+    const sig = buildPrizeSignature(d);
+
+    if (!ymd || !sig) {
+      const fallbackKey = `id::${String(
+        d?.drawId || d?.id || Math.random()
+      )}`;
+      if (!byKey.has(fallbackKey)) byKey.set(fallbackKey, d);
+      continue;
+    }
+
+    const key = `${ymd}__${sig}`;
+    const prev = byKey.get(key);
+
+    if (!prev) byKey.set(key, d);
+    else byKey.set(key, pickBetterFederalClone(prev, d));
+  }
+
+  return sortDrawsLocal(Array.from(byKey.values()));
+}
+
+function drawsCacheKeyDay({ scopeKey, ymd, positionsArr, hourFilter }) {
+  const p = positionsArr && positionsArr.length ? positionsArr.join(",") : "all";
+  const h =
+    hourFilter?.kind === "bucket"
+      ? `bucket:${hourFilter.bucket}`
+      : hourFilter?.kind === "exact"
+      ? `exact:${hourFilter.hhmm}`
+      : "all";
+  return `day::${scopeKey}::${ymd}::pos=${p}::h=${h}`;
+}
+
+export async function getKingResultsByDate({
+  uf,
+  date,
+  closeHour = null,
+  closeHourBucket = null,
+  positions = null,
+}) {
+  if (!uf || !date) throw new Error("Parâmetros obrigatórios: uf e date");
+
+  const scopeKey = canonicalScopeKey(uf);
+
+  const positionsArr = normalizePositions(positions);
+  const ymdDate = normalizeToYMD(date);
+  if (!ymdDate) return [];
+
+  const hourFilter = resolveHourFilter({ closeHour, closeHourBucket });
+
+  const dayKey = drawsCacheKeyDay({
+    scopeKey,
+    ymd: ymdDate,
+    positionsArr,
+    hourFilter,
+  });
+
+  const forceFreshServer = shouldForceFreshServerRead(ymdDate);
+  const allowMemoryCache = !forceFreshServer;
+
+  if (allowMemoryCache) {
+    const cached = cacheGet(DRAWS_CACHE, dayKey);
+    if (cached) return cached;
+  }
+
+  const readPolicy = forceFreshServer ? "server" : DEFAULT_READ_POLICY;
+
+  const docCandidates = [];
+
+  {
+    const { docs: found, error } = await fetchDrawDocsPreferUf({
+      uf,
+      extraWheres: [where("ymd", "==", ymdDate)],
+      policy: readPolicy,
+    });
+    if (error) throw error;
+    if (found.length) docCandidates.push(...found);
+  }
+
+  if (!docCandidates.length) {
+    const rawDate = String(date || "").trim();
+    if (rawDate) {
+      const { docs: found, error } = await fetchDrawDocsPreferUf({
+        uf,
+        extraWheres: [where("date", "==", rawDate)],
+        policy: readPolicy,
+      });
+      if (error) throw error;
+      if (found.length) docCandidates.push(...found);
+    }
+  }
+
+  if (!docCandidates.length) {
+    const { docs: found, error } = await fetchDrawDocsPreferUf({
+      uf,
+      extraWheres: [where("date", "==", ymdDate)],
+      policy: readPolicy,
+    });
+    if (error) throw error;
+    if (found.length) docCandidates.push(...found);
+  }
+
+  if (!docCandidates.length) {
+    const brDate = ymdToBR(ymdDate);
+    if (brDate) {
+      const { docs: found, error } = await fetchDrawDocsPreferUf({
+        uf,
+        extraWheres: [where("date", "==", brDate)],
+        policy: readPolicy,
+      });
+      if (error) throw error;
+      if (found.length) docCandidates.push(...found);
+    }
+  }
+
+  if (!docCandidates.length) return [];
+
+  let baseAll = dedupeDrawsLocal(docCandidates.map(mapDrawDoc));
+  baseAll = baseAll.filter((x) => (x.ymd || normalizeToYMD(x.date)) === ymdDate);
+
+  const orderedAll = sortDrawsLocal(baseAll);
+
+  const hydratedAll = await mapWithConcurrency(orderedAll, 6, async (item) => {
+    const prizes = await fetchPrizesForDraw(item.drawId, positionsArr, item.prizes);
+    const pc = Array.isArray(prizes) ? prizes.length : 0;
+    return { ...item, prizes, prizesCount: pc, __mode: "detailed" };
+  });
+
+  let dayAll = dedupeDrawsLocal(hydratedAll);
+
+if (scopeKey === FEDERAL_SCOPE_CODE) {
+  dayAll = collapseFederalDailyCloneDraws(dayAll);
+}
+
+  const base = hourFilter?.kind
+    ? dayAll.filter((d) => drawPassesHourFilter(d, hourFilter))
+    : dayAll;
+
+  let out = dedupeDrawsLocal(sortDrawsLocal(base));
+
+if (scopeKey === FEDERAL_SCOPE_CODE) {
+  out = collapseFederalDailyCloneDraws(out);
+}
+
+  if (allowMemoryCache) {
+    cacheSet(DRAWS_CACHE, dayKey, out);
+  }
+
+  return out;
+}
+
+/* =========================
+   API: Range
+========================= */
+
+function drawsCacheKeyRange({
+  scopeKey,
+  from,
+  to,
+  positionsArr,
+  hourFilter,
+  mode,
+}) {
+  const p = positionsArr && positionsArr.length ? positionsArr.join(",") : "all";
+  const h =
+    hourFilter?.kind === "bucket"
+      ? `bucket:${hourFilter.bucket}`
+      : hourFilter?.kind === "exact"
+      ? `exact:${hourFilter.hhmm}`
+      : "all";
+  const m = mode ? String(mode) : "detailed";
+  return `range::${scopeKey}::${from}..${to}::pos=${p}::h=${h}::mode=${m}`;
+}
+
+function chooseRangeConcurrency(drawCount) {
+  if (!Number.isFinite(drawCount)) return 6;
+  if (drawCount <= 50) return 4;
+  if (drawCount <= 300) return 6;
+  if (drawCount <= 1200) return 8;
+  return 10;
+}
+
+export function decideKingRangeMode({ dateFrom, dateTo, mode = "detailed" }) {
+  const ymdFrom = normalizeToYMD(dateFrom);
+  const ymdTo = normalizeToYMD(dateTo);
+  if (!ymdFrom || !ymdTo) return "detailed";
+
+  if (mode === "detailed" || mode === "aggregated") return mode;
+  if (mode !== "auto") return "detailed";
+
+  const days = daysBetweenInclusiveUTC(ymdFrom, ymdTo);
+  if (!Number.isFinite(days) || days <= 0) return "detailed";
+  return "detailed";
+}
+
+/**
+ * ✅ Fallback barato (SEM prizes): usado quando falta índice composto no RANGE,
+ * ou quando você quer aggregated sem custo de hidratar.
+ */
+async function fetchDrawsDayNoPrizes({ uf, dayYmd }) {
+  const readPolicy = shouldForceFreshServerRead(dayYmd) ? "server" : DEFAULT_READ_POLICY;
+
+  const { docs, error } = await fetchDrawDocsPreferUf({
+    uf,
+    extraWheres: [where("ymd", "==", dayYmd)],
+    policy: readPolicy,
+  });
+  if (error) throw error;
+  if (!docs || !docs.length) return [];
+
+  let baseAll = dedupeDrawsLocal(docs.map(mapDrawDoc));
+  baseAll = baseAll.filter((x) => (x.ymd || normalizeToYMD(x.date)) === dayYmd);
+
+  const ordered = sortDrawsLocal(baseAll);
+
+  return ordered.map((d) => {
+    const embedded = normalizeEmbeddedPrizesForAggregated(d?.prizes);
+    return {
+      ...d,
+      prizes: embedded,
+      prizesCount: embedded.length || Number(d?.prizesCount || 0),
+      __mode: "aggregated",
+    };
+  });
+}
+
+export async function getKingResultsByRange({
+  uf,
+  dateFrom,
+  dateTo,
+  closeHour = null,
+  closeHourBucket = null,
+  positions = null,
+  mode = "detailed",
+  readPolicy = DEFAULT_READ_POLICY,
+  bypassCache = false,
+}) {
+  if (!uf || !dateFrom || !dateTo) {
+    throw new Error("Parâmetros obrigatórios: uf, dateFrom, dateTo");
+  }
+
+  const scopeKey = canonicalScopeKey(uf);
+
+  const positionsArr = normalizePositions(positions);
+
+  const ymdFrom = normalizeToYMD(dateFrom);
+  const ymdTo = normalizeToYMD(dateTo);
+  if (!ymdFrom || !ymdTo) return [];
+
+  const hourFilter = resolveHourFilter({ closeHour, closeHourBucket });
+
+  const effectiveMode = decideKingRangeMode({
+    dateFrom: ymdFrom,
+    dateTo: ymdTo,
+    mode,
+  });
+
+  const rangeKey = drawsCacheKeyRange({
+    scopeKey,
+    from: ymdFrom,
+    to: ymdTo,
+    positionsArr,
+    hourFilter,
+    mode: effectiveMode,
+  });
+  if (!bypassCache) {
+    const cached = cacheGet(DRAWS_CACHE, rangeKey);
+    if (cached) return cached;
+  }
+
+  const DOC_ID = documentId();
+  const rangeOrder = [orderBy("ymd", "asc"), orderBy(DOC_ID)];
+
+  const { docs, error, usedField } = await fetchDrawDocsPreferUf({
+    uf,
+    extraWheres: [where("ymd", ">=", ymdFrom), where("ymd", "<=", ymdTo)],
+    extraOrderBy: rangeOrder,
+    policy: readPolicy,
+  });
+
+  if (error) {
+    if (isIndexError(error)) {
+      const days = daysBetweenInclusiveUTC(ymdFrom, ymdTo);
+      const MAX_FALLBACK_DAYS = 31;
+
+      if (Number.isFinite(days) && days > 0 && days <= MAX_FALLBACK_DAYS) {
+        if (effectiveMode === "aggregated") {
+          const all = [];
+          for (let i = 0; i < days; i += 1) {
+            const day = addDaysUTC(ymdFrom, i);
+            const dayDraws = await fetchDrawsDayNoPrizes({ uf, dayYmd: day });
+            if (dayDraws.length) all.push(...dayDraws);
+          }
+
+          const baseAll = dedupeDrawsLocal(all);
+          const base = hourFilter?.kind
+            ? baseAll.filter((d) => drawPassesHourFilter(d, hourFilter))
+            : baseAll;
+
+          let out = dedupeDrawsLocal(sortDrawsLocal(base));
+
+          if (!bypassCache) {
+      cacheSet(DRAWS_CACHE, rangeKey, out);
+    }
+          return out;
+        }
+
+        const all = [];
+        for (let i = 0; i < days; i += 1) {
+          const day = addDaysUTC(ymdFrom, i);
+          const dayDraws = await getKingResultsByDate({
+            uf,
+            date: day,
+            closeHour,
+            closeHourBucket,
+            positions: positionsArr,
+          });
+          if (Array.isArray(dayDraws) && dayDraws.length) all.push(...dayDraws);
+        }
+
+        const baseAll = dedupeDrawsLocal(all);
+        const base = hourFilter?.kind
+          ? baseAll.filter((d) => drawPassesHourFilter(d, hourFilter))
+          : baseAll;
+
+        let out = dedupeDrawsLocal(sortDrawsLocal(base));
+
+        if (!bypassCache) {
+      cacheSet(DRAWS_CACHE, rangeKey, out);
+    }
+        return out;
+      }
+
+      const rawCode = String(error?.code || "");
+      const rawMsg = String(error?.message || "");
+
+      throw new Error(
+        `Firestore: falta índice composto para RANGE (campo ${usedField} + ymd).\n` +
+          `Crie/valide o índice no console (Collection: draws | Fields: ${usedField} ASC, ymd ASC, __name__ (documentId) ASC).\n` +
+          `Obs: fallback automático só é aplicado para ranges até ${MAX_FALLBACK_DAYS} dias.\n` +
+          (rawCode || rawMsg ? `Detalhe: ${rawCode} ${rawMsg}` : "")
+      );
+    }
+
+    throw error;
+  }
+
+  if (!docs || !docs.length) {
+    const days = daysBetweenInclusiveUTC(ymdFrom, ymdTo);
+    const MAX_EMPTY_RANGE_FALLBACK_DAYS = 120;
+
+    if (
+      Number.isFinite(days) &&
+      days > 0 &&
+      days <= MAX_EMPTY_RANGE_FALLBACK_DAYS
+    ) {
+      if (effectiveMode === "aggregated") {
+        const all = [];
+        for (let i = 0; i < days; i += 1) {
+          const day = addDaysUTC(ymdFrom, i);
+          const dayDraws = await fetchDrawsDayNoPrizes({ uf, dayYmd: day });
+          if (dayDraws.length) all.push(...dayDraws);
+        }
+
+        const baseAll = dedupeDrawsLocal(all);
+        const base = hourFilter?.kind
+          ? baseAll.filter((d) => drawPassesHourFilter(d, hourFilter))
+          : baseAll;
+
+        let out = dedupeDrawsLocal(sortDrawsLocal(base));
+
+        if (!bypassCache) {
+      cacheSet(DRAWS_CACHE, rangeKey, out);
+    }
+        return out;
+      }
+
+      const all = [];
+      for (let i = 0; i < days; i += 1) {
+        const day = addDaysUTC(ymdFrom, i);
+        const dayDraws = await getKingResultsByDate({
+          uf,
+          date: day,
+          closeHour,
+          closeHourBucket,
+          positions: positionsArr,
+        });
+        if (Array.isArray(dayDraws) && dayDraws.length) all.push(...dayDraws);
+      }
+
+      const baseAll = dedupeDrawsLocal(all);
+      const base = hourFilter?.kind
+        ? baseAll.filter((d) => drawPassesHourFilter(d, hourFilter))
+        : baseAll;
+
+      const ordered = sortDrawsLocal(base);
+
+      const conc = chooseRangeConcurrency(ordered.length);
+      const results = await mapWithConcurrency(ordered, conc, async (item) => {
+        const prizes = await fetchPrizesForDraw(item.drawId, positionsArr, item.prizes);
+        const pc = Array.isArray(prizes) ? prizes.length : 0;
+        return { ...item, prizes, prizesCount: pc, __mode: "detailed" };
+      });
+
+      const out = dedupeDrawsLocal(results);
+      if (!bypassCache) {
+      cacheSet(DRAWS_CACHE, rangeKey, out);
+    }
+      return out;
+    }
+
+    return [];
+  }
+
+  const baseAll = dedupeDrawsLocal(docs.map(mapDrawDoc));
+  const base = hourFilter?.kind
+    ? baseAll.filter((d) => drawPassesHourFilter(d, hourFilter))
+    : baseAll;
+
+  const ordered = sortDrawsLocal(base);
+
+  if (effectiveMode === "aggregated") {
+    const out = dedupeDrawsLocal(
+      ordered.map((d) => {
+        const embedded = normalizeEmbeddedPrizesForAggregated(d?.prizes);
+        return {
+          ...d,
+          prizes: embedded,
+          prizesCount: Number.isFinite(Number(d?.prizesCount))
+            ? Number(d.prizesCount)
+            : embedded.length || 0,
+          __mode: "aggregated",
+        };
+      })
+    );
+    if (!bypassCache) {
+      cacheSet(DRAWS_CACHE, rangeKey, out);
+    }
+    return out;
+  }
+
+  const conc = chooseRangeConcurrency(ordered.length);
+
+  const results = await mapWithConcurrency(ordered, conc, async (item) => {
+    const prizes = await fetchPrizesForDraw(item.drawId, positionsArr, item.prizes);
+    const pc = Array.isArray(prizes) ? prizes.length : 0;
+    return { ...item, prizes, prizesCount: pc, __mode: "detailed" };
+  });
+
+  const out = dedupeDrawsLocal(results);
+  if (!bypassCache) {
+      cacheSet(DRAWS_CACHE, rangeKey, out);
+    }
+  return out;
+}
+
+/* =========================
+   ✅ Hidratação de prizes (para UX no "Todos")
+========================= */
+
+export async function hydrateKingDrawsWithPrizes({
+  draws,
+  positions = null,
+  concurrency = null,
+}) {
+  const arr = Array.isArray(draws) ? draws : [];
+  if (!arr.length) return [];
+
+  const positionsArr = normalizePositions(positions);
+
+  const conc =
+    Number.isFinite(Number(concurrency)) && Number(concurrency) > 0
+      ? Number(concurrency)
+      : chooseRangeConcurrency(arr.length);
+
+  const results = await mapWithConcurrency(arr, conc, async (item) => {
+    const prizes = await fetchPrizesForDraw(item.drawId, positionsArr, item.prizes);
+    const pc = Array.isArray(prizes) ? prizes.length : 0;
+    return { ...item, prizes, prizesCount: pc, __mode: "detailed" };
+  });
+
+  return dedupeDrawsLocal(results);
+}
+
+/* =========================
+   ✅ ATRASADOS (Late) — 100% baseado na SUA base
+========================= */
+
+function normalizeLotteriesList(lotteries) {
+  const arr = Array.isArray(lotteries) ? lotteries : [];
+  const cleaned = arr
+    .map((x) => String(x ?? "").trim().toUpperCase())
+    .filter(Boolean);
+  return cleaned.length ? Array.from(new Set(cleaned)) : null;
+}
+
+function drawPassesLotteriesFilter(draw, lotteriesArr) {
+  if (!lotteriesArr || !lotteriesArr.length) return true;
+
+  const identities = [
+    draw?.lottery_key,
+    draw?.lotteryKey,
+    draw?.lottery_code,
+    draw?.lotteryCode,
+    draw?.lot_code,
+    draw?.lotCode,
+    draw?.lot,
+    draw?.code,
+  ]
+    .map((value) => String(value ?? "").trim().toUpperCase())
+    .filter(Boolean);
+
+  return identities.some((identity) =>
+    lotteriesArr.includes(identity)
+  );
+}
+
+function lateCacheKey({
+  scopeKey,
+  fromYmd,
+  toYmd,
+  baseYmd,
+  prizePosition,
+  hourFilter,
+  lotteriesArr,
+  chunkDays,
+}) {
+  const h =
+    hourFilter?.kind === "bucket"
+      ? `bucket:${hourFilter.bucket}`
+      : hourFilter?.kind === "exact"
+      ? `exact:${hourFilter.hhmm}`
+      : "all";
+  const lots = lotteriesArr && lotteriesArr.length ? lotteriesArr.join(",") : "all";
+  const cd = Number(chunkDays) || 15;
+  const pos = Number(prizePosition) || 1;
+  return `late::${scopeKey}::${fromYmd}..${toYmd}::base=${baseYmd}::pos=${pos}::h=${h}::lots=${lots}::chunk=${cd}`;
+}
+
+function hourToNumSafe(hhmm) {
+  const s = normalizeHourLike(hhmm);
+  const m = s.match(/^(\d{2}):(\d{2})$/);
+  if (!m) return Number.POSITIVE_INFINITY;
+  return Number(m[1]) * 100 + Number(m[2]);
+}
+
+export async function getKingLateByRange({
+  uf,
+  dateFrom,
+  dateTo,
+  baseDate = null,
+  lotteries = null,
+  prizePosition = 1,
+  closeHour = null,
+  closeHourBucket = null,
+  chunkDays = 15,
+}) {
+  if (!uf || !dateFrom || !dateTo) {
+    throw new Error("Parâmetros obrigatórios: uf, dateFrom, dateTo");
+  }
+
+  const scopeKey = canonicalScopeKey(uf);
+
+  const fromYmd = normalizeToYMD(dateFrom);
+  const toYmd = normalizeToYMD(dateTo);
+  if (!fromYmd || !toYmd) return [];
+
+  const baseYmd = normalizeToYMD(baseDate) || toYmd;
+
+  const hourFilter = resolveHourFilter({ closeHour, closeHourBucket });
+  const lotteriesArr = normalizeLotteriesList(lotteries);
+
+  const cacheKey = lateCacheKey({
+    scopeKey,
+    fromYmd,
+    toYmd,
+    baseYmd,
+    prizePosition,
+    hourFilter,
+    lotteriesArr,
+    chunkDays,
+  });
+
+  const cached = cacheGet(LATE_CACHE, cacheKey);
+  if (cached) return cached;
+
+  const posNum = Number(prizePosition) || 1;
+
+  const lastSeen = new Map();
+
+  let cursorTo = toYmd;
+  const chunk = Math.max(3, Math.min(60, Number(chunkDays) || 15));
+
+  if (cursorTo < fromYmd) {
+    const outEmpty = Array.from({ length: 25 }, (_, i) => ({
+      pos: i + 1,
+      grupo: i + 1,
+      lastYmd: null,
+      lastHour: null,
+      lastDrawId: null,
+      lastLottery: null,
+      atrasoDias: null,
+    }));
+    cacheSet(LATE_CACHE, cacheKey, outEmpty);
+    return outEmpty;
+  }
+
+  while (cursorTo >= fromYmd && lastSeen.size < 25) {
+    let chunkFrom = addDaysUTC(cursorTo, -(chunk - 1));
+    if (chunkFrom < fromYmd) chunkFrom = fromYmd;
+
+    const draws = await getKingResultsByRange({
+      uf,
+      dateFrom: chunkFrom,
+      dateTo: cursorTo,
+      closeHour,
+      closeHourBucket,
+      positions: [posNum],
+      mode: "detailed",
+    });
+
+    const desc = sortDrawsLocalDesc(dedupeDrawsLocal(draws));
+
+    for (const d of desc) {
+      if (!d) continue;
+
+      if (hourFilter?.kind && !drawPassesHourFilter(d, hourFilter)) continue;
+      if (lotteriesArr && !drawPassesLotteriesFilter(d, lotteriesArr)) continue;
+
+      const ymd = d.ymd || normalizeToYMD(d.date);
+      if (!ymd || !isYMD(ymd)) continue;
+
+      const p = Array.isArray(d.prizes)
+        ? d.prizes.find(
+            (x) => Number(x?.position) === posNum && isValidGrupo(x?.grupo)
+          )
+        : null;
+
+      const g = Number(p?.grupo);
+      if (!isValidGrupo(g)) continue;
+
+      if (!lastSeen.has(g)) {
+        lastSeen.set(g, {
+          ymd,
+          hour: d.close_hour || d.closeHour || "",
+          drawId: d.drawId || d.id || null,
+          lottery_code: d.lottery_code || null,
+        });
+
+        if (lastSeen.size >= 25) break;
+      }
+    }
+
+    cursorTo = addDaysUTC(chunkFrom, -1);
+  }
+
+  const rows = [];
+  for (let g = 1; g <= 25; g += 1) {
+    const seen = lastSeen.get(g) || null;
+    const lastYmd = seen?.ymd || null;
+    const diff = lastYmd ? daysDiffUTC(lastYmd, baseYmd) : NaN;
+    const atrasoDias =
+      lastYmd && Number.isFinite(diff) ? Math.max(0, diff) : null;
+
+    rows.push({
+      pos: 0,
+      grupo: g,
+      lastYmd,
+      lastHour: seen?.hour ? normalizeHourLike(seen.hour) : null,
+      lastDrawId: seen?.drawId || null,
+      lastLottery: seen?.lottery_code || null,
+      atrasoDias,
+    });
+  }
+
+  const sorted = [...rows].sort((a, b) => {
+    const aa = Number.isFinite(Number(a?.atrasoDias)) ? Number(a.atrasoDias) : -1;
+    const bb = Number.isFinite(Number(b?.atrasoDias)) ? Number(b.atrasoDias) : -1;
+    if (bb !== aa) return bb - aa;
+
+    const ha = hourToNumSafe(a?.lastHour);
+    const hb = hourToNumSafe(b?.lastHour);
+    if (ha !== hb) return ha - hb;
+
+    return Number(a?.grupo || 0) - Number(b?.grupo || 0);
+  });
+
+  const out = sorted.map((r, idx) => ({ ...r, pos: idx + 1 }));
+
+  cacheSet(LATE_CACHE, cacheKey, out);
+  return out;
+}
+
+====================================================================================================
+REFERÊNCIAS DA PÁGINA RESULTS
+====================================================================================================
+ARQUIVO: C:\Users\glaub\palpitaco\src\dev\runAuditRJ.js
+LINHA: 2
+import { getKingBoundsByUf } from "../services/kingResultsService";
+
+ARQUIVO: C:\Users\glaub\palpitaco\src\dev\runAuditTop3.js
+LINHA: 5
+  getKingResultsByRange,
+
+ARQUIVO: C:\Users\glaub\palpitaco\src\dev\runAuditTop3.js
+LINHA: 6
+} from "../services/kingResultsService";
+
+ARQUIVO: C:\Users\glaub\palpitaco\src\dev\runAuditTop3.js
+LINHA: 102
+  const drawsRange = await getKingResultsByRange({
+
+ARQUIVO: C:\Users\glaub\palpitaco\src\hooks\useKingRanking.js
+LINHA: 3
+  getKingResultsByDate,
+
+ARQUIVO: C:\Users\glaub\palpitaco\src\hooks\useKingRanking.js
+LINHA: 4
+  getKingResultsByRange,
+
+ARQUIVO: C:\Users\glaub\palpitaco\src\hooks\useKingRanking.js
+LINHA: 6
+} from "../services/kingResultsService";
+
+ARQUIVO: C:\Users\glaub\palpitaco\src\hooks\useKingRanking.js
+LINHA: 570
+          draws = await getKingResultsByRange({
+
+ARQUIVO: C:\Users\glaub\palpitaco\src\hooks\useKingRanking.js
+LINHA: 582
+          draws = await getKingResultsByDate({
+
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Admin\modules\MilharEngine\MilharEnginePage.jsx
+LINHA: 5
+  getKingResultsByRange,
+
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Admin\modules\MilharEngine\MilharEnginePage.jsx
+LINHA: 6
+} from "../../../../services/kingResultsService";
+
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Admin\modules\MilharEngine\MilharEnginePage.jsx
+LINHA: 341
+          await getKingResultsByRange({
+
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Centenas\CentenasView.jsx
+LINHA: 3
+import { getKingBoundsByUf, getKingResultsByRange } from "../../services/kingResultsService";
+
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Centenas\CentenasView.jsx
+LINHA: 1024
+                    await getKingResultsByRange({
+
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Dashboard\Dashboard.jsx
+LINHA: 29
+import { getKingBoundsByUf } from "../../services/kingResultsService";
+
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Dashboard\Dashboard.jsx
+LINHA: 1185
+  const drawsForUi = useMemo(() => (Array.isArray(drawsRaw) ? drawsRaw : []), [drawsRaw]);
+
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Dashboard\Dashboard.jsx
+LINHA: 1275
+    const list = Array.isArray(drawsForUi) ? drawsForUi : [];
+
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Dashboard\Dashboard.jsx
+LINHA: 1356
+    drawsForUi,
+
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Dashboard\Dashboard.jsx
+LINHA: 1372
+    if (!Array.isArray(drawsForUi) || !drawsForUi.length) return rankingRowsFromMeta;
+
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Dashboard\Dashboard.jsx
+LINHA: 1375
+      const built = buildRanking(drawsForUi);
+
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Dashboard\Dashboard.jsx
+LINHA: 1392
+  }, [drawsForUi, rankingRowsFromMeta, isAggregatedOnly]);
+
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Dashboard\Dashboard.jsx
+LINHA: 1438
+    if (Array.isArray(drawsForUi) && drawsForUi.length) {
+
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Dashboard\Dashboard.jsx
+LINHA: 1439
+      for (const d of drawsForUi) {
+
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Dashboard\Dashboard.jsx
+LINHA: 1482
+  }, [drawsForUi, isFederal]);
+
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Dashboard\Dashboard.jsx
+LINHA: 1741
+          loading={loadingEffective && !rankingRowsFromMeta.length && !drawsForUi.length}
+
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Dashboard\Dashboard.jsx
+LINHA: 1800
+                      drawsRawGlobal={dataReady ? drawsForUi : []}
+
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Dashboard\Dashboard.jsx
+LINHA: 1811
+                    drawsRawGlobal={dataReady ? drawsForUi : []}
+
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Dashboard\Dashboard.jsx
+LINHA: 1855
+              drawsRawGlobal={drawsForUi}
+
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Downloads\Downloads.jsx
+LINHA: 3
+import { getKingResultsByRange, getKingBoundsByUf } from "../../services/kingResultsService";
+
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Downloads\Downloads.jsx
+LINHA: 762
+    const out = await getKingResultsByRange({
+
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx
+LINHA: 5
+  getKingResultsByDate,
+
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx
+LINHA: 7
+} from "../../services/kingResultsService";
+
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx
+LINHA: 469
+    const dayResult = await getKingResultsByDate({
+
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Results\Results.jsx
+LINHA: 1
+// src/pages/Results/Results.jsx
+
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Results\Results.jsx
+LINHA: 6
+  getKingResultsByDate,
+
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Results\Results.jsx
+LINHA: 7
+  getKingResultsByRange,
+
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Results\Results.jsx
+LINHA: 8
+} from "../../services/kingResultsService";
+
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Results\Results.jsx
+LINHA: 846
+      const out = await getKingResultsByRange({
+
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Results\Results.jsx
+LINHA: 871
+      const out = await getKingResultsByDate({
+
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Search\Search.jsx
+LINHA: 3
+import { getKingBoundsByUf, getKingResultsByRange } from "../../services/kingResultsService";
+
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Search\Search.jsx
+LINHA: 754
+        const res = await getKingResultsByRange({
+
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Statistics\Statistics.jsx
+LINHA: 4
+  getKingResultsByRange,
+
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Statistics\Statistics.jsx
+LINHA: 5
+} from "../../services/kingResultsService";
+
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Statistics\Statistics.jsx
+LINHA: 905
+        const response = await getKingResultsByRange({
+
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Top3\__tests__\top3.backtest.layers.test.js
+LINHA: 22
+  getKingResultsByRange,
+
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Top3\__tests__\top3.backtest.layers.test.js
+LINHA: 23
+} from "../../../services/kingResultsService";
+
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Top3\__tests__\top3.backtest.layers.test.js
+LINHA: 161
+  const raw = await getKingResultsByRange({
+
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Top3\__tests__\top3.backtest.test.js
+LINHA: 22
+  getKingResultsByRange,
+
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Top3\__tests__\top3.backtest.test.js
+LINHA: 23
+} from "../../../services/kingResultsService";
+
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Top3\__tests__\top3.backtest.test.js
+LINHA: 173
+  const raw = await getKingResultsByRange({
+
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Top3\modules\top3.loader.js
+LINHA: 2
+  getKingResultsByRange,
+
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Top3\modules\top3.loader.js
+LINHA: 27
+    (await getKingResultsByRange({
+
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Top3\modules\top3.loader.js
+LINHA: 44
+  getKingResultsByRange,
+
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Top3\modules\top3.loader.js
+LINHA: 57
+    (await getKingResultsByRange({
+
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js
+LINHA: 297
+  getKingResultsByDate,
+
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js
+LINHA: 341
+    const out = await getKingResultsByDate({
+
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js
+LINHA: 297
+  getKingResultsByDate,
+
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js
+LINHA: 341
+    const out = await getKingResultsByDate({
+
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.js
+LINHA: 423
+  getKingResultsByDate,
+
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.js
+LINHA: 467
+    const out = await getKingResultsByDate({
+
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js
+LINHA: 52
+  getKingResultsByDate,
+
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js
+LINHA: 53
+  getKingResultsByRange,
+
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js
+LINHA: 55
+} from "../../services/kingResultsService";
+
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js
+LINHA: 495
+        (await getKingResultsByDate({
+
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js
+LINHA: 602
+          getKingResultsByDate,
+
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js
+LINHA: 616
+              getKingResultsByRange,
+
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js
+LINHA: 660
+          : (await getKingResultsByDate({
+
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js
+LINHA: 674
+        getKingResultsByDate,
+
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js
+LINHA: 687
+          getKingResultsByRange,
+
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js
+LINHA: 771
+        getKingResultsByRange,
+
+ARQUIVO: C:\Users\glaub\palpitaco\src\services\king\king.normalize.js
+LINHA: 3
+// Migração controlada: as funções serão movidas gradualmente do kingResultsService.js para cá.
+
+ARQUIVO: C:\Users\glaub\palpitaco\src\services\kingResultsService.js
+LINHA: 2
+// src/services/kingResultsService.js
+
+ARQUIVO: C:\Users\glaub\palpitaco\src\services\kingResultsService.js
+LINHA: 1110
+export async function getKingResultsByDate({
+
+ARQUIVO: C:\Users\glaub\palpitaco\src\services\kingResultsService.js
+LINHA: 1303
+export async function getKingResultsByRange({
+
+ARQUIVO: C:\Users\glaub\palpitaco\src\services\kingResultsService.js
+LINHA: 1387
+          const dayDraws = await getKingResultsByDate({
+
+ARQUIVO: C:\Users\glaub\palpitaco\src\services\kingResultsService.js
+LINHA: 1457
+        const dayDraws = await getKingResultsByDate({
+
+ARQUIVO: C:\Users\glaub\palpitaco\src\services\kingResultsService.js
+LINHA: 1688
+    const draws = await getKingResultsByRange({
+
+ARQUIVO: C:\Users\glaub\palpitaco\src\services\statisticsEngine.js
+LINHA: 3
+import { getKingResultsByRange } from "./kingResultsService";
+
+ARQUIVO: C:\Users\glaub\palpitaco\src\services\statisticsEngine.js
+LINHA: 48
+  const draws = await getKingResultsByRange({
+
+ARQUIVO: C:\Users\glaub\palpitaco\src\App.jsx
+LINHA: 21
+const Results = lazy(() => import("./pages/Results/Results"));
+
+ARQUIVO: C:\Users\glaub\palpitaco\src\App.jsx
+LINHA: 374
+      return "/results";
+
+ARQUIVO: C:\Users\glaub\palpitaco\src\App.jsx
+LINHA: 400
+  if (p === "/results") return ROUTES.RESULTS;
+
+
+====================================================================================================
+FIM
+====================================================================================================

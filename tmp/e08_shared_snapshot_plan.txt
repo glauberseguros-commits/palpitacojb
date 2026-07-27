@@ -1,0 +1,281 @@
+====================================================================================================
+backend\scripts\backtestTop3Official.js
+====================================================================================================
+
+[490] runOfficialBacktest
+  482:     lines.push(
+  483:       `${month} avaliados=${String(bucket.evaluated).padStart(5)} | TOP1=${formatPercent(bucket.top1Rate).padStart(8)} | TOP3=${formatPercent(bucket.top3Rate).padStart(8)} | erros=${bucket.errors}`
+  484:     );
+  485:   }
+  486: 
+  487:   return lines.join("\n");
+  488: }
+  489: 
+  490: async function runOfficialBacktest(
+  491:   options = {},
+  492:   dependencies = {}
+  493: ) {
+  494:   const startedAt = Date.now();
+  495: 
+  496:   const lotteryKey =
+  497:     normalizeLotteryKey(
+  498:       options.lotteryKey ||
+  499:       "PT_RIO"
+  500:     );
+  501: 
+  502:   const publicApi =
+
+[507] dependencies\.readFullHistory
+  499:       "PT_RIO"
+  500:     );
+  501: 
+  502:   const publicApi =
+  503:     dependencies.publicApi ||
+  504:     loadTop3PublicApi();
+  505: 
+  506:   const loadHistory =
+  507:     dependencies.readFullHistory ||
+  508:     readFullHistory;
+  509: 
+  510:   const loadMetadata =
+  511:     dependencies.readMetadata ||
+  512:     readMetadata;
+  513: 
+  514:   const computeTop3 =
+  515:     dependencies.computeTop3 ||
+  516:     computeStatisticalTop3V3;
+  517: 
+  518:   const history = sortDraws(
+  519:     await loadHistory(
+
+[518] const history =
+  510:   const loadMetadata =
+  511:     dependencies.readMetadata ||
+  512:     readMetadata;
+  513: 
+  514:   const computeTop3 =
+  515:     dependencies.computeTop3 ||
+  516:     computeStatisticalTop3V3;
+  517: 
+  518:   const history = sortDraws(
+  519:     await loadHistory(
+  520:       lotteryKey,
+  521:       dependencies.historyDependencies || {}
+  522:     ),
+  523:     publicApi
+  524:   );
+  525: 
+  526:   if (!history.length) {
+  527:     throw new Error(
+  528:       "Histórico TOP3 vazio."
+  529:     );
+  530:   }
+
+[519] await loadHistory
+  511:     dependencies.readMetadata ||
+  512:     readMetadata;
+  513: 
+  514:   const computeTop3 =
+  515:     dependencies.computeTop3 ||
+  516:     computeStatisticalTop3V3;
+  517: 
+  518:   const history = sortDraws(
+  519:     await loadHistory(
+  520:       lotteryKey,
+  521:       dependencies.historyDependencies || {}
+  522:     ),
+  523:     publicApi
+  524:   );
+  525: 
+  526:   if (!history.length) {
+  527:     throw new Error(
+  528:       "Histórico TOP3 vazio."
+  529:     );
+  530:   }
+  531: 
+
+[521] dependencies\.historyDependencies
+  513: 
+  514:   const computeTop3 =
+  515:     dependencies.computeTop3 ||
+  516:     computeStatisticalTop3V3;
+  517: 
+  518:   const history = sortDraws(
+  519:     await loadHistory(
+  520:       lotteryKey,
+  521:       dependencies.historyDependencies || {}
+  522:     ),
+  523:     publicApi
+  524:   );
+  525: 
+  526:   if (!history.length) {
+  527:     throw new Error(
+  528:       "Histórico TOP3 vazio."
+  529:     );
+  530:   }
+  531: 
+  532:   const metadataResult =
+  533:     await loadMetadata(
+
+[535] dependencies\.historyDependencies
+  527:     throw new Error(
+  528:       "Histórico TOP3 vazio."
+  529:     );
+  530:   }
+  531: 
+  532:   const metadataResult =
+  533:     await loadMetadata(
+  534:       lotteryKey,
+  535:       dependencies.historyDependencies || {}
+  536:     );
+  537: 
+  538:   const metadata =
+  539:     metadataResult?.data || null;
+  540: 
+  541:   if (
+  542:     dependencies.allowIncompleteSnapshot !== true &&
+  543:     (
+  544:       metadataResult?.exists !== true ||
+  545:       metadata?.bootstrapStatus !==
+  546:         "complete"
+  547:     )
+
+[999] runOfficialBacktest
+  991:     "Telemetria.........:",
+  992:     options.telemetry
+  993:       ? "ATIVA"
+  994:       : "DESATIVADA"
+  995:   );
+  996:   console.log("");
+  997: 
+  998:   const result =
+  999:     await runOfficialBacktest(
+ 1000:       options
+ 1001:     );
+ 1002: 
+ 1003:   const outputDir = path.resolve(
+ 1004:     options.outputDir
+ 1005:   );
+ 1006: 
+ 1007:   fs.mkdirSync(
+ 1008:     outputDir,
+ 1009:     {
+ 1010:       recursive: true,
+ 1011:     }
+
+[1072] module\.exports
+ 1064:       error?.message ||
+ 1065:       error
+ 1066:     );
+ 1067: 
+ 1068:     process.exit(1);
+ 1069:   });
+ 1070: }
+ 1071: 
+ 1072: module.exports = {
+ 1073:   parseBooleanFlag,
+ 1074:   parseCliArgs,
+ 1075:   sortDraws,
+ 1076:   getFirstPrizeGroup,
+ 1077:   getPredictionGroups,
+ 1078:   finalizeBucket,
+ 1079:   buildTextReport,
+ 1080:   runOfficialBacktest,
+ 1081: };
+
+[1080] runOfficialBacktest
+ 1072: module.exports = {
+ 1073:   parseBooleanFlag,
+ 1074:   parseCliArgs,
+ 1075:   sortDraws,
+ 1076:   getFirstPrizeGroup,
+ 1077:   getPredictionGroups,
+ 1078:   finalizeBucket,
+ 1079:   buildTextReport,
+ 1080:   runOfficialBacktest,
+ 1081: };
+
+====================================================================================================
+backend\scripts\backtestTop3E08Experimental.js
+====================================================================================================
+
+[7] runOfficialBacktest
+    1: "use strict";
+    2: 
+    3: const fs = require("fs");
+    4: const path = require("path");
+    5: 
+    6: const {
+    7:   runOfficialBacktest,
+    8: } = require("./backtestTop3Official");
+    9: 
+   10: const {
+   11:   computeStatisticalTop3E08Experimental,
+   12: } = require("../engine/scoreEngineE08Experimental");
+   13: 
+   14: function parseIntegerFlag(
+   15:   flags,
+   16:   name,
+   17:   fallback
+   18: ) {
+   19:   const prefix = `--${name}=`;
+
+[130] runOfficialBacktest
+  122:   );
+  123:   console.log("");
+  124: 
+  125:   console.log(
+  126:     "[1/2] Executando V3..."
+  127:   );
+  128: 
+  129:   const baseline =
+  130:     await runOfficialBacktest(
+  131:       options
+  132:     );
+  133: 
+  134:   console.log("");
+  135:   console.log(
+  136:     "[2/2] Executando E08..."
+  137:   );
+  138: 
+  139:   const experimental =
+  140:     await runOfficialBacktest(
+  141:       options,
+  142:       {
+
+[140] runOfficialBacktest
+  132:     );
+  133: 
+  134:   console.log("");
+  135:   console.log(
+  136:     "[2/2] Executando E08..."
+  137:   );
+  138: 
+  139:   const experimental =
+  140:     await runOfficialBacktest(
+  141:       options,
+  142:       {
+  143:         computeTop3:
+  144:           computeStatisticalTop3E08Experimental,
+  145:       }
+  146:     );
+  147: 
+  148:   const top3Invariant =
+  149:     (
+  150:       baseline.global.top3Hits ===
+  151:       experimental.global.top3Hits
+  152:     );
+
+[409] module\.exports
+  401:         error
+  402:       );
+  403: 
+  404:       process.exit(1);
+  405:     }
+  406:   );
+  407: }
+  408: 
+  409: module.exports = {
+  410:   main,
+  411: };
+

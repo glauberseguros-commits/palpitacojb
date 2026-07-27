@@ -1,0 +1,278 @@
+====================================================================================================
+TOP3-UI-04 — BLOCO DO HISTÓRICO RECENTE
+====================================================================================================
+Gerado em: 25/07/2026 20:15:58
+Arquivo: .\src\pages\Top3\Top3View.jsx
+====================================================================================================
+
+01245:               </div>
+01246:             </div>
+01247:           ) : (
+01248:             <div className="timeline-compact__resultPending">PENDENTE</div>
+01249:           )}
+01250:         </div>
+01251: 
+01252:         <div className="timeline-compact__performance">
+01253:           <div
+01254:             className={`timeline-compact__performanceBadge timeline-compact__performanceBadge--${status}`}
+01255:           >
+01256:             {statusLabel}
+01257:           </div>
+01258:           <div className="timeline-compact__performanceText">{statusDetail}</div>
+01259:         </div>
+01260:       </div>
+01261:     </div>
+01262:   );
+01263: }
+01264: 
+01265: function TimelineSlot({
+01266:   slot,
+01267:   theme,
+01268:   copiedAllKey,
+01269:   copiedCellKey,
+01270:   setCopiedAllKey,
+01271:   setCopiedCellKey,
+01272:   copyText,
+01273:   build16,
+01274:   buildMilhares,
+01275:   build20,
+01276: }) {
+01277:   const t = theme;
+01278:   const slotTop3 = Array.isArray(slot?.top3) ? slot.top3.slice(0, 3) : [];
+01279: 
+01280:   const resultGrupo = getSlotResultGrupo(slot);
+01281:   const hasResult = hasOfficialResult(slot);
+01282:   const resultAnimal =
+01283:     hasResult && Number.isFinite(resultGrupo)
+01284:       ? String(getAnimalLabel(resultGrupo) || "")
+01285:       : "";
+01286: 
+01287:   const officialPodium = getOfficialPodium(slot);
+01288: 
+01289:   const analysis = analyzeTop3Hit(
+01290:     slotTop3,
+01291:     officialPodium
+01292:   );
+01293: 
+01294:   const status =
+01295:     !hasResult
+01296:       ? "pending"
+01297:       : analysis.type === "miss"
+01298:         ? "miss"
+01299:         : "hit";
+01300: 
+01301:   const statusLabel =
+01302:     !hasResult
+01303:       ? "⏳ PENDENTE"
+01304:       : analysis.type === "hit_exact"
+01305:         ? "🎯 MILHAR (100%)"
+01306:         : analysis.type === "hit_centena"
+01307:           ? "🟡 CENTENA (66,67%)"
+01308:           : analysis.type === "hit_grupo"
+01309:             ? "✅ DEZENA/GRUPO (33,33%)"
+01310:             : "❌ ERRO (0%)";
+01311: 
+01312:   const statusDetail =
+01313:     !hasResult
+01314:       ? "Aguardando resultado oficial."
+01315:       : analysis.type === "hit_exact"
+01316:         ? `Milhar exata acertada no palpite #${analysis.position}.`
+01317:         : analysis.type === "hit_centena"
+01318:           ? `Centena acertada no palpite #${analysis.position}.`
+01319:           : analysis.type === "hit_grupo"
+01320:             ? `Grupo acertado no palpite #${analysis.position}.`
+01321:             : "Nenhum dos 3 palpites foi sorteado.";
+01322: 
+01323:   return (
+01324:     <section className="top3-shell">
+01325:       <div className="timeline-slot__header">
+01326:         <div className="timeline-slot__title">
+01327:           {formatYmdHour(slot?.targetYmd, slot?.targetHour)}
+01328:         </div>
+01329: 
+01330:         <div className={`timeline-slot__badge timeline-slot__badge--${status}`}>
+01331:           {statusLabel}
+01332:         </div>
+01333:       </div>
+01334: 
+01335:       <div className="timeline-slot__metaGrid">
+01336:         <div className="top3-metaItem">
+01337:           <div className="top3-metaItem__label">Base usada</div>
+01338:           <div className="top3-metaItem__value">
+01339:             {formatYmdHour(slot?.baseYmd, slot?.baseHour)}
+01340:           </div>
+01341:         </div>
+01342: 
+01343:         <div className="top3-metaItem">
+01344:           <div className="top3-metaItem__label">Resultado real</div>
+01345:           <div className="top3-metaItem__value">
+01346:             {hasResult
+01347:               ? `G${formatGrupo(resultGrupo)} • ${resultAnimal.toUpperCase()}`
+01348:               : "Pendente"}
+01349:           </div>
+01350:         </div>
+01351: 
+01352:         <div className="top3-metaItem">
+01353:           <div className="top3-metaItem__label">Status</div>
+01354:           <div className="top3-metaItem__value">{statusDetail}</div>
+01355:         </div>
+01356:       </div>
+01357: 
+01358:       {!slotTop3.length ? (
+01359:         <div className="top3-empty">Sem Top3 calculado para este horário.</div>
+01360:       ) : status === "pending" ? (
+01361:         <div className="timeline-slot__cards">
+01362:           {slotTop3.map((item, i) => (
+01363:             <Top3Card
+01364:               key={`${slot?.targetYmd || "y"}_${slot?.targetHour || "h"}_${String(item?.grupo ?? i)}`}
+01365:               item={item}
+01366:               idx={i}
+01367:               theme={t}
+01368:               copiedAllKey={copiedAllKey}
+01369:               copiedCellKey={copiedCellKey}
+01370:               setCopiedAllKey={setCopiedAllKey}
+01371:               setCopiedCellKey={setCopiedCellKey}
+01372:               copyText={copyText}
+01373:               build16={build16}
+01374:               buildMilhares={buildMilhares}
+01375:               build20={build20}
+01376:             />
+01377:           ))}
+01378:         </div>
+01379:       ) : (
+01380:         <CompactTop3Result
+01381:           slot={slot}
+01382:           status={status}
+01383:           statusLabel={statusLabel}
+01384:           statusDetail={statusDetail}
+01385:         />
+01386:       )}
+01387:     </section>
+01388:   );
+01389: }
+01390: 
+01391: export default function Top3View(props) {
+01392:   const {
+01393:     loading,
+01394:     error,
+01395:     timelineTop3,
+01396:     persistedTop3History,
+01397:     top3,
+01398:     layerMetaText,
+01399:     lastLabel,
+01400:     prevLabel,
+01401:     theme,
+01402:     LOTTERY_OPTIONS,
+01403:     lotteryKeySafe,
+01404:     setLotteryKey,
+01405:     setYmd,
+01406:     build16,
+01407:     buildMilhares,
+01408:     build20,
+01409:     analysisYmd,
+01410:     analysisHourBucket,
+01411:     loadedYmd,
+01412:     ymdSafe,
+01413:     lastHourBucket,
+01414:   } = props || {};
+01415: 
+01416:   // TODO_BACKTEST_REAL
+01417: // Os cards estatísticos deverão consumir auditTop3Backtest()
+01418: // evitando cálculos paralelos na interface.
+01419: //
+01420: // Fase atual:
+01421: // apenas corrigindo nomenclatura para refletir o cálculo existente.
+01422: 
+01423: const list = Array.isArray(top3)
+01424:   ? top3.slice(0, 3)
+01425:   : [];
+01426:   const timeline = (Array.isArray(timelineTop3) ? timelineTop3 : [])
+01427:   .slice()
+01428:   .sort((a, b) => {
+01429:     const ta = `${a?.targetYmd || ""} ${a?.targetHour || ""}`;
+01430:     const tb = `${b?.targetYmd || ""} ${b?.targetHour || ""}`;
+01431:     return ta.localeCompare(tb);
+01432:   });
+01433: 
+01434:   const showDetailedTimeline = false;
+01435: 
+01436:   const meta = useMemo(() => {
+01437:     const last = lastLabel || "—";
+01438:     const prev = prevLabel || "—";
+01439:     const layer = cleanLayerText(layerMetaText || "—");
+01440:     return { last, prev, layer };
+01441:   }, [lastLabel, prevLabel, layerMetaText]);
+01442: 
+01443:   const headerBase = useMemo(() => meta.last || "—", [meta.last]);
+01444: 
+01445:   const headerForecast = useMemo(() => {
+01446:     return formatYmdHour(analysisYmd, analysisHourBucket);
+01447:   }, [analysisYmd, analysisHourBucket]);
+01448: 
+01449:   const headerTransition = useMemo(() => {
+01450:     const from = String(lastHourBucket || "").trim();
+01451:     const to = String(analysisHourBucket || "").trim();
+01452:     if (from && to) return `${from} → ${to}`;
+01453:     return "—";
+01454:   }, [lastHourBucket, analysisHourBucket]);
+01455: 
+01456:   const t = theme || {
+01457:     bg: "#050505",
+01458:     panel: "rgba(0,0,0,0.55)",
+01459:     border: "rgba(255,255,255,0.18)",
+01460:     text: "rgba(255,255,255,0.92)",
+01461:     muted: "rgba(255,255,255,0.72)",
+01462:     accent: "rgba(201,168,62,0.92)",
+01463:   };
+01464: 
+01465:   const [copiedAllKey, setCopiedAllKey] = useState("");
+01466:   const [copiedCellKey, setCopiedCellKey] = useState("");
+01467: 
+01468: 
+01469:   useEffect(() => {
+01470:     if (!copiedAllKey) return;
+01471:     const id = setTimeout(() => setCopiedAllKey(""), 900);
+01472:     return () => clearTimeout(id);
+01473:   }, [copiedAllKey]);
+01474: 
+01475:   useEffect(() => {
+01476:     if (!copiedCellKey) return;
+01477:     const id = setTimeout(() => setCopiedCellKey(""), 750);
+01478:     return () => clearTimeout(id);
+01479:   }, [copiedCellKey]);
+01480: 
+01481:   const copyText = useCallback(async (txt) => {
+01482:     const s = String(txt || "").trim();
+01483:     if (!s) return false;
+01484: 
+01485:     try {
+01486:       if (typeof navigator !== "undefined" && navigator?.clipboard?.writeText) {
+01487:         await navigator.clipboard.writeText(s);
+01488:         return true;
+01489:       }
+01490:     } catch {}
+01491: 
+01492:     try {
+01493:       if (typeof document === "undefined") return false;
+01494: 
+01495:       const ta = document.createElement("textarea");
+01496:       ta.value = s;
+01497:       ta.style.position = "fixed";
+01498:       ta.style.left = "-9999px";
+01499:       ta.style.top = "0";
+01500:       document.body.appendChild(ta);
+01501:       ta.focus();
+01502:       ta.select();
+01503:       document.execCommand("copy");
+01504:       document.body.removeChild(ta);
+01505:       return true;
+01506:     } catch {
+01507:       return false;
+01508:     }
+01509:   }, []);
+01510: 
+01511:   const baseLots = Array.isArray(LOTTERY_OPTIONS) ? LOTTERY_OPTIONS : [];
+01512:   const mustHave = [
+01513:     { value: "PT_RIO", label: "RJ" },
+01514:     { value: "FEDERAL", label: "Federal" },
+01515:     { value: "LOOK", label: "LOOK" },

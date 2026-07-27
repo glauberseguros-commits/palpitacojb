@@ -1,0 +1,159 @@
+==============================================================================================================
+URL: https://api.palpitacojb.com.br/api/bounds?uf=FEDERAL
+==============================================================================================================
+STATUS: 200
+
+CABEÇALHOS:
+Access-Control-Allow-Headers: Content-Type,Authorization
+Access-Control-Allow-Methods: GET,POST,PUT,PATCH,DELETE,OPTIONS
+Access-Control-Allow-Origin: *
+Alt-Svc: h3=":443"
+Cache-Control: no-store, must-revalidate, proxy-revalidate, no-cache
+cf-cache-status: DYNAMIC
+CF-RAY: a1e2c0d5786762b3-BSB
+Connection: keep-alive
+Content-Type: application/json; charset=utf-8
+Date: Mon, 20 Jul 2026 14:46:30 GMT
+ETag: W/"163-ldOPsCle3P2mijJJIHw/7OO+5o0"
+Expires: 0
+Pragma: no-cache
+rndr-id: f8e73ffe-58a5-4c2e
+Server: cloudflare
+surrogate-control: no-store
+Vary: Accept-Encoding
+X-Powered-By: Express
+x-render-origin-server: Render
+
+CORPO:
+{
+  "ok": true,
+  "lottery": "FEDERAL",
+  "minYmd": "2022-06-08",
+  "maxYmd": "2026-07-19",
+  "source": "where(lottery_key)+orderBy(ymd)+docId(scan=50)",
+  "minDocId": "FEDERAL__2022-06-08__20-00__9519c673-c3b8-4cb9-bcfe-9ddece3b03f3",
+  "maxDocId": "FEDERAL__2026-07-19__20-00__9519c673-c3b8-4cb9-bcfe-9ddece3b03f3",
+  "sampleCount": null,
+  "firstDocId": null,
+  "lastDocId": null,
+  "note": null
+}
+
+
+==============================================================================================================
+URL: https://api.palpitacojb.com.br/api/bounds?lottery=FEDERAL
+==============================================================================================================
+STATUS: 200
+
+CABEÇALHOS:
+Access-Control-Allow-Headers: Content-Type,Authorization
+Access-Control-Allow-Methods: GET,POST,PUT,PATCH,DELETE,OPTIONS
+Access-Control-Allow-Origin: *
+Alt-Svc: h3=":443"
+Cache-Control: no-store, must-revalidate, proxy-revalidate, no-cache
+cf-cache-status: DYNAMIC
+CF-RAY: a1e2c17b1fac62a7-BSB
+Connection: keep-alive
+Content-Type: application/json; charset=utf-8
+Date: Mon, 20 Jul 2026 14:46:31 GMT
+ETag: W/"163-ldOPsCle3P2mijJJIHw/7OO+5o0"
+Expires: 0
+Pragma: no-cache
+rndr-id: c3b5213d-7c1b-4fe4
+Server: cloudflare
+surrogate-control: no-store
+Vary: Accept-Encoding
+X-Powered-By: Express
+x-render-origin-server: Render
+
+CORPO:
+{
+  "ok": true,
+  "lottery": "FEDERAL",
+  "minYmd": "2022-06-08",
+  "maxYmd": "2026-07-19",
+  "source": "where(lottery_key)+orderBy(ymd)+docId(scan=50)",
+  "minDocId": "FEDERAL__2022-06-08__20-00__9519c673-c3b8-4cb9-bcfe-9ddece3b03f3",
+  "maxDocId": "FEDERAL__2026-07-19__20-00__9519c673-c3b8-4cb9-bcfe-9ddece3b03f3",
+  "sampleCount": null,
+  "firstDocId": null,
+  "lastDocId": null,
+  "note": null
+}
+
+
+==============================================================================================================
+URL: https://api.palpitacojb.com.br/api/bounds?lottery_key=FEDERAL
+==============================================================================================================
+STATUS: 400
+
+CABEÇALHOS:
+Access-Control-Allow-Headers: Content-Type,Authorization
+Access-Control-Allow-Methods: GET,POST,PUT,PATCH,DELETE,OPTIONS
+Access-Control-Allow-Origin: *
+Alt-Svc: h3=":443"
+Cache-Control: no-store, must-revalidate, proxy-revalidate, no-cache
+cf-cache-status: DYNAMIC
+CF-RAY: a1e2c1847a7b6295-BSB
+Connection: keep-alive
+Content-Type: application/json; charset=utf-8
+Date: Mon, 20 Jul 2026 14:46:32 GMT
+ETag: W/"26-PvPI2l7YW90JBRbncUv6lGQ0UQc"
+Expires: 0
+Pragma: no-cache
+rndr-id: 41045481-b43e-4295
+Server: cloudflare
+surrogate-control: no-store
+Vary: Accept-Encoding
+X-Powered-By: Express
+x-render-origin-server: Render
+
+CORPO:
+{
+  "ok": false,
+  "error": "invalid_lottery"
+}
+
+
+==============================================================================================================
+URL: https://api.palpitacojb.com.br/api/bounds?uf=BR&lottery=FEDERAL
+==============================================================================================================
+STATUS: 200
+
+CABEÇALHOS:
+Access-Control-Allow-Headers: Content-Type,Authorization
+Access-Control-Allow-Methods: GET,POST,PUT,PATCH,DELETE,OPTIONS
+Access-Control-Allow-Origin: *
+Alt-Svc: h3=":443"
+Cache-Control: no-store, must-revalidate, proxy-revalidate, no-cache
+cf-cache-status: DYNAMIC
+CF-RAY: a1e2c1892d8262a7-BSB
+Connection: keep-alive
+Content-Type: application/json; charset=utf-8
+Date: Mon, 20 Jul 2026 14:46:34 GMT
+ETag: W/"163-ldOPsCle3P2mijJJIHw/7OO+5o0"
+Expires: 0
+Pragma: no-cache
+rndr-id: cc99b742-0e91-460a
+Server: cloudflare
+surrogate-control: no-store
+Vary: Accept-Encoding
+X-Powered-By: Express
+x-render-origin-server: Render
+
+CORPO:
+{
+  "ok": true,
+  "lottery": "FEDERAL",
+  "minYmd": "2022-06-08",
+  "maxYmd": "2026-07-19",
+  "source": "where(lottery_key)+orderBy(ymd)+docId(scan=50)",
+  "minDocId": "FEDERAL__2022-06-08__20-00__9519c673-c3b8-4cb9-bcfe-9ddece3b03f3",
+  "maxDocId": "FEDERAL__2026-07-19__20-00__9519c673-c3b8-4cb9-bcfe-9ddece3b03f3",
+  "sampleCount": null,
+  "firstDocId": null,
+  "lastDocId": null,
+  "note": null
+}
+
+

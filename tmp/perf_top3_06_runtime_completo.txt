@@ -1,0 +1,162 @@
+[OVERRIDE] PT_RIO lotteries=6 | FEDERAL lotteries=1 | LOOK lotteries=8 | NACIONAL lotteries=8
+[FETCH:PART] PT_RIO 2026-07-23 lotteryId=c168d9b3-97b7-42dc-a332-7815edaa51e2 draws=1 close_hours=[09:09]
+[FETCH:PART] PT_RIO 2026-07-23 lotteryId=cbac7c11-e733-400b-ba4d-2dfe0cba4272 draws=1 close_hours=[11:12]
+[FETCH:PART] PT_RIO 2026-07-23 lotteryId=98352455-8fd3-447d-ab3d-701dc3f7865f draws=1 close_hours=[14:12]
+[FETCH:PART] PT_RIO 2026-07-23 lotteryId=76c127b7-8157-46b6-a64a-ec7ed1574c9f draws=1 close_hours=[16:12]
+[FETCH:PART] PT_RIO 2026-07-23 lotteryId=8290329b-aac0-4a6a-9649-5feb6182cf4f draws=1 close_hours=[18:09]
+[FETCH:PART] PT_RIO 2026-07-23 lotteryId=d5123f7e-629d-43e9-a8fb-1385ff1cba45 draws=1 close_hours=[21:12]
+[FETCH] PT_RIO 2026-07-23 per-lottery=6 -> merged_draws=6 close_hours=[09:00, 11:00, 14:00, 16:00, 18:00, 21:00]
+[IMPORT] API draws=6 | match_close=1 | validos=1 | draws_upserted=0 | draws_novos=0 | prizes_upserted=0 | prizes_novos=0 | skip_vazio=0 | skip_invalido=0 | skip_close=5 | skip_complete=1 | CHECK_EXISTENCE=OFF | uf=RJ lottery_key=PT_RIO | expected=1 complete=1 slotDocs=1 apiTargets=1
+[TOP3-HISTORY] Incremental OK | PT_RIO | draws=1 | meses=2026-07
+[TOP3 AUTO] OK | PT_RIO | importado=2026-07-23 21:00 | pr├│ximo=2026-07-24 09:00
+[PERF:IMPORT] PT_RIO 2026-07-23 21:00 | fetch=1074ms | firestore=1865ms | history=908ms | top3=8223ms | total=12084ms
+
+===== RESULTADO =====
+{
+  "ok": true,
+  "lotteryKey": "PT_RIO",
+  "date": "2026-07-23",
+  "closeHour": "21:00",
+  "requestedCloseHour": "21:00",
+  "blocked": false,
+  "blockedReason": null,
+  "todayBR": "2026-07-24",
+  "captured": true,
+  "apiHasPrizes": true,
+  "alreadyCompleteAny": true,
+  "alreadyCompleteAll": true,
+  "expectedTargets": 1,
+  "alreadyCompleteCount": 1,
+  "slotDocsFound": 1,
+  "apiReturnedTargetDraws": 1,
+  "savedCount": 0,
+  "writeCount": 0,
+  "targetDrawIds": [
+    "PT_RIO__2026-07-23__21-00__d5123f7e-629d-43e9-a8fb-1385ff1cba45"
+  ],
+  "tookMs": 2952,
+  "totalDrawsFromApi": 6,
+  "totalDrawsMatchedClose": 1,
+  "totalDrawsValid": 1,
+  "totalDrawsSaved": 0,
+  "totalDrawsUpserted": 0,
+  "totalPrizesSaved": 0,
+  "totalPrizesUpserted": 0,
+  "skippedEmpty": 0,
+  "skippedInvalid": 0,
+  "skippedCloseHour": 5,
+  "skippedAlreadyComplete": 1,
+  "proof": {
+    "filterClose": "21:00",
+    "apiHasPrizes": true,
+    "apiReturnedTargetDraws": 1,
+    "targetDrawIds": [
+      "PT_RIO__2026-07-23__21-00__d5123f7e-629d-43e9-a8fb-1385ff1cba45"
+    ],
+    "inferredDate": "2026-07-23",
+    "expectedTargets": 1,
+    "slotDocsFound": 1,
+    "alreadyCompleteCount": 1,
+    "alreadyCompleteAny": true,
+    "alreadyCompleteAll": true,
+    "targetWriteCount": 0,
+    "targetSavedCount": 0
+  },
+  "top3HistorySync": {
+    "ok": true,
+    "skipped": false,
+    "lotteryKey": "PT_RIO",
+    "importedDraws": 1,
+    "updatedMonths": [
+      {
+        "yearMonth": "2026-07",
+        "drawCount": 122,
+        "previousDrawCount": 122,
+        "firstYmd": "2026-07-01",
+        "lastYmd": "2026-07-23",
+        "firstDrawId": "PT_RIO__2026-07-01__09-00__c168d9b3-97b7-42dc-a332-7815edaa51e2",
+        "lastDrawId": "PT_RIO__2026-07-23__21-00__d5123f7e-629d-43e9-a8fb-1385ff1cba45"
+      }
+    ],
+    "totalDraws": 7533,
+    "monthCount": 50,
+    "months": [
+      "2022-06",
+      "2022-07",
+      "2022-08",
+      "2022-09",
+      "2022-10",
+      "2022-11",
+      "2022-12",
+      "2023-01",
+      "2023-02",
+      "2023-03",
+      "2023-04",
+      "2023-05",
+      "2023-06",
+      "2023-07",
+      "2023-08",
+      "2023-09",
+      "2023-10",
+      "2023-11",
+      "2023-12",
+      "2024-01",
+      "2024-02",
+      "2024-03",
+      "2024-04",
+      "2024-05",
+      "2024-06",
+      "2024-07",
+      "2024-08",
+      "2024-09",
+      "2024-10",
+      "2024-11",
+      "2024-12",
+      "2025-01",
+      "2025-02",
+      "2025-03",
+      "2025-04",
+      "2025-05",
+      "2025-06",
+      "2025-07",
+      "2025-08",
+      "2025-09",
+      "2025-10",
+      "2025-11",
+      "2025-12",
+      "2026-01",
+      "2026-02",
+      "2026-03",
+      "2026-04",
+      "2026-05",
+      "2026-06",
+      "2026-07"
+    ],
+    "firstYmd": "2022-06-07",
+    "lastYmd": "2026-07-23",
+    "firstDrawId": "PT_RIO__2022-06-07__11-00__cbac7c11-e733-400b-ba4d-2dfe0cba4272",
+    "lastDrawId": "PT_RIO__2026-07-23__21-00__d5123f7e-629d-43e9-a8fb-1385ff1cba45"
+  },
+  "top3AutoPrediction": {
+    "ok": true,
+    "skipped": false,
+    "targetYmd": "2026-07-24",
+    "targetHour": "09:00",
+    "runId": "PT_RIO__2026-07-24__0900__auto-import",
+    "publicProjection": {
+      "ok": true,
+      "created": false,
+      "updated": true,
+      "existing": true,
+      "protected": false,
+      "id": "PT_RIO__2026-07-24__09"
+    }
+  },
+  "performance": {
+    "fetchMs": 1074,
+    "importMs": 1865,
+    "historySyncMs": 908,
+    "top3Ms": 8223,
+    "totalMs": 12084
+  }
+}

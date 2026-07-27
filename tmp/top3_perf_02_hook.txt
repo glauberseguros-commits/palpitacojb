@@ -1,0 +1,544 @@
+====================================================================================================
+TOP3-PERF-02 — MAPEAMENTO DE GARGALOS DO HOOK
+====================================================================================================
+Gerado em: 24/07/2026 18:30:10
+====================================================================================================
+
+
+====================================================================================================
+1. useEffect
+====================================================================================================
+
+> src\pages\Top3\top3.hooks.js:1:import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+  src\pages\Top3\top3.hooks.js:2:
+  src\pages\Top3\top3.hooks.js:3:import {
+  src\pages\Top3\top3.hooks.js:4:  safeStr,
+  src\pages\Top3\top3.hooks.js:5:  isYMD,
+  src\pages\Top3\top3.hooks.js:6:  ymdToBR,
+  src\pages\Top3\top3.hooks.js:7:  normalizeToYMD,
+  src\pages\Top3\top3.hooks.js:8:  todayYMDLocal,
+  src\pages\Top3\top3.hooks.js:9:  addDaysYMD,
+  src\pages\Top3\top3.hooks.js:10:  toHourBucket,
+  src\pages\Top3\top3.hooks.js:11:  hourToInt,
+  src\pages\Top3\top3.hooks.js:12:  getCentena3,
+  src\pages\Top3\top3.hooks.js:13:} from "./top3.formatters";
+  src\pages\Top3\top3.hooks.js:14:
+  src\pages\Top3\top3.hooks.js:15:import {
+  src\pages\Top3\top3.hooks.js:16:  LOOKBACK_ALL,
+  src\pages\Top3\top3.hooks.js:17:  LOOKBACK_OPTIONS,
+  src\pages\Top3\top3.hooks.js:18:  LOTTERY_OPTIONS,
+  src\pages\Top3\top3.hooks.js:19:  PT_RIO_SCHEDULE_NORMAL,
+  src\pages\Top3\top3.hooks.js:20:  PT_RIO_SCHEDULE_WED_SAT,
+  src\pages\Top3\top3.hooks.js:21:  FEDERAL_SCHEDULE,
+> src\pages\Top3\top3.hooks.js:853:  useEffect(() => {
+  src\pages\Top3\top3.hooks.js:854:    debugTop3Effect("01_load", {
+  src\pages\Top3\top3.hooks.js:855:      lotteryKey: lotteryKeySafe,
+  src\pages\Top3\top3.hooks.js:856:      ymd: ymdSafe,
+  src\pages\Top3\top3.hooks.js:857:      lookback,
+  src\pages\Top3\top3.hooks.js:858:    });
+  src\pages\Top3\top3.hooks.js:859:
+  src\pages\Top3\top3.hooks.js:860:    load();
+  src\pages\Top3\top3.hooks.js:861:  }, [load]);
+  src\pages\Top3\top3.hooks.js:862:
+> src\pages\Top3\top3.hooks.js:863:  useEffect(() => {
+  src\pages\Top3\top3.hooks.js:864:    debugTop3Effect("02_ensure_timeline", {
+  src\pages\Top3\top3.hooks.js:865:      lotteryKey: lotteryKeySafe,
+  src\pages\Top3\top3.hooks.js:866:      timelineYmd,
+  src\pages\Top3\top3.hooks.js:867:    });
+  src\pages\Top3\top3.hooks.js:868:
+  src\pages\Top3\top3.hooks.js:869:    ensureDayTimeline({
+  src\pages\Top3\top3.hooks.js:870:      ymd: timelineYmd,
+  src\pages\Top3\top3.hooks.js:871:      lotteryKey: lotteryKeySafe,
+  src\pages\Top3\top3.hooks.js:872:    });
+  src\pages\Top3\top3.hooks.js:873:  }, [timelineYmd, lotteryKeySafe]);
+  src\pages\Top3\top3.hooks.js:874:
+  src\pages\Top3\top3.hooks.js:875:  const analytics = useMemo(() => {
+  src\pages\Top3\top3.hooks.js:876:    return computeTop3Analytics({
+  src\pages\Top3\top3.hooks.js:877:      rangeDraws,
+  src\pages\Top3\top3.hooks.js:878:      baseDrawState,
+  src\pages\Top3\top3.hooks.js:879:      analyticsCacheRef,
+  src\pages\Top3\top3.hooks.js:880:      lotteryKeySafe,
+  src\pages\Top3\top3.hooks.js:881:      lookback,
+  src\pages\Top3\top3.hooks.js:882:      rangeInfo,
+  src\pages\Top3\top3.hooks.js:883:      todayDraws,
+> src\pages\Top3\top3.hooks.js:962:  useEffect(() => {
+  src\pages\Top3\top3.hooks.js:963:    debugTop3Effect("03_save_prediction", {
+  src\pages\Top3\top3.hooks.js:964:      lotteryKey: lotteryKeySafe,
+  src\pages\Top3\top3.hooks.js:965:      analysisYmd,
+  src\pages\Top3\top3.hooks.js:966:      analysisHourBucket,
+  src\pages\Top3\top3.hooks.js:967:      top3Length: Array.isArray(top3)
+  src\pages\Top3\top3.hooks.js:968:        ? top3.length
+  src\pages\Top3\top3.hooks.js:969:        : -1,
+  src\pages\Top3\top3.hooks.js:970:    });
+  src\pages\Top3\top3.hooks.js:971:
+  src\pages\Top3\top3.hooks.js:972:    if (!analysisYmd || !analysisHourBucket) return;
+  src\pages\Top3\top3.hooks.js:973:    if (!Array.isArray(top3) || !top3.length) return;
+  src\pages\Top3\top3.hooks.js:974:    if (!isFutureTarget(analysisYmd, analysisHourBucket)) return;
+  src\pages\Top3\top3.hooks.js:975:
+  src\pages\Top3\top3.hooks.js:976:    const targetKey = makeTargetKey(analysisYmd, analysisHourBucket);
+  src\pages\Top3\top3.hooks.js:977:    const picks = top3
+  src\pages\Top3\top3.hooks.js:978:      .map((x) => Number(x?.grupo))
+  src\pages\Top3\top3.hooks.js:979:      .filter((n) => Number.isFinite(n) && n >= 1 && n <= 25)
+  src\pages\Top3\top3.hooks.js:980:      .slice(0, 3);
+  src\pages\Top3\top3.hooks.js:981:
+  src\pages\Top3\top3.hooks.js:982:    if (!targetKey || !picks.length) return;
+> src\pages\Top3\top3.hooks.js:1098:  useEffect(() => {
+  src\pages\Top3\top3.hooks.js:1099:    const persistedSchedule = scheduleKey
+  src\pages\Top3\top3.hooks.js:1100:      ? scheduleKey.split("|").filter(Boolean)
+  src\pages\Top3\top3.hooks.js:1101:      : [];
+  src\pages\Top3\top3.hooks.js:1102:
+  src\pages\Top3\top3.hooks.js:1103:    debugTop3Effect("04_load_persisted_history", {
+  src\pages\Top3\top3.hooks.js:1104:      lotteryKey: lotteryKeySafe,
+  src\pages\Top3\top3.hooks.js:1105:      timelineYmd,
+  src\pages\Top3\top3.hooks.js:1106:      scheduleLength: persistedSchedule.length,
+  src\pages\Top3\top3.hooks.js:1107:    });
+  src\pages\Top3\top3.hooks.js:1108:
+  src\pages\Top3\top3.hooks.js:1109:    let alive = true;
+  src\pages\Top3\top3.hooks.js:1110:
+  src\pages\Top3\top3.hooks.js:1111:    async function loadPersistedHistory() {
+  src\pages\Top3\top3.hooks.js:1112:      if (!isYMD(timelineYmd)) {
+  src\pages\Top3\top3.hooks.js:1113:        if (alive) setPersistedTop3History([]);
+  src\pages\Top3\top3.hooks.js:1114:        return;
+  src\pages\Top3\top3.hooks.js:1115:      }
+  src\pages\Top3\top3.hooks.js:1116:
+  src\pages\Top3\top3.hooks.js:1117:      try {
+  src\pages\Top3\top3.hooks.js:1118:        const history = await loadTop3PredictionDay({
+> src\pages\Top3\top3.hooks.js:1145:  useEffect(() => {
+  src\pages\Top3\top3.hooks.js:1146:    const persistedSchedule = scheduleKey
+  src\pages\Top3\top3.hooks.js:1147:      ? scheduleKey.split("|").filter(Boolean)
+  src\pages\Top3\top3.hooks.js:1148:      : [];
+  src\pages\Top3\top3.hooks.js:1149:
+  src\pages\Top3\top3.hooks.js:1150:    debugTop3Effect("05_reconcile_history", {
+  src\pages\Top3\top3.hooks.js:1151:      lotteryKey: lotteryKeySafe,
+  src\pages\Top3\top3.hooks.js:1152:      timelineYmd,
+  src\pages\Top3\top3.hooks.js:1153:      scheduleLength: persistedSchedule.length,
+  src\pages\Top3\top3.hooks.js:1154:      todayDrawsLength: Array.isArray(todayDraws)
+  src\pages\Top3\top3.hooks.js:1155:        ? todayDraws.length
+  src\pages\Top3\top3.hooks.js:1156:        : -1,
+  src\pages\Top3\top3.hooks.js:1157:      rangeDrawsLength: Array.isArray(rangeDraws)
+  src\pages\Top3\top3.hooks.js:1158:        ? rangeDraws.length
+  src\pages\Top3\top3.hooks.js:1159:        : -1,
+  src\pages\Top3\top3.hooks.js:1160:      loading,
+  src\pages\Top3\top3.hooks.js:1161:    });
+  src\pages\Top3\top3.hooks.js:1162:
+  src\pages\Top3\top3.hooks.js:1163:    if (loading) return;
+  src\pages\Top3\top3.hooks.js:1164:    if (!isYMD(timelineYmd)) return;
+  src\pages\Top3\top3.hooks.js:1165:    if (!(todayDraws?.length || rangeDraws?.length)) return;
+
+
+
+====================================================================================================
+2. Promise.all
+====================================================================================================
+
+
+====================================================================================================
+3. Firestore
+====================================================================================================
+
+> src\pages\Top3\top3.hooks.js:46:  saveTop3PredictionSnapshot,
+  src\pages\Top3\top3.hooks.js:47:  loadTop3PredictionDay,
+  src\pages\Top3\top3.hooks.js:48:  reconcileTop3PredictionDay,
+  src\pages\Top3\top3.hooks.js:49:} from "./top3.firestore";
+  src\pages\Top3\top3.hooks.js:50:
+  src\pages\Top3\top3.hooks.js:51:import {
+> src\pages\Top3\top3.hooks.js:1023:    saveTop3PredictionSnapshot({
+  src\pages\Top3\top3.hooks.js:1024:      lotteryKey: lotteryKeySafe,
+  src\pages\Top3\top3.hooks.js:1025:      targetYmd: analysisYmd,
+  src\pages\Top3\top3.hooks.js:1026:      targetHour: analysisHourBucket,
+  src\pages\Top3\top3.hooks.js:1027:      picks,
+  src\pages\Top3\top3.hooks.js:1028:      snapshot,
+
+
+
+====================================================================================================
+4. Cálculos pesados
+====================================================================================================
+
+> src\pages\Top3\top3.hooks.js:31:  build16MilharesForGrupo,
+> src\pages\Top3\top3.hooks.js:32:  buildMilharesForGrupo,
+  src\pages\Top3\top3.hooks.js:33:  getNextSlotForLottery,
+  src\pages\Top3\top3.hooks.js:34:  isFederalDrawDay,
+  src\pages\Top3\top3.hooks.js:35:} from "./top3.engine";
+> src\pages\Top3\top3.hooks.js:57:import { getAnimalLabel } from "../../constants/bichoMap";
+  src\pages\Top3\top3.hooks.js:58:
+  src\pages\Top3\top3.hooks.js:59:import {
+  src\pages\Top3\top3.hooks.js:60:  fallbackBaseSearch,
+> src\pages\Top3\top3.hooks.js:64:import { computeTop3Analytics } from "./modules/top3.analytics";
+  src\pages\Top3\top3.hooks.js:65:
+> src\pages\Top3\top3.hooks.js:66:import { buildTop3Predictions } from "./modules/top3.prediction";
+  src\pages\Top3\top3.hooks.js:67:
+> src\pages\Top3\top3.hooks.js:68:import { buildTop3TimelineViewModel } from "./modules/top3.timeline";
+  src\pages\Top3\top3.hooks.js:69:
+  src\pages\Top3\top3.hooks.js:70:import {
+> src\pages\Top3\top3.hooks.js:71:  buildTop3MilharesCols,
+  src\pages\Top3\top3.hooks.js:72:  resolveTop3ProbValue,
+  src\pages\Top3\top3.hooks.js:73:} from "./modules/top3.viewmodel";
+  src\pages\Top3\top3.hooks.js:74:
+> src\pages\Top3\top3.hooks.js:78:  buildResultStyleImgVariants,
+  src\pages\Top3\top3.hooks.js:79:} from "./top3.images";
+  src\pages\Top3\top3.hooks.js:80:
+  src\pages\Top3\top3.hooks.js:81:const top3SaveRunKeys = new Set();
+> src\pages\Top3\top3.hooks.js:94:  const [Y, M, D] = String(y).split("-").map(Number);
+  src\pages\Top3\top3.hooks.js:95:  const mins = hourToInt(h);
+  src\pages\Top3\top3.hooks.js:96:
+  src\pages\Top3\top3.hooks.js:97:  if (!Number.isFinite(mins) || mins < 0) {
+> src\pages\Top3\top3.hooks.js:126:  const map = new Map();
+  src\pages\Top3\top3.hooks.js:127:
+  src\pages\Top3\top3.hooks.js:128:  for (const d of list) {
+  src\pages\Top3\top3.hooks.js:129:    const k = drawKey(d);
+> src\pages\Top3\top3.hooks.js:130:    if (k) map.set(k, d);
+  src\pages\Top3\top3.hooks.js:131:  }
+  src\pages\Top3\top3.hooks.js:132:
+> src\pages\Top3\top3.hooks.js:133:  if (!map.has(key)) {
+> src\pages\Top3\top3.hooks.js:134:    map.set(key, baseDraw);
+  src\pages\Top3\top3.hooks.js:135:  }
+  src\pages\Top3\top3.hooks.js:136:
+> src\pages\Top3\top3.hooks.js:137:  return Array.from(map.values()).sort((a, b) => drawTs(a) - drawTs(b));
+  src\pages\Top3\top3.hooks.js:138:}
+  src\pages\Top3\top3.hooks.js:139:
+  src\pages\Top3\top3.hooks.js:140:function isDrawValidForLotterySchedule(draw, lotteryKey) {
+> src\pages\Top3\top3.hooks.js:155:    ? schedule.map(toHourBucket).filter(Boolean)
+  src\pages\Top3\top3.hooks.js:156:    : [];
+  src\pages\Top3\top3.hooks.js:157:
+  src\pages\Top3\top3.hooks.js:158:  return normalizedSchedule.includes(h);
+> src\pages\Top3\top3.hooks.js:174:  const [Y, M, D] = String(targetYmd).split("-").map(Number);
+  src\pages\Top3\top3.hooks.js:175:  const mins = hourToInt(targetHour);
+  src\pages\Top3\top3.hooks.js:176:  const targetTs = Date.UTC(Y, M - 1, D) + mins * 60 * 1000;
+  src\pages\Top3\top3.hooks.js:177:
+> src\pages\Top3\top3.hooks.js:213:    .filter((d) => isDrawValidForLotterySchedule(d, lotteryKey))
+> src\pages\Top3\top3.hooks.js:214:    .filter((d) => {
+  src\pages\Top3\top3.hooks.js:215:      const ts = drawTs(d);
+  src\pages\Top3\top3.hooks.js:216:      return Number.isFinite(ts) && ts <= baseTs;
+  src\pages\Top3\top3.hooks.js:217:    })
+> src\pages\Top3\top3.hooks.js:218:    .sort((a, b) => drawTs(a) - drawTs(b));
+  src\pages\Top3\top3.hooks.js:219:}
+  src\pages\Top3\top3.hooks.js:220:
+  src\pages\Top3\top3.hooks.js:221:function parseTargetDate(ymd, hour) {
+> src\pages\Top3\top3.hooks.js:229:  const [Y, M, D] = String(ymd).split("-").map(Number);
+  src\pages\Top3\top3.hooks.js:230:  const hh = Number(m[1]);
+  src\pages\Top3\top3.hooks.js:231:
+  src\pages\Top3\top3.hooks.js:232:  const dt = new Date(Y, M - 1, D, hh, 0, 0, 0);
+> src\pages\Top3\top3.hooks.js:258:    .map((v) => safeStr(v))
+> src\pages\Top3\top3.hooks.js:259:    .filter(Boolean);
+  src\pages\Top3\top3.hooks.js:260:
+  src\pages\Top3\top3.hooks.js:261:  return candidates[0] || "";
+  src\pages\Top3\top3.hooks.js:262:}
+> src\pages\Top3\top3.hooks.js:296:  const boundsCacheRef = useRef(new Map());
+  src\pages\Top3\top3.hooks.js:297:  const analyticsCacheRef = useRef({ key: "", value: emptyAnalytics() });
+  src\pages\Top3\top3.hooks.js:298:
+  src\pages\Top3\top3.hooks.js:299:  const [lotteryKey, setLotteryKey] = useState(DEFAULT_LOTTERY);
+> src\pages\Top3\top3.hooks.js:387:      .map(toHourBucket)
+> src\pages\Top3\top3.hooks.js:388:      .filter(Boolean)
+  src\pages\Top3\top3.hooks.js:389:      .join("|");
+  src\pages\Top3\top3.hooks.js:390:  }, [schedule]);
+  src\pages\Top3\top3.hooks.js:391:
+> src\pages\Top3\top3.hooks.js:532:              .map(toHourBucket)
+> src\pages\Top3\top3.hooks.js:533:              .filter((h) => h && h !== "18:00"),
+  src\pages\Top3\top3.hooks.js:534:            "19:00",
+  src\pages\Top3\top3.hooks.js:535:          ])
+> src\pages\Top3\top3.hooks.js:536:        ).sort((a, b) => {
+> src\pages\Top3\top3.hooks.js:537:          const [ah, am] = String(a).split(":").map(Number);
+> src\pages\Top3\top3.hooks.js:538:          const [bh, bm] = String(b).split(":").map(Number);
+  src\pages\Top3\top3.hooks.js:539:
+  src\pages\Top3\top3.hooks.js:540:          return ah * 60 + am - (bh * 60 + bm);
+  src\pages\Top3\top3.hooks.js:541:        });
+> src\pages\Top3\top3.hooks.js:548:        setError("Não há grade de sorteio válida para esta data/loteria.");
+  src\pages\Top3\top3.hooks.js:549:        return;
+  src\pages\Top3\top3.hooks.js:550:      }
+  src\pages\Top3\top3.hooks.js:551:
+> src\pages\Top3\top3.hooks.js:574:          .map(toHourBucket)
+> src\pages\Top3\top3.hooks.js:575:          .filter(Boolean);
+  src\pages\Top3\top3.hooks.js:576:
+  src\pages\Top3\top3.hooks.js:577:        const baseIdx = baseY === effectiveYmd
+  src\pages\Top3\top3.hooks.js:578:          ? effectiveTodaySchedule.indexOf(baseH)
+> src\pages\Top3\top3.hooks.js:639:            "Não foi possível localizar a base anterior ao primeiro sorteio do dia."
+  src\pages\Top3\top3.hooks.js:640:          );
+  src\pages\Top3\top3.hooks.js:641:          return;
+  src\pages\Top3\top3.hooks.js:642:        }
+> src\pages\Top3\top3.hooks.js:876:    return computeTop3Analytics({
+  src\pages\Top3\top3.hooks.js:877:      rangeDraws,
+  src\pages\Top3\top3.hooks.js:878:      baseDrawState,
+  src\pages\Top3\top3.hooks.js:879:      analyticsCacheRef,
+> src\pages\Top3\top3.hooks.js:899:  const build20 = useCallback(
+  src\pages\Top3\top3.hooks.js:900:    (grupo2, item = null) => {
+> src\pages\Top3\top3.hooks.js:901:      return buildMilharesForGrupo({
+  src\pages\Top3\top3.hooks.js:902:        rangeDraws,
+  src\pages\Top3\top3.hooks.js:903:        analysisHourBucket,
+  src\pages\Top3\top3.hooks.js:904:        schedule,
+> src\pages\Top3\top3.hooks.js:918:    return buildTop3Predictions({
+  src\pages\Top3\top3.hooks.js:919:      analytics,
+> src\pages\Top3\top3.hooks.js:920:      build20,
+  src\pages\Top3\top3.hooks.js:921:      safeStr,
+  src\pages\Top3\top3.hooks.js:922:      getAnimalLabel,
+> src\pages\Top3\top3.hooks.js:923:      build4ColsFromEngineOut: buildTop3MilharesCols,
+  src\pages\Top3\top3.hooks.js:924:      resolveProbValue: resolveTop3ProbValue,
+  src\pages\Top3\top3.hooks.js:925:      getGrupoImgSrc,
+> src\pages\Top3\top3.hooks.js:926:      buildResultStyleImgVariants,
+  src\pages\Top3\top3.hooks.js:927:    });
+> src\pages\Top3\top3.hooks.js:928:  }, [analytics, build20]);
+  src\pages\Top3\top3.hooks.js:929:
+  src\pages\Top3\top3.hooks.js:930:  const timelineTop3 = useMemo(() => {
+> src\pages\Top3\top3.hooks.js:931:    const built = buildTop3TimelineViewModel({
+  src\pages\Top3\top3.hooks.js:932:      todayDraws,
+  src\pages\Top3\top3.hooks.js:933:      rangeDraws,
+  src\pages\Top3\top3.hooks.js:934:      lotteryKeySafe,
+> src\pages\Top3\top3.hooks.js:945:      return (Array.isArray(built) ? built : []).filter((slot) => {
+  src\pages\Top3\top3.hooks.js:946:        const y = String(slot?.targetYmd || "").trim();
+  src\pages\Top3\top3.hooks.js:947:        const h = toHourBucket(slot?.targetHour || "");
+  src\pages\Top3\top3.hooks.js:948:        return !(y === timelineYmd && h === "18:00");
+> src\pages\Top3\top3.hooks.js:978:      .map((x) => Number(x?.grupo))
+> src\pages\Top3\top3.hooks.js:979:      .filter((n) => Number.isFinite(n) && n >= 1 && n <= 25)
+  src\pages\Top3\top3.hooks.js:980:      .slice(0, 3);
+  src\pages\Top3\top3.hooks.js:981:
+  src\pages\Top3\top3.hooks.js:982:    if (!targetKey || !picks.length) return;
+> src\pages\Top3\top3.hooks.js:994:    const snapshot = top3.map((item, index) => ({
+  src\pages\Top3\top3.hooks.js:995:      rank: index + 1,
+  src\pages\Top3\top3.hooks.js:996:      grupo: Number(item?.grupo),
+  src\pages\Top3\top3.hooks.js:997:      animal: safeStr(item?.animal || ""),
+> src\pages\Top3\top3.hooks.js:1100:      ? scheduleKey.split("|").filter(Boolean)
+  src\pages\Top3\top3.hooks.js:1101:      : [];
+  src\pages\Top3\top3.hooks.js:1102:
+  src\pages\Top3\top3.hooks.js:1103:    debugTop3Effect("04_load_persisted_history", {
+> src\pages\Top3\top3.hooks.js:1147:      ? scheduleKey.split("|").filter(Boolean)
+  src\pages\Top3\top3.hooks.js:1148:      : [];
+  src\pages\Top3\top3.hooks.js:1149:
+  src\pages\Top3\top3.hooks.js:1150:    debugTop3Effect("05_reconcile_history", {
+> src\pages\Top3\top3.hooks.js:1167:    const drawMap = new Map();
+  src\pages\Top3\top3.hooks.js:1168:
+  src\pages\Top3\top3.hooks.js:1169:    for (const draw of [
+  src\pages\Top3\top3.hooks.js:1170:      ...(Array.isArray(rangeDraws) ? rangeDraws : []),
+> src\pages\Top3\top3.hooks.js:1178:      drawMap.set(key, draw);
+  src\pages\Top3\top3.hooks.js:1179:    }
+  src\pages\Top3\top3.hooks.js:1180:
+> src\pages\Top3\top3.hooks.js:1181:    const targetDraws = Array.from(drawMap.values()).sort(
+  src\pages\Top3\top3.hooks.js:1182:      (a, b) => drawTs(a) - drawTs(b)
+  src\pages\Top3\top3.hooks.js:1183:    );
+  src\pages\Top3\top3.hooks.js:1184:
+> src\pages\Top3\top3.hooks.js:1188:      .map((draw) => {
+  src\pages\Top3\top3.hooks.js:1189:        const key = drawKey(draw);
+  src\pages\Top3\top3.hooks.js:1190:        const grupo = Number(
+  src\pages\Top3\top3.hooks.js:1191:          pickPrize1GrupoFromDraw(draw) || 0
+> src\pages\Top3\top3.hooks.js:1311:    build16: (grupo2) =>
+> src\pages\Top3\top3.hooks.js:1312:      build16MilharesForGrupo({
+  src\pages\Top3\top3.hooks.js:1313:        rangeDraws,
+  src\pages\Top3\top3.hooks.js:1314:        analysisHourBucket,
+  src\pages\Top3\top3.hooks.js:1315:        schedule,
+> src\pages\Top3\top3.hooks.js:1320:    build20,
+  src\pages\Top3\top3.hooks.js:1321:    getCentena3,
+  src\pages\Top3\top3.hooks.js:1322:    normalizeImgSrc,
+  src\pages\Top3\top3.hooks.js:1323:  };
+
+
+
+====================================================================================================
+5. useMemo / useCallback
+====================================================================================================
+
+> src\pages\Top3\top3.hooks.js:1:import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+  src\pages\Top3\top3.hooks.js:2:
+  src\pages\Top3\top3.hooks.js:3:import {
+  src\pages\Top3\top3.hooks.js:4:  safeStr,
+  src\pages\Top3\top3.hooks.js:5:  isYMD,
+  src\pages\Top3\top3.hooks.js:6:  ymdToBR,
+  src\pages\Top3\top3.hooks.js:7:  normalizeToYMD,
+  src\pages\Top3\top3.hooks.js:8:  todayYMDLocal,
+  src\pages\Top3\top3.hooks.js:9:  addDaysYMD,
+  src\pages\Top3\top3.hooks.js:10:  toHourBucket,
+  src\pages\Top3\top3.hooks.js:11:  hourToInt,
+> src\pages\Top3\top3.hooks.js:338:  const lotteryKeySafe = useMemo(
+  src\pages\Top3\top3.hooks.js:339:    () => safeStr(lotteryKey).toUpperCase() || DEFAULT_LOTTERY,
+  src\pages\Top3\top3.hooks.js:340:    [lotteryKey]
+  src\pages\Top3\top3.hooks.js:341:  );
+  src\pages\Top3\top3.hooks.js:342:
+> src\pages\Top3\top3.hooks.js:343:  const ymdSafe = useMemo(() => {
+  src\pages\Top3\top3.hooks.js:344:    const y = normalizeToYMD(ymd);
+  src\pages\Top3\top3.hooks.js:345:    return y && isYMD(y) ? y : todayYMDLocal();
+  src\pages\Top3\top3.hooks.js:346:  }, [ymd]);
+  src\pages\Top3\top3.hooks.js:347:
+> src\pages\Top3\top3.hooks.js:348:  const dateBR = useMemo(() => ymdToBR(ymdSafe), [ymdSafe]);
+  src\pages\Top3\top3.hooks.js:349:
+> src\pages\Top3\top3.hooks.js:350:  const analysisHourBucket = useMemo(
+  src\pages\Top3\top3.hooks.js:351:    () => toHourBucket(targetHourBucket) || "",
+  src\pages\Top3\top3.hooks.js:352:    [targetHourBucket]
+  src\pages\Top3\top3.hooks.js:353:  );
+  src\pages\Top3\top3.hooks.js:354:
+> src\pages\Top3\top3.hooks.js:355:  const analysisYmd = useMemo(
+  src\pages\Top3\top3.hooks.js:356:    () => (isYMD(targetYmd) ? targetYmd : ""),
+  src\pages\Top3\top3.hooks.js:357:    [targetYmd]
+  src\pages\Top3\top3.hooks.js:358:  );
+  src\pages\Top3\top3.hooks.js:359:
+> src\pages\Top3\top3.hooks.js:360:  const timelineYmd = useMemo(() => {
+  src\pages\Top3\top3.hooks.js:361:    if (isYMD(loadedYmd)) return loadedYmd;
+  src\pages\Top3\top3.hooks.js:362:    return ymdSafe;
+  src\pages\Top3\top3.hooks.js:363:  }, [loadedYmd, ymdSafe]);
+  src\pages\Top3\top3.hooks.js:364:
+> src\pages\Top3\top3.hooks.js:365:  const schedule = useMemo(() => {
+  src\pages\Top3\top3.hooks.js:366:    const y = isYMD(analysisYmd)
+  src\pages\Top3\top3.hooks.js:367:      ? analysisYmd
+  src\pages\Top3\top3.hooks.js:368:      : isYMD(loadedYmd)
+  src\pages\Top3\top3.hooks.js:369:        ? loadedYmd
+  src\pages\Top3\top3.hooks.js:370:        : ymdSafe;
+  src\pages\Top3\top3.hooks.js:371:
+  src\pages\Top3\top3.hooks.js:372:    return getScheduleForLottery({
+  src\pages\Top3\top3.hooks.js:373:      lotteryKey: lotteryKeySafe,
+  src\pages\Top3\top3.hooks.js:374:      ymd: y,
+  src\pages\Top3\top3.hooks.js:375:      PT_RIO_SCHEDULE_NORMAL,
+> src\pages\Top3\top3.hooks.js:381:  const isFederalNonDrawDay = useMemo(() => {
+  src\pages\Top3\top3.hooks.js:382:    return lotteryKeySafe === "FEDERAL" && !isFederalDrawDay(ymdSafe);
+  src\pages\Top3\top3.hooks.js:383:  }, [lotteryKeySafe, ymdSafe]);
+  src\pages\Top3\top3.hooks.js:384:
+> src\pages\Top3\top3.hooks.js:385:  const scheduleKey = useMemo(() => {
+  src\pages\Top3\top3.hooks.js:386:    return (Array.isArray(schedule) ? schedule : [])
+  src\pages\Top3\top3.hooks.js:387:      .map(toHourBucket)
+  src\pages\Top3\top3.hooks.js:388:      .filter(Boolean)
+  src\pages\Top3\top3.hooks.js:389:      .join("|");
+  src\pages\Top3\top3.hooks.js:390:  }, [schedule]);
+  src\pages\Top3\top3.hooks.js:391:
+> src\pages\Top3\top3.hooks.js:392:  const rangeLabel = useMemo(() => {
+  src\pages\Top3\top3.hooks.js:393:    const f = safeStr(rangeInfo?.from);
+  src\pages\Top3\top3.hooks.js:394:    const t = safeStr(rangeInfo?.to);
+  src\pages\Top3\top3.hooks.js:395:
+  src\pages\Top3\top3.hooks.js:396:    if (isYMD(f) && isYMD(t)) return `${ymdToBR(f)} → ${ymdToBR(t)}`;
+  src\pages\Top3\top3.hooks.js:397:    return "—";
+  src\pages\Top3\top3.hooks.js:398:  }, [rangeInfo]);
+  src\pages\Top3\top3.hooks.js:399:
+> src\pages\Top3\top3.hooks.js:400:  const prevLabel = useMemo(() => {
+  src\pages\Top3\top3.hooks.js:401:    if (!prevInfo?.prevGrupo) return "—";
+  src\pages\Top3\top3.hooks.js:402:
+  src\pages\Top3\top3.hooks.js:403:    const g = Number(prevInfo.prevGrupo);
+  src\pages\Top3\top3.hooks.js:404:    const animal = safeStr(prevInfo.prevAnimal || getAnimalLabel?.(g) || "");
+  src\pages\Top3\top3.hooks.js:405:
+  src\pages\Top3\top3.hooks.js:406:    const when =
+  src\pages\Top3\top3.hooks.js:407:      prevInfo?.prevYmd && prevInfo?.prevHour
+  src\pages\Top3\top3.hooks.js:408:        ? `${ymdToBR(prevInfo.prevYmd)} ${prevInfo.prevHour}`
+  src\pages\Top3\top3.hooks.js:409:        : "";
+  src\pages\Top3\top3.hooks.js:410:
+> src\pages\Top3\top3.hooks.js:416:  const lastLabel = useMemo(() => {
+  src\pages\Top3\top3.hooks.js:417:    if (!lastInfo?.lastGrupo) return "—";
+  src\pages\Top3\top3.hooks.js:418:
+  src\pages\Top3\top3.hooks.js:419:    const g = Number(lastInfo.lastGrupo);
+  src\pages\Top3\top3.hooks.js:420:    const animal = safeStr(lastInfo.lastAnimal || getAnimalLabel?.(g) || "");
+  src\pages\Top3\top3.hooks.js:421:
+  src\pages\Top3\top3.hooks.js:422:    const when =
+  src\pages\Top3\top3.hooks.js:423:      lastInfo?.lastYmd && lastInfo?.lastHour
+  src\pages\Top3\top3.hooks.js:424:        ? `${ymdToBR(lastInfo.lastYmd)} ${lastInfo.lastHour}`
+  src\pages\Top3\top3.hooks.js:425:        : "";
+  src\pages\Top3\top3.hooks.js:426:
+> src\pages\Top3\top3.hooks.js:432:  const resetStateForNoData = useCallback(() => {
+  src\pages\Top3\top3.hooks.js:433:    analyticsCacheRef.current = { key: "", value: emptyAnalytics() };
+  src\pages\Top3\top3.hooks.js:434:
+  src\pages\Top3\top3.hooks.js:435:    setLoadedYmd("");
+  src\pages\Top3\top3.hooks.js:436:    setLastHourBucket("");
+  src\pages\Top3\top3.hooks.js:437:    setTargetHourBucket("");
+  src\pages\Top3\top3.hooks.js:438:    setTargetYmd("");
+  src\pages\Top3\top3.hooks.js:439:    setSkipPtRio18ByFederal(false);
+  src\pages\Top3\top3.hooks.js:440:    setBaseDrawState(null);
+  src\pages\Top3\top3.hooks.js:441:
+  src\pages\Top3\top3.hooks.js:442:    setLastInfo({
+> src\pages\Top3\top3.hooks.js:462:  const load = useCallback(async () => {
+  src\pages\Top3\top3.hooks.js:463:    const lKey = safeStr(lotteryKeySafe).toUpperCase();
+  src\pages\Top3\top3.hooks.js:464:    if (!lKey || !isYMD(ymdSafe)) return;
+  src\pages\Top3\top3.hooks.js:465:
+  src\pages\Top3\top3.hooks.js:466:    setLoading(true);
+  src\pages\Top3\top3.hooks.js:467:    setLoadingStage({ today: true, range: false });
+  src\pages\Top3\top3.hooks.js:468:    setError("");
+  src\pages\Top3\top3.hooks.js:469:
+  src\pages\Top3\top3.hooks.js:470:    // Impede exibir resultados pertencentes à consulta anterior.
+  src\pages\Top3\top3.hooks.js:471:    resetStateForNoData();
+  src\pages\Top3\top3.hooks.js:472:
+> src\pages\Top3\top3.hooks.js:875:  const analytics = useMemo(() => {
+  src\pages\Top3\top3.hooks.js:876:    return computeTop3Analytics({
+  src\pages\Top3\top3.hooks.js:877:      rangeDraws,
+  src\pages\Top3\top3.hooks.js:878:      baseDrawState,
+  src\pages\Top3\top3.hooks.js:879:      analyticsCacheRef,
+  src\pages\Top3\top3.hooks.js:880:      lotteryKeySafe,
+  src\pages\Top3\top3.hooks.js:881:      lookback,
+  src\pages\Top3\top3.hooks.js:882:      rangeInfo,
+  src\pages\Top3\top3.hooks.js:883:      todayDraws,
+  src\pages\Top3\top3.hooks.js:884:      sanitizeHistoricalDraws,
+  src\pages\Top3\top3.hooks.js:885:      targetYmd: analysisYmd,
+> src\pages\Top3\top3.hooks.js:899:  const build20 = useCallback(
+  src\pages\Top3\top3.hooks.js:900:    (grupo2, item = null) => {
+  src\pages\Top3\top3.hooks.js:901:      return buildMilharesForGrupo({
+  src\pages\Top3\top3.hooks.js:902:        rangeDraws,
+  src\pages\Top3\top3.hooks.js:903:        analysisHourBucket,
+  src\pages\Top3\top3.hooks.js:904:        schedule,
+  src\pages\Top3\top3.hooks.js:905:        grupo2,
+  src\pages\Top3\top3.hooks.js:906:        count: 20,
+  src\pages\Top3\top3.hooks.js:907:        targetYmd: item?.meta?.next?.ymd || analysisYmd,
+  src\pages\Top3\top3.hooks.js:908:      });
+  src\pages\Top3\top3.hooks.js:909:    },
+> src\pages\Top3\top3.hooks.js:913:  const layerMetaText = useMemo(() => {
+  src\pages\Top3\top3.hooks.js:914:    return resolveLayerMetaText(analytics);
+  src\pages\Top3\top3.hooks.js:915:  }, [analytics]);
+  src\pages\Top3\top3.hooks.js:916:
+> src\pages\Top3\top3.hooks.js:917:  const top3 = useMemo(() => {
+  src\pages\Top3\top3.hooks.js:918:    return buildTop3Predictions({
+  src\pages\Top3\top3.hooks.js:919:      analytics,
+  src\pages\Top3\top3.hooks.js:920:      build20,
+  src\pages\Top3\top3.hooks.js:921:      safeStr,
+  src\pages\Top3\top3.hooks.js:922:      getAnimalLabel,
+  src\pages\Top3\top3.hooks.js:923:      build4ColsFromEngineOut: buildTop3MilharesCols,
+  src\pages\Top3\top3.hooks.js:924:      resolveProbValue: resolveTop3ProbValue,
+  src\pages\Top3\top3.hooks.js:925:      getGrupoImgSrc,
+  src\pages\Top3\top3.hooks.js:926:      buildResultStyleImgVariants,
+  src\pages\Top3\top3.hooks.js:927:    });
+> src\pages\Top3\top3.hooks.js:930:  const timelineTop3 = useMemo(() => {
+  src\pages\Top3\top3.hooks.js:931:    const built = buildTop3TimelineViewModel({
+  src\pages\Top3\top3.hooks.js:932:      todayDraws,
+  src\pages\Top3\top3.hooks.js:933:      rangeDraws,
+  src\pages\Top3\top3.hooks.js:934:      lotteryKeySafe,
+  src\pages\Top3\top3.hooks.js:935:      ymdSafe: timelineYmd,
+  src\pages\Top3\top3.hooks.js:936:      analysisYmd,
+  src\pages\Top3\top3.hooks.js:937:      publicBase: String(process.env.PUBLIC_URL || "").trim(),
+  src\pages\Top3\top3.hooks.js:938:    });
+  src\pages\Top3\top3.hooks.js:939:
+  src\pages\Top3\top3.hooks.js:940:    if (
+
+
+
+====================================================================================================
+6. Estados
+====================================================================================================
+
+> src\pages\Top3\top3.hooks.js:1:import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+  src\pages\Top3\top3.hooks.js:2:
+  src\pages\Top3\top3.hooks.js:3:import {
+  src\pages\Top3\top3.hooks.js:4:  safeStr,
+> src\pages\Top3\top3.hooks.js:299:  const [lotteryKey, setLotteryKey] = useState(DEFAULT_LOTTERY);
+> src\pages\Top3\top3.hooks.js:300:  const [ymd, setYmd] = useState(() => todayYMDLocal());
+> src\pages\Top3\top3.hooks.js:301:  const [lookback, setLookback] = useState(LOOKBACK_ALL);
+  src\pages\Top3\top3.hooks.js:302:
+> src\pages\Top3\top3.hooks.js:303:  const [loading, setLoading] = useState(false);
+> src\pages\Top3\top3.hooks.js:304:  const [loadingStage, setLoadingStage] = useState({
+  src\pages\Top3\top3.hooks.js:305:    today: false,
+  src\pages\Top3\top3.hooks.js:306:    range: false,
+  src\pages\Top3\top3.hooks.js:307:  });
+> src\pages\Top3\top3.hooks.js:308:  const [error, setError] = useState("");
+  src\pages\Top3\top3.hooks.js:309:
+> src\pages\Top3\top3.hooks.js:310:  const [rangeDraws, setRangeDraws] = useState([]);
+> src\pages\Top3\top3.hooks.js:311:  const [todayDraws, setTodayDraws] = useState([]);
+> src\pages\Top3\top3.hooks.js:312:  const [rangeInfo, setRangeInfo] = useState({ from: "", to: "" });
+  src\pages\Top3\top3.hooks.js:313:
+> src\pages\Top3\top3.hooks.js:314:  const [loadedYmd, setLoadedYmd] = useState("");
+> src\pages\Top3\top3.hooks.js:315:  const [lastHourBucket, setLastHourBucket] = useState("");
+> src\pages\Top3\top3.hooks.js:316:  const [targetHourBucket, setTargetHourBucket] = useState("");
+> src\pages\Top3\top3.hooks.js:317:  const [targetYmd, setTargetYmd] = useState("");
+> src\pages\Top3\top3.hooks.js:318:  const [skipPtRio18ByFederal, setSkipPtRio18ByFederal] = useState(false);
+  src\pages\Top3\top3.hooks.js:319:
+> src\pages\Top3\top3.hooks.js:320:  const [lastInfo, setLastInfo] = useState({
+  src\pages\Top3\top3.hooks.js:321:    lastYmd: "",
+  src\pages\Top3\top3.hooks.js:322:    lastHour: "",
+  src\pages\Top3\top3.hooks.js:323:    lastGrupo: null,
+> src\pages\Top3\top3.hooks.js:327:  const [prevInfo, setPrevInfo] = useState({
+  src\pages\Top3\top3.hooks.js:328:    prevYmd: "",
+  src\pages\Top3\top3.hooks.js:329:    prevHour: "",
+  src\pages\Top3\top3.hooks.js:330:    prevGrupo: null,
+> src\pages\Top3\top3.hooks.js:335:  const [baseDrawState, setBaseDrawState] = useState(null);
+> src\pages\Top3\top3.hooks.js:336:  const [persistedTop3History, setPersistedTop3History] = useState([]);
+  src\pages\Top3\top3.hooks.js:337:
+  src\pages\Top3\top3.hooks.js:338:  const lotteryKeySafe = useMemo(
+  src\pages\Top3\top3.hooks.js:339:    () => safeStr(lotteryKey).toUpperCase() || DEFAULT_LOTTERY,
+
+

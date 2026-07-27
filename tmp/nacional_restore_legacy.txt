@@ -1,0 +1,21 @@
+DOCUMENTOS NO BACKUP: 4224
+LOTE 1: 250 restaurados | TOTAL: 250/4224
+LOTE 2: 250 restaurados | TOTAL: 500/4224
+LOTE 3: 250 restaurados | TOTAL: 750/4224
+LOTE 4: 250 restaurados | TOTAL: 1000/4224
+LOTE 5: 250 restaurados | TOTAL: 1250/4224
+LOTE 6: 250 restaurados | TOTAL: 1500/4224
+LOTE 7: 250 restaurados | TOTAL: 1750/4224
+LOTE 8: 250 restaurados | TOTAL: 2000/4224
+LOTE 9: 250 restaurados | TOTAL: 2250/4224
+LOTE 10: 250 restaurados | TOTAL: 2500/4224
+LOTE 11: 250 restaurados | TOTAL: 2750/4224
+LOTE 12: 250 restaurados | TOTAL: 3000/4224
+LOTE 13: 250 restaurados | TOTAL: 3250/4224
+LOTE 14: 250 restaurados | TOTAL: 3500/4224
+LOTE 15: 250 restaurados | TOTAL: 3750/4224
+LOTE 16: 250 restaurados | TOTAL: 4000/4224
+LOTE 17: 224 restaurados | TOTAL: 4224/4224
+
+===== RESTAURA├ç├âO CONCLU├ìDA =====
+DOCUMENTOS RESTAURADOS: 4224

@@ -1,0 +1,22 @@
+TPP-04.31 — PATCH APLICADO
+
+Arquivo: src\pages\Top3\top3.hooks.js
+
+REGRA RESULTANTE
+- PT Rio em dia de Federal.
+- Regra válida desde 03/11/2025.
+- Retira 18:00 da grade.
+- Insere 19:00.
+- Ordena cronologicamente os horários.
+- Não depende de o resultado Federal das 20h já estar carregado.
+
+GRADE ESPERADA
+09:00 → 11:00 → 14:00 → 16:00 → 19:00 → 21:00
+
+VALIDAÇÕES
+- inclui_regra_19h: OK
+- remove_18h_da_grade: OK
+- mantem_dia_federal: OK
+- remove_dependencia_resultado_federal: OK
+- remove_consulta_federal_no_hook: OK
+- remove_variavel_federalToday: OK

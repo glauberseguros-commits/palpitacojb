@@ -1,0 +1,470 @@
+================================================================================
+C:\Users\glaub\palpitaco\src\dev\runAuditTop3.js
+Linha: 106
+    closeHour: null,
+
+================================================================================
+C:\Users\glaub\palpitaco\src\hooks\useKingRanking.js
+Linha: 189
+    close_hour: closeHour || "",
+
+================================================================================
+C:\Users\glaub\palpitaco\src\hooks\useKingRanking.js
+Linha: 190
+    closeHour: closeHour || "",
+
+================================================================================
+C:\Users\glaub\palpitaco\src\hooks\useKingRanking.js
+Linha: 574
+            closeHour: null,
+
+================================================================================
+C:\Users\glaub\palpitaco\src\hooks\useKingRanking.js
+Linha: 585
+            closeHour: null,
+
+================================================================================
+C:\Users\glaub\palpitaco\src\pages\Account\Account.jsx
+Linha: 21
+  getDocs,
+
+================================================================================
+C:\Users\glaub\palpitaco\src\pages\Account\Account.jsx
+Linha: 221
+          collection(db, "users"),
+
+================================================================================
+C:\Users\glaub\palpitaco\src\pages\Account\Account.jsx
+Linha: 225
+        const snap = await getDocs(qRef);
+
+================================================================================
+C:\Users\glaub\palpitaco\src\pages\Account\Account.jsx
+Linha: 239
+          collection(db, "users"),
+
+================================================================================
+C:\Users\glaub\palpitaco\src\pages\Account\Account.jsx
+Linha: 243
+        const snap = await getDocs(qRef);
+
+================================================================================
+C:\Users\glaub\palpitaco\src\pages\Admin\modules\MilharEngine\MilharEnginePage.jsx
+Linha: 345
+            closeHour: null,
+
+================================================================================
+C:\Users\glaub\palpitaco\src\pages\Centenas\__tests__\milharProbabilityEngineV3.test.js
+Linha: 16
+    closeHour: hour,
+
+================================================================================
+C:\Users\glaub\palpitaco\src\pages\Centenas\CentenasView.jsx
+Linha: 1028
+                      closeHour:
+
+================================================================================
+C:\Users\glaub\palpitaco\src\pages\Dashboard\components\SearchResultsTable.jsx
+Linha: 330
+      const close_hour_raw = pickHour(r);
+
+================================================================================
+C:\Users\glaub\palpitaco\src\pages\Dashboard\components\SearchResultsTable.jsx
+Linha: 331
+      const close_hour = hourBucketFromAny(close_hour_raw); // ✅ PADRÃO "09h"
+
+================================================================================
+C:\Users\glaub\palpitaco\src\pages\Dashboard\Dashboard.jsx
+Linha: 247
+    d.close_hour_raw ??
+
+================================================================================
+C:\Users\glaub\palpitaco\src\pages\Dashboard\Dashboard.jsx
+Linha: 248
+    d.closeHourRaw ??
+
+================================================================================
+C:\Users\glaub\palpitaco\src\pages\Dashboard\Dashboard.jsx
+Linha: 591
+    d.close_hour_raw ??
+
+================================================================================
+C:\Users\glaub\palpitaco\src\pages\Dashboard\Dashboard.jsx
+Linha: 592
+    d.closeHourRaw ??
+
+================================================================================
+C:\Users\glaub\palpitaco\src\pages\Dashboard\Dashboard.jsx
+Linha: 1185
+  const drawsForUi = useMemo(() => (Array.isArray(drawsRaw) ? drawsRaw : []), [drawsRaw]);
+
+================================================================================
+C:\Users\glaub\palpitaco\src\pages\Dashboard\Dashboard.jsx
+Linha: 1275
+    const list = Array.isArray(drawsForUi) ? drawsForUi : [];
+
+================================================================================
+C:\Users\glaub\palpitaco\src\pages\Dashboard\Dashboard.jsx
+Linha: 1356
+    drawsForUi,
+
+================================================================================
+C:\Users\glaub\palpitaco\src\pages\Dashboard\Dashboard.jsx
+Linha: 1372
+    if (!Array.isArray(drawsForUi) || !drawsForUi.length) return rankingRowsFromMeta;
+
+================================================================================
+C:\Users\glaub\palpitaco\src\pages\Dashboard\Dashboard.jsx
+Linha: 1375
+      const built = buildRanking(drawsForUi);
+
+================================================================================
+C:\Users\glaub\palpitaco\src\pages\Dashboard\Dashboard.jsx
+Linha: 1392
+  }, [drawsForUi, rankingRowsFromMeta, isAggregatedOnly]);
+
+================================================================================
+C:\Users\glaub\palpitaco\src\pages\Dashboard\Dashboard.jsx
+Linha: 1438
+    if (Array.isArray(drawsForUi) && drawsForUi.length) {
+
+================================================================================
+C:\Users\glaub\palpitaco\src\pages\Dashboard\Dashboard.jsx
+Linha: 1439
+      for (const d of drawsForUi) {
+
+================================================================================
+C:\Users\glaub\palpitaco\src\pages\Dashboard\Dashboard.jsx
+Linha: 1482
+  }, [drawsForUi, isFederal]);
+
+================================================================================
+C:\Users\glaub\palpitaco\src\pages\Dashboard\Dashboard.jsx
+Linha: 1741
+          loading={loadingEffective && !rankingRowsFromMeta.length && !drawsForUi.length}
+
+================================================================================
+C:\Users\glaub\palpitaco\src\pages\Dashboard\Dashboard.jsx
+Linha: 1800
+                      drawsRawGlobal={dataReady ? drawsForUi : []}
+
+================================================================================
+C:\Users\glaub\palpitaco\src\pages\Dashboard\Dashboard.jsx
+Linha: 1811
+                    drawsRawGlobal={dataReady ? drawsForUi : []}
+
+================================================================================
+C:\Users\glaub\palpitaco\src\pages\Dashboard\Dashboard.jsx
+Linha: 1855
+              drawsRawGlobal={drawsForUi}
+
+================================================================================
+C:\Users\glaub\palpitaco\src\pages\Downloads\Downloads.jsx
+Linha: 766
+      closeHour: null,
+
+================================================================================
+C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx
+Linha: 156
+      best = { ymd: d?.ymd || d?.date || "", closeHour: ch || "" };
+
+================================================================================
+C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx
+Linha: 193
+        lastCloseHour: r?.lastCloseHour ? normalizeHourLike(r.lastCloseHour) : "",
+
+================================================================================
+C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx
+Linha: 208
+    const rec = byGrupo.get(g) || { grupo: g, lastYmd: null, lastCloseHour: "" };
+
+================================================================================
+C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx
+Linha: 311
+    { id: "ALL", label: "Todos os horários", closeHour: null },
+
+================================================================================
+C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx
+Linha: 312
+    { id: "09", label: "09h", closeHour: "09:00" },
+
+================================================================================
+C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx
+Linha: 313
+    { id: "11", label: "11h", closeHour: "11:00" },
+
+================================================================================
+C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx
+Linha: 314
+    { id: "14", label: "14h", closeHour: "14:00" },
+
+================================================================================
+C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx
+Linha: 315
+    { id: "16", label: "16h", closeHour: "16:00" },
+
+================================================================================
+C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx
+Linha: 316
+    { id: "18", label: "18h", closeHour: "18:00" },
+
+================================================================================
+C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx
+Linha: 317
+    { id: "21", label: "21h", closeHour: "21:00" },
+
+================================================================================
+C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx
+Linha: 321
+    { id: "ALL", label: "Todos os horários", closeHour: null },
+
+================================================================================
+C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx
+Linha: 322
+    { id: "20", label: "20h", closeHour: "20:00" },
+
+================================================================================
+C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx
+Linha: 326
+    { id: "ALL", label: "Todos os horários", closeHour: null },
+
+================================================================================
+C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx
+Linha: 330
+    { id: "ALL", label: "Todos os horários", closeHour: null },
+
+================================================================================
+C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx
+Linha: 358
+    closeHour: "",
+
+================================================================================
+C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx
+Linha: 467
+    if (!maxYmd) return { ymd: "", closeHour: "" };
+
+================================================================================
+C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx
+Linha: 472
+      closeHour: null,
+
+================================================================================
+C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx
+Linha: 479
+      return { ymd: String(latest.ymd || maxYmd), closeHour: String(latest.closeHour || "") };
+
+================================================================================
+C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx
+Linha: 481
+    return { ymd: maxYmd, closeHour: "" };
+
+================================================================================
+C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx
+Linha: 538
+        closeHour: null,
+
+================================================================================
+C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx
+Linha: 547
+        lastCloseHour: r?.lastHour || r?.lastCloseHour || "",
+
+================================================================================
+C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx
+Linha: 567
+        lastCloseHour: r?.lastCloseHour ? normalizeHourLike(r.lastCloseHour) : "",
+
+================================================================================
+C:\Users\glaub\palpitaco\src\pages\Results\Results.jsx
+Linha: 646
+      close_hour: hour,
+
+================================================================================
+C:\Users\glaub\palpitaco\src\pages\Results\Results.jsx
+Linha: 647
+      closeHour: hour,
+
+================================================================================
+C:\Users\glaub\palpitaco\src\pages\Results\Results.jsx
+Linha: 826
+        closeHour: null,
+
+================================================================================
+C:\Users\glaub\palpitaco\src\pages\Search\Search.jsx
+Linha: 678
+          closeHour: selectedCloseHourBucket ? `${String(selectedCloseHourBucket).slice(0, 2)}:00` : null,
+
+================================================================================
+C:\Users\glaub\palpitaco\src\pages\Search\Search.jsx
+Linha: 761
+              close_hour: closeHourDisplay, // <<<<<< padrão bucket
+
+================================================================================
+C:\Users\glaub\palpitaco\src\pages\Top3\modules\scoreEngine\contextEvidence.js
+Linha: 50
+        closeHour: context.hour || null,
+
+================================================================================
+C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js
+Linha: 344
+      closeHour: null,
+
+================================================================================
+C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js
+Linha: 344
+      closeHour: null,
+
+================================================================================
+C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.js
+Linha: 460
+      closeHour: null,
+
+================================================================================
+C:\Users\glaub\palpitaco\src\pages\Top3\top3.firestore.js
+Linha: 209
+export async function saveTop3PredictionSnapshot({
+
+================================================================================
+C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js
+Linha: 46
+  saveTop3PredictionSnapshot,
+
+================================================================================
+C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js
+Linha: 1004
+    saveTop3PredictionSnapshot({
+
+================================================================================
+C:\Users\glaub\palpitaco\src\services\king\king.firestore.js
+Linha: 5
+  getDocs,
+
+================================================================================
+C:\Users\glaub\palpitaco\src\services\king\king.firestore.js
+Linha: 6
+  getDocsFromServer,
+
+================================================================================
+C:\Users\glaub\palpitaco\src\services\king\king.firestore.js
+Linha: 11
+export async function safeGetDocsSmart(qRef, { policy = "cache" } = {}) {
+
+================================================================================
+C:\Users\glaub\palpitaco\src\services\king\king.firestore.js
+Linha: 16
+      const snap = await getDocsFromServer(qRef);
+
+================================================================================
+C:\Users\glaub\palpitaco\src\services\king\king.firestore.js
+Linha: 20
+        const snap = await getDocs(qRef);
+
+================================================================================
+C:\Users\glaub\palpitaco\src\services\king\king.firestore.js
+Linha: 29
+    const snapCache = await getDocs(qRef);
+
+================================================================================
+C:\Users\glaub\palpitaco\src\services\king\king.firestore.js
+Linha: 35
+      const snapServer = await getDocsFromServer(qRef);
+
+================================================================================
+C:\Users\glaub\palpitaco\src\services\king\king.firestore.js
+Linha: 42
+      const snap = await getDocsFromServer(qRef);
+
+================================================================================
+C:\Users\glaub\palpitaco\src\services\auditKingCounts.js
+Linha: 313
+          close_hour: extractRawCloseHourFromDraw(d) || null,
+
+================================================================================
+C:\Users\glaub\palpitaco\src\services\kingResultsService.js
+Linha: 14
+import { safeGetDocsSmart } from "./king/king.firestore";
+
+================================================================================
+C:\Users\glaub\palpitaco\src\services\kingResultsService.js
+Linha: 420
+      close_hour: hour || raw.close_hour || raw.closeHour || "",
+
+================================================================================
+C:\Users\glaub\palpitaco\src\services\kingResultsService.js
+Linha: 421
+      closeHour: hour || raw.closeHour || raw.close_hour || "",
+
+================================================================================
+C:\Users\glaub\palpitaco\src\services\kingResultsService.js
+Linha: 521
+  const prizesCol = collection(db, "draws", drawKey, "prizes");
+
+================================================================================
+C:\Users\glaub\palpitaco\src\services\kingResultsService.js
+Linha: 523
+  const { snap, error } = await safeGetDocsSmart(prizesCol, { policy: "server" });
+
+================================================================================
+C:\Users\glaub\palpitaco\src\services\kingResultsService.js
+Linha: 546
+function mapDrawDoc(doc) {
+
+================================================================================
+C:\Users\glaub\palpitaco\src\services\kingResultsService.js
+Linha: 577
+    close_hour: hourNorm,
+
+================================================================================
+C:\Users\glaub\palpitaco\src\services\kingResultsService.js
+Linha: 578
+    closeHour: hourNorm,
+
+================================================================================
+C:\Users\glaub\palpitaco\src\services\kingResultsService.js
+Linha: 614
+  const drawsCol = collection(db, "draws");
+
+================================================================================
+C:\Users\glaub\palpitaco\src\services\kingResultsService.js
+Linha: 629
+  return safeGetDocsSmart(qRef, { policy });
+
+================================================================================
+C:\Users\glaub\palpitaco\src\services\kingResultsService.js
+Linha: 849
+    const mappedA = (asc?.snap?.docs || []).map(mapDrawDoc);
+
+================================================================================
+C:\Users\glaub\palpitaco\src\services\kingResultsService.js
+Linha: 850
+    const mappedB = (last?.snap?.docs || []).map(mapDrawDoc);
+
+================================================================================
+C:\Users\glaub\palpitaco\src\services\kingResultsService.js
+Linha: 893
+      const mappedMin = minDocs.map(mapDrawDoc);
+
+================================================================================
+C:\Users\glaub\palpitaco\src\services\kingResultsService.js
+Linha: 894
+      const mappedMax = maxDocs.map(mapDrawDoc);
+
+================================================================================
+C:\Users\glaub\palpitaco\src\services\kingResultsService.js
+Linha: 1191
+  let baseAll = dedupeDrawsLocal(docCandidates.map(mapDrawDoc));
+
+================================================================================
+C:\Users\glaub\palpitaco\src\services\kingResultsService.js
+Linha: 1284
+  let baseAll = dedupeDrawsLocal(docs.map(mapDrawDoc));
+
+================================================================================
+C:\Users\glaub\palpitaco\src\services\kingResultsService.js
+Linha: 1488
+  const baseAll = dedupeDrawsLocal(docs.map(mapDrawDoc));
+
+================================================================================
+C:\Users\glaub\palpitaco\src\utils\buildRanking.js
+Linha: 304
+          close_hour: getDrawHourRaw(draw) || null,
+

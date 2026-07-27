@@ -1,0 +1,165 @@
+====================================================================================================
+src\App.jsx
+ACHADOS:
+  - Route
+  - getDoc(
+  - onAuthStateChanged
+  - useEffect(
+
+====================================================================================================
+src\services\auth.js
+ACHADOS:
+  - onAuthStateChanged
+
+====================================================================================================
+src\services\firebase.js
+ACHADOS:
+  - getAuth
+  - getFirestore
+  - initializeApp
+
+====================================================================================================
+src\services\kingResultsService.js
+ACHADOS:
+  - Promise.all
+  - collection(
+  - fetch(
+  - limit(
+  - orderBy(
+  - query(
+  - where(
+
+====================================================================================================
+src\services\planService.js
+ACHADOS:
+  - getDoc(
+
+====================================================================================================
+src\services\statisticsEngine.js
+ACHADOS:
+  - getDoc(
+
+====================================================================================================
+src\services\king\king.firestore.js
+ACHADOS:
+  - getDocs(
+
+====================================================================================================
+src\hooks\useKingRanking.js
+ACHADOS:
+  - useEffect(
+
+====================================================================================================
+src\pages\Account\account.hooks.js
+ACHADOS:
+  - useEffect(
+
+====================================================================================================
+src\pages\Account\Account.jsx
+ACHADOS:
+  - collection(
+  - getDocs(
+  - limit(
+  - onAuthStateChanged
+  - query(
+  - useEffect(
+  - where(
+
+====================================================================================================
+src\pages\Account\account.profile.service.js
+ACHADOS:
+  - getDoc(
+
+====================================================================================================
+src\pages\Account\LoginVisual.jsx
+ACHADOS:
+  - useEffect(
+
+====================================================================================================
+src\pages\Admin\AdminLogin.jsx
+ACHADOS:
+  - getDoc(
+  - useEffect(
+
+====================================================================================================
+src\pages\Admin\modules\MilharEngine\MilharEnginePage.jsx
+ACHADOS:
+  - Promise.all
+
+====================================================================================================
+src\pages\Centenas\centenas.utils.js
+ACHADOS:
+  - Promise.all
+
+====================================================================================================
+src\pages\Centenas\CentenasView.jsx
+ACHADOS:
+  - Promise.all
+  - useEffect(
+
+====================================================================================================
+src\pages\Dashboard\Dashboard.jsx
+ACHADOS:
+  - fetch(
+  - useEffect(
+
+====================================================================================================
+src\pages\Dashboard\components\SearchResultsTable.jsx
+ACHADOS:
+  - useEffect(
+
+====================================================================================================
+src\pages\Dashboard\components\Sidebar\AppShell.jsx
+ACHADOS:
+  - onAuthStateChanged
+  - useEffect(
+
+====================================================================================================
+src\pages\Downloads\Downloads.jsx
+ACHADOS:
+  - useEffect(
+
+====================================================================================================
+src\pages\Late\Late.jsx
+ACHADOS:
+  - useEffect(
+
+====================================================================================================
+src\pages\Results\Results.jsx
+ACHADOS:
+  - Promise.all
+  - fetch(
+  - useEffect(
+
+====================================================================================================
+src\pages\Search\Search.jsx
+ACHADOS:
+  - Promise.all
+  - useEffect(
+
+====================================================================================================
+src\pages\Top3\top3.firestore.js
+ACHADOS:
+  - Promise.all
+  - getDoc(
+
+====================================================================================================
+src\pages\Top3\top3.hooks.js
+ACHADOS:
+  - useEffect(
+
+====================================================================================================
+src\pages\Top3\Top3View.jsx
+ACHADOS:
+  - useEffect(
+
+====================================================================================================
+src\pages\Top3\Top3View.jsx.bak_history_from_timeline_20260326_131646
+ACHADOS:
+  - useEffect(
+
+====================================================================================================
+src\pages\Top3\Top3View.premium.backup.jsx
+ACHADOS:
+  - useEffect(
+

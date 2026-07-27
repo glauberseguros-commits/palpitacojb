@@ -1,0 +1,38 @@
+====================================================================================================
+TOP3-UNI-03 — VALIDAÇÃO FINAL
+====================================================================================================
+Gerado em: 25/07/2026 10:18:22
+====================================================================================================
+
+
+====================================================================================================
+ARQUIVO: .\src\pages\Top3\top3.engine.js
+====================================================================================================
+3615: export function buildMilharesForGrupo({
+3929: export function build16MilharesForGrupo(args) {
+3930:   return buildMilharesForGrupo({ ...(args || {}), count: 16 });
+3933: export function build20MilharesForGrupo(args) {
+3934:   return buildMilharesForGrupo({ ...(args || {}), count: 20 });
+
+====================================================================================================
+ARQUIVO: .\src\pages\Top3\top3.public-api.js
+====================================================================================================
+23:   buildMilharesForGrupo,
+24:   build16MilharesForGrupo,
+25:   build20MilharesForGrupo,
+
+====================================================================================================
+ARQUIVO: .\src\pages\Top3\top3.hooks.js
+====================================================================================================
+31:   build16MilharesForGrupo,
+32:   buildMilharesForGrupo,
+990:       const generated = buildMilharesForGrupo({
+
+====================================================================================================
+ARQUIVO: .\src\pages\Centenas\modules\milharProbabilityEngine.js
+====================================================================================================
+333: export function chooseBestMilhar(args = {}) {
+395: export function buildMilharRecommendation(args = {}) {
+396:   const result = chooseBestMilhar(args);
+674:   const result = chooseBestMilhar(args);
+675:   const recommendation = buildMilharRecommendation(args);

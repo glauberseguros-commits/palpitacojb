@@ -1,0 +1,4692 @@
+========================================================================================================================
+TERNO-GRUPO-02 — 06_top3_engine.txt
+Gerado em: 26/07/2026 19:03:38
+========================================================================================================================
+
+########################################################################################################################
+ARQUIVO COMPLETO: .\src\pages\Top3\top3.engine.js
+########################################################################################################################
+00001: /* eslint-disable no-unused-vars */
+00002: // src/pages/Top3/top3.engine.js
+00003: import {
+00004:   safeStr,
+00005:   isYMD,
+00006:   normalizeToYMD,
+00007:   addDaysYMD,
+00008:   normalizeHourLike,
+00009:   toHourBucket,
+00010:   hourToInt,
+00011:   getDowKey,
+00012:   pickPrizeMilhar4,
+00013:   getDezena2,
+00014:   getCentena3,
+00015:   milharCompareAsc,
+00016:   wrapToDezena2,
+00017: } from "./top3.formatters";
+00018: 
+00019: import { scoreRanking } from "./modules/scoreEngine/scoreEngineV2";
+00020: 
+00021: import { chooseBestMilhar } from "../../shared/predictiveMilharEngine";
+00022: 
+00023: import {
+00024:   TOP3_NEXTDRAW_SCAN_MAX_STEPS,
+00025:   TOP3_NEXTDRAW_SCAN_MAX_DAYS,
+00026:   TOP3_GROUPS_K,
+00027:   TOP3_SMOOTH_ALPHA,
+00028:   TOP3_SCENE_WEIGHT,
+00029:   TOP3_SCENE_SAMPLE_TARGET,
+00030:   TOP3_SCENE_BLEND_SCENE,
+00031:   TOP3_SCENE_BLEND_UNIFORM,
+00032:   PT_RIO_SCHEDULE_SUNDAY,
+00033:   LOOK_SCHEDULE,
+00034:   NACIONAL_SCHEDULE,
+00035: } from "./top3.constants";
+00036: 
+00037: function findPreviousValidDraw(draws, currentYmd, currentHour) {
+00038:   const list = Array.isArray(draws) ? draws : [];
+00039:   const targetY = safeStr(currentYmd);
+00040:   const targetH = toHourBucket(currentHour);
+00041: 
+00042:   if (!isYMD(targetY) || !targetH) return null;
+00043: 
+00044:   const targetTs = ymdHourToTs(targetY, targetH);
+00045: 
+00046:   return list
+00047:     .filter((draw) => Array.isArray(draw?.prizes) && draw.prizes.length > 0)
+00048:     .map((draw) => {
+00049:       const y = pickDrawYMD(draw);
+00050:       const h = toHourBucket(pickDrawHour(draw));
+00051:       return { draw, ts: ymdHourToTs(y, h) };
+00052:     })
+00053:     .filter((x) => Number.isFinite(x.ts) && x.ts < targetTs)
+00054:     .sort((a, b) => b.ts - a.ts)[0]?.draw || null;
+00055: }
+00056: 
+00057: /* =========================
+00058:    Draw helpers (robustos)
+00059: ========================= */
+00060: 
+00061: function grupoFromDezena2(dezena2) {
+00062:   const s = safeStr(dezena2);
+00063:   if (!/^\d{2}$/.test(s)) return null;
+00064: 
+00065:   const n = Number(s);
+00066:   if (!Number.isFinite(n) || n < 0 || n > 99) return null;
+00067:   if (n === 0) return 25;
+00068: 
+00069:   const g = Math.ceil(n / 4);
+00070:   return g >= 1 && g <= 25 ? g : null;
+00071: }
+00072: 
+00073: function drawQualityScore(draw) {
+00074:   const prizes = Array.isArray(draw?.prizes) ? draw.prizes : [];
+00075:   const y = pickDrawYMD(draw);
+00076:   const h = toHourBucket(pickDrawHour(draw));
+00077: 
+00078:   let score = 0;
+00079:   if (isYMD(y)) score += 20;
+00080:   if (h) score += 20;
+00081:   score += Math.min(10, prizes.length) * 10;
+00082: 
+00083:   const hasP1 = prizes.some((p) => guessPrizePos(p) === 1);
+00084:   if (hasP1) score += 15;
+00085: 
+00086:   return score;
+00087: }
+00088: 
+00089: export function guessPrizePos(p) {
+00090:   const pos = Number.isFinite(Number(p?.position))
+00091:     ? Number(p.position)
+00092:     : Number.isFinite(Number(p?.posicao))
+00093:       ? Number(p.posicao)
+00094:       : Number.isFinite(Number(p?.pos))
+00095:         ? Number(p.pos)
+00096:         : Number.isFinite(Number(p?.colocacao))
+00097:           ? Number(p.colocacao)
+00098:           : null;
+00099: 
+00100:   return pos;
+00101: }
+00102: 
+00103: export function guessPrizeGrupo(p) {
+00104:   const directCandidates = [
+00105:     p?.grupo2,
+00106:     p?.group2,
+00107:     p?.grupo,
+00108:     p?.group,
+00109:     p?.animal_grupo,
+00110:     p?.grupo_animal,
+00111:     p?.grupoAnimal,
+00112:     p?.g,
+00113:   ];
+00114: 
+00115:   for (const v of directCandidates) {
+00116:     const g = Number(v);
+00117:     if (Number.isFinite(g) && g >= 1 && g <= 25) {
+00118:       return g;
+00119:     }
+00120:   }
+00121: 
+00122:   const milhar4 = pickPrizeMilhar4(p);
+00123: 
+00124:   if (milhar4) {
+00125:     const dezena2 = getDezena2(milhar4);
+00126:     const derived = grupoFromDezena2(dezena2);
+00127: 
+00128:     if (Number.isFinite(derived)) return derived;
+00129:   }
+00130: 
+00131:   return null;
+00132: }
+00133: 
+00134: export function pickDrawHour(draw) {
+00135:   return normalizeHourLike(
+00136:     draw?.close_hour || draw?.closeHour || draw?.hour || draw?.hora || ""
+00137:   );
+00138: }
+00139: 
+00140: export function pickDrawYMD(draw) {
+00141:   const y =
+00142:     draw?.ymd ||
+00143:     normalizeToYMD(draw?.date) ||
+00144:     normalizeToYMD(draw?.data) ||
+00145:     normalizeToYMD(draw?.dt) ||
+00146:     normalizeToYMD(draw?.draw_date) ||
+00147:     normalizeToYMD(draw?.drawDate) ||
+00148:     normalizeToYMD(draw?.close_date) ||
+00149:     normalizeToYMD(draw?.closeDate) ||
+00150:     null;
+00151: 
+00152:   return y;
+00153: }
+00154: 
+00155: export function pickPrize1GrupoFromDraw(draw) {
+00156:   const prizes = Array.isArray(draw?.prizes) ? draw.prizes : [];
+00157:   if (prizes.length) {
+00158:     const p1 = prizes.find((p) => guessPrizePos(p) === 1) || null;
+00159:     if (p1) {
+00160:       const g = guessPrizeGrupo(p1);
+00161:       return Number.isFinite(Number(g)) ? Number(g) : null;
+00162:     }
+00163:   }
+00164: 
+00165:   const candidates = [
+00166:     draw?.grupo1,
+00167:     draw?.group1,
+00168:     draw?.primeiro_grupo,
+00169:     draw?.first_grupo,
+00170:     draw?.prize1_grupo,
+00171:     draw?.prize1Grupo,
+00172:     draw?.p1_grupo2,
+00173:     draw?.p1Grupo2,
+00174:     draw?.g1,
+00175:     draw?.grupo_1,
+00176:     draw?.grupoPrimeiro,
+00177:   ];
+00178: 
+00179:   for (const v of candidates) {
+00180:     if (Number.isFinite(Number(v))) return Number(v);
+00181:   }
+00182: 
+00183:   return null;
+00184: }
+00185: 
+00186: /* =========================
+00187:    Helpers internos
+00188: ========================= */
+00189: 
+00190: function safeInt(v, fallback) {
+00191:   const n = Number(v);
+00192:   return Number.isFinite(n) ? n : fallback;
+00193: }
+00194: 
+00195: function getDayOfMonth(ymd) {
+00196:   if (!isYMD(ymd)) return NaN;
+00197:   return Number(String(ymd).slice(8, 10));
+00198: }
+00199: 
+00200: function ymdHourToTs(ymd, hourBucket) {
+00201:   const y = safeStr(ymd);
+00202:   const h = toHourBucket(hourBucket);
+00203: 
+00204:   if (!isYMD(y) || !h) return Number.POSITIVE_INFINITY;
+00205: 
+00206:   const mins = hourToInt(h);
+00207:   if (!Number.isFinite(mins) || mins < 0) {
+00208:     return Number.POSITIVE_INFINITY;
+00209:   }
+00210: 
+00211:   const [Y, M, D] = y.split("-").map((x) => Number(x));
+00212:   const base = Date.UTC(Y, M - 1, D);
+00213: 
+00214:   return base + mins * 60 * 1000;
+00215: }
+00216: 
+00217: /* =========================
+00218:    Schedules
+00219: ========================= */
+00220: 
+00221: const FEDERAL_SUNDAY_START_YMD = "2026-07-19";
+00222: const PT_RIO_SUNDAY_REDUCED_START_YMD = "2026-07-18";
+00223: const FEDERAL_20_REMOVES_PT_RIO_18_START_YMD = "2025-11-03";
+00224: 
+00225: /**
+00226:  * Calendário Federal com preservação histórica.
+00227:  *
+00228:  * Até 18/07/2026:
+00229:  * - quarta-feira às 20h;
+00230:  * - sábado às 20h.
+00231:  *
+00232:  * A partir de 19/07/2026:
+00233:  * - quarta-feira às 20h;
+00234:  * - domingo às 11h;
+00235:  * - sábado deixa de ter sorteio Federal.
+00236:  */
+00237: export function isFederalDrawDay(ymd) {
+00238:   const y = safeStr(ymd);
+00239:   if (!y) return false;
+00240: 
+00241:   const dow = Number(getDowKey(y));
+00242: 
+00243:   if (y >= FEDERAL_SUNDAY_START_YMD) {
+00244:     return dow === 0 || dow === 3;
+00245:   }
+00246: 
+00247:   return dow === 3 || dow === 6;
+00248: }
+00249: 
+00250: function getFederalScheduleForYmd(ymd, FEDERAL_SCHEDULE) {
+00251:   const y = safeStr(ymd);
+00252: 
+00253:   if (!y || !isFederalDrawDay(y)) {
+00254:     return [];
+00255:   }
+00256: 
+00257:   const dow = Number(getDowKey(y));
+00258: 
+00259:   if (y >= FEDERAL_SUNDAY_START_YMD && dow === 0) {
+00260:     return ["11:00"];
+00261:   }
+00262: 
+00263:   const historical = Array.isArray(FEDERAL_SCHEDULE)
+00264:     ? FEDERAL_SCHEDULE
+00265:     : [];
+00266: 
+00267:   const normalized = historical
+00268:     .map(toHourBucket)
+00269:     .filter(Boolean);
+00270: 
+00271:   if (normalized.includes("20:00")) {
+00272:     return ["20:00"];
+00273:   }
+00274: 
+00275:   return normalized.length
+00276:     ? normalized
+00277:     : ["20:00"];
+00278: }
+00279: 
+00280: /**
+00281:  * Determina apenas os slots esperados.
+00282:  * Nenhum resultado histórico é removido.
+00283:  */
+00284: export function getPtRioScheduleForYmd(
+00285:   ymd,
+00286:   PT_RIO_SCHEDULE_NORMAL,
+00287:   PT_RIO_SCHEDULE_WED_SAT
+00288: ) {
+00289:   const y = safeStr(ymd);
+00290:   const dow = Number(getDowKey(y));
+00291: 
+00292:   if (dow === 0) {
+00293:     const sundaySchedule = Array.isArray(PT_RIO_SCHEDULE_SUNDAY)
+00294:       ? [...PT_RIO_SCHEDULE_SUNDAY]
+00295:       : [];
+00296: 
+00297:     if (y >= PT_RIO_SUNDAY_REDUCED_START_YMD) {
+00298:       return sundaySchedule.filter((hour) => {
+00299:         const h = normalizeHourLike(hour);
+00300: 
+00301:         return h === "14:00" || h === "16:00";
+00302:       });
+00303:     }
+00304: 
+00305:     return sundaySchedule;
+00306:   }
+00307: 
+00308:   if (dow === 6) {
+00309:     const saturdaySchedule = Array.isArray(
+00310:       PT_RIO_SCHEDULE_WED_SAT
+00311:     )
+00312:       ? [...PT_RIO_SCHEDULE_WED_SAT]
+00313:       : [];
+00314: 
+00315:     if (y >= "2026-07-18") {
+00316:       const transitionedSchedule = saturdaySchedule
+00317:         .map(normalizeHourLike)
+00318:         .filter(Boolean)
+00319:         .filter((hour) => hour !== "18:00");
+00320: 
+00321:       if (!transitionedSchedule.includes("19:00")) {
+00322:         transitionedSchedule.push("19:00");
+00323:       }
+00324: 
+00325:       return transitionedSchedule
+00326:         .filter(
+00327:           (hour, index, schedule) =>
+00328:             schedule.indexOf(hour) === index
+00329:         )
+00330:         .sort(
+00331:           (hourA, hourB) =>
+00332:             hourToInt(hourA) - hourToInt(hourB)
+00333:         );
+00334:     }
+00335: 
+00336:     return saturdaySchedule;
+00337:   }
+00338: 
+00339:   if (dow === 3) {
+00340:     return Array.isArray(PT_RIO_SCHEDULE_WED_SAT)
+00341:       ? [...PT_RIO_SCHEDULE_WED_SAT]
+00342:       : [];
+00343:   }
+00344: 
+00345:   return Array.isArray(PT_RIO_SCHEDULE_NORMAL)
+00346:     ? [...PT_RIO_SCHEDULE_NORMAL]
+00347:     : [];
+00348: }
+00349: 
+00350: export function getScheduleForLottery({
+00351:   lotteryKey,
+00352:   ymd,
+00353:   PT_RIO_SCHEDULE_NORMAL,
+00354:   PT_RIO_SCHEDULE_WED_SAT,
+00355:   FEDERAL_SCHEDULE,
+00356: }) {
+00357:   const key = safeStr(lotteryKey).toUpperCase();
+00358: 
+00359:   if (key === "FEDERAL") {
+00360:     return getFederalScheduleForYmd(
+00361:       ymd,
+00362:       FEDERAL_SCHEDULE
+00363:     );
+00364:   }
+00365: 
+00366:   if (key === "LOOK") {
+00367:     return [...LOOK_SCHEDULE];
+00368:   }
+00369: 
+00370:   if (key === "NACIONAL") {
+00371:     return [...NACIONAL_SCHEDULE];
+00372:   }
+00373: 
+00374:   return getPtRioScheduleForYmd(
+00375:     ymd,
+00376:     PT_RIO_SCHEDULE_NORMAL,
+00377:     PT_RIO_SCHEDULE_WED_SAT
+00378:   );
+00379: }
+00380: 
+00381: export function scheduleSet(schedule) {
+00382:   return new Set((Array.isArray(schedule) ? schedule : []).map(toHourBucket));
+00383: }
+00384: 
+00385: export function isHourInSchedule(schedule, hhmm) {
+00386:   const s = scheduleSet(schedule);
+00387:   return s.has(toHourBucket(hhmm));
+00388: }
+00389: 
+00390: export function findLastDrawInList(draws, schedule) {
+00391:   const list = Array.isArray(draws) ? draws : [];
+00392:   if (!list.length) return null;
+00393: 
+00394:   const sorted = [...list]
+00395:     .filter((d) => isHourInSchedule(schedule, pickDrawHour(d)))
+00396:     .sort((a, b) => {
+00397:       const ta = ymdHourToTs(pickDrawYMD(a), toHourBucket(pickDrawHour(a)));
+00398:       const tb = ymdHourToTs(pickDrawYMD(b), toHourBucket(pickDrawHour(b)));
+00399:       return tb - ta;
+00400:     });
+00401: 
+00402:   return sorted[0] || null;
+00403: }
+00404: 
+00405: export function findPrevDrawBeforeTargetInSameDay(
+00406:   draws,
+00407:   targetHourBucket,
+00408:   schedule
+00409: ) {
+00410:   const list = Array.isArray(draws) ? draws : [];
+00411:   if (!list.length) return null;
+00412: 
+00413:   const t = hourToInt(targetHourBucket);
+00414:   if (t < 0) return null;
+00415: 
+00416:   const candidates = list
+00417:     .filter((d) => isHourInSchedule(schedule, pickDrawHour(d)))
+00418:     .map((d) => ({ d, h: hourToInt(toHourBucket(pickDrawHour(d))) }))
+00419:     .filter((x) => x.h >= 0 && x.h < t)
+00420:     .sort((a, b) => b.h - a.h);
+00421: 
+00422:   return candidates.length ? candidates[0].d : null;
+00423: }
+00424: 
+00425: export async function getPreviousDrawRobust({
+00426:   getKingResultsByDate,
+00427:   lotteryKey,
+00428:   ymdTarget,
+00429:   targetHourBucket,
+00430:   todayDraws,
+00431:   schedule,
+00432:   maxBackDays = 10,
+00433:   PT_RIO_SCHEDULE_NORMAL,
+00434:   PT_RIO_SCHEDULE_WED_SAT,
+00435:   FEDERAL_SCHEDULE,
+00436: }) {
+00437:   const prevSameDay = findPrevDrawBeforeTargetInSameDay(
+00438:     todayDraws,
+00439:     targetHourBucket,
+00440:     schedule
+00441:   );
+00442: 
+00443:   if (prevSameDay) {
+00444:     return {
+00445:       draw: prevSameDay,
+00446:       ymd: pickDrawYMD(prevSameDay) || ymdTarget,
+00447:       hour: toHourBucket(pickDrawHour(prevSameDay)),
+00448:       source: "same_day",
+00449:     };
+00450:   }
+00451: 
+00452:   for (let i = 1; i <= maxBackDays; i += 1) {
+00453:     const day = addDaysYMD(ymdTarget, -i);
+00454: 
+00455:     const daySchedule = getScheduleForLottery({
+00456:       lotteryKey,
+00457:       ymd: day,
+00458:       PT_RIO_SCHEDULE_NORMAL,
+00459:       PT_RIO_SCHEDULE_WED_SAT,
+00460:       FEDERAL_SCHEDULE,
+00461:     });
+00462: 
+00463:     if (
+00464:       safeStr(lotteryKey).toUpperCase() === "FEDERAL" &&
+00465:       !daySchedule.length
+00466:     ) {
+00467:       continue;
+00468:     }
+00469: 
+00470:     const out = await getKingResultsByDate({
+00471:       uf: lotteryKey,
+00472:       date: day,
+00473:       closeHour: null,
+00474:       positions: null,
+00475:       readPolicy: "server",
+00476:     });
+00477: 
+00478:     const last = findLastDrawInList(out, daySchedule);
+00479:     if (last) {
+00480:       return {
+00481:         draw: last,
+00482:         ymd: pickDrawYMD(last) || day,
+00483:         hour: toHourBucket(pickDrawHour(last)),
+00484:         source: "prev_day",
+00485:       };
+00486:     }
+00487:   }
+00488: 
+00489:   return { draw: null, ymd: "", hour: "", source: "none" };
+00490: }
+00491: 
+00492: /* =========================
+00493:    Próximo sorteio (slot válido)
+00494: ========================= */
+00495: 
+00496: export function getNextSlotForLottery({
+00497:   lotteryKey,
+00498:   ymd,
+00499:   hourBucket,
+00500:   PT_RIO_SCHEDULE_NORMAL,
+00501:   PT_RIO_SCHEDULE_WED_SAT,
+00502:   FEDERAL_SCHEDULE,
+00503:   maxForwardDays = 21,
+00504: }) {
+00505:   const key = safeStr(lotteryKey).toUpperCase();
+00506:   const y0 = safeStr(ymd);
+00507:   const h0 = toHourBucket(hourBucket);
+00508: 
+00509:   if (!isYMD(y0) || !safeStr(h0)) return { ymd: "", hour: "" };
+00510: 
+00511:   if (key === "FEDERAL") {
+00512:     for (let i = 1; i <= maxForwardDays; i += 1) {
+00513:       const day = addDaysYMD(y0, i);
+00514:       const sch = getScheduleForLottery({
+00515:         lotteryKey: key,
+00516:         ymd: day,
+00517:         PT_RIO_SCHEDULE_NORMAL,
+00518:         PT_RIO_SCHEDULE_WED_SAT,
+00519:         FEDERAL_SCHEDULE,
+00520:       });
+00521:       if (Array.isArray(sch) && sch.length) {
+00522:         return { ymd: day, hour: toHourBucket(sch[0]) };
+00523:       }
+00524:     }
+00525:     return { ymd: "", hour: "" };
+00526:   }
+00527: 
+00528:   const sch0 = getScheduleForLottery({
+00529:     lotteryKey: key,
+00530:     ymd: y0,
+00531:     hourBucket: h0,
+00532:     PT_RIO_SCHEDULE_NORMAL,
+00533:     PT_RIO_SCHEDULE_WED_SAT,
+00534:     FEDERAL_SCHEDULE,
+00535:   });
+00536: 
+00537:   const idx = (Array.isArray(sch0) ? sch0 : []).findIndex(
+00538:     (x) => toHourBucket(x) === h0
+00539:   );
+00540: 
+00541:   if (idx >= 0 && idx < sch0.length - 1) {
+00542:     return { ymd: y0, hour: toHourBucket(sch0[idx + 1]) };
+00543:   }
+00544: 
+00545:   for (let i = 1; i <= maxForwardDays; i += 1) {
+00546:     const day = addDaysYMD(y0, i);
+00547:     const sch = getScheduleForLottery({
+00548:       lotteryKey: key,
+00549:       ymd: day,
+00550:       PT_RIO_SCHEDULE_NORMAL,
+00551:       PT_RIO_SCHEDULE_WED_SAT,
+00552:       FEDERAL_SCHEDULE,
+00553:     });
+00554:     if (Array.isArray(sch) && sch.length) {
+00555:       return { ymd: day, hour: toHourBucket(sch[0]) };
+00556:     }
+00557:   }
+00558: 
+00559:   return { ymd: "", hour: "" };
+00560: }
+00561: 
+00562: /* =========================
+00563:    Próximo DRAW REAL (não perde amostra)
+00564: ========================= */
+00565: 
+00566: export function findNextExistingDrawFromSlot({
+00567:   lotteryKey,
+00568:   startSlot,
+00569:   drawsIndex,
+00570:   PT_RIO_SCHEDULE_NORMAL,
+00571:   PT_RIO_SCHEDULE_WED_SAT,
+00572:   FEDERAL_SCHEDULE,
+00573:   maxSteps = TOP3_NEXTDRAW_SCAN_MAX_STEPS,
+00574:   maxDays = TOP3_NEXTDRAW_SCAN_MAX_DAYS,
+00575: }) {
+00576:   const key = safeStr(lotteryKey).toUpperCase();
+00577:   const y0 = safeStr(startSlot?.ymd);
+00578:   const h0 = toHourBucket(startSlot?.hour);
+00579: 
+00580:   if (!isYMD(y0) || !h0 || !(drawsIndex instanceof Map)) {
+00581:     return { slot: null, draw: null };
+00582:   }
+00583: 
+00584:   if (key === "FEDERAL") {
+00585:     let curY = y0;
+00586:     let steps = 0;
+00587:     let daysWalked = 0;
+00588: 
+00589:     while (steps < maxSteps && daysWalked <= maxDays) {
+00590:       const sch = getScheduleForLottery({
+00591:         lotteryKey: key,
+00592:         ymd: curY,
+00593:         PT_RIO_SCHEDULE_NORMAL,
+00594:         PT_RIO_SCHEDULE_WED_SAT,
+00595:         FEDERAL_SCHEDULE,
+00596:       });
+00597: 
+00598:       if (Array.isArray(sch) && sch.length) {
+00599:         const hh = toHourBucket(sch[0]);
+00600:         const d = drawsIndex.get(`${curY}|${hh}`) || null;
+00601:         if (d) return { slot: { ymd: curY, hour: hh }, draw: d };
+00602:       }
+00603: 
+00604:       curY = addDaysYMD(curY, 1);
+00605:       daysWalked += 1;
+00606:       steps += 1;
+00607:     }
+00608: 
+00609:     return { slot: null, draw: null };
+00610:   }
+00611: 
+00612:   let curY = y0;
+00613:   let curH = h0;
+00614:   let steps = 0;
+00615:   let daysWalked = 0;
+00616: 
+00617:   while (steps < maxSteps && daysWalked <= maxDays) {
+00618:     const drawKey = `${curY}|${toHourBucket(curH)}`;
+00619:     let d = drawsIndex.get(drawKey) || null;
+00620: 
+00621:     if (!d) {
+00622:       const curTs = ymdHourToTs(curY, curH);
+00623:       const curYLocked = curY;
+00624:       d = Array.from(drawsIndex.entries())
+00625:         .map(([k, v]) => {
+00626:           const [ky, kh] = String(k).split("|");
+00627:           return { ymd: ky, hour: kh, draw: v, ts: ymdHourToTs(ky, kh) };
+00628:         })
+00629:         .filter((x) => x.ymd === curYLocked)
+00630:         .filter((x) => Number.isFinite(x.ts) && x.ts >= curTs)
+00631:         .sort((a, b) => a.ts - b.ts)[0]?.draw || null;
+00632:     }
+00633: 
+00634:     if (d) return { slot: { ymd: curY, hour: toHourBucket(curH) }, draw: d };
+00635: 
+00636:     const sch = getScheduleForLottery({
+00637:       lotteryKey: key,
+00638:       ymd: curY,
+00639:       PT_RIO_SCHEDULE_NORMAL,
+00640:       PT_RIO_SCHEDULE_WED_SAT,
+00641:       FEDERAL_SCHEDULE,
+00642:     });
+00643: 
+00644:     const arr = Array.isArray(sch) ? sch.map(toHourBucket) : [];
+00645:     const curBucket = toHourBucket(curH);
+00646:     const idx = arr.indexOf(curBucket);
+00647: 
+00648:     if (idx >= 0 && idx < arr.length - 1) {
+00649:       curH = arr[idx + 1];
+00650:     } else {
+00651:       curY = addDaysYMD(curY, 1);
+00652:       daysWalked += 1;
+00653: 
+00654:       const sch2 = getScheduleForLottery({
+00655:         lotteryKey: key,
+00656:         ymd: curY,
+00657:         PT_RIO_SCHEDULE_NORMAL,
+00658:         PT_RIO_SCHEDULE_WED_SAT,
+00659:         FEDERAL_SCHEDULE,
+00660:       });
+00661: 
+00662:       const arr2 = Array.isArray(sch2) ? sch2.map(toHourBucket) : [];
+00663:       if (!arr2.length) break;
+00664:       curH = arr2[0];
+00665:     }
+00666: 
+00667:     steps += 1;
+00668:   }
+00669: 
+00670:   return { slot: null, draw: null };
+00671: }
+00672: 
+00673: /* =========================
+00674:    Index + utilitários de grupo
+00675: ========================= */
+00676: 
+00677: export function indexDrawsByYmdHour(draws) {
+00678:   const map = new Map();
+00679:   const list = Array.isArray(draws) ? draws : [];
+00680: 
+00681:   for (const d of list) {
+00682:     const y = pickDrawYMD(d);
+00683:     const rawH = pickDrawHour(d);
+00684:     const h = toHourBucket(rawH);
+00685: 
+00686:     if (!isYMD(y) || !h) continue;
+00687: 
+00688:     const drawKey = `${y}|${h}`;
+00689:     const prev = map.get(drawKey);
+00690: 
+00691:     if (!prev) {
+00692:       map.set(drawKey, d);
+00693:       continue;
+00694:     }
+00695: 
+00696:     if (drawQualityScore(d) >= drawQualityScore(prev)) {
+00697:       map.set(drawKey, d);
+00698:     }
+00699:   }
+00700: 
+00701:   return map;
+00702: }
+00703: 
+00704: export function computeLastSeenByGrupo(draws) {
+00705:   const last = new Map();
+00706:   const list = Array.isArray(draws) ? draws : [];
+00707: 
+00708:   for (const d of list) {
+00709:     const y = pickDrawYMD(d);
+00710:     const h = toHourBucket(pickDrawHour(d));
+00711:     if (!isYMD(y) || !h) continue;
+00712: 
+00713:     const ts = ymdHourToTs(y, h);
+00714:     const ps = Array.isArray(d?.prizes) ? d.prizes : [];
+00715: 
+00716:     for (const p of ps) {
+00717:       const pos = guessPrizePos(p);
+00718:       if (!Number.isFinite(Number(pos)) || Number(pos) < 1 || Number(pos) > 5) {
+00719:         continue;
+00720:       }
+00721: 
+00722:       const g = guessPrizeGrupo(p);
+00723:       if (!Number.isFinite(Number(g)) || Number(g) <= 0) continue;
+00724: 
+00725:       const gg = Number(g);
+00726:       const prev = last.get(gg);
+00727: 
+00728:       if (!Number.isFinite(prev) || ts > prev) {
+00729:         last.set(gg, ts);
+00730:       }
+00731:     }
+00732:   }
+00733: 
+00734:   return last;
+00735: }
+00736: 
+00737: export function countAparicoesByGrupoInDraw(draw) {
+00738:   const counts = new Map();
+00739:   const ps = Array.isArray(draw?.prizes) ? draw.prizes : [];
+00740:   for (const p of ps) {
+00741:     const pos = guessPrizePos(p);
+00742:     if (!Number.isFinite(Number(pos)) || Number(pos) < 1 || Number(pos) > 5) {
+00743:       continue;
+00744:     }
+00745:     const g = guessPrizeGrupo(p);
+00746:     if (!Number.isFinite(Number(g)) || Number(g) <= 0) continue;
+00747:     const gg = Number(g);
+00748:     counts.set(gg, (counts.get(gg) || 0) + 1);
+00749:   }
+00750:   return counts;
+00751: }
+00752: 
+00753: function getFirstGrupoFromDraw(draw) {
+00754:   const ps = Array.isArray(draw?.prizes) ? draw.prizes : [];
+00755:   const p1 = ps.find((p) => guessPrizePos(p) === 1) || null;
+00756:   if (p1) {
+00757:     const g = guessPrizeGrupo(p1);
+00758:     return Number.isFinite(Number(g)) ? Number(g) : null;
+00759:   }
+00760:   return pickPrize1GrupoFromDraw(draw);
+00761: }
+00762: 
+00763: function getPrizeGroupsByPosition(draw, maxPosition = 3) {
+00764:   const limit = Math.max(1, Number(maxPosition || 3));
+00765:   const prizes = Array.isArray(draw?.prizes) ? draw.prizes : [];
+00766: 
+00767:   return Array.from({ length: limit }, (_, index) => {
+00768:     const position = index + 1;
+00769: 
+00770:     const prize =
+00771:       prizes.find(
+00772:         (item) => Number(guessPrizePos(item)) === position
+00773:       ) || null;
+00774: 
+00775:     if (!prize) return null;
+00776: 
+00777:     const grupo = Number(guessPrizeGrupo(prize));
+00778: 
+00779:     return Number.isFinite(grupo) &&
+00780:       grupo >= 1 &&
+00781:       grupo <= TOP3_GROUPS_K
+00782:       ? grupo
+00783:       : null;
+00784:   });
+00785: }
+00786: 
+00787: 
+00788: function getAllPrizePresenceGroups(draw) {
+00789:   const out = [];
+00790:   const ps = Array.isArray(draw?.prizes) ? draw.prizes : [];
+00791:   for (const p of ps) {
+00792:     const pos = guessPrizePos(p);
+00793:     if (!Number.isFinite(Number(pos)) || Number(pos) < 1 || Number(pos) > 5) {
+00794:       continue;
+00795:     }
+00796:     const g = guessPrizeGrupo(p);
+00797:     if (!Number.isFinite(Number(g)) || Number(g) <= 0) continue;
+00798:     out.push({ pos: Number(pos), grupo: Number(g) });
+00799:   }
+00800:   return out.sort((a, b) => a.pos - b.pos);
+00801: }
+00802: 
+00803: function buildFreqAndFirstMaps(nextDraw) {
+00804:   const freq = new Map();
+00805:   const firstMap = new Map();
+00806:   const items = getAllPrizePresenceGroups(nextDraw);
+00807: 
+00808:   for (const it of items) {
+00809:     freq.set(it.grupo, (freq.get(it.grupo) || 0) + 1);
+00810:     if (it.pos === 1) {
+00811:       firstMap.set(it.grupo, (firstMap.get(it.grupo) || 0) + 1);
+00812:     }
+00813:   }
+00814: 
+00815:   return { freq, firstMap };
+00816: }
+00817: 
+00818: function mergeMapsAdd(target, source) {
+00819:   for (const [k, v] of source.entries()) {
+00820:     target.set(Number(k), Number(target.get(Number(k)) || 0) + Number(v || 0));
+00821:   }
+00822: }
+00823: 
+00824: function probFromFreq(freq, samples, groupsK = TOP3_GROUPS_K) {
+00825:   const k = safeInt(groupsK, 25);
+00826:   const denom = Math.max(1, Number(samples || 0) * 5);
+00827:   const out = new Map();
+00828: 
+00829:   for (let g = 1; g <= k; g += 1) {
+00830:     const n = Number(freq.get(g) || 0);
+00831:     out.set(g, n / denom);
+00832:   }
+00833: 
+00834:   return out;
+00835: }
+00836: 
+00837: function computeStructuralBaseDistribution(
+00838:   draws,
+00839:   lotteryKey,
+00840:   targetHour,
+00841:   targetDow,
+00842:   groupsK = TOP3_GROUPS_K
+00843: ) {
+00844:   const list = Array.isArray(draws) ? draws : [];
+00845:   const key = safeStr(lotteryKey).toUpperCase();
+00846:   const target = toHourBucket(targetHour);
+00847:   const k = safeInt(groupsK, 25);
+00848: 
+00849:   const freq = new Map();
+00850:   let totalSamples = 0;
+00851: 
+00852:   for (const d of list) {
+00853:     const h = toHourBucket(pickDrawHour(d));
+00854:     const y = pickDrawYMD(d);
+00855:     if (!h || !y) continue;
+00856: 
+00857:     if (key === "FEDERAL") {
+00858:       if (!isFederalDrawDay(y)) continue;
+00859:       if (Number(getDowKey(y)) !== Number(targetDow)) continue;
+00860:     } else {
+00861:       if (h !== target) continue;
+00862:     }
+00863: 
+00864:     const items = getAllPrizePresenceGroups(d);
+00865:     if (!items.length) continue;
+00866: 
+00867:     totalSamples += 1;
+00868: 
+00869:     for (const it of items) {
+00870:       const g = Number(it.grupo);
+00871:       if (!Number.isFinite(g) || g < 1 || g > k) continue;
+00872:       freq.set(g, Number(freq.get(g) || 0) + 1);
+00873:     }
+00874:   }
+00875: 
+00876:   const out = new Map();
+00877:   const denom = Math.max(1, totalSamples * 5);
+00878: 
+00879:   for (let g = 1; g <= k; g += 1) {
+00880:     const n = Number(freq.get(g) || 0);
+00881:     out.set(g, n / denom);
+00882:   }
+00883: 
+00884:   return { scoreProb: out, totalSamples };
+00885: }
+00886: 
+00887: /* =========================
+00888:    Recência / pressão estrutural
+00889: ========================= */
+00890: 
+00891: function sortDrawsAsc(draws) {
+00892:   const list = Array.isArray(draws) ? draws : [];
+00893:   return [...list].sort((a, b) => {
+00894:     const ya = pickDrawYMD(a);
+00895:     const yb = pickDrawYMD(b);
+00896:     const ha = toHourBucket(pickDrawHour(a));
+00897:     const hb = toHourBucket(pickDrawHour(b));
+00898:     const tsa = ymdHourToTs(ya, ha);
+00899:     const tsb = ymdHourToTs(yb, hb);
+00900:     return tsa - tsb;
+00901:   });
+00902: }
+00903: 
+00904: function getRecentDrawsBefore(draws, drawLast, count = 6) {
+00905:   const list = sortDrawsAsc(draws);
+00906:   const lastY = pickDrawYMD(drawLast);
+00907:   const lastH = toHourBucket(pickDrawHour(drawLast));
+00908:   const lastTs = ymdHourToTs(lastY, lastH);
+00909: 
+00910:   const prev = list.filter((d) => {
+00911:     const y = pickDrawYMD(d);
+00912:     const h = toHourBucket(pickDrawHour(d));
+00913:     const ts = ymdHourToTs(y, h);
+00914:     return Number.isFinite(ts) && ts < lastTs;
+00915:   });
+00916: 
+00917:   return prev.slice(-Math.max(1, Number(count || 6)));
+00918: }
+00919: 
+00920: function computeRecentPressureMetrics(recentDraws, groupsK = TOP3_GROUPS_K) {
+00921:   const k = safeInt(groupsK, 25);
+00922:   const out = new Map();
+00923: 
+00924:   for (let g = 1; g <= k; g += 1) {
+00925:     out.set(g, {
+00926:       recentPrizePresence: 0,
+00927:       recentIndirect: 0,
+00928:       recentFirst: 0,
+00929:       recentLast1First: 0,
+00930:       recentLast2PrizePresence: 0,
+00931:     });
+00932:   }
+00933: 
+00934:   const list = Array.isArray(recentDraws) ? recentDraws : [];
+00935:   const last1 = list.length ? [list[list.length - 1]] : [];
+00936:   const last2 = list.slice(-2);
+00937: 
+00938:   for (const d of list) {
+00939:     const items = getAllPrizePresenceGroups(d);
+00940: 
+00941:     for (const it of items) {
+00942:       const g = Number(it.grupo);
+00943:       const pos = Number(it.pos);
+00944:       if (!Number.isFinite(g) || g < 1 || g > k) continue;
+00945: 
+00946:       const row = out.get(g);
+00947:       row.recentPrizePresence += 1;
+00948: 
+00949:       if (pos >= 2 && pos <= 4) row.recentIndirect += 1;
+00950:       if (pos === 1) row.recentFirst += 1;
+00951:     }
+00952:   }
+00953: 
+00954:   for (const d of last1) {
+00955:     const items = getAllPrizePresenceGroups(d);
+00956:     for (const it of items) {
+00957:       const g = Number(it.grupo);
+00958:       const pos = Number(it.pos);
+00959:       if (!Number.isFinite(g) || g < 1 || g > k) continue;
+00960:       if (pos === 1) {
+00961:         out.get(g).recentLast1First += 1;
+00962:       }
+00963:     }
+00964:   }
+00965: 
+00966:   for (const d of last2) {
+00967:     const items = getAllPrizePresenceGroups(d);
+00968:     const seen = new Set();
+00969:     for (const it of items) {
+00970:       const g = Number(it.grupo);
+00971:       if (!Number.isFinite(g) || g < 1 || g > k) continue;
+00972:       if (seen.has(g)) continue;
+00973:       seen.add(g);
+00974:       out.get(g).recentLast2PrizePresence += 1;
+00975:     }
+00976:   }
+00977: 
+00978:   return out;
+00979: }
+00980: 
+00981: function normalizeMetric(value, maxValue) {
+00982:   const v = Number(value || 0);
+00983:   const m = Number(maxValue || 0);
+00984:   if (!Number.isFinite(v) || !Number.isFinite(m) || m <= 0) return 0;
+00985:   return Math.max(0, Math.min(1, v / m));
+00986: }
+00987: 
+00988: function clamp01(v) {
+00989:   const n = Number(v);
+00990:   if (!Number.isFinite(n)) return 0;
+00991:   return Math.max(0, Math.min(1, n));
+00992: }
+00993: 
+00994: function buildZeroProbMap(groupsK = TOP3_GROUPS_K) {
+00995:   const k = safeInt(groupsK, 25);
+00996:   return new Map(Array.from({ length: k }, (_, i) => [i + 1, 0]));
+00997: }
+00998: 
+00999: function confidenceFromSamples(samples, fullConfidenceAt = 8) {
+01000:   const n = Number(samples || 0);
+01001:   const lim = Math.max(1, Number(fullConfidenceAt || 8));
+01002:   return clamp01(n / lim);
+01003: }
+01004: 
+01005: /* =========================
+01006:    Motor condicional puro por camadas
+01007: ========================= */
+01008: 
+01009: const LAYER_MIN_SAMPLES = {
+01010:   DOM_DOW_PREVH_PREVG_TO_TARGET: 3,
+01011:   DOW_PREVH_PREVG_TO_TARGET: 5,
+01012:   PREVH_PREVG_TO_TARGET: 8,
+01013:   DOM_TARGET: 8,
+01014:   DOW_TARGET: 12,
+01015:   TARGET_ONLY: 20,
+01016: 
+01017:   FED_DOW_PREVG: 3,
+01018:   FED_PREVG: 4,
+01019:   FED_DOW_ONLY: 6,
+01020:   FED_ONLY: 10,
+01021: };
+01022: 
+01023: function buildLayerConfigs({
+01024:   lotteryKey,
+01025:   targetDayOfMonth,
+01026:   targetDow,
+01027:   prevHour,
+01028:   prevGrupo,
+01029:   targetHour,
+01030: }) {
+01031:   const key = safeStr(lotteryKey).toUpperCase();
+01032: 
+01033:   if (key === "FEDERAL") {
+01034:     return [
+01035:       {
+01036:         key: "FED_DOW_PREVG",
+01037:         label: "Federal: dia da semana + grupo anterior",
+01038:         minSamples: LAYER_MIN_SAMPLES.FED_DOW_PREVG,
+01039:         match: (ctx) =>
+01040:           ctx.targetDow === targetDow &&
+01041:           ctx.prevGrupo === prevGrupo,
+01042:       },
+01043:       {
+01044:         key: "FED_PREVG",
+01045:         label: "Federal: grupo anterior",
+01046:         minSamples: LAYER_MIN_SAMPLES.FED_PREVG,
+01047:         match: (ctx) => ctx.prevGrupo === prevGrupo,
+01048:       },
+01049:       {
+01050:         key: "FED_DOW_ONLY",
+01051:         label: "Federal: dia da semana",
+01052:         minSamples: LAYER_MIN_SAMPLES.FED_DOW_ONLY,
+01053:         match: (ctx) => ctx.targetDow === targetDow,
+01054:       },
+01055:       {
+01056:         key: "FED_ONLY",
+01057:         label: "Federal: histórico geral",
+01058:         minSamples: LAYER_MIN_SAMPLES.FED_ONLY,
+01059:         match: () => true,
+01060:       },
+01061:     ];
+01062:   }
+01063: 
+01064:   return [
+01065:     {
+01066:       key: "DOM_DOW_PREVH_PREVG_TO_TARGET",
+01067:       label: "dia do mês + dia da semana + hora anterior + grupo anterior -> alvo",
+01068:       minSamples: LAYER_MIN_SAMPLES.DOM_DOW_PREVH_PREVG_TO_TARGET,
+01069:       match: (ctx) =>
+01070:         ctx.targetDayOfMonth === targetDayOfMonth &&
+01071:         ctx.targetDow === targetDow &&
+01072:         ctx.prevHour === prevHour &&
+01073:         ctx.prevGrupo === prevGrupo &&
+01074:         ctx.targetHour === targetHour,
+01075:     },
+01076:     {
+01077:       key: "DOW_PREVH_PREVG_TO_TARGET",
+01078:       label: "dia da semana + hora anterior + grupo anterior -> alvo",
+01079:       minSamples: LAYER_MIN_SAMPLES.DOW_PREVH_PREVG_TO_TARGET,
+01080:       match: (ctx) =>
+01081:         ctx.targetDow === targetDow &&
+01082:         ctx.prevHour === prevHour &&
+01083:         ctx.prevGrupo === prevGrupo &&
+01084:         ctx.targetHour === targetHour,
+01085:     },
+01086:     {
+01087:       key: "PREVH_PREVG_TO_TARGET",
+01088:       label: "hora anterior + grupo anterior -> alvo",
+01089:       minSamples: LAYER_MIN_SAMPLES.PREVH_PREVG_TO_TARGET,
+01090:       match: (ctx) =>
+01091:         ctx.prevHour === prevHour &&
+01092:         ctx.prevGrupo === prevGrupo &&
+01093:         ctx.targetHour === targetHour,
+01094:     },
+01095:     {
+01096:       key: "DOM_TARGET",
+01097:       label: "dia do mês + alvo",
+01098:       minSamples: LAYER_MIN_SAMPLES.DOM_TARGET,
+01099:       match: (ctx) =>
+01100:         ctx.targetDayOfMonth === targetDayOfMonth &&
+01101:         ctx.targetHour === targetHour,
+01102:     },
+01103:     {
+01104:       key: "DOW_TARGET",
+01105:       label: "dia da semana + alvo",
+01106:       minSamples: LAYER_MIN_SAMPLES.DOW_TARGET,
+01107:       match: (ctx) =>
+01108:         ctx.targetDow === targetDow &&
+01109:         ctx.targetHour === targetHour,
+01110:     },
+01111:     {
+01112:       key: "TARGET_ONLY",
+01113:       label: "alvo geral",
+01114:       minSamples: LAYER_MIN_SAMPLES.TARGET_ONLY,
+01115:       match: (ctx) => ctx.targetHour === targetHour,
+01116:     },
+01117:   ];
+01118: }
+01119: 
+01120: function buildConditionalLayerDistribution({
+01121:   lotteryKey,
+01122:   drawsRange,
+01123:   targetHour,
+01124:   targetDow,
+01125:   targetDayOfMonth,
+01126:   prevHour,
+01127:   prevGrupo,
+01128:   PT_RIO_SCHEDULE_NORMAL,
+01129:   PT_RIO_SCHEDULE_WED_SAT,
+01130:   FEDERAL_SCHEDULE,
+01131: }) {
+01132:   const list = Array.isArray(drawsRange) ? drawsRange : [];
+01133:   const drawsIndex = indexDrawsByYmdHour(list);
+01134: 
+01135:   const layers = buildLayerConfigs({
+01136:     lotteryKey,
+01137:     targetDayOfMonth,
+01138:     targetDow,
+01139:     prevHour,
+01140:     prevGrupo,
+01141:     targetHour,
+01142:   });
+01143: 
+01144:   const layerResults = layers.map((layer) => ({
+01145:     key: layer.key,
+01146:     label: layer.label,
+01147:     minSamples: layer.minSamples,
+01148:     samples: 0,
+01149:     freq: new Map(),
+01150:     firstFreq: new Map(),
+01151:     matchingDraws: [],
+01152:   }));
+01153: 
+01154:   for (const d of list) {
+01155:     const prevY = pickDrawYMD(d);
+01156:     const prevH = toHourBucket(pickDrawHour(d));
+01157:     if (!isYMD(prevY) || !prevH) continue;
+01158: 
+01159:     const prevG = getFirstGrupoFromDraw(d);
+01160:     if (!Number.isFinite(Number(prevG)) || Number(prevG) <= 0) continue;
+01161: 
+01162:     const ns = getNextSlotForLottery({
+01163:       lotteryKey,
+01164:       ymd: prevY,
+01165:       hourBucket: prevH,
+01166:       PT_RIO_SCHEDULE_NORMAL,
+01167:       PT_RIO_SCHEDULE_WED_SAT,
+01168:       FEDERAL_SCHEDULE,
+01169:     });
+01170: 
+01171:     if (!ns?.ymd || !ns?.hour) continue;
+01172: 
+01173:     const found = findNextExistingDrawFromSlot({
+01174:       lotteryKey,
+01175:       startSlot: { ymd: ns.ymd, hour: ns.hour },
+01176:       drawsIndex,
+01177:       PT_RIO_SCHEDULE_NORMAL,
+01178:       PT_RIO_SCHEDULE_WED_SAT,
+01179:       FEDERAL_SCHEDULE,
+01180:     });
+01181: 
+01182:     const nextDraw = found?.draw || null;
+01183:     const nextSlot = found?.slot || null;
+01184:     if (!nextDraw || !nextSlot?.ymd || !nextSlot?.hour) continue;
+01185: 
+01186:     const ctx = {
+01187:       prevYmd: prevY,
+01188:       prevHour: prevH,
+01189:       prevGrupo: Number(prevG),
+01190:       targetYmd: safeStr(nextSlot.ymd),
+01191:       targetHour: toHourBucket(nextSlot.hour),
+01192:       targetDow: getDowKey(nextSlot.ymd),
+01193:       targetDayOfMonth: getDayOfMonth(nextSlot.ymd),
+01194:     };
+01195: 
+01196:     const nextMaps = buildFreqAndFirstMaps(nextDraw);
+01197: 
+01198:     for (let i = 0; i < layers.length; i += 1) {
+01199:       const layer = layers[i];
+01200:       if (!layer.match(ctx)) continue;
+01201: 
+01202:       layerResults[i].samples += 1;
+01203:       layerResults[i].matchingDraws.push(nextDraw);
+01204:       mergeMapsAdd(layerResults[i].freq, nextMaps.freq);
+01205:       mergeMapsAdd(layerResults[i].firstFreq, nextMaps.firstMap);
+01206:     }
+01207:   }
+01208: 
+01209:   let chosen =
+01210:     layerResults.find((x) => x.samples >= x.minSamples && x.freq.size > 0) ||
+01211:     layerResults.find((x) => x.samples > 0 && x.freq.size > 0) ||
+01212:     null;
+01213: 
+01214:   if (!chosen) {
+01215:     chosen = {
+01216:       key: "NONE",
+01217:       label: "sem amostra",
+01218:       minSamples: 0,
+01219:       samples: 0,
+01220:       freq: new Map(),
+01221:       firstFreq: new Map(),
+01222:       matchingDraws: [],
+01223:     };
+01224:   }
+01225: 
+01226:   return {
+01227:     chosen,
+01228:     layers: layerResults,
+01229:   };
+01230: }
+01231: 
+01232: /* =========================
+01233:    Motor principal V1
+01234: ========================= */
+01235: 
+01236: export function computeConditionalNextTop3({
+01237:   lotteryKey,
+01238:   drawsRange,
+01239:   drawLast,
+01240:   PT_RIO_SCHEDULE_NORMAL,
+01241:   PT_RIO_SCHEDULE_WED_SAT,
+01242:   FEDERAL_SCHEDULE,
+01243:   topN = 3,
+01244:   targetYmdOverride = "",
+01245:   targetHourOverride = "",
+01246: }) {
+01247:   const list = Array.isArray(drawsRange) ? drawsRange : [];
+01248:   if (!list.length || !drawLast) {
+01249:     return { top: [], meta: null };
+01250:   }
+01251: 
+01252:   const key = safeStr(lotteryKey).toUpperCase();
+01253: 
+01254:   const lastY = pickDrawYMD(drawLast);
+01255:   const lastH = toHourBucket(pickDrawHour(drawLast));
+01256:   const prevGrupo = getFirstGrupoFromDraw(drawLast);
+01257: 
+01258:   if (
+01259:     !isYMD(lastY) ||
+01260:     !lastH ||
+01261:     !Number.isFinite(Number(prevGrupo)) ||
+01262:     Number(prevGrupo) <= 0
+01263:   ) {
+01264:     return { top: [], meta: null };
+01265:   }
+01266: 
+01267:   const nextSlot = getNextSlotForLottery({
+01268:     lotteryKey,
+01269:     ymd: lastY,
+01270:     hourBucket: lastH,
+01271:     PT_RIO_SCHEDULE_NORMAL,
+01272:     PT_RIO_SCHEDULE_WED_SAT,
+01273:     FEDERAL_SCHEDULE,
+01274:   });
+01275: 
+01276:   const forcedTargetY = safeStr(targetYmdOverride);
+01277:   const forcedTargetH = toHourBucket(targetHourOverride);
+01278: 
+01279:   const targetY = isYMD(forcedTargetY) && forcedTargetH
+01280:     ? forcedTargetY
+01281:     : safeStr(nextSlot?.ymd);
+01282: 
+01283:   const targetH = isYMD(forcedTargetY) && forcedTargetH
+01284:     ? forcedTargetH
+01285:     : toHourBucket(nextSlot?.hour);
+01286:   const targetDow = getDowKey(targetY);
+01287:   const targetDayOfMonth = getDayOfMonth(targetY);
+01288:   const transition = `${lastH}->${targetH}`;
+01289: 
+01290:   const useFirstFocusedRanking =
+01291:     key !== "FEDERAL" &&
+01292:     (transition === "11h->14h" || transition === "14h->16h");
+01293: 
+01294:   if (!isYMD(targetY) || !targetH || !Number.isFinite(targetDow)) {
+01295:     return { top: [], meta: null };
+01296:   }
+01297: 
+01298:   const layerOut = buildConditionalLayerDistribution({
+01299:     lotteryKey,
+01300:     drawsRange: list,
+01301:     targetHour: targetH,
+01302:     targetDow,
+01303:     targetDayOfMonth,
+01304:     prevHour: lastH,
+01305:     prevGrupo: Number(prevGrupo),
+01306:     PT_RIO_SCHEDULE_NORMAL,
+01307:     PT_RIO_SCHEDULE_WED_SAT,
+01308:     FEDERAL_SCHEDULE,
+01309:   });
+01310: 
+01311:   const chosen = layerOut.chosen;
+01312:   const samples = Number(chosen?.samples || 0);
+01313:   const freq = chosen?.freq || new Map();
+01314:   const firstFreq = chosen?.firstFreq || new Map();
+01315:   const probCond = probFromFreq(freq, samples, TOP3_GROUPS_K);
+01316: 
+01317:   const structural = computeStructuralBaseDistribution(
+01318:     list,
+01319:     key,
+01320:     targetH,
+01321:     targetDow,
+01322:     TOP3_GROUPS_K
+01323:   );
+01324:   const probBase = structural?.scoreProb || new Map();
+01325: 
+01326:   const condWeight =
+01327:     key === "FEDERAL"
+01328:       ? samples >= 8
+01329:         ? 0.55
+01330:         : samples >= 4
+01331:           ? 0.4
+01332:           : 0.25
+01333:       : samples >= 12
+01334:         ? 0.65
+01335:         : samples >= 6
+01336:           ? 0.55
+01337:           : 0.45;
+01338: 
+01339:   const baseWeight = 1 - condWeight;
+01340: 
+01341:   const lastSeen = computeLastSeenByGrupo(list);
+01342:   const nowTs = ymdHourToTs(lastY, lastH);
+01343: 
+01344:   const finiteLastSeen = Array.from(lastSeen.values()).filter((v) =>
+01345:     Number.isFinite(Number(v))
+01346:   );
+01347:   const minLastSeenTs = finiteLastSeen.length ? Math.min(...finiteLastSeen) : nowTs;
+01348:   const maxGapMsBase =
+01349:     Number.isFinite(nowTs) && Number.isFinite(minLastSeenTs)
+01350:       ? Math.max(1, nowTs - minLastSeenTs)
+01351:       : 1;
+01352: 
+01353:   const recentDraws = getRecentDrawsBefore(list, drawLast, 6);
+01354:   const recentMetrics = computeRecentPressureMetrics(recentDraws, TOP3_GROUPS_K);
+01355: 
+01356:   const recentMaxPrizePresence = Math.max(
+01357:     1,
+01358:     ...Array.from(recentMetrics.values()).map((x) => Number(x.recentPrizePresence || 0))
+01359:   );
+01360:   const recentMaxIndirect = Math.max(
+01361:     1,
+01362:     ...Array.from(recentMetrics.values()).map((x) => Number(x.recentIndirect || 0))
+01363:   );
+01364:   const recentMaxFirst = Math.max(
+01365:     1,
+01366:     ...Array.from(recentMetrics.values()).map((x) => Number(x.recentFirst || 0))
+01367:   );
+01368: 
+01369:   const ranked = Array.from({ length: safeInt(TOP3_GROUPS_K, 25) }, (_, idx) => {
+01370:     const grupo = idx + 1;
+01371:     const aparicoes = Number(freq.get(grupo) || 0);
+01372:     const primeiros = Number(firstFreq.get(grupo) || 0);
+01373:     const pCond = Number(probCond.get(grupo) || 0);
+01374:     const pBase = Number(probBase.get(grupo) || 0);
+01375:     const pFinal = (pCond * condWeight) + (pBase * baseWeight);
+01376: 
+01377:     const ls = lastSeen.get(grupo);
+01378:     const lastSeenTs = Number.isFinite(ls) ? ls : Number.POSITIVE_INFINITY;
+01379: 
+01380:     const gapMs =
+01381:       Number.isFinite(nowTs) &&
+01382:       Number.isFinite(lastSeenTs) &&
+01383:       lastSeenTs !== Number.POSITIVE_INFINITY
+01384:         ? Math.max(0, nowTs - lastSeenTs)
+01385:         : maxGapMsBase;
+01386: 
+01387:     const taxaPrimeiro = samples > 0 ? primeiros / samples : 0;
+01388:     const lateBonusRaw = Math.max(0, gapMs) / Math.max(1, maxGapMsBase);
+01389:     const lateBonus = Math.max(0, Math.min(1, lateBonusRaw));
+01390: 
+01391:     const rm = recentMetrics.get(grupo) || {
+01392:       recentPrizePresence: 0,
+01393:       recentIndirect: 0,
+01394:       recentFirst: 0,
+01395:       recentLast1First: 0,
+01396:       recentLast2PrizePresence: 0,
+01397:     };
+01398: 
+01399:     const recentPrizePresenceNorm = normalizeMetric(rm.recentPrizePresence, recentMaxPrizePresence);
+01400:     const recentIndirectNorm = normalizeMetric(rm.recentIndirect, recentMaxIndirect);
+01401:     const recentFirstNorm = normalizeMetric(rm.recentFirst, recentMaxFirst);
+01402:     const recentLast1FirstNorm = normalizeMetric(rm.recentLast1First, 1);
+01403:     const recentLast2PrizePresenceNorm = normalizeMetric(rm.recentLast2PrizePresence, 2);
+01404: 
+01405:     const recencyCoolingFactor =
+01406:       rm.recentLast1First > 0
+01407:         ? 0.72
+01408:         : rm.recentFirst >= 2
+01409:           ? 0.84
+01410:           : 1.0;
+01411: 
+01412:     const smartLateBoost =
+01413:       lateBonus *
+01414:       (0.45 + (recentIndirectNorm * 0.35) + (recentLast2PrizePresenceNorm * 0.2)) *
+01415:       recencyCoolingFactor;
+01416: 
+01417:     const recentComposite =
+01418:       (recentPrizePresenceNorm * 0.45) +
+01419:       (recentIndirectNorm * 0.35) +
+01420:       (recentFirstNorm * 0.2);
+01421: 
+01422:     const baseScore =
+01423:       key === "FEDERAL"
+01424:         ? (pFinal * 145) +
+01425:           (pBase * 85) +
+01426:           (primeiros * 42) +
+01427:           (aparicoes * 18) +
+01428:           (recentComposite * 26) +
+01429:           (smartLateBoost * 10)
+01430:         : useFirstFocusedRanking
+01431:           ? (pFinal * 125) +
+01432:             (aparicoes * 155) +
+01433:             (primeiros * 70) +
+01434:             (taxaPrimeiro * 34) +
+01435:             (recentComposite * 18) +
+01436:             (recentLast1FirstNorm * 10) +
+01437:             (smartLateBoost * 16)
+01438:           : (pFinal * 125) +
+01439:             (aparicoes * 135) +
+01440:             (primeiros * 62) +
+01441:             (recentComposite * 24) +
+01442:             (recentLast1FirstNorm * 8) +
+01443:             (smartLateBoost * 18);
+01444: 
+01445:     return {
+01446:       grupo,
+01447:       aparicoes,
+01448:       primeiros,
+01449:       taxaPrimeiro,
+01450:       scoreProb: pFinal,
+01451:       probCond: pCond,
+01452:       probBase: pBase,
+01453:       score: baseScore,
+01454:       lateBonus,
+01455:       smartLateBoost,
+01456:       recentPrizePresence: rm.recentPrizePresence,
+01457:       recentIndirect: rm.recentIndirect,
+01458:       recentFirst: rm.recentFirst,
+01459:       recentLast1First: rm.recentLast1First,
+01460:       recentLast2PrizePresence: rm.recentLast2PrizePresence,
+01461:       recentComposite,
+01462:       lastSeenTs,
+01463:       gapMs,
+01464:     };
+01465:   })
+01466:     .sort((a, b) => {
+01467:       if (b.score !== a.score) return b.score - a.score;
+01468:       if (b.scoreProb !== a.scoreProb) return b.scoreProb - a.scoreProb;
+01469:       if (b.primeiros !== a.primeiros) return b.primeiros - a.primeiros;
+01470:       if (b.aparicoes !== a.aparicoes) return b.aparicoes - a.aparicoes;
+01471:       return a.grupo - b.grupo;
+01472:     })
+01473:     .slice(0, Math.max(1, Number(topN || 3)));
+01474: 
+01475:   const reasonsBase = [
+01476:     `Camada usada: ${chosen?.label || "—"}`,
+01477:     `Amostra histórica condicional: ${samples}`,
+01478:     `Amostra estrutural: ${Number(structural?.totalSamples || 0)}`,
+01479:     `Pesos: condicional=${(condWeight * 100).toFixed(0)}% | estrutural=${(baseWeight * 100).toFixed(0)}%`,
+01480:     `Estado atual: prev=${String(prevGrupo).padStart(2, "0")} @ ${lastH} → alvo ${targetH}`,
+01481:     `Data alvo: ${targetY} | DOW=${targetDow} | dia=${String(targetDayOfMonth).padStart(2, "0")}`,
+01482:   ];
+01483: 
+01484:   const top = ranked.map((x, idx) => {
+01485:     const g2 = String(x.grupo).padStart(2, "0");
+01486:     const pct = (x.scoreProb * 100).toFixed(2);
+01487:     const pctCond = (x.probCond * 100).toFixed(2);
+01488:     const pctBase = (x.probBase * 100).toFixed(2);
+01489: 
+01490:     return {
+01491:       rank: idx + 1,
+01492:       title:
+01493:         idx === 0
+01494:           ? "Mais provável"
+01495:           : idx === 1
+01496:             ? "2º mais provável"
+01497:             : "3º mais provável",
+01498:       grupo: x.grupo,
+01499:       scoreProb: Number(x.scoreProb || 0),
+01500:       probCond: Number(x.probCond || 0),
+01501:       probBase: Number(x.probBase || 0),
+01502:       lateBonus: Number(x.lateBonus || 0),
+01503:       freq: x.aparicoes,
+01504:       freqCond: x.aparicoes,
+01505:       freqBase: 0,
+01506:       freqZeroWhy:
+01507:         x.aparicoes <= 0
+01508:           ? `Sem ocorrência nesta camada (${chosen?.label || "—"}).`
+01509:           : "",
+01510:       reasons: [
+01511:         ...reasonsBase,
+01512:         `Grupo G${g2}: aparições=${x.aparicoes} em ${samples} amostras do próximo sorteio`,
+01513:         `Grupo G${g2}: primeiros lugares=${x.primeiros}`,
+01514:         `Probabilidade final estimada no TOP3: ${pct}%`,
+01515:         `Composição da probabilidade: condicional=${pctCond}% | estrutural=${pctBase}%`,
+01516:         `Presença indireta recente (2º-4º): ${x.recentIndirect}`,
+01517:         `Persistência curta recente: ${x.recentPrizePresence}`,
+01518:         `Bônus de atraso ajustado: ${(Number(x.smartLateBoost || 0) * 100).toFixed(2)}%`,
+01519:       ],
+01520:       meta: {
+01521:         trigger: {
+01522:           ymd: lastY,
+01523:           hour: lastH,
+01524:           grupo: Number(prevGrupo),
+01525:         },
+01526:         next: {
+01527:           ymd: safeStr(targetY),
+01528:           hour: safeStr(targetH),
+01529:         },
+01530:         samples,
+01531:         scenario: chosen?.key || "NONE",
+01532:         explain: {
+01533:           layerKey: chosen?.key || "NONE",
+01534:           layerLabel: chosen?.label || "—",
+01535:           layerSamples: samples,
+01536:           baseSamples: Number(structural?.totalSamples || 0),
+01537:           condWeight,
+01538:           baseWeight,
+01539:           targetDow,
+01540:           targetDayOfMonth,
+01541:           prevHour: lastH,
+01542:           prevGrupo: Number(prevGrupo),
+01543:           recentPrizePresence: x.recentPrizePresence,
+01544:           recentIndirect: x.recentIndirect,
+01545:           recentFirst: x.recentFirst,
+01546:           recentLast1First: x.recentLast1First,
+01547:           recentLast2PrizePresence: x.recentLast2PrizePresence,
+01548:           allLayers: (layerOut?.layers || []).map((layer) => ({
+01549:             key: layer.key,
+01550:             label: layer.label,
+01551:             samples: layer.samples,
+01552:             minSamples: layer.minSamples,
+01553:           })),
+01554:         },
+01555:       },
+01556:     };
+01557:   });
+01558: 
+01559:   return {
+01560:     top,
+01561:     meta: {
+01562:       trigger: {
+01563:         ymd: lastY,
+01564:         hour: lastH,
+01565:         grupo: Number(prevGrupo),
+01566:       },
+01567:       next: {
+01568:         ymd: safeStr(targetY),
+01569:         hour: safeStr(targetH),
+01570:       },
+01571:       samples,
+01572:       scenario: chosen?.key || "NONE",
+01573:       explain: {
+01574:         layerKey: chosen?.key || "NONE",
+01575:         layerLabel: chosen?.label || "—",
+01576:         layerSamples: samples,
+01577:         baseSamples: Number(structural?.totalSamples || 0),
+01578:         condWeight,
+01579:         baseWeight,
+01580:         targetDow,
+01581:         targetDayOfMonth,
+01582:         prevHour: lastH,
+01583:         prevGrupo: Number(prevGrupo),
+01584:         allLayers: (layerOut?.layers || []).map((layer) => ({
+01585:           key: layer.key,
+01586:           label: layer.label,
+01587:           samples: layer.samples,
+01588:           minSamples: layer.minSamples,
+01589:         })),
+01590:       },
+01591:     },
+01592:   };
+01593: }
+01594: 
+01595: /* =========================
+01596:    V2 — helpers focados em BICHO
+01597: ========================= */
+01598: 
+01599: function computeStructuralFirstDistribution(
+01600:   draws,
+01601:   lotteryKey,
+01602:   targetHour,
+01603:   targetDow,
+01604:   groupsK = TOP3_GROUPS_K
+01605: ) {
+01606:   const list = Array.isArray(draws) ? draws : [];
+01607:   const key = safeStr(lotteryKey).toUpperCase();
+01608:   const target = toHourBucket(targetHour);
+01609:   const k = safeInt(groupsK, 25);
+01610: 
+01611:   const firstFreq = new Map();
+01612:   let totalSamples = 0;
+01613: 
+01614:   for (const d of list) {
+01615:     const y = pickDrawYMD(d);
+01616:     const h = toHourBucket(pickDrawHour(d));
+01617:     if (!isYMD(y) || !h) continue;
+01618: 
+01619:     if (key === "FEDERAL") {
+01620:       if (!isFederalDrawDay(y)) continue;
+01621:       if (Number(getDowKey(y)) !== Number(targetDow)) continue;
+01622:     } else {
+01623:       if (h !== target) continue;
+01624:     }
+01625: 
+01626:     const g = getFirstGrupoFromDraw(d);
+01627:     if (!Number.isFinite(Number(g)) || Number(g) < 1 || Number(g) > k) continue;
+01628: 
+01629:     totalSamples += 1;
+01630:     firstFreq.set(Number(g), Number(firstFreq.get(Number(g)) || 0) + 1);
+01631:   }
+01632: 
+01633:   const prob = new Map();
+01634:   const denom = Math.max(1, totalSamples);
+01635: 
+01636:   for (let g = 1; g <= k; g += 1) {
+01637:     prob.set(g, Number(firstFreq.get(g) || 0) / denom);
+01638:   }
+01639: 
+01640:   return { prob, firstFreq, totalSamples };
+01641: }
+01642: 
+01643: function getComparableDrawsForTargetContext(
+01644:   draws,
+01645:   lotteryKey,
+01646:   targetHour,
+01647:   targetDow
+01648: ) {
+01649:   const list = sortDrawsAsc(draws);
+01650:   const key = safeStr(lotteryKey).toUpperCase();
+01651:   const target = toHourBucket(targetHour);
+01652: 
+01653:   return list.filter((d) => {
+01654:     const y = pickDrawYMD(d);
+01655:     const h = toHourBucket(pickDrawHour(d));
+01656:     if (!isYMD(y) || !h) return false;
+01657: 
+01658:     if (key === "FEDERAL") {
+01659:       return isFederalDrawDay(y) && Number(getDowKey(y)) === Number(targetDow);
+01660:     }
+01661: 
+01662:     return h === target;
+01663:   });
+01664: }
+01665: 
+01666: function buildComparableFirstSequence(
+01667:   draws,
+01668:   lotteryKey,
+01669:   targetHour,
+01670:   targetDow
+01671: ) {
+01672:   return getComparableDrawsForTargetContext(
+01673:     draws,
+01674:     lotteryKey,
+01675:     targetHour,
+01676:     targetDow
+01677:   )
+01678:     .map((d) => {
+01679:       const y = pickDrawYMD(d);
+01680:       const h = toHourBucket(pickDrawHour(d));
+01681:       const grupo = getFirstGrupoFromDraw(d);
+01682:       return {
+01683:         draw: d,
+01684:         ymd: y,
+01685:         hour: h,
+01686:         ts: ymdHourToTs(y, h),
+01687:         grupo: Number(grupo),
+01688:       };
+01689:     })
+01690:     .filter((x) =>
+01691:       isYMD(x.ymd) &&
+01692:       x.hour &&
+01693:       Number.isFinite(Number(x.ts)) &&
+01694:       Number.isFinite(Number(x.grupo)) &&
+01695:       Number(x.grupo) >= 1 &&
+01696:       Number(x.grupo) <= 25
+01697:     );
+01698: }
+01699: 
+01700: function getStateFromComparableSequenceBeforeTs(seq, beforeTs, count = 3) {
+01701:   const list = Array.isArray(seq) ? seq : [];
+01702:   const n = Math.max(1, Number(count || 3));
+01703: 
+01704:   return list
+01705:     .filter((x) => Number.isFinite(Number(x.ts)) && Number(x.ts) < Number(beforeTs))
+01706:     .slice(-n)
+01707:     .reverse()
+01708:     .map((x) => Number(x.grupo))
+01709:     .filter((g) => Number.isFinite(g) && g >= 1 && g <= 25);
+01710: }
+01711: 
+01712: function getComparableRecentDrawsBeforeTs(seq, beforeTs, count = 6) {
+01713:   const list = Array.isArray(seq) ? seq : [];
+01714:   return list
+01715:     .filter((x) => Number.isFinite(Number(x.ts)) && Number(x.ts) < Number(beforeTs))
+01716:     .slice(-Math.max(1, Number(count || 6)));
+01717: }
+01718: 
+01719: function countLeadingStateMatches(currentState, histState) {
+01720:   const a = Array.isArray(currentState) ? currentState : [];
+01721:   const b = Array.isArray(histState) ? histState : [];
+01722:   const len = Math.min(a.length, b.length);
+01723: 
+01724:   let matched = 0;
+01725:   for (let i = 0; i < len; i += 1) {
+01726:     if (Number(a[i]) !== Number(b[i])) break;
+01727:     matched += 1;
+01728:   }
+01729:   return matched;
+01730: }
+01731: 
+01732: function buildMemoryStateDistribution({
+01733:   drawsRange,
+01734:   lotteryKey,
+01735:   targetHour,
+01736:   targetDow,
+01737:   currentState,
+01738:   groupsK = TOP3_GROUPS_K,
+01739: }) {
+01740:   const seq = buildComparableFirstSequence(
+01741:     drawsRange,
+01742:     lotteryKey,
+01743:     targetHour,
+01744:     targetDow
+01745:   );
+01746: 
+01747:   const k = safeInt(groupsK, 25);
+01748:   const freq = new Map();
+01749: 
+01750:   for (let g = 1; g <= k; g += 1) {
+01751:     freq.set(g, 0);
+01752:   }
+01753: 
+01754:   let totalWeight = 0;
+01755:   let matchedSamples = 0;
+01756: 
+01757:   for (let i = 0; i < seq.length; i += 1) {
+01758:     const target = seq[i];
+01759:     const histState = [];
+01760: 
+01761:     for (let j = i - 1; j >= 0 && histState.length < 3; j -= 1) {
+01762:       histState.push(Number(seq[j].grupo));
+01763:     }
+01764: 
+01765:     const matchDepth = countLeadingStateMatches(currentState, histState);
+01766:     if (matchDepth <= 0) continue;
+01767: 
+01768:     const weight =
+01769:       matchDepth >= 3 ? 4.0 :
+01770:       matchDepth === 2 ? 2.5 :
+01771:       1.0;
+01772: 
+01773:     const g = Number(target.grupo);
+01774:     if (!Number.isFinite(g) || g < 1 || g > k) continue;
+01775: 
+01776:     freq.set(g, Number(freq.get(g) || 0) + weight);
+01777:     totalWeight += weight;
+01778:     matchedSamples += 1;
+01779:   }
+01780: 
+01781:   const prob = new Map();
+01782:   const denom = Math.max(1, totalWeight);
+01783: 
+01784:   for (let g = 1; g <= k; g += 1) {
+01785:     prob.set(g, Number(freq.get(g) || 0) / denom);
+01786:   }
+01787: 
+01788:   return {
+01789:     prob,
+01790:     freq,
+01791:     totalWeight,
+01792:     matchedSamples,
+01793:     state: Array.isArray(currentState) ? currentState : [],
+01794:     sequenceSamples: seq.length,
+01795:   };
+01796: }
+01797: 
+01798: function detectRegimeFromComparableSequence(seqRecent) {
+01799:   const list = Array.isArray(seqRecent) ? seqRecent : [];
+01800:   const groups = list
+01801:     .map((x) => Number(x?.grupo))
+01802:     .filter((g) => Number.isFinite(g) && g >= 1 && g <= 25);
+01803: 
+01804:   if (groups.length <= 1) {
+01805:     return {
+01806:       regime: "neutral",
+01807:       repeatRate: 0,
+01808:       uniqueRate: groups.length ? 1 : 0,
+01809:       samples: groups.length,
+01810:     };
+01811:   }
+01812: 
+01813:   let repeats = 0;
+01814:   for (let i = 1; i < groups.length; i += 1) {
+01815:     if (groups[i] === groups[i - 1]) repeats += 1;
+01816:   }
+01817: 
+01818:   const repeatRate = repeats / Math.max(1, groups.length - 1);
+01819:   const uniqueRate = new Set(groups).size / Math.max(1, groups.length);
+01820: 
+01821:   let regime = "neutral";
+01822: 
+01823:   if (repeatRate >= 0.34 || uniqueRate <= 0.5) {
+01824:     regime = "repeat";
+01825:   } else if (repeatRate === 0 && uniqueRate >= 0.84) {
+01826:     regime = "spread";
+01827:   }
+01828: 
+01829:   return {
+01830:     regime,
+01831:     repeatRate,
+01832:     uniqueRate,
+01833:     samples: groups.length,
+01834:   };
+01835: }
+01836: 
+01837: function computeComparablePrizePresenceDistribution(
+01838:   draws,
+01839:   lotteryKey,
+01840:   targetHour,
+01841:   targetDow,
+01842:   groupsK = TOP3_GROUPS_K
+01843: ) {
+01844:   const list = getComparableDrawsForTargetContext(
+01845:     draws,
+01846:     lotteryKey,
+01847:     targetHour,
+01848:     targetDow
+01849:   );
+01850: 
+01851:   const k = safeInt(groupsK, 25);
+01852:   const freq = new Map();
+01853:   let totalSamples = 0;
+01854: 
+01855:   for (let g = 1; g <= k; g += 1) {
+01856:     freq.set(g, 0);
+01857:   }
+01858: 
+01859:   for (const d of list) {
+01860:     const items = getAllPrizePresenceGroups(d);
+01861:     if (!items.length) continue;
+01862: 
+01863:     totalSamples += 1;
+01864: 
+01865:     for (const it of items) {
+01866:       const g = Number(it.grupo);
+01867:       if (!Number.isFinite(g) || g < 1 || g > k) continue;
+01868:       freq.set(g, Number(freq.get(g) || 0) + 1);
+01869:     }
+01870:   }
+01871: 
+01872:   const prob = new Map();
+01873:   const denom = Math.max(1, totalSamples * 5);
+01874: 
+01875:   for (let g = 1; g <= k; g += 1) {
+01876:     prob.set(g, Number(freq.get(g) || 0) / denom);
+01877:   }
+01878: 
+01879:   return { prob, freq, totalSamples };
+01880: }
+01881: 
+01882: function computeComparableDuplicationDistribution(
+01883:   draws,
+01884:   lotteryKey,
+01885:   targetHour,
+01886:   targetDow,
+01887:   groupsK = TOP3_GROUPS_K
+01888: ) {
+01889:   const list = getComparableDrawsForTargetContext(
+01890:     draws,
+01891:     lotteryKey,
+01892:     targetHour,
+01893:     targetDow
+01894:   );
+01895: 
+01896:   const k = safeInt(groupsK, 25);
+01897:   const freq = new Map();
+01898:   let totalSamples = 0;
+01899: 
+01900:   for (let g = 1; g <= k; g += 1) {
+01901:     freq.set(g, 0);
+01902:   }
+01903: 
+01904:   for (const d of list) {
+01905:     const counts = countAparicoesByGrupoInDraw(d);
+01906:     if (!counts.size) continue;
+01907: 
+01908:     totalSamples += 1;
+01909: 
+01910:     for (let g = 1; g <= k; g += 1) {
+01911:       const c = Number(counts.get(g) || 0);
+01912:       if (c >= 2) {
+01913:         freq.set(g, Number(freq.get(g) || 0) + 1);
+01914:       }
+01915:     }
+01916:   }
+01917: 
+01918:   const prob = new Map();
+01919:   const denom = Math.max(1, totalSamples);
+01920: 
+01921:   for (let g = 1; g <= k; g += 1) {
+01922:     prob.set(g, Number(freq.get(g) || 0) / denom);
+01923:   }
+01924: 
+01925:   return { prob, freq, totalSamples };
+01926: }
+01927: 
+01928: function getComparableContextDrawsBeforeTs(
+01929:   draws,
+01930:   lotteryKey,
+01931:   targetHour,
+01932:   targetDow,
+01933:   beforeTs,
+01934:   count = 8
+01935: ) {
+01936:   return getComparableDrawsForTargetContext(draws, lotteryKey, targetHour, targetDow)
+01937:     .filter((d) => {
+01938:       const y = pickDrawYMD(d);
+01939:       const h = toHourBucket(pickDrawHour(d));
+01940:       const ts = ymdHourToTs(y, h);
+01941:       return Number.isFinite(Number(ts)) && ts < Number(beforeTs);
+01942:     })
+01943:     .slice(-Math.max(1, Number(count || 8)));
+01944: }
+01945: 
+01946: function computeRecentBichoMetrics(draws, groupsK = TOP3_GROUPS_K) {
+01947:   const k = safeInt(groupsK, 25);
+01948:   const out = new Map();
+01949: 
+01950:   for (let g = 1; g <= k; g += 1) {
+01951:     out.set(g, {
+01952:       recentPrizePresence: 0,
+01953:       recentFirst: 0,
+01954:       recentDupDraws: 0,
+01955:       recentLast1PrizePresence: 0,
+01956:       recentLast2PrizePresence: 0,
+01957:       recentLast3PrizePresence: 0,
+01958:     });
+01959:   }
+01960: 
+01961:   const list = Array.isArray(draws) ? draws : [];
+01962:   const last1 = list.length ? [list[list.length - 1]] : [];
+01963:   const last2 = list.slice(-2);
+01964:   const last3 = list.slice(-3);
+01965: 
+01966:   for (const d of list) {
+01967:     const items = getAllPrizePresenceGroups(d);
+01968:     const perDrawCounts = new Map();
+01969: 
+01970:     for (const it of items) {
+01971:       const g = Number(it.grupo);
+01972:       if (!Number.isFinite(g) || g < 1 || g > k) continue;
+01973: 
+01974:       const row = out.get(g);
+01975:       row.recentPrizePresence += 1;
+01976: 
+01977:       if (Number(it.pos) === 1) {
+01978:         row.recentFirst += 1;
+01979:       }
+01980: 
+01981:       perDrawCounts.set(g, Number(perDrawCounts.get(g) || 0) + 1);
+01982:     }
+01983: 
+01984:     for (const [g, c] of perDrawCounts.entries()) {
+01985:       if (Number(c) >= 2) {
+01986:         out.get(Number(g)).recentDupDraws += 1;
+01987:       }
+01988:     }
+01989:   }
+01990: 
+01991:   for (const d of last1) {
+01992:     const seen = new Set();
+01993:     for (const it of getAllPrizePresenceGroups(d)) {
+01994:       const g = Number(it.grupo);
+01995:       if (!Number.isFinite(g) || g < 1 || g > k || seen.has(g)) continue;
+01996:       seen.add(g);
+01997:       out.get(g).recentLast1PrizePresence += 1;
+01998:     }
+01999:   }
+02000: 
+02001:   for (const d of last2) {
+02002:     const seen = new Set();
+02003:     for (const it of getAllPrizePresenceGroups(d)) {
+02004:       const g = Number(it.grupo);
+02005:       if (!Number.isFinite(g) || g < 1 || g > k || seen.has(g)) continue;
+02006:       seen.add(g);
+02007:       out.get(g).recentLast2PrizePresence += 1;
+02008:     }
+02009:   }
+02010: 
+02011:   for (const d of last3) {
+02012:     const seen = new Set();
+02013:     for (const it of getAllPrizePresenceGroups(d)) {
+02014:       const g = Number(it.grupo);
+02015:       if (!Number.isFinite(g) || g < 1 || g > k || seen.has(g)) continue;
+02016:       seen.add(g);
+02017:       out.get(g).recentLast3PrizePresence += 1;
+02018:     }
+02019:   }
+02020: 
+02021:   return out;
+02022: }
+02023: 
+02024: function getDayDrivenWeights(mode) {
+02025:   if (mode === "REPEAT") {
+02026:     return {
+02027:       transition: 0.25,
+02028:       pair: 0.25,
+02029:       memory: 0.2,
+02030:       recent: 0.15,
+02031:       structural: 0.1,
+02032:       late: 0.05,
+02033:     };
+02034:   }
+02035: 
+02036:   if (mode === "SPREAD") {
+02037:     return {
+02038:       transition: 0.2,
+02039:       pair: 0.1,
+02040:       memory: 0.1,
+02041:       recent: 0.2,
+02042:       structural: 0.3,
+02043:       late: 0.1,
+02044:     };
+02045:   }
+02046: 
+02047:   return {
+02048:     transition: 0.3,
+02049:     pair: 0.15,
+02050:     memory: 0.15,
+02051:     recent: 0.15,
+02052:     structural: 0.2,
+02053:     late: 0.05,
+02054:   };
+02055: }
+02056: 
+02057: function normalizeWeights(weights) {
+02058:   const safe = {
+02059:     transition: Number(weights?.transition || 0),
+02060:     pair: Number(weights?.pair || 0),
+02061:     memory: Number(weights?.memory || 0),
+02062:     recent: Number(weights?.recent || 0),
+02063:     structural: Number(weights?.structural || 0),
+02064:     late: Number(weights?.late || 0),
+02065:   };
+02066: 
+02067:   const total = Object.values(safe).reduce((acc, n) => acc + n, 0);
+02068:   if (!Number.isFinite(total) || total <= 0) {
+02069:     return {
+02070:       transition: 0.3,
+02071:       pair: 0.15,
+02072:       memory: 0.15,
+02073:       recent: 0.15,
+02074:       structural: 0.2,
+02075:       late: 0.05,
+02076:     };
+02077:   }
+02078: 
+02079:   return {
+02080:     transition: safe.transition / total,
+02081:     pair: safe.pair / total,
+02082:     memory: safe.memory / total,
+02083:     recent: safe.recent / total,
+02084:     structural: safe.structural / total,
+02085:     late: safe.late / total,
+02086:   };
+02087: }
+02088: 
+02089: function computeComparableLastSeenByGrupo(
+02090:   draws,
+02091:   lotteryKey,
+02092:   targetHour,
+02093:   targetDow,
+02094:   groupsK = TOP3_GROUPS_K
+02095: ) {
+02096:   const list = getComparableDrawsForTargetContext(
+02097:     draws,
+02098:     lotteryKey,
+02099:     targetHour,
+02100:     targetDow
+02101:   );
+02102: 
+02103:   const k = safeInt(groupsK, 25);
+02104:   const last = new Map();
+02105: 
+02106:   for (let g = 1; g <= k; g += 1) {
+02107:     last.set(g, Number.NEGATIVE_INFINITY);
+02108:   }
+02109: 
+02110:   for (const d of list) {
+02111:     const y = pickDrawYMD(d);
+02112:     const h = toHourBucket(pickDrawHour(d));
+02113:     const ts = ymdHourToTs(y, h);
+02114:     const items = getAllPrizePresenceGroups(d);
+02115: 
+02116:     for (const it of items) {
+02117:       const g = Number(it.grupo);
+02118:       if (!Number.isFinite(g) || g < 1 || g > k) continue;
+02119: 
+02120:       const prev = Number(last.get(g));
+02121:       if (!Number.isFinite(prev) || ts > prev) {
+02122:         last.set(g, ts);
+02123:       }
+02124:     }
+02125:   }
+02126: 
+02127:   return last;
+02128: }
+02129: 
+02130: function buildDayContext(drawsToday = []) {
+02131:   const list = sortDrawsAsc(Array.isArray(drawsToday) ? drawsToday : []);
+02132:   const freq = new Map();
+02133:   const firstFreq = new Map();
+02134:   const seq = [];
+02135: 
+02136:   for (const d of list) {
+02137:     const g = getFirstGrupoFromDraw(d);
+02138:     if (!Number.isFinite(Number(g)) || Number(g) < 1 || Number(g) > 25) continue;
+02139: 
+02140:     const gg = Number(g);
+02141:     seq.push(gg);
+02142:     freq.set(gg, Number(freq.get(gg) || 0) + 1);
+02143: 
+02144:     const items = getAllPrizePresenceGroups(d);
+02145:     if (items.some((it) => Number(it.grupo) === gg && Number(it.pos) === 1)) {
+02146:       firstFreq.set(gg, Number(firstFreq.get(gg) || 0) + 1);
+02147:     }
+02148:   }
+02149: 
+02150:   const total = seq.length;
+02151:   const unique = new Set(seq).size;
+02152:   const diversidade = total > 0 ? unique / total : 0;
+02153: 
+02154:   let dominante = null;
+02155:   let dominanteCount = -1;
+02156:   for (const [g, n] of freq.entries()) {
+02157:     if (Number(n) > dominanteCount) {
+02158:       dominante = Number(g);
+02159:       dominanteCount = Number(n);
+02160:     }
+02161:   }
+02162: 
+02163:   const last1 = total >= 1 ? seq[total - 1] : null;
+02164:   const last2 = total >= 2 ? seq[total - 2] : null;
+02165:   const repeatNow =
+02166:     Number.isFinite(Number(last1)) &&
+02167:     Number.isFinite(Number(last2)) &&
+02168:     Number(last1) === Number(last2);
+02169: 
+02170:   return {
+02171:     total,
+02172:     unique,
+02173:     diversidade,
+02174:     dominante,
+02175:     dominanteCount: Math.max(0, dominanteCount),
+02176:     repeatNow,
+02177:     freq,
+02178:     firstFreq,
+02179:     seq,
+02180:   };
+02181: }
+02182: 
+02183: function buildPairSequenceDistribution({
+02184:   drawsRange,
+02185:   lotteryKey,
+02186:   targetHour,
+02187:   targetDow,
+02188:   targetDayOfMonth,
+02189:   prevPair,
+02190:   PT_RIO_SCHEDULE_NORMAL,
+02191:   PT_RIO_SCHEDULE_WED_SAT,
+02192:   FEDERAL_SCHEDULE,
+02193:   groupsK = TOP3_GROUPS_K,
+02194: }) {
+02195:   const seq = buildComparableFirstSequence(
+02196:     Array.isArray(drawsRange) ? drawsRange : [],
+02197:     lotteryKey,
+02198:     targetHour,
+02199:     targetDow
+02200:   );
+02201: 
+02202:   const k = safeInt(groupsK, 25);
+02203:   const outFreq = new Map();
+02204: 
+02205:   for (let g = 1; g <= k; g += 1) outFreq.set(g, 0);
+02206: 
+02207:   const pair = Array.isArray(prevPair) ? prevPair : [];
+02208:   if (pair.length < 2) {
+02209:     return {
+02210:       prob: buildZeroProbMap(k),
+02211:       samples: 0,
+02212:       weightedSamples: 0,
+02213:       exactDomSamples: 0,
+02214:       freq: outFreq,
+02215:     };
+02216:   }
+02217: 
+02218:   const pA = Number(pair[0]);
+02219:   const pB = Number(pair[1]);
+02220:   const key = safeStr(lotteryKey).toUpperCase();
+02221: 
+02222:   let matchedSamples = 0;
+02223:   let weightedSamples = 0;
+02224:   let exactDomSamples = 0;
+02225: 
+02226:   for (let i = 2; i < seq.length; i += 1) {
+02227:     const a = Number(seq[i - 2]?.grupo);
+02228:     const b = Number(seq[i - 1]?.grupo);
+02229:     const g = Number(seq[i]?.grupo);
+02230:     const y = safeStr(seq[i]?.ymd);
+02231: 
+02232:     if (!Number.isFinite(a) || !Number.isFinite(b) || !Number.isFinite(g)) continue;
+02233:     if (a !== pA || b !== pB) continue;
+02234:     if (!isYMD(y)) continue;
+02235: 
+02236:     matchedSamples += 1;
+02237: 
+02238:     let weight = 1;
+02239: 
+02240:     if (key !== "FEDERAL") {
+02241:       const dom = Number(getDayOfMonth(y));
+02242:       if (Number.isFinite(dom) && Number(dom) === Number(targetDayOfMonth)) {
+02243:         weight = 1.35;
+02244:         exactDomSamples += 1;
+02245:       }
+02246:     }
+02247: 
+02248:     weightedSamples += weight;
+02249:     outFreq.set(g, Number(outFreq.get(g) || 0) + weight);
+02250:   }
+02251: 
+02252:   const prob = new Map();
+02253:   const denom = Math.max(1, weightedSamples);
+02254: 
+02255:   for (let g = 1; g <= k; g += 1) {
+02256:     prob.set(g, Number(outFreq.get(g) || 0) / denom);
+02257:   }
+02258: 
+02259:   return {
+02260:     prob,
+02261:     samples: matchedSamples,
+02262:     weightedSamples,
+02263:     exactDomSamples,
+02264:     freq: outFreq,
+02265:   };
+02266: }
+02267: 
+02268: function buildSeq2FirstDistribution(
+02269:   comparableSeq,
+02270:   currentState,
+02271:   groupsK = TOP3_GROUPS_K
+02272: ) {
+02273:   const seq = Array.isArray(comparableSeq) ? comparableSeq : [];
+02274:   const state = Array.isArray(currentState) ? currentState : [];
+02275:   const k = safeInt(groupsK, 25);
+02276: 
+02277:   const freq = new Map();
+02278:   for (let g = 1; g <= k; g += 1) freq.set(g, 0);
+02279: 
+02280:   if (state.length < 2) {
+02281:     const prob = new Map();
+02282:     for (let g = 1; g <= k; g += 1) prob.set(g, 0);
+02283:     return { prob, freq, samples: 0, prev2: null, prev1: null };
+02284:   }
+02285: 
+02286:   const prev1 = Number(state[0]);
+02287:   const prev2 = Number(state[1]);
+02288: 
+02289:   let samples = 0;
+02290: 
+02291:   for (let i = 2; i < seq.length; i += 1) {
+02292:     const gA = Number(seq[i - 2]?.grupo);
+02293:     const gB = Number(seq[i - 1]?.grupo);
+02294:     const gN = Number(seq[i]?.grupo);
+02295: 
+02296:     if (!Number.isFinite(gA) || !Number.isFinite(gB) || !Number.isFinite(gN)) continue;
+02297:     if (gA !== prev2 || gB !== prev1) continue;
+02298:     if (gN < 1 || gN > k) continue;
+02299: 
+02300:     samples += 1;
+02301:     freq.set(gN, Number(freq.get(gN) || 0) + 1);
+02302:   }
+02303: 
+02304:   const prob = new Map();
+02305:   const denom = Math.max(1, samples);
+02306: 
+02307:   for (let g = 1; g <= k; g += 1) {
+02308:     prob.set(g, Number(freq.get(g) || 0) / denom);
+02309:   }
+02310: 
+02311:   return { prob, freq, samples, prev2, prev1 };
+02312: }
+02313: 
+02314: function buildRecentRepeatBoostMap(
+02315:   comparableSeq,
+02316:   targetTs,
+02317:   windowSize = 4,
+02318:   groupsK = TOP3_GROUPS_K
+02319: ) {
+02320:   const seq = getComparableRecentDrawsBeforeTs(
+02321:     Array.isArray(comparableSeq) ? comparableSeq : [],
+02322:     targetTs,
+02323:     windowSize
+02324:   );
+02325: 
+02326:   const k = safeInt(groupsK, 25);
+02327:   const counts = new Map();
+02328:   for (let g = 1; g <= k; g += 1) counts.set(g, 0);
+02329: 
+02330:   for (const item of seq) {
+02331:     const g = Number(item?.grupo);
+02332:     if (!Number.isFinite(g) || g < 1 || g > k) continue;
+02333:     counts.set(g, Number(counts.get(g) || 0) + 1);
+02334:   }
+02335: 
+02336:   const boost = new Map();
+02337:   const maxCount = Math.max(1, ...Array.from(counts.values()).map((n) => Number(n || 0)));
+02338: 
+02339:   for (let g = 1; g <= k; g += 1) {
+02340:     const c = Number(counts.get(g) || 0);
+02341:     boost.set(g, c >= 2 ? c / maxCount : 0);
+02342:   }
+02343: 
+02344:   return {
+02345:     boost,
+02346:     counts,
+02347:     windowSize,
+02348:     considered: Array.isArray(seq) ? seq.length : 0,
+02349:   };
+02350: }
+02351: 
+02352: /* =========================
+02353:    Motor principal V2 (FOCO = BICHO)
+02354: ========================= */
+02355: 
+02356: export function computeConditionalNextTop3V2({
+02357:   lotteryKey,
+02358:   drawsRange,
+02359:   drawLast,
+02360:   drawsToday,
+02361:   PT_RIO_SCHEDULE_NORMAL,
+02362:   PT_RIO_SCHEDULE_WED_SAT,
+02363:   FEDERAL_SCHEDULE,
+02364:   topN = 3,
+02365:   targetYmdOverride = "",
+02366:   targetHourOverride = "",
+02367: }) {
+02368:   const list = Array.isArray(drawsRange) ? drawsRange : [];
+02369:   if (!list.length || !drawLast) {
+02370:     return { top: [], meta: null };
+02371:   }
+02372: 
+02373:   const key = safeStr(lotteryKey).toUpperCase();
+02374: 
+02375:   const lastY = pickDrawYMD(drawLast);
+02376:   const lastH = toHourBucket(pickDrawHour(drawLast));
+02377:   const prevGrupo = getFirstGrupoFromDraw(drawLast);
+02378: 
+02379:   if (
+02380:     !isYMD(lastY) ||
+02381:     !lastH ||
+02382:     !Number.isFinite(Number(prevGrupo)) ||
+02383:     Number(prevGrupo) <= 0
+02384:   ) {
+02385:     return { top: [], meta: null };
+02386:   }
+02387: 
+02388:   const nextSlot = getNextSlotForLottery({
+02389:     lotteryKey,
+02390:     ymd: lastY,
+02391:     hourBucket: lastH,
+02392:     PT_RIO_SCHEDULE_NORMAL,
+02393:     PT_RIO_SCHEDULE_WED_SAT,
+02394:     FEDERAL_SCHEDULE,
+02395:   });
+02396: 
+02397:   const forcedTargetY = safeStr(targetYmdOverride);
+02398:   const forcedTargetH = toHourBucket(targetHourOverride);
+02399: 
+02400:   const targetY = isYMD(forcedTargetY) && forcedTargetH
+02401:     ? forcedTargetY
+02402:     : safeStr(nextSlot?.ymd);
+02403: 
+02404:   const targetH = isYMD(forcedTargetY) && forcedTargetH
+02405:     ? forcedTargetH
+02406:     : toHourBucket(nextSlot?.hour);
+02407:   const targetDow = getDowKey(targetY);
+02408:   const targetDayOfMonth = getDayOfMonth(targetY);
+02409: 
+02410:   if (!isYMD(targetY) || !targetH || !Number.isFinite(Number(targetDow))) {
+02411:     return { top: [], meta: null };
+02412:   }
+02413: 
+02414:   const targetTs = ymdHourToTs(targetY, targetH);
+02415: 
+02416:   const dayContext = buildDayContext(drawsToday);
+02417:   const prevPair =
+02418:     Array.isArray(dayContext?.seq) && dayContext.seq.length >= 2
+02419:       ? dayContext.seq.slice(-2)
+02420:       : [];
+02421: 
+02422:   const pairOut = buildPairSequenceDistribution({
+02423:     drawsRange: list,
+02424:     lotteryKey: key,
+02425:     targetHour: targetH,
+02426:     targetDow,
+02427:     targetDayOfMonth,
+02428:     prevPair,
+02429:     PT_RIO_SCHEDULE_NORMAL,
+02430:     PT_RIO_SCHEDULE_WED_SAT,
+02431:     FEDERAL_SCHEDULE,
+02432:     groupsK: TOP3_GROUPS_K,
+02433:   });
+02434: 
+02435:   const pairConfidence = clamp01(
+02436:     (confidenceFromSamples(pairOut?.samples || 0, 6) * 0.7) +
+02437:     (confidenceFromSamples(pairOut?.exactDomSamples || 0, 3) * 0.3)
+02438:   );
+02439: 
+02440:   const layerOut = buildConditionalLayerDistribution({
+02441:     lotteryKey,
+02442:     drawsRange: list,
+02443:     targetHour: targetH,
+02444:     targetDow,
+02445:     targetDayOfMonth,
+02446:     prevHour: lastH,
+02447:     prevGrupo: Number(prevGrupo),
+02448:     PT_RIO_SCHEDULE_NORMAL,
+02449:     PT_RIO_SCHEDULE_WED_SAT,
+02450:     FEDERAL_SCHEDULE,
+02451:   });
+02452: 
+02453:   const chosen = layerOut?.chosen || null;
+02454:   const condSamples = Number(chosen?.samples || 0);
+02455:   const condFirstFreq = chosen?.firstFreq || new Map();
+02456: 
+02457:   const pTransitionFirst = new Map();
+02458:   for (let g = 1; g <= safeInt(TOP3_GROUPS_K, 25); g += 1) {
+02459:     pTransitionFirst.set(
+02460:       g,
+02461:       Number(condFirstFreq.get(g) || 0) / Math.max(1, condSamples)
+02462:     );
+02463:   }
+02464: 
+02465:   const structuralFirst = computeStructuralFirstDistribution(
+02466:     list,
+02467:     key,
+02468:     targetH,
+02469:     targetDow,
+02470:     TOP3_GROUPS_K
+02471:   );
+02472:   const pStructuralFirst = structuralFirst?.prob || new Map();
+02473: 
+02474:   const structuralPrizePresence = computeComparablePrizePresenceDistribution(
+02475:     list,
+02476:     key,
+02477:     targetH,
+02478:     targetDow,
+02479:     TOP3_GROUPS_K
+02480:   );
+02481:   const pStructuralPrizePresence = structuralPrizePresence?.prob || new Map();
+02482: 
+02483:   const duplication = computeComparableDuplicationDistribution(
+02484:     list,
+02485:     key,
+02486:     targetH,
+02487:     targetDow,
+02488:     TOP3_GROUPS_K
+02489:   );
+02490:   const pDuplication = duplication?.prob || new Map();
+02491: 
+02492:   const comparableSeq = buildComparableFirstSequence(
+02493:     list,
+02494:     key,
+02495:     targetH,
+02496:     targetDow
+02497:   );
+02498: 
+02499:   const currentState = getStateFromComparableSequenceBeforeTs(
+02500:     comparableSeq,
+02501:     targetTs,
+02502:     3
+02503:   );
+02504: 
+02505:   const memoryOut = buildMemoryStateDistribution({
+02506:     drawsRange: list,
+02507:     lotteryKey: key,
+02508:     targetHour: targetH,
+02509:     targetDow,
+02510:     currentState,
+02511:     groupsK: TOP3_GROUPS_K,
+02512:   });
+02513: 
+02514:   const pMemory = memoryOut?.prob || new Map();
+02515: 
+02516:   const seq2Out = buildSeq2FirstDistribution(
+02517:     comparableSeq,
+02518:     currentState,
+02519:     TOP3_GROUPS_K
+02520:   );
+02521:   const pSeq2 = seq2Out?.prob || new Map();
+02522: 
+02523:   const repeatBoostOut = buildRecentRepeatBoostMap(
+02524:     comparableSeq,
+02525:     targetTs,
+02526:     4,
+02527:     TOP3_GROUPS_K
+02528:   );
+02529:   const repeatBoostMap = repeatBoostOut?.boost || new Map();
+02530: 
+02531:   const regimeInfo = detectRegimeFromComparableSequence(
+02532:     getComparableRecentDrawsBeforeTs(comparableSeq, targetTs, 6)
+02533:   );
+02534: 
+02535:   const regime = safeStr(regimeInfo?.regime || "neutral");
+02536: 
+02537:   const mode =
+02538:     dayContext.repeatNow || Number(dayContext?.diversidade || 0) < 0.5
+02539:       ? "REPEAT"
+02540:       : Number(dayContext?.diversidade || 0) > 0.75
+02541:         ? "SPREAD"
+02542:         : "NEUTRAL";
+02543: 
+02544:   const weights = getDayDrivenWeights(mode);
+02545: 
+02546:   const recentContextDraws = getComparableContextDrawsBeforeTs(
+02547:     list,
+02548:     key,
+02549:     targetH,
+02550:     targetDow,
+02551:     targetTs,
+02552:     8
+02553:   );
+02554:   const recentMetrics = computeRecentBichoMetrics(recentContextDraws, TOP3_GROUPS_K);
+02555: 
+02556:   const recentMaxPrizePresence = Math.max(
+02557:     1,
+02558:     ...Array.from(recentMetrics.values()).map((x) => Number(x.recentPrizePresence || 0))
+02559:   );
+02560:   const recentMaxFirst = Math.max(
+02561:     1,
+02562:     ...Array.from(recentMetrics.values()).map((x) => Number(x.recentFirst || 0))
+02563:   );
+02564:   const recentMaxDup = Math.max(
+02565:     1,
+02566:     ...Array.from(recentMetrics.values()).map((x) => Number(x.recentDupDraws || 0))
+02567:   );
+02568: 
+02569:   const lateSeen = computeComparableLastSeenByGrupo(
+02570:     list,
+02571:     key,
+02572:     targetH,
+02573:     targetDow,
+02574:     TOP3_GROUPS_K
+02575:   );
+02576: 
+02577:   const finiteSeen = Array.from(lateSeen.values()).filter((x) =>
+02578:     Number.isFinite(Number(x))
+02579:   );
+02580:   const minSeenTs = finiteSeen.length ? Math.min(...finiteSeen) : targetTs;
+02581:   const maxGapMsBase =
+02582:     Number.isFinite(targetTs) && Number.isFinite(minSeenTs)
+02583:       ? Math.max(1, targetTs - minSeenTs)
+02584:       : 1;
+02585: 
+02586:   const dayFlowConfidence = confidenceFromSamples(dayContext?.total || 0, 4);
+02587:   const pairStrong = Number(pairOut?.samples || 0) >= 4;
+02588: 
+02589:   const confidence =
+02590:     (pairConfidence * 0.3) +
+02591:     (confidenceFromSamples(condSamples, 20) * 0.4) +
+02592:     (confidenceFromSamples(memoryOut?.matchedSamples || 0, 15) * 0.3);
+02593: 
+02594:   const adjustedWeights = normalizeWeights({
+02595:     transition: pairStrong ? weights.transition * 0.7 : weights.transition,
+02596:     pair: pairStrong ? weights.pair * 1.4 : weights.pair,
+02597:     memory: weights.memory,
+02598:     recent: weights.recent,
+02599:     structural: weights.structural,
+02600:     late: weights.late,
+02601:   });
+02602: 
+02603:   const ranked = Array.from({ length: safeInt(TOP3_GROUPS_K, 25) }, (_, idx) => {
+02604:     const grupo = idx + 1;
+02605: 
+02606:     const pT = Number(pTransitionFirst.get(grupo) || 0);
+02607:     const pSF = Number(pStructuralFirst.get(grupo) || 0);
+02608:     const pST = Number(pStructuralPrizePresence.get(grupo) || 0);
+02609:     const pM = Number(pMemory.get(grupo) || 0);
+02610:     const pD = Number(pDuplication.get(grupo) || 0);
+02611:     const pSeq = Number(pSeq2.get(grupo) || 0);
+02612:     const repeatBoost = Number(repeatBoostMap.get(grupo) || 0);
+02613:     const pPair = Number(pairOut?.prob?.get?.(grupo) || 0);
+02614: 
+02615:     const rm = recentMetrics.get(grupo) || {
+02616:       recentPrizePresence: 0,
+02617:       recentFirst: 0,
+02618:       recentDupDraws: 0,
+02619:       recentLast1PrizePresence: 0,
+02620:       recentLast2PrizePresence: 0,
+02621:       recentLast3PrizePresence: 0,
+02622:     };
+02623: 
+02624:     const recentPrizePresenceNorm = normalizeMetric(rm.recentPrizePresence, recentMaxPrizePresence);
+02625:     const recentFirstNorm = normalizeMetric(rm.recentFirst, recentMaxFirst);
+02626:     const recentDupNorm = normalizeMetric(rm.recentDupDraws, recentMaxDup);
+02627:     const recentLast1Norm = normalizeMetric(rm.recentLast1PrizePresence, 1);
+02628:     const recentLast2Norm = normalizeMetric(rm.recentLast2PrizePresence, 2);
+02629: 
+02630:     const recentComposite =
+02631:       (recentFirstNorm * 0.52) +
+02632:       (recentPrizePresenceNorm * 0.08) +
+02633:       (recentDupNorm * 0.18) +
+02634:       (recentLast2Norm * 0.14) +
+02635:       (recentLast1Norm * 0.1);
+02636: 
+02637:     const dominanceScore =
+02638:       (pT * 0.42) +
+02639:       (pSF * 0.26) +
+02640:       (pST * 0.18) +
+02641:       (pD * 0.14);
+02642: 
+02643:     const seenTs = Number(lateSeen.get(grupo));
+02644:     const gapMs =
+02645:       Number.isFinite(targetTs) && Number.isFinite(seenTs)
+02646:         ? Math.max(0, targetTs - seenTs)
+02647:         : maxGapMsBase;
+02648: 
+02649:     const lateNorm = Math.max(
+02650:       0,
+02651:       Math.min(1, gapMs / Math.max(1, maxGapMsBase))
+02652:     );
+02653: 
+02654:     const dayFreq = Number(dayContext?.freq?.get?.(grupo) || 0);
+02655:     const dayFirstFreq = Number(dayContext?.firstFreq?.get?.(grupo) || 0);
+02656:     const isDominantToday =
+02657:       Number.isFinite(Number(dayContext?.dominante)) &&
+02658:       Number(dayContext.dominante) === Number(grupo);
+02659: 
+02660:     let dayFlowRaw = 0;
+02661: 
+02662:     if (dayFreq >= 2) dayFlowRaw += 32;
+02663:     if (dayFreq >= 3) dayFlowRaw += 18;
+02664:     if (dayFirstFreq >= 1) dayFlowRaw += 20;
+02665:     if (dayFirstFreq >= 2) dayFlowRaw += 14;
+02666:     if (isDominantToday) dayFlowRaw += 24;
+02667: 
+02668:     if (Number(dayContext?.diversidade || 0) < 0.5) {
+02669:       dayFlowRaw += dayFreq > 0 ? 12 : -8;
+02670:     } else if (Number(dayContext?.diversidade || 0) > 0.75) {
+02671:       dayFlowRaw += dayFreq === 0 ? 10 : 0;
+02672:     }
+02673: 
+02674:     if (dayContext?.repeatNow && dayFreq > 0) {
+02675:       dayFlowRaw += 10;
+02676:     }
+02677: 
+02678:     const dayFlowScore = dayFlowRaw * dayFlowConfidence;
+02679: 
+02680:     const pairSequenceScore =
+02681:       Number(pairOut?.samples || 0) > 0
+02682:         ? ((pPair * 260) + Math.min(70, Number(pairOut.samples || 0) * 8)) * pairConfidence
+02683:         : 0;
+02684: 
+02685:     const structuralBlend =
+02686:       (pSF * 0.45) +
+02687:       (pST * 0.35) +
+02688:       (pD * 0.2);
+02689: 
+02690:     const memoryBlend =
+02691:       (pM * 0.75) +
+02692:       (pSeq * 0.25);
+02693: 
+02694:     const recentBlend =
+02695:       (recentComposite * 0.85) +
+02696:       (repeatBoost * 0.15);
+02697: 
+02698:     const prob =
+02699:       (pT * adjustedWeights.transition) +
+02700:       (pPair * adjustedWeights.pair * pairConfidence) +
+02701:       (memoryBlend * adjustedWeights.memory) +
+02702:       (recentBlend * adjustedWeights.recent) +
+02703:       (structuralBlend * adjustedWeights.structural) +
+02704:       (lateNorm * adjustedWeights.late);
+02705: 
+02706:     const score =
+02707:       (prob * 1000) +
+02708:       (dominanceScore * 180) +
+02709:       (pairSequenceScore * 0.6) +
+02710:       (dayFlowScore * 0.8) +
+02711:       (confidence * 50);
+02712: 
+02713:     return {
+02714:       grupo,
+02715:       prob,
+02716:       scoreProb: prob,
+02717:       score,
+02718:       probTransition: pT,
+02719:       probStructuralFirst: pSF,
+02720:       probStructuralPrizePresence: pST,
+02721:       probMemory: pM,
+02722:       probDuplication: pD,
+02723:       probSeq2: pSeq,
+02724:       probPair: pPair,
+02725:       pairProb: pPair,
+02726:       pairConfidence,
+02727:       repeatBoost,
+02728:       dominanceScore,
+02729:       recentComposite,
+02730:       recentPrizePresence: rm.recentPrizePresence,
+02731:       recentFirst: rm.recentFirst,
+02732:       recentDupDraws: rm.recentDupDraws,
+02733:       recentLast1PrizePresence: rm.recentLast1PrizePresence,
+02734:       recentLast2PrizePresence: rm.recentLast2PrizePresence,
+02735:       recentLast3PrizePresence: rm.recentLast3PrizePresence,
+02736:       lateNorm,
+02737:       gapMs,
+02738:       condFirstCount: Number(condFirstFreq.get(grupo) || 0),
+02739:       structuralFirstCount: Number(structuralFirst?.firstFreq?.get(grupo) || 0),
+02740:       structuralPrizePresenceCount: Number(structuralPrizePresence?.freq?.get(grupo) || 0),
+02741:       duplicationCount: Number(duplication?.freq?.get(grupo) || 0),
+02742:       memoryWeight: Number(memoryOut?.freq?.get(grupo) || 0),
+02743:       dayFreq,
+02744:       dayFirstFreq,
+02745:       isDominantToday,
+02746:       dayFlowConfidence,
+02747:       dayFlowScore,
+02748:       pairSamples: Number(pairOut?.samples || 0),
+02749:       pairWeightedSamples: Number(pairOut?.weightedSamples || 0),
+02750:       pairExactDomSamples: Number(pairOut?.exactDomSamples || 0),
+02751:       pairCount: Number(pairOut?.freq?.get?.(grupo) || 0),
+02752:       pairSequenceScore,
+02753:     };
+02754:   })
+02755:     .sort((a, b) => {
+02756:       if (b.score !== a.score) return b.score - a.score;
+02757:       if (b.scoreProb !== a.scoreProb) return b.scoreProb - a.scoreProb;
+02758:       if (b.dominanceScore !== a.dominanceScore) return b.dominanceScore - a.dominanceScore;
+02759:       if (b.probTransition !== a.probTransition) return b.probTransition - a.probTransition;
+02760:       if (b.probPair !== a.probPair) return b.probPair - a.probPair;
+02761:       if (b.probDuplication !== a.probDuplication) return b.probDuplication - a.probDuplication;
+02762:       if (b.probStructuralFirst !== a.probStructuralFirst) return b.probStructuralFirst - a.probStructuralFirst;
+02763:       if (b.probStructuralPrizePresence !== a.probStructuralPrizePresence) return b.probStructuralPrizePresence - a.probStructuralPrizePresence;
+02764:       return a.grupo - b.grupo;
+02765:     })
+02766:     .slice(0, Math.max(1, Number(topN || 3)));
+02767: 
+02768: 
+02769: 
+02770:   const reasonsBase = [
+02771:     `Motor: V2_BICHO`,
+02772:     `Regime detectado: ${regime}`,
+02773:     `RepeatRate=${Number(regimeInfo?.repeatRate || 0).toFixed(2)} | UniqueRate=${Number(regimeInfo?.uniqueRate || 0).toFixed(2)}`,
+02774:     `Pesos: mode=${mode} | transição=${(adjustedWeights.transition * 100).toFixed(0)}% | par=${(adjustedWeights.pair * 100).toFixed(0)}% | memória=${(adjustedWeights.memory * 100).toFixed(0)}% | recência=${(adjustedWeights.recent * 100).toFixed(0)}% | estrutural=${(adjustedWeights.structural * 100).toFixed(0)}% | atraso=${(adjustedWeights.late * 100).toFixed(0)}%`,
+02775:     `Estado atual: prev=${String(prevGrupo).padStart(2, "0")} @ ${lastH} → alvo ${targetH}`,
+02776:     `Estado curto comparável: [${currentState.map((g) => String(g).padStart(2, "0")).join(", ")}]`,
+02777:     `Camada condicional: ${chosen?.label || "—"} | amostras=${condSamples}`,
+02778:     `Amostra estrutural 1º=${Number(structuralFirst?.totalSamples || 0)} | PRIZE_PRESENCE=${Number(structuralPrizePresence?.totalSamples || 0)} | duplicação=${Number(duplication?.totalSamples || 0)}`,
+02779:     `Amostra memória: matches=${Number(memoryOut?.matchedSamples || 0)} | peso=${Number(memoryOut?.totalWeight || 0).toFixed(2)}`,
+02780:     `Par do dia: ${Array.isArray(prevPair) && prevPair.length === 2 ? prevPair.map((n) => String(n).padStart(2, "0")).join("→") : "--"} | matches=${Number(pairOut?.samples || 0)} | matches DOM=${Number(pairOut?.exactDomSamples || 0)} | confiança=${(pairConfidence * 100).toFixed(0)}%`,
+02781:     `Fluxo do dia: draws=${Number(dayContext?.total || 0)} | confiança=${(dayFlowConfidence * 100).toFixed(0)}%`,
+02782:     `Data alvo: ${targetY} | DOW=${targetDow} | dia=${String(targetDayOfMonth).padStart(2, "0")}`,
+02783:   ];
+02784: 
+02785:   const top = ranked.map((x, idx) => {
+02786:     const g2 = String(x.grupo).padStart(2, "0");
+02787: 
+02788:     return {
+02789:       rank: idx + 1,
+02790:       title:
+02791:         idx === 0
+02792:           ? "Mais provável"
+02793:           : idx === 1
+02794:             ? "2º mais provável"
+02795:             : "3º mais provável",
+02796:       grupo: x.grupo,
+02797:       scoreProb: Number(x.scoreProb || 0),
+02798:       probCond: Number(x.probTransition || 0),
+02799:       probBase: Number(x.probStructuralFirst || 0),
+02800:       lateBonus: Number(x.lateNorm || 0),
+02801:       freq: x.condFirstCount,
+02802:       freqCond: x.condFirstCount,
+02803:       freqBase: x.structuralFirstCount,
+02804:       freqZeroWhy:
+02805:         x.condFirstCount <= 0
+02806:           ? `Sem 1º lugar nesta camada (${chosen?.label || "—"}).`
+02807:           : "",
+02808:       reasons: [
+02809:         ...reasonsBase,
+02810:         `Grupo G${g2}: transição para 1º=${(x.probTransition * 100).toFixed(2)}%`,
+02811:         `Grupo G${g2}: estrutural de 1º=${(x.probStructuralFirst * 100).toFixed(2)}%`,
+02812:         `Grupo G${g2}: estrutural de TOP3=${(x.probStructuralPrizePresence * 100).toFixed(2)}%`,
+02813:         `Grupo G${g2}: duplicação histórica=${(x.probDuplication * 100).toFixed(2)}%`,
+02814:         `Grupo G${g2}: sequência ordem 2=${(x.probSeq2 * 100).toFixed(2)}%`,
+02815:         `Grupo G${g2}: par do dia=${(x.probPair * 100).toFixed(2)}% | confiança=${(x.pairConfidence * 100).toFixed(2)}%`,
+02816:         `Grupo G${g2}: boost de repetição=${(x.repeatBoost * 100).toFixed(2)}%`,
+02817:         `Grupo G${g2}: memória curta=${(x.probMemory * 100).toFixed(2)}%`,
+02818:         `Grupo G${g2}: recência composta=${(x.recentComposite * 100).toFixed(2)}%`,
+02819:         `Grupo G${g2}: atraso normalizado=${(x.lateNorm * 100).toFixed(2)}%`,
+02820:         `Grupo G${g2}: 1ºs na camada=${x.condFirstCount}`,
+02821:         `Grupo G${g2}: 1ºs estruturais=${x.structuralFirstCount}`,
+02822:         `Grupo G${g2}: TOP3 estruturais=${x.structuralPrizePresenceCount}`,
+02823:         `Grupo G${g2}: draws com duplicação=${x.duplicationCount}`,
+02824:         `Grupo G${g2}: peso de memória=${Number(x.memoryWeight || 0).toFixed(2)}`,
+02825:         `Grupo G${g2}: frequência no dia=${x.dayFreq}`,
+02826:         `Grupo G${g2}: 1ºs no dia=${x.dayFirstFreq}`,
+02827:         `Grupo G${g2}: dominante no dia=${x.isDominantToday ? "sim" : "não"}`,
+02828:         `Grupo G${g2}: score do fluxo do dia=${Number(x.dayFlowScore || 0).toFixed(2)} | confiança=${(Number(x.dayFlowConfidence || 0) * 100).toFixed(0)}%`,
+02829:         `Grupo G${g2}: sequência ${Array.isArray(prevPair) && prevPair.length === 2 ? prevPair.map((n) => String(n).padStart(2, "0")).join("→") : "--"} | amostras=${x.pairSamples} | amostras ponderadas=${Number(x.pairWeightedSamples || 0).toFixed(2)} | DOM exato=${x.pairExactDomSamples} | ocorrências=${Number(x.pairCount || 0).toFixed(2)} | prob=${(Number(x.pairProb || 0) * 100).toFixed(2)}% | score=${Number(x.pairSequenceScore || 0).toFixed(2)}`,
+02830:         `Probabilidade final BICHO=${(x.scoreProb * 100).toFixed(2)}%`,
+02831:       ],
+02832:       meta: {
+02833:         trigger: {
+02834:           ymd: lastY,
+02835:           hour: lastH,
+02836:           grupo: Number(prevGrupo),
+02837:         },
+02838:         next: {
+02839:           ymd: safeStr(targetY),
+02840:           hour: safeStr(targetH),
+02841:         },
+02842:         samples: condSamples,
+02843:         scenario: `V2_BICHO_${safeStr(regime).toUpperCase()}`,
+02844:         explain: {
+02845:           engine: "V2_BICHO",
+02846:           mode,
+02847:           regime,
+02848:           repeatRate: Number(regimeInfo?.repeatRate || 0),
+02849:           uniqueRate: Number(regimeInfo?.uniqueRate || 0),
+02850:           weights: adjustedWeights,
+02851:           layerKey: chosen?.key || "NONE",
+02852:           layerLabel: chosen?.label || "—",
+02853:           layerSamples: condSamples,
+02854:           structuralFirstSamples: Number(structuralFirst?.totalSamples || 0),
+02855:           structuralPrizePresenceSamples: Number(structuralPrizePresence?.totalSamples || 0),
+02856:           duplicationSamples: Number(duplication?.totalSamples || 0),
+02857:           memoryMatchedSamples: Number(memoryOut?.matchedSamples || 0),
+02858:           memoryTotalWeight: Number(memoryOut?.totalWeight || 0),
+02859:           seq2Samples: Number(seq2Out?.samples || 0),
+02860:           seq2Prev2: Number(seq2Out?.prev2 || 0),
+02861:           seq2Prev1: Number(seq2Out?.prev1 || 0),
+02862:           pairSamples: Number(pairOut?.samples || 0),
+02863:           pairWeightedSamples: Number(pairOut?.weightedSamples || 0),
+02864:           pairExactDomSamples: Number(pairOut?.exactDomSamples || 0),
+02865:           pairConfidence,
+02866:           repeatWindowSize: Number(repeatBoostOut?.windowSize || 0),
+02867:           repeatWindowConsidered: Number(repeatBoostOut?.considered || 0),
+02868:           currentState,
+02869:           targetDow,
+02870:           targetDayOfMonth,
+02871:           prevHour: lastH,
+02872:           prevGrupo: Number(prevGrupo),
+02873:           dayContextTotal: Number(dayContext?.total || 0),
+02874:           dayFlowConfidence,
+02875:           dominanceScore: x.dominanceScore,
+02876:           recentComposite: x.recentComposite,
+02877:           recentPrizePresence: x.recentPrizePresence,
+02878:           recentFirst: x.recentFirst,
+02879:           recentDupDraws: x.recentDupDraws,
+02880:           allLayers: (layerOut?.layers || []).map((layer) => ({
+02881:             key: layer.key,
+02882:             label: layer.label,
+02883:             samples: layer.samples,
+02884:             minSamples: layer.minSamples,
+02885:           })),
+02886:         },
+02887:       },
+02888:     };
+02889:   });
+02890: 
+02891:   return {
+02892:     top,
+02893:     meta: {
+02894:       trigger: {
+02895:         ymd: lastY,
+02896:         hour: lastH,
+02897:         grupo: Number(prevGrupo),
+02898:       },
+02899:       next: {
+02900:         ymd: safeStr(targetY),
+02901:         hour: safeStr(targetH),
+02902:       },
+02903:       samples: condSamples,
+02904:       scenario: `V2_BICHO_${safeStr(regime).toUpperCase()}`,
+02905:       explain: {
+02906:         engine: "V2_BICHO",
+02907:         mode,
+02908:         regime,
+02909:         repeatRate: Number(regimeInfo?.repeatRate || 0),
+02910:         uniqueRate: Number(regimeInfo?.uniqueRate || 0),
+02911:         weights: adjustedWeights,
+02912:         layerKey: chosen?.key || "NONE",
+02913:         layerLabel: chosen?.label || "—",
+02914:         layerSamples: condSamples,
+02915:         structuralFirstSamples: Number(structuralFirst?.totalSamples || 0),
+02916:         structuralPrizePresenceSamples: Number(structuralPrizePresence?.totalSamples || 0),
+02917:         duplicationSamples: Number(duplication?.totalSamples || 0),
+02918:         memoryMatchedSamples: Number(memoryOut?.matchedSamples || 0),
+02919:         memoryTotalWeight: Number(memoryOut?.totalWeight || 0),
+02920:         pairSamples: Number(pairOut?.samples || 0),
+02921:         pairWeightedSamples: Number(pairOut?.weightedSamples || 0),
+02922:         pairExactDomSamples: Number(pairOut?.exactDomSamples || 0),
+02923:         pairConfidence,
+02924:         currentState,
+02925:         targetDow,
+02926:         targetDayOfMonth,
+02927:         prevHour: lastH,
+02928:         prevGrupo: Number(prevGrupo),
+02929:         dayContextTotal: Number(dayContext?.total || 0),
+02930:         dayFlowConfidence,
+02931:         allLayers: (layerOut?.layers || []).map((layer) => ({
+02932:           key: layer.key,
+02933:           label: layer.label,
+02934:           samples: layer.samples,
+02935:           minSamples: layer.minSamples,
+02936:         })),
+02937:       },
+02938:     },
+02939:   };
+02940: }
+02941: 
+02942: 
+02943: /* =========================
+02944:    Motor principal V3 (ESTATISTICO AUDITAVEL)
+02945: ========================= */
+02946: 
+02947: function incMap(map, key, value = 1) {
+02948:   const k = Number(key);
+02949:   if (!Number.isFinite(k) || k < 1 || k > TOP3_GROUPS_K) return;
+02950:   map.set(k, Number(map.get(k) || 0) + Number(value || 0));
+02951: }
+02952: 
+02953: function emptyGroupMap() {
+02954:   const out = new Map();
+02955:   for (let g = 1; g <= safeInt(TOP3_GROUPS_K, 25); g += 1) out.set(g, 0);
+02956:   return out;
+02957: }
+02958: 
+02959: function getPrizePresenceGroupSet(draw) {
+02960:   return new Set(
+02961:     getAllPrizePresenceGroups(draw)
+02962:       .map((x) => Number(x.grupo))
+02963:       .filter((g) => Number.isFinite(g) && g >= 1 && g <= TOP3_GROUPS_K)
+02964:   );
+02965: }
+02966: 
+02967: function layerProbability(freqMap, samples, alpha = TOP3_SMOOTH_ALPHA) {
+02968:   const out = new Map();
+02969:   const k = safeInt(TOP3_GROUPS_K, 25);
+02970:   const a = Math.max(0, Number(alpha || 0));
+02971:   const base = Math.max(0, Number(samples || 0));
+02972:   const denom = Math.max(1, base + (a * k));
+02973: 
+02974:   for (let g = 1; g <= k; g += 1) {
+02975:     const count = Math.max(0, Number(freqMap?.get?.(g) || 0));
+02976:     out.set(g, (count + a) / denom);
+02977:   }
+02978: 
+02979:   return out;
+02980: }
+02981: 
+02982: function sampleConfidence(samples, fullAt = 30) {
+02983:   const n = Number(samples || 0);
+02984:   const lim = Math.max(1, Number(fullAt || 30));
+02985:   return Math.max(0, Math.min(1, n / lim));
+02986: }
+02987: 
+02988: export function computeStatisticalTop3V3({
+02989:   lotteryKey,
+02990:   drawsRange,
+02991:   drawLast,
+02992:   PT_RIO_SCHEDULE_NORMAL,
+02993:   PT_RIO_SCHEDULE_WED_SAT,
+02994:   FEDERAL_SCHEDULE,
+02995:   topN = 3,
+02996:   targetYmdOverride = "",
+02997:   targetHourOverride = "",
+02998:   drawsAlreadySorted = false,
+02999: }) {
+03000:   const sourceList =
+03001:     Array.isArray(drawsRange)
+03002:       ? drawsRange
+03003:       : [];
+03004: 
+03005:   const list = drawsAlreadySorted
+03006:     ? sourceList
+03007:     : sortDrawsAsc(sourceList);
+03008:   if (!list.length || !drawLast) return { top: [], meta: null };
+03009: 
+03010:   const key = safeStr(lotteryKey).toUpperCase();
+03011: 
+03012:   const lastY = pickDrawYMD(drawLast);
+03013:   const lastH = toHourBucket(pickDrawHour(drawLast));
+03014:   const prevGrupo = getFirstGrupoFromDraw(drawLast);
+03015: 
+03016:   if (
+03017:     !isYMD(lastY) ||
+03018:     !lastH ||
+03019:     !Number.isFinite(Number(prevGrupo)) ||
+03020:     Number(prevGrupo) < 1 ||
+03021:     Number(prevGrupo) > TOP3_GROUPS_K
+03022:   ) {
+03023:     return { top: [], meta: null };
+03024:   }
+03025: 
+03026:   const nextSlot = getNextSlotForLottery({
+03027:     lotteryKey: key,
+03028:     ymd: lastY,
+03029:     hourBucket: lastH,
+03030:     PT_RIO_SCHEDULE_NORMAL,
+03031:     PT_RIO_SCHEDULE_WED_SAT,
+03032:     FEDERAL_SCHEDULE,
+03033:   });
+03034: 
+03035:   const forcedTargetY = safeStr(targetYmdOverride);
+03036:   const forcedTargetH = toHourBucket(targetHourOverride);
+03037: 
+03038:   const targetY = isYMD(forcedTargetY) && forcedTargetH
+03039:     ? forcedTargetY
+03040:     : safeStr(nextSlot?.ymd);
+03041: 
+03042:   const targetH = isYMD(forcedTargetY) && forcedTargetH
+03043:     ? forcedTargetH
+03044:     : toHourBucket(nextSlot?.hour);
+03045:   const targetDow = getDowKey(targetY);
+03046:   const targetDayOfMonth = getDayOfMonth(targetY);
+03047:   const targetTs = ymdHourToTs(targetY, targetH);
+03048: 
+03049:   if (!isYMD(targetY) || !targetH || !Number.isFinite(Number(targetDow))) {
+03050:     return { top: [], meta: null };
+03051:   }
+03052: 
+03053:   const history = list.filter((d) => {
+03054:     const y = pickDrawYMD(d);
+03055:     const h = toHourBucket(pickDrawHour(d));
+03056:     const ts = ymdHourToTs(y, h);
+03057:     return isYMD(y) && h && Number.isFinite(ts) && ts < targetTs;
+03058:   });
+03059: 
+03060:   const layers = {
+03061:     hour: { label: `frequência no horário ${targetH}`, samples: 0, first: emptyGroupMap(), prizePresence: emptyGroupMap(), weight: 0.33 },
+03062:     dowHour: { label: `frequência no dia da semana + horário`, samples: 0, first: emptyGroupMap(), prizePresence: emptyGroupMap(), weight: 0.27 },
+03063:     dayMonth: { label: `frequência no dia ${String(targetDayOfMonth).padStart(2, "0")}`, samples: 0, first: emptyGroupMap(), prizePresence: emptyGroupMap(), weight: 0.04 },
+03064:     transition: { label: `transição G${String(prevGrupo).padStart(2, "0")} @ ${lastH} → ${targetH}`, samples: 0, first: emptyGroupMap(), prizePresence: emptyGroupMap(), weight: 0.26 },
+03065:     recent: { label: `recência comparável`, samples: 0, first: emptyGroupMap(), prizePresence: emptyGroupMap(), weight: 0.10 },
+03066:   };
+03067: 
+03068:   for (const d of history) {
+03069:     const y = pickDrawYMD(d);
+03070:     const h = toHourBucket(pickDrawHour(d));
+03071:     const dow = getDowKey(y);
+03072:     const dom = getDayOfMonth(y);
+03073:     const g1 = getFirstGrupoFromDraw(d);
+03074:     const prizePresenceSet = getPrizePresenceGroupSet(d);
+03075: 
+03076:     const addToLayer = (layer) => {
+03077:       layer.samples += 1;
+03078:       incMap(layer.first, g1, 1);
+03079:       for (const g of prizePresenceSet) incMap(layer.prizePresence, g, 1);
+03080:     };
+03081: 
+03082:     if (h === targetH) addToLayer(layers.hour);
+03083:     if (h === targetH && Number(dow) === Number(targetDow)) addToLayer(layers.dowHour);
+03084:     if (Number(dom) === Number(targetDayOfMonth)) addToLayer(layers.dayMonth);
+03085:   }
+03086: 
+03087:   const indexed = indexDrawsByYmdHour(history);
+03088: 
+03089:   for (const prev of history) {
+03090:     const py = pickDrawYMD(prev);
+03091:     const ph = toHourBucket(pickDrawHour(prev));
+03092:     const pg = getFirstGrupoFromDraw(prev);
+03093: 
+03094:     if (!isYMD(py) || !ph || Number(pg) !== Number(prevGrupo)) continue;
+03095: 
+03096:     const ns = getNextSlotForLottery({
+03097:       lotteryKey: key,
+03098:       ymd: py,
+03099:       hourBucket: ph,
+03100:       PT_RIO_SCHEDULE_NORMAL,
+03101:       PT_RIO_SCHEDULE_WED_SAT,
+03102:       FEDERAL_SCHEDULE,
+03103:     });
+03104: 
+03105:     if (toHourBucket(ns?.hour) !== targetH) continue;
+03106:     if (ph !== lastH) continue;
+03107: 
+03108:     const nextDraw = indexed.get(`${safeStr(ns?.ymd)}|${toHourBucket(ns?.hour)}`) || null;
+03109:     if (!nextDraw) continue;
+03110: 
+03111:     const g1 = getFirstGrupoFromDraw(nextDraw);
+03112:     const prizePresenceSet = getPrizePresenceGroupSet(nextDraw);
+03113: 
+03114:     layers.transition.samples += 1;
+03115:     incMap(layers.transition.first, g1, 1);
+03116:     for (const g of prizePresenceSet) incMap(layers.transition.prizePresence, g, 1);
+03117:   }
+03118: 
+03119:   const recentComparable = history
+03120:     .filter((d) => {
+03121:       const y = pickDrawYMD(d);
+03122:       const h = toHourBucket(pickDrawHour(d));
+03123:       return h === targetH && Number(getDowKey(y)) === Number(targetDow);
+03124:     })
+03125:     .slice(-20);
+03126: 
+03127:   for (const d of recentComparable) {
+03128:     const g1 = getFirstGrupoFromDraw(d);
+03129:     const prizePresenceSet = getPrizePresenceGroupSet(d);
+03130: 
+03131:     layers.recent.samples += 1;
+03132:     incMap(layers.recent.first, g1, 1);
+03133:     for (const g of prizePresenceSet) incMap(layers.recent.prizePresence, g, 1);
+03134:   }
+03135: 
+03136:   const currentScene = buildSceneFromDraw(drawLast);
+03137:   const sceneRanking = buildHistoricalSceneRanking(history, currentScene, 80);
+03138:   const sceneHypothesis = buildSceneHypothesisDistribution(sceneRanking, TOP3_GROUPS_K);
+03139:   const sceneWeight =
+03140:     sampleConfidence(sceneHypothesis?.samples || 0, TOP3_SCENE_SAMPLE_TARGET) *
+03141:     TOP3_SCENE_WEIGHT;
+03142: 
+03143: 
+03144:   const activeWeights = {};
+03145:   let totalWeight = 0;
+03146: 
+03147:   for (const [keyLayer, layer] of Object.entries(layers)) {
+03148:     const conf =
+03149:       keyLayer === "transition"
+03150:         ? sampleConfidence(layer.samples, 8)
+03151:         : keyLayer === "recent"
+03152:           ? sampleConfidence(layer.samples, 12)
+03153:           : sampleConfidence(layer.samples, 30);
+03154: 
+03155:     const w = layer.samples > 0 ? layer.weight * conf : 0;
+03156:     activeWeights[keyLayer] = w;
+03157:     totalWeight += w;
+03158:   }
+03159: 
+03160:   if (totalWeight <= 0) {
+03161:     activeWeights.hour = 1;
+03162:     totalWeight = 1;
+03163:   }
+03164: 
+03165:   for (const keyLayer of Object.keys(activeWeights)) {
+03166:     activeWeights[keyLayer] = activeWeights[keyLayer] / totalWeight;
+03167:   }
+03168: 
+03169:   const layerProbabilities = Object.fromEntries(
+03170:     Object.entries(layers).map(([keyLayer, layer]) => [
+03171:       keyLayer,
+03172:       {
+03173:         first: layerProbability(layer.first, layer.samples),
+03174:         prizePresence: layerProbability(layer.prizePresence, layer.samples),
+03175:       },
+03176:     ])
+03177:   );
+03178: 
+03179:   const ranked = Array.from({ length: safeInt(TOP3_GROUPS_K, 25) }, (_, idx) => {
+03180:     const grupo = idx + 1;
+03181: 
+03182:     let scoreProb = 0;
+03183:     const details = {};
+03184: 
+03185:     for (const [keyLayer, layer] of Object.entries(layers)) {
+03186:       const probabilities = layerProbabilities[keyLayer];
+03187: 
+03188:       const pFirst = Number(probabilities.first.get(grupo) || 0);
+03189:       const pPrizePresence = Number(probabilities.prizePresence.get(grupo) || 0);
+03190: 
+03191:       const pLayer = (pFirst * 0.92) + (pPrizePresence * 0.08);
+03192:       const w = Number(activeWeights[keyLayer] || 0);
+03193: 
+03194:       scoreProb += pLayer * w;
+03195: 
+03196:       details[keyLayer] = {
+03197:         label: layer.label,
+03198:         samples: layer.samples,
+03199:         firstCount: Number(layer.first.get(grupo) || 0),
+03200:         top3Count: Number(layer.prizePresence.get(grupo) || 0),
+03201:         probability: pLayer,
+03202:         weight: w,
+03203:       };
+03204:     }
+03205: 
+03206:     const pSceneRaw = Number(sceneHypothesis?.prob?.get?.(grupo) || 0);
+03207:     const pScene =
+03208:       (pSceneRaw * TOP3_SCENE_BLEND_SCENE) +
+03209:       ((1 / TOP3_GROUPS_K) * TOP3_SCENE_BLEND_UNIFORM);
+03210: 
+03211:     if (sceneWeight > 0) {
+03212:       scoreProb = (scoreProb * (1 - sceneWeight)) + (pScene * sceneWeight);
+03213:     }
+03214: 
+03215:     details.scene = {
+03216:       label: "analogia histórica de cena",
+03217:       samples: Number(sceneHypothesis?.samples || 0),
+03218:       firstCount: Number(sceneHypothesis?.freq?.get?.(grupo) || 0),
+03219:       top3Count: 0,
+03220:       probability: pScene,
+03221:       weight: sceneWeight,
+03222:     };
+03223: 
+03224:     return {
+03225:       grupo,
+03226:       scoreProb,
+03227:       score: scoreProb * 1000,
+03228:       details,
+03229:     };
+03230:   })
+03231:     .sort((a, b) => {
+03232:       if (b.score !== a.score) return b.score - a.score;
+03233:       return a.grupo - b.grupo;
+03234:     })
+03235:     .slice(0, Math.max(1, Number(topN || 3)));
+03236: 
+03237:   const rankedScored = scoreRanking(
+03238:     ranked,
+03239:     {
+03240:       lotteryKey,
+03241:       targetYmd: targetY,
+03242:       targetHour: targetH,
+03243:       previousGroup: prevGrupo,
+03244:       totalDraws: history.length,
+03245:     }
+03246:   );
+03247: 
+03248:   const top = rankedScored.map((x, idx) => {
+03249:     const g2 = String(x.grupo).padStart(2, "0");
+03250:     const rawScoreProb = Number(x.scoreProb || 0);
+03251: 
+03252:     const strongest = Object.values(x.details)
+03253:       .filter((d) => Number(d.probability || 0) > 0)
+03254:       .sort((a, b) => (b.probability * b.weight) - (a.probability * a.weight))
+03255:       .slice(0, 3);
+03256: 
+03257:     return {
+03258:       rank: idx + 1,
+03259:       title:
+03260:         idx === 0
+03261:           ? "Mais provável"
+03262:           : idx === 1
+03263:             ? "2º mais provável"
+03264:             : "3º mais provável",
+03265:       grupo: x.grupo,
+03266:       scoreProb: Number(rawScoreProb || 0),
+03267:       rawScoreProb: Number(rawScoreProb || 0),
+03268:       probCond: Number(x.details.transition?.probability || 0),
+03269:       probBase: Number(x.details.hour?.probability || 0),
+03270:       lateBonus: 0,
+03271:       freq: Number(x.details.hour?.firstCount || 0),
+03272:       freqCond: Number(x.details.transition?.firstCount || 0),
+03273:       freqBase: Number(x.details.hour?.firstCount || 0),
+03274:       freqZeroWhy: "",
+03275:       reasons: [
+03276:         `Motor: V3_STATISTICAL`,
+03277:         `Alvo: ${targetY} ${targetH} | DOW=${targetDow} | dia=${String(targetDayOfMonth).padStart(2, "0")}`,
+03278:         `Base: G${String(prevGrupo).padStart(2, "0")} @ ${lastH}`,
+03279:         `Probabilidade final G${g2}: ${(Number(rawScoreProb || 0) * 100).toFixed(2)}%`,
+03280:         ...strongest.map((d) =>
+03281:           `${d.label}: ${d.firstCount}x em 1º | ${d.top3Count}x no TOP3 | amostras=${d.samples} | peso=${(d.weight * 100).toFixed(0)}%`
+03282:         ),
+03283:       ],
+03284:       meta: {
+03285:         trigger: {
+03286:           ymd: lastY,
+03287:           hour: lastH,
+03288:           grupo: Number(prevGrupo),
+03289:         },
+03290:         next: {
+03291:           ymd: safeStr(targetY),
+03292:           hour: safeStr(targetH),
+03293:         },
+03294:         samples: history.length,
+03295:         period: {
+03296:           from: pickDrawYMD(history[0]) || "",
+03297:           to: pickDrawYMD(history[history.length - 1]) || "",
+03298:         },
+03299:         scenario: "V3_STATISTICAL",
+03300:         explain: {
+03301:           engine: "V3_STATISTICAL",
+03302:           targetDow,
+03303:           targetDayOfMonth,
+03304:           prevHour: lastH,
+03305:           prevGrupo: Number(prevGrupo),
+03306:           activeWeights,
+03307:           scene: {
+03308:             samples: Number(sceneHypothesis?.samples || 0),
+03309:             totalWeight: Number(sceneHypothesis?.totalWeight || 0),
+03310:             weight: Number(sceneWeight || 0),
+03311:             currentSignature: currentScene?.signature || "",
+03312:           },
+03313:           layers: Object.fromEntries(
+03314:             Object.entries(layers).map(([k, v]) => [
+03315:               k,
+03316:               {
+03317:                 label: v.label,
+03318:                 samples: v.samples,
+03319:                 weight: activeWeights[k],
+03320:               },
+03321:             ])
+03322:           ),
+03323:           details: x.details,
+03324:         },
+03325:       },
+03326:     };
+03327:   });
+03328: 
+03329:   return {
+03330:     top,
+03331:     meta: {
+03332:       trigger: {
+03333:         ymd: lastY,
+03334:         hour: lastH,
+03335:         grupo: Number(prevGrupo),
+03336:       },
+03337:       next: {
+03338:         ymd: safeStr(targetY),
+03339:         hour: safeStr(targetH),
+03340:       },
+03341:       samples: history.length,
+03342:       scenario: "V3_STATISTICAL",
+03343:       explain: {
+03344:         engine: "V3_STATISTICAL",
+03345:         targetDow,
+03346:         targetDayOfMonth,
+03347:         prevHour: lastH,
+03348:         prevGrupo: Number(prevGrupo),
+03349:         activeWeights,
+03350:         layers: Object.fromEntries(
+03351:           Object.entries(layers).map(([k, v]) => [
+03352:             k,
+03353:             {
+03354:               label: v.label,
+03355:               samples: v.samples,
+03356:               weight: activeWeights[k],
+03357:             },
+03358:           ])
+03359:         ),
+03360:       },
+03361:     },
+03362:   };
+03363: }
+03364: 
+03365: 
+03366: 
+03367: /* =========================
+03368:    TOP3 SCENE READER
+03369: ========================= */
+03370: 
+03371: function scenePickMilhar4(prize) {
+03372:   const candidates = [
+03373:     prize?.milhar,
+03374:     prize?.milhar4,
+03375:     prize?.numero,
+03376:     prize?.number,
+03377:     prize?.value,
+03378:     prize?.result,
+03379:     prize?.resultado,
+03380:     prize?.premio,
+03381:   ];
+03382: 
+03383:   for (const v of candidates) {
+03384:     const dig = String(v ?? "").replace(/\D+/g, "");
+03385:     if (dig) return dig.length >= 4 ? dig.slice(-4) : dig.padStart(4, "0");
+03386:   }
+03387: 
+03388:   return "";
+03389: }
+03390: 
+03391: function sceneGrupoFromMilhar4(m4) {
+03392:   const s = String(m4 || "").replace(/\D+/g, "").padStart(4, "0").slice(-4);
+03393:   if (!/^\d{4}$/.test(s)) return null;
+03394: 
+03395:   const dzRaw = Number(s.slice(-2));
+03396:   if (!Number.isFinite(dzRaw)) return null;
+03397: 
+03398:   const dz = dzRaw === 0 ? 100 : dzRaw;
+03399:   const grupo = Math.ceil(dz / 4);
+03400: 
+03401:   return grupo >= 1 && grupo <= 25 ? grupo : null;
+03402: }
+03403: 
+03404: function buildSceneFromDraw(draw) {
+03405:   const prizes = Array.isArray(draw?.prizes) ? draw.prizes : [];
+03406: 
+03407:   const rows = prizes
+03408:     .map((p) => {
+03409:       const pos = Number(guessPrizePos(p));
+03410:       const milhar = scenePickMilhar4(p);
+03411:       const grupo = sceneGrupoFromMilhar4(milhar);
+03412: 
+03413:       return {
+03414:         pos,
+03415:         milhar: String(milhar || "").replace(/\D+/g, "").padStart(4, "0").slice(-4),
+03416:         centena: getCentena3(milhar),
+03417:         dezena: getDezena2(milhar),
+03418:         grupo,
+03419:       };
+03420:     })
+03421:     .filter((x) => Number.isFinite(x.pos) && x.pos >= 1 && x.pos <= 7)
+03422:     .sort((a, b) => a.pos - b.pos);
+03423: 
+03424:   const grupos = rows.map((x) => x.grupo).filter((x) => Number.isFinite(x));
+03425:   const dezenas = rows.map((x) => x.dezena).filter(Boolean);
+03426:   const centenas = rows.map((x) => x.centena).filter(Boolean);
+03427:   const milhares = rows.map((x) => x.milhar).filter(Boolean);
+03428: 
+03429:   const countMap = (arr) => {
+03430:     const m = new Map();
+03431:     for (const x of arr) m.set(String(x), (m.get(String(x)) || 0) + 1);
+03432:     return Array.from(m.entries())
+03433:       .filter(([, n]) => n > 1)
+03434:       .map(([value, count]) => ({ value, count }));
+03435:   };
+03436: 
+03437:   return {
+03438:     ymd: pickDrawYMD(draw),
+03439:     hour: toHourBucket(pickDrawHour(draw)),
+03440:     firstGrupo: grupos[0] ?? null,
+03441:     grupos,
+03442:     dezenas,
+03443:     centenas,
+03444:     milhares,
+03445:     repeatedGroups: countMap(grupos),
+03446:     repeatedDezenas: countMap(dezenas),
+03447:     repeatedCentenas: countMap(centenas),
+03448:     rows,
+03449:     signature: grupos.map((g) => String(g).padStart(2, "0")).join("-"),
+03450:   };
+03451: }
+03452: 
+03453: 
+03454: 
+03455: function compareScenes(a, b, explain = false) {
+03456:   if (!a || !b) return explain ? { score: 0, details: {} } : 0;
+03457: 
+03458:   let score = 0;
+03459:   const details = {};
+03460: 
+03461:   const add = (key, value) => {
+03462:     if (!value) return;
+03463:     score += value;
+03464:     details[key] = value;
+03465:   };
+03466: 
+03467:   const ag = Array.isArray(a.grupos) ? a.grupos : [];
+03468:   const bg = Array.isArray(b.grupos) ? b.grupos : [];
+03469: 
+03470:   const ad = Array.isArray(a.dezenas) ? a.dezenas : [];
+03471:   const bd = Array.isArray(b.dezenas) ? b.dezenas : [];
+03472: 
+03473:   const ac = Array.isArray(a.centenas) ? a.centenas : [];
+03474:   const bc = Array.isArray(b.centenas) ? b.centenas : [];
+03475: 
+03476:   if (Number(a.firstGrupo) === Number(b.firstGrupo))
+03477:     add("firstGrupo",45);
+03478: 
+03479:   for (let i = 0; i < Math.min(ag.length,bg.length,7); i++) {
+03480:     if (Number(ag[i]) === Number(bg[i]))
+03481:       add("order_"+i, i===0 ? 20 : 10);
+03482:   }
+03483: 
+03484:   add(
+03485:     "groupOverlap",
+03486:     new Set(ag.filter(g => bg.includes(g))).size * 6
+03487:   );
+03488: 
+03489:   add(
+03490:     "dezenaOverlap",
+03491:     new Set(ad.filter(d => bd.includes(d))).size * 3
+03492:   );
+03493: 
+03494:   add(
+03495:     "centenaOverlap",
+03496:     new Set(ac.filter(c => bc.includes(c))).size * 1.5
+03497:   );
+03498: 
+03499:   const repA = Array.isArray(a.repeatedGroups) ? a.repeatedGroups.length : 0;
+03500:   const repB = Array.isArray(b.repeatedGroups) ? b.repeatedGroups.length : 0;
+03501: 
+03502:   if (repA > 0 && repB > 0)
+03503:     add("repeatExists",8);
+03504: 
+03505:   if (repA === repB && repA > 0)
+03506:     add("repeatEqual",6);
+03507: 
+03508:   if (String(a.signature||"") === String(b.signature||""))
+03509:     add("signature",60);
+03510: 
+03511:   if (a.hour === b.hour)
+03512:     add("hour",8);
+03513: 
+03514:   return explain ? { score, details } : score;
+03515: }
+03516: 
+03517: 
+03518: 
+03519: 
+03520: function buildHistoricalSceneRanking(draws, currentScene, limit = 100) {
+03521:   const list = Array.isArray(draws) ? draws : [];
+03522:   if (!currentScene) return [];
+03523: 
+03524:   const ordered = list
+03525:     .map((draw) => ({
+03526:       draw,
+03527:       scene: buildSceneFromDraw(draw),
+03528:     }))
+03529:     .filter((x) => x.scene)
+03530:     .sort((a, b) => {
+03531:       const ta = ymdHourToTs(a.scene?.ymd, a.scene?.hour);
+03532:       const tb = ymdHourToTs(b.scene?.ymd, b.scene?.hour);
+03533:       return Number(ta || 0) - Number(tb || 0);
+03534:     });
+03535: 
+03536:   return ordered
+03537:     .map((item, idx) => {
+03538:       const next = ordered[idx + 1] || null;
+03539:       const score = compareScenes(currentScene, item.scene);
+03540: 
+03541:       return {
+03542:         draw: item.draw,
+03543:         scene: item.scene,
+03544:         nextDraw: next?.draw || null,
+03545:         nextScene: next?.scene || null,
+03546:         score,
+03547:       };
+03548:     })
+03549:     .filter((x) => x.scene && x.nextDraw && Number(x.score) > 0)
+03550:     .sort((a, b) => {
+03551:       if (Number(b.score) !== Number(a.score)) {
+03552:         return Number(b.score) - Number(a.score);
+03553:       }
+03554: 
+03555:       const ta = ymdHourToTs(a.scene?.ymd, a.scene?.hour);
+03556:       const tb = ymdHourToTs(b.scene?.ymd, b.scene?.hour);
+03557:       return Number(tb || 0) - Number(ta || 0);
+03558:     })
+03559:     .slice(0, Math.max(1, Number(limit || 100)));
+03560: }
+03561: 
+03562: 
+03563: 
+03564: 
+03565: function buildSceneHypothesisDistribution(sceneRanking, groupsK = TOP3_GROUPS_K) {
+03566:   const ranking = Array.isArray(sceneRanking) ? sceneRanking : [];
+03567:   const k = safeInt(groupsK, 25);
+03568: 
+03569:   const freq = new Map();
+03570:   for (let g = 1; g <= k; g += 1) freq.set(g, 0);
+03571: 
+03572:   let totalWeight = 0;
+03573: 
+03574:   for (const item of ranking) {
+03575:     const score = Math.max(0, Number(item?.score || 0));
+03576:     const nextGrupo = Number(item?.nextDraw ? pickPrize1GrupoFromDraw(item.nextDraw) : null);
+03577: 
+03578:     if (!Number.isFinite(nextGrupo) || nextGrupo < 1 || nextGrupo > k) continue;
+03579:     if (score <= 0) continue;
+03580: 
+03581:     freq.set(nextGrupo, Number(freq.get(nextGrupo) || 0) + score);
+03582:     totalWeight += score;
+03583:   }
+03584: 
+03585:   const prob = new Map();
+03586:   for (let g = 1; g <= k; g += 1) {
+03587:     prob.set(g, totalWeight > 0 ? Number(freq.get(g) || 0) / totalWeight : 0);
+03588:   }
+03589: 
+03590:   return {
+03591:     freq,
+03592:     prob,
+03593:     samples: ranking.length,
+03594:     totalWeight,
+03595:   };
+03596: }
+03597: 
+03598: 
+03599: /* =========================
+03600:    16/20 milhares (por grupo) — POR TERMINAÇÃO (CORRETO)
+03601: ========================= */
+03602: 
+03603: function getDezenasFixasFromGrupo(grupo2) {
+03604:   const g = Number(grupo2);
+03605:   if (!Number.isFinite(g) || g < 1 || g > 25) return [];
+03606: 
+03607:   const start = (g - 1) * 4 + 1;
+03608:   const out = [];
+03609: 
+03610:   for (let i = 0; i < 4; i += 1) {
+03611:     out.push(wrapToDezena2(start + i));
+03612:   }
+03613: 
+03614:   return out.filter(Boolean);
+03615: }
+03616: 
+03617: 
+03618: export function buildMilharesForGrupo({
+03619:   rangeDraws,
+03620:   analysisHourBucket,
+03621:   schedule,
+03622:   grupo2,
+03623:   count = 20,
+03624:   targetYmd = "",
+03625: }) {
+03626:   const list = Array.isArray(rangeDraws) ? rangeDraws : [];
+03627:   const target = toHourBucket(analysisHourBucket);
+03628:   const schSet = scheduleSet(schedule);
+03629:   const targetDay = safeStr(targetYmd);
+03630:   const targetDow = isYMD(targetDay) ? getDowKey(targetDay) : null;
+03631: 
+03632:   const N = Number.isFinite(Number(count))
+03633:     ? Math.max(4, Math.trunc(Number(count)))
+03634:     : 20;
+03635: 
+03636:   const grupoNum = Number(grupo2);
+03637: 
+03638:   if (!Number.isFinite(grupoNum) || grupoNum < 1 || grupoNum > 25 || !list.length) {
+03639:     return { dezenas: [], slots: [] };
+03640:   }
+03641: 
+03642:   const dezenasFixas = getDezenasFixasFromGrupo(grupoNum);
+03643:   if (!dezenasFixas.length) return { dezenas: [], slots: [] };
+03644: 
+03645:   const perDezena = Math.max(1, Math.ceil(N / dezenasFixas.length));
+03646:   const byMilhar = new Map();
+03647: 
+03648:   for (const d of list) {
+03649:     const y = pickDrawYMD(d);
+03650:     const h = toHourBucket(pickDrawHour(d));
+03651:     if (!h) continue;
+03652: 
+03653:     const isTargetHour = target && h === target;
+03654:     const isScheduleHour = schSet.size && schSet.has(h);
+03655:     const isSameDow = targetDow !== null && Number(getDowKey(y)) === Number(targetDow);
+03656:     const ts = ymdHourToTs(y, h);
+03657: 
+03658:     const ps = Array.isArray(d?.prizes) ? d.prizes : [];
+03659: 
+03660:     for (const prize of ps) {
+03661:       const pos = Number(guessPrizePos(prize));
+03662:       if (!Number.isFinite(pos) || pos < 1 || pos > 7) continue;
+03663: 
+03664:       const g = Number(guessPrizeGrupo(prize));
+03665:       if (g !== grupoNum) continue;
+03666: 
+03667:       const m4 = String(pickPrizeMilhar4(prize) || "").replace(/\D+/g, "").padStart(4, "0").slice(-4);
+03668:       if (!/^\d{4}$/.test(m4)) continue;
+03669: 
+03670:       const dz = getDezena2(m4);
+03671:       const c3 = getCentena3(m4);
+03672: 
+03673:       if (!dz || !c3 || !dezenasFixas.includes(dz)) continue;
+03674: 
+03675:       const current = byMilhar.get(m4) || {
+03676:         milhar: m4,
+03677:         dezena: dz,
+03678:         centena: c3,
+03679:         freq: 0,
+03680:         score: 0,
+03681:         targetHits: 0,
+03682:         scheduleHits: 0,
+03683:         sameDowHits: 0,
+03684:         firstPrizeHits: 0,
+03685:         lastTs: 0,
+03686:       };
+03687: 
+03688:       let inc = 1;
+03689: 
+03690:       if (isTargetHour) {
+03691:         inc += 8;
+03692:         current.targetHits += 1;
+03693:       }
+03694: 
+03695:       if (isScheduleHour) {
+03696:         inc += 3;
+03697:         current.scheduleHits += 1;
+03698:       }
+03699: 
+03700:       if (isSameDow) {
+03701:         inc += 2;
+03702:         current.sameDowHits += 1;
+03703:       }
+03704: 
+03705:       if (pos === 1) {
+03706:         inc += 3;
+03707:         current.firstPrizeHits += 1;
+03708:       } else if (pos <= 3) {
+03709:         inc += 1;
+03710:       }
+03711: 
+03712:       current.freq += 1;
+03713:       current.score += inc;
+03714: 
+03715:       if (Number.isFinite(ts)) {
+03716:         current.lastTs = Math.max(Number(current.lastTs || 0), ts);
+03717:       }
+03718: 
+03719:       byMilhar.set(m4, current);
+03720:     }
+03721:   }
+03722: 
+03723:   const ranked = Array.from(byMilhar.values())
+03724:     .map((m) => {
+03725:       const freq = Number(m.freq || 0);
+03726:       const targetHits = Number(m.targetHits || 0);
+03727:       const scheduleHits = Number(m.scheduleHits || 0);
+03728:       const sameDowHits = Number(m.sameDowHits || 0);
+03729:       const firstPrizeHits = Number(m.firstPrizeHits || 0);
+03730:       const recencyBoost = Number(m.lastTs || 0) > 0 ? 1 : 0;
+03731: 
+03732:       return {
+03733:         ...m,
+03734:         score:
+03735:           freq * 100 +
+03736:           targetHits * 70 +
+03737:           scheduleHits * 35 +
+03738:           sameDowHits * 25 +
+03739:           firstPrizeHits * 45 +
+03740:           recencyBoost * 5,
+03741:       };
+03742:     })
+03743:     .sort((a, b) => {
+03744:       if (Number(b.score) !== Number(a.score)) return Number(b.score) - Number(a.score);
+03745:       if (Number(b.targetHits) !== Number(a.targetHits)) return Number(b.targetHits) - Number(a.targetHits);
+03746:       if (Number(b.freq) !== Number(a.freq)) return Number(b.freq) - Number(a.freq);
+03747:       if (Number(b.lastTs) !== Number(a.lastTs)) return Number(b.lastTs) - Number(a.lastTs);
+03748:       return milharCompareAsc(a.milhar, b.milhar);
+03749:     });
+03750: 
+03751:   const centenaStats = new Map();
+03752: 
+03753:   for (const item of ranked) {
+03754:     const centena = String(item?.centena || "").trim();
+03755:     if (!centena) continue;
+03756: 
+03757:     const current = centenaStats.get(centena) || {
+03758:       centena,
+03759:       freq: 0,
+03760:       score: 0,
+03761:       targetHits: 0,
+03762:       sameDowHits: 0,
+03763:       firstPrizeHits: 0,
+03764:       lastTs: 0,
+03765:     };
+03766: 
+03767:     current.freq += Number(item.freq || 0);
+03768:     current.score += Number(item.score || 0);
+03769:     current.targetHits += Number(item.targetHits || 0);
+03770:     current.sameDowHits += Number(item.sameDowHits || 0);
+03771:     current.firstPrizeHits += Number(item.firstPrizeHits || 0);
+03772:     current.lastTs = Math.max(Number(current.lastTs || 0), Number(item.lastTs || 0));
+03773: 
+03774:     centenaStats.set(centena, current);
+03775:   }
+03776: 
+03777:   const centenaScoreMap = new Map();
+03778: 
+03779:   for (const c of centenaStats.values()) {
+03780:     centenaScoreMap.set(
+03781:       c.centena,
+03782:       Number(c.score || 0) +
+03783:         Number(c.freq || 0) * 25 +
+03784:         Number(c.targetHits || 0) * 60 +
+03785:         Number(c.sameDowHits || 0) * 30 +
+03786:         Number(c.firstPrizeHits || 0) * 40 +
+03787:         (Number(c.lastTs || 0) > 0 ? 10 : 0)
+03788:     );
+03789:   }
+03790: 
+03791:   /*
+03792:    * Contexto compartilhado do seletor de milhar.
+03793:    *
+03794:    * O Top3 continua escolhendo:
+03795:    * - grupo;
+03796:    * - dezenas;
+03797:    * - centenas.
+03798:    *
+03799:    * O chooseBestMilhar escolhe somente o prefixo vencedor
+03800:    * para cada centena selecionada.
+03801:    */
+03802:   const fallbackMilharPrizes = [];
+03803:   const primaryMilharPrizes = [];
+03804: 
+03805:   for (const draw of list) {
+03806:     const drawYmd = pickDrawYMD(draw);
+03807:     const drawHour = toHourBucket(pickDrawHour(draw));
+03808:     const drawDow =
+03809:       isYMD(drawYmd)
+03810:         ? getDowKey(drawYmd)
+03811:         : null;
+03812: 
+03813:     const matchesTargetHour =
+03814:       Boolean(target) &&
+03815:       drawHour === target;
+03816: 
+03817:     const matchesTargetDow =
+03818:       targetDow === null ||
+03819:       Number(drawDow) === Number(targetDow);
+03820: 
+03821:     const prizes = Array.isArray(draw?.prizes)
+03822:       ? draw.prizes
+03823:       : [];
+03824: 
+03825:     for (const prize of prizes) {
+03826:       const position = Number(guessPrizePos(prize));
+03827:       const prizeGroup = Number(guessPrizeGrupo(prize));
+03828: 
+03829:       if (
+03830:         !Number.isFinite(position) ||
+03831:         position < 1 ||
+03832:         position > 7 ||
+03833:         prizeGroup !== grupoNum
+03834:       ) {
+03835:         continue;
+03836:       }
+03837: 
+03838:       fallbackMilharPrizes.push(prize);
+03839: 
+03840:       if (matchesTargetHour && matchesTargetDow) {
+03841:         primaryMilharPrizes.push(prize);
+03842:       }
+03843:     }
+03844:   }
+03845: 
+03846:   const usedMilhares = new Set();
+03847:   const slots = [];
+03848: 
+03849:   function pickDiversifiedMilharesForDezena(dz, limit) {
+03850:     const candidates = ranked
+03851:       .filter((item) => item.dezena === dz)
+03852:       .map((item) => {
+03853:         const centena = String(
+03854:           item?.centena || ""
+03855:         )
+03856:           .replace(/\D+/g, "")
+03857:           .padStart(3, "0")
+03858:           .slice(-3);
+03859: 
+03860:         return {
+03861:           ...item,
+03862:           centena,
+03863:           centenaScore: Number(
+03864:             centenaScoreMap.get(centena) || 0
+03865:           ),
+03866:         };
+03867:       })
+03868:       .filter((item) => /^\d{3}$/.test(item.centena));
+03869: 
+03870:     const byCentena = new Map();
+03871: 
+03872:     for (const item of candidates) {
+03873:       const current = byCentena.get(item.centena);
+03874: 
+03875:       if (
+03876:         !current ||
+03877:         Number(item.centenaScore || 0) >
+03878:           Number(current.centenaScore || 0) ||
+03879:         (
+03880:           Number(item.centenaScore || 0) ===
+03881:             Number(current.centenaScore || 0) &&
+03882:           Number(item.score || 0) >
+03883:             Number(current.score || 0)
+03884:         )
+03885:       ) {
+03886:         byCentena.set(item.centena, item);
+03887:       }
+03888:     }
+03889: 
+03890:     const strongestCentenas = Array.from(
+03891:       byCentena.values()
+03892:     ).sort((a, b) => {
+03893:       if (
+03894:         Number(b.centenaScore || 0) !==
+03895:         Number(a.centenaScore || 0)
+03896:       ) {
+03897:         return (
+03898:           Number(b.centenaScore || 0) -
+03899:           Number(a.centenaScore || 0)
+03900:         );
+03901:       }
+03902: 
+03903:       if (
+03904:         Number(b.score || 0) !==
+03905:         Number(a.score || 0)
+03906:       ) {
+03907:         return (
+03908:           Number(b.score || 0) -
+03909:           Number(a.score || 0)
+03910:         );
+03911:       }
+03912: 
+03913:       if (
+03914:         Number(b.targetHits || 0) !==
+03915:         Number(a.targetHits || 0)
+03916:       ) {
+03917:         return (
+03918:           Number(b.targetHits || 0) -
+03919:           Number(a.targetHits || 0)
+03920:         );
+03921:       }
+03922: 
+03923:       if (
+03924:         Number(b.freq || 0) !==
+03925:         Number(a.freq || 0)
+03926:       ) {
+03927:         return (
+03928:           Number(b.freq || 0) -
+03929:           Number(a.freq || 0)
+03930:         );
+03931:       }
+03932: 
+03933:       return String(a.centena).localeCompare(
+03934:         String(b.centena)
+03935:       );
+03936:     });
+03937: 
+03938:     const picked = [];
+03939: 
+03940:     for (const centenaItem of strongestCentenas) {
+03941:       if (picked.length >= limit) break;
+03942: 
+03943:       const sharedResult = chooseBestMilhar({
+03944:         centena: centenaItem.centena,
+03945:         prizes: primaryMilharPrizes,
+03946:         fallbackPrizes: fallbackMilharPrizes,
+03947:       });
+03948: 
+03949:       const sharedWinner =
+03950:         sharedResult?.winner || null;
+03951: 
+03952:       const selectedMilhar = String(
+03953:         sharedWinner?.milhar || ""
+03954:       )
+03955:         .replace(/\D+/g, "")
+03956:         .padStart(4, "0")
+03957:         .slice(-4);
+03958: 
+03959:       if (!/^\d{4}$/.test(selectedMilhar)) {
+03960:         continue;
+03961:       }
+03962: 
+03963:       if (
+03964:         selectedMilhar.slice(-3) !==
+03965:         centenaItem.centena
+03966:       ) {
+03967:         continue;
+03968:       }
+03969: 
+03970:       if (
+03971:         getDezena2(selectedMilhar) !== dz ||
+03972:         usedMilhares.has(selectedMilhar) ||
+03973:         picked.some(
+03974:           (item) =>
+03975:             item.milhar === selectedMilhar
+03976:         )
+03977:       ) {
+03978:         continue;
+03979:       }
+03980: 
+03981:       picked.push({
+03982:         ...centenaItem,
+03983:         milhar: selectedMilhar,
+03984:         prefix:
+03985:           sharedWinner?.prefix ??
+03986:           selectedMilhar.slice(0, 1),
+03987:         adjustedScore: Number(
+03988:           sharedWinner?.score ||
+03989:           centenaItem.score ||
+03990:           0
+03991:         ),
+03992:         sharedMilharModel:
+03993:           sharedResult?.model ||
+03994:           "MILHAR_PROBABILITY_V2",
+03995:         sharedMilharSampleSize: Number(
+03996:           sharedResult?.sampleSize || 0
+03997:         ),
+03998:       });
+03999:     }
+04000: 
+04001:     return picked.slice(0, limit);
+04002:   }
+04003: 
+04004:   for (const dz of dezenasFixas) {
+04005:     const items = pickDiversifiedMilharesForDezena(dz, perDezena);
+04006: 
+04007:     let pushed = 0;
+04008: 
+04009:     for (const item of items) {
+04010:       usedMilhares.add(item.milhar);
+04011:       slots.push({
+04012:         dezena: dz,
+04013:         milhar: item.milhar,
+04014:         score: item.score,
+04015:         adjustedScore: item.adjustedScore,
+04016:         centena: item.centena,
+04017:         centenaScore: item.centenaScore,
+04018:         freq: item.freq,
+04019:         targetHits: item.targetHits,
+04020:         scheduleHits: item.scheduleHits,
+04021:         sameDowHits: item.sameDowHits,
+04022:         firstPrizeHits: item.firstPrizeHits,
+04023:       });
+04024:       pushed += 1;
+04025:     }
+04026: 
+04027:     while (pushed < perDezena) {
+04028:       slots.push({ dezena: dz, milhar: "" });
+04029:       pushed += 1;
+04030:     }
+04031:   }
+04032: 
+04033:   while (slots.length < N) slots.push({ dezena: "", milhar: "" });
+04034: 
+04035:   return { dezenas: dezenasFixas, slots: slots.slice(0, N) };
+04036: }
+04037: 
+04038: export function build16MilharesForGrupo(args) {
+04039:   return buildMilharesForGrupo({ ...(args || {}), count: 16 });
+04040: }
+04041: 
+04042: export function build20MilharesForGrupo(args) {
+04043:   return buildMilharesForGrupo({ ...(args || {}), count: 20 });
+04044: }
+04045: 
+04046: /* =========================
+04047:    TIMELINE DO DIA (CADEIA PREDITIVA)
+04048: ========================= */
+04049: 
+04050: 
+04051: 
+04052: export function auditTop3Timeline({
+04053:   timeline,
+04054:   lotteryKey = "",
+04055: }) {
+04056:   const rows = Array.isArray(timeline) ? timeline : [];
+04057: 
+04058:   const validated = rows.filter((slot) => {
+04059:     const status = String(slot?.status || "").toLowerCase();
+04060: 
+04061:     return (
+04062:       status === "validated" &&
+04063:       Number.isFinite(Number(slot?.resultGrupo))
+04064:     );
+04065:   });
+04066: 
+04067:   function pct(n, d) {
+04068:     if (!d) return 0;
+04069: 
+04070:     return Number(
+04071:       ((Number(n || 0) / Number(d || 1)) * 100).toFixed(2)
+04072:     );
+04073:   }
+04074: 
+04075:   function normalizeResultTop3(slot) {
+04076:     const source = Array.isArray(slot?.resultTop3Groups)
+04077:       ? slot.resultTop3Groups
+04078:       : [];
+04079: 
+04080:     const normalized = source
+04081:       .slice(0, 3)
+04082:       .map((grupo) => {
+04083:         const value = Number(grupo);
+04084: 
+04085:         return Number.isFinite(value) &&
+04086:           value >= 1 &&
+04087:           value <= TOP3_GROUPS_K
+04088:           ? value
+04089:           : null;
+04090:       });
+04091: 
+04092:     while (normalized.length < 3) {
+04093:       normalized.push(null);
+04094:     }
+04095: 
+04096:     if (!Number.isFinite(Number(normalized[0]))) {
+04097:       const fallback = Number(slot?.resultGrupo);
+04098: 
+04099:       normalized[0] =
+04100:         Number.isFinite(fallback) &&
+04101:         fallback >= 1 &&
+04102:         fallback <= TOP3_GROUPS_K
+04103:           ? fallback
+04104:           : null;
+04105:     }
+04106: 
+04107:     return normalized;
+04108:   }
+04109: 
+04110:   function evaluateSlot(slot) {
+04111:     const picks = (Array.isArray(slot?.top3) ? slot.top3 : [])
+04112:       .slice(0, 3)
+04113:       .map((item) => Number(item?.grupo))
+04114:       .filter(
+04115:         (grupo) =>
+04116:           Number.isFinite(grupo) &&
+04117:           grupo >= 1 &&
+04118:           grupo <= TOP3_GROUPS_K
+04119:       );
+04120: 
+04121:     const resultTop3 = normalizeResultTop3(slot);
+04122:     const resultGrupo = Number(resultTop3[0]);
+04123: 
+04124:     const top1Hit =
+04125:       picks.length > 0 &&
+04126:       Number.isFinite(resultGrupo) &&
+04127:       Number(picks[0]) === resultGrupo;
+04128: 
+04129:     const top3Hit =
+04130:       Number.isFinite(resultGrupo) &&
+04131:       picks.some(
+04132:         (grupo) => Number(grupo) === resultGrupo
+04133:       );
+04134: 
+04135:     const prizePositionHits = resultTop3.map(
+04136:       (grupo) =>
+04137:         Number.isFinite(Number(grupo)) &&
+04138:         picks.some(
+04139:           (pick) => Number(pick) === Number(grupo)
+04140:         )
+04141:     );
+04142: 
+04143:     const predictionHits = picks.map((grupo) =>
+04144:       resultTop3.some(
+04145:         (result) =>
+04146:           Number.isFinite(Number(result)) &&
+04147:           Number(result) === Number(grupo)
+04148:       )
+04149:     );
+04150: 
+04151:     const matchedPrizePositions =
+04152:       prizePositionHits.filter(Boolean).length;
+04153: 
+04154:     const matchedPredictions =
+04155:       predictionHits.filter(Boolean).length;
+04156: 
+04157:     return {
+04158:       picks,
+04159:       resultTop3,
+04160:       resultGrupo,
+04161: 
+04162:       top1Hit,
+04163:       top3Hit,
+04164: 
+04165:       prize1Hit: Boolean(prizePositionHits[0]),
+04166:       prize2Hit: Boolean(prizePositionHits[1]),
+04167:       prize3Hit: Boolean(prizePositionHits[2]),
+04168: 
+04169:       top3PrizeHit: matchedPrizePositions > 0,
+04170: 
+04171:       matchedPrizePositions,
+04172:       matchedPredictions,
+04173: 
+04174:       prizePositionHits,
+04175:       predictionHits,
+04176:     };
+04177:   }
+04178: 
+04179:   const evaluated = validated.map((slot) => ({
+04180:     slot,
+04181:     metrics: evaluateSlot(slot),
+04182:   }));
+04183: 
+04184:   function summarize(items) {
+04185:     const summary = {
+04186:       total: items.length,
+04187: 
+04188:       top1Hits: 0,
+04189:       top3Hits: 0,
+04190: 
+04191:       prize1Hits: 0,
+04192:       prize2Hits: 0,
+04193:       prize3Hits: 0,
+04194: 
+04195:       top3PrizeHits: 0,
+04196: 
+04197:       matchedPrizePositions: 0,
+04198:       matchedPredictions: 0,
+04199:     };
+04200: 
+04201:     for (const item of items) {
+04202:       const metrics = item.metrics;
+04203: 
+04204:       if (metrics.top1Hit) summary.top1Hits += 1;
+04205:       if (metrics.top3Hit) summary.top3Hits += 1;
+04206: 
+04207:       if (metrics.prize1Hit) summary.prize1Hits += 1;
+04208:       if (metrics.prize2Hit) summary.prize2Hits += 1;
+04209:       if (metrics.prize3Hit) summary.prize3Hits += 1;
+04210: 
+04211:       if (metrics.top3PrizeHit) {
+04212:         summary.top3PrizeHits += 1;
+04213:       }
+04214: 
+04215:       summary.matchedPrizePositions +=
+04216:         Number(metrics.matchedPrizePositions || 0);
+04217: 
+04218:       summary.matchedPredictions +=
+04219:         Number(metrics.matchedPredictions || 0);
+04220:     }
+04221: 
+04222:     return {
+04223:       ...summary,
+04224: 
+04225:       top1Rate: pct(summary.top1Hits, summary.total),
+04226:       top3Rate: pct(summary.top3Hits, summary.total),
+04227: 
+04228:       prize1Rate: pct(summary.prize1Hits, summary.total),
+04229:       prize2Rate: pct(summary.prize2Hits, summary.total),
+04230:       prize3Rate: pct(summary.prize3Hits, summary.total),
+04231: 
+04232:       top3PrizeRate: pct(
+04233:         summary.top3PrizeHits,
+04234:         summary.total
+04235:       ),
+04236: 
+04237:       averageMatchedPrizePositions: summary.total
+04238:         ? Number(
+04239:             (
+04240:               summary.matchedPrizePositions /
+04241:               summary.total
+04242:             ).toFixed(4)
+04243:           )
+04244:         : 0,
+04245: 
+04246:       averageMatchedPredictions: summary.total
+04247:         ? Number(
+04248:             (
+04249:               summary.matchedPredictions /
+04250:               summary.total
+04251:             ).toFixed(4)
+04252:           )
+04253:         : 0,
+04254:     };
+04255:   }
+04256: 
+04257:   function groupBy(keyFn) {
+04258:     const map = new Map();
+04259: 
+04260:     for (const item of evaluated) {
+04261:       const key = keyFn(item.slot);
+04262: 
+04263:       if (!map.has(key)) {
+04264:         map.set(key, []);
+04265:       }
+04266: 
+04267:       map.get(key).push(item);
+04268:     }
+04269: 
+04270:     return Array.from(map.entries())
+04271:       .map(([key, items]) => ({
+04272:         key,
+04273:         ...summarize(items),
+04274:       }))
+04275:       .sort((a, b) => {
+04276:         if (b.top3PrizeRate !== a.top3PrizeRate) {
+04277:           return b.top3PrizeRate - a.top3PrizeRate;
+04278:         }
+04279: 
+04280:         if (b.top3Rate !== a.top3Rate) {
+04281:           return b.top3Rate - a.top3Rate;
+04282:         }
+04283: 
+04284:         return b.total - a.total;
+04285:       });
+04286:   }
+04287: 
+04288:   const summary = summarize(evaluated);
+04289: 
+04290:   return {
+04291:     lotteryKey,
+04292:     ...summary,
+04293: 
+04294:     byHour: groupBy(
+04295:       (slot) => String(slot?.targetHour || "")
+04296:     ),
+04297: 
+04298:     byDate: groupBy(
+04299:       (slot) => String(slot?.targetYmd || "")
+04300:     ),
+04301: 
+04302:     rows: evaluated.map(({ slot, metrics }) => ({
+04303:       ymd: slot.targetYmd,
+04304:       hour: slot.targetHour,
+04305: 
+04306:       baseYmd: slot.baseYmd,
+04307:       baseHour: slot.baseHour,
+04308: 
+04309:       resultGrupo: metrics.resultGrupo,
+04310:       resultTop3: metrics.resultTop3,
+04311: 
+04312:       top3: metrics.picks,
+04313: 
+04314:       top1Hit: metrics.top1Hit,
+04315:       top3Hit: metrics.top3Hit,
+04316: 
+04317:       prize1Hit: metrics.prize1Hit,
+04318:       prize2Hit: metrics.prize2Hit,
+04319:       prize3Hit: metrics.prize3Hit,
+04320: 
+04321:       top3PrizeHit: metrics.top3PrizeHit,
+04322: 
+04323:       matchedPrizePositions:
+04324:         metrics.matchedPrizePositions,
+04325: 
+04326:       matchedPredictions:
+04327:         metrics.matchedPredictions,
+04328: 
+04329:       prizePositionHits:
+04330:         metrics.prizePositionHits,
+04331: 
+04332:       predictionHits:
+04333:         metrics.predictionHits,
+04334: 
+04335:       historyStats: slot.historyStats || null,
+04336:     })),
+04337:   };
+04338: }
+04339: 
+04340: 
+04341: function buildTimelineForDate({
+04342:   ymd,
+04343:   drawsToday,
+04344:   drawsRange,
+04345:   lotteryKey,
+04346:   PT_RIO_SCHEDULE_NORMAL,
+04347:   PT_RIO_SCHEDULE_WED_SAT,
+04348:   FEDERAL_SCHEDULE,
+04349: }) {
+04350:   const targetYmd = safeStr(ymd);
+04351:   const day = Array.isArray(drawsToday) ? [...drawsToday] : [];
+04352:   const range = Array.isArray(drawsRange) ? [...drawsRange] : [];
+04353: 
+04354:   if (!isYMD(targetYmd) || !range.length) return [];
+04355: 
+04356:   const schedule = getScheduleForLottery({
+04357:     lotteryKey,
+04358:     ymd: targetYmd,
+04359:     PT_RIO_SCHEDULE_NORMAL,
+04360:     PT_RIO_SCHEDULE_WED_SAT,
+04361:     FEDERAL_SCHEDULE,
+04362:   });
+04363: 
+04364:   const normalizedSchedule = (Array.isArray(schedule) ? schedule : [])
+04365:     .map(toHourBucket)
+04366:     .filter(Boolean);
+04367: 
+04368:   if (!normalizedSchedule.length) return [];
+04369: 
+04370:   const daySorted = day
+04371:     .filter((d) => isYMD(pickDrawYMD(d)) && toHourBucket(pickDrawHour(d)))
+04372:     .sort((a, b) => {
+04373:       const ta = ymdHourToTs(pickDrawYMD(a), toHourBucket(pickDrawHour(a)));
+04374:       const tb = ymdHourToTs(pickDrawYMD(b), toHourBucket(pickDrawHour(b)));
+04375:       return ta - tb;
+04376:     });
+04377: 
+04378:   const rangeSorted = range
+04379:     .filter((d) => isYMD(pickDrawYMD(d)) && toHourBucket(pickDrawHour(d)))
+04380:     .sort((a, b) => {
+04381:       const ta = ymdHourToTs(pickDrawYMD(a), toHourBucket(pickDrawHour(a)));
+04382:       const tb = ymdHourToTs(pickDrawYMD(b), toHourBucket(pickDrawHour(b)));
+04383:       return ta - tb;
+04384:     });
+04385: 
+04386:   const realizedTodayMap = new Map();
+04387: 
+04388:   for (const d of daySorted) {
+04389:     const y = pickDrawYMD(d);
+04390:     const h = toHourBucket(pickDrawHour(d));
+04391:     if (!isYMD(y) || !h) continue;
+04392:     if (y !== targetYmd) continue;
+04393:     realizedTodayMap.set(`${y}|${h}`, d);
+04394:   }
+04395: 
+04396: 
+04397:   const chainContextDraws = [];
+04398:   const timeline = [];
+04399:   let pendingPredictionAlreadyShown = false;
+04400: 
+04401:   for (const slotHour of normalizedSchedule) {
+04402:     const currentDraw = realizedTodayMap.get(`${targetYmd}|${slotHour}`) || null;
+04403:     const slotTs = ymdHourToTs(targetYmd, slotHour);
+04404: 
+04405: 
+04406:     if (!currentDraw && pendingPredictionAlreadyShown) {
+04407:       timeline.push({
+04408:         targetYmd,
+04409:         targetHour: slotHour,
+04410:         baseYmd: "",
+04411:         baseHour: "",
+04412:         top3: [],
+04413:         resultGrupo: null,
+04414:         hit: null,
+04415:         status: "pending",
+04416:       });
+04417:       continue;
+04418:     }
+04419: 
+04420:     let baseDraw = null;
+04421: 
+04422:     const priorChainDraw = [...chainContextDraws]
+04423:       .filter((d) => {
+04424:         const y = pickDrawYMD(d);
+04425:         const h = toHourBucket(pickDrawHour(d));
+04426:         const ts = ymdHourToTs(y, h);
+04427:         return isYMD(y) && h && Number.isFinite(ts) && ts < slotTs;
+04428:       })
+04429:       .sort((a, b) => {
+04430:         const ta = ymdHourToTs(pickDrawYMD(a), toHourBucket(pickDrawHour(a)));
+04431:         const tb = ymdHourToTs(pickDrawYMD(b), toHourBucket(pickDrawHour(b)));
+04432:         return tb - ta;
+04433:       })[0] || null;
+04434: 
+04435:     if (priorChainDraw) baseDraw = priorChainDraw;
+04436: 
+04437:     if (!baseDraw) {
+04438:       const prevSameDay = daySorted
+04439:         .filter((d) => {
+04440:           const y = pickDrawYMD(d);
+04441:           const h = toHourBucket(pickDrawHour(d));
+04442:           const ts = ymdHourToTs(y, h);
+04443:           return y === targetYmd && h && Number.isFinite(ts) && ts < slotTs;
+04444:         })
+04445:         .sort((a, b) => {
+04446:           const ta = ymdHourToTs(pickDrawYMD(a), toHourBucket(pickDrawHour(a)));
+04447:           const tb = ymdHourToTs(pickDrawYMD(b), toHourBucket(pickDrawHour(b)));
+04448:           return tb - ta;
+04449:         })[0] || null;
+04450: 
+04451:       if (prevSameDay) baseDraw = prevSameDay;
+04452:     }
+04453: 
+04454:     if (!baseDraw) {
+04455:       for (let i = rangeSorted.length - 1; i >= 0; i -= 1) {
+04456:         const d = rangeSorted[i];
+04457:         const y = pickDrawYMD(d);
+04458:         const h = toHourBucket(pickDrawHour(d));
+04459:         const ts = ymdHourToTs(y, h);
+04460: 
+04461:         if (!Number.isFinite(ts) || ts >= slotTs) continue;
+04462: 
+04463:         baseDraw = d;
+04464:         break;
+04465:       }
+04466:     }
+04467: 
+04468:     if (!baseDraw) {
+04469:       baseDraw = findPreviousValidDraw(rangeSorted, targetYmd, slotHour);
+04470:     }
+04471: 
+04472:     if (!baseDraw) {
+04473:       timeline.push({
+04474:         targetYmd,
+04475:         targetHour: slotHour,
+04476:         baseYmd: "",
+04477:         baseHour: "",
+04478:         top3: [],
+04479:         resultGrupo: null,
+04480:         hit: null,
+04481:         status: "pending",
+04482:       });
+04483:       continue;
+04484:     }
+04485: 
+04486:     const baseTs = ymdHourToTs(
+04487:       pickDrawYMD(baseDraw),
+04488:       toHourBucket(pickDrawHour(baseDraw))
+04489:     );
+04490: 
+04491:     const usableHistory = rangeSorted.filter((d) => {
+04492:       const ts = ymdHourToTs(
+04493:         pickDrawYMD(d),
+04494:         toHourBucket(pickDrawHour(d))
+04495:       );
+04496:       return Number.isFinite(ts) && ts <= baseTs;
+04497:     });
+04498: 
+04499:     const historyStats = (() => {
+04500:       const MS_DAY = 24 * 60 * 60 * 1000;
+04501: 
+04502:       let d30 = 0;
+04503:       let d90 = 0;
+04504:       let d180 = 0;
+04505:       let d365 = 0;
+04506: 
+04507:       for (const historicalDraw of usableHistory) {
+04508:         const historicalTs = ymdHourToTs(
+04509:           pickDrawYMD(historicalDraw),
+04510:           toHourBucket(pickDrawHour(historicalDraw))
+04511:         );
+04512: 
+04513:         if (!Number.isFinite(historicalTs)) continue;
+04514: 
+04515:         const diffDays = (baseTs - historicalTs) / MS_DAY;
+04516: 
+04517:         if (diffDays >= 0 && diffDays <= 30) d30 += 1;
+04518:         if (diffDays >= 0 && diffDays <= 90) d90 += 1;
+04519:         if (diffDays >= 0 && diffDays <= 180) d180 += 1;
+04520:         if (diffDays >= 0 && diffDays <= 365) d365 += 1;
+04521:       }
+04522: 
+04523:       return {
+04524:         total: usableHistory.length,
+04525:         d30,
+04526:         d90,
+04527:         d180,
+04528:         d365,
+04529:       };
+04530:     })();
+04531: 
+04532:     const usableTodayContext = [...chainContextDraws]
+04533:       .filter((d) => {
+04534:         const ts = ymdHourToTs(
+04535:           pickDrawYMD(d),
+04536:           toHourBucket(pickDrawHour(d))
+04537:         );
+04538:         return Number.isFinite(ts) && ts <= baseTs;
+04539:       })
+04540:       .sort((a, b) => {
+04541:         const ta = ymdHourToTs(pickDrawYMD(a), toHourBucket(pickDrawHour(a)));
+04542:         const tb = ymdHourToTs(pickDrawYMD(b), toHourBucket(pickDrawHour(b)));
+04543:         return ta - tb;
+04544:       });
+04545: 
+04546:     const computed = computeStatisticalTop3V3({
+04547:       lotteryKey,
+04548:       drawsRange: [...usableHistory, ...usableTodayContext],
+04549:       drawLast: baseDraw,
+04550:       drawsToday: usableTodayContext,
+04551:       PT_RIO_SCHEDULE_NORMAL,
+04552:       PT_RIO_SCHEDULE_WED_SAT,
+04553:       FEDERAL_SCHEDULE,
+04554:       topN: 3,
+04555:       targetYmdOverride: targetYmd,
+04556:       targetHourOverride: slotHour,
+04557:     });
+04558: 
+04559: 
+04560:     const computedNextYmd = safeStr(computed?.meta?.next?.ymd || "");
+04561:     const computedNextHour = toHourBucket(computed?.meta?.next?.hour || "");
+04562:     const computedForSlot =
+04563:       computedNextYmd === targetYmd && computedNextHour === slotHour;
+04564: 
+04565:     const top3 =
+04566:       computedForSlot && Array.isArray(computed?.top)
+04567:         ? computed.top.slice(0, 3)
+04568:         : [];
+04569: 
+04570:     const resultTop3Groups = currentDraw
+04571:       ? getPrizeGroupsByPosition(currentDraw, 3)
+04572:       : [null, null, null];
+04573: 
+04574:     const resultGrupo = Number(resultTop3Groups[0]);
+04575: 
+04576:     const normalizedResultGrupo =
+04577:       Number.isFinite(resultGrupo) &&
+04578:       resultGrupo >= 1 &&
+04579:       resultGrupo <= TOP3_GROUPS_K
+04580:         ? resultGrupo
+04581:         : null;
+04582: 
+04583:     const hitPrizePositions = resultTop3Groups.map(
+04584:       (resultGroup) =>
+04585:         Number.isFinite(Number(resultGroup)) &&
+04586:         top3.some(
+04587:           (item) =>
+04588:             Number(item?.grupo) ===
+04589:             Number(resultGroup)
+04590:         )
+04591:     );
+04592: 
+04593:     const matchedPrizePositions =
+04594:       hitPrizePositions.filter(Boolean).length;
+04595: 
+04596:     const hit =
+04597:       top3.length > 0 &&
+04598:       resultTop3Groups.some(
+04599:         (resultGroup) =>
+04600:           Number.isFinite(Number(resultGroup))
+04601:       )
+04602:         ? matchedPrizePositions > 0
+04603:         : null;
+04604: 
+04605:     timeline.push({
+04606:       targetYmd,
+04607:       targetHour: slotHour,
+04608: 
+04609:       baseYmd: pickDrawYMD(baseDraw) || "",
+04610:       baseHour: toHourBucket(pickDrawHour(baseDraw)) || "",
+04611: 
+04612:       top3,
+04613: 
+04614:       resultGrupo: normalizedResultGrupo,
+04615:       resultTop3Groups,
+04616: 
+04617:       hit,
+04618:       top3PrizeHit: hit,
+04619:       hitPrizePositions,
+04620:       matchedPrizePositions,
+04621: 
+04622:       status: Number.isFinite(
+04623:         Number(normalizedResultGrupo)
+04624:       )
+04625:         ? "validated"
+04626:         : "pending",
+04627: 
+04628:       historyStats,
+04629:     });
+04630: 
+04631:     if (currentDraw) {
+04632:       chainContextDraws.push(currentDraw);
+04633:     } else {
+04634:       pendingPredictionAlreadyShown = true;
+04635:     }
+04636:   }
+04637: 
+04638:   return timeline;
+04639: 
+04640: }
+04641: 
+04642: export function buildTimelineTop3(args) {
+04643:   return buildTimelineForDate(args || {});
+04644: }
+04645: 
+04646: export function auditTop3Backtest({
+04647:   drawsRange,
+04648:   lotteryKey,
+04649:   PT_RIO_SCHEDULE_NORMAL,
+04650:   PT_RIO_SCHEDULE_WED_SAT,
+04651:   FEDERAL_SCHEDULE,
+04652: }) {
+04653:   const range = Array.isArray(drawsRange) ? drawsRange : [];
+04654:   const dates = Array.from(
+04655:     new Set(
+04656:       range
+04657:         .map((d) => pickDrawYMD(d))
+04658:         .filter((ymd) => isYMD(ymd))
+04659:     )
+04660:   ).sort();
+04661: 
+04662:   const allTimeline = [];
+04663: 
+04664:   for (const ymd of dates) {
+04665:     const drawsToday = range.filter((d) => pickDrawYMD(d) === ymd);
+04666: 
+04667:     const dayTimeline = buildTimelineForDate({
+04668:       ymd,
+04669:       drawsToday,
+04670:       drawsRange: range,
+04671:       lotteryKey,
+04672:       PT_RIO_SCHEDULE_NORMAL,
+04673:       PT_RIO_SCHEDULE_WED_SAT,
+04674:       FEDERAL_SCHEDULE,
+04675:     });
+04676: 
+04677:     allTimeline.push(...(Array.isArray(dayTimeline) ? dayTimeline : []));
+04678:   }
+04679: 
+04680:   return auditTop3Timeline({
+04681:     timeline: allTimeline,
+04682:     lotteryKey,
+04683:   });
+04684: }

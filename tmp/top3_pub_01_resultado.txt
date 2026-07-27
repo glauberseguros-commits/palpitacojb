@@ -1,0 +1,160 @@
+====================================================================================================
+TOP3-PUB-01 — PUBLICAÇÃO DA FASE 1
+====================================================================================================
+Gerado em: 24/07/2026 18:53:41
+Arquivo: src/pages/Top3/top3.hooks.js
+====================================================================================================
+
+diff --git a/src/pages/Top3/top3.hooks.js b/src/pages/Top3/top3.hooks.js
+index e70b82c..c5f44b9 100644
+--- a/src/pages/Top3/top3.hooks.js
++++ b/src/pages/Top3/top3.hooks.js
+@@ -335,6 +335,11 @@ export function useTop3Controller() {
+   const [baseDrawState, setBaseDrawState] = useState(null);
+   const [persistedTop3History, setPersistedTop3History] = useState([]);
+ 
++  // TOP3_REF_02_DEFER_SECONDARY
++  // Libera primeiro os dados e palpites essenciais.
++  // Timeline e persist├¬ncia s├úo processadas depois, fora do caminho cr├¡tico.
++  const [secondaryReady, setSecondaryReady] = useState(false);
++
+   const lotteryKeySafe = useMemo(
+     () => safeStr(lotteryKey).toUpperCase() || DEFAULT_LOTTERY,
+     [lotteryKey]
+@@ -466,6 +471,7 @@ export function useTop3Controller() {
+     setLoading(true);
+     setLoadingStage({ today: true, range: false });
+     setError("");
++    setSecondaryReady(false);
+ 
+     // Impede exibir resultados pertencentes ├á consulta anterior.
+     resetStateForNoData();
+@@ -860,6 +866,56 @@ export function useTop3Controller() {
+     load();
+   }, [load]);
+ 
++  useEffect(() => {
++    if (
++      loading ||
++      !baseDrawState ||
++      !Array.isArray(rangeDraws) ||
++      !rangeDraws.length
++    ) {
++      setSecondaryReady(false);
++      return undefined;
++    }
++
++    let cancelled = false;
++    let idleId = null;
++    let timeoutId = null;
++
++    const activateSecondaryPipeline = () => {
++      if (!cancelled) {
++        setSecondaryReady(true);
++      }
++    };
++
++    if (
++      typeof window !== "undefined" &&
++      typeof window.requestIdleCallback === "function"
++    ) {
++      idleId = window.requestIdleCallback(
++        activateSecondaryPipeline,
++        { timeout: 300 }
++      );
++    } else {
++      timeoutId = setTimeout(activateSecondaryPipeline, 0);
++    }
++
++    return () => {
++      cancelled = true;
++
++      if (
++        idleId != null &&
++        typeof window !== "undefined" &&
++        typeof window.cancelIdleCallback === "function"
++      ) {
++        window.cancelIdleCallback(idleId);
++      }
++
++      if (timeoutId != null) {
++        clearTimeout(timeoutId);
++      }
++    };
++  }, [loading, baseDrawState, rangeDraws]);
++
+   useEffect(() => {
+     debugTop3Effect("02_ensure_timeline", {
+       lotteryKey: lotteryKeySafe,
+@@ -928,6 +984,8 @@ export function useTop3Controller() {
+   }, [analytics, build20]);
+ 
+   const timelineTop3 = useMemo(() => {
++    if (!secondaryReady) return [];
++
+     const built = buildTop3TimelineViewModel({
+       todayDraws,
+       rangeDraws,
+@@ -957,6 +1015,7 @@ export function useTop3Controller() {
+     timelineYmd,
+     analysisYmd,
+     skipPtRio18ByFederal,
++    secondaryReady,
+   ]);
+ 
+   useEffect(() => {
+@@ -1104,8 +1163,14 @@ export function useTop3Controller() {
+       lotteryKey: lotteryKeySafe,
+       timelineYmd,
+       scheduleLength: persistedSchedule.length,
++      secondaryReady,
+     });
+ 
++    if (!secondaryReady) {
++      setPersistedTop3History([]);
++      return undefined;
++    }
++
+     let alive = true;
+ 
+     async function loadPersistedHistory() {
+@@ -1140,6 +1205,7 @@ export function useTop3Controller() {
+     lotteryKeySafe,
+     timelineYmd,
+     scheduleKey,
++    secondaryReady,
+   ]);
+ 
+   useEffect(() => {
+@@ -1158,8 +1224,10 @@ export function useTop3Controller() {
+         ? rangeDraws.length
+         : -1,
+       loading,
++      secondaryReady,
+     });
+ 
++    if (!secondaryReady) return;
+     if (loading) return;
+     if (!isYMD(timelineYmd)) return;
+     if (!(todayDraws?.length || rangeDraws?.length)) return;
+@@ -1267,6 +1335,7 @@ export function useTop3Controller() {
+     scheduleKey,
+     debugTop3,
+     loading,
++    secondaryReady,
+   ]);
+ 
+   return {
+[main 2fb1ff4] perf(top3): defer secondary pipeline initialization
+ 1 file changed, 69 insertions(+)
+To https://github.com/glauberseguros-commits/palpitacojb.git
+   c74b992..2fb1ff4  main -> main
+
+====================================================================================================
+PUBLICAÇÃO CONCLUÍDA
+====================================================================================================
+STATUS: OK
+ARQUIVO: src/pages/Top3/top3.hooks.js
+COMMIT: 2fb1ff40e603106a627f35d3526b7e50f66f4652
+PUSH: CONCLUÍDO
+====================================================================================================

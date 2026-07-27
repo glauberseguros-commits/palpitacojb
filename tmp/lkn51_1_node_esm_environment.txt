@@ -1,0 +1,478 @@
+
+====================================================================================================
+1. VERSÕES DO AMBIENTE
+====================================================================================================
+
+$ node --version
+v22.16.0
+
+Erro ao executar npm --version: [WinError 2] O sistema não pode encontrar o arquivo especificado
+
+
+====================================================================================================
+2. PRIMEIRAS 120 LINHAS DO TOP3.ENGINE
+====================================================================================================
+
+00001: // src/pages/Top3/top3.engine.js
+00002: import {
+00003:   safeStr,
+00004:   isYMD,
+00005:   normalizeToYMD,
+00006:   addDaysYMD,
+00007:   normalizeHourLike,
+00008:   toHourBucket,
+00009:   hourToInt,
+00010:   getDowKey,
+00011:   pickPrizeMilhar4,
+00012:   getDezena2,
+00013:   getCentena3,
+00014:   milharCompareAsc,
+00015:   wrapToDezena2,
+00016: } from "./top3.formatters";
+00017: 
+00018: import { scoreRanking } from "./modules/scoreEngine/scoreEngineV2";
+00019: 
+00020: import {
+00021:   TOP3_NEXTDRAW_SCAN_MAX_STEPS,
+00022:   TOP3_NEXTDRAW_SCAN_MAX_DAYS,
+00023:   TOP3_GROUPS_K,
+00024:   TOP3_SMOOTH_ALPHA,
+00025:   TOP3_SCENE_WEIGHT,
+00026:   TOP3_SCENE_SAMPLE_TARGET,
+00027:   TOP3_SCENE_BLEND_SCENE,
+00028:   TOP3_SCENE_BLEND_UNIFORM,
+00029:   PT_RIO_SCHEDULE_SUNDAY,
+00030: } from "./top3.constants";
+00031: 
+00032: function findPreviousValidDraw(draws, currentYmd, currentHour) {
+00033:   const list = Array.isArray(draws) ? draws : [];
+00034:   const targetY = safeStr(currentYmd);
+00035:   const targetH = toHourBucket(currentHour);
+00036: 
+00037:   if (!isYMD(targetY) || !targetH) return null;
+00038: 
+00039:   const targetTs = ymdHourToTs(targetY, targetH);
+00040: 
+00041:   return list
+00042:     .filter((draw) => Array.isArray(draw?.prizes) && draw.prizes.length > 0)
+00043:     .map((draw) => {
+00044:       const y = pickDrawYMD(draw);
+00045:       const h = toHourBucket(pickDrawHour(draw));
+00046:       return { draw, ts: ymdHourToTs(y, h) };
+00047:     })
+00048:     .filter((x) => Number.isFinite(x.ts) && x.ts < targetTs)
+00049:     .sort((a, b) => b.ts - a.ts)[0]?.draw || null;
+00050: }
+00051: 
+00052: /* =========================
+00053:    Draw helpers (robustos)
+00054: ========================= */
+00055: 
+00056: function grupoFromDezena2(dezena2) {
+00057:   const s = safeStr(dezena2);
+00058:   if (!/^\d{2}$/.test(s)) return null;
+00059: 
+00060:   const n = Number(s);
+00061:   if (!Number.isFinite(n) || n < 0 || n > 99) return null;
+00062:   if (n === 0) return 25;
+00063: 
+00064:   const g = Math.ceil(n / 4);
+00065:   return g >= 1 && g <= 25 ? g : null;
+00066: }
+00067: 
+00068: function drawQualityScore(draw) {
+00069:   const prizes = Array.isArray(draw?.prizes) ? draw.prizes : [];
+00070:   const y = pickDrawYMD(draw);
+00071:   const h = toHourBucket(pickDrawHour(draw));
+00072: 
+00073:   let score = 0;
+00074:   if (isYMD(y)) score += 20;
+00075:   if (h) score += 20;
+00076:   score += Math.min(10, prizes.length) * 10;
+00077: 
+00078:   const hasP1 = prizes.some((p) => guessPrizePos(p) === 1);
+00079:   if (hasP1) score += 15;
+00080: 
+00081:   return score;
+00082: }
+00083: 
+00084: export function guessPrizePos(p) {
+00085:   const pos = Number.isFinite(Number(p?.position))
+00086:     ? Number(p.position)
+00087:     : Number.isFinite(Number(p?.posicao))
+00088:       ? Number(p.posicao)
+00089:       : Number.isFinite(Number(p?.pos))
+00090:         ? Number(p.pos)
+00091:         : Number.isFinite(Number(p?.colocacao))
+00092:           ? Number(p.colocacao)
+00093:           : null;
+00094: 
+00095:   return pos;
+00096: }
+00097: 
+00098: export function guessPrizeGrupo(p) {
+00099:   const directCandidates = [
+00100:     p?.grupo2,
+00101:     p?.group2,
+00102:     p?.grupo,
+00103:     p?.group,
+00104:     p?.animal_grupo,
+00105:     p?.grupo_animal,
+00106:     p?.grupoAnimal,
+00107:     p?.g,
+00108:   ];
+00109: 
+00110:   for (const v of directCandidates) {
+00111:     const g = Number(v);
+00112:     if (Number.isFinite(g) && g >= 1 && g <= 25) {
+00113:       return g;
+00114:     }
+00115:   }
+00116: 
+00117:   const milhar4 = pickPrizeMilhar4(p);
+00118: 
+00119:   if (milhar4) {
+00120:     const dezena2 = getDezena2(milhar4);
+
+====================================================================================================
+3. TODOS OS BLOCOS IMPORT DO TOP3.ENGINE
+====================================================================================================
+
+IMPORT 1
+import {
+  safeStr,
+  isYMD,
+  normalizeToYMD,
+  addDaysYMD,
+  normalizeHourLike,
+  toHourBucket,
+  hourToInt,
+  getDowKey,
+  pickPrizeMilhar4,
+  getDezena2,
+  getCentena3,
+  milharCompareAsc,
+  wrapToDezena2,
+} from "./top3.formatters";
+
+IMPORT 2
+import { scoreRanking } from "./modules/scoreEngine/scoreEngineV2";
+
+IMPORT 3
+import {
+  TOP3_NEXTDRAW_SCAN_MAX_STEPS,
+  TOP3_NEXTDRAW_SCAN_MAX_DAYS,
+  TOP3_GROUPS_K,
+  TOP3_SMOOTH_ALPHA,
+  TOP3_SCENE_WEIGHT,
+  TOP3_SCENE_SAMPLE_TARGET,
+  TOP3_SCENE_BLEND_SCENE,
+  TOP3_SCENE_BLEND_UNIFORM,
+  PT_RIO_SCHEDULE_SUNDAY,
+} from "./top3.constants";
+
+
+====================================================================================================
+4. ESPECIFICADORES RELATIVOS SEM EXTENSÃO
+====================================================================================================
+
+COM EXTENSÃO: ./top3.formatters
+SEM EXTENSÃO: ./modules/scoreEngine/scoreEngineV2
+  C:\Users\glaub\palpitaco\src\pages\Top3\modules\scoreEngine\scoreEngineV2.js: OK
+  C:\Users\glaub\palpitaco\src\pages\Top3\modules\scoreEngine\scoreEngineV2.jsx: NÃO ENCONTRADO
+  C:\Users\glaub\palpitaco\src\pages\Top3\modules\scoreEngine\scoreEngineV2.mjs: NÃO ENCONTRADO
+  C:\Users\glaub\palpitaco\src\pages\Top3\modules\scoreEngine\scoreEngineV2\index.js: NÃO ENCONTRADO
+COM EXTENSÃO: ./top3.constants
+
+====================================================================================================
+5. PACKAGE.JSON — TYPE E SCRIPTS
+====================================================================================================
+
+type = None
+
+backend:server: node backend/server.js
+stats:update: node backend/workers/updateStatistics.js
+dev: react-scripts start
+auto:pt_rio: node backend/scripts/autoImportToday.js
+build: react-scripts build
+eject: react-scripts eject
+test: react-scripts test
+start: react-scripts start
+auto:federal: powershell -NoProfile -Command "$env:LOTTERY='FEDERAL'; node backend/scripts/autoImportToday.js"
+vitenode:import: powershell -ExecutionPolicy Bypass -File .\tools\run-vitenode.ps1 -Entry
+build:vercel: REACT_APP_BUILD_SHA=$VERCEL_GIT_COMMIT_SHA REACT_APP_BUILD_REF=$VERCEL_GIT_COMMIT_REF REACT_APP_BUILD_TIME=$VERCEL_BUILD_TIME react-scripts build
+
+====================================================================================================
+6. TESTES NODE EXISTENTES NO TOP3
+====================================================================================================
+
+src/pages/Top3/__tests__/top3.backtest.layers.test.js
+src/pages/Top3/__tests__/top3.backtest.test.js
+src/pages/Top3/__tests__/top3.public-api.node.test.js
+src/pages/Top3/__tests__/top3.schedule-calendar-rules.node.test.js
+src/pages/Top3/__tests__/top3.schedule-transition.test.js
+
+====================================================================================================
+7. CABEÇALHO DOS TESTES PUBLIC-API E TRANSIÇÃO
+====================================================================================================
+
+
+--- src\pages\Top3\__tests__\top3.public-api.node.test.js ---
+0001: /** @jest-environment node */
+0002: 
+0003: import * as publicApi from "../top3.public-api";
+0004: 
+0005: const EXPECTED_EXPORTS = [
+0006:   "auditTop3Backtest",
+0007:   "auditTop3Timeline",
+0008:   "build16MilharesForGrupo",
+0009:   "build20MilharesForGrupo",
+0010:   "buildContextEvidence",
+0011:   "buildFrequencyEvidence",
+0012:   "buildMilharesForGrupo",
+0013:   "buildTimelineTop3",
+0014:   "calculateEvidenceStrength",
+0015:   "collectEvidence",
+0016:   "computeConditionalNextTop3",
+0017:   "computeConditionalNextTop3V2",
+0018:   "computeLastSeenByGrupo",
+0019:   "computeStatisticalTop3V3",
+0020:   "countAparicoesByGrupoInDraw",
+0021:   "getNextSlotForLottery",
+0022:   "getPtRioScheduleForYmd",
+0023:   "getScheduleForLottery",
+0024:   "guessPrizeGrupo",
+0025:   "guessPrizePos",
+0026:   "indexDrawsByYmdHour",
+0027:   "isFederalDrawDay",
+0028:   "isHourInSchedule",
+0029:   "pickDrawHour",
+0030:   "pickDrawYMD",
+0031:   "pickPrize1GrupoFromDraw",
+0032:   "scheduleSet",
+0033:   "scoreItem",
+0034:   "scoreRanking",
+0035: ];
+0036: 
+0037: describe("TOP3 public API contract", () => {
+0038:   test("executa em ambiente Node sem APIs do navegador", () => {
+0039:     expect(typeof window).toBe("undefined");
+0040:     expect(typeof document).toBe("undefined");
+0041:     expect(typeof navigator).toBe("undefined");
+0042:   });
+0043: 
+0044:   test("expõe exatamente o contrato público aprovado", () => {
+0045:     expect(
+0046:       Object.keys(publicApi).sort()
+0047:     ).toEqual(
+0048:       [...EXPECTED_EXPORTS].sort()
+0049:     );
+0050:   });
+0051: 
+0052:   test("todas as exportações públicas são funções", () => {
+0053:     for (const name of EXPECTED_EXPORTS) {
+0054:       expect(typeof publicApi[name]).toBe("function");
+0055:     }
+0056:   });
+0057: 
+0058:   test("executa funções básicas através da fachada", () => {
+0059:     expect(
+0060:       publicApi.isHourInSchedule(
+0061:         ["09h", "11h", "14h"],
+0062:         "11:00"
+0063:       )
+0064:     ).toBe(true);
+0065: 
+0066:     const context = publicApi.buildContextEvidence(
+0067:       {},
+0068:       {
+0069:         lotteryKey: "PT_RIO",
+0070:         ymd: "2026-07-15",
+0071:         weekday: "quarta-feira",
+0072:         hour: "14h",
+0073:         previousGroup: 10,
+0074:         window: 90,
+0075:       }
+0076:     );
+0077: 
+0078:     expect(context.module).toBe("context");
+0079:     expect(context.evidence.window).toBe(90);
+0080: 
+
+--- src\pages\Top3\__tests__\top3.schedule-transition.test.js ---
+0001: import {
+0002:   getScheduleForLottery,
+0003:   getPtRioScheduleForYmd,
+0004:   isFederalDrawDay,
+0005: } from "../top3.public-api";
+0006: 
+0007: import {
+0008:   PT_RIO_SCHEDULE_NORMAL,
+0009:   PT_RIO_SCHEDULE_WED_SAT,
+0010:   FEDERAL_SCHEDULE,
+0011: } from "../top3.constants";
+0012: 
+0013: function schedule(lotteryKey, ymd) {
+0014:   return getScheduleForLottery({
+0015:     lotteryKey,
+0016:     ymd,
+0017:     PT_RIO_SCHEDULE_NORMAL,
+0018:     PT_RIO_SCHEDULE_WED_SAT,
+0019:     FEDERAL_SCHEDULE,
+0020:   });
+0021: }
+0022: 
+0023: describe("TOP3 — transição oficial de horários", () => {
+0024:   test("preserva Federal histórica no sábado 18/07/2026 às 20h", () => {
+0025:     expect(isFederalDrawDay("2026-07-18")).toBe(true);
+0026:     expect(schedule("FEDERAL", "2026-07-18")).toEqual(["20:00"]);
+0027:   });
+0028: 
+0029:   test("Federal passa para domingo 19/07/2026 às 11h", () => {
+0030:     expect(isFederalDrawDay("2026-07-19")).toBe(true);
+0031:     expect(schedule("FEDERAL", "2026-07-19")).toEqual(["11:00"]);
+0032:   });
+0033: 
+0034:   test("Federal deixa de funcionar aos sábados após a transição", () => {
+0035:     expect(isFederalDrawDay("2026-07-25")).toBe(false);
+0036:     expect(schedule("FEDERAL", "2026-07-25")).toEqual([]);
+0037:   });
+0038: 
+0039:   test("Federal continua funcionando na quarta-feira às 20h", () => {
+0040:     expect(isFederalDrawDay("2026-07-22")).toBe(true);
+0041:     expect(schedule("FEDERAL", "2026-07-22")).toEqual(["20:00"]);
+0042:   });
+0043: 
+0044:   test("PT Rio preserva domingo histórico anterior à mudança", () => {
+0045:     const result = getPtRioScheduleForYmd(
+0046:       "2026-07-12",
+0047:       PT_RIO_SCHEDULE_NORMAL,
+0048:       PT_RIO_SCHEDULE_WED_SAT
+0049:     );
+0050: 
+0051:     expect(result).toContain("09:00");
+0052:     expect(result).toContain("11:00");
+0053:   });
+0054: 
+0055:   test("PT Rio remove 09h e 11h do domingo após a mudança", () => {
+0056:     const result = getPtRioScheduleForYmd(
+0057:       "2026-07-19",
+0058:       PT_RIO_SCHEDULE_NORMAL,
+0059:       PT_RIO_SCHEDULE_WED_SAT
+0060:     );
+0061: 
+0062:     expect(result).not.toContain("09:00");
+0063:     expect(result).not.toContain("11:00");
+0064:   });
+0065: 
+0066:   test("PT Rio mantém 18h no sábado depois da saída da Federal", () => {
+0067:     const result = getPtRioScheduleForYmd(
+0068:       "2026-07-25",
+0069:       PT_RIO_SCHEDULE_NORMAL,
+0070:       PT_RIO_SCHEDULE_WED_SAT
+0071:     );
+0072: 
+0073:     expect(result).toContain("18:00");
+0074:   });
+0075: 
+0076:   test("PT Rio histórico mantém remoção de 18h no sábado com Federal", () => {
+0077:     const result = getPtRioScheduleForYmd(
+0078:       "2026-07-18",
+0079:       PT_RIO_SCHEDULE_NORMAL,
+0080:       PT_RIO_SCHEDULE_WED_SAT
+
+--- src\pages\Top3\__tests__\top3.schedule-calendar-rules.node.test.js ---
+0001: import test from "node:test";
+0002: import assert from "node:assert/strict";
+0003: 
+0004: import {
+0005:   getScheduleForLottery,
+0006:   isFederalDrawDay,
+0007: } from "../top3.engine.js";
+0008: 
+0009: import {
+0010:   FEDERAL_SCHEDULE,
+0011:   PT_RIO_SCHEDULE_NORMAL,
+0012:   PT_RIO_SCHEDULE_WED_SAT,
+0013: } from "../top3.constants.js";
+0014: 
+0015: function schedule(lotteryKey, ymd) {
+0016:   return getScheduleForLottery({
+0017:     lotteryKey,
+0018:     ymd,
+0019:     PT_RIO_SCHEDULE_NORMAL,
+0020:     PT_RIO_SCHEDULE_WED_SAT,
+0021:     FEDERAL_SCHEDULE,
+0022:   });
+0023: }
+0024: 
+0025: test("Federal histórica: quarta-feira às 20h", () => {
+0026:   assert.equal(
+0027:     isFederalDrawDay("2026-07-15"),
+0028:     true
+0029:   );
+0030: 
+0031:   assert.deepEqual(
+0032:     schedule("FEDERAL", "2026-07-15"),
+0033:     ["20:00"]
+0034:   );
+0035: });
+0036: 
+0037: test("Federal histórica: sábado às 20h até 18/07/2026", () => {
+0038:   assert.equal(
+0039:     isFederalDrawDay("2026-07-18"),
+0040:     true
+0041:   );
+0042: 
+0043:   assert.deepEqual(
+0044:     schedule("FEDERAL", "2026-07-18"),
+0045:     ["20:00"]
+0046:   );
+0047: });
+0048: 
+0049: test("Federal nova: domingo às 11h desde 19/07/2026", () => {
+0050:   assert.equal(
+0051:     isFederalDrawDay("2026-07-19"),
+0052:     true
+0053:   );
+0054: 
+0055:   assert.deepEqual(
+0056:     schedule("FEDERAL", "2026-07-19"),
+0057:     ["11:00"]
+0058:   );
+0059: });
+0060: 
+0061: test("Federal nova: quarta-feira continua às 20h", () => {
+0062:   assert.equal(
+0063:     isFederalDrawDay("2026-07-22"),
+0064:     true
+0065:   );
+0066: 
+0067:   assert.deepEqual(
+0068:     schedule("FEDERAL", "2026-07-22"),
+0069:     ["20:00"]
+0070:   );
+0071: });
+0072: 
+0073: test("Federal nova: sábado deixa de ter sorteio", () => {
+0074:   assert.equal(
+0075:     isFederalDrawDay("2026-07-25"),
+0076:     false
+0077:   );
+0078: 
+0079:   assert.deepEqual(
+0080:     schedule("FEDERAL", "2026-07-25"),
+
+====================================================================================================
+8. CONFIGURAÇÕES NODE/BABEL/JEST/VITE
+====================================================================================================
+
+babel.config.js: NÃO ENCONTRADO
+babel.config.cjs: NÃO ENCONTRADO
+babel.config.json: NÃO ENCONTRADO
+jest.config.js: NÃO ENCONTRADO
+jest.config.cjs: NÃO ENCONTRADO
+vite.config.js: NÃO ENCONTRADO
+vite.config.mjs: NÃO ENCONTRADO
+jsconfig.json: NÃO ENCONTRADO
+tsconfig.json: NÃO ENCONTRADO

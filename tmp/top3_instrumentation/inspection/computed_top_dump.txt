@@ -1,0 +1,508 @@
+
+====================================
+TOP3 OFFICIAL BACKTEST
+====================================
+
+Loteria............: PT_RIO
+Limite.............: 1
+Hist├│rico m├¡nimo...: 100
+Per├¡odo............: in├¡cio at├® fim
+Telemetria.........: ATIVA
+
+
+========== CHAVES DE computed ==========
+[
+  "top",
+  "meta"
+]
+
+========== computed.top COMPLETO ==========
+[
+  {
+    "rank": 1,
+    "title": "Mais prov├ível",
+    "grupo": 16,
+    "scoreProb": 0.08590359444652305,
+    "rawScoreProb": 0.08590359444652305,
+    "probCond": 0.04,
+    "probBase": 0.09191489361702128,
+    "lateBonus": 0,
+    "freq": 3,
+    "freqCond": 0,
+    "freqBase": 3,
+    "freqZeroWhy": "",
+    "reasons": [
+      "Motor: V3_STATISTICAL",
+      "Alvo: 2022-06-29 16h | DOW=3 | dia=29",
+      "Base: G22 @ 14h",
+      "Probabilidade final G16: 8.59%",
+      "frequ├¬ncia no hor├írio 16h: 3x em 1┬║ | 7x no TOP3 | amostras=22 | peso=82%",
+      "frequ├¬ncia no dia da semana + hor├írio: 1x em 1┬║ | 2x no TOP3 | amostras=3 | peso=9%",
+      "rec├¬ncia compar├ível: 1x em 1┬║ | 2x no TOP3 | amostras=3 | peso=8%"
+    ],
+    "meta": {
+      "trigger": {
+        "ymd": "2022-06-29",
+        "hour": "14h",
+        "grupo": 22
+      },
+      "next": {
+        "ymd": "2022-06-29",
+        "hour": "16h"
+      },
+      "samples": 100,
+      "period": {
+        "from": "2022-06-07",
+        "to": "2022-06-29"
+      },
+      "scenario": "V3_STATISTICAL",
+      "explain": {
+        "engine": "V3_STATISTICAL",
+        "targetDow": 3,
+        "targetDayOfMonth": 29,
+        "prevHour": "14h",
+        "prevGrupo": 22,
+        "activeWeights": {
+          "hour": 0.8157303370786516,
+          "dowHour": 0.09101123595505618,
+          "dayMonth": 0.00898876404494382,
+          "transition": 0,
+          "recent": 0.08426966292134831
+        },
+        "scene": {
+          "samples": 80,
+          "totalWeight": 1849,
+          "weight": 0.06,
+          "currentSignature": "22-21-16-07-08-22-21"
+        },
+        "layers": {
+          "hour": {
+            "label": "frequ├¬ncia no hor├írio 16h",
+            "samples": 22,
+            "weight": 0.8157303370786516
+          },
+          "dowHour": {
+            "label": "frequ├¬ncia no dia da semana + hor├írio",
+            "samples": 3,
+            "weight": 0.09101123595505618
+          },
+          "dayMonth": {
+            "label": "frequ├¬ncia no dia 29",
+            "samples": 2,
+            "weight": 0.00898876404494382
+          },
+          "transition": {
+            "label": "transi├º├úo G22 @ 14h ÔåÆ 16h",
+            "samples": 0,
+            "weight": 0
+          },
+          "recent": {
+            "label": "rec├¬ncia compar├ível",
+            "samples": 3,
+            "weight": 0.08426966292134831
+          }
+        },
+        "details": {
+          "hour": {
+            "label": "frequ├¬ncia no hor├írio 16h",
+            "samples": 22,
+            "firstCount": 3,
+            "top3Count": 7,
+            "probability": 0.09191489361702128,
+            "weight": 0.8157303370786516
+          },
+          "dowHour": {
+            "label": "frequ├¬ncia no dia da semana + hor├írio",
+            "samples": 3,
+            "firstCount": 1,
+            "top3Count": 2,
+            "probability": 0.07428571428571429,
+            "weight": 0.09101123595505618
+          },
+          "dayMonth": {
+            "label": "frequ├¬ncia no dia 29",
+            "samples": 2,
+            "firstCount": 0,
+            "top3Count": 1,
+            "probability": 0.04,
+            "weight": 0.00898876404494382
+          },
+          "transition": {
+            "label": "transi├º├úo G22 @ 14h ÔåÆ 16h",
+            "samples": 0,
+            "firstCount": 0,
+            "top3Count": 0,
+            "probability": 0.04,
+            "weight": 0
+          },
+          "recent": {
+            "label": "rec├¬ncia compar├ível",
+            "samples": 3,
+            "firstCount": 1,
+            "top3Count": 2,
+            "probability": 0.07428571428571429,
+            "weight": 0.08426966292134831
+          },
+          "scene": {
+            "label": "analogia hist├│rica de cena",
+            "samples": 80,
+            "firstCount": 99,
+            "top3Count": 0,
+            "probability": 0.04744835045970795,
+            "weight": 0.06
+          }
+        }
+      }
+    }
+  },
+  {
+    "rank": 2,
+    "title": "2┬║ mais prov├ível",
+    "grupo": 3,
+    "scoreProb": 0.06791296177493758,
+    "rawScoreProb": 0.06791296177493758,
+    "probCond": 0.04,
+    "probBase": 0.06893617021276596,
+    "lateBonus": 0,
+    "freq": 2,
+    "freqCond": 0,
+    "freqBase": 2,
+    "freqZeroWhy": "",
+    "reasons": [
+      "Motor: V3_STATISTICAL",
+      "Alvo: 2022-06-29 16h | DOW=3 | dia=29",
+      "Base: G22 @ 14h",
+      "Probabilidade final G03: 6.79%",
+      "frequ├¬ncia no hor├írio 16h: 2x em 1┬║ | 5x no TOP3 | amostras=22 | peso=82%",
+      "frequ├¬ncia no dia da semana + hor├írio: 1x em 1┬║ | 1x no TOP3 | amostras=3 | peso=9%",
+      "rec├¬ncia compar├ível: 1x em 1┬║ | 1x no TOP3 | amostras=3 | peso=8%"
+    ],
+    "meta": {
+      "trigger": {
+        "ymd": "2022-06-29",
+        "hour": "14h",
+        "grupo": 22
+      },
+      "next": {
+        "ymd": "2022-06-29",
+        "hour": "16h"
+      },
+      "samples": 100,
+      "period": {
+        "from": "2022-06-07",
+        "to": "2022-06-29"
+      },
+      "scenario": "V3_STATISTICAL",
+      "explain": {
+        "engine": "V3_STATISTICAL",
+        "targetDow": 3,
+        "targetDayOfMonth": 29,
+        "prevHour": "14h",
+        "prevGrupo": 22,
+        "activeWeights": {
+          "hour": 0.8157303370786516,
+          "dowHour": 0.09101123595505618,
+          "dayMonth": 0.00898876404494382,
+          "transition": 0,
+          "recent": 0.08426966292134831
+        },
+        "scene": {
+          "samples": 80,
+          "totalWeight": 1849,
+          "weight": 0.06,
+          "currentSignature": "22-21-16-07-08-22-21"
+        },
+        "layers": {
+          "hour": {
+            "label": "frequ├¬ncia no hor├írio 16h",
+            "samples": 22,
+            "weight": 0.8157303370786516
+          },
+          "dowHour": {
+            "label": "frequ├¬ncia no dia da semana + hor├írio",
+            "samples": 3,
+            "weight": 0.09101123595505618
+          },
+          "dayMonth": {
+            "label": "frequ├¬ncia no dia 29",
+            "samples": 2,
+            "weight": 0.00898876404494382
+          },
+          "transition": {
+            "label": "transi├º├úo G22 @ 14h ÔåÆ 16h",
+            "samples": 0,
+            "weight": 0
+          },
+          "recent": {
+            "label": "rec├¬ncia compar├ível",
+            "samples": 3,
+            "weight": 0.08426966292134831
+          }
+        },
+        "details": {
+          "hour": {
+            "label": "frequ├¬ncia no hor├írio 16h",
+            "samples": 22,
+            "firstCount": 2,
+            "top3Count": 5,
+            "probability": 0.06893617021276596,
+            "weight": 0.8157303370786516
+          },
+          "dowHour": {
+            "label": "frequ├¬ncia no dia da semana + hor├írio",
+            "samples": 3,
+            "firstCount": 1,
+            "top3Count": 1,
+            "probability": 0.07142857142857142,
+            "weight": 0.09101123595505618
+          },
+          "dayMonth": {
+            "label": "frequ├¬ncia no dia 29",
+            "samples": 2,
+            "firstCount": 0,
+            "top3Count": 0,
+            "probability": 0.03703703703703704,
+            "weight": 0.00898876404494382
+          },
+          "transition": {
+            "label": "transi├º├úo G22 @ 14h ÔåÆ 16h",
+            "samples": 0,
+            "firstCount": 0,
+            "top3Count": 0,
+            "probability": 0.04,
+            "weight": 0
+          },
+          "recent": {
+            "label": "rec├¬ncia compar├ível",
+            "samples": 3,
+            "firstCount": 1,
+            "top3Count": 1,
+            "probability": 0.07142857142857142,
+            "weight": 0.08426966292134831
+          },
+          "scene": {
+            "label": "analogia hist├│rica de cena",
+            "samples": 80,
+            "firstCount": 106,
+            "top3Count": 0,
+            "probability": 0.04953055705786912,
+            "weight": 0.06
+          }
+        }
+      }
+    }
+  },
+  {
+    "rank": 3,
+    "title": "3┬║ mais prov├ível",
+    "grupo": 9,
+    "scoreProb": 0.05972390389192935,
+    "rawScoreProb": 0.05972390389192935,
+    "probCond": 0.04,
+    "probBase": 0.06723404255319149,
+    "lateBonus": 0,
+    "freq": 2,
+    "freqCond": 0,
+    "freqBase": 2,
+    "freqZeroWhy": "",
+    "reasons": [
+      "Motor: V3_STATISTICAL",
+      "Alvo: 2022-06-29 16h | DOW=3 | dia=29",
+      "Base: G22 @ 14h",
+      "Probabilidade final G09: 5.97%",
+      "frequ├¬ncia no hor├írio 16h: 2x em 1┬║ | 4x no TOP3 | amostras=22 | peso=82%",
+      "frequ├¬ncia no dia da semana + hor├írio: 0x em 1┬║ | 0x no TOP3 | amostras=3 | peso=9%",
+      "rec├¬ncia compar├ível: 0x em 1┬║ | 0x no TOP3 | amostras=3 | peso=8%"
+    ],
+    "meta": {
+      "trigger": {
+        "ymd": "2022-06-29",
+        "hour": "14h",
+        "grupo": 22
+      },
+      "next": {
+        "ymd": "2022-06-29",
+        "hour": "16h"
+      },
+      "samples": 100,
+      "period": {
+        "from": "2022-06-07",
+        "to": "2022-06-29"
+      },
+      "scenario": "V3_STATISTICAL",
+      "explain": {
+        "engine": "V3_STATISTICAL",
+        "targetDow": 3,
+        "targetDayOfMonth": 29,
+        "prevHour": "14h",
+        "prevGrupo": 22,
+        "activeWeights": {
+          "hour": 0.8157303370786516,
+          "dowHour": 0.09101123595505618,
+          "dayMonth": 0.00898876404494382,
+          "transition": 0,
+          "recent": 0.08426966292134831
+        },
+        "scene": {
+          "samples": 80,
+          "totalWeight": 1849,
+          "weight": 0.06,
+          "currentSignature": "22-21-16-07-08-22-21"
+        },
+        "layers": {
+          "hour": {
+            "label": "frequ├¬ncia no hor├írio 16h",
+            "samples": 22,
+            "weight": 0.8157303370786516
+          },
+          "dowHour": {
+            "label": "frequ├¬ncia no dia da semana + hor├írio",
+            "samples": 3,
+            "weight": 0.09101123595505618
+          },
+          "dayMonth": {
+            "label": "frequ├¬ncia no dia 29",
+            "samples": 2,
+            "weight": 0.00898876404494382
+          },
+          "transition": {
+            "label": "transi├º├úo G22 @ 14h ÔåÆ 16h",
+            "samples": 0,
+            "weight": 0
+          },
+          "recent": {
+            "label": "rec├¬ncia compar├ível",
+            "samples": 3,
+            "weight": 0.08426966292134831
+          }
+        },
+        "details": {
+          "hour": {
+            "label": "frequ├¬ncia no hor├írio 16h",
+            "samples": 22,
+            "firstCount": 2,
+            "top3Count": 4,
+            "probability": 0.06723404255319149,
+            "weight": 0.8157303370786516
+          },
+          "dowHour": {
+            "label": "frequ├¬ncia no dia da semana + hor├írio",
+            "samples": 3,
+            "firstCount": 0,
+            "top3Count": 0,
+            "probability": 0.03571428571428571,
+            "weight": 0.09101123595505618
+          },
+          "dayMonth": {
+            "label": "frequ├¬ncia no dia 29",
+            "samples": 2,
+            "firstCount": 0,
+            "top3Count": 0,
+            "probability": 0.03703703703703704,
+            "weight": 0.00898876404494382
+          },
+          "transition": {
+            "label": "transi├º├úo G22 @ 14h ÔåÆ 16h",
+            "samples": 0,
+            "firstCount": 0,
+            "top3Count": 0,
+            "probability": 0.04,
+            "weight": 0
+          },
+          "recent": {
+            "label": "rec├¬ncia compar├ível",
+            "samples": 3,
+            "firstCount": 0,
+            "top3Count": 0,
+            "probability": 0.03571428571428571,
+            "weight": 0.08426966292134831
+          },
+          "scene": {
+            "label": "analogia hist├│rica de cena",
+            "samples": 80,
+            "firstCount": 50,
+            "top3Count": 0,
+            "probability": 0.03287290427257977,
+            "weight": 0.06
+          }
+        }
+      }
+    }
+  }
+]
+
+========== CHAVES DE computed.top[0] ==========
+[
+  "rank",
+  "title",
+  "grupo",
+  "scoreProb",
+  "rawScoreProb",
+  "probCond",
+  "probBase",
+  "lateBonus",
+  "freq",
+  "freqCond",
+  "freqBase",
+  "freqZeroWhy",
+  "reasons",
+  "meta"
+]
+
+========== computed.meta ==========
+{
+  "trigger": {
+    "ymd": "2022-06-29",
+    "hour": "14h",
+    "grupo": 22
+  },
+  "next": {
+    "ymd": "2022-06-29",
+    "hour": "16h"
+  },
+  "samples": 100,
+  "scenario": "V3_STATISTICAL",
+  "explain": {
+    "engine": "V3_STATISTICAL",
+    "targetDow": 3,
+    "targetDayOfMonth": 29,
+    "prevHour": "14h",
+    "prevGrupo": 22,
+    "activeWeights": {
+      "hour": 0.8157303370786516,
+      "dowHour": 0.09101123595505618,
+      "dayMonth": 0.00898876404494382,
+      "transition": 0,
+      "recent": 0.08426966292134831
+    },
+    "layers": {
+      "hour": {
+        "label": "frequ├¬ncia no hor├írio 16h",
+        "samples": 22,
+        "weight": 0.8157303370786516
+      },
+      "dowHour": {
+        "label": "frequ├¬ncia no dia da semana + hor├írio",
+        "samples": 3,
+        "weight": 0.09101123595505618
+      },
+      "dayMonth": {
+        "label": "frequ├¬ncia no dia 29",
+        "samples": 2,
+        "weight": 0.00898876404494382
+      },
+      "transition": {
+        "label": "transi├º├úo G22 @ 14h ÔåÆ 16h",
+        "samples": 0,
+        "weight": 0
+      },
+      "recent": {
+        "label": "rec├¬ncia compar├ível",
+        "samples": 3,
+        "weight": 0.08426966292134831
+      }
+    }
+  }
+}
+
+========== FIM DA INSPE├ç├âO ==========

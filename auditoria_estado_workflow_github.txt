@@ -1,0 +1,44 @@
+================================================================================================
+AUDITORIA DO ESTADO OPERACIONAL DO WORKFLOW
+================================================================================================
+
+id: 224287043
+node_id: W_kwDOQ5SIwc4NXllD
+name: Auto Import — PalPitaco JB
+path: .github/workflows/auto-import.yml
+state: active
+created_at: 16/01/2026 14:15:10
+updated_at: 13/07/2026 13:20:49
+html_url: https://github.com/glauberseguros-commits/palpitacojb/blob/main/.github/workflows/auto-import.yml
+badge_url: https://github.com/glauberseguros-commits/palpitacojb/workflows/Auto%20Import%20%E2%80%94%20PalPitaco%20JB/badge.svg
+
+================================================================================================
+ÚLTIMAS 20 EXECUÇÕES
+================================================================================================
+
+Run=29346228263 | Evento=schedule | Status=completed | Conclusão=failure | Branch=main | Criado=14/07/2026 15:38:35
+Run=29339472712 | Evento=schedule | Status=completed | Conclusão=failure | Branch=main | Criado=14/07/2026 14:07:52
+Run=29301313071 | Evento=schedule | Status=completed | Conclusão=failure | Branch=main | Criado=14/07/2026 02:32:18
+Run=29288575144 | Evento=schedule | Status=completed | Conclusão=failure | Branch=main | Criado=13/07/2026 22:03:17
+Run=29282024641 | Evento=schedule | Status=completed | Conclusão=failure | Branch=main | Criado=13/07/2026 20:20:59
+Run=29275902418 | Evento=schedule | Status=completed | Conclusão=failure | Branch=main | Criado=13/07/2026 18:47:41
+Run=29266111313 | Evento=workflow_dispatch | Status=completed | Conclusão=success | Branch=main | Criado=13/07/2026 16:22:03
+Run=29262777885 | Evento=workflow_dispatch | Status=completed | Conclusão=success | Branch=main | Criado=13/07/2026 15:34:11
+Run=29262585344 | Evento=workflow_dispatch | Status=completed | Conclusão=success | Branch=main | Criado=13/07/2026 15:31:29
+Run=29260412959 | Evento=workflow_dispatch | Status=completed | Conclusão=failure | Branch=main | Criado=13/07/2026 15:00:54
+Run=29255217092 | Evento=workflow_dispatch | Status=completed | Conclusão=success | Branch=main | Criado=13/07/2026 13:47:55
+Run=29255120237 | Evento=workflow_dispatch | Status=completed | Conclusão=success | Branch=main | Criado=13/07/2026 13:46:33
+Run=29253905044 | Evento=workflow_dispatch | Status=completed | Conclusão=success | Branch=main | Criado=13/07/2026 13:28:33
+Run=29252839803 | Evento=workflow_dispatch | Status=completed | Conclusão=failure | Branch=main | Criado=13/07/2026 13:12:05
+Run=29252769445 | Evento=workflow_dispatch | Status=completed | Conclusão=failure | Branch=main | Criado=13/07/2026 13:11:06
+Run=26407376889 | Evento=schedule | Status=completed | Conclusão=failure | Branch=main | Criado=25/05/2026 15:13:34
+Run=26371625860 | Evento=schedule | Status=completed | Conclusão=failure | Branch=main | Criado=24/05/2026 20:14:04
+Run=26368821187 | Evento=schedule | Status=completed | Conclusão=failure | Branch=main | Criado=24/05/2026 18:06:02
+Run=26364979906 | Evento=schedule | Status=completed | Conclusão=failure | Branch=main | Criado=24/05/2026 15:16:22
+Run=26362855375 | Evento=schedule | Status=completed | Conclusão=success | Branch=main | Criado=24/05/2026 13:41:24
+
+================================================================================================
+VERIFICAÇÃO DE WORKFLOW DESABILITADO
+================================================================================================
+
+RESULTADO: Workflow ATIVO.

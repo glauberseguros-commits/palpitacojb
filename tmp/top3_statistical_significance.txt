@@ -1,0 +1,389 @@
+==============================================
+SIGNIFICÂNCIA ESTATÍSTICA — TOP3
+==============================================
+
+Referência TOP1: 4,00%
+Referência TOP3: 12,00%
+Teste: binomial unilateral
+Intervalo: Wilson 95%
+Correção: Bonferroni
+
+===== RESULTADO GLOBAL =====
+
+TOP1 — global
+  Avaliados.............: 7391
+  Acertos...............: 320
+  Acertos esperados.....: 295.64
+  Taxa observada........: 4.3296%
+  Taxa aleatória........: 4.0000%
+  Ganho absoluto........: 0.3296 p.p.
+  IC 95%................: 3.8888% a 4.8178%
+  p unilateral..........: 0.079623778
+  p corrigido...........: 0.079623778
+  Significativo bruto...: NÃO
+  Significativo corrigido: NÃO
+
+TOP3 — global
+  Avaliados.............: 7391
+  Acertos...............: 911
+  Acertos esperados.....: 886.92
+  Taxa observada........: 12.3258%
+  Taxa aleatória........: 12.0000%
+  Ganho absoluto........: 0.3258 p.p.
+  IC 95%................: 11.5959% a 13.0949%
+  p unilateral..........: 0.19895779
+  p corrigido...........: 0.19895779
+  Significativo bruto...: NÃO
+  Significativo corrigido: NÃO
+
+===== RESULTADO POR HORÁRIO =====
+
+TOP1 — 21:00
+  Avaliados.............: 1248
+  Acertos...............: 75
+  Acertos esperados.....: 49.92
+  Taxa observada........: 6.0096%
+  Taxa aleatória........: 4.0000%
+  Ganho absoluto........: 2.0096 p.p.
+  IC 95%................: 4.8212% a 7.4681%
+  p unilateral..........: 0.00042228235
+  p corrigido...........: 0.0050673882
+  Significativo bruto...: SIM
+  Significativo corrigido: SIM
+
+TOP1 — 16:00
+  Avaliados.............: 1462
+  Acertos...............: 53
+  Acertos esperados.....: 58.48
+  Taxa observada........: 3.6252%
+  Taxa aleatória........: 4.0000%
+  Ganho absoluto........: -0.3748 p.p.
+  IC 95%................: 2.7822% a 4.7113%
+  p unilateral..........: 0.78547784
+  p corrigido...........: 1
+  Significativo bruto...: NÃO
+  Significativo corrigido: NÃO
+
+TOP1 — 11:00
+  Avaliados.............: 1462
+  Acertos...............: 68
+  Acertos esperados.....: 58.48
+  Taxa observada........: 4.6512%
+  Taxa aleatória........: 4.0000%
+  Ganho absoluto........: 0.6512 p.p.
+  IC 95%................: 3.6854% a 5.8546%
+  p unilateral..........: 0.11586455
+  p corrigido...........: 1
+  Significativo bruto...: NÃO
+  Significativo corrigido: NÃO
+
+TOP1 — 14:00
+  Avaliados.............: 1463
+  Acertos...............: 65
+  Acertos esperados.....: 58.52
+  Taxa observada........: 4.4429%
+  Taxa aleatória........: 4.0000%
+  Ganho absoluto........: 0.4429 p.p.
+  IC 95%................: 3.5011% a 5.6234%
+  p unilateral..........: 0.21027264
+  p corrigido...........: 1
+  Significativo bruto...: NÃO
+  Significativo corrigido: NÃO
+
+TOP1 — 18:00
+  Avaliados.............: 847
+  Acertos...............: 30
+  Acertos esperados.....: 33.88
+  Taxa observada........: 3.5419%
+  Taxa aleatória........: 4.0000%
+  Ganho absoluto........: -0.4581 p.p.
+  IC 95%................: 2.4921% a 5.0112%
+  p unilateral..........: 0.77551363
+  p corrigido...........: 1
+  Significativo bruto...: NÃO
+  Significativo corrigido: NÃO
+
+TOP1 — 09:00
+  Avaliados.............: 909
+  Acertos...............: 29
+  Acertos esperados.....: 36.36
+  Taxa observada........: 3.1903%
+  Taxa aleatória........: 4.0000%
+  Ganho absoluto........: -0.8097 p.p.
+  IC 95%................: 2.2304% a 4.5443%
+  p unilateral..........: 0.9121122
+  p corrigido...........: 1
+  Significativo bruto...: NÃO
+  Significativo corrigido: NÃO
+
+TOP3 — 21:00
+  Avaliados.............: 1248
+  Acertos...............: 169
+  Acertos esperados.....: 149.76
+  Taxa observada........: 13.5417%
+  Taxa aleatória........: 12.0000%
+  Ganho absoluto........: 1.5417 p.p.
+  IC 95%................: 11.7548% a 15.5523%
+  p unilateral..........: 0.053125947
+  p corrigido...........: 0.63751136
+  Significativo bruto...: NÃO
+  Significativo corrigido: NÃO
+
+TOP3 — 16:00
+  Avaliados.............: 1462
+  Acertos...............: 189
+  Acertos esperados.....: 175.44
+  Taxa observada........: 12.9275%
+  Taxa aleatória........: 12.0000%
+  Ganho absoluto........: 0.9275 p.p.
+  IC 95%................: 11.3044% a 14.7449%
+  p unilateral..........: 0.14681026
+  p corrigido...........: 1
+  Significativo bruto...: NÃO
+  Significativo corrigido: NÃO
+
+TOP3 — 11:00
+  Avaliados.............: 1462
+  Acertos...............: 174
+  Acertos esperados.....: 175.44
+  Taxa observada........: 11.9015%
+  Taxa aleatória........: 12.0000%
+  Ganho absoluto........: -0.0985 p.p.
+  IC 95%................: 10.3407% a 13.6620%
+  p unilateral..........: 0.55810085
+  p corrigido...........: 1
+  Significativo bruto...: NÃO
+  Significativo corrigido: NÃO
+
+TOP3 — 14:00
+  Avaliados.............: 1463
+  Acertos...............: 178
+  Acertos esperados.....: 175.56
+  Taxa observada........: 12.1668%
+  Taxa aleatória........: 12.0000%
+  Ganho absoluto........: 0.1668 p.p.
+  IC 95%................: 10.5900% a 13.9417%
+  p unilateral..........: 0.43407595
+  p corrigido...........: 1
+  Significativo bruto...: NÃO
+  Significativo corrigido: NÃO
+
+TOP3 — 18:00
+  Avaliados.............: 847
+  Acertos...............: 101
+  Acertos esperados.....: 101.64
+  Taxa observada........: 11.9244%
+  Taxa aleatória........: 12.0000%
+  Ganho absoluto........: -0.0756 p.p.
+  IC 95%................: 9.9120% a 14.2807%
+  p unilateral..........: 0.54272094
+  p corrigido...........: 1
+  Significativo bruto...: NÃO
+  Significativo corrigido: NÃO
+
+TOP3 — 09:00
+  Avaliados.............: 909
+  Acertos...............: 100
+  Acertos esperados.....: 109.08
+  Taxa observada........: 11.0011%
+  Taxa aleatória........: 12.0000%
+  Ganho absoluto........: -0.9989 p.p.
+  IC 95%................: 9.1288% a 13.2017%
+  p unilateral..........: 0.83582841
+  p corrigido...........: 1
+  Significativo bruto...: NÃO
+  Significativo corrigido: NÃO
+
+===== RESULTADO POR DIA =====
+
+TOP1 — quinta-feira
+  Avaliados.............: 1163
+  Acertos...............: 60
+  Acertos esperados.....: 46.52
+  Taxa observada........: 5.1591%
+  Taxa aleatória........: 4.0000%
+  Ganho absoluto........: 1.1591 p.p.
+  IC 95%................: 4.0290% a 6.5844%
+  p unilateral..........: 0.02961165
+  p corrigido...........: 0.41456309
+  Significativo bruto...: SIM
+  Significativo corrigido: NÃO
+
+TOP1 — sexta-feira
+  Avaliados.............: 1172
+  Acertos...............: 58
+  Acertos esperados.....: 46.88
+  Taxa observada........: 4.9488%
+  Taxa aleatória........: 4.0000%
+  Ganho absoluto........: 0.9488 p.p.
+  IC 95%................: 3.8476% a 6.3444%
+  p unilateral..........: 0.060249829
+  p corrigido...........: 0.84349761
+  Significativo bruto...: NÃO
+  Significativo corrigido: NÃO
+
+TOP1 — domingo
+  Avaliados.............: 744
+  Acertos...............: 17
+  Acertos esperados.....: 29.76
+  Taxa observada........: 2.2849%
+  Taxa aleatória........: 4.0000%
+  Ganho absoluto........: -1.7151 p.p.
+  IC 95%................: 1.4314% a 3.6287%
+  p unilateral..........: 0.99620963
+  p corrigido...........: 1
+  Significativo bruto...: NÃO
+  Significativo corrigido: NÃO
+
+TOP1 — segunda-feira
+  Avaliados.............: 1178
+  Acertos...............: 48
+  Acertos esperados.....: 47.12
+  Taxa observada........: 4.0747%
+  Taxa aleatória........: 4.0000%
+  Ganho absoluto........: 0.0747 p.p.
+  IC 95%................: 3.0870% a 5.3610%
+  p unilateral..........: 0.46841674
+  p corrigido...........: 1
+  Significativo bruto...: NÃO
+  Significativo corrigido: NÃO
+
+TOP1 — terça-feira
+  Avaliados.............: 1181
+  Acertos...............: 52
+  Acertos esperados.....: 47.24
+  Taxa observada........: 4.4030%
+  Taxa aleatória........: 4.0000%
+  Ganho absoluto........: 0.4030 p.p.
+  IC 95%................: 3.3734% a 5.7284%
+  p unilateral..........: 0.25905342
+  p corrigido...........: 1
+  Significativo bruto...: NÃO
+  Significativo corrigido: NÃO
+
+TOP1 — quarta-feira
+  Avaliados.............: 975
+  Acertos...............: 40
+  Acertos esperados.....: 39.00
+  Taxa observada........: 4.1026%
+  Taxa aleatória........: 4.0000%
+  Ganho absoluto........: 0.1026 p.p.
+  IC 95%................: 3.0271% a 5.5383%
+  p unilateral..........: 0.45754243
+  p corrigido...........: 1
+  Significativo bruto...: NÃO
+  Significativo corrigido: NÃO
+
+TOP1 — sábado
+  Avaliados.............: 978
+  Acertos...............: 45
+  Acertos esperados.....: 39.12
+  Taxa observada........: 4.6012%
+  Taxa aleatória........: 4.0000%
+  Ganho absoluto........: 0.6012 p.p.
+  IC 95%................: 3.4564% a 6.1013%
+  p unilateral..........: 0.18830609
+  p corrigido...........: 1
+  Significativo bruto...: NÃO
+  Significativo corrigido: NÃO
+
+TOP3 — sexta-feira
+  Avaliados.............: 1172
+  Acertos...............: 160
+  Acertos esperados.....: 140.64
+  Taxa observada........: 13.6519%
+  Taxa aleatória........: 12.0000%
+  Ganho absoluto........: 1.6519 p.p.
+  IC 95%................: 11.8046% a 15.7367%
+  p unilateral..........: 0.046923966
+  p corrigido...........: 0.65693552
+  Significativo bruto...: SIM
+  Significativo corrigido: NÃO
+
+TOP3 — domingo
+  Avaliados.............: 744
+  Acertos...............: 68
+  Acertos esperados.....: 89.28
+  Taxa observada........: 9.1398%
+  Taxa aleatória........: 12.0000%
+  Ganho absoluto........: -2.8602 p.p.
+  IC 95%................: 7.2737% a 11.4257%
+  p unilateral..........: 0.99444157
+  p corrigido...........: 1
+  Significativo bruto...: NÃO
+  Significativo corrigido: NÃO
+
+TOP3 — segunda-feira
+  Avaliados.............: 1178
+  Acertos...............: 150
+  Acertos esperados.....: 141.36
+  Taxa observada........: 12.7334%
+  Taxa aleatória........: 12.0000%
+  Ganho absoluto........: 0.7334 p.p.
+  IC 95%................: 10.9502% a 14.7589%
+  p unilateral..........: 0.23112409
+  p corrigido...........: 1
+  Significativo bruto...: NÃO
+  Significativo corrigido: NÃO
+
+TOP3 — terça-feira
+  Avaliados.............: 1181
+  Acertos...............: 148
+  Acertos esperados.....: 141.72
+  Taxa observada........: 12.5318%
+  Taxa aleatória........: 12.0000%
+  Ganho absoluto........: 0.5318 p.p.
+  IC 95%................: 10.7642% a 14.5423%
+  p unilateral..........: 0.29950042
+  p corrigido...........: 1
+  Significativo bruto...: NÃO
+  Significativo corrigido: NÃO
+
+TOP3 — quarta-feira
+  Avaliados.............: 975
+  Acertos...............: 121
+  Acertos esperados.....: 117.00
+  Taxa observada........: 12.4103%
+  Taxa aleatória........: 12.0000%
+  Ganho absoluto........: 0.4103 p.p.
+  IC 95%................: 10.4871% a 14.6285%
+  p unilateral..........: 0.36096496
+  p corrigido...........: 1
+  Significativo bruto...: NÃO
+  Significativo corrigido: NÃO
+
+TOP3 — quinta-feira
+  Avaliados.............: 1163
+  Acertos...............: 149
+  Acertos esperados.....: 139.56
+  Taxa observada........: 12.8117%
+  Taxa aleatória........: 12.0000%
+  Ganho absoluto........: 0.8117 p.p.
+  IC 95%................: 11.0125% a 14.8557%
+  p unilateral..........: 0.2087543
+  p corrigido...........: 1
+  Significativo bruto...: NÃO
+  Significativo corrigido: NÃO
+
+TOP3 — sábado
+  Avaliados.............: 978
+  Acertos...............: 115
+  Acertos esperados.....: 117.36
+  Taxa observada........: 11.7587%
+  Taxa aleatória........: 12.0000%
+  Ganho absoluto........: -0.2413 p.p.
+  IC 95%................: 9.8879% a 13.9287%
+  p unilateral..........: 0.60637264
+  p corrigido...........: 1
+  Significativo bruto...: NÃO
+  Significativo corrigido: NÃO
+
+===== DESCOBERTAS APÓS CORREÇÃO =====
+
+Horários significativos: 1
+Dias significativos....: 0
+Meses significativos...: 0
+
+hour | TOP1 | 21:00 | taxa=6.0096% | p corrigido=0.0050673882
+
+Observação: resultado significativo em recorte histórico ainda precisa ser confirmado fora da amostra antes de alterar pesos.

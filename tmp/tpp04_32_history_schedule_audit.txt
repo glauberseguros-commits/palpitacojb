@@ -1,0 +1,538 @@
+
+===== PADRÃO: ensureDayTimeline =====
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:38:
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:39:import {
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:40:  registerPrediction,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:41:  reconcilePendingTop3Log,
+> C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:42:  ensureDayTimeline,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:43:} from "./top3.storage";
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:44:
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:45:import {
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:46:  saveTop3PredictionSnapshot,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:47:  loadTop3PredictionDay,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:48:  reconcileTop3PredictionDay,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:49:} from "./top3.firestore";
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:50:
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:51:import {
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:52:  getKingResultsByDate,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:856:      lotteryKey: lotteryKeySafe,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:857:      timelineYmd,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:858:    });
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:859:
+> C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:860:    ensureDayTimeline({
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:861:      ymd: timelineYmd,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:862:      lotteryKey: lotteryKeySafe,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:863:    });
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:864:  }, [timelineYmd, lotteryKeySafe]);
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:865:
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:866:  const analytics = useMemo(() => {
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:867:    return computeTop3Analytics({
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:868:      rangeDraws,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:869:      baseDrawState,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:870:      analyticsCacheRef,
+
+===== PADRÃO: loadPersisted =====
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1088:    });
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1089:
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1090:    let alive = true;
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1091:
+> C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1092:    async function loadPersistedHistory() {
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1093:      if (!isYMD(timelineYmd)) {
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1094:        if (alive) setPersistedTop3History([]);
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1095:        return;
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1096:      }
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1097:
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1098:      try {
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1099:        const history = await loadTop3PredictionDay({
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1100:          lotteryKey: lotteryKeySafe,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1101:          targetYmd: timelineYmd,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1102:          schedule,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1111:        if (alive) setPersistedTop3History([]);
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1112:      }
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1113:    }
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1114:
+> C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1115:    loadPersistedHistory();
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1116:
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1117:    return () => {
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1118:      alive = false;
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1119:    };
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1120:  }, [
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1121:    lotteryKeySafe,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1122:    timelineYmd,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1123:    schedule,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1124:    todayDraws,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1125:    rangeDraws,
+
+===== PADRÃO: reconcile =====
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:37:import { lotteryLabel } from "./top3.selectors";
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:38:
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:39:import {
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:40:  registerPrediction,
+> C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:41:  reconcilePendingTop3Log,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:42:  ensureDayTimeline,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:43:} from "./top3.storage";
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:44:
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:45:import {
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:46:  saveTop3PredictionSnapshot,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:47:  loadTop3PredictionDay,
+> C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:48:  reconcileTop3PredictionDay,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:49:} from "./top3.firestore";
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:50:
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:51:import {
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:52:  getKingResultsByDate,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:53:  getKingResultsByRange,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:54:  getKingBoundsByUf,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:55:} from "../../services/kingResultsService";
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:56:
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:57:import { getAnimalLabel } from "../../constants/bichoMap";
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:58:
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1125:    rangeDraws,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1126:  ]);
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1127:
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1128:  useEffect(() => {
+> C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1129:    debugTop3Effect("05_reconcile_history", {
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1130:      lotteryKey: lotteryKeySafe,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1131:      timelineYmd,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1132:      scheduleLength: Array.isArray(schedule)
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1133:        ? schedule.length
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1134:        : -1,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1135:      todayDrawsLength: Array.isArray(todayDraws)
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1136:        ? todayDraws.length
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1137:        : -1,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1138:      rangeDrawsLength: Array.isArray(rangeDraws)
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1139:        ? rangeDraws.length
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1146:      ...(Array.isArray(rangeDraws) ? rangeDraws : []),
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1147:      ...(Array.isArray(todayDraws) ? todayDraws : []),
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1148:    ];
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1149:
+> C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1150:    reconcilePendingTop3Log({
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1151:      todayDraws: Array.isArray(todayDraws) ? todayDraws : [],
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1152:      rangeDraws: Array.isArray(rangeDraws) ? rangeDraws : [],
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1153:    });
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1154:
+> C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1155:    reconcileTop3PredictionDay({
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1156:      lotteryKey: lotteryKeySafe,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1157:      targetYmd: timelineYmd,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1158:      schedule,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1159:      draws: allDraws,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1160:    })
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1161:      .then(async () => {
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1162:        const history = await loadTop3PredictionDay({
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1163:          lotteryKey: lotteryKeySafe,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1164:          targetYmd: timelineYmd,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1165:          schedule,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1170:        );
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1171:      })
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1172:      .catch((error) => {
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1173:        if (debugTop3) {
+> C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1174:          console.warn("[TOP3 FIRESTORE RECONCILE]", error);
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1175:        }
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1176:      });
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1177:  }, [
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1178:    todayDraws,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1179:    rangeDraws,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1180:    lotteryKeySafe,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1181:    timelineYmd,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1182:    schedule,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1183:    debugTop3,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1184:  ]);
+
+===== PADRÃO: timelineYmd =====
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:353:    () => (isYMD(targetYmd) ? targetYmd : ""),
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:354:    [targetYmd]
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:355:  );
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:356:
+> C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:357:  const timelineYmd = useMemo(() => {
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:358:    if (isYMD(loadedYmd)) return loadedYmd;
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:359:    return ymdSafe;
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:360:  }, [loadedYmd, ymdSafe]);
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:361:
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:362:  const schedule = useMemo(() => {
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:363:    const y = isYMD(analysisYmd)
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:364:      ? analysisYmd
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:365:      : isYMD(loadedYmd)
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:366:        ? loadedYmd
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:367:        : ymdSafe;
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:853:
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:854:  useEffect(() => {
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:855:    debugTop3Effect("02_ensure_timeline", {
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:856:      lotteryKey: lotteryKeySafe,
+> C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:857:      timelineYmd,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:858:    });
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:859:
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:860:    ensureDayTimeline({
+> C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:861:      ymd: timelineYmd,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:862:      lotteryKey: lotteryKeySafe,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:863:    });
+> C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:864:  }, [timelineYmd, lotteryKeySafe]);
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:865:
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:866:  const analytics = useMemo(() => {
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:867:    return computeTop3Analytics({
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:868:      rangeDraws,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:869:      baseDrawState,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:870:      analyticsCacheRef,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:871:      lotteryKeySafe,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:872:      lookback,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:873:      rangeInfo,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:874:      todayDraws,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:922:    const built = buildTop3TimelineViewModel({
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:923:      todayDraws,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:924:      rangeDraws,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:925:      lotteryKeySafe,
+> C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:926:      ymdSafe: timelineYmd,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:927:      analysisYmd,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:928:      publicBase: String(process.env.PUBLIC_URL || "").trim(),
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:929:    });
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:930:
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:931:    if (
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:932:      (lotteryKeySafe === "PT_RIO" || lotteryKeySafe === "RJ") &&
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:933:      skipPtRio18ByFederal &&
+> C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:934:      isYMD(timelineYmd)
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:935:    ) {
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:936:      return (Array.isArray(built) ? built : []).filter((slot) => {
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:937:        const y = String(slot?.targetYmd || "").trim();
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:938:        const h = toHourBucket(slot?.targetHour || "");
+> C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:939:        return !(y === timelineYmd && h === "18:00");
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:940:      });
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:941:    }
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:942:
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:943:    return built;
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:944:  }, [
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:945:    todayDraws,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:946:    rangeDraws,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:947:    lotteryKeySafe,
+> C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:948:    timelineYmd,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:949:    analysisYmd,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:950:    skipPtRio18ByFederal,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:951:  ]);
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:952:
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:953:  useEffect(() => {
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:954:    debugTop3Effect("03_save_prediction", {
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:955:      lotteryKey: lotteryKeySafe,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:956:      analysisYmd,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:957:      analysisHourBucket,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:958:      top3Length: Array.isArray(top3)
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1074:
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1075:  useEffect(() => {
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1076:    debugTop3Effect("04_load_persisted_history", {
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1077:      lotteryKey: lotteryKeySafe,
+> C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1078:      timelineYmd,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1079:      scheduleLength: Array.isArray(schedule)
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1080:        ? schedule.length
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1081:        : -1,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1082:      todayDrawsLength: Array.isArray(todayDraws)
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1083:        ? todayDraws.length
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1084:        : -1,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1085:      rangeDrawsLength: Array.isArray(rangeDraws)
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1086:        ? rangeDraws.length
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1087:        : -1,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1088:    });
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1089:
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1090:    let alive = true;
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1091:
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1092:    async function loadPersistedHistory() {
+> C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1093:      if (!isYMD(timelineYmd)) {
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1094:        if (alive) setPersistedTop3History([]);
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1095:        return;
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1096:      }
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1097:
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1098:      try {
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1099:        const history = await loadTop3PredictionDay({
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1100:          lotteryKey: lotteryKeySafe,
+> C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1101:          targetYmd: timelineYmd,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1102:          schedule,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1103:        });
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1104:
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1105:        if (alive) {
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1106:          setPersistedTop3History(
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1107:            Array.isArray(history) ? history : []
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1108:          );
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1109:        }
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1110:      } catch {
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1111:        if (alive) setPersistedTop3History([]);
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1118:      alive = false;
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1119:    };
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1120:  }, [
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1121:    lotteryKeySafe,
+> C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1122:    timelineYmd,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1123:    schedule,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1124:    todayDraws,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1125:    rangeDraws,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1126:  ]);
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1127:
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1128:  useEffect(() => {
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1129:    debugTop3Effect("05_reconcile_history", {
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1130:      lotteryKey: lotteryKeySafe,
+> C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1131:      timelineYmd,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1132:      scheduleLength: Array.isArray(schedule)
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1133:        ? schedule.length
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1134:        : -1,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1135:      todayDrawsLength: Array.isArray(todayDraws)
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1136:        ? todayDraws.length
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1137:        : -1,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1138:      rangeDrawsLength: Array.isArray(rangeDraws)
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1139:        ? rangeDraws.length
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1140:        : -1,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1141:    });
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1153:    });
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1154:
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1155:    reconcileTop3PredictionDay({
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1156:      lotteryKey: lotteryKeySafe,
+> C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1157:      targetYmd: timelineYmd,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1158:      schedule,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1159:      draws: allDraws,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1160:    })
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1161:      .then(async () => {
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1162:        const history = await loadTop3PredictionDay({
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1163:          lotteryKey: lotteryKeySafe,
+> C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1164:          targetYmd: timelineYmd,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1165:          schedule,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1166:        });
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1167:
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1168:        setPersistedTop3History(
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1169:          Array.isArray(history) ? history : []
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1170:        );
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1171:      })
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1172:      .catch((error) => {
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1173:        if (debugTop3) {
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1174:          console.warn("[TOP3 FIRESTORE RECONCILE]", error);
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1177:  }, [
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1178:    todayDraws,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1179:    rangeDraws,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1180:    lotteryKeySafe,
+> C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1181:    timelineYmd,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1182:    schedule,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1183:    debugTop3,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1184:  ]);
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1185:
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1186:  return {
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1187:    LOOKBACK_ALL,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1188:    LOOKBACK_OPTIONS,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1189:    LOTTERY_OPTIONS,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1190:
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1191:    lotteryKeySafe,
+
+===== PADRÃO: setSchedule =====
+
+===== PADRÃO: schedule: =====
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:603:          lotteryKey: lKey,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:604:          ymdTarget: effectiveYmd,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:605:          targetHourBucket: firstHourToday,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:606:          todayDraws: today,
+> C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:607:          schedule: todaySchedule,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:608:          PT_RIO_SCHEDULE_NORMAL,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:609:          PT_RIO_SCHEDULE_WED_SAT,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:610:          FEDERAL_SCHEDULE,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:611:        });
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:612:
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:613:        const previousResolved = previousForFirstSlot?.draw
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:614:          ? previousForFirstSlot
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:615:          : await fallbackBaseSearch({
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:616:              getKingResultsByRange,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:617:              findLatestHistoricalBaseDraw,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:676:        lotteryKey: lKey,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:677:        ymdTarget: baseY,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:678:        targetHourBucket: baseH,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:679:        todayDraws: baseDayDraws,
+> C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:680:        schedule: baseDaySchedule,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:681:        PT_RIO_SCHEDULE_NORMAL,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:682:        PT_RIO_SCHEDULE_WED_SAT,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:683:        FEDERAL_SCHEDULE,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:684:      });
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:685:
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:686:      if (!resolvedPrev?.draw) {
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:687:        resolvedPrev = await fallbackBaseSearch({
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:688:          getKingResultsByRange,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:689:          findLatestHistoricalBaseDraw,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:690:          addDaysYMD,
+
+===== PADRÃO: todaySchedule =====
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:501:
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:502:      setLoadedYmd(effectiveYmd);
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:503:      setTodayDraws(today);
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:504:
+> C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:505:      let todaySchedule = getScheduleForLottery({
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:506:        lotteryKey: lKey,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:507:        ymd: effectiveYmd,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:508:        PT_RIO_SCHEDULE_NORMAL,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:509:        PT_RIO_SCHEDULE_WED_SAT,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:510:        FEDERAL_SCHEDULE,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:511:      });
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:512:
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:513:      const shouldSkipPtRio18 =
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:514:        (lKey === "PT_RIO" || lKey === "RJ") &&
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:515:        isFederalDrawDay(effectiveYmd) &&
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:516:        String(effectiveYmd || "").trim() >= "2025-11-03";
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:517:
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:518:      if (shouldSkipPtRio18) {
+> C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:519:        todaySchedule = Array.from(
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:520:          new Set([
+> C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:521:            ...(Array.isArray(todaySchedule) ? todaySchedule : [])
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:522:              .map(toHourBucket)
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:523:              .filter((h) => h && h !== "18:00"),
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:524:            "19:00",
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:525:          ])
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:526:        ).sort((a, b) => {
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:527:          const [ah, am] = String(a).split(":").map(Number);
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:528:          const [bh, bm] = String(b).split(":").map(Number);
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:529:
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:530:          return ah * 60 + am - (bh * 60 + bm);
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:531:        });
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:532:      }
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:533:
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:534:      setSkipPtRio18ByFederal(Boolean(shouldSkipPtRio18));
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:535:
+> C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:536:      if (!Array.isArray(todaySchedule) || !todaySchedule.length) {
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:537:        resetStateForNoData();
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:538:        setError("Não há grade de sorteio válida para esta data/loteria.");
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:539:        return;
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:540:      }
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:541:
+> C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:542:      const todayLast = findLastDrawInList(today, todaySchedule);
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:543:
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:544:      let baseDraw = null;
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:545:      let baseY = "";
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:546:      let baseH = "";
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:547:      let baseGrupo = null;
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:548:      let baseAnimal = "";
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:549:      let resolvedTargetY = "";
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:550:      let resolvedTargetH = "";
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:551:      let resolvedPrev = {
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:552:        draw: null,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:559:        baseDraw = todayLast;
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:560:        baseY = pickDrawYMD(todayLast) || effectiveYmd;
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:561:        baseH = toHourBucket(pickDrawHour(todayLast));
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:562:
+> C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:563:        const effectiveTodaySchedule = (Array.isArray(todaySchedule) ? todaySchedule : [])
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:564:          .map(toHourBucket)
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:565:          .filter(Boolean);
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:566:
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:567:        const baseIdx = baseY === effectiveYmd
+> C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:568:          ? effectiveTodaySchedule.indexOf(baseH)
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:569:          : -1;
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:570:
+> C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:571:        if (baseIdx >= 0 && baseIdx < effectiveTodaySchedule.length - 1) {
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:572:          resolvedTargetY = effectiveYmd;
+> C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:573:          resolvedTargetH = effectiveTodaySchedule[baseIdx + 1];
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:574:        } else {
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:575:          const nextSlot = getNextSlotForLottery({
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:576:            lotteryKey: lKey,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:577:            ymd: baseY,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:578:            hourBucket: baseH,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:579:            PT_RIO_SCHEDULE_NORMAL,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:580:            PT_RIO_SCHEDULE_WED_SAT,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:581:            FEDERAL_SCHEDULE,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:582:          });
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:583:
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:584:          resolvedTargetY = safeStr(nextSlot?.ymd || "");
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:585:          resolvedTargetH = toHourBucket(nextSlot?.hour || "");
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:586:        }
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:587:      } else {
+> C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:588:        const firstHourToday = toHourBucket(todaySchedule?.[0]);
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:589:
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:590:        if (!firstHourToday) {
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:591:          resetStateForNoData();
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:592:          setError(
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:593:            "Não foi possível determinar o primeiro horário válido para esta loteria."
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:594:          );
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:595:          return;
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:596:        }
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:597:
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:598:        resolvedTargetY = effectiveYmd;
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:603:          lotteryKey: lKey,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:604:          ymdTarget: effectiveYmd,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:605:          targetHourBucket: firstHourToday,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:606:          todayDraws: today,
+> C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:607:          schedule: todaySchedule,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:608:          PT_RIO_SCHEDULE_NORMAL,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:609:          PT_RIO_SCHEDULE_WED_SAT,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:610:          FEDERAL_SCHEDULE,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:611:        });
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:612:
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:613:        const previousResolved = previousForFirstSlot?.draw
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:614:          ? previousForFirstSlot
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:615:          : await fallbackBaseSearch({
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:616:              getKingResultsByRange,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:617:              findLatestHistoricalBaseDraw,
+
+===== PADRÃO: effectiveTodaySchedule =====
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:559:        baseDraw = todayLast;
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:560:        baseY = pickDrawYMD(todayLast) || effectiveYmd;
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:561:        baseH = toHourBucket(pickDrawHour(todayLast));
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:562:
+> C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:563:        const effectiveTodaySchedule = (Array.isArray(todaySchedule) ? todaySchedule : [])
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:564:          .map(toHourBucket)
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:565:          .filter(Boolean);
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:566:
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:567:        const baseIdx = baseY === effectiveYmd
+> C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:568:          ? effectiveTodaySchedule.indexOf(baseH)
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:569:          : -1;
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:570:
+> C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:571:        if (baseIdx >= 0 && baseIdx < effectiveTodaySchedule.length - 1) {
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:572:          resolvedTargetY = effectiveYmd;
+> C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:573:          resolvedTargetH = effectiveTodaySchedule[baseIdx + 1];
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:574:        } else {
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:575:          const nextSlot = getNextSlotForLottery({
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:576:            lotteryKey: lKey,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:577:            ymd: baseY,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:578:            hourBucket: baseH,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:579:            PT_RIO_SCHEDULE_NORMAL,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:580:            PT_RIO_SCHEDULE_WED_SAT,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:581:            FEDERAL_SCHEDULE,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:582:          });
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:583:
+
+===== PADRÃO: persistedHistory =====
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1088:    });
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1089:
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1090:    let alive = true;
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1091:
+> C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1092:    async function loadPersistedHistory() {
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1093:      if (!isYMD(timelineYmd)) {
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1094:        if (alive) setPersistedTop3History([]);
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1095:        return;
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1096:      }
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1097:
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1098:      try {
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1099:        const history = await loadTop3PredictionDay({
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1100:          lotteryKey: lotteryKeySafe,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1101:          targetYmd: timelineYmd,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1102:          schedule,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1111:        if (alive) setPersistedTop3History([]);
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1112:      }
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1113:    }
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1114:
+> C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1115:    loadPersistedHistory();
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1116:
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1117:    return () => {
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1118:      alive = false;
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1119:    };
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1120:  }, [
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1121:    lotteryKeySafe,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1122:    timelineYmd,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1123:    schedule,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1124:    todayDraws,
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:1125:    rangeDraws,
+
+===== PADRÃO: setHistory =====
+
+===== PADRÃO: setRecent =====
+
+===== PADRÃO: 19:00 =====
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:520:          new Set([
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:521:            ...(Array.isArray(todaySchedule) ? todaySchedule : [])
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:522:              .map(toHourBucket)
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:523:              .filter((h) => h && h !== "18:00"),
+> C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:524:            "19:00",
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:525:          ])
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:526:        ).sort((a, b) => {
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:527:          const [ah, am] = String(a).split(":").map(Number);
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:528:          const [bh, bm] = String(b).split(":").map(Number);
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:529:
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:530:          return ah * 60 + am - (bh * 60 + bm);
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:531:        });
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:532:      }
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:533:
+  C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js:534:      setSkipPtRio18ByFederal(Boolean(shouldSkipPtRio18));
+
+===== PADRÃO: 21:00 =====

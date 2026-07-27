@@ -1,0 +1,377 @@
+======================================================================================================================
+EXTRAÇÃO DIRETA — computeStatisticalTop3V3
+======================================================================================================================
+
+Arquivo: src/pages/Top3/top3.engine.js
+Total de linhas do arquivo: 4168
+Intervalo extraído: 2834-3165
+Quantidade de linhas: 332
+
+======================================================================================================================
+VALIDAÇÃO ESTRUTURAL
+======================================================================================================================
+
+possui_assinatura: SIM
+possui_topN: SIM
+possui_ranked_array: SIM
+possui_scoreProb: SIM
+possui_rawScoreProb: SIM
+possui_activeWeights: SIM
+possui_scoreRanking: SIM
+possui_sort: SIM
+possui_slice: SIM
+possui_const_top: SIM
+possui_return: SIM
+
+======================================================================================================================
+ÂNCORAS LOCALIZADAS
+======================================================================================================================
+
+function_signature: 2834
+topN: 2841, 3061
+ranked_array: 3007
+scoreProb: 3010, 3020, 3038, 3052, 3053, 3076, 3092
+rawScoreProb: 3076, 3092, 3093, 3105
+activeWeights: 2982, 2994, 2999, 3003, 3004, 3018, 3132, 3145
+scoreRanking: 3063
+sort: 3057, 3080
+slice: 2963, 3061, 3081
+const_top: 3074
+return: 2861, 2888, 2895, 2961, 3050, 3059, 3083, 3155
+
+======================================================================================================================
+CÓDIGO EXTRAÍDO
+======================================================================================================================
+
+ 2834 | export function computeStatisticalTop3V3({
+ 2835 |   lotteryKey,
+ 2836 |   drawsRange,
+ 2837 |   drawLast,
+ 2838 |   PT_RIO_SCHEDULE_NORMAL,
+ 2839 |   PT_RIO_SCHEDULE_WED_SAT,
+ 2840 |   FEDERAL_SCHEDULE,
+ 2841 |   topN = 3,
+ 2842 |   targetYmdOverride = "",
+ 2843 |   targetHourOverride = "",
+ 2844 | }) {
+ 2845 |   const list = sortDrawsAsc(Array.isArray(drawsRange) ? drawsRange : []);
+ 2846 |   if (!list.length || !drawLast) return { top: [], meta: null };
+ 2847 | 
+ 2848 |   const key = safeStr(lotteryKey).toUpperCase();
+ 2849 | 
+ 2850 |   const lastY = pickDrawYMD(drawLast);
+ 2851 |   const lastH = toHourBucket(pickDrawHour(drawLast));
+ 2852 |   const prevGrupo = getFirstGrupoFromDraw(drawLast);
+ 2853 | 
+ 2854 |   if (
+ 2855 |     !isYMD(lastY) ||
+ 2856 |     !lastH ||
+ 2857 |     !Number.isFinite(Number(prevGrupo)) ||
+ 2858 |     Number(prevGrupo) < 1 ||
+ 2859 |     Number(prevGrupo) > TOP3_GROUPS_K
+ 2860 |   ) {
+ 2861 |     return { top: [], meta: null };
+ 2862 |   }
+ 2863 | 
+ 2864 |   const nextSlot = getNextSlotForLottery({
+ 2865 |     lotteryKey: key,
+ 2866 |     ymd: lastY,
+ 2867 |     hourBucket: lastH,
+ 2868 |     PT_RIO_SCHEDULE_NORMAL,
+ 2869 |     PT_RIO_SCHEDULE_WED_SAT,
+ 2870 |     FEDERAL_SCHEDULE,
+ 2871 |   });
+ 2872 | 
+ 2873 |   const forcedTargetY = safeStr(targetYmdOverride);
+ 2874 |   const forcedTargetH = toHourBucket(targetHourOverride);
+ 2875 | 
+ 2876 |   const targetY = isYMD(forcedTargetY) && forcedTargetH
+ 2877 |     ? forcedTargetY
+ 2878 |     : safeStr(nextSlot?.ymd);
+ 2879 | 
+ 2880 |   const targetH = isYMD(forcedTargetY) && forcedTargetH
+ 2881 |     ? forcedTargetH
+ 2882 |     : toHourBucket(nextSlot?.hour);
+ 2883 |   const targetDow = getDowKey(targetY);
+ 2884 |   const targetDayOfMonth = getDayOfMonth(targetY);
+ 2885 |   const targetTs = ymdHourToTs(targetY, targetH);
+ 2886 | 
+ 2887 |   if (!isYMD(targetY) || !targetH || !Number.isFinite(Number(targetDow))) {
+ 2888 |     return { top: [], meta: null };
+ 2889 |   }
+ 2890 | 
+ 2891 |   const history = list.filter((d) => {
+ 2892 |     const y = pickDrawYMD(d);
+ 2893 |     const h = toHourBucket(pickDrawHour(d));
+ 2894 |     const ts = ymdHourToTs(y, h);
+ 2895 |     return isYMD(y) && h && Number.isFinite(ts) && ts < targetTs;
+ 2896 |   });
+ 2897 | 
+ 2898 |   const layers = {
+ 2899 |     hour: { label: `frequência no horário ${targetH}`, samples: 0, first: emptyGroupMap(), prizePresence: emptyGroupMap(), weight: 0.33 },
+ 2900 |     dowHour: { label: `frequência no dia da semana + horário`, samples: 0, first: emptyGroupMap(), prizePresence: emptyGroupMap(), weight: 0.27 },
+ 2901 |     dayMonth: { label: `frequência no dia ${String(targetDayOfMonth).padStart(2, "0")}`, samples: 0, first: emptyGroupMap(), prizePresence: emptyGroupMap(), weight: 0.04 },
+ 2902 |     transition: { label: `transição G${String(prevGrupo).padStart(2, "0")} @ ${lastH} → ${targetH}`, samples: 0, first: emptyGroupMap(), prizePresence: emptyGroupMap(), weight: 0.26 },
+ 2903 |     recent: { label: `recência comparável`, samples: 0, first: emptyGroupMap(), prizePresence: emptyGroupMap(), weight: 0.10 },
+ 2904 |   };
+ 2905 | 
+ 2906 |   for (const d of history) {
+ 2907 |     const y = pickDrawYMD(d);
+ 2908 |     const h = toHourBucket(pickDrawHour(d));
+ 2909 |     const dow = getDowKey(y);
+ 2910 |     const dom = getDayOfMonth(y);
+ 2911 |     const g1 = getFirstGrupoFromDraw(d);
+ 2912 |     const prizePresenceSet = getPrizePresenceGroupSet(d);
+ 2913 | 
+ 2914 |     const addToLayer = (layer) => {
+ 2915 |       layer.samples += 1;
+ 2916 |       incMap(layer.first, g1, 1);
+ 2917 |       for (const g of prizePresenceSet) incMap(layer.prizePresence, g, 1);
+ 2918 |     };
+ 2919 | 
+ 2920 |     if (h === targetH) addToLayer(layers.hour);
+ 2921 |     if (h === targetH && Number(dow) === Number(targetDow)) addToLayer(layers.dowHour);
+ 2922 |     if (Number(dom) === Number(targetDayOfMonth)) addToLayer(layers.dayMonth);
+ 2923 |   }
+ 2924 | 
+ 2925 |   const indexed = indexDrawsByYmdHour(history);
+ 2926 | 
+ 2927 |   for (const prev of history) {
+ 2928 |     const py = pickDrawYMD(prev);
+ 2929 |     const ph = toHourBucket(pickDrawHour(prev));
+ 2930 |     const pg = getFirstGrupoFromDraw(prev);
+ 2931 | 
+ 2932 |     if (!isYMD(py) || !ph || Number(pg) !== Number(prevGrupo)) continue;
+ 2933 | 
+ 2934 |     const ns = getNextSlotForLottery({
+ 2935 |       lotteryKey: key,
+ 2936 |       ymd: py,
+ 2937 |       hourBucket: ph,
+ 2938 |       PT_RIO_SCHEDULE_NORMAL,
+ 2939 |       PT_RIO_SCHEDULE_WED_SAT,
+ 2940 |       FEDERAL_SCHEDULE,
+ 2941 |     });
+ 2942 | 
+ 2943 |     if (toHourBucket(ns?.hour) !== targetH) continue;
+ 2944 |     if (ph !== lastH) continue;
+ 2945 | 
+ 2946 |     const nextDraw = indexed.get(`${safeStr(ns?.ymd)}|${toHourBucket(ns?.hour)}`) || null;
+ 2947 |     if (!nextDraw) continue;
+ 2948 | 
+ 2949 |     const g1 = getFirstGrupoFromDraw(nextDraw);
+ 2950 |     const prizePresenceSet = getPrizePresenceGroupSet(nextDraw);
+ 2951 | 
+ 2952 |     layers.transition.samples += 1;
+ 2953 |     incMap(layers.transition.first, g1, 1);
+ 2954 |     for (const g of prizePresenceSet) incMap(layers.transition.prizePresence, g, 1);
+ 2955 |   }
+ 2956 | 
+ 2957 |   const recentComparable = history
+ 2958 |     .filter((d) => {
+ 2959 |       const y = pickDrawYMD(d);
+ 2960 |       const h = toHourBucket(pickDrawHour(d));
+ 2961 |       return h === targetH && Number(getDowKey(y)) === Number(targetDow);
+ 2962 |     })
+ 2963 |     .slice(-20);
+ 2964 | 
+ 2965 |   for (const d of recentComparable) {
+ 2966 |     const g1 = getFirstGrupoFromDraw(d);
+ 2967 |     const prizePresenceSet = getPrizePresenceGroupSet(d);
+ 2968 | 
+ 2969 |     layers.recent.samples += 1;
+ 2970 |     incMap(layers.recent.first, g1, 1);
+ 2971 |     for (const g of prizePresenceSet) incMap(layers.recent.prizePresence, g, 1);
+ 2972 |   }
+ 2973 | 
+ 2974 |   const currentScene = buildSceneFromDraw(drawLast);
+ 2975 |   const sceneRanking = buildHistoricalSceneRanking(history, currentScene, 80);
+ 2976 |   const sceneHypothesis = buildSceneHypothesisDistribution(sceneRanking, TOP3_GROUPS_K);
+ 2977 |   const sceneWeight =
+ 2978 |     sampleConfidence(sceneHypothesis?.samples || 0, TOP3_SCENE_SAMPLE_TARGET) *
+ 2979 |     TOP3_SCENE_WEIGHT;
+ 2980 | 
+ 2981 | 
+ 2982 |   const activeWeights = {};
+ 2983 |   let totalWeight = 0;
+ 2984 | 
+ 2985 |   for (const [keyLayer, layer] of Object.entries(layers)) {
+ 2986 |     const conf =
+ 2987 |       keyLayer === "transition"
+ 2988 |         ? sampleConfidence(layer.samples, 8)
+ 2989 |         : keyLayer === "recent"
+ 2990 |           ? sampleConfidence(layer.samples, 12)
+ 2991 |           : sampleConfidence(layer.samples, 30);
+ 2992 | 
+ 2993 |     const w = layer.samples > 0 ? layer.weight * conf : 0;
+ 2994 |     activeWeights[keyLayer] = w;
+ 2995 |     totalWeight += w;
+ 2996 |   }
+ 2997 | 
+ 2998 |   if (totalWeight <= 0) {
+ 2999 |     activeWeights.hour = 1;
+ 3000 |     totalWeight = 1;
+ 3001 |   }
+ 3002 | 
+ 3003 |   for (const keyLayer of Object.keys(activeWeights)) {
+ 3004 |     activeWeights[keyLayer] = activeWeights[keyLayer] / totalWeight;
+ 3005 |   }
+ 3006 | 
+ 3007 |   const ranked = Array.from({ length: safeInt(TOP3_GROUPS_K, 25) }, (_, idx) => {
+ 3008 |     const grupo = idx + 1;
+ 3009 | 
+ 3010 |     let scoreProb = 0;
+ 3011 |     const details = {};
+ 3012 | 
+ 3013 |     for (const [keyLayer, layer] of Object.entries(layers)) {
+ 3014 |       const pFirst = Number(layerProbability(layer.first, layer.samples).get(grupo) || 0);
+ 3015 |       const pPrizePresence = Number(layerProbability(layer.prizePresence, layer.samples).get(grupo) || 0);
+ 3016 | 
+ 3017 |       const pLayer = (pFirst * 0.92) + (pPrizePresence * 0.08);
+ 3018 |       const w = Number(activeWeights[keyLayer] || 0);
+ 3019 | 
+ 3020 |       scoreProb += pLayer * w;
+ 3021 | 
+ 3022 |       details[keyLayer] = {
+ 3023 |         label: layer.label,
+ 3024 |         samples: layer.samples,
+ 3025 |         firstCount: Number(layer.first.get(grupo) || 0),
+ 3026 |         top3Count: Number(layer.prizePresence.get(grupo) || 0),
+ 3027 |         probability: pLayer,
+ 3028 |         weight: w,
+ 3029 |       };
+ 3030 |     }
+ 3031 | 
+ 3032 |     const pSceneRaw = Number(sceneHypothesis?.prob?.get?.(grupo) || 0);
+ 3033 |     const pScene =
+ 3034 |       (pSceneRaw * TOP3_SCENE_BLEND_SCENE) +
+ 3035 |       ((1 / TOP3_GROUPS_K) * TOP3_SCENE_BLEND_UNIFORM);
+ 3036 | 
+ 3037 |     if (sceneWeight > 0) {
+ 3038 |       scoreProb = (scoreProb * (1 - sceneWeight)) + (pScene * sceneWeight);
+ 3039 |     }
+ 3040 | 
+ 3041 |     details.scene = {
+ 3042 |       label: "analogia histórica de cena",
+ 3043 |       samples: Number(sceneHypothesis?.samples || 0),
+ 3044 |       firstCount: Number(sceneHypothesis?.freq?.get?.(grupo) || 0),
+ 3045 |       top3Count: 0,
+ 3046 |       probability: pScene,
+ 3047 |       weight: sceneWeight,
+ 3048 |     };
+ 3049 | 
+ 3050 |     return {
+ 3051 |       grupo,
+ 3052 |       scoreProb,
+ 3053 |       score: scoreProb * 1000,
+ 3054 |       details,
+ 3055 |     };
+ 3056 |   })
+ 3057 |     .sort((a, b) => {
+ 3058 |       if (b.score !== a.score) return b.score - a.score;
+ 3059 |       return a.grupo - b.grupo;
+ 3060 |     })
+ 3061 |     .slice(0, Math.max(1, Number(topN || 3)));
+ 3062 | 
+ 3063 |   const rankedScored = scoreRanking(
+ 3064 |     ranked,
+ 3065 |     {
+ 3066 |       lotteryKey,
+ 3067 |       targetYmd: targetY,
+ 3068 |       targetHour: targetH,
+ 3069 |       previousGroup: prevGrupo,
+ 3070 |       totalDraws: history.length,
+ 3071 |     }
+ 3072 |   );
+ 3073 | 
+ 3074 |   const top = rankedScored.map((x, idx) => {
+ 3075 |     const g2 = String(x.grupo).padStart(2, "0");
+ 3076 |     const rawScoreProb = Number(x.scoreProb || 0);
+ 3077 | 
+ 3078 |     const strongest = Object.values(x.details)
+ 3079 |       .filter((d) => Number(d.probability || 0) > 0)
+ 3080 |       .sort((a, b) => (b.probability * b.weight) - (a.probability * a.weight))
+ 3081 |       .slice(0, 3);
+ 3082 | 
+ 3083 |     return {
+ 3084 |       rank: idx + 1,
+ 3085 |       title:
+ 3086 |         idx === 0
+ 3087 |           ? "Mais provável"
+ 3088 |           : idx === 1
+ 3089 |             ? "2º mais provável"
+ 3090 |             : "3º mais provável",
+ 3091 |       grupo: x.grupo,
+ 3092 |       scoreProb: Number(rawScoreProb || 0),
+ 3093 |       rawScoreProb: Number(rawScoreProb || 0),
+ 3094 |       probCond: Number(x.details.transition?.probability || 0),
+ 3095 |       probBase: Number(x.details.hour?.probability || 0),
+ 3096 |       lateBonus: 0,
+ 3097 |       freq: Number(x.details.hour?.firstCount || 0),
+ 3098 |       freqCond: Number(x.details.transition?.firstCount || 0),
+ 3099 |       freqBase: Number(x.details.hour?.firstCount || 0),
+ 3100 |       freqZeroWhy: "",
+ 3101 |       reasons: [
+ 3102 |         `Motor: V3_STATISTICAL`,
+ 3103 |         `Alvo: ${targetY} ${targetH} | DOW=${targetDow} | dia=${String(targetDayOfMonth).padStart(2, "0")}`,
+ 3104 |         `Base: G${String(prevGrupo).padStart(2, "0")} @ ${lastH}`,
+ 3105 |         `Probabilidade final G${g2}: ${(Number(rawScoreProb || 0) * 100).toFixed(2)}%`,
+ 3106 |         ...strongest.map((d) =>
+ 3107 |           `${d.label}: ${d.firstCount}x em 1º | ${d.top3Count}x no TOP3 | amostras=${d.samples} | peso=${(d.weight * 100).toFixed(0)}%`
+ 3108 |         ),
+ 3109 |       ],
+ 3110 |       meta: {
+ 3111 |         trigger: {
+ 3112 |           ymd: lastY,
+ 3113 |           hour: lastH,
+ 3114 |           grupo: Number(prevGrupo),
+ 3115 |         },
+ 3116 |         next: {
+ 3117 |           ymd: safeStr(targetY),
+ 3118 |           hour: safeStr(targetH),
+ 3119 |         },
+ 3120 |         samples: history.length,
+ 3121 |         period: {
+ 3122 |           from: pickDrawYMD(history[0]) || "",
+ 3123 |           to: pickDrawYMD(history[history.length - 1]) || "",
+ 3124 |         },
+ 3125 |         scenario: "V3_STATISTICAL",
+ 3126 |         explain: {
+ 3127 |           engine: "V3_STATISTICAL",
+ 3128 |           targetDow,
+ 3129 |           targetDayOfMonth,
+ 3130 |           prevHour: lastH,
+ 3131 |           prevGrupo: Number(prevGrupo),
+ 3132 |           activeWeights,
+ 3133 |           scene: {
+ 3134 |             samples: Number(sceneHypothesis?.samples || 0),
+ 3135 |             totalWeight: Number(sceneHypothesis?.totalWeight || 0),
+ 3136 |             weight: Number(sceneWeight || 0),
+ 3137 |             currentSignature: currentScene?.signature || "",
+ 3138 |           },
+ 3139 |           layers: Object.fromEntries(
+ 3140 |             Object.entries(layers).map(([k, v]) => [
+ 3141 |               k,
+ 3142 |               {
+ 3143 |                 label: v.label,
+ 3144 |                 samples: v.samples,
+ 3145 |                 weight: activeWeights[k],
+ 3146 |               },
+ 3147 |             ])
+ 3148 |           ),
+ 3149 |           details: x.details,
+ 3150 |         },
+ 3151 |       },
+ 3152 |     };
+ 3153 |   });
+ 3154 | 
+ 3155 |   return {
+ 3156 |     top,
+ 3157 |     meta: {
+ 3158 |       trigger: {
+ 3159 |         ymd: lastY,
+ 3160 |         hour: lastH,
+ 3161 |         grupo: Number(prevGrupo),
+ 3162 |       },
+ 3163 |       next: {
+ 3164 |         ymd: safeStr(targetY),
+ 3165 |         hour: safeStr(targetH),

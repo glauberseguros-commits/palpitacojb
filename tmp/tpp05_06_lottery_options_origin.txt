@@ -1,0 +1,1670 @@
+========================================================================================================================
+src/pages/Centenas/CentenasView.jsx
+========================================================================================================================
+
+--- linha 479 ---
+      444: }
+      445: 
+      446: /* ========= imagem: tentar _128 ========= */
+      447: 
+      448: function upgradeImg(src, target = 128) {
+      449:   const s = String(src || "").trim();
+      450:   if (!s) return "";
+      451:   return s.replace(/_(64|96|128)\.(png|jpg|jpeg|webp)$/i, `_${target}.$2`);
+      452: }
+      453: 
+      454: function tryGetImg(getImgFromGrupo, grupo, size) {
+      455:   try {
+      456:     const v = getImgFromGrupo?.(grupo, size);
+      457:     if (v) return String(v);
+      458:   } catch {}
+      459:   try {
+      460:     const v2 = getImgFromGrupo?.(grupo);
+      461:     if (v2) return String(v2);
+      462:   } catch {}
+      463:   return "";
+      464: }
+      465: 
+      466: /* ========= King URL helper ========= */
+      467: function buildKingGuessUrlFromPalpites(palpites4) {
+      468:   const list = (Array.isArray(palpites4) ? palpites4 : [])
+      469:     .map((x) => String(x || "").trim())
+      470:     .filter(Boolean);
+      471: 
+      472:   const payload = encodeURIComponent(list.join(","));
+      473: 
+      474:   // usando querystring (envia pro servidor)
+      475:   return `https://app.kingapostas.com/bet/guess?pp=${payload}`;
+      476: }
+      477: 
+      478: export default function CentenasView() {
+>>>   479:   const LOTTERY_OPTIONS = useMemo(
+      480:     () => [
+      481:       {
+      482:         id: "ALL",
+      483:         label: "Todas as loterias",
+      484:         lotteryKeys: [
+      485:           LOTTERY_KEYS.PT_RIO,
+      486:           LOTTERY_KEYS.FEDERAL,
+      487:           LOTTERY_KEYS.LOOK,
+      488:           LOTTERY_KEYS.NACIONAL,
+      489:         ],
+      490:       },
+      491:       {
+      492:         id: LOTTERY_KEYS.PT_RIO,
+      493:         label: "PT Rio",
+      494:         lotteryKeys: [
+      495:           LOTTERY_KEYS.PT_RIO,
+      496:         ],
+      497:       },
+      498:       {
+      499:         id: LOTTERY_KEYS.FEDERAL,
+      500:         label: "Federal",
+      501:         lotteryKeys: [
+      502:           LOTTERY_KEYS.FEDERAL,
+      503:         ],
+      504:       },
+      505:       {
+      506:         id: LOTTERY_KEYS.LOOK,
+      507:         label: "LOOK",
+      508:         lotteryKeys: [
+      509:           LOTTERY_KEYS.LOOK,
+      510:         ],
+      511:       },
+      512:       {
+      513:         id: LOTTERY_KEYS.NACIONAL,
+      514:         label: "Nacional",
+      515:         lotteryKeys: [
+      516:           LOTTERY_KEYS.NACIONAL,
+      517:         ],
+      518:       },
+      519:     ],
+      520:     []
+      521:   );
+      522: 
+      523:   const allPrizePositions = useMemo(
+      524:     () => [1, 2, 3, 4, 5, 6, 7],
+      525:     []
+      526:   );
+      527: 
+      528: // filtros
+      529:   const [lotteryOptId, setLotteryOptId] = useState("ALL");
+      530:   const [fMes, setFMes] = useState("Todos");
+      531:   const [fDiaMes, setFDiaMes] = useState("Todos");
+      532:   const [fDiaSemana, setFDiaSemana] = useState("Todos");
+      533:   const [fHorario, setFHorario] = useState("Todos");
+      534:   const [fAnimal, setFAnimal] = useState("Todos");
+      535:   const [fPosicao, setFPosicao] = useState("Todos");
+      536:   const [showOnlyHits, setShowOnlyHits] = useState(false);
+      537: 
+      538:   /*
+      539:    * A consulta deve buscar apenas a posição escolhida.
+      540:    * Quando estiver em Todos, mantém 1º ao 7º.
+      541:    */
+      542:   const requestedPrizePositions = useMemo(() => {
+      543:     if (isTodos(fPosicao)) {
+      544:       return allPrizePositions;
+      545:     }
+      546: 
+      547:     const position = Number(fPosicao);
+      548: 
+
+--- linha 603 ---
+      568:   // bounds
+      569:   const [bounds, setBounds] = useState({ minYmd: null, maxYmd: null, source: "" });
+      570:   const [loadingBounds, setLoadingBounds] = useState(false);
+      571: 
+      572:   // data
+      573:   const [loading, setLoading] = useState(false);
+      574:   const [error, setError] = useState("");
+      575:   const [groups, setGroups] = useState([]);
+      576:   const [openGrupo, setOpenGrupo] = useState(19);
+      577: 
+      578:   const [kingModalOpen, setKingModalOpen] = useState(false);
+      579:   const [kingText, setKingText] = useState("");
+      580:   const [kingCopyOk, setKingCopyOk] = useState(false);
+      581:   const [kingUrl, setKingUrl] = useState("");
+      582: 
+      583:   // ✅ ref para NÃO disparar rebuild quando abre/fecha card
+      584:   const openGrupoRef = useRef(openGrupo);
+      585:   useEffect(() => {
+      586:     openGrupoRef.current = openGrupo;
+      587:   }, [openGrupo]);
+      588: 
+      589:   // progresso
+      590:   const [progress, setProgress] = useState({ done: 0, total: 0, label: "" });
+      591: 
+      592:   const abortedRef = useRef(false);
+      593:   const buildSeqRef = useRef(0);
+      594:   const autoTimerRef = useRef(null);
+      595: 
+      596:   const getAnimalLabel = useMemo(() => getAnimalLabelFn, []);
+      597:   const getImgFromGrupo = useMemo(() => getImgFromGrupoFn, []);
+      598: 
+      599:   // cache em memória
+      600:   const baseCacheRef = useRef(new Map());
+      601: 
+      602:   const selectedLottery = useMemo(
+>>>   603:     () => LOTTERY_OPTIONS.find((x) => x.id === lotteryOptId) || LOTTERY_OPTIONS[0],
+      604:     [lotteryOptId, LOTTERY_OPTIONS]
+      605:   );
+      606: 
+      607:   const selectedLotteryKeys = useMemo(
+      608:     () =>
+      609:       Array.isArray(
+      610:         selectedLottery?.lotteryKeys
+      611:       )
+      612:         ? selectedLottery.lotteryKeys
+      613:         : [LOTTERY_KEYS.PT_RIO],
+      614:     [selectedLottery]
+      615:   );
+      616: 
+      617:   const selectedLotteryKeysKey =
+      618:     selectedLotteryKeys.join(",");
+      619: 
+      620:   const boundsReady = !!(
+      621:     bounds?.minYmd &&
+      622:     bounds?.maxYmd
+      623:   );
+      624: 
+      625:   // ========= persistência de filtros =========
+      626: 
+      627:   useEffect(() => {
+      628:     try {
+      629:       const raw = localStorage.getItem(FILTERS_LS_KEY);
+      630:       if (raw) {
+      631:         const saved = JSON.parse(raw);
+      632:         if (saved && typeof saved === "object") {
+      633:           if (saved.lotteryOptId) setLotteryOptId(String(saved.lotteryOptId));
+      634:           if (saved.fMes) setFMes(String(saved.fMes));
+      635:           if (saved.fDiaMes) setFDiaMes(String(saved.fDiaMes));
+      636:           if (saved.fDiaSemana) setFDiaSemana(String(saved.fDiaSemana));
+      637:           if (saved.fHorario) setFHorario(String(saved.fHorario));
+      638:           if (saved.fAnimal) setFAnimal(String(saved.fAnimal));
+      639:           if (saved.fPosicao) setFPosicao(String(saved.fPosicao));
+      640:           if (typeof saved.showOnlyHits === "boolean") setShowOnlyHits(saved.showOnlyHits);
+      641:           if (Number.isFinite(Number(saved.openGrupo))) setOpenGrupo(Number(saved.openGrupo));
+      642:         }
+      643:       }
+      644:     } catch {}
+      645:   }, []);
+      646: 
+      647:   useEffect(() => {
+      648:     const t = setTimeout(() => {
+      649:       try {
+      650:         localStorage.setItem(
+      651:           FILTERS_LS_KEY,
+      652:           JSON.stringify({
+      653:             lotteryOptId,
+      654:             fMes,
+      655:             fDiaMes,
+      656:             fDiaSemana,
+      657:             fHorario,
+      658:             fAnimal,
+      659:             fPosicao,
+      660:             showOnlyHits,
+      661:             openGrupo,
+      662:           })
+      663:         );
+      664:       } catch {}
+      665:     }, 150);
+      666:     return () => clearTimeout(t);
+      667:   }, [lotteryOptId, fMes, fDiaMes, fDiaSemana, fHorario, fAnimal, fPosicao, showOnlyHits, openGrupo]);
+      668: 
+      669:   // ========= options =========
+      670: 
+      671:   const mesOptions = useMemo(() => {
+      672:     const out = [{ v: "Todos", label: "Todos" }];
+
+--- linha 604 ---
+      569:   const [bounds, setBounds] = useState({ minYmd: null, maxYmd: null, source: "" });
+      570:   const [loadingBounds, setLoadingBounds] = useState(false);
+      571: 
+      572:   // data
+      573:   const [loading, setLoading] = useState(false);
+      574:   const [error, setError] = useState("");
+      575:   const [groups, setGroups] = useState([]);
+      576:   const [openGrupo, setOpenGrupo] = useState(19);
+      577: 
+      578:   const [kingModalOpen, setKingModalOpen] = useState(false);
+      579:   const [kingText, setKingText] = useState("");
+      580:   const [kingCopyOk, setKingCopyOk] = useState(false);
+      581:   const [kingUrl, setKingUrl] = useState("");
+      582: 
+      583:   // ✅ ref para NÃO disparar rebuild quando abre/fecha card
+      584:   const openGrupoRef = useRef(openGrupo);
+      585:   useEffect(() => {
+      586:     openGrupoRef.current = openGrupo;
+      587:   }, [openGrupo]);
+      588: 
+      589:   // progresso
+      590:   const [progress, setProgress] = useState({ done: 0, total: 0, label: "" });
+      591: 
+      592:   const abortedRef = useRef(false);
+      593:   const buildSeqRef = useRef(0);
+      594:   const autoTimerRef = useRef(null);
+      595: 
+      596:   const getAnimalLabel = useMemo(() => getAnimalLabelFn, []);
+      597:   const getImgFromGrupo = useMemo(() => getImgFromGrupoFn, []);
+      598: 
+      599:   // cache em memória
+      600:   const baseCacheRef = useRef(new Map());
+      601: 
+      602:   const selectedLottery = useMemo(
+      603:     () => LOTTERY_OPTIONS.find((x) => x.id === lotteryOptId) || LOTTERY_OPTIONS[0],
+>>>   604:     [lotteryOptId, LOTTERY_OPTIONS]
+      605:   );
+      606: 
+      607:   const selectedLotteryKeys = useMemo(
+      608:     () =>
+      609:       Array.isArray(
+      610:         selectedLottery?.lotteryKeys
+      611:       )
+      612:         ? selectedLottery.lotteryKeys
+      613:         : [LOTTERY_KEYS.PT_RIO],
+      614:     [selectedLottery]
+      615:   );
+      616: 
+      617:   const selectedLotteryKeysKey =
+      618:     selectedLotteryKeys.join(",");
+      619: 
+      620:   const boundsReady = !!(
+      621:     bounds?.minYmd &&
+      622:     bounds?.maxYmd
+      623:   );
+      624: 
+      625:   // ========= persistência de filtros =========
+      626: 
+      627:   useEffect(() => {
+      628:     try {
+      629:       const raw = localStorage.getItem(FILTERS_LS_KEY);
+      630:       if (raw) {
+      631:         const saved = JSON.parse(raw);
+      632:         if (saved && typeof saved === "object") {
+      633:           if (saved.lotteryOptId) setLotteryOptId(String(saved.lotteryOptId));
+      634:           if (saved.fMes) setFMes(String(saved.fMes));
+      635:           if (saved.fDiaMes) setFDiaMes(String(saved.fDiaMes));
+      636:           if (saved.fDiaSemana) setFDiaSemana(String(saved.fDiaSemana));
+      637:           if (saved.fHorario) setFHorario(String(saved.fHorario));
+      638:           if (saved.fAnimal) setFAnimal(String(saved.fAnimal));
+      639:           if (saved.fPosicao) setFPosicao(String(saved.fPosicao));
+      640:           if (typeof saved.showOnlyHits === "boolean") setShowOnlyHits(saved.showOnlyHits);
+      641:           if (Number.isFinite(Number(saved.openGrupo))) setOpenGrupo(Number(saved.openGrupo));
+      642:         }
+      643:       }
+      644:     } catch {}
+      645:   }, []);
+      646: 
+      647:   useEffect(() => {
+      648:     const t = setTimeout(() => {
+      649:       try {
+      650:         localStorage.setItem(
+      651:           FILTERS_LS_KEY,
+      652:           JSON.stringify({
+      653:             lotteryOptId,
+      654:             fMes,
+      655:             fDiaMes,
+      656:             fDiaSemana,
+      657:             fHorario,
+      658:             fAnimal,
+      659:             fPosicao,
+      660:             showOnlyHits,
+      661:             openGrupo,
+      662:           })
+      663:         );
+      664:       } catch {}
+      665:     }, 150);
+      666:     return () => clearTimeout(t);
+      667:   }, [lotteryOptId, fMes, fDiaMes, fDiaSemana, fHorario, fAnimal, fPosicao, showOnlyHits, openGrupo]);
+      668: 
+      669:   // ========= options =========
+      670: 
+      671:   const mesOptions = useMemo(() => {
+      672:     const out = [{ v: "Todos", label: "Todos" }];
+      673:     for (let m = 1; m <= 12; m += 1) out.push({ v: String(m), label: monthNamePTBR(m) });
+
+--- linha 2040 ---
+     2005:                 if (!isTodos(v)) {
+     2006:                   const g = Number(v);
+     2007:                   if (Number.isFinite(g) && g >= 1 && g <= 25) setOpenGrupo(g);
+     2008:                 }
+     2009:               }}
+     2010:             >
+     2011:               {animalOptions.map((o) => (
+     2012:                 <option key={o.v} value={o.v}>
+     2013:                   {o.label}
+     2014:                 </option>
+     2015:               ))}
+     2016:             </select>
+     2017:             <div className="cx0_chev" />
+     2018:           </div>
+     2019:         </div>
+     2020: 
+     2021:         <div className="cx0_fItem">
+     2022:           <div className="cx0_fLab">Posição</div>
+     2023:           <div className="cx0_selWrap">
+     2024:             <select className="cx0_sel" value={fPosicao} onChange={(e) => setFPosicao(String(e.target.value || "Todos"))}>
+     2025:               {posicaoOptions.map((o) => (
+     2026:                 <option key={o.v} value={o.v}>
+     2027:                   {o.label}
+     2028:                 </option>
+     2029:               ))}
+     2030:             </select>
+     2031:             <div className="cx0_chev" />
+     2032:           </div>
+     2033:         </div>
+     2034:       </div>
+     2035: 
+     2036:       <div className="cx0_controls">
+     2037:         <div className="cx0_chip">
+     2038:           <label>Loteria</label>
+     2039:           <select value={lotteryOptId} onChange={(e) => setLotteryOptId(String(e.target.value || "ALL"))}>
+>>>  2040:             {LOTTERY_OPTIONS.map((x) => (
+     2041:               <option key={x.id} value={x.id}>
+     2042:                 {x.label}
+     2043:               </option>
+     2044:             ))}
+     2045:           </select>
+     2046:         </div>
+     2047: 
+     2048:         <button className="cx0_btn" onClick={build} disabled={loading || loadingBounds || !boundsReady}>
+     2049:           {loading ? "Carregando..." : "Atualizar"}
+     2050:         </button>
+     2051: 
+     2052:       </div>
+     2053: 
+     2054:       {loading && progress?.total ? (
+     2055:         <div className="cx0_status">
+     2056:           {progress.label || "Carregando..."} · {progress.done}/{progress.total} · {progressPct}%
+     2057:           <div className="cx0_bar">
+     2058:             <div style={{ width: `${progressPct}%` }} />
+     2059:           </div>
+     2060:         </div>
+     2061:       ) : null}
+     2062: 
+     2063:       {error ? <div className="cx0_err">{error}</div> : null}
+     2064: 
+     2065:       <div className="cx0_panel">
+     2066:         <div className="cx0_grid">
+     2067:           <div className="cx0_banner">
+     2068:             <div className="cx0_bImg">{bannerImg ? <img src={bannerImg} alt={bannerLabel || ""} /> : null}</div>
+     2069:             <div className="cx0_bTxt">
+     2070:               <div className="cx0_bGrp">GRUPO {pad2(bannerGrupo)}</div>
+     2071:               <div className="cx0_bAn">{bannerLabel || "—"}</div>
+     2072:             </div>
+     2073:           </div>
+     2074: 
+     2075:           <div className="cx0_list">
+     2076:             {!loading && (!groups || !groups.length) ? (
+     2077:               <div style={{ padding: 14, textAlign: "center", color: "rgba(233,233,233,0.7)" }}>Sem dados para exibir.</div>
+     2078:             ) : null}
+     2079: 
+     2080:             {(groups || []).map((g) => {
+     2081:               const isOpen = Number(openGrupo) === Number(g.grupo);
+     2082:               const rows = showOnlyHits ? (g.list40 || []).filter((x) => (Number(x.count) || 0) > 0) : g.list40 || [];
+     2083: 
+     2084:               return (
+     2085:                 <div className="cx0_card" key={g.grupo}>
+     2086:                   <div
+     2087:                     className="cx0_head"
+     2088:                     role="button"
+     2089:                     tabIndex={0}
+     2090:                     onClick={() => setOpenGrupo(isOpen ? null : g.grupo)}
+     2091:                     onKeyDown={(e) => {
+     2092:                       if (e.key === "Enter" || e.key === " ") setOpenGrupo(isOpen ? null : g.grupo);
+     2093:                     }}
+     2094:                     title={`Grupo ${g.grupo2} · ${g.animal}`}
+     2095:                   >
+     2096:                     <div className="cx0_hLeft">
+     2097:                       <div className="cx0_hImg">{g.img ? <img src={g.img} alt={g.animal || ""} /> : null}</div>
+     2098:                       <div className="cx0_hNames">
+     2099:                         <div className="cx0_hGrp">GRUPO {g.grupo2}</div>
+     2100:                         <div className="cx0_hAn">{g.animal || "—"}</div>
+     2101:                       </div>
+     2102:                     </div>
+     2103: 
+     2104:                     <div className="cx0_hRight">
+     2105:                       <div className="cx0_kpi">
+     2106:                         <div className="cx0_kpiK">Total</div>
+     2107:                         <div className="cx0_kpiV">{g.totalHits}</div>
+     2108:                       </div>
+     2109:                     </div>
+
+========================================================================================================================
+src/pages/Late/Late.jsx
+========================================================================================================================
+
+--- linha 282 ---
+      247: 
+      248:   let out = d;
+      249:   const min = safeStr(minYmd);
+      250:   const max = safeStr(maxYmd);
+      251: 
+      252:   if (isYMD(min) && out < min) out = min;
+      253:   if (isYMD(max) && out > max) out = max;
+      254: 
+      255:   return out;
+      256: }
+      257: 
+      258: function normalizeSingleDateWithBounds(dateIn, minYmd, maxYmd) {
+      259:   const d = clampYmd(dateIn, minYmd, maxYmd);
+      260:   if (d) return d;
+      261: 
+      262:   const fallback =
+      263:     clampYmd(todayYMDLocal(), minYmd, maxYmd) ||
+      264:     (isYMD(maxYmd) ? maxYmd : null) ||
+      265:     (isYMD(minYmd) ? minYmd : null) ||
+      266:     todayYMDLocal();
+      267: 
+      268:   return fallback;
+      269: }
+      270: 
+      271: /* =========================
+      272:    ✅ Bounds normalize (PATCH)
+      273: ========================= */
+      274: function normalizeBoundsResponse(b) {
+      275:   const minRaw = safeStr(b?.minYmd || b?.minDate || b?.min || "");
+      276:   const maxRaw = safeStr(b?.maxYmd || b?.maxDate || b?.max || "");
+      277:   const minYmd = isYMD(minRaw) ? minRaw : null;
+      278:   const maxYmd = isYMD(maxRaw) ? maxRaw : null;
+      279:   return { minYmd, maxYmd, source: safeStr(b?.source || "") };
+      280: }
+      281: 
+>>>   282: const LATE_LOTTERY_OPTIONS = [
+      283:   {
+      284:     id: "PT_RIO",
+      285:     label: "Rio de Janeiro",
+      286:     lotteries: ["PT_RIO"],
+      287:     uf: "RJ",
+      288:   },
+      289:   {
+      290:     id: "FEDERAL",
+      291:     label: "Federal",
+      292:     lotteries: ["FEDERAL"],
+      293:     uf: "FEDERAL",
+      294:   },
+      295:   {
+      296:     id: "LOOK",
+      297:     label: "LOOK",
+      298:     lotteries: ["LOOK"],
+      299:     uf: "GO",
+      300:   },
+      301:   {
+      302:     id: "NACIONAL",
+      303:     label: "Nacional",
+      304:     lotteries: ["NACIONAL"],
+      305:     uf: "NACIONAL",
+      306:   },
+      307: ];
+      308: 
+      309: const LATE_HOUR_OPTIONS = {
+      310:   PT_RIO: [
+      311:     { id: "ALL", label: "Todos os horários", closeHour: null },
+      312:     { id: "09", label: "09h", closeHour: "09:00" },
+      313:     { id: "11", label: "11h", closeHour: "11:00" },
+      314:     { id: "14", label: "14h", closeHour: "14:00" },
+      315:     { id: "16", label: "16h", closeHour: "16:00" },
+      316:     { id: "18", label: "18h", closeHour: "18:00" },
+      317:     { id: "21", label: "21h", closeHour: "21:00" },
+      318:   ],
+      319: 
+      320:   FEDERAL: [
+      321:     { id: "ALL", label: "Todos os horários", closeHour: null },
+      322:     { id: "20", label: "20h", closeHour: "20:00" },
+      323:   ],
+      324: 
+      325:   LOOK: [
+      326:     { id: "ALL", label: "Todos os horários", closeHour: null },
+      327:   ],
+      328: 
+      329:   NACIONAL: [
+      330:     { id: "ALL", label: "Todos os horários", closeHour: null },
+      331:   ],
+      332: };
+      333: 
+      334: export default function Late() {
+      335: 
+      336: 
+      337:   // UI
+      338:   const [lotteryOptId, setLotteryOptId] = useState("ALL");
+      339: 
+      340:   const [selectedLotteryId, setSelectedLotteryId] = useState("PT_RIO");
+      341:   const [kind, setKind] = useState("grupo");
+      342:   const [prizeMode, setPrizeMode] = useState("1");
+      343:   const [dateYmd, setDateYmd] = useState(todayYMDLocal());
+      344: 
+      345:   // Data
+      346:   const [bounds, setBounds] = useState({
+      347:     minYmd: null,
+      348:     maxYmd: null,
+      349:     source: "",
+      350:   });
+      351:   const [loading, setLoading] = useState(false);
+
+--- linha 391 ---
+      356:   const [lastImported, setLastImported] = useState({
+      357:     ymd: "",
+      358:     closeHour: "",
+      359:   });
+      360: 
+      361:   const lastImportedRef = useRef(lastImported);
+      362:   useEffect(() => {
+      363:     lastImportedRef.current = lastImported;
+      364:   }, [lastImported]);
+      365: 
+      366:   const [meta, setMeta] = useState({
+      367:     effectiveTargetYmd: "",
+      368:   });
+      369: 
+      370:   const abortedRef = useRef(false);
+      371:   const pollRef = useRef(null);
+      372:   const selectedHourOptions = useMemo(
+      373:     () =>
+      374:       LATE_HOUR_OPTIONS[selectedLotteryId] ||
+      375:       LATE_HOUR_OPTIONS.PT_RIO,
+      376:     [selectedLotteryId]
+      377:   );
+      378: 
+      379:   const selectedHourOption = useMemo(
+      380:     () =>
+      381:       selectedHourOptions.find(
+      382:         (option) => option.id === lotteryOptId
+      383:       ) || selectedHourOptions[0],
+      384:     [lotteryOptId, selectedHourOptions]
+      385:   );
+      386: 
+      387: 
+      388:   // ✅ bucket "09h" etc (preferível pra bater na base)
+      389:   const selectedLateLottery = useMemo(
+      390:     () =>
+>>>   391:       LATE_LOTTERY_OPTIONS.find(
+      392:         (option) => option.id === selectedLotteryId
+      393:       ) || LATE_LOTTERY_OPTIONS[0],
+      394:     [selectedLotteryId]
+      395:   );
+      396: 
+      397:   const selectedLateLotteries = useMemo(
+      398:     () => selectedLateLottery.lotteries,
+      399:     [selectedLateLottery]
+      400:   );
+      401: 
+      402:   const selectedLateUf = selectedLateLottery.uf;
+      403: 
+      404:   const LOTTERY_DISPLAY = selectedLateLottery.label;
+      405: 
+      406: 
+      407: 
+      408:   const selectedCloseHourBucket = useMemo(() => {
+      409:     const raw = selectedHourOption?.closeHour;
+      410:     if (!raw) return null;
+      411:     return String(raw).includes("h") ? String(raw).trim() : toHourBucket(raw);
+      412:   }, [selectedHourOption]);
+      413: 
+      414:   const prizePositions = useMemo(() => {
+      415:     if (prizeMode === "1-5") return [1, 2, 3, 4, 5];
+      416:     const n = Number(prizeMode);
+      417:     if (Number.isFinite(n) && n >= 1 && n <= 5) return [n];
+      418:     return [1];
+      419:   }, [prizeMode]);
+      420: 
+      421:   const boundsReady = !!(bounds?.minYmd && bounds?.maxYmd);
+      422: 
+      423:   // ✅ label e img robustos (assinam variações)
+      424:   const safeGetAnimalLabel = useCallback((grupoNum) => {
+      425:     const g = Number(grupoNum);
+      426:     if (!Number.isFinite(g)) return "";
+      427:     try {
+      428:       if (typeof getAnimalLabelFn === "function") {
+      429:         const a1 = getAnimalLabelFn({ grupo: g, animal: "" });
+      430:         const s1 = String(a1 ?? "").trim();
+      431:         if (s1) return s1;
+      432:       }
+      433:     } catch {}
+      434:     try {
+      435:       if (typeof getAnimalLabelFn === "function") {
+      436:         const a2 = getAnimalLabelFn(g);
+      437:         const s2 = String(a2 ?? "").trim();
+      438:         if (s2) return s2;
+      439:       }
+      440:     } catch {}
+      441:     return "";
+      442:   }, []);
+      443: 
+      444:   const safeGetImg = useCallback((grupoNum) => {
+      445:     const g = Number(grupoNum);
+      446:     if (!Number.isFinite(g)) return "";
+      447:     try {
+      448:       if (typeof getImgFromGrupoFn === "function") {
+      449:         const c128 = String(getImgFromGrupoFn(g, 128) || "").trim();
+      450:         if (c128) return c128;
+      451:         const c96 = String(getImgFromGrupoFn(g, 96) || "").trim();
+      452:         if (c96) return c96;
+      453:         const c64 = String(getImgFromGrupoFn(g, 64) || "").trim();
+      454:         if (c64) return c64;
+      455:         const base = String(getImgFromGrupoFn(g) || "").trim();
+      456:         if (base) return base;
+      457:       }
+      458:     } catch {}
+      459:     return "";
+      460:   }, []);
+
+--- linha 393 ---
+      358:     closeHour: "",
+      359:   });
+      360: 
+      361:   const lastImportedRef = useRef(lastImported);
+      362:   useEffect(() => {
+      363:     lastImportedRef.current = lastImported;
+      364:   }, [lastImported]);
+      365: 
+      366:   const [meta, setMeta] = useState({
+      367:     effectiveTargetYmd: "",
+      368:   });
+      369: 
+      370:   const abortedRef = useRef(false);
+      371:   const pollRef = useRef(null);
+      372:   const selectedHourOptions = useMemo(
+      373:     () =>
+      374:       LATE_HOUR_OPTIONS[selectedLotteryId] ||
+      375:       LATE_HOUR_OPTIONS.PT_RIO,
+      376:     [selectedLotteryId]
+      377:   );
+      378: 
+      379:   const selectedHourOption = useMemo(
+      380:     () =>
+      381:       selectedHourOptions.find(
+      382:         (option) => option.id === lotteryOptId
+      383:       ) || selectedHourOptions[0],
+      384:     [lotteryOptId, selectedHourOptions]
+      385:   );
+      386: 
+      387: 
+      388:   // ✅ bucket "09h" etc (preferível pra bater na base)
+      389:   const selectedLateLottery = useMemo(
+      390:     () =>
+      391:       LATE_LOTTERY_OPTIONS.find(
+      392:         (option) => option.id === selectedLotteryId
+>>>   393:       ) || LATE_LOTTERY_OPTIONS[0],
+      394:     [selectedLotteryId]
+      395:   );
+      396: 
+      397:   const selectedLateLotteries = useMemo(
+      398:     () => selectedLateLottery.lotteries,
+      399:     [selectedLateLottery]
+      400:   );
+      401: 
+      402:   const selectedLateUf = selectedLateLottery.uf;
+      403: 
+      404:   const LOTTERY_DISPLAY = selectedLateLottery.label;
+      405: 
+      406: 
+      407: 
+      408:   const selectedCloseHourBucket = useMemo(() => {
+      409:     const raw = selectedHourOption?.closeHour;
+      410:     if (!raw) return null;
+      411:     return String(raw).includes("h") ? String(raw).trim() : toHourBucket(raw);
+      412:   }, [selectedHourOption]);
+      413: 
+      414:   const prizePositions = useMemo(() => {
+      415:     if (prizeMode === "1-5") return [1, 2, 3, 4, 5];
+      416:     const n = Number(prizeMode);
+      417:     if (Number.isFinite(n) && n >= 1 && n <= 5) return [n];
+      418:     return [1];
+      419:   }, [prizeMode]);
+      420: 
+      421:   const boundsReady = !!(bounds?.minYmd && bounds?.maxYmd);
+      422: 
+      423:   // ✅ label e img robustos (assinam variações)
+      424:   const safeGetAnimalLabel = useCallback((grupoNum) => {
+      425:     const g = Number(grupoNum);
+      426:     if (!Number.isFinite(g)) return "";
+      427:     try {
+      428:       if (typeof getAnimalLabelFn === "function") {
+      429:         const a1 = getAnimalLabelFn({ grupo: g, animal: "" });
+      430:         const s1 = String(a1 ?? "").trim();
+      431:         if (s1) return s1;
+      432:       }
+      433:     } catch {}
+      434:     try {
+      435:       if (typeof getAnimalLabelFn === "function") {
+      436:         const a2 = getAnimalLabelFn(g);
+      437:         const s2 = String(a2 ?? "").trim();
+      438:         if (s2) return s2;
+      439:       }
+      440:     } catch {}
+      441:     return "";
+      442:   }, []);
+      443: 
+      444:   const safeGetImg = useCallback((grupoNum) => {
+      445:     const g = Number(grupoNum);
+      446:     if (!Number.isFinite(g)) return "";
+      447:     try {
+      448:       if (typeof getImgFromGrupoFn === "function") {
+      449:         const c128 = String(getImgFromGrupoFn(g, 128) || "").trim();
+      450:         if (c128) return c128;
+      451:         const c96 = String(getImgFromGrupoFn(g, 96) || "").trim();
+      452:         if (c96) return c96;
+      453:         const c64 = String(getImgFromGrupoFn(g, 64) || "").trim();
+      454:         if (c64) return c64;
+      455:         const base = String(getImgFromGrupoFn(g) || "").trim();
+      456:         if (base) return base;
+      457:       }
+      458:     } catch {}
+      459:     return "";
+      460:   }, []);
+      461: 
+      462:   /**
+
+--- linha 900 ---
+      865:         .ppImgCell{ width:66px; }
+      866:         .ppImg{
+      867:           width:34px; height:34px;
+      868:           border-radius:12px;
+      869:           border:2px solid rgba(202,166,75,0.55);
+      870:           box-shadow:0 14px 34px rgba(0,0,0,0.45);
+      871:           background:rgba(0,0,0,0.55);
+      872:           display:inline-flex;
+      873:           align-items:center;
+      874:           justify-content:center;
+      875:           overflow:hidden;
+      876:         }
+      877:         .ppImg img{ width:100%; height:100%; object-fit:cover; display:block; }
+      878: 
+      879:         .ppGrupo{ font-weight:900; letter-spacing:0.4px; color:#e9e9e9; }
+      880:         .ppAnimal{ width:150px; max-width:150px; font-weight:800; color:rgba(233,233,233,0.92); }
+      881:         .ppLast{ width:130px; text-align:center; color:rgba(233,233,233,0.72); font-weight:700; }
+      882:         .ppDays{ width:118px; font-weight:900; text-align:center; letter-spacing:0.2px; }
+      883:         .ppDays b{ color:#caa64b; }
+      884: 
+      885:         @media (max-width:1100px){
+      886:           .ppLate{ padding:12px 12px 10px; }
+      887:           .ppLateTable{ width:100%; }
+      888:           .ppAnimal{ width:140px; max-width:140px; }
+      889:         }
+      890:       `}</style>
+      891: 
+      892:       <div className="ppLateHeader">
+      893:         <div className="ppLateTitleWrap">
+      894:           <h1 className="ppLateTitle">Atrasados</h1>
+      895: 
+      896:           <div className="ppLateSubtitle">
+      897:             Leitura de atraso por <b>Grupo</b> · Prêmio{" "}
+      898:             <b>{prizeMode === "1-5" ? "1º ao 5º" : `${prizeMode}º`}</b> · Data{" "}
+      899:             <b>{titleDateBR}</b> · <b>{
+>>>   900: LATE_LOTTERY_OPTIONS.find(
+      901:   option => option.id === selectedLotteryId
+      902: )?.label || selectedLotteryId
+      903: }</b> · Loteria{" "}
+      904:             <b>{LOTTERY_DISPLAY}</b>
+      905:             {meta?.effectiveTargetYmd && meta.effectiveTargetYmd !== dateYmd ? (
+      906:               <>
+      907:                 {" · "}
+      908:                 Data efetiva <b>{effectiveDateBR}</b>
+      909:               </>
+      910:             ) : null}
+      911:             {lastImportedBR ? (
+      912:               <>
+      913:                 {" · "}
+      914:                 Último sorteio importado <b>{lastImportedBR}</b>
+      915:               </>
+      916:             ) : null}
+      917:           </div>
+      918:         </div>
+      919: 
+      920:         <div className="ppLateControls">
+      921: 
+      922: 
+      923:           <div className="ppCtl">
+      924:             <label htmlFor="lateLottery">Loteria</label>
+      925: 
+      926:             <select
+      927:               id="lateLottery"
+      928:               value={selectedLotteryId}
+      929:               onChange={(event) =>
+      930:                 setSelectedLotteryId(event.target.value)
+      931:               }
+      932:               disabled={loading}
+      933:             >
+      934:               {LATE_LOTTERY_OPTIONS.map((option) => (
+      935:                 <option
+      936:                   key={option.id}
+      937:                   value={option.id}
+      938:                 >
+      939:                   {option.label}
+      940:                 </option>
+      941:               ))}
+      942:             </select>
+      943:           </div>
+      944:           <div className="ppCtl">
+      945:             <label htmlFor="lateHour">Horário</label>
+      946: 
+      947:             <select
+      948:               id="lateHour"
+      949:               value={lotteryOptId}
+      950:               onChange={(event) =>
+      951:                 setLotteryOptId(
+      952:                   String(event.target.value || "ALL")
+      953:                 )
+      954:               }
+      955:               disabled={loading}
+      956:             >
+      957:               {selectedHourOptions.map((option) => (
+      958:                 <option
+      959:                   key={option.id}
+      960:                   value={option.id}
+      961:                 >
+      962:                   {option.label}
+      963:                 </option>
+      964:               ))}
+      965:             </select>
+      966:           </div>
+      967: 
+      968:           <div className="ppCtl">
+      969:             <label>Tipo</label>
+
+--- linha 934 ---
+      899:             <b>{titleDateBR}</b> · <b>{
+      900: LATE_LOTTERY_OPTIONS.find(
+      901:   option => option.id === selectedLotteryId
+      902: )?.label || selectedLotteryId
+      903: }</b> · Loteria{" "}
+      904:             <b>{LOTTERY_DISPLAY}</b>
+      905:             {meta?.effectiveTargetYmd && meta.effectiveTargetYmd !== dateYmd ? (
+      906:               <>
+      907:                 {" · "}
+      908:                 Data efetiva <b>{effectiveDateBR}</b>
+      909:               </>
+      910:             ) : null}
+      911:             {lastImportedBR ? (
+      912:               <>
+      913:                 {" · "}
+      914:                 Último sorteio importado <b>{lastImportedBR}</b>
+      915:               </>
+      916:             ) : null}
+      917:           </div>
+      918:         </div>
+      919: 
+      920:         <div className="ppLateControls">
+      921: 
+      922: 
+      923:           <div className="ppCtl">
+      924:             <label htmlFor="lateLottery">Loteria</label>
+      925: 
+      926:             <select
+      927:               id="lateLottery"
+      928:               value={selectedLotteryId}
+      929:               onChange={(event) =>
+      930:                 setSelectedLotteryId(event.target.value)
+      931:               }
+      932:               disabled={loading}
+      933:             >
+>>>   934:               {LATE_LOTTERY_OPTIONS.map((option) => (
+      935:                 <option
+      936:                   key={option.id}
+      937:                   value={option.id}
+      938:                 >
+      939:                   {option.label}
+      940:                 </option>
+      941:               ))}
+      942:             </select>
+      943:           </div>
+      944:           <div className="ppCtl">
+      945:             <label htmlFor="lateHour">Horário</label>
+      946: 
+      947:             <select
+      948:               id="lateHour"
+      949:               value={lotteryOptId}
+      950:               onChange={(event) =>
+      951:                 setLotteryOptId(
+      952:                   String(event.target.value || "ALL")
+      953:                 )
+      954:               }
+      955:               disabled={loading}
+      956:             >
+      957:               {selectedHourOptions.map((option) => (
+      958:                 <option
+      959:                   key={option.id}
+      960:                   value={option.id}
+      961:                 >
+      962:                   {option.label}
+      963:                 </option>
+      964:               ))}
+      965:             </select>
+      966:           </div>
+      967: 
+      968:           <div className="ppCtl">
+      969:             <label>Tipo</label>
+      970:             <select value={kind} onChange={(e) => setKind(String(e.target.value || "grupo"))}>
+      971:               <option value="grupo">Grupo</option>
+      972:               <option value="milhar" disabled>Milhar</option>
+      973:               <option value="centena" disabled>Centena</option>
+      974:               <option value="dezena" disabled>Dezena</option>
+      975:               <option value="unidade" disabled>Unidade</option>
+      976:             </select>
+      977:           </div>
+      978: 
+      979:           <div className="ppCtl">
+      980:             <label>Prêmio</label>
+      981:             <select value={prizeMode} onChange={(e) => setPrizeMode(String(e.target.value || "1"))}>
+      982:               <option value="1">1º Prêmio</option>
+      983:               <option value="2">2º Prêmio</option>
+      984:               <option value="3">3º Prêmio</option>
+      985:               <option value="4">4º Prêmio</option>
+      986:               <option value="5">5º Prêmio</option>
+      987:               <option value="1-5">1º ao 5º Prêmio</option>
+      988:             </select>
+      989:           </div>
+      990: 
+      991:           <div className="ppCtl">
+      992:             <label>Data</label>
+      993:             <input
+      994:               type="date"
+      995:               value={dateYmd}
+      996:               min={bounds?.minYmd || undefined}
+      997:               max={bounds?.maxYmd || undefined}
+      998:               onChange={(e) => onChangeDate(e.target.value || todayYMDLocal())}
+      999:             />
+     1000:           </div>
+     1001: 
+     1002:           <button className="ppBtn" onClick={() => refresh()} disabled={loading || !boundsReady}>
+     1003:             {loading ? "Carregando..." : "Atualizar"}
+
+========================================================================================================================
+src/pages/Top3/top3.constants.js
+========================================================================================================================
+
+--- linha 18 ---
+        1: // src/pages/Top3/top3.constants.js
+        2: 
+        3: export const LOOKBACK_ALL = "ALL";
+        4: 
+        5: export const LOOKBACK_OPTIONS = [
+        6:   { value: LOOKBACK_ALL, label: "Todos" },
+        7:   { value: 180, label: "180 dias" },
+        8:   { value: 150, label: "150 dias" },
+        9:   { value: 120, label: "120 dias" },
+       10:   { value: 90, label: "90 dias" },
+       11:   { value: 60, label: "60 dias" },
+       12:   { value: 30, label: "30 dias" },
+       13:   { value: 21, label: "21 dias" },
+       14:   { value: 14, label: "14 dias" },
+       15:   { value: 7, label: "7 dias" },
+       16: ];
+       17: 
+>>>    18: export const LOTTERY_OPTIONS = [
+       19:   { key: "PT_RIO", value: "PT_RIO", label: "RJ (PT_RIO)" },
+       20:   { key: "FEDERAL", value: "FEDERAL", label: "Federal" },
+       21: ];
+       22: 
+       23: // Grades
+       24: export const PT_RIO_SCHEDULE_NORMAL = [
+       25:   "09:00",
+       26:   "11:00",
+       27:   "14:00",
+       28:   "16:00",
+       29:   "18:00",
+       30:   "21:00",
+       31: ];
+       32: 
+       33: export const PT_RIO_SCHEDULE_SUNDAY = [
+       34:   "09:00",
+       35:   "11:00",
+       36:   "14:00",
+       37:   "16:00",
+       38: ];
+       39: 
+       40: /**
+       41:  * PT_RIO em QUA/SÁB (RJ)
+       42:  * Mantém 18:00 porque existem ocorrências históricas nesse horário.
+       43:  * A ausência eventual do sorteio deve ser tratada pelo motor/dados reais,
+       44:  * não pela exclusão rígida da grade.
+       45:  */
+       46: export const PT_RIO_SCHEDULE_WED_SAT = [
+       47:   "09:00",
+       48:   "11:00",
+       49:   "14:00",
+       50:   "16:00",
+       51:   "18:00",
+       52:   "21:00",
+       53: ];
+       54: 
+       55: // Federal: travado em 20h
+       56: export const FEDERAL_SCHEDULE = ["20:00"];
+       57: 
+       58: /* =========================
+       59:    Parâmetros do motor TOP3
+       60: ========================= */
+       61: 
+       62: export const TOP3_SMOOTH_ALPHA = 1;
+       63: export const TOP3_SHRINK_M = 40;
+       64: 
+       65: export const TOP3_NEXTDRAW_SCAN_MAX_STEPS = 18;
+       66: export const TOP3_NEXTDRAW_SCAN_MAX_DAYS = 7;
+       67: 
+       68: export const TOP3_GROUPS_K = 25;
+       69: 
+       70: /* =========================
+       71:    Calibração Estatística
+       72: ========================= */
+       73: 
+       74: export const TOP3_SCENE_WEIGHT = 0.06;
+       75: export const TOP3_SCENE_SAMPLE_TARGET = 60;
+       76: export const TOP3_SCENE_BLEND_SCENE = 0.55;
+       77: export const TOP3_SCENE_BLEND_UNIFORM = 0.45;
+
+========================================================================================================================
+src/pages/Top3/top3.hooks.js
+========================================================================================================================
+
+--- linha 18 ---
+        1: import { useCallback, useEffect, useMemo, useRef, useState } from "react";
+        2: 
+        3: import {
+        4:   safeStr,
+        5:   isYMD,
+        6:   ymdToBR,
+        7:   normalizeToYMD,
+        8:   todayYMDLocal,
+        9:   addDaysYMD,
+       10:   toHourBucket,
+       11:   hourToInt,
+       12:   getCentena3,
+       13: } from "./top3.formatters";
+       14: 
+       15: import {
+       16:   LOOKBACK_ALL,
+       17:   LOOKBACK_OPTIONS,
+>>>    18:   LOTTERY_OPTIONS,
+       19:   PT_RIO_SCHEDULE_NORMAL,
+       20:   PT_RIO_SCHEDULE_WED_SAT,
+       21:   FEDERAL_SCHEDULE,
+       22: } from "./top3.constants";
+       23: 
+       24: import {
+       25:   getScheduleForLottery,
+       26:   findLastDrawInList,
+       27:   pickDrawHour,
+       28:   pickDrawYMD,
+       29:   pickPrize1GrupoFromDraw,
+       30:   getPreviousDrawRobust,
+       31:   build16MilharesForGrupo,
+       32:   buildMilharesForGrupo,
+       33:   getNextSlotForLottery,
+       34:   isFederalDrawDay,
+       35: } from "./top3.engine";
+       36: 
+       37: import { lotteryLabel } from "./top3.selectors";
+       38: 
+       39: import {
+       40:   registerPrediction,
+       41:   reconcilePendingTop3Log,
+       42:   ensureDayTimeline,
+       43: } from "./top3.storage";
+       44: 
+       45: import {
+       46:   saveTop3PredictionSnapshot,
+       47:   loadTop3PredictionDay,
+       48:   reconcileTop3PredictionDay,
+       49: } from "./top3.firestore";
+       50: 
+       51: import {
+       52:   getKingResultsByDate,
+       53:   getKingResultsByRange,
+       54:   getKingBoundsByUf,
+       55: } from "../../services/kingResultsService";
+       56: 
+       57: import { getAnimalLabel } from "../../constants/bichoMap";
+       58: 
+       59: import {
+       60:   fallbackBaseSearch,
+       61:   loadHistoryRange,
+       62: } from "./modules/top3.loader";
+       63: 
+       64: import { computeTop3Analytics } from "./modules/top3.analytics";
+       65: 
+       66: import { buildTop3Predictions } from "./modules/top3.prediction";
+       67: 
+       68: import { buildTop3TimelineViewModel } from "./modules/top3.timeline";
+       69: 
+       70: import {
+       71:   buildTop3MilharesCols,
+       72:   resolveTop3ProbValue,
+       73: } from "./modules/top3.viewmodel";
+       74: 
+       75: import {
+       76:   normalizeImgSrc,
+       77:   getGrupoImgSrc,
+       78:   buildResultStyleImgVariants,
+       79: } from "./top3.images";
+       80: 
+       81: function emptyAnalytics() {
+       82:   return { top: [], meta: null };
+       83: }
+       84: 
+       85: function drawTs(draw) {
+       86:   const y = pickDrawYMD(draw);
+       87:   const h = toHourBucket(pickDrawHour(draw));
+
+--- linha 1189 ---
+     1154: 
+     1155:     reconcileTop3PredictionDay({
+     1156:       lotteryKey: lotteryKeySafe,
+     1157:       targetYmd: timelineYmd,
+     1158:       schedule,
+     1159:       draws: allDraws,
+     1160:     })
+     1161:       .then(async () => {
+     1162:         const history = await loadTop3PredictionDay({
+     1163:           lotteryKey: lotteryKeySafe,
+     1164:           targetYmd: timelineYmd,
+     1165:           schedule,
+     1166:         });
+     1167: 
+     1168:         setPersistedTop3History(
+     1169:           Array.isArray(history) ? history : []
+     1170:         );
+     1171:       })
+     1172:       .catch((error) => {
+     1173:         if (debugTop3) {
+     1174:           console.warn("[TOP3 FIRESTORE RECONCILE]", error);
+     1175:         }
+     1176:       });
+     1177:   }, [
+     1178:     todayDraws,
+     1179:     rangeDraws,
+     1180:     lotteryKeySafe,
+     1181:     timelineYmd,
+     1182:     schedule,
+     1183:     debugTop3,
+     1184:   ]);
+     1185: 
+     1186:   return {
+     1187:     LOOKBACK_ALL,
+     1188:     LOOKBACK_OPTIONS,
+>>>  1189:     LOTTERY_OPTIONS,
+     1190: 
+     1191:     lotteryKeySafe,
+     1192:     ymdSafe,
+     1193:     loadedYmd,
+     1194:     lookback,
+     1195:     loading,
+     1196:     loadingStage,
+     1197:     error,
+     1198:     dateBR,
+     1199:     schedule,
+     1200:     isFederalNonDrawDay,
+     1201:     rangeLabel,
+     1202: 
+     1203:     lastHourBucket,
+     1204:     targetHourBucket,
+     1205:     targetYmd,
+     1206:     analysisHourBucket,
+     1207:     analysisYmd,
+     1208: 
+     1209:     prevLabel,
+     1210:     lastLabel,
+     1211:     layerMetaText,
+     1212: 
+     1213:     top3,
+     1214:     timelineTop3,
+     1215:     persistedTop3History,
+     1216: 
+     1217:     setLotteryKey,
+     1218:     setYmd,
+     1219:     setLookback,
+     1220:     load,
+     1221: 
+     1222:     safeStr,
+     1223:     lotteryLabel,
+     1224: 
+     1225:     build16: (grupo2) =>
+     1226:       build16MilharesForGrupo({
+     1227:         rangeDraws,
+     1228:         analysisHourBucket,
+     1229:         schedule,
+     1230:         grupo2,
+     1231:         targetYmd: analysisYmd,
+     1232:       }),
+     1233: 
+     1234:     build20,
+     1235:     getCentena3,
+     1236:     normalizeImgSrc,
+     1237:   };
+     1238: }
+
+========================================================================================================================
+src/pages/Top3/Top3View.jsx
+========================================================================================================================
+
+--- linha 1231 ---
+     1196:               theme={t}
+     1197:               copiedAllKey={copiedAllKey}
+     1198:               copiedCellKey={copiedCellKey}
+     1199:               setCopiedAllKey={setCopiedAllKey}
+     1200:               setCopiedCellKey={setCopiedCellKey}
+     1201:               copyText={copyText}
+     1202:               build16={build16}
+     1203:               buildMilhares={buildMilhares}
+     1204:               build20={build20}
+     1205:             />
+     1206:           ))}
+     1207:         </div>
+     1208:       ) : (
+     1209:         <CompactTop3Result
+     1210:           slot={slot}
+     1211:           status={status}
+     1212:           statusLabel={statusLabel}
+     1213:           statusDetail={statusDetail}
+     1214:         />
+     1215:       )}
+     1216:     </section>
+     1217:   );
+     1218: }
+     1219: 
+     1220: export default function Top3View(props) {
+     1221:   const {
+     1222:     loading,
+     1223:     error,
+     1224:     timelineTop3,
+     1225:     persistedTop3History,
+     1226:     top3,
+     1227:     layerMetaText,
+     1228:     lastLabel,
+     1229:     prevLabel,
+     1230:     theme,
+>>>  1231:     LOTTERY_OPTIONS,
+     1232:     lotteryKeySafe,
+     1233:     setLotteryKey,
+     1234:     setYmd,
+     1235:     build16,
+     1236:     buildMilhares,
+     1237:     build20,
+     1238:     analysisYmd,
+     1239:     analysisHourBucket,
+     1240:     loadedYmd,
+     1241:     ymdSafe,
+     1242:     lastHourBucket,
+     1243:   } = props || {};
+     1244: 
+     1245:   // TODO_BACKTEST_REAL
+     1246: // Os cards estatísticos deverão consumir auditTop3Backtest()
+     1247: // evitando cálculos paralelos na interface.
+     1248: //
+     1249: // Fase atual:
+     1250: // apenas corrigindo nomenclatura para refletir o cálculo existente.
+     1251: 
+     1252: const list = Array.isArray(top3)
+     1253:   ? top3.slice(0, 3)
+     1254:   : [];
+     1255:   const timeline = (Array.isArray(timelineTop3) ? timelineTop3 : [])
+     1256:   .slice()
+     1257:   .sort((a, b) => {
+     1258:     const ta = `${a?.targetYmd || ""} ${a?.targetHour || ""}`;
+     1259:     const tb = `${b?.targetYmd || ""} ${b?.targetHour || ""}`;
+     1260:     return ta.localeCompare(tb);
+     1261:   });
+     1262: 
+     1263:   const showDetailedTimeline = false;
+     1264: 
+     1265:   const meta = useMemo(() => {
+     1266:     const last = lastLabel || "—";
+     1267:     const prev = prevLabel || "—";
+     1268:     const layer = cleanLayerText(layerMetaText || "—");
+     1269:     return { last, prev, layer };
+     1270:   }, [lastLabel, prevLabel, layerMetaText]);
+     1271: 
+     1272:   const headerBase = useMemo(() => meta.last || "—", [meta.last]);
+     1273: 
+     1274:   const headerForecast = useMemo(() => {
+     1275:     return formatYmdHour(analysisYmd, analysisHourBucket);
+     1276:   }, [analysisYmd, analysisHourBucket]);
+     1277: 
+     1278:   const headerTransition = useMemo(() => {
+     1279:     const from = String(lastHourBucket || "").trim();
+     1280:     const to = String(analysisHourBucket || "").trim();
+     1281:     if (from && to) return `${from} → ${to}`;
+     1282:     return "—";
+     1283:   }, [lastHourBucket, analysisHourBucket]);
+     1284: 
+     1285:   const t = theme || {
+     1286:     bg: "#050505",
+     1287:     panel: "rgba(0,0,0,0.55)",
+     1288:     border: "rgba(255,255,255,0.18)",
+     1289:     text: "rgba(255,255,255,0.92)",
+     1290:     muted: "rgba(255,255,255,0.72)",
+     1291:     accent: "rgba(201,168,62,0.92)",
+     1292:   };
+     1293: 
+     1294:   const [copiedAllKey, setCopiedAllKey] = useState("");
+     1295:   const [copiedCellKey, setCopiedCellKey] = useState("");
+     1296: 
+     1297: 
+     1298:   useEffect(() => {
+     1299:     if (!copiedAllKey) return;
+     1300:     const id = setTimeout(() => setCopiedAllKey(""), 900);
+
+--- linha 1340 ---
+     1305:     if (!copiedCellKey) return;
+     1306:     const id = setTimeout(() => setCopiedCellKey(""), 750);
+     1307:     return () => clearTimeout(id);
+     1308:   }, [copiedCellKey]);
+     1309: 
+     1310:   const copyText = useCallback(async (txt) => {
+     1311:     const s = String(txt || "").trim();
+     1312:     if (!s) return false;
+     1313: 
+     1314:     try {
+     1315:       if (typeof navigator !== "undefined" && navigator?.clipboard?.writeText) {
+     1316:         await navigator.clipboard.writeText(s);
+     1317:         return true;
+     1318:       }
+     1319:     } catch {}
+     1320: 
+     1321:     try {
+     1322:       if (typeof document === "undefined") return false;
+     1323: 
+     1324:       const ta = document.createElement("textarea");
+     1325:       ta.value = s;
+     1326:       ta.style.position = "fixed";
+     1327:       ta.style.left = "-9999px";
+     1328:       ta.style.top = "0";
+     1329:       document.body.appendChild(ta);
+     1330:       ta.focus();
+     1331:       ta.select();
+     1332:       document.execCommand("copy");
+     1333:       document.body.removeChild(ta);
+     1334:       return true;
+     1335:     } catch {
+     1336:       return false;
+     1337:     }
+     1338:   }, []);
+     1339: 
+>>>  1340:   const baseLots = Array.isArray(LOTTERY_OPTIONS) ? LOTTERY_OPTIONS : [];
+     1341:   const mustHave = [
+     1342:     { value: "PT_RIO", label: "PT_RIO (RJ)" },
+     1343:     { value: "FEDERAL", label: "Federal" },
+     1344:     { value: "LOOK", label: "LOOK" },
+     1345:     { value: "NACIONAL", label: "Nacional" },
+     1346:   ];
+     1347: 
+     1348:   const map = new Map();
+     1349: 
+     1350:   [...baseLots, ...mustHave].forEach((op) => {
+     1351:     const rawVal = String(op?.value ?? op?.key ?? "").toUpperCase();
+     1352:     if (!rawVal) return;
+     1353: 
+     1354:     if (!map.has(rawVal)) {
+     1355:       map.set(rawVal, {
+     1356:         value: rawVal,
+     1357:         label: op?.label || rawVal,
+     1358:       });
+     1359:     }
+     1360:   });
+     1361: 
+     1362:   const lotOptions = [
+     1363:     map.get("PT_RIO"),
+     1364:     map.get("FEDERAL"),
+     1365:     map.get("LOOK"),
+     1366:     map.get("NACIONAL"),
+     1367:     ...[...map.values()].filter(
+     1368:       (x) =>
+     1369:         ![
+     1370:           "PT_RIO",
+     1371:           "FEDERAL",
+     1372:           "LOOK",
+     1373:           "NACIONAL",
+     1374:         ].includes(
+     1375:           String(
+     1376:             x?.value || ""
+     1377:           ).toUpperCase()
+     1378:         )
+     1379:     ),
+     1380:   ].filter(Boolean);
+     1381: 
+     1382:   const curLot = String(lotteryKeySafe || "PT_RIO").toUpperCase();
+     1383:   const heroItem = list[0] || null;
+     1384:   const secondaryItems = list.slice(1, 3);
+     1385: 
+     1386:   const historyAnchorYmd = useMemo(() => {
+     1387:   const loaded = String(loadedYmd || "").trim();
+     1388:   if (isYMD(loaded)) return loaded;
+     1389: 
+     1390:   const selected = String(ymdSafe || "").trim();
+     1391:   if (isYMD(selected)) return selected;
+     1392: 
+     1393:   const realized = (Array.isArray(timeline) ? timeline : [])
+     1394:     .filter((slot) => String(slot?.status || "").toLowerCase() === "validated")
+     1395:     .slice()
+     1396:     .sort((a, b) => {
+     1397:       const ta = `${a?.targetYmd || ""} ${a?.targetHour || ""}`;
+     1398:       const tb = `${b?.targetYmd || ""} ${b?.targetHour || ""}`;
+     1399:       return tb.localeCompare(ta);
+     1400:     });
+     1401: 
+     1402:   const fallback = String(realized?.[0]?.targetYmd || "").trim();
+     1403:   return isYMD(fallback) ? fallback : "";
+     1404: }, [loadedYmd, ymdSafe, timeline]);
+     1405: 
+     1406:   const historyRows = useMemo(() => {
+     1407:   const persisted = Array.isArray(persistedTop3History)
+     1408:     ? persistedTop3History
+     1409:     : [];
+
+========================================================================================================================
+src/pages/Top3/Top3View.premium.backup.jsx
+========================================================================================================================
+
+--- linha 967 ---
+      932:               item={item}
+      933:               idx={i}
+      934:               theme={t}
+      935:               copiedAllKey={copiedAllKey}
+      936:               copiedCellKey={copiedCellKey}
+      937:               setCopiedAllKey={setCopiedAllKey}
+      938:               setCopiedCellKey={setCopiedCellKey}
+      939:               copyText={copyText}
+      940:               build16={build16}
+      941:               buildMilhares={buildMilhares}
+      942:               build20={build20}
+      943:             />
+      944:           ))}
+      945:         </div>
+      946:       ) : (
+      947:         <CompactTop3Result
+      948:           slot={slot}
+      949:           status={status}
+      950:           statusLabel={statusLabel}
+      951:           statusDetail={statusDetail}
+      952:         />
+      953:       )}
+      954:     </section>
+      955:   );
+      956: }
+      957: 
+      958: export default function Top3View(props) {
+      959:   const {
+      960:     loading,
+      961:     error,
+      962:     timelineTop3,
+      963:     layerMetaText,
+      964:     lastLabel,
+      965:     prevLabel,
+      966:     theme,
+>>>   967:     LOTTERY_OPTIONS,
+      968:     lotteryKeySafe,
+      969:     setLotteryKey,
+      970:     build16,
+      971:     buildMilhares,
+      972:     build20,
+      973:     analysisYmd,
+      974:     analysisHourBucket,
+      975:     lastHourBucket,
+      976:   } = props || {};
+      977: 
+      978:   const forecastSlot = useMemo(() => {
+      979:   if (!Array.isArray(timelineTop3) || !timelineTop3.length) return null;
+      980: 
+      981:   return timelineTop3.find((slot) =>
+      982:     String(slot?.targetYmd || "").trim() === String(analysisYmd || "").trim() &&
+      983:     String(slot?.targetHour || "").trim() === String(analysisHourBucket || "").trim()
+      984:   ) || null;
+      985: }, [timelineTop3, analysisYmd, analysisHourBucket]);
+      986: 
+      987: const list = Array.isArray(forecastSlot?.top3)
+      988:   ? forecastSlot.top3.slice(0, 3)
+      989:   : [];
+      990:   const timeline = (Array.isArray(timelineTop3) ? timelineTop3 : [])
+      991:   .slice()
+      992:   .sort((a, b) => {
+      993:     const ta = `${a?.targetYmd || ""} ${a?.targetHour || ""}`;
+      994:     const tb = `${b?.targetYmd || ""} ${b?.targetHour || ""}`;
+      995:     return ta.localeCompare(tb);
+      996:   });
+      997: 
+      998:   const showDetailedTimeline = false;
+      999: 
+     1000:   const meta = useMemo(() => {
+     1001:     const last = lastLabel || "—";
+     1002:     const prev = prevLabel || "—";
+     1003:     const layer = cleanLayerText(layerMetaText || "—");
+     1004:     return { last, prev, layer };
+     1005:   }, [lastLabel, prevLabel, layerMetaText]);
+     1006: 
+     1007:   const headerBase = useMemo(() => meta.last || "—", [meta.last]);
+     1008: 
+     1009:   const headerForecast = useMemo(() => {
+     1010:     return formatYmdHour(analysisYmd, analysisHourBucket);
+     1011:   }, [analysisYmd, analysisHourBucket]);
+     1012: 
+     1013:   const headerTransition = useMemo(() => {
+     1014:     const from = String(lastHourBucket || "").trim();
+     1015:     const to = String(analysisHourBucket || "").trim();
+     1016:     if (from && to) return `${from} → ${to}`;
+     1017:     return "—";
+     1018:   }, [lastHourBucket, analysisHourBucket]);
+     1019: 
+     1020:   const t = theme || {
+     1021:     bg: "#050505",
+     1022:     panel: "rgba(0,0,0,0.55)",
+     1023:     border: "rgba(255,255,255,0.18)",
+     1024:     text: "rgba(255,255,255,0.92)",
+     1025:     muted: "rgba(255,255,255,0.72)",
+     1026:     accent: "rgba(201,168,62,0.92)",
+     1027:   };
+     1028: 
+     1029:   const [copiedAllKey, setCopiedAllKey] = useState("");
+     1030:   const [copiedCellKey, setCopiedCellKey] = useState("");
+     1031: 
+     1032: 
+     1033:   useEffect(() => {
+     1034:     if (!copiedAllKey) return;
+     1035:     const id = setTimeout(() => setCopiedAllKey(""), 900);
+     1036:     return () => clearTimeout(id);
+
+--- linha 1075 ---
+     1040:     if (!copiedCellKey) return;
+     1041:     const id = setTimeout(() => setCopiedCellKey(""), 750);
+     1042:     return () => clearTimeout(id);
+     1043:   }, [copiedCellKey]);
+     1044: 
+     1045:   const copyText = useCallback(async (txt) => {
+     1046:     const s = String(txt || "").trim();
+     1047:     if (!s) return false;
+     1048: 
+     1049:     try {
+     1050:       if (typeof navigator !== "undefined" && navigator?.clipboard?.writeText) {
+     1051:         await navigator.clipboard.writeText(s);
+     1052:         return true;
+     1053:       }
+     1054:     } catch {}
+     1055: 
+     1056:     try {
+     1057:       if (typeof document === "undefined") return false;
+     1058: 
+     1059:       const ta = document.createElement("textarea");
+     1060:       ta.value = s;
+     1061:       ta.style.position = "fixed";
+     1062:       ta.style.left = "-9999px";
+     1063:       ta.style.top = "0";
+     1064:       document.body.appendChild(ta);
+     1065:       ta.focus();
+     1066:       ta.select();
+     1067:       document.execCommand("copy");
+     1068:       document.body.removeChild(ta);
+     1069:       return true;
+     1070:     } catch {
+     1071:       return false;
+     1072:     }
+     1073:   }, []);
+     1074: 
+>>>  1075:   const baseLots = Array.isArray(LOTTERY_OPTIONS) ? LOTTERY_OPTIONS : [];
+     1076:   const mustHave = [
+     1077:     { value: "PT_RIO", label: "PT_RIO (RJ)" },
+     1078:     { value: "FEDERAL", label: "Federal" },
+     1079:   ];
+     1080: 
+     1081:   const map = new Map();
+     1082: 
+     1083:   [...baseLots, ...mustHave].forEach((op) => {
+     1084:     const rawVal = String(op?.value ?? op?.key ?? "").toUpperCase();
+     1085:     if (!rawVal) return;
+     1086: 
+     1087:     if (!map.has(rawVal)) {
+     1088:       map.set(rawVal, {
+     1089:         value: rawVal,
+     1090:         label: op?.label || rawVal,
+     1091:       });
+     1092:     }
+     1093:   });
+     1094: 
+     1095:   const lotOptions = [
+     1096:     map.get("PT_RIO"),
+     1097:     map.get("FEDERAL"),
+     1098:     ...[...map.values()].filter(
+     1099:       (x) => !["PT_RIO", "FEDERAL"].includes(String(x?.value || "").toUpperCase())
+     1100:     ),
+     1101:   ].filter(Boolean);
+     1102: 
+     1103:   const curLot = String(lotteryKeySafe || "PT_RIO").toUpperCase();
+     1104:   const heroItem = list[0] || null;
+     1105:   const secondaryItems = list.slice(1, 3);
+     1106: 
+     1107:   const historyAnchorYmd = useMemo(() => {
+     1108:   const y = String(analysisYmd || "").trim();
+     1109:   if (isYMD(y)) return y;
+     1110: 
+     1111:   const lastTimeline = Array.isArray(timeline) && timeline.length
+     1112:     ? timeline[timeline.length - 1]
+     1113:     : null;
+     1114: 
+     1115:   const fallback = String(lastTimeline?.targetYmd || "").trim();
+     1116:   return isYMD(fallback) ? fallback : "";
+     1117: }, [analysisYmd, timeline]);
+     1118: 
+     1119:   const historyRows = useMemo(() => {
+     1120:   if (!Array.isArray(timeline) || !timeline.length || !historyAnchorYmd) return [];
+     1121: 
+     1122:   return timeline
+     1123:     .filter((slot) => String(slot?.targetYmd || "").trim() === historyAnchorYmd)
+     1124:     .sort((a, b) => {
+     1125:       const ah = hourBucketToSortValue(a?.targetHour);
+     1126:       const bh = hourBucketToSortValue(b?.targetHour);
+     1127:       return ah - bh;
+     1128:     })
+     1129:     .map((slot) => {
+     1130:       const slotTop3 = Array.isArray(slot?.top3) ? slot.top3.slice(0, 3) : [];
+     1131:       const resultGrupo = getSlotResultGrupo(slot);
+     1132:       const hasResult =
+     1133:         Number.isFinite(resultGrupo) && resultGrupo >= 1 && resultGrupo <= 25;
+     1134: 
+     1135:       const analysis = analyzeTop3Hit(
+     1136:         slotTop3,
+     1137:         resultGrupo,
+     1138:         extractResultMilhar(slot)
+     1139:       );
+     1140: 
+     1141:       return {
+     1142:         targetKey: `${String(slot?.targetYmd || "")}__${String(slot?.targetHour || "")}`,
+     1143:         target: {
+     1144:           ymd: String(slot?.targetYmd || ""),
+

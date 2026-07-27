@@ -1,0 +1,1039 @@
+"use strict";
+
+const { isPtRio18Expected } = require("../scripts/ptRioCalendar");
+
+const express = require("express");
+const fs = require("fs");
+const path = require("path");
+const { getDb } = require("../service/firebaseAdmin");
+
+const router = express.Router();
+
+/* =========================
+   TIME (America/Sao_Paulo)
+========================= */
+
+function todayYMDInSaoPaulo() {
+  try {
+    const parts = new Intl.DateTimeFormat("en-CA", {
+      timeZone: "America/Sao_Paulo",
+      year: "numeric",
+      month: "2-digit",
+      day: "2-digit",
+    }).formatToParts(new Date());
+    const y = parts.find((p) => p.type === "year")?.value || "1970";
+    const m = parts.find((p) => p.type === "month")?.value || "01";
+    const d = parts.find((p) => p.type === "day")?.value || "01";
+    return `${y}-${m}-${d}`;
+  } catch {
+    const d = new Date();
+    const y = d.getFullYear();
+    const m = String(d.getMonth() + 1).padStart(2, "0");
+    const dd = String(d.getDate()).padStart(2, "0");
+    return `${y}-${m}-${dd}`;
+  }
+}
+
+function nowMinutesInSaoPaulo() {
+  try {
+    const parts = new Intl.DateTimeFormat("en-GB", {
+      timeZone: "America/Sao_Paulo",
+      hour: "2-digit",
+      minute: "2-digit",
+      hour12: false,
+    }).formatToParts(new Date());
+
+    const hh = Number(parts.find((p) => p.type === "hour")?.value || "0");
+    const mm = Number(parts.find((p) => p.type === "minute")?.value || "0");
+    if (!Number.isFinite(hh) || !Number.isFinite(mm)) return 0;
+    return hh * 60 + mm;
+  } catch {
+    const d = new Date();
+    return d.getHours() * 60 + d.getMinutes();
+  }
+}
+
+function hourToMinutes(hh) {
+  const n = Number(String(hh ?? "").trim());
+  if (!Number.isFinite(n)) return NaN;
+  return n * 60;
+}
+
+function isSlotPublishedToday(hh, nowMin, graceMin) {
+  const hm = hourToMinutes(hh);
+  if (!Number.isFinite(hm)) return false;
+  const g = Number.isFinite(graceMin) ? graceMin : 25;
+  return nowMin >= hm + g;
+}
+
+/* =========================
+   LOTTERY KEY NORMALIZATION
+========================= */
+
+function normalizeLotteryKey(v) {
+  const s = String(v ?? "").trim().toUpperCase();
+
+  if (s === "RJ" || s === "RIO" || s === "PT-RIO" || s === "PT_RIO") return "PT_RIO";
+  if (s === "FED" || s === "FEDERAL" || s === "BR") return "FEDERAL";
+
+  return "";
+}
+
+/* =========================
+   HELPERS
+========================= */
+
+function isISODate(s) {
+  const str = String(s || "").trim();
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(str)) return false;
+
+  const [y, m, d] = str.split("-").map(Number);
+  const dt = new Date(Date.UTC(y, m - 1, d));
+
+  return (
+    dt.getUTCFullYear() === y &&
+    dt.getUTCMonth() === m - 1 &&
+    dt.getUTCDate() === d
+  );
+}
+
+function isHHMM(s) {
+  const str = String(s || "").trim();
+  const m = str.match(/^(\d{2}):(\d{2})$/);
+  if (!m) return false;
+
+  const hh = Number(m[1]);
+  const mm = Number(m[2]);
+
+  return hh >= 0 && hh <= 23 && mm >= 0 && mm <= 59;
+}
+
+function pad2(n) {
+  return String(n).padStart(2, "0");
+}
+
+function normalizeHHMM(value) {
+  const s = String(value ?? "").trim();
+  if (!s) return "";
+
+  if (isHHMM(s)) return s;
+
+  const m1 = s.match(/^(\d{1,2})h$/i);
+  if (m1) {
+    const hh = Number(m1[1]);
+    if (hh >= 0 && hh <= 23) return `${pad2(hh)}:00`;
+    return "";
+  }
+
+  const m2 = s.match(/^(\d{1,2})$/);
+  if (m2) {
+    const hh = Number(m2[1]);
+    if (hh >= 0 && hh <= 23) return `${pad2(hh)}:00`;
+    return "";
+  }
+
+  const m3 = s.match(/^(\d{1,2}):(\d{1,2})$/);
+  if (m3) {
+    const hh = Number(m3[1]);
+    const mm = Number(m3[2]);
+    if (hh >= 0 && hh <= 23 && mm >= 0 && mm <= 59) {
+      return `${pad2(hh)}:${pad2(mm)}`;
+    }
+    return "";
+  }
+
+  return "";
+}
+
+function upTrim(v) {
+  return String(v ?? "").trim().toUpperCase();
+}
+
+function cmpHHMM(a, b) {
+  return String(a || "").localeCompare(String(b || ""));
+}
+
+function parseBool01(v) {
+  const s = String(v ?? "").trim().toLowerCase();
+  return s === "1" || s === "true" || s === "yes" || s === "y";
+}
+
+function parsePosInt(v, def, min, max) {
+  const s = String(v ?? "").trim();
+  if (!s) return def;
+
+  const n = Number(s);
+  if (!Number.isFinite(n)) return def;
+
+  const i = Math.trunc(n);
+  if (Number.isFinite(min) && i < min) return min;
+  if (Number.isFinite(max) && i > max) return max;
+  return i;
+}
+
+function uniqSorted(arr) {
+  return Array.from(new Set((Array.isArray(arr) ? arr : []).filter(Boolean))).sort();
+}
+
+function setDiff(a, bSet) {
+  const out = [];
+  for (const v of Array.isArray(a) ? a : []) {
+    if (!bSet.has(v)) out.push(v);
+  }
+  return out;
+}
+
+function intersectToSet(a, bSet) {
+  const out = new Set();
+  for (const v of Array.isArray(a) ? a : []) {
+    if (bSet.has(v)) out.add(v);
+  }
+  return out;
+}
+
+function isFutureISODate(ymd) {
+  if (!isISODate(ymd)) return false;
+  const todayBR = todayYMDInSaoPaulo();
+  return String(ymd) > String(todayBR);
+}
+
+/**
+ * Pega o melhor candidato de close_hour em docs legados.
+ */
+function getCloseCandidate(d) {
+  try {
+    const v =
+      d?.close_hour ??
+      d?.close ??
+      d?.close_hour_raw ??
+      d?.closeHour ??
+      d?.horario ??
+      d?.hour ??
+      "";
+    return String(v ?? "").trim();
+  } catch {
+    return "";
+  }
+}
+
+/**
+ * Normaliza close_hour para SLOT (compatível com import):
+ * - PT_RIO: HH:09 => slot HH:00
+ * - outros: preserva HH:MM
+ */
+function normalizeCloseHourForLottery(value, lotteryKey) {
+  const lk = upTrim(lotteryKey || "");
+  const raw0 = normalizeHHMM(value);
+  if (!raw0 || !isHHMM(raw0)) return { raw: "", slot: "" };
+
+  if (lk === "PT_RIO") {
+    const hh = raw0.slice(0, 2);
+    const mm = raw0.slice(3, 5);
+    const raw = mm === "09" ? "" : raw0;
+    return { raw, slot: `${hh}:00` };
+  }
+
+  return { raw: raw0, slot: raw0 };
+}
+
+function hourFromCloseHourSlot(closeHour, lotteryKey) {
+  const { slot } = normalizeCloseHourForLottery(closeHour, lotteryKey);
+  const s0 = String(slot ?? "").trim();
+  if (!s0) return null;
+  const m = s0.match(/(\d{1,2})/);
+  if (!m) return null;
+  const hh = Number(m[1]);
+  if (!Number.isFinite(hh) || hh < 0 || hh > 23) return null;
+  return pad2(hh);
+}
+
+async function fetchDayDrawDocs(db, date) {
+  const [snapDate, snapYmd] = await Promise.all([
+    db.collection("draws").where("date", "==", date).get(),
+    db.collection("draws").where("ymd", "==", date).get(),
+  ]);
+
+  const byId = new Map();
+
+  for (const doc of snapDate.docs) byId.set(doc.id, doc);
+  for (const doc of snapYmd.docs) byId.set(doc.id, doc);
+
+  return Array.from(byId.values());
+}
+
+/* =========================
+   Day Status cache
+========================= */
+
+const _dayStatusCache = new Map();
+const DAY_STATUS_TTL_MS = 60_000;
+
+function readDayStatusMap(lottery, opts) {
+  const key = upTrim(lottery || "PT_RIO") || "PT_RIO";
+  const reload = !!(opts && opts.reload);
+
+  const cached = _dayStatusCache.get(key);
+  if (!reload && cached && Date.now() - cached.loadedAt < DAY_STATUS_TTL_MS) {
+    return cached.map;
+  }
+
+  const p = path.join(__dirname, "..", "data", "day_status", `${key}.json`);
+  let map = {};
+  try {
+    if (fs.existsSync(p)) {
+      const raw = fs.readFileSync(p, "utf8");
+      const j = raw ? JSON.parse(raw) : {};
+      if (j && typeof j === "object") map = j;
+    }
+  } catch {
+    map = {};
+  }
+
+  _dayStatusCache.set(key, { loadedAt: Date.now(), map });
+  return map;
+}
+
+function shouldBlockDayStatus(dayStatus, strict) {
+  if (dayStatus === "holiday_no_draw") return true;
+  if (dayStatus === "incomplete") return true;
+  if (strict && dayStatus === "partial_hard") return true;
+  return false;
+}
+
+/* =========================
+   SLOT SCHEDULE
+========================= */
+
+const DEFAULT_SCHEDULE_DIR = path.join(__dirname, "..", "data", "slot_schedule");
+const DEFAULT_GAPS_DIR = path.join(__dirname, "..", "data", "source_gaps");
+
+function safeReadJson(p, fallback) {
+  try {
+    if (!fs.existsSync(p)) return fallback;
+    const raw = fs.readFileSync(p, "utf8");
+    const j = JSON.parse(raw || "{}");
+    return j && typeof j === "object" ? j : fallback;
+  } catch {
+    return fallback;
+  }
+}
+
+function normalizeHourList(arr) {
+  const out = [];
+  const seen = new Set();
+  for (const v of Array.isArray(arr) ? arr : []) {
+    const m = String(v ?? "").match(/\d{1,2}/);
+    if (!m) continue;
+    const hh = pad2(Number(m[0]));
+    const n = Number(hh);
+    if (!Number.isFinite(n) || n < 0 || n > 23) continue;
+    if (!seen.has(hh)) {
+      seen.add(hh);
+      out.push(hh);
+    }
+  }
+  return out.sort();
+}
+
+function shouldInclude09ForDate(ymd, include09FromYmd) {
+  if (include09FromYmd && isISODate(include09FromYmd)) return ymd >= include09FromYmd;
+  return false;
+}
+
+function expectedHoursPT_RIO_FALLBACK(ymd, include09FromYmd) {
+  const d = new Date(`${ymd}T12:00:00-03:00`);
+  const dow = d.getDay();
+
+  const has09 = shouldInclude09ForDate(ymd, include09FromYmd);
+
+  const hardWeek = ["11", "14", "16", "18", "21"];
+  const hardSun = ["11", "14", "16"];
+
+  const hard = [];
+  const soft = [];
+
+  if (dow === 0) {
+    hard.push(...hardSun);
+    if (has09) soft.push("09");
+    return { hard, soft, mode: "fallback", scheduleFile: false };
+  }
+
+  if (has09) hard.push("09");
+  hard.push(...hardWeek);
+
+  return { hard, soft, mode: "fallback", scheduleFile: false };
+}
+
+function pickRangeForDate(ranges, ymd) {
+  for (const r of Array.isArray(ranges) ? ranges : []) {
+    const from0 = String(r?.from || "").trim();
+    const to0 = String(r?.to || "").trim();
+
+    const hasFrom = isISODate(from0);
+    const hasTo = isISODate(to0);
+
+    if (!hasFrom && !hasTo) return r;
+
+    if (!hasFrom && hasTo) {
+      if (ymd <= to0) return r;
+      continue;
+    }
+    if (hasFrom && !hasTo) {
+      if (ymd >= from0) return r;
+      continue;
+    }
+
+    if (hasFrom && hasTo && ymd >= from0 && ymd <= to0) return r;
+  }
+  return null;
+}
+
+function parseScheduleGlobal(scheduleRaw) {
+  const hard = normalizeHourList(scheduleRaw?.hard || scheduleRaw?.expectedHard || []);
+  const soft = normalizeHourList(scheduleRaw?.soft || scheduleRaw?.expectedSoft || []);
+  const hours = normalizeHourList(scheduleRaw?.hours || []);
+  if (hours.length) return { hard: hours, soft: [], mode: "schedule", scheduleFile: true };
+  if (hard.length || soft.length) return { hard, soft, mode: "schedule", scheduleFile: true };
+  return null;
+}
+
+function getExpectedForDate(lotteryKey, ymd, include09FromYmdDefault) {
+  const p = path.join(DEFAULT_SCHEDULE_DIR, `${lotteryKey}.json`);
+  const scheduleRaw = safeReadJson(p, null);
+  const scheduleFile = !!scheduleRaw;
+
+  if (scheduleRaw) {
+    const global = parseScheduleGlobal(scheduleRaw);
+    if (global && (global.hard.length || global.soft.length)) return global;
+  }
+
+  const ranges = Array.isArray(scheduleRaw) ? scheduleRaw : scheduleRaw?.ranges;
+  const r = pickRangeForDate(ranges, ymd);
+
+  if (r) {
+    if (r.dow && typeof r.dow === "object") {
+      const d = new Date(String(ymd) + "T12:00:00-03:00");
+      const dow = String(d.getDay());
+      const block = r.dow[dow] || r.dow[Number(dow)] || null;
+
+      const hard = normalizeHourList(block?.hard || block?.expectedHard || []);
+      const soft = normalizeHourList(block?.soft || block?.expectedSoft || []);
+      const hours = normalizeHourList(block?.hours || []);
+
+      if (hours.length) return { hard: hours, soft: [], mode: "schedule", scheduleFile: true };
+      return { hard, soft, mode: "schedule", scheduleFile: true };
+    }
+
+    const hard = normalizeHourList(r?.hard || r?.expectedHard || []);
+    const soft = normalizeHourList(r?.soft || r?.expectedSoft || []);
+    const hours = normalizeHourList(r?.hours || []);
+    if (hours.length) return { hard: hours, soft: [], mode: "schedule", scheduleFile: true };
+    return { hard, soft, mode: "schedule", scheduleFile: true };
+  }
+
+  if (lotteryKey === "PT_RIO") {
+    return expectedHoursPT_RIO_FALLBACK(ymd, include09FromYmdDefault || "2024-01-05");
+  }
+
+  return { hard: [], soft: [], mode: "none", scheduleFile };
+}
+
+/* =========================
+   SOURCE GAPS
+========================= */
+
+const _gapsCache = new Map();
+const GAPS_TTL_MS = 60_000;
+
+function readGapsMap(lottery, opts) {
+  const key = upTrim(lottery || "PT_RIO") || "PT_RIO";
+  const reload = !!(opts && opts.reload);
+
+  const cached = _gapsCache.get(key);
+  if (!reload && cached && Date.now() - cached.loadedAt < GAPS_TTL_MS) {
+    return cached.map;
+  }
+
+  const p = path.join(DEFAULT_GAPS_DIR, `${key}.json`);
+  let map = {};
+  try {
+    if (fs.existsSync(p)) {
+      const raw = fs.readFileSync(p, "utf8");
+      const j = raw ? JSON.parse(raw) : {};
+      if (j && typeof j === "object") map = j;
+    }
+  } catch {
+    map = {};
+  }
+
+  _gapsCache.set(key, { loadedAt: Date.now(), map });
+  return map;
+}
+
+function normalizeGapEntry(entry) {
+  if (Array.isArray(entry)) {
+    return {
+      removedHard: normalizeHourList(entry),
+      removedSoft: [],
+    };
+  }
+
+  const obj = entry && typeof entry === "object" ? entry : {};
+  const hard = obj.removedHard || obj.removeHard || obj.hard || obj.expectedRemovedHard || [];
+  const soft = obj.removedSoft || obj.removeSoft || obj.soft || obj.expectedRemovedSoft || [];
+
+  return {
+    removedHard: normalizeHourList(hard),
+    removedSoft: normalizeHourList(soft),
+  };
+}
+
+function getGapsForDate(lotteryKey, ymd, opts) {
+  const map = readGapsMap(lotteryKey, opts);
+  const entry = map?.gapsByDay?.[ymd] ?? map?.[ymd];
+
+  if (!entry) return { removedHard: [], removedSoft: [] };
+  return normalizeGapEntry(entry);
+}
+
+/* =========================
+   CONCURRENCY
+========================= */
+
+async function mapWithConcurrency(items, limitN, mapper) {
+  const arr = Array.isArray(items) ? items : [];
+  const concurrency = Math.max(1, Number(limitN) || 6);
+  const results = new Array(arr.length);
+  let idx = 0;
+
+  async function worker() {
+    while (true) {
+      const current = idx;
+      idx += 1;
+      if (current >= arr.length) break;
+      results[current] = await mapper(arr[current], current);
+    }
+  }
+
+  await Promise.all(
+    Array.from({ length: Math.min(concurrency, arr.length) }, () => worker())
+  );
+  return results;
+}
+
+/* =========================
+   ROUTE
+========================= */
+
+function buildCalendarStatus({ slotsSummary, blocked = false, blockedReason = "", isToday = false }) {
+  const expected = Number(slotsSummary?.expectedTotal || 0);
+  const found = Number(slotsSummary?.foundTotal || 0);
+  const missing = Number(slotsSummary?.missingTotal || 0);
+
+  let status = "empty";
+  if (blocked) status = blockedReason === "future_date" ? "future" : "blocked";
+  else if (isToday && missing > 0) status = "pending";
+  else if (expected > 0 && missing === 0) status = "complete";
+  else if (found > 0 && missing > 0) status = "partial";
+  else if (expected > 0 && found === 0) status = "empty";
+
+  return {
+    status,
+    expected,
+    found,
+    missing,
+    completionPct: Number(slotsSummary?.completionPct ?? 0),
+  };
+}
+
+function buildSlots(opts) {
+  const {
+    scheduleAll,
+    byHour,
+    baseSoft,
+    removedHardApplied,
+    removedSoftApplied,
+    expectedHard,
+    expectedSoft,
+    expectedHardPublished,
+    expectedSoftPublished,
+    capToday,
+    isToday,
+    nowMinBR,
+    slotGraceMin,
+  } = opts || {};
+
+  return (Array.isArray(scheduleAll) ? scheduleAll : []).map((hh) => {
+    const draw = byHour?.get ? byHour.get(hh) || null : null;
+
+    const isSoft = Array.isArray(baseSoft) && baseSoft.includes(hh);
+    const kind = isSoft ? "soft" : "hard";
+
+    if (removedHardApplied?.has?.(hh) || removedSoftApplied?.has?.(hh)) {
+      return { hour: hh, kind, status: "gap", reason: "source_gap", draw: null };
+    }
+
+    if (draw) return { hour: hh, kind, status: "valid", draw };
+
+    if (
+      capToday &&
+      isToday &&
+      ((expectedHard && expectedHard.includes(hh)) || (expectedSoft && expectedSoft.includes(hh)))
+    ) {
+      const published = isSlotPublishedToday(hh, nowMinBR, slotGraceMin);
+      if (!published) {
+        return { hour: hh, kind, status: "future", reason: "not_yet_published", draw: null };
+      }
+    }
+
+    if (expectedHardPublished && expectedHardPublished.includes(hh)) {
+      return { hour: hh, kind: "hard", status: "missing", draw: null };
+    }
+    if (expectedSoftPublished && expectedSoftPublished.includes(hh)) {
+      return { hour: hh, kind: "soft", status: "soft_missing", draw: null };
+    }
+
+    return { hour: hh, kind, status: "gap", reason: "not_expected", draw: null };
+  });
+}
+
+router.get("/results", async (req, res) => {
+  if ((req.query.lotteryKey != null || req.query.lottery != null) && req.query.uf != null) {
+    return res.status(400).json({
+      ok: false,
+      error:
+        "Parâmetros conflitantes: quando 'lottery' (ou 'lotteryKey') é informado, 'uf' é ignorado. Remova 'uf' ou use apenas 'uf=RJ|BR' (legado).",
+      hint: "Use: ?date=YYYY-MM-DD&lottery=PT_RIO|FEDERAL  (ou)  ?date=YYYY-MM-DD&uf=RJ|BR",
+    });
+  }
+
+  const slotGraceMin = parsePosInt(req.query.slotGraceMin, 25, 0, 240);
+  const noCapToday = parseBool01(req.query.noCapToday);
+  const capToday = !noCapToday;
+
+  const lotteryParam = req.query.lotteryKey ?? req.query.lottery ?? null;
+  const legacyLottery = lotteryParam == null ? req.query.uf : null;
+
+  const lotteryRaw = String(lotteryParam ?? legacyLottery ?? "").trim();
+  const lotteryKey = normalizeLotteryKey(lotteryRaw);
+
+  try {
+    const date = String(req.query.date || "").trim();
+    const lottery = lotteryKey;
+    const strict = parseBool01(req.query.strict);
+    const reloadDayStatus = parseBool01(req.query.reloadDayStatus);
+    const reloadGaps = parseBool01(req.query.reloadGaps);
+
+    const includePrizes =
+      req.query.includePrizes == null ? true : parseBool01(req.query.includePrizes);
+    const limitDocs = parsePosInt(req.query.limitDocs, 120, 20, 500);
+
+    if (!date) return res.status(400).json({ ok: false, error: "date obrigatório" });
+    if (!isISODate(date)) {
+      return res.status(400).json({ ok: false, error: "date inválido (use YYYY-MM-DD)" });
+    }
+    if (!lotteryRaw) return res.status(400).json({ ok: false, error: "lottery obrigatório" });
+    if (!lottery) {
+      return res.status(400).json({
+        ok: false,
+        error: "lottery inválida: " + lotteryRaw + " (use lottery=PT_RIO|FEDERAL ou aliases RJ|BR)",
+      });
+    }
+
+    if (isFutureISODate(date)) {
+      const todayBR = todayYMDInSaoPaulo();
+      return res.json({
+        ok: true,
+        date,
+        lottery,
+        strict,
+        includePrizes,
+        limitDocs,
+        dayStatus: "",
+        blocked: true,
+        blockedReason: "future_date",
+        todayBR,
+        count: 0,
+        draws: [],
+        slots: [],
+      });
+    }
+
+    const dayStatusMap = readDayStatusMap(lottery, { reload: reloadDayStatus });
+    const dayStatus = String(dayStatusMap?.[date] || "").trim();
+
+    const db = getDb();
+
+    const docsDay = await fetchDayDrawDocs(db, date);
+
+    const docsAll = docsDay.filter((doc) => {
+      const d = doc.data() || {};
+      const lkSnake = upTrim(d.lottery_key || "");
+      const lkCamel = upTrim(d.lotteryKey || "");
+      return lkSnake === lotteryKey || lkCamel === lotteryKey;
+    });
+
+    if (dayStatus && shouldBlockDayStatus(dayStatus, strict)) {
+      if (!docsAll.length) {
+        return res.json({
+          ok: true,
+          date,
+          lottery,
+          strict,
+          includePrizes,
+          limitDocs,
+          dayStatus,
+          blocked: true,
+          blockedReason: "day_status_confirmed_no_docs",
+          count: 0,
+          draws: [],
+          slots: [],
+        });
+      }
+    }
+
+    const docsFound = docsAll.length;
+    const docs = docsAll.slice(0, limitDocs);
+    const docsCapped = docs.length !== docsFound;
+
+    const include09FromDefault = "2024-01-05";
+    const expectedBase = getExpectedForDate(
+      lottery,
+      date,
+      include09FromDefault
+    );
+
+    let baseHard = Array.isArray(expectedBase?.hard)
+      ? [...expectedBase.hard]
+      : [];
+
+    let baseSoft = Array.isArray(expectedBase?.soft)
+      ? [...expectedBase.soft]
+      : [];
+
+    let federal20Exists = false;
+    let ptRio18Expected = true;
+    let operationalRulesApplied = [];
+
+    if (lottery === "PT_RIO") {
+      const federalExpectedBase =
+        getExpectedForDate(
+          "FEDERAL",
+          date,
+          include09FromDefault
+        );
+
+      const federalExpectedHours = [
+        ...(Array.isArray(
+          federalExpectedBase?.hard
+        )
+          ? federalExpectedBase.hard
+          : []),
+        ...(Array.isArray(
+          federalExpectedBase?.soft
+        )
+          ? federalExpectedBase.soft
+          : []),
+      ]
+        .map((value) =>
+          String(value ?? "")
+            .trim()
+            .replace(/:00$/, "")
+            .replace(/h$/i, "")
+            .padStart(2, "0")
+        )
+        .filter(Boolean);
+
+      federal20Exists =
+        federalExpectedHours.includes("20");
+
+      ptRio18Expected =
+        isPtRio18Expected(
+          date,
+          { federal20Exists }
+        );
+
+      if (!ptRio18Expected) {
+        const remove18 = (hours) =>
+          hours.filter((value) => {
+            const normalized =
+              String(value ?? "")
+                .trim()
+                .replace(/:00$/, "")
+                .replace(/h$/i, "")
+                .padStart(2, "0");
+
+            return normalized !== "18";
+          });
+
+        baseHard = remove18(baseHard);
+        baseSoft = remove18(baseSoft);
+
+        operationalRulesApplied.push(
+          "FEDERAL_20_REMOVES_PT_RIO_18"
+        );
+      }
+    }
+
+    const todayBR = todayYMDInSaoPaulo();
+    const isToday = date === todayBR;
+    const nowMinBR = nowMinutesInSaoPaulo();
+
+    if (process.env.NODE_ENV === "development") {
+      try {
+        const dbg18 = isSlotPublishedToday("18", nowMinBR, slotGraceMin);
+        const dbg21 = isSlotPublishedToday("21", nowMinBR, slotGraceMin);
+        console.log("[pitaco/results][capToday]", {
+          date,
+          todayBR,
+          isToday,
+          nowMinBR,
+          slotGraceMin,
+          dbg18,
+          dbg21,
+        });
+      } catch (e) {
+        console.log("[pitaco/results][capToday] debug error", e?.message || e);
+      }
+    }
+
+    const gaps = getGapsForDate(lottery, date, { reload: reloadGaps });
+    const removedHardSet = new Set(gaps.removedHard || []);
+    const removedSoftSet = new Set(gaps.removedSoft || []);
+
+    const scheduleAll = uniqSorted([...baseHard, ...baseSoft]);
+
+    const expectedHard = setDiff(baseHard, removedHardSet);
+    const expectedSoft = setDiff(baseSoft, removedSoftSet);
+
+    const expectedHardPublished =
+      capToday && isToday
+        ? expectedHard.filter((hh) => isSlotPublishedToday(hh, nowMinBR, slotGraceMin))
+        : expectedHard;
+
+    const expectedSoftPublished =
+      capToday && isToday
+        ? expectedSoft.filter((hh) => isSlotPublishedToday(hh, nowMinBR, slotGraceMin))
+        : expectedSoft;
+
+    const removedHardApplied = intersectToSet(baseHard, removedHardSet);
+    const removedSoftApplied = intersectToSet(baseSoft, removedSoftSet);
+
+    if (!includePrizes) {
+      const drawsNoPrizes = docs.map((doc) => {
+        const d = doc.data() || {};
+        const cand = getCloseCandidate(d);
+        const { raw, slot } = normalizeCloseHourForLottery(cand, lotteryKey);
+        return {
+          id: doc.id,
+          ...d,
+          close_hour: slot || normalizeHHMM(d.close_hour),
+          close_hour_raw: raw || d.close_hour_raw || null,
+          prizesCount: typeof d.prizesCount !== "undefined" ? d.prizesCount : undefined,
+        };
+      });
+
+      drawsNoPrizes.sort((a, b) => cmpHHMM(a.close_hour, b.close_hour));
+
+      const byHour = new Map();
+      for (const dr of drawsNoPrizes) {
+        const hh = hourFromCloseHourSlot(dr?.close_hour, lotteryKey);
+        if (!hh) continue;
+        const prev = byHour.get(hh);
+        if (!prev) {
+          byHour.set(hh, dr);
+        } else {
+          const a = String(prev.close_hour || "");
+          const b = String(dr.close_hour || "");
+          if (b && (!a || b < a)) byHour.set(hh, dr);
+        }
+      }
+
+      const presentHours = uniqSorted(Array.from(byHour.keys()));
+
+      const slots = buildSlots({
+        scheduleAll,
+        byHour,
+        baseSoft,
+        removedHardApplied,
+        removedSoftApplied,
+        expectedHard,
+        expectedSoft,
+        federal20Exists,
+        ptRio18Expected,
+        operationalRulesApplied,
+        expectedHardPublished,
+        expectedSoftPublished,
+        capToday,
+        isToday,
+        nowMinBR,
+        slotGraceMin,
+      });
+
+      const slotsSummary = {
+        mode: expectedBase?.mode || "none",
+        scheduleFile: !!expectedBase?.scheduleFile,
+        scheduleHard: baseHard.length,
+        scheduleSoft: baseSoft.length,
+        scheduleAll: scheduleAll.length,
+        expectedHard: expectedHard.length,
+        expectedSoft: expectedSoft.length,
+        expectedTotal: expectedHard.length + expectedSoft.length,
+        presentHours: presentHours.length,
+        foundTotal: presentHours.length,
+        removedHard: removedHardApplied.size,
+        removedSoft: removedSoftApplied.size,
+        missingHard: slots.filter((s) => s.status === "missing").length,
+        missingSoft: slots.filter((s) => s.status === "soft_missing").length,
+        missingTotal:
+          slots.filter((s) => s.status === "missing").length +
+          slots.filter((s) => s.status === "soft_missing").length,
+        completionPct:
+          expectedHard.length + expectedSoft.length
+            ? Number(
+                (
+                  (presentHours.length /
+                    (expectedHard.length + expectedSoft.length)) *
+                  100
+                ).toFixed(1)
+              )
+            : 100,
+      };
+
+      return res.json({
+        ok: true,
+        date,
+        lottery,
+        strict,
+        includePrizes,
+        limitDocs,
+        docsFound,
+        docsCapped,
+        dayStatus,
+        blocked: false,
+        count: drawsNoPrizes.length,
+        draws: drawsNoPrizes,
+        expectedHard,
+        expectedSoft,
+        federal20Exists,
+        ptRio18Expected,
+        operationalRulesApplied,
+        presentHours,
+        slotsSummary,
+        calendarStatus: buildCalendarStatus({ slotsSummary, blocked: false, isToday }),
+        slots,
+      });
+    }
+
+    const draws = await mapWithConcurrency(docs, 6, async (doc) => {
+      const d = doc.data() || {};
+      const cand = getCloseCandidate(d);
+      const { raw, slot } = normalizeCloseHourForLottery(cand, lotteryKey);
+
+      const prizesSnap = await doc.ref.collection("prizes").orderBy("position", "asc").get();
+
+      return {
+        id: doc.id,
+        ...d,
+        close_hour: slot || normalizeHHMM(d.close_hour),
+        close_hour_raw: raw || d.close_hour_raw || null,
+        prizes: prizesSnap.docs.map((p) => p.data()),
+      };
+    });
+
+    draws.sort((a, b) => cmpHHMM(a.close_hour, b.close_hour));
+
+    const byHour = new Map();
+    for (const dr of draws) {
+      const hh = hourFromCloseHourSlot(dr?.close_hour, lotteryKey);
+      if (!hh) continue;
+      const prev = byHour.get(hh);
+      if (!prev) {
+        byHour.set(hh, dr);
+      } else {
+        const a = String(prev.close_hour || "");
+        const b = String(dr.close_hour || "");
+        if (b && (!a || b < a)) byHour.set(hh, dr);
+      }
+    }
+
+    const presentHours = uniqSorted(Array.from(byHour.keys()));
+
+    const slots = buildSlots({
+      scheduleAll,
+      byHour,
+      baseSoft,
+      removedHardApplied,
+      removedSoftApplied,
+      expectedHard,
+      expectedSoft,
+      federal20Exists,
+      ptRio18Expected,
+      operationalRulesApplied,
+      expectedHardPublished,
+      expectedSoftPublished,
+      capToday,
+      isToday,
+      nowMinBR,
+      slotGraceMin,
+    });
+
+    const slotsSummary = {
+      mode: expectedBase?.mode || "none",
+      scheduleFile: !!expectedBase?.scheduleFile,
+      scheduleHard: baseHard.length,
+      scheduleSoft: baseSoft.length,
+      scheduleAll: scheduleAll.length,
+      expectedHard: expectedHard.length,
+      expectedSoft: expectedSoft.length,
+      expectedTotal: expectedHard.length + expectedSoft.length,
+      presentHours: presentHours.length,
+      foundTotal: presentHours.length,
+      removedHard: removedHardApplied.size,
+      removedSoft: removedSoftApplied.size,
+      missingHard: slots.filter((s) => s.status === "missing").length,
+      missingSoft: slots.filter((s) => s.status === "soft_missing").length,
+      missingTotal:
+        slots.filter((s) => s.status === "missing").length +
+        slots.filter((s) => s.status === "soft_missing").length,
+      completionPct:
+        expectedHard.length + expectedSoft.length
+          ? Number(
+              (
+                (presentHours.length /
+                  (expectedHard.length + expectedSoft.length)) *
+                100
+              ).toFixed(1)
+            )
+          : 100,
+    };
+
+    return res.json({
+      ok: true,
+      date,
+      lottery,
+      strict,
+      includePrizes,
+      limitDocs,
+      docsFound,
+      docsCapped,
+      dayStatus,
+      blocked: false,
+      count: draws.length,
+      draws,
+      expectedHard,
+      expectedSoft,
+      federal20Exists,
+      ptRio18Expected,
+      operationalRulesApplied,
+      presentHours,
+      slotsSummary,
+      calendarStatus: buildCalendarStatus({ slotsSummary, blocked: false, isToday }),
+      slots,
+    });
+  } catch (e) {
+    return res.status(500).json({ ok: false, error: e?.message || "erro" });
+  }
+});
+
+module.exports = router;

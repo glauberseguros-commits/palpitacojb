@@ -1,0 +1,338 @@
+{
+  "ok": true,
+  "generatedAt": "2026-07-18T19:33:20.053Z",
+  "experiment": "TPP-01.04",
+  "lotteryKey": "PT_RIO",
+  "requestedVariant": "A02",
+  "variant": "SEM_CONTEXT",
+  "limit": 500,
+  "minHistory": 100,
+  "from": null,
+  "to": null,
+  "baselineOfficial": {
+    "ok": true,
+    "lotteryKey": "PT_RIO",
+    "engine": "top3_statistical_v3",
+    "evaluated": 500,
+    "skipped": 0,
+    "top1": {
+      "hits": 28,
+      "total": 500,
+      "rate": 5.6
+    },
+    "top3": {
+      "hits": 67,
+      "total": 500,
+      "rate": 13.4
+    },
+    "errors": 0,
+    "byHour": {
+      "16:00": {
+        "evaluated": 114,
+        "top1Hits": 4,
+        "top3Hits": 13,
+        "errors": 0,
+        "top1Rate": 3.5088,
+        "top3Rate": 11.4035
+      },
+      "21:00": {
+        "evaluated": 96,
+        "top1Hits": 7,
+        "top3Hits": 12,
+        "errors": 0,
+        "top1Rate": 7.2917,
+        "top3Rate": 12.5
+      },
+      "11:00": {
+        "evaluated": 113,
+        "top1Hits": 9,
+        "top3Hits": 17,
+        "errors": 0,
+        "top1Rate": 7.9646,
+        "top3Rate": 15.0442
+      },
+      "14:00": {
+        "evaluated": 113,
+        "top1Hits": 5,
+        "top3Hits": 17,
+        "errors": 0,
+        "top1Rate": 4.4248,
+        "top3Rate": 15.0442
+      },
+      "18:00": {
+        "evaluated": 64,
+        "top1Hits": 3,
+        "top3Hits": 8,
+        "errors": 0,
+        "top1Rate": 4.6875,
+        "top3Rate": 12.5
+      }
+    },
+    "byWeekday": {
+      "0": {
+        "evaluated": 45,
+        "top1Hits": 0,
+        "top3Hits": 3,
+        "errors": 0,
+        "top1Rate": 0,
+        "top3Rate": 6.6667
+      },
+      "1": {
+        "evaluated": 80,
+        "top1Hits": 5,
+        "top3Hits": 13,
+        "errors": 0,
+        "top1Rate": 6.25,
+        "top3Rate": 16.25
+      },
+      "2": {
+        "evaluated": 80,
+        "top1Hits": 5,
+        "top3Hits": 11,
+        "errors": 0,
+        "top1Rate": 6.25,
+        "top3Rate": 13.75
+      },
+      "3": {
+        "evaluated": 64,
+        "top1Hits": 3,
+        "top3Hits": 9,
+        "errors": 0,
+        "top1Rate": 4.6875,
+        "top3Rate": 14.0625
+      },
+      "4": {
+        "evaluated": 83,
+        "top1Hits": 7,
+        "top3Hits": 11,
+        "errors": 0,
+        "top1Rate": 8.4337,
+        "top3Rate": 13.253
+      },
+      "5": {
+        "evaluated": 84,
+        "top1Hits": 4,
+        "top3Hits": 11,
+        "errors": 0,
+        "top1Rate": 4.7619,
+        "top3Rate": 13.0952
+      },
+      "6": {
+        "evaluated": 64,
+        "top1Hits": 4,
+        "top3Hits": 9,
+        "errors": 0,
+        "top1Rate": 6.25,
+        "top3Rate": 14.0625
+      }
+    },
+    "byMonth": {
+      "2022-06": {
+        "evaluated": 7,
+        "top1Hits": 0,
+        "top3Hits": 1,
+        "errors": 0,
+        "top1Rate": 0,
+        "top3Rate": 14.2857
+      },
+      "2022-07": {
+        "evaluated": 136,
+        "top1Hits": 8,
+        "top3Hits": 18,
+        "errors": 0,
+        "top1Rate": 5.8824,
+        "top3Rate": 13.2353
+      },
+      "2022-08": {
+        "evaluated": 138,
+        "top1Hits": 8,
+        "top3Hits": 16,
+        "errors": 0,
+        "top1Rate": 5.7971,
+        "top3Rate": 11.5942
+      },
+      "2022-09": {
+        "evaluated": 132,
+        "top1Hits": 8,
+        "top3Hits": 19,
+        "errors": 0,
+        "top1Rate": 6.0606,
+        "top3Rate": 14.3939
+      },
+      "2022-10": {
+        "evaluated": 87,
+        "top1Hits": 4,
+        "top3Hits": 13,
+        "errors": 0,
+        "top1Rate": 4.5977,
+        "top3Rate": 14.9425
+      }
+    }
+  },
+  "variantResult": {
+    "ok": true,
+    "lotteryKey": "PT_RIO",
+    "engine": "top3_statistical_v3",
+    "evaluated": 500,
+    "skipped": 0,
+    "top1": {
+      "hits": 28,
+      "total": 500,
+      "rate": 5.6
+    },
+    "top3": {
+      "hits": 67,
+      "total": 500,
+      "rate": 13.4
+    },
+    "errors": 0,
+    "byHour": {
+      "16:00": {
+        "evaluated": 114,
+        "top1Hits": 4,
+        "top3Hits": 13,
+        "errors": 0,
+        "top1Rate": 3.5088,
+        "top3Rate": 11.4035
+      },
+      "21:00": {
+        "evaluated": 96,
+        "top1Hits": 7,
+        "top3Hits": 12,
+        "errors": 0,
+        "top1Rate": 7.2917,
+        "top3Rate": 12.5
+      },
+      "11:00": {
+        "evaluated": 113,
+        "top1Hits": 9,
+        "top3Hits": 17,
+        "errors": 0,
+        "top1Rate": 7.9646,
+        "top3Rate": 15.0442
+      },
+      "14:00": {
+        "evaluated": 113,
+        "top1Hits": 5,
+        "top3Hits": 17,
+        "errors": 0,
+        "top1Rate": 4.4248,
+        "top3Rate": 15.0442
+      },
+      "18:00": {
+        "evaluated": 64,
+        "top1Hits": 3,
+        "top3Hits": 8,
+        "errors": 0,
+        "top1Rate": 4.6875,
+        "top3Rate": 12.5
+      }
+    },
+    "byWeekday": {
+      "0": {
+        "evaluated": 45,
+        "top1Hits": 0,
+        "top3Hits": 3,
+        "errors": 0,
+        "top1Rate": 0,
+        "top3Rate": 6.6667
+      },
+      "1": {
+        "evaluated": 80,
+        "top1Hits": 5,
+        "top3Hits": 13,
+        "errors": 0,
+        "top1Rate": 6.25,
+        "top3Rate": 16.25
+      },
+      "2": {
+        "evaluated": 80,
+        "top1Hits": 5,
+        "top3Hits": 11,
+        "errors": 0,
+        "top1Rate": 6.25,
+        "top3Rate": 13.75
+      },
+      "3": {
+        "evaluated": 64,
+        "top1Hits": 3,
+        "top3Hits": 9,
+        "errors": 0,
+        "top1Rate": 4.6875,
+        "top3Rate": 14.0625
+      },
+      "4": {
+        "evaluated": 83,
+        "top1Hits": 7,
+        "top3Hits": 11,
+        "errors": 0,
+        "top1Rate": 8.4337,
+        "top3Rate": 13.253
+      },
+      "5": {
+        "evaluated": 84,
+        "top1Hits": 4,
+        "top3Hits": 11,
+        "errors": 0,
+        "top1Rate": 4.7619,
+        "top3Rate": 13.0952
+      },
+      "6": {
+        "evaluated": 64,
+        "top1Hits": 4,
+        "top3Hits": 9,
+        "errors": 0,
+        "top1Rate": 6.25,
+        "top3Rate": 14.0625
+      }
+    },
+    "byMonth": {
+      "2022-06": {
+        "evaluated": 7,
+        "top1Hits": 0,
+        "top3Hits": 1,
+        "errors": 0,
+        "top1Rate": 0,
+        "top3Rate": 14.2857
+      },
+      "2022-07": {
+        "evaluated": 136,
+        "top1Hits": 8,
+        "top3Hits": 18,
+        "errors": 0,
+        "top1Rate": 5.8824,
+        "top3Rate": 13.2353
+      },
+      "2022-08": {
+        "evaluated": 138,
+        "top1Hits": 8,
+        "top3Hits": 16,
+        "errors": 0,
+        "top1Rate": 5.7971,
+        "top3Rate": 11.5942
+      },
+      "2022-09": {
+        "evaluated": 132,
+        "top1Hits": 8,
+        "top3Hits": 19,
+        "errors": 0,
+        "top1Rate": 6.0606,
+        "top3Rate": 14.3939
+      },
+      "2022-10": {
+        "evaluated": 87,
+        "top1Hits": 4,
+        "top3Hits": 13,
+        "errors": 0,
+        "top1Rate": 4.5977,
+        "top3Rate": 14.9425
+      }
+    }
+  },
+  "comparison": {
+    "equivalent": true,
+    "top1HitsDelta": 0,
+    "top3HitsDelta": 0,
+    "errorsDelta": 0
+  }
+}

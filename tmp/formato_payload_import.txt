@@ -1,0 +1,1208 @@
+
+  backend\scripts\importKingApostas.js:159: * - CHECK_EXISTENCE=1 => faz reads extras para calcular "novos" (lento)
+  backend\scripts\importKingApostas.js:160: * - default => não faz reads extras (rápido)
+  backend\scripts\importKingApostas.js:161: */
+  backend\scripts\importKingApostas.js:162:const CHECK_EXISTENCE = String(process.env.CHECK_EXISTENCE || "").trim() === "1";
+  backend\scripts\importKingApostas.js:163:
+  backend\scripts\importKingApostas.js:164:/**
+  backend\scripts\importKingApostas.js:165: * Retry HTTP simples (evita falhas intermitentes/429)
+  backend\scripts\importKingApostas.js:166: */
+> backend\scripts\importKingApostas.js:167:const HTTP_RETRIES = Number.isFinite(Number(process.env.HTTP_RETRIES))
+> backend\scripts\importKingApostas.js:168:  ? Math.max(0, Number(process.env.HTTP_RETRIES))
+  backend\scripts\importKingApostas.js:169:  : 3;
+  backend\scripts\importKingApostas.js:170:
+> backend\scripts\importKingApostas.js:171:const HTTP_RETRY_BASE_MS = Number.isFinite(Number(process.env.HTTP_RETRY_BASE_MS))
+> backend\scripts\importKingApostas.js:172:  ? Math.max(50, Number(process.env.HTTP_RETRY_BASE_MS))
+  backend\scripts\importKingApostas.js:173:  : 600;
+  backend\scripts\importKingApostas.js:174:
+  backend\scripts\importKingApostas.js:175:/**
+  backend\scripts\importKingApostas.js:176: * ✅ fetch por lottery (robusto contra “cap” da API quando manda muitos lotteries[]).
+  backend\scripts\importKingApostas.js:177: * Default: ON
+  backend\scripts\importKingApostas.js:178: * - KING_FETCH_PER_LOTTERY=0 => volta ao modo antigo (1 request com todos lotteries[])
+  backend\scripts\importKingApostas.js:179: */
+  backend\scripts\importKingApostas.js:180:const FETCH_PER_LOTTERY =
+  backend\scripts\importKingApostas.js:181:  String(process.env.KING_FETCH_PER_LOTTERY || "").trim() === "0" ? false : true;
+  backend\scripts\importKingApostas.js:182:
+  backend\scripts\importKingApostas.js:183:// ✅ Debug do fetch (log por lotteryId)
+  backend\scripts\importKingApostas.js:184:// Ative com: set KING_FETCH_DEBUG=1
+  backend\scripts\importKingApostas.js:185:const KING_FETCH_DEBUG = String(process.env.KING_FETCH_DEBUG || "").trim() === "1";
+  backend\scripts\importKingApostas.js:186:
+  backend\scripts\importKingApostas.js:187:// ✅ Debug leve do override FEDERAL
+  backend\scripts\importKingApostas.js:188:// Ative com: set KING_OVERRIDE_DEBUG=1
+  backend\scripts\importKingApostas.js:189:const KING_OVERRIDE_DEBUG = String(process.env.KING_OVERRIDE_DEBUG || "").trim() === "1";
+  backend\scripts\importKingApostas.js:190:
+  backend\scripts\importKingApostas.js:191:/**
+  backend\scripts\importKingApostas.js:192: * ✅ Blindagem contra datas futuras (não busca API, não escreve no FS)
+  backend\scripts\importKingApostas.js:193: * - ALLOW_FUTURE_DATE=1 => libera (use com MUITO cuidado / apenas para testes)
+  backend\scripts\importKingApostas.js:194: */
+  backend\scripts\importKingApostas.js:195:const ALLOW_FUTURE_DATE = String(process.env.ALLOW_FUTURE_DATE || "").trim() === "1";
+  backend\scripts\importKingApostas.js:196:
+  backend\scripts\importKingApostas.js:197:/**
+  backend\scripts\importKingApostas.js:255:}
+  backend\scripts\importKingApostas.js:256:
+  backend\scripts\importKingApostas.js:257:/**
+  backend\scripts\importKingApostas.js:258: * =========================
+  backend\scripts\importKingApostas.js:259: * Jogo do Bicho helpers
+  backend\scripts\importKingApostas.js:260: * =========================
+  backend\scripts\importKingApostas.js:261: */
+  backend\scripts\importKingApostas.js:262:
+> backend\scripts\importKingApostas.js:263:/** Mapeamento oficial Grupo -> Animal */
+> backend\scripts\importKingApostas.js:264:const GRUPO_TO_ANIMAL = {
+  backend\scripts\importKingApostas.js:265:  1: "Avestruz",
+  backend\scripts\importKingApostas.js:266:  2: "Águia",
+  backend\scripts\importKingApostas.js:267:  3: "Burro",
+  backend\scripts\importKingApostas.js:268:  4: "Borboleta",
+  backend\scripts\importKingApostas.js:269:  5: "Cachorro",
+  backend\scripts\importKingApostas.js:270:  6: "Cabra",
+  backend\scripts\importKingApostas.js:271:  7: "Carneiro",
+  backend\scripts\importKingApostas.js:272:  8: "Camelo",
+  backend\scripts\importKingApostas.js:273:  9: "Cobra",
+  backend\scripts\importKingApostas.js:274:  10: "Coelho",
+  backend\scripts\importKingApostas.js:275:  11: "Cavalo",
+  backend\scripts\importKingApostas.js:276:  12: "Elefante",
+  backend\scripts\importKingApostas.js:277:  13: "Galo",
+  backend\scripts\importKingApostas.js:278:  14: "Gato",
+  backend\scripts\importKingApostas.js:279:  15: "Jacaré",
+  backend\scripts\importKingApostas.js:280:  16: "Leão",
+  backend\scripts\importKingApostas.js:281:  17: "Macaco",
+  backend\scripts\importKingApostas.js:282:  18: "Porco",
+  backend\scripts\importKingApostas.js:283:  19: "Pavão",
+  backend\scripts\importKingApostas.js:284:  20: "Peru",
+  backend\scripts\importKingApostas.js:285:  21: "Touro",
+  backend\scripts\importKingApostas.js:286:  22: "Tigre",
+  backend\scripts\importKingApostas.js:287:  23: "Urso",
+  backend\scripts\importKingApostas.js:288:  24: "Veado",
+  backend\scripts\importKingApostas.js:289:  25: "Vaca",
+  backend\scripts\importKingApostas.js:290:};
+  backend\scripts\importKingApostas.js:291:
+  backend\scripts\importKingApostas.js:292:function pad4(s) {
+  backend\scripts\importKingApostas.js:293:  return String(s ?? "").trim().padStart(4, "0");
+  backend\scripts\importKingApostas.js:294:}
+  backend\scripts\importKingApostas.js:295:
+> backend\scripts\importKingApostas.js:296:/** Regra do Jogo do Bicho: dezena 00 => grupo 25; senão ceil(dezena/4) */
+> backend\scripts\importKingApostas.js:297:function dezenaToGrupo(dezena2) {
+> backend\scripts\importKingApostas.js:298:  const n = Number(dezena2);
+> backend\scripts\importKingApostas.js:299:  if (!Number.isFinite(n)) return null;
+  backend\scripts\importKingApostas.js:300:  if (n === 0) return 25;
+  backend\scripts\importKingApostas.js:301:  return Math.ceil(n / 4);
+  backend\scripts\importKingApostas.js:302:}
+  backend\scripts\importKingApostas.js:303:
+  backend\scripts\importKingApostas.js:304:function normalizePrize(raw) {
+> backend\scripts\importKingApostas.js:305:  const milhar = pad4(raw);
+> backend\scripts\importKingApostas.js:306:  const centena = milhar.slice(-3);
+> backend\scripts\importKingApostas.js:307:  const dezena = milhar.slice(-2);
+> backend\scripts\importKingApostas.js:308:  const grupo = dezenaToGrupo(dezena);
+> backend\scripts\importKingApostas.js:309:  const animal = grupo ? GRUPO_TO_ANIMAL[grupo] : null;
+> backend\scripts\importKingApostas.js:310:  return { raw: String(raw), milhar, centena, dezena, grupo, animal };
+  backend\scripts\importKingApostas.js:311:}
+  backend\scripts\importKingApostas.js:312:
+  backend\scripts\importKingApostas.js:313:function isISODate(s) {
+  backend\scripts\importKingApostas.js:314:  return /^\d{4}-\d{2}-\d{2}$/.test(String(s || "").trim());
+  backend\scripts\importKingApostas.js:315:}
+  backend\scripts\importKingApostas.js:316:
+  backend\scripts\importKingApostas.js:317:function isHHMM(s) {
+  backend\scripts\importKingApostas.js:318:  return /^\d{2}:\d{2}$/.test(String(s || "").trim());
+  backend\scripts\importKingApostas.js:319:}
+  backend\scripts\importKingApostas.js:320:
+  backend\scripts\importKingApostas.js:321:/**
+  backend\scripts\importKingApostas.js:322: * Normaliza horário para HH:MM (raw)
+  backend\scripts\importKingApostas.js:323: * Aceita: "10", "10h", "10:9", "10:09"
+  backend\scripts\importKingApostas.js:324: */
+  backend\scripts\importKingApostas.js:325:function normalizeHHMM(value) {
+  backend\scripts\importKingApostas.js:326:  const s = String(value ?? "").trim();
+  backend\scripts\importKingApostas.js:327:  if (!s) return "";
+  backend\scripts\importKingApostas.js:328:
+  backend\scripts\importKingApostas.js:329:  if (isHHMM(s)) return s;
+  backend\scripts\importKingApostas.js:330:
+  backend\scripts\importKingApostas.js:331:  const m1 = s.match(/^(\d{1,2})h$/i);
+  backend\scripts\importKingApostas.js:332:  if (m1) return `${String(m1[1]).padStart(2, "0")}:00`;
+  backend\scripts\importKingApostas.js:333:
+  backend\scripts\importKingApostas.js:334:  const m2 = s.match(/^(\d{1,2})$/);
+  backend\scripts\importKingApostas.js:335:  if (m2) return `${String(m2[1]).padStart(2, "0")}:00`;
+  backend\scripts\importKingApostas.js:340:    const mm = String(m3[2]).padStart(2, "0");
+  backend\scripts\importKingApostas.js:341:    return `${hh}:${mm}`;
+  backend\scripts\importKingApostas.js:342:  }
+  backend\scripts\importKingApostas.js:343:
+  backend\scripts\importKingApostas.js:344:  return "";
+  backend\scripts\importKingApostas.js:345:}
+  backend\scripts\importKingApostas.js:346:
+  backend\scripts\importKingApostas.js:347:/**
+> backend\scripts\importKingApostas.js:348: * ✅ Normaliza close_hour para SLOT (campo de negócio)
+  backend\scripts\importKingApostas.js:349: * - Para PT_RIO: força minutos = 00 (09:09 -> 09:00)
+  backend\scripts\importKingApostas.js:350: * - Para outros: preserva raw
+  backend\scripts\importKingApostas.js:351: *
+  backend\scripts\importKingApostas.js:352: * Correção crítica:
+  backend\scripts\importKingApostas.js:353: * - A API do PT_RIO costuma devolver HH:09 como "marcação" e NÃO um minuto real.
+  backend\scripts\importKingApostas.js:354: * - Portanto, para PT_RIO, se raw terminar em ":09", tratamos como "sem minuto real"
+> backend\scripts\importKingApostas.js:355: *   e NÃO persistimos close_hour_raw (vira "").
+  backend\scripts\importKingApostas.js:356: *
+  backend\scripts\importKingApostas.js:357: * Retorna:
+  backend\scripts\importKingApostas.js:358: * - raw: HH:MM (normalizado) OU "" quando for "sintético" (PT_RIO HH:09)
+  backend\scripts\importKingApostas.js:359: * - slot: HH:MM (normalizado para o que o sistema deve usar em consultas/ID)
+  backend\scripts\importKingApostas.js:360: */
+  backend\scripts\importKingApostas.js:361:function normalizeCloseHourForLottery(value, lotteryKey) {
+  backend\scripts\importKingApostas.js:362:  const lk = String(lotteryKey || "").trim().toUpperCase();
+  backend\scripts\importKingApostas.js:363:  const raw0 = normalizeHHMM(value);
+  backend\scripts\importKingApostas.js:364:  if (!raw0 || !isHHMM(raw0)) return { raw: "", slot: "" };
+  backend\scripts\importKingApostas.js:365:
+  backend\scripts\importKingApostas.js:366:  // ✅ FEDERAL: slot de negócio é sempre 20:00, mas preserva o raw
+  backend\scripts\importKingApostas.js:367:  if (lk === "FEDERAL") {
+  backend\scripts\importKingApostas.js:368:    return { raw: raw0, slot: "20:00" };
+  backend\scripts\importKingApostas.js:369:  }
+  backend\scripts\importKingApostas.js:370:
+  backend\scripts\importKingApostas.js:371:  if (lk === "PT_RIO") {
+  backend\scripts\importKingApostas.js:372:    const hh = raw0.slice(0, 2);
+  backend\scripts\importKingApostas.js:373:    const mm = raw0.slice(3, 5);
+  backend\scripts\importKingApostas.js:374:
+> backend\scripts\importKingApostas.js:375:    // ✅ se vier HH:09, é marcação (não minuto real) -> não grava close_hour_raw
+  backend\scripts\importKingApostas.js:376:    const raw = mm === "09" ? "" : raw0;
+  backend\scripts\importKingApostas.js:377:    return { raw, slot: `${hh}:00` };
+  backend\scripts\importKingApostas.js:378:  }
+  backend\scripts\importKingApostas.js:379:
+  backend\scripts\importKingApostas.js:380:  return { raw: raw0, slot: raw0 };
+  backend\scripts\importKingApostas.js:381:}
+  backend\scripts\importKingApostas.js:382:
+  backend\scripts\importKingApostas.js:383:/**
+  backend\scripts\importKingApostas.js:384: * ✅ Normaliza o parâmetro closeHour (do CLI/scheduler) e evita log enganoso.
+  backend\scripts\importKingApostas.js:385: * - Para FEDERAL: qualquer coisa vira slot=20:00, mas mantemos "requested" para log.
+  backend\scripts\importKingApostas.js:386: */
+  backend\scripts\importKingApostas.js:387:function normalizeRequestedCloseHour(closeHour, lotteryKey) {
+  backend\scripts\importKingApostas.js:388:  const lk = String(lotteryKey || "").trim().toUpperCase();
+  backend\scripts\importKingApostas.js:389:  const requested = closeHour ? normalizeHHMM(closeHour) : null;
+  backend\scripts\importKingApostas.js:390:  const requestedIsValid = requested ? isHHMM(requested) : false;
+  backend\scripts\importKingApostas.js:391:
+  backend\scripts\importKingApostas.js:392:  if (!requested) {
+  backend\scripts\importKingApostas.js:393:    return { requested: null, slot: null, note: null };
+  backend\scripts\importKingApostas.js:394:  }
+  backend\scripts\importKingApostas.js:395:  if (!requestedIsValid) {
+  backend\scripts\importKingApostas.js:396:    return { requested, slot: null, note: "invalid" };
+  backend\scripts\importKingApostas.js:397:  }
+  backend\scripts\importKingApostas.js:398:
+  backend\scripts\importKingApostas.js:399:  // FEDERAL: slot único 20:00 (não fingir que o usuário pediu 20:00)
+  backend\scripts\importKingApostas.js:400:  if (lk === "FEDERAL") {
+  backend\scripts\importKingApostas.js:418:    .replace(/\s+/g, "_")
+  backend\scripts\importKingApostas.js:419:    .replace(/[\/\\?#\[\]]/g, "_")
+  backend\scripts\importKingApostas.js:420:    .replace(/:+/g, "-")
+  backend\scripts\importKingApostas.js:421:    .slice(0, 80);
+  backend\scripts\importKingApostas.js:422:}
+  backend\scripts\importKingApostas.js:423:
+  backend\scripts\importKingApostas.js:424:function pickLotteryId(draw) {
+  backend\scripts\importKingApostas.js:425:  const candidates = [
+> backend\scripts\importKingApostas.js:426:    draw?.lottery_id,
+  backend\scripts\importKingApostas.js:427:    draw?.lotteryId,
+  backend\scripts\importKingApostas.js:428:    draw?.lottery_uuid,
+  backend\scripts\importKingApostas.js:429:    draw?.lotteryUuid,
+  backend\scripts\importKingApostas.js:430:    draw?.lottery,
+  backend\scripts\importKingApostas.js:431:    draw?.lottery_key,
+  backend\scripts\importKingApostas.js:432:  ];
+  backend\scripts\importKingApostas.js:433:  for (const c of candidates) {
+  backend\scripts\importKingApostas.js:434:    const s = String(c ?? "").trim();
+  backend\scripts\importKingApostas.js:435:    if (s) return s;
+  backend\scripts\importKingApostas.js:436:  }
+  backend\scripts\importKingApostas.js:437:  return null;
+  backend\scripts\importKingApostas.js:438:}
+  backend\scripts\importKingApostas.js:439:
+  backend\scripts\importKingApostas.js:440:/**
+  backend\scripts\importKingApostas.js:441: * Loterias (IDs) capturadas do Network.
+> backend\scripts\importKingApostas.js:442: * Observação: a API pode consolidar em 1 draw por close_hour, mesmo havendo múltiplos IDs aqui.
+  backend\scripts\importKingApostas.js:443: *
+  backend\scripts\importKingApostas.js:444: * ✅ Agora aceita override via ENV:
+  backend\scripts\importKingApostas.js:445: * - KING_LOTTERIES_PT_RIO="uuid1,uuid2,..."
+  backend\scripts\importKingApostas.js:446: * - KING_LOTTERIES_FEDERAL="uuid1,uuid2,..."
+  backend\scripts\importKingApostas.js:447: */
+  backend\scripts\importKingApostas.js:448:const LOTTERIES_BY_KEY = {
+  backend\scripts\importKingApostas.js:449:  PT_RIO: [
+  backend\scripts\importKingApostas.js:450:    "c168d9b3-97b7-42dc-a332-7815edaa51e2",
+  backend\scripts\importKingApostas.js:451:    "cbac7c11-e733-400b-ba4d-2dfe0cba4272",
+  backend\scripts\importKingApostas.js:452:    "98352455-8fd3-447d-ab3d-701dc3f7865f",
+  backend\scripts\importKingApostas.js:453:    "76c127b7-8157-46b6-a64a-ec7ed1574c9f",
+  backend\scripts\importKingApostas.js:454:    "8290329b-aac0-4a6a-9649-5feb6182cf4f",
+  backend\scripts\importKingApostas.js:455:    "d5123f7e-629d-43e9-a8fb-1385ff1cba45",
+  backend\scripts\importKingApostas.js:456:  ],
+  backend\scripts\importKingApostas.js:457:  FEDERAL: [],
+  backend\scripts\importKingApostas.js:458:};
+  backend\scripts\importKingApostas.js:459:
+  backend\scripts\importKingApostas.js:460:(function applyLotteryOverridesFromEnv() {
+  backend\scripts\importKingApostas.js:461:  try {
+  backend\scripts\importKingApostas.js:462:    const rawRio = String(process.env.KING_LOTTERIES_PT_RIO || "").trim();
+  backend\scripts\importKingApostas.js:463:    if (rawRio) {
+  backend\scripts\importKingApostas.js:464:      const arr = rawRio
+  backend\scripts\importKingApostas.js:465:        .split(",")
+  backend\scripts\importKingApostas.js:466:        .map((s) => String(s || "").trim())
+  backend\scripts\importKingApostas.js:467:        .filter(Boolean);
+  backend\scripts\importKingApostas.js:521:}
+  backend\scripts\importKingApostas.js:522:
+  backend\scripts\importKingApostas.js:523:function sleep(ms) {
+  backend\scripts\importKingApostas.js:524:  return new Promise((r) => setTimeout(r, ms));
+  backend\scripts\importKingApostas.js:525:}
+  backend\scripts\importKingApostas.js:526:
+  backend\scripts\importKingApostas.js:527:function shouldRetryAxiosError(err) {
+  backend\scripts\importKingApostas.js:528:  const code = String(err?.code || "").toLowerCase();
+> backend\scripts\importKingApostas.js:529:  const status = Number(err?.response?.status);
+  backend\scripts\importKingApostas.js:530:
+  backend\scripts\importKingApostas.js:531:  if (
+  backend\scripts\importKingApostas.js:532:    code.includes("etimedout") ||
+  backend\scripts\importKingApostas.js:533:    code.includes("econnreset") ||
+  backend\scripts\importKingApostas.js:534:    code.includes("enotfound")
+  backend\scripts\importKingApostas.js:535:  ) {
+  backend\scripts\importKingApostas.js:536:    return true;
+  backend\scripts\importKingApostas.js:537:  }
+  backend\scripts\importKingApostas.js:538:
+  backend\scripts\importKingApostas.js:539:  // 429 / 5xx
+  backend\scripts\importKingApostas.js:540:  if (
+> backend\scripts\importKingApostas.js:541:    Number.isFinite(status) &&
+  backend\scripts\importKingApostas.js:542:    (status === 429 || (status >= 500 && status <= 599))
+  backend\scripts\importKingApostas.js:543:  ) {
+  backend\scripts\importKingApostas.js:544:    return true;
+  backend\scripts\importKingApostas.js:545:  }
+  backend\scripts\importKingApostas.js:546:
+  backend\scripts\importKingApostas.js:547:  return false;
+  backend\scripts\importKingApostas.js:548:}
+  backend\scripts\importKingApostas.js:549:
+  backend\scripts\importKingApostas.js:550:async function axiosGetJson(url) {
+  backend\scripts\importKingApostas.js:551:  let lastErr = null;
+  backend\scripts\importKingApostas.js:552:
+  backend\scripts\importKingApostas.js:553:  for (let attempt = 0; attempt <= HTTP_RETRIES; attempt++) {
+  backend\scripts\importKingApostas.js:554:    try {
+  backend\scripts\importKingApostas.js:555:      const { data } = await axios.get(url, {
+  backend\scripts\importKingApostas.js:556:        headers: {
+  backend\scripts\importKingApostas.js:557:          Accept: "application/json, text/plain, */*",
+  backend\scripts\importKingApostas.js:558:          Origin: "https://app.kingapostas.com",
+  backend\scripts\importKingApostas.js:559:          Referer: "https://app.kingapostas.com/",
+  backend\scripts\importKingApostas.js:560:        },
+  backend\scripts\importKingApostas.js:561:        timeout: 30000,
+  backend\scripts\importKingApostas.js:562:        validateStatus: (s) => s >= 200 && s < 300,
+  backend\scripts\importKingApostas.js:563:      });
+  backend\scripts\importKingApostas.js:564:
+  backend\scripts\importKingApostas.js:565:      if (!data?.success || !Array.isArray(data?.data)) {
+  backend\scripts\importKingApostas.js:566:        throw new Error("Resposta inesperada da API (success/data).");
+  backend\scripts\importKingApostas.js:707:    hasSlot: parsed.hasSlot,
+  backend\scripts\importKingApostas.js:708:    hasAnyPrize: parsed.hasAnyPrize,
+  backend\scripts\importKingApostas.js:709:    kind: parsed.kind,
+  backend\scripts\importKingApostas.js:710:  };
+  backend\scripts\importKingApostas.js:711:}
+  backend\scripts\importKingApostas.js:712:
+  backend\scripts\importKingApostas.js:713:/**
+  backend\scripts\importKingApostas.js:714: * ✅ Merge + dedup de draws vindos de múltiplos requests
+> backend\scripts\importKingApostas.js:715: * Dedup key: date + close_hour(SLOT) + lottery_id (se existir)
+  backend\scripts\importKingApostas.js:716: */
+  backend\scripts\importKingApostas.js:717:function mergeAndDedupDraws(arrays, lotteryKey) {
+  backend\scripts\importKingApostas.js:718:  const map = new Map();
+  backend\scripts\importKingApostas.js:719:
+  backend\scripts\importKingApostas.js:720:  for (const a of arrays) {
+  backend\scripts\importKingApostas.js:721:    const list = Array.isArray(a) ? a : [];
+  backend\scripts\importKingApostas.js:722:    for (const d of list) {
+  backend\scripts\importKingApostas.js:723:      const date = String(d?.date || "").trim();
+> backend\scripts\importKingApostas.js:724:      const { slot } = normalizeCloseHourForLottery(d?.close_hour || "", lotteryKey);
+  backend\scripts\importKingApostas.js:725:
+  backend\scripts\importKingApostas.js:726:      const lid =
+  backend\scripts\importKingApostas.js:727:        pickLotteryId(d) ||
+  backend\scripts\importKingApostas.js:728:        String(d?.lottery_name || d?.name || "").trim() ||
+  backend\scripts\importKingApostas.js:729:        "NA";
+  backend\scripts\importKingApostas.js:730:      const key = `${date}__${slot}__${lid}`;
+  backend\scripts\importKingApostas.js:731:
+  backend\scripts\importKingApostas.js:732:      if (!map.has(key)) {
+  backend\scripts\importKingApostas.js:733:        map.set(key, d);
+  backend\scripts\importKingApostas.js:734:      } else {
+> backend\scripts\importKingApostas.js:735:        // se duplicado, preferir o que tiver mais prizes preenchidos
+  backend\scripts\importKingApostas.js:736:        const prev = map.get(key);
+> backend\scripts\importKingApostas.js:737:        const prevCount = countPrizesInDraw(prev);
+> backend\scripts\importKingApostas.js:738:        const curCount = countPrizesInDraw(d);
+  backend\scripts\importKingApostas.js:739:        if (curCount > prevCount) map.set(key, d);
+  backend\scripts\importKingApostas.js:740:      }
+  backend\scripts\importKingApostas.js:741:    }
+  backend\scripts\importKingApostas.js:742:  }
+  backend\scripts\importKingApostas.js:743:
+  backend\scripts\importKingApostas.js:744:  return Array.from(map.values());
+  backend\scripts\importKingApostas.js:745:}
+  backend\scripts\importKingApostas.js:746:
+> backend\scripts\importKingApostas.js:747:function countPrizesInDraw(draw) {
+  backend\scripts\importKingApostas.js:748:  let c = 0;
+  backend\scripts\importKingApostas.js:749:  for (let i = 1; i <= 15; i++) {
+  backend\scripts\importKingApostas.js:750:    const v = draw?.[`prize_${i}`];
+  backend\scripts\importKingApostas.js:751:    if (v === null || v === undefined || String(v).trim() === "") continue;
+  backend\scripts\importKingApostas.js:752:    c++;
+  backend\scripts\importKingApostas.js:753:  }
+  backend\scripts\importKingApostas.js:754:  return c;
+  backend\scripts\importKingApostas.js:755:}
+  backend\scripts\importKingApostas.js:756:
+  backend\scripts\importKingApostas.js:757:function summarizeCloseHours(draws, lotteryKey) {
+  backend\scripts\importKingApostas.js:758:  const set = new Set();
+  backend\scripts\importKingApostas.js:759:  for (const d of draws) {
+> backend\scripts\importKingApostas.js:760:    const { slot } = normalizeCloseHourForLottery(d?.close_hour || "", lotteryKey);
+  backend\scripts\importKingApostas.js:761:    if (slot) set.add(slot);
+  backend\scripts\importKingApostas.js:762:  }
+  backend\scripts\importKingApostas.js:763:  return Array.from(set).sort();
+  backend\scripts\importKingApostas.js:764:}
+  backend\scripts\importKingApostas.js:765:
+  backend\scripts\importKingApostas.js:766:/**
+  backend\scripts\importKingApostas.js:767: * ✅ Fetch robusto:
+  backend\scripts\importKingApostas.js:768: * - Por default faz 1 request por lotteryId e mescla (evita “cap”/consolidação do endpoint)
+  backend\scripts\importKingApostas.js:769: * - Se KING_FETCH_PER_LOTTERY=0 -> faz 1 request único (modo antigo)
+  backend\scripts\importKingApostas.js:770: */
+  backend\scripts\importKingApostas.js:771:async function fetchKingResults({ date, lotteryKey }) {
+  backend\scripts\importKingApostas.js:772:  const lk = String(lotteryKey || "").trim().toUpperCase();
+  backend\scripts\importKingApostas.js:773:  const lotteries = LOTTERIES_BY_KEY[lk];
+  backend\scripts\importKingApostas.js:774:  if (!lotteries?.length) {
+  backend\scripts\importKingApostas.js:775:    if (lk === "FEDERAL") {
+  backend\scripts\importKingApostas.js:776:      throw new Error(
+  backend\scripts\importKingApostas.js:777:        `FEDERAL sem lotteryIds. Defina KING_LOTTERIES_FEDERAL="uuid1,uuid2,..." para habilitar fetch.`
+  backend\scripts\importKingApostas.js:778:      );
+  backend\scripts\importKingApostas.js:779:    }
+  backend\scripts\importKingApostas.js:780:    throw new Error(`lotteryKey inválida: ${lk}`);
+  backend\scripts\importKingApostas.js:781:  }
+  backend\scripts\importKingApostas.js:782:
+  backend\scripts\importKingApostas.js:783:  if (!FETCH_PER_LOTTERY) {
+  backend\scripts\importKingApostas.js:784:    const url = buildResultsUrl({ date, lotteryKey: lk });
+  backend\scripts\importKingApostas.js:785:    return await axiosGetJson(url);
+  backend\scripts\importKingApostas.js:786:  }
+  backend\scripts\importKingApostas.js:787:
+  backend\scripts\importKingApostas.js:788:  // ✅ 1 request por lottery (sequencial: mais estável e respeita rate-limit)
+  backend\scripts\importKingApostas.js:789:  const parts = [];
+  backend\scripts\importKingApostas.js:790:  const errors = [];
+  backend\scripts\importKingApostas.js:791:
+  backend\scripts\importKingApostas.js:792:  // helper local: extrai e normaliza closes vindos nesse UUID
+  backend\scripts\importKingApostas.js:793:  const closeFromDraw = (d) =>
+> backend\scripts\importKingApostas.js:794:    normalizeHHMM(d?.close_hour ?? d?.closeHour ?? d?.horario ?? d?.close ?? "");
+  backend\scripts\importKingApostas.js:795:
+  backend\scripts\importKingApostas.js:796:  const summarizeCloseHoursPart = (list) => {
+  backend\scripts\importKingApostas.js:797:    const set = new Set();
+  backend\scripts\importKingApostas.js:798:    for (const d of Array.isArray(list) ? list : []) {
+  backend\scripts\importKingApostas.js:799:      const c = closeFromDraw(d);
+  backend\scripts\importKingApostas.js:800:      if (c) set.add(c);
+  backend\scripts\importKingApostas.js:801:    }
+  backend\scripts\importKingApostas.js:802:    return Array.from(set).sort();
+  backend\scripts\importKingApostas.js:803:  };
+  backend\scripts\importKingApostas.js:804:
+  backend\scripts\importKingApostas.js:805:  for (const lotteryId of lotteries) {
+  backend\scripts\importKingApostas.js:806:    const url = buildResultsUrl({ date, lotteryKey: lk, lotteryId });
+  backend\scripts\importKingApostas.js:807:
+  backend\scripts\importKingApostas.js:808:    try {
+  backend\scripts\importKingApostas.js:809:      const data = await axiosGetJson(url);
+  backend\scripts\importKingApostas.js:810:
+> backend\scripts\importKingApostas.js:811:      // ✅ carimba o UUID do request em cada draw (a API nem sempre retorna lottery_id)
+  backend\scripts\importKingApostas.js:812:      if (data && Array.isArray(data.data)) {
+  backend\scripts\importKingApostas.js:813:        data.data = data.data.map((d) => ({
+  backend\scripts\importKingApostas.js:814:          ...d,
+> backend\scripts\importKingApostas.js:815:          lottery_id: d?.lottery_id || lotteryId,
+  backend\scripts\importKingApostas.js:816:          lotteryId: d?.lotteryId || lotteryId,
+  backend\scripts\importKingApostas.js:817:        }));
+  backend\scripts\importKingApostas.js:818:      }
+  backend\scripts\importKingApostas.js:819:      const list = Array.isArray(data?.data) ? data.data : [];
+  backend\scripts\importKingApostas.js:820:      parts.push(list);
+  backend\scripts\importKingApostas.js:821:
+  backend\scripts\importKingApostas.js:822:      if (KING_FETCH_DEBUG) {
+  backend\scripts\importKingApostas.js:823:        const closesPart = summarizeCloseHoursPart(list);
+  backend\scripts\importKingApostas.js:824:        console.log(
+> backend\scripts\importKingApostas.js:825:          `[FETCH:PART] ${lk} ${date} lotteryId=${lotteryId} draws=${list.length} close_hours=[${closesPart.join(
+  backend\scripts\importKingApostas.js:826:            ", "
+  backend\scripts\importKingApostas.js:827:          )}]`
+  backend\scripts\importKingApostas.js:828:        );
+  backend\scripts\importKingApostas.js:829:      }
+  backend\scripts\importKingApostas.js:830:    } catch (e) {
+  backend\scripts\importKingApostas.js:831:      const msg = e?.response?.status
+  backend\scripts\importKingApostas.js:832:        ? `HTTP_${e.response.status}`
+  backend\scripts\importKingApostas.js:833:        : e?.code || e?.message || "ERR";
+  backend\scripts\importKingApostas.js:834:
+  backend\scripts\importKingApostas.js:835:      errors.push({ lotteryId, msg });
+  backend\scripts\importKingApostas.js:836:
+  backend\scripts\importKingApostas.js:837:      console.warn(
+  backend\scripts\importKingApostas.js:838:        `[FETCH:PART] ${lk} ${date} lotteryId=${lotteryId} ERROR=${msg} (seguindo...)`
+  backend\scripts\importKingApostas.js:839:      );
+  backend\scripts\importKingApostas.js:840:
+  backend\scripts\importKingApostas.js:841:      // segue para não travar o dia inteiro por 1 UUID
+  backend\scripts\importKingApostas.js:842:      continue;
+  backend\scripts\importKingApostas.js:843:    }
+  backend\scripts\importKingApostas.js:844:  }
+  backend\scripts\importKingApostas.js:845:
+  backend\scripts\importKingApostas.js:846:  const merged = mergeAndDedupDraws(parts, lk);
+  backend\scripts\importKingApostas.js:847:  const closes = summarizeCloseHours(merged, lk);
+  backend\scripts\importKingApostas.js:848:  const errInfo =
+  backend\scripts\importKingApostas.js:849:    KING_FETCH_DEBUG && errors.length
+  backend\scripts\importKingApostas.js:850:      ? ` errors=${errors.length} ids=[${errors.map((x) => x.lotteryId).join(",")}]`
+  backend\scripts\importKingApostas.js:851:      : "";
+  backend\scripts\importKingApostas.js:852:
+  backend\scripts\importKingApostas.js:853:  console.log(
+  backend\scripts\importKingApostas.js:854:    `[FETCH] ${lk} ${date} per-lottery=${lotteries.length} -> merged_draws=${
+  backend\scripts\importKingApostas.js:855:      merged.length
+> backend\scripts\importKingApostas.js:856:    } close_hours=[${closes.join(", ")}]${errInfo}`
+  backend\scripts\importKingApostas.js:857:  );
+  backend\scripts\importKingApostas.js:858:  return { success: true, data: merged };
+  backend\scripts\importKingApostas.js:859:}
+  backend\scripts\importKingApostas.js:860:
+  backend\scripts\importKingApostas.js:861:/**
+> backend\scripts\importKingApostas.js:862: * Monta prizes do draw (até 15), já filtrando vazios.
+  backend\scripts\importKingApostas.js:863: */
+> backend\scripts\importKingApostas.js:864:function extractPrizes(draw) {
+> backend\scripts\importKingApostas.js:865:  const prizes = [];
+  backend\scripts\importKingApostas.js:866:  for (let i = 1; i <= 15; i++) {
+  backend\scripts\importKingApostas.js:867:    const v = draw?.[`prize_${i}`];
+  backend\scripts\importKingApostas.js:868:    if (v === null || v === undefined || String(v).trim() === "") continue;
+> backend\scripts\importKingApostas.js:869:    prizes.push({ position: i, value: String(v) });
+  backend\scripts\importKingApostas.js:870:  }
+> backend\scripts\importKingApostas.js:871:  return prizes;
+  backend\scripts\importKingApostas.js:872:}
+  backend\scripts\importKingApostas.js:873:
+  backend\scripts\importKingApostas.js:874:/**
+> backend\scripts\importKingApostas.js:875: * Gera drawId e drawRef no mesmo padrão do seu projeto.
+> backend\scripts\importKingApostas.js:876: * ✅ Agora usa close_hour SLOT no ID e guarda close_hour_raw (quando fizer sentido).
+  backend\scripts\importKingApostas.js:877: */
+> backend\scripts\importKingApostas.js:878:function buildDrawRef({ draw, lotteryKey }) {
+  backend\scripts\importKingApostas.js:879:  const date = String(draw?.date || "").trim();
+  backend\scripts\importKingApostas.js:880:
+  backend\scripts\importKingApostas.js:881:  const { raw: closeRaw, slot: closeSlot } = normalizeCloseHourForLottery(
+> backend\scripts\importKingApostas.js:882:    draw?.close_hour || "",
+  backend\scripts\importKingApostas.js:883:    lotteryKey
+  backend\scripts\importKingApostas.js:884:  );
+  backend\scripts\importKingApostas.js:885:
+  backend\scripts\importKingApostas.js:886:  const lotteryName = String(draw?.lottery_name || draw?.name || "SEM_NOME").trim();
+  backend\scripts\importKingApostas.js:887:
+  backend\scripts\importKingApostas.js:888:  const lotteryIdFromDraw = pickLotteryId(draw);
+  backend\scripts\importKingApostas.js:889:  const lotteryIdPart = safeIdPart(lotteryIdFromDraw || lotteryName);
+  backend\scripts\importKingApostas.js:890:
+  backend\scripts\importKingApostas.js:891:  // ✅ ID por SLOT
+  backend\scripts\importKingApostas.js:892:  const drawId = `${safeIdPart(lotteryKey)}__${date}__${safeIdPart(
+  backend\scripts\importKingApostas.js:893:    closeSlot
+  backend\scripts\importKingApostas.js:894:  )}__${lotteryIdPart}`;
+> backend\scripts\importKingApostas.js:895:  const drawRef = db.collection("draws").doc(drawId);
+  backend\scripts\importKingApostas.js:896:
+  backend\scripts\importKingApostas.js:897:  return {
+  backend\scripts\importKingApostas.js:898:    drawId,
+> backend\scripts\importKingApostas.js:899:    drawRef,
+  backend\scripts\importKingApostas.js:900:    date,
+  backend\scripts\importKingApostas.js:901:    closeRaw,
+  backend\scripts\importKingApostas.js:902:    closeSlot,
+  backend\scripts\importKingApostas.js:903:    lotteryName,
+  backend\scripts\importKingApostas.js:904:    lotteryIdFromDraw,
+  backend\scripts\importKingApostas.js:905:  };
+  backend\scripts\importKingApostas.js:906:}
+  backend\scripts\importKingApostas.js:907:
+  backend\scripts\importKingApostas.js:908:/**
+  backend\scripts\importKingApostas.js:909: * Prova forte de “já completo”:
+  backend\scripts\importKingApostas.js:910: * - draw existe
+> backend\scripts\importKingApostas.js:911: * - prizesCount > 0 (ou) existe ao menos 1 doc na subcoleção prizes
+  backend\scripts\importKingApostas.js:912: */
+> backend\scripts\importKingApostas.js:913:async function checkAlreadyComplete(drawRef) {
+  backend\scripts\importKingApostas.js:914:  try {
+> backend\scripts\importKingApostas.js:915:    const dSnap = await drawRef.get();
+  backend\scripts\importKingApostas.js:916:    if (!dSnap.exists) return false;
+  backend\scripts\importKingApostas.js:917:
+  backend\scripts\importKingApostas.js:918:    const data = dSnap.data() || {};
+> backend\scripts\importKingApostas.js:919:    if (Number(data.prizesCount) > 0) return true;
+  backend\scripts\importKingApostas.js:920:
+> backend\scripts\importKingApostas.js:921:    // fallback: olha 1 doc de prizes
+> backend\scripts\importKingApostas.js:922:    const pSnap = await drawRef.collection("prizes").limit(1).get();
+  backend\scripts\importKingApostas.js:923:    return !pSnap.empty;
+  backend\scripts\importKingApostas.js:924:  } catch {
+  backend\scripts\importKingApostas.js:925:    return false;
+  backend\scripts\importKingApostas.js:926:  }
+  backend\scripts\importKingApostas.js:927:}
+  backend\scripts\importKingApostas.js:928:
+  backend\scripts\importKingApostas.js:929:/**
+  backend\scripts\importKingApostas.js:930: * ✅ Prova forte por SLOT (anti-índice composto)
+  backend\scripts\importKingApostas.js:931: * - Query filtra SOMENTE por date
+> backend\scripts\importKingApostas.js:932: * - close_hour + lottery_key/lotteryKey filtrados em memória
+  backend\scripts\importKingApostas.js:933: *
+  backend\scripts\importKingApostas.js:934: * ✅ FIX CRÍTICO:
+> backend\scripts\importKingApostas.js:935: * - Normaliza o close_hour armazenado (pode existir legado "09:09")
+  backend\scripts\importKingApostas.js:936: *   e compara por SLOT (HH:00), para não “perder” doc existente.
+  backend\scripts\importKingApostas.js:937: */
+  backend\scripts\importKingApostas.js:938:async function checkSlotCompletion({ date, closeHour, lotteryKey }) {
+  backend\scripts\importKingApostas.js:939:  try {
+  backend\scripts\importKingApostas.js:940:    const lk = String(lotteryKey || "").trim().toUpperCase();
+  backend\scripts\importKingApostas.js:941:    const targetSlot = normalizeCloseHourForLottery(closeHour || "", lk).slot;
+  backend\scripts\importKingApostas.js:942:    if (!targetSlot || !isHHMM(targetSlot)) return { docs: 0, complete: 0 };
+  backend\scripts\importKingApostas.js:943:
+  backend\scripts\importKingApostas.js:944:    // query mínima
+  backend\scripts\importKingApostas.js:945:    const snap = await db.collection("draws").where("date", "==", date).get();
+  backend\scripts\importKingApostas.js:946:    if (snap.empty) return { docs: 0, complete: 0 };
+  backend\scripts\importKingApostas.js:947:
+  backend\scripts\importKingApostas.js:948:    const refs = [];
+  backend\scripts\importKingApostas.js:949:    snap.forEach((doc) => {
+  backend\scripts\importKingApostas.js:950:      const d = doc.data() || {};
+  backend\scripts\importKingApostas.js:951:
+  backend\scripts\importKingApostas.js:952:      const lkSnake = String(d.lottery_key || "").trim().toUpperCase();
+  backend\scripts\importKingApostas.js:953:      const lkCamel = String(d.lotteryKey || "").trim().toUpperCase();
+  backend\scripts\importKingApostas.js:954:
+  backend\scripts\importKingApostas.js:955:      if (lkSnake !== lk && lkCamel !== lk) return;
+  backend\scripts\importKingApostas.js:956:
+  backend\scripts\importKingApostas.js:957:      // ✅ compara por SLOT normalizado (pega legado "09:09" como "09:00")
+> backend\scripts\importKingApostas.js:958:      const storedSlot = normalizeCloseHourForLottery(d.close_hour || "", lk).slot;
+  backend\scripts\importKingApostas.js:959:      if (storedSlot !== targetSlot) return;
+  backend\scripts\importKingApostas.js:960:
+  backend\scripts\importKingApostas.js:961:      refs.push(doc.ref);
+  backend\scripts\importKingApostas.js:962:    });
+  backend\scripts\importKingApostas.js:963:
+  backend\scripts\importKingApostas.js:964:    if (!refs.length) return { docs: 0, complete: 0 };
+  backend\scripts\importKingApostas.js:965:
+  backend\scripts\importKingApostas.js:966:    let complete = 0;
+  backend\scripts\importKingApostas.js:967:    for (const ref of refs) {
+  backend\scripts\importKingApostas.js:968:      const ok = await checkAlreadyComplete(ref);
+  backend\scripts\importKingApostas.js:969:      if (ok) complete += 1;
+  backend\scripts\importKingApostas.js:970:    }
+  backend\scripts\importKingApostas.js:971:
+  backend\scripts\importKingApostas.js:972:    return { docs: refs.length, complete };
+  backend\scripts\importKingApostas.js:973:  } catch {
+  backend\scripts\importKingApostas.js:974:    return { docs: 0, complete: 0 };
+  backend\scripts\importKingApostas.js:975:  }
+  backend\scripts\importKingApostas.js:976:}
+  backend\scripts\importKingApostas.js:977:
+  backend\scripts\importKingApostas.js:978:/**
+  backend\scripts\importKingApostas.js:979: * Importa payload para o Firestore.
+  backend\scripts\importKingApostas.js:980: * closeHour (opcional): se informado, importa SOMENTE draws daquele horário (SLOT).
+  backend\scripts\importKingApostas.js:981: *
+  backend\scripts\importKingApostas.js:982: * Opts extras:
+  backend\scripts\importKingApostas.js:983: * - skipIfAlreadyComplete (boolean): se true, e o draw do closeHour já estiver completo no FS,
+  backend\scripts\importKingApostas.js:997:
+  backend\scripts\importKingApostas.js:998:  let totalDrawsFromApi = 0;
+  backend\scripts\importKingApostas.js:999:  let totalDrawsMatchedClose = 0;
+  backend\scripts\importKingApostas.js:1000:  let totalDrawsValid = 0;
+  backend\scripts\importKingApostas.js:1001:
+  backend\scripts\importKingApostas.js:1002:  let totalDrawsUpserted = 0;
+  backend\scripts\importKingApostas.js:1003:  let totalDrawsSaved = 0;
+  backend\scripts\importKingApostas.js:1004:
+> backend\scripts\importKingApostas.js:1005:  let totalPrizesUpserted = 0;
+> backend\scripts\importKingApostas.js:1006:  let totalPrizesSaved = 0;
+  backend\scripts\importKingApostas.js:1007:
+  backend\scripts\importKingApostas.js:1008:  let skippedInvalid = 0;
+  backend\scripts\importKingApostas.js:1009:  let skippedEmpty = 0;
+  backend\scripts\importKingApostas.js:1010:  let skippedCloseHour = 0;
+  backend\scripts\importKingApostas.js:1011:  let skippedAlreadyComplete = 0;
+  backend\scripts\importKingApostas.js:1012:
+  backend\scripts\importKingApostas.js:1013:  // Provas úteis para o scheduler (quando closeHour é informado)
+  backend\scripts\importKingApostas.js:1014:  const proof = {
+  backend\scripts\importKingApostas.js:1015:    filterClose: null,
+  backend\scripts\importKingApostas.js:1016:
+> backend\scripts\importKingApostas.js:1017:    apiHasPrizes: false,
+> backend\scripts\importKingApostas.js:1018:    apiReturnedTargetDraws: 0, // draws válidos do closeHour com prizes
+  backend\scripts\importKingApostas.js:1019:    targetDrawIds: [],
+  backend\scripts\importKingApostas.js:1020:    inferredDate: null, // date do slot (inferido a partir do payload)
+  backend\scripts\importKingApostas.js:1021:
+  backend\scripts\importKingApostas.js:1022:    expectedTargets: 0, // = max(1, apiReturnedTargetDraws)
+  backend\scripts\importKingApostas.js:1023:    slotDocsFound: 0,
+  backend\scripts\importKingApostas.js:1024:    alreadyCompleteCount: 0,
+  backend\scripts\importKingApostas.js:1025:    alreadyCompleteAny: false,
+  backend\scripts\importKingApostas.js:1026:    alreadyCompleteAll: false,
+  backend\scripts\importKingApostas.js:1027:
+  backend\scripts\importKingApostas.js:1028:    targetWriteCount: 0,
+  backend\scripts\importKingApostas.js:1029:    targetSavedCount: 0,
+  backend\scripts\importKingApostas.js:1030:  };
+  backend\scripts\importKingApostas.js:1031:
+  backend\scripts\importKingApostas.js:1032:  // ✅ filtro deve ser SLOT também
+  backend\scripts\importKingApostas.js:1033:  const filterClose = closeHour
+  backend\scripts\importKingApostas.js:1034:    ? normalizeCloseHourForLottery(closeHour, lk).slot
+  backend\scripts\importKingApostas.js:1035:    : null;
+  backend\scripts\importKingApostas.js:1036:  if (filterClose && !isHHMM(filterClose)) {
+  backend\scripts\importKingApostas.js:1037:    throw new Error('Parâmetro "closeHour" inválido. Use HH:MM.');
+  backend\scripts\importKingApostas.js:1038:  }
+  backend\scripts\importKingApostas.js:1039:  proof.filterClose = filterClose;
+  backend\scripts\importKingApostas.js:1040:
+> backend\scripts\importKingApostas.js:1041:  const apiArr = Array.isArray(payload?.data) ? payload.data : [];
+  backend\scripts\importKingApostas.js:1042:
+  backend\scripts\importKingApostas.js:1043:  for (const draw of apiArr) {
+  backend\scripts\importKingApostas.js:1044:    totalDrawsFromApi++;
+  backend\scripts\importKingApostas.js:1045:
+  backend\scripts\importKingApostas.js:1046:    const date = String(draw?.date || "").trim();
+  backend\scripts\importKingApostas.js:1047:    const { raw: closeRaw, slot: closeSlot } = normalizeCloseHourForLottery(
+> backend\scripts\importKingApostas.js:1048:      draw?.close_hour || "",
+  backend\scripts\importKingApostas.js:1049:      lk
+  backend\scripts\importKingApostas.js:1050:    );
+  backend\scripts\importKingApostas.js:1051:
+  backend\scripts\importKingApostas.js:1052:    // filtro por horário (SLOT)
+  backend\scripts\importKingApostas.js:1053:    if (filterClose) {
+  backend\scripts\importKingApostas.js:1054:      if (closeSlot !== filterClose) {
+  backend\scripts\importKingApostas.js:1055:        skippedCloseHour++;
+  backend\scripts\importKingApostas.js:1056:        continue;
+  backend\scripts\importKingApostas.js:1057:      }
+  backend\scripts\importKingApostas.js:1058:    }
+  backend\scripts\importKingApostas.js:1059:
+  backend\scripts\importKingApostas.js:1060:    totalDrawsMatchedClose++;
+  backend\scripts\importKingApostas.js:1061:
+  backend\scripts\importKingApostas.js:1062:    // validações mínimas (slot precisa ser HH:MM)
+  backend\scripts\importKingApostas.js:1063:    if (!isISODate(date) || !isHHMM(closeSlot)) {
+  backend\scripts\importKingApostas.js:1064:      skippedInvalid++;
+  backend\scripts\importKingApostas.js:1065:      continue;
+  backend\scripts\importKingApostas.js:1066:    }
+  backend\scripts\importKingApostas.js:1067:
+> backend\scripts\importKingApostas.js:1068:    // prizes existentes
+> backend\scripts\importKingApostas.js:1069:    const prizes = extractPrizes(draw);
+  backend\scripts\importKingApostas.js:1070:
+  backend\scripts\importKingApostas.js:1071:    // Se não tem prize nenhum, NÃO grava
+> backend\scripts\importKingApostas.js:1072:    if (!prizes.length) {
+  backend\scripts\importKingApostas.js:1073:      skippedEmpty++;
+  backend\scripts\importKingApostas.js:1074:      continue;
+  backend\scripts\importKingApostas.js:1075:    }
+  backend\scripts\importKingApostas.js:1076:
+  backend\scripts\importKingApostas.js:1077:    totalDrawsValid++;
+  backend\scripts\importKingApostas.js:1078:
+  backend\scripts\importKingApostas.js:1079:    if (filterClose) {
+> backend\scripts\importKingApostas.js:1080:      proof.apiHasPrizes = true;
+  backend\scripts\importKingApostas.js:1081:      proof.apiReturnedTargetDraws += 1;
+  backend\scripts\importKingApostas.js:1082:      proof.inferredDate = proof.inferredDate || date;
+  backend\scripts\importKingApostas.js:1083:    }
+  backend\scripts\importKingApostas.js:1084:
+> backend\scripts\importKingApostas.js:1085:    const { drawId, drawRef, lotteryName, lotteryIdFromDraw } = buildDrawRef({
+  backend\scripts\importKingApostas.js:1086:      draw,
+  backend\scripts\importKingApostas.js:1087:      lotteryKey: lk,
+  backend\scripts\importKingApostas.js:1088:    });
+  backend\scripts\importKingApostas.js:1089:
+  backend\scripts\importKingApostas.js:1090:    if (filterClose) proof.targetDrawIds.push(drawId);
+  backend\scripts\importKingApostas.js:1091:
+  backend\scripts\importKingApostas.js:1092:    // Em closeHour: checa “já completo” e, se configurado, pula escrita (por draw)
+  backend\scripts\importKingApostas.js:1093:    if (filterClose) {
+> backend\scripts\importKingApostas.js:1094:      const already = await checkAlreadyComplete(drawRef);
+  backend\scripts\importKingApostas.js:1095:      if (skipIfAlreadyComplete && already) {
+  backend\scripts\importKingApostas.js:1096:        skippedAlreadyComplete++;
+  backend\scripts\importKingApostas.js:1097:        continue;
+  backend\scripts\importKingApostas.js:1098:      }
+  backend\scripts\importKingApostas.js:1099:    }
+  backend\scripts\importKingApostas.js:1100:
+  backend\scripts\importKingApostas.js:1101:    // métrica "novo" (opcional — custa reads)
+  backend\scripts\importKingApostas.js:1102:    let isNewDraw = false;
+  backend\scripts\importKingApostas.js:1103:    if (CHECK_EXISTENCE) {
+  backend\scripts\importKingApostas.js:1104:      try {
+> backend\scripts\importKingApostas.js:1105:        const snap = await drawRef.get();
+  backend\scripts\importKingApostas.js:1106:        isNewDraw = !snap.exists;
+  backend\scripts\importKingApostas.js:1107:      } catch {
+  backend\scripts\importKingApostas.js:1108:        isNewDraw = false;
+  backend\scripts\importKingApostas.js:1109:      }
+  backend\scripts\importKingApostas.js:1110:    }
+  backend\scripts\importKingApostas.js:1111:
+  backend\scripts\importKingApostas.js:1112:    const ymd = date;
+  backend\scripts\importKingApostas.js:1113:
+  backend\scripts\importKingApostas.js:1114:    batch.set(
+> backend\scripts\importKingApostas.js:1115:      drawRef,
+  backend\scripts\importKingApostas.js:1116:      {
+  backend\scripts\importKingApostas.js:1117:        source: "kingapostas",
+  backend\scripts\importKingApostas.js:1118:
+  backend\scripts\importKingApostas.js:1119:        uf: uf || null,
+  backend\scripts\importKingApostas.js:1120:        lottery_key: lk,
+  backend\scripts\importKingApostas.js:1121:
+  backend\scripts\importKingApostas.js:1122:        lottery_name: lotteryName,
+> backend\scripts\importKingApostas.js:1123:        lottery_id: lotteryIdFromDraw || null,
+  backend\scripts\importKingApostas.js:1124:        drawId,
+  backend\scripts\importKingApostas.js:1125:
+  backend\scripts\importKingApostas.js:1126:        date,
+  backend\scripts\importKingApostas.js:1127:        ymd,
+  backend\scripts\importKingApostas.js:1128:
+  backend\scripts\importKingApostas.js:1129:        // ✅ campo de negócio (SLOT)
+> backend\scripts\importKingApostas.js:1130:        close_hour: closeSlot,
+  backend\scripts\importKingApostas.js:1131:
+  backend\scripts\importKingApostas.js:1132:        // ✅ compat: campos usados no front (evita undefined)
+  backend\scripts\importKingApostas.js:1133:        hour: closeSlot ? String(closeSlot).slice(0, 2) : null,
+  backend\scripts\importKingApostas.js:1134:        close: closeSlot || null,
+  backend\scripts\importKingApostas.js:1135:
+  backend\scripts\importKingApostas.js:1136:        // ✅ guarda o que veio da API SOMENTE quando fizer sentido
+  backend\scripts\importKingApostas.js:1137:        // (PT_RIO HH:09 vira "", então cai em null)
+> backend\scripts\importKingApostas.js:1138:        close_hour_raw: closeRaw || null,
+  backend\scripts\importKingApostas.js:1139:
+> backend\scripts\importKingApostas.js:1140:        prizesCount: prizes.length,
+  backend\scripts\importKingApostas.js:1141:        importedAt: admin.firestore.FieldValue.serverTimestamp(),
+  backend\scripts\importKingApostas.js:1142:      },
+  backend\scripts\importKingApostas.js:1143:      { merge: true }
+  backend\scripts\importKingApostas.js:1144:    );
+  backend\scripts\importKingApostas.js:1145:    ops++;
+  backend\scripts\importKingApostas.js:1146:    totalDrawsUpserted++;
+  backend\scripts\importKingApostas.js:1147:    if (isNewDraw) totalDrawsSaved++;
+  backend\scripts\importKingApostas.js:1148:
+  backend\scripts\importKingApostas.js:1149:    if (filterClose) proof.targetWriteCount += 1;
+  backend\scripts\importKingApostas.js:1150:
+> backend\scripts\importKingApostas.js:1151:    for (const p of prizes) {
+  backend\scripts\importKingApostas.js:1152:      const n = normalizePrize(p.value);
+> backend\scripts\importKingApostas.js:1153:      const prizeId = `p${String(p.position).padStart(2, "0")}`;
+> backend\scripts\importKingApostas.js:1154:      const prizeRef = drawRef.collection("prizes").doc(prizeId);
+  backend\scripts\importKingApostas.js:1155:
+  backend\scripts\importKingApostas.js:1156:      let isNewPrize = false;
+  backend\scripts\importKingApostas.js:1157:      if (CHECK_EXISTENCE) {
+  backend\scripts\importKingApostas.js:1158:        try {
+> backend\scripts\importKingApostas.js:1159:          const psnap = await prizeRef.get();
+  backend\scripts\importKingApostas.js:1160:          isNewPrize = !psnap.exists;
+  backend\scripts\importKingApostas.js:1161:        } catch {
+  backend\scripts\importKingApostas.js:1162:          isNewPrize = false;
+  backend\scripts\importKingApostas.js:1163:        }
+  backend\scripts\importKingApostas.js:1164:      }
+  backend\scripts\importKingApostas.js:1165:
+  backend\scripts\importKingApostas.js:1166:      batch.set(
+> backend\scripts\importKingApostas.js:1167:        prizeRef,
+  backend\scripts\importKingApostas.js:1168:        {
+> backend\scripts\importKingApostas.js:1169:          position: p.position,
+  backend\scripts\importKingApostas.js:1170:          ...n,
+  backend\scripts\importKingApostas.js:1171:        },
+  backend\scripts\importKingApostas.js:1172:        { merge: true }
+  backend\scripts\importKingApostas.js:1173:      );
+  backend\scripts\importKingApostas.js:1174:      ops++;
+> backend\scripts\importKingApostas.js:1175:      totalPrizesUpserted++;
+> backend\scripts\importKingApostas.js:1176:      if (isNewPrize) totalPrizesSaved++;
+  backend\scripts\importKingApostas.js:1177:
+  backend\scripts\importKingApostas.js:1178:      if (filterClose) proof.targetWriteCount += 1;
+  backend\scripts\importKingApostas.js:1179:
+  backend\scripts\importKingApostas.js:1180:      if (ops >= 420) {
+  backend\scripts\importKingApostas.js:1181:        await batch.commit();
+  backend\scripts\importKingApostas.js:1182:        batch = db.batch();
+  backend\scripts\importKingApostas.js:1183:        ops = 0;
+  backend\scripts\importKingApostas.js:1184:      }
+  backend\scripts\importKingApostas.js:1185:    }
+  backend\scripts\importKingApostas.js:1186:  }
+  backend\scripts\importKingApostas.js:1187:
+  backend\scripts\importKingApostas.js:1188:  if (ops > 0) await batch.commit();
+  backend\scripts\importKingApostas.js:1189:
+  backend\scripts\importKingApostas.js:1190:  // ✅ flags finais de complete (por SLOT via query anti-índice)
+  backend\scripts\importKingApostas.js:1191:  if (proof.filterClose) {
+  backend\scripts\importKingApostas.js:1192:    const slotDate = proof.inferredDate; // se API trouxe o slot, teremos date
+> backend\scripts\importKingApostas.js:1193:    proof.expectedTargets = Math.max(1, Number(proof.apiReturnedTargetDraws || 0));
+  backend\scripts\importKingApostas.js:1194:
+  backend\scripts\importKingApostas.js:1195:    if (slotDate) {
+  backend\scripts\importKingApostas.js:1196:      const { docs, complete } = await checkSlotCompletion({
+  backend\scripts\importKingApostas.js:1197:        date: slotDate,
+  backend\scripts\importKingApostas.js:1198:        closeHour: proof.filterClose,
+  backend\scripts\importKingApostas.js:1199:        lotteryKey: lk,
+  backend\scripts\importKingApostas.js:1200:      });
+  backend\scripts\importKingApostas.js:1201:
+  backend\scripts\importKingApostas.js:1202:      proof.slotDocsFound = docs;
+  backend\scripts\importKingApostas.js:1203:      proof.alreadyCompleteCount = complete;
+  backend\scripts\importKingApostas.js:1204:      proof.alreadyCompleteAny = complete > 0;
+  backend\scripts\importKingApostas.js:1205:      proof.alreadyCompleteAll = complete >= proof.expectedTargets;
+  backend\scripts\importKingApostas.js:1206:    } else {
+  backend\scripts\importKingApostas.js:1207:      proof.slotDocsFound = 0;
+  backend\scripts\importKingApostas.js:1208:      proof.alreadyCompleteCount = 0;
+  backend\scripts\importKingApostas.js:1209:      proof.alreadyCompleteAny = false;
+  backend\scripts\importKingApostas.js:1210:      proof.alreadyCompleteAll = false;
+  backend\scripts\importKingApostas.js:1211:    }
+  backend\scripts\importKingApostas.js:1212:
+  backend\scripts\importKingApostas.js:1213:    // savedCount “forte” para o scheduler:
+> backend\scripts\importKingApostas.js:1214:    if (!proof.apiHasPrizes) {
+  backend\scripts\importKingApostas.js:1215:      proof.targetSavedCount = 0;
+  backend\scripts\importKingApostas.js:1216:    } else if (skipIfAlreadyComplete && proof.alreadyCompleteAll) {
+  backend\scripts\importKingApostas.js:1217:      proof.targetSavedCount = 0;
+  backend\scripts\importKingApostas.js:1218:    } else {
+  backend\scripts\importKingApostas.js:1219:      proof.targetSavedCount = proof.targetWriteCount;
+  backend\scripts\importKingApostas.js:1220:    }
+  backend\scripts\importKingApostas.js:1221:  }
+  backend\scripts\importKingApostas.js:1222:
+  backend\scripts\importKingApostas.js:1223:  console.log(
+  backend\scripts\importKingApostas.js:1224:    `[IMPORT] API draws=${totalDrawsFromApi} | match_close=${totalDrawsMatchedClose} | validos=${totalDrawsValid}` +
+  backend\scripts\importKingApostas.js:1225:      ` | draws_upserted=${totalDrawsUpserted} | draws_novos=${totalDrawsSaved}` +
+> backend\scripts\importKingApostas.js:1226:      ` | prizes_upserted=${totalPrizesUpserted} | prizes_novos=${totalPrizesSaved}` +
+  backend\scripts\importKingApostas.js:1227:      ` | skip_vazio=${skippedEmpty} | skip_invalido=${skippedInvalid} | skip_close=${skippedCloseHour}` +
+  backend\scripts\importKingApostas.js:1228:      ` | skip_complete=${skippedAlreadyComplete}` +
+  backend\scripts\importKingApostas.js:1229:      ` | CHECK_EXISTENCE=${CHECK_EXISTENCE ? "ON" : "OFF"}` +
+  backend\scripts\importKingApostas.js:1230:      ` | uf=${uf || "NULL"} lottery_key=${lk}` +
+  backend\scripts\importKingApostas.js:1231:      (proof.filterClose
+  backend\scripts\importKingApostas.js:1232:        ? ` | expected=${proof.expectedTargets} complete=${proof.alreadyCompleteCount} slotDocs=${proof.slotDocsFound} apiTargets=${proof.apiReturnedTargetDraws}`
+  backend\scripts\importKingApostas.js:1233:        : "")
+  backend\scripts\importKingApostas.js:1234:  );
+  backend\scripts\importKingApostas.js:1235:
+  backend\scripts\importKingApostas.js:1236:  return {
+  backend\scripts\importKingApostas.js:1237:    totalDrawsFromApi,
+  backend\scripts\importKingApostas.js:1238:    totalDrawsMatchedClose,
+  backend\scripts\importKingApostas.js:1239:    totalDrawsValid,
+  backend\scripts\importKingApostas.js:1240:
+  backend\scripts\importKingApostas.js:1241:    totalDrawsSaved,
+  backend\scripts\importKingApostas.js:1242:    totalDrawsUpserted,
+  backend\scripts\importKingApostas.js:1243:
+> backend\scripts\importKingApostas.js:1244:    totalPrizesSaved,
+> backend\scripts\importKingApostas.js:1245:    totalPrizesUpserted,
+  backend\scripts\importKingApostas.js:1246:
+  backend\scripts\importKingApostas.js:1247:    skippedEmpty,
+  backend\scripts\importKingApostas.js:1248:    skippedInvalid,
+  backend\scripts\importKingApostas.js:1249:    skippedCloseHour,
+  backend\scripts\importKingApostas.js:1250:    skippedAlreadyComplete,
+  backend\scripts\importKingApostas.js:1251:
+  backend\scripts\importKingApostas.js:1252:    proof,
+  backend\scripts\importKingApostas.js:1253:  };
+  backend\scripts\importKingApostas.js:1254:}
+  backend\scripts\importKingApostas.js:1255:
+  backend\scripts\importKingApostas.js:1256:/**
+> backend\scripts\importKingApostas.js:1257: * ✅ Cleanup automático: remove docs legados (lottery_id null) quando existe doc UUID no mesmo date+slot.
+  backend\scripts\importKingApostas.js:1258: * - Usa query mínima por date (sem índice composto)
+  backend\scripts\importKingApostas.js:1259: * - Seguro: só apaga legado se existe UUID no slot
+  backend\scripts\importKingApostas.js:1260: */
+  backend\scripts\importKingApostas.js:1261:async function cleanupLegacyDrawsForDate({ date, lotteryKey }) {
+  backend\scripts\importKingApostas.js:1262:  const lk = String(lotteryKey || "").trim().toUpperCase();
+  backend\scripts\importKingApostas.js:1263:  if (!date || !isISODate(date) || !lk)
+  backend\scripts\importKingApostas.js:1264:    return { ok: false, deleted: 0, slots: 0, reason: "bad_args" };
+  backend\scripts\importKingApostas.js:1265:
+  backend\scripts\importKingApostas.js:1266:  const snap = await db.collection("draws").where("date", "==", date).get();
+  backend\scripts\importKingApostas.js:1267:  const rows = snap.docs.map((doc) => ({ ref: doc.ref, id: doc.id, ...doc.data() }));
+  backend\scripts\importKingApostas.js:1268:
+  backend\scripts\importKingApostas.js:1269:  const mine = rows.filter(
+  backend\scripts\importKingApostas.js:1270:    (r) => String(r.lottery_key || "").trim().toUpperCase() === lk
+  backend\scripts\importKingApostas.js:1271:  );
+  backend\scripts\importKingApostas.js:1272:
+  backend\scripts\importKingApostas.js:1273:  const bySlot = new Map();
+  backend\scripts\importKingApostas.js:1274:  for (const r of mine) {
+> backend\scripts\importKingApostas.js:1275:    const slot = String(r.close_hour || "").trim();
+  backend\scripts\importKingApostas.js:1276:    if (!slot) continue;
+  backend\scripts\importKingApostas.js:1277:    if (!bySlot.has(slot)) bySlot.set(slot, []);
+  backend\scripts\importKingApostas.js:1278:    bySlot.get(slot).push(r);
+  backend\scripts\importKingApostas.js:1279:  }
+  backend\scripts\importKingApostas.js:1280:
+  backend\scripts\importKingApostas.js:1281:  let deleted = 0;
+  backend\scripts\importKingApostas.js:1282:  let slots = 0;
+  backend\scripts\importKingApostas.js:1283:  let batch = db.batch();
+  backend\scripts\importKingApostas.js:1284:  let ops = 0;
+  backend\scripts\importKingApostas.js:1285:
+  backend\scripts\importKingApostas.js:1286:  for (const [slot, arr] of bySlot.entries()) {
+> backend\scripts\importKingApostas.js:1287:    const hasUuid = arr.some((x) => x.lottery_id && String(x.lottery_id).includes("-"));
+  backend\scripts\importKingApostas.js:1288:    if (!hasUuid) continue;
+  backend\scripts\importKingApostas.js:1289:
+> backend\scripts\importKingApostas.js:1290:    const leg = arr.filter((x) => !x.lottery_id);
+  backend\scripts\importKingApostas.js:1291:    if (!leg.length) continue;
+  backend\scripts\importKingApostas.js:1292:
+  backend\scripts\importKingApostas.js:1293:    for (const d of leg) {
+  backend\scripts\importKingApostas.js:1294:      batch.delete(d.ref);
+  backend\scripts\importKingApostas.js:1295:      deleted += 1;
+  backend\scripts\importKingApostas.js:1296:      ops += 1;
+  backend\scripts\importKingApostas.js:1297:      if (ops >= 450) {
+  backend\scripts\importKingApostas.js:1298:        await batch.commit();
+  backend\scripts\importKingApostas.js:1299:        batch = db.batch();
+  backend\scripts\importKingApostas.js:1300:        ops = 0;
+  backend\scripts\importKingApostas.js:1301:      }
+  backend\scripts\importKingApostas.js:1302:    }
+  backend\scripts\importKingApostas.js:1303:    slots += 1;
+  backend\scripts\importKingApostas.js:1304:  }
+  backend\scripts\importKingApostas.js:1305:
+  backend\scripts\importKingApostas.js:1306:  if (ops > 0) await batch.commit();
+  backend\scripts\importKingApostas.js:1307:
+  backend\scripts\importKingApostas.js:1308:  return { ok: true, deleted, slots };
+  backend\scripts\importKingApostas.js:1309:}
+  backend\scripts\importKingApostas.js:1310:
+  backend\scripts\importKingApostas.js:1311:async function runImport({ date, lotteryKey = "PT_RIO", closeHour = null } = {}) {
+  backend\scripts\importKingApostas.js:1312:  if (!date || !isISODate(date)) {
+  backend\scripts\importKingApostas.js:1313:    throw new Error('Parâmetro "date" inválido. Use YYYY-MM-DD.');
+  backend\scripts\importKingApostas.js:1314:  }
+  backend\scripts\importKingApostas.js:1315:
+  backend\scripts\importKingApostas.js:1330:
+  backend\scripts\importKingApostas.js:1331:      requestedCloseHour: norm.requested || null,
+  backend\scripts\importKingApostas.js:1332:
+  backend\scripts\importKingApostas.js:1333:      blocked: true,
+  backend\scripts\importKingApostas.js:1334:      blockedReason: "future_date",
+  backend\scripts\importKingApostas.js:1335:      todayBR,
+  backend\scripts\importKingApostas.js:1336:
+  backend\scripts\importKingApostas.js:1337:      captured: false,
+> backend\scripts\importKingApostas.js:1338:      apiHasPrizes: null,
+  backend\scripts\importKingApostas.js:1339:      alreadyCompleteAny: null,
+  backend\scripts\importKingApostas.js:1340:      alreadyCompleteAll: null,
+  backend\scripts\importKingApostas.js:1341:      expectedTargets: null,
+  backend\scripts\importKingApostas.js:1342:      alreadyCompleteCount: null,
+  backend\scripts\importKingApostas.js:1343:      slotDocsFound: null,
+  backend\scripts\importKingApostas.js:1344:      apiReturnedTargetDraws: null,
+  backend\scripts\importKingApostas.js:1345:      savedCount: null,
+  backend\scripts\importKingApostas.js:1346:      writeCount: null,
+  backend\scripts\importKingApostas.js:1347:      targetDrawIds: null,
+  backend\scripts\importKingApostas.js:1348:      tookMs: 0,
+  backend\scripts\importKingApostas.js:1349:
+  backend\scripts\importKingApostas.js:1350:      totalDrawsFromApi: 0,
+  backend\scripts\importKingApostas.js:1351:      totalDrawsMatchedClose: 0,
+  backend\scripts\importKingApostas.js:1352:      totalDrawsValid: 0,
+  backend\scripts\importKingApostas.js:1353:      totalDrawsSaved: 0,
+  backend\scripts\importKingApostas.js:1354:      totalDrawsUpserted: 0,
+> backend\scripts\importKingApostas.js:1355:      totalPrizesSaved: 0,
+> backend\scripts\importKingApostas.js:1356:      totalPrizesUpserted: 0,
+  backend\scripts\importKingApostas.js:1357:      skippedEmpty: 0,
+  backend\scripts\importKingApostas.js:1358:      skippedInvalid: 0,
+  backend\scripts\importKingApostas.js:1359:      skippedCloseHour: 0,
+  backend\scripts\importKingApostas.js:1360:      skippedAlreadyComplete: 0,
+  backend\scripts\importKingApostas.js:1361:      proof: {
+  backend\scripts\importKingApostas.js:1362:        filterClose: norm.slot || null,
+> backend\scripts\importKingApostas.js:1363:        apiHasPrizes: false,
+  backend\scripts\importKingApostas.js:1364:        apiReturnedTargetDraws: 0,
+  backend\scripts\importKingApostas.js:1365:        targetDrawIds: [],
+  backend\scripts\importKingApostas.js:1366:        inferredDate: null,
+  backend\scripts\importKingApostas.js:1367:        expectedTargets: 0,
+  backend\scripts\importKingApostas.js:1368:        slotDocsFound: 0,
+  backend\scripts\importKingApostas.js:1369:        alreadyCompleteCount: 0,
+  backend\scripts\importKingApostas.js:1370:        alreadyCompleteAny: false,
+  backend\scripts\importKingApostas.js:1371:        alreadyCompleteAll: false,
+  backend\scripts\importKingApostas.js:1372:        targetWriteCount: 0,
+  backend\scripts\importKingApostas.js:1373:        targetSavedCount: 0,
+  backend\scripts\importKingApostas.js:1374:      },
+  backend\scripts\importKingApostas.js:1375:    };
+  backend\scripts\importKingApostas.js:1376:  }
+  backend\scripts\importKingApostas.js:1377:
+  backend\scripts\importKingApostas.js:1378:  // ✅ closeHour do scheduler: normaliza SEM log enganoso
+  backend\scripts\importKingApostas.js:1379:  const norm = normalizeRequestedCloseHour(closeHour, lk);
+  backend\scripts\importKingApostas.js:1380:  if (norm.note === "invalid") {
+  backend\scripts\importKingApostas.js:1381:    throw new Error('Parâmetro "closeHour" inválido. Use HH:MM.');
+  backend\scripts\importKingApostas.js:1382:  }
+  backend\scripts\importKingApostas.js:1383:  const normalizedClose = norm.slot || null;
+  backend\scripts\importKingApostas.js:1384:
+  backend\scripts\importKingApostas.js:1385:  const startedAt = Date.now();
+  backend\scripts\importKingApostas.js:1386:
+  backend\scripts\importKingApostas.js:1387:  // ✅ SOFT OVERRIDE: PT_RIO 18:00 fora do calendário (controlado por env)
+  backend\scripts\importKingApostas.js:1388:  const allowSoftOverride18 =
+  backend\scripts\importKingApostas.js:1414:          date,
+  backend\scripts\importKingApostas.js:1415:          closeHour: normalizedClose,
+  backend\scripts\importKingApostas.js:1416:          requestedCloseHour: norm.requested || null,
+  backend\scripts\importKingApostas.js:1417:
+  backend\scripts\importKingApostas.js:1418:          blocked: true,
+  backend\scripts\importKingApostas.js:1419:          blockedReason: "no_draw_for_slot_calendar",
+  backend\scripts\importKingApostas.js:1420:          todayBR,
+  backend\scripts\importKingApostas.js:1421:          captured: false,
+> backend\scripts\importKingApostas.js:1422:          apiHasPrizes: false,
+  backend\scripts\importKingApostas.js:1423:          alreadyCompleteAny: false,
+  backend\scripts\importKingApostas.js:1424:          alreadyCompleteAll: false,
+  backend\scripts\importKingApostas.js:1425:          expectedTargets: 0,
+  backend\scripts\importKingApostas.js:1426:          alreadyCompleteCount: 0,
+  backend\scripts\importKingApostas.js:1427:          slotDocsFound: 0,
+  backend\scripts\importKingApostas.js:1428:          apiReturnedTargetDraws: 0,
+  backend\scripts\importKingApostas.js:1429:          savedCount: 0,
+  backend\scripts\importKingApostas.js:1430:          writeCount: 0,
+  backend\scripts\importKingApostas.js:1431:          targetDrawIds: [],
+  backend\scripts\importKingApostas.js:1432:          tookMs: ms0,
+  backend\scripts\importKingApostas.js:1433:          totalDrawsFromApi: 0,
+  backend\scripts\importKingApostas.js:1434:          totalDrawsMatchedClose: 0,
+  backend\scripts\importKingApostas.js:1435:          totalDrawsValid: 0,
+  backend\scripts\importKingApostas.js:1436:          totalDrawsSaved: 0,
+  backend\scripts\importKingApostas.js:1437:          totalDrawsUpserted: 0,
+> backend\scripts\importKingApostas.js:1438:          totalPrizesSaved: 0,
+> backend\scripts\importKingApostas.js:1439:          totalPrizesUpserted: 0,
+  backend\scripts\importKingApostas.js:1440:          skippedEmpty: 0,
+  backend\scripts\importKingApostas.js:1441:          skippedInvalid: 0,
+  backend\scripts\importKingApostas.js:1442:          skippedCloseHour: 0,
+  backend\scripts\importKingApostas.js:1443:          skippedAlreadyComplete: 0,
+  backend\scripts\importKingApostas.js:1444:          proof: {
+  backend\scripts\importKingApostas.js:1445:            filterClose: normalizedClose,
+> backend\scripts\importKingApostas.js:1446:            apiHasPrizes: false,
+  backend\scripts\importKingApostas.js:1447:            apiReturnedTargetDraws: 0,
+  backend\scripts\importKingApostas.js:1448:            targetDrawIds: [],
+  backend\scripts\importKingApostas.js:1449:            inferredDate: null,
+  backend\scripts\importKingApostas.js:1450:            expectedTargets: 0,
+  backend\scripts\importKingApostas.js:1451:            slotDocsFound: 0,
+  backend\scripts\importKingApostas.js:1452:            alreadyCompleteCount: 0,
+  backend\scripts\importKingApostas.js:1453:            alreadyCompleteAny: false,
+  backend\scripts\importKingApostas.js:1454:            alreadyCompleteAll: false,
+  backend\scripts\importKingApostas.js:1455:            targetWriteCount: 0,
+  backend\scripts\importKingApostas.js:1456:            targetSavedCount: 0,
+  backend\scripts\importKingApostas.js:1457:          },
+  backend\scripts\importKingApostas.js:1458:        };
+  backend\scripts\importKingApostas.js:1459:      }
+  backend\scripts\importKingApostas.js:1460:    }
+  backend\scripts\importKingApostas.js:1461:  }
+  backend\scripts\importKingApostas.js:1462:
+  backend\scripts\importKingApostas.js:1463:  // ✅ Fetch API (JSON)
+  backend\scripts\importKingApostas.js:1464:  let payload = await fetchKingResults({ date, lotteryKey: lk });
+  backend\scripts\importKingApostas.js:1465:
+> backend\scripts\importKingApostas.js:1466:  // ✅ Se pediram closeHour e ele NÃO existe no dia (close_hours do FETCH), retorna blocked/api_missing_slot
+  backend\scripts\importKingApostas.js:1467:  if (normalizedClose) {
+  backend\scripts\importKingApostas.js:1468:    const closes = summarizeCloseHours(
+> backend\scripts\importKingApostas.js:1469:      Array.isArray(payload?.data) ? payload.data : [],
+  backend\scripts\importKingApostas.js:1470:      lk
+  backend\scripts\importKingApostas.js:1471:    );
+  backend\scripts\importKingApostas.js:1472:    const hasTarget = closes.includes(normalizedClose);
+  backend\scripts\importKingApostas.js:1473:
+  backend\scripts\importKingApostas.js:1474:    if (!hasTarget) {
+  backend\scripts\importKingApostas.js:1475:      // diagnóstico: tenta fallback HTML apenas para logar
+  backend\scripts\importKingApostas.js:1476:      try {
+  backend\scripts\importKingApostas.js:1477:        const fb = await tryHtmlDetailsFallback({
+  backend\scripts\importKingApostas.js:1478:          date,
+  backend\scripts\importKingApostas.js:1479:          lotteryKey: lk,
+  backend\scripts\importKingApostas.js:1480:          closeHour: normalizedClose,
+  backend\scripts\importKingApostas.js:1481:        });
+  backend\scripts\importKingApostas.js:1482:
+  backend\scripts\importKingApostas.js:1483:        if (fb.ok) {
+  backend\scripts\importKingApostas.js:1484:          console.warn(
+  backend\scripts\importKingApostas.js:1485:            "[FALLBACK:DETAILS] lk=" +
+  backend\scripts\importKingApostas.js:1486:              lk +
+  backend\scripts\importKingApostas.js:1487:              " date=" +
+  backend\scripts\importKingApostas.js:1488:              date +
+  backend\scripts\importKingApostas.js:1489:              " slot=" +
+  backend\scripts\importKingApostas.js:1490:              fb.slot +
+  backend\scripts\importKingApostas.js:1491:              " kind=" +
+  backend\scripts\importKingApostas.js:1492:              fb.kind +
+  backend\scripts\importKingApostas.js:1493:              " hasSlot=" +
+  backend\scripts\importKingApostas.js:1494:              fb.hasSlot +
+  backend\scripts\importKingApostas.js:1511:        closeHour: normalizedClose,
+  backend\scripts\importKingApostas.js:1512:        requestedCloseHour: norm.requested || null,
+  backend\scripts\importKingApostas.js:1513:
+  backend\scripts\importKingApostas.js:1514:        blocked: true,
+  backend\scripts\importKingApostas.js:1515:        blockedReason: "api_missing_slot",
+  backend\scripts\importKingApostas.js:1516:        todayBR,
+  backend\scripts\importKingApostas.js:1517:
+  backend\scripts\importKingApostas.js:1518:        captured: false,
+> backend\scripts\importKingApostas.js:1519:        apiHasPrizes: false,
+  backend\scripts\importKingApostas.js:1520:        alreadyCompleteAny: false,
+  backend\scripts\importKingApostas.js:1521:        alreadyCompleteAll: false,
+  backend\scripts\importKingApostas.js:1522:
+  backend\scripts\importKingApostas.js:1523:        expectedTargets: 0,
+  backend\scripts\importKingApostas.js:1524:        alreadyCompleteCount: 0,
+  backend\scripts\importKingApostas.js:1525:        slotDocsFound: 0,
+  backend\scripts\importKingApostas.js:1526:        apiReturnedTargetDraws: 0,
+  backend\scripts\importKingApostas.js:1527:
+  backend\scripts\importKingApostas.js:1528:        savedCount: 0,
+  backend\scripts\importKingApostas.js:1529:        writeCount: 0,
+  backend\scripts\importKingApostas.js:1530:        targetDrawIds: [],
+  backend\scripts\importKingApostas.js:1531:
+  backend\scripts\importKingApostas.js:1532:        tookMs: ms0,
+  backend\scripts\importKingApostas.js:1533:
+> backend\scripts\importKingApostas.js:1534:        totalDrawsFromApi: Array.isArray(payload?.data) ? payload.data.length : 0,
+  backend\scripts\importKingApostas.js:1535:        totalDrawsMatchedClose: 0,
+  backend\scripts\importKingApostas.js:1536:        totalDrawsValid: 0,
+  backend\scripts\importKingApostas.js:1537:        totalDrawsSaved: 0,
+  backend\scripts\importKingApostas.js:1538:        totalDrawsUpserted: 0,
+> backend\scripts\importKingApostas.js:1539:        totalPrizesSaved: 0,
+> backend\scripts\importKingApostas.js:1540:        totalPrizesUpserted: 0,
+  backend\scripts\importKingApostas.js:1541:        skippedEmpty: 0,
+  backend\scripts\importKingApostas.js:1542:        skippedInvalid: 0,
+  backend\scripts\importKingApostas.js:1543:        skippedCloseHour: 0,
+  backend\scripts\importKingApostas.js:1544:        skippedAlreadyComplete: 0,
+  backend\scripts\importKingApostas.js:1545:        proof: {
+  backend\scripts\importKingApostas.js:1546:          filterClose: normalizedClose,
+> backend\scripts\importKingApostas.js:1547:          apiHasPrizes: false,
+  backend\scripts\importKingApostas.js:1548:          apiReturnedTargetDraws: 0,
+  backend\scripts\importKingApostas.js:1549:          targetDrawIds: [],
+  backend\scripts\importKingApostas.js:1550:          inferredDate: null,
+  backend\scripts\importKingApostas.js:1551:          expectedTargets: 0,
+  backend\scripts\importKingApostas.js:1552:          slotDocsFound: 0,
+  backend\scripts\importKingApostas.js:1553:          alreadyCompleteCount: 0,
+  backend\scripts\importKingApostas.js:1554:          alreadyCompleteAny: false,
+  backend\scripts\importKingApostas.js:1555:          alreadyCompleteAll: false,
+  backend\scripts\importKingApostas.js:1556:          targetWriteCount: 0,
+  backend\scripts\importKingApostas.js:1557:          targetSavedCount: 0,
+  backend\scripts\importKingApostas.js:1558:        },
+  backend\scripts\importKingApostas.js:1559:      };
+  backend\scripts\importKingApostas.js:1560:    }
+  backend\scripts\importKingApostas.js:1561:  }
+  backend\scripts\importKingApostas.js:1562:
+  backend\scripts\importKingApostas.js:1563:  const result = await importFromPayload({
+  backend\scripts\importKingApostas.js:1564:    payload,
+  backend\scripts\importKingApostas.js:1565:    lotteryKey: lk,
+  backend\scripts\importKingApostas.js:1566:    closeHour: normalizedClose,
+  backend\scripts\importKingApostas.js:1567:    skipIfAlreadyComplete: Boolean(normalizedClose), // scheduler: evita regravar
+  backend\scripts\importKingApostas.js:1568:  });
+  backend\scripts\importKingApostas.js:1569:
+  backend\scripts\importKingApostas.js:1570:  const ms = Date.now() - startedAt;
+  backend\scripts\importKingApostas.js:1571:
+  backend\scripts\importKingApostas.js:1572:  const proof = result.proof || {};
+> backend\scripts\importKingApostas.js:1573:  const apiHasPrizes = Boolean(proof.apiHasPrizes);
+  backend\scripts\importKingApostas.js:1574:
+  backend\scripts\importKingApostas.js:1575:  const alreadyCompleteAnyReal = Boolean(proof.alreadyCompleteAny);
+  backend\scripts\importKingApostas.js:1576:  const alreadyCompleteAll = Boolean(proof.alreadyCompleteAll);
+  backend\scripts\importKingApostas.js:1577:
+  backend\scripts\importKingApostas.js:1578:  const alreadyCompleteAny = normalizedClose ? alreadyCompleteAnyReal : null;
+  backend\scripts\importKingApostas.js:1579:
+  backend\scripts\importKingApostas.js:1580:  // ✅ Captured “verdadeiro” (modo closeHour):
+> backend\scripts\importKingApostas.js:1581:  // - API liberou prizes para o horário, OU
+  backend\scripts\importKingApostas.js:1582:  // - slot já está completo no Firestore
+  backend\scripts\importKingApostas.js:1583:  const captured = normalizedClose
+> backend\scripts\importKingApostas.js:1584:    ? apiHasPrizes || alreadyCompleteAnyReal
+  backend\scripts\importKingApostas.js:1585:    : (result.totalDrawsValid || 0) > 0;
+  backend\scripts\importKingApostas.js:1586:
+> backend\scripts\importKingApostas.js:1587:  const writeCount = Number.isFinite(Number(proof.targetWriteCount))
+> backend\scripts\importKingApostas.js:1588:    ? Number(proof.targetWriteCount)
+  backend\scripts\importKingApostas.js:1589:    : 0;
+  backend\scripts\importKingApostas.js:1590:
+> backend\scripts\importKingApostas.js:1591:  const savedCount = Number.isFinite(Number(proof.targetSavedCount))
+> backend\scripts\importKingApostas.js:1592:    ? Number(proof.targetSavedCount)
+  backend\scripts\importKingApostas.js:1593:    : 0;
+  backend\scripts\importKingApostas.js:1594:
+  backend\scripts\importKingApostas.js:1595:  return {
+  backend\scripts\importKingApostas.js:1596:    ok: true,
+  backend\scripts\importKingApostas.js:1597:    lotteryKey: lk,
+  backend\scripts\importKingApostas.js:1598:    date,
+  backend\scripts\importKingApostas.js:1599:    closeHour: normalizedClose || null,
+  backend\scripts\importKingApostas.js:1600:    requestedCloseHour: norm.requested || null,
+  backend\scripts\importKingApostas.js:1601:
+  backend\scripts\importKingApostas.js:1602:    blocked: false,
+  backend\scripts\importKingApostas.js:1603:    blockedReason: null,
+  backend\scripts\importKingApostas.js:1604:    todayBR,
+  backend\scripts\importKingApostas.js:1605:
+  backend\scripts\importKingApostas.js:1606:    captured,
+> backend\scripts\importKingApostas.js:1607:    apiHasPrizes: normalizedClose ? apiHasPrizes : null,
+  backend\scripts\importKingApostas.js:1608:    alreadyCompleteAny: normalizedClose ? alreadyCompleteAny : null,
+  backend\scripts\importKingApostas.js:1609:    alreadyCompleteAll: normalizedClose ? alreadyCompleteAll : null,
+  backend\scripts\importKingApostas.js:1610:
+> backend\scripts\importKingApostas.js:1611:    expectedTargets: normalizedClose ? Number(proof.expectedTargets || 0) : null,
+> backend\scripts\importKingApostas.js:1612:    alreadyCompleteCount: normalizedClose ? Number(proof.alreadyCompleteCount || 0) : null,
+> backend\scripts\importKingApostas.js:1613:    slotDocsFound: normalizedClose ? Number(proof.slotDocsFound || 0) : null,
+> backend\scripts\importKingApostas.js:1614:    apiReturnedTargetDraws: normalizedClose ? Number(proof.apiReturnedTargetDraws || 0) : null,
+  backend\scripts\importKingApostas.js:1615:
+  backend\scripts\importKingApostas.js:1616:    savedCount: normalizedClose ? savedCount : null,
+  backend\scripts\importKingApostas.js:1617:    writeCount: normalizedClose ? writeCount : null,
+  backend\scripts\importKingApostas.js:1618:    targetDrawIds: normalizedClose ? proof.targetDrawIds || [] : null,
+  backend\scripts\importKingApostas.js:1619:
+  backend\scripts\importKingApostas.js:1620:    tookMs: ms,
+  backend\scripts\importKingApostas.js:1621:    ...result,
+  backend\scripts\importKingApostas.js:1622:  };
+  backend\scripts\importKingApostas.js:1623:}
+  backend\scripts\importKingApostas.js:1624:
+  backend\scripts\importKingApostas.js:1625:/**
+  backend\scripts\importKingApostas.js:1626: * CLI wrapper (mantém compatibilidade)
+  backend\scripts\importKingApostas.js:1627: */
+  backend\scripts\importKingApostas.js:1628:async function main() {
+  backend\scripts\importKingApostas.js:1629:  const date = process.argv[2];
+  backend\scripts\importKingApostas.js:1630:  const lotteryKey = process.argv[3] || "PT_RIO";
+  backend\scripts\importKingApostas.js:1631:  const closeHour = process.argv[4] || null;
+  backend\scripts\importKingApostas.js:1632:
+  backend\scripts\importKingApostas.js:1633:  if (!date || !isISODate(date)) {
+  backend\scripts\importKingApostas.js:1634:    throw new Error(
+  backend\scripts\importKingApostas.js:1635:      "Uso: node backend/scripts/importKingApostas.js YYYY-MM-DD [PT_RIO|FEDERAL] [HH:MM]"
+  backend\scripts\importKingApostas.js:1636:    );
+  backend\scripts\importKingApostas.js:1637:  }
+  backend\scripts\importKingApostas.js:1638:
+  backend\scripts\importKingApostas.js:1639:  const lk = String(lotteryKey || "").trim().toUpperCase();
+  backend\scripts\importKingApostas.js:1674:
+  backend\scripts\importKingApostas.js:1675:  console.log(`STEP 1/3 Buscando API: ${lk} ${date}${closeInfo}`);
+  backend\scripts\importKingApostas.js:1676:
+  backend\scripts\importKingApostas.js:1677:  let payload = await fetchKingResults({ date, lotteryKey: lk });
+  backend\scripts\importKingApostas.js:1678:
+  backend\scripts\importKingApostas.js:1679:  // ✅ NOVO (CLI também): se pediram closeHour e ele não existe no dia, avisa e sai 0
+  backend\scripts\importKingApostas.js:1680:  if (normalizedClose) {
+  backend\scripts\importKingApostas.js:1681:    const closes = summarizeCloseHours(
+> backend\scripts\importKingApostas.js:1682:      Array.isArray(payload?.data) ? payload.data : [],
+  backend\scripts\importKingApostas.js:1683:      lk
+  backend\scripts\importKingApostas.js:1684:    );
+  backend\scripts\importKingApostas.js:1685:    const hasTarget = closes.includes(normalizedClose);
+  backend\scripts\importKingApostas.js:1686:
+  backend\scripts\importKingApostas.js:1687:    if (!hasTarget) {
+  backend\scripts\importKingApostas.js:1688:      console.warn(
+> backend\scripts\importKingApostas.js:1689:        `[NO_DRAW_FOR_SLOT] ${lk} ${date} slot=${normalizedClose} close_hours=[${closes.join(", ")}]`
+  backend\scripts\importKingApostas.js:1690:      );
+  backend\scripts\importKingApostas.js:1691:
+  backend\scripts\importKingApostas.js:1692:      // tenta fallback apenas pra logar
+  backend\scripts\importKingApostas.js:1693:      try {
+  backend\scripts\importKingApostas.js:1694:        const fb = await tryHtmlDetailsFallback({
+  backend\scripts\importKingApostas.js:1695:          date,
+  backend\scripts\importKingApostas.js:1696:          lotteryKey: lk,
+  backend\scripts\importKingApostas.js:1697:          closeHour: normalizedClose,
+  backend\scripts\importKingApostas.js:1698:        });
+  backend\scripts\importKingApostas.js:1699:        if (fb.ok) {
+  backend\scripts\importKingApostas.js:1700:          console.warn(
+  backend\scripts\importKingApostas.js:1701:            `[FALLBACK:DETAILS] lk=${lk} date=${date} slot=${fb.slot} kind=${fb.kind} hasSlot=${fb.hasSlot} hasAnyPrize=${fb.hasAnyPrize} url=${fb.url}`
+  backend\scripts\importKingApostas.js:1702:          );
+  backend\scripts\importKingApostas.js:1703:        }
+  backend\scripts\importKingApostas.js:1704:      } catch {}
+  backend\scripts\importKingApostas.js:1705:
+  backend\scripts\importKingApostas.js:1706:      process.exit(0);
+  backend\scripts\importKingApostas.js:1707:    }
+  backend\scripts\importKingApostas.js:1708:  }
+  backend\scripts\importKingApostas.js:1709:
+  backend\scripts\importKingApostas.js:1710:  console.log(
+> backend\scripts\importKingApostas.js:1711:    `STEP 2/3 Processando ${Array.isArray(payload?.data) ? payload.data.length : 0
+  backend\scripts\importKingApostas.js:1712:    } draws retornados pela API...`
+  backend\scripts\importKingApostas.js:1713:  );
+  backend\scripts\importKingApostas.js:1714:
+  backend\scripts\importKingApostas.js:1715:  await importFromPayload({
+  backend\scripts\importKingApostas.js:1716:    payload,
+  backend\scripts\importKingApostas.js:1717:    lotteryKey: lk,
+  backend\scripts\importKingApostas.js:1718:    closeHour: normalizedClose,
+  backend\scripts\importKingApostas.js:1719:    skipIfAlreadyComplete: false, // CLI regrava
+  backend\scripts\importKingApostas.js:1720:  });
+  backend\scripts\importKingApostas.js:1721:
+  backend\scripts\importKingApostas.js:1722:  console.log(
+  backend\scripts\importKingApostas.js:1723:    `STEP 3/3 OK. Import concluído: ${lk} ${date}${normalizedClose ? ` ${normalizedClose}` : ""
+  backend\scripts\importKingApostas.js:1724:    }`
+  backend\scripts\importKingApostas.js:1725:  );
+  backend\scripts\importKingApostas.js:1726:
+  backend\scripts\importKingApostas.js:1727:  // ✅ cleanup automático de legado (somente quando per-lottery está ON)
+  backend\scripts\importKingApostas.js:1728:  if (FETCH_PER_LOTTERY) {
+  backend\scripts\importKingApostas.js:1729:    try {
+  backend\scripts\importKingApostas.js:1730:      const c = await cleanupLegacyDrawsForDate({ date, lotteryKey: lk });
+  backend\scripts\importKingApostas.js:1731:      if (c && c.ok && c.deleted) {
+  backend\scripts\importKingApostas.js:1732:        console.log(`[CLEANUP] ${lk} ${date} slots=${c.slots} deleted=${c.deleted}`);
+  backend\scripts\importKingApostas.js:1733:      } else {
+  backend\scripts\importKingApostas.js:1734:        console.log(`[CLEANUP] ${lk} ${date} slots=${c?.slots || 0} deleted=${c?.deleted || 0}`);
+  backend\scripts\importKingApostas.js:1735:      }
+  backend\scripts\importKingApostas.js:1736:    } catch (e) {
+
+

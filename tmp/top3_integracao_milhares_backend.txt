@@ -1,0 +1,307 @@
+================================================================================
+IMPORTS DO scoreEngineUnified
+================================================================================
+const {
+  fetchDrawsWithPrizesByRange,
+} = require("./drawRepository");
+
+const {
+  readFullHistory,
+  readMetadata,
+} = require("./top3HistoryRepository");
+
+const {
+  computeStatisticalTop3V3,
+  loadTop3PublicApi,
+} = require("./scoreEngineUnified");
+
+================================================================================
+CHAMADAS computeStatisticalTop3V3
+================================================================================
+================================================================================
+persistRun
+================================================================================
+ength,
+    drawsToday: drawsToday.length,
+    historySource,
+    historyBootstrapStatus:
+      historyMetadata?.bootstrapStatus || null,
+    historyTotalStored:
+      Number(historyMetadata?.totalDraws || 0) || null,
+    lookbackDays,
+    maxDraws,
+    startYmd,
+    targetYmd: date,
+    targetHour: closeHour,
+    meta: computed?.meta || null,
+  };
+
+  if (input.dryRun === true) {
+    return {
+      run: null,
+      predictions,
+      engine,
+      dryRun: true,
+    };
+  }
+
+  const result = await persistRun({
+    lotteryKey,
+    date,
+    closeHour,
+    source: input.source || "backend-top3",
+    algorithm: "top3_statistical_v3",
+    metadata,
+    predictions,
+  });
+
+  return {
+    ...result,
+    engine,
+    dryRun: false,
+  };
+}
+
+module.exports = {
+  createTop3PredictionRun,
+  mapTop3ToPredictions,
+  normalizeHour,
+  normalizeHistorySource,
+  loadPredictionHistory,
+};
+
+
+--------------------------------------------------------------------------------
+
+================================================================================
+mapTop3ToPredictions
+================================================================================
+function mapTop3ToPredictions(top = []) {
+  return (Array.isArray(top) ? top : [])
+    .slice(0, 3)
+    .map((item, index) => {
+      const grupoNumber = Number(item?.grupo);
+      const grupo = String(grupoNumber).padStart(2, "0");
+
+      const probability = Number(
+        item?.scoreProb ??
+        item?.probability ??
+        item?.confidence ??
+        0
+      );
+
+      const percentage =
+        probability > 0 && probability <= 1
+          ? probability * 100
+          : probability;
+
+      return {
+        type: "grupo",
+        grupo,
+        animal:
+          item?.animal ||
+          ANIMALS[grupo] ||
+          null,
+        score: Number(
+          Number.isFinite(percentage)
+            ? percentage.toFixed(4)
+            : 0
+        ),
+        confidence: Number(
+          Number.isFinite(percentage)
+            ? percentage.toFixed(4)
+            : 0
+        ),
+        reasons: Array.isArray(item?.reasons)
+          ? item.reasons.filter(Boolean)
+          : [],
+        signals: {
+          engine: "top3_statistical_v3",
+          rankPosition: index + 1,
+          scoreProb: Number(item?.scoreProb || 0),
+          rawScore: Number(item?.score || 0),
+          meta: item?.meta || null,
+        },
+      };
+    })
+    .filter((item) => /^\d{2}$/.test(item.grupo));
+}
+
+async function createTop3PredictionRun(
+  input = {},
+  dependencies = {}
+) {
+  const lotteryKey = normalizeLotteryKey(
+    input.lotteryKey
+  );
+
+  const date = normalizeYmd(input.date);
+  const closeHour = normalizeHour(input.closeHour);
+
+  const computeTop3 =
+    dependencies.computeTop3 ||
+    computeStatisticalTop3V3;
+
+  const persistRun =
+    dependencies.persistRun ||
+    createPredictionRun;
+
+  const publicApi =
+    dependencies.publicApi ||
+    loadTop3PublicApi();
+
+  const historyLoad = await loadPredictionHistory({
+    lotteryKey,
+    date,
+    input,
+    dependencies,
+  });
+
+  const allDraws = extractDraws(
+    historyLoad.draws
+  );
+
+  const {
+    source: historySource,
+    metadata: historyMetadata,
+    lookbackDays,
+    maxDraws,
+    startYmd,
+  } = historyLoad;
+
+  if (!allDraws.length) {
+    throw new Error(
+      `Nenhum resultado encontrado para ${lotteryKey}.`
+    );
+  }
+
+  const targetKey = dateHourKey(date, closeHour);
+
+  const history = allDraws
+    .filter((draw) => {
+      const ymd = publicApi.pickDrawYMD(draw);
+      const hour = publicApi.pickDrawHour(draw);
+
+      if (!ymd || !hour) {
+        return false;
+      }
+
+      return dateHourKey(ymd, hour) < targetKey;
+    })
+    .sort((a, b) => {
+      const aKey = dateHourKey(
+        publicApi.pickDrawYMD(a),
+        publicApi.pickDrawHour(a)
+      );
+
+      const bKey = dateHourKey(
+        publicApi.pickDrawYMD(b),
+        publicApi.pickDrawHour(b)
+      );
+
+      return aKey.localeCompare(bKey);
+    });
+
+  if (!history.length) {
+    throw new Error(
+      "NÒo existe hist¾rico anterior ao horßrio solicitado."
+    );
+  }
+
+  const drawLast = history[history.length - 1];
+
+  const drawsToday = history.filter(
+    (draw) => publicApi.pickDrawYMD(draw) === date
+  );
+
+  const computed = computeTop3({
+    lotteryKey,
+    drawsRange: history,
+    drawLast,
+    PT_RIO_SCHEDULE_NORMAL,
+    PT_RIO_SCHEDULE_WED_SAT,
+    FEDERAL_SCHEDULE,
+    topN: 3,
+    targetYmdOverride: date,
+    targetHourOverride: closeHour,
+  });
+
+  const predictions = mapTop3ToPredictions(
+    computed?.top
+  );
+
+  if (!predictions.length) {
+    throw new Error(
+      "O motor TOP3 nÒo produziu previs§es vßlidas."
+    );
+  }
+
+  const metadata = {
+    ...(input.metadata || {}),
+    engine: "top3_statistical_v3",
+    historyDraws: history.length,
+    drawsToday: drawsToday.length,
+    historySource,
+    historyBootstrapStatus:
+      historyMetadata?.bootstrapStatus || null,
+    historyTotalStored:
+      Number(historyMetadata?.totalDraws || 0) || null,
+    lookbackDays,
+    maxDraws,
+    startYmd,
+    lastDrawYmd:
+      publicApi.pickDrawYMD(drawLast) || null,
+    lastDrawHour:
+      publicApi.pickDrawHour(drawLast) || null,
+    targetYmd: date,
+    targetHour: closeHour,
+    engineMeta: computed?.meta || null,
+  };
+
+  const engine = {
+    name: "top3_statistical_v3",
+    historyDraws: history.length,
+    drawsToday: drawsToday.length,
+    historySource,
+    historyBootstrapStatus:
+      historyMetadata?.bootstrapStatus || null,
+    historyTotalStored:
+      Number(historyMetadata?.totalDraws || 0) || null,
+    lookbackDays,
+    maxDraws,
+    startYmd,
+    targetYmd: date,
+    targetHour: closeHour,
+    meta: computed?.meta || null,
+  };
+
+  if (input.dryRun === true) {
+    return {
+      run: null,
+      predictions,
+      engine,
+      dryRun: true,
+    };
+  }
+
+  const result = await persistRun({
+    lotteryKey,
+    date,
+    closeHour,
+    source: input.source || "backend-top3",
+    algorithm: "top3_statistical_v3",
+    metadata,
+    predictions,
+  });
+
+  return {
+    ...result,
+    engine,
+    dryRun: false,
+  };
+}
+
+module.exports = {
+  createTop3PredictionRun,
+  mapTop3ToPredictions,
+  norma

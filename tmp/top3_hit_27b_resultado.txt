@@ -1,0 +1,20 @@
+C:\Users\glaub\palpitaco\tmp\top3_hit_27b_patch.cjs:53
+    throw new Error(
+    ^
+
+Error: matchedMilhar no retorno final: esperado 1, encontrado 3.
+    at replaceExactCount (C:\Users\glaub\palpitaco\tmp\top3_hit_27b_patch.cjs:53:11)
+    at C:\Users\glaub\palpitaco\tmp\top3_hit_27b_patch.cjs:81:15
+    at replaceRegion (C:\Users\glaub\palpitaco\tmp\top3_hit_27b_patch.cjs:35:19)
+    at Object.<anonymous> (C:\Users\glaub\palpitaco\tmp\top3_hit_27b_patch.cjs:65:1)
+    at Module._compile (node:internal/modules/cjs/loader:1730:14)
+    at Object..js (node:internal/modules/cjs/loader:1895:10)
+    at Module.load (node:internal/modules/cjs/loader:1465:32)
+    at Function._load (node:internal/modules/cjs/loader:1282:12)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:235:24)
+
+Node.js v22.16.0
+
+TOP3-HIT-27B REPROVADO
+Falha ao aplicar o patch.

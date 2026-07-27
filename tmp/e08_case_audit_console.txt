@@ -1,0 +1,117 @@
+
+========================================
+E08 - BACKTEST DE RERANKING
+========================================
+Loteria: PT_RIO
+Limite: 0
+Historico minimo: 100
+
+[SNAPSHOT] Carregando hist├│rico compartilhado...
+[SNAPSHOT] Sorteios congelados: 7507
+
+[1/2] Executando V3...
+[BACKTEST] 25/7407 | avaliados=25 | erros=0
+[BACKTEST] 50/7407 | avaliados=50 | erros=0
+[BACKTEST] 75/7407 | avaliados=75 | erros=0
+[BACKTEST] 100/7407 | avaliados=100 | erros=0
+[BACKTEST] 125/7407 | avaliados=125 | erros=0
+[BACKTEST] 150/7407 | avaliados=150 | erros=0
+[BACKTEST] 175/7407 | avaliados=175 | erros=0
+[BACKTEST] 200/7407 | avaliados=200 | erros=0
+[BACKTEST] 225/7407 | avaliados=225 | erros=0
+[BACKTEST] 250/7407 | avaliados=250 | erros=0
+[BACKTEST] 275/7407 | avaliados=275 | erros=0
+[BACKTEST] 300/7407 | avaliados=300 | erros=0
+[BACKTEST] 325/7407 | avaliados=325 | erros=0
+[BACKTEST] 350/7407 | avaliados=350 | erros=0
+[BACKTEST] 375/7407 | avaliados=375 | erros=0
+[BACKTEST] 400/7407 | avaliados=400 | erros=0
+[BACKTEST] 425/7407 | avaliados=425 | erros=0
+[BACKTEST] 450/7407 | avaliados=450 | erros=0
+[BACKTEST] 475/7407 | avaliados=475 | erros=0
+[BACKTEST] 500/7407 | avaliados=500 | erros=0
+[BACKTEST] 525/7407 | avaliados=525 | erros=0
+[BACKTEST] 550/7407 | avaliados=550 | erros=0
+[BACKTEST] 575/7407 | avaliados=575 | erros=0
+[BACKTEST] 600/7407 | avaliados=600 | erros=0
+[BACKTEST] 625/7407 | avaliados=625 | erros=0
+[BACKTEST] 650/7407 | avaliados=650 | erros=0
+[BACKTEST] 675/7407 | avaliados=675 | erros=0
+[BACKTEST] 700/7407 | avaliados=700 | erros=0
+[BACKTEST] 725/7407 | avaliados=725 | erros=0
+[BACKTEST] 750/7407 | avaliados=750 | erros=0
+[BACKTEST] 775/7407 | avaliados=775 | erros=0
+[BACKTEST] 800/7407 | avaliados=800 | erros=0
+[BACKTEST] 825/7407 | avaliados=825 | erros=0
+[BACKTEST] 850/7407 | avaliados=850 | erros=0
+[BACKTEST] 875/7407 | avaliados=875 | erros=0
+[BACKTEST] 900/7407 | avaliados=900 | erros=0
+[BACKTEST] 925/7407 | avaliados=925 | erros=0
+[BACKTEST] 950/7407 | avaliados=950 | erros=0
+[BACKTEST] 975/7407 | avaliados=975 | erros=0
+[BACKTEST] 1000/7407 | avaliados=1000 | erros=0
+[BACKTEST] 1025/7407 | avaliados=1025 | erros=0
+[BACKTEST] 1050/7407 | avaliados=1050 | erros=0
+[BACKTEST] 1075/7407 | avaliados=1075 | erros=0
+[BACKTEST] 1100/7407 | avaliados=1100 | erros=0
+[BACKTEST] 1125/7407 | avaliados=1125 | erros=0
+[BACKTEST] 1150/7407 | avaliados=1150 | erros=0
+[BACKTEST] 1175/7407 | avaliados=1175 | erros=0
+[BACKTEST] 1200/7407 | avaliados=1200 | erros=0
+[BACKTEST] 1225/7407 | avaliados=1225 | erros=0
+[BACKTEST] 1250/7407 | avaliados=1250 | erros=0
+[BACKTEST] 1275/7407 | avaliados=1275 | erros=0
+[BACKTEST] 1300/7407 | avaliados=1300 | erros=0
+[BACKTEST] 1325/7407 | avaliados=1325 | erros=0
+[BACKTEST] 1350/7407 | avaliados=1350 | erros=0
+[BACKTEST] 1375/7407 | avaliados=1375 | erros=0
+[BACKTEST] 1400/7407 | avaliados=1400 | erros=0
+[BACKTEST] 1425/7407 | avaliados=1425 | erros=0
+[BACKTEST] 1450/7407 | avaliados=1450 | erros=0
+[BACKTEST] 1475/7407 | avaliados=1475 | erros=0
+[BACKTEST] 1500/7407 | avaliados=1500 | erros=0
+[BACKTEST] 1525/7407 | avaliados=1525 | erros=0
+[BACKTEST] 1550/7407 | avaliados=1550 | erros=0
+[BACKTEST] 1575/7407 | avaliados=1575 | erros=0
+[BACKTEST] 1600/7407 | avaliados=1600 | erros=0
+[BACKTEST] 1625/7407 | avaliados=1625 | erros=0
+[BACKTEST] 1650/7407 | avaliados=1650 | erros=0
+[BACKTEST] 1675/7407 | avaliados=1675 | erros=0
+[BACKTEST] 1700/7407 | avaliados=1700 | erros=0
+[BACKTEST] 1725/7407 | avaliados=1725 | erros=0
+[BACKTEST] 1750/7407 | avaliados=1750 | erros=0
+[BACKTEST] 1775/7407 | avaliados=1775 | erros=0
+[BACKTEST] 1800/7407 | avaliados=1800 | erros=0
+[BACKTEST] 1825/7407 | avaliados=1825 | erros=0
+[BACKTEST] 1850/7407 | avaliados=1850 | erros=0
+[BACKTEST] 1875/7407 | avaliados=1875 | erros=0
+[BACKTEST] 1900/7407 | avaliados=1900 | erros=0
+[BACKTEST] 1925/7407 | avaliados=1925 | erros=0
+[BACKTEST] 1950/7407 | avaliados=1950 | erros=0
+[BACKTEST] 1975/7407 | avaliados=1975 | erros=0
+[BACKTEST] 2000/7407 | avaliados=2000 | erros=0
+[BACKTEST] 2025/7407 | avaliados=2025 | erros=0
+[BACKTEST] 2050/7407 | avaliados=2050 | erros=0
+[BACKTEST] 2075/7407 | avaliados=2075 | erros=0
+[BACKTEST] 2100/7407 | avaliados=2100 | erros=0
+[BACKTEST] 2125/7407 | avaliados=2125 | erros=0
+[BACKTEST] 2150/7407 | avaliados=2150 | erros=0
+[BACKTEST] 2175/7407 | avaliados=2175 | erros=0
+[BACKTEST] 2200/7407 | avaliados=2200 | erros=0
+[BACKTEST] 2225/7407 | avaliados=2225 | erros=0
+[BACKTEST] 2250/7407 | avaliados=2250 | erros=0
+[BACKTEST] 2275/7407 | avaliados=2275 | erros=0
+[BACKTEST] 2300/7407 | avaliados=2300 | erros=0
+[BACKTEST] 2325/7407 | avaliados=2325 | erros=0
+[BACKTEST] 2350/7407 | avaliados=2350 | erros=0
+[BACKTEST] 2375/7407 | avaliados=2375 | erros=0
+[BACKTEST] 2400/7407 | avaliados=2400 | erros=0
+[BACKTEST] 2425/7407 | avaliados=2425 | erros=0
+[BACKTEST] 2450/7407 | avaliados=2450 | erros=0
+[BACKTEST] 2475/7407 | avaliados=2475 | erros=0
+[BACKTEST] 2500/7407 | avaliados=2500 | erros=0
+[BACKTEST] 2525/7407 | avaliados=2525 | erros=0
+[BACKTEST] 2550/7407 | avaliados=2550 | erros=0
+[BACKTEST] 2575/7407 | avaliados=2575 | erros=0
+[BACKTEST] 2600/7407 | avaliados=2600 | erros=0
+[BACKTEST] 2625/7407 | avaliados=2625 | erros=0

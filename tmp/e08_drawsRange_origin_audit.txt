@@ -1,0 +1,223 @@
+========================================================================
+E08.12 - ORIGEM DO drawsRange
+========================================================================
+
+
+------------------------------------------------------------------------
+backend/engine/scoreEngineE08Experimental.js
+------------------------------------------------------------------------
+0004:   computeStatisticalTop3V3,
+0251:   drawsRange,
+0268:     of safeArray(drawsRange)
+0349: function computeStatisticalTop3E08Experimental(
+0353:     computeStatisticalTop3V3(
+0376:       input.targetHourOverride
+0381:       input.drawsRange,
+0522:   computeStatisticalTop3E08Experimental,
+
+------------------------------------------------------------------------
+backend/engine/scoreEngineUnified.js
+------------------------------------------------------------------------
+0088: function computeStatisticalTop3V3(input = {}) {
+0093:     "computeStatisticalTop3V3"
+0102:   computeStatisticalTop3V3,
+
+------------------------------------------------------------------------
+backend/engine/scoreEngineV4Experimental.js
+------------------------------------------------------------------------
+0004:   computeStatisticalTop3V3,
+0352:     input.drawsRange
+0366:       input.targetHourOverride
+0684:     computeStatisticalTop3V3(
+
+------------------------------------------------------------------------
+backend/engine/top3PredictionService.js
+------------------------------------------------------------------------
+0013:   computeStatisticalTop3V3,
+0757:     computeStatisticalTop3V3;
+0833:     drawsRange: history,
+0840:     targetHourOverride: closeHour,
+
+------------------------------------------------------------------------
+backend/scripts/auditTop3E08DifferencesExperimental.js
+------------------------------------------------------------------------
+0011:   computeStatisticalTop3E08Experimental,
+0194:           computeStatisticalTop3E08Experimental,
+
+------------------------------------------------------------------------
+backend/scripts/backtestTop3E08Experimental.js
+------------------------------------------------------------------------
+0011:   computeStatisticalTop3E08Experimental,
+0179:           computeStatisticalTop3E08Experimental,
+
+------------------------------------------------------------------------
+backend/scripts/backtestTop3Official.js
+------------------------------------------------------------------------
+0012:   computeStatisticalTop3V3,
+0516:     computeStatisticalTop3V3;
+0705:           drawsRange:
+0714:           targetHourOverride:
+
+------------------------------------------------------------------------
+src/dev/runAuditTop3.js
+------------------------------------------------------------------------
+0102:   const drawsRange = await getKingResultsByRange({
+0114:   const draws = Array.isArray(drawsRange) ? drawsRange : [];
+0124:     drawsRange: draws,
+
+------------------------------------------------------------------------
+src/pages/Top3/__tests__/top3.backtest.layers.test.js
+------------------------------------------------------------------------
+0222:       drawsRange: history,
+
+------------------------------------------------------------------------
+src/pages/Top3/__tests__/top3.backtest.test.js
+------------------------------------------------------------------------
+0230:       drawsRange: history,
+
+------------------------------------------------------------------------
+src/pages/Top3/__tests__/top3.public-api.node.test.js
+------------------------------------------------------------------------
+0019:   "computeStatisticalTop3V3",
+
+------------------------------------------------------------------------
+src/pages/Top3/modules/top3.analytics.js
+------------------------------------------------------------------------
+0013:   computeStatisticalTop3V3,
+0193:     computeStatisticalTop3V3({
+0195:       drawsRange: safeHistoricalList,
+0203:       targetHourOverride: forcedTargetH,
+
+------------------------------------------------------------------------
+src/pages/Top3/modules/top3.timeline.js
+------------------------------------------------------------------------
+0142:     drawsRange: range,
+
+------------------------------------------------------------------------
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js
+------------------------------------------------------------------------
+0968:   drawsRange,
+0978:   const list = Array.isArray(drawsRange) ? drawsRange : [];
+1084:   drawsRange,
+1091:   targetHourOverride = "",
+1093:   const list = Array.isArray(drawsRange) ? drawsRange : [];
+1123:   const forcedTargetH = toHourBucket(targetHourOverride);
+1146:     drawsRange: list,
+1579:   drawsRange,
+1587:     drawsRange,
+2030:   drawsRange,
+2042:     Array.isArray(drawsRange) ? drawsRange : [],
+2204:   drawsRange,
+2212:   targetHourOverride = "",
+2214:   const list = Array.isArray(drawsRange) ? drawsRange : [];
+2244:   const forcedTargetH = toHourBucket(targetHourOverride);
+2269:     drawsRange: list,
+2288:     drawsRange: list,
+2352:     drawsRange: list,
+2880: export function computeStatisticalTop3V3({
+2882:   drawsRange,
+2889:   targetHourOverride = "",
+2891:   const list = sortDrawsAsc(Array.isArray(drawsRange) ? drawsRange : []);
+2920:   const forcedTargetH = toHourBucket(targetHourOverride);
+3937:   drawsRange,
+3945:   const range = Array.isArray(drawsRange) ? [...drawsRange] : [];
+4106:     const computed = computeStatisticalTop3V3({
+4108:       drawsRange: [...usableHistory, ...usableTodayContext],
+4116:       targetHourOverride: slotHour,
+4164:   drawsRange,
+4170:   const range = Array.isArray(drawsRange) ? drawsRange : [];
+4187:       drawsRange: range,
+
+------------------------------------------------------------------------
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js
+------------------------------------------------------------------------
+0968:   drawsRange,
+0978:   const list = Array.isArray(drawsRange) ? drawsRange : [];
+1084:   drawsRange,
+1091:   targetHourOverride = "",
+1093:   const list = Array.isArray(drawsRange) ? drawsRange : [];
+1123:   const forcedTargetH = toHourBucket(targetHourOverride);
+1146:     drawsRange: list,
+1579:   drawsRange,
+1587:     drawsRange,
+2030:   drawsRange,
+2042:     Array.isArray(drawsRange) ? drawsRange : [],
+2204:   drawsRange,
+2212:   targetHourOverride = "",
+2214:   const list = Array.isArray(drawsRange) ? drawsRange : [];
+2244:   const forcedTargetH = toHourBucket(targetHourOverride);
+2269:     drawsRange: list,
+2288:     drawsRange: list,
+2352:     drawsRange: list,
+2880: export function computeStatisticalTop3V3({
+2882:   drawsRange,
+2889:   targetHourOverride = "",
+2891:   const list = sortDrawsAsc(Array.isArray(drawsRange) ? drawsRange : []);
+2920:   const forcedTargetH = toHourBucket(targetHourOverride);
+3937:   drawsRange,
+3945:   const range = Array.isArray(drawsRange) ? [...drawsRange] : [];
+4106:     const computed = computeStatisticalTop3V3({
+4108:       drawsRange: [...usableHistory, ...usableTodayContext],
+4116:       targetHourOverride: slotHour,
+4164:   drawsRange,
+4170:   const range = Array.isArray(drawsRange) ? drawsRange : [];
+4187:       drawsRange: range,
+
+------------------------------------------------------------------------
+src/pages/Top3/top3.engine.js
+------------------------------------------------------------------------
+0968:   drawsRange,
+0978:   const list = Array.isArray(drawsRange) ? drawsRange : [];
+1084:   drawsRange,
+1091:   targetHourOverride = "",
+1093:   const list = Array.isArray(drawsRange) ? drawsRange : [];
+1123:   const forcedTargetH = toHourBucket(targetHourOverride);
+1146:     drawsRange: list,
+1579:   drawsRange,
+1587:     drawsRange,
+2030:   drawsRange,
+2042:     Array.isArray(drawsRange) ? drawsRange : [],
+2204:   drawsRange,
+2212:   targetHourOverride = "",
+2214:   const list = Array.isArray(drawsRange) ? drawsRange : [];
+2244:   const forcedTargetH = toHourBucket(targetHourOverride);
+2269:     drawsRange: list,
+2288:     drawsRange: list,
+2352:     drawsRange: list,
+2834: export function computeStatisticalTop3V3({
+2836:   drawsRange,
+2843:   targetHourOverride = "",
+2845:   const list = sortDrawsAsc(Array.isArray(drawsRange) ? drawsRange : []);
+2874:   const forcedTargetH = toHourBucket(targetHourOverride);
+3870:   drawsRange,
+3878:   const range = Array.isArray(drawsRange) ? [...drawsRange] : [];
+4072:     const computed = computeStatisticalTop3V3({
+4074:       drawsRange: [...usableHistory, ...usableTodayContext],
+4082:       targetHourOverride: slotHour,
+4131:   drawsRange,
+4137:   const range = Array.isArray(drawsRange) ? drawsRange : [];
+4154:       drawsRange: range,
+
+------------------------------------------------------------------------
+src/pages/Top3/top3.public-api.js
+------------------------------------------------------------------------
+0015:   computeStatisticalTop3V3,
+
+------------------------------------------------------------------------
+src/services/statsSignals.js
+------------------------------------------------------------------------
+0019:    - drawsRange: lista de draws (preferencialmente detailed), com prizes embutidos
+0289:   drawsRange,
+0297:   const list = Array.isArray(drawsRange) ? drawsRange : [];
+
+========================================================================
+OBJETIVO
+========================================================================
+
+1. Descobrir quem monta input.drawsRange.
+2. Descobrir se drawsRange já vem filtrado.
+3. Confirmar se somente concursos anteriores são usados.
+4. Localizar eventual risco de look-ahead.
+
+Nenhum backtest executado.
+Nenhum arquivo alterado.

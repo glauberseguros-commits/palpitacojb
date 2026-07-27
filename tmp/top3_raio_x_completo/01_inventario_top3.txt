@@ -1,0 +1,40 @@
+
+Arquivo                                                                Bytes
+-------                                                                -----
+src\pages\Top3\__tests__\top3.backtest.layers.test.js                   9778
+src\pages\Top3\__tests__\top3.backtest.test.js                          8196
+src\pages\Top3\__tests__\top3.public-api.node.test.js                   2773
+src\pages\Top3\__tests__\top3.schedule-calendar-rules.node.test.js      2601
+src\pages\Top3\__tests__\top3.schedule-transition.test.js               4841
+src\pages\Top3\modules\scoreEngine\contextEvidence.js                   1609
+src\pages\Top3\modules\scoreEngine\evidenceEngine.js                    1155
+src\pages\Top3\modules\scoreEngine\frequencyEvidence.js                 2392
+src\pages\Top3\modules\scoreEngine\scoreConfig.js                       1405
+src\pages\Top3\modules\scoreEngine\scoreEngineV2.backup.js              2169
+src\pages\Top3\modules\scoreEngine\scoreEngineV2.js                     3990
+src\pages\Top3\modules\top3.analytics.js                                5633
+src\pages\Top3\modules\top3.loader.js                                   1642
+src\pages\Top3\modules\top3.prediction.js                               1806
+src\pages\Top3\modules\top3.state.js                                    2005
+src\pages\Top3\modules\top3.timeline.js                                 7340
+src\pages\Top3\modules\top3.viewmodel.js                                4747
+src\pages\Top3\top3.chain.js                                            7527
+src\pages\Top3\top3.constants.js                                        2252
+src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js    120046
+src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js    120046
+src\pages\Top3\top3.engine.js                                         122445
+src\pages\Top3\top3.firestore.js                                       10101
+src\pages\Top3\top3.formatters.js                                       7767
+src\pages\Top3\top3.hooks.js                                           32215
+src\pages\Top3\top3.hooks.js.bak_transition19_20260718_205016          32345
+src\pages\Top3\top3.hooks.js.bak_transition19_20260718_205053          32345
+src\pages\Top3\top3.images.js                                           2036
+src\pages\Top3\Top3.jsx                                                  237
+src\pages\Top3\top3.public-api.js                                       1493
+src\pages\Top3\top3.selectors.js                                        3457
+src\pages\Top3\top3.storage.js                                          9548
+src\pages\Top3\Top3View.jsx                                            91700
+src\pages\Top3\Top3View.jsx.bak_history_from_timeline_20260326_131646  62763
+src\pages\Top3\Top3View.premium.backup.jsx                             69746
+
+

@@ -1,0 +1,5 @@
+version=optimized
+run=2
+warmup=False
+elapsed_ms=31495
+exit_code=0

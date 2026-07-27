@@ -1,0 +1,1606 @@
+===== LATE-02 — FLUXO EXATO DOS FILTROS E RESULTADOS =====
+HEAD: d921acb1767313ce1c0f3e167fae842ae92f4af9
+Gerado: 21/07/2026 20:24:27
+
+============================================================
+===== FILE: .\src\pages\Late\Late.jsx =====
+============================================================
+    1: // src/pages/Late/Late.jsx
+    2: import React, { useEffect, useMemo, useRef, useState, useCallback } from "react";
+    3: import {
+    4:   getKingBoundsByUf,
+    5:   getKingResultsByDate,
+    6:   getKingLateByRange,
+    7: } from "../../services/kingResultsService";
+    8: import {
+    9:   getAnimalLabel as getAnimalLabelFn,
+   10:   getImgFromGrupo as getImgFromGrupoFn,
+   11: } from "../../constants/bichoMap";
+   12: 
+   13: /**
+   14:  * Late (Atrasados) — Premium
+   15:  *
+   16:  * ✅ 100% em cima da SUA base:
+   17:  * - Usa getKingLateByRange() (varre histórico interno com prizes)
+   18:  * - NÃO chama nada externo
+   19:  *
+   20:  * ✅ Atualiza por SORTEIO:
+   21:  * - Rebusca bounds periodicamente (maxYmd atualiza quando entra sorteio novo)
+   22:  * - Detecta "último sorteio importado" (maxYmd + maior close_hour do dia)
+   23:  * - Se mudar maxYmd ou close_hour do último sorteio -> refresh automático
+   24:  *
+   25:  * ✅ IMPORTANTE (SEU PROJETO):
+   26:  * - Consultas devem usar UF="RJ" (com trava interna para PT_RIO)
+   27:  */
+   28: 
+   29: function pad2(n) {
+   30:   return String(n).padStart(2, "0");
+   31: }
+   32: 
+   33: function safeStr(v) {
+   34:   return String(v ?? "").trim();
+   35: }
+   36: 
+   37: function todayYMDLocal() {
+   38:   const d = new Date();
+   39:   return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+   40: }
+   41: 
+   42: function isYMD(s) {
+   43:   return /^\d{4}-\d{2}-\d{2}$/.test(String(s || "").trim());
+   44: }
+   45: 
+   46: function ymdToBR(ymd) {
+   47:   const m = String(ymd || "")
+   48:     .trim()
+   49:     .match(/^(\d{4})-(\d{2})-(\d{2})$/);
+   50:   if (!m) return "";
+   51:   return `${m[3]}/${m[2]}/${m[1]}`;
+   52: }
+   53: 
+   54: function ymdToUTCDate(ymd) {
+   55:   const m = String(ymd || "").match(/^(\d{4})-(\d{2})-(\d{2})$/);
+   56:   if (!m) return null;
+   57:   return new Date(Date.UTC(Number(m[1]), Number(m[2]) - 1, Number(m[3])));
+   58: }
+   59: 
+   60: function diffDaysUTC(aYmd, bYmd) {
+   61:   const a = ymdToUTCDate(aYmd);
+   62:   const b = ymdToUTCDate(bYmd);
+   63:   if (!a || !b) return NaN;
+   64:   return Math.floor((b.getTime() - a.getTime()) / 86400000);
+   65: }
+   66: 
+   67: function toGrupo2(n) {
+   68:   const v = Number(n);
+   69:   if (!Number.isFinite(v)) return "";
+   70:   return pad2(v);
+   71: }
+   72: 
+   73: function isValidGrupo(n) {
+   74:   const v = Number(n);
+   75:   return Number.isFinite(v) && v >= 1 && v <= 25;
+   76: }
+   77: 
+   78: function sortPTBR(a, b) {
+   79:   return String(a || "").localeCompare(String(b || ""), "pt-BR", { sensitivity: "base" });
+   80: }
+   81: 
+   82: /**
+   83:  * Normaliza entradas como:
+   84:  * "09h" / "09HS" / "9" / "09:10" -> "09:00" ou "09:10"
+   85:  */
+   86: function normalizeHourLike(value) {
+   87:   const s0 = String(value ?? "").trim();
+   88:   if (!s0) return "";
+   89: 
+   90:   const s = s0.replace(/\s+/g, "");
+   91:   const mhx = s.match(/^(\d{1,2})(?:h|hs|hr|hrs)$/i);
+   92:   if (mhx) return `${pad2(mhx[1])}:00`;
+   93: 
+   94:   const mISO = s.match(/^(\d{1,2}):(\d{1,2})(?::(\d{1,2}))?$/);
+   95:   if (mISO) return `${pad2(mISO[1])}:${pad2(mISO[2])}`;
+   96: 
+   97:   const m2 = s.match(/^(\d{1,2})$/);
+   98:   if (m2) return `${pad2(m2[1])}:00`;
+   99: 
+  100:   return s0.trim();
+  101: }
+  102: 
+  103: /**
+  104:  * Converte "09:00" -> 540
+  105:  */
+  106: function hourToMinutes(hhmm) {
+  107:   const s = normalizeHourLike(hhmm);
+  241:    ✅ Bounds helpers (FIX UI)
+  242: ========================= */
+  243: 
+  244: function clampYmd(ymd, minYmd, maxYmd) {
+  245:   const d = safeStr(ymd);
+  246:   if (!isYMD(d)) return null;
+  247: 
+  248:   let out = d;
+  249:   const min = safeStr(minYmd);
+  250:   const max = safeStr(maxYmd);
+  251: 
+  252:   if (isYMD(min) && out < min) out = min;
+  253:   if (isYMD(max) && out > max) out = max;
+  254: 
+  255:   return out;
+  256: }
+  257: 
+  258: function normalizeSingleDateWithBounds(dateIn, minYmd, maxYmd) {
+  259:   const d = clampYmd(dateIn, minYmd, maxYmd);
+  260:   if (d) return d;
+  261: 
+  262:   const fallback =
+  263:     clampYmd(todayYMDLocal(), minYmd, maxYmd) ||
+  264:     (isYMD(maxYmd) ? maxYmd : null) ||
+  265:     (isYMD(minYmd) ? minYmd : null) ||
+  266:     todayYMDLocal();
+  267: 
+  268:   return fallback;
+  269: }
+  270: 
+  271: /* =========================
+  272:    ✅ Bounds normalize (PATCH)
+  273: ========================= */
+  274: function normalizeBoundsResponse(b) {
+  275:   const minRaw = safeStr(b?.minYmd || b?.minDate || b?.min || "");
+  276:   const maxRaw = safeStr(b?.maxYmd || b?.maxDate || b?.max || "");
+  277:   const minYmd = isYMD(minRaw) ? minRaw : null;
+  278:   const maxYmd = isYMD(maxRaw) ? maxRaw : null;
+  279:   return { minYmd, maxYmd, source: safeStr(b?.source || "") };
+  280: }
+  281: 
+  282: const LATE_LOTTERY_OPTIONS = [
+  283:   {
+  284:     id: "PT_RIO",
+  285:     label: "Rio de Janeiro",
+  286:     lotteries: ["PT_RIO"],
+  287:     uf: "RJ",
+  288:   },
+  289:   {
+  290:     id: "FEDERAL",
+  291:     label: "Federal",
+  292:     lotteries: ["FEDERAL"],
+  293:     uf: "FEDERAL",
+  294:   },
+  295:   {
+  296:     id: "LOOK",
+  297:     label: "LOOK",
+  298:     lotteries: ["LOOK"],
+  299:     uf: "GO",
+  300:   },
+  301:   {
+  302:     id: "NACIONAL",
+  303:     label: "Nacional",
+  304:     lotteries: ["NACIONAL"],
+  305:     uf: "NACIONAL",
+  306:   },
+  307: ];
+  308: 
+  309: const LATE_HOUR_OPTIONS = {
+  310:   PT_RIO: [
+  311:     { id: "ALL", label: "Todos os horários", closeHour: null },
+  312:     { id: "09", label: "09h", closeHour: "09:00" },
+  313:     { id: "11", label: "11h", closeHour: "11:00" },
+  314:     { id: "14", label: "14h", closeHour: "14:00" },
+  315:     { id: "16", label: "16h", closeHour: "16:00" },
+  316:     { id: "18", label: "18h", closeHour: "18:00" },
+  317:     { id: "21", label: "21h", closeHour: "21:00" },
+  318:   ],
+  319: 
+  320:   FEDERAL: [
+  321:     { id: "ALL", label: "Todos os horários", closeHour: null },
+  322:     { id: "20", label: "20h", closeHour: "20:00" },
+  323:   ],
+  324: 
+  325:   LOOK: [
+  326:     { id: "ALL", label: "Todos os horários", closeHour: null },
+  327:   ],
+  328: 
+  329:   NACIONAL: [
+  330:     { id: "ALL", label: "Todos os horários", closeHour: null },
+  331:   ],
+  332: };
+  333: 
+  334: export default function Late() {
+  335: 
+  336: 
+  337:   // UI
+  338:   const [lotteryOptId, setLotteryOptId] = useState("ALL");
+  339: 
+  340:   const [selectedLotteryId, setSelectedLotteryId] = useState("PT_RIO");
+  341:   const [kind, setKind] = useState("grupo");
+  342:   const [prizeMode, setPrizeMode] = useState("1");
+  343:   const [dateYmd, setDateYmd] = useState(todayYMDLocal());
+  344: 
+  345:   // Data
+  346:   const [bounds, setBounds] = useState({
+  347:     minYmd: null,
+  348:     maxYmd: null,
+  349:     source: "",
+  350:   });
+  351:   const [loading, setLoading] = useState(false);
+  352:   const [error, setError] = useState("");
+  353:   const [rows, setRows] = useState([]);
+  354: 
+  355:   // Último sorteio importado (INDEPENDENTE do prizeMode / filtro)
+  356:   const [lastImported, setLastImported] = useState({
+  357:     ymd: "",
+  358:     closeHour: "",
+  359:   });
+  360: 
+  361:   const lastImportedRef = useRef(lastImported);
+  362:   useEffect(() => {
+  363:     lastImportedRef.current = lastImported;
+  364:   }, [lastImported]);
+  365: 
+  366:   const [meta, setMeta] = useState({
+  367:     effectiveTargetYmd: "",
+  368:   });
+  369: 
+  370:   const abortedRef = useRef(false);
+  371:   const pollRef = useRef(null);
+  372:   const selectedHourOptions = useMemo(
+  373:     () =>
+  374:       LATE_HOUR_OPTIONS[selectedLotteryId] ||
+  375:       LATE_HOUR_OPTIONS.PT_RIO,
+  376:     [selectedLotteryId]
+  377:   );
+  378: 
+  379:   const selectedHourOption = useMemo(
+  380:     () =>
+  381:       selectedHourOptions.find(
+  382:         (option) => option.id === lotteryOptId
+  383:       ) || selectedHourOptions[0],
+  384:     [lotteryOptId, selectedHourOptions]
+  385:   );
+  386: 
+  387: 
+  388:   // ✅ bucket "09h" etc (preferível pra bater na base)
+  389:   const selectedLateLottery = useMemo(
+  390:     () =>
+  391:       LATE_LOTTERY_OPTIONS.find(
+  392:         (option) => option.id === selectedLotteryId
+  393:       ) || LATE_LOTTERY_OPTIONS[0],
+  394:     [selectedLotteryId]
+  395:   );
+  396: 
+  397:   const selectedLateLotteries = useMemo(
+  398:     () => selectedLateLottery.lotteries,
+  399:     [selectedLateLottery]
+  400:   );
+  401: 
+  402:   const selectedLateUf = selectedLateLottery.uf;
+  403: 
+  404:   const LOTTERY_DISPLAY = selectedLateLottery.label;
+  405: 
+  406: 
+  407: 
+  408:   const selectedCloseHourBucket = useMemo(() => {
+  409:     const raw = selectedHourOption?.closeHour;
+  410:     if (!raw) return null;
+  411:     return String(raw).includes("h") ? String(raw).trim() : toHourBucket(raw);
+  412:   }, [selectedHourOption]);
+  413: 
+  414:   const prizePositions = useMemo(() => {
+  415:     if (prizeMode === "1-5") return [1, 2, 3, 4, 5];
+  416:     const n = Number(prizeMode);
+  417:     if (Number.isFinite(n) && n >= 1 && n <= 5) return [n];
+  418:     return [1];
+  419:   }, [prizeMode]);
+  420: 
+  421:   const boundsReady = !!(bounds?.minYmd && bounds?.maxYmd);
+  422: 
+  423:   // ✅ label e img robustos (assinam variações)
+  424:   const safeGetAnimalLabel = useCallback((grupoNum) => {
+  425:     const g = Number(grupoNum);
+  426:     if (!Number.isFinite(g)) return "";
+  427:     try {
+  428:       if (typeof getAnimalLabelFn === "function") {
+  429:         const a1 = getAnimalLabelFn({ grupo: g, animal: "" });
+  430:         const s1 = String(a1 ?? "").trim();
+  431:         if (s1) return s1;
+  432:       }
+  433:     } catch {}
+  434:     try {
+  435:       if (typeof getAnimalLabelFn === "function") {
+  436:         const a2 = getAnimalLabelFn(g);
+  437:         const s2 = String(a2 ?? "").trim();
+  438:         if (s2) return s2;
+  439:       }
+  440:     } catch {}
+  441:     return "";
+  442:   }, []);
+  443: 
+  444:   const safeGetImg = useCallback((grupoNum) => {
+  445:     const g = Number(grupoNum);
+  446:     if (!Number.isFinite(g)) return "";
+  447:     try {
+  448:       if (typeof getImgFromGrupoFn === "function") {
+  449:         const c128 = String(getImgFromGrupoFn(g, 128) || "").trim();
+  450:         if (c128) return c128;
+  451:         const c96 = String(getImgFromGrupoFn(g, 96) || "").trim();
+  452:         if (c96) return c96;
+  453:         const c64 = String(getImgFromGrupoFn(g, 64) || "").trim();
+  454:         if (c64) return c64;
+  455:         const base = String(getImgFromGrupoFn(g) || "").trim();
+  456:         if (base) return base;
+  457:       }
+  458:     } catch {}
+  459:     return "";
+  460:   }, []);
+  461: 
+  462:   /**
+  463:    * ✅ ÚLTIMO SORTEIO IMPORTADO:
+  464:    * sempre calcula por (maxYmd + maior close_hour do dia), sem depender do prizeMode/lottery selecionada.
+  465:    */
+  466:   async function fetchLastImportedFromMaxYmd(maxYmd) {
+  467:     if (!maxYmd) return { ymd: "", closeHour: "" };
+  468: 
+  469:     const dayResult = await getKingResultsByDate({
+  470:       uf: selectedLateUf,
+  471:       date: maxYmd,
+  472:       closeHour: null,
+  473:       closeHourBucket: null,
+  474:       positions: [1],
+  475:     });
+  476: 
+  477:     const latest = pickLatestCloseHour(dayResult);
+  478:     if (latest?.ymd && latest?.closeHour) {
+  479:       return { ymd: String(latest.ymd || maxYmd), closeHour: String(latest.closeHour || "") };
+  480:     }
+  481:     return { ymd: maxYmd, closeHour: "" };
+  482:   }
+  483: 
+  484:   async function refreshBoundsAndLastDraw() {
+  485:     const b = await getKingBoundsByUf({ uf: selectedLateUf });
+  486: 
+  487:     // ✅ PATCH: aceita minDate/maxDate também
+  488:     const nb = normalizeBoundsResponse(b);
+  489:     const minYmd = nb.minYmd;
+  490:     const maxYmd = nb.maxYmd;
+  491: 
+  492:     setBounds({ minYmd, maxYmd, source: nb.source });
+  493: 
+  494:     if (maxYmd) {
+  495:       const li = await fetchLastImportedFromMaxYmd(maxYmd);
+  496:       setLastImported(li);
+  497:     }
+  498: 
+  499:     return { minYmd, maxYmd };
+  500:   }
+  501: 
+  502:   function getEffectiveTargetYmd(targetYmd, effBounds) {
+  503:     const minYmd = effBounds?.minYmd || null;
+  504:     const maxYmd = effBounds?.maxYmd || null;
+  505: 
+  506:     if (!minYmd || !maxYmd || !isYMD(targetYmd)) {
+  507:       return { effective: targetYmd, note: "" };
+  508:     }
+  509: 
+  510:     if (targetYmd < minYmd)
+  511:       return { effective: minYmd, note: `Data fora do bounds. Usando ${ymdToBR(minYmd)}.` };
+  512:     if (targetYmd > maxYmd)
+  513:       return { effective: maxYmd, note: `Data fora do bounds. Usando ${ymdToBR(maxYmd)}.` };
+  514: 
+  515:     return { effective: targetYmd, note: "" };
+  516:   }
+  517: 
+  518:   async function buildLateList({ targetYmd, effBounds }) {
+  519:     const { effective: safeTarget, note } = getEffectiveTargetYmd(targetYmd, effBounds);
+  520:     if (note) setError(note);
+  521: 
+  522:     const minYmd = effBounds?.minYmd || null;
+  523:     if (!minYmd) {
+  524:       return { rows: [], meta: { effectiveTargetYmd: safeTarget } };
+  525:     }
+  526: 
+  527:     // 1) Consulta atrasados por posição (1 ou várias) via SUA base
+  528:     const lists = [];
+  529:     for (const pos of prizePositions) {
+  530:       const list = await getKingLateByRange({
+  531:         uf: selectedLateUf,
+  532:         lotteries: selectedLateLotteries,
+  533:         dateFrom: minYmd,
+  534:         dateTo: safeTarget,
+  535:         baseDate: safeTarget,
+  536:         prizePosition: pos,
+  537: 
+  538:         closeHour: null,
+  539:         closeHourBucket: selectedCloseHourBucket || null,
+  540: 
+  541:         chunkDays: 15,
+  542:       });
+  543: 
+  544:       const mapped = (Array.isArray(list) ? list : []).map((r) => ({
+  545:         grupo: Number(r?.grupo),
+  546:         lastYmd: r?.lastYmd || null,
+  547:         lastCloseHour: r?.lastHour || r?.lastCloseHour || "",
+  548:       }));
+  549: 
+  550:       lists.push(mapped);
+  551:     }
+  552: 
+  553:     // 2) Merge (1-5) e cálculo de daysLate
+  554:     const merged = mergeLateLists(lists, safeTarget);
+  555: 
+  556:     // 3) Injeta label/imagem
+  557:     const out = merged.map((r) => {
+  558:       const g = Number(r?.grupo);
+  559:       const animalLabel = safeGetAnimalLabel(g) || "";
+  560:       const img = safeGetImg(g) || "";
+  561:       return {
+  562:         ...r,
+  563:         grupo: g,
+  564:         grupo2: toGrupo2(g),
+  565:         animal: animalLabel,
+  566:         img,
+  567:         lastCloseHour: r?.lastCloseHour ? normalizeHourLike(r.lastCloseHour) : "",
+  568:       };
+  569:     });
+  570: 
+  571:     // 4) desempate com animal (estável e bonito)
+  572:     out.sort((a, b) => {
+  573:       const aa = a.daysLate == null ? 999999 : a.daysLate;
+  574:       const bb = b.daysLate == null ? 999999 : b.daysLate;
+  575:       if (bb !== aa) return bb - aa;
+  576: 
+  577:       const ma = hourToMinutes(a.lastCloseHour);
+  578:       const mb = hourToMinutes(b.lastCloseHour);
+  579:       if (ma != null && mb != null && ma !== mb) return ma - mb;
+  580:       if (ma == null && mb != null) return 1;
+  581:       if (ma != null && mb == null) return -1;
+  582: 
+  583:       const an = sortPTBR(a.animal, b.animal);
+  584:       if (an !== 0) return an;
+  585: 
+  586:       return a.grupo - b.grupo;
+  587:     });
+  588: 
+  589:     const finalRows = out.map((r, idx) => ({ ...r, pos: idx + 1 }));
+  590: 
+  591:     return { rows: finalRows, meta: { effectiveTargetYmd: safeTarget } };
+  592:   }
+  593: 
+  594:   const refresh = useCallback(
+  595:     async ({ silent = false } = {}) => {
+  596:       abortedRef.current = false;
+  597:       if (!silent) {
+  598:         setLoading(true);
+  599:         setError("");
+  600:       }
+  601: 
+  602:       try {
+  603:         // ✅ trava e retorna (não roda consulta com kind inválido)
+  604:         if (kind !== "grupo") {
+  605:           setError("Por enquanto, o modo ativo é apenas: Grupo (os demais entram na próxima etapa).");
+  606:           setKind("grupo");
+  607:           return;
+  608:         }
+  609: 
+  610:         const effBounds = await refreshBoundsAndLastDraw();
+  611:         const result = await buildLateList({ targetYmd: dateYmd, effBounds });
+  612:         if (abortedRef.current) return;
+  613: 
+  614:         setRows(result.rows);
+  615:         setMeta({ effectiveTargetYmd: result.meta.effectiveTargetYmd });
+  616:       } catch (e) {
+  617:         if (abortedRef.current) return;
+  618:         if (!silent) setError(String(e?.message || e));
+  619:       } finally {
+  620:         if (!abortedRef.current && !silent) setLoading(false);
+  621:       }
+  622:     },
+  623:     [
+  624:       dateYmd,
+  625:       kind,
+  626:       prizePositions,
+  627:       selectedCloseHourBucket,
+  628:       selectedLateUf,
+  629:       selectedLateLotteries,
+  630:     ] // eslint-disable-line react-hooks/exhaustive-deps
+  631:   );
+  632: 
+  633:   useEffect(() => {
+  634:     setLotteryOptId("ALL");
+  635:   }, [selectedLotteryId]);
+  636: 
+  637: 
+  638: 
+  639:   // primeiro load
+  640:   useEffect(() => {
+  641:     let alive = true;
+  642:     (async () => {
+  643:       setError("");
+  644:       try {
+  645:         await refreshBoundsAndLastDraw();
+  646:         if (!alive) return;
+  647:       } catch (e) {
+  648:         if (!alive) return;
+  649:         setError(String(e?.message || e));
+  650:       }
+  651:     })();
+  652: 
+  653:     return () => {
+  654:       alive = false;
+  655:     };
+  656:     // eslint-disable-next-line react-hooks/exhaustive-deps
+  657:   }, []);
+  658: 
+  659:   // ✅ FIX: clampa a data da UI quando bounds chega/atualiza (evita UI fora do range)
+  660:   useEffect(() => {
+  661:     const minYmd = bounds?.minYmd;
+  662:     const maxYmd = bounds?.maxYmd;
+  663:     if (!isYMD(minYmd) || !isYMD(maxYmd)) return;
+  664: 
+  665:     const normalized = normalizeSingleDateWithBounds(dateYmd, minYmd, maxYmd);
+  666:     if (normalized && normalized !== dateYmd) setDateYmd(normalized);
+  667:   }, [bounds?.minYmd, bounds?.maxYmd, dateYmd]);
+  668: 
+  669:   // refresh quando muda filtros/data
+  670:   useEffect(() => {
+  671:     if (!boundsReady) return;
+  672:     refresh();
+  673:     // eslint-disable-next-line react-hooks/exhaustive-deps
+  674:   }, [
+  675:     boundsReady,
+  676:     dateYmd,
+  677:     prizeMode,
+  678:     lotteryOptId,
+  679:     selectedLotteryId,
+  680:   ]);
+  681: 
+  682:   // polling: atualiza quando entrar sorteio novo
+  683:   useEffect(() => {
+  684:     if (pollRef.current) clearInterval(pollRef.current);
+  685: 
+  686:     pollRef.current = setInterval(async () => {
+  687:       if (abortedRef.current) return;
+  688: 
+  689:       try {
+  690:         const prev = lastImportedRef.current;
+  691: 
+  692:         const b = await getKingBoundsByUf({ uf: selectedLateUf });
+  693:         const nb = normalizeBoundsResponse(b);
+  694:         const maxYmd = nb.maxYmd || "";
+  695:         if (!maxYmd) return;
+  696: 
+  697:         const next = await fetchLastImportedFromMaxYmd(maxYmd);
+  698: 
+  699:         const changed =
+  700:           String(prev?.ymd || "") !== String(next.ymd || "") ||
+  701:           String(prev?.closeHour || "") !== String(next.closeHour || "");
+  702: 
+  703:         if (changed) {
+  704:           setLastImported(next);
+  705: 
+  706:           setBounds((old) => ({
+  707:             minYmd: old?.minYmd ?? nb.minYmd ?? null,
+  708:             maxYmd: nb.maxYmd ?? old?.maxYmd ?? null,
+  709:             source: nb.source || old?.source || "",
+  710:           }));
+  711: 
+  712:           await refresh({ silent: true });
+  713:         }
+  714:       } catch {
+  715:         // silencioso
+  716:       }
+  717:     }, 60000);
+  718: 
+  719:     return () => {
+  720:       if (pollRef.current) clearInterval(pollRef.current);
+  721:     };
+  722:     // eslint-disable-next-line react-hooks/exhaustive-deps
+  723:   }, [refresh]);
+  724: 
+  725:   useEffect(() => {
+  726:     return () => {
+  727:       abortedRef.current = true;
+  728:       if (pollRef.current) clearInterval(pollRef.current);
+  729:     };
+  730:   }, []);
+  731: 
+  732:   const titleDateBR = useMemo(() => ymdToBR(dateYmd), [dateYmd]);
+  733:   const effectiveDateBR = useMemo(() => ymdToBR(meta?.effectiveTargetYmd || ""), [meta?.effectiveTargetYmd]);
+  734: 
+  735:   const lastImportedBR = useMemo(() => {
+  736:     const d = lastImported?.ymd ? ymdToBR(lastImported.ymd) : "";
+  737:     const h = lastImported?.closeHour ? lastImported.closeHour : "";
+  738:     return d ? (h ? `${d} ${h}` : d) : "";
+  739:   }, [lastImported]);
+  740: 
+  741:   // ✅ handler clamped (date input)
+  742:   const onChangeDate = useCallback(
+  743:     (raw) => {
+  744:       const minYmd = bounds?.minYmd;
+  745:       const maxYmd = bounds?.maxYmd;
+  746:       const next = normalizeSingleDateWithBounds(String(raw || ""), minYmd, maxYmd);
+  747:       setDateYmd(next);
+  748:     },
+  749:     [bounds?.minYmd, bounds?.maxYmd]
+  750:   );
+  751: 
+  752:   return (
+  753:     <div className="ppLate">
+  754:       <style>{`
+  755:         .ppLate{
+  756:           width:100%;
+  757:           height:calc(100vh - 24px);
+  758:           padding:14px 14px 10px;
+  759:           color:#e9e9e9;
+  760:           display:flex;
+  761:           flex-direction:column;
+  762:           gap:10px;
+  763:           overflow:hidden;
+  764:           min-height:0;
+  765:         }
+  766: 
+  767:         .ppLateHeader{ display:grid; grid-template-columns:1fr; gap:8px; flex:0 0 auto; }
+  768: 
+  769:         .ppLateTitleWrap{ display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; }
+  856:           color:rgba(233,233,233,0.92);
+  857:           white-space:nowrap;
+  858:           overflow:hidden;
+  859:           text-overflow:ellipsis;
+  860:         }
+  861: 
+  862:         .ppLateTable tbody tr:hover td{ background:rgba(202,166,75,0.06); }
+  863: 
+  864:         .ppPos{ width:58px; color:rgba(233,233,233,0.75); font-weight:900; }
+  865:         .ppImgCell{ width:66px; }
+  866:         .ppImg{
+  867:           width:34px; height:34px;
+  868:           border-radius:12px;
+  869:           border:2px solid rgba(202,166,75,0.55);
+  870:           box-shadow:0 14px 34px rgba(0,0,0,0.45);
+  871:           background:rgba(0,0,0,0.55);
+  872:           display:inline-flex;
+  873:           align-items:center;
+  874:           justify-content:center;
+  875:           overflow:hidden;
+  876:         }
+  877:         .ppImg img{ width:100%; height:100%; object-fit:cover; display:block; }
+  878: 
+  879:         .ppGrupo{ font-weight:900; letter-spacing:0.4px; color:#e9e9e9; }
+  880:         .ppAnimal{ width:150px; max-width:150px; font-weight:800; color:rgba(233,233,233,0.92); }
+  881:         .ppLast{ width:130px; text-align:center; color:rgba(233,233,233,0.72); font-weight:700; }
+  882:         .ppDays{ width:118px; font-weight:900; text-align:center; letter-spacing:0.2px; }
+  883:         .ppDays b{ color:#caa64b; }
+  884: 
+  885:         @media (max-width:1100px){
+  886:           .ppLate{ padding:12px 12px 10px; }
+  887:           .ppLateTable{ width:100%; }
+  888:           .ppAnimal{ width:140px; max-width:140px; }
+  889:         }
+  890:       `}</style>
+  891: 
+  892:       <div className="ppLateHeader">
+  893:         <div className="ppLateTitleWrap">
+  894:           <h1 className="ppLateTitle">Atrasados</h1>
+  895: 
+  896:           <div className="ppLateSubtitle">
+  897:             Leitura de atraso por <b>Grupo</b> · Prêmio{" "}
+  898:             <b>{prizeMode === "1-5" ? "1º ao 5º" : `${prizeMode}º`}</b> · Data{" "}
+  899:             <b>{titleDateBR}</b> · <b>{
+  900: LATE_LOTTERY_OPTIONS.find(
+  901:   option => option.id === selectedLotteryId
+  902: )?.label || selectedLotteryId
+  903: }</b> · Loteria{" "}
+  904:             <b>{LOTTERY_DISPLAY}</b>
+  905:             {meta?.effectiveTargetYmd && meta.effectiveTargetYmd !== dateYmd ? (
+  906:               <>
+  907:                 {" · "}
+  908:                 Data efetiva <b>{effectiveDateBR}</b>
+  909:               </>
+  910:             ) : null}
+  911:             {lastImportedBR ? (
+  912:               <>
+  913:                 {" · "}
+  914:                 Último sorteio importado <b>{lastImportedBR}</b>
+  915:               </>
+  916:             ) : null}
+  917:           </div>
+  918:         </div>
+  919: 
+  920:         <div className="ppLateControls">
+  921: 
+  922: 
+  923:           <div className="ppCtl">
+  924:             <label htmlFor="lateLottery">Loteria</label>
+  925: 
+  926:             <select
+  927:               id="lateLottery"
+  928:               value={selectedLotteryId}
+  929:               onChange={(event) =>
+  930:                 setSelectedLotteryId(event.target.value)
+  931:               }
+  932:               disabled={loading}
+  933:             >
+  934:               {LATE_LOTTERY_OPTIONS.map((option) => (
+  935:                 <option
+  936:                   key={option.id}
+  937:                   value={option.id}
+  938:                 >
+  939:                   {option.label}
+  940:                 </option>
+  941:               ))}
+  942:             </select>
+  943:           </div>
+  944:           <div className="ppCtl">
+  945:             <label htmlFor="lateHour">Horário</label>
+  946: 
+  947:             <select
+  948:               id="lateHour"
+  949:               value={lotteryOptId}
+  950:               onChange={(event) =>
+  951:                 setLotteryOptId(
+  952:                   String(event.target.value || "ALL")
+  953:                 )
+  954:               }
+  955:               disabled={loading}
+  956:             >
+  957:               {selectedHourOptions.map((option) => (
+  958:                 <option
+  959:                   key={option.id}
+  960:                   value={option.id}
+  961:                 >
+  962:                   {option.label}
+  963:                 </option>
+  964:               ))}
+  965:             </select>
+  966:           </div>
+  967: 
+  968:           <div className="ppCtl">
+  969:             <label>Tipo</label>
+  970:             <select value={kind} onChange={(e) => setKind(String(e.target.value || "grupo"))}>
+  971:               <option value="grupo">Grupo</option>
+  972:               <option value="milhar" disabled>Milhar</option>
+  973:               <option value="centena" disabled>Centena</option>
+  974:               <option value="dezena" disabled>Dezena</option>
+  975:               <option value="unidade" disabled>Unidade</option>
+  976:             </select>
+  977:           </div>
+  978: 
+  979:           <div className="ppCtl">
+  980:             <label>Prêmio</label>
+  981:             <select value={prizeMode} onChange={(e) => setPrizeMode(String(e.target.value || "1"))}>
+  982:               <option value="1">1º Prêmio</option>
+  983:               <option value="2">2º Prêmio</option>
+  984:               <option value="3">3º Prêmio</option>
+  985:               <option value="4">4º Prêmio</option>
+  986:               <option value="5">5º Prêmio</option>
+  987:               <option value="1-5">1º ao 5º Prêmio</option>
+  988:             </select>
+  989:           </div>
+  990: 
+  991:           <div className="ppCtl">
+  992:             <label>Data</label>
+  993:             <input
+  994:               type="date"
+  995:               value={dateYmd}
+  996:               min={bounds?.minYmd || undefined}
+  997:               max={bounds?.maxYmd || undefined}
+  998:               onChange={(e) => onChangeDate(e.target.value || todayYMDLocal())}
+  999:             />
+ 1000:           </div>
+ 1001: 
+ 1002:           <button className="ppBtn" onClick={() => refresh()} disabled={loading || !boundsReady}>
+ 1003:             {loading ? "Carregando..." : "Atualizar"}
+ 1004:           </button>
+ 1005:         </div>
+ 1006:       </div>
+ 1007: 
+ 1008:       {error ? <div className="ppErr">{error}</div> : null}
+ 1009: 
+ 1010:       <div className="ppLatePanel">
+ 1011:         <div className="ppLateTableWrap">
+ 1012:           <table className="ppLateTable">
+ 1013:             <thead>
+ 1014:               <tr>
+ 1015:                 <th style={{ width: 58 }}>Posição</th>
+ 1016:                 <th style={{ width: 66 }}>Imagem</th>
+ 1017:                 <th style={{ width: 150 }}>Grupo</th>
+ 1018:                 <th style={{ width: 150 }}>Bicho</th>
+ 1019:                 <th style={{ width: 130 }}>Última Aparição</th>
+ 1020:                 <th style={{ width: 118 }}>Atraso (DIAS)</th>
+ 1021:               </tr>
+ 1022:             </thead>
+ 1023: 
+ 1024:             <tbody>
+ 1025:               {(rows || []).map((r, idx) => {
+ 1026:                 const lastBR = r.lastYmd ? ymdToBR(r.lastYmd) : "—";
+ 1027:                 const hh = r.lastCloseHour ? normalizeHourLike(r.lastCloseHour) : "";
+ 1028:                 const lastLabel = lastBR === "—" ? "—" : (hh ? `${lastBR} ${hh}` : lastBR);
+ 1029: 
+ 1030:                 const days = r.daysLate == null ? "—" : String(r.daysLate);
+ 1031: 
+ 1032:                 return (
+ 1033:                   <tr key={`g${r.grupo}`}>
+ 1034:                     <td className="ppPos">{idx + 1}º</td>
+ 1035: 
+ 1036:                     <td className="ppImgCell">
+ 1037:                       <span className="ppImg" title={`Grupo ${r.grupo2} · ${r.animal}`}>
+ 1038:                         {r.img ? <img src={r.img} alt={r.animal} /> : null}
+ 1039:                       </span>
+ 1040:                     </td>
+ 1041: 
+ 1042:                     <td>
+ 1043:                       <span className="ppGrupo">GRUPO {r.grupo2}</span>
+ 1044:                     </td>
+ 1045: 
+ 1046:                     <td className="ppAnimal" title={r.animal || ""}>
+ 1047:                       {r.animal || "—"}
+
+============================================================
+===== FILE: .\src\services\kingResultsService.js =====
+============================================================
+  496: async function fetchPrizesForDraw(drawId, positionsArr, embeddedPrizes) {
+  497:   const drawKey = String(drawId || "").trim();
+  498:   if (!drawKey) return [];
+  499: 
+  500:   if (Array.isArray(embeddedPrizes) && embeddedPrizes.length) {
+  501:     const normalized = embeddedPrizes.map((p, idx) =>
+  502:       normalizePrize(p, p?.prizeId ?? `emb_${idx}`)
+  503:     );
+  504: 
+  505:     const cleaned = normalized.filter(
+  506:       (x) => isValidGrupo(x?.grupo) && isValidPosition(x?.position)
+  507:     );
+  508: 
+  509:     if (cleaned.length) {
+  510:       const allSorted = sortPrizesByPosition(cleaned);
+  511:       return filterPrizesByPositions(allSorted, positionsArr);
+  512:     }
+  513:   }
+  514: 
+  515:   const allKey = prizesCacheKeyAll(drawKey);
+  516:   const cachedAll = cacheGet(PRIZES_CACHE, allKey);
+  517:   if (Array.isArray(cachedAll) && cachedAll.length > 0) {
+  518:     return filterPrizesByPositions(cachedAll, positionsArr);
+  519:   }
+  520: 
+  521:   const prizesCol = collection(db, "draws", drawKey, "prizes");
+  522: 
+  523:   const { snap, error } = await safeGetDocsSmart(prizesCol, { policy: "server" });
+  524:   if (error) throw error;
+  525: 
+  526:   const allRaw = snap.docs.map((d) => normalizePrize(d.data(), d.id));
+  527: 
+  528:   // console.log("DEBUG allRaw:", allRaw);
+  529: 
+  530: const all = allRaw.filter(
+  531:   (x) => isValidGrupo(x?.grupo) && isValidPosition(x?.position)
+  532: );
+  533: 
+  534: // console.log("DEBUG allFiltered:", all);
+  535: 
+  536:   const allSorted = sortPrizesByPosition(all);
+  537:   cacheSet(PRIZES_CACHE, allKey, allSorted);
+  538: 
+  539:   return filterPrizesByPositions(allSorted, positionsArr);
+  540: }
+  541: 
+  542: /* =========================
+  543:    Map Draw
+  544: ========================= */
+  545: 
+  546: function mapDrawDoc(doc) {
+  547:   const d = doc.data();
+  548: 
+  549:   const ymd = d.ymd || normalizeToYMD(getDocDateRaw(d));
+  550:   const hourNorm = normalizeHourLike(
+  551:     d.close_hour ?? d.closeHour ?? d.hour ?? d.hora ?? ""
+  552:   );
+  553: 
+  554:   const embeddedPrizes = Array.isArray(d.prizes) && d.prizes.length > 0 ? d.prizes : null;
+  555: 
+  556:   const ufRaw = d.uf ?? null;
+  557:   const lotteryKeyRaw = d.lottery_key ?? d.lotteryKey ?? d.lottery ?? null;
+  558: 
+  559:   const lotteryCodeRaw =
+  560:     d.lottery_code ??
+  561:     d.lotteryCode ??
+  562:     d.lot_code ??
+  563:     d.lotCode ??
+  564:     d.lot ??
+  565:     d.code ??
+  566:     d.lottery_id ??
+  567:     d.lotteryId ??
+  568:     null;
+  569: 
+  570:   return {
+  571:     drawId: doc.id,
+  572:     id: doc.id,
+  573: 
+  574:     date: d.date ?? d.data ?? d.dt ?? d.draw_date ?? d.close_date ?? null,
+  575:     ymd,
+  576: 
+  577:     close_hour: hourNorm,
+  578:     closeHour: hourNorm,
+  579: 
+  580:     uf: ufRaw,
+  581:     lottery_key: lotteryKeyRaw,
+  582: 
+  583:     lottery_code: lotteryCodeRaw ? String(lotteryCodeRaw).toUpperCase() : null,
+  584: 
+  585:     lottery_name: d.lottery_name ?? d.lotteryName ?? null,
+  586:     lottery_label: d.lottery_label ?? d.lotteryLabel ?? null,
+  587: 
+  588:     prizesCount: d.prizesCount,
+  589:     prizes: embeddedPrizes,
+  590:   };
+  591: }
+  592: 
+  593: /* =========================
+  594:    Compat: uf OU lottery_key
+  595: ========================= */
+  596: 
+  597: function buildUfWhereClauses(fieldName, uf) {
+  598:   const normalized = normalizeValueForField(fieldName, uf);
+  599:   return [where(fieldName, "==", normalized)];
+  600: }
+  601: 
+  602: function normalizeOrderBys(extraOrderBy) {
+  603:   if (!extraOrderBy) return [];
+  604:   return Array.isArray(extraOrderBy)
+  605:     ? extraOrderBy.filter(Boolean)
+  606:     : [extraOrderBy];
+  607: }
+  608: 
+  609: async function queryDrawsByField({
+  610:   fieldName,
+  611:   uf,
+  612:   extraWheres = [],
+  613:   extraOrderBy = null,
+  614:   extraLimit = null,
+  615:   policy = DEFAULT_READ_POLICY,
+  616: }) {
+  617:   const drawsCol = collection(db, "draws");
+  618: 
+  619:   const parts = [
+  620:     drawsCol,
+  621:     ...buildUfWhereClauses(fieldName, uf),
+  622:     ...buildRJLockWhereIfNeeded(fieldName, uf),
+  623:     ...(extraWheres || []),
+  624:   ];
+  625: 
+  626:   const orderBys = normalizeOrderBys(extraOrderBy);
+  627:   for (const ob of orderBys) parts.push(ob);
+  628: 
+  629:   if (extraLimit) parts.push(extraLimit);
+  630: 
+  631:   const qRef = query(...parts);
+  632:   return safeGetDocsSmart(qRef, { policy });
+  633: }
+  634: 
+  635: function extractUfParam(maybeUfOrObj) {
+  636:   if (!maybeUfOrObj) return "";
+  637:   if (typeof maybeUfOrObj === "string") return maybeUfOrObj;
+  638:   if (typeof maybeUfOrObj === "object" && typeof maybeUfOrObj.uf === "string") {
+  639:     return maybeUfOrObj.uf;
+  640:   }
+  641:   return String(maybeUfOrObj || "");
+  642: }
+  643: 
+  644: async function fetchDrawDocsPreferUf({
+  645:   uf,
+  646:   extraWheres = [],
+  647:   extraOrderBy = null,
+  648:   extraLimit = null,
+  649:   policy = DEFAULT_READ_POLICY,
+  650: }) {
+  651:   const ufTrim = String(extractUfParam(uf) || "").trim();
+  652:   const ufUp = ufTrim.toUpperCase();
+  653: 
+  654:   if (isFederalInput(ufUp)) {
+  655:     for (const lk of FEDERAL_LOTTERY_KEYS) {
+  656:       const { snap, error } = await queryDrawsByField({
+ 1253:   if (drawCount <= 50) return 4;
+ 1254:   if (drawCount <= 300) return 6;
+ 1255:   if (drawCount <= 1200) return 8;
+ 1256:   return 10;
+ 1257: }
+ 1258: 
+ 1259: export function decideKingRangeMode({ dateFrom, dateTo, mode = "detailed" }) {
+ 1260:   const ymdFrom = normalizeToYMD(dateFrom);
+ 1261:   const ymdTo = normalizeToYMD(dateTo);
+ 1262:   if (!ymdFrom || !ymdTo) return "detailed";
+ 1263: 
+ 1264:   if (mode === "detailed" || mode === "aggregated") return mode;
+ 1265:   if (mode !== "auto") return "detailed";
+ 1266: 
+ 1267:   const days = daysBetweenInclusiveUTC(ymdFrom, ymdTo);
+ 1268:   if (!Number.isFinite(days) || days <= 0) return "detailed";
+ 1269:   return "detailed";
+ 1270: }
+ 1271: 
+ 1272: /**
+ 1273:  * ✅ Fallback barato (SEM prizes): usado quando falta índice composto no RANGE,
+ 1274:  * ou quando você quer aggregated sem custo de hidratar.
+ 1275:  */
+ 1276: async function fetchDrawsDayNoPrizes({ uf, dayYmd }) {
+ 1277:   const readPolicy = shouldForceFreshServerRead(dayYmd) ? "server" : DEFAULT_READ_POLICY;
+ 1278: 
+ 1279:   const { docs, error } = await fetchDrawDocsPreferUf({
+ 1280:     uf,
+ 1281:     extraWheres: [where("ymd", "==", dayYmd)],
+ 1282:     policy: readPolicy,
+ 1283:   });
+ 1284:   if (error) throw error;
+ 1285:   if (!docs || !docs.length) return [];
+ 1286: 
+ 1287:   let baseAll = dedupeDrawsLocal(docs.map(mapDrawDoc));
+ 1288:   baseAll = baseAll.filter((x) => (x.ymd || normalizeToYMD(x.date)) === dayYmd);
+ 1289: 
+ 1290:   const ordered = sortDrawsLocal(baseAll);
+ 1291: 
+ 1292:   return ordered.map((d) => {
+ 1293:     const embedded = normalizeEmbeddedPrizesForAggregated(d?.prizes);
+ 1294:     return {
+ 1295:       ...d,
+ 1296:       prizes: embedded,
+ 1297:       prizesCount: embedded.length || Number(d?.prizesCount || 0),
+ 1298:       __mode: "aggregated",
+ 1299:     };
+ 1300:   });
+ 1301: }
+ 1302: 
+ 1303: export async function getKingResultsByRange({
+ 1304:   uf,
+ 1305:   dateFrom,
+ 1306:   dateTo,
+ 1307:   closeHour = null,
+ 1308:   closeHourBucket = null,
+ 1309:   positions = null,
+ 1310:   mode = "detailed",
+ 1311:   readPolicy = DEFAULT_READ_POLICY,
+ 1312:   bypassCache = false,
+ 1313: }) {
+ 1314:   if (!uf || !dateFrom || !dateTo) {
+ 1315:     throw new Error("Parâmetros obrigatórios: uf, dateFrom, dateTo");
+ 1316:   }
+ 1317: 
+ 1318:   const scopeKey = canonicalScopeKey(uf);
+ 1319: 
+ 1320:   const positionsArr = normalizePositions(positions);
+ 1321: 
+ 1322:   const ymdFrom = normalizeToYMD(dateFrom);
+ 1323:   const ymdTo = normalizeToYMD(dateTo);
+ 1324:   if (!ymdFrom || !ymdTo) return [];
+ 1325: 
+ 1326:   const hourFilter = resolveHourFilter({ closeHour, closeHourBucket });
+ 1327: 
+ 1328:   const effectiveMode = decideKingRangeMode({
+ 1329:     dateFrom: ymdFrom,
+ 1330:     dateTo: ymdTo,
+ 1331:     mode,
+ 1332:   });
+ 1333: 
+ 1334:   const rangeKey = drawsCacheKeyRange({
+ 1335:     scopeKey,
+ 1336:     from: ymdFrom,
+ 1337:     to: ymdTo,
+ 1338:     positionsArr,
+ 1339:     hourFilter,
+ 1340:     mode: effectiveMode,
+ 1341:   });
+ 1342:   if (!bypassCache) {
+ 1343:     const cached = cacheGet(DRAWS_CACHE, rangeKey);
+ 1344:     if (cached) return cached;
+ 1345:   }
+ 1346: 
+ 1347:   const DOC_ID = documentId();
+ 1348:   const rangeOrder = [orderBy("ymd", "asc"), orderBy(DOC_ID)];
+ 1349: 
+ 1350:   const { docs, error, usedField } = await fetchDrawDocsPreferUf({
+ 1351:     uf,
+ 1352:     extraWheres: [where("ymd", ">=", ymdFrom), where("ymd", "<=", ymdTo)],
+ 1353:     extraOrderBy: rangeOrder,
+ 1354:     policy: readPolicy,
+ 1355:   });
+ 1356: 
+ 1357:   if (error) {
+ 1358:     if (isIndexError(error)) {
+ 1359:       const days = daysBetweenInclusiveUTC(ymdFrom, ymdTo);
+ 1360:       const MAX_FALLBACK_DAYS = 31;
+ 1361: 
+ 1362:       if (Number.isFinite(days) && days > 0 && days <= MAX_FALLBACK_DAYS) {
+ 1363:         if (effectiveMode === "aggregated") {
+ 1364:           const all = [];
+ 1365:           for (let i = 0; i < days; i += 1) {
+ 1366:             const day = addDaysUTC(ymdFrom, i);
+ 1367:             const dayDraws = await fetchDrawsDayNoPrizes({ uf, dayYmd: day });
+ 1368:             if (dayDraws.length) all.push(...dayDraws);
+ 1369:           }
+ 1370: 
+ 1371:           const baseAll = dedupeDrawsLocal(all);
+ 1372:           const base = hourFilter?.kind
+ 1373:             ? baseAll.filter((d) => drawPassesHourFilter(d, hourFilter))
+ 1374:             : baseAll;
+ 1375: 
+ 1376:           let out = dedupeDrawsLocal(sortDrawsLocal(base));
+ 1377: 
+ 1378:           if (!bypassCache) {
+ 1379:       cacheSet(DRAWS_CACHE, rangeKey, out);
+ 1380:     }
+ 1381:           return out;
+ 1382:         }
+ 1383: 
+ 1384:         const all = [];
+ 1385:         for (let i = 0; i < days; i += 1) {
+ 1386:           const day = addDaysUTC(ymdFrom, i);
+ 1387:           const dayDraws = await getKingResultsByDate({
+ 1388:             uf,
+ 1389:             date: day,
+ 1390:             closeHour,
+ 1391:             closeHourBucket,
+ 1392:             positions: positionsArr,
+ 1393:           });
+ 1394:           if (Array.isArray(dayDraws) && dayDraws.length) all.push(...dayDraws);
+ 1395:         }
+ 1396: 
+ 1397:         const baseAll = dedupeDrawsLocal(all);
+ 1398:         const base = hourFilter?.kind
+ 1399:           ? baseAll.filter((d) => drawPassesHourFilter(d, hourFilter))
+ 1400:           : baseAll;
+ 1401: 
+ 1402:         let out = dedupeDrawsLocal(sortDrawsLocal(base));
+ 1403: 
+ 1404:         if (!bypassCache) {
+ 1405:       cacheSet(DRAWS_CACHE, rangeKey, out);
+ 1406:     }
+ 1407:         return out;
+ 1408:       }
+ 1409: 
+ 1410:       const rawCode = String(error?.code || "");
+ 1411:       const rawMsg = String(error?.message || "");
+ 1412: 
+ 1413:       throw new Error(
+ 1523:     return { ...item, prizes, prizesCount: pc, __mode: "detailed" };
+ 1524:   });
+ 1525: 
+ 1526:   const out = dedupeDrawsLocal(results);
+ 1527:   if (!bypassCache) {
+ 1528:       cacheSet(DRAWS_CACHE, rangeKey, out);
+ 1529:     }
+ 1530:   return out;
+ 1531: }
+ 1532: 
+ 1533: /* =========================
+ 1534:    ✅ Hidratação de prizes (para UX no "Todos")
+ 1535: ========================= */
+ 1536: 
+ 1537: export async function hydrateKingDrawsWithPrizes({
+ 1538:   draws,
+ 1539:   positions = null,
+ 1540:   concurrency = null,
+ 1541: }) {
+ 1542:   const arr = Array.isArray(draws) ? draws : [];
+ 1543:   if (!arr.length) return [];
+ 1544: 
+ 1545:   const positionsArr = normalizePositions(positions);
+ 1546: 
+ 1547:   const conc =
+ 1548:     Number.isFinite(Number(concurrency)) && Number(concurrency) > 0
+ 1549:       ? Number(concurrency)
+ 1550:       : chooseRangeConcurrency(arr.length);
+ 1551: 
+ 1552:   const results = await mapWithConcurrency(arr, conc, async (item) => {
+ 1553:     const prizes = await fetchPrizesForDraw(item.drawId, positionsArr, item.prizes);
+ 1554:     const pc = Array.isArray(prizes) ? prizes.length : 0;
+ 1555:     return { ...item, prizes, prizesCount: pc, __mode: "detailed" };
+ 1556:   });
+ 1557: 
+ 1558:   return dedupeDrawsLocal(results);
+ 1559: }
+ 1560: 
+ 1561: /* =========================
+ 1562:    ✅ ATRASADOS (Late) — 100% baseado na SUA base
+ 1563: ========================= */
+ 1564: 
+ 1565: function normalizeLotteriesList(lotteries) {
+ 1566:   const arr = Array.isArray(lotteries) ? lotteries : [];
+ 1567:   const cleaned = arr
+ 1568:     .map((x) => String(x ?? "").trim().toUpperCase())
+ 1569:     .filter(Boolean);
+ 1570:   return cleaned.length ? Array.from(new Set(cleaned)) : null;
+ 1571: }
+ 1572: 
+ 1573: function drawPassesLotteriesFilter(draw, lotteriesArr) {
+ 1574:   if (!lotteriesArr || !lotteriesArr.length) return true;
+ 1575:   const code = String(draw?.lottery_code ?? "").trim().toUpperCase();
+ 1576:   if (!code) return false;
+ 1577:   return lotteriesArr.includes(code);
+ 1578: }
+ 1579: 
+ 1580: function lateCacheKey({
+ 1581:   scopeKey,
+ 1582:   fromYmd,
+ 1583:   toYmd,
+ 1584:   baseYmd,
+ 1585:   prizePosition,
+ 1586:   hourFilter,
+ 1587:   lotteriesArr,
+ 1588:   chunkDays,
+ 1589: }) {
+ 1590:   const h =
+ 1591:     hourFilter?.kind === "bucket"
+ 1592:       ? `bucket:${hourFilter.bucket}`
+ 1593:       : hourFilter?.kind === "exact"
+ 1594:       ? `exact:${hourFilter.hhmm}`
+ 1595:       : "all";
+ 1596:   const lots = lotteriesArr && lotteriesArr.length ? lotteriesArr.join(",") : "all";
+ 1597:   const cd = Number(chunkDays) || 15;
+ 1598:   const pos = Number(prizePosition) || 1;
+ 1599:   return `late::${scopeKey}::${fromYmd}..${toYmd}::base=${baseYmd}::pos=${pos}::h=${h}::lots=${lots}::chunk=${cd}`;
+ 1600: }
+ 1601: 
+ 1602: function hourToNumSafe(hhmm) {
+ 1603:   const s = normalizeHourLike(hhmm);
+ 1604:   const m = s.match(/^(\d{2}):(\d{2})$/);
+ 1605:   if (!m) return Number.POSITIVE_INFINITY;
+ 1606:   return Number(m[1]) * 100 + Number(m[2]);
+ 1607: }
+ 1608: 
+ 1609: export async function getKingLateByRange({
+ 1610:   uf,
+ 1611:   dateFrom,
+ 1612:   dateTo,
+ 1613:   baseDate = null,
+ 1614:   lotteries = null,
+ 1615:   prizePosition = 1,
+ 1616:   closeHour = null,
+ 1617:   closeHourBucket = null,
+ 1618:   chunkDays = 15,
+ 1619: }) {
+ 1620:   if (!uf || !dateFrom || !dateTo) {
+ 1621:     throw new Error("Parâmetros obrigatórios: uf, dateFrom, dateTo");
+ 1622:   }
+ 1623: 
+ 1624:   const scopeKey = canonicalScopeKey(uf);
+ 1625: 
+ 1626:   const fromYmd = normalizeToYMD(dateFrom);
+ 1627:   const toYmd = normalizeToYMD(dateTo);
+ 1628:   if (!fromYmd || !toYmd) return [];
+ 1629: 
+ 1630:   const baseYmd = normalizeToYMD(baseDate) || toYmd;
+ 1631: 
+ 1632:   const hourFilter = resolveHourFilter({ closeHour, closeHourBucket });
+ 1633:   const lotteriesArr = normalizeLotteriesList(lotteries);
+ 1634: 
+ 1635:   const cacheKey = lateCacheKey({
+ 1636:     scopeKey,
+ 1637:     fromYmd,
+ 1638:     toYmd,
+ 1639:     baseYmd,
+ 1640:     prizePosition,
+ 1641:     hourFilter,
+ 1642:     lotteriesArr,
+ 1643:     chunkDays,
+ 1644:   });
+ 1645: 
+ 1646:   const cached = cacheGet(LATE_CACHE, cacheKey);
+ 1647:   if (cached) return cached;
+ 1648: 
+ 1649:   const posNum = Number(prizePosition) || 1;
+ 1650: 
+ 1651:   const lastSeen = new Map();
+ 1652: 
+ 1653:   let cursorTo = toYmd;
+ 1654:   const chunk = Math.max(3, Math.min(60, Number(chunkDays) || 15));
+ 1655: 
+ 1656:   if (cursorTo < fromYmd) {
+ 1657:     const outEmpty = Array.from({ length: 25 }, (_, i) => ({
+ 1658:       pos: i + 1,
+ 1659:       grupo: i + 1,
+ 1660:       lastYmd: null,
+ 1661:       lastHour: null,
+ 1662:       lastDrawId: null,
+ 1663:       lastLottery: null,
+ 1664:       atrasoDias: null,
+ 1665:     }));
+ 1666:     cacheSet(LATE_CACHE, cacheKey, outEmpty);
+ 1667:     return outEmpty;
+ 1668:   }
+ 1669: 
+ 1670:   while (cursorTo >= fromYmd && lastSeen.size < 25) {
+ 1671:     let chunkFrom = addDaysUTC(cursorTo, -(chunk - 1));
+ 1672:     if (chunkFrom < fromYmd) chunkFrom = fromYmd;
+ 1673: 
+ 1674:     const draws = await getKingResultsByRange({
+ 1675:       uf,
+ 1676:       dateFrom: chunkFrom,
+ 1677:       dateTo: cursorTo,
+ 1678:       closeHour,
+ 1679:       closeHourBucket,
+ 1680:       positions: [posNum],
+ 1681:       mode: "detailed",
+ 1682:     });
+ 1683: 
+ 1684:     const desc = sortDrawsLocalDesc(dedupeDrawsLocal(draws));
+ 1685: 
+ 1686:     for (const d of desc) {
+ 1687:       if (!d) continue;
+ 1688: 
+ 1689:       if (hourFilter?.kind && !drawPassesHourFilter(d, hourFilter)) continue;
+ 1690:       if (lotteriesArr && !drawPassesLotteriesFilter(d, lotteriesArr)) continue;
+ 1691: 
+ 1692:       const ymd = d.ymd || normalizeToYMD(d.date);
+ 1693:       if (!ymd || !isYMD(ymd)) continue;
+ 1694: 
+ 1695:       const p = Array.isArray(d.prizes)
+ 1696:         ? d.prizes.find(
+ 1697:             (x) => Number(x?.position) === posNum && isValidGrupo(x?.grupo)
+ 1698:           )
+ 1699:         : null;
+ 1700: 
+ 1701:       const g = p?.grupo;
+ 1702:       if (!isValidGrupo(g)) continue;
+ 1703: 
+ 1704:       if (!lastSeen.has(g)) {
+ 1705:         lastSeen.set(g, {
+ 1706:           ymd,
+ 1707:           hour: d.close_hour || d.closeHour || "",
+ 1708:           drawId: d.drawId || d.id || null,
+ 1709:           lottery_code: d.lottery_code || null,
+ 1710:         });
+ 1711: 
+ 1712:         if (lastSeen.size >= 25) break;
+ 1713:       }
+ 1714:     }
+ 1715: 
+ 1716:     cursorTo = addDaysUTC(chunkFrom, -1);
+ 1717:   }
+ 1718: 
+ 1719:   const rows = [];
+
+============================================================
+===== FILE: .\backend\server.js =====
+============================================================
+  361: }
+  362: 
+  363: function pickPrizePositionFromAny(prizeLike) {
+  364:   const p = prizeLike || {};
+  365:   const raw =
+  366:     p.position ??
+  367:     p.posicao ??
+  368:     p.pos ??
+  369:     p.colocacao ??
+  370:     p.place ??
+  371:     p.premio ??
+  372:     p.prize ??
+  373:     p.p ??
+  374:     null;
+  375: 
+  376:   const s = safeStr(raw);
+  377:   if (!s) return null;
+  378:   const m = s.match(/(\d{1,2})/);
+  379:   const pos = m ? Number(m[1]) : Number(s);
+  380:   return Number.isFinite(pos) ? pos : null;
+  381: }
+  382: 
+  383: /* =========================
+  384:    HEALTH
+  385: ========================= */
+  386: 
+  387: app.get("/health", (req, res) => {
+  388:   const lk = getLotteryFromReq(req);
+  389:   res.json({
+  390:     ok: true,
+  391:     service: "palpitaco-backend",
+  392:     version: "PATCH_CLOSEHOUR_V1",
+  393:     ts: new Date().toISOString(),
+  394:     host: HOST,
+  395:     port: PORT,
+  396:     pid: process.pid,
+  397:     lotteryKey: lk,
+  398:   });
+  399: });
+  400: 
+  401: /* =========================
+  402:    ROUTES
+  403: ========================= */
+  404: 
+  405: const pitacoResults = require("./routes/pitacoResults");
+  406: const kingDraws = require("./routes/kingDraws");
+  407: const receiveResults = require("./routes/receiveResults");
+  408: const bounds = require("./routes/bounds");
+  409: const predictions = require("./routes/predictions");
+  410: 
+  411: app.use("/api/pitaco", pitacoResults);
+  412: app.use("/api/king", kingDraws);
+  413: app.use("/api", receiveResults);
+  414: app.use("/api", bounds);
+  415: app.use("/api/predictions", predictions);
+  416: 
+  417: // ✅ alias compat: alguns pontos chamam /api/king/bounds (mantém /api/bounds intacto)
+  418: app.use("/api/king", bounds);
+  419: 
+  420: /* =========================================================
+  421:    ✅ /api/lates — ATRASADOS (server-side, Admin SDK)
+  422: ========================================================= */
+  423: 
+  424: app.get("/api/lates", async (req, res) => {
+  425:   try {
+  426:     const admin = require("firebase-admin");
+  427:     const db = admin.firestore();
+  428: 
+  429:     const lottery = getLotteryFromReq(req);
+  430: 
+  431:     // regra RJ/PT_RIO (lock)
+  432:     const RJ_LOCK_LOTTERY_KEY = "PT_RIO";
+  433:     const RJ_LOCK_UF = "RJ";
+  434:     const targetLotteryKey = lottery === "RJ" ? RJ_LOCK_LOTTERY_KEY : lottery;
+  435: 
+  436:     const modality = safeStr(req.query.modality || "PT").toUpperCase();
+  437:     const prizeRaw = safeStr(req.query.prize || "1");
+  438:     const page = Math.max(1, Number(req.query.page || 1) || 1);
+  439:     const pageSize = Math.max(
+  440:       1,
+  441:       Math.min(100, Number(req.query.pageSize || 25) || 25)
+  442:     );
+  443: 
+  444:     const closeHour = safeStr(req.query.closeHour || "");
+  445:     const closeHourBucket = safeStr(req.query.closeHourBucket || req.query.hour || "");
+  446:     const hourBucket = toHourBucket(closeHourBucket || closeHour);
+  447: 
+  448:     const baseDateParam = safeStr(req.query.baseDate || req.query.date || "");
+  449:     const baseYmd = isISODate(baseDateParam) ? baseDateParam : "";
+  450: 
+  451:     const PROBE_LOOKBACK_DAYS = 60;
+  452:     const baseDateSource = baseYmd ? "param" : "brToday";
+  453:     const baseDateYmd = baseYmd || brTodayYmd();
+  454: 
+  455:     // positions
+  456:     let positions = [];
+  457:     if (prizeRaw === "1-5") positions = [1, 2, 3, 4, 5];
+  458:     else {
+  459:       const p = Number(prizeRaw);
+  460:       if (!Number.isFinite(p) || p < 1 || p > 10) {
+  461:         return res
+  462:           .status(400)
+  463:           .json({ ok: false, error: "prize inválido (use 1..5 ou 1-5)" });
+  464:       }
+  465:       positions = [p];
+  466:     }
+  467: 
+  468:     async function fetchDayDraws(dayYmd) {
+  469:       const snap = await db.collection("draws").where("ymd", "==", dayYmd).get();
+  470: 
+  471:       const draws = [];
+  472:       snap.forEach((doc) => {
+  473:         const d = doc.data() || {};
+  474:         const ymd = safeStr(d.ymd || "");
+  475:         const close_hour = normalizeHourLike(
+  476:           d.close_hour ?? d.closeHour ?? d.hour ?? d.hora ?? ""
+  477:         );
+  478:         const uf = safeStr(d.uf || "").toUpperCase();
+  479:         const lottery_key = safeStr(
+  480:           d.lottery_key ?? d.lotteryKey ?? d.lottery ?? ""
+  481:         ).toUpperCase();
+  482:         const lottery_code = safeStr(
+  483:           d.lottery_code ??
+  484:             d.lotteryCode ??
+  485:             d.lot_code ??
+  486:             d.lotCode ??
+  487:             d.lot ??
+  488:             d.code ??
+  489:             ""
+  490:         ).toUpperCase();
+  491: 
+  492:         if (targetLotteryKey === RJ_LOCK_LOTTERY_KEY) {
+  493:           if (lottery_key && lottery_key !== RJ_LOCK_LOTTERY_KEY) return;
+  494:           if (uf && uf !== RJ_LOCK_UF) return;
+  495:         } else {
+  496:           if (lottery_key && lottery_key !== targetLotteryKey) return;
+  497:         }
+  498: 
+  499:         if (hourBucket) {
+  500:           if (toHourBucket(close_hour) !== hourBucket) return;
+  501:         }
+  502: 
+  503:         draws.push({
+  504:           id: doc.id,
+  505:           ymd,
+  506:           close_hour,
+  507:           uf,
+  508:           lottery_key,
+  509:           lottery_code: lottery_code || null,
+  510:           embeddedPrizes: Array.isArray(d.prizes) ? d.prizes : null,
+  511:         });
+  512:       });
+  513: 
+  514:       draws.sort((a, b) => hourToNumSafe(b.close_hour) - hourToNumSafe(a.close_hour));
+  515:       return draws;
+  516:     }
+  517: 
+  518:     async function findGrupoForDrawPosition(drawId, embeddedPrizes, posWanted) {
+  519:       if (Array.isArray(embeddedPrizes) && embeddedPrizes.length) {
+  520:         for (const p of embeddedPrizes) {
+  521:           const pos = pickPrizePositionFromAny(p);
+  522:           if (Number(pos) !== Number(posWanted)) continue;
+  523:           const g = pickPrizeGrupoFromAny(p);
+  524:           if (isValidGrupo(g)) return g;
+  525:         }
+  526:       }
+  527: 
+  528:       const snap = await db
+  529:         .collection("draws")
+  530:         .doc(String(drawId))
+  531:         .collection("prizes")
+  532:         .where("position", "==", Number(posWanted))
+  533:         .limit(5)
+  534:         .get();
+  535: 
+  536:       let bestG = null;
+  537:       snap.forEach((doc) => {
+  538:         if (bestG) return;
+  539:         const p = doc.data() || {};
+  540:         const g = pickPrizeGrupoFromAny(p);
+  541:         if (isValidGrupo(g)) bestG = g;
+  542:       });
+  543: 
+  544:       return bestG;
+  545:     }
+  546: 
+  547:     async function probeRecentMaxYmd(lookbackDays = 60) {
+  548:       const base = brTodayYmd();
+  549:       const n = Math.max(3, Math.min(180, Number(lookbackDays) || 60));
+  550: 
+  551:       for (let i = 0; i <= n; i += 1) {
+  552:         const day = addDaysUTC(base, -i);
+  553:         const draws = await fetchDayDraws(day);
+  554:         if (draws && draws.length) return day;
+  555:       }
+  556:       return "";
+  557:     }
+  558: 
+  559:     const scanStartYmd = baseYmd || (await probeRecentMaxYmd(PROBE_LOOKBACK_DAYS));
+  560: 
+  561:     if (!baseDateYmd) {
+  562:       return res.json({
+  563:         ok: true,
+  564:         lottery: lottery,
+  565:         modality,
+  566:         prize: prizeRaw,
+  567:         baseDate: "",
+  568:         hourBucket: hourBucket || null,
+  569:         page,
+  570:         pageSize,
+  571:         total: 25,
+  572:         rows: Array.from({ length: 25 }, (_, i) => ({
+  573:           pos: i + 1,
+  574:           grupo: i + 1,
+  575:           lastYmd: null,
+  576:           lastCloseHour: null,
+  577:           daysLate: null,
+  578:           lastDrawId: null,
+  579:           lastLottery: null,
+  580:         })),
+  581:         note: "Sem draws recentes no lookback. Informe baseDate=YYYY-MM-DD para forçar.",
+  582:       });
+  583:     }
+  584: 
+  585:     const lastSeen = new Map(); // grupo -> { ymd, closeHour, drawId, lottery_code }
+  586:     const MAX_LOOKBACK_DAYS = 370;
+  587:     let cursor = scanStartYmd;
+  588: 
+  589:     for (let iter = 0; iter < MAX_LOOKBACK_DAYS && lastSeen.size < 25; iter += 1) {
+  590:       const dayDraws = await fetchDayDraws(cursor);
+  591: 
+  592:       for (const d of dayDraws) {
+  593:         for (const posWanted of positions) {
+  594:           if (lastSeen.size >= 25) break;
+  595: 
+  596:           const g = await findGrupoForDrawPosition(d.id, d.embeddedPrizes, posWanted);
+  597:           if (!isValidGrupo(g)) continue;
+  598:           if (lastSeen.has(g)) continue;
+  599: 
+  600:           lastSeen.set(g, {
+  601:             ymd: cursor,
+  602:             closeHour: d.close_hour || "",
+  603:             drawId: d.id,
+  604:             lottery_code: d.lottery_code || null,

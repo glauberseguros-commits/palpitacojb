@@ -1,0 +1,834 @@
+================================================================================
+src/pages/Centenas/CentenasView.jsx
+================================================================================
+
+--- LINHAS 41-47 ---
+00041:  * - builds concorrentes não podem "finalizar UI" do build mais novo no finally.
+00042:  */
+00043: 
+00044: const LOTTERY_KEYS = {
+00045:   PT_RIO: "PT_RIO",
+00046:   FEDERAL: "FEDERAL",
+00047: };
+
+--- LINHAS 42-48 ---
+00042:  */
+00043: 
+00044: const LOTTERY_KEYS = {
+00045:   PT_RIO: "PT_RIO",
+00046:   FEDERAL: "FEDERAL",
+00047: };
+00048: 
+
+--- LINHAS 43-49 ---
+00043: 
+00044: const LOTTERY_KEYS = {
+00045:   PT_RIO: "PT_RIO",
+00046:   FEDERAL: "FEDERAL",
+00047: };
+00048: 
+00049: const FILTERS_LS_KEY = "pp_centenas_filters_v2";
+
+--- LINHAS 480-486 ---
+00480:         id: "ALL",
+00481:         label: "Todas as loterias",
+00482:         lotteryKeys: [
+00483:           LOTTERY_KEYS.PT_RIO,
+00484:           LOTTERY_KEYS.FEDERAL,
+00485:         ],
+00486:       },
+
+--- LINHAS 481-487 ---
+00481:         label: "Todas as loterias",
+00482:         lotteryKeys: [
+00483:           LOTTERY_KEYS.PT_RIO,
+00484:           LOTTERY_KEYS.FEDERAL,
+00485:         ],
+00486:       },
+00487:       {
+
+--- LINHAS 485-491 ---
+00485:         ],
+00486:       },
+00487:       {
+00488:         id: LOTTERY_KEYS.PT_RIO,
+00489:         label: "PT Rio",
+00490:         lotteryKeys: [
+00491:           LOTTERY_KEYS.PT_RIO,
+
+--- LINHAS 488-494 ---
+00488:         id: LOTTERY_KEYS.PT_RIO,
+00489:         label: "PT Rio",
+00490:         lotteryKeys: [
+00491:           LOTTERY_KEYS.PT_RIO,
+00492:         ],
+00493:       },
+00494:       {
+
+--- LINHAS 492-498 ---
+00492:         ],
+00493:       },
+00494:       {
+00495:         id: LOTTERY_KEYS.FEDERAL,
+00496:         label: "Federal",
+00497:         lotteryKeys: [
+00498:           LOTTERY_KEYS.FEDERAL,
+
+--- LINHAS 495-501 ---
+00495:         id: LOTTERY_KEYS.FEDERAL,
+00496:         label: "Federal",
+00497:         lotteryKeys: [
+00498:           LOTTERY_KEYS.FEDERAL,
+00499:         ],
+00500:       },
+00501:     ],
+
+--- LINHAS 581-587 ---
+00581:   // cache em memória
+00582:   const baseCacheRef = useRef(new Map());
+00583: 
+00584:   const selectedLottery = useMemo(
+00585:     () => LOTTERY_OPTIONS.find((x) => x.id === lotteryOptId) || LOTTERY_OPTIONS[0],
+00586:     [lotteryOptId, LOTTERY_OPTIONS]
+00587:   );
+
+--- LINHAS 586-592 ---
+00586:     [lotteryOptId, LOTTERY_OPTIONS]
+00587:   );
+00588: 
+00589:   const selectedLotteryKeys = useMemo(
+00590:     () =>
+00591:       Array.isArray(
+00592:         selectedLottery?.lotteryKeys
+
+--- LINHAS 589-595 ---
+00589:   const selectedLotteryKeys = useMemo(
+00590:     () =>
+00591:       Array.isArray(
+00592:         selectedLottery?.lotteryKeys
+00593:       )
+00594:         ? selectedLottery.lotteryKeys
+00595:         : [LOTTERY_KEYS.PT_RIO],
+
+--- LINHAS 591-597 ---
+00591:       Array.isArray(
+00592:         selectedLottery?.lotteryKeys
+00593:       )
+00594:         ? selectedLottery.lotteryKeys
+00595:         : [LOTTERY_KEYS.PT_RIO],
+00596:     [selectedLottery]
+00597:   );
+
+--- LINHAS 592-598 ---
+00592:         selectedLottery?.lotteryKeys
+00593:       )
+00594:         ? selectedLottery.lotteryKeys
+00595:         : [LOTTERY_KEYS.PT_RIO],
+00596:     [selectedLottery]
+00597:   );
+00598: 
+
+--- LINHAS 593-599 ---
+00593:       )
+00594:         ? selectedLottery.lotteryKeys
+00595:         : [LOTTERY_KEYS.PT_RIO],
+00596:     [selectedLottery]
+00597:   );
+00598: 
+00599:   const selectedLotteryKeysKey =
+
+--- LINHAS 596-602 ---
+00596:     [selectedLottery]
+00597:   );
+00598: 
+00599:   const selectedLotteryKeysKey =
+00600:     selectedLotteryKeys.join(",");
+00601: 
+00602:   const boundsReady = !!(
+
+--- LINHAS 597-603 ---
+00597:   );
+00598: 
+00599:   const selectedLotteryKeysKey =
+00600:     selectedLotteryKeys.join(",");
+00601: 
+00602:   const boundsReady = !!(
+00603:     bounds?.minYmd &&
+
+--- LINHAS 687-693 ---
+00687:     let base = [];
+00688: 
+00689:     if (
+00690:       selectedLotteryKeys.includes(
+00691:         LOTTERY_KEYS.PT_RIO
+00692:       )
+00693:     ) {
+
+--- LINHAS 688-694 ---
+00688: 
+00689:     if (
+00690:       selectedLotteryKeys.includes(
+00691:         LOTTERY_KEYS.PT_RIO
+00692:       )
+00693:     ) {
+00694:       base.push(...ptRioHours);
+
+--- LINHAS 695-701 ---
+00695:     }
+00696: 
+00697:     if (
+00698:       selectedLotteryKeys.includes(
+00699:         LOTTERY_KEYS.FEDERAL
+00700:       )
+00701:     ) {
+
+--- LINHAS 696-702 ---
+00696: 
+00697:     if (
+00698:       selectedLotteryKeys.includes(
+00699:         LOTTERY_KEYS.FEDERAL
+00700:       )
+00701:     ) {
+00702:       base.push(...federalHours);
+
+--- LINHAS 714-720 ---
+00714:         label: hour.replace(":00", "h"),
+00715:       })),
+00716:     ];
+00717:   }, [selectedLotteryKeys]);
+00718: 
+00719:   useEffect(() => {
+00720:     if (isTodos(fHorario)) return;
+
+--- LINHAS 781-787 ---
+00781:       try {
+00782:         const responses =
+00783:           await Promise.all(
+00784:             selectedLotteryKeys.map(
+00785:               async (lotteryKey) => {
+00786:                 const result =
+00787:                   await getKingBoundsByUf({
+
+--- LINHAS 865-871 ---
+00865:     return () => {
+00866:       alive = false;
+00867:     };
+00868:   }, [selectedLotteryKeys]);
+00869: 
+00870:   // ========= filtros (draw-level) =========
+00871: 
+
+--- LINHAS 928-934 ---
+00928: 
+00929:   const buildBaseKey = useMemo(
+00930:     () =>
+00931:       `${selectedLotteryKeysKey}` +
+00932:       `::close=${requestedCloseHour || "all"}` +
+00933:       `::pos=${requestedPrizePositions.join(",")}`,
+00934:     [
+
+--- LINHAS 932-938 ---
+00932:       `::close=${requestedCloseHour || "all"}` +
+00933:       `::pos=${requestedPrizePositions.join(",")}`,
+00934:     [
+00935:       selectedLotteryKeysKey,
+00936:       requestedCloseHour,
+00937:       requestedPrizePositions,
+00938:     ]
+
+--- LINHAS 965-971 ---
+00965: 
+00966:           const responses =
+00967:             await Promise.all(
+00968:               selectedLotteryKeys.map(
+00969:                 async (lotteryKey) => {
+00970:                   const res =
+00971:                     await getKingResultsByRange({
+
+--- LINHAS 1251-1257 ---
+01251:     boundsReady,
+01252:     bounds?.minYmd,
+01253:     bounds?.maxYmd,
+01254:     selectedLotteryKeys,
+01255:     requestedPrizePositions,
+01256:     requestedCloseHour,
+01257:     buildBaseKey,
+
+--- LINHAS 1285-1291 ---
+01285:   }, []);
+01286: 
+01287:   const subtitle = useMemo(() => {
+01288:     const lotTxt = selectedLottery?.label || "Todas as loterias";
+01289:     const rangeTxt =
+01290:       boundsReady && bounds?.minYmd && bounds?.maxYmd ? `${ymdToBR(bounds.minYmd)} até ${ymdToBR(bounds.maxYmd)}` : "";
+01291:     return `Frequência das 40 centenas · Prêmio 1º ao 7º · ${lotTxt}${
+
+--- LINHAS 1293-1299 ---
+01293:         ? ` · Período ${rangeTxt}`
+01294:         : ""
+01295:     }`;
+01296:   }, [selectedLottery, boundsReady, bounds?.minYmd, bounds?.maxYmd]);
+01297: 
+01298:   const bannerGrupo = useMemo(() => {
+01299:     if (!isTodos(fAnimal)) {
+
+================================================================================
+src/pages/Top3/Top3View.jsx
+================================================================================
+
+--- LINHAS 1338-1344 ---
+01338:   }, []);
+01339: 
+01340:   const baseLots = Array.isArray(LOTTERY_OPTIONS) ? LOTTERY_OPTIONS : [];
+01341:   const mustHave = [
+01342:     { value: "PT_RIO", label: "PT_RIO (RJ)" },
+01343:     { value: "FEDERAL", label: "Federal" },
+01344:   ];
+
+--- LINHAS 1339-1345 ---
+01339: 
+01340:   const baseLots = Array.isArray(LOTTERY_OPTIONS) ? LOTTERY_OPTIONS : [];
+01341:   const mustHave = [
+01342:     { value: "PT_RIO", label: "PT_RIO (RJ)" },
+01343:     { value: "FEDERAL", label: "Federal" },
+01344:   ];
+01345: 
+
+--- LINHAS 1340-1346 ---
+01340:   const baseLots = Array.isArray(LOTTERY_OPTIONS) ? LOTTERY_OPTIONS : [];
+01341:   const mustHave = [
+01342:     { value: "PT_RIO", label: "PT_RIO (RJ)" },
+01343:     { value: "FEDERAL", label: "Federal" },
+01344:   ];
+01345: 
+01346:   const map = new Map();
+
+--- LINHAS 1345-1351 ---
+01345: 
+01346:   const map = new Map();
+01347: 
+01348:   [...baseLots, ...mustHave].forEach((op) => {
+01349:     const rawVal = String(op?.value ?? op?.key ?? "").toUpperCase();
+01350:     if (!rawVal) return;
+01351: 
+
+--- LINHAS 1357-1363 ---
+01357:     }
+01358:   });
+01359: 
+01360:   const lotOptions = [
+01361:     map.get("PT_RIO"),
+01362:     map.get("FEDERAL"),
+01363:     ...[...map.values()].filter(
+
+--- LINHAS 1358-1364 ---
+01358:   });
+01359: 
+01360:   const lotOptions = [
+01361:     map.get("PT_RIO"),
+01362:     map.get("FEDERAL"),
+01363:     ...[...map.values()].filter(
+01364:       (x) => !["PT_RIO", "FEDERAL"].includes(String(x?.value || "").toUpperCase())
+
+--- LINHAS 1359-1365 ---
+01359: 
+01360:   const lotOptions = [
+01361:     map.get("PT_RIO"),
+01362:     map.get("FEDERAL"),
+01363:     ...[...map.values()].filter(
+01364:       (x) => !["PT_RIO", "FEDERAL"].includes(String(x?.value || "").toUpperCase())
+01365:     ),
+
+--- LINHAS 1361-1367 ---
+01361:     map.get("PT_RIO"),
+01362:     map.get("FEDERAL"),
+01363:     ...[...map.values()].filter(
+01364:       (x) => !["PT_RIO", "FEDERAL"].includes(String(x?.value || "").toUpperCase())
+01365:     ),
+01366:   ].filter(Boolean);
+01367: 
+
+--- LINHAS 1365-1371 ---
+01365:     ),
+01366:   ].filter(Boolean);
+01367: 
+01368:   const curLot = String(lotteryKeySafe || "PT_RIO").toUpperCase();
+01369:   const heroItem = list[0] || null;
+01370:   const secondaryItems = list.slice(1, 3);
+01371: 
+
+--- LINHAS 2640-2646 ---
+02640:             </div>
+02641: 
+02642:             <div className="pp-tabs">
+02643:               {lotOptions.map((op) => {
+02644:                 const k = String(op?.value || "").toUpperCase();
+02645:                 const active = k === curLot ? "1" : "0";
+02646:                 const canSet = typeof setLotteryKey === "function" && !!k;
+
+================================================================================
+src/pages/Top3/top3.hooks.js
+================================================================================
+
+--- LINHAS 13-19 ---
+00013: } from "./top3.formatters";
+00014: 
+00015: import {
+00016:   LOOKBACK_ALL,
+00017:   LOOKBACK_OPTIONS,
+00018:   LOTTERY_OPTIONS,
+00019:   PT_RIO_SCHEDULE_NORMAL,
+
+--- LINHAS 14-20 ---
+00014: 
+00015: import {
+00016:   LOOKBACK_ALL,
+00017:   LOOKBACK_OPTIONS,
+00018:   LOTTERY_OPTIONS,
+00019:   PT_RIO_SCHEDULE_NORMAL,
+00020:   PT_RIO_SCHEDULE_WED_SAT,
+
+--- LINHAS 16-22 ---
+00016:   LOOKBACK_ALL,
+00017:   LOOKBACK_OPTIONS,
+00018:   LOTTERY_OPTIONS,
+00019:   PT_RIO_SCHEDULE_NORMAL,
+00020:   PT_RIO_SCHEDULE_WED_SAT,
+00021:   FEDERAL_SCHEDULE,
+00022: } from "./top3.constants";
+
+--- LINHAS 17-23 ---
+00017:   LOOKBACK_OPTIONS,
+00018:   LOTTERY_OPTIONS,
+00019:   PT_RIO_SCHEDULE_NORMAL,
+00020:   PT_RIO_SCHEDULE_WED_SAT,
+00021:   FEDERAL_SCHEDULE,
+00022: } from "./top3.constants";
+00023: 
+
+--- LINHAS 18-24 ---
+00018:   LOTTERY_OPTIONS,
+00019:   PT_RIO_SCHEDULE_NORMAL,
+00020:   PT_RIO_SCHEDULE_WED_SAT,
+00021:   FEDERAL_SCHEDULE,
+00022: } from "./top3.constants";
+00023: 
+00024: import {
+
+--- LINHAS 143-149 ---
+00143:   const schedule = getScheduleForLottery({
+00144:     lotteryKey,
+00145:     ymd: y,
+00146:     PT_RIO_SCHEDULE_NORMAL,
+00147:     PT_RIO_SCHEDULE_WED_SAT,
+00148:     FEDERAL_SCHEDULE,
+00149:   });
+
+--- LINHAS 144-150 ---
+00144:     lotteryKey,
+00145:     ymd: y,
+00146:     PT_RIO_SCHEDULE_NORMAL,
+00147:     PT_RIO_SCHEDULE_WED_SAT,
+00148:     FEDERAL_SCHEDULE,
+00149:   });
+00150: 
+
+--- LINHAS 145-151 ---
+00145:     ymd: y,
+00146:     PT_RIO_SCHEDULE_NORMAL,
+00147:     PT_RIO_SCHEDULE_WED_SAT,
+00148:     FEDERAL_SCHEDULE,
+00149:   });
+00150: 
+00151:   const normalizedSchedule = Array.isArray(schedule)
+
+--- LINHAS 283-289 ---
+00283: }
+00284: 
+00285: export function useTop3Controller() {
+00286:   const DEFAULT_LOTTERY = "PT_RIO";
+00287: 
+00288:   const debugTop3 =
+00289:     typeof window !== "undefined" &&
+
+--- LINHAS 295-301 ---
+00295: 
+00296:   const [lotteryKey, setLotteryKey] = useState(DEFAULT_LOTTERY);
+00297:   const [ymd, setYmd] = useState(() => todayYMDLocal());
+00298:   const [lookback, setLookback] = useState(LOOKBACK_ALL);
+00299: 
+00300:   const [loading, setLoading] = useState(false);
+00301:   const [loadingStage, setLoadingStage] = useState({
+
+--- LINHAS 369-375 ---
+00369:     return getScheduleForLottery({
+00370:       lotteryKey: lotteryKeySafe,
+00371:       ymd: y,
+00372:       PT_RIO_SCHEDULE_NORMAL,
+00373:       PT_RIO_SCHEDULE_WED_SAT,
+00374:       FEDERAL_SCHEDULE,
+00375:     });
+
+--- LINHAS 370-376 ---
+00370:       lotteryKey: lotteryKeySafe,
+00371:       ymd: y,
+00372:       PT_RIO_SCHEDULE_NORMAL,
+00373:       PT_RIO_SCHEDULE_WED_SAT,
+00374:       FEDERAL_SCHEDULE,
+00375:     });
+00376:   }, [lotteryKeySafe, ymdSafe, loadedYmd, analysisYmd]);
+
+--- LINHAS 371-377 ---
+00371:       ymd: y,
+00372:       PT_RIO_SCHEDULE_NORMAL,
+00373:       PT_RIO_SCHEDULE_WED_SAT,
+00374:       FEDERAL_SCHEDULE,
+00375:     });
+00376:   }, [lotteryKeySafe, ymdSafe, loadedYmd, analysisYmd]);
+00377: 
+
+--- LINHAS 376-382 ---
+00376:   }, [lotteryKeySafe, ymdSafe, loadedYmd, analysisYmd]);
+00377: 
+00378:   const isFederalNonDrawDay = useMemo(() => {
+00379:     return lotteryKeySafe === "FEDERAL" && !isFederalDrawDay(ymdSafe);
+00380:   }, [lotteryKeySafe, ymdSafe]);
+00381: 
+00382:   const rangeLabel = useMemo(() => {
+
+--- LINHAS 485-491 ---
+00485:       }
+00486: 
+00487:       const selectedFederalNonDrawDay =
+00488:         lKey === "FEDERAL" && !isFederalDrawDay(ymdSafe);
+00489: 
+00490:       const effectiveYmd =
+00491:         selectedFederalNonDrawDay && isYMD(maxDate) ? maxDate : ymdSafe;
+
+--- LINHAS 505-511 ---
+00505:       let todaySchedule = getScheduleForLottery({
+00506:         lotteryKey: lKey,
+00507:         ymd: effectiveYmd,
+00508:         PT_RIO_SCHEDULE_NORMAL,
+00509:         PT_RIO_SCHEDULE_WED_SAT,
+00510:         FEDERAL_SCHEDULE,
+00511:       });
+
+--- LINHAS 506-512 ---
+00506:         lotteryKey: lKey,
+00507:         ymd: effectiveYmd,
+00508:         PT_RIO_SCHEDULE_NORMAL,
+00509:         PT_RIO_SCHEDULE_WED_SAT,
+00510:         FEDERAL_SCHEDULE,
+00511:       });
+00512: 
+
+--- LINHAS 507-513 ---
+00507:         ymd: effectiveYmd,
+00508:         PT_RIO_SCHEDULE_NORMAL,
+00509:         PT_RIO_SCHEDULE_WED_SAT,
+00510:         FEDERAL_SCHEDULE,
+00511:       });
+00512: 
+00513:       const shouldSkipPtRio18 =
+
+--- LINHAS 511-517 ---
+00511:       });
+00512: 
+00513:       const shouldSkipPtRio18 =
+00514:         (lKey === "PT_RIO" || lKey === "RJ") &&
+00515:         isFederalDrawDay(effectiveYmd) &&
+00516:         String(effectiveYmd || "").trim() >= "2025-11-03";
+00517: 
+
+--- LINHAS 576-582 ---
+00576:             lotteryKey: lKey,
+00577:             ymd: baseY,
+00578:             hourBucket: baseH,
+00579:             PT_RIO_SCHEDULE_NORMAL,
+00580:             PT_RIO_SCHEDULE_WED_SAT,
+00581:             FEDERAL_SCHEDULE,
+00582:           });
+
+--- LINHAS 577-583 ---
+00577:             ymd: baseY,
+00578:             hourBucket: baseH,
+00579:             PT_RIO_SCHEDULE_NORMAL,
+00580:             PT_RIO_SCHEDULE_WED_SAT,
+00581:             FEDERAL_SCHEDULE,
+00582:           });
+00583: 
+
+--- LINHAS 578-584 ---
+00578:             hourBucket: baseH,
+00579:             PT_RIO_SCHEDULE_NORMAL,
+00580:             PT_RIO_SCHEDULE_WED_SAT,
+00581:             FEDERAL_SCHEDULE,
+00582:           });
+00583: 
+00584:           resolvedTargetY = safeStr(nextSlot?.ymd || "");
+
+--- LINHAS 605-611 ---
+00605:           targetHourBucket: firstHourToday,
+00606:           todayDraws: today,
+00607:           schedule: todaySchedule,
+00608:           PT_RIO_SCHEDULE_NORMAL,
+00609:           PT_RIO_SCHEDULE_WED_SAT,
+00610:           FEDERAL_SCHEDULE,
+00611:         });
+
+--- LINHAS 606-612 ---
+00606:           todayDraws: today,
+00607:           schedule: todaySchedule,
+00608:           PT_RIO_SCHEDULE_NORMAL,
+00609:           PT_RIO_SCHEDULE_WED_SAT,
+00610:           FEDERAL_SCHEDULE,
+00611:         });
+00612: 
+
+--- LINHAS 607-613 ---
+00607:           schedule: todaySchedule,
+00608:           PT_RIO_SCHEDULE_NORMAL,
+00609:           PT_RIO_SCHEDULE_WED_SAT,
+00610:           FEDERAL_SCHEDULE,
+00611:         });
+00612: 
+00613:         const previousResolved = previousForFirstSlot?.draw
+
+--- LINHAS 666-672 ---
+00666:       const baseDaySchedule = getScheduleForLottery({
+00667:         lotteryKey: lKey,
+00668:         ymd: baseY,
+00669:         PT_RIO_SCHEDULE_NORMAL,
+00670:         PT_RIO_SCHEDULE_WED_SAT,
+00671:         FEDERAL_SCHEDULE,
+00672:       });
+
+--- LINHAS 667-673 ---
+00667:         lotteryKey: lKey,
+00668:         ymd: baseY,
+00669:         PT_RIO_SCHEDULE_NORMAL,
+00670:         PT_RIO_SCHEDULE_WED_SAT,
+00671:         FEDERAL_SCHEDULE,
+00672:       });
+00673: 
+
+--- LINHAS 668-674 ---
+00668:         ymd: baseY,
+00669:         PT_RIO_SCHEDULE_NORMAL,
+00670:         PT_RIO_SCHEDULE_WED_SAT,
+00671:         FEDERAL_SCHEDULE,
+00672:       });
+00673: 
+00674:       resolvedPrev = await getPreviousDrawRobust({
+
+--- LINHAS 678-684 ---
+00678:         targetHourBucket: baseH,
+00679:         todayDraws: baseDayDraws,
+00680:         schedule: baseDaySchedule,
+00681:         PT_RIO_SCHEDULE_NORMAL,
+00682:         PT_RIO_SCHEDULE_WED_SAT,
+00683:         FEDERAL_SCHEDULE,
+00684:       });
+
+--- LINHAS 679-685 ---
+00679:         todayDraws: baseDayDraws,
+00680:         schedule: baseDaySchedule,
+00681:         PT_RIO_SCHEDULE_NORMAL,
+00682:         PT_RIO_SCHEDULE_WED_SAT,
+00683:         FEDERAL_SCHEDULE,
+00684:       });
+00685: 
+
+--- LINHAS 680-686 ---
+00680:         schedule: baseDaySchedule,
+00681:         PT_RIO_SCHEDULE_NORMAL,
+00682:         PT_RIO_SCHEDULE_WED_SAT,
+00683:         FEDERAL_SCHEDULE,
+00684:       });
+00685: 
+00686:       if (!resolvedPrev?.draw) {
+
+--- LINHAS 756-762 ---
+00756: 
+00757:       let rangeFrom = "";
+00758: 
+00759:       if (lookback === LOOKBACK_ALL) {
+00760:         rangeFrom = minDate || addDaysYMD(baseY, -240);
+00761:       } else {
+00762:         const days = Math.max(1, Number(lookback || 30));
+
+--- LINHAS 929-935 ---
+00929:     });
+00930: 
+00931:     if (
+00932:       (lotteryKeySafe === "PT_RIO" || lotteryKeySafe === "RJ") &&
+00933:       skipPtRio18ByFederal &&
+00934:       isYMD(timelineYmd)
+00935:     ) {
+
+--- LINHAS 1184-1190 ---
+01184:   ]);
+01185: 
+01186:   return {
+01187:     LOOKBACK_ALL,
+01188:     LOOKBACK_OPTIONS,
+01189:     LOTTERY_OPTIONS,
+01190: 
+
+--- LINHAS 1185-1191 ---
+01185: 
+01186:   return {
+01187:     LOOKBACK_ALL,
+01188:     LOOKBACK_OPTIONS,
+01189:     LOTTERY_OPTIONS,
+01190: 
+01191:     lotteryKeySafe,
+
+================================================================================
+src/pages/Results/Results.jsx
+================================================================================
+
+--- LINHAS 191-197 ---
+00191: ========================= */
+00192: 
+00193: const SCOPE_RJ = "RJ";
+00194: const SCOPE_FEDERAL = "FEDERAL";
+00195: 
+00196: const FEDERAL_INPUT_ALIASES = new Set([
+00197:   "FEDERAL",
+
+--- LINHAS 193-199 ---
+00193: const SCOPE_RJ = "RJ";
+00194: const SCOPE_FEDERAL = "FEDERAL";
+00195: 
+00196: const FEDERAL_INPUT_ALIASES = new Set([
+00197:   "FEDERAL",
+00198:   "FED",
+00199:   "LOTERIA FEDERAL",
+
+--- LINHAS 194-200 ---
+00194: const SCOPE_FEDERAL = "FEDERAL";
+00195: 
+00196: const FEDERAL_INPUT_ALIASES = new Set([
+00197:   "FEDERAL",
+00198:   "FED",
+00199:   "LOTERIA FEDERAL",
+00200:   "LOTERIA_FEDERAL",
+
+--- LINHAS 196-202 ---
+00196: const FEDERAL_INPUT_ALIASES = new Set([
+00197:   "FEDERAL",
+00198:   "FED",
+00199:   "LOTERIA FEDERAL",
+00200:   "LOTERIA_FEDERAL",
+00201:   "LOT FEDERAL",
+00202:   "LT_FEDERAL",
+
+--- LINHAS 197-203 ---
+00197:   "FEDERAL",
+00198:   "FED",
+00199:   "LOTERIA FEDERAL",
+00200:   "LOTERIA_FEDERAL",
+00201:   "LOT FEDERAL",
+00202:   "LT_FEDERAL",
+00203:   "FED_BR",
+
+--- LINHAS 198-204 ---
+00198:   "FED",
+00199:   "LOTERIA FEDERAL",
+00200:   "LOTERIA_FEDERAL",
+00201:   "LOT FEDERAL",
+00202:   "LT_FEDERAL",
+00203:   "FED_BR",
+00204: ]);
+
+--- LINHAS 199-205 ---
+00199:   "LOTERIA FEDERAL",
+00200:   "LOTERIA_FEDERAL",
+00201:   "LOT FEDERAL",
+00202:   "LT_FEDERAL",
+00203:   "FED_BR",
+00204: ]);
+00205: 
+
+--- LINHAS 209-215 ---
+00209: function isFederalInput(scope) {
+00210:   const up = safeStr(scope).toUpperCase();
+00211:   if (!up) return false;
+00212:   if (up === SCOPE_FEDERAL) return true;
+00213:   if (FEDERAL_INPUT_ALIASES.has(up)) return true;
+00214:   const compact = up.replace(/[\s_]+/g, " ").trim();
+00215:   if (FEDERAL_INPUT_ALIASES.has(compact)) return true;
+
+--- LINHAS 210-216 ---
+00210:   const up = safeStr(scope).toUpperCase();
+00211:   if (!up) return false;
+00212:   if (up === SCOPE_FEDERAL) return true;
+00213:   if (FEDERAL_INPUT_ALIASES.has(up)) return true;
+00214:   const compact = up.replace(/[\s_]+/g, " ").trim();
+00215:   if (FEDERAL_INPUT_ALIASES.has(compact)) return true;
+00216:   const unders = up.replace(/[\s_]+/g, "_");
+
+--- LINHAS 212-218 ---
+00212:   if (up === SCOPE_FEDERAL) return true;
+00213:   if (FEDERAL_INPUT_ALIASES.has(up)) return true;
+00214:   const compact = up.replace(/[\s_]+/g, " ").trim();
+00215:   if (FEDERAL_INPUT_ALIASES.has(compact)) return true;
+00216:   const unders = up.replace(/[\s_]+/g, "_");
+00217:   if (FEDERAL_INPUT_ALIASES.has(unders)) return true;
+00218:   return false;
+
+--- LINHAS 214-220 ---
+00214:   const compact = up.replace(/[\s_]+/g, " ").trim();
+00215:   if (FEDERAL_INPUT_ALIASES.has(compact)) return true;
+00216:   const unders = up.replace(/[\s_]+/g, "_");
+00217:   if (FEDERAL_INPUT_ALIASES.has(unders)) return true;
+00218:   return false;
+00219: }
+00220: 
+
+--- LINHAS 222-228 ---
+00222:   const s = safeStr(input).toUpperCase();
+00223:   if (!s) return SCOPE_RJ;
+00224:   if (s === SCOPE_RJ) return SCOPE_RJ;
+00225:   if (isFederalInput(s)) return SCOPE_FEDERAL;
+00226:   return s;
+00227: }
+00228: 
+
+--- LINHAS 229-235 ---
+00229: function scopeDisplayName(scope) {
+00230:   const up = safeStr(scope).toUpperCase();
+00231:   if (up === SCOPE_RJ) return "RIO";
+00232:   if (isFederalInput(up)) return "FEDERAL";
+00233:   return up;
+00234: }
+00235: 
+
+--- LINHAS 558-564 ---
+00558:     if (!byHour.has(h)) byHour.set(h, d);
+00559:   }
+00560: 
+00561:   if (scopeKey === SCOPE_FEDERAL) {
+00562:     return [...list].sort((a, b) => {
+00563:       const ha = hourToNum(
+00564:         a?.__slotHour || a?.close_hour || a?.closeHour || a?.hour || a?.hora
+
+--- LINHAS 1509-1515 ---
+01509:                 className={scopePillClass(isFederal)}
+01510:                 onClick={(e) => {
+01511:                   stopEvt(e);
+01512:                   setScopeUi(SCOPE_FEDERAL);
+01513:                 }}
+01514:                 title="Resultados da Federal"
+01515:               >
+
+--- LINHAS 1513-1519 ---
+01513:                 }}
+01514:                 title="Resultados da Federal"
+01515:               >
+01516:                 FEDERAL
+01517:               </button>
+01518:             </div>
+01519: 

@@ -1,0 +1,49 @@
+===== TRECHO ATUAL =====
+
+function normalizeCloseHourForLottery(value, lotteryKey) {
+  const lk = String(lotteryKey || "").trim().toUpperCase();
+  const raw0 = normalizeHHMM(value);
+  if (!raw0 || !isHHMM(raw0)) return { raw: "", slot: "" };
+
+  // ✅ FEDERAL: slot de negócio é sempre 20:00, mas preserva o raw
+  if (lk === "FEDERAL") {
+    return { raw: raw0, slot: "20:00" };
+  }
+
+  if (lk === "PT_RIO") {
+    const hh = raw0.slice(0, 2);
+    const mm = raw0.slice(3, 5);
+
+    // ✅ se vier HH:09, é marcação (não minuto real) -> não grava close_hour_raw
+    const raw = mm === "09" ? "" : raw0;
+    return { raw, slot: `${hh}:00` };
+  }
+
+  return { raw: raw0, slot: raw0 };
+}
+
+==========================================================================================
+PATCH PLANEJADO
+==========================================================================================
+
+Adicionar logo após o bloco FEDERAL:
+
+// NACIONAL:
+// - preservar close_hour_raw (HH:49)
+// - usar o horário oficial do lottery_name (LT NACIONAL 23HS -> 23:00)
+
+const lotteryName =
+    String(draw?.lottery_name || draw?.name || "");
+
+const m =
+    lotteryName.match(/(\d{2})\s*HS/i);
+
+if (lk === "NACIONAL" && m) {
+    return {
+        raw: raw0,
+        slot: `${m[1]}:00`
+    };
+}
+
+Nenhuma outra loteria será alterada.
+

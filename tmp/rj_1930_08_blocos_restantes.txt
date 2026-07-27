@@ -1,0 +1,1819 @@
+====================================================================================================
+RJ-1930-08B — EXTRAÇÃO FINAL DOS 4 ARQUIVOS RESTANTES
+====================================================================================================
+Gerado em: 26/07/2026 11:57:06
+
+
+####################################################################################################
+ARQUIVO: src\pages\Statistics\Statistics.jsx
+LINHAS: 2617
+OCORRÊNCIAS BRUTAS: 24
+####################################################################################################
+
+----- LINHAS 2-64 -----
+00002: import {
+00003:   getKingBoundsByUf,
+00004:   getKingResultsByRange,
+00005: } from "../../services/kingResultsService";
+00006: import {
+00007:   getAnimalLabel,
+00008: } from "../../constants/bichoMap";
+00009: 
+00010: const LOTTERIES = Object.freeze([
+00011:   Object.freeze({
+00012:     value: "PT_RIO",
+00013:     label: "Rio de Janeiro",
+00014:     hours: Object.freeze([
+00015:       "09:00",
+00016:       "11:00",
+00017:       "14:00",
+00018:       "16:00",
+00019:       "18:00",
+00020:       "19:20",
+00021:       "21:00",
+00022:     ]),
+00023:   }),
+00024:   Object.freeze({
+00025:     value: "FEDERAL",
+00026:     label: "Federal",
+00027:     hours: Object.freeze([
+00028:       "11:00",
+00029:       "19:00",
+00030:       "20:00",
+00031:     ]),
+00032:   }),
+00033:   Object.freeze({
+00034:     value: "LOOK",
+00035:     label: "LOOK",
+00036:     hours: Object.freeze([
+00037:       "07:00",
+00038:       "09:00",
+00039:       "11:00",
+00040:       "14:00",
+00041:       "16:00",
+00042:       "18:00",
+00043:       "21:00",
+00044:       "23:00",
+00045:     ]),
+00046:   }),
+00047:   Object.freeze({
+00048:     value: "NACIONAL",
+00049:     label: "Nacional",
+00050:     hours: Object.freeze([
+00051:       "02:00",
+00052:       "08:00",
+00053:       "10:00",
+00054:       "12:00",
+00055:       "15:00",
+00056:       "17:00",
+00057:       "21:00",
+00058:       "23:00",
+00059:     ]),
+00060:   }),
+00061: ]);
+00062: 
+00063: const MODES = Object.freeze([
+00064:   Object.freeze({ value: "dezena", label: "Dezenas" }),
+
+----- LINHAS 237-278 -----
+00237: }
+00238: 
+00239: function lastDigits(value, length) {
+00240:   const digits = digitsOnly(value);
+00241: 
+00242:   if (!digits) return "";
+00243: 
+00244:   return digits.slice(-length).padStart(length, "0");
+00245: }
+00246: 
+00247: function normalizeHour(value) {
+00248:   const input = safeStr(value).replace(/\s+/g, "");
+00249:   if (!input) return "";
+00250: 
+00251:   const hourLabel = input.match(/^(\d{1,2})(?:h|hs|hr|hrs)$/i);
+00252:   if (hourLabel) return `${pad2(hourLabel[1])}:00`;
+00253: 
+00254:   const clock = input.match(/^(\d{1,2}):(\d{1,2})(?::\d{1,2})?$/);
+00255:   if (clock) return `${pad2(clock[1])}:${pad2(clock[2])}`;
+00256: 
+00257:   const hourOnly = input.match(/^(\d{1,2})$/);
+00258:   if (hourOnly) return `${pad2(hourOnly[1])}:00`;
+00259: 
+00260:   return input;
+00261: }
+00262: 
+00263: function hourBucket(value) {
+00264:   const normalized = normalizeHour(value);
+00265:   const match = normalized.match(/^(\d{2}):/);
+00266: 
+00267:   return match ? `${match[1]}h` : normalized;
+00268: }
+00269: 
+00270: function monthLabel(ymd) {
+00271:   if (!isYmd(ymd)) return "";
+00272: 
+00273:   const month = Number(ymd.slice(5, 7));
+00274: 
+00275:   return [
+00276:     "",
+00277:     "Jan",
+00278:     "Fev",
+
+----- LINHAS 613-637 -----
+00613:       animal:
+00614:         getAnimalLabel(group) ||
+00615:         `Grupo ${pad2(group)}`,
+00616:     });
+00617:   }
+00618: 
+00619:   return output;
+00620: }
+00621: 
+00622: export default function Statistics() {
+00623:   const [lotteryKey, setLotteryKey] = useState("PT_RIO");
+00624:   const [mode, setMode] = useState("dezena");
+00625:   const [rankingView, setRankingView] = useState("frequentes");
+00626:   const [copyFeedback, setCopyFeedback] = useState(false);
+00627: 
+00628:   const [bounds, setBounds] = useState({
+00629:     minYmd: "",
+00630:     maxYmd: "",
+00631:     source: "",
+00632:   });
+00633: 
+00634:   const [range, setRange] = useState({
+00635:     from: "",
+00636:     to: "",
+00637:   });
+
+----- LINHAS 820-847 -----
+00820:       safeStr(position).replace(/\D+/g, "")
+00821:     );
+00822: 
+00823:     return Number.isFinite(parsed) &&
+00824:       parsed >= 1 &&
+00825:       parsed <= 7
+00826:       ? parsed
+00827:       : null;
+00828:   }, [position]);
+00829: 
+00830:   const selectedHourBucket = useMemo(() => {
+00831:     if (schedule === "Todos") return null;
+00832: 
+00833:     return hourBucket(schedule);
+00834:   }, [schedule]);
+00835: 
+00836:   const analyze = useCallback(async () => {
+00837:     const runId = runIdRef.current + 1;
+00838:     runIdRef.current = runId;
+00839: 
+00840:     const isCurrent = () =>
+00841:       mountedRef.current &&
+00842:       runIdRef.current === runId;
+00843: 
+00844:     setLoading(true);
+00845:     setError("");
+00846:     setRows([]);
+00847:     setMeta({
+
+----- LINHAS 899-961 -----
+00899:       let occurrences = 0;
+00900:       let completedChunks = 0;
+00901: 
+00902:       const worker = async (chunk) => {
+00903:         if (!isCurrent()) return;
+00904: 
+00905:         const response = await getKingResultsByRange({
+00906:           uf: lotteryKey,
+00907:           dateFrom: chunk.from,
+00908:           dateTo: chunk.to,
+00909:           closeHourBucket: null,
+00910:           closeHour: selectedHourBucket
+00911:             ? `${selectedHourBucket.slice(0, 2)}:00`
+00912:             : null,
+00913:           positions: selectedPosition
+00914:             ? [selectedPosition]
+00915:             : null,
+00916:           mode: "detailed",
+00917:         });
+00918: 
+00919:         if (!isCurrent()) return;
+00920: 
+00921:         const draws = normalizeDrawsResponse(response);
+00922: 
+00923:         for (const draw of draws) {
+00924:           const ymd = normalizeYmd(
+00925:             draw?.ymd ??
+00926:               draw?.dateYmd ??
+00927:               draw?.date ??
+00928:               draw?.data ??
+00929:               ""
+00930:           );
+00931: 
+00932:           if (!ymd) continue;
+00933: 
+00934:           const drawHour = normalizeHour(
+00935:             draw?.close_hour ??
+00936:               draw?.closeHour ??
+00937:               draw?.hour ??
+00938:               draw?.hora ??
+00939:               draw?.close_hour_bucket ??
+00940:               ""
+00941:           );
+00942: 
+00943:           const drawHourBucket = hourBucket(drawHour);
+00944: 
+00945:           if (
+00946:             selectedHourBucket &&
+00947:             drawHourBucket !== selectedHourBucket
+00948:           ) {
+00949:             continue;
+00950:           }
+00951: 
+00952:           if (
+00953:             month !== "Todos" &&
+00954:             monthLabel(ymd) !== month
+00955:           ) {
+00956:             continue;
+00957:           }
+00958: 
+00959:           if (monthDay !== "Todos") {
+00960:             const day = Number(ymd.slice(8, 10));
+00961: 
+
+----- LINHAS 1043-1067 -----
+01043: 
+01044:             current.count += 1;
+01045: 
+01046:             if (
+01047:               !current.latestKey ||
+01048:               latestKey > current.latestKey
+01049:             ) {
+01050:               current.latestKey = latestKey;
+01051:               current.latestYmd = ymd;
+01052:               current.latestHour =
+01053:                 drawHourBucket ||
+01054:                 drawHour ||
+01055:                 "—";
+01056:               current.latestPosition =
+01057:                 Number.isFinite(prizePosition)
+01058:                   ? prizePosition
+01059:                   : null;
+01060:             }
+01061: 
+01062:             aggregate.set(key, current);
+01063:           }
+01064:         }
+01065: 
+01066:         completedChunks += 1;
+01067: 
+
+----- LINHAS 1107-1131 -----
+01107:     }
+01108:   }, [
+01109:     lotteryKey,
+01110:     mode,
+01111:     boundsReady,
+01112:     safeRange,
+01113:     bounds,
+01114:     month,
+01115:     monthDay,
+01116:     weekday,
+01117:     selectedHourBucket,
+01118:     selectedGroup,
+01119:     selectedPosition,
+01120:   ]);
+01121: 
+01122:   const sortedRows = useMemo(() => {
+01123:     const output = [...rows];
+01124: 
+01125:     output.sort((a, b) => {
+01126:       if (sort === "count_asc") {
+01127:         if (a.count !== b.count) return a.count - b.count;
+01128:         return String(a.key).localeCompare(
+01129:           String(b.key),
+01130:           "pt-BR",
+01131:           { numeric: true }
+
+----- LINHAS 2232-2256 -----
+02232:             <label>Horário</label>
+02233:             <select
+02234:               value={schedule}
+02235:               onChange={(event) =>
+02236:                 setSchedule(event.target.value)
+02237:               }
+02238:               disabled={loading}
+02239:             >
+02240:               {[
+02241:                 "Todos",
+02242:                 ...selectedLottery.hours,
+02243:               ].map((item) => (
+02244:                 <option key={item} value={item}>
+02245:                   {item}
+02246:                 </option>
+02247:               ))}
+02248:             </select>
+02249:           </div>
+02250: 
+02251:           <div className="ppStatsControl">
+02252:             <label>Animal</label>
+02253:             <select
+02254:               value={animal}
+02255:               onChange={(event) =>
+02256:                 setAnimal(event.target.value)
+
+####################################################################################################
+ARQUIVO: src\pages\Downloads\Downloads.jsx
+LINHAS: 1494
+OCORRÊNCIAS BRUTAS: 21
+####################################################################################################
+
+----- LINHAS 30-73 -----
+00030: function isYMD(s) {
+00031:   return /^\d{4}-\d{2}-\d{2}$/.test(String(s || "").trim());
+00032: }
+00033: 
+00034: function ymdToBR(ymd) {
+00035:   const m = String(ymd || "").trim().match(/^(\d{4})-(\d{2})-(\d{2})$/);
+00036:   if (!m) return safeStr(ymd);
+00037:   return `${m[3]}/${m[2]}/${m[1]}`;
+00038: }
+00039: 
+00040: function normalizeHourLike(value) {
+00041:   const s0 = safeStr(value);
+00042:   if (!s0) return "";
+00043: 
+00044:   const s = s0.replace(/\s+/g, "");
+00045: 
+00046:   const mhx = s.match(/^(\d{1,2})(?:h|hs|hr|hrs)$/i);
+00047:   if (mhx) return `${pad2(mhx[1])}:00`;
+00048: 
+00049:   const mISO = s.match(/^(\d{1,2}):(\d{1,2})(?::(\d{1,2}))?$/);
+00050:   if (mISO) return `${pad2(mISO[1])}:${pad2(mISO[2])}`;
+00051: 
+00052:   const m2 = s.match(/^(\d{1,2})$/);
+00053:   if (m2) return `${pad2(m2[1])}:00`;
+00054: 
+00055:   return s0;
+00056: }
+00057: 
+00058: function toHourBucket(hhmm) {
+00059:   const s = normalizeHourLike(hhmm);
+00060:   const m = s.match(/^(\d{2}):(\d{2})$/);
+00061:   if (!m) return s;
+00062:   return `${m[1]}:00`;
+00063: }
+00064: 
+00065: function normalizeToYMD(input) {
+00066:   if (!input) return null;
+00067: 
+00068:   if (typeof input === "object" && typeof input.toDate === "function") {
+00069:     const d = input.toDate();
+00070:     if (d instanceof Date && !Number.isNaN(d.getTime())) {
+00071:       return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+00072:     }
+00073:   }
+
+----- LINHAS 164-218 -----
+00164:   return s.slice(2, 4);
+00165: }
+00166: 
+00167: function getCentena3(milhar4) {
+00168:   const s = safeStr(milhar4);
+00169:   if (!/^\d{4}$/.test(s)) return "";
+00170:   return s.slice(1, 4);
+00171: }
+00172: 
+00173: function pickDrawHour(draw) {
+00174:   return normalizeHourLike(draw?.close_hour || draw?.closeHour || draw?.hour || draw?.hora || "");
+00175: }
+00176: 
+00177: function pickDrawYMD(draw) {
+00178:   const y =
+00179:     draw?.ymd ||
+00180:     normalizeToYMD(draw?.date) ||
+00181:     normalizeToYMD(draw?.data) ||
+00182:     normalizeToYMD(draw?.dt) ||
+00183:     null;
+00184:   return y;
+00185: }
+00186: 
+00187: const UF_TO_LOTTERY_KEY = {
+00188:   RJ: "PT_RIO",
+00189:   FEDERAL: "FEDERAL",
+00190:   BR: "FEDERAL",
+00191:   LOOK: "LOOK",
+00192:   NACIONAL: "NACIONAL",
+00193: };
+00194: 
+00195: function normalizeUfToQueryKey(input) {
+00196:   const s = safeStr(input).toUpperCase();
+00197:   if (!s) return "";
+00198:   if (s.includes("_") || s.length > 2) return s;
+00199:   return UF_TO_LOTTERY_KEY[s] || s;
+00200: }
+00201: 
+00202: function lotteryLabelFromKey(key) {
+00203:   const s = safeStr(key).toUpperCase();
+00204:   if (s === "PT_RIO") return "RIO";
+00205:   if (s === "FEDERAL") return "FEDERAL";
+00206:   if (s === "LOOK") return "LOOK";
+00207:   if (s === "NACIONAL") return "NACIONAL";
+00208:   if (s.length === 2) return s;
+00209:   const parts = s.split("_");
+00210:   return parts[parts.length - 1] || s;
+00211: }
+00212: 
+00213: /* =========================
+00214:    Bounds helpers (FIX principal)
+00215: ========================= */
+00216: 
+00217: function clampYmd(ymd, minDate, maxDate) {
+00218:   const d = normalizeToYMD(ymd);
+
+----- LINHAS 545-569 -----
+00545:   { v: 1, label: "1º" },
+00546:   { v: 2, label: "2º" },
+00547:   { v: 3, label: "3º" },
+00548:   { v: 4, label: "4º" },
+00549:   { v: 5, label: "5º" },
+00550:   { v: 6, label: "6º" },
+00551:   { v: 7, label: "7º" },
+00552: ];
+00553: 
+00554: export default function Downloads() {
+00555:   const [ufUi, setUfUi] = useState("PT_RIO");
+00556:   const ufQueryKey = useMemo(() => normalizeUfToQueryKey(ufUi), [ufUi]);
+00557:   const label = useMemo(() => lotteryLabelFromKey(ufQueryKey || ufUi), [ufQueryKey, ufUi]);
+00558: 
+00559:   const [bounds, setBounds] = useState({ minDate: "", maxDate: "" });
+00560: 
+00561:   // ✅ estados podem iniciar “fora” do bounds, mas vamos normalizar assim que bounds chegar
+00562:   const [dateFrom, setDateFrom] = useState(() => todayYMDLocal());
+00563:   const [dateTo, setDateTo] = useState(() => todayYMDLocal());
+00564: 
+00565:   const [fMonth, setFMonth] = useState("ALL");
+00566:   const [fDay, setFDay] = useState("ALL");
+00567:   const [fDow, setFDow] = useState("ALL");
+00568:   const [fHour, setFHour] = useState("ALL");
+00569:   const [fAnimalGrupo, setFAnimalGrupo] = useState("ALL");
+
+----- LINHAS 664-738 -----
+00664: 
+00665:   const animalOptions = useMemo(() => {
+00666:     const opts = [{ v: "ALL", label: "Todos" }];
+00667:     for (let g = 1; g <= 25; g += 1) {
+00668:       const name = safeStr(getAnimalLabel?.(g) || "");
+00669:       opts.push({ v: String(g), label: `G${pad2(g)} • ${name || "—"}` });
+00670:     }
+00671:     return opts;
+00672:   }, []);
+00673: 
+00674:   const hourOptions = useMemo(() => {
+00675:     const lotteryKey = safeStr(ufQueryKey).toUpperCase();
+00676: 
+00677:     const hoursByLottery = {
+00678:       PT_RIO: ["09:00", "11:00", "14:00", "16:00", "18:00", "19:00", "21:00"],
+00679:       FEDERAL: ["19:00", "20:00"],
+00680:       LOOK: ["07:00", "09:00", "11:00", "14:00", "16:00", "18:00", "21:00", "23:00"],
+00681:       NACIONAL: ["02:00", "08:00", "10:00", "12:00", "15:00", "17:00", "21:00", "23:00"],
+00682:     };
+00683: 
+00684:     const base = ["ALL", ...(hoursByLottery[lotteryKey] || [])];
+00685:     const uniq = Array.from(new Set(base));
+00686: 
+00687:     return uniq.map((h) =>
+00688:       h === "ALL"
+00689:         ? { v: "ALL", label: "Todos" }
+00690:         : { v: h, label: h }
+00691:     );
+00692:   }, [ufQueryKey]);
+00693: 
+00694:   const applyFiltersToRows = useCallback(
+00695:     (rows) => {
+00696:       const monthN = fMonth === "ALL" ? null : Number(fMonth);
+00697:       const dayN = fDay === "ALL" ? null : Number(fDay);
+00698:       const dowN = fDow === "ALL" ? null : Number(fDow);
+00699:       const hour = fHour === "ALL" ? null : toHourBucket(fHour);
+00700:       const grupoN = fAnimalGrupo === "ALL" ? null : Number(fAnimalGrupo);
+00701:       const posN = fPos === "ALL" ? null : Number(fPos);
+00702: 
+00703:       return rows.filter((r) => {
+00704:         if (monthN != null && Number(r.month) !== monthN) return false;
+00705:         if (dayN != null && Number(r.day) !== dayN) return false;
+00706:         if (dowN != null && Number(r.dow) !== dowN) return false;
+00707:         if (hour && toHourBucket(r.hour) !== hour) return false;
+00708:         if (grupoN != null && Number(r.grupo) !== grupoN) return false;
+00709:         if (posN != null && Number(r.pos) !== posN) return false;
+00710:         return true;
+00711:       });
+00712:     },
+00713:     [fMonth, fDay, fDow, fHour, fAnimalGrupo, fPos]
+00714:   );
+00715: 
+00716:   const buildRowsFromDraws = useCallback((draws) => {
+00717:     const list = Array.isArray(draws) ? draws : [];
+00718:     const out = [];
+00719: 
+00720:     for (const d of list) {
+00721:       const ymd = pickDrawYMD(d);
+00722:       if (!isYMD(ymd)) continue;
+00723: 
+00724:       const hour = toHourBucket(pickDrawHour(d));
+00725:       const prizes = Array.isArray(d?.prizes) ? d.prizes : [];
+00726:       if (!prizes.length) continue;
+00727: 
+00728:       for (const p of prizes) {
+00729:         const pos = guessPrizePos(p);
+00730:         const grupo = guessPrizeGrupo(p);
+00731:         if (!Number.isFinite(Number(pos)) || !Number.isFinite(Number(grupo))) continue;
+00732: 
+00733:         const milhar = pickPrizeMilhar4(p) || "";
+00734:         const animal = safeStr(getAnimalLabel?.(Number(grupo)) || "");
+00735:         const dz = milhar ? getDezena2(milhar) : "";
+00736:         const cen = milhar ? getCentena3(milhar) : "";
+00737: 
+00738:         out.push({
+
+----- LINHAS 754-819 -----
+00754: 
+00755:     return out;
+00756:   }, []);
+00757: 
+00758:   const buildMetaLines = useCallback(() => {
+00759:     const { from, to } = normalizeRange();
+00760:     const lines = [];
+00761: 
+00762:     const lotteryKey = safeStr(ufUi).toUpperCase();
+00763:     const lotteryUiLabel =
+00764:       lotteryKey === "PT_RIO"
+00765:         ? "RJ"
+00766:         : lotteryKey === "FEDERAL"
+00767:         ? "Federal"
+00768:         : lotteryKey === "LOOK"
+00769:         ? "LOOK"
+00770:         : lotteryKey === "NACIONAL"
+00771:         ? "Nacional"
+00772:         : lotteryKey;
+00773: 
+00774:     lines.push(`Loteria: ${lotteryUiLabel} • ${label}`);
+00775: 
+00776:     lines.push(`Período: ${ymdToBR(from)} → ${ymdToBR(to)}`);
+00777: 
+00778:     const f = [];
+00779:     if (fMonth !== "ALL") f.push(`Mês: ${String(fMonth).padStart(2, "0")}`);
+00780:     if (fDay !== "ALL") f.push(`Dia: ${String(fDay).padStart(2, "0")}`);
+00781:     if (fDow !== "ALL")
+00782:       f.push(`Semana: ${DOW_OPTIONS.find((x) => String(x.v) === String(fDow))?.label || fDow}`);
+00783:     if (fHour !== "ALL") f.push(`Horário: ${toHourBucket(fHour)}`);
+00784:     if (fAnimalGrupo !== "ALL") {
+00785:       const g = Number(fAnimalGrupo);
+00786:       f.push(`Animal: G${pad2(g)} ${safeStr(getAnimalLabel?.(g) || "")}`);
+00787:     }
+00788:     if (fPos !== "ALL") f.push(`Posição: ${fPos}º`);
+00789:     if (f.length) lines.push(`Filtros: ${f.join(" • ")}`);
+00790:     else lines.push(`Filtros: Todos`);
+00791: 
+00792:     return lines;
+00793:   }, [normalizeRange, ufUi, label, fMonth, fDay, fDow, fHour, fAnimalGrupo, fPos]);
+00794: 
+00795:   const fetchFilteredRows = useCallback(async () => {
+00796:     const u = safeStr(ufQueryKey);
+00797:     if (!u) return [];
+00798: 
+00799:     const { from, to } = normalizeRange();
+00800: 
+00801:     const out = await getKingResultsByRange({
+00802:       uf: u,
+00803:       dateFrom: from,
+00804:       dateTo: to,
+00805:       closeHour: null,
+00806:       positions: null,
+00807:       mode: "detailed",
+00808:     });
+00809: 
+00810:     const draws = Array.isArray(out) ? out : [];
+00811:     const rows = buildRowsFromDraws(draws);
+00812:     const filteredRows = applyFiltersToRows(rows);
+00813: 
+00814:     filteredRows.sort((a, b) => {
+00815:       const da = safeStr(a.ymd);
+00816:       const db = safeStr(b.ymd);
+00817:       if (da !== db) return da.localeCompare(db);
+00818:       const ha = safeStr(a.hour);
+00819:       const hb = safeStr(b.hour);
+
+----- LINHAS 1264-1288 -----
+01264:               Baixar Excel
+01265:             </PillButton>
+01266:           </div>
+01267:         </div>
+01268: 
+01269:         <div className="pp-export">
+01270:           <div className="pp-exportBar">
+01271:             <div className="pp-field">
+01272:               <div className="pp-fieldLabel">UF</div>
+01273:               <select className="pp-select" value={ufUi} onChange={(e) => setUfUi(e.target.value)}>
+01274:                 <option value="PT_RIO">RJ</option>
+01275:                 <option value="FEDERAL">Federal</option>
+01276:                 <option value="LOOK">LOOK</option>
+01277:                 <option value="NACIONAL">Nacional</option>
+01278:               </select>
+01279:             </div>
+01280: 
+01281:             <div className="pp-field">
+01282:               <div className="pp-fieldLabel">De</div>
+01283:               <input
+01284:                 className="pp-input"
+01285:                 type="date"
+01286:                 value={fromSafe}
+01287:                 min={bounds?.minDate || undefined}
+01288:                 max={bounds?.maxDate || undefined}
+
+----- LINHAS 1335-1359 -----
+01335:                   <option key={`dow_${x.v}`} value={String(x.v)}>
+01336:                     {x.label}
+01337:                   </option>
+01338:                 ))}
+01339:               </select>
+01340:             </div>
+01341: 
+01342:             <div className="pp-field">
+01343:               <div className="pp-fieldLabel">Horário</div>
+01344:               <select className="pp-select" value={String(fHour)} onChange={(e) => setFHour(e.target.value)}>
+01345:                 {hourOptions.map((h) => (
+01346:                   <option key={`h_${h.v}`} value={String(h.v)}>
+01347:                     {h.label}
+01348:                   </option>
+01349:                 ))}
+01350:               </select>
+01351:             </div>
+01352: 
+01353:             <div className="pp-field">
+01354:               <div className="pp-fieldLabel">Animal</div>
+01355:               <select
+01356:                 className="pp-select"
+01357:                 value={String(fAnimalGrupo)}
+01358:                 onChange={(e) => setFAnimalGrupo(e.target.value)}
+01359:               >
+
+####################################################################################################
+ARQUIVO: src\pages\Late\Late.jsx
+LINHAS: 1117
+OCORRÊNCIAS BRUTAS: 64
+####################################################################################################
+
+----- LINHAS 17-41 -----
+00017:  * ✅ 100% em cima da SUA base:
+00018:  * - Usa getKingLateByRange() (varre histórico interno com prizes)
+00019:  * - NÃO chama nada externo
+00020:  *
+00021:  * ✅ Atualiza por SORTEIO:
+00022:  * - Rebusca bounds periodicamente (maxYmd atualiza quando entra sorteio novo)
+00023:  * - Detecta "último sorteio importado" (maxYmd + maior close_hour do dia)
+00024:  * - Se mudar maxYmd ou close_hour do último sorteio -> refresh automático
+00025:  *
+00026:  * ✅ IMPORTANTE (SEU PROJETO):
+00027:  * - Consultas devem usar UF="RJ" (com trava interna para PT_RIO)
+00028:  */
+00029: 
+00030: function pad2(n) {
+00031:   return String(n).padStart(2, "0");
+00032: }
+00033: 
+00034: function safeStr(v) {
+00035:   return String(v ?? "").trim();
+00036: }
+00037: 
+00038: function todayYMDLocal() {
+00039:   const d = new Date();
+00040:   return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+00041: }
+
+----- LINHAS 77-244 -----
+00077: }
+00078: 
+00079: function sortPTBR(a, b) {
+00080:   return String(a || "").localeCompare(String(b || ""), "pt-BR", { sensitivity: "base" });
+00081: }
+00082: 
+00083: /**
+00084:  * Normaliza entradas como:
+00085:  * "09h" / "09HS" / "9" / "09:10" -> "09:00" ou "09:10"
+00086:  */
+00087: function normalizeHourLike(value) {
+00088:   const s0 = String(value ?? "").trim();
+00089:   if (!s0) return "";
+00090: 
+00091:   const s = s0.replace(/\s+/g, "");
+00092:   const mhx = s.match(/^(\d{1,2})(?:h|hs|hr|hrs)$/i);
+00093:   if (mhx) return `${pad2(mhx[1])}:00`;
+00094: 
+00095:   const mISO = s.match(/^(\d{1,2}):(\d{1,2})(?::(\d{1,2}))?$/);
+00096:   if (mISO) return `${pad2(mISO[1])}:${pad2(mISO[2])}`;
+00097: 
+00098:   const m2 = s.match(/^(\d{1,2})$/);
+00099:   if (m2) return `${pad2(m2[1])}:00`;
+00100: 
+00101:   return s0.trim();
+00102: }
+00103: 
+00104: /**
+00105:  * Converte "09:00" -> 540
+00106:  */
+00107: function hourToMinutes(hhmm) {
+00108:   const s = normalizeHourLike(hhmm);
+00109:   const m = String(s).match(/^(\d{2}):(\d{2})$/);
+00110:   if (!m) return null;
+00111:   const hh = Number(m[1]);
+00112:   const mm = Number(m[2]);
+00113:   if (!Number.isFinite(hh) || !Number.isFinite(mm)) return null;
+00114:   return hh * 60 + mm;
+00115: }
+00116: 
+00117: /**
+00118:  * Converte um label de loteria (closeHour) pra bucket "09h"
+00119:  * Aceita "09:00" / "09h" / "09HS" / "9" etc.
+00120:  */
+00121: function toHourBucket(value) {
+00122:   const hhmm = normalizeHourLike(value);
+00123:   const m = String(hhmm).match(/^(\d{2}):/);
+00124:   if (!m) return null;
+00125:   return `${m[1]}h`;
+00126: }
+00127: 
+00128: /**
+00129:  * ✅ Extrai array de draws de qualquer retorno comum do service
+00130:  */
+00131: function unwrapDraws(maybe) {
+00132:   if (Array.isArray(maybe)) return maybe;
+00133:   if (maybe && typeof maybe === "object") {
+00134:     if (Array.isArray(maybe.drawsRaw)) return maybe.drawsRaw;
+00135:     if (Array.isArray(maybe.draws)) return maybe.draws;
+00136:     if (Array.isArray(maybe.rows)) return maybe.rows;
+00137:     if (Array.isArray(maybe.data)) return maybe.data;
+00138:   }
+00139:   return [];
+00140: }
+00141: 
+00142: /**
+00143:  * ✅ Pega a maior close_hour existente em um conjunto de draws
+00144:  * Retorna { ymd, closeHour }.
+00145:  */
+00146: function pickLatestCloseHour(drawsLike) {
+00147:   const arr = unwrapDraws(drawsLike);
+00148:   let best = null;
+00149:   let bestMin = -1;
+00150: 
+00151:   for (const d of arr) {
+00152:     const ch = normalizeHourLike(d?.close_hour || d?.closeHour || d?.hour || d?.hora || "");
+00153:     const min = hourToMinutes(ch);
+00154:     if (min == null) continue;
+00155:     if (min > bestMin) {
+00156:       bestMin = min;
+00157:       best = { ymd: d?.ymd || d?.date || "", closeHour: ch || "" };
+00158:     }
+00159:   }
+00160: 
+00161:   return best;
+00162: }
+00163: 
+00164: // escolhe "mais recente" entre (ymd + closeHour)
+00165: function isMoreRecent(a, b) {
+00166:   const ay = String(a?.lastYmd || "");
+00167:   const by = String(b?.lastYmd || "");
+00168:   if (ay && by && ay !== by) return ay > by;
+00169: 
+00170:   const am = hourToMinutes(a?.lastCloseHour || "");
+00171:   const bm = hourToMinutes(b?.lastCloseHour || "");
+00172:   if (am != null && bm != null && am !== bm) return am > bm;
+00173: 
+00174:   if (ay && !by) return true;
+00175:   if (!ay && by) return false;
+00176: 
+00177:   return false;
+00178: }
+00179: 
+00180: // merge de múltiplas consultas (ex: 1º ao 5º) => pega a última aparição mais recente por grupo
+00181: function mergeLateLists(lists, baseYmd) {
+00182:   const byGrupo = new Map();
+00183: 
+00184:   for (const list of lists) {
+00185:     const arr = Array.isArray(list) ? list : [];
+00186:     for (const r of arr) {
+00187:       const g = Number(r?.grupo);
+00188:       if (!isValidGrupo(g)) continue;
+00189: 
+00190:       const candidate = {
+00191:         grupo: g,
+00192:         lastYmd: r?.lastYmd || null,
+00193:         // ✅ normaliza aqui (evita “09h/09HS/9”)
+00194:         lastCloseHour: r?.lastCloseHour ? normalizeHourLike(r.lastCloseHour) : "",
+00195:       };
+00196: 
+00197:       if (!byGrupo.has(g)) {
+00198:         byGrupo.set(g, candidate);
+00199:         continue;
+00200:       }
+00201: 
+00202:       const prev = byGrupo.get(g);
+00203:       if (isMoreRecent(candidate, prev)) byGrupo.set(g, candidate);
+00204:     }
+00205:   }
+00206: 
+00207:   const out = [];
+00208:   for (let g = 1; g <= 25; g += 1) {
+00209:     const rec = byGrupo.get(g) || { grupo: g, lastYmd: null, lastCloseHour: "" };
+00210:     const lastYmd = rec?.lastYmd || null;
+00211:     const lastCloseHour = rec?.lastCloseHour ? normalizeHourLike(rec.lastCloseHour) : "";
+00212:     const daysLate = lastYmd ? diffDaysUTC(lastYmd, baseYmd) : null;
+00213: 
+00214:     out.push({
+00215:       grupo: g,
+00216:       grupo2: toGrupo2(g),
+00217:       lastYmd,
+00218:       lastCloseHour,
+00219:       daysLate,
+00220:     });
+00221:   }
+00222: 
+00223:   // ordenação: atraso desc, depois hora asc, depois grupo asc
+00224:   out.sort((a, b) => {
+00225:     const aa = a.daysLate == null ? 999999 : a.daysLate;
+00226:     const bb = b.daysLate == null ? 999999 : b.daysLate;
+00227:     if (bb !== aa) return bb - aa;
+00228: 
+00229:     const ma = hourToMinutes(a.lastCloseHour);
+00230:     const mb = hourToMinutes(b.lastCloseHour);
+00231:     if (ma != null && mb != null && ma !== mb) return ma - mb;
+00232:     if (ma == null && mb != null) return 1;
+00233:     if (ma != null && mb == null) return -1;
+00234: 
+00235:     return a.grupo - b.grupo;
+00236:   });
+00237: 
+00238:   return out.map((r, idx) => ({ ...r, pos: idx + 1 }));
+00239: }
+00240: 
+00241: /* =========================
+00242:    ✅ Bounds helpers (FIX UI)
+00243: ========================= */
+00244: 
+
+----- LINHAS 275-426 -----
+00275: function normalizeBoundsResponse(b) {
+00276:   const minRaw = safeStr(b?.minYmd || b?.minDate || b?.min || "");
+00277:   const maxRaw = safeStr(b?.maxYmd || b?.maxDate || b?.max || "");
+00278:   const minYmd = isYMD(minRaw) ? minRaw : null;
+00279:   const maxYmd = isYMD(maxRaw) ? maxRaw : null;
+00280:   return { minYmd, maxYmd, source: safeStr(b?.source || "") };
+00281: }
+00282: 
+00283: const LATE_LOTTERY_OPTIONS = [
+00284:   {
+00285:     id: "PT_RIO",
+00286:     label: "Rio de Janeiro",
+00287:     lotteries: ["PT_RIO"],
+00288:     uf: "RJ",
+00289:   },
+00290:   {
+00291:     id: "FEDERAL",
+00292:     label: "Federal",
+00293:     lotteries: ["FEDERAL"],
+00294:     uf: "FEDERAL",
+00295:   },
+00296:   {
+00297:     id: "LOOK",
+00298:     label: "LOOK",
+00299:     lotteries: ["LOOK"],
+00300:     uf: "GO",
+00301:   },
+00302:   {
+00303:     id: "NACIONAL",
+00304:     label: "Nacional",
+00305:     lotteries: ["NACIONAL"],
+00306:     uf: "NACIONAL",
+00307:   },
+00308: ];
+00309: 
+00310: const LATE_HOUR_OPTIONS = {
+00311:   PT_RIO: [
+00312:     { id: "ALL", label: "Todos os horários", closeHour: null },
+00313:     { id: "09", label: "09h", closeHour: "09:00" },
+00314:     { id: "11", label: "11h", closeHour: "11:00" },
+00315:     { id: "14", label: "14h", closeHour: "14:00" },
+00316:     { id: "16", label: "16h", closeHour: "16:00" },
+00317:     { id: "18", label: "18h", closeHour: "18:00" },
+00318:     { id: "21", label: "21h", closeHour: "21:00" },
+00319:   ],
+00320: 
+00321:   FEDERAL: [
+00322:     { id: "ALL", label: "Todos os horários", closeHour: null },
+00323:     { id: "20", label: "20h", closeHour: "20:00" },
+00324:   ],
+00325: 
+00326:   LOOK: [
+00327:     { id: "ALL", label: "Todos os horários", closeHour: null },
+00328:   ],
+00329: 
+00330:   NACIONAL: [
+00331:     { id: "ALL", label: "Todos os horários", closeHour: null },
+00332:   ],
+00333: };
+00334: 
+00335: export default function Late() {
+00336: 
+00337: 
+00338:   // UI
+00339:   const [lotteryOptId, setLotteryOptId] = useState("ALL");
+00340: 
+00341:   const [selectedLotteryId, setSelectedLotteryId] = useState("PT_RIO");
+00342:   const [kind, setKind] = useState("grupo");
+00343:   const [prizeMode, setPrizeMode] = useState("1");
+00344:   const [dateYmd, setDateYmd] = useState(todayYMDLocal());
+00345: 
+00346:   // Data
+00347:   const [bounds, setBounds] = useState({
+00348:     minYmd: null,
+00349:     maxYmd: null,
+00350:     source: "",
+00351:   });
+00352:   const [loading, setLoading] = useState(false);
+00353:   const [error, setError] = useState("");
+00354:   const [rows, setRows] = useState([]);
+00355: 
+00356:   // Último sorteio importado (INDEPENDENTE do prizeMode / filtro)
+00357:   const [lastImported, setLastImported] = useState({
+00358:     ymd: "",
+00359:     closeHour: "",
+00360:   });
+00361: 
+00362:   const lastImportedRef = useRef(lastImported);
+00363:   useEffect(() => {
+00364:     lastImportedRef.current = lastImported;
+00365:   }, [lastImported]);
+00366: 
+00367:   const [meta, setMeta] = useState({
+00368:     effectiveTargetYmd: "",
+00369:   });
+00370: 
+00371:   const abortedRef = useRef(false);
+00372:   const pollRef = useRef(null);
+00373:   const selectedHourOptions = useMemo(
+00374:     () =>
+00375:       LATE_HOUR_OPTIONS[selectedLotteryId] ||
+00376:       LATE_HOUR_OPTIONS.PT_RIO,
+00377:     [selectedLotteryId]
+00378:   );
+00379: 
+00380:   const selectedHourOption = useMemo(
+00381:     () =>
+00382:       selectedHourOptions.find(
+00383:         (option) => option.id === lotteryOptId
+00384:       ) || selectedHourOptions[0],
+00385:     [lotteryOptId, selectedHourOptions]
+00386:   );
+00387: 
+00388: 
+00389:   // ✅ bucket "09h" etc (preferível pra bater na base)
+00390:   const selectedLateLottery = useMemo(
+00391:     () =>
+00392:       LATE_LOTTERY_OPTIONS.find(
+00393:         (option) => option.id === selectedLotteryId
+00394:       ) || LATE_LOTTERY_OPTIONS[0],
+00395:     [selectedLotteryId]
+00396:   );
+00397: 
+00398:   const selectedLateLotteries = useMemo(
+00399:     () => selectedLateLottery.lotteries,
+00400:     [selectedLateLottery]
+00401:   );
+00402: 
+00403:   const selectedLateUf = selectedLateLottery.uf;
+00404: 
+00405:   const LOTTERY_DISPLAY = selectedLateLottery.label;
+00406: 
+00407: 
+00408: 
+00409:   const selectedCloseHourBucket = useMemo(() => {
+00410:     const raw = selectedHourOption?.closeHour;
+00411:     if (!raw) return null;
+00412:     return String(raw).includes("h") ? String(raw).trim() : toHourBucket(raw);
+00413:   }, [selectedHourOption]);
+00414: 
+00415:   const prizePositions = useMemo(() => {
+00416:     if (prizeMode === "1-5") return [1, 2, 3, 4, 5];
+00417:     const n = Number(prizeMode);
+00418:     if (Number.isFinite(n) && n >= 1 && n <= 5) return [n];
+00419:     return [1];
+00420:   }, [prizeMode]);
+00421: 
+00422:   const boundsReady = !!(bounds?.minYmd && bounds?.maxYmd);
+00423: 
+00424:   // ✅ label e img robustos (assinam variações)
+00425:   const safeGetAnimalLabel = useCallback((grupoNum) => {
+00426:     const g = Number(grupoNum);
+
+----- LINHAS 458-496 -----
+00458:       }
+00459:     } catch {}
+00460:     return "";
+00461:   }, []);
+00462: 
+00463:   /**
+00464:    * ✅ ÚLTIMO SORTEIO IMPORTADO:
+00465:    * sempre calcula por (maxYmd + maior close_hour do dia), sem depender do prizeMode/lottery selecionada.
+00466:    */
+00467:   async function fetchLastImportedFromMaxYmd(maxYmd) {
+00468:     if (!maxYmd) return { ymd: "", closeHour: "" };
+00469: 
+00470:     const dayResult = await getKingResultsByDate({
+00471:       uf: selectedLateUf,
+00472:       date: maxYmd,
+00473:       closeHour: null,
+00474:       closeHourBucket: null,
+00475:       positions: [1],
+00476:     });
+00477: 
+00478:     const latest = pickLatestCloseHour(dayResult);
+00479:     if (latest?.ymd && latest?.closeHour) {
+00480:       return { ymd: String(latest.ymd || maxYmd), closeHour: String(latest.closeHour || "") };
+00481:     }
+00482:     return { ymd: maxYmd, closeHour: "" };
+00483:   }
+00484: 
+00485:   async function refreshBoundsAndLastDraw() {
+00486:     const b = await getKingBoundsByUf({ uf: selectedLateUf });
+00487: 
+00488:     // ✅ PATCH: aceita minDate/maxDate também
+00489:     const nb = normalizeBoundsResponse(b);
+00490:     const minYmd = nb.minYmd;
+00491:     const maxYmd = nb.maxYmd;
+00492: 
+00493:     setBounds({ minYmd, maxYmd, source: nb.source });
+00494: 
+00495:     if (maxYmd) {
+00496:       const li = await fetchLastImportedFromMaxYmd(maxYmd);
+
+----- LINHAS 551-615 -----
+00551:     const lists = [];
+00552:     for (const pos of prizePositions) {
+00553:       const list = await getKingLateByRange({
+00554:         uf: selectedLateUf,
+00555:         lotteries: selectedLateLotteries,
+00556:         dateFrom: minYmd,
+00557:         dateTo: queryToYmd,
+00558:         baseDate: referenceYmd,
+00559:         prizePosition: pos,
+00560: 
+00561:         closeHour: null,
+00562:         closeHourBucket: selectedCloseHourBucket || null,
+00563: 
+00564:         chunkDays: 15,
+00565:       });
+00566: 
+00567:       const mapped = (Array.isArray(list) ? list : []).map((r) => ({
+00568:         grupo: Number(r?.grupo),
+00569:         lastYmd: r?.lastYmd || null,
+00570:         lastCloseHour: r?.lastHour || r?.lastCloseHour || "",
+00571:       }));
+00572: 
+00573:       lists.push(mapped);
+00574:     }
+00575: 
+00576:     // 2) Merge (1-5) e cálculo de daysLate
+00577:     const merged = mergeLateLists(lists, referenceYmd);
+00578: 
+00579:     // 3) Injeta label/imagem
+00580:     const out = merged.map((r) => {
+00581:       const g = Number(r?.grupo);
+00582:       const animalLabel = safeGetAnimalLabel(g) || "";
+00583:       const img = safeGetImg(g) || "";
+00584:       return {
+00585:         ...r,
+00586:         grupo: g,
+00587:         grupo2: toGrupo2(g),
+00588:         animal: animalLabel,
+00589:         img,
+00590:         lastCloseHour: r?.lastCloseHour ? normalizeHourLike(r.lastCloseHour) : "",
+00591:       };
+00592:     });
+00593: 
+00594:     // 4) desempate com animal (estável e bonito)
+00595:     out.sort((a, b) => {
+00596:       const aa = a.daysLate == null ? 999999 : a.daysLate;
+00597:       const bb = b.daysLate == null ? 999999 : b.daysLate;
+00598:       if (bb !== aa) return bb - aa;
+00599: 
+00600:       const ma = hourToMinutes(a.lastCloseHour);
+00601:       const mb = hourToMinutes(b.lastCloseHour);
+00602:       if (ma != null && mb != null && ma !== mb) return ma - mb;
+00603:       if (ma == null && mb != null) return 1;
+00604:       if (ma != null && mb == null) return -1;
+00605: 
+00606:       const an = sortPTBR(a.animal, b.animal);
+00607:       if (an !== 0) return an;
+00608: 
+00609:       return a.grupo - b.grupo;
+00610:     });
+00611: 
+00612:     const finalRows = out.map((r, idx) => ({ ...r, pos: idx + 1 }));
+00613: 
+00614:     return { rows: finalRows, meta: { effectiveTargetYmd: referenceYmd } };
+00615:   }
+
+----- LINHAS 640-664 -----
+00640:         if (abortedRef.current) return;
+00641:         if (!silent) setError(String(e?.message || e));
+00642:       } finally {
+00643:         if (!abortedRef.current && !silent) setLoading(false);
+00644:       }
+00645:     },
+00646:     [
+00647:       dateYmd,
+00648:       kind,
+00649:       prizePositions,
+00650:       selectedCloseHourBucket,
+00651:       selectedLateUf,
+00652:       selectedLateLotteries,
+00653:     ] // eslint-disable-line react-hooks/exhaustive-deps
+00654:   );
+00655: 
+00656:   useEffect(() => {
+00657:     setLotteryOptId("ALL");
+00658:   }, [selectedLotteryId]);
+00659: 
+00660: 
+00661: 
+00662:   // primeiro load
+00663:   useEffect(() => {
+00664:     let alive = true;
+
+----- LINHAS 718-742 -----
+00718: 
+00719:         const b = await getKingBoundsByUf({ uf: selectedLateUf });
+00720:         const nb = normalizeBoundsResponse(b);
+00721:         const maxYmd = nb.maxYmd || "";
+00722:         if (!maxYmd) return;
+00723: 
+00724:         const next = await fetchLastImportedFromMaxYmd(maxYmd);
+00725: 
+00726:         const changed =
+00727:           String(prev?.ymd || "") !== String(next.ymd || "") ||
+00728:           String(prev?.closeHour || "") !== String(next.closeHour || "");
+00729: 
+00730:         if (changed) {
+00731:           setLastImported(next);
+00732: 
+00733:           setBounds((old) => ({
+00734:             minYmd: old?.minYmd ?? nb.minYmd ?? null,
+00735:             maxYmd: nb.maxYmd ?? old?.maxYmd ?? null,
+00736:             source: nb.source || old?.source || "",
+00737:           }));
+00738: 
+00739:           await refresh({ silent: true });
+00740:         }
+00741:       } catch {
+00742:         // silencioso
+
+----- LINHAS 754-778 -----
+00754:       abortedRef.current = true;
+00755:       if (pollRef.current) clearInterval(pollRef.current);
+00756:     };
+00757:   }, []);
+00758: 
+00759:   const titleDateBR = useMemo(() => ymdToBR(dateYmd), [dateYmd]);
+00760:   const effectiveDateBR = useMemo(() => ymdToBR(meta?.effectiveTargetYmd || ""), [meta?.effectiveTargetYmd]);
+00761: 
+00762:   const lastImportedBR = useMemo(() => {
+00763:     const d = lastImported?.ymd ? ymdToBR(lastImported.ymd) : "";
+00764:     const h = lastImported?.closeHour ? lastImported.closeHour : "";
+00765:     return d ? (h ? `${d} ${h}` : d) : "";
+00766:   }, [lastImported]);
+00767: 
+00768:   // ✅ handler clamped (date input)
+00769:   const onChangeDate = useCallback(
+00770:     (raw) => {
+00771:       const minYmd = bounds?.minYmd;
+00772:       const maxYmd = bounds?.maxYmd;
+00773:       const next = normalizeSingleDateWithBounds(
+00774:         String(raw || ""),
+00775:         minYmd,
+00776:         todayYMDLocal()
+00777:       );
+00778:       setDateYmd(next);
+
+----- LINHAS 978-1002 -----
+00978:             <select
+00979:               id="lateHour"
+00980:               value={lotteryOptId}
+00981:               onChange={(event) =>
+00982:                 setLotteryOptId(
+00983:                   String(event.target.value || "ALL")
+00984:                 )
+00985:               }
+00986:               disabled={loading}
+00987:             >
+00988:               {selectedHourOptions.map((option) => (
+00989:                 <option
+00990:                   key={option.id}
+00991:                   value={option.id}
+00992:                 >
+00993:                   {option.label}
+00994:                 </option>
+00995:               ))}
+00996:             </select>
+00997:           </div>
+00998: 
+00999:           <div className="ppCtl">
+01000:             <label>Tipo</label>
+01001:             <select value={kind} onChange={(e) => setKind(String(e.target.value || "grupo"))}>
+01002:               <option value="grupo">Grupo</option>
+
+----- LINHAS 1048-1072 -----
+01048:                 <th style={{ width: 150 }}>Grupo</th>
+01049:                 <th style={{ width: 150 }}>Bicho</th>
+01050:                 <th style={{ width: 130 }}>Última Aparição</th>
+01051:                 <th style={{ width: 118 }}>Atraso (DIAS)</th>
+01052:               </tr>
+01053:             </thead>
+01054: 
+01055:             <tbody>
+01056:               {(rows || []).map((r, idx) => {
+01057:                 const lastBR = r.lastYmd ? ymdToBR(r.lastYmd) : "—";
+01058:                 const hh = r.lastCloseHour ? normalizeHourLike(r.lastCloseHour) : "";
+01059:                 const lastLabel = lastBR === "—" ? "—" : (hh ? `${lastBR} ${hh}` : lastBR);
+01060: 
+01061:                 const days = r.daysLate == null ? "—" : String(r.daysLate);
+01062: 
+01063:                 return (
+01064:                   <tr key={`g${r.grupo}`}>
+01065:                     <td className="ppPos">{idx + 1}º</td>
+01066: 
+01067:                     <td className="ppImgCell">
+01068:                       <span className="ppImg" title={`Grupo ${r.grupo2} · ${r.animal}`}>
+01069:                         {r.img ? <img src={r.img} alt={r.animal} /> : null}
+01070:                       </span>
+01071:                     </td>
+01072: 
+
+####################################################################################################
+ARQUIVO: src\pages\Top3\Top3View.jsx
+LINHAS: 4274
+OCORRÊNCIAS BRUTAS: 34
+####################################################################################################
+
+----- LINHAS 233-257 -----
+00233: 
+00234: function formatYmdHour(ymd, hour) {
+00235:   const y = String(ymd || "").trim();
+00236:   const h = String(hour || "").trim();
+00237:   if (y && h) return `${ymdToBR(y)} ${h}`;
+00238:   if (y) return ymdToBR(y);
+00239:   if (h) return h;
+00240:   return "—";
+00241: }
+00242: 
+00243: function hourBucketToSortValue(hour) {
+00244:   const s = String(hour || "").trim().toLowerCase();
+00245:   const m = s.match(/^(\d{1,2})(?::(\d{2}))?h?$/);
+00246:   if (!m) return -1;
+00247:   const hh = Number(m[1]);
+00248:   const mm = Number(m[2] || 0);
+00249:   if (!Number.isFinite(hh) || !Number.isFinite(mm)) return -1;
+00250:   return hh * 60 + mm;
+00251: }
+00252: 
+00253: function wrapToDezena2(n) {
+00254:   const x = Number(n);
+00255:   if (!Number.isFinite(x)) return "";
+00256:   const d = ((x % 100) + 100) % 100;
+00257:   return String(d).padStart(2, "0");
+
+----- LINHAS 759-810 -----
+00759: 
+00760:   const periodLabel =
+00761:     periodFrom && periodTo
+00762:       ? `Período analisado: ${ymdToBR(periodFrom)} até ${ymdToBR(periodTo)}`
+00763:       : samples > 0
+00764:         ? `Amostra analisada: ${samples} sorteios`
+00765:         : "";
+00766: 
+00767:   const baseGrupo = formatGrupo(item?.meta?.trigger?.grupo);
+00768:   const baseHour = String(item?.meta?.trigger?.hour || "").trim();
+00769:   const targetHour = String(item?.meta?.next?.hour || "").trim();
+00770: 
+00771:   const smartReasons = [];
+00772: 
+00773:   if (periodLabel) {
+00774:     smartReasons.push(periodLabel);
+00775:   }
+00776: 
+00777:   if (transitionDetail) {
+00778:     const first = Number(transitionDetail.firstCount || 0);
+00779:     const top5 = Number(transitionDetail.top3Count || 0);
+00780:     const amostras = Number(transitionDetail.samples || 0);
+00781: 
+00782:     smartReasons.push(
+00783:       `Após G${baseGrupo} às ${baseHour}, G${grupoTxt} apareceu ${first}x em 1º e ${top5}x no TOP3 para o alvo ${targetHour}.`
+00784:     );
+00785: 
+00786:     if (amostras > 0) {
+00787:       smartReasons.push(`Cenários de transição avaliados: ${amostras}.`);
+00788:     }
+00789:   }
+00790: 
+00791:   if (hourDetail) {
+00792:     const first = Number(hourDetail.firstCount || 0);
+00793:     const top5 = Number(hourDetail.top3Count || 0);
+00794: 
+00795:     smartReasons.push(
+00796:       `No horário ${targetHour}, G${grupoTxt} apareceu ${first}x em 1º e ${top5}x no TOP3.`
+00797:     );
+00798:   }
+00799: 
+00800:   if (dowDetail) {
+00801:     const first = Number(dowDetail.firstCount || 0);
+00802:     const top5 = Number(dowDetail.top3Count || 0);
+00803: 
+00804:     smartReasons.push(
+00805:       `No mesmo dia da semana, G${grupoTxt} apareceu ${first}x em 1º e ${top5}x no TOP3.`
+00806:     );
+00807:   }
+00808: 
+00809:   if (sceneDetail && Number(sceneDetail.samples || 0) > 0) {
+00810:     smartReasons.push(
+
+----- LINHAS 1079-1103 -----
+01079:                 <br />
+01080:                 {targetLabel} em 1º: {transitionFirst}x
+01081:                 <br />
+01082:                 {targetLabel} no TOP3: {transitionTop3}x
+01083:               </div>
+01084:             </div>
+01085: 
+01086:             <div className="top3-metaItem">
+01087:               <div className="top3-metaItem__label">🕘 Horário</div>
+01088:               <div className="top3-metaItem__value">
+01089:                 Às {targetHour || "—"}
+01090:                 <br />
+01091:                 {targetLabel} em 1º: {hourFirst}x
+01092:               </div>
+01093:             </div>
+01094: 
+01095:             <div className="top3-metaItem">
+01096:               <div className="top3-metaItem__label">📅 Dia da semana</div>
+01097:               <div className="top3-metaItem__value">
+01098:                 {targetWeekdayName}
+01099:                 <br />
+01100:                 {targetLabel} em 1º: {dowFirst}x
+01101:               </div>
+01102:             </div>
+01103: 
+
+----- LINHAS 1258-1282 -----
+01258:       : resultPosition === 1
+01259:         ? "🥇"
+01260:         : resultPosition === 2
+01261:           ? "🥈"
+01262:           : resultPosition === 3
+01263:             ? "🥉"
+01264:             : "";
+01265: 
+01266:   const dateLabel = formatYmdHour(
+01267:     slot?.targetYmd,
+01268:     slot?.targetHour
+01269:   );
+01270: 
+01271:   return (
+01272:     <div
+01273:       className="timeline-compact"
+01274:       title={statusDetail || statusLabel || ""}
+01275:       style={{
+01276:         width: "100%",
+01277:         overflowX: "auto",
+01278:       }}
+01279:     >
+01280:       <div
+01281:         className="timeline-compact__twoLine"
+01282:         style={{
+
+----- LINHAS 1318-1342 -----
+01318: 
+01319:           const isMatched =
+01320:             status === "hit" &&
+01321:             matchedPredictionIndex === idx;
+01322: 
+01323:           return (
+01324:             <div
+01325:               key={`${String(
+01326:                 slot?.targetYmd || "y"
+01327:               )}_${String(
+01328:                 slot?.targetHour || "h"
+01329:               )}_${idx}_${grupo}`}
+01330:               className={`timeline-compact__pick ${
+01331:                 isMatched
+01332:                   ? "timeline-compact__pick--matched"
+01333:                   : ""
+01334:               }`}
+01335:               style={{
+01336:                 display: "grid",
+01337:                 gridTemplateRows: "34px 18px",
+01338:                 justifyItems: "center",
+01339:                 alignItems: "center",
+01340:                 minWidth: 0,
+01341:                 padding: 0,
+01342:                 border: "none",
+
+----- LINHAS 1526-1550 -----
+01526:             : "Nenhum dos 3 palpites foi sorteado.";
+01527: 
+01528:   return (
+01529:     <section className="top3-shell">
+01530:       {status === "pending" ? (
+01531:         <>
+01532:           <div className="timeline-slot__header">
+01533:             <div className="timeline-slot__title">
+01534:               {formatYmdHour(
+01535:                 slot?.targetYmd,
+01536:                 slot?.targetHour
+01537:               )}
+01538:             </div>
+01539: 
+01540:             <div
+01541:               className={`timeline-slot__badge timeline-slot__badge--${status}`}
+01542:             >
+01543:               {statusLabel}
+01544:             </div>
+01545:           </div>
+01546: 
+01547:           <div className="timeline-slot__metaGrid">
+01548:             <div className="top3-metaItem">
+01549:               <div className="top3-metaItem__label">
+01550:                 Base usada
+
+----- LINHAS 1584-1608 -----
+01584:           </div>
+01585:         </>
+01586:       ) : null}
+01587: 
+01588:       {!slotTop3.length ? (
+01589:         <div className="top3-empty">Sem Top3 calculado para este horário.</div>
+01590:       ) : status === "pending" ? (
+01591:         <div className="timeline-slot__cards">
+01592:           {slotTop3.map((item, i) => (
+01593:             <Top3Card
+01594:               key={`${slot?.targetYmd || "y"}_${slot?.targetHour || "h"}_${String(item?.grupo ?? i)}`}
+01595:               item={item}
+01596:               idx={i}
+01597:               theme={t}
+01598:               copiedAllKey={copiedAllKey}
+01599:               copiedCellKey={copiedCellKey}
+01600:               setCopiedAllKey={setCopiedAllKey}
+01601:               setCopiedCellKey={setCopiedCellKey}
+01602:               copyText={copyText}
+01603:               build16={build16}
+01604:               buildMilhares={buildMilhares}
+01605:               build20={build20}
+01606:             />
+01607:           ))}
+01608:         </div>
+
+----- LINHAS 1631-1699 -----
+01631:     prevLabel,
+01632:     theme,
+01633:     LOTTERY_OPTIONS,
+01634:     lotteryKeySafe,
+01635:     setLotteryKey,
+01636:     setYmd,
+01637:     build16,
+01638:     buildMilhares,
+01639:     build20,
+01640:     analysisYmd,
+01641:     analysisHourBucket,
+01642:     loadedYmd,
+01643:     ymdSafe,
+01644:     lastHourBucket,
+01645:   } = props || {};
+01646: 
+01647:   // TODO_BACKTEST_REAL
+01648: // Os cards estatísticos deverão consumir auditTop3Backtest()
+01649: // evitando cálculos paralelos na interface.
+01650: //
+01651: // Fase atual:
+01652: // apenas corrigindo nomenclatura para refletir o cálculo existente.
+01653: 
+01654: const list = Array.isArray(top3)
+01655:   ? top3.slice(0, 3)
+01656:   : [];
+01657:   const timeline = (Array.isArray(timelineTop3) ? timelineTop3 : [])
+01658:   .slice()
+01659:   .sort((a, b) => {
+01660:     const ta = `${a?.targetYmd || ""} ${a?.targetHour || ""}`;
+01661:     const tb = `${b?.targetYmd || ""} ${b?.targetHour || ""}`;
+01662:     return ta.localeCompare(tb);
+01663:   });
+01664: 
+01665:   const showDetailedTimeline = false;
+01666: 
+01667:   const meta = useMemo(() => {
+01668:     const last = lastLabel || "—";
+01669:     const prev = prevLabel || "—";
+01670:     const layer = cleanLayerText(layerMetaText || "—");
+01671:     return { last, prev, layer };
+01672:   }, [lastLabel, prevLabel, layerMetaText]);
+01673: 
+01674:   const headerBase = useMemo(() => meta.last || "—", [meta.last]);
+01675: 
+01676:   const headerForecast = useMemo(() => {
+01677:     return formatYmdHour(analysisYmd, analysisHourBucket);
+01678:   }, [analysisYmd, analysisHourBucket]);
+01679: 
+01680:   const headerTransition = useMemo(() => {
+01681:     const from = String(lastHourBucket || "").trim();
+01682:     const to = String(analysisHourBucket || "").trim();
+01683:     if (from && to) return `${from} → ${to}`;
+01684:     return "—";
+01685:   }, [lastHourBucket, analysisHourBucket]);
+01686: 
+01687:   const t = theme || {
+01688:     bg: "#050505",
+01689:     panel: "rgba(0,0,0,0.55)",
+01690:     border: "rgba(255,255,255,0.18)",
+01691:     text: "rgba(255,255,255,0.92)",
+01692:     muted: "rgba(255,255,255,0.72)",
+01693:     accent: "rgba(201,168,62,0.92)",
+01694:   };
+01695: 
+01696:   const [copiedAllKey, setCopiedAllKey] = useState("");
+01697:   const [copiedCellKey, setCopiedCellKey] = useState("");
+01698: 
+01699: 
+
+----- LINHAS 1734-1816 -----
+01734:       document.execCommand("copy");
+01735:       document.body.removeChild(ta);
+01736:       return true;
+01737:     } catch {
+01738:       return false;
+01739:     }
+01740:   }, []);
+01741: 
+01742:   const baseLots = Array.isArray(LOTTERY_OPTIONS) ? LOTTERY_OPTIONS : [];
+01743:   const mustHave = [
+01744:     { value: "PT_RIO", label: "RJ" },
+01745:     { value: "FEDERAL", label: "Federal" },
+01746:     { value: "LOOK", label: "LOOK" },
+01747:     { value: "NACIONAL", label: "Nacional" },
+01748:   ];
+01749: 
+01750:   const map = new Map();
+01751: 
+01752:   [...baseLots, ...mustHave].forEach((op) => {
+01753:     const rawVal = String(op?.value ?? op?.key ?? "").toUpperCase();
+01754:     if (!rawVal) return;
+01755: 
+01756:     if (!map.has(rawVal)) {
+01757:       map.set(rawVal, {
+01758:         value: rawVal,
+01759:         label:
+01760:           rawVal === "PT_RIO"
+01761:             ? "RJ"
+01762:             : op?.label || rawVal,
+01763:       });
+01764:     }
+01765:   });
+01766: 
+01767:   const lotOptions = [
+01768:     map.get("PT_RIO"),
+01769:     map.get("FEDERAL"),
+01770:     map.get("LOOK"),
+01771:     map.get("NACIONAL"),
+01772:     ...[...map.values()].filter(
+01773:       (x) =>
+01774:         ![
+01775:           "PT_RIO",
+01776:           "FEDERAL",
+01777:           "LOOK",
+01778:           "NACIONAL",
+01779:         ].includes(
+01780:           String(
+01781:             x?.value || ""
+01782:           ).toUpperCase()
+01783:         )
+01784:     ),
+01785:   ].filter(Boolean);
+01786: 
+01787:   const curLot = String(lotteryKeySafe || "PT_RIO").toUpperCase();
+01788:   const visibleTop3 = list.slice(0, 3);
+01789: 
+01790:   const historyAnchorYmd = useMemo(() => {
+01791:   const loaded = String(loadedYmd || "").trim();
+01792:   if (isYMD(loaded)) return loaded;
+01793: 
+01794:   const selected = String(ymdSafe || "").trim();
+01795:   if (isYMD(selected)) return selected;
+01796: 
+01797:   const realized = (Array.isArray(timeline) ? timeline : [])
+01798:     .filter((slot) => String(slot?.status || "").toLowerCase() === "validated")
+01799:     .slice()
+01800:     .sort((a, b) => {
+01801:       const ta = `${a?.targetYmd || ""} ${a?.targetHour || ""}`;
+01802:       const tb = `${b?.targetYmd || ""} ${b?.targetHour || ""}`;
+01803:       return tb.localeCompare(ta);
+01804:     });
+01805: 
+01806:   const fallback = String(realized?.[0]?.targetYmd || "").trim();
+01807:   return isYMD(fallback) ? fallback : "";
+01808: }, [loadedYmd, ymdSafe, timeline]);
+01809: 
+01810:   const historyRows = useMemo(() => {
+01811:     const persistedRows = (
+01812:       Array.isArray(persistedTop3History)
+01813:         ? persistedTop3History
+01814:         : []
+01815:     )
+01816:       .filter(
+
+----- LINHAS 1828-1852 -----
+01828:           Number.isFinite(resultGrupo) &&
+01829:           resultGrupo >= 1 &&
+01830:           resultGrupo <= 25;
+01831: 
+01832:         return {
+01833:           targetKey: String(
+01834:             entry?.id || entry?.targetKey || ""
+01835:           ),
+01836:           target: {
+01837:             ymd: String(entry?.targetYmd || ""),
+01838:             hour: String(entry?.targetHour || ""),
+01839:           },
+01840:           picks: Array.isArray(entry?.picks)
+01841:             ? entry.picks
+01842:             : snapshot
+01843:                 .map((item) => Number(item?.grupo))
+01844:                 .filter(Number.isFinite),
+01845:           top3: snapshot,
+01846:           result: hasResult ? resultGrupo : null,
+01847:           grupo: hasResult ? resultGrupo : null,
+01848:           animal: hasResult
+01849:             ? String(
+01850:                 entry?.resultAnimal ||
+01851:                   getAnimalLabel(resultGrupo) ||
+01852:                   ""
+
+----- LINHAS 1934-1961 -----
+01934:           getOfficialPodium(slot);
+01935: 
+01936:         const analysis = analyzeTop3Hit(
+01937:           slotTop3,
+01938:           officialPodium
+01939:         );
+01940: 
+01941:         return {
+01942:           targetKey:
+01943:             `${String(slot?.targetYmd || "")}` +
+01944:             `__${String(slot?.targetHour || "")}`,
+01945:           target: {
+01946:             ymd: String(slot?.targetYmd || ""),
+01947:             hour: String(slot?.targetHour || ""),
+01948:           },
+01949:           picks: slotTop3
+01950:             .map((item) => Number(item?.grupo))
+01951:             .filter(Number.isFinite),
+01952:           top3: slotTop3,
+01953:           result: hasResult
+01954:             ? Number(resultGrupo)
+01955:             : null,
+01956:           grupo: hasResult
+01957:             ? Number(resultGrupo)
+01958:             : null,
+01959:           animal: hasResult
+01960:             ? getAnimalLabel(resultGrupo)
+01961:             : "",
+
+----- LINHAS 1974-1998 -----
+01974:             analysis.type !== "miss" &&
+01975:             analysis.type !== "none",
+01976:           hitType: analysis.type,
+01977:           hitScore: Number(analysis.score || 0),
+01978:           hitPosition: Number(
+01979:             analysis.position ?? -1
+01980:           ),
+01981:         };
+01982:       });
+01983: 
+01984:     // A timeline garante todos os horarios oficiais.
+01985:     // O registro persistido prevalece quando realmente existe.
+01986:     const rowsByTarget = new Map();
+01987: 
+01988:     for (const row of timelineRows) {
+01989:       const key =
+01990:         `${String(row?.target?.ymd || "")}` +
+01991:         `__${String(row?.target?.hour || "")}`;
+01992: 
+01993:       rowsByTarget.set(key, row);
+01994:     }
+01995: 
+01996:     for (const row of persistedRows) {
+01997:       const key =
+01998:         `${String(row?.target?.ymd || "")}` +
+
+----- LINHAS 2033-2060 -----
+02033:         hitType: analysis.type,
+02034:         hitScore: Number(analysis.score || 0),
+02035:         hitPosition: Number(
+02036:           analysis.position ?? -1
+02037:         ),
+02038:       });
+02039:     }
+02040: 
+02041:     return Array.from(rowsByTarget.values())
+02042:       .sort((a, b) => {
+02043:         const ah = hourBucketToSortValue(
+02044:           a?.target?.hour
+02045:         );
+02046:         const bh = hourBucketToSortValue(
+02047:           b?.target?.hour
+02048:         );
+02049: 
+02050:         return ah - bh;
+02051:       });
+02052:   }, [
+02053:     timeline,
+02054:     historyAnchorYmd,
+02055:     persistedTop3History,
+02056:   ]);
+02057: 
+02058:   const historySummary = useMemo(() => {
+02059:     const validated = historyRows.filter(
+02060:       (item) => item?.result != null
+
+----- LINHAS 3535-3582 -----
+03535:           <section className="top3-stage">
+03536:             <section className="top3-shell">
+03537:               <div className="top3-header__title">Leitura do dia — Timeline completa</div>
+03538:               <div className="top3-helper">
+03539:                 Cada bloco abaixo mostra o Top3 calculado para o horário alvo, a base usada e o resultado real quando disponível.
+03540:               </div>
+03541:             </section>
+03542: 
+03543:             {timeline.map((slot, idx) => (
+03544:               <TimelineSlot
+03545:                 key={`${String(slot?.targetYmd || "y")}_${String(slot?.targetHour || "h")}_${idx}`}
+03546:                 slot={slot}
+03547:                 theme={t}
+03548:                 copiedAllKey={copiedAllKey}
+03549:                 copiedCellKey={copiedCellKey}
+03550:                 setCopiedAllKey={setCopiedAllKey}
+03551:                 setCopiedCellKey={setCopiedCellKey}
+03552:                 copyText={copyText}
+03553:                 build16={build16}
+03554:                 buildMilhares={buildMilhares}
+03555:                 build20={build20}
+03556:               />
+03557:             ))}
+03558:           </section>
+03559:         ) : null}
+03560: 
+03561:         <section className="top3-shell">
+03562:           <div className="top3-header__title">
+03563:             Histórico recente {historyAnchorYmd ? `— ${ymdToBR(historyAnchorYmd)}` : ""}
+03564:           </div>
+03565: 
+03566:           <div className="top3-historySummary">
+03567:             <div className="top3-historyMetric">
+03568:               <div className="top3-historyMetric__label">Horários</div>
+03569:               <div className="top3-historyMetric__value">
+03570:                 {historySummary.total}
+03571:               </div>
+03572:             </div>
+03573: 
+03574:             <div className="top3-historyMetric">
+03575:               <div className="top3-historyMetric__label">Validados</div>
+03576:               <div className="top3-historyMetric__value">
+03577:                 {historySummary.validated}
+03578:               </div>
+03579:             </div>
+03580: 
+03581:             <div className="top3-historyMetric">
+03582:               <div className="top3-historyMetric__label">Grupo/dezena</div>
+
+====================================================================================================
+RESUMO DE REFERÊNCIAS EXATAS
+====================================================================================================
+
+19:00 — 3 ocorrência(s)
+C:\Users\glaub\palpitaco\src\pages\Statistics\Statistics.jsx:29: "19:00",
+C:\Users\glaub\palpitaco\src\pages\Downloads\Downloads.jsx:678: PT_RIO: ["09:00", "11:00", "14:00", "16:00", "18:00", "19:00", "21:00"],
+C:\Users\glaub\palpitaco\src\pages\Downloads\Downloads.jsx:679: FEDERAL: ["19:00", "20:00"],
+
+19:20 — 1 ocorrência(s)
+C:\Users\glaub\palpitaco\src\pages\Statistics\Statistics.jsx:20: "19:20",
+
+19:30 — 0 ocorrência(s)
+
+====================================================================================================
+EXTRAÇÃO CONCLUÍDA.
+Nenhum arquivo foi alterado.
+====================================================================================================

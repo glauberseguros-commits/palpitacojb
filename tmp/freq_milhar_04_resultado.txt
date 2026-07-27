@@ -1,0 +1,19 @@
+====================================================================================================
+FREQ-MILHAR-04 — RESULTADO
+====================================================================================================
+STATUS: OK
+ARQUIVO ALTERADO: src/pages/Statistics/Statistics.jsx
+CORREÇÃO:
+- Prêmios filtrados agora conta somente itens que entram efetivamente no ranking.
+- O 7º prêmio continua excluído da aba Milhares.
+- Nenhuma centena é transformada em milhar.
+- Nenhum dígito é acrescentado à esquerda para criar uma falsa milhar.
+
+EXEMPLO ESPERADO:
+76 resultados x 6 milhares = 456 prêmios filtrados
+
+BUILD: APROVADO
+COMMIT: eb3e6b13fa59c09aa87eae5c6a5bd659762eba52
+PUSH: CONCLUÍDO
+BACKUP: .\tmp\freq_milhar_04_backup_20260726_005427
+====================================================================================================

@@ -1,0 +1,68 @@
+====================================================================================================
+AUDITORIA ESTATÍSTICA DA TELEMETRIA TOP3
+====================================================================================================
+
+Casos avaliados : 100
+TOP1 oficiais   : 6
+TOP3 oficiais   : 13
+
+SCORE MÉDIO
+----------------------------------------------------------------------------------------------------
+TOP1 .......... n/d
+TOP3 .......... n/d
+ERROS ......... n/d
+
+PROBABILITY MÉDIA
+----------------------------------------------------------------------------------------------------
+Acertos ....... n/d
+Erros ......... n/d
+
+CONFIDENCE MÉDIA
+----------------------------------------------------------------------------------------------------
+Acertos ....... n/d
+Erros ......... n/d
+
+FREQUÊNCIA MÉDIA
+----------------------------------------------------------------------------------------------------
+Acertos ....... 3.4615
+Erros ......... 3.9310
+
+TOP10 REASONS NOS ACERTOS
+----------------------------------------------------------------------------------------------------
+  13  Motor: V3_STATISTICAL
+   2  Base: G22 @ 16h
+   1  Alvo: 2022-06-30 18h | DOW=4 | dia=30
+   1  Probabilidade final G04: 6.25%
+   1  frequência no horário 18h: 1x em 1º | 3x no TOP3 | amostras=13 | peso=72%
+   1  frequência no dia da semana + horário: 1x em 1º | 2x no TOP3 | amostras=3 | peso=14%
+   1  recência comparável: 1x em 1º | 2x no TOP3 | amostras=3 | peso=13%
+   1  Alvo: 2022-07-01 16h | DOW=5 | dia=01
+   1  Base: G01 @ 14h
+   1  Probabilidade final G16: 7.89%
+
+TOP10 REASONS NOS ERROS
+----------------------------------------------------------------------------------------------------
+  87  Motor: V3_STATISTICAL
+   4  frequência no dia da semana + horário: 1x em 1º | 1x no TOP3 | amostras=4 | peso=9%
+   3  recência comparável: 1x em 1º | 1x no TOP3 | amostras=3 | peso=8%
+   3  Base: G05 @ 14h
+   3  recência comparável: 1x em 1º | 1x no TOP3 | amostras=4 | peso=9%
+   3  Base: G16 @ 11h
+   3  frequência no dia da semana + horário: 1x em 1º | 2x no TOP3 | amostras=5 | peso=11%
+   3  recência comparável: 1x em 1º | 2x no TOP3 | amostras=5 | peso=10%
+   3  frequência no dia da semana + horário: 0x em 1º | 1x no TOP3 | amostras=5 | peso=11%
+   3  recência comparável: 0x em 1º | 1x no TOP3 | amostras=5 | peso=10%
+
+TOP10 SIGNALS NOS ACERTOS
+----------------------------------------------------------------------------------------------------
+
+TOP10 SIGNALS NOS ERROS
+----------------------------------------------------------------------------------------------------
+
+DESEMPENHO POR HORÁRIO
+----------------------------------------------------------------------------------------------------
+11:00 | Aval= 22 | TOP1=  1 | TOP3=  1
+14:00 | Aval= 22 | TOP1=  2 | TOP3=  5
+16:00 | Aval= 23 | TOP1=  0 | TOP3=  2
+18:00 | Aval= 13 | TOP1=  1 | TOP3=  3
+21:00 | Aval= 20 | TOP1=  2 | TOP3=  2

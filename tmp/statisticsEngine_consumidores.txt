@@ -1,0 +1,330 @@
+==============================================================================================================
+CONSUMIDORES E REFERÊNCIAS DO statisticsEngine
+==============================================================================================================
+
+--------------------------------------------------------------------------------------------------------------
+backend/engine/bootstrapSnapshot.js
+--------------------------------------------------------------------------------------------------------------
+
+Linha 4 | Padrões: statisticsEngine
+        1: "use strict";
+        2: 
+        3: const { fetchAllDrawsWithPrizes } = require("./drawRepository");
+>>>     4: const { writeStatisticsSnapshot } = require("./statisticsEngine");
+        5: 
+        6: // Ajuste estes requires caso os arquivos estejam em outro caminho
+        7: const { buildRanking } = require("../../src/utils/buildRanking");
+        8: const { applyScoreEngine } = require("../../src/utils/scoreEngine");
+        9: 
+
+Linha 29 | Padrões: dashboard_full
+       24: 
+       25:   const rankingScored = applyScoreEngine(ranking);
+       26: 
+       27:   await writeStatisticsSnapshot({
+       28:     uf: lottery,
+>>>    29:     scope: "dashboard_full",
+       30:     data: {
+       31:       version: 1,
+       32:       totalDraws: built.totalDraws,
+       33:       uniqueDays: built.uniqueDays,
+       34:       totalOcorrencias: built.totalOcorrencias,
+
+--------------------------------------------------------------------------------------------------------------
+backend/engine/drawRepository.js
+--------------------------------------------------------------------------------------------------------------
+
+Linha 3 | Padrões: statisticsEngine
+        1: "use strict";
+        2: 
+>>>     3: const { getAdminDb } = require("./statisticsEngine");
+        4: 
+        5: function normalizeLottery(lottery) {
+        6:   return String(lottery || "PT_RIO").trim().toUpperCase();
+        7: }
+        8: 
+
+--------------------------------------------------------------------------------------------------------------
+backend/engine/snapshotManager.js
+--------------------------------------------------------------------------------------------------------------
+
+Linha 3 | Padrões: readStatisticsSnapshot
+        1: const { computeBounds } = require("../routes/bounds");
+        2: const {
+>>>     3:   readStatisticsSnapshot,
+        4:   writeStatisticsSnapshot,
+        5:   getAdminDb,
+        6: } = require("./statisticsEngine");
+        7: 
+        8: const {
+
+Linha 6 | Padrões: statisticsEngine
+        1: const { computeBounds } = require("../routes/bounds");
+        2: const {
+        3:   readStatisticsSnapshot,
+        4:   writeStatisticsSnapshot,
+        5:   getAdminDb,
+>>>     6: } = require("./statisticsEngine");
+        7: 
+        8: const {
+        9:   readSnapshotMetadata,
+       10:   writeSnapshotMetadata,
+       11: } = require("./snapshotMetadata");
+
+Linha 53 | Padrões: readStatisticsSnapshot
+       48: 
+       49:   // Bounds atuais do Firestore
+       50:   const { result: bounds } = await computeBounds(db, lottery);
+       51: 
+       52:   // Snapshot existente
+>>>    53:   const current = await readStatisticsSnapshot({
+       54:     uf: lottery,
+       55:     scope: "dashboard_full",
+       56:   });
+       57: 
+       58:   // Metadata de controle incremental
+
+Linha 55 | Padrões: dashboard_full
+       50:   const { result: bounds } = await computeBounds(db, lottery);
+       51: 
+       52:   // Snapshot existente
+       53:   const current = await readStatisticsSnapshot({
+       54:     uf: lottery,
+>>>    55:     scope: "dashboard_full",
+       56:   });
+       57: 
+       58:   // Metadata de controle incremental
+       59:   const metadata = await readSnapshotMetadata(lottery);
+       60: 
+
+--------------------------------------------------------------------------------------------------------------
+backend/engine/snapshotMetadata.js
+--------------------------------------------------------------------------------------------------------------
+
+Linha 3 | Padrões: statisticsEngine
+        1: const {
+        2:   getAdminDb,
+>>>     3: } = require("./statisticsEngine");
+        4: 
+        5: function metadataRef(db, lottery) {
+        6:   return db
+        7:     .collection("statistics")
+        8:     .doc(String(lottery).toUpperCase())
+
+--------------------------------------------------------------------------------------------------------------
+backend/engine/statisticsEngine.js
+--------------------------------------------------------------------------------------------------------------
+
+Linha 17 | Padrões: dashboard_full
+       12: 
+       13: function normalizeUfKey(uf) {
+       14:   return String(uf || "PT_RIO").trim().toUpperCase() || "PT_RIO";
+       15: }
+       16: 
+>>>    17: function snapshotRef(db, uf, scope = "dashboard_full") {
+       18:   return db
+       19:     .collection("statistics")
+       20:     .doc(normalizeUfKey(uf))
+       21:     .collection("snapshots")
+       22:     .doc(scope);
+
+Linha 25 | Padrões: readStatisticsSnapshot, dashboard_full
+       20:     .doc(normalizeUfKey(uf))
+       21:     .collection("snapshots")
+       22:     .doc(scope);
+       23: }
+       24: 
+>>>    25: async function readStatisticsSnapshot({ uf = "PT_RIO", scope = "dashboard_full" } = {}) {
+       26:   const db = getAdminDb();
+       27:   const snap = await snapshotRef(db, uf, scope).get();
+       28: 
+       29:   if (!snap.exists) {
+       30:     return { exists: false, data: null };
+
+Linha 38 | Padrões: dashboard_full
+       33:   return { exists: true, data: snap.data() };
+       34: }
+       35: 
+       36: async function writeStatisticsSnapshot({
+       37:   uf = "PT_RIO",
+>>>    38:   scope = "dashboard_full",
+       39:   data,
+       40: } = {}) {
+       41:   const db = getAdminDb();
+       42: 
+       43:   const payload = {
+
+Linha 59 | Padrões: readStatisticsSnapshot
+       54: 
+       55: module.exports = {
+       56:   getAdminDb,
+       57:   safeArray,
+       58:   normalizeUfKey,
+>>>    59:   readStatisticsSnapshot,
+       60:   writeStatisticsSnapshot,
+       61: };
+
+--------------------------------------------------------------------------------------------------------------
+src/pages/Dashboard/dashboard.snapshot.loader.js
+--------------------------------------------------------------------------------------------------------------
+
+Linha 1 | Padrões: ensureStatisticsSnapshot, statisticsEngine
+>>>     1: import { ensureStatisticsSnapshot } from "../../services/statisticsEngine";
+        2: 
+        3: export async function loadDashboardStatistics({
+        4:   uf,
+        5:   dateFrom,
+        6:   dateTo,
+
+Linha 9 | Padrões: ensureStatisticsSnapshot
+        4:   uf,
+        5:   dateFrom,
+        6:   dateTo,
+        7: }) {
+        8: 
+>>>     9:   const result = await ensureStatisticsSnapshot({
+       10:     uf,
+       11:     dateFrom,
+       12:     dateTo,
+       13:     force: false,
+       14:   });
+
+--------------------------------------------------------------------------------------------------------------
+src/services/statisticsEngine.js
+--------------------------------------------------------------------------------------------------------------
+
+Linha 15 | Padrões: dashboard_full
+       10: 
+       11: function normalizeUfKey(uf) {
+       12:   return String(uf || "PT_RIO").trim().toUpperCase() || "PT_RIO";
+       13: }
+       14: 
+>>>    15: function snapshotDocRef(uf, scope = "dashboard_full") {
+       16:   const key = normalizeUfKey(uf);
+       17:   return doc(db, "statistics", key, "snapshots", scope);
+       18: }
+       19: 
+       20: export async function readStatisticsSnapshot({ uf, scope = "dashboard_full" } = {}) {
+
+Linha 17 | Padrões: doc(db, "statistics"
+       12:   return String(uf || "PT_RIO").trim().toUpperCase() || "PT_RIO";
+       13: }
+       14: 
+       15: function snapshotDocRef(uf, scope = "dashboard_full") {
+       16:   const key = normalizeUfKey(uf);
+>>>    17:   return doc(db, "statistics", key, "snapshots", scope);
+       18: }
+       19: 
+       20: export async function readStatisticsSnapshot({ uf, scope = "dashboard_full" } = {}) {
+       21:   const ref = snapshotDocRef(uf, scope);
+       22:   const snap = await getDoc(ref);
+
+Linha 20 | Padrões: readStatisticsSnapshot, dashboard_full
+       15: function snapshotDocRef(uf, scope = "dashboard_full") {
+       16:   const key = normalizeUfKey(uf);
+       17:   return doc(db, "statistics", key, "snapshots", scope);
+       18: }
+       19: 
+>>>    20: export async function readStatisticsSnapshot({ uf, scope = "dashboard_full" } = {}) {
+       21:   const ref = snapshotDocRef(uf, scope);
+       22:   const snap = await getDoc(ref);
+       23: 
+       24:   if (!snap.exists()) {
+       25:     return {
+
+Linha 37 | Padrões: buildStatisticsSnapshot
+       32:     exists: true,
+       33:     data: snap.data(),
+       34:   };
+       35: }
+       36: 
+>>>    37: export async function buildStatisticsSnapshot({
+       38:   uf = "PT_RIO",
+       39:   dateFrom,
+       40:   dateTo,
+       41:   scope = "dashboard_full",
+       42:   positions = null,
+
+Linha 41 | Padrões: dashboard_full
+       36: 
+       37: export async function buildStatisticsSnapshot({
+       38:   uf = "PT_RIO",
+       39:   dateFrom,
+       40:   dateTo,
+>>>    41:   scope = "dashboard_full",
+       42:   positions = null,
+       43: } = {}) {
+       44:   if (!dateFrom || !dateTo) {
+       45:     throw new Error("buildStatisticsSnapshot exige dateFrom e dateTo.");
+       46:   }
+
+Linha 45 | Padrões: buildStatisticsSnapshot
+       40:   dateTo,
+       41:   scope = "dashboard_full",
+       42:   positions = null,
+       43: } = {}) {
+       44:   if (!dateFrom || !dateTo) {
+>>>    45:     throw new Error("buildStatisticsSnapshot exige dateFrom e dateTo.");
+       46:   }
+       47: 
+       48:   const draws = await getKingResultsByRange({
+       49:     uf,
+       50:     dateFrom,
+
+Linha 83 | Padrões: ensureStatisticsSnapshot
+       78:   await setDoc(snapshotDocRef(uf, scope), payload, { merge: true });
+       79: 
+       80:   return payload;
+       81: }
+       82: 
+>>>    83: export async function ensureStatisticsSnapshot({
+       84:   uf = "PT_RIO",
+       85:   dateFrom,
+       86:   dateTo,
+       87:   scope = "dashboard_full",
+       88:   force = false,
+
+Linha 87 | Padrões: dashboard_full
+       82: 
+       83: export async function ensureStatisticsSnapshot({
+       84:   uf = "PT_RIO",
+       85:   dateFrom,
+       86:   dateTo,
+>>>    87:   scope = "dashboard_full",
+       88:   force = false,
+       89:   positions = null,
+       90: } = {}) {
+       91:   const current = await readStatisticsSnapshot({ uf, scope });
+       92: 
+
+Linha 91 | Padrões: readStatisticsSnapshot
+       86:   dateTo,
+       87:   scope = "dashboard_full",
+       88:   force = false,
+       89:   positions = null,
+       90: } = {}) {
+>>>    91:   const current = await readStatisticsSnapshot({ uf, scope });
+       92: 
+       93:   if (!force && current.exists && current.data?.from === dateFrom && current.data?.to === dateTo) {
+       94:     return {
+       95:       source: "cache",
+       96:       data: current.data,
+
+Linha 100 | Padrões: buildStatisticsSnapshot
+       95:       source: "cache",
+       96:       data: current.data,
+       97:     };
+       98:   }
+       99: 
+>>>   100:   const data = await buildStatisticsSnapshot({
+      101:     uf,
+      102:     dateFrom,
+      103:     dateTo,
+      104:     scope,
+      105:     positions,
+
+==============================================================================================================
+RESUMO
+==============================================================================================================
+Arquivos com referências: 7
+Ocorrências: 24

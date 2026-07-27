@@ -1,0 +1,181 @@
+====================================================================================================
+TOP3-UI-11 — SEPARAÇÃO ENTRE ACERTO E RESULTADO OFICIAL
+====================================================================================================
+
+OBJETIVO
+
+Separar completamente:
+
+1) O QUE O TOP3 ACERTOU
+
+de
+
+2) O RESULTADO OFICIAL
+
+====================================================================================================
+REGRAS
+====================================================================================================
+
+COLUNA DOS PALPITES
+
+Somente os palpites recebem:
+
+• medalha
+
+• borda ouro
+
+• borda prata
+
+• borda bronze
+
+Nunca alterar esta regra.
+
+
+----------------------------------------------------------------------------------------------------
+
+COLUNA "ACERTO"
+
+Mostrar exatamente:
+
+Grupo ✓
+
+Dezena XX ✓
+
+Centena XXX ✓
+
+Milhar XXXX ✓
+
+Somente quando existir.
+
+Caso contrário:
+
+—
+
+Não destacar o resultado oficial.
+
+
+----------------------------------------------------------------------------------------------------
+
+RESULTADO OFICIAL
+
+Transformar em um cartão neutro.
+
+Sem medalhas.
+
+Sem ouro.
+
+Sem prata.
+
+Sem bronze.
+
+Mostrar apenas:
+
+Imagem (20% maior)
+
+Nome do animal
+
+Grupo
+
+Milhar sorteada
+
+Exemplo:
+
+ELEFANTE
+
+Grupo 12
+
+Milhar 0832
+
+
+----------------------------------------------------------------------------------------------------
+
+EXCEÇÃO
+
+Quando houver acerto em PRIMEIRO PRÊMIO
+
+a foto do resultado oficial pode aumentar cerca de 20%
+
+apenas para facilitar a leitura,
+
+mas SEM medalha
+
+SEM borda dourada
+
+SEM glow.
+
+
+----------------------------------------------------------------------------------------------------
+
+REMOVER
+
+Não destacar o resultado oficial por causa do prêmio.
+
+Quem merece destaque é o PALPITE.
+
+Nunca o resultado.
+
+
+----------------------------------------------------------------------------------------------------
+
+PRESERVAR
+
+• engine
+
+• firestore
+
+• score
+
+• estatísticas
+
+• cálculo dos acertos
+
+• responsividade
+
+• mobile
+
+• desktop
+
+• tablet
+
+
+----------------------------------------------------------------------------------------------------
+
+VALIDAR
+
+npm run build
+
+Se falhar:
+
+restaurar backup
+
+cancelar commit
+
+cancelar push
+
+
+----------------------------------------------------------------------------------------------------
+
+PUBLICAÇÃO
+
+git add src/pages/Top3/Top3View.jsx
+
+git commit -m "TOP3: separa destaque do palpite e resultado oficial"
+
+git push
+
+
+----------------------------------------------------------------------------------------------------
+
+RELATÓRIO
+
+Informar:
+
+✓ build
+
+✓ commit
+
+✓ push
+
+✓ deploy
+
+====================================================================================================

@@ -1,0 +1,54 @@
+====================================================================================================
+RES-39 — REIMPORTAÇÃO DIRETA DOS HORÁRIOS AUSENTES PT_RIO
+====================================================================================================
+
+Executado em: 23/07/2026 14:30:53
+
+
+----------------------------------------------------------------------------------------------------
+PT_RIO | 2026-07-19 | 09:00
+----------------------------------------------------------------------------------------------------
+ExitCode: 0
+Log: .\tmp\res39_logs\pt_rio_2026-07-19_0900.log
+
+STEP 1/3 Buscando API: PT_RIO 2026-07-19 09:00
+[FETCH] PT_RIO 2026-07-19 per-lottery=6 -> merged_draws=2 close_hours=[14:00, 16:00]
+[NO_DRAW_FOR_SLOT] PT_RIO 2026-07-19 slot=09:00 close_hours=[14:00, 16:00]
+
+
+----------------------------------------------------------------------------------------------------
+PT_RIO | 2026-07-19 | 11:00
+----------------------------------------------------------------------------------------------------
+ExitCode: 0
+Log: .\tmp\res39_logs\pt_rio_2026-07-19_1100.log
+
+STEP 1/3 Buscando API: PT_RIO 2026-07-19 11:00
+[FETCH] PT_RIO 2026-07-19 per-lottery=6 -> merged_draws=2 close_hours=[14:00, 16:00]
+[NO_DRAW_FOR_SLOT] PT_RIO 2026-07-19 slot=11:00 close_hours=[14:00, 16:00]
+
+
+----------------------------------------------------------------------------------------------------
+PT_RIO | 2026-07-22 | 18:00
+----------------------------------------------------------------------------------------------------
+ExitCode: 0
+Log: .\tmp\res39_logs\pt_rio_2026-07-22_1800.log
+
+STEP 1/3 Buscando API: PT_RIO 2026-07-22 18:00
+[FETCH] PT_RIO 2026-07-22 per-lottery=6 -> merged_draws=5 close_hours=[09:00, 11:00, 14:00, 16:00, 21:00]
+[NO_DRAW_FOR_SLOT] PT_RIO 2026-07-22 slot=18:00 close_hours=[09:00, 11:00, 14:00, 16:00, 21:00]
+[FALLBACK:DETAILS] lk=PT_RIO date=2026-07-22 slot=18:00 kind=login hasSlot=false hasAnyPrize=false url=https://app.kingapostas.com/results/details?lottery=PT%20RIO&date=2026-07-22
+
+
+----------------------------------------------------------------------------------------------------
+PT_RIO | 2026-07-22 | 21:00
+----------------------------------------------------------------------------------------------------
+ExitCode: 0
+Log: .\tmp\res39_logs\pt_rio_2026-07-22_2100.log
+
+STEP 1/3 Buscando API: PT_RIO 2026-07-22 21:00
+[FETCH] PT_RIO 2026-07-22 per-lottery=6 -> merged_draws=5 close_hours=[09:00, 11:00, 14:00, 16:00, 21:00]
+STEP 2/3 Processando 5 draws retornados pela API...
+[IMPORT] API draws=5 | match_close=1 | validos=1 | draws_upserted=1 | draws_novos=0 | prizes_upserted=7 | prizes_novos=0 | skip_vazio=0 | skip_invalido=0 | skip_close=4 | skip_complete=0 | CHECK_EXISTENCE=OFF | uf=RJ lottery_key=PT_RIO | expected=1 complete=1 slotDocs=1 apiTargets=1
+STEP 3/3 OK. Import conclu├¡do: PT_RIO 2026-07-22 21:00
+[CLEANUP] PT_RIO 2026-07-22 slots=0 deleted=0
+

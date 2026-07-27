@@ -1,0 +1,79 @@
+====================================================================================================
+TOP3-AUTO-01 — DIAGNÓSTICO DO MÓDULO TOP3
+====================================================================================================
+Gerado em: 07/23/2026 22:52:06
+====================================================================================================
+
+====================================================================================================
+1. EXISTE O ARQUIVO?
+====================================================================================================
+OK -> .\src\pages\Top3\top3.public-api.js
+NÃO EXISTE -> .\src\pages\Top3\top3.public-api.jsx
+NÃO EXISTE -> .\src\pages\Top3\top3.public-api.ts
+NÃO EXISTE -> .\src\src\pages\Top3\top3.public-api.js
+
+====================================================================================================
+2. BUSCA POR IMPORTS
+====================================================================================================
+C:\Users\glaub\palpitaco\backend\engine\scoreEngineUnified.js:46
+    "../../src/pages/Top3/top3.public-api.js"
+
+C:\Users\glaub\palpitaco\src\pages\Top3\__tests__\top3.public-api.node.test.js:3
+import * as publicApi from "../top3.public-api";
+
+C:\Users\glaub\palpitaco\src\pages\Top3\__tests__\top3.schedule-transition.test.js:6
+} from "../top3.public-api";
+
+C:\Users\glaub\palpitaco\src\pages\Top3\top3.public-api.js:1
+// src/pages/Top3/top3.public-api.js
+
+
+====================================================================================================
+3. SCORE ENGINE
+====================================================================================================
+
+const path = require("path");
+  require("@babel/register")({
+      require.resolve(
+  publicApi = require(
+    "../../src/pages/Top3/top3.public-api.js"
+
+
+====================================================================================================
+4. AUTO IMPORT
+====================================================================================================
+
+const { runImport } = require("./importKingApostas");
+          r = await runImport({ date, lotteryKey: LOTTERY, closeHour });
+
+
+====================================================================================================
+5. IMPORT KING
+====================================================================================================
+
+  syncImportedResultToTop3History,
+} = require("../engine/top3HistorySync");
+  createTop3PredictionRun,
+  resolveNextTop3Slot,
+} = require("../engine/top3PredictionService");
+  loadTop3PublicApi,
+} = require("../engine/scoreEngineUnified");
+async function runImport({ date, lotteryKey = "PT_RIO", closeHour = null } = {}) {
+  const top3HistorySync =
+    await syncImportedResultToTop3History(
+  let top3AutoPrediction = {
+      const publicApi = loadTop3PublicApi();
+        resolveNextTop3Slot({
+          await createTop3PredictionRun({
+        top3AutoPrediction = {
+          `[TOP3 AUTO] OK | ${lk} | ` +
+        top3AutoPrediction = {
+          `[TOP3 AUTO] próximo slot não localizado | ` +
+      top3AutoPrediction = {
+          "top3_auto_failed"
+        "[TOP3 AUTO] falhou:",
+    top3AutoPrediction = {
+    top3HistorySync,
+    top3AutoPrediction,
+  runImport,
+

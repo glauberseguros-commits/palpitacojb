@@ -1,0 +1,213 @@
+run-import (NACIONAL)	Set up job	´╗┐2026-07-20T21:18:50.3862257Z Current runner version: '2.335.1'
+run-import (NACIONAL)	Set up job	2026-07-20T21:18:50.3889710Z ##[group]Runner Image Provisioner
+run-import (NACIONAL)	Set up job	2026-07-20T21:18:50.3890901Z Hosted Compute Agent
+run-import (NACIONAL)	Set up job	2026-07-20T21:18:50.3891757Z Version: 20260707.563
+run-import (NACIONAL)	Set up job	2026-07-20T21:18:50.3892647Z Commit: 02667638d2b423fbc733a8e32a88b44996a3ba6e
+run-import (NACIONAL)	Set up job	2026-07-20T21:18:50.3893881Z Build Date: 2026-07-07T19:33:50Z
+run-import (NACIONAL)	Set up job	2026-07-20T21:18:50.3894956Z Worker ID: ***2095dfe6-3ae2-44e7-bec9-97054ec4e1dc***
+run-import (NACIONAL)	Set up job	2026-07-20T21:18:50.3896005Z Azure Region: westus
+run-import (NACIONAL)	Set up job	2026-07-20T21:18:50.3896845Z ##[endgroup]
+run-import (NACIONAL)	Set up job	2026-07-20T21:18:50.3898902Z ##[group]Operating System
+run-import (NACIONAL)	Set up job	2026-07-20T21:18:50.3899885Z Ubuntu
+run-import (NACIONAL)	Set up job	2026-07-20T21:18:50.3900591Z 24.04.4
+run-import (NACIONAL)	Set up job	2026-07-20T21:18:50.3901404Z LTS
+run-import (NACIONAL)	Set up job	2026-07-20T21:18:50.3902101Z ##[endgroup]
+run-import (NACIONAL)	Set up job	2026-07-20T21:18:50.3903184Z ##[group]Runner Image
+run-import (NACIONAL)	Set up job	2026-07-20T21:18:50.3904021Z Image: ubuntu-24.04
+run-import (NACIONAL)	Set up job	2026-07-20T21:18:50.3904912Z Version: 20260714.240.1
+run-import (NACIONAL)	Set up job	2026-07-20T21:18:50.3906202Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20260714.240/images/ubuntu/Ubuntu2404-Readme.md
+run-import (NACIONAL)	Set up job	2026-07-20T21:18:50.3908191Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20260714.240
+run-import (NACIONAL)	Set up job	2026-07-20T21:18:50.3909429Z ##[endgroup]
+run-import (NACIONAL)	Set up job	2026-07-20T21:18:50.3910873Z ##[group]GITHUB_TOKEN Permissions
+run-import (NACIONAL)	Set up job	2026-07-20T21:18:50.3913669Z Contents: read
+run-import (NACIONAL)	Set up job	2026-07-20T21:18:50.3914573Z Metadata: read
+run-import (NACIONAL)	Set up job	2026-07-20T21:18:50.3915334Z ##[endgroup]
+run-import (NACIONAL)	Set up job	2026-07-20T21:18:50.3917664Z Secret source: Actions
+run-import (NACIONAL)	Set up job	2026-07-20T21:18:50.3918785Z Prepare workflow directory
+run-import (NACIONAL)	Set up job	2026-07-20T21:18:50.4477008Z Prepare all required actions
+run-import (NACIONAL)	Set up job	2026-07-20T21:18:50.4515047Z Getting action download info
+run-import (NACIONAL)	Set up job	2026-07-20T21:18:50.8161339Z Download action repository 'actions/checkout@v4' (SHA:11d5960a326750d5838078e36cf38b85af677262)
+run-import (NACIONAL)	Set up job	2026-07-20T21:18:51.3551226Z Download action repository 'actions/setup-node@v4' (SHA:49933ea5288caeca8642d1e84afbd3f7d6820020)
+run-import (NACIONAL)	Set up job	2026-07-20T21:18:51.5369040Z Complete job name: run-import (NACIONAL)
+run-import (NACIONAL)	Checkout do reposit├│rio	´╗┐2026-07-20T21:18:51.6099877Z Node 20 is being deprecated. This workflow is running with Node 24 by default. If you need to temporarily use Node 20, you can set the ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION=true environment variable. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+run-import (NACIONAL)	Checkout do reposit├│rio	2026-07-20T21:18:51.6109787Z ##[group]Run actions/checkout@v4
+run-import (NACIONAL)	Checkout do reposit├│rio	2026-07-20T21:18:51.6110745Z with:
+run-import (NACIONAL)	Checkout do reposit├│rio	2026-07-20T21:18:51.6111395Z   repository: glauberseguros-commits/palpitacojb
+run-import (NACIONAL)	Checkout do reposit├│rio	2026-07-20T21:18:51.6115978Z   token: ***
+run-import (NACIONAL)	Checkout do reposit├│rio	2026-07-20T21:18:51.6116560Z   ssh-strict: true
+run-import (NACIONAL)	Checkout do reposit├│rio	2026-07-20T21:18:51.6117138Z   ssh-user: git
+run-import (NACIONAL)	Checkout do reposit├│rio	2026-07-20T21:18:51.6117715Z   persist-credentials: true
+run-import (NACIONAL)	Checkout do reposit├│rio	2026-07-20T21:18:51.6118399Z   clean: true
+run-import (NACIONAL)	Checkout do reposit├│rio	2026-07-20T21:18:51.6118971Z   sparse-checkout-cone-mode: true
+run-import (NACIONAL)	Checkout do reposit├│rio	2026-07-20T21:18:51.6119623Z   fetch-depth: 1
+run-import (NACIONAL)	Checkout do reposit├│rio	2026-07-20T21:18:51.6120183Z   fetch-tags: false
+run-import (NACIONAL)	Checkout do reposit├│rio	2026-07-20T21:18:51.6120763Z   show-progress: true
+run-import (NACIONAL)	Checkout do reposit├│rio	2026-07-20T21:18:51.6121342Z   lfs: false
+run-import (NACIONAL)	Checkout do reposit├│rio	2026-07-20T21:18:51.6121880Z   submodules: false
+run-import (NACIONAL)	Checkout do reposit├│rio	2026-07-20T21:18:51.6122518Z   set-safe-directory: true
+run-import (NACIONAL)	Checkout do reposit├│rio	2026-07-20T21:18:51.6123423Z   allow-unsafe-pr-checkout: false
+run-import (NACIONAL)	Checkout do reposit├│rio	2026-07-20T21:18:51.6124423Z env:
+run-import (NACIONAL)	Checkout do reposit├│rio	2026-07-20T21:18:51.6124983Z   TZ: America/Sao_Paulo
+run-import (NACIONAL)	Checkout do reposit├│rio	2026-07-20T21:18:51.6125677Z   PITACO_API_BASE: https://api.palpitacojb.com.br
+run-import (NACIONAL)	Checkout do reposit├│rio	2026-07-20T21:18:51.6126426Z ##[endgroup]
+run-import (NACIONAL)	Checkout do reposit├│rio	2026-07-20T21:18:51.7161686Z Syncing repository: glauberseguros-commits/palpitacojb
+run-import (NACIONAL)	Checkout do reposit├│rio	2026-07-20T21:18:51.7165479Z ##[group]Getting Git version info
+run-import (NACIONAL)	Checkout do reposit├│rio	2026-07-20T21:18:51.7167210Z Working directory is '/home/runner/work/palpitacojb/palpitacojb'
+run-import (NACIONAL)	Checkout do reposit├│rio	2026-07-20T21:18:51.7169290Z [command]/usr/bin/git version
+run-import (NACIONAL)	Checkout do reposit├│rio	2026-07-20T21:18:51.7237279Z git version 2.54.0
+run-import (NACIONAL)	Checkout do reposit├│rio	2026-07-20T21:18:51.7295780Z ##[endgroup]
+run-import (NACIONAL)	Checkout do reposit├│rio	2026-07-20T21:18:51.7310868Z Temporarily overriding HOME='/home/runner/work/_temp/89ef0a95-9e6c-45b3-95b2-9d86f9367b29' before making global git config changes
+run-import (NACIONAL)	Checkout do reposit├│rio	2026-07-20T21:18:51.7313862Z Adding repository directory to the temporary git global config as a safe directory
+run-import (NACIONAL)	Checkout do reposit├│rio	2026-07-20T21:18:51.7317157Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/palpitacojb/palpitacojb
+run-import (NACIONAL)	Checkout do reposit├│rio	2026-07-20T21:18:51.7376846Z Deleting the contents of '/home/runner/work/palpitacojb/palpitacojb'
+run-import (NACIONAL)	Checkout do reposit├│rio	2026-07-20T21:18:51.7380939Z ##[group]Initializing the repository
+run-import (NACIONAL)	Checkout do reposit├│rio	2026-07-20T21:18:51.7387564Z [command]/usr/bin/git init /home/runner/work/palpitacojb/palpitacojb
+run-import (NACIONAL)	Checkout do reposit├│rio	2026-07-20T21:18:51.7507864Z hint: Using 'master' as the name for the initial branch. This default branch name
+run-import (NACIONAL)	Checkout do reposit├│rio	2026-07-20T21:18:51.7510496Z hint: will change to "main" in Git 3.0. To configure the initial branch name
+run-import (NACIONAL)	Checkout do reposit├│rio	2026-07-20T21:18:51.7512700Z hint: to use in all of your new repositories, which will suppress this warning,
+run-import (NACIONAL)	Checkout do reposit├│rio	2026-07-20T21:18:51.7514817Z hint: call:
+run-import (NACIONAL)	Checkout do reposit├│rio	2026-07-20T21:18:51.7516113Z hint:
+run-import (NACIONAL)	Checkout do reposit├│rio	2026-07-20T21:18:51.7517472Z hint: 	git config --global init.defaultBranch <name>
+run-import (NACIONAL)	Checkout do reposit├│rio	2026-07-20T21:18:51.7518983Z hint:
+run-import (NACIONAL)	Checkout do reposit├│rio	2026-07-20T21:18:51.7520300Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+run-import (NACIONAL)	Checkout do reposit├│rio	2026-07-20T21:18:51.7522236Z hint: 'development'. The just-created branch can be renamed via this command:
+run-import (NACIONAL)	Checkout do reposit├│rio	2026-07-20T21:18:51.7524153Z hint:
+run-import (NACIONAL)	Checkout do reposit├│rio	2026-07-20T21:18:51.7525213Z hint: 	git branch -m <name>
+run-import (NACIONAL)	Checkout do reposit├│rio	2026-07-20T21:18:51.7526250Z hint:
+run-import (NACIONAL)	Checkout do reposit├│rio	2026-07-20T21:18:51.7527688Z hint: Disable this message with "git config set advice.defaultBranchName false"
+run-import (NACIONAL)	Checkout do reposit├│rio	2026-07-20T21:18:51.7529027Z Initialized empty Git repository in /home/runner/work/palpitacojb/palpitacojb/.git/
+run-import (NACIONAL)	Checkout do reposit├│rio	2026-07-20T21:18:51.7533427Z [command]/usr/bin/git remote add origin https://github.com/glauberseguros-commits/palpitacojb
+run-import (NACIONAL)	Checkout do reposit├│rio	2026-07-20T21:18:51.7586648Z ##[endgroup]
+run-import (NACIONAL)	Checkout do reposit├│rio	2026-07-20T21:18:51.7588321Z ##[group]Disabling automatic garbage collection
+run-import (NACIONAL)	Checkout do reposit├│rio	2026-07-20T21:18:51.7590235Z [command]/usr/bin/git config --local gc.auto 0
+run-import (NACIONAL)	Checkout do reposit├│rio	2026-07-20T21:18:51.7634801Z ##[endgroup]
+run-import (NACIONAL)	Checkout do reposit├│rio	2026-07-20T21:18:51.7636548Z ##[group]Setting up auth
+run-import (NACIONAL)	Checkout do reposit├│rio	2026-07-20T21:18:51.7642883Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+run-import (NACIONAL)	Checkout do reposit├│rio	2026-07-20T21:18:51.7685593Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+run-import (NACIONAL)	Checkout do reposit├│rio	2026-07-20T21:18:51.8098111Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+run-import (NACIONAL)	Checkout do reposit├│rio	2026-07-20T21:18:51.8138955Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+run-import (NACIONAL)	Checkout do reposit├│rio	2026-07-20T21:18:51.8380078Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+run-import (NACIONAL)	Checkout do reposit├│rio	2026-07-20T21:18:51.8421613Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+run-import (NACIONAL)	Checkout do reposit├│rio	2026-07-20T21:18:51.8677210Z [command]/usr/bin/git config --local http.https://github.com/.extraheader AUTHORIZATION: basic ***
+run-import (NACIONAL)	Checkout do reposit├│rio	2026-07-20T21:18:51.8730808Z ##[endgroup]
+run-import (NACIONAL)	Checkout do reposit├│rio	2026-07-20T21:18:51.8732787Z ##[group]Fetching the repository
+run-import (NACIONAL)	Checkout do reposit├│rio	2026-07-20T21:18:51.8742873Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +d4f136706a3c1e918dbb9ce7ce388eff70051c7a:refs/remotes/origin/main
+run-import (NACIONAL)	Checkout do reposit├│rio	2026-07-20T21:18:53.2579641Z From https://github.com/glauberseguros-commits/palpitacojb
+run-import (NACIONAL)	Checkout do reposit├│rio	2026-07-20T21:18:53.2581087Z  * [new ref]         d4f136706a3c1e918dbb9ce7ce388eff70051c7a -> origin/main
+run-import (NACIONAL)	Checkout do reposit├│rio	2026-07-20T21:18:53.2620666Z ##[endgroup]
+run-import (NACIONAL)	Checkout do reposit├│rio	2026-07-20T21:18:53.2622106Z ##[group]Determining the checkout info
+run-import (NACIONAL)	Checkout do reposit├│rio	2026-07-20T21:18:53.2623955Z ##[endgroup]
+run-import (NACIONAL)	Checkout do reposit├│rio	2026-07-20T21:18:53.2631239Z [command]/usr/bin/git sparse-checkout disable
+run-import (NACIONAL)	Checkout do reposit├│rio	2026-07-20T21:18:53.2765431Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+run-import (NACIONAL)	Checkout do reposit├│rio	2026-07-20T21:18:53.2776889Z ##[group]Checking out the ref
+run-import (NACIONAL)	Checkout do reposit├│rio	2026-07-20T21:18:53.2778030Z [command]/usr/bin/git checkout --progress --force -B main refs/remotes/origin/main
+run-import (NACIONAL)	Checkout do reposit├│rio	2026-07-20T21:18:53.3537164Z Switched to a new branch 'main'
+run-import (NACIONAL)	Checkout do reposit├│rio	2026-07-20T21:18:53.3538303Z branch 'main' set up to track 'origin/main'.
+run-import (NACIONAL)	Checkout do reposit├│rio	2026-07-20T21:18:53.3557234Z ##[endgroup]
+run-import (NACIONAL)	Checkout do reposit├│rio	2026-07-20T21:18:53.3614724Z [command]/usr/bin/git log -1 --format=%H
+run-import (NACIONAL)	Checkout do reposit├│rio	2026-07-20T21:18:53.3643430Z d4f136706a3c1e918dbb9ce7ce388eff70051c7a
+run-import (NACIONAL)	Setup Node.js	´╗┐2026-07-20T21:18:53.3905495Z Node 20 is being deprecated. This workflow is running with Node 24 by default. If you need to temporarily use Node 20, you can set the ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION=true environment variable. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+run-import (NACIONAL)	Setup Node.js	2026-07-20T21:18:53.3907311Z ##[group]Run actions/setup-node@v4
+run-import (NACIONAL)	Setup Node.js	2026-07-20T21:18:53.3907704Z with:
+run-import (NACIONAL)	Setup Node.js	2026-07-20T21:18:53.3908010Z   node-version: 20
+run-import (NACIONAL)	Setup Node.js	2026-07-20T21:18:53.3908337Z   always-auth: false
+run-import (NACIONAL)	Setup Node.js	2026-07-20T21:18:53.3908671Z   check-latest: false
+run-import (NACIONAL)	Setup Node.js	2026-07-20T21:18:53.3911570Z   token: ***
+run-import (NACIONAL)	Setup Node.js	2026-07-20T21:18:53.3911886Z env:
+run-import (NACIONAL)	Setup Node.js	2026-07-20T21:18:53.3912197Z   TZ: America/Sao_Paulo
+run-import (NACIONAL)	Setup Node.js	2026-07-20T21:18:53.3912597Z   PITACO_API_BASE: https://api.palpitacojb.com.br
+run-import (NACIONAL)	Setup Node.js	2026-07-20T21:18:53.3913345Z ##[endgroup]
+run-import (NACIONAL)	Setup Node.js	2026-07-20T21:18:53.5370845Z Attempting to download 20...
+run-import (NACIONAL)	Setup Node.js	2026-07-20T21:18:53.5484069Z (node:2294) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+run-import (NACIONAL)	Setup Node.js	2026-07-20T21:18:53.5486092Z (Use `node --trace-deprecation ...` to show where the warning was created)
+run-import (NACIONAL)	Setup Node.js	2026-07-20T21:18:54.3383273Z Acquiring 20.20.2 - x64 from https://github.com/actions/node-versions/releases/download/20.20.2-23521894959/node-20.20.2-linux-x64.tar.gz
+run-import (NACIONAL)	Setup Node.js	2026-07-20T21:18:54.7718329Z Extracting ...
+run-import (NACIONAL)	Setup Node.js	2026-07-20T21:18:54.7857393Z [command]/usr/bin/tar xz --strip 1 --warning=no-unknown-keyword --overwrite -C /home/runner/work/_temp/be80d9ad-b424-4351-993b-238763e8d4d4 -f /home/runner/work/_temp/d0a9e5ed-13fe-41eb-8c20-f4bd5e8f304d
+run-import (NACIONAL)	Setup Node.js	2026-07-20T21:18:55.8256713Z Adding to the cache ...
+run-import (NACIONAL)	Setup Node.js	2026-07-20T21:18:57.7391614Z ##[group]Environment details
+run-import (NACIONAL)	Setup Node.js	2026-07-20T21:18:57.9709295Z node: v20.20.2
+run-import (NACIONAL)	Setup Node.js	2026-07-20T21:18:57.9709902Z npm: 10.8.2
+run-import (NACIONAL)	Setup Node.js	2026-07-20T21:18:57.9734150Z yarn: 1.22.22
+run-import (NACIONAL)	Setup Node.js	2026-07-20T21:18:57.9745235Z ##[endgroup]
+run-import (NACIONAL)	Instalar depend├¬ncias (backend)	´╗┐2026-07-20T21:18:57.9918864Z ##[group]Run npm ci
+run-import (NACIONAL)	Instalar depend├¬ncias (backend)	2026-07-20T21:18:57.9919345Z ^[[36;1mnpm ci^[[0m
+run-import (NACIONAL)	Instalar depend├¬ncias (backend)	2026-07-20T21:18:58.0010937Z shell: /usr/bin/bash -e ***0***
+run-import (NACIONAL)	Instalar depend├¬ncias (backend)	2026-07-20T21:18:58.0011402Z env:
+run-import (NACIONAL)	Instalar depend├¬ncias (backend)	2026-07-20T21:18:58.0011690Z   TZ: America/Sao_Paulo
+run-import (NACIONAL)	Instalar depend├¬ncias (backend)	2026-07-20T21:18:58.0012076Z   PITACO_API_BASE: https://api.palpitacojb.com.br
+run-import (NACIONAL)	Instalar depend├¬ncias (backend)	2026-07-20T21:18:58.0012510Z ##[endgroup]
+run-import (NACIONAL)	Instalar depend├¬ncias (backend)	2026-07-20T21:19:02.5371556Z 
+run-import (NACIONAL)	Instalar depend├¬ncias (backend)	2026-07-20T21:19:02.5378605Z added 302 packages, and audited 303 packages in 4s
+run-import (NACIONAL)	Instalar depend├¬ncias (backend)	2026-07-20T21:19:02.5379017Z 
+run-import (NACIONAL)	Instalar depend├¬ncias (backend)	2026-07-20T21:19:02.5379294Z 35 packages are looking for funding
+run-import (NACIONAL)	Instalar depend├¬ncias (backend)	2026-07-20T21:19:02.5379746Z   run `npm fund` for details
+run-import (NACIONAL)	Instalar depend├¬ncias (backend)	2026-07-20T21:19:02.5675053Z 
+run-import (NACIONAL)	Instalar depend├¬ncias (backend)	2026-07-20T21:19:02.5676269Z 22 vulnerabilities (1 low, 13 moderate, 5 high, 3 critical)
+run-import (NACIONAL)	Instalar depend├¬ncias (backend)	2026-07-20T21:19:02.5676785Z 
+run-import (NACIONAL)	Instalar depend├¬ncias (backend)	2026-07-20T21:19:02.5677179Z To address issues that do not require attention, run:
+run-import (NACIONAL)	Instalar depend├¬ncias (backend)	2026-07-20T21:19:02.5677769Z   npm audit fix
+run-import (NACIONAL)	Instalar depend├¬ncias (backend)	2026-07-20T21:19:02.5678006Z 
+run-import (NACIONAL)	Instalar depend├¬ncias (backend)	2026-07-20T21:19:02.5678399Z To address all issues (including breaking changes), run:
+run-import (NACIONAL)	Instalar depend├¬ncias (backend)	2026-07-20T21:19:02.5679003Z   npm audit fix --force
+run-import (NACIONAL)	Instalar depend├¬ncias (backend)	2026-07-20T21:19:02.5679403Z 
+run-import (NACIONAL)	Instalar depend├¬ncias (backend)	2026-07-20T21:19:02.5679632Z Run `npm audit` for details.
+run-import (NACIONAL)	Rodar importa├º├úo autom├ítica (NACIONAL)	´╗┐2026-07-20T21:19:02.5907509Z ##[group]Run node scripts/autoImportToday.js
+run-import (NACIONAL)	Rodar importa├º├úo autom├ítica (NACIONAL)	2026-07-20T21:19:02.5908000Z ^[[36;1mnode scripts/autoImportToday.js^[[0m
+run-import (NACIONAL)	Rodar importa├º├úo autom├ítica (NACIONAL)	2026-07-20T21:19:02.5969669Z shell: /usr/bin/bash -e ***0***
+run-import (NACIONAL)	Rodar importa├º├úo autom├ítica (NACIONAL)	2026-07-20T21:19:02.5970019Z env:
+run-import (NACIONAL)	Rodar importa├º├úo autom├ítica (NACIONAL)	2026-07-20T21:19:02.5970279Z   TZ: America/Sao_Paulo
+run-import (NACIONAL)	Rodar importa├º├úo autom├ítica (NACIONAL)	2026-07-20T21:19:02.5970676Z   PITACO_API_BASE: https://api.palpitacojb.com.br
+run-import (NACIONAL)	Rodar importa├º├úo autom├ítica (NACIONAL)	2026-07-20T21:19:02.5981034Z   FIREBASE_ADMIN_SA_JSON: ***
+run-import (NACIONAL)	Rodar importa├º├úo autom├ítica (NACIONAL)	
+run-import (NACIONAL)	Rodar importa├º├úo autom├ítica (NACIONAL)	2026-07-20T21:19:02.5981359Z   LOTTERY: NACIONAL
+run-import (NACIONAL)	Rodar importa├º├úo autom├ítica (NACIONAL)	2026-07-20T21:19:02.5981618Z   FAIL_ON_CRITICAL: 1
+run-import (NACIONAL)	Rodar importa├º├úo autom├ítica (NACIONAL)	2026-07-20T21:19:02.5981898Z   AUDIT_WARN_MIN: 20
+run-import (NACIONAL)	Rodar importa├º├úo autom├ítica (NACIONAL)	2026-07-20T21:19:02.5982162Z   AUDIT_CRIT_MIN: 60
+run-import (NACIONAL)	Rodar importa├º├úo autom├ítica (NACIONAL)	2026-07-20T21:19:02.5982425Z ##[endgroup]
+run-import (NACIONAL)	Rodar importa├º├úo autom├ítica (NACIONAL)	2026-07-20T21:19:02.8116559Z [CFG] PITACO_API_BASE efetivo => https://api.palpitacojb.com.br
+run-import (NACIONAL)	Rodar importa├º├úo autom├ítica (NACIONAL)	2026-07-20T21:19:17.8817299Z [AUTO] CATCH-UP p├│s-release 2026-07-20 slot=17:00 (HARD) releaseAt=17:29 window=17:05~17:35 (fora da janela)
+run-import (NACIONAL)	Rodar importa├º├úo autom├ítica (NACIONAL)	2026-07-20T21:19:17.8822735Z [AUTO] tentando 2026-07-20 slot=17:00 (HARD) window=17:05-17:35 closes=17:00,17:01,17:02,17:09,17:10,17:11
+run-import (NACIONAL)	Rodar importa├º├úo autom├ítica (NACIONAL)	2026-07-20T21:19:19.7686085Z [FETCH] NACIONAL 2026-07-20 per-lottery=8 -> merged_draws=6 close_hours=[02:00, 08:00, 10:00, 12:00, 15:00, 17:00]
+run-import (NACIONAL)	Rodar importa├º├úo autom├ítica (NACIONAL)	2026-07-20T21:19:22.3761893Z [IMPORT] API draws=6 | match_close=1 | validos=1 | draws_upserted=1 | draws_novos=0 | prizes_upserted=7 | prizes_novos=0 | skip_vazio=0 | skip_invalido=0 | skip_close=5 | skip_complete=0 | CHECK_EXISTENCE=OFF | uf=BR lottery_key=NACIONAL | expected=1 complete=1 slotDocs=1 apiTargets=1
+run-import (NACIONAL)	Rodar importa├º├úo autom├ítica (NACIONAL)	2026-07-20T21:19:24.1581057Z [TOP3] P├ígina 1 | 2026-01-22 at├® 2026-07-21 | limite=250
+run-import (NACIONAL)	Rodar importa├º├úo autom├ítica (NACIONAL)	2026-07-20T21:19:29.6489650Z [TOP3] P├ígina 1: 250 draws | total=250
+run-import (NACIONAL)	Rodar importa├º├úo autom├ítica (NACIONAL)	2026-07-20T21:19:29.6497915Z [TOP3] P├ígina 2 | 2026-01-22 at├® 2026-07-21 | limite=250
+run-import (NACIONAL)	Rodar importa├º├úo autom├ítica (NACIONAL)	2026-07-20T21:19:34.3894775Z [TOP3] P├ígina 2: 250 draws | total=500
+run-import (NACIONAL)	Rodar importa├º├úo autom├ítica (NACIONAL)	2026-07-20T21:19:34.3898635Z [TOP3] P├ígina 3 | 2026-01-22 at├® 2026-07-21 | limite=250
+run-import (NACIONAL)	Rodar importa├º├úo autom├ítica (NACIONAL)	2026-07-20T21:19:38.9158368Z [TOP3] P├ígina 3: 250 draws | total=750
+run-import (NACIONAL)	Rodar importa├º├úo autom├ítica (NACIONAL)	2026-07-20T21:19:38.9160573Z [TOP3] P├ígina 4 | 2026-01-22 at├® 2026-07-21 | limite=250
+run-import (NACIONAL)	Rodar importa├º├úo autom├ítica (NACIONAL)	2026-07-20T21:19:43.6609783Z [TOP3] P├ígina 4: 250 draws | total=1000
+run-import (NACIONAL)	Rodar importa├º├úo autom├ítica (NACIONAL)	2026-07-20T21:19:43.6614424Z [TOP3] P├ígina 5 | 2026-01-22 at├® 2026-07-21 | limite=200
+run-import (NACIONAL)	Rodar importa├º├úo autom├ítica (NACIONAL)	2026-07-20T21:19:47.5865301Z [TOP3] P├ígina 5: 200 draws | total=1200
+run-import (NACIONAL)	Rodar importa├º├úo autom├ítica (NACIONAL)	2026-07-20T21:19:48.9780140Z [TOP3 AUTO] OK | NACIONAL | importado=2026-07-20 17:00 | pr├│ximo=2026-07-21 09:00
+run-import (NACIONAL)	Rodar importa├º├úo autom├ítica (NACIONAL)	2026-07-20T21:19:48.9788636Z [AUTO] FS j├í tem slot=17:00 COMPLETO (close=17:00) -> DONE
+run-import (NACIONAL)	Rodar importa├º├úo autom├ítica (NACIONAL)	2026-07-20T21:19:48.9796246Z [ALERT] HARD slot perdeu janela: date=2026-07-20 slot=02:00 releaseAt=02:29 windowEnd=02:35 tries=0
+run-import (NACIONAL)	Rodar importa├º├úo autom├ítica (NACIONAL)	2026-07-20T21:19:48.9798234Z [ALERT] HARD slot CRITICAL: date=2026-07-20 slot=02:00 since=950min (>=60) tries=0
+run-import (NACIONAL)	Rodar importa├º├úo autom├ítica (NACIONAL)	2026-07-20T21:19:48.9800682Z [ALERT] HARD slot perdeu janela: date=2026-07-20 slot=08:00 releaseAt=08:29 windowEnd=08:35 tries=0
+run-import (NACIONAL)	Rodar importa├º├úo autom├ítica (NACIONAL)	2026-07-20T21:19:48.9802484Z [ALERT] HARD slot CRITICAL: date=2026-07-20 slot=08:00 since=590min (>=60) tries=0
+run-import (NACIONAL)	Rodar importa├º├úo autom├ítica (NACIONAL)	2026-07-20T21:19:48.9805201Z [ALERT] HARD slot perdeu janela: date=2026-07-20 slot=10:00 releaseAt=10:29 windowEnd=10:35 tries=0
+run-import (NACIONAL)	Rodar importa├º├úo autom├ítica (NACIONAL)	2026-07-20T21:19:48.9807141Z [ALERT] HARD slot CRITICAL: date=2026-07-20 slot=10:00 since=470min (>=60) tries=0
+run-import (NACIONAL)	Rodar importa├º├úo autom├ítica (NACIONAL)	2026-07-20T21:19:48.9810945Z [ALERT] HARD slot perdeu janela: date=2026-07-20 slot=12:00 releaseAt=12:29 windowEnd=12:35 tries=0
+run-import (NACIONAL)	Rodar importa├º├úo autom├ítica (NACIONAL)	2026-07-20T21:19:48.9812571Z [ALERT] HARD slot CRITICAL: date=2026-07-20 slot=12:00 since=350min (>=60) tries=0
+run-import (NACIONAL)	Rodar importa├º├úo autom├ítica (NACIONAL)	2026-07-20T21:19:48.9815242Z [ALERT] HARD slot perdeu janela: date=2026-07-20 slot=15:00 releaseAt=15:29 windowEnd=15:35 tries=0
+run-import (NACIONAL)	Rodar importa├º├úo autom├ítica (NACIONAL)	2026-07-20T21:19:48.9817086Z [ALERT] HARD slot CRITICAL: date=2026-07-20 slot=15:00 since=170min (>=60) tries=0
+run-import (NACIONAL)	Rodar importa├º├úo autom├ítica (NACIONAL)	2026-07-20T21:19:48.9828892Z [AUDIT] CRITICAL missing=5 warning=0 softLate=0 (relat├│rio salvo em auditCritical-NACIONAL-2026-07-20.json)
+run-import (NACIONAL)	Rodar importa├º├úo autom├ítica (NACIONAL)	2026-07-20T21:19:48.9830311Z [AUDIT] FAIL_ON_CRITICAL=1 => exit(2)
+run-import (NACIONAL)	Rodar importa├º├úo autom├ítica (NACIONAL)	2026-07-20T21:19:49.0085014Z ##[error]Process completed with exit code 2.
+run-import (NACIONAL)	Post Checkout do reposit├│rio	´╗┐2026-07-20T21:19:49.0255070Z Node 20 is being deprecated. This workflow is running with Node 24 by default. If you need to temporarily use Node 20, you can set the ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION=true environment variable. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+run-import (NACIONAL)	Post Checkout do reposit├│rio	2026-07-20T21:19:49.0256417Z Post job cleanup.
+run-import (NACIONAL)	Post Checkout do reposit├│rio	2026-07-20T21:19:49.1125842Z [command]/usr/bin/git version
+run-import (NACIONAL)	Post Checkout do reposit├│rio	2026-07-20T21:19:49.1176653Z git version 2.54.0
+run-import (NACIONAL)	Post Checkout do reposit├│rio	2026-07-20T21:19:49.1222703Z Temporarily overriding HOME='/home/runner/work/_temp/16457651-1731-459d-bd67-39ba24a8242e' before making global git config changes
+run-import (NACIONAL)	Post Checkout do reposit├│rio	2026-07-20T21:19:49.1224888Z Adding repository directory to the temporary git global config as a safe directory
+run-import (NACIONAL)	Post Checkout do reposit├│rio	2026-07-20T21:19:49.1230102Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/palpitacojb/palpitacojb
+run-import (NACIONAL)	Post Checkout do reposit├│rio	2026-07-20T21:19:49.1273455Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+run-import (NACIONAL)	Post Checkout do reposit├│rio	2026-07-20T21:19:49.1313289Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+run-import (NACIONAL)	Post Checkout do reposit├│rio	2026-07-20T21:19:49.1567091Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+run-import (NACIONAL)	Post Checkout do reposit├│rio	2026-07-20T21:19:49.1600677Z http.https://github.com/.extraheader
+run-import (NACIONAL)	Post Checkout do reposit├│rio	2026-07-20T21:19:49.1620271Z [command]/usr/bin/git config --local --unset-all http.https://github.com/.extraheader
+run-import (NACIONAL)	Post Checkout do reposit├│rio	2026-07-20T21:19:49.1662219Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+run-import (NACIONAL)	Post Checkout do reposit├│rio	2026-07-20T21:19:49.1949934Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+run-import (NACIONAL)	Post Checkout do reposit├│rio	2026-07-20T21:19:49.1990197Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+run-import (NACIONAL)	Complete job	´╗┐2026-07-20T21:19:49.2392738Z Cleaning up orphan processes
+run-import (NACIONAL)	Complete job	2026-07-20T21:19:49.2718897Z ##[warning]Node.js 20 is deprecated. The following actions target Node.js 20 but are being forced to run on Node.js 24: actions/checkout@v4, actions/setup-node@v4. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/

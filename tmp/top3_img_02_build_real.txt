@@ -1,0 +1,380 @@
+**********************
+PowerShell transcript start
+Start time: 20260724123619
+Username: DESKTOP-BHOKNSP\glaub
+RunAs User: DESKTOP-BHOKNSP\glaub
+Configuration Name: 
+Machine: DESKTOP-BHOKNSP (Microsoft Windows NT 10.0.26200.0)
+Host Application: C:\Program Files\PowerShell\7\pwsh.dll -noexit -command try { . "c:\Users\glaub\AppData\Local\Programs\Microsoft VS Code\1b6a188127\resources\app\out\vs\workbench\contrib\terminal\common\scripts\shellIntegration.ps1" } catch {}
+Process ID: 5696
+PSVersion: 7.6.3
+PSEdition: Core
+GitCommitId: 7.6.3
+OS: Microsoft Windows 10.0.26200
+Platform: Win32NT
+PSCompatibleVersions: 1.0, 2.0, 3.0, 4.0, 5.0, 5.1, 6.0, 7.0
+PSRemotingProtocolVersion: 2.4
+SerializationVersion: 1.1.0.1
+WSManStackVersion: 3.0
+**********************
+Transcript started, output file is .\tmp\top3_img_02_build_real.txt
+
+===== 1. ARQUIVOS CONFIRMADOS =====
+OK -> .\backend\Dockerfile | 359 bytes
+OK -> .\backend\.dockerignore | 166 bytes
+OK -> .\backend\engine\scoreEngineUnified.js | 2096 bytes
+OK -> .\backend\engine\top3PredictionService.js | 19190 bytes
+OK -> .\backend\scripts\importKingApostas.js | 53407 bytes
+OK -> .\backend\scripts\autoImportToday.js | 45768 bytes
+OK -> .\src\pages\Top3\top3.public-api.js | 1493 bytes
+OK -> .\src\pages\Top3\top3.engine.js | 123452 bytes
+
+===== 2. CONTEÚDO DO DOCKERFILE =====
+FROM node:22-bookworm-slim
+
+WORKDIR /app
+
+ENV NODE_ENV=production
+ENV TZ=America/Sao_Paulo
+
+COPY package.json package-lock.json ./
+
+RUN npm ci --omit=dev --no-audit --no-fund \
+    && npm cache clean --force
+
+COPY --chown=node:node . .
+
+RUN mkdir -p /app/logs \
+    && chown -R node:node /app/logs
+
+USER node
+
+CMD ["node", "scripts/runAutoImportHeartbeat.js"]
+
+===== 3. IMPORT REAL DO TOP3 =====
+);
+
+let publicApi = null;
+
+/**
+ * Carrega o núcleo ESM do TOP3 dentro do backend CommonJS.
+ *
+ * A transformação é limitada ao diretório do TOP3. Nenhum arquivo
+ * de React, Firebase ou restante do frontend é processado.
+ */
+function loadTop3PublicApi() {
+  if (publicApi) {
+    return publicApi;
+  }
+
+  require("@babel/register")({
+    babelrc: false,
+    configFile: false,
+    cache: true,
+    extensions: [".js"],
+    only: [
+      (filename) => {
+        const absolute = path.resolve(filename);
+
+        return (
+          absolute === TOP3_ROOT ||
+          absolute.startsWith(`${TOP3_ROOT}${path.sep}`)
+        );
+      },
+    ],
+    plugins: [
+----------------------------------------
+      },
+    ],
+    plugins: [
+      require.resolve(
+        "@babel/plugin-transform-modules-commonjs"
+      ),
+    ],
+  });
+
+  publicApi = require(
+    "../../src/pages/Top3/top3.public-api.js"
+  );
+
+  return publicApi;
+}
+
+function assertFunction(api, name) {
+  if (!api || typeof api[name] !== "function") {
+    throw new Error(
+      `Função pública TOP3 indisponível: ${name}`
+    );
+  }
+
+  return api[name];
+}
+
+function getTop3Capabilities() {
+  const api = loadTop3PublicApi();
+
+  return Object.keys(api)
+    .filter((name) => typeof api[name] === "function")
+----------------------------------------
+  if (!api || typeof api[name] !== "function") {
+    throw new Error(
+      `Função pública TOP3 indisponível: ${name}`
+    );
+  }
+
+  return api[name];
+}
+
+function getTop3Capabilities() {
+  const api = loadTop3PublicApi();
+
+  return Object.keys(api)
+    .filter((name) => typeof api[name] === "function")
+    .sort();
+}
+
+function computeConditionalNextTop3(input = {}) {
+  const api = loadTop3PublicApi();
+
+  return assertFunction(
+    api,
+    "computeConditionalNextTop3"
+  )(input);
+}
+
+function computeConditionalNextTop3V2(input = {}) {
+  const api = loadTop3PublicApi();
+
+  return assertFunction(
+    api,
+----------------------------------------
+
+function getTop3Capabilities() {
+  const api = loadTop3PublicApi();
+
+  return Object.keys(api)
+    .filter((name) => typeof api[name] === "function")
+    .sort();
+}
+
+function computeConditionalNextTop3(input = {}) {
+  const api = loadTop3PublicApi();
+
+  return assertFunction(
+    api,
+    "computeConditionalNextTop3"
+  )(input);
+}
+
+function computeConditionalNextTop3V2(input = {}) {
+  const api = loadTop3PublicApi();
+
+  return assertFunction(
+    api,
+    "computeConditionalNextTop3V2"
+  )(input);
+}
+
+function computeStatisticalTop3V3(input = {}) {
+  const api = loadTop3PublicApi();
+
+  return assertFunction(
+----------------------------------------
+function computeConditionalNextTop3(input = {}) {
+  const api = loadTop3PublicApi();
+
+  return assertFunction(
+    api,
+    "computeConditionalNextTop3"
+  )(input);
+}
+
+function computeConditionalNextTop3V2(input = {}) {
+  const api = loadTop3PublicApi();
+
+  return assertFunction(
+    api,
+    "computeConditionalNextTop3V2"
+  )(input);
+}
+
+function computeStatisticalTop3V3(input = {}) {
+  const api = loadTop3PublicApi();
+
+  return assertFunction(
+    api,
+    "computeStatisticalTop3V3"
+  )(input);
+}
+
+module.exports = {
+  loadTop3PublicApi,
+  getTop3Capabilities,
+  computeConditionalNextTop3,
+----------------------------------------
+function computeConditionalNextTop3V2(input = {}) {
+  const api = loadTop3PublicApi();
+
+  return assertFunction(
+    api,
+    "computeConditionalNextTop3V2"
+  )(input);
+}
+
+function computeStatisticalTop3V3(input = {}) {
+  const api = loadTop3PublicApi();
+
+  return assertFunction(
+    api,
+    "computeStatisticalTop3V3"
+  )(input);
+}
+
+module.exports = {
+  loadTop3PublicApi,
+  getTop3Capabilities,
+  computeConditionalNextTop3,
+  computeConditionalNextTop3V2,
+  computeStatisticalTop3V3,
+};
+----------------------------------------
+function computeStatisticalTop3V3(input = {}) {
+  const api = loadTop3PublicApi();
+
+  return assertFunction(
+    api,
+    "computeStatisticalTop3V3"
+  )(input);
+}
+
+module.exports = {
+  loadTop3PublicApi,
+  getTop3Capabilities,
+  computeConditionalNextTop3,
+  computeConditionalNextTop3V2,
+  computeStatisticalTop3V3,
+};
+----------------------------------------
+
+===== 4. REFERÊNCIAS DE BUILD FORA DE NODE_MODULES E TMP =====
+Nenhuma referência encontrada fora de node_modules/tmp.
+
+===== 5. CONTEXTO TEMPORÁRIO GCP09 =====
+tmp\gcp09_build_context\backend\.dockerignore
+tmp\gcp09_build_context\backend\.gitignore
+tmp\gcp09_build_context\backend\Dockerfile
+tmp\gcp09_build_context\backend\package-lock.json
+tmp\gcp09_build_context\backend\package.json
+tmp\gcp09_build_context\backend\server.js
+tmp\gcp09_build_context\backend\data\backfillPlan_PT_RIO.json
+tmp\gcp09_build_context\backend\data\day_status\FEDERAL.json
+tmp\gcp09_build_context\backend\data\no_draw_days\FEDERAL.json
+tmp\gcp09_build_context\backend\data\no_draw_days\PT_RIO.json
+tmp\gcp09_build_context\backend\data\slot_schedule\FEDERAL.json
+tmp\gcp09_build_context\backend\data\slot_schedule\PT_RIO.json
+tmp\gcp09_build_context\backend\data\source_gaps\FEDERAL.json
+tmp\gcp09_build_context\backend\data\source_gaps\PT_RIO.json
+tmp\gcp09_build_context\backend\engine\bootstrapSnapshot.js
+tmp\gcp09_build_context\backend\engine\contextEvidence.js
+tmp\gcp09_build_context\backend\engine\drawRepository.js
+tmp\gcp09_build_context\backend\engine\evidenceEngine.js
+tmp\gcp09_build_context\backend\engine\frequencyEvidence.js
+tmp\gcp09_build_context\backend\engine\historicalQueryEngine.js
+tmp\gcp09_build_context\backend\engine\hypothesisEngine.js
+tmp\gcp09_build_context\backend\engine\predictionModel.js
+tmp\gcp09_build_context\backend\engine\predictionRepository.js
+tmp\gcp09_build_context\backend\engine\predictionService.js
+tmp\gcp09_build_context\backend\engine\scoreConfig.js
+tmp\gcp09_build_context\backend\engine\scoreEngineUnified.js
+tmp\gcp09_build_context\backend\engine\scoreEngineV1.js
+tmp\gcp09_build_context\backend\engine\scoreEngineV2.js
+tmp\gcp09_build_context\backend\engine\snapshotManager.js
+tmp\gcp09_build_context\backend\engine\snapshotMetadata.js
+tmp\gcp09_build_context\backend\engine\statisticsEngine.js
+tmp\gcp09_build_context\backend\engine\top3HistoryRepository.js
+tmp\gcp09_build_context\backend\engine\top3HistorySync.js
+tmp\gcp09_build_context\backend\engine\top3PredictionService.js
+tmp\gcp09_build_context\backend\engine\auditor\auditEngine.js
+tmp\gcp09_build_context\backend\engine\auditor\auditRepair.js
+tmp\gcp09_build_context\backend\engine\auditor\auditReport.js
+tmp\gcp09_build_context\backend\routes\bounds.js
+tmp\gcp09_build_context\backend\routes\kingDraws.js
+tmp\gcp09_build_context\backend\routes\pitacoResults.js
+tmp\gcp09_build_context\backend\routes\predictions.js
+tmp\gcp09_build_context\backend\routes\receiveResults.js
+tmp\gcp09_build_context\backend\scripts\auditCoverage.js
+tmp\gcp09_build_context\backend\scripts\auditDbDateRange.js
+tmp\gcp09_build_context\backend\scripts\auditDbDateRangeNoIndex.js
+tmp\gcp09_build_context\backend\scripts\auditDrawsBoundsAndCounts.js
+tmp\gcp09_build_context\backend\scripts\auditDrawSlotsRange.js
+tmp\gcp09_build_context\backend\scripts\auditFastPtRio.js
+tmp\gcp09_build_context\backend\scripts\auditFederalCompleteness.js
+tmp\gcp09_build_context\backend\scripts\auditFederalContent.js
+tmp\gcp09_build_context\backend\scripts\auditFederalContestContent.js
+tmp\gcp09_build_context\backend\scripts\auditFederalContestDuplicates.js
+tmp\gcp09_build_context\backend\scripts\auditFederalDateContent.js
+tmp\gcp09_build_context\backend\scripts\auditFederalStructure.js
+tmp\gcp09_build_context\backend\scripts\auditFirestorePtRioRange.js
+tmp\gcp09_build_context\backend\scripts\auditHistoricalGaps.js
+tmp\gcp09_build_context\backend\scripts\auditOfficialSource.js
+tmp\gcp09_build_context\backend\scripts\auditPredictionRuns.js
+tmp\gcp09_build_context\backend\scripts\auditPtRioContent.js
+tmp\gcp09_build_context\backend\scripts\auditRealGradePtRio.js
+tmp\gcp09_build_context\backend\scripts\auditSpecificDays.js
+tmp\gcp09_build_context\backend\scripts\autoImportToday.js
+tmp\gcp09_build_context\backend\scripts\autoMaintainBackfill.js
+tmp\gcp09_build_context\backend\scripts\autoRepairToday.js
+tmp\gcp09_build_context\backend\scripts\backfillFederalMonth.ps1
+tmp\gcp09_build_context\backend\scripts\backtestTop3Official.js
+tmp\gcp09_build_context\backend\scripts\buildFederalNoDrawFromAudit.js
+tmp\gcp09_build_context\backend\scripts\checkOneDraw.js
+tmp\gcp09_build_context\backend\scripts\cleanSourceGapsFromBackfillReport.js
+tmp\gcp09_build_context\backend\scripts\federalCalendar.js
+tmp\gcp09_build_context\backend\scripts\federalCalendar.test.js
+tmp\gcp09_build_context\backend\scripts\findDuplicatesDraws.js
+tmp\gcp09_build_context\backend\scripts\fixFederalContestDuplicates.js
+tmp\gcp09_build_context\backend\scripts\fixLegacyIdDuplicates.js
+tmp\gcp09_build_context\backend\scripts\fixMinuteVariantDuplicates.js
+tmp\gcp09_build_context\backend\scripts\fixPtRioContentAudit.js
+tmp\gcp09_build_context\backend\scripts\fixReceiveDuplicates.js
+tmp\gcp09_build_context\backend\scripts\genPtRioCalendarRules.js
+tmp\gcp09_build_context\backend\scripts\importKingApostas.js
+tmp\gcp09_build_context\backend\scripts\importKingApostas.js.safe_patch_20260324_130240
+tmp\gcp09_build_context\backend\scripts\importKingRange.js
+tmp\gcp09_build_context\backend\scripts\inspectDrawSchema.js
+tmp\gcp09_build_context\backend\scripts\integrityCheck.js
+tmp\gcp09_build_context\backend\scripts\lastDrawsFirestore.js
+tmp\gcp09_build_context\backend\scripts\lintSourceGaps.js
+tmp\gcp09_build_context\backend\scripts\listDrawDuplicates.js
+tmp\gcp09_build_context\backend\scripts\planBackfillFromAudit.js
+tmp\gcp09_build_context\backend\scripts\probeFederalSwitch.js
+tmp\gcp09_build_context\backend\scripts\probeKingLotteryIds.js
+tmp\gcp09_build_context\backend\scripts\ptRioCalendar.js
+tmp\gcp09_build_context\backend\scripts\ptRioCalendar.test.js
+tmp\gcp09_build_context\backend\scripts\ptRioSaturdayTransition.test.js
+tmp\gcp09_build_context\backend\scripts\reconcileKingFirestore.js
+tmp\gcp09_build_context\backend\scripts\repairHistoricalHardGaps.js
+tmp\gcp09_build_context\backend\scripts\runAutoImport.ps1
+tmp\gcp09_build_context\backend\scripts\runAutoImportHeartbeat.js
+tmp\gcp09_build_context\backend\scripts\runAutoImportToday.cmd
+tmp\gcp09_build_context\backend\scripts\runAutoRepairToday.cmd
+tmp\gcp09_build_context\backend\scripts\runBackfillFromPlan.js
+tmp\gcp09_build_context\backend\scripts\runFullAudit.js
+tmp\gcp09_build_context\backend\scripts\testPredictionRun.js
+tmp\gcp09_build_context\backend\scripts\maintenance\backfillYmdDraws.js
+tmp\gcp09_build_context\backend\service\firebaseAdmin.js
+tmp\gcp09_build_context\backend\utils\validateEnv.js
+tmp\gcp09_build_context\backend\workers\bootstrapTop3History.js
+tmp\gcp09_build_context\backend\workers\updateStatistics.js
+
+===== 6. TOP3 DENTRO DO CONTEXTO DE BUILD =====
+CONFIRMADO -> O Top3 NÃO está no contexto temporário.
+
+===== 7. IMAGEM ATUAL =====
+
+
+===== DIAGNÓSTICO CONCLUÍDO =====
+**********************
+PowerShell transcript end
+End time: 20260724123729
+**********************

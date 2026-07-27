@@ -1,0 +1,2734 @@
+====================================================================================================
+ARCH-03 — ARQUIVOS COMPLETOS PARA AUDITORIA DE NORMALIZAÇÃO
+Gerado em: 24/07/2026 17:26:41
+Objetivo: comparar implementações reais antes de qualquer alteração
+====================================================================================================
+
+
+====================================================================================================
+ARQUIVO: .\backend\engine\top3PredictionService.js
+====================================================================================================
+Tamanho: 19190 bytes
+Linhas: 975
+Modificado em: 07/24/2026 00:58:15
+SHA256: E6043A5DFA841962666F5BD6900DD309789FAAEC7012DA9DF9588FED22FA5514
+
+----- INÍCIO DO CONTEÚDO COMPLETO -----
+
+"use strict";
+
+const {
+  fetchDrawsWithPrizesByRange,
+} = require("./drawRepository");
+
+const {
+  readFullHistory,
+  readMetadata,
+} = require("./top3HistoryRepository");
+
+const {
+  computeStatisticalTop3V3,
+  loadTop3PublicApi,
+} = require("./scoreEngineUnified");
+
+const {
+  createPredictionRun,
+} = require("./predictionService");
+
+const {
+  getDb,
+} = require("../service/firebaseAdmin");
+
+const PT_RIO_SCHEDULE_NORMAL = [
+  "09:00",
+  "11:00",
+  "14:00",
+  "16:00",
+  "18:00",
+  "21:00",
+];
+
+const PT_RIO_SCHEDULE_WED_SAT = [
+  "09:00",
+  "11:00",
+  "14:00",
+  "16:00",
+  "21:00",
+];
+
+const FEDERAL_SCHEDULE = [
+  "20:00",
+];
+
+const ANIMALS = {
+  "01": "Avestruz",
+  "02": "Águia",
+  "03": "Burro",
+  "04": "Borboleta",
+  "05": "Cachorro",
+  "06": "Cabra",
+  "07": "Carneiro",
+  "08": "Camelo",
+  "09": "Cobra",
+  "10": "Coelho",
+  "11": "Cavalo",
+  "12": "Elefante",
+  "13": "Galo",
+  "14": "Gato",
+  "15": "Jacaré",
+  "16": "Leão",
+  "17": "Macaco",
+  "18": "Porco",
+  "19": "Pavão",
+  "20": "Peru",
+  "21": "Touro",
+  "22": "Tigre",
+  "23": "Urso",
+  "24": "Veado",
+  "25": "Vaca",
+};
+
+function normalizeLotteryKey(value) {
+  return String(value || "PT_RIO")
+    .trim()
+    .toUpperCase() || "PT_RIO";
+}
+
+function normalizeYmd(value) {
+  const text = String(value || "").trim();
+
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(text)) {
+    throw new Error(
+      "Data inválida. Utilize o formato YYYY-MM-DD."
+    );
+  }
+
+  return text;
+}
+
+function normalizeHour(value) {
+  const text = String(value || "")
+    .trim()
+    .replace(/[hH]/g, ":");
+
+  const match = text.match(
+    /^(\d{1,2})(?::?(\d{2}))?$/
+  );
+
+  if (!match) {
+    throw new Error(
+      "Horário inválido. Utilize HH:MM."
+    );
+  }
+
+  const hour = Number(match[1]);
+  const minute = Number(match[2] || 0);
+
+  if (
+    hour < 0 ||
+    hour > 23 ||
+    minute < 0 ||
+    minute > 59
+  ) {
+    throw new Error("Horário fora do intervalo válido.");
+  }
+
+  return `${String(hour).padStart(2, "0")}:${String(
+    minute
+  ).padStart(2, "0")}`;
+}
+
+function dateHourKey(ymd, hour) {
+  return `${ymd}T${normalizeHour(hour)}`;
+}
+
+function subtractDaysYmd(ymd, days) {
+  const safeDays = Math.max(
+    1,
+    Math.min(1460, Number(days || 180))
+  );
+
+  const date = new Date(`${ymd}T12:00:00Z`);
+
+  if (Number.isNaN(date.getTime())) {
+    throw new Error(
+      "Não foi possível calcular a janela histórica."
+    );
+  }
+
+  date.setUTCDate(
+    date.getUTCDate() - safeDays
+  );
+
+  return date.toISOString().slice(0, 10);
+}
+
+function normalizeHistorySource(value) {
+  const source = String(value || "auto")
+    .trim()
+    .toLowerCase();
+
+  if (
+    source !== "auto" &&
+    source !== "snapshot" &&
+    source !== "range"
+  ) {
+    throw new Error(
+      "historySource inválido. Utilize auto, snapshot ou range."
+    );
+  }
+
+  return source;
+}
+
+async function loadPredictionHistory({
+  lotteryKey,
+  date,
+  input = {},
+  dependencies = {},
+} = {}) {
+  const requestedSource = normalizeHistorySource(
+    input.historySource
+  );
+
+  const loadMetadata =
+    dependencies.readHistoryMetadata ||
+    readMetadata;
+
+  const loadFullHistory =
+    dependencies.readFullHistory ||
+    readFullHistory;
+
+  const loadRangeHistory =
+    dependencies.fetchDraws ||
+    fetchDrawsWithPrizesByRange;
+
+  if (
+    requestedSource === "auto" ||
+    requestedSource === "snapshot"
+  ) {
+    const metadataResult = await loadMetadata(
+      lotteryKey,
+      dependencies.historyDependencies || {}
+    );
+
+    const metadata =
+      metadataResult?.data || null;
+
+    const snapshotReady =
+      metadataResult?.exists === true &&
+      metadata?.bootstrapStatus === "complete";
+
+    if (snapshotReady) {
+      const draws = await loadFullHistory(
+        lotteryKey,
+        dependencies.historyDependencies || {}
+      );
+
+      if (Array.isArray(draws) && draws.length) {
+        const expectedTotal = Number(
+          metadata?.totalDraws || 0
+        );
+
+        if (
+          expectedTotal > 0 &&
+          draws.length !== expectedTotal
+        ) {
+          throw new Error(
+            "Histórico TOP3 inconsistente: metadata.totalDraws=" +
+            `${expectedTotal}, carregados=${draws.length}.`
+          );
+        }
+
+        return {
+          source: "snapshot",
+          draws,
+          metadata,
+          lookbackDays: null,
+          maxDraws: null,
+          startYmd:
+            metadata?.firstYmd || null,
+        };
+      }
+
+      throw new Error(
+        "Metadata do histórico TOP3 está completo, mas nenhum draw foi carregado."
+      );
+    }
+
+    if (requestedSource === "snapshot") {
+      throw new Error(
+        "Histórico TOP3 completo ainda não está disponível."
+      );
+    }
+  }
+
+  const lookbackDays = Math.max(
+    30,
+    Math.min(
+      1460,
+      Number(input.lookbackDays || 180)
+    )
+  );
+
+  const maxDraws = Math.max(
+    100,
+    Math.min(
+      5000,
+      Number(input.maxDraws || 1200)
+    )
+  );
+
+  const startYmd = subtractDaysYmd(
+    date,
+    lookbackDays
+  );
+
+  const rawDraws = await loadRangeHistory({
+    lottery: lotteryKey,
+    startYmd,
+    endYmd: date,
+    pageSize: Number(input.pageSize || 250),
+    maxDraws,
+    prizeConcurrency: Number(
+      input.prizeConcurrency || 24
+    ),
+  });
+
+  return {
+    source: "range_fallback",
+    draws: extractDraws(rawDraws),
+    metadata: null,
+    lookbackDays,
+    maxDraws,
+    startYmd,
+  };
+}
+
+function extractDraws(result) {
+  if (Array.isArray(result)) {
+    return result;
+  }
+
+  const candidates = [
+    result?.draws,
+    result?.items,
+    result?.results,
+    result?.data,
+  ];
+
+  for (const candidate of candidates) {
+    if (Array.isArray(candidate)) {
+      return candidate;
+    }
+  }
+
+  return [];
+}
+
+function normalizePublicMilhar(value) {
+  const digits = String(value || "")
+    .replace(/\D+/g, "");
+
+  if (!digits) {
+    return "";
+  }
+
+  return digits
+    .slice(-4)
+    .padStart(4, "0");
+}
+
+function publicHourCode(value) {
+  return normalizeHour(value)
+    .replace(/\D+/g, "")
+    .slice(0, 2)
+    .padStart(2, "0");
+}
+
+function resolveNextTop3Slot({
+  lotteryKey,
+  ymd,
+  hour,
+  publicApi,
+}) {
+  if (
+    !publicApi ||
+    typeof publicApi.getNextSlotForLottery !== "function"
+  ) {
+    throw new Error(
+      "API pública TOP3 sem getNextSlotForLottery."
+    );
+  }
+
+  const resolved =
+    publicApi.getNextSlotForLottery({
+      lotteryKey: normalizeLotteryKey(lotteryKey),
+      ymd: normalizeYmd(ymd),
+      hourBucket: normalizeHour(hour),
+      PT_RIO_SCHEDULE_NORMAL,
+      PT_RIO_SCHEDULE_WED_SAT,
+      FEDERAL_SCHEDULE,
+    });
+
+  const rawHour = String(
+    resolved?.hour ||
+    resolved?.hourBucket ||
+    ""
+  ).trim();
+
+  const hourMatch =
+    rawHour.match(/^(\d{1,2})(?::00|h)?$/i);
+
+  const canonicalHour = hourMatch
+    ? `${String(Number(hourMatch[1])).padStart(2, "0")}:00`
+    : "";
+
+  return {
+    ...resolved,
+    ymd: normalizeYmd(resolved?.ymd),
+    hour: canonicalHour,
+    hourBucket: canonicalHour,
+  };
+}
+
+function scheduleForPublicProjection(
+  lotteryKey,
+  date
+) {
+  if (normalizeLotteryKey(lotteryKey) === "FEDERAL") {
+    return [...FEDERAL_SCHEDULE];
+  }
+
+  const parsed = new Date(`${date}T12:00:00Z`);
+  const dow = parsed.getUTCDay();
+
+  if (dow === 3 || dow === 6) {
+    return [...PT_RIO_SCHEDULE_WED_SAT];
+  }
+
+  return [...PT_RIO_SCHEDULE_NORMAL];
+}
+
+function buildPublicMilharesCols(
+  engineOutput,
+  expectedCols = 4,
+  perCol = 5
+) {
+  const dezenas = Array.isArray(engineOutput?.dezenas)
+    ? engineOutput.dezenas
+    : [];
+
+  const slots = Array.isArray(engineOutput?.slots)
+    ? engineOutput.slots
+    : [];
+
+  const cols = [];
+
+  for (const dezena of dezenas.slice(0, expectedCols)) {
+    const items = slots
+      .filter(
+        (slot) =>
+          String(slot?.dezena || "") ===
+          String(dezena || "")
+      )
+      .map(
+        (slot) =>
+          normalizePublicMilhar(slot?.milhar)
+      )
+      .filter(
+        (milhar) => /^\d{4}$/.test(milhar)
+      )
+      .slice(0, perCol);
+
+    while (items.length < perCol) {
+      items.push("");
+    }
+
+    cols.push({
+      dezena: String(dezena || ""),
+      items,
+    });
+  }
+
+  while (cols.length < expectedCols) {
+    cols.push({
+      dezena: "",
+      items: Array(perCol).fill(""),
+    });
+  }
+
+  return cols.slice(0, expectedCols);
+}
+
+function buildTop3PublicSnapshot({
+  computedTop,
+  history,
+  lotteryKey,
+  date,
+  closeHour,
+  publicApi,
+}) {
+  const schedule = scheduleForPublicProjection(
+    lotteryKey,
+    date
+  );
+
+  return (Array.isArray(computedTop)
+    ? computedTop
+    : []
+  )
+    .slice(0, 3)
+    .map((item, index) => {
+      const grupo = Number(item?.grupo);
+
+      if (
+        !Number.isFinite(grupo) ||
+        grupo < 1 ||
+        grupo > 25
+      ) {
+        return null;
+      }
+
+      const probability = Number(
+        item?.scoreProb ??
+        item?.probability ??
+        item?.confidence ??
+        0
+      );
+
+      const prob =
+        probability > 1
+          ? probability / 100
+          : probability;
+
+      const engineOutput =
+        publicApi.build20MilharesForGrupo({
+          rangeDraws: history,
+          analysisHourBucket: closeHour,
+          schedule,
+          grupo2: grupo,
+          targetYmd: date,
+        });
+
+      const milharesCols =
+        buildPublicMilharesCols(
+          engineOutput,
+          4,
+          5
+        );
+
+      const milhares20 = milharesCols
+        .flatMap((column) => column.items)
+        .filter(
+          (milhar) => /^\d{4}$/.test(milhar)
+        )
+        .slice(0, 20);
+
+      return {
+        rank: index + 1,
+        grupo,
+        animal:
+          item?.animal ||
+          ANIMALS[
+            String(grupo).padStart(2, "0")
+          ] ||
+          "",
+        prob:
+          Number.isFinite(prob)
+            ? prob
+            : 0,
+        probPct:
+          Number.isFinite(prob)
+            ? Number((prob * 100).toFixed(4))
+            : 0,
+        milhares20,
+        milharesCols,
+        meta: item?.meta || null,
+      };
+    })
+    .filter(Boolean);
+}
+
+async function saveTop3PublicProjection({
+  lotteryKey,
+  date,
+  closeHour,
+  snapshot,
+  engineVersion = "V3_STATISTICAL",
+  source = "backend-top3",
+}) {
+  const lottery = normalizeLotteryKey(lotteryKey);
+  const hour = normalizeHour(closeHour);
+  const hourCode = publicHourCode(hour);
+
+  const id =
+    `${lottery}__${date}__${hourCode}`;
+
+  const normalizedSnapshot =
+    Array.isArray(snapshot)
+      ? snapshot.slice(0, 3)
+      : [];
+
+  if (!normalizedSnapshot.length) {
+    throw new Error(
+      "Snapshot público TOP3 vazio."
+    );
+  }
+
+  const picks = normalizedSnapshot
+    .map((item) => Number(item?.grupo))
+    .filter(
+      (grupo) =>
+        Number.isFinite(grupo) &&
+        grupo >= 1 &&
+        grupo <= 25
+    )
+    .slice(0, 3);
+
+  if (!picks.length) {
+    throw new Error(
+      "Picks públicos TOP3 inválidos."
+    );
+  }
+
+  const database = getDb();
+  const ref = database
+    .collection("top3_predictions")
+    .doc(id);
+
+  const now = Date.now();
+
+  const payload = {
+    id,
+    lotteryKey: lottery,
+    targetYmd: date,
+    targetHour:
+      `${hourCode}h`,
+    targetKey:
+      `${date}_${hourCode}h`,
+    picks,
+    snapshot: normalizedSnapshot,
+    engineVersion,
+    status: "predicted",
+    resultGrupo: null,
+    resultMilhar: "",
+    resultAnimal: "",
+    hitType: "",
+    hitScore: 0,
+    hitPosition: -1,
+    matchedValue: "",
+    createdAt: now,
+    updatedAt: now,
+    createdBy: source,
+    source,
+  };
+
+  return database.runTransaction(
+    async (transaction) => {
+      const current =
+        await transaction.get(ref);
+
+      if (!current.exists) {
+        transaction.set(ref, payload);
+
+        return {
+          ok: true,
+          created: true,
+          updated: false,
+          existing: false,
+          protected: false,
+          id,
+        };
+      }
+
+      const currentData =
+        current.data() || {};
+
+      const currentStatus = String(
+        currentData.status || ""
+      )
+        .trim()
+        .toLowerCase();
+
+      if (currentStatus === "validated") {
+        return {
+          ok: true,
+          created: false,
+          updated: false,
+          existing: true,
+          protected: true,
+          reason: "ALREADY_VALIDATED",
+          id,
+        };
+      }
+
+      const updatedPayload = {
+        ...payload,
+        createdAt:
+          currentData.createdAt ||
+          payload.createdAt,
+        updatedAt: Date.now(),
+        resultGrupo:
+          currentData.resultGrupo ?? null,
+        resultMilhar:
+          currentData.resultMilhar || "",
+        resultAnimal:
+          currentData.resultAnimal || "",
+        hitType:
+          currentData.hitType || "",
+        hitScore:
+          Number(currentData.hitScore || 0),
+        hitPosition:
+          Number.isFinite(
+            Number(currentData.hitPosition)
+          )
+            ? Number(currentData.hitPosition)
+            : -1,
+        matchedValue:
+          currentData.matchedValue || "",
+      };
+
+      transaction.set(
+        ref,
+        updatedPayload,
+        { merge: true }
+      );
+
+      return {
+        ok: true,
+        created: false,
+        updated: true,
+        existing: true,
+        protected: false,
+        id,
+      };
+    }
+  );
+}
+
+function mapTop3ToPredictions(top = []) {
+  return (Array.isArray(top) ? top : [])
+    .slice(0, 3)
+    .map((item, index) => {
+      const grupoNumber = Number(item?.grupo);
+      const grupo = String(grupoNumber).padStart(2, "0");
+
+      const probability = Number(
+        item?.scoreProb ??
+        item?.probability ??
+        item?.confidence ??
+        0
+      );
+
+      const percentage =
+        probability > 0 && probability <= 1
+          ? probability * 100
+          : probability;
+
+      return {
+        type: "grupo",
+        grupo,
+        animal:
+          item?.animal ||
+          ANIMALS[grupo] ||
+          null,
+        score: Number(
+          Number.isFinite(percentage)
+            ? percentage.toFixed(4)
+            : 0
+        ),
+        confidence: Number(
+          Number.isFinite(percentage)
+            ? percentage.toFixed(4)
+            : 0
+        ),
+        reasons: Array.isArray(item?.reasons)
+          ? item.reasons.filter(Boolean)
+          : [],
+        signals: {
+          engine: "top3_statistical_v3",
+          rankPosition: index + 1,
+          scoreProb: Number(item?.scoreProb || 0),
+          rawScore: Number(item?.score || 0),
+          meta: item?.meta || null,
+        },
+      };
+    })
+    .filter((item) => /^\d{2}$/.test(item.grupo));
+}
+
+async function createTop3PredictionRun(
+  input = {},
+  dependencies = {}
+) {
+  const lotteryKey = normalizeLotteryKey(
+    input.lotteryKey
+  );
+
+  const date = normalizeYmd(input.date);
+  const closeHour = normalizeHour(input.closeHour);
+
+  const computeTop3 =
+    dependencies.computeTop3 ||
+    computeStatisticalTop3V3;
+
+  const persistRun =
+    dependencies.persistRun ||
+    createPredictionRun;
+
+  const publicApi =
+    dependencies.publicApi ||
+    loadTop3PublicApi();
+
+  const historyLoad = await loadPredictionHistory({
+    lotteryKey,
+    date,
+    input,
+    dependencies,
+  });
+
+  const allDraws = extractDraws(
+    historyLoad.draws
+  );
+
+  const {
+    source: historySource,
+    metadata: historyMetadata,
+    lookbackDays,
+    maxDraws,
+    startYmd,
+  } = historyLoad;
+
+  if (!allDraws.length) {
+    throw new Error(
+      `Nenhum resultado encontrado para ${lotteryKey}.`
+    );
+  }
+
+  const targetKey = dateHourKey(date, closeHour);
+
+  const history = allDraws
+    .map((draw) => {
+      const ymd =
+        publicApi.pickDrawYMD(draw);
+
+      const rawHour =
+        publicApi.pickDrawHour(draw);
+
+      if (!ymd || !rawHour) {
+        return null;
+      }
+
+      const hour =
+        normalizeHour(rawHour);
+
+      return {
+        draw,
+        ymd,
+        hour,
+        key: `${ymd}T${hour}`,
+      };
+    })
+    .filter(
+      (item) =>
+        item &&
+        item.key < targetKey
+    )
+    .sort((a, b) =>
+      a.key.localeCompare(b.key)
+    )
+    .map((item) => item.draw);
+
+  if (!history.length) {
+    throw new Error(
+      "Não existe histórico anterior ao horário solicitado."
+    );
+  }
+
+  const drawLast = history[history.length - 1];
+
+  const drawsToday = history.filter(
+    (draw) => publicApi.pickDrawYMD(draw) === date
+  );
+
+  const computed = computeTop3({
+    lotteryKey,
+    drawsRange: history,
+    drawLast,
+    PT_RIO_SCHEDULE_NORMAL,
+    PT_RIO_SCHEDULE_WED_SAT,
+    FEDERAL_SCHEDULE,
+    topN: 3,
+    targetYmdOverride: date,
+    targetHourOverride: closeHour,
+    drawsAlreadySorted: true,
+  });
+
+  const predictions = mapTop3ToPredictions(
+    computed?.top
+  );
+
+  const publicSnapshot =
+    buildTop3PublicSnapshot({
+      computedTop: computed?.top,
+      history,
+      lotteryKey,
+      date,
+      closeHour,
+      publicApi,
+    });
+
+  if (!predictions.length) {
+    throw new Error(
+      "O motor TOP3 não produziu previsões válidas."
+    );
+  }
+
+  if (
+    publicSnapshot.length !== 3 ||
+    publicSnapshot.some(
+      (item) =>
+        !Array.isArray(item?.milhares20) ||
+        item.milhares20.length !== 20
+    )
+  ) {
+    throw new Error(
+      "O motor TOP3 não produziu 20 milhares válidas para cada grupo."
+    );
+  }
+
+  const metadata = {
+    ...(input.metadata || {}),
+    engine: "top3_statistical_v3",
+    historyDraws: history.length,
+    drawsToday: drawsToday.length,
+    historySource,
+    historyBootstrapStatus:
+      historyMetadata?.bootstrapStatus || null,
+    historyTotalStored:
+      Number(historyMetadata?.totalDraws || 0) || null,
+    lookbackDays,
+    maxDraws,
+    startYmd,
+    lastDrawYmd:
+      publicApi.pickDrawYMD(drawLast) || null,
+    lastDrawHour:
+      publicApi.pickDrawHour(drawLast) || null,
+    targetYmd: date,
+    targetHour: closeHour,
+    engineMeta: computed?.meta || null,
+  };
+
+  const engine = {
+    name: "top3_statistical_v3",
+    historyDraws: history.length,
+    drawsToday: drawsToday.length,
+    historySource,
+    historyBootstrapStatus:
+      historyMetadata?.bootstrapStatus || null,
+    historyTotalStored:
+      Number(historyMetadata?.totalDraws || 0) || null,
+    lookbackDays,
+    maxDraws,
+    startYmd,
+    targetYmd: date,
+    targetHour: closeHour,
+    meta: computed?.meta || null,
+  };
+
+  if (input.dryRun === true) {
+    return {
+      run: null,
+      predictions,
+      publicSnapshot,
+      engine,
+      dryRun: true,
+    };
+  }
+
+  const source =
+    input.source || "backend-top3";
+
+  const result = await persistRun({
+    lotteryKey,
+    date,
+    closeHour,
+    source,
+    algorithm: "top3_statistical_v3",
+    metadata,
+    predictions,
+  });
+
+  const publicProjection =
+    await saveTop3PublicProjection({
+      lotteryKey,
+      date,
+      closeHour,
+      snapshot: publicSnapshot,
+      engineVersion: "V3_STATISTICAL",
+      source,
+    });
+
+  return {
+    ...result,
+    publicSnapshot,
+    publicProjection,
+    engine,
+    dryRun: false,
+  };
+}
+
+module.exports = {
+  createTop3PredictionRun,
+  mapTop3ToPredictions,
+  normalizeHour,
+  normalizeHistorySource,
+  loadPredictionHistory,
+  buildPublicMilharesCols,
+  buildTop3PublicSnapshot,
+  saveTop3PublicProjection,
+  resolveNextTop3Slot,
+};
+
+----- FIM DO CONTEÚDO COMPLETO -----
+
+====================================================================================================
+ARQUIVO: .\backend\engine\top3HistoryRepository.js
+====================================================================================================
+Tamanho: 15821 bytes
+Linhas: 913
+Modificado em: 07/24/2026 01:48:09
+SHA256: F50DF4586B21C77859AC8066E80A8167D89680635CCE78A34979A9A04D3B9088
+
+----- INÍCIO DO CONTEÚDO COMPLETO -----
+
+"use strict";
+
+const {
+  getDb,
+} = require("../service/firebaseAdmin");
+
+const ROOT_COLLECTION = "top3_history";
+const MONTHS_COLLECTION = "months";
+const METADATA_COLLECTION = "metadata";
+const CURRENT_METADATA_DOC = "current";
+const SCHEMA_VERSION = 1;
+
+const COMPACT_COLLECTION = "compact_years";
+const COMPACT_MANIFEST_DOC = "__manifest";
+const COMPACT_SCHEMA_VERSION = 1;
+
+function normalizeLotteryKey(value) {
+  const key = String(value || "PT_RIO")
+    .trim()
+    .toUpperCase();
+
+  if (!key) {
+    throw new Error(
+      "lotteryKey obrigatório."
+    );
+  }
+
+  return key;
+}
+
+function normalizeYearMonth(value) {
+  const yearMonth = String(value || "").trim();
+
+  if (!/^\d{4}-\d{2}$/.test(yearMonth)) {
+    throw new Error(
+      "yearMonth inválido. Utilize YYYY-MM."
+    );
+  }
+
+  const month = Number(yearMonth.slice(5, 7));
+
+  if (month < 1 || month > 12) {
+    throw new Error(
+      "Mês inválido em yearMonth."
+    );
+  }
+
+  return yearMonth;
+}
+
+function normalizeYmd(value) {
+  const ymd = String(value || "").trim();
+
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(ymd)) {
+    return null;
+  }
+
+  return ymd;
+}
+
+function normalizeYear(value) {
+  const year = String(value || "").trim();
+
+  if (!/^\d{4}$/.test(year)) {
+    throw new Error(
+      "year inválido. Utilize YYYY."
+    );
+  }
+
+  return year;
+}
+
+function resolveDb(dependencies = {}) {
+  if (dependencies.db) {
+    return dependencies.db;
+  }
+
+  return getDb();
+}
+
+function historyRootRef(
+  database,
+  lotteryKey
+) {
+  return database
+    .collection(ROOT_COLLECTION)
+    .doc(normalizeLotteryKey(lotteryKey));
+}
+
+function historyMonthRef(
+  database,
+  lotteryKey,
+  yearMonth
+) {
+  return historyRootRef(
+    database,
+    lotteryKey
+  )
+    .collection(MONTHS_COLLECTION)
+    .doc(normalizeYearMonth(yearMonth));
+}
+
+function metadataRef(
+  database,
+  lotteryKey
+) {
+  return historyRootRef(
+    database,
+    lotteryKey
+  )
+    .collection(METADATA_COLLECTION)
+    .doc(CURRENT_METADATA_DOC);
+}
+
+function compactCollectionRef(
+  database,
+  lotteryKey
+) {
+  return historyRootRef(
+    database,
+    lotteryKey
+  ).collection(COMPACT_COLLECTION);
+}
+
+function compactYearRef(
+  database,
+  lotteryKey,
+  year
+) {
+  return compactCollectionRef(
+    database,
+    lotteryKey
+  ).doc(normalizeYear(year));
+}
+
+function compactManifestRef(
+  database,
+  lotteryKey
+) {
+  return compactCollectionRef(
+    database,
+    lotteryKey
+  ).doc(COMPACT_MANIFEST_DOC);
+}
+
+function safeArray(value) {
+  return Array.isArray(value)
+    ? value
+    : [];
+}
+
+function normalizePrize(prize = {}) {
+  const position = Number(prize.position);
+  const grupo = Number(prize.grupo);
+
+  if (
+    !Number.isFinite(position) ||
+    position < 1 ||
+    position > 10 ||
+    !Number.isFinite(grupo) ||
+    grupo < 1 ||
+    grupo > 25
+  ) {
+    return null;
+  }
+
+  return {
+    id: prize.id
+      ? String(prize.id)
+      : null,
+    position,
+    grupo,
+    milhar:
+      prize.milhar != null
+        ? String(prize.milhar).padStart(4, "0")
+        : null,
+    centena:
+      prize.centena != null
+        ? String(prize.centena).padStart(3, "0")
+        : null,
+    dezena:
+      prize.dezena != null
+        ? String(prize.dezena).padStart(2, "0")
+        : null,
+  };
+}
+
+function normalizeDraw(draw = {}) {
+  const drawId = String(
+    draw.drawId ||
+    draw.id ||
+    ""
+  ).trim();
+
+  const ymd = normalizeYmd(
+    draw.ymd ||
+    draw.date
+  );
+
+  const closeHour = String(
+    draw.close_hour ||
+    draw.closeHour ||
+    draw.hour ||
+    ""
+  ).trim();
+
+  if (!drawId || !ymd || !closeHour) {
+    return null;
+  }
+
+  const prizes = safeArray(draw.prizes)
+    .map(normalizePrize)
+    .filter(Boolean)
+    .sort(
+      (a, b) =>
+        Number(a.position) -
+        Number(b.position)
+    );
+
+  return {
+    drawId,
+    id: drawId,
+    ymd,
+    closeHour,
+    lotteryKey: normalizeLotteryKey(
+      draw.lottery_key ||
+      draw.lotteryKey ||
+      "PT_RIO"
+    ),
+    lotteryCode:
+      draw.lottery_code ||
+      draw.lotteryCode ||
+      null,
+    prizes,
+  };
+}
+
+function sortDraws(draws = []) {
+  return [...draws].sort((a, b) => {
+    const aKey =
+      `${a.ymd}T${a.closeHour}T${a.drawId}`;
+
+    const bKey =
+      `${b.ymd}T${b.closeHour}T${b.drawId}`;
+
+    return aKey.localeCompare(bKey);
+  });
+}
+
+function deduplicateDraws(draws = []) {
+  const map = new Map();
+
+  for (const raw of safeArray(draws)) {
+    const draw = normalizeDraw(raw);
+
+    if (!draw) {
+      continue;
+    }
+
+    map.set(draw.drawId, draw);
+  }
+
+  return sortDraws(
+    Array.from(map.values())
+  );
+}
+
+async function readHistoryMonth(
+  lotteryKey,
+  yearMonth,
+  dependencies = {}
+) {
+  const database = resolveDb(dependencies);
+
+  const snap = await historyMonthRef(
+    database,
+    lotteryKey,
+    yearMonth
+  ).get();
+
+  if (!snap.exists) {
+    return {
+      exists: false,
+      lotteryKey: normalizeLotteryKey(
+        lotteryKey
+      ),
+      yearMonth: normalizeYearMonth(
+        yearMonth
+      ),
+      draws: [],
+      data: null,
+    };
+  }
+
+  const data = snap.data() || {};
+
+  return {
+    exists: true,
+    lotteryKey: normalizeLotteryKey(
+      lotteryKey
+    ),
+    yearMonth: normalizeYearMonth(
+      yearMonth
+    ),
+    draws: deduplicateDraws(data.draws),
+    data,
+  };
+}
+
+async function writeHistoryMonth(
+  lotteryKey,
+  yearMonth,
+  draws,
+  dependencies = {}
+) {
+  const database = resolveDb(dependencies);
+  const key = normalizeLotteryKey(lotteryKey);
+  const month = normalizeYearMonth(yearMonth);
+
+  const normalizedDraws = deduplicateDraws(
+    draws
+  ).filter(
+    (draw) =>
+      draw.ymd.slice(0, 7) === month
+  );
+
+  const firstDraw =
+    normalizedDraws[0] || null;
+
+  const lastDraw =
+    normalizedDraws[
+      normalizedDraws.length - 1
+    ] || null;
+
+  const payload = {
+    schemaVersion: SCHEMA_VERSION,
+    lotteryKey: key,
+    yearMonth: month,
+    drawCount: normalizedDraws.length,
+    firstYmd: firstDraw?.ymd || null,
+    lastYmd: lastDraw?.ymd || null,
+    firstDrawId:
+      firstDraw?.drawId || null,
+    lastDrawId:
+      lastDraw?.drawId || null,
+    draws: normalizedDraws,
+    updatedAt: new Date(),
+  };
+
+  await historyMonthRef(
+    database,
+    key,
+    month
+  ).set(
+    payload,
+    {
+      merge: false,
+    }
+  );
+
+  return payload;
+}
+
+async function upsertHistoryMonth(
+  lotteryKey,
+  yearMonth,
+  newDraws,
+  dependencies = {}
+) {
+  const current = await readHistoryMonth(
+    lotteryKey,
+    yearMonth,
+    dependencies
+  );
+
+  const merged = deduplicateDraws([
+    ...current.draws,
+    ...safeArray(newDraws),
+  ]);
+
+  const payload = await writeHistoryMonth(
+    lotteryKey,
+    yearMonth,
+    merged,
+    dependencies
+  );
+
+  return {
+    ...payload,
+    previousDrawCount: current.draws.length,
+    previousFirstYmd:
+      current.draws[0]?.ymd || null,
+    previousLastYmd:
+      current.draws[
+        current.draws.length - 1
+      ]?.ymd || null,
+    previousFirstDrawId:
+      current.draws[0]?.drawId || null,
+    previousLastDrawId:
+      current.draws[
+        current.draws.length - 1
+      ]?.drawId || null,
+  };
+}
+
+async function readMetadata(
+  lotteryKey,
+  dependencies = {}
+) {
+  const database = resolveDb(dependencies);
+  const key = normalizeLotteryKey(lotteryKey);
+
+  const snap = await metadataRef(
+    database,
+    key
+  ).get();
+
+  if (!snap.exists) {
+    return {
+      exists: false,
+      lotteryKey: key,
+      data: null,
+    };
+  }
+
+  return {
+    exists: true,
+    lotteryKey: key,
+    data: snap.data() || {},
+  };
+}
+
+async function writeMetadata(
+  lotteryKey,
+  metadata = {},
+  dependencies = {}
+) {
+  const database = resolveDb(dependencies);
+  const key = normalizeLotteryKey(lotteryKey);
+
+  const payload = {
+    ...metadata,
+    schemaVersion: SCHEMA_VERSION,
+    lotteryKey: key,
+    updatedAt: new Date(),
+  };
+
+  await metadataRef(
+    database,
+    key
+  ).set(
+    payload,
+    {
+      merge: true,
+    }
+  );
+
+  return payload;
+}
+
+async function listHistoryMonths(
+  lotteryKey,
+  dependencies = {}
+) {
+  const database = resolveDb(dependencies);
+  const key = normalizeLotteryKey(lotteryKey);
+
+  const snap = await historyRootRef(
+    database,
+    key
+  )
+    .collection(MONTHS_COLLECTION)
+    .get();
+
+  return snap.docs
+    .map((doc) => ({
+      id: doc.id,
+      ...(doc.data() || {}),
+    }))
+    .sort(
+      (a, b) =>
+        String(a.yearMonth || a.id)
+          .localeCompare(
+            String(b.yearMonth || b.id)
+          )
+    );
+}
+
+function encodeCompactPrize(prize = {}) {
+  const normalized = normalizePrize(prize);
+
+  if (!normalized) {
+    return null;
+  }
+
+  return {
+    i: normalized.id,
+    o: normalized.position,
+    g: normalized.grupo,
+    m: normalized.milhar,
+    c: normalized.centena,
+    d: normalized.dezena,
+  };
+}
+
+function decodeCompactPrize(row) {
+  if (
+    !row ||
+    typeof row !== "object" ||
+    Array.isArray(row)
+  ) {
+    return null;
+  }
+
+  return normalizePrize({
+    id: row.i,
+    position: row.o,
+    grupo: row.g,
+    milhar: row.m,
+    centena: row.c,
+    dezena: row.d,
+  });
+}
+
+function encodeCompactDraw(draw = {}) {
+  const normalized = normalizeDraw(draw);
+
+  if (!normalized) {
+    return null;
+  }
+
+  return {
+    d: normalized.drawId,
+    y: normalized.ymd,
+    h: normalized.closeHour,
+    k: normalized.lotteryKey,
+    c: normalized.lotteryCode,
+    p: safeArray(normalized.prizes)
+      .map(encodeCompactPrize)
+      .filter(Boolean),
+  };
+}
+
+function decodeCompactDraw(row) {
+  if (
+    !row ||
+    typeof row !== "object" ||
+    Array.isArray(row)
+  ) {
+    return null;
+  }
+
+  return normalizeDraw({
+    drawId: row.d,
+    id: row.d,
+    ymd: row.y,
+    closeHour: row.h,
+    lotteryKey: row.k,
+    lotteryCode: row.c,
+    prizes: safeArray(row.p)
+      .map(decodeCompactPrize)
+      .filter(Boolean),
+  });
+}
+
+async function readCompactManifest(
+  lotteryKey,
+  dependencies = {}
+) {
+  const database = resolveDb(dependencies);
+  const key = normalizeLotteryKey(lotteryKey);
+
+  const snap = await compactManifestRef(
+    database,
+    key
+  ).get();
+
+  return {
+    exists: snap.exists,
+    lotteryKey: key,
+    data: snap.exists
+      ? snap.data() || {}
+      : null,
+  };
+}
+
+async function writeCompactManifest(
+  lotteryKey,
+  metadata = {},
+  dependencies = {}
+) {
+  const database = resolveDb(dependencies);
+  const key = normalizeLotteryKey(lotteryKey);
+
+  const payload = {
+    ...metadata,
+    schemaVersion: COMPACT_SCHEMA_VERSION,
+    lotteryKey: key,
+    updatedAt: new Date(),
+  };
+
+  await compactManifestRef(
+    database,
+    key
+  ).set(
+    payload,
+    {
+      merge: true,
+    }
+  );
+
+  return payload;
+}
+
+async function readCompactHistoryYear(
+  lotteryKey,
+  year,
+  dependencies = {}
+) {
+  const database = resolveDb(dependencies);
+  const key = normalizeLotteryKey(lotteryKey);
+  const normalizedYear = normalizeYear(year);
+
+  const snap = await compactYearRef(
+    database,
+    key,
+    normalizedYear
+  ).get();
+
+  if (!snap.exists) {
+    return {
+      exists: false,
+      lotteryKey: key,
+      year: normalizedYear,
+      draws: [],
+      data: null,
+    };
+  }
+
+  const data = snap.data() || {};
+
+  return {
+    exists: true,
+    lotteryKey: key,
+    year: normalizedYear,
+    draws: deduplicateDraws(
+      safeArray(data.rows)
+        .map(decodeCompactDraw)
+        .filter(Boolean)
+    ),
+    data,
+  };
+}
+
+async function writeCompactHistoryYear(
+  lotteryKey,
+  year,
+  draws,
+  dependencies = {}
+) {
+  const database = resolveDb(dependencies);
+  const key = normalizeLotteryKey(lotteryKey);
+  const normalizedYear = normalizeYear(year);
+
+  const normalizedDraws = deduplicateDraws(
+    draws
+  ).filter(
+    (draw) =>
+      draw.ymd.slice(0, 4) === normalizedYear
+  );
+
+  const first =
+    normalizedDraws[0] || null;
+
+  const last =
+    normalizedDraws[
+      normalizedDraws.length - 1
+    ] || null;
+
+  const payload = {
+    schemaVersion: COMPACT_SCHEMA_VERSION,
+    lotteryKey: key,
+    year: normalizedYear,
+    drawCount: normalizedDraws.length,
+    firstYmd: first?.ymd || null,
+    lastYmd: last?.ymd || null,
+    firstDrawId:
+      first?.drawId || null,
+    lastDrawId:
+      last?.drawId || null,
+    rows: normalizedDraws
+      .map(encodeCompactDraw)
+      .filter(Boolean),
+    updatedAt: new Date(),
+  };
+
+  await compactYearRef(
+    database,
+    key,
+    normalizedYear
+  ).set(
+    payload,
+    {
+      merge: false,
+    }
+  );
+
+  return payload;
+}
+
+async function upsertCompactHistoryYear(
+  lotteryKey,
+  year,
+  newDraws,
+  dependencies = {}
+) {
+  const current =
+    await readCompactHistoryYear(
+      lotteryKey,
+      year,
+      dependencies
+    );
+
+  const merged = deduplicateDraws([
+    ...current.draws,
+    ...safeArray(newDraws),
+  ]);
+
+  const payload =
+    await writeCompactHistoryYear(
+      lotteryKey,
+      year,
+      merged,
+      dependencies
+    );
+
+  return {
+    ...payload,
+    previousDrawCount:
+      current.draws.length,
+  };
+}
+
+async function readCompactFullHistory(
+  lotteryKey,
+  dependencies = {}
+) {
+  const key = normalizeLotteryKey(lotteryKey);
+
+  const manifestResult =
+    await readCompactManifest(
+      key,
+      dependencies
+    );
+
+  const manifest =
+    manifestResult?.data || null;
+
+  if (
+    manifestResult?.exists !== true ||
+    manifest?.status !== "complete"
+  ) {
+    return [];
+  }
+
+  const years = safeArray(
+    manifest.years
+  )
+    .map((year) =>
+      String(year || "").trim()
+    )
+    .filter(
+      (year) =>
+        /^\d{4}$/.test(year)
+    )
+    .sort();
+
+  if (!years.length) {
+    return [];
+  }
+
+  const yearlyResults =
+    await Promise.all(
+      years.map(
+        (year) =>
+          readCompactHistoryYear(
+            key,
+            year,
+            dependencies
+          )
+      )
+    );
+
+  if (
+    yearlyResults.some(
+      (result) =>
+        result.exists !== true
+    )
+  ) {
+    throw new Error(
+      "Snapshot compacto possui ano ausente."
+    );
+  }
+
+  const draws = deduplicateDraws(
+    yearlyResults.flatMap(
+      (result) =>
+        result.draws
+    )
+  );
+
+  const expectedTotal = Number(
+    manifest.totalDraws || 0
+  );
+
+  if (
+    expectedTotal > 0 &&
+    draws.length !== expectedTotal
+  ) {
+    throw new Error(
+      "Snapshot compacto inconsistente: " +
+      `esperado=${expectedTotal}; ` +
+      `carregado=${draws.length}.`
+    );
+  }
+
+  return draws;
+}
+
+async function readLegacyFullHistory(
+  lotteryKey,
+  dependencies = {}
+) {
+  const months = await listHistoryMonths(
+    lotteryKey,
+    dependencies
+  );
+
+  const draws = [];
+
+  for (const month of months) {
+    draws.push(
+      ...safeArray(month.draws)
+    );
+  }
+
+  return deduplicateDraws(draws);
+}
+
+async function readFullHistory(
+  lotteryKey,
+  dependencies = {}
+) {
+  if (
+    dependencies.forceLegacy !== true
+  ) {
+    try {
+      const compact =
+        await readCompactFullHistory(
+          lotteryKey,
+          dependencies
+        );
+
+      if (compact.length) {
+        return compact;
+      }
+    } catch (error) {
+      console.warn(
+        "[TOP3-HISTORY] Snapshot compacto indisponível; " +
+        "usando histórico mensal:",
+        error?.message || error
+      );
+    }
+  }
+
+  return readLegacyFullHistory(
+    lotteryKey,
+    dependencies
+  );
+}
+
+module.exports = {
+  ROOT_COLLECTION,
+  MONTHS_COLLECTION,
+  METADATA_COLLECTION,
+  SCHEMA_VERSION,
+  COMPACT_COLLECTION,
+  COMPACT_MANIFEST_DOC,
+  COMPACT_SCHEMA_VERSION,
+  normalizeLotteryKey,
+  normalizeYearMonth,
+  normalizeYear,
+  normalizeDraw,
+  deduplicateDraws,
+  readHistoryMonth,
+  writeHistoryMonth,
+  upsertHistoryMonth,
+  readMetadata,
+  writeMetadata,
+  listHistoryMonths,
+  encodeCompactPrize,
+  decodeCompactPrize,
+  encodeCompactDraw,
+  decodeCompactDraw,
+  readCompactManifest,
+  writeCompactManifest,
+  readCompactHistoryYear,
+  writeCompactHistoryYear,
+  upsertCompactHistoryYear,
+  readCompactFullHistory,
+  readLegacyFullHistory,
+  readFullHistory,
+};
+
+----- FIM DO CONTEÚDO COMPLETO -----
+
+====================================================================================================
+ARQUIVO: .\backend\engine\top3HistorySync.js
+====================================================================================================
+Tamanho: 13895 bytes
+Linhas: 674
+Modificado em: 07/24/2026 01:42:15
+SHA256: CE2A21D01F10EB0C4149C9746DF59D38331EFDD34348E2FDB4D247655BD17CF1
+
+----- INÍCIO DO CONTEÚDO COMPLETO -----
+
+"use strict";
+
+const {
+  getDb,
+} = require("../service/firebaseAdmin");
+
+const {
+  readMetadata,
+  writeMetadata,
+  upsertHistoryMonth,
+  deduplicateDraws,
+  readCompactManifest,
+  writeCompactManifest,
+  upsertCompactHistoryYear,
+} = require("./top3HistoryRepository");
+
+function safeArray(value) {
+  return Array.isArray(value)
+    ? value
+    : [];
+}
+
+function normalizeLotteryKey(value) {
+  return String(value || "PT_RIO")
+    .trim()
+    .toUpperCase() || "PT_RIO";
+}
+
+function validYmd(value) {
+  const ymd = String(value || "").trim();
+
+  return /^\d{4}-\d{2}-\d{2}$/.test(ymd)
+    ? ymd
+    : null;
+}
+
+function resolveDb(dependencies = {}) {
+  return dependencies.db || getDb();
+}
+
+async function readDrawWithPrizes(
+  database,
+  drawDoc
+) {
+  if (!drawDoc || !drawDoc.exists) {
+    return null;
+  }
+
+  const data = drawDoc.data() || {};
+
+  const prizesSnap = await drawDoc.ref
+    .collection("prizes")
+    .get();
+
+  const prizes = prizesSnap.docs.map(
+    (doc) => ({
+      id: doc.id,
+      ...(doc.data() || {}),
+    })
+  );
+
+  return {
+    id: drawDoc.id,
+    drawId: drawDoc.id,
+    ...data,
+    prizes,
+  };
+}
+
+async function loadImportedDraws(
+  importResult = {},
+  dependencies = {}
+) {
+  const database = resolveDb(dependencies);
+
+  const lotteryKey = normalizeLotteryKey(
+    importResult.lotteryKey
+  );
+
+  const date = validYmd(
+    importResult.date
+  );
+
+  const targetDrawIds = safeArray(
+    importResult.targetDrawIds
+  )
+    .map((value) => String(value || "").trim())
+    .filter(Boolean);
+
+  const docs = [];
+
+  if (targetDrawIds.length) {
+    const snapshots = await Promise.all(
+      targetDrawIds.map(
+        (drawId) =>
+          database
+            .collection("draws")
+            .doc(drawId)
+            .get()
+      )
+    );
+
+    docs.push(
+      ...snapshots.filter(
+        (snap) => snap.exists
+      )
+    );
+  } else if (date) {
+    const snap = await database
+      .collection("draws")
+      .where("lottery_key", "==", lotteryKey)
+      .where("ymd", "==", date)
+      .get();
+
+    docs.push(...snap.docs);
+  }
+
+  const loadedDraws = await Promise.all(
+    docs.map(
+      (doc) =>
+        readDrawWithPrizes(
+          database,
+          doc
+        )
+    )
+  );
+
+  const draws = loadedDraws.filter((draw) => {
+    if (!draw) {
+      return false;
+    }
+
+    const drawLotteryKey = normalizeLotteryKey(
+      draw.lottery_key ||
+      draw.lotteryKey
+    );
+
+    if (drawLotteryKey !== lotteryKey) {
+      return false;
+    }
+
+    if (
+      date &&
+      String(draw.ymd || draw.date || "") !== date
+    ) {
+      return false;
+    }
+
+    return true;
+  });
+
+  return deduplicateDraws(draws);
+}
+
+function summarizeMonths(months = []) {
+  const ordered = [...safeArray(months)]
+    .sort((a, b) =>
+      String(a.yearMonth || a.id)
+        .localeCompare(
+          String(b.yearMonth || b.id)
+        )
+    );
+
+  const allDraws = deduplicateDraws(
+    ordered.flatMap(
+      (month) =>
+        safeArray(month.draws)
+    )
+  );
+
+  const first = allDraws[0] || null;
+  const last =
+    allDraws[allDraws.length - 1] || null;
+
+  return {
+    totalDraws: allDraws.length,
+    monthCount: ordered.length,
+    months: ordered.map(
+      (month) =>
+        month.yearMonth || month.id
+    ),
+    firstYmd: first?.ymd || null,
+    lastYmd: last?.ymd || null,
+    firstDrawId:
+      first?.drawId || null,
+    lastDrawId:
+      last?.drawId || null,
+  };
+}
+
+async function markHistoryStale(
+  lotteryKey,
+  error,
+  dependencies = {}
+) {
+  const saveMetadata =
+    dependencies.writeMetadata ||
+    writeMetadata;
+
+  try {
+    await saveMetadata(
+      lotteryKey,
+      {
+        bootstrapStatus: "stale",
+        staleReason:
+          String(
+            error?.message ||
+            error ||
+            "incremental_sync_failed"
+          ),
+        staleAt:
+          new Date().toISOString(),
+      },
+      dependencies.repositoryDependencies || {}
+    );
+
+    return true;
+  } catch (metadataError) {
+    console.error(
+      "[TOP3-HISTORY] Falha também ao marcar snapshot como stale:",
+      metadataError?.message ||
+      metadataError
+    );
+
+    return false;
+  }
+}
+
+async function syncImportedResultToTop3History(
+  importResult = {},
+  dependencies = {}
+) {
+  const lotteryKey = normalizeLotteryKey(
+    importResult.lotteryKey
+  );
+
+  const loadMetadata =
+    dependencies.readMetadata ||
+    readMetadata;
+
+  const saveMonth =
+    dependencies.upsertHistoryMonth ||
+    upsertHistoryMonth;
+
+  const saveMetadata =
+    dependencies.writeMetadata ||
+    writeMetadata;
+
+  const loadCompactManifest =
+    dependencies.readCompactManifest ||
+    readCompactManifest;
+
+  const saveCompactManifest =
+    dependencies.writeCompactManifest ||
+    writeCompactManifest;
+
+  const saveCompactYear =
+    dependencies.upsertCompactHistoryYear ||
+    upsertCompactHistoryYear;
+
+  try {
+    if (
+      importResult.blocked === true ||
+      !validYmd(importResult.date)
+    ) {
+      return {
+        ok: true,
+        skipped: true,
+        reason:
+          importResult.blocked === true
+            ? "import_blocked"
+            : "invalid_date",
+      };
+    }
+
+    const metadataResult = await loadMetadata(
+      lotteryKey,
+      dependencies.repositoryDependencies || {}
+    );
+
+    const metadata =
+      metadataResult?.data || null;
+
+    const compactManifestResult =
+      await loadCompactManifest(
+        lotteryKey,
+        dependencies.repositoryDependencies || {}
+      );
+
+    const compactManifest =
+      compactManifestResult?.data || null;
+
+    const compactReady =
+      compactManifestResult?.exists === true &&
+      compactManifest?.status === "complete";
+
+    if (
+      metadataResult?.exists !== true ||
+      metadata?.bootstrapStatus !== "complete"
+    ) {
+      return {
+        ok: true,
+        skipped: true,
+        reason: "bootstrap_not_complete",
+      };
+    }
+
+    const draws = await (
+      dependencies.loadImportedDraws ||
+      loadImportedDraws
+    )(
+      importResult,
+      dependencies
+    );
+
+    if (!draws.length) {
+      return {
+        ok: true,
+        skipped: true,
+        reason: "no_draws_found",
+      };
+    }
+
+    const byMonth = new Map();
+
+    for (const draw of draws) {
+      const yearMonth = draw.ymd.slice(0, 7);
+
+      if (!byMonth.has(yearMonth)) {
+        byMonth.set(yearMonth, []);
+      }
+
+      byMonth.get(yearMonth).push(draw);
+    }
+
+    const updatedMonths = [];
+
+    for (
+      const [yearMonth, monthDraws]
+      of byMonth.entries()
+    ) {
+      const payload = await saveMonth(
+        lotteryKey,
+        yearMonth,
+        monthDraws,
+        dependencies.repositoryDependencies || {}
+      );
+
+      updatedMonths.push({
+        yearMonth,
+        drawCount:
+          Number(payload?.drawCount || 0),
+        previousDrawCount:
+          Number(
+            payload?.previousDrawCount || 0
+          ),
+        firstYmd:
+          payload?.firstYmd || null,
+        lastYmd:
+          payload?.lastYmd || null,
+        firstDrawId:
+          payload?.firstDrawId || null,
+        lastDrawId:
+          payload?.lastDrawId || null,
+      });
+    }
+
+    const metadataMonths = safeArray(
+      metadata?.months
+    )
+      .map((value) =>
+        String(value || "").trim()
+      )
+      .filter(Boolean);
+
+    const monthSet = new Set(
+      metadataMonths
+    );
+
+    for (const item of updatedMonths) {
+      monthSet.add(item.yearMonth);
+    }
+
+    const orderedMonths =
+      Array.from(monthSet).sort();
+
+    const totalDelta =
+      updatedMonths.reduce(
+        (total, item) =>
+          total +
+          Number(item.drawCount || 0) -
+          Number(
+            item.previousDrawCount || 0
+          ),
+        0
+      );
+
+    const totalDraws = Math.max(
+      0,
+      Number(metadata?.totalDraws || 0) +
+      totalDelta
+    );
+
+    const firstCandidates = [
+      metadata?.firstYmd
+        ? {
+            ymd: metadata.firstYmd,
+            drawId:
+              metadata.firstDrawId || null,
+          }
+        : null,
+      ...updatedMonths.map((item) =>
+        item.firstYmd
+          ? {
+              ymd: item.firstYmd,
+              drawId:
+                item.firstDrawId || null,
+            }
+          : null
+      ),
+    ]
+      .filter(Boolean)
+      .sort((a, b) =>
+        String(a.ymd)
+          .localeCompare(String(b.ymd))
+      );
+
+    const lastCandidates = [
+      metadata?.lastYmd
+        ? {
+            ymd: metadata.lastYmd,
+            drawId:
+              metadata.lastDrawId || null,
+          }
+        : null,
+      ...updatedMonths.map((item) =>
+        item.lastYmd
+          ? {
+              ymd: item.lastYmd,
+              drawId:
+                item.lastDrawId || null,
+            }
+          : null
+      ),
+    ]
+      .filter(Boolean)
+      .sort((a, b) =>
+        String(a.ymd)
+          .localeCompare(String(b.ymd))
+      );
+
+    const first =
+      firstCandidates[0] || null;
+
+    const last =
+      lastCandidates[
+        lastCandidates.length - 1
+      ] || null;
+
+    const summary = {
+      totalDraws,
+      monthCount:
+        orderedMonths.length,
+      months:
+        orderedMonths,
+      firstYmd:
+        first?.ymd || null,
+      lastYmd:
+        last?.ymd || null,
+      firstDrawId:
+        first?.drawId || null,
+      lastDrawId:
+        last?.drawId || null,
+    };
+
+    let compactUpdated = false;
+    let compactError = null;
+    const updatedCompactYears = [];
+
+    if (compactReady) {
+      try {
+        const byYear = new Map();
+
+        for (const draw of draws) {
+          const year = draw.ymd.slice(0, 4);
+
+          if (!byYear.has(year)) {
+            byYear.set(year, []);
+          }
+
+          byYear.get(year).push(draw);
+        }
+
+        for (
+          const [year, yearDraws]
+          of byYear.entries()
+        ) {
+          const payload =
+            await saveCompactYear(
+              lotteryKey,
+              year,
+              yearDraws,
+              dependencies.repositoryDependencies || {}
+            );
+
+          updatedCompactYears.push({
+            year,
+            drawCount:
+              Number(payload?.drawCount || 0),
+            previousDrawCount:
+              Number(
+                payload?.previousDrawCount || 0
+              ),
+          });
+        }
+
+        const compactYears = Array.from(
+          new Set(
+            orderedMonths.map(
+              (month) =>
+                String(month).slice(0, 4)
+            )
+          )
+        ).sort();
+
+        await saveCompactManifest(
+          lotteryKey,
+          {
+            status: "complete",
+            totalDraws:
+              summary.totalDraws,
+            yearCount:
+              compactYears.length,
+            years:
+              compactYears,
+            firstYmd:
+              summary.firstYmd,
+            lastYmd:
+              summary.lastYmd,
+            firstDrawId:
+              summary.firstDrawId,
+            lastDrawId:
+              summary.lastDrawId,
+            source:
+              "bootstrap_plus_incremental",
+            incrementalUpdatedAt:
+              new Date().toISOString(),
+            staleReason: null,
+            staleAt: null,
+          },
+          dependencies.repositoryDependencies || {}
+        );
+
+        compactUpdated = true;
+      } catch (error) {
+        compactError = String(
+          error?.message ||
+          error ||
+          "compact_incremental_failed"
+        );
+
+        console.warn(
+          "[TOP3-HISTORY] Compacto incremental falhou; " +
+          "a leitura mensal continuará disponível:",
+          compactError
+        );
+
+        try {
+          await saveCompactManifest(
+            lotteryKey,
+            {
+              status: "stale",
+              staleReason:
+                compactError,
+              staleAt:
+                new Date().toISOString(),
+            },
+            dependencies.repositoryDependencies || {}
+          );
+        } catch (manifestError) {
+          console.warn(
+            "[TOP3-HISTORY] Falha ao marcar compacto como stale:",
+            manifestError?.message ||
+            manifestError
+          );
+        }
+      }
+    }
+
+    await saveMetadata(
+      lotteryKey,
+      {
+        bootstrapStatus: "complete",
+        incrementalUpdatedAt:
+          new Date().toISOString(),
+        totalDraws:
+          summary.totalDraws,
+        monthCount:
+          summary.monthCount,
+        months:
+          summary.months,
+        firstYmd:
+          summary.firstYmd,
+        lastYmd:
+          summary.lastYmd,
+        firstDrawId:
+          summary.firstDrawId,
+        lastDrawId:
+          summary.lastDrawId,
+        lastProcessedDrawId:
+          summary.lastDrawId,
+        staleReason: null,
+        staleAt: null,
+        source:
+          "bootstrap_plus_incremental",
+      },
+      dependencies.repositoryDependencies || {}
+    );
+
+    console.log(
+      `[TOP3-HISTORY] Incremental OK | ${lotteryKey} | ` +
+      `draws=${draws.length} | meses=${updatedMonths
+        .map((item) => item.yearMonth)
+        .join(",")}`
+    );
+
+    return {
+      ok: true,
+      skipped: false,
+      lotteryKey,
+      importedDraws: draws.length,
+      updatedMonths,
+      compactReady,
+      compactUpdated,
+      compactError,
+      updatedCompactYears,
+      ...summary,
+    };
+  } catch (error) {
+    console.error(
+      "[TOP3-HISTORY] Incremental falhou:",
+      error?.stack ||
+      error?.message ||
+      error
+    );
+
+    const markedStale = await markHistoryStale(
+      lotteryKey,
+      error,
+      dependencies
+    );
+
+    return {
+      ok: false,
+      skipped: false,
+      lotteryKey,
+      markedStale,
+      error:
+        String(
+          error?.message ||
+          error ||
+          "incremental_sync_failed"
+        ),
+    };
+  }
+}
+
+module.exports = {
+  readDrawWithPrizes,
+  loadImportedDraws,
+  summarizeMonths,
+  markHistoryStale,
+  syncImportedResultToTop3History,
+};
+
+----- FIM DO CONTEÚDO COMPLETO -----
+
+====================================================================================================
+ARQUIVO: .\src\constants\schedule.js
+====================================================================================================
+Tamanho: 2354 bytes
+Linhas: 106
+Modificado em: 07/19/2026 12:42:00
+SHA256: 3992A2E34DA40DDEFA3FDAD4917D9C16D2561183AF0FAF2943CC86FF795A70E6
+
+----- INÍCIO DO CONTEÚDO COMPLETO -----
+
+/**
+ * Schedule oficial do PalPitaco (FRONT)
+ * Fonte única de horários por loteria
+ * ⚠️ NÃO deixar este arquivo vazio
+ */
+
+function normalizeLotteryKey(v) {
+  const s = String(v || "").trim().toUpperCase();
+
+  if (s === "RJ") return "PT_RIO";
+  if (s === "RIO") return "PT_RIO";
+  if (s === "PT-RIO") return "PT_RIO";
+  if (s === "PT_RIO") return "PT_RIO";
+
+  if (s === "FED") return "FEDERAL";
+  if (s === "BR") return "FEDERAL"; // compat defensiva
+  if (s === "FEDERAL") return "FEDERAL";
+
+  if (s === "LOOK") return "LOOK";
+  if (s === "GO") return "LOOK";
+
+  if (s === "NACIONAL") return "NACIONAL";
+  if (s === "LT_NACIONAL") return "NACIONAL";
+  if (s === "LT-NACIONAL") return "NACIONAL";
+
+  return "PT_RIO"; // fallback seguro
+}
+
+function isValidHourFormat(h) {
+  return /^\d{2}:\d{2}$/.test(String(h || "").trim());
+}
+
+function sortHoursAsc(arr) {
+  return [...arr].sort((a, b) => {
+    const [ha, ma] = a.split(":").map(Number);
+    const [hb, mb] = b.split(":").map(Number);
+    return ha * 60 + ma - (hb * 60 + mb);
+  });
+}
+
+export const SCHEDULES = Object.freeze({
+  PT_RIO: Object.freeze([
+    "09:00",
+    "11:00",
+    "14:00",
+    "16:00",
+    "18:00",
+    "21:00",
+  ]),
+  FEDERAL: Object.freeze([
+    "20:00",
+  ]),
+  LOOK: Object.freeze([
+    "07:00",
+    "09:00",
+    "11:00",
+    "14:00",
+    "16:00",
+    "18:00",
+    "21:00",
+    "23:00",
+  ]),
+  NACIONAL: Object.freeze([
+    "02:00",
+    "08:00",
+    "10:00",
+    "12:00",
+    "15:00",
+    "17:00",
+    "21:00",
+    "23:00",
+  ]),
+});
+
+/**
+ * Retorna os horários da loteria (normalizado e seguro)
+ */
+export function getScheduleByLottery(lottery = "PT_RIO") {
+  const key = normalizeLotteryKey(lottery);
+
+  const list = SCHEDULES[key];
+  if (!Array.isArray(list)) return [];
+
+  // Filtra formato inválido por segurança
+  return sortHoursAsc(list.filter(isValidHourFormat));
+}
+
+/**
+ * Retorna todos os horários conhecidos (flat + únicos + ordenados corretamente)
+ */
+export function getAllScheduleHours() {
+  const all = Object.values(SCHEDULES)
+    .flat()
+    .filter(isValidHourFormat);
+
+  return sortHoursAsc(Array.from(new Set(all)));
+}
+
+/**
+ * Helper opcional:
+ * Verifica se horário pertence à loteria
+ */
+export function isValidLotteryHour(lottery, hour) {
+  const list = getScheduleByLottery(lottery);
+  return list.includes(String(hour || "").trim());
+}
+
+----- FIM DO CONTEÚDO COMPLETO -----
+
+====================================================================================================
+RESUMO
+====================================================================================================
+OK | .\backend\engine\top3PredictionService.js | 975 linhas
+OK | .\backend\engine\top3HistoryRepository.js | 913 linhas
+OK | .\backend\engine\top3HistorySync.js | 674 linhas
+OK | .\src\constants\schedule.js | 106 linhas

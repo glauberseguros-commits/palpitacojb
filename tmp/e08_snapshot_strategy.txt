@@ -1,0 +1,527 @@
+====================================================================================================
+backend\scripts\backtestTop3Official.js
+====================================================================================================
+
+[7] readFullHistory
+    2: 
+    3: const fs = require("fs");
+    4: const path = require("path");
+    5: 
+    6: const {
+    7:   readFullHistory,
+    8:   readMetadata,
+    9: } = require("../engine/top3HistoryRepository");
+   10: 
+   11: const {
+   12:   computeStatisticalTop3V3,
+   13:   loadTop3PublicApi,
+   14: } = require("../engine/scoreEngineUnified");
+   15: 
+
+[226] sortDraws
+  221:       false
+  222:     ),
+  223:   };
+  224: }
+  225: 
+  226: function sortDraws(draws = [], publicApi) {
+  227:   return [...safeArray(draws)]
+  228:     .filter(Boolean)
+  229:     .sort((a, b) => {
+  230:       const aYmd =
+  231:         publicApi.pickDrawYMD(a) || "";
+  232: 
+  233:       const bYmd =
+  234:         publicApi.pickDrawYMD(b) || "";
+
+[490] runOfficialBacktest
+  485:   }
+  486: 
+  487:   return lines.join("\n");
+  488: }
+  489: 
+  490: async function runOfficialBacktest(
+  491:   options = {},
+  492:   dependencies = {}
+  493: ) {
+  494:   const startedAt = Date.now();
+  495: 
+  496:   const lotteryKey =
+  497:     normalizeLotteryKey(
+  498:       options.lotteryKey ||
+
+[492] dependencies
+  487:   return lines.join("\n");
+  488: }
+  489: 
+  490: async function runOfficialBacktest(
+  491:   options = {},
+  492:   dependencies = {}
+  493: ) {
+  494:   const startedAt = Date.now();
+  495: 
+  496:   const lotteryKey =
+  497:     normalizeLotteryKey(
+  498:       options.lotteryKey ||
+  499:       "PT_RIO"
+  500:     );
+
+[503] dependencies
+  498:       options.lotteryKey ||
+  499:       "PT_RIO"
+  500:     );
+  501: 
+  502:   const publicApi =
+  503:     dependencies.publicApi ||
+  504:     loadTop3PublicApi();
+  505: 
+  506:   const loadHistory =
+  507:     dependencies.readFullHistory ||
+  508:     readFullHistory;
+  509: 
+  510:   const loadMetadata =
+  511:     dependencies.readMetadata ||
+
+[506] loadHistory
+  501: 
+  502:   const publicApi =
+  503:     dependencies.publicApi ||
+  504:     loadTop3PublicApi();
+  505: 
+  506:   const loadHistory =
+  507:     dependencies.readFullHistory ||
+  508:     readFullHistory;
+  509: 
+  510:   const loadMetadata =
+  511:     dependencies.readMetadata ||
+  512:     readMetadata;
+  513: 
+  514:   const computeTop3 =
+
+[507] readFullHistory
+  502:   const publicApi =
+  503:     dependencies.publicApi ||
+  504:     loadTop3PublicApi();
+  505: 
+  506:   const loadHistory =
+  507:     dependencies.readFullHistory ||
+  508:     readFullHistory;
+  509: 
+  510:   const loadMetadata =
+  511:     dependencies.readMetadata ||
+  512:     readMetadata;
+  513: 
+  514:   const computeTop3 =
+  515:     dependencies.computeTop3 ||
+
+[508] readFullHistory
+  503:     dependencies.publicApi ||
+  504:     loadTop3PublicApi();
+  505: 
+  506:   const loadHistory =
+  507:     dependencies.readFullHistory ||
+  508:     readFullHistory;
+  509: 
+  510:   const loadMetadata =
+  511:     dependencies.readMetadata ||
+  512:     readMetadata;
+  513: 
+  514:   const computeTop3 =
+  515:     dependencies.computeTop3 ||
+  516:     computeStatisticalTop3V3;
+
+[511] dependencies
+  506:   const loadHistory =
+  507:     dependencies.readFullHistory ||
+  508:     readFullHistory;
+  509: 
+  510:   const loadMetadata =
+  511:     dependencies.readMetadata ||
+  512:     readMetadata;
+  513: 
+  514:   const computeTop3 =
+  515:     dependencies.computeTop3 ||
+  516:     computeStatisticalTop3V3;
+  517: 
+  518:   const history = sortDraws(
+  519:     await loadHistory(
+
+[514] computeTop3
+  509: 
+  510:   const loadMetadata =
+  511:     dependencies.readMetadata ||
+  512:     readMetadata;
+  513: 
+  514:   const computeTop3 =
+  515:     dependencies.computeTop3 ||
+  516:     computeStatisticalTop3V3;
+  517: 
+  518:   const history = sortDraws(
+  519:     await loadHistory(
+  520:       lotteryKey,
+  521:       dependencies.historyDependencies || {}
+  522:     ),
+
+[515] dependencies
+  510:   const loadMetadata =
+  511:     dependencies.readMetadata ||
+  512:     readMetadata;
+  513: 
+  514:   const computeTop3 =
+  515:     dependencies.computeTop3 ||
+  516:     computeStatisticalTop3V3;
+  517: 
+  518:   const history = sortDraws(
+  519:     await loadHistory(
+  520:       lotteryKey,
+  521:       dependencies.historyDependencies || {}
+  522:     ),
+  523:     publicApi
+
+[518] history =
+  513: 
+  514:   const computeTop3 =
+  515:     dependencies.computeTop3 ||
+  516:     computeStatisticalTop3V3;
+  517: 
+  518:   const history = sortDraws(
+  519:     await loadHistory(
+  520:       lotteryKey,
+  521:       dependencies.historyDependencies || {}
+  522:     ),
+  523:     publicApi
+  524:   );
+  525: 
+  526:   if (!history.length) {
+
+[519] loadHistory
+  514:   const computeTop3 =
+  515:     dependencies.computeTop3 ||
+  516:     computeStatisticalTop3V3;
+  517: 
+  518:   const history = sortDraws(
+  519:     await loadHistory(
+  520:       lotteryKey,
+  521:       dependencies.historyDependencies || {}
+  522:     ),
+  523:     publicApi
+  524:   );
+  525: 
+  526:   if (!history.length) {
+  527:     throw new Error(
+
+[521] dependencies
+  516:     computeStatisticalTop3V3;
+  517: 
+  518:   const history = sortDraws(
+  519:     await loadHistory(
+  520:       lotteryKey,
+  521:       dependencies.historyDependencies || {}
+  522:     ),
+  523:     publicApi
+  524:   );
+  525: 
+  526:   if (!history.length) {
+  527:     throw new Error(
+  528:       "Histórico TOP3 vazio."
+  529:     );
+
+[535] dependencies
+  530:   }
+  531: 
+  532:   const metadataResult =
+  533:     await loadMetadata(
+  534:       lotteryKey,
+  535:       dependencies.historyDependencies || {}
+  536:     );
+  537: 
+  538:   const metadata =
+  539:     metadataResult?.data || null;
+  540: 
+  541:   if (
+  542:     dependencies.allowIncompleteSnapshot !== true &&
+  543:     (
+
+[542] dependencies
+  537: 
+  538:   const metadata =
+  539:     metadataResult?.data || null;
+  540: 
+  541:   if (
+  542:     dependencies.allowIncompleteSnapshot !== true &&
+  543:     (
+  544:       metadataResult?.exists !== true ||
+  545:       metadata?.bootstrapStatus !==
+  546:         "complete"
+  547:     )
+  548:   ) {
+  549:     throw new Error(
+  550:       "Histórico TOP3 não está marcado como completo."
+
+[554] history =
+  549:     throw new Error(
+  550:       "Histórico TOP3 não está marcado como completo."
+  551:     );
+  552:   }
+  553: 
+  554:   const minHistory = Number(
+  555:     options.minHistory || 100
+  556:   );
+  557: 
+  558:   const from =
+  559:     options.from || null;
+  560: 
+  561:   const to =
+  562:     options.to || null;
+
+[655] historyBefore
+  650:       getFirstPrizeGroup(
+  651:         targetDraw,
+  652:         publicApi
+  653:       );
+  654: 
+  655:     const historyBefore =
+  656:       history.slice(0, index);
+  657: 
+  658:     const drawLast =
+  659:       historyBefore[
+  660:         historyBefore.length - 1
+  661:       ];
+  662: 
+  663:     if (
+
+[659] historyBefore
+  654: 
+  655:     const historyBefore =
+  656:       history.slice(0, index);
+  657: 
+  658:     const drawLast =
+  659:       historyBefore[
+  660:         historyBefore.length - 1
+  661:       ];
+  662: 
+  663:     if (
+  664:       !targetYmd ||
+  665:       !targetHour ||
+  666:       actualGroup == null ||
+  667:       !drawLast
+
+[660] historyBefore
+  655:     const historyBefore =
+  656:       history.slice(0, index);
+  657: 
+  658:     const drawLast =
+  659:       historyBefore[
+  660:         historyBefore.length - 1
+  661:       ];
+  662: 
+  663:     if (
+  664:       !targetYmd ||
+  665:       !targetHour ||
+  666:       actualGroup == null ||
+  667:       !drawLast
+  668:     ) {
+
+[703] computeTop3
+  698:         month
+  699:       );
+  700: 
+  701:     try {
+  702:       const computed =
+  703:         computeTop3({
+  704:           lotteryKey,
+  705:           drawsRange:
+  706:             historyBefore,
+  707:           drawLast,
+  708:           PT_RIO_SCHEDULE_NORMAL,
+  709:           PT_RIO_SCHEDULE_WED_SAT,
+  710:           FEDERAL_SCHEDULE,
+  711:           topN: 3,
+
+[706] historyBefore
+  701:     try {
+  702:       const computed =
+  703:         computeTop3({
+  704:           lotteryKey,
+  705:           drawsRange:
+  706:             historyBefore,
+  707:           drawLast,
+  708:           PT_RIO_SCHEDULE_NORMAL,
+  709:           PT_RIO_SCHEDULE_WED_SAT,
+  710:           FEDERAL_SCHEDULE,
+  711:           topN: 3,
+  712:           targetYmdOverride:
+  713:             targetYmd,
+  714:           targetHourOverride:
+
+[758] historyBefore
+  753:             weekday,
+  754:             month,
+  755:           },
+  756:           history: {
+  757:             availableBefore:
+  758:               historyBefore.length,
+  759:             lastDrawYmd:
+  760:               publicApi.pickDrawYMD(
+  761:                 drawLast
+  762:               ) || null,
+  763:             lastDrawHour:
+  764:               publicApi.pickDrawHour(
+  765:                 drawLast
+  766:               ) || null,
+
+[858] dependencies
+  853:       hourBucket.errors += 1;
+  854:       weekdayBucket.errors += 1;
+  855:       monthBucket.errors += 1;
+  856: 
+  857:       if (
+  858:         dependencies.onCaseError
+  859:       ) {
+  860:         dependencies.onCaseError({
+  861:           index,
+  862:           targetYmd,
+  863:           targetHour,
+  864:           error,
+  865:         });
+  866:       }
+
+[860] dependencies
+  855:       monthBucket.errors += 1;
+  856: 
+  857:       if (
+  858:         dependencies.onCaseError
+  859:       ) {
+  860:         dependencies.onCaseError({
+  861:           index,
+  862:           targetYmd,
+  863:           targetHour,
+  864:           error,
+  865:         });
+  866:       }
+  867:     }
+  868: 
+
+[999] runOfficialBacktest
+  994:       : "DESATIVADA"
+  995:   );
+  996:   console.log("");
+  997: 
+  998:   const result =
+  999:     await runOfficialBacktest(
+ 1000:       options
+ 1001:     );
+ 1002: 
+ 1003:   const outputDir = path.resolve(
+ 1004:     options.outputDir
+ 1005:   );
+ 1006: 
+ 1007:   fs.mkdirSync(
+
+[1075] sortDraws
+ 1070: }
+ 1071: 
+ 1072: module.exports = {
+ 1073:   parseBooleanFlag,
+ 1074:   parseCliArgs,
+ 1075:   sortDraws,
+ 1076:   getFirstPrizeGroup,
+ 1077:   getPredictionGroups,
+ 1078:   finalizeBucket,
+ 1079:   buildTextReport,
+ 1080:   runOfficialBacktest,
+ 1081: };
+
+[1080] runOfficialBacktest
+ 1075:   sortDraws,
+ 1076:   getFirstPrizeGroup,
+ 1077:   getPredictionGroups,
+ 1078:   finalizeBucket,
+ 1079:   buildTextReport,
+ 1080:   runOfficialBacktest,
+ 1081: };
+
+====================================================================================================
+backend\scripts\backtestTop3E08Experimental.js
+====================================================================================================
+
+[7] runOfficialBacktest
+    2: 
+    3: const fs = require("fs");
+    4: const path = require("path");
+    5: 
+    6: const {
+    7:   runOfficialBacktest,
+    8: } = require("./backtestTop3Official");
+    9: 
+   10: const {
+   11:   computeStatisticalTop3E08Experimental,
+   12: } = require("../engine/scoreEngineE08Experimental");
+   13: 
+   14: function parseIntegerFlag(
+   15:   flags,
+
+[76] history =
+   71:       flags,
+   72:       "limit",
+   73:       100
+   74:     );
+   75: 
+   76:   const minHistory =
+   77:     parseIntegerFlag(
+   78:       flags,
+   79:       "min-history",
+   80:       100
+   81:     );
+   82: 
+   83:   const outputDir =
+   84:     path.resolve("tmp");
+
+[130] runOfficialBacktest
+  125:   console.log(
+  126:     "[1/2] Executando V3..."
+  127:   );
+  128: 
+  129:   const baseline =
+  130:     await runOfficialBacktest(
+  131:       options
+  132:     );
+  133: 
+  134:   console.log("");
+  135:   console.log(
+  136:     "[2/2] Executando E08..."
+  137:   );
+  138: 
+
+[140] runOfficialBacktest
+  135:   console.log(
+  136:     "[2/2] Executando E08..."
+  137:   );
+  138: 
+  139:   const experimental =
+  140:     await runOfficialBacktest(
+  141:       options,
+  142:       {
+  143:         computeTop3:
+  144:           computeStatisticalTop3E08Experimental,
+  145:       }
+  146:     );
+  147: 
+  148:   const top3Invariant =
+
+[143] computeTop3
+  138: 
+  139:   const experimental =
+  140:     await runOfficialBacktest(
+  141:       options,
+  142:       {
+  143:         computeTop3:
+  144:           computeStatisticalTop3E08Experimental,
+  145:       }
+  146:     );
+  147: 
+  148:   const top3Invariant =
+  149:     (
+  150:       baseline.global.top3Hits ===
+  151:       experimental.global.top3Hits
+

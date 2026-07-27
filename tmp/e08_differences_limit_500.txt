@@ -1,0 +1,39 @@
+================================================
+E08.7 - AUDITORIA DE DIFERENÇAS
+================================================
+
+Loteria...............: PT_RIO
+Casos avaliados.......: 500
+Histórico mínimo......: 100
+
+RESUMO
+Ordem alterada........: 179
+Ganhos TOP1...........: 4
+Perdas TOP1...........: 6
+Neutros...............: 169
+Saldo TOP1............: -2
+
+INVARIANTES
+Mesma avaliação.......: OK
+Mesmos erros..........: OK
+Mesmo TOP3............: OK
+Mesma telemetria......: OK
+
+POR HORÁRIO
+11:00 | mudanças=44 | ganhos=0 | perdas=2 | neutros=42 | saldo=-2
+14:00 | mudanças=36 | ganhos=1 | perdas=1 | neutros=34 | saldo=+0
+16:00 | mudanças=40 | ganhos=2 | perdas=0 | neutros=38 | saldo=+2
+18:00 | mudanças=24 | ganhos=0 | perdas=1 | neutros=23 | saldo=-1
+21:00 | mudanças=35 | ganhos=1 | perdas=2 | neutros=32 | saldo=-1
+
+CASOS COM GANHO OU PERDA
+2022-07-21 | 16:00 | GAIN | real=G16 | V3=G05 > G16 > G01 | E08=G16 > G01 > G05
+2022-08-04 | 18:00 | LOSS | real=G01 | V3=G01 > G07 > G15 | E08=G07 > G15 > G01
+2022-08-09 | 14:00 | GAIN | real=G05 | V3=G04 > G05 > G11 | E08=G05 > G04 > G11
+2022-08-15 | 21:00 | LOSS | real=G14 | V3=G14 > G07 > G05 | E08=G07 > G14 > G05
+2022-08-16 | 11:00 | LOSS | real=G16 | V3=G16 > G20 > G08 | E08=G20 > G08 > G16
+2022-09-14 | 21:00 | LOSS | real=G14 | V3=G14 > G03 > G07 | E08=G03 > G14 > G07
+2022-09-28 | 16:00 | GAIN | real=G16 | V3=G06 > G03 > G16 | E08=G16 > G06 > G03
+2022-09-30 | 14:00 | LOSS | real=G01 | V3=G01 > G05 > G18 | E08=G05 > G01 > G18
+2022-10-03 | 21:00 | GAIN | real=G03 | V3=G14 > G05 > G03 | E08=G03 > G14 > G05
+2022-10-05 | 11:00 | LOSS | real=G20 | V3=G20 > G01 > G25 | E08=G01 > G20 > G25

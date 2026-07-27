@@ -1,0 +1,128 @@
+{
+  "ok": true,
+  "experiment": "E07",
+  "lotteryKey": "PT_RIO",
+  "limit": 100,
+  "minHistory": 100,
+  "baseline": {
+    "engine": "top3_statistical_v3",
+    "evaluated": 100,
+    "errors": 0,
+    "top1Hits": 6,
+    "top1Rate": 6,
+    "top3Hits": 13,
+    "top3Rate": 13
+  },
+  "experimental": {
+    "engine": "top3_v4_experimental_e07",
+    "evaluated": 100,
+    "errors": 0,
+    "top1Hits": 4,
+    "top1Rate": 4,
+    "top3Hits": 10,
+    "top3Rate": 10
+  },
+  "delta": {
+    "top1Hits": -2,
+    "top1Rate": -2,
+    "top3Hits": -3,
+    "top3Rate": -3
+  },
+  "byHour": {
+    "baseline": {
+      "16:00": {
+        "evaluated": 23,
+        "top1Hits": 0,
+        "top3Hits": 2,
+        "errors": 0,
+        "top1Rate": 0,
+        "top3Rate": 8.6957
+      },
+      "21:00": {
+        "evaluated": 20,
+        "top1Hits": 2,
+        "top3Hits": 2,
+        "errors": 0,
+        "top1Rate": 10,
+        "top3Rate": 10
+      },
+      "11:00": {
+        "evaluated": 22,
+        "top1Hits": 1,
+        "top3Hits": 1,
+        "errors": 0,
+        "top1Rate": 4.5455,
+        "top3Rate": 4.5455
+      },
+      "14:00": {
+        "evaluated": 22,
+        "top1Hits": 2,
+        "top3Hits": 5,
+        "errors": 0,
+        "top1Rate": 9.0909,
+        "top3Rate": 22.7273
+      },
+      "18:00": {
+        "evaluated": 13,
+        "top1Hits": 1,
+        "top3Hits": 3,
+        "errors": 0,
+        "top1Rate": 7.6923,
+        "top3Rate": 23.0769
+      }
+    },
+    "experimental": {
+      "16:00": {
+        "evaluated": 23,
+        "top1Hits": 0,
+        "top3Hits": 1,
+        "errors": 0,
+        "top1Rate": 0,
+        "top3Rate": 4.3478
+      },
+      "21:00": {
+        "evaluated": 20,
+        "top1Hits": 2,
+        "top3Hits": 3,
+        "errors": 0,
+        "top1Rate": 10,
+        "top3Rate": 15
+      },
+      "11:00": {
+        "evaluated": 22,
+        "top1Hits": 1,
+        "top3Hits": 2,
+        "errors": 0,
+        "top1Rate": 4.5455,
+        "top3Rate": 9.0909
+      },
+      "14:00": {
+        "evaluated": 22,
+        "top1Hits": 0,
+        "top3Hits": 2,
+        "errors": 0,
+        "top1Rate": 0,
+        "top3Rate": 9.0909
+      },
+      "18:00": {
+        "evaluated": 13,
+        "top1Hits": 1,
+        "top3Hits": 2,
+        "errors": 0,
+        "top1Rate": 7.6923,
+        "top3Rate": 15.3846
+      }
+    }
+  },
+  "periods": {
+    "history": {
+      "from": "2022-06-07",
+      "to": "2026-07-17"
+    },
+    "evaluation": {
+      "from": "2022-06-29",
+      "to": "2022-07-21"
+    }
+  },
+  "generatedAt": "2026-07-18T01:10:24.432Z"
+}

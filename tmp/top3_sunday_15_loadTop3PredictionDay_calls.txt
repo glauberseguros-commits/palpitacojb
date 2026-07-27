@@ -1,0 +1,126 @@
+
+================ LINHA 1066 ================
+01047:     });
+01048:   }, [timelineYmd, lotteryKeySafe]);
+01049: 
+01050:   useEffect(() => {
+01051:     let alive = true;
+01052: 
+01053:     setCurrentPersistedPrediction(null);
+01054:     setCurrentPersistedResolved(false);
+01055: 
+01056:     async function loadCurrentPersistedPrediction() {
+01057:       if (!isYMD(analysisYmd) || !analysisHourBucket) {
+01058:         if (alive) {
+01059:           setCurrentPersistedPrediction(null);
+01060:           setCurrentPersistedResolved(true);
+01061:         }
+01062:         return;
+01063:       }
+01064: 
+01065:       try {
+01066:         const history = await loadTop3PredictionDay({
+01067:           lotteryKey: lotteryKeySafe,
+01068:           targetYmd: analysisYmd,
+01069:           schedule: [analysisHourBucket],
+01070:         });
+01071: 
+01072:         const exactEntry = (
+01073:           Array.isArray(history) ? history : []
+01074:         ).find((entry) => {
+01075:           return (
+01076:             safeStr(entry?.lotteryKey).toUpperCase() ===
+01077:               lotteryKeySafe &&
+01078:             safeStr(entry?.targetYmd) === analysisYmd &&
+01079:             toHourBucket(entry?.targetHour) ===
+01080:               analysisHourBucket
+01081:           );
+01082:         }) || null;
+01083: 
+01084:         if (alive) {
+01085:           setCurrentPersistedPrediction(exactEntry);
+01086:         }
+01087:       } catch (error) {
+01088:         if (debugTop3) {
+01089:           console.warn(
+01090:             "[TOP3 CURRENT SNAPSHOT LOAD]",
+01091:             error
+01092:           );
+01093:         }
+01094: 
+01095:         if (alive) {
+01096:           setCurrentPersistedPrediction(null);
+01097:         }
+01098:       } finally {
+01099:         if (alive) {
+01100:           setCurrentPersistedResolved(true);
+01101:         }
+01102:       }
+01103:     }
+01104: 
+01105:     loadCurrentPersistedPrediction();
+01106: 
+01107:     return () => {
+
+================ LINHA 1573 ================
+01554:       timelineYmd,
+01555:       scheduleLength: persistedSchedule.length,
+01556:       secondaryReady,
+01557:     });
+01558: 
+01559:     if (!secondaryReady) {
+01560:       setPersistedTop3History([]);
+01561:       return undefined;
+01562:     }
+01563: 
+01564:     let alive = true;
+01565: 
+01566:     async function loadPersistedHistory() {
+01567:       if (!isYMD(timelineYmd)) {
+01568:         if (alive) setPersistedTop3History([]);
+01569:         return;
+01570:       }
+01571: 
+01572:       try {
+01573:         const history = await loadTop3PredictionDay({
+01574:           lotteryKey: lotteryKeySafe,
+01575:           targetYmd: timelineYmd,
+01576:           schedule: persistedSchedule,
+01577:         });
+01578: 
+01579:         if (alive) {
+01580:           setPersistedTop3History(
+01581:             Array.isArray(history) ? history : []
+01582:           );
+01583:         }
+01584:       } catch {
+01585:         if (alive) setPersistedTop3History([]);
+01586:       }
+01587:     }
+01588: 
+01589:     loadPersistedHistory();
+01590: 
+01591:     return () => {
+01592:       alive = false;
+01593:     };
+01594:   }, [
+01595:     lotteryKeySafe,
+01596:     timelineYmd,
+01597:     scheduleKey,
+01598:     secondaryReady,
+01599:   ]);
+01600: 
+01601:   useEffect(() => {
+01602:     const persistedSchedule = scheduleKey
+01603:       ? scheduleKey.split("|").filter(Boolean)
+01604:       : [];
+01605: 
+01606:     debugTop3Effect("05_reconcile_history", {
+01607:       lotteryKey: lotteryKeySafe,
+01608:       timelineYmd,
+01609:       scheduleLength: persistedSchedule.length,
+01610:       todayDrawsLength: Array.isArray(todayDraws)
+01611:         ? todayDraws.length
+01612:         : -1,
+01613:       rangeDrawsLength: Array.isArray(rangeDraws)
+01614:         ? rangeDraws.length

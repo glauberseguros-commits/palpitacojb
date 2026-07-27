@@ -1,0 +1,110 @@
+d6f221576548b1b96c113b3607b5392d218c7fc3
+d6f2215 LKN-180 - Corrige mapeamento historico de horarios da Nacional
+9793b23 fix(results): normalize LOOK/NACIONAL hourly slots
+cf8d073 fix(look): normalize source minutes to hourly slots
+d4f1367 fix(dashboard): corrigir mapeamento dos hor├írios da Nacional
+a1213cb Corrige normaliza├º├úo dos hor├írios da Nacional
+Retrieving projectÔÇª
+Fetching deployments in glauber-oliveiras-projects
+> Deployments for glauber-oliveiras-projects/palpitacojb [325ms]
+
+  Age     Project                                    Deployment                                                              Status      Environment     Duration     Username                   
+  3m      glauber-oliveiras-projects/palpitacojb     https://palpitacojb-bc4660fci-glauber-oliveiras-projects.vercel.app     ÔùÅ Ready     Production      46s          glauberseguros-commits     
+  50m     glauber-oliveiras-projects/palpitacojb     https://palpitacojb-367taumbc-glauber-oliveiras-projects.vercel.app     ÔùÅ Ready     Production      46s          glauberseguros-commits     
+  1h      glauber-oliveiras-projects/palpitacojb     https://palpitacojb-elqnae5uh-glauber-oliveiras-projects.vercel.app     ÔùÅ Ready     Production      42s          glauberseguros-commits     
+  3h      glauber-oliveiras-projects/palpitacojb     https://palpitacojb-4whfdrva6-glauber-oliveiras-projects.vercel.app     ÔùÅ Ready     Production      47s          glauberseguros-commits     
+https://palpitacojb-bc4660fci-glauber-oliveiras-projects.vercel.app
+https://palpitacojb-367taumbc-glauber-oliveiras-projects.vercel.app
+https://palpitacojb-elqnae5uh-glauber-oliveiras-projects.vercel.app
+https://palpitacojb-4whfdrva6-glauber-oliveiras-projects.vercel.app
+https://palpitacojb-r2lwpcvbb-glauber-oliveiras-projects.vercel.app
+https://palpitacojb-dkgyn649d-glauber-oliveiras-projects.vercel.app
+https://palpitacojb-l8jm02kqi-glauber-oliveiras-projects.vercel.app
+https://palpitacojb-es677z4w3-glauber-oliveiras-projects.vercel.app
+https://palpitacojb-qwaxfgenz-glauber-oliveiras-projects.vercel.app
+https://palpitacojb-5kc9fx5wo-glauber-oliveiras-projects.vercel.app
+https://palpitacojb-me1836ic8-glauber-oliveiras-projects.vercel.app
+https://palpitacojb-czn1f1vs8-glauber-oliveiras-projects.vercel.app
+https://palpitacojb-hjkuzd0yo-glauber-oliveiras-projects.vercel.app
+https://palpitacojb-mqijjo6am-glauber-oliveiras-projects.vercel.app
+https://palpitacojb-ekki35n9g-glauber-oliveiras-projects.vercel.app
+https://palpitacojb-em3lv6i87-glauber-oliveiras-projects.vercel.app
+https://palpitacojb-ktqioknrl-glauber-oliveiras-projects.vercel.app
+https://palpitacojb-76jn72krj-glauber-oliveiras-projects.vercel.app
+https://palpitacojb-hcwprmmy9-glauber-oliveiras-projects.vercel.app
+https://palpitacojb-4bdz3smwj-glauber-oliveiras-projects.vercel.app
+  7h      glauber-oliveiras-projects/palpitacojb     https://palpitacojb-r2lwpcvbb-glauber-oliveiras-projects.vercel.app     ÔùÅ Ready     Production      43s          glauberseguros-commits     
+  8h      glauber-oliveiras-projects/palpitacojb     https://palpitacojb-dkgyn649d-glauber-oliveiras-projects.vercel.app     ÔùÅ Ready     Production      43s          glauberseguros-commits     
+  8h      glauber-oliveiras-projects/palpitacojb     https://palpitacojb-l8jm02kqi-glauber-oliveiras-projects.vercel.app     ÔùÅ Ready     Production      45s          glauberseguros-commits     
+  18h     glauber-oliveiras-projects/palpitacojb     https://palpitacojb-es677z4w3-glauber-oliveiras-projects.vercel.app     ÔùÅ Ready     Production      43s          glauberseguros-commits     
+  19h     glauber-oliveiras-projects/palpitacojb     https://palpitacojb-qwaxfgenz-glauber-oliveiras-projects.vercel.app     ÔùÅ Ready     Production      45s          glauberseguros-commits     
+  21h     glauber-oliveiras-projects/palpitacojb     https://palpitacojb-5kc9fx5wo-glauber-oliveiras-projects.vercel.app     ÔùÅ Ready     Production      40s          glauberseguros-commits     
+  21h     glauber-oliveiras-projects/palpitacojb     https://palpitacojb-me1836ic8-glauber-oliveiras-projects.vercel.app     ÔùÅ Ready     Production      48s          glauberseguros-commits     
+  1d      glauber-oliveiras-projects/palpitacojb     https://palpitacojb-czn1f1vs8-glauber-oliveiras-projects.vercel.app     ÔùÅ Ready     Production      46s          glauberseguros-commits     
+  1d      glauber-oliveiras-projects/palpitacojb     https://palpitacojb-hjkuzd0yo-glauber-oliveiras-projects.vercel.app     ÔùÅ Ready     Production      43s          glauberseguros-commits     
+  1d      glauber-oliveiras-projects/palpitacojb     https://palpitacojb-mqijjo6am-glauber-oliveiras-projects.vercel.app     ÔùÅ Error     Production      46s          glauberseguros-commits     
+  2d      glauber-oliveiras-projects/palpitacojb     https://palpitacojb-ekki35n9g-glauber-oliveiras-projects.vercel.app     ÔùÅ Error     Production      40s          glauberseguros-commits     
+  2d      glauber-oliveiras-projects/palpitacojb     https://palpitacojb-em3lv6i87-glauber-oliveiras-projects.vercel.app     ÔùÅ Error     Production      46s          glauberseguros-commits     
+  2d      glauber-oliveiras-projects/palpitacojb     https://palpitacojb-ktqioknrl-glauber-oliveiras-projects.vercel.app     ÔùÅ Error     Production      41s          glauberseguros-commits     
+  2d      glauber-oliveiras-projects/palpitacojb     https://palpitacojb-76jn72krj-glauber-oliveiras-projects.vercel.app     ÔùÅ Error     Production      38s          glauberseguros-commits     
+  2d      glauber-oliveiras-projects/palpitacojb     https://palpitacojb-hcwprmmy9-glauber-oliveiras-projects.vercel.app     ÔùÅ Error     Production      41s          glauberseguros-commits     
+  2d      glauber-oliveiras-projects/palpitacojb     https://palpitacojb-4bdz3smwj-glauber-oliveiras-projects.vercel.app     ÔùÅ Ready     Production      45s          glauberseguros-commits     
+
+> To display the next page, run `vercel ls --next 1784413646032`
+Error: `vercel inspect <url>` expects exactly one argument
+
+  Ôû▓ vercel inspect url|deploymentId [options]
+
+  Show information about a deployment.                                          
+
+  Options:
+
+  -F,  --format <FORMAT>  Specify the output format (json)                      
+  -l,  --logs             Prints the build logs instead of the deployment       
+                          summary                                               
+       --timeout <TIME>   Time to wait for deployment completion [3m]           
+       --wait             Blocks until deployment completes                     
+
+
+  Global Options:
+
+       --cwd <DIR>            Sets the current working directory for a single   
+                              run of a command                                  
+  -d,  --debug                Debug mode (default off)                          
+  -Q,  --global-config <DIR>  Path to the global `.vercel` directory            
+  -h,  --help                 Output usage information                          
+  -A,  --local-config <FILE>  Path to the local `vercel.json` file              
+       --no-color             No color mode (default off)                       
+       --non-interactive      Run without interactive prompts; when an agent is 
+                              detected this is the default                      
+  -S,  --scope                Set a custom scope                                
+  -t,  --token <TOKEN>        Login token                                       
+  -v,  --version              Output the version number                         
+
+
+  Examples:
+
+  - Get information about a deployment by its unique URL
+
+    $ vercel inspect my-deployment-ji2fjij2.vercel.app
+
+  - Get information about the deployment an alias points to
+
+    $ vercel inspect my-deployment.vercel.app
+
+  - Get information about a deployment by piping in the URL
+
+    $ echo my-deployment.vercel.app | vercel inspect
+
+  - Wait up to 90 seconds for deployment to complete
+
+    $ vercel inspect my-deployment.vercel.app --wait --timeout 90s
+
+  - Get deployment build logs
+
+    $ vercel inspect my-deployment.vercel.app --logs
+
+  - Get deployment information as JSON
+
+    $ vercel inspect my-deployment.vercel.app --format=json
+

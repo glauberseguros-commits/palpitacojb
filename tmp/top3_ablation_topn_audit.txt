@@ -1,0 +1,35 @@
+====================================================================================================
+AUDITORIA DOS CORTES TOPN
+====================================================================================================
+
+  284 | function getPredictionGroups(
+  315 |       top1Hits: 0,
+  316 |       top3Hits: 0,
+  329 |   const top1Hits = Number(
+  330 |     bucket.top1Hits || 0
+  333 |   const top3Hits = Number(
+  334 |     bucket.top3Hits || 0
+  339 |     top1Hits,
+  340 |     top3Hits,
+  348 |               top1Hits /
+  358 |               top3Hits /
+  440 |     `TOP1................: ${result.global.top1Hits} (${formatPercent(result.global.top1Rate)})`
+  444 |     `TOP3................: ${result.global.top3Hits} (${formatPercent(result.global.top3Rate)})`
+  613 |     top1Hits: 0,
+  614 |     top3Hits: 0,
+  711 |           topN: 3,
+  718 |       const predictionGroups =
+  719 |         getPredictionGroups(
+  724 |         predictionGroups.length < 3
+  731 |       const top1Hit =
+  732 |         predictionGroups[0] ===
+  735 |       const top3Hit =
+  736 |         predictionGroups.includes(
+  772 |             groups: predictionGroups,
+  773 |             top1Hit,
+  774 |             top3Hit,
+  838 |         if (top1Hit) {
+  839 |           bucket.top1Hits += 1;
+  842 |         if (top3Hit) {
+  843 |           bucket.top3Hits += 1;
+ 1077 |   getPredictionGroups,

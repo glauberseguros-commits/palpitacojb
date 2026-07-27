@@ -1,0 +1,6500 @@
+
+==================================================
+DATA: 2023-08-31
+TOTAL: 6
+==================================================
+{
+  "id": "NACIONAL__2023-08-31__01-50__6c2b52ec-d613-4383-9c07-ff5ac7e04611",
+  "close_hour": "01:50",
+  "close_hour_raw": "01:50",
+  "hour": "01",
+  "close": "01:50",
+  "lottery_name": "LT NACIONAL 02HS",
+  "lottery_id": "6c2b52ec-d613-4383-9c07-ff5ac7e04611",
+  "fields": {
+    "date": {
+      "type": "string",
+      "value": "2023-08-31"
+    },
+    "close_hour_raw": {
+      "type": "string",
+      "value": "01:50"
+    },
+    "importedAt": {
+      "type": "object",
+      "keys": [
+        "_nanoseconds",
+        "_seconds"
+      ]
+    },
+    "drawId": {
+      "type": "string",
+      "value": "NACIONAL__2023-08-31__01-50__6c2b52ec-d613-4383-9c07-ff5ac7e04611"
+    },
+    "lottery_id": {
+      "type": "string",
+      "value": "6c2b52ec-d613-4383-9c07-ff5ac7e04611"
+    },
+    "lottery_name": {
+      "type": "string",
+      "value": "LT NACIONAL 02HS"
+    },
+    "source": {
+      "type": "string",
+      "value": "kingapostas"
+    },
+    "uf": {
+      "type": "string",
+      "value": "BR"
+    },
+    "ymd": {
+      "type": "string",
+      "value": "2023-08-31"
+    },
+    "close_hour": {
+      "type": "string",
+      "value": "01:50"
+    },
+    "hour": {
+      "type": "string",
+      "value": "01"
+    },
+    "prizesCount": {
+      "type": "number",
+      "value": 7
+    },
+    "lottery_key": {
+      "type": "string",
+      "value": "NACIONAL"
+    },
+    "close": {
+      "type": "string",
+      "value": "01:50"
+    }
+  }
+}
+{
+  "id": "NACIONAL__2023-08-31__07-50__76a3feee-faa6-4b6c-aae5-656fd6af7b6b",
+  "close_hour": "07:50",
+  "close_hour_raw": "07:50",
+  "hour": "07",
+  "close": "07:50",
+  "lottery_name": "LT NACIONAL 08HS",
+  "lottery_id": "76a3feee-faa6-4b6c-aae5-656fd6af7b6b",
+  "fields": {
+    "date": {
+      "type": "string",
+      "value": "2023-08-31"
+    },
+    "close_hour_raw": {
+      "type": "string",
+      "value": "07:50"
+    },
+    "importedAt": {
+      "type": "object",
+      "keys": [
+        "_nanoseconds",
+        "_seconds"
+      ]
+    },
+    "drawId": {
+      "type": "string",
+      "value": "NACIONAL__2023-08-31__07-50__76a3feee-faa6-4b6c-aae5-656fd6af7b6b"
+    },
+    "lottery_id": {
+      "type": "string",
+      "value": "76a3feee-faa6-4b6c-aae5-656fd6af7b6b"
+    },
+    "lottery_name": {
+      "type": "string",
+      "value": "LT NACIONAL 08HS"
+    },
+    "source": {
+      "type": "string",
+      "value": "kingapostas"
+    },
+    "uf": {
+      "type": "string",
+      "value": "BR"
+    },
+    "ymd": {
+      "type": "string",
+      "value": "2023-08-31"
+    },
+    "close_hour": {
+      "type": "string",
+      "value": "07:50"
+    },
+    "hour": {
+      "type": "string",
+      "value": "07"
+    },
+    "prizesCount": {
+      "type": "number",
+      "value": 7
+    },
+    "lottery_key": {
+      "type": "string",
+      "value": "NACIONAL"
+    },
+    "close": {
+      "type": "string",
+      "value": "07:50"
+    }
+  }
+}
+{
+  "id": "NACIONAL__2023-08-31__09-50__4dda728b-bbd9-43eb-a17b-acf968b1eca0",
+  "close_hour": "09:50",
+  "close_hour_raw": "09:50",
+  "hour": "09",
+  "close": "09:50",
+  "lottery_name": "LT NACIONAL 10HS",
+  "lottery_id": "4dda728b-bbd9-43eb-a17b-acf968b1eca0",
+  "fields": {
+    "date": {
+      "type": "string",
+      "value": "2023-08-31"
+    },
+    "close_hour_raw": {
+      "type": "string",
+      "value": "09:50"
+    },
+    "importedAt": {
+      "type": "object",
+      "keys": [
+        "_nanoseconds",
+        "_seconds"
+      ]
+    },
+    "drawId": {
+      "type": "string",
+      "value": "NACIONAL__2023-08-31__09-50__4dda728b-bbd9-43eb-a17b-acf968b1eca0"
+    },
+    "lottery_id": {
+      "type": "string",
+      "value": "4dda728b-bbd9-43eb-a17b-acf968b1eca0"
+    },
+    "lottery_name": {
+      "type": "string",
+      "value": "LT NACIONAL 10HS"
+    },
+    "source": {
+      "type": "string",
+      "value": "kingapostas"
+    },
+    "uf": {
+      "type": "string",
+      "value": "BR"
+    },
+    "ymd": {
+      "type": "string",
+      "value": "2023-08-31"
+    },
+    "close_hour": {
+      "type": "string",
+      "value": "09:50"
+    },
+    "hour": {
+      "type": "string",
+      "value": "09"
+    },
+    "prizesCount": {
+      "type": "number",
+      "value": 7
+    },
+    "lottery_key": {
+      "type": "string",
+      "value": "NACIONAL"
+    },
+    "close": {
+      "type": "string",
+      "value": "09:50"
+    }
+  }
+}
+{
+  "id": "NACIONAL__2023-08-31__11-50__8efc7c5a-8883-48a3-ab7f-cf3d0f7eebd4",
+  "close_hour": "11:50",
+  "close_hour_raw": "11:50",
+  "hour": "11",
+  "close": "11:50",
+  "lottery_name": "LT NACIONAL 12HS",
+  "lottery_id": "8efc7c5a-8883-48a3-ab7f-cf3d0f7eebd4",
+  "fields": {
+    "date": {
+      "type": "string",
+      "value": "2023-08-31"
+    },
+    "close_hour_raw": {
+      "type": "string",
+      "value": "11:50"
+    },
+    "importedAt": {
+      "type": "object",
+      "keys": [
+        "_nanoseconds",
+        "_seconds"
+      ]
+    },
+    "drawId": {
+      "type": "string",
+      "value": "NACIONAL__2023-08-31__11-50__8efc7c5a-8883-48a3-ab7f-cf3d0f7eebd4"
+    },
+    "lottery_id": {
+      "type": "string",
+      "value": "8efc7c5a-8883-48a3-ab7f-cf3d0f7eebd4"
+    },
+    "lottery_name": {
+      "type": "string",
+      "value": "LT NACIONAL 12HS"
+    },
+    "source": {
+      "type": "string",
+      "value": "kingapostas"
+    },
+    "uf": {
+      "type": "string",
+      "value": "BR"
+    },
+    "ymd": {
+      "type": "string",
+      "value": "2023-08-31"
+    },
+    "close_hour": {
+      "type": "string",
+      "value": "11:50"
+    },
+    "hour": {
+      "type": "string",
+      "value": "11"
+    },
+    "prizesCount": {
+      "type": "number",
+      "value": 7
+    },
+    "lottery_key": {
+      "type": "string",
+      "value": "NACIONAL"
+    },
+    "close": {
+      "type": "string",
+      "value": "11:50"
+    }
+  }
+}
+{
+  "id": "NACIONAL__2023-08-31__14-50__3bafbe99-632b-4445-9b73-12e78ee45283",
+  "close_hour": "14:50",
+  "close_hour_raw": "14:50",
+  "hour": "14",
+  "close": "14:50",
+  "lottery_name": "LT NACIONAL 15HS",
+  "lottery_id": "3bafbe99-632b-4445-9b73-12e78ee45283",
+  "fields": {
+    "date": {
+      "type": "string",
+      "value": "2023-08-31"
+    },
+    "close_hour_raw": {
+      "type": "string",
+      "value": "14:50"
+    },
+    "importedAt": {
+      "type": "object",
+      "keys": [
+        "_nanoseconds",
+        "_seconds"
+      ]
+    },
+    "drawId": {
+      "type": "string",
+      "value": "NACIONAL__2023-08-31__14-50__3bafbe99-632b-4445-9b73-12e78ee45283"
+    },
+    "lottery_id": {
+      "type": "string",
+      "value": "3bafbe99-632b-4445-9b73-12e78ee45283"
+    },
+    "lottery_name": {
+      "type": "string",
+      "value": "LT NACIONAL 15HS"
+    },
+    "source": {
+      "type": "string",
+      "value": "kingapostas"
+    },
+    "uf": {
+      "type": "string",
+      "value": "BR"
+    },
+    "ymd": {
+      "type": "string",
+      "value": "2023-08-31"
+    },
+    "close_hour": {
+      "type": "string",
+      "value": "14:50"
+    },
+    "hour": {
+      "type": "string",
+      "value": "14"
+    },
+    "prizesCount": {
+      "type": "number",
+      "value": 7
+    },
+    "lottery_key": {
+      "type": "string",
+      "value": "NACIONAL"
+    },
+    "close": {
+      "type": "string",
+      "value": "14:50"
+    }
+  }
+}
+{
+  "id": "NACIONAL__2023-08-31__16-50__87db8fb6-8718-49c3-b739-96eec085e09d",
+  "close_hour": "16:50",
+  "close_hour_raw": "16:50",
+  "hour": "16",
+  "close": "16:50",
+  "lottery_name": "LT NACIONAL 17HS",
+  "lottery_id": "87db8fb6-8718-49c3-b739-96eec085e09d",
+  "fields": {
+    "date": {
+      "type": "string",
+      "value": "2023-08-31"
+    },
+    "close_hour_raw": {
+      "type": "string",
+      "value": "16:50"
+    },
+    "importedAt": {
+      "type": "object",
+      "keys": [
+        "_nanoseconds",
+        "_seconds"
+      ]
+    },
+    "drawId": {
+      "type": "string",
+      "value": "NACIONAL__2023-08-31__16-50__87db8fb6-8718-49c3-b739-96eec085e09d"
+    },
+    "lottery_id": {
+      "type": "string",
+      "value": "87db8fb6-8718-49c3-b739-96eec085e09d"
+    },
+    "lottery_name": {
+      "type": "string",
+      "value": "LT NACIONAL 17HS"
+    },
+    "source": {
+      "type": "string",
+      "value": "kingapostas"
+    },
+    "uf": {
+      "type": "string",
+      "value": "BR"
+    },
+    "ymd": {
+      "type": "string",
+      "value": "2023-08-31"
+    },
+    "close_hour": {
+      "type": "string",
+      "value": "16:50"
+    },
+    "hour": {
+      "type": "string",
+      "value": "16"
+    },
+    "prizesCount": {
+      "type": "number",
+      "value": 7
+    },
+    "lottery_key": {
+      "type": "string",
+      "value": "NACIONAL"
+    },
+    "close": {
+      "type": "string",
+      "value": "16:50"
+    }
+  }
+}
+
+==================================================
+DATA: 2023-09-01
+TOTAL: 8
+==================================================
+{
+  "id": "NACIONAL__2023-09-01__01-50__6c2b52ec-d613-4383-9c07-ff5ac7e04611",
+  "close_hour": "01:50",
+  "close_hour_raw": "01:50",
+  "hour": "01",
+  "close": "01:50",
+  "lottery_name": "LT NACIONAL 02HS",
+  "lottery_id": "6c2b52ec-d613-4383-9c07-ff5ac7e04611",
+  "fields": {
+    "date": {
+      "type": "string",
+      "value": "2023-09-01"
+    },
+    "close_hour_raw": {
+      "type": "string",
+      "value": "01:50"
+    },
+    "importedAt": {
+      "type": "object",
+      "keys": [
+        "_nanoseconds",
+        "_seconds"
+      ]
+    },
+    "drawId": {
+      "type": "string",
+      "value": "NACIONAL__2023-09-01__01-50__6c2b52ec-d613-4383-9c07-ff5ac7e04611"
+    },
+    "lottery_id": {
+      "type": "string",
+      "value": "6c2b52ec-d613-4383-9c07-ff5ac7e04611"
+    },
+    "lottery_name": {
+      "type": "string",
+      "value": "LT NACIONAL 02HS"
+    },
+    "source": {
+      "type": "string",
+      "value": "kingapostas"
+    },
+    "uf": {
+      "type": "string",
+      "value": "BR"
+    },
+    "ymd": {
+      "type": "string",
+      "value": "2023-09-01"
+    },
+    "close_hour": {
+      "type": "string",
+      "value": "01:50"
+    },
+    "hour": {
+      "type": "string",
+      "value": "01"
+    },
+    "prizesCount": {
+      "type": "number",
+      "value": 7
+    },
+    "lottery_key": {
+      "type": "string",
+      "value": "NACIONAL"
+    },
+    "close": {
+      "type": "string",
+      "value": "01:50"
+    }
+  }
+}
+{
+  "id": "NACIONAL__2023-09-01__07-50__76a3feee-faa6-4b6c-aae5-656fd6af7b6b",
+  "close_hour": "07:50",
+  "close_hour_raw": "07:50",
+  "hour": "07",
+  "close": "07:50",
+  "lottery_name": "LT NACIONAL 08HS",
+  "lottery_id": "76a3feee-faa6-4b6c-aae5-656fd6af7b6b",
+  "fields": {
+    "date": {
+      "type": "string",
+      "value": "2023-09-01"
+    },
+    "close_hour_raw": {
+      "type": "string",
+      "value": "07:50"
+    },
+    "importedAt": {
+      "type": "object",
+      "keys": [
+        "_nanoseconds",
+        "_seconds"
+      ]
+    },
+    "drawId": {
+      "type": "string",
+      "value": "NACIONAL__2023-09-01__07-50__76a3feee-faa6-4b6c-aae5-656fd6af7b6b"
+    },
+    "lottery_id": {
+      "type": "string",
+      "value": "76a3feee-faa6-4b6c-aae5-656fd6af7b6b"
+    },
+    "lottery_name": {
+      "type": "string",
+      "value": "LT NACIONAL 08HS"
+    },
+    "source": {
+      "type": "string",
+      "value": "kingapostas"
+    },
+    "uf": {
+      "type": "string",
+      "value": "BR"
+    },
+    "ymd": {
+      "type": "string",
+      "value": "2023-09-01"
+    },
+    "close_hour": {
+      "type": "string",
+      "value": "07:50"
+    },
+    "hour": {
+      "type": "string",
+      "value": "07"
+    },
+    "prizesCount": {
+      "type": "number",
+      "value": 7
+    },
+    "lottery_key": {
+      "type": "string",
+      "value": "NACIONAL"
+    },
+    "close": {
+      "type": "string",
+      "value": "07:50"
+    }
+  }
+}
+{
+  "id": "NACIONAL__2023-09-01__09-50__4dda728b-bbd9-43eb-a17b-acf968b1eca0",
+  "close_hour": "09:50",
+  "close_hour_raw": "09:50",
+  "hour": "09",
+  "close": "09:50",
+  "lottery_name": "LT NACIONAL 10HS",
+  "lottery_id": "4dda728b-bbd9-43eb-a17b-acf968b1eca0",
+  "fields": {
+    "date": {
+      "type": "string",
+      "value": "2023-09-01"
+    },
+    "close_hour_raw": {
+      "type": "string",
+      "value": "09:50"
+    },
+    "importedAt": {
+      "type": "object",
+      "keys": [
+        "_nanoseconds",
+        "_seconds"
+      ]
+    },
+    "drawId": {
+      "type": "string",
+      "value": "NACIONAL__2023-09-01__09-50__4dda728b-bbd9-43eb-a17b-acf968b1eca0"
+    },
+    "lottery_id": {
+      "type": "string",
+      "value": "4dda728b-bbd9-43eb-a17b-acf968b1eca0"
+    },
+    "lottery_name": {
+      "type": "string",
+      "value": "LT NACIONAL 10HS"
+    },
+    "source": {
+      "type": "string",
+      "value": "kingapostas"
+    },
+    "uf": {
+      "type": "string",
+      "value": "BR"
+    },
+    "ymd": {
+      "type": "string",
+      "value": "2023-09-01"
+    },
+    "close_hour": {
+      "type": "string",
+      "value": "09:50"
+    },
+    "hour": {
+      "type": "string",
+      "value": "09"
+    },
+    "prizesCount": {
+      "type": "number",
+      "value": 7
+    },
+    "lottery_key": {
+      "type": "string",
+      "value": "NACIONAL"
+    },
+    "close": {
+      "type": "string",
+      "value": "09:50"
+    }
+  }
+}
+{
+  "id": "NACIONAL__2023-09-01__11-50__8efc7c5a-8883-48a3-ab7f-cf3d0f7eebd4",
+  "close_hour": "11:50",
+  "close_hour_raw": "11:50",
+  "hour": "11",
+  "close": "11:50",
+  "lottery_name": "LT NACIONAL 12HS",
+  "lottery_id": "8efc7c5a-8883-48a3-ab7f-cf3d0f7eebd4",
+  "fields": {
+    "date": {
+      "type": "string",
+      "value": "2023-09-01"
+    },
+    "close_hour_raw": {
+      "type": "string",
+      "value": "11:50"
+    },
+    "importedAt": {
+      "type": "object",
+      "keys": [
+        "_nanoseconds",
+        "_seconds"
+      ]
+    },
+    "drawId": {
+      "type": "string",
+      "value": "NACIONAL__2023-09-01__11-50__8efc7c5a-8883-48a3-ab7f-cf3d0f7eebd4"
+    },
+    "lottery_id": {
+      "type": "string",
+      "value": "8efc7c5a-8883-48a3-ab7f-cf3d0f7eebd4"
+    },
+    "lottery_name": {
+      "type": "string",
+      "value": "LT NACIONAL 12HS"
+    },
+    "source": {
+      "type": "string",
+      "value": "kingapostas"
+    },
+    "uf": {
+      "type": "string",
+      "value": "BR"
+    },
+    "ymd": {
+      "type": "string",
+      "value": "2023-09-01"
+    },
+    "close_hour": {
+      "type": "string",
+      "value": "11:50"
+    },
+    "hour": {
+      "type": "string",
+      "value": "11"
+    },
+    "prizesCount": {
+      "type": "number",
+      "value": 7
+    },
+    "lottery_key": {
+      "type": "string",
+      "value": "NACIONAL"
+    },
+    "close": {
+      "type": "string",
+      "value": "11:50"
+    }
+  }
+}
+{
+  "id": "NACIONAL__2023-09-01__14-50__3bafbe99-632b-4445-9b73-12e78ee45283",
+  "close_hour": "14:50",
+  "close_hour_raw": "14:50",
+  "hour": "14",
+  "close": "14:50",
+  "lottery_name": "LT NACIONAL 15HS",
+  "lottery_id": "3bafbe99-632b-4445-9b73-12e78ee45283",
+  "fields": {
+    "date": {
+      "type": "string",
+      "value": "2023-09-01"
+    },
+    "close_hour_raw": {
+      "type": "string",
+      "value": "14:50"
+    },
+    "importedAt": {
+      "type": "object",
+      "keys": [
+        "_nanoseconds",
+        "_seconds"
+      ]
+    },
+    "drawId": {
+      "type": "string",
+      "value": "NACIONAL__2023-09-01__14-50__3bafbe99-632b-4445-9b73-12e78ee45283"
+    },
+    "lottery_id": {
+      "type": "string",
+      "value": "3bafbe99-632b-4445-9b73-12e78ee45283"
+    },
+    "lottery_name": {
+      "type": "string",
+      "value": "LT NACIONAL 15HS"
+    },
+    "source": {
+      "type": "string",
+      "value": "kingapostas"
+    },
+    "uf": {
+      "type": "string",
+      "value": "BR"
+    },
+    "ymd": {
+      "type": "string",
+      "value": "2023-09-01"
+    },
+    "close_hour": {
+      "type": "string",
+      "value": "14:50"
+    },
+    "hour": {
+      "type": "string",
+      "value": "14"
+    },
+    "prizesCount": {
+      "type": "number",
+      "value": 7
+    },
+    "lottery_key": {
+      "type": "string",
+      "value": "NACIONAL"
+    },
+    "close": {
+      "type": "string",
+      "value": "14:50"
+    }
+  }
+}
+{
+  "id": "NACIONAL__2023-09-01__16-50__87db8fb6-8718-49c3-b739-96eec085e09d",
+  "close_hour": "16:50",
+  "close_hour_raw": "16:50",
+  "hour": "16",
+  "close": "16:50",
+  "lottery_name": "LT NACIONAL 17HS",
+  "lottery_id": "87db8fb6-8718-49c3-b739-96eec085e09d",
+  "fields": {
+    "date": {
+      "type": "string",
+      "value": "2023-09-01"
+    },
+    "close_hour_raw": {
+      "type": "string",
+      "value": "16:50"
+    },
+    "importedAt": {
+      "type": "object",
+      "keys": [
+        "_nanoseconds",
+        "_seconds"
+      ]
+    },
+    "drawId": {
+      "type": "string",
+      "value": "NACIONAL__2023-09-01__16-50__87db8fb6-8718-49c3-b739-96eec085e09d"
+    },
+    "lottery_id": {
+      "type": "string",
+      "value": "87db8fb6-8718-49c3-b739-96eec085e09d"
+    },
+    "lottery_name": {
+      "type": "string",
+      "value": "LT NACIONAL 17HS"
+    },
+    "source": {
+      "type": "string",
+      "value": "kingapostas"
+    },
+    "uf": {
+      "type": "string",
+      "value": "BR"
+    },
+    "ymd": {
+      "type": "string",
+      "value": "2023-09-01"
+    },
+    "close_hour": {
+      "type": "string",
+      "value": "16:50"
+    },
+    "hour": {
+      "type": "string",
+      "value": "16"
+    },
+    "prizesCount": {
+      "type": "number",
+      "value": 7
+    },
+    "lottery_key": {
+      "type": "string",
+      "value": "NACIONAL"
+    },
+    "close": {
+      "type": "string",
+      "value": "16:50"
+    }
+  }
+}
+{
+  "id": "NACIONAL__2023-09-01__19-50__1eebc22a-890e-4598-86b5-6fda7e04ca4b",
+  "close_hour": "19:50",
+  "close_hour_raw": "19:50",
+  "hour": "19",
+  "close": "19:50",
+  "lottery_name": "LT NACIONAL 20HS",
+  "lottery_id": "1eebc22a-890e-4598-86b5-6fda7e04ca4b",
+  "fields": {
+    "date": {
+      "type": "string",
+      "value": "2023-09-01"
+    },
+    "close_hour_raw": {
+      "type": "string",
+      "value": "19:50"
+    },
+    "importedAt": {
+      "type": "object",
+      "keys": [
+        "_nanoseconds",
+        "_seconds"
+      ]
+    },
+    "drawId": {
+      "type": "string",
+      "value": "NACIONAL__2023-09-01__19-50__1eebc22a-890e-4598-86b5-6fda7e04ca4b"
+    },
+    "lottery_id": {
+      "type": "string",
+      "value": "1eebc22a-890e-4598-86b5-6fda7e04ca4b"
+    },
+    "lottery_name": {
+      "type": "string",
+      "value": "LT NACIONAL 20HS"
+    },
+    "source": {
+      "type": "string",
+      "value": "kingapostas"
+    },
+    "uf": {
+      "type": "string",
+      "value": "BR"
+    },
+    "ymd": {
+      "type": "string",
+      "value": "2023-09-01"
+    },
+    "close_hour": {
+      "type": "string",
+      "value": "19:50"
+    },
+    "hour": {
+      "type": "string",
+      "value": "19"
+    },
+    "prizesCount": {
+      "type": "number",
+      "value": 7
+    },
+    "lottery_key": {
+      "type": "string",
+      "value": "NACIONAL"
+    },
+    "close": {
+      "type": "string",
+      "value": "19:50"
+    }
+  }
+}
+{
+  "id": "NACIONAL__2023-09-01__22-50__2a424135-9b6a-4415-8a57-15e0d3abd736",
+  "close_hour": "22:50",
+  "close_hour_raw": "22:50",
+  "hour": "22",
+  "close": "22:50",
+  "lottery_name": "LT NACIONAL 23HS",
+  "lottery_id": "2a424135-9b6a-4415-8a57-15e0d3abd736",
+  "fields": {
+    "date": {
+      "type": "string",
+      "value": "2023-09-01"
+    },
+    "close_hour_raw": {
+      "type": "string",
+      "value": "22:50"
+    },
+    "importedAt": {
+      "type": "object",
+      "keys": [
+        "_nanoseconds",
+        "_seconds"
+      ]
+    },
+    "drawId": {
+      "type": "string",
+      "value": "NACIONAL__2023-09-01__22-50__2a424135-9b6a-4415-8a57-15e0d3abd736"
+    },
+    "lottery_id": {
+      "type": "string",
+      "value": "2a424135-9b6a-4415-8a57-15e0d3abd736"
+    },
+    "lottery_name": {
+      "type": "string",
+      "value": "LT NACIONAL 23HS"
+    },
+    "source": {
+      "type": "string",
+      "value": "kingapostas"
+    },
+    "uf": {
+      "type": "string",
+      "value": "BR"
+    },
+    "ymd": {
+      "type": "string",
+      "value": "2023-09-01"
+    },
+    "close_hour": {
+      "type": "string",
+      "value": "22:50"
+    },
+    "hour": {
+      "type": "string",
+      "value": "22"
+    },
+    "prizesCount": {
+      "type": "number",
+      "value": 7
+    },
+    "lottery_key": {
+      "type": "string",
+      "value": "NACIONAL"
+    },
+    "close": {
+      "type": "string",
+      "value": "22:50"
+    }
+  }
+}
+
+==================================================
+DATA: 2023-09-02
+TOTAL: 8
+==================================================
+{
+  "id": "NACIONAL__2023-09-02__01-50__6c2b52ec-d613-4383-9c07-ff5ac7e04611",
+  "close_hour": "01:50",
+  "close_hour_raw": "01:50",
+  "hour": "01",
+  "close": "01:50",
+  "lottery_name": "LT NACIONAL 02HS",
+  "lottery_id": "6c2b52ec-d613-4383-9c07-ff5ac7e04611",
+  "fields": {
+    "date": {
+      "type": "string",
+      "value": "2023-09-02"
+    },
+    "close_hour_raw": {
+      "type": "string",
+      "value": "01:50"
+    },
+    "importedAt": {
+      "type": "object",
+      "keys": [
+        "_nanoseconds",
+        "_seconds"
+      ]
+    },
+    "drawId": {
+      "type": "string",
+      "value": "NACIONAL__2023-09-02__01-50__6c2b52ec-d613-4383-9c07-ff5ac7e04611"
+    },
+    "lottery_id": {
+      "type": "string",
+      "value": "6c2b52ec-d613-4383-9c07-ff5ac7e04611"
+    },
+    "lottery_name": {
+      "type": "string",
+      "value": "LT NACIONAL 02HS"
+    },
+    "source": {
+      "type": "string",
+      "value": "kingapostas"
+    },
+    "uf": {
+      "type": "string",
+      "value": "BR"
+    },
+    "ymd": {
+      "type": "string",
+      "value": "2023-09-02"
+    },
+    "close_hour": {
+      "type": "string",
+      "value": "01:50"
+    },
+    "hour": {
+      "type": "string",
+      "value": "01"
+    },
+    "prizesCount": {
+      "type": "number",
+      "value": 7
+    },
+    "lottery_key": {
+      "type": "string",
+      "value": "NACIONAL"
+    },
+    "close": {
+      "type": "string",
+      "value": "01:50"
+    }
+  }
+}
+{
+  "id": "NACIONAL__2023-09-02__07-50__76a3feee-faa6-4b6c-aae5-656fd6af7b6b",
+  "close_hour": "07:50",
+  "close_hour_raw": "07:50",
+  "hour": "07",
+  "close": "07:50",
+  "lottery_name": "LT NACIONAL 08HS",
+  "lottery_id": "76a3feee-faa6-4b6c-aae5-656fd6af7b6b",
+  "fields": {
+    "date": {
+      "type": "string",
+      "value": "2023-09-02"
+    },
+    "close_hour_raw": {
+      "type": "string",
+      "value": "07:50"
+    },
+    "importedAt": {
+      "type": "object",
+      "keys": [
+        "_nanoseconds",
+        "_seconds"
+      ]
+    },
+    "drawId": {
+      "type": "string",
+      "value": "NACIONAL__2023-09-02__07-50__76a3feee-faa6-4b6c-aae5-656fd6af7b6b"
+    },
+    "lottery_id": {
+      "type": "string",
+      "value": "76a3feee-faa6-4b6c-aae5-656fd6af7b6b"
+    },
+    "lottery_name": {
+      "type": "string",
+      "value": "LT NACIONAL 08HS"
+    },
+    "source": {
+      "type": "string",
+      "value": "kingapostas"
+    },
+    "uf": {
+      "type": "string",
+      "value": "BR"
+    },
+    "ymd": {
+      "type": "string",
+      "value": "2023-09-02"
+    },
+    "close_hour": {
+      "type": "string",
+      "value": "07:50"
+    },
+    "hour": {
+      "type": "string",
+      "value": "07"
+    },
+    "prizesCount": {
+      "type": "number",
+      "value": 7
+    },
+    "lottery_key": {
+      "type": "string",
+      "value": "NACIONAL"
+    },
+    "close": {
+      "type": "string",
+      "value": "07:50"
+    }
+  }
+}
+{
+  "id": "NACIONAL__2023-09-02__09-50__4dda728b-bbd9-43eb-a17b-acf968b1eca0",
+  "close_hour": "09:50",
+  "close_hour_raw": "09:50",
+  "hour": "09",
+  "close": "09:50",
+  "lottery_name": "LT NACIONAL 10HS",
+  "lottery_id": "4dda728b-bbd9-43eb-a17b-acf968b1eca0",
+  "fields": {
+    "date": {
+      "type": "string",
+      "value": "2023-09-02"
+    },
+    "close_hour_raw": {
+      "type": "string",
+      "value": "09:50"
+    },
+    "importedAt": {
+      "type": "object",
+      "keys": [
+        "_nanoseconds",
+        "_seconds"
+      ]
+    },
+    "drawId": {
+      "type": "string",
+      "value": "NACIONAL__2023-09-02__09-50__4dda728b-bbd9-43eb-a17b-acf968b1eca0"
+    },
+    "lottery_id": {
+      "type": "string",
+      "value": "4dda728b-bbd9-43eb-a17b-acf968b1eca0"
+    },
+    "lottery_name": {
+      "type": "string",
+      "value": "LT NACIONAL 10HS"
+    },
+    "source": {
+      "type": "string",
+      "value": "kingapostas"
+    },
+    "uf": {
+      "type": "string",
+      "value": "BR"
+    },
+    "ymd": {
+      "type": "string",
+      "value": "2023-09-02"
+    },
+    "close_hour": {
+      "type": "string",
+      "value": "09:50"
+    },
+    "hour": {
+      "type": "string",
+      "value": "09"
+    },
+    "prizesCount": {
+      "type": "number",
+      "value": 7
+    },
+    "lottery_key": {
+      "type": "string",
+      "value": "NACIONAL"
+    },
+    "close": {
+      "type": "string",
+      "value": "09:50"
+    }
+  }
+}
+{
+  "id": "NACIONAL__2023-09-02__11-50__8efc7c5a-8883-48a3-ab7f-cf3d0f7eebd4",
+  "close_hour": "11:50",
+  "close_hour_raw": "11:50",
+  "hour": "11",
+  "close": "11:50",
+  "lottery_name": "LT NACIONAL 12HS",
+  "lottery_id": "8efc7c5a-8883-48a3-ab7f-cf3d0f7eebd4",
+  "fields": {
+    "date": {
+      "type": "string",
+      "value": "2023-09-02"
+    },
+    "close_hour_raw": {
+      "type": "string",
+      "value": "11:50"
+    },
+    "importedAt": {
+      "type": "object",
+      "keys": [
+        "_nanoseconds",
+        "_seconds"
+      ]
+    },
+    "drawId": {
+      "type": "string",
+      "value": "NACIONAL__2023-09-02__11-50__8efc7c5a-8883-48a3-ab7f-cf3d0f7eebd4"
+    },
+    "lottery_id": {
+      "type": "string",
+      "value": "8efc7c5a-8883-48a3-ab7f-cf3d0f7eebd4"
+    },
+    "lottery_name": {
+      "type": "string",
+      "value": "LT NACIONAL 12HS"
+    },
+    "source": {
+      "type": "string",
+      "value": "kingapostas"
+    },
+    "uf": {
+      "type": "string",
+      "value": "BR"
+    },
+    "ymd": {
+      "type": "string",
+      "value": "2023-09-02"
+    },
+    "close_hour": {
+      "type": "string",
+      "value": "11:50"
+    },
+    "hour": {
+      "type": "string",
+      "value": "11"
+    },
+    "prizesCount": {
+      "type": "number",
+      "value": 7
+    },
+    "lottery_key": {
+      "type": "string",
+      "value": "NACIONAL"
+    },
+    "close": {
+      "type": "string",
+      "value": "11:50"
+    }
+  }
+}
+{
+  "id": "NACIONAL__2023-09-02__14-50__3bafbe99-632b-4445-9b73-12e78ee45283",
+  "close_hour": "14:50",
+  "close_hour_raw": "14:50",
+  "hour": "14",
+  "close": "14:50",
+  "lottery_name": "LT NACIONAL 15HS",
+  "lottery_id": "3bafbe99-632b-4445-9b73-12e78ee45283",
+  "fields": {
+    "date": {
+      "type": "string",
+      "value": "2023-09-02"
+    },
+    "close_hour_raw": {
+      "type": "string",
+      "value": "14:50"
+    },
+    "importedAt": {
+      "type": "object",
+      "keys": [
+        "_nanoseconds",
+        "_seconds"
+      ]
+    },
+    "drawId": {
+      "type": "string",
+      "value": "NACIONAL__2023-09-02__14-50__3bafbe99-632b-4445-9b73-12e78ee45283"
+    },
+    "lottery_id": {
+      "type": "string",
+      "value": "3bafbe99-632b-4445-9b73-12e78ee45283"
+    },
+    "lottery_name": {
+      "type": "string",
+      "value": "LT NACIONAL 15HS"
+    },
+    "source": {
+      "type": "string",
+      "value": "kingapostas"
+    },
+    "uf": {
+      "type": "string",
+      "value": "BR"
+    },
+    "ymd": {
+      "type": "string",
+      "value": "2023-09-02"
+    },
+    "close_hour": {
+      "type": "string",
+      "value": "14:50"
+    },
+    "hour": {
+      "type": "string",
+      "value": "14"
+    },
+    "prizesCount": {
+      "type": "number",
+      "value": 7
+    },
+    "lottery_key": {
+      "type": "string",
+      "value": "NACIONAL"
+    },
+    "close": {
+      "type": "string",
+      "value": "14:50"
+    }
+  }
+}
+{
+  "id": "NACIONAL__2023-09-02__16-50__87db8fb6-8718-49c3-b739-96eec085e09d",
+  "close_hour": "16:50",
+  "close_hour_raw": "16:50",
+  "hour": "16",
+  "close": "16:50",
+  "lottery_name": "LT NACIONAL 17HS",
+  "lottery_id": "87db8fb6-8718-49c3-b739-96eec085e09d",
+  "fields": {
+    "date": {
+      "type": "string",
+      "value": "2023-09-02"
+    },
+    "close_hour_raw": {
+      "type": "string",
+      "value": "16:50"
+    },
+    "importedAt": {
+      "type": "object",
+      "keys": [
+        "_nanoseconds",
+        "_seconds"
+      ]
+    },
+    "drawId": {
+      "type": "string",
+      "value": "NACIONAL__2023-09-02__16-50__87db8fb6-8718-49c3-b739-96eec085e09d"
+    },
+    "lottery_id": {
+      "type": "string",
+      "value": "87db8fb6-8718-49c3-b739-96eec085e09d"
+    },
+    "lottery_name": {
+      "type": "string",
+      "value": "LT NACIONAL 17HS"
+    },
+    "source": {
+      "type": "string",
+      "value": "kingapostas"
+    },
+    "uf": {
+      "type": "string",
+      "value": "BR"
+    },
+    "ymd": {
+      "type": "string",
+      "value": "2023-09-02"
+    },
+    "close_hour": {
+      "type": "string",
+      "value": "16:50"
+    },
+    "hour": {
+      "type": "string",
+      "value": "16"
+    },
+    "prizesCount": {
+      "type": "number",
+      "value": 7
+    },
+    "lottery_key": {
+      "type": "string",
+      "value": "NACIONAL"
+    },
+    "close": {
+      "type": "string",
+      "value": "16:50"
+    }
+  }
+}
+{
+  "id": "NACIONAL__2023-09-02__19-50__1eebc22a-890e-4598-86b5-6fda7e04ca4b",
+  "close_hour": "19:50",
+  "close_hour_raw": "19:50",
+  "hour": "19",
+  "close": "19:50",
+  "lottery_name": "LT NACIONAL 20HS",
+  "lottery_id": "1eebc22a-890e-4598-86b5-6fda7e04ca4b",
+  "fields": {
+    "date": {
+      "type": "string",
+      "value": "2023-09-02"
+    },
+    "close_hour_raw": {
+      "type": "string",
+      "value": "19:50"
+    },
+    "importedAt": {
+      "type": "object",
+      "keys": [
+        "_nanoseconds",
+        "_seconds"
+      ]
+    },
+    "drawId": {
+      "type": "string",
+      "value": "NACIONAL__2023-09-02__19-50__1eebc22a-890e-4598-86b5-6fda7e04ca4b"
+    },
+    "lottery_id": {
+      "type": "string",
+      "value": "1eebc22a-890e-4598-86b5-6fda7e04ca4b"
+    },
+    "lottery_name": {
+      "type": "string",
+      "value": "LT NACIONAL 20HS"
+    },
+    "source": {
+      "type": "string",
+      "value": "kingapostas"
+    },
+    "uf": {
+      "type": "string",
+      "value": "BR"
+    },
+    "ymd": {
+      "type": "string",
+      "value": "2023-09-02"
+    },
+    "close_hour": {
+      "type": "string",
+      "value": "19:50"
+    },
+    "hour": {
+      "type": "string",
+      "value": "19"
+    },
+    "prizesCount": {
+      "type": "number",
+      "value": 7
+    },
+    "lottery_key": {
+      "type": "string",
+      "value": "NACIONAL"
+    },
+    "close": {
+      "type": "string",
+      "value": "19:50"
+    }
+  }
+}
+{
+  "id": "NACIONAL__2023-09-02__22-50__2a424135-9b6a-4415-8a57-15e0d3abd736",
+  "close_hour": "22:50",
+  "close_hour_raw": "22:50",
+  "hour": "22",
+  "close": "22:50",
+  "lottery_name": "LT NACIONAL 23HS",
+  "lottery_id": "2a424135-9b6a-4415-8a57-15e0d3abd736",
+  "fields": {
+    "date": {
+      "type": "string",
+      "value": "2023-09-02"
+    },
+    "close_hour_raw": {
+      "type": "string",
+      "value": "22:50"
+    },
+    "importedAt": {
+      "type": "object",
+      "keys": [
+        "_nanoseconds",
+        "_seconds"
+      ]
+    },
+    "drawId": {
+      "type": "string",
+      "value": "NACIONAL__2023-09-02__22-50__2a424135-9b6a-4415-8a57-15e0d3abd736"
+    },
+    "lottery_id": {
+      "type": "string",
+      "value": "2a424135-9b6a-4415-8a57-15e0d3abd736"
+    },
+    "lottery_name": {
+      "type": "string",
+      "value": "LT NACIONAL 23HS"
+    },
+    "source": {
+      "type": "string",
+      "value": "kingapostas"
+    },
+    "uf": {
+      "type": "string",
+      "value": "BR"
+    },
+    "ymd": {
+      "type": "string",
+      "value": "2023-09-02"
+    },
+    "close_hour": {
+      "type": "string",
+      "value": "22:50"
+    },
+    "hour": {
+      "type": "string",
+      "value": "22"
+    },
+    "prizesCount": {
+      "type": "number",
+      "value": 7
+    },
+    "lottery_key": {
+      "type": "string",
+      "value": "NACIONAL"
+    },
+    "close": {
+      "type": "string",
+      "value": "22:50"
+    }
+  }
+}
+
+==================================================
+DATA: 2025-02-05
+TOTAL: 8
+==================================================
+{
+  "id": "NACIONAL__2025-02-05__01-50__6c2b52ec-d613-4383-9c07-ff5ac7e04611",
+  "close_hour": "01:50",
+  "close_hour_raw": "01:50",
+  "hour": "01",
+  "close": "01:50",
+  "lottery_name": "LT NACIONAL 02HS",
+  "lottery_id": "6c2b52ec-d613-4383-9c07-ff5ac7e04611",
+  "fields": {
+    "date": {
+      "type": "string",
+      "value": "2025-02-05"
+    },
+    "close_hour_raw": {
+      "type": "string",
+      "value": "01:50"
+    },
+    "importedAt": {
+      "type": "object",
+      "keys": [
+        "_nanoseconds",
+        "_seconds"
+      ]
+    },
+    "drawId": {
+      "type": "string",
+      "value": "NACIONAL__2025-02-05__01-50__6c2b52ec-d613-4383-9c07-ff5ac7e04611"
+    },
+    "lottery_id": {
+      "type": "string",
+      "value": "6c2b52ec-d613-4383-9c07-ff5ac7e04611"
+    },
+    "lottery_name": {
+      "type": "string",
+      "value": "LT NACIONAL 02HS"
+    },
+    "source": {
+      "type": "string",
+      "value": "kingapostas"
+    },
+    "uf": {
+      "type": "string",
+      "value": "BR"
+    },
+    "ymd": {
+      "type": "string",
+      "value": "2025-02-05"
+    },
+    "close_hour": {
+      "type": "string",
+      "value": "01:50"
+    },
+    "hour": {
+      "type": "string",
+      "value": "01"
+    },
+    "prizesCount": {
+      "type": "number",
+      "value": 7
+    },
+    "lottery_key": {
+      "type": "string",
+      "value": "NACIONAL"
+    },
+    "close": {
+      "type": "string",
+      "value": "01:50"
+    }
+  }
+}
+{
+  "id": "NACIONAL__2025-02-05__07-50__76a3feee-faa6-4b6c-aae5-656fd6af7b6b",
+  "close_hour": "07:50",
+  "close_hour_raw": "07:50",
+  "hour": "07",
+  "close": "07:50",
+  "lottery_name": "LT NACIONAL 08HS",
+  "lottery_id": "76a3feee-faa6-4b6c-aae5-656fd6af7b6b",
+  "fields": {
+    "date": {
+      "type": "string",
+      "value": "2025-02-05"
+    },
+    "close_hour_raw": {
+      "type": "string",
+      "value": "07:50"
+    },
+    "importedAt": {
+      "type": "object",
+      "keys": [
+        "_nanoseconds",
+        "_seconds"
+      ]
+    },
+    "drawId": {
+      "type": "string",
+      "value": "NACIONAL__2025-02-05__07-50__76a3feee-faa6-4b6c-aae5-656fd6af7b6b"
+    },
+    "lottery_id": {
+      "type": "string",
+      "value": "76a3feee-faa6-4b6c-aae5-656fd6af7b6b"
+    },
+    "lottery_name": {
+      "type": "string",
+      "value": "LT NACIONAL 08HS"
+    },
+    "source": {
+      "type": "string",
+      "value": "kingapostas"
+    },
+    "uf": {
+      "type": "string",
+      "value": "BR"
+    },
+    "ymd": {
+      "type": "string",
+      "value": "2025-02-05"
+    },
+    "close_hour": {
+      "type": "string",
+      "value": "07:50"
+    },
+    "hour": {
+      "type": "string",
+      "value": "07"
+    },
+    "prizesCount": {
+      "type": "number",
+      "value": 7
+    },
+    "lottery_key": {
+      "type": "string",
+      "value": "NACIONAL"
+    },
+    "close": {
+      "type": "string",
+      "value": "07:50"
+    }
+  }
+}
+{
+  "id": "NACIONAL__2025-02-05__09-50__4dda728b-bbd9-43eb-a17b-acf968b1eca0",
+  "close_hour": "09:50",
+  "close_hour_raw": "09:50",
+  "hour": "09",
+  "close": "09:50",
+  "lottery_name": "LT NACIONAL 10HS",
+  "lottery_id": "4dda728b-bbd9-43eb-a17b-acf968b1eca0",
+  "fields": {
+    "date": {
+      "type": "string",
+      "value": "2025-02-05"
+    },
+    "close_hour_raw": {
+      "type": "string",
+      "value": "09:50"
+    },
+    "importedAt": {
+      "type": "object",
+      "keys": [
+        "_nanoseconds",
+        "_seconds"
+      ]
+    },
+    "drawId": {
+      "type": "string",
+      "value": "NACIONAL__2025-02-05__09-50__4dda728b-bbd9-43eb-a17b-acf968b1eca0"
+    },
+    "lottery_id": {
+      "type": "string",
+      "value": "4dda728b-bbd9-43eb-a17b-acf968b1eca0"
+    },
+    "lottery_name": {
+      "type": "string",
+      "value": "LT NACIONAL 10HS"
+    },
+    "source": {
+      "type": "string",
+      "value": "kingapostas"
+    },
+    "uf": {
+      "type": "string",
+      "value": "BR"
+    },
+    "ymd": {
+      "type": "string",
+      "value": "2025-02-05"
+    },
+    "close_hour": {
+      "type": "string",
+      "value": "09:50"
+    },
+    "hour": {
+      "type": "string",
+      "value": "09"
+    },
+    "prizesCount": {
+      "type": "number",
+      "value": 7
+    },
+    "lottery_key": {
+      "type": "string",
+      "value": "NACIONAL"
+    },
+    "close": {
+      "type": "string",
+      "value": "09:50"
+    }
+  }
+}
+{
+  "id": "NACIONAL__2025-02-05__11-50__8efc7c5a-8883-48a3-ab7f-cf3d0f7eebd4",
+  "close_hour": "11:50",
+  "close_hour_raw": "11:50",
+  "hour": "11",
+  "close": "11:50",
+  "lottery_name": "LT NACIONAL 12HS",
+  "lottery_id": "8efc7c5a-8883-48a3-ab7f-cf3d0f7eebd4",
+  "fields": {
+    "date": {
+      "type": "string",
+      "value": "2025-02-05"
+    },
+    "close_hour_raw": {
+      "type": "string",
+      "value": "11:50"
+    },
+    "importedAt": {
+      "type": "object",
+      "keys": [
+        "_nanoseconds",
+        "_seconds"
+      ]
+    },
+    "drawId": {
+      "type": "string",
+      "value": "NACIONAL__2025-02-05__11-50__8efc7c5a-8883-48a3-ab7f-cf3d0f7eebd4"
+    },
+    "lottery_id": {
+      "type": "string",
+      "value": "8efc7c5a-8883-48a3-ab7f-cf3d0f7eebd4"
+    },
+    "lottery_name": {
+      "type": "string",
+      "value": "LT NACIONAL 12HS"
+    },
+    "source": {
+      "type": "string",
+      "value": "kingapostas"
+    },
+    "uf": {
+      "type": "string",
+      "value": "BR"
+    },
+    "ymd": {
+      "type": "string",
+      "value": "2025-02-05"
+    },
+    "close_hour": {
+      "type": "string",
+      "value": "11:50"
+    },
+    "hour": {
+      "type": "string",
+      "value": "11"
+    },
+    "prizesCount": {
+      "type": "number",
+      "value": 7
+    },
+    "lottery_key": {
+      "type": "string",
+      "value": "NACIONAL"
+    },
+    "close": {
+      "type": "string",
+      "value": "11:50"
+    }
+  }
+}
+{
+  "id": "NACIONAL__2025-02-05__14-50__3bafbe99-632b-4445-9b73-12e78ee45283",
+  "close_hour": "14:50",
+  "close_hour_raw": "14:50",
+  "hour": "14",
+  "close": "14:50",
+  "lottery_name": "LT NACIONAL 15HS",
+  "lottery_id": "3bafbe99-632b-4445-9b73-12e78ee45283",
+  "fields": {
+    "date": {
+      "type": "string",
+      "value": "2025-02-05"
+    },
+    "close_hour_raw": {
+      "type": "string",
+      "value": "14:50"
+    },
+    "importedAt": {
+      "type": "object",
+      "keys": [
+        "_nanoseconds",
+        "_seconds"
+      ]
+    },
+    "drawId": {
+      "type": "string",
+      "value": "NACIONAL__2025-02-05__14-50__3bafbe99-632b-4445-9b73-12e78ee45283"
+    },
+    "lottery_id": {
+      "type": "string",
+      "value": "3bafbe99-632b-4445-9b73-12e78ee45283"
+    },
+    "lottery_name": {
+      "type": "string",
+      "value": "LT NACIONAL 15HS"
+    },
+    "source": {
+      "type": "string",
+      "value": "kingapostas"
+    },
+    "uf": {
+      "type": "string",
+      "value": "BR"
+    },
+    "ymd": {
+      "type": "string",
+      "value": "2025-02-05"
+    },
+    "close_hour": {
+      "type": "string",
+      "value": "14:50"
+    },
+    "hour": {
+      "type": "string",
+      "value": "14"
+    },
+    "prizesCount": {
+      "type": "number",
+      "value": 7
+    },
+    "lottery_key": {
+      "type": "string",
+      "value": "NACIONAL"
+    },
+    "close": {
+      "type": "string",
+      "value": "14:50"
+    }
+  }
+}
+{
+  "id": "NACIONAL__2025-02-05__16-50__87db8fb6-8718-49c3-b739-96eec085e09d",
+  "close_hour": "16:50",
+  "close_hour_raw": "16:50",
+  "hour": "16",
+  "close": "16:50",
+  "lottery_name": "LT NACIONAL 17HS",
+  "lottery_id": "87db8fb6-8718-49c3-b739-96eec085e09d",
+  "fields": {
+    "date": {
+      "type": "string",
+      "value": "2025-02-05"
+    },
+    "close_hour_raw": {
+      "type": "string",
+      "value": "16:50"
+    },
+    "importedAt": {
+      "type": "object",
+      "keys": [
+        "_nanoseconds",
+        "_seconds"
+      ]
+    },
+    "drawId": {
+      "type": "string",
+      "value": "NACIONAL__2025-02-05__16-50__87db8fb6-8718-49c3-b739-96eec085e09d"
+    },
+    "lottery_id": {
+      "type": "string",
+      "value": "87db8fb6-8718-49c3-b739-96eec085e09d"
+    },
+    "lottery_name": {
+      "type": "string",
+      "value": "LT NACIONAL 17HS"
+    },
+    "source": {
+      "type": "string",
+      "value": "kingapostas"
+    },
+    "uf": {
+      "type": "string",
+      "value": "BR"
+    },
+    "ymd": {
+      "type": "string",
+      "value": "2025-02-05"
+    },
+    "close_hour": {
+      "type": "string",
+      "value": "16:50"
+    },
+    "hour": {
+      "type": "string",
+      "value": "16"
+    },
+    "prizesCount": {
+      "type": "number",
+      "value": 7
+    },
+    "lottery_key": {
+      "type": "string",
+      "value": "NACIONAL"
+    },
+    "close": {
+      "type": "string",
+      "value": "16:50"
+    }
+  }
+}
+{
+  "id": "NACIONAL__2025-02-05__19-50__1eebc22a-890e-4598-86b5-6fda7e04ca4b",
+  "close_hour": "19:50",
+  "close_hour_raw": "19:50",
+  "hour": "19",
+  "close": "19:50",
+  "lottery_name": "LT NACIONAL 20HS",
+  "lottery_id": "1eebc22a-890e-4598-86b5-6fda7e04ca4b",
+  "fields": {
+    "date": {
+      "type": "string",
+      "value": "2025-02-05"
+    },
+    "close_hour_raw": {
+      "type": "string",
+      "value": "19:50"
+    },
+    "importedAt": {
+      "type": "object",
+      "keys": [
+        "_nanoseconds",
+        "_seconds"
+      ]
+    },
+    "drawId": {
+      "type": "string",
+      "value": "NACIONAL__2025-02-05__19-50__1eebc22a-890e-4598-86b5-6fda7e04ca4b"
+    },
+    "lottery_id": {
+      "type": "string",
+      "value": "1eebc22a-890e-4598-86b5-6fda7e04ca4b"
+    },
+    "lottery_name": {
+      "type": "string",
+      "value": "LT NACIONAL 20HS"
+    },
+    "source": {
+      "type": "string",
+      "value": "kingapostas"
+    },
+    "uf": {
+      "type": "string",
+      "value": "BR"
+    },
+    "ymd": {
+      "type": "string",
+      "value": "2025-02-05"
+    },
+    "close_hour": {
+      "type": "string",
+      "value": "19:50"
+    },
+    "hour": {
+      "type": "string",
+      "value": "19"
+    },
+    "prizesCount": {
+      "type": "number",
+      "value": 7
+    },
+    "lottery_key": {
+      "type": "string",
+      "value": "NACIONAL"
+    },
+    "close": {
+      "type": "string",
+      "value": "19:50"
+    }
+  }
+}
+{
+  "id": "NACIONAL__2025-02-05__22-50__2a424135-9b6a-4415-8a57-15e0d3abd736",
+  "close_hour": "22:50",
+  "close_hour_raw": "22:50",
+  "hour": "22",
+  "close": "22:50",
+  "lottery_name": "LT NACIONAL 23HS",
+  "lottery_id": "2a424135-9b6a-4415-8a57-15e0d3abd736",
+  "fields": {
+    "date": {
+      "type": "string",
+      "value": "2025-02-05"
+    },
+    "close_hour_raw": {
+      "type": "string",
+      "value": "22:50"
+    },
+    "importedAt": {
+      "type": "object",
+      "keys": [
+        "_nanoseconds",
+        "_seconds"
+      ]
+    },
+    "drawId": {
+      "type": "string",
+      "value": "NACIONAL__2025-02-05__22-50__2a424135-9b6a-4415-8a57-15e0d3abd736"
+    },
+    "lottery_id": {
+      "type": "string",
+      "value": "2a424135-9b6a-4415-8a57-15e0d3abd736"
+    },
+    "lottery_name": {
+      "type": "string",
+      "value": "LT NACIONAL 23HS"
+    },
+    "source": {
+      "type": "string",
+      "value": "kingapostas"
+    },
+    "uf": {
+      "type": "string",
+      "value": "BR"
+    },
+    "ymd": {
+      "type": "string",
+      "value": "2025-02-05"
+    },
+    "close_hour": {
+      "type": "string",
+      "value": "22:50"
+    },
+    "hour": {
+      "type": "string",
+      "value": "22"
+    },
+    "prizesCount": {
+      "type": "number",
+      "value": 7
+    },
+    "lottery_key": {
+      "type": "string",
+      "value": "NACIONAL"
+    },
+    "close": {
+      "type": "string",
+      "value": "22:50"
+    }
+  }
+}
+
+==================================================
+DATA: 2025-02-06
+TOTAL: 8
+==================================================
+{
+  "id": "NACIONAL__2025-02-06__01-49__6c2b52ec-d613-4383-9c07-ff5ac7e04611",
+  "close_hour": "01:49",
+  "close_hour_raw": "01:49",
+  "hour": "01",
+  "close": "01:49",
+  "lottery_name": "LT NACIONAL 02HS",
+  "lottery_id": "6c2b52ec-d613-4383-9c07-ff5ac7e04611",
+  "fields": {
+    "date": {
+      "type": "string",
+      "value": "2025-02-06"
+    },
+    "close_hour_raw": {
+      "type": "string",
+      "value": "01:49"
+    },
+    "importedAt": {
+      "type": "object",
+      "keys": [
+        "_nanoseconds",
+        "_seconds"
+      ]
+    },
+    "drawId": {
+      "type": "string",
+      "value": "NACIONAL__2025-02-06__01-49__6c2b52ec-d613-4383-9c07-ff5ac7e04611"
+    },
+    "lottery_id": {
+      "type": "string",
+      "value": "6c2b52ec-d613-4383-9c07-ff5ac7e04611"
+    },
+    "lottery_name": {
+      "type": "string",
+      "value": "LT NACIONAL 02HS"
+    },
+    "source": {
+      "type": "string",
+      "value": "kingapostas"
+    },
+    "uf": {
+      "type": "string",
+      "value": "BR"
+    },
+    "ymd": {
+      "type": "string",
+      "value": "2025-02-06"
+    },
+    "close_hour": {
+      "type": "string",
+      "value": "01:49"
+    },
+    "hour": {
+      "type": "string",
+      "value": "01"
+    },
+    "prizesCount": {
+      "type": "number",
+      "value": 7
+    },
+    "lottery_key": {
+      "type": "string",
+      "value": "NACIONAL"
+    },
+    "close": {
+      "type": "string",
+      "value": "01:49"
+    }
+  }
+}
+{
+  "id": "NACIONAL__2025-02-06__07-49__76a3feee-faa6-4b6c-aae5-656fd6af7b6b",
+  "close_hour": "07:49",
+  "close_hour_raw": "07:49",
+  "hour": "07",
+  "close": "07:49",
+  "lottery_name": "LT NACIONAL 08HS",
+  "lottery_id": "76a3feee-faa6-4b6c-aae5-656fd6af7b6b",
+  "fields": {
+    "date": {
+      "type": "string",
+      "value": "2025-02-06"
+    },
+    "close_hour_raw": {
+      "type": "string",
+      "value": "07:49"
+    },
+    "importedAt": {
+      "type": "object",
+      "keys": [
+        "_nanoseconds",
+        "_seconds"
+      ]
+    },
+    "drawId": {
+      "type": "string",
+      "value": "NACIONAL__2025-02-06__07-49__76a3feee-faa6-4b6c-aae5-656fd6af7b6b"
+    },
+    "lottery_id": {
+      "type": "string",
+      "value": "76a3feee-faa6-4b6c-aae5-656fd6af7b6b"
+    },
+    "lottery_name": {
+      "type": "string",
+      "value": "LT NACIONAL 08HS"
+    },
+    "source": {
+      "type": "string",
+      "value": "kingapostas"
+    },
+    "uf": {
+      "type": "string",
+      "value": "BR"
+    },
+    "ymd": {
+      "type": "string",
+      "value": "2025-02-06"
+    },
+    "close_hour": {
+      "type": "string",
+      "value": "07:49"
+    },
+    "hour": {
+      "type": "string",
+      "value": "07"
+    },
+    "prizesCount": {
+      "type": "number",
+      "value": 7
+    },
+    "lottery_key": {
+      "type": "string",
+      "value": "NACIONAL"
+    },
+    "close": {
+      "type": "string",
+      "value": "07:49"
+    }
+  }
+}
+{
+  "id": "NACIONAL__2025-02-06__09-49__4dda728b-bbd9-43eb-a17b-acf968b1eca0",
+  "close_hour": "09:49",
+  "close_hour_raw": "09:49",
+  "hour": "09",
+  "close": "09:49",
+  "lottery_name": "LT NACIONAL 10HS",
+  "lottery_id": "4dda728b-bbd9-43eb-a17b-acf968b1eca0",
+  "fields": {
+    "date": {
+      "type": "string",
+      "value": "2025-02-06"
+    },
+    "close_hour_raw": {
+      "type": "string",
+      "value": "09:49"
+    },
+    "importedAt": {
+      "type": "object",
+      "keys": [
+        "_nanoseconds",
+        "_seconds"
+      ]
+    },
+    "drawId": {
+      "type": "string",
+      "value": "NACIONAL__2025-02-06__09-49__4dda728b-bbd9-43eb-a17b-acf968b1eca0"
+    },
+    "lottery_id": {
+      "type": "string",
+      "value": "4dda728b-bbd9-43eb-a17b-acf968b1eca0"
+    },
+    "lottery_name": {
+      "type": "string",
+      "value": "LT NACIONAL 10HS"
+    },
+    "source": {
+      "type": "string",
+      "value": "kingapostas"
+    },
+    "uf": {
+      "type": "string",
+      "value": "BR"
+    },
+    "ymd": {
+      "type": "string",
+      "value": "2025-02-06"
+    },
+    "close_hour": {
+      "type": "string",
+      "value": "09:49"
+    },
+    "hour": {
+      "type": "string",
+      "value": "09"
+    },
+    "prizesCount": {
+      "type": "number",
+      "value": 7
+    },
+    "lottery_key": {
+      "type": "string",
+      "value": "NACIONAL"
+    },
+    "close": {
+      "type": "string",
+      "value": "09:49"
+    }
+  }
+}
+{
+  "id": "NACIONAL__2025-02-06__11-49__8efc7c5a-8883-48a3-ab7f-cf3d0f7eebd4",
+  "close_hour": "11:49",
+  "close_hour_raw": "11:49",
+  "hour": "11",
+  "close": "11:49",
+  "lottery_name": "LT NACIONAL 12HS",
+  "lottery_id": "8efc7c5a-8883-48a3-ab7f-cf3d0f7eebd4",
+  "fields": {
+    "date": {
+      "type": "string",
+      "value": "2025-02-06"
+    },
+    "close_hour_raw": {
+      "type": "string",
+      "value": "11:49"
+    },
+    "importedAt": {
+      "type": "object",
+      "keys": [
+        "_nanoseconds",
+        "_seconds"
+      ]
+    },
+    "drawId": {
+      "type": "string",
+      "value": "NACIONAL__2025-02-06__11-49__8efc7c5a-8883-48a3-ab7f-cf3d0f7eebd4"
+    },
+    "lottery_id": {
+      "type": "string",
+      "value": "8efc7c5a-8883-48a3-ab7f-cf3d0f7eebd4"
+    },
+    "lottery_name": {
+      "type": "string",
+      "value": "LT NACIONAL 12HS"
+    },
+    "source": {
+      "type": "string",
+      "value": "kingapostas"
+    },
+    "uf": {
+      "type": "string",
+      "value": "BR"
+    },
+    "ymd": {
+      "type": "string",
+      "value": "2025-02-06"
+    },
+    "close_hour": {
+      "type": "string",
+      "value": "11:49"
+    },
+    "hour": {
+      "type": "string",
+      "value": "11"
+    },
+    "prizesCount": {
+      "type": "number",
+      "value": 7
+    },
+    "lottery_key": {
+      "type": "string",
+      "value": "NACIONAL"
+    },
+    "close": {
+      "type": "string",
+      "value": "11:49"
+    }
+  }
+}
+{
+  "id": "NACIONAL__2025-02-06__14-49__3bafbe99-632b-4445-9b73-12e78ee45283",
+  "close_hour": "14:49",
+  "close_hour_raw": "14:49",
+  "hour": "14",
+  "close": "14:49",
+  "lottery_name": "LT NACIONAL 15HS",
+  "lottery_id": "3bafbe99-632b-4445-9b73-12e78ee45283",
+  "fields": {
+    "date": {
+      "type": "string",
+      "value": "2025-02-06"
+    },
+    "close_hour_raw": {
+      "type": "string",
+      "value": "14:49"
+    },
+    "importedAt": {
+      "type": "object",
+      "keys": [
+        "_nanoseconds",
+        "_seconds"
+      ]
+    },
+    "drawId": {
+      "type": "string",
+      "value": "NACIONAL__2025-02-06__14-49__3bafbe99-632b-4445-9b73-12e78ee45283"
+    },
+    "lottery_id": {
+      "type": "string",
+      "value": "3bafbe99-632b-4445-9b73-12e78ee45283"
+    },
+    "lottery_name": {
+      "type": "string",
+      "value": "LT NACIONAL 15HS"
+    },
+    "source": {
+      "type": "string",
+      "value": "kingapostas"
+    },
+    "uf": {
+      "type": "string",
+      "value": "BR"
+    },
+    "ymd": {
+      "type": "string",
+      "value": "2025-02-06"
+    },
+    "close_hour": {
+      "type": "string",
+      "value": "14:49"
+    },
+    "hour": {
+      "type": "string",
+      "value": "14"
+    },
+    "prizesCount": {
+      "type": "number",
+      "value": 7
+    },
+    "lottery_key": {
+      "type": "string",
+      "value": "NACIONAL"
+    },
+    "close": {
+      "type": "string",
+      "value": "14:49"
+    }
+  }
+}
+{
+  "id": "NACIONAL__2025-02-06__16-49__87db8fb6-8718-49c3-b739-96eec085e09d",
+  "close_hour": "16:49",
+  "close_hour_raw": "16:49",
+  "hour": "16",
+  "close": "16:49",
+  "lottery_name": "LT NACIONAL 17HS",
+  "lottery_id": "87db8fb6-8718-49c3-b739-96eec085e09d",
+  "fields": {
+    "date": {
+      "type": "string",
+      "value": "2025-02-06"
+    },
+    "close_hour_raw": {
+      "type": "string",
+      "value": "16:49"
+    },
+    "importedAt": {
+      "type": "object",
+      "keys": [
+        "_nanoseconds",
+        "_seconds"
+      ]
+    },
+    "drawId": {
+      "type": "string",
+      "value": "NACIONAL__2025-02-06__16-49__87db8fb6-8718-49c3-b739-96eec085e09d"
+    },
+    "lottery_id": {
+      "type": "string",
+      "value": "87db8fb6-8718-49c3-b739-96eec085e09d"
+    },
+    "lottery_name": {
+      "type": "string",
+      "value": "LT NACIONAL 17HS"
+    },
+    "source": {
+      "type": "string",
+      "value": "kingapostas"
+    },
+    "uf": {
+      "type": "string",
+      "value": "BR"
+    },
+    "ymd": {
+      "type": "string",
+      "value": "2025-02-06"
+    },
+    "close_hour": {
+      "type": "string",
+      "value": "16:49"
+    },
+    "hour": {
+      "type": "string",
+      "value": "16"
+    },
+    "prizesCount": {
+      "type": "number",
+      "value": 7
+    },
+    "lottery_key": {
+      "type": "string",
+      "value": "NACIONAL"
+    },
+    "close": {
+      "type": "string",
+      "value": "16:49"
+    }
+  }
+}
+{
+  "id": "NACIONAL__2025-02-06__19-49__1eebc22a-890e-4598-86b5-6fda7e04ca4b",
+  "close_hour": "19:49",
+  "close_hour_raw": "19:49",
+  "hour": "19",
+  "close": "19:49",
+  "lottery_name": "LT NACIONAL 20HS",
+  "lottery_id": "1eebc22a-890e-4598-86b5-6fda7e04ca4b",
+  "fields": {
+    "date": {
+      "type": "string",
+      "value": "2025-02-06"
+    },
+    "close_hour_raw": {
+      "type": "string",
+      "value": "19:49"
+    },
+    "importedAt": {
+      "type": "object",
+      "keys": [
+        "_nanoseconds",
+        "_seconds"
+      ]
+    },
+    "drawId": {
+      "type": "string",
+      "value": "NACIONAL__2025-02-06__19-49__1eebc22a-890e-4598-86b5-6fda7e04ca4b"
+    },
+    "lottery_id": {
+      "type": "string",
+      "value": "1eebc22a-890e-4598-86b5-6fda7e04ca4b"
+    },
+    "lottery_name": {
+      "type": "string",
+      "value": "LT NACIONAL 20HS"
+    },
+    "source": {
+      "type": "string",
+      "value": "kingapostas"
+    },
+    "uf": {
+      "type": "string",
+      "value": "BR"
+    },
+    "ymd": {
+      "type": "string",
+      "value": "2025-02-06"
+    },
+    "close_hour": {
+      "type": "string",
+      "value": "19:49"
+    },
+    "hour": {
+      "type": "string",
+      "value": "19"
+    },
+    "prizesCount": {
+      "type": "number",
+      "value": 7
+    },
+    "lottery_key": {
+      "type": "string",
+      "value": "NACIONAL"
+    },
+    "close": {
+      "type": "string",
+      "value": "19:49"
+    }
+  }
+}
+{
+  "id": "NACIONAL__2025-02-06__22-49__2a424135-9b6a-4415-8a57-15e0d3abd736",
+  "close_hour": "22:49",
+  "close_hour_raw": "22:49",
+  "hour": "22",
+  "close": "22:49",
+  "lottery_name": "LT NACIONAL 23HS",
+  "lottery_id": "2a424135-9b6a-4415-8a57-15e0d3abd736",
+  "fields": {
+    "date": {
+      "type": "string",
+      "value": "2025-02-06"
+    },
+    "close_hour_raw": {
+      "type": "string",
+      "value": "22:49"
+    },
+    "importedAt": {
+      "type": "object",
+      "keys": [
+        "_nanoseconds",
+        "_seconds"
+      ]
+    },
+    "drawId": {
+      "type": "string",
+      "value": "NACIONAL__2025-02-06__22-49__2a424135-9b6a-4415-8a57-15e0d3abd736"
+    },
+    "lottery_id": {
+      "type": "string",
+      "value": "2a424135-9b6a-4415-8a57-15e0d3abd736"
+    },
+    "lottery_name": {
+      "type": "string",
+      "value": "LT NACIONAL 23HS"
+    },
+    "source": {
+      "type": "string",
+      "value": "kingapostas"
+    },
+    "uf": {
+      "type": "string",
+      "value": "BR"
+    },
+    "ymd": {
+      "type": "string",
+      "value": "2025-02-06"
+    },
+    "close_hour": {
+      "type": "string",
+      "value": "22:49"
+    },
+    "hour": {
+      "type": "string",
+      "value": "22"
+    },
+    "prizesCount": {
+      "type": "number",
+      "value": 7
+    },
+    "lottery_key": {
+      "type": "string",
+      "value": "NACIONAL"
+    },
+    "close": {
+      "type": "string",
+      "value": "22:49"
+    }
+  }
+}
+
+==================================================
+DATA: 2025-02-07
+TOTAL: 8
+==================================================
+{
+  "id": "NACIONAL__2025-02-07__01-49__6c2b52ec-d613-4383-9c07-ff5ac7e04611",
+  "close_hour": "01:49",
+  "close_hour_raw": "01:49",
+  "hour": "01",
+  "close": "01:49",
+  "lottery_name": "LT NACIONAL 02HS",
+  "lottery_id": "6c2b52ec-d613-4383-9c07-ff5ac7e04611",
+  "fields": {
+    "date": {
+      "type": "string",
+      "value": "2025-02-07"
+    },
+    "close_hour_raw": {
+      "type": "string",
+      "value": "01:49"
+    },
+    "importedAt": {
+      "type": "object",
+      "keys": [
+        "_nanoseconds",
+        "_seconds"
+      ]
+    },
+    "drawId": {
+      "type": "string",
+      "value": "NACIONAL__2025-02-07__01-49__6c2b52ec-d613-4383-9c07-ff5ac7e04611"
+    },
+    "lottery_id": {
+      "type": "string",
+      "value": "6c2b52ec-d613-4383-9c07-ff5ac7e04611"
+    },
+    "lottery_name": {
+      "type": "string",
+      "value": "LT NACIONAL 02HS"
+    },
+    "source": {
+      "type": "string",
+      "value": "kingapostas"
+    },
+    "uf": {
+      "type": "string",
+      "value": "BR"
+    },
+    "ymd": {
+      "type": "string",
+      "value": "2025-02-07"
+    },
+    "close_hour": {
+      "type": "string",
+      "value": "01:49"
+    },
+    "hour": {
+      "type": "string",
+      "value": "01"
+    },
+    "prizesCount": {
+      "type": "number",
+      "value": 7
+    },
+    "lottery_key": {
+      "type": "string",
+      "value": "NACIONAL"
+    },
+    "close": {
+      "type": "string",
+      "value": "01:49"
+    }
+  }
+}
+{
+  "id": "NACIONAL__2025-02-07__07-49__76a3feee-faa6-4b6c-aae5-656fd6af7b6b",
+  "close_hour": "07:49",
+  "close_hour_raw": "07:49",
+  "hour": "07",
+  "close": "07:49",
+  "lottery_name": "LT NACIONAL 08HS",
+  "lottery_id": "76a3feee-faa6-4b6c-aae5-656fd6af7b6b",
+  "fields": {
+    "date": {
+      "type": "string",
+      "value": "2025-02-07"
+    },
+    "close_hour_raw": {
+      "type": "string",
+      "value": "07:49"
+    },
+    "importedAt": {
+      "type": "object",
+      "keys": [
+        "_nanoseconds",
+        "_seconds"
+      ]
+    },
+    "drawId": {
+      "type": "string",
+      "value": "NACIONAL__2025-02-07__07-49__76a3feee-faa6-4b6c-aae5-656fd6af7b6b"
+    },
+    "lottery_id": {
+      "type": "string",
+      "value": "76a3feee-faa6-4b6c-aae5-656fd6af7b6b"
+    },
+    "lottery_name": {
+      "type": "string",
+      "value": "LT NACIONAL 08HS"
+    },
+    "source": {
+      "type": "string",
+      "value": "kingapostas"
+    },
+    "uf": {
+      "type": "string",
+      "value": "BR"
+    },
+    "ymd": {
+      "type": "string",
+      "value": "2025-02-07"
+    },
+    "close_hour": {
+      "type": "string",
+      "value": "07:49"
+    },
+    "hour": {
+      "type": "string",
+      "value": "07"
+    },
+    "prizesCount": {
+      "type": "number",
+      "value": 7
+    },
+    "lottery_key": {
+      "type": "string",
+      "value": "NACIONAL"
+    },
+    "close": {
+      "type": "string",
+      "value": "07:49"
+    }
+  }
+}
+{
+  "id": "NACIONAL__2025-02-07__09-49__4dda728b-bbd9-43eb-a17b-acf968b1eca0",
+  "close_hour": "09:49",
+  "close_hour_raw": "09:49",
+  "hour": "09",
+  "close": "09:49",
+  "lottery_name": "LT NACIONAL 10HS",
+  "lottery_id": "4dda728b-bbd9-43eb-a17b-acf968b1eca0",
+  "fields": {
+    "date": {
+      "type": "string",
+      "value": "2025-02-07"
+    },
+    "close_hour_raw": {
+      "type": "string",
+      "value": "09:49"
+    },
+    "importedAt": {
+      "type": "object",
+      "keys": [
+        "_nanoseconds",
+        "_seconds"
+      ]
+    },
+    "drawId": {
+      "type": "string",
+      "value": "NACIONAL__2025-02-07__09-49__4dda728b-bbd9-43eb-a17b-acf968b1eca0"
+    },
+    "lottery_id": {
+      "type": "string",
+      "value": "4dda728b-bbd9-43eb-a17b-acf968b1eca0"
+    },
+    "lottery_name": {
+      "type": "string",
+      "value": "LT NACIONAL 10HS"
+    },
+    "source": {
+      "type": "string",
+      "value": "kingapostas"
+    },
+    "uf": {
+      "type": "string",
+      "value": "BR"
+    },
+    "ymd": {
+      "type": "string",
+      "value": "2025-02-07"
+    },
+    "close_hour": {
+      "type": "string",
+      "value": "09:49"
+    },
+    "hour": {
+      "type": "string",
+      "value": "09"
+    },
+    "prizesCount": {
+      "type": "number",
+      "value": 7
+    },
+    "lottery_key": {
+      "type": "string",
+      "value": "NACIONAL"
+    },
+    "close": {
+      "type": "string",
+      "value": "09:49"
+    }
+  }
+}
+{
+  "id": "NACIONAL__2025-02-07__11-49__8efc7c5a-8883-48a3-ab7f-cf3d0f7eebd4",
+  "close_hour": "11:49",
+  "close_hour_raw": "11:49",
+  "hour": "11",
+  "close": "11:49",
+  "lottery_name": "LT NACIONAL 12HS",
+  "lottery_id": "8efc7c5a-8883-48a3-ab7f-cf3d0f7eebd4",
+  "fields": {
+    "date": {
+      "type": "string",
+      "value": "2025-02-07"
+    },
+    "close_hour_raw": {
+      "type": "string",
+      "value": "11:49"
+    },
+    "importedAt": {
+      "type": "object",
+      "keys": [
+        "_nanoseconds",
+        "_seconds"
+      ]
+    },
+    "drawId": {
+      "type": "string",
+      "value": "NACIONAL__2025-02-07__11-49__8efc7c5a-8883-48a3-ab7f-cf3d0f7eebd4"
+    },
+    "lottery_id": {
+      "type": "string",
+      "value": "8efc7c5a-8883-48a3-ab7f-cf3d0f7eebd4"
+    },
+    "lottery_name": {
+      "type": "string",
+      "value": "LT NACIONAL 12HS"
+    },
+    "source": {
+      "type": "string",
+      "value": "kingapostas"
+    },
+    "uf": {
+      "type": "string",
+      "value": "BR"
+    },
+    "ymd": {
+      "type": "string",
+      "value": "2025-02-07"
+    },
+    "close_hour": {
+      "type": "string",
+      "value": "11:49"
+    },
+    "hour": {
+      "type": "string",
+      "value": "11"
+    },
+    "prizesCount": {
+      "type": "number",
+      "value": 7
+    },
+    "lottery_key": {
+      "type": "string",
+      "value": "NACIONAL"
+    },
+    "close": {
+      "type": "string",
+      "value": "11:49"
+    }
+  }
+}
+{
+  "id": "NACIONAL__2025-02-07__14-49__3bafbe99-632b-4445-9b73-12e78ee45283",
+  "close_hour": "14:49",
+  "close_hour_raw": "14:49",
+  "hour": "14",
+  "close": "14:49",
+  "lottery_name": "LT NACIONAL 15HS",
+  "lottery_id": "3bafbe99-632b-4445-9b73-12e78ee45283",
+  "fields": {
+    "date": {
+      "type": "string",
+      "value": "2025-02-07"
+    },
+    "close_hour_raw": {
+      "type": "string",
+      "value": "14:49"
+    },
+    "importedAt": {
+      "type": "object",
+      "keys": [
+        "_nanoseconds",
+        "_seconds"
+      ]
+    },
+    "drawId": {
+      "type": "string",
+      "value": "NACIONAL__2025-02-07__14-49__3bafbe99-632b-4445-9b73-12e78ee45283"
+    },
+    "lottery_id": {
+      "type": "string",
+      "value": "3bafbe99-632b-4445-9b73-12e78ee45283"
+    },
+    "lottery_name": {
+      "type": "string",
+      "value": "LT NACIONAL 15HS"
+    },
+    "source": {
+      "type": "string",
+      "value": "kingapostas"
+    },
+    "uf": {
+      "type": "string",
+      "value": "BR"
+    },
+    "ymd": {
+      "type": "string",
+      "value": "2025-02-07"
+    },
+    "close_hour": {
+      "type": "string",
+      "value": "14:49"
+    },
+    "hour": {
+      "type": "string",
+      "value": "14"
+    },
+    "prizesCount": {
+      "type": "number",
+      "value": 7
+    },
+    "lottery_key": {
+      "type": "string",
+      "value": "NACIONAL"
+    },
+    "close": {
+      "type": "string",
+      "value": "14:49"
+    }
+  }
+}
+{
+  "id": "NACIONAL__2025-02-07__16-49__87db8fb6-8718-49c3-b739-96eec085e09d",
+  "close_hour": "16:49",
+  "close_hour_raw": "16:49",
+  "hour": "16",
+  "close": "16:49",
+  "lottery_name": "LT NACIONAL 17HS",
+  "lottery_id": "87db8fb6-8718-49c3-b739-96eec085e09d",
+  "fields": {
+    "date": {
+      "type": "string",
+      "value": "2025-02-07"
+    },
+    "close_hour_raw": {
+      "type": "string",
+      "value": "16:49"
+    },
+    "importedAt": {
+      "type": "object",
+      "keys": [
+        "_nanoseconds",
+        "_seconds"
+      ]
+    },
+    "drawId": {
+      "type": "string",
+      "value": "NACIONAL__2025-02-07__16-49__87db8fb6-8718-49c3-b739-96eec085e09d"
+    },
+    "lottery_id": {
+      "type": "string",
+      "value": "87db8fb6-8718-49c3-b739-96eec085e09d"
+    },
+    "lottery_name": {
+      "type": "string",
+      "value": "LT NACIONAL 17HS"
+    },
+    "source": {
+      "type": "string",
+      "value": "kingapostas"
+    },
+    "uf": {
+      "type": "string",
+      "value": "BR"
+    },
+    "ymd": {
+      "type": "string",
+      "value": "2025-02-07"
+    },
+    "close_hour": {
+      "type": "string",
+      "value": "16:49"
+    },
+    "hour": {
+      "type": "string",
+      "value": "16"
+    },
+    "prizesCount": {
+      "type": "number",
+      "value": 7
+    },
+    "lottery_key": {
+      "type": "string",
+      "value": "NACIONAL"
+    },
+    "close": {
+      "type": "string",
+      "value": "16:49"
+    }
+  }
+}
+{
+  "id": "NACIONAL__2025-02-07__19-49__1eebc22a-890e-4598-86b5-6fda7e04ca4b",
+  "close_hour": "19:49",
+  "close_hour_raw": "19:49",
+  "hour": "19",
+  "close": "19:49",
+  "lottery_name": "LT NACIONAL 20HS",
+  "lottery_id": "1eebc22a-890e-4598-86b5-6fda7e04ca4b",
+  "fields": {
+    "date": {
+      "type": "string",
+      "value": "2025-02-07"
+    },
+    "close_hour_raw": {
+      "type": "string",
+      "value": "19:49"
+    },
+    "importedAt": {
+      "type": "object",
+      "keys": [
+        "_nanoseconds",
+        "_seconds"
+      ]
+    },
+    "drawId": {
+      "type": "string",
+      "value": "NACIONAL__2025-02-07__19-49__1eebc22a-890e-4598-86b5-6fda7e04ca4b"
+    },
+    "lottery_id": {
+      "type": "string",
+      "value": "1eebc22a-890e-4598-86b5-6fda7e04ca4b"
+    },
+    "lottery_name": {
+      "type": "string",
+      "value": "LT NACIONAL 20HS"
+    },
+    "source": {
+      "type": "string",
+      "value": "kingapostas"
+    },
+    "uf": {
+      "type": "string",
+      "value": "BR"
+    },
+    "ymd": {
+      "type": "string",
+      "value": "2025-02-07"
+    },
+    "close_hour": {
+      "type": "string",
+      "value": "19:49"
+    },
+    "hour": {
+      "type": "string",
+      "value": "19"
+    },
+    "prizesCount": {
+      "type": "number",
+      "value": 7
+    },
+    "lottery_key": {
+      "type": "string",
+      "value": "NACIONAL"
+    },
+    "close": {
+      "type": "string",
+      "value": "19:49"
+    }
+  }
+}
+{
+  "id": "NACIONAL__2025-02-07__22-49__2a424135-9b6a-4415-8a57-15e0d3abd736",
+  "close_hour": "22:49",
+  "close_hour_raw": "22:49",
+  "hour": "22",
+  "close": "22:49",
+  "lottery_name": "LT NACIONAL 23HS",
+  "lottery_id": "2a424135-9b6a-4415-8a57-15e0d3abd736",
+  "fields": {
+    "date": {
+      "type": "string",
+      "value": "2025-02-07"
+    },
+    "close_hour_raw": {
+      "type": "string",
+      "value": "22:49"
+    },
+    "importedAt": {
+      "type": "object",
+      "keys": [
+        "_nanoseconds",
+        "_seconds"
+      ]
+    },
+    "drawId": {
+      "type": "string",
+      "value": "NACIONAL__2025-02-07__22-49__2a424135-9b6a-4415-8a57-15e0d3abd736"
+    },
+    "lottery_id": {
+      "type": "string",
+      "value": "2a424135-9b6a-4415-8a57-15e0d3abd736"
+    },
+    "lottery_name": {
+      "type": "string",
+      "value": "LT NACIONAL 23HS"
+    },
+    "source": {
+      "type": "string",
+      "value": "kingapostas"
+    },
+    "uf": {
+      "type": "string",
+      "value": "BR"
+    },
+    "ymd": {
+      "type": "string",
+      "value": "2025-02-07"
+    },
+    "close_hour": {
+      "type": "string",
+      "value": "22:49"
+    },
+    "hour": {
+      "type": "string",
+      "value": "22"
+    },
+    "prizesCount": {
+      "type": "number",
+      "value": 7
+    },
+    "lottery_key": {
+      "type": "string",
+      "value": "NACIONAL"
+    },
+    "close": {
+      "type": "string",
+      "value": "22:49"
+    }
+  }
+}
+
+==================================================
+DATA: 2025-11-06
+TOTAL: 8
+==================================================
+{
+  "id": "NACIONAL__2025-11-06__01-49__6c2b52ec-d613-4383-9c07-ff5ac7e04611",
+  "close_hour": "01:49",
+  "close_hour_raw": "01:49",
+  "hour": "01",
+  "close": "01:49",
+  "lottery_name": "LT NACIONAL 02HS",
+  "lottery_id": "6c2b52ec-d613-4383-9c07-ff5ac7e04611",
+  "fields": {
+    "date": {
+      "type": "string",
+      "value": "2025-11-06"
+    },
+    "close_hour_raw": {
+      "type": "string",
+      "value": "01:49"
+    },
+    "importedAt": {
+      "type": "object",
+      "keys": [
+        "_nanoseconds",
+        "_seconds"
+      ]
+    },
+    "drawId": {
+      "type": "string",
+      "value": "NACIONAL__2025-11-06__01-49__6c2b52ec-d613-4383-9c07-ff5ac7e04611"
+    },
+    "lottery_id": {
+      "type": "string",
+      "value": "6c2b52ec-d613-4383-9c07-ff5ac7e04611"
+    },
+    "lottery_name": {
+      "type": "string",
+      "value": "LT NACIONAL 02HS"
+    },
+    "source": {
+      "type": "string",
+      "value": "kingapostas"
+    },
+    "uf": {
+      "type": "string",
+      "value": "BR"
+    },
+    "ymd": {
+      "type": "string",
+      "value": "2025-11-06"
+    },
+    "close_hour": {
+      "type": "string",
+      "value": "01:49"
+    },
+    "hour": {
+      "type": "string",
+      "value": "01"
+    },
+    "prizesCount": {
+      "type": "number",
+      "value": 7
+    },
+    "lottery_key": {
+      "type": "string",
+      "value": "NACIONAL"
+    },
+    "close": {
+      "type": "string",
+      "value": "01:49"
+    }
+  }
+}
+{
+  "id": "NACIONAL__2025-11-06__07-49__76a3feee-faa6-4b6c-aae5-656fd6af7b6b",
+  "close_hour": "07:49",
+  "close_hour_raw": "07:49",
+  "hour": "07",
+  "close": "07:49",
+  "lottery_name": "LT NACIONAL 08HS",
+  "lottery_id": "76a3feee-faa6-4b6c-aae5-656fd6af7b6b",
+  "fields": {
+    "date": {
+      "type": "string",
+      "value": "2025-11-06"
+    },
+    "close_hour_raw": {
+      "type": "string",
+      "value": "07:49"
+    },
+    "importedAt": {
+      "type": "object",
+      "keys": [
+        "_nanoseconds",
+        "_seconds"
+      ]
+    },
+    "drawId": {
+      "type": "string",
+      "value": "NACIONAL__2025-11-06__07-49__76a3feee-faa6-4b6c-aae5-656fd6af7b6b"
+    },
+    "lottery_id": {
+      "type": "string",
+      "value": "76a3feee-faa6-4b6c-aae5-656fd6af7b6b"
+    },
+    "lottery_name": {
+      "type": "string",
+      "value": "LT NACIONAL 08HS"
+    },
+    "source": {
+      "type": "string",
+      "value": "kingapostas"
+    },
+    "uf": {
+      "type": "string",
+      "value": "BR"
+    },
+    "ymd": {
+      "type": "string",
+      "value": "2025-11-06"
+    },
+    "close_hour": {
+      "type": "string",
+      "value": "07:49"
+    },
+    "hour": {
+      "type": "string",
+      "value": "07"
+    },
+    "prizesCount": {
+      "type": "number",
+      "value": 7
+    },
+    "lottery_key": {
+      "type": "string",
+      "value": "NACIONAL"
+    },
+    "close": {
+      "type": "string",
+      "value": "07:49"
+    }
+  }
+}
+{
+  "id": "NACIONAL__2025-11-06__09-49__4dda728b-bbd9-43eb-a17b-acf968b1eca0",
+  "close_hour": "09:49",
+  "close_hour_raw": "09:49",
+  "hour": "09",
+  "close": "09:49",
+  "lottery_name": "LT NACIONAL 10HS",
+  "lottery_id": "4dda728b-bbd9-43eb-a17b-acf968b1eca0",
+  "fields": {
+    "date": {
+      "type": "string",
+      "value": "2025-11-06"
+    },
+    "close_hour_raw": {
+      "type": "string",
+      "value": "09:49"
+    },
+    "importedAt": {
+      "type": "object",
+      "keys": [
+        "_nanoseconds",
+        "_seconds"
+      ]
+    },
+    "drawId": {
+      "type": "string",
+      "value": "NACIONAL__2025-11-06__09-49__4dda728b-bbd9-43eb-a17b-acf968b1eca0"
+    },
+    "lottery_id": {
+      "type": "string",
+      "value": "4dda728b-bbd9-43eb-a17b-acf968b1eca0"
+    },
+    "lottery_name": {
+      "type": "string",
+      "value": "LT NACIONAL 10HS"
+    },
+    "source": {
+      "type": "string",
+      "value": "kingapostas"
+    },
+    "uf": {
+      "type": "string",
+      "value": "BR"
+    },
+    "ymd": {
+      "type": "string",
+      "value": "2025-11-06"
+    },
+    "close_hour": {
+      "type": "string",
+      "value": "09:49"
+    },
+    "hour": {
+      "type": "string",
+      "value": "09"
+    },
+    "prizesCount": {
+      "type": "number",
+      "value": 7
+    },
+    "lottery_key": {
+      "type": "string",
+      "value": "NACIONAL"
+    },
+    "close": {
+      "type": "string",
+      "value": "09:49"
+    }
+  }
+}
+{
+  "id": "NACIONAL__2025-11-06__11-49__8efc7c5a-8883-48a3-ab7f-cf3d0f7eebd4",
+  "close_hour": "11:49",
+  "close_hour_raw": "11:49",
+  "hour": "11",
+  "close": "11:49",
+  "lottery_name": "LT NACIONAL 12HS",
+  "lottery_id": "8efc7c5a-8883-48a3-ab7f-cf3d0f7eebd4",
+  "fields": {
+    "date": {
+      "type": "string",
+      "value": "2025-11-06"
+    },
+    "close_hour_raw": {
+      "type": "string",
+      "value": "11:49"
+    },
+    "importedAt": {
+      "type": "object",
+      "keys": [
+        "_nanoseconds",
+        "_seconds"
+      ]
+    },
+    "drawId": {
+      "type": "string",
+      "value": "NACIONAL__2025-11-06__11-49__8efc7c5a-8883-48a3-ab7f-cf3d0f7eebd4"
+    },
+    "lottery_id": {
+      "type": "string",
+      "value": "8efc7c5a-8883-48a3-ab7f-cf3d0f7eebd4"
+    },
+    "lottery_name": {
+      "type": "string",
+      "value": "LT NACIONAL 12HS"
+    },
+    "source": {
+      "type": "string",
+      "value": "kingapostas"
+    },
+    "uf": {
+      "type": "string",
+      "value": "BR"
+    },
+    "ymd": {
+      "type": "string",
+      "value": "2025-11-06"
+    },
+    "close_hour": {
+      "type": "string",
+      "value": "11:49"
+    },
+    "hour": {
+      "type": "string",
+      "value": "11"
+    },
+    "prizesCount": {
+      "type": "number",
+      "value": 7
+    },
+    "lottery_key": {
+      "type": "string",
+      "value": "NACIONAL"
+    },
+    "close": {
+      "type": "string",
+      "value": "11:49"
+    }
+  }
+}
+{
+  "id": "NACIONAL__2025-11-06__14-49__3bafbe99-632b-4445-9b73-12e78ee45283",
+  "close_hour": "14:49",
+  "close_hour_raw": "14:49",
+  "hour": "14",
+  "close": "14:49",
+  "lottery_name": "LT NACIONAL 15HS",
+  "lottery_id": "3bafbe99-632b-4445-9b73-12e78ee45283",
+  "fields": {
+    "date": {
+      "type": "string",
+      "value": "2025-11-06"
+    },
+    "close_hour_raw": {
+      "type": "string",
+      "value": "14:49"
+    },
+    "importedAt": {
+      "type": "object",
+      "keys": [
+        "_nanoseconds",
+        "_seconds"
+      ]
+    },
+    "drawId": {
+      "type": "string",
+      "value": "NACIONAL__2025-11-06__14-49__3bafbe99-632b-4445-9b73-12e78ee45283"
+    },
+    "lottery_id": {
+      "type": "string",
+      "value": "3bafbe99-632b-4445-9b73-12e78ee45283"
+    },
+    "lottery_name": {
+      "type": "string",
+      "value": "LT NACIONAL 15HS"
+    },
+    "source": {
+      "type": "string",
+      "value": "kingapostas"
+    },
+    "uf": {
+      "type": "string",
+      "value": "BR"
+    },
+    "ymd": {
+      "type": "string",
+      "value": "2025-11-06"
+    },
+    "close_hour": {
+      "type": "string",
+      "value": "14:49"
+    },
+    "hour": {
+      "type": "string",
+      "value": "14"
+    },
+    "prizesCount": {
+      "type": "number",
+      "value": 7
+    },
+    "lottery_key": {
+      "type": "string",
+      "value": "NACIONAL"
+    },
+    "close": {
+      "type": "string",
+      "value": "14:49"
+    }
+  }
+}
+{
+  "id": "NACIONAL__2025-11-06__16-49__87db8fb6-8718-49c3-b739-96eec085e09d",
+  "close_hour": "16:49",
+  "close_hour_raw": "16:49",
+  "hour": "16",
+  "close": "16:49",
+  "lottery_name": "LT NACIONAL 17HS",
+  "lottery_id": "87db8fb6-8718-49c3-b739-96eec085e09d",
+  "fields": {
+    "date": {
+      "type": "string",
+      "value": "2025-11-06"
+    },
+    "close_hour_raw": {
+      "type": "string",
+      "value": "16:49"
+    },
+    "importedAt": {
+      "type": "object",
+      "keys": [
+        "_nanoseconds",
+        "_seconds"
+      ]
+    },
+    "drawId": {
+      "type": "string",
+      "value": "NACIONAL__2025-11-06__16-49__87db8fb6-8718-49c3-b739-96eec085e09d"
+    },
+    "lottery_id": {
+      "type": "string",
+      "value": "87db8fb6-8718-49c3-b739-96eec085e09d"
+    },
+    "lottery_name": {
+      "type": "string",
+      "value": "LT NACIONAL 17HS"
+    },
+    "source": {
+      "type": "string",
+      "value": "kingapostas"
+    },
+    "uf": {
+      "type": "string",
+      "value": "BR"
+    },
+    "ymd": {
+      "type": "string",
+      "value": "2025-11-06"
+    },
+    "close_hour": {
+      "type": "string",
+      "value": "16:49"
+    },
+    "hour": {
+      "type": "string",
+      "value": "16"
+    },
+    "prizesCount": {
+      "type": "number",
+      "value": 7
+    },
+    "lottery_key": {
+      "type": "string",
+      "value": "NACIONAL"
+    },
+    "close": {
+      "type": "string",
+      "value": "16:49"
+    }
+  }
+}
+{
+  "id": "NACIONAL__2025-11-06__19-49__1eebc22a-890e-4598-86b5-6fda7e04ca4b",
+  "close_hour": "19:49",
+  "close_hour_raw": "19:49",
+  "hour": "19",
+  "close": "19:49",
+  "lottery_name": "LT NACIONAL 20HS",
+  "lottery_id": "1eebc22a-890e-4598-86b5-6fda7e04ca4b",
+  "fields": {
+    "date": {
+      "type": "string",
+      "value": "2025-11-06"
+    },
+    "close_hour_raw": {
+      "type": "string",
+      "value": "19:49"
+    },
+    "importedAt": {
+      "type": "object",
+      "keys": [
+        "_nanoseconds",
+        "_seconds"
+      ]
+    },
+    "drawId": {
+      "type": "string",
+      "value": "NACIONAL__2025-11-06__19-49__1eebc22a-890e-4598-86b5-6fda7e04ca4b"
+    },
+    "lottery_id": {
+      "type": "string",
+      "value": "1eebc22a-890e-4598-86b5-6fda7e04ca4b"
+    },
+    "lottery_name": {
+      "type": "string",
+      "value": "LT NACIONAL 20HS"
+    },
+    "source": {
+      "type": "string",
+      "value": "kingapostas"
+    },
+    "uf": {
+      "type": "string",
+      "value": "BR"
+    },
+    "ymd": {
+      "type": "string",
+      "value": "2025-11-06"
+    },
+    "close_hour": {
+      "type": "string",
+      "value": "19:49"
+    },
+    "hour": {
+      "type": "string",
+      "value": "19"
+    },
+    "prizesCount": {
+      "type": "number",
+      "value": 7
+    },
+    "lottery_key": {
+      "type": "string",
+      "value": "NACIONAL"
+    },
+    "close": {
+      "type": "string",
+      "value": "19:49"
+    }
+  }
+}
+{
+  "id": "NACIONAL__2025-11-06__22-49__2a424135-9b6a-4415-8a57-15e0d3abd736",
+  "close_hour": "22:49",
+  "close_hour_raw": "22:49",
+  "hour": "22",
+  "close": "22:49",
+  "lottery_name": "LT NACIONAL 23HS",
+  "lottery_id": "2a424135-9b6a-4415-8a57-15e0d3abd736",
+  "fields": {
+    "date": {
+      "type": "string",
+      "value": "2025-11-06"
+    },
+    "close_hour_raw": {
+      "type": "string",
+      "value": "22:49"
+    },
+    "importedAt": {
+      "type": "object",
+      "keys": [
+        "_nanoseconds",
+        "_seconds"
+      ]
+    },
+    "drawId": {
+      "type": "string",
+      "value": "NACIONAL__2025-11-06__22-49__2a424135-9b6a-4415-8a57-15e0d3abd736"
+    },
+    "lottery_id": {
+      "type": "string",
+      "value": "2a424135-9b6a-4415-8a57-15e0d3abd736"
+    },
+    "lottery_name": {
+      "type": "string",
+      "value": "LT NACIONAL 23HS"
+    },
+    "source": {
+      "type": "string",
+      "value": "kingapostas"
+    },
+    "uf": {
+      "type": "string",
+      "value": "BR"
+    },
+    "ymd": {
+      "type": "string",
+      "value": "2025-11-06"
+    },
+    "close_hour": {
+      "type": "string",
+      "value": "22:49"
+    },
+    "hour": {
+      "type": "string",
+      "value": "22"
+    },
+    "prizesCount": {
+      "type": "number",
+      "value": 7
+    },
+    "lottery_key": {
+      "type": "string",
+      "value": "NACIONAL"
+    },
+    "close": {
+      "type": "string",
+      "value": "22:49"
+    }
+  }
+}
+
+==================================================
+DATA: 2025-11-07
+TOTAL: 8
+==================================================
+{
+  "id": "NACIONAL__2025-11-07__01-49__6c2b52ec-d613-4383-9c07-ff5ac7e04611",
+  "close_hour": "01:49",
+  "close_hour_raw": "01:49",
+  "hour": "01",
+  "close": "01:49",
+  "lottery_name": "LT NACIONAL 02HS",
+  "lottery_id": "6c2b52ec-d613-4383-9c07-ff5ac7e04611",
+  "fields": {
+    "date": {
+      "type": "string",
+      "value": "2025-11-07"
+    },
+    "close_hour_raw": {
+      "type": "string",
+      "value": "01:49"
+    },
+    "importedAt": {
+      "type": "object",
+      "keys": [
+        "_nanoseconds",
+        "_seconds"
+      ]
+    },
+    "drawId": {
+      "type": "string",
+      "value": "NACIONAL__2025-11-07__01-49__6c2b52ec-d613-4383-9c07-ff5ac7e04611"
+    },
+    "lottery_id": {
+      "type": "string",
+      "value": "6c2b52ec-d613-4383-9c07-ff5ac7e04611"
+    },
+    "lottery_name": {
+      "type": "string",
+      "value": "LT NACIONAL 02HS"
+    },
+    "source": {
+      "type": "string",
+      "value": "kingapostas"
+    },
+    "uf": {
+      "type": "string",
+      "value": "BR"
+    },
+    "ymd": {
+      "type": "string",
+      "value": "2025-11-07"
+    },
+    "close_hour": {
+      "type": "string",
+      "value": "01:49"
+    },
+    "hour": {
+      "type": "string",
+      "value": "01"
+    },
+    "prizesCount": {
+      "type": "number",
+      "value": 7
+    },
+    "lottery_key": {
+      "type": "string",
+      "value": "NACIONAL"
+    },
+    "close": {
+      "type": "string",
+      "value": "01:49"
+    }
+  }
+}
+{
+  "id": "NACIONAL__2025-11-07__07-49__76a3feee-faa6-4b6c-aae5-656fd6af7b6b",
+  "close_hour": "07:49",
+  "close_hour_raw": "07:49",
+  "hour": "07",
+  "close": "07:49",
+  "lottery_name": "LT NACIONAL 08HS",
+  "lottery_id": "76a3feee-faa6-4b6c-aae5-656fd6af7b6b",
+  "fields": {
+    "date": {
+      "type": "string",
+      "value": "2025-11-07"
+    },
+    "close_hour_raw": {
+      "type": "string",
+      "value": "07:49"
+    },
+    "importedAt": {
+      "type": "object",
+      "keys": [
+        "_nanoseconds",
+        "_seconds"
+      ]
+    },
+    "drawId": {
+      "type": "string",
+      "value": "NACIONAL__2025-11-07__07-49__76a3feee-faa6-4b6c-aae5-656fd6af7b6b"
+    },
+    "lottery_id": {
+      "type": "string",
+      "value": "76a3feee-faa6-4b6c-aae5-656fd6af7b6b"
+    },
+    "lottery_name": {
+      "type": "string",
+      "value": "LT NACIONAL 08HS"
+    },
+    "source": {
+      "type": "string",
+      "value": "kingapostas"
+    },
+    "uf": {
+      "type": "string",
+      "value": "BR"
+    },
+    "ymd": {
+      "type": "string",
+      "value": "2025-11-07"
+    },
+    "close_hour": {
+      "type": "string",
+      "value": "07:49"
+    },
+    "hour": {
+      "type": "string",
+      "value": "07"
+    },
+    "prizesCount": {
+      "type": "number",
+      "value": 7
+    },
+    "lottery_key": {
+      "type": "string",
+      "value": "NACIONAL"
+    },
+    "close": {
+      "type": "string",
+      "value": "07:49"
+    }
+  }
+}
+{
+  "id": "NACIONAL__2025-11-07__09-49__4dda728b-bbd9-43eb-a17b-acf968b1eca0",
+  "close_hour": "09:49",
+  "close_hour_raw": "09:49",
+  "hour": "09",
+  "close": "09:49",
+  "lottery_name": "LT NACIONAL 10HS",
+  "lottery_id": "4dda728b-bbd9-43eb-a17b-acf968b1eca0",
+  "fields": {
+    "date": {
+      "type": "string",
+      "value": "2025-11-07"
+    },
+    "close_hour_raw": {
+      "type": "string",
+      "value": "09:49"
+    },
+    "importedAt": {
+      "type": "object",
+      "keys": [
+        "_nanoseconds",
+        "_seconds"
+      ]
+    },
+    "drawId": {
+      "type": "string",
+      "value": "NACIONAL__2025-11-07__09-49__4dda728b-bbd9-43eb-a17b-acf968b1eca0"
+    },
+    "lottery_id": {
+      "type": "string",
+      "value": "4dda728b-bbd9-43eb-a17b-acf968b1eca0"
+    },
+    "lottery_name": {
+      "type": "string",
+      "value": "LT NACIONAL 10HS"
+    },
+    "source": {
+      "type": "string",
+      "value": "kingapostas"
+    },
+    "uf": {
+      "type": "string",
+      "value": "BR"
+    },
+    "ymd": {
+      "type": "string",
+      "value": "2025-11-07"
+    },
+    "close_hour": {
+      "type": "string",
+      "value": "09:49"
+    },
+    "hour": {
+      "type": "string",
+      "value": "09"
+    },
+    "prizesCount": {
+      "type": "number",
+      "value": 7
+    },
+    "lottery_key": {
+      "type": "string",
+      "value": "NACIONAL"
+    },
+    "close": {
+      "type": "string",
+      "value": "09:49"
+    }
+  }
+}
+{
+  "id": "NACIONAL__2025-11-07__11-49__8efc7c5a-8883-48a3-ab7f-cf3d0f7eebd4",
+  "close_hour": "11:49",
+  "close_hour_raw": "11:49",
+  "hour": "11",
+  "close": "11:49",
+  "lottery_name": "LT NACIONAL 12HS",
+  "lottery_id": "8efc7c5a-8883-48a3-ab7f-cf3d0f7eebd4",
+  "fields": {
+    "date": {
+      "type": "string",
+      "value": "2025-11-07"
+    },
+    "close_hour_raw": {
+      "type": "string",
+      "value": "11:49"
+    },
+    "importedAt": {
+      "type": "object",
+      "keys": [
+        "_nanoseconds",
+        "_seconds"
+      ]
+    },
+    "drawId": {
+      "type": "string",
+      "value": "NACIONAL__2025-11-07__11-49__8efc7c5a-8883-48a3-ab7f-cf3d0f7eebd4"
+    },
+    "lottery_id": {
+      "type": "string",
+      "value": "8efc7c5a-8883-48a3-ab7f-cf3d0f7eebd4"
+    },
+    "lottery_name": {
+      "type": "string",
+      "value": "LT NACIONAL 12HS"
+    },
+    "source": {
+      "type": "string",
+      "value": "kingapostas"
+    },
+    "uf": {
+      "type": "string",
+      "value": "BR"
+    },
+    "ymd": {
+      "type": "string",
+      "value": "2025-11-07"
+    },
+    "close_hour": {
+      "type": "string",
+      "value": "11:49"
+    },
+    "hour": {
+      "type": "string",
+      "value": "11"
+    },
+    "prizesCount": {
+      "type": "number",
+      "value": 7
+    },
+    "lottery_key": {
+      "type": "string",
+      "value": "NACIONAL"
+    },
+    "close": {
+      "type": "string",
+      "value": "11:49"
+    }
+  }
+}
+{
+  "id": "NACIONAL__2025-11-07__14-49__3bafbe99-632b-4445-9b73-12e78ee45283",
+  "close_hour": "14:49",
+  "close_hour_raw": "14:49",
+  "hour": "14",
+  "close": "14:49",
+  "lottery_name": "LT NACIONAL 15HS",
+  "lottery_id": "3bafbe99-632b-4445-9b73-12e78ee45283",
+  "fields": {
+    "date": {
+      "type": "string",
+      "value": "2025-11-07"
+    },
+    "close_hour_raw": {
+      "type": "string",
+      "value": "14:49"
+    },
+    "importedAt": {
+      "type": "object",
+      "keys": [
+        "_nanoseconds",
+        "_seconds"
+      ]
+    },
+    "drawId": {
+      "type": "string",
+      "value": "NACIONAL__2025-11-07__14-49__3bafbe99-632b-4445-9b73-12e78ee45283"
+    },
+    "lottery_id": {
+      "type": "string",
+      "value": "3bafbe99-632b-4445-9b73-12e78ee45283"
+    },
+    "lottery_name": {
+      "type": "string",
+      "value": "LT NACIONAL 15HS"
+    },
+    "source": {
+      "type": "string",
+      "value": "kingapostas"
+    },
+    "uf": {
+      "type": "string",
+      "value": "BR"
+    },
+    "ymd": {
+      "type": "string",
+      "value": "2025-11-07"
+    },
+    "close_hour": {
+      "type": "string",
+      "value": "14:49"
+    },
+    "hour": {
+      "type": "string",
+      "value": "14"
+    },
+    "prizesCount": {
+      "type": "number",
+      "value": 7
+    },
+    "lottery_key": {
+      "type": "string",
+      "value": "NACIONAL"
+    },
+    "close": {
+      "type": "string",
+      "value": "14:49"
+    }
+  }
+}
+{
+  "id": "NACIONAL__2025-11-07__16-49__87db8fb6-8718-49c3-b739-96eec085e09d",
+  "close_hour": "16:49",
+  "close_hour_raw": "16:49",
+  "hour": "16",
+  "close": "16:49",
+  "lottery_name": "LT NACIONAL 17HS",
+  "lottery_id": "87db8fb6-8718-49c3-b739-96eec085e09d",
+  "fields": {
+    "date": {
+      "type": "string",
+      "value": "2025-11-07"
+    },
+    "close_hour_raw": {
+      "type": "string",
+      "value": "16:49"
+    },
+    "importedAt": {
+      "type": "object",
+      "keys": [
+        "_nanoseconds",
+        "_seconds"
+      ]
+    },
+    "drawId": {
+      "type": "string",
+      "value": "NACIONAL__2025-11-07__16-49__87db8fb6-8718-49c3-b739-96eec085e09d"
+    },
+    "lottery_id": {
+      "type": "string",
+      "value": "87db8fb6-8718-49c3-b739-96eec085e09d"
+    },
+    "lottery_name": {
+      "type": "string",
+      "value": "LT NACIONAL 17HS"
+    },
+    "source": {
+      "type": "string",
+      "value": "kingapostas"
+    },
+    "uf": {
+      "type": "string",
+      "value": "BR"
+    },
+    "ymd": {
+      "type": "string",
+      "value": "2025-11-07"
+    },
+    "close_hour": {
+      "type": "string",
+      "value": "16:49"
+    },
+    "hour": {
+      "type": "string",
+      "value": "16"
+    },
+    "prizesCount": {
+      "type": "number",
+      "value": 7
+    },
+    "lottery_key": {
+      "type": "string",
+      "value": "NACIONAL"
+    },
+    "close": {
+      "type": "string",
+      "value": "16:49"
+    }
+  }
+}
+{
+  "id": "NACIONAL__2025-11-07__20-49__1eebc22a-890e-4598-86b5-6fda7e04ca4b",
+  "close_hour": "20:49",
+  "close_hour_raw": "20:49",
+  "hour": "20",
+  "close": "20:49",
+  "lottery_name": "LT NACIONAL 21HS",
+  "lottery_id": "1eebc22a-890e-4598-86b5-6fda7e04ca4b",
+  "fields": {
+    "date": {
+      "type": "string",
+      "value": "2025-11-07"
+    },
+    "close_hour_raw": {
+      "type": "string",
+      "value": "20:49"
+    },
+    "importedAt": {
+      "type": "object",
+      "keys": [
+        "_nanoseconds",
+        "_seconds"
+      ]
+    },
+    "drawId": {
+      "type": "string",
+      "value": "NACIONAL__2025-11-07__20-49__1eebc22a-890e-4598-86b5-6fda7e04ca4b"
+    },
+    "lottery_id": {
+      "type": "string",
+      "value": "1eebc22a-890e-4598-86b5-6fda7e04ca4b"
+    },
+    "lottery_name": {
+      "type": "string",
+      "value": "LT NACIONAL 21HS"
+    },
+    "source": {
+      "type": "string",
+      "value": "kingapostas"
+    },
+    "uf": {
+      "type": "string",
+      "value": "BR"
+    },
+    "ymd": {
+      "type": "string",
+      "value": "2025-11-07"
+    },
+    "close_hour": {
+      "type": "string",
+      "value": "20:49"
+    },
+    "hour": {
+      "type": "string",
+      "value": "20"
+    },
+    "prizesCount": {
+      "type": "number",
+      "value": 7
+    },
+    "lottery_key": {
+      "type": "string",
+      "value": "NACIONAL"
+    },
+    "close": {
+      "type": "string",
+      "value": "20:49"
+    }
+  }
+}
+{
+  "id": "NACIONAL__2025-11-07__22-49__2a424135-9b6a-4415-8a57-15e0d3abd736",
+  "close_hour": "22:49",
+  "close_hour_raw": "22:49",
+  "hour": "22",
+  "close": "22:49",
+  "lottery_name": "LT NACIONAL 23HS",
+  "lottery_id": "2a424135-9b6a-4415-8a57-15e0d3abd736",
+  "fields": {
+    "date": {
+      "type": "string",
+      "value": "2025-11-07"
+    },
+    "close_hour_raw": {
+      "type": "string",
+      "value": "22:49"
+    },
+    "importedAt": {
+      "type": "object",
+      "keys": [
+        "_nanoseconds",
+        "_seconds"
+      ]
+    },
+    "drawId": {
+      "type": "string",
+      "value": "NACIONAL__2025-11-07__22-49__2a424135-9b6a-4415-8a57-15e0d3abd736"
+    },
+    "lottery_id": {
+      "type": "string",
+      "value": "2a424135-9b6a-4415-8a57-15e0d3abd736"
+    },
+    "lottery_name": {
+      "type": "string",
+      "value": "LT NACIONAL 23HS"
+    },
+    "source": {
+      "type": "string",
+      "value": "kingapostas"
+    },
+    "uf": {
+      "type": "string",
+      "value": "BR"
+    },
+    "ymd": {
+      "type": "string",
+      "value": "2025-11-07"
+    },
+    "close_hour": {
+      "type": "string",
+      "value": "22:49"
+    },
+    "hour": {
+      "type": "string",
+      "value": "22"
+    },
+    "prizesCount": {
+      "type": "number",
+      "value": 7
+    },
+    "lottery_key": {
+      "type": "string",
+      "value": "NACIONAL"
+    },
+    "close": {
+      "type": "string",
+      "value": "22:49"
+    }
+  }
+}
+
+==================================================
+DATA: 2025-11-08
+TOTAL: 8
+==================================================
+{
+  "id": "NACIONAL__2025-11-08__01-49__6c2b52ec-d613-4383-9c07-ff5ac7e04611",
+  "close_hour": "01:49",
+  "close_hour_raw": "01:49",
+  "hour": "01",
+  "close": "01:49",
+  "lottery_name": "LT NACIONAL 02HS",
+  "lottery_id": "6c2b52ec-d613-4383-9c07-ff5ac7e04611",
+  "fields": {
+    "date": {
+      "type": "string",
+      "value": "2025-11-08"
+    },
+    "close_hour_raw": {
+      "type": "string",
+      "value": "01:49"
+    },
+    "importedAt": {
+      "type": "object",
+      "keys": [
+        "_nanoseconds",
+        "_seconds"
+      ]
+    },
+    "drawId": {
+      "type": "string",
+      "value": "NACIONAL__2025-11-08__01-49__6c2b52ec-d613-4383-9c07-ff5ac7e04611"
+    },
+    "lottery_id": {
+      "type": "string",
+      "value": "6c2b52ec-d613-4383-9c07-ff5ac7e04611"
+    },
+    "lottery_name": {
+      "type": "string",
+      "value": "LT NACIONAL 02HS"
+    },
+    "source": {
+      "type": "string",
+      "value": "kingapostas"
+    },
+    "uf": {
+      "type": "string",
+      "value": "BR"
+    },
+    "ymd": {
+      "type": "string",
+      "value": "2025-11-08"
+    },
+    "close_hour": {
+      "type": "string",
+      "value": "01:49"
+    },
+    "hour": {
+      "type": "string",
+      "value": "01"
+    },
+    "prizesCount": {
+      "type": "number",
+      "value": 7
+    },
+    "lottery_key": {
+      "type": "string",
+      "value": "NACIONAL"
+    },
+    "close": {
+      "type": "string",
+      "value": "01:49"
+    }
+  }
+}
+{
+  "id": "NACIONAL__2025-11-08__07-49__76a3feee-faa6-4b6c-aae5-656fd6af7b6b",
+  "close_hour": "07:49",
+  "close_hour_raw": "07:49",
+  "hour": "07",
+  "close": "07:49",
+  "lottery_name": "LT NACIONAL 08HS",
+  "lottery_id": "76a3feee-faa6-4b6c-aae5-656fd6af7b6b",
+  "fields": {
+    "date": {
+      "type": "string",
+      "value": "2025-11-08"
+    },
+    "close_hour_raw": {
+      "type": "string",
+      "value": "07:49"
+    },
+    "importedAt": {
+      "type": "object",
+      "keys": [
+        "_nanoseconds",
+        "_seconds"
+      ]
+    },
+    "drawId": {
+      "type": "string",
+      "value": "NACIONAL__2025-11-08__07-49__76a3feee-faa6-4b6c-aae5-656fd6af7b6b"
+    },
+    "lottery_id": {
+      "type": "string",
+      "value": "76a3feee-faa6-4b6c-aae5-656fd6af7b6b"
+    },
+    "lottery_name": {
+      "type": "string",
+      "value": "LT NACIONAL 08HS"
+    },
+    "source": {
+      "type": "string",
+      "value": "kingapostas"
+    },
+    "uf": {
+      "type": "string",
+      "value": "BR"
+    },
+    "ymd": {
+      "type": "string",
+      "value": "2025-11-08"
+    },
+    "close_hour": {
+      "type": "string",
+      "value": "07:49"
+    },
+    "hour": {
+      "type": "string",
+      "value": "07"
+    },
+    "prizesCount": {
+      "type": "number",
+      "value": 7
+    },
+    "lottery_key": {
+      "type": "string",
+      "value": "NACIONAL"
+    },
+    "close": {
+      "type": "string",
+      "value": "07:49"
+    }
+  }
+}
+{
+  "id": "NACIONAL__2025-11-08__09-49__4dda728b-bbd9-43eb-a17b-acf968b1eca0",
+  "close_hour": "09:49",
+  "close_hour_raw": "09:49",
+  "hour": "09",
+  "close": "09:49",
+  "lottery_name": "LT NACIONAL 10HS",
+  "lottery_id": "4dda728b-bbd9-43eb-a17b-acf968b1eca0",
+  "fields": {
+    "date": {
+      "type": "string",
+      "value": "2025-11-08"
+    },
+    "close_hour_raw": {
+      "type": "string",
+      "value": "09:49"
+    },
+    "importedAt": {
+      "type": "object",
+      "keys": [
+        "_nanoseconds",
+        "_seconds"
+      ]
+    },
+    "drawId": {
+      "type": "string",
+      "value": "NACIONAL__2025-11-08__09-49__4dda728b-bbd9-43eb-a17b-acf968b1eca0"
+    },
+    "lottery_id": {
+      "type": "string",
+      "value": "4dda728b-bbd9-43eb-a17b-acf968b1eca0"
+    },
+    "lottery_name": {
+      "type": "string",
+      "value": "LT NACIONAL 10HS"
+    },
+    "source": {
+      "type": "string",
+      "value": "kingapostas"
+    },
+    "uf": {
+      "type": "string",
+      "value": "BR"
+    },
+    "ymd": {
+      "type": "string",
+      "value": "2025-11-08"
+    },
+    "close_hour": {
+      "type": "string",
+      "value": "09:49"
+    },
+    "hour": {
+      "type": "string",
+      "value": "09"
+    },
+    "prizesCount": {
+      "type": "number",
+      "value": 7
+    },
+    "lottery_key": {
+      "type": "string",
+      "value": "NACIONAL"
+    },
+    "close": {
+      "type": "string",
+      "value": "09:49"
+    }
+  }
+}
+{
+  "id": "NACIONAL__2025-11-08__11-49__8efc7c5a-8883-48a3-ab7f-cf3d0f7eebd4",
+  "close_hour": "11:49",
+  "close_hour_raw": "11:49",
+  "hour": "11",
+  "close": "11:49",
+  "lottery_name": "LT NACIONAL 12HS",
+  "lottery_id": "8efc7c5a-8883-48a3-ab7f-cf3d0f7eebd4",
+  "fields": {
+    "date": {
+      "type": "string",
+      "value": "2025-11-08"
+    },
+    "close_hour_raw": {
+      "type": "string",
+      "value": "11:49"
+    },
+    "importedAt": {
+      "type": "object",
+      "keys": [
+        "_nanoseconds",
+        "_seconds"
+      ]
+    },
+    "drawId": {
+      "type": "string",
+      "value": "NACIONAL__2025-11-08__11-49__8efc7c5a-8883-48a3-ab7f-cf3d0f7eebd4"
+    },
+    "lottery_id": {
+      "type": "string",
+      "value": "8efc7c5a-8883-48a3-ab7f-cf3d0f7eebd4"
+    },
+    "lottery_name": {
+      "type": "string",
+      "value": "LT NACIONAL 12HS"
+    },
+    "source": {
+      "type": "string",
+      "value": "kingapostas"
+    },
+    "uf": {
+      "type": "string",
+      "value": "BR"
+    },
+    "ymd": {
+      "type": "string",
+      "value": "2025-11-08"
+    },
+    "close_hour": {
+      "type": "string",
+      "value": "11:49"
+    },
+    "hour": {
+      "type": "string",
+      "value": "11"
+    },
+    "prizesCount": {
+      "type": "number",
+      "value": 7
+    },
+    "lottery_key": {
+      "type": "string",
+      "value": "NACIONAL"
+    },
+    "close": {
+      "type": "string",
+      "value": "11:49"
+    }
+  }
+}
+{
+  "id": "NACIONAL__2025-11-08__14-49__3bafbe99-632b-4445-9b73-12e78ee45283",
+  "close_hour": "14:49",
+  "close_hour_raw": "14:49",
+  "hour": "14",
+  "close": "14:49",
+  "lottery_name": "LT NACIONAL 15HS",
+  "lottery_id": "3bafbe99-632b-4445-9b73-12e78ee45283",
+  "fields": {
+    "date": {
+      "type": "string",
+      "value": "2025-11-08"
+    },
+    "close_hour_raw": {
+      "type": "string",
+      "value": "14:49"
+    },
+    "importedAt": {
+      "type": "object",
+      "keys": [
+        "_nanoseconds",
+        "_seconds"
+      ]
+    },
+    "drawId": {
+      "type": "string",
+      "value": "NACIONAL__2025-11-08__14-49__3bafbe99-632b-4445-9b73-12e78ee45283"
+    },
+    "lottery_id": {
+      "type": "string",
+      "value": "3bafbe99-632b-4445-9b73-12e78ee45283"
+    },
+    "lottery_name": {
+      "type": "string",
+      "value": "LT NACIONAL 15HS"
+    },
+    "source": {
+      "type": "string",
+      "value": "kingapostas"
+    },
+    "uf": {
+      "type": "string",
+      "value": "BR"
+    },
+    "ymd": {
+      "type": "string",
+      "value": "2025-11-08"
+    },
+    "close_hour": {
+      "type": "string",
+      "value": "14:49"
+    },
+    "hour": {
+      "type": "string",
+      "value": "14"
+    },
+    "prizesCount": {
+      "type": "number",
+      "value": 7
+    },
+    "lottery_key": {
+      "type": "string",
+      "value": "NACIONAL"
+    },
+    "close": {
+      "type": "string",
+      "value": "14:49"
+    }
+  }
+}
+{
+  "id": "NACIONAL__2025-11-08__16-49__87db8fb6-8718-49c3-b739-96eec085e09d",
+  "close_hour": "16:49",
+  "close_hour_raw": "16:49",
+  "hour": "16",
+  "close": "16:49",
+  "lottery_name": "LT NACIONAL 17HS",
+  "lottery_id": "87db8fb6-8718-49c3-b739-96eec085e09d",
+  "fields": {
+    "date": {
+      "type": "string",
+      "value": "2025-11-08"
+    },
+    "close_hour_raw": {
+      "type": "string",
+      "value": "16:49"
+    },
+    "importedAt": {
+      "type": "object",
+      "keys": [
+        "_nanoseconds",
+        "_seconds"
+      ]
+    },
+    "drawId": {
+      "type": "string",
+      "value": "NACIONAL__2025-11-08__16-49__87db8fb6-8718-49c3-b739-96eec085e09d"
+    },
+    "lottery_id": {
+      "type": "string",
+      "value": "87db8fb6-8718-49c3-b739-96eec085e09d"
+    },
+    "lottery_name": {
+      "type": "string",
+      "value": "LT NACIONAL 17HS"
+    },
+    "source": {
+      "type": "string",
+      "value": "kingapostas"
+    },
+    "uf": {
+      "type": "string",
+      "value": "BR"
+    },
+    "ymd": {
+      "type": "string",
+      "value": "2025-11-08"
+    },
+    "close_hour": {
+      "type": "string",
+      "value": "16:49"
+    },
+    "hour": {
+      "type": "string",
+      "value": "16"
+    },
+    "prizesCount": {
+      "type": "number",
+      "value": 7
+    },
+    "lottery_key": {
+      "type": "string",
+      "value": "NACIONAL"
+    },
+    "close": {
+      "type": "string",
+      "value": "16:49"
+    }
+  }
+}
+{
+  "id": "NACIONAL__2025-11-08__20-49__1eebc22a-890e-4598-86b5-6fda7e04ca4b",
+  "close_hour": "20:49",
+  "close_hour_raw": "20:49",
+  "hour": "20",
+  "close": "20:49",
+  "lottery_name": "LT NACIONAL 21HS",
+  "lottery_id": "1eebc22a-890e-4598-86b5-6fda7e04ca4b",
+  "fields": {
+    "date": {
+      "type": "string",
+      "value": "2025-11-08"
+    },
+    "close_hour_raw": {
+      "type": "string",
+      "value": "20:49"
+    },
+    "importedAt": {
+      "type": "object",
+      "keys": [
+        "_nanoseconds",
+        "_seconds"
+      ]
+    },
+    "drawId": {
+      "type": "string",
+      "value": "NACIONAL__2025-11-08__20-49__1eebc22a-890e-4598-86b5-6fda7e04ca4b"
+    },
+    "lottery_id": {
+      "type": "string",
+      "value": "1eebc22a-890e-4598-86b5-6fda7e04ca4b"
+    },
+    "lottery_name": {
+      "type": "string",
+      "value": "LT NACIONAL 21HS"
+    },
+    "source": {
+      "type": "string",
+      "value": "kingapostas"
+    },
+    "uf": {
+      "type": "string",
+      "value": "BR"
+    },
+    "ymd": {
+      "type": "string",
+      "value": "2025-11-08"
+    },
+    "close_hour": {
+      "type": "string",
+      "value": "20:49"
+    },
+    "hour": {
+      "type": "string",
+      "value": "20"
+    },
+    "prizesCount": {
+      "type": "number",
+      "value": 7
+    },
+    "lottery_key": {
+      "type": "string",
+      "value": "NACIONAL"
+    },
+    "close": {
+      "type": "string",
+      "value": "20:49"
+    }
+  }
+}
+{
+  "id": "NACIONAL__2025-11-08__22-49__2a424135-9b6a-4415-8a57-15e0d3abd736",
+  "close_hour": "22:49",
+  "close_hour_raw": "22:49",
+  "hour": "22",
+  "close": "22:49",
+  "lottery_name": "LT NACIONAL 23HS",
+  "lottery_id": "2a424135-9b6a-4415-8a57-15e0d3abd736",
+  "fields": {
+    "date": {
+      "type": "string",
+      "value": "2025-11-08"
+    },
+    "close_hour_raw": {
+      "type": "string",
+      "value": "22:49"
+    },
+    "importedAt": {
+      "type": "object",
+      "keys": [
+        "_nanoseconds",
+        "_seconds"
+      ]
+    },
+    "drawId": {
+      "type": "string",
+      "value": "NACIONAL__2025-11-08__22-49__2a424135-9b6a-4415-8a57-15e0d3abd736"
+    },
+    "lottery_id": {
+      "type": "string",
+      "value": "2a424135-9b6a-4415-8a57-15e0d3abd736"
+    },
+    "lottery_name": {
+      "type": "string",
+      "value": "LT NACIONAL 23HS"
+    },
+    "source": {
+      "type": "string",
+      "value": "kingapostas"
+    },
+    "uf": {
+      "type": "string",
+      "value": "BR"
+    },
+    "ymd": {
+      "type": "string",
+      "value": "2025-11-08"
+    },
+    "close_hour": {
+      "type": "string",
+      "value": "22:49"
+    },
+    "hour": {
+      "type": "string",
+      "value": "22"
+    },
+    "prizesCount": {
+      "type": "number",
+      "value": 7
+    },
+    "lottery_key": {
+      "type": "string",
+      "value": "NACIONAL"
+    },
+    "close": {
+      "type": "string",
+      "value": "22:49"
+    }
+  }
+}
+
+==================================================
+DATA: 2026-07-18
+TOTAL: 8
+==================================================
+{
+  "id": "NACIONAL__2026-07-18__01-49__6c2b52ec-d613-4383-9c07-ff5ac7e04611",
+  "close_hour": "01:49",
+  "close_hour_raw": "01:49",
+  "hour": "01",
+  "close": "01:49",
+  "lottery_name": "LT NACIONAL 02HS",
+  "lottery_id": "6c2b52ec-d613-4383-9c07-ff5ac7e04611",
+  "fields": {
+    "date": {
+      "type": "string",
+      "value": "2026-07-18"
+    },
+    "close_hour_raw": {
+      "type": "string",
+      "value": "01:49"
+    },
+    "drawId": {
+      "type": "string",
+      "value": "NACIONAL__2026-07-18__01-49__6c2b52ec-d613-4383-9c07-ff5ac7e04611"
+    },
+    "lottery_id": {
+      "type": "string",
+      "value": "6c2b52ec-d613-4383-9c07-ff5ac7e04611"
+    },
+    "lottery_name": {
+      "type": "string",
+      "value": "LT NACIONAL 02HS"
+    },
+    "source": {
+      "type": "string",
+      "value": "kingapostas"
+    },
+    "uf": {
+      "type": "string",
+      "value": "BR"
+    },
+    "ymd": {
+      "type": "string",
+      "value": "2026-07-18"
+    },
+    "close_hour": {
+      "type": "string",
+      "value": "01:49"
+    },
+    "hour": {
+      "type": "string",
+      "value": "01"
+    },
+    "prizesCount": {
+      "type": "number",
+      "value": 7
+    },
+    "lottery_key": {
+      "type": "string",
+      "value": "NACIONAL"
+    },
+    "close": {
+      "type": "string",
+      "value": "01:49"
+    },
+    "importedAt": {
+      "type": "object",
+      "keys": [
+        "_nanoseconds",
+        "_seconds"
+      ]
+    }
+  }
+}
+{
+  "id": "NACIONAL__2026-07-18__07-49__76a3feee-faa6-4b6c-aae5-656fd6af7b6b",
+  "close_hour": "07:49",
+  "close_hour_raw": "07:49",
+  "hour": "07",
+  "close": "07:49",
+  "lottery_name": "LT NACIONAL 08HS",
+  "lottery_id": "76a3feee-faa6-4b6c-aae5-656fd6af7b6b",
+  "fields": {
+    "date": {
+      "type": "string",
+      "value": "2026-07-18"
+    },
+    "close_hour_raw": {
+      "type": "string",
+      "value": "07:49"
+    },
+    "drawId": {
+      "type": "string",
+      "value": "NACIONAL__2026-07-18__07-49__76a3feee-faa6-4b6c-aae5-656fd6af7b6b"
+    },
+    "lottery_id": {
+      "type": "string",
+      "value": "76a3feee-faa6-4b6c-aae5-656fd6af7b6b"
+    },
+    "lottery_name": {
+      "type": "string",
+      "value": "LT NACIONAL 08HS"
+    },
+    "source": {
+      "type": "string",
+      "value": "kingapostas"
+    },
+    "uf": {
+      "type": "string",
+      "value": "BR"
+    },
+    "ymd": {
+      "type": "string",
+      "value": "2026-07-18"
+    },
+    "close_hour": {
+      "type": "string",
+      "value": "07:49"
+    },
+    "hour": {
+      "type": "string",
+      "value": "07"
+    },
+    "prizesCount": {
+      "type": "number",
+      "value": 7
+    },
+    "lottery_key": {
+      "type": "string",
+      "value": "NACIONAL"
+    },
+    "close": {
+      "type": "string",
+      "value": "07:49"
+    },
+    "importedAt": {
+      "type": "object",
+      "keys": [
+        "_nanoseconds",
+        "_seconds"
+      ]
+    }
+  }
+}
+{
+  "id": "NACIONAL__2026-07-18__09-49__4dda728b-bbd9-43eb-a17b-acf968b1eca0",
+  "close_hour": "09:49",
+  "close_hour_raw": "09:49",
+  "hour": "09",
+  "close": "09:49",
+  "lottery_name": "LT NACIONAL 10HS",
+  "lottery_id": "4dda728b-bbd9-43eb-a17b-acf968b1eca0",
+  "fields": {
+    "date": {
+      "type": "string",
+      "value": "2026-07-18"
+    },
+    "close_hour_raw": {
+      "type": "string",
+      "value": "09:49"
+    },
+    "drawId": {
+      "type": "string",
+      "value": "NACIONAL__2026-07-18__09-49__4dda728b-bbd9-43eb-a17b-acf968b1eca0"
+    },
+    "lottery_id": {
+      "type": "string",
+      "value": "4dda728b-bbd9-43eb-a17b-acf968b1eca0"
+    },
+    "lottery_name": {
+      "type": "string",
+      "value": "LT NACIONAL 10HS"
+    },
+    "source": {
+      "type": "string",
+      "value": "kingapostas"
+    },
+    "uf": {
+      "type": "string",
+      "value": "BR"
+    },
+    "ymd": {
+      "type": "string",
+      "value": "2026-07-18"
+    },
+    "close_hour": {
+      "type": "string",
+      "value": "09:49"
+    },
+    "hour": {
+      "type": "string",
+      "value": "09"
+    },
+    "prizesCount": {
+      "type": "number",
+      "value": 7
+    },
+    "lottery_key": {
+      "type": "string",
+      "value": "NACIONAL"
+    },
+    "close": {
+      "type": "string",
+      "value": "09:49"
+    },
+    "importedAt": {
+      "type": "object",
+      "keys": [
+        "_nanoseconds",
+        "_seconds"
+      ]
+    }
+  }
+}
+{
+  "id": "NACIONAL__2026-07-18__11-49__8efc7c5a-8883-48a3-ab7f-cf3d0f7eebd4",
+  "close_hour": "11:49",
+  "close_hour_raw": "11:49",
+  "hour": "11",
+  "close": "11:49",
+  "lottery_name": "LT NACIONAL 12HS",
+  "lottery_id": "8efc7c5a-8883-48a3-ab7f-cf3d0f7eebd4",
+  "fields": {
+    "date": {
+      "type": "string",
+      "value": "2026-07-18"
+    },
+    "close_hour_raw": {
+      "type": "string",
+      "value": "11:49"
+    },
+    "drawId": {
+      "type": "string",
+      "value": "NACIONAL__2026-07-18__11-49__8efc7c5a-8883-48a3-ab7f-cf3d0f7eebd4"
+    },
+    "lottery_id": {
+      "type": "string",
+      "value": "8efc7c5a-8883-48a3-ab7f-cf3d0f7eebd4"
+    },
+    "lottery_name": {
+      "type": "string",
+      "value": "LT NACIONAL 12HS"
+    },
+    "source": {
+      "type": "string",
+      "value": "kingapostas"
+    },
+    "uf": {
+      "type": "string",
+      "value": "BR"
+    },
+    "ymd": {
+      "type": "string",
+      "value": "2026-07-18"
+    },
+    "close_hour": {
+      "type": "string",
+      "value": "11:49"
+    },
+    "hour": {
+      "type": "string",
+      "value": "11"
+    },
+    "prizesCount": {
+      "type": "number",
+      "value": 7
+    },
+    "lottery_key": {
+      "type": "string",
+      "value": "NACIONAL"
+    },
+    "close": {
+      "type": "string",
+      "value": "11:49"
+    },
+    "importedAt": {
+      "type": "object",
+      "keys": [
+        "_nanoseconds",
+        "_seconds"
+      ]
+    }
+  }
+}
+{
+  "id": "NACIONAL__2026-07-18__14-49__3bafbe99-632b-4445-9b73-12e78ee45283",
+  "close_hour": "14:49",
+  "close_hour_raw": "14:49",
+  "hour": "14",
+  "close": "14:49",
+  "lottery_name": "LT NACIONAL 15HS",
+  "lottery_id": "3bafbe99-632b-4445-9b73-12e78ee45283",
+  "fields": {
+    "date": {
+      "type": "string",
+      "value": "2026-07-18"
+    },
+    "close_hour_raw": {
+      "type": "string",
+      "value": "14:49"
+    },
+    "drawId": {
+      "type": "string",
+      "value": "NACIONAL__2026-07-18__14-49__3bafbe99-632b-4445-9b73-12e78ee45283"
+    },
+    "lottery_id": {
+      "type": "string",
+      "value": "3bafbe99-632b-4445-9b73-12e78ee45283"
+    },
+    "lottery_name": {
+      "type": "string",
+      "value": "LT NACIONAL 15HS"
+    },
+    "source": {
+      "type": "string",
+      "value": "kingapostas"
+    },
+    "uf": {
+      "type": "string",
+      "value": "BR"
+    },
+    "ymd": {
+      "type": "string",
+      "value": "2026-07-18"
+    },
+    "close_hour": {
+      "type": "string",
+      "value": "14:49"
+    },
+    "hour": {
+      "type": "string",
+      "value": "14"
+    },
+    "prizesCount": {
+      "type": "number",
+      "value": 7
+    },
+    "lottery_key": {
+      "type": "string",
+      "value": "NACIONAL"
+    },
+    "close": {
+      "type": "string",
+      "value": "14:49"
+    },
+    "importedAt": {
+      "type": "object",
+      "keys": [
+        "_nanoseconds",
+        "_seconds"
+      ]
+    }
+  }
+}
+{
+  "id": "NACIONAL__2026-07-18__16-49__87db8fb6-8718-49c3-b739-96eec085e09d",
+  "close_hour": "16:49",
+  "close_hour_raw": "16:49",
+  "hour": "16",
+  "close": "16:49",
+  "lottery_name": "LT NACIONAL 17HS",
+  "lottery_id": "87db8fb6-8718-49c3-b739-96eec085e09d",
+  "fields": {
+    "date": {
+      "type": "string",
+      "value": "2026-07-18"
+    },
+    "close_hour_raw": {
+      "type": "string",
+      "value": "16:49"
+    },
+    "drawId": {
+      "type": "string",
+      "value": "NACIONAL__2026-07-18__16-49__87db8fb6-8718-49c3-b739-96eec085e09d"
+    },
+    "lottery_id": {
+      "type": "string",
+      "value": "87db8fb6-8718-49c3-b739-96eec085e09d"
+    },
+    "lottery_name": {
+      "type": "string",
+      "value": "LT NACIONAL 17HS"
+    },
+    "source": {
+      "type": "string",
+      "value": "kingapostas"
+    },
+    "uf": {
+      "type": "string",
+      "value": "BR"
+    },
+    "ymd": {
+      "type": "string",
+      "value": "2026-07-18"
+    },
+    "close_hour": {
+      "type": "string",
+      "value": "16:49"
+    },
+    "hour": {
+      "type": "string",
+      "value": "16"
+    },
+    "prizesCount": {
+      "type": "number",
+      "value": 7
+    },
+    "lottery_key": {
+      "type": "string",
+      "value": "NACIONAL"
+    },
+    "close": {
+      "type": "string",
+      "value": "16:49"
+    },
+    "importedAt": {
+      "type": "object",
+      "keys": [
+        "_nanoseconds",
+        "_seconds"
+      ]
+    }
+  }
+}
+{
+  "id": "NACIONAL__2026-07-18__20-49__1eebc22a-890e-4598-86b5-6fda7e04ca4b",
+  "close_hour": "20:49",
+  "close_hour_raw": "20:49",
+  "hour": "20",
+  "close": "20:49",
+  "lottery_name": "LT NACIONAL 21HS",
+  "lottery_id": "1eebc22a-890e-4598-86b5-6fda7e04ca4b",
+  "fields": {
+    "date": {
+      "type": "string",
+      "value": "2026-07-18"
+    },
+    "close_hour_raw": {
+      "type": "string",
+      "value": "20:49"
+    },
+    "drawId": {
+      "type": "string",
+      "value": "NACIONAL__2026-07-18__20-49__1eebc22a-890e-4598-86b5-6fda7e04ca4b"
+    },
+    "lottery_id": {
+      "type": "string",
+      "value": "1eebc22a-890e-4598-86b5-6fda7e04ca4b"
+    },
+    "lottery_name": {
+      "type": "string",
+      "value": "LT NACIONAL 21HS"
+    },
+    "source": {
+      "type": "string",
+      "value": "kingapostas"
+    },
+    "uf": {
+      "type": "string",
+      "value": "BR"
+    },
+    "ymd": {
+      "type": "string",
+      "value": "2026-07-18"
+    },
+    "close_hour": {
+      "type": "string",
+      "value": "20:49"
+    },
+    "hour": {
+      "type": "string",
+      "value": "20"
+    },
+    "prizesCount": {
+      "type": "number",
+      "value": 7
+    },
+    "lottery_key": {
+      "type": "string",
+      "value": "NACIONAL"
+    },
+    "close": {
+      "type": "string",
+      "value": "20:49"
+    },
+    "importedAt": {
+      "type": "object",
+      "keys": [
+        "_nanoseconds",
+        "_seconds"
+      ]
+    }
+  }
+}
+{
+  "id": "NACIONAL__2026-07-18__22-49__2a424135-9b6a-4415-8a57-15e0d3abd736",
+  "close_hour": "22:49",
+  "close_hour_raw": "22:49",
+  "hour": "22",
+  "close": "22:49",
+  "lottery_name": "LT NACIONAL 23HS",
+  "lottery_id": "2a424135-9b6a-4415-8a57-15e0d3abd736",
+  "fields": {
+    "date": {
+      "type": "string",
+      "value": "2026-07-18"
+    },
+    "close_hour_raw": {
+      "type": "string",
+      "value": "22:49"
+    },
+    "importedAt": {
+      "type": "object",
+      "keys": [
+        "_nanoseconds",
+        "_seconds"
+      ]
+    },
+    "drawId": {
+      "type": "string",
+      "value": "NACIONAL__2026-07-18__22-49__2a424135-9b6a-4415-8a57-15e0d3abd736"
+    },
+    "lottery_id": {
+      "type": "string",
+      "value": "2a424135-9b6a-4415-8a57-15e0d3abd736"
+    },
+    "lottery_name": {
+      "type": "string",
+      "value": "LT NACIONAL 23HS"
+    },
+    "source": {
+      "type": "string",
+      "value": "kingapostas"
+    },
+    "uf": {
+      "type": "string",
+      "value": "BR"
+    },
+    "ymd": {
+      "type": "string",
+      "value": "2026-07-18"
+    },
+    "close_hour": {
+      "type": "string",
+      "value": "22:49"
+    },
+    "hour": {
+      "type": "string",
+      "value": "22"
+    },
+    "prizesCount": {
+      "type": "number",
+      "value": 7
+    },
+    "lottery_key": {
+      "type": "string",
+      "value": "NACIONAL"
+    },
+    "close": {
+      "type": "string",
+      "value": "22:49"
+    }
+  }
+}
+
+==================================================
+DATA: 2026-07-19
+TOTAL: 8
+==================================================
+{
+  "id": "NACIONAL__2026-07-19__02-00__6c2b52ec-d613-4383-9c07-ff5ac7e04611",
+  "close_hour": "02:00",
+  "close_hour_raw": "01:49",
+  "hour": "02",
+  "close": "02:00",
+  "lottery_name": "LT NACIONAL 02HS",
+  "lottery_id": "6c2b52ec-d613-4383-9c07-ff5ac7e04611",
+  "fields": {
+    "date": {
+      "type": "string",
+      "value": "2026-07-19"
+    },
+    "close_hour_raw": {
+      "type": "string",
+      "value": "01:49"
+    },
+    "importedAt": {
+      "type": "object",
+      "keys": [
+        "_nanoseconds",
+        "_seconds"
+      ]
+    },
+    "drawId": {
+      "type": "string",
+      "value": "NACIONAL__2026-07-19__02-00__6c2b52ec-d613-4383-9c07-ff5ac7e04611"
+    },
+    "lottery_id": {
+      "type": "string",
+      "value": "6c2b52ec-d613-4383-9c07-ff5ac7e04611"
+    },
+    "lottery_name": {
+      "type": "string",
+      "value": "LT NACIONAL 02HS"
+    },
+    "source": {
+      "type": "string",
+      "value": "kingapostas"
+    },
+    "uf": {
+      "type": "string",
+      "value": "BR"
+    },
+    "ymd": {
+      "type": "string",
+      "value": "2026-07-19"
+    },
+    "close_hour": {
+      "type": "string",
+      "value": "02:00"
+    },
+    "hour": {
+      "type": "string",
+      "value": "02"
+    },
+    "prizesCount": {
+      "type": "number",
+      "value": 7
+    },
+    "lottery_key": {
+      "type": "string",
+      "value": "NACIONAL"
+    },
+    "close": {
+      "type": "string",
+      "value": "02:00"
+    }
+  }
+}
+{
+  "id": "NACIONAL__2026-07-19__08-00__76a3feee-faa6-4b6c-aae5-656fd6af7b6b",
+  "close_hour": "08:00",
+  "close_hour_raw": "07:49",
+  "hour": "08",
+  "close": "08:00",
+  "lottery_name": "LT NACIONAL 08HS",
+  "lottery_id": "76a3feee-faa6-4b6c-aae5-656fd6af7b6b",
+  "fields": {
+    "date": {
+      "type": "string",
+      "value": "2026-07-19"
+    },
+    "close_hour_raw": {
+      "type": "string",
+      "value": "07:49"
+    },
+    "importedAt": {
+      "type": "object",
+      "keys": [
+        "_nanoseconds",
+        "_seconds"
+      ]
+    },
+    "drawId": {
+      "type": "string",
+      "value": "NACIONAL__2026-07-19__08-00__76a3feee-faa6-4b6c-aae5-656fd6af7b6b"
+    },
+    "lottery_id": {
+      "type": "string",
+      "value": "76a3feee-faa6-4b6c-aae5-656fd6af7b6b"
+    },
+    "lottery_name": {
+      "type": "string",
+      "value": "LT NACIONAL 08HS"
+    },
+    "source": {
+      "type": "string",
+      "value": "kingapostas"
+    },
+    "uf": {
+      "type": "string",
+      "value": "BR"
+    },
+    "ymd": {
+      "type": "string",
+      "value": "2026-07-19"
+    },
+    "close_hour": {
+      "type": "string",
+      "value": "08:00"
+    },
+    "hour": {
+      "type": "string",
+      "value": "08"
+    },
+    "prizesCount": {
+      "type": "number",
+      "value": 7
+    },
+    "lottery_key": {
+      "type": "string",
+      "value": "NACIONAL"
+    },
+    "close": {
+      "type": "string",
+      "value": "08:00"
+    }
+  }
+}
+{
+  "id": "NACIONAL__2026-07-19__10-00__4dda728b-bbd9-43eb-a17b-acf968b1eca0",
+  "close_hour": "10:00",
+  "close_hour_raw": "09:49",
+  "hour": "10",
+  "close": "10:00",
+  "lottery_name": "LT NACIONAL 10HS",
+  "lottery_id": "4dda728b-bbd9-43eb-a17b-acf968b1eca0",
+  "fields": {
+    "date": {
+      "type": "string",
+      "value": "2026-07-19"
+    },
+    "close_hour_raw": {
+      "type": "string",
+      "value": "09:49"
+    },
+    "importedAt": {
+      "type": "object",
+      "keys": [
+        "_nanoseconds",
+        "_seconds"
+      ]
+    },
+    "drawId": {
+      "type": "string",
+      "value": "NACIONAL__2026-07-19__10-00__4dda728b-bbd9-43eb-a17b-acf968b1eca0"
+    },
+    "lottery_id": {
+      "type": "string",
+      "value": "4dda728b-bbd9-43eb-a17b-acf968b1eca0"
+    },
+    "lottery_name": {
+      "type": "string",
+      "value": "LT NACIONAL 10HS"
+    },
+    "source": {
+      "type": "string",
+      "value": "kingapostas"
+    },
+    "uf": {
+      "type": "string",
+      "value": "BR"
+    },
+    "ymd": {
+      "type": "string",
+      "value": "2026-07-19"
+    },
+    "close_hour": {
+      "type": "string",
+      "value": "10:00"
+    },
+    "hour": {
+      "type": "string",
+      "value": "10"
+    },
+    "prizesCount": {
+      "type": "number",
+      "value": 7
+    },
+    "lottery_key": {
+      "type": "string",
+      "value": "NACIONAL"
+    },
+    "close": {
+      "type": "string",
+      "value": "10:00"
+    }
+  }
+}
+{
+  "id": "NACIONAL__2026-07-19__12-00__8efc7c5a-8883-48a3-ab7f-cf3d0f7eebd4",
+  "close_hour": "12:00",
+  "close_hour_raw": "11:49",
+  "hour": "12",
+  "close": "12:00",
+  "lottery_name": "LT NACIONAL 12HS",
+  "lottery_id": "8efc7c5a-8883-48a3-ab7f-cf3d0f7eebd4",
+  "fields": {
+    "date": {
+      "type": "string",
+      "value": "2026-07-19"
+    },
+    "close_hour_raw": {
+      "type": "string",
+      "value": "11:49"
+    },
+    "importedAt": {
+      "type": "object",
+      "keys": [
+        "_nanoseconds",
+        "_seconds"
+      ]
+    },
+    "drawId": {
+      "type": "string",
+      "value": "NACIONAL__2026-07-19__12-00__8efc7c5a-8883-48a3-ab7f-cf3d0f7eebd4"
+    },
+    "lottery_id": {
+      "type": "string",
+      "value": "8efc7c5a-8883-48a3-ab7f-cf3d0f7eebd4"
+    },
+    "lottery_name": {
+      "type": "string",
+      "value": "LT NACIONAL 12HS"
+    },
+    "source": {
+      "type": "string",
+      "value": "kingapostas"
+    },
+    "uf": {
+      "type": "string",
+      "value": "BR"
+    },
+    "ymd": {
+      "type": "string",
+      "value": "2026-07-19"
+    },
+    "close_hour": {
+      "type": "string",
+      "value": "12:00"
+    },
+    "hour": {
+      "type": "string",
+      "value": "12"
+    },
+    "prizesCount": {
+      "type": "number",
+      "value": 7
+    },
+    "lottery_key": {
+      "type": "string",
+      "value": "NACIONAL"
+    },
+    "close": {
+      "type": "string",
+      "value": "12:00"
+    }
+  }
+}
+{
+  "id": "NACIONAL__2026-07-19__15-00__3bafbe99-632b-4445-9b73-12e78ee45283",
+  "close_hour": "15:00",
+  "close_hour_raw": "14:49",
+  "hour": "15",
+  "close": "15:00",
+  "lottery_name": "LT NACIONAL 15HS",
+  "lottery_id": "3bafbe99-632b-4445-9b73-12e78ee45283",
+  "fields": {
+    "date": {
+      "type": "string",
+      "value": "2026-07-19"
+    },
+    "close_hour_raw": {
+      "type": "string",
+      "value": "14:49"
+    },
+    "importedAt": {
+      "type": "object",
+      "keys": [
+        "_nanoseconds",
+        "_seconds"
+      ]
+    },
+    "drawId": {
+      "type": "string",
+      "value": "NACIONAL__2026-07-19__15-00__3bafbe99-632b-4445-9b73-12e78ee45283"
+    },
+    "lottery_id": {
+      "type": "string",
+      "value": "3bafbe99-632b-4445-9b73-12e78ee45283"
+    },
+    "lottery_name": {
+      "type": "string",
+      "value": "LT NACIONAL 15HS"
+    },
+    "source": {
+      "type": "string",
+      "value": "kingapostas"
+    },
+    "uf": {
+      "type": "string",
+      "value": "BR"
+    },
+    "ymd": {
+      "type": "string",
+      "value": "2026-07-19"
+    },
+    "close_hour": {
+      "type": "string",
+      "value": "15:00"
+    },
+    "hour": {
+      "type": "string",
+      "value": "15"
+    },
+    "prizesCount": {
+      "type": "number",
+      "value": 7
+    },
+    "lottery_key": {
+      "type": "string",
+      "value": "NACIONAL"
+    },
+    "close": {
+      "type": "string",
+      "value": "15:00"
+    }
+  }
+}
+{
+  "id": "NACIONAL__2026-07-19__17-00__87db8fb6-8718-49c3-b739-96eec085e09d",
+  "close_hour": "17:00",
+  "close_hour_raw": "16:49",
+  "hour": "17",
+  "close": "17:00",
+  "lottery_name": "LT NACIONAL 17HS",
+  "lottery_id": "87db8fb6-8718-49c3-b739-96eec085e09d",
+  "fields": {
+    "date": {
+      "type": "string",
+      "value": "2026-07-19"
+    },
+    "close_hour_raw": {
+      "type": "string",
+      "value": "16:49"
+    },
+    "importedAt": {
+      "type": "object",
+      "keys": [
+        "_nanoseconds",
+        "_seconds"
+      ]
+    },
+    "drawId": {
+      "type": "string",
+      "value": "NACIONAL__2026-07-19__17-00__87db8fb6-8718-49c3-b739-96eec085e09d"
+    },
+    "lottery_id": {
+      "type": "string",
+      "value": "87db8fb6-8718-49c3-b739-96eec085e09d"
+    },
+    "lottery_name": {
+      "type": "string",
+      "value": "LT NACIONAL 17HS"
+    },
+    "source": {
+      "type": "string",
+      "value": "kingapostas"
+    },
+    "uf": {
+      "type": "string",
+      "value": "BR"
+    },
+    "ymd": {
+      "type": "string",
+      "value": "2026-07-19"
+    },
+    "close_hour": {
+      "type": "string",
+      "value": "17:00"
+    },
+    "hour": {
+      "type": "string",
+      "value": "17"
+    },
+    "prizesCount": {
+      "type": "number",
+      "value": 7
+    },
+    "lottery_key": {
+      "type": "string",
+      "value": "NACIONAL"
+    },
+    "close": {
+      "type": "string",
+      "value": "17:00"
+    }
+  }
+}
+{
+  "id": "NACIONAL__2026-07-19__21-00__1eebc22a-890e-4598-86b5-6fda7e04ca4b",
+  "close_hour": "21:00",
+  "close_hour_raw": "20:49",
+  "hour": "21",
+  "close": "21:00",
+  "lottery_name": "LT NACIONAL 21HS",
+  "lottery_id": "1eebc22a-890e-4598-86b5-6fda7e04ca4b",
+  "fields": {
+    "date": {
+      "type": "string",
+      "value": "2026-07-19"
+    },
+    "close_hour_raw": {
+      "type": "string",
+      "value": "20:49"
+    },
+    "importedAt": {
+      "type": "object",
+      "keys": [
+        "_nanoseconds",
+        "_seconds"
+      ]
+    },
+    "drawId": {
+      "type": "string",
+      "value": "NACIONAL__2026-07-19__21-00__1eebc22a-890e-4598-86b5-6fda7e04ca4b"
+    },
+    "lottery_id": {
+      "type": "string",
+      "value": "1eebc22a-890e-4598-86b5-6fda7e04ca4b"
+    },
+    "lottery_name": {
+      "type": "string",
+      "value": "LT NACIONAL 21HS"
+    },
+    "source": {
+      "type": "string",
+      "value": "kingapostas"
+    },
+    "uf": {
+      "type": "string",
+      "value": "BR"
+    },
+    "ymd": {
+      "type": "string",
+      "value": "2026-07-19"
+    },
+    "close_hour": {
+      "type": "string",
+      "value": "21:00"
+    },
+    "hour": {
+      "type": "string",
+      "value": "21"
+    },
+    "prizesCount": {
+      "type": "number",
+      "value": 7
+    },
+    "lottery_key": {
+      "type": "string",
+      "value": "NACIONAL"
+    },
+    "close": {
+      "type": "string",
+      "value": "21:00"
+    }
+  }
+}
+{
+  "id": "NACIONAL__2026-07-19__23-00__2a424135-9b6a-4415-8a57-15e0d3abd736",
+  "close_hour": "23:00",
+  "close_hour_raw": "22:49",
+  "hour": "23",
+  "close": "23:00",
+  "lottery_name": "LT NACIONAL 23HS",
+  "lottery_id": "2a424135-9b6a-4415-8a57-15e0d3abd736",
+  "fields": {
+    "date": {
+      "type": "string",
+      "value": "2026-07-19"
+    },
+    "close_hour_raw": {
+      "type": "string",
+      "value": "22:49"
+    },
+    "importedAt": {
+      "type": "object",
+      "keys": [
+        "_nanoseconds",
+        "_seconds"
+      ]
+    },
+    "drawId": {
+      "type": "string",
+      "value": "NACIONAL__2026-07-19__23-00__2a424135-9b6a-4415-8a57-15e0d3abd736"
+    },
+    "lottery_id": {
+      "type": "string",
+      "value": "2a424135-9b6a-4415-8a57-15e0d3abd736"
+    },
+    "lottery_name": {
+      "type": "string",
+      "value": "LT NACIONAL 23HS"
+    },
+    "source": {
+      "type": "string",
+      "value": "kingapostas"
+    },
+    "uf": {
+      "type": "string",
+      "value": "BR"
+    },
+    "ymd": {
+      "type": "string",
+      "value": "2026-07-19"
+    },
+    "close_hour": {
+      "type": "string",
+      "value": "23:00"
+    },
+    "hour": {
+      "type": "string",
+      "value": "23"
+    },
+    "prizesCount": {
+      "type": "number",
+      "value": 7
+    },
+    "lottery_key": {
+      "type": "string",
+      "value": "NACIONAL"
+    },
+    "close": {
+      "type": "string",
+      "value": "23:00"
+    }
+  }
+}
+
+==================================================
+DATA: 2026-07-20
+TOTAL: 6
+==================================================
+{
+  "id": "NACIONAL__2026-07-20__02-00__6c2b52ec-d613-4383-9c07-ff5ac7e04611",
+  "close_hour": "02:00",
+  "close_hour_raw": "01:49",
+  "hour": "02",
+  "close": "02:00",
+  "lottery_name": "LT NACIONAL 02HS",
+  "lottery_id": "6c2b52ec-d613-4383-9c07-ff5ac7e04611",
+  "fields": {
+    "date": {
+      "type": "string",
+      "value": "2026-07-20"
+    },
+    "close_hour_raw": {
+      "type": "string",
+      "value": "01:49"
+    },
+    "importedAt": {
+      "type": "object",
+      "keys": [
+        "_nanoseconds",
+        "_seconds"
+      ]
+    },
+    "drawId": {
+      "type": "string",
+      "value": "NACIONAL__2026-07-20__02-00__6c2b52ec-d613-4383-9c07-ff5ac7e04611"
+    },
+    "lottery_id": {
+      "type": "string",
+      "value": "6c2b52ec-d613-4383-9c07-ff5ac7e04611"
+    },
+    "lottery_name": {
+      "type": "string",
+      "value": "LT NACIONAL 02HS"
+    },
+    "source": {
+      "type": "string",
+      "value": "kingapostas"
+    },
+    "uf": {
+      "type": "string",
+      "value": "BR"
+    },
+    "ymd": {
+      "type": "string",
+      "value": "2026-07-20"
+    },
+    "close_hour": {
+      "type": "string",
+      "value": "02:00"
+    },
+    "hour": {
+      "type": "string",
+      "value": "02"
+    },
+    "prizesCount": {
+      "type": "number",
+      "value": 7
+    },
+    "lottery_key": {
+      "type": "string",
+      "value": "NACIONAL"
+    },
+    "close": {
+      "type": "string",
+      "value": "02:00"
+    }
+  }
+}
+{
+  "id": "NACIONAL__2026-07-20__08-00__76a3feee-faa6-4b6c-aae5-656fd6af7b6b",
+  "close_hour": "08:00",
+  "close_hour_raw": "07:49",
+  "hour": "08",
+  "close": "08:00",
+  "lottery_name": "LT NACIONAL 08HS",
+  "lottery_id": "76a3feee-faa6-4b6c-aae5-656fd6af7b6b",
+  "fields": {
+    "date": {
+      "type": "string",
+      "value": "2026-07-20"
+    },
+    "close_hour_raw": {
+      "type": "string",
+      "value": "07:49"
+    },
+    "importedAt": {
+      "type": "object",
+      "keys": [
+        "_nanoseconds",
+        "_seconds"
+      ]
+    },
+    "drawId": {
+      "type": "string",
+      "value": "NACIONAL__2026-07-20__08-00__76a3feee-faa6-4b6c-aae5-656fd6af7b6b"
+    },
+    "lottery_id": {
+      "type": "string",
+      "value": "76a3feee-faa6-4b6c-aae5-656fd6af7b6b"
+    },
+    "lottery_name": {
+      "type": "string",
+      "value": "LT NACIONAL 08HS"
+    },
+    "source": {
+      "type": "string",
+      "value": "kingapostas"
+    },
+    "uf": {
+      "type": "string",
+      "value": "BR"
+    },
+    "ymd": {
+      "type": "string",
+      "value": "2026-07-20"
+    },
+    "close_hour": {
+      "type": "string",
+      "value": "08:00"
+    },
+    "hour": {
+      "type": "string",
+      "value": "08"
+    },
+    "prizesCount": {
+      "type": "number",
+      "value": 7
+    },
+    "lottery_key": {
+      "type": "string",
+      "value": "NACIONAL"
+    },
+    "close": {
+      "type": "string",
+      "value": "08:00"
+    }
+  }
+}
+{
+  "id": "NACIONAL__2026-07-20__10-00__4dda728b-bbd9-43eb-a17b-acf968b1eca0",
+  "close_hour": "10:00",
+  "close_hour_raw": "09:49",
+  "hour": "10",
+  "close": "10:00",
+  "lottery_name": "LT NACIONAL 10HS",
+  "lottery_id": "4dda728b-bbd9-43eb-a17b-acf968b1eca0",
+  "fields": {
+    "date": {
+      "type": "string",
+      "value": "2026-07-20"
+    },
+    "close_hour_raw": {
+      "type": "string",
+      "value": "09:49"
+    },
+    "importedAt": {
+      "type": "object",
+      "keys": [
+        "_nanoseconds",
+        "_seconds"
+      ]
+    },
+    "drawId": {
+      "type": "string",
+      "value": "NACIONAL__2026-07-20__10-00__4dda728b-bbd9-43eb-a17b-acf968b1eca0"
+    },
+    "lottery_id": {
+      "type": "string",
+      "value": "4dda728b-bbd9-43eb-a17b-acf968b1eca0"
+    },
+    "lottery_name": {
+      "type": "string",
+      "value": "LT NACIONAL 10HS"
+    },
+    "source": {
+      "type": "string",
+      "value": "kingapostas"
+    },
+    "uf": {
+      "type": "string",
+      "value": "BR"
+    },
+    "ymd": {
+      "type": "string",
+      "value": "2026-07-20"
+    },
+    "close_hour": {
+      "type": "string",
+      "value": "10:00"
+    },
+    "hour": {
+      "type": "string",
+      "value": "10"
+    },
+    "prizesCount": {
+      "type": "number",
+      "value": 7
+    },
+    "lottery_key": {
+      "type": "string",
+      "value": "NACIONAL"
+    },
+    "close": {
+      "type": "string",
+      "value": "10:00"
+    }
+  }
+}
+{
+  "id": "NACIONAL__2026-07-20__12-00__8efc7c5a-8883-48a3-ab7f-cf3d0f7eebd4",
+  "close_hour": "12:00",
+  "close_hour_raw": "11:49",
+  "hour": "12",
+  "close": "12:00",
+  "lottery_name": "LT NACIONAL 12HS",
+  "lottery_id": "8efc7c5a-8883-48a3-ab7f-cf3d0f7eebd4",
+  "fields": {
+    "date": {
+      "type": "string",
+      "value": "2026-07-20"
+    },
+    "close_hour_raw": {
+      "type": "string",
+      "value": "11:49"
+    },
+    "importedAt": {
+      "type": "object",
+      "keys": [
+        "_nanoseconds",
+        "_seconds"
+      ]
+    },
+    "drawId": {
+      "type": "string",
+      "value": "NACIONAL__2026-07-20__12-00__8efc7c5a-8883-48a3-ab7f-cf3d0f7eebd4"
+    },
+    "lottery_id": {
+      "type": "string",
+      "value": "8efc7c5a-8883-48a3-ab7f-cf3d0f7eebd4"
+    },
+    "lottery_name": {
+      "type": "string",
+      "value": "LT NACIONAL 12HS"
+    },
+    "source": {
+      "type": "string",
+      "value": "kingapostas"
+    },
+    "uf": {
+      "type": "string",
+      "value": "BR"
+    },
+    "ymd": {
+      "type": "string",
+      "value": "2026-07-20"
+    },
+    "close_hour": {
+      "type": "string",
+      "value": "12:00"
+    },
+    "hour": {
+      "type": "string",
+      "value": "12"
+    },
+    "prizesCount": {
+      "type": "number",
+      "value": 7
+    },
+    "lottery_key": {
+      "type": "string",
+      "value": "NACIONAL"
+    },
+    "close": {
+      "type": "string",
+      "value": "12:00"
+    }
+  }
+}
+{
+  "id": "NACIONAL__2026-07-20__15-00__3bafbe99-632b-4445-9b73-12e78ee45283",
+  "close_hour": "15:00",
+  "close_hour_raw": "14:49",
+  "hour": "15",
+  "close": "15:00",
+  "lottery_name": "LT NACIONAL 15HS",
+  "lottery_id": "3bafbe99-632b-4445-9b73-12e78ee45283",
+  "fields": {
+    "date": {
+      "type": "string",
+      "value": "2026-07-20"
+    },
+    "close_hour_raw": {
+      "type": "string",
+      "value": "14:49"
+    },
+    "importedAt": {
+      "type": "object",
+      "keys": [
+        "_nanoseconds",
+        "_seconds"
+      ]
+    },
+    "drawId": {
+      "type": "string",
+      "value": "NACIONAL__2026-07-20__15-00__3bafbe99-632b-4445-9b73-12e78ee45283"
+    },
+    "lottery_id": {
+      "type": "string",
+      "value": "3bafbe99-632b-4445-9b73-12e78ee45283"
+    },
+    "lottery_name": {
+      "type": "string",
+      "value": "LT NACIONAL 15HS"
+    },
+    "source": {
+      "type": "string",
+      "value": "kingapostas"
+    },
+    "uf": {
+      "type": "string",
+      "value": "BR"
+    },
+    "ymd": {
+      "type": "string",
+      "value": "2026-07-20"
+    },
+    "close_hour": {
+      "type": "string",
+      "value": "15:00"
+    },
+    "hour": {
+      "type": "string",
+      "value": "15"
+    },
+    "prizesCount": {
+      "type": "number",
+      "value": 7
+    },
+    "lottery_key": {
+      "type": "string",
+      "value": "NACIONAL"
+    },
+    "close": {
+      "type": "string",
+      "value": "15:00"
+    }
+  }
+}
+{
+  "id": "NACIONAL__2026-07-20__17-00__87db8fb6-8718-49c3-b739-96eec085e09d",
+  "close_hour": "17:00",
+  "close_hour_raw": "16:49",
+  "hour": "17",
+  "close": "17:00",
+  "lottery_name": "LT NACIONAL 17HS",
+  "lottery_id": "87db8fb6-8718-49c3-b739-96eec085e09d",
+  "fields": {
+    "date": {
+      "type": "string",
+      "value": "2026-07-20"
+    },
+    "close_hour_raw": {
+      "type": "string",
+      "value": "16:49"
+    },
+    "importedAt": {
+      "type": "object",
+      "keys": [
+        "_nanoseconds",
+        "_seconds"
+      ]
+    },
+    "drawId": {
+      "type": "string",
+      "value": "NACIONAL__2026-07-20__17-00__87db8fb6-8718-49c3-b739-96eec085e09d"
+    },
+    "lottery_id": {
+      "type": "string",
+      "value": "87db8fb6-8718-49c3-b739-96eec085e09d"
+    },
+    "lottery_name": {
+      "type": "string",
+      "value": "LT NACIONAL 17HS"
+    },
+    "source": {
+      "type": "string",
+      "value": "kingapostas"
+    },
+    "uf": {
+      "type": "string",
+      "value": "BR"
+    },
+    "ymd": {
+      "type": "string",
+      "value": "2026-07-20"
+    },
+    "close_hour": {
+      "type": "string",
+      "value": "17:00"
+    },
+    "hour": {
+      "type": "string",
+      "value": "17"
+    },
+    "prizesCount": {
+      "type": "number",
+      "value": 7
+    },
+    "lottery_key": {
+      "type": "string",
+      "value": "NACIONAL"
+    },
+    "close": {
+      "type": "string",
+      "value": "17:00"
+    }
+  }
+}

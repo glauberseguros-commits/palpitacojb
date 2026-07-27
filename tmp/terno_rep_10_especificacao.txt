@@ -1,0 +1,54 @@
+OBJETIVO
+
+Transformar o Motor Repetição no único motor da página.
+
+REGRAS
+
+1. Remover completamente o seletor "Modo".
+
+2. Remover:
+   - engineMode
+   - isRepetitionMode
+   - activeEngineLabel
+   - activeMinQuantity
+   - activeMaxQuantity
+   - activeQuantityValidator
+
+3. Utilizar diretamente:
+
+   buildAllTernosGrupoRepetition()
+
+   validateTernoRepetitionQuantity()
+
+   TERNO_GRUPO_REPETITION_MIN_QUANTITY
+
+   TERNO_GRUPO_REPETITION_MAX_QUANTITY
+
+4. Remover toda lógica condicional:
+
+   engineMode === ...
+
+5. O título passa de:
+
+   Resultado Gerado • Motor Repetição
+
+   para
+
+   Resultado Gerado
+
+6. O botão Copiar não deve mais informar o nome do motor.
+
+7. A quantidade máxima passa a ser fixa:
+
+   2.925 combinações.
+
+8. O comportamento funcional NÃO pode mudar.
+
+9. Build obrigatório.
+
+10. Commit obrigatório.
+
+11. Push obrigatório.
+
+12. Deploy automático obrigatório.
+

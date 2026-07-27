@@ -1,0 +1,25 @@
+========================================================================================================================
+TERNO-REP-09 — VALIDAÇÃO FINAL
+========================================================================================================================
+Gerado em: 27/07/2026 00:30:39
+
+CHECKLIST
+
+[ ] 1. Abrir a página Terno de Grupo publicada.
+[ ] 2. Confirmar que o modo padrão é Tradicional.
+[ ] 3. Confirmar limite de 2.300.
+[ ] 4. Trocar para Repetição.
+[ ] 5. Confirmar limite de 2.925.
+[ ] 6. Gerar pelo menos 50 ternos.
+[ ] 7. Verificar se aparecem grupos repetidos (18-18-15, 07-07-07 etc.).
+[ ] 8. Confirmar que não houve erro visual.
+[ ] 9. Confirmar que o botão Copiar funciona.
+[ ] 10. Confirmar que voltar para Tradicional remove grupos repetidos.
+
+ANEXAR:
+- Print do modo Tradicional.
+- Print do modo Repetição.
+- Print mostrando um terno com repetição.
+
+STATUS FINAL:
+PENDENTE DE VALIDAÇÃO FUNCIONAL.

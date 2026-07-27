@@ -1,0 +1,211 @@
+run-import (NACIONAL)	UNKNOWN STEP	´╗┐2026-07-20T19:54:23.5950127Z Current runner version: '2.335.1'
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:54:23.5990072Z ##[group]Runner Image Provisioner
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:54:23.5992003Z Hosted Compute Agent
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:54:23.5993368Z Version: 20260707.563
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:54:23.5995045Z Commit: 02667638d2b423fbc733a8e32a88b44996a3ba6e
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:54:23.5996546Z Build Date: 2026-07-07T19:33:50Z
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:54:23.5998099Z Worker ID: ***9215e7f3-354f-4cf9-93c6-9056db3c3fe7***
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:54:23.5999654Z Azure Region: eastus2
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:54:23.6000908Z ##[endgroup]
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:54:23.6003344Z ##[group]Operating System
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:54:23.6004796Z Ubuntu
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:54:23.6006204Z 24.04.4
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:54:23.6007252Z LTS
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:54:23.6008478Z ##[endgroup]
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:54:23.6009674Z ##[group]Runner Image
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:54:23.6011011Z Image: ubuntu-24.04
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:54:23.6012221Z Version: 20260714.240.1
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:54:23.6014802Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20260714.240/images/ubuntu/Ubuntu2404-Readme.md
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:54:23.6017850Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20260714.240
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:54:23.6019771Z ##[endgroup]
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:54:23.6022166Z ##[group]GITHUB_TOKEN Permissions
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:54:23.6025695Z Contents: read
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:54:23.6026847Z Metadata: read
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:54:23.6028078Z ##[endgroup]
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:54:23.6031438Z Secret source: Actions
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:54:23.6032988Z Prepare workflow directory
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:54:23.6789607Z Prepare all required actions
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:54:23.6844869Z Getting action download info
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:54:23.8559031Z Download action repository 'actions/checkout@v4' (SHA:11d5960a326750d5838078e36cf38b85af677262)
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:54:24.0962902Z Download action repository 'actions/setup-node@v4' (SHA:49933ea5288caeca8642d1e84afbd3f7d6820020)
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:54:24.2892929Z Complete job name: run-import (NACIONAL)
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:54:24.3608899Z Node 20 is being deprecated. This workflow is running with Node 24 by default. If you need to temporarily use Node 20, you can set the ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION=true environment variable. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:54:24.3618346Z ##[group]Run actions/checkout@v4
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:54:24.3619245Z with:
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:54:24.3619920Z   repository: glauberseguros-commits/palpitacojb
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:54:24.3623956Z   token: ***
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:54:24.3624809Z   ssh-strict: true
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:54:24.3625431Z   ssh-user: git
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:54:24.3626043Z   persist-credentials: true
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:54:24.3626701Z   clean: true
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:54:24.3627296Z   sparse-checkout-cone-mode: true
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:54:24.3627978Z   fetch-depth: 1
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:54:24.3628565Z   fetch-tags: false
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:54:24.3629164Z   show-progress: true
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:54:24.3629770Z   lfs: false
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:54:24.3630404Z   submodules: false
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:54:24.3631019Z   set-safe-directory: true
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:54:24.3631692Z   allow-unsafe-pr-checkout: false
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:54:24.3632644Z env:
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:54:24.3633222Z   TZ: America/Sao_Paulo
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:54:24.3633942Z   PITACO_API_BASE: https://api.palpitacojb.com.br
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:54:24.3634868Z ##[endgroup]
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:54:24.4723559Z Syncing repository: glauberseguros-commits/palpitacojb
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:54:24.4727101Z ##[group]Getting Git version info
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:54:24.4728519Z Working directory is '/home/runner/work/palpitacojb/palpitacojb'
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:54:24.4730632Z [command]/usr/bin/git version
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:54:24.4765312Z git version 2.54.0
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:54:24.4798315Z ##[endgroup]
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:54:24.4805944Z Temporarily overriding HOME='/home/runner/work/_temp/5c184168-fac3-41b1-935d-9160d4db7737' before making global git config changes
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:54:24.4808497Z Adding repository directory to the temporary git global config as a safe directory
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:54:24.4810739Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/palpitacojb/palpitacojb
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:54:24.4868529Z Deleting the contents of '/home/runner/work/palpitacojb/palpitacojb'
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:54:24.4872793Z ##[group]Initializing the repository
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:54:24.4878290Z [command]/usr/bin/git init /home/runner/work/palpitacojb/palpitacojb
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:54:24.4980192Z hint: Using 'master' as the name for the initial branch. This default branch name
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:54:24.4982101Z hint: will change to "main" in Git 3.0. To configure the initial branch name
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:54:24.4983833Z hint: to use in all of your new repositories, which will suppress this warning,
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:54:24.4985503Z hint: call:
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:54:24.4986410Z hint:
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:54:24.4987411Z hint: 	git config --global init.defaultBranch <name>
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:54:24.4988592Z hint:
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:54:24.4989703Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:54:24.4991546Z hint: 'development'. The just-created branch can be renamed via this command:
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:54:24.4992958Z hint:
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:54:24.4993820Z hint: 	git branch -m <name>
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:54:24.4994906Z hint:
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:54:24.4996125Z hint: Disable this message with "git config set advice.defaultBranchName false"
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:54:24.5003837Z Initialized empty Git repository in /home/runner/work/palpitacojb/palpitacojb/.git/
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:54:24.5013888Z [command]/usr/bin/git remote add origin https://github.com/glauberseguros-commits/palpitacojb
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:54:24.5065809Z ##[endgroup]
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:54:24.5067373Z ##[group]Disabling automatic garbage collection
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:54:24.5069278Z [command]/usr/bin/git config --local gc.auto 0
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:54:24.5105969Z ##[endgroup]
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:54:24.5107519Z ##[group]Setting up auth
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:54:24.5112455Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:54:24.5153101Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:54:24.5566722Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:54:24.5620124Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:54:24.5886038Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:54:24.5931233Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:54:24.6213260Z [command]/usr/bin/git config --local http.https://github.com/.extraheader AUTHORIZATION: basic ***
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:54:24.6262021Z ##[endgroup]
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:54:24.6263896Z ##[group]Fetching the repository
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:54:24.6275074Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +a1213cb77c082239287f535bdf24603b6efaf441:refs/remotes/origin/main
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:54:25.8942824Z From https://github.com/glauberseguros-commits/palpitacojb
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:54:25.8945534Z  * [new ref]         a1213cb77c082239287f535bdf24603b6efaf441 -> origin/main
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:54:25.8986270Z ##[endgroup]
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:54:25.8988273Z ##[group]Determining the checkout info
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:54:25.8990341Z ##[endgroup]
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:54:25.9087429Z [command]/usr/bin/git sparse-checkout disable
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:54:25.9090342Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:54:25.9119810Z ##[group]Checking out the ref
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:54:25.9121573Z [command]/usr/bin/git checkout --progress --force -B main refs/remotes/origin/main
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:54:25.9969268Z Switched to a new branch 'main'
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:54:25.9976294Z branch 'main' set up to track 'origin/main'.
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:54:25.9989449Z ##[endgroup]
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:54:26.0042490Z [command]/usr/bin/git log -1 --format=%H
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:54:26.0074185Z a1213cb77c082239287f535bdf24603b6efaf441
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:54:26.0377890Z Node 20 is being deprecated. This workflow is running with Node 24 by default. If you need to temporarily use Node 20, you can set the ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION=true environment variable. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:54:26.0382089Z ##[group]Run actions/setup-node@v4
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:54:26.0382874Z with:
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:54:26.0383458Z   node-version: 20
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:54:26.0384092Z   always-auth: false
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:54:26.0384882Z   check-latest: false
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:54:26.0390153Z   token: ***
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:54:26.0390747Z env:
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:54:26.0391330Z   TZ: America/Sao_Paulo
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:54:26.0392111Z   PITACO_API_BASE: https://api.palpitacojb.com.br
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:54:26.0393019Z ##[endgroup]
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:54:26.1848157Z Attempting to download 20...
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:54:26.1958236Z (node:2356) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:54:26.1960758Z (Use `node --trace-deprecation ...` to show where the warning was created)
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:54:26.6526093Z Acquiring 20.20.2 - x64 from https://github.com/actions/node-versions/releases/download/20.20.2-23521894959/node-20.20.2-linux-x64.tar.gz
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:54:27.0389811Z Extracting ...
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:54:27.0513064Z [command]/usr/bin/tar xz --strip 1 --warning=no-unknown-keyword --overwrite -C /home/runner/work/_temp/99028120-1450-4dfc-b894-97cbaff66cf3 -f /home/runner/work/_temp/0fb9f812-762a-40cc-bac9-a8bf6d5ef7a3
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:54:28.1561139Z Adding to the cache ...
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:54:29.7739616Z ##[group]Environment details
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:54:29.9988537Z node: v20.20.2
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:54:29.9989140Z npm: 10.8.2
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:54:29.9989541Z yarn: 1.22.22
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:54:29.9990378Z ##[endgroup]
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:54:30.0178371Z ##[group]Run npm ci
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:54:30.0178799Z ^[[36;1mnpm ci^[[0m
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:54:30.0268561Z shell: /usr/bin/bash -e ***0***
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:54:30.0268958Z env:
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:54:30.0269243Z   TZ: America/Sao_Paulo
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:54:30.0269728Z   PITACO_API_BASE: https://api.palpitacojb.com.br
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:54:30.0270159Z ##[endgroup]
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:54:33.9289214Z 
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:54:33.9299086Z added 302 packages, and audited 303 packages in 4s
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:54:33.9299646Z 
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:54:33.9300025Z 35 packages are looking for funding
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:54:33.9300640Z   run `npm fund` for details
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:54:33.9555434Z 
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:54:33.9556538Z 22 vulnerabilities (1 low, 13 moderate, 5 high, 3 critical)
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:54:33.9557098Z 
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:54:33.9557540Z To address issues that do not require attention, run:
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:54:33.9558165Z   npm audit fix
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:54:33.9558426Z 
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:54:33.9558851Z To address all issues (including breaking changes), run:
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:54:33.9559627Z   npm audit fix --force
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:54:33.9559933Z 
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:54:33.9560180Z Run `npm audit` for details.
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:54:33.9796758Z ##[group]Run node scripts/autoImportToday.js
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:54:33.9797576Z ^[[36;1mnode scripts/autoImportToday.js^[[0m
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:54:33.9871027Z shell: /usr/bin/bash -e ***0***
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:54:33.9871391Z env:
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:54:33.9871665Z   TZ: America/Sao_Paulo
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:54:33.9872287Z   PITACO_API_BASE: https://api.palpitacojb.com.br
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:54:33.9882246Z   FIREBASE_ADMIN_SA_JSON: ***
+run-import (NACIONAL)	UNKNOWN STEP	
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:54:33.9882782Z   LOTTERY: NACIONAL
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:54:33.9883102Z   FAIL_ON_CRITICAL: 1
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:54:33.9883387Z   AUDIT_WARN_MIN: 20
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:54:33.9883895Z   AUDIT_CRIT_MIN: 60
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:54:33.9884172Z ##[endgroup]
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:54:34.2177767Z [CFG] PITACO_API_BASE efetivo => https://api.palpitacojb.com.br
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:54:49.2880323Z [AUTO] CATCH-UP p├│s-release 2026-07-20 slot=15:00 (HARD) releaseAt=15:29 window=15:05~15:35 (fora da janela)
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:54:49.2885395Z [AUTO] tentando 2026-07-20 slot=15:00 (HARD) window=15:05-15:35 closes=15:00,15:01,15:02,15:09,15:10,15:11
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:54:50.6112418Z [FETCH] NACIONAL 2026-07-20 per-lottery=8 -> merged_draws=5 close_hours=[02:00, 08:00, 10:00, 12:00, 15:00]
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:54:52.5524995Z [IMPORT] API draws=5 | match_close=1 | validos=1 | draws_upserted=1 | draws_novos=0 | prizes_upserted=7 | prizes_novos=0 | skip_vazio=0 | skip_invalido=0 | skip_close=4 | skip_complete=0 | CHECK_EXISTENCE=OFF | uf=BR lottery_key=NACIONAL | expected=1 complete=1 slotDocs=1 apiTargets=1
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:54:54.0337690Z [TOP3] P├ígina 1 | 2026-01-22 at├® 2026-07-21 | limite=250
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:54:57.9503647Z [TOP3] P├ígina 1: 250 draws | total=250
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:54:57.9517954Z [TOP3] P├ígina 2 | 2026-01-22 at├® 2026-07-21 | limite=250
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:55:00.9572811Z [TOP3] P├ígina 2: 250 draws | total=500
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:55:00.9575479Z [TOP3] P├ígina 3 | 2026-01-22 at├® 2026-07-21 | limite=250
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:55:03.9799172Z [TOP3] P├ígina 3: 250 draws | total=750
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:55:03.9800237Z [TOP3] P├ígina 4 | 2026-01-22 at├® 2026-07-21 | limite=250
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:55:06.9028980Z [TOP3] P├ígina 4: 250 draws | total=1000
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:55:06.9034392Z [TOP3] P├ígina 5 | 2026-01-22 at├® 2026-07-21 | limite=200
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:55:09.3462067Z [TOP3] P├ígina 5: 200 draws | total=1200
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:55:10.3491661Z [TOP3 AUTO] OK | NACIONAL | importado=2026-07-20 15:00 | pr├│ximo=2026-07-21 09:00
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:55:10.3499934Z [AUTO] FS j├í tem slot=15:00 COMPLETO (close=15:00) -> DONE
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:55:10.3507729Z [ALERT] HARD slot perdeu janela: date=2026-07-20 slot=02:00 releaseAt=02:29 windowEnd=02:35 tries=0
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:55:10.3509974Z [ALERT] HARD slot CRITICAL: date=2026-07-20 slot=02:00 since=865min (>=60) tries=0
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:55:10.3512035Z [ALERT] HARD slot perdeu janela: date=2026-07-20 slot=08:00 releaseAt=08:29 windowEnd=08:35 tries=0
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:55:10.3513961Z [ALERT] HARD slot CRITICAL: date=2026-07-20 slot=08:00 since=505min (>=60) tries=0
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:55:10.3516990Z [ALERT] HARD slot perdeu janela: date=2026-07-20 slot=10:00 releaseAt=10:29 windowEnd=10:35 tries=0
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:55:10.3518865Z [ALERT] HARD slot CRITICAL: date=2026-07-20 slot=10:00 since=385min (>=60) tries=0
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:55:10.3521457Z [ALERT] HARD slot perdeu janela: date=2026-07-20 slot=12:00 releaseAt=12:29 windowEnd=12:35 tries=0
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:55:10.3523431Z [ALERT] HARD slot CRITICAL: date=2026-07-20 slot=12:00 since=265min (>=60) tries=0
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:55:10.3538013Z [AUDIT] CRITICAL missing=4 warning=0 softLate=0 (relat├│rio salvo em auditCritical-NACIONAL-2026-07-20.json)
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:55:10.3539235Z [AUDIT] FAIL_ON_CRITICAL=1 => exit(2)
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:55:10.3835654Z ##[error]Process completed with exit code 2.
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:55:10.4011812Z Node 20 is being deprecated. This workflow is running with Node 24 by default. If you need to temporarily use Node 20, you can set the ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION=true environment variable. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:55:10.4013139Z Post job cleanup.
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:55:10.4956902Z [command]/usr/bin/git version
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:55:10.5012601Z git version 2.54.0
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:55:10.5054234Z Temporarily overriding HOME='/home/runner/work/_temp/9b461da4-ca43-4ef3-a690-007abc238c6b' before making global git config changes
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:55:10.5058179Z Adding repository directory to the temporary git global config as a safe directory
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:55:10.5061726Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/palpitacojb/palpitacojb
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:55:10.5111790Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:55:10.5155989Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:55:10.5431816Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:55:10.5462612Z http.https://github.com/.extraheader
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:55:10.5474408Z [command]/usr/bin/git config --local --unset-all http.https://github.com/.extraheader
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:55:10.5515588Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:55:10.5796258Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:55:10.5840537Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:55:10.6272494Z Cleaning up orphan processes
+run-import (NACIONAL)	UNKNOWN STEP	2026-07-20T19:55:10.6559935Z ##[warning]Node.js 20 is deprecated. The following actions target Node.js 20 but are being forced to run on Node.js 24: actions/checkout@v4, actions/setup-node@v4. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/

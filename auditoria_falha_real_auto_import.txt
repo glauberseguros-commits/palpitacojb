@@ -1,0 +1,194 @@
+run-import (PT_RIO)	UNKNOWN STEP	﻿2026-07-14T15:38:38.8341869Z Current runner version: '2.335.1'
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:38:38.8369146Z ##[group]Runner Image Provisioner
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:38:38.8370223Z Hosted Compute Agent
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:38:38.8371144Z Version: 20260624.560
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:38:38.8372291Z Commit: 925d229a51159bc391ae97e54a2dd1fe20af789d
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:38:38.8373331Z Build Date: 2026-06-24T18:26:47Z
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:38:38.8374407Z Worker ID: ***f1802cec-90a2-4126-9085-a5cded331ff2***
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:38:38.8375502Z Azure Region: eastus
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:38:38.8376336Z ##[endgroup]
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:38:38.8378594Z ##[group]Operating System
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:38:38.8379679Z Ubuntu
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:38:38.8380401Z 24.04.4
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:38:38.8381229Z LTS
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:38:38.8382374Z ##[endgroup]
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:38:38.8383250Z ##[group]Runner Image
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:38:38.8384104Z Image: ubuntu-24.04
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:38:38.8384887Z Version: 20260705.232.1
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:38:38.8386468Z Included Software: https://github.com/actions/runner-images/blob/ubuntu24/20260705.232/images/ubuntu/Ubuntu2404-Readme.md
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:38:38.8388318Z Image Release: https://github.com/actions/runner-images/releases/tag/ubuntu24%2F20260705.232
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:38:38.8389658Z ##[endgroup]
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:38:38.8391271Z ##[group]GITHUB_TOKEN Permissions
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:38:38.8393840Z Contents: read
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:38:38.8394839Z Metadata: read
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:38:38.8395666Z ##[endgroup]
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:38:38.8398285Z Secret source: Actions
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:38:38.8399299Z Prepare workflow directory
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:38:38.8961151Z Prepare all required actions
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:38:38.9001243Z Getting action download info
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:38:39.1143435Z Download action repository 'actions/checkout@v4' (SHA:34e114876b0b11c390a56381ad16ebd13914f8d5)
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:38:39.2009811Z Download action repository 'actions/setup-node@v4' (SHA:49933ea5288caeca8642d1e84afbd3f7d6820020)
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:38:39.3873848Z Complete job name: run-import (PT_RIO)
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:38:39.4608081Z Node 20 is being deprecated. This workflow is running with Node 24 by default. If you need to temporarily use Node 20, you can set the ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION=true environment variable. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:38:39.4619115Z ##[group]Run actions/checkout@v4
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:38:39.4620106Z with:
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:38:39.4620787Z   repository: glauberseguros-commits/palpitacojb
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:38:39.4625566Z   token: ***
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:38:39.4626169Z   ssh-strict: true
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:38:39.4626835Z   ssh-user: git
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:38:39.4627522Z   persist-credentials: true
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:38:39.4628192Z   clean: true
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:38:39.4628788Z   sparse-checkout-cone-mode: true
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:38:39.4629464Z   fetch-depth: 1
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:38:39.4630042Z   fetch-tags: false
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:38:39.4630646Z   show-progress: true
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:38:39.4631254Z   lfs: false
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:38:39.4632014Z   submodules: false
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:38:39.4632636Z   set-safe-directory: true
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:38:39.4633558Z env:
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:38:39.4634148Z   TZ: America/Sao_Paulo
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:38:39.4634866Z   PITACO_API_BASE: https://api.palpitacojb.com.br
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:38:39.4635629Z ##[endgroup]
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:38:39.5664065Z Syncing repository: glauberseguros-commits/palpitacojb
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:38:39.5666322Z ##[group]Getting Git version info
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:38:39.5667263Z Working directory is '/home/runner/work/palpitacojb/palpitacojb'
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:38:39.5668612Z [command]/usr/bin/git version
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:38:39.5765425Z git version 2.54.0
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:38:39.5820990Z ##[endgroup]
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:38:39.5836650Z Temporarily overriding HOME='/home/runner/work/_temp/0b5a3986-6c79-42a9-9391-01eb7ab8b5e1' before making global git config changes
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:38:39.5838965Z Adding repository directory to the temporary git global config as a safe directory
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:38:39.5842267Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/palpitacojb/palpitacojb
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:38:39.5904357Z Deleting the contents of '/home/runner/work/palpitacojb/palpitacojb'
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:38:39.5909531Z ##[group]Initializing the repository
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:38:39.5915712Z [command]/usr/bin/git init /home/runner/work/palpitacojb/palpitacojb
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:38:39.6051036Z hint: Using 'master' as the name for the initial branch. This default branch name
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:38:39.6053025Z hint: will change to "main" in Git 3.0. To configure the initial branch name
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:38:39.6054990Z hint: to use in all of your new repositories, which will suppress this warning,
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:38:39.6056459Z hint: call:
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:38:39.6057171Z hint:
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:38:39.6058040Z hint: 	git config --global init.defaultBranch <name>
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:38:39.6059068Z hint:
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:38:39.6060133Z hint: Names commonly chosen instead of 'master' are 'main', 'trunk' and
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:38:39.6062859Z hint: 'development'. The just-created branch can be renamed via this command:
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:38:39.6064148Z hint:
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:38:39.6064727Z hint: 	git branch -m <name>
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:38:39.6065389Z hint:
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:38:39.6066183Z hint: Disable this message with "git config set advice.defaultBranchName false"
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:38:39.6068271Z Initialized empty Git repository in /home/runner/work/palpitacojb/palpitacojb/.git/
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:38:39.6070779Z [command]/usr/bin/git remote add origin https://github.com/glauberseguros-commits/palpitacojb
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:38:39.6119109Z ##[endgroup]
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:38:39.6120179Z ##[group]Disabling automatic garbage collection
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:38:39.6123561Z [command]/usr/bin/git config --local gc.auto 0
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:38:39.6156538Z ##[endgroup]
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:38:39.6157530Z ##[group]Setting up auth
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:38:39.6164336Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:38:39.6200603Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:38:39.6608149Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:38:39.6640963Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:38:39.6872484Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:38:39.6907708Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:38:39.7138922Z [command]/usr/bin/git config --local http.https://github.com/.extraheader AUTHORIZATION: basic ***
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:38:39.7175336Z ##[endgroup]
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:38:39.7176418Z ##[group]Fetching the repository
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:38:39.7185087Z [command]/usr/bin/git -c protocol.version=2 fetch --no-tags --prune --no-recurse-submodules --depth=1 origin +7e18dad1806dbfdb5c9e5316a602ff7a67fe59b2:refs/remotes/origin/main
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:38:40.4634374Z From https://github.com/glauberseguros-commits/palpitacojb
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:38:40.4637638Z  * [new ref]         7e18dad1806dbfdb5c9e5316a602ff7a67fe59b2 -> origin/main
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:38:40.4678043Z ##[endgroup]
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:38:40.4681194Z ##[group]Determining the checkout info
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:38:40.4684506Z ##[endgroup]
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:38:40.4688538Z [command]/usr/bin/git sparse-checkout disable
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:38:40.4739983Z [command]/usr/bin/git config --local --unset-all extensions.worktreeConfig
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:38:40.4774168Z ##[group]Checking out the ref
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:38:40.4846413Z [command]/usr/bin/git checkout --progress --force -B main refs/remotes/origin/main
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:38:40.5582495Z Switched to a new branch 'main'
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:38:40.5585170Z branch 'main' set up to track 'origin/main'.
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:38:40.5603336Z ##[endgroup]
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:38:40.5649937Z [command]/usr/bin/git log -1 --format=%H
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:38:40.5683373Z 7e18dad1806dbfdb5c9e5316a602ff7a67fe59b2
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:38:40.6093870Z Node 20 is being deprecated. This workflow is running with Node 24 by default. If you need to temporarily use Node 20, you can set the ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION=true environment variable. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:38:40.6100307Z ##[group]Run actions/setup-node@v4
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:38:40.6102240Z with:
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:38:40.6103441Z   node-version: 20
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:38:40.6104739Z   always-auth: false
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:38:40.6106065Z   check-latest: false
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:38:40.6117697Z   token: ***
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:38:40.6118909Z env:
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:38:40.6120109Z   TZ: America/Sao_Paulo
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:38:40.6121782Z   PITACO_API_BASE: https://api.palpitacojb.com.br
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:38:40.6123527Z ##[endgroup]
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:38:40.7653943Z Attempting to download 20...
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:38:40.7768792Z (node:2296) [DEP0040] DeprecationWarning: The `punycode` module is deprecated. Please use a userland alternative instead.
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:38:40.7773287Z (Use `node --trace-deprecation ...` to show where the warning was created)
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:38:41.1166433Z Acquiring 20.20.2 - x64 from https://github.com/actions/node-versions/releases/download/20.20.2-23521894959/node-20.20.2-linux-x64.tar.gz
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:38:41.4188558Z Extracting ...
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:38:41.4318263Z [command]/usr/bin/tar xz --strip 1 --warning=no-unknown-keyword --overwrite -C /home/runner/work/_temp/86f4952a-68aa-4093-9a85-16c81b8d3313 -f /home/runner/work/_temp/5c350bb2-256b-4ed4-b897-7b74d463251e
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:38:42.4697602Z Adding to the cache ...
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:38:44.3756366Z ##[group]Environment details
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:38:44.6130530Z node: v20.20.2
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:38:44.6131117Z npm: 10.8.2
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:38:44.6131932Z yarn: 1.22.22
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:38:44.6132910Z ##[endgroup]
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:38:44.6329223Z ##[group]Run npm ci
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:38:44.6329627Z ^[[36;1mnpm ci^[[0m
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:38:44.6559939Z shell: /usr/bin/bash -e ***0***
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:38:44.6560492Z env:
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:38:44.6560843Z   TZ: America/Sao_Paulo
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:38:44.6561638Z   PITACO_API_BASE: https://api.palpitacojb.com.br
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:38:44.6562268Z ##[endgroup]
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:38:48.2947160Z 
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:38:48.2955857Z added 237 packages, and audited 238 packages in 4s
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:38:48.2956386Z 
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:38:48.2956711Z 30 packages are looking for funding
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:38:48.2957213Z   run `npm fund` for details
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:38:48.3302154Z 
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:38:48.3303048Z 21 vulnerabilities (1 low, 13 moderate, 5 high, 2 critical)
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:38:48.3303523Z 
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:38:48.3303873Z To address issues that do not require attention, run:
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:38:48.3304400Z   npm audit fix
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:38:48.3304642Z 
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:38:48.3304986Z To address all issues (including breaking changes), run:
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:38:48.3305597Z   npm audit fix --force
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:38:48.3305834Z 
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:38:48.3306031Z Run `npm audit` for details.
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:38:48.3512191Z ##[group]Run node scripts/autoImportToday.js
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:38:48.3512727Z ^[[36;1mnode scripts/autoImportToday.js^[[0m
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:38:48.3546053Z shell: /usr/bin/bash -e ***0***
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:38:48.3546401Z env:
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:38:48.3546670Z   TZ: America/Sao_Paulo
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:38:48.3547040Z   PITACO_API_BASE: https://api.palpitacojb.com.br
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:38:48.3556893Z   FIREBASE_ADMIN_SA_JSON: ***
+run-import (PT_RIO)	UNKNOWN STEP	
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:38:48.3557234Z   LOTTERY: PT_RIO
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:38:48.3557545Z   FAIL_ON_CRITICAL: 1
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:38:48.3557838Z   AUDIT_WARN_MIN: 20
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:38:48.3558109Z   AUDIT_CRIT_MIN: 60
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:38:48.3558390Z ##[endgroup]
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:38:48.5613845Z [CFG] PITACO_API_BASE efetivo => https://api.palpitacojb.com.br
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:39:03.6303535Z [CAL] PT_RIO seg-sex: date=2026-07-14 dow=2 => HARD=[09,11,14,16,18,21]
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:39:03.6309812Z [AUTO] CATCH-UP pós-release 2026-07-14 slot=11:00 (HARD) releaseAt=11:29 window=11:05~11:35 (fora da janela)
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:39:03.6316116Z [AUTO] tentando 2026-07-14 slot=11:00 (HARD) window=11:05-11:35 closes=11:00,11:01,11:02,11:09,11:10,11:11
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:39:04.8279196Z [FETCH] PT_RIO 2026-07-14 per-lottery=6 -> merged_draws=2 close_hours=[09:00, 11:00]
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:39:06.5638814Z [IMPORT] API draws=2 | match_close=1 | validos=1 | draws_upserted=0 | draws_novos=0 | prizes_upserted=0 | prizes_novos=0 | skip_vazio=0 | skip_invalido=0 | skip_close=1 | skip_complete=1 | CHECK_EXISTENCE=OFF | uf=RJ lottery_key=PT_RIO | expected=1 complete=1 slotDocs=1 apiTargets=1
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:39:06.5647243Z [AUTO] FS já tem slot=11:00 COMPLETO (close=11:00) -> DONE
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:39:06.5656066Z [ALERT] HARD slot perdeu janela: date=2026-07-14 slot=09:00 releaseAt=09:29 windowEnd=09:35 tries=0
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:39:06.5657707Z [ALERT] HARD slot CRITICAL: date=2026-07-14 slot=09:00 since=189min (>=60) tries=0
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:39:06.5667414Z [AUDIT] CRITICAL missing=1 warning=0 softLate=0 (relatório salvo em auditCritical-PT_RIO-2026-07-14.json)
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:39:06.5682680Z [AUDIT] FAIL_ON_CRITICAL=1 => exit(2)
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:39:06.5755446Z ##[error]Process completed with exit code 2.
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:39:06.5921680Z Node 20 is being deprecated. This workflow is running with Node 24 by default. If you need to temporarily use Node 20, you can set the ACTIONS_ALLOW_USE_UNSECURE_NODE_VERSION=true environment variable. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:39:06.5923048Z Post job cleanup.
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:39:06.6750398Z [command]/usr/bin/git version
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:39:06.6789050Z git version 2.54.0
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:39:06.6829407Z Temporarily overriding HOME='/home/runner/work/_temp/0c27bd52-316e-4927-beee-de671f8857dc' before making global git config changes
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:39:06.6831186Z Adding repository directory to the temporary git global config as a safe directory
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:39:06.6836110Z [command]/usr/bin/git config --global --add safe.directory /home/runner/work/palpitacojb/palpitacojb
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:39:06.6873868Z [command]/usr/bin/git config --local --name-only --get-regexp core\.sshCommand
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:39:06.6909983Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'core\.sshCommand' && git config --local --unset-all 'core.sshCommand' || :"
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:39:06.7141049Z [command]/usr/bin/git config --local --name-only --get-regexp http\.https\:\/\/github\.com\/\.extraheader
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:39:06.7168263Z http.https://github.com/.extraheader
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:39:06.7179675Z [command]/usr/bin/git config --local --unset-all http.https://github.com/.extraheader
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:39:06.7210942Z [command]/usr/bin/git submodule foreach --recursive sh -c "git config --local --name-only --get-regexp 'http\.https\:\/\/github\.com\/\.extraheader' && git config --local --unset-all 'http.https://github.com/.extraheader' || :"
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:39:06.7436639Z [command]/usr/bin/git config --local --name-only --get-regexp ^includeIf\.gitdir:
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:39:06.7468101Z [command]/usr/bin/git submodule foreach --recursive git config --local --show-origin --name-only --get-regexp remote.origin.url
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:39:06.7830878Z Cleaning up orphan processes
+run-import (PT_RIO)	UNKNOWN STEP	2026-07-14T15:39:06.8117056Z ##[warning]Node.js 20 is deprecated. The following actions target Node.js 20 but are being forced to run on Node.js 24: actions/checkout@v4, actions/setup-node@v4. For more information see: https://github.blog/changelog/2025-09-19-deprecation-of-node-20-on-github-actions-runners/

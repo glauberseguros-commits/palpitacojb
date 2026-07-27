@@ -1,0 +1,19 @@
+====================================================================================================
+TOP3-UI-13 — PUBLICAÇÃO DO HISTÓRICO TOP3
+====================================================================================================
+Gerado em: 25/07/2026 22:38:09
+
+ARQUIVO:
+src/pages/Top3/Top3View.jsx
+
+BUILD: APROVADO
+COMMIT: e6926826ce949238eb9ba74a2a879c3720377fdc
+PUSH: CONCLUÍDO
+
+PUBLICADO:
+- medalha, borda e brilho somente no palpite acertado
+- resultado oficial com aparência neutra
+- coluna ACERTO com Grupo, Dezena, Centena e Milhar
+- valores do acerto vinculados ao prêmio realmente atingido
+- suporte correto para acertos no 1º, 2º ou 3º prêmio
+====================================================================================================

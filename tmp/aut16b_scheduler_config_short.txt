@@ -1,0 +1,242 @@
+{
+  "version": 2,
+  "buildCommand": null,
+  "installCommand": null,
+  "outputDirectory": "build",
+  "routes": [
+    { "src": "^/health$", "dest": "https://palpitacojb.onrender.com/health" },
+    { "src": "^/api/(.*)$", "dest": "https://palpitacojb.onrender.com/api/$1" },
+
+    { "handle": "filesystem" },
+    { "src": "/(.*)", "dest": "/index.html" }
+  ]
+}
+{
+  "backend:server": "node backend/server.js",
+  "stats:update": "node backend/workers/updateStatistics.js",
+  "dev": "react-scripts start",
+  "auto:pt_rio": "node backend/scripts/autoImportToday.js",
+  "build": "react-scripts build",
+  "eject": "react-scripts eject",
+  "test": "react-scripts test",
+  "start": "react-scripts start",
+  "auto:federal": "powershell -NoProfile -Command \"$env:LOTTERY='FEDERAL'; node backend/scripts/autoImportToday.js\"",
+  "vitenode:import": "powershell -ExecutionPolicy Bypass -File .\\tools\\run-vitenode.ps1 -Entry",
+  "build:vercel": "REACT_APP_BUILD_SHA=$VERCEL_GIT_COMMIT_SHA REACT_APP_BUILD_REF=$VERCEL_GIT_COMMIT_REF REACT_APP_BUILD_TIME=$VERCEL_BUILD_TIME react-scripts build"
+}
+{
+  "dev": "node server.js",
+  "start": "node server.js"
+}
+name: Auto Import — PalPitaco JB
+
+on:
+  schedule:
+    # Heartbeat resiliente a cada 10 minutos:
+    # UTC 00h–02h = BRT 21h–23h
+    # UTC 05h = BRT 02h
+    # UTC 10h–23h = BRT 07h–20h
+    #
+    # Um único gatilho evita colisões entre loterias.
+    # Minutos fora do início da hora reduzem atrasos do GitHub Actions.
+    - cron: "3 0-2,5,10-23 * * *"
+    - cron: "13 0-2,5,10-23 * * *"
+    - cron: "23 0-2,5,10-23 * * *"
+    - cron: "33 0-2,5,10-23 * * *"
+    - cron: "43 0-2,5,10-23 * * *"
+    - cron: "53 0-2,5,10-23 * * *"
+
+  workflow_dispatch:
+    inputs:
+      lottery:
+        description: "Qual loteria executar"
+        required: true
+        default: "ALL"
+        type: choice
+        options:
+          - ALL
+          - PT_RIO
+          - FEDERAL
+          - LOOK
+          - NACIONAL
+
+# Mantém somente uma execução ativa e uma pendente.
+# Cada execução reconcilia todas as loterias e recupera slots anteriores.
+concurrency:
+  group: auto-import-heartbeat-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+env:
+  TZ: America/Sao_Paulo
+  PITACO_API_BASE: ${{ vars.PITACO_API_BASE }}
+
+jobs:
+  reconcile-results:
+    name: Reconciliar resultados
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    defaults:
+      run:
+        working-directory: backend
+
+    steps:
+      - name: Checkout do repositório
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Instalar dependências
+        run: npm ci
+
+      - name: Importar hoje e reconciliar ontem
+        shell: bash
+        env:
+          FIREBASE_ADMIN_SA_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_JSON }}
+          FAIL_ON_CRITICAL: "1"
+          AUDIT_WARN_MIN: "20"
+          AUDIT_CRIT_MIN: "60"
+          CATCHUP_MAX_AFTER_END_MIN: "1440"
+        run: |
+          set +e
+
+          requested="${{ inputs.lottery }}"
+
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" && "$requested" != "ALL" ]]; then
+            lotteries="$requested"
+          else
+            lotteries="PT_RIO FEDERAL LOOK NACIONAL"
+          fi
+
+          yesterday="$(TZ=America/Sao_Paulo date -d 'yesterday' +%F)"
+          overall=0
+
+          run_import() {
+            local lottery="$1"
+            local period="$2"
+            shift 2
+
+            echo ""
+            echo "=================================================="
+            echo "LOTTERY=$lottery | PERIOD=$period"
+            echo "=================================================="
+
+            env LOTTERY="$lottery" "$@" node scripts/autoImportToday.js
+            local code=$?
+
+            if [[ $code -ne 0 ]]; then
+              echo "::error::Falha LOTTERY=$lottery PERIOD=$period EXIT=$code"
+              overall=1
+            fi
+          }
+
+          for lottery in $lotteries; do
+            run_import "$lottery" "TODAY"
+          done
+
+          for lottery in $lotteries; do
+            run_import \
+              "$lottery" \
+              "YESTERDAY:$yesterday" \
+              DATE="$yesterday" \
+              NOW_HM="23:59"
+          done
+
+          exit $overall
+
+  backend\scripts\autoImportToday.js:41:const WARN_AFTER_MIN = Number(process.env.AUDIT_WARN_MIN || 20);
+  backend\scripts\autoImportToday.js:42:const CRIT_AFTER_MIN = Number(process.env.AUDIT_CRIT_MIN || 60);
+> backend\scripts\autoImportToday.js:43:const FAIL_ON_CRITICAL = String(process.env.FAIL_ON_CRITICAL || "0").trim() === "1";
+  backend\scripts\autoImportToday.js:44:
+  backend\scripts\autoImportToday.js:45:// ✅ Limite de catch-up pós-janela (minutos após windowEnd)
+  backend\scripts\autoImportToday.js:46:// Default 1440: qualquer slot anterior do mesmo dia continua recuperável
+> backend\scripts\autoImportToday.js:47:const CATCHUP_MAX_AFTER_END_MIN = Number(process.env.CATCHUP_MAX_AFTER_END_MIN || 1440);
+  backend\scripts\autoImportToday.js:48:
+  backend\scripts\autoImportToday.js:49:// ✅ PROBE/SOFT da FEDERAL: limite de tentativas por slot/dia (anti-spam)
+  backend\scripts\autoImportToday.js:50:// default 2 (tenta 2 ticks e para, mesmo que o cron rode mais vezes)
+  backend\scripts\autoImportToday.js:51:const FEDERAL_SOFT_MAX_TRIES_PER_DAY = Number(process.env.FEDERAL_SOFT_MAX_TRIES_PER_DAY || 2);
+  backend\scripts\autoImportToday.js:52:
+  backend\scripts\autoImportToday.js:789:   (mantido como no seu arquivo)
+  backend\scripts\autoImportToday.js:790:========================= */
+> backend\scripts\autoImportToday.js:791:const VERIFY_PERSISTED = String(process.env.VERIFY_PERSISTED || "1").trim() === "1";
+  backend\scripts\autoImportToday.js:792:
+  backend\scripts\autoImportToday.js:793:function missingSlotsMonthFile(dateYMD) {
+  backend\scripts\autoImportToday.js:794:  const ym = String(dateYMD || "").slice(0, 7);
+  backend\scripts\autoImportToday.js:795:  return path.join(LOG_DIR, `missingSlots-${LOTTERY}-${ym}.json`);
+  backend\scripts\autoImportToday.js:796:}
+  backend\scripts\autoImportToday.js:908:
+  backend\scripts\autoImportToday.js:909:async function guardPersistedOrCritical({ date, slotHHMM, calendar, closeHourTried, meta }) {
+> backend\scripts\autoImportToday.js:910:  if (!VERIFY_PERSISTED) return { ok: true, skipped: true };
+  backend\scripts\autoImportToday.js:911:
+> backend\scripts\autoImportToday.js:912:  if (meta && (meta.mode === "ALREADY_COMPLETE" || meta.mode === "NO_DRAW")) {
+  backend\scripts\autoImportToday.js:913:    return { ok: true, skipped: true, reason: `SKIP_${meta.mode}` };
+  backend\scripts\autoImportToday.js:914:  }
+  backend\scripts\autoImportToday.js:915:
+  backend\scripts\autoImportToday.js:916:  if (meta && meta.mode === "CAPTURE_WRITE") {
+  backend\scripts\autoImportToday.js:917:    const sc = Number.isFinite(Number(meta.savedCount)) ? Number(meta.savedCount) : 0;
+  backend\scripts\autoImportToday.js:941:  );
+  backend\scripts\autoImportToday.js:942:
+> backend\scripts\autoImportToday.js:943:  if (FAIL_ON_CRITICAL) process.exitCode = 2;
+  backend\scripts\autoImportToday.js:944:
+  backend\scripts\autoImportToday.js:945:  return { ok: false, verified: false, reason: v.reason || "NOT_PERSISTED", file };
+  backend\scripts\autoImportToday.js:946:}
+  backend\scripts\autoImportToday.js:947:
+  backend\scripts\autoImportToday.js:948:/**
+  backend\scripts\autoImportToday.js:950: * realmente presentes no backend/Firestore.
+  backend\scripts\autoImportToday.js:951: */
+> backend\scripts\autoImportToday.js:952:function syncStateFromBackendSnapshot({
+  backend\scripts\autoImportToday.js:953:  state,
+  backend\scripts\autoImportToday.js:954:  statusMap,
+  backend\scripts\autoImportToday.js:955:  daySnapshot,
+  backend\scripts\autoImportToday.js:956:  isoNow,
+  backend\scripts\autoImportToday.js:957:}) {
+  backend\scripts\autoImportToday.js:996:      ok: true,
+  backend\scripts\autoImportToday.js:997:      reconciledFromBackend: true,
+> backend\scripts\autoImportToday.js:998:      reason: "BACKEND_PRESENT_HOUR",
+  backend\scripts\autoImportToday.js:999:      presentHour: hour,
+  backend\scripts\autoImportToday.js:1000:    };
+  backend\scripts\autoImportToday.js:1001:    slot.alertMissedWindow = false;
+  backend\scripts\autoImportToday.js:1002:    slot.alertCritical = false;
+  backend\scripts\autoImportToday.js:1003:
+  backend\scripts\autoImportToday.js:1231:    // O workspace do GitHub Actions é novo a cada execução.
+  backend\scripts\autoImportToday.js:1232:    // Antes de auditar, sincroniza o state local com a fonte real.
+> backend\scripts\autoImportToday.js:1233:    const syncedFromBackend = syncStateFromBackendSnapshot({
+  backend\scripts\autoImportToday.js:1234:      state,
+  backend\scripts\autoImportToday.js:1235:      statusMap,
+  backend\scripts\autoImportToday.js:1236:      daySnapshot: ds,
+  backend\scripts\autoImportToday.js:1237:      isoNow,
+  backend\scripts\autoImportToday.js:1238:    });
+  backend\scripts\autoImportToday.js:1331:        if (!afterRelease) continue;
+  backend\scripts\autoImportToday.js:1332:
+> backend\scripts\autoImportToday.js:1333:        const extraCatchup = st === "SOFT" ? Math.max(CATCHUP_MAX_AFTER_END_MIN, 360) : CATCHUP_MAX_AFTER_END_MIN;
+  backend\scripts\autoImportToday.js:1334:        const catchupLimit = w.end + extraCatchup;
+  backend\scripts\autoImportToday.js:1335:        if (nowMin > catchupLimit) continue;
+  backend\scripts\autoImportToday.js:1336:
+  backend\scripts\autoImportToday.js:1337:        const key = `${date}::${sched.hour}`;
+  backend\scripts\autoImportToday.js:1338:        if (catchupTried.has(key)) continue;
+  backend\scripts\autoImportToday.js:1481:              calendar: st,
+  backend\scripts\autoImportToday.js:1482:              closeHourTried: closeHour,
+> backend\scripts\autoImportToday.js:1483:              meta: { mode: "ALREADY_COMPLETE", alreadyCompleteAll: true },
+  backend\scripts\autoImportToday.js:1484:            });
+  backend\scripts\autoImportToday.js:1485:          } else {
+  backend\scripts\autoImportToday.js:1486:            logLine(`[AUTO] CAPTURADO slot=${sched.hour} (close=${closeHour}) saved=${savedCount} writes=${writeCount} -> DONE`, "INFO");
+  backend\scripts\autoImportToday.js:1487:            await guardPersistedOrCritical({
+  backend\scripts\autoImportToday.js:1488:              date,
+  backend\scripts\autoImportToday.js:1537:          "ERROR"
+  backend\scripts\autoImportToday.js:1538:        );
+> backend\scripts\autoImportToday.js:1539:        if (FAIL_ON_CRITICAL) {
+> backend\scripts\autoImportToday.js:1540:          logLine(`[AUDIT] FAIL_ON_CRITICAL=1 => exit(2)`, "ERROR");
+  backend\scripts\autoImportToday.js:1541:          process.exitCode = 2;
+  backend\scripts\autoImportToday.js:1542:        }
+  backend\scripts\autoImportToday.js:1543:      } else if (report.status === "warning") {
+  backend\scripts\autoImportToday.js:1544:        logLine(
+  backend\scripts\autoImportToday.js:1545:          `[AUDIT] WARNING missing=${report.warningCount} softLate=${report.softLateCount} (relatório salvo em ${path.basename(
+

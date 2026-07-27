@@ -1,0 +1,25 @@
+====================================================================================================
+MIL-SHARED-05B — CORREÇÃO DO EOF, COMMIT E PUSH
+====================================================================================================
+Gerado em: 25/07/2026 11:43:14
+
+OBJETIVO:
+- remover somente a linha vazia excedente no final do arquivo;
+- confirmar que o único diff funcional é a troca do import;
+- publicar exclusivamente top3.engine.js;
+- não alterar o motor preditivo de bichos.
+====================================================================================================
+
+NUMSTAT:
+1	1	src/pages/Top3/top3.engine.js
+
+ARQUIVO STAGED:
+src/pages/Top3/top3.engine.js
+
+COMMIT: 3c0d31c4840a033fc5c1699f88cfeabfe8337a3d
+PUSH: CONCLUÍDO
+ARQUIVO PUBLICADO: src/pages/Top3/top3.engine.js
+ALTERAÇÃO: SOMENTE CAMINHO DO IMPORT
+ALTERAÇÃO FUNCIONAL: NÃO
+MOTOR DE BICHOS ALTERADO: NÃO
+STATUS: OK

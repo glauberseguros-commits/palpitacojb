@@ -1,0 +1,100 @@
+====================================================================================================
+DEPENDÊNCIAS DO NÚCLEO TOP3
+====================================================================================================
+
+src/pages/Top3/__tests__/top3.backtest.layers.test.js
+  -> ../top3.formatters
+
+src/pages/Top3/__tests__/top3.backtest.test.js
+  -> ../top3.formatters
+
+src/pages/Top3/__tests__/top3.public-api.node.test.js
+  -> ../top3.public-api
+
+src/pages/Top3/modules/scoreEngine/contextEvidence.js
+  (sem imports)
+
+src/pages/Top3/modules/scoreEngine/evidenceEngine.js
+  -> ./frequencyEvidence
+  -> ./contextEvidence
+
+src/pages/Top3/modules/scoreEngine/frequencyEvidence.js
+  (sem imports)
+
+src/pages/Top3/modules/scoreEngine/scoreConfig.js
+  (sem imports)
+
+src/pages/Top3/modules/scoreEngine/scoreEngineV2.backup.js
+  -> ./scoreConfig
+  -> ./evidenceEngine
+
+src/pages/Top3/modules/scoreEngine/scoreEngineV2.js
+  -> ./scoreConfig
+  -> ./evidenceEngine
+
+src/pages/Top3/modules/top3.analytics.js
+  -> ../top3.formatters
+
+src/pages/Top3/modules/top3.loader.js
+  (sem imports)
+
+src/pages/Top3/modules/top3.prediction.js
+  (sem imports)
+
+src/pages/Top3/modules/top3.state.js
+  -> react
+
+src/pages/Top3/modules/top3.timeline.js
+  -> ../top3.formatters
+  -> ../../../constants/bichoMap
+
+src/pages/Top3/modules/top3.viewmodel.js
+  -> ../top3.formatters
+  -> ../top3.engine
+  -> ../../../constants/bichoMap
+
+src/pages/Top3/top3.chain.js
+  -> ./top3.formatters
+
+src/pages/Top3/top3.constants.js
+  (sem imports)
+
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js
+  -> ./modules/scoreEngine/scoreEngineV2
+
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js
+  -> ./modules/scoreEngine/scoreEngineV2
+
+src/pages/Top3/top3.engine.js
+  -> ./modules/scoreEngine/scoreEngineV2
+
+src/pages/Top3/top3.firestore.js
+  -> ../../services/firebase
+  -> ../../services/auth
+
+src/pages/Top3/top3.formatters.js
+  (sem imports)
+
+src/pages/Top3/top3.hooks.js
+  -> react
+  -> ./top3.selectors
+  -> ../../constants/bichoMap
+  -> ./modules/top3.analytics
+  -> ./modules/top3.prediction
+  -> ./modules/top3.timeline
+
+src/pages/Top3/top3.images.js
+  -> ../../constants/bichoMap
+
+src/pages/Top3/top3.public-api.js
+  (sem imports)
+
+src/pages/Top3/top3.selectors.js
+  -> ./top3.formatters
+
+src/pages/Top3/top3.storage.js
+  -> ./top3.formatters
+
+====================================================================================================
+TOTAL DE IMPORTS: 31
+====================================================================================================

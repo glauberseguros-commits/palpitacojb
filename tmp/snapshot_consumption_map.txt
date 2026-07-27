@@ -1,0 +1,244 @@
+====================================================================================================
+MAPA DE CONSUMO DOS SNAPSHOTS
+====================================================================================================
+
+backend/engine/statisticsEngine.js
+
+Linha 17
+   14:   return String(uf || "PT_RIO").trim().toUpperCase() || "PT_RIO";
+   15: }
+   16: 
+   17: function snapshotRef(db, uf, scope = "dashboard_full") {
+   18:   return db
+   19:     .collection("statistics")
+   20:     .doc(normalizeUfKey(uf))
+   21:     .collection("snapshots")
+   22:     .doc(scope);
+
+Linha 21
+   18:   return db
+   19:     .collection("statistics")
+   20:     .doc(normalizeUfKey(uf))
+   21:     .collection("snapshots")
+   22:     .doc(scope);
+   23: }
+   24: 
+   25: async function readStatisticsSnapshot({ uf = "PT_RIO", scope = "dashboard_full" } = {}) {
+   26:   const db = getAdminDb();
+
+Linha 25
+   22:     .doc(scope);
+   23: }
+   24: 
+   25: async function readStatisticsSnapshot({ uf = "PT_RIO", scope = "dashboard_full" } = {}) {
+   26:   const db = getAdminDb();
+   27:   const snap = await snapshotRef(db, uf, scope).get();
+   28: 
+   29:   if (!snap.exists) {
+   30:     return { exists: false, data: null };
+
+Linha 27
+   24: 
+   25: async function readStatisticsSnapshot({ uf = "PT_RIO", scope = "dashboard_full" } = {}) {
+   26:   const db = getAdminDb();
+   27:   const snap = await snapshotRef(db, uf, scope).get();
+   28: 
+   29:   if (!snap.exists) {
+   30:     return { exists: false, data: null };
+   31:   }
+   32: 
+
+Linha 38
+   35: 
+   36: async function writeStatisticsSnapshot({
+   37:   uf = "PT_RIO",
+   38:   scope = "dashboard_full",
+   39:   data,
+   40: } = {}) {
+   41:   const db = getAdminDb();
+   42: 
+   43:   const payload = {
+
+Linha 50
+   47:     updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+   48:   };
+   49: 
+   50:   await snapshotRef(db, uf, scope).set(payload, { merge: true });
+   51: 
+   52:   return payload;
+   53: }
+   54: 
+   55: module.exports = {
+
+Linha 59
+   56:   getAdminDb,
+   57:   safeArray,
+   58:   normalizeUfKey,
+   59:   readStatisticsSnapshot,
+   60:   writeStatisticsSnapshot,
+   61: };
+
+backend/engine/snapshotManager.js
+
+Linha 3
+    1: const { computeBounds } = require("../routes/bounds");
+    2: const {
+    3:   readStatisticsSnapshot,
+    4:   writeStatisticsSnapshot,
+    5:   getAdminDb,
+    6: } = require("./statisticsEngine");
+    7: 
+    8: const {
+
+Linha 11
+    8: const {
+    9:   readSnapshotMetadata,
+   10:   writeSnapshotMetadata,
+   11: } = require("./snapshotMetadata");
+   12: 
+   13: 
+   14: async function fetchNewDrawsAfter(db, lottery, lastProcessedDrawId, limit = 25) {
+   15:   if (!lastProcessedDrawId) {
+   16:     return {
+
+Linha 42
+   39:   };
+   40: }
+   41: 
+   42: async function updateSnapshot({
+   43:   lottery = "PT_RIO",
+   44:   force = false,
+   45: } = {}) {
+   46: 
+   47:   const db = getAdminDb();
+
+Linha 53
+   50:   const { result: bounds } = await computeBounds(db, lottery);
+   51: 
+   52:   // Snapshot existente
+   53:   const current = await readStatisticsSnapshot({
+   54:     uf: lottery,
+   55:     scope: "dashboard_full",
+   56:   });
+   57: 
+   58:   // Metadata de controle incremental
+
+Linha 55
+   52:   // Snapshot existente
+   53:   const current = await readStatisticsSnapshot({
+   54:     uf: lottery,
+   55:     scope: "dashboard_full",
+   56:   });
+   57: 
+   58:   // Metadata de controle incremental
+   59:   const metadata = await readSnapshotMetadata(lottery);
+   60: 
+
+Linha 75
+   72:       ok: true,
+   73:       lottery,
+   74:       mode: "noop",
+   75:       reason: "snapshot_already_up_to_date",
+   76:       bounds,
+   77:       metadata,
+   78:       processed: 0,
+   79:     };
+   80:   }
+
+Linha 108
+  105:       ? "force_pending"
+  106:       : "incremental_pending",
+  107:     bounds,
+  108:     snapshot: current.data || null,
+  109:     metadata,
+  110:     pendingNewDraws: pending.draws,
+  111:     pendingNewDrawsCount: pending.draws.length,
+  112:     requiresBootstrap: pending.requiresBootstrap,
+  113:     processed: 0,
+
+Linha 121
+  118: }
+  119: 
+  120: module.exports = {
+  121:   updateSnapshot,
+  122: };
+
+backend/engine/top3PredictionService.js
+
+Linha 201
+  198:           ? item.reasons.filter(Boolean)
+  199:           : [],
+  200:         signals: {
+  201:           engine: "top3_statistical_v3",
+  202:           rankPosition: index + 1,
+  203:           scoreProb: Number(item?.scoreProb || 0),
+  204:           rawScore: Number(item?.score || 0),
+  205:           meta: item?.meta || null,
+  206:         },
+
+Linha 342
+  339: 
+  340:   const metadata = {
+  341:     ...(input.metadata || {}),
+  342:     engine: "top3_statistical_v3",
+  343:     historyDraws: history.length,
+  344:     drawsToday: drawsToday.length,
+  345:     lookbackDays,
+  346:     maxDraws,
+  347:     startYmd,
+
+Linha 358
+  355:   };
+  356: 
+  357:   const engine = {
+  358:     name: "top3_statistical_v3",
+  359:     historyDraws: history.length,
+  360:     drawsToday: drawsToday.length,
+  361:     lookbackDays,
+  362:     maxDraws,
+  363:     startYmd,
+
+Linha 382
+  379:     lotteryKey,
+  380:     date,
+  381:     closeHour,
+  382:     source: input.source || "backend-top3",
+  383:     algorithm: "top3_statistical_v3",
+  384:     metadata,
+  385:     predictions,
+  386:   });
+  387: 
+
+Linha 383
+  380:     date,
+  381:     closeHour,
+  382:     source: input.source || "backend-top3",
+  383:     algorithm: "top3_statistical_v3",
+  384:     metadata,
+  385:     predictions,
+  386:   });
+  387: 
+  388:   return {
+
+backend/workers/updateStatistics.js
+
+Linha 3
+    1: "use strict";
+    2: 
+    3: const { updateSnapshot } = require("../engine/snapshotManager");
+    4: 
+    5: async function main() {
+    6:   try {
+    7:     const lottery = process.argv[2] || "PT_RIO";
+    8:     const force = String(process.argv[3] || "").toLowerCase() === "force";
+
+Linha 20
+   17:     console.log("Force....:", force);
+   18:     console.log("");
+   19: 
+   20:     const result = await updateSnapshot({
+   21:       lottery,
+   22:       force,
+   23:     });
+   24: 
+   25:     console.log("OK.......:", result.ok);

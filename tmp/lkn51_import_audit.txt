@@ -1,0 +1,19 @@
+===== EXIST╩NCIA DOS ARQUIVOS =====
+
+src\pages\Top3\top3.engine.js: OK
+src\pages\Top3\top3.formatters.js: OK
+src\pages\Top3\top3.constants.js: OK
+package.json: OK
+
+===== IMPORTS DO TOP3.ENGINE =====
+
+./modules/scoreEngine/scoreEngineV2
+
+===== PACKAGE.JSON =====
+
+type = <ausente>
+
+===== IMPORTS SEM .js =====
+
+./modules/scoreEngine/scoreEngineV2
+

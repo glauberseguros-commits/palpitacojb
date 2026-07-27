@@ -1,0 +1,1613 @@
+
+  src\pages\Top3\Top3View.jsx:1271:  );
+  src\pages\Top3\Top3View.jsx:1272:
+  src\pages\Top3\Top3View.jsx:1273:  const medal =
+  src\pages\Top3\Top3View.jsx:1274:    status !== "hit"
+  src\pages\Top3\Top3View.jsx:1275:      ? ""
+  src\pages\Top3\Top3View.jsx:1276:      : resultPosition === 1
+  src\pages\Top3\Top3View.jsx:1277:        ? "🥇"
+  src\pages\Top3\Top3View.jsx:1278:        : resultPosition === 2
+  src\pages\Top3\Top3View.jsx:1279:          ? "🥈"
+  src\pages\Top3\Top3View.jsx:1280:          : resultPosition === 3
+  src\pages\Top3\Top3View.jsx:1281:            ? "🥉"
+  src\pages\Top3\Top3View.jsx:1282:            : "";
+  src\pages\Top3\Top3View.jsx:1283:
+  src\pages\Top3\Top3View.jsx:1284:  const dateLabel = formatYmdHour(
+  src\pages\Top3\Top3View.jsx:1285:    slot?.targetYmd,
+  src\pages\Top3\Top3View.jsx:1286:    slot?.targetHour
+  src\pages\Top3\Top3View.jsx:1287:  );
+  src\pages\Top3\Top3View.jsx:1288:
+  src\pages\Top3\Top3View.jsx:1289:  return (
+  src\pages\Top3\Top3View.jsx:1290:    <div
+> src\pages\Top3\Top3View.jsx:1291:      className="timeline-compact"
+  src\pages\Top3\Top3View.jsx:1292:      title={statusDetail || statusLabel || ""}
+  src\pages\Top3\Top3View.jsx:1293:      style={{
+  src\pages\Top3\Top3View.jsx:1294:        width: "100%",
+  src\pages\Top3\Top3View.jsx:1295:        overflowX: "auto",
+  src\pages\Top3\Top3View.jsx:1296:      }}
+  src\pages\Top3\Top3View.jsx:1297:    >
+  src\pages\Top3\Top3View.jsx:1298:      <div
+> src\pages\Top3\Top3View.jsx:1299:        className="timeline-compact__twoLine"
+  src\pages\Top3\Top3View.jsx:1300:        style={{
+  src\pages\Top3\Top3View.jsx:1301:          display: "grid",
+  src\pages\Top3\Top3View.jsx:1302:          gridTemplateColumns:
+  src\pages\Top3\Top3View.jsx:1303:            "minmax(112px, 1.35fr) repeat(3, minmax(54px, 0.72fr)) minmax(82px, 0.95fr)",
+  src\pages\Top3\Top3View.jsx:1304:          alignItems: "center",
+  src\pages\Top3\Top3View.jsx:1305:          gap: "6px",
+  src\pages\Top3\Top3View.jsx:1306:          minWidth: "410px",
+  src\pages\Top3\Top3View.jsx:1307:          padding: "8px 6px",
+  src\pages\Top3\Top3View.jsx:1308:        }}
+  src\pages\Top3\Top3View.jsx:1309:      >
+  src\pages\Top3\Top3View.jsx:1310:        <div
+> src\pages\Top3\Top3View.jsx:1311:          className="timeline-compact__date"
+  src\pages\Top3\Top3View.jsx:1312:          style={{
+  src\pages\Top3\Top3View.jsx:1313:            gridRow: "1 / span 2",
+  src\pages\Top3\Top3View.jsx:1314:            alignSelf: "center",
+  src\pages\Top3\Top3View.jsx:1315:            fontSize: "12px",
+  src\pages\Top3\Top3View.jsx:1316:            fontWeight: 800,
+  src\pages\Top3\Top3View.jsx:1317:            lineHeight: 1.2,
+  src\pages\Top3\Top3View.jsx:1318:            whiteSpace: "nowrap",
+  src\pages\Top3\Top3View.jsx:1319:          }}
+  src\pages\Top3\Top3View.jsx:1320:        >
+  src\pages\Top3\Top3View.jsx:1321:          {dateLabel}
+  src\pages\Top3\Top3View.jsx:1322:        </div>
+  src\pages\Top3\Top3View.jsx:1323:
+  src\pages\Top3\Top3View.jsx:1324:        {slotTop3.map((item, idx) => {
+  src\pages\Top3\Top3View.jsx:1325:          const grupo = Number(item?.grupo);
+  src\pages\Top3\Top3View.jsx:1326:
+  src\pages\Top3\Top3View.jsx:1327:          const animal = String(
+  src\pages\Top3\Top3View.jsx:1328:            item?.animal ||
+  src\pages\Top3\Top3View.jsx:1329:              getAnimalLabel(grupo) ||
+  src\pages\Top3\Top3View.jsx:1330:              ""
+  src\pages\Top3\Top3View.jsx:1331:          ).trim();
+  src\pages\Top3\Top3View.jsx:1332:
+  src\pages\Top3\Top3View.jsx:1333:          const img = Number.isFinite(grupo)
+  src\pages\Top3\Top3View.jsx:1334:            ? getImgFromGrupo(grupo, 64)
+  src\pages\Top3\Top3View.jsx:1335:            : "";
+  src\pages\Top3\Top3View.jsx:1336:
+  src\pages\Top3\Top3View.jsx:1337:          const isMatched =
+  src\pages\Top3\Top3View.jsx:1338:            status === "hit" &&
+  src\pages\Top3\Top3View.jsx:1339:            matchedPredictionIndex === idx;
+  src\pages\Top3\Top3View.jsx:1340:
+  src\pages\Top3\Top3View.jsx:1341:          return (
+  src\pages\Top3\Top3View.jsx:1342:            <div
+  src\pages\Top3\Top3View.jsx:1343:              key={`${String(
+  src\pages\Top3\Top3View.jsx:1344:                slot?.targetYmd || "y"
+  src\pages\Top3\Top3View.jsx:1345:              )}_${String(
+  src\pages\Top3\Top3View.jsx:1346:                slot?.targetHour || "h"
+  src\pages\Top3\Top3View.jsx:1347:              )}_${idx}_${grupo}`}
+> src\pages\Top3\Top3View.jsx:1348:              className={`timeline-compact__pick ${
+  src\pages\Top3\Top3View.jsx:1349:                isMatched
+> src\pages\Top3\Top3View.jsx:1350:                  ? "timeline-compact__pick--matched"
+  src\pages\Top3\Top3View.jsx:1351:                  : ""
+  src\pages\Top3\Top3View.jsx:1352:              }`}
+  src\pages\Top3\Top3View.jsx:1353:              style={{
+  src\pages\Top3\Top3View.jsx:1354:                display: "grid",
+  src\pages\Top3\Top3View.jsx:1355:                gridTemplateRows: "34px 18px",
+  src\pages\Top3\Top3View.jsx:1356:                justifyItems: "center",
+  src\pages\Top3\Top3View.jsx:1357:                alignItems: "center",
+  src\pages\Top3\Top3View.jsx:1358:                minWidth: 0,
+  src\pages\Top3\Top3View.jsx:1359:                padding: 0,
+  src\pages\Top3\Top3View.jsx:1360:                border: "none",
+  src\pages\Top3\Top3View.jsx:1361:                background: "transparent",
+  src\pages\Top3\Top3View.jsx:1362:              }}
+  src\pages\Top3\Top3View.jsx:1363:              title={`${animal || "Animal"} — G${formatGrupo(
+  src\pages\Top3\Top3View.jsx:1364:                grupo
+  src\pages\Top3\Top3View.jsx:1365:              )}`}
+  src\pages\Top3\Top3View.jsx:1366:            >
+  src\pages\Top3\Top3View.jsx:1367:              <div
+  src\pages\Top3\Top3View.jsx:1368:                style={{
+  src\pages\Top3\Top3View.jsx:1369:                  position: "relative",
+  src\pages\Top3\Top3View.jsx:1370:                  display: "flex",
+  src\pages\Top3\Top3View.jsx:1371:                  alignItems: "center",
+  src\pages\Top3\Top3View.jsx:1372:                  justifyContent: "center",
+  src\pages\Top3\Top3View.jsx:1373:                }}
+  src\pages\Top3\Top3View.jsx:1374:              >
+  src\pages\Top3\Top3View.jsx:1375:                <ImgWithFallback
+  src\pages\Top3\Top3View.jsx:1376:                  srcs={img ? [img] : []}
+  src\pages\Top3\Top3View.jsx:1377:                  alt={
+  src\pages\Top3\Top3View.jsx:1378:                    animal ||
+  src\pages\Top3\Top3View.jsx:1379:                    `G${formatGrupo(grupo)}`
+  src\pages\Top3\Top3View.jsx:1380:                  }
+  src\pages\Top3\Top3View.jsx:1381:                  size={34}
+  src\pages\Top3\Top3View.jsx:1382:                  style={{
+  src\pages\Top3\Top3View.jsx:1383:                    borderRadius: 8,
+  src\pages\Top3\Top3View.jsx:1384:                    outline: isMatched
+  src\pages\Top3\Top3View.jsx:1385:                      ? "2px solid rgba(201,168,62,0.95)"
+  src\pages\Top3\Top3View.jsx:1386:                      : "none",
+  src\pages\Top3\Top3View.jsx:1387:                    outlineOffset: 1,
+  src\pages\Top3\Top3View.jsx:1388:                  }}
+  src\pages\Top3\Top3View.jsx:1389:                />
+  src\pages\Top3\Top3View.jsx:1390:
+  src\pages\Top3\Top3View.jsx:1404:                    {medal}
+  src\pages\Top3\Top3View.jsx:1405:                  </span>
+  src\pages\Top3\Top3View.jsx:1406:                ) : null}
+  src\pages\Top3\Top3View.jsx:1407:              </div>
+  src\pages\Top3\Top3View.jsx:1408:
+  src\pages\Top3\Top3View.jsx:1409:              <div
+  src\pages\Top3\Top3View.jsx:1410:                style={{
+  src\pages\Top3\Top3View.jsx:1411:                  fontSize: "12px",
+  src\pages\Top3\Top3View.jsx:1412:                  fontWeight: 900,
+  src\pages\Top3\Top3View.jsx:1413:                  lineHeight: 1,
+  src\pages\Top3\Top3View.jsx:1414:                  whiteSpace: "nowrap",
+  src\pages\Top3\Top3View.jsx:1415:                }}
+  src\pages\Top3\Top3View.jsx:1416:              >
+  src\pages\Top3\Top3View.jsx:1417:                G{formatGrupo(grupo)}
+  src\pages\Top3\Top3View.jsx:1418:              </div>
+  src\pages\Top3\Top3View.jsx:1419:            </div>
+  src\pages\Top3\Top3View.jsx:1420:          );
+  src\pages\Top3\Top3View.jsx:1421:        })}
+  src\pages\Top3\Top3View.jsx:1422:
+  src\pages\Top3\Top3View.jsx:1423:        <div
+> src\pages\Top3\Top3View.jsx:1424:          className="timeline-compact__official"
+  src\pages\Top3\Top3View.jsx:1425:          style={{
+  src\pages\Top3\Top3View.jsx:1426:            display: "grid",
+  src\pages\Top3\Top3View.jsx:1427:            gridTemplateRows: "34px 18px",
+  src\pages\Top3\Top3View.jsx:1428:            justifyItems: "center",
+  src\pages\Top3\Top3View.jsx:1429:            alignItems: "center",
+  src\pages\Top3\Top3View.jsx:1430:            minWidth: 0,
+  src\pages\Top3\Top3View.jsx:1431:            paddingLeft: "6px",
+  src\pages\Top3\Top3View.jsx:1432:            borderLeft:
+  src\pages\Top3\Top3View.jsx:1433:              "1px solid rgba(255,255,255,0.14)",
+  src\pages\Top3\Top3View.jsx:1434:          }}
+  src\pages\Top3\Top3View.jsx:1435:          title={
+  src\pages\Top3\Top3View.jsx:1436:            hasResult
+  src\pages\Top3\Top3View.jsx:1437:              ? `${resultAnimal} — G${formatGrupo(
+  src\pages\Top3\Top3View.jsx:1438:                  resultGrupo
+  src\pages\Top3\Top3View.jsx:1439:                )}${
+  src\pages\Top3\Top3View.jsx:1440:                  resultMilhar
+  src\pages\Top3\Top3View.jsx:1441:                    ? ` — ${resultMilhar}`
+  src\pages\Top3\Top3View.jsx:1442:                    : ""
+  src\pages\Top3\Top3View.jsx:1443:                }`
+  src\pages\Top3\Top3View.jsx:1444:              : "Resultado pendente"
+  src\pages\Top3\Top3View.jsx:1445:          }
+  src\pages\Top3\Top3View.jsx:1446:        >
+  src\pages\Top3\Top3View.jsx:1447:          {hasResult ? (
+  src\pages\Top3\Top3View.jsx:1448:            <>
+  src\pages\Top3\Top3View.jsx:1449:              <ImgWithFallback
+  src\pages\Top3\Top3View.jsx:1450:                srcs={resultImg ? [resultImg] : []}
+  src\pages\Top3\Top3View.jsx:1451:                alt={resultAnimal}
+  src\pages\Top3\Top3View.jsx:1452:                size={34}
+  src\pages\Top3\Top3View.jsx:1453:                style={{ borderRadius: 8 }}
+  src\pages\Top3\Top3View.jsx:1454:              />
+  src\pages\Top3\Top3View.jsx:1455:
+  src\pages\Top3\Top3View.jsx:1456:              <div
+  src\pages\Top3\Top3View.jsx:1457:                style={{
+  src\pages\Top3\Top3View.jsx:1458:                  fontSize: "11px",
+  src\pages\Top3\Top3View.jsx:1459:                  fontWeight: 900,
+  src\pages\Top3\Top3View.jsx:1460:                  lineHeight: 1,
+  src\pages\Top3\Top3View.jsx:1461:                  whiteSpace: "nowrap",
+  src\pages\Top3\Top3View.jsx:1462:                }}
+  src\pages\Top3\Top3View.jsx:1463:              >
+  src\pages\Top3\Top3View.jsx:1464:                G{formatGrupo(resultGrupo)}
+  src\pages\Top3\Top3View.jsx:1468:              </div>
+  src\pages\Top3\Top3View.jsx:1469:            </>
+  src\pages\Top3\Top3View.jsx:1470:          ) : (
+  src\pages\Top3\Top3View.jsx:1471:            <div
+  src\pages\Top3\Top3View.jsx:1472:              style={{
+  src\pages\Top3\Top3View.jsx:1473:                gridRow: "1 / span 2",
+  src\pages\Top3\Top3View.jsx:1474:                alignSelf: "center",
+  src\pages\Top3\Top3View.jsx:1475:                fontSize: "10px",
+  src\pages\Top3\Top3View.jsx:1476:                fontWeight: 800,
+  src\pages\Top3\Top3View.jsx:1477:              }}
+  src\pages\Top3\Top3View.jsx:1478:            >
+  src\pages\Top3\Top3View.jsx:1479:              PENDENTE
+  src\pages\Top3\Top3View.jsx:1480:            </div>
+  src\pages\Top3\Top3View.jsx:1481:          )}
+  src\pages\Top3\Top3View.jsx:1482:        </div>
+  src\pages\Top3\Top3View.jsx:1483:      </div>
+  src\pages\Top3\Top3View.jsx:1484:    </div>
+  src\pages\Top3\Top3View.jsx:1485:  );
+  src\pages\Top3\Top3View.jsx:1486:}
+  src\pages\Top3\Top3View.jsx:1487:
+> src\pages\Top3\Top3View.jsx:1488:function TimelineSlot({
+  src\pages\Top3\Top3View.jsx:1489:  slot,
+  src\pages\Top3\Top3View.jsx:1490:  theme,
+  src\pages\Top3\Top3View.jsx:1491:  copiedAllKey,
+  src\pages\Top3\Top3View.jsx:1492:  copiedCellKey,
+  src\pages\Top3\Top3View.jsx:1493:  setCopiedAllKey,
+  src\pages\Top3\Top3View.jsx:1494:  setCopiedCellKey,
+  src\pages\Top3\Top3View.jsx:1495:  copyText,
+  src\pages\Top3\Top3View.jsx:1496:  build16,
+  src\pages\Top3\Top3View.jsx:1497:  buildMilhares,
+  src\pages\Top3\Top3View.jsx:1498:  build20,
+  src\pages\Top3\Top3View.jsx:1499:}) {
+  src\pages\Top3\Top3View.jsx:1500:  const t = theme;
+  src\pages\Top3\Top3View.jsx:1501:  const slotTop3 = Array.isArray(slot?.top3) ? slot.top3.slice(0, 3) : [];
+  src\pages\Top3\Top3View.jsx:1502:
+  src\pages\Top3\Top3View.jsx:1503:  const resultGrupo = getSlotResultGrupo(slot);
+  src\pages\Top3\Top3View.jsx:1504:  const hasResult = hasOfficialResult(slot);
+  src\pages\Top3\Top3View.jsx:1505:  const resultAnimal =
+  src\pages\Top3\Top3View.jsx:1506:    hasResult && Number.isFinite(resultGrupo)
+  src\pages\Top3\Top3View.jsx:1507:      ? String(getAnimalLabel(resultGrupo) || "")
+  src\pages\Top3\Top3View.jsx:1508:      : "";
+  src\pages\Top3\Top3View.jsx:1509:
+  src\pages\Top3\Top3View.jsx:1510:  const officialPodium = getOfficialPodium(slot);
+  src\pages\Top3\Top3View.jsx:1511:
+  src\pages\Top3\Top3View.jsx:1512:  const analysis = analyzeTop3Hit(
+  src\pages\Top3\Top3View.jsx:1513:    slotTop3,
+  src\pages\Top3\Top3View.jsx:1514:    officialPodium
+  src\pages\Top3\Top3View.jsx:1515:  );
+  src\pages\Top3\Top3View.jsx:1516:
+  src\pages\Top3\Top3View.jsx:1517:  const status =
+  src\pages\Top3\Top3View.jsx:1518:    !hasResult
+  src\pages\Top3\Top3View.jsx:1519:      ? "pending"
+  src\pages\Top3\Top3View.jsx:1520:      : analysis.type === "miss"
+  src\pages\Top3\Top3View.jsx:1521:        ? "miss"
+  src\pages\Top3\Top3View.jsx:1522:        : "hit";
+  src\pages\Top3\Top3View.jsx:1523:
+  src\pages\Top3\Top3View.jsx:1524:  const statusLabel =
+  src\pages\Top3\Top3View.jsx:1525:    !hasResult
+  src\pages\Top3\Top3View.jsx:1526:      ? "⏳ PENDENTE"
+  src\pages\Top3\Top3View.jsx:1527:      : analysis.type === "hit_exact"
+  src\pages\Top3\Top3View.jsx:1528:        ? "🎯 MILHAR (100%)"
+  src\pages\Top3\Top3View.jsx:1530:          ? "🟡 CENTENA (66,67%)"
+  src\pages\Top3\Top3View.jsx:1531:          : analysis.type === "hit_grupo"
+  src\pages\Top3\Top3View.jsx:1532:            ? "✅ DEZENA/GRUPO (33,33%)"
+  src\pages\Top3\Top3View.jsx:1533:            : "❌ ERRO (0%)";
+  src\pages\Top3\Top3View.jsx:1534:
+  src\pages\Top3\Top3View.jsx:1535:  const statusDetail =
+  src\pages\Top3\Top3View.jsx:1536:    !hasResult
+  src\pages\Top3\Top3View.jsx:1537:      ? "Aguardando resultado oficial."
+  src\pages\Top3\Top3View.jsx:1538:      : analysis.type === "hit_exact"
+  src\pages\Top3\Top3View.jsx:1539:        ? `Milhar exata acertada no palpite #${analysis.position}.`
+  src\pages\Top3\Top3View.jsx:1540:        : analysis.type === "hit_centena"
+  src\pages\Top3\Top3View.jsx:1541:          ? `Centena acertada no palpite #${analysis.position}.`
+  src\pages\Top3\Top3View.jsx:1542:          : analysis.type === "hit_grupo"
+  src\pages\Top3\Top3View.jsx:1543:            ? `Grupo acertado no palpite #${analysis.position}.`
+  src\pages\Top3\Top3View.jsx:1544:            : "Nenhum dos 3 palpites foi sorteado.";
+  src\pages\Top3\Top3View.jsx:1545:
+  src\pages\Top3\Top3View.jsx:1546:  return (
+  src\pages\Top3\Top3View.jsx:1547:    <section className="top3-shell">
+  src\pages\Top3\Top3View.jsx:1548:      {status === "pending" ? (
+  src\pages\Top3\Top3View.jsx:1549:        <>
+> src\pages\Top3\Top3View.jsx:1550:          <div className="timeline-slot__header">
+> src\pages\Top3\Top3View.jsx:1551:            <div className="timeline-slot__title">
+  src\pages\Top3\Top3View.jsx:1552:              {formatYmdHour(
+  src\pages\Top3\Top3View.jsx:1553:                slot?.targetYmd,
+  src\pages\Top3\Top3View.jsx:1554:                slot?.targetHour
+  src\pages\Top3\Top3View.jsx:1555:              )}
+  src\pages\Top3\Top3View.jsx:1556:            </div>
+  src\pages\Top3\Top3View.jsx:1557:
+  src\pages\Top3\Top3View.jsx:1558:            <div
+> src\pages\Top3\Top3View.jsx:1559:              className={`timeline-slot__badge timeline-slot__badge--${status}`}
+  src\pages\Top3\Top3View.jsx:1560:            >
+  src\pages\Top3\Top3View.jsx:1561:              {statusLabel}
+  src\pages\Top3\Top3View.jsx:1562:            </div>
+  src\pages\Top3\Top3View.jsx:1563:          </div>
+  src\pages\Top3\Top3View.jsx:1564:
+> src\pages\Top3\Top3View.jsx:1565:          <div className="timeline-slot__metaGrid">
+  src\pages\Top3\Top3View.jsx:1566:            <div className="top3-metaItem">
+  src\pages\Top3\Top3View.jsx:1567:              <div className="top3-metaItem__label">
+  src\pages\Top3\Top3View.jsx:1568:                Base usada
+  src\pages\Top3\Top3View.jsx:1569:              </div>
+  src\pages\Top3\Top3View.jsx:1570:
+  src\pages\Top3\Top3View.jsx:1571:              <div className="top3-metaItem__value">
+  src\pages\Top3\Top3View.jsx:1572:                {formatYmdHour(
+  src\pages\Top3\Top3View.jsx:1573:                  slot?.baseYmd,
+  src\pages\Top3\Top3View.jsx:1574:                  slot?.baseHour
+  src\pages\Top3\Top3View.jsx:1575:                )}
+  src\pages\Top3\Top3View.jsx:1576:              </div>
+  src\pages\Top3\Top3View.jsx:1577:            </div>
+  src\pages\Top3\Top3View.jsx:1578:
+  src\pages\Top3\Top3View.jsx:1579:            <div className="top3-metaItem">
+  src\pages\Top3\Top3View.jsx:1580:              <div className="top3-metaItem__label">
+  src\pages\Top3\Top3View.jsx:1581:                Resultado real
+  src\pages\Top3\Top3View.jsx:1582:              </div>
+  src\pages\Top3\Top3View.jsx:1583:
+  src\pages\Top3\Top3View.jsx:1584:              <div className="top3-metaItem__value">
+  src\pages\Top3\Top3View.jsx:1585:                {hasResult
+  src\pages\Top3\Top3View.jsx:1586:                  ? `G${formatGrupo(
+  src\pages\Top3\Top3View.jsx:1587:                      resultGrupo
+  src\pages\Top3\Top3View.jsx:1588:                    )} • ${resultAnimal.toUpperCase()}`
+  src\pages\Top3\Top3View.jsx:1589:                  : "Pendente"}
+  src\pages\Top3\Top3View.jsx:1590:              </div>
+  src\pages\Top3\Top3View.jsx:1591:            </div>
+  src\pages\Top3\Top3View.jsx:1592:
+  src\pages\Top3\Top3View.jsx:1593:            <div className="top3-metaItem">
+  src\pages\Top3\Top3View.jsx:1594:              <div className="top3-metaItem__label">
+  src\pages\Top3\Top3View.jsx:1595:                Status
+  src\pages\Top3\Top3View.jsx:1596:              </div>
+  src\pages\Top3\Top3View.jsx:1597:
+  src\pages\Top3\Top3View.jsx:1598:              <div className="top3-metaItem__value">
+  src\pages\Top3\Top3View.jsx:1599:                {statusDetail}
+  src\pages\Top3\Top3View.jsx:1600:              </div>
+  src\pages\Top3\Top3View.jsx:1601:            </div>
+  src\pages\Top3\Top3View.jsx:1602:          </div>
+  src\pages\Top3\Top3View.jsx:1603:        </>
+  src\pages\Top3\Top3View.jsx:1604:      ) : null}
+  src\pages\Top3\Top3View.jsx:1605:
+  src\pages\Top3\Top3View.jsx:1606:      {!slotTop3.length ? (
+  src\pages\Top3\Top3View.jsx:1607:        <div className="top3-empty">Sem Top3 calculado para este horário.</div>
+  src\pages\Top3\Top3View.jsx:1608:      ) : status === "pending" ? (
+> src\pages\Top3\Top3View.jsx:1609:        <div className="timeline-slot__cards">
+  src\pages\Top3\Top3View.jsx:1610:          {slotTop3.map((item, i) => (
+  src\pages\Top3\Top3View.jsx:1611:            <Top3Card
+  src\pages\Top3\Top3View.jsx:1612:              key={`${slot?.targetYmd || "y"}_${slot?.targetHour || "h"}_${String(item?.grupo ?? i)}`}
+  src\pages\Top3\Top3View.jsx:1613:              item={item}
+  src\pages\Top3\Top3View.jsx:1614:              idx={i}
+  src\pages\Top3\Top3View.jsx:1615:              theme={t}
+  src\pages\Top3\Top3View.jsx:1616:              copiedAllKey={copiedAllKey}
+  src\pages\Top3\Top3View.jsx:1617:              copiedCellKey={copiedCellKey}
+  src\pages\Top3\Top3View.jsx:1618:              setCopiedAllKey={setCopiedAllKey}
+  src\pages\Top3\Top3View.jsx:1619:              setCopiedCellKey={setCopiedCellKey}
+  src\pages\Top3\Top3View.jsx:1620:              copyText={copyText}
+  src\pages\Top3\Top3View.jsx:1621:              build16={build16}
+  src\pages\Top3\Top3View.jsx:1622:              buildMilhares={buildMilhares}
+  src\pages\Top3\Top3View.jsx:1623:              build20={build20}
+  src\pages\Top3\Top3View.jsx:1624:            />
+  src\pages\Top3\Top3View.jsx:1625:          ))}
+  src\pages\Top3\Top3View.jsx:1626:        </div>
+  src\pages\Top3\Top3View.jsx:1627:      ) : (
+  src\pages\Top3\Top3View.jsx:1628:        <CompactTop3Result
+  src\pages\Top3\Top3View.jsx:1629:          slot={slot}
+  src\pages\Top3\Top3View.jsx:1630:          status={status}
+  src\pages\Top3\Top3View.jsx:1631:          statusLabel={statusLabel}
+  src\pages\Top3\Top3View.jsx:1632:          statusDetail={statusDetail}
+  src\pages\Top3\Top3View.jsx:1633:          analysis={analysis}
+  src\pages\Top3\Top3View.jsx:1634:        />
+  src\pages\Top3\Top3View.jsx:1635:      )}
+  src\pages\Top3\Top3View.jsx:1636:    </section>
+  src\pages\Top3\Top3View.jsx:1637:  );
+  src\pages\Top3\Top3View.jsx:1638:}
+  src\pages\Top3\Top3View.jsx:1639:
+  src\pages\Top3\Top3View.jsx:1640:export default function Top3View(props) {
+  src\pages\Top3\Top3View.jsx:1641:  const {
+  src\pages\Top3\Top3View.jsx:1642:    loading,
+  src\pages\Top3\Top3View.jsx:1643:    error,
+> src\pages\Top3\Top3View.jsx:1644:    timelineTop3,
+  src\pages\Top3\Top3View.jsx:1645:    persistedTop3History,
+  src\pages\Top3\Top3View.jsx:1646:    availableHistoryDates: controllerHistoryDates,
+  src\pages\Top3\Top3View.jsx:1647:    top3,
+  src\pages\Top3\Top3View.jsx:1648:    layerMetaText,
+  src\pages\Top3\Top3View.jsx:1649:    lastLabel,
+  src\pages\Top3\Top3View.jsx:1650:    prevLabel,
+  src\pages\Top3\Top3View.jsx:1651:    theme,
+  src\pages\Top3\Top3View.jsx:1652:    LOTTERY_OPTIONS,
+  src\pages\Top3\Top3View.jsx:1653:    lotteryKeySafe,
+  src\pages\Top3\Top3View.jsx:1654:    setLotteryKey,
+  src\pages\Top3\Top3View.jsx:1655:    setYmd,
+  src\pages\Top3\Top3View.jsx:1656:    build16,
+  src\pages\Top3\Top3View.jsx:1657:    buildMilhares,
+  src\pages\Top3\Top3View.jsx:1658:    build20,
+  src\pages\Top3\Top3View.jsx:1659:    analysisYmd,
+  src\pages\Top3\Top3View.jsx:1660:    analysisHourBucket,
+  src\pages\Top3\Top3View.jsx:1661:    loadedYmd,
+  src\pages\Top3\Top3View.jsx:1662:    ymdSafe,
+  src\pages\Top3\Top3View.jsx:1663:    lastHourBucket,
+  src\pages\Top3\Top3View.jsx:1664:  } = props || {};
+  src\pages\Top3\Top3View.jsx:1665:
+  src\pages\Top3\Top3View.jsx:1666:  // TODO_BACKTEST_REAL
+  src\pages\Top3\Top3View.jsx:1667:// Os cards estatísticos deverão consumir auditTop3Backtest()
+  src\pages\Top3\Top3View.jsx:1668:// evitando cálculos paralelos na interface.
+  src\pages\Top3\Top3View.jsx:1669://
+  src\pages\Top3\Top3View.jsx:1670:// Fase atual:
+  src\pages\Top3\Top3View.jsx:1671:// apenas corrigindo nomenclatura para refletir o cálculo existente.
+  src\pages\Top3\Top3View.jsx:1672:
+  src\pages\Top3\Top3View.jsx:1673:const list = Array.isArray(top3)
+  src\pages\Top3\Top3View.jsx:1674:  ? top3.slice(0, 3)
+  src\pages\Top3\Top3View.jsx:1675:  : [];
+> src\pages\Top3\Top3View.jsx:1676:  const timeline = (Array.isArray(timelineTop3) ? timelineTop3 : [])
+  src\pages\Top3\Top3View.jsx:1677:  .slice()
+  src\pages\Top3\Top3View.jsx:1678:  .sort((a, b) => {
+  src\pages\Top3\Top3View.jsx:1679:    const ta = `${a?.targetYmd || ""} ${a?.targetHour || ""}`;
+  src\pages\Top3\Top3View.jsx:1680:    const tb = `${b?.targetYmd || ""} ${b?.targetHour || ""}`;
+  src\pages\Top3\Top3View.jsx:1681:    return ta.localeCompare(tb);
+  src\pages\Top3\Top3View.jsx:1682:  });
+  src\pages\Top3\Top3View.jsx:1683:
+> src\pages\Top3\Top3View.jsx:1684:  const showDetailedTimeline = false;
+  src\pages\Top3\Top3View.jsx:1685:
+  src\pages\Top3\Top3View.jsx:1686:  const meta = useMemo(() => {
+  src\pages\Top3\Top3View.jsx:1687:    const last = lastLabel || "—";
+  src\pages\Top3\Top3View.jsx:1688:    const prev = prevLabel || "—";
+  src\pages\Top3\Top3View.jsx:1689:    const layer = cleanLayerText(layerMetaText || "—");
+  src\pages\Top3\Top3View.jsx:1690:    return { last, prev, layer };
+  src\pages\Top3\Top3View.jsx:1691:  }, [lastLabel, prevLabel, layerMetaText]);
+  src\pages\Top3\Top3View.jsx:1692:
+  src\pages\Top3\Top3View.jsx:1693:  const headerBase = useMemo(() => meta.last || "—", [meta.last]);
+  src\pages\Top3\Top3View.jsx:1694:
+  src\pages\Top3\Top3View.jsx:1695:  const headerForecast = useMemo(() => {
+  src\pages\Top3\Top3View.jsx:1696:    return formatYmdHour(analysisYmd, analysisHourBucket);
+  src\pages\Top3\Top3View.jsx:1697:  }, [analysisYmd, analysisHourBucket]);
+  src\pages\Top3\Top3View.jsx:1698:
+  src\pages\Top3\Top3View.jsx:1699:  const headerTransition = useMemo(() => {
+  src\pages\Top3\Top3View.jsx:1700:    const from = String(lastHourBucket || "").trim();
+  src\pages\Top3\Top3View.jsx:1701:    const to = String(analysisHourBucket || "").trim();
+  src\pages\Top3\Top3View.jsx:1702:    if (from && to) return `${from} → ${to}`;
+  src\pages\Top3\Top3View.jsx:1703:    return "—";
+  src\pages\Top3\Top3View.jsx:1704:  }, [lastHourBucket, analysisHourBucket]);
+  src\pages\Top3\Top3View.jsx:1705:
+  src\pages\Top3\Top3View.jsx:1706:  const t = theme || {
+  src\pages\Top3\Top3View.jsx:1707:    bg: "#050505",
+  src\pages\Top3\Top3View.jsx:1708:    panel: "rgba(0,0,0,0.55)",
+  src\pages\Top3\Top3View.jsx:1709:    border: "rgba(255,255,255,0.18)",
+  src\pages\Top3\Top3View.jsx:1710:    text: "rgba(255,255,255,0.92)",
+  src\pages\Top3\Top3View.jsx:1711:    muted: "rgba(255,255,255,0.72)",
+  src\pages\Top3\Top3View.jsx:1712:    accent: "rgba(201,168,62,0.92)",
+  src\pages\Top3\Top3View.jsx:1713:  };
+  src\pages\Top3\Top3View.jsx:1714:
+  src\pages\Top3\Top3View.jsx:1715:  const [copiedAllKey, setCopiedAllKey] = useState("");
+  src\pages\Top3\Top3View.jsx:1716:  const [copiedCellKey, setCopiedCellKey] = useState("");
+  src\pages\Top3\Top3View.jsx:1717:
+  src\pages\Top3\Top3View.jsx:1718:
+  src\pages\Top3\Top3View.jsx:1719:  useEffect(() => {
+  src\pages\Top3\Top3View.jsx:1720:    if (!copiedAllKey) return;
+  src\pages\Top3\Top3View.jsx:1721:    const id = setTimeout(() => setCopiedAllKey(""), 900);
+  src\pages\Top3\Top3View.jsx:1722:    return () => clearTimeout(id);
+  src\pages\Top3\Top3View.jsx:1723:  }, [copiedAllKey]);
+  src\pages\Top3\Top3View.jsx:1724:
+  src\pages\Top3\Top3View.jsx:1796:          "LOOK",
+  src\pages\Top3\Top3View.jsx:1797:          "NACIONAL",
+  src\pages\Top3\Top3View.jsx:1798:        ].includes(
+  src\pages\Top3\Top3View.jsx:1799:          String(
+  src\pages\Top3\Top3View.jsx:1800:            x?.value || ""
+  src\pages\Top3\Top3View.jsx:1801:          ).toUpperCase()
+  src\pages\Top3\Top3View.jsx:1802:        )
+  src\pages\Top3\Top3View.jsx:1803:    ),
+  src\pages\Top3\Top3View.jsx:1804:  ].filter(Boolean);
+  src\pages\Top3\Top3View.jsx:1805:
+  src\pages\Top3\Top3View.jsx:1806:  const curLot = String(lotteryKeySafe || "PT_RIO").toUpperCase();
+  src\pages\Top3\Top3View.jsx:1807:  const visibleTop3 = list.slice(0, 3);
+  src\pages\Top3\Top3View.jsx:1808:
+  src\pages\Top3\Top3View.jsx:1809:  const historyAnchorYmd = useMemo(() => {
+  src\pages\Top3\Top3View.jsx:1810:  const loaded = String(loadedYmd || "").trim();
+  src\pages\Top3\Top3View.jsx:1811:  if (isYMD(loaded)) return loaded;
+  src\pages\Top3\Top3View.jsx:1812:
+  src\pages\Top3\Top3View.jsx:1813:  const selected = String(ymdSafe || "").trim();
+  src\pages\Top3\Top3View.jsx:1814:  if (isYMD(selected)) return selected;
+  src\pages\Top3\Top3View.jsx:1815:
+> src\pages\Top3\Top3View.jsx:1816:  const realized = (Array.isArray(timeline) ? timeline : [])
+> src\pages\Top3\Top3View.jsx:1817:    .filter((slot) => String(slot?.status || "").toLowerCase() === "validated")
+  src\pages\Top3\Top3View.jsx:1818:    .slice()
+  src\pages\Top3\Top3View.jsx:1819:    .sort((a, b) => {
+  src\pages\Top3\Top3View.jsx:1820:      const ta = `${a?.targetYmd || ""} ${a?.targetHour || ""}`;
+  src\pages\Top3\Top3View.jsx:1821:      const tb = `${b?.targetYmd || ""} ${b?.targetHour || ""}`;
+  src\pages\Top3\Top3View.jsx:1822:      return tb.localeCompare(ta);
+  src\pages\Top3\Top3View.jsx:1823:    });
+  src\pages\Top3\Top3View.jsx:1824:
+  src\pages\Top3\Top3View.jsx:1825:  const fallback = String(realized?.[0]?.targetYmd || "").trim();
+  src\pages\Top3\Top3View.jsx:1826:  return isYMD(fallback) ? fallback : "";
+> src\pages\Top3\Top3View.jsx:1827:}, [loadedYmd, ymdSafe, timeline]);
+  src\pages\Top3\Top3View.jsx:1828:
+  src\pages\Top3\Top3View.jsx:1829:  const historyRows = useMemo(() => {
+  src\pages\Top3\Top3View.jsx:1830:    const persistedRows = (
+  src\pages\Top3\Top3View.jsx:1831:      Array.isArray(persistedTop3History)
+  src\pages\Top3\Top3View.jsx:1832:        ? persistedTop3History
+  src\pages\Top3\Top3View.jsx:1833:        : []
+  src\pages\Top3\Top3View.jsx:1834:    )
+  src\pages\Top3\Top3View.jsx:1835:      .filter(
+  src\pages\Top3\Top3View.jsx:1836:        (entry) =>
+  src\pages\Top3\Top3View.jsx:1837:          String(entry?.targetYmd || "").trim() ===
+  src\pages\Top3\Top3View.jsx:1838:          historyAnchorYmd
+  src\pages\Top3\Top3View.jsx:1839:      )
+  src\pages\Top3\Top3View.jsx:1840:      .map((entry) => {
+  src\pages\Top3\Top3View.jsx:1841:        const snapshot = Array.isArray(entry?.snapshot)
+  src\pages\Top3\Top3View.jsx:1842:          ? entry.snapshot.slice(0, 3)
+  src\pages\Top3\Top3View.jsx:1843:          : [];
+  src\pages\Top3\Top3View.jsx:1844:
+  src\pages\Top3\Top3View.jsx:1845:        const resultGrupo = Number(entry?.resultGrupo);
+  src\pages\Top3\Top3View.jsx:1846:        const hasResult =
+  src\pages\Top3\Top3View.jsx:1847:          Number.isFinite(resultGrupo) &&
+  src\pages\Top3\Top3View.jsx:1848:          resultGrupo >= 1 &&
+  src\pages\Top3\Top3View.jsx:1849:          resultGrupo <= 25;
+  src\pages\Top3\Top3View.jsx:1850:
+  src\pages\Top3\Top3View.jsx:1851:        return {
+  src\pages\Top3\Top3View.jsx:1852:          targetKey: String(
+  src\pages\Top3\Top3View.jsx:1853:            entry?.id || entry?.targetKey || ""
+  src\pages\Top3\Top3View.jsx:1854:          ),
+  src\pages\Top3\Top3View.jsx:1855:          target: {
+  src\pages\Top3\Top3View.jsx:1856:            ymd: String(entry?.targetYmd || ""),
+  src\pages\Top3\Top3View.jsx:1857:            hour: String(entry?.targetHour || ""),
+  src\pages\Top3\Top3View.jsx:1858:          },
+  src\pages\Top3\Top3View.jsx:1859:          picks: Array.isArray(entry?.picks)
+  src\pages\Top3\Top3View.jsx:1860:            ? entry.picks
+  src\pages\Top3\Top3View.jsx:1861:            : snapshot
+  src\pages\Top3\Top3View.jsx:1862:                .map((item) => Number(item?.grupo))
+  src\pages\Top3\Top3View.jsx:1863:                .filter(Number.isFinite),
+  src\pages\Top3\Top3View.jsx:1864:          top3: snapshot,
+  src\pages\Top3\Top3View.jsx:1865:          result: hasResult ? resultGrupo : null,
+  src\pages\Top3\Top3View.jsx:1866:          grupo: hasResult ? resultGrupo : null,
+  src\pages\Top3\Top3View.jsx:1867:          animal: hasResult
+  src\pages\Top3\Top3View.jsx:1921:            ),
+  src\pages\Top3\Top3View.jsx:1922:            resultPosition: Number(
+  src\pages\Top3\Top3View.jsx:1923:              entry?.resultPosition ?? -1
+  src\pages\Top3\Top3View.jsx:1924:            ),
+  src\pages\Top3\Top3View.jsx:1925:            podiumMedal: String(
+  src\pages\Top3\Top3View.jsx:1926:              entry?.podiumMedal || ""
+  src\pages\Top3\Top3View.jsx:1927:            ),
+  src\pages\Top3\Top3View.jsx:1928:            matchedValue: String(
+  src\pages\Top3\Top3View.jsx:1929:              entry?.matchedValue || ""
+  src\pages\Top3\Top3View.jsx:1930:            ),
+  src\pages\Top3\Top3View.jsx:1931:            matchedGrupo: Number(
+  src\pages\Top3\Top3View.jsx:1932:              entry?.matchedGrupo ?? NaN
+  src\pages\Top3\Top3View.jsx:1933:            ),
+  src\pages\Top3\Top3View.jsx:1934:            matchedMilhar: normalizeMilharStr(
+  src\pages\Top3\Top3View.jsx:1935:              entry?.matchedMilhar || ""
+  src\pages\Top3\Top3View.jsx:1936:            ),
+  src\pages\Top3\Top3View.jsx:1937:          },
+  src\pages\Top3\Top3View.jsx:1938:        };
+  src\pages\Top3\Top3View.jsx:1939:      });
+  src\pages\Top3\Top3View.jsx:1940:
+> src\pages\Top3\Top3View.jsx:1941:    const timelineRows = (
+> src\pages\Top3\Top3View.jsx:1942:      Array.isArray(timeline) ? timeline : []
+  src\pages\Top3\Top3View.jsx:1943:    )
+  src\pages\Top3\Top3View.jsx:1944:      .filter(
+  src\pages\Top3\Top3View.jsx:1945:        (slot) =>
+  src\pages\Top3\Top3View.jsx:1946:          String(slot?.targetYmd || "").trim() ===
+  src\pages\Top3\Top3View.jsx:1947:          historyAnchorYmd
+  src\pages\Top3\Top3View.jsx:1948:      )
+  src\pages\Top3\Top3View.jsx:1949:      .map((slot) => {
+  src\pages\Top3\Top3View.jsx:1950:        const slotTop3 = Array.isArray(slot?.top3)
+  src\pages\Top3\Top3View.jsx:1951:          ? slot.top3.slice(0, 3)
+  src\pages\Top3\Top3View.jsx:1952:          : [];
+  src\pages\Top3\Top3View.jsx:1953:
+  src\pages\Top3\Top3View.jsx:1954:        const resultGrupo = getSlotResultGrupo(slot);
+  src\pages\Top3\Top3View.jsx:1955:
+  src\pages\Top3\Top3View.jsx:1956:        const hasResult =
+  src\pages\Top3\Top3View.jsx:1957:          Number.isFinite(resultGrupo) &&
+  src\pages\Top3\Top3View.jsx:1958:          resultGrupo >= 1 &&
+  src\pages\Top3\Top3View.jsx:1959:          resultGrupo <= 25;
+  src\pages\Top3\Top3View.jsx:1960:
+  src\pages\Top3\Top3View.jsx:1961:        const resultMilhar =
+  src\pages\Top3\Top3View.jsx:1962:          extractResultMilhar(slot);
+  src\pages\Top3\Top3View.jsx:1963:
+  src\pages\Top3\Top3View.jsx:1964:        const officialPodium =
+  src\pages\Top3\Top3View.jsx:1965:          getOfficialPodium(slot);
+  src\pages\Top3\Top3View.jsx:1966:
+  src\pages\Top3\Top3View.jsx:1967:        const analysis = analyzeTop3Hit(
+  src\pages\Top3\Top3View.jsx:1968:          slotTop3,
+  src\pages\Top3\Top3View.jsx:1969:          officialPodium
+  src\pages\Top3\Top3View.jsx:1970:        );
+  src\pages\Top3\Top3View.jsx:1971:
+  src\pages\Top3\Top3View.jsx:1972:        return {
+  src\pages\Top3\Top3View.jsx:1973:          targetKey:
+  src\pages\Top3\Top3View.jsx:1974:            `${String(slot?.targetYmd || "")}` +
+  src\pages\Top3\Top3View.jsx:1975:            `__${String(slot?.targetHour || "")}`,
+  src\pages\Top3\Top3View.jsx:1976:          target: {
+  src\pages\Top3\Top3View.jsx:1977:            ymd: String(slot?.targetYmd || ""),
+  src\pages\Top3\Top3View.jsx:1978:            hour: String(slot?.targetHour || ""),
+  src\pages\Top3\Top3View.jsx:1979:          },
+  src\pages\Top3\Top3View.jsx:1980:          picks: slotTop3
+  src\pages\Top3\Top3View.jsx:1981:            .map((item) => Number(item?.grupo))
+  src\pages\Top3\Top3View.jsx:1982:            .filter(Number.isFinite),
+  src\pages\Top3\Top3View.jsx:1995:            (item) => Number(item?.grupo)
+  src\pages\Top3\Top3View.jsx:1996:          ),
+  src\pages\Top3\Top3View.jsx:1997:          resultTop3Milhares: officialPodium.map(
+  src\pages\Top3\Top3View.jsx:1998:            (item) => String(item?.milhar || "")
+  src\pages\Top3\Top3View.jsx:1999:          ),
+  src\pages\Top3\Top3View.jsx:2000:          prizes: Array.isArray(slot?.prizes)
+  src\pages\Top3\Top3View.jsx:2001:            ? slot.prizes
+  src\pages\Top3\Top3View.jsx:2002:            : [],
+  src\pages\Top3\Top3View.jsx:2003:          analysis,
+  src\pages\Top3\Top3View.jsx:2004:          hit:
+  src\pages\Top3\Top3View.jsx:2005:            analysis.type !== "miss" &&
+  src\pages\Top3\Top3View.jsx:2006:            analysis.type !== "none",
+  src\pages\Top3\Top3View.jsx:2007:          hitType: analysis.type,
+  src\pages\Top3\Top3View.jsx:2008:          hitScore: Number(analysis.score || 0),
+  src\pages\Top3\Top3View.jsx:2009:          hitPosition: Number(
+  src\pages\Top3\Top3View.jsx:2010:            analysis.position ?? -1
+  src\pages\Top3\Top3View.jsx:2011:          ),
+  src\pages\Top3\Top3View.jsx:2012:        };
+  src\pages\Top3\Top3View.jsx:2013:      });
+  src\pages\Top3\Top3View.jsx:2014:
+> src\pages\Top3\Top3View.jsx:2015:    // A timeline garante todos os horarios oficiais.
+  src\pages\Top3\Top3View.jsx:2016:    // O registro persistido prevalece quando realmente existe.
+  src\pages\Top3\Top3View.jsx:2017:    const rowsByTarget = new Map();
+  src\pages\Top3\Top3View.jsx:2018:
+> src\pages\Top3\Top3View.jsx:2019:    for (const row of timelineRows) {
+  src\pages\Top3\Top3View.jsx:2020:      const key =
+  src\pages\Top3\Top3View.jsx:2021:        `${String(row?.target?.ymd || "")}` +
+  src\pages\Top3\Top3View.jsx:2022:        `__${String(row?.target?.hour || "")}`;
+  src\pages\Top3\Top3View.jsx:2023:
+  src\pages\Top3\Top3View.jsx:2024:      rowsByTarget.set(key, row);
+  src\pages\Top3\Top3View.jsx:2025:    }
+  src\pages\Top3\Top3View.jsx:2026:
+  src\pages\Top3\Top3View.jsx:2027:    for (const row of persistedRows) {
+  src\pages\Top3\Top3View.jsx:2028:      const key =
+  src\pages\Top3\Top3View.jsx:2029:        `${String(row?.target?.ymd || "")}` +
+  src\pages\Top3\Top3View.jsx:2030:        `__${String(row?.target?.hour || "")}`;
+  src\pages\Top3\Top3View.jsx:2031:
+> src\pages\Top3\Top3View.jsx:2032:      const timelineRow = rowsByTarget.get(key);
+  src\pages\Top3\Top3View.jsx:2033:
+> src\pages\Top3\Top3View.jsx:2034:      if (!timelineRow || timelineRow?.result == null) {
+  src\pages\Top3\Top3View.jsx:2035:        rowsByTarget.set(key, row);
+  src\pages\Top3\Top3View.jsx:2036:        continue;
+  src\pages\Top3\Top3View.jsx:2037:      }
+  src\pages\Top3\Top3View.jsx:2038:
+> src\pages\Top3\Top3View.jsx:2039:      const resultGrupo = Number(timelineRow.result);
+  src\pages\Top3\Top3View.jsx:2040:      const resultMilhar = String(
+> src\pages\Top3\Top3View.jsx:2041:        timelineRow?.resultMilhar || ""
+  src\pages\Top3\Top3View.jsx:2042:      );
+  src\pages\Top3\Top3View.jsx:2043:
+> src\pages\Top3\Top3View.jsx:2044:      const officialPodium = getOfficialPodium(timelineRow);
+  src\pages\Top3\Top3View.jsx:2045:
+  src\pages\Top3\Top3View.jsx:2046:      const analysis = analyzeTop3Hit(
+  src\pages\Top3\Top3View.jsx:2047:        row?.top3,
+  src\pages\Top3\Top3View.jsx:2048:        officialPodium
+  src\pages\Top3\Top3View.jsx:2049:      );
+  src\pages\Top3\Top3View.jsx:2050:
+  src\pages\Top3\Top3View.jsx:2051:      rowsByTarget.set(key, {
+  src\pages\Top3\Top3View.jsx:2052:        ...row,
+  src\pages\Top3\Top3View.jsx:2053:        result: resultGrupo,
+  src\pages\Top3\Top3View.jsx:2054:        grupo: resultGrupo,
+  src\pages\Top3\Top3View.jsx:2055:        animal:
+> src\pages\Top3\Top3View.jsx:2056:          timelineRow?.animal ||
+  src\pages\Top3\Top3View.jsx:2057:          getAnimalLabel(resultGrupo) ||
+  src\pages\Top3\Top3View.jsx:2058:          "",
+  src\pages\Top3\Top3View.jsx:2059:        resultMilhar,
+  src\pages\Top3\Top3View.jsx:2060:        resultTop3Groups: Array.isArray(
+> src\pages\Top3\Top3View.jsx:2061:          timelineRow?.resultTop3Groups
+  src\pages\Top3\Top3View.jsx:2062:        )
+> src\pages\Top3\Top3View.jsx:2063:          ? timelineRow.resultTop3Groups
+  src\pages\Top3\Top3View.jsx:2064:          : row?.resultTop3Groups || [],
+  src\pages\Top3\Top3View.jsx:2065:        resultTop3Milhares: Array.isArray(
+> src\pages\Top3\Top3View.jsx:2066:          timelineRow?.resultTop3Milhares
+  src\pages\Top3\Top3View.jsx:2067:        )
+> src\pages\Top3\Top3View.jsx:2068:          ? timelineRow.resultTop3Milhares
+  src\pages\Top3\Top3View.jsx:2069:          : row?.resultTop3Milhares || [],
+  src\pages\Top3\Top3View.jsx:2070:        matchedGrupo: Number(
+  src\pages\Top3\Top3View.jsx:2071:          analysis?.matchedGrupo ?? NaN
+  src\pages\Top3\Top3View.jsx:2072:        ),
+  src\pages\Top3\Top3View.jsx:2073:        matchedMilhar: normalizeMilharStr(
+  src\pages\Top3\Top3View.jsx:2074:          analysis?.matchedMilhar || ""
+  src\pages\Top3\Top3View.jsx:2075:        ),
+  src\pages\Top3\Top3View.jsx:2076:        analysis,
+  src\pages\Top3\Top3View.jsx:2077:        hit:
+  src\pages\Top3\Top3View.jsx:2078:          analysis.type !== "miss" &&
+  src\pages\Top3\Top3View.jsx:2079:          analysis.type !== "none",
+  src\pages\Top3\Top3View.jsx:2080:        hitType: analysis.type,
+  src\pages\Top3\Top3View.jsx:2081:        hitScore: Number(analysis.score || 0),
+  src\pages\Top3\Top3View.jsx:2082:        hitPosition: Number(
+  src\pages\Top3\Top3View.jsx:2083:          analysis.position ?? -1
+  src\pages\Top3\Top3View.jsx:2084:        ),
+  src\pages\Top3\Top3View.jsx:2085:      });
+  src\pages\Top3\Top3View.jsx:2086:    }
+  src\pages\Top3\Top3View.jsx:2087:
+  src\pages\Top3\Top3View.jsx:2088:    const todayYmd = todayYMDLocalView();
+  src\pages\Top3\Top3View.jsx:2089:
+  src\pages\Top3\Top3View.jsx:2090:    return Array.from(rowsByTarget.values())
+  src\pages\Top3\Top3View.jsx:2091:      // TOP3_NODRAW_07_FILTER
+  src\pages\Top3\Top3View.jsx:2092:      .filter((row) => {
+  src\pages\Top3\Top3View.jsx:2093:        const targetYmd = String(
+  src\pages\Top3\Top3View.jsx:2094:          row?.target?.ymd || ""
+  src\pages\Top3\Top3View.jsx:2095:        ).trim();
+  src\pages\Top3\Top3View.jsx:2096:
+  src\pages\Top3\Top3View.jsx:2097:        const hasResult =
+  src\pages\Top3\Top3View.jsx:2098:          row?.result != null;
+  src\pages\Top3\Top3View.jsx:2099:
+  src\pages\Top3\Top3View.jsx:2100:        // Resultado oficial existente sempre permanece.
+  src\pages\Top3\Top3View.jsx:2101:        if (hasResult) return true;
+  src\pages\Top3\Top3View.jsx:2102:
+  src\pages\Top3\Top3View.jsx:2103:        // Registro sem data válida não pode gerar card pendente.
+  src\pages\Top3\Top3View.jsx:2104:        if (!isYMD(targetYmd)) return false;
+  src\pages\Top3\Top3View.jsx:2105:
+  src\pages\Top3\Top3View.jsx:2106:        const todayYmd = todayYMDLocalView();
+  src\pages\Top3\Top3View.jsx:2107:
+  src\pages\Top3\Top3View.jsx:2108:        // Pendência só permanece para o dia atual ou data futura.
+  src\pages\Top3\Top3View.jsx:2122:
+  src\pages\Top3\Top3View.jsx:2123:        // Linha inválida não deve gerar card pendente.
+  src\pages\Top3\Top3View.jsx:2124:        if (!isYMD(targetYmd)) return false;
+  src\pages\Top3\Top3View.jsx:2125:
+  src\pages\Top3\Top3View.jsx:2126:        // Pendência só é legítima no dia atual ou em data futura.
+  src\pages\Top3\Top3View.jsx:2127:        // Datas anteriores sem resultado representam sorteio inexistente,
+  src\pages\Top3\Top3View.jsx:2128:        // cancelado ou definitivamente não publicado.
+  src\pages\Top3\Top3View.jsx:2129:        return targetYmd >= todayYmd;
+  src\pages\Top3\Top3View.jsx:2130:      })
+  src\pages\Top3\Top3View.jsx:2131:      .sort((a, b) => {
+  src\pages\Top3\Top3View.jsx:2132:        const ah = hourBucketToSortValue(
+  src\pages\Top3\Top3View.jsx:2133:          a?.target?.hour
+  src\pages\Top3\Top3View.jsx:2134:        );
+  src\pages\Top3\Top3View.jsx:2135:        const bh = hourBucketToSortValue(
+  src\pages\Top3\Top3View.jsx:2136:          b?.target?.hour
+  src\pages\Top3\Top3View.jsx:2137:        );
+  src\pages\Top3\Top3View.jsx:2138:
+  src\pages\Top3\Top3View.jsx:2139:        return ah - bh;
+  src\pages\Top3\Top3View.jsx:2140:      });
+  src\pages\Top3\Top3View.jsx:2141:  }, [
+> src\pages\Top3\Top3View.jsx:2142:    timeline,
+  src\pages\Top3\Top3View.jsx:2143:    historyAnchorYmd,
+  src\pages\Top3\Top3View.jsx:2144:    persistedTop3History,
+  src\pages\Top3\Top3View.jsx:2145:  ]);
+  src\pages\Top3\Top3View.jsx:2146:
+  src\pages\Top3\Top3View.jsx:2147:  const historySummary = useMemo(() => {
+  src\pages\Top3\Top3View.jsx:2148:    const validated = historyRows.filter(
+  src\pages\Top3\Top3View.jsx:2149:      (item) => item?.result != null
+  src\pages\Top3\Top3View.jsx:2150:    );
+  src\pages\Top3\Top3View.jsx:2151:
+  src\pages\Top3\Top3View.jsx:2152:    const exact = validated.filter(
+  src\pages\Top3\Top3View.jsx:2153:      (item) => item?.hitType === "hit_exact"
+  src\pages\Top3\Top3View.jsx:2154:    ).length;
+  src\pages\Top3\Top3View.jsx:2155:
+  src\pages\Top3\Top3View.jsx:2156:    const centena = validated.filter(
+  src\pages\Top3\Top3View.jsx:2157:      (item) => item?.hitType === "hit_centena"
+  src\pages\Top3\Top3View.jsx:2158:    ).length;
+  src\pages\Top3\Top3View.jsx:2159:
+  src\pages\Top3\Top3View.jsx:2160:    const grupo = validated.filter(
+  src\pages\Top3\Top3View.jsx:2161:      (item) =>
+  src\pages\Top3\Top3View.jsx:2162:        item?.hitType === "hit_grupo" ||
+  src\pages\Top3\Top3View.jsx:2163:        item?.hitType === "hit_dezena"
+  src\pages\Top3\Top3View.jsx:2164:    ).length;
+  src\pages\Top3\Top3View.jsx:2165:
+  src\pages\Top3\Top3View.jsx:2166:    const misses = validated.filter(
+  src\pages\Top3\Top3View.jsx:2167:      (item) =>
+  src\pages\Top3\Top3View.jsx:2168:        item?.hitType === "miss" ||
+  src\pages\Top3\Top3View.jsx:2169:        item?.hitType === "none"
+  src\pages\Top3\Top3View.jsx:2170:    ).length;
+  src\pages\Top3\Top3View.jsx:2171:
+  src\pages\Top3\Top3View.jsx:2172:    const totalScore = validated.reduce(
+  src\pages\Top3\Top3View.jsx:2173:      (sum, item) => sum + Number(item?.hitScore || 0),
+  src\pages\Top3\Top3View.jsx:2174:      0
+  src\pages\Top3\Top3View.jsx:2175:    );
+  src\pages\Top3\Top3View.jsx:2176:
+  src\pages\Top3\Top3View.jsx:2177:    const average =
+  src\pages\Top3\Top3View.jsx:2178:      validated.length > 0
+  src\pages\Top3\Top3View.jsx:2179:        ? totalScore / validated.length
+  src\pages\Top3\Top3View.jsx:2180:        : 0;
+  src\pages\Top3\Top3View.jsx:2181:
+  src\pages\Top3\Top3View.jsx:2182:    return {
+  src\pages\Top3\Top3View.jsx:2194:  const todayForCalendar = todayYMDLocalView();
+  src\pages\Top3\Top3View.jsx:2195:  const selectedHistoryYmd = isYMD(ymdSafe)
+  src\pages\Top3\Top3View.jsx:2196:    ? ymdSafe
+  src\pages\Top3\Top3View.jsx:2197:    : todayForCalendar;
+  src\pages\Top3\Top3View.jsx:2198:
+  src\pages\Top3\Top3View.jsx:2199:  const availableHistoryDates = useMemo(() => {
+  src\pages\Top3\Top3View.jsx:2200:    const dates = new Set();
+  src\pages\Top3\Top3View.jsx:2201:
+  src\pages\Top3\Top3View.jsx:2202:    (
+  src\pages\Top3\Top3View.jsx:2203:      Array.isArray(controllerHistoryDates)
+  src\pages\Top3\Top3View.jsx:2204:        ? controllerHistoryDates
+  src\pages\Top3\Top3View.jsx:2205:        : []
+  src\pages\Top3\Top3View.jsx:2206:    ).forEach((date) => {
+  src\pages\Top3\Top3View.jsx:2207:      const ymd = String(date || "").trim();
+  src\pages\Top3\Top3View.jsx:2208:
+  src\pages\Top3\Top3View.jsx:2209:      if (isYMD(ymd) && ymd <= todayForCalendar) {
+  src\pages\Top3\Top3View.jsx:2210:        dates.add(ymd);
+  src\pages\Top3\Top3View.jsx:2211:      }
+  src\pages\Top3\Top3View.jsx:2212:    });
+  src\pages\Top3\Top3View.jsx:2213:
+> src\pages\Top3\Top3View.jsx:2214:    (Array.isArray(timeline) ? timeline : []).forEach(
+  src\pages\Top3\Top3View.jsx:2215:      (slot) => {
+  src\pages\Top3\Top3View.jsx:2216:        const ymd = String(
+  src\pages\Top3\Top3View.jsx:2217:          slot?.targetYmd || ""
+  src\pages\Top3\Top3View.jsx:2218:        ).trim();
+  src\pages\Top3\Top3View.jsx:2219:
+  src\pages\Top3\Top3View.jsx:2220:        if (isYMD(ymd) && ymd <= todayForCalendar) {
+  src\pages\Top3\Top3View.jsx:2221:          dates.add(ymd);
+  src\pages\Top3\Top3View.jsx:2222:        }
+  src\pages\Top3\Top3View.jsx:2223:      }
+  src\pages\Top3\Top3View.jsx:2224:    );
+  src\pages\Top3\Top3View.jsx:2225:
+  src\pages\Top3\Top3View.jsx:2226:    (
+  src\pages\Top3\Top3View.jsx:2227:      Array.isArray(persistedTop3History)
+  src\pages\Top3\Top3View.jsx:2228:        ? persistedTop3History
+  src\pages\Top3\Top3View.jsx:2229:        : []
+  src\pages\Top3\Top3View.jsx:2230:    ).forEach((entry) => {
+  src\pages\Top3\Top3View.jsx:2231:      const ymd = String(
+  src\pages\Top3\Top3View.jsx:2232:        entry?.targetYmd || ""
+  src\pages\Top3\Top3View.jsx:2233:      ).trim();
+  src\pages\Top3\Top3View.jsx:2234:
+  src\pages\Top3\Top3View.jsx:2235:      if (isYMD(ymd) && ymd <= todayForCalendar) {
+  src\pages\Top3\Top3View.jsx:2236:        dates.add(ymd);
+  src\pages\Top3\Top3View.jsx:2237:      }
+  src\pages\Top3\Top3View.jsx:2238:    });
+  src\pages\Top3\Top3View.jsx:2239:
+  src\pages\Top3\Top3View.jsx:2240:    return Array.from(dates).sort();
+  src\pages\Top3\Top3View.jsx:2241:  }, [
+  src\pages\Top3\Top3View.jsx:2242:    controllerHistoryDates,
+> src\pages\Top3\Top3View.jsx:2243:    timeline,
+  src\pages\Top3\Top3View.jsx:2244:    persistedTop3History,
+  src\pages\Top3\Top3View.jsx:2245:    todayForCalendar,
+  src\pages\Top3\Top3View.jsx:2246:  ]);
+  src\pages\Top3\Top3View.jsx:2247:
+  src\pages\Top3\Top3View.jsx:2248:  const previousAvailableDate = useMemo(() => {
+  src\pages\Top3\Top3View.jsx:2249:    for (
+  src\pages\Top3\Top3View.jsx:2250:      let index = availableHistoryDates.length - 1;
+  src\pages\Top3\Top3View.jsx:2251:      index >= 0;
+  src\pages\Top3\Top3View.jsx:2252:      index -= 1
+  src\pages\Top3\Top3View.jsx:2253:    ) {
+  src\pages\Top3\Top3View.jsx:2254:      if (
+  src\pages\Top3\Top3View.jsx:2255:        availableHistoryDates[index] <
+  src\pages\Top3\Top3View.jsx:2256:        selectedHistoryYmd
+  src\pages\Top3\Top3View.jsx:2257:      ) {
+  src\pages\Top3\Top3View.jsx:2258:        return availableHistoryDates[index];
+  src\pages\Top3\Top3View.jsx:2259:      }
+  src\pages\Top3\Top3View.jsx:2260:    }
+  src\pages\Top3\Top3View.jsx:2261:
+  src\pages\Top3\Top3View.jsx:2262:    return "";
+  src\pages\Top3\Top3View.jsx:2263:  }, [
+  src\pages\Top3\Top3View.jsx:2264:    availableHistoryDates,
+  src\pages\Top3\Top3View.jsx:2265:    selectedHistoryYmd,
+  src\pages\Top3\Top3View.jsx:2266:  ]);
+  src\pages\Top3\Top3View.jsx:2267:
+  src\pages\Top3\Top3View.jsx:2268:  const nextAvailableDate = useMemo(() => {
+  src\pages\Top3\Top3View.jsx:2269:    return (
+  src\pages\Top3\Top3View.jsx:2270:      availableHistoryDates.find(
+  src\pages\Top3\Top3View.jsx:2271:        (date) => date > selectedHistoryYmd
+  src\pages\Top3\Top3View.jsx:2272:      ) || ""
+  src\pages\Top3\Top3View.jsx:2273:    );
+  src\pages\Top3\Top3View.jsx:2274:  }, [
+  src\pages\Top3\Top3View.jsx:2275:    availableHistoryDates,
+  src\pages\Top3\Top3View.jsx:2276:    selectedHistoryYmd,
+  src\pages\Top3\Top3View.jsx:2277:  ]);
+  src\pages\Top3\Top3View.jsx:2278:
+  src\pages\Top3\Top3View.jsx:2279:  const canGoPrevious =
+  src\pages\Top3\Top3View.jsx:2280:    isYMD(previousAvailableDate);
+  src\pages\Top3\Top3View.jsx:2281:
+  src\pages\Top3\Top3View.jsx:2282:  const canGoNext =
+  src\pages\Top3\Top3View.jsx:2283:    isYMD(nextAvailableDate);
+  src\pages\Top3\Top3View.jsx:2386:          color: rgba(255,255,255,0.88);
+  src\pages\Top3\Top3View.jsx:2387:          font-weight: 900;
+  src\pages\Top3\Top3View.jsx:2388:          cursor: pointer;
+  src\pages\Top3\Top3View.jsx:2389:          transition: transform .12s ease, box-shadow .18s ease, background .18s ease, border-color .18s ease;
+  src\pages\Top3\Top3View.jsx:2390:          white-space: nowrap;
+  src\pages\Top3\Top3View.jsx:2391:        }
+  src\pages\Top3\Top3View.jsx:2392:
+  src\pages\Top3\Top3View.jsx:2393:        .pp-tab:hover{
+  src\pages\Top3\Top3View.jsx:2394:          transform: translateY(-1px);
+  src\pages\Top3\Top3View.jsx:2395:          border-color: rgba(201,168,62,0.40);
+  src\pages\Top3\Top3View.jsx:2396:          box-shadow: 0 10px 24px rgba(0,0,0,0.35);
+  src\pages\Top3\Top3View.jsx:2397:        }
+  src\pages\Top3\Top3View.jsx:2398:
+  src\pages\Top3\Top3View.jsx:2399:        .pp-tab[data-active="1"]{
+  src\pages\Top3\Top3View.jsx:2400:          background: rgba(201,168,62,0.16);
+  src\pages\Top3\Top3View.jsx:2401:          border: 1px solid rgba(201,168,62,0.45);
+  src\pages\Top3\Top3View.jsx:2402:          color: rgba(255,255,255,0.94);
+  src\pages\Top3\Top3View.jsx:2403:        }
+  src\pages\Top3\Top3View.jsx:2404:
+  src\pages\Top3\Top3View.jsx:2405:        .top3-metaGrid,
+> src\pages\Top3\Top3View.jsx:2406:        .timeline-slot__metaGrid{
+  src\pages\Top3\Top3View.jsx:2407:          display: grid;
+  src\pages\Top3\Top3View.jsx:2408:          grid-template-columns: repeat(3, minmax(0, 1fr));
+  src\pages\Top3\Top3View.jsx:2409:          gap: 10px;
+  src\pages\Top3\Top3View.jsx:2410:        }
+  src\pages\Top3\Top3View.jsx:2411:
+  src\pages\Top3\Top3View.jsx:2412:        .top3-metaItem{
+  src\pages\Top3\Top3View.jsx:2413:          background: rgba(255,255,255,0.025);
+  src\pages\Top3\Top3View.jsx:2414:          border: 1px solid rgba(255,255,255,0.08);
+  src\pages\Top3\Top3View.jsx:2415:          border-radius: 14px;
+  src\pages\Top3\Top3View.jsx:2416:          padding: 10px 12px;
+  src\pages\Top3\Top3View.jsx:2417:          display: grid;
+  src\pages\Top3\Top3View.jsx:2418:          gap: 4px;
+  src\pages\Top3\Top3View.jsx:2419:          min-width: 0;
+  src\pages\Top3\Top3View.jsx:2420:        }
+  src\pages\Top3\Top3View.jsx:2421:
+  src\pages\Top3\Top3View.jsx:2422:        .top3-metaItem__label{
+  src\pages\Top3\Top3View.jsx:2423:          color: var(--top3-muted);
+  src\pages\Top3\Top3View.jsx:2424:          font-size: 11px;
+  src\pages\Top3\Top3View.jsx:2425:          font-weight: 900;
+  src\pages\Top3\Top3View.jsx:2426:          letter-spacing: 0.9px;
+  src\pages\Top3\Top3View.jsx:2427:          text-transform: uppercase;
+  src\pages\Top3\Top3View.jsx:2428:        }
+  src\pages\Top3\Top3View.jsx:2429:
+  src\pages\Top3\Top3View.jsx:2430:        .top3-metaItem__value{
+  src\pages\Top3\Top3View.jsx:2431:          color: var(--top3-text);
+  src\pages\Top3\Top3View.jsx:2432:          font-size: 13px;
+  src\pages\Top3\Top3View.jsx:2433:          font-weight: 800;
+  src\pages\Top3\Top3View.jsx:2434:          line-height: 1.35;
+  src\pages\Top3\Top3View.jsx:2435:          word-break: break-word;
+  src\pages\Top3\Top3View.jsx:2436:        }
+  src\pages\Top3\Top3View.jsx:2437:
+  src\pages\Top3\Top3View.jsx:2438:        .top3-stage{
+  src\pages\Top3\Top3View.jsx:2439:          display: grid;
+  src\pages\Top3\Top3View.jsx:2440:          gap: 16px;
+  src\pages\Top3\Top3View.jsx:2441:        }
+  src\pages\Top3\Top3View.jsx:2442:
+  src\pages\Top3\Top3View.jsx:2443:        .top3-heroWrap{
+  src\pages\Top3\Top3View.jsx:2444:          width: 100%;
+  src\pages\Top3\Top3View.jsx:2445:          max-width: 1120px;
+  src\pages\Top3\Top3View.jsx:2446:          margin: 0 auto;
+  src\pages\Top3\Top3View.jsx:2447:        }
+  src\pages\Top3\Top3View.jsx:2448:
+  src\pages\Top3\Top3View.jsx:2449:        .top3-secondaryRow{
+  src\pages\Top3\Top3View.jsx:2450:          width: 100%;
+  src\pages\Top3\Top3View.jsx:2451:          max-width: 1120px;
+  src\pages\Top3\Top3View.jsx:2452:          margin: 0 auto;
+  src\pages\Top3\Top3View.jsx:2453:          display: grid;
+  src\pages\Top3\Top3View.jsx:2454:          grid-template-columns: repeat(2, minmax(0, 1fr));
+  src\pages\Top3\Top3View.jsx:2455:          gap: 16px;
+  src\pages\Top3\Top3View.jsx:2456:          align-items: start;
+  src\pages\Top3\Top3View.jsx:2457:          justify-content: center;
+  src\pages\Top3\Top3View.jsx:2458:        }
+  src\pages\Top3\Top3View.jsx:2459:
+> src\pages\Top3\Top3View.jsx:2460:        .timeline-slot__cards{
+  src\pages\Top3\Top3View.jsx:2461:          width: 100%;
+  src\pages\Top3\Top3View.jsx:2462:          display: grid;
+  src\pages\Top3\Top3View.jsx:2463:          grid-template-columns: repeat(3, minmax(0, 1fr));
+  src\pages\Top3\Top3View.jsx:2464:          gap: 14px;
+  src\pages\Top3\Top3View.jsx:2465:          align-items: start;
+  src\pages\Top3\Top3View.jsx:2466:        }
+  src\pages\Top3\Top3View.jsx:2467:
+> src\pages\Top3\Top3View.jsx:2468:        .timeline-compact{
+  src\pages\Top3\Top3View.jsx:2469:          margin-top: 2px;
+  src\pages\Top3\Top3View.jsx:2470:        }
+  src\pages\Top3\Top3View.jsx:2471:
+> src\pages\Top3\Top3View.jsx:2472:        .timeline-compact__grid{
+  src\pages\Top3\Top3View.jsx:2473:          display: grid;
+  src\pages\Top3\Top3View.jsx:2474:          grid-template-columns: minmax(0, 1.7fr) minmax(220px, 0.8fr) minmax(240px, 1fr);
+  src\pages\Top3\Top3View.jsx:2475:          gap: 12px;
+  src\pages\Top3\Top3View.jsx:2476:          align-items: stretch;
+  src\pages\Top3\Top3View.jsx:2477:        }
+  src\pages\Top3\Top3View.jsx:2478:
+> src\pages\Top3\Top3View.jsx:2479:        .timeline-compact__predictions,
+> src\pages\Top3\Top3View.jsx:2480:        .timeline-compact__result,
+> src\pages\Top3\Top3View.jsx:2481:        .timeline-compact__performance{
+  src\pages\Top3\Top3View.jsx:2482:          border: 1px solid rgba(255,255,255,0.10);
+  src\pages\Top3\Top3View.jsx:2483:          background: rgba(255,255,255,0.025);
+  src\pages\Top3\Top3View.jsx:2484:          border-radius: 16px;
+  src\pages\Top3\Top3View.jsx:2485:          padding: 12px;
+  src\pages\Top3\Top3View.jsx:2486:          min-width: 0;
+  src\pages\Top3\Top3View.jsx:2487:          transition: all 0.2s ease;
+  src\pages\Top3\Top3View.jsx:2488:        }
+  src\pages\Top3\Top3View.jsx:2489:
+> src\pages\Top3\Top3View.jsx:2490:        .timeline-compact__performanceBadge--miss ~ *{
+  src\pages\Top3\Top3View.jsx:2491:          opacity: 0.92;
+  src\pages\Top3\Top3View.jsx:2492:        }
+  src\pages\Top3\Top3View.jsx:2493:
+> src\pages\Top3\Top3View.jsx:2494:        .timeline-compact__predictions{
+  src\pages\Top3\Top3View.jsx:2495:          display: grid;
+  src\pages\Top3\Top3View.jsx:2496:          grid-template-columns: repeat(3, minmax(0, 1fr));
+  src\pages\Top3\Top3View.jsx:2497:          gap: 10px;
+  src\pages\Top3\Top3View.jsx:2498:        }
+  src\pages\Top3\Top3View.jsx:2499:
+> src\pages\Top3\Top3View.jsx:2500:        .timeline-compact__pick{
+  src\pages\Top3\Top3View.jsx:2501:          display: grid;
+  src\pages\Top3\Top3View.jsx:2502:          grid-template-columns: 28px 44px minmax(0, 1fr);
+  src\pages\Top3\Top3View.jsx:2503:          gap: 10px;
+  src\pages\Top3\Top3View.jsx:2504:          align-items: center;
+  src\pages\Top3\Top3View.jsx:2505:          min-width: 0;
+  src\pages\Top3\Top3View.jsx:2506:          padding: 8px;
+  src\pages\Top3\Top3View.jsx:2507:          border-radius: 14px;
+  src\pages\Top3\Top3View.jsx:2508:          background:
+  src\pages\Top3\Top3View.jsx:2509:            linear-gradient(180deg, rgba(201,168,62,0.08), rgba(255,255,255,0.02)),
+  src\pages\Top3\Top3View.jsx:2510:            rgba(255,255,255,0.02);
+  src\pages\Top3\Top3View.jsx:2511:          border: 1px solid rgba(201,168,62,0.14);
+  src\pages\Top3\Top3View.jsx:2512:        }
+  src\pages\Top3\Top3View.jsx:2513:
+> src\pages\Top3\Top3View.jsx:2514:        .timeline-compact__pickRank{
+  src\pages\Top3\Top3View.jsx:2515:          width: 28px;
+  src\pages\Top3\Top3View.jsx:2516:          height: 28px;
+  src\pages\Top3\Top3View.jsx:2517:          display: grid;
+  src\pages\Top3\Top3View.jsx:2518:          place-items: center;
+  src\pages\Top3\Top3View.jsx:2519:          border-radius: 9px;
+  src\pages\Top3\Top3View.jsx:2520:          background: rgba(201,168,62,0.16);
+  src\pages\Top3\Top3View.jsx:2521:          border: 1px solid rgba(201,168,62,0.30);
+  src\pages\Top3\Top3View.jsx:2522:          color: var(--top3-accent);
+  src\pages\Top3\Top3View.jsx:2523:          font-size: 12px;
+  src\pages\Top3\Top3View.jsx:2524:          font-weight: 1000;
+  src\pages\Top3\Top3View.jsx:2525:        }
+  src\pages\Top3\Top3View.jsx:2526:
+> src\pages\Top3\Top3View.jsx:2527:        .timeline-compact__pickText{
+  src\pages\Top3\Top3View.jsx:2528:          display: grid;
+  src\pages\Top3\Top3View.jsx:2529:          gap: 2px;
+  src\pages\Top3\Top3View.jsx:2530:          min-width: 0;
+  src\pages\Top3\Top3View.jsx:2531:        }
+  src\pages\Top3\Top3View.jsx:2532:
+> src\pages\Top3\Top3View.jsx:2533:        .timeline-compact__pickGroup{
+  src\pages\Top3\Top3View.jsx:2534:          font-size: 11px;
+  src\pages\Top3\Top3View.jsx:2535:          font-weight: 900;
+  src\pages\Top3\Top3View.jsx:2536:          color: var(--top3-muted);
+  src\pages\Top3\Top3View.jsx:2537:          letter-spacing: 0.6px;
+  src\pages\Top3\Top3View.jsx:2538:        }
+  src\pages\Top3\Top3View.jsx:2539:
+> src\pages\Top3\Top3View.jsx:2540:        .timeline-compact__pickAnimal{
+  src\pages\Top3\Top3View.jsx:2541:          font-size: 15px;
+  src\pages\Top3\Top3View.jsx:2542:          font-weight: 1000;
+  src\pages\Top3\Top3View.jsx:2543:          color: var(--top3-text);
+  src\pages\Top3\Top3View.jsx:2544:          text-transform: uppercase;
+  src\pages\Top3\Top3View.jsx:2545:          line-height: 1.05;
+  src\pages\Top3\Top3View.jsx:2546:          word-break: break-word;
+  src\pages\Top3\Top3View.jsx:2547:        }
+  src\pages\Top3\Top3View.jsx:2548:
+> src\pages\Top3\Top3View.jsx:2549:        .timeline-compact__result{
+  src\pages\Top3\Top3View.jsx:2550:          display: grid;
+  src\pages\Top3\Top3View.jsx:2551:          gap: 10px;
+  src\pages\Top3\Top3View.jsx:2552:          align-content: start;
+  src\pages\Top3\Top3View.jsx:2553:        }
+  src\pages\Top3\Top3View.jsx:2554:
+> src\pages\Top3\Top3View.jsx:2555:        .timeline-compact__resultLabel{
+  src\pages\Top3\Top3View.jsx:2556:          font-size: 11px;
+  src\pages\Top3\Top3View.jsx:2557:          font-weight: 1000;
+  src\pages\Top3\Top3View.jsx:2558:          letter-spacing: 0.9px;
+  src\pages\Top3\Top3View.jsx:2559:          text-transform: uppercase;
+  src\pages\Top3\Top3View.jsx:2560:          color: var(--top3-muted);
+  src\pages\Top3\Top3View.jsx:2561:        }
+  src\pages\Top3\Top3View.jsx:2562:
+> src\pages\Top3\Top3View.jsx:2563:        .timeline-compact__resultBox{
+  src\pages\Top3\Top3View.jsx:2564:          display: flex;
+  src\pages\Top3\Top3View.jsx:2565:          align-items: center;
+  src\pages\Top3\Top3View.jsx:2566:          gap: 12px;
+  src\pages\Top3\Top3View.jsx:2567:          min-width: 0;
+  src\pages\Top3\Top3View.jsx:2568:          padding: 10px 12px;
+  src\pages\Top3\Top3View.jsx:2569:          border-radius: 14px;
+  src\pages\Top3\Top3View.jsx:2570:          background:
+  src\pages\Top3\Top3View.jsx:2571:            linear-gradient(180deg, rgba(201,168,62,0.10), rgba(255,255,255,0.02)),
+  src\pages\Top3\Top3View.jsx:2572:            rgba(255,255,255,0.04);
+  src\pages\Top3\Top3View.jsx:2573:          border: 1px solid rgba(201,168,62,0.18);
+  src\pages\Top3\Top3View.jsx:2574:          box-shadow: 0 8px 20px rgba(0,0,0,0.35);
+  src\pages\Top3\Top3View.jsx:2575:        }
+  src\pages\Top3\Top3View.jsx:2576:
+> src\pages\Top3\Top3View.jsx:2577:        .timeline-compact__resultText{
+  src\pages\Top3\Top3View.jsx:2578:          display: grid;
+  src\pages\Top3\Top3View.jsx:2579:          gap: 2px;
+  src\pages\Top3\Top3View.jsx:2580:          min-width: 0;
+  src\pages\Top3\Top3View.jsx:2581:        }
+  src\pages\Top3\Top3View.jsx:2582:
+> src\pages\Top3\Top3View.jsx:2583:        .timeline-compact__resultGroup{
+  src\pages\Top3\Top3View.jsx:2584:          font-size: 20px;
+  src\pages\Top3\Top3View.jsx:2585:          font-weight: 1000;
+  src\pages\Top3\Top3View.jsx:2586:          line-height: 1;
+  src\pages\Top3\Top3View.jsx:2587:          color: var(--top3-accent);
+  src\pages\Top3\Top3View.jsx:2588:          text-shadow: 0 0 8px rgba(201,168,62,0.35);
+  src\pages\Top3\Top3View.jsx:2589:        }
+  src\pages\Top3\Top3View.jsx:2590:
+> src\pages\Top3\Top3View.jsx:2591:        .timeline-compact__resultAnimal{
+  src\pages\Top3\Top3View.jsx:2592:          font-size: 12px;
+  src\pages\Top3\Top3View.jsx:2593:          color: var(--top3-muted);
+  src\pages\Top3\Top3View.jsx:2594:          text-transform: uppercase;
+  src\pages\Top3\Top3View.jsx:2595:          letter-spacing: 0.5px;
+  src\pages\Top3\Top3View.jsx:2596:        }
+  src\pages\Top3\Top3View.jsx:2597:
+> src\pages\Top3\Top3View.jsx:2598:        .timeline-compact__resultPending{
+  src\pages\Top3\Top3View.jsx:2599:          font-size: 14px;
+  src\pages\Top3\Top3View.jsx:2600:          font-weight: 1000;
+  src\pages\Top3\Top3View.jsx:2601:          color: var(--top3-muted);
+  src\pages\Top3\Top3View.jsx:2602:        }
+  src\pages\Top3\Top3View.jsx:2603:
+> src\pages\Top3\Top3View.jsx:2604:        .timeline-compact__performance{
+  src\pages\Top3\Top3View.jsx:2605:          display: grid;
+  src\pages\Top3\Top3View.jsx:2606:          gap: 10px;
+  src\pages\Top3\Top3View.jsx:2607:          align-content: start;
+  src\pages\Top3\Top3View.jsx:2608:        }
+  src\pages\Top3\Top3View.jsx:2609:
+> src\pages\Top3\Top3View.jsx:2610:        .timeline-compact__performanceBadge{
+  src\pages\Top3\Top3View.jsx:2611:          width: fit-content;
+  src\pages\Top3\Top3View.jsx:2612:          max-width: 100%;
+  src\pages\Top3\Top3View.jsx:2613:          border-radius: 999px;
+  src\pages\Top3\Top3View.jsx:2614:          padding: 10px 14px;
+  src\pages\Top3\Top3View.jsx:2615:          font-size: 12px;
+  src\pages\Top3\Top3View.jsx:2616:          font-weight: 1000;
+  src\pages\Top3\Top3View.jsx:2617:          letter-spacing: 0.6px;
+  src\pages\Top3\Top3View.jsx:2618:          border: 1px solid rgba(255,255,255,0.16);
+  src\pages\Top3\Top3View.jsx:2619:          box-shadow: 0 12px 28px rgba(0,0,0,0.35);
+  src\pages\Top3\Top3View.jsx:2620:          white-space: nowrap;
+  src\pages\Top3\Top3View.jsx:2621:        }
+  src\pages\Top3\Top3View.jsx:2622:
+> src\pages\Top3\Top3View.jsx:2623:        .timeline-compact__performanceBadge--hit{
+  src\pages\Top3\Top3View.jsx:2624:          background: linear-gradient(180deg, rgba(201,168,62,0.28), rgba(201,168,62,0.12));
+  src\pages\Top3\Top3View.jsx:2625:          color: #fff4c4;
+  src\pages\Top3\Top3View.jsx:2626:          border-color: rgba(201,168,62,0.5);
+  src\pages\Top3\Top3View.jsx:2627:          box-shadow: 0 0 16px rgba(201,168,62,0.35);
+  src\pages\Top3\Top3View.jsx:2628:        }
+  src\pages\Top3\Top3View.jsx:2629:
+> src\pages\Top3\Top3View.jsx:2630:        .timeline-compact__performanceBadge--miss{
+  src\pages\Top3\Top3View.jsx:2631:          background: linear-gradient(180deg, rgba(220,70,70,0.28), rgba(120,20,20,0.18));
+  src\pages\Top3\Top3View.jsx:2632:          color: #ffe0e0;
+  src\pages\Top3\Top3View.jsx:2633:          border-color: rgba(220, 70, 70, 0.6);
+  src\pages\Top3\Top3View.jsx:2634:          box-shadow: 0 0 18px rgba(220,70,70,0.35);
+  src\pages\Top3\Top3View.jsx:2635:        }
+  src\pages\Top3\Top3View.jsx:2636:
+> src\pages\Top3\Top3View.jsx:2637:        .timeline-compact__performanceBadge--pending{
+  src\pages\Top3\Top3View.jsx:2638:          background: rgba(201,168,62,0.16);
+  src\pages\Top3\Top3View.jsx:2639:          color: rgba(255,255,255,0.92);
+  src\pages\Top3\Top3View.jsx:2640:          border-color: rgba(201,168,62,0.35);
+  src\pages\Top3\Top3View.jsx:2641:        }
+  src\pages\Top3\Top3View.jsx:2642:
+> src\pages\Top3\Top3View.jsx:2643:        .timeline-compact__performanceText{
+  src\pages\Top3\Top3View.jsx:2644:          font-size: 14px;
+  src\pages\Top3\Top3View.jsx:2645:          font-weight: 900;
+  src\pages\Top3\Top3View.jsx:2646:          line-height: 1.4;
+  src\pages\Top3\Top3View.jsx:2647:          color: var(--top3-text);
+  src\pages\Top3\Top3View.jsx:2648:        }
+  src\pages\Top3\Top3View.jsx:2649:
+> src\pages\Top3\Top3View.jsx:2650:        .timeline-slot__header{
+  src\pages\Top3\Top3View.jsx:2651:          display:flex;
+  src\pages\Top3\Top3View.jsx:2652:          align-items:flex-start;
+  src\pages\Top3\Top3View.jsx:2653:          justify-content:space-between;
+  src\pages\Top3\Top3View.jsx:2654:          gap:14px;
+  src\pages\Top3\Top3View.jsx:2655:          margin-bottom: 14px;
+  src\pages\Top3\Top3View.jsx:2656:        }
+  src\pages\Top3\Top3View.jsx:2657:
+> src\pages\Top3\Top3View.jsx:2658:        .timeline-slot__title{
+  src\pages\Top3\Top3View.jsx:2659:          font-weight: 1000;
+  src\pages\Top3\Top3View.jsx:2660:          font-size: 22px;
+  src\pages\Top3\Top3View.jsx:2661:          letter-spacing: 0.2px;
+  src\pages\Top3\Top3View.jsx:2662:          line-height: 1;
+  src\pages\Top3\Top3View.jsx:2663:        }
+  src\pages\Top3\Top3View.jsx:2664:
+> src\pages\Top3\Top3View.jsx:2665:        .timeline-slot__badge{
+  src\pages\Top3\Top3View.jsx:2666:          border-radius: 999px;
+  src\pages\Top3\Top3View.jsx:2667:          padding: 10px 14px;
+  src\pages\Top3\Top3View.jsx:2668:          font-weight: 1000;
+  src\pages\Top3\Top3View.jsx:2669:          font-size: 12px;
+  src\pages\Top3\Top3View.jsx:2670:          letter-spacing: 0.55px;
+  src\pages\Top3\Top3View.jsx:2671:          border: 1px solid rgba(255,255,255,0.14);
+  src\pages\Top3\Top3View.jsx:2672:          white-space: nowrap;
+  src\pages\Top3\Top3View.jsx:2673:          box-shadow: 0 10px 24px rgba(0,0,0,0.28);
+  src\pages\Top3\Top3View.jsx:2674:        }
+  src\pages\Top3\Top3View.jsx:2675:
+> src\pages\Top3\Top3View.jsx:2676:        .timeline-slot__badge--hit{
+  src\pages\Top3\Top3View.jsx:2677:          background: rgba(38, 180, 90, 0.18);
+  src\pages\Top3\Top3View.jsx:2678:          color: #b8ffd0;
+  src\pages\Top3\Top3View.jsx:2679:          border-color: rgba(38, 180, 90, 0.35);
+  src\pages\Top3\Top3View.jsx:2680:        }
+  src\pages\Top3\Top3View.jsx:2681:
+> src\pages\Top3\Top3View.jsx:2682:        .timeline-slot__badge--miss{
+  src\pages\Top3\Top3View.jsx:2683:          background: rgba(220, 70, 70, 0.18);
+  src\pages\Top3\Top3View.jsx:2684:          color: #ffd0d0;
+  src\pages\Top3\Top3View.jsx:2685:          border-color: rgba(220, 70, 70, 0.35);
+  src\pages\Top3\Top3View.jsx:2686:        }
+  src\pages\Top3\Top3View.jsx:2687:
+> src\pages\Top3\Top3View.jsx:2688:        .timeline-slot__badge--pending{
+  src\pages\Top3\Top3View.jsx:2689:          background: rgba(201,168,62,0.16);
+  src\pages\Top3\Top3View.jsx:2690:          color: rgba(255,255,255,0.92);
+  src\pages\Top3\Top3View.jsx:2691:          border-color: rgba(201,168,62,0.35);
+  src\pages\Top3\Top3View.jsx:2692:        }
+  src\pages\Top3\Top3View.jsx:2693:
+> src\pages\Top3\Top3View.jsx:2694:        .timeline-slot__resultBox{
+  src\pages\Top3\Top3View.jsx:2695:          margin-top: 12px;
+  src\pages\Top3\Top3View.jsx:2696:          display:flex;
+  src\pages\Top3\Top3View.jsx:2697:          align-items:center;
+  src\pages\Top3\Top3View.jsx:2698:          gap:14px;
+  src\pages\Top3\Top3View.jsx:2699:          padding: 12px 14px;
+  src\pages\Top3\Top3View.jsx:2700:          border-radius: 16px;
+  src\pages\Top3\Top3View.jsx:2701:          background:
+  src\pages\Top3\Top3View.jsx:2702:            linear-gradient(180deg, rgba(201,168,62,0.08), rgba(255,255,255,0.02)),
+  src\pages\Top3\Top3View.jsx:2703:            rgba(255,255,255,0.03);
+  src\pages\Top3\Top3View.jsx:2704:          border: 1px solid rgba(255,255,255,0.09);
+  src\pages\Top3\Top3View.jsx:2705:          box-shadow: inset 0 0 0 1px rgba(255,255,255,0.02);
+  src\pages\Top3\Top3View.jsx:2706:        }
+  src\pages\Top3\Top3View.jsx:2707:
+> src\pages\Top3\Top3View.jsx:2708:        .timeline-slot__resultText{
+  src\pages\Top3\Top3View.jsx:2709:          display:grid;
+  src\pages\Top3\Top3View.jsx:2710:          gap:2px;
+  src\pages\Top3\Top3View.jsx:2711:        }
+  src\pages\Top3\Top3View.jsx:2712:
+> src\pages\Top3\Top3View.jsx:2713:        .timeline-slot__resultGroup{
+  src\pages\Top3\Top3View.jsx:2714:          font-weight: 1000;
+  src\pages\Top3\Top3View.jsx:2715:          font-size: 18px;
+  src\pages\Top3\Top3View.jsx:2716:          line-height: 1;
+  src\pages\Top3\Top3View.jsx:2717:        }
+  src\pages\Top3\Top3View.jsx:2718:
+> src\pages\Top3\Top3View.jsx:2719:        .timeline-slot__resultAnimal{
+  src\pages\Top3\Top3View.jsx:2720:          font-size: 12px;
+  src\pages\Top3\Top3View.jsx:2721:          color: var(--top3-muted);
+  src\pages\Top3\Top3View.jsx:2722:          text-transform: uppercase;
+  src\pages\Top3\Top3View.jsx:2723:          letter-spacing: 0.6px;
+  src\pages\Top3\Top3View.jsx:2724:        }
+  src\pages\Top3\Top3View.jsx:2725:
+> src\pages\Top3\Top3View.jsx:2726:        .timeline-slot__insightBox{
+  src\pages\Top3\Top3View.jsx:2727:          margin-top: 12px;
+  src\pages\Top3\Top3View.jsx:2728:          padding: 14px 16px;
+  src\pages\Top3\Top3View.jsx:2729:          border-radius: 16px;
+  src\pages\Top3\Top3View.jsx:2730:          background:
+  src\pages\Top3\Top3View.jsx:2731:            linear-gradient(180deg, rgba(255,255,255,0.03), rgba(255,255,255,0.015)),
+  src\pages\Top3\Top3View.jsx:2732:            rgba(255,255,255,0.025);
+  src\pages\Top3\Top3View.jsx:2733:          border: 1px solid rgba(255,255,255,0.08);
+  src\pages\Top3\Top3View.jsx:2734:          display: grid;
+  src\pages\Top3\Top3View.jsx:2735:          gap: 6px;
+  src\pages\Top3\Top3View.jsx:2736:        }
+  src\pages\Top3\Top3View.jsx:2737:
+> src\pages\Top3\Top3View.jsx:2738:        .timeline-slot__insightTitle{
+  src\pages\Top3\Top3View.jsx:2739:          font-size: 11px;
+  src\pages\Top3\Top3View.jsx:2740:          font-weight: 1000;
+  src\pages\Top3\Top3View.jsx:2741:          letter-spacing: 1px;
+  src\pages\Top3\Top3View.jsx:2742:          text-transform: uppercase;
+  src\pages\Top3\Top3View.jsx:2743:          color: var(--top3-accent);
+  src\pages\Top3\Top3View.jsx:2744:        }
+  src\pages\Top3\Top3View.jsx:2745:
+> src\pages\Top3\Top3View.jsx:2746:        .timeline-slot__insightText{
+  src\pages\Top3\Top3View.jsx:2747:          font-size: 14px;
+  src\pages\Top3\Top3View.jsx:2748:          font-weight: 900;
+  src\pages\Top3\Top3View.jsx:2749:          line-height: 1.4;
+  src\pages\Top3\Top3View.jsx:2750:          color: var(--top3-text);
+  src\pages\Top3\Top3View.jsx:2751:        }
+  src\pages\Top3\Top3View.jsx:2752:
+  src\pages\Top3\Top3View.jsx:2753:        .top3-card{
+  src\pages\Top3\Top3View.jsx:2754:          position: relative;
+  src\pages\Top3\Top3View.jsx:2755:          background:
+  src\pages\Top3\Top3View.jsx:2756:            radial-gradient(1100px 280px at 50% 0%, rgba(201,168,62,0.08), transparent 55%),
+  src\pages\Top3\Top3View.jsx:2757:            linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.00)),
+  src\pages\Top3\Top3View.jsx:2758:            var(--top3-panel);
+  src\pages\Top3\Top3View.jsx:2759:          border: 1px solid var(--top3-border);
+  src\pages\Top3\Top3View.jsx:2760:          border-radius: 20px;
+  src\pages\Top3\Top3View.jsx:2761:          padding: 16px;
+  src\pages\Top3\Top3View.jsx:2762:          display: grid;
+  src\pages\Top3\Top3View.jsx:2763:          gap: 14px;
+  src\pages\Top3\Top3View.jsx:2764:          box-shadow:
+  src\pages\Top3\Top3View.jsx:2765:            0 18px 44px rgba(0,0,0,0.30),
+  src\pages\Top3\Top3View.jsx:2766:            inset 0 0 0 1px rgba(255,255,255,0.03);
+  src\pages\Top3\Top3View.jsx:2767:          overflow: hidden;
+  src\pages\Top3\Top3View.jsx:2768:        }
+  src\pages\Top3\Top3View.jsx:2769:
+  src\pages\Top3\Top3View.jsx:2770:        .top3-card::after{
+  src\pages\Top3\Top3View.jsx:2771:          content: "";
+  src\pages\Top3\Top3View.jsx:2772:          position: absolute;
+  src\pages\Top3\Top3View.jsx:2773:          inset: 0;
+  src\pages\Top3\Top3View.jsx:2774:          border-radius: inherit;
+  src\pages\Top3\Top3View.jsx:2775:          pointer-events: none;
+  src\pages\Top3\Top3View.jsx:2776:          box-shadow: inset 0 0 0 1px rgba(201,168,62,0.05);
+  src\pages\Top3\Top3View.jsx:2777:        }
+  src\pages\Top3\Top3View.jsx:2778:
+  src\pages\Top3\Top3View.jsx:2779:        .top3-card--hero{
+  src\pages\Top3\Top3View.jsx:2780:          padding: 18px;
+  src\pages\Top3\Top3View.jsx:2781:        }
+  src\pages\Top3\Top3View.jsx:2782:
+  src\pages\Top3\Top3View.jsx:2783:        .top3-card__topline{
+  src\pages\Top3\Top3View.jsx:2784:          display:flex;
+  src\pages\Top3\Top3View.jsx:2785:          align-items:center;
+  src\pages\Top3\Top3View.jsx:2786:          gap:10px;
+  src\pages\Top3\Top3View.jsx:3121:
+  src\pages\Top3\Top3View.jsx:3122:        .top3-historyResultGroup{
+  src\pages\Top3\Top3View.jsx:3123:          font-weight:900;
+  src\pages\Top3\Top3View.jsx:3124:        }
+  src\pages\Top3\Top3View.jsx:3125:
+  src\pages\Top3\Top3View.jsx:3126:        .top3-historyResultAnimal{
+  src\pages\Top3\Top3View.jsx:3127:          font-size:10px;
+  src\pages\Top3\Top3View.jsx:3128:          color: var(--top3-muted);
+  src\pages\Top3\Top3View.jsx:3129:          text-transform: uppercase;
+  src\pages\Top3\Top3View.jsx:3130:          white-space: nowrap;
+  src\pages\Top3\Top3View.jsx:3131:          overflow: hidden;
+  src\pages\Top3\Top3View.jsx:3132:          text-overflow: ellipsis;
+  src\pages\Top3\Top3View.jsx:3133:          letter-spacing: 0.5px;
+  src\pages\Top3\Top3View.jsx:3134:        }
+  src\pages\Top3\Top3View.jsx:3135:
+  src\pages\Top3\Top3View.jsx:3136:        @media (max-width: 1180px){
+  src\pages\Top3\Top3View.jsx:3137:          .top3-secondaryRow{
+  src\pages\Top3\Top3View.jsx:3138:            max-width: 980px;
+  src\pages\Top3\Top3View.jsx:3139:          }
+  src\pages\Top3\Top3View.jsx:3140:
+> src\pages\Top3\Top3View.jsx:3141:          .timeline-slot__cards{
+  src\pages\Top3\Top3View.jsx:3142:            grid-template-columns: 1fr;
+  src\pages\Top3\Top3View.jsx:3143:          }
+  src\pages\Top3\Top3View.jsx:3144:
+> src\pages\Top3\Top3View.jsx:3145:          .timeline-compact__grid{
+  src\pages\Top3\Top3View.jsx:3146:            grid-template-columns: 1fr;
+  src\pages\Top3\Top3View.jsx:3147:          }
+  src\pages\Top3\Top3View.jsx:3148:
+> src\pages\Top3\Top3View.jsx:3149:          .timeline-compact__predictions{
+  src\pages\Top3\Top3View.jsx:3150:            grid-template-columns: 1fr;
+  src\pages\Top3\Top3View.jsx:3151:          }
+  src\pages\Top3\Top3View.jsx:3152:        }
+  src\pages\Top3\Top3View.jsx:3153:
+  src\pages\Top3\Top3View.jsx:3154:        @media (max-width: 980px){
+  src\pages\Top3\Top3View.jsx:3155:          .top3-page{
+  src\pages\Top3\Top3View.jsx:3156:            gap: 14px;
+  src\pages\Top3\Top3View.jsx:3157:          }
+  src\pages\Top3\Top3View.jsx:3158:
+  src\pages\Top3\Top3View.jsx:3159:          .top3-shell{
+  src\pages\Top3\Top3View.jsx:3160:            padding: 14px;
+  src\pages\Top3\Top3View.jsx:3161:            border-radius: 18px;
+  src\pages\Top3\Top3View.jsx:3162:          }
+  src\pages\Top3\Top3View.jsx:3163:
+  src\pages\Top3\Top3View.jsx:3164:          .top3-metaGrid,
+> src\pages\Top3\Top3View.jsx:3165:          .timeline-slot__metaGrid{
+  src\pages\Top3\Top3View.jsx:3166:            grid-template-columns: 1fr 1fr;
+  src\pages\Top3\Top3View.jsx:3167:          }
+  src\pages\Top3\Top3View.jsx:3168:
+  src\pages\Top3\Top3View.jsx:3169:          .top3-heroWrap,
+  src\pages\Top3\Top3View.jsx:3170:          .top3-secondaryRow{
+  src\pages\Top3\Top3View.jsx:3171:            max-width: none;
+  src\pages\Top3\Top3View.jsx:3172:          }
+  src\pages\Top3\Top3View.jsx:3173:
+  src\pages\Top3\Top3View.jsx:3174:          .top3-secondaryRow{
+  src\pages\Top3\Top3View.jsx:3175:            grid-template-columns: 1fr;
+  src\pages\Top3\Top3View.jsx:3176:            gap: 14px;
+  src\pages\Top3\Top3View.jsx:3177:          }
+  src\pages\Top3\Top3View.jsx:3178:
+  src\pages\Top3\Top3View.jsx:3179:          .top3-card,
+  src\pages\Top3\Top3View.jsx:3180:          .top3-card--hero{
+  src\pages\Top3\Top3View.jsx:3181:            padding: 14px;
+  src\pages\Top3\Top3View.jsx:3182:            border-radius: 18px;
+  src\pages\Top3\Top3View.jsx:3183:          }
+  src\pages\Top3\Top3View.jsx:3184:
+  src\pages\Top3\Top3View.jsx:3185:          .top3-card__summary,
+  src\pages\Top3\Top3View.jsx:3186:          .top3-card--hero .top3-card__summary{
+  src\pages\Top3\Top3View.jsx:3187:            grid-template-columns: 1fr;
+  src\pages\Top3\Top3View.jsx:3188:            gap: 12px;
+  src\pages\Top3\Top3View.jsx:3189:          }
+  src\pages\Top3\Top3View.jsx:3190:
+  src\pages\Top3\Top3View.jsx:3191:          .top3-card__confidence{
+  src\pages\Top3\Top3View.jsx:3192:            justify-self: stretch;
+  src\pages\Top3\Top3View.jsx:3193:            text-align: left;
+  src\pages\Top3\Top3View.jsx:3194:            max-width: none;
+  src\pages\Top3\Top3View.jsx:3195:          }
+  src\pages\Top3\Top3View.jsx:3196:
+  src\pages\Top3\Top3View.jsx:3197:          .top3-card__confidenceValue{
+  src\pages\Top3\Top3View.jsx:3198:            font-size: 28px;
+  src\pages\Top3\Top3View.jsx:3199:          }
+  src\pages\Top3\Top3View.jsx:3200:
+  src\pages\Top3\Top3View.jsx:3201:          .top3-card__actions{
+  src\pages\Top3\Top3View.jsx:3202:            align-items: stretch;
+  src\pages\Top3\Top3View.jsx:3203:            flex-direction: column;
+  src\pages\Top3\Top3View.jsx:3204:          }
+  src\pages\Top3\Top3View.jsx:3205:
+  src\pages\Top3\Top3View.jsx:3207:            width: 100%;
+  src\pages\Top3\Top3View.jsx:3208:          }
+  src\pages\Top3\Top3View.jsx:3209:
+  src\pages\Top3\Top3View.jsx:3210:          .top3-historyToolbar{
+  src\pages\Top3\Top3View.jsx:3211:            grid-template-columns: 1fr 1fr;
+  src\pages\Top3\Top3View.jsx:3212:          }
+  src\pages\Top3\Top3View.jsx:3213:
+  src\pages\Top3\Top3View.jsx:3214:          .top3-historyDate{
+  src\pages\Top3\Top3View.jsx:3215:            grid-column: 1 / -1;
+  src\pages\Top3\Top3View.jsx:3216:          }
+  src\pages\Top3\Top3View.jsx:3217:
+  src\pages\Top3\Top3View.jsx:3218:          .top3-historySummary{
+  src\pages\Top3\Top3View.jsx:3219:            grid-template-columns: repeat(3, minmax(0, 1fr));
+  src\pages\Top3\Top3View.jsx:3220:          }
+  src\pages\Top3\Top3View.jsx:3221:
+  src\pages\Top3\Top3View.jsx:3222:          .top3-historyRow{
+  src\pages\Top3\Top3View.jsx:3223:            grid-template-columns: 1fr;
+  src\pages\Top3\Top3View.jsx:3224:            align-items:start;
+  src\pages\Top3\Top3View.jsx:3225:          }
+  src\pages\Top3\Top3View.jsx:3226:
+> src\pages\Top3\Top3View.jsx:3227:          .timeline-slot__header{
+  src\pages\Top3\Top3View.jsx:3228:            flex-direction: column;
+  src\pages\Top3\Top3View.jsx:3229:            align-items: flex-start;
+  src\pages\Top3\Top3View.jsx:3230:          }
+  src\pages\Top3\Top3View.jsx:3231:        }
+  src\pages\Top3\Top3View.jsx:3232:
+  src\pages\Top3\Top3View.jsx:3233:        @media (max-width: 640px){
+> src\pages\Top3\Top3View.jsx:3234:          .timeline-compact__pick{
+  src\pages\Top3\Top3View.jsx:3235:            grid-template-columns: 26px 40px minmax(0, 1fr);
+  src\pages\Top3\Top3View.jsx:3236:            gap: 8px;
+  src\pages\Top3\Top3View.jsx:3237:            padding: 8px;
+  src\pages\Top3\Top3View.jsx:3238:          }
+  src\pages\Top3\Top3View.jsx:3239:
+> src\pages\Top3\Top3View.jsx:3240:          .timeline-compact__pickRank{
+  src\pages\Top3\Top3View.jsx:3241:            width: 26px;
+  src\pages\Top3\Top3View.jsx:3242:            height: 26px;
+  src\pages\Top3\Top3View.jsx:3243:            border-radius: 8px;
+  src\pages\Top3\Top3View.jsx:3244:          }
+  src\pages\Top3\Top3View.jsx:3245:
+> src\pages\Top3\Top3View.jsx:3246:          .timeline-compact__pickAnimal{
+  src\pages\Top3\Top3View.jsx:3247:            font-size: 14px;
+  src\pages\Top3\Top3View.jsx:3248:          }
+  src\pages\Top3\Top3View.jsx:3249:
+> src\pages\Top3\Top3View.jsx:3250:          .timeline-compact__resultGroup{
+  src\pages\Top3\Top3View.jsx:3251:            font-size: 16px;
+  src\pages\Top3\Top3View.jsx:3252:          }
+  src\pages\Top3\Top3View.jsx:3253:
+> src\pages\Top3\Top3View.jsx:3254:          .timeline-compact__performanceText{
+  src\pages\Top3\Top3View.jsx:3255:            font-size: 13px;
+  src\pages\Top3\Top3View.jsx:3256:          }
+  src\pages\Top3\Top3View.jsx:3257:
+  src\pages\Top3\Top3View.jsx:3258:          .top3-page{
+  src\pages\Top3\Top3View.jsx:3259:            gap: 12px;
+  src\pages\Top3\Top3View.jsx:3260:          }
+  src\pages\Top3\Top3View.jsx:3261:
+  src\pages\Top3\Top3View.jsx:3262:          .top3-shell{
+  src\pages\Top3\Top3View.jsx:3263:            padding: 12px;
+  src\pages\Top3\Top3View.jsx:3264:            border-radius: 16px;
+  src\pages\Top3\Top3View.jsx:3265:          }
+  src\pages\Top3\Top3View.jsx:3266:
+  src\pages\Top3\Top3View.jsx:3267:          .top3-header__title,
+> src\pages\Top3\Top3View.jsx:3268:          .timeline-slot__title{
+  src\pages\Top3\Top3View.jsx:3269:            font-size: 17px;
+  src\pages\Top3\Top3View.jsx:3270:          }
+  src\pages\Top3\Top3View.jsx:3271:
+  src\pages\Top3\Top3View.jsx:3272:          .top3-card__topline{
+  src\pages\Top3\Top3View.jsx:3273:            gap: 8px;
+  src\pages\Top3\Top3View.jsx:3274:          }
+  src\pages\Top3\Top3View.jsx:3275:
+  src\pages\Top3\Top3View.jsx:3276:          .top3-rankBadge{
+  src\pages\Top3\Top3View.jsx:3277:            width: 28px;
+  src\pages\Top3\Top3View.jsx:3278:            height: 28px;
+  src\pages\Top3\Top3View.jsx:3279:            border-radius: 9px;
+  src\pages\Top3\Top3View.jsx:3280:          }
+  src\pages\Top3\Top3View.jsx:3281:
+  src\pages\Top3\Top3View.jsx:3282:          .top3-card__identity{
+  src\pages\Top3\Top3View.jsx:3283:            gap: 10px;
+  src\pages\Top3\Top3View.jsx:3284:            align-items: center;
+  src\pages\Top3\Top3View.jsx:3285:          }
+  src\pages\Top3\Top3View.jsx:3286:
+  src\pages\Top3\Top3View.jsx:3287:          .top3-card__animal{
+  src\pages\Top3\Top3View.jsx:3288:            font-size: 18px;
+  src\pages\Top3\Top3View.jsx:3289:            letter-spacing: 0.35px;
+  src\pages\Top3\Top3View.jsx:3290:          }
+  src\pages\Top3\Top3View.jsx:3291:
+  src\pages\Top3\Top3View.jsx:3292:          .top3-card--secondary .top3-card__animal{
+  src\pages\Top3\Top3View.jsx:3293:            font-size: 18px;
+  src\pages\Top3\Top3View.jsx:3294:          }
+  src\pages\Top3\Top3View.jsx:3295:
+  src\pages\Top3\Top3View.jsx:3296:          .top3-card__confidenceValue,
+  src\pages\Top3\Top3View.jsx:3297:          .top3-card--secondary .top3-card__confidenceValue{
+  src\pages\Top3\Top3View.jsx:3298:            font-size: 24px;
+  src\pages\Top3\Top3View.jsx:3299:          }
+  src\pages\Top3\Top3View.jsx:3300:
+  src\pages\Top3\Top3View.jsx:3301:          .pp-chipRow{
+  src\pages\Top3\Top3View.jsx:3302:            grid-template-columns: repeat(2, minmax(0, 1fr));
+  src\pages\Top3\Top3View.jsx:3303:          }
+  src\pages\Top3\Top3View.jsx:3304:
+  src\pages\Top3\Top3View.jsx:3305:          .pp-row{
+  src\pages\Top3\Top3View.jsx:3306:            grid-template-columns: repeat(2, minmax(0, 1fr));
+  src\pages\Top3\Top3View.jsx:3307:          }
+  src\pages\Top3\Top3View.jsx:3308:
+  src\pages\Top3\Top3View.jsx:3309:          .pp-pill{
+  src\pages\Top3\Top3View.jsx:3310:            padding: 10px 8px;
+  src\pages\Top3\Top3View.jsx:3311:            font-size: 13px;
+  src\pages\Top3\Top3View.jsx:3312:            letter-spacing: 1px;
+  src\pages\Top3\Top3View.jsx:3313:          }
+  src\pages\Top3\Top3View.jsx:3314:
+  src\pages\Top3\Top3View.jsx:3315:          .pp-copiedBadge{
+  src\pages\Top3\Top3View.jsx:3316:            right: 6px;
+  src\pages\Top3\Top3View.jsx:3317:            top: 6px;
+  src\pages\Top3\Top3View.jsx:3318:            font-size: 9px;
+  src\pages\Top3\Top3View.jsx:3319:            padding: 3px 6px;
+  src\pages\Top3\Top3View.jsx:3320:          }
+  src\pages\Top3\Top3View.jsx:3321:
+  src\pages\Top3\Top3View.jsx:3322:          .top3-metaGrid,
+> src\pages\Top3\Top3View.jsx:3323:          .timeline-slot__metaGrid{
+  src\pages\Top3\Top3View.jsx:3324:            grid-template-columns: 1fr;
+  src\pages\Top3\Top3View.jsx:3325:          }
+  src\pages\Top3\Top3View.jsx:3326:
+  src\pages\Top3\Top3View.jsx:3327:          .top3-historyToolbar{
+  src\pages\Top3\Top3View.jsx:3328:            grid-template-columns: 1fr 1fr;
+  src\pages\Top3\Top3View.jsx:3329:          }
+  src\pages\Top3\Top3View.jsx:3330:
+  src\pages\Top3\Top3View.jsx:3331:          .top3-historySummary{
+  src\pages\Top3\Top3View.jsx:3332:            grid-template-columns: repeat(2, minmax(0, 1fr));
+  src\pages\Top3\Top3View.jsx:3333:          }
+  src\pages\Top3\Top3View.jsx:3334:        }
+  src\pages\Top3\Top3View.jsx:3335:
+  src\pages\Top3\Top3View.jsx:3336:        @media (max-width: 420px){
+  src\pages\Top3\Top3View.jsx:3337:          .top3-shell{
+  src\pages\Top3\Top3View.jsx:3338:            padding: 10px;
+  src\pages\Top3\Top3View.jsx:3339:          }
+  src\pages\Top3\Top3View.jsx:3340:
+  src\pages\Top3\Top3View.jsx:3341:          .top3-card,
+  src\pages\Top3\Top3View.jsx:3342:          .top3-card--hero{
+  src\pages\Top3\Top3View.jsx:3343:            padding: 12px;
+  src\pages\Top3\Top3View.jsx:3344:          }
+  src\pages\Top3\Top3View.jsx:3345:
+  src\pages\Top3\Top3View.jsx:3346:          .top3-card__group{
+  src\pages\Top3\Top3View.jsx:3347:            font-size: 10px;
+  src\pages\Top3\Top3View.jsx:3348:          }
+  src\pages\Top3\Top3View.jsx:3349:
+  src\pages\Top3\Top3View.jsx:3350:          .top3-card__animal{
+  src\pages\Top3\Top3View.jsx:3351:            font-size: 16px;
+  src\pages\Top3\Top3View.jsx:3352:          }
+  src\pages\Top3\Top3View.jsx:3353:
+  src\pages\Top3\Top3View.jsx:3354:          .top3-card__confidenceValue{
+  src\pages\Top3\Top3View.jsx:3355:            font-size: 22px;
+  src\pages\Top3\Top3View.jsx:3356:          }
+  src\pages\Top3\Top3View.jsx:3357:
+  src\pages\Top3\Top3View.jsx:3358:          .pp-gridBox{
+  src\pages\Top3\Top3View.jsx:3359:            padding: 10px;
+  src\pages\Top3\Top3View.jsx:3360:            gap: 7px;
+  src\pages\Top3\Top3View.jsx:3361:          }
+  src\pages\Top3\Top3View.jsx:3362:
+  src\pages\Top3\Top3View.jsx:3363:          .pp-row,
+  src\pages\Top3\Top3View.jsx:3483:          }
+  src\pages\Top3\Top3View.jsx:3484:
+  src\pages\Top3\Top3View.jsx:3485:          .top3-stage--predictions > .top3-card:first-child{
+  src\pages\Top3\Top3View.jsx:3486:            grid-column: auto;
+  src\pages\Top3\Top3View.jsx:3487:          }
+  src\pages\Top3\Top3View.jsx:3488:
+  src\pages\Top3\Top3View.jsx:3489:          .top3-card__actions{
+  src\pages\Top3\Top3View.jsx:3490:            display: grid;
+  src\pages\Top3\Top3View.jsx:3491:            grid-template-columns: repeat(2, minmax(0, 1fr));
+  src\pages\Top3\Top3View.jsx:3492:          }
+  src\pages\Top3\Top3View.jsx:3493:
+  src\pages\Top3\Top3View.jsx:3494:          .top3-card__actions .pp-btn{
+  src\pages\Top3\Top3View.jsx:3495:            width: 100%;
+  src\pages\Top3\Top3View.jsx:3496:            min-width: 0;
+  src\pages\Top3\Top3View.jsx:3497:          }
+  src\pages\Top3\Top3View.jsx:3498:
+  src\pages\Top3\Top3View.jsx:3499:          .top3-metaGrid{
+  src\pages\Top3\Top3View.jsx:3500:            grid-template-columns: repeat(2, minmax(0, 1fr));
+  src\pages\Top3\Top3View.jsx:3501:          }
+  src\pages\Top3\Top3View.jsx:3502:
+> src\pages\Top3\Top3View.jsx:3503:          .timeline-slot__metaGrid{
+  src\pages\Top3\Top3View.jsx:3504:            grid-template-columns: 1fr;
+  src\pages\Top3\Top3View.jsx:3505:          }
+  src\pages\Top3\Top3View.jsx:3506:        }
+  src\pages\Top3\Top3View.jsx:3507:
+  src\pages\Top3\Top3View.jsx:3508:        @media (max-width: 420px){
+  src\pages\Top3\Top3View.jsx:3509:          .top3-card__actions,
+  src\pages\Top3\Top3View.jsx:3510:          .top3-metaGrid{
+  src\pages\Top3\Top3View.jsx:3511:            grid-template-columns: 1fr;
+  src\pages\Top3\Top3View.jsx:3512:          }
+  src\pages\Top3\Top3View.jsx:3513:        }
+  src\pages\Top3\Top3View.jsx:3514:
+  src\pages\Top3\Top3View.jsx:3515:        @media (prefers-reduced-motion: reduce){
+  src\pages\Top3\Top3View.jsx:3516:          .top3-skeleton::after{
+  src\pages\Top3\Top3View.jsx:3517:            animation: none;
+  src\pages\Top3\Top3View.jsx:3518:          }
+  src\pages\Top3\Top3View.jsx:3519:        }
+  src\pages\Top3\Top3View.jsx:3520:
+  src\pages\Top3\Top3View.jsx:3521:
+  src\pages\Top3\Top3View.jsx:3522:        @media (max-width: 640px){
+  src\pages\Top3\Top3View.jsx:3523:          .pp-tabs{
+  src\pages\Top3\Top3View.jsx:3524:            gap:6px;
+  src\pages\Top3\Top3View.jsx:3525:          }
+  src\pages\Top3\Top3View.jsx:3526:
+  src\pages\Top3\Top3View.jsx:3527:          .pp-tab{
+  src\pages\Top3\Top3View.jsx:3528:            padding:8px 10px;
+  src\pages\Top3\Top3View.jsx:3529:            font-size:13px;
+  src\pages\Top3\Top3View.jsx:3530:          }
+  src\pages\Top3\Top3View.jsx:3531:        }
+  src\pages\Top3\Top3View.jsx:3532:
+  src\pages\Top3\Top3View.jsx:3533:      `}</style>
+  src\pages\Top3\Top3View.jsx:3534:
+  src\pages\Top3\Top3View.jsx:3535:      <div className="top3-page">
+  src\pages\Top3\Top3View.jsx:3536:        <section className="top3-shell">
+  src\pages\Top3\Top3View.jsx:3537:          <div className="top3-header">
+  src\pages\Top3\Top3View.jsx:3538:            <div className="top3-header__title">TOP3 — Próximo sorteio</div>
+  src\pages\Top3\Top3View.jsx:3539:
+  src\pages\Top3\Top3View.jsx:3540:            <div className="top3-context">
+  src\pages\Top3\Top3View.jsx:3541:              <div><b>Base:</b> {headerBase}</div>
+  src\pages\Top3\Top3View.jsx:3542:              <div><b>Previsão:</b> {headerForecast}</div>
+  src\pages\Top3\Top3View.jsx:3543:              <div><b>Transição:</b> {headerTransition}</div>
+  src\pages\Top3\Top3View.jsx:3692:              <Top3Card
+  src\pages\Top3\Top3View.jsx:3693:                key={`${String(item?.grupo ?? "g")}__${String(
+  src\pages\Top3\Top3View.jsx:3694:                  item?.animal || ""
+  src\pages\Top3\Top3View.jsx:3695:                )}__${idx}`}
+  src\pages\Top3\Top3View.jsx:3696:                item={item}
+  src\pages\Top3\Top3View.jsx:3697:                idx={idx}
+  src\pages\Top3\Top3View.jsx:3698:                theme={t}
+  src\pages\Top3\Top3View.jsx:3699:                copiedAllKey={copiedAllKey}
+  src\pages\Top3\Top3View.jsx:3700:                copiedCellKey={copiedCellKey}
+  src\pages\Top3\Top3View.jsx:3701:                setCopiedAllKey={setCopiedAllKey}
+  src\pages\Top3\Top3View.jsx:3702:                setCopiedCellKey={setCopiedCellKey}
+  src\pages\Top3\Top3View.jsx:3703:                copyText={copyText}
+  src\pages\Top3\Top3View.jsx:3704:                build16={build16}
+  src\pages\Top3\Top3View.jsx:3705:                buildMilhares={buildMilhares}
+  src\pages\Top3\Top3View.jsx:3706:                build20={build20}
+  src\pages\Top3\Top3View.jsx:3707:              />
+  src\pages\Top3\Top3View.jsx:3708:            ))}
+  src\pages\Top3\Top3View.jsx:3709:          </section>
+  src\pages\Top3\Top3View.jsx:3710:        )}
+  src\pages\Top3\Top3View.jsx:3711:
+> src\pages\Top3\Top3View.jsx:3712:        {showDetailedTimeline && timeline.length > 0 ? (
+  src\pages\Top3\Top3View.jsx:3713:          <section className="top3-stage">
+  src\pages\Top3\Top3View.jsx:3714:            <section className="top3-shell">
+> src\pages\Top3\Top3View.jsx:3715:              <div className="top3-header__title">Leitura do dia — Timeline completa</div>
+  src\pages\Top3\Top3View.jsx:3716:              <div className="top3-helper">
+  src\pages\Top3\Top3View.jsx:3717:                Cada bloco abaixo mostra o Top3 calculado para o horário alvo, a base usada e o resultado real quando disponível.
+  src\pages\Top3\Top3View.jsx:3718:              </div>
+  src\pages\Top3\Top3View.jsx:3719:            </section>
+  src\pages\Top3\Top3View.jsx:3720:
+> src\pages\Top3\Top3View.jsx:3721:            {timeline.map((slot, idx) => (
+> src\pages\Top3\Top3View.jsx:3722:              <TimelineSlot
+  src\pages\Top3\Top3View.jsx:3723:                key={`${String(slot?.targetYmd || "y")}_${String(slot?.targetHour || "h")}_${idx}`}
+  src\pages\Top3\Top3View.jsx:3724:                slot={slot}
+  src\pages\Top3\Top3View.jsx:3725:                theme={t}
+  src\pages\Top3\Top3View.jsx:3726:                copiedAllKey={copiedAllKey}
+  src\pages\Top3\Top3View.jsx:3727:                copiedCellKey={copiedCellKey}
+  src\pages\Top3\Top3View.jsx:3728:                setCopiedAllKey={setCopiedAllKey}
+  src\pages\Top3\Top3View.jsx:3729:                setCopiedCellKey={setCopiedCellKey}
+  src\pages\Top3\Top3View.jsx:3730:                copyText={copyText}
+  src\pages\Top3\Top3View.jsx:3731:                build16={build16}
+  src\pages\Top3\Top3View.jsx:3732:                buildMilhares={buildMilhares}
+  src\pages\Top3\Top3View.jsx:3733:                build20={build20}
+  src\pages\Top3\Top3View.jsx:3734:              />
+  src\pages\Top3\Top3View.jsx:3735:            ))}
+  src\pages\Top3\Top3View.jsx:3736:          </section>
+  src\pages\Top3\Top3View.jsx:3737:        ) : null}
+  src\pages\Top3\Top3View.jsx:3738:
+  src\pages\Top3\Top3View.jsx:3739:        <section className="top3-shell">
+  src\pages\Top3\Top3View.jsx:3740:          <div className="top3-header__title">
+  src\pages\Top3\Top3View.jsx:3741:            Histórico recente {historyAnchorYmd ? `— ${ymdToBR(historyAnchorYmd)}` : ""}
+  src\pages\Top3\Top3View.jsx:3742:          </div>
+  src\pages\Top3\Top3View.jsx:3743:
+  src\pages\Top3\Top3View.jsx:3744:          <div className="top3-historySummary">
+  src\pages\Top3\Top3View.jsx:3745:            <div className="top3-historyMetric">
+  src\pages\Top3\Top3View.jsx:3746:              <div className="top3-historyMetric__label">Horários</div>
+  src\pages\Top3\Top3View.jsx:3747:              <div className="top3-historyMetric__value">
+  src\pages\Top3\Top3View.jsx:3748:                {historySummary.total}
+  src\pages\Top3\Top3View.jsx:3749:              </div>
+  src\pages\Top3\Top3View.jsx:3750:            </div>
+  src\pages\Top3\Top3View.jsx:3751:
+  src\pages\Top3\Top3View.jsx:3752:            <div className="top3-historyMetric">
+  src\pages\Top3\Top3View.jsx:3753:              <div className="top3-historyMetric__label">Validados</div>
+  src\pages\Top3\Top3View.jsx:3754:              <div className="top3-historyMetric__value">
+  src\pages\Top3\Top3View.jsx:3755:                {historySummary.validated}
+  src\pages\Top3\Top3View.jsx:3756:              </div>
+  src\pages\Top3\Top3View.jsx:3757:            </div>
+  src\pages\Top3\Top3View.jsx:3758:
+  src\pages\Top3\Top3View.jsx:3759:            <div className="top3-historyMetric">
+  src\pages\Top3\Top3View.jsx:3760:              <div className="top3-historyMetric__label">Grupo/dezena</div>
+  src\pages\Top3\Top3View.jsx:3761:              <div className="top3-historyMetric__value">
+  src\pages\Top3\Top3View.jsx:3762:                {historySummary.grupo}
+

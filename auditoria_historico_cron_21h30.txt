@@ -1,0 +1,120 @@
+==============================================================================================================
+AUDITORIA HISTÓRICA — CRON DAS 21H30
+==============================================================================================================
+
+Workflow: .github/workflows/auto-import.yml
+Cron investigado: 5-45 0 * * 0,2-6
+
+==============================================================================================================
+1. CRON NO ARQUIVO ATUAL
+==============================================================================================================
+Linha 24: - cron: "5-45 0 * * 0,2-6"
+
+==============================================================================================================
+2. COMMITS QUE ADICIONARAM OU REMOVERAM O CRON
+==============================================================================================================
+COMMIT=d8107dcbac3bea157a61d7e62a957d86b9cee366|DATA=2026-01-21T18:22:54-03:00|AUTOR=Palpitaco JB|ASSUNTO=fix(actions): usa FIREBASE_ADMIN_SA_JSON para Firebase Admin
+
+==============================================================================================================
+3. PATCH DOS COMMITS ENCONTRADOS
+==============================================================================================================
+
+--------------------------------------------------------------------------------------------------------------
+COMMIT: d8107dcbac3bea157a61d7e62a957d86b9cee366
+--------------------------------------------------------------------------------------------------------------
+commit d8107dcbac3bea157a61d7e62a957d86b9cee366
+Author: Palpitaco JB
+Date: 2026-01-21T18:22:54-03:00
+Subject: fix(actions): usa FIREBASE_ADMIN_SA_JSON para Firebase Admin
+
+
+diff --git a/.github/workflows/auto-import.yml b/.github/workflows/auto-import.yml
+index 7f8dcff..2061b02 100644
+--- a/.github/workflows/auto-import.yml
++++ b/.github/workflows/auto-import.yml
+@@ -1,4 +1,4 @@
+-name: Auto Import â€” PalPitaco JB
++name: Auto Import — PalPitaco JB
+ 
+ on:
+   schedule:
+@@ -21,7 +21,7 @@ on:
+ 
+     # BRT 21:05–21:45 => UTC 0:05–0:45 (vira o dia no UTC; TER–DOM)
+     # (Isso representa SEG–SÁB em BRT)
+-    - cron: "5-45 0 * * 2-0"
++    - cron: "5-45 0 * * 0,2-6"
+ 
+     # =========================
+     # FEDERAL — Quarta e Sábado — janela BRT 19:49–20:10
+@@ -79,7 +79,8 @@ jobs:
+ 
+       - name: Rodar importação automática (PT_RIO)
+         env:
+-          FIREBASE_SERVICE_ACCOUNT_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_JSON }}
++          # ✅ nome correto que o firebaseAdmin.js lê
++          FIREBASE_ADMIN_SA_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_JSON }}
+           LOTTERY: PT_RIO
+         run: node scripts/autoImportToday.js
+ 
+@@ -116,6 +117,7 @@ jobs:
+ 
+       - name: Rodar importação automática (FEDERAL)
+         env:
+-          FIREBASE_SERVICE_ACCOUNT_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_JSON }}
++          # ✅ nome correto que o firebaseAdmin.js lê
++          FIREBASE_ADMIN_SA_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_JSON }}
+           LOTTERY: FEDERAL
+         run: node scripts/autoImportToday.js
+
+==============================================================================================================
+4. SNAPSHOT DA MAIN EM 09/07/2026
+==============================================================================================================
+
+--------------------------------------------------------------------------------------------------------------
+DATA ANALISADA: 09/07/2026
+Limite: 2026-07-09T23:59:59-03:00
+--------------------------------------------------------------------------------------------------------------
+COMMIT=88c01dd08ddc61d84777f40210044fc083ba7128
+DATA=2026-07-09T13:42:48-03:00
+ASSUNTO=Remove instrumentacao temporaria do TOP3
+RESULTADO: O cron JÁ EXISTIA nessa data.
+
+CRONS PRESENTES NESSE COMMIT:
+- cron: "5-31 12 * * 0-6"
+- cron: "5-31 14 * * 0-6"
+- cron: "5-31 17 * * 0-6"
+- cron: "5-31 19 * * 0-6"
+- cron: "5-31 21 * * 1,2,4,5"
+- cron: "35 21 * * 3,6"
+- cron: "5-45 0 * * 0,2-6"
+- cron: "49-59 22 * * 3,6"
+- cron: "0-10 23 * * 3,6"
+
+--------------------------------------------------------------------------------------------------------------
+DATA ANALISADA: 13/07/2026
+Limite: 2026-07-13T23:59:59-03:00
+--------------------------------------------------------------------------------------------------------------
+COMMIT=3fb095cedded26f6ece8fb2abeea1a5065c44d01
+DATA=2026-07-13T21:10:45-03:00
+ASSUNTO=Diversifica prefixos das milhares nas Centenas
+RESULTADO: O cron JÁ EXISTIA nessa data.
+
+CRONS PRESENTES NESSE COMMIT:
+- cron: "5-31 12 * * 0-6"
+- cron: "5-31 14 * * 0-6"
+- cron: "5-31 17 * * 0-6"
+- cron: "5-31 19 * * 0-6"
+- cron: "5-31 21 * * 1,2,4,5"
+- cron: "35 21 * * 3,6"
+- cron: "5-45 0 * * 0,2-6"
+- cron: "49-59 22 * * 3,6"
+- cron: "0-10 23 * * 3,6"
+
+==============================================================================================================
+5. PRIMEIRO COMMIT CONTENDO O CRON
+==============================================================================================================
+COMMIT=d8107dcbac3bea157a61d7e62a957d86b9cee366
+DATA=2026-01-21T18:22:54-03:00
+AUTOR=Palpitaco JB
+ASSUNTO=fix(actions): usa FIREBASE_ADMIN_SA_JSON para Firebase Admin

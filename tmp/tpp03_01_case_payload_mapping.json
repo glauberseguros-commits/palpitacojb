@@ -1,0 +1,4572 @@
+{
+  "generatedAt": "2026-07-18T19:38:45.321Z",
+  "files": {
+    "harness": "C:\\Users\\glaub\\palpitaco\\backend\\scripts\\backtestTop3AblationExperimental.js",
+    "official": "C:\\Users\\glaub\\palpitaco\\backend\\scripts\\backtestTop3Official.js",
+    "validationJson": "C:\\Users\\glaub\\palpitaco\\tmp\\tpp01_04_harness_validation.json"
+  },
+  "validationPayload": {
+    "topLevelKeys": [
+      "ok",
+      "generatedAt",
+      "experiment",
+      "lotteryKey",
+      "requestedVariant",
+      "variant",
+      "limit",
+      "minHistory",
+      "from",
+      "to",
+      "baselineOfficial",
+      "variantResult",
+      "comparison"
+    ],
+    "structure": {
+      "type": "object",
+      "keys": [
+        "ok",
+        "generatedAt",
+        "experiment",
+        "lotteryKey",
+        "requestedVariant",
+        "variant",
+        "limit",
+        "minHistory",
+        "from",
+        "to",
+        "baselineOfficial",
+        "variantResult",
+        "comparison"
+      ],
+      "children": {
+        "ok": {
+          "type": "boolean",
+          "sample": true
+        },
+        "generatedAt": {
+          "type": "string",
+          "sample": "2026-07-18T19:33:20.053Z"
+        },
+        "experiment": {
+          "type": "string",
+          "sample": "TPP-01.04"
+        },
+        "lotteryKey": {
+          "type": "string",
+          "sample": "PT_RIO"
+        },
+        "requestedVariant": {
+          "type": "string",
+          "sample": "A02"
+        },
+        "variant": {
+          "type": "string",
+          "sample": "SEM_CONTEXT"
+        },
+        "limit": {
+          "type": "number",
+          "sample": 500
+        },
+        "minHistory": {
+          "type": "number",
+          "sample": 100
+        },
+        "from": {
+          "type": "null",
+          "sample": null
+        },
+        "to": {
+          "type": "null",
+          "sample": null
+        },
+        "baselineOfficial": {
+          "type": "object",
+          "keys": [
+            "ok",
+            "lotteryKey",
+            "engine",
+            "evaluated",
+            "skipped",
+            "top1",
+            "top3",
+            "errors",
+            "byHour",
+            "byWeekday",
+            "byMonth"
+          ],
+          "children": {
+            "ok": {
+              "type": "boolean",
+              "sample": true
+            },
+            "lotteryKey": {
+              "type": "string",
+              "sample": "PT_RIO"
+            },
+            "engine": {
+              "type": "string",
+              "sample": "top3_statistical_v3"
+            },
+            "evaluated": {
+              "type": "number",
+              "sample": 500
+            },
+            "skipped": {
+              "type": "number",
+              "sample": 0
+            },
+            "top1": {
+              "type": "object",
+              "keys": [
+                "hits",
+                "total",
+                "rate"
+              ],
+              "children": {
+                "hits": {
+                  "type": "number",
+                  "sample": 28
+                },
+                "total": {
+                  "type": "number",
+                  "sample": 500
+                },
+                "rate": {
+                  "type": "number",
+                  "sample": 5.6
+                }
+              }
+            },
+            "top3": {
+              "type": "object",
+              "keys": [
+                "hits",
+                "total",
+                "rate"
+              ],
+              "children": {
+                "hits": {
+                  "type": "number",
+                  "sample": 67
+                },
+                "total": {
+                  "type": "number",
+                  "sample": 500
+                },
+                "rate": {
+                  "type": "number",
+                  "sample": 13.4
+                }
+              }
+            },
+            "errors": {
+              "type": "number",
+              "sample": 0
+            },
+            "byHour": {
+              "type": "object",
+              "keys": [
+                "16:00",
+                "21:00",
+                "11:00",
+                "14:00",
+                "18:00"
+              ],
+              "children": {
+                "16:00": {
+                  "type": "object",
+                  "keys": [
+                    "evaluated",
+                    "top1Hits",
+                    "top3Hits",
+                    "errors",
+                    "top1Rate",
+                    "top3Rate"
+                  ],
+                  "children": {
+                    "evaluated": {
+                      "type": "number",
+                      "sample": 114
+                    },
+                    "top1Hits": {
+                      "type": "number",
+                      "sample": 4
+                    },
+                    "top3Hits": {
+                      "type": "number",
+                      "sample": 13
+                    },
+                    "errors": {
+                      "type": "number",
+                      "sample": 0
+                    },
+                    "top1Rate": {
+                      "type": "number",
+                      "sample": 3.5088
+                    },
+                    "top3Rate": {
+                      "type": "number",
+                      "sample": 11.4035
+                    }
+                  }
+                },
+                "21:00": {
+                  "type": "object",
+                  "keys": [
+                    "evaluated",
+                    "top1Hits",
+                    "top3Hits",
+                    "errors",
+                    "top1Rate",
+                    "top3Rate"
+                  ],
+                  "children": {
+                    "evaluated": {
+                      "type": "number",
+                      "sample": 96
+                    },
+                    "top1Hits": {
+                      "type": "number",
+                      "sample": 7
+                    },
+                    "top3Hits": {
+                      "type": "number",
+                      "sample": 12
+                    },
+                    "errors": {
+                      "type": "number",
+                      "sample": 0
+                    },
+                    "top1Rate": {
+                      "type": "number",
+                      "sample": 7.2917
+                    },
+                    "top3Rate": {
+                      "type": "number",
+                      "sample": 12.5
+                    }
+                  }
+                },
+                "11:00": {
+                  "type": "object",
+                  "keys": [
+                    "evaluated",
+                    "top1Hits",
+                    "top3Hits",
+                    "errors",
+                    "top1Rate",
+                    "top3Rate"
+                  ],
+                  "children": {
+                    "evaluated": {
+                      "type": "number",
+                      "sample": 113
+                    },
+                    "top1Hits": {
+                      "type": "number",
+                      "sample": 9
+                    },
+                    "top3Hits": {
+                      "type": "number",
+                      "sample": 17
+                    },
+                    "errors": {
+                      "type": "number",
+                      "sample": 0
+                    },
+                    "top1Rate": {
+                      "type": "number",
+                      "sample": 7.9646
+                    },
+                    "top3Rate": {
+                      "type": "number",
+                      "sample": 15.0442
+                    }
+                  }
+                },
+                "14:00": {
+                  "type": "object",
+                  "keys": [
+                    "evaluated",
+                    "top1Hits",
+                    "top3Hits",
+                    "errors",
+                    "top1Rate",
+                    "top3Rate"
+                  ],
+                  "children": {
+                    "evaluated": {
+                      "type": "number",
+                      "sample": 113
+                    },
+                    "top1Hits": {
+                      "type": "number",
+                      "sample": 5
+                    },
+                    "top3Hits": {
+                      "type": "number",
+                      "sample": 17
+                    },
+                    "errors": {
+                      "type": "number",
+                      "sample": 0
+                    },
+                    "top1Rate": {
+                      "type": "number",
+                      "sample": 4.4248
+                    },
+                    "top3Rate": {
+                      "type": "number",
+                      "sample": 15.0442
+                    }
+                  }
+                },
+                "18:00": {
+                  "type": "object",
+                  "keys": [
+                    "evaluated",
+                    "top1Hits",
+                    "top3Hits",
+                    "errors",
+                    "top1Rate",
+                    "top3Rate"
+                  ],
+                  "children": {
+                    "evaluated": {
+                      "type": "number",
+                      "sample": 64
+                    },
+                    "top1Hits": {
+                      "type": "number",
+                      "sample": 3
+                    },
+                    "top3Hits": {
+                      "type": "number",
+                      "sample": 8
+                    },
+                    "errors": {
+                      "type": "number",
+                      "sample": 0
+                    },
+                    "top1Rate": {
+                      "type": "number",
+                      "sample": 4.6875
+                    },
+                    "top3Rate": {
+                      "type": "number",
+                      "sample": 12.5
+                    }
+                  }
+                }
+              }
+            },
+            "byWeekday": {
+              "type": "object",
+              "keys": [
+                "0",
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6"
+              ],
+              "children": {
+                "0": {
+                  "type": "object",
+                  "keys": [
+                    "evaluated",
+                    "top1Hits",
+                    "top3Hits",
+                    "errors",
+                    "top1Rate",
+                    "top3Rate"
+                  ],
+                  "children": {
+                    "evaluated": {
+                      "type": "number",
+                      "sample": 45
+                    },
+                    "top1Hits": {
+                      "type": "number",
+                      "sample": 0
+                    },
+                    "top3Hits": {
+                      "type": "number",
+                      "sample": 3
+                    },
+                    "errors": {
+                      "type": "number",
+                      "sample": 0
+                    },
+                    "top1Rate": {
+                      "type": "number",
+                      "sample": 0
+                    },
+                    "top3Rate": {
+                      "type": "number",
+                      "sample": 6.6667
+                    }
+                  }
+                },
+                "1": {
+                  "type": "object",
+                  "keys": [
+                    "evaluated",
+                    "top1Hits",
+                    "top3Hits",
+                    "errors",
+                    "top1Rate",
+                    "top3Rate"
+                  ],
+                  "children": {
+                    "evaluated": {
+                      "type": "number",
+                      "sample": 80
+                    },
+                    "top1Hits": {
+                      "type": "number",
+                      "sample": 5
+                    },
+                    "top3Hits": {
+                      "type": "number",
+                      "sample": 13
+                    },
+                    "errors": {
+                      "type": "number",
+                      "sample": 0
+                    },
+                    "top1Rate": {
+                      "type": "number",
+                      "sample": 6.25
+                    },
+                    "top3Rate": {
+                      "type": "number",
+                      "sample": 16.25
+                    }
+                  }
+                },
+                "2": {
+                  "type": "object",
+                  "keys": [
+                    "evaluated",
+                    "top1Hits",
+                    "top3Hits",
+                    "errors",
+                    "top1Rate",
+                    "top3Rate"
+                  ],
+                  "children": {
+                    "evaluated": {
+                      "type": "number",
+                      "sample": 80
+                    },
+                    "top1Hits": {
+                      "type": "number",
+                      "sample": 5
+                    },
+                    "top3Hits": {
+                      "type": "number",
+                      "sample": 11
+                    },
+                    "errors": {
+                      "type": "number",
+                      "sample": 0
+                    },
+                    "top1Rate": {
+                      "type": "number",
+                      "sample": 6.25
+                    },
+                    "top3Rate": {
+                      "type": "number",
+                      "sample": 13.75
+                    }
+                  }
+                },
+                "3": {
+                  "type": "object",
+                  "keys": [
+                    "evaluated",
+                    "top1Hits",
+                    "top3Hits",
+                    "errors",
+                    "top1Rate",
+                    "top3Rate"
+                  ],
+                  "children": {
+                    "evaluated": {
+                      "type": "number",
+                      "sample": 64
+                    },
+                    "top1Hits": {
+                      "type": "number",
+                      "sample": 3
+                    },
+                    "top3Hits": {
+                      "type": "number",
+                      "sample": 9
+                    },
+                    "errors": {
+                      "type": "number",
+                      "sample": 0
+                    },
+                    "top1Rate": {
+                      "type": "number",
+                      "sample": 4.6875
+                    },
+                    "top3Rate": {
+                      "type": "number",
+                      "sample": 14.0625
+                    }
+                  }
+                },
+                "4": {
+                  "type": "object",
+                  "keys": [
+                    "evaluated",
+                    "top1Hits",
+                    "top3Hits",
+                    "errors",
+                    "top1Rate",
+                    "top3Rate"
+                  ],
+                  "children": {
+                    "evaluated": {
+                      "type": "number",
+                      "sample": 83
+                    },
+                    "top1Hits": {
+                      "type": "number",
+                      "sample": 7
+                    },
+                    "top3Hits": {
+                      "type": "number",
+                      "sample": 11
+                    },
+                    "errors": {
+                      "type": "number",
+                      "sample": 0
+                    },
+                    "top1Rate": {
+                      "type": "number",
+                      "sample": 8.4337
+                    },
+                    "top3Rate": {
+                      "type": "number",
+                      "sample": 13.253
+                    }
+                  }
+                },
+                "5": {
+                  "type": "object",
+                  "keys": [
+                    "evaluated",
+                    "top1Hits",
+                    "top3Hits",
+                    "errors",
+                    "top1Rate",
+                    "top3Rate"
+                  ],
+                  "children": {
+                    "evaluated": {
+                      "type": "number",
+                      "sample": 84
+                    },
+                    "top1Hits": {
+                      "type": "number",
+                      "sample": 4
+                    },
+                    "top3Hits": {
+                      "type": "number",
+                      "sample": 11
+                    },
+                    "errors": {
+                      "type": "number",
+                      "sample": 0
+                    },
+                    "top1Rate": {
+                      "type": "number",
+                      "sample": 4.7619
+                    },
+                    "top3Rate": {
+                      "type": "number",
+                      "sample": 13.0952
+                    }
+                  }
+                },
+                "6": {
+                  "type": "object",
+                  "keys": [
+                    "evaluated",
+                    "top1Hits",
+                    "top3Hits",
+                    "errors",
+                    "top1Rate",
+                    "top3Rate"
+                  ],
+                  "children": {
+                    "evaluated": {
+                      "type": "number",
+                      "sample": 64
+                    },
+                    "top1Hits": {
+                      "type": "number",
+                      "sample": 4
+                    },
+                    "top3Hits": {
+                      "type": "number",
+                      "sample": 9
+                    },
+                    "errors": {
+                      "type": "number",
+                      "sample": 0
+                    },
+                    "top1Rate": {
+                      "type": "number",
+                      "sample": 6.25
+                    },
+                    "top3Rate": {
+                      "type": "number",
+                      "sample": 14.0625
+                    }
+                  }
+                }
+              }
+            },
+            "byMonth": {
+              "type": "object",
+              "keys": [
+                "2022-06",
+                "2022-07",
+                "2022-08",
+                "2022-09",
+                "2022-10"
+              ],
+              "children": {
+                "2022-06": {
+                  "type": "object",
+                  "keys": [
+                    "evaluated",
+                    "top1Hits",
+                    "top3Hits",
+                    "errors",
+                    "top1Rate",
+                    "top3Rate"
+                  ],
+                  "children": {
+                    "evaluated": {
+                      "type": "number",
+                      "sample": 7
+                    },
+                    "top1Hits": {
+                      "type": "number",
+                      "sample": 0
+                    },
+                    "top3Hits": {
+                      "type": "number",
+                      "sample": 1
+                    },
+                    "errors": {
+                      "type": "number",
+                      "sample": 0
+                    },
+                    "top1Rate": {
+                      "type": "number",
+                      "sample": 0
+                    },
+                    "top3Rate": {
+                      "type": "number",
+                      "sample": 14.2857
+                    }
+                  }
+                },
+                "2022-07": {
+                  "type": "object",
+                  "keys": [
+                    "evaluated",
+                    "top1Hits",
+                    "top3Hits",
+                    "errors",
+                    "top1Rate",
+                    "top3Rate"
+                  ],
+                  "children": {
+                    "evaluated": {
+                      "type": "number",
+                      "sample": 136
+                    },
+                    "top1Hits": {
+                      "type": "number",
+                      "sample": 8
+                    },
+                    "top3Hits": {
+                      "type": "number",
+                      "sample": 18
+                    },
+                    "errors": {
+                      "type": "number",
+                      "sample": 0
+                    },
+                    "top1Rate": {
+                      "type": "number",
+                      "sample": 5.8824
+                    },
+                    "top3Rate": {
+                      "type": "number",
+                      "sample": 13.2353
+                    }
+                  }
+                },
+                "2022-08": {
+                  "type": "object",
+                  "keys": [
+                    "evaluated",
+                    "top1Hits",
+                    "top3Hits",
+                    "errors",
+                    "top1Rate",
+                    "top3Rate"
+                  ],
+                  "children": {
+                    "evaluated": {
+                      "type": "number",
+                      "sample": 138
+                    },
+                    "top1Hits": {
+                      "type": "number",
+                      "sample": 8
+                    },
+                    "top3Hits": {
+                      "type": "number",
+                      "sample": 16
+                    },
+                    "errors": {
+                      "type": "number",
+                      "sample": 0
+                    },
+                    "top1Rate": {
+                      "type": "number",
+                      "sample": 5.7971
+                    },
+                    "top3Rate": {
+                      "type": "number",
+                      "sample": 11.5942
+                    }
+                  }
+                },
+                "2022-09": {
+                  "type": "object",
+                  "keys": [
+                    "evaluated",
+                    "top1Hits",
+                    "top3Hits",
+                    "errors",
+                    "top1Rate",
+                    "top3Rate"
+                  ],
+                  "children": {
+                    "evaluated": {
+                      "type": "number",
+                      "sample": 132
+                    },
+                    "top1Hits": {
+                      "type": "number",
+                      "sample": 8
+                    },
+                    "top3Hits": {
+                      "type": "number",
+                      "sample": 19
+                    },
+                    "errors": {
+                      "type": "number",
+                      "sample": 0
+                    },
+                    "top1Rate": {
+                      "type": "number",
+                      "sample": 6.0606
+                    },
+                    "top3Rate": {
+                      "type": "number",
+                      "sample": 14.3939
+                    }
+                  }
+                },
+                "2022-10": {
+                  "type": "object",
+                  "keys": [
+                    "evaluated",
+                    "top1Hits",
+                    "top3Hits",
+                    "errors",
+                    "top1Rate",
+                    "top3Rate"
+                  ],
+                  "children": {
+                    "evaluated": {
+                      "type": "number",
+                      "sample": 87
+                    },
+                    "top1Hits": {
+                      "type": "number",
+                      "sample": 4
+                    },
+                    "top3Hits": {
+                      "type": "number",
+                      "sample": 13
+                    },
+                    "errors": {
+                      "type": "number",
+                      "sample": 0
+                    },
+                    "top1Rate": {
+                      "type": "number",
+                      "sample": 4.5977
+                    },
+                    "top3Rate": {
+                      "type": "number",
+                      "sample": 14.9425
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "variantResult": {
+          "type": "object",
+          "keys": [
+            "ok",
+            "lotteryKey",
+            "engine",
+            "evaluated",
+            "skipped",
+            "top1",
+            "top3",
+            "errors",
+            "byHour",
+            "byWeekday",
+            "byMonth"
+          ],
+          "children": {
+            "ok": {
+              "type": "boolean",
+              "sample": true
+            },
+            "lotteryKey": {
+              "type": "string",
+              "sample": "PT_RIO"
+            },
+            "engine": {
+              "type": "string",
+              "sample": "top3_statistical_v3"
+            },
+            "evaluated": {
+              "type": "number",
+              "sample": 500
+            },
+            "skipped": {
+              "type": "number",
+              "sample": 0
+            },
+            "top1": {
+              "type": "object",
+              "keys": [
+                "hits",
+                "total",
+                "rate"
+              ],
+              "children": {
+                "hits": {
+                  "type": "number",
+                  "sample": 28
+                },
+                "total": {
+                  "type": "number",
+                  "sample": 500
+                },
+                "rate": {
+                  "type": "number",
+                  "sample": 5.6
+                }
+              }
+            },
+            "top3": {
+              "type": "object",
+              "keys": [
+                "hits",
+                "total",
+                "rate"
+              ],
+              "children": {
+                "hits": {
+                  "type": "number",
+                  "sample": 67
+                },
+                "total": {
+                  "type": "number",
+                  "sample": 500
+                },
+                "rate": {
+                  "type": "number",
+                  "sample": 13.4
+                }
+              }
+            },
+            "errors": {
+              "type": "number",
+              "sample": 0
+            },
+            "byHour": {
+              "type": "object",
+              "keys": [
+                "16:00",
+                "21:00",
+                "11:00",
+                "14:00",
+                "18:00"
+              ],
+              "children": {
+                "16:00": {
+                  "type": "object",
+                  "keys": [
+                    "evaluated",
+                    "top1Hits",
+                    "top3Hits",
+                    "errors",
+                    "top1Rate",
+                    "top3Rate"
+                  ],
+                  "children": {
+                    "evaluated": {
+                      "type": "number",
+                      "sample": 114
+                    },
+                    "top1Hits": {
+                      "type": "number",
+                      "sample": 4
+                    },
+                    "top3Hits": {
+                      "type": "number",
+                      "sample": 13
+                    },
+                    "errors": {
+                      "type": "number",
+                      "sample": 0
+                    },
+                    "top1Rate": {
+                      "type": "number",
+                      "sample": 3.5088
+                    },
+                    "top3Rate": {
+                      "type": "number",
+                      "sample": 11.4035
+                    }
+                  }
+                },
+                "21:00": {
+                  "type": "object",
+                  "keys": [
+                    "evaluated",
+                    "top1Hits",
+                    "top3Hits",
+                    "errors",
+                    "top1Rate",
+                    "top3Rate"
+                  ],
+                  "children": {
+                    "evaluated": {
+                      "type": "number",
+                      "sample": 96
+                    },
+                    "top1Hits": {
+                      "type": "number",
+                      "sample": 7
+                    },
+                    "top3Hits": {
+                      "type": "number",
+                      "sample": 12
+                    },
+                    "errors": {
+                      "type": "number",
+                      "sample": 0
+                    },
+                    "top1Rate": {
+                      "type": "number",
+                      "sample": 7.2917
+                    },
+                    "top3Rate": {
+                      "type": "number",
+                      "sample": 12.5
+                    }
+                  }
+                },
+                "11:00": {
+                  "type": "object",
+                  "keys": [
+                    "evaluated",
+                    "top1Hits",
+                    "top3Hits",
+                    "errors",
+                    "top1Rate",
+                    "top3Rate"
+                  ],
+                  "children": {
+                    "evaluated": {
+                      "type": "number",
+                      "sample": 113
+                    },
+                    "top1Hits": {
+                      "type": "number",
+                      "sample": 9
+                    },
+                    "top3Hits": {
+                      "type": "number",
+                      "sample": 17
+                    },
+                    "errors": {
+                      "type": "number",
+                      "sample": 0
+                    },
+                    "top1Rate": {
+                      "type": "number",
+                      "sample": 7.9646
+                    },
+                    "top3Rate": {
+                      "type": "number",
+                      "sample": 15.0442
+                    }
+                  }
+                },
+                "14:00": {
+                  "type": "object",
+                  "keys": [
+                    "evaluated",
+                    "top1Hits",
+                    "top3Hits",
+                    "errors",
+                    "top1Rate",
+                    "top3Rate"
+                  ],
+                  "children": {
+                    "evaluated": {
+                      "type": "number",
+                      "sample": 113
+                    },
+                    "top1Hits": {
+                      "type": "number",
+                      "sample": 5
+                    },
+                    "top3Hits": {
+                      "type": "number",
+                      "sample": 17
+                    },
+                    "errors": {
+                      "type": "number",
+                      "sample": 0
+                    },
+                    "top1Rate": {
+                      "type": "number",
+                      "sample": 4.4248
+                    },
+                    "top3Rate": {
+                      "type": "number",
+                      "sample": 15.0442
+                    }
+                  }
+                },
+                "18:00": {
+                  "type": "object",
+                  "keys": [
+                    "evaluated",
+                    "top1Hits",
+                    "top3Hits",
+                    "errors",
+                    "top1Rate",
+                    "top3Rate"
+                  ],
+                  "children": {
+                    "evaluated": {
+                      "type": "number",
+                      "sample": 64
+                    },
+                    "top1Hits": {
+                      "type": "number",
+                      "sample": 3
+                    },
+                    "top3Hits": {
+                      "type": "number",
+                      "sample": 8
+                    },
+                    "errors": {
+                      "type": "number",
+                      "sample": 0
+                    },
+                    "top1Rate": {
+                      "type": "number",
+                      "sample": 4.6875
+                    },
+                    "top3Rate": {
+                      "type": "number",
+                      "sample": 12.5
+                    }
+                  }
+                }
+              }
+            },
+            "byWeekday": {
+              "type": "object",
+              "keys": [
+                "0",
+                "1",
+                "2",
+                "3",
+                "4",
+                "5",
+                "6"
+              ],
+              "children": {
+                "0": {
+                  "type": "object",
+                  "keys": [
+                    "evaluated",
+                    "top1Hits",
+                    "top3Hits",
+                    "errors",
+                    "top1Rate",
+                    "top3Rate"
+                  ],
+                  "children": {
+                    "evaluated": {
+                      "type": "number",
+                      "sample": 45
+                    },
+                    "top1Hits": {
+                      "type": "number",
+                      "sample": 0
+                    },
+                    "top3Hits": {
+                      "type": "number",
+                      "sample": 3
+                    },
+                    "errors": {
+                      "type": "number",
+                      "sample": 0
+                    },
+                    "top1Rate": {
+                      "type": "number",
+                      "sample": 0
+                    },
+                    "top3Rate": {
+                      "type": "number",
+                      "sample": 6.6667
+                    }
+                  }
+                },
+                "1": {
+                  "type": "object",
+                  "keys": [
+                    "evaluated",
+                    "top1Hits",
+                    "top3Hits",
+                    "errors",
+                    "top1Rate",
+                    "top3Rate"
+                  ],
+                  "children": {
+                    "evaluated": {
+                      "type": "number",
+                      "sample": 80
+                    },
+                    "top1Hits": {
+                      "type": "number",
+                      "sample": 5
+                    },
+                    "top3Hits": {
+                      "type": "number",
+                      "sample": 13
+                    },
+                    "errors": {
+                      "type": "number",
+                      "sample": 0
+                    },
+                    "top1Rate": {
+                      "type": "number",
+                      "sample": 6.25
+                    },
+                    "top3Rate": {
+                      "type": "number",
+                      "sample": 16.25
+                    }
+                  }
+                },
+                "2": {
+                  "type": "object",
+                  "keys": [
+                    "evaluated",
+                    "top1Hits",
+                    "top3Hits",
+                    "errors",
+                    "top1Rate",
+                    "top3Rate"
+                  ],
+                  "children": {
+                    "evaluated": {
+                      "type": "number",
+                      "sample": 80
+                    },
+                    "top1Hits": {
+                      "type": "number",
+                      "sample": 5
+                    },
+                    "top3Hits": {
+                      "type": "number",
+                      "sample": 11
+                    },
+                    "errors": {
+                      "type": "number",
+                      "sample": 0
+                    },
+                    "top1Rate": {
+                      "type": "number",
+                      "sample": 6.25
+                    },
+                    "top3Rate": {
+                      "type": "number",
+                      "sample": 13.75
+                    }
+                  }
+                },
+                "3": {
+                  "type": "object",
+                  "keys": [
+                    "evaluated",
+                    "top1Hits",
+                    "top3Hits",
+                    "errors",
+                    "top1Rate",
+                    "top3Rate"
+                  ],
+                  "children": {
+                    "evaluated": {
+                      "type": "number",
+                      "sample": 64
+                    },
+                    "top1Hits": {
+                      "type": "number",
+                      "sample": 3
+                    },
+                    "top3Hits": {
+                      "type": "number",
+                      "sample": 9
+                    },
+                    "errors": {
+                      "type": "number",
+                      "sample": 0
+                    },
+                    "top1Rate": {
+                      "type": "number",
+                      "sample": 4.6875
+                    },
+                    "top3Rate": {
+                      "type": "number",
+                      "sample": 14.0625
+                    }
+                  }
+                },
+                "4": {
+                  "type": "object",
+                  "keys": [
+                    "evaluated",
+                    "top1Hits",
+                    "top3Hits",
+                    "errors",
+                    "top1Rate",
+                    "top3Rate"
+                  ],
+                  "children": {
+                    "evaluated": {
+                      "type": "number",
+                      "sample": 83
+                    },
+                    "top1Hits": {
+                      "type": "number",
+                      "sample": 7
+                    },
+                    "top3Hits": {
+                      "type": "number",
+                      "sample": 11
+                    },
+                    "errors": {
+                      "type": "number",
+                      "sample": 0
+                    },
+                    "top1Rate": {
+                      "type": "number",
+                      "sample": 8.4337
+                    },
+                    "top3Rate": {
+                      "type": "number",
+                      "sample": 13.253
+                    }
+                  }
+                },
+                "5": {
+                  "type": "object",
+                  "keys": [
+                    "evaluated",
+                    "top1Hits",
+                    "top3Hits",
+                    "errors",
+                    "top1Rate",
+                    "top3Rate"
+                  ],
+                  "children": {
+                    "evaluated": {
+                      "type": "number",
+                      "sample": 84
+                    },
+                    "top1Hits": {
+                      "type": "number",
+                      "sample": 4
+                    },
+                    "top3Hits": {
+                      "type": "number",
+                      "sample": 11
+                    },
+                    "errors": {
+                      "type": "number",
+                      "sample": 0
+                    },
+                    "top1Rate": {
+                      "type": "number",
+                      "sample": 4.7619
+                    },
+                    "top3Rate": {
+                      "type": "number",
+                      "sample": 13.0952
+                    }
+                  }
+                },
+                "6": {
+                  "type": "object",
+                  "keys": [
+                    "evaluated",
+                    "top1Hits",
+                    "top3Hits",
+                    "errors",
+                    "top1Rate",
+                    "top3Rate"
+                  ],
+                  "children": {
+                    "evaluated": {
+                      "type": "number",
+                      "sample": 64
+                    },
+                    "top1Hits": {
+                      "type": "number",
+                      "sample": 4
+                    },
+                    "top3Hits": {
+                      "type": "number",
+                      "sample": 9
+                    },
+                    "errors": {
+                      "type": "number",
+                      "sample": 0
+                    },
+                    "top1Rate": {
+                      "type": "number",
+                      "sample": 6.25
+                    },
+                    "top3Rate": {
+                      "type": "number",
+                      "sample": 14.0625
+                    }
+                  }
+                }
+              }
+            },
+            "byMonth": {
+              "type": "object",
+              "keys": [
+                "2022-06",
+                "2022-07",
+                "2022-08",
+                "2022-09",
+                "2022-10"
+              ],
+              "children": {
+                "2022-06": {
+                  "type": "object",
+                  "keys": [
+                    "evaluated",
+                    "top1Hits",
+                    "top3Hits",
+                    "errors",
+                    "top1Rate",
+                    "top3Rate"
+                  ],
+                  "children": {
+                    "evaluated": {
+                      "type": "number",
+                      "sample": 7
+                    },
+                    "top1Hits": {
+                      "type": "number",
+                      "sample": 0
+                    },
+                    "top3Hits": {
+                      "type": "number",
+                      "sample": 1
+                    },
+                    "errors": {
+                      "type": "number",
+                      "sample": 0
+                    },
+                    "top1Rate": {
+                      "type": "number",
+                      "sample": 0
+                    },
+                    "top3Rate": {
+                      "type": "number",
+                      "sample": 14.2857
+                    }
+                  }
+                },
+                "2022-07": {
+                  "type": "object",
+                  "keys": [
+                    "evaluated",
+                    "top1Hits",
+                    "top3Hits",
+                    "errors",
+                    "top1Rate",
+                    "top3Rate"
+                  ],
+                  "children": {
+                    "evaluated": {
+                      "type": "number",
+                      "sample": 136
+                    },
+                    "top1Hits": {
+                      "type": "number",
+                      "sample": 8
+                    },
+                    "top3Hits": {
+                      "type": "number",
+                      "sample": 18
+                    },
+                    "errors": {
+                      "type": "number",
+                      "sample": 0
+                    },
+                    "top1Rate": {
+                      "type": "number",
+                      "sample": 5.8824
+                    },
+                    "top3Rate": {
+                      "type": "number",
+                      "sample": 13.2353
+                    }
+                  }
+                },
+                "2022-08": {
+                  "type": "object",
+                  "keys": [
+                    "evaluated",
+                    "top1Hits",
+                    "top3Hits",
+                    "errors",
+                    "top1Rate",
+                    "top3Rate"
+                  ],
+                  "children": {
+                    "evaluated": {
+                      "type": "number",
+                      "sample": 138
+                    },
+                    "top1Hits": {
+                      "type": "number",
+                      "sample": 8
+                    },
+                    "top3Hits": {
+                      "type": "number",
+                      "sample": 16
+                    },
+                    "errors": {
+                      "type": "number",
+                      "sample": 0
+                    },
+                    "top1Rate": {
+                      "type": "number",
+                      "sample": 5.7971
+                    },
+                    "top3Rate": {
+                      "type": "number",
+                      "sample": 11.5942
+                    }
+                  }
+                },
+                "2022-09": {
+                  "type": "object",
+                  "keys": [
+                    "evaluated",
+                    "top1Hits",
+                    "top3Hits",
+                    "errors",
+                    "top1Rate",
+                    "top3Rate"
+                  ],
+                  "children": {
+                    "evaluated": {
+                      "type": "number",
+                      "sample": 132
+                    },
+                    "top1Hits": {
+                      "type": "number",
+                      "sample": 8
+                    },
+                    "top3Hits": {
+                      "type": "number",
+                      "sample": 19
+                    },
+                    "errors": {
+                      "type": "number",
+                      "sample": 0
+                    },
+                    "top1Rate": {
+                      "type": "number",
+                      "sample": 6.0606
+                    },
+                    "top3Rate": {
+                      "type": "number",
+                      "sample": 14.3939
+                    }
+                  }
+                },
+                "2022-10": {
+                  "type": "object",
+                  "keys": [
+                    "evaluated",
+                    "top1Hits",
+                    "top3Hits",
+                    "errors",
+                    "top1Rate",
+                    "top3Rate"
+                  ],
+                  "children": {
+                    "evaluated": {
+                      "type": "number",
+                      "sample": 87
+                    },
+                    "top1Hits": {
+                      "type": "number",
+                      "sample": 4
+                    },
+                    "top3Hits": {
+                      "type": "number",
+                      "sample": 13
+                    },
+                    "errors": {
+                      "type": "number",
+                      "sample": 0
+                    },
+                    "top1Rate": {
+                      "type": "number",
+                      "sample": 4.5977
+                    },
+                    "top3Rate": {
+                      "type": "number",
+                      "sample": 14.9425
+                    }
+                  }
+                }
+              }
+            }
+          }
+        },
+        "comparison": {
+          "type": "object",
+          "keys": [
+            "equivalent",
+            "top1HitsDelta",
+            "top3HitsDelta",
+            "errorsDelta"
+          ],
+          "children": {
+            "equivalent": {
+              "type": "boolean",
+              "sample": true
+            },
+            "top1HitsDelta": {
+              "type": "number",
+              "sample": 0
+            },
+            "top3HitsDelta": {
+              "type": "number",
+              "sample": 0
+            },
+            "errorsDelta": {
+              "type": "number",
+              "sample": 0
+            }
+          }
+        }
+      }
+    },
+    "arrays": [],
+    "candidateCaseArrays": []
+  },
+  "harnessSource": {
+    "requiresAndImports": [
+      {
+        "lineNumber": 12,
+        "text": "const fs = require(\"fs\");"
+      },
+      {
+        "lineNumber": 13,
+        "text": "const path = require(\"path\");"
+      },
+      {
+        "lineNumber": 17,
+        "text": "} = require(\"./backtestTop3Official\");"
+      }
+    ],
+    "exports": [],
+    "relevantLines": [
+      {
+        "lineNumber": 16,
+        "terms": [
+          "runOfficialBacktest"
+        ],
+        "text": "  runOfficialBacktest,"
+      },
+      {
+        "lineNumber": 17,
+        "terms": [
+          "top3"
+        ],
+        "text": "} = require(\"./backtestTop3Official\");"
+      },
+      {
+        "lineNumber": 42,
+        "terms": [
+          "return"
+        ],
+        "text": "  if (!match) return fallback;"
+      },
+      {
+        "lineNumber": 44,
+        "terms": [
+          "return"
+        ],
+        "text": "  return String(match)"
+      },
+      {
+        "lineNumber": 64,
+        "terms": [
+          "return"
+        ],
+        "text": "    return fallback;"
+      },
+      {
+        "lineNumber": 78,
+        "terms": [
+          "return"
+        ],
+        "text": "  return value;"
+      },
+      {
+        "lineNumber": 86,
+        "terms": [
+          "case"
+        ],
+        "text": "    .toUpperCase();"
+      },
+      {
+        "lineNumber": 98,
+        "terms": [
+          "return"
+        ],
+        "text": "  return normalized;"
+      },
+      {
+        "lineNumber": 109,
+        "terms": [
+          "return"
+        ],
+        "text": "      return number;"
+      },
+      {
+        "lineNumber": 113,
+        "terms": [
+          "return"
+        ],
+        "text": "  return fallback;"
+      },
+      {
+        "lineNumber": 120,
+        "terms": [
+          "hit",
+          "hits"
+        ],
+        "text": "  const hits = firstFiniteNumber("
+      },
+      {
+        "lineNumber": 122,
+        "terms": [
+          "hit",
+          "hits"
+        ],
+        "text": "      bucket?.hits,"
+      },
+      {
+        "lineNumber": 123,
+        "terms": [
+          "hit"
+        ],
+        "text": "      bucket?.hit,"
+      },
+      {
+        "lineNumber": 134,
+        "terms": [
+          "evaluated"
+        ],
+        "text": "      bucket?.evaluated,"
+      },
+      {
+        "lineNumber": 135,
+        "terms": [
+          "case",
+          "cases"
+        ],
+        "text": "      bucket?.cases,"
+      },
+      {
+        "lineNumber": 136,
+        "terms": [
+          "samples"
+        ],
+        "text": "      bucket?.samples,"
+      },
+      {
+        "lineNumber": 154,
+        "terms": [
+          "hit",
+          "hits"
+        ],
+        "text": "    hits != null &&"
+      },
+      {
+        "lineNumber": 159,
+        "terms": [
+          "hit",
+          "hits"
+        ],
+        "text": "      (hits / total) * 100;"
+      },
+      {
+        "lineNumber": 162,
+        "terms": [
+          "return"
+        ],
+        "text": "  return {"
+      },
+      {
+        "lineNumber": 163,
+        "terms": [
+          "hit",
+          "hits"
+        ],
+        "text": "    hits,"
+      },
+      {
+        "lineNumber": 169,
+        "terms": [
+          "result"
+        ],
+        "text": "function pickComparableResult(result = {}) {"
+      },
+      {
+        "lineNumber": 170,
+        "terms": [
+          "global"
+        ],
+        "text": "  const globalBucket ="
+      },
+      {
+        "lineNumber": 171,
+        "terms": [
+          "result",
+          "global"
+        ],
+        "text": "    result?.global ||"
+      },
+      {
+        "lineNumber": 172,
+        "terms": [
+          "result"
+        ],
+        "text": "    result?.overall ||"
+      },
+      {
+        "lineNumber": 173,
+        "terms": [
+          "result"
+        ],
+        "text": "    result?.summary ||"
+      },
+      {
+        "lineNumber": 174,
+        "terms": [
+          "result"
+        ],
+        "text": "    result?.metrics ||"
+      },
+      {
+        "lineNumber": 177,
+        "terms": [
+          "evaluated"
+        ],
+        "text": "  const evaluated = firstFiniteNumber("
+      },
+      {
+        "lineNumber": 179,
+        "terms": [
+          "result",
+          "evaluated"
+        ],
+        "text": "      result?.evaluated,"
+      },
+      {
+        "lineNumber": 180,
+        "terms": [
+          "result"
+        ],
+        "text": "      result?.evaluationCount,"
+      },
+      {
+        "lineNumber": 181,
+        "terms": [
+          "case",
+          "cases",
+          "result",
+          "evaluated"
+        ],
+        "text": "      result?.casesEvaluated,"
+      },
+      {
+        "lineNumber": 182,
+        "terms": [
+          "result",
+          "evaluated"
+        ],
+        "text": "      result?.totalEvaluated,"
+      },
+      {
+        "lineNumber": 183,
+        "terms": [
+          "evaluated",
+          "global"
+        ],
+        "text": "      globalBucket?.evaluated,"
+      },
+      {
+        "lineNumber": 184,
+        "terms": [
+          "global"
+        ],
+        "text": "      globalBucket?.total,"
+      },
+      {
+        "lineNumber": 185,
+        "terms": [
+          "case",
+          "cases",
+          "global"
+        ],
+        "text": "      globalBucket?.cases,"
+      },
+      {
+        "lineNumber": 186,
+        "terms": [
+          "global",
+          "samples"
+        ],
+        "text": "      globalBucket?.samples,"
+      },
+      {
+        "lineNumber": 191,
+        "terms": [
+          "top1"
+        ],
+        "text": "  const top1Bucket ="
+      },
+      {
+        "lineNumber": 192,
+        "terms": [
+          "top1",
+          "global"
+        ],
+        "text": "    globalBucket?.top1 ||"
+      },
+      {
+        "lineNumber": 193,
+        "terms": [
+          "result",
+          "top1"
+        ],
+        "text": "    result?.top1 ||"
+      },
+      {
+        "lineNumber": 194,
+        "terms": [
+          "result",
+          "top1"
+        ],
+        "text": "    result?.metrics?.top1 ||"
+      },
+      {
+        "lineNumber": 195,
+        "terms": [
+          "result",
+          "top1"
+        ],
+        "text": "    result?.summary?.top1 ||"
+      },
+      {
+        "lineNumber": 198,
+        "terms": [
+          "top3"
+        ],
+        "text": "  const top3Bucket ="
+      },
+      {
+        "lineNumber": 199,
+        "terms": [
+          "top3",
+          "global"
+        ],
+        "text": "    globalBucket?.top3 ||"
+      },
+      {
+        "lineNumber": 200,
+        "terms": [
+          "result",
+          "top3"
+        ],
+        "text": "    result?.top3 ||"
+      },
+      {
+        "lineNumber": 201,
+        "terms": [
+          "result",
+          "top3"
+        ],
+        "text": "    result?.metrics?.top3 ||"
+      },
+      {
+        "lineNumber": 202,
+        "terms": [
+          "result",
+          "top3"
+        ],
+        "text": "    result?.summary?.top3 ||"
+      },
+      {
+        "lineNumber": 205,
+        "terms": [
+          "top1"
+        ],
+        "text": "  const top1 = normalizeMetricBucket("
+      },
+      {
+        "lineNumber": 207,
+        "terms": [
+          "top1"
+        ],
+        "text": "      ...top1Bucket,"
+      },
+      {
+        "lineNumber": 208,
+        "terms": [
+          "hit",
+          "hits"
+        ],
+        "text": "      hits: firstFiniteNumber("
+      },
+      {
+        "lineNumber": 210,
+        "terms": [
+          "top1",
+          "hit",
+          "hits"
+        ],
+        "text": "          top1Bucket?.hits,"
+      },
+      {
+        "lineNumber": 211,
+        "terms": [
+          "top1",
+          "hit",
+          "hits",
+          "global"
+        ],
+        "text": "          globalBucket?.top1Hits,"
+      },
+      {
+        "lineNumber": 212,
+        "terms": [
+          "result",
+          "top1",
+          "hit",
+          "hits"
+        ],
+        "text": "          result?.top1Hits,"
+      },
+      {
+        "lineNumber": 213,
+        "terms": [
+          "result",
+          "top1",
+          "hit",
+          "hits"
+        ],
+        "text": "          result?.metrics?.top1Hits,"
+      },
+      {
+        "lineNumber": 214,
+        "terms": [
+          "result",
+          "top1",
+          "hit",
+          "hits"
+        ],
+        "text": "          result?.summary?.top1Hits,"
+      },
+      {
+        "lineNumber": 220,
+        "terms": [
+          "top1"
+        ],
+        "text": "          top1Bucket?.total,"
+      },
+      {
+        "lineNumber": 221,
+        "terms": [
+          "top1",
+          "global"
+        ],
+        "text": "          globalBucket?.top1Total,"
+      },
+      {
+        "lineNumber": 222,
+        "terms": [
+          "result",
+          "top1"
+        ],
+        "text": "          result?.top1Total,"
+      },
+      {
+        "lineNumber": 223,
+        "terms": [
+          "evaluated"
+        ],
+        "text": "          evaluated,"
+      },
+      {
+        "lineNumber": 229,
+        "terms": [
+          "top1"
+        ],
+        "text": "          top1Bucket?.rate,"
+      },
+      {
+        "lineNumber": 230,
+        "terms": [
+          "top1",
+          "global"
+        ],
+        "text": "          globalBucket?.top1Rate,"
+      },
+      {
+        "lineNumber": 231,
+        "terms": [
+          "result",
+          "top1"
+        ],
+        "text": "          result?.top1Rate,"
+      },
+      {
+        "lineNumber": 232,
+        "terms": [
+          "result",
+          "top1"
+        ],
+        "text": "          result?.metrics?.top1Rate,"
+      },
+      {
+        "lineNumber": 233,
+        "terms": [
+          "result",
+          "top1"
+        ],
+        "text": "          result?.summary?.top1Rate,"
+      },
+      {
+        "lineNumber": 238,
+        "terms": [
+          "evaluated"
+        ],
+        "text": "    evaluated"
+      },
+      {
+        "lineNumber": 241,
+        "terms": [
+          "top3"
+        ],
+        "text": "  const top3 = normalizeMetricBucket("
+      },
+      {
+        "lineNumber": 243,
+        "terms": [
+          "top3"
+        ],
+        "text": "      ...top3Bucket,"
+      },
+      {
+        "lineNumber": 244,
+        "terms": [
+          "hit",
+          "hits"
+        ],
+        "text": "      hits: firstFiniteNumber("
+      },
+      {
+        "lineNumber": 246,
+        "terms": [
+          "top3",
+          "hit",
+          "hits"
+        ],
+        "text": "          top3Bucket?.hits,"
+      },
+      {
+        "lineNumber": 247,
+        "terms": [
+          "top3",
+          "hit",
+          "hits",
+          "global"
+        ],
+        "text": "          globalBucket?.top3Hits,"
+      },
+      {
+        "lineNumber": 248,
+        "terms": [
+          "result",
+          "top3",
+          "hit",
+          "hits"
+        ],
+        "text": "          result?.top3Hits,"
+      },
+      {
+        "lineNumber": 249,
+        "terms": [
+          "result",
+          "top3",
+          "hit",
+          "hits"
+        ],
+        "text": "          result?.metrics?.top3Hits,"
+      },
+      {
+        "lineNumber": 250,
+        "terms": [
+          "result",
+          "top3",
+          "hit",
+          "hits"
+        ],
+        "text": "          result?.summary?.top3Hits,"
+      },
+      {
+        "lineNumber": 256,
+        "terms": [
+          "top3"
+        ],
+        "text": "          top3Bucket?.total,"
+      },
+      {
+        "lineNumber": 257,
+        "terms": [
+          "top3",
+          "global"
+        ],
+        "text": "          globalBucket?.top3Total,"
+      },
+      {
+        "lineNumber": 258,
+        "terms": [
+          "result",
+          "top3"
+        ],
+        "text": "          result?.top3Total,"
+      },
+      {
+        "lineNumber": 259,
+        "terms": [
+          "evaluated"
+        ],
+        "text": "          evaluated,"
+      },
+      {
+        "lineNumber": 265,
+        "terms": [
+          "top3"
+        ],
+        "text": "          top3Bucket?.rate,"
+      },
+      {
+        "lineNumber": 266,
+        "terms": [
+          "top3",
+          "global"
+        ],
+        "text": "          globalBucket?.top3Rate,"
+      },
+      {
+        "lineNumber": 267,
+        "terms": [
+          "result",
+          "top3"
+        ],
+        "text": "          result?.top3Rate,"
+      },
+      {
+        "lineNumber": 268,
+        "terms": [
+          "result",
+          "top3"
+        ],
+        "text": "          result?.metrics?.top3Rate,"
+      },
+      {
+        "lineNumber": 269,
+        "terms": [
+          "result",
+          "top3"
+        ],
+        "text": "          result?.summary?.top3Rate,"
+      },
+      {
+        "lineNumber": 274,
+        "terms": [
+          "evaluated"
+        ],
+        "text": "    evaluated"
+      },
+      {
+        "lineNumber": 279,
+        "terms": [
+          "result"
+        ],
+        "text": "      result?.errors,"
+      },
+      {
+        "lineNumber": 280,
+        "terms": [
+          "global"
+        ],
+        "text": "      globalBucket?.errors,"
+      },
+      {
+        "lineNumber": 281,
+        "terms": [
+          "result"
+        ],
+        "text": "      result?.errorCount,"
+      },
+      {
+        "lineNumber": 282,
+        "terms": [
+          "result"
+        ],
+        "text": "      result?.summary?.errors,"
+      },
+      {
+        "lineNumber": 283,
+        "terms": [
+          "result"
+        ],
+        "text": "      result?.metrics?.errors,"
+      },
+      {
+        "lineNumber": 288,
+        "terms": [
+          "return"
+        ],
+        "text": "  return {"
+      },
+      {
+        "lineNumber": 289,
+        "terms": [
+          "result"
+        ],
+        "text": "    ok: result.ok === true,"
+      },
+      {
+        "lineNumber": 290,
+        "terms": [
+          "lottery"
+        ],
+        "text": "    lotteryKey:"
+      },
+      {
+        "lineNumber": 291,
+        "terms": [
+          "result",
+          "lottery"
+        ],
+        "text": "      result.lotteryKey || null,"
+      },
+      {
+        "lineNumber": 293,
+        "terms": [
+          "result"
+        ],
+        "text": "      result.engine || null,"
+      },
+      {
+        "lineNumber": 294,
+        "terms": [
+          "evaluated"
+        ],
+        "text": "    evaluated,"
+      },
+      {
+        "lineNumber": 297,
+        "terms": [
+          "result"
+        ],
+        "text": "        result?.skipped,"
+      },
+      {
+        "lineNumber": 298,
+        "terms": [
+          "global"
+        ],
+        "text": "        globalBucket?.skipped,"
+      },
+      {
+        "lineNumber": 302,
+        "terms": [
+          "top1"
+        ],
+        "text": "    top1,"
+      },
+      {
+        "lineNumber": 303,
+        "terms": [
+          "top3"
+        ],
+        "text": "    top3,"
+      },
+      {
+        "lineNumber": 305,
+        "terms": [
+          "hour"
+        ],
+        "text": "    byHour:"
+      },
+      {
+        "lineNumber": 306,
+        "terms": [
+          "result",
+          "hour"
+        ],
+        "text": "      result.byHour || {},"
+      },
+      {
+        "lineNumber": 308,
+        "terms": [
+          "result"
+        ],
+        "text": "      result.byWeekday || {},"
+      },
+      {
+        "lineNumber": 310,
+        "terms": [
+          "result"
+        ],
+        "text": "      result.byMonth || {},"
+      },
+      {
+        "lineNumber": 322,
+        "terms": [
+          "evaluated"
+        ],
+        "text": "      Number(comparable?.evaluated)"
+      },
+      {
+        "lineNumber": 324,
+        "terms": [
+          "evaluated"
+        ],
+        "text": "    Number(comparable.evaluated) <= 0"
+      },
+      {
+        "lineNumber": 327,
+        "terms": [
+          "evaluated"
+        ],
+        "text": "      \"evaluated ausente ou igual a zero\""
+      },
+      {
+        "lineNumber": 333,
+        "terms": [
+          "top1",
+          "hit",
+          "hits"
+        ],
+        "text": "      Number(comparable?.top1?.hits)"
+      },
+      {
+        "lineNumber": 337,
+        "terms": [
+          "top1",
+          "hit",
+          "hits"
+        ],
+        "text": "      \"TOP1 hits não localizado\""
+      },
+      {
+        "lineNumber": 343,
+        "terms": [
+          "top1"
+        ],
+        "text": "      Number(comparable?.top1?.total)"
+      },
+      {
+        "lineNumber": 345,
+        "terms": [
+          "top1"
+        ],
+        "text": "    Number(comparable.top1.total) <= 0"
+      },
+      {
+        "lineNumber": 348,
+        "terms": [
+          "top1"
+        ],
+        "text": "      \"TOP1 total ausente ou igual a zero\""
+      },
+      {
+        "lineNumber": 354,
+        "terms": [
+          "top3",
+          "hit",
+          "hits"
+        ],
+        "text": "      Number(comparable?.top3?.hits)"
+      },
+      {
+        "lineNumber": 358,
+        "terms": [
+          "top3",
+          "hit",
+          "hits"
+        ],
+        "text": "      \"TOP3 hits não localizado\""
+      },
+      {
+        "lineNumber": 364,
+        "terms": [
+          "top3"
+        ],
+        "text": "      Number(comparable?.top3?.total)"
+      },
+      {
+        "lineNumber": 366,
+        "terms": [
+          "top3"
+        ],
+        "text": "    Number(comparable.top3.total) <= 0"
+      },
+      {
+        "lineNumber": 369,
+        "terms": [
+          "top3"
+        ],
+        "text": "      \"TOP3 total ausente ou igual a zero\""
+      },
+      {
+        "lineNumber": 383,
+        "terms": [
+          "return"
+        ],
+        "text": "    return value.map(stableSortObject);"
+      },
+      {
+        "lineNumber": 390,
+        "terms": [
+          "return"
+        ],
+        "text": "    return Object.keys(value)"
+      },
+      {
+        "lineNumber": 396,
+        "terms": [
+          "return"
+        ],
+        "text": "        return out;"
+      },
+      {
+        "lineNumber": 400,
+        "terms": [
+          "return"
+        ],
+        "text": "  return value;"
+      },
+      {
+        "lineNumber": 404,
+        "terms": [
+          "return"
+        ],
+        "text": "  return JSON.stringify("
+      },
+      {
+        "lineNumber": 414,
+        "terms": [
+          "top3",
+          "global"
+        ],
+        "text": "    globalThis.__TOP3_ABLATION__;"
+      },
+      {
+        "lineNumber": 420,
+        "terms": [
+          "top3",
+          "global"
+        ],
+        "text": "      delete globalThis.__TOP3_ABLATION__;"
+      },
+      {
+        "lineNumber": 422,
+        "terms": [
+          "top3",
+          "global"
+        ],
+        "text": "      globalThis.__TOP3_ABLATION__ ="
+      },
+      {
+        "lineNumber": 426,
+        "terms": [
+          "return",
+          "runOfficialBacktest"
+        ],
+        "text": "    return await runOfficialBacktest("
+      },
+      {
+        "lineNumber": 435,
+        "terms": [
+          "top3",
+          "global"
+        ],
+        "text": "      delete globalThis.__TOP3_ABLATION__;"
+      },
+      {
+        "lineNumber": 437,
+        "terms": [
+          "top3",
+          "global"
+        ],
+        "text": "      globalThis.__TOP3_ABLATION__ ="
+      },
+      {
+        "lineNumber": 447,
+        "terms": [
+          "lottery"
+        ],
+        "text": "  const lotteryKey = String("
+      },
+      {
+        "lineNumber": 451,
+        "terms": [
+          "case"
+        ],
+        "text": "    .toUpperCase();"
+      },
+      {
+        "lineNumber": 509,
+        "terms": [
+          "lottery"
+        ],
+        "text": "    lotteryKey,"
+      },
+      {
+        "lineNumber": 523,
+        "terms": [
+          "lottery"
+        ],
+        "text": "    lotteryKey"
+      },
+      {
+        "lineNumber": 549,
+        "terms": [
+          "result"
+        ],
+        "text": "  const variantResult ="
+      },
+      {
+        "lineNumber": 556,
+        "terms": [
+          "result"
+        ],
+        "text": "    pickComparableResult("
+      },
+      {
+        "lineNumber": 561,
+        "terms": [
+          "result"
+        ],
+        "text": "    pickComparableResult("
+      },
+      {
+        "lineNumber": 562,
+        "terms": [
+          "result"
+        ],
+        "text": "      variantResult"
+      },
+      {
+        "lineNumber": 583,
+        "terms": [
+          "result"
+        ],
+        "text": "  const result = {"
+      },
+      {
+        "lineNumber": 586,
+        "terms": [
+          "date"
+        ],
+        "text": "      new Date().toISOString(),"
+      },
+      {
+        "lineNumber": 589,
+        "terms": [
+          "lottery"
+        ],
+        "text": "    lotteryKey,"
+      },
+      {
+        "lineNumber": 598,
+        "terms": [
+          "result"
+        ],
+        "text": "    variantResult:"
+      },
+      {
+        "lineNumber": 602,
+        "terms": [
+          "top1",
+          "hit",
+          "hits"
+        ],
+        "text": "      top1HitsDelta:"
+      },
+      {
+        "lineNumber": 603,
+        "terms": [
+          "top1",
+          "hit",
+          "hits"
+        ],
+        "text": "        variantComparable.top1.hits -"
+      },
+      {
+        "lineNumber": 604,
+        "terms": [
+          "top1",
+          "hit",
+          "hits"
+        ],
+        "text": "        baselineComparable.top1.hits,"
+      },
+      {
+        "lineNumber": 605,
+        "terms": [
+          "top3",
+          "hit",
+          "hits"
+        ],
+        "text": "      top3HitsDelta:"
+      },
+      {
+        "lineNumber": 606,
+        "terms": [
+          "top3",
+          "hit",
+          "hits"
+        ],
+        "text": "        variantComparable.top3.hits -"
+      },
+      {
+        "lineNumber": 607,
+        "terms": [
+          "top3",
+          "hit",
+          "hits"
+        ],
+        "text": "        baselineComparable.top3.hits,"
+      },
+      {
+        "lineNumber": 627,
+        "terms": [
+          "result"
+        ],
+        "text": "      result,"
+      },
+      {
+        "lineNumber": 639,
+        "terms": [
+          "lottery"
+        ],
+        "text": "    `Loteria: ${lotteryKey}`,"
+      },
+      {
+        "lineNumber": 644,
+        "terms": [
+          "evaluated"
+        ],
+        "text": "    `Casos avaliados no baseline: ${baselineComparable.evaluated}`,"
+      },
+      {
+        "lineNumber": 645,
+        "terms": [
+          "evaluated"
+        ],
+        "text": "    `Casos avaliados na variante: ${variantComparable.evaluated}`,"
+      },
+      {
+        "lineNumber": 648,
+        "terms": [
+          "top1",
+          "hit",
+          "hits"
+        ],
+        "text": "    `TOP1: ${baselineComparable.top1.hits}`,"
+      },
+      {
+        "lineNumber": 649,
+        "terms": [
+          "top3",
+          "hit",
+          "hits"
+        ],
+        "text": "    `TOP3: ${baselineComparable.top3.hits}`,"
+      },
+      {
+        "lineNumber": 652,
+        "terms": [
+          "result"
+        ],
+        "text": "    \"RESULTADO DA VARIANTE\","
+      },
+      {
+        "lineNumber": 653,
+        "terms": [
+          "top1",
+          "hit",
+          "hits"
+        ],
+        "text": "    `TOP1: ${variantComparable.top1.hits}`,"
+      },
+      {
+        "lineNumber": 654,
+        "terms": [
+          "top3",
+          "hit",
+          "hits"
+        ],
+        "text": "    `TOP3: ${variantComparable.top3.hits}`,"
+      },
+      {
+        "lineNumber": 659,
+        "terms": [
+          "result",
+          "top1",
+          "hit",
+          "hits"
+        ],
+        "text": "    `Delta TOP1: ${result.comparison.top1HitsDelta}`,"
+      },
+      {
+        "lineNumber": 660,
+        "terms": [
+          "result",
+          "top3",
+          "hit",
+          "hits"
+        ],
+        "text": "    `Delta TOP3: ${result.comparison.top3HitsDelta}`,"
+      },
+      {
+        "lineNumber": 661,
+        "terms": [
+          "result"
+        ],
+        "text": "    `Delta erros: ${result.comparison.errorsDelta}`,"
+      }
+    ]
+  },
+  "officialSource": {
+    "requiresAndImports": [
+      {
+        "lineNumber": 3,
+        "text": "const fs = require(\"fs\");"
+      },
+      {
+        "lineNumber": 4,
+        "text": "const path = require(\"path\");"
+      },
+      {
+        "lineNumber": 9,
+        "text": "} = require(\"../engine/top3HistoryRepository\");"
+      },
+      {
+        "lineNumber": 14,
+        "text": "} = require(\"../engine/scoreEngineUnified\");"
+      }
+    ],
+    "exports": [
+      {
+        "lineNumber": 1072,
+        "text": "module.exports = {"
+      }
+    ],
+    "relevantLines": [
+      {
+        "lineNumber": 9,
+        "terms": [
+          "top3"
+        ],
+        "text": "} = require(\"../engine/top3HistoryRepository\");"
+      },
+      {
+        "lineNumber": 12,
+        "terms": [
+          "top3"
+        ],
+        "text": "  computeStatisticalTop3V3,"
+      },
+      {
+        "lineNumber": 13,
+        "terms": [
+          "top3"
+        ],
+        "text": "  loadTop3PublicApi,"
+      },
+      {
+        "lineNumber": 40,
+        "terms": [
+          "return"
+        ],
+        "text": "  return Array.isArray(value)"
+      },
+      {
+        "lineNumber": 45,
+        "terms": [
+          "lottery"
+        ],
+        "text": "function normalizeLotteryKey(value) {"
+      },
+      {
+        "lineNumber": 46,
+        "terms": [
+          "return"
+        ],
+        "text": "  return String(value || \"PT_RIO\")"
+      },
+      {
+        "lineNumber": 48,
+        "terms": [
+          "case"
+        ],
+        "text": "    .toUpperCase() || \"PT_RIO\";"
+      },
+      {
+        "lineNumber": 51,
+        "terms": [
+          "hour"
+        ],
+        "text": "function normalizeHour(value) {"
+      },
+      {
+        "lineNumber": 57,
+        "terms": [
+          "return"
+        ],
+        "text": "    return `${raw.padStart(2, \"0\")}:00`;"
+      },
+      {
+        "lineNumber": 61,
+        "terms": [
+          "hour"
+        ],
+        "text": "    const [hour, minute] = raw.split(\":\");"
+      },
+      {
+        "lineNumber": 63,
+        "terms": [
+          "hour",
+          "return"
+        ],
+        "text": "    return `${hour.padStart(2, \"0\")}:${minute}`;"
+      },
+      {
+        "lineNumber": 66,
+        "terms": [
+          "return"
+        ],
+        "text": "  return null;"
+      },
+      {
+        "lineNumber": 69,
+        "terms": [
+          "date",
+          "hour"
+        ],
+        "text": "function dateHourKey(ymd, hour) {"
+      },
+      {
+        "lineNumber": 70,
+        "terms": [
+          "hour",
+          "return"
+        ],
+        "text": "  return `${ymd}T${normalizeHour(hour) || hour}`;"
+      },
+      {
+        "lineNumber": 86,
+        "terms": [
+          "return"
+        ],
+        "text": "    return fallback;"
+      },
+      {
+        "lineNumber": 102,
+        "terms": [
+          "return"
+        ],
+        "text": "  return number;"
+      },
+      {
+        "lineNumber": 117,
+        "terms": [
+          "return"
+        ],
+        "text": "      return ("
+      },
+      {
+        "lineNumber": 125,
+        "terms": [
+          "return"
+        ],
+        "text": "    return fallback;"
+      },
+      {
+        "lineNumber": 129,
+        "terms": [
+          "return"
+        ],
+        "text": "    return true;"
+      },
+      {
+        "lineNumber": 135,
+        "terms": [
+          "case"
+        ],
+        "text": "    .toLowerCase();"
+      },
+      {
+        "lineNumber": 143,
+        "terms": [
+          "return"
+        ],
+        "text": "    return true;"
+      },
+      {
+        "lineNumber": 152,
+        "terms": [
+          "return"
+        ],
+        "text": "    return false;"
+      },
+      {
+        "lineNumber": 174,
+        "terms": [
+          "return"
+        ],
+        "text": "    return fallback;"
+      },
+      {
+        "lineNumber": 181,
+        "terms": [
+          "return"
+        ],
+        "text": "  return value || fallback;"
+      },
+      {
+        "lineNumber": 185,
+        "terms": [
+          "lottery"
+        ],
+        "text": "  const lotteryKey = normalizeLotteryKey("
+      },
+      {
+        "lineNumber": 191,
+        "terms": [
+          "return"
+        ],
+        "text": "  return {"
+      },
+      {
+        "lineNumber": 192,
+        "terms": [
+          "lottery"
+        ],
+        "text": "    lotteryKey,"
+      },
+      {
+        "lineNumber": 226,
+        "terms": [
+          "draw",
+          "draws"
+        ],
+        "text": "function sortDraws(draws = [], publicApi) {"
+      },
+      {
+        "lineNumber": 227,
+        "terms": [
+          "draw",
+          "draws",
+          "return"
+        ],
+        "text": "  return [...safeArray(draws)]"
+      },
+      {
+        "lineNumber": 231,
+        "terms": [
+          "draw"
+        ],
+        "text": "        publicApi.pickDrawYMD(a) || \"\";"
+      },
+      {
+        "lineNumber": 234,
+        "terms": [
+          "draw"
+        ],
+        "text": "        publicApi.pickDrawYMD(b) || \"\";"
+      },
+      {
+        "lineNumber": 236,
+        "terms": [
+          "hour"
+        ],
+        "text": "      const aHour ="
+      },
+      {
+        "lineNumber": 237,
+        "terms": [
+          "draw",
+          "hour"
+        ],
+        "text": "        publicApi.pickDrawHour(a) || \"\";"
+      },
+      {
+        "lineNumber": 239,
+        "terms": [
+          "hour"
+        ],
+        "text": "      const bHour ="
+      },
+      {
+        "lineNumber": 240,
+        "terms": [
+          "draw",
+          "hour"
+        ],
+        "text": "        publicApi.pickDrawHour(b) || \"\";"
+      },
+      {
+        "lineNumber": 243,
+        "terms": [
+          "draw"
+        ],
+        "text": "        a.drawId || a.id || \"\""
+      },
+      {
+        "lineNumber": 247,
+        "terms": [
+          "draw"
+        ],
+        "text": "        b.drawId || b.id || \"\""
+      },
+      {
+        "lineNumber": 250,
+        "terms": [
+          "date",
+          "hour",
+          "return"
+        ],
+        "text": "      return dateHourKey("
+      },
+      {
+        "lineNumber": 252,
+        "terms": [
+          "hour"
+        ],
+        "text": "        aHour"
+      },
+      {
+        "lineNumber": 254,
+        "terms": [
+          "date",
+          "hour"
+        ],
+        "text": "        dateHourKey("
+      },
+      {
+        "lineNumber": 256,
+        "terms": [
+          "hour"
+        ],
+        "text": "          bHour"
+      },
+      {
+        "lineNumber": 263,
+        "terms": [
+          "draw"
+        ],
+        "text": "  draw,"
+      },
+      {
+        "lineNumber": 267,
+        "terms": [
+          "draw"
+        ],
+        "text": "    publicApi.pickPrize1GrupoFromDraw("
+      },
+      {
+        "lineNumber": 268,
+        "terms": [
+          "draw"
+        ],
+        "text": "      draw"
+      },
+      {
+        "lineNumber": 278,
+        "terms": [
+          "return"
+        ],
+        "text": "    return null;"
+      },
+      {
+        "lineNumber": 281,
+        "terms": [
+          "return"
+        ],
+        "text": "  return group;"
+      },
+      {
+        "lineNumber": 284,
+        "terms": [
+          "prediction"
+        ],
+        "text": "function getPredictionGroups("
+      },
+      {
+        "lineNumber": 287,
+        "terms": [
+          "date"
+        ],
+        "text": "  const candidates ="
+      },
+      {
+        "lineNumber": 290,
+        "terms": [
+          "ranking"
+        ],
+        "text": "      : safeArray(computed?.ranking);"
+      },
+      {
+        "lineNumber": 292,
+        "terms": [
+          "date",
+          "return"
+        ],
+        "text": "  return candidates"
+      },
+      {
+        "lineNumber": 314,
+        "terms": [
+          "evaluated"
+        ],
+        "text": "      evaluated: 0,"
+      },
+      {
+        "lineNumber": 315,
+        "terms": [
+          "top1",
+          "hit",
+          "hits"
+        ],
+        "text": "      top1Hits: 0,"
+      },
+      {
+        "lineNumber": 316,
+        "terms": [
+          "top3",
+          "hit",
+          "hits"
+        ],
+        "text": "      top3Hits: 0,"
+      },
+      {
+        "lineNumber": 321,
+        "terms": [
+          "return"
+        ],
+        "text": "  return map[key];"
+      },
+      {
+        "lineNumber": 325,
+        "terms": [
+          "evaluated"
+        ],
+        "text": "  const evaluated = Number("
+      },
+      {
+        "lineNumber": 326,
+        "terms": [
+          "evaluated"
+        ],
+        "text": "    bucket.evaluated || 0"
+      },
+      {
+        "lineNumber": 329,
+        "terms": [
+          "top1",
+          "hit",
+          "hits"
+        ],
+        "text": "  const top1Hits = Number("
+      },
+      {
+        "lineNumber": 330,
+        "terms": [
+          "top1",
+          "hit",
+          "hits"
+        ],
+        "text": "    bucket.top1Hits || 0"
+      },
+      {
+        "lineNumber": 333,
+        "terms": [
+          "top3",
+          "hit",
+          "hits"
+        ],
+        "text": "  const top3Hits = Number("
+      },
+      {
+        "lineNumber": 334,
+        "terms": [
+          "top3",
+          "hit",
+          "hits"
+        ],
+        "text": "    bucket.top3Hits || 0"
+      },
+      {
+        "lineNumber": 337,
+        "terms": [
+          "return"
+        ],
+        "text": "  return {"
+      },
+      {
+        "lineNumber": 338,
+        "terms": [
+          "evaluated"
+        ],
+        "text": "    evaluated,"
+      },
+      {
+        "lineNumber": 339,
+        "terms": [
+          "top1",
+          "hit",
+          "hits"
+        ],
+        "text": "    top1Hits,"
+      },
+      {
+        "lineNumber": 340,
+        "terms": [
+          "top3",
+          "hit",
+          "hits"
+        ],
+        "text": "    top3Hits,"
+      },
+      {
+        "lineNumber": 344,
+        "terms": [
+          "top1"
+        ],
+        "text": "    top1Rate:"
+      },
+      {
+        "lineNumber": 345,
+        "terms": [
+          "evaluated"
+        ],
+        "text": "      evaluated > 0"
+      },
+      {
+        "lineNumber": 348,
+        "terms": [
+          "top1",
+          "hit",
+          "hits"
+        ],
+        "text": "              top1Hits /"
+      },
+      {
+        "lineNumber": 349,
+        "terms": [
+          "evaluated"
+        ],
+        "text": "              evaluated *"
+      },
+      {
+        "lineNumber": 354,
+        "terms": [
+          "top3"
+        ],
+        "text": "    top3Rate:"
+      },
+      {
+        "lineNumber": 355,
+        "terms": [
+          "evaluated"
+        ],
+        "text": "      evaluated > 0"
+      },
+      {
+        "lineNumber": 358,
+        "terms": [
+          "top3",
+          "hit",
+          "hits"
+        ],
+        "text": "              top3Hits /"
+      },
+      {
+        "lineNumber": 359,
+        "terms": [
+          "evaluated"
+        ],
+        "text": "              evaluated *"
+      },
+      {
+        "lineNumber": 368,
+        "terms": [
+          "result"
+        ],
+        "text": "  const result = {};"
+      },
+      {
+        "lineNumber": 374,
+        "terms": [
+          "result"
+        ],
+        "text": "    result[key] = finalizeBucket("
+      },
+      {
+        "lineNumber": 379,
+        "terms": [
+          "result",
+          "return"
+        ],
+        "text": "  return result;"
+      },
+      {
+        "lineNumber": 383,
+        "terms": [
+          "return"
+        ],
+        "text": "  return `${Number(value || 0).toFixed(2)}%`;"
+      },
+      {
+        "lineNumber": 386,
+        "terms": [
+          "result"
+        ],
+        "text": "function buildTextReport(result) {"
+      },
+      {
+        "lineNumber": 394,
+        "terms": [
+          "top3"
+        ],
+        "text": "    \"TOP3 OFFICIAL BACKTEST\""
+      },
+      {
+        "lineNumber": 404,
+        "terms": [
+          "result",
+          "lottery"
+        ],
+        "text": "    `Loteria.............: ${result.lotteryKey}`"
+      },
+      {
+        "lineNumber": 408,
+        "terms": [
+          "result"
+        ],
+        "text": "    `Engine..............: ${result.engine}`"
+      },
+      {
+        "lineNumber": 412,
+        "terms": [
+          "result"
+        ],
+        "text": "    `Histórico carregado.: ${result.historyLoaded}`"
+      },
+      {
+        "lineNumber": 416,
+        "terms": [
+          "case",
+          "cases",
+          "result"
+        ],
+        "text": "    `Casos elegíveis.....: ${result.eligibleCases}`"
+      },
+      {
+        "lineNumber": 420,
+        "terms": [
+          "result",
+          "evaluated",
+          "global"
+        ],
+        "text": "    `Casos avaliados.....: ${result.global.evaluated}`"
+      },
+      {
+        "lineNumber": 424,
+        "terms": [
+          "result"
+        ],
+        "text": "    `Casos ignorados.....: ${result.skipped}`"
+      },
+      {
+        "lineNumber": 428,
+        "terms": [
+          "result",
+          "global"
+        ],
+        "text": "    `Erros...............: ${result.global.errors}`"
+      },
+      {
+        "lineNumber": 432,
+        "terms": [
+          "result"
+        ],
+        "text": "    `Período histórico...: ${result.historyPeriod.from} até ${result.historyPeriod.to}`"
+      },
+      {
+        "lineNumber": 436,
+        "terms": [
+          "result"
+        ],
+        "text": "    `Período avaliado....: ${result.evaluationPeriod.from || \"-\"} até ${result.evaluationPeriod.to || \"-\"}`"
+      },
+      {
+        "lineNumber": 440,
+        "terms": [
+          "result",
+          "top1",
+          "hit",
+          "hits",
+          "global"
+        ],
+        "text": "    `TOP1................: ${result.global.top1Hits} (${formatPercent(result.global.top1Rate)})`"
+      },
+      {
+        "lineNumber": 444,
+        "terms": [
+          "result",
+          "top3",
+          "hit",
+          "hits",
+          "global"
+        ],
+        "text": "    `TOP3................: ${result.global.top3Hits} (${formatPercent(result.global.top3Rate)})`"
+      },
+      {
+        "lineNumber": 448,
+        "terms": [
+          "result"
+        ],
+        "text": "    `Tempo total.........: ${result.tookMs} ms`"
+      },
+      {
+        "lineNumber": 455,
+        "terms": [
+          "hour"
+        ],
+        "text": "    const [hour, bucket]"
+      },
+      {
+        "lineNumber": 456,
+        "terms": [
+          "result",
+          "hour"
+        ],
+        "text": "    of Object.entries(result.byHour)"
+      },
+      {
+        "lineNumber": 459,
+        "terms": [
+          "top1",
+          "top3",
+          "evaluated",
+          "hour"
+        ],
+        "text": "      `${hour.padEnd(8)} avaliados=${String(bucket.evaluated).padStart(5)} | TOP1=${formatPercent(bucket.top1Rate).padStart(8)} | TOP3=${formatPercent(bucket.top3Rate).padStart(8)} | erros=${bucket.errors}`"
+      },
+      {
+        "lineNumber": 468,
+        "terms": [
+          "result"
+        ],
+        "text": "    of Object.entries(result.byWeekday)"
+      },
+      {
+        "lineNumber": 471,
+        "terms": [
+          "top1",
+          "top3",
+          "evaluated"
+        ],
+        "text": "      `${weekday.padEnd(3)} avaliados=${String(bucket.evaluated).padStart(5)} | TOP1=${formatPercent(bucket.top1Rate).padStart(8)} | TOP3=${formatPercent(bucket.top3Rate).padStart(8)} | erros=${bucket.errors}`"
+      },
+      {
+        "lineNumber": 480,
+        "terms": [
+          "result"
+        ],
+        "text": "    of Object.entries(result.byMonth)"
+      },
+      {
+        "lineNumber": 483,
+        "terms": [
+          "top1",
+          "top3",
+          "evaluated"
+        ],
+        "text": "      `${month} avaliados=${String(bucket.evaluated).padStart(5)} | TOP1=${formatPercent(bucket.top1Rate).padStart(8)} | TOP3=${formatPercent(bucket.top3Rate).padStart(8)} | erros=${bucket.errors}`"
+      },
+      {
+        "lineNumber": 487,
+        "terms": [
+          "return"
+        ],
+        "text": "  return lines.join(\"\\n\");"
+      },
+      {
+        "lineNumber": 490,
+        "terms": [
+          "runOfficialBacktest"
+        ],
+        "text": "async function runOfficialBacktest("
+      },
+      {
+        "lineNumber": 494,
+        "terms": [
+          "date"
+        ],
+        "text": "  const startedAt = Date.now();"
+      },
+      {
+        "lineNumber": 496,
+        "terms": [
+          "lottery"
+        ],
+        "text": "  const lotteryKey ="
+      },
+      {
+        "lineNumber": 497,
+        "terms": [
+          "lottery"
+        ],
+        "text": "    normalizeLotteryKey("
+      },
+      {
+        "lineNumber": 498,
+        "terms": [
+          "lottery"
+        ],
+        "text": "      options.lotteryKey ||"
+      },
+      {
+        "lineNumber": 504,
+        "terms": [
+          "top3"
+        ],
+        "text": "    loadTop3PublicApi();"
+      },
+      {
+        "lineNumber": 514,
+        "terms": [
+          "top3"
+        ],
+        "text": "  const computeTop3 ="
+      },
+      {
+        "lineNumber": 515,
+        "terms": [
+          "top3"
+        ],
+        "text": "    dependencies.computeTop3 ||"
+      },
+      {
+        "lineNumber": 516,
+        "terms": [
+          "top3"
+        ],
+        "text": "    computeStatisticalTop3V3;"
+      },
+      {
+        "lineNumber": 518,
+        "terms": [
+          "draw",
+          "draws"
+        ],
+        "text": "  const history = sortDraws("
+      },
+      {
+        "lineNumber": 520,
+        "terms": [
+          "lottery"
+        ],
+        "text": "      lotteryKey,"
+      },
+      {
+        "lineNumber": 528,
+        "terms": [
+          "top3"
+        ],
+        "text": "      \"Histórico TOP3 vazio.\""
+      },
+      {
+        "lineNumber": 532,
+        "terms": [
+          "result"
+        ],
+        "text": "  const metadataResult ="
+      },
+      {
+        "lineNumber": 534,
+        "terms": [
+          "lottery"
+        ],
+        "text": "      lotteryKey,"
+      },
+      {
+        "lineNumber": 539,
+        "terms": [
+          "result"
+        ],
+        "text": "    metadataResult?.data || null;"
+      },
+      {
+        "lineNumber": 544,
+        "terms": [
+          "result"
+        ],
+        "text": "      metadataResult?.exists !== true ||"
+      },
+      {
+        "lineNumber": 550,
+        "terms": [
+          "top3"
+        ],
+        "text": "      \"Histórico TOP3 não está marcado como completo.\""
+      },
+      {
+        "lineNumber": 571,
+        "terms": [
+          "draw"
+        ],
+        "text": "    const draw = history[index];"
+      },
+      {
+        "lineNumber": 574,
+        "terms": [
+          "draw"
+        ],
+        "text": "      publicApi.pickDrawYMD(draw);"
+      },
+      {
+        "lineNumber": 576,
+        "terms": [
+          "hour"
+        ],
+        "text": "    const hour ="
+      },
+      {
+        "lineNumber": 577,
+        "terms": [
+          "draw",
+          "hour"
+        ],
+        "text": "      publicApi.pickDrawHour(draw);"
+      },
+      {
+        "lineNumber": 579,
+        "terms": [
+          "hour"
+        ],
+        "text": "    if (!ymd || !hour) {"
+      },
+      {
+        "lineNumber": 593,
+        "terms": [
+          "draw"
+        ],
+        "text": "        draw,"
+      },
+      {
+        "lineNumber": 611,
+        "terms": [
+          "global"
+        ],
+        "text": "  const globalBucket = {"
+      },
+      {
+        "lineNumber": 612,
+        "terms": [
+          "evaluated"
+        ],
+        "text": "    evaluated: 0,"
+      },
+      {
+        "lineNumber": 613,
+        "terms": [
+          "top1",
+          "hit",
+          "hits"
+        ],
+        "text": "    top1Hits: 0,"
+      },
+      {
+        "lineNumber": 614,
+        "terms": [
+          "top3",
+          "hit",
+          "hits"
+        ],
+        "text": "    top3Hits: 0,"
+      },
+      {
+        "lineNumber": 618,
+        "terms": [
+          "hour"
+        ],
+        "text": "  const byHour = {};"
+      },
+      {
+        "lineNumber": 622,
+        "terms": [
+          "case",
+          "cases"
+        ],
+        "text": "  const telemetryCases = [];"
+      },
+      {
+        "lineNumber": 636,
+        "terms": [
+          "target",
+          "draw"
+        ],
+        "text": "    const targetDraw ="
+      },
+      {
+        "lineNumber": 639,
+        "terms": [
+          "target"
+        ],
+        "text": "    const targetYmd ="
+      },
+      {
+        "lineNumber": 640,
+        "terms": [
+          "draw"
+        ],
+        "text": "      publicApi.pickDrawYMD("
+      },
+      {
+        "lineNumber": 641,
+        "terms": [
+          "target",
+          "draw"
+        ],
+        "text": "        targetDraw"
+      },
+      {
+        "lineNumber": 644,
+        "terms": [
+          "target",
+          "hour"
+        ],
+        "text": "    const targetHour ="
+      },
+      {
+        "lineNumber": 645,
+        "terms": [
+          "draw",
+          "hour"
+        ],
+        "text": "      publicApi.pickDrawHour("
+      },
+      {
+        "lineNumber": 646,
+        "terms": [
+          "target",
+          "draw"
+        ],
+        "text": "        targetDraw"
+      },
+      {
+        "lineNumber": 649,
+        "terms": [
+          "actual"
+        ],
+        "text": "    const actualGroup ="
+      },
+      {
+        "lineNumber": 651,
+        "terms": [
+          "target",
+          "draw"
+        ],
+        "text": "        targetDraw,"
+      },
+      {
+        "lineNumber": 658,
+        "terms": [
+          "draw"
+        ],
+        "text": "    const drawLast ="
+      },
+      {
+        "lineNumber": 664,
+        "terms": [
+          "target"
+        ],
+        "text": "      !targetYmd ||"
+      },
+      {
+        "lineNumber": 665,
+        "terms": [
+          "target",
+          "hour"
+        ],
+        "text": "      !targetHour ||"
+      },
+      {
+        "lineNumber": 666,
+        "terms": [
+          "actual"
+        ],
+        "text": "      actualGroup == null ||"
+      },
+      {
+        "lineNumber": 667,
+        "terms": [
+          "draw"
+        ],
+        "text": "      !drawLast"
+      },
+      {
+        "lineNumber": 674,
+        "terms": [
+          "date"
+        ],
+        "text": "      new Date("
+      },
+      {
+        "lineNumber": 675,
+        "terms": [
+          "target"
+        ],
+        "text": "        `${targetYmd}T12:00:00Z`"
+      },
+      {
+        "lineNumber": 680,
+        "terms": [
+          "target"
+        ],
+        "text": "      targetYmd.slice(0, 7);"
+      },
+      {
+        "lineNumber": 682,
+        "terms": [
+          "hour"
+        ],
+        "text": "    const hourBucket ="
+      },
+      {
+        "lineNumber": 684,
+        "terms": [
+          "hour"
+        ],
+        "text": "        byHour,"
+      },
+      {
+        "lineNumber": 685,
+        "terms": [
+          "target",
+          "hour"
+        ],
+        "text": "        normalizeHour(targetHour) ||"
+      },
+      {
+        "lineNumber": 686,
+        "terms": [
+          "target",
+          "hour"
+        ],
+        "text": "        targetHour"
+      },
+      {
+        "lineNumber": 703,
+        "terms": [
+          "top3"
+        ],
+        "text": "        computeTop3({"
+      },
+      {
+        "lineNumber": 704,
+        "terms": [
+          "lottery"
+        ],
+        "text": "          lotteryKey,"
+      },
+      {
+        "lineNumber": 705,
+        "terms": [
+          "draw",
+          "draws"
+        ],
+        "text": "          drawsRange:"
+      },
+      {
+        "lineNumber": 707,
+        "terms": [
+          "draw"
+        ],
+        "text": "          drawLast,"
+      },
+      {
+        "lineNumber": 712,
+        "terms": [
+          "target"
+        ],
+        "text": "          targetYmdOverride:"
+      },
+      {
+        "lineNumber": 713,
+        "terms": [
+          "target"
+        ],
+        "text": "            targetYmd,"
+      },
+      {
+        "lineNumber": 714,
+        "terms": [
+          "target",
+          "hour"
+        ],
+        "text": "          targetHourOverride:"
+      },
+      {
+        "lineNumber": 715,
+        "terms": [
+          "target",
+          "hour"
+        ],
+        "text": "            targetHour,"
+      },
+      {
+        "lineNumber": 718,
+        "terms": [
+          "prediction"
+        ],
+        "text": "      const predictionGroups ="
+      },
+      {
+        "lineNumber": 719,
+        "terms": [
+          "prediction"
+        ],
+        "text": "        getPredictionGroups("
+      },
+      {
+        "lineNumber": 724,
+        "terms": [
+          "prediction"
+        ],
+        "text": "        predictionGroups.length < 3"
+      },
+      {
+        "lineNumber": 731,
+        "terms": [
+          "top1",
+          "hit"
+        ],
+        "text": "      const top1Hit ="
+      },
+      {
+        "lineNumber": 732,
+        "terms": [
+          "prediction"
+        ],
+        "text": "        predictionGroups[0] ==="
+      },
+      {
+        "lineNumber": 733,
+        "terms": [
+          "actual"
+        ],
+        "text": "        actualGroup;"
+      },
+      {
+        "lineNumber": 735,
+        "terms": [
+          "top3",
+          "hit"
+        ],
+        "text": "      const top3Hit ="
+      },
+      {
+        "lineNumber": 736,
+        "terms": [
+          "prediction"
+        ],
+        "text": "        predictionGroups.includes("
+      },
+      {
+        "lineNumber": 737,
+        "terms": [
+          "actual"
+        ],
+        "text": "          actualGroup"
+      },
+      {
+        "lineNumber": 745,
+        "terms": [
+          "case",
+          "cases"
+        ],
+        "text": "        telemetryCases.push({"
+      },
+      {
+        "lineNumber": 746,
+        "terms": [
+          "case"
+        ],
+        "text": "          caseNumber: position + 1,"
+      },
+      {
+        "lineNumber": 748,
+        "terms": [
+          "target"
+        ],
+        "text": "          target: {"
+      },
+      {
+        "lineNumber": 749,
+        "terms": [
+          "target"
+        ],
+        "text": "            ymd: targetYmd,"
+      },
+      {
+        "lineNumber": 750,
+        "terms": [
+          "hour"
+        ],
+        "text": "            hour:"
+      },
+      {
+        "lineNumber": 751,
+        "terms": [
+          "target",
+          "hour"
+        ],
+        "text": "              normalizeHour(targetHour) ||"
+      },
+      {
+        "lineNumber": 752,
+        "terms": [
+          "target",
+          "hour"
+        ],
+        "text": "              targetHour,"
+      },
+      {
+        "lineNumber": 759,
+        "terms": [
+          "draw"
+        ],
+        "text": "            lastDrawYmd:"
+      },
+      {
+        "lineNumber": 760,
+        "terms": [
+          "draw"
+        ],
+        "text": "              publicApi.pickDrawYMD("
+      },
+      {
+        "lineNumber": 761,
+        "terms": [
+          "draw"
+        ],
+        "text": "                drawLast"
+      },
+      {
+        "lineNumber": 763,
+        "terms": [
+          "draw",
+          "hour"
+        ],
+        "text": "            lastDrawHour:"
+      },
+      {
+        "lineNumber": 764,
+        "terms": [
+          "draw",
+          "hour"
+        ],
+        "text": "              publicApi.pickDrawHour("
+      },
+      {
+        "lineNumber": 765,
+        "terms": [
+          "draw"
+        ],
+        "text": "                drawLast"
+      },
+      {
+        "lineNumber": 768,
+        "terms": [
+          "actual"
+        ],
+        "text": "          actual: {"
+      },
+      {
+        "lineNumber": 769,
+        "terms": [
+          "actual"
+        ],
+        "text": "            group: actualGroup,"
+      },
+      {
+        "lineNumber": 771,
+        "terms": [
+          "prediction"
+        ],
+        "text": "          prediction: {"
+      },
+      {
+        "lineNumber": 772,
+        "terms": [
+          "prediction"
+        ],
+        "text": "            groups: predictionGroups,"
+      },
+      {
+        "lineNumber": 773,
+        "terms": [
+          "top1",
+          "hit"
+        ],
+        "text": "            top1Hit,"
+      },
+      {
+        "lineNumber": 774,
+        "terms": [
+          "top3",
+          "hit"
+        ],
+        "text": "            top3Hit,"
+      },
+      {
+        "lineNumber": 776,
+        "terms": [
+          "date"
+        ],
+        "text": "          candidates: computedTop"
+      },
+      {
+        "lineNumber": 831,
+        "terms": [
+          "global"
+        ],
+        "text": "        globalBucket,"
+      },
+      {
+        "lineNumber": 832,
+        "terms": [
+          "hour"
+        ],
+        "text": "        hourBucket,"
+      },
+      {
+        "lineNumber": 836,
+        "terms": [
+          "evaluated"
+        ],
+        "text": "        bucket.evaluated += 1;"
+      },
+      {
+        "lineNumber": 838,
+        "terms": [
+          "top1",
+          "hit"
+        ],
+        "text": "        if (top1Hit) {"
+      },
+      {
+        "lineNumber": 839,
+        "terms": [
+          "top1",
+          "hit",
+          "hits"
+        ],
+        "text": "          bucket.top1Hits += 1;"
+      },
+      {
+        "lineNumber": 842,
+        "terms": [
+          "top3",
+          "hit"
+        ],
+        "text": "        if (top3Hit) {"
+      },
+      {
+        "lineNumber": 843,
+        "terms": [
+          "top3",
+          "hit",
+          "hits"
+        ],
+        "text": "          bucket.top3Hits += 1;"
+      },
+      {
+        "lineNumber": 848,
+        "terms": [
+          "target"
+        ],
+        "text": "        evaluationFrom || targetYmd;"
+      },
+      {
+        "lineNumber": 850,
+        "terms": [
+          "target"
+        ],
+        "text": "      evaluationTo = targetYmd;"
+      },
+      {
+        "lineNumber": 852,
+        "terms": [
+          "global"
+        ],
+        "text": "      globalBucket.errors += 1;"
+      },
+      {
+        "lineNumber": 853,
+        "terms": [
+          "hour"
+        ],
+        "text": "      hourBucket.errors += 1;"
+      },
+      {
+        "lineNumber": 858,
+        "terms": [
+          "case"
+        ],
+        "text": "        dependencies.onCaseError"
+      },
+      {
+        "lineNumber": 860,
+        "terms": [
+          "case"
+        ],
+        "text": "        dependencies.onCaseError({"
+      },
+      {
+        "lineNumber": 862,
+        "terms": [
+          "target"
+        ],
+        "text": "          targetYmd,"
+      },
+      {
+        "lineNumber": 863,
+        "terms": [
+          "target",
+          "hour"
+        ],
+        "text": "          targetHour,"
+      },
+      {
+        "lineNumber": 879,
+        "terms": [
+          "evaluated",
+          "global"
+        ],
+        "text": "        `[BACKTEST] ${done}/${selectedIndexes.length} | avaliados=${globalBucket.evaluated} | erros=${globalBucket.errors}`"
+      },
+      {
+        "lineNumber": 884,
+        "terms": [
+          "result"
+        ],
+        "text": "  const result = {"
+      },
+      {
+        "lineNumber": 886,
+        "terms": [
+          "lottery"
+        ],
+        "text": "    lotteryKey,"
+      },
+      {
+        "lineNumber": 888,
+        "terms": [
+          "top3"
+        ],
+        "text": "      \"top3_statistical_v3\","
+      },
+      {
+        "lineNumber": 893,
+        "terms": [
+          "case",
+          "cases"
+        ],
+        "text": "    eligibleCases:"
+      },
+      {
+        "lineNumber": 895,
+        "terms": [
+          "case",
+          "cases"
+        ],
+        "text": "    selectedCases:"
+      },
+      {
+        "lineNumber": 903,
+        "terms": [
+          "draw"
+        ],
+        "text": "        publicApi.pickDrawYMD("
+      },
+      {
+        "lineNumber": 907,
+        "terms": [
+          "draw"
+        ],
+        "text": "        publicApi.pickDrawYMD("
+      },
+      {
+        "lineNumber": 917,
+        "terms": [
+          "global"
+        ],
+        "text": "    global:"
+      },
+      {
+        "lineNumber": 919,
+        "terms": [
+          "global"
+        ],
+        "text": "        globalBucket"
+      },
+      {
+        "lineNumber": 921,
+        "terms": [
+          "hour"
+        ],
+        "text": "    byHour:"
+      },
+      {
+        "lineNumber": 922,
+        "terms": [
+          "hour"
+        ],
+        "text": "      finalizeMap(byHour),"
+      },
+      {
+        "lineNumber": 932,
+        "terms": [
+          "case",
+          "cases"
+        ],
+        "text": "            cases: telemetryCases,"
+      },
+      {
+        "lineNumber": 937,
+        "terms": [
+          "case",
+          "cases"
+        ],
+        "text": "            cases: [],"
+      },
+      {
+        "lineNumber": 945,
+        "terms": [
+          "draw",
+          "draws"
+        ],
+        "text": "          metadata?.totalDraws || 0"
+      },
+      {
+        "lineNumber": 947,
+        "terms": [
+          "draw"
+        ],
+        "text": "      lastProcessedDrawId:"
+      },
+      {
+        "lineNumber": 948,
+        "terms": [
+          "draw"
+        ],
+        "text": "        metadata?.lastProcessedDrawId ||"
+      },
+      {
+        "lineNumber": 952,
+        "terms": [
+          "date"
+        ],
+        "text": "      Date.now() - startedAt,"
+      },
+      {
+        "lineNumber": 955,
+        "terms": [
+          "result",
+          "return"
+        ],
+        "text": "  return result;"
+      },
+      {
+        "lineNumber": 968,
+        "terms": [
+          "top3"
+        ],
+        "text": "    \"TOP3 OFFICIAL BACKTEST\""
+      },
+      {
+        "lineNumber": 976,
+        "terms": [
+          "lottery"
+        ],
+        "text": "    options.lotteryKey"
+      },
+      {
+        "lineNumber": 998,
+        "terms": [
+          "result"
+        ],
+        "text": "  const result ="
+      },
+      {
+        "lineNumber": 999,
+        "terms": [
+          "runOfficialBacktest"
+        ],
+        "text": "    await runOfficialBacktest("
+      },
+      {
+        "lineNumber": 1021,
+        "terms": [
+          "top3"
+        ],
+        "text": "    `top3_official_backtest_${suffix}.json`"
+      },
+      {
+        "lineNumber": 1026,
+        "terms": [
+          "top3"
+        ],
+        "text": "    `top3_official_backtest_${suffix}.txt`"
+      },
+      {
+        "lineNumber": 1032,
+        "terms": [
+          "result"
+        ],
+        "text": "      result,"
+      },
+      {
+        "lineNumber": 1041,
+        "terms": [
+          "result"
+        ],
+        "text": "    buildTextReport(result),"
+      },
+      {
+        "lineNumber": 1047,
+        "terms": [
+          "result"
+        ],
+        "text": "    buildTextReport(result)"
+      },
+      {
+        "lineNumber": 1075,
+        "terms": [
+          "draw",
+          "draws"
+        ],
+        "text": "  sortDraws,"
+      },
+      {
+        "lineNumber": 1077,
+        "terms": [
+          "prediction"
+        ],
+        "text": "  getPredictionGroups,"
+      },
+      {
+        "lineNumber": 1080,
+        "terms": [
+          "runOfficialBacktest"
+        ],
+        "text": "  runOfficialBacktest,"
+      }
+    ]
+  },
+  "conclusion": {
+    "hasCandidateCaseArray": false,
+    "nextAction": "O payload atual parece conter apenas métricas agregadas. Ampliar a telemetria experimental para preservar os casos, rankings e acertos."
+  }
+}

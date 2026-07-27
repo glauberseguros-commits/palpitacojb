@@ -1,0 +1,8 @@
+npm error Missing script: "diagnose:import"
+npm error
+npm error Did you mean this?
+npm error   npm run vitenode:import # run the "vitenode:import" package script
+npm error
+npm error To see a list of scripts, run:
+npm error   npm run
+npm error A complete log of this run can be found in: C:\Users\glaub\AppData\Local\npm-cache\_logs\2026-07-25T23_36_25_341Z-debug-0.log

@@ -1,0 +1,1115 @@
+
+===== loteriasDefault =====
+0207: }) {
+0208:   const loteria = useMemo(
+0209:     () => normalizeLoteriaInput(filters?.loteria),
+0210:     [filters?.loteria]
+0211:   );
+0212:   const isFederal = loteria === "FEDERAL";
+0213: 
+0214:   const defaultOptions = useMemo(() => {
+0215:     const loteriasDefault = [
+0216:       { label: "RJ", value: "PT_RIO" },
+0217:       { label: "FEDERAL", value: "FEDERAL" },
+0218:     ];
+0219: 
+0220:     const mesesDefault = [
+0221:       "Todos",
+0222:       "Janeiro",
+0223:       "Fevereiro",
+0224:       "Março",
+0225:       "Abril",
+0226:       "Maio",
+0227:       "Junho",
+0228:       "Julho",
+0229:       "Agosto",
+0230:       "Setembro",
+0231:       "Outubro",
+0232:       "Novembro",
+0233:       "Dezembro",
+0234:     ];
+
+0368:               .filter(Boolean)
+0369:               .filter((x) => x.toLowerCase() !== "todos");
+0370:             const uniq = Array.from(new Set(cleaned));
+0371:             return ["Todos", ...uniq];
+0372:           })()
+0373:         : mesesDefault;
+0374: 
+0375:     return {
+0376:       loterias: loteriasDefault,
+0377:       meses,
+0378:       diasMes,
+0379:       diasSemana: diasSemanaFromParent,
+0380:       horarios,
+0381:       animais,
+0382:       posicoes,
+0383:     };
+0384:   }, [options, posicaoMode, posicoesFromOptionsMode, isFederal]);
+0385: 
+0386:   const ui = {
+0387:     bar: {
+0388:       border: `1px solid ${PP.strokeStrong}`,
+0389:       borderRadius: PP.rCard,
+0390:       background: `linear-gradient(180deg, ${PP.surface}, ${PP.surface2})`,
+0391:       padding: 12,
+0392:       boxShadow: PP.shadowGlow,
+0393:       overflow: "hidden",
+0394:       minWidth: 0,
+0395:     },
+
+
+===== horariosRJ =====
+0240:       { label: "Terça-Feira", value: "Ter" },
+0241:       { label: "Quarta-Feira", value: "Qua" },
+0242:       { label: "Quinta-Feira", value: "Qui" },
+0243:       { label: "Sexta-Feira", value: "Sex" },
+0244:       { label: "Sábado", value: "Sáb" },
+0245:     ];
+0246: 
+0247:     // ✅ PT_RIO (domínio fixo)
+0248:     const horariosRJ = [
+0249:       { label: "Todos", value: "Todos" },
+0250:       { label: "09h", value: "09h" },
+0251:       { label: "11h", value: "11h" },
+0252:       { label: "14h", value: "14h" },
+0253:       { label: "16h", value: "16h" },
+0254:       { label: "18h", value: "18h" },
+0255:       { label: "21h", value: "21h" },
+0256:     ];
+0257: 
+0258:     // ✅ FEDERAL (Todos/19h/20h)
+0259:     const horariosFED = [
+0260:       { label: "Todos", value: "Todos" },
+0261:       { label: "19h", value: "19h" },
+0262:       { label: "20h", value: "20h" },
+0263:     ];
+0264: 
+0265:     const posicoesDefaultFull = [
+0266:       { label: "Todos", value: "Todos" },
+0267:       { label: "1º", value: "1º" },
+
+0338:         : ["Todos", ...Array.from({ length: 31 }, (_, i) => String(i + 1))];
+0339: 
+0340:     const diasSemanaFromParent =
+0341:       Array.isArray(options.diasSemana) && options.diasSemana.length
+0342:         ? normalizeLabelValueList(options.diasSemana, diasSemanaDefault)
+0343:         : diasSemanaDefault;
+0344: 
+0345:     // ✅ horário depende da loteria (PT_RIO x FEDERAL)
+0346:     const horarios = isFederal ? horariosFED : horariosRJ;
+0347: 
+0348:     const posicoesFromParent =
+0349:       posicoesFromOptionsMode === "respect" &&
+0350:       Array.isArray(options.posicoes) &&
+0351:       options.posicoes.length
+0352:         ? normalizeLabelValueList(options.posicoes, posicoesDefaultFull)
+0353:         : null;
+0354: 
+0355:     const posicoes =
+0356:       posicoesFromParent ||
+0357:       (posicaoMode === "v1" ? posicoesDefaultV1 : posicoesDefaultFull);
+0358: 
+0359:     const meses =
+0360:       Array.isArray(options.meses) && options.meses.length
+0361:         ? (() => {
+0362:             const cleaned = options.meses
+0363:               .map((x) => {
+0364:                 if (x && typeof x === "object")
+0365:                   return String(x.value ?? x.label ?? "").trim();
+
+
+===== horariosFED =====
+0251:       { label: "11h", value: "11h" },
+0252:       { label: "14h", value: "14h" },
+0253:       { label: "16h", value: "16h" },
+0254:       { label: "18h", value: "18h" },
+0255:       { label: "21h", value: "21h" },
+0256:     ];
+0257: 
+0258:     // ✅ FEDERAL (Todos/19h/20h)
+0259:     const horariosFED = [
+0260:       { label: "Todos", value: "Todos" },
+0261:       { label: "19h", value: "19h" },
+0262:       { label: "20h", value: "20h" },
+0263:     ];
+0264: 
+0265:     const posicoesDefaultFull = [
+0266:       { label: "Todos", value: "Todos" },
+0267:       { label: "1º", value: "1º" },
+0268:       { label: "2º", value: "2º" },
+0269:       { label: "3º", value: "3º" },
+0270:       { label: "4º", value: "4º" },
+0271:       { label: "5º", value: "5º" },
+0272:       { label: "6º", value: "6º" },
+0273:       { label: "7º", value: "7º" },
+0274:     ];
+0275: 
+0276:     const posicoesDefaultV1 = [{ label: "1º", value: "1º" }];
+0277: 
+0278:     const normalizeLabelValueList = (arr, fallback) => {
+
+0338:         : ["Todos", ...Array.from({ length: 31 }, (_, i) => String(i + 1))];
+0339: 
+0340:     const diasSemanaFromParent =
+0341:       Array.isArray(options.diasSemana) && options.diasSemana.length
+0342:         ? normalizeLabelValueList(options.diasSemana, diasSemanaDefault)
+0343:         : diasSemanaDefault;
+0344: 
+0345:     // ✅ horário depende da loteria (PT_RIO x FEDERAL)
+0346:     const horarios = isFederal ? horariosFED : horariosRJ;
+0347: 
+0348:     const posicoesFromParent =
+0349:       posicoesFromOptionsMode === "respect" &&
+0350:       Array.isArray(options.posicoes) &&
+0351:       options.posicoes.length
+0352:         ? normalizeLabelValueList(options.posicoes, posicoesDefaultFull)
+0353:         : null;
+0354: 
+0355:     const posicoes =
+0356:       posicoesFromParent ||
+0357:       (posicaoMode === "v1" ? posicoesDefaultV1 : posicoesDefaultFull);
+0358: 
+0359:     const meses =
+0360:       Array.isArray(options.meses) && options.meses.length
+0361:         ? (() => {
+0362:             const cleaned = options.meses
+0363:               .map((x) => {
+0364:                 if (x && typeof x === "object")
+0365:                   return String(x.value ?? x.label ?? "").trim();
+
+
+===== isFederal =====
+0204:   posicoesFromOptionsMode = "ignore",
+0205:   disabledAll = false,
+0206:   onBlocked = null,
+0207: }) {
+0208:   const loteria = useMemo(
+0209:     () => normalizeLoteriaInput(filters?.loteria),
+0210:     [filters?.loteria]
+0211:   );
+0212:   const isFederal = loteria === "FEDERAL";
+0213: 
+0214:   const defaultOptions = useMemo(() => {
+0215:     const loteriasDefault = [
+0216:       { label: "RJ", value: "PT_RIO" },
+0217:       { label: "FEDERAL", value: "FEDERAL" },
+0218:     ];
+0219: 
+0220:     const mesesDefault = [
+0221:       "Todos",
+0222:       "Janeiro",
+0223:       "Fevereiro",
+0224:       "Março",
+0225:       "Abril",
+0226:       "Maio",
+0227:       "Junho",
+0228:       "Julho",
+0229:       "Agosto",
+0230:       "Setembro",
+0231:       "Outubro",
+
+0338:         : ["Todos", ...Array.from({ length: 31 }, (_, i) => String(i + 1))];
+0339: 
+0340:     const diasSemanaFromParent =
+0341:       Array.isArray(options.diasSemana) && options.diasSemana.length
+0342:         ? normalizeLabelValueList(options.diasSemana, diasSemanaDefault)
+0343:         : diasSemanaDefault;
+0344: 
+0345:     // ✅ horário depende da loteria (PT_RIO x FEDERAL)
+0346:     const horarios = isFederal ? horariosFED : horariosRJ;
+0347: 
+0348:     const posicoesFromParent =
+0349:       posicoesFromOptionsMode === "respect" &&
+0350:       Array.isArray(options.posicoes) &&
+0351:       options.posicoes.length
+0352:         ? normalizeLabelValueList(options.posicoes, posicoesDefaultFull)
+0353:         : null;
+0354: 
+0355:     const posicoes =
+0356:       posicoesFromParent ||
+0357:       (posicaoMode === "v1" ? posicoesDefaultV1 : posicoesDefaultFull);
+0358: 
+0359:     const meses =
+0360:       Array.isArray(options.meses) && options.meses.length
+0361:         ? (() => {
+0362:             const cleaned = options.meses
+0363:               .map((x) => {
+0364:                 if (x && typeof x === "object")
+0365:                   return String(x.value ?? x.label ?? "").trim();
+
+0376:       loterias: loteriasDefault,
+0377:       meses,
+0378:       diasMes,
+0379:       diasSemana: diasSemanaFromParent,
+0380:       horarios,
+0381:       animais,
+0382:       posicoes,
+0383:     };
+0384:   }, [options, posicaoMode, posicoesFromOptionsMode, isFederal]);
+0385: 
+0386:   const ui = {
+0387:     bar: {
+0388:       border: `1px solid ${PP.strokeStrong}`,
+0389:       borderRadius: PP.rCard,
+0390:       background: `linear-gradient(180deg, ${PP.surface}, ${PP.surface2})`,
+0391:       padding: 12,
+0392:       boxShadow: PP.shadowGlow,
+0393:       overflow: "hidden",
+0394:       minWidth: 0,
+0395:     },
+0396:     grid: {
+0397:       display: "grid",
+0398:       gridTemplateColumns: "repeat(12, minmax(0, 1fr))",
+0399:       gap: 10,
+0400:       alignItems: "end",
+0401:       minWidth: 0,
+0402:     },
+0403:     spanLoteria: { gridColumn: "span 2", minWidth: 0 },
+
+
+===== normalizeLoteria =====
+0034:   const s = String(v ?? "").trim();
+0035:   return s ? s : fallback;
+0036: }
+0037: 
+0038: function sortPTBR(a, b) {
+0039:   return String(a).localeCompare(String(b), "pt-BR", { sensitivity: "base" });
+0040: }
+0041: 
+0042: function normalizeLoteriaInput(v) {
+0043:   const raw = String(v ?? "").trim();
+0044:   if (!raw) return "PT_RIO";
+0045: 
+0046:   const key = raw
+0047:     .toLowerCase()
+0048:     .normalize("NFD")
+0049:     .replace(/[\u0300-\u036f]/g, "")
+0050:     .replace(/\s+/g, " ")
+0051:     .trim();
+0052: 
+0053:   if (key === "federal" || key === "fed" || key === "br" || key === "brasil")
+0054:     return "FEDERAL";
+0055:   if (key === "rj" || key === "rio" || key === "pt_rio" || key === "pt-rio")
+0056:     return "PT_RIO";
+0057: 
+0058:   const out = key
+0059:     .toUpperCase()
+0060:     .replace(/[^A-Z0-9]+/g, "_")
+0061:     .replace(/^_+|_+$/g, "");
+
+0201:   onChange = () => {},
+0202:   options = {},
+0203:   posicaoMode = "full",
+0204:   posicoesFromOptionsMode = "ignore",
+0205:   disabledAll = false,
+0206:   onBlocked = null,
+0207: }) {
+0208:   const loteria = useMemo(
+0209:     () => normalizeLoteriaInput(filters?.loteria),
+0210:     [filters?.loteria]
+0211:   );
+0212:   const isFederal = loteria === "FEDERAL";
+0213: 
+0214:   const defaultOptions = useMemo(() => {
+0215:     const loteriasDefault = [
+0216:       { label: "RJ", value: "PT_RIO" },
+0217:       { label: "FEDERAL", value: "FEDERAL" },
+0218:     ];
+0219: 
+0220:     const mesesDefault = [
+0221:       "Todos",
+0222:       "Janeiro",
+0223:       "Fevereiro",
+0224:       "Março",
+0225:       "Abril",
+0226:       "Maio",
+0227:       "Junho",
+0228:       "Julho",
+
+0534:     (name, next) => {
+0535:       if (disabledAll) {
+0536:         if (typeof onBlocked === "function") onBlocked(name);
+0537:         return;
+0538:       }
+0539: 
+0540:       // ✅ Troca loteria: normaliza e reseta filtros sensíveis SEMPRE
+0541:       if (name === "loteria") {
+0542:         const nextLot = normalizeLoteriaInput(next);
+0543:         onChange("loteria", nextLot);
+0544: 
+0545:         // reset para evitar “estatística inválida” por estado anterior
+0546:         onChange("horario", "Todos");
+0547:         onChange("animal", "Todos");
+0548:         onChange("posicao", "Todos");
+0549: 
+0550:         return;
+0551:       }
+0552: 
+0553:       if (lockPosicaoV1 && name === "posicao") {
+0554:         onChange("posicao", "1º");
+0555:         return;
+0556:       }
+0557: 
+0558:       if (name === "posicao") {
+0559:         onChange(name, normalizePosicaoInput(next));
+0560:         return;
+0561:       }
+
+0581:     forceValue = null,
+0582:   }) => {
+0583:     const normalizeFn =
+0584:       name === "posicao"
+0585:         ? normalizePosicaoInput
+0586:         : name === "diaSemana"
+0587:         ? normalizeDiaSemanaInput
+0588:         : name === "loteria"
+0589:         ? normalizeLoteriaInput
+0590:         : null;
+0591: 
+0592:     const normalizedValue = ensureValueInList({
+0593:       value,
+0594:       list,
+0595:       forceValue,
+0596:       fallback: name === "loteria" ? "PT_RIO" : "Todos",
+0597:       normalizeFn,
+0598:     });
+0599: 
+0600:     const isObjList =
+0601:       Array.isArray(list) && list.length && typeof list[0] === "object" && list[0];
+0602: 
+0603:     const finalDisabled = !!disabledAll || !!disabled;
+0604: 
+0605:     const block = (e) => {
+0606:       if (!finalDisabled) return;
+0607:       try {
+0608:         e?.preventDefault?.();
+
+
+===== const horarios =====
+0240:       { label: "Terça-Feira", value: "Ter" },
+0241:       { label: "Quarta-Feira", value: "Qua" },
+0242:       { label: "Quinta-Feira", value: "Qui" },
+0243:       { label: "Sexta-Feira", value: "Sex" },
+0244:       { label: "Sábado", value: "Sáb" },
+0245:     ];
+0246: 
+0247:     // ✅ PT_RIO (domínio fixo)
+0248:     const horariosRJ = [
+0249:       { label: "Todos", value: "Todos" },
+0250:       { label: "09h", value: "09h" },
+0251:       { label: "11h", value: "11h" },
+0252:       { label: "14h", value: "14h" },
+0253:       { label: "16h", value: "16h" },
+0254:       { label: "18h", value: "18h" },
+0255:       { label: "21h", value: "21h" },
+0256:     ];
+0257: 
+0258:     // ✅ FEDERAL (Todos/19h/20h)
+0259:     const horariosFED = [
+0260:       { label: "Todos", value: "Todos" },
+0261:       { label: "19h", value: "19h" },
+0262:       { label: "20h", value: "20h" },
+0263:     ];
+0264: 
+0265:     const posicoesDefaultFull = [
+0266:       { label: "Todos", value: "Todos" },
+0267:       { label: "1º", value: "1º" },
+
+0251:       { label: "11h", value: "11h" },
+0252:       { label: "14h", value: "14h" },
+0253:       { label: "16h", value: "16h" },
+0254:       { label: "18h", value: "18h" },
+0255:       { label: "21h", value: "21h" },
+0256:     ];
+0257: 
+0258:     // ✅ FEDERAL (Todos/19h/20h)
+0259:     const horariosFED = [
+0260:       { label: "Todos", value: "Todos" },
+0261:       { label: "19h", value: "19h" },
+0262:       { label: "20h", value: "20h" },
+0263:     ];
+0264: 
+0265:     const posicoesDefaultFull = [
+0266:       { label: "Todos", value: "Todos" },
+0267:       { label: "1º", value: "1º" },
+0268:       { label: "2º", value: "2º" },
+0269:       { label: "3º", value: "3º" },
+0270:       { label: "4º", value: "4º" },
+0271:       { label: "5º", value: "5º" },
+0272:       { label: "6º", value: "6º" },
+0273:       { label: "7º", value: "7º" },
+0274:     ];
+0275: 
+0276:     const posicoesDefaultV1 = [{ label: "1º", value: "1º" }];
+0277: 
+0278:     const normalizeLabelValueList = (arr, fallback) => {
+
+0338:         : ["Todos", ...Array.from({ length: 31 }, (_, i) => String(i + 1))];
+0339: 
+0340:     const diasSemanaFromParent =
+0341:       Array.isArray(options.diasSemana) && options.diasSemana.length
+0342:         ? normalizeLabelValueList(options.diasSemana, diasSemanaDefault)
+0343:         : diasSemanaDefault;
+0344: 
+0345:     // ✅ horário depende da loteria (PT_RIO x FEDERAL)
+0346:     const horarios = isFederal ? horariosFED : horariosRJ;
+0347: 
+0348:     const posicoesFromParent =
+0349:       posicoesFromOptionsMode === "respect" &&
+0350:       Array.isArray(options.posicoes) &&
+0351:       options.posicoes.length
+0352:         ? normalizeLabelValueList(options.posicoes, posicoesDefaultFull)
+0353:         : null;
+0354: 
+0355:     const posicoes =
+0356:       posicoesFromParent ||
+0357:       (posicaoMode === "v1" ? posicoesDefaultV1 : posicoesDefaultFull);
+0358: 
+0359:     const meses =
+0360:       Array.isArray(options.meses) && options.meses.length
+0361:         ? (() => {
+0362:             const cleaned = options.meses
+0363:               .map((x) => {
+0364:                 if (x && typeof x === "object")
+0365:                   return String(x.value ?? x.label ?? "").trim();
+
+
+===== loteria =====
+0001: // src/pages/Dashboard/components/FiltersBar.jsx
+0002: import React, { useMemo, useCallback } from "react";
+0003: 
+0004: /**
+0005:  * FiltersBar (Premium)
+0006:  *
+0007:  * ✅ Loteria:
+0008:  * - filters.loteria: "PT_RIO" | "FEDERAL" (default: "PT_RIO")
+0009:  *
+0010:  * ✅ Horário (domínio fixo por loteria):
+0011:  * - PT_RIO: Todos + 09h/11h/14h/16h/18h/21h
+0012:  * - FEDERAL: Todos + 19h/20h
+0013:  *
+0014:  * ✅ Segurança:
+0015:  * - Ao trocar loteria, reseta filtros sensíveis:
+0016:  *   horario -> "Todos"
+0017:  *   animal  -> "Todos"
+0018:  *   posicao -> "Todos"
+0019:  *
+0020:  * posicaoMode:
+0021:  * - "full" (default): Todos + 1º..7º
+0022:  * - "v1": trava em 1º (desabilita select e lista só 1º)
+0023:  *
+0024:  * posicoesFromOptionsMode:
+0025:  * - "ignore" (default): IGNORA options.posicoes (posição é domínio fixo)
+0026:  * - "respect": respeita options.posicoes se vier (com fallback seguro)
+0027:  *
+
+0002: import React, { useMemo, useCallback } from "react";
+0003: 
+0004: /**
+0005:  * FiltersBar (Premium)
+0006:  *
+0007:  * ✅ Loteria:
+0008:  * - filters.loteria: "PT_RIO" | "FEDERAL" (default: "PT_RIO")
+0009:  *
+0010:  * ✅ Horário (domínio fixo por loteria):
+0011:  * - PT_RIO: Todos + 09h/11h/14h/16h/18h/21h
+0012:  * - FEDERAL: Todos + 19h/20h
+0013:  *
+0014:  * ✅ Segurança:
+0015:  * - Ao trocar loteria, reseta filtros sensíveis:
+0016:  *   horario -> "Todos"
+0017:  *   animal  -> "Todos"
+0018:  *   posicao -> "Todos"
+0019:  *
+0020:  * posicaoMode:
+0021:  * - "full" (default): Todos + 1º..7º
+0022:  * - "v1": trava em 1º (desabilita select e lista só 1º)
+0023:  *
+0024:  * posicoesFromOptionsMode:
+0025:  * - "ignore" (default): IGNORA options.posicoes (posição é domínio fixo)
+0026:  * - "respect": respeita options.posicoes se vier (com fallback seguro)
+0027:  *
+0028:  * Extras (freeze-safe):
+0029:  * - disabledAll: trava todos selects (útil para modo DEMO)
+
+0007:  * ✅ Loteria:
+0008:  * - filters.loteria: "PT_RIO" | "FEDERAL" (default: "PT_RIO")
+0009:  *
+0010:  * ✅ Horário (domínio fixo por loteria):
+0011:  * - PT_RIO: Todos + 09h/11h/14h/16h/18h/21h
+0012:  * - FEDERAL: Todos + 19h/20h
+0013:  *
+0014:  * ✅ Segurança:
+0015:  * - Ao trocar loteria, reseta filtros sensíveis:
+0016:  *   horario -> "Todos"
+0017:  *   animal  -> "Todos"
+0018:  *   posicao -> "Todos"
+0019:  *
+0020:  * posicaoMode:
+0021:  * - "full" (default): Todos + 1º..7º
+0022:  * - "v1": trava em 1º (desabilita select e lista só 1º)
+0023:  *
+0024:  * posicoesFromOptionsMode:
+0025:  * - "ignore" (default): IGNORA options.posicoes (posição é domínio fixo)
+0026:  * - "respect": respeita options.posicoes se vier (com fallback seguro)
+0027:  *
+0028:  * Extras (freeze-safe):
+0029:  * - disabledAll: trava todos selects (útil para modo DEMO)
+0030:  * - onBlocked: callback quando usuário tenta interagir enquanto bloqueado
+0031:  */
+0032: 
+0033: function normalizeValue(v, fallback = "Todos") {
+0034:   const s = String(v ?? "").trim();
+
+0185:   inputH: 44,
+0186:   selGoldA: "rgba(200,178,90,0.95)",
+0187:   selGoldB: "rgba(184,158,71,0.95)",
+0188:   selGoldSoft: "rgba(200,178,90,0.55)",
+0189: };
+0190: 
+0191: export default function FiltersBar({
+0192:   filters = {
+0193:     loteria: "PT_RIO",
+0194:     mes: "Todos",
+0195:     diaMes: "Todos",
+0196:     diaSemana: "Todos",
+0197:     horario: "Todos",
+0198:     animal: "Todos",
+0199:     posicao: "Todos",
+0200:   },
+0201:   onChange = () => {},
+0202:   options = {},
+0203:   posicaoMode = "full",
+0204:   posicoesFromOptionsMode = "ignore",
+0205:   disabledAll = false,
+0206:   onBlocked = null,
+0207: }) {
+0208:   const loteria = useMemo(
+0209:     () => normalizeLoteriaInput(filters?.loteria),
+0210:     [filters?.loteria]
+0211:   );
+0212:   const isFederal = loteria === "FEDERAL";
+
+0200:   },
+0201:   onChange = () => {},
+0202:   options = {},
+0203:   posicaoMode = "full",
+0204:   posicoesFromOptionsMode = "ignore",
+0205:   disabledAll = false,
+0206:   onBlocked = null,
+0207: }) {
+0208:   const loteria = useMemo(
+0209:     () => normalizeLoteriaInput(filters?.loteria),
+0210:     [filters?.loteria]
+0211:   );
+0212:   const isFederal = loteria === "FEDERAL";
+0213: 
+0214:   const defaultOptions = useMemo(() => {
+0215:     const loteriasDefault = [
+0216:       { label: "RJ", value: "PT_RIO" },
+0217:       { label: "FEDERAL", value: "FEDERAL" },
+0218:     ];
+0219: 
+0220:     const mesesDefault = [
+0221:       "Todos",
+0222:       "Janeiro",
+0223:       "Fevereiro",
+0224:       "Março",
+0225:       "Abril",
+0226:       "Maio",
+0227:       "Junho",
+
+0201:   onChange = () => {},
+0202:   options = {},
+0203:   posicaoMode = "full",
+0204:   posicoesFromOptionsMode = "ignore",
+0205:   disabledAll = false,
+0206:   onBlocked = null,
+0207: }) {
+0208:   const loteria = useMemo(
+0209:     () => normalizeLoteriaInput(filters?.loteria),
+0210:     [filters?.loteria]
+0211:   );
+0212:   const isFederal = loteria === "FEDERAL";
+0213: 
+0214:   const defaultOptions = useMemo(() => {
+0215:     const loteriasDefault = [
+0216:       { label: "RJ", value: "PT_RIO" },
+0217:       { label: "FEDERAL", value: "FEDERAL" },
+0218:     ];
+0219: 
+0220:     const mesesDefault = [
+0221:       "Todos",
+0222:       "Janeiro",
+0223:       "Fevereiro",
+0224:       "Março",
+0225:       "Abril",
+0226:       "Maio",
+0227:       "Junho",
+0228:       "Julho",
+
+0202:   options = {},
+0203:   posicaoMode = "full",
+0204:   posicoesFromOptionsMode = "ignore",
+0205:   disabledAll = false,
+0206:   onBlocked = null,
+0207: }) {
+0208:   const loteria = useMemo(
+0209:     () => normalizeLoteriaInput(filters?.loteria),
+0210:     [filters?.loteria]
+0211:   );
+0212:   const isFederal = loteria === "FEDERAL";
+0213: 
+0214:   const defaultOptions = useMemo(() => {
+0215:     const loteriasDefault = [
+0216:       { label: "RJ", value: "PT_RIO" },
+0217:       { label: "FEDERAL", value: "FEDERAL" },
+0218:     ];
+0219: 
+0220:     const mesesDefault = [
+0221:       "Todos",
+0222:       "Janeiro",
+0223:       "Fevereiro",
+0224:       "Março",
+0225:       "Abril",
+0226:       "Maio",
+0227:       "Junho",
+0228:       "Julho",
+0229:       "Agosto",
+
+0204:   posicoesFromOptionsMode = "ignore",
+0205:   disabledAll = false,
+0206:   onBlocked = null,
+0207: }) {
+0208:   const loteria = useMemo(
+0209:     () => normalizeLoteriaInput(filters?.loteria),
+0210:     [filters?.loteria]
+0211:   );
+0212:   const isFederal = loteria === "FEDERAL";
+0213: 
+0214:   const defaultOptions = useMemo(() => {
+0215:     const loteriasDefault = [
+0216:       { label: "RJ", value: "PT_RIO" },
+0217:       { label: "FEDERAL", value: "FEDERAL" },
+0218:     ];
+0219: 
+0220:     const mesesDefault = [
+0221:       "Todos",
+0222:       "Janeiro",
+0223:       "Fevereiro",
+0224:       "Março",
+0225:       "Abril",
+0226:       "Maio",
+0227:       "Junho",
+0228:       "Julho",
+0229:       "Agosto",
+0230:       "Setembro",
+0231:       "Outubro",
+
+0207: }) {
+0208:   const loteria = useMemo(
+0209:     () => normalizeLoteriaInput(filters?.loteria),
+0210:     [filters?.loteria]
+0211:   );
+0212:   const isFederal = loteria === "FEDERAL";
+0213: 
+0214:   const defaultOptions = useMemo(() => {
+0215:     const loteriasDefault = [
+0216:       { label: "RJ", value: "PT_RIO" },
+0217:       { label: "FEDERAL", value: "FEDERAL" },
+0218:     ];
+0219: 
+0220:     const mesesDefault = [
+0221:       "Todos",
+0222:       "Janeiro",
+0223:       "Fevereiro",
+0224:       "Março",
+0225:       "Abril",
+0226:       "Maio",
+0227:       "Junho",
+0228:       "Julho",
+0229:       "Agosto",
+0230:       "Setembro",
+0231:       "Outubro",
+0232:       "Novembro",
+0233:       "Dezembro",
+0234:     ];
+
+0337:           })()
+0338:         : ["Todos", ...Array.from({ length: 31 }, (_, i) => String(i + 1))];
+0339: 
+0340:     const diasSemanaFromParent =
+0341:       Array.isArray(options.diasSemana) && options.diasSemana.length
+0342:         ? normalizeLabelValueList(options.diasSemana, diasSemanaDefault)
+0343:         : diasSemanaDefault;
+0344: 
+0345:     // ✅ horário depende da loteria (PT_RIO x FEDERAL)
+0346:     const horarios = isFederal ? horariosFED : horariosRJ;
+0347: 
+0348:     const posicoesFromParent =
+0349:       posicoesFromOptionsMode === "respect" &&
+0350:       Array.isArray(options.posicoes) &&
+0351:       options.posicoes.length
+0352:         ? normalizeLabelValueList(options.posicoes, posicoesDefaultFull)
+0353:         : null;
+0354: 
+0355:     const posicoes =
+0356:       posicoesFromParent ||
+0357:       (posicaoMode === "v1" ? posicoesDefaultV1 : posicoesDefaultFull);
+0358: 
+0359:     const meses =
+0360:       Array.isArray(options.meses) && options.meses.length
+0361:         ? (() => {
+0362:             const cleaned = options.meses
+0363:               .map((x) => {
+0364:                 if (x && typeof x === "object")
+
+0368:               .filter(Boolean)
+0369:               .filter((x) => x.toLowerCase() !== "todos");
+0370:             const uniq = Array.from(new Set(cleaned));
+0371:             return ["Todos", ...uniq];
+0372:           })()
+0373:         : mesesDefault;
+0374: 
+0375:     return {
+0376:       loterias: loteriasDefault,
+0377:       meses,
+0378:       diasMes,
+0379:       diasSemana: diasSemanaFromParent,
+0380:       horarios,
+0381:       animais,
+0382:       posicoes,
+0383:     };
+0384:   }, [options, posicaoMode, posicoesFromOptionsMode, isFederal]);
+0385: 
+0386:   const ui = {
+0387:     bar: {
+0388:       border: `1px solid ${PP.strokeStrong}`,
+0389:       borderRadius: PP.rCard,
+0390:       background: `linear-gradient(180deg, ${PP.surface}, ${PP.surface2})`,
+0391:       padding: 12,
+0392:       boxShadow: PP.shadowGlow,
+0393:       overflow: "hidden",
+0394:       minWidth: 0,
+0395:     },
+
+0462:       pointerEvents: "none",
+0463:       opacity: 0.9,
+0464:     },
+0465:     styleTag: `
+0466:       .pp_filters_grid * { box-sizing: border-box; }
+0467: 
+0468:       @media (max-width: 1200px){
+0469:         .pp_filters_grid{ grid-template-columns: repeat(8, minmax(0, 1fr)); }
+0470:         .pp_f_loteria{ grid-column: span 2 !important; }
+0471:         .pp_f_mes{ grid-column: span 2 !important; }
+0472:         .pp_f_diaMes{ grid-column: span 2 !important; }
+0473:         .pp_f_diaSemana{ grid-column: span 4 !important; }
+0474:         .pp_f_horario{ grid-column: span 2 !important; }
+0475:         .pp_f_animal{ grid-column: span 2 !important; }
+0476:         .pp_f_posicao{ grid-column: span 2 !important; }
+0477:       }
+0478:       @media (max-width: 760px){
+0479:         .pp_filters_grid{ grid-template-columns: repeat(4, minmax(0, 1fr)); }
+0480:         .pp_f_loteria,
+0481:         .pp_f_mes,
+0482:         .pp_f_diaMes,
+0483:         .pp_f_diaSemana,
+0484:         .pp_f_horario,
+0485:         .pp_f_animal,
+0486:         .pp_f_posicao{ grid-column: span 4 !important; }
+0487:       }
+0488: 
+0489:       .pp_filters_grid select{ color-scheme: dark; }
+
+0472:         .pp_f_diaMes{ grid-column: span 2 !important; }
+0473:         .pp_f_diaSemana{ grid-column: span 4 !important; }
+0474:         .pp_f_horario{ grid-column: span 2 !important; }
+0475:         .pp_f_animal{ grid-column: span 2 !important; }
+0476:         .pp_f_posicao{ grid-column: span 2 !important; }
+0477:       }
+0478:       @media (max-width: 760px){
+0479:         .pp_filters_grid{ grid-template-columns: repeat(4, minmax(0, 1fr)); }
+0480:         .pp_f_loteria,
+0481:         .pp_f_mes,
+0482:         .pp_f_diaMes,
+0483:         .pp_f_diaSemana,
+0484:         .pp_f_horario,
+0485:         .pp_f_animal,
+0486:         .pp_f_posicao{ grid-column: span 4 !important; }
+0487:       }
+0488: 
+0489:       .pp_filters_grid select{ color-scheme: dark; }
+0490: 
+0491:       .pp_filters_grid select:focus{
+0492:         border-color: rgba(200,178,90,0.55) !important;
+0493:         box-shadow: 0 0 0 3px rgba(200,178,90,0.14) !important;
+0494:       }
+0495: 
+0496:       .pp_filters_grid select:hover{
+0497:         border-color: rgba(200,178,90,0.20);
+0498:       }
+0499: 
+
+0532: 
+0533:   const handleChange = useCallback(
+0534:     (name, next) => {
+0535:       if (disabledAll) {
+0536:         if (typeof onBlocked === "function") onBlocked(name);
+0537:         return;
+0538:       }
+0539: 
+0540:       // ✅ Troca loteria: normaliza e reseta filtros sensíveis SEMPRE
+0541:       if (name === "loteria") {
+0542:         const nextLot = normalizeLoteriaInput(next);
+0543:         onChange("loteria", nextLot);
+0544: 
+0545:         // reset para evitar “estatística inválida” por estado anterior
+0546:         onChange("horario", "Todos");
+0547:         onChange("animal", "Todos");
+0548:         onChange("posicao", "Todos");
+0549: 
+0550:         return;
+0551:       }
+0552: 
+0553:       if (lockPosicaoV1 && name === "posicao") {
+0554:         onChange("posicao", "1º");
+0555:         return;
+0556:       }
+0557: 
+0558:       if (name === "posicao") {
+0559:         onChange(name, normalizePosicaoInput(next));
+
+0533:   const handleChange = useCallback(
+0534:     (name, next) => {
+0535:       if (disabledAll) {
+0536:         if (typeof onBlocked === "function") onBlocked(name);
+0537:         return;
+0538:       }
+0539: 
+0540:       // ✅ Troca loteria: normaliza e reseta filtros sensíveis SEMPRE
+0541:       if (name === "loteria") {
+0542:         const nextLot = normalizeLoteriaInput(next);
+0543:         onChange("loteria", nextLot);
+0544: 
+0545:         // reset para evitar “estatística inválida” por estado anterior
+0546:         onChange("horario", "Todos");
+0547:         onChange("animal", "Todos");
+0548:         onChange("posicao", "Todos");
+0549: 
+0550:         return;
+0551:       }
+0552: 
+0553:       if (lockPosicaoV1 && name === "posicao") {
+0554:         onChange("posicao", "1º");
+0555:         return;
+0556:       }
+0557: 
+0558:       if (name === "posicao") {
+0559:         onChange(name, normalizePosicaoInput(next));
+0560:         return;
+
+0535:       if (disabledAll) {
+0536:         if (typeof onBlocked === "function") onBlocked(name);
+0537:         return;
+0538:       }
+0539: 
+0540:       // ✅ Troca loteria: normaliza e reseta filtros sensíveis SEMPRE
+0541:       if (name === "loteria") {
+0542:         const nextLot = normalizeLoteriaInput(next);
+0543:         onChange("loteria", nextLot);
+0544: 
+0545:         // reset para evitar “estatística inválida” por estado anterior
+0546:         onChange("horario", "Todos");
+0547:         onChange("animal", "Todos");
+0548:         onChange("posicao", "Todos");
+0549: 
+0550:         return;
+0551:       }
+0552: 
+0553:       if (lockPosicaoV1 && name === "posicao") {
+0554:         onChange("posicao", "1º");
+0555:         return;
+0556:       }
+0557: 
+0558:       if (name === "posicao") {
+0559:         onChange(name, normalizePosicaoInput(next));
+0560:         return;
+0561:       }
+0562: 
+
+0580:     disabled = false,
+0581:     forceValue = null,
+0582:   }) => {
+0583:     const normalizeFn =
+0584:       name === "posicao"
+0585:         ? normalizePosicaoInput
+0586:         : name === "diaSemana"
+0587:         ? normalizeDiaSemanaInput
+0588:         : name === "loteria"
+0589:         ? normalizeLoteriaInput
+0590:         : null;
+0591: 
+0592:     const normalizedValue = ensureValueInList({
+0593:       value,
+0594:       list,
+0595:       forceValue,
+0596:       fallback: name === "loteria" ? "PT_RIO" : "Todos",
+0597:       normalizeFn,
+0598:     });
+0599: 
+0600:     const isObjList =
+0601:       Array.isArray(list) && list.length && typeof list[0] === "object" && list[0];
+0602: 
+0603:     const finalDisabled = !!disabledAll || !!disabled;
+0604: 
+0605:     const block = (e) => {
+0606:       if (!finalDisabled) return;
+0607:       try {
+
+0588:         : name === "loteria"
+0589:         ? normalizeLoteriaInput
+0590:         : null;
+0591: 
+0592:     const normalizedValue = ensureValueInList({
+0593:       value,
+0594:       list,
+0595:       forceValue,
+0596:       fallback: name === "loteria" ? "PT_RIO" : "Todos",
+0597:       normalizeFn,
+0598:     });
+0599: 
+0600:     const isObjList =
+0601:       Array.isArray(list) && list.length && typeof list[0] === "object" && list[0];
+0602: 
+0603:     const finalDisabled = !!disabledAll || !!disabled;
+0604: 
+0605:     const block = (e) => {
+0606:       if (!finalDisabled) return;
+0607:       try {
+0608:         e?.preventDefault?.();
+0609:         e?.stopPropagation?.();
+0610:       } catch {}
+0611:       if (typeof onBlocked === "function") onBlocked(name);
+0612:     };
+0613: 
+0614:     return (
+0615:       <div className={wrapClassName} style={{ ...wrapStyle, minWidth: 0 }}>
+
+0662: 
+0663:   return (
+0664:     <div style={ui.bar}>
+0665:       <style>{ui.styleTag}</style>
+0666: 
+0667:       <div className="pp_filters_grid" style={ui.grid}>
+0668:         <Item
+0669:           label="Loteria"
+0670:           name="loteria"
+0671:           value={loteria}
+0672:           list={defaultOptions.loterias}
+0673:           wrapClassName="pp_f_loteria"
+0674:           wrapStyle={ui.spanLoteria}
+0675:         />
+0676: 
+0677:         <Item
+0678:           label="Mês"
+0679:           name="mes"
+0680:           value={filters.mes}
+0681:           list={defaultOptions.meses}
+0682:           wrapClassName="pp_f_mes"
+0683:           wrapStyle={ui.spanMes}
+0684:         />
+0685: 
+0686:         <Item
+0687:           label="Dia do Mês"
+0688:           name="diaMes"
+0689:           value={filters.diaMes}
+
+0663:   return (
+0664:     <div style={ui.bar}>
+0665:       <style>{ui.styleTag}</style>
+0666: 
+0667:       <div className="pp_filters_grid" style={ui.grid}>
+0668:         <Item
+0669:           label="Loteria"
+0670:           name="loteria"
+0671:           value={loteria}
+0672:           list={defaultOptions.loterias}
+0673:           wrapClassName="pp_f_loteria"
+0674:           wrapStyle={ui.spanLoteria}
+0675:         />
+0676: 
+0677:         <Item
+0678:           label="Mês"
+0679:           name="mes"
+0680:           value={filters.mes}
+0681:           list={defaultOptions.meses}
+0682:           wrapClassName="pp_f_mes"
+0683:           wrapStyle={ui.spanMes}
+0684:         />
+0685: 
+0686:         <Item
+0687:           label="Dia do Mês"
+0688:           name="diaMes"
+0689:           value={filters.diaMes}
+0690:           list={defaultOptions.diasMes}
+
+0664:     <div style={ui.bar}>
+0665:       <style>{ui.styleTag}</style>
+0666: 
+0667:       <div className="pp_filters_grid" style={ui.grid}>
+0668:         <Item
+0669:           label="Loteria"
+0670:           name="loteria"
+0671:           value={loteria}
+0672:           list={defaultOptions.loterias}
+0673:           wrapClassName="pp_f_loteria"
+0674:           wrapStyle={ui.spanLoteria}
+0675:         />
+0676: 
+0677:         <Item
+0678:           label="Mês"
+0679:           name="mes"
+0680:           value={filters.mes}
+0681:           list={defaultOptions.meses}
+0682:           wrapClassName="pp_f_mes"
+0683:           wrapStyle={ui.spanMes}
+0684:         />
+0685: 
+0686:         <Item
+0687:           label="Dia do Mês"
+0688:           name="diaMes"
+0689:           value={filters.diaMes}
+0690:           list={defaultOptions.diasMes}
+0691:           wrapClassName="pp_f_diaMes"
+
+0665:       <style>{ui.styleTag}</style>
+0666: 
+0667:       <div className="pp_filters_grid" style={ui.grid}>
+0668:         <Item
+0669:           label="Loteria"
+0670:           name="loteria"
+0671:           value={loteria}
+0672:           list={defaultOptions.loterias}
+0673:           wrapClassName="pp_f_loteria"
+0674:           wrapStyle={ui.spanLoteria}
+0675:         />
+0676: 
+0677:         <Item
+0678:           label="Mês"
+0679:           name="mes"
+0680:           value={filters.mes}
+0681:           list={defaultOptions.meses}
+0682:           wrapClassName="pp_f_mes"
+0683:           wrapStyle={ui.spanMes}
+0684:         />
+0685: 
+0686:         <Item
+0687:           label="Dia do Mês"
+0688:           name="diaMes"
+0689:           value={filters.diaMes}
+0690:           list={defaultOptions.diasMes}
+0691:           wrapClassName="pp_f_diaMes"
+0692:           wrapStyle={ui.spanDiaMes}
+

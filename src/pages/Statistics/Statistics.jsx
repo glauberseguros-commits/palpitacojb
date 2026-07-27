@@ -906,10 +906,8 @@ export default function Statistics() {
           uf: lotteryKey,
           dateFrom: chunk.from,
           dateTo: chunk.to,
-          closeHourBucket: null,
-          closeHour: selectedHourBucket
-            ? `${selectedHourBucket.slice(0, 2)}:00`
-            : null,
+          closeHourBucket: selectedHourBucket,
+          closeHour: null,
           positions: selectedPosition
             ? [selectedPosition]
             : null,
@@ -919,6 +917,7 @@ export default function Statistics() {
         if (!isCurrent()) return;
 
         const draws = normalizeDrawsResponse(response);
+
 
         for (const draw of draws) {
           const ymd = normalizeYmd(
@@ -2615,3 +2614,5 @@ export default function Statistics() {
     </div>
   );
 }
+
+

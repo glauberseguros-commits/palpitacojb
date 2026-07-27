@@ -1,0 +1,42 @@
+{
+  "baselineName": "TOP3_V3_OFICIAL",
+  "baselineDate": "2026-07-17",
+  "sourceFile": "tmp\\top3_official_backtest_full.json",
+  "lotteryKey": "PT_RIO",
+  "engine": "top3_statistical_v3",
+  "historySource": "snapshot",
+  "historyLoaded": 7491,
+  "eligibleCases": 7391,
+  "selectedCases": 7391,
+  "skipped": 0,
+  "minHistory": 100,
+  "historyPeriod": {
+    "from": "2022-06-07",
+    "to": "2026-07-15"
+  },
+  "evaluationPeriod": {
+    "from": "2022-06-29",
+    "to": "2026-07-15"
+  },
+  "metrics": {
+    "evaluated": 7391,
+    "top1Hits": 320,
+    "top3Hits": 911,
+    "errors": 0,
+    "top1Rate": 4.3296,
+    "top3Rate": 12.3258
+  },
+  "validation": {
+    "calculatedTop1Rate": 4.3296,
+    "calculatedTop3Rate": 12.3258,
+    "top1RateConsistent": true,
+    "top3RateConsistent": true
+  },
+  "metadata": {
+    "bootstrapStatus": "complete",
+    "totalStored": 7491,
+    "lastProcessedDrawId": "PT_RIO__2026-07-15__16-00__76c127b7-8157-46b6-a64a-ec7ed1574c9f"
+  },
+  "tookMs": 2404093,
+  "tookMinutes": 40.07
+}

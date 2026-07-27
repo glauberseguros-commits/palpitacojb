@@ -1,0 +1,260 @@
+            <div className="top3-card__animal">
+              {animal ? animal.toUpperCase() : "—"}
+            </div>
+          </div>
+        </div>
+
+        <div className="top3-card__confidence">
+          <div className="top3-card__confidenceLabel">CONFIANÇA</div>
+          <div className="top3-card__confidenceValue">{pct.toFixed(2)}%</div>
+          <div className="top3-card__confidenceBar">
+            <div
+              className="top3-card__confidenceBarFill"
+              style={{ width: `${pct}%`, background: t.accent }}
+            />
+          </div>
+        </div>
+      </div>
+
+      <div
+        className="top3-card__engine top3-card__engine--premium"
+        style={{
+          borderTop: "1px solid rgba(212,175,55,0.22)",
+          paddingTop: 14,
+          display: "grid",
+          gridTemplateColumns: isHero ? "300px minmax(0, 1fr)" : "1fr",
+          gap: 14,
+          alignItems: "stretch",
+        }}
+      >
+        {isHero ? (
+          <div
+            style={{
+              border: "1px solid rgba(212,175,55,0.30)",
+              borderRadius: 18,
+              padding: 14,
+              background:
+                "radial-gradient(circle at 50% 0%, rgba(212,175,55,0.18), rgba(0,0,0,0.12) 48%, rgba(0,0,0,0.28))",
+              boxShadow: "0 18px 45px rgba(0,0,0,0.32)",
+            }}
+          >
+            <div style={{ display: "grid", gap: 12 }}>
+              <div style={{ display: "flex", alignItems: "center", gap: 10 }}>
+                <div className="top3-rankBadge">{rank}</div>
+                <div className="top3-card__label">⭐ {title}</div>
+              </div>
+
+              <div
+                style={{
+                  borderRadius: 16,
+                  overflow: "hidden",
+                  border: "1px solid rgba(212,175,55,0.35)",
+                  minHeight: 180,
+                  display: "none",
+                  placeItems: "center",
+                  background: "rgba(0,0,0,0.28)",
+                }}
+              >
+                <ImgWithFallback
+                  srcs={iconSrcs}
+                  alt={animal ? animal : `G${grupoTxt}`}
+                  size={168}
+                  style={{ borderRadius: 14 }}
+                />
+              </div>
+
+              <div>
+                <div className="top3-card__group">GRUPO {grupoTxt}</div>
+                <div className="top3-card__animal">
+                  {animal ? animal.toUpperCase() : "—"}
+                </div>
+              </div>
+
+              <div
+                style={{
+                  border: "1px solid rgba(212,175,55,0.28)",
+                  borderRadius: 14,
+                  padding: 14,
+                  background: "rgba(0,0,0,0.22)",
+                }}
+              >
+                <div className="top3-card__confidenceLabel">SCORE</div>
+                <div
+                  style={{
+                    fontSize: 42,
+                    fontWeight: 900,
+                    letterSpacing: 1,
+                    color: t.accent,
+                    lineHeight: 1,
+                  }}
+                >
+                  {displayScore}
+                  <span style={{ color: "rgba(255,255,255,0.78)", fontSize: 24 }}>
+                    /100
+                  </span>
+                </div>
+
+                <div className="top3-card__confidenceBar" style={{ marginTop: 12 }}>
+                  <div
+                    className="top3-card__confidenceBarFill"
+                    style={{ width: `${scoreBarPct}%`, background: t.accent }}
+                  />
+                </div>
+              </div>
+
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "1fr 1fr",
+                  gap: 8,
+                }}
+              >
+                <div className="top3-metaItem">
+                  <div className="top3-metaItem__label">Força</div>
+                  <div className="top3-metaItem__value">{premiumForceLabel}</div>
+                </div>
+
+                <div className="top3-metaItem">
+                  <div className="top3-metaItem__label">Confiabilidade</div>
+                  <div className="top3-metaItem__value">{premiumReliabilityLabel}</div>
+                </div>
+              </div>
+            </div>
+          </div>
+        ) : null}
+
+        <div
+          style={{
+            border: "1px solid rgba(212,175,55,0.22)",
+            borderRadius: 18,
+            padding: 14,
+            background:
+              "linear-gradient(180deg, rgba(255,255,255,0.035), rgba(255,255,255,0.012))",
+          }}
+        >
+          <div
+            style={{
+              display: "grid",
+              gridTemplateColumns: isHero
+                ? "repeat(3, minmax(0, 1fr))"
+                : "1fr",
+              gap: 10,
+            }}
+          >
+            <div className="top3-metaItem">
+              <div className="top3-metaItem__label">📊 Base estatística</div>
+              <div className="top3-metaItem__value">
+                {periodFrom && periodTo
+                  ? `${ymdToBR(periodFrom)} → ${ymdToBR(periodTo)}`
+                  : `${samples} sorteios`}
+              </div>
+            </div>
+
+            <div className="top3-metaItem">
+              <div className="top3-metaItem__label">🔄 Transição</div>
+              <div className="top3-metaItem__value">
+                Após {baseLabel} às {baseHour}
+                <br />
+                {targetLabel} em 1º: {transitionFirst}x
+                <br />
+                {targetLabel} no TOP3: {transitionTop3}x
+              </div>
+            </div>
+
+            <div className="top3-metaItem">
+              <div className="top3-metaItem__label">🕘 Horário</div>
+              <div className="top3-metaItem__value">
+                Às {targetHour || "—"}
+                <br />
+                {targetLabel} em 1º: {hourFirst}x
+              </div>
+            </div>
+
+            <div className="top3-metaItem">
+              <div className="top3-metaItem__label">📅 Dia da semana</div>
+              <div className="top3-metaItem__value">
+                {targetWeekdayName}
+                <br />
+                {targetLabel} em 1º: {dowFirst}x
+              </div>
+            </div>
+
+            <div className="top3-metaItem">
+              <div className="top3-metaItem__label">🧠 Cenários semelhantes</div>
+              <div className="top3-metaItem__value">
+                {
+      sceneSamples > 0
+        ? `${sceneSamples} cenários semelhantes`
+        : transitionSamples > 0
+          ? `${transitionSamples} transições históricas`
+          : `${samples} registros históricos`
+    }
+              </div>
+            </div>
+
+            <div className="top3-metaItem">
+              <div className="top3-metaItem__label">🎯 Frequência histórica da transição</div>
+              <div className="top3-metaItem__value">
+                {transitionFirst > 0 && transitionSamples > 0
+                  ? `${transitionFirst} ocorrências em ${transitionSamples} transições`
+                  : "Em apuração"}
+              </div>
+            </div>
+          </div>
+
+          <div
+            style={{
+              marginTop: 12,
+              border: "1px solid rgba(212,175,55,0.20)",
+              borderRadius: 14,
+              padding: 12,
+              display: "flex",
+              gap: 10,
+              alignItems: "center",
+              background: "rgba(212,175,55,0.055)",
+            }}
+          >
+            <div style={{ fontSize: 26 }}>⭐</div>
+            <div>
+              <div
+                style={{
+                  color: t.accent,
+                  fontWeight: 900,
+                  textTransform: "uppercase",
+                }}
+              >
+                Score — confiança da análise
+              </div>
+              <div style={{ color: "rgba(255,255,255,0.82)", fontSize: 13 }}>
+                {displayScore}/100 · {visibleEvidenceCount} evidências estatísticas · {trendLabel}
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div className="top3-card__body">
+        <div
+          className="top3-card__actions"
+          style={{
+            display: "flex",
+            justifyContent: "flex-end",
+            alignItems: "center",
+          }}
+        >
+          <button
+            type="button"
+            onClick={doCopyAll}
+            className="pp-btn"
+            title="Copiar as 20 milhares"
+          >
+            {copiedAllKey === key ? "✅ Copiado" : "📋 Copiar"}
+          </button>
+        </div>
+
+        {dezenasHeader.length ? (
+          <div className="pp-chipRow">
+            {dezenasHeader.map((dz, i) => (
+              <div key={`${dz}-${i}`} className="pp-chip">
+                {dz || "—"}
+              </div>

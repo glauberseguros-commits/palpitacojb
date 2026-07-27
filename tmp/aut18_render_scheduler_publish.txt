@@ -1,0 +1,36 @@
+[HEARTBEAT] START local=15:19 date=2026-07-21 period=TODAY
+
+LOTTERY=PT_RIO | PERIOD=TODAY | DATE=2026-07-21
+[HEARTBEAT] DRY_RUN LOTTERY=PT_RIO
+
+LOTTERY=FEDERAL | PERIOD=TODAY | DATE=2026-07-21
+[HEARTBEAT] DRY_RUN LOTTERY=FEDERAL
+
+LOTTERY=LOOK | PERIOD=TODAY | DATE=2026-07-21
+[HEARTBEAT] DRY_RUN LOTTERY=LOOK
+
+LOTTERY=NACIONAL | PERIOD=TODAY | DATE=2026-07-21
+[HEARTBEAT] DRY_RUN LOTTERY=NACIONAL
+[HEARTBEAT] FINAL=SUCCESS
+[HEARTBEAT] START local=15:19 date=2026-07-20 period=YESTERDAY
+
+LOTTERY=PT_RIO | PERIOD=YESTERDAY | DATE=2026-07-20
+[HEARTBEAT] DRY_RUN LOTTERY=PT_RIO
+
+LOTTERY=FEDERAL | PERIOD=YESTERDAY | DATE=2026-07-20
+[HEARTBEAT] DRY_RUN LOTTERY=FEDERAL
+
+LOTTERY=LOOK | PERIOD=YESTERDAY | DATE=2026-07-20
+[HEARTBEAT] DRY_RUN LOTTERY=LOOK
+
+LOTTERY=NACIONAL | PERIOD=YESTERDAY | DATE=2026-07-20
+[HEARTBEAT] DRY_RUN LOTTERY=NACIONAL
+[HEARTBEAT] FINAL=SUCCESS
+warning: in the working copy of 'backend/scripts/runAutoImportHeartbeat.js', LF will be replaced by CRLF the next time Git touches it
+warning: in the working copy of 'render.yaml', LF will be replaced by CRLF the next time Git touches it
+[main a2a9141] feat: adicionar heartbeat automatico no Render
+ 2 files changed, 234 insertions(+)
+ create mode 100644 backend/scripts/runAutoImportHeartbeat.js
+ create mode 100644 render.yaml
+To https://github.com/glauberseguros-commits/palpitacojb.git
+   9446f19..a2a9141  main -> main

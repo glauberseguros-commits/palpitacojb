@@ -1,0 +1,58 @@
+====================================================================================================
+TOP3-TRACE-01 — LOCALIZAR analyzeTop3Hit
+====================================================================================================
+
+
+  src\pages\Top3\Top3View.jsx:381:  const milhar = extractResultMilhar(slot);
+  src\pages\Top3\Top3View.jsx:382:  return /^\d{4}$/.test(milhar);
+  src\pages\Top3\Top3View.jsx:383:}
+  src\pages\Top3\Top3View.jsx:384:
+> src\pages\Top3\Top3View.jsx:385:function analyzeTop3Hit(top3, resultSource, resultMilhar) {
+  src\pages\Top3\Top3View.jsx:386:  if (!Array.isArray(top3) || !top3.length) {
+  src\pages\Top3\Top3View.jsx:387:    return {
+  src\pages\Top3\Top3View.jsx:388:      type: "none",
+  src\pages\Top3\Top3View.jsx:389:      score: 0,
+  src\pages\Top3\Top3View.jsx:390:      position: -1,
+  src\pages\Top3\Top3View.jsx:391:      predictionPosition: -1,
+  src\pages\Top3\Top3View.jsx:392:      resultPosition: -1,
+  src\pages\Top3\Top3View.jsx:393:      podiumMedal: "",
+  src\pages\Top3\Top3View.jsx:1285:      : "";
+  src\pages\Top3\Top3View.jsx:1286:
+  src\pages\Top3\Top3View.jsx:1287:  const officialPodium = getOfficialPodium(slot);
+  src\pages\Top3\Top3View.jsx:1288:
+> src\pages\Top3\Top3View.jsx:1289:  const analysis = analyzeTop3Hit(
+  src\pages\Top3\Top3View.jsx:1290:    slotTop3,
+  src\pages\Top3\Top3View.jsx:1291:    officialPodium
+  src\pages\Top3\Top3View.jsx:1292:  );
+  src\pages\Top3\Top3View.jsx:1293:
+  src\pages\Top3\Top3View.jsx:1294:  const status =
+  src\pages\Top3\Top3View.jsx:1295:    !hasResult
+  src\pages\Top3\Top3View.jsx:1296:      ? "pending"
+  src\pages\Top3\Top3View.jsx:1297:      : analysis.type === "miss"
+  src\pages\Top3\Top3View.jsx:1701:
+  src\pages\Top3\Top3View.jsx:1702:        const officialPodium =
+  src\pages\Top3\Top3View.jsx:1703:          getOfficialPodium(slot);
+  src\pages\Top3\Top3View.jsx:1704:
+> src\pages\Top3\Top3View.jsx:1705:        const analysis = analyzeTop3Hit(
+  src\pages\Top3\Top3View.jsx:1706:          slotTop3,
+  src\pages\Top3\Top3View.jsx:1707:          officialPodium
+  src\pages\Top3\Top3View.jsx:1708:        );
+  src\pages\Top3\Top3View.jsx:1709:
+  src\pages\Top3\Top3View.jsx:1710:        return {
+  src\pages\Top3\Top3View.jsx:1711:          targetKey:
+  src\pages\Top3\Top3View.jsx:1712:            `${String(slot?.targetYmd || "")}` +
+  src\pages\Top3\Top3View.jsx:1713:            `__${String(slot?.targetHour || "")}`,
+  src\pages\Top3\Top3View.jsx:1778:console.log("timelineRow:", timelineRow);
+  src\pages\Top3\Top3View.jsx:1779:console.log("officialPodium:", officialPodium);
+  src\pages\Top3\Top3View.jsx:1780:console.log("persistedTop3:", row?.top3);
+  src\pages\Top3\Top3View.jsx:1781:
+> src\pages\Top3\Top3View.jsx:1782:const analysis = analyzeTop3Hit(
+  src\pages\Top3\Top3View.jsx:1783:  row?.top3,
+  src\pages\Top3\Top3View.jsx:1784:  officialPodium
+  src\pages\Top3\Top3View.jsx:1785:);
+  src\pages\Top3\Top3View.jsx:1786:
+  src\pages\Top3\Top3View.jsx:1787:console.log("analysis:", analysis);
+  src\pages\Top3\Top3View.jsx:1788:console.log("========================================");
+  src\pages\Top3\Top3View.jsx:1789:
+  src\pages\Top3\Top3View.jsx:1790:      rowsByTarget.set(key, {
+

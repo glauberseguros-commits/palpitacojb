@@ -1,0 +1,106 @@
+==========================================================================================
+
+const\s+LOTTERIES_BY_KEY[\s\S]{0,1200}?\};
+
+==========================================================================================
+
+const LOTTERIES_BY_KEY = {
+  PT_RIO: [
+    "c168d9b3-97b7-42dc-a332-7815edaa51e2",
+    "cbac7c11-e733-400b-ba4d-2dfe0cba4272",
+    "98352455-8fd3-447d-ab3d-701dc3f7865f",
+    "76c127b7-8157-46b6-a64a-ec7ed1574c9f",
+    "8290329b-aac0-4a6a-9649-5feb6182cf4f",
+    "d5123f7e-629d-43e9-a8fb-1385ff1cba45",
+  ],
+  FEDERAL: [],
+};
+
+==========================================================================================
+
+function\s+resolveUfFromLotteryKey[\s\S]{0,800}?\n\}
+
+==========================================================================================
+
+function resolveUfFromLotteryKey(lotteryKey) {
+  const lk = String(lotteryKey || "").trim().toUpperCase();
+  if (!lk) return null;
+  if (lk === RJ_LOTTERY_KEY) return RJ_STATE_CODE;
+  if (lk === FEDERAL_LOTTERY_KEY) return FEDERAL_STATE_CODE;
+  // se for uma UF padrão de 2 letras (SP, MG, DF etc.), preserva
+  if (/^[A-Z]{2}$/.test(lk)) return lk;
+
+  // fallback: não inventa UF
+  return null;
+}
+
+==========================================================================================
+
+async\s+function\s+fetchKingResults[\s\S]{0,2000}?\n\}
+
+==========================================================================================
+
+NÃO ENCONTRADO
+
+==========================================================================================
+
+async\s+function\s+runImport[\s\S]{0,2500}?\n\}
+
+==========================================================================================
+
+NÃO ENCONTRADO
+
+==========================================================================================
+
+function\s+buildResultsUrl[\s\S]{0,1200}?\n\}
+
+==========================================================================================
+
+function buildResultsUrl({ date, lotteryKey, lotteryId = null }) {
+  const base = "https://app_services.apionline.cloud/api/results";
+  const lk = String(lotteryKey || "").trim().toUpperCase();
+  const lotteries = LOTTERIES_BY_KEY[lk];
+
+  if (!lotteries?.length) {
+    if (lk === "FEDERAL") {
+      throw new Error(
+        `FEDERAL sem lotteryIds. Defina KING_LOTTERIES_FEDERAL="uuid1,uuid2,..." (ex.: o UUID do draw FEDERAL 20HS).`
+      );
+    }
+    throw new Error(`lotteryKey inválida: ${lk}`);
+  }
+
+  const params = new URLSearchParams();
+  params.append("dates[]", date);
+
+  // ✅ se lotteryId for fornecido -> 1 request por lottery
+  if (lotteryId) {
+    params.append("lotteries[]", lotteryId);
+    return `${base}?${params.toString()}`;
+  }
+
+  // modo antigo (todos lotteries no mesmo request)
+  for (const id of lotteries) params.append("lotteries[]", id);
+  return `${base}?${params.toString()}`;
+}
+
+==========================================================================================
+
+function\s+buildDetailsUrl[\s\S]{0,1200}?\n\}
+
+==========================================================================================
+
+function buildDetailsUrl({ date, lotteryKey }) {
+  const lk = String(lotteryKey || "").trim().toUpperCase();
+
+  // ✅ bate com o print: lottery=PT+RIO
+  const lot = lk === "PT_RIO" ? "PT RIO" : lk.replace(/_/g, " ");
+
+  const q =
+    "lottery=" +
+    encodeURIComponent(lot) +
+    "&date=" +
+    encodeURIComponent(String(date || "").trim());
+
+  return "https://app.kingapostas.com/results/details?" + q;
+}

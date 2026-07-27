@@ -1,0 +1,33 @@
+====================================================================================================
+TOP3-PODIUM-04 — RESULTADO
+====================================================================================================
+STATUS: OK
+
+ARQUIVO ALTERADO:
+src/pages/Top3/Top3View.jsx
+
+CORREÇÃO:
+- removida a chamada que validava somente o 1º prêmio;
+- TimelineSlot agora utiliza getOfficialPodium(slot);
+- analyzeTop3Hit agora recebe os resultados oficiais do 1º, 2º e 3º prêmios;
+- validação antiga não encontrada após o patch.
+
+REGRA VALIDADA:
+- grupo sorteado em 1º prêmio: ouro;
+- grupo sorteado em 2º prêmio: prata;
+- grupo sorteado em 3º prêmio: bronze;
+- ausência no pódio: erro.
+
+CASO DE REGRESSÃO:
+Nacional 10h
+Palpites: 22 / 14 / 16
+Pódio: 20 / 16 / 11
+Resultado esperado: PRATA — grupo 16 no 2º prêmio
+
+BUILD: APROVADO
+COMMIT: 694bffdb91a9b38f4b9783153825095d2834ade1
+PUSH: CONCLUÍDO
+
+BACKUP:
+.\tmp\top3_podium_04_backup_20260725_182039.jsx
+====================================================================================================

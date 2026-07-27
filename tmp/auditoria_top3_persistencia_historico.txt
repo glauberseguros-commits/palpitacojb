@@ -1,0 +1,1641 @@
+========================================================================================================================
+ARQUIVO: src\pages\Top3\top3.firestore.js
+========================================================================================================================
+
+===== LINHAS 12 A 163 =====
+   12:   safeStr,
+   13:   isYMD,
+   14:   toHourBucket,
+   15: } from "./top3.formatters";
+   16: 
+   17: import {
+   18:   pickDrawYMD,
+   19:   pickDrawHour,
+   20:   pickPrize1GrupoFromDraw,
+   21: } from "./top3.engine";
+   22: 
+   23: const COLLECTION = "top3_predictions";
+   24: 
+   25: function normalizeLotteryKey(value) {
+   26:   return safeStr(value).toUpperCase() || "PT_RIO";
+   27: }
+   28: 
+   29: function normalizeHour(value) {
+   30:   return toHourBucket(value) || "";
+   31: }
+   32: 
+   33: function hourCode(value) {
+   34:   return normalizeHour(value).replace(/\D/g, "").padStart(2, "0");
+   35: }
+   36: 
+   37: function makePredictionId({ lotteryKey, targetYmd, targetHour }) {
+   38:   const lottery = normalizeLotteryKey(lotteryKey);
+   39:   const ymd = safeStr(targetYmd);
+   40:   const hour = hourCode(targetHour);
+   41: 
+   42:   if (!lottery || !isYMD(ymd) || !hour) return "";
+   43: 
+   44:   return `${lottery}__${ymd}__${hour}`;
+   45: }
+   46: 
+   47: function predictionRef(params) {
+   48:   const id = makePredictionId(params);
+   49:   return id ? doc(db, COLLECTION, id) : null;
+   50: }
+   51: 
+   52: function cleanFirestoreValue(value) {
+   53:   try {
+   54:     return JSON.parse(
+   55:       JSON.stringify(value, (_key, current) => {
+   56:         if (current === undefined) return null;
+   57:         if (typeof current === "number" && !Number.isFinite(current)) {
+   58:           return null;
+   59:         }
+   60:         return current;
+   61:       })
+   62:     );
+   63:   } catch {
+   64:     return null;
+   65:   }
+   66: }
+   67: 
+   68: function normalizeMilhar(value) {
+   69:   const digits = String(value || "").replace(/\D/g, "");
+   70:   if (!digits) return "";
+   71:   return digits.slice(-4).padStart(4, "0");
+   72: }
+   73: 
+   74: function extractPrize1(draw) {
+   75:   const prizes = Array.isArray(draw?.prizes) ? draw.prizes : [];
+   76: 
+   77:   return (
+   78:     prizes.find((item) => Number(item?.position) === 1) ||
+   79:     prizes[0] ||
+   80:     null
+   81:   );
+   82: }
+   83: 
+   84: function extractPrize1Milhar(draw) {
+   85:   const prize = extractPrize1(draw);
+   86: 
+   87:   return normalizeMilhar(
+   88:     prize?.milhar ??
+   89:       prize?.numero ??
+   90:       prize?.number ??
+   91:       prize?.valor ??
+   92:       draw?.prize_1 ??
+   93:       ""
+   94:   );
+   95: }
+   96: 
+   97: function findDrawForTarget({
+   98:   draws,
+   99:   targetYmd,
+  100:   targetHour,
+  101: }) {
+  102:   const ymd = safeStr(targetYmd);
+  103:   const hour = normalizeHour(targetHour);
+  104: 
+  105:   if (!isYMD(ymd) || !hour) return null;
+  106: 
+  107:   return (
+  108:     (Array.isArray(draws) ? draws : []).find((draw) => {
+  109:       return (
+  110:         pickDrawYMD(draw) === ymd &&
+  111:         normalizeHour(pickDrawHour(draw)) === hour
+  112:       );
+  113:     }) || null
+  114:   );
+  115: }
+  116: 
+  117: function normalizeSnapshot(snapshot) {
+  118:   return (Array.isArray(snapshot) ? snapshot : [])
+  119:     .slice(0, 3)
+  120:     .map((item, index) => ({
+  121:       rank: Number(item?.rank || index + 1),
+  122:       grupo: Number(item?.grupo),
+  123:       animal: safeStr(item?.animal || ""),
+  124:       prob: Number(item?.prob || 0),
+  125:       probPct: Number(item?.probPct || 0),
+  126:       milhares20: Array.isArray(item?.milhares20)
+  127:         ? item.milhares20.map(normalizeMilhar).filter(Boolean).slice(0, 20)
+  128:         : [],
+  129:       milharesCols: Array.isArray(item?.milharesCols)
+  130:         ? cleanFirestoreValue(item.milharesCols)
+  131:         : [],
+  132:       meta: cleanFirestoreValue(item?.meta || null),
+  133:     }))
+  134:     .filter((item) => {
+  135:       return (
+  136:         Number.isFinite(item.grupo) &&
+  137:         item.grupo >= 1 &&
+  138:         item.grupo <= 25
+  139:       );
+  140:     });
+  141: }
+  142: 
+  143: function analyzeSnapshotHit(snapshot, resultGrupo, resultMilhar) {
+  144:   const top3 = Array.isArray(snapshot) ? snapshot.slice(0, 3) : [];
+  145:   const grupo = Number(resultGrupo);
+  146:   const milhar = normalizeMilhar(resultMilhar);
+  147:   const centena = milhar ? milhar.slice(-3) : "";
+  148: 
+  149:   let best = {
+  150:     hitType: "miss",
+  151:     hitScore: 0,
+  152:     hitPosition: -1,
+  153:     matchedValue: "",
+  154:   };
+  155: 
+  156:   top3.forEach((item, index) => {
+  157:     const itemGrupo = Number(item?.grupo);
+  158: 
+  159:     const milhares = (Array.isArray(item?.milhares20)
+  160:       ? item.milhares20
+  161:       : []
+  162:     )
+  163:       .map(normalizeMilhar)
+
+===== LINHAS 184 A 467 =====
+  184:         hitType: "hit_centena",
+  185:         hitScore: 66.67,
+  186:         hitPosition: index + 1,
+  187:         matchedValue: centena,
+  188:       };
+  189:       return;
+  190:     }
+  191: 
+  192:     if (
+  193:       best.hitScore < 33.33 &&
+  194:       Number.isFinite(grupo) &&
+  195:       itemGrupo === grupo
+  196:     ) {
+  197:       best = {
+  198:         hitType: "hit_grupo",
+  199:         hitScore: 33.33,
+  200:         hitPosition: index + 1,
+  201:         matchedValue: milhar ? milhar.slice(-2) : String(grupo),
+  202:       };
+  203:     }
+  204:   });
+  205: 
+  206:   return best;
+  207: }
+  208: 
+  209: export async function saveTop3PredictionSnapshot({
+  210:   lotteryKey,
+  211:   targetYmd,
+  212:   targetHour,
+  213:   picks,
+  214:   snapshot,
+  215:   engineVersion,
+  216: }) {
+  217:   let user = null;
+  218: 
+  219:   try {
+  220:     user = await loginAnonymous();
+  221:   } catch (error) {
+  222:     return {
+  223:       ok: false,
+  224:       skipped: true,
+  225:       reason: "AUTH_FAILED",
+  226:       error: String(error?.message || error || ""),
+  227:     };
+  228:   }
+  229: 
+  230:   if (!user?.uid) {
+  231:     return {
+  232:       ok: false,
+  233:       skipped: true,
+  234:       reason: "AUTH_REQUIRED",
+  235:     };
+  236:   }
+  237: 
+  238:   const lottery = normalizeLotteryKey(lotteryKey);
+  239:   const ymd = safeStr(targetYmd);
+  240:   const hour = normalizeHour(targetHour);
+  241:   const ref = predictionRef({
+  242:     lotteryKey: lottery,
+  243:     targetYmd: ymd,
+  244:     targetHour: hour,
+  245:   });
+  246: 
+  247:   if (!ref || !isYMD(ymd) || !hour) {
+  248:     return {
+  249:       ok: false,
+  250:       skipped: true,
+  251:       reason: "INVALID_TARGET",
+  252:     };
+  253:   }
+  254: 
+  255:   const normalizedSnapshot = normalizeSnapshot(snapshot);
+  256: 
+  257:   if (!normalizedSnapshot.length) {
+  258:     return {
+  259:       ok: false,
+  260:       skipped: true,
+  261:       reason: "EMPTY_SNAPSHOT",
+  262:     };
+  263:   }
+  264: 
+  265:   const normalizedPicks = Array.from(
+  266:     new Set(
+  267:       (Array.isArray(picks) ? picks : [])
+  268:         .map(Number)
+  269:         .filter((value) => value >= 1 && value <= 25)
+  270:     )
+  271:   ).slice(0, 3);
+  272: 
+  273:   const now = Date.now();
+  274: 
+  275:   const payload = cleanFirestoreValue({
+  276:     id: ref.id,
+  277:     lotteryKey: lottery,
+  278:     targetYmd: ymd,
+  279:     targetHour: hour,
+  280:     targetKey: `${ymd}_${hour}`,
+  281:     picks: normalizedPicks,
+  282:     snapshot: normalizedSnapshot,
+  283:     engineVersion: safeStr(engineVersion || "V3_STATISTICAL"),
+  284:     status: "predicted",
+  285:     resultGrupo: null,
+  286:     resultMilhar: "",
+  287:     resultAnimal: "",
+  288:     hitType: "",
+  289:     hitScore: 0,
+  290:     hitPosition: -1,
+  291:     matchedValue: "",
+  292:     createdAt: now,
+  293:     updatedAt: now,
+  294:     createdBy: user.uid,
+  295:   });
+  296: 
+  297:   const result = await runTransaction(db, async (transaction) => {
+  298:     const current = await transaction.get(ref);
+  299: 
+  300:     if (current.exists()) {
+  301:       return {
+  302:         ok: true,
+  303:         created: false,
+  304:         existing: true,
+  305:       };
+  306:     }
+  307: 
+  308:     transaction.set(ref, payload);
+  309: 
+  310:     return {
+  311:       ok: true,
+  312:       created: true,
+  313:       existing: false,
+  314:     };
+  315:   });
+  316: 
+  317:   return result;
+  318: }
+  319: 
+  320: export async function loadTop3PredictionDay({
+  321:   lotteryKey,
+  322:   targetYmd,
+  323:   schedule,
+  324: }) {
+  325:   const lottery = normalizeLotteryKey(lotteryKey);
+  326:   const ymd = safeStr(targetYmd);
+  327: 
+  328:   if (!isYMD(ymd)) return [];
+  329: 
+  330:   const hours = Array.from(
+  331:     new Set(
+  332:       (Array.isArray(schedule) ? schedule : [])
+  333:         .map(normalizeHour)
+  334:         .filter(Boolean)
+  335:     )
+  336:   );
+  337: 
+  338:   const snapshots = await Promise.all(
+  339:     hours.map(async (hour) => {
+  340:       const ref = predictionRef({
+  341:         lotteryKey: lottery,
+  342:         targetYmd: ymd,
+  343:         targetHour: hour,
+  344:       });
+  345: 
+  346:       if (!ref) return null;
+  347: 
+  348:       try {
+  349:         const snap = await getDoc(ref);
+  350:         if (!snap.exists()) return null;
+  351: 
+  352:         return {
+  353:           id: snap.id,
+  354:           ...snap.data(),
+  355:         };
+  356:       } catch {
+  357:         return null;
+  358:       }
+  359:     })
+  360:   );
+  361: 
+  362:   return snapshots
+  363:     .filter(Boolean)
+  364:     .sort((a, b) => {
+  365:       return normalizeHour(a?.targetHour).localeCompare(
+  366:         normalizeHour(b?.targetHour)
+  367:       );
+  368:     });
+  369: }
+  370: 
+  371: export async function reconcileTop3PredictionDay({
+  372:   lotteryKey,
+  373:   targetYmd,
+  374:   schedule,
+  375:   draws,
+  376: }) {
+  377:   let user = null;
+  378: 
+  379:   try {
+  380:     user = await loginAnonymous();
+  381:   } catch (error) {
+  382:     return {
+  383:       ok: false,
+  384:       skipped: true,
+  385:       reason: "AUTH_FAILED",
+  386:       error: String(error?.message || error || ""),
+  387:     };
+  388:   }
+  389: 
+  390:   if (!user?.uid) {
+  391:     return {
+  392:       ok: false,
+  393:       skipped: true,
+  394:       reason: "AUTH_REQUIRED",
+  395:     };
+  396:   }
+  397: 
+  398:   const history = await loadTop3PredictionDay({
+  399:     lotteryKey,
+  400:     targetYmd,
+  401:     schedule,
+  402:   });
+  403: 
+  404:   let updated = 0;
+  405: 
+  406:   for (const entry of history) {
+  407:     if (!entry || entry?.status === "validated") continue;
+  408: 
+  409:     const realDraw = findDrawForTarget({
+  410:       draws,
+  411:       targetYmd: entry?.targetYmd,
+  412:       targetHour: entry?.targetHour,
+  413:     });
+  414: 
+  415:     if (!realDraw) continue;
+  416: 
+  417:     const resultGrupo = Number(
+  418:       pickPrize1GrupoFromDraw(realDraw)
+  419:     );
+  420: 
+  421:     if (
+  422:       !Number.isFinite(resultGrupo) ||
+  423:       resultGrupo < 1 ||
+  424:       resultGrupo > 25
+  425:     ) {
+  426:       continue;
+  427:     }
+  428: 
+  429:     const resultMilhar = extractPrize1Milhar(realDraw);
+  430: 
+  431:     const analysis = analyzeSnapshotHit(
+  432:       entry?.snapshot,
+  433:       resultGrupo,
+  434:       resultMilhar
+  435:     );
+  436: 
+  437:     const ref = doc(db, COLLECTION, entry.id);
+  438:     const now = Date.now();
+  439: 
+  440:     await setDoc(
+  441:       ref,
+  442:       {
+  443:         resultGrupo,
+  444:         resultMilhar,
+  445:         resultAnimal: safeStr(
+  446:           extractPrize1(realDraw)?.animal || ""
+  447:         ),
+  448:         hitType: analysis.hitType,
+  449:         hitScore: analysis.hitScore,
+  450:         hitPosition: analysis.hitPosition,
+  451:         matchedValue: analysis.matchedValue,
+  452:         validatedAt: now,
+  453:         validatedBy: user.uid,
+  454:         updatedAt: now,
+  455:         status: "validated",
+  456:       },
+  457:       { merge: true }
+  458:     );
+  459: 
+  460:     updated += 1;
+  461:   }
+  462: 
+  463:   return {
+  464:     ok: true,
+  465:     updated,
+  466:   };
+  467: }
+========================================================================================================================
+ARQUIVO: src\pages\Top3\top3.hooks.js
+========================================================================================================================
+
+===== LINHAS 16 A 784 =====
+   16:   LOOKBACK_ALL,
+   17:   LOOKBACK_OPTIONS,
+   18:   LOTTERY_OPTIONS,
+   19:   PT_RIO_SCHEDULE_NORMAL,
+   20:   PT_RIO_SCHEDULE_WED_SAT,
+   21:   FEDERAL_SCHEDULE,
+   22: } from "./top3.constants";
+   23: 
+   24: import {
+   25:   getScheduleForLottery,
+   26:   findLastDrawInList,
+   27:   pickDrawHour,
+   28:   pickDrawYMD,
+   29:   pickPrize1GrupoFromDraw,
+   30:   getPreviousDrawRobust,
+   31:   build16MilharesForGrupo,
+   32:   buildMilharesForGrupo,
+   33:   getNextSlotForLottery,
+   34:   isFederalDrawDay,
+   35: } from "./top3.engine";
+   36: 
+   37: import { lotteryLabel } from "./top3.selectors";
+   38: 
+   39: import {
+   40:   registerPrediction,
+   41:   reconcilePendingTop3Log,
+   42:   ensureDayTimeline,
+   43: } from "./top3.storage";
+   44: 
+   45: import {
+   46:   saveTop3PredictionSnapshot,
+   47:   loadTop3PredictionDay,
+   48:   reconcileTop3PredictionDay,
+   49: } from "./top3.firestore";
+   50: 
+   51: import {
+   52:   getKingResultsByDate,
+   53:   getKingResultsByRange,
+   54:   getKingBoundsByUf,
+   55: } from "../../services/kingResultsService";
+   56: 
+   57: import { getAnimalLabel } from "../../constants/bichoMap";
+   58: 
+   59: import {
+   60:   fallbackBaseSearch,
+   61:   loadHistoryRange,
+   62: } from "./modules/top3.loader";
+   63: 
+   64: import { computeTop3Analytics } from "./modules/top3.analytics";
+   65: 
+   66: import { buildTop3Predictions } from "./modules/top3.prediction";
+   67: 
+   68: import { buildTop3TimelineViewModel } from "./modules/top3.timeline";
+   69: 
+   70: import {
+   71:   buildTop3MilharesCols,
+   72:   resolveTop3ProbValue,
+   73: } from "./modules/top3.viewmodel";
+   74: 
+   75: import {
+   76:   normalizeImgSrc,
+   77:   getGrupoImgSrc,
+   78:   buildResultStyleImgVariants,
+   79: } from "./top3.images";
+   80: 
+   81: function emptyAnalytics() {
+   82:   return { top: [], meta: null };
+   83: }
+   84: 
+   85: function drawTs(draw) {
+   86:   const y = pickDrawYMD(draw);
+   87:   const h = toHourBucket(pickDrawHour(draw));
+   88: 
+   89:   if (!isYMD(y) || !h) return Number.NEGATIVE_INFINITY;
+   90: 
+   91:   const [Y, M, D] = String(y).split("-").map(Number);
+   92:   const mins = hourToInt(h);
+   93: 
+   94:   if (!Number.isFinite(mins) || mins < 0) {
+   95:     return Number.NEGATIVE_INFINITY;
+   96:   }
+   97: 
+   98:   return Date.UTC(Y, M - 1, D) + mins * 60 * 1000;
+   99: }
+  100: 
+  101: function drawKey(draw) {
+  102:   const y = pickDrawYMD(draw);
+  103:   const h = toHourBucket(pickDrawHour(draw));
+  104:   return isYMD(y) && h ? `${y}|${h}` : "";
+  105: }
+  106: 
+  107: function hasDrawAtHour(draws, hourBucket) {
+  108:   const target = toHourBucket(hourBucket);
+  109:   if (!target) return false;
+  110: 
+  111:   return (Array.isArray(draws) ? draws : []).some((d) => {
+  112:     const h = toHourBucket(pickDrawHour(d));
+  113:     return h === target;
+  114:   });
+  115: }
+  116: 
+  117: function mergeBaseIntoRange(rangeDraws, baseDraw) {
+  118:   const list = Array.isArray(rangeDraws) ? rangeDraws : [];
+  119:   const key = drawKey(baseDraw);
+  120: 
+  121:   if (!key) return list;
+  122: 
+  123:   const map = new Map();
+  124: 
+  125:   for (const d of list) {
+  126:     const k = drawKey(d);
+  127:     if (k) map.set(k, d);
+  128:   }
+  129: 
+  130:   if (!map.has(key)) {
+  131:     map.set(key, baseDraw);
+  132:   }
+  133: 
+  134:   return Array.from(map.values()).sort((a, b) => drawTs(a) - drawTs(b));
+  135: }
+  136: 
+  137: function isDrawValidForLotterySchedule(draw, lotteryKey) {
+  138:   const y = pickDrawYMD(draw);
+  139:   const h = toHourBucket(pickDrawHour(draw));
+  140: 
+  141:   if (!isYMD(y) || !h) return false;
+  142: 
+  143:   const schedule = getScheduleForLottery({
+  144:     lotteryKey,
+  145:     ymd: y,
+  146:     PT_RIO_SCHEDULE_NORMAL,
+  147:     PT_RIO_SCHEDULE_WED_SAT,
+  148:     FEDERAL_SCHEDULE,
+  149:   });
+  150: 
+  151:   const normalizedSchedule = Array.isArray(schedule)
+  152:     ? schedule.map(toHourBucket).filter(Boolean)
+  153:     : [];
+  154: 
+  155:   return normalizedSchedule.includes(h);
+  156: }
+  157: 
+  158: function findLatestHistoricalBaseDraw({
+  159:   draws,
+  160:   lotteryKey,
+  161:   targetYmd,
+  162:   targetHourBucket,
+  163: }) {
+  164:   const list = Array.isArray(draws) ? draws : [];
+  165:   const targetHour = toHourBucket(targetHourBucket);
+  166: 
+  167:   if (!isYMD(targetYmd) || !targetHour) {
+  168:     return { draw: null, ymd: "", hour: "", source: "none" };
+  169:   }
+  170: 
+  171:   const [Y, M, D] = String(targetYmd).split("-").map(Number);
+  172:   const mins = hourToInt(targetHour);
+  173:   const targetTs = Date.UTC(Y, M - 1, D) + mins * 60 * 1000;
+  174: 
+  175:   let best = null;
+  176:   let bestTs = Number.NEGATIVE_INFINITY;
+  177: 
+  178:   for (const d of list) {
+  179:     if (!isDrawValidForLotterySchedule(d, lotteryKey)) continue;
+  180: 
+  181:     const ts = drawTs(d);
+  182:     if (!Number.isFinite(ts)) continue;
+  183:     if (ts >= targetTs) continue;
+  184: 
+  185:     if (ts > bestTs) {
+  186:       best = d;
+  187:       bestTs = ts;
+  188:     }
+  189:   }
+  190: 
+  191:   if (!best) {
+  192:     return { draw: null, ymd: "", hour: "", source: "none" };
+  193:   }
+  194: 
+  195:   return {
+  196:     draw: best,
+  197:     ymd: pickDrawYMD(best) || "",
+  198:     hour: toHourBucket(pickDrawHour(best)) || "",
+  199:     source: "history_range",
+  200:   };
+  201: }
+  202: 
+  203: function sanitizeHistoricalDraws({ draws, lotteryKey, baseDraw }) {
+  204:   const list = Array.isArray(draws) ? draws : [];
+  205:   const baseTs = drawTs(baseDraw);
+  206: 
+  207:   if (!baseDraw || !Number.isFinite(baseTs)) return [];
+  208: 
+  209:   return list
+  210:     .filter((d) => isDrawValidForLotterySchedule(d, lotteryKey))
+  211:     .filter((d) => {
+  212:       const ts = drawTs(d);
+  213:       return Number.isFinite(ts) && ts <= baseTs;
+  214:     })
+  215:     .sort((a, b) => drawTs(a) - drawTs(b));
+  216: }
+  217: 
+  218: function parseTargetDate(ymd, hour) {
+  219:   if (!isYMD(ymd)) return null;
+  220: 
+  221:   const h = toHourBucket(hour);
+  222:   const m = String(h || "").match(/^(\d{2})h$/);
+  223: 
+  224:   if (!m) return null;
+  225: 
+  226:   const [Y, M, D] = String(ymd).split("-").map(Number);
+  227:   const hh = Number(m[1]);
+  228: 
+  229:   const dt = new Date(Y, M - 1, D, hh, 0, 0, 0);
+  230:   return Number.isNaN(dt.getTime()) ? null : dt;
+  231: }
+  232: 
+  233: function isFutureTarget(ymd, hour) {
+  234:   const target = parseTargetDate(ymd, hour);
+  235:   if (!target) return false;
+  236:   return target.getTime() > Date.now();
+  237: }
+  238: 
+  239: function makeTargetKey(ymd, hour) {
+  240:   const y = safeStr(ymd);
+  241:   const h = toHourBucket(hour);
+  242:   return isYMD(y) && h ? `${y}_${h}` : "";
+  243: }
+  244: 
+  245: function resolveLayerMetaText(analytics) {
+  246:   const meta = analytics?.meta || null;
+  247:   const explain = meta?.explain || null;
+  248: 
+  249:   const candidates = [
+  250:     meta?.label,
+  251:     explain?.layerLabel,
+  252:     explain?.layerKey,
+  253:     meta?.scenario,
+  254:   ]
+  255:     .map((v) => safeStr(v))
+  256:     .filter(Boolean);
+  257: 
+  258:   return candidates[0] || "";
+  259: }
+  260: 
+  261: function debugTop3Effect(name, details = {}) {
+  262:   if (typeof window === "undefined") return;
+  263: 
+  264:   const enabled =
+  265:     new URLSearchParams(window.location.search).get(
+  266:       "debugTop3Effects"
+  267:     ) === "1";
+  268: 
+  269:   if (!enabled) return;
+  270: 
+  271:   const counters =
+  272:     window.__TOP3_EFFECT_COUNTS__ ||
+  273:     (window.__TOP3_EFFECT_COUNTS__ = {});
+  274: 
+  275:   counters[name] = Number(counters[name] || 0) + 1;
+  276: 
+  277:   console.info(
+  278:     "[TOP3 EFFECT]",
+  279:     name,
+  280:     `#${counters[name]}`,
+  281:     details
+  282:   );
+  283: }
+  284: 
+  285: export function useTop3Controller() {
+  286:   const DEFAULT_LOTTERY = "PT_RIO";
+  287: 
+  288:   const debugTop3 =
+  289:     typeof window !== "undefined" &&
+  290:     new URLSearchParams(window.location.search).get("debugTop3") === "1";
+  291: 
+  292:   const requestIdRef = useRef(0);
+  293:   const boundsCacheRef = useRef(new Map());
+  294:   const analyticsCacheRef = useRef({ key: "", value: emptyAnalytics() });
+  295: 
+  296:   const [lotteryKey, setLotteryKey] = useState(DEFAULT_LOTTERY);
+  297:   const [ymd, setYmd] = useState(() => todayYMDLocal());
+  298:   const [lookback, setLookback] = useState(LOOKBACK_ALL);
+  299: 
+  300:   const [loading, setLoading] = useState(false);
+  301:   const [loadingStage, setLoadingStage] = useState({
+  302:     today: false,
+  303:     range: false,
+  304:   });
+  305:   const [error, setError] = useState("");
+  306: 
+  307:   const [rangeDraws, setRangeDraws] = useState([]);
+  308:   const [todayDraws, setTodayDraws] = useState([]);
+  309:   const [rangeInfo, setRangeInfo] = useState({ from: "", to: "" });
+  310: 
+  311:   const [loadedYmd, setLoadedYmd] = useState("");
+  312:   const [lastHourBucket, setLastHourBucket] = useState("");
+  313:   const [targetHourBucket, setTargetHourBucket] = useState("");
+  314:   const [targetYmd, setTargetYmd] = useState("");
+  315:   const [skipPtRio18ByFederal, setSkipPtRio18ByFederal] = useState(false);
+  316: 
+  317:   const [lastInfo, setLastInfo] = useState({
+  318:     lastYmd: "",
+  319:     lastHour: "",
+  320:     lastGrupo: null,
+  321:     lastAnimal: "",
+  322:   });
+  323: 
+  324:   const [prevInfo, setPrevInfo] = useState({
+  325:     prevYmd: "",
+  326:     prevHour: "",
+  327:     prevGrupo: null,
+  328:     prevAnimal: "",
+  329:     source: "none",
+  330:   });
+  331: 
+  332:   const [baseDrawState, setBaseDrawState] = useState(null);
+  333:   const [persistedTop3History, setPersistedTop3History] = useState([]);
+  334: 
+  335:   const lotteryKeySafe = useMemo(
+  336:     () => safeStr(lotteryKey).toUpperCase() || DEFAULT_LOTTERY,
+  337:     [lotteryKey]
+  338:   );
+  339: 
+  340:   const ymdSafe = useMemo(() => {
+  341:     const y = normalizeToYMD(ymd);
+  342:     return y && isYMD(y) ? y : todayYMDLocal();
+  343:   }, [ymd]);
+  344: 
+  345:   const dateBR = useMemo(() => ymdToBR(ymdSafe), [ymdSafe]);
+  346: 
+  347:   const analysisHourBucket = useMemo(
+  348:     () => toHourBucket(targetHourBucket) || "",
+  349:     [targetHourBucket]
+  350:   );
+  351: 
+  352:   const analysisYmd = useMemo(
+  353:     () => (isYMD(targetYmd) ? targetYmd : ""),
+  354:     [targetYmd]
+  355:   );
+  356: 
+  357:   const timelineYmd = useMemo(() => {
+  358:     if (isYMD(loadedYmd)) return loadedYmd;
+  359:     return ymdSafe;
+  360:   }, [loadedYmd, ymdSafe]);
+  361: 
+  362:   const schedule = useMemo(() => {
+  363:     const y = isYMD(analysisYmd)
+  364:       ? analysisYmd
+  365:       : isYMD(loadedYmd)
+  366:         ? loadedYmd
+  367:         : ymdSafe;
+  368: 
+  369:     return getScheduleForLottery({
+  370:       lotteryKey: lotteryKeySafe,
+  371:       ymd: y,
+  372:       PT_RIO_SCHEDULE_NORMAL,
+  373:       PT_RIO_SCHEDULE_WED_SAT,
+  374:       FEDERAL_SCHEDULE,
+  375:     });
+  376:   }, [lotteryKeySafe, ymdSafe, loadedYmd, analysisYmd]);
+  377: 
+  378:   const isFederalNonDrawDay = useMemo(() => {
+  379:     return lotteryKeySafe === "FEDERAL" && !isFederalDrawDay(ymdSafe);
+  380:   }, [lotteryKeySafe, ymdSafe]);
+  381: 
+  382:   const rangeLabel = useMemo(() => {
+  383:     const f = safeStr(rangeInfo?.from);
+  384:     const t = safeStr(rangeInfo?.to);
+  385: 
+  386:     if (isYMD(f) && isYMD(t)) return `${ymdToBR(f)} → ${ymdToBR(t)}`;
+  387:     return "—";
+  388:   }, [rangeInfo]);
+  389: 
+  390:   const prevLabel = useMemo(() => {
+  391:     if (!prevInfo?.prevGrupo) return "—";
+  392: 
+  393:     const g = Number(prevInfo.prevGrupo);
+  394:     const animal = safeStr(prevInfo.prevAnimal || getAnimalLabel?.(g) || "");
+  395: 
+  396:     const when =
+  397:       prevInfo?.prevYmd && prevInfo?.prevHour
+  398:         ? `${ymdToBR(prevInfo.prevYmd)} ${prevInfo.prevHour}`
+  399:         : "";
+  400: 
+  401:     return `G${String(g).padStart(2, "0")}${
+  402:       animal ? " • " + animal.toUpperCase() : ""
+  403:     }${when ? " • " + when : ""}`;
+  404:   }, [prevInfo]);
+  405: 
+  406:   const lastLabel = useMemo(() => {
+  407:     if (!lastInfo?.lastGrupo) return "—";
+  408: 
+  409:     const g = Number(lastInfo.lastGrupo);
+  410:     const animal = safeStr(lastInfo.lastAnimal || getAnimalLabel?.(g) || "");
+  411: 
+  412:     const when =
+  413:       lastInfo?.lastYmd && lastInfo?.lastHour
+  414:         ? `${ymdToBR(lastInfo.lastYmd)} ${lastInfo.lastHour}`
+  415:         : "";
+  416: 
+  417:     return `G${String(g).padStart(2, "0")}${
+  418:       animal ? " • " + animal.toUpperCase() : ""
+  419:     }${when ? " • " + when : ""}`;
+  420:   }, [lastInfo]);
+  421: 
+  422:   const resetStateForNoData = useCallback(() => {
+  423:     analyticsCacheRef.current = { key: "", value: emptyAnalytics() };
+  424: 
+  425:     setLoadedYmd("");
+  426:     setLastHourBucket("");
+  427:     setTargetHourBucket("");
+  428:     setTargetYmd("");
+  429:     setSkipPtRio18ByFederal(false);
+  430:     setBaseDrawState(null);
+  431: 
+  432:     setLastInfo({
+  433:       lastYmd: "",
+  434:       lastHour: "",
+  435:       lastGrupo: null,
+  436:       lastAnimal: "",
+  437:     });
+  438: 
+  439:     setPrevInfo({
+  440:       prevYmd: "",
+  441:       prevHour: "",
+  442:       prevGrupo: null,
+  443:       prevAnimal: "",
+  444:       source: "none",
+  445:     });
+  446: 
+  447:     setRangeInfo({ from: "", to: "" });
+  448:     setRangeDraws([]);
+  449:     setTodayDraws([]);
+  450:   }, []);
+  451: 
+  452:   const load = useCallback(async () => {
+  453:     const lKey = safeStr(lotteryKeySafe).toUpperCase();
+  454:     if (!lKey || !isYMD(ymdSafe)) return;
+  455: 
+  456:     setLoading(true);
+  457:     setLoadingStage({ today: true, range: false });
+  458:     setError("");
+  459: 
+  460:     analyticsCacheRef.current = { key: "", value: emptyAnalytics() };
+  461: 
+  462:     const currentRequestId = ++requestIdRef.current;
+  463: 
+  464:     try {
+  465:       const ufResolved = lKey;
+  466: 
+  467:       let minDate = "";
+  468:       let maxDate = "";
+  469: 
+  470:       const cached = boundsCacheRef.current.get(ufResolved);
+  471: 
+  472:       if (cached) {
+  473:         minDate = cached.minDate;
+  474:         maxDate = cached.maxDate;
+  475:       } else {
+  476:         const b = await getKingBoundsByUf({ uf: ufResolved });
+  477: 
+  478:         const bMin = safeStr(b?.minYmd || b?.minDate || "");
+  479:         const bMax = safeStr(b?.maxYmd || b?.maxDate || "");
+  480: 
+  481:         if (isYMD(bMin)) minDate = bMin;
+  482:         if (isYMD(bMax)) maxDate = bMax;
+  483: 
+  484:         boundsCacheRef.current.set(ufResolved, { minDate, maxDate });
+  485:       }
+  486: 
+  487:       const selectedFederalNonDrawDay =
+  488:         lKey === "FEDERAL" && !isFederalDrawDay(ymdSafe);
+  489: 
+  490:       const effectiveYmd =
+  491:         selectedFederalNonDrawDay && isYMD(maxDate) ? maxDate : ymdSafe;
+  492: 
+  493:       const today =
+  494:         (await getKingResultsByDate({
+  495:           uf: ufResolved,
+  496:           date: effectiveYmd,
+  497:           readPolicy: "server",
+  498:         })) || [];
+  499: 
+  500:       if (requestIdRef.current !== currentRequestId) return;
+  501: 
+  502:       setLoadedYmd(effectiveYmd);
+  503:       setTodayDraws(today);
+  504: 
+  505:       let todaySchedule = getScheduleForLottery({
+  506:         lotteryKey: lKey,
+  507:         ymd: effectiveYmd,
+  508:         PT_RIO_SCHEDULE_NORMAL,
+  509:         PT_RIO_SCHEDULE_WED_SAT,
+  510:         FEDERAL_SCHEDULE,
+  511:       });
+  512: 
+  513:       let shouldSkipPtRio18 = false;
+  514: 
+  515:       if ((lKey === "PT_RIO" || lKey === "RJ") && isFederalDrawDay(effectiveYmd)) {
+  516:         let federalToday = [];
+  517: 
+  518:         try {
+  519:           federalToday =
+  520:             (await getKingResultsByDate({
+  521:               uf: "FEDERAL",
+  522:               date: effectiveYmd,
+  523:               readPolicy: "server",
+  524:             })) || [];
+  525:         } catch {
+  526:           federalToday = [];
+  527:         }
+  528: 
+  529:         const federal20Exists = hasDrawAtHour(federalToday, "20:00");
+  530:         const ptRio18Exists = hasDrawAtHour(today, "18:00");
+  531: 
+  532:         shouldSkipPtRio18 = federal20Exists && !ptRio18Exists;
+  533: 
+  534:         if (shouldSkipPtRio18) {
+  535:           todaySchedule = (Array.isArray(todaySchedule) ? todaySchedule : [])
+  536:             .map(toHourBucket)
+  537:             .filter((h) => h && h !== "18:00");
+  538:         }
+  539:       }
+  540: 
+  541:       setSkipPtRio18ByFederal(Boolean(shouldSkipPtRio18));
+  542: 
+  543:       if (!Array.isArray(todaySchedule) || !todaySchedule.length) {
+  544:         resetStateForNoData();
+  545:         setError("Não há grade de sorteio válida para esta data/loteria.");
+  546:         return;
+  547:       }
+  548: 
+  549:       const todayLast = findLastDrawInList(today, todaySchedule);
+  550: 
+  551:       let baseDraw = null;
+  552:       let baseY = "";
+  553:       let baseH = "";
+  554:       let baseGrupo = null;
+  555:       let baseAnimal = "";
+  556:       let resolvedTargetY = "";
+  557:       let resolvedTargetH = "";
+  558:       let resolvedPrev = {
+  559:         draw: null,
+  560:         ymd: "",
+  561:         hour: "",
+  562:         source: "none",
+  563:       };
+  564: 
+  565:       if (todayLast) {
+  566:         baseDraw = todayLast;
+  567:         baseY = pickDrawYMD(todayLast) || effectiveYmd;
+  568:         baseH = toHourBucket(pickDrawHour(todayLast));
+  569: 
+  570:         const effectiveTodaySchedule = (Array.isArray(todaySchedule) ? todaySchedule : [])
+  571:           .map(toHourBucket)
+  572:           .filter(Boolean);
+  573: 
+  574:         const baseIdx = baseY === effectiveYmd
+  575:           ? effectiveTodaySchedule.indexOf(baseH)
+  576:           : -1;
+  577: 
+  578:         if (baseIdx >= 0 && baseIdx < effectiveTodaySchedule.length - 1) {
+  579:           resolvedTargetY = effectiveYmd;
+  580:           resolvedTargetH = effectiveTodaySchedule[baseIdx + 1];
+  581:         } else {
+  582:           const nextSlot = getNextSlotForLottery({
+  583:             lotteryKey: lKey,
+  584:             ymd: baseY,
+  585:             hourBucket: baseH,
+  586:             PT_RIO_SCHEDULE_NORMAL,
+  587:             PT_RIO_SCHEDULE_WED_SAT,
+  588:             FEDERAL_SCHEDULE,
+  589:           });
+  590: 
+  591:           resolvedTargetY = safeStr(nextSlot?.ymd || "");
+  592:           resolvedTargetH = toHourBucket(nextSlot?.hour || "");
+  593:         }
+  594:       } else {
+  595:         const firstHourToday = toHourBucket(todaySchedule?.[0]);
+  596: 
+  597:         if (!firstHourToday) {
+  598:           resetStateForNoData();
+  599:           setError(
+  600:             "Não foi possível determinar o primeiro horário válido para esta loteria."
+  601:           );
+  602:           return;
+  603:         }
+  604: 
+  605:         resolvedTargetY = effectiveYmd;
+  606:         resolvedTargetH = firstHourToday;
+  607: 
+  608:         const previousForFirstSlot = await getPreviousDrawRobust({
+  609:           getKingResultsByDate,
+  610:           lotteryKey: lKey,
+  611:           ymdTarget: effectiveYmd,
+  612:           targetHourBucket: firstHourToday,
+  613:           todayDraws: today,
+  614:           schedule: todaySchedule,
+  615:           PT_RIO_SCHEDULE_NORMAL,
+  616:           PT_RIO_SCHEDULE_WED_SAT,
+  617:           FEDERAL_SCHEDULE,
+  618:         });
+  619: 
+  620:         const previousResolved = previousForFirstSlot?.draw
+  621:           ? previousForFirstSlot
+  622:           : await fallbackBaseSearch({
+  623:               getKingResultsByRange,
+  624:               findLatestHistoricalBaseDraw,
+  625:               addDaysYMD,
+  626:               minDate,
+  627:               lotteryKey: lKey,
+  628:               targetYmd: effectiveYmd,
+  629:               targetHourBucket: firstHourToday,
+  630:               uf: ufResolved,
+  631:             });
+  632: 
+  633:         if (!previousResolved?.draw) {
+  634:           resetStateForNoData();
+  635:           setError(
+  636:             "Não foi possível localizar a base anterior ao primeiro sorteio do dia."
+  637:           );
+  638:           return;
+  639:         }
+  640: 
+  641:         baseDraw = previousResolved.draw;
+  642:         baseY = safeStr(previousResolved.ymd);
+  643:         baseH = toHourBucket(previousResolved.hour);
+  644:       }
+  645: 
+  646:       baseGrupo = pickPrize1GrupoFromDraw(baseDraw);
+  647:       baseAnimal = baseGrupo ? safeStr(getAnimalLabel(baseGrupo)) : "";
+  648: 
+  649:       if (
+  650:         !baseDraw ||
+  651:         !isYMD(baseY) ||
+  652:         !baseH ||
+  653:         !Number.isFinite(Number(baseGrupo)) ||
+  654:         Number(baseGrupo) < 1 ||
+  655:         Number(baseGrupo) > 25 ||
+  656:         !isYMD(resolvedTargetY) ||
+  657:         !resolvedTargetH
+  658:       ) {
+  659:         resetStateForNoData();
+  660:         setError("Base ou alvo inválido para cálculo do TOP3.");
+  661:         return;
+  662:       }
+  663: 
+  664:       const baseDayDraws =
+  665:         baseY === effectiveYmd
+  666:           ? today
+  667:           : (await getKingResultsByDate({
+  668:               uf: ufResolved,
+  669:               date: baseY,
+  670:               readPolicy: "server",
+  671:             })) || [];
+  672: 
+  673:       const baseDaySchedule = getScheduleForLottery({
+  674:         lotteryKey: lKey,
+  675:         ymd: baseY,
+  676:         PT_RIO_SCHEDULE_NORMAL,
+  677:         PT_RIO_SCHEDULE_WED_SAT,
+  678:         FEDERAL_SCHEDULE,
+  679:       });
+  680: 
+  681:       resolvedPrev = await getPreviousDrawRobust({
+  682:         getKingResultsByDate,
+  683:         lotteryKey: lKey,
+  684:         ymdTarget: baseY,
+  685:         targetHourBucket: baseH,
+  686:         todayDraws: baseDayDraws,
+  687:         schedule: baseDaySchedule,
+  688:         PT_RIO_SCHEDULE_NORMAL,
+  689:         PT_RIO_SCHEDULE_WED_SAT,
+  690:         FEDERAL_SCHEDULE,
+  691:       });
+  692: 
+  693:       if (!resolvedPrev?.draw) {
+  694:         resolvedPrev = await fallbackBaseSearch({
+  695:           getKingResultsByRange,
+  696:           findLatestHistoricalBaseDraw,
+  697:           addDaysYMD,
+  698:           minDate,
+  699:           lotteryKey: lKey,
+  700:           targetYmd: baseY,
+  701:           targetHourBucket: baseH,
+  702:           uf: ufResolved,
+  703:         });
+  704:       }
+  705: 
+  706:       if (requestIdRef.current !== currentRequestId) return;
+  707: 
+  708:       setBaseDrawState(baseDraw);
+  709:       setLastHourBucket(baseH);
+  710:       setTargetYmd(resolvedTargetY);
+  711:       setTargetHourBucket(resolvedTargetH);
+  712: 
+  713:       if (debugTop3) console.log(
+  714:         "[TOP3 STATE]",
+  715:         JSON.stringify(
+  716:           {
+  717:             loadedYmd: effectiveYmd,
+  718: 
+  719:             baseYmd: baseY,
+  720:             baseHour: baseH,
+  721:             baseGrupo,
+  722: 
+  723:             targetYmd: resolvedTargetY,
+  724:             targetHour: resolvedTargetH,
+  725: 
+  726:             previousYmd: resolvedPrev?.ymd || "",
+  727:             previousHour: resolvedPrev?.hour || "",
+  728:             previousSource: resolvedPrev?.source || "",
+  729: 
+  730:             todayDraws: Array.isArray(today) ? today.length : 0,
+  731:           },
+  732:           null,
+  733:           2
+  734:         )
+  735:       );
+  736: 
+  737:       setLastInfo({
+  738:         lastYmd: baseY,
+  739:         lastHour: baseH,
+  740:         lastGrupo: Number(baseGrupo),
+  741:         lastAnimal: baseAnimal,
+  742:       });
+  743: 
+  744:       if (resolvedPrev?.draw) {
+  745:         const gPrev = pickPrize1GrupoFromDraw(resolvedPrev.draw);
+  746: 
+  747:         setPrevInfo({
+  748:           prevYmd: resolvedPrev.ymd || "",
+  749:           prevHour: toHourBucket(resolvedPrev.hour) || "",
+  750:           prevGrupo: Number.isFinite(Number(gPrev)) ? Number(gPrev) : null,
+  751:           prevAnimal: gPrev ? safeStr(getAnimalLabel(gPrev)) : "",
+  752:           source: resolvedPrev.source || "none",
+  753:         });
+  754:       } else {
+  755:         setPrevInfo({
+  756:           prevYmd: "",
+  757:           prevHour: "",
+  758:           prevGrupo: null,
+  759:           prevAnimal: "",
+  760:           source: "none",
+  761:         });
+  762:       }
+  763: 
+  764:       let rangeFrom = "";
+  765: 
+  766:       if (lookback === LOOKBACK_ALL) {
+  767:         rangeFrom = minDate || addDaysYMD(baseY, -240);
+  768:       } else {
+  769:         const days = Math.max(1, Number(lookback || 30));
+  770:         rangeFrom = addDaysYMD(baseY, -(days - 1));
+  771:       }
+  772: 
+  773:       const rangeTo = baseY;
+  774: 
+  775:       setRangeInfo({ from: rangeFrom, to: rangeTo });
+  776:       setLoadingStage({ today: false, range: true });
+  777: 
+  778:       const histRaw = await loadHistoryRange({
+  779:         getKingResultsByRange,
+  780:         uf: ufResolved,
+  781:         dateFrom: rangeFrom,
+  782:         dateTo: rangeTo,
+  783:         readPolicy: "server",
+  784:       });
+
+===== LINHAS 824 A 1245 =====
+  824:                 ? {
+  825:                     ymd: pickDrawYMD(hist[hist.length - 1]),
+  826:                     hour: toHourBucket(
+  827:                       pickDrawHour(hist[hist.length - 1])
+  828:                     ),
+  829:                   }
+  830:                 : null,
+  831:           },
+  832:           null,
+  833:           2
+  834:         )
+  835:       );
+  836: 
+  837:       setRangeDraws(hist);
+  838:     } catch (e) {
+  839:       if (requestIdRef.current === currentRequestId) {
+  840:         setError(String(e?.message || e || "Falha ao carregar dados do TOP3."));
+  841:         setBaseDrawState(null);
+  842:       }
+  843:     } finally {
+  844:       if (requestIdRef.current === currentRequestId) {
+  845:         setLoadingStage({ today: false, range: false });
+  846:         setLoading(false);
+  847:       }
+  848:     }
+  849:   }, [lotteryKeySafe, ymdSafe, lookback, resetStateForNoData]);
+  850: 
+  851:   useEffect(() => {
+  852:     debugTop3Effect("01_load", {
+  853:       lotteryKey: lotteryKeySafe,
+  854:       ymd: ymdSafe,
+  855:       lookback,
+  856:     });
+  857: 
+  858:     load();
+  859:   }, [load]);
+  860: 
+  861:   useEffect(() => {
+  862:     debugTop3Effect("02_ensure_timeline", {
+  863:       lotteryKey: lotteryKeySafe,
+  864:       timelineYmd,
+  865:     });
+  866: 
+  867:     ensureDayTimeline({
+  868:       ymd: timelineYmd,
+  869:       lotteryKey: lotteryKeySafe,
+  870:     });
+  871:   }, [timelineYmd, lotteryKeySafe]);
+  872: 
+  873:   const analytics = useMemo(() => {
+  874:     return computeTop3Analytics({
+  875:       rangeDraws,
+  876:       baseDrawState,
+  877:       analyticsCacheRef,
+  878:       lotteryKeySafe,
+  879:       lookback,
+  880:       rangeInfo,
+  881:       todayDraws,
+  882:       sanitizeHistoricalDraws,
+  883:       targetYmd: analysisYmd,
+  884:       targetHourBucket: analysisHourBucket,
+  885:     });
+  886:   }, [
+  887:     rangeDraws,
+  888:     baseDrawState,
+  889:     lotteryKeySafe,
+  890:     lookback,
+  891:     rangeInfo,
+  892:     todayDraws,
+  893:     analysisYmd,
+  894:     analysisHourBucket,
+  895:   ]);
+  896: 
+  897:   const build20 = useCallback(
+  898:     (grupo2, item = null) => {
+  899:       return buildMilharesForGrupo({
+  900:         rangeDraws,
+  901:         analysisHourBucket,
+  902:         schedule,
+  903:         grupo2,
+  904:         count: 20,
+  905:         targetYmd: item?.meta?.next?.ymd || analysisYmd,
+  906:       });
+  907:     },
+  908:     [rangeDraws, analysisHourBucket, schedule, analysisYmd]
+  909:   );
+  910: 
+  911:   const layerMetaText = useMemo(() => {
+  912:     return resolveLayerMetaText(analytics);
+  913:   }, [analytics]);
+  914: 
+  915:   const top3 = useMemo(() => {
+  916:     return buildTop3Predictions({
+  917:       analytics,
+  918:       build20,
+  919:       safeStr,
+  920:       getAnimalLabel,
+  921:       build4ColsFromEngineOut: buildTop3MilharesCols,
+  922:       resolveProbValue: resolveTop3ProbValue,
+  923:       getGrupoImgSrc,
+  924:       buildResultStyleImgVariants,
+  925:     });
+  926:   }, [analytics, build20]);
+  927: 
+  928:   const timelineTop3 = useMemo(() => {
+  929:     const built = buildTop3TimelineViewModel({
+  930:       todayDraws,
+  931:       rangeDraws,
+  932:       lotteryKeySafe,
+  933:       ymdSafe: timelineYmd,
+  934:       analysisYmd,
+  935:       publicBase: String(process.env.PUBLIC_URL || "").trim(),
+  936:     });
+  937: 
+  938:     if (
+  939:       (lotteryKeySafe === "PT_RIO" || lotteryKeySafe === "RJ") &&
+  940:       skipPtRio18ByFederal &&
+  941:       isYMD(timelineYmd)
+  942:     ) {
+  943:       return (Array.isArray(built) ? built : []).filter((slot) => {
+  944:         const y = String(slot?.targetYmd || "").trim();
+  945:         const h = toHourBucket(slot?.targetHour || "");
+  946:         return !(y === timelineYmd && h === "18:00");
+  947:       });
+  948:     }
+  949: 
+  950:     return built;
+  951:   }, [
+  952:     todayDraws,
+  953:     rangeDraws,
+  954:     lotteryKeySafe,
+  955:     timelineYmd,
+  956:     analysisYmd,
+  957:     skipPtRio18ByFederal,
+  958:   ]);
+  959: 
+  960:   useEffect(() => {
+  961:     debugTop3Effect("03_save_prediction", {
+  962:       lotteryKey: lotteryKeySafe,
+  963:       analysisYmd,
+  964:       analysisHourBucket,
+  965:       top3Length: Array.isArray(top3)
+  966:         ? top3.length
+  967:         : -1,
+  968:     });
+  969: 
+  970:     if (!analysisYmd || !analysisHourBucket) return;
+  971:     if (!Array.isArray(top3) || !top3.length) return;
+  972:     if (!isFutureTarget(analysisYmd, analysisHourBucket)) return;
+  973: 
+  974:     const targetKey = makeTargetKey(analysisYmd, analysisHourBucket);
+  975:     const picks = top3
+  976:       .map((x) => Number(x?.grupo))
+  977:       .filter((n) => Number.isFinite(n) && n >= 1 && n <= 25)
+  978:       .slice(0, 3);
+  979: 
+  980:     if (!targetKey || !picks.length) return;
+  981: 
+  982:     const snapshot = top3.map((item, index) => ({
+  983:       rank: index + 1,
+  984:       grupo: Number(item?.grupo),
+  985:       animal: safeStr(item?.animal || ""),
+  986:       prob: Number(item?.prob || 0),
+  987:       probPct: Number(item?.probPct || 0),
+  988:       milhares20: Array.isArray(item?.milhares20)
+  989:         ? item.milhares20.slice(0, 20)
+  990:         : [],
+  991:       milharesCols: Array.isArray(item?.milharesCols)
+  992:         ? item.milharesCols
+  993:         : [],
+  994:       meta: item?.meta || null,
+  995:     }));
+  996: 
+  997:     const engineVersion =
+  998:       safeStr(top3?.[0]?.meta?.explain?.engine) ||
+  999:       safeStr(top3?.[0]?.meta?.scenario) ||
+ 1000:       "V3_STATISTICAL";
+ 1001: 
+ 1002:     registerPrediction({
+ 1003:       targetKey,
+ 1004:       targetYmd: analysisYmd,
+ 1005:       targetHour: analysisHourBucket,
+ 1006:       picks,
+ 1007:       snapshot,
+ 1008:       engineVersion,
+ 1009:     });
+ 1010: 
+ 1011:     saveTop3PredictionSnapshot({
+ 1012:       lotteryKey: lotteryKeySafe,
+ 1013:       targetYmd: analysisYmd,
+ 1014:       targetHour: analysisHourBucket,
+ 1015:       picks,
+ 1016:       snapshot,
+ 1017:       engineVersion,
+ 1018:     })
+ 1019:       .then((result) => {
+ 1020:         const diagnostic = {
+ 1021:           at: new Date().toISOString(),
+ 1022:           lotteryKey: lotteryKeySafe,
+ 1023:           targetYmd: analysisYmd,
+ 1024:           targetHour: analysisHourBucket,
+ 1025:           picks,
+ 1026:           result: result || null,
+ 1027:         };
+ 1028: 
+ 1029:         try {
+ 1030:           window.localStorage.setItem(
+ 1031:             "top3_firestore_last_save",
+ 1032:             JSON.stringify(diagnostic)
+ 1033:           );
+ 1034: 
+ 1035:           window.__TOP3_FIRESTORE_LAST_SAVE__ = diagnostic;
+ 1036:         } catch {}
+ 1037: 
+ 1038:         if (!result?.ok) {
+ 1039:           console.error(
+ 1040:             "[TOP3 FIRESTORE SAVE FAILED]",
+ 1041:             diagnostic
+ 1042:           );
+ 1043:         } else {
+ 1044:           console.info(
+ 1045:             "[TOP3 FIRESTORE SAVE OK]",
+ 1046:             diagnostic
+ 1047:           );
+ 1048:         }
+ 1049:       })
+ 1050:       .catch((error) => {
+ 1051:         const diagnostic = {
+ 1052:           at: new Date().toISOString(),
+ 1053:           lotteryKey: lotteryKeySafe,
+ 1054:           targetYmd: analysisYmd,
+ 1055:           targetHour: analysisHourBucket,
+ 1056:           picks,
+ 1057:           error: String(error?.message || error || ""),
+ 1058:         };
+ 1059: 
+ 1060:         try {
+ 1061:           window.localStorage.setItem(
+ 1062:             "top3_firestore_last_save",
+ 1063:             JSON.stringify(diagnostic)
+ 1064:           );
+ 1065: 
+ 1066:           window.__TOP3_FIRESTORE_LAST_SAVE__ = diagnostic;
+ 1067:         } catch {}
+ 1068: 
+ 1069:         console.error(
+ 1070:           "[TOP3 FIRESTORE SAVE EXCEPTION]",
+ 1071:           diagnostic
+ 1072:         );
+ 1073:       });
+ 1074:   }, [
+ 1075:     analysisYmd,
+ 1076:     analysisHourBucket,
+ 1077:     top3,
+ 1078:     lotteryKeySafe,
+ 1079:     debugTop3,
+ 1080:   ]);
+ 1081: 
+ 1082:   useEffect(() => {
+ 1083:     debugTop3Effect("04_load_persisted_history", {
+ 1084:       lotteryKey: lotteryKeySafe,
+ 1085:       timelineYmd,
+ 1086:       scheduleLength: Array.isArray(schedule)
+ 1087:         ? schedule.length
+ 1088:         : -1,
+ 1089:       todayDrawsLength: Array.isArray(todayDraws)
+ 1090:         ? todayDraws.length
+ 1091:         : -1,
+ 1092:       rangeDrawsLength: Array.isArray(rangeDraws)
+ 1093:         ? rangeDraws.length
+ 1094:         : -1,
+ 1095:     });
+ 1096: 
+ 1097:     let alive = true;
+ 1098: 
+ 1099:     async function loadPersistedHistory() {
+ 1100:       if (!isYMD(timelineYmd)) {
+ 1101:         if (alive) setPersistedTop3History([]);
+ 1102:         return;
+ 1103:       }
+ 1104: 
+ 1105:       try {
+ 1106:         const history = await loadTop3PredictionDay({
+ 1107:           lotteryKey: lotteryKeySafe,
+ 1108:           targetYmd: timelineYmd,
+ 1109:           schedule,
+ 1110:         });
+ 1111: 
+ 1112:         if (alive) {
+ 1113:           setPersistedTop3History(
+ 1114:             Array.isArray(history) ? history : []
+ 1115:           );
+ 1116:         }
+ 1117:       } catch {
+ 1118:         if (alive) setPersistedTop3History([]);
+ 1119:       }
+ 1120:     }
+ 1121: 
+ 1122:     loadPersistedHistory();
+ 1123: 
+ 1124:     return () => {
+ 1125:       alive = false;
+ 1126:     };
+ 1127:   }, [
+ 1128:     lotteryKeySafe,
+ 1129:     timelineYmd,
+ 1130:     schedule,
+ 1131:     todayDraws,
+ 1132:     rangeDraws,
+ 1133:   ]);
+ 1134: 
+ 1135:   useEffect(() => {
+ 1136:     debugTop3Effect("05_reconcile_history", {
+ 1137:       lotteryKey: lotteryKeySafe,
+ 1138:       timelineYmd,
+ 1139:       scheduleLength: Array.isArray(schedule)
+ 1140:         ? schedule.length
+ 1141:         : -1,
+ 1142:       todayDrawsLength: Array.isArray(todayDraws)
+ 1143:         ? todayDraws.length
+ 1144:         : -1,
+ 1145:       rangeDrawsLength: Array.isArray(rangeDraws)
+ 1146:         ? rangeDraws.length
+ 1147:         : -1,
+ 1148:     });
+ 1149: 
+ 1150:     if (!(todayDraws?.length || rangeDraws?.length)) return;
+ 1151: 
+ 1152:     const allDraws = [
+ 1153:       ...(Array.isArray(rangeDraws) ? rangeDraws : []),
+ 1154:       ...(Array.isArray(todayDraws) ? todayDraws : []),
+ 1155:     ];
+ 1156: 
+ 1157:     reconcilePendingTop3Log({
+ 1158:       todayDraws: Array.isArray(todayDraws) ? todayDraws : [],
+ 1159:       rangeDraws: Array.isArray(rangeDraws) ? rangeDraws : [],
+ 1160:     });
+ 1161: 
+ 1162:     reconcileTop3PredictionDay({
+ 1163:       lotteryKey: lotteryKeySafe,
+ 1164:       targetYmd: timelineYmd,
+ 1165:       schedule,
+ 1166:       draws: allDraws,
+ 1167:     })
+ 1168:       .then(async () => {
+ 1169:         const history = await loadTop3PredictionDay({
+ 1170:           lotteryKey: lotteryKeySafe,
+ 1171:           targetYmd: timelineYmd,
+ 1172:           schedule,
+ 1173:         });
+ 1174: 
+ 1175:         setPersistedTop3History(
+ 1176:           Array.isArray(history) ? history : []
+ 1177:         );
+ 1178:       })
+ 1179:       .catch((error) => {
+ 1180:         if (debugTop3) {
+ 1181:           console.warn("[TOP3 FIRESTORE RECONCILE]", error);
+ 1182:         }
+ 1183:       });
+ 1184:   }, [
+ 1185:     todayDraws,
+ 1186:     rangeDraws,
+ 1187:     lotteryKeySafe,
+ 1188:     timelineYmd,
+ 1189:     schedule,
+ 1190:     debugTop3,
+ 1191:   ]);
+ 1192: 
+ 1193:   return {
+ 1194:     LOOKBACK_ALL,
+ 1195:     LOOKBACK_OPTIONS,
+ 1196:     LOTTERY_OPTIONS,
+ 1197: 
+ 1198:     lotteryKeySafe,
+ 1199:     ymdSafe,
+ 1200:     loadedYmd,
+ 1201:     lookback,
+ 1202:     loading,
+ 1203:     loadingStage,
+ 1204:     error,
+ 1205:     dateBR,
+ 1206:     schedule,
+ 1207:     isFederalNonDrawDay,
+ 1208:     rangeLabel,
+ 1209: 
+ 1210:     lastHourBucket,
+ 1211:     targetHourBucket,
+ 1212:     targetYmd,
+ 1213:     analysisHourBucket,
+ 1214:     analysisYmd,
+ 1215: 
+ 1216:     prevLabel,
+ 1217:     lastLabel,
+ 1218:     layerMetaText,
+ 1219: 
+ 1220:     top3,
+ 1221:     timelineTop3,
+ 1222:     persistedTop3History,
+ 1223: 
+ 1224:     setLotteryKey,
+ 1225:     setYmd,
+ 1226:     setLookback,
+ 1227:     load,
+ 1228: 
+ 1229:     safeStr,
+ 1230:     lotteryLabel,
+ 1231: 
+ 1232:     build16: (grupo2) =>
+ 1233:       build16MilharesForGrupo({
+ 1234:         rangeDraws,
+ 1235:         analysisHourBucket,
+ 1236:         schedule,
+ 1237:         grupo2,
+ 1238:         targetYmd: analysisYmd,
+ 1239:       }),
+ 1240: 
+ 1241:     build20,
+ 1242:     getCentena3,
+ 1243:     normalizeImgSrc,
+ 1244:   };
+ 1245: }

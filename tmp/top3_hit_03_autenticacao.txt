@@ -1,0 +1,154 @@
+====================================================================================================
+TOP3-HIT-03 — DIAGNÓSTICO SEGURO DE AUTENTICAÇÃO FIRESTORE
+====================================================================================================
+Gerado em: 25/07/2026 23:31:33
+
+OBJETIVO:
+- identificar como o projeto autentica no Firebase Admin
+- verificar se gcloud está instalado e autenticado
+- verificar variáveis de ambiente sem revelar valores secretos
+- localizar arquivos de credencial somente pelo caminho e nome
+- não alterar configurações
+====================================================================================================
+
+====================================================================================================
+1. GCLOUD
+====================================================================================================
+GCLOUD: ENCONTRADO
+CAMINHO: C:\Users\glaub\AppData\Local\Google\Cloud SDK\google-cloud-sdk\bin\gcloud.ps1
+Google Cloud SDK 548.0.0
+bq 2.1.25
+core 2025.11.17
+gcloud-crc32c 1.0.0
+gsutil 5.35
+Updates are available for some Google Cloud CLI components.  To install them,
+please run:
+  $ gcloud components update
+
+CONTAS CONFIGURADAS:
+glauber.seguros@gmail.com
+
+PROJETO ATIVO:
+Your active configuration is: [palpitacojb]
+palpitacojb-app
+
+ADC PADRÃO: C:\Users\glaub\AppData\Roaming\gcloud\application_default_credentials.json
+ADC EXISTE: False
+
+====================================================================================================
+2. VARIÁVEIS DE AMBIENTE
+====================================================================================================
+GOOGLE_APPLICATION_CREDENTIALS: NÃO DEFINIDA
+GOOGLE_CLOUD_PROJECT: NÃO DEFINIDA
+GCLOUD_PROJECT: NÃO DEFINIDA
+FIREBASE_CONFIG: NÃO DEFINIDA
+FIREBASE_PROJECT_ID: NÃO DEFINIDA
+
+====================================================================================================
+3. MECANISMOS DE AUTENTICAÇÃO NO CÓDIGO
+====================================================================================================
+C:\Users\glaub\palpitaco\backend\engine\drawRepository.js:96: const admin = require("firebase-admin");
+C:\Users\glaub\palpitaco\backend\engine\drawRepository.js:178: const admin = require("firebase-admin");
+C:\Users\glaub\palpitaco\backend\engine\snapshotManager.js:22: const admin = require("firebase-admin");
+C:\Users\glaub\palpitaco\backend\scripts\auditFederalContestDuplicates.js:6: const current = String(process.env.GOOGLE_APPLICATION_CREDENTIALS || "").trim();
+C:\Users\glaub\palpitaco\backend\scripts\auditFederalContestDuplicates.js:12: delete process.env.GOOGLE_APPLICATION_CREDENTIALS;
+C:\Users\glaub\palpitaco\backend\scripts\auditFederalContestDuplicates.js:14: process.env.GOOGLE_APPLICATION_CREDENTIALS = "";
+C:\Users\glaub\palpitaco\backend\scripts\auditFederalContestDuplicates.js:22: .filter((f) => /^palpitacojb-app-firebase-adminsdk-.*\.json$/i.test(f))
+C:\Users\glaub\palpitaco\backend\scripts\auditFederalContestDuplicates.js:45: process.env.GOOGLE_APPLICATION_CREDENTIALS = hit;
+C:\Users\glaub\palpitaco\backend\scripts\auditFederalContestDuplicates.js:52: const admin = require("firebase-admin");
+C:\Users\glaub\palpitaco\backend\scripts\auditFederalContestDuplicates.js:104: admin.initializeApp();
+C:\Users\glaub\palpitaco\backend\scripts\fixFederalContestDuplicates.js:6: const current = String(process.env.GOOGLE_APPLICATION_CREDENTIALS || "").trim();
+C:\Users\glaub\palpitaco\backend\scripts\fixFederalContestDuplicates.js:12: delete process.env.GOOGLE_APPLICATION_CREDENTIALS;
+C:\Users\glaub\palpitaco\backend\scripts\fixFederalContestDuplicates.js:14: process.env.GOOGLE_APPLICATION_CREDENTIALS = "";
+C:\Users\glaub\palpitaco\backend\scripts\fixFederalContestDuplicates.js:22: .filter((f) => /^palpitacojb-app-firebase-adminsdk-.*\.json$/i.test(f))
+C:\Users\glaub\palpitaco\backend\scripts\fixFederalContestDuplicates.js:45: process.env.GOOGLE_APPLICATION_CREDENTIALS = hit;
+C:\Users\glaub\palpitaco\backend\scripts\fixFederalContestDuplicates.js:52: const admin = require("firebase-admin");
+C:\Users\glaub\palpitaco\backend\scripts\fixFederalContestDuplicates.js:95: admin.initializeApp();
+C:\Users\glaub\palpitaco\backend\scripts\importKingApostas.js:63: * - GOOGLE_APPLICATION_CREDENTIALS estiver ausente, OU
+C:\Users\glaub\palpitaco\backend\scripts\importKingApostas.js:70: const current = String(process.env.GOOGLE_APPLICATION_CREDENTIALS || "").trim();
+C:\Users\glaub\palpitaco\backend\scripts\importKingApostas.js:84: delete process.env.GOOGLE_APPLICATION_CREDENTIALS;
+C:\Users\glaub\palpitaco\backend\scripts\importKingApostas.js:86: process.env.GOOGLE_APPLICATION_CREDENTIALS = "";
+C:\Users\glaub\palpitaco\backend\scripts\importKingApostas.js:96: .filter((f) => /^palpitacojb-app-firebase-adminsdk-.*\.json$/i.test(f))
+C:\Users\glaub\palpitaco\backend\scripts\importKingApostas.js:125: process.env.GOOGLE_APPLICATION_CREDENTIALS = cwdPick;
+C:\Users\glaub\palpitaco\backend\scripts\importKingApostas.js:135: process.env.GOOGLE_APPLICATION_CREDENTIALS = pick1;
+C:\Users\glaub\palpitaco\backend\scripts\listDrawDuplicates.js:5: const admin = require("firebase-admin");
+C:\Users\glaub\palpitaco\backend\scripts\listDrawDuplicates.js:122: if (!admin.apps.length) admin.initializeApp();
+C:\Users\glaub\palpitaco\backend\secrets\serviceAccount.json:4: "private_key_id": "fa107ecc35a3d40c825aebe1d44ab3d4bf17f977",
+C:\Users\glaub\palpitaco\backend\secrets\serviceAccount.json:5: "private_key": "[OCULTO]",
+C:\Users\glaub\palpitaco\backend\secrets\serviceAccount.json:6: "client_email": "[OCULTO]",
+C:\Users\glaub\palpitaco\backend\secrets\serviceAccount.json:11: "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/firebase-adminsdk-fbsvc%40palpitacojb-app.iam.gserviceaccount.com",
+C:\Users\glaub\palpitaco\backend\service\firebaseAdmin.js:6: const admin = require("firebase-admin");
+C:\Users\glaub\palpitaco\backend\service\firebaseAdmin.js:91: if (sa && typeof sa.private_key =[OCULTO]
+C:\Users\glaub\palpitaco\backend\service\firebaseAdmin.js:93: sa.private_key = [OCULTO], "\n");
+C:\Users\glaub\palpitaco\backend\service\firebaseAdmin.js:98: function isValidServiceAccount(sa) {
+C:\Users\glaub\palpitaco\backend\service\firebaseAdmin.js:103: typeof sa.client_email =[OCULTO]
+C:\Users\glaub\palpitaco\backend\service\firebaseAdmin.js:104: typeof sa.private_key =[OCULTO]
+C:\Users\glaub\palpitaco\backend\service\firebaseAdmin.js:105: sa.client_email.includes("@") &&
+C:\Users\glaub\palpitaco\backend\service\firebaseAdmin.js:106: sa.private_key.includes("BEGIN PRIVATE KEY") &&
+C:\Users\glaub\palpitaco\backend\service\firebaseAdmin.js:107: sa.private_key.includes("END PRIVATE KEY")
+C:\Users\glaub\palpitaco\backend\service\firebaseAdmin.js:112: * Procura candidatos comuns quando GOOGLE_APPLICATION_CREDENTIALS está errado.
+C:\Users\glaub\palpitaco\backend\service\firebaseAdmin.js:113: * - backend/*.json com "firebase-adminsdk" no nome
+C:\Users\glaub\palpitaco\backend\service\firebaseAdmin.js:114: * - backend/serviceAccount*.json
+C:\Users\glaub\palpitaco\backend\service\firebaseAdmin.js:115: * - backend/serviceAccount.json
+C:\Users\glaub\palpitaco\backend\service\firebaseAdmin.js:116: * - <repo>/_secrets/palpitaco/firebase-admin.json (se existir)
+C:\Users\glaub\palpitaco\backend\service\firebaseAdmin.js:135: if (lower.includes("firebase-adminsdk") || lower.startsWith("serviceaccount")) {
+C:\Users\glaub\palpitaco\backend\service\firebaseAdmin.js:138: if (lower === "serviceaccount.json") {
+C:\Users\glaub\palpitaco\backend\service\firebaseAdmin.js:146: // 2) _secrets/palpitaco/firebase-admin.json
+C:\Users\glaub\palpitaco\backend\service\firebaseAdmin.js:148: const p = path.join(repoDir, "_secrets", "palpitaco", "firebase-admin.json");
+C:\Users\glaub\palpitaco\backend\service\firebaseAdmin.js:159: const rawEnv = String(process.env.GOOGLE_APPLICATION_CREDENTIALS || "").trim();
+C:\Users\glaub\palpitaco\backend\service\firebaseAdmin.js:190: process.env.GOOGLE_APPLICATION_CREDENTIALS = auto;
+C:\Users\glaub\palpitaco\backend\service\firebaseAdmin.js:192: "[WARN] GOOGLE_APPLICATION_CREDENTIALS inválido. Usando automaticamente:",
+C:\Users\glaub\palpitaco\backend\service\firebaseAdmin.js:207: `GOOGLE_APPLICATION_CREDENTIALS aponta para caminho inexistente:\n${p}\n\n` +
+C:\Users\glaub\palpitaco\backend\service\firebaseAdmin.js:210: `GOOGLE_APPLICATION_CREDENTIALS=C:\\Users\\glaub\\palpitaco\\backend\\SEU_ARQUIVO.json`
+C:\Users\glaub\palpitaco\backend\service\firebaseAdmin.js:217: function readServiceAccountFromEnv() {
+C:\Users\glaub\palpitaco\backend\service\firebaseAdmin.js:223: if (!isValidServiceAccount(sa)) {
+C:\Users\glaub\palpitaco\backend\service\firebaseAdmin.js:244: if (!isValidServiceAccount(sa)) {
+C:\Users\glaub\palpitaco\backend\service\firebaseAdmin.js:280: const saFromEnv = readServiceAccountFromEnv();
+C:\Users\glaub\palpitaco\backend\service\firebaseAdmin.js:284: admin.initializeApp({
+C:\Users\glaub\palpitaco\backend\service\firebaseAdmin.js:285: credential: admin.credential.cert(saFromEnv),
+C:\Users\glaub\palpitaco\backend\service\firebaseAdmin.js:293: if (process.env.GOOGLE_APPLICATION_CREDENTIALS) {
+C:\Users\glaub\palpitaco\backend\service\firebaseAdmin.js:298: if (!isValidServiceAccount(json)) {
+C:\Users\glaub\palpitaco\backend\service\firebaseAdmin.js:304: admin.initializeApp({
+C:\Users\glaub\palpitaco\backend\service\firebaseAdmin.js:305: credential: admin.credential.cert(json),
+C:\Users\glaub\palpitaco\backend\service\firebaseAdmin.js:315: admin.initializeApp({
+C:\Users\glaub\palpitaco\backend\service\firebaseAdmin.js:316: credential: admin.credential.applicationDefault(),
+C:\Users\glaub\palpitaco\backend\service\firebaseAdmin.js:326: "- GOOGLE_APPLICATION_CREDENTIALS\n\n" +
+C:\Users\glaub\palpitaco\backend\package-lock.json:16: "firebase-admin": "^13.6.0"
+C:\Users\glaub\palpitaco\backend\package-lock.json:1653: "node_modules/firebase-admin": {
+C:\Users\glaub\palpitaco\backend\package-lock.json:1655: "resolved": "https://registry.npmjs.org/firebase-admin/-/firebase-admin-13.6.0.tgz",
+C:\Users\glaub\palpitaco\backend\package.json:16: "firebase-admin": "^13.6.0"
+C:\Users\glaub\palpitaco\backend\server.js:201: const json = process.env.GOOGLE_APPLICATION_CREDENTIALS_JSON;
+C:\Users\glaub\palpitaco\backend\server.js:202: if (json && !process.env.GOOGLE_APPLICATION_CREDENTIALS) {
+C:\Users\glaub\palpitaco\backend\server.js:205: process.env.GOOGLE_APPLICATION_CREDENTIALS = tmp;
+C:\Users\glaub\palpitaco\backend\server.js:212: const credPath = process.env.GOOGLE_APPLICATION_CREDENTIALS || "";
+C:\Users\glaub\palpitaco\backend\server.js:214: console.warn("[WARN] GOOGLE_APPLICATION_CREDENTIALS não definido. Admin SDK pode falhar.");
+C:\Users\glaub\palpitaco\backend\server.js:216: console.log("[INFO] GOOGLE_APPLICATION_CREDENTIALS:", credPath);
+C:\Users\glaub\palpitaco\backend\server.js:221: console.log("[OK] Firebase Admin inicializado (applicationDefault).");
+C:\Users\glaub\palpitaco\backend\server.js:426: const admin = require("firebase-admin");
+C:\Users\glaub\palpitaco\src\services\firebase.js:2: import { initializeApp, getApps, getApp } from "firebase/app";
+C:\Users\glaub\palpitaco\src\services\firebase.js:67: return initializeApp(firebaseConfig);
+
+====================================================================================================
+4. ARQUIVOS DE CREDENCIAL POSSÍVEIS
+====================================================================================================
+ATENÇÃO: somente caminho, tamanho e data. O conteúdo não será exibido.
+
+FullName                                                                                 Length LastWriteTime
+--------                                                                                 ------ -------------
+C:\Users\glaub\.config\configstore\firebase-tools.json                                     3305 24/07/2026 11:33:36
+C:\Users\glaub\.config\configstore\update-notifier-firebase-tools.json                      165 24/07/2026 11:33:33
+C:\Users\glaub\palpitaco\_secrets\palpitaco\firebase-admin.json                            2385 16/01/2026 13:05:25
+C:\Users\glaub\palpitaco\backend\secrets\serviceAccount.json                               2385 01/02/2026 15:17:34
+C:\Users\glaub\palpitaco\firebase.json                                                      213 01/03/2026 10:44:11
+C:\Users\glaub\palpitaco\secrets\palpitacojb-app-firebase-adminsdk-fbsvc-fa107ecc35.json   2385 01/02/2026 15:17:34
+
+
+
+====================================================================================================
+5. SCRIPTS QUE JÁ ACESSAM FIRESTORE
+====================================================================================================
+C:\Users\glaub\palpitaco\backend\scripts\auditFederalContestDuplicates.js
+C:\Users\glaub\palpitaco\backend\scripts\fixFederalContestDuplicates.js
+C:\Users\glaub\palpitaco\backend\scripts\listDrawDuplicates.js
+C:\Users\glaub\palpitaco\backend\server.js
+C:\Users\glaub\palpitaco\backend\service\firebaseAdmin.js

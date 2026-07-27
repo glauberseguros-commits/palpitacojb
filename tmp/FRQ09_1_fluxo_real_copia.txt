@@ -1,0 +1,234 @@
+
+==============================================================================================================
+1. ESTADOS USESTATE DO COMPONENTE
+==============================================================================================================
+const [lotteryKey, setLotteryKey] = useState("PT_RIO");
+  const [mode, setMode] = useState("dezena");
+  const [rankingView, setRankingView] = useState("frequentes");
+
+  const [bounds, setBounds] = useState({
+    minYmd: "",
+    maxYmd: "",
+    source: "",
+  });
+
+  const [range, setRange] = useState({
+    from: "",
+    to: "",
+  });
+
+  const [month, setMonth] = useState("Todos");
+  const [monthDay, setMonthDay] = useState("Todos");
+  const [weekday, setWeekday] = useState("Todos");
+  const [schedule, setSchedule] = useState("Todos");
+  const [animal, setAnimal] = useState("Todos");
+  const [position, setPosition] = useState("Todos");
+
+  const [sort, setSort] = useState("count_desc");
+  const [limit, setLimit] = useState("25");
+
+  const [loading, setLoading] = useState(false);
+  const [progress, setProgress] = useState({
+    done: 0,
+    total: 0,
+  });
+
+  const [error, setError] = useState("");
+  const [rows, setRows] = useState([]);
+  const [meta, setMeta] = useState({
+    draws: 0,
+    prizes: 0,
+    occurrences: 0,
+  });
+
+==============================================================================================================
+2. FUNÇÃO COPYRANKING COMPLETA
+==============================================================================================================
+const copyRanking = useCallback(async () => {
+    const lines = [];
+
+    if (isUnseenView) {
+      lines.push(
+        "MILHARES INÉDITAS",
+        "",
+        "Loteria: " + selectedLottery.label,
+        "Período: " +
+          ymdToBr(safeRange.from) +
+          " até " +
+          ymdToBr(safeRange.to),
+        "Quantidade: " +
+          formatInteger(unseenRows.length),
+        ""
+      );
+
+      visibleUnseenRows.forEach((row, index) => {
+        lines.push(
+          String(index + 1) +
+            "º - " +
+            row.key +
+            " - Grupo " +
+            pad2(row.group) +
+            " - " +
+            row.animal
+        );
+      });
+    } else {
+      const title =
+        mode === "dezena"
+          ? "RANKING DE DEZENAS"
+          : mode === "centena"
+          ? "RANKING DE CENTENAS"
+          : mode === "milhar"
+          ? "RANKING DE MILHARES"
+          : "RANKING DE ANIMAIS";
+
+      lines.push(
+        title,
+        "",
+        "Loteria: " + selectedLottery.label,
+        "Período: " +
+          ymdToBr(safeRange.from) +
+          " até " +
+          ymdToBr(safeRange.to),
+        ""
+      );
+
+      sortedRows.forEach((row, index) => {
+        const label = itemLabel(mode, row.key);
+
+        lines.push(
+          String(index + 1) +
+            "º - " +
+            label.main +
+            " - " +
+            formatInteger(row.count) +
+            " ocorrência(s)"
+        );
+      });
+    }
+
+    try {
+      await navigator.clipboard.writeText(
+        lines.join("\n")
+      );
+
+      alert(
+        isUnseenView
+          ? "Milhares inéditas copiadas."
+          : "Ranking copiado."
+      );
+    } catch {
+      alert(
+        "Não foi possível copiar automaticamente."
+      );
+    }
+  }, [
+    isUnseenView,
+    mode,
+    selectedLottery,
+    safeRange,
+    sortedRows,
+    unseenRows,
+    visibleUnseenRows,
+  ]);
+
+==============================================================================================================
+3. ALERTS, CLIPBOARD E MENSAGENS DE CÓPIA
+==============================================================================================================
+1292:   const copyRanking = useCallback(async () => {
+1356:       await navigator.clipboard.writeText(
+1360:       alert(
+1362:           ? "Milhares inéditas copiadas."
+1363:           : "Ranking copiado."
+1366:       alert(
+2214:                 onClick={copyRanking}
+
+==============================================================================================================
+4. BOTÃO COPIAR COMPLETO
+==============================================================================================================
+<button
+                type="button"
+                className="ppStatsAnalyze"
+                onClick={copyRanking}
+              >
+                Copiar
+              </button>
+
+==============================================================================================================
+5. CONTEXTO DA TOOLBAR
+==============================================================================================================
+iv className="ppStatsToolbar">
+            <div className="ppStatsToolbarGroup">
+              <label>Ordenar</label>
+              <select
+                value={sort}
+                onChange={(event) =>
+                  setSort(event.target.value)
+                }
+              >
+                {(isUnseenView
+                  ? SORTS.filter((item) =>
+                      [
+                        "number_asc",
+                        "number_desc",
+                      ].includes(item.value)
+                    )
+                  : SORTS
+                ).map((item) => (
+                  <option
+                    key={item.value}
+                    value={item.value}
+                  >
+                    {item.label}
+                  </option>
+                ))}
+              </select>
+            </div>
+
+            <div className="ppStatsToolbarGroup">
+
+              <button
+                type="button"
+                className="ppStatsAnalyze"
+                onClick={copyRanking}
+              >
+                Copiar
+              </button>
+
+              <label>Exibir</label>
+              <select
+                value={limit}
+                onChange={(event) =>
+                  setLimit(event.target.value)
+                }
+              >
+                <option value="10">Top 10</option>
+                <option value="25">Top 25</option>
+                <option value="50">Top 50</option>
+                <option value="0">Todos</option>
+              </select>
+            </div>
+          </div>
+
+          <div className="ppStatsTableWrap">
+            <table className="ppStatsTable">
+              <thead>
+                <tr>
+                  {isUnseenView ? (
+                    <>
+                      <th style={{ width: 90 }}>
+                        Ordem
+                      </th>
+                      <th style={{ width: 180 }}>
+                        Milhar
+                      </th>
+
+==============================================================================================================
+6. INFORMAÇÕES DO ARQUIVO
+==============================================================================================================
+Linhas: 2415
+Caracteres: 57595
+Possui rankingView: True
+Possui inéditas: True
+Quantidade de alert(: 2
+Quantidade de onClick={copyRanking}: 1

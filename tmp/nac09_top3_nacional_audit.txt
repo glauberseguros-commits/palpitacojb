@@ -1,0 +1,1294 @@
+===== NAC-09 — AUDITORIA TOP3 NACIONAL =====
+
+============================================================
+ARQUIVOS TOP3
+============================================================
+
+C:\Users\glaub\palpitaco\src\pages\Top3\top3.chain.js
+C:\Users\glaub\palpitaco\src\pages\Top3\top3.constants.js
+C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js
+C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js
+C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.js
+C:\Users\glaub\palpitaco\src\pages\Top3\top3.firestore.js
+C:\Users\glaub\palpitaco\src\pages\Top3\top3.formatters.js
+C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js
+C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js.bak_transition19_20260718_205016
+C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js.bak_transition19_20260718_205053
+C:\Users\glaub\palpitaco\src\pages\Top3\top3.images.js
+C:\Users\glaub\palpitaco\src\pages\Top3\Top3.jsx
+C:\Users\glaub\palpitaco\src\pages\Top3\top3.public-api.js
+C:\Users\glaub\palpitaco\src\pages\Top3\top3.selectors.js
+C:\Users\glaub\palpitaco\src\pages\Top3\top3.storage.js
+C:\Users\glaub\palpitaco\src\pages\Top3\Top3View.jsx
+C:\Users\glaub\palpitaco\src\pages\Top3\Top3View.jsx.bak_history_from_timeline_20260326_131646
+C:\Users\glaub\palpitaco\src\pages\Top3\Top3View.premium.backup.jsx
+C:\Users\glaub\palpitaco\src\pages\Top3\modules\top3.analytics.js
+C:\Users\glaub\palpitaco\src\pages\Top3\modules\top3.loader.js
+C:\Users\glaub\palpitaco\src\pages\Top3\modules\top3.prediction.js
+C:\Users\glaub\palpitaco\src\pages\Top3\modules\top3.state.js
+C:\Users\glaub\palpitaco\src\pages\Top3\modules\top3.timeline.js
+C:\Users\glaub\palpitaco\src\pages\Top3\modules\top3.viewmodel.js
+C:\Users\glaub\palpitaco\src\pages\Top3\modules\scoreEngine\contextEvidence.js
+C:\Users\glaub\palpitaco\src\pages\Top3\modules\scoreEngine\evidenceEngine.js
+C:\Users\glaub\palpitaco\src\pages\Top3\modules\scoreEngine\frequencyEvidence.js
+C:\Users\glaub\palpitaco\src\pages\Top3\modules\scoreEngine\scoreConfig.js
+C:\Users\glaub\palpitaco\src\pages\Top3\modules\scoreEngine\scoreEngineV2.backup.js
+C:\Users\glaub\palpitaco\src\pages\Top3\modules\scoreEngine\scoreEngineV2.js
+C:\Users\glaub\palpitaco\src\pages\Top3\__tests__\top3.backtest.layers.test.js
+C:\Users\glaub\palpitaco\src\pages\Top3\__tests__\top3.backtest.test.js
+C:\Users\glaub\palpitaco\src\pages\Top3\__tests__\top3.public-api.node.test.js
+C:\Users\glaub\palpitaco\src\pages\Top3\__tests__\top3.schedule-calendar-rules.node.test.js
+C:\Users\glaub\palpitaco\src\pages\Top3\__tests__\top3.schedule-transition.test.js
+
+============================================================
+REFERÊNCIAS À NACIONAL
+============================================================
+
+backend/routes/bounds.js:21:  if (["NACIONAL", "LT_NACIONAL", "LT-NACIONAL"].includes(s)) {
+backend/routes/bounds.js:22:    return "NACIONAL";
+backend/routes/pitacoResults.js:80:    s === "NACIONAL" ||
+backend/routes/pitacoResults.js:81:    s === "LT_NACIONAL" ||
+backend/routes/pitacoResults.js:82:    s === "LT-NACIONAL" ||
+backend/routes/pitacoResults.js:83:    s === "LT NACIONAL"
+backend/routes/pitacoResults.js:85:    return "NACIONAL";
+backend/routes/pitacoResults.js:615:      hint: "Use: ?date=YYYY-MM-DD&lottery=PT_RIO|FEDERAL|LOOK|NACIONAL  (ou)  ?date=YYYY-MM-DD&uf=RJ|BR",
+backend/routes/pitacoResults.js:648:        error: "lottery inv├ílida: " + lotteryRaw + " (use lottery=PT_RIO|FEDERAL|LOOK|NACIONAL ou aliases RJ|BR)",
+backend/scripts/autoImportToday.js:160:  NACIONAL: [
+backend/scripts/importKingApostas.js:230:const NACIONAL_STATE_CODE = "BR";
+backend/scripts/importKingApostas.js:231:const NACIONAL_LOTTERY_KEY = "NACIONAL";
+backend/scripts/importKingApostas.js:239:  if (lk === NACIONAL_LOTTERY_KEY) return NACIONAL_STATE_CODE;
+backend/scripts/importKingApostas.js:407: * NACIONAL:
+backend/scripts/importKingApostas.js:418:  if (lk !== "NACIONAL") {
+backend/scripts/importKingApostas.js:506: * - KING_LOTTERIES_NACIONAL="uuid1,uuid2,..."
+backend/scripts/importKingApostas.js:528:    NACIONAL: [
+backend/scripts/importKingApostas.js:570:      process.env.KING_LOTTERIES_NACIONAL || ""
+backend/scripts/importKingApostas.js:577:      if (arrNacional.length) LOTTERIES_BY_KEY.NACIONAL = arrNacional;
+backend/scripts/importKingApostas.js:593:          `NACIONAL lotteries=${counts.NACIONAL}`
+backend/scripts/importKingApostas.js:1868:      "Uso: node backend/scripts/importKingApostas.js YYYY-MM-DD [PT_RIO|FEDERAL|LOOK|NACIONAL] [HH:MM]"
+backend/scripts/importKingApostas.js:1875:      "Uso: node backend/scripts/importKingApostas.js YYYY-MM-DD [PT_RIO|FEDERAL|LOOK|NACIONAL] [HH:MM]"
+backend/scripts/importKingApostas.js:1891:      "Uso: node backend/scripts/importKingApostas.js YYYY-MM-DD [PT_RIO|FEDERAL|LOOK|NACIONAL] [HH:MM]"
+src/pages/Top3/Top3View.jsx:1345:    { value: "NACIONAL", label: "Nacional" },
+src/pages/Top3/Top3View.jsx:1366:    map.get("NACIONAL"),
+src/pages/Top3/Top3View.jsx:1373:          "NACIONAL",
+src/pages/Top3/top3.constants.js:22:  { key: "NACIONAL", value: "NACIONAL", label: "Nacional" },
+
+============================================================
+AGENDA E HORÁRIOS
+============================================================
+
+src/pages/Top3/__tests__/top3.public-api.node.test.js:61:        ["09h", "11h", "14h"],
+src/pages/Top3/top3.constants.js:27:  "09:00",
+src/pages/Top3/top3.constants.js:30:  "16:00",
+src/pages/Top3/top3.constants.js:32:  "21:00",
+src/pages/Top3/top3.constants.js:36:  "09:00",
+src/pages/Top3/top3.constants.js:39:  "16:00",
+src/pages/Top3/top3.constants.js:49:  "09:00",
+src/pages/Top3/top3.constants.js:52:  "16:00",
+src/pages/Top3/top3.constants.js:54:  "21:00",
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:1138:    (transition === "11h->14h" || transition === "14h->16h");
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:1138:    (transition === "11h->14h" || transition === "14h->16h");
+src/pages/Top3/top3.engine.js:296:        return h === "14:00" || h === "16:00";
+src/pages/Top3/top3.engine.js:1254:    (transition === "11h->14h" || transition === "14h->16h");
+
+============================================================
+LOTTERY KEY E FILTROS
+============================================================
+
+src/pages/Top3/Top3View.jsx:1232:    lotteryKeySafe,
+src/pages/Top3/Top3View.jsx:1382:  const curLot = String(lotteryKeySafe || "PT_RIO").toUpperCase();
+src/pages/Top3/Top3View.premium.backup.jsx:968:    lotteryKeySafe,
+src/pages/Top3/Top3View.premium.backup.jsx:1103:  const curLot = String(lotteryKeySafe || "PT_RIO").toUpperCase();
+src/pages/Top3/__tests__/top3.backtest.layers.test.js:154:  const bounds = await getKingBoundsByUf({ uf: "PT_RIO" });
+src/pages/Top3/__tests__/top3.backtest.layers.test.js:162:    uf: "PT_RIO",
+src/pages/Top3/__tests__/top3.backtest.layers.test.js:191:      lotteryKey: "PT_RIO",
+src/pages/Top3/__tests__/top3.backtest.layers.test.js:202:      lotteryKey: "PT_RIO",
+src/pages/Top3/__tests__/top3.backtest.layers.test.js:221:      lotteryKey: "PT_RIO",
+src/pages/Top3/__tests__/top3.backtest.test.js:165:  const bounds = await getKingBoundsByUf({ uf: "PT_RIO" });
+src/pages/Top3/__tests__/top3.backtest.test.js:174:    uf: "PT_RIO",
+src/pages/Top3/__tests__/top3.backtest.test.js:202:      lotteryKey: "PT_RIO",
+src/pages/Top3/__tests__/top3.backtest.test.js:213:      lotteryKey: "PT_RIO",
+src/pages/Top3/__tests__/top3.backtest.test.js:229:      lotteryKey: "PT_RIO",
+src/pages/Top3/__tests__/top3.public-api.node.test.js:69:        lotteryKey: "PT_RIO",
+src/pages/Top3/__tests__/top3.public-api.node.test.js:88:        lotteryKey: "PT_RIO",
+src/pages/Top3/modules/scoreEngine/contextEvidence.js:22:    if (ctx.lotteryKey)
+src/pages/Top3/modules/scoreEngine/contextEvidence.js:23:        reasons.push(`Loteria: ${ctx.lotteryKey}`);
+src/pages/Top3/modules/scoreEngine/contextEvidence.js:44:        lotteryKey: context.lotteryKey || null,
+src/pages/Top3/modules/scoreEngine/frequencyEvidence.js:108:      lotteryKey: context.lotteryKey || null,
+src/pages/Top3/modules/scoreEngine/scoreEngineV2.backup.js:26:      reasons: ["Sem evid├¬ncias suficientes."],
+src/pages/Top3/modules/scoreEngine/scoreEngineV2.js:98:      reasons: ["Sem evid├¬ncias suficientes."],
+src/pages/Top3/modules/top3.analytics.js:99:  lotteryKeySafe,
+src/pages/Top3/modules/top3.analytics.js:108:  const lotteryKey = String(lotteryKeySafe || "").trim();
+src/pages/Top3/modules/top3.analytics.js:113:  if (!rawList.length || !drawLast || !lotteryKey) {
+src/pages/Top3/modules/top3.analytics.js:144:          lotteryKey,
+src/pages/Top3/modules/top3.analytics.js:170:    lotteryKey,
+src/pages/Top3/modules/top3.analytics.js:194:      lotteryKey,
+src/pages/Top3/modules/top3.loader.js:6:  lotteryKey,
+src/pages/Top3/modules/top3.loader.js:9:  uf,
+src/pages/Top3/modules/top3.loader.js:11:  const key = String(lotteryKey || "").trim().toUpperCase();
+src/pages/Top3/modules/top3.loader.js:12:  const safeUf = String(uf || "").trim().toUpperCase();
+src/pages/Top3/modules/top3.loader.js:28:      uf: safeUf,
+src/pages/Top3/modules/top3.loader.js:37:    lotteryKey: key,
+src/pages/Top3/modules/top3.loader.js:45:  uf,
+src/pages/Top3/modules/top3.loader.js:50:  const safeUf = String(uf || "").trim().toUpperCase();
+src/pages/Top3/modules/top3.loader.js:58:      uf: safeUf,
+src/pages/Top3/modules/top3.state.js:8:  const [lotteryKey, setLotteryKey] = useState(
+src/pages/Top3/modules/top3.state.js:51:    lotteryKey,
+src/pages/Top3/modules/top3.timeline.js:125:  lotteryKeySafe,
+src/pages/Top3/modules/top3.timeline.js:143:    lotteryKey: lotteryKeySafe,
+src/pages/Top3/modules/top3.timeline.js:151:    lotteryKey: lotteryKeySafe,
+src/pages/Top3/modules/top3.timeline.js:160:        Loteria: timelineAudit.lotteryKey,
+src/pages/Top3/modules/top3.timeline.js:205:              lotteryKey: lotteryKeySafe,
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:233:  lotteryKey,
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:239:  const key = safeStr(lotteryKey).toUpperCase();
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:298:  lotteryKey,
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:327:      lotteryKey,
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:335:      safeStr(lotteryKey).toUpperCase() === "FEDERAL" &&
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:342:      uf: lotteryKey,
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:368:  lotteryKey,
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:376:  const key = safeStr(lotteryKey).toUpperCase();
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:386:        lotteryKey: key,
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:400:    lotteryKey: key,
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:419:      lotteryKey: key,
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:438:  lotteryKey,
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:447:  const key = safeStr(lotteryKey).toUpperCase();
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:462:        lotteryKey: key,
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:508:      lotteryKey: key,
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:526:        lotteryKey: key,
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:685:  lotteryKey,
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:691:  const key = safeStr(lotteryKey).toUpperCase();
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:870:  lotteryKey,
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:877:  const key = safeStr(lotteryKey).toUpperCase();
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:967:  lotteryKey,
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:982:    lotteryKey,
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:1009:      lotteryKey,
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:1020:      lotteryKey,
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:1083:  lotteryKey,
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:1098:  const key = safeStr(lotteryKey).toUpperCase();
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:1114:    lotteryKey,
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:1145:    lotteryKey,
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:1447:  lotteryKey,
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:1453:  const key = safeStr(lotteryKey).toUpperCase();
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:1491:  lotteryKey,
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:1496:  const key = safeStr(lotteryKey).toUpperCase();
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:1514:  lotteryKey,
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:1520:    lotteryKey,
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:1580:  lotteryKey,
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:1588:    lotteryKey,
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:1685:  lotteryKey,
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:1692:    lotteryKey,
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:1730:  lotteryKey,
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:1737:    lotteryKey,
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:1776:  lotteryKey,
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:1782:  return getComparableDrawsForTargetContext(draws, lotteryKey, targetHour, targetDow)
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:1937:  lotteryKey,
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:1944:    lotteryKey,
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:2031:  lotteryKey,
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:2043:    lotteryKey,
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:2066:  const key = safeStr(lotteryKey).toUpperCase();
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:2203:  lotteryKey,
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:2219:  const key = safeStr(lotteryKey).toUpperCase();
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:2235:    lotteryKey,
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:2270:    lotteryKey: key,
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:2287:    lotteryKey,
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:2353:    lotteryKey: key,
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:2881:  lotteryKey,
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:2894:  const key = safeStr(lotteryKey).toUpperCase();
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:2911:    lotteryKey: key,
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:2981:      lotteryKey: key,
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:3112:      lotteryKey,
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:3842:  lotteryKey = "",
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:3907:    lotteryKey,
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:3938:  lotteryKey,
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:3950:    lotteryKey,
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:4107:      lotteryKey,
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:4165:  lotteryKey,
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:4188:      lotteryKey,
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:4199:    lotteryKey,
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:233:  lotteryKey,
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:239:  const key = safeStr(lotteryKey).toUpperCase();
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:298:  lotteryKey,
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:327:      lotteryKey,
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:335:      safeStr(lotteryKey).toUpperCase() === "FEDERAL" &&
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:342:      uf: lotteryKey,
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:368:  lotteryKey,
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:376:  const key = safeStr(lotteryKey).toUpperCase();
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:386:        lotteryKey: key,
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:400:    lotteryKey: key,
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:419:      lotteryKey: key,
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:438:  lotteryKey,
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:447:  const key = safeStr(lotteryKey).toUpperCase();
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:462:        lotteryKey: key,
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:508:      lotteryKey: key,
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:526:        lotteryKey: key,
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:685:  lotteryKey,
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:691:  const key = safeStr(lotteryKey).toUpperCase();
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:870:  lotteryKey,
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:877:  const key = safeStr(lotteryKey).toUpperCase();
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:967:  lotteryKey,
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:982:    lotteryKey,
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:1009:      lotteryKey,
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:1020:      lotteryKey,
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:1083:  lotteryKey,
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:1098:  const key = safeStr(lotteryKey).toUpperCase();
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:1114:    lotteryKey,
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:1145:    lotteryKey,
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:1447:  lotteryKey,
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:1453:  const key = safeStr(lotteryKey).toUpperCase();
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:1491:  lotteryKey,
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:1496:  const key = safeStr(lotteryKey).toUpperCase();
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:1514:  lotteryKey,
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:1520:    lotteryKey,
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:1580:  lotteryKey,
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:1588:    lotteryKey,
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:1685:  lotteryKey,
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:1692:    lotteryKey,
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:1730:  lotteryKey,
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:1737:    lotteryKey,
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:1776:  lotteryKey,
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:1782:  return getComparableDrawsForTargetContext(draws, lotteryKey, targetHour, targetDow)
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:1937:  lotteryKey,
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:1944:    lotteryKey,
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:2031:  lotteryKey,
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:2043:    lotteryKey,
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:2066:  const key = safeStr(lotteryKey).toUpperCase();
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:2203:  lotteryKey,
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:2219:  const key = safeStr(lotteryKey).toUpperCase();
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:2235:    lotteryKey,
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:2270:    lotteryKey: key,
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:2287:    lotteryKey,
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:2353:    lotteryKey: key,
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:2881:  lotteryKey,
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:2894:  const key = safeStr(lotteryKey).toUpperCase();
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:2911:    lotteryKey: key,
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:2981:      lotteryKey: key,
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:3112:      lotteryKey,
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:3842:  lotteryKey = "",
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:3907:    lotteryKey,
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:3938:  lotteryKey,
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:3950:    lotteryKey,
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:4107:      lotteryKey,
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:4165:  lotteryKey,
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:4188:      lotteryKey,
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:4199:    lotteryKey,
+src/pages/Top3/top3.engine.js:346:  lotteryKey,
+src/pages/Top3/top3.engine.js:352:  const key = safeStr(lotteryKey).toUpperCase();
+src/pages/Top3/top3.engine.js:414:  lotteryKey,
+src/pages/Top3/top3.engine.js:443:      lotteryKey,
+src/pages/Top3/top3.engine.js:451:      safeStr(lotteryKey).toUpperCase() === "FEDERAL" &&
+src/pages/Top3/top3.engine.js:458:      uf: lotteryKey,
+src/pages/Top3/top3.engine.js:484:  lotteryKey,
+src/pages/Top3/top3.engine.js:492:  const key = safeStr(lotteryKey).toUpperCase();
+src/pages/Top3/top3.engine.js:502:        lotteryKey: key,
+src/pages/Top3/top3.engine.js:516:    lotteryKey: key,
+src/pages/Top3/top3.engine.js:535:      lotteryKey: key,
+src/pages/Top3/top3.engine.js:554:  lotteryKey,
+src/pages/Top3/top3.engine.js:563:  const key = safeStr(lotteryKey).toUpperCase();
+src/pages/Top3/top3.engine.js:578:        lotteryKey: key,
+src/pages/Top3/top3.engine.js:624:      lotteryKey: key,
+src/pages/Top3/top3.engine.js:642:        lotteryKey: key,
+src/pages/Top3/top3.engine.js:801:  lotteryKey,
+src/pages/Top3/top3.engine.js:807:  const key = safeStr(lotteryKey).toUpperCase();
+src/pages/Top3/top3.engine.js:986:  lotteryKey,
+src/pages/Top3/top3.engine.js:993:  const key = safeStr(lotteryKey).toUpperCase();
+src/pages/Top3/top3.engine.js:1083:  lotteryKey,
+src/pages/Top3/top3.engine.js:1098:    lotteryKey,
+src/pages/Top3/top3.engine.js:1125:      lotteryKey,
+src/pages/Top3/top3.engine.js:1136:      lotteryKey,
+src/pages/Top3/top3.engine.js:1199:  lotteryKey,
+src/pages/Top3/top3.engine.js:1214:  const key = safeStr(lotteryKey).toUpperCase();
+src/pages/Top3/top3.engine.js:1230:    lotteryKey,
+src/pages/Top3/top3.engine.js:1261:    lotteryKey,
+src/pages/Top3/top3.engine.js:1563:  lotteryKey,
+src/pages/Top3/top3.engine.js:1569:  const key = safeStr(lotteryKey).toUpperCase();
+src/pages/Top3/top3.engine.js:1607:  lotteryKey,
+src/pages/Top3/top3.engine.js:1612:  const key = safeStr(lotteryKey).toUpperCase();
+src/pages/Top3/top3.engine.js:1630:  lotteryKey,
+src/pages/Top3/top3.engine.js:1636:    lotteryKey,
+src/pages/Top3/top3.engine.js:1696:  lotteryKey,
+src/pages/Top3/top3.engine.js:1704:    lotteryKey,
+src/pages/Top3/top3.engine.js:1801:  lotteryKey,
+src/pages/Top3/top3.engine.js:1808:    lotteryKey,
+src/pages/Top3/top3.engine.js:1846:  lotteryKey,
+src/pages/Top3/top3.engine.js:1853:    lotteryKey,
+src/pages/Top3/top3.engine.js:1892:  lotteryKey,
+src/pages/Top3/top3.engine.js:1898:  return getComparableDrawsForTargetContext(draws, lotteryKey, targetHour, targetDow)
+src/pages/Top3/top3.engine.js:2053:  lotteryKey,
+src/pages/Top3/top3.engine.js:2060:    lotteryKey,
+src/pages/Top3/top3.engine.js:2147:  lotteryKey,
+src/pages/Top3/top3.engine.js:2159:    lotteryKey,
+src/pages/Top3/top3.engine.js:2182:  const key = safeStr(lotteryKey).toUpperCase();
+src/pages/Top3/top3.engine.js:2319:  lotteryKey,
+src/pages/Top3/top3.engine.js:2335:  const key = safeStr(lotteryKey).toUpperCase();
+src/pages/Top3/top3.engine.js:2351:    lotteryKey,
+src/pages/Top3/top3.engine.js:2386:    lotteryKey: key,
+src/pages/Top3/top3.engine.js:2403:    lotteryKey,
+src/pages/Top3/top3.engine.js:2469:    lotteryKey: key,
+src/pages/Top3/top3.engine.js:2951:  lotteryKey,
+src/pages/Top3/top3.engine.js:2964:  const key = safeStr(lotteryKey).toUpperCase();
+src/pages/Top3/top3.engine.js:2981:    lotteryKey: key,
+src/pages/Top3/top3.engine.js:3051:      lotteryKey: key,
+src/pages/Top3/top3.engine.js:3182:      lotteryKey,
+src/pages/Top3/top3.engine.js:3890:  lotteryKey = "",
+src/pages/Top3/top3.engine.js:3955:    lotteryKey,
+src/pages/Top3/top3.engine.js:3987:  lotteryKey,
+src/pages/Top3/top3.engine.js:3999:    lotteryKey,
+src/pages/Top3/top3.engine.js:4189:      lotteryKey,
+src/pages/Top3/top3.engine.js:4248:  lotteryKey,
+src/pages/Top3/top3.engine.js:4271:      lotteryKey,
+src/pages/Top3/top3.engine.js:4282:    lotteryKey,
+src/pages/Top3/top3.firestore.js:37:function makePredictionId({ lotteryKey, targetYmd, targetHour }) {
+src/pages/Top3/top3.firestore.js:38:  const lottery = normalizeLotteryKey(lotteryKey);
+src/pages/Top3/top3.firestore.js:210:  lotteryKey,
+src/pages/Top3/top3.firestore.js:238:  const lottery = normalizeLotteryKey(lotteryKey);
+src/pages/Top3/top3.firestore.js:242:    lotteryKey: lottery,
+src/pages/Top3/top3.firestore.js:277:    lotteryKey: lottery,
+src/pages/Top3/top3.firestore.js:321:  lotteryKey,
+src/pages/Top3/top3.firestore.js:325:  const lottery = normalizeLotteryKey(lotteryKey);
+src/pages/Top3/top3.firestore.js:341:        lotteryKey: lottery,
+src/pages/Top3/top3.firestore.js:372:  lotteryKey,
+src/pages/Top3/top3.firestore.js:399:    lotteryKey,
+src/pages/Top3/top3.hooks.js:137:function isDrawValidForLotterySchedule(draw, lotteryKey) {
+src/pages/Top3/top3.hooks.js:144:    lotteryKey,
+src/pages/Top3/top3.hooks.js:160:  lotteryKey,
+src/pages/Top3/top3.hooks.js:179:    if (!isDrawValidForLotterySchedule(d, lotteryKey)) continue;
+src/pages/Top3/top3.hooks.js:203:function sanitizeHistoricalDraws({ draws, lotteryKey, baseDraw }) {
+src/pages/Top3/top3.hooks.js:210:    .filter((d) => isDrawValidForLotterySchedule(d, lotteryKey))
+src/pages/Top3/top3.hooks.js:296:  const [lotteryKey, setLotteryKey] = useState(DEFAULT_LOTTERY);
+src/pages/Top3/top3.hooks.js:335:  const lotteryKeySafe = useMemo(
+src/pages/Top3/top3.hooks.js:336:    () => safeStr(lotteryKey).toUpperCase() || DEFAULT_LOTTERY,
+src/pages/Top3/top3.hooks.js:337:    [lotteryKey]
+src/pages/Top3/top3.hooks.js:370:      lotteryKey: lotteryKeySafe,
+src/pages/Top3/top3.hooks.js:376:  }, [lotteryKeySafe, ymdSafe, loadedYmd, analysisYmd]);
+src/pages/Top3/top3.hooks.js:379:    return lotteryKeySafe === "FEDERAL" && !isFederalDrawDay(ymdSafe);
+src/pages/Top3/top3.hooks.js:380:  }, [lotteryKeySafe, ymdSafe]);
+src/pages/Top3/top3.hooks.js:453:    const lKey = safeStr(lotteryKeySafe).toUpperCase();
+src/pages/Top3/top3.hooks.js:465:      const ufResolved = lKey;
+src/pages/Top3/top3.hooks.js:470:      const cached = boundsCacheRef.current.get(ufResolved);
+src/pages/Top3/top3.hooks.js:476:        const b = await getKingBoundsByUf({ uf: ufResolved });
+src/pages/Top3/top3.hooks.js:484:        boundsCacheRef.current.set(ufResolved, { minDate, maxDate });
+src/pages/Top3/top3.hooks.js:495:          uf: ufResolved,
+src/pages/Top3/top3.hooks.js:506:        lotteryKey: lKey,
+src/pages/Top3/top3.hooks.js:538:        setError("N├úo h├í grade de sorteio v├ílida para esta data/loteria.");
+src/pages/Top3/top3.hooks.js:576:            lotteryKey: lKey,
+src/pages/Top3/top3.hooks.js:593:            "N├úo foi poss├¡vel determinar o primeiro hor├írio v├ílido para esta loteria."
+src/pages/Top3/top3.hooks.js:603:          lotteryKey: lKey,
+src/pages/Top3/top3.hooks.js:620:              lotteryKey: lKey,
+src/pages/Top3/top3.hooks.js:623:              uf: ufResolved,
+src/pages/Top3/top3.hooks.js:661:              uf: ufResolved,
+src/pages/Top3/top3.hooks.js:667:        lotteryKey: lKey,
+src/pages/Top3/top3.hooks.js:676:        lotteryKey: lKey,
+src/pages/Top3/top3.hooks.js:692:          lotteryKey: lKey,
+src/pages/Top3/top3.hooks.js:695:          uf: ufResolved,
+src/pages/Top3/top3.hooks.js:773:        uf: ufResolved,
+src/pages/Top3/top3.hooks.js:842:  }, [lotteryKeySafe, ymdSafe, lookback, resetStateForNoData]);
+src/pages/Top3/top3.hooks.js:846:      lotteryKey: lotteryKeySafe,
+src/pages/Top3/top3.hooks.js:856:      lotteryKey: lotteryKeySafe,
+src/pages/Top3/top3.hooks.js:862:      lotteryKey: lotteryKeySafe,
+src/pages/Top3/top3.hooks.js:864:  }, [timelineYmd, lotteryKeySafe]);
+src/pages/Top3/top3.hooks.js:871:      lotteryKeySafe,
+src/pages/Top3/top3.hooks.js:882:    lotteryKeySafe,
+src/pages/Top3/top3.hooks.js:925:      lotteryKeySafe,
+src/pages/Top3/top3.hooks.js:932:      (lotteryKeySafe === "PT_RIO" || lotteryKeySafe === "RJ") &&
+src/pages/Top3/top3.hooks.js:947:    lotteryKeySafe,
+src/pages/Top3/top3.hooks.js:955:      lotteryKey: lotteryKeySafe,
+src/pages/Top3/top3.hooks.js:1005:      lotteryKey: lotteryKeySafe,
+src/pages/Top3/top3.hooks.js:1015:          lotteryKey: lotteryKeySafe,
+src/pages/Top3/top3.hooks.js:1046:          lotteryKey: lotteryKeySafe,
+src/pages/Top3/top3.hooks.js:1071:    lotteryKeySafe,
+src/pages/Top3/top3.hooks.js:1077:      lotteryKey: lotteryKeySafe,
+src/pages/Top3/top3.hooks.js:1100:          lotteryKey: lotteryKeySafe,
+src/pages/Top3/top3.hooks.js:1121:    lotteryKeySafe,
+src/pages/Top3/top3.hooks.js:1130:      lotteryKey: lotteryKeySafe,
+src/pages/Top3/top3.hooks.js:1156:      lotteryKey: lotteryKeySafe,
+src/pages/Top3/top3.hooks.js:1163:          lotteryKey: lotteryKeySafe,
+src/pages/Top3/top3.hooks.js:1180:    lotteryKeySafe,
+src/pages/Top3/top3.hooks.js:1191:    lotteryKeySafe,
+src/pages/Top3/top3.selectors.js:153:export function lotteryLabel(lotteryKey) {
+src/pages/Top3/top3.selectors.js:154:  const k = safeStr(lotteryKey).toUpperCase();
+src/pages/Top3/top3.storage.js:314:function ensureDayTimeline({ ymd, lotteryKey }) {
+src/pages/Top3/top3.storage.js:318:    lotteryKey,
+
+============================================================
+CARREGAMENTO DE RESULTADOS
+============================================================
+
+src/pages/Top3/Top3View.jsx:675:    const payload = flat20.join(" ").trim();
+src/pages/Top3/Top3View.jsx:676:    if (!payload) return;
+src/pages/Top3/Top3View.jsx:678:    const ok = await copyText(payload);
+src/pages/Top3/Top3View.jsx:1222:    loading,
+src/pages/Top3/Top3View.jsx:1240:    loadedYmd,
+src/pages/Top3/Top3View.jsx:1386:  const historyAnchorYmd = useMemo(() => {
+src/pages/Top3/Top3View.jsx:1387:  const loaded = String(loadedYmd || "").trim();
+src/pages/Top3/Top3View.jsx:1388:  if (isYMD(loaded)) return loaded;
+src/pages/Top3/Top3View.jsx:1404:}, [loadedYmd, ymdSafe, timeline]);
+src/pages/Top3/Top3View.jsx:1406:  const historyRows = useMemo(() => {
+src/pages/Top3/Top3View.jsx:1415:          String(entry?.targetYmd || "").trim() === historyAnchorYmd
+src/pages/Top3/Top3View.jsx:1469:  if (!Array.isArray(timeline) || !timeline.length || !historyAnchorYmd) {
+src/pages/Top3/Top3View.jsx:1474:    .filter((slot) => String(slot?.targetYmd || "").trim() === historyAnchorYmd)
+src/pages/Top3/Top3View.jsx:1515:}, [timeline, historyAnchorYmd, persistedTop3History]);
+src/pages/Top3/Top3View.jsx:1517:  const historySummary = useMemo(() => {
+src/pages/Top3/Top3View.jsx:1518:    const validated = historyRows.filter(
+src/pages/Top3/Top3View.jsx:1551:      total: historyRows.length,
+src/pages/Top3/Top3View.jsx:1553:      pending: Math.max(0, historyRows.length - validated.length),
+src/pages/Top3/Top3View.jsx:1560:  }, [historyRows]);
+src/pages/Top3/Top3View.jsx:2317:        .top3-historyToolbar{
+src/pages/Top3/Top3View.jsx:2325:        .top3-historyDate{
+src/pages/Top3/Top3View.jsx:2338:        .top3-historySummary{
+src/pages/Top3/Top3View.jsx:2345:        .top3-historyMetric{
+src/pages/Top3/Top3View.jsx:2354:        .top3-historyMetric__label{
+src/pages/Top3/Top3View.jsx:2362:        .top3-historyMetric__value{
+src/pages/Top3/Top3View.jsx:2368:        .top3-historyRow{
+src/pages/Top3/Top3View.jsx:2380:        .top3-historyResult{
+src/pages/Top3/Top3View.jsx:2387:        .top3-historyResultText{
+src/pages/Top3/Top3View.jsx:2393:        .top3-historyResultGroup{
+src/pages/Top3/Top3View.jsx:2397:        .top3-historyResultAnimal{
+src/pages/Top3/Top3View.jsx:2481:          .top3-historyToolbar{
+src/pages/Top3/Top3View.jsx:2485:          .top3-historyDate{
+src/pages/Top3/Top3View.jsx:2489:          .top3-historySummary{
+src/pages/Top3/Top3View.jsx:2493:          .top3-historyRow{
+src/pages/Top3/Top3View.jsx:2598:          .top3-historyToolbar{
+src/pages/Top3/Top3View.jsx:2602:          .top3-historySummary{
+src/pages/Top3/Top3View.jsx:2706:          <div className="top3-historyToolbar">
+src/pages/Top3/Top3View.jsx:2721:              className="top3-historyDate"
+src/pages/Top3/Top3View.jsx:2759:        {loading ? (
+src/pages/Top3/Top3View.jsx:2837:            Hist├│rico recente {historyAnchorYmd ? `ÔÇö ${ymdToBR(historyAnchorYmd)}` : ""}
+src/pages/Top3/Top3View.jsx:2840:          <div className="top3-historySummary">
+src/pages/Top3/Top3View.jsx:2841:            <div className="top3-historyMetric">
+src/pages/Top3/Top3View.jsx:2842:              <div className="top3-historyMetric__label">Hor├írios</div>
+src/pages/Top3/Top3View.jsx:2843:              <div className="top3-historyMetric__value">
+src/pages/Top3/Top3View.jsx:2844:                {historySummary.total}
+src/pages/Top3/Top3View.jsx:2848:            <div className="top3-historyMetric">
+src/pages/Top3/Top3View.jsx:2849:              <div className="top3-historyMetric__label">Validados</div>
+src/pages/Top3/Top3View.jsx:2850:              <div className="top3-historyMetric__value">
+src/pages/Top3/Top3View.jsx:2851:                {historySummary.validated}
+src/pages/Top3/Top3View.jsx:2855:            <div className="top3-historyMetric">
+src/pages/Top3/Top3View.jsx:2856:              <div className="top3-historyMetric__label">Grupo/dezena</div>
+src/pages/Top3/Top3View.jsx:2857:              <div className="top3-historyMetric__value">
+src/pages/Top3/Top3View.jsx:2858:                {historySummary.grupo}
+src/pages/Top3/Top3View.jsx:2862:            <div className="top3-historyMetric">
+src/pages/Top3/Top3View.jsx:2863:              <div className="top3-historyMetric__label">Centena</div>
+src/pages/Top3/Top3View.jsx:2864:              <div className="top3-historyMetric__value">
+src/pages/Top3/Top3View.jsx:2865:                {historySummary.centena}
+src/pages/Top3/Top3View.jsx:2869:            <div className="top3-historyMetric">
+src/pages/Top3/Top3View.jsx:2870:              <div className="top3-historyMetric__label">Milhar</div>
+src/pages/Top3/Top3View.jsx:2871:              <div className="top3-historyMetric__value">
+src/pages/Top3/Top3View.jsx:2872:                {historySummary.exact}
+src/pages/Top3/Top3View.jsx:2876:            <div className="top3-historyMetric">
+src/pages/Top3/Top3View.jsx:2877:              <div className="top3-historyMetric__label">├ìndice m├®dio</div>
+src/pages/Top3/Top3View.jsx:2878:              <div className="top3-historyMetric__value">
+src/pages/Top3/Top3View.jsx:2879:                {historySummary.average.toFixed(2)}%
+src/pages/Top3/Top3View.jsx:2885:            {!historyRows.length ? (
+src/pages/Top3/Top3View.jsx:2888:              historyRows.map((item) => {
+src/pages/Top3/Top3View.jsx:2927:                    className="top3-historyRow"
+src/pages/Top3/Top3View.jsx:2937:                    <div className="top3-historyResult">
+src/pages/Top3/Top3View.jsx:2946:                          <div className="top3-historyResultText">
+src/pages/Top3/Top3View.jsx:2947:                            <div className="top3-historyResultGroup">
+src/pages/Top3/Top3View.jsx:2950:                            <div className="top3-historyResultAnimal">
+src/pages/Top3/Top3View.jsx:2963:                          <div className="top3-historyResultText">
+src/pages/Top3/Top3View.jsx:2964:                            <div className="top3-historyResultGroup">GÔÇö</div>
+src/pages/Top3/Top3View.jsx:2965:                            <div className="top3-historyResultAnimal">PENDENTE</div>
+src/pages/Top3/Top3View.premium.backup.jsx:580:    const payload = flat20.join(" ").trim();
+src/pages/Top3/Top3View.premium.backup.jsx:581:    if (!payload) return;
+src/pages/Top3/Top3View.premium.backup.jsx:583:    const ok = await copyText(payload);
+src/pages/Top3/Top3View.premium.backup.jsx:960:    loading,
+src/pages/Top3/Top3View.premium.backup.jsx:1107:  const historyAnchorYmd = useMemo(() => {
+src/pages/Top3/Top3View.premium.backup.jsx:1119:  const historyRows = useMemo(() => {
+src/pages/Top3/Top3View.premium.backup.jsx:1120:  if (!Array.isArray(timeline) || !timeline.length || !historyAnchorYmd) return [];
+src/pages/Top3/Top3View.premium.backup.jsx:1123:    .filter((slot) => String(slot?.targetYmd || "").trim() === historyAnchorYmd)
+src/pages/Top3/Top3View.premium.backup.jsx:1155:}, [timeline, historyAnchorYmd]);
+src/pages/Top3/Top3View.premium.backup.jsx:1894:        .top3-historyRow{
+src/pages/Top3/Top3View.premium.backup.jsx:1906:        .top3-historyResult{
+src/pages/Top3/Top3View.premium.backup.jsx:1913:        .top3-historyResultText{
+src/pages/Top3/Top3View.premium.backup.jsx:1919:        .top3-historyResultGroup{
+src/pages/Top3/Top3View.premium.backup.jsx:1923:        .top3-historyResultAnimal{
+src/pages/Top3/Top3View.premium.backup.jsx:2007:          .top3-historyRow{
+src/pages/Top3/Top3View.premium.backup.jsx:2209:        {loading ? (
+src/pages/Top3/Top3View.premium.backup.jsx:2287:            Hist├│rico recente {historyAnchorYmd ? `ÔÇö ${ymdToBR(historyAnchorYmd)}` : ""}
+src/pages/Top3/Top3View.premium.backup.jsx:2291:            {!historyRows.length ? (
+src/pages/Top3/Top3View.premium.backup.jsx:2294:              historyRows.map((item) => {
+src/pages/Top3/Top3View.premium.backup.jsx:2326:                    className="top3-historyRow"
+src/pages/Top3/Top3View.premium.backup.jsx:2336:                    <div className="top3-historyResult">
+src/pages/Top3/Top3View.premium.backup.jsx:2345:                          <div className="top3-historyResultText">
+src/pages/Top3/Top3View.premium.backup.jsx:2346:                            <div className="top3-historyResultGroup">
+src/pages/Top3/Top3View.premium.backup.jsx:2349:                            <div className="top3-historyResultAnimal">
+src/pages/Top3/Top3View.premium.backup.jsx:2362:                          <div className="top3-historyResultText">
+src/pages/Top3/Top3View.premium.backup.jsx:2363:                            <div className="top3-historyResultGroup">GÔÇö</div>
+src/pages/Top3/Top3View.premium.backup.jsx:2364:                            <div className="top3-historyResultAnimal">PENDENTE</div>
+src/pages/Top3/__tests__/top3.backtest.layers.test.js:22:  getKingResultsByRange,
+src/pages/Top3/__tests__/top3.backtest.layers.test.js:46:function dedupeAndSort(draws) {
+src/pages/Top3/__tests__/top3.backtest.layers.test.js:49:  for (const d of Array.isArray(draws) ? draws : []) {
+src/pages/Top3/__tests__/top3.backtest.layers.test.js:161:  const raw = await getKingResultsByRange({
+src/pages/Top3/__tests__/top3.backtest.layers.test.js:170:  const drawsIndex = indexDrawsByYmdHour(allDraws);
+src/pages/Top3/__tests__/top3.backtest.layers.test.js:184:    const history = allDraws.slice(0, i + 1);
+src/pages/Top3/__tests__/top3.backtest.layers.test.js:204:      drawsIndex,
+src/pages/Top3/__tests__/top3.backtest.layers.test.js:213:    const historyLastKey = drawKey(history[history.length - 1]);
+src/pages/Top3/__tests__/top3.backtest.layers.test.js:216:    if (historyLastKey === nextDrawKey) {
+src/pages/Top3/__tests__/top3.backtest.layers.test.js:222:      drawsRange: history,
+src/pages/Top3/__tests__/top3.backtest.test.js:22:  getKingResultsByRange,
+src/pages/Top3/__tests__/top3.backtest.test.js:47:function dedupeAndSort(draws) {
+src/pages/Top3/__tests__/top3.backtest.test.js:50:  for (const d of Array.isArray(draws) ? draws : []) {
+src/pages/Top3/__tests__/top3.backtest.test.js:173:  const raw = await getKingResultsByRange({
+src/pages/Top3/__tests__/top3.backtest.test.js:182:  const drawsIndex = indexDrawsByYmdHour(allDraws);
+src/pages/Top3/__tests__/top3.backtest.test.js:194:    const history = allDraws.slice(0, i + 1);
+src/pages/Top3/__tests__/top3.backtest.test.js:215:      drawsIndex,
+src/pages/Top3/__tests__/top3.backtest.test.js:224:    if (drawKey(history[history.length - 1]) === drawKey(nextDraw)) {
+src/pages/Top3/__tests__/top3.backtest.test.js:230:      drawsRange: history,
+src/pages/Top3/modules/scoreEngine/scoreConfig.js:31:    history: {
+src/pages/Top3/modules/top3.analytics.js:143:          draws: rawList,
+src/pages/Top3/modules/top3.analytics.js:195:      drawsRange: safeHistoricalList,
+src/pages/Top3/modules/top3.analytics.js:197:      drawsToday: Array.isArray(todayDraws) ? todayDraws : [],
+src/pages/Top3/modules/top3.loader.js:2:  getKingResultsByRange,
+src/pages/Top3/modules/top3.loader.js:27:    (await getKingResultsByRange({
+src/pages/Top3/modules/top3.loader.js:36:    draws: hist,
+src/pages/Top3/modules/top3.loader.js:43:export async function loadHistoryRange({
+src/pages/Top3/modules/top3.loader.js:44:  getKingResultsByRange,
+src/pages/Top3/modules/top3.loader.js:57:    (await getKingResultsByRange({
+src/pages/Top3/modules/top3.state.js:14:  const [loading, setLoading] = useState(false);
+src/pages/Top3/modules/top3.state.js:15:  const [loadingStage, setLoadingStage] = useState({
+src/pages/Top3/modules/top3.state.js:58:    loading,
+src/pages/Top3/modules/top3.state.js:60:    loadingStage,
+src/pages/Top3/modules/top3.timeline.js:141:    drawsToday: day,
+src/pages/Top3/modules/top3.timeline.js:142:    drawsRange: range,
+src/pages/Top3/top3.chain.js:55:function dedupeAndSortDraws(draws) {
+src/pages/Top3/top3.chain.js:56:  const list = Array.isArray(draws) ? draws : [];
+src/pages/Top3/top3.chain.js:96:function getHistoryBeforeTarget(draws, targetYmd, targetHourBucket) {
+src/pages/Top3/top3.chain.js:97:  const list = dedupeAndSortDraws(draws);
+src/pages/Top3/top3.chain.js:108:export function computeChainTransitions(draws) {
+src/pages/Top3/top3.chain.js:109:  const list = dedupeAndSortDraws(draws);
+src/pages/Top3/top3.chain.js:141:function findPreviousDrawForTarget(draws, targetYmd, targetHourBucket) {
+src/pages/Top3/top3.chain.js:142:  const list = dedupeAndSortDraws(draws);
+src/pages/Top3/top3.chain.js:197:    const draws = arg1;
+src/pages/Top3/top3.chain.js:200:    const list = dedupeAndSortDraws(draws);
+src/pages/Top3/top3.chain.js:226:  const { draws, targetYmd, targetHourBucket, topN = 3 } = arg1 || {};
+src/pages/Top3/top3.chain.js:233:  const historyBeforeTarget = getHistoryBeforeTarget(
+src/pages/Top3/top3.chain.js:234:    draws,
+src/pages/Top3/top3.chain.js:239:  if (!historyBeforeTarget.length) return [];
+src/pages/Top3/top3.chain.js:241:  const prevDraw = historyBeforeTarget[historyBeforeTarget.length - 1];
+src/pages/Top3/top3.chain.js:259:    computeChainTransitions(historyBeforeTarget);
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:32:function findPreviousValidDraw(draws, currentYmd, currentHour) {
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:33:  const list = Array.isArray(draws) ? draws : [];
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:261:export function findLastDrawInList(draws, schedule) {
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:262:  const list = Array.isArray(draws) ? draws : [];
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:277:  draws,
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:281:  const list = Array.isArray(draws) ? draws : [];
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:297:  getKingResultsByDate,
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:341:    const out = await getKingResultsByDate({
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:440:  drawsIndex,
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:451:  if (!isYMD(y0) || !h0 || !(drawsIndex instanceof Map)) {
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:471:        const d = drawsIndex.get(`${curY}|${hh}`) || null;
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:490:    let d = drawsIndex.get(drawKey) || null;
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:495:      d = Array.from(drawsIndex.entries())
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:548:export function indexDrawsByYmdHour(draws) {
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:550:  const list = Array.isArray(draws) ? draws : [];
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:575:export function computeLastSeenByGrupo(draws) {
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:577:  const list = Array.isArray(draws) ? draws : [];
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:684:  draws,
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:690:  const list = Array.isArray(draws) ? draws : [];
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:737:function sortDrawsAsc(draws) {
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:738:  const list = Array.isArray(draws) ? draws : [];
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:750:function getRecentDrawsBefore(draws, drawLast, count = 6) {
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:751:  const list = sortDrawsAsc(draws);
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:968:  drawsRange,
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:978:  const list = Array.isArray(drawsRange) ? drawsRange : [];
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:979:  const drawsIndex = indexDrawsByYmdHour(list);
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:1022:      drawsIndex,
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:1084:  drawsRange,
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:1093:  const list = Array.isArray(drawsRange) ? drawsRange : [];
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:1146:    drawsRange: list,
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:1446:  draws,
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:1452:  const list = Array.isArray(draws) ? draws : [];
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:1490:  draws,
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:1495:  const list = sortDrawsAsc(draws);
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:1513:  draws,
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:1519:    draws,
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:1579:  drawsRange,
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:1587:    drawsRange,
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:1684:  draws,
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:1691:    draws,
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:1729:  draws,
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:1736:    draws,
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:1775:  draws,
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:1782:  return getComparableDrawsForTargetContext(draws, lotteryKey, targetHour, targetDow)
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:1792:function computeRecentBichoMetrics(draws, groupsK = TOP3_GROUPS_K) {
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:1807:  const list = Array.isArray(draws) ? draws : [];
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:1936:  draws,
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:1943:    draws,
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:1976:function buildDayContext(drawsToday = []) {
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:1977:  const list = sortDrawsAsc(Array.isArray(drawsToday) ? drawsToday : []);
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:2030:  drawsRange,
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:2042:    Array.isArray(drawsRange) ? drawsRange : [],
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:2204:  drawsRange,
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:2206:  drawsToday,
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:2214:  const list = Array.isArray(drawsRange) ? drawsRange : [];
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:2262:  const dayContext = buildDayContext(drawsToday);
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:2269:    drawsRange: list,
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:2288:    drawsRange: list,
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:2352:    drawsRange: list,
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:2673:    `Fluxo do dia: draws=${Number(dayContext?.total || 0)} | confian├ºa=${(dayFlowConfidence * 100).toFixed(0)}%`,
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:2715:        `Grupo G${g2}: draws com duplica├º├úo=${x.duplicationCount}`,
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:2882:  drawsRange,
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:2891:  const list = sortDrawsAsc(Array.isArray(drawsRange) ? drawsRange : []);
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:2937:  const history = list.filter((d) => {
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:2952:  for (const d of history) {
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:2971:  const indexed = indexDrawsByYmdHour(history);
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:2973:  for (const prev of history) {
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:3003:  const recentComparable = history
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:3021:  const sceneRanking = buildHistoricalSceneRanking(history, currentScene, 80);
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:3116:      totalDraws: history.length,
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:3166:        samples: history.length,
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:3168:          from: pickDrawYMD(history[0]) || "",
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:3169:          to: pickDrawYMD(history[history.length - 1]) || "",
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:3213:      samples: history.length,
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:3392:function buildHistoricalSceneRanking(draws, currentScene, limit = 100) {
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:3393:  const list = Array.isArray(draws) ? draws : [];
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:3936:  drawsToday,
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:3937:  drawsRange,
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:3944:  const day = Array.isArray(drawsToday) ? [...drawsToday] : [];
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:3945:  const range = Array.isArray(drawsRange) ? [...drawsRange] : [];
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:4108:      drawsRange: [...usableHistory, ...usableTodayContext],
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:4110:      drawsToday: usableTodayContext,
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:4164:  drawsRange,
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:4170:  const range = Array.isArray(drawsRange) ? drawsRange : [];
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:4182:    const drawsToday = range.filter((d) => pickDrawYMD(d) === ymd);
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:4186:      drawsToday,
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:4187:      drawsRange: range,
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:32:function findPreviousValidDraw(draws, currentYmd, currentHour) {
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:33:  const list = Array.isArray(draws) ? draws : [];
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:261:export function findLastDrawInList(draws, schedule) {
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:262:  const list = Array.isArray(draws) ? draws : [];
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:277:  draws,
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:281:  const list = Array.isArray(draws) ? draws : [];
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:297:  getKingResultsByDate,
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:341:    const out = await getKingResultsByDate({
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:440:  drawsIndex,
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:451:  if (!isYMD(y0) || !h0 || !(drawsIndex instanceof Map)) {
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:471:        const d = drawsIndex.get(`${curY}|${hh}`) || null;
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:490:    let d = drawsIndex.get(drawKey) || null;
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:495:      d = Array.from(drawsIndex.entries())
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:548:export function indexDrawsByYmdHour(draws) {
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:550:  const list = Array.isArray(draws) ? draws : [];
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:575:export function computeLastSeenByGrupo(draws) {
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:577:  const list = Array.isArray(draws) ? draws : [];
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:684:  draws,
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:690:  const list = Array.isArray(draws) ? draws : [];
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:737:function sortDrawsAsc(draws) {
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:738:  const list = Array.isArray(draws) ? draws : [];
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:750:function getRecentDrawsBefore(draws, drawLast, count = 6) {
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:751:  const list = sortDrawsAsc(draws);
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:968:  drawsRange,
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:978:  const list = Array.isArray(drawsRange) ? drawsRange : [];
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:979:  const drawsIndex = indexDrawsByYmdHour(list);
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:1022:      drawsIndex,
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:1084:  drawsRange,
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:1093:  const list = Array.isArray(drawsRange) ? drawsRange : [];
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:1146:    drawsRange: list,
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:1446:  draws,
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:1452:  const list = Array.isArray(draws) ? draws : [];
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:1490:  draws,
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:1495:  const list = sortDrawsAsc(draws);
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:1513:  draws,
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:1519:    draws,
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:1579:  drawsRange,
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:1587:    drawsRange,
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:1684:  draws,
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:1691:    draws,
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:1729:  draws,
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:1736:    draws,
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:1775:  draws,
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:1782:  return getComparableDrawsForTargetContext(draws, lotteryKey, targetHour, targetDow)
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:1792:function computeRecentBichoMetrics(draws, groupsK = TOP3_GROUPS_K) {
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:1807:  const list = Array.isArray(draws) ? draws : [];
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:1936:  draws,
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:1943:    draws,
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:1976:function buildDayContext(drawsToday = []) {
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:1977:  const list = sortDrawsAsc(Array.isArray(drawsToday) ? drawsToday : []);
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:2030:  drawsRange,
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:2042:    Array.isArray(drawsRange) ? drawsRange : [],
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:2204:  drawsRange,
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:2206:  drawsToday,
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:2214:  const list = Array.isArray(drawsRange) ? drawsRange : [];
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:2262:  const dayContext = buildDayContext(drawsToday);
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:2269:    drawsRange: list,
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:2288:    drawsRange: list,
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:2352:    drawsRange: list,
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:2673:    `Fluxo do dia: draws=${Number(dayContext?.total || 0)} | confian├ºa=${(dayFlowConfidence * 100).toFixed(0)}%`,
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:2715:        `Grupo G${g2}: draws com duplica├º├úo=${x.duplicationCount}`,
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:2882:  drawsRange,
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:2891:  const list = sortDrawsAsc(Array.isArray(drawsRange) ? drawsRange : []);
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:2937:  const history = list.filter((d) => {
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:2952:  for (const d of history) {
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:2971:  const indexed = indexDrawsByYmdHour(history);
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:2973:  for (const prev of history) {
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:3003:  const recentComparable = history
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:3021:  const sceneRanking = buildHistoricalSceneRanking(history, currentScene, 80);
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:3116:      totalDraws: history.length,
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:3166:        samples: history.length,
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:3168:          from: pickDrawYMD(history[0]) || "",
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:3169:          to: pickDrawYMD(history[history.length - 1]) || "",
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:3213:      samples: history.length,
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:3392:function buildHistoricalSceneRanking(draws, currentScene, limit = 100) {
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:3393:  const list = Array.isArray(draws) ? draws : [];
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:3936:  drawsToday,
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:3937:  drawsRange,
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:3944:  const day = Array.isArray(drawsToday) ? [...drawsToday] : [];
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:3945:  const range = Array.isArray(drawsRange) ? [...drawsRange] : [];
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:4108:      drawsRange: [...usableHistory, ...usableTodayContext],
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:4110:      drawsToday: usableTodayContext,
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:4164:  drawsRange,
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:4170:  const range = Array.isArray(drawsRange) ? drawsRange : [];
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:4182:    const drawsToday = range.filter((d) => pickDrawYMD(d) === ymd);
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:4186:      drawsToday,
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:4187:      drawsRange: range,
+src/pages/Top3/top3.engine.js:32:function findPreviousValidDraw(draws, currentYmd, currentHour) {
+src/pages/Top3/top3.engine.js:33:  const list = Array.isArray(draws) ? draws : [];
+src/pages/Top3/top3.engine.js:377:export function findLastDrawInList(draws, schedule) {
+src/pages/Top3/top3.engine.js:378:  const list = Array.isArray(draws) ? draws : [];
+src/pages/Top3/top3.engine.js:393:  draws,
+src/pages/Top3/top3.engine.js:397:  const list = Array.isArray(draws) ? draws : [];
+src/pages/Top3/top3.engine.js:413:  getKingResultsByDate,
+src/pages/Top3/top3.engine.js:457:    const out = await getKingResultsByDate({
+src/pages/Top3/top3.engine.js:556:  drawsIndex,
+src/pages/Top3/top3.engine.js:567:  if (!isYMD(y0) || !h0 || !(drawsIndex instanceof Map)) {
+src/pages/Top3/top3.engine.js:587:        const d = drawsIndex.get(`${curY}|${hh}`) || null;
+src/pages/Top3/top3.engine.js:606:    let d = drawsIndex.get(drawKey) || null;
+src/pages/Top3/top3.engine.js:611:      d = Array.from(drawsIndex.entries())
+src/pages/Top3/top3.engine.js:664:export function indexDrawsByYmdHour(draws) {
+src/pages/Top3/top3.engine.js:666:  const list = Array.isArray(draws) ? draws : [];
+src/pages/Top3/top3.engine.js:691:export function computeLastSeenByGrupo(draws) {
+src/pages/Top3/top3.engine.js:693:  const list = Array.isArray(draws) ? draws : [];
+src/pages/Top3/top3.engine.js:800:  draws,
+src/pages/Top3/top3.engine.js:806:  const list = Array.isArray(draws) ? draws : [];
+src/pages/Top3/top3.engine.js:853:function sortDrawsAsc(draws) {
+src/pages/Top3/top3.engine.js:854:  const list = Array.isArray(draws) ? draws : [];
+src/pages/Top3/top3.engine.js:866:function getRecentDrawsBefore(draws, drawLast, count = 6) {
+src/pages/Top3/top3.engine.js:867:  const list = sortDrawsAsc(draws);
+src/pages/Top3/top3.engine.js:1084:  drawsRange,
+src/pages/Top3/top3.engine.js:1094:  const list = Array.isArray(drawsRange) ? drawsRange : [];
+src/pages/Top3/top3.engine.js:1095:  const drawsIndex = indexDrawsByYmdHour(list);
+src/pages/Top3/top3.engine.js:1138:      drawsIndex,
+src/pages/Top3/top3.engine.js:1200:  drawsRange,
+src/pages/Top3/top3.engine.js:1209:  const list = Array.isArray(drawsRange) ? drawsRange : [];
+src/pages/Top3/top3.engine.js:1262:    drawsRange: list,
+src/pages/Top3/top3.engine.js:1562:  draws,
+src/pages/Top3/top3.engine.js:1568:  const list = Array.isArray(draws) ? draws : [];
+src/pages/Top3/top3.engine.js:1606:  draws,
+src/pages/Top3/top3.engine.js:1611:  const list = sortDrawsAsc(draws);
+src/pages/Top3/top3.engine.js:1629:  draws,
+src/pages/Top3/top3.engine.js:1635:    draws,
+src/pages/Top3/top3.engine.js:1695:  drawsRange,
+src/pages/Top3/top3.engine.js:1703:    drawsRange,
+src/pages/Top3/top3.engine.js:1800:  draws,
+src/pages/Top3/top3.engine.js:1807:    draws,
+src/pages/Top3/top3.engine.js:1845:  draws,
+src/pages/Top3/top3.engine.js:1852:    draws,
+src/pages/Top3/top3.engine.js:1891:  draws,
+src/pages/Top3/top3.engine.js:1898:  return getComparableDrawsForTargetContext(draws, lotteryKey, targetHour, targetDow)
+src/pages/Top3/top3.engine.js:1908:function computeRecentBichoMetrics(draws, groupsK = TOP3_GROUPS_K) {
+src/pages/Top3/top3.engine.js:1923:  const list = Array.isArray(draws) ? draws : [];
+src/pages/Top3/top3.engine.js:2052:  draws,
+src/pages/Top3/top3.engine.js:2059:    draws,
+src/pages/Top3/top3.engine.js:2092:function buildDayContext(drawsToday = []) {
+src/pages/Top3/top3.engine.js:2093:  const list = sortDrawsAsc(Array.isArray(drawsToday) ? drawsToday : []);
+src/pages/Top3/top3.engine.js:2146:  drawsRange,
+src/pages/Top3/top3.engine.js:2158:    Array.isArray(drawsRange) ? drawsRange : [],
+src/pages/Top3/top3.engine.js:2320:  drawsRange,
+src/pages/Top3/top3.engine.js:2322:  drawsToday,
+src/pages/Top3/top3.engine.js:2330:  const list = Array.isArray(drawsRange) ? drawsRange : [];
+src/pages/Top3/top3.engine.js:2378:  const dayContext = buildDayContext(drawsToday);
+src/pages/Top3/top3.engine.js:2385:    drawsRange: list,
+src/pages/Top3/top3.engine.js:2404:    drawsRange: list,
+src/pages/Top3/top3.engine.js:2468:    drawsRange: list,
+src/pages/Top3/top3.engine.js:2743:    `Fluxo do dia: draws=${Number(dayContext?.total || 0)} | confian├ºa=${(dayFlowConfidence * 100).toFixed(0)}%`,
+src/pages/Top3/top3.engine.js:2785:        `Grupo G${g2}: draws com duplica├º├úo=${x.duplicationCount}`,
+src/pages/Top3/top3.engine.js:2952:  drawsRange,
+src/pages/Top3/top3.engine.js:2961:  const list = sortDrawsAsc(Array.isArray(drawsRange) ? drawsRange : []);
+src/pages/Top3/top3.engine.js:3007:  const history = list.filter((d) => {
+src/pages/Top3/top3.engine.js:3022:  for (const d of history) {
+src/pages/Top3/top3.engine.js:3041:  const indexed = indexDrawsByYmdHour(history);
+src/pages/Top3/top3.engine.js:3043:  for (const prev of history) {
+src/pages/Top3/top3.engine.js:3073:  const recentComparable = history
+src/pages/Top3/top3.engine.js:3091:  const sceneRanking = buildHistoricalSceneRanking(history, currentScene, 80);
+src/pages/Top3/top3.engine.js:3186:      totalDraws: history.length,
+src/pages/Top3/top3.engine.js:3236:        samples: history.length,
+src/pages/Top3/top3.engine.js:3238:          from: pickDrawYMD(history[0]) || "",
+src/pages/Top3/top3.engine.js:3239:          to: pickDrawYMD(history[history.length - 1]) || "",
+src/pages/Top3/top3.engine.js:3283:      samples: history.length,
+src/pages/Top3/top3.engine.js:3462:function buildHistoricalSceneRanking(draws, currentScene, limit = 100) {
+src/pages/Top3/top3.engine.js:3463:  const list = Array.isArray(draws) ? draws : [];
+src/pages/Top3/top3.engine.js:3977:      historyStats: slot.historyStats || null,
+src/pages/Top3/top3.engine.js:3985:  drawsToday,
+src/pages/Top3/top3.engine.js:3986:  drawsRange,
+src/pages/Top3/top3.engine.js:3993:  const day = Array.isArray(drawsToday) ? [...drawsToday] : [];
+src/pages/Top3/top3.engine.js:3994:  const range = Array.isArray(drawsRange) ? [...drawsRange] : [];
+src/pages/Top3/top3.engine.js:4141:    const historyStats = (() => {
+src/pages/Top3/top3.engine.js:4190:      drawsRange: [...usableHistory, ...usableTodayContext],
+src/pages/Top3/top3.engine.js:4192:      drawsToday: usableTodayContext,
+src/pages/Top3/top3.engine.js:4228:      historyStats,
+src/pages/Top3/top3.engine.js:4247:  drawsRange,
+src/pages/Top3/top3.engine.js:4253:  const range = Array.isArray(drawsRange) ? drawsRange : [];
+src/pages/Top3/top3.engine.js:4265:    const drawsToday = range.filter((d) => pickDrawYMD(d) === ymd);
+src/pages/Top3/top3.engine.js:4269:      drawsToday,
+src/pages/Top3/top3.engine.js:4270:      drawsRange: range,
+src/pages/Top3/top3.firestore.js:98:  draws,
+src/pages/Top3/top3.firestore.js:108:    (Array.isArray(draws) ? draws : []).find((draw) => {
+src/pages/Top3/top3.firestore.js:275:  const payload = cleanFirestoreValue({
+src/pages/Top3/top3.firestore.js:308:    transaction.set(ref, payload);
+src/pages/Top3/top3.firestore.js:320:export async function loadTop3PredictionDay({
+src/pages/Top3/top3.firestore.js:375:  draws,
+src/pages/Top3/top3.firestore.js:398:  const history = await loadTop3PredictionDay({
+src/pages/Top3/top3.firestore.js:406:  for (const entry of history) {
+src/pages/Top3/top3.firestore.js:410:      draws,
+src/pages/Top3/top3.hooks.js:47:  loadTop3PredictionDay,
+src/pages/Top3/top3.hooks.js:52:  getKingResultsByDate,
+src/pages/Top3/top3.hooks.js:53:  getKingResultsByRange,
+src/pages/Top3/top3.hooks.js:61:  loadHistoryRange,
+src/pages/Top3/top3.hooks.js:62:} from "./modules/top3.loader";
+src/pages/Top3/top3.hooks.js:107:function hasDrawAtHour(draws, hourBucket) {
+src/pages/Top3/top3.hooks.js:111:  return (Array.isArray(draws) ? draws : []).some((d) => {
+src/pages/Top3/top3.hooks.js:159:  draws,
+src/pages/Top3/top3.hooks.js:164:  const list = Array.isArray(draws) ? draws : [];
+src/pages/Top3/top3.hooks.js:199:    source: "history_range",
+src/pages/Top3/top3.hooks.js:203:function sanitizeHistoricalDraws({ draws, lotteryKey, baseDraw }) {
+src/pages/Top3/top3.hooks.js:204:  const list = Array.isArray(draws) ? draws : [];
+src/pages/Top3/top3.hooks.js:300:  const [loading, setLoading] = useState(false);
+src/pages/Top3/top3.hooks.js:301:  const [loadingStage, setLoadingStage] = useState({
+src/pages/Top3/top3.hooks.js:311:  const [loadedYmd, setLoadedYmd] = useState("");
+src/pages/Top3/top3.hooks.js:358:    if (isYMD(loadedYmd)) return loadedYmd;
+src/pages/Top3/top3.hooks.js:360:  }, [loadedYmd, ymdSafe]);
+src/pages/Top3/top3.hooks.js:365:      : isYMD(loadedYmd)
+src/pages/Top3/top3.hooks.js:366:        ? loadedYmd
+src/pages/Top3/top3.hooks.js:376:  }, [lotteryKeySafe, ymdSafe, loadedYmd, analysisYmd]);
+src/pages/Top3/top3.hooks.js:452:  const load = useCallback(async () => {
+src/pages/Top3/top3.hooks.js:494:        (await getKingResultsByDate({
+src/pages/Top3/top3.hooks.js:602:          getKingResultsByDate,
+src/pages/Top3/top3.hooks.js:616:              getKingResultsByRange,
+src/pages/Top3/top3.hooks.js:660:          : (await getKingResultsByDate({
+src/pages/Top3/top3.hooks.js:675:        getKingResultsByDate,
+src/pages/Top3/top3.hooks.js:688:          getKingResultsByRange,
+src/pages/Top3/top3.hooks.js:710:            loadedYmd: effectiveYmd,
+src/pages/Top3/top3.hooks.js:771:      const histRaw = await loadHistoryRange({
+src/pages/Top3/top3.hooks.js:772:        getKingResultsByRange,
+src/pages/Top3/top3.hooks.js:845:    debugTop3Effect("01_load", {
+src/pages/Top3/top3.hooks.js:851:    load();
+src/pages/Top3/top3.hooks.js:852:  }, [load]);
+src/pages/Top3/top3.hooks.js:1076:    debugTop3Effect("04_load_persisted_history", {
+src/pages/Top3/top3.hooks.js:1092:    async function loadPersistedHistory() {
+src/pages/Top3/top3.hooks.js:1099:        const history = await loadTop3PredictionDay({
+src/pages/Top3/top3.hooks.js:1107:            Array.isArray(history) ? history : []
+src/pages/Top3/top3.hooks.js:1115:    loadPersistedHistory();
+src/pages/Top3/top3.hooks.js:1129:    debugTop3Effect("05_reconcile_history", {
+src/pages/Top3/top3.hooks.js:1159:      draws: allDraws,
+src/pages/Top3/top3.hooks.js:1162:        const history = await loadTop3PredictionDay({
+src/pages/Top3/top3.hooks.js:1169:          Array.isArray(history) ? history : []
+src/pages/Top3/top3.hooks.js:1193:    loadedYmd,
+src/pages/Top3/top3.hooks.js:1195:    loading,
+src/pages/Top3/top3.hooks.js:1196:    loadingStage,
+src/pages/Top3/top3.hooks.js:1220:    load,
+
+============================================================
+PRÓXIMO SLOT E TRANSIÇÃO
+============================================================
+
+src/pages/Top3/Top3View.jsx:538:  const transitionDetail = detailMap.transition || null;
+src/pages/Top3/Top3View.jsx:563:  if (transitionDetail) {
+src/pages/Top3/Top3View.jsx:564:    const first = Number(transitionDetail.firstCount || 0);
+src/pages/Top3/Top3View.jsx:565:    const top5 = Number(transitionDetail.top3Count || 0);
+src/pages/Top3/Top3View.jsx:566:    const amostras = Number(transitionDetail.samples || 0);
+src/pages/Top3/Top3View.jsx:648:  const transitionFirst = Number(transitionDetail?.firstCount || 0);
+src/pages/Top3/Top3View.jsx:649:  const transitionTop3 = Number(transitionDetail?.top3Count || transitionDetail?.top5Count || 0);
+src/pages/Top3/Top3View.jsx:650:  const transitionSamples = Number(transitionDetail?.samples || 0);
+src/pages/Top3/Top3View.jsx:866:                {targetLabel} em 1┬║: {transitionFirst}x
+src/pages/Top3/Top3View.jsx:868:                {targetLabel} no TOP3: {transitionTop3}x
+src/pages/Top3/Top3View.jsx:896:        : transitionSamples > 0
+src/pages/Top3/Top3View.jsx:897:          ? `${transitionSamples} transi├º├Áes hist├│ricas`
+src/pages/Top3/Top3View.jsx:906:                {transitionFirst > 0 && transitionSamples > 0
+src/pages/Top3/Top3View.jsx:907:                  ? `${transitionFirst} ocorr├¬ncias em ${transitionSamples} transi├º├Áes`
+src/pages/Top3/Top3View.jsx:1660:          transition: transform .12s ease, box-shadow .18s ease, background .18s ease, border-color .18s ease;
+src/pages/Top3/Top3View.jsx:1758:          transition: all 0.2s ease;
+src/pages/Top3/Top3View.jsx:2192:          transition: transform .12s ease, box-shadow .18s ease, background .18s ease, border-color .18s ease;
+src/pages/Top3/Top3View.jsx:2265:          transition: transform .10s ease, box-shadow .18s ease, background .18s ease, border-color .18s ease, opacity .18s ease;
+src/pages/Top3/Top3View.premium.backup.jsx:482:  const transitionDetail = detailMap.transition || null;
+src/pages/Top3/Top3View.premium.backup.jsx:507:  if (transitionDetail) {
+src/pages/Top3/Top3View.premium.backup.jsx:508:    const first = Number(transitionDetail.firstCount || 0);
+src/pages/Top3/Top3View.premium.backup.jsx:509:    const top5 = Number(transitionDetail.top3Count || 0);
+src/pages/Top3/Top3View.premium.backup.jsx:510:    const amostras = Number(transitionDetail.samples || 0);
+src/pages/Top3/Top3View.premium.backup.jsx:1237:          transition: transform .12s ease, box-shadow .18s ease, background .18s ease, border-color .18s ease;
+src/pages/Top3/Top3View.premium.backup.jsx:1335:          transition: all 0.2s ease;
+src/pages/Top3/Top3View.premium.backup.jsx:1769:          transition: transform .12s ease, box-shadow .18s ease, background .18s ease, border-color .18s ease;
+src/pages/Top3/Top3View.premium.backup.jsx:1842:          transition: transform .10s ease, box-shadow .18s ease, background .18s ease, border-color .18s ease, opacity .18s ease;
+src/pages/Top3/__tests__/top3.backtest.layers.test.js:86:function assertComputedSlotMatchesNextDraw({ computed, found, nextSlot, drawLast }) {
+src/pages/Top3/__tests__/top3.backtest.layers.test.js:90:  const expectedYmd = found?.ymd || nextSlot?.ymd || "";
+src/pages/Top3/__tests__/top3.backtest.layers.test.js:91:  const expectedHour = toHourBucket(found?.hour || nextSlot?.hour || "");
+src/pages/Top3/__tests__/top3.backtest.layers.test.js:106:function assertPredictionIntegrity({ computed, drawLast, nextDraw }) {
+src/pages/Top3/__tests__/top3.backtest.layers.test.js:114:        `Pr├│ximo sorteio: ${pickDrawYMD(nextDraw)} ${toHourBucket(pickDrawHour(nextDraw))}`,
+src/pages/Top3/__tests__/top3.backtest.layers.test.js:190:    const nextSlot = getNextSlotForLottery({
+src/pages/Top3/__tests__/top3.backtest.layers.test.js:199:    if (!nextSlot?.ymd || !nextSlot?.hour) continue;
+src/pages/Top3/__tests__/top3.backtest.layers.test.js:203:      startSlot: { ymd: nextSlot.ymd, hour: nextSlot.hour },
+src/pages/Top3/__tests__/top3.backtest.layers.test.js:210:    const nextDraw = found?.draw || null;
+src/pages/Top3/__tests__/top3.backtest.layers.test.js:211:    if (!nextDraw) continue;
+src/pages/Top3/__tests__/top3.backtest.layers.test.js:214:    const nextDrawKey = drawKey(nextDraw);
+src/pages/Top3/__tests__/top3.backtest.layers.test.js:216:    if (historyLastKey === nextDrawKey) {
+src/pages/Top3/__tests__/top3.backtest.layers.test.js:217:      throw new Error(`Vazamento de futuro no hist├│rico: ${nextDrawKey}`);
+src/pages/Top3/__tests__/top3.backtest.layers.test.js:233:      nextSlot,
+src/pages/Top3/__tests__/top3.backtest.layers.test.js:240:      nextDraw,
+src/pages/Top3/__tests__/top3.backtest.layers.test.js:247:    const actualTop5 = top5Groups(nextDraw);
+src/pages/Top3/__tests__/top3.backtest.test.js:89:function assertComputedSlotMatchesNextDraw({ computed, found, nextSlot, drawLast }) {
+src/pages/Top3/__tests__/top3.backtest.test.js:93:  const expectedYmd = found?.ymd || found?.slot?.ymd || nextSlot?.ymd || "";
+src/pages/Top3/__tests__/top3.backtest.test.js:95:    found?.hour || found?.slot?.hour || nextSlot?.hour || ""
+src/pages/Top3/__tests__/top3.backtest.test.js:113:function assertPredictionIntegrity({ computed, drawLast, nextDraw }) {
+src/pages/Top3/__tests__/top3.backtest.test.js:123:        `Pr├│ximo sorteio: ${pickDrawYMD(nextDraw)} ${toHourBucket(
+src/pages/Top3/__tests__/top3.backtest.test.js:124:          pickDrawHour(nextDraw)
+src/pages/Top3/__tests__/top3.backtest.test.js:201:    const nextSlot = getNextSlotForLottery({
+src/pages/Top3/__tests__/top3.backtest.test.js:210:    if (!nextSlot?.ymd || !nextSlot?.hour) continue;
+src/pages/Top3/__tests__/top3.backtest.test.js:214:      startSlot: { ymd: nextSlot.ymd, hour: nextSlot.hour },
+src/pages/Top3/__tests__/top3.backtest.test.js:221:    const nextDraw = found?.draw || null;
+src/pages/Top3/__tests__/top3.backtest.test.js:222:    if (!nextDraw) continue;
+src/pages/Top3/__tests__/top3.backtest.test.js:224:    if (drawKey(history[history.length - 1]) === drawKey(nextDraw)) {
+src/pages/Top3/__tests__/top3.backtest.test.js:225:      throw new Error(`Vazamento de futuro no hist├│rico: ${drawKey(nextDraw)}`);
+src/pages/Top3/__tests__/top3.backtest.test.js:241:      nextSlot,
+src/pages/Top3/__tests__/top3.backtest.test.js:248:      nextDraw,
+src/pages/Top3/__tests__/top3.backtest.test.js:255:    const actualTop5 = top5Groups(nextDraw);
+src/pages/Top3/__tests__/top3.backtest.test.js:271:      found?.hour || found?.slot?.hour || pickDrawHour(nextDraw) || "";
+src/pages/Top3/__tests__/top3.public-api.node.test.js:23:  "getScheduleForLottery",
+src/pages/Top3/modules/top3.timeline.js:10:  getScheduleForLottery,
+src/pages/Top3/modules/top3.timeline.js:204:            schedule: getScheduleForLottery({
+src/pages/Top3/top3.chain.js:110:  const transitionsAny = new Map();
+src/pages/Top3/top3.chain.js:111:  const transitionsByEdge = new Map();
+src/pages/Top3/top3.chain.js:127:    const anyRow = getNestedMap(transitionsAny, fromGrupo);
+src/pages/Top3/top3.chain.js:133:    const edgeMap = getNestedMap(transitionsByEdge, edgeKey);
+src/pages/Top3/top3.chain.js:138:  return { transitionsAny, transitionsByEdge };
+src/pages/Top3/top3.chain.js:203:    const { transitionsAny } = computeChainTransitions(list);
+src/pages/Top3/top3.chain.js:211:    const rowMap = transitionsAny.get(lastGrupo);
+src/pages/Top3/top3.chain.js:221:      transitionType: "ANY",
+src/pages/Top3/top3.chain.js:222:      transitionEdge: "",
+src/pages/Top3/top3.chain.js:258:  const { transitionsAny, transitionsByEdge } =
+src/pages/Top3/top3.chain.js:262:  const edgeMap = edgeKey ? transitionsByEdge.get(edgeKey) || null : null;
+src/pages/Top3/top3.chain.js:266:  let transitionType = "EDGE";
+src/pages/Top3/top3.chain.js:269:    const anyRow = transitionsAny.get(prevGrupo) || null;
+src/pages/Top3/top3.chain.js:271:    transitionType = "ANY_FALLBACK";
+src/pages/Top3/top3.chain.js:281:    transitionType,
+src/pages/Top3/top3.chain.js:282:    transitionEdge: edgeKey,
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:232:export function getScheduleForLottery({
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:326:    const daySchedule = getScheduleForLottery({
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:385:      const sch = getScheduleForLottery({
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:399:  const sch0 = getScheduleForLottery({
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:418:    const sch = getScheduleForLottery({
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:461:      const sch = getScheduleForLottery({
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:507:    const sch = getScheduleForLottery({
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:525:      const sch2 = getScheduleForLottery({
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:649:function buildFreqAndFirstMaps(nextDraw) {
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:652:  const items = getAllTop5Groups(nextDraw);
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:1028:    const nextDraw = found?.draw || null;
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:1029:    const nextSlot = found?.slot || null;
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:1030:    if (!nextDraw || !nextSlot?.ymd || !nextSlot?.hour) continue;
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:1036:      targetYmd: safeStr(nextSlot.ymd),
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:1037:      targetHour: toHourBucket(nextSlot.hour),
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:1038:      targetDow: getDowKey(nextSlot.ymd),
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:1039:      targetDayOfMonth: getDayOfMonth(nextSlot.ymd),
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:1042:    const nextMaps = buildFreqAndFirstMaps(nextDraw);
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:1049:      layerResults[i].matchingDraws.push(nextDraw);
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:1113:  const nextSlot = getNextSlotForLottery({
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:1127:    : safeStr(nextSlot?.ymd);
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:1131:    : toHourBucket(nextSlot?.hour);
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:1134:  const transition = `${lastH}->${targetH}`;
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:1138:    (transition === "11h->14h" || transition === "14h->16h");
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:1873:      transition: 0.25,
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:1884:      transition: 0.2,
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:1894:    transition: 0.3,
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:1905:    transition: Number(weights?.transition || 0),
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:1916:      transition: 0.3,
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:1926:    transition: safe.transition / total,
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:2234:  const nextSlot = getNextSlotForLottery({
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:2248:    : safeStr(nextSlot?.ymd);
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:2252:    : toHourBucket(nextSlot?.hour);
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:2441:    transition: pairStrong ? weights.transition * 0.7 : weights.transition,
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:2545:      (pT * adjustedWeights.transition) +
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:2666:    `Pesos: mode=${mode} | transi├º├úo=${(adjustedWeights.transition * 100).toFixed(0)}% | par=${(adjustedWeights.pair * 100).toFixed(0)}% | mem├│ria=${(adjustedWeights.memory * 100).toFixed(0)}% | rec├¬ncia=${(adjustedWeights.recent * 100).toFixed(0)}% | estrutural=${(adjustedWeights.structural * 100).toFixed(0)}% | atraso=${(adjustedWeights.late * 100).toFixed(0)}%`,
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:2910:  const nextSlot = getNextSlotForLottery({
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:2924:    : safeStr(nextSlot?.ymd);
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:2928:    : toHourBucket(nextSlot?.hour);
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:2948:    transition: { label: `transi├º├úo G${String(prevGrupo).padStart(2, "0")} @ ${lastH} ÔåÆ ${targetH}`, samples: 0, first: emptyGroupMap(), top5: emptyGroupMap(), weight: 0.26 },
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:2992:    const nextDraw = indexed.get(`${safeStr(ns?.ymd)}|${toHourBucket(ns?.hour)}`) || null;
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:2993:    if (!nextDraw) continue;
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:2995:    const g1 = getFirstGrupoFromDraw(nextDraw);
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:2996:    const top5Set = getTop5GroupSet(nextDraw);
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:2998:    layers.transition.samples += 1;
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:2999:    incMap(layers.transition.first, g1, 1);
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:3000:    for (const g of top5Set) incMap(layers.transition.top5, g, 1);
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:3033:      keyLayer === "transition"
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:3140:      probCond: Number(x.details.transition?.probability || 0),
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:3144:      freqCond: Number(x.details.transition?.firstCount || 0),
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:3416:        nextDraw: next?.draw || null,
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:3421:    .filter((x) => x.scene && x.nextDraw && Number(x.score) > 0)
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:3448:    const nextGrupo = Number(item?.nextDraw ? pickPrize1GrupoFromDraw(item.nextDraw) : null);
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:3949:  const schedule = getScheduleForLottery({
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:232:export function getScheduleForLottery({
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:326:    const daySchedule = getScheduleForLottery({
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:385:      const sch = getScheduleForLottery({
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:399:  const sch0 = getScheduleForLottery({
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:418:    const sch = getScheduleForLottery({
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:461:      const sch = getScheduleForLottery({
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:507:    const sch = getScheduleForLottery({
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:525:      const sch2 = getScheduleForLottery({
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:649:function buildFreqAndFirstMaps(nextDraw) {
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:652:  const items = getAllTop5Groups(nextDraw);
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:1028:    const nextDraw = found?.draw || null;
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:1029:    const nextSlot = found?.slot || null;
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:1030:    if (!nextDraw || !nextSlot?.ymd || !nextSlot?.hour) continue;
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:1036:      targetYmd: safeStr(nextSlot.ymd),
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:1037:      targetHour: toHourBucket(nextSlot.hour),
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:1038:      targetDow: getDowKey(nextSlot.ymd),
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:1039:      targetDayOfMonth: getDayOfMonth(nextSlot.ymd),
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:1042:    const nextMaps = buildFreqAndFirstMaps(nextDraw);
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:1049:      layerResults[i].matchingDraws.push(nextDraw);
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:1113:  const nextSlot = getNextSlotForLottery({
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:1127:    : safeStr(nextSlot?.ymd);
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:1131:    : toHourBucket(nextSlot?.hour);
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:1134:  const transition = `${lastH}->${targetH}`;
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:1138:    (transition === "11h->14h" || transition === "14h->16h");
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:1873:      transition: 0.25,
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:1884:      transition: 0.2,
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:1894:    transition: 0.3,
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:1905:    transition: Number(weights?.transition || 0),
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:1916:      transition: 0.3,
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:1926:    transition: safe.transition / total,
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:2234:  const nextSlot = getNextSlotForLottery({
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:2248:    : safeStr(nextSlot?.ymd);
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:2252:    : toHourBucket(nextSlot?.hour);
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:2441:    transition: pairStrong ? weights.transition * 0.7 : weights.transition,
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:2545:      (pT * adjustedWeights.transition) +
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:2666:    `Pesos: mode=${mode} | transi├º├úo=${(adjustedWeights.transition * 100).toFixed(0)}% | par=${(adjustedWeights.pair * 100).toFixed(0)}% | mem├│ria=${(adjustedWeights.memory * 100).toFixed(0)}% | rec├¬ncia=${(adjustedWeights.recent * 100).toFixed(0)}% | estrutural=${(adjustedWeights.structural * 100).toFixed(0)}% | atraso=${(adjustedWeights.late * 100).toFixed(0)}%`,
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:2910:  const nextSlot = getNextSlotForLottery({
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:2924:    : safeStr(nextSlot?.ymd);
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:2928:    : toHourBucket(nextSlot?.hour);
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:2948:    transition: { label: `transi├º├úo G${String(prevGrupo).padStart(2, "0")} @ ${lastH} ÔåÆ ${targetH}`, samples: 0, first: emptyGroupMap(), top5: emptyGroupMap(), weight: 0.26 },
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:2992:    const nextDraw = indexed.get(`${safeStr(ns?.ymd)}|${toHourBucket(ns?.hour)}`) || null;
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:2993:    if (!nextDraw) continue;
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:2995:    const g1 = getFirstGrupoFromDraw(nextDraw);
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:2996:    const top5Set = getTop5GroupSet(nextDraw);
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:2998:    layers.transition.samples += 1;
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:2999:    incMap(layers.transition.first, g1, 1);
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:3000:    for (const g of top5Set) incMap(layers.transition.top5, g, 1);
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:3033:      keyLayer === "transition"
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:3140:      probCond: Number(x.details.transition?.probability || 0),
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:3144:      freqCond: Number(x.details.transition?.firstCount || 0),
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:3416:        nextDraw: next?.draw || null,
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:3421:    .filter((x) => x.scene && x.nextDraw && Number(x.score) > 0)
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:3448:    const nextGrupo = Number(item?.nextDraw ? pickPrize1GrupoFromDraw(item.nextDraw) : null);
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:3949:  const schedule = getScheduleForLottery({
+src/pages/Top3/top3.engine.js:311:      const transitionedSchedule = saturdaySchedule
+src/pages/Top3/top3.engine.js:316:      if (!transitionedSchedule.includes("19:00")) {
+src/pages/Top3/top3.engine.js:317:        transitionedSchedule.push("19:00");
+src/pages/Top3/top3.engine.js:320:      return transitionedSchedule
+src/pages/Top3/top3.engine.js:345:export function getScheduleForLottery({
+src/pages/Top3/top3.engine.js:442:    const daySchedule = getScheduleForLottery({
+src/pages/Top3/top3.engine.js:501:      const sch = getScheduleForLottery({
+src/pages/Top3/top3.engine.js:515:  const sch0 = getScheduleForLottery({
+src/pages/Top3/top3.engine.js:534:    const sch = getScheduleForLottery({
+src/pages/Top3/top3.engine.js:577:      const sch = getScheduleForLottery({
+src/pages/Top3/top3.engine.js:623:    const sch = getScheduleForLottery({
+src/pages/Top3/top3.engine.js:641:      const sch2 = getScheduleForLottery({
+src/pages/Top3/top3.engine.js:765:function buildFreqAndFirstMaps(nextDraw) {
+src/pages/Top3/top3.engine.js:768:  const items = getAllPrizePresenceGroups(nextDraw);
+src/pages/Top3/top3.engine.js:1144:    const nextDraw = found?.draw || null;
+src/pages/Top3/top3.engine.js:1145:    const nextSlot = found?.slot || null;
+src/pages/Top3/top3.engine.js:1146:    if (!nextDraw || !nextSlot?.ymd || !nextSlot?.hour) continue;
+src/pages/Top3/top3.engine.js:1152:      targetYmd: safeStr(nextSlot.ymd),
+src/pages/Top3/top3.engine.js:1153:      targetHour: toHourBucket(nextSlot.hour),
+src/pages/Top3/top3.engine.js:1154:      targetDow: getDowKey(nextSlot.ymd),
+src/pages/Top3/top3.engine.js:1155:      targetDayOfMonth: getDayOfMonth(nextSlot.ymd),
+src/pages/Top3/top3.engine.js:1158:    const nextMaps = buildFreqAndFirstMaps(nextDraw);
+src/pages/Top3/top3.engine.js:1165:      layerResults[i].matchingDraws.push(nextDraw);
+src/pages/Top3/top3.engine.js:1229:  const nextSlot = getNextSlotForLottery({
+src/pages/Top3/top3.engine.js:1243:    : safeStr(nextSlot?.ymd);
+src/pages/Top3/top3.engine.js:1247:    : toHourBucket(nextSlot?.hour);
+src/pages/Top3/top3.engine.js:1250:  const transition = `${lastH}->${targetH}`;
+src/pages/Top3/top3.engine.js:1254:    (transition === "11h->14h" || transition === "14h->16h");
+src/pages/Top3/top3.engine.js:1989:      transition: 0.25,
+src/pages/Top3/top3.engine.js:2000:      transition: 0.2,
+src/pages/Top3/top3.engine.js:2010:    transition: 0.3,
+src/pages/Top3/top3.engine.js:2021:    transition: Number(weights?.transition || 0),
+src/pages/Top3/top3.engine.js:2032:      transition: 0.3,
+src/pages/Top3/top3.engine.js:2042:    transition: safe.transition / total,
+src/pages/Top3/top3.engine.js:2350:  const nextSlot = getNextSlotForLottery({
+src/pages/Top3/top3.engine.js:2364:    : safeStr(nextSlot?.ymd);
+src/pages/Top3/top3.engine.js:2368:    : toHourBucket(nextSlot?.hour);
+src/pages/Top3/top3.engine.js:2557:    transition: pairStrong ? weights.transition * 0.7 : weights.transition,
+src/pages/Top3/top3.engine.js:2661:      (pT * adjustedWeights.transition) +
+src/pages/Top3/top3.engine.js:2736:    `Pesos: mode=${mode} | transi├º├úo=${(adjustedWeights.transition * 100).toFixed(0)}% | par=${(adjustedWeights.pair * 100).toFixed(0)}% | mem├│ria=${(adjustedWeights.memory * 100).toFixed(0)}% | rec├¬ncia=${(adjustedWeights.recent * 100).toFixed(0)}% | estrutural=${(adjustedWeights.structural * 100).toFixed(0)}% | atraso=${(adjustedWeights.late * 100).toFixed(0)}%`,
+src/pages/Top3/top3.engine.js:2980:  const nextSlot = getNextSlotForLottery({
+src/pages/Top3/top3.engine.js:2994:    : safeStr(nextSlot?.ymd);
+src/pages/Top3/top3.engine.js:2998:    : toHourBucket(nextSlot?.hour);
+src/pages/Top3/top3.engine.js:3018:    transition: { label: `transi├º├úo G${String(prevGrupo).padStart(2, "0")} @ ${lastH} ÔåÆ ${targetH}`, samples: 0, first: emptyGroupMap(), prizePresence: emptyGroupMap(), weight: 0.26 },
+src/pages/Top3/top3.engine.js:3062:    const nextDraw = indexed.get(`${safeStr(ns?.ymd)}|${toHourBucket(ns?.hour)}`) || null;
+src/pages/Top3/top3.engine.js:3063:    if (!nextDraw) continue;
+src/pages/Top3/top3.engine.js:3065:    const g1 = getFirstGrupoFromDraw(nextDraw);
+src/pages/Top3/top3.engine.js:3066:    const prizePresenceSet = getPrizePresenceGroupSet(nextDraw);
+src/pages/Top3/top3.engine.js:3068:    layers.transition.samples += 1;
+src/pages/Top3/top3.engine.js:3069:    incMap(layers.transition.first, g1, 1);
+src/pages/Top3/top3.engine.js:3070:    for (const g of prizePresenceSet) incMap(layers.transition.prizePresence, g, 1);
+src/pages/Top3/top3.engine.js:3103:      keyLayer === "transition"
+src/pages/Top3/top3.engine.js:3210:      probCond: Number(x.details.transition?.probability || 0),
+src/pages/Top3/top3.engine.js:3214:      freqCond: Number(x.details.transition?.firstCount || 0),
+src/pages/Top3/top3.engine.js:3486:        nextDraw: next?.draw || null,
+src/pages/Top3/top3.engine.js:3491:    .filter((x) => x.scene && x.nextDraw && Number(x.score) > 0)
+src/pages/Top3/top3.engine.js:3518:    const nextGrupo = Number(item?.nextDraw ? pickPrize1GrupoFromDraw(item.nextDraw) : null);
+src/pages/Top3/top3.engine.js:3998:  const schedule = getScheduleForLottery({
+src/pages/Top3/top3.hooks.js:25:  getScheduleForLottery,
+src/pages/Top3/top3.hooks.js:143:  const schedule = getScheduleForLottery({
+src/pages/Top3/top3.hooks.js:369:    return getScheduleForLottery({
+src/pages/Top3/top3.hooks.js:505:      let todaySchedule = getScheduleForLottery({
+src/pages/Top3/top3.hooks.js:575:          const nextSlot = getNextSlotForLottery({
+src/pages/Top3/top3.hooks.js:584:          resolvedTargetY = safeStr(nextSlot?.ymd || "");
+src/pages/Top3/top3.hooks.js:585:          resolvedTargetH = toHourBucket(nextSlot?.hour || "");
+src/pages/Top3/top3.hooks.js:666:      const baseDaySchedule = getScheduleForLottery({
+src/pages/Top3/top3.public-api.js:28:  getScheduleForLottery,
+src/pages/Top3/top3.storage.js:7:  getScheduleForLottery,
+src/pages/Top3/top3.storage.js:317:  const schedule = getScheduleForLottery({
+
+============================================================
+BASE, ÚLTIMO E ANTERIOR
+============================================================
+
+src/pages/Top3/Top3View.jsx:638:  const baseLabel = baseAnimalName
+src/pages/Top3/Top3View.jsx:864:                Ap├│s {baseLabel} ├ás {baseHour}
+src/pages/Top3/Top3View.jsx:2716:              ÔùÇ Dia anterior
+src/pages/Top3/modules/scoreEngine/contextEvidence.js:32:        reasons.push(`Grupo anterior: ${ctx.previousGroup}`);
+src/pages/Top3/modules/scoreEngine/contextEvidence.js:35:        reasons.push(`Animal anterior: ${ctx.previousAnimal}`);
+src/pages/Top3/modules/top3.analytics.js:97:  baseDrawState,
+src/pages/Top3/modules/top3.analytics.js:111:  const drawLast = baseDrawState || null;
+src/pages/Top3/modules/top3.analytics.js:145:          baseDraw: drawLast,
+src/pages/Top3/modules/top3.analytics.js:160:  const lastDrawInRange =
+src/pages/Top3/modules/top3.analytics.js:179:    lastDrawInRange ? pickDrawYMD(lastDrawInRange) || "" : "",
+src/pages/Top3/modules/top3.analytics.js:180:    lastDrawInRange ? toHourBucket(pickDrawHour(lastDrawInRange)) || "" : "",
+src/pages/Top3/modules/top3.state.js:44:  const [baseDrawState, setBaseDrawState] = useState(null);
+src/pages/Top3/modules/top3.state.js:84:    baseDrawState,
+src/pages/Top3/top3.chain.js:14:- Encontra o draw imediatamente anterior ao alvo
+src/pages/Top3/top3.chain.js:17:- Evita vazamento usando apenas hist├│rico anterior ao alvo no modo target_aware
+src/pages/Top3/top3.chain.js:204:    const lastDraw = list[list.length - 1];
+src/pages/Top3/top3.chain.js:205:    const lastGrupo = Number(pickPrize1GrupoFromDraw(lastDraw));
+src/pages/Top3/top3.chain.js:217:      basedOnHour: toHourBucket(pickDrawHour(lastDraw)),
+src/pages/Top3/top3.chain.js:218:      basedOnYmd: pickDrawYMD(lastDraw),
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:883:        label: "Federal: dia da semana + grupo anterior",
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:891:        label: "Federal: grupo anterior",
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:913:      label: "dia do m├¬s + dia da semana + hora anterior + grupo anterior -> alvo",
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:924:      label: "dia da semana + hora anterior + grupo anterior -> alvo",
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:934:      label: "hora anterior + grupo anterior -> alvo",
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:4013:    let baseDraw = null;
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:4028:    if (priorChainDraw) baseDraw = priorChainDraw;
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:4030:    if (!baseDraw) {
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:4044:      if (prevSameDay) baseDraw = prevSameDay;
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:4047:    if (!baseDraw) {
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:4056:        baseDraw = d;
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:4061:    if (!baseDraw) {
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:4062:      baseDraw = findPreviousValidDraw(rangeSorted, targetYmd, slotHour);
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:4065:    if (!baseDraw) {
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:4080:      pickDrawYMD(baseDraw),
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:4081:      toHourBucket(pickDrawHour(baseDraw))
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:4109:      drawLast: baseDraw,
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:4140:      baseYmd: pickDrawYMD(baseDraw) || "",
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:4141:      baseHour: toHourBucket(pickDrawHour(baseDraw)) || "",
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:883:        label: "Federal: dia da semana + grupo anterior",
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:891:        label: "Federal: grupo anterior",
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:913:      label: "dia do m├¬s + dia da semana + hora anterior + grupo anterior -> alvo",
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:924:      label: "dia da semana + hora anterior + grupo anterior -> alvo",
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:934:      label: "hora anterior + grupo anterior -> alvo",
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:4013:    let baseDraw = null;
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:4028:    if (priorChainDraw) baseDraw = priorChainDraw;
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:4030:    if (!baseDraw) {
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:4044:      if (prevSameDay) baseDraw = prevSameDay;
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:4047:    if (!baseDraw) {
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:4056:        baseDraw = d;
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:4061:    if (!baseDraw) {
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:4062:      baseDraw = findPreviousValidDraw(rangeSorted, targetYmd, slotHour);
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:4065:    if (!baseDraw) {
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:4080:      pickDrawYMD(baseDraw),
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:4081:      toHourBucket(pickDrawHour(baseDraw))
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:4109:      drawLast: baseDraw,
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:4140:      baseYmd: pickDrawYMD(baseDraw) || "",
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:4141:      baseHour: toHourBucket(pickDrawHour(baseDraw)) || "",
+src/pages/Top3/top3.engine.js:999:        label: "Federal: dia da semana + grupo anterior",
+src/pages/Top3/top3.engine.js:1007:        label: "Federal: grupo anterior",
+src/pages/Top3/top3.engine.js:1029:      label: "dia do m├¬s + dia da semana + hora anterior + grupo anterior -> alvo",
+src/pages/Top3/top3.engine.js:1040:      label: "dia da semana + hora anterior + grupo anterior -> alvo",
+src/pages/Top3/top3.engine.js:1050:      label: "hora anterior + grupo anterior -> alvo",
+src/pages/Top3/top3.engine.js:4062:    let baseDraw = null;
+src/pages/Top3/top3.engine.js:4077:    if (priorChainDraw) baseDraw = priorChainDraw;
+src/pages/Top3/top3.engine.js:4079:    if (!baseDraw) {
+src/pages/Top3/top3.engine.js:4093:      if (prevSameDay) baseDraw = prevSameDay;
+src/pages/Top3/top3.engine.js:4096:    if (!baseDraw) {
+src/pages/Top3/top3.engine.js:4105:        baseDraw = d;
+src/pages/Top3/top3.engine.js:4110:    if (!baseDraw) {
+src/pages/Top3/top3.engine.js:4111:      baseDraw = findPreviousValidDraw(rangeSorted, targetYmd, slotHour);
+src/pages/Top3/top3.engine.js:4114:    if (!baseDraw) {
+src/pages/Top3/top3.engine.js:4129:      pickDrawYMD(baseDraw),
+src/pages/Top3/top3.engine.js:4130:      toHourBucket(pickDrawHour(baseDraw))
+src/pages/Top3/top3.engine.js:4191:      drawLast: baseDraw,
+src/pages/Top3/top3.engine.js:4222:      baseYmd: pickDrawYMD(baseDraw) || "",
+src/pages/Top3/top3.engine.js:4223:      baseHour: toHourBucket(pickDrawHour(baseDraw)) || "",
+src/pages/Top3/top3.hooks.js:117:function mergeBaseIntoRange(rangeDraws, baseDraw) {
+src/pages/Top3/top3.hooks.js:119:  const key = drawKey(baseDraw);
+src/pages/Top3/top3.hooks.js:131:    map.set(key, baseDraw);
+src/pages/Top3/top3.hooks.js:203:function sanitizeHistoricalDraws({ draws, lotteryKey, baseDraw }) {
+src/pages/Top3/top3.hooks.js:205:  const baseTs = drawTs(baseDraw);
+src/pages/Top3/top3.hooks.js:207:  if (!baseDraw || !Number.isFinite(baseTs)) return [];
+src/pages/Top3/top3.hooks.js:332:  const [baseDrawState, setBaseDrawState] = useState(null);
+src/pages/Top3/top3.hooks.js:544:      let baseDraw = null;
+src/pages/Top3/top3.hooks.js:559:        baseDraw = todayLast;
+src/pages/Top3/top3.hooks.js:629:            "N├úo foi poss├¡vel localizar a base anterior ao primeiro sorteio do dia."
+src/pages/Top3/top3.hooks.js:634:        baseDraw = previousResolved.draw;
+src/pages/Top3/top3.hooks.js:639:      baseGrupo = pickPrize1GrupoFromDraw(baseDraw);
+src/pages/Top3/top3.hooks.js:643:        !baseDraw ||
+src/pages/Top3/top3.hooks.js:701:      setBaseDrawState(baseDraw);
+src/pages/Top3/top3.hooks.js:781:      const hist = mergeBaseIntoRange(histRaw, baseDraw);
+src/pages/Top3/top3.hooks.js:803:                    drawKey(d) === drawKey(baseDraw)
+src/pages/Top3/top3.hooks.js:815:            lastDraw:
+src/pages/Top3/top3.hooks.js:869:      baseDrawState,
+src/pages/Top3/top3.hooks.js:881:    baseDrawState,
+
+============================================================
+CONSUMIDORES DO MOTOR TOP3
+============================================================
+
+src/pages/Top3/Top3.jsx:4:import Top3View from "./Top3View";
+src/pages/Top3/Top3.jsx:8:  return <Top3View {...c} />;
+src/pages/Top3/Top3View.jsx:1:// src/pages/Top3/Top3View.jsx
+src/pages/Top3/Top3View.jsx:1220:export default function Top3View(props) {
+src/pages/Top3/Top3View.premium.backup.jsx:1:// src/pages/Top3/Top3View.jsx
+src/pages/Top3/Top3View.premium.backup.jsx:958:export default function Top3View(props) {
+src/pages/Top3/__tests__/top3.backtest.layers.test.js:10:} from "../top3.engine";
+src/pages/Top3/__tests__/top3.backtest.test.js:10:} from "../top3.engine";
+src/pages/Top3/__tests__/top3.public-api.node.test.js:19:  "computeStatisticalTop3V3",
+src/pages/Top3/modules/top3.analytics.js:13:  computeStatisticalTop3V3,
+src/pages/Top3/modules/top3.analytics.js:14:} from "../top3.engine";
+src/pages/Top3/modules/top3.analytics.js:193:    computeStatisticalTop3V3({
+src/pages/Top3/modules/top3.prediction.js:15:export function buildTop3Predictions({
+src/pages/Top3/modules/top3.timeline.js:14:} from "../top3.engine";
+src/pages/Top3/modules/top3.timeline.js:122:export function buildTop3TimelineViewModel({
+src/pages/Top3/modules/top3.viewmodel.js:2:import { buildMilharesForGrupo } from "../top3.engine";
+src/pages/Top3/modules/top3.viewmodel.js:22:export function buildTop3MilharesCols(out, expectedCols = 4, perCol = 5) {
+src/pages/Top3/modules/top3.viewmodel.js:58:export function buildTop3ImgVariants(grupo, publicBase = "", size = 96) {
+src/pages/Top3/modules/top3.viewmodel.js:101:export function buildTop3CardViewModel({
+src/pages/Top3/modules/top3.viewmodel.js:138:  const milharesCols = buildTop3MilharesCols(out, 4, 5);
+src/pages/Top3/modules/top3.viewmodel.js:152:    imgIcon: buildTop3ImgVariants(g, publicBase, 96),
+src/pages/Top3/top3.chain.js:5:} from "./top3.engine";
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:1:// src/pages/Top3/top3.engine.js
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:2880:export function computeStatisticalTop3V3({
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:4106:    const computed = computeStatisticalTop3V3({
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:1:// src/pages/Top3/top3.engine.js
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:2880:export function computeStatisticalTop3V3({
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:4106:    const computed = computeStatisticalTop3V3({
+src/pages/Top3/top3.engine.js:1:// src/pages/Top3/top3.engine.js
+src/pages/Top3/top3.engine.js:2950:export function computeStatisticalTop3V3({
+src/pages/Top3/top3.engine.js:4188:    const computed = computeStatisticalTop3V3({
+src/pages/Top3/top3.firestore.js:21:} from "./top3.engine";
+src/pages/Top3/top3.hooks.js:35:} from "./top3.engine";
+src/pages/Top3/top3.hooks.js:66:import { buildTop3Predictions } from "./modules/top3.prediction";
+src/pages/Top3/top3.hooks.js:68:import { buildTop3TimelineViewModel } from "./modules/top3.timeline";
+src/pages/Top3/top3.hooks.js:71:  buildTop3MilharesCols,
+src/pages/Top3/top3.hooks.js:909:    return buildTop3Predictions({
+src/pages/Top3/top3.hooks.js:914:      build4ColsFromEngineOut: buildTop3MilharesCols,
+src/pages/Top3/top3.hooks.js:922:    const built = buildTop3TimelineViewModel({
+src/pages/Top3/top3.public-api.js:15:  computeStatisticalTop3V3,
+src/pages/Top3/top3.public-api.js:46:} from "./top3.engine";
+src/pages/Top3/top3.storage.js:8:} from "./top3.engine";

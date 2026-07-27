@@ -1,0 +1,90 @@
+PATCH_OK
+Arquivo alterado: .\src\pages\Dashboard\components\Sidebar\Icon.jsx
+Ícone adicionado: pets
+Representação: três bichinhos lado a lado
+Backup: .\tmp\terno_grupo_06_backup_20260726_200259
+diff --git a/src/pages/Dashboard/components/Sidebar/Icon.jsx b/src/pages/Dashboard/components/Sidebar/Icon.jsx
+index 2b93c64..e1ef8b1 100644
+--- a/src/pages/Dashboard/components/Sidebar/Icon.jsx
++++ b/src/pages/Dashboard/components/Sidebar/Icon.jsx
+@@ -107,6 +107,76 @@ export default function Icon({ name = "home", size = 18 }) {
+     );
+   }
+ 
++  if (name === "pets") {
++    return (
++      <svg {...common}>
++        {/* Bichinho esquerdo */}
++        <path
++          d="M2.6 9.2 3.4 6l2 1.5L7.3 6l.8 3.2v2.1a2.75 2.75 0 0 1-5.5 0V9.2Z"
++          stroke={stroke}
++          strokeWidth="1.45"
++          strokeLinecap="round"
++          strokeLinejoin="round"
++        />
++        <path
++          d="M4.3 10.4h.1M6.3 10.4h.1M5.35 11.5v.1"
++          stroke={gold}
++          strokeWidth="1.35"
++          strokeLinecap="round"
++        />
++
++        {/* Bichinho central */}
++        <path
++          d="M9.1 8.7 10 5.2l2 2 2-2 .9 3.5v2.5a2.9 2.9 0 0 1-5.8 0V8.7Z"
++          stroke={gold}
++          strokeWidth="1.55"
++          strokeLinecap="round"
++          strokeLinejoin="round"
++        />
++        <path
++          d="M10.8 10.2h.1M13.1 10.2h.1M12 11.5v.1"
++          stroke={stroke}
++          strokeWidth="1.4"
++          strokeLinecap="round"
++        />
++
++        {/* Bichinho direito */}
++        <path
++          d="M16 9.2 16.8 6l1.9 1.5L20.6 6l.8 3.2v2.1a2.7 2.7 0 0 1-5.4 0V9.2Z"
++          stroke={stroke}
++          strokeWidth="1.45"
++          strokeLinecap="round"
++          strokeLinejoin="round"
++        />
++        <path
++          d="M17.7 10.4h.1M19.7 10.4h.1M18.75 11.5v.1"
++          stroke={gold}
++          strokeWidth="1.35"
++          strokeLinecap="round"
++        />
++
++        {/* Base visual do trio */}
++        <path
++          d="M3.2 16.8c.8-1.5 2-2.2 3.2-2.2 1 0 1.9.4 2.6 1.2"
++          stroke={stroke}
++          strokeWidth="1.45"
++          strokeLinecap="round"
++        />
++        <path
++          d="M8.3 17.8c.9-1.9 2.2-2.8 3.7-2.8s2.8.9 3.7 2.8"
++          stroke={gold}
++          strokeWidth="1.55"
++          strokeLinecap="round"
++        />
++        <path
++          d="M15 15.8c.7-.8 1.6-1.2 2.6-1.2 1.2 0 2.4.7 3.2 2.2"
++          stroke={stroke}
++          strokeWidth="1.45"
++          strokeLinecap="round"
++        />
++      </svg>
++    );
++  }
+   if (name === "clock") {
+     return (
+       <svg {...common}>
+
+BUILD_APROVADO
+COMMIT_CONCLUIDO
+PUSH_CONCLUIDO

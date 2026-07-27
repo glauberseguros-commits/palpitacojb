@@ -1,0 +1,3061 @@
+===== LKN-22 — MAPA CIRÚRGICO DA INTEGRAÇÃO FRONTEND =====
+
+===== RESUMO =====
+
+ARQUIVOS_ANALISADOS=60
+ARQUIVOS_RELEVANTES=40
+
+===== ARQUIVOS PRIORITÁRIOS =====
+
+01. SCORE=24 | src/pages/Centenas/CentenasView.jsx
+    CATEGORIAS=API_REFERENCES, CONDITIONAL_REFERENCES, LOTTERY_REFERENCES, SCHEDULE_REFERENCES, SELECTOR_REFERENCES
+    LOTERIAS=PT_RIO=True | FEDERAL=True | LOOK=False | NACIONAL=False
+
+02. SCORE=24 | src/pages/Top3/top3.hooks.js
+    CATEGORIAS=API_REFERENCES, CONDITIONAL_REFERENCES, LOTTERY_REFERENCES, SCHEDULE_REFERENCES, SELECTOR_REFERENCES
+    LOTERIAS=PT_RIO=True | FEDERAL=True | LOOK=False | NACIONAL=False
+
+03. SCORE=22 | src/pages/Results/Results.jsx
+    CATEGORIAS=API_REFERENCES, CONDITIONAL_REFERENCES, LOTTERY_REFERENCES, SCHEDULE_REFERENCES, SELECTOR_REFERENCES
+    LOTERIAS=PT_RIO=False | FEDERAL=True | LOOK=False | NACIONAL=False
+
+04. SCORE=22 | src/pages/Top3/Top3View.jsx
+    CATEGORIAS=CONDITIONAL_REFERENCES, LOTTERY_REFERENCES, SCHEDULE_REFERENCES, SELECTOR_REFERENCES
+    LOTERIAS=PT_RIO=True | FEDERAL=True | LOOK=False | NACIONAL=False
+
+05. SCORE=22 | src/pages/Top3/Top3View.premium.backup.jsx
+    CATEGORIAS=CONDITIONAL_REFERENCES, LOTTERY_REFERENCES, SCHEDULE_REFERENCES, SELECTOR_REFERENCES
+    LOTERIAS=PT_RIO=True | FEDERAL=True | LOOK=False | NACIONAL=False
+
+06. SCORE=22 | src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js
+    CATEGORIAS=API_REFERENCES, CONDITIONAL_REFERENCES, LOTTERY_REFERENCES, SCHEDULE_REFERENCES, SELECTOR_REFERENCES
+    LOTERIAS=PT_RIO=False | FEDERAL=True | LOOK=False | NACIONAL=False
+
+07. SCORE=22 | src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js
+    CATEGORIAS=API_REFERENCES, CONDITIONAL_REFERENCES, LOTTERY_REFERENCES, SCHEDULE_REFERENCES, SELECTOR_REFERENCES
+    LOTERIAS=PT_RIO=False | FEDERAL=True | LOOK=False | NACIONAL=False
+
+08. SCORE=20 | src/services/kingResultsService.js
+    CATEGORIAS=API_REFERENCES, CONDITIONAL_REFERENCES, LOTTERY_REFERENCES, SCHEDULE_REFERENCES
+    LOTERIAS=PT_RIO=True | FEDERAL=True | LOOK=False | NACIONAL=False
+
+09. SCORE=18 | src/constants/schedule.js
+    CATEGORIAS=CONDITIONAL_REFERENCES, LOTTERY_REFERENCES, SCHEDULE_REFERENCES
+    LOTERIAS=PT_RIO=True | FEDERAL=True | LOOK=False | NACIONAL=False
+
+10. SCORE=18 | src/pages/Top3/__tests__/top3.backtest.layers.test.js
+    CATEGORIAS=API_REFERENCES, CONDITIONAL_REFERENCES, LOTTERY_REFERENCES, SCHEDULE_REFERENCES
+    LOTERIAS=PT_RIO=True | FEDERAL=False | LOOK=False | NACIONAL=False
+
+11. SCORE=18 | src/pages/Top3/__tests__/top3.backtest.test.js
+    CATEGORIAS=API_REFERENCES, CONDITIONAL_REFERENCES, LOTTERY_REFERENCES, SCHEDULE_REFERENCES
+    LOTERIAS=PT_RIO=True | FEDERAL=False | LOOK=False | NACIONAL=False
+
+12. SCORE=18 | src/pages/Top3/modules/top3.loader.js
+    CATEGORIAS=API_REFERENCES, CONDITIONAL_REFERENCES, LOTTERY_REFERENCES, SCHEDULE_REFERENCES
+    LOTERIAS=PT_RIO=False | FEDERAL=True | LOOK=False | NACIONAL=False
+
+13. SCORE=18 | src/pages/Top3/top3.engine.js
+    CATEGORIAS=API_REFERENCES, CONDITIONAL_REFERENCES, LOTTERY_REFERENCES, SCHEDULE_REFERENCES
+    LOTERIAS=PT_RIO=False | FEDERAL=True | LOOK=False | NACIONAL=False
+
+14. SCORE=18 | src/pages/Top3/top3.firestore.js
+    CATEGORIAS=API_REFERENCES, CONDITIONAL_REFERENCES, LOTTERY_REFERENCES, SCHEDULE_REFERENCES
+    LOTERIAS=PT_RIO=True | FEDERAL=False | LOOK=False | NACIONAL=False
+
+15. SCORE=15 | src/hooks/useKingRanking.js
+    CATEGORIAS=API_REFERENCES, CONDITIONAL_REFERENCES, SCHEDULE_REFERENCES, SELECTOR_REFERENCES
+    LOTERIAS=PT_RIO=False | FEDERAL=False | LOOK=False | NACIONAL=False
+
+16. SCORE=14 | src/pages/Top3/modules/scoreEngine/frequencyEvidence.js
+    CATEGORIAS=CONDITIONAL_REFERENCES, LOTTERY_REFERENCES, SCHEDULE_REFERENCES
+    LOTERIAS=PT_RIO=False | FEDERAL=False | LOOK=False | NACIONAL=False
+
+17. SCORE=14 | src/pages/Top3/top3.selectors.js
+    CATEGORIAS=CONDITIONAL_REFERENCES, LOTTERY_REFERENCES
+    LOTERIAS=PT_RIO=True | FEDERAL=True | LOOK=False | NACIONAL=False
+
+18. SCORE=14 | src/pages/Top3/top3.storage.js
+    CATEGORIAS=CONDITIONAL_REFERENCES, LOTTERY_REFERENCES, SCHEDULE_REFERENCES
+    LOTERIAS=PT_RIO=False | FEDERAL=False | LOOK=False | NACIONAL=False
+
+19. SCORE=13 | src/pages/Top3/__tests__/top3.public-api.node.test.js
+    CATEGORIAS=API_REFERENCES, LOTTERY_REFERENCES, SCHEDULE_REFERENCES
+    LOTERIAS=PT_RIO=True | FEDERAL=False | LOOK=False | NACIONAL=False
+
+20. SCORE=13 | src/pages/Top3/modules/top3.timeline.js
+    CATEGORIAS=LOTTERY_REFERENCES, SCHEDULE_REFERENCES, SELECTOR_REFERENCES
+    LOTERIAS=PT_RIO=False | FEDERAL=False | LOOK=False | NACIONAL=False
+
+21. SCORE=13 | src/services/statsSignals.js
+    CATEGORIAS=API_REFERENCES, LOTTERY_REFERENCES, SCHEDULE_REFERENCES
+    LOTERIAS=PT_RIO=True | FEDERAL=False | LOOK=False | NACIONAL=False
+
+22. SCORE=11 | src/pages/Centenas/centenas.utils.js
+    CATEGORIAS=API_REFERENCES, LOTTERY_REFERENCES, SCHEDULE_REFERENCES
+    LOTERIAS=PT_RIO=False | FEDERAL=False | LOOK=False | NACIONAL=False
+
+23. SCORE=11 | src/pages/Top3/modules/top3.analytics.js
+    CATEGORIAS=API_REFERENCES, LOTTERY_REFERENCES, SCHEDULE_REFERENCES
+    LOTERIAS=PT_RIO=False | FEDERAL=False | LOOK=False | NACIONAL=False
+
+24. SCORE=11 | src/services/auditKingCounts.js
+    CATEGORIAS=API_REFERENCES, LOTTERY_REFERENCES, SCHEDULE_REFERENCES
+    LOTERIAS=PT_RIO=False | FEDERAL=False | LOOK=False | NACIONAL=False
+
+25. SCORE=09 | src/pages/Top3/modules/scoreEngine/contextEvidence.js
+    CATEGORIAS=LOTTERY_REFERENCES, SCHEDULE_REFERENCES
+    LOTERIAS=PT_RIO=False | FEDERAL=False | LOOK=False | NACIONAL=False
+
+26. SCORE=09 | src/pages/Top3/top3.constants.js
+    CATEGORIAS=LOTTERY_REFERENCES
+    LOTERIAS=PT_RIO=True | FEDERAL=True | LOOK=False | NACIONAL=False
+
+27. SCORE=09 | src/services/statisticsEngine.js
+    CATEGORIAS=API_REFERENCES, LOTTERY_REFERENCES
+    LOTERIAS=PT_RIO=True | FEDERAL=False | LOOK=False | NACIONAL=False
+
+28. SCORE=06 | src/pages/Centenas/__tests__/milharProbabilityEngineV3.test.js
+    CATEGORIAS=API_REFERENCES, SCHEDULE_REFERENCES
+    LOTERIAS=PT_RIO=False | FEDERAL=False | LOOK=False | NACIONAL=False
+
+29. SCORE=06 | src/pages/Centenas/modules/milharProbabilityEngineV3.js
+    CATEGORIAS=API_REFERENCES, SCHEDULE_REFERENCES
+    LOTERIAS=PT_RIO=False | FEDERAL=False | LOOK=False | NACIONAL=False
+
+30. SCORE=06 | src/pages/Top3/modules/scoreEngine/scoreConfig.js
+    CATEGORIAS=API_REFERENCES, SCHEDULE_REFERENCES
+    LOTERIAS=PT_RIO=False | FEDERAL=False | LOOK=False | NACIONAL=False
+
+31. SCORE=06 | src/pages/Top3/top3.public-api.js
+    CATEGORIAS=API_REFERENCES, SCHEDULE_REFERENCES
+    LOTERIAS=PT_RIO=False | FEDERAL=False | LOOK=False | NACIONAL=False
+
+32. SCORE=05 | src/pages/Top3/modules/top3.state.js
+    CATEGORIAS=LOTTERY_REFERENCES
+    LOTERIAS=PT_RIO=False | FEDERAL=False | LOOK=False | NACIONAL=False
+
+33. SCORE=04 | src/pages/Centenas/centenas.styles.js
+    CATEGORIAS=SELECTOR_REFERENCES
+    LOTERIAS=PT_RIO=False | FEDERAL=False | LOOK=False | NACIONAL=False
+
+34. SCORE=04 | src/pages/Centenas/modules/milharProbabilityEngine.js
+    CATEGORIAS=SELECTOR_REFERENCES
+    LOTERIAS=PT_RIO=False | FEDERAL=False | LOOK=False | NACIONAL=False
+
+35. SCORE=04 | src/pages/Top3/modules/top3.prediction.js
+    CATEGORIAS=SCHEDULE_REFERENCES
+    LOTERIAS=PT_RIO=False | FEDERAL=False | LOOK=False | NACIONAL=False
+
+36. SCORE=04 | src/pages/Top3/modules/top3.viewmodel.js
+    CATEGORIAS=SCHEDULE_REFERENCES
+    LOTERIAS=PT_RIO=False | FEDERAL=False | LOOK=False | NACIONAL=False
+
+37. SCORE=02 | src/pages/Top3/top3.chain.js
+    CATEGORIAS=API_REFERENCES
+    LOTERIAS=PT_RIO=False | FEDERAL=False | LOOK=False | NACIONAL=False
+
+38. SCORE=02 | src/services/king/king.draws.js
+    CATEGORIAS=API_REFERENCES
+    LOTERIAS=PT_RIO=False | FEDERAL=False | LOOK=False | NACIONAL=False
+
+39. SCORE=02 | src/services/king/king.prizes.js
+    CATEGORIAS=API_REFERENCES
+    LOTERIAS=PT_RIO=False | FEDERAL=False | LOOK=False | NACIONAL=False
+
+40. SCORE=02 | src/services/predictionService.js
+    CATEGORIAS=API_REFERENCES
+    LOTERIAS=PT_RIO=False | FEDERAL=False | LOOK=False | NACIONAL=False
+
+===== TRECHOS DOS 20 ARQUIVOS MAIS PRIORITÁRIOS =====
+
+==================================================
+ARQUIVO: src/pages/Centenas/CentenasView.jsx
+SCORE: 24
+CATEGORIAS: API_REFERENCES, CONDITIONAL_REFERENCES, LOTTERY_REFERENCES, SCHEDULE_REFERENCES, SELECTOR_REFERENCES
+LOTERIAS: PT_RIO=True | FEDERAL=True | LOOK=False | NACIONAL=False
+
+--- BLOCO 01 | LINHA 17 | LOTTERY_REFERENCES, SCHEDULE_REFERENCES ---
+   00013: /**
+   00014:  * Centenas+ (PREMIUM)
+   00015:  * ✅ Performance:
+   00016:  * - chunks em paralelo (concorrência controlada)
+>> 00017:  * - cache em memória por (lottery + closeHour + positions)
+   00018:  *
+   00019:  * ✅ UX:
+   00020:  * - persistência de filtros no localStorage (não apaga ao trocar de página)
+   00021:  * - status de progresso por chunks
+   00022:  *
+   00023:  * ✅ Imagem nítida:
+   00024:  * - tenta usar getImgFromGrupo(grupo, 128) quando disponível
+
+--- BLOCO 02 | LINHA 45 | LOTTERY_REFERENCES ---
+   00041:  * - builds concorrentes não podem "finalizar UI" do build mais novo no finally.
+   00042:  */
+   00043: 
+   00044: const LOTTERY_KEYS = {
+>> 00045:   PT_RIO: "PT_RIO",
+   00046:   FEDERAL: "FEDERAL",
+   00047: };
+   00048: 
+   00049: const FILTERS_LS_KEY = "pp_centenas_filters_v2";
+   00050: 
+   00051: // tuning
+   00052: const CHUNK_DAYS = 45; // manter < 60 para não cair no aggregated
+
+--- BLOCO 03 | LINHA 154 | LOTTERY_REFERENCES, SCHEDULE_REFERENCES ---
+   00150:     "";
+   00151:   return isYMD(y) ? y : "";
+   00152: }
+   00153: function pickDrawHour(draw) {
+>> 00154:   const directCandidates = [draw?.closeHour, draw?.hour, draw?.horario, draw?.close_hour, draw?.close];
+   00155:   for (const c of directCandidates) {
+   00156:     const norm = normalizeHourLike(c);
+   00157:     if (norm) return norm;
+   00158:   }
+   00159: 
+   00160:   const nested = draw?.lottery || draw?.loteria || draw?.meta || null;
+   00161:   if (nested) {
+
+--- BLOCO 04 | LINHA 163 | LOTTERY_REFERENCES, SCHEDULE_REFERENCES ---
+   00159: 
+   00160:   const nested = draw?.lottery || draw?.loteria || draw?.meta || null;
+   00161:   if (nested) {
+   00162:     const nestedCandidates = [
+>> 00163:       nested?.closeHour,
+   00164:       nested?.close_hour,
+   00165:       nested?.hour,
+   00166:       nested?.horario,
+   00167:       nested?.close,
+   00168:       nested?.drawHour,
+   00169:       nested?.draw_hour,
+   00170:     ];
+
+--- BLOCO 05 | LINHA 345 | API_REFERENCES ---
+   00341: }
+   00342: 
+   00343: function normalizeDrawsResult(maybe) {
+   00344:   if (Array.isArray(maybe)) return maybe;
+>> 00345:   if (Array.isArray(maybe?.draws)) return maybe.draws;
+   00346:   if (Array.isArray(maybe?.drawsRaw)) return maybe.drawsRaw;
+   00347:   if (Array.isArray(maybe?.data)) return maybe.data;
+   00348:   if (Array.isArray(maybe?.results)) return maybe.results;
+   00349:   return [];
+   00350: }
+   00351: 
+   00352: /**
+
+--- BLOCO 06 | LINHA 373 | API_REFERENCES ---
+   00369:   return [];
+   00370: }
+   00371: 
+   00372: /**
+>> 00373:  * ✅ Extrai ymd/hora direto da prize (para quando draws vierem sem prizes)
+   00374:  */
+   00375: function pickPrizeYmd(prize) {
+   00376:   const candidates = [
+   00377:     prize?.dateYmd,
+   00378:     prize?.ymd,
+   00379:     prize?.date_ymd,
+   00380:     prize?.drawYmd,
+
+--- BLOCO 07 | LINHA 395 | SCHEDULE_REFERENCES ---
+   00391: }
+   00392: 
+   00393: function pickPrizeHour(prize) {
+   00394:   const candidates = [
+>> 00395:     prize?.closeHour,
+   00396:     prize?.close_hour,
+   00397:     prize?.hour,
+   00398:     prize?.horario,
+   00399:     prize?.drawHour,
+   00400:     prize?.draw_hour,
+   00401:     prize?.lotteryCloseHour,
+   00402:   ];
+
+--- BLOCO 08 | LINHA 430 | API_REFERENCES ---
+   00426: 
+   00427: async function mapWithConcurrency(items, limitN, mapper) {
+   00428:   const arr = Array.isArray(items) ? items : [];
+   00429:   const concurrency = Math.max(1, Number(limitN) || 3);
+>> 00430:   const results = new Array(arr.length);
+   00431:   let idx = 0;
+   00432: 
+   00433:   async function worker() {
+   00434:     while (idx < arr.length) {
+   00435:       const current = idx++;
+   00436:       results[current] = await mapper(arr[current], current);
+   00437:     }
+
+--- BLOCO 09 | LINHA 441 | API_REFERENCES ---
+   00437:     }
+   00438:   }
+   00439: 
+   00440:   await Promise.all(Array.from({ length: Math.min(concurrency, arr.length) }, worker));
+>> 00441:   return results;
+   00442: }
+   00443: 
+   00444: /* ========= imagem: tentar _128 ========= */
+   00445: 
+   00446: function upgradeImg(src, target = 128) {
+   00447:   const s = String(src || "").trim();
+   00448:   if (!s) return "";
+
+--- BLOCO 10 | LINHA 483 | LOTTERY_REFERENCES ---
+   00479:       {
+   00480:         id: "ALL",
+   00481:         label: "Todas as loterias",
+   00482:         lotteryKeys: [
+>> 00483:           LOTTERY_KEYS.PT_RIO,
+   00484:           LOTTERY_KEYS.FEDERAL,
+   00485:         ],
+   00486:       },
+   00487:       {
+   00488:         id: LOTTERY_KEYS.PT_RIO,
+   00489:         label: "PT Rio",
+   00490:         lotteryKeys: [
+
+--- BLOCO 11 | LINHA 491 | LOTTERY_REFERENCES ---
+   00487:       {
+   00488:         id: LOTTERY_KEYS.PT_RIO,
+   00489:         label: "PT Rio",
+   00490:         lotteryKeys: [
+>> 00491:           LOTTERY_KEYS.PT_RIO,
+   00492:         ],
+   00493:       },
+   00494:       {
+   00495:         id: LOTTERY_KEYS.FEDERAL,
+   00496:         label: "Federal",
+   00497:         lotteryKeys: [
+   00498:           LOTTERY_KEYS.FEDERAL,
+
+--- BLOCO 12 | LINHA 584 | LOTTERY_REFERENCES, SELECTOR_REFERENCES ---
+   00580: 
+   00581:   // cache em memória
+   00582:   const baseCacheRef = useRef(new Map());
+   00583: 
+>> 00584:   const selectedLottery = useMemo(
+   00585:     () => LOTTERY_OPTIONS.find((x) => x.id === lotteryOptId) || LOTTERY_OPTIONS[0],
+   00586:     [lotteryOptId, LOTTERY_OPTIONS]
+   00587:   );
+   00588: 
+   00589:   const selectedLotteryKeys = useMemo(
+   00590:     () =>
+   00591:       Array.isArray(
+
+... 48 blocos adicionais omitidos
+
+==================================================
+ARQUIVO: src/pages/Top3/top3.hooks.js
+SCORE: 24
+CATEGORIAS: API_REFERENCES, CONDITIONAL_REFERENCES, LOTTERY_REFERENCES, SCHEDULE_REFERENCES, SELECTOR_REFERENCES
+LOTERIAS: PT_RIO=True | FEDERAL=True | LOOK=False | NACIONAL=False
+
+--- BLOCO 01 | LINHA 25 | SCHEDULE_REFERENCES ---
+   00021:   FEDERAL_SCHEDULE,
+   00022: } from "./top3.constants";
+   00023: 
+   00024: import {
+>> 00025:   getScheduleForLottery,
+   00026:   findLastDrawInList,
+   00027:   pickDrawHour,
+   00028:   pickDrawYMD,
+   00029:   pickPrize1GrupoFromDraw,
+   00030:   getPreviousDrawRobust,
+   00031:   build16MilharesForGrupo,
+   00032:   buildMilharesForGrupo,
+
+--- BLOCO 02 | LINHA 37 | SELECTOR_REFERENCES ---
+   00033:   getNextSlotForLottery,
+   00034:   isFederalDrawDay,
+   00035: } from "./top3.engine";
+   00036: 
+>> 00037: import { lotteryLabel } from "./top3.selectors";
+   00038: 
+   00039: import {
+   00040:   registerPrediction,
+   00041:   reconcilePendingTop3Log,
+   00042:   ensureDayTimeline,
+   00043: } from "./top3.storage";
+   00044: 
+
+--- BLOCO 03 | LINHA 107 | API_REFERENCES ---
+   00103:   const h = toHourBucket(pickDrawHour(draw));
+   00104:   return isYMD(y) && h ? `${y}|${h}` : "";
+   00105: }
+   00106: 
+>> 00107: function hasDrawAtHour(draws, hourBucket) {
+   00108:   const target = toHourBucket(hourBucket);
+   00109:   if (!target) return false;
+   00110: 
+   00111:   return (Array.isArray(draws) ? draws : []).some((d) => {
+   00112:     const h = toHourBucket(pickDrawHour(d));
+   00113:     return h === target;
+   00114:   });
+
+--- BLOCO 04 | LINHA 137 | LOTTERY_REFERENCES, SCHEDULE_REFERENCES ---
+   00133: 
+   00134:   return Array.from(map.values()).sort((a, b) => drawTs(a) - drawTs(b));
+   00135: }
+   00136: 
+>> 00137: function isDrawValidForLotterySchedule(draw, lotteryKey) {
+   00138:   const y = pickDrawYMD(draw);
+   00139:   const h = toHourBucket(pickDrawHour(draw));
+   00140: 
+   00141:   if (!isYMD(y) || !h) return false;
+   00142: 
+   00143:   const schedule = getScheduleForLottery({
+   00144:     lotteryKey,
+
+--- BLOCO 05 | LINHA 151 | CONDITIONAL_REFERENCES, SCHEDULE_REFERENCES ---
+   00147:     PT_RIO_SCHEDULE_WED_SAT,
+   00148:     FEDERAL_SCHEDULE,
+   00149:   });
+   00150: 
+>> 00151:   const normalizedSchedule = Array.isArray(schedule)
+   00152:     ? schedule.map(toHourBucket).filter(Boolean)
+   00153:     : [];
+   00154: 
+   00155:   return normalizedSchedule.includes(h);
+   00156: }
+   00157: 
+   00158: function findLatestHistoricalBaseDraw({
+
+--- BLOCO 06 | LINHA 159 | API_REFERENCES, CONDITIONAL_REFERENCES, LOTTERY_REFERENCES ---
+   00155:   return normalizedSchedule.includes(h);
+   00156: }
+   00157: 
+   00158: function findLatestHistoricalBaseDraw({
+>> 00159:   draws,
+   00160:   lotteryKey,
+   00161:   targetYmd,
+   00162:   targetHourBucket,
+   00163: }) {
+   00164:   const list = Array.isArray(draws) ? draws : [];
+   00165:   const targetHour = toHourBucket(targetHourBucket);
+   00166: 
+
+--- BLOCO 07 | LINHA 168 | API_REFERENCES, SCHEDULE_REFERENCES ---
+   00164:   const list = Array.isArray(draws) ? draws : [];
+   00165:   const targetHour = toHourBucket(targetHourBucket);
+   00166: 
+   00167:   if (!isYMD(targetYmd) || !targetHour) {
+>> 00168:     return { draw: null, ymd: "", hour: "", source: "none" };
+   00169:   }
+   00170: 
+   00171:   const [Y, M, D] = String(targetYmd).split("-").map(Number);
+   00172:   const mins = hourToInt(targetHour);
+   00173:   const targetTs = Date.UTC(Y, M - 1, D) + mins * 60 * 1000;
+   00174: 
+   00175:   let best = null;
+
+--- BLOCO 08 | LINHA 179 | LOTTERY_REFERENCES ---
+   00175:   let best = null;
+   00176:   let bestTs = Number.NEGATIVE_INFINITY;
+   00177: 
+   00178:   for (const d of list) {
+>> 00179:     if (!isDrawValidForLotterySchedule(d, lotteryKey)) continue;
+   00180: 
+   00181:     const ts = drawTs(d);
+   00182:     if (!Number.isFinite(ts)) continue;
+   00183:     if (ts >= targetTs) continue;
+   00184: 
+   00185:     if (ts > bestTs) {
+   00186:       best = d;
+
+--- BLOCO 09 | LINHA 192 | SCHEDULE_REFERENCES ---
+   00188:     }
+   00189:   }
+   00190: 
+   00191:   if (!best) {
+>> 00192:     return { draw: null, ymd: "", hour: "", source: "none" };
+   00193:   }
+   00194: 
+   00195:   return {
+   00196:     draw: best,
+   00197:     ymd: pickDrawYMD(best) || "",
+   00198:     hour: toHourBucket(pickDrawHour(best)) || "",
+   00199:     source: "history_range",
+
+--- BLOCO 10 | LINHA 203 | API_REFERENCES, LOTTERY_REFERENCES ---
+   00199:     source: "history_range",
+   00200:   };
+   00201: }
+   00202: 
+>> 00203: function sanitizeHistoricalDraws({ draws, lotteryKey, baseDraw }) {
+   00204:   const list = Array.isArray(draws) ? draws : [];
+   00205:   const baseTs = drawTs(baseDraw);
+   00206: 
+   00207:   if (!baseDraw || !Number.isFinite(baseTs)) return [];
+   00208: 
+   00209:   return list
+   00210:     .filter((d) => isDrawValidForLotterySchedule(d, lotteryKey))
+
+--- BLOCO 11 | LINHA 218 | SCHEDULE_REFERENCES ---
+   00214:     })
+   00215:     .sort((a, b) => drawTs(a) - drawTs(b));
+   00216: }
+   00217: 
+>> 00218: function parseTargetDate(ymd, hour) {
+   00219:   if (!isYMD(ymd)) return null;
+   00220: 
+   00221:   const h = toHourBucket(hour);
+   00222:   const m = String(h || "").match(/^(\d{2})h$/);
+   00223: 
+   00224:   if (!m) return null;
+   00225: 
+
+--- BLOCO 12 | LINHA 233 | SCHEDULE_REFERENCES ---
+   00229:   const dt = new Date(Y, M - 1, D, hh, 0, 0, 0);
+   00230:   return Number.isNaN(dt.getTime()) ? null : dt;
+   00231: }
+   00232: 
+>> 00233: function isFutureTarget(ymd, hour) {
+   00234:   const target = parseTargetDate(ymd, hour);
+   00235:   if (!target) return false;
+   00236:   return target.getTime() > Date.now();
+   00237: }
+   00238: 
+   00239: function makeTargetKey(ymd, hour) {
+   00240:   const y = safeStr(ymd);
+
+... 43 blocos adicionais omitidos
+
+==================================================
+ARQUIVO: src/pages/Results/Results.jsx
+SCORE: 22
+CATEGORIAS: API_REFERENCES, CONDITIONAL_REFERENCES, LOTTERY_REFERENCES, SCHEDULE_REFERENCES, SELECTOR_REFERENCES
+LOTERIAS: PT_RIO=False | FEDERAL=True | LOOK=False | NACIONAL=False
+
+--- BLOCO 01 | LINHA 1 | API_REFERENCES ---
+>> 00001: // src/pages/Results/Results.jsx
+   00002: import React, { useEffect, useMemo, useRef, useState } from "react";
+   00003: import { useQuery } from "@tanstack/react-query";
+   00004: import {
+   00005:   getKingBoundsByUf,
+   00006:   getKingResultsByDate,
+   00007:   getKingResultsByRange,
+   00008: } from "../../services/kingResultsService";
+
+--- BLOCO 02 | LINHA 142 | API_REFERENCES ---
+   00138: function unwrapDraws(maybe) {
+   00139:   if (Array.isArray(maybe)) return maybe;
+   00140:   if (maybe && typeof maybe === "object") {
+   00141:     if (Array.isArray(maybe.drawsRaw)) return maybe.drawsRaw;
+>> 00142:     if (Array.isArray(maybe.draws)) return maybe.draws;
+   00143:     if (Array.isArray(maybe.rows)) return maybe.rows;
+   00144:     if (Array.isArray(maybe.data)) return maybe.data;
+   00145:     if (maybe.result && Array.isArray(maybe.result)) return maybe.result;
+   00146:   }
+   00147:   return [];
+   00148: }
+   00149: 
+
+--- BLOCO 03 | LINHA 194 | LOTTERY_REFERENCES ---
+   00190:    Escopos
+   00191: ========================= */
+   00192: 
+   00193: const SCOPE_RJ = "RJ";
+>> 00194: const SCOPE_FEDERAL = "FEDERAL";
+   00195: 
+   00196: const FEDERAL_INPUT_ALIASES = new Set([
+   00197:   "FEDERAL",
+   00198:   "FED",
+   00199:   "LOTERIA FEDERAL",
+   00200:   "LOTERIA_FEDERAL",
+   00201:   "LOT FEDERAL",
+
+--- BLOCO 04 | LINHA 232 | LOTTERY_REFERENCES ---
+   00228: 
+   00229: function scopeDisplayName(scope) {
+   00230:   const up = safeStr(scope).toUpperCase();
+   00231:   if (up === SCOPE_RJ) return "RIO";
+>> 00232:   if (isFederalInput(up)) return "FEDERAL";
+   00233:   return up;
+   00234: }
+   00235: 
+   00236: /* =========================
+   00237:    prizeNumber
+   00238: ========================= */
+   00239: 
+
+--- BLOCO 05 | LINHA 440 | API_REFERENCES, SCHEDULE_REFERENCES ---
+   00436:   return { grupo: null, label, imgVariants: [] };
+   00437: }
+   00438: 
+   00439: /* =========================
+>> 00440:    Dedup de draws
+   00441: ========================= */
+   00442: 
+   00443: function drawKeyForDedup(d, scopeKey, ymd) {
+   00444:   const hour = normalizeHourLike(
+   00445:     d?.close_hour || d?.closeHour || d?.hour || d?.hora || ""
+   00446:   );
+   00447:   if (hour) return `HOUR:${scopeKey}|${ymd}|${hour}`;
+
+--- BLOCO 06 | LINHA 461 | SCHEDULE_REFERENCES ---
+   00457:   const pa = countPrizes(a);
+   00458:   const pb = countPrizes(b);
+   00459:   if (pa !== pb) return pb > pa ? b : a;
+   00460: 
+>> 00461:   const ha = safeStr(a?.close_hour || a?.closeHour || a?.hour || a?.hora);
+   00462:   const hb = safeStr(b?.close_hour || b?.closeHour || b?.hour || b?.hora);
+   00463:   if (!!hb !== !!ha) return hb ? b : a;
+   00464: 
+   00465:   return a;
+   00466: }
+   00467: 
+   00468: function dedupeDraws(list, scopeKey, ymd) {
+
+--- BLOCO 07 | LINHA 540 | SCHEDULE_REFERENCES ---
+   00536: 
+   00537:   return out;
+   00538: }
+   00539: 
+>> 00540: function shouldShowExpectedHour(ymd, hour) {
+   00541:   const hNum = hourToNum(hour);
+   00542:   if (hNum < 0) return true;
+   00543: 
+   00544:   if (safeStr(ymd) !== todayYMDLocal()) return true;
+   00545: 
+   00546:   return hNum <= currentHourNumLocal();
+   00547: }
+
+--- BLOCO 08 | LINHA 555 | SCHEDULE_REFERENCES ---
+   00551:   const byHour = new Map();
+   00552: 
+   00553:   for (const d of list) {
+   00554:     const h = normalizeHourLike(
+>> 00555:       d?.close_hour || d?.closeHour || d?.hour || d?.hora || ""
+   00556:     );
+   00557:     if (!h) continue;
+   00558:     if (!byHour.has(h)) byHour.set(h, d);
+   00559:   }
+   00560: 
+   00561:   if (scopeKey === SCOPE_FEDERAL) {
+   00562:     return [...list].sort((a, b) => {
+
+--- BLOCO 09 | LINHA 564 | SCHEDULE_REFERENCES ---
+   00560: 
+   00561:   if (scopeKey === SCOPE_FEDERAL) {
+   00562:     return [...list].sort((a, b) => {
+   00563:       const ha = hourToNum(
+>> 00564:         a?.__slotHour || a?.close_hour || a?.closeHour || a?.hour || a?.hora
+   00565:       );
+   00566:       const hb = hourToNum(
+   00567:         b?.__slotHour || b?.close_hour || b?.closeHour || b?.hour || b?.hora
+   00568:       );
+   00569:       return hb - ha;
+   00570:     });
+   00571:   }
+
+--- BLOCO 10 | LINHA 576 | SCHEDULE_REFERENCES ---
+   00572: 
+   00573:   const expectedHours =
+   00574:     scopeKey === SCOPE_RJ ? getExpectedRjHoursDesc(ymd) : [];
+   00575: 
+>> 00576:   const visibleExpectedHours = expectedHours.filter((hour) =>
+   00577:     shouldShowExpectedHour(ymd, hour)
+   00578:   );
+   00579: 
+   00580:   const result = visibleExpectedHours.map((hour) => {
+   00581:     const found = byHour.get(hour);
+   00582:     if (found) return found;
+   00583: 
+
+--- BLOCO 11 | LINHA 586 | SCHEDULE_REFERENCES ---
+   00582:     if (found) return found;
+   00583: 
+   00584:     return {
+   00585:       __placeholder: true,
+>> 00586:       __slotHour: hour,
+   00587:       __placeholderKind: "compact",
+   00588:       drawId: `placeholder_${scopeKey}_${hour}`,
+   00589:       id: `placeholder_${scopeKey}_${hour}`,
+   00590:       close_hour: hour,
+   00591:       closeHour: hour,
+   00592:       prizes: [],
+   00593:     };
+
+--- BLOCO 12 | LINHA 598 | CONDITIONAL_REFERENCES, SCHEDULE_REFERENCES ---
+   00594:   });
+   00595: 
+   00596:   const extraActual = list.filter((d) => {
+   00597:     const h = normalizeHourLike(
+>> 00598:       d?.close_hour || d?.closeHour || d?.hour || d?.hora || ""
+   00599:     );
+   00600:     return h && !visibleExpectedHours.includes(h);
+   00601:   });
+   00602: 
+   00603:   return [...result, ...extraActual].sort((a, b) => {
+   00604:     const ha = hourToNum(
+   00605:       a?.__slotHour || a?.close_hour || a?.closeHour || a?.hour || a?.hora
+
+... 33 blocos adicionais omitidos
+
+==================================================
+ARQUIVO: src/pages/Top3/Top3View.jsx
+SCORE: 22
+CATEGORIAS: CONDITIONAL_REFERENCES, LOTTERY_REFERENCES, SCHEDULE_REFERENCES, SELECTOR_REFERENCES
+LOTERIAS: PT_RIO=True | FEDERAL=True | LOOK=False | NACIONAL=False
+
+--- BLOCO 01 | LINHA 90 | SCHEDULE_REFERENCES ---
+   00086:     String(now.getDate()).padStart(2, "0"),
+   00087:   ].join("-");
+   00088: }
+   00089: 
+>> 00090: function formatYmdHour(ymd, hour) {
+   00091:   const y = String(ymd || "").trim();
+   00092:   const h = String(hour || "").trim();
+   00093:   if (y && h) return `${ymdToBR(y)} ${h}`;
+   00094:   if (y) return ymdToBR(y);
+   00095:   if (h) return h;
+   00096:   return "—";
+   00097: }
+
+--- BLOCO 02 | LINHA 99 | SCHEDULE_REFERENCES ---
+   00095:   if (h) return h;
+   00096:   return "—";
+   00097: }
+   00098: 
+>> 00099: function hourBucketToSortValue(hour) {
+   00100:   const s = String(hour || "").trim().toLowerCase();
+   00101:   const m = s.match(/^(\d{1,2})(?::(\d{2}))?h?$/);
+   00102:   if (!m) return -1;
+   00103:   const hh = Number(m[1]);
+   00104:   const mm = Number(m[2] || 0);
+   00105:   if (!Number.isFinite(hh) || !Number.isFinite(mm)) return -1;
+   00106:   return hh * 60 + mm;
+
+--- BLOCO 03 | LINHA 307 | CONDITIONAL_REFERENCES ---
+   00303:     let score = 0;
+   00304:     let type = "miss";
+   00305:     let matchedValue = "";
+   00306: 
+>> 00307:     if (hasMilhar && milhares.includes(milhar)) {
+   00308:       score = 100;
+   00309:       type = "hit_exact";
+   00310:       matchedValue = milhar;
+   00311:     } else if (centena && centenas.includes(centena)) {
+   00312:       score = 66.67;
+   00313:       type = "hit_centena";
+   00314:       matchedValue = centena;
+
+--- BLOCO 04 | LINHA 539 | SCHEDULE_REFERENCES ---
+   00535:       ? explain.details
+   00536:       : {};
+   00537: 
+   00538:   const transitionDetail = detailMap.transition || null;
+>> 00539:   const hourDetail = detailMap.hour || null;
+   00540:   const dowDetail = detailMap.dow || detailMap.weekday || null;
+   00541:   const sceneDetail = detailMap.scene || null;
+   00542: 
+   00543:   const periodFrom = String(item?.meta?.period?.from || "").trim();
+   00544:   const periodTo = String(item?.meta?.period?.to || "").trim();
+   00545: 
+   00546:   const periodLabel =
+
+--- BLOCO 05 | LINHA 554 | SCHEDULE_REFERENCES ---
+   00550:         ? `Amostra analisada: ${samples} sorteios`
+   00551:         : "";
+   00552: 
+   00553:   const baseGrupo = formatGrupo(item?.meta?.trigger?.grupo);
+>> 00554:   const baseHour = String(item?.meta?.trigger?.hour || "").trim();
+   00555:   const targetHour = String(item?.meta?.next?.hour || "").trim();
+   00556: 
+   00557:   const smartReasons = [];
+   00558: 
+   00559:   if (periodLabel) {
+   00560:     smartReasons.push(periodLabel);
+   00561:   }
+
+--- BLOCO 06 | LINHA 957 | SELECTOR_REFERENCES ---
+   00953:         >
+   00954:           <div aria-hidden="true"></div>
+   00955:           <div aria-hidden="true"></div>
+   00956: 
+>> 00957:           <button
+   00958:             type="button"
+   00959:             onClick={doCopyAll}
+   00960:             className="pp-btn"
+   00961:             title="Copiar as 20 milhares"
+   00962:             style={{ width: "100%" }}
+   00963:           >
+   00964:             {copiedAllKey === key ? "✅ Copiado" : "📋 Copiar"}
+
+--- BLOCO 07 | LINHA 965 | SELECTOR_REFERENCES ---
+   00961:             title="Copiar as 20 milhares"
+   00962:             style={{ width: "100%" }}
+   00963:           >
+   00964:             {copiedAllKey === key ? "✅ Copiado" : "📋 Copiar"}
+>> 00965:           </button>
+   00966: 
+   00967:           <button
+   00968:             type="button"
+   00969:             className="pp-btn"
+   00970:             title="Integração automática com banca (em desenvolvimento)"
+   00971:             onClick={() => {
+   00972:               alert("Em breve você poderá enviar automaticamente estas milhares para a banca.");
+
+--- BLOCO 08 | LINHA 977 | SELECTOR_REFERENCES ---
+   00973:             }}
+   00974:             style={{ width: "100%" }}
+   00975:           >
+   00976:             🎯 Apostar
+>> 00977:           </button>
+   00978:         </div>
+   00979: 
+   00980:         {dezenasHeader.length ? (
+   00981:           <div className="pp-chipRow">
+   00982:             {dezenasHeader.map((dz, i) => (
+   00983:               <div key={`${dz}-${i}`} className="pp-chip">
+   00984:                 {dz || "—"}
+
+--- BLOCO 09 | LINHA 1331 | SELECTOR_REFERENCES ---
+   01327:       ta.style.left = "-9999px";
+   01328:       ta.style.top = "0";
+   01329:       document.body.appendChild(ta);
+   01330:       ta.focus();
+>> 01331:       ta.select();
+   01332:       document.execCommand("copy");
+   01333:       document.body.removeChild(ta);
+   01334:       return true;
+   01335:     } catch {
+   01336:       return false;
+   01337:     }
+   01338:   }, []);
+
+--- BLOCO 10 | LINHA 1342 | LOTTERY_REFERENCES ---
+   01338:   }, []);
+   01339: 
+   01340:   const baseLots = Array.isArray(LOTTERY_OPTIONS) ? LOTTERY_OPTIONS : [];
+   01341:   const mustHave = [
+>> 01342:     { value: "PT_RIO", label: "PT_RIO (RJ)" },
+   01343:     { value: "FEDERAL", label: "Federal" },
+   01344:   ];
+   01345: 
+   01346:   const map = new Map();
+   01347: 
+   01348:   [...baseLots, ...mustHave].forEach((op) => {
+   01349:     const rawVal = String(op?.value ?? op?.key ?? "").toUpperCase();
+
+--- BLOCO 11 | LINHA 1361 | CONDITIONAL_REFERENCES, LOTTERY_REFERENCES ---
+   01357:     }
+   01358:   });
+   01359: 
+   01360:   const lotOptions = [
+>> 01361:     map.get("PT_RIO"),
+   01362:     map.get("FEDERAL"),
+   01363:     ...[...map.values()].filter(
+   01364:       (x) => !["PT_RIO", "FEDERAL"].includes(String(x?.value || "").toUpperCase())
+   01365:     ),
+   01366:   ].filter(Boolean);
+   01367: 
+   01368:   const curLot = String(lotteryKeySafe || "PT_RIO").toUpperCase();
+
+--- BLOCO 12 | LINHA 1376 | SELECTOR_REFERENCES ---
+   01372:   const historyAnchorYmd = useMemo(() => {
+   01373:   const loaded = String(loadedYmd || "").trim();
+   01374:   if (isYMD(loaded)) return loaded;
+   01375: 
+>> 01376:   const selected = String(ymdSafe || "").trim();
+   01377:   if (isYMD(selected)) return selected;
+   01378: 
+   01379:   const realized = (Array.isArray(timeline) ? timeline : [])
+   01380:     .filter((slot) => String(slot?.status || "").toLowerCase() === "validated")
+   01381:     .slice()
+   01382:     .sort((a, b) => {
+   01383:       const ta = `${a?.targetYmd || ""} ${a?.targetHour || ""}`;
+
+... 16 blocos adicionais omitidos
+
+==================================================
+ARQUIVO: src/pages/Top3/Top3View.premium.backup.jsx
+SCORE: 22
+CATEGORIAS: CONDITIONAL_REFERENCES, LOTTERY_REFERENCES, SCHEDULE_REFERENCES, SELECTOR_REFERENCES
+LOTERIAS: PT_RIO=True | FEDERAL=True | LOOK=False | NACIONAL=False
+
+--- BLOCO 01 | LINHA 64 | SCHEDULE_REFERENCES ---
+   00060:   const [y, m, d] = s.split("-");
+   00061:   return `${d}/${m}/${y}`;
+   00062: }
+   00063: 
+>> 00064: function formatYmdHour(ymd, hour) {
+   00065:   const y = String(ymd || "").trim();
+   00066:   const h = String(hour || "").trim();
+   00067:   if (y && h) return `${ymdToBR(y)} ${h}`;
+   00068:   if (y) return ymdToBR(y);
+   00069:   if (h) return h;
+   00070:   return "—";
+   00071: }
+
+--- BLOCO 02 | LINHA 73 | SCHEDULE_REFERENCES ---
+   00069:   if (h) return h;
+   00070:   return "—";
+   00071: }
+   00072: 
+>> 00073: function hourBucketToSortValue(hour) {
+   00074:   const s = String(hour || "").trim().toLowerCase();
+   00075:   const m = s.match(/^(\d{1,2})(?::(\d{2}))?h?$/);
+   00076:   if (!m) return -1;
+   00077:   const hh = Number(m[1]);
+   00078:   const mm = Number(m[2] || 0);
+   00079:   if (!Number.isFinite(hh) || !Number.isFinite(mm)) return -1;
+   00080:   return hh * 60 + mm;
+
+--- BLOCO 03 | LINHA 274 | CONDITIONAL_REFERENCES ---
+   00270: 
+   00271:     let score = 0;
+   00272:     let type = "miss";
+   00273: 
+>> 00274:     if (hasMilhar && milhares.includes(milhar)) {
+   00275:       score = 100;
+   00276:       type = "hit_exact";
+   00277:     } else if (centena && centenas.includes(centena)) {
+   00278:       score = 66;
+   00279:       type = "hit_centena";
+   00280:     } else if (hasGrupo && g === grupoNum) {
+   00281:       score = 33;
+
+--- BLOCO 04 | LINHA 483 | SCHEDULE_REFERENCES ---
+   00479:       ? explain.details
+   00480:       : {};
+   00481: 
+   00482:   const transitionDetail = detailMap.transition || null;
+>> 00483:   const hourDetail = detailMap.hour || null;
+   00484:   const dowDetail = detailMap.dow || detailMap.weekday || null;
+   00485:   const sceneDetail = detailMap.scene || null;
+   00486: 
+   00487:   const periodFrom = String(item?.meta?.period?.from || "").trim();
+   00488:   const periodTo = String(item?.meta?.period?.to || "").trim();
+   00489: 
+   00490:   const periodLabel =
+
+--- BLOCO 05 | LINHA 498 | SCHEDULE_REFERENCES ---
+   00494:         ? `Amostra analisada: ${samples} sorteios`
+   00495:         : "";
+   00496: 
+   00497:   const baseGrupo = formatGrupo(item?.meta?.trigger?.grupo);
+>> 00498:   const baseHour = String(item?.meta?.trigger?.hour || "").trim();
+   00499:   const targetHour = String(item?.meta?.next?.hour || "").trim();
+   00500: 
+   00501:   const smartReasons = [];
+   00502: 
+   00503:   if (periodLabel) {
+   00504:     smartReasons.push(periodLabel);
+   00505:   }
+
+--- BLOCO 06 | LINHA 708 | SELECTOR_REFERENCES ---
+   00704:       <div className="top3-card__body">
+   00705:         <div className="top3-card__actions">
+   00706:           <div className="top3-card__sectionTitle"></div>
+   00707: 
+>> 00708:           <button
+   00709:             type="button"
+   00710:             onClick={doCopyAll}
+   00711:             className="pp-btn"
+   00712:             title="Copiar as 20 milhares"
+   00713:           >
+   00714:             {copiedAllKey === key ? "✅ Copiado" : "Apostar"}
+   00715:           </button>
+
+--- BLOCO 07 | LINHA 1066 | SELECTOR_REFERENCES ---
+   01062:       ta.style.left = "-9999px";
+   01063:       ta.style.top = "0";
+   01064:       document.body.appendChild(ta);
+   01065:       ta.focus();
+>> 01066:       ta.select();
+   01067:       document.execCommand("copy");
+   01068:       document.body.removeChild(ta);
+   01069:       return true;
+   01070:     } catch {
+   01071:       return false;
+   01072:     }
+   01073:   }, []);
+
+--- BLOCO 08 | LINHA 1077 | LOTTERY_REFERENCES ---
+   01073:   }, []);
+   01074: 
+   01075:   const baseLots = Array.isArray(LOTTERY_OPTIONS) ? LOTTERY_OPTIONS : [];
+   01076:   const mustHave = [
+>> 01077:     { value: "PT_RIO", label: "PT_RIO (RJ)" },
+   01078:     { value: "FEDERAL", label: "Federal" },
+   01079:   ];
+   01080: 
+   01081:   const map = new Map();
+   01082: 
+   01083:   [...baseLots, ...mustHave].forEach((op) => {
+   01084:     const rawVal = String(op?.value ?? op?.key ?? "").toUpperCase();
+
+--- BLOCO 09 | LINHA 1096 | CONDITIONAL_REFERENCES, LOTTERY_REFERENCES ---
+   01092:     }
+   01093:   });
+   01094: 
+   01095:   const lotOptions = [
+>> 01096:     map.get("PT_RIO"),
+   01097:     map.get("FEDERAL"),
+   01098:     ...[...map.values()].filter(
+   01099:       (x) => !["PT_RIO", "FEDERAL"].includes(String(x?.value || "").toUpperCase())
+   01100:     ),
+   01101:   ].filter(Boolean);
+   01102: 
+   01103:   const curLot = String(lotteryKeySafe || "PT_RIO").toUpperCase();
+
+--- BLOCO 10 | LINHA 1145 | SCHEDULE_REFERENCES ---
+   01141:       return {
+   01142:         targetKey: `${String(slot?.targetYmd || "")}__${String(slot?.targetHour || "")}`,
+   01143:         target: {
+   01144:           ymd: String(slot?.targetYmd || ""),
+>> 01145:           hour: String(slot?.targetHour || ""),
+   01146:         },
+   01147:         picks: slotTop3.map((t) => Number(t?.grupo)).filter((g) => Number.isFinite(g)),
+   01148:         top3: slotTop3,
+   01149:         result: hasResult ? Number(resultGrupo) : null,
+   01150:         grupo: hasResult ? Number(resultGrupo) : null,
+   01151:         animal: hasResult ? getAnimalLabel(resultGrupo) : "",
+   01152:         hit: analysis.type !== "miss" && analysis.type !== "none",
+
+--- BLOCO 11 | LINHA 1222 | SELECTOR_REFERENCES ---
+   01218:           font-size: 13px;
+   01219:           line-height: 1.4;
+   01220:         }
+   01221: 
+>> 01222:         .pp-tabs{
+   01223:           display:flex;
+   01224:           gap:8px;
+   01225:           flex-wrap:wrap;
+   01226:           margin-top: 2px;
+   01227:         }
+   01228: 
+   01229:         .pp-tab{
+
+--- BLOCO 12 | LINHA 1241 | SELECTOR_REFERENCES ---
+   01237:           transition: transform .12s ease, box-shadow .18s ease, background .18s ease, border-color .18s ease;
+   01238:           white-space: nowrap;
+   01239:         }
+   01240: 
+>> 01241:         .pp-tab:hover{
+   01242:           transform: translateY(-1px);
+   01243:           border-color: rgba(201,168,62,0.40);
+   01244:           box-shadow: 0 10px 24px rgba(0,0,0,0.35);
+   01245:         }
+   01246: 
+   01247:         .pp-tab[data-active="1"]{
+   01248:           background: rgba(201,168,62,0.16);
+
+... 5 blocos adicionais omitidos
+
+==================================================
+ARQUIVO: src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js
+SCORE: 22
+CATEGORIAS: API_REFERENCES, CONDITIONAL_REFERENCES, LOTTERY_REFERENCES, SCHEDULE_REFERENCES, SELECTOR_REFERENCES
+LOTERIAS: PT_RIO=False | FEDERAL=True | LOOK=False | NACIONAL=False
+
+--- BLOCO 01 | LINHA 32 | API_REFERENCES ---
+   00028:   TOP3_SCENE_BLEND_UNIFORM,
+   00029:   PT_RIO_SCHEDULE_SUNDAY,
+   00030: } from "./top3.constants";
+   00031: 
+>> 00032: function findPreviousValidDraw(draws, currentYmd, currentHour) {
+   00033:   const list = Array.isArray(draws) ? draws : [];
+   00034:   const targetY = safeStr(currentYmd);
+   00035:   const targetH = toHourBucket(currentHour);
+   00036: 
+   00037:   if (!isYMD(targetY) || !targetH) return null;
+   00038: 
+   00039:   const targetTs = ymdHourToTs(targetY, targetH);
+
+--- BLOCO 02 | LINHA 131 | SCHEDULE_REFERENCES ---
+   00127: }
+   00128: 
+   00129: export function pickDrawHour(draw) {
+   00130:   return normalizeHourLike(
+>> 00131:     draw?.close_hour || draw?.closeHour || draw?.hour || draw?.hora || ""
+   00132:   );
+   00133: }
+   00134: 
+   00135: export function pickDrawYMD(draw) {
+   00136:   const y =
+   00137:     draw?.ymd ||
+   00138:     normalizeToYMD(draw?.date) ||
+
+--- BLOCO 03 | LINHA 213 | SCHEDULE_REFERENCES ---
+   00209:   return base + mins * 60 * 1000;
+   00210: }
+   00211: 
+   00212: /* =========================
+>> 00213:    Schedules
+   00214: ========================= */
+   00215: 
+   00216: export function isFederalDrawDay(ymd) {
+   00217:   const dow = getDowKey(ymd);
+   00218:   return dow === 3 || dow === 6;
+   00219: }
+   00220: 
+
+--- BLOCO 04 | LINHA 232 | LOTTERY_REFERENCES, SCHEDULE_REFERENCES ---
+   00228:   if (dow === 3 || dow === 6) return PT_RIO_SCHEDULE_WED_SAT;
+   00229:   return PT_RIO_SCHEDULE_NORMAL;
+   00230: }
+   00231: 
+>> 00232: export function getScheduleForLottery({
+   00233:   lotteryKey,
+   00234:   ymd,
+   00235:   PT_RIO_SCHEDULE_NORMAL,
+   00236:   PT_RIO_SCHEDULE_WED_SAT,
+   00237:   FEDERAL_SCHEDULE,
+   00238: }) {
+   00239:   const key = safeStr(lotteryKey).toUpperCase();
+
+--- BLOCO 05 | LINHA 241 | CONDITIONAL_REFERENCES, LOTTERY_REFERENCES ---
+   00237:   FEDERAL_SCHEDULE,
+   00238: }) {
+   00239:   const key = safeStr(lotteryKey).toUpperCase();
+   00240: 
+>> 00241:   if (key === "FEDERAL") {
+   00242:     return isFederalDrawDay(ymd) ? FEDERAL_SCHEDULE : [];
+   00243:   }
+   00244: 
+   00245:   return getPtRioScheduleForYmd(
+   00246:     ymd,
+   00247:     PT_RIO_SCHEDULE_NORMAL,
+   00248:     PT_RIO_SCHEDULE_WED_SAT
+
+--- BLOCO 06 | LINHA 252 | SCHEDULE_REFERENCES ---
+   00248:     PT_RIO_SCHEDULE_WED_SAT
+   00249:   );
+   00250: }
+   00251: 
+>> 00252: export function scheduleSet(schedule) {
+   00253:   return new Set((Array.isArray(schedule) ? schedule : []).map(toHourBucket));
+   00254: }
+   00255: 
+   00256: export function isHourInSchedule(schedule, hhmm) {
+   00257:   const s = scheduleSet(schedule);
+   00258:   return s.has(toHourBucket(hhmm));
+   00259: }
+
+--- BLOCO 07 | LINHA 261 | API_REFERENCES, SCHEDULE_REFERENCES ---
+   00257:   const s = scheduleSet(schedule);
+   00258:   return s.has(toHourBucket(hhmm));
+   00259: }
+   00260: 
+>> 00261: export function findLastDrawInList(draws, schedule) {
+   00262:   const list = Array.isArray(draws) ? draws : [];
+   00263:   if (!list.length) return null;
+   00264: 
+   00265:   const sorted = [...list]
+   00266:     .filter((d) => isHourInSchedule(schedule, pickDrawHour(d)))
+   00267:     .sort((a, b) => {
+   00268:       const ta = ymdHourToTs(pickDrawYMD(a), toHourBucket(pickDrawHour(a)));
+
+--- BLOCO 08 | LINHA 277 | API_REFERENCES, SCHEDULE_REFERENCES ---
+   00273:   return sorted[0] || null;
+   00274: }
+   00275: 
+   00276: export function findPrevDrawBeforeTargetInSameDay(
+>> 00277:   draws,
+   00278:   targetHourBucket,
+   00279:   schedule
+   00280: ) {
+   00281:   const list = Array.isArray(draws) ? draws : [];
+   00282:   if (!list.length) return null;
+   00283: 
+   00284:   const t = hourToInt(targetHourBucket);
+
+--- BLOCO 09 | LINHA 288 | SCHEDULE_REFERENCES ---
+   00284:   const t = hourToInt(targetHourBucket);
+   00285:   if (t < 0) return null;
+   00286: 
+   00287:   const candidates = list
+>> 00288:     .filter((d) => isHourInSchedule(schedule, pickDrawHour(d)))
+   00289:     .map((d) => ({ d, h: hourToInt(toHourBucket(pickDrawHour(d))) }))
+   00290:     .filter((x) => x.h >= 0 && x.h < t)
+   00291:     .sort((a, b) => b.h - a.h);
+   00292: 
+   00293:   return candidates.length ? candidates[0].d : null;
+   00294: }
+   00295: 
+
+--- BLOCO 10 | LINHA 298 | LOTTERY_REFERENCES, SCHEDULE_REFERENCES ---
+   00294: }
+   00295: 
+   00296: export async function getPreviousDrawRobust({
+   00297:   getKingResultsByDate,
+>> 00298:   lotteryKey,
+   00299:   ymdTarget,
+   00300:   targetHourBucket,
+   00301:   todayDraws,
+   00302:   schedule,
+   00303:   maxBackDays = 10,
+   00304:   PT_RIO_SCHEDULE_NORMAL,
+   00305:   PT_RIO_SCHEDULE_WED_SAT,
+
+--- BLOCO 11 | LINHA 311 | SCHEDULE_REFERENCES ---
+   00307: }) {
+   00308:   const prevSameDay = findPrevDrawBeforeTargetInSameDay(
+   00309:     todayDraws,
+   00310:     targetHourBucket,
+>> 00311:     schedule
+   00312:   );
+   00313: 
+   00314:   if (prevSameDay) {
+   00315:     return {
+   00316:       draw: prevSameDay,
+   00317:       ymd: pickDrawYMD(prevSameDay) || ymdTarget,
+   00318:       hour: toHourBucket(pickDrawHour(prevSameDay)),
+
+--- BLOCO 12 | LINHA 326 | LOTTERY_REFERENCES, SCHEDULE_REFERENCES ---
+   00322: 
+   00323:   for (let i = 1; i <= maxBackDays; i += 1) {
+   00324:     const day = addDaysYMD(ymdTarget, -i);
+   00325: 
+>> 00326:     const daySchedule = getScheduleForLottery({
+   00327:       lotteryKey,
+   00328:       ymd: day,
+   00329:       PT_RIO_SCHEDULE_NORMAL,
+   00330:       PT_RIO_SCHEDULE_WED_SAT,
+   00331:       FEDERAL_SCHEDULE,
+   00332:     });
+   00333: 
+
+... 111 blocos adicionais omitidos
+
+==================================================
+ARQUIVO: src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js
+SCORE: 22
+CATEGORIAS: API_REFERENCES, CONDITIONAL_REFERENCES, LOTTERY_REFERENCES, SCHEDULE_REFERENCES, SELECTOR_REFERENCES
+LOTERIAS: PT_RIO=False | FEDERAL=True | LOOK=False | NACIONAL=False
+
+--- BLOCO 01 | LINHA 32 | API_REFERENCES ---
+   00028:   TOP3_SCENE_BLEND_UNIFORM,
+   00029:   PT_RIO_SCHEDULE_SUNDAY,
+   00030: } from "./top3.constants";
+   00031: 
+>> 00032: function findPreviousValidDraw(draws, currentYmd, currentHour) {
+   00033:   const list = Array.isArray(draws) ? draws : [];
+   00034:   const targetY = safeStr(currentYmd);
+   00035:   const targetH = toHourBucket(currentHour);
+   00036: 
+   00037:   if (!isYMD(targetY) || !targetH) return null;
+   00038: 
+   00039:   const targetTs = ymdHourToTs(targetY, targetH);
+
+--- BLOCO 02 | LINHA 131 | SCHEDULE_REFERENCES ---
+   00127: }
+   00128: 
+   00129: export function pickDrawHour(draw) {
+   00130:   return normalizeHourLike(
+>> 00131:     draw?.close_hour || draw?.closeHour || draw?.hour || draw?.hora || ""
+   00132:   );
+   00133: }
+   00134: 
+   00135: export function pickDrawYMD(draw) {
+   00136:   const y =
+   00137:     draw?.ymd ||
+   00138:     normalizeToYMD(draw?.date) ||
+
+--- BLOCO 03 | LINHA 213 | SCHEDULE_REFERENCES ---
+   00209:   return base + mins * 60 * 1000;
+   00210: }
+   00211: 
+   00212: /* =========================
+>> 00213:    Schedules
+   00214: ========================= */
+   00215: 
+   00216: export function isFederalDrawDay(ymd) {
+   00217:   const dow = getDowKey(ymd);
+   00218:   return dow === 3 || dow === 6;
+   00219: }
+   00220: 
+
+--- BLOCO 04 | LINHA 232 | LOTTERY_REFERENCES, SCHEDULE_REFERENCES ---
+   00228:   if (dow === 3 || dow === 6) return PT_RIO_SCHEDULE_WED_SAT;
+   00229:   return PT_RIO_SCHEDULE_NORMAL;
+   00230: }
+   00231: 
+>> 00232: export function getScheduleForLottery({
+   00233:   lotteryKey,
+   00234:   ymd,
+   00235:   PT_RIO_SCHEDULE_NORMAL,
+   00236:   PT_RIO_SCHEDULE_WED_SAT,
+   00237:   FEDERAL_SCHEDULE,
+   00238: }) {
+   00239:   const key = safeStr(lotteryKey).toUpperCase();
+
+--- BLOCO 05 | LINHA 241 | CONDITIONAL_REFERENCES, LOTTERY_REFERENCES ---
+   00237:   FEDERAL_SCHEDULE,
+   00238: }) {
+   00239:   const key = safeStr(lotteryKey).toUpperCase();
+   00240: 
+>> 00241:   if (key === "FEDERAL") {
+   00242:     return isFederalDrawDay(ymd) ? FEDERAL_SCHEDULE : [];
+   00243:   }
+   00244: 
+   00245:   return getPtRioScheduleForYmd(
+   00246:     ymd,
+   00247:     PT_RIO_SCHEDULE_NORMAL,
+   00248:     PT_RIO_SCHEDULE_WED_SAT
+
+--- BLOCO 06 | LINHA 252 | SCHEDULE_REFERENCES ---
+   00248:     PT_RIO_SCHEDULE_WED_SAT
+   00249:   );
+   00250: }
+   00251: 
+>> 00252: export function scheduleSet(schedule) {
+   00253:   return new Set((Array.isArray(schedule) ? schedule : []).map(toHourBucket));
+   00254: }
+   00255: 
+   00256: export function isHourInSchedule(schedule, hhmm) {
+   00257:   const s = scheduleSet(schedule);
+   00258:   return s.has(toHourBucket(hhmm));
+   00259: }
+
+--- BLOCO 07 | LINHA 261 | API_REFERENCES, SCHEDULE_REFERENCES ---
+   00257:   const s = scheduleSet(schedule);
+   00258:   return s.has(toHourBucket(hhmm));
+   00259: }
+   00260: 
+>> 00261: export function findLastDrawInList(draws, schedule) {
+   00262:   const list = Array.isArray(draws) ? draws : [];
+   00263:   if (!list.length) return null;
+   00264: 
+   00265:   const sorted = [...list]
+   00266:     .filter((d) => isHourInSchedule(schedule, pickDrawHour(d)))
+   00267:     .sort((a, b) => {
+   00268:       const ta = ymdHourToTs(pickDrawYMD(a), toHourBucket(pickDrawHour(a)));
+
+--- BLOCO 08 | LINHA 277 | API_REFERENCES, SCHEDULE_REFERENCES ---
+   00273:   return sorted[0] || null;
+   00274: }
+   00275: 
+   00276: export function findPrevDrawBeforeTargetInSameDay(
+>> 00277:   draws,
+   00278:   targetHourBucket,
+   00279:   schedule
+   00280: ) {
+   00281:   const list = Array.isArray(draws) ? draws : [];
+   00282:   if (!list.length) return null;
+   00283: 
+   00284:   const t = hourToInt(targetHourBucket);
+
+--- BLOCO 09 | LINHA 288 | SCHEDULE_REFERENCES ---
+   00284:   const t = hourToInt(targetHourBucket);
+   00285:   if (t < 0) return null;
+   00286: 
+   00287:   const candidates = list
+>> 00288:     .filter((d) => isHourInSchedule(schedule, pickDrawHour(d)))
+   00289:     .map((d) => ({ d, h: hourToInt(toHourBucket(pickDrawHour(d))) }))
+   00290:     .filter((x) => x.h >= 0 && x.h < t)
+   00291:     .sort((a, b) => b.h - a.h);
+   00292: 
+   00293:   return candidates.length ? candidates[0].d : null;
+   00294: }
+   00295: 
+
+--- BLOCO 10 | LINHA 298 | LOTTERY_REFERENCES, SCHEDULE_REFERENCES ---
+   00294: }
+   00295: 
+   00296: export async function getPreviousDrawRobust({
+   00297:   getKingResultsByDate,
+>> 00298:   lotteryKey,
+   00299:   ymdTarget,
+   00300:   targetHourBucket,
+   00301:   todayDraws,
+   00302:   schedule,
+   00303:   maxBackDays = 10,
+   00304:   PT_RIO_SCHEDULE_NORMAL,
+   00305:   PT_RIO_SCHEDULE_WED_SAT,
+
+--- BLOCO 11 | LINHA 311 | SCHEDULE_REFERENCES ---
+   00307: }) {
+   00308:   const prevSameDay = findPrevDrawBeforeTargetInSameDay(
+   00309:     todayDraws,
+   00310:     targetHourBucket,
+>> 00311:     schedule
+   00312:   );
+   00313: 
+   00314:   if (prevSameDay) {
+   00315:     return {
+   00316:       draw: prevSameDay,
+   00317:       ymd: pickDrawYMD(prevSameDay) || ymdTarget,
+   00318:       hour: toHourBucket(pickDrawHour(prevSameDay)),
+
+--- BLOCO 12 | LINHA 326 | LOTTERY_REFERENCES, SCHEDULE_REFERENCES ---
+   00322: 
+   00323:   for (let i = 1; i <= maxBackDays; i += 1) {
+   00324:     const day = addDaysYMD(ymdTarget, -i);
+   00325: 
+>> 00326:     const daySchedule = getScheduleForLottery({
+   00327:       lotteryKey,
+   00328:       ymd: day,
+   00329:       PT_RIO_SCHEDULE_NORMAL,
+   00330:       PT_RIO_SCHEDULE_WED_SAT,
+   00331:       FEDERAL_SCHEDULE,
+   00332:     });
+   00333: 
+
+... 111 blocos adicionais omitidos
+
+==================================================
+ARQUIVO: src/services/kingResultsService.js
+SCORE: 20
+CATEGORIAS: API_REFERENCES, CONDITIONAL_REFERENCES, LOTTERY_REFERENCES, SCHEDULE_REFERENCES
+LOTERIAS: PT_RIO=True | FEDERAL=True | LOOK=False | NACIONAL=False
+
+--- BLOCO 01 | LINHA 5 | API_REFERENCES ---
+   00001: import { apiUrl } from "../config/apiBase";
+   00002: // src/services/kingResultsService.js
+   00003: import {
+   00004:   collection,
+>> 00005:   query,
+   00006:   where,
+   00007:   orderBy,
+   00008:   limit,
+   00009:   limitToLast,
+   00010:   documentId,
+   00011: } from "firebase/firestore";
+   00012: import { db } from "./firebase";
+
+--- BLOCO 02 | LINHA 62 | LOTTERY_REFERENCES ---
+   00058: 
+   00059: const DEFAULT_READ_POLICY = "cache";
+   00060: 
+   00061: const RJ_STATE_CODE = "RJ";
+>> 00062: const RJ_LOTTERY_KEY = "PT_RIO";
+   00063: 
+   00064: export const FEDERAL_SCOPE_CODE = "FEDERAL";
+   00065: export const FEDERAL_19H_TO_20H_CHANGE_YMD = "2025-11-03";
+   00066: 
+   00067: const FEDERAL_LOTTERY_KEYS = [
+   00068:   "FEDERAL",
+   00069:   "LOTERIA_FEDERAL",
+
+--- BLOCO 03 | LINHA 75 | LOTTERY_REFERENCES ---
+   00071:   "FED",
+   00072: ];
+   00073: 
+   00074: const FEDERAL_INPUT_ALIASES = new Set([
+>> 00075:   "FEDERAL",
+   00076:   "LOTERIA FEDERAL",
+   00077:   "LOTERIA_FEDERAL",
+   00078:   "LT FEDERAL",
+   00079:   "LT_FEDERAL",
+   00080:   "FED",
+   00081: ]);
+   00082: 
+
+--- BLOCO 04 | LINHA 90 | LOTTERY_REFERENCES ---
+   00086:   return { minYmd: minYmd || null, maxYmd: maxYmd || null };
+   00087: }
+   00088: 
+   00089: /**
+>> 00090:  * ✅ Regra histórica da Federal
+   00091:  * - até 2025-11-02: 19h
+   00092:  * - a partir de 2025-11-03: 20h
+   00093:  */
+   00094: export function getFederalPreferredHourForYmd(ymd) {
+   00095:   const y = String(ymd || "").trim();
+   00096:   if (/^\d{4}-\d{2}-\d{2}$/.test(y) && y >= FEDERAL_19H_TO_20H_CHANGE_YMD) {
+   00097:     return "20:00";
+
+--- BLOCO 05 | LINHA 107 | LOTTERY_REFERENCES ---
+   00103:   return getFederalPreferredHourForYmd(ymd) === "20:00" ? "20h" : "19h";
+   00104: }
+   00105: 
+   00106: /**
+>> 00107:  * Detecta se o usuário está pedindo Federal (por input/alias).
+   00108:  */
+   00109: function isFederalInput(scopeInput) {
+   00110:   const up = String(scopeInput || "").trim().toUpperCase();
+   00111:   if (!up) return false;
+   00112:   if (up === FEDERAL_SCOPE_CODE) return true;
+   00113:   if (FEDERAL_INPUT_ALIASES.has(up)) return true;
+   00114: 
+
+--- BLOCO 06 | LINHA 125 | LOTTERY_REFERENCES ---
+   00121: }
+   00122: 
+   00123: /**
+   00124:  * Resolve qual lottery_key usar quando o usuário passar:
+>> 00125:  * - "RJ" -> "PT_RIO"
+   00126:  * - "FEDERAL"/aliases -> "FEDERAL" (canônico)
+   00127:  * - outros -> mantém o valor original (compatível com seu app atual)
+   00128:  */
+   00129: function resolveLotteryKeyForQuery(ufInput) {
+   00130:   const uf = String(ufInput || "").trim();
+   00131:   if (!uf) return "";
+   00132:   const up = uf.toUpperCase();
+
+--- BLOCO 07 | LINHA 142 | LOTTERY_REFERENCES ---
+   00138: }
+   00139: 
+   00140: /**
+   00141:  * ✅ Chave canônica para CACHE:
+>> 00142:  * - "RJ" -> "PT_RIO"
+   00143:  * - Federal (qualquer alias) -> "FEDERAL"
+   00144:  * - outros -> UPPER(TRIM)
+   00145:  */
+   00146: function canonicalScopeKey(ufInput) {
+   00147:   const s = String(ufInput || "").trim();
+   00148:   if (!s) return "";
+   00149:   const up = s.toUpperCase();
+
+--- BLOCO 08 | LINHA 159 | LOTTERY_REFERENCES ---
+   00155: }
+   00156: 
+   00157: /**
+   00158:  * Quando for consultar por campo "uf", adiciona trava de lottery_key para RJ.
+>> 00159:  * Isso elimina o vazamento de Federal para o Rio.
+   00160:  */
+   00161: function buildRJLockWhereIfNeeded(fieldName, ufInput) {
+   00162:   const ufUp = String(ufInput || "").trim().toUpperCase();
+   00163:   if (fieldName === "uf" && ufUp === RJ_STATE_CODE) {
+   00164:     return [where("lottery_key", "==", RJ_LOTTERY_KEY)];
+   00165:   }
+   00166:   return [];
+
+--- BLOCO 09 | LINHA 185 | LOTTERY_REFERENCES ---
+   00181:   }
+   00182: 
+   00183:   if (fieldName === "lottery_key") {
+   00184:     const up = s.toUpperCase();
+>> 00185:     if (up === RJ_STATE_CODE) return RJ_LOTTERY_KEY; // ✅ PREVENTIVO: RJ -> PT_RIO
+   00186:     if (isFederalInput(up)) return FEDERAL_SCOPE_CODE;
+   00187:     return up;
+   00188:   }
+   00189: 
+   00190:   return s;
+   00191: }
+   00192: 
+
+--- BLOCO 10 | LINHA 260 | SCHEDULE_REFERENCES ---
+   00256: 
+   00257: /* =========================
+   00258:    ✅ FIX DEFINITIVO: filtro de horário (bucket vs exato)
+   00259:    - bucket SOMENTE via closeHourBucket
+>> 00260:    - exact  SOMENTE via closeHour
+   00261:    (elimina ambiguidade e "filtro fantasma")
+   00262: ========================= */
+   00263: 
+   00264: function resolveHourFilter({ closeHour = null, closeHourBucket = null }) {
+   00265:   const bucket = toHourBucket(closeHourBucket);
+   00266:   if (bucket) return { kind: "bucket", bucket, hhmm: null };
+   00267: 
+
+--- BLOCO 11 | LINHA 268 | SCHEDULE_REFERENCES ---
+   00264: function resolveHourFilter({ closeHour = null, closeHourBucket = null }) {
+   00265:   const bucket = toHourBucket(closeHourBucket);
+   00266:   if (bucket) return { kind: "bucket", bucket, hhmm: null };
+   00267: 
+>> 00268:   const hhmm = closeHour ? normalizeHourLike(closeHour) : null;
+   00269:   if (hhmm) return { kind: "exact", bucket: null, hhmm };
+   00270: 
+   00271:   return { kind: null, bucket: null, hhmm: null };
+   00272: }
+   00273: 
+   00274: function drawPassesHourFilter(draw, hourFilter) {
+   00275:   if (!hourFilter || !hourFilter.kind) return true;
+
+--- BLOCO 12 | LINHA 278 | SCHEDULE_REFERENCES ---
+   00274: function drawPassesHourFilter(draw, hourFilter) {
+   00275:   if (!hourFilter || !hourFilter.kind) return true;
+   00276: 
+   00277:   const raw =
+>> 00278:     draw?.close_hour ?? draw?.closeHour ?? draw?.hour ?? draw?.hora ?? "";
+   00279:   const norm = normalizeHourLike(raw);
+   00280: 
+   00281:   if (hourFilter.kind === "exact") {
+   00282:     return norm === normalizeHourLike(hourFilter.hhmm);
+   00283:   }
+   00284: 
+   00285:   if (hourFilter.kind === "bucket") {
+
+... 46 blocos adicionais omitidos
+
+==================================================
+ARQUIVO: src/constants/schedule.js
+SCORE: 18
+CATEGORIAS: CONDITIONAL_REFERENCES, LOTTERY_REFERENCES, SCHEDULE_REFERENCES
+LOTERIAS: PT_RIO=True | FEDERAL=True | LOOK=False | NACIONAL=False
+
+--- BLOCO 01 | LINHA 2 | SCHEDULE_REFERENCES ---
+   00001: /**
+>> 00002:  * Schedule oficial do PalPitaco (FRONT)
+   00003:  * Fonte única de horários por loteria
+   00004:  * ⚠️ NÃO deixar este arquivo vazio
+   00005:  */
+   00006: 
+   00007: function normalizeLotteryKey(v) {
+   00008:   const s = String(v || "").trim().toUpperCase();
+   00009: 
+
+--- BLOCO 02 | LINHA 10 | CONDITIONAL_REFERENCES, LOTTERY_REFERENCES ---
+   00006: 
+   00007: function normalizeLotteryKey(v) {
+   00008:   const s = String(v || "").trim().toUpperCase();
+   00009: 
+>> 00010:   if (s === "RJ") return "PT_RIO";
+   00011:   if (s === "RIO") return "PT_RIO";
+   00012:   if (s === "PT-RIO") return "PT_RIO";
+   00013:   if (s === "PT_RIO") return "PT_RIO";
+   00014: 
+   00015:   if (s === "FED") return "FEDERAL";
+   00016:   if (s === "BR") return "FEDERAL"; // compat defensiva
+   00017:   if (s === "FEDERAL") return "FEDERAL";
+
+--- BLOCO 03 | LINHA 19 | CONDITIONAL_REFERENCES, LOTTERY_REFERENCES ---
+   00015:   if (s === "FED") return "FEDERAL";
+   00016:   if (s === "BR") return "FEDERAL"; // compat defensiva
+   00017:   if (s === "FEDERAL") return "FEDERAL";
+   00018: 
+>> 00019:   return "PT_RIO"; // fallback seguro
+   00020: }
+   00021: 
+   00022: function isValidHourFormat(h) {
+   00023:   return /^\d{2}:\d{2}$/.test(String(h || "").trim());
+   00024: }
+   00025: 
+   00026: function sortHoursAsc(arr) {
+
+--- BLOCO 04 | LINHA 34 | LOTTERY_REFERENCES, SCHEDULE_REFERENCES ---
+   00030:     return ha * 60 + ma - (hb * 60 + mb);
+   00031:   });
+   00032: }
+   00033: 
+>> 00034: export const SCHEDULES = Object.freeze({
+   00035:   PT_RIO: Object.freeze([
+   00036:     "09:00",
+   00037:     "11:00",
+   00038:     "14:00",
+   00039:     "16:00",
+   00040:     "18:00",
+   00041:     "21:00",
+
+--- BLOCO 05 | LINHA 43 | LOTTERY_REFERENCES ---
+   00039:     "16:00",
+   00040:     "18:00",
+   00041:     "21:00",
+   00042:   ]),
+>> 00043:   FEDERAL: Object.freeze([
+   00044:     "20:00",
+   00045:   ]),
+   00046: });
+   00047: 
+   00048: /**
+   00049:  * Retorna os horários da loteria (normalizado e seguro)
+   00050:  */
+
+--- BLOCO 06 | LINHA 51 | LOTTERY_REFERENCES, SCHEDULE_REFERENCES ---
+   00047: 
+   00048: /**
+   00049:  * Retorna os horários da loteria (normalizado e seguro)
+   00050:  */
+>> 00051: export function getScheduleByLottery(lottery = "PT_RIO") {
+   00052:   const key = normalizeLotteryKey(lottery);
+   00053: 
+   00054:   const list = SCHEDULES[key];
+   00055:   if (!Array.isArray(list)) return [];
+   00056: 
+   00057:   // Filtra formato inválido por segurança
+   00058:   return sortHoursAsc(list.filter(isValidHourFormat));
+
+--- BLOCO 07 | LINHA 65 | SCHEDULE_REFERENCES ---
+   00061: /**
+   00062:  * Retorna todos os horários conhecidos (flat + únicos + ordenados corretamente)
+   00063:  */
+   00064: export function getAllScheduleHours() {
+>> 00065:   const all = Object.values(SCHEDULES)
+   00066:     .flat()
+   00067:     .filter(isValidHourFormat);
+   00068: 
+   00069:   return sortHoursAsc(Array.from(new Set(all)));
+   00070: }
+   00071: 
+   00072: /**
+
+--- BLOCO 08 | LINHA 76 | CONDITIONAL_REFERENCES, LOTTERY_REFERENCES, SCHEDULE_REFERENCES ---
+   00072: /**
+   00073:  * Helper opcional:
+   00074:  * Verifica se horário pertence à loteria
+   00075:  */
+>> 00076: export function isValidLotteryHour(lottery, hour) {
+   00077:   const list = getScheduleByLottery(lottery);
+   00078:   return list.includes(String(hour || "").trim());
+   00079: }
+
+==================================================
+ARQUIVO: src/pages/Top3/__tests__/top3.backtest.layers.test.js
+SCORE: 18
+CATEGORIAS: API_REFERENCES, CONDITIONAL_REFERENCES, LOTTERY_REFERENCES, SCHEDULE_REFERENCES
+LOTERIAS: PT_RIO=True | FEDERAL=False | LOOK=False | NACIONAL=False
+
+--- BLOCO 01 | LINHA 46 | API_REFERENCES ---
+   00042:   if (!y || !h) return "";
+   00043:   return `${y}|${h}`;
+   00044: }
+   00045: 
+>> 00046: function dedupeAndSort(draws) {
+   00047:   const map = new Map();
+   00048: 
+   00049:   for (const d of Array.isArray(draws) ? draws : []) {
+   00050:     const key = drawKey(d);
+   00051:     if (!key) continue;
+   00052:     if (!map.has(key)) map.set(key, d);
+   00053:   }
+
+--- BLOCO 02 | LINHA 88 | SCHEDULE_REFERENCES ---
+   00084: }
+   00085: 
+   00086: function assertComputedSlotMatchesNextDraw({ computed, found, nextSlot, drawLast }) {
+   00087:   const computedNextYmd = computed?.meta?.next?.ymd || "";
+>> 00088:   const computedNextHour = toHourBucket(computed?.meta?.next?.hour || "");
+   00089: 
+   00090:   const expectedYmd = found?.ymd || nextSlot?.ymd || "";
+   00091:   const expectedHour = toHourBucket(found?.hour || nextSlot?.hour || "");
+   00092: 
+   00093:   if (computedNextYmd !== expectedYmd || computedNextHour !== expectedHour) {
+   00094:     throw new Error(
+   00095:       [
+
+--- BLOCO 03 | LINHA 153 | LOTTERY_REFERENCES ---
+   00149:     }
+   00150:   }
+   00151: }
+   00152: 
+>> 00153: test("backtest TOP3 PT_RIO - camadas e transições", async () => {
+   00154:   const bounds = await getKingBoundsByUf({ uf: "PT_RIO" });
+   00155:   const maxDate = bounds?.maxYmd || bounds?.maxDate;
+   00156:   expect(maxDate).toBeTruthy();
+   00157: 
+   00158:   const from = addDaysYMD(maxDate, -179);
+   00159:   const toExclusive = addDaysYMD(maxDate, 1);
+   00160: 
+
+--- BLOCO 04 | LINHA 162 | LOTTERY_REFERENCES ---
+   00158:   const from = addDaysYMD(maxDate, -179);
+   00159:   const toExclusive = addDaysYMD(maxDate, 1);
+   00160: 
+   00161:   const raw = await getKingResultsByRange({
+>> 00162:     uf: "PT_RIO",
+   00163:     dateFrom: from,
+   00164:     dateTo: toExclusive,
+   00165:     mode: "detailed",
+   00166:     readPolicy: "server",
+   00167:   });
+   00168: 
+   00169:   const allDraws = dedupeAndSort(raw);
+
+--- BLOCO 05 | LINHA 184 | API_REFERENCES, LOTTERY_REFERENCES ---
+   00180:   const byPrevGrupo = new Map();
+   00181: 
+   00182:   for (let i = 0; i < allDraws.length - 1; i += 1) {
+   00183:     const drawLast = allDraws[i];
+>> 00184:     const history = allDraws.slice(0, i + 1);
+   00185: 
+   00186:     const lastY = pickDrawYMD(drawLast);
+   00187:     const lastH = toHourBucket(pickDrawHour(drawLast));
+   00188:     if (!lastY || !lastH) continue;
+   00189: 
+   00190:     const nextSlot = getNextSlotForLottery({
+   00191:       lotteryKey: "PT_RIO",
+
+--- BLOCO 06 | LINHA 199 | LOTTERY_REFERENCES, SCHEDULE_REFERENCES ---
+   00195:       PT_RIO_SCHEDULE_WED_SAT,
+   00196:       FEDERAL_SCHEDULE,
+   00197:     });
+   00198: 
+>> 00199:     if (!nextSlot?.ymd || !nextSlot?.hour) continue;
+   00200: 
+   00201:     const found = findNextExistingDrawFromSlot({
+   00202:       lotteryKey: "PT_RIO",
+   00203:       startSlot: { ymd: nextSlot.ymd, hour: nextSlot.hour },
+   00204:       drawsIndex,
+   00205:       PT_RIO_SCHEDULE_NORMAL,
+   00206:       PT_RIO_SCHEDULE_WED_SAT,
+
+--- BLOCO 07 | LINHA 213 | API_REFERENCES ---
+   00209: 
+   00210:     const nextDraw = found?.draw || null;
+   00211:     if (!nextDraw) continue;
+   00212: 
+>> 00213:     const historyLastKey = drawKey(history[history.length - 1]);
+   00214:     const nextDrawKey = drawKey(nextDraw);
+   00215: 
+   00216:     if (historyLastKey === nextDrawKey) {
+   00217:       throw new Error(`Vazamento de futuro no histórico: ${nextDrawKey}`);
+   00218:     }
+   00219: 
+   00220:     const computed = computeConditionalNextTop3({
+
+--- BLOCO 08 | LINHA 221 | API_REFERENCES, LOTTERY_REFERENCES ---
+   00217:       throw new Error(`Vazamento de futuro no histórico: ${nextDrawKey}`);
+   00218:     }
+   00219: 
+   00220:     const computed = computeConditionalNextTop3({
+>> 00221:       lotteryKey: "PT_RIO",
+   00222:       drawsRange: history,
+   00223:       drawLast,
+   00224:       PT_RIO_SCHEDULE_NORMAL,
+   00225:       PT_RIO_SCHEDULE_WED_SAT,
+   00226:       FEDERAL_SCHEDULE,
+   00227:       topN: 3,
+   00228:     });
+
+--- BLOCO 09 | LINHA 255 | CONDITIONAL_REFERENCES ---
+   00251:     if (!actualGroups.length || !Number.isFinite(Number(actualFirst))) {
+   00252:       continue;
+   00253:     }
+   00254: 
+>> 00255:     const hasTop5 = pred.some((g) => actualGroups.includes(g));
+   00256:     const hasFirst = pred.includes(Number(actualFirst));
+   00257: 
+   00258:     totalCases += 1;
+   00259:     if (hasTop5) hitTop5 += 1;
+   00260:     if (hasFirst) hitFirst += 1;
+   00261: 
+   00262:     const scenario = computed?.meta?.scenario || "NONE";
+
+--- BLOCO 10 | LINHA 263 | SCHEDULE_REFERENCES ---
+   00259:     if (hasTop5) hitTop5 += 1;
+   00260:     if (hasFirst) hitFirst += 1;
+   00261: 
+   00262:     const scenario = computed?.meta?.scenario || "NONE";
+>> 00263:     const prevHour = toHourBucket(computed?.meta?.trigger?.hour || "") || "";
+   00264:     const nextHour = toHourBucket(computed?.meta?.next?.hour || "") || "";
+   00265:     const prevGrupo = Number(computed?.meta?.trigger?.grupo || 0);
+   00266:     const edge = `${prevHour}->${nextHour}`;
+   00267: 
+   00268:     const rowScenario = ensureRow(byScenario, scenario);
+   00269:     rowScenario.total += 1;
+   00270:     if (hasTop5) rowScenario.hitTop5 += 1;
+
+--- BLOCO 11 | LINHA 285 | LOTTERY_REFERENCES ---
+   00281:     if (hasTop5) rowPrevGrupo.hitTop5 += 1;
+   00282:     if (hasFirst) rowPrevGrupo.hitFirst += 1;
+   00283:   }
+   00284: 
+>> 00285:   console.log("\n================ BACKTEST TOP3 PT_RIO (CAMADAS) ================");
+   00286:   console.log(`Janela: ${from} até ${maxDate}`);
+   00287:   console.log(`Casos testados: ${totalCases}`);
+   00288:   console.log(`TOP5 geral: ${hitTop5}/${totalCases} (${pct(hitTop5, totalCases)}%)`);
+   00289:   console.log(`1º geral: ${hitFirst}/${totalCases} (${pct(hitFirst, totalCases)}%)`);
+   00290:   console.log("----------------------------------------------------------------");
+   00291: 
+   00292:   console.log("POR CENÁRIO:");
+
+==================================================
+ARQUIVO: src/pages/Top3/__tests__/top3.backtest.test.js
+SCORE: 18
+CATEGORIAS: API_REFERENCES, CONDITIONAL_REFERENCES, LOTTERY_REFERENCES, SCHEDULE_REFERENCES
+LOTERIAS: PT_RIO=True | FEDERAL=False | LOOK=False | NACIONAL=False
+
+--- BLOCO 01 | LINHA 47 | API_REFERENCES ---
+   00043:   if (!y || !h) return "";
+   00044:   return `${y}|${h}`;
+   00045: }
+   00046: 
+>> 00047: function dedupeAndSort(draws) {
+   00048:   const map = new Map();
+   00049: 
+   00050:   for (const d of Array.isArray(draws) ? draws : []) {
+   00051:     const key = drawKey(d);
+   00052:     if (!key) continue;
+   00053:     if (!map.has(key)) map.set(key, d);
+   00054:   }
+
+--- BLOCO 02 | LINHA 79 | SCHEDULE_REFERENCES ---
+   00075: function pct(n, d) {
+   00076:   return d ? ((n / d) * 100).toFixed(2) : "0.00";
+   00077: }
+   00078: 
+>> 00079: function ensureHourRow(map, hour) {
+   00080:   const key = toHourBucket(hour || "") || "SEM_HORA";
+   00081: 
+   00082:   if (!map.has(key)) {
+   00083:     map.set(key, { total: 0, hitTop5: 0, hitFirst: 0 });
+   00084:   }
+   00085: 
+   00086:   return map.get(key);
+
+--- BLOCO 03 | LINHA 91 | SCHEDULE_REFERENCES ---
+   00087: }
+   00088: 
+   00089: function assertComputedSlotMatchesNextDraw({ computed, found, nextSlot, drawLast }) {
+   00090:   const computedNextYmd = computed?.meta?.next?.ymd || "";
+>> 00091:   const computedNextHour = toHourBucket(computed?.meta?.next?.hour || "");
+   00092: 
+   00093:   const expectedYmd = found?.ymd || found?.slot?.ymd || nextSlot?.ymd || "";
+   00094:   const expectedHour = toHourBucket(
+   00095:     found?.hour || found?.slot?.hour || nextSlot?.hour || ""
+   00096:   );
+   00097: 
+   00098:   if (computedNextYmd !== expectedYmd || computedNextHour !== expectedHour) {
+
+--- BLOCO 04 | LINHA 164 | LOTTERY_REFERENCES ---
+   00160:     }
+   00161:   }
+   00162: }
+   00163: 
+>> 00164: test("backtest TOP3 PT_RIO - últimos 180 dias", async () => {
+   00165:   const bounds = await getKingBoundsByUf({ uf: "PT_RIO" });
+   00166:   const maxDate = bounds?.maxYmd || bounds?.maxDate;
+   00167: 
+   00168:   expect(maxDate).toBeTruthy();
+   00169: 
+   00170:   const from = addDaysYMD(maxDate, -179);
+   00171:   const toExclusive = addDaysYMD(maxDate, 1);
+
+--- BLOCO 05 | LINHA 174 | LOTTERY_REFERENCES ---
+   00170:   const from = addDaysYMD(maxDate, -179);
+   00171:   const toExclusive = addDaysYMD(maxDate, 1);
+   00172: 
+   00173:   const raw = await getKingResultsByRange({
+>> 00174:     uf: "PT_RIO",
+   00175:     dateFrom: from,
+   00176:     dateTo: toExclusive,
+   00177:     mode: "detailed",
+   00178:     readPolicy: "server",
+   00179:   });
+   00180: 
+   00181:   const allDraws = dedupeAndSort(raw);
+
+--- BLOCO 06 | LINHA 194 | API_REFERENCES ---
+   00190:   const byTargetHour = new Map();
+   00191: 
+   00192:   for (let i = 0; i < allDraws.length - 1; i += 1) {
+   00193:     const drawLast = allDraws[i];
+>> 00194:     const history = allDraws.slice(0, i + 1);
+   00195: 
+   00196:     const lastY = pickDrawYMD(drawLast);
+   00197:     const lastH = toHourBucket(pickDrawHour(drawLast));
+   00198: 
+   00199:     if (!lastY || !lastH) continue;
+   00200: 
+   00201:     const nextSlot = getNextSlotForLottery({
+
+--- BLOCO 07 | LINHA 202 | LOTTERY_REFERENCES ---
+   00198: 
+   00199:     if (!lastY || !lastH) continue;
+   00200: 
+   00201:     const nextSlot = getNextSlotForLottery({
+>> 00202:       lotteryKey: "PT_RIO",
+   00203:       ymd: lastY,
+   00204:       hourBucket: lastH,
+   00205:       PT_RIO_SCHEDULE_NORMAL,
+   00206:       PT_RIO_SCHEDULE_WED_SAT,
+   00207:       FEDERAL_SCHEDULE,
+   00208:     });
+   00209: 
+
+--- BLOCO 08 | LINHA 210 | LOTTERY_REFERENCES, SCHEDULE_REFERENCES ---
+   00206:       PT_RIO_SCHEDULE_WED_SAT,
+   00207:       FEDERAL_SCHEDULE,
+   00208:     });
+   00209: 
+>> 00210:     if (!nextSlot?.ymd || !nextSlot?.hour) continue;
+   00211: 
+   00212:     const found = findNextExistingDrawFromSlot({
+   00213:       lotteryKey: "PT_RIO",
+   00214:       startSlot: { ymd: nextSlot.ymd, hour: nextSlot.hour },
+   00215:       drawsIndex,
+   00216:       PT_RIO_SCHEDULE_NORMAL,
+   00217:       PT_RIO_SCHEDULE_WED_SAT,
+
+--- BLOCO 09 | LINHA 224 | API_REFERENCES, LOTTERY_REFERENCES ---
+   00220: 
+   00221:     const nextDraw = found?.draw || null;
+   00222:     if (!nextDraw) continue;
+   00223: 
+>> 00224:     if (drawKey(history[history.length - 1]) === drawKey(nextDraw)) {
+   00225:       throw new Error(`Vazamento de futuro no histórico: ${drawKey(nextDraw)}`);
+   00226:     }
+   00227: 
+   00228:     const computed = computeConditionalNextTop3({
+   00229:       lotteryKey: "PT_RIO",
+   00230:       drawsRange: history,
+   00231:       drawLast,
+
+--- BLOCO 10 | LINHA 263 | CONDITIONAL_REFERENCES ---
+   00259:     if (!actualGroups.length || !Number.isFinite(Number(actualFirst))) {
+   00260:       continue;
+   00261:     }
+   00262: 
+>> 00263:     const hasTop5 = pred.some((g) => actualGroups.includes(g));
+   00264:     const hasFirst = pred.includes(Number(actualFirst));
+   00265: 
+   00266:     totalCases += 1;
+   00267:     if (hasTop5) hitTop5 += 1;
+   00268:     if (hasFirst) hitFirst += 1;
+   00269: 
+   00270:     const targetHour =
+
+--- BLOCO 11 | LINHA 271 | SCHEDULE_REFERENCES ---
+   00267:     if (hasTop5) hitTop5 += 1;
+   00268:     if (hasFirst) hitFirst += 1;
+   00269: 
+   00270:     const targetHour =
+>> 00271:       found?.hour || found?.slot?.hour || pickDrawHour(nextDraw) || "";
+   00272: 
+   00273:     const row = ensureHourRow(byTargetHour, targetHour);
+   00274:     row.total += 1;
+   00275:     if (hasTop5) row.hitTop5 += 1;
+   00276:     if (hasFirst) row.hitFirst += 1;
+   00277:   }
+   00278: 
+
+--- BLOCO 12 | LINHA 279 | LOTTERY_REFERENCES ---
+   00275:     if (hasTop5) row.hitTop5 += 1;
+   00276:     if (hasFirst) row.hitFirst += 1;
+   00277:   }
+   00278: 
+>> 00279:   console.log("\n================ BACKTEST TOP3 PT_RIO ================");
+   00280:   console.log(`Janela: ${from} até ${maxDate}`);
+   00281:   console.log(`Casos testados: ${totalCases}`);
+   00282:   console.log(
+   00283:     `Acerto TOP3 dentro do TOP5: ${hitTop5} / ${totalCases} = ${pct(
+   00284:       hitTop5,
+   00285:       totalCases
+   00286:     )}%`
+
+... 1 blocos adicionais omitidos
+
+==================================================
+ARQUIVO: src/pages/Top3/modules/top3.loader.js
+SCORE: 18
+CATEGORIAS: API_REFERENCES, CONDITIONAL_REFERENCES, LOTTERY_REFERENCES, SCHEDULE_REFERENCES
+LOTERIAS: PT_RIO=False | FEDERAL=True | LOOK=False | NACIONAL=False
+
+--- BLOCO 01 | LINHA 6 | LOTTERY_REFERENCES ---
+   00002:   getKingResultsByRange,
+   00003:   findLatestHistoricalBaseDraw,
+   00004:   addDaysYMD,
+   00005:   minDate,
+>> 00006:   lotteryKey,
+   00007:   targetYmd,
+   00008:   targetHourBucket,
+   00009:   uf,
+   00010: }) {
+   00011:   const key = String(lotteryKey || "").trim().toUpperCase();
+   00012:   const safeUf = String(uf || "").trim().toUpperCase();
+   00013:   const safeTargetYmd = String(targetYmd || "").trim();
+
+--- BLOCO 02 | LINHA 17 | CONDITIONAL_REFERENCES, LOTTERY_REFERENCES, SCHEDULE_REFERENCES ---
+   00013:   const safeTargetYmd = String(targetYmd || "").trim();
+   00014:   const safeTargetHour = String(targetHourBucket || "").trim();
+   00015: 
+   00016:   if (!safeTargetYmd || !safeTargetHour || !safeUf) {
+>> 00017:     return { draw: null, ymd: "", hour: "", source: "none" };
+   00018:   }
+   00019: 
+   00020:   const searchFrom =
+   00021:     String(minDate || "").trim() ||
+   00022:     (key === "FEDERAL"
+   00023:       ? addDaysYMD(safeTargetYmd, -240)
+   00024:       : addDaysYMD(safeTargetYmd, -90));
+
+--- BLOCO 03 | LINHA 36 | API_REFERENCES, LOTTERY_REFERENCES ---
+   00032:       readPolicy: "server",
+   00033:     })) || [];
+   00034: 
+   00035:   return findLatestHistoricalBaseDraw({
+>> 00036:     draws: hist,
+   00037:     lotteryKey: key,
+   00038:     targetYmd: safeTargetYmd,
+   00039:     targetHourBucket: safeTargetHour,
+   00040:   });
+   00041: }
+   00042: 
+   00043: export async function loadHistoryRange({
+
+==================================================
+ARQUIVO: src/pages/Top3/top3.engine.js
+SCORE: 18
+CATEGORIAS: API_REFERENCES, CONDITIONAL_REFERENCES, LOTTERY_REFERENCES, SCHEDULE_REFERENCES
+LOTERIAS: PT_RIO=False | FEDERAL=True | LOOK=False | NACIONAL=False
+
+--- BLOCO 01 | LINHA 32 | API_REFERENCES ---
+   00028:   TOP3_SCENE_BLEND_UNIFORM,
+   00029:   PT_RIO_SCHEDULE_SUNDAY,
+   00030: } from "./top3.constants";
+   00031: 
+>> 00032: function findPreviousValidDraw(draws, currentYmd, currentHour) {
+   00033:   const list = Array.isArray(draws) ? draws : [];
+   00034:   const targetY = safeStr(currentYmd);
+   00035:   const targetH = toHourBucket(currentHour);
+   00036: 
+   00037:   if (!isYMD(targetY) || !targetH) return null;
+   00038: 
+   00039:   const targetTs = ymdHourToTs(targetY, targetH);
+
+--- BLOCO 02 | LINHA 131 | SCHEDULE_REFERENCES ---
+   00127: }
+   00128: 
+   00129: export function pickDrawHour(draw) {
+   00130:   return normalizeHourLike(
+>> 00131:     draw?.close_hour || draw?.closeHour || draw?.hour || draw?.hora || ""
+   00132:   );
+   00133: }
+   00134: 
+   00135: export function pickDrawYMD(draw) {
+   00136:   const y =
+   00137:     draw?.ymd ||
+   00138:     normalizeToYMD(draw?.date) ||
+
+--- BLOCO 03 | LINHA 213 | SCHEDULE_REFERENCES ---
+   00209:   return base + mins * 60 * 1000;
+   00210: }
+   00211: 
+   00212: /* =========================
+>> 00213:    Schedules
+   00214: ========================= */
+   00215: 
+   00216: export function isFederalDrawDay(ymd) {
+   00217:   const dow = getDowKey(ymd);
+   00218:   return dow === 3 || dow === 6;
+   00219: }
+   00220: 
+
+--- BLOCO 04 | LINHA 235 | LOTTERY_REFERENCES ---
+   00231:     const baseSchedule = Array.isArray(PT_RIO_SCHEDULE_WED_SAT)
+   00232:       ? PT_RIO_SCHEDULE_WED_SAT
+   00233:       : [];
+   00234: 
+>> 00235:     // A Federal mudou de 19h para 20h em 03/11/2025.
+   00236:     // Desde então, nas quartas e sábados, o PT Rio das 18h
+   00237:     // é substituído pelo sorteio das 19h.
+   00238:     if (String(ymd || "").trim() >= "2025-11-03") {
+   00239:       return Array.from(
+   00240:         new Set([
+   00241:           ...baseSchedule
+   00242:             .map(toHourBucket)
+
+--- BLOCO 05 | LINHA 243 | SCHEDULE_REFERENCES ---
+   00239:       return Array.from(
+   00240:         new Set([
+   00241:           ...baseSchedule
+   00242:             .map(toHourBucket)
+>> 00243:             .filter((hour) => hour && hour !== "18:00"),
+   00244:           "19:00",
+   00245:         ])
+   00246:       ).sort((a, b) => hourToInt(a) - hourToInt(b));
+   00247:     }
+   00248: 
+   00249:     return baseSchedule;
+   00250:   }
+
+--- BLOCO 06 | LINHA 255 | LOTTERY_REFERENCES, SCHEDULE_REFERENCES ---
+   00251: 
+   00252:   return PT_RIO_SCHEDULE_NORMAL;
+   00253: }
+   00254: 
+>> 00255: export function getScheduleForLottery({
+   00256:   lotteryKey,
+   00257:   ymd,
+   00258:   PT_RIO_SCHEDULE_NORMAL,
+   00259:   PT_RIO_SCHEDULE_WED_SAT,
+   00260:   FEDERAL_SCHEDULE,
+   00261: }) {
+   00262:   const key = safeStr(lotteryKey).toUpperCase();
+
+--- BLOCO 07 | LINHA 264 | CONDITIONAL_REFERENCES, LOTTERY_REFERENCES ---
+   00260:   FEDERAL_SCHEDULE,
+   00261: }) {
+   00262:   const key = safeStr(lotteryKey).toUpperCase();
+   00263: 
+>> 00264:   if (key === "FEDERAL") {
+   00265:     return isFederalDrawDay(ymd) ? FEDERAL_SCHEDULE : [];
+   00266:   }
+   00267: 
+   00268:   return getPtRioScheduleForYmd(
+   00269:     ymd,
+   00270:     PT_RIO_SCHEDULE_NORMAL,
+   00271:     PT_RIO_SCHEDULE_WED_SAT
+
+--- BLOCO 08 | LINHA 275 | SCHEDULE_REFERENCES ---
+   00271:     PT_RIO_SCHEDULE_WED_SAT
+   00272:   );
+   00273: }
+   00274: 
+>> 00275: export function scheduleSet(schedule) {
+   00276:   return new Set((Array.isArray(schedule) ? schedule : []).map(toHourBucket));
+   00277: }
+   00278: 
+   00279: export function isHourInSchedule(schedule, hhmm) {
+   00280:   const s = scheduleSet(schedule);
+   00281:   return s.has(toHourBucket(hhmm));
+   00282: }
+
+--- BLOCO 09 | LINHA 284 | API_REFERENCES, SCHEDULE_REFERENCES ---
+   00280:   const s = scheduleSet(schedule);
+   00281:   return s.has(toHourBucket(hhmm));
+   00282: }
+   00283: 
+>> 00284: export function findLastDrawInList(draws, schedule) {
+   00285:   const list = Array.isArray(draws) ? draws : [];
+   00286:   if (!list.length) return null;
+   00287: 
+   00288:   const sorted = [...list]
+   00289:     .filter((d) => isHourInSchedule(schedule, pickDrawHour(d)))
+   00290:     .sort((a, b) => {
+   00291:       const ta = ymdHourToTs(pickDrawYMD(a), toHourBucket(pickDrawHour(a)));
+
+--- BLOCO 10 | LINHA 300 | API_REFERENCES, SCHEDULE_REFERENCES ---
+   00296:   return sorted[0] || null;
+   00297: }
+   00298: 
+   00299: export function findPrevDrawBeforeTargetInSameDay(
+>> 00300:   draws,
+   00301:   targetHourBucket,
+   00302:   schedule
+   00303: ) {
+   00304:   const list = Array.isArray(draws) ? draws : [];
+   00305:   if (!list.length) return null;
+   00306: 
+   00307:   const t = hourToInt(targetHourBucket);
+
+--- BLOCO 11 | LINHA 311 | SCHEDULE_REFERENCES ---
+   00307:   const t = hourToInt(targetHourBucket);
+   00308:   if (t < 0) return null;
+   00309: 
+   00310:   const candidates = list
+>> 00311:     .filter((d) => isHourInSchedule(schedule, pickDrawHour(d)))
+   00312:     .map((d) => ({ d, h: hourToInt(toHourBucket(pickDrawHour(d))) }))
+   00313:     .filter((x) => x.h >= 0 && x.h < t)
+   00314:     .sort((a, b) => b.h - a.h);
+   00315: 
+   00316:   return candidates.length ? candidates[0].d : null;
+   00317: }
+   00318: 
+
+--- BLOCO 12 | LINHA 321 | LOTTERY_REFERENCES, SCHEDULE_REFERENCES ---
+   00317: }
+   00318: 
+   00319: export async function getPreviousDrawRobust({
+   00320:   getKingResultsByDate,
+>> 00321:   lotteryKey,
+   00322:   ymdTarget,
+   00323:   targetHourBucket,
+   00324:   todayDraws,
+   00325:   schedule,
+   00326:   maxBackDays = 10,
+   00327:   PT_RIO_SCHEDULE_NORMAL,
+   00328:   PT_RIO_SCHEDULE_WED_SAT,
+
+... 111 blocos adicionais omitidos
+
+==================================================
+ARQUIVO: src/pages/Top3/top3.firestore.js
+SCORE: 18
+CATEGORIAS: API_REFERENCES, CONDITIONAL_REFERENCES, LOTTERY_REFERENCES, SCHEDULE_REFERENCES
+LOTERIAS: PT_RIO=True | FEDERAL=False | LOOK=False | NACIONAL=False
+
+--- BLOCO 01 | LINHA 26 | LOTTERY_REFERENCES ---
+   00022: 
+   00023: const COLLECTION = "top3_predictions";
+   00024: 
+   00025: function normalizeLotteryKey(value) {
+>> 00026:   return safeStr(value).toUpperCase() || "PT_RIO";
+   00027: }
+   00028: 
+   00029: function normalizeHour(value) {
+   00030:   return toHourBucket(value) || "";
+   00031: }
+   00032: 
+   00033: function hourCode(value) {
+
+--- BLOCO 02 | LINHA 37 | LOTTERY_REFERENCES, SCHEDULE_REFERENCES ---
+   00033: function hourCode(value) {
+   00034:   return normalizeHour(value).replace(/\D/g, "").padStart(2, "0");
+   00035: }
+   00036: 
+>> 00037: function makePredictionId({ lotteryKey, targetYmd, targetHour }) {
+   00038:   const lottery = normalizeLotteryKey(lotteryKey);
+   00039:   const ymd = safeStr(targetYmd);
+   00040:   const hour = hourCode(targetHour);
+   00041: 
+   00042:   if (!lottery || !isYMD(ymd) || !hour) return "";
+   00043: 
+   00044:   return `${lottery}__${ymd}__${hour}`;
+
+--- BLOCO 03 | LINHA 47 | API_REFERENCES, LOTTERY_REFERENCES, SCHEDULE_REFERENCES ---
+   00043: 
+   00044:   return `${lottery}__${ymd}__${hour}`;
+   00045: }
+   00046: 
+>> 00047: function predictionRef(params) {
+   00048:   const id = makePredictionId(params);
+   00049:   return id ? doc(db, COLLECTION, id) : null;
+   00050: }
+   00051: 
+   00052: function cleanFirestoreValue(value) {
+   00053:   try {
+   00054:     return JSON.parse(
+
+--- BLOCO 04 | LINHA 98 | API_REFERENCES, SCHEDULE_REFERENCES ---
+   00094:   );
+   00095: }
+   00096: 
+   00097: function findDrawForTarget({
+>> 00098:   draws,
+   00099:   targetYmd,
+   00100:   targetHour,
+   00101: }) {
+   00102:   const ymd = safeStr(targetYmd);
+   00103:   const hour = normalizeHour(targetHour);
+   00104: 
+   00105:   if (!isYMD(ymd) || !hour) return null;
+
+--- BLOCO 05 | LINHA 108 | API_REFERENCES, SCHEDULE_REFERENCES ---
+   00104: 
+   00105:   if (!isYMD(ymd) || !hour) return null;
+   00106: 
+   00107:   return (
+>> 00108:     (Array.isArray(draws) ? draws : []).find((draw) => {
+   00109:       return (
+   00110:         pickDrawYMD(draw) === ymd &&
+   00111:         normalizeHour(pickDrawHour(draw)) === hour
+   00112:       );
+   00113:     }) || null
+   00114:   );
+   00115: }
+
+--- BLOCO 06 | LINHA 168 | CONDITIONAL_REFERENCES ---
+   00164:       .filter(Boolean);
+   00165: 
+   00166:     const centenas = milhares.map((value) => value.slice(-3));
+   00167: 
+>> 00168:     if (milhar && milhares.includes(milhar)) {
+   00169:       best = {
+   00170:         hitType: "hit_exact",
+   00171:         hitScore: 100,
+   00172:         hitPosition: index + 1,
+   00173:         matchedValue: milhar,
+   00174:       };
+   00175:       return;
+
+--- BLOCO 07 | LINHA 181 | CONDITIONAL_REFERENCES ---
+   00177: 
+   00178:     if (
+   00179:       best.hitScore < 66.67 &&
+   00180:       centena &&
+>> 00181:       centenas.includes(centena)
+   00182:     ) {
+   00183:       best = {
+   00184:         hitType: "hit_centena",
+   00185:         hitScore: 66.67,
+   00186:         hitPosition: index + 1,
+   00187:         matchedValue: centena,
+   00188:       };
+
+--- BLOCO 08 | LINHA 210 | LOTTERY_REFERENCES ---
+   00206:   return best;
+   00207: }
+   00208: 
+   00209: export async function saveTop3PredictionSnapshot({
+>> 00210:   lotteryKey,
+   00211:   targetYmd,
+   00212:   targetHour,
+   00213:   picks,
+   00214:   snapshot,
+   00215:   engineVersion,
+   00216: }) {
+   00217:   let user = null;
+
+--- BLOCO 09 | LINHA 238 | LOTTERY_REFERENCES, SCHEDULE_REFERENCES ---
+   00234:       reason: "AUTH_REQUIRED",
+   00235:     };
+   00236:   }
+   00237: 
+>> 00238:   const lottery = normalizeLotteryKey(lotteryKey);
+   00239:   const ymd = safeStr(targetYmd);
+   00240:   const hour = normalizeHour(targetHour);
+   00241:   const ref = predictionRef({
+   00242:     lotteryKey: lottery,
+   00243:     targetYmd: ymd,
+   00244:     targetHour: hour,
+   00245:   });
+
+--- BLOCO 10 | LINHA 247 | SCHEDULE_REFERENCES ---
+   00243:     targetYmd: ymd,
+   00244:     targetHour: hour,
+   00245:   });
+   00246: 
+>> 00247:   if (!ref || !isYMD(ymd) || !hour) {
+   00248:     return {
+   00249:       ok: false,
+   00250:       skipped: true,
+   00251:       reason: "INVALID_TARGET",
+   00252:     };
+   00253:   }
+   00254: 
+
+--- BLOCO 11 | LINHA 277 | LOTTERY_REFERENCES, SCHEDULE_REFERENCES ---
+   00273:   const now = Date.now();
+   00274: 
+   00275:   const payload = cleanFirestoreValue({
+   00276:     id: ref.id,
+>> 00277:     lotteryKey: lottery,
+   00278:     targetYmd: ymd,
+   00279:     targetHour: hour,
+   00280:     targetKey: `${ymd}_${hour}`,
+   00281:     picks: normalizedPicks,
+   00282:     snapshot: normalizedSnapshot,
+   00283:     engineVersion: safeStr(engineVersion || "V3_STATISTICAL"),
+   00284:     status: "predicted",
+
+--- BLOCO 12 | LINHA 321 | LOTTERY_REFERENCES, SCHEDULE_REFERENCES ---
+   00317:   return result;
+   00318: }
+   00319: 
+   00320: export async function loadTop3PredictionDay({
+>> 00321:   lotteryKey,
+   00322:   targetYmd,
+   00323:   schedule,
+   00324: }) {
+   00325:   const lottery = normalizeLotteryKey(lotteryKey);
+   00326:   const ymd = safeStr(targetYmd);
+   00327: 
+   00328:   if (!isYMD(ymd)) return [];
+
+... 5 blocos adicionais omitidos
+
+==================================================
+ARQUIVO: src/hooks/useKingRanking.js
+SCORE: 15
+CATEGORIAS: API_REFERENCES, CONDITIONAL_REFERENCES, SCHEDULE_REFERENCES, SELECTOR_REFERENCES
+LOTERIAS: PT_RIO=False | FEDERAL=False | LOOK=False | NACIONAL=False
+
+--- BLOCO 01 | LINHA 20 | CONDITIONAL_REFERENCES ---
+   00016:   const msg = String(err?.message || err || "").toLowerCase();
+   00017:   const code = String(err?.code || "").toLowerCase();
+   00018: 
+   00019:   return (
+>> 00020:     code.includes("failed-precondition") ||
+   00021:     msg.includes("failed_precondition") ||
+   00022:     msg.includes("requires an index") ||
+   00023:     (msg.includes("index") && msg.includes("create")) ||
+   00024:     msg.includes("falta indice") ||
+   00025:     msg.includes("falta índice") ||
+   00026:     msg.includes("falta índice composto") ||
+   00027:     msg.includes("falta indice composto") ||
+
+--- BLOCO 02 | LINHA 28 | CONDITIONAL_REFERENCES ---
+   00024:     msg.includes("falta indice") ||
+   00025:     msg.includes("falta índice") ||
+   00026:     msg.includes("falta índice composto") ||
+   00027:     msg.includes("falta indice composto") ||
+>> 00028:     msg.includes("firestore: falta índice") ||
+   00029:     msg.includes("firestore: falta indice")
+   00030:   );
+   00031: }
+   00032: 
+   00033: function normalizeToYMD(input) {
+   00034:   return normalizeToYMD_SP(input);
+   00035: }
+
+--- BLOCO 03 | LINHA 94 | SCHEDULE_REFERENCES ---
+   00090: 
+   00091:   return s;
+   00092: }
+   00093: 
+>> 00094: function toHourBucketLabel(closeHour) {
+   00095:   const hhmm = normHHMM(closeHour);
+   00096:   if (!hhmm) return null;
+   00097: 
+   00098:   const hh = hhmm.slice(0, 2);
+   00099:   if (!/^\d{2}$/.test(hh)) return null;
+   00100:   return `${hh}h`;
+   00101: }
+
+--- BLOCO 04 | LINHA 110 | SCHEDULE_REFERENCES ---
+   00106: }
+   00107: 
+   00108: function getDrawHourRaw(d) {
+   00109:   if (!d) return "";
+>> 00110:   return String(d.close_hour ?? d.closeHour ?? d.hour ?? d.hora ?? "").trim();
+   00111: }
+   00112: 
+   00113: function getDrawLotteryCodeRaw(d) {
+   00114:   if (!d) return "";
+   00115:   return String(
+   00116:     d.lottery_code ??
+   00117:       d.lotteryCode ??
+
+--- BLOCO 05 | LINHA 130 | API_REFERENCES ---
+   00126:     .trim()
+   00127:     .toUpperCase();
+   00128: }
+   00129: 
+>> 00130: function dedupeDrawsLogicalPreferBest(draws) {
+   00131:   const arr = Array.isArray(draws) ? draws : [];
+   00132:   if (!arr.length) return arr;
+   00133: 
+   00134:   const byKey = new Map();
+   00135:   const order = [];
+   00136: 
+   00137:   const score = (d) => {
+
+--- BLOCO 06 | LINHA 182 | SCHEDULE_REFERENCES ---
+   00178: }
+   00179: 
+   00180: function normalizeDrawForCharts(d) {
+   00181:   const ymd = d?.ymd || normalizeToYMD(getDrawDateRaw(d));
+>> 00182:   const closeHour = normHHMM(getDrawHourRaw(d));
+   00183:   const prizes = Array.isArray(d?.prizes) ? d.prizes : [];
+   00184: 
+   00185:   return {
+   00186:     ...d,
+   00187:     date: ymd || d?.date || null,
+   00188:     ymd: ymd || null,
+   00189:     close_hour: closeHour || "",
+
+--- BLOCO 07 | LINHA 190 | SCHEDULE_REFERENCES ---
+   00186:     ...d,
+   00187:     date: ymd || d?.date || null,
+   00188:     ymd: ymd || null,
+   00189:     close_hour: closeHour || "",
+>> 00190:     closeHour: closeHour || "",
+   00191:     lottery_code: getDrawLotteryCodeRaw(d) || d?.lottery_code || null,
+   00192:     prizes,
+   00193:   };
+   00194: }
+   00195: 
+   00196: function clampMs(n, min, max) {
+   00197:   const x = Number(n);
+
+--- BLOCO 08 | LINHA 394 | SELECTOR_REFERENCES ---
+   00390:     if (!Array.isArray(positionsEffective) || !positionsEffective.length) return "";
+   00391:     return positionsEffective.map((n) => String(n)).join(",");
+   00392:   }, [positionsEffective]);
+   00393: 
+>> 00394:   const positionsArrStable = useMemo(
+   00395:     () => normalizePositionsFromKey(positionsInputKey),
+   00396:     [positionsInputKey]
+   00397:   );
+   00398: 
+   00399:   const positionsKey = useMemo(
+   00400:     () => (positionsArrStable ? positionsArrStable.join(",") : ""),
+   00401:     [positionsArrStable]
+
+--- BLOCO 09 | LINHA 564 | API_REFERENCES ---
+   00560:               `Obs: fallback automático só cobre até ${RANGE_FALLBACK_LIMIT_DAYS} dias.`
+   00561:           );
+   00562:         }
+   00563: 
+>> 00564:         let draws = [];
+   00565:         let serviceMode = "detailed";
+   00566: 
+   00567:         if (mode === "range") {
+   00568:           serviceMode = "detailed";
+   00569: 
+   00570:           draws = await getKingResultsByRange({
+   00571:             uf,
+
+--- BLOCO 10 | LINHA 574 | API_REFERENCES, SCHEDULE_REFERENCES, SELECTOR_REFERENCES ---
+   00570:           draws = await getKingResultsByRange({
+   00571:             uf,
+   00572:             dateFrom: ymdFrom,
+   00573:             dateTo: ymdTo,
+>> 00574:             closeHour: null,
+   00575:             positions: positionsArrStable,
+   00576:             mode: serviceMode,
+   00577:             readPolicy: "server",
+   00578:           });
+   00579:         } else if (mode === "day") {
+   00580:           serviceMode = "detailed";
+   00581: 
+
+--- BLOCO 11 | LINHA 582 | API_REFERENCES, SCHEDULE_REFERENCES, SELECTOR_REFERENCES ---
+   00578:           });
+   00579:         } else if (mode === "day") {
+   00580:           serviceMode = "detailed";
+   00581: 
+>> 00582:           draws = await getKingResultsByDate({
+   00583:             uf,
+   00584:             date: effectiveDayYmd,
+   00585:             closeHour: null,
+   00586:             positions: positionsArrStable,
+   00587:             readPolicy: "server",
+   00588:           });
+   00589:         } else {
+
+--- BLOCO 12 | LINHA 590 | API_REFERENCES, SELECTOR_REFERENCES ---
+   00586:             positions: positionsArrStable,
+   00587:             readPolicy: "server",
+   00588:           });
+   00589:         } else {
+>> 00590:           draws = [];
+   00591:         }
+   00592: 
+   00593:         if (!mounted || mySeq !== refreshSeqRef.current) return;
+   00594: 
+   00595:         if (rangeBlocked) setRangeBlocked(false);
+   00596: 
+   00597:         let unique = dedupeDrawsLogicalPreferBest(draws).map(normalizeDrawForCharts);
+
+... 1 blocos adicionais omitidos
+
+==================================================
+ARQUIVO: src/pages/Top3/modules/scoreEngine/frequencyEvidence.js
+SCORE: 14
+CATEGORIAS: CONDITIONAL_REFERENCES, LOTTERY_REFERENCES, SCHEDULE_REFERENCES
+LOTERIAS: PT_RIO=False | FEDERAL=False | LOOK=False | NACIONAL=False
+
+--- BLOCO 01 | LINHA 48 | CONDITIONAL_REFERENCES ---
+   00044:   if (percent > 0) {
+   00045:     reasons.push(`Participação: ${percent.toFixed(1)}%`);
+   00046:   }
+   00047: 
+>> 00048:   switch (level) {
+   00049:     case "very_high":
+   00050:       reasons.push("Frequência muito elevada.");
+   00051:       break;
+   00052: 
+   00053:     case "high":
+   00054:       reasons.push("Frequência elevada.");
+   00055:       break;
+
+--- BLOCO 02 | LINHA 108 | LOTTERY_REFERENCES, SCHEDULE_REFERENCES ---
+   00104:       level,
+   00105:       totalUniverse,
+   00106: 
+   00107:       window: context.window || null,
+>> 00108:       lotteryKey: context.lotteryKey || null,
+   00109:       position: context.position || null,
+   00110:       weekday: context.weekday || null,
+   00111:       hour: context.hour || null,
+   00112:     },
+   00113: 
+   00114:     reasons: buildReasons(frequency, percent, level),
+   00115:   };
+
+==================================================
+ARQUIVO: src/pages/Top3/top3.selectors.js
+SCORE: 14
+CATEGORIAS: CONDITIONAL_REFERENCES, LOTTERY_REFERENCES
+LOTERIAS: PT_RIO=True | FEDERAL=True | LOOK=False | NACIONAL=False
+
+--- BLOCO 01 | LINHA 78 | CONDITIONAL_REFERENCES ---
+   00074: function addCacheBust(url, token = "v=1") {
+   00075:   const s = safeStr(url);
+   00076:   if (!s) return "";
+   00077: 
+>> 00078:   return s.includes("?") ? `${s}&${token}` : `${s}?${token}`;
+   00079: }
+   00080: 
+   00081: function pushExtensionVariants(out, clean) {
+   00082:   const s = safeStr(clean);
+   00083:   if (!s) return;
+   00084: 
+   00085:   out.push(s);
+
+--- BLOCO 02 | LINHA 153 | CONDITIONAL_REFERENCES, LOTTERY_REFERENCES ---
+   00149: 
+   00150:   return Array.from(new Set(out.filter(Boolean)));
+   00151: }
+   00152: 
+>> 00153: export function lotteryLabel(lotteryKey) {
+   00154:   const k = safeStr(lotteryKey).toUpperCase();
+   00155: 
+   00156:   if (k === "FEDERAL") return "FEDERAL (20h • qua/sáb)";
+   00157:   if (k === "PT_RIO") return "RIO (PT_RIO)";
+   00158: 
+   00159:   return k || "—";
+   00160: }
+
+==================================================
+ARQUIVO: src/pages/Top3/top3.storage.js
+SCORE: 14
+CATEGORIAS: CONDITIONAL_REFERENCES, LOTTERY_REFERENCES, SCHEDULE_REFERENCES
+LOTERIAS: PT_RIO=False | FEDERAL=False | LOOK=False | NACIONAL=False
+
+--- BLOCO 01 | LINHA 7 | SCHEDULE_REFERENCES ---
+   00003: import {
+   00004:   pickDrawYMD,
+   00005:   pickDrawHour,
+   00006:   pickPrize1GrupoFromDraw,
+>> 00007:   getScheduleForLottery,
+   00008: } from "./top3.engine";
+   00009: 
+   00010: import {
+   00011:   PT_RIO_SCHEDULE_NORMAL,
+   00012:   PT_RIO_SCHEDULE_WED_SAT,
+   00013:   FEDERAL_SCHEDULE,
+   00014: } from "./top3.constants";
+
+--- BLOCO 02 | LINHA 24 | SCHEDULE_REFERENCES ---
+   00020: function normHour(h) {
+   00021:   return toHourBucket(h) || "";
+   00022: }
+   00023: 
+>> 00024: function makeKey(ymd, hour) {
+   00025:   const y = safeStr(ymd);
+   00026:   const h = normHour(hour);
+   00027:   return isYMD(y) && h ? `${y}_${h}` : "";
+   00028: }
+   00029: 
+   00030: function parseTargetDate(ymd, hour) {
+   00031:   if (!isYMD(ymd)) return null;
+
+--- BLOCO 03 | LINHA 33 | SCHEDULE_REFERENCES ---
+   00029: 
+   00030: function parseTargetDate(ymd, hour) {
+   00031:   if (!isYMD(ymd)) return null;
+   00032: 
+>> 00033:   const hourBucket = normHour(hour);
+   00034:   const m = String(hourBucket || "").match(/^(\d{2})h$/);
+   00035:   if (!m) return null;
+   00036: 
+   00037:   const [Y, M, D] = String(ymd).split("-").map(Number);
+   00038:   const hh = Number(m[1]);
+   00039: 
+   00040:   const dt = new Date(Y, M - 1, D, hh, 0, 0, 0);
+
+--- BLOCO 04 | LINHA 44 | SCHEDULE_REFERENCES ---
+   00040:   const dt = new Date(Y, M - 1, D, hh, 0, 0, 0);
+   00041:   return Number.isNaN(dt.getTime()) ? null : dt;
+   00042: }
+   00043: 
+>> 00044: function isFutureTarget(ymd, hour) {
+   00045:   const target = parseTargetDate(ymd, hour);
+   00046:   if (!target) return false;
+   00047:   return target.getTime() > Date.now();
+   00048: }
+   00049: 
+   00050: function resolvePendingStatus(ymd, hour, picks) {
+   00051:   const hasPicks = Array.isArray(picks) && picks.length > 0;
+
+--- BLOCO 05 | LINHA 53 | SCHEDULE_REFERENCES ---
+   00049: 
+   00050: function resolvePendingStatus(ymd, hour, picks) {
+   00051:   const hasPicks = Array.isArray(picks) && picks.length > 0;
+   00052:   if (!hasPicks) return "empty";
+>> 00053:   return isFutureTarget(ymd, hour) ? "future" : "pending_result";
+   00054: }
+   00055: 
+   00056: function normalizePicks(picks) {
+   00057:   return Array.from(
+   00058:     new Set(
+   00059:       (Array.isArray(picks) ? picks : [])
+   00060:         .map(Number)
+
+--- BLOCO 06 | LINHA 75 | SCHEDULE_REFERENCES ---
+   00071: function normalizeLogEntry(entry) {
+   00072:   if (!entry || typeof entry !== "object") return null;
+   00073: 
+   00074:   const ymd = safeStr(entry?.target?.ymd || "");
+>> 00075:   const hour = normHour(entry?.target?.hour || "");
+   00076:   const targetKey = makeKey(ymd, hour);
+   00077: 
+   00078:   if (!targetKey) return null;
+   00079: 
+   00080:   const picks = normalizePicks(entry?.picks);
+   00081:   const result = normalizeResult(entry?.result);
+   00082: 
+
+--- BLOCO 07 | LINHA 85 | CONDITIONAL_REFERENCES, SCHEDULE_REFERENCES ---
+   00081:   const result = normalizeResult(entry?.result);
+   00082: 
+   00083:   const hit =
+   00084:     result != null && picks.length
+>> 00085:       ? picks.includes(result)
+   00086:       : typeof entry?.hit === "boolean"
+   00087:         ? entry.hit
+   00088:         : null;
+   00089: 
+   00090:   const status =
+   00091:     result != null ? "validated" : resolvePendingStatus(ymd, hour, picks);
+   00092: 
+
+--- BLOCO 08 | LINHA 96 | SCHEDULE_REFERENCES ---
+   00092: 
+   00093:   return {
+   00094:     ...entry,
+   00095:     targetKey,
+>> 00096:     target: { ymd, hour },
+   00097:     picks,
+   00098:     result,
+   00099:     hit,
+   00100:     createdAt: Number(entry?.createdAt) || Date.now(),
+   00101:     validatedAt:
+   00102:       result != null && Number(entry?.validatedAt)
+   00103:         ? Number(entry.validatedAt)
+
+--- BLOCO 09 | LINHA 138 | SCHEDULE_REFERENCES ---
+   00134:     }
+   00135:   }
+   00136: 
+   00137:   return [...byKey.values()].sort((a, b) => {
+>> 00138:     const aKey = `${a?.target?.ymd || ""}_${a?.target?.hour || ""}`;
+   00139:     const bKey = `${b?.target?.ymd || ""}_${b?.target?.hour || ""}`;
+   00140:     return aKey < bKey ? -1 : aKey > bKey ? 1 : 0;
+   00141:   });
+   00142: }
+   00143: 
+   00144: function getTop3Log() {
+   00145:   try {
+
+--- BLOCO 10 | LINHA 169 | SCHEDULE_REFERENCES ---
+   00165:   snapshot = [],
+   00166:   engineVersion = "",
+   00167: }) {
+   00168:   const ymd = safeStr(targetYmd);
+>> 00169:   const hour = normHour(targetHour);
+   00170:   const normalizedKey = targetKey || makeKey(ymd, hour);
+   00171: 
+   00172:   if (!isYMD(ymd) || !hour || !normalizedKey) return;
+   00173: 
+   00174:   const normalizedPicks = normalizePicks(picks);
+   00175:   if (!normalizedPicks.length) return;
+   00176: 
+
+--- BLOCO 11 | LINHA 183 | SCHEDULE_REFERENCES ---
+   00179:   const idx = log.findIndex(
+   00180:     (l) => String(l?.targetKey || "") === String(normalizedKey)
+   00181:   );
+   00182: 
+>> 00183:   const status = resolvePendingStatus(ymd, hour, normalizedPicks);
+   00184: 
+   00185:   if (idx >= 0) {
+   00186:     const prev = log[idx] || {};
+   00187: 
+   00188:     if (prev.result != null || prev.status === "validated") return;
+   00189: 
+   00190:     log[idx] = {
+
+--- BLOCO 12 | LINHA 193 | SCHEDULE_REFERENCES ---
+   00189: 
+   00190:     log[idx] = {
+   00191:       ...prev,
+   00192:       targetKey: normalizedKey,
+>> 00193:       target: { ymd, hour },
+   00194:       picks: normalizedPicks,
+   00195:       result: null,
+   00196:       hit: null,
+   00197:       snapshot:
+   00198:         Array.isArray(prev?.snapshot) && prev.snapshot.length
+   00199:           ? prev.snapshot
+   00200:           : Array.isArray(snapshot)
+
+... 10 blocos adicionais omitidos
+
+==================================================
+ARQUIVO: src/pages/Top3/__tests__/top3.public-api.node.test.js
+SCORE: 13
+CATEGORIAS: API_REFERENCES, LOTTERY_REFERENCES, SCHEDULE_REFERENCES
+LOTERIAS: PT_RIO=True | FEDERAL=False | LOOK=False | NACIONAL=False
+
+--- BLOCO 01 | LINHA 3 | API_REFERENCES ---
+   00001: /** @jest-environment node */
+   00002: 
+>> 00003: import * as publicApi from "../top3.public-api";
+   00004: 
+   00005: const EXPECTED_EXPORTS = [
+   00006:   "auditTop3Backtest",
+   00007:   "auditTop3Timeline",
+   00008:   "build16MilharesForGrupo",
+   00009:   "build20MilharesForGrupo",
+   00010:   "buildContextEvidence",
+
+--- BLOCO 02 | LINHA 23 | SCHEDULE_REFERENCES ---
+   00019:   "computeStatisticalTop3V3",
+   00020:   "countAparicoesByGrupoInDraw",
+   00021:   "getNextSlotForLottery",
+   00022:   "getPtRioScheduleForYmd",
+>> 00023:   "getScheduleForLottery",
+   00024:   "guessPrizeGrupo",
+   00025:   "guessPrizePos",
+   00026:   "indexDrawsByYmdHour",
+   00027:   "isFederalDrawDay",
+   00028:   "isHourInSchedule",
+   00029:   "pickDrawHour",
+   00030:   "pickDrawYMD",
+
+--- BLOCO 03 | LINHA 37 | API_REFERENCES ---
+   00033:   "scoreItem",
+   00034:   "scoreRanking",
+   00035: ];
+   00036: 
+>> 00037: describe("TOP3 public API contract", () => {
+   00038:   test("executa em ambiente Node sem APIs do navegador", () => {
+   00039:     expect(typeof window).toBe("undefined");
+   00040:     expect(typeof document).toBe("undefined");
+   00041:     expect(typeof navigator).toBe("undefined");
+   00042:   });
+   00043: 
+   00044:   test("expõe exatamente o contrato público aprovado", () => {
+
+--- BLOCO 04 | LINHA 69 | LOTTERY_REFERENCES, SCHEDULE_REFERENCES ---
+   00065: 
+   00066:     const context = publicApi.buildContextEvidence(
+   00067:       {},
+   00068:       {
+>> 00069:         lotteryKey: "PT_RIO",
+   00070:         ymd: "2026-07-15",
+   00071:         weekday: "quarta-feira",
+   00072:         hour: "14h",
+   00073:         previousGroup: 10,
+   00074:         window: 90,
+   00075:       }
+   00076:     );
+
+--- BLOCO 05 | LINHA 88 | LOTTERY_REFERENCES ---
+   00084:       },
+   00085:       {
+   00086:         totalDraws: 90,
+   00087:         window: 90,
+>> 00088:         lotteryKey: "PT_RIO",
+   00089:       }
+   00090:     );
+   00091: 
+   00092:     expect(frequency.module).toBe("frequency");
+   00093:     expect(frequency.evidence.percent).toBe(20);
+   00094:   });
+   00095: 
+
+==================================================
+ARQUIVO: src/pages/Top3/modules/top3.timeline.js
+SCORE: 13
+CATEGORIAS: LOTTERY_REFERENCES, SCHEDULE_REFERENCES, SELECTOR_REFERENCES
+LOTERIAS: PT_RIO=False | FEDERAL=False | LOOK=False | NACIONAL=False
+
+--- BLOCO 01 | LINHA 10 | SCHEDULE_REFERENCES ---
+   00006:   FEDERAL_SCHEDULE,
+   00007: } from "../top3.constants";
+   00008: 
+   00009: import {
+>> 00010:   getScheduleForLottery,
+   00011:   buildMilharesForGrupo,
+   00012:   buildTimelineTop3,
+   00013:   auditTop3Timeline,
+   00014: } from "../top3.engine";
+   00015: 
+   00016: import { getAnimalLabel, getImgFromGrupo } from "../../../constants/bichoMap";
+   00017: 
+
+--- BLOCO 02 | LINHA 114 | SCHEDULE_REFERENCES ---
+   00110:   const targetY = safeStr(slot?.targetYmd || "");
+   00111:   const targetH = toHourBucket(slot?.targetHour || "");
+   00112: 
+   00113:   const nextY = safeStr(item?.meta?.next?.ymd || "");
+>> 00114:   const nextH = toHourBucket(item?.meta?.next?.hour || "");
+   00115: 
+   00116:   if (!isYMD(targetY) || !targetH) return false;
+   00117:   if (!isYMD(nextY) || !nextH) return false;
+   00118: 
+   00119:   return nextY === targetY && nextH === targetH;
+   00120: }
+   00121: 
+
+--- BLOCO 03 | LINHA 143 | LOTTERY_REFERENCES ---
+   00139:   const rawTimeline = buildTimelineTop3({
+   00140:     ymd: timelineYmd,
+   00141:     drawsToday: day,
+   00142:     drawsRange: range,
+>> 00143:     lotteryKey: lotteryKeySafe,
+   00144:     PT_RIO_SCHEDULE_NORMAL,
+   00145:     PT_RIO_SCHEDULE_WED_SAT,
+   00146:     FEDERAL_SCHEDULE,
+   00147:   });
+   00148: 
+   00149:   const timelineAudit = auditTop3Timeline({
+   00150:     timeline: rawTimeline,
+
+--- BLOCO 04 | LINHA 151 | LOTTERY_REFERENCES, SELECTOR_REFERENCES ---
+   00147:   });
+   00148: 
+   00149:   const timelineAudit = auditTop3Timeline({
+   00150:     timeline: rawTimeline,
+>> 00151:     lotteryKey: lotteryKeySafe,
+   00152:   });
+   00153: 
+   00154:   if (typeof window !== "undefined") {
+   00155:     window.__TOP3_AUDIT__ = timelineAudit;
+   00156: 
+   00157:     console.groupCollapsed("[TOP3 AUDIT]");
+   00158:     console.table([
+
+--- BLOCO 05 | LINHA 160 | LOTTERY_REFERENCES, SELECTOR_REFERENCES ---
+   00156: 
+   00157:     console.groupCollapsed("[TOP3 AUDIT]");
+   00158:     console.table([
+   00159:       {
+>> 00160:         Loteria: timelineAudit.lotteryKey,
+   00161:         Previsoes: timelineAudit.total,
+   00162:         "TOP1 %": timelineAudit.top1Rate,
+   00163:         "TOP3 %": timelineAudit.top3Rate,
+   00164:       },
+   00165:     ]);
+   00166: 
+   00167:     console.log("Por horário");
+
+--- BLOCO 06 | LINHA 168 | SELECTOR_REFERENCES ---
+   00164:       },
+   00165:     ]);
+   00166: 
+   00167:     console.log("Por horário");
+>> 00168:     console.table(timelineAudit.byHour);
+   00169: 
+   00170:     console.log("Por data");
+   00171:     console.table(timelineAudit.byDate);
+   00172: 
+   00173:     console.groupEnd();
+   00174:   }
+   00175: 
+
+--- BLOCO 07 | LINHA 204 | LOTTERY_REFERENCES, SCHEDULE_REFERENCES ---
+   00200:         if (!out) {
+   00201:           out = buildMilharesForGrupo({
+   00202:             rangeDraws: range,
+   00203:             analysisHourBucket: slotHour,
+>> 00204:             schedule: getScheduleForLottery({
+   00205:               lotteryKey: lotteryKeySafe,
+   00206:               ymd: slotYmd,
+   00207:               PT_RIO_SCHEDULE_NORMAL,
+   00208:               PT_RIO_SCHEDULE_WED_SAT,
+   00209:               FEDERAL_SCHEDULE,
+   00210:             }),
+   00211:             grupo2: g,
+
+===== POSSÍVEIS PONTOS DE ALTERAÇÃO =====
+
+src/pages/Centenas/CentenasView.jsx => seletor/lista visual; horários por loteria; condicional restritiva; chamada de API/parâmetros; cadastro ou chave de loteria
+src/pages/Top3/top3.hooks.js => seletor/lista visual; horários por loteria; condicional restritiva; chamada de API/parâmetros; cadastro ou chave de loteria
+src/pages/Results/Results.jsx => seletor/lista visual; horários por loteria; condicional restritiva; chamada de API/parâmetros; cadastro ou chave de loteria
+src/pages/Top3/Top3View.jsx => seletor/lista visual; horários por loteria; condicional restritiva; cadastro ou chave de loteria
+src/pages/Top3/Top3View.premium.backup.jsx => seletor/lista visual; horários por loteria; condicional restritiva; cadastro ou chave de loteria
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js => seletor/lista visual; horários por loteria; condicional restritiva; chamada de API/parâmetros; cadastro ou chave de loteria
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js => seletor/lista visual; horários por loteria; condicional restritiva; chamada de API/parâmetros; cadastro ou chave de loteria
+src/services/kingResultsService.js => horários por loteria; condicional restritiva; chamada de API/parâmetros; cadastro ou chave de loteria
+src/constants/schedule.js => horários por loteria; condicional restritiva; cadastro ou chave de loteria
+src/pages/Top3/__tests__/top3.backtest.layers.test.js => horários por loteria; condicional restritiva; chamada de API/parâmetros; cadastro ou chave de loteria
+src/pages/Top3/__tests__/top3.backtest.test.js => horários por loteria; condicional restritiva; chamada de API/parâmetros; cadastro ou chave de loteria
+src/pages/Top3/modules/top3.loader.js => horários por loteria; condicional restritiva; chamada de API/parâmetros; cadastro ou chave de loteria
+src/pages/Top3/top3.engine.js => horários por loteria; condicional restritiva; chamada de API/parâmetros; cadastro ou chave de loteria
+src/pages/Top3/top3.firestore.js => horários por loteria; condicional restritiva; chamada de API/parâmetros; cadastro ou chave de loteria
+src/hooks/useKingRanking.js => seletor/lista visual; horários por loteria; condicional restritiva; chamada de API/parâmetros
+src/pages/Top3/modules/scoreEngine/frequencyEvidence.js => horários por loteria; condicional restritiva
+src/pages/Top3/top3.selectors.js => condicional restritiva; cadastro ou chave de loteria
+src/pages/Top3/top3.storage.js => horários por loteria; condicional restritiva
+src/pages/Top3/__tests__/top3.public-api.node.test.js => horários por loteria; chamada de API/parâmetros; cadastro ou chave de loteria
+src/pages/Top3/modules/top3.timeline.js => seletor/lista visual; horários por loteria
+src/services/statsSignals.js => horários por loteria; chamada de API/parâmetros; cadastro ou chave de loteria
+src/pages/Centenas/centenas.utils.js => horários por loteria; chamada de API/parâmetros
+src/pages/Top3/modules/top3.analytics.js => horários por loteria; chamada de API/parâmetros
+src/services/auditKingCounts.js => horários por loteria; chamada de API/parâmetros
+src/pages/Top3/modules/scoreEngine/contextEvidence.js => horários por loteria
+src/pages/Top3/top3.constants.js => cadastro ou chave de loteria
+src/services/statisticsEngine.js => chamada de API/parâmetros; cadastro ou chave de loteria
+src/pages/Centenas/__tests__/milharProbabilityEngineV3.test.js => horários por loteria; chamada de API/parâmetros
+src/pages/Centenas/modules/milharProbabilityEngineV3.js => horários por loteria; chamada de API/parâmetros
+src/pages/Top3/modules/scoreEngine/scoreConfig.js => horários por loteria; chamada de API/parâmetros
+src/pages/Top3/top3.public-api.js => horários por loteria; chamada de API/parâmetros
+src/pages/Centenas/centenas.styles.js => seletor/lista visual
+src/pages/Centenas/modules/milharProbabilityEngine.js => seletor/lista visual
+src/pages/Top3/modules/top3.prediction.js => horários por loteria
+src/pages/Top3/modules/top3.viewmodel.js => horários por loteria
+src/pages/Top3/top3.chain.js => chamada de API/parâmetros
+src/services/king/king.draws.js => chamada de API/parâmetros
+src/services/king/king.prizes.js => chamada de API/parâmetros
+src/services/predictionService.js => chamada de API/parâmetros

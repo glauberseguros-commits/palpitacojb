@@ -1,0 +1,1409 @@
+.\src\pages\Top3\top3.hooks.js-992-      safeStr(top3?.[0]?.meta?.scenario) ||
+.\src\pages\Top3\top3.hooks.js-993-      "V3_STATISTICAL";
+.\src\pages\Top3\top3.hooks.js-994-
+.\src\pages\Top3\top3.hooks.js-995-    registerPrediction({
+.\src\pages\Top3\top3.hooks.js-996-      targetKey,
+.\src\pages\Top3\top3.hooks.js-997-      targetYmd: analysisYmd,
+.\src\pages\Top3\top3.hooks.js-998-      targetHour: analysisHourBucket,
+.\src\pages\Top3\top3.hooks.js-999-      picks,
+.\src\pages\Top3\top3.hooks.js-1000-      snapshot,
+.\src\pages\Top3\top3.hooks.js-1001-      engineVersion,
+.\src\pages\Top3\top3.hooks.js-1002-    });
+.\src\pages\Top3\top3.hooks.js-1003-
+.\src\pages\Top3\top3.hooks.js:1004:    saveTop3PredictionSnapshot({
+.\src\pages\Top3\top3.hooks.js-1005-      lotteryKey: lotteryKeySafe,
+.\src\pages\Top3\top3.hooks.js-1006-      targetYmd: analysisYmd,
+.\src\pages\Top3\top3.hooks.js-1007-      targetHour: analysisHourBucket,
+.\src\pages\Top3\top3.hooks.js-1008-      picks,
+.\src\pages\Top3\top3.hooks.js-1009-      snapshot,
+.\src\pages\Top3\top3.hooks.js-1010-      engineVersion,
+.\src\pages\Top3\top3.hooks.js-1011-    })
+.\src\pages\Top3\top3.hooks.js-1012-      .then((result) => {
+.\src\pages\Top3\top3.hooks.js-1013-        const diagnostic = {
+.\src\pages\Top3\top3.hooks.js-1014-          at: new Date().toISOString(),
+.\src\pages\Top3\top3.hooks.js-1015-          lotteryKey: lotteryKeySafe,
+.\src\pages\Top3\top3.hooks.js-1016-          targetYmd: analysisYmd,
+--
+.\src\pages\Top3\top3.firestore.js-197-      best = {
+.\src\pages\Top3\top3.firestore.js-198-        hitType: "hit_grupo",
+.\src\pages\Top3\top3.firestore.js-199-        hitScore: 33.33,
+.\src\pages\Top3\top3.firestore.js-200-        hitPosition: index + 1,
+.\src\pages\Top3\top3.firestore.js-201-        matchedValue: milhar ? milhar.slice(-2) : String(grupo),
+.\src\pages\Top3\top3.firestore.js-202-      };
+.\src\pages\Top3\top3.firestore.js-203-    }
+.\src\pages\Top3\top3.firestore.js-204-  });
+.\src\pages\Top3\top3.firestore.js-205-
+.\src\pages\Top3\top3.firestore.js-206-  return best;
+.\src\pages\Top3\top3.firestore.js-207-}
+.\src\pages\Top3\top3.firestore.js-208-
+.\src\pages\Top3\top3.firestore.js:209:export async function saveTop3PredictionSnapshot({
+.\src\pages\Top3\top3.firestore.js-210-  lotteryKey,
+.\src\pages\Top3\top3.firestore.js-211-  targetYmd,
+.\src\pages\Top3\top3.firestore.js-212-  targetHour,
+.\src\pages\Top3\top3.firestore.js-213-  picks,
+.\src\pages\Top3\top3.firestore.js-214-  snapshot,
+.\src\pages\Top3\top3.firestore.js-215-  engineVersion,
+.\src\pages\Top3\top3.firestore.js-216-}) {
+.\src\pages\Top3\top3.firestore.js-217-  let user = null;
+.\src\pages\Top3\top3.firestore.js-218-
+.\src\pages\Top3\top3.firestore.js-219-  try {
+.\src\pages\Top3\top3.firestore.js-220-    user = await loginAnonymous();
+.\src\pages\Top3\top3.firestore.js-221-  } catch (error) {
+109-function isFederalInput(scopeInput) {
+110-  const up = String(scopeInput || "").trim().toUpperCase();
+111-  if (!up) return false;
+112-  if (up === FEDERAL_SCOPE_CODE) return true;
+113-  if (FEDERAL_INPUT_ALIASES.has(up)) return true;
+114-
+115-  // normaliza espa├ºos/underscores pra captar varia├º├Áes
+116-  const compact = up.replace(/[\s_]+/g, " ").trim();
+117-  return (
+118-    FEDERAL_INPUT_ALIASES.has(compact) ||
+119-    FEDERAL_INPUT_ALIASES.has(up.replace(/[\s_]+/g, "_"))
+120-  );
+121-}
+122-
+123-/**
+124: * Resolve qual lottery_key usar quando o usu├írio passar:
+125- * - "RJ" -> "PT_RIO"
+126- * - "FEDERAL"/aliases -> "FEDERAL" (can├┤nico)
+127- * - outros -> mant├®m o valor original (compat├¡vel com seu app atual)
+128- */
+129-function resolveLotteryKeyForQuery(ufInput) {
+130-  const uf = String(ufInput || "").trim();
+131-  if (!uf) return "";
+132-  const up = uf.toUpperCase();
+133-
+134-  if (up === RJ_STATE_CODE) return RJ_LOTTERY_KEY;
+135-  if (isFederalInput(up)) return FEDERAL_SCOPE_CODE;
+136-
+137-  return uf;
+138-}
+139-
+--
+143- * - Federal (qualquer alias) -> "FEDERAL"
+144- * - outros -> UPPER(TRIM)
+145- */
+146-function canonicalScopeKey(ufInput) {
+147-  const s = String(ufInput || "").trim();
+148-  if (!s) return "";
+149-  const up = s.toUpperCase();
+150-
+151-  if (up === RJ_STATE_CODE) return RJ_LOTTERY_KEY;
+152-  if (isFederalInput(up)) return FEDERAL_SCOPE_CODE;
+153-
+154-  return up;
+155-}
+156-
+157-/**
+158: * Quando for consultar por campo "uf", adiciona trava de lottery_key para RJ.
+159- * Isso elimina o vazamento de Federal para o Rio.
+160- */
+161-function buildRJLockWhereIfNeeded(fieldName, ufInput) {
+162-  const ufUp = String(ufInput || "").trim().toUpperCase();
+163-  if (fieldName === "uf" && ufUp === RJ_STATE_CODE) {
+164:    return [where("lottery_key", "==", RJ_LOTTERY_KEY)];
+165-  }
+166-  return [];
+167-}
+168-
+169-/* =========================
+170-   Ô£à FIX silencioso: normalizar valor do WHERE por campo
+171-========================= */
+172-
+173-function normalizeValueForField(fieldName, valueInput) {
+174-  const s = String(valueInput || "").trim();
+175-  if (!s) return "";
+176-
+177-  if (fieldName === "uf") {
+178-    const up = s.toUpperCase();
+179-    if (isFederalInput(up)) return FEDERAL_SCOPE_CODE;
+180-    return up;
+181-  }
+182-
+183:  if (fieldName === "lottery_key") {
+184-    const up = s.toUpperCase();
+185-    if (up === RJ_STATE_CODE) return RJ_LOTTERY_KEY; // Ô£à PREVENTIVO: RJ -> PT_RIO
+186-    if (isFederalInput(up)) return FEDERAL_SCOPE_CODE;
+187-    return up;
+188-  }
+189-
+190-  return s;
+191-}
+192-
+193-/* =========================
+194-   Utils
+195-========================= */
+196-
+197-/**
+198- * Ô£à Normaliza "hor├írio" para HH:MM
+--
+506-      (x) => isValidGrupo(x?.grupo) && isValidPosition(x?.position)
+507-    );
+508-
+509-    if (cleaned.length) {
+510-      const allSorted = sortPrizesByPosition(cleaned);
+511-      return filterPrizesByPositions(allSorted, positionsArr);
+512-    }
+513-  }
+514-
+515-  const allKey = prizesCacheKeyAll(drawKey);
+516-  const cachedAll = cacheGet(PRIZES_CACHE, allKey);
+517-  if (Array.isArray(cachedAll) && cachedAll.length > 0) {
+518-    return filterPrizesByPositions(cachedAll, positionsArr);
+519-  }
+520-
+521:  const prizesCol = collection(db, "draws", drawKey, "prizes");
+522-
+523-  const { snap, error } = await safeGetDocsSmart(prizesCol, { policy: "server" });
+524-  if (error) throw error;
+525-
+526-  const allRaw = snap.docs.map((d) => normalizePrize(d.data(), d.id));
+527-
+528-  // console.log("DEBUG allRaw:", allRaw);
+529-
+530-const all = allRaw.filter(
+531-  (x) => isValidGrupo(x?.grupo) && isValidPosition(x?.position)
+532-);
+533-
+534-// console.log("DEBUG allFiltered:", all);
+535-
+536-  const allSorted = sortPrizesByPosition(all);
+--
+542-/* =========================
+543-   Map Draw
+544-========================= */
+545-
+546-function mapDrawDoc(doc) {
+547-  const d = doc.data();
+548-
+549-  const ymd = d.ymd || normalizeToYMD(getDocDateRaw(d));
+550-  const hourNorm = normalizeHourLike(
+551-    d.close_hour ?? d.closeHour ?? d.hour ?? d.hora ?? ""
+552-  );
+553-
+554-  const embeddedPrizes = Array.isArray(d.prizes) && d.prizes.length > 0 ? d.prizes : null;
+555-
+556-  const ufRaw = d.uf ?? null;
+557:  const lotteryKeyRaw = d.lottery_key ?? d.lotteryKey ?? d.lottery ?? null;
+558-
+559-  const lotteryCodeRaw =
+560-    d.lottery_code ??
+561-    d.lotteryCode ??
+562-    d.lot_code ??
+563-    d.lotCode ??
+564-    d.lot ??
+565-    d.code ??
+566-    d.lottery_id ??
+567-    d.lotteryId ??
+568-    null;
+569-
+570-  return {
+571-    drawId: doc.id,
+572-    id: doc.id,
+573-
+574-    date: d.date ?? d.data ?? d.dt ?? d.draw_date ?? d.close_date ?? null,
+575-    ymd,
+576-
+577-    close_hour: hourNorm,
+578-    closeHour: hourNorm,
+579-
+580-    uf: ufRaw,
+581:    lottery_key: lotteryKeyRaw,
+582-
+583-    lottery_code: lotteryCodeRaw ? String(lotteryCodeRaw).toUpperCase() : null,
+584-
+585-    lottery_name: d.lottery_name ?? d.lotteryName ?? null,
+586-    lottery_label: d.lottery_label ?? d.lotteryLabel ?? null,
+587-
+588-    prizesCount: d.prizesCount,
+589-    prizes: embeddedPrizes,
+590-  };
+591-}
+592-
+593-/* =========================
+594:   Compat: uf OU lottery_key
+595-========================= */
+596-
+597-function buildUfWhereClauses(fieldName, uf) {
+598-  const normalized = normalizeValueForField(fieldName, uf);
+599-  return [where(fieldName, "==", normalized)];
+600-}
+601-
+602-function normalizeOrderBys(extraOrderBy) {
+603-  if (!extraOrderBy) return [];
+604-  return Array.isArray(extraOrderBy)
+605-    ? extraOrderBy.filter(Boolean)
+606-    : [extraOrderBy];
+607-}
+608-
+609-async function queryDrawsByField({
+610-  fieldName,
+611-  uf,
+612-  extraWheres = [],
+613-  extraOrderBy = null,
+614-  extraLimit = null,
+615-  policy = DEFAULT_READ_POLICY,
+616-}) {
+617:  const drawsCol = collection(db, "draws");
+618-
+619-  const parts = [
+620-    drawsCol,
+621-    ...buildUfWhereClauses(fieldName, uf),
+622-    ...buildRJLockWhereIfNeeded(fieldName, uf),
+623-    ...(extraWheres || []),
+624-  ];
+625-
+626-  const orderBys = normalizeOrderBys(extraOrderBy);
+627-  for (const ob of orderBys) parts.push(ob);
+628-
+629-  if (extraLimit) parts.push(extraLimit);
+630-
+631-  const qRef = query(...parts);
+632-  return safeGetDocsSmart(qRef, { policy });
+--
+642-}
+643-
+644-async function fetchDrawDocsPreferUf({
+645-  uf,
+646-  extraWheres = [],
+647-  extraOrderBy = null,
+648-  extraLimit = null,
+649-  policy = DEFAULT_READ_POLICY,
+650-}) {
+651-  const ufTrim = String(extractUfParam(uf) || "").trim();
+652-  const ufUp = ufTrim.toUpperCase();
+653-
+654-  if (isFederalInput(ufUp)) {
+655-    for (const lk of FEDERAL_LOTTERY_KEYS) {
+656-      const { snap, error } = await queryDrawsByField({
+657:        fieldName: "lottery_key",
+658-        uf: lk,
+659-        extraWheres,
+660-        extraOrderBy,
+661-        extraLimit,
+662-        policy,
+663-      });
+664-
+665:      if (error) return { docs: [], usedField: "lottery_key", error };
+666-      if (snap?.docs?.length) {
+667:        return { docs: snap.docs, usedField: "lottery_key", error: null };
+668-      }
+669-    }
+670-
+671:    return { docs: [], usedField: "lottery_key", error: null };
+672-  }
+673-
+674-  {
+675-    const { snap, error } = await queryDrawsByField({
+676-      fieldName: "uf",
+677-      uf: ufUp,
+678-      extraWheres,
+679-      extraOrderBy,
+680-      extraLimit,
+681-      policy,
+682-    });
+683-
+684-    if (!error && snap?.docs?.length) {
+685-      return { docs: snap.docs, usedField: "uf", error: null };
+686-    }
+687-    if (error) return { docs: [], usedField: "uf", error };
+688-  }
+689-
+690-  {
+691-    const lotteryKey =
+692-      ufUp === RJ_STATE_CODE ? RJ_LOTTERY_KEY : resolveLotteryKeyForQuery(ufTrim);
+693-
+694-    const { snap, error } = await queryDrawsByField({
+695:      fieldName: "lottery_key",
+696-      uf: String(lotteryKey).toUpperCase(),
+697-      extraWheres,
+698-      extraOrderBy,
+699-      extraLimit,
+700-      policy,
+701-    });
+702-
+703-    if (!error && snap?.docs?.length) {
+704:      return { docs: snap.docs, usedField: "lottery_key", error: null };
+705-    }
+706:    if (error) return { docs: [], usedField: "lottery_key", error };
+707-  }
+708-
+709-  return { docs: [], usedField: "none", error: null };
+710-}
+711-
+712-/* =========================
+713-   Bounds (min/max reais)
+714-========================= */
+715-
+716-function pickMinMaxFromMapped(mapped) {
+717-  let minYmd = null;
+718-  let maxYmd = null;
+719-
+720-  for (const d of mapped) {
+721-    const y = d?.ymd || normalizeToYMD(d?.date);
+--
+919-  const scopeKeyBounds = canonicalScopeKey(uf);
+920-  {
+921-    const idxInfo = (() => {
+922-      const code = String(firstTryError?.code || "");
+923-      const msg = String(firstTryError?.message || "");
+924-      if (!code && !msg) return "";
+925-      return `:firstTryError=${code || "err"}`;
+926-    })();
+927-
+928-    const a = await sampleEdgesByDocId("uf", String(uf).toUpperCase());
+929-
+930-    const ufUp = String(uf || "").trim().toUpperCase();
+931-
+932-    if (!a.ok && isFederalInput(ufUp)) {
+933-      for (const lk of FEDERAL_LOTTERY_KEYS) {
+934:        const b = await sampleEdgesByDocId("lottery_key", lk);
+935-        if (b.ok) {
+936-          const mm = pickMinMaxFromMapped(b.merged);
+937-
+938-          const maxFixed =
+939-            recentMaxYmd && (!mm.maxYmd || recentMaxYmd > mm.maxYmd)
+940-              ? recentMaxYmd
+941-              : mm.maxYmd;
+942-
+943-          const floored = applyBoundsFloor(scopeKeyBounds, {
+944-            minYmd: mm.minYmd || null,
+945-            maxYmd: maxFixed || null,
+946-          });
+947-
+948-          return {
+949-            ok: !!(floored.minYmd && floored.maxYmd),
+950-            uf,
+951-
+952-            minYmd: floored.minYmd,
+953-            maxYmd: floored.maxYmd,
+954-
+955-            minDate: floored.minYmd,
+956-            maxDate: floored.maxYmd,
+957-
+958:            source: `fallback_edges_docId_limit=${FALLBACK_EDGE_LIMIT}:lottery_key(${lk}):sampleCount=${b.merged.length}${
+959-              recentMaxYmd ? ":max_probe" : ""
+960-            }${idxInfo}`,
+961-          };
+962-        }
+963-      }
+964-    }
+965-
+966-    const lotteryKey =
+967-      ufUp === RJ_STATE_CODE ? RJ_LOTTERY_KEY : resolveLotteryKeyForQuery(uf);
+968-
+969-    const b = a.ok
+970-      ? null
+971:      : await sampleEdgesByDocId("lottery_key", String(lotteryKey).toUpperCase());
+972-
+973-    const merged = a.ok ? a.merged : b?.merged || [];
+974-    const mm = pickMinMaxFromMapped(merged);
+975-
+976-    const maxFixed =
+977-      recentMaxYmd && (!mm.maxYmd || recentMaxYmd > mm.maxYmd)
+978-        ? recentMaxYmd
+979-        : mm.maxYmd;
+980-
+981-    const floored = applyBoundsFloor(scopeKeyBounds, {
+982-      minYmd: mm.minYmd || null,
+983-      maxYmd: maxFixed || null,
+984-    });
+985-
+986-    return {
+987-      ok: !!(floored.minYmd && floored.maxYmd),
+988-      uf,
+989-
+990-      minYmd: floored.minYmd,
+991-      maxYmd: floored.maxYmd,
+992-
+993-      minDate: floored.minYmd,
+994-      maxDate: floored.maxYmd,
+995-
+996-      source: `fallback_edges_docId_limit=${FALLBACK_EDGE_LIMIT}:${
+997:        a.ok ? "uf" : "lottery_key"
+998-      }:sampleCount=${merged.length}${recentMaxYmd ? ":max_probe" : ""}${idxInfo}`,
+999-    };
+1000-  }
+1001-}
+1002-
+1003-/* =========================
+1004-   API: Day
+1005-========================= */
+1006-
+1007-function buildPrizeSignature(draw) {
+1008-  const prizes = Array.isArray(draw?.prizes) ? draw.prizes : [];
+1009-  if (!prizes.length) return "";
+1010-
+1011-  const parts = prizes
+1012-    .map((p) => {
+rg: .\backend\services: O sistema n├úo pode encontrar o arquivo especificado. (os error 2)
+.\backend\service\firebaseAdmin.js-345-  admin,
+.\backend\service\firebaseAdmin.js-346-  initAdmin,
+.\backend\service\firebaseAdmin.js-347-  getDb,
+.\backend\service\firebaseAdmin.js-348-};
+.\backend\service\firebaseAdmin.js-349-
+.\backend\service\firebaseAdmin.js-350-Object.defineProperty(exportsObj, "db", {
+.\backend\service\firebaseAdmin.js-351-  enumerable: true,
+.\backend\service\firebaseAdmin.js-352-  get() {
+.\backend\service\firebaseAdmin.js-353-    return getDb(false);
+.\backend\service\firebaseAdmin.js-354-  },
+.\backend\service\firebaseAdmin.js-355-});
+.\backend\service\firebaseAdmin.js-356-
+.\backend\service\firebaseAdmin.js:357:module.exports = exportsObj;
+--
+.\backend\engine\contextEvidence.js-68-        module: "context",
+.\backend\engine\contextEvidence.js-69-
+.\backend\engine\contextEvidence.js-70-        value: 1,
+.\backend\engine\contextEvidence.js-71-
+.\backend\engine\contextEvidence.js-72-        evidence,
+.\backend\engine\contextEvidence.js-73-
+.\backend\engine\contextEvidence.js-74-        reasons: buildReasons(evidence),
+.\backend\engine\contextEvidence.js-75-
+.\backend\engine\contextEvidence.js-76-    };
+.\backend\engine\contextEvidence.js-77-
+.\backend\engine\contextEvidence.js-78-}
+.\backend\engine\contextEvidence.js-79-
+.\backend\engine\contextEvidence.js:80:module.exports = {
+.\backend\engine\contextEvidence.js-81-
+.\backend\engine\contextEvidence.js-82-    buildContextEvidence,
+.\backend\engine\contextEvidence.js-83-
+.\backend\engine\contextEvidence.js-84-};
+--
+.\backend\engine\bootstrapSnapshot.js-1-"use strict";
+.\backend\engine\bootstrapSnapshot.js-2-
+.\backend\engine\bootstrapSnapshot.js-3-const { fetchAllDrawsWithPrizes } = require("./drawRepository");
+.\backend\engine\bootstrapSnapshot.js-4-const { writeStatisticsSnapshot } = require("./statisticsEngine");
+.\backend\engine\bootstrapSnapshot.js-5-
+.\backend\engine\bootstrapSnapshot.js-6-// Ajuste estes requires caso os arquivos estejam em outro caminho
+.\backend\engine\bootstrapSnapshot.js-7-const { buildRanking } = require("../../src/utils/buildRanking");
+.\backend\engine\bootstrapSnapshot.js-8-const { applyScoreEngine } = require("../../src/utils/scoreEngine");
+.\backend\engine\bootstrapSnapshot.js-9-
+.\backend\engine\bootstrapSnapshot.js:10:async function bootstrapSnapshot(lottery = "PT_RIO") {
+.\backend\engine\bootstrapSnapshot.js-11-
+.\backend\engine\bootstrapSnapshot.js-12-  const draws = await fetchAllDrawsWithPrizes({
+.\backend\engine\bootstrapSnapshot.js-13-    lottery,
+.\backend\engine\bootstrapSnapshot.js-14-    pageSize: 500,
+.\backend\engine\bootstrapSnapshot.js-15-  });
+.\backend\engine\bootstrapSnapshot.js-16-
+.\backend\engine\bootstrapSnapshot.js-17-  console.log("Draws carregados:", draws.length);
+.\backend\engine\bootstrapSnapshot.js-18-
+.\backend\engine\bootstrapSnapshot.js-19-  const built = buildRanking(draws);
+.\backend\engine\bootstrapSnapshot.js-20-
+.\backend\engine\bootstrapSnapshot.js-21-  const ranking = Array.isArray(built?.ranking)
+.\backend\engine\bootstrapSnapshot.js-22-    ? built.ranking
+--
+.\backend\engine\bootstrapSnapshot.js-39-      integrityIssues: built.integrityIssues || [],
+.\backend\engine\bootstrapSnapshot.js-40-      generatedAt: new Date().toISOString(),
+.\backend\engine\bootstrapSnapshot.js-41-    },
+.\backend\engine\bootstrapSnapshot.js-42-  });
+.\backend\engine\bootstrapSnapshot.js-43-
+.\backend\engine\bootstrapSnapshot.js-44-  return {
+.\backend\engine\bootstrapSnapshot.js-45-    draws: draws.length,
+.\backend\engine\bootstrapSnapshot.js-46-    ranking: ranking.length,
+.\backend\engine\bootstrapSnapshot.js-47-    top3: rankingScored.slice(0,3),
+.\backend\engine\bootstrapSnapshot.js-48-  };
+.\backend\engine\bootstrapSnapshot.js-49-}
+.\backend\engine\bootstrapSnapshot.js-50-
+.\backend\engine\bootstrapSnapshot.js:51:module.exports = {
+.\backend\engine\bootstrapSnapshot.js:52:  bootstrapSnapshot,
+.\backend\engine\bootstrapSnapshot.js-53-};
+--
+.\backend\engine\predictionModel.js-77-    milhar,
+.\backend\engine\predictionModel.js-78-    score: Number(score) || 0,
+.\backend\engine\predictionModel.js-79-    confidence: Number(confidence) || 0,
+.\backend\engine\predictionModel.js-80-    reasons: Array.isArray(reasons) ? reasons : [],
+.\backend\engine\predictionModel.js-81-    signals: signals && typeof signals === "object" ? signals : {},
+.\backend\engine\predictionModel.js-82-    status: "pending",
+.\backend\engine\predictionModel.js-83-    result: null,
+.\backend\engine\predictionModel.js-84-    createdAt: null,
+.\backend\engine\predictionModel.js-85-    updatedAt: null,
+.\backend\engine\predictionModel.js-86-  };
+.\backend\engine\predictionModel.js-87-}
+.\backend\engine\predictionModel.js-88-
+.\backend\engine\predictionModel.js:89:module.exports = {
+.\backend\engine\predictionModel.js-90-  normalizeLotteryKey,
+.\backend\engine\predictionModel.js-91-  makePredictionRunId,
+.\backend\engine\predictionModel.js-92-  buildPredictionRun,
+.\backend\engine\predictionModel.js-93-  buildPrediction,
+.\backend\engine\predictionModel.js-94-};
+--
+.\backend\engine\predictionService.js-45-  );
+.\backend\engine\predictionService.js-46-
+.\backend\engine\predictionService.js-47-  if (rows.length) {
+.\backend\engine\predictionService.js-48-    await savePredictions(run.id, rows);
+.\backend\engine\predictionService.js-49-  }
+.\backend\engine\predictionService.js-50-
+.\backend\engine\predictionService.js-51-  return {
+.\backend\engine\predictionService.js-52-    run,
+.\backend\engine\predictionService.js-53-    predictions: rows,
+.\backend\engine\predictionService.js-54-  };
+.\backend\engine\predictionService.js-55-}
+.\backend\engine\predictionService.js-56-
+.\backend\engine\predictionService.js:57:module.exports = {
+.\backend\engine\predictionService.js-58-  createPredictionRun,
+.\backend\engine\predictionService.js-59-};
+--
+.\backend\engine\hypothesisEngine.js-85-        },
+.\backend\engine\hypothesisEngine.js-86-
+.\backend\engine\hypothesisEngine.js-87-        status: "pending",
+.\backend\engine\hypothesisEngine.js-88-
+.\backend\engine\hypothesisEngine.js-89-        createdAt: null,
+.\backend\engine\hypothesisEngine.js-90-
+.\backend\engine\hypothesisEngine.js-91-        updatedAt: null,
+.\backend\engine\hypothesisEngine.js-92-
+.\backend\engine\hypothesisEngine.js-93-    };
+.\backend\engine\hypothesisEngine.js-94-
+.\backend\engine\hypothesisEngine.js-95-}
+.\backend\engine\hypothesisEngine.js-96-
+.\backend\engine\hypothesisEngine.js:97:module.exports = {
+.\backend\engine\hypothesisEngine.js-98-
+.\backend\engine\hypothesisEngine.js-99-    buildHypothesis,
+.\backend\engine\hypothesisEngine.js-100-
+.\backend\engine\hypothesisEngine.js-101-};
+--
+.\backend\engine\scoreEngineE08Experimental.js-508-      experimental: {
+.\backend\engine\scoreEngineE08Experimental.js-509-        experiment: "E08",
+.\backend\engine\scoreEngineE08Experimental.js-510-        preservesCandidateSet:
+.\backend\engine\scoreEngineE08Experimental.js-511-          true,
+.\backend\engine\scoreEngineE08Experimental.js-512-        targetHour,
+.\backend\engine\scoreEngineE08Experimental.js-513-        samples:
+.\backend\engine\scoreEngineE08Experimental.js-514-          frequency.samples,
+.\backend\engine\scoreEngineE08Experimental.js-515-      },
+.\backend\engine\scoreEngineE08Experimental.js-516-    },
+.\backend\engine\scoreEngineE08Experimental.js-517-  };
+.\backend\engine\scoreEngineE08Experimental.js-518-}
+.\backend\engine\scoreEngineE08Experimental.js-519-
+.\backend\engine\scoreEngineE08Experimental.js:520:module.exports = {
+.\backend\engine\scoreEngineE08Experimental.js-521-  collectSameHourFrequency,
+.\backend\engine\scoreEngineE08Experimental.js-522-  computeStatisticalTop3E08Experimental,
+.\backend\engine\scoreEngineE08Experimental.js-523-};
+--
+.\backend\engine\scoreConfig.js-1-"use strict";
+.\backend\engine\scoreConfig.js-2-
+.\backend\engine\scoreConfig.js-3-/**
+.\backend\engine\scoreConfig.js-4- * Score Engine V2
+.\backend\engine\scoreConfig.js-5- *
+.\backend\engine\scoreConfig.js-6- * Configura├º├úo central do mecanismo de pontua├º├úo.
+.\backend\engine\scoreConfig.js-7- * Cada m├│dulo produz evid├¬ncias independentes.
+.\backend\engine\scoreConfig.js-8- */
+.\backend\engine\scoreConfig.js-9-
+.\backend\engine\scoreConfig.js:10:module.exports = {
+.\backend\engine\scoreConfig.js-11-
+.\backend\engine\scoreConfig.js-12-  version: "2.2.0",
+.\backend\engine\scoreConfig.js-13-
+.\backend\engine\scoreConfig.js-14-  evidenceModules: {
+.\backend\engine\scoreConfig.js-15-
+.\backend\engine\scoreConfig.js-16-    frequency: {
+.\backend\engine\scoreConfig.js-17-      enabled: true,
+.\backend\engine\scoreConfig.js-18-      weight: 1.00,
+.\backend\engine\scoreConfig.js-19-      description: "Frequ├¬ncia hist├│rica."
+.\backend\engine\scoreConfig.js-20-    },
+.\backend\engine\scoreConfig.js-21-
+.\backend\engine\scoreConfig.js-22-    context: {
+--
+.\backend\engine\scoreEngineV1.js-72-        `Ranking V1: ${x.aparicoes} apari├º├Áes no recorte analisado`,
+.\backend\engine\scoreEngineV1.js-73-        `Posi├º├úo ${idx + 1} entre os grupos avaliados`,
+.\backend\engine\scoreEngineV1.js-74-      ],
+.\backend\engine\scoreEngineV1.js-75-      signals: {
+.\backend\engine\scoreEngineV1.js-76-        aparicoes: x.aparicoes,
+.\backend\engine\scoreEngineV1.js-77-        rankPosition: idx + 1,
+.\backend\engine\scoreEngineV1.js-78-        engine: "score_engine_v1",
+.\backend\engine\scoreEngineV1.js-79-      },
+.\backend\engine\scoreEngineV1.js-80-    };
+.\backend\engine\scoreEngineV1.js-81-  });
+.\backend\engine\scoreEngineV1.js-82-}
+.\backend\engine\scoreEngineV1.js-83-
+.\backend\engine\scoreEngineV1.js:84:module.exports = {
+.\backend\engine\scoreEngineV1.js-85-  rankingToPredictions,
+.\backend\engine\scoreEngineV1.js-86-};
+--
+.\backend\engine\scoreEngineUnified.js-85-  )(input);
+.\backend\engine\scoreEngineUnified.js-86-}
+.\backend\engine\scoreEngineUnified.js-87-
+.\backend\engine\scoreEngineUnified.js-88-function computeStatisticalTop3V3(input = {}) {
+.\backend\engine\scoreEngineUnified.js-89-  const api = loadTop3PublicApi();
+.\backend\engine\scoreEngineUnified.js-90-
+.\backend\engine\scoreEngineUnified.js-91-  return assertFunction(
+.\backend\engine\scoreEngineUnified.js-92-    api,
+.\backend\engine\scoreEngineUnified.js-93-    "computeStatisticalTop3V3"
+.\backend\engine\scoreEngineUnified.js-94-  )(input);
+.\backend\engine\scoreEngineUnified.js-95-}
+.\backend\engine\scoreEngineUnified.js-96-
+.\backend\engine\scoreEngineUnified.js:97:module.exports = {
+.\backend\engine\scoreEngineUnified.js-98-  loadTop3PublicApi,
+.\backend\engine\scoreEngineUnified.js-99-  getTop3Capabilities,
+.\backend\engine\scoreEngineUnified.js-100-  computeConditionalNextTop3,
+.\backend\engine\scoreEngineUnified.js-101-  computeConditionalNextTop3V2,
+.\backend\engine\scoreEngineUnified.js-102-  computeStatisticalTop3V3,
+.\backend\engine\scoreEngineUnified.js-103-};
+--
+.\backend\engine\scoreEngineV2.js-79-      if (b.score !== a.score)
+.\backend\engine\scoreEngineV2.js-80-        return b.score - a.score;
+.\backend\engine\scoreEngineV2.js-81-
+.\backend\engine\scoreEngineV2.js-82-      if (b.confidence !== a.confidence)
+.\backend\engine\scoreEngineV2.js-83-        return b.confidence - a.confidence;
+.\backend\engine\scoreEngineV2.js-84-
+.\backend\engine\scoreEngineV2.js-85-      return (Number(b.scoreProb || 0) - Number(a.scoreProb || 0));
+.\backend\engine\scoreEngineV2.js-86-
+.\backend\engine\scoreEngineV2.js-87-    });
+.\backend\engine\scoreEngineV2.js-88-
+.\backend\engine\scoreEngineV2.js-89-}
+.\backend\engine\scoreEngineV2.js-90-
+.\backend\engine\scoreEngineV2.js:91:module.exports = {
+.\backend\engine\scoreEngineV2.js-92-  scoreItem,
+.\backend\engine\scoreEngineV2.js-93-  scoreRanking,
+.\backend\engine\scoreEngineV2.js-94-  calculateEvidenceStrength,
+.\backend\engine\scoreEngineV2.js-95-};
+--
+.\backend\engine\scoreEngineV4Experimental.js-723-        "V4_EXPERIMENTAL_E07",
+.\backend\engine\scoreEngineV4Experimental.js-724-      experimental: {
+.\backend\engine\scoreEngineV4Experimental.js-725-        experiment: "E07",
+.\backend\engine\scoreEngineV4Experimental.js-726-        source:
+.\backend\engine\scoreEngineV4Experimental.js-727-          evidence.source,
+.\backend\engine\scoreEngineV4Experimental.js-728-        samples:
+.\backend\engine\scoreEngineV4Experimental.js-729-          evidence.samples,
+.\backend\engine\scoreEngineV4Experimental.js-730-      },
+.\backend\engine\scoreEngineV4Experimental.js-731-    },
+.\backend\engine\scoreEngineV4Experimental.js-732-  };
+.\backend\engine\scoreEngineV4Experimental.js-733-}
+.\backend\engine\scoreEngineV4Experimental.js-734-
+.\backend\engine\scoreEngineV4Experimental.js:735:module.exports = {
+.\backend\engine\scoreEngineV4Experimental.js-736-  collectTransitionEvidence,
+.\backend\engine\scoreEngineV4Experimental.js-737-  computeStatisticalTop3V4Experimental,
+.\backend\engine\scoreEngineV4Experimental.js-738-};
+--
+.\backend\engine\snapshotManager.js-2-const {
+.\backend\engine\snapshotManager.js-3-  readStatisticsSnapshot,
+.\backend\engine\snapshotManager.js-4-  writeStatisticsSnapshot,
+.\backend\engine\snapshotManager.js-5-  getAdminDb,
+.\backend\engine\snapshotManager.js-6-} = require("./statisticsEngine");
+.\backend\engine\snapshotManager.js-7-
+.\backend\engine\snapshotManager.js-8-const {
+.\backend\engine\snapshotManager.js-9-  readSnapshotMetadata,
+.\backend\engine\snapshotManager.js-10-  writeSnapshotMetadata,
+.\backend\engine\snapshotManager.js-11-} = require("./snapshotMetadata");
+.\backend\engine\snapshotManager.js-12-
+.\backend\engine\snapshotManager.js-13-
+.\backend\engine\snapshotManager.js:14:async function fetchNewDrawsAfter(db, lottery, lastProcessedDrawId, limit = 25) {
+.\backend\engine\snapshotManager.js-15-  if (!lastProcessedDrawId) {
+.\backend\engine\snapshotManager.js-16-    return {
+.\backend\engine\snapshotManager.js-17-      requiresBootstrap: true,
+.\backend\engine\snapshotManager.js-18-      draws: [],
+.\backend\engine\snapshotManager.js-19-    };
+.\backend\engine\snapshotManager.js-20-  }
+.\backend\engine\snapshotManager.js-21-
+.\backend\engine\snapshotManager.js-22-  const admin = require("firebase-admin");
+.\backend\engine\snapshotManager.js-23-  const DOC_ID = admin.firestore.FieldPath.documentId();
+.\backend\engine\snapshotManager.js-24-
+.\backend\engine\snapshotManager.js-25-  const snap = await db
+.\backend\engine\snapshotManager.js-26-    .collection("draws")
+--
+.\backend\engine\snapshotManager.js-30-    .limit(limit)
+.\backend\engine\snapshotManager.js-31-    .get();
+.\backend\engine\snapshotManager.js-32-
+.\backend\engine\snapshotManager.js-33-  return {
+.\backend\engine\snapshotManager.js-34-    requiresBootstrap: false,
+.\backend\engine\snapshotManager.js-35-    draws: snap.docs.map((doc) => ({
+.\backend\engine\snapshotManager.js-36-      id: doc.id,
+.\backend\engine\snapshotManager.js-37-      ...doc.data(),
+.\backend\engine\snapshotManager.js-38-    })),
+.\backend\engine\snapshotManager.js-39-  };
+.\backend\engine\snapshotManager.js-40-}
+.\backend\engine\snapshotManager.js-41-
+.\backend\engine\snapshotManager.js:42:async function updateSnapshot({
+.\backend\engine\snapshotManager.js-43-  lottery = "PT_RIO",
+.\backend\engine\snapshotManager.js-44-  force = false,
+.\backend\engine\snapshotManager.js-45-} = {}) {
+.\backend\engine\snapshotManager.js-46-
+.\backend\engine\snapshotManager.js-47-  const db = getAdminDb();
+.\backend\engine\snapshotManager.js-48-
+.\backend\engine\snapshotManager.js-49-  // Bounds atuais do Firestore
+.\backend\engine\snapshotManager.js-50-  const { result: bounds } = await computeBounds(db, lottery);
+.\backend\engine\snapshotManager.js-51-
+.\backend\engine\snapshotManager.js-52-  // Snapshot existente
+.\backend\engine\snapshotManager.js-53-  const current = await readStatisticsSnapshot({
+.\backend\engine\snapshotManager.js-54-    uf: lottery,
+--
+.\backend\engine\snapshotManager.js-70-  if (upToDate) {
+.\backend\engine\snapshotManager.js-71-    return {
+.\backend\engine\snapshotManager.js-72-      ok: true,
+.\backend\engine\snapshotManager.js-73-      lottery,
+.\backend\engine\snapshotManager.js-74-      mode: "noop",
+.\backend\engine\snapshotManager.js-75-      reason: "snapshot_already_up_to_date",
+.\backend\engine\snapshotManager.js-76-      bounds,
+.\backend\engine\snapshotManager.js-77-      metadata,
+.\backend\engine\snapshotManager.js-78-      processed: 0,
+.\backend\engine\snapshotManager.js-79-    };
+.\backend\engine\snapshotManager.js-80-  }
+.\backend\engine\snapshotManager.js-81-
+.\backend\engine\snapshotManager.js:82:  const pending = await fetchNewDrawsAfter(
+.\backend\engine\snapshotManager.js-83-    db,
+.\backend\engine\snapshotManager.js-84-    lottery,
+.\backend\engine\snapshotManager.js-85-    lastProcessedDrawId,
+.\backend\engine\snapshotManager.js-86-    25
+.\backend\engine\snapshotManager.js-87-  );
+.\backend\engine\snapshotManager.js-88-
+.\backend\engine\snapshotManager.js-89-  await writeSnapshotMetadata(lottery, {
+.\backend\engine\snapshotManager.js-90-    lastKnownMinYmd: bounds?.minYmd || null,
+.\backend\engine\snapshotManager.js-91-    lastKnownMaxYmd: bounds?.maxYmd || null,
+.\backend\engine\snapshotManager.js-92-    latestDrawId,
+.\backend\engine\snapshotManager.js-93-    lastCheckAt: new Date().toISOString(),
+.\backend\engine\snapshotManager.js-94-    pendingIncrementalEngine: true,
+.\backend\engine\snapshotManager.js-95-    pendingNewDrawsCount: pending.draws.length,
+.\backend\engine\snapshotManager.js-96-    requiresBootstrap: pending.requiresBootstrap,
+.\backend\engine\snapshotManager.js-97-  });
+.\backend\engine\snapshotManager.js-98-
+.\backend\engine\snapshotManager.js-99-  return {
+.\backend\engine\snapshotManager.js-100-    ok: true,
+.\backend\engine\snapshotManager.js-101-    lottery,
+.\backend\engine\snapshotManager.js-102-    mode: pending.requiresBootstrap
+.\backend\engine\snapshotManager.js:103:      ? "bootstrap_required"
+.\backend\engine\snapshotManager.js-104-      : force
+.\backend\engine\snapshotManager.js-105-      ? "force_pending"
+.\backend\engine\snapshotManager.js-106-      : "incremental_pending",
+.\backend\engine\snapshotManager.js-107-    bounds,
+.\backend\engine\snapshotManager.js-108-    snapshot: current.data || null,
+.\backend\engine\snapshotManager.js-109-    metadata,
+.\backend\engine\snapshotManager.js-110-    pendingNewDraws: pending.draws,
+.\backend\engine\snapshotManager.js-111-    pendingNewDrawsCount: pending.draws.length,
+.\backend\engine\snapshotManager.js-112-    requiresBootstrap: pending.requiresBootstrap,
+.\backend\engine\snapshotManager.js-113-    processed: 0,
+.\backend\engine\snapshotManager.js-114-    nextStep: pending.requiresBootstrap
+.\backend\engine\snapshotManager.js-115-      ? "IMPLEMENT_BOOTSTRAP_SNAPSHOT"
+.\backend\engine\snapshotManager.js-116-      : "IMPLEMENT_APPLY_NEW_DRAWS",
+.\backend\engine\snapshotManager.js-117-  };
+.\backend\engine\snapshotManager.js-118-}
+.\backend\engine\snapshotManager.js-119-
+.\backend\engine\snapshotManager.js:120:module.exports = {
+.\backend\engine\snapshotManager.js:121:  updateSnapshot,
+.\backend\engine\snapshotManager.js-122-};
+--
+.\backend\engine\statisticsEngine.js-43-  const payload = {
+.\backend\engine\statisticsEngine.js-44-    ...data,
+.\backend\engine\statisticsEngine.js-45-    uf: normalizeUfKey(uf),
+.\backend\engine\statisticsEngine.js-46-    scope,
+.\backend\engine\statisticsEngine.js-47-    updatedAt: admin.firestore.FieldValue.serverTimestamp(),
+.\backend\engine\statisticsEngine.js-48-  };
+.\backend\engine\statisticsEngine.js-49-
+.\backend\engine\statisticsEngine.js-50-  await snapshotRef(db, uf, scope).set(payload, { merge: true });
+.\backend\engine\statisticsEngine.js-51-
+.\backend\engine\statisticsEngine.js-52-  return payload;
+.\backend\engine\statisticsEngine.js-53-}
+.\backend\engine\statisticsEngine.js-54-
+.\backend\engine\statisticsEngine.js:55:module.exports = {
+.\backend\engine\statisticsEngine.js-56-  getAdminDb,
+.\backend\engine\statisticsEngine.js-57-  safeArray,
+.\backend\engine\statisticsEngine.js-58-  normalizeUfKey,
+.\backend\engine\statisticsEngine.js-59-  readStatisticsSnapshot,
+.\backend\engine\statisticsEngine.js-60-  writeStatisticsSnapshot,
+.\backend\engine\statisticsEngine.js-61-};
+--
+.\backend\engine\top3HistoryRepository.js-433-
+.\backend\engine\top3HistoryRepository.js-434-  const draws = [];
+.\backend\engine\top3HistoryRepository.js-435-
+.\backend\engine\top3HistoryRepository.js-436-  for (const month of months) {
+.\backend\engine\top3HistoryRepository.js-437-    draws.push(
+.\backend\engine\top3HistoryRepository.js-438-      ...safeArray(month.draws)
+.\backend\engine\top3HistoryRepository.js-439-    );
+.\backend\engine\top3HistoryRepository.js-440-  }
+.\backend\engine\top3HistoryRepository.js-441-
+.\backend\engine\top3HistoryRepository.js-442-  return deduplicateDraws(draws);
+.\backend\engine\top3HistoryRepository.js-443-}
+.\backend\engine\top3HistoryRepository.js-444-
+.\backend\engine\top3HistoryRepository.js:445:module.exports = {
+.\backend\engine\top3HistoryRepository.js-446-  ROOT_COLLECTION,
+.\backend\engine\top3HistoryRepository.js-447-  MONTHS_COLLECTION,
+.\backend\engine\top3HistoryRepository.js-448-  METADATA_COLLECTION,
+.\backend\engine\top3HistoryRepository.js-449-  SCHEMA_VERSION,
+.\backend\engine\top3HistoryRepository.js-450-  normalizeLotteryKey,
+.\backend\engine\top3HistoryRepository.js-451-  normalizeYearMonth,
+.\backend\engine\top3HistoryRepository.js-452-  normalizeDraw,
+.\backend\engine\top3HistoryRepository.js-453-  deduplicateDraws,
+.\backend\engine\top3HistoryRepository.js-454-  readHistoryMonth,
+.\backend\engine\top3HistoryRepository.js-455-  writeHistoryMonth,
+.\backend\engine\top3HistoryRepository.js-456-  upsertHistoryMonth,
+.\backend\engine\top3HistoryRepository.js-457-  readMetadata,
+--
+.\backend\engine\evidenceEngine.js-55-    count: evidence.filter(e => !e.error).length,
+.\backend\engine\evidenceEngine.js-56-
+.\backend\engine\evidenceEngine.js-57-    modules: evidence
+.\backend\engine\evidenceEngine.js-58-      .filter(e => !e.error)
+.\backend\engine\evidenceEngine.js-59-      .map(e => e.module),
+.\backend\engine\evidenceEngine.js-60-
+.\backend\engine\evidenceEngine.js-61-    evidence,
+.\backend\engine\evidenceEngine.js-62-
+.\backend\engine\evidenceEngine.js-63-  };
+.\backend\engine\evidenceEngine.js-64-
+.\backend\engine\evidenceEngine.js-65-}
+.\backend\engine\evidenceEngine.js-66-
+.\backend\engine\evidenceEngine.js:67:module.exports = {
+.\backend\engine\evidenceEngine.js-68-  collectEvidence,
+.\backend\engine\evidenceEngine.js-69-};
+--
+.\backend\engine\top3PredictionService.js-191-    requestedSource === "snapshot"
+.\backend\engine\top3PredictionService.js-192-  ) {
+.\backend\engine\top3PredictionService.js-193-    const metadataResult = await loadMetadata(
+.\backend\engine\top3PredictionService.js-194-      lotteryKey,
+.\backend\engine\top3PredictionService.js-195-      dependencies.historyDependencies || {}
+.\backend\engine\top3PredictionService.js-196-    );
+.\backend\engine\top3PredictionService.js-197-
+.\backend\engine\top3PredictionService.js-198-    const metadata =
+.\backend\engine\top3PredictionService.js-199-      metadataResult?.data || null;
+.\backend\engine\top3PredictionService.js-200-
+.\backend\engine\top3PredictionService.js-201-    const snapshotReady =
+.\backend\engine\top3PredictionService.js-202-      metadataResult?.exists === true &&
+.\backend\engine\top3PredictionService.js:203:      metadata?.bootstrapStatus === "complete";
+.\backend\engine\top3PredictionService.js-204-
+.\backend\engine\top3PredictionService.js-205-    if (snapshotReady) {
+.\backend\engine\top3PredictionService.js-206-      const draws = await loadFullHistory(
+.\backend\engine\top3PredictionService.js-207-        lotteryKey,
+.\backend\engine\top3PredictionService.js-208-        dependencies.historyDependencies || {}
+.\backend\engine\top3PredictionService.js-209-      );
+.\backend\engine\top3PredictionService.js-210-
+.\backend\engine\top3PredictionService.js-211-      if (Array.isArray(draws) && draws.length) {
+.\backend\engine\top3PredictionService.js-212-        const expectedTotal = Number(
+.\backend\engine\top3PredictionService.js-213-          metadata?.totalDraws || 0
+.\backend\engine\top3PredictionService.js-214-        );
+.\backend\engine\top3PredictionService.js-215-
+--
+.\backend\engine\top3PredictionService.js-871-    throw new Error(
+.\backend\engine\top3PredictionService.js-872-      "O motor TOP3 n├úo produziu 20 milhares v├ílidas para cada grupo."
+.\backend\engine\top3PredictionService.js-873-    );
+.\backend\engine\top3PredictionService.js-874-  }
+.\backend\engine\top3PredictionService.js-875-
+.\backend\engine\top3PredictionService.js-876-  const metadata = {
+.\backend\engine\top3PredictionService.js-877-    ...(input.metadata || {}),
+.\backend\engine\top3PredictionService.js-878-    engine: "top3_statistical_v3",
+.\backend\engine\top3PredictionService.js-879-    historyDraws: history.length,
+.\backend\engine\top3PredictionService.js-880-    drawsToday: drawsToday.length,
+.\backend\engine\top3PredictionService.js-881-    historySource,
+.\backend\engine\top3PredictionService.js-882-    historyBootstrapStatus:
+.\backend\engine\top3PredictionService.js:883:      historyMetadata?.bootstrapStatus || null,
+.\backend\engine\top3PredictionService.js-884-    historyTotalStored:
+.\backend\engine\top3PredictionService.js-885-      Number(historyMetadata?.totalDraws || 0) || null,
+.\backend\engine\top3PredictionService.js-886-    lookbackDays,
+.\backend\engine\top3PredictionService.js-887-    maxDraws,
+.\backend\engine\top3PredictionService.js-888-    startYmd,
+.\backend\engine\top3PredictionService.js-889-    lastDrawYmd:
+.\backend\engine\top3PredictionService.js-890-      publicApi.pickDrawYMD(drawLast) || null,
+.\backend\engine\top3PredictionService.js-891-    lastDrawHour:
+.\backend\engine\top3PredictionService.js-892-      publicApi.pickDrawHour(drawLast) || null,
+.\backend\engine\top3PredictionService.js-893-    targetYmd: date,
+.\backend\engine\top3PredictionService.js-894-    targetHour: closeHour,
+.\backend\engine\top3PredictionService.js-895-    engineMeta: computed?.meta || null,
+.\backend\engine\top3PredictionService.js-896-  };
+.\backend\engine\top3PredictionService.js-897-
+.\backend\engine\top3PredictionService.js-898-  const engine = {
+.\backend\engine\top3PredictionService.js-899-    name: "top3_statistical_v3",
+.\backend\engine\top3PredictionService.js-900-    historyDraws: history.length,
+.\backend\engine\top3PredictionService.js-901-    drawsToday: drawsToday.length,
+.\backend\engine\top3PredictionService.js-902-    historySource,
+.\backend\engine\top3PredictionService.js-903-    historyBootstrapStatus:
+.\backend\engine\top3PredictionService.js:904:      historyMetadata?.bootstrapStatus || null,
+.\backend\engine\top3PredictionService.js-905-    historyTotalStored:
+.\backend\engine\top3PredictionService.js-906-      Number(historyMetadata?.totalDraws || 0) || null,
+.\backend\engine\top3PredictionService.js-907-    lookbackDays,
+.\backend\engine\top3PredictionService.js-908-    maxDraws,
+.\backend\engine\top3PredictionService.js-909-    startYmd,
+.\backend\engine\top3PredictionService.js-910-    targetYmd: date,
+.\backend\engine\top3PredictionService.js-911-    targetHour: closeHour,
+.\backend\engine\top3PredictionService.js-912-    meta: computed?.meta || null,
+.\backend\engine\top3PredictionService.js-913-  };
+.\backend\engine\top3PredictionService.js-914-
+.\backend\engine\top3PredictionService.js-915-  if (input.dryRun === true) {
+.\backend\engine\top3PredictionService.js-916-    return {
+--
+.\backend\engine\top3PredictionService.js-945-      source,
+.\backend\engine\top3PredictionService.js-946-    });
+.\backend\engine\top3PredictionService.js-947-
+.\backend\engine\top3PredictionService.js-948-  return {
+.\backend\engine\top3PredictionService.js-949-    ...result,
+.\backend\engine\top3PredictionService.js-950-    publicSnapshot,
+.\backend\engine\top3PredictionService.js-951-    publicProjection,
+.\backend\engine\top3PredictionService.js-952-    engine,
+.\backend\engine\top3PredictionService.js-953-    dryRun: false,
+.\backend\engine\top3PredictionService.js-954-  };
+.\backend\engine\top3PredictionService.js-955-}
+.\backend\engine\top3PredictionService.js-956-
+.\backend\engine\top3PredictionService.js:957:module.exports = {
+.\backend\engine\top3PredictionService.js-958-  createTop3PredictionRun,
+.\backend\engine\top3PredictionService.js-959-  mapTop3ToPredictions,
+.\backend\engine\top3PredictionService.js-960-  normalizeHour,
+.\backend\engine\top3PredictionService.js-961-  normalizeHistorySource,
+.\backend\engine\top3PredictionService.js-962-  loadPredictionHistory,
+.\backend\engine\top3PredictionService.js-963-  buildPublicMilharesCols,
+.\backend\engine\top3PredictionService.js-964-  buildTop3PublicSnapshot,
+.\backend\engine\top3PredictionService.js-965-  saveTop3PublicProjection,
+.\backend\engine\top3PredictionService.js-966-  resolveNextTop3Slot,
+.\backend\engine\top3PredictionService.js-967-};
+--
+.\backend\engine\top3HistorySync.js-182-  lotteryKey,
+.\backend\engine\top3HistorySync.js-183-  error,
+.\backend\engine\top3HistorySync.js-184-  dependencies = {}
+.\backend\engine\top3HistorySync.js-185-) {
+.\backend\engine\top3HistorySync.js-186-  const saveMetadata =
+.\backend\engine\top3HistorySync.js-187-    dependencies.writeMetadata ||
+.\backend\engine\top3HistorySync.js-188-    writeMetadata;
+.\backend\engine\top3HistorySync.js-189-
+.\backend\engine\top3HistorySync.js-190-  try {
+.\backend\engine\top3HistorySync.js-191-    await saveMetadata(
+.\backend\engine\top3HistorySync.js-192-      lotteryKey,
+.\backend\engine\top3HistorySync.js-193-      {
+.\backend\engine\top3HistorySync.js:194:        bootstrapStatus: "stale",
+.\backend\engine\top3HistorySync.js-195-        staleReason:
+.\backend\engine\top3HistorySync.js-196-          String(
+.\backend\engine\top3HistorySync.js-197-            error?.message ||
+.\backend\engine\top3HistorySync.js-198-            error ||
+.\backend\engine\top3HistorySync.js-199-            "incremental_sync_failed"
+.\backend\engine\top3HistorySync.js-200-          ),
+.\backend\engine\top3HistorySync.js-201-        staleAt:
+.\backend\engine\top3HistorySync.js-202-          new Date().toISOString(),
+.\backend\engine\top3HistorySync.js-203-      },
+.\backend\engine\top3HistorySync.js-204-      dependencies.repositoryDependencies || {}
+.\backend\engine\top3HistorySync.js-205-    );
+.\backend\engine\top3HistorySync.js-206-
+--
+.\backend\engine\top3HistorySync.js-256-    }
+.\backend\engine\top3HistorySync.js-257-
+.\backend\engine\top3HistorySync.js-258-    const metadataResult = await loadMetadata(
+.\backend\engine\top3HistorySync.js-259-      lotteryKey,
+.\backend\engine\top3HistorySync.js-260-      dependencies.repositoryDependencies || {}
+.\backend\engine\top3HistorySync.js-261-    );
+.\backend\engine\top3HistorySync.js-262-
+.\backend\engine\top3HistorySync.js-263-    const metadata =
+.\backend\engine\top3HistorySync.js-264-      metadataResult?.data || null;
+.\backend\engine\top3HistorySync.js-265-
+.\backend\engine\top3HistorySync.js-266-    if (
+.\backend\engine\top3HistorySync.js-267-      metadataResult?.exists !== true ||
+.\backend\engine\top3HistorySync.js:268:      metadata?.bootstrapStatus !== "complete"
+.\backend\engine\top3HistorySync.js-269-    ) {
+.\backend\engine\top3HistorySync.js-270-      return {
+.\backend\engine\top3HistorySync.js-271-        ok: true,
+.\backend\engine\top3HistorySync.js-272-        skipped: true,
+.\backend\engine\top3HistorySync.js:273:        reason: "bootstrap_not_complete",
+.\backend\engine\top3HistorySync.js-274-      };
+.\backend\engine\top3HistorySync.js-275-    }
+.\backend\engine\top3HistorySync.js-276-
+.\backend\engine\top3HistorySync.js-277-    const draws = await (
+.\backend\engine\top3HistorySync.js-278-      dependencies.loadImportedDraws ||
+.\backend\engine\top3HistorySync.js-279-      loadImportedDraws
+.\backend\engine\top3HistorySync.js-280-    )(
+.\backend\engine\top3HistorySync.js-281-      importResult,
+.\backend\engine\top3HistorySync.js-282-      dependencies
+.\backend\engine\top3HistorySync.js-283-    );
+.\backend\engine\top3HistorySync.js-284-
+.\backend\engine\top3HistorySync.js-285-    if (!draws.length) {
+--
+.\backend\engine\top3HistorySync.js-323-    }
+.\backend\engine\top3HistorySync.js-324-
+.\backend\engine\top3HistorySync.js-325-    const months = await loadMonths(
+.\backend\engine\top3HistorySync.js-326-      lotteryKey,
+.\backend\engine\top3HistorySync.js-327-      dependencies.repositoryDependencies || {}
+.\backend\engine\top3HistorySync.js-328-    );
+.\backend\engine\top3HistorySync.js-329-
+.\backend\engine\top3HistorySync.js-330-    const summary = summarizeMonths(months);
+.\backend\engine\top3HistorySync.js-331-
+.\backend\engine\top3HistorySync.js-332-    await saveMetadata(
+.\backend\engine\top3HistorySync.js-333-      lotteryKey,
+.\backend\engine\top3HistorySync.js-334-      {
+.\backend\engine\top3HistorySync.js:335:        bootstrapStatus: "complete",
+.\backend\engine\top3HistorySync.js-336-        incrementalUpdatedAt:
+.\backend\engine\top3HistorySync.js-337-          new Date().toISOString(),
+.\backend\engine\top3HistorySync.js-338-        totalDraws:
+.\backend\engine\top3HistorySync.js-339-          summary.totalDraws,
+.\backend\engine\top3HistorySync.js-340-        monthCount:
+.\backend\engine\top3HistorySync.js-341-          summary.monthCount,
+.\backend\engine\top3HistorySync.js-342-        months:
+.\backend\engine\top3HistorySync.js-343-          summary.months,
+.\backend\engine\top3HistorySync.js-344-        firstYmd:
+.\backend\engine\top3HistorySync.js-345-          summary.firstYmd,
+.\backend\engine\top3HistorySync.js-346-        lastYmd:
+.\backend\engine\top3HistorySync.js-347-          summary.lastYmd,
+.\backend\engine\top3HistorySync.js-348-        firstDrawId:
+.\backend\engine\top3HistorySync.js-349-          summary.firstDrawId,
+.\backend\engine\top3HistorySync.js-350-        lastDrawId:
+.\backend\engine\top3HistorySync.js-351-          summary.lastDrawId,
+.\backend\engine\top3HistorySync.js-352-        lastProcessedDrawId:
+.\backend\engine\top3HistorySync.js-353-          summary.lastDrawId,
+.\backend\engine\top3HistorySync.js-354-        staleReason: null,
+.\backend\engine\top3HistorySync.js-355-        staleAt: null,
+.\backend\engine\top3HistorySync.js-356-        source:
+.\backend\engine\top3HistorySync.js:357:          "bootstrap_plus_incremental",
+.\backend\engine\top3HistorySync.js-358-      },
+.\backend\engine\top3HistorySync.js-359-      dependencies.repositoryDependencies || {}
+.\backend\engine\top3HistorySync.js-360-    );
+.\backend\engine\top3HistorySync.js-361-
+.\backend\engine\top3HistorySync.js-362-    console.log(
+.\backend\engine\top3HistorySync.js-363-      `[TOP3-HISTORY] Incremental OK | ${lotteryKey} | ` +
+.\backend\engine\top3HistorySync.js-364-      `draws=${draws.length} | meses=${updatedMonths
+.\backend\engine\top3HistorySync.js-365-        .map((item) => item.yearMonth)
+.\backend\engine\top3HistorySync.js-366-        .join(",")}`
+.\backend\engine\top3HistorySync.js-367-    );
+.\backend\engine\top3HistorySync.js-368-
+.\backend\engine\top3HistorySync.js-369-    return {
+--
+.\backend\engine\top3HistorySync.js-394-      lotteryKey,
+.\backend\engine\top3HistorySync.js-395-      markedStale,
+.\backend\engine\top3HistorySync.js-396-      error:
+.\backend\engine\top3HistorySync.js-397-        String(
+.\backend\engine\top3HistorySync.js-398-          error?.message ||
+.\backend\engine\top3HistorySync.js-399-          error ||
+.\backend\engine\top3HistorySync.js-400-          "incremental_sync_failed"
+.\backend\engine\top3HistorySync.js-401-        ),
+.\backend\engine\top3HistorySync.js-402-    };
+.\backend\engine\top3HistorySync.js-403-  }
+.\backend\engine\top3HistorySync.js-404-}
+.\backend\engine\top3HistorySync.js-405-
+.\backend\engine\top3HistorySync.js:406:module.exports = {
+.\backend\engine\top3HistorySync.js-407-  readDrawWithPrizes,
+.\backend\engine\top3HistorySync.js-408-  loadImportedDraws,
+.\backend\engine\top3HistorySync.js-409-  summarizeMonths,
+.\backend\engine\top3HistorySync.js-410-  markHistoryStale,
+.\backend\engine\top3HistorySync.js-411-  syncImportedResultToTop3History,
+.\backend\engine\top3HistorySync.js-412-};
+--
+.\backend\engine\drawRepository.js-221-    console.log(
+.\backend\engine\drawRepository.js-222-      `[BOOTSTRAP] P├ígina ${page}: ${snap.docs.length} draws | total=${draws.length}`
+.\backend\engine\drawRepository.js-223-    );
+.\backend\engine\drawRepository.js-224-
+.\backend\engine\drawRepository.js-225-    lastDoc = snap.docs[snap.docs.length - 1];
+.\backend\engine\drawRepository.js-226-
+.\backend\engine\drawRepository.js-227-    if (snap.docs.length < pageSize) break;
+.\backend\engine\drawRepository.js-228-  }
+.\backend\engine\drawRepository.js-229-
+.\backend\engine\drawRepository.js-230-  return draws;
+.\backend\engine\drawRepository.js-231-}
+.\backend\engine\drawRepository.js-232-
+.\backend\engine\drawRepository.js:233:module.exports = {
+.\backend\engine\drawRepository.js-234-  fetchAllDrawsWithPrizes,
+.\backend\engine\drawRepository.js-235-  fetchDrawsWithPrizesByRange,
+.\backend\engine\drawRepository.js-236-};
+--
+.\backend\engine\historicalQueryEngine.js-26-  return d.getDay();
+.\backend\engine\historicalQueryEngine.js-27-}
+.\backend\engine\historicalQueryEngine.js-28-
+.\backend\engine\historicalQueryEngine.js-29-/**
+.\backend\engine\historicalQueryEngine.js-30- * Query Engine
+.\backend\engine\historicalQueryEngine.js-31- *
+.\backend\engine\historicalQueryEngine.js-32- * Futuras otimiza├º├Áes:
+.\backend\engine\historicalQueryEngine.js-33- * - cache por consulta
+.\backend\engine\historicalQueryEngine.js-34- * - pagina├º├úo
+.\backend\engine\historicalQueryEngine.js-35- * - consultas paralelas
+.\backend\engine\historicalQueryEngine.js-36- * - filtros compostos
+.\backend\engine\historicalQueryEngine.js-37- */
+.\backend\engine\historicalQueryEngine.js:38:async function queryOccurrences({
+.\backend\engine\historicalQueryEngine.js-39-  lotteryKey,
+.\backend\engine\historicalQueryEngine.js-40-  entityType,
+.\backend\engine\historicalQueryEngine.js-41-  entityValue,
+.\backend\engine\historicalQueryEngine.js-42-  filters = {},
+.\backend\engine\historicalQueryEngine.js-43-  limitSamples = 20,
+.\backend\engine\historicalQueryEngine.js-44-} = {}) {
+.\backend\engine\historicalQueryEngine.js-45-
+.\backend\engine\historicalQueryEngine.js-46-  if (!lotteryKey) throw new Error("lotteryKey obrigat├│rio");
+.\backend\engine\historicalQueryEngine.js-47-  if (!entityType) throw new Error("entityType obrigat├│rio");
+.\backend\engine\historicalQueryEngine.js-48-
+.\backend\engine\historicalQueryEngine.js-49-  const db = getDb();
+.\backend\engine\historicalQueryEngine.js-50-
+--
+.\backend\engine\historicalQueryEngine.js-155-        drawsAnalyzed
+.\backend\engine\historicalQueryEngine.js-156-          ? Number((occurrences*100/drawsAnalyzed).toFixed(2))
+.\backend\engine\historicalQueryEngine.js-157-          : 0
+.\backend\engine\historicalQueryEngine.js-158-
+.\backend\engine\historicalQueryEngine.js-159-    },
+.\backend\engine\historicalQueryEngine.js-160-
+.\backend\engine\historicalQueryEngine.js-161-    matches
+.\backend\engine\historicalQueryEngine.js-162-
+.\backend\engine\historicalQueryEngine.js-163-  };
+.\backend\engine\historicalQueryEngine.js-164-
+.\backend\engine\historicalQueryEngine.js-165-}
+.\backend\engine\historicalQueryEngine.js-166-
+.\backend\engine\historicalQueryEngine.js:167:module.exports = {
+.\backend\engine\historicalQueryEngine.js-168-
+.\backend\engine\historicalQueryEngine.js:169:  queryOccurrences,
+.\backend\engine\historicalQueryEngine.js-170-
+.\backend\engine\historicalQueryEngine.js-171-};
+--
+.\backend\engine\snapshotMetadata.js-24-) {
+.\backend\engine\snapshotMetadata.js-25-  const db = getAdminDb();
+.\backend\engine\snapshotMetadata.js-26-
+.\backend\engine\snapshotMetadata.js-27-  await metadataRef(db, lottery).set(
+.\backend\engine\snapshotMetadata.js-28-    {
+.\backend\engine\snapshotMetadata.js-29-      ...data,
+.\backend\engine\snapshotMetadata.js-30-      updatedAt: new Date().toISOString(),
+.\backend\engine\snapshotMetadata.js-31-    },
+.\backend\engine\snapshotMetadata.js-32-    { merge: true }
+.\backend\engine\snapshotMetadata.js-33-  );
+.\backend\engine\snapshotMetadata.js-34-}
+.\backend\engine\snapshotMetadata.js-35-
+.\backend\engine\snapshotMetadata.js:36:module.exports = {
+.\backend\engine\snapshotMetadata.js-37-  readSnapshotMetadata,
+.\backend\engine\snapshotMetadata.js-38-  writeSnapshotMetadata,
+.\backend\engine\snapshotMetadata.js-39-};
+--
+.\backend\engine\predictionRepository.js-113-  const snap = await db()
+.\backend\engine\predictionRepository.js-114-    .collection(RUNS)
+.\backend\engine\predictionRepository.js-115-    .doc(runId)
+.\backend\engine\predictionRepository.js-116-    .get();
+.\backend\engine\predictionRepository.js-117-
+.\backend\engine\predictionRepository.js-118-  if (!snap.exists) {
+.\backend\engine\predictionRepository.js-119-    return null;
+.\backend\engine\predictionRepository.js-120-  }
+.\backend\engine\predictionRepository.js-121-
+.\backend\engine\predictionRepository.js-122-  return snap.data();
+.\backend\engine\predictionRepository.js-123-}
+.\backend\engine\predictionRepository.js-124-
+.\backend\engine\predictionRepository.js:125:module.exports = {
+.\backend\engine\predictionRepository.js-126-  savePredictionRun,
+.\backend\engine\predictionRepository.js-127-  savePrediction,
+.\backend\engine\predictionRepository.js-128-  savePredictions,
+.\backend\engine\predictionRepository.js-129-  loadPredictionRun,
+.\backend\engine\predictionRepository.js-130-};
+--
+.\backend\engine\frequencyEvidence.js-107-
+.\backend\engine\frequencyEvidence.js-108-      window: context.window || null,
+.\backend\engine\frequencyEvidence.js-109-      lotteryKey: context.lotteryKey || null,
+.\backend\engine\frequencyEvidence.js-110-      position: context.position || null,
+.\backend\engine\frequencyEvidence.js-111-      weekday: context.weekday || null,
+.\backend\engine\frequencyEvidence.js-112-      hour: context.hour || null,
+.\backend\engine\frequencyEvidence.js-113-    },
+.\backend\engine\frequencyEvidence.js-114-
+.\backend\engine\frequencyEvidence.js-115-    reasons: buildReasons(frequency, percent, level),
+.\backend\engine\frequencyEvidence.js-116-  };
+.\backend\engine\frequencyEvidence.js-117-}
+.\backend\engine\frequencyEvidence.js-118-
+.\backend\engine\frequencyEvidence.js:119:module.exports = {
+.\backend\engine\frequencyEvidence.js-120-  buildFrequencyEvidence,
+.\backend\engine\frequencyEvidence.js-121-};
+.\backend\workers\bootstrapTop3History.js-1-"use strict";
+.\backend\workers\bootstrapTop3History.js-2-
+.\backend\workers\bootstrapTop3History.js-3-const {
+.\backend\workers\bootstrapTop3History.js-4-  fetchAllDrawsWithPrizes,
+.\backend\workers\bootstrapTop3History.js:5:} = require("../engine/drawRepository");
+.\backend\workers\bootstrapTop3History.js-6-
+.\backend\workers\bootstrapTop3History.js-7-const {
+.\backend\workers\bootstrapTop3History.js-8-  normalizeLotteryKey,
+.\backend\workers\bootstrapTop3History.js-9-  normalizeDraw,
+.\backend\workers\bootstrapTop3History.js-10-  deduplicateDraws,
+.\backend\workers\bootstrapTop3History.js-11-  writeHistoryMonth,
+.\backend\workers\bootstrapTop3History.js-12-  writeMetadata,
+.\backend\workers\bootstrapTop3History.js-13-  SCHEMA_VERSION,
+.\backend\workers\bootstrapTop3History.js-14-} = require("../engine/top3HistoryRepository");
+.\backend\workers\bootstrapTop3History.js-15-
+--
+.\backend\workers\updateStatistics.js-1-"use strict";
+.\backend\workers\updateStatistics.js-2-
+.\backend\workers\updateStatistics.js:3:const { updateSnapshot } = require("../engine/snapshotManager");
+.\backend\workers\updateStatistics.js-4-
+.\backend\workers\updateStatistics.js-5-async function main() {
+.\backend\workers\updateStatistics.js-6-  try {
+.\backend\workers\updateStatistics.js-7-    const lottery = process.argv[2] || "PT_RIO";
+.\backend\workers\updateStatistics.js-8-    const force = String(process.argv[3] || "").toLowerCase() === "force";
+.\backend\workers\updateStatistics.js-9-
+.\backend\workers\updateStatistics.js-10-    console.log("");
+.\backend\workers\updateStatistics.js-11-    console.log("====================================");
+.\backend\workers\updateStatistics.js-12-    console.log(" PALPITACO JB - Snapshot Worker");
+.\backend\workers\updateStatistics.js-13-    console.log("====================================");
+.\backend\workers\updateStatistics.js-14-    console.log("");
+.\backend\workers\updateStatistics.js-15-
+.\backend\workers\updateStatistics.js-16-    console.log("Lottery..:", lottery);
+.\backend\workers\updateStatistics.js-17-    console.log("Force....:", force);
+.\backend\workers\updateStatistics.js-18-    console.log("");
+.\backend\workers\updateStatistics.js-19-
+.\backend\workers\updateStatistics.js:20:    const result = await updateSnapshot({
+.\backend\workers\updateStatistics.js-21-      lottery,
+.\backend\workers\updateStatistics.js-22-      force,
+.\backend\workers\updateStatistics.js-23-    });
+.\backend\workers\updateStatistics.js-24-
+.\backend\workers\updateStatistics.js-25-    console.log("OK.......:", result.ok);
+.\backend\workers\updateStatistics.js-26-    console.log("Bounds...:", result.bounds || null);
+.\backend\workers\updateStatistics.js-27-    console.log("Next.....:", result.nextStep || null);
+.\backend\workers\updateStatistics.js-28-
+.\backend\workers\updateStatistics.js-29-    console.log("");
+.\backend\workers\updateStatistics.js-30-    console.log("Worker finalizado.");
+--
+.\backend\engine\bootstrapSnapshot.js-1-"use strict";
+.\backend\engine\bootstrapSnapshot.js-2-
+.\backend\engine\bootstrapSnapshot.js:3:const { fetchAllDrawsWithPrizes } = require("./drawRepository");
+.\backend\engine\bootstrapSnapshot.js-4-const { writeStatisticsSnapshot } = require("./statisticsEngine");
+.\backend\engine\bootstrapSnapshot.js-5-
+.\backend\engine\bootstrapSnapshot.js-6-// Ajuste estes requires caso os arquivos estejam em outro caminho
+.\backend\engine\bootstrapSnapshot.js-7-const { buildRanking } = require("../../src/utils/buildRanking");
+.\backend\engine\bootstrapSnapshot.js-8-const { applyScoreEngine } = require("../../src/utils/scoreEngine");
+.\backend\engine\bootstrapSnapshot.js-9-
+.\backend\engine\bootstrapSnapshot.js-10-async function bootstrapSnapshot(lottery = "PT_RIO") {
+.\backend\engine\bootstrapSnapshot.js-11-
+.\backend\engine\bootstrapSnapshot.js-12-  const draws = await fetchAllDrawsWithPrizes({
+.\backend\engine\bootstrapSnapshot.js-13-    lottery,
+--
+.\backend\engine\historicalQueryEngine.js-28-
+.\backend\engine\historicalQueryEngine.js-29-/**
+.\backend\engine\historicalQueryEngine.js-30- * Query Engine
+.\backend\engine\historicalQueryEngine.js-31- *
+.\backend\engine\historicalQueryEngine.js-32- * Futuras otimiza├º├Áes:
+.\backend\engine\historicalQueryEngine.js-33- * - cache por consulta
+.\backend\engine\historicalQueryEngine.js-34- * - pagina├º├úo
+.\backend\engine\historicalQueryEngine.js-35- * - consultas paralelas
+.\backend\engine\historicalQueryEngine.js-36- * - filtros compostos
+.\backend\engine\historicalQueryEngine.js-37- */
+.\backend\engine\historicalQueryEngine.js:38:async function queryOccurrences({
+.\backend\engine\historicalQueryEngine.js-39-  lotteryKey,
+.\backend\engine\historicalQueryEngine.js-40-  entityType,
+.\backend\engine\historicalQueryEngine.js-41-  entityValue,
+.\backend\engine\historicalQueryEngine.js-42-  filters = {},
+.\backend\engine\historicalQueryEngine.js-43-  limitSamples = 20,
+.\backend\engine\historicalQueryEngine.js-44-} = {}) {
+.\backend\engine\historicalQueryEngine.js-45-
+.\backend\engine\historicalQueryEngine.js-46-  if (!lotteryKey) throw new Error("lotteryKey obrigat├│rio");
+.\backend\engine\historicalQueryEngine.js-47-  if (!entityType) throw new Error("entityType obrigat├│rio");
+.\backend\engine\historicalQueryEngine.js-48-
+--
+.\backend\engine\top3PredictionService.js-1-"use strict";
+.\backend\engine\top3PredictionService.js-2-
+.\backend\engine\top3PredictionService.js-3-const {
+.\backend\engine\top3PredictionService.js-4-  fetchDrawsWithPrizesByRange,
+.\backend\engine\top3PredictionService.js:5:} = require("./drawRepository");
+.\backend\engine\top3PredictionService.js-6-
+.\backend\engine\top3PredictionService.js-7-const {
+.\backend\engine\top3PredictionService.js-8-  readFullHistory,
+.\backend\engine\top3PredictionService.js-9-  readMetadata,
+.\backend\engine\top3PredictionService.js-10-} = require("./top3HistoryRepository");
+.\backend\engine\top3PredictionService.js-11-
+.\backend\engine\top3PredictionService.js-12-const {
+.\backend\engine\top3PredictionService.js-13-  computeStatisticalTop3V3,
+.\backend\engine\top3PredictionService.js-14-  loadTop3PublicApi,
+.\backend\engine\top3PredictionService.js-15-} = require("./scoreEngineUnified");
+--
+.\backend\engine\snapshotManager.js-4-  writeStatisticsSnapshot,
+.\backend\engine\snapshotManager.js-5-  getAdminDb,
+.\backend\engine\snapshotManager.js-6-} = require("./statisticsEngine");
+.\backend\engine\snapshotManager.js-7-
+.\backend\engine\snapshotManager.js-8-const {
+.\backend\engine\snapshotManager.js-9-  readSnapshotMetadata,
+.\backend\engine\snapshotManager.js-10-  writeSnapshotMetadata,
+.\backend\engine\snapshotManager.js-11-} = require("./snapshotMetadata");
+.\backend\engine\snapshotManager.js-12-
+.\backend\engine\snapshotManager.js-13-
+.\backend\engine\snapshotManager.js:14:async function fetchNewDrawsAfter(db, lottery, lastProcessedDrawId, limit = 25) {
+.\backend\engine\snapshotManager.js-15-  if (!lastProcessedDrawId) {
+.\backend\engine\snapshotManager.js-16-    return {
+.\backend\engine\snapshotManager.js-17-      requiresBootstrap: true,
+.\backend\engine\snapshotManager.js-18-      draws: [],
+.\backend\engine\snapshotManager.js-19-    };
+.\backend\engine\snapshotManager.js-20-  }
+.\backend\engine\snapshotManager.js-21-
+.\backend\engine\snapshotManager.js-22-  const admin = require("firebase-admin");
+.\backend\engine\snapshotManager.js-23-  const DOC_ID = admin.firestore.FieldPath.documentId();
+.\backend\engine\snapshotManager.js-24-
+--
+.\backend\engine\snapshotManager.js-32-
+.\backend\engine\snapshotManager.js-33-  return {
+.\backend\engine\snapshotManager.js-34-    requiresBootstrap: false,
+.\backend\engine\snapshotManager.js-35-    draws: snap.docs.map((doc) => ({
+.\backend\engine\snapshotManager.js-36-      id: doc.id,
+.\backend\engine\snapshotManager.js-37-      ...doc.data(),
+.\backend\engine\snapshotManager.js-38-    })),
+.\backend\engine\snapshotManager.js-39-  };
+.\backend\engine\snapshotManager.js-40-}
+.\backend\engine\snapshotManager.js-41-
+.\backend\engine\snapshotManager.js:42:async function updateSnapshot({
+.\backend\engine\snapshotManager.js-43-  lottery = "PT_RIO",
+.\backend\engine\snapshotManager.js-44-  force = false,
+.\backend\engine\snapshotManager.js-45-} = {}) {
+.\backend\engine\snapshotManager.js-46-
+.\backend\engine\snapshotManager.js-47-  const db = getAdminDb();
+.\backend\engine\snapshotManager.js-48-
+.\backend\engine\snapshotManager.js-49-  // Bounds atuais do Firestore
+.\backend\engine\snapshotManager.js-50-  const { result: bounds } = await computeBounds(db, lottery);
+.\backend\engine\snapshotManager.js-51-
+.\backend\engine\snapshotManager.js-52-  // Snapshot existente
+--
+.\backend\engine\snapshotManager.js-72-      ok: true,
+.\backend\engine\snapshotManager.js-73-      lottery,
+.\backend\engine\snapshotManager.js-74-      mode: "noop",
+.\backend\engine\snapshotManager.js-75-      reason: "snapshot_already_up_to_date",
+.\backend\engine\snapshotManager.js-76-      bounds,
+.\backend\engine\snapshotManager.js-77-      metadata,
+.\backend\engine\snapshotManager.js-78-      processed: 0,
+.\backend\engine\snapshotManager.js-79-    };
+.\backend\engine\snapshotManager.js-80-  }
+.\backend\engine\snapshotManager.js-81-
+.\backend\engine\snapshotManager.js:82:  const pending = await fetchNewDrawsAfter(
+.\backend\engine\snapshotManager.js-83-    db,
+.\backend\engine\snapshotManager.js-84-    lottery,
+.\backend\engine\snapshotManager.js-85-    lastProcessedDrawId,
+.\backend\engine\snapshotManager.js-86-    25
+.\backend\engine\snapshotManager.js-87-  );
+.\backend\engine\snapshotManager.js-88-
+.\backend\engine\snapshotManager.js-89-  await writeSnapshotMetadata(lottery, {
+.\backend\engine\snapshotManager.js-90-    lastKnownMinYmd: bounds?.minYmd || null,
+.\backend\engine\snapshotManager.js-91-    lastKnownMaxYmd: bounds?.maxYmd || null,
+.\backend\engine\snapshotManager.js-92-    latestDrawId,
+.\backend\scripts\auditCoverage.js-121-      coveragePercent:coverage,
+.\backend\scripts\auditCoverage.js-122-      missing
+.\backend\scripts\auditCoverage.js-123-  };
+.\backend\scripts\auditCoverage.js-124-
+.\backend\scripts\auditCoverage.js-125-  const out=path.join(
+.\backend\scripts\auditCoverage.js-126-      process.cwd(),
+.\backend\scripts\auditCoverage.js-127-      "backend",
+.\backend\scripts\auditCoverage.js-128-      "logs",
+.\backend\scripts\auditCoverage.js:129:      `auditCoverage-${LOTTERY}.json`
+.\backend\scripts\auditCoverage.js-130-  );
+.\backend\scripts\auditCoverage.js-131-
+.\backend\scripts\auditCoverage.js-132-  fs.writeFileSync(out,JSON.stringify(report,null,2));
+.\backend\scripts\auditCoverage.js-133-
+.\backend\scripts\auditCoverage.js-134-  console.log("");
+.\backend\scripts\auditCoverage.js-135-  console.log("==================================");
+.\backend\scripts\auditCoverage.js-136-  console.log(" COBERTURA HIST├ôRICA ");
+.\backend\scripts\auditCoverage.js-137-  console.log("==================================");
+.\.github\workflows\auto-maintain-backfill.yml-1-name: Auto Maintain Backfill (PT_RIO)
+.\.github\workflows\auto-maintain-backfill.yml-2-
+.\.github\workflows\auto-maintain-backfill.yml-3-on:
+.\.github\workflows\auto-maintain-backfill.yml-4-  workflow_dispatch:
+.\.github\workflows\auto-maintain-backfill.yml-5-    inputs:
+.\.github\workflows\auto-maintain-backfill.yml-6-      days:
+.\.github\workflows\auto-maintain-backfill.yml:7:        description: "Janela de auditoria (dias)"
+.\.github\workflows\auto-maintain-backfill.yml-8-        required: true
+.\.github\workflows\auto-maintain-backfill.yml-9-        default: "60"
+.\.github\workflows\auto-maintain-backfill.yml-10-      limitDays:
+.\.github\workflows\auto-maintain-backfill.yml-11-        description: "Limite de dias por execu├º├úo de backfill"
+.\.github\workflows\auto-maintain-backfill.yml-12-        required: true
+.\.github\workflows\auto-maintain-backfill.yml-13-        default: "14"
+.\.github\workflows\auto-maintain-backfill.yml-14-  schedule:
+.\.github\workflows\auto-maintain-backfill.yml-15-    # Domingo 06:15 (BRT = UTC-3) => 09:15 UTC
+--
+.\.github\workflows\auto-import.yml-39-permissions:
+.\.github\workflows\auto-import.yml-40-  contents: read
+.\.github\workflows\auto-import.yml-41-
+.\.github\workflows\auto-import.yml-42-env:
+.\.github\workflows\auto-import.yml-43-  TZ: America/Sao_Paulo
+.\.github\workflows\auto-import.yml-44-  PITACO_API_BASE: ${{ vars.PITACO_API_BASE }}
+.\.github\workflows\auto-import.yml-45-
+.\.github\workflows\auto-import.yml-46-jobs:
+.\.github\workflows\auto-import.yml:47:  reconcile-results:
+.\.github\workflows\auto-import.yml-48-    name: Reconciliar resultados
+.\.github\workflows\auto-import.yml-49-    runs-on: ubuntu-latest
+.\.github\workflows\auto-import.yml-50-    timeout-minutes: 30
+.\.github\workflows\auto-import.yml-51-
+.\.github\workflows\auto-import.yml-52-    defaults:
+.\.github\workflows\auto-import.yml-53-      run:
+.\.github\workflows\auto-import.yml-54-        working-directory: backend
+.\.github\workflows\auto-import.yml-55-
+--
+.\.github\workflows\auto-import.yml-94-            local period="$2"
+.\.github\workflows\auto-import.yml-95-            shift 2
+.\.github\workflows\auto-import.yml-96-
+.\.github\workflows\auto-import.yml-97-            echo ""
+.\.github\workflows\auto-import.yml-98-            echo "=================================================="
+.\.github\workflows\auto-import.yml-99-            echo "LOTTERY=$lottery | PERIOD=$period"
+.\.github\workflows\auto-import.yml-100-            echo "=================================================="
+.\.github\workflows\auto-import.yml-101-
+.\.github\workflows\auto-import.yml:102:            env LOTTERY="$lottery" "$@" node scripts/autoImportToday.js
+.\.github\workflows\auto-import.yml-103-            local code=$?
+.\.github\workflows\auto-import.yml-104-
+.\.github\workflows\auto-import.yml-105-            if [[ $code -ne 0 ]]; then
+.\.github\workflows\auto-import.yml-106-              echo "::error::Falha LOTTERY=$lottery PERIOD=$period EXIT=$code"
+.\.github\workflows\auto-import.yml-107-              overall=1
+.\.github\workflows\auto-import.yml-108-            fi
+.\.github\workflows\auto-import.yml-109-          }
+.\.github\workflows\auto-import.yml-110-

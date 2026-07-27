@@ -1,0 +1,5 @@
+
+context state   description              target_url
+------- -----   -----------              ----------
+Vercel  success Deployment has completed https://vercel.com/glauber-oliveiras-projects/palpitacojb/Gq1hbzeaoaNMJzd9PDUTGZPYCREp
+

@@ -1,0 +1,203 @@
+==============================================================================================================
+COMANDO: git log -1 --oneline
+==============================================================================================================
+
+84e9699 fix(search): preserva horario federal de 19h
+
+RETORNO: 0
+
+==============================================================================================================
+COMANDO: git grep -n -C 8 getKingResultsByDate -- src/pages/Results/Results.jsx src/services/kingResultsService.js
+==============================================================================================================
+
+src/pages/Results/Results.jsx-1-// src/pages/Results/Results.jsx
+src/pages/Results/Results.jsx-2-import React, { useEffect, useMemo, useRef, useState } from "react";
+src/pages/Results/Results.jsx-3-import { useQuery } from "@tanstack/react-query";
+src/pages/Results/Results.jsx-4-import {
+src/pages/Results/Results.jsx-5-  getKingBoundsByUf,
+src/pages/Results/Results.jsx:6:  getKingResultsByDate,
+src/pages/Results/Results.jsx-7-  getKingResultsByRange,
+src/pages/Results/Results.jsx-8-} from "../../services/kingResultsService";
+src/pages/Results/Results.jsx-9-import {
+src/pages/Results/Results.jsx-10-  getAnimalLabel,
+src/pages/Results/Results.jsx-11-  getImgFromGrupo,
+src/pages/Results/Results.jsx-12-  getSlugByGrupo,
+src/pages/Results/Results.jsx-13-} from "../../constants/bichoMap";
+src/pages/Results/Results.jsx-14-
+--
+src/pages/Results/Results.jsx-863-
+src/pages/Results/Results.jsx-864-  const dayResultsQuery = useQuery({
+src/pages/Results/Results.jsx-865-    queryKey: ["results", "day", scopeKey, ymdClamped],
+src/pages/Results/Results.jsx-866-    enabled: !!safeStr(scopeKey) && isYMD(ymdClamped),
+src/pages/Results/Results.jsx-867-    queryFn: async () => {
+src/pages/Results/Results.jsx-868-      const sKey = safeStr(scopeKey);
+src/pages/Results/Results.jsx-869-      const d = safeStr(ymdClamped);
+src/pages/Results/Results.jsx-870-
+src/pages/Results/Results.jsx:871:      const out = await getKingResultsByDate({
+src/pages/Results/Results.jsx-872-        uf: sKey,
+src/pages/Results/Results.jsx-873-        date: d,
+src/pages/Results/Results.jsx-874-        closeHour: null,
+src/pages/Results/Results.jsx-875-        closeHourBucket: null,
+src/pages/Results/Results.jsx-876-        positions: [1, 2, 3, 4, 5, 6, 7],
+src/pages/Results/Results.jsx-877-      });
+src/pages/Results/Results.jsx-878-
+src/pages/Results/Results.jsx-879-      const list = unwrapDraws(out);
+--
+src/services/kingResultsService.js-1102-    hourFilter?.kind === "bucket"
+src/services/kingResultsService.js-1103-      ? `bucket:${hourFilter.bucket}`
+src/services/kingResultsService.js-1104-      : hourFilter?.kind === "exact"
+src/services/kingResultsService.js-1105-      ? `exact:${hourFilter.hhmm}`
+src/services/kingResultsService.js-1106-      : "all";
+src/services/kingResultsService.js-1107-  return `day::${scopeKey}::${ymd}::pos=${p}::h=${h}`;
+src/services/kingResultsService.js-1108-}
+src/services/kingResultsService.js-1109-
+src/services/kingResultsService.js:1110:export async function getKingResultsByDate({
+src/services/kingResultsService.js-1111-  uf,
+src/services/kingResultsService.js-1112-  date,
+src/services/kingResultsService.js-1113-  closeHour = null,
+src/services/kingResultsService.js-1114-  closeHourBucket = null,
+src/services/kingResultsService.js-1115-  positions = null,
+src/services/kingResultsService.js-1116-}) {
+src/services/kingResultsService.js-1117-  if (!uf || !date) throw new Error("Parâmetros obrigatórios: uf e date");
+src/services/kingResultsService.js-1118-
+--
+src/services/kingResultsService.js-1379-      cacheSet(DRAWS_CACHE, rangeKey, out);
+src/services/kingResultsService.js-1380-    }
+src/services/kingResultsService.js-1381-          return out;
+src/services/kingResultsService.js-1382-        }
+src/services/kingResultsService.js-1383-
+src/services/kingResultsService.js-1384-        const all = [];
+src/services/kingResultsService.js-1385-        for (let i = 0; i < days; i += 1) {
+src/services/kingResultsService.js-1386-          const day = addDaysUTC(ymdFrom, i);
+src/services/kingResultsService.js:1387:          const dayDraws = await getKingResultsByDate({
+src/services/kingResultsService.js-1388-            uf,
+src/services/kingResultsService.js-1389-            date: day,
+src/services/kingResultsService.js-1390-            closeHour,
+src/services/kingResultsService.js-1391-            closeHourBucket,
+src/services/kingResultsService.js-1392-            positions: positionsArr,
+src/services/kingResultsService.js-1393-          });
+src/services/kingResultsService.js-1394-          if (Array.isArray(dayDraws) && dayDraws.length) all.push(...dayDraws);
+src/services/kingResultsService.js-1395-        }
+--
+src/services/kingResultsService.js-1449-      cacheSet(DRAWS_CACHE, rangeKey, out);
+src/services/kingResultsService.js-1450-    }
+src/services/kingResultsService.js-1451-        return out;
+src/services/kingResultsService.js-1452-      }
+src/services/kingResultsService.js-1453-
+src/services/kingResultsService.js-1454-      const all = [];
+src/services/kingResultsService.js-1455-      for (let i = 0; i < days; i += 1) {
+src/services/kingResultsService.js-1456-        const day = addDaysUTC(ymdFrom, i);
+src/services/kingResultsService.js:1457:        const dayDraws = await getKingResultsByDate({
+src/services/kingResultsService.js-1458-          uf,
+src/services/kingResultsService.js-1459-          date: day,
+src/services/kingResultsService.js-1460-          closeHour,
+src/services/kingResultsService.js-1461-          closeHourBucket,
+src/services/kingResultsService.js-1462-          positions: positionsArr,
+src/services/kingResultsService.js-1463-        });
+src/services/kingResultsService.js-1464-        if (Array.isArray(dayDraws) && dayDraws.length) all.push(...dayDraws);
+src/services/kingResultsService.js-1465-      }
+
+RETORNO: 0
+
+==============================================================================================================
+COMANDO: git grep -n -C 8 getKingResultsByRange -- src/services/kingResultsService.js
+==============================================================================================================
+
+src/services/kingResultsService.js-1295-      ...d,
+src/services/kingResultsService.js-1296-      prizes: embedded,
+src/services/kingResultsService.js-1297-      prizesCount: embedded.length || Number(d?.prizesCount || 0),
+src/services/kingResultsService.js-1298-      __mode: "aggregated",
+src/services/kingResultsService.js-1299-    };
+src/services/kingResultsService.js-1300-  });
+src/services/kingResultsService.js-1301-}
+src/services/kingResultsService.js-1302-
+src/services/kingResultsService.js:1303:export async function getKingResultsByRange({
+src/services/kingResultsService.js-1304-  uf,
+src/services/kingResultsService.js-1305-  dateFrom,
+src/services/kingResultsService.js-1306-  dateTo,
+src/services/kingResultsService.js-1307-  closeHour = null,
+src/services/kingResultsService.js-1308-  closeHourBucket = null,
+src/services/kingResultsService.js-1309-  positions = null,
+src/services/kingResultsService.js-1310-  mode = "detailed",
+src/services/kingResultsService.js-1311-  readPolicy = DEFAULT_READ_POLICY,
+--
+src/services/kingResultsService.js-1680-    cacheSet(LATE_CACHE, cacheKey, outEmpty);
+src/services/kingResultsService.js-1681-    return outEmpty;
+src/services/kingResultsService.js-1682-  }
+src/services/kingResultsService.js-1683-
+src/services/kingResultsService.js-1684-  while (cursorTo >= fromYmd && lastSeen.size < 25) {
+src/services/kingResultsService.js-1685-    let chunkFrom = addDaysUTC(cursorTo, -(chunk - 1));
+src/services/kingResultsService.js-1686-    if (chunkFrom < fromYmd) chunkFrom = fromYmd;
+src/services/kingResultsService.js-1687-
+src/services/kingResultsService.js:1688:    const draws = await getKingResultsByRange({
+src/services/kingResultsService.js-1689-      uf,
+src/services/kingResultsService.js-1690-      dateFrom: chunkFrom,
+src/services/kingResultsService.js-1691-      dateTo: cursorTo,
+src/services/kingResultsService.js-1692-      closeHour,
+src/services/kingResultsService.js-1693-      closeHourBucket,
+src/services/kingResultsService.js-1694-      positions: [posNum],
+src/services/kingResultsService.js-1695-      mode: "detailed",
+src/services/kingResultsService.js-1696-    });
+
+RETORNO: 0
+
+==============================================================================================================
+COMANDO: git grep -n -C 8 api/pitaco/results -- backend src
+==============================================================================================================
+
+backend/scripts/autoImportToday.js-755-}
+backend/scripts/autoImportToday.js-756-
+backend/scripts/autoImportToday.js-757-/* =========================
+backend/scripts/autoImportToday.js-758-   DayStatus guard + agenda dinâmica
+backend/scripts/autoImportToday.js-759-========================= */
+backend/scripts/autoImportToday.js-760-async function fetchDayStatusFromBackend({ date, lottery }) {
+backend/scripts/autoImportToday.js-761-  try {
+backend/scripts/autoImportToday.js-762-    const base = PITACO_API_BASE.replace(/\/+$/, "");
+backend/scripts/autoImportToday.js:763:    const u = `${base}/api/pitaco/results?date=${encodeURIComponent(String(date || "").trim())}&lottery=${encodeURIComponent(
+backend/scripts/autoImportToday.js-764-      String(lottery || "").trim()
+backend/scripts/autoImportToday.js-765-    )}`;
+backend/scripts/autoImportToday.js-766-
+backend/scripts/autoImportToday.js-767-    const res = await axios.get(u, {
+backend/scripts/autoImportToday.js-768-      timeout: 15000,
+backend/scripts/autoImportToday.js-769-      validateStatus: (s) => s >= 200 && s < 400,
+backend/scripts/autoImportToday.js-770-      headers: { "User-Agent": "palpitaco-autoImportToday" },
+backend/scripts/autoImportToday.js-771-    });
+--
+backend/scripts/autoImportToday.js-904-  if (s === `${hh}h`) return true;
+backend/scripts/autoImportToday.js-905-
+backend/scripts/autoImportToday.js-906-  return false;
+backend/scripts/autoImportToday.js-907-}
+backend/scripts/autoImportToday.js-908-
+backend/scripts/autoImportToday.js-909-async function verifySlotPersistedViaBackend({ date, slotHHMM }) {
+backend/scripts/autoImportToday.js-910-  try {
+backend/scripts/autoImportToday.js-911-    const base = PITACO_API_BASE.replace(/\/+$/, "");
+backend/scripts/autoImportToday.js:912:    const u = `${base}/api/pitaco/results?date=${encodeURIComponent(date)}&lottery=${encodeURIComponent(LOTTERY)}`;
+backend/scripts/autoImportToday.js-913-
+backend/scripts/autoImportToday.js-914-    const res = await axios.get(u, {
+backend/scripts/autoImportToday.js-915-      timeout: 15000,
+backend/scripts/autoImportToday.js-916-      validateStatus: (s) => s >= 200 && s < 400,
+backend/scripts/autoImportToday.js-917-      headers: { "User-Agent": "palpitaco-autoImportToday" },
+backend/scripts/autoImportToday.js-918-    });
+backend/scripts/autoImportToday.js-919-
+backend/scripts/autoImportToday.js-920-    const j = res && res.data ? res.data : null;
+--
+backend/scripts/planBackfillFromAudit.js-352-    const prev = missingMap.get(ymd) || [];
+backend/scripts/planBackfillFromAudit.js-353-    missingMap.set(ymd, uniqSorted(prev.concat(normalizedMissing)));
+backend/scripts/planBackfillFromAudit.js-354-  }
+backend/scripts/planBackfillFromAudit.js-355-
+backend/scripts/planBackfillFromAudit.js-356-  const dates = uniqSorted(Array.from(missingMap.keys()));
+backend/scripts/planBackfillFromAudit.js-357-
+backend/scripts/planBackfillFromAudit.js-358-  const rows = [];
+backend/scripts/planBackfillFromAudit.js-359-  for (const ymd of dates) {
+backend/scripts/planBackfillFromAudit.js:360:    const url = `${baseUrl}/api/pitaco/results?date=${encodeURIComponent(
+backend/scripts/planBackfillFromAudit.js-361-      ymd
+backend/scripts/planBackfillFromAudit.js-362-    )}&lottery=${encodeURIComponent(lottery)}&includePrizes=0`;
+backend/scripts/planBackfillFromAudit.js-363-    const res = await fetchJson(url);
+backend/scripts/planBackfillFromAudit.js-364-
+backend/scripts/planBackfillFromAudit.js-365-    const blocked = !!res?.blocked;
+backend/scripts/planBackfillFromAudit.js-366-    const blockedReason = String(res?.blockedReason || "").trim();
+backend/scripts/planBackfillFromAudit.js-367-    const dayStatus = String(res?.dayStatus || "").trim();
+backend/scripts/planBackfillFromAudit.js-368-
+
+RETORNO: 0
+

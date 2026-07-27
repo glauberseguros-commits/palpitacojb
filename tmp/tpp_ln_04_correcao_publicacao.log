@@ -1,0 +1,103 @@
+OK: comparaþÒo interna do PT Rio normalizada
+OK: teste LOOK ajustado ao formato can¶nico 07h
+OK: teste Nacional ajustado ao formato can¶nico 02h
+
+> palpitaco@0.1.0 test
+> react-scripts test --watchAll=false --runInBand --runTestsByPath src/pages/Top3/__tests__/top3.schedule-transition.test.js
+
+PASS src/pages/Top3/__tests__/top3.schedule-transition.test.js
+  TOP3 ÔÇö transi├º├úo oficial de hor├írios
+    ÔêÜ Federal hist├│rica funciona no s├íbado 18/07/2026 ├ás 20h (4 ms)
+    ÔêÜ Federal passa para domingo 19/07/2026 ├ás 11h (1 ms)
+    ÔêÜ Federal deixa de funcionar aos s├íbados ap├│s a transi├º├úo (1 ms)
+    ÔêÜ Federal continua funcionando na quarta-feira ├ás 20h (1 ms)
+    ÔêÜ PT Rio preserva domingo hist├│rico anterior ├á mudan├ºa (1 ms)
+    ÔêÜ PT Rio passa a ter somente 14h e 16h no domingo
+    ÔêÜ PT Rio preserva s├íbado hist├│rico com 18h (1 ms)
+    ÔêÜ PT Rio substitui 18h por 19h em 18/07/2026 (1 ms)
+    ÔêÜ PT Rio mant├®m 19h nos s├íbados posteriores (1 ms)
+    ÔêÜ PT Rio mant├®m 18h na quarta-feira (1 ms)
+    ÔêÜ PT Rio mant├®m 18h nos demais dias ├║teis
+    ÔêÜ LOOK usa a grade oficial completa (1 ms)
+    ÔêÜ LOOK faz a transicao 23h para 7h do dia seguinte (1 ms)
+    ÔêÜ Nacional usa somente os oito horarios oficiais
+    ÔêÜ Nacional faz a transicao 23h para 2h do dia seguinte
+
+Test Suites: 1 passed, 1 total
+Tests:       15 passed, 15 total
+Snapshots:   0 total
+Time:        3.681 s, estimated 9 s
+Ran all test suites within paths "src/pages/Top3/__tests__/top3.schedule-transition.test.js".
+
+> palpitaco@0.1.0 build
+> react-scripts build
+
+Creating an optimized production build...
+Compiled with warnings.
+
+[eslint] 
+src\pages\Account\Account.jsx
+  Line 1:1:  Unexpected Unicode BOM (Byte Order Mark)  unicode-bom
+
+src\pages\Account\account.profile.service.js
+  Line 322:11:  'lastActiveAt' is assigned a value but never used  no-unused-vars
+
+src\pages\Centenas\CentenasView.jsx
+  Line 82:10:   'todayYMDLocal' is defined but never used  no-unused-vars
+  Line 419:10:  'digitFromKey' is defined but never used   no-unused-vars
+
+src\pages\Dashboard\Dashboard.jsx
+  Line 30:10:  'loadDashboardStatistics' is defined but never used  no-unused-vars
+
+src\pages\Late\Late.jsx
+  Line 623:5:  React Hook useCallback has missing dependencies: 'buildLateList' and 'refreshBoundsAndLastDraw'. Either include them or remove the dependency array  react-hooks/exhaustive-deps
+
+src\pages\Top3\modules\scoreEngine\contextEvidence.js
+  Line 1:1:  'use strict' is unnecessary inside of modules  strict
+
+src\pages\Top3\modules\scoreEngine\evidenceEngine.js
+  Line 1:1:  'use strict' is unnecessary inside of modules  strict
+
+src\pages\Top3\modules\scoreEngine\frequencyEvidence.js
+  Line 1:1:  'use strict' is unnecessary inside of modules  strict
+
+src\pages\Top3\modules\scoreEngine\scoreConfig.js
+  Line 1:1:  'use strict' is unnecessary inside of modules  strict
+
+src\pages\Top3\modules\scoreEngine\scoreEngineV2.js
+  Line 1:1:  'use strict' is unnecessary inside of modules  strict
+
+src\pages\Top3\top3.engine.js
+  Line 220:7:  'FEDERAL_20_REMOVES_PT_RIO_18_START_YMD' is assigned a value but never used  no-unused-vars
+
+src\pages\Top3\top3.hooks.js
+  Line 107:10:  'hasDrawAtHour' is defined but never used                                                                                                       no-unused-vars
+  Line 842:6:   React Hook useCallback has a missing dependency: 'debugTop3'. Either include it or remove the dependency array                                  react-hooks/exhaustive-deps
+  Line 852:6:   React Hook useEffect has missing dependencies: 'lookback', 'lotteryKeySafe', and 'ymdSafe'. Either include them or remove the dependency array  react-hooks/exhaustive-deps
+
+Search for the keywords to learn more about each warning.
+To ignore, add // eslint-disable-next-line to the line before.
+
+File sizes after gzip:
+
+  343 kB (+154 B)  build\static\js\main.ef4ef75b.js
+  138.8 kB         build\static\js\238.133659d3.chunk.js
+  128.07 kB        build\static\js\389.21aa2d35.chunk.js
+  46.35 kB         build\static\js\239.6b4eaf90.chunk.js
+  42.9 kB          build\static\js\455.7220bbdf.chunk.js
+  9.79 kB          build\static\js\857.e51a2e06.chunk.js
+  8.69 kB          build\static\js\977.efeedf50.chunk.js
+  6.2 kB           build\static\css\main.64e2afab.css
+
+The project was built assuming it is hosted at /.
+You can control this with the homepage field in your package.json.
+
+The build folder is ready to be deployed.
+You may serve it with a static server:
+
+  serve -s build
+
+Find out more about deployment here:
+
+  https://cra.link/deployment
+

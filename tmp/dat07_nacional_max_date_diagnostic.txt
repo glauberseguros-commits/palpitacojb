@@ -1,0 +1,36 @@
+===== DAT-07 — DIAGNÓSTICO DA DATA FINAL NACIONAL =====
+
+DATA/HORA LOCAL:
+2026-07-20 13:26:54 -03:00
+
+==================================================
+URL: https://api.palpitacojb.com.br/api/bounds?uf=NACIONAL
+{
+  "ok": true,
+  "lottery": "NACIONAL",
+  "minYmd": "2022-06-07",
+  "maxYmd": "2026-07-19",
+  "source": "where(lottery_key)+orderBy(ymd)+docId(scan=50)",
+  "minDocId": "NACIONAL__2022-06-07__01-50__6c2b52ec-d613-4383-9c07-ff5ac7e04611",
+  "maxDocId": "NACIONAL__2026-07-19__23-00__2a424135-9b6a-4415-8a57-15e0d3abd736",
+  "sampleCount": null,
+  "firstDocId": null,
+  "lastDocId": null,
+  "note": null
+}
+
+==================================================
+URL: https://api.palpitacojb.com.br/api/bounds?lottery=NACIONAL
+{
+  "ok": true,
+  "lottery": "NACIONAL",
+  "minYmd": "2022-06-07",
+  "maxYmd": "2026-07-19",
+  "source": "where(lottery_key)+orderBy(ymd)+docId(scan=50)",
+  "minDocId": "NACIONAL__2022-06-07__01-50__6c2b52ec-d613-4383-9c07-ff5ac7e04611",
+  "maxDocId": "NACIONAL__2026-07-19__23-00__2a424135-9b6a-4415-8a57-15e0d3abd736",
+  "sampleCount": null,
+  "firstDocId": null,
+  "lastDocId": null,
+  "note": null
+}

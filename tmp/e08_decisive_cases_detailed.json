@@ -1,0 +1,249 @@
+{
+  "source": "tmp\\e08_differences_limit_500.json",
+  "totalDifferences": 179,
+  "decisiveCount": 10,
+  "summary": {
+    "gain": 4,
+    "loss": 6,
+    "net": -2
+  },
+  "byHour": {
+    "11:00": {
+      "gain": 0,
+      "loss": 2,
+      "net": -2
+    },
+    "14:00": {
+      "gain": 1,
+      "loss": 1,
+      "net": 0
+    },
+    "16:00": {
+      "gain": 2,
+      "loss": 0,
+      "net": 2
+    },
+    "18:00": {
+      "gain": 0,
+      "loss": 1,
+      "net": -1
+    },
+    "21:00": {
+      "gain": 1,
+      "loss": 2,
+      "net": -1
+    }
+  },
+  "cases": [
+    {
+      "caseKey": "2022-07-21|16:00",
+      "date": "2022-07-21",
+      "hour": "16:00",
+      "actualGroup": 16,
+      "baselineGroups": [
+        5,
+        16,
+        1
+      ],
+      "experimentalGroups": [
+        16,
+        1,
+        5
+      ],
+      "baselineTop1Hit": false,
+      "experimentalTop1Hit": true,
+      "baselineTop3Hit": true,
+      "experimentalTop3Hit": true,
+      "outcome": "GAIN"
+    },
+    {
+      "caseKey": "2022-08-04|18:00",
+      "date": "2022-08-04",
+      "hour": "18:00",
+      "actualGroup": 1,
+      "baselineGroups": [
+        1,
+        7,
+        15
+      ],
+      "experimentalGroups": [
+        7,
+        15,
+        1
+      ],
+      "baselineTop1Hit": true,
+      "experimentalTop1Hit": false,
+      "baselineTop3Hit": true,
+      "experimentalTop3Hit": true,
+      "outcome": "LOSS"
+    },
+    {
+      "caseKey": "2022-08-09|14:00",
+      "date": "2022-08-09",
+      "hour": "14:00",
+      "actualGroup": 5,
+      "baselineGroups": [
+        4,
+        5,
+        11
+      ],
+      "experimentalGroups": [
+        5,
+        4,
+        11
+      ],
+      "baselineTop1Hit": false,
+      "experimentalTop1Hit": true,
+      "baselineTop3Hit": true,
+      "experimentalTop3Hit": true,
+      "outcome": "GAIN"
+    },
+    {
+      "caseKey": "2022-08-15|21:00",
+      "date": "2022-08-15",
+      "hour": "21:00",
+      "actualGroup": 14,
+      "baselineGroups": [
+        14,
+        7,
+        5
+      ],
+      "experimentalGroups": [
+        7,
+        14,
+        5
+      ],
+      "baselineTop1Hit": true,
+      "experimentalTop1Hit": false,
+      "baselineTop3Hit": true,
+      "experimentalTop3Hit": true,
+      "outcome": "LOSS"
+    },
+    {
+      "caseKey": "2022-08-16|11:00",
+      "date": "2022-08-16",
+      "hour": "11:00",
+      "actualGroup": 16,
+      "baselineGroups": [
+        16,
+        20,
+        8
+      ],
+      "experimentalGroups": [
+        20,
+        8,
+        16
+      ],
+      "baselineTop1Hit": true,
+      "experimentalTop1Hit": false,
+      "baselineTop3Hit": true,
+      "experimentalTop3Hit": true,
+      "outcome": "LOSS"
+    },
+    {
+      "caseKey": "2022-09-14|21:00",
+      "date": "2022-09-14",
+      "hour": "21:00",
+      "actualGroup": 14,
+      "baselineGroups": [
+        14,
+        3,
+        7
+      ],
+      "experimentalGroups": [
+        3,
+        14,
+        7
+      ],
+      "baselineTop1Hit": true,
+      "experimentalTop1Hit": false,
+      "baselineTop3Hit": true,
+      "experimentalTop3Hit": true,
+      "outcome": "LOSS"
+    },
+    {
+      "caseKey": "2022-09-28|16:00",
+      "date": "2022-09-28",
+      "hour": "16:00",
+      "actualGroup": 16,
+      "baselineGroups": [
+        6,
+        3,
+        16
+      ],
+      "experimentalGroups": [
+        16,
+        6,
+        3
+      ],
+      "baselineTop1Hit": false,
+      "experimentalTop1Hit": true,
+      "baselineTop3Hit": true,
+      "experimentalTop3Hit": true,
+      "outcome": "GAIN"
+    },
+    {
+      "caseKey": "2022-09-30|14:00",
+      "date": "2022-09-30",
+      "hour": "14:00",
+      "actualGroup": 1,
+      "baselineGroups": [
+        1,
+        5,
+        18
+      ],
+      "experimentalGroups": [
+        5,
+        1,
+        18
+      ],
+      "baselineTop1Hit": true,
+      "experimentalTop1Hit": false,
+      "baselineTop3Hit": true,
+      "experimentalTop3Hit": true,
+      "outcome": "LOSS"
+    },
+    {
+      "caseKey": "2022-10-03|21:00",
+      "date": "2022-10-03",
+      "hour": "21:00",
+      "actualGroup": 3,
+      "baselineGroups": [
+        14,
+        5,
+        3
+      ],
+      "experimentalGroups": [
+        3,
+        14,
+        5
+      ],
+      "baselineTop1Hit": false,
+      "experimentalTop1Hit": true,
+      "baselineTop3Hit": true,
+      "experimentalTop3Hit": true,
+      "outcome": "GAIN"
+    },
+    {
+      "caseKey": "2022-10-05|11:00",
+      "date": "2022-10-05",
+      "hour": "11:00",
+      "actualGroup": 20,
+      "baselineGroups": [
+        20,
+        1,
+        25
+      ],
+      "experimentalGroups": [
+        1,
+        20,
+        25
+      ],
+      "baselineTop1Hit": true,
+      "experimentalTop1Hit": false,
+      "baselineTop3Hit": true,
+      "experimentalTop3Hit": true,
+      "outcome": "LOSS"
+    }
+  ]
+}

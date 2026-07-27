@@ -1,0 +1,35 @@
+==============================================
+E07 - COMPARACAO V3 x TRANSICOES
+==============================================
+
+Loteria.............: PT_RIO
+Casos avaliados.....: 100
+Historico minimo....: 100
+Periodo avaliado....: 2022-06-29 ate 2022-07-21
+
+BASELINE V3
+TOP1................: 6 (600.0000%)
+TOP3................: 13 (1300.0000%)
+Erros...............: 0
+
+EXPERIMENTAL E07
+TOP1................: 4 (400.0000%)
+TOP3................: 10 (1000.0000%)
+Erros...............: 0
+
+DELTA E07 - V3
+TOP1 acertos........: -2
+TOP1 taxa...........: -200.0000%
+TOP3 acertos........: -3
+TOP3 taxa...........: -300.0000%
+
+POR HORARIO - E07
+16:00 | avaliados=23 | TOP1=0.0000% | TOP3=434.7800% | erros=0
+21:00 | avaliados=20 | TOP1=1000.0000% | TOP3=1500.0000% | erros=0
+11:00 | avaliados=22 | TOP1=454.5500% | TOP3=909.0900% | erros=0
+14:00 | avaliados=22 | TOP1=0.0000% | TOP3=909.0900% | erros=0
+18:00 | avaliados=13 | TOP1=769.2300% | TOP3=1538.4600% | erros=0
+
+Nenhuma alteracao foi aplicada a producao.
+Nenhum peso oficial da V3 foi alterado.
+Nenhum deploy ou commit foi realizado.

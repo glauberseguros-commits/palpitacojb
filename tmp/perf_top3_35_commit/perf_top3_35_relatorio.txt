@@ -1,0 +1,918 @@
+====================================================================================================
+PERF-TOP3-35 — BOOTSTRAP REAL MULTILOTERIA
+====================================================================================================
+Data: 2026-07-24 09:41:25
+HEAD: 28d88bf9000215e8fbf3ea782224bbc4188b038c
+Branch: main
+
+Objetivo:
+- criar os históricos mensais TOP3 de FEDERAL, LOOK e NACIONAL;
+- criar metadata/current com bootstrapStatus=complete;
+- validar imediatamente as gravações;
+- não alterar código de produção.
+====================================================================================================
+
+====================================================================================================
+BOOTSTRAP: FEDERAL
+====================================================================================================
+
+===== TOP3 HISTORY BOOTSTRAP =====
+Loteria: FEDERAL
+Modo....: COMMIT
+
+[TOP3-HISTORY] Iniciando bootstrap FEDERAL | dryRun=false
+[BOOTSTRAP] Buscando p├ígina 1...
+[BOOTSTRAP] P├ígina 1: 416 draws | total=416
+[TOP3-HISTORY] Draws=416 | meses=50
+[TOP3-HISTORY] 2022-06 | draws=7 | bytesÔëê5765
+[TOP3-HISTORY] 2022-07 | draws=9 | bytesÔëê7259
+[TOP3-HISTORY] 2022-08 | draws=9 | bytesÔëê7261
+[TOP3-HISTORY] 2022-09 | draws=8 | bytesÔëê6527
+[TOP3-HISTORY] 2022-10 | draws=9 | bytesÔëê7265
+[TOP3-HISTORY] 2022-11 | draws=9 | bytesÔëê7256
+[TOP3-HISTORY] 2022-12 | draws=7 | bytesÔëê5705
+[TOP3-HISTORY] 2023-01 | draws=8 | bytesÔëê6483
+[TOP3-HISTORY] 2023-02 | draws=7 | bytesÔëê5704
+[TOP3-HISTORY] 2023-03 | draws=9 | bytesÔëê7257
+[TOP3-HISTORY] 2023-04 | draws=9 | bytesÔëê7261
+[TOP3-HISTORY] 2023-05 | draws=9 | bytesÔëê7263
+[TOP3-HISTORY] 2023-06 | draws=8 | bytesÔëê6483
+[TOP3-HISTORY] 2023-07 | draws=9 | bytesÔëê7266
+[TOP3-HISTORY] 2023-08 | draws=9 | bytesÔëê7266
+[TOP3-HISTORY] 2023-09 | draws=9 | bytesÔëê7261
+[TOP3-HISTORY] 2023-10 | draws=8 | bytesÔëê6479
+[TOP3-HISTORY] 2023-11 | draws=9 | bytesÔëê7265
+[TOP3-HISTORY] 2023-12 | draws=7 | bytesÔëê5703
+[TOP3-HISTORY] 2024-01 | draws=9 | bytesÔëê7424
+[TOP3-HISTORY] 2024-02 | draws=7 | bytesÔëê5784
+[TOP3-HISTORY] 2024-03 | draws=9 | bytesÔëê7262
+[TOP3-HISTORY] 2024-04 | draws=8 | bytesÔëê6480
+[TOP3-HISTORY] 2024-05 | draws=9 | bytesÔëê7261
+[TOP3-HISTORY] 2024-06 | draws=9 | bytesÔëê7264
+[TOP3-HISTORY] 2024-07 | draws=9 | bytesÔëê7253
+[TOP3-HISTORY] 2024-08 | draws=9 | bytesÔëê7264
+[TOP3-HISTORY] 2024-09 | draws=8 | bytesÔëê6482
+[TOP3-HISTORY] 2024-10 | draws=9 | bytesÔëê7257
+[TOP3-HISTORY] 2024-11 | draws=9 | bytesÔëê7267
+[TOP3-HISTORY] 2024-12 | draws=6 | bytesÔëê4929
+[TOP3-HISTORY] 2025-01 | draws=8 | bytesÔëê6484
+[TOP3-HISTORY] 2025-02 | draws=8 | bytesÔëê6481
+[TOP3-HISTORY] 2025-03 | draws=8 | bytesÔëê6477
+[TOP3-HISTORY] 2025-04 | draws=8 | bytesÔëê6486
+[TOP3-HISTORY] 2025-05 | draws=9 | bytesÔëê7263
+[TOP3-HISTORY] 2025-06 | draws=8 | bytesÔëê6478
+[TOP3-HISTORY] 2025-07 | draws=9 | bytesÔëê7263
+[TOP3-HISTORY] 2025-08 | draws=9 | bytesÔëê7260
+[TOP3-HISTORY] 2025-09 | draws=8 | bytesÔëê6482
+[TOP3-HISTORY] 2025-10 | draws=9 | bytesÔëê7256
+[TOP3-HISTORY] 2025-11 | draws=9 | bytesÔëê7614
+[TOP3-HISTORY] 2025-12 | draws=7 | bytesÔëê6041
+[TOP3-HISTORY] 2026-01 | draws=9 | bytesÔëê7679
+[TOP3-HISTORY] 2026-02 | draws=7 | bytesÔëê6038
+[TOP3-HISTORY] 2026-03 | draws=8 | bytesÔëê6855
+[TOP3-HISTORY] 2026-04 | draws=8 | bytesÔëê6856
+[TOP3-HISTORY] 2026-05 | draws=9 | bytesÔëê7676
+[TOP3-HISTORY] 2026-06 | draws=8 | bytesÔëê6863
+[TOP3-HISTORY] 2026-07 | draws=7 | bytesÔëê6040
+[TOP3-HISTORY] Gravado 2022-06: 7 draws
+[TOP3-HISTORY] Gravado 2022-07: 9 draws
+[TOP3-HISTORY] Gravado 2022-08: 9 draws
+[TOP3-HISTORY] Gravado 2022-09: 8 draws
+[TOP3-HISTORY] Gravado 2022-10: 9 draws
+[TOP3-HISTORY] Gravado 2022-11: 9 draws
+[TOP3-HISTORY] Gravado 2022-12: 7 draws
+[TOP3-HISTORY] Gravado 2023-01: 8 draws
+[TOP3-HISTORY] Gravado 2023-02: 7 draws
+[TOP3-HISTORY] Gravado 2023-03: 9 draws
+[TOP3-HISTORY] Gravado 2023-04: 9 draws
+[TOP3-HISTORY] Gravado 2023-05: 9 draws
+[TOP3-HISTORY] Gravado 2023-06: 8 draws
+[TOP3-HISTORY] Gravado 2023-07: 9 draws
+[TOP3-HISTORY] Gravado 2023-08: 9 draws
+[TOP3-HISTORY] Gravado 2023-09: 9 draws
+[TOP3-HISTORY] Gravado 2023-10: 8 draws
+[TOP3-HISTORY] Gravado 2023-11: 9 draws
+[TOP3-HISTORY] Gravado 2023-12: 7 draws
+[TOP3-HISTORY] Gravado 2024-01: 9 draws
+[TOP3-HISTORY] Gravado 2024-02: 7 draws
+[TOP3-HISTORY] Gravado 2024-03: 9 draws
+[TOP3-HISTORY] Gravado 2024-04: 8 draws
+[TOP3-HISTORY] Gravado 2024-05: 9 draws
+[TOP3-HISTORY] Gravado 2024-06: 9 draws
+[TOP3-HISTORY] Gravado 2024-07: 9 draws
+[TOP3-HISTORY] Gravado 2024-08: 9 draws
+[TOP3-HISTORY] Gravado 2024-09: 8 draws
+[TOP3-HISTORY] Gravado 2024-10: 9 draws
+[TOP3-HISTORY] Gravado 2024-11: 9 draws
+[TOP3-HISTORY] Gravado 2024-12: 6 draws
+[TOP3-HISTORY] Gravado 2025-01: 8 draws
+[TOP3-HISTORY] Gravado 2025-02: 8 draws
+[TOP3-HISTORY] Gravado 2025-03: 8 draws
+[TOP3-HISTORY] Gravado 2025-04: 8 draws
+[TOP3-HISTORY] Gravado 2025-05: 9 draws
+[TOP3-HISTORY] Gravado 2025-06: 8 draws
+[TOP3-HISTORY] Gravado 2025-07: 9 draws
+[TOP3-HISTORY] Gravado 2025-08: 9 draws
+[TOP3-HISTORY] Gravado 2025-09: 8 draws
+[TOP3-HISTORY] Gravado 2025-10: 9 draws
+[TOP3-HISTORY] Gravado 2025-11: 9 draws
+[TOP3-HISTORY] Gravado 2025-12: 7 draws
+[TOP3-HISTORY] Gravado 2026-01: 9 draws
+[TOP3-HISTORY] Gravado 2026-02: 7 draws
+[TOP3-HISTORY] Gravado 2026-03: 8 draws
+[TOP3-HISTORY] Gravado 2026-04: 8 draws
+[TOP3-HISTORY] Gravado 2026-05: 9 draws
+[TOP3-HISTORY] Gravado 2026-06: 8 draws
+[TOP3-HISTORY] Gravado 2026-07: 7 draws
+
+{
+  "ok": true,
+  "dryRun": false,
+  "lotteryKey": "FEDERAL",
+  "totalDraws": 416,
+  "months": [
+    "2022-06",
+    "2022-07",
+    "2022-08",
+    "2022-09",
+    "2022-10",
+    "2022-11",
+    "2022-12",
+    "2023-01",
+    "2023-02",
+    "2023-03",
+    "2023-04",
+    "2023-05",
+    "2023-06",
+    "2023-07",
+    "2023-08",
+    "2023-09",
+    "2023-10",
+    "2023-11",
+    "2023-12",
+    "2024-01",
+    "2024-02",
+    "2024-03",
+    "2024-04",
+    "2024-05",
+    "2024-06",
+    "2024-07",
+    "2024-08",
+    "2024-09",
+    "2024-10",
+    "2024-11",
+    "2024-12",
+    "2025-01",
+    "2025-02",
+    "2025-03",
+    "2025-04",
+    "2025-05",
+    "2025-06",
+    "2025-07",
+    "2025-08",
+    "2025-09",
+    "2025-10",
+    "2025-11",
+    "2025-12",
+    "2026-01",
+    "2026-02",
+    "2026-03",
+    "2026-04",
+    "2026-05",
+    "2026-06",
+    "2026-07"
+  ],
+  "monthCount": 50,
+  "firstYmd": "2022-06-08",
+  "lastYmd": "2026-07-22",
+  "firstDrawId": "FEDERAL__2022-06-08__20-00__9519c673-c3b8-4cb9-bcfe-9ddece3b03f3",
+  "lastDrawId": "FEDERAL__2026-07-22__20-00__9519c673-c3b8-4cb9-bcfe-9ddece3b03f3",
+  "metadata": {
+    "bootstrapStatus": "complete",
+    "bootstrapCompletedAt": "2026-07-24T12:41:33.120Z",
+    "totalDraws": 416,
+    "monthCount": 50,
+    "months": [
+      "2022-06",
+      "2022-07",
+      "2022-08",
+      "2022-09",
+      "2022-10",
+      "2022-11",
+      "2022-12",
+      "2023-01",
+      "2023-02",
+      "2023-03",
+      "2023-04",
+      "2023-05",
+      "2023-06",
+      "2023-07",
+      "2023-08",
+      "2023-09",
+      "2023-10",
+      "2023-11",
+      "2023-12",
+      "2024-01",
+      "2024-02",
+      "2024-03",
+      "2024-04",
+      "2024-05",
+      "2024-06",
+      "2024-07",
+      "2024-08",
+      "2024-09",
+      "2024-10",
+      "2024-11",
+      "2024-12",
+      "2025-01",
+      "2025-02",
+      "2025-03",
+      "2025-04",
+      "2025-05",
+      "2025-06",
+      "2025-07",
+      "2025-08",
+      "2025-09",
+      "2025-10",
+      "2025-11",
+      "2025-12",
+      "2026-01",
+      "2026-02",
+      "2026-03",
+      "2026-04",
+      "2026-05",
+      "2026-06",
+      "2026-07"
+    ],
+    "firstYmd": "2022-06-08",
+    "lastYmd": "2026-07-22",
+    "firstDrawId": "FEDERAL__2022-06-08__20-00__9519c673-c3b8-4cb9-bcfe-9ddece3b03f3",
+    "lastDrawId": "FEDERAL__2026-07-22__20-00__9519c673-c3b8-4cb9-bcfe-9ddece3b03f3",
+    "lastProcessedDrawId": "FEDERAL__2026-07-22__20-00__9519c673-c3b8-4cb9-bcfe-9ddece3b03f3",
+    "source": "fetchAllDrawsWithPrizes",
+    "schemaVersion": 1,
+    "lotteryKey": "FEDERAL",
+    "updatedAt": "2026-07-24T12:41:33.121Z"
+  },
+  "tookMs": 6656
+}
+
+ExitCode: 0
+Tempo total: 6989 ms
+Log: .\tmp\perf_top3_35_commit\federal_commit.log
+
+====================================================================================================
+BOOTSTRAP: LOOK
+====================================================================================================
+
+===== TOP3 HISTORY BOOTSTRAP =====
+Loteria: LOOK
+Modo....: COMMIT
+
+[TOP3-HISTORY] Iniciando bootstrap LOOK | dryRun=false
+[BOOTSTRAP] Buscando p├ígina 1...
+[BOOTSTRAP] P├ígina 1: 500 draws | total=500
+[BOOTSTRAP] Buscando p├ígina 2...
+[BOOTSTRAP] P├ígina 2: 500 draws | total=1000
+[BOOTSTRAP] Buscando p├ígina 3...
+[BOOTSTRAP] P├ígina 3: 500 draws | total=1500
+[BOOTSTRAP] Buscando p├ígina 4...
+[BOOTSTRAP] P├ígina 4: 500 draws | total=2000
+[BOOTSTRAP] Buscando p├ígina 5...
+[BOOTSTRAP] P├ígina 5: 500 draws | total=2500
+[BOOTSTRAP] Buscando p├ígina 6...
+[BOOTSTRAP] P├ígina 6: 500 draws | total=3000
+[BOOTSTRAP] Buscando p├ígina 7...
+[BOOTSTRAP] P├ígina 7: 500 draws | total=3500
+[BOOTSTRAP] Buscando p├ígina 8...
+[BOOTSTRAP] P├ígina 8: 500 draws | total=4000
+[BOOTSTRAP] Buscando p├ígina 9...
+[BOOTSTRAP] P├ígina 9: 500 draws | total=4500
+[BOOTSTRAP] Buscando p├ígina 10...
+[BOOTSTRAP] P├ígina 10: 500 draws | total=5000
+[BOOTSTRAP] Buscando p├ígina 11...
+[BOOTSTRAP] P├ígina 11: 500 draws | total=5500
+[BOOTSTRAP] Buscando p├ígina 12...
+[BOOTSTRAP] P├ígina 12: 500 draws | total=6000
+[BOOTSTRAP] Buscando p├ígina 13...
+[BOOTSTRAP] P├ígina 13: 500 draws | total=6500
+[BOOTSTRAP] Buscando p├ígina 14...
+[BOOTSTRAP] P├ígina 14: 500 draws | total=7000
+[BOOTSTRAP] Buscando p├ígina 15...
+[BOOTSTRAP] P├ígina 15: 500 draws | total=7500
+[BOOTSTRAP] Buscando p├ígina 16...
+[BOOTSTRAP] P├ígina 16: 500 draws | total=8000
+[BOOTSTRAP] Buscando p├ígina 17...
+[BOOTSTRAP] P├ígina 17: 500 draws | total=8500
+[BOOTSTRAP] Buscando p├ígina 18...
+[BOOTSTRAP] P├ígina 18: 500 draws | total=9000
+[BOOTSTRAP] Buscando p├ígina 19...
+[BOOTSTRAP] P├ígina 19: 500 draws | total=9500
+[BOOTSTRAP] Buscando p├ígina 20...
+[BOOTSTRAP] P├ígina 20: 500 draws | total=10000
+[BOOTSTRAP] Buscando p├ígina 21...
+[BOOTSTRAP] P├ígina 21: 219 draws | total=10219
+[TOP3-HISTORY] Draws=10219 | meses=50
+[TOP3-HISTORY] 2022-06 | draws=96 | bytesÔëê78193
+[TOP3-HISTORY] 2022-07 | draws=124 | bytesÔëê100918
+[TOP3-HISTORY] 2022-08 | draws=124 | bytesÔëê100916
+[TOP3-HISTORY] 2022-09 | draws=120 | bytesÔëê97672
+[TOP3-HISTORY] 2022-10 | draws=124 | bytesÔëê100891
+[TOP3-HISTORY] 2022-11 | draws=120 | bytesÔëê97672
+[TOP3-HISTORY] 2022-12 | draws=124 | bytesÔëê100903
+[TOP3-HISTORY] 2023-01 | draws=131 | bytesÔëê106589
+[TOP3-HISTORY] 2023-02 | draws=140 | bytesÔëê113902
+[TOP3-HISTORY] 2023-03 | draws=155 | bytesÔëê126026
+[TOP3-HISTORY] 2023-04 | draws=150 | bytesÔëê122039
+[TOP3-HISTORY] 2023-05 | draws=186 | bytesÔëê151234
+[TOP3-HISTORY] 2023-06 | draws=180 | bytesÔëê146367
+[TOP3-HISTORY] 2023-07 | draws=175 | bytesÔëê142301
+[TOP3-HISTORY] 2023-08 | draws=162 | bytesÔëê131761
+[TOP3-HISTORY] 2023-09 | draws=167 | bytesÔëê135783
+[TOP3-HISTORY] 2023-10 | draws=188 | bytesÔëê152846
+[TOP3-HISTORY] 2023-11 | draws=180 | bytesÔëê146366
+[TOP3-HISTORY] 2023-12 | draws=186 | bytesÔëê151216
+[TOP3-HISTORY] 2024-01 | draws=192 | bytesÔëê161043
+[TOP3-HISTORY] 2024-02 | draws=193 | bytesÔëê159804
+[TOP3-HISTORY] 2024-03 | draws=248 | bytesÔëê201512
+[TOP3-HISTORY] 2024-04 | draws=240 | bytesÔëê195086
+[TOP3-HISTORY] 2024-05 | draws=248 | bytesÔëê201547
+[TOP3-HISTORY] 2024-06 | draws=240 | bytesÔëê195049
+[TOP3-HISTORY] 2024-07 | draws=248 | bytesÔëê201504
+[TOP3-HISTORY] 2024-08 | draws=248 | bytesÔëê201550
+[TOP3-HISTORY] 2024-09 | draws=240 | bytesÔëê195051
+[TOP3-HISTORY] 2024-10 | draws=248 | bytesÔëê201532
+[TOP3-HISTORY] 2024-11 | draws=240 | bytesÔëê195059
+[TOP3-HISTORY] 2024-12 | draws=248 | bytesÔëê201494
+[TOP3-HISTORY] 2025-01 | draws=248 | bytesÔëê201545
+[TOP3-HISTORY] 2025-02 | draws=224 | bytesÔëê182055
+[TOP3-HISTORY] 2025-03 | draws=248 | bytesÔëê201523
+[TOP3-HISTORY] 2025-04 | draws=240 | bytesÔëê195010
+[TOP3-HISTORY] 2025-05 | draws=248 | bytesÔëê201514
+[TOP3-HISTORY] 2025-06 | draws=240 | bytesÔëê195070
+[TOP3-HISTORY] 2025-07 | draws=248 | bytesÔëê201579
+[TOP3-HISTORY] 2025-08 | draws=248 | bytesÔëê201551
+[TOP3-HISTORY] 2025-09 | draws=240 | bytesÔëê195055
+[TOP3-HISTORY] 2025-10 | draws=248 | bytesÔëê201544
+[TOP3-HISTORY] 2025-11 | draws=240 | bytesÔëê195041
+[TOP3-HISTORY] 2025-12 | draws=248 | bytesÔëê201481
+[TOP3-HISTORY] 2026-01 | draws=248 | bytesÔëê201527
+[TOP3-HISTORY] 2026-02 | draws=224 | bytesÔëê182015
+[TOP3-HISTORY] 2026-03 | draws=248 | bytesÔëê201538
+[TOP3-HISTORY] 2026-04 | draws=240 | bytesÔëê195035
+[TOP3-HISTORY] 2026-05 | draws=248 | bytesÔëê201536
+[TOP3-HISTORY] 2026-06 | draws=240 | bytesÔëê195087
+[TOP3-HISTORY] 2026-07 | draws=186 | bytesÔëê151209
+[TOP3-HISTORY] Gravado 2022-06: 96 draws
+[TOP3-HISTORY] Gravado 2022-07: 124 draws
+[TOP3-HISTORY] Gravado 2022-08: 124 draws
+[TOP3-HISTORY] Gravado 2022-09: 120 draws
+[TOP3-HISTORY] Gravado 2022-10: 124 draws
+[TOP3-HISTORY] Gravado 2022-11: 120 draws
+[TOP3-HISTORY] Gravado 2022-12: 124 draws
+[TOP3-HISTORY] Gravado 2023-01: 131 draws
+[TOP3-HISTORY] Gravado 2023-02: 140 draws
+[TOP3-HISTORY] Gravado 2023-03: 155 draws
+[TOP3-HISTORY] Gravado 2023-04: 150 draws
+[TOP3-HISTORY] Gravado 2023-05: 186 draws
+[TOP3-HISTORY] Gravado 2023-06: 180 draws
+[TOP3-HISTORY] Gravado 2023-07: 175 draws
+[TOP3-HISTORY] Gravado 2023-08: 162 draws
+[TOP3-HISTORY] Gravado 2023-09: 167 draws
+[TOP3-HISTORY] Gravado 2023-10: 188 draws
+[TOP3-HISTORY] Gravado 2023-11: 180 draws
+[TOP3-HISTORY] Gravado 2023-12: 186 draws
+[TOP3-HISTORY] Gravado 2024-01: 192 draws
+[TOP3-HISTORY] Gravado 2024-02: 193 draws
+[TOP3-HISTORY] Gravado 2024-03: 248 draws
+[TOP3-HISTORY] Gravado 2024-04: 240 draws
+[TOP3-HISTORY] Gravado 2024-05: 248 draws
+[TOP3-HISTORY] Gravado 2024-06: 240 draws
+[TOP3-HISTORY] Gravado 2024-07: 248 draws
+[TOP3-HISTORY] Gravado 2024-08: 248 draws
+[TOP3-HISTORY] Gravado 2024-09: 240 draws
+[TOP3-HISTORY] Gravado 2024-10: 248 draws
+[TOP3-HISTORY] Gravado 2024-11: 240 draws
+[TOP3-HISTORY] Gravado 2024-12: 248 draws
+[TOP3-HISTORY] Gravado 2025-01: 248 draws
+[TOP3-HISTORY] Gravado 2025-02: 224 draws
+[TOP3-HISTORY] Gravado 2025-03: 248 draws
+[TOP3-HISTORY] Gravado 2025-04: 240 draws
+[TOP3-HISTORY] Gravado 2025-05: 248 draws
+[TOP3-HISTORY] Gravado 2025-06: 240 draws
+[TOP3-HISTORY] Gravado 2025-07: 248 draws
+[TOP3-HISTORY] Gravado 2025-08: 248 draws
+[TOP3-HISTORY] Gravado 2025-09: 240 draws
+[TOP3-HISTORY] Gravado 2025-10: 248 draws
+[TOP3-HISTORY] Gravado 2025-11: 240 draws
+[TOP3-HISTORY] Gravado 2025-12: 248 draws
+[TOP3-HISTORY] Gravado 2026-01: 248 draws
+[TOP3-HISTORY] Gravado 2026-02: 224 draws
+[TOP3-HISTORY] Gravado 2026-03: 248 draws
+[TOP3-HISTORY] Gravado 2026-04: 240 draws
+[TOP3-HISTORY] Gravado 2026-05: 248 draws
+[TOP3-HISTORY] Gravado 2026-06: 240 draws
+[TOP3-HISTORY] Gravado 2026-07: 186 draws
+
+{
+  "ok": true,
+  "dryRun": false,
+  "lotteryKey": "LOOK",
+  "totalDraws": 10219,
+  "months": [
+    "2022-06",
+    "2022-07",
+    "2022-08",
+    "2022-09",
+    "2022-10",
+    "2022-11",
+    "2022-12",
+    "2023-01",
+    "2023-02",
+    "2023-03",
+    "2023-04",
+    "2023-05",
+    "2023-06",
+    "2023-07",
+    "2023-08",
+    "2023-09",
+    "2023-10",
+    "2023-11",
+    "2023-12",
+    "2024-01",
+    "2024-02",
+    "2024-03",
+    "2024-04",
+    "2024-05",
+    "2024-06",
+    "2024-07",
+    "2024-08",
+    "2024-09",
+    "2024-10",
+    "2024-11",
+    "2024-12",
+    "2025-01",
+    "2025-02",
+    "2025-03",
+    "2025-04",
+    "2025-05",
+    "2025-06",
+    "2025-07",
+    "2025-08",
+    "2025-09",
+    "2025-10",
+    "2025-11",
+    "2025-12",
+    "2026-01",
+    "2026-02",
+    "2026-03",
+    "2026-04",
+    "2026-05",
+    "2026-06",
+    "2026-07"
+  ],
+  "monthCount": 50,
+  "firstYmd": "2022-06-07",
+  "lastYmd": "2026-07-24",
+  "firstDrawId": "LOOK__2022-06-07__11-10__fe478ce4-0387-4985-b35a-4656ecc40382",
+  "lastDrawId": "LOOK__2026-07-24__09-00__aaede2c3-8305-460a-a580-bb7c26ecd0b6",
+  "metadata": {
+    "bootstrapStatus": "complete",
+    "bootstrapCompletedAt": "2026-07-24T12:42:27.107Z",
+    "totalDraws": 10219,
+    "monthCount": 50,
+    "months": [
+      "2022-06",
+      "2022-07",
+      "2022-08",
+      "2022-09",
+      "2022-10",
+      "2022-11",
+      "2022-12",
+      "2023-01",
+      "2023-02",
+      "2023-03",
+      "2023-04",
+      "2023-05",
+      "2023-06",
+      "2023-07",
+      "2023-08",
+      "2023-09",
+      "2023-10",
+      "2023-11",
+      "2023-12",
+      "2024-01",
+      "2024-02",
+      "2024-03",
+      "2024-04",
+      "2024-05",
+      "2024-06",
+      "2024-07",
+      "2024-08",
+      "2024-09",
+      "2024-10",
+      "2024-11",
+      "2024-12",
+      "2025-01",
+      "2025-02",
+      "2025-03",
+      "2025-04",
+      "2025-05",
+      "2025-06",
+      "2025-07",
+      "2025-08",
+      "2025-09",
+      "2025-10",
+      "2025-11",
+      "2025-12",
+      "2026-01",
+      "2026-02",
+      "2026-03",
+      "2026-04",
+      "2026-05",
+      "2026-06",
+      "2026-07"
+    ],
+    "firstYmd": "2022-06-07",
+    "lastYmd": "2026-07-24",
+    "firstDrawId": "LOOK__2022-06-07__11-10__fe478ce4-0387-4985-b35a-4656ecc40382",
+    "lastDrawId": "LOOK__2026-07-24__09-00__aaede2c3-8305-460a-a580-bb7c26ecd0b6",
+    "lastProcessedDrawId": "LOOK__2026-07-24__09-00__aaede2c3-8305-460a-a580-bb7c26ecd0b6",
+    "source": "fetchAllDrawsWithPrizes",
+    "schemaVersion": 1,
+    "lotteryKey": "LOOK",
+    "updatedAt": "2026-07-24T12:42:27.107Z"
+  },
+  "tookMs": 52968
+}
+
+ExitCode: 0
+Tempo total: 53869 ms
+Log: .\tmp\perf_top3_35_commit\look_commit.log
+
+====================================================================================================
+BOOTSTRAP: NACIONAL
+====================================================================================================
+
+===== TOP3 HISTORY BOOTSTRAP =====
+Loteria: NACIONAL
+Modo....: COMMIT
+
+[TOP3-HISTORY] Iniciando bootstrap NACIONAL | dryRun=false
+[BOOTSTRAP] Buscando p├ígina 1...
+[BOOTSTRAP] P├ígina 1: 500 draws | total=500
+[BOOTSTRAP] Buscando p├ígina 2...
+[BOOTSTRAP] P├ígina 2: 500 draws | total=1000
+[BOOTSTRAP] Buscando p├ígina 3...
+[BOOTSTRAP] P├ígina 3: 500 draws | total=1500
+[BOOTSTRAP] Buscando p├ígina 4...
+[BOOTSTRAP] P├ígina 4: 500 draws | total=2000
+[BOOTSTRAP] Buscando p├ígina 5...
+[BOOTSTRAP] P├ígina 5: 500 draws | total=2500
+[BOOTSTRAP] Buscando p├ígina 6...
+[BOOTSTRAP] P├ígina 6: 500 draws | total=3000
+[BOOTSTRAP] Buscando p├ígina 7...
+[BOOTSTRAP] P├ígina 7: 500 draws | total=3500
+[BOOTSTRAP] Buscando p├ígina 8...
+[BOOTSTRAP] P├ígina 8: 500 draws | total=4000
+[BOOTSTRAP] Buscando p├ígina 9...
+[BOOTSTRAP] P├ígina 9: 500 draws | total=4500
+[BOOTSTRAP] Buscando p├ígina 10...
+[BOOTSTRAP] P├ígina 10: 500 draws | total=5000
+[BOOTSTRAP] Buscando p├ígina 11...
+[BOOTSTRAP] P├ígina 11: 500 draws | total=5500
+[BOOTSTRAP] Buscando p├ígina 12...
+[BOOTSTRAP] P├ígina 12: 500 draws | total=6000
+[BOOTSTRAP] Buscando p├ígina 13...
+[BOOTSTRAP] P├ígina 13: 500 draws | total=6500
+[BOOTSTRAP] Buscando p├ígina 14...
+[BOOTSTRAP] P├ígina 14: 500 draws | total=7000
+[BOOTSTRAP] Buscando p├ígina 15...
+[BOOTSTRAP] P├ígina 15: 500 draws | total=7500
+[BOOTSTRAP] Buscando p├ígina 16...
+[BOOTSTRAP] P├ígina 16: 500 draws | total=8000
+[BOOTSTRAP] Buscando p├ígina 17...
+[BOOTSTRAP] P├ígina 17: 500 draws | total=8500
+[BOOTSTRAP] Buscando p├ígina 18...
+[BOOTSTRAP] P├ígina 18: 500 draws | total=9000
+[BOOTSTRAP] Buscando p├ígina 19...
+[BOOTSTRAP] P├ígina 19: 500 draws | total=9500
+[BOOTSTRAP] Buscando p├ígina 20...
+[BOOTSTRAP] P├ígina 20: 500 draws | total=10000
+[BOOTSTRAP] Buscando p├ígina 21...
+[BOOTSTRAP] P├ígina 21: 500 draws | total=10500
+[BOOTSTRAP] Buscando p├ígina 22...
+[BOOTSTRAP] P├ígina 22: 500 draws | total=11000
+[BOOTSTRAP] Buscando p├ígina 23...
+[BOOTSTRAP] P├ígina 23: 172 draws | total=11172
+[TOP3-HISTORY] Draws=11172 | meses=50
+[TOP3-HISTORY] 2022-06 | draws=144 | bytesÔëê118865
+[TOP3-HISTORY] 2022-07 | draws=186 | bytesÔëê153492
+[TOP3-HISTORY] 2022-08 | draws=186 | bytesÔëê153494
+[TOP3-HISTORY] 2022-09 | draws=180 | bytesÔëê148537
+[TOP3-HISTORY] 2022-10 | draws=186 | bytesÔëê153520
+[TOP3-HISTORY] 2022-11 | draws=180 | bytesÔëê148516
+[TOP3-HISTORY] 2022-12 | draws=186 | bytesÔëê153485
+[TOP3-HISTORY] 2023-01 | draws=186 | bytesÔëê153504
+[TOP3-HISTORY] 2023-02 | draws=168 | bytesÔëê138652
+[TOP3-HISTORY] 2023-03 | draws=186 | bytesÔëê153447
+[TOP3-HISTORY] 2023-04 | draws=180 | bytesÔëê148536
+[TOP3-HISTORY] 2023-05 | draws=186 | bytesÔëê153477
+[TOP3-HISTORY] 2023-06 | draws=180 | bytesÔëê148543
+[TOP3-HISTORY] 2023-07 | draws=186 | bytesÔëê153444
+[TOP3-HISTORY] 2023-08 | draws=186 | bytesÔëê153449
+[TOP3-HISTORY] 2023-09 | draws=240 | bytesÔëê197921
+[TOP3-HISTORY] 2023-10 | draws=248 | bytesÔëê204547
+[TOP3-HISTORY] 2023-11 | draws=240 | bytesÔëê197940
+[TOP3-HISTORY] 2023-12 | draws=248 | bytesÔëê204529
+[TOP3-HISTORY] 2024-01 | draws=248 | bytesÔëê210316
+[TOP3-HISTORY] 2024-02 | draws=232 | bytesÔëê194883
+[TOP3-HISTORY] 2024-03 | draws=248 | bytesÔëê204509
+[TOP3-HISTORY] 2024-04 | draws=240 | bytesÔëê197922
+[TOP3-HISTORY] 2024-05 | draws=248 | bytesÔëê204508
+[TOP3-HISTORY] 2024-06 | draws=240 | bytesÔëê197937
+[TOP3-HISTORY] 2024-07 | draws=248 | bytesÔëê204547
+[TOP3-HISTORY] 2024-08 | draws=248 | bytesÔëê204529
+[TOP3-HISTORY] 2024-09 | draws=240 | bytesÔëê197934
+[TOP3-HISTORY] 2024-10 | draws=248 | bytesÔëê204552
+[TOP3-HISTORY] 2024-11 | draws=240 | bytesÔëê197891
+[TOP3-HISTORY] 2024-12 | draws=248 | bytesÔëê204537
+[TOP3-HISTORY] 2025-01 | draws=248 | bytesÔëê204542
+[TOP3-HISTORY] 2025-02 | draws=224 | bytesÔëê184761
+[TOP3-HISTORY] 2025-03 | draws=256 | bytesÔëê211146
+[TOP3-HISTORY] 2025-04 | draws=240 | bytesÔëê197985
+[TOP3-HISTORY] 2025-05 | draws=248 | bytesÔëê204484
+[TOP3-HISTORY] 2025-06 | draws=240 | bytesÔëê197921
+[TOP3-HISTORY] 2025-07 | draws=248 | bytesÔëê204496
+[TOP3-HISTORY] 2025-08 | draws=248 | bytesÔëê204542
+[TOP3-HISTORY] 2025-09 | draws=240 | bytesÔëê197909
+[TOP3-HISTORY] 2025-10 | draws=248 | bytesÔëê204543
+[TOP3-HISTORY] 2025-11 | draws=240 | bytesÔëê197930
+[TOP3-HISTORY] 2025-12 | draws=248 | bytesÔëê204505
+[TOP3-HISTORY] 2026-01 | draws=248 | bytesÔëê204491
+[TOP3-HISTORY] 2026-02 | draws=224 | bytesÔëê184759
+[TOP3-HISTORY] 2026-03 | draws=248 | bytesÔëê204533
+[TOP3-HISTORY] 2026-04 | draws=240 | bytesÔëê197916
+[TOP3-HISTORY] 2026-05 | draws=248 | bytesÔëê204529
+[TOP3-HISTORY] 2026-06 | draws=240 | bytesÔëê197968
+[TOP3-HISTORY] 2026-07 | draws=186 | bytesÔëê153496
+[TOP3-HISTORY] Gravado 2022-06: 144 draws
+[TOP3-HISTORY] Gravado 2022-07: 186 draws
+[TOP3-HISTORY] Gravado 2022-08: 186 draws
+[TOP3-HISTORY] Gravado 2022-09: 180 draws
+[TOP3-HISTORY] Gravado 2022-10: 186 draws
+[TOP3-HISTORY] Gravado 2022-11: 180 draws
+[TOP3-HISTORY] Gravado 2022-12: 186 draws
+[TOP3-HISTORY] Gravado 2023-01: 186 draws
+[TOP3-HISTORY] Gravado 2023-02: 168 draws
+[TOP3-HISTORY] Gravado 2023-03: 186 draws
+[TOP3-HISTORY] Gravado 2023-04: 180 draws
+[TOP3-HISTORY] Gravado 2023-05: 186 draws
+[TOP3-HISTORY] Gravado 2023-06: 180 draws
+[TOP3-HISTORY] Gravado 2023-07: 186 draws
+[TOP3-HISTORY] Gravado 2023-08: 186 draws
+[TOP3-HISTORY] Gravado 2023-09: 240 draws
+[TOP3-HISTORY] Gravado 2023-10: 248 draws
+[TOP3-HISTORY] Gravado 2023-11: 240 draws
+[TOP3-HISTORY] Gravado 2023-12: 248 draws
+[TOP3-HISTORY] Gravado 2024-01: 248 draws
+[TOP3-HISTORY] Gravado 2024-02: 232 draws
+[TOP3-HISTORY] Gravado 2024-03: 248 draws
+[TOP3-HISTORY] Gravado 2024-04: 240 draws
+[TOP3-HISTORY] Gravado 2024-05: 248 draws
+[TOP3-HISTORY] Gravado 2024-06: 240 draws
+[TOP3-HISTORY] Gravado 2024-07: 248 draws
+[TOP3-HISTORY] Gravado 2024-08: 248 draws
+[TOP3-HISTORY] Gravado 2024-09: 240 draws
+[TOP3-HISTORY] Gravado 2024-10: 248 draws
+[TOP3-HISTORY] Gravado 2024-11: 240 draws
+[TOP3-HISTORY] Gravado 2024-12: 248 draws
+[TOP3-HISTORY] Gravado 2025-01: 248 draws
+[TOP3-HISTORY] Gravado 2025-02: 224 draws
+[TOP3-HISTORY] Gravado 2025-03: 256 draws
+[TOP3-HISTORY] Gravado 2025-04: 240 draws
+[TOP3-HISTORY] Gravado 2025-05: 248 draws
+[TOP3-HISTORY] Gravado 2025-06: 240 draws
+[TOP3-HISTORY] Gravado 2025-07: 248 draws
+[TOP3-HISTORY] Gravado 2025-08: 248 draws
+[TOP3-HISTORY] Gravado 2025-09: 240 draws
+[TOP3-HISTORY] Gravado 2025-10: 248 draws
+[TOP3-HISTORY] Gravado 2025-11: 240 draws
+[TOP3-HISTORY] Gravado 2025-12: 248 draws
+[TOP3-HISTORY] Gravado 2026-01: 248 draws
+[TOP3-HISTORY] Gravado 2026-02: 224 draws
+[TOP3-HISTORY] Gravado 2026-03: 248 draws
+[TOP3-HISTORY] Gravado 2026-04: 240 draws
+[TOP3-HISTORY] Gravado 2026-05: 248 draws
+[TOP3-HISTORY] Gravado 2026-06: 240 draws
+[TOP3-HISTORY] Gravado 2026-07: 186 draws
+
+{
+  "ok": true,
+  "dryRun": false,
+  "lotteryKey": "NACIONAL",
+  "totalDraws": 11172,
+  "months": [
+    "2022-06",
+    "2022-07",
+    "2022-08",
+    "2022-09",
+    "2022-10",
+    "2022-11",
+    "2022-12",
+    "2023-01",
+    "2023-02",
+    "2023-03",
+    "2023-04",
+    "2023-05",
+    "2023-06",
+    "2023-07",
+    "2023-08",
+    "2023-09",
+    "2023-10",
+    "2023-11",
+    "2023-12",
+    "2024-01",
+    "2024-02",
+    "2024-03",
+    "2024-04",
+    "2024-05",
+    "2024-06",
+    "2024-07",
+    "2024-08",
+    "2024-09",
+    "2024-10",
+    "2024-11",
+    "2024-12",
+    "2025-01",
+    "2025-02",
+    "2025-03",
+    "2025-04",
+    "2025-05",
+    "2025-06",
+    "2025-07",
+    "2025-08",
+    "2025-09",
+    "2025-10",
+    "2025-11",
+    "2025-12",
+    "2026-01",
+    "2026-02",
+    "2026-03",
+    "2026-04",
+    "2026-05",
+    "2026-06",
+    "2026-07"
+  ],
+  "monthCount": 50,
+  "firstYmd": "2022-06-07",
+  "lastYmd": "2026-07-24",
+  "firstDrawId": "NACIONAL__2022-06-07__01-50__6c2b52ec-d613-4383-9c07-ff5ac7e04611",
+  "lastDrawId": "NACIONAL__2026-07-24__08-00__76a3feee-faa6-4b6c-aae5-656fd6af7b6b",
+  "metadata": {
+    "bootstrapStatus": "complete",
+    "bootstrapCompletedAt": "2026-07-24T12:43:25.807Z",
+    "totalDraws": 11172,
+    "monthCount": 50,
+    "months": [
+      "2022-06",
+      "2022-07",
+      "2022-08",
+      "2022-09",
+      "2022-10",
+      "2022-11",
+      "2022-12",
+      "2023-01",
+      "2023-02",
+      "2023-03",
+      "2023-04",
+      "2023-05",
+      "2023-06",
+      "2023-07",
+      "2023-08",
+      "2023-09",
+      "2023-10",
+      "2023-11",
+      "2023-12",
+      "2024-01",
+      "2024-02",
+      "2024-03",
+      "2024-04",
+      "2024-05",
+      "2024-06",
+      "2024-07",
+      "2024-08",
+      "2024-09",
+      "2024-10",
+      "2024-11",
+      "2024-12",
+      "2025-01",
+      "2025-02",
+      "2025-03",
+      "2025-04",
+      "2025-05",
+      "2025-06",
+      "2025-07",
+      "2025-08",
+      "2025-09",
+      "2025-10",
+      "2025-11",
+      "2025-12",
+      "2026-01",
+      "2026-02",
+      "2026-03",
+      "2026-04",
+      "2026-05",
+      "2026-06",
+      "2026-07"
+    ],
+    "firstYmd": "2022-06-07",
+    "lastYmd": "2026-07-24",
+    "firstDrawId": "NACIONAL__2022-06-07__01-50__6c2b52ec-d613-4383-9c07-ff5ac7e04611",
+    "lastDrawId": "NACIONAL__2026-07-24__08-00__76a3feee-faa6-4b6c-aae5-656fd6af7b6b",
+    "lastProcessedDrawId": "NACIONAL__2026-07-24__08-00__76a3feee-faa6-4b6c-aae5-656fd6af7b6b",
+    "source": "fetchAllDrawsWithPrizes",
+    "schemaVersion": 1,
+    "lotteryKey": "NACIONAL",
+    "updatedAt": "2026-07-24T12:43:25.808Z"
+  },
+  "tookMs": 58308
+}
+
+ExitCode: 0
+Tempo total: 58701 ms
+Log: .\tmp\perf_top3_35_commit\nacional_commit.log
+
+====================================================================================================
+VALIDAÇÃO PÓS-BOOTSTRAP
+====================================================================================================
+{
+  "valid": true,
+  "results": [
+    {
+      "lotteryKey": "FEDERAL",
+      "metadataExists": true,
+      "bootstrapStatus": "complete",
+      "expectedTotal": 416,
+      "loadedTotal": 416,
+      "monthCountMetadata": 50,
+      "monthCountLoaded": 50,
+      "firstYmd": "2022-06-08",
+      "lastYmd": "2026-07-22",
+      "totalsMatch": true,
+      "monthsMatch": true,
+      "valid": true
+    },
+    {
+      "lotteryKey": "LOOK",
+      "metadataExists": true,
+      "bootstrapStatus": "complete",
+      "expectedTotal": 10219,
+      "loadedTotal": 10219,
+      "monthCountMetadata": 50,
+      "monthCountLoaded": 50,
+      "firstYmd": "2022-06-07",
+      "lastYmd": "2026-07-24",
+      "totalsMatch": true,
+      "monthsMatch": true,
+      "valid": true
+    },
+    {
+      "lotteryKey": "NACIONAL",
+      "metadataExists": true,
+      "bootstrapStatus": "complete",
+      "expectedTotal": 11172,
+      "loadedTotal": 11172,
+      "monthCountMetadata": 50,
+      "monthCountLoaded": 50,
+      "firstYmd": "2022-06-07",
+      "lastYmd": "2026-07-24",
+      "totalsMatch": true,
+      "monthsMatch": true,
+      "valid": true
+    }
+  ]
+}
+
+ValidationExitCode: 0
+
+====================================================================================================
+RESULTADO FINAL
+====================================================================================================
+Sucesso geral: True
+
+Firestore:
+- históricos mensais foram gravados;
+- metadata/current foi gravado;
+- a consistência foi verificada após a gravação.
+
+Código:
+- nenhum arquivo de produção foi alterado;
+- nenhum commit foi criado;
+- nenhum push foi executado.
+
+Próxima etapa:
+- criar os snapshots compactos anuais;
+- executar o benchmark das quatro loterias;
+- aplicar a otimização de CPU.
+====================================================================================================

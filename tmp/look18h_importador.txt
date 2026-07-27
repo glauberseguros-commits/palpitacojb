@@ -1,0 +1,350 @@
+====================================================================================================
+LOOK-18H-04B — AUDITORIA DO IMPORTADOR
+====================================================================================================
+Gerado em: 25/07/2026 20:43:32
+Arquivo: .\backend\scripts\importKingApostas.js
+====================================================================================================
+
+
+LineNumber Line
+---------- ----
+        11   normalizeFederalRequestedSlot,
+        12   normalizeFederalSourceSlot,
+        13 } = require("./federalCalendar");
+        66  * Mantém compatível com seu fluxo local (Windows) e com Cloud (ADC).
+       153 const { getPtRioSlotsByDate } = require("./ptRioCalendar");
+       161   resolveNextTop3Slot,
+       182  * Retry HTTP simples (evita falhas intermitentes/429)
+       188 const HTTP_RETRY_BASE_MS = Number.isFinite(Number(process.env.HTTP_RETRY_BASE_MS))
+       189   ? Math.max(50, Number(process.env.HTTP_RETRY_BASE_MS))
+       204 // ✅ Debug leve do override FEDERAL
+       220  * - lottery_key identifica a loteria/fonte (ex.: PT_RIO)
+       223  * Se uf ficar "PT_RIO", o bounds por UF quebra.
+       226 const RJ_LOTTERY_KEY = "PT_RIO";
+       228 const FEDERAL_STATE_CODE = "BR";
+       229 const FEDERAL_LOTTERY_KEY = "FEDERAL";
+       231 const LOOK_STATE_CODE = "GO";
+       232 const LOOK_LOTTERY_KEY = "LOOK";
+       234 const NACIONAL_STATE_CODE = "BR";
+       235 const NACIONAL_LOTTERY_KEY = "NACIONAL";
+       241   if (lk === FEDERAL_LOTTERY_KEY) return FEDERAL_STATE_CODE;
+       242   if (lk === LOOK_LOTTERY_KEY) return LOOK_STATE_CODE;
+       243   if (lk === NACIONAL_LOTTERY_KEY) return NACIONAL_STATE_CODE;
+       301   11: "Cavalo",
+       304   14: "Gato",
+       306   16: "Leão",
+       308   18: "Porco",
+       311   21: "Touro",
+       313   23: "Urso",
+       349  * Aceita: "10", "10h", "10:9", "10:09"
+       374  * ✅ Normaliza close_hour para SLOT (campo de negócio)
+       375  * - Para PT_RIO: força minutos = 00 (09:09 -> 09:00)
+       379  * - A API do PT_RIO costuma devolver HH:09 como "marcação" e NÃO um minuto real.
+       380  * - Portanto, para PT_RIO, se raw terminar em ":09", tratamos como "sem minuto real"
+       381  *   e NÃO persistimos close_hour_raw (vira "").
+       384  * - raw: HH:MM (normalizado) OU "" quando for "sintético" (PT_RIO HH:09)
+       385  * - slot: HH:MM (normalizado para o que o sistema deve usar em consultas/ID)
+       387 function normalizeCloseHourForLottery(value, lotteryKey) {
+       390   if (!raw0 || !isHHMM(raw0)) return { raw: "", slot: "" };
+       392   // Federal: 11h e o novo slot oficial de domingo.
+       393   // A marcacao antecipada de 19h continua pertencendo ao slot 20h.
+       394   if (lk === "FEDERAL") {
+       397       slot: normalizeFederalRequestedSlot(raw0),
+       401   // LOOK:
+       402   // a fonte pode publicar minutos variáveis, por exemplo 07:09, 09:09 e 11:12.
+       403   // Para o sistema, todos pertencem ao slot operacional da hora cheia.
+       404   // Preservamos o horário bruto em close_hour_raw e gravamos HH:00 em close_hour.
+       405   if (lk === "LOOK") {
+       407     return { raw: raw0, slot: `${hh}:00` };
+       410   if (lk === "PT_RIO") {
+       414     // ✅ se vier HH:09, é marcação (não minuto real) -> não grava close_hour_raw
+       415     const raw = mm === "09" ? "" : raw0;
+       416     return { raw, slot: `${hh}:00` };
+       419   return { raw: raw0, slot: raw0 };
+       424  * NACIONAL:
+       427 function normalizeDrawCloseHour(draw, lotteryKey) {
+       428   const base = normalizeCloseHourForLottery(
+       429     draw?.close_hour || "",
+       435   if (lk === "FEDERAL") {
+       438       slot: normalizeFederalSourceSlot({
+       440         rawSlot: base.raw || base.slot,
+       445   if (lk !== "NACIONAL") {
+       463     slot: `${String(m[1]).padStart(2,"0")}:00`
+       469  * ✅ Normaliza o parâmetro closeHour (do CLI/scheduler) e evita log enganoso.
+       470  * - Para FEDERAL: qualquer coisa vira slot=20:00, mas mantemos "requested" para log.
+       472 function normalizeRequestedCloseHour(closeHour, lotteryKey) {
+       474   const requested = closeHour ? normalizeHHMM(closeHour) : null;
+       478     return { requested: null, slot: null, note: null };
+       481     return { requested, slot: null, note: "invalid" };
+       484   if (lk === "FEDERAL") {
+       485     const slot =
+       486       normalizeFederalRequestedSlot(requested);
+       489       requested !== slot
+       490         ? `FEDERAL_slot_normalized(${requested}->${slot})`
+       493     return { requested, slot, note };
+       496   // outros: normalização normal por lotteryKey (PT_RIO min->00 etc.)
+       497   const slot = normalizeCloseHourForLottery(requested, lk).slot;
+       498   return { requested, slot: slot || null, note: null };
+       502  * Sanitiza string para docId do Firestore.
+       532  * Observação: a API pode consolidar em 1 draw por close_hour, mesmo havendo múltiplos IDs aqui.
+       535  * - KING_LOTTERIES_PT_RIO="uuid1,uuid2,..."
+       536  * - KING_LOTTERIES_FEDERAL="uuid1,uuid2,..."
+       537  * - KING_LOTTERIES_LOOK="uuid1,uuid2,..."
+       538  * - KING_LOTTERIES_NACIONAL="uuid1,uuid2,..."
+       541   PT_RIO: [
+       542     "c168d9b3-97b7-42dc-a332-7815edaa51e2",
+       543     "cbac7c11-e733-400b-ba4d-2dfe0cba4272",
+       546     "8290329b-aac0-4a6a-9649-5feb6182cf4f",
+       547     "d5123f7e-629d-43e9-a8fb-1385ff1cba45",
+       549   FEDERAL: [
+       552     LOOK: [
+       553     "64d49fc1-9230-4d6a-92e5-5f2f70e5d352",
+       557     "502d50e3-4092-4730-bb81-a80462044256",
+       559     "09593bd0-4a14-4372-a550-e34bfd463bdd",
+       562     NACIONAL: [
+       563     "6c2b52ec-d613-4383-9c07-ff5ac7e04611",
+       568     "87db8fb6-8718-49c3-b739-96eec085e09d",
+       576     const rawRio = String(process.env.KING_LOTTERIES_PT_RIO || "").trim();
+       582       if (arr.length) LOTTERIES_BY_KEY.PT_RIO = arr;
+       585     const rawFed = String(process.env.KING_LOTTERIES_FEDERAL || "").trim();
+       591       if (arrF.length) LOTTERIES_BY_KEY.FEDERAL = arrF;
+       594     const rawLook = String(process.env.KING_LOTTERIES_LOOK || "").trim();
+       595     if (rawLook) {
+       596       const arrLook = rawLook
+       600       if (arrLook.length) LOTTERIES_BY_KEY.LOOK = arrLook;
+       603     const rawNacional = String(
+       604       process.env.KING_LOTTERIES_NACIONAL || ""
+       606     if (rawNacional) {
+       607       const arrNacional = rawNacional
+       611       if (arrNacional.length) LOTTERIES_BY_KEY.NACIONAL = arrNacional;
+       624         `[OVERRIDE] PT_RIO lotteries=${counts.PT_RIO} | ` +
+       625           `FEDERAL lotteries=${counts.FEDERAL} | ` +
+       626           `LOOK lotteries=${counts.LOOK} | ` +
+       627           `NACIONAL lotteries=${counts.NACIONAL}`
+       665   return new Promise((r) => setTimeout(r, ms));
+       668 function shouldRetryAxiosError(err) {
+       714       const canRetry = attempt < HTTP_RETRIES && shouldRetryAxiosError(e);
+       715       if (!canRetry) break;
+       717       const backoff = HTTP_RETRY_BASE_MS * Math.pow(2, attempt);
+       721         }). retry em ${backoff}ms...`
+       731    DETAILS (HTML) fallback — PT_RIO 18h
+       737   const lot = lk === "PT_RIO" ? "PT RIO" : lk.replace(/_/g, " ");
+       760             "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120 Safari/537.36",
+       769       const canRetry = attempt < HTTP_RETRIES && shouldRetryAxiosError(e);
+       770       if (!canRetry) break;
+       772       const backoff = HTTP_RETRY_BASE_MS * Math.pow(2, attempt);
+       776         }). retry em ${backoff}ms...`
+       804 // Heurística: só diagnosticar se o HTML "parece" ter o slot e algum conteúdo de prêmios
+       805 function parseDetailsHtmlForSlot(html, slotHHMM) {
+       807     hasSlot: false,
+       812   const slot = String(slotHHMM || "").trim();
+       813   if (!h || !slot) return out;
+       822   if (h.toLowerCase().includes(slot.toLowerCase())) out.hasSlot = true;
+       830 async function tryHtmlDetailsFallback({ date, lotteryKey, closeHour }) {
+       832   const slot = normalizeCloseHourForLottery(closeHour || "", lk).slot;
+       833   if (!slot || !isHHMM(slot)) return { ok: false, reason: "bad_slot" };
+       835   // por enquanto: só PT_RIO 18:00 (não altera outros horários)
+       836   if (!(lk === "PT_RIO" && slot === "18:00")) {
+       842   const parsed = parseDetailsHtmlForSlot(html, slot);
+       847     slot,
+       848     hasSlot: parsed.hasSlot,
+       856  * Dedup key: date + close_hour(SLOT) + lottery_id (se existir)
+       865       const { slot } = normalizeDrawCloseHour(d, lotteryKey);
+       871       const key = `${date}__${slot}__${lid}`;
+       898 function summarizeCloseHours(draws, lotteryKey) {
+       902     const { slot } = normalizeDrawCloseHour(
+       907     if (slot) {
+       908       set.add(slot);
+       944     normalizeHHMM(d?.close_hour ?? d?.closeHour ?? d?.horario ?? d?.close ?? "");
+       946   const summarizeCloseHoursPart = (list) => {
+       973         const closesPart = summarizeCloseHoursPart(list);
+       975           `[FETCH:PART] ${lk} ${date} lotteryId=${lotteryId} draws=${list.length} close_hours=[${closesPart.join(
+       997   const closes = summarizeCloseHours(merged, lk);
+      1006     } close_hours=[${closes.join(", ")}]${errInfo}`
+      1026  * ✅ Agora usa close_hour SLOT no ID e guarda close_hour_raw (quando fizer sentido).
+      1031   const { raw: closeRaw, slot: closeSlot } = normalizeDrawCloseHour(
+      1041   // O ID deve usar sempre o slot oficial.
+      1043   // e permanece preservado apenas em close_hour_raw.
+      1044   const drawIdSlot = closeSlot;
+      1047     drawIdSlot
+      1056     closeSlot,
+      1084  * ✅ Prova forte por SLOT (anti-índice composto)
+      1086  * - close_hour + lottery_key/lotteryKey filtrados em memória
+      1089  * - Normaliza o close_hour armazenado (pode existir legado "09:09")
+      1090  *   e compara por SLOT (HH:00), para não “perder” doc existente.
+      1092 async function checkSlotCompletion({ date, closeHour, lotteryKey }) {
+      1095     const targetSlot = normalizeCloseHourForLottery(closeHour || "", lk).slot;
+      1096     if (!targetSlot || !isHHMM(targetSlot)) return { docs: 0, complete: 0 };
+      1111       // ✅ compara por SLOT normalizado (pega legado "09:09" como "09:00")
+      1112       const storedSlot = normalizeCloseHourForLottery(d.close_hour || "", lk).slot;
+      1113       if (storedSlot !== targetSlot) return;
+      1133  * Importa payload para o Firestore.
+      1134  * closeHour (opcional): se informado, importa SOMENTE draws daquele horário (SLOT).
+      1137  * - skipIfAlreadyComplete (boolean): se true, e o draw do closeHour já estiver completo no FS,
+      1143   closeHour = null,
+      1149   let batch = db.batch();
+      1157   let totalDrawsSaved = 0;
+      1160   let totalPrizesSaved = 0;
+      1164   let skippedCloseHour = 0;
+      1167   // Provas úteis para o scheduler (quando closeHour é informado)
+      1172     apiReturnedTargetDraws: 0, // draws válidos do closeHour com prizes
+      1174     inferredDate: null, // date do slot (inferido a partir do payload)
+      1177     slotDocsFound: 0,
+      1182     targetWriteCount: 0,
+      1183     targetSavedCount: 0,
+      1186   // ✅ filtro deve ser SLOT também
+      1187   const filterClose = closeHour
+      1188     ? normalizeCloseHourForLottery(closeHour, lk).slot
+      1191     throw new Error('Parâmetro "closeHour" inválido. Use HH:MM.');
+      1201     const { raw: closeRaw, slot: closeSlot } = normalizeDrawCloseHour(
+      1206     // filtro por horário (SLOT)
+      1208       if (closeSlot !== filterClose) {
+      1209         skippedCloseHour++;
+      1216     // validações mínimas (slot precisa ser HH:MM)
+      1217     if (!isISODate(date) || !isHHMM(closeSlot)) {
+      1246     // Em closeHour: checa “já completo” e, se configurado, pula escrita (por draw)
+      1268     batch.set(
+      1283         // ✅ campo de negócio (SLOT)
+      1284         close_hour: closeSlot,
+      1287         hour: closeSlot ? String(closeSlot).slice(0, 2) : null,
+      1288         close: closeSlot || null,
+      1291         // (PT_RIO HH:09 vira "", então cai em null)
+      1292         close_hour_raw: closeRaw || null,
+      1295         importedAt: admin.firestore.FieldValue.serverTimestamp(),
+      1301     if (isNewDraw) totalDrawsSaved++;
+      1303     if (filterClose) proof.targetWriteCount += 1;
+      1320       batch.set(
+      1330       if (isNewPrize) totalPrizesSaved++;
+      1332       if (filterClose) proof.targetWriteCount += 1;
+      1335         await batch.commit();
+      1336         batch = db.batch();
+      1342   if (ops > 0) await batch.commit();
+      1344   // ✅ flags finais de complete (por SLOT via query anti-índice)
+      1346     const slotDate = proof.inferredDate; // se API trouxe o slot, teremos date
+      1349     if (slotDate) {
+      1350       const { docs, complete } = await checkSlotCompletion({
+      1351         date: slotDate,
+      1352         closeHour: proof.filterClose,
+      1356       proof.slotDocsFound = docs;
+      1361       proof.slotDocsFound = 0;
+      1367     // savedCount “forte” para o scheduler:
+      1369       proof.targetSavedCount = 0;
+      1371       proof.targetSavedCount = 0;
+      1373       proof.targetSavedCount = proof.targetWriteCount;
+      1379       ` | draws_upserted=${totalDrawsUpserted} | draws_novos=${totalDrawsSaved}` +
+      1380       ` | prizes_upserted=${totalPrizesUpserted} | prizes_novos=${totalPrizesSaved}` +
+      1381       ` | skip_vazio=${skippedEmpty} | skip_invalido=${skippedInvalid} | skip_close=${skippedCloseHour}` +
+      1386         ? ` | expected=${proof.expectedTargets} complete=${proof.alreadyCompleteCount} slotDocs=${proof.slotDocsFound} apiTargets=${proof.apiReturnedTargetDraws}`
+      1395     totalDrawsSaved,
+      1398     totalPrizesSaved,
+      1403     skippedCloseHour,
+      1411  * ✅ Cleanup automático: remove docs legados (lottery_id null) quando existe doc UUID no mesmo date+slot.
+      1413  * - Seguro: só apaga legado se existe UUID no slot
+      1418     return { ok: false, deleted: 0, slots: 0, reason: "bad_args" };
+      1427   const bySlot = new Map();
+      1429     const slot = String(r.close_hour || "").trim();
+      1430     if (!slot) continue;
+      1431     if (!bySlot.has(slot)) bySlot.set(slot, []);
+      1432     bySlot.get(slot).push(r);
+      1436   let slots = 0;
+      1437   let batch = db.batch();
+      1440   for (const [slot, arr] of bySlot.entries()) {
+      1448       batch.delete(d.ref);
+      1452         await batch.commit();
+      1453         batch = db.batch();
+      1457     slots += 1;
+      1460   if (ops > 0) await batch.commit();
+      1462   return { ok: true, deleted, slots };
+      1465 async function runImport({ date, lotteryKey = "PT_RIO", closeHour = null } = {}) {
+      1478     const norm = normalizeRequestedCloseHour(closeHour, lk);
+      1483       closeHour: norm.slot || null,
+      1485       requestedCloseHour: norm.requested || null,
+      1497       slotDocsFound: null,
+      1499       savedCount: null,
+      1500       writeCount: null,
+      1507       totalDrawsSaved: 0,
+      1509       totalPrizesSaved: 0,
+      1513       skippedCloseHour: 0,
+      1516         filterClose: norm.slot || null,
+      1522         slotDocsFound: 0,
+      1526         targetWriteCount: 0,
+      1527         targetSavedCount: 0,
+      1532   // ✅ closeHour do scheduler: normaliza SEM log enganoso
+      1533   const norm = normalizeRequestedCloseHour(closeHour, lk);
+      1535     throw new Error('Parâmetro "closeHour" inválido. Use HH:MM.');
+      1537   const normalizedClose = norm.slot || null;
+      1549   // ✅ SOFT OVERRIDE: PT_RIO 18:00 fora do calendário (controlado por env)
+      1550   const allowSoftOverride18 =
+      1551     lk === "PT_RIO" &&
+      1552     normalizedClose === "18:00" &&
+      1553     String(process.env.PT_RIO_SOFT_OVERRIDE_18 || "1").trim() === "1";
+      1555   // ✅ GATE POR CALENDÁRIO (PT_RIO)
+      1556   if (normalizedClose && lk === "PT_RIO") {
+      1557     const cal = getPtRioSlotsByDate(date);
+      1561       if (allowSoftOverride18) {
+      1564             "[CAL-OVERRIDE] PT_RIO " +
+      1566               " slot=" +
+      1568               " fora do calendário -> tentando mesmo assim (SOFT 18h override)"
+      1577           closeHour: normalizedClose,
+      1578           requestedCloseHour: norm.requested || null,
+      1581           blockedReason: "no_draw_for_slot_calendar",
+      1589           slotDocsFound: 0,
+      1591           savedCount: 0,
+      1592           writeCount: 0,
+      1598           totalDrawsSaved: 0,
+      1600           totalPrizesSaved: 0,
+      1604           skippedCloseHour: 0,
+      1613             slotDocsFound: 0,
+      1617             targetWriteCount: 0,
+      1618             targetSavedCount: 0,
+      1636   // ✅ Se pediram closeHour e ele NÃO existe no dia (close_hours do FETCH), retorna blocked/api_missing_slot
+      1638     const closes = summarizeCloseHours(
+      1650           closeHour: normalizedClose,
+      1659               " slot=" +
+      1660               fb.slot +
+      1663               " hasSlot=" +
+      1664               fb.hasSlot +
+      1681         closeHour: normalizedClose,
+      1682         requestedCloseHour: norm.requested || null,
+      1685         blockedReason: "api_missing_slot",
+      1695         slotDocsFound: 0,
+      1698         savedCount: 0,
+      1699         writeCount: 0,
+      1707         totalDrawsSaved: 0,
+      1709         totalPrizesSaved: 0,
+      1713         skippedCloseHour: 0,
+      1722           slotDocsFound: 0,
+      1726           targetWriteCount: 0,
+      1727           targetSavedCount: 0,
+      1738     closeHour: normalizedClose,
+      1755   // ✅ Captured “verdadeiro” (modo closeHour):
+      1757   // - slot já está completo no Firestore
+      1762   const writeCount = Number.isFinite(Number(proof.targetWriteCount))
+      1763     ? Number(proof.targetWriteCount)
+      1766   const savedCount = Number.isFinite(Number(proof.targetSavedCount))
+      1767     ? Number(proof.targetSavedCount)
+      1774     closeHour: normalizedClose || null,
+      1775     requestedCloseHour: norm.requested || null,
+      1788     slotDocsFound: normalizedClose ? Number(proof.slotDocsFound || 0) : null,
+      1791     savedCount: normalizedClose ? savedCount : null,
+      1792     writeCount: normalizedClose ? writeCount : null,
+      1826       const nextSlot =
+      1827         resolveNextTop3Slot({
+      1830           hour: normalizedClose,
+      1835         String(nextSlot?.ymd || "").trim();
+      1837       const nextHour =
+      1838         String(nextSlot?.hour || "").trim();
+      1842         nextHour
+      1848             closeHour: nextHour,
+      1854               importedHour: normalizedClose,
+      1862           targetHour: nextHour,
+      1872           `próximo=${nextYmd} ${nextHour}`
+      1878           reason: "next_slot_not_found",
+      1882           `[TOP3 AUTO] próximo slot não localizado | ` +
+      1913           : "close_hour_missing",
+      1927       ` | firestore=${performance.importMs}ms` +
+      1946   const lotteryKey = process.argv[3] || "PT_RIO";
+      1947   const closeHour = process.argv[4] || null;
+      1952     closeHour,
+
+

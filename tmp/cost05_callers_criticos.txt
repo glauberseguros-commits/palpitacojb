@@ -1,0 +1,4919 @@
+===== COST-05 — CALLERS CRÍTICOS =====
+
+HEAD:
+92d8b19 fix(results): atualiza resultados do dia automaticamente
+
+====================================================================================================
+ARQUIVOS QUE CHAMAM getKingResultsByRange
+====================================================================================================
+==============================================================================================================
+
+ARQUIVO: src\dev\runAuditTop3.js
+TOTAL DE CHAMADAS: 2
+FLAGS: mode_detailed=True | read_policy_server=True | reads_statistics_snapshot=False | uses_fallback=False
+
+CHAMADA NA LINHA 5
+        1: // src/dev/runAuditTop3.js
+        2: 
+        3: import {
+        4:   getKingBoundsByUf,
+>>      5:   getKingResultsByRange,
+        6: } from "../services/kingResultsService";
+        7: 
+        8: import {
+        9:   auditTop3Backtest,
+       10:   pickDrawYMD,
+       11: } from "../pages/Top3/top3.engine";
+       12: 
+       13: import {
+       14:   PT_RIO_SCHEDULE_NORMAL,
+       15:   PT_RIO_SCHEDULE_WED_SAT,
+       16:   FEDERAL_SCHEDULE,
+       17: } from "../pages/Top3/top3.constants";
+       18: 
+       19: function safeStr(value) {
+       20:   return String(value ?? "").trim();
+       21: }
+       22: 
+       23: function isYmd(value) {
+       24:   return /^\d{4}-\d{2}-\d{2}$/.test(safeStr(value));
+       25: }
+       26: 
+       27: function addDaysUtc(ymd, amount) {
+       28:   if (!isYmd(ymd)) return "";
+       29: 
+       30:   const [year, month, day] = ymd.split("-").map(Number);
+       31:   const date = new Date(Date.UTC(year, month - 1, day));
+       32: 
+       33:   date.setUTCDate(date.getUTCDate() + Number(amount || 0));
+       34: 
+       35:   return [
+       36:     date.getUTCFullYear(),
+       37:     String(date.getUTCMonth() + 1).padStart(2, "0"),
+       38:     String(date.getUTCDate()).padStart(2, "0"),
+       39:   ].join("-");
+       40: }
+
+CHAMADA NA LINHA 102
+       84:   const defaultFrom = addDaysUtc(dateTo, -29);
+       85:   const dateFrom = isYmd(envFrom)
+       86:     ? envFrom
+       87:     : fullAudit
+       88:     ? minDate
+       89:     : defaultFrom < minDate
+       90:     ? minDate
+       91:     : defaultFrom;
+       92: 
+       93:   console.log("[BACKTEST TOP3] Base disponível:", minDate, "até", maxDate);
+       94:   console.log("[BACKTEST TOP3] Período auditado:", dateFrom, "até", dateTo);
+       95:   console.log(
+       96:     "[BACKTEST TOP3] Leitura:",
+       97:     "Firestore server + bypass do cache de range"
+       98:   );
+       99: 
+      100:   const startedAt = Date.now();
+      101: 
+>>    102:   const drawsRange = await getKingResultsByRange({
+      103:     uf,
+      104:     dateFrom,
+      105:     dateTo,
+      106:     closeHour: null,
+      107:     closeHourBucket: null,
+      108:     positions: null,
+      109:     mode: "detailed",
+      110:     readPolicy: "server",
+      111:     bypassCache: true,
+      112:   });
+      113: 
+      114:   const draws = Array.isArray(drawsRange) ? drawsRange : [];
+      115: 
+      116:   console.log("[BACKTEST TOP3] Sorteios carregados:", draws.length);
+      117:   console.log("[BACKTEST TOP3] Dias com resultados:", countUniqueDays(draws));
+      118: 
+      119:   if (!draws.length) {
+      120:     throw new Error("Nenhum sorteio encontrado no período auditado.");
+      121:   }
+      122: 
+      123:   const report = auditTop3Backtest({
+      124:     drawsRange: draws,
+      125:     lotteryKey,
+      126:     PT_RIO_SCHEDULE_NORMAL,
+      127:     PT_RIO_SCHEDULE_WED_SAT,
+      128:     FEDERAL_SCHEDULE,
+      129:   });
+      130: 
+      131:   const debugYmd = safeStr(process.env.DEBUG_YMD);
+      132:   const debugHour = safeStr(process.env.DEBUG_HOUR);
+      133: 
+      134:   if (debugYmd && debugHour) {
+      135:     const row = (Array.isArray(report?.rows) ? report.rows : []).find(
+      136:       (r) =>
+      137:         String(r?.ymd || "") === debugYmd &&
+
+ARQUIVO: src\hooks\useKingRanking.js
+TOTAL DE CHAMADAS: 2
+FLAGS: mode_detailed=True | read_policy_server=True | reads_statistics_snapshot=False | uses_fallback=True
+
+CHAMADA NA LINHA 4
+        1: import { useEffect, useMemo, useRef, useState } from "react";
+        2: import {
+        3:   getKingResultsByDate,
+>>      4:   getKingResultsByRange,
+        5:   getKingBoundsByUf,
+        6: } from "../services/kingResultsService";
+        7: import { buildRanking } from "../utils/buildRanking";
+        8: import { buildPalpite } from "../utils/buildPalpites";
+        9: import { normalizeToYMD_SP } from "../utils/ymd";
+       10: 
+       11: /* =========================
+       12:    Utils
+       13: ========================= */
+       14: 
+       15: function isIndexErrorMessage(err) {
+       16:   const msg = String(err?.message || err || "").toLowerCase();
+       17:   const code = String(err?.code || "").toLowerCase();
+       18: 
+       19:   return (
+       20:     code.includes("failed-precondition") ||
+       21:     msg.includes("failed_precondition") ||
+       22:     msg.includes("requires an index") ||
+       23:     (msg.includes("index") && msg.includes("create")) ||
+       24:     msg.includes("falta indice") ||
+       25:     msg.includes("falta índice") ||
+       26:     msg.includes("falta índice composto") ||
+       27:     msg.includes("falta indice composto") ||
+       28:     msg.includes("firestore: falta índice") ||
+       29:     msg.includes("firestore: falta indice")
+       30:   );
+       31: }
+       32: 
+       33: function normalizeToYMD(input) {
+       34:   return normalizeToYMD_SP(input);
+       35: }
+       36: 
+       37: function ymdToNumber(ymd) {
+       38:   if (!ymd) return NaN;
+       39:   const m = String(ymd).match(/^(\d{4})-(\d{2})-(\d{2})$/);
+
+CHAMADA NA LINHA 570
+      552:           mode === "range" &&
+      553:           rangeBlocked &&
+      554:           Number.isFinite(rangeDays) &&
+      555:           rangeDays > RANGE_FALLBACK_LIMIT_DAYS
+      556:         ) {
+      557:           throw new Error(
+      558:             `Firestore: consulta de RANGE longa está bloqueada após erro de índice.\n` +
+      559:               `Seu range atual tem ${rangeDays} dias.\n\n` +
+      560:               `Obs: fallback automático só cobre até ${RANGE_FALLBACK_LIMIT_DAYS} dias.`
+      561:           );
+      562:         }
+      563: 
+      564:         let draws = [];
+      565:         let serviceMode = "detailed";
+      566: 
+      567:         if (mode === "range") {
+      568:           serviceMode = "detailed";
+      569: 
+>>    570:           draws = await getKingResultsByRange({
+      571:             uf,
+      572:             dateFrom: ymdFrom,
+      573:             dateTo: ymdTo,
+      574:             closeHour: null,
+      575:             positions: positionsArrStable,
+      576:             mode: serviceMode,
+      577:             readPolicy: "server",
+      578:           });
+      579:         } else if (mode === "day") {
+      580:           serviceMode = "detailed";
+      581: 
+      582:           draws = await getKingResultsByDate({
+      583:             uf,
+      584:             date: effectiveDayYmd,
+      585:             closeHour: null,
+      586:             positions: positionsArrStable,
+      587:             readPolicy: "server",
+      588:           });
+      589:         } else {
+      590:           draws = [];
+      591:         }
+      592: 
+      593:         if (!mounted || mySeq !== refreshSeqRef.current) return;
+      594: 
+      595:         if (rangeBlocked) setRangeBlocked(false);
+      596: 
+      597:         let unique = dedupeDrawsLogicalPreferBest(draws).map(normalizeDrawForCharts);
+      598: 
+      599:         if (bucketNorm) {
+      600:           unique = unique.filter((d) => toHourBucketLabel(d?.close_hour) === bucketNorm);
+      601:         }
+      602: 
+      603:         setDrawsRaw(unique);
+      604: 
+      605:         const hasAnyPrize = unique.some((d) => Array.isArray(d?.prizes) && d.prizes.length);
+
+ARQUIVO: src\pages\Admin\modules\MilharEngine\MilharEnginePage.jsx
+TOTAL DE CHAMADAS: 2
+FLAGS: mode_detailed=True | read_policy_server=False | reads_statistics_snapshot=False | uses_fallback=False
+
+CHAMADA NA LINHA 5
+        1: import React, { useState } from "react";
+        2: 
+        3: import {
+        4:   getKingBoundsByUf,
+>>      5:   getKingResultsByRange,
+        6: } from "../../../../services/kingResultsService";
+        7: 
+        8: import { loadMilharEngineAudit } from "./engine.api";
+        9: import { ENGINE_INFO } from "./engine.info";
+       10: 
+       11: const LOTTERY_KEY = "PT_RIO";
+       12: const CHUNK_DAYS = 45;
+       13: const POSITIONS = [1, 2, 3, 4, 5, 6, 7];
+       14: 
+       15: let historicalCache = null;
+       16: let historicalPromise = null;
+       17: 
+       18: function pad2(value) {
+       19:   return String(value).padStart(2, "0");
+       20: }
+       21: 
+       22: function isYmd(value) {
+       23:   return /^\d{4}-\d{2}-\d{2}$/.test(
+       24:     String(value || "").trim()
+       25:   );
+       26: }
+       27: 
+       28: function ymdToUtc(value) {
+       29:   if (!isYmd(value)) return null;
+       30: 
+       31:   const [year, month, day] = value
+       32:     .split("-")
+       33:     .map(Number);
+       34: 
+       35:   return new Date(
+       36:     Date.UTC(year, month - 1, day)
+       37:   );
+       38: }
+       39: 
+       40: function addDays(value, amount) {
+
+CHAMADA NA LINHA 341
+      323:     const chunks = splitRange(
+      324:       bounds.minYmd,
+      325:       bounds.maxYmd
+      326:     );
+      327: 
+      328:     if (!chunks.length) {
+      329:       throw new Error(
+      330:         "A base histórica não gerou períodos válidos."
+      331:       );
+      332:     }
+      333: 
+      334:     let completed = 0;
+      335: 
+      336:     const results = await mapWithConcurrency(
+      337:       chunks,
+      338:       3,
+      339:       async (chunk) => {
+      340:         const response =
+>>    341:           await getKingResultsByRange({
+      342:             uf: LOTTERY_KEY,
+      343:             dateFrom: chunk.from,
+      344:             dateTo: chunk.to,
+      345:             closeHour: null,
+      346:             positions: POSITIONS,
+      347:             mode: "detailed",
+      348:           });
+      349: 
+      350:         const prizes = collectPrizes(response);
+      351: 
+      352:         completed += 1;
+      353: 
+      354:         onProgress?.({
+      355:           completed,
+      356:           total: chunks.length,
+      357:           label:
+      358:             `Carregando histórico ` +
+      359:             `(${completed}/${chunks.length})`,
+      360:         });
+      361: 
+      362:         return prizes;
+      363:       }
+      364:     );
+      365: 
+      366:     historicalCache = {
+      367:       prizes: results.flat(),
+      368:       minYmd: bounds.minYmd,
+      369:       maxYmd: bounds.maxYmd,
+      370:       chunks: chunks.length,
+      371:     };
+      372: 
+      373:     return historicalCache;
+      374:   })();
+      375: 
+      376:   try {
+
+ARQUIVO: src\pages\Centenas\CentenasView.jsx
+TOTAL DE CHAMADAS: 2
+FLAGS: mode_detailed=True | read_policy_server=False | reads_statistics_snapshot=False | uses_fallback=True
+
+CHAMADA NA LINHA 3
+        1: // src/pages/Centenas/CentenasView.jsx
+        2: import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+>>      3: import { getKingBoundsByUf, getKingResultsByRange } from "../../services/kingResultsService";
+        4: import {
+        5:   buildMilharRecommendation,
+        6:   diversifyMilharRecommendations,
+        7: } from "./modules/milharProbabilityEngine";
+        8: import {
+        9:   getAnimalLabel as getAnimalLabelFn,
+       10:   getImgFromGrupo as getImgFromGrupoFn,
+       11: } from "../../constants/bichoMap";
+       12: 
+       13: /**
+       14:  * Centenas+ (PREMIUM)
+       15:  * ✅ Performance:
+       16:  * - chunks em paralelo (concorrência controlada)
+       17:  * - cache em memória por (lottery + closeHour + positions)
+       18:  *
+       19:  * ✅ UX:
+       20:  * - persistência de filtros no localStorage (não apaga ao trocar de página)
+       21:  * - status de progresso por chunks
+       22:  *
+       23:  * ✅ Imagem nítida:
+       24:  * - tenta usar getImgFromGrupo(grupo, 128) quando disponível
+       25:  * - tenta "upar" _64/_96 -> _128 no banner e nos cards
+       26:  *
+       27:  * ✅ FIX (Horário):
+       28:  * - Firestore/King pode salvar close_hour como 21:10 / 11:10 etc.
+       29:  * - O filtro "21h" precisa bater por bucket de hora (HH:00), ignorando minutos.
+       30:  *
+       31:  * ✅ FIX (Frequência 0):
+       32:  * - Nem sempre o service devolve draw.prizes dentro de cada draw.
+       33:  * - Alguns retornos vêm com prizes separados (prizesAll / prizesAllSorted).
+       34:  * - Agora: se draw.prizes não existir, agrupamos prizes flat por (ymd + hourBucket).
+       35:  *
+       36:  * ✅ FIX CRÍTICO (rebuild indevido):
+       37:  * - openGrupo não pode entrar nas deps do build.
+       38:  * - abrir/fechar card NÃO deve disparar rebuild do histórico.
+
+CHAMADA NA LINHA 1024
+     1006:       }
+     1007: 
+     1008:       const cachedBase = baseCacheRef.current.get(buildBaseKey);
+     1009:       let entriesBase = cachedBase?.entries || null;
+     1010: 
+     1011:       if (!entriesBase) {
+     1012:         const chunks = splitRangeIntoChunks(bounds.minYmd, bounds.maxYmd, CHUNK_DAYS);
+     1013:         setProgress({ done: 0, total: chunks.length, label: "Carregando histórico..." });
+     1014: 
+     1015:         const results = await mapWithConcurrency(chunks, CHUNKS_CONCURRENCY, async (ch, idx) => {
+     1016:           if (abortedRef.current) return { ok: false, entries: [] };
+     1017:           if (buildSeqRef.current !== mySeq) return { ok: false, entries: [] };
+     1018: 
+     1019:           const responses =
+     1020:             await Promise.all(
+     1021:               selectedLotteryKeys.map(
+     1022:                 async (lotteryKey) => {
+     1023:                   const res =
+>>   1024:                     await getKingResultsByRange({
+     1025:                       uf: lotteryKey,
+     1026:                       dateFrom: ch.from,
+     1027:                       dateTo: ch.to,
+     1028:                       closeHour:
+     1029:                         requestedCloseHour,
+     1030:                       positions:
+     1031:                         requestedPrizePositions,
+     1032:                       mode: "detailed",
+     1033:                     });
+     1034: 
+     1035:                   return {
+     1036:                     lotteryKey,
+     1037:                     res,
+     1038:                   };
+     1039:                 }
+     1040:               )
+     1041:             );
+     1042: 
+     1043:           const drawsChunk =
+     1044:             responses.flatMap(
+     1045:               ({
+     1046:                 lotteryKey,
+     1047:                 res,
+     1048:               }) =>
+     1049:                 normalizeDrawsResult(res)
+     1050:                   .map((draw) => ({
+     1051:                     ...draw,
+     1052:                     __centenasLotteryKey:
+     1053:                       lotteryKey,
+     1054:                   }))
+     1055:             );
+     1056: 
+     1057:           const prizesFlat =
+     1058:             responses.flatMap(
+     1059:               ({
+
+ARQUIVO: src\pages\Downloads\Downloads.jsx
+TOTAL DE CHAMADAS: 2
+FLAGS: mode_detailed=True | read_policy_server=False | reads_statistics_snapshot=False | uses_fallback=True
+
+CHAMADA NA LINHA 3
+        1: // src/pages/Downloads/Downloads.jsx
+        2: import React, { useEffect, useMemo, useState, useCallback, useRef } from "react";
+>>      3: import { getKingResultsByRange, getKingBoundsByUf } from "../../services/kingResultsService";
+        4: import { getAnimalLabel } from "../../constants/bichoMap";
+        5: 
+        6: const GOLD = "rgba(202,166,75,1)";
+        7: const GOLD_SOFT = "rgba(202,166,75,0.16)";
+        8: const GOLD_SOFT2 = "rgba(202,166,75,0.24)";
+        9: const WHITE = "rgba(255,255,255,0.92)";
+       10: const WHITE_78 = "rgba(255,255,255,0.78)";
+       11: const WHITE_60 = "rgba(255,255,255,0.60)";
+       12: const BLACK_GLASS = "rgba(0,0,0,0.35)";
+       13: 
+       14: /* =========================
+       15:    Helpers (robustos)
+       16: ========================= */
+       17: 
+       18: function cx(...parts) {
+       19:   return parts.filter(Boolean).join(" ");
+       20: }
+       21: 
+       22: function pad2(n) {
+       23:   return String(n).padStart(2, "0");
+       24: }
+       25: 
+       26: function safeStr(v) {
+       27:   return String(v ?? "").trim();
+       28: }
+       29: 
+       30: function isYMD(s) {
+       31:   return /^\d{4}-\d{2}-\d{2}$/.test(String(s || "").trim());
+       32: }
+       33: 
+       34: function ymdToBR(ymd) {
+       35:   const m = String(ymd || "").trim().match(/^(\d{4})-(\d{2})-(\d{2})$/);
+       36:   if (!m) return safeStr(ymd);
+       37:   return `${m[3]}/${m[2]}/${m[1]}`;
+       38: }
+
+CHAMADA NA LINHA 762
+      744:     if (fHour !== "ALL") f.push(`Horário: ${toHourBucket(fHour)}`);
+      745:     if (fAnimalGrupo !== "ALL") {
+      746:       const g = Number(fAnimalGrupo);
+      747:       f.push(`Animal: G${pad2(g)} ${safeStr(getAnimalLabel?.(g) || "")}`);
+      748:     }
+      749:     if (fPos !== "ALL") f.push(`Posição: ${fPos}º`);
+      750:     if (f.length) lines.push(`Filtros: ${f.join(" • ")}`);
+      751:     else lines.push(`Filtros: Todos`);
+      752: 
+      753:     return lines;
+      754:   }, [normalizeRange, ufUi, label, fMonth, fDay, fDow, fHour, fAnimalGrupo, fPos]);
+      755: 
+      756:   const fetchFilteredRows = useCallback(async () => {
+      757:     const u = safeStr(ufQueryKey);
+      758:     if (!u) return [];
+      759: 
+      760:     const { from, to } = normalizeRange();
+      761: 
+>>    762:     const out = await getKingResultsByRange({
+      763:       uf: u,
+      764:       dateFrom: from,
+      765:       dateTo: to,
+      766:       closeHour: null,
+      767:       positions: null,
+      768:       mode: "detailed",
+      769:     });
+      770: 
+      771:     const draws = Array.isArray(out) ? out : [];
+      772:     const rows = buildRowsFromDraws(draws);
+      773:     const filteredRows = applyFiltersToRows(rows);
+      774: 
+      775:     filteredRows.sort((a, b) => {
+      776:       const da = safeStr(a.ymd);
+      777:       const db = safeStr(b.ymd);
+      778:       if (da !== db) return da.localeCompare(db);
+      779:       const ha = safeStr(a.hour);
+      780:       const hb = safeStr(b.hour);
+      781:       if (ha !== hb) return ha.localeCompare(hb);
+      782:       return Number(a.pos) - Number(b.pos);
+      783:     });
+      784: 
+      785:     return filteredRows;
+      786:   }, [ufQueryKey, normalizeRange, buildRowsFromDraws, applyFiltersToRows]);
+      787: 
+      788:   const loadPreview = useCallback(async () => {
+      789:     setPreviewLoading(true);
+      790:     setPreviewError("");
+      791:     setPreviewRows([]);
+      792:     setPreviewPage(1);
+      793: 
+      794:     try {
+      795:       const rows = await fetchFilteredRows();
+      796:       setPreviewRows(rows);
+      797: 
+
+ARQUIVO: src\pages\Results\Results.jsx
+TOTAL DE CHAMADAS: 2
+FLAGS: mode_detailed=False | read_policy_server=False | reads_statistics_snapshot=False | uses_fallback=True
+
+CHAMADA NA LINHA 7
+        1: // src/pages/Results/Results.jsx
+        2: import React, { useEffect, useMemo, useRef, useState } from "react";
+        3: import { useQuery } from "@tanstack/react-query";
+        4: import {
+        5:   getKingBoundsByUf,
+        6:   getKingResultsByDate,
+>>      7:   getKingResultsByRange,
+        8: } from "../../services/kingResultsService";
+        9: import {
+       10:   getAnimalLabel,
+       11:   getImgFromGrupo,
+       12:   getSlugByGrupo,
+       13: } from "../../constants/bichoMap";
+       14: 
+       15: /* =========================
+       16:    Helpers (locais e robustos)
+       17: ========================= */
+       18: 
+       19: function pad2(n) {
+       20:   return String(n).padStart(2, "0");
+       21: }
+       22: 
+       23: function safeStr(v) {
+       24:   return String(v ?? "").trim();
+       25: }
+       26: 
+       27: function isYMD(s) {
+       28:   return /^\d{4}-\d{2}-\d{2}$/.test(String(s || "").trim());
+       29: }
+       30: 
+       31: function ymdToBR(ymd) {
+       32:   const m = String(ymd || "")
+       33:     .trim()
+       34:     .match(/^(\d{4})-(\d{2})-(\d{2})$/);
+       35:   if (!m) return safeStr(ymd);
+       36:   return `${m[3]}/${m[2]}/${m[1]}`;
+       37: }
+       38: 
+       39: function nowLocal() {
+       40:   return new Date();
+       41: }
+       42: 
+
+CHAMADA NA LINHA 846
+      828:     effectiveBounds?.maxYmd,
+      829:     ymd,
+      830:     ymdSafe,
+      831:   ]);
+      832: 
+      833:   useEffect(() => {
+      834:     setCalendarMonthYmd(startOfMonthYMD(ymdClamped));
+      835:   }, [ymdClamped]);
+      836: 
+      837:   const calendarMarksQuery = useQuery({
+      838:     queryKey: ["results", "calendar-marks", scopeKey, calendarMonthYmd],
+      839:     enabled:
+      840:       isYMD(startOfMonthYMD(calendarMonthYmd)) &&
+      841:       isYMD(endOfMonthYMD(calendarMonthYmd)),
+      842:     queryFn: async () => {
+      843:       const from = startOfMonthYMD(calendarMonthYmd);
+      844:       const to = endOfMonthYMD(calendarMonthYmd);
+      845: 
+>>    846:       const out = await getKingResultsByRange({
+      847:         uf: scopeKey,
+      848:         dateFrom: from,
+      849:         dateTo: to,
+      850:         positions: [1, 2, 3, 4, 5, 6, 7],
+      851:         mode: "aggregated",
+      852:       });
+      853: 
+      854:       return Array.from(monthDaysWithDraws(out)).sort();
+      855:     },
+      856:     staleTime: 30 * 60 * 1000,
+      857:     gcTime: 2 * 60 * 60 * 1000,
+      858:     placeholderData: (prev) => prev ?? [],
+      859:     refetchOnMount: false,
+      860:     refetchOnWindowFocus: false,
+      861:     refetchOnReconnect: false,
+      862:   });
+      863: 
+      864:   const dayResultsQuery = useQuery({
+      865:     queryKey: ["results", "day", scopeKey, ymdClamped],
+      866:     enabled: !!safeStr(scopeKey) && isYMD(ymdClamped),
+      867:     queryFn: async () => {
+      868:       const sKey = safeStr(scopeKey);
+      869:       const d = safeStr(ymdClamped);
+      870: 
+      871:       const out = await getKingResultsByDate({
+      872:         uf: sKey,
+      873:         date: d,
+      874:         closeHour: null,
+      875:         closeHourBucket: null,
+      876:         positions: [1, 2, 3, 4, 5, 6, 7],
+      877:       });
+      878: 
+      879:       const list = unwrapDraws(out);
+      880:       const deduped = dedupeDraws(list, sKey, d);
+      881: 
+
+ARQUIVO: src\pages\Search\Search.jsx
+TOTAL DE CHAMADAS: 2
+FLAGS: mode_detailed=True | read_policy_server=False | reads_statistics_snapshot=False | uses_fallback=True
+
+CHAMADA NA LINHA 3
+        1: // src/pages/Search/Search.jsx
+        2: import React, { useCallback, useEffect, useMemo, useRef, useState } from "react";
+>>      3: import { getKingBoundsByUf, getKingResultsByRange } from "../../services/kingResultsService";
+        4: import {
+        5:   getAnimalLabel as getAnimalLabelFn,
+        6:   getImgFromGrupo as getImgFromGrupoFn,
+        7: } from "../../constants/bichoMap";
+        8: import SearchResultsTable from "../Dashboard/components/SearchResultsTable";
+        9: 
+       10: /**
+       11:  * Search — Premium (SEM índice)
+       12:  * - 2 dígitos => dezena (últimos 2)  ✅ preserva zero à esquerda
+       13:  * - 3 dígitos => centena (últimos 3) ✅ preserva zero à esquerda
+       14:  * - 4 dígitos => milhar (4)         ✅ preserva zero à esquerda
+       15:  *
+       16:  * ✅ REGRA GLOBAL DO PROJETO:
+       17:  * - 7º prêmio = CENTENA (3 dígitos) e NÃO pode virar 4 dígitos.
+       18:  * - Nenhum zero à esquerda pode ser ignorado.
+       19:  *
+       20:  * ✅ UI:
+       21:  * - Mantém apenas 1 card, com 1 bloco: "OCORRÊNCIAS"
+       22:  *
+       23:  * ✅ PERF:
+       24:  * - Busca em chunks maiores (60 dias) + concorrência limitada
+       25:  * - Renderiza resultados de forma incremental
+       26:  */
+       27: 
+       28: function pad2(n) {
+       29:   return String(n).padStart(2, "0");
+       30: }
+       31: 
+       32: function safeStr(v) {
+       33:   return String(v ?? "").trim();
+       34: }
+       35: 
+       36: function isYMD(s) {
+       37:   return /^\d{4}-\d{2}-\d{2}$/.test(String(s || "").trim());
+       38: }
+
+CHAMADA NA LINHA 754
+      736:       }
+      737: 
+      738:       const qDigits = String(qi.digits || "");
+      739:       const qLen = qi.len;
+      740:       const q4 = qLen === 4 ? qDigits.slice(0, 4).padStart(4, "0") : null;
+      741: 
+      742:       let allHits = [];
+      743: 
+      744:       const pushHitsIncremental = (newHits) => {
+      745:         if (!newHits.length) return;
+      746:         allHits = allHits.concat(newHits);
+      747:         // atualiza incrementalmente sem travar a UI
+      748:         safeSet(() => setMatches([...allHits]));
+      749:       };
+      750: 
+      751:       const worker = async (ch) => {
+      752:         if (!safeOk()) return;
+      753: 
+>>    754:         const res = await getKingResultsByRange({
+      755:           uf: LOTTERY_KEY,
+      756:           dateFrom: ch.from,
+      757:           dateTo: ch.to,
+      758:           closeHourBucket: null,
+      759:           closeHour: selectedCloseHourBucket ? `${String(selectedCloseHourBucket).slice(0, 2)}:00` : null,
+      760:           positions: selectedPositions || null,
+      761:           mode: "detailed",
+      762:         });
+      763: 
+      764:         if (!safeOk()) return;
+      765: 
+      766:         const drawsArr = normalizeDrawsResponse(res);
+      767:         const chunkHits = [];
+      768: 
+      769:         for (const d of drawsArr) {
+      770:           const ymd = normalizeYmdAny(d?.ymd || d?.dateYmd || d?.date || d?.data || "");
+      771:           if (!isYMD(ymd)) continue;
+      772: 
+      773:           const closeRaw = normalizeHourLike(d?.close_hour || d?.closeHour || d?.hour || d?.hora || "");
+      774:           const closeBucket = toHourBucket(closeRaw) || toHourBucket(d?.close_hour_bucket) || null;
+      775: 
+      776:           // ✅ filtro por bucket (se selecionado)
+      777:           if (selectedCloseHourBucket) {
+      778:             const b = closeBucket || toHourBucket(closeRaw);
+      779:             if (b !== selectedCloseHourBucket) continue;
+      780:           }
+      781: 
+      782:           const prizes = ensurePrizes(d);
+      783: 
+      784:           for (const p of prizes) {
+      785:             const grupo = Number(p?.grupo);
+      786:             const position = Number(p?.position);
+      787: 
+      788:             const wantLen = position === 7 ? 3 : 4;
+      789: 
+
+ARQUIVO: src\pages\Top3\__tests__\top3.backtest.layers.test.js
+TOTAL DE CHAMADAS: 2
+FLAGS: mode_detailed=True | read_policy_server=True | reads_statistics_snapshot=False | uses_fallback=False
+
+CHAMADA NA LINHA 22
+        4:   findNextExistingDrawFromSlot,
+        5:   indexDrawsByYmdHour,
+        6:   pickDrawYMD,
+        7:   pickDrawHour,
+        8:   guessPrizePos,
+        9:   guessPrizeGrupo,
+       10: } from "../top3.engine";
+       11: 
+       12: import {
+       13:   PT_RIO_SCHEDULE_NORMAL,
+       14:   PT_RIO_SCHEDULE_WED_SAT,
+       15:   FEDERAL_SCHEDULE,
+       16: } from "../top3.constants";
+       17: 
+       18: import { toHourBucket, hourToInt, addDaysYMD } from "../top3.formatters";
+       19: 
+       20: import {
+       21:   getKingBoundsByUf,
+>>     22:   getKingResultsByRange,
+       23: } from "../../../services/kingResultsService";
+       24: 
+       25: jest.setTimeout(300000);
+       26: 
+       27: function drawTs(draw) {
+       28:   const y = pickDrawYMD(draw);
+       29:   const h = toHourBucket(pickDrawHour(draw));
+       30:   if (!y || !h) return Number.POSITIVE_INFINITY;
+       31: 
+       32:   const [Y, M, D] = y.split("-").map(Number);
+       33:   const base = Date.UTC(Y, M - 1, D);
+       34:   const mins = hourToInt(h);
+       35:   const add = mins >= 0 ? mins * 60 * 1000 : 0;
+       36:   return base + add;
+       37: }
+       38: 
+       39: function drawKey(draw) {
+       40:   const y = pickDrawYMD(draw);
+       41:   const h = toHourBucket(pickDrawHour(draw));
+       42:   if (!y || !h) return "";
+       43:   return `${y}|${h}`;
+       44: }
+       45: 
+       46: function dedupeAndSort(draws) {
+       47:   const map = new Map();
+       48: 
+       49:   for (const d of Array.isArray(draws) ? draws : []) {
+       50:     const key = drawKey(d);
+       51:     if (!key) continue;
+       52:     if (!map.has(key)) map.set(key, d);
+       53:   }
+       54: 
+       55:   return Array.from(map.values()).sort((a, b) => drawTs(a) - drawTs(b));
+       56: }
+       57: 
+
+CHAMADA NA LINHA 161
+      143:     if (!Number.isFinite(confidence)) {
+      144:       throw new Error(`Confiança inválida no TOP3: ${JSON.stringify(item)}`);
+      145:     }
+      146: 
+      147:     if (confidence < 0) {
+      148:       throw new Error(`Confiança negativa no TOP3: ${JSON.stringify(item)}`);
+      149:     }
+      150:   }
+      151: }
+      152: 
+      153: test("backtest TOP3 PT_RIO - camadas e transições", async () => {
+      154:   const bounds = await getKingBoundsByUf({ uf: "PT_RIO" });
+      155:   const maxDate = bounds?.maxYmd || bounds?.maxDate;
+      156:   expect(maxDate).toBeTruthy();
+      157: 
+      158:   const from = addDaysYMD(maxDate, -179);
+      159:   const toExclusive = addDaysYMD(maxDate, 1);
+      160: 
+>>    161:   const raw = await getKingResultsByRange({
+      162:     uf: "PT_RIO",
+      163:     dateFrom: from,
+      164:     dateTo: toExclusive,
+      165:     mode: "detailed",
+      166:     readPolicy: "server",
+      167:   });
+      168: 
+      169:   const allDraws = dedupeAndSort(raw);
+      170:   const drawsIndex = indexDrawsByYmdHour(allDraws);
+      171: 
+      172:   expect(allDraws.length).toBeGreaterThan(30);
+      173: 
+      174:   let totalCases = 0;
+      175:   let hitTop5 = 0;
+      176:   let hitFirst = 0;
+      177: 
+      178:   const byScenario = new Map();
+      179:   const byEdge = new Map();
+      180:   const byPrevGrupo = new Map();
+      181: 
+      182:   for (let i = 0; i < allDraws.length - 1; i += 1) {
+      183:     const drawLast = allDraws[i];
+      184:     const history = allDraws.slice(0, i + 1);
+      185: 
+      186:     const lastY = pickDrawYMD(drawLast);
+      187:     const lastH = toHourBucket(pickDrawHour(drawLast));
+      188:     if (!lastY || !lastH) continue;
+      189: 
+      190:     const nextSlot = getNextSlotForLottery({
+      191:       lotteryKey: "PT_RIO",
+      192:       ymd: lastY,
+      193:       hourBucket: lastH,
+      194:       PT_RIO_SCHEDULE_NORMAL,
+      195:       PT_RIO_SCHEDULE_WED_SAT,
+      196:       FEDERAL_SCHEDULE,
+
+ARQUIVO: src\pages\Top3\__tests__\top3.backtest.test.js
+TOTAL DE CHAMADAS: 2
+FLAGS: mode_detailed=True | read_policy_server=True | reads_statistics_snapshot=False | uses_fallback=False
+
+CHAMADA NA LINHA 22
+        4:   findNextExistingDrawFromSlot,
+        5:   indexDrawsByYmdHour,
+        6:   pickDrawYMD,
+        7:   pickDrawHour,
+        8:   guessPrizePos,
+        9:   guessPrizeGrupo,
+       10: } from "../top3.engine";
+       11: 
+       12: import {
+       13:   PT_RIO_SCHEDULE_NORMAL,
+       14:   PT_RIO_SCHEDULE_WED_SAT,
+       15:   FEDERAL_SCHEDULE,
+       16: } from "../top3.constants";
+       17: 
+       18: import { toHourBucket, hourToInt, addDaysYMD } from "../top3.formatters";
+       19: 
+       20: import {
+       21:   getKingBoundsByUf,
+>>     22:   getKingResultsByRange,
+       23: } from "../../../services/kingResultsService";
+       24: 
+       25: jest.setTimeout(300000);
+       26: 
+       27: function drawTs(draw) {
+       28:   const y = pickDrawYMD(draw);
+       29:   const h = toHourBucket(pickDrawHour(draw));
+       30:   if (!y || !h) return Number.POSITIVE_INFINITY;
+       31: 
+       32:   const [Y, M, D] = y.split("-").map(Number);
+       33:   const base = Date.UTC(Y, M - 1, D);
+       34:   const mins = hourToInt(h);
+       35:   const add = mins >= 0 ? mins * 60 * 1000 : 0;
+       36: 
+       37:   return base + add;
+       38: }
+       39: 
+       40: function drawKey(draw) {
+       41:   const y = pickDrawYMD(draw);
+       42:   const h = toHourBucket(pickDrawHour(draw));
+       43:   if (!y || !h) return "";
+       44:   return `${y}|${h}`;
+       45: }
+       46: 
+       47: function dedupeAndSort(draws) {
+       48:   const map = new Map();
+       49: 
+       50:   for (const d of Array.isArray(draws) ? draws : []) {
+       51:     const key = drawKey(d);
+       52:     if (!key) continue;
+       53:     if (!map.has(key)) map.set(key, d);
+       54:   }
+       55: 
+       56:   return Array.from(map.values()).sort((a, b) => drawTs(a) - drawTs(b));
+       57: }
+
+CHAMADA NA LINHA 173
+      155:       throw new Error(`Confiança inválida no TOP3: ${JSON.stringify(item)}`);
+      156:     }
+      157: 
+      158:     if (confidence < 0) {
+      159:       throw new Error(`Confiança negativa no TOP3: ${JSON.stringify(item)}`);
+      160:     }
+      161:   }
+      162: }
+      163: 
+      164: test("backtest TOP3 PT_RIO - últimos 180 dias", async () => {
+      165:   const bounds = await getKingBoundsByUf({ uf: "PT_RIO" });
+      166:   const maxDate = bounds?.maxYmd || bounds?.maxDate;
+      167: 
+      168:   expect(maxDate).toBeTruthy();
+      169: 
+      170:   const from = addDaysYMD(maxDate, -179);
+      171:   const toExclusive = addDaysYMD(maxDate, 1);
+      172: 
+>>    173:   const raw = await getKingResultsByRange({
+      174:     uf: "PT_RIO",
+      175:     dateFrom: from,
+      176:     dateTo: toExclusive,
+      177:     mode: "detailed",
+      178:     readPolicy: "server",
+      179:   });
+      180: 
+      181:   const allDraws = dedupeAndSort(raw);
+      182:   const drawsIndex = indexDrawsByYmdHour(allDraws);
+      183: 
+      184:   expect(allDraws.length).toBeGreaterThan(30);
+      185: 
+      186:   let totalCases = 0;
+      187:   let hitTop5 = 0;
+      188:   let hitFirst = 0;
+      189: 
+      190:   const byTargetHour = new Map();
+      191: 
+      192:   for (let i = 0; i < allDraws.length - 1; i += 1) {
+      193:     const drawLast = allDraws[i];
+      194:     const history = allDraws.slice(0, i + 1);
+      195: 
+      196:     const lastY = pickDrawYMD(drawLast);
+      197:     const lastH = toHourBucket(pickDrawHour(drawLast));
+      198: 
+      199:     if (!lastY || !lastH) continue;
+      200: 
+      201:     const nextSlot = getNextSlotForLottery({
+      202:       lotteryKey: "PT_RIO",
+      203:       ymd: lastY,
+      204:       hourBucket: lastH,
+      205:       PT_RIO_SCHEDULE_NORMAL,
+      206:       PT_RIO_SCHEDULE_WED_SAT,
+      207:       FEDERAL_SCHEDULE,
+      208:     });
+
+ARQUIVO: src\pages\Top3\modules\top3.loader.js
+TOTAL DE CHAMADAS: 4
+FLAGS: mode_detailed=True | read_policy_server=True | reads_statistics_snapshot=False | uses_fallback=True
+
+CHAMADA NA LINHA 2
+        1: export async function fallbackBaseSearch({
+>>      2:   getKingResultsByRange,
+        3:   findLatestHistoricalBaseDraw,
+        4:   addDaysYMD,
+        5:   minDate,
+        6:   lotteryKey,
+        7:   targetYmd,
+        8:   targetHourBucket,
+        9:   uf,
+       10: }) {
+       11:   const key = String(lotteryKey || "").trim().toUpperCase();
+       12:   const safeUf = String(uf || "").trim().toUpperCase();
+       13:   const safeTargetYmd = String(targetYmd || "").trim();
+       14:   const safeTargetHour = String(targetHourBucket || "").trim();
+       15: 
+       16:   if (!safeTargetYmd || !safeTargetHour || !safeUf) {
+       17:     return { draw: null, ymd: "", hour: "", source: "none" };
+       18:   }
+       19: 
+       20:   const searchFrom =
+       21:     String(minDate || "").trim() ||
+       22:     (key === "FEDERAL"
+       23:       ? addDaysYMD(safeTargetYmd, -240)
+       24:       : addDaysYMD(safeTargetYmd, -90));
+       25: 
+       26:   const hist =
+       27:     (await getKingResultsByRange({
+       28:       uf: safeUf,
+       29:       dateFrom: searchFrom,
+       30:       dateTo: safeTargetYmd,
+       31:       mode: "detailed",
+       32:       readPolicy: "server",
+       33:     })) || [];
+       34: 
+       35:   return findLatestHistoricalBaseDraw({
+       36:     draws: hist,
+       37:     lotteryKey: key,
+
+CHAMADA NA LINHA 27
+        9:   uf,
+       10: }) {
+       11:   const key = String(lotteryKey || "").trim().toUpperCase();
+       12:   const safeUf = String(uf || "").trim().toUpperCase();
+       13:   const safeTargetYmd = String(targetYmd || "").trim();
+       14:   const safeTargetHour = String(targetHourBucket || "").trim();
+       15: 
+       16:   if (!safeTargetYmd || !safeTargetHour || !safeUf) {
+       17:     return { draw: null, ymd: "", hour: "", source: "none" };
+       18:   }
+       19: 
+       20:   const searchFrom =
+       21:     String(minDate || "").trim() ||
+       22:     (key === "FEDERAL"
+       23:       ? addDaysYMD(safeTargetYmd, -240)
+       24:       : addDaysYMD(safeTargetYmd, -90));
+       25: 
+       26:   const hist =
+>>     27:     (await getKingResultsByRange({
+       28:       uf: safeUf,
+       29:       dateFrom: searchFrom,
+       30:       dateTo: safeTargetYmd,
+       31:       mode: "detailed",
+       32:       readPolicy: "server",
+       33:     })) || [];
+       34: 
+       35:   return findLatestHistoricalBaseDraw({
+       36:     draws: hist,
+       37:     lotteryKey: key,
+       38:     targetYmd: safeTargetYmd,
+       39:     targetHourBucket: safeTargetHour,
+       40:   });
+       41: }
+       42: 
+       43: export async function loadHistoryRange({
+       44:   getKingResultsByRange,
+       45:   uf,
+       46:   dateFrom,
+       47:   dateTo,
+       48:   readPolicy = "server",
+       49: }) {
+       50:   const safeUf = String(uf || "").trim().toUpperCase();
+       51:   const safeDateFrom = String(dateFrom || "").trim();
+       52:   const safeDateTo = String(dateTo || "").trim();
+       53: 
+       54:   if (!safeUf || !safeDateFrom || !safeDateTo) return [];
+       55: 
+       56:   return (
+       57:     (await getKingResultsByRange({
+       58:       uf: safeUf,
+       59:       dateFrom: safeDateFrom,
+       60:       dateTo: safeDateTo,
+       61:       mode: "detailed",
+       62:       readPolicy,
+
+CHAMADA NA LINHA 44
+       26:   const hist =
+       27:     (await getKingResultsByRange({
+       28:       uf: safeUf,
+       29:       dateFrom: searchFrom,
+       30:       dateTo: safeTargetYmd,
+       31:       mode: "detailed",
+       32:       readPolicy: "server",
+       33:     })) || [];
+       34: 
+       35:   return findLatestHistoricalBaseDraw({
+       36:     draws: hist,
+       37:     lotteryKey: key,
+       38:     targetYmd: safeTargetYmd,
+       39:     targetHourBucket: safeTargetHour,
+       40:   });
+       41: }
+       42: 
+       43: export async function loadHistoryRange({
+>>     44:   getKingResultsByRange,
+       45:   uf,
+       46:   dateFrom,
+       47:   dateTo,
+       48:   readPolicy = "server",
+       49: }) {
+       50:   const safeUf = String(uf || "").trim().toUpperCase();
+       51:   const safeDateFrom = String(dateFrom || "").trim();
+       52:   const safeDateTo = String(dateTo || "").trim();
+       53: 
+       54:   if (!safeUf || !safeDateFrom || !safeDateTo) return [];
+       55: 
+       56:   return (
+       57:     (await getKingResultsByRange({
+       58:       uf: safeUf,
+       59:       dateFrom: safeDateFrom,
+       60:       dateTo: safeDateTo,
+       61:       mode: "detailed",
+       62:       readPolicy,
+       63:     })) || []
+       64:   );
+       65: }
+
+CHAMADA NA LINHA 57
+       39:     targetHourBucket: safeTargetHour,
+       40:   });
+       41: }
+       42: 
+       43: export async function loadHistoryRange({
+       44:   getKingResultsByRange,
+       45:   uf,
+       46:   dateFrom,
+       47:   dateTo,
+       48:   readPolicy = "server",
+       49: }) {
+       50:   const safeUf = String(uf || "").trim().toUpperCase();
+       51:   const safeDateFrom = String(dateFrom || "").trim();
+       52:   const safeDateTo = String(dateTo || "").trim();
+       53: 
+       54:   if (!safeUf || !safeDateFrom || !safeDateTo) return [];
+       55: 
+       56:   return (
+>>     57:     (await getKingResultsByRange({
+       58:       uf: safeUf,
+       59:       dateFrom: safeDateFrom,
+       60:       dateTo: safeDateTo,
+       61:       mode: "detailed",
+       62:       readPolicy,
+       63:     })) || []
+       64:   );
+       65: }
+
+ARQUIVO: src\pages\Top3\top3.hooks.js
+TOTAL DE CHAMADAS: 4
+FLAGS: mode_detailed=False | read_policy_server=True | reads_statistics_snapshot=False | uses_fallback=True
+
+CHAMADA NA LINHA 53
+       35: } from "./top3.engine";
+       36: 
+       37: import { lotteryLabel } from "./top3.selectors";
+       38: 
+       39: import {
+       40:   registerPrediction,
+       41:   reconcilePendingTop3Log,
+       42:   ensureDayTimeline,
+       43: } from "./top3.storage";
+       44: 
+       45: import {
+       46:   saveTop3PredictionSnapshot,
+       47:   loadTop3PredictionDay,
+       48:   reconcileTop3PredictionDay,
+       49: } from "./top3.firestore";
+       50: 
+       51: import {
+       52:   getKingResultsByDate,
+>>     53:   getKingResultsByRange,
+       54:   getKingBoundsByUf,
+       55: } from "../../services/kingResultsService";
+       56: 
+       57: import { getAnimalLabel } from "../../constants/bichoMap";
+       58: 
+       59: import {
+       60:   fallbackBaseSearch,
+       61:   loadHistoryRange,
+       62: } from "./modules/top3.loader";
+       63: 
+       64: import { computeTop3Analytics } from "./modules/top3.analytics";
+       65: 
+       66: import { buildTop3Predictions } from "./modules/top3.prediction";
+       67: 
+       68: import { buildTop3TimelineViewModel } from "./modules/top3.timeline";
+       69: 
+       70: import {
+       71:   buildTop3MilharesCols,
+       72:   resolveTop3ProbValue,
+       73: } from "./modules/top3.viewmodel";
+       74: 
+       75: import {
+       76:   normalizeImgSrc,
+       77:   getGrupoImgSrc,
+       78:   buildResultStyleImgVariants,
+       79: } from "./top3.images";
+       80: 
+       81: function emptyAnalytics() {
+       82:   return { top: [], meta: null };
+       83: }
+       84: 
+       85: function drawTs(draw) {
+       86:   const y = pickDrawYMD(draw);
+       87:   const h = toHourBucket(pickDrawHour(draw));
+       88: 
+
+CHAMADA NA LINHA 617
+      599:         resolvedTargetY = effectiveYmd;
+      600:         resolvedTargetH = firstHourToday;
+      601: 
+      602:         const previousForFirstSlot = await getPreviousDrawRobust({
+      603:           getKingResultsByDate,
+      604:           lotteryKey: lKey,
+      605:           ymdTarget: effectiveYmd,
+      606:           targetHourBucket: firstHourToday,
+      607:           todayDraws: today,
+      608:           schedule: todaySchedule,
+      609:           PT_RIO_SCHEDULE_NORMAL,
+      610:           PT_RIO_SCHEDULE_WED_SAT,
+      611:           FEDERAL_SCHEDULE,
+      612:         });
+      613: 
+      614:         const previousResolved = previousForFirstSlot?.draw
+      615:           ? previousForFirstSlot
+      616:           : await fallbackBaseSearch({
+>>    617:               getKingResultsByRange,
+      618:               findLatestHistoricalBaseDraw,
+      619:               addDaysYMD,
+      620:               minDate,
+      621:               lotteryKey: lKey,
+      622:               targetYmd: effectiveYmd,
+      623:               targetHourBucket: firstHourToday,
+      624:               uf: ufResolved,
+      625:             });
+      626: 
+      627:         if (!previousResolved?.draw) {
+      628:           resetStateForNoData();
+      629:           setError(
+      630:             "Não foi possível localizar a base anterior ao primeiro sorteio do dia."
+      631:           );
+      632:           return;
+      633:         }
+      634: 
+      635:         baseDraw = previousResolved.draw;
+      636:         baseY = safeStr(previousResolved.ymd);
+      637:         baseH = toHourBucket(previousResolved.hour);
+      638:       }
+      639: 
+      640:       baseGrupo = pickPrize1GrupoFromDraw(baseDraw);
+      641:       baseAnimal = baseGrupo ? safeStr(getAnimalLabel(baseGrupo)) : "";
+      642: 
+      643:       if (
+      644:         !baseDraw ||
+      645:         !isYMD(baseY) ||
+      646:         !baseH ||
+      647:         !Number.isFinite(Number(baseGrupo)) ||
+      648:         Number(baseGrupo) < 1 ||
+      649:         Number(baseGrupo) > 25 ||
+      650:         !isYMD(resolvedTargetY) ||
+      651:         !resolvedTargetH
+      652:       ) {
+
+CHAMADA NA LINHA 689
+      671:         PT_RIO_SCHEDULE_WED_SAT,
+      672:         FEDERAL_SCHEDULE,
+      673:       });
+      674: 
+      675:       resolvedPrev = await getPreviousDrawRobust({
+      676:         getKingResultsByDate,
+      677:         lotteryKey: lKey,
+      678:         ymdTarget: baseY,
+      679:         targetHourBucket: baseH,
+      680:         todayDraws: baseDayDraws,
+      681:         schedule: baseDaySchedule,
+      682:         PT_RIO_SCHEDULE_NORMAL,
+      683:         PT_RIO_SCHEDULE_WED_SAT,
+      684:         FEDERAL_SCHEDULE,
+      685:       });
+      686: 
+      687:       if (!resolvedPrev?.draw) {
+      688:         resolvedPrev = await fallbackBaseSearch({
+>>    689:           getKingResultsByRange,
+      690:           findLatestHistoricalBaseDraw,
+      691:           addDaysYMD,
+      692:           minDate,
+      693:           lotteryKey: lKey,
+      694:           targetYmd: baseY,
+      695:           targetHourBucket: baseH,
+      696:           uf: ufResolved,
+      697:         });
+      698:       }
+      699: 
+      700:       if (requestIdRef.current !== currentRequestId) return;
+      701: 
+      702:       setBaseDrawState(baseDraw);
+      703:       setLastHourBucket(baseH);
+      704:       setTargetYmd(resolvedTargetY);
+      705:       setTargetHourBucket(resolvedTargetH);
+      706: 
+      707:       if (debugTop3) console.log(
+      708:         "[TOP3 STATE]",
+      709:         JSON.stringify(
+      710:           {
+      711:             loadedYmd: effectiveYmd,
+      712: 
+      713:             baseYmd: baseY,
+      714:             baseHour: baseH,
+      715:             baseGrupo,
+      716: 
+      717:             targetYmd: resolvedTargetY,
+      718:             targetHour: resolvedTargetH,
+      719: 
+      720:             previousYmd: resolvedPrev?.ymd || "",
+      721:             previousHour: resolvedPrev?.hour || "",
+      722:             previousSource: resolvedPrev?.source || "",
+      723: 
+      724:             todayDraws: Array.isArray(today) ? today.length : 0,
+
+CHAMADA NA LINHA 773
+      755:         });
+      756:       }
+      757: 
+      758:       let rangeFrom = "";
+      759: 
+      760:       if (lookback === LOOKBACK_ALL) {
+      761:         rangeFrom = minDate || addDaysYMD(baseY, -240);
+      762:       } else {
+      763:         const days = Math.max(1, Number(lookback || 30));
+      764:         rangeFrom = addDaysYMD(baseY, -(days - 1));
+      765:       }
+      766: 
+      767:       const rangeTo = baseY;
+      768: 
+      769:       setRangeInfo({ from: rangeFrom, to: rangeTo });
+      770:       setLoadingStage({ today: false, range: true });
+      771: 
+      772:       const histRaw = await loadHistoryRange({
+>>    773:         getKingResultsByRange,
+      774:         uf: ufResolved,
+      775:         dateFrom: rangeFrom,
+      776:         dateTo: rangeTo,
+      777:         readPolicy: "server",
+      778:       });
+      779: 
+      780:       if (requestIdRef.current !== currentRequestId) return;
+      781: 
+      782:       const hist = mergeBaseIntoRange(histRaw, baseDraw);
+      783: 
+      784:       if (debugTop3) console.log(
+      785:         "[TOP3 HISTORY]",
+      786:         JSON.stringify(
+      787:           {
+      788:             period: {
+      789:               from: rangeFrom,
+      790:               to: rangeTo,
+      791:             },
+      792: 
+      793:             firestoreDraws: Array.isArray(histRaw)
+      794:               ? histRaw.length
+      795:               : 0,
+      796: 
+      797:             mergedDraws: Array.isArray(hist)
+      798:               ? hist.length
+      799:               : 0,
+      800: 
+      801:             baseIncluded: Array.isArray(hist)
+      802:               ? hist.some(
+      803:                   (d) =>
+      804:                     drawKey(d) === drawKey(baseDraw)
+      805:                 )
+      806:               : false,
+      807: 
+      808:             firstDraw:
+
+ARQUIVO: src\services\kingResultsService.js
+TOTAL DE CHAMADAS: 2
+FLAGS: mode_detailed=True | read_policy_server=False | reads_statistics_snapshot=False | uses_fallback=True
+
+CHAMADA NA LINHA 1303
+     1285:   if (!docs || !docs.length) return [];
+     1286: 
+     1287:   let baseAll = dedupeDrawsLocal(docs.map(mapDrawDoc));
+     1288:   baseAll = baseAll.filter((x) => (x.ymd || normalizeToYMD(x.date)) === dayYmd);
+     1289: 
+     1290:   const ordered = sortDrawsLocal(baseAll);
+     1291: 
+     1292:   return ordered.map((d) => {
+     1293:     const embedded = normalizeEmbeddedPrizesForAggregated(d?.prizes);
+     1294:     return {
+     1295:       ...d,
+     1296:       prizes: embedded,
+     1297:       prizesCount: embedded.length || Number(d?.prizesCount || 0),
+     1298:       __mode: "aggregated",
+     1299:     };
+     1300:   });
+     1301: }
+     1302: 
+>>   1303: export async function getKingResultsByRange({
+     1304:   uf,
+     1305:   dateFrom,
+     1306:   dateTo,
+     1307:   closeHour = null,
+     1308:   closeHourBucket = null,
+     1309:   positions = null,
+     1310:   mode = "detailed",
+     1311:   readPolicy = DEFAULT_READ_POLICY,
+     1312:   bypassCache = false,
+     1313: }) {
+     1314:   if (!uf || !dateFrom || !dateTo) {
+     1315:     throw new Error("Parâmetros obrigatórios: uf, dateFrom, dateTo");
+     1316:   }
+     1317: 
+     1318:   const scopeKey = canonicalScopeKey(uf);
+     1319: 
+     1320:   const positionsArr = normalizePositions(positions);
+     1321: 
+     1322:   const ymdFrom = normalizeToYMD(dateFrom);
+     1323:   const ymdTo = normalizeToYMD(dateTo);
+     1324:   if (!ymdFrom || !ymdTo) return [];
+     1325: 
+     1326:   const hourFilter = resolveHourFilter({ closeHour, closeHourBucket });
+     1327: 
+     1328:   const effectiveMode = decideKingRangeMode({
+     1329:     dateFrom: ymdFrom,
+     1330:     dateTo: ymdTo,
+     1331:     mode,
+     1332:   });
+     1333: 
+     1334:   const rangeKey = drawsCacheKeyRange({
+     1335:     scopeKey,
+     1336:     from: ymdFrom,
+     1337:     to: ymdTo,
+     1338:     positionsArr,
+
+CHAMADA NA LINHA 1688
+     1670:   if (cursorTo < fromYmd) {
+     1671:     const outEmpty = Array.from({ length: 25 }, (_, i) => ({
+     1672:       pos: i + 1,
+     1673:       grupo: i + 1,
+     1674:       lastYmd: null,
+     1675:       lastHour: null,
+     1676:       lastDrawId: null,
+     1677:       lastLottery: null,
+     1678:       atrasoDias: null,
+     1679:     }));
+     1680:     cacheSet(LATE_CACHE, cacheKey, outEmpty);
+     1681:     return outEmpty;
+     1682:   }
+     1683: 
+     1684:   while (cursorTo >= fromYmd && lastSeen.size < 25) {
+     1685:     let chunkFrom = addDaysUTC(cursorTo, -(chunk - 1));
+     1686:     if (chunkFrom < fromYmd) chunkFrom = fromYmd;
+     1687: 
+>>   1688:     const draws = await getKingResultsByRange({
+     1689:       uf,
+     1690:       dateFrom: chunkFrom,
+     1691:       dateTo: cursorTo,
+     1692:       closeHour,
+     1693:       closeHourBucket,
+     1694:       positions: [posNum],
+     1695:       mode: "detailed",
+     1696:     });
+     1697: 
+     1698:     const desc = sortDrawsLocalDesc(dedupeDrawsLocal(draws));
+     1699: 
+     1700:     for (const d of desc) {
+     1701:       if (!d) continue;
+     1702: 
+     1703:       if (hourFilter?.kind && !drawPassesHourFilter(d, hourFilter)) continue;
+     1704:       if (lotteriesArr && !drawPassesLotteriesFilter(d, lotteriesArr)) continue;
+     1705: 
+     1706:       const ymd = d.ymd || normalizeToYMD(d.date);
+     1707:       if (!ymd || !isYMD(ymd)) continue;
+     1708: 
+     1709:       const p = Array.isArray(d.prizes)
+     1710:         ? d.prizes.find(
+     1711:             (x) => Number(x?.position) === posNum && isValidGrupo(x?.grupo)
+     1712:           )
+     1713:         : null;
+     1714: 
+     1715:       const g = Number(p?.grupo);
+     1716:       if (!isValidGrupo(g)) continue;
+     1717: 
+     1718:       if (!lastSeen.has(g)) {
+     1719:         lastSeen.set(g, {
+     1720:           ymd,
+     1721:           hour: d.close_hour || d.closeHour || "",
+     1722:           drawId: d.drawId || d.id || null,
+     1723:           lottery_code: d.lottery_code || null,
+
+ARQUIVO: src\services\statisticsEngine.js
+TOTAL DE CHAMADAS: 2
+FLAGS: mode_detailed=True | read_policy_server=False | reads_statistics_snapshot=True | uses_fallback=False
+
+CHAMADA NA LINHA 3
+        1: import { doc, getDoc, serverTimestamp, setDoc } from "firebase/firestore";
+        2: import { db } from "./firebase";
+>>      3: import { getKingResultsByRange } from "./kingResultsService";
+        4: import { buildRanking } from "../utils/buildRanking";
+        5: import { applyScoreEngine } from "../utils/scoreEngine";
+        6: 
+        7: function safeArray(v) {
+        8:   return Array.isArray(v) ? v : [];
+        9: }
+       10: 
+       11: function normalizeUfKey(uf) {
+       12:   return String(uf || "PT_RIO").trim().toUpperCase() || "PT_RIO";
+       13: }
+       14: 
+       15: function snapshotDocRef(uf, scope = "dashboard_full") {
+       16:   const key = normalizeUfKey(uf);
+       17:   return doc(db, "statistics", key, "snapshots", scope);
+       18: }
+       19: 
+       20: export async function readStatisticsSnapshot({ uf, scope = "dashboard_full" } = {}) {
+       21:   const ref = snapshotDocRef(uf, scope);
+       22:   const snap = await getDoc(ref);
+       23: 
+       24:   if (!snap.exists()) {
+       25:     return {
+       26:       exists: false,
+       27:       data: null,
+       28:     };
+       29:   }
+       30: 
+       31:   return {
+       32:     exists: true,
+       33:     data: snap.data(),
+       34:   };
+       35: }
+       36: 
+       37: export async function buildStatisticsSnapshot({
+       38:   uf = "PT_RIO",
+
+CHAMADA NA LINHA 48
+       30: 
+       31:   return {
+       32:     exists: true,
+       33:     data: snap.data(),
+       34:   };
+       35: }
+       36: 
+       37: export async function buildStatisticsSnapshot({
+       38:   uf = "PT_RIO",
+       39:   dateFrom,
+       40:   dateTo,
+       41:   scope = "dashboard_full",
+       42:   positions = null,
+       43: } = {}) {
+       44:   if (!dateFrom || !dateTo) {
+       45:     throw new Error("buildStatisticsSnapshot exige dateFrom e dateTo.");
+       46:   }
+       47: 
+>>     48:   const draws = await getKingResultsByRange({
+       49:     uf,
+       50:     dateFrom,
+       51:     dateTo,
+       52:     positions,
+       53:     mode: "detailed",
+       54:   });
+       55: 
+       56:   const built = buildRanking(draws);
+       57:   const ranking = safeArray(built?.ranking);
+       58:   const rankingScored = applyScoreEngine(ranking);
+       59: 
+       60:   const payload = {
+       61:     version: 1,
+       62:     scope,
+       63:     uf: normalizeUfKey(uf),
+       64:     from: dateFrom,
+       65:     to: dateTo,
+       66:     totalDraws: Number(built?.totalDraws || 0),
+       67:     uniqueDays: Number(built?.uniqueDays || 0),
+       68:     totalOcorrencias: Number(built?.totalOcorrencias || 0),
+       69:     ranking,
+       70:     rankingScored,
+       71:     top3: safeArray(rankingScored).slice(0, 3),
+       72:     integrityIssues: safeArray(built?.integrityIssues),
+       73:     countMode: built?.countMode || "byPrize",
+       74:     generatedAt: new Date().toISOString(),
+       75:     updatedAt: serverTimestamp(),
+       76:   };
+       77: 
+       78:   await setDoc(snapshotDocRef(uf, scope), payload, { merge: true });
+       79: 
+       80:   return payload;
+       81: }
+       82: 
+       83: export async function ensureStatisticsSnapshot({
+
+==============================================================================================================
+CHAMADAS COM mode: detailed
+==============================================================================================================
+
+ARQUIVO: src\dev\runAuditTop3.js | LINHA: 109
+       89:     : defaultFrom < minDate
+       90:     ? minDate
+       91:     : defaultFrom;
+       92: 
+       93:   console.log("[BACKTEST TOP3] Base disponível:", minDate, "até", maxDate);
+       94:   console.log("[BACKTEST TOP3] Período auditado:", dateFrom, "até", dateTo);
+       95:   console.log(
+       96:     "[BACKTEST TOP3] Leitura:",
+       97:     "Firestore server + bypass do cache de range"
+       98:   );
+       99: 
+      100:   const startedAt = Date.now();
+      101: 
+      102:   const drawsRange = await getKingResultsByRange({
+      103:     uf,
+      104:     dateFrom,
+      105:     dateTo,
+      106:     closeHour: null,
+      107:     closeHourBucket: null,
+      108:     positions: null,
+>>    109:     mode: "detailed",
+      110:     readPolicy: "server",
+      111:     bypassCache: true,
+      112:   });
+      113: 
+      114:   const draws = Array.isArray(drawsRange) ? drawsRange : [];
+      115: 
+      116:   console.log("[BACKTEST TOP3] Sorteios carregados:", draws.length);
+      117:   console.log("[BACKTEST TOP3] Dias com resultados:", countUniqueDays(draws));
+      118: 
+      119:   if (!draws.length) {
+      120:     throw new Error("Nenhum sorteio encontrado no período auditado.");
+      121:   }
+      122: 
+      123:   const report = auditTop3Backtest({
+      124:     drawsRange: draws,
+      125:     lotteryKey,
+      126:     PT_RIO_SCHEDULE_NORMAL,
+      127:     PT_RIO_SCHEDULE_WED_SAT,
+      128:     FEDERAL_SCHEDULE,
+      129:   });
+      130: 
+      131:   const debugYmd = safeStr(process.env.DEBUG_YMD);
+      132:   const debugHour = safeStr(process.env.DEBUG_HOUR);
+      133: 
+      134:   if (debugYmd && debugHour) {
+
+ARQUIVO: src\hooks\useKingRanking.js | LINHA: 273
+      253:   maxYmd: null,
+      254:   source: "none",
+      255: };
+      256: 
+      257: const INITIAL_META = {
+      258:   top3: [],
+      259:   totalOcorrencias: 0,
+      260:   totalDraws: 0,
+      261:   mode: "none",
+      262:   date: null,
+      263:   dateFrom: null,
+      264:   dateTo: null,
+      265: 
+      266:   palpitesByGrupo: {},
+      267:   palpiteSampleDrawsUsed: 0,
+      268:   palpiteUsedBucket: null,
+      269: 
+      270:   bounds: { ...INITIAL_BOUNDS },
+      271:   suggestedRange: { from: null, to: null },
+      272: 
+>>    273:   serviceMode: "detailed",
+      274:   hydrating: false,
+      275: };
+      276: 
+      277: export function useKingRanking({
+      278:   uf,
+      279:   date,
+      280:   dateFrom,
+      281:   dateTo,
+      282:   closeHourBucket = null,
+      283:   positions = null,
+      284:   needsPrizes = false,
+      285: }) {
+      286:   const [loading, setLoading] = useState(true);
+      287:   const [error, setError] = useState(null);
+      288: 
+      289:   const [data, setData] = useState([]);
+      290:   const [meta, setMeta] = useState(INITIAL_META);
+      291: 
+      292:   const [drawsRaw, setDrawsRaw] = useState([]);
+      293: 
+      294:   const boundsCacheRef = useRef(new Map());
+      295:   const [bounds, setBounds] = useState(INITIAL_BOUNDS);
+      296: 
+      297:   const [boundsRetryTick, setBoundsRetryTick] = useState(0);
+      298:   const boundsRetryTimerRef = useRef(null);
+
+ARQUIVO: src\pages\Admin\modules\MilharEngine\MilharEnginePage.jsx | LINHA: 347
+      327: 
+      328:     if (!chunks.length) {
+      329:       throw new Error(
+      330:         "A base histórica não gerou períodos válidos."
+      331:       );
+      332:     }
+      333: 
+      334:     let completed = 0;
+      335: 
+      336:     const results = await mapWithConcurrency(
+      337:       chunks,
+      338:       3,
+      339:       async (chunk) => {
+      340:         const response =
+      341:           await getKingResultsByRange({
+      342:             uf: LOTTERY_KEY,
+      343:             dateFrom: chunk.from,
+      344:             dateTo: chunk.to,
+      345:             closeHour: null,
+      346:             positions: POSITIONS,
+>>    347:             mode: "detailed",
+      348:           });
+      349: 
+      350:         const prizes = collectPrizes(response);
+      351: 
+      352:         completed += 1;
+      353: 
+      354:         onProgress?.({
+      355:           completed,
+      356:           total: chunks.length,
+      357:           label:
+      358:             `Carregando histórico ` +
+      359:             `(${completed}/${chunks.length})`,
+      360:         });
+      361: 
+      362:         return prizes;
+      363:       }
+      364:     );
+      365: 
+      366:     historicalCache = {
+      367:       prizes: results.flat(),
+      368:       minYmd: bounds.minYmd,
+      369:       maxYmd: bounds.maxYmd,
+      370:       chunks: chunks.length,
+      371:     };
+      372: 
+
+ARQUIVO: src\pages\Centenas\CentenasView.jsx | LINHA: 1032
+     1012:         const chunks = splitRangeIntoChunks(bounds.minYmd, bounds.maxYmd, CHUNK_DAYS);
+     1013:         setProgress({ done: 0, total: chunks.length, label: "Carregando histórico..." });
+     1014: 
+     1015:         const results = await mapWithConcurrency(chunks, CHUNKS_CONCURRENCY, async (ch, idx) => {
+     1016:           if (abortedRef.current) return { ok: false, entries: [] };
+     1017:           if (buildSeqRef.current !== mySeq) return { ok: false, entries: [] };
+     1018: 
+     1019:           const responses =
+     1020:             await Promise.all(
+     1021:               selectedLotteryKeys.map(
+     1022:                 async (lotteryKey) => {
+     1023:                   const res =
+     1024:                     await getKingResultsByRange({
+     1025:                       uf: lotteryKey,
+     1026:                       dateFrom: ch.from,
+     1027:                       dateTo: ch.to,
+     1028:                       closeHour:
+     1029:                         requestedCloseHour,
+     1030:                       positions:
+     1031:                         requestedPrizePositions,
+>>   1032:                       mode: "detailed",
+     1033:                     });
+     1034: 
+     1035:                   return {
+     1036:                     lotteryKey,
+     1037:                     res,
+     1038:                   };
+     1039:                 }
+     1040:               )
+     1041:             );
+     1042: 
+     1043:           const drawsChunk =
+     1044:             responses.flatMap(
+     1045:               ({
+     1046:                 lotteryKey,
+     1047:                 res,
+     1048:               }) =>
+     1049:                 normalizeDrawsResult(res)
+     1050:                   .map((draw) => ({
+     1051:                     ...draw,
+     1052:                     __centenasLotteryKey:
+     1053:                       lotteryKey,
+     1054:                   }))
+     1055:             );
+     1056: 
+     1057:           const prizesFlat =
+
+ARQUIVO: src\pages\Downloads\Downloads.jsx | LINHA: 768
+      748:     }
+      749:     if (fPos !== "ALL") f.push(`Posição: ${fPos}º`);
+      750:     if (f.length) lines.push(`Filtros: ${f.join(" • ")}`);
+      751:     else lines.push(`Filtros: Todos`);
+      752: 
+      753:     return lines;
+      754:   }, [normalizeRange, ufUi, label, fMonth, fDay, fDow, fHour, fAnimalGrupo, fPos]);
+      755: 
+      756:   const fetchFilteredRows = useCallback(async () => {
+      757:     const u = safeStr(ufQueryKey);
+      758:     if (!u) return [];
+      759: 
+      760:     const { from, to } = normalizeRange();
+      761: 
+      762:     const out = await getKingResultsByRange({
+      763:       uf: u,
+      764:       dateFrom: from,
+      765:       dateTo: to,
+      766:       closeHour: null,
+      767:       positions: null,
+>>    768:       mode: "detailed",
+      769:     });
+      770: 
+      771:     const draws = Array.isArray(out) ? out : [];
+      772:     const rows = buildRowsFromDraws(draws);
+      773:     const filteredRows = applyFiltersToRows(rows);
+      774: 
+      775:     filteredRows.sort((a, b) => {
+      776:       const da = safeStr(a.ymd);
+      777:       const db = safeStr(b.ymd);
+      778:       if (da !== db) return da.localeCompare(db);
+      779:       const ha = safeStr(a.hour);
+      780:       const hb = safeStr(b.hour);
+      781:       if (ha !== hb) return ha.localeCompare(hb);
+      782:       return Number(a.pos) - Number(b.pos);
+      783:     });
+      784: 
+      785:     return filteredRows;
+      786:   }, [ufQueryKey, normalizeRange, buildRowsFromDraws, applyFiltersToRows]);
+      787: 
+      788:   const loadPreview = useCallback(async () => {
+      789:     setPreviewLoading(true);
+      790:     setPreviewError("");
+      791:     setPreviewRows([]);
+      792:     setPreviewPage(1);
+      793: 
+
+ARQUIVO: src\pages\Search\Search.jsx | LINHA: 761
+      741: 
+      742:       let allHits = [];
+      743: 
+      744:       const pushHitsIncremental = (newHits) => {
+      745:         if (!newHits.length) return;
+      746:         allHits = allHits.concat(newHits);
+      747:         // atualiza incrementalmente sem travar a UI
+      748:         safeSet(() => setMatches([...allHits]));
+      749:       };
+      750: 
+      751:       const worker = async (ch) => {
+      752:         if (!safeOk()) return;
+      753: 
+      754:         const res = await getKingResultsByRange({
+      755:           uf: LOTTERY_KEY,
+      756:           dateFrom: ch.from,
+      757:           dateTo: ch.to,
+      758:           closeHourBucket: null,
+      759:           closeHour: selectedCloseHourBucket ? `${String(selectedCloseHourBucket).slice(0, 2)}:00` : null,
+      760:           positions: selectedPositions || null,
+>>    761:           mode: "detailed",
+      762:         });
+      763: 
+      764:         if (!safeOk()) return;
+      765: 
+      766:         const drawsArr = normalizeDrawsResponse(res);
+      767:         const chunkHits = [];
+      768: 
+      769:         for (const d of drawsArr) {
+      770:           const ymd = normalizeYmdAny(d?.ymd || d?.dateYmd || d?.date || d?.data || "");
+      771:           if (!isYMD(ymd)) continue;
+      772: 
+      773:           const closeRaw = normalizeHourLike(d?.close_hour || d?.closeHour || d?.hour || d?.hora || "");
+      774:           const closeBucket = toHourBucket(closeRaw) || toHourBucket(d?.close_hour_bucket) || null;
+      775: 
+      776:           // ✅ filtro por bucket (se selecionado)
+      777:           if (selectedCloseHourBucket) {
+      778:             const b = closeBucket || toHourBucket(closeRaw);
+      779:             if (b !== selectedCloseHourBucket) continue;
+      780:           }
+      781: 
+      782:           const prizes = ensurePrizes(d);
+      783: 
+      784:           for (const p of prizes) {
+      785:             const grupo = Number(p?.grupo);
+      786:             const position = Number(p?.position);
+
+ARQUIVO: src\pages\Top3\__tests__\top3.backtest.layers.test.js | LINHA: 165
+      145:     }
+      146: 
+      147:     if (confidence < 0) {
+      148:       throw new Error(`Confiança negativa no TOP3: ${JSON.stringify(item)}`);
+      149:     }
+      150:   }
+      151: }
+      152: 
+      153: test("backtest TOP3 PT_RIO - camadas e transições", async () => {
+      154:   const bounds = await getKingBoundsByUf({ uf: "PT_RIO" });
+      155:   const maxDate = bounds?.maxYmd || bounds?.maxDate;
+      156:   expect(maxDate).toBeTruthy();
+      157: 
+      158:   const from = addDaysYMD(maxDate, -179);
+      159:   const toExclusive = addDaysYMD(maxDate, 1);
+      160: 
+      161:   const raw = await getKingResultsByRange({
+      162:     uf: "PT_RIO",
+      163:     dateFrom: from,
+      164:     dateTo: toExclusive,
+>>    165:     mode: "detailed",
+      166:     readPolicy: "server",
+      167:   });
+      168: 
+      169:   const allDraws = dedupeAndSort(raw);
+      170:   const drawsIndex = indexDrawsByYmdHour(allDraws);
+      171: 
+      172:   expect(allDraws.length).toBeGreaterThan(30);
+      173: 
+      174:   let totalCases = 0;
+      175:   let hitTop5 = 0;
+      176:   let hitFirst = 0;
+      177: 
+      178:   const byScenario = new Map();
+      179:   const byEdge = new Map();
+      180:   const byPrevGrupo = new Map();
+      181: 
+      182:   for (let i = 0; i < allDraws.length - 1; i += 1) {
+      183:     const drawLast = allDraws[i];
+      184:     const history = allDraws.slice(0, i + 1);
+      185: 
+      186:     const lastY = pickDrawYMD(drawLast);
+      187:     const lastH = toHourBucket(pickDrawHour(drawLast));
+      188:     if (!lastY || !lastH) continue;
+      189: 
+      190:     const nextSlot = getNextSlotForLottery({
+
+ARQUIVO: src\pages\Top3\__tests__\top3.backtest.test.js | LINHA: 177
+      157: 
+      158:     if (confidence < 0) {
+      159:       throw new Error(`Confiança negativa no TOP3: ${JSON.stringify(item)}`);
+      160:     }
+      161:   }
+      162: }
+      163: 
+      164: test("backtest TOP3 PT_RIO - últimos 180 dias", async () => {
+      165:   const bounds = await getKingBoundsByUf({ uf: "PT_RIO" });
+      166:   const maxDate = bounds?.maxYmd || bounds?.maxDate;
+      167: 
+      168:   expect(maxDate).toBeTruthy();
+      169: 
+      170:   const from = addDaysYMD(maxDate, -179);
+      171:   const toExclusive = addDaysYMD(maxDate, 1);
+      172: 
+      173:   const raw = await getKingResultsByRange({
+      174:     uf: "PT_RIO",
+      175:     dateFrom: from,
+      176:     dateTo: toExclusive,
+>>    177:     mode: "detailed",
+      178:     readPolicy: "server",
+      179:   });
+      180: 
+      181:   const allDraws = dedupeAndSort(raw);
+      182:   const drawsIndex = indexDrawsByYmdHour(allDraws);
+      183: 
+      184:   expect(allDraws.length).toBeGreaterThan(30);
+      185: 
+      186:   let totalCases = 0;
+      187:   let hitTop5 = 0;
+      188:   let hitFirst = 0;
+      189: 
+      190:   const byTargetHour = new Map();
+      191: 
+      192:   for (let i = 0; i < allDraws.length - 1; i += 1) {
+      193:     const drawLast = allDraws[i];
+      194:     const history = allDraws.slice(0, i + 1);
+      195: 
+      196:     const lastY = pickDrawYMD(drawLast);
+      197:     const lastH = toHourBucket(pickDrawHour(drawLast));
+      198: 
+      199:     if (!lastY || !lastH) continue;
+      200: 
+      201:     const nextSlot = getNextSlotForLottery({
+      202:       lotteryKey: "PT_RIO",
+
+ARQUIVO: src\pages\Top3\modules\top3.loader.js | LINHA: 31
+       11:   const key = String(lotteryKey || "").trim().toUpperCase();
+       12:   const safeUf = String(uf || "").trim().toUpperCase();
+       13:   const safeTargetYmd = String(targetYmd || "").trim();
+       14:   const safeTargetHour = String(targetHourBucket || "").trim();
+       15: 
+       16:   if (!safeTargetYmd || !safeTargetHour || !safeUf) {
+       17:     return { draw: null, ymd: "", hour: "", source: "none" };
+       18:   }
+       19: 
+       20:   const searchFrom =
+       21:     String(minDate || "").trim() ||
+       22:     (key === "FEDERAL"
+       23:       ? addDaysYMD(safeTargetYmd, -240)
+       24:       : addDaysYMD(safeTargetYmd, -90));
+       25: 
+       26:   const hist =
+       27:     (await getKingResultsByRange({
+       28:       uf: safeUf,
+       29:       dateFrom: searchFrom,
+       30:       dateTo: safeTargetYmd,
+>>     31:       mode: "detailed",
+       32:       readPolicy: "server",
+       33:     })) || [];
+       34: 
+       35:   return findLatestHistoricalBaseDraw({
+       36:     draws: hist,
+       37:     lotteryKey: key,
+       38:     targetYmd: safeTargetYmd,
+       39:     targetHourBucket: safeTargetHour,
+       40:   });
+       41: }
+       42: 
+       43: export async function loadHistoryRange({
+       44:   getKingResultsByRange,
+       45:   uf,
+       46:   dateFrom,
+       47:   dateTo,
+       48:   readPolicy = "server",
+       49: }) {
+       50:   const safeUf = String(uf || "").trim().toUpperCase();
+       51:   const safeDateFrom = String(dateFrom || "").trim();
+       52:   const safeDateTo = String(dateTo || "").trim();
+       53: 
+       54:   if (!safeUf || !safeDateFrom || !safeDateTo) return [];
+       55: 
+       56:   return (
+
+ARQUIVO: src\pages\Top3\modules\top3.loader.js | LINHA: 61
+       41: }
+       42: 
+       43: export async function loadHistoryRange({
+       44:   getKingResultsByRange,
+       45:   uf,
+       46:   dateFrom,
+       47:   dateTo,
+       48:   readPolicy = "server",
+       49: }) {
+       50:   const safeUf = String(uf || "").trim().toUpperCase();
+       51:   const safeDateFrom = String(dateFrom || "").trim();
+       52:   const safeDateTo = String(dateTo || "").trim();
+       53: 
+       54:   if (!safeUf || !safeDateFrom || !safeDateTo) return [];
+       55: 
+       56:   return (
+       57:     (await getKingResultsByRange({
+       58:       uf: safeUf,
+       59:       dateFrom: safeDateFrom,
+       60:       dateTo: safeDateTo,
+>>     61:       mode: "detailed",
+       62:       readPolicy,
+       63:     })) || []
+       64:   );
+       65: }
+
+ARQUIVO: src\services\kingResultsService.js | LINHA: 1202
+     1182:       const { docs: found, error } = await fetchDrawDocsPreferUf({
+     1183:         uf,
+     1184:         extraWheres: [where("date", "==", brDate)],
+     1185:         policy: readPolicy,
+     1186:       });
+     1187:       if (error) throw error;
+     1188:       if (found.length) docCandidates.push(...found);
+     1189:     }
+     1190:   }
+     1191: 
+     1192:   if (!docCandidates.length) return [];
+     1193: 
+     1194:   let baseAll = dedupeDrawsLocal(docCandidates.map(mapDrawDoc));
+     1195:   baseAll = baseAll.filter((x) => (x.ymd || normalizeToYMD(x.date)) === ymdDate);
+     1196: 
+     1197:   const orderedAll = sortDrawsLocal(baseAll);
+     1198: 
+     1199:   const hydratedAll = await mapWithConcurrency(orderedAll, 6, async (item) => {
+     1200:     const prizes = await fetchPrizesForDraw(item.drawId, positionsArr, item.prizes);
+     1201:     const pc = Array.isArray(prizes) ? prizes.length : 0;
+>>   1202:     return { ...item, prizes, prizesCount: pc, __mode: "detailed" };
+     1203:   });
+     1204: 
+     1205:   let dayAll = dedupeDrawsLocal(hydratedAll);
+     1206: 
+     1207: if (scopeKey === FEDERAL_SCOPE_CODE) {
+     1208:   dayAll = collapseFederalDailyCloneDraws(dayAll);
+     1209: }
+     1210: 
+     1211:   const base = hourFilter?.kind
+     1212:     ? dayAll.filter((d) => drawPassesHourFilter(d, hourFilter))
+     1213:     : dayAll;
+     1214: 
+     1215:   let out = dedupeDrawsLocal(sortDrawsLocal(base));
+     1216: 
+     1217: if (scopeKey === FEDERAL_SCOPE_CODE) {
+     1218:   out = collapseFederalDailyCloneDraws(out);
+     1219: }
+     1220: 
+     1221:   if (allowMemoryCache) {
+     1222:     cacheSet(DRAWS_CACHE, dayKey, out);
+     1223:   }
+     1224: 
+     1225:   return out;
+     1226: }
+     1227: 
+
+ARQUIVO: src\services\kingResultsService.js | LINHA: 1478
+     1458:           uf,
+     1459:           date: day,
+     1460:           closeHour,
+     1461:           closeHourBucket,
+     1462:           positions: positionsArr,
+     1463:         });
+     1464:         if (Array.isArray(dayDraws) && dayDraws.length) all.push(...dayDraws);
+     1465:       }
+     1466: 
+     1467:       const baseAll = dedupeDrawsLocal(all);
+     1468:       const base = hourFilter?.kind
+     1469:         ? baseAll.filter((d) => drawPassesHourFilter(d, hourFilter))
+     1470:         : baseAll;
+     1471: 
+     1472:       const ordered = sortDrawsLocal(base);
+     1473: 
+     1474:       const conc = chooseRangeConcurrency(ordered.length);
+     1475:       const results = await mapWithConcurrency(ordered, conc, async (item) => {
+     1476:         const prizes = await fetchPrizesForDraw(item.drawId, positionsArr, item.prizes);
+     1477:         const pc = Array.isArray(prizes) ? prizes.length : 0;
+>>   1478:         return { ...item, prizes, prizesCount: pc, __mode: "detailed" };
+     1479:       });
+     1480: 
+     1481:       const out = dedupeDrawsLocal(results);
+     1482:       if (!bypassCache) {
+     1483:       cacheSet(DRAWS_CACHE, rangeKey, out);
+     1484:     }
+     1485:       return out;
+     1486:     }
+     1487: 
+     1488:     return [];
+     1489:   }
+     1490: 
+     1491:   const baseAll = dedupeDrawsLocal(docs.map(mapDrawDoc));
+     1492:   const base = hourFilter?.kind
+     1493:     ? baseAll.filter((d) => drawPassesHourFilter(d, hourFilter))
+     1494:     : baseAll;
+     1495: 
+     1496:   const ordered = sortDrawsLocal(base);
+     1497: 
+     1498:   if (effectiveMode === "aggregated") {
+     1499:     const out = dedupeDrawsLocal(
+     1500:       ordered.map((d) => {
+     1501:         const embedded = normalizeEmbeddedPrizesForAggregated(d?.prizes);
+     1502:         return {
+     1503:           ...d,
+
+ARQUIVO: src\services\kingResultsService.js | LINHA: 1523
+     1503:           ...d,
+     1504:           prizes: embedded,
+     1505:           prizesCount: Number.isFinite(Number(d?.prizesCount))
+     1506:             ? Number(d.prizesCount)
+     1507:             : embedded.length || 0,
+     1508:           __mode: "aggregated",
+     1509:         };
+     1510:       })
+     1511:     );
+     1512:     if (!bypassCache) {
+     1513:       cacheSet(DRAWS_CACHE, rangeKey, out);
+     1514:     }
+     1515:     return out;
+     1516:   }
+     1517: 
+     1518:   const conc = chooseRangeConcurrency(ordered.length);
+     1519: 
+     1520:   const results = await mapWithConcurrency(ordered, conc, async (item) => {
+     1521:     const prizes = await fetchPrizesForDraw(item.drawId, positionsArr, item.prizes);
+     1522:     const pc = Array.isArray(prizes) ? prizes.length : 0;
+>>   1523:     return { ...item, prizes, prizesCount: pc, __mode: "detailed" };
+     1524:   });
+     1525: 
+     1526:   const out = dedupeDrawsLocal(results);
+     1527:   if (!bypassCache) {
+     1528:       cacheSet(DRAWS_CACHE, rangeKey, out);
+     1529:     }
+     1530:   return out;
+     1531: }
+     1532: 
+     1533: /* =========================
+     1534:    ✅ Hidratação de prizes (para UX no "Todos")
+     1535: ========================= */
+     1536: 
+     1537: export async function hydrateKingDrawsWithPrizes({
+     1538:   draws,
+     1539:   positions = null,
+     1540:   concurrency = null,
+     1541: }) {
+     1542:   const arr = Array.isArray(draws) ? draws : [];
+     1543:   if (!arr.length) return [];
+     1544: 
+     1545:   const positionsArr = normalizePositions(positions);
+     1546: 
+     1547:   const conc =
+     1548:     Number.isFinite(Number(concurrency)) && Number(concurrency) > 0
+
+ARQUIVO: src\services\kingResultsService.js | LINHA: 1555
+     1535: ========================= */
+     1536: 
+     1537: export async function hydrateKingDrawsWithPrizes({
+     1538:   draws,
+     1539:   positions = null,
+     1540:   concurrency = null,
+     1541: }) {
+     1542:   const arr = Array.isArray(draws) ? draws : [];
+     1543:   if (!arr.length) return [];
+     1544: 
+     1545:   const positionsArr = normalizePositions(positions);
+     1546: 
+     1547:   const conc =
+     1548:     Number.isFinite(Number(concurrency)) && Number(concurrency) > 0
+     1549:       ? Number(concurrency)
+     1550:       : chooseRangeConcurrency(arr.length);
+     1551: 
+     1552:   const results = await mapWithConcurrency(arr, conc, async (item) => {
+     1553:     const prizes = await fetchPrizesForDraw(item.drawId, positionsArr, item.prizes);
+     1554:     const pc = Array.isArray(prizes) ? prizes.length : 0;
+>>   1555:     return { ...item, prizes, prizesCount: pc, __mode: "detailed" };
+     1556:   });
+     1557: 
+     1558:   return dedupeDrawsLocal(results);
+     1559: }
+     1560: 
+     1561: /* =========================
+     1562:    ✅ ATRASADOS (Late) — 100% baseado na SUA base
+     1563: ========================= */
+     1564: 
+     1565: function normalizeLotteriesList(lotteries) {
+     1566:   const arr = Array.isArray(lotteries) ? lotteries : [];
+     1567:   const cleaned = arr
+     1568:     .map((x) => String(x ?? "").trim().toUpperCase())
+     1569:     .filter(Boolean);
+     1570:   return cleaned.length ? Array.from(new Set(cleaned)) : null;
+     1571: }
+     1572: 
+     1573: function drawPassesLotteriesFilter(draw, lotteriesArr) {
+     1574:   if (!lotteriesArr || !lotteriesArr.length) return true;
+     1575: 
+     1576:   const identities = [
+     1577:     draw?.lottery_key,
+     1578:     draw?.lotteryKey,
+     1579:     draw?.lottery_code,
+     1580:     draw?.lotteryCode,
+
+ARQUIVO: src\services\kingResultsService.js | LINHA: 1695
+     1675:       lastHour: null,
+     1676:       lastDrawId: null,
+     1677:       lastLottery: null,
+     1678:       atrasoDias: null,
+     1679:     }));
+     1680:     cacheSet(LATE_CACHE, cacheKey, outEmpty);
+     1681:     return outEmpty;
+     1682:   }
+     1683: 
+     1684:   while (cursorTo >= fromYmd && lastSeen.size < 25) {
+     1685:     let chunkFrom = addDaysUTC(cursorTo, -(chunk - 1));
+     1686:     if (chunkFrom < fromYmd) chunkFrom = fromYmd;
+     1687: 
+     1688:     const draws = await getKingResultsByRange({
+     1689:       uf,
+     1690:       dateFrom: chunkFrom,
+     1691:       dateTo: cursorTo,
+     1692:       closeHour,
+     1693:       closeHourBucket,
+     1694:       positions: [posNum],
+>>   1695:       mode: "detailed",
+     1696:     });
+     1697: 
+     1698:     const desc = sortDrawsLocalDesc(dedupeDrawsLocal(draws));
+     1699: 
+     1700:     for (const d of desc) {
+     1701:       if (!d) continue;
+     1702: 
+     1703:       if (hourFilter?.kind && !drawPassesHourFilter(d, hourFilter)) continue;
+     1704:       if (lotteriesArr && !drawPassesLotteriesFilter(d, lotteriesArr)) continue;
+     1705: 
+     1706:       const ymd = d.ymd || normalizeToYMD(d.date);
+     1707:       if (!ymd || !isYMD(ymd)) continue;
+     1708: 
+     1709:       const p = Array.isArray(d.prizes)
+     1710:         ? d.prizes.find(
+     1711:             (x) => Number(x?.position) === posNum && isValidGrupo(x?.grupo)
+     1712:           )
+     1713:         : null;
+     1714: 
+     1715:       const g = Number(p?.grupo);
+     1716:       if (!isValidGrupo(g)) continue;
+     1717: 
+     1718:       if (!lastSeen.has(g)) {
+     1719:         lastSeen.set(g, {
+     1720:           ymd,
+
+ARQUIVO: src\services\statisticsEngine.js | LINHA: 53
+       33:     data: snap.data(),
+       34:   };
+       35: }
+       36: 
+       37: export async function buildStatisticsSnapshot({
+       38:   uf = "PT_RIO",
+       39:   dateFrom,
+       40:   dateTo,
+       41:   scope = "dashboard_full",
+       42:   positions = null,
+       43: } = {}) {
+       44:   if (!dateFrom || !dateTo) {
+       45:     throw new Error("buildStatisticsSnapshot exige dateFrom e dateTo.");
+       46:   }
+       47: 
+       48:   const draws = await getKingResultsByRange({
+       49:     uf,
+       50:     dateFrom,
+       51:     dateTo,
+       52:     positions,
+>>     53:     mode: "detailed",
+       54:   });
+       55: 
+       56:   const built = buildRanking(draws);
+       57:   const ranking = safeArray(built?.ranking);
+       58:   const rankingScored = applyScoreEngine(ranking);
+       59: 
+       60:   const payload = {
+       61:     version: 1,
+       62:     scope,
+       63:     uf: normalizeUfKey(uf),
+       64:     from: dateFrom,
+       65:     to: dateTo,
+       66:     totalDraws: Number(built?.totalDraws || 0),
+       67:     uniqueDays: Number(built?.uniqueDays || 0),
+       68:     totalOcorrencias: Number(built?.totalOcorrencias || 0),
+       69:     ranking,
+       70:     rankingScored,
+       71:     top3: safeArray(rankingScored).slice(0, 3),
+       72:     integrityIssues: safeArray(built?.integrityIssues),
+       73:     countMode: built?.countMode || "byPrize",
+       74:     generatedAt: new Date().toISOString(),
+       75:     updatedAt: serverTimestamp(),
+       76:   };
+       77: 
+       78:   await setDoc(snapshotDocRef(uf, scope), payload, { merge: true });
+
+==============================================================================================================
+CHAMADAS COM readPolicy: server
+==============================================================================================================
+
+ARQUIVO: src\dev\runAuditTop3.js | LINHA: 110
+       90:     ? minDate
+       91:     : defaultFrom;
+       92: 
+       93:   console.log("[BACKTEST TOP3] Base disponível:", minDate, "até", maxDate);
+       94:   console.log("[BACKTEST TOP3] Período auditado:", dateFrom, "até", dateTo);
+       95:   console.log(
+       96:     "[BACKTEST TOP3] Leitura:",
+       97:     "Firestore server + bypass do cache de range"
+       98:   );
+       99: 
+      100:   const startedAt = Date.now();
+      101: 
+      102:   const drawsRange = await getKingResultsByRange({
+      103:     uf,
+      104:     dateFrom,
+      105:     dateTo,
+      106:     closeHour: null,
+      107:     closeHourBucket: null,
+      108:     positions: null,
+      109:     mode: "detailed",
+>>    110:     readPolicy: "server",
+      111:     bypassCache: true,
+      112:   });
+      113: 
+      114:   const draws = Array.isArray(drawsRange) ? drawsRange : [];
+      115: 
+      116:   console.log("[BACKTEST TOP3] Sorteios carregados:", draws.length);
+      117:   console.log("[BACKTEST TOP3] Dias com resultados:", countUniqueDays(draws));
+      118: 
+      119:   if (!draws.length) {
+      120:     throw new Error("Nenhum sorteio encontrado no período auditado.");
+      121:   }
+      122: 
+      123:   const report = auditTop3Backtest({
+      124:     drawsRange: draws,
+      125:     lotteryKey,
+      126:     PT_RIO_SCHEDULE_NORMAL,
+      127:     PT_RIO_SCHEDULE_WED_SAT,
+      128:     FEDERAL_SCHEDULE,
+      129:   });
+      130: 
+      131:   const debugYmd = safeStr(process.env.DEBUG_YMD);
+      132:   const debugHour = safeStr(process.env.DEBUG_HOUR);
+      133: 
+      134:   if (debugYmd && debugHour) {
+      135:     const row = (Array.isArray(report?.rows) ? report.rows : []).find(
+
+ARQUIVO: src\hooks\useKingRanking.js | LINHA: 577
+      557:           throw new Error(
+      558:             `Firestore: consulta de RANGE longa está bloqueada após erro de índice.\n` +
+      559:               `Seu range atual tem ${rangeDays} dias.\n\n` +
+      560:               `Obs: fallback automático só cobre até ${RANGE_FALLBACK_LIMIT_DAYS} dias.`
+      561:           );
+      562:         }
+      563: 
+      564:         let draws = [];
+      565:         let serviceMode = "detailed";
+      566: 
+      567:         if (mode === "range") {
+      568:           serviceMode = "detailed";
+      569: 
+      570:           draws = await getKingResultsByRange({
+      571:             uf,
+      572:             dateFrom: ymdFrom,
+      573:             dateTo: ymdTo,
+      574:             closeHour: null,
+      575:             positions: positionsArrStable,
+      576:             mode: serviceMode,
+>>    577:             readPolicy: "server",
+      578:           });
+      579:         } else if (mode === "day") {
+      580:           serviceMode = "detailed";
+      581: 
+      582:           draws = await getKingResultsByDate({
+      583:             uf,
+      584:             date: effectiveDayYmd,
+      585:             closeHour: null,
+      586:             positions: positionsArrStable,
+      587:             readPolicy: "server",
+      588:           });
+      589:         } else {
+      590:           draws = [];
+      591:         }
+      592: 
+      593:         if (!mounted || mySeq !== refreshSeqRef.current) return;
+      594: 
+      595:         if (rangeBlocked) setRangeBlocked(false);
+      596: 
+      597:         let unique = dedupeDrawsLogicalPreferBest(draws).map(normalizeDrawForCharts);
+      598: 
+      599:         if (bucketNorm) {
+      600:           unique = unique.filter((d) => toHourBucketLabel(d?.close_hour) === bucketNorm);
+      601:         }
+      602: 
+
+ARQUIVO: src\hooks\useKingRanking.js | LINHA: 587
+      567:         if (mode === "range") {
+      568:           serviceMode = "detailed";
+      569: 
+      570:           draws = await getKingResultsByRange({
+      571:             uf,
+      572:             dateFrom: ymdFrom,
+      573:             dateTo: ymdTo,
+      574:             closeHour: null,
+      575:             positions: positionsArrStable,
+      576:             mode: serviceMode,
+      577:             readPolicy: "server",
+      578:           });
+      579:         } else if (mode === "day") {
+      580:           serviceMode = "detailed";
+      581: 
+      582:           draws = await getKingResultsByDate({
+      583:             uf,
+      584:             date: effectiveDayYmd,
+      585:             closeHour: null,
+      586:             positions: positionsArrStable,
+>>    587:             readPolicy: "server",
+      588:           });
+      589:         } else {
+      590:           draws = [];
+      591:         }
+      592: 
+      593:         if (!mounted || mySeq !== refreshSeqRef.current) return;
+      594: 
+      595:         if (rangeBlocked) setRangeBlocked(false);
+      596: 
+      597:         let unique = dedupeDrawsLogicalPreferBest(draws).map(normalizeDrawForCharts);
+      598: 
+      599:         if (bucketNorm) {
+      600:           unique = unique.filter((d) => toHourBucketLabel(d?.close_hour) === bucketNorm);
+      601:         }
+      602: 
+      603:         setDrawsRaw(unique);
+      604: 
+      605:         const hasAnyPrize = unique.some((d) => Array.isArray(d?.prizes) && d.prizes.length);
+      606: 
+      607:         if (serviceMode === "detailed") {
+      608:           if (hasAnyPrize) {
+      609:             const built = buildRanking(unique);
+      610:             setData(built.ranking || []);
+      611: 
+      612:             const palpiteBuilt = buildPalpite(unique, {
+
+ARQUIVO: src\pages\Top3\__tests__\top3.backtest.layers.test.js | LINHA: 166
+      146: 
+      147:     if (confidence < 0) {
+      148:       throw new Error(`Confiança negativa no TOP3: ${JSON.stringify(item)}`);
+      149:     }
+      150:   }
+      151: }
+      152: 
+      153: test("backtest TOP3 PT_RIO - camadas e transições", async () => {
+      154:   const bounds = await getKingBoundsByUf({ uf: "PT_RIO" });
+      155:   const maxDate = bounds?.maxYmd || bounds?.maxDate;
+      156:   expect(maxDate).toBeTruthy();
+      157: 
+      158:   const from = addDaysYMD(maxDate, -179);
+      159:   const toExclusive = addDaysYMD(maxDate, 1);
+      160: 
+      161:   const raw = await getKingResultsByRange({
+      162:     uf: "PT_RIO",
+      163:     dateFrom: from,
+      164:     dateTo: toExclusive,
+      165:     mode: "detailed",
+>>    166:     readPolicy: "server",
+      167:   });
+      168: 
+      169:   const allDraws = dedupeAndSort(raw);
+      170:   const drawsIndex = indexDrawsByYmdHour(allDraws);
+      171: 
+      172:   expect(allDraws.length).toBeGreaterThan(30);
+      173: 
+      174:   let totalCases = 0;
+      175:   let hitTop5 = 0;
+      176:   let hitFirst = 0;
+      177: 
+      178:   const byScenario = new Map();
+      179:   const byEdge = new Map();
+      180:   const byPrevGrupo = new Map();
+      181: 
+      182:   for (let i = 0; i < allDraws.length - 1; i += 1) {
+      183:     const drawLast = allDraws[i];
+      184:     const history = allDraws.slice(0, i + 1);
+      185: 
+      186:     const lastY = pickDrawYMD(drawLast);
+      187:     const lastH = toHourBucket(pickDrawHour(drawLast));
+      188:     if (!lastY || !lastH) continue;
+      189: 
+      190:     const nextSlot = getNextSlotForLottery({
+      191:       lotteryKey: "PT_RIO",
+
+ARQUIVO: src\pages\Top3\__tests__\top3.backtest.test.js | LINHA: 178
+      158:     if (confidence < 0) {
+      159:       throw new Error(`Confiança negativa no TOP3: ${JSON.stringify(item)}`);
+      160:     }
+      161:   }
+      162: }
+      163: 
+      164: test("backtest TOP3 PT_RIO - últimos 180 dias", async () => {
+      165:   const bounds = await getKingBoundsByUf({ uf: "PT_RIO" });
+      166:   const maxDate = bounds?.maxYmd || bounds?.maxDate;
+      167: 
+      168:   expect(maxDate).toBeTruthy();
+      169: 
+      170:   const from = addDaysYMD(maxDate, -179);
+      171:   const toExclusive = addDaysYMD(maxDate, 1);
+      172: 
+      173:   const raw = await getKingResultsByRange({
+      174:     uf: "PT_RIO",
+      175:     dateFrom: from,
+      176:     dateTo: toExclusive,
+      177:     mode: "detailed",
+>>    178:     readPolicy: "server",
+      179:   });
+      180: 
+      181:   const allDraws = dedupeAndSort(raw);
+      182:   const drawsIndex = indexDrawsByYmdHour(allDraws);
+      183: 
+      184:   expect(allDraws.length).toBeGreaterThan(30);
+      185: 
+      186:   let totalCases = 0;
+      187:   let hitTop5 = 0;
+      188:   let hitFirst = 0;
+      189: 
+      190:   const byTargetHour = new Map();
+      191: 
+      192:   for (let i = 0; i < allDraws.length - 1; i += 1) {
+      193:     const drawLast = allDraws[i];
+      194:     const history = allDraws.slice(0, i + 1);
+      195: 
+      196:     const lastY = pickDrawYMD(drawLast);
+      197:     const lastH = toHourBucket(pickDrawHour(drawLast));
+      198: 
+      199:     if (!lastY || !lastH) continue;
+      200: 
+      201:     const nextSlot = getNextSlotForLottery({
+      202:       lotteryKey: "PT_RIO",
+      203:       ymd: lastY,
+
+ARQUIVO: src\pages\Top3\modules\top3.loader.js | LINHA: 32
+       12:   const safeUf = String(uf || "").trim().toUpperCase();
+       13:   const safeTargetYmd = String(targetYmd || "").trim();
+       14:   const safeTargetHour = String(targetHourBucket || "").trim();
+       15: 
+       16:   if (!safeTargetYmd || !safeTargetHour || !safeUf) {
+       17:     return { draw: null, ymd: "", hour: "", source: "none" };
+       18:   }
+       19: 
+       20:   const searchFrom =
+       21:     String(minDate || "").trim() ||
+       22:     (key === "FEDERAL"
+       23:       ? addDaysYMD(safeTargetYmd, -240)
+       24:       : addDaysYMD(safeTargetYmd, -90));
+       25: 
+       26:   const hist =
+       27:     (await getKingResultsByRange({
+       28:       uf: safeUf,
+       29:       dateFrom: searchFrom,
+       30:       dateTo: safeTargetYmd,
+       31:       mode: "detailed",
+>>     32:       readPolicy: "server",
+       33:     })) || [];
+       34: 
+       35:   return findLatestHistoricalBaseDraw({
+       36:     draws: hist,
+       37:     lotteryKey: key,
+       38:     targetYmd: safeTargetYmd,
+       39:     targetHourBucket: safeTargetHour,
+       40:   });
+       41: }
+       42: 
+       43: export async function loadHistoryRange({
+       44:   getKingResultsByRange,
+       45:   uf,
+       46:   dateFrom,
+       47:   dateTo,
+       48:   readPolicy = "server",
+       49: }) {
+       50:   const safeUf = String(uf || "").trim().toUpperCase();
+       51:   const safeDateFrom = String(dateFrom || "").trim();
+       52:   const safeDateTo = String(dateTo || "").trim();
+       53: 
+       54:   if (!safeUf || !safeDateFrom || !safeDateTo) return [];
+       55: 
+       56:   return (
+       57:     (await getKingResultsByRange({
+
+ARQUIVO: src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js | LINHA: 346
+      326:     const daySchedule = getScheduleForLottery({
+      327:       lotteryKey,
+      328:       ymd: day,
+      329:       PT_RIO_SCHEDULE_NORMAL,
+      330:       PT_RIO_SCHEDULE_WED_SAT,
+      331:       FEDERAL_SCHEDULE,
+      332:     });
+      333: 
+      334:     if (
+      335:       safeStr(lotteryKey).toUpperCase() === "FEDERAL" &&
+      336:       !daySchedule.length
+      337:     ) {
+      338:       continue;
+      339:     }
+      340: 
+      341:     const out = await getKingResultsByDate({
+      342:       uf: lotteryKey,
+      343:       date: day,
+      344:       closeHour: null,
+      345:       positions: null,
+>>    346:       readPolicy: "server",
+      347:     });
+      348: 
+      349:     const last = findLastDrawInList(out, daySchedule);
+      350:     if (last) {
+      351:       return {
+      352:         draw: last,
+      353:         ymd: pickDrawYMD(last) || day,
+      354:         hour: toHourBucket(pickDrawHour(last)),
+      355:         source: "prev_day",
+      356:       };
+      357:     }
+      358:   }
+      359: 
+      360:   return { draw: null, ymd: "", hour: "", source: "none" };
+      361: }
+      362: 
+      363: /* =========================
+      364:    Próximo sorteio (slot válido)
+      365: ========================= */
+      366: 
+      367: export function getNextSlotForLottery({
+      368:   lotteryKey,
+      369:   ymd,
+      370:   hourBucket,
+      371:   PT_RIO_SCHEDULE_NORMAL,
+
+ARQUIVO: src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js | LINHA: 346
+      326:     const daySchedule = getScheduleForLottery({
+      327:       lotteryKey,
+      328:       ymd: day,
+      329:       PT_RIO_SCHEDULE_NORMAL,
+      330:       PT_RIO_SCHEDULE_WED_SAT,
+      331:       FEDERAL_SCHEDULE,
+      332:     });
+      333: 
+      334:     if (
+      335:       safeStr(lotteryKey).toUpperCase() === "FEDERAL" &&
+      336:       !daySchedule.length
+      337:     ) {
+      338:       continue;
+      339:     }
+      340: 
+      341:     const out = await getKingResultsByDate({
+      342:       uf: lotteryKey,
+      343:       date: day,
+      344:       closeHour: null,
+      345:       positions: null,
+>>    346:       readPolicy: "server",
+      347:     });
+      348: 
+      349:     const last = findLastDrawInList(out, daySchedule);
+      350:     if (last) {
+      351:       return {
+      352:         draw: last,
+      353:         ymd: pickDrawYMD(last) || day,
+      354:         hour: toHourBucket(pickDrawHour(last)),
+      355:         source: "prev_day",
+      356:       };
+      357:     }
+      358:   }
+      359: 
+      360:   return { draw: null, ymd: "", hour: "", source: "none" };
+      361: }
+      362: 
+      363: /* =========================
+      364:    Próximo sorteio (slot válido)
+      365: ========================= */
+      366: 
+      367: export function getNextSlotForLottery({
+      368:   lotteryKey,
+      369:   ymd,
+      370:   hourBucket,
+      371:   PT_RIO_SCHEDULE_NORMAL,
+
+ARQUIVO: src\pages\Top3\top3.engine.js | LINHA: 472
+      452:     const daySchedule = getScheduleForLottery({
+      453:       lotteryKey,
+      454:       ymd: day,
+      455:       PT_RIO_SCHEDULE_NORMAL,
+      456:       PT_RIO_SCHEDULE_WED_SAT,
+      457:       FEDERAL_SCHEDULE,
+      458:     });
+      459: 
+      460:     if (
+      461:       safeStr(lotteryKey).toUpperCase() === "FEDERAL" &&
+      462:       !daySchedule.length
+      463:     ) {
+      464:       continue;
+      465:     }
+      466: 
+      467:     const out = await getKingResultsByDate({
+      468:       uf: lotteryKey,
+      469:       date: day,
+      470:       closeHour: null,
+      471:       positions: null,
+>>    472:       readPolicy: "server",
+      473:     });
+      474: 
+      475:     const last = findLastDrawInList(out, daySchedule);
+      476:     if (last) {
+      477:       return {
+      478:         draw: last,
+      479:         ymd: pickDrawYMD(last) || day,
+      480:         hour: toHourBucket(pickDrawHour(last)),
+      481:         source: "prev_day",
+      482:       };
+      483:     }
+      484:   }
+      485: 
+      486:   return { draw: null, ymd: "", hour: "", source: "none" };
+      487: }
+      488: 
+      489: /* =========================
+      490:    Próximo sorteio (slot válido)
+      491: ========================= */
+      492: 
+      493: export function getNextSlotForLottery({
+      494:   lotteryKey,
+      495:   ymd,
+      496:   hourBucket,
+      497:   PT_RIO_SCHEDULE_NORMAL,
+
+ARQUIVO: src\pages\Top3\top3.hooks.js | LINHA: 498
+      478: 
+      479:         const bMin = safeStr(b?.minYmd || b?.minDate || "");
+      480:         const bMax = safeStr(b?.maxYmd || b?.maxDate || "");
+      481: 
+      482:         if (isYMD(bMin)) minDate = bMin;
+      483:         if (isYMD(bMax)) maxDate = bMax;
+      484: 
+      485:         boundsCacheRef.current.set(ufResolved, { minDate, maxDate });
+      486:       }
+      487: 
+      488:       const selectedFederalNonDrawDay =
+      489:         lKey === "FEDERAL" && !isFederalDrawDay(ymdSafe);
+      490: 
+      491:       const effectiveYmd =
+      492:         selectedFederalNonDrawDay && isYMD(maxDate) ? maxDate : ymdSafe;
+      493: 
+      494:       const today =
+      495:         (await getKingResultsByDate({
+      496:           uf: ufResolved,
+      497:           date: effectiveYmd,
+>>    498:           readPolicy: "server",
+      499:         })) || [];
+      500: 
+      501:       if (requestIdRef.current !== currentRequestId) return;
+      502: 
+      503:       setLoadedYmd(effectiveYmd);
+      504:       setTodayDraws(today);
+      505: 
+      506:       let todaySchedule = getScheduleForLottery({
+      507:         lotteryKey: lKey,
+      508:         ymd: effectiveYmd,
+      509:         PT_RIO_SCHEDULE_NORMAL,
+      510:         PT_RIO_SCHEDULE_WED_SAT,
+      511:         FEDERAL_SCHEDULE,
+      512:       });
+      513: 
+      514:       const shouldSkipPtRio18 =
+      515:         (lKey === "PT_RIO" || lKey === "RJ") &&
+      516:         isFederalDrawDay(effectiveYmd) &&
+      517:         String(effectiveYmd || "").trim() >= "2025-11-03";
+      518: 
+      519:       if (shouldSkipPtRio18) {
+      520:         todaySchedule = Array.from(
+      521:           new Set([
+      522:             ...(Array.isArray(todaySchedule) ? todaySchedule : [])
+      523:               .map(toHourBucket)
+
+ARQUIVO: src\pages\Top3\top3.hooks.js | LINHA: 664
+      644:         !baseDraw ||
+      645:         !isYMD(baseY) ||
+      646:         !baseH ||
+      647:         !Number.isFinite(Number(baseGrupo)) ||
+      648:         Number(baseGrupo) < 1 ||
+      649:         Number(baseGrupo) > 25 ||
+      650:         !isYMD(resolvedTargetY) ||
+      651:         !resolvedTargetH
+      652:       ) {
+      653:         resetStateForNoData();
+      654:         setError("Base ou alvo inválido para cálculo do TOP3.");
+      655:         return;
+      656:       }
+      657: 
+      658:       const baseDayDraws =
+      659:         baseY === effectiveYmd
+      660:           ? today
+      661:           : (await getKingResultsByDate({
+      662:               uf: ufResolved,
+      663:               date: baseY,
+>>    664:               readPolicy: "server",
+      665:             })) || [];
+      666: 
+      667:       const baseDaySchedule = getScheduleForLottery({
+      668:         lotteryKey: lKey,
+      669:         ymd: baseY,
+      670:         PT_RIO_SCHEDULE_NORMAL,
+      671:         PT_RIO_SCHEDULE_WED_SAT,
+      672:         FEDERAL_SCHEDULE,
+      673:       });
+      674: 
+      675:       resolvedPrev = await getPreviousDrawRobust({
+      676:         getKingResultsByDate,
+      677:         lotteryKey: lKey,
+      678:         ymdTarget: baseY,
+      679:         targetHourBucket: baseH,
+      680:         todayDraws: baseDayDraws,
+      681:         schedule: baseDaySchedule,
+      682:         PT_RIO_SCHEDULE_NORMAL,
+      683:         PT_RIO_SCHEDULE_WED_SAT,
+      684:         FEDERAL_SCHEDULE,
+      685:       });
+      686: 
+      687:       if (!resolvedPrev?.draw) {
+      688:         resolvedPrev = await fallbackBaseSearch({
+      689:           getKingResultsByRange,
+
+ARQUIVO: src\pages\Top3\top3.hooks.js | LINHA: 777
+      757: 
+      758:       let rangeFrom = "";
+      759: 
+      760:       if (lookback === LOOKBACK_ALL) {
+      761:         rangeFrom = minDate || addDaysYMD(baseY, -240);
+      762:       } else {
+      763:         const days = Math.max(1, Number(lookback || 30));
+      764:         rangeFrom = addDaysYMD(baseY, -(days - 1));
+      765:       }
+      766: 
+      767:       const rangeTo = baseY;
+      768: 
+      769:       setRangeInfo({ from: rangeFrom, to: rangeTo });
+      770:       setLoadingStage({ today: false, range: true });
+      771: 
+      772:       const histRaw = await loadHistoryRange({
+      773:         getKingResultsByRange,
+      774:         uf: ufResolved,
+      775:         dateFrom: rangeFrom,
+      776:         dateTo: rangeTo,
+>>    777:         readPolicy: "server",
+      778:       });
+      779: 
+      780:       if (requestIdRef.current !== currentRequestId) return;
+      781: 
+      782:       const hist = mergeBaseIntoRange(histRaw, baseDraw);
+      783: 
+      784:       if (debugTop3) console.log(
+      785:         "[TOP3 HISTORY]",
+      786:         JSON.stringify(
+      787:           {
+      788:             period: {
+      789:               from: rangeFrom,
+      790:               to: rangeTo,
+      791:             },
+      792: 
+      793:             firestoreDraws: Array.isArray(histRaw)
+      794:               ? histRaw.length
+      795:               : 0,
+      796: 
+      797:             mergedDraws: Array.isArray(hist)
+      798:               ? hist.length
+      799:               : 0,
+      800: 
+      801:             baseIncluded: Array.isArray(hist)
+      802:               ? hist.some(
+
+
+====================================================================================================
+CONSUMIDORES DE SNAPSHOT NO FRONTEND
+====================================================================================================
+==============================================================================================================
+
+ARQUIVO: src\pages\Dashboard\dashboard.snapshot.loader.js | LINHA: 1
+>>      1: import { ensureStatisticsSnapshot } from "../../services/statisticsEngine";
+        2: 
+        3: export async function loadDashboardStatistics({
+        4:   uf,
+        5:   dateFrom,
+        6:   dateTo,
+        7: }) {
+        8: 
+        9:   const result = await ensureStatisticsSnapshot({
+       10:     uf,
+       11:     dateFrom,
+       12:     dateTo,
+       13:     force: false,
+       14:   });
+       15: 
+       16:   return result.data;
+       17: }
+
+ARQUIVO: src\pages\Dashboard\dashboard.snapshot.loader.js | LINHA: 9
+        1: import { ensureStatisticsSnapshot } from "../../services/statisticsEngine";
+        2: 
+        3: export async function loadDashboardStatistics({
+        4:   uf,
+        5:   dateFrom,
+        6:   dateTo,
+        7: }) {
+        8: 
+>>      9:   const result = await ensureStatisticsSnapshot({
+       10:     uf,
+       11:     dateFrom,
+       12:     dateTo,
+       13:     force: false,
+       14:   });
+       15: 
+       16:   return result.data;
+       17: }
+
+ARQUIVO: src\services\statisticsEngine.js | LINHA: 20
+        5: import { applyScoreEngine } from "../utils/scoreEngine";
+        6: 
+        7: function safeArray(v) {
+        8:   return Array.isArray(v) ? v : [];
+        9: }
+       10: 
+       11: function normalizeUfKey(uf) {
+       12:   return String(uf || "PT_RIO").trim().toUpperCase() || "PT_RIO";
+       13: }
+       14: 
+       15: function snapshotDocRef(uf, scope = "dashboard_full") {
+       16:   const key = normalizeUfKey(uf);
+       17:   return doc(db, "statistics", key, "snapshots", scope);
+       18: }
+       19: 
+>>     20: export async function readStatisticsSnapshot({ uf, scope = "dashboard_full" } = {}) {
+       21:   const ref = snapshotDocRef(uf, scope);
+       22:   const snap = await getDoc(ref);
+       23: 
+       24:   if (!snap.exists()) {
+       25:     return {
+       26:       exists: false,
+       27:       data: null,
+       28:     };
+       29:   }
+       30: 
+       31:   return {
+       32:     exists: true,
+       33:     data: snap.data(),
+       34:   };
+       35: }
+       36: 
+       37: export async function buildStatisticsSnapshot({
+       38:   uf = "PT_RIO",
+       39:   dateFrom,
+       40:   dateTo,
+       41:   scope = "dashboard_full",
+       42:   positions = null,
+
+ARQUIVO: src\services\statisticsEngine.js | LINHA: 83
+       68:     totalOcorrencias: Number(built?.totalOcorrencias || 0),
+       69:     ranking,
+       70:     rankingScored,
+       71:     top3: safeArray(rankingScored).slice(0, 3),
+       72:     integrityIssues: safeArray(built?.integrityIssues),
+       73:     countMode: built?.countMode || "byPrize",
+       74:     generatedAt: new Date().toISOString(),
+       75:     updatedAt: serverTimestamp(),
+       76:   };
+       77: 
+       78:   await setDoc(snapshotDocRef(uf, scope), payload, { merge: true });
+       79: 
+       80:   return payload;
+       81: }
+       82: 
+>>     83: export async function ensureStatisticsSnapshot({
+       84:   uf = "PT_RIO",
+       85:   dateFrom,
+       86:   dateTo,
+       87:   scope = "dashboard_full",
+       88:   force = false,
+       89:   positions = null,
+       90: } = {}) {
+       91:   const current = await readStatisticsSnapshot({ uf, scope });
+       92: 
+       93:   if (!force && current.exists && current.data?.from === dateFrom && current.data?.to === dateTo) {
+       94:     return {
+       95:       source: "cache",
+       96:       data: current.data,
+       97:     };
+       98:   }
+       99: 
+      100:   const data = await buildStatisticsSnapshot({
+      101:     uf,
+      102:     dateFrom,
+      103:     dateTo,
+      104:     scope,
+      105:     positions,
+
+ARQUIVO: src\services\statisticsEngine.js | LINHA: 91
+       76:   };
+       77: 
+       78:   await setDoc(snapshotDocRef(uf, scope), payload, { merge: true });
+       79: 
+       80:   return payload;
+       81: }
+       82: 
+       83: export async function ensureStatisticsSnapshot({
+       84:   uf = "PT_RIO",
+       85:   dateFrom,
+       86:   dateTo,
+       87:   scope = "dashboard_full",
+       88:   force = false,
+       89:   positions = null,
+       90: } = {}) {
+>>     91:   const current = await readStatisticsSnapshot({ uf, scope });
+       92: 
+       93:   if (!force && current.exists && current.data?.from === dateFrom && current.data?.to === dateTo) {
+       94:     return {
+       95:       source: "cache",
+       96:       data: current.data,
+       97:     };
+       98:   }
+       99: 
+      100:   const data = await buildStatisticsSnapshot({
+      101:     uf,
+      102:     dateFrom,
+      103:     dateTo,
+      104:     scope,
+      105:     positions,
+      106:   });
+      107: 
+      108:   return {
+      109:     source: "rebuilt",
+      110:     data,
+      111:   };
+      112: }
+
+
+====================================================================================================
+MAPA POR PÁGINA
+====================================================================================================
+==============================================================================================================
+
+[Account]
+ - src\pages\Account\Account.jsx
+ - src\pages\Account\account.profile.service.js
+
+[Admin]
+ - src\pages\Admin\AdminLogin.jsx
+ - src\pages\Admin\modules\MilharEngine\MilharEnginePage.jsx
+
+[Centenas]
+ - src\pages\Centenas\CentenasView.jsx
+
+[Dashboard]
+ - src\pages\Dashboard\dashboard.snapshot.loader.js
+
+[Downloads]
+ - src\pages\Downloads\Downloads.jsx
+
+[Results]
+ - src\pages\Results\Results.jsx
+
+[Search]
+ - src\pages\Search\Search.jsx
+
+[Top3]
+ - src\pages\Top3\__tests__\top3.backtest.layers.test.js
+ - src\pages\Top3\__tests__\top3.backtest.test.js
+ - src\pages\Top3\modules\top3.loader.js
+ - src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js
+ - src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js
+ - src\pages\Top3\top3.engine.js
+ - src\pages\Top3\top3.firestore.js
+ - src\pages\Top3\top3.hooks.js
+
+[hooks]
+ - src\hooks\useKingRanking.js
+
+[outros]
+ - src\App.jsx
+ - src\dev\runAuditTop3.js
+
+[services]
+ - src\services\kingResultsService.js
+ - src\services\king\king.firestore.js
+ - src\services\planService.js
+ - src\services\statisticsEngine.js
+
+
+====================================================================================================
+BUSCA GLOBAL VIA GIT GREP
+====================================================================================================
+==============================================================================================================
+
+----- PADRÃO: getKingResultsByRange -----
+src/dev/runAuditTop3.js:5:  getKingResultsByRange,
+src/dev/runAuditTop3.js:102:  const drawsRange = await getKingResultsByRange({
+src/hooks/useKingRanking.js:4:  getKingResultsByRange,
+src/hooks/useKingRanking.js:570:          draws = await getKingResultsByRange({
+src/pages/Admin/modules/MilharEngine/MilharEnginePage.jsx:5:  getKingResultsByRange,
+src/pages/Admin/modules/MilharEngine/MilharEnginePage.jsx:341:          await getKingResultsByRange({
+src/pages/Centenas/CentenasView.jsx:3:import { getKingBoundsByUf, getKingResultsByRange } from "../../services/kingResultsService";
+src/pages/Centenas/CentenasView.jsx:1024:                    await getKingResultsByRange({
+src/pages/Downloads/Downloads.jsx:3:import { getKingResultsByRange, getKingBoundsByUf } from "../../services/kingResultsService";
+src/pages/Downloads/Downloads.jsx:762:    const out = await getKingResultsByRange({
+src/pages/Results/Results.jsx:7:  getKingResultsByRange,
+src/pages/Results/Results.jsx:846:      const out = await getKingResultsByRange({
+src/pages/Search/Search.jsx:3:import { getKingBoundsByUf, getKingResultsByRange } from "../../services/kingResultsService";
+src/pages/Search/Search.jsx:754:        const res = await getKingResultsByRange({
+src/pages/Top3/__tests__/top3.backtest.layers.test.js:22:  getKingResultsByRange,
+src/pages/Top3/__tests__/top3.backtest.layers.test.js:161:  const raw = await getKingResultsByRange({
+src/pages/Top3/__tests__/top3.backtest.test.js:22:  getKingResultsByRange,
+src/pages/Top3/__tests__/top3.backtest.test.js:173:  const raw = await getKingResultsByRange({
+src/pages/Top3/modules/top3.loader.js:2:  getKingResultsByRange,
+src/pages/Top3/modules/top3.loader.js:27:    (await getKingResultsByRange({
+src/pages/Top3/modules/top3.loader.js:44:  getKingResultsByRange,
+src/pages/Top3/modules/top3.loader.js:57:    (await getKingResultsByRange({
+src/pages/Top3/top3.hooks.js:53:  getKingResultsByRange,
+src/pages/Top3/top3.hooks.js:617:              getKingResultsByRange,
+src/pages/Top3/top3.hooks.js:689:          getKingResultsByRange,
+src/pages/Top3/top3.hooks.js:773:        getKingResultsByRange,
+src/services/kingResultsService.js:1303:export async function getKingResultsByRange({
+src/services/kingResultsService.js:1688:    const draws = await getKingResultsByRange({
+src/services/statisticsEngine.js:3:import { getKingResultsByRange } from "./kingResultsService";
+src/services/statisticsEngine.js:48:  const draws = await getKingResultsByRange({
+
+----- PADRÃO: mode: "detailed" -----
+src/dev/runAuditTop3.js:109:    mode: "detailed",
+src/pages/Admin/modules/MilharEngine/MilharEnginePage.jsx:347:            mode: "detailed",
+src/pages/Centenas/CentenasView.jsx:1032:                      mode: "detailed",
+src/pages/Downloads/Downloads.jsx:768:      mode: "detailed",
+src/pages/Search/Search.jsx:761:          mode: "detailed",
+src/pages/Top3/__tests__/top3.backtest.layers.test.js:165:    mode: "detailed",
+src/pages/Top3/__tests__/top3.backtest.test.js:177:    mode: "detailed",
+src/pages/Top3/modules/top3.loader.js:31:      mode: "detailed",
+src/pages/Top3/modules/top3.loader.js:61:      mode: "detailed",
+src/services/kingResultsService.js:1202:    return { ...item, prizes, prizesCount: pc, __mode: "detailed" };
+src/services/kingResultsService.js:1478:        return { ...item, prizes, prizesCount: pc, __mode: "detailed" };
+src/services/kingResultsService.js:1523:    return { ...item, prizes, prizesCount: pc, __mode: "detailed" };
+src/services/kingResultsService.js:1555:    return { ...item, prizes, prizesCount: pc, __mode: "detailed" };
+src/services/kingResultsService.js:1695:      mode: "detailed",
+src/services/statisticsEngine.js:53:    mode: "detailed",
+
+----- PADRÃO: mode: 'detailed' -----
+Nenhuma ocorrência.
+
+----- PADRÃO: readPolicy: "server" -----
+src/dev/runAuditTop3.js:110:    readPolicy: "server",
+src/hooks/useKingRanking.js:577:            readPolicy: "server",
+src/hooks/useKingRanking.js:587:            readPolicy: "server",
+src/pages/Top3/__tests__/top3.backtest.layers.test.js:166:    readPolicy: "server",
+src/pages/Top3/__tests__/top3.backtest.test.js:178:    readPolicy: "server",
+src/pages/Top3/modules/top3.loader.js:32:      readPolicy: "server",
+src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:346:      readPolicy: "server",
+src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:346:      readPolicy: "server",
+src/pages/Top3/top3.engine.js:472:      readPolicy: "server",
+src/pages/Top3/top3.hooks.js:498:          readPolicy: "server",
+src/pages/Top3/top3.hooks.js:664:              readPolicy: "server",
+src/pages/Top3/top3.hooks.js:777:        readPolicy: "server",
+
+----- PADRÃO: readPolicy: 'server' -----
+Nenhuma ocorrência.
+
+----- PADRÃO: readStatisticsSnapshot -----
+src/services/statisticsEngine.js:20:export async function readStatisticsSnapshot({ uf, scope = "dashboard_full" } = {}) {
+src/services/statisticsEngine.js:91:  const current = await readStatisticsSnapshot({ uf, scope });
+
+----- PADRÃO: ensureStatisticsSnapshot -----
+src/pages/Dashboard/dashboard.snapshot.loader.js:1:import { ensureStatisticsSnapshot } from "../../services/statisticsEngine";
+src/pages/Dashboard/dashboard.snapshot.loader.js:9:  const result = await ensureStatisticsSnapshot({
+src/services/statisticsEngine.js:83:export async function ensureStatisticsSnapshot({
+
+----- PADRÃO: loadHistoryRange -----
+src/pages/Top3/modules/top3.loader.js:43:export async function loadHistoryRange({
+src/pages/Top3/top3.hooks.js:61:  loadHistoryRange,
+src/pages/Top3/top3.hooks.js:772:      const histRaw = await loadHistoryRange({
+
+----- PADRÃO: fallbackBaseSearch -----
+src/pages/Top3/modules/top3.loader.js:1:export async function fallbackBaseSearch({
+src/pages/Top3/top3.hooks.js:60:  fallbackBaseSearch,
+src/pages/Top3/top3.hooks.js:616:          : await fallbackBaseSearch({
+src/pages/Top3/top3.hooks.js:688:        resolvedPrev = await fallbackBaseSearch({
+
+
+====================================================================================================
+CLASSIFICAÇÃO PRELIMINAR
+====================================================================================================
+==============================================================================================================
+
+RISCO=5 | src\dev\runAuditTop3.js
+  modeDetailed=True
+  readPolicyServer=True
+  snapshotAntesDaLeitura=False
+
+RISCO=5 | src\hooks\useKingRanking.js
+  modeDetailed=True
+  readPolicyServer=True
+  snapshotAntesDaLeitura=False
+
+RISCO=5 | src\pages\Top3\__tests__\top3.backtest.layers.test.js
+  modeDetailed=True
+  readPolicyServer=True
+  snapshotAntesDaLeitura=False
+
+RISCO=5 | src\pages\Top3\__tests__\top3.backtest.test.js
+  modeDetailed=True
+  readPolicyServer=True
+  snapshotAntesDaLeitura=False
+
+RISCO=5 | src\pages\Top3\modules\top3.loader.js
+  modeDetailed=True
+  readPolicyServer=True
+  snapshotAntesDaLeitura=False
+
+RISCO=3 | src\pages\Admin\modules\MilharEngine\MilharEnginePage.jsx
+  modeDetailed=True
+  readPolicyServer=False
+  snapshotAntesDaLeitura=False
+
+RISCO=3 | src\pages\Centenas\CentenasView.jsx
+  modeDetailed=True
+  readPolicyServer=False
+  snapshotAntesDaLeitura=False
+
+RISCO=3 | src\pages\Downloads\Downloads.jsx
+  modeDetailed=True
+  readPolicyServer=False
+  snapshotAntesDaLeitura=False
+
+RISCO=3 | src\pages\Search\Search.jsx
+  modeDetailed=True
+  readPolicyServer=False
+  snapshotAntesDaLeitura=False
+
+RISCO=3 | src\pages\Top3\top3.hooks.js
+  modeDetailed=False
+  readPolicyServer=True
+  snapshotAntesDaLeitura=False
+
+RISCO=3 | src\services\kingResultsService.js
+  modeDetailed=True
+  readPolicyServer=False
+  snapshotAntesDaLeitura=False
+
+RISCO=2 | src\services\statisticsEngine.js
+  modeDetailed=True
+  readPolicyServer=False
+  snapshotAntesDaLeitura=True
+
+RISCO=1 | src\pages\Results\Results.jsx
+  modeDetailed=False
+  readPolicyServer=False
+  snapshotAntesDaLeitura=False
+
+====================================================================================================
+TOP3 — TRECHOS CRÍTICOS DIRETOS
+====================================================================================================
+
+
+ARQUIVO: .\src\pages\Top3\modules\top3.loader.js
+----------------------------------------------------------------------------------------------------
+
+LINHA 1: export async function fallbackBaseSearch({
+>> export async function fallbackBaseSearch({
+    getKingResultsByRange,
+    findLatestHistoricalBaseDraw,
+    addDaysYMD,
+    minDate,
+    lotteryKey,
+    targetYmd,
+    targetHourBucket,
+    uf,
+  }) {
+    const key = String(lotteryKey || "").trim().toUpperCase();
+    const safeUf = String(uf || "").trim().toUpperCase();
+    const safeTargetYmd = String(targetYmd || "").trim();
+    const safeTargetHour = String(targetHourBucket || "").trim();
+  
+    if (!safeTargetYmd || !safeTargetHour || !safeUf) {
+      return { draw: null, ymd: "", hour: "", source: "none" };
+
+LINHA 2: getKingResultsByRange,
+  export async function fallbackBaseSearch({
+>>   getKingResultsByRange,
+    findLatestHistoricalBaseDraw,
+    addDaysYMD,
+    minDate,
+    lotteryKey,
+    targetYmd,
+    targetHourBucket,
+    uf,
+  }) {
+    const key = String(lotteryKey || "").trim().toUpperCase();
+    const safeUf = String(uf || "").trim().toUpperCase();
+    const safeTargetYmd = String(targetYmd || "").trim();
+    const safeTargetHour = String(targetHourBucket || "").trim();
+  
+    if (!safeTargetYmd || !safeTargetHour || !safeUf) {
+      return { draw: null, ymd: "", hour: "", source: "none" };
+    }
+
+LINHA 27: (await getKingResultsByRange({
+  
+    const searchFrom =
+      String(minDate || "").trim() ||
+      (key === "FEDERAL"
+        ? addDaysYMD(safeTargetYmd, -240)
+        : addDaysYMD(safeTargetYmd, -90));
+  
+    const hist =
+>>     (await getKingResultsByRange({
+        uf: safeUf,
+        dateFrom: searchFrom,
+        dateTo: safeTargetYmd,
+        mode: "detailed",
+        readPolicy: "server",
+      })) || [];
+  
+    return findLatestHistoricalBaseDraw({
+      draws: hist,
+      lotteryKey: key,
+      targetYmd: safeTargetYmd,
+      targetHourBucket: safeTargetHour,
+    });
+  }
+  
+  export async function loadHistoryRange({
+
+LINHA 31: mode: "detailed",
+        ? addDaysYMD(safeTargetYmd, -240)
+        : addDaysYMD(safeTargetYmd, -90));
+  
+    const hist =
+      (await getKingResultsByRange({
+        uf: safeUf,
+        dateFrom: searchFrom,
+        dateTo: safeTargetYmd,
+>>       mode: "detailed",
+        readPolicy: "server",
+      })) || [];
+  
+    return findLatestHistoricalBaseDraw({
+      draws: hist,
+      lotteryKey: key,
+      targetYmd: safeTargetYmd,
+      targetHourBucket: safeTargetHour,
+    });
+  }
+  
+  export async function loadHistoryRange({
+    getKingResultsByRange,
+    uf,
+    dateFrom,
+    dateTo,
+
+LINHA 32: readPolicy: "server",
+        : addDaysYMD(safeTargetYmd, -90));
+  
+    const hist =
+      (await getKingResultsByRange({
+        uf: safeUf,
+        dateFrom: searchFrom,
+        dateTo: safeTargetYmd,
+        mode: "detailed",
+>>       readPolicy: "server",
+      })) || [];
+  
+    return findLatestHistoricalBaseDraw({
+      draws: hist,
+      lotteryKey: key,
+      targetYmd: safeTargetYmd,
+      targetHourBucket: safeTargetHour,
+    });
+  }
+  
+  export async function loadHistoryRange({
+    getKingResultsByRange,
+    uf,
+    dateFrom,
+    dateTo,
+    readPolicy = "server",
+
+LINHA 43: export async function loadHistoryRange({
+    return findLatestHistoricalBaseDraw({
+      draws: hist,
+      lotteryKey: key,
+      targetYmd: safeTargetYmd,
+      targetHourBucket: safeTargetHour,
+    });
+  }
+  
+>> export async function loadHistoryRange({
+    getKingResultsByRange,
+    uf,
+    dateFrom,
+    dateTo,
+    readPolicy = "server",
+  }) {
+    const safeUf = String(uf || "").trim().toUpperCase();
+    const safeDateFrom = String(dateFrom || "").trim();
+    const safeDateTo = String(dateTo || "").trim();
+  
+    if (!safeUf || !safeDateFrom || !safeDateTo) return [];
+  
+    return (
+      (await getKingResultsByRange({
+        uf: safeUf,
+        dateFrom: safeDateFrom,
+
+LINHA 44: getKingResultsByRange,
+      draws: hist,
+      lotteryKey: key,
+      targetYmd: safeTargetYmd,
+      targetHourBucket: safeTargetHour,
+    });
+  }
+  
+  export async function loadHistoryRange({
+>>   getKingResultsByRange,
+    uf,
+    dateFrom,
+    dateTo,
+    readPolicy = "server",
+  }) {
+    const safeUf = String(uf || "").trim().toUpperCase();
+    const safeDateFrom = String(dateFrom || "").trim();
+    const safeDateTo = String(dateTo || "").trim();
+  
+    if (!safeUf || !safeDateFrom || !safeDateTo) return [];
+  
+    return (
+      (await getKingResultsByRange({
+        uf: safeUf,
+        dateFrom: safeDateFrom,
+        dateTo: safeDateTo,
+
+LINHA 57: (await getKingResultsByRange({
+  }) {
+    const safeUf = String(uf || "").trim().toUpperCase();
+    const safeDateFrom = String(dateFrom || "").trim();
+    const safeDateTo = String(dateTo || "").trim();
+  
+    if (!safeUf || !safeDateFrom || !safeDateTo) return [];
+  
+    return (
+>>     (await getKingResultsByRange({
+        uf: safeUf,
+        dateFrom: safeDateFrom,
+        dateTo: safeDateTo,
+        mode: "detailed",
+        readPolicy,
+      })) || []
+    );
+  }
+
+LINHA 61: mode: "detailed",
+  
+    if (!safeUf || !safeDateFrom || !safeDateTo) return [];
+  
+    return (
+      (await getKingResultsByRange({
+        uf: safeUf,
+        dateFrom: safeDateFrom,
+        dateTo: safeDateTo,
+>>       mode: "detailed",
+        readPolicy,
+      })) || []
+    );
+  }
+
+ARQUIVO: .\src\pages\Top3\top3.hooks.js
+----------------------------------------------------------------------------------------------------
+
+LINHA 47: loadTop3PredictionDay,
+  import {
+    registerPrediction,
+    reconcilePendingTop3Log,
+    ensureDayTimeline,
+  } from "./top3.storage";
+  
+  import {
+    saveTop3PredictionSnapshot,
+>>   loadTop3PredictionDay,
+    reconcileTop3PredictionDay,
+  } from "./top3.firestore";
+  
+  import {
+    getKingResultsByDate,
+    getKingResultsByRange,
+    getKingBoundsByUf,
+  } from "../../services/kingResultsService";
+  
+  import { getAnimalLabel } from "../../constants/bichoMap";
+  
+  import {
+    fallbackBaseSearch,
+    loadHistoryRange,
+  } from "./modules/top3.loader";
+  
+
+LINHA 53: getKingResultsByRange,
+  import {
+    saveTop3PredictionSnapshot,
+    loadTop3PredictionDay,
+    reconcileTop3PredictionDay,
+  } from "./top3.firestore";
+  
+  import {
+    getKingResultsByDate,
+>>   getKingResultsByRange,
+    getKingBoundsByUf,
+  } from "../../services/kingResultsService";
+  
+  import { getAnimalLabel } from "../../constants/bichoMap";
+  
+  import {
+    fallbackBaseSearch,
+    loadHistoryRange,
+  } from "./modules/top3.loader";
+  
+  import { computeTop3Analytics } from "./modules/top3.analytics";
+  
+  import { buildTop3Predictions } from "./modules/top3.prediction";
+  
+  import { buildTop3TimelineViewModel } from "./modules/top3.timeline";
+  
+
+LINHA 60: fallbackBaseSearch,
+    getKingResultsByDate,
+    getKingResultsByRange,
+    getKingBoundsByUf,
+  } from "../../services/kingResultsService";
+  
+  import { getAnimalLabel } from "../../constants/bichoMap";
+  
+  import {
+>>   fallbackBaseSearch,
+    loadHistoryRange,
+  } from "./modules/top3.loader";
+  
+  import { computeTop3Analytics } from "./modules/top3.analytics";
+  
+  import { buildTop3Predictions } from "./modules/top3.prediction";
+  
+  import { buildTop3TimelineViewModel } from "./modules/top3.timeline";
+  
+  import {
+    buildTop3MilharesCols,
+    resolveTop3ProbValue,
+  } from "./modules/top3.viewmodel";
+  
+  import {
+    normalizeImgSrc,
+
+LINHA 61: loadHistoryRange,
+    getKingResultsByRange,
+    getKingBoundsByUf,
+  } from "../../services/kingResultsService";
+  
+  import { getAnimalLabel } from "../../constants/bichoMap";
+  
+  import {
+    fallbackBaseSearch,
+>>   loadHistoryRange,
+  } from "./modules/top3.loader";
+  
+  import { computeTop3Analytics } from "./modules/top3.analytics";
+  
+  import { buildTop3Predictions } from "./modules/top3.prediction";
+  
+  import { buildTop3TimelineViewModel } from "./modules/top3.timeline";
+  
+  import {
+    buildTop3MilharesCols,
+    resolveTop3ProbValue,
+  } from "./modules/top3.viewmodel";
+  
+  import {
+    normalizeImgSrc,
+    getGrupoImgSrc,
+
+LINHA 117: function mergeBaseIntoRange(rangeDraws, baseDraw) {
+    if (!target) return false;
+  
+    return (Array.isArray(draws) ? draws : []).some((d) => {
+      const h = toHourBucket(pickDrawHour(d));
+      return h === target;
+    });
+  }
+  
+>> function mergeBaseIntoRange(rangeDraws, baseDraw) {
+    const list = Array.isArray(rangeDraws) ? rangeDraws : [];
+    const key = drawKey(baseDraw);
+  
+    if (!key) return list;
+  
+    const map = new Map();
+  
+    for (const d of list) {
+      const k = drawKey(d);
+      if (k) map.set(k, d);
+    }
+  
+    if (!map.has(key)) {
+      map.set(key, baseDraw);
+    }
+  
+
+LINHA 118: const list = Array.isArray(rangeDraws) ? rangeDraws : [];
+  
+    return (Array.isArray(draws) ? draws : []).some((d) => {
+      const h = toHourBucket(pickDrawHour(d));
+      return h === target;
+    });
+  }
+  
+  function mergeBaseIntoRange(rangeDraws, baseDraw) {
+>>   const list = Array.isArray(rangeDraws) ? rangeDraws : [];
+    const key = drawKey(baseDraw);
+  
+    if (!key) return list;
+  
+    const map = new Map();
+  
+    for (const d of list) {
+      const k = drawKey(d);
+      if (k) map.set(k, d);
+    }
+  
+    if (!map.has(key)) {
+      map.set(key, baseDraw);
+    }
+  
+    return Array.from(map.values()).sort((a, b) => drawTs(a) - drawTs(b));
+
+LINHA 307: const [rangeDraws, setRangeDraws] = useState([]);
+  
+    const [loading, setLoading] = useState(false);
+    const [loadingStage, setLoadingStage] = useState({
+      today: false,
+      range: false,
+    });
+    const [error, setError] = useState("");
+  
+>>   const [rangeDraws, setRangeDraws] = useState([]);
+    const [todayDraws, setTodayDraws] = useState([]);
+    const [rangeInfo, setRangeInfo] = useState({ from: "", to: "" });
+  
+    const [loadedYmd, setLoadedYmd] = useState("");
+    const [lastHourBucket, setLastHourBucket] = useState("");
+    const [targetHourBucket, setTargetHourBucket] = useState("");
+    const [targetYmd, setTargetYmd] = useState("");
+    const [skipPtRio18ByFederal, setSkipPtRio18ByFederal] = useState(false);
+  
+    const [lastInfo, setLastInfo] = useState({
+      lastYmd: "",
+      lastHour: "",
+      lastGrupo: null,
+      lastAnimal: "",
+    });
+  
+
+LINHA 448: setRangeDraws([]);
+        prevYmd: "",
+        prevHour: "",
+        prevGrupo: null,
+        prevAnimal: "",
+        source: "none",
+      });
+  
+      setRangeInfo({ from: "", to: "" });
+>>     setRangeDraws([]);
+      setTodayDraws([]);
+    }, []);
+  
+    const load = useCallback(async () => {
+      const lKey = safeStr(lotteryKeySafe).toUpperCase();
+      if (!lKey || !isYMD(ymdSafe)) return;
+  
+      setLoading(true);
+      setLoadingStage({ today: true, range: false });
+      setError("");
+  
+      // Impede exibir resultados pertencentes à consulta anterior.
+      resetStateForNoData();
+  
+      const currentRequestId = ++requestIdRef.current;
+  
+
+LINHA 498: readPolicy: "server",
+  
+        const effectiveYmd =
+          selectedFederalNonDrawDay && isYMD(maxDate) ? maxDate : ymdSafe;
+  
+        const today =
+          (await getKingResultsByDate({
+            uf: ufResolved,
+            date: effectiveYmd,
+>>           readPolicy: "server",
+          })) || [];
+  
+        if (requestIdRef.current !== currentRequestId) return;
+  
+        setLoadedYmd(effectiveYmd);
+        setTodayDraws(today);
+  
+        let todaySchedule = getScheduleForLottery({
+          lotteryKey: lKey,
+          ymd: effectiveYmd,
+          PT_RIO_SCHEDULE_NORMAL,
+          PT_RIO_SCHEDULE_WED_SAT,
+          FEDERAL_SCHEDULE,
+        });
+  
+        const shouldSkipPtRio18 =
+
+LINHA 616: : await fallbackBaseSearch({
+            schedule: todaySchedule,
+            PT_RIO_SCHEDULE_NORMAL,
+            PT_RIO_SCHEDULE_WED_SAT,
+            FEDERAL_SCHEDULE,
+          });
+  
+          const previousResolved = previousForFirstSlot?.draw
+            ? previousForFirstSlot
+>>           : await fallbackBaseSearch({
+                getKingResultsByRange,
+                findLatestHistoricalBaseDraw,
+                addDaysYMD,
+                minDate,
+                lotteryKey: lKey,
+                targetYmd: effectiveYmd,
+                targetHourBucket: firstHourToday,
+                uf: ufResolved,
+              });
+  
+          if (!previousResolved?.draw) {
+            resetStateForNoData();
+            setError(
+              "Não foi possível localizar a base anterior ao primeiro sorteio do dia."
+            );
+            return;
+
+LINHA 617: getKingResultsByRange,
+            PT_RIO_SCHEDULE_NORMAL,
+            PT_RIO_SCHEDULE_WED_SAT,
+            FEDERAL_SCHEDULE,
+          });
+  
+          const previousResolved = previousForFirstSlot?.draw
+            ? previousForFirstSlot
+            : await fallbackBaseSearch({
+>>               getKingResultsByRange,
+                findLatestHistoricalBaseDraw,
+                addDaysYMD,
+                minDate,
+                lotteryKey: lKey,
+                targetYmd: effectiveYmd,
+                targetHourBucket: firstHourToday,
+                uf: ufResolved,
+              });
+  
+          if (!previousResolved?.draw) {
+            resetStateForNoData();
+            setError(
+              "Não foi possível localizar a base anterior ao primeiro sorteio do dia."
+            );
+            return;
+          }
+
+LINHA 664: readPolicy: "server",
+        }
+  
+        const baseDayDraws =
+          baseY === effectiveYmd
+            ? today
+            : (await getKingResultsByDate({
+                uf: ufResolved,
+                date: baseY,
+>>               readPolicy: "server",
+              })) || [];
+  
+        const baseDaySchedule = getScheduleForLottery({
+          lotteryKey: lKey,
+          ymd: baseY,
+          PT_RIO_SCHEDULE_NORMAL,
+          PT_RIO_SCHEDULE_WED_SAT,
+          FEDERAL_SCHEDULE,
+        });
+  
+        resolvedPrev = await getPreviousDrawRobust({
+          getKingResultsByDate,
+          lotteryKey: lKey,
+          ymdTarget: baseY,
+          targetHourBucket: baseH,
+          todayDraws: baseDayDraws,
+
+LINHA 688: resolvedPrev = await fallbackBaseSearch({
+          todayDraws: baseDayDraws,
+          schedule: baseDaySchedule,
+          PT_RIO_SCHEDULE_NORMAL,
+          PT_RIO_SCHEDULE_WED_SAT,
+          FEDERAL_SCHEDULE,
+        });
+  
+        if (!resolvedPrev?.draw) {
+>>         resolvedPrev = await fallbackBaseSearch({
+            getKingResultsByRange,
+            findLatestHistoricalBaseDraw,
+            addDaysYMD,
+            minDate,
+            lotteryKey: lKey,
+            targetYmd: baseY,
+            targetHourBucket: baseH,
+            uf: ufResolved,
+          });
+        }
+  
+        if (requestIdRef.current !== currentRequestId) return;
+  
+        setBaseDrawState(baseDraw);
+        setLastHourBucket(baseH);
+        setTargetYmd(resolvedTargetY);
+
+LINHA 689: getKingResultsByRange,
+          schedule: baseDaySchedule,
+          PT_RIO_SCHEDULE_NORMAL,
+          PT_RIO_SCHEDULE_WED_SAT,
+          FEDERAL_SCHEDULE,
+        });
+  
+        if (!resolvedPrev?.draw) {
+          resolvedPrev = await fallbackBaseSearch({
+>>           getKingResultsByRange,
+            findLatestHistoricalBaseDraw,
+            addDaysYMD,
+            minDate,
+            lotteryKey: lKey,
+            targetYmd: baseY,
+            targetHourBucket: baseH,
+            uf: ufResolved,
+          });
+        }
+  
+        if (requestIdRef.current !== currentRequestId) return;
+  
+        setBaseDrawState(baseDraw);
+        setLastHourBucket(baseH);
+        setTargetYmd(resolvedTargetY);
+        setTargetHourBucket(resolvedTargetH);
+
+LINHA 772: const histRaw = await loadHistoryRange({
+          rangeFrom = addDaysYMD(baseY, -(days - 1));
+        }
+  
+        const rangeTo = baseY;
+  
+        setRangeInfo({ from: rangeFrom, to: rangeTo });
+        setLoadingStage({ today: false, range: true });
+  
+>>       const histRaw = await loadHistoryRange({
+          getKingResultsByRange,
+          uf: ufResolved,
+          dateFrom: rangeFrom,
+          dateTo: rangeTo,
+          readPolicy: "server",
+        });
+  
+        if (requestIdRef.current !== currentRequestId) return;
+  
+        const hist = mergeBaseIntoRange(histRaw, baseDraw);
+  
+        if (debugTop3) console.log(
+          "[TOP3 HISTORY]",
+          JSON.stringify(
+            {
+              period: {
+
+LINHA 773: getKingResultsByRange,
+        }
+  
+        const rangeTo = baseY;
+  
+        setRangeInfo({ from: rangeFrom, to: rangeTo });
+        setLoadingStage({ today: false, range: true });
+  
+        const histRaw = await loadHistoryRange({
+>>         getKingResultsByRange,
+          uf: ufResolved,
+          dateFrom: rangeFrom,
+          dateTo: rangeTo,
+          readPolicy: "server",
+        });
+  
+        if (requestIdRef.current !== currentRequestId) return;
+  
+        const hist = mergeBaseIntoRange(histRaw, baseDraw);
+  
+        if (debugTop3) console.log(
+          "[TOP3 HISTORY]",
+          JSON.stringify(
+            {
+              period: {
+                from: rangeFrom,
+
+LINHA 777: readPolicy: "server",
+        setRangeInfo({ from: rangeFrom, to: rangeTo });
+        setLoadingStage({ today: false, range: true });
+  
+        const histRaw = await loadHistoryRange({
+          getKingResultsByRange,
+          uf: ufResolved,
+          dateFrom: rangeFrom,
+          dateTo: rangeTo,
+>>         readPolicy: "server",
+        });
+  
+        if (requestIdRef.current !== currentRequestId) return;
+  
+        const hist = mergeBaseIntoRange(histRaw, baseDraw);
+  
+        if (debugTop3) console.log(
+          "[TOP3 HISTORY]",
+          JSON.stringify(
+            {
+              period: {
+                from: rangeFrom,
+                to: rangeTo,
+              },
+  
+              firestoreDraws: Array.isArray(histRaw)
+
+LINHA 831: setRangeDraws(hist);
+                    }
+                  : null,
+            },
+            null,
+            2
+          )
+        );
+  
+>>       setRangeDraws(hist);
+      } catch (e) {
+        if (requestIdRef.current === currentRequestId) {
+          setError(String(e?.message || e || "Falha ao carregar dados do TOP3."));
+          setBaseDrawState(null);
+        }
+      } finally {
+        if (requestIdRef.current === currentRequestId) {
+          setLoadingStage({ today: false, range: false });
+          setLoading(false);
+        }
+      }
+    }, [lotteryKeySafe, ymdSafe, lookback, resetStateForNoData]);
+  
+    useEffect(() => {
+      debugTop3Effect("01_load", {
+        lotteryKey: lotteryKeySafe,
+
+LINHA 869: rangeDraws,
+      ensureDayTimeline({
+        ymd: timelineYmd,
+        lotteryKey: lotteryKeySafe,
+      });
+    }, [timelineYmd, lotteryKeySafe]);
+  
+    const analytics = useMemo(() => {
+      return computeTop3Analytics({
+>>       rangeDraws,
+        baseDrawState,
+        analyticsCacheRef,
+        lotteryKeySafe,
+        lookback,
+        rangeInfo,
+        todayDraws,
+        sanitizeHistoricalDraws,
+        targetYmd: analysisYmd,
+        targetHourBucket: analysisHourBucket,
+      });
+    }, [
+      rangeDraws,
+      baseDrawState,
+      lotteryKeySafe,
+      lookback,
+      rangeInfo,
+
+LINHA 881: rangeDraws,
+        lookback,
+        rangeInfo,
+        todayDraws,
+        sanitizeHistoricalDraws,
+        targetYmd: analysisYmd,
+        targetHourBucket: analysisHourBucket,
+      });
+    }, [
+>>     rangeDraws,
+      baseDrawState,
+      lotteryKeySafe,
+      lookback,
+      rangeInfo,
+      todayDraws,
+      analysisYmd,
+      analysisHourBucket,
+    ]);
+  
+    const build20 = useCallback(
+      (grupo2, item = null) => {
+        return buildMilharesForGrupo({
+          rangeDraws,
+          analysisHourBucket,
+          schedule,
+          grupo2,
+
+LINHA 894: rangeDraws,
+      todayDraws,
+      analysisYmd,
+      analysisHourBucket,
+    ]);
+  
+    const build20 = useCallback(
+      (grupo2, item = null) => {
+        return buildMilharesForGrupo({
+>>         rangeDraws,
+          analysisHourBucket,
+          schedule,
+          grupo2,
+          count: 20,
+          targetYmd: item?.meta?.next?.ymd || analysisYmd,
+        });
+      },
+      [rangeDraws, analysisHourBucket, schedule, analysisYmd]
+    );
+  
+    const layerMetaText = useMemo(() => {
+      return resolveLayerMetaText(analytics);
+    }, [analytics]);
+  
+    const top3 = useMemo(() => {
+      return buildTop3Predictions({
+
+LINHA 902: [rangeDraws, analysisHourBucket, schedule, analysisYmd]
+          rangeDraws,
+          analysisHourBucket,
+          schedule,
+          grupo2,
+          count: 20,
+          targetYmd: item?.meta?.next?.ymd || analysisYmd,
+        });
+      },
+>>     [rangeDraws, analysisHourBucket, schedule, analysisYmd]
+    );
+  
+    const layerMetaText = useMemo(() => {
+      return resolveLayerMetaText(analytics);
+    }, [analytics]);
+  
+    const top3 = useMemo(() => {
+      return buildTop3Predictions({
+        analytics,
+        build20,
+        safeStr,
+        getAnimalLabel,
+        build4ColsFromEngineOut: buildTop3MilharesCols,
+        resolveProbValue: resolveTop3ProbValue,
+        getGrupoImgSrc,
+        buildResultStyleImgVariants,
+
+LINHA 925: rangeDraws,
+        getGrupoImgSrc,
+        buildResultStyleImgVariants,
+      });
+    }, [analytics, build20]);
+  
+    const timelineTop3 = useMemo(() => {
+      const built = buildTop3TimelineViewModel({
+        todayDraws,
+>>       rangeDraws,
+        lotteryKeySafe,
+        ymdSafe: timelineYmd,
+        analysisYmd,
+        publicBase: String(process.env.PUBLIC_URL || "").trim(),
+      });
+  
+      if (
+        (lotteryKeySafe === "PT_RIO" || lotteryKeySafe === "RJ") &&
+        skipPtRio18ByFederal &&
+        isYMD(timelineYmd)
+      ) {
+        return (Array.isArray(built) ? built : []).filter((slot) => {
+          const y = String(slot?.targetYmd || "").trim();
+          const h = toHourBucket(slot?.targetHour || "");
+          return !(y === timelineYmd && h === "18:00");
+        });
+
+LINHA 947: rangeDraws,
+          const h = toHourBucket(slot?.targetHour || "");
+          return !(y === timelineYmd && h === "18:00");
+        });
+      }
+  
+      return built;
+    }, [
+      todayDraws,
+>>     rangeDraws,
+      lotteryKeySafe,
+      timelineYmd,
+      analysisYmd,
+      skipPtRio18ByFederal,
+    ]);
+  
+    useEffect(() => {
+      debugTop3Effect("03_save_prediction", {
+        lotteryKey: lotteryKeySafe,
+        analysisYmd,
+        analysisHourBucket,
+        top3Length: Array.isArray(top3)
+          ? top3.length
+          : -1,
+      });
+  
+
+LINHA 1086: rangeDrawsLength: Array.isArray(rangeDraws)
+        lotteryKey: lotteryKeySafe,
+        timelineYmd,
+        scheduleLength: Array.isArray(schedule)
+          ? schedule.length
+          : -1,
+        todayDrawsLength: Array.isArray(todayDraws)
+          ? todayDraws.length
+          : -1,
+>>       rangeDrawsLength: Array.isArray(rangeDraws)
+          ? rangeDraws.length
+          : -1,
+      });
+  
+      let alive = true;
+  
+      async function loadPersistedHistory() {
+        if (!isYMD(timelineYmd)) {
+          if (alive) setPersistedTop3History([]);
+          return;
+        }
+  
+        try {
+          const history = await loadTop3PredictionDay({
+            lotteryKey: lotteryKeySafe,
+            targetYmd: timelineYmd,
+
+LINHA 1087: ? rangeDraws.length
+        timelineYmd,
+        scheduleLength: Array.isArray(schedule)
+          ? schedule.length
+          : -1,
+        todayDrawsLength: Array.isArray(todayDraws)
+          ? todayDraws.length
+          : -1,
+        rangeDrawsLength: Array.isArray(rangeDraws)
+>>         ? rangeDraws.length
+          : -1,
+      });
+  
+      let alive = true;
+  
+      async function loadPersistedHistory() {
+        if (!isYMD(timelineYmd)) {
+          if (alive) setPersistedTop3History([]);
+          return;
+        }
+  
+        try {
+          const history = await loadTop3PredictionDay({
+            lotteryKey: lotteryKeySafe,
+            targetYmd: timelineYmd,
+            schedule,
+
+LINHA 1100: const history = await loadTop3PredictionDay({
+  
+      async function loadPersistedHistory() {
+        if (!isYMD(timelineYmd)) {
+          if (alive) setPersistedTop3History([]);
+          return;
+        }
+  
+        try {
+>>         const history = await loadTop3PredictionDay({
+            lotteryKey: lotteryKeySafe,
+            targetYmd: timelineYmd,
+            schedule,
+          });
+  
+          if (alive) {
+            setPersistedTop3History(
+              Array.isArray(history) ? history : []
+            );
+          }
+        } catch {
+          if (alive) setPersistedTop3History([]);
+        }
+      }
+  
+      loadPersistedHistory();
+
+LINHA 1126: rangeDraws,
+      return () => {
+        alive = false;
+      };
+    }, [
+      lotteryKeySafe,
+      timelineYmd,
+      schedule,
+      todayDraws,
+>>     rangeDraws,
+    ]);
+  
+    useEffect(() => {
+      debugTop3Effect("05_reconcile_history", {
+        lotteryKey: lotteryKeySafe,
+        timelineYmd,
+        scheduleLength: Array.isArray(schedule)
+          ? schedule.length
+          : -1,
+        todayDrawsLength: Array.isArray(todayDraws)
+          ? todayDraws.length
+          : -1,
+        rangeDrawsLength: Array.isArray(rangeDraws)
+          ? rangeDraws.length
+          : -1,
+      });
+
+LINHA 1139: rangeDrawsLength: Array.isArray(rangeDraws)
+        lotteryKey: lotteryKeySafe,
+        timelineYmd,
+        scheduleLength: Array.isArray(schedule)
+          ? schedule.length
+          : -1,
+        todayDrawsLength: Array.isArray(todayDraws)
+          ? todayDraws.length
+          : -1,
+>>       rangeDrawsLength: Array.isArray(rangeDraws)
+          ? rangeDraws.length
+          : -1,
+      });
+  
+      if (!(todayDraws?.length || rangeDraws?.length)) return;
+  
+      const allDraws = [
+        ...(Array.isArray(rangeDraws) ? rangeDraws : []),
+        ...(Array.isArray(todayDraws) ? todayDraws : []),
+      ];
+  
+      reconcilePendingTop3Log({
+        todayDraws: Array.isArray(todayDraws) ? todayDraws : [],
+        rangeDraws: Array.isArray(rangeDraws) ? rangeDraws : [],
+      });
+  
+
+LINHA 1140: ? rangeDraws.length
+        timelineYmd,
+        scheduleLength: Array.isArray(schedule)
+          ? schedule.length
+          : -1,
+        todayDrawsLength: Array.isArray(todayDraws)
+          ? todayDraws.length
+          : -1,
+        rangeDrawsLength: Array.isArray(rangeDraws)
+>>         ? rangeDraws.length
+          : -1,
+      });
+  
+      if (!(todayDraws?.length || rangeDraws?.length)) return;
+  
+      const allDraws = [
+        ...(Array.isArray(rangeDraws) ? rangeDraws : []),
+        ...(Array.isArray(todayDraws) ? todayDraws : []),
+      ];
+  
+      reconcilePendingTop3Log({
+        todayDraws: Array.isArray(todayDraws) ? todayDraws : [],
+        rangeDraws: Array.isArray(rangeDraws) ? rangeDraws : [],
+      });
+  
+      reconcileTop3PredictionDay({
+
+LINHA 1144: if (!(todayDraws?.length || rangeDraws?.length)) return;
+        todayDrawsLength: Array.isArray(todayDraws)
+          ? todayDraws.length
+          : -1,
+        rangeDrawsLength: Array.isArray(rangeDraws)
+          ? rangeDraws.length
+          : -1,
+      });
+  
+>>     if (!(todayDraws?.length || rangeDraws?.length)) return;
+  
+      const allDraws = [
+        ...(Array.isArray(rangeDraws) ? rangeDraws : []),
+        ...(Array.isArray(todayDraws) ? todayDraws : []),
+      ];
+  
+      reconcilePendingTop3Log({
+        todayDraws: Array.isArray(todayDraws) ? todayDraws : [],
+        rangeDraws: Array.isArray(rangeDraws) ? rangeDraws : [],
+      });
+  
+      reconcileTop3PredictionDay({
+        lotteryKey: lotteryKeySafe,
+        targetYmd: timelineYmd,
+        schedule,
+        draws: allDraws,
+
+LINHA 1147: ...(Array.isArray(rangeDraws) ? rangeDraws : []),
+        rangeDrawsLength: Array.isArray(rangeDraws)
+          ? rangeDraws.length
+          : -1,
+      });
+  
+      if (!(todayDraws?.length || rangeDraws?.length)) return;
+  
+      const allDraws = [
+>>       ...(Array.isArray(rangeDraws) ? rangeDraws : []),
+        ...(Array.isArray(todayDraws) ? todayDraws : []),
+      ];
+  
+      reconcilePendingTop3Log({
+        todayDraws: Array.isArray(todayDraws) ? todayDraws : [],
+        rangeDraws: Array.isArray(rangeDraws) ? rangeDraws : [],
+      });
+  
+      reconcileTop3PredictionDay({
+        lotteryKey: lotteryKeySafe,
+        targetYmd: timelineYmd,
+        schedule,
+        draws: allDraws,
+      })
+        .then(async () => {
+          const history = await loadTop3PredictionDay({
+
+LINHA 1153: rangeDraws: Array.isArray(rangeDraws) ? rangeDraws : [],
+  
+      const allDraws = [
+        ...(Array.isArray(rangeDraws) ? rangeDraws : []),
+        ...(Array.isArray(todayDraws) ? todayDraws : []),
+      ];
+  
+      reconcilePendingTop3Log({
+        todayDraws: Array.isArray(todayDraws) ? todayDraws : [],
+>>       rangeDraws: Array.isArray(rangeDraws) ? rangeDraws : [],
+      });
+  
+      reconcileTop3PredictionDay({
+        lotteryKey: lotteryKeySafe,
+        targetYmd: timelineYmd,
+        schedule,
+        draws: allDraws,
+      })
+        .then(async () => {
+          const history = await loadTop3PredictionDay({
+            lotteryKey: lotteryKeySafe,
+            targetYmd: timelineYmd,
+            schedule,
+          });
+  
+          setPersistedTop3History(
+
+LINHA 1163: const history = await loadTop3PredictionDay({
+  
+      reconcileTop3PredictionDay({
+        lotteryKey: lotteryKeySafe,
+        targetYmd: timelineYmd,
+        schedule,
+        draws: allDraws,
+      })
+        .then(async () => {
+>>         const history = await loadTop3PredictionDay({
+            lotteryKey: lotteryKeySafe,
+            targetYmd: timelineYmd,
+            schedule,
+          });
+  
+          setPersistedTop3History(
+            Array.isArray(history) ? history : []
+          );
+        })
+        .catch((error) => {
+          if (debugTop3) {
+            console.warn("[TOP3 FIRESTORE RECONCILE]", error);
+          }
+        });
+    }, [
+      todayDraws,
+
+LINHA 1180: rangeDraws,
+        })
+        .catch((error) => {
+          if (debugTop3) {
+            console.warn("[TOP3 FIRESTORE RECONCILE]", error);
+          }
+        });
+    }, [
+      todayDraws,
+>>     rangeDraws,
+      lotteryKeySafe,
+      timelineYmd,
+      schedule,
+      debugTop3,
+    ]);
+  
+    return {
+      LOOKBACK_ALL,
+      LOOKBACK_OPTIONS,
+      LOTTERY_OPTIONS,
+  
+      lotteryKeySafe,
+      ymdSafe,
+      loadedYmd,
+      lookback,
+      loading,
+
+LINHA 1228: rangeDraws,
+      setLookback,
+      load,
+  
+      safeStr,
+      lotteryLabel,
+  
+      build16: (grupo2) =>
+        build16MilharesForGrupo({
+>>         rangeDraws,
+          analysisHourBucket,
+          schedule,
+          grupo2,
+          targetYmd: analysisYmd,
+        }),
+  
+      build20,
+      getCentena3,
+      normalizeImgSrc,
+    };
+  }
+
+ARQUIVO: .\src\pages\Top3\top3.firestore.js
+----------------------------------------------------------------------------------------------------
+
+LINHA 319: export async function loadTop3PredictionDay({
+        created: true,
+        existing: false,
+      };
+    });
+  
+    return result;
+  }
+  
+>> export async function loadTop3PredictionDay({
+    lotteryKey,
+    targetYmd,
+    schedule,
+  }) {
+    const lottery = normalizeLotteryKey(lotteryKey);
+    const ymd = safeStr(targetYmd);
+  
+    if (!isYMD(ymd)) return [];
+  
+    const hours = Array.from(
+      new Set(
+        (Array.isArray(schedule) ? schedule : [])
+          .map(normalizeHour)
+          .filter(Boolean)
+      )
+    );
+
+LINHA 397: const history = await loadTop3PredictionDay({
+    if (!user?.uid) {
+      return {
+        ok: false,
+        skipped: true,
+        reason: "AUTH_REQUIRED",
+      };
+    }
+  
+>>   const history = await loadTop3PredictionDay({
+      lotteryKey,
+      targetYmd,
+      schedule,
+    });
+  
+    const lottery = normalizeLotteryKey(lotteryKey);
+    let updated = 0;
+  
+    for (const entry of history) {
+      if (!entry) continue;
+  
+      const realDraw = findDrawForTarget({
+        draws,
+        targetYmd: entry?.targetYmd,
+        targetHour: entry?.targetHour,
+      });
+
+ARQUIVO: .\src\services\statisticsEngine.js
+----------------------------------------------------------------------------------------------------
+
+LINHA 3: import { getKingResultsByRange } from "./kingResultsService";
+  import { doc, getDoc, serverTimestamp, setDoc } from "firebase/firestore";
+  import { db } from "./firebase";
+>> import { getKingResultsByRange } from "./kingResultsService";
+  import { buildRanking } from "../utils/buildRanking";
+  import { applyScoreEngine } from "../utils/scoreEngine";
+  
+  function safeArray(v) {
+    return Array.isArray(v) ? v : [];
+  }
+  
+  function normalizeUfKey(uf) {
+    return String(uf || "PT_RIO").trim().toUpperCase() || "PT_RIO";
+  }
+  
+  function snapshotDocRef(uf, scope = "dashboard_full") {
+    const key = normalizeUfKey(uf);
+    return doc(db, "statistics", key, "snapshots", scope);
+  }
+  
+
+LINHA 20: export async function readStatisticsSnapshot({ uf, scope = "dashboard_full" } = {}) {
+    return String(uf || "PT_RIO").trim().toUpperCase() || "PT_RIO";
+  }
+  
+  function snapshotDocRef(uf, scope = "dashboard_full") {
+    const key = normalizeUfKey(uf);
+    return doc(db, "statistics", key, "snapshots", scope);
+  }
+  
+>> export async function readStatisticsSnapshot({ uf, scope = "dashboard_full" } = {}) {
+    const ref = snapshotDocRef(uf, scope);
+    const snap = await getDoc(ref);
+  
+    if (!snap.exists()) {
+      return {
+        exists: false,
+        data: null,
+      };
+    }
+  
+    return {
+      exists: true,
+      data: snap.data(),
+    };
+  }
+  
+
+LINHA 48: const draws = await getKingResultsByRange({
+    dateTo,
+    scope = "dashboard_full",
+    positions = null,
+  } = {}) {
+    if (!dateFrom || !dateTo) {
+      throw new Error("buildStatisticsSnapshot exige dateFrom e dateTo.");
+    }
+  
+>>   const draws = await getKingResultsByRange({
+      uf,
+      dateFrom,
+      dateTo,
+      positions,
+      mode: "detailed",
+    });
+  
+    const built = buildRanking(draws);
+    const ranking = safeArray(built?.ranking);
+    const rankingScored = applyScoreEngine(ranking);
+  
+    const payload = {
+      version: 1,
+      scope,
+      uf: normalizeUfKey(uf),
+      from: dateFrom,
+
+LINHA 53: mode: "detailed",
+      throw new Error("buildStatisticsSnapshot exige dateFrom e dateTo.");
+    }
+  
+    const draws = await getKingResultsByRange({
+      uf,
+      dateFrom,
+      dateTo,
+      positions,
+>>     mode: "detailed",
+    });
+  
+    const built = buildRanking(draws);
+    const ranking = safeArray(built?.ranking);
+    const rankingScored = applyScoreEngine(ranking);
+  
+    const payload = {
+      version: 1,
+      scope,
+      uf: normalizeUfKey(uf),
+      from: dateFrom,
+      to: dateTo,
+      totalDraws: Number(built?.totalDraws || 0),
+      uniqueDays: Number(built?.uniqueDays || 0),
+      totalOcorrencias: Number(built?.totalOcorrencias || 0),
+      ranking,
+
+LINHA 73: countMode: built?.countMode || "byPrize",
+      to: dateTo,
+      totalDraws: Number(built?.totalDraws || 0),
+      uniqueDays: Number(built?.uniqueDays || 0),
+      totalOcorrencias: Number(built?.totalOcorrencias || 0),
+      ranking,
+      rankingScored,
+      top3: safeArray(rankingScored).slice(0, 3),
+      integrityIssues: safeArray(built?.integrityIssues),
+>>     countMode: built?.countMode || "byPrize",
+      generatedAt: new Date().toISOString(),
+      updatedAt: serverTimestamp(),
+    };
+  
+    await setDoc(snapshotDocRef(uf, scope), payload, { merge: true });
+  
+    return payload;
+  }
+  
+  export async function ensureStatisticsSnapshot({
+    uf = "PT_RIO",
+    dateFrom,
+    dateTo,
+    scope = "dashboard_full",
+    force = false,
+    positions = null,
+
+LINHA 83: export async function ensureStatisticsSnapshot({
+      updatedAt: serverTimestamp(),
+    };
+  
+    await setDoc(snapshotDocRef(uf, scope), payload, { merge: true });
+  
+    return payload;
+  }
+  
+>> export async function ensureStatisticsSnapshot({
+    uf = "PT_RIO",
+    dateFrom,
+    dateTo,
+    scope = "dashboard_full",
+    force = false,
+    positions = null,
+  } = {}) {
+    const current = await readStatisticsSnapshot({ uf, scope });
+  
+    if (!force && current.exists && current.data?.from === dateFrom && current.data?.to === dateTo) {
+      return {
+        source: "cache",
+        data: current.data,
+      };
+    }
+  
+
+LINHA 91: const current = await readStatisticsSnapshot({ uf, scope });
+  export async function ensureStatisticsSnapshot({
+    uf = "PT_RIO",
+    dateFrom,
+    dateTo,
+    scope = "dashboard_full",
+    force = false,
+    positions = null,
+  } = {}) {
+>>   const current = await readStatisticsSnapshot({ uf, scope });
+  
+    if (!force && current.exists && current.data?.from === dateFrom && current.data?.to === dateTo) {
+      return {
+        source: "cache",
+        data: current.data,
+      };
+    }
+  
+    const data = await buildStatisticsSnapshot({
+      uf,
+      dateFrom,
+      dateTo,
+      scope,
+      positions,
+    });
+  
+
+ARQUIVO: .\src\hooks\useKingRanking.js
+----------------------------------------------------------------------------------------------------
+
+LINHA 4: getKingResultsByRange,
+  import { useEffect, useMemo, useRef, useState } from "react";
+  import {
+    getKingResultsByDate,
+>>   getKingResultsByRange,
+    getKingBoundsByUf,
+  } from "../services/kingResultsService";
+  import { buildRanking } from "../utils/buildRanking";
+  import { buildPalpite } from "../utils/buildPalpites";
+  import { normalizeToYMD_SP } from "../utils/ymd";
+  
+  /* =========================
+     Utils
+  ========================= */
+  
+  function isIndexErrorMessage(err) {
+    const msg = String(err?.message || err || "").toLowerCase();
+    const code = String(err?.code || "").toLowerCase();
+  
+    return (
+      code.includes("failed-precondition") ||
+
+LINHA 261: mode: "none",
+    maxYmd: null,
+    source: "none",
+  };
+  
+  const INITIAL_META = {
+    top3: [],
+    totalOcorrencias: 0,
+    totalDraws: 0,
+>>   mode: "none",
+    date: null,
+    dateFrom: null,
+    dateTo: null,
+  
+    palpitesByGrupo: {},
+    palpiteSampleDrawsUsed: 0,
+    palpiteUsedBucket: null,
+  
+    bounds: { ...INITIAL_BOUNDS },
+    suggestedRange: { from: null, to: null },
+  
+    serviceMode: "detailed",
+    hydrating: false,
+  };
+  
+  export function useKingRanking({
+
+LINHA 273: serviceMode: "detailed",
+  
+    palpitesByGrupo: {},
+    palpiteSampleDrawsUsed: 0,
+    palpiteUsedBucket: null,
+  
+    bounds: { ...INITIAL_BOUNDS },
+    suggestedRange: { from: null, to: null },
+  
+>>   serviceMode: "detailed",
+    hydrating: false,
+  };
+  
+  export function useKingRanking({
+    uf,
+    date,
+    dateFrom,
+    dateTo,
+    closeHourBucket = null,
+    positions = null,
+    needsPrizes = false,
+  }) {
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
+  
+    const [data, setData] = useState([]);
+
+LINHA 570: draws = await getKingResultsByRange({
+          }
+  
+          let draws = [];
+          let serviceMode = "detailed";
+  
+          if (mode === "range") {
+            serviceMode = "detailed";
+  
+>>           draws = await getKingResultsByRange({
+              uf,
+              dateFrom: ymdFrom,
+              dateTo: ymdTo,
+              closeHour: null,
+              positions: positionsArrStable,
+              mode: serviceMode,
+              readPolicy: "server",
+            });
+          } else if (mode === "day") {
+            serviceMode = "detailed";
+  
+            draws = await getKingResultsByDate({
+              uf,
+              date: effectiveDayYmd,
+              closeHour: null,
+              positions: positionsArrStable,
+
+LINHA 576: mode: serviceMode,
+            serviceMode = "detailed";
+  
+            draws = await getKingResultsByRange({
+              uf,
+              dateFrom: ymdFrom,
+              dateTo: ymdTo,
+              closeHour: null,
+              positions: positionsArrStable,
+>>             mode: serviceMode,
+              readPolicy: "server",
+            });
+          } else if (mode === "day") {
+            serviceMode = "detailed";
+  
+            draws = await getKingResultsByDate({
+              uf,
+              date: effectiveDayYmd,
+              closeHour: null,
+              positions: positionsArrStable,
+              readPolicy: "server",
+            });
+          } else {
+            draws = [];
+          }
+  
+
+LINHA 577: readPolicy: "server",
+  
+            draws = await getKingResultsByRange({
+              uf,
+              dateFrom: ymdFrom,
+              dateTo: ymdTo,
+              closeHour: null,
+              positions: positionsArrStable,
+              mode: serviceMode,
+>>             readPolicy: "server",
+            });
+          } else if (mode === "day") {
+            serviceMode = "detailed";
+  
+            draws = await getKingResultsByDate({
+              uf,
+              date: effectiveDayYmd,
+              closeHour: null,
+              positions: positionsArrStable,
+              readPolicy: "server",
+            });
+          } else {
+            draws = [];
+          }
+  
+          if (!mounted || mySeq !== refreshSeqRef.current) return;
+
+LINHA 587: readPolicy: "server",
+          } else if (mode === "day") {
+            serviceMode = "detailed";
+  
+            draws = await getKingResultsByDate({
+              uf,
+              date: effectiveDayYmd,
+              closeHour: null,
+              positions: positionsArrStable,
+>>             readPolicy: "server",
+            });
+          } else {
+            draws = [];
+          }
+  
+          if (!mounted || mySeq !== refreshSeqRef.current) return;
+  
+          if (rangeBlocked) setRangeBlocked(false);
+  
+          let unique = dedupeDrawsLogicalPreferBest(draws).map(normalizeDrawForCharts);
+  
+          if (bucketNorm) {
+            unique = unique.filter((d) => toHourBucketLabel(d?.close_hour) === bucketNorm);
+          }
+  
+          setDrawsRaw(unique);
+
+LINHA 691: serviceMode: "aggregated",
+            palpiteUsedBucket: null,
+  
+            bounds: boundsSnapshot,
+            suggestedRange: {
+              from: boundsSnapshot?.minYmd || null,
+              to: boundsSnapshot?.maxYmd || null,
+            },
+  
+>>           serviceMode: "aggregated",
+            hydrating: false,
+          }));
+        } catch (e) {
+          if (!mounted) return;
+          if (refreshSeqRef.current && mySeq !== refreshSeqRef.current) return;
+  
+          if (
+            mode === "range" &&
+            isIndexErrorMessage(e) &&
+            Number.isFinite(rangeDays) &&
+            rangeDays > RANGE_FALLBACK_LIMIT_DAYS
+          ) {
+            setRangeBlocked(true);
+          }
+  
+          if (hard) {

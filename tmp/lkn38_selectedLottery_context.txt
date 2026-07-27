@@ -1,0 +1,122 @@
+===== CONTEXTO LINHAS 840-940 =====
+
+0840:           z-index:2;
+0841:           background:rgba(0,0,0,0.72);
+0842:           backdrop-filter:blur(8px);
+0843:           border-bottom:1px solid rgba(255,255,255,0.08);
+0844:           padding:9px 10px;
+0845:           font-size:10px;
+0846:           text-transform:uppercase;
+0847:           letter-spacing:0.6px;
+0848:           color:rgba(233,233,233,0.72);
+0849:           white-space:nowrap;
+0850:         }
+0851: 
+0852:         .ppLateTable tbody td{
+0853:           padding:8px 10px;
+0854:           border-bottom:1px solid rgba(255,255,255,0.06);
+0855:           font-size:12px;
+0856:           color:rgba(233,233,233,0.92);
+0857:           white-space:nowrap;
+0858:           overflow:hidden;
+0859:           text-overflow:ellipsis;
+0860:         }
+0861: 
+0862:         .ppLateTable tbody tr:hover td{ background:rgba(202,166,75,0.06); }
+0863: 
+0864:         .ppPos{ width:58px; color:rgba(233,233,233,0.75); font-weight:900; }
+0865:         .ppImgCell{ width:66px; }
+0866:         .ppImg{
+0867:           width:34px; height:34px;
+0868:           border-radius:12px;
+0869:           border:2px solid rgba(202,166,75,0.55);
+0870:           box-shadow:0 14px 34px rgba(0,0,0,0.45);
+0871:           background:rgba(0,0,0,0.55);
+0872:           display:inline-flex;
+0873:           align-items:center;
+0874:           justify-content:center;
+0875:           overflow:hidden;
+0876:         }
+0877:         .ppImg img{ width:100%; height:100%; object-fit:cover; display:block; }
+0878: 
+0879:         .ppGrupo{ font-weight:900; letter-spacing:0.4px; color:#e9e9e9; }
+0880:         .ppAnimal{ width:150px; max-width:150px; font-weight:800; color:rgba(233,233,233,0.92); }
+0881:         .ppLast{ width:130px; text-align:center; color:rgba(233,233,233,0.72); font-weight:700; }
+0882:         .ppDays{ width:118px; font-weight:900; text-align:center; letter-spacing:0.2px; }
+0883:         .ppDays b{ color:#caa64b; }
+0884: 
+0885:         @media (max-width:1100px){
+0886:           .ppLate{ padding:12px 12px 10px; }
+0887:           .ppLateTable{ width:100%; }
+0888:           .ppAnimal{ width:140px; max-width:140px; }
+0889:         }
+0890:       `}</style>
+0891: 
+0892:       <div className="ppLateHeader">
+0893:         <div className="ppLateTitleWrap">
+0894:           <h1 className="ppLateTitle">Atrasados</h1>
+0895: 
+0896:           <div className="ppLateSubtitle">
+0897:             Leitura de atraso por <b>Grupo</b> · Prêmio{" "}
+0898:             <b>{prizeMode === "1-5" ? "1º ao 5º" : `${prizeMode}º`}</b> · Data{" "}
+0899:             <b>{titleDateBR}</b> · <b>{
+0900: LATE_LOTTERY_OPTIONS.find(
+0901:   option => option.id === selectedLotteryId
+0902: )?.label || selectedLotteryId
+0903: }</b> · Loteria{" "}
+0904:             <b>{LOTTERY_DISPLAY}</b>
+0905:             {meta?.effectiveTargetYmd && meta.effectiveTargetYmd !== dateYmd ? (
+0906:               <>
+0907:                 {" · "}
+0908:                 Data efetiva <b>{effectiveDateBR}</b>
+0909:               </>
+0910:             ) : null}
+0911:             {lastImportedBR ? (
+0912:               <>
+0913:                 {" · "}
+0914:                 Último sorteio importado <b>{lastImportedBR}</b>
+0915:               </>
+0916:             ) : null}
+0917:           </div>
+0918:         </div>
+0919: 
+0920:         <div className="ppLateControls">
+0921: 
+0922: 
+0923:           <div className="ppCtl">
+0924:             <label htmlFor="lateLottery">Loteria</label>
+0925: 
+0926:             <select
+0927:               id="lateLottery"
+0928:               value={selectedLotteryId}
+0929:               onChange={(event) =>
+0930:                 setSelectedLotteryId(event.target.value)
+0931:               }
+0932:               disabled={loading}
+0933:             >
+0934:               {LATE_LOTTERY_OPTIONS.map((option) => (
+0935:                 <option
+0936:                   key={option.id}
+0937:                   value={option.id}
+0938:                 >
+0939:                   {option.label}
+0940:                 </option>
+
+===== OCORRÊNCIAS selectedLottery =====
+
+0340:   const [selectedLotteryId, setSelectedLotteryId] = useState("PT_RIO");
+0374:       LATE_HOUR_OPTIONS[selectedLotteryId] ||
+0376:     [selectedLotteryId]
+0392:         (option) => option.id === selectedLotteryId
+0394:     [selectedLotteryId]
+0635:   }, [selectedLotteryId]);
+0679:     selectedLotteryId,
+0901:   option => option.id === selectedLotteryId
+0902: )?.label || selectedLotteryId
+0928:               value={selectedLotteryId}
+
+===== OCORRÊNCIAS selectedLotteryKeys =====
+
+
+===== OCORRÊNCIAS activeLottery / lotteryFilter / lottery =====
+

@@ -1,0 +1,1643 @@
+
+         Id Evento            Conclusao UTC                 Brasilia            Commit  URL
+         -- ------            --------- ---                 --------            ------  ---
+29874543143 schedule          success   2026-07-21 22:39:53 2026-07-21 19:39:53 e046882 https://github.com/glauberseguros-commits/palpitacojb/actions/runs/29874543143
+29874231501 schedule          success   2026-07-21 22:34:15 2026-07-21 19:34:15 e046882 https://github.com/glauberseguros-commits/palpitacojb/actions/runs/29874231501
+29873845800 schedule          success   2026-07-21 22:27:40 2026-07-21 19:27:40 e046882 https://github.com/glauberseguros-commits/palpitacojb/actions/runs/29873845800
+29871458179 schedule          success   2026-07-21 21:49:18 2026-07-21 18:49:18 7f30d86 https://github.com/glauberseguros-commits/palpitacojb/actions/runs/29871458179
+29870643518 schedule          success   2026-07-21 21:36:37 2026-07-21 18:36:37 c178156 https://github.com/glauberseguros-commits/palpitacojb/actions/runs/29870643518
+29870366597 schedule          success   2026-07-21 21:32:29 2026-07-21 18:32:29 c178156 https://github.com/glauberseguros-commits/palpitacojb/actions/runs/29870366597
+29869459861 schedule          success   2026-07-21 21:18:58 2026-07-21 18:18:58 c178156 https://github.com/glauberseguros-commits/palpitacojb/actions/runs/29869459861
+29867585865 schedule          success   2026-07-21 20:51:59 2026-07-21 17:51:59 c178156 https://github.com/glauberseguros-commits/palpitacojb/actions/runs/29867585865
+29867301436 schedule          success   2026-07-21 20:47:56 2026-07-21 17:47:56 c178156 https://github.com/glauberseguros-commits/palpitacojb/actions/runs/29867301436
+29867129482 schedule          success   2026-07-21 20:45:29 2026-07-21 17:45:29 c178156 https://github.com/glauberseguros-commits/palpitacojb/actions/runs/29867129482
+29863672429 schedule          success   2026-07-21 19:57:02 2026-07-21 16:57:02 a2a9141 https://github.com/glauberseguros-commits/palpitacojb/actions/runs/29863672429
+29863237086 schedule          success   2026-07-21 19:50:49 2026-07-21 16:50:49 a2a9141 https://github.com/glauberseguros-commits/palpitacojb/actions/runs/29863237086
+29862664249 schedule          success   2026-07-21 19:42:38 2026-07-21 16:42:38 a2a9141 https://github.com/glauberseguros-commits/palpitacojb/actions/runs/29862664249
+29859496719 schedule          success   2026-07-21 18:58:16 2026-07-21 15:58:16 a2a9141 https://github.com/glauberseguros-commits/palpitacojb/actions/runs/29859496719
+29859150203 schedule          success   2026-07-21 18:53:32 2026-07-21 15:53:32 a2a9141 https://github.com/glauberseguros-commits/palpitacojb/actions/runs/29859150203
+29858997064 schedule          success   2026-07-21 18:51:23 2026-07-21 15:51:23 a2a9141 https://github.com/glauberseguros-commits/palpitacojb/actions/runs/29858997064
+29848552600 workflow_dispatch success   2026-07-21 16:25:56 2026-07-21 13:25:56 0233956 https://github.com/glauberseguros-commits/palpitacojb/actions/runs/29848552600
+29845791547 schedule          failure   2026-07-21 15:49:39 2026-07-21 12:49:39 01d2f27 https://github.com/glauberseguros-commits/palpitacojb/actions/runs/29845791547
+29845775037 schedule          failure   2026-07-21 15:49:26 2026-07-21 12:49:26 01d2f27 https://github.com/glauberseguros-commits/palpitacojb/actions/runs/29845775037
+29842523676 schedule          failure   2026-07-21 15:08:14 2026-07-21 12:08:14 01d2f27 https://github.com/glauberseguros-commits/palpitacojb/actions/runs/29842523676
+29838349026 schedule          success   2026-07-21 14:16:52 2026-07-21 11:16:52 01d2f27 https://github.com/glauberseguros-commits/palpitacojb/actions/runs/29838349026
+29838153527 schedule          failure   2026-07-21 14:14:22 2026-07-21 11:14:22 01d2f27 https://github.com/glauberseguros-commits/palpitacojb/actions/runs/29838153527
+29830056934 schedule          failure   2026-07-21 12:25:52 2026-07-21 09:25:52 01d2f27 https://github.com/glauberseguros-commits/palpitacojb/actions/runs/29830056934
+29827549300 schedule          success   2026-07-21 11:48:26 2026-07-21 08:48:26 01d2f27 https://github.com/glauberseguros-commits/palpitacojb/actions/runs/29827549300
+29811240483 schedule          failure   2026-07-21 07:39:09 2026-07-21 04:39:09 01d2f27 https://github.com/glauberseguros-commits/palpitacojb/actions/runs/29811240483
+29804091494 schedule          success   2026-07-21 05:28:28 2026-07-21 02:28:28 01d2f27 https://github.com/glauberseguros-commits/palpitacojb/actions/runs/29804091494
+29804076672 schedule          success   2026-07-21 05:28:09 2026-07-21 02:28:09 01d2f27 https://github.com/glauberseguros-commits/palpitacojb/actions/runs/29804076672
+29798958336 schedule          success   2026-07-21 03:36:12 2026-07-21 00:36:12 01d2f27 https://github.com/glauberseguros-commits/palpitacojb/actions/runs/29798958336
+29798919744 schedule          success   2026-07-21 03:35:18 2026-07-21 00:35:18 01d2f27 https://github.com/glauberseguros-commits/palpitacojb/actions/runs/29798919744
+29796612364 schedule          failure   2026-07-21 02:44:07 2026-07-20 23:44:07 01d2f27 https://github.com/glauberseguros-commits/palpitacojb/actions/runs/29796612364
+
+
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T22:39:56.3058481Z ##[group]GITHUB_TOKEN Permissions
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T22:40:02.6969955Z (node:2302) [DEP0169] DeprecationWarning: `url.parse()` behavior is not standardized and prone to errors that have security implications. Use the WHATWG URL API instead. CVEs are not issued for `url.parse()` vulnerabilities.
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T22:40:05.5248304Z 35 packages are looking for funding
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T22:40:05.5579097Z 22 vulnerabilities (1 low, 13 moderate, 5 high, 3 critical)
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T22:40:05.5833657Z ^[[36;1m  lotteries="PT_RIO FEDERAL LOOK NACIONAL"^[[0m
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T22:40:05.5842430Z ^[[36;1m    echo "::error::Falha LOTTERY=$lottery PERIOD=$period EXIT=$code"^[[0m
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T22:40:05.5844798Z ^[[36;1mdone^[[0m
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T22:40:05.5847373Z ^[[36;1mdone^[[0m
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T22:40:05.5928870Z   FAIL_ON_CRITICAL: 1
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T22:40:05.5929870Z   CATCHUP_MAX_AFTER_END_MIN: 1440
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T22:40:08.4247904Z [CAL] PT_RIO resolved: date=2026-07-21 dow=2 saturday19=0 federal20=0 HARD=[09:00,11:00,14:00,16:00,18:00,21:00] SOFT=[] OFF=[19:00]
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T22:40:08.4251993Z [STATE-SYNC] backend confirmou slot=09:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T22:40:08.4254688Z [STATE-SYNC] backend confirmou slot=11:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T22:40:08.4256554Z [STATE-SYNC] backend confirmou slot=14:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T22:40:08.4259820Z [STATE-SYNC] backend confirmou slot=16:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T22:40:08.4261820Z [STATE-SYNC] backend confirmou slot=18:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T22:40:08.4271083Z [AUTO] N/A slot=19:00 (NAO_APLICA) -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T22:40:08.6541803Z [AUTO] N/A slot=11:00 (FEDERAL_FORA_DA_GRADE) -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T22:40:08.6543907Z [AUTO] N/A slot=19:00 (FEDERAL_FORA_DA_GRADE) -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T22:40:08.6546033Z [AUTO] N/A slot=20:00 (FEDERAL_FORA_DA_GRADE) -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T22:40:08.6741299Z LOTTERY=LOOK | PERIOD=TODAY
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T22:40:10.5050434Z [STATE-SYNC] backend confirmou slot=07:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T22:40:10.5051330Z [STATE-SYNC] backend confirmou slot=09:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T22:40:10.5053450Z [STATE-SYNC] backend confirmou slot=11:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T22:40:10.5055327Z [STATE-SYNC] backend confirmou slot=14:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T22:40:10.5057455Z [STATE-SYNC] backend confirmou slot=16:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T22:40:10.5060979Z [STATE-SYNC] backend confirmou slot=18:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T22:40:11.3829711Z [STATE-SYNC] backend confirmou slot=02:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T22:40:11.3830804Z [STATE-SYNC] backend confirmou slot=08:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T22:40:11.3832785Z [STATE-SYNC] backend confirmou slot=10:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T22:40:11.3834997Z [STATE-SYNC] backend confirmou slot=12:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T22:40:11.3837160Z [STATE-SYNC] backend confirmou slot=15:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T22:40:11.3840491Z [STATE-SYNC] backend confirmou slot=17:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T22:40:12.6512195Z [CAL] PT_RIO resolved: date=2026-07-20 dow=1 saturday19=0 federal20=0 HARD=[09:00,11:00,14:00,16:00,18:00,21:00] SOFT=[] OFF=[19:00]
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T22:40:12.6516457Z [STATE-SYNC] backend confirmou slot=09:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T22:40:12.6518352Z [STATE-SYNC] backend confirmou slot=11:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T22:40:12.6521762Z [STATE-SYNC] backend confirmou slot=14:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T22:40:12.6524132Z [STATE-SYNC] backend confirmou slot=16:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T22:40:12.6526200Z [STATE-SYNC] backend confirmou slot=18:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T22:40:12.6529040Z [STATE-SYNC] backend confirmou slot=21:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T22:40:12.6562021Z [AUTO] DIA COMPLETO (2026-07-20) ÔÇö slots conclu├¡dos (skip import)
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T22:40:12.8760792Z [AUTO] N/A slot=11:00 (FEDERAL_FORA_DA_GRADE) -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T22:40:12.8762971Z [AUTO] N/A slot=19:00 (FEDERAL_FORA_DA_GRADE) -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T22:40:12.8764946Z [AUTO] N/A slot=20:00 (FEDERAL_FORA_DA_GRADE) -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T22:40:12.8967119Z LOTTERY=LOOK | PERIOD=YESTERDAY:2026-07-20
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T22:40:14.1494328Z [STATE-SYNC] backend confirmou slot=07:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T22:40:14.1495505Z [STATE-SYNC] backend confirmou slot=09:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T22:40:14.1497711Z [STATE-SYNC] backend confirmou slot=11:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T22:40:14.1499897Z [STATE-SYNC] backend confirmou slot=14:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T22:40:14.1502004Z [STATE-SYNC] backend confirmou slot=16:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T22:40:14.1504004Z [STATE-SYNC] backend confirmou slot=18:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T22:40:14.1506823Z [STATE-SYNC] backend confirmou slot=21:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T22:40:14.1508925Z [STATE-SYNC] backend confirmou slot=23:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T22:40:14.1523184Z [AUTO] DIA COMPLETO (2026-07-20) ÔÇö slots conclu├¡dos (skip import)
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T22:40:15.1619400Z [STATE-SYNC] backend confirmou slot=02:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T22:40:15.1620472Z [STATE-SYNC] backend confirmou slot=08:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T22:40:15.1622620Z [STATE-SYNC] backend confirmou slot=10:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T22:40:15.1624861Z [STATE-SYNC] backend confirmou slot=12:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T22:40:15.1626268Z [STATE-SYNC] backend confirmou slot=15:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T22:40:15.1628216Z [STATE-SYNC] backend confirmou slot=17:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T22:40:15.1631316Z [STATE-SYNC] backend confirmou slot=21:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T22:40:15.1633377Z [STATE-SYNC] backend confirmou slot=23:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T22:40:15.1646227Z [AUTO] DIA COMPLETO (2026-07-20) ÔÇö slots conclu├¡dos (skip import)
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T22:34:18.4820604Z ##[group]GITHUB_TOKEN Permissions
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T22:34:28.9064126Z (node:2026) [DEP0169] DeprecationWarning: `url.parse()` behavior is not standardized and prone to errors that have security implications. Use the WHATWG URL API instead. CVEs are not issued for `url.parse()` vulnerabilities.
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T22:34:32.1848563Z 35 packages are looking for funding
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T22:34:32.2025662Z 22 vulnerabilities (1 low, 13 moderate, 5 high, 3 critical)
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T22:34:32.2153137Z ^[[36;1m  lotteries="PT_RIO FEDERAL LOOK NACIONAL"^[[0m
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T22:34:32.2161170Z ^[[36;1m    echo "::error::Falha LOTTERY=$lottery PERIOD=$period EXIT=$code"^[[0m
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T22:34:32.2163648Z ^[[36;1mdone^[[0m
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T22:34:32.2166431Z ^[[36;1mdone^[[0m
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T22:34:32.2208689Z   FAIL_ON_CRITICAL: 1
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T22:34:32.2209911Z   CATCHUP_MAX_AFTER_END_MIN: 1440
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T22:34:35.0995798Z [CAL] PT_RIO resolved: date=2026-07-21 dow=2 saturday19=0 federal20=0 HARD=[09:00,11:00,14:00,16:00,18:00,21:00] SOFT=[] OFF=[19:00]
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T22:34:35.0997710Z [STATE-SYNC] backend confirmou slot=09:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T22:34:35.1000932Z [STATE-SYNC] backend confirmou slot=11:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T22:34:35.1001933Z [STATE-SYNC] backend confirmou slot=14:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T22:34:35.1002587Z [STATE-SYNC] backend confirmou slot=16:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T22:34:35.1004844Z [STATE-SYNC] backend confirmou slot=18:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T22:34:35.1010619Z [AUTO] N/A slot=19:00 (NAO_APLICA) -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T22:34:35.2421647Z [AUTO] N/A slot=11:00 (FEDERAL_FORA_DA_GRADE) -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T22:34:35.2423579Z [AUTO] N/A slot=19:00 (FEDERAL_FORA_DA_GRADE) -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T22:34:35.2424613Z [AUTO] N/A slot=20:00 (FEDERAL_FORA_DA_GRADE) -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T22:34:35.2557022Z LOTTERY=LOOK | PERIOD=TODAY
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T22:34:37.1583491Z [STATE-SYNC] backend confirmou slot=07:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T22:34:37.1584191Z [STATE-SYNC] backend confirmou slot=09:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T22:34:37.1585130Z [STATE-SYNC] backend confirmou slot=11:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T22:34:37.1586481Z [STATE-SYNC] backend confirmou slot=14:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T22:34:37.1587794Z [STATE-SYNC] backend confirmou slot=16:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T22:34:37.1590526Z [STATE-SYNC] backend confirmou slot=18:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T22:34:38.0050560Z [STATE-SYNC] backend confirmou slot=02:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T22:34:38.0051476Z [STATE-SYNC] backend confirmou slot=08:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T22:34:38.0052039Z [STATE-SYNC] backend confirmou slot=10:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T22:34:38.0052697Z [STATE-SYNC] backend confirmou slot=12:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T22:34:38.0053318Z [STATE-SYNC] backend confirmou slot=15:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T22:34:38.0054372Z [STATE-SYNC] backend confirmou slot=17:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T22:34:39.0566905Z [CAL] PT_RIO resolved: date=2026-07-20 dow=1 saturday19=0 federal20=0 HARD=[09:00,11:00,14:00,16:00,18:00,21:00] SOFT=[] OFF=[19:00]
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T22:34:39.0568478Z [STATE-SYNC] backend confirmou slot=09:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T22:34:39.0569790Z [STATE-SYNC] backend confirmou slot=11:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T22:34:39.0575512Z [STATE-SYNC] backend confirmou slot=14:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T22:34:39.0576476Z [STATE-SYNC] backend confirmou slot=16:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T22:34:39.0577162Z [STATE-SYNC] backend confirmou slot=18:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T22:34:39.0577844Z [STATE-SYNC] backend confirmou slot=21:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T22:34:39.0600346Z [AUTO] DIA COMPLETO (2026-07-20) ÔÇö slots conclu├¡dos (skip import)
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T22:34:39.2157769Z [AUTO] N/A slot=11:00 (FEDERAL_FORA_DA_GRADE) -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T22:34:39.2159374Z [AUTO] N/A slot=19:00 (FEDERAL_FORA_DA_GRADE) -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T22:34:39.2160766Z [AUTO] N/A slot=20:00 (FEDERAL_FORA_DA_GRADE) -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T22:34:39.3044168Z LOTTERY=LOOK | PERIOD=YESTERDAY:2026-07-20
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T22:34:40.2978509Z [STATE-SYNC] backend confirmou slot=07:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T22:34:40.2979597Z [STATE-SYNC] backend confirmou slot=09:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T22:34:40.2980432Z [STATE-SYNC] backend confirmou slot=11:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T22:34:40.2981132Z [STATE-SYNC] backend confirmou slot=14:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T22:34:40.2983394Z [STATE-SYNC] backend confirmou slot=16:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T22:34:40.2984204Z [STATE-SYNC] backend confirmou slot=18:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T22:34:40.2984969Z [STATE-SYNC] backend confirmou slot=21:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T22:34:40.2988677Z [STATE-SYNC] backend confirmou slot=23:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T22:34:40.3000642Z [AUTO] DIA COMPLETO (2026-07-20) ÔÇö slots conclu├¡dos (skip import)
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T22:34:41.2695943Z [STATE-SYNC] backend confirmou slot=02:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T22:34:41.2697035Z [STATE-SYNC] backend confirmou slot=08:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T22:34:41.2697736Z [STATE-SYNC] backend confirmou slot=10:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T22:34:41.2698658Z [STATE-SYNC] backend confirmou slot=12:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T22:34:41.2699508Z [STATE-SYNC] backend confirmou slot=15:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T22:34:41.2700599Z [STATE-SYNC] backend confirmou slot=17:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T22:34:41.2702479Z [STATE-SYNC] backend confirmou slot=21:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T22:34:41.2703981Z [STATE-SYNC] backend confirmou slot=23:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T22:34:41.2716803Z [AUTO] DIA COMPLETO (2026-07-20) ÔÇö slots conclu├¡dos (skip import)
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T22:27:44.6150631Z ##[group]GITHUB_TOKEN Permissions
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T22:27:53.1164077Z (node:2178) [DEP0169] DeprecationWarning: `url.parse()` behavior is not standardized and prone to errors that have security implications. Use the WHATWG URL API instead. CVEs are not issued for `url.parse()` vulnerabilities.
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T22:27:56.8414873Z 35 packages are looking for funding
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T22:27:56.8700608Z 22 vulnerabilities (1 low, 13 moderate, 5 high, 3 critical)
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T22:27:56.9769144Z ^[[36;1m  lotteries="PT_RIO FEDERAL LOOK NACIONAL"^[[0m
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T22:27:56.9777510Z ^[[36;1m    echo "::error::Falha LOTTERY=$lottery PERIOD=$period EXIT=$code"^[[0m
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T22:27:56.9780057Z ^[[36;1mdone^[[0m
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T22:27:56.9782693Z ^[[36;1mdone^[[0m
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T22:27:56.9829569Z   FAIL_ON_CRITICAL: 1
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T22:27:56.9830493Z   CATCHUP_MAX_AFTER_END_MIN: 1440
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T22:28:00.0715450Z [CAL] PT_RIO resolved: date=2026-07-21 dow=2 saturday19=0 federal20=0 HARD=[09:00,11:00,14:00,16:00,18:00,21:00] SOFT=[] OFF=[19:00]
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T22:28:00.0718452Z [STATE-SYNC] backend confirmou slot=09:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T22:28:00.0720654Z [STATE-SYNC] backend confirmou slot=11:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T22:28:00.0722520Z [STATE-SYNC] backend confirmou slot=14:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T22:28:00.0725505Z [STATE-SYNC] backend confirmou slot=16:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T22:28:00.0726966Z [STATE-SYNC] backend confirmou slot=18:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T22:28:00.0734440Z [AUTO] N/A slot=19:00 (NAO_APLICA) -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T22:28:00.2690885Z [AUTO] N/A slot=11:00 (FEDERAL_FORA_DA_GRADE) -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T22:28:00.2692711Z [AUTO] N/A slot=19:00 (FEDERAL_FORA_DA_GRADE) -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T22:28:00.2695169Z [AUTO] N/A slot=20:00 (FEDERAL_FORA_DA_GRADE) -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T22:28:00.2860026Z LOTTERY=LOOK | PERIOD=TODAY
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T22:28:02.2356525Z [STATE-SYNC] backend confirmou slot=07:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T22:28:02.2358500Z [STATE-SYNC] backend confirmou slot=09:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T22:28:02.2361216Z [STATE-SYNC] backend confirmou slot=11:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T22:28:02.2363229Z [STATE-SYNC] backend confirmou slot=14:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T22:28:02.2366100Z [STATE-SYNC] backend confirmou slot=16:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T22:28:02.2375606Z [STATE-SYNC] backend confirmou slot=18:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T22:28:03.1914598Z [STATE-SYNC] backend confirmou slot=02:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T22:28:03.1916663Z [STATE-SYNC] backend confirmou slot=08:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T22:28:03.1918863Z [STATE-SYNC] backend confirmou slot=10:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T22:28:03.1931680Z [STATE-SYNC] backend confirmou slot=12:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T22:28:03.1932749Z [STATE-SYNC] backend confirmou slot=15:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T22:28:03.1933851Z [STATE-SYNC] backend confirmou slot=17:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T22:28:04.6903885Z [CAL] PT_RIO resolved: date=2026-07-20 dow=1 saturday19=0 federal20=0 HARD=[09:00,11:00,14:00,16:00,18:00,21:00] SOFT=[] OFF=[19:00]
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T22:28:04.6908378Z [STATE-SYNC] backend confirmou slot=09:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T22:28:04.6910793Z [STATE-SYNC] backend confirmou slot=11:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T22:28:04.6913909Z [STATE-SYNC] backend confirmou slot=14:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T22:28:04.6916364Z [STATE-SYNC] backend confirmou slot=16:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T22:28:04.6918421Z [STATE-SYNC] backend confirmou slot=18:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T22:28:04.6920999Z [STATE-SYNC] backend confirmou slot=21:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T22:28:04.6934872Z [AUTO] DIA COMPLETO (2026-07-20) ÔÇö slots conclu├¡dos (skip import)
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T22:28:04.8866628Z [AUTO] N/A slot=11:00 (FEDERAL_FORA_DA_GRADE) -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T22:28:04.8868712Z [AUTO] N/A slot=19:00 (FEDERAL_FORA_DA_GRADE) -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T22:28:04.8871267Z [AUTO] N/A slot=20:00 (FEDERAL_FORA_DA_GRADE) -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T22:28:04.9035588Z LOTTERY=LOOK | PERIOD=YESTERDAY:2026-07-20
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T22:28:06.1374107Z [STATE-SYNC] backend confirmou slot=07:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T22:28:06.1375759Z [STATE-SYNC] backend confirmou slot=09:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T22:28:06.1377646Z [STATE-SYNC] backend confirmou slot=11:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T22:28:06.1379487Z [STATE-SYNC] backend confirmou slot=14:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T22:28:06.1381477Z [STATE-SYNC] backend confirmou slot=16:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T22:28:06.1383181Z [STATE-SYNC] backend confirmou slot=18:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T22:28:06.1385534Z [STATE-SYNC] backend confirmou slot=21:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T22:28:06.1387401Z [STATE-SYNC] backend confirmou slot=23:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T22:28:06.1398626Z [AUTO] DIA COMPLETO (2026-07-20) ÔÇö slots conclu├¡dos (skip import)
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T22:28:07.1215004Z [STATE-SYNC] backend confirmou slot=02:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T22:28:07.1216562Z [STATE-SYNC] backend confirmou slot=08:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T22:28:07.1218546Z [STATE-SYNC] backend confirmou slot=10:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T22:28:07.1220688Z [STATE-SYNC] backend confirmou slot=12:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T22:28:07.1222332Z [STATE-SYNC] backend confirmou slot=15:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T22:28:07.1223999Z [STATE-SYNC] backend confirmou slot=17:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T22:28:07.1226442Z [STATE-SYNC] backend confirmou slot=21:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T22:28:07.1228632Z [STATE-SYNC] backend confirmou slot=23:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T22:28:07.1241129Z [AUTO] DIA COMPLETO (2026-07-20) ÔÇö slots conclu├¡dos (skip import)
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:49:22.8264074Z ##[group]GITHUB_TOKEN Permissions
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:49:30.4057450Z (node:2260) [DEP0169] DeprecationWarning: `url.parse()` behavior is not standardized and prone to errors that have security implications. Use the WHATWG URL API instead. CVEs are not issued for `url.parse()` vulnerabilities.
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:49:34.9176647Z 35 packages are looking for funding
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:49:34.9538214Z 22 vulnerabilities (1 low, 13 moderate, 5 high, 3 critical)
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:49:34.9782708Z ^[[36;1m  lotteries="PT_RIO FEDERAL LOOK NACIONAL"^[[0m
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:49:34.9789404Z ^[[36;1m    echo "::error::Falha LOTTERY=$lottery PERIOD=$period EXIT=$code"^[[0m
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:49:34.9792045Z ^[[36;1mdone^[[0m
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:49:34.9794390Z ^[[36;1mdone^[[0m
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:49:34.9870439Z   FAIL_ON_CRITICAL: 1
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:49:34.9871266Z   CATCHUP_MAX_AFTER_END_MIN: 1440
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:49:38.0454924Z [CAL] PT_RIO resolved: date=2026-07-21 dow=2 saturday19=0 federal20=0 HARD=[09:00,11:00,14:00,16:00,18:00,21:00] SOFT=[] OFF=[19:00]
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:49:38.0458298Z [STATE-SYNC] backend confirmou slot=09:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:49:38.0460766Z [STATE-SYNC] backend confirmou slot=11:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:49:38.0462440Z [STATE-SYNC] backend confirmou slot=14:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:49:38.0465124Z [STATE-SYNC] backend confirmou slot=16:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:49:38.0466981Z [STATE-SYNC] backend confirmou slot=18:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:49:38.0474234Z [AUTO] N/A slot=19:00 (NAO_APLICA) -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:49:38.2793941Z [AUTO] N/A slot=11:00 (FEDERAL_FORA_DA_GRADE) -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:49:38.2796102Z [AUTO] N/A slot=19:00 (FEDERAL_FORA_DA_GRADE) -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:49:38.2798592Z [AUTO] N/A slot=20:00 (FEDERAL_FORA_DA_GRADE) -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:49:38.2978529Z LOTTERY=LOOK | PERIOD=TODAY
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:49:40.3034201Z [STATE-SYNC] backend confirmou slot=07:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:49:40.3035643Z [STATE-SYNC] backend confirmou slot=09:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:49:40.3038086Z [STATE-SYNC] backend confirmou slot=11:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:49:40.3040687Z [STATE-SYNC] backend confirmou slot=14:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:49:40.3043156Z [STATE-SYNC] backend confirmou slot=16:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:49:40.3046232Z [STATE-SYNC] backend confirmou slot=18:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:49:41.2213160Z [STATE-SYNC] backend confirmou slot=02:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:49:41.2214728Z [STATE-SYNC] backend confirmou slot=08:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:49:41.2216866Z [STATE-SYNC] backend confirmou slot=10:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:49:41.2219154Z [STATE-SYNC] backend confirmou slot=12:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:49:41.2221897Z [STATE-SYNC] backend confirmou slot=15:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:49:41.2224822Z [STATE-SYNC] backend confirmou slot=17:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:49:42.4621104Z [CAL] PT_RIO resolved: date=2026-07-20 dow=1 saturday19=0 federal20=0 HARD=[09:00,11:00,14:00,16:00,18:00,21:00] SOFT=[] OFF=[19:00]
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:49:42.4624934Z [STATE-SYNC] backend confirmou slot=09:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:49:42.4626850Z [STATE-SYNC] backend confirmou slot=11:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:49:42.4629659Z [STATE-SYNC] backend confirmou slot=14:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:49:42.4632444Z [STATE-SYNC] backend confirmou slot=16:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:49:42.4634186Z [STATE-SYNC] backend confirmou slot=18:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:49:42.4636227Z [STATE-SYNC] backend confirmou slot=21:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:49:42.4649050Z [AUTO] DIA COMPLETO (2026-07-20) ÔÇö slots conclu├¡dos (skip import)
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:49:42.6959139Z [AUTO] N/A slot=11:00 (FEDERAL_FORA_DA_GRADE) -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:49:42.6961764Z [AUTO] N/A slot=19:00 (FEDERAL_FORA_DA_GRADE) -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:49:42.6964274Z [AUTO] N/A slot=20:00 (FEDERAL_FORA_DA_GRADE) -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:49:42.7151141Z LOTTERY=LOOK | PERIOD=YESTERDAY:2026-07-20
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:49:43.9287786Z [STATE-SYNC] backend confirmou slot=07:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:49:43.9288916Z [STATE-SYNC] backend confirmou slot=09:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:49:43.9291329Z [STATE-SYNC] backend confirmou slot=11:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:49:43.9293904Z [STATE-SYNC] backend confirmou slot=14:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:49:43.9295857Z [STATE-SYNC] backend confirmou slot=16:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:49:43.9298220Z [STATE-SYNC] backend confirmou slot=18:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:49:43.9301762Z [STATE-SYNC] backend confirmou slot=21:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:49:43.9303763Z [STATE-SYNC] backend confirmou slot=23:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:49:43.9317439Z [AUTO] DIA COMPLETO (2026-07-20) ÔÇö slots conclu├¡dos (skip import)
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:49:44.9661693Z [STATE-SYNC] backend confirmou slot=02:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:49:44.9663003Z [STATE-SYNC] backend confirmou slot=08:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:49:44.9665150Z [STATE-SYNC] backend confirmou slot=10:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:49:44.9667290Z [STATE-SYNC] backend confirmou slot=12:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:49:44.9668810Z [STATE-SYNC] backend confirmou slot=15:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:49:44.9670942Z [STATE-SYNC] backend confirmou slot=17:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:49:44.9673786Z [STATE-SYNC] backend confirmou slot=21:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:49:44.9675609Z [STATE-SYNC] backend confirmou slot=23:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:49:44.9688090Z [AUTO] DIA COMPLETO (2026-07-20) ÔÇö slots conclu├¡dos (skip import)
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:36:40.8766626Z ##[group]GITHUB_TOKEN Permissions
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:36:47.1943541Z (node:2247) [DEP0169] DeprecationWarning: `url.parse()` behavior is not standardized and prone to errors that have security implications. Use the WHATWG URL API instead. CVEs are not issued for `url.parse()` vulnerabilities.
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:36:50.0185717Z 35 packages are looking for funding
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:36:50.0517916Z 22 vulnerabilities (1 low, 13 moderate, 5 high, 3 critical)
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:36:50.0765540Z ^[[36;1m  lotteries="PT_RIO FEDERAL LOOK NACIONAL"^[[0m
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:36:50.0772831Z ^[[36;1m    echo "::error::Falha LOTTERY=$lottery PERIOD=$period EXIT=$code"^[[0m
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:36:50.0775166Z ^[[36;1mdone^[[0m
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:36:50.0777856Z ^[[36;1mdone^[[0m
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:36:50.0857844Z   FAIL_ON_CRITICAL: 1
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:36:50.0858712Z   CATCHUP_MAX_AFTER_END_MIN: 1440
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:36:51.4098762Z [CAL] PT_RIO resolved: date=2026-07-21 dow=2 saturday19=0 federal20=0 HARD=[09:00,11:00,14:00,16:00,18:00,21:00] SOFT=[] OFF=[19:00]
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:36:51.4102672Z [STATE-SYNC] backend confirmou slot=09:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:36:51.4104905Z [STATE-SYNC] backend confirmou slot=11:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:36:51.4107219Z [STATE-SYNC] backend confirmou slot=14:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:36:51.4110088Z [STATE-SYNC] backend confirmou slot=16:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:36:51.4117512Z [AUTO] N/A slot=19:00 (NAO_APLICA) -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:36:54.3484871Z [IMPORT] API draws=5 | match_close=1 | validos=1 | draws_upserted=1 | draws_novos=0 | prizes_upserted=7 | prizes_novos=0 | skip_vazio=0 | skip_invalido=0 | skip_close=4 | skip_complete=0 | CHECK_EXISTENCE=OFF | uf=RJ lottery_key=PT_RIO | expected=1 complete=1 slotDocs=1 apiTargets=1
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:37:03.7432383Z [TOP3 AUTO] OK | PT_RIO | importado=2026-07-21 18:00 | pr├│ximo=2026-07-21 21:00
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:37:03.7440883Z [AUTO] FS j├í tem slot=18:00 COMPLETO (close=18:00) -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:37:03.9784616Z [AUTO] N/A slot=11:00 (FEDERAL_FORA_DA_GRADE) -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:37:03.9785911Z [AUTO] N/A slot=19:00 (FEDERAL_FORA_DA_GRADE) -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:37:03.9788645Z [AUTO] N/A slot=20:00 (FEDERAL_FORA_DA_GRADE) -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:37:03.9982723Z LOTTERY=LOOK | PERIOD=TODAY
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:37:04.8240172Z [STATE-SYNC] backend confirmou slot=07:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:37:04.8241253Z [STATE-SYNC] backend confirmou slot=09:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:37:04.8243240Z [STATE-SYNC] backend confirmou slot=11:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:37:04.8245069Z [STATE-SYNC] backend confirmou slot=14:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:37:04.8247215Z [STATE-SYNC] backend confirmou slot=16:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:37:04.8250032Z [STATE-SYNC] backend confirmou slot=18:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:37:05.8909554Z [STATE-SYNC] backend confirmou slot=02:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:37:05.8910884Z [STATE-SYNC] backend confirmou slot=08:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:37:05.8913250Z [STATE-SYNC] backend confirmou slot=10:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:37:05.8914730Z [STATE-SYNC] backend confirmou slot=12:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:37:05.8916785Z [STATE-SYNC] backend confirmou slot=15:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:37:05.8919593Z [STATE-SYNC] backend confirmou slot=17:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:37:06.9610963Z [CAL] PT_RIO resolved: date=2026-07-20 dow=1 saturday19=0 federal20=0 HARD=[09:00,11:00,14:00,16:00,18:00,21:00] SOFT=[] OFF=[19:00]
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:37:06.9615141Z [STATE-SYNC] backend confirmou slot=09:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:37:06.9616671Z [STATE-SYNC] backend confirmou slot=11:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:37:06.9619700Z [STATE-SYNC] backend confirmou slot=14:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:37:06.9621704Z [STATE-SYNC] backend confirmou slot=16:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:37:06.9623581Z [STATE-SYNC] backend confirmou slot=18:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:37:06.9625485Z [STATE-SYNC] backend confirmou slot=21:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:37:06.9639542Z [AUTO] DIA COMPLETO (2026-07-20) ÔÇö slots conclu├¡dos (skip import)
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:37:07.1801401Z [AUTO] N/A slot=11:00 (FEDERAL_FORA_DA_GRADE) -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:37:07.1803433Z [AUTO] N/A slot=19:00 (FEDERAL_FORA_DA_GRADE) -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:37:07.1805360Z [AUTO] N/A slot=20:00 (FEDERAL_FORA_DA_GRADE) -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:37:07.1986211Z LOTTERY=LOOK | PERIOD=YESTERDAY:2026-07-20
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:37:08.2262259Z [STATE-SYNC] backend confirmou slot=07:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:37:08.2263460Z [STATE-SYNC] backend confirmou slot=09:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:37:08.2265154Z [STATE-SYNC] backend confirmou slot=11:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:37:08.2268048Z [STATE-SYNC] backend confirmou slot=14:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:37:08.2269738Z [STATE-SYNC] backend confirmou slot=16:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:37:08.2272131Z [STATE-SYNC] backend confirmou slot=18:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:37:08.2275283Z [STATE-SYNC] backend confirmou slot=21:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:37:08.2277469Z [STATE-SYNC] backend confirmou slot=23:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:37:08.2292221Z [AUTO] DIA COMPLETO (2026-07-20) ÔÇö slots conclu├¡dos (skip import)
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:37:09.1021121Z [STATE-SYNC] backend confirmou slot=02:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:37:09.1022266Z [STATE-SYNC] backend confirmou slot=08:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:37:09.1024343Z [STATE-SYNC] backend confirmou slot=10:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:37:09.1026335Z [STATE-SYNC] backend confirmou slot=12:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:37:09.1028545Z [STATE-SYNC] backend confirmou slot=15:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:37:09.1030363Z [STATE-SYNC] backend confirmou slot=17:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:37:09.1033142Z [STATE-SYNC] backend confirmou slot=21:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:37:09.1035159Z [STATE-SYNC] backend confirmou slot=23:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:37:09.1048175Z [AUTO] DIA COMPLETO (2026-07-20) ÔÇö slots conclu├¡dos (skip import)
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:32:33.0004339Z ##[group]GITHUB_TOKEN Permissions
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:32:39.8454532Z (node:2221) [DEP0169] DeprecationWarning: `url.parse()` behavior is not standardized and prone to errors that have security implications. Use the WHATWG URL API instead. CVEs are not issued for `url.parse()` vulnerabilities.
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:32:44.8527956Z 35 packages are looking for funding
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:32:44.8836008Z 22 vulnerabilities (1 low, 13 moderate, 5 high, 3 critical)
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:32:44.9003902Z ^[[36;1m  lotteries="PT_RIO FEDERAL LOOK NACIONAL"^[[0m
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:32:44.9014016Z ^[[36;1m    echo "::error::Falha LOTTERY=$lottery PERIOD=$period EXIT=$code"^[[0m
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:32:44.9017258Z ^[[36;1mdone^[[0m
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:32:44.9021315Z ^[[36;1mdone^[[0m
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:32:44.9078313Z   FAIL_ON_CRITICAL: 1
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:32:44.9079736Z   CATCHUP_MAX_AFTER_END_MIN: 1440
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:32:47.7604026Z [CAL] PT_RIO resolved: date=2026-07-21 dow=2 saturday19=0 federal20=0 HARD=[09:00,11:00,14:00,16:00,18:00,21:00] SOFT=[] OFF=[19:00]
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:32:47.7608717Z [STATE-SYNC] backend confirmou slot=09:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:32:47.7610282Z [STATE-SYNC] backend confirmou slot=11:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:32:47.7612236Z [STATE-SYNC] backend confirmou slot=14:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:32:47.7615269Z [STATE-SYNC] backend confirmou slot=16:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:32:47.7625577Z [AUTO] N/A slot=19:00 (NAO_APLICA) -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:32:49.4068447Z [AUTO] api_missing_slot slot=18:00 (HARD) close=18:00 -> parando closes candidatos (vai retry depois)
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:32:49.5974303Z [AUTO] N/A slot=11:00 (FEDERAL_FORA_DA_GRADE) -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:32:49.5976100Z [AUTO] N/A slot=19:00 (FEDERAL_FORA_DA_GRADE) -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:32:49.5977812Z [AUTO] N/A slot=20:00 (FEDERAL_FORA_DA_GRADE) -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:32:49.6184562Z LOTTERY=LOOK | PERIOD=TODAY
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:32:51.4437566Z [STATE-SYNC] backend confirmou slot=07:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:32:51.4438949Z [STATE-SYNC] backend confirmou slot=09:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:32:51.4443152Z [STATE-SYNC] backend confirmou slot=11:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:32:51.4444238Z [STATE-SYNC] backend confirmou slot=14:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:32:51.4445132Z [STATE-SYNC] backend confirmou slot=16:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:32:52.6551367Z [FETCH] LOOK 2026-07-21 per-lottery=8 -> merged_draws=6 close_hours=[07:00, 09:00, 11:00, 14:00, 16:00, 18:00]
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:32:54.8672494Z [IMPORT] API draws=6 | match_close=1 | validos=1 | draws_upserted=1 | draws_novos=0 | prizes_upserted=7 | prizes_novos=0 | skip_vazio=0 | skip_invalido=0 | skip_close=5 | skip_complete=0 | CHECK_EXISTENCE=OFF | uf=GO lottery_key=LOOK | expected=1 complete=1 slotDocs=1 apiTargets=1
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:33:15.7462897Z [TOP3 AUTO] OK | LOOK | importado=2026-07-21 18:00 | pr├│ximo=2026-07-21 21:00
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:33:15.7472531Z [AUTO] FS j├í tem slot=18:00 COMPLETO (close=18:00) -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:33:17.0376949Z [STATE-SYNC] backend confirmou slot=02:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:33:17.0378301Z [STATE-SYNC] backend confirmou slot=08:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:33:17.0379449Z [STATE-SYNC] backend confirmou slot=10:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:33:17.0381440Z [STATE-SYNC] backend confirmou slot=12:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:33:17.0393375Z [STATE-SYNC] backend confirmou slot=15:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:33:17.0413452Z [STATE-SYNC] backend confirmou slot=17:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:33:18.1260480Z [CAL] PT_RIO resolved: date=2026-07-20 dow=1 saturday19=0 federal20=0 HARD=[09:00,11:00,14:00,16:00,18:00,21:00] SOFT=[] OFF=[19:00]
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:33:18.1265253Z [STATE-SYNC] backend confirmou slot=09:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:33:18.1266733Z [STATE-SYNC] backend confirmou slot=11:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:33:18.1268987Z [STATE-SYNC] backend confirmou slot=14:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:33:18.1270646Z [STATE-SYNC] backend confirmou slot=16:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:33:18.1272381Z [STATE-SYNC] backend confirmou slot=18:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:33:18.1274061Z [STATE-SYNC] backend confirmou slot=21:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:33:18.1288831Z [AUTO] DIA COMPLETO (2026-07-20) ÔÇö slots conclu├¡dos (skip import)
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:33:18.3209246Z [AUTO] N/A slot=11:00 (FEDERAL_FORA_DA_GRADE) -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:33:18.3210835Z [AUTO] N/A slot=19:00 (FEDERAL_FORA_DA_GRADE) -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:33:18.3212788Z [AUTO] N/A slot=20:00 (FEDERAL_FORA_DA_GRADE) -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:33:18.3425878Z LOTTERY=LOOK | PERIOD=YESTERDAY:2026-07-20
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:33:19.1742910Z [STATE-SYNC] backend confirmou slot=07:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:33:19.1744426Z [STATE-SYNC] backend confirmou slot=09:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:33:19.1745705Z [STATE-SYNC] backend confirmou slot=11:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:33:19.1747188Z [STATE-SYNC] backend confirmou slot=14:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:33:19.1748471Z [STATE-SYNC] backend confirmou slot=16:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:33:19.1749642Z [STATE-SYNC] backend confirmou slot=18:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:33:19.1751880Z [STATE-SYNC] backend confirmou slot=21:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:33:19.1753625Z [STATE-SYNC] backend confirmou slot=23:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:33:19.1771351Z [AUTO] DIA COMPLETO (2026-07-20) ÔÇö slots conclu├¡dos (skip import)
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:33:20.0300361Z [STATE-SYNC] backend confirmou slot=02:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:33:20.0301439Z [STATE-SYNC] backend confirmou slot=08:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:33:20.0304008Z [STATE-SYNC] backend confirmou slot=10:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:33:20.0306094Z [STATE-SYNC] backend confirmou slot=12:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:33:20.0307945Z [STATE-SYNC] backend confirmou slot=15:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:33:20.0309426Z [STATE-SYNC] backend confirmou slot=17:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:33:20.0312848Z [STATE-SYNC] backend confirmou slot=21:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:33:20.0314661Z [STATE-SYNC] backend confirmou slot=23:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:33:20.0330936Z [AUTO] DIA COMPLETO (2026-07-20) ÔÇö slots conclu├¡dos (skip import)
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:19:01.1505291Z ##[group]GITHUB_TOKEN Permissions
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:19:07.8098586Z (node:2147) [DEP0169] DeprecationWarning: `url.parse()` behavior is not standardized and prone to errors that have security implications. Use the WHATWG URL API instead. CVEs are not issued for `url.parse()` vulnerabilities.
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:19:10.8190574Z 35 packages are looking for funding
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:19:10.8534532Z 22 vulnerabilities (1 low, 13 moderate, 5 high, 3 critical)
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:19:10.8764721Z ^[[36;1m  lotteries="PT_RIO FEDERAL LOOK NACIONAL"^[[0m
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:19:10.8771386Z ^[[36;1m    echo "::error::Falha LOTTERY=$lottery PERIOD=$period EXIT=$code"^[[0m
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:19:10.8773513Z ^[[36;1mdone^[[0m
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:19:10.8775986Z ^[[36;1mdone^[[0m
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:19:10.8851328Z   FAIL_ON_CRITICAL: 1
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:19:10.8852147Z   CATCHUP_MAX_AFTER_END_MIN: 1440
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:19:36.3296936Z [CAL] PT_RIO resolved: date=2026-07-21 dow=2 saturday19=0 federal20=0 HARD=[09:00,11:00,14:00,16:00,18:00,21:00] SOFT=[] OFF=[19:00]
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:19:36.3300268Z [AUTO] N/A slot=19:00 (NAO_APLICA) -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:19:38.1295440Z [IMPORT] API draws=4 | match_close=1 | validos=1 | draws_upserted=0 | draws_novos=0 | prizes_upserted=0 | prizes_novos=0 | skip_vazio=0 | skip_invalido=0 | skip_close=3 | skip_complete=1 | CHECK_EXISTENCE=OFF | uf=RJ lottery_key=PT_RIO | expected=1 complete=1 slotDocs=1 apiTargets=1
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:19:45.7293676Z [AUTO] FS j├í tem slot=09:00 COMPLETO (close=09:00) -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:19:47.0476223Z [IMPORT] API draws=4 | match_close=1 | validos=1 | draws_upserted=0 | draws_novos=0 | prizes_upserted=0 | prizes_novos=0 | skip_vazio=0 | skip_invalido=0 | skip_close=3 | skip_complete=1 | CHECK_EXISTENCE=OFF | uf=RJ lottery_key=PT_RIO | expected=1 complete=1 slotDocs=1 apiTargets=1
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:19:53.1877805Z [AUTO] FS j├í tem slot=11:00 COMPLETO (close=11:00) -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:19:54.4148389Z [IMPORT] API draws=4 | match_close=1 | validos=1 | draws_upserted=0 | draws_novos=0 | prizes_upserted=0 | prizes_novos=0 | skip_vazio=0 | skip_invalido=0 | skip_close=3 | skip_complete=1 | CHECK_EXISTENCE=OFF | uf=RJ lottery_key=PT_RIO | expected=1 complete=1 slotDocs=1 apiTargets=1
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:20:00.4686706Z [AUTO] FS j├í tem slot=14:00 COMPLETO (close=14:00) -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:20:01.7409490Z [IMPORT] API draws=4 | match_close=1 | validos=1 | draws_upserted=0 | draws_novos=0 | prizes_upserted=0 | prizes_novos=0 | skip_vazio=0 | skip_invalido=0 | skip_close=3 | skip_complete=1 | CHECK_EXISTENCE=OFF | uf=RJ lottery_key=PT_RIO | expected=1 complete=1 slotDocs=1 apiTargets=1
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:20:07.3905165Z [AUTO] FS j├í tem slot=16:00 COMPLETO (close=16:00) -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:20:08.5942240Z [AUTO] api_missing_slot slot=18:00 (HARD) close=18:00 -> parando closes candidatos (vai retry depois)
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:20:08.8294037Z [AUTO] N/A slot=11:00 (FEDERAL_FORA_DA_GRADE) -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:20:08.8296244Z [AUTO] N/A slot=19:00 (FEDERAL_FORA_DA_GRADE) -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:20:08.8298822Z [AUTO] N/A slot=20:00 (FEDERAL_FORA_DA_GRADE) -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:20:08.8473381Z LOTTERY=LOOK | PERIOD=TODAY
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:20:10.7260880Z [STATE-SYNC] backend confirmou slot=07:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:20:10.7262082Z [STATE-SYNC] backend confirmou slot=09:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:20:10.7264566Z [STATE-SYNC] backend confirmou slot=11:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:20:10.7266796Z [STATE-SYNC] backend confirmou slot=14:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:20:10.7269256Z [STATE-SYNC] backend confirmou slot=16:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:20:11.9605034Z [FETCH] LOOK 2026-07-21 per-lottery=8 -> merged_draws=5 close_hours=[07:00, 09:00, 11:00, 14:00, 16:00]
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:20:11.9612132Z [AUTO] api_missing_slot slot=18:00 (HARD) close=18:00 -> parando closes candidatos (vai retry depois)
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:20:13.7552634Z [STATE-SYNC] backend confirmou slot=02:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:20:13.7553794Z [STATE-SYNC] backend confirmou slot=08:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:20:13.7556178Z [STATE-SYNC] backend confirmou slot=10:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:20:13.7558082Z [STATE-SYNC] backend confirmou slot=12:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:20:13.7560019Z [STATE-SYNC] backend confirmou slot=15:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:20:13.7562538Z [STATE-SYNC] backend confirmou slot=17:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:20:14.9809804Z [CAL] PT_RIO resolved: date=2026-07-20 dow=1 saturday19=0 federal20=0 HARD=[09:00,11:00,14:00,16:00,18:00,21:00] SOFT=[] OFF=[19:00]
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:20:14.9813025Z [STATE-SYNC] backend confirmou slot=09:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:20:14.9814932Z [STATE-SYNC] backend confirmou slot=11:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:20:14.9817688Z [STATE-SYNC] backend confirmou slot=14:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:20:14.9819768Z [STATE-SYNC] backend confirmou slot=16:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:20:14.9821705Z [STATE-SYNC] backend confirmou slot=18:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:20:14.9823682Z [STATE-SYNC] backend confirmou slot=21:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:20:14.9836098Z [AUTO] DIA COMPLETO (2026-07-20) ÔÇö slots conclu├¡dos (skip import)
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:20:15.1998370Z [AUTO] N/A slot=11:00 (FEDERAL_FORA_DA_GRADE) -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:20:15.2000540Z [AUTO] N/A slot=19:00 (FEDERAL_FORA_DA_GRADE) -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:20:15.2002628Z [AUTO] N/A slot=20:00 (FEDERAL_FORA_DA_GRADE) -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:20:15.2167879Z LOTTERY=LOOK | PERIOD=YESTERDAY:2026-07-20
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:20:16.2736821Z [STATE-SYNC] backend confirmou slot=07:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:20:16.2738344Z [STATE-SYNC] backend confirmou slot=09:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:20:16.2740931Z [STATE-SYNC] backend confirmou slot=11:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:20:16.2742924Z [STATE-SYNC] backend confirmou slot=14:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:20:16.2745278Z [STATE-SYNC] backend confirmou slot=16:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:20:16.2747400Z [STATE-SYNC] backend confirmou slot=18:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:20:16.2750757Z [STATE-SYNC] backend confirmou slot=21:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:20:16.2752656Z [STATE-SYNC] backend confirmou slot=23:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:20:16.2765486Z [AUTO] DIA COMPLETO (2026-07-20) ÔÇö slots conclu├¡dos (skip import)
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:20:17.3351873Z [STATE-SYNC] backend confirmou slot=02:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:20:17.3352985Z [STATE-SYNC] backend confirmou slot=08:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:20:17.3355188Z [STATE-SYNC] backend confirmou slot=10:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:20:17.3356945Z [STATE-SYNC] backend confirmou slot=12:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:20:17.3358495Z [STATE-SYNC] backend confirmou slot=15:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:20:17.3360023Z [STATE-SYNC] backend confirmou slot=17:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:20:17.3362253Z [STATE-SYNC] backend confirmou slot=21:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:20:17.3363916Z [STATE-SYNC] backend confirmou slot=23:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T21:20:17.3376046Z [AUTO] DIA COMPLETO (2026-07-20) ÔÇö slots conclu├¡dos (skip import)
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T20:52:03.6752637Z ##[group]GITHUB_TOKEN Permissions
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T20:52:11.3478173Z (node:2298) [DEP0169] DeprecationWarning: `url.parse()` behavior is not standardized and prone to errors that have security implications. Use the WHATWG URL API instead. CVEs are not issued for `url.parse()` vulnerabilities.
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T20:52:15.7148991Z 35 packages are looking for funding
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T20:52:15.7519730Z 22 vulnerabilities (1 low, 13 moderate, 5 high, 3 critical)
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T20:52:15.7747277Z ^[[36;1m  lotteries="PT_RIO FEDERAL LOOK NACIONAL"^[[0m
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T20:52:15.7754530Z ^[[36;1m    echo "::error::Falha LOTTERY=$lottery PERIOD=$period EXIT=$code"^[[0m
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T20:52:15.7757139Z ^[[36;1mdone^[[0m
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T20:52:15.7759671Z ^[[36;1mdone^[[0m
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T20:52:15.7836388Z   FAIL_ON_CRITICAL: 1
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T20:52:15.7837297Z   CATCHUP_MAX_AFTER_END_MIN: 1440
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T20:52:17.2989428Z [CAL] PT_RIO resolved: date=2026-07-21 dow=2 saturday19=0 federal20=0 HARD=[09:00,11:00,14:00,16:00,18:00,21:00] SOFT=[] OFF=[19:00]
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T20:52:17.2993422Z [STATE-SYNC] backend confirmou slot=09:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T20:52:17.2995710Z [STATE-SYNC] backend confirmou slot=11:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T20:52:17.2997801Z [STATE-SYNC] backend confirmou slot=14:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T20:52:17.3000848Z [STATE-SYNC] backend confirmou slot=16:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T20:52:17.3008020Z [AUTO] N/A slot=19:00 (NAO_APLICA) -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T20:52:17.5209616Z [AUTO] N/A slot=11:00 (FEDERAL_FORA_DA_GRADE) -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T20:52:17.5211744Z [AUTO] N/A slot=19:00 (FEDERAL_FORA_DA_GRADE) -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T20:52:17.5213859Z [AUTO] N/A slot=20:00 (FEDERAL_FORA_DA_GRADE) -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T20:52:17.5382662Z LOTTERY=LOOK | PERIOD=TODAY
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T20:52:18.4506335Z [STATE-SYNC] backend confirmou slot=07:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T20:52:18.4508073Z [STATE-SYNC] backend confirmou slot=09:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T20:52:18.4510450Z [STATE-SYNC] backend confirmou slot=11:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T20:52:18.4512606Z [STATE-SYNC] backend confirmou slot=14:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T20:52:18.4515232Z [STATE-SYNC] backend confirmou slot=16:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T20:52:19.2296716Z [STATE-SYNC] backend confirmou slot=02:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T20:52:19.2298081Z [STATE-SYNC] backend confirmou slot=08:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T20:52:19.2299890Z [STATE-SYNC] backend confirmou slot=10:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T20:52:19.2301754Z [STATE-SYNC] backend confirmou slot=12:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T20:52:19.2303656Z [STATE-SYNC] backend confirmou slot=15:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T20:52:19.2306434Z [STATE-SYNC] backend confirmou slot=17:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T20:52:20.6242718Z [CAL] PT_RIO resolved: date=2026-07-20 dow=1 saturday19=0 federal20=0 HARD=[09:00,11:00,14:00,16:00,18:00,21:00] SOFT=[] OFF=[19:00]
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T20:52:20.6247003Z [STATE-SYNC] backend confirmou slot=09:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T20:52:20.6248643Z [STATE-SYNC] backend confirmou slot=11:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T20:52:20.6252027Z [STATE-SYNC] backend confirmou slot=14:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T20:52:20.6254102Z [STATE-SYNC] backend confirmou slot=16:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T20:52:20.6256863Z [STATE-SYNC] backend confirmou slot=18:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T20:52:20.6258844Z [STATE-SYNC] backend confirmou slot=21:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T20:52:20.6272223Z [AUTO] DIA COMPLETO (2026-07-20) ÔÇö slots conclu├¡dos (skip import)
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T20:52:20.8519862Z [AUTO] N/A slot=11:00 (FEDERAL_FORA_DA_GRADE) -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T20:52:20.8521763Z [AUTO] N/A slot=19:00 (FEDERAL_FORA_DA_GRADE) -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T20:52:20.8523757Z [AUTO] N/A slot=20:00 (FEDERAL_FORA_DA_GRADE) -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T20:52:20.8709793Z LOTTERY=LOOK | PERIOD=YESTERDAY:2026-07-20
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T20:52:22.0079967Z [STATE-SYNC] backend confirmou slot=07:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T20:52:22.0081265Z [STATE-SYNC] backend confirmou slot=09:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T20:52:22.0083471Z [STATE-SYNC] backend confirmou slot=11:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T20:52:22.0085362Z [STATE-SYNC] backend confirmou slot=14:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T20:52:22.0087547Z [STATE-SYNC] backend confirmou slot=16:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T20:52:22.0089230Z [STATE-SYNC] backend confirmou slot=18:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T20:52:22.0092066Z [STATE-SYNC] backend confirmou slot=21:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T20:52:22.0094073Z [STATE-SYNC] backend confirmou slot=23:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T20:52:22.0106530Z [AUTO] DIA COMPLETO (2026-07-20) ÔÇö slots conclu├¡dos (skip import)
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T20:52:22.7959077Z [STATE-SYNC] backend confirmou slot=02:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T20:52:22.7960359Z [STATE-SYNC] backend confirmou slot=08:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T20:52:22.7962332Z [STATE-SYNC] backend confirmou slot=10:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T20:52:22.7964491Z [STATE-SYNC] backend confirmou slot=12:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T20:52:22.7966723Z [STATE-SYNC] backend confirmou slot=15:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T20:52:22.7968954Z [STATE-SYNC] backend confirmou slot=17:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T20:52:22.7971507Z [STATE-SYNC] backend confirmou slot=21:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T20:52:22.7973594Z [STATE-SYNC] backend confirmou slot=23:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T20:52:22.7985848Z [AUTO] DIA COMPLETO (2026-07-20) ÔÇö slots conclu├¡dos (skip import)
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T20:47:59.5939883Z ##[group]GITHUB_TOKEN Permissions
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T20:48:08.7200235Z (node:2159) [DEP0169] DeprecationWarning: `url.parse()` behavior is not standardized and prone to errors that have security implications. Use the WHATWG URL API instead. CVEs are not issued for `url.parse()` vulnerabilities.
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T20:48:12.2549280Z 35 packages are looking for funding
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T20:48:12.2765964Z 22 vulnerabilities (1 low, 13 moderate, 5 high, 3 critical)
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T20:48:12.2962657Z ^[[36;1m  lotteries="PT_RIO FEDERAL LOOK NACIONAL"^[[0m
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T20:48:12.2968765Z ^[[36;1m    echo "::error::Falha LOTTERY=$lottery PERIOD=$period EXIT=$code"^[[0m
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T20:48:12.2970987Z ^[[36;1mdone^[[0m
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T20:48:12.2973108Z ^[[36;1mdone^[[0m
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T20:48:12.3034376Z   FAIL_ON_CRITICAL: 1
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T20:48:12.3035098Z   CATCHUP_MAX_AFTER_END_MIN: 1440
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T20:48:13.9743665Z [CAL] PT_RIO resolved: date=2026-07-21 dow=2 saturday19=0 federal20=0 HARD=[09:00,11:00,14:00,16:00,18:00,21:00] SOFT=[] OFF=[19:00]
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T20:48:13.9747176Z [STATE-SYNC] backend confirmou slot=09:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T20:48:13.9749043Z [STATE-SYNC] backend confirmou slot=11:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T20:48:13.9750726Z [STATE-SYNC] backend confirmou slot=14:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T20:48:13.9753321Z [STATE-SYNC] backend confirmou slot=16:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T20:48:13.9759125Z [AUTO] N/A slot=19:00 (NAO_APLICA) -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T20:48:14.1558927Z [AUTO] N/A slot=11:00 (FEDERAL_FORA_DA_GRADE) -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T20:48:14.1560446Z [AUTO] N/A slot=19:00 (FEDERAL_FORA_DA_GRADE) -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T20:48:14.1562318Z [AUTO] N/A slot=20:00 (FEDERAL_FORA_DA_GRADE) -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T20:48:14.1719145Z LOTTERY=LOOK | PERIOD=TODAY
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T20:48:15.2098234Z [STATE-SYNC] backend confirmou slot=07:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T20:48:15.2098905Z [STATE-SYNC] backend confirmou slot=09:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T20:48:15.2100709Z [STATE-SYNC] backend confirmou slot=11:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T20:48:15.2102282Z [STATE-SYNC] backend confirmou slot=14:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T20:48:15.2103939Z [STATE-SYNC] backend confirmou slot=16:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T20:48:15.9575964Z [STATE-SYNC] backend confirmou slot=02:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T20:48:15.9576804Z [STATE-SYNC] backend confirmou slot=08:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T20:48:15.9578458Z [STATE-SYNC] backend confirmou slot=10:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T20:48:15.9580271Z [STATE-SYNC] backend confirmou slot=12:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T20:48:15.9582291Z [STATE-SYNC] backend confirmou slot=15:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T20:48:15.9584773Z [STATE-SYNC] backend confirmou slot=17:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T20:48:17.2085110Z [CAL] PT_RIO resolved: date=2026-07-20 dow=1 saturday19=0 federal20=0 HARD=[09:00,11:00,14:00,16:00,18:00,21:00] SOFT=[] OFF=[19:00]
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T20:48:17.2088213Z [STATE-SYNC] backend confirmou slot=09:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T20:48:17.2089490Z [STATE-SYNC] backend confirmou slot=11:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T20:48:17.2091573Z [STATE-SYNC] backend confirmou slot=14:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T20:48:17.2093148Z [STATE-SYNC] backend confirmou slot=16:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T20:48:17.2094569Z [STATE-SYNC] backend confirmou slot=18:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T20:48:17.2095975Z [STATE-SYNC] backend confirmou slot=21:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T20:48:17.2106239Z [AUTO] DIA COMPLETO (2026-07-20) ÔÇö slots conclu├¡dos (skip import)
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T20:48:17.3789942Z [AUTO] N/A slot=11:00 (FEDERAL_FORA_DA_GRADE) -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T20:48:17.3791853Z [AUTO] N/A slot=19:00 (FEDERAL_FORA_DA_GRADE) -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T20:48:17.3793362Z [AUTO] N/A slot=20:00 (FEDERAL_FORA_DA_GRADE) -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T20:48:17.4137813Z LOTTERY=LOOK | PERIOD=YESTERDAY:2026-07-20
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T20:48:18.4411631Z [STATE-SYNC] backend confirmou slot=07:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T20:48:18.4412326Z [STATE-SYNC] backend confirmou slot=09:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T20:48:18.4413876Z [STATE-SYNC] backend confirmou slot=11:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T20:48:18.4415425Z [STATE-SYNC] backend confirmou slot=14:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T20:48:18.4417087Z [STATE-SYNC] backend confirmou slot=16:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T20:48:18.4418786Z [STATE-SYNC] backend confirmou slot=18:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T20:48:18.4421372Z [STATE-SYNC] backend confirmou slot=21:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T20:48:18.4422936Z [STATE-SYNC] backend confirmou slot=23:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T20:48:18.4839636Z [AUTO] DIA COMPLETO (2026-07-20) ÔÇö slots conclu├¡dos (skip import)
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T20:48:19.4664397Z [STATE-SYNC] backend confirmou slot=02:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T20:48:19.4665186Z [STATE-SYNC] backend confirmou slot=08:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T20:48:19.4666638Z [STATE-SYNC] backend confirmou slot=10:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T20:48:19.4668327Z [STATE-SYNC] backend confirmou slot=12:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T20:48:19.4669914Z [STATE-SYNC] backend confirmou slot=15:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T20:48:19.4671970Z [STATE-SYNC] backend confirmou slot=17:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T20:48:19.4674298Z [STATE-SYNC] backend confirmou slot=21:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T20:48:19.4676145Z [STATE-SYNC] backend confirmou slot=23:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T20:48:19.4687084Z [AUTO] DIA COMPLETO (2026-07-20) ÔÇö slots conclu├¡dos (skip import)
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T20:45:33.4721724Z ##[group]GITHUB_TOKEN Permissions
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T20:45:40.2242525Z (node:2246) [DEP0169] DeprecationWarning: `url.parse()` behavior is not standardized and prone to errors that have security implications. Use the WHATWG URL API instead. CVEs are not issued for `url.parse()` vulnerabilities.
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T20:45:43.4396134Z 35 packages are looking for funding
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T20:45:43.4717054Z 22 vulnerabilities (1 low, 13 moderate, 5 high, 3 critical)
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T20:45:43.4966819Z ^[[36;1m  lotteries="PT_RIO FEDERAL LOOK NACIONAL"^[[0m
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T20:45:43.4974148Z ^[[36;1m    echo "::error::Falha LOTTERY=$lottery PERIOD=$period EXIT=$code"^[[0m
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T20:45:43.4976531Z ^[[36;1mdone^[[0m
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T20:45:43.4979086Z ^[[36;1mdone^[[0m
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T20:45:43.5059047Z   FAIL_ON_CRITICAL: 1
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T20:45:43.5059943Z   CATCHUP_MAX_AFTER_END_MIN: 1440
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T20:45:45.0742114Z [CAL] PT_RIO resolved: date=2026-07-21 dow=2 saturday19=0 federal20=0 HARD=[09:00,11:00,14:00,16:00,18:00,21:00] SOFT=[] OFF=[19:00]
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T20:45:45.0745998Z [STATE-SYNC] backend confirmou slot=09:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T20:45:45.0748529Z [STATE-SYNC] backend confirmou slot=11:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T20:45:45.0750613Z [STATE-SYNC] backend confirmou slot=14:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T20:45:45.0753752Z [STATE-SYNC] backend confirmou slot=16:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T20:45:45.0761213Z [AUTO] N/A slot=19:00 (NAO_APLICA) -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T20:45:45.2998307Z [AUTO] N/A slot=11:00 (FEDERAL_FORA_DA_GRADE) -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T20:45:45.3000489Z [AUTO] N/A slot=19:00 (FEDERAL_FORA_DA_GRADE) -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T20:45:45.3002636Z [AUTO] N/A slot=20:00 (FEDERAL_FORA_DA_GRADE) -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T20:45:45.3189271Z LOTTERY=LOOK | PERIOD=TODAY
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T20:45:46.1508018Z [STATE-SYNC] backend confirmou slot=07:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T20:45:46.1509316Z [STATE-SYNC] backend confirmou slot=09:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T20:45:46.1511477Z [STATE-SYNC] backend confirmou slot=11:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T20:45:46.1513464Z [STATE-SYNC] backend confirmou slot=14:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T20:45:46.1515541Z [STATE-SYNC] backend confirmou slot=16:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T20:45:46.9492838Z [STATE-SYNC] backend confirmou slot=02:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T20:45:46.9493905Z [STATE-SYNC] backend confirmou slot=08:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T20:45:46.9496344Z [STATE-SYNC] backend confirmou slot=10:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T20:45:46.9498564Z [STATE-SYNC] backend confirmou slot=12:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T20:45:46.9500874Z [STATE-SYNC] backend confirmou slot=15:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T20:45:46.9503886Z [STATE-SYNC] backend confirmou slot=17:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T20:45:48.3146284Z [CAL] PT_RIO resolved: date=2026-07-20 dow=1 saturday19=0 federal20=0 HARD=[09:00,11:00,14:00,16:00,18:00,21:00] SOFT=[] OFF=[19:00]
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T20:45:48.3150051Z [STATE-SYNC] backend confirmou slot=09:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T20:45:48.3152288Z [STATE-SYNC] backend confirmou slot=11:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T20:45:48.3154970Z [STATE-SYNC] backend confirmou slot=14:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T20:45:48.3157206Z [STATE-SYNC] backend confirmou slot=16:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T20:45:48.3159247Z [STATE-SYNC] backend confirmou slot=18:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T20:45:48.3161514Z [STATE-SYNC] backend confirmou slot=21:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T20:45:48.3174711Z [AUTO] DIA COMPLETO (2026-07-20) ÔÇö slots conclu├¡dos (skip import)
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T20:45:48.5338386Z [AUTO] N/A slot=11:00 (FEDERAL_FORA_DA_GRADE) -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T20:45:48.5340643Z [AUTO] N/A slot=19:00 (FEDERAL_FORA_DA_GRADE) -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T20:45:48.5342760Z [AUTO] N/A slot=20:00 (FEDERAL_FORA_DA_GRADE) -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T20:45:48.5533610Z LOTTERY=LOOK | PERIOD=YESTERDAY:2026-07-20
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T20:45:49.5863779Z [STATE-SYNC] backend confirmou slot=07:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T20:45:49.5865063Z [STATE-SYNC] backend confirmou slot=09:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T20:45:49.5867265Z [STATE-SYNC] backend confirmou slot=11:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T20:45:49.5869285Z [STATE-SYNC] backend confirmou slot=14:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T20:45:49.5871570Z [STATE-SYNC] backend confirmou slot=16:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T20:45:49.5873612Z [STATE-SYNC] backend confirmou slot=18:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T20:45:49.5876453Z [STATE-SYNC] backend confirmou slot=21:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T20:45:49.5878644Z [STATE-SYNC] backend confirmou slot=23:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T20:45:49.5891930Z [AUTO] DIA COMPLETO (2026-07-20) ÔÇö slots conclu├¡dos (skip import)
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T20:45:50.6147195Z [STATE-SYNC] backend confirmou slot=02:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T20:45:50.6148252Z [STATE-SYNC] backend confirmou slot=08:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T20:45:50.6150117Z [STATE-SYNC] backend confirmou slot=10:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T20:45:50.6152482Z [STATE-SYNC] backend confirmou slot=12:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T20:45:50.6154469Z [STATE-SYNC] backend confirmou slot=15:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T20:45:50.6156649Z [STATE-SYNC] backend confirmou slot=17:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T20:45:50.6159253Z [STATE-SYNC] backend confirmou slot=21:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T20:45:50.6161656Z [STATE-SYNC] backend confirmou slot=23:00 presente -> DONE
+Reconciliar resultados	UNKNOWN STEP	2026-07-21T20:45:50.6174076Z [AUTO] DIA COMPLETO (2026-07-20) ÔÇö slots conclu├¡dos (skip import)
+Your active configuration is: [palpitacojb]
+palpitacojb-app
+ID                               SCHEDULE                     TIME_ZONE          STATE    LAST_ATTEMPT_TIME            CODE  URI
+palpitaco-daily-reconciliation   15 0 * * *                   America/Sao_Paulo  ENABLED                               -1    https://run.googleapis.com/v2/projects/palpitacojb-app/locations/southamerica-east1/jobs/palpitaco-auto-import:run
+palpitaco-pt-rio-saturday-19h    23,33 19 * * 6               America/Sao_Paulo  ENABLED                               -1    https://run.googleapis.com/v2/projects/palpitacojb-app/locations/southamerica-east1/jobs/palpitaco-auto-import:run
+palpitaco-standard-windows       32,42 2,7-12,14-18,23 * * *  America/Sao_Paulo  ENABLED  2026-07-21T22:22:00.228982Z        https://run.googleapis.com/v2/projects/palpitacojb-app/locations/southamerica-east1/jobs/palpitaco-auto-import:run
+palpitaco-federal-wednesday-20h  3,13 20 * * 3                America/Sao_Paulo  ENABLED                               -1    https://run.googleapis.com/v2/projects/palpitacojb-app/locations/southamerica-east1/jobs/palpitaco-auto-import:run
+palpitaco-federal-sunday-11h     8,18 11 * * 0                America/Sao_Paulo  ENABLED                               -1    https://run.googleapis.com/v2/projects/palpitacojb-app/locations/southamerica-east1/jobs/palpitaco-auto-import:run
+palpitaco-21h-windows            8,18 21 * * *                America/Sao_Paulo  ENABLED  2026-07-22T00:18:01.678713Z        https://run.googleapis.com/v2/projects/palpitacojb-app/locations/southamerica-east1/jobs/palpitaco-auto-import:run
+{
+  "ok": true,
+  "date": "2026-07-21",
+  "lottery": "LOOK",
+  "strict": false,
+  "includePrizes": true,
+  "limitDocs": 120,
+  "docsFound": 7,
+  "docsCapped": false,
+  "dayStatus": "",
+  "blocked": false,
+  "count": 7,
+  "draws": [
+    {
+      "id": "LOOK__2026-07-21__07-00__64d49fc1-9230-4d6a-92e5-5f2f70e5d352",
+      "date": "2026-07-21",
+      "close_hour_raw": "07:00",
+      "importedAt": {
+        "_seconds": 1784634538,
+        "_nanoseconds": 942000000
+      },
+      "drawId": "LOOK__2026-07-21__07-00__64d49fc1-9230-4d6a-92e5-5f2f70e5d352",
+      "lottery_id": "64d49fc1-9230-4d6a-92e5-5f2f70e5d352",
+      "lottery_name": "LT LOOK 07HS",
+      "source": "kingapostas",
+      "uf": "GO",
+      "ymd": "2026-07-21",
+      "close_hour": "07:00",
+      "hour": "07",
+      "prizesCount": 7,
+      "lottery_key": "LOOK",
+      "close": "07:00",
+      "prizes": [
+        {
+          "dezena": "53",
+          "milhar": "3353",
+          "centena": "353",
+          "grupo": 14,
+          "animal": "Gato",
+          "raw": "3353",
+          "position": 1
+        },
+        {
+          "dezena": "07",
+          "milhar": "0107",
+          "centena": "107",
+          "grupo": 2,
+          "animal": "Águia",
+          "raw": "0107",
+          "position": 2
+        },
+        {
+          "dezena": "13",
+          "milhar": "4813",
+          "centena": "813",
+          "grupo": 4,
+          "animal": "Borboleta",
+          "raw": "4813",
+          "position": 3
+        },
+        {
+          "dezena": "53",
+          "milhar": "9353",
+          "centena": "353",
+          "grupo": 14,
+          "animal": "Gato",
+          "raw": "9353",
+          "position": 4
+        },
+        {
+          "dezena": "10",
+          "milhar": "4810",
+          "centena": "810",
+          "grupo": 3,
+          "animal": "Burro",
+          "raw": "4810",
+          "position": 5
+        },
+        {
+          "dezena": "36",
+          "milhar": "2436",
+          "centena": "436",
+          "grupo": 9,
+          "animal": "Cobra",
+          "raw": "2436",
+          "position": 6
+        },
+        {
+          "dezena": "58",
+          "milhar": "0358",
+          "centena": "358",
+          "grupo": 15,
+          "animal": "Jacaré",
+          "raw": "358",
+          "position": 7
+        }
+      ]
+    },
+    {
+      "id": "LOOK__2026-07-21__09-00__aaede2c3-8305-460a-a580-bb7c26ecd0b6",
+      "date": "2026-07-21",
+      "close_hour_raw": "09:00",
+      "importedAt": {
+        "_seconds": 1784651213,
+        "_nanoseconds": 36000000
+      },
+      "drawId": "LOOK__2026-07-21__09-00__aaede2c3-8305-460a-a580-bb7c26ecd0b6",
+      "lottery_id": "aaede2c3-8305-460a-a580-bb7c26ecd0b6",
+      "lottery_name": "LT LOOK 09HS",
+      "source": "kingapostas",
+      "uf": "GO",
+      "ymd": "2026-07-21",
+      "close_hour": "09:00",
+      "hour": "09",
+      "prizesCount": 7,
+      "lottery_key": "LOOK",
+      "close": "09:00",
+      "prizes": [
+        {
+          "dezena": "21",
+          "milhar": "6921",
+          "centena": "921",
+          "grupo": 6,
+          "animal": "Cabra",
+          "raw": "6921",
+          "position": 1
+        },
+        {
+          "dezena": "38",
+          "milhar": "7038",
+          "centena": "038",
+          "grupo": 10,
+          "animal": "Coelho",
+          "raw": "7038",
+          "position": 2
+        },
+        {
+          "dezena": "06",
+          "milhar": "4606",
+          "centena": "606",
+          "grupo": 2,
+          "animal": "Águia",
+          "raw": "4606",
+          "position": 3
+        },
+        {
+          "dezena": "99",
+          "milhar": "3499",
+          "centena": "499",
+          "grupo": 25,
+          "animal": "Vaca",
+          "raw": "3499",
+          "position": 4
+        },
+        {
+          "dezena": "42",
+          "milhar": "7142",
+          "centena": "142",
+          "grupo": 11,
+          "animal": "Cavalo",
+          "raw": "7142",
+          "position": 5
+        },
+        {
+          "dezena": "06",
+          "milhar": "9206",
+          "centena": "206",
+          "grupo": 2,
+          "animal": "Águia",
+          "raw": "9206",
+          "position": 6
+        },
+        {
+          "dezena": "09",
+          "milhar": "0709",
+          "centena": "709",
+          "grupo": 3,
+          "animal": "Burro",
+          "raw": "709",
+          "position": 7
+        }
+      ]
+    },
+    {
+      "id": "LOOK__2026-07-21__11-00__fe478ce4-0387-4985-b35a-4656ecc40382",
+      "date": "2026-07-21",
+      "close_hour_raw": "11:00",
+      "importedAt": {
+        "_seconds": 1784649040,
+        "_nanoseconds": 283000000
+      },
+      "drawId": "LOOK__2026-07-21__11-00__fe478ce4-0387-4985-b35a-4656ecc40382",
+      "lottery_id": "fe478ce4-0387-4985-b35a-4656ecc40382",
+      "lottery_name": "LT LOOK 11HS",
+      "source": "kingapostas",
+      "uf": "GO",
+      "ymd": "2026-07-21",
+      "close_hour": "11:00",
+      "hour": "11",
+      "prizesCount": 7,
+      "lottery_key": "LOOK",
+      "close": "11:00",
+      "prizes": [
+        {
+          "dezena": "93",
+          "milhar": "3693",
+          "centena": "693",
+          "grupo": 24,
+          "animal": "Veado",
+          "raw": "3693",
+          "position": 1
+        },
+        {
+          "dezena": "82",
+          "milhar": "8382",
+          "centena": "382",
+          "grupo": 21,
+          "animal": "Touro",
+          "raw": "8382",
+          "position": 2
+        },
+        {
+          "dezena": "62",
+          "milhar": "8262",
+          "centena": "262",
+          "grupo": 16,
+          "animal": "Leão",
+          "raw": "8262",
+          "position": 3
+        },
+        {
+          "dezena": "48",
+          "milhar": "7948",
+          "centena": "948",
+          "grupo": 12,
+          "animal": "Elefante",
+          "raw": "7948",
+          "position": 4
+        },
+        {
+          "dezena": "84",
+          "milhar": "4884",
+          "centena": "884",
+          "grupo": 21,
+          "animal": "Touro",
+          "raw": "4884",
+          "position": 5
+        },
+        {
+          "dezena": "69",
+          "milhar": "3169",
+          "centena": "169",
+          "grupo": 18,
+          "animal": "Porco",
+          "raw": "3169",
+          "position": 6
+        },
+        {
+          "dezena": "54",
+          "milhar": "0954",
+          "centena": "954",
+          "grupo": 14,
+          "animal": "Gato",
+          "raw": "954",
+          "position": 7
+        }
+      ]
+    },
+    {
+      "id": "LOOK__2026-07-21__14-00__961f5fb2-0540-41a6-9542-69e4fef7e68d",
+      "date": "2026-07-21",
+      "close_hour_raw": "14:00",
+      "importedAt": {
+        "_seconds": 1784657033,
+        "_nanoseconds": 623000000
+      },
+      "drawId": "LOOK__2026-07-21__14-00__961f5fb2-0540-41a6-9542-69e4fef7e68d",
+      "lottery_id": "961f5fb2-0540-41a6-9542-69e4fef7e68d",
+      "lottery_name": "LT LOOK 14HS",
+      "source": "kingapostas",
+      "uf": "GO",
+      "ymd": "2026-07-21",
+      "close_hour": "14:00",
+      "hour": "14",
+      "prizesCount": 7,
+      "lottery_key": "LOOK",
+      "close": "14:00",
+      "prizes": [
+        {
+          "dezena": "22",
+          "milhar": "5822",
+          "centena": "822",
+          "grupo": 6,
+          "animal": "Cabra",
+          "raw": "5822",
+          "position": 1
+        },
+        {
+          "dezena": "93",
+          "milhar": "0793",
+          "centena": "793",
+          "grupo": 24,
+          "animal": "Veado",
+          "raw": "0793",
+          "position": 2
+        },
+        {
+          "dezena": "45",
+          "milhar": "8745",
+          "centena": "745",
+          "grupo": 12,
+          "animal": "Elefante",
+          "raw": "8745",
+          "position": 3
+        },
+        {
+          "dezena": "50",
+          "milhar": "3650",
+          "centena": "650",
+          "grupo": 13,
+          "animal": "Galo",
+          "raw": "3650",
+          "position": 4
+        },
+        {
+          "dezena": "46",
+          "milhar": "2046",
+          "centena": "046",
+          "grupo": 12,
+          "animal": "Elefante",
+          "raw": "2046",
+          "position": 5
+        },
+        {
+          "dezena": "56",
+          "milhar": "1056",
+          "centena": "056",
+          "grupo": 14,
+          "animal": "Gato",
+          "raw": "1056",
+          "position": 6
+        },
+        {
+          "dezena": "16",
+          "milhar": "0616",
+          "centena": "616",
+          "grupo": 4,
+          "animal": "Borboleta",
+          "raw": "616",
+          "position": 7
+        }
+      ]
+    },
+    {
+      "id": "LOOK__2026-07-21__16-00__502d50e3-4092-4730-bb81-a80462044256",
+      "date": "2026-07-21",
+      "close_hour_raw": "16:00",
+      "importedAt": {
+        "_seconds": 1784663039,
+        "_nanoseconds": 624000000
+      },
+      "drawId": "LOOK__2026-07-21__16-00__502d50e3-4092-4730-bb81-a80462044256",
+      "lottery_id": "502d50e3-4092-4730-bb81-a80462044256",
+      "lottery_name": "LT LOOK 16HS",
+      "source": "kingapostas",
+      "uf": "GO",
+      "ymd": "2026-07-21",
+      "close_hour": "16:00",
+      "hour": "16",
+      "prizesCount": 7,
+      "lottery_key": "LOOK",
+      "close": "16:00",
+      "prizes": [
+        {
+          "dezena": "68",
+          "milhar": "3768",
+          "centena": "768",
+          "grupo": 17,
+          "animal": "Macaco",
+          "raw": "3768",
+          "position": 1
+        },
+        {
+          "dezena": "83",
+          "milhar": "1283",
+          "centena": "283",
+          "grupo": 21,
+          "animal": "Touro",
+          "raw": "1283",
+          "position": 2
+        },
+        {
+          "dezena": "00",
+          "milhar": "4500",
+          "centena": "500",
+          "grupo": 25,
+          "animal": "Vaca",
+          "raw": "4500",
+          "position": 3
+        },
+        {
+          "dezena": "35",
+          "milhar": "7935",
+          "centena": "935",
+          "grupo": 9,
+          "animal": "Cobra",
+          "raw": "7935",
+          "position": 4
+        },
+        {
+          "dezena": "18",
+          "milhar": "4518",
+          "centena": "518",
+          "grupo": 5,
+          "animal": "Cachorro",
+          "raw": "4518",
+          "position": 5
+        },
+        {
+          "dezena": "04",
+          "milhar": "2004",
+          "centena": "004",
+          "grupo": 1,
+          "animal": "Avestruz",
+          "raw": "2004",
+          "position": 6
+        },
+        {
+          "dezena": "34",
+          "milhar": "0834",
+          "centena": "834",
+          "grupo": 9,
+          "animal": "Cobra",
+          "raw": "834",
+          "position": 7
+        }
+      ]
+    },
+    {
+      "id": "LOOK__2026-07-21__18-00__60c70d87-e86f-4501-8bc2-c0e71aa20e1a",
+      "date": "2026-07-21",
+      "close_hour_raw": "18:00",
+      "importedAt": {
+        "_seconds": 1784669573,
+        "_nanoseconds": 842000000
+      },
+      "drawId": "LOOK__2026-07-21__18-00__60c70d87-e86f-4501-8bc2-c0e71aa20e1a",
+      "lottery_id": "60c70d87-e86f-4501-8bc2-c0e71aa20e1a",
+      "lottery_name": "LT LOOK 18HS",
+      "source": "kingapostas",
+      "uf": "GO",
+      "ymd": "2026-07-21",
+      "close_hour": "18:00",
+      "hour": "18",
+      "prizesCount": 7,
+      "lottery_key": "LOOK",
+      "close": "18:00",
+      "prizes": [
+        {
+          "dezena": "51",
+          "milhar": "8751",
+          "centena": "751",
+          "grupo": 13,
+          "animal": "Galo",
+          "raw": "8751",
+          "position": 1
+        },
+        {
+          "dezena": "35",
+          "milhar": "3535",
+          "centena": "535",
+          "grupo": 9,
+          "animal": "Cobra",
+          "raw": "3535",
+          "position": 2
+        },
+        {
+          "dezena": "78",
+          "milhar": "2978",
+          "centena": "978",
+          "grupo": 20,
+          "animal": "Peru",
+          "raw": "2978",
+          "position": 3
+        },
+        {
+          "dezena": "52",
+          "milhar": "8352",
+          "centena": "352",
+          "grupo": 13,
+          "animal": "Galo",
+          "raw": "8352",
+          "position": 4
+        },
+        {
+          "dezena": "51",
+          "milhar": "6251",
+          "centena": "251",
+          "grupo": 13,
+          "animal": "Galo",
+          "raw": "6251",
+          "position": 5
+        },
+        {
+          "dezena": "67",
+          "milhar": "9867",
+          "centena": "867",
+          "grupo": 17,
+          "animal": "Macaco",
+          "raw": "9867",
+          "position": 6
+        },
+        {
+          "dezena": "34",
+          "milhar": "0934",
+          "centena": "934",
+          "grupo": 9,
+          "animal": "Cobra",
+          "raw": "934",
+          "position": 7
+        }
+      ]
+    },
+    {
+      "id": "LOOK__2026-07-21__21-00__09593bd0-4a14-4372-a550-e34bfd463bdd",
+      "date": "2026-07-21",
+      "close_hour_raw": "21:00",
+      "importedAt": {
+        "_seconds": 1784683366,
+        "_nanoseconds": 125000000
+      },
+      "drawId": "LOOK__2026-07-21__21-00__09593bd0-4a14-4372-a550-e34bfd463bdd",
+      "lottery_id": "09593bd0-4a14-4372-a550-e34bfd463bdd",
+      "lottery_name": "LT LOOK 21HS",
+      "source": "kingapostas",
+      "uf": "GO",
+      "ymd": "2026-07-21",
+      "close_hour": "21:00",
+      "hour": "21",
+      "prizesCount": 7,
+      "lottery_key": "LOOK",
+      "close": "21:00",
+      "prizes": [
+        {
+          "dezena": "72",
+          "milhar": "9572",
+          "centena": "572",
+          "grupo": 18,
+          "animal": "Porco",
+          "raw": "9572",
+          "position": 1
+        },
+        {
+          "dezena": "14",
+          "milhar": "9014",
+          "centena": "014",
+          "grupo": 4,
+          "animal": "Borboleta",
+          "raw": "9014",
+          "position": 2
+        },
+        {
+          "dezena": "78",
+          "milhar": "7678",
+          "centena": "678",
+          "grupo": 20,
+          "animal": "Peru",
+          "raw": "7678",
+          "position": 3
+        },
+        {
+          "dezena": "21",
+          "milhar": "9221",
+          "centena": "221",
+          "grupo": 6,
+          "animal": "Cabra",
+          "raw": "9221",
+          "position": 4
+        },
+        {
+          "dezena": "05",
+          "milhar": "4105",
+          "centena": "105",
+          "grupo": 2,
+          "animal": "Águia",
+          "raw": "4105",
+          "position": 5
+        },
+        {
+          "dezena": "90",
+          "milhar": "9590",
+          "centena": "590",
+          "grupo": 23,
+          "animal": "Urso",
+          "raw": "9590",
+          "position": 6
+        },
+        {
+          "dezena": "82",
+          "milhar": "0282",
+          "centena": "282",
+          "grupo": 21,
+          "animal": "Touro",
+          "raw": "282",
+          "position": 7
+        }
+      ]
+    }
+  ],
+  "expectedHard": [],
+  "expectedSoft": [],
+  "federal20Exists": false,
+  "ptRio18Expected": true,
+  "operationalRulesApplied": [],
+  "presentHours": [
+    "07",
+    "09",
+    "11",
+    "14",
+    "16",
+    "18",
+    "21"
+  ],
+  "slotsSummary": {
+    "mode": "none",
+    "scheduleFile": false,
+    "scheduleHard": 0,
+    "scheduleSoft": 0,
+    "scheduleAll": 0,
+    "expectedHard": 0,
+    "expectedSoft": 0,
+    "expectedTotal": 0,
+    "presentHours": 7,
+    "foundTotal": 7,
+    "removedHard": 0,
+    "removedSoft": 0,
+    "missingHard": 0,
+    "missingSoft": 0,
+    "missingTotal": 0,
+    "completionPct": 100
+  },
+  "calendarStatus": {
+    "status": "empty",
+    "expected": 0,
+    "found": 7,
+    "missing": 0,
+    "completionPct": 100
+  },
+  "slots": []
+}
+name: Auto Import — PalPitaco JB
+
+on:
+  # Automatic scheduling migrated to Google Cloud Scheduler.
+  # This workflow remains available only for manual execution.
+  workflow_dispatch:
+    inputs:
+      lottery:
+        description: "Qual loteria executar"
+        required: true
+        default: "ALL"
+        type: choice
+        options:
+          - ALL
+          - PT_RIO
+          - FEDERAL
+          - LOOK
+          - NACIONAL
+
+# Mantém somente uma execução ativa e uma pendente.
+# Cada execução reconcilia todas as loterias e recupera slots anteriores.
+concurrency:
+  group: auto-import-heartbeat-${{ github.ref }}
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+env:
+  TZ: America/Sao_Paulo
+  PITACO_API_BASE: ${{ vars.PITACO_API_BASE }}
+
+jobs:
+  reconcile-results:
+    name: Reconciliar resultados
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    defaults:
+      run:
+        working-directory: backend
+
+    steps:
+      - name: Checkout do repositório
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+          cache-dependency-path: backend/package-lock.json
+
+      - name: Instalar dependências
+        run: npm ci
+
+      - name: Importar hoje e reconciliar ontem
+        shell: bash
+        env:
+          FIREBASE_ADMIN_SA_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_JSON }}
+          FAIL_ON_CRITICAL: "1"
+          AUDIT_WARN_MIN: "20"
+          AUDIT_CRIT_MIN: "60"
+          CATCHUP_MAX_AFTER_END_MIN: "1440"
+        run: |
+          set +e
+
+          requested="${{ inputs.lottery }}"
+
+          if [[ "${{ github.event_name }}" == "workflow_dispatch" && "$requested" != "ALL" ]]; then
+            lotteries="$requested"
+          else
+            lotteries="PT_RIO FEDERAL LOOK NACIONAL"
+          fi
+
+          yesterday="$(TZ=America/Sao_Paulo date -d 'yesterday' +%F)"
+          overall=0
+
+          run_import() {
+            local lottery="$1"
+            local period="$2"
+            shift 2
+
+            echo ""
+            echo "=================================================="
+            echo "LOTTERY=$lottery | PERIOD=$period"
+            echo "=================================================="
+
+            env LOTTERY="$lottery" "$@" node scripts/autoImportToday.js
+            local code=$?
+
+            if [[ $code -ne 0 ]]; then
+              echo "::error::Falha LOTTERY=$lottery PERIOD=$period EXIT=$code"
+              overall=1
+            fi
+          }
+
+          for lottery in $lotteries; do
+            run_import "$lottery" "TODAY"
+          done
+
+          for lottery in $lotteries; do
+            run_import \
+              "$lottery" \
+              "YESTERDAY:$yesterday" \
+              DATE="$yesterday" \
+              NOW_HM="23:59"
+          done
+
+          exit $overall
+"use strict";
+
+const path = require("node:path");
+const { spawnSync } = require("node:child_process");
+
+const TIME_ZONE = "America/Sao_Paulo";
+const LOTTERIES = [
+  "PT_RIO",
+  "FEDERAL",
+  "LOOK",
+  "NACIONAL",
+];
+
+function saoPauloParts(date = new Date()) {
+  const formatter = new Intl.DateTimeFormat("en-CA", {
+    timeZone: TIME_ZONE,
+    year: "numeric",
+    month: "2-digit",
+    day: "2-digit",
+    hour: "2-digit",
+    minute: "2-digit",
+    hourCycle: "h23",
+  });
+
+  return Object.fromEntries(
+    formatter
+      .formatToParts(date)
+      .filter((part) => part.type !== "literal")
+      .map((part) => [part.type, part.value])
+  );
+}
+
+function ymdFromParts(parts) {
+  return `${parts.year}-${parts.month}-${parts.day}`;
+}
+
+function previousYmd(ymd) {
+  const match = String(ymd).match(
+    /^(\d{4})-(\d{2})-(\d{2})$/
+  );
+
+  if (!match) {
+    throw new Error(`Data invalida: ${ymd}`);
+  }
+
+  const date = new Date(
+    Date.UTC(
+      Number(match[1]),
+      Number(match[2]) - 1,
+      Number(match[3])
+    )
+  );
+
+  date.setUTCDate(date.getUTCDate() - 1);
+
+  return date.toISOString().slice(0, 10);
+}
+
+function buildPlan() {
+  const parts = saoPauloParts();
+  const today = ymdFromParts(parts);
+  const hour = Number(parts.hour);
+
+  const forcedPeriod = String(
+    process.env.HEARTBEAT_PERIOD || ""
+  )
+    .trim()
+    .toUpperCase();
+
+  const reconcileYesterday =
+    forcedPeriod === "YESTERDAY" ||
+    (
+      forcedPeriod !== "TODAY" &&
+      (hour === 0 || hour === 1)
+    );
+
+  if (reconcileYesterday) {
+    return {
+      period: "YESTERDAY",
+      date: previousYmd(today),
+      nowHm: "23:59",
+      localTime: `${parts.hour}:${parts.minute}`,
+    };
+  }
+
+  return {
+    period: "TODAY",
+    date: today,
+    nowHm: null,
+    localTime: `${parts.hour}:${parts.minute}`,
+  };
+}
+
+function run() {
+  const plan = buildPlan();
+  const dryRun =
+    String(process.env.HEARTBEAT_DRY_RUN || "")
+      .trim() === "1";
+
+  console.log(
+    `[HEARTBEAT] START local=${plan.localTime} ` +
+      `date=${plan.date} period=${plan.period}`
+  );
+
+  let failed = false;
+
+  for (const lottery of LOTTERIES) {
+    console.log("");
+    console.log(
+      `LOTTERY=${lottery} | PERIOD=${plan.period} | ` +
+        `DATE=${plan.date}`
+    );
+
+    if (dryRun) {
+      console.log(
+        `[HEARTBEAT] DRY_RUN LOTTERY=${lottery}`
+      );
+      continue;
+    }
+
+    const childEnv = {
+      ...process.env,
+      LOTTERY: lottery,
+    };
+
+    delete childEnv.HEARTBEAT_DRY_RUN;
+    delete childEnv.HEARTBEAT_PERIOD;
+
+    if (plan.period === "YESTERDAY") {
+      childEnv.DATE = plan.date;
+      childEnv.NOW_HM = plan.nowHm;
+    }
+    else {
+      delete childEnv.DATE;
+      delete childEnv.NOW_HM;
+    }
+
+    const child = spawnSync(
+      process.execPath,
+      [
+        path.join(
+          __dirname,
+          "autoImportToday.js"
+        ),
+      ],
+      {
+        cwd: path.resolve(__dirname, ".."),
+        env: childEnv,
+        stdio: "inherit",
+      }
+    );
+
+    const exitCode =
+      Number.isInteger(child.status)
+        ? child.status
+        : 1;
+
+    if (child.error) {
+      console.error(
+        `[HEARTBEAT] ERROR LOTTERY=${lottery}: ` +
+          `${child.error.message}`
+      );
+    }
+
+    if (exitCode !== 0) {
+      console.error(
+        `[HEARTBEAT] FAILED LOTTERY=${lottery} ` +
+          `EXIT=${exitCode}`
+      );
+      failed = true;
+    }
+    else {
+      console.log(
+        `[HEARTBEAT] OK LOTTERY=${lottery}`
+      );
+    }
+  }
+
+  if (failed) {
+    console.error(
+      "[HEARTBEAT] FINAL=FAILED"
+    );
+    process.exitCode = 1;
+    return;
+  }
+
+  console.log(
+    "[HEARTBEAT] FINAL=SUCCESS"
+  );
+}
+
+try {
+  run();
+}
+catch (error) {
+  console.error(
+    "[HEARTBEAT] FATAL:",
+    error?.stack ||
+      error?.message ||
+      error
+  );
+
+  process.exitCode = 1;
+}
+

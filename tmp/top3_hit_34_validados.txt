@@ -1,0 +1,1056 @@
+
+============================================================
+COLLECTION: top3_predictions
+TOTAL DA COLE├ç├âO: 151
+DOCUMENTOS VALIDADOS/COM RESULTADO: 151
+============================================================
+
+ID: NACIONAL__2026-07-26__15
+{
+  "lotteryKey": "NACIONAL",
+  "targetYmd": "2026-07-26",
+  "targetHour": "15h",
+  "status": "predicted",
+  "picks": [
+    5,
+    16,
+    22
+  ],
+  "resultGrupo": null,
+  "resultMilhar": "",
+  "resultAnimal": "",
+  "hitType": "",
+  "hitScore": 0,
+  "hitPosition": -1,
+  "matchedValue": "",
+  "updatedAt": 1785082154309
+}
+
+ID: FEDERAL__2026-07-29__20
+{
+  "lotteryKey": "FEDERAL",
+  "targetYmd": "2026-07-29",
+  "targetHour": "20h",
+  "status": "predicted",
+  "picks": [
+    24,
+    10,
+    11
+  ],
+  "resultGrupo": null,
+  "resultMilhar": "",
+  "resultAnimal": "",
+  "hitType": "",
+  "hitScore": 0,
+  "hitPosition": -1,
+  "matchedValue": "",
+  "updatedAt": 1785081945221
+}
+
+ID: NACIONAL__2026-07-26__12
+{
+  "lotteryKey": "NACIONAL",
+  "targetYmd": "2026-07-26",
+  "targetHour": "12h",
+  "status": "predicted",
+  "picks": [
+    17,
+    12,
+    16
+  ],
+  "resultGrupo": null,
+  "resultMilhar": "",
+  "resultAnimal": "",
+  "hitType": "",
+  "hitScore": 0,
+  "hitPosition": -1,
+  "matchedValue": "",
+  "updatedAt": 1785074501418
+}
+
+ID: FEDERAL__2026-07-26__14
+{
+  "lotteryKey": "FEDERAL",
+  "targetYmd": "2026-07-26",
+  "targetHour": "14h",
+  "status": "predicted",
+  "picks": [
+    24,
+    10,
+    11
+  ],
+  "resultGrupo": null,
+  "resultMilhar": "",
+  "resultAnimal": "",
+  "hitType": "",
+  "hitScore": 0,
+  "hitPosition": -1,
+  "matchedValue": "",
+  "updatedAt": 1785074488900
+}
+
+ID: NACIONAL__2026-07-26__10
+{
+  "lotteryKey": "NACIONAL",
+  "targetYmd": "2026-07-26",
+  "targetHour": "10h",
+  "status": "predicted",
+  "picks": [
+    17,
+    12,
+    16
+  ],
+  "resultGrupo": null,
+  "resultMilhar": "",
+  "resultAnimal": "",
+  "hitType": "",
+  "hitScore": 0,
+  "hitPosition": -1,
+  "matchedValue": "",
+  "updatedAt": 1785069265452
+}
+
+ID: NACIONAL__2026-07-26__11
+{
+  "lotteryKey": "NACIONAL",
+  "targetYmd": "2026-07-26",
+  "targetHour": "11h",
+  "status": "predicted",
+  "picks": [
+    17,
+    12,
+    16
+  ],
+  "resultGrupo": null,
+  "resultMilhar": "",
+  "resultAnimal": "",
+  "hitType": "",
+  "hitScore": 0,
+  "hitPosition": -1,
+  "matchedValue": "",
+  "updatedAt": 1785069264152
+}
+
+ID: NACIONAL__2026-07-26__08
+{
+  "lotteryKey": "NACIONAL",
+  "targetYmd": "2026-07-26",
+  "targetHour": "08h",
+  "status": "predicted",
+  "picks": [
+    19,
+    10,
+    2
+  ],
+  "resultGrupo": null,
+  "resultMilhar": "",
+  "resultAnimal": "",
+  "hitType": "",
+  "hitScore": 0,
+  "hitPosition": -1,
+  "matchedValue": "",
+  "updatedAt": 1785043147246
+}
+
+ID: NACIONAL__2026-07-26__14
+{
+  "lotteryKey": "NACIONAL",
+  "targetYmd": "2026-07-26",
+  "targetHour": "14h",
+  "status": "predicted",
+  "picks": [
+    24,
+    10,
+    11
+  ],
+  "resultGrupo": null,
+  "resultMilhar": "",
+  "resultAnimal": "",
+  "hitType": "",
+  "hitScore": 0,
+  "hitPosition": -1,
+  "matchedValue": "",
+  "updatedAt": 1785041342593
+}
+
+ID: LOOK__2026-07-26__07
+{
+  "lotteryKey": "LOOK",
+  "targetYmd": "2026-07-26",
+  "targetHour": "07h",
+  "status": "predicted",
+  "picks": [
+    9,
+    13,
+    22
+  ],
+  "resultGrupo": null,
+  "resultMilhar": "",
+  "resultAnimal": "",
+  "hitType": "",
+  "hitScore": 0,
+  "hitPosition": -1,
+  "matchedValue": "",
+  "updatedAt": 1785036218697
+}
+
+ID: PT_RIO__2026-07-26__11
+{
+  "lotteryKey": "PT_RIO",
+  "targetYmd": "2026-07-26",
+  "targetHour": "11h",
+  "status": "predicted",
+  "picks": [
+    17,
+    12,
+    16
+  ],
+  "resultGrupo": null,
+  "resultMilhar": "",
+  "resultAnimal": "",
+  "hitType": "",
+  "hitScore": 0,
+  "hitPosition": -1,
+  "matchedValue": "",
+  "updatedAt": 1785036037283
+}
+
+ID: NACIONAL__2026-07-26__02
+{
+  "lotteryKey": "NACIONAL",
+  "targetYmd": "2026-07-26",
+  "targetHour": "02h",
+  "status": "predicted",
+  "picks": [
+    23,
+    14,
+    20
+  ],
+  "resultGrupo": null,
+  "resultMilhar": "",
+  "resultAnimal": "",
+  "hitType": "",
+  "hitScore": 0,
+  "hitPosition": -1,
+  "matchedValue": "",
+  "updatedAt": 1785032302698
+}
+
+ID: LOOK__2026-07-26__14
+{
+  "lotteryKey": "LOOK",
+  "targetYmd": "2026-07-26",
+  "targetHour": "14h",
+  "status": "predicted",
+  "picks": [
+    24,
+    10,
+    11
+  ],
+  "resultGrupo": null,
+  "resultMilhar": "",
+  "resultAnimal": "",
+  "hitType": "",
+  "hitScore": 0,
+  "hitPosition": -1,
+  "matchedValue": "",
+  "updatedAt": 1785028442780
+}
+
+ID: PT_RIO__2026-07-26__14
+{
+  "lotteryKey": "PT_RIO",
+  "targetYmd": "2026-07-26",
+  "targetHour": "14h",
+  "status": "predicted",
+  "picks": [
+    24,
+    10,
+    11
+  ],
+  "resultGrupo": null,
+  "resultMilhar": "",
+  "resultAnimal": "",
+  "hitType": "",
+  "hitScore": 0,
+  "hitPosition": -1,
+  "matchedValue": "",
+  "updatedAt": 1785027097994
+}
+
+ID: LOOK__2026-07-25__23
+{
+  "lotteryKey": "LOOK",
+  "targetYmd": "2026-07-25",
+  "targetHour": "23h",
+  "status": "predicted",
+  "picks": [
+    10,
+    13,
+    20
+  ],
+  "resultGrupo": null,
+  "resultMilhar": "",
+  "resultAnimal": "",
+  "hitType": "",
+  "hitScore": 0,
+  "hitPosition": -1,
+  "matchedValue": "",
+  "updatedAt": 1785026884684
+}
+
+ID: PT_RIO__2026-07-25__23
+{
+  "lotteryKey": "PT_RIO",
+  "targetYmd": "2026-07-25",
+  "targetHour": "23h",
+  "status": "predicted",
+  "picks": [
+    22,
+    3,
+    20
+  ],
+  "resultGrupo": null,
+  "resultMilhar": "",
+  "resultAnimal": "",
+  "hitType": "",
+  "hitScore": 0,
+  "hitPosition": -1,
+  "matchedValue": "",
+  "updatedAt": 1785025893600
+}
+
+ID: NACIONAL__2026-07-25__23
+{
+  "lotteryKey": "NACIONAL",
+  "targetYmd": "2026-07-25",
+  "targetHour": "23h",
+  "status": "predicted",
+  "picks": [
+    18,
+    2,
+    8
+  ],
+  "resultGrupo": null,
+  "resultMilhar": "",
+  "resultAnimal": "",
+  "hitType": "",
+  "hitScore": 0,
+  "hitPosition": -1,
+  "matchedValue": "",
+  "updatedAt": 1785025505661
+}
+
+ID: LOOK__2026-07-25__21
+{
+  "lotteryKey": "LOOK",
+  "targetYmd": "2026-07-25",
+  "targetHour": "21h",
+  "status": "predicted",
+  "picks": [
+    20,
+    15,
+    6
+  ],
+  "resultGrupo": null,
+  "resultMilhar": "",
+  "resultAnimal": "",
+  "hitType": "",
+  "hitScore": 0,
+  "hitPosition": -1,
+  "matchedValue": "",
+  "updatedAt": 1785018639895
+}
+
+ID: PT_RIO__2026-07-25__21
+{
+  "lotteryKey": "PT_RIO",
+  "targetYmd": "2026-07-25",
+  "targetHour": "21h",
+  "status": "predicted",
+  "picks": [
+    20,
+    3,
+    15
+  ],
+  "resultGrupo": null,
+  "resultMilhar": "",
+  "resultAnimal": "",
+  "hitType": "",
+  "hitScore": 0,
+  "hitPosition": -1,
+  "matchedValue": "",
+  "updatedAt": 1785017634452
+}
+
+ID: NACIONAL__2026-07-25__19
+{
+  "lotteryKey": "NACIONAL",
+  "targetYmd": "2026-07-25",
+  "targetHour": "19h",
+  "status": "predicted",
+  "picks": [
+    15,
+    6,
+    17
+  ],
+  "resultGrupo": null,
+  "resultMilhar": "",
+  "resultAnimal": "",
+  "hitType": "",
+  "hitScore": 0,
+  "hitPosition": -1,
+  "matchedValue": "",
+  "updatedAt": 1785016084935
+}
+
+ID: PT_RIO__2026-07-25__19
+{
+  "lotteryKey": "PT_RIO",
+  "targetYmd": "2026-07-25",
+  "targetHour": "19h",
+  "status": "predicted",
+  "picks": [
+    20,
+    12,
+    23
+  ],
+  "resultGrupo": null,
+  "resultMilhar": "",
+  "resultAnimal": "",
+  "hitType": "",
+  "hitScore": 0,
+  "hitPosition": -1,
+  "matchedValue": "",
+  "updatedAt": 1785015442610
+}
+
+ID: NACIONAL__2026-07-25__21
+{
+  "lotteryKey": "NACIONAL",
+  "targetYmd": "2026-07-25",
+  "targetHour": "21h",
+  "status": "predicted",
+  "picks": [
+    6,
+    15,
+    20
+  ],
+  "resultGrupo": null,
+  "resultMilhar": "",
+  "resultAnimal": "",
+  "hitType": "",
+  "hitScore": 0,
+  "hitPosition": -1,
+  "matchedValue": "",
+  "updatedAt": 1785010725180
+}
+
+ID: PT_RIO__2026-07-25__15
+{
+  "lotteryKey": "PT_RIO",
+  "targetYmd": "2026-07-25",
+  "targetHour": "15h",
+  "status": "predicted",
+  "picks": [
+    22,
+    20,
+    3
+  ],
+  "resultGrupo": null,
+  "resultMilhar": "",
+  "resultAnimal": "",
+  "hitType": "",
+  "hitScore": 0,
+  "hitPosition": -1,
+  "matchedValue": "",
+  "updatedAt": 1784999182241
+}
+
+ID: LOOK__2026-07-25__15
+{
+  "lotteryKey": "LOOK",
+  "targetYmd": "2026-07-25",
+  "targetHour": "15h",
+  "status": "predicted",
+  "picks": [
+    22,
+    20,
+    24
+  ],
+  "resultGrupo": null,
+  "resultMilhar": "",
+  "resultAnimal": "",
+  "hitType": "",
+  "hitScore": 0,
+  "hitPosition": -1,
+  "matchedValue": "",
+  "updatedAt": 1784999088602
+}
+
+ID: LOOK__2026-07-25__14
+{
+  "lotteryKey": "LOOK",
+  "targetYmd": "2026-07-25",
+  "targetHour": "14h",
+  "status": "predicted",
+  "picks": [
+    12,
+    24,
+    19
+  ],
+  "resultGrupo": null,
+  "resultMilhar": "",
+  "resultAnimal": "",
+  "hitType": "",
+  "hitScore": 0,
+  "hitPosition": -1,
+  "matchedValue": "",
+  "updatedAt": 1784996285984
+}
+
+ID: NACIONAL__2026-07-25__15
+{
+  "lotteryKey": "NACIONAL",
+  "targetYmd": "2026-07-25",
+  "targetHour": "15h",
+  "status": "predicted",
+  "picks": [
+    22,
+    5,
+    2
+  ],
+  "resultGrupo": null,
+  "resultMilhar": "",
+  "resultAnimal": "",
+  "hitType": "",
+  "hitScore": 0,
+  "hitPosition": -1,
+  "matchedValue": "",
+  "updatedAt": 1784995066583
+}
+
+ID: NACIONAL__2026-07-25__14
+{
+  "lotteryKey": "NACIONAL",
+  "targetYmd": "2026-07-25",
+  "targetHour": "14h",
+  "status": "predicted",
+  "picks": [
+    15,
+    6,
+    17
+  ],
+  "resultGrupo": null,
+  "resultMilhar": "",
+  "resultAnimal": "",
+  "hitType": "",
+  "hitScore": 0,
+  "hitPosition": -1,
+  "matchedValue": "",
+  "updatedAt": 1784990727513
+}
+
+ID: PT_RIO__2026-07-25__14
+{
+  "lotteryKey": "PT_RIO",
+  "targetYmd": "2026-07-25",
+  "targetHour": "14h",
+  "status": "predicted",
+  "picks": [
+    12,
+    24,
+    19
+  ],
+  "resultGrupo": null,
+  "resultMilhar": "",
+  "resultAnimal": "",
+  "hitType": "",
+  "hitScore": 0,
+  "hitPosition": -1,
+  "matchedValue": "",
+  "updatedAt": 1784990665236
+}
+
+ID: PT_RIO__2026-07-25__12
+{
+  "lotteryKey": "PT_RIO",
+  "targetYmd": "2026-07-25",
+  "targetHour": "12h",
+  "status": "predicted",
+  "picks": [
+    22,
+    20,
+    3
+  ],
+  "resultGrupo": null,
+  "resultMilhar": "",
+  "resultAnimal": "",
+  "hitType": "",
+  "hitScore": 0,
+  "hitPosition": -1,
+  "matchedValue": "",
+  "updatedAt": 1784985525257
+}
+
+ID: NACIONAL__2026-07-25__12
+{
+  "lotteryKey": "NACIONAL",
+  "targetYmd": "2026-07-25",
+  "targetHour": "12h",
+  "status": "predicted",
+  "picks": [
+    20,
+    18,
+    24
+  ],
+  "resultGrupo": null,
+  "resultMilhar": "",
+  "resultAnimal": "",
+  "hitType": "",
+  "hitScore": 0,
+  "hitPosition": -1,
+  "matchedValue": "",
+  "updatedAt": 1784984993193
+}
+
+ID: PT_RIO__2026-07-25__11
+{
+  "lotteryKey": "PT_RIO",
+  "targetYmd": "2026-07-25",
+  "targetHour": "11h",
+  "status": "predicted",
+  "picks": [
+    5,
+    11,
+    15
+  ],
+  "resultGrupo": null,
+  "resultMilhar": "",
+  "resultAnimal": "",
+  "hitType": "",
+  "hitScore": 0,
+  "hitPosition": -1,
+  "matchedValue": "",
+  "updatedAt": 1784983047634
+}
+
+ID: NACIONAL__2026-07-25__11
+{
+  "lotteryKey": "NACIONAL",
+  "targetYmd": "2026-07-25",
+  "targetHour": "11h",
+  "status": "predicted",
+  "picks": [
+    16,
+    6,
+    15
+  ],
+  "resultGrupo": null,
+  "resultMilhar": "",
+  "resultAnimal": "",
+  "hitType": "",
+  "hitScore": 0,
+  "hitPosition": -1,
+  "matchedValue": "",
+  "updatedAt": 1784983007746
+}
+
+ID: LOOK__2026-07-25__11
+{
+  "lotteryKey": "LOOK",
+  "targetYmd": "2026-07-25",
+  "targetHour": "11h",
+  "status": "predicted",
+  "picks": [
+    3,
+    16,
+    25
+  ],
+  "resultGrupo": null,
+  "resultMilhar": "",
+  "resultAnimal": "",
+  "hitType": "",
+  "hitScore": 0,
+  "hitPosition": -1,
+  "matchedValue": "",
+  "updatedAt": 1784982980190
+}
+
+ID: PT_RIO__2026-07-25__10
+{
+  "lotteryKey": "PT_RIO",
+  "targetYmd": "2026-07-25",
+  "targetHour": "10h",
+  "status": "predicted",
+  "picks": [
+    22,
+    20,
+    3
+  ],
+  "resultGrupo": null,
+  "resultMilhar": "",
+  "resultAnimal": "",
+  "hitType": "",
+  "hitScore": 0,
+  "hitPosition": -1,
+  "matchedValue": "",
+  "updatedAt": 1784981421081
+}
+
+ID: NACIONAL__2026-07-25__10
+{
+  "lotteryKey": "NACIONAL",
+  "targetYmd": "2026-07-25",
+  "targetHour": "10h",
+  "status": "predicted",
+  "picks": [
+    22,
+    14,
+    16
+  ],
+  "resultGrupo": null,
+  "resultMilhar": "",
+  "resultAnimal": "",
+  "hitType": "",
+  "hitScore": 0,
+  "hitPosition": -1,
+  "matchedValue": "",
+  "updatedAt": 1784981126266
+}
+
+ID: LOOK__2026-07-26__11
+{
+  "lotteryKey": "LOOK",
+  "targetYmd": "2026-07-26",
+  "targetHour": "11h",
+  "status": "predicted",
+  "picks": [
+    17,
+    4,
+    11
+  ],
+  "resultGrupo": null,
+  "resultMilhar": "",
+  "resultAnimal": "",
+  "hitType": "",
+  "hitScore": 0,
+  "hitPosition": -1,
+  "matchedValue": "",
+  "updatedAt": 1784980758655
+}
+
+ID: LOOK__2026-07-25__09
+{
+  "lotteryKey": "LOOK",
+  "targetYmd": "2026-07-25",
+  "targetHour": "09h",
+  "status": "predicted",
+  "picks": [
+    23,
+    12,
+    19
+  ],
+  "resultGrupo": null,
+  "resultMilhar": "",
+  "resultAnimal": "",
+  "hitType": "",
+  "hitScore": 0,
+  "hitPosition": -1,
+  "matchedValue": "",
+  "updatedAt": 1784980625094
+}
+
+ID: NACIONAL__2026-07-25__08
+{
+  "lotteryKey": "NACIONAL",
+  "targetYmd": "2026-07-25",
+  "targetHour": "08h",
+  "status": "predicted",
+  "picks": [
+    18,
+    12,
+    14
+  ],
+  "resultGrupo": null,
+  "resultMilhar": "",
+  "resultAnimal": "",
+  "hitType": "",
+  "hitScore": 0,
+  "hitPosition": -1,
+  "matchedValue": "",
+  "updatedAt": 1784973471786
+}
+
+ID: NACIONAL__2026-07-25__09
+{
+  "lotteryKey": "NACIONAL",
+  "targetYmd": "2026-07-25",
+  "targetHour": "09h",
+  "status": "predicted",
+  "picks": [
+    6,
+    15,
+    7
+  ],
+  "resultGrupo": null,
+  "resultMilhar": "",
+  "resultAnimal": "",
+  "hitType": "",
+  "hitScore": 0,
+  "hitPosition": -1,
+  "matchedValue": "",
+  "updatedAt": 1784973364499
+}
+
+ID: NACIONAL__2026-07-25__07
+{
+  "lotteryKey": "NACIONAL",
+  "targetYmd": "2026-07-25",
+  "targetHour": "07h",
+  "status": "predicted",
+  "picks": [
+    16,
+    6,
+    15
+  ],
+  "resultGrupo": null,
+  "resultMilhar": "",
+  "resultAnimal": "",
+  "hitType": "",
+  "hitScore": 0,
+  "hitPosition": -1,
+  "matchedValue": "",
+  "updatedAt": 1784973300379
+}
+
+ID: LOOK__2026-07-25__07
+{
+  "lotteryKey": "LOOK",
+  "targetYmd": "2026-07-25",
+  "targetHour": "07h",
+  "status": "predicted",
+  "picks": [
+    9,
+    14,
+    13
+  ],
+  "resultGrupo": null,
+  "resultMilhar": "",
+  "resultAnimal": "",
+  "hitType": "",
+  "hitScore": 0,
+  "hitPosition": -1,
+  "matchedValue": "",
+  "updatedAt": 1784973140016
+}
+
+ID: PT_RIO__2026-07-25__09
+{
+  "lotteryKey": "PT_RIO",
+  "targetYmd": "2026-07-25",
+  "targetHour": "09h",
+  "status": "predicted",
+  "picks": [
+    12,
+    5,
+    23
+  ],
+  "resultGrupo": null,
+  "resultMilhar": "",
+  "resultAnimal": "",
+  "hitType": "",
+  "hitScore": 0,
+  "hitPosition": -1,
+  "matchedValue": "",
+  "updatedAt": 1784941035990
+}
+
+ID: LOOK__2026-07-24__21
+{
+  "lotteryKey": "LOOK",
+  "targetYmd": "2026-07-24",
+  "targetHour": "21h",
+  "status": "predicted",
+  "picks": [
+    3,
+    16,
+    5
+  ],
+  "resultGrupo": null,
+  "resultMilhar": "",
+  "resultAnimal": "",
+  "hitType": "",
+  "hitScore": 0,
+  "hitPosition": -1,
+  "matchedValue": "",
+  "updatedAt": 1784930173610
+}
+
+ID: PT_RIO__2026-07-24__21
+{
+  "lotteryKey": "PT_RIO",
+  "targetYmd": "2026-07-24",
+  "targetHour": "21h",
+  "status": "predicted",
+  "picks": [
+    3,
+    16,
+    5
+  ],
+  "resultGrupo": null,
+  "resultMilhar": "",
+  "resultAnimal": "",
+  "hitType": "",
+  "hitScore": 0,
+  "hitPosition": -1,
+  "matchedValue": "",
+  "updatedAt": 1784929039665
+}
+
+ID: LOOK__2026-07-24__18
+{
+  "lotteryKey": "LOOK",
+  "targetYmd": "2026-07-24",
+  "targetHour": "18h",
+  "status": "predicted",
+  "picks": [
+    15,
+    7,
+    6
+  ],
+  "resultGrupo": null,
+  "resultMilhar": "",
+  "resultAnimal": "",
+  "hitType": "",
+  "hitScore": 0,
+  "hitPosition": -1,
+  "matchedValue": "",
+  "updatedAt": 1784926545666
+}
+
+ID: NACIONAL__2026-07-24__21
+{
+  "lotteryKey": "NACIONAL",
+  "targetYmd": "2026-07-24",
+  "targetHour": "21h",
+  "status": "predicted",
+  "picks": [
+    15,
+    20,
+    6
+  ],
+  "resultGrupo": null,
+  "resultMilhar": "",
+  "resultAnimal": "",
+  "hitType": "",
+  "hitScore": 0,
+  "hitPosition": -1,
+  "matchedValue": "",
+  "updatedAt": 1784923748257
+}
+
+ID: PT_RIO__2026-07-24__18
+{
+  "lotteryKey": "PT_RIO",
+  "targetYmd": "2026-07-24",
+  "targetHour": "18h",
+  "status": "predicted",
+  "picks": [
+    15,
+    7,
+    6
+  ],
+  "resultGrupo": null,
+  "resultMilhar": "",
+  "resultAnimal": "",
+  "hitType": "",
+  "hitScore": 0,
+  "hitPosition": -1,
+  "matchedValue": "",
+  "updatedAt": 1784922137168
+}
+
+ID: NACIONAL__2026-07-24__17
+{
+  "lotteryKey": "NACIONAL",
+  "targetYmd": "2026-07-24",
+  "targetHour": "17h",
+  "status": "predicted",
+  "picks": [
+    10,
+    14,
+    16
+  ],
+  "resultGrupo": null,
+  "resultMilhar": "",
+  "resultAnimal": "",
+  "hitType": "",
+  "hitScore": 0,
+  "hitPosition": -1,
+  "matchedValue": "",
+  "updatedAt": 1784916536333
+}
+
+ID: LOOK__2026-07-24__15
+{
+  "lotteryKey": "LOOK",
+  "targetYmd": "2026-07-24",
+  "targetHour": "15h",
+  "status": "predicted",
+  "picks": [
+    1,
+    15,
+    14
+  ],
+  "resultGrupo": null,
+  "resultMilhar": "",
+  "resultAnimal": "",
+  "hitType": "",
+  "hitScore": 0,
+  "hitPosition": -1,
+  "matchedValue": "",
+  "updatedAt": 1784915371252
+}
+
+ID: NACIONAL__2026-07-24__16
+{
+  "lotteryKey": "NACIONAL",
+  "targetYmd": "2026-07-24",
+  "targetHour": "16h",
+  "status": "predicted",
+  "picks": [
+    12,
+    23,
+    24
+  ],
+  "resultGrupo": null,
+  "resultMilhar": "",
+  "resultAnimal": "",
+  "hitType": "",
+  "hitScore": 0,
+  "hitPosition": -1,
+  "matchedValue": "",
+  "updatedAt": 1784914939997
+}
+
+ID: PT_RIO__2026-07-24__16
+{
+  "lotteryKey": "PT_RIO",
+  "targetYmd": "2026-07-24",
+  "targetHour": "16h",
+  "status": "predicted",
+  "picks": [
+    5,
+    12,
+    2
+  ],
+  "resultGrupo": null,
+  "resultMilhar": "",
+  "resultAnimal": "",
+  "hitType": "",
+  "hitScore": 0,
+  "hitPosition": -1,
+  "matchedValue": "",
+  "updatedAt": 1784914637891
+}

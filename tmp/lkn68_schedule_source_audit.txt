@@ -1,0 +1,3841 @@
+================================================================================
+backend\engine\top3PredictionService.js
+Encontrados: schedule, 09:00, 11:00, 14:00, 16:00, 18:00, 20:00, 21:00
+
+0023: } = require("../service/firebaseAdmin");
+0024: 
+0025: const PT_RIO_SCHEDULE_NORMAL = [
+0026:   "09:00",
+0027:   "11:00",
+0028:   "14:00",
+0029:   "16:00",
+
+0024: 
+0025: const PT_RIO_SCHEDULE_NORMAL = [
+0026:   "09:00",
+0027:   "11:00",
+0028:   "14:00",
+0029:   "16:00",
+0030:   "18:00",
+
+0025: const PT_RIO_SCHEDULE_NORMAL = [
+0026:   "09:00",
+0027:   "11:00",
+0028:   "14:00",
+0029:   "16:00",
+0030:   "18:00",
+0031:   "21:00",
+
+0026:   "09:00",
+0027:   "11:00",
+0028:   "14:00",
+0029:   "16:00",
+0030:   "18:00",
+0031:   "21:00",
+0032: ];
+
+0027:   "11:00",
+0028:   "14:00",
+0029:   "16:00",
+0030:   "18:00",
+0031:   "21:00",
+0032: ];
+0033: 
+
+0028:   "14:00",
+0029:   "16:00",
+0030:   "18:00",
+0031:   "21:00",
+0032: ];
+0033: 
+0034: const PT_RIO_SCHEDULE_WED_SAT = [
+
+0032: ];
+0033: 
+0034: const PT_RIO_SCHEDULE_WED_SAT = [
+0035:   "09:00",
+0036:   "11:00",
+0037:   "14:00",
+0038:   "16:00",
+
+0033: 
+0034: const PT_RIO_SCHEDULE_WED_SAT = [
+0035:   "09:00",
+0036:   "11:00",
+0037:   "14:00",
+0038:   "16:00",
+0039:   "21:00",
+
+0034: const PT_RIO_SCHEDULE_WED_SAT = [
+0035:   "09:00",
+0036:   "11:00",
+0037:   "14:00",
+0038:   "16:00",
+0039:   "21:00",
+0040: ];
+
+0035:   "09:00",
+0036:   "11:00",
+0037:   "14:00",
+0038:   "16:00",
+0039:   "21:00",
+0040: ];
+0041: 
+
+0036:   "11:00",
+0037:   "14:00",
+0038:   "16:00",
+0039:   "21:00",
+0040: ];
+0041: 
+0042: const FEDERAL_SCHEDULE = [
+
+0040: ];
+0041: 
+0042: const FEDERAL_SCHEDULE = [
+0043:   "20:00",
+0044: ];
+0045: 
+0046: const ANIMALS = {
+
+0375:   };
+0376: }
+0377: 
+0378: function scheduleForPublicProjection(
+0379:   lotteryKey,
+0380:   date
+0381: ) {
+
+0452:   closeHour,
+0453:   publicApi,
+0454: }) {
+0455:   const schedule = scheduleForPublicProjection(
+0456:     lotteryKey,
+0457:     date
+0458:   );
+
+0489:         publicApi.build20MilharesForGrupo({
+0490:           rangeDraws: history,
+0491:           analysisHourBucket: closeHour,
+0492:           schedule,
+0493:           grupo2: grupo,
+0494:           targetYmd: date,
+0495:         });
+
+================================================================================
+backend\node_modules\@firebase\database\dist\index.cjs.js
+Encontrados: schedule
+
+3681:         this.firstConnection_ = false;
+3682:         this.onConnectStatus_(true);
+3683:     }
+3684:     scheduleConnect_(timeout) {
+3685:         util.assert(!this.realtime_, "Scheduling a connect when we're already connected/ing?");
+3686:         if (this.establishConnectionTimer_) {
+3687:             clearTimeout(this.establishConnectionTimer_);
+
+3696:     }
+3697:     initConnection_() {
+3698:         if (!this.realtime_ && this.firstConnection_) {
+3699:             this.scheduleConnect_(0);
+3700:         }
+3701:     }
+3702:     onVisible_(visible) {
+
+3707:             this.log_('Window became visible.  Reducing delay.');
+3708:             this.reconnectDelay_ = RECONNECT_MIN_DELAY;
+3709:             if (!this.realtime_) {
+3710:                 this.scheduleConnect_(0);
+3711:             }
+3712:         }
+3713:         this.visible_ = visible;
+
+3717:             this.log_('Browser went online.');
+3718:             this.reconnectDelay_ = RECONNECT_MIN_DELAY;
+3719:             if (!this.realtime_) {
+3720:                 this.scheduleConnect_(0);
+3721:             }
+3722:         }
+3723:         else {
+
+3753:             let reconnectDelay = Math.max(0, this.reconnectDelay_ - timeSinceLastConnectAttempt);
+3754:             reconnectDelay = Math.random() * reconnectDelay;
+3755:             this.log_('Trying to reconnect in ' + reconnectDelay + 'ms');
+3756:             this.scheduleConnect_(reconnectDelay);
+3757:             // Adjust reconnect delay for next time.
+3758:             this.reconnectDelay_ = Math.min(this.maxReconnectDelay_, this.reconnectDelay_ * RECONNECT_DELAY_MULTIPLIER);
+3759:         }
+
+3847:         if (util.isEmpty(this.interruptReasons_)) {
+3848:             this.reconnectDelay_ = RECONNECT_MIN_DELAY;
+3849:             if (!this.realtime_) {
+3850:                 this.scheduleConnect_(0);
+3851:             }
+3852:         }
+3853:     }
+
+================================================================================
+backend\node_modules\@firebase\database\dist\index.esm.js
+Encontrados: schedule
+
+3677:         this.firstConnection_ = false;
+3678:         this.onConnectStatus_(true);
+3679:     }
+3680:     scheduleConnect_(timeout) {
+3681:         assert(!this.realtime_, "Scheduling a connect when we're already connected/ing?");
+3682:         if (this.establishConnectionTimer_) {
+3683:             clearTimeout(this.establishConnectionTimer_);
+
+3692:     }
+3693:     initConnection_() {
+3694:         if (!this.realtime_ && this.firstConnection_) {
+3695:             this.scheduleConnect_(0);
+3696:         }
+3697:     }
+3698:     onVisible_(visible) {
+
+3703:             this.log_('Window became visible.  Reducing delay.');
+3704:             this.reconnectDelay_ = RECONNECT_MIN_DELAY;
+3705:             if (!this.realtime_) {
+3706:                 this.scheduleConnect_(0);
+3707:             }
+3708:         }
+3709:         this.visible_ = visible;
+
+3713:             this.log_('Browser went online.');
+3714:             this.reconnectDelay_ = RECONNECT_MIN_DELAY;
+3715:             if (!this.realtime_) {
+3716:                 this.scheduleConnect_(0);
+3717:             }
+3718:         }
+3719:         else {
+
+3749:             let reconnectDelay = Math.max(0, this.reconnectDelay_ - timeSinceLastConnectAttempt);
+3750:             reconnectDelay = Math.random() * reconnectDelay;
+3751:             this.log_('Trying to reconnect in ' + reconnectDelay + 'ms');
+3752:             this.scheduleConnect_(reconnectDelay);
+3753:             // Adjust reconnect delay for next time.
+3754:             this.reconnectDelay_ = Math.min(this.maxReconnectDelay_, this.reconnectDelay_ * RECONNECT_DELAY_MULTIPLIER);
+3755:         }
+
+3843:         if (isEmpty(this.interruptReasons_)) {
+3844:             this.reconnectDelay_ = RECONNECT_MIN_DELAY;
+3845:             if (!this.realtime_) {
+3846:                 this.scheduleConnect_(0);
+3847:             }
+3848:         }
+3849:     }
+
+================================================================================
+backend\node_modules\@firebase\database\dist\index.node.cjs.js
+Encontrados: schedule
+
+3689:         this.firstConnection_ = false;
+3690:         this.onConnectStatus_(true);
+3691:     }
+3692:     scheduleConnect_(timeout) {
+3693:         util.assert(!this.realtime_, "Scheduling a connect when we're already connected/ing?");
+3694:         if (this.establishConnectionTimer_) {
+3695:             clearTimeout(this.establishConnectionTimer_);
+
+3704:     }
+3705:     initConnection_() {
+3706:         if (!this.realtime_ && this.firstConnection_) {
+3707:             this.scheduleConnect_(0);
+3708:         }
+3709:     }
+3710:     onVisible_(visible) {
+
+3715:             this.log_('Window became visible.  Reducing delay.');
+3716:             this.reconnectDelay_ = RECONNECT_MIN_DELAY;
+3717:             if (!this.realtime_) {
+3718:                 this.scheduleConnect_(0);
+3719:             }
+3720:         }
+3721:         this.visible_ = visible;
+
+3725:             this.log_('Browser went online.');
+3726:             this.reconnectDelay_ = RECONNECT_MIN_DELAY;
+3727:             if (!this.realtime_) {
+3728:                 this.scheduleConnect_(0);
+3729:             }
+3730:         }
+3731:         else {
+
+3761:             let reconnectDelay = Math.max(0, this.reconnectDelay_ - timeSinceLastConnectAttempt);
+3762:             reconnectDelay = Math.random() * reconnectDelay;
+3763:             this.log_('Trying to reconnect in ' + reconnectDelay + 'ms');
+3764:             this.scheduleConnect_(reconnectDelay);
+3765:             // Adjust reconnect delay for next time.
+3766:             this.reconnectDelay_ = Math.min(this.maxReconnectDelay_, this.reconnectDelay_ * RECONNECT_DELAY_MULTIPLIER);
+3767:         }
+
+3855:         if (util.isEmpty(this.interruptReasons_)) {
+3856:             this.reconnectDelay_ = RECONNECT_MIN_DELAY;
+3857:             if (!this.realtime_) {
+3858:                 this.scheduleConnect_(0);
+3859:             }
+3860:         }
+3861:     }
+
+================================================================================
+backend\node_modules\@firebase\database\dist\index.standalone.js
+Encontrados: schedule
+
+3686:         this.firstConnection_ = false;
+3687:         this.onConnectStatus_(true);
+3688:     }
+3689:     scheduleConnect_(timeout) {
+3690:         util.assert(!this.realtime_, "Scheduling a connect when we're already connected/ing?");
+3691:         if (this.establishConnectionTimer_) {
+3692:             clearTimeout(this.establishConnectionTimer_);
+
+3701:     }
+3702:     initConnection_() {
+3703:         if (!this.realtime_ && this.firstConnection_) {
+3704:             this.scheduleConnect_(0);
+3705:         }
+3706:     }
+3707:     onVisible_(visible) {
+
+3712:             this.log_('Window became visible.  Reducing delay.');
+3713:             this.reconnectDelay_ = RECONNECT_MIN_DELAY;
+3714:             if (!this.realtime_) {
+3715:                 this.scheduleConnect_(0);
+3716:             }
+3717:         }
+3718:         this.visible_ = visible;
+
+3722:             this.log_('Browser went online.');
+3723:             this.reconnectDelay_ = RECONNECT_MIN_DELAY;
+3724:             if (!this.realtime_) {
+3725:                 this.scheduleConnect_(0);
+3726:             }
+3727:         }
+3728:         else {
+
+3758:             let reconnectDelay = Math.max(0, this.reconnectDelay_ - timeSinceLastConnectAttempt);
+3759:             reconnectDelay = Math.random() * reconnectDelay;
+3760:             this.log_('Trying to reconnect in ' + reconnectDelay + 'ms');
+3761:             this.scheduleConnect_(reconnectDelay);
+3762:             // Adjust reconnect delay for next time.
+3763:             this.reconnectDelay_ = Math.min(this.maxReconnectDelay_, this.reconnectDelay_ * RECONNECT_DELAY_MULTIPLIER);
+3764:         }
+
+3852:         if (util.isEmpty(this.interruptReasons_)) {
+3853:             this.reconnectDelay_ = RECONNECT_MIN_DELAY;
+3854:             if (!this.realtime_) {
+3855:                 this.scheduleConnect_(0);
+3856:             }
+3857:         }
+3858:     }
+
+================================================================================
+backend\node_modules\@firebase\database\dist\internal.d.ts
+Encontrados: schedule
+
+1915:     private onDataMessage_;
+1916:     private onDataPush_;
+1917:     private onReady_;
+1918:     private scheduleConnect_;
+1919:     private initConnection_;
+1920:     private onVisible_;
+1921:     private onOnline_;
+
+================================================================================
+backend\node_modules\@firebase\database\dist\node-esm\index.node.esm.js
+Encontrados: schedule
+
+3681:         this.firstConnection_ = false;
+3682:         this.onConnectStatus_(true);
+3683:     }
+3684:     scheduleConnect_(timeout) {
+3685:         assert(!this.realtime_, "Scheduling a connect when we're already connected/ing?");
+3686:         if (this.establishConnectionTimer_) {
+3687:             clearTimeout(this.establishConnectionTimer_);
+
+3696:     }
+3697:     initConnection_() {
+3698:         if (!this.realtime_ && this.firstConnection_) {
+3699:             this.scheduleConnect_(0);
+3700:         }
+3701:     }
+3702:     onVisible_(visible) {
+
+3707:             this.log_('Window became visible.  Reducing delay.');
+3708:             this.reconnectDelay_ = RECONNECT_MIN_DELAY;
+3709:             if (!this.realtime_) {
+3710:                 this.scheduleConnect_(0);
+3711:             }
+3712:         }
+3713:         this.visible_ = visible;
+
+3717:             this.log_('Browser went online.');
+3718:             this.reconnectDelay_ = RECONNECT_MIN_DELAY;
+3719:             if (!this.realtime_) {
+3720:                 this.scheduleConnect_(0);
+3721:             }
+3722:         }
+3723:         else {
+
+3753:             let reconnectDelay = Math.max(0, this.reconnectDelay_ - timeSinceLastConnectAttempt);
+3754:             reconnectDelay = Math.random() * reconnectDelay;
+3755:             this.log_('Trying to reconnect in ' + reconnectDelay + 'ms');
+3756:             this.scheduleConnect_(reconnectDelay);
+3757:             // Adjust reconnect delay for next time.
+3758:             this.reconnectDelay_ = Math.min(this.maxReconnectDelay_, this.reconnectDelay_ * RECONNECT_DELAY_MULTIPLIER);
+3759:         }
+
+3847:         if (isEmpty(this.interruptReasons_)) {
+3848:             this.reconnectDelay_ = RECONNECT_MIN_DELAY;
+3849:             if (!this.realtime_) {
+3850:                 this.scheduleConnect_(0);
+3851:             }
+3852:         }
+3853:     }
+
+================================================================================
+backend\node_modules\@firebase\database\dist\node-esm\src\core\PersistentConnection.d.ts
+Encontrados: schedule
+
+0111:     private onDataMessage_;
+0112:     private onDataPush_;
+0113:     private onReady_;
+0114:     private scheduleConnect_;
+0115:     private initConnection_;
+0116:     private onVisible_;
+0117:     private onOnline_;
+
+================================================================================
+backend\node_modules\@firebase\database\dist\private.d.ts
+Encontrados: schedule
+
+1899:     private onDataMessage_;
+1900:     private onDataPush_;
+1901:     private onReady_;
+1902:     private scheduleConnect_;
+1903:     private initConnection_;
+1904:     private onVisible_;
+1905:     private onOnline_;
+
+================================================================================
+backend\node_modules\@firebase\database\dist\src\core\PersistentConnection.d.ts
+Encontrados: schedule
+
+0111:     private onDataMessage_;
+0112:     private onDataPush_;
+0113:     private onReady_;
+0114:     private scheduleConnect_;
+0115:     private initConnection_;
+0116:     private onVisible_;
+0117:     private onOnline_;
+
+================================================================================
+backend\node_modules\@firebase\database-compat\dist\index.standalone.js
+Encontrados: schedule
+
+8607:         this.firstConnection_ = false;
+8608:         this.onConnectStatus_(true);
+8609:     }
+8610:     scheduleConnect_(timeout) {
+8611:         util.assert(!this.realtime_, "Scheduling a connect when we're already connected/ing?");
+8612:         if (this.establishConnectionTimer_) {
+8613:             clearTimeout(this.establishConnectionTimer_);
+
+8622:     }
+8623:     initConnection_() {
+8624:         if (!this.realtime_ && this.firstConnection_) {
+8625:             this.scheduleConnect_(0);
+8626:         }
+8627:     }
+8628:     onVisible_(visible) {
+
+8633:             this.log_('Window became visible.  Reducing delay.');
+8634:             this.reconnectDelay_ = RECONNECT_MIN_DELAY;
+8635:             if (!this.realtime_) {
+8636:                 this.scheduleConnect_(0);
+8637:             }
+8638:         }
+8639:         this.visible_ = visible;
+
+8643:             this.log_('Browser went online.');
+8644:             this.reconnectDelay_ = RECONNECT_MIN_DELAY;
+8645:             if (!this.realtime_) {
+8646:                 this.scheduleConnect_(0);
+8647:             }
+8648:         }
+8649:         else {
+
+8679:             let reconnectDelay = Math.max(0, this.reconnectDelay_ - timeSinceLastConnectAttempt);
+8680:             reconnectDelay = Math.random() * reconnectDelay;
+8681:             this.log_('Trying to reconnect in ' + reconnectDelay + 'ms');
+8682:             this.scheduleConnect_(reconnectDelay);
+8683:             // Adjust reconnect delay for next time.
+8684:             this.reconnectDelay_ = Math.min(this.maxReconnectDelay_, this.reconnectDelay_ * RECONNECT_DELAY_MULTIPLIER);
+8685:         }
+
+8773:         if (util.isEmpty(this.interruptReasons_)) {
+8774:             this.reconnectDelay_ = RECONNECT_MIN_DELAY;
+8775:             if (!this.realtime_) {
+8776:                 this.scheduleConnect_(0);
+8777:             }
+8778:         }
+8779:     }
+
+================================================================================
+backend\node_modules\@firebase\util\dist\index.cjs.js
+Encontrados: schedule
+
+1591:         this.buf_ = [];
+1592:         /**
+1593:          * An array of 80 bytes, each a part of the message to be hashed.  Referred to
+1594:          * as the message schedule in the docs.
+1595:          * @private
+1596:          */
+1597:         this.W_ = [];
+
+================================================================================
+backend\node_modules\@firebase\util\dist\index.esm.js
+Encontrados: schedule
+
+1587:         this.buf_ = [];
+1588:         /**
+1589:          * An array of 80 bytes, each a part of the message to be hashed.  Referred to
+1590:          * as the message schedule in the docs.
+1591:          * @private
+1592:          */
+1593:         this.W_ = [];
+
+================================================================================
+backend\node_modules\@firebase\util\dist\index.node.cjs.js
+Encontrados: schedule
+
+1591:         this.buf_ = [];
+1592:         /**
+1593:          * An array of 80 bytes, each a part of the message to be hashed.  Referred to
+1594:          * as the message schedule in the docs.
+1595:          * @private
+1596:          */
+1597:         this.W_ = [];
+
+================================================================================
+backend\node_modules\@firebase\util\dist\node-esm\index.node.esm.js
+Encontrados: schedule
+
+1587:         this.buf_ = [];
+1588:         /**
+1589:          * An array of 80 bytes, each a part of the message to be hashed.  Referred to
+1590:          * as the message schedule in the docs.
+1591:          * @private
+1592:          */
+1593:         this.W_ = [];
+
+================================================================================
+backend\node_modules\@firebase\util\dist\node-esm\src\sha1.d.ts
+Encontrados: schedule
+
+0051:     private buf_;
+0052:     /**
+0053:      * An array of 80 bytes, each a part of the message to be hashed.  Referred to
+0054:      * as the message schedule in the docs.
+0055:      * @private
+0056:      */
+0057:     private W_;
+
+================================================================================
+backend\node_modules\@firebase\util\dist\src\sha1.d.ts
+Encontrados: schedule
+
+0051:     private buf_;
+0052:     /**
+0053:      * An array of 80 bytes, each a part of the message to be hashed.  Referred to
+0054:      * as the message schedule in the docs.
+0055:      * @private
+0056:      */
+0057:     private W_;
+
+================================================================================
+backend\node_modules\@firebase\util\dist\util-public.d.ts
+Encontrados: schedule
+
+0892:     private buf_;
+0893:     /**
+0894:      * An array of 80 bytes, each a part of the message to be hashed.  Referred to
+0895:      * as the message schedule in the docs.
+0896:      * @private
+0897:      */
+0898:     private W_;
+
+================================================================================
+backend\node_modules\@firebase\util\dist\util.d.ts
+Encontrados: schedule
+
+0912:     private buf_;
+0913:     /**
+0914:      * An array of 80 bytes, each a part of the message to be hashed.  Referred to
+0915:      * as the message schedule in the docs.
+0916:      * @private
+0917:      */
+0918:     private W_;
+
+================================================================================
+backend\node_modules\@google-cloud\firestore\build\src\backoff.js
+Encontrados: schedule
+
+0184:         if (this.retryCount > exports.MAX_RETRY_ATTEMPTS) {
+0185:             return Promise.reject(new Error('Exceeded maximum number of retries allowed.'));
+0186:         }
+0187:         // First schedule using the current base (which may be 0 and should be
+0188:         // honored as such).
+0189:         const delayWithJitterMs = this.currentBaseMs + this.jitterDelayMs();
+0190:         if (this.currentBaseMs > 0) {
+
+================================================================================
+backend\node_modules\@google-cloud\firestore\build\src\bulk-writer.d.ts
+Encontrados: schedule
+
+0148:      */
+0149:     private _maxBatchSize;
+0150:     /**
+0151:      * The batch that is currently used to schedule operations. Once this batch
+0152:      * reaches maximum capacity, a new batch is created.
+0153:      * @private
+0154:      * @internal
+
+0164:     /**
+0165:      * When this BulkWriter instance has started to close, a flush promise is
+0166:      * saved. Afterwards, no new operations can be enqueued, except for retry
+0167:      * operations scheduled by the error handler.
+0168:      * @private
+0169:      * @internal
+0170:      */
+
+0452:      * Commits all enqueued writes and marks the BulkWriter instance as closed.
+0453:      *
+0454:      * After calling `close()`, calling any method will throw an error. Any
+0455:      * retries scheduled as part of an `onWriteError()` handler will be run
+0456:      * before the `close()` promise resolves.
+0457:      *
+0458:      * Returns a Promise that resolves when there are no more pending writes. The
+
+0490:      * @private
+0491:      * @internal
+0492:      */
+0493:     private _scheduleCurrentBatch;
+0494:     /**
+0495:      * Sends the provided batch once the rate limiter does not require any delay.
+0496:      * @private
+
+0511:      */
+0512:     private _enqueue;
+0513:     /**
+0514:      * Manages the pending operation counter and schedules the next BulkWriter
+0515:      * operation if we're under the maximum limit.
+0516:      * @private
+0517:      * @internal
+
+================================================================================
+backend\node_modules\@google-cloud\firestore\build\src\bulk-writer.js
+Encontrados: schedule
+
+0297:          */
+0298:         this._maxBatchSize = MAX_BATCH_SIZE;
+0299:         /**
+0300:          * The batch that is currently used to schedule operations. Once this batch
+0301:          * reaches maximum capacity, a new batch is created.
+0302:          * @private
+0303:          * @internal
+
+0664:      */
+0665:     flush() {
+0666:         this._verifyNotClosed();
+0667:         this._scheduleCurrentBatch(/* flush= */ true);
+0668:         // Mark the most recent operation as flushed to ensure that the batch
+0669:         // containing it will be sent once it's popped from the buffer.
+0670:         if (this._bufferedOperations.length > 0) {
+
+0676:      * Commits all enqueued writes and marks the BulkWriter instance as closed.
+0677:      *
+0678:      * After calling `close()`, calling any method will throw an error. Any
+0679:      * retries scheduled as part of an `onWriteError()` handler will be run
+0680:      * before the `close()` promise resolves.
+0681:      *
+0682:      * Returns a Promise that resolves when there are no more pending writes. The
+
+0724:      * @private
+0725:      * @internal
+0726:      */
+0727:     _scheduleCurrentBatch(flush = false) {
+0728:         if (this._bulkCommitBatch._opCount === 0)
+0729:             return;
+0730:         const pendingBatch = this._bulkCommitBatch;
+
+0748:      */
+0749:     async _sendBatch(batch, flush = false) {
+0750:         const tag = (0, util_1.requestTag)();
+0751:         // Send the batch if it is does not require any delay, or schedule another
+0752:         // attempt after the appropriate timeout.
+0753:         const underRateLimit = this._rateLimiter.tryMakeRequest(batch._opCount);
+0754:         if (underRateLimit) {
+
+0754:         if (underRateLimit) {
+0755:             await batch.bulkCommit({ requestTag: tag });
+0756:             if (flush)
+0757:                 this._scheduleCurrentBatch(flush);
+0758:         }
+0759:         else {
+0760:             const delayMs = this._rateLimiter.getNextRequestDelayMs(batch._opCount);
+
+0814:         }
+0815:         // Chain the BulkWriter operation promise with the buffer processing logic
+0816:         // in order to ensure that it runs and that subsequent operations are
+0817:         // enqueued before the next batch is scheduled in `_sendBatch()`.
+0818:         return userPromise
+0819:             .then(res => {
+0820:             this._pendingOpsCount--;
+
+0828:         });
+0829:     }
+0830:     /**
+0831:      * Manages the pending operation counter and schedules the next BulkWriter
+0832:      * operation if we're under the maximum limit.
+0833:      * @private
+0834:      * @internal
+
+0853:         // that the batch is under the 10MiB limit.
+0854:         if (op.backoffDuration > 0) {
+0855:             if (this._bulkCommitBatch.pendingOps.length >= exports.RETRY_MAX_BATCH_SIZE) {
+0856:                 this._scheduleCurrentBatch(/* flush= */ false);
+0857:             }
+0858:             this._bulkCommitBatch.setMaxBatchSize(exports.RETRY_MAX_BATCH_SIZE);
+0859:         }
+
+0860:         if (this._bulkCommitBatch.has(op.ref)) {
+0861:             // Create a new batch since the backend doesn't support batches with two
+0862:             // writes to the same document.
+0863:             this._scheduleCurrentBatch();
+0864:         }
+0865:         enqueueOnBatchCallback(this._bulkCommitBatch);
+0866:         this._bulkCommitBatch.processLastOperation(op);
+
+0865:         enqueueOnBatchCallback(this._bulkCommitBatch);
+0866:         this._bulkCommitBatch.processLastOperation(op);
+0867:         if (this._bulkCommitBatch._opCount === this._bulkCommitBatch.maxBatchSize) {
+0868:             this._scheduleCurrentBatch();
+0869:         }
+0870:         else if (op.flushed) {
+0871:             // If flush() was called before this operation was enqueued into a batch,
+
+0869:         }
+0870:         else if (op.flushed) {
+0871:             // If flush() was called before this operation was enqueued into a batch,
+0872:             // we still need to schedule it.
+0873:             this._scheduleCurrentBatch(/* flush= */ true);
+0874:         }
+0875:     }
+
+0870:         else if (op.flushed) {
+0871:             // If flush() was called before this operation was enqueued into a batch,
+0872:             // we still need to schedule it.
+0873:             this._scheduleCurrentBatch(/* flush= */ true);
+0874:         }
+0875:     }
+0876: }
+
+================================================================================
+backend\node_modules\@google-cloud\firestore\build\src\index.d.ts
+Encontrados: schedule
+
+0881:      * Helper method that retries failed Promises.
+0882:      *
+0883:      * If 'delayMs' is specified, waits 'delayMs' between invocations. Otherwise,
+0884:      * schedules the first attempt immediately, and then waits 100 milliseconds
+0885:      * for further attempts.
+0886:      *
+0887:      * @private
+
+================================================================================
+backend\node_modules\@google-cloud\firestore\build\src\index.js
+Encontrados: schedule
+
+1246:      * Helper method that retries failed Promises.
+1247:      *
+1248:      * If 'delayMs' is specified, waits 'delayMs' between invocations. Otherwise,
+1249:      * schedules the first attempt immediately, and then waits 100 milliseconds
+1250:      * for further attempts.
+1251:      *
+1252:      * @private
+
+================================================================================
+backend\node_modules\@google-cloud\firestore\build\src\pool.d.ts
+Encontrados: schedule
+
+0055:     private readonly lazyLogStringForAllClientIds;
+0056:     /**
+0057:      * Whether the Firestore instance has been terminated. Once terminated, the
+0058:      * ClientPool can longer schedule new operations.
+0059:      */
+0060:     private terminated;
+0061:     /**
+
+================================================================================
+backend\node_modules\@google-cloud\firestore\build\src\pool.js
+Encontrados: schedule
+
+0067:         this.clientIdByClient = new WeakMap();
+0068:         /**
+0069:          * Whether the Firestore instance has been terminated. Once terminated, the
+0070:          * ClientPool can longer schedule new operations.
+0071:          */
+0072:         this.terminated = false;
+0073:         /**
+
+================================================================================
+backend\node_modules\@google-cloud\firestore\build\src\v1\firestore_admin_client.d.ts
+Encontrados: schedule
+
+0357:     deleteBackup(request: protos.google.firestore.admin.v1.IDeleteBackupRequest, options: CallOptions, callback: Callback<protos.google.protobuf.IEmpty, protos.google.firestore.admin.v1.IDeleteBackupRequest | null | undefined, {} | null | undefined>): void;
+0358:     deleteBackup(request: protos.google.firestore.admin.v1.IDeleteBackupRequest, callback: Callback<protos.google.protobuf.IEmpty, protos.google.firestore.admin.v1.IDeleteBackupRequest | null | undefined, {} | null | undefined>): void;
+0359:     /**
+0360:      * Creates a backup schedule on a database.
+0361:      * At most two backup schedules can be configured on a database, one daily
+0362:      * backup schedule and one weekly backup schedule.
+0363:      *
+
+0358:     deleteBackup(request: protos.google.firestore.admin.v1.IDeleteBackupRequest, callback: Callback<protos.google.protobuf.IEmpty, protos.google.firestore.admin.v1.IDeleteBackupRequest | null | undefined, {} | null | undefined>): void;
+0359:     /**
+0360:      * Creates a backup schedule on a database.
+0361:      * At most two backup schedules can be configured on a database, one daily
+0362:      * backup schedule and one weekly backup schedule.
+0363:      *
+0364:      * @param {Object} request
+
+0359:     /**
+0360:      * Creates a backup schedule on a database.
+0361:      * At most two backup schedules can be configured on a database, one daily
+0362:      * backup schedule and one weekly backup schedule.
+0363:      *
+0364:      * @param {Object} request
+0365:      *   The request object that will be sent.
+
+0368:      *
+0369:      *    Format `projects/{project}/databases/{database}`
+0370:      * @param {google.firestore.admin.v1.BackupSchedule} request.backupSchedule
+0371:      *   Required. The backup schedule to create.
+0372:      * @param {object} [options]
+0373:      *   Call options. See {@link https://googleapis.dev/nodejs/google-gax/latest/interfaces/CallOptions.html|CallOptions} for more details.
+0374:      * @returns {Promise} - The promise which resolves to an array.
+
+0375:      *   The first element of the array is an object representing {@link protos.google.firestore.admin.v1.BackupSchedule|BackupSchedule}.
+0376:      *   Please see the {@link https://github.com/googleapis/gax-nodejs/blob/master/client-libraries.md#regular-methods | documentation }
+0377:      *   for more details and examples.
+0378:      * @example <caption>include:samples/generated/v1/firestore_admin.create_backup_schedule.js</caption>
+0379:      * region_tag:firestore_v1_generated_FirestoreAdmin_CreateBackupSchedule_async
+0380:      */
+0381:     createBackupSchedule(request?: protos.google.firestore.admin.v1.ICreateBackupScheduleRequest, options?: CallOptions): Promise<[
+
+0386:     createBackupSchedule(request: protos.google.firestore.admin.v1.ICreateBackupScheduleRequest, options: CallOptions, callback: Callback<protos.google.firestore.admin.v1.IBackupSchedule, protos.google.firestore.admin.v1.ICreateBackupScheduleRequest | null | undefined, {} | null | undefined>): void;
+0387:     createBackupSchedule(request: protos.google.firestore.admin.v1.ICreateBackupScheduleRequest, callback: Callback<protos.google.firestore.admin.v1.IBackupSchedule, protos.google.firestore.admin.v1.ICreateBackupScheduleRequest | null | undefined, {} | null | undefined>): void;
+0388:     /**
+0389:      * Gets information about a backup schedule.
+0390:      *
+0391:      * @param {Object} request
+0392:      *   The request object that will be sent.
+
+0391:      * @param {Object} request
+0392:      *   The request object that will be sent.
+0393:      * @param {string} request.name
+0394:      *   Required. The name of the backup schedule.
+0395:      *
+0396:      *   Format
+0397:      *   `projects/{project}/databases/{database}/backupSchedules/{backup_schedule}`
+
+0394:      *   Required. The name of the backup schedule.
+0395:      *
+0396:      *   Format
+0397:      *   `projects/{project}/databases/{database}/backupSchedules/{backup_schedule}`
+0398:      * @param {object} [options]
+0399:      *   Call options. See {@link https://googleapis.dev/nodejs/google-gax/latest/interfaces/CallOptions.html|CallOptions} for more details.
+0400:      * @returns {Promise} - The promise which resolves to an array.
+
+0401:      *   The first element of the array is an object representing {@link protos.google.firestore.admin.v1.BackupSchedule|BackupSchedule}.
+0402:      *   Please see the {@link https://github.com/googleapis/gax-nodejs/blob/master/client-libraries.md#regular-methods | documentation }
+0403:      *   for more details and examples.
+0404:      * @example <caption>include:samples/generated/v1/firestore_admin.get_backup_schedule.js</caption>
+0405:      * region_tag:firestore_v1_generated_FirestoreAdmin_GetBackupSchedule_async
+0406:      */
+0407:     getBackupSchedule(request?: protos.google.firestore.admin.v1.IGetBackupScheduleRequest, options?: CallOptions): Promise<[
+
+0412:     getBackupSchedule(request: protos.google.firestore.admin.v1.IGetBackupScheduleRequest, options: CallOptions, callback: Callback<protos.google.firestore.admin.v1.IBackupSchedule, protos.google.firestore.admin.v1.IGetBackupScheduleRequest | null | undefined, {} | null | undefined>): void;
+0413:     getBackupSchedule(request: protos.google.firestore.admin.v1.IGetBackupScheduleRequest, callback: Callback<protos.google.firestore.admin.v1.IBackupSchedule, protos.google.firestore.admin.v1.IGetBackupScheduleRequest | null | undefined, {} | null | undefined>): void;
+0414:     /**
+0415:      * List backup schedules.
+0416:      *
+0417:      * @param {Object} request
+0418:      *   The request object that will be sent.
+
+0426:      *   The first element of the array is an object representing {@link protos.google.firestore.admin.v1.ListBackupSchedulesResponse|ListBackupSchedulesResponse}.
+0427:      *   Please see the {@link https://github.com/googleapis/gax-nodejs/blob/master/client-libraries.md#regular-methods | documentation }
+0428:      *   for more details and examples.
+0429:      * @example <caption>include:samples/generated/v1/firestore_admin.list_backup_schedules.js</caption>
+0430:      * region_tag:firestore_v1_generated_FirestoreAdmin_ListBackupSchedules_async
+0431:      */
+0432:     listBackupSchedules(request?: protos.google.firestore.admin.v1.IListBackupSchedulesRequest, options?: CallOptions): Promise<[
+
+0437:     listBackupSchedules(request: protos.google.firestore.admin.v1.IListBackupSchedulesRequest, options: CallOptions, callback: Callback<protos.google.firestore.admin.v1.IListBackupSchedulesResponse, protos.google.firestore.admin.v1.IListBackupSchedulesRequest | null | undefined, {} | null | undefined>): void;
+0438:     listBackupSchedules(request: protos.google.firestore.admin.v1.IListBackupSchedulesRequest, callback: Callback<protos.google.firestore.admin.v1.IListBackupSchedulesResponse, protos.google.firestore.admin.v1.IListBackupSchedulesRequest | null | undefined, {} | null | undefined>): void;
+0439:     /**
+0440:      * Updates a backup schedule.
+0441:      *
+0442:      * @param {Object} request
+0443:      *   The request object that will be sent.
+
+0442:      * @param {Object} request
+0443:      *   The request object that will be sent.
+0444:      * @param {google.firestore.admin.v1.BackupSchedule} request.backupSchedule
+0445:      *   Required. The backup schedule to update.
+0446:      * @param {google.protobuf.FieldMask} request.updateMask
+0447:      *   The list of fields to be updated.
+0448:      * @param {object} [options]
+
+0451:      *   The first element of the array is an object representing {@link protos.google.firestore.admin.v1.BackupSchedule|BackupSchedule}.
+0452:      *   Please see the {@link https://github.com/googleapis/gax-nodejs/blob/master/client-libraries.md#regular-methods | documentation }
+0453:      *   for more details and examples.
+0454:      * @example <caption>include:samples/generated/v1/firestore_admin.update_backup_schedule.js</caption>
+0455:      * region_tag:firestore_v1_generated_FirestoreAdmin_UpdateBackupSchedule_async
+0456:      */
+0457:     updateBackupSchedule(request?: protos.google.firestore.admin.v1.IUpdateBackupScheduleRequest, options?: CallOptions): Promise<[
+
+0462:     updateBackupSchedule(request: protos.google.firestore.admin.v1.IUpdateBackupScheduleRequest, options: CallOptions, callback: Callback<protos.google.firestore.admin.v1.IBackupSchedule, protos.google.firestore.admin.v1.IUpdateBackupScheduleRequest | null | undefined, {} | null | undefined>): void;
+0463:     updateBackupSchedule(request: protos.google.firestore.admin.v1.IUpdateBackupScheduleRequest, callback: Callback<protos.google.firestore.admin.v1.IBackupSchedule, protos.google.firestore.admin.v1.IUpdateBackupScheduleRequest | null | undefined, {} | null | undefined>): void;
+0464:     /**
+0465:      * Deletes a backup schedule.
+0466:      *
+0467:      * @param {Object} request
+0468:      *   The request object that will be sent.
+
+0467:      * @param {Object} request
+0468:      *   The request object that will be sent.
+0469:      * @param {string} request.name
+0470:      *   Required. The name of the backup schedule.
+0471:      *
+0472:      *   Format
+0473:      *   `projects/{project}/databases/{database}/backupSchedules/{backup_schedule}`
+
+0470:      *   Required. The name of the backup schedule.
+0471:      *
+0472:      *   Format
+0473:      *   `projects/{project}/databases/{database}/backupSchedules/{backup_schedule}`
+0474:      * @param {object} [options]
+0475:      *   Call options. See {@link https://googleapis.dev/nodejs/google-gax/latest/interfaces/CallOptions.html|CallOptions} for more details.
+0476:      * @returns {Promise} - The promise which resolves to an array.
+
+0477:      *   The first element of the array is an object representing {@link protos.google.protobuf.Empty|Empty}.
+0478:      *   Please see the {@link https://github.com/googleapis/gax-nodejs/blob/master/client-libraries.md#regular-methods | documentation }
+0479:      *   for more details and examples.
+0480:      * @example <caption>include:samples/generated/v1/firestore_admin.delete_backup_schedule.js</caption>
+0481:      * region_tag:firestore_v1_generated_FirestoreAdmin_DeleteBackupSchedule_async
+0482:      */
+0483:     deleteBackupSchedule(request?: protos.google.firestore.admin.v1.IDeleteBackupScheduleRequest, options?: CallOptions): Promise<[
+
+1407:      *
+1408:      * @param {string} project
+1409:      * @param {string} database
+1410:      * @param {string} backup_schedule
+1411:      * @returns {string} Resource name string.
+1412:      */
+1413:     backupSchedulePath(project: string, database: string, backupSchedule: string): string;
+
+1428:      */
+1429:     matchDatabaseFromBackupScheduleName(backupScheduleName: string): string | number;
+1430:     /**
+1431:      * Parse the backup_schedule from BackupSchedule resource.
+1432:      *
+1433:      * @param {string} backupScheduleName
+1434:      *   A fully-qualified path representing BackupSchedule resource.
+
+1432:      *
+1433:      * @param {string} backupScheduleName
+1434:      *   A fully-qualified path representing BackupSchedule resource.
+1435:      * @returns {string} A string representing the backup_schedule.
+1436:      */
+1437:     matchBackupScheduleFromBackupScheduleName(backupScheduleName: string): string | number;
+1438:     /**
+
+================================================================================
+backend\node_modules\@google-cloud\firestore\build\src\v1\firestore_admin_client.js
+Encontrados: schedule
+
+0177:         // Create useful helper objects for these.
+0178:         this.pathTemplates = {
+0179:             backupPathTemplate: new this._gaxModule.PathTemplate('projects/{project}/locations/{location}/backups/{backup}'),
+0180:             backupSchedulePathTemplate: new this._gaxModule.PathTemplate('projects/{project}/databases/{database}/backupSchedules/{backup_schedule}'),
+0181:             collectionGroupPathTemplate: new this._gaxModule.PathTemplate('projects/{project}/databases/{database}/collectionGroups/{collection}'),
+0182:             databasePathTemplate: new this._gaxModule.PathTemplate('projects/{project}/databases/{database}'),
+0183:             fieldPathTemplate: new this._gaxModule.PathTemplate('projects/{project}/databases/{database}/collectionGroups/{collection}/fields/{field}'),
+
+0641:         options.otherArgs.headers = options.otherArgs.headers || {};
+0642:         options.otherArgs.headers['x-goog-request-params'] =
+0643:             this._gaxModule.routingHeader.fromParams({
+0644:                 'backup_schedule.name': (_a = request.backupSchedule.name) !== null && _a !== void 0 ? _a : '',
+0645:             });
+0646:         this.initialize();
+0647:         return this.innerApiCalls.updateBackupSchedule(request, options, callback);
+
+1525:      *
+1526:      * @param {string} project
+1527:      * @param {string} database
+1528:      * @param {string} backup_schedule
+1529:      * @returns {string} Resource name string.
+1530:      */
+1531:     backupSchedulePath(project, database, backupSchedule) {
+
+1532:         return this.pathTemplates.backupSchedulePathTemplate.render({
+1533:             project: project,
+1534:             database: database,
+1535:             backup_schedule: backupSchedule,
+1536:         });
+1537:     }
+1538:     /**
+
+1556:         return this.pathTemplates.backupSchedulePathTemplate.match(backupScheduleName).database;
+1557:     }
+1558:     /**
+1559:      * Parse the backup_schedule from BackupSchedule resource.
+1560:      *
+1561:      * @param {string} backupScheduleName
+1562:      *   A fully-qualified path representing BackupSchedule resource.
+
+1560:      *
+1561:      * @param {string} backupScheduleName
+1562:      *   A fully-qualified path representing BackupSchedule resource.
+1563:      * @returns {string} A string representing the backup_schedule.
+1564:      */
+1565:     matchBackupScheduleFromBackupScheduleName(backupScheduleName) {
+1566:         return this.pathTemplates.backupSchedulePathTemplate.match(backupScheduleName).backup_schedule;
+
+1563:      * @returns {string} A string representing the backup_schedule.
+1564:      */
+1565:     matchBackupScheduleFromBackupScheduleName(backupScheduleName) {
+1566:         return this.pathTemplates.backupSchedulePathTemplate.match(backupScheduleName).backup_schedule;
+1567:     }
+1568:     /**
+1569:      * Return a fully-qualified collectionGroup resource name string.
+
+================================================================================
+backend\node_modules\@google-cloud\firestore\build\src\watch.d.ts
+Encontrados: schedule
+
+0190:      */
+0191:     private maybeReopenStream;
+0192:     /**
+0193:      * Cancels the current idle timeout and reschedules a new timer.
+0194:      *
+0195:      * @private
+0196:      * @internal
+
+================================================================================
+backend\node_modules\@google-cloud\firestore\build\src\watch.js
+Encontrados: schedule
+
+0248:         }
+0249:     }
+0250:     /**
+0251:      * Cancels the current idle timeout and reschedules a new timer.
+0252:      *
+0253:      * @private
+0254:      * @internal
+
+================================================================================
+backend\node_modules\@google-cloud\firestore\types\firestore.d.ts
+Encontrados: schedule
+
+1126:      * Commits all enqueued writes and marks the BulkWriter instance as closed.
+1127:      *
+1128:      * After calling `close()`, calling any method will throw an error. Any
+1129:      * retries scheduled as part of an `onWriteError()` handler will be run
+1130:      * before the `close()` promise resolves.
+1131:      *
+1132:      * Returns a Promise that resolves when all writes have been committed. The
+
+================================================================================
+backend\node_modules\@google-cloud\firestore\types\v1\firestore_admin_client.d.ts
+Encontrados: schedule
+
+0545:     >
+0546:   ): void;
+0547:   /**
+0548:    * Creates a backup schedule on a database.
+0549:    * At most two backup schedules can be configured on a database, one daily
+0550:    * backup schedule and one weekly backup schedule.
+0551:    *
+
+0546:   ): void;
+0547:   /**
+0548:    * Creates a backup schedule on a database.
+0549:    * At most two backup schedules can be configured on a database, one daily
+0550:    * backup schedule and one weekly backup schedule.
+0551:    *
+0552:    * @param {Object} request
+
+0547:   /**
+0548:    * Creates a backup schedule on a database.
+0549:    * At most two backup schedules can be configured on a database, one daily
+0550:    * backup schedule and one weekly backup schedule.
+0551:    *
+0552:    * @param {Object} request
+0553:    *   The request object that will be sent.
+
+0556:    *
+0557:    *    Format `projects/{project}/databases/{database}`
+0558:    * @param {google.firestore.admin.v1.BackupSchedule} request.backupSchedule
+0559:    *   Required. The backup schedule to create.
+0560:    * @param {object} [options]
+0561:    *   Call options. See {@link https://googleapis.dev/nodejs/google-gax/latest/interfaces/CallOptions.html|CallOptions} for more details.
+0562:    * @returns {Promise} - The promise which resolves to an array.
+
+0563:    *   The first element of the array is an object representing {@link protos.google.firestore.admin.v1.BackupSchedule|BackupSchedule}.
+0564:    *   Please see the {@link https://github.com/googleapis/gax-nodejs/blob/master/client-libraries.md#regular-methods | documentation }
+0565:    *   for more details and examples.
+0566:    * @example <caption>include:samples/generated/v1/firestore_admin.create_backup_schedule.js</caption>
+0567:    * region_tag:firestore_v1_generated_FirestoreAdmin_CreateBackupSchedule_async
+0568:    */
+0569:   createBackupSchedule(
+
+0598:     >
+0599:   ): void;
+0600:   /**
+0601:    * Gets information about a backup schedule.
+0602:    *
+0603:    * @param {Object} request
+0604:    *   The request object that will be sent.
+
+0603:    * @param {Object} request
+0604:    *   The request object that will be sent.
+0605:    * @param {string} request.name
+0606:    *   Required. The name of the backup schedule.
+0607:    *
+0608:    *   Format
+0609:    *   `projects/{project}/databases/{database}/backupSchedules/{backup_schedule}`
+
+0606:    *   Required. The name of the backup schedule.
+0607:    *
+0608:    *   Format
+0609:    *   `projects/{project}/databases/{database}/backupSchedules/{backup_schedule}`
+0610:    * @param {object} [options]
+0611:    *   Call options. See {@link https://googleapis.dev/nodejs/google-gax/latest/interfaces/CallOptions.html|CallOptions} for more details.
+0612:    * @returns {Promise} - The promise which resolves to an array.
+
+0613:    *   The first element of the array is an object representing {@link protos.google.firestore.admin.v1.BackupSchedule|BackupSchedule}.
+0614:    *   Please see the {@link https://github.com/googleapis/gax-nodejs/blob/master/client-libraries.md#regular-methods | documentation }
+0615:    *   for more details and examples.
+0616:    * @example <caption>include:samples/generated/v1/firestore_admin.get_backup_schedule.js</caption>
+0617:    * region_tag:firestore_v1_generated_FirestoreAdmin_GetBackupSchedule_async
+0618:    */
+0619:   getBackupSchedule(
+
+0648:     >
+0649:   ): void;
+0650:   /**
+0651:    * List backup schedules.
+0652:    *
+0653:    * @param {Object} request
+0654:    *   The request object that will be sent.
+
+0662:    *   The first element of the array is an object representing {@link protos.google.firestore.admin.v1.ListBackupSchedulesResponse|ListBackupSchedulesResponse}.
+0663:    *   Please see the {@link https://github.com/googleapis/gax-nodejs/blob/master/client-libraries.md#regular-methods | documentation }
+0664:    *   for more details and examples.
+0665:    * @example <caption>include:samples/generated/v1/firestore_admin.list_backup_schedules.js</caption>
+0666:    * region_tag:firestore_v1_generated_FirestoreAdmin_ListBackupSchedules_async
+0667:    */
+0668:   listBackupSchedules(
+
+0697:     >
+0698:   ): void;
+0699:   /**
+0700:    * Updates a backup schedule.
+0701:    *
+0702:    * @param {Object} request
+0703:    *   The request object that will be sent.
+
+0702:    * @param {Object} request
+0703:    *   The request object that will be sent.
+0704:    * @param {google.firestore.admin.v1.BackupSchedule} request.backupSchedule
+0705:    *   Required. The backup schedule to update.
+0706:    * @param {google.protobuf.FieldMask} request.updateMask
+0707:    *   The list of fields to be updated.
+0708:    * @param {object} [options]
+
+0711:    *   The first element of the array is an object representing {@link protos.google.firestore.admin.v1.BackupSchedule|BackupSchedule}.
+0712:    *   Please see the {@link https://github.com/googleapis/gax-nodejs/blob/master/client-libraries.md#regular-methods | documentation }
+0713:    *   for more details and examples.
+0714:    * @example <caption>include:samples/generated/v1/firestore_admin.update_backup_schedule.js</caption>
+0715:    * region_tag:firestore_v1_generated_FirestoreAdmin_UpdateBackupSchedule_async
+0716:    */
+0717:   updateBackupSchedule(
+
+0746:     >
+0747:   ): void;
+0748:   /**
+0749:    * Deletes a backup schedule.
+0750:    *
+0751:    * @param {Object} request
+0752:    *   The request object that will be sent.
+
+0751:    * @param {Object} request
+0752:    *   The request object that will be sent.
+0753:    * @param {string} request.name
+0754:    *   Required. The name of the backup schedule.
+0755:    *
+0756:    *   Format
+0757:    *   `projects/{project}/databases/{database}/backupSchedules/{backup_schedule}`
+
+0754:    *   Required. The name of the backup schedule.
+0755:    *
+0756:    *   Format
+0757:    *   `projects/{project}/databases/{database}/backupSchedules/{backup_schedule}`
+0758:    * @param {object} [options]
+0759:    *   Call options. See {@link https://googleapis.dev/nodejs/google-gax/latest/interfaces/CallOptions.html|CallOptions} for more details.
+0760:    * @returns {Promise} - The promise which resolves to an array.
+
+0761:    *   The first element of the array is an object representing {@link protos.google.protobuf.Empty|Empty}.
+0762:    *   Please see the {@link https://github.com/googleapis/gax-nodejs/blob/master/client-libraries.md#regular-methods | documentation }
+0763:    *   for more details and examples.
+0764:    * @example <caption>include:samples/generated/v1/firestore_admin.delete_backup_schedule.js</caption>
+0765:    * region_tag:firestore_v1_generated_FirestoreAdmin_DeleteBackupSchedule_async
+0766:    */
+0767:   deleteBackupSchedule(
+
+2157:    *
+2158:    * @param {string} project
+2159:    * @param {string} database
+2160:    * @param {string} backup_schedule
+2161:    * @returns {string} Resource name string.
+2162:    */
+2163:   backupSchedulePath(
+
+2186:     backupScheduleName: string
+2187:   ): string | number;
+2188:   /**
+2189:    * Parse the backup_schedule from BackupSchedule resource.
+2190:    *
+2191:    * @param {string} backupScheduleName
+2192:    *   A fully-qualified path representing BackupSchedule resource.
+
+2190:    *
+2191:    * @param {string} backupScheduleName
+2192:    *   A fully-qualified path representing BackupSchedule resource.
+2193:    * @returns {string} A string representing the backup_schedule.
+2194:    */
+2195:   matchBackupScheduleFromBackupScheduleName(
+2196:     backupScheduleName: string
+
+================================================================================
+backend\node_modules\@grpc\grpc-js\build\src\server.js
+Encontrados: schedule
+
+1361:             onIdleTimeout(ctx, session) {
+1362:                 const { socket } = session;
+1363:                 const sessionInfo = ctx.sessionIdleTimeouts.get(session);
+1364:                 // if it is called while we have activeStreams - timer will not be rescheduled
+1365:                 // until last active stream is closed, then it will call .refresh() on the timer
+1366:                 // important part is to not clearTimeout(timer) or it becomes unusable
+1367:                 // for future refreshes
+
+================================================================================
+backend\node_modules\@grpc\grpc-js\src\server.ts
+Encontrados: schedule
+
+1919:     const { socket } = session;
+1920:     const sessionInfo = ctx.sessionIdleTimeouts.get(session);
+1921: 
+1922:     // if it is called while we have activeStreams - timer will not be rescheduled
+1923:     // until last active stream is closed, then it will call .refresh() on the timer
+1924:     // important part is to not clearTimeout(timer) or it becomes unusable
+1925:     // for future refreshes
+
+================================================================================
+backend\node_modules\@types\node\inspector.generated.d.ts
+Encontrados: schedule
+
+0898:         }
+0899:         interface StepIntoParameterType {
+0900:             /**
+0901:              * Debugger will issue additional Debugger.paused notification if any async task is scheduled before next pause.
+0902:              * @experimental
+0903:              */
+0904:             breakOnAsyncCall?: boolean | undefined;
+
+1290:              */
+1291:             asyncStackTraceId?: Runtime.StackTraceId | undefined;
+1292:             /**
+1293:              * Just scheduled async call will have this stack trace as parent stack during async execution. This field is available only after <code>Debugger.stepInto</code> call with <code>breakOnAsynCall</code> flag.
+1294:              * @experimental
+1295:              */
+1296:             asyncCallStackTraceId?: Runtime.StackTraceId | undefined;
+
+2147:          */
+2148:         post(method: "Debugger.pause", callback?: (err: Error | null) => void): void;
+2149:         /**
+2150:          * This method is deprecated - use Debugger.stepInto with breakOnAsyncCall and Debugger.pauseOnAsyncTask instead. Steps into next scheduled async task if any is scheduled before next pause. Returns success when async task is actually scheduled, returns error if no task were scheduled or another scheduleStepIntoAsync was called.
+2151:          * @experimental
+2152:          */
+2153:         post(method: "Debugger.scheduleStepIntoAsync", callback?: (err: Error | null) => void): void;
+
+2150:          * This method is deprecated - use Debugger.stepInto with breakOnAsyncCall and Debugger.pauseOnAsyncTask instead. Steps into next scheduled async task if any is scheduled before next pause. Returns success when async task is actually scheduled, returns error if no task were scheduled or another scheduleStepIntoAsync was called.
+2151:          * @experimental
+2152:          */
+2153:         post(method: "Debugger.scheduleStepIntoAsync", callback?: (err: Error | null) => void): void;
+2154:         /**
+2155:          * Resumes JavaScript execution.
+2156:          */
+
+3211:          */
+3212:         post(method: "Debugger.pause"): Promise<void>;
+3213:         /**
+3214:          * This method is deprecated - use Debugger.stepInto with breakOnAsyncCall and Debugger.pauseOnAsyncTask instead. Steps into next scheduled async task if any is scheduled before next pause. Returns success when async task is actually scheduled, returns error if no task were scheduled or another scheduleStepIntoAsync was called.
+3215:          * @experimental
+3216:          */
+3217:         post(method: "Debugger.scheduleStepIntoAsync"): Promise<void>;
+
+3214:          * This method is deprecated - use Debugger.stepInto with breakOnAsyncCall and Debugger.pauseOnAsyncTask instead. Steps into next scheduled async task if any is scheduled before next pause. Returns success when async task is actually scheduled, returns error if no task were scheduled or another scheduleStepIntoAsync was called.
+3215:          * @experimental
+3216:          */
+3217:         post(method: "Debugger.scheduleStepIntoAsync"): Promise<void>;
+3218:         /**
+3219:          * Resumes JavaScript execution.
+3220:          */
+
+================================================================================
+backend\node_modules\@types\node\perf_hooks.d.ts
+Encontrados: schedule
+
+0183:          * It returns the current set of event loop metrics.
+0184:          *
+0185:          * It is recommended to use this property inside a function whose execution was
+0186:          * scheduled using `setImmediate` to avoid collecting metrics before finishing all
+0187:          * operations scheduled during the current loop iteration.
+0188:          * @since v22.8.0, v20.18.0
+0189:          */
+
+0184:          *
+0185:          * It is recommended to use this property inside a function whose execution was
+0186:          * scheduled using `setImmediate` to avoid collecting metrics before finishing all
+0187:          * operations scheduled during the current loop iteration.
+0188:          * @since v22.8.0, v20.18.0
+0189:          */
+0190:         readonly uvMetricsInfo: UVMetrics;
+
+================================================================================
+backend\node_modules\@types\node\process.d.ts
+Encontrados: schedule
+
+1630:                  * nextTick(() => {
+1631:                  *   console.log('nextTick callback');
+1632:                  * });
+1633:                  * console.log('scheduled');
+1634:                  * // Output:
+1635:                  * // start
+1636:                  * // scheduled
+
+1633:                  * console.log('scheduled');
+1634:                  * // Output:
+1635:                  * // start
+1636:                  * // scheduled
+1637:                  * // nextTick callback
+1638:                  * ```
+1639:                  *
+
+================================================================================
+backend\node_modules\@types\node\test.d.ts
+Encontrados: schedule
+
+0113:      *
+0114:      * The `timeout` option can be used to fail the test if it takes longer than `timeout` milliseconds to complete. However, it is not a reliable mechanism for
+0115:      * canceling tests because a running test might block the application thread and
+0116:      * thus prevent the scheduled cancellation.
+0117:      * @since v18.0.0, v16.17.0
+0118:      * @param name The name of the test, which is displayed when reporting test results.
+0119:      * Defaults to the `name` property of `fn`, or `'<anonymous>'` if `fn` does not have a name.
+
+================================================================================
+backend\node_modules\@types\node\timers\promises.d.ts
+Encontrados: schedule
+
+0075:          * An experimental API defined by the [Scheduling APIs](https://github.com/WICG/scheduling-apis) draft specification
+0076:          * being developed as a standard Web Platform API.
+0077:          *
+0078:          * Calling `timersPromises.scheduler.wait(delay, options)` is roughly equivalent
+0079:          * to calling `timersPromises.setTimeout(delay, undefined, options)` except that
+0080:          * the `ref` option is not supported.
+0081:          *
+
+0080:          * the `ref` option is not supported.
+0081:          *
+0082:          * ```js
+0083:          * import { scheduler } from 'node:timers/promises';
+0084:          *
+0085:          * await scheduler.wait(1000); // Wait one second before continuing
+0086:          * ```
+
+0082:          * ```js
+0083:          * import { scheduler } from 'node:timers/promises';
+0084:          *
+0085:          * await scheduler.wait(1000); // Wait one second before continuing
+0086:          * ```
+0087:          * @since v17.3.0, v16.14.0
+0088:          * @experimental
+
+0094:          * An experimental API defined by the [Scheduling APIs](https://github.com/WICG/scheduling-apis) draft specification
+0095:          * being developed as a standard Web Platform API.
+0096:          *
+0097:          * Calling `timersPromises.scheduler.yield()` is equivalent to calling
+0098:          * `timersPromises.setImmediate()` with no arguments.
+0099:          * @since v17.3.0, v16.14.0
+0100:          * @experimental
+
+0101:          */
+0102:         yield(): Promise<void>;
+0103:     }
+0104:     const scheduler: Scheduler;
+0105: }
+0106: declare module "node:timers/promises" {
+0107:     export * from "timers/promises";
+
+================================================================================
+backend\node_modules\@types\node\timers.d.ts
+Encontrados: schedule
+
+0013:     import * as promises from "node:timers/promises";
+0014:     export interface TimerOptions extends Abortable {
+0015:         /**
+0016:          * Set to `false` to indicate that the scheduled `Timeout`
+0017:          * should not require the Node.js event loop to remain active.
+0018:          * @default true
+0019:          */
+
+0023:         namespace NodeJS {
+0024:             /**
+0025:              * This object is created internally and is returned from `setImmediate()`. It
+0026:              * can be passed to `clearImmediate()` in order to cancel the scheduled
+0027:              * actions.
+0028:              *
+0029:              * By default, when an immediate is scheduled, the Node.js event loop will continue
+
+0026:              * can be passed to `clearImmediate()` in order to cancel the scheduled
+0027:              * actions.
+0028:              *
+0029:              * By default, when an immediate is scheduled, the Node.js event loop will continue
+0030:              * running as long as the immediate is active. The `Immediate` object returned by
+0031:              * `setImmediate()` exports both `immediate.ref()` and `immediate.unref()`
+0032:              * functions that can be used to control this default behavior.
+
+0076:             /**
+0077:              * This object is created internally and is returned from `setTimeout()` and
+0078:              * `setInterval()`. It can be passed to either `clearTimeout()` or
+0079:              * `clearInterval()` in order to cancel the scheduled actions.
+0080:              *
+0081:              * By default, when a timer is scheduled using either `setTimeout()` or
+0082:              * `setInterval()`, the Node.js event loop will continue running as long as the
+
+0078:              * `setInterval()`. It can be passed to either `clearTimeout()` or
+0079:              * `clearInterval()` in order to cancel the scheduled actions.
+0080:              *
+0081:              * By default, when a timer is scheduled using either `setTimeout()` or
+0082:              * `setInterval()`, the Node.js event loop will continue running as long as the
+0083:              * timer is active. Each of the `Timeout` objects returned by these functions
+0084:              * export both `timeout.ref()` and `timeout.unref()` functions that can be used to
+
+0108:                  */
+0109:                 ref(): this;
+0110:                 /**
+0111:                  * Sets the timer's start time to the current time, and reschedules the timer to
+0112:                  * call its callback at the previously specified duration adjusted to the current
+0113:                  * time. This is useful for refreshing a timer without allocating a new
+0114:                  * JavaScript object.
+
+================================================================================
+backend\node_modules\browserslist\index.js
+Encontrados: schedule
+
+0002: var jsReleases = require('node-releases/data/processed/envs.json')
+0003: var agents = require('caniuse-lite/dist/unpacker/agents').agents
+0004: var e2c = require('electron-to-chromium/versions')
+0005: var jsEOL = require('node-releases/data/release-schedule/release-schedule.json')
+0006: var path = require('path')
+0007: 
+0008: var BrowserslistError = require('./error')
+
+================================================================================
+backend\node_modules\finalhandler\index.js
+Encontrados: schedule
+
+0117: 
+0118:     debug('default %s', status)
+0119: 
+0120:     // schedule onerror callback
+0121:     if (err && onerror) {
+0122:       defer(onerror, err, req, res)
+0123:     }
+
+================================================================================
+backend\node_modules\firebase-admin\lib\database\database.d.ts
+Encontrados: schedule
+
+0060:     get app(): App;
+0061:     getDatabase(url?: string): Database;
+0062:     private onTokenChange;
+0063:     private scheduleTokenRefresh;
+0064:     private ensureUrl;
+0065: }
+
+================================================================================
+backend\node_modules\firebase-admin\lib\database\database.js
+Encontrados: schedule
+
+0102:             // If the new token is set to expire soon (unlikely), do nothing. Somebody will eventually
+0103:             // notice and refresh the token, at which point this callback will fire again.
+0104:             if (delayMillis > 0) {
+0105:                 this.scheduleTokenRefresh(delayMillis);
+0106:             }
+0107:         }
+0108:     }
+
+0106:             }
+0107:         }
+0108:     }
+0109:     scheduleTokenRefresh(delayMillis) {
+0110:         clearTimeout(this.tokenRefreshTimeout);
+0111:         this.tokenRefreshTimeout = setTimeout(() => {
+0112:             this.firebaseApp.INTERNAL.getToken(/*forceRefresh=*/ true)
+
+================================================================================
+backend\node_modules\firebase-admin\lib\functions\functions-api-client-internal.d.ts
+Encontrados: schedule
+
+0023:  */
+0024: export interface Task {
+0025:     name?: string;
+0026:     scheduleTime?: string;
+0027:     dispatchDeadline?: string;
+0028:     httpRequest: {
+0029:         url: string;
+
+================================================================================
+backend\node_modules\firebase-admin\lib\functions\functions-api-client-internal.js
+Encontrados: schedule
+
+0226:             if (!validator.isNonNullObject(opts)) {
+0227:                 throw new FirebaseFunctionsError('invalid-argument', 'TaskOptions must be a non-null object');
+0228:             }
+0229:             if ('scheduleTime' in opts && 'scheduleDelaySeconds' in opts) {
+0230:                 throw new FirebaseFunctionsError('invalid-argument', 'Both scheduleTime and scheduleDelaySeconds are provided. '
+0231:                     + 'Only one value should be set.');
+0232:             }
+
+0227:                 throw new FirebaseFunctionsError('invalid-argument', 'TaskOptions must be a non-null object');
+0228:             }
+0229:             if ('scheduleTime' in opts && 'scheduleDelaySeconds' in opts) {
+0230:                 throw new FirebaseFunctionsError('invalid-argument', 'Both scheduleTime and scheduleDelaySeconds are provided. '
+0231:                     + 'Only one value should be set.');
+0232:             }
+0233:             if ('scheduleTime' in opts && typeof opts.scheduleTime !== 'undefined') {
+
+0230:                 throw new FirebaseFunctionsError('invalid-argument', 'Both scheduleTime and scheduleDelaySeconds are provided. '
+0231:                     + 'Only one value should be set.');
+0232:             }
+0233:             if ('scheduleTime' in opts && typeof opts.scheduleTime !== 'undefined') {
+0234:                 if (!(opts.scheduleTime instanceof Date)) {
+0235:                     throw new FirebaseFunctionsError('invalid-argument', 'scheduleTime must be a valid Date object.');
+0236:                 }
+
+0231:                     + 'Only one value should be set.');
+0232:             }
+0233:             if ('scheduleTime' in opts && typeof opts.scheduleTime !== 'undefined') {
+0234:                 if (!(opts.scheduleTime instanceof Date)) {
+0235:                     throw new FirebaseFunctionsError('invalid-argument', 'scheduleTime must be a valid Date object.');
+0236:                 }
+0237:                 task.scheduleTime = opts.scheduleTime.toISOString();
+
+0232:             }
+0233:             if ('scheduleTime' in opts && typeof opts.scheduleTime !== 'undefined') {
+0234:                 if (!(opts.scheduleTime instanceof Date)) {
+0235:                     throw new FirebaseFunctionsError('invalid-argument', 'scheduleTime must be a valid Date object.');
+0236:                 }
+0237:                 task.scheduleTime = opts.scheduleTime.toISOString();
+0238:             }
+
+0234:                 if (!(opts.scheduleTime instanceof Date)) {
+0235:                     throw new FirebaseFunctionsError('invalid-argument', 'scheduleTime must be a valid Date object.');
+0236:                 }
+0237:                 task.scheduleTime = opts.scheduleTime.toISOString();
+0238:             }
+0239:             if ('scheduleDelaySeconds' in opts && typeof opts.scheduleDelaySeconds !== 'undefined') {
+0240:                 if (!validator.isNumber(opts.scheduleDelaySeconds) || opts.scheduleDelaySeconds < 0) {
+
+0236:                 }
+0237:                 task.scheduleTime = opts.scheduleTime.toISOString();
+0238:             }
+0239:             if ('scheduleDelaySeconds' in opts && typeof opts.scheduleDelaySeconds !== 'undefined') {
+0240:                 if (!validator.isNumber(opts.scheduleDelaySeconds) || opts.scheduleDelaySeconds < 0) {
+0241:                     throw new FirebaseFunctionsError('invalid-argument', 'scheduleDelaySeconds must be a non-negative duration in seconds.');
+0242:                 }
+
+0237:                 task.scheduleTime = opts.scheduleTime.toISOString();
+0238:             }
+0239:             if ('scheduleDelaySeconds' in opts && typeof opts.scheduleDelaySeconds !== 'undefined') {
+0240:                 if (!validator.isNumber(opts.scheduleDelaySeconds) || opts.scheduleDelaySeconds < 0) {
+0241:                     throw new FirebaseFunctionsError('invalid-argument', 'scheduleDelaySeconds must be a non-negative duration in seconds.');
+0242:                 }
+0243:                 const date = new Date();
+
+0238:             }
+0239:             if ('scheduleDelaySeconds' in opts && typeof opts.scheduleDelaySeconds !== 'undefined') {
+0240:                 if (!validator.isNumber(opts.scheduleDelaySeconds) || opts.scheduleDelaySeconds < 0) {
+0241:                     throw new FirebaseFunctionsError('invalid-argument', 'scheduleDelaySeconds must be a non-negative duration in seconds.');
+0242:                 }
+0243:                 const date = new Date();
+0244:                 date.setSeconds(date.getSeconds() + opts.scheduleDelaySeconds);
+
+0241:                     throw new FirebaseFunctionsError('invalid-argument', 'scheduleDelaySeconds must be a non-negative duration in seconds.');
+0242:                 }
+0243:                 const date = new Date();
+0244:                 date.setSeconds(date.getSeconds() + opts.scheduleDelaySeconds);
+0245:                 task.scheduleTime = date.toISOString();
+0246:             }
+0247:             if (typeof opts.dispatchDeadlineSeconds !== 'undefined') {
+
+0242:                 }
+0243:                 const date = new Date();
+0244:                 date.setSeconds(date.getSeconds() + opts.scheduleDelaySeconds);
+0245:                 task.scheduleTime = date.toISOString();
+0246:             }
+0247:             if (typeof opts.dispatchDeadlineSeconds !== 'undefined') {
+0248:                 if (!validator.isNumber(opts.dispatchDeadlineSeconds) || opts.dispatchDeadlineSeconds < 15
+
+================================================================================
+backend\node_modules\firebase-admin\lib\functions\functions-api.d.ts
+Encontrados: schedule
+
+0020:  */
+0021: export interface DelayDelivery {
+0022:     /**
+0023:      * The duration of delay of the time when the task is scheduled to be attempted or retried.
+0024:      * This delay is added to the current time.
+0025:      */
+0026:     scheduleDelaySeconds?: number;
+
+0023:      * The duration of delay of the time when the task is scheduled to be attempted or retried.
+0024:      * This delay is added to the current time.
+0025:      */
+0026:     scheduleDelaySeconds?: number;
+0027:     /** @alpha */
+0028:     scheduleTime?: never;
+0029: }
+
+0025:      */
+0026:     scheduleDelaySeconds?: number;
+0027:     /** @alpha */
+0028:     scheduleTime?: never;
+0029: }
+0030: /**
+0031:  * Interface representing task options with absolute delivery.
+
+0032:  */
+0033: export interface AbsoluteDelivery {
+0034:     /**
+0035:      * The time when the task is scheduled to be attempted or retried.
+0036:      */
+0037:     scheduleTime?: Date;
+0038:     /** @alpha */
+
+0034:     /**
+0035:      * The time when the task is scheduled to be attempted or retried.
+0036:      */
+0037:     scheduleTime?: Date;
+0038:     /** @alpha */
+0039:     scheduleDelaySeconds?: never;
+0040: }
+
+0036:      */
+0037:     scheduleTime?: Date;
+0038:     /** @alpha */
+0039:     scheduleDelaySeconds?: never;
+0040: }
+0041: /**
+0042:  * Type representing delivery schedule options.
+
+0039:     scheduleDelaySeconds?: never;
+0040: }
+0041: /**
+0042:  * Type representing delivery schedule options.
+0043:  * `DeliverySchedule` is a union type of {@link DelayDelivery} and {@link AbsoluteDelivery} types.
+0044:  */
+0045: export type DeliverySchedule = DelayDelivery | AbsoluteDelivery;
+
+================================================================================
+backend\node_modules\google-gax\build\src\bundlingCalls\bundleApiCaller.js
+Encontrados: schedule
+
+0040:             throw new googleError_1.GoogleError('Bundling enabled with no isBundling!');
+0041:         }
+0042:         status.call((argument, callback) => {
+0043:             this.bundler.schedule(apiCall, argument, callback);
+0044:             return status;
+0045:         }, argument);
+0046:     }
+
+================================================================================
+backend\node_modules\google-gax\build\src\bundlingCalls\bundleExecutor.d.ts
+Encontrados: schedule
+
+0086:      * @param {function} apiCall - the function for an API call.
+0087:      * @param {Object} request - the request object to be bundled with others.
+0088:      * @param {APICallback} callback - the callback to be called when the method finished.
+0089:      * @return {function()} - the function to cancel the scheduled invocation.
+0090:      */
+0091:     schedule(apiCall: SimpleCallbackFunction, request: {
+0092:         [index: string]: Array<{}> | string;
+
+0088:      * @param {APICallback} callback - the callback to be called when the method finished.
+0089:      * @return {function()} - the function to cancel the scheduled invocation.
+0090:      */
+0091:     schedule(apiCall: SimpleCallbackFunction, request: {
+0092:         [index: string]: Array<{}> | string;
+0093:     }, callback?: TaskCallback): import("../apitypes").GRPCCallResult;
+0094:     /**
+
+0092:         [index: string]: Array<{}> | string;
+0093:     }, callback?: TaskCallback): import("../apitypes").GRPCCallResult;
+0094:     /**
+0095:      * Clears scheduled timeout if it exists.
+0096:      *
+0097:      * @param {String} bundleId - the id for the task whose timeout needs to be
+0098:      *   cleared.
+
+================================================================================
+backend\node_modules\google-gax\build\src\bundlingCalls\bundleExecutor.js
+Encontrados: schedule
+
+0052:      * @param {function} apiCall - the function for an API call.
+0053:      * @param {Object} request - the request object to be bundled with others.
+0054:      * @param {APICallback} callback - the callback to be called when the method finished.
+0055:      * @return {function()} - the function to cancel the scheduled invocation.
+0056:      */
+0057:     schedule(apiCall, request, callback) {
+0058:         const bundleId = (0, bundlingUtils_1.computeBundleId)(request, this._descriptor.requestDiscriminatorFields);
+
+0054:      * @param {APICallback} callback - the callback to be called when the method finished.
+0055:      * @return {function()} - the function to cancel the scheduled invocation.
+0056:      */
+0057:     schedule(apiCall, request, callback) {
+0058:         const bundleId = (0, bundlingUtils_1.computeBundleId)(request, this._descriptor.requestDiscriminatorFields);
+0059:         callback = (callback || noop);
+0060:         if (bundleId === undefined) {
+
+0058:         const bundleId = (0, bundlingUtils_1.computeBundleId)(request, this._descriptor.requestDiscriminatorFields);
+0059:         callback = (callback || noop);
+0060:         if (bundleId === undefined) {
+0061:             (0, warnings_1.warn)('bundling_schedule_bundleid_undefined', 'The request does not have enough information for request bundling. ' +
+0062:                 `Invoking immediately. Request: ${JSON.stringify(request)} ` +
+0063:                 `discriminator fields: ${this._descriptor.requestDiscriminatorFields}`);
+0064:             return apiCall(request, callback);
+
+0138:         return ret;
+0139:     }
+0140:     /**
+0141:      * Clears scheduled timeout if it exists.
+0142:      *
+0143:      * @param {String} bundleId - the id for the task whose timeout needs to be
+0144:      *   cleared.
+
+================================================================================
+backend\node_modules\mime\types\other.js
+Encontrados: schedule
+
+0001: module.exports = {"application/prs.cww":["cww"],"application/vnd.1000minds.decision-model+xml":["1km"],"application/vnd.3gpp.pic-bw-large":["plb"],"application/vnd.3gpp.pic-bw-small":["psb"],"application/vnd.3gpp.pic-bw-var":["pvb"],"application/vnd.3gpp2.tcap":["tcap"],"application/vnd.3m.post-it-notes":["pwn"],"application/vnd.accpac.simply.aso":["aso"],"application/vnd.accpac.simply.imp":["imp"],"application/vnd.acucobol":["acu"],"application/vnd.acucorp":["atc","acutc"],"application/vnd.adobe.air-application-installer-package+zip":["air"],"application/vnd.adobe.formscentral.fcdt":["fcdt"],"application/vnd.adobe.fxp":["fxp","fxpl"],"application/vnd.adobe.xdp+xml":["xdp"],"application/vnd.adobe.xfdf":["xfdf"],"application/vnd.ahead.space":["ahead"],"application/vnd.airzip.filesecure.azf":["azf"],"application/vnd.airzip.filesecure.azs":["azs"],"application/vnd.amazon.ebook":["azw"],"application/vnd.americandynamics.acc":["acc"],"application/vnd.amiga.ami":["ami"],"application/vnd.android.package-archive":["apk"],"application/vnd.anser-web-certificate-issue-initiation":["cii"],"application/vnd.anser-web-funds-transfer-initiation":["fti"],"application/vnd.antix.game-component":["atx"],"application/vnd.apple.installer+xml":["mpkg"],"application/vnd.apple.keynote":["key"],"application/vnd.apple.mpegurl":["m3u8"],"application/vnd.apple.numbers":["numbers"],"application/vnd.apple.pages":["pages"],"application/vnd.apple.pkpass":["pkpass"],"application/vnd.aristanetworks.swi":["swi"],"application/vnd.astraea-software.iota":["iota"],"application/vnd.audiograph":["aep"],"application/vnd.balsamiq.bmml+xml":["bmml"],"application/vnd.blueice.multipass":["mpm"],"application/vnd.bmi":["bmi"],"application/vnd.businessobjects":["rep"],"application/vnd.chemdraw+xml":["cdxml"],"application/vnd.chipnuts.karaoke-mmd":["mmd"],"application/vnd.cinderella":["cdy"],"application/vnd.citationstyles.style+xml":["csl"],"application/vnd.claymore":["cla"],"application/vnd.cloanto.rp9":["rp9"],"application/vnd.clonk.c4group":["c4g","c4d","c4f","c4p","c4u"],"application/vnd.cluetrust.cartomobile-config":["c11amc"],"application/vnd.cluetrust.cartomobile-config-pkg":["c11amz"],"application/vnd.commonspace":["csp"],"application/vnd.contact.cmsg":["cdbcmsg"],"application/vnd.cosmocaller":["cmc"],"application/vnd.crick.clicker":["clkx"],"application/vnd.crick.clicker.keyboard":["clkk"],"application/vnd.crick.clicker.palette":["clkp"],"application/vnd.crick.clicker.template":["clkt"],"application/vnd.crick.clicker.wordbank":["clkw"],"application/vnd.criticaltools.wbs+xml":["wbs"],"application/vnd.ctc-posml":["pml"],"application/vnd.cups-ppd":["ppd"],"application/vnd.curl.car":["car"],"application/vnd.curl.pcurl":["pcurl"],"application/vnd.dart":["dart"],"application/vnd.data-vision.rdz":["rdz"],"application/vnd.dbf":["dbf"],"application/vnd.dece.data":["uvf","uvvf","uvd","uvvd"],"application/vnd.dece.ttml+xml":["uvt","uvvt"],"application/vnd.dece.unspecified":["uvx","uvvx"],"application/vnd.dece.zip":["uvz","uvvz"],"application/vnd.denovo.fcselayout-link":["fe_launch"],"application/vnd.dna":["dna"],"application/vnd.dolby.mlp":["mlp"],"application/vnd.dpgraph":["dpg"],"application/vnd.dreamfactory":["dfac"],"application/vnd.ds-keypoint":["kpxx"],"application/vnd.dvb.ait":["ait"],"application/vnd.dvb.service":["svc"],"application/vnd.dynageo":["geo"],"application/vnd.ecowin.chart":["mag"],"application/vnd.enliven":["nml"],"application/vnd.epson.esf":["esf"],"application/vnd.epson.msf":["msf"],"application/vnd.epson.quickanime":["qam"],"application/vnd.epson.salt":["slt"],"application/vnd.epson.ssf":["ssf"],"application/vnd.eszigno3+xml":["es3","et3"],"application/vnd.ezpix-album":["ez2"],"application/vnd.ezpix-package":["ez3"],"application/vnd.fdf":["fdf"],"application/vnd.fdsn.mseed":["mseed"],"application/vnd.fdsn.seed":["seed","dataless"],"application/vnd.flographit":["gph"],"application/vnd.fluxtime.clip":["ftc"],"application/vnd.framemaker":["fm","frame","maker","book"],"application/vnd.frogans.fnc":["fnc"],"application/vnd.frogans.ltf":["ltf"],"application/vnd.fsc.weblaunch":["fsc"],"application/vnd.fujitsu.oasys":["oas"],"application/vnd.fujitsu.oasys2":["oa2"],"application/vnd.fujitsu.oasys3":["oa3"],"application/vnd.fujitsu.oasysgp":["fg5"],"application/vnd.fujitsu.oasysprs":["bh2"],"application/vnd.fujixerox.ddd":["ddd"],"application/vnd.fujixerox.docuworks":["xdw"],"application/vnd.fujixerox.docuworks.binder":["xbd"],"application/vnd.fuzzysheet":["fzs"],"application/vnd.genomatix.tuxedo":["txd"],"application/vnd.geogebra.file":["ggb"],"application/vnd.geogebra.tool":["ggt"],"application/vnd.geometry-explorer":["gex","gre"],"application/vnd.geonext":["gxt"],"application/vnd.geoplan":["g2w"],"application/vnd.geospace":["g3w"],"application/vnd.gmx":["gmx"],"application/vnd.google-apps.document":["gdoc"],"application/vnd.google-apps.presentation":["gslides"],"application/vnd.google-apps.spreadsheet":["gsheet"],"application/vnd.google-earth.kml+xml":["kml"],"application/vnd.google-earth.kmz":["kmz"],"application/vnd.grafeq":["gqf","gqs"],"application/vnd.groove-account":["gac"],"application/vnd.groove-help":["ghf"],"application/vnd.groove-identity-message":["gim"],"application/vnd.groove-injector":["grv"],"application/vnd.groove-tool-message":["gtm"],"application/vnd.groove-tool-template":["tpl"],"application/vnd.groove-vcard":["vcg"],"application/vnd.hal+xml":["hal"],"application/vnd.handheld-entertainment+xml":["zmm"],"application/vnd.hbci":["hbci"],"application/vnd.hhe.lesson-player":["les"],"application/vnd.hp-hpgl":["hpgl"],"application/vnd.hp-hpid":["hpid"],"application/vnd.hp-hps":["hps"],"application/vnd.hp-jlyt":["jlt"],"application/vnd.hp-pcl":["pcl"],"application/vnd.hp-pclxl":["pclxl"],"application/vnd.hydrostatix.sof-data":["sfd-hdstx"],"application/vnd.ibm.minipay":["mpy"],"application/vnd.ibm.modcap":["afp","listafp","list3820"],"application/vnd.ibm.rights-management":["irm"],"application/vnd.ibm.secure-container":["sc"],"application/vnd.iccprofile":["icc","icm"],"application/vnd.igloader":["igl"],"application/vnd.immervision-ivp":["ivp"],"application/vnd.immervision-ivu":["ivu"],"application/vnd.insors.igm":["igm"],"application/vnd.intercon.formnet":["xpw","xpx"],"application/vnd.intergeo":["i2g"],"application/vnd.intu.qbo":["qbo"],"application/vnd.intu.qfx":["qfx"],"application/vnd.ipunplugged.rcprofile":["rcprofile"],"application/vnd.irepository.package+xml":["irp"],"application/vnd.is-xpr":["xpr"],"application/vnd.isac.fcs":["fcs"],"application/vnd.jam":["jam"],"application/vnd.jcp.javame.midlet-rms":["rms"],"application/vnd.jisp":["jisp"],"application/vnd.joost.joda-archive":["joda"],"application/vnd.kahootz":["ktz","ktr"],"application/vnd.kde.karbon":["karbon"],"application/vnd.kde.kchart":["chrt"],"application/vnd.kde.kformula":["kfo"],"application/vnd.kde.kivio":["flw"],"application/vnd.kde.kontour":["kon"],"application/vnd.kde.kpresenter":["kpr","kpt"],"application/vnd.kde.kspread":["ksp"],"application/vnd.kde.kword":["kwd","kwt"],"application/vnd.kenameaapp":["htke"],"application/vnd.kidspiration":["kia"],"application/vnd.kinar":["kne","knp"],"application/vnd.koan":["skp","skd","skt","skm"],"application/vnd.kodak-descriptor":["sse"],"application/vnd.las.las+xml":["lasxml"],"application/vnd.llamagraphics.life-balance.desktop":["lbd"],"application/vnd.llamagraphics.life-balance.exchange+xml":["lbe"],"application/vnd.lotus-1-2-3":["123"],"application/vnd.lotus-approach":["apr"],"application/vnd.lotus-freelance":["pre"],"application/vnd.lotus-notes":["nsf"],"application/vnd.lotus-organizer":["org"],"application/vnd.lotus-screencam":["scm"],"application/vnd.lotus-wordpro":["lwp"],"application/vnd.macports.portpkg":["portpkg"],"application/vnd.mapbox-vector-tile":["mvt"],"application/vnd.mcd":["mcd"],"application/vnd.medcalcdata":["mc1"],"application/vnd.mediastation.cdkey":["cdkey"],"application/vnd.mfer":["mwf"],"application/vnd.mfmp":["mfm"],"application/vnd.micrografx.flo":["flo"],"application/vnd.micrografx.igx":["igx"],"application/vnd.mif":["mif"],"application/vnd.mobius.daf":["daf"],"application/vnd.mobius.dis":["dis"],"application/vnd.mobius.mbk":["mbk"],"application/vnd.mobius.mqy":["mqy"],"application/vnd.mobius.msl":["msl"],"application/vnd.mobius.plc":["plc"],"application/vnd.mobius.txf":["txf"],"application/vnd.mophun.application":["mpn"],"application/vnd.mophun.certificate":["mpc"],"application/vnd.mozilla.xul+xml":["xul"],"application/vnd.ms-artgalry":["cil"],"application/vnd.ms-cab-compressed":["cab"],"application/vnd.ms-excel":["xls","xlm","xla","xlc","xlt","xlw"],"application/vnd.ms-excel.addin.macroenabled.12":["xlam"],"application/vnd.ms-excel.sheet.binary.macroenabled.12":["xlsb"],"application/vnd.ms-excel.sheet.macroenabled.12":["xlsm"],"application/vnd.ms-excel.template.macroenabled.12":["xltm"],"application/vnd.ms-fontobject":["eot"],"application/vnd.ms-htmlhelp":["chm"],"application/vnd.ms-ims":["ims"],"application/vnd.ms-lrm":["lrm"],"application/vnd.ms-officetheme":["thmx"],"application/vnd.ms-outlook":["msg"],"application/vnd.ms-pki.seccat":["cat"],"application/vnd.ms-pki.stl":["*stl"],"application/vnd.ms-powerpoint":["ppt","pps","pot"],"application/vnd.ms-powerpoint.addin.macroenabled.12":["ppam"],"application/vnd.ms-powerpoint.presentation.macroenabled.12":["pptm"],"application/vnd.ms-powerpoint.slide.macroenabled.12":["sldm"],"application/vnd.ms-powerpoint.slideshow.macroenabled.12":["ppsm"],"application/vnd.ms-powerpoint.template.macroenabled.12":["potm"],"application/vnd.ms-project":["mpp","mpt"],"application/vnd.ms-word.document.macroenabled.12":["docm"],"application/vnd.ms-word.template.macroenabled.12":["dotm"],"application/vnd.ms-works":["wps","wks","wcm","wdb"],"application/vnd.ms-wpl":["wpl"],"application/vnd.ms-xpsdocument":["xps"],"application/vnd.mseq":["mseq"],"application/vnd.musician":["mus"],"application/vnd.muvee.style":["msty"],"application/vnd.mynfc":["taglet"],"application/vnd.neurolanguage.nlu":["nlu"],"application/vnd.nitf":["ntf","nitf"],"application/vnd.noblenet-directory":["nnd"],"application/vnd.noblenet-sealer":["nns"],"application/vnd.noblenet-web":["nnw"],"application/vnd.nokia.n-gage.ac+xml":["*ac"],"application/vnd.nokia.n-gage.data":["ngdat"],"application/vnd.nokia.n-gage.symbian.install":["n-gage"],"application/vnd.nokia.radio-preset":["rpst"],"application/vnd.nokia.radio-presets":["rpss"],"application/vnd.novadigm.edm":["edm"],"application/vnd.novadigm.edx":["edx"],"application/vnd.novadigm.ext":["ext"],"application/vnd.oasis.opendocument.chart":["odc"],"application/vnd.oasis.opendocument.chart-template":["otc"],"application/vnd.oasis.opendocument.database":["odb"],"application/vnd.oasis.opendocument.formula":["odf"],"application/vnd.oasis.opendocument.formula-template":["odft"],"application/vnd.oasis.opendocument.graphics":["odg"],"application/vnd.oasis.opendocument.graphics-template":["otg"],"application/vnd.oasis.opendocument.image":["odi"],"application/vnd.oasis.opendocument.image-template":["oti"],"application/vnd.oasis.opendocument.presentation":["odp"],"application/vnd.oasis.opendocument.presentation-template":["otp"],"application/vnd.oasis.opendocument.spreadsheet":["ods"],"application/vnd.oasis.opendocument.spreadsheet-template":["ots"],"application/vnd.oasis.opendocument.text":["odt"],"application/vnd.oasis.opendocument.text-master":["odm"],"application/vnd.oasis.opendocument.text-template":["ott"],"application/vnd.oasis.opendocument.text-web":["oth"],"application/vnd.olpc-sugar":["xo"],"application/vnd.oma.dd2+xml":["dd2"],"application/vnd.openblox.game+xml":["obgx"],"application/vnd.openofficeorg.extension":["oxt"],"application/vnd.openstreetmap.data+xml":["osm"],"application/vnd.openxmlformats-officedocument.presentationml.presentation":["pptx"],"application/vnd.openxmlformats-officedocument.presentationml.slide":["sldx"],"application/vnd.openxmlformats-officedocument.presentationml.slideshow":["ppsx"],"application/vnd.openxmlformats-officedocument.presentationml.template":["potx"],"application/vnd.openxmlformats-officedocument.spreadsheetml.sheet":["xlsx"],"application/vnd.openxmlformats-officedocument.spreadsheetml.template":["xltx"],"application/vnd.openxmlformats-officedocument.wordprocessingml.document":["docx"],"application/vnd.openxmlformats-officedocument.wordprocessingml.template":["dotx"],"application/vnd.osgeo.mapguide.package":["mgp"],"application/vnd.osgi.dp":["dp"],"application/vnd.osgi.subsystem":["esa"],"application/vnd.palm":["pdb","pqa","oprc"],"application/vnd.pawaafile":["paw"],"application/vnd.pg.format":["str"],"application/vnd.pg.osasli":["ei6"],"application/vnd.picsel":["efif"],"application/vnd.pmi.widget":["wg"],"application/vnd.pocketlearn":["plf"],"application/vnd.powerbuilder6":["pbd"],"application/vnd.previewsystems.box":["box"],"application/vnd.proteus.magazine":["mgz"],"application/vnd.publishare-delta-tree":["qps"],"application/vnd.pvi.ptid1":["ptid"],"application/vnd.quark.quarkxpress":["qxd","qxt","qwd","qwt","qxl","qxb"],"application/vnd.rar":["rar"],"application/vnd.realvnc.bed":["bed"],"application/vnd.recordare.musicxml":["mxl"],"application/vnd.recordare.musicxml+xml":["musicxml"],"application/vnd.rig.cryptonote":["cryptonote"],"application/vnd.rim.cod":["cod"],"application/vnd.rn-realmedia":["rm"],"application/vnd.rn-realmedia-vbr":["rmvb"],"application/vnd.route66.link66+xml":["link66"],"application/vnd.sailingtracker.track":["st"],"application/vnd.seemail":["see"],"application/vnd.sema":["sema"],"application/vnd.semd":["semd"],"application/vnd.semf":["semf"],"application/vnd.shana.informed.formdata":["ifm"],"application/vnd.shana.informed.formtemplate":["itp"],"application/vnd.shana.informed.interchange":["iif"],"application/vnd.shana.informed.package":["ipk"],"application/vnd.simtech-mindmapper":["twd","twds"],"application/vnd.smaf":["mmf"],"application/vnd.smart.teacher":["teacher"],"application/vnd.software602.filler.form+xml":["fo"],"application/vnd.solent.sdkm+xml":["sdkm","sdkd"],"application/vnd.spotfire.dxp":["dxp"],"application/vnd.spotfire.sfs":["sfs"],"application/vnd.stardivision.calc":["sdc"],"application/vnd.stardivision.draw":["sda"],"application/vnd.stardivision.impress":["sdd"],"application/vnd.stardivision.math":["smf"],"application/vnd.stardivision.writer":["sdw","vor"],"application/vnd.stardivision.writer-global":["sgl"],"application/vnd.stepmania.package":["smzip"],"application/vnd.stepmania.stepchart":["sm"],"application/vnd.sun.wadl+xml":["wadl"],"application/vnd.sun.xml.calc":["sxc"],"application/vnd.sun.xml.calc.template":["stc"],"application/vnd.sun.xml.draw":["sxd"],"application/vnd.sun.xml.draw.template":["std"],"application/vnd.sun.xml.impress":["sxi"],"application/vnd.sun.xml.impress.template":["sti"],"application/vnd.sun.xml.math":["sxm"],"application/vnd.sun.xml.writer":["sxw"],"application/vnd.sun.xml.writer.global":["sxg"],"application/vnd.sun.xml.writer.template":["stw"],"application/vnd.sus-calendar":["sus","susp"],"application/vnd.svd":["svd"],"application/vnd.symbian.install":["sis","sisx"],"application/vnd.syncml+xml":["xsm"],"application/vnd.syncml.dm+wbxml":["bdm"],"application/vnd.syncml.dm+xml":["xdm"],"application/vnd.syncml.dmddf+xml":["ddf"],"application/vnd.tao.intent-module-archive":["tao"],"application/vnd.tcpdump.pcap":["pcap","cap","dmp"],"application/vnd.tmobile-livetv":["tmo"],"application/vnd.trid.tpt":["tpt"],"application/vnd.triscape.mxs":["mxs"],"application/vnd.trueapp":["tra"],"application/vnd.ufdl":["ufd","ufdl"],"application/vnd.uiq.theme":["utz"],"application/vnd.umajin":["umj"],"application/vnd.unity":["unityweb"],"application/vnd.uoml+xml":["uoml"],"application/vnd.vcx":["vcx"],"application/vnd.visio":["vsd","vst","vss","vsw"],"application/vnd.visionary":["vis"],"application/vnd.vsf":["vsf"],"application/vnd.wap.wbxml":["wbxml"],"application/vnd.wap.wmlc":["wmlc"],"application/vnd.wap.wmlscriptc":["wmlsc"],"application/vnd.webturbo":["wtb"],"application/vnd.wolfram.player":["nbp"],"application/vnd.wordperfect":["wpd"],"application/vnd.wqd":["wqd"],"application/vnd.wt.stf":["stf"],"application/vnd.xara":["xar"],"application/vnd.xfdl":["xfdl"],"application/vnd.yamaha.hv-dic":["hvd"],"application/vnd.yamaha.hv-script":["hvs"],"application/vnd.yamaha.hv-voice":["hvp"],"application/vnd.yamaha.openscoreformat":["osf"],"application/vnd.yamaha.openscoreformat.osfpvg+xml":["osfpvg"],"application/vnd.yamaha.smaf-audio":["saf"],"application/vnd.yamaha.smaf-phrase":["spf"],"application/vnd.yellowriver-custom-menu":["cmp"],"application/vnd.zul":["zir","zirz"],"application/vnd.zzazz.deck+xml":["zaz"],"application/x-7z-compressed":["7z"],"application/x-abiword":["abw"],"application/x-ace-compressed":["ace"],"application/x-apple-diskimage":["*dmg"],"application/x-arj":["arj"],"application/x-authorware-bin":["aab","x32","u32","vox"],"application/x-authorware-map":["aam"],"application/x-authorware-seg":["aas"],"application/x-bcpio":["bcpio"],"application/x-bdoc":["*bdoc"],"application/x-bittorrent":["torrent"],"application/x-blorb":["blb","blorb"],"application/x-bzip":["bz"],"application/x-bzip2":["bz2","boz"],"application/x-cbr":["cbr","cba","cbt","cbz","cb7"],"application/x-cdlink":["vcd"],"application/x-cfs-compressed":["cfs"],"application/x-chat":["chat"],"application/x-chess-pgn":["pgn"],"application/x-chrome-extension":["crx"],"application/x-cocoa":["cco"],"application/x-conference":["nsc"],"application/x-cpio":["cpio"],"application/x-csh":["csh"],"application/x-debian-package":["*deb","udeb"],"application/x-dgc-compressed":["dgc"],"application/x-director":["dir","dcr","dxr","cst","cct","cxt","w3d","fgd","swa"],"application/x-doom":["wad"],"application/x-dtbncx+xml":["ncx"],"application/x-dtbook+xml":["dtb"],"application/x-dtbresource+xml":["res"],"application/x-dvi":["dvi"],"application/x-envoy":["evy"],"application/x-eva":["eva"],"application/x-font-bdf":["bdf"],"application/x-font-ghostscript":["gsf"],"application/x-font-linux-psf":["psf"],"application/x-font-pcf":["pcf"],"application/x-font-snf":["snf"],"application/x-font-type1":["pfa","pfb","pfm","afm"],"application/x-freearc":["arc"],"application/x-futuresplash":["spl"],"application/x-gca-compressed":["gca"],"application/x-glulx":["ulx"],"application/x-gnumeric":["gnumeric"],"application/x-gramps-xml":["gramps"],"application/x-gtar":["gtar"],"application/x-hdf":["hdf"],"application/x-httpd-php":["php"],"application/x-install-instructions":["install"],"application/x-iso9660-image":["*iso"],"application/x-iwork-keynote-sffkey":["*key"],"application/x-iwork-numbers-sffnumbers":["*numbers"],"application/x-iwork-pages-sffpages":["*pages"],"application/x-java-archive-diff":["jardiff"],"application/x-java-jnlp-file":["jnlp"],"application/x-keepass2":["kdbx"],"application/x-latex":["latex"],"application/x-lua-bytecode":["luac"],"application/x-lzh-compressed":["lzh","lha"],"application/x-makeself":["run"],"application/x-mie":["mie"],"application/x-mobipocket-ebook":["prc","mobi"],"application/x-ms-application":["application"],"application/x-ms-shortcut":["lnk"],"application/x-ms-wmd":["wmd"],"application/x-ms-wmz":["wmz"],"application/x-ms-xbap":["xbap"],"application/x-msaccess":["mdb"],"application/x-msbinder":["obd"],"application/x-mscardfile":["crd"],"application/x-msclip":["clp"],"application/x-msdos-program":["*exe"],"application/x-msdownload":["*exe","*dll","com","bat","*msi"],"application/x-msmediaview":["mvb","m13","m14"],"application/x-msmetafile":["*wmf","*wmz","*emf","emz"],"application/x-msmoney":["mny"],"application/x-mspublisher":["pub"],"application/x-msschedule":["scd"],"application/x-msterminal":["trm"],"application/x-mswrite":["wri"],"application/x-netcdf":["nc","cdf"],"application/x-ns-proxy-autoconfig":["pac"],"application/x-nzb":["nzb"],"application/x-perl":["pl","pm"],"application/x-pilot":["*prc","*pdb"],"application/x-pkcs12":["p12","pfx"],"application/x-pkcs7-certificates":["p7b","spc"],"application/x-pkcs7-certreqresp":["p7r"],"application/x-rar-compressed":["*rar"],"application/x-redhat-package-manager":["rpm"],"application/x-research-info-systems":["ris"],"application/x-sea":["sea"],"application/x-sh":["sh"],"application/x-shar":["shar"],"application/x-shockwave-flash":["swf"],"application/x-silverlight-app":["xap"],"application/x-sql":["sql"],"application/x-stuffit":["sit"],"application/x-stuffitx":["sitx"],"application/x-subrip":["srt"],"application/x-sv4cpio":["sv4cpio"],"application/x-sv4crc":["sv4crc"],"application/x-t3vm-image":["t3"],"application/x-tads":["gam"],"application/x-tar":["tar"],"application/x-tcl":["tcl","tk"],"application/x-tex":["tex"],"application/x-tex-tfm":["tfm"],"application/x-texinfo":["texinfo","texi"],"application/x-tgif":["*obj"],"application/x-ustar":["ustar"],"application/x-virtualbox-hdd":["hdd"],"application/x-virtualbox-ova":["ova"],"application/x-virtualbox-ovf":["ovf"],"application/x-virtualbox-vbox":["vbox"],"application/x-virtualbox-vbox-extpack":["vbox-extpack"],"application/x-virtualbox-vdi":["vdi"],"application/x-virtualbox-vhd":["vhd"],"application/x-virtualbox-vmdk":["vmdk"],"application/x-wais-source":["src"],"application/x-web-app-manifest+json":["webapp"],"application/x-x509-ca-cert":["der","crt","pem"],"application/x-xfig":["fig"],"application/x-xliff+xml":["*xlf"],"application/x-xpinstall":["xpi"],"application/x-xz":["xz"],"application/x-zmachine":["z1","z2","z3","z4","z5","z6","z7","z8"],"audio/vnd.dece.audio":["uva","uvva"],"audio/vnd.digital-winds":["eol"],"audio/vnd.dra":["dra"],"audio/vnd.dts":["dts"],"audio/vnd.dts.hd":["dtshd"],"audio/vnd.lucent.voice":["lvp"],"audio/vnd.ms-playready.media.pya":["pya"],"audio/vnd.nuera.ecelp4800":["ecelp4800"],"audio/vnd.nuera.ecelp7470":["ecelp7470"],"audio/vnd.nuera.ecelp9600":["ecelp9600"],"audio/vnd.rip":["rip"],"audio/x-aac":["aac"],"audio/x-aiff":["aif","aiff","aifc"],"audio/x-caf":["caf"],"audio/x-flac":["flac"],"audio/x-m4a":["*m4a"],"audio/x-matroska":["mka"],"audio/x-mpegurl":["m3u"],"audio/x-ms-wax":["wax"],"audio/x-ms-wma":["wma"],"audio/x-pn-realaudio":["ram","ra"],"audio/x-pn-realaudio-plugin":["rmp"],"audio/x-realaudio":["*ra"],"audio/x-wav":["*wav"],"chemical/x-cdx":["cdx"],"chemical/x-cif":["cif"],"chemical/x-cmdf":["cmdf"],"chemical/x-cml":["cml"],"chemical/x-csml":["csml"],"chemical/x-xyz":["xyz"],"image/prs.btif":["btif"],"image/prs.pti":["pti"],"image/vnd.adobe.photoshop":["psd"],"image/vnd.airzip.accelerator.azv":["azv"],"image/vnd.dece.graphic":["uvi","uvvi","uvg","uvvg"],"image/vnd.djvu":["djvu","djv"],"image/vnd.dvb.subtitle":["*sub"],"image/vnd.dwg":["dwg"],"image/vnd.dxf":["dxf"],"image/vnd.fastbidsheet":["fbs"],"image/vnd.fpx":["fpx"],"image/vnd.fst":["fst"],"image/vnd.fujixerox.edmics-mmr":["mmr"],"image/vnd.fujixerox.edmics-rlc":["rlc"],"image/vnd.microsoft.icon":["ico"],"image/vnd.ms-dds":["dds"],"image/vnd.ms-modi":["mdi"],"image/vnd.ms-photo":["wdp"],"image/vnd.net-fpx":["npx"],"image/vnd.pco.b16":["b16"],"image/vnd.tencent.tap":["tap"],"image/vnd.valve.source.texture":["vtf"],"image/vnd.wap.wbmp":["wbmp"],"image/vnd.xiff":["xif"],"image/vnd.zbrush.pcx":["pcx"],"image/x-3ds":["3ds"],"image/x-cmu-raster":["ras"],"image/x-cmx":["cmx"],"image/x-freehand":["fh","fhc","fh4","fh5","fh7"],"image/x-icon":["*ico"],"image/x-jng":["jng"],"image/x-mrsid-image":["sid"],"image/x-ms-bmp":["*bmp"],"image/x-pcx":["*pcx"],"image/x-pict":["pic","pct"],"image/x-portable-anymap":["pnm"],"image/x-portable-bitmap":["pbm"],"image/x-portable-graymap":["pgm"],"image/x-portable-pixmap":["ppm"],"image/x-rgb":["rgb"],"image/x-tga":["tga"],"image/x-xbitmap":["xbm"],"image/x-xpixmap":["xpm"],"image/x-xwindowdump":["xwd"],"message/vnd.wfa.wsc":["wsc"],"model/vnd.collada+xml":["dae"],"model/vnd.dwf":["dwf"],"model/vnd.gdl":["gdl"],"model/vnd.gtw":["gtw"],"model/vnd.mts":["mts"],"model/vnd.opengex":["ogex"],"model/vnd.parasolid.transmit.binary":["x_b"],"model/vnd.parasolid.transmit.text":["x_t"],"model/vnd.sap.vds":["vds"],"model/vnd.usdz+zip":["usdz"],"model/vnd.valve.source.compiled-map":["bsp"],"model/vnd.vtu":["vtu"],"text/prs.lines.tag":["dsc"],"text/vnd.curl":["curl"],"text/vnd.curl.dcurl":["dcurl"],"text/vnd.curl.mcurl":["mcurl"],"text/vnd.curl.scurl":["scurl"],"text/vnd.dvb.subtitle":["sub"],"text/vnd.fly":["fly"],"text/vnd.fmi.flexstor":["flx"],"text/vnd.graphviz":["gv"],"text/vnd.in3d.3dml":["3dml"],"text/vnd.in3d.spot":["spot"],"text/vnd.sun.j2me.app-descriptor":["jad"],"text/vnd.wap.wml":["wml"],"text/vnd.wap.wmlscript":["wmls"],"text/x-asm":["s","asm"],"text/x-c":["c","cc","cxx","cpp","h","hh","dic"],"text/x-component":["htc"],"text/x-fortran":["f","for","f77","f90"],"text/x-handlebars-template":["hbs"],"text/x-java-source":["java"],"text/x-lua":["lua"],"text/x-markdown":["mkd"],"text/x-nfo":["nfo"],"text/x-opml":["opml"],"text/x-org":["*org"],"text/x-pascal":["p","pas"],"text/x-processing":["pde"],"text/x-sass":["sass"],"text/x-scss":["scss"],"text/x-setext":["etx"],"text/x-sfv":["sfv"],"text/x-suse-ymp":["ymp"],"text/x-uuencode":["uu"],"text/x-vcalendar":["vcs"],"text/x-vcard":["vcf"],"video/vnd.dece.hd":["uvh","uvvh"],"video/vnd.dece.mobile":["uvm","uvvm"],"video/vnd.dece.pd":["uvp","uvvp"],"video/vnd.dece.sd":["uvs","uvvs"],"video/vnd.dece.video":["uvv","uvvv"],"video/vnd.dvb.file":["dvb"],"video/vnd.fvt":["fvt"],"video/vnd.mpegurl":["mxu","m4u"],"video/vnd.ms-playready.media.pyv":["pyv"],"video/vnd.uvvu.mp4":["uvu","uvvu"],"video/vnd.vivo":["viv"],"video/x-f4v":["f4v"],"video/x-fli":["fli"],"video/x-flv":["flv"],"video/x-m4v":["m4v"],"video/x-matroska":["mkv","mk3d","mks"],"video/x-mng":["mng"],"video/x-ms-asf":["asf","asx"],"video/x-ms-vob":["vob"],"video/x-ms-wm":["wm"],"video/x-ms-wmv":["wmv"],"video/x-ms-wmx":["wmx"],"video/x-ms-wvx":["wvx"],"video/x-msvideo":["avi"],"video/x-sgi-movie":["movie"],"video/x-smv":["smv"],"x-conference/x-cooltalk":["ice"]};
+
+================================================================================
+backend\node_modules\node-forge\lib\aes.js
+Encontrados: schedule
+
+0641: }
+0642: 
+0643: /**
+0644:  * Generates a key schedule using the AES key expansion algorithm.
+0645:  *
+0646:  * The AES algorithm takes the Cipher Key, K, and performs a Key Expansion
+0647:  * routine to generate a key schedule. The Key Expansion generates a total
+
+0644:  * Generates a key schedule using the AES key expansion algorithm.
+0645:  *
+0646:  * The AES algorithm takes the Cipher Key, K, and performs a Key Expansion
+0647:  * routine to generate a key schedule. The Key Expansion generates a total
+0648:  * of Nb*(Nr + 1) words: the algorithm requires an initial set of Nb words,
+0649:  * and each of the Nr rounds requires Nb words of key data. The resulting
+0650:  * key schedule consists of a linear array of 4-byte words, denoted [wi ],
+
+0647:  * routine to generate a key schedule. The Key Expansion generates a total
+0648:  * of Nb*(Nr + 1) words: the algorithm requires an initial set of Nb words,
+0649:  * and each of the Nr rounds requires Nb words of key data. The resulting
+0650:  * key schedule consists of a linear array of 4-byte words, denoted [wi ],
+0651:  * with i in the range 0 <= i < Nb(Nr + 1).
+0652:  *
+0653:  * KeyExpansion(byte key[4*Nk], word w[Nb*(Nr+1)], Nk)
+
+0659:  * Nb is the number of columns (32-bit words) comprising the State (or
+0660:  * number of bytes in a block). For AES, Nb=4.
+0661:  *
+0662:  * @param key the key to schedule (as an array of 32-bit words).
+0663:  * @param decrypt true to modify the key schedule to decrypt, false not to.
+0664:  *
+0665:  * @return the generated key schedule.
+
+0660:  * number of bytes in a block). For AES, Nb=4.
+0661:  *
+0662:  * @param key the key to schedule (as an array of 32-bit words).
+0663:  * @param decrypt true to modify the key schedule to decrypt, false not to.
+0664:  *
+0665:  * @return the generated key schedule.
+0666:  */
+
+0662:  * @param key the key to schedule (as an array of 32-bit words).
+0663:  * @param decrypt true to modify the key schedule to decrypt, false not to.
+0664:  *
+0665:  * @return the generated key schedule.
+0666:  */
+0667: function _expandKey(key, decrypt) {
+0668:   // copy the key's words to initialize the key schedule
+
+0665:  * @return the generated key schedule.
+0666:  */
+0667: function _expandKey(key, decrypt) {
+0668:   // copy the key's words to initialize the key schedule
+0669:   var w = key.slice(0);
+0670: 
+0671:   /* RotWord() will rotate a word, moving the first byte to the last
+
+0708:      encryption whether we are decrypting or not (to shorten code and
+0709:      simplify the generation of look up tables). However, because there
+0710:      are differences in the decryption algorithm, other than just swapping
+0711:      in different look up tables, we must transform our key schedule to
+0712:      account for these changes:
+0713: 
+0714:      1. The decryption algorithm gets its key rounds in reverse order.
+
+0715:      2. The decryption algorithm adds the round key before mixing columns
+0716:        instead of afterwards.
+0717: 
+0718:      We don't need to modify our key schedule to handle the first case,
+0719:      we can just traverse the key schedule in reverse order when decrypting.
+0720: 
+0721:      The second case requires a little work.
+
+0716:        instead of afterwards.
+0717: 
+0718:      We don't need to modify our key schedule to handle the first case,
+0719:      we can just traverse the key schedule in reverse order when decrypting.
+0720: 
+0721:      The second case requires a little work.
+0722: 
+
+0737:      undo our substitution leaving us with the original value that we
+0738:      want -- and then inverse-mix that value.
+0739: 
+0740:      This change will correctly alter our key schedule so that we can XOR
+0741:      each round key with our already transformed decryption state. This
+0742:      allows us to use the same code path as the encryption algorithm.
+0743: 
+
+0744:      We make one more change to the decryption key. Since the decryption
+0745:      algorithm runs in reverse from the encryption algorithm, we reverse
+0746:      the order of the round keys to avoid having to iterate over the key
+0747:      schedule backwards when running the encryption algorithm later in
+0748:      decryption mode. In addition to reversing the order of the round keys,
+0749:      we also swap each round key's 2nd and 4th rows. See the comments
+0750:      section where rounds are performed for more details about why this is
+
+0793:  * Updates a single block (16 bytes) using AES. The update will either
+0794:  * encrypt or decrypt the block.
+0795:  *
+0796:  * @param w the key schedule.
+0797:  * @param input the input block (an array of 32-bit words).
+0798:  * @param output the updated output block.
+0799:  * @param decrypt true to decrypt the block, false to encrypt it.
+
+0862:   /* In order to share code we follow the encryption algorithm when both
+0863:     encrypting and decrypting. To account for the changes required in the
+0864:     decryption algorithm, we use different lookup tables when decrypting
+0865:     and use a modified key schedule to account for the difference in the
+0866:     order of transformations applied when performing rounds. We also get
+0867:     key rounds in reverse order (relative to encryption). */
+0868:   for(var round = 1; round < Nr; ++round) {
+
+0979:       we need to do then to make the mapping exactly the same is to swap
+0980:       the 2nd and 4th rows when in decryption mode. To do this without
+0981:       having to do it on each iteration, we swapped the 2nd and 4th rows
+0982:       in the decryption key schedule. We also have to do the swap above
+0983:       when we first pull in the input and when we set the final output. */
+0984:     a2 =
+0985:       m0[a >>> 24] ^
+
+================================================================================
+backend\node_modules\node-forge\lib\socket.js
+Encontrados: schedule
+
+0075:           that triggered the event (in this case flash) ... which will
+0076:           either run concurrently with other javascript or pre-empt any
+0077:           running javascript in the middle of its execution (BAD!) ...
+0078:           calling setTimeout() will schedule the javascript to run on
+0079:           the javascript thread and solve this EVIL problem. */
+0080:         setTimeout(function() {sp.sockets[e.id][f](e);}, 0);
+0081:       }
+
+================================================================================
+backend\node_modules\node-forge\lib\tls.js
+Encontrados: schedule
+
+2424:  *
+2425:  * cipher state:
+2426:  *   The current state of the encryption algorithm. This will consist of the
+2427:  *   scheduled key for that connection. For stream ciphers, this will also
+2428:  *   contain whatever state information is necessary to allow the stream to
+2429:  *   continue to encrypt or decrypt data.
+2430:  *
+
+================================================================================
+backend\node_modules\node-forge\lib\util.js
+Encontrados: schedule
+
+2643:       }
+2644:     }
+2645:     // get maximum overlaps ... don't include overlapping worker itself
+2646:     // as the main JS process was also being scheduled during the work and
+2647:     // would have to be subtracted from the estimate anyway
+2648:     return overlaps.reduce(function(max, overlap) {
+2649:       return Math.max(max, overlap.length);
+
+================================================================================
+backend\node_modules\readable-stream\lib\_stream_readable.js
+Encontrados: schedule
+
+0150:   // the number of writers that are awaiting a drain event in .pipe()s
+0151:   this.awaitDrain = 0;
+0152: 
+0153:   // if true, a maybeReadMore has been scheduled
+0154:   this.readingMore = false;
+0155:   this.decoder = null;
+0156:   this.encoding = null;
+
+0502:   // 1. It is not flowing, as the flow mechanism will take
+0503:   //    care of it.
+0504:   // 2. It is not ended.
+0505:   // 3. It is below the highWaterMark, so we can schedule
+0506:   //    another readable later.
+0507:   state.needReadable = !state.flowing && !state.ended && state.length <= state.highWaterMark;
+0508:   flow(stream);
+
+================================================================================
+backend\routes\kingDraws.js
+Encontrados: 09:00, 11:00, 14:00, 16:00, 18:00, 21:00
+
+0030: 
+0031:   // Domingo: só 09, 11, 14, 16
+0032:   if (dow === 0) {
+0033:     return ["09:00", "11:00", "14:00", "16:00"];
+0034:   }
+0035: 
+0036:   // Base fixa todos os outros dias
+
+0034:   }
+0035: 
+0036:   // Base fixa todos os outros dias
+0037:   const expected = ["09:00", "11:00", "14:00", "16:00"];
+0038: 
+0039:   // 21h existe fora domingo
+0040:   expected.push("21:00");
+
+0037:   const expected = ["09:00", "11:00", "14:00", "16:00"];
+0038: 
+0039:   // 21h existe fora domingo
+0040:   expected.push("21:00");
+0041: 
+0042:   // 18h só se NÃO tiver Federal no dia
+0043:   if (!hasFederal) {
+
+0041: 
+0042:   // 18h só se NÃO tiver Federal no dia
+0043:   if (!hasFederal) {
+0044:     expected.push("18:00");
+0045:   }
+0046: 
+0047:   return expected.sort();
+
+================================================================================
+backend\routes\pitacoResults.js
+Encontrados: schedule
+
+0304:    SLOT SCHEDULE
+0305: ========================= */
+0306: 
+0307: const DEFAULT_SCHEDULE_DIR = path.join(__dirname, "..", "data", "slot_schedule");
+0308: const DEFAULT_GAPS_DIR = path.join(__dirname, "..", "data", "source_gaps");
+0309: 
+0310: function safeReadJson(p, fallback) {
+
+0355:   if (dow === 0) {
+0356:     hard.push(...hardSun);
+0357:     if (has09) soft.push("09");
+0358:     return { hard, soft, mode: "fallback", scheduleFile: false };
+0359:   }
+0360: 
+0361:   if (has09) hard.push("09");
+
+0361:   if (has09) hard.push("09");
+0362:   hard.push(...hardWeek);
+0363: 
+0364:   return { hard, soft, mode: "fallback", scheduleFile: false };
+0365: }
+0366: 
+0367: function pickRangeForDate(ranges, ymd) {
+
+0388:   return null;
+0389: }
+0390: 
+0391: function parseScheduleGlobal(scheduleRaw) {
+0392:   const hard = normalizeHourList(scheduleRaw?.hard || scheduleRaw?.expectedHard || []);
+0393:   const soft = normalizeHourList(scheduleRaw?.soft || scheduleRaw?.expectedSoft || []);
+0394:   const hours = normalizeHourList(scheduleRaw?.hours || []);
+
+0389: }
+0390: 
+0391: function parseScheduleGlobal(scheduleRaw) {
+0392:   const hard = normalizeHourList(scheduleRaw?.hard || scheduleRaw?.expectedHard || []);
+0393:   const soft = normalizeHourList(scheduleRaw?.soft || scheduleRaw?.expectedSoft || []);
+0394:   const hours = normalizeHourList(scheduleRaw?.hours || []);
+0395:   if (hours.length) return { hard: hours, soft: [], mode: "schedule", scheduleFile: true };
+
+0390: 
+0391: function parseScheduleGlobal(scheduleRaw) {
+0392:   const hard = normalizeHourList(scheduleRaw?.hard || scheduleRaw?.expectedHard || []);
+0393:   const soft = normalizeHourList(scheduleRaw?.soft || scheduleRaw?.expectedSoft || []);
+0394:   const hours = normalizeHourList(scheduleRaw?.hours || []);
+0395:   if (hours.length) return { hard: hours, soft: [], mode: "schedule", scheduleFile: true };
+0396:   if (hard.length || soft.length) return { hard, soft, mode: "schedule", scheduleFile: true };
+
+0391: function parseScheduleGlobal(scheduleRaw) {
+0392:   const hard = normalizeHourList(scheduleRaw?.hard || scheduleRaw?.expectedHard || []);
+0393:   const soft = normalizeHourList(scheduleRaw?.soft || scheduleRaw?.expectedSoft || []);
+0394:   const hours = normalizeHourList(scheduleRaw?.hours || []);
+0395:   if (hours.length) return { hard: hours, soft: [], mode: "schedule", scheduleFile: true };
+0396:   if (hard.length || soft.length) return { hard, soft, mode: "schedule", scheduleFile: true };
+0397:   return null;
+
+0392:   const hard = normalizeHourList(scheduleRaw?.hard || scheduleRaw?.expectedHard || []);
+0393:   const soft = normalizeHourList(scheduleRaw?.soft || scheduleRaw?.expectedSoft || []);
+0394:   const hours = normalizeHourList(scheduleRaw?.hours || []);
+0395:   if (hours.length) return { hard: hours, soft: [], mode: "schedule", scheduleFile: true };
+0396:   if (hard.length || soft.length) return { hard, soft, mode: "schedule", scheduleFile: true };
+0397:   return null;
+0398: }
+
+0393:   const soft = normalizeHourList(scheduleRaw?.soft || scheduleRaw?.expectedSoft || []);
+0394:   const hours = normalizeHourList(scheduleRaw?.hours || []);
+0395:   if (hours.length) return { hard: hours, soft: [], mode: "schedule", scheduleFile: true };
+0396:   if (hard.length || soft.length) return { hard, soft, mode: "schedule", scheduleFile: true };
+0397:   return null;
+0398: }
+0399: 
+
+0399: 
+0400: function getExpectedForDate(lotteryKey, ymd, include09FromYmdDefault) {
+0401:   const p = path.join(DEFAULT_SCHEDULE_DIR, `${lotteryKey}.json`);
+0402:   const scheduleRaw = safeReadJson(p, null);
+0403:   const scheduleFile = !!scheduleRaw;
+0404: 
+0405:   if (scheduleRaw) {
+
+0400: function getExpectedForDate(lotteryKey, ymd, include09FromYmdDefault) {
+0401:   const p = path.join(DEFAULT_SCHEDULE_DIR, `${lotteryKey}.json`);
+0402:   const scheduleRaw = safeReadJson(p, null);
+0403:   const scheduleFile = !!scheduleRaw;
+0404: 
+0405:   if (scheduleRaw) {
+0406:     const global = parseScheduleGlobal(scheduleRaw);
+
+0402:   const scheduleRaw = safeReadJson(p, null);
+0403:   const scheduleFile = !!scheduleRaw;
+0404: 
+0405:   if (scheduleRaw) {
+0406:     const global = parseScheduleGlobal(scheduleRaw);
+0407:     if (global && (global.hard.length || global.soft.length)) return global;
+0408:   }
+
+0403:   const scheduleFile = !!scheduleRaw;
+0404: 
+0405:   if (scheduleRaw) {
+0406:     const global = parseScheduleGlobal(scheduleRaw);
+0407:     if (global && (global.hard.length || global.soft.length)) return global;
+0408:   }
+0409: 
+
+0407:     if (global && (global.hard.length || global.soft.length)) return global;
+0408:   }
+0409: 
+0410:   const ranges = Array.isArray(scheduleRaw) ? scheduleRaw : scheduleRaw?.ranges;
+0411:   const r = pickRangeForDate(ranges, ymd);
+0412: 
+0413:   if (r) {
+
+0420:       const soft = normalizeHourList(block?.soft || block?.expectedSoft || []);
+0421:       const hours = normalizeHourList(block?.hours || []);
+0422: 
+0423:       if (hours.length) return { hard: hours, soft: [], mode: "schedule", scheduleFile: true };
+0424:       return { hard, soft, mode: "schedule", scheduleFile: true };
+0425:     }
+0426: 
+
+0421:       const hours = normalizeHourList(block?.hours || []);
+0422: 
+0423:       if (hours.length) return { hard: hours, soft: [], mode: "schedule", scheduleFile: true };
+0424:       return { hard, soft, mode: "schedule", scheduleFile: true };
+0425:     }
+0426: 
+0427:     const hard = normalizeHourList(r?.hard || r?.expectedHard || []);
+
+0427:     const hard = normalizeHourList(r?.hard || r?.expectedHard || []);
+0428:     const soft = normalizeHourList(r?.soft || r?.expectedSoft || []);
+0429:     const hours = normalizeHourList(r?.hours || []);
+0430:     if (hours.length) return { hard: hours, soft: [], mode: "schedule", scheduleFile: true };
+0431:     return { hard, soft, mode: "schedule", scheduleFile: true };
+0432:   }
+0433: 
+
+0428:     const soft = normalizeHourList(r?.soft || r?.expectedSoft || []);
+0429:     const hours = normalizeHourList(r?.hours || []);
+0430:     if (hours.length) return { hard: hours, soft: [], mode: "schedule", scheduleFile: true };
+0431:     return { hard, soft, mode: "schedule", scheduleFile: true };
+0432:   }
+0433: 
+0434:   if (lotteryKey === "PT_RIO") {
+
+0435:     return expectedHoursPT_RIO_FALLBACK(ymd, include09FromYmdDefault || "2024-01-05");
+0436:   }
+0437: 
+0438:   return { hard: [], soft: [], mode: "none", scheduleFile };
+0439: }
+0440: 
+0441: /* =========================
+
+0548: 
+0549: function buildSlots(opts) {
+0550:   const {
+0551:     scheduleAll,
+0552:     byHour,
+0553:     baseSoft,
+0554:     removedHardApplied,
+
+0563:     slotGraceMin,
+0564:   } = opts || {};
+0565: 
+0566:   return (Array.isArray(scheduleAll) ? scheduleAll : []).map((hh) => {
+0567:     const draw = byHour?.get ? byHour.get(hh) || null : null;
+0568: 
+0569:     const isSoft = Array.isArray(baseSoft) && baseSoft.includes(hh);
+
+0801:     const removedHardSet = new Set(gaps.removedHard || []);
+0802:     const removedSoftSet = new Set(gaps.removedSoft || []);
+0803: 
+0804:     const scheduleAll = uniqSorted([...baseHard, ...baseSoft]);
+0805: 
+0806:     const expectedHard = setDiff(baseHard, removedHardSet);
+0807:     const expectedSoft = setDiff(baseSoft, removedSoftSet);
+
+0852:       const presentHours = uniqSorted(Array.from(byHour.keys()));
+0853: 
+0854:       const slots = buildSlots({
+0855:         scheduleAll,
+0856:         byHour,
+0857:         baseSoft,
+0858:         removedHardApplied,
+
+0872: 
+0873:       const slotsSummary = {
+0874:         mode: expectedBase?.mode || "none",
+0875:         scheduleFile: !!expectedBase?.scheduleFile,
+0876:         scheduleHard: baseHard.length,
+0877:         scheduleSoft: baseSoft.length,
+0878:         scheduleAll: scheduleAll.length,
+
+0873:       const slotsSummary = {
+0874:         mode: expectedBase?.mode || "none",
+0875:         scheduleFile: !!expectedBase?.scheduleFile,
+0876:         scheduleHard: baseHard.length,
+0877:         scheduleSoft: baseSoft.length,
+0878:         scheduleAll: scheduleAll.length,
+0879:         expectedHard: expectedHard.length,
+
+0874:         mode: expectedBase?.mode || "none",
+0875:         scheduleFile: !!expectedBase?.scheduleFile,
+0876:         scheduleHard: baseHard.length,
+0877:         scheduleSoft: baseSoft.length,
+0878:         scheduleAll: scheduleAll.length,
+0879:         expectedHard: expectedHard.length,
+0880:         expectedSoft: expectedSoft.length,
+
+0875:         scheduleFile: !!expectedBase?.scheduleFile,
+0876:         scheduleHard: baseHard.length,
+0877:         scheduleSoft: baseSoft.length,
+0878:         scheduleAll: scheduleAll.length,
+0879:         expectedHard: expectedHard.length,
+0880:         expectedSoft: expectedSoft.length,
+0881:         expectedTotal: expectedHard.length + expectedSoft.length,
+
+0960:     const presentHours = uniqSorted(Array.from(byHour.keys()));
+0961: 
+0962:     const slots = buildSlots({
+0963:       scheduleAll,
+0964:       byHour,
+0965:       baseSoft,
+0966:       removedHardApplied,
+
+0980: 
+0981:     const slotsSummary = {
+0982:       mode: expectedBase?.mode || "none",
+0983:       scheduleFile: !!expectedBase?.scheduleFile,
+0984:       scheduleHard: baseHard.length,
+0985:       scheduleSoft: baseSoft.length,
+0986:       scheduleAll: scheduleAll.length,
+
+0981:     const slotsSummary = {
+0982:       mode: expectedBase?.mode || "none",
+0983:       scheduleFile: !!expectedBase?.scheduleFile,
+0984:       scheduleHard: baseHard.length,
+0985:       scheduleSoft: baseSoft.length,
+0986:       scheduleAll: scheduleAll.length,
+0987:       expectedHard: expectedHard.length,
+
+0982:       mode: expectedBase?.mode || "none",
+0983:       scheduleFile: !!expectedBase?.scheduleFile,
+0984:       scheduleHard: baseHard.length,
+0985:       scheduleSoft: baseSoft.length,
+0986:       scheduleAll: scheduleAll.length,
+0987:       expectedHard: expectedHard.length,
+0988:       expectedSoft: expectedSoft.length,
+
+0983:       scheduleFile: !!expectedBase?.scheduleFile,
+0984:       scheduleHard: baseHard.length,
+0985:       scheduleSoft: baseSoft.length,
+0986:       scheduleAll: scheduleAll.length,
+0987:       expectedHard: expectedHard.length,
+0988:       expectedSoft: expectedSoft.length,
+0989:       expectedTotal: expectedHard.length + expectedSoft.length,
+
+================================================================================
+backend\routes\receiveResults.js
+Encontrados: 21:00
+
+0040:   return hh >= 0 && hh <= 23 && mm >= 0 && mm <= 59;
+0041: }
+0042: 
+0043: // aceita "21", "21h", "21:0", "21:00"
+0044: function normalizeHHMM(value) {
+0045:   const s = String(value ?? "").trim();
+0046:   if (!s) return "";
+
+================================================================================
+backend\scripts\auditCoverage.js
+Encontrados: 09:00, 11:00, 14:00, 16:00, 18:00, 21:00
+
+0022: 
+0023:   // domingo
+0024:   if(dow===0)
+0025:     return ["09:00","11:00","14:00","16:00"];
+0026: 
+0027:   // quarta
+0028:   if(dow===3)
+
+0026: 
+0027:   // quarta
+0028:   if(dow===3)
+0029:     return ["09:00","11:00","14:00","16:00","21:00"];
+0030: 
+0031:   // sábado
+0032:   if(dow===6)
+
+0030: 
+0031:   // sábado
+0032:   if(dow===6)
+0033:     return ["09:00","11:00","14:00","16:00","21:00"];
+0034: 
+0035:   return ["09:00","11:00","14:00","16:00","18:00","21:00"];
+0036: }
+
+0032:   if(dow===6)
+0033:     return ["09:00","11:00","14:00","16:00","21:00"];
+0034: 
+0035:   return ["09:00","11:00","14:00","16:00","18:00","21:00"];
+0036: }
+0037: 
+0038: function normHour(v){
+
+================================================================================
+backend\scripts\auditDrawSlotsRange.js
+Encontrados: schedule, 09:00
+
+0008: // Utils
+0009: // =====================
+0010: const LOG_DIR = path.join(__dirname, "..", "logs");
+0011: const DEFAULT_SCHEDULE_DIR = path.join(__dirname, "..", "data", "slot_schedule");
+0012: 
+0013: // ✅ NOVO: gaps de fonte (API_NO_SLOT)
+0014: const DEFAULT_GAPS_DIR = path.join(__dirname, "..", "data", "source_gaps");
+
+0052: 
+0053: /**
+0054:  * ✅ Hora robusta:
+0055:  * aceita "11:09", "11:09:00", "11h", "11hs", "11", "09-09", "09hs", etc.
+0056:  * retorna "HH" (2 dígitos) ou null
+0057:  */
+0058: function hourFromCloseHour(closeHour) {
+
+0108: Uso:
+0109:   node backend/scripts/auditDrawSlotsRange.js PT_RIO 2022-06-07 2026-01-21 [--details] [--limit=50]
+0110:   node backend/scripts/auditDrawSlotsRange.js PT_RIO 2022-06-07 [--details] [--limit=50]
+0111:     [--soft18WedSat] [--include09From=YYYY-MM-DD] [--scheduleFile=PATH] [--strictSchedule]
+0112:     [--gapsFile=PATH] [--noDrawFile=PATH]
+0113:     [--today=YYYY-MM-DD] [--nowHM=HH:mm] [--slotGraceMin=MIN] [--noCapToday]
+0114: 
+
+0119:   --include09From=YYYY-MM-DD
+0120:                             (fallback hardcoded) considera 09 como existente no calendário a partir desta data
+0121:                             default: 2024-01-05
+0122:   --scheduleFile=PATH
+0123:                             usa agenda de slots por período (se existir). default:
+0124:                             backend/data/slot_schedule/<LOTTERY>.json
+0125:   --strictSchedule
+
+0121:                             default: 2024-01-05
+0122:   --scheduleFile=PATH
+0123:                             usa agenda de slots por período (se existir). default:
+0124:                             backend/data/slot_schedule/<LOTTERY>.json
+0125:   --strictSchedule
+0126:                             se agenda existir e não bater (sem range para a data), ERRA (ao invés de cair no fallback)
+0127:   --gapsFile=PATH
+
+0138:   --slotGraceMin=MIN
+0139:                             tolerância (minutos) após a hora do slot para considerar "já publicado". default: 25
+0140:   --noCapToday
+0141:                             desativa o cap do dia atual (volta a esperar todos os slots do schedule)
+0142: 
+0143: Observação:
+0144:   ✅ endYmd é opcional:
+
+0193: }
+0194: 
+0195: // =====================
+0196: // Schedule (slot_schedule) — fonte da verdade quando existe
+0197: // =====================
+0198: function normalizeHourList(arr) {
+0199:   const out = [];
+
+0213:   return out;
+0214: }
+0215: 
+0216: function loadScheduleOrNull(lotteryKey, scheduleFileArg) {
+0217:   const scheduleFile =
+0218:     String(scheduleFileArg || "").trim() ||
+0219:     path.join(DEFAULT_SCHEDULE_DIR, `${lotteryKey}.json`);
+
+0214: }
+0215: 
+0216: function loadScheduleOrNull(lotteryKey, scheduleFileArg) {
+0217:   const scheduleFile =
+0218:     String(scheduleFileArg || "").trim() ||
+0219:     path.join(DEFAULT_SCHEDULE_DIR, `${lotteryKey}.json`);
+0220: 
+
+0215: 
+0216: function loadScheduleOrNull(lotteryKey, scheduleFileArg) {
+0217:   const scheduleFile =
+0218:     String(scheduleFileArg || "").trim() ||
+0219:     path.join(DEFAULT_SCHEDULE_DIR, `${lotteryKey}.json`);
+0220: 
+0221:   if (!fs.existsSync(scheduleFile)) return { schedule: null, scheduleFile };
+
+0218:     String(scheduleFileArg || "").trim() ||
+0219:     path.join(DEFAULT_SCHEDULE_DIR, `${lotteryKey}.json`);
+0220: 
+0221:   if (!fs.existsSync(scheduleFile)) return { schedule: null, scheduleFile };
+0222: 
+0223:   const schedule = safeReadJson(scheduleFile, null);
+0224:   if (!schedule || typeof schedule !== "object") return { schedule: null, scheduleFile };
+
+0220: 
+0221:   if (!fs.existsSync(scheduleFile)) return { schedule: null, scheduleFile };
+0222: 
+0223:   const schedule = safeReadJson(scheduleFile, null);
+0224:   if (!schedule || typeof schedule !== "object") return { schedule: null, scheduleFile };
+0225: 
+0226:   const lk = String(schedule.lotteryKey || "").trim().toUpperCase();
+
+0221:   if (!fs.existsSync(scheduleFile)) return { schedule: null, scheduleFile };
+0222: 
+0223:   const schedule = safeReadJson(scheduleFile, null);
+0224:   if (!schedule || typeof schedule !== "object") return { schedule: null, scheduleFile };
+0225: 
+0226:   const lk = String(schedule.lotteryKey || "").trim().toUpperCase();
+0227:   if (lk && lk !== lotteryKey) {
+
+0223:   const schedule = safeReadJson(scheduleFile, null);
+0224:   if (!schedule || typeof schedule !== "object") return { schedule: null, scheduleFile };
+0225: 
+0226:   const lk = String(schedule.lotteryKey || "").trim().toUpperCase();
+0227:   if (lk && lk !== lotteryKey) {
+0228:     return { schedule: null, scheduleFile };
+0229:   }
+
+0225: 
+0226:   const lk = String(schedule.lotteryKey || "").trim().toUpperCase();
+0227:   if (lk && lk !== lotteryKey) {
+0228:     return { schedule: null, scheduleFile };
+0229:   }
+0230: 
+0231:   const ranges = Array.isArray(schedule.ranges) ? schedule.ranges : [];
+
+0228:     return { schedule: null, scheduleFile };
+0229:   }
+0230: 
+0231:   const ranges = Array.isArray(schedule.ranges) ? schedule.ranges : [];
+0232:   schedule.lotteryKey = lotteryKey;
+0233:   schedule.ranges = ranges
+0234:     .filter((r) => r && typeof r === "object" && isISODate(r.from))
+
+0229:   }
+0230: 
+0231:   const ranges = Array.isArray(schedule.ranges) ? schedule.ranges : [];
+0232:   schedule.lotteryKey = lotteryKey;
+0233:   schedule.ranges = ranges
+0234:     .filter((r) => r && typeof r === "object" && isISODate(r.from))
+0235:     .map((r) => ({
+
+0230: 
+0231:   const ranges = Array.isArray(schedule.ranges) ? schedule.ranges : [];
+0232:   schedule.lotteryKey = lotteryKey;
+0233:   schedule.ranges = ranges
+0234:     .filter((r) => r && typeof r === "object" && isISODate(r.from))
+0235:     .map((r) => ({
+0236:       from: String(r.from).trim(),
+
+0239:     }))
+0240:     .sort((a, b) => (a.from < b.from ? -1 : a.from > b.from ? 1 : 0));
+0241: 
+0242:   return { schedule, scheduleFile };
+0243: }
+0244: 
+0245: function pickRangeForDate(schedule, ymd) {
+
+0242:   return { schedule, scheduleFile };
+0243: }
+0244: 
+0245: function pickRangeForDate(schedule, ymd) {
+0246:   if (!schedule || !Array.isArray(schedule.ranges)) return null;
+0247:   let picked = null;
+0248:   for (const r of schedule.ranges) {
+
+0243: }
+0244: 
+0245: function pickRangeForDate(schedule, ymd) {
+0246:   if (!schedule || !Array.isArray(schedule.ranges)) return null;
+0247:   let picked = null;
+0248:   for (const r of schedule.ranges) {
+0249:     if (!r || !r.from) continue;
+
+0245: function pickRangeForDate(schedule, ymd) {
+0246:   if (!schedule || !Array.isArray(schedule.ranges)) return null;
+0247:   let picked = null;
+0248:   for (const r of schedule.ranges) {
+0249:     if (!r || !r.from) continue;
+0250:     if (r.from <= ymd && (r.to == null || ymd <= r.to)) {
+0251:       picked = r;
+
+0254:   return picked;
+0255: }
+0256: 
+0257: function expectedHoursFromSchedule(schedule, ymd, dow) {
+0258:   const r = pickRangeForDate(schedule, ymd);
+0259:   if (!r) return null;
+0260: 
+
+0255: }
+0256: 
+0257: function expectedHoursFromSchedule(schedule, ymd, dow) {
+0258:   const r = pickRangeForDate(schedule, ymd);
+0259:   if (!r) return null;
+0260: 
+0261:   const dd = String(dow);
+
+0265:     return {
+0266:       expectedHard: [],
+0267:       expectedSoft: [],
+0268:       mode: "schedule",
+0269:       range: { from: r.from, to: r.to },
+0270:     };
+0271:   }
+
+0276:   return {
+0277:     expectedHard,
+0278:     expectedSoft,
+0279:     mode: "schedule",
+0280:     range: { from: r.from, to: r.to },
+0281:   };
+0282: }
+
+0284: // =====================
+0285: // ✅ SCHEDULE DIGEST (não infla JSON)
+0286: // =====================
+0287: function buildScheduleDigestFromFileOrNull(scheduleFile) {
+0288:   try {
+0289:     const sf = String(scheduleFile || "").trim();
+0290:     if (!sf || !fs.existsSync(sf)) return null;
+
+0286: // =====================
+0287: function buildScheduleDigestFromFileOrNull(scheduleFile) {
+0288:   try {
+0289:     const sf = String(scheduleFile || "").trim();
+0290:     if (!sf || !fs.existsSync(sf)) return null;
+0291: 
+0292:     const raw = safeReadJson(sf, null);
+
+0501:   const soft18WedSat = hasFlag("soft18WedSat");
+0502:   const include09FromYmd = String(parseArg("include09From") || "2024-01-05").trim();
+0503: 
+0504:   const scheduleFileArg = parseArg("scheduleFile");
+0505:   const strictSchedule = hasFlag("strictSchedule");
+0506: 
+0507:   // ✅ cap do DIA ATUAL até o último horário que já deveria estar publicado
+
+0518:   ensureLogDir();
+0519:   const db = getDb();
+0520: 
+0521:   const { schedule, scheduleFile } = loadScheduleOrNull(lotteryKey, scheduleFileArg);
+0522:   const scheduleOn = !!schedule;
+0523: 
+0524:   const scheduleDigest = scheduleOn ? buildScheduleDigestFromFileOrNull(scheduleFile) : null;
+
+0519:   const db = getDb();
+0520: 
+0521:   const { schedule, scheduleFile } = loadScheduleOrNull(lotteryKey, scheduleFileArg);
+0522:   const scheduleOn = !!schedule;
+0523: 
+0524:   const scheduleDigest = scheduleOn ? buildScheduleDigestFromFileOrNull(scheduleFile) : null;
+0525: 
+
+0521:   const { schedule, scheduleFile } = loadScheduleOrNull(lotteryKey, scheduleFileArg);
+0522:   const scheduleOn = !!schedule;
+0523: 
+0524:   const scheduleDigest = scheduleOn ? buildScheduleDigestFromFileOrNull(scheduleFile) : null;
+0525: 
+0526:   const { gaps, gapsFile } = loadGapsOrNull(lotteryKey, gapsFileArg);
+0527:   const gapsOn = !!gaps;
+
+0533:   console.log(`[AUDIT-SLOTS] lottery_key=${lotteryKey}`);
+0534:   console.log(`range: ${startYmd} -> ${endYmd}`);
+0535:   console.log(
+0536:     `schedule: ${scheduleOn ? "ON" : "OFF"} file=${scheduleFile} strict=${strictSchedule ? "YES" : "NO"}`
+0537:   );
+0538:   console.log(`gaps: ${gapsOn ? "ON" : "OFF"} file=${gapsFile}`);
+0539:   console.log(`noDraw: ${noDrawOn ? "ON" : "OFF"} file=${noDrawFile}`);
+
+0578:   // ✅ FIX: unexpectedByDay vira MAP por YMD
+0579:   const unexpectedByDay = Object.create(null);
+0580: 
+0581:   const scheduleMissByDay = [];
+0582:   const scheduleRangeByDay = [];
+0583: 
+0584:   const progressEvery = 30;
+
+0579:   const unexpectedByDay = Object.create(null);
+0580: 
+0581:   const scheduleMissByDay = [];
+0582:   const scheduleRangeByDay = [];
+0583: 
+0584:   const progressEvery = 30;
+0585: 
+
+0587:     totalDays += 1;
+0588:     const dow = ymdToDowSP(ymd);
+0589: 
+0590:     // 1) schedule (se existir)
+0591:     let expected = null;
+0592: 
+0593:     if (scheduleOn) {
+
+0590:     // 1) schedule (se existir)
+0591:     let expected = null;
+0592: 
+0593:     if (scheduleOn) {
+0594:       expected = expectedHoursFromSchedule(schedule, ymd, dow);
+0595: 
+0596:       // ✅ PATCH FORENSE: strictSchedule NÃO PULA DIA
+
+0591:     let expected = null;
+0592: 
+0593:     if (scheduleOn) {
+0594:       expected = expectedHoursFromSchedule(schedule, ymd, dow);
+0595: 
+0596:       // ✅ PATCH FORENSE: strictSchedule NÃO PULA DIA
+0597:       if (!expected) {
+
+0596:       // ✅ PATCH FORENSE: strictSchedule NÃO PULA DIA
+0597:       if (!expected) {
+0598:         if (strictSchedule) {
+0599:           scheduleMissByDay.push({ ymd, dow, reason: "NO_RANGE" });
+0600:           expected = { expectedHard: [], expectedSoft: [], mode: "schedule_strict_no_range" };
+0601:         } else {
+0602:           expected = expectedHoursPT_RIO_FALLBACK(ymd, dow, include09FromYmd, soft18WedSat);
+
+0597:       if (!expected) {
+0598:         if (strictSchedule) {
+0599:           scheduleMissByDay.push({ ymd, dow, reason: "NO_RANGE" });
+0600:           expected = { expectedHard: [], expectedSoft: [], mode: "schedule_strict_no_range" };
+0601:         } else {
+0602:           expected = expectedHoursPT_RIO_FALLBACK(ymd, dow, include09FromYmd, soft18WedSat);
+0603:         }
+
+0602:           expected = expectedHoursPT_RIO_FALLBACK(ymd, dow, include09FromYmd, soft18WedSat);
+0603:         }
+0604:       } else {
+0605:         scheduleRangeByDay.push({ ymd, dow, range: expected.range });
+0606:       }
+0607:     } else {
+0608:       expected = expectedHoursPT_RIO_FALLBACK(ymd, dow, include09FromYmd, soft18WedSat);
+
+0754:     missingHardSlots: missingHardSlotsTotal,
+0755:     missingSoftSlots: missingSoftSlotsTotal,
+0756: 
+0757:     schedule: {
+0758:       enabled: scheduleOn,
+0759:       scheduleFile,
+0760:       strictSchedule,
+
+0755:     missingSoftSlots: missingSoftSlotsTotal,
+0756: 
+0757:     schedule: {
+0758:       enabled: scheduleOn,
+0759:       scheduleFile,
+0760:       strictSchedule,
+0761:       missingDaysNoRange: scheduleMissByDay.length,
+
+0756: 
+0757:     schedule: {
+0758:       enabled: scheduleOn,
+0759:       scheduleFile,
+0760:       strictSchedule,
+0761:       missingDaysNoRange: scheduleMissByDay.length,
+0762:     },
+
+0758:       enabled: scheduleOn,
+0759:       scheduleFile,
+0760:       strictSchedule,
+0761:       missingDaysNoRange: scheduleMissByDay.length,
+0762:     },
+0763:     // ✅ digest do schedule (conteúdo do arquivo, sem inflar o JSON)
+0764:     scheduleDigest,
+
+0760:       strictSchedule,
+0761:       missingDaysNoRange: scheduleMissByDay.length,
+0762:     },
+0763:     // ✅ digest do schedule (conteúdo do arquivo, sem inflar o JSON)
+0764:     scheduleDigest,
+0765: 
+0766:     gaps: {
+
+0761:       missingDaysNoRange: scheduleMissByDay.length,
+0762:     },
+0763:     // ✅ digest do schedule (conteúdo do arquivo, sem inflar o JSON)
+0764:     scheduleDigest,
+0765: 
+0766:     gaps: {
+0767:       enabled: gapsOn,
+
+0800:     daysWithMissingSoft: missingSoftByDay.length,
+0801:     daysWithDuplicates: dupByDay.length,
+0802: 
+0803:     scheduleMissByDay,
+0804:     scheduleRangeByDay: details ? scheduleRangeByDay : undefined,
+0805: 
+0806:     missingHardByDay,
+
+0801:     daysWithDuplicates: dupByDay.length,
+0802: 
+0803:     scheduleMissByDay,
+0804:     scheduleRangeByDay: details ? scheduleRangeByDay : undefined,
+0805: 
+0806:     missingHardByDay,
+0807:     missingSoftByDay,
+
+0833:     `[RESULT] unexpectedSlots(hours)=${unexpectedHoursTotal} unexpectedDocs=${unexpectedDocsTotal} daysWithUnexpected=${daysWithUnexpected}`
+0834:   );
+0835: 
+0836:   if (scheduleOn) {
+0837:     console.log(
+0838:       `[SCHEDULE] strict=${strictSchedule ? "YES" : "NO"} missingNoRangeDays=${scheduleMissByDay.length}`
+0839:     );
+
+0835: 
+0836:   if (scheduleOn) {
+0837:     console.log(
+0838:       `[SCHEDULE] strict=${strictSchedule ? "YES" : "NO"} missingNoRangeDays=${scheduleMissByDay.length}`
+0839:     );
+0840:   }
+0841:   if (gapsOn) {
+
+0850:   console.log(`[OUTPUT] ${outFile}`);
+0851:   console.log("==================================");
+0852: 
+0853:   if (scheduleMissByDay.length) {
+0854:     console.log(
+0855:       `\n[SCHEDULE-MISS] primeiros ${Math.min(limitPrint, scheduleMissByDay.length)} dias sem range:`
+0856:     );
+
+0852: 
+0853:   if (scheduleMissByDay.length) {
+0854:     console.log(
+0855:       `\n[SCHEDULE-MISS] primeiros ${Math.min(limitPrint, scheduleMissByDay.length)} dias sem range:`
+0856:     );
+0857:     for (const r of scheduleMissByDay.slice(0, limitPrint)) {
+0858:       console.log(`- ${r.ymd} dow=${r.dow}`);
+
+0854:     console.log(
+0855:       `\n[SCHEDULE-MISS] primeiros ${Math.min(limitPrint, scheduleMissByDay.length)} dias sem range:`
+0856:     );
+0857:     for (const r of scheduleMissByDay.slice(0, limitPrint)) {
+0858:       console.log(`- ${r.ymd} dow=${r.dow}`);
+0859:     }
+0860:   }
+
+================================================================================
+backend\scripts\auditFastPtRio.js
+Encontrados: 09:00, 11:00, 14:00, 16:00, 18:00, 21:00
+
+0005: const LOTTERY = "PT_RIO";
+0006: const START = "2022-06-07";
+0007: const END = "2026-07-08";
+0008: const EXPECTED = ["09:00", "11:00", "14:00", "16:00", "18:00", "21:00"];
+0009: 
+0010: function addDays(ymd, n) {
+0011:   const d = new Date(ymd + "T00:00:00Z");
+
+================================================================================
+backend\scripts\auditFirestorePtRioRange.js
+Encontrados: 09:00, 11:00, 14:00, 16:00, 18:00, 21:00
+
+0005: const START = "2022-06-07";
+0006: const END = "2026-07-08";
+0007: const LOTTERY = "PT_RIO";
+0008: const EXPECTED = ["09:00", "11:00", "14:00", "16:00", "18:00", "21:00"];
+0009: 
+0010: function addDays(ymd, n) {
+0011:   const d = new Date(ymd + "T00:00:00Z");
+
+================================================================================
+backend\scripts\auditHistoricalGaps.js
+Encontrados: schedule
+
+0110: }
+0111: 
+0112: function readSlotSchedule() {
+0113:   const p = path.join(__dirname, "..", "data", "slot_schedule", `${TARGET_LOTTERY}.json`);
+0114:   return safeReadJson(p, null);
+0115: }
+0116: 
+
+0143:   return {
+0144:     hard: normalizeHourList(block.hard || []),
+0145:     soft: normalizeHourList(block.soft || []),
+0146:     source: "slot_schedule",
+0147:   };
+0148: }
+0149: 
+
+================================================================================
+backend\scripts\auditOfficialSource.js
+Encontrados: 09:00, 11:00, 14:00, 16:00, 18:00, 21:00
+
+0032:   const wd = weekdayUTC(ymd);
+0033: 
+0034:   // 0 domingo
+0035:   if (wd === 0) return ["09:00", "11:00", "14:00", "16:00"];
+0036: 
+0037:   // 3 quarta e 6 sábado
+0038:   if (wd === 3 || wd === 6) {
+
+0036: 
+0037:   // 3 quarta e 6 sábado
+0038:   if (wd === 3 || wd === 6) {
+0039:     return ["09:00", "11:00", "14:00", "16:00", "21:00"];
+0040:   }
+0041: 
+0042:   // segunda, terça, quinta, sexta
+
+0040:   }
+0041: 
+0042:   // segunda, terça, quinta, sexta
+0043:   return ["09:00", "11:00", "14:00", "16:00", "18:00", "21:00"];
+0044: }
+0045: 
+0046: function classifyProblem(problem) {
+
+================================================================================
+backend\scripts\auditRealGradePtRio.js
+Encontrados: 09:00, 11:00, 14:00, 16:00, 18:00, 21:00
+
+0005: const LOTTERY = "PT_RIO";
+0006: const START = "2022-06-07";
+0007: const END = "2026-07-08";
+0008: const END_LIMIT_HOUR = "11:00";
+0009: 
+0010: function addDays(ymd, n) {
+0011:   const d = new Date(ymd + "T00:00:00Z");
+
+0025: 
+0026:   let hours;
+0027:   if (dow === 0) {
+0028:     hours = ["09:00", "11:00", "14:00", "16:00"];
+0029:   } else if (dow === 3 || dow === 6) {
+0030:     hours = ["09:00", "11:00", "14:00", "16:00", "18:00"];
+0031:   } else {
+
+0027:   if (dow === 0) {
+0028:     hours = ["09:00", "11:00", "14:00", "16:00"];
+0029:   } else if (dow === 3 || dow === 6) {
+0030:     hours = ["09:00", "11:00", "14:00", "16:00", "18:00"];
+0031:   } else {
+0032:     hours = ["09:00", "11:00", "14:00", "16:00", "18:00", "21:00"];
+0033:   }
+
+0029:   } else if (dow === 3 || dow === 6) {
+0030:     hours = ["09:00", "11:00", "14:00", "16:00", "18:00"];
+0031:   } else {
+0032:     hours = ["09:00", "11:00", "14:00", "16:00", "18:00", "21:00"];
+0033:   }
+0034: 
+0035:   if (ymd === END) {
+
+================================================================================
+backend\scripts\autoImportToday.js
+Encontrados: schedule, 09:00, 11:00, 14:00, 16:00, 18:00, 19:00, 20:00, 21:00
+
+0129: ========================= */
+0130: const SCHEDULES = {
+0131:   PT_RIO: [
+0132:     { hour: "09:00", windowStart: "09:05", releaseAt: "09:29", windowEnd: "09:35" },
+0133:     { hour: "11:00", windowStart: "11:05", releaseAt: "11:29", windowEnd: "11:35" },
+0134:     { hour: "14:00", windowStart: "14:05", releaseAt: "14:29", windowEnd: "14:35" },
+0135:     { hour: "16:00", windowStart: "16:05", releaseAt: "16:29", windowEnd: "16:35" },
+
+0130: const SCHEDULES = {
+0131:   PT_RIO: [
+0132:     { hour: "09:00", windowStart: "09:05", releaseAt: "09:29", windowEnd: "09:35" },
+0133:     { hour: "11:00", windowStart: "11:05", releaseAt: "11:29", windowEnd: "11:35" },
+0134:     { hour: "14:00", windowStart: "14:05", releaseAt: "14:29", windowEnd: "14:35" },
+0135:     { hour: "16:00", windowStart: "16:05", releaseAt: "16:29", windowEnd: "16:35" },
+0136:     { hour: "18:00", windowStart: "18:05", releaseAt: "18:29", windowEnd: "18:35" },
+
+0131:   PT_RIO: [
+0132:     { hour: "09:00", windowStart: "09:05", releaseAt: "09:29", windowEnd: "09:35" },
+0133:     { hour: "11:00", windowStart: "11:05", releaseAt: "11:29", windowEnd: "11:35" },
+0134:     { hour: "14:00", windowStart: "14:05", releaseAt: "14:29", windowEnd: "14:35" },
+0135:     { hour: "16:00", windowStart: "16:05", releaseAt: "16:29", windowEnd: "16:35" },
+0136:     { hour: "18:00", windowStart: "18:05", releaseAt: "18:29", windowEnd: "18:35" },
+0137:     // 21h: janela longa
+
+0132:     { hour: "09:00", windowStart: "09:05", releaseAt: "09:29", windowEnd: "09:35" },
+0133:     { hour: "11:00", windowStart: "11:05", releaseAt: "11:29", windowEnd: "11:35" },
+0134:     { hour: "14:00", windowStart: "14:05", releaseAt: "14:29", windowEnd: "14:35" },
+0135:     { hour: "16:00", windowStart: "16:05", releaseAt: "16:29", windowEnd: "16:35" },
+0136:     { hour: "18:00", windowStart: "18:05", releaseAt: "18:29", windowEnd: "18:35" },
+0137:     // 21h: janela longa
+0138:     { hour: "21:00", windowStart: "21:05", releaseAt: "21:05", windowEnd: "21:45" },
+
+0133:     { hour: "11:00", windowStart: "11:05", releaseAt: "11:29", windowEnd: "11:35" },
+0134:     { hour: "14:00", windowStart: "14:05", releaseAt: "14:29", windowEnd: "14:35" },
+0135:     { hour: "16:00", windowStart: "16:05", releaseAt: "16:29", windowEnd: "16:35" },
+0136:     { hour: "18:00", windowStart: "18:05", releaseAt: "18:29", windowEnd: "18:35" },
+0137:     // 21h: janela longa
+0138:     { hour: "21:00", windowStart: "21:05", releaseAt: "21:05", windowEnd: "21:45" },
+0139:   ],
+
+0135:     { hour: "16:00", windowStart: "16:05", releaseAt: "16:29", windowEnd: "16:35" },
+0136:     { hour: "18:00", windowStart: "18:05", releaseAt: "18:29", windowEnd: "18:35" },
+0137:     // 21h: janela longa
+0138:     { hour: "21:00", windowStart: "21:05", releaseAt: "21:05", windowEnd: "21:45" },
+0139:   ],
+0140: 
+0141:   // FEDERAL
+
+0139:   ],
+0140: 
+0141:   // FEDERAL
+0142:   // - 19:00 = PROBE (SOFT)
+0143:   // - 20:00 = HARD (padrão)
+0144:   FEDERAL: [
+0145:     { hour: "19:00", windowStart: "18:50", releaseAt: "19:00", windowEnd: "19:20" }, // PROBE (SOFT)
+
+0140: 
+0141:   // FEDERAL
+0142:   // - 19:00 = PROBE (SOFT)
+0143:   // - 20:00 = HARD (padrão)
+0144:   FEDERAL: [
+0145:     { hour: "19:00", windowStart: "18:50", releaseAt: "19:00", windowEnd: "19:20" }, // PROBE (SOFT)
+0146:     { hour: "20:00", windowStart: "19:50", releaseAt: "20:00", windowEnd: "20:20" }, // HARD
+
+0142:   // - 19:00 = PROBE (SOFT)
+0143:   // - 20:00 = HARD (padrão)
+0144:   FEDERAL: [
+0145:     { hour: "19:00", windowStart: "18:50", releaseAt: "19:00", windowEnd: "19:20" }, // PROBE (SOFT)
+0146:     { hour: "20:00", windowStart: "19:50", releaseAt: "20:00", windowEnd: "20:20" }, // HARD
+0147:   ],
+0148: };
+
+0143:   // - 20:00 = HARD (padrão)
+0144:   FEDERAL: [
+0145:     { hour: "19:00", windowStart: "18:50", releaseAt: "19:00", windowEnd: "19:20" }, // PROBE (SOFT)
+0146:     { hour: "20:00", windowStart: "19:50", releaseAt: "20:00", windowEnd: "20:20" }, // HARD
+0147:   ],
+0148: };
+0149: 
+
+0373: 
+0374:   // PT_RIO 21h pode sair como fechamento de 21:30.
+0375:   // Mantém os closes históricos e adiciona a faixa 21:29~21:32.
+0376:   if (LOTTERY === "PT_RIO" && s === "21:00") {
+0377:     return [
+0378:       "21:00", "21:01", "21:02",
+0379:       "21:09", "21:10", "21:11",
+
+0375:   // Mantém os closes históricos e adiciona a faixa 21:29~21:32.
+0376:   if (LOTTERY === "PT_RIO" && s === "21:00") {
+0377:     return [
+0378:       "21:00", "21:01", "21:02",
+0379:       "21:09", "21:10", "21:11",
+0380:       "21:29", "21:30", "21:31", "21:32"
+0381:     ];
+
+0475:       .filter(Boolean)
+0476:   );
+0477: 
+0478:   return expected.has("20:00");
+0479: }
+0480: 
+0481: /* =========================
+
+0497: 
+0498:     if (isSunday) {
+0499:       if (
+0500:         hh === "18:00" ||
+0501:         hh === "21:00"
+0502:       ) {
+0503:         map.set(hh, "OFF");
+
+0498:     if (isSunday) {
+0499:       if (
+0500:         hh === "18:00" ||
+0501:         hh === "21:00"
+0502:       ) {
+0503:         map.set(hh, "OFF");
+0504:       } else {
+
+0509:     }
+0510: 
+0511:     if (isWed || isSat) {
+0512:       if (hh === "18:00") {
+0513:         map.set(hh, "SOFT");
+0514:       } else {
+0515:         map.set(hh, "HARD");
+
+0528:     );
+0529: 
+0530:   if (!ptRio18Expected) {
+0531:     map.set("18:00", "OFF");
+0532: 
+0533:     logLine(
+0534:       `[CAL] PT_RIO 18:00 OFF: ` +
+
+0531:     map.set("18:00", "OFF");
+0532: 
+0533:     logLine(
+0534:       `[CAL] PT_RIO 18:00 OFF: ` +
+0535:         `date=${dateYMD} ` +
+0536:         `reason=FEDERAL_20_SCHEDULED`,
+0537:       "INFO"
+
+0572: /**
+0573:  * FEDERAL (robusto / independente de expectedHard do backend):
+0574:  * - domingo: OFF
+0575:  * - demais dias: 19:00 = SOFT (PROBE), 20:00 = HARD (padrão)
+0576:  * Obs: ainda logamos expectedHard/expectedSoft como debug, mas não usamos como "fonte da verdade".
+0577:  */
+0578: function buildTodaySlotStatusMapFEDERAL({ dateYMD, dow, ds }) {
+
+0588:       continue;
+0589:     }
+0590: 
+0591:     if (sched.hour === "19:00") {
+0592:       map.set(sched.hour, "SOFT");
+0593:       continue;
+0594:     }
+
+0593:       continue;
+0594:     }
+0595: 
+0596:     if (sched.hour === "20:00") {
+0597:       map.set(sched.hour, "HARD");
+0598:       continue;
+0599:     }
+
+0612:   return map;
+0613: }
+0614: 
+0615: function slotWindow(schedule) {
+0616:   const ws = parseHHMM(schedule.windowStart);
+0617:   const ra = parseHHMM(schedule.releaseAt);
+0618:   const we = parseHHMM(schedule.windowEnd);
+
+0613: }
+0614: 
+0615: function slotWindow(schedule) {
+0616:   const ws = parseHHMM(schedule.windowStart);
+0617:   const ra = parseHHMM(schedule.releaseAt);
+0618:   const we = parseHHMM(schedule.windowEnd);
+0619: 
+
+0614: 
+0615: function slotWindow(schedule) {
+0616:   const ws = parseHHMM(schedule.windowStart);
+0617:   const ra = parseHHMM(schedule.releaseAt);
+0618:   const we = parseHHMM(schedule.windowEnd);
+0619: 
+0620:   if (!ws || !ra || !we) {
+
+0615: function slotWindow(schedule) {
+0616:   const ws = parseHHMM(schedule.windowStart);
+0617:   const ra = parseHHMM(schedule.releaseAt);
+0618:   const we = parseHHMM(schedule.windowEnd);
+0619: 
+0620:   if (!ws || !ra || !we) {
+0621:     const { h } = parseHH(schedule.hour);
+
+0618:   const we = parseHHMM(schedule.windowEnd);
+0619: 
+0620:   if (!ws || !ra || !we) {
+0621:     const { h } = parseHH(schedule.hour);
+0622:     return {
+0623:       start: toMin(h, 5),
+0624:       release: toMin(h, 29),
+
+0637:     start,
+0638:     release,
+0639:     end,
+0640:     startLabel: schedule.windowStart,
+0641:     releaseLabel: schedule.releaseAt,
+0642:     endLabel: schedule.windowEnd,
+0643:   };
+
+0638:     release,
+0639:     end,
+0640:     startLabel: schedule.windowStart,
+0641:     releaseLabel: schedule.releaseAt,
+0642:     endLabel: schedule.windowEnd,
+0643:   };
+0644: }
+
+0639:     end,
+0640:     startLabel: schedule.windowStart,
+0641:     releaseLabel: schedule.releaseAt,
+0642:     endLabel: schedule.windowEnd,
+0643:   };
+0644: }
+0645: 
+
+1152:         );
+1153:       } else {
+1154:         logLine(
+1155:           `[CAL] FEDERAL schedule: ` +
+1156:             `date=${date} ` +
+1157:             `has20=${federal20Exists ? "1" : "0"} ` +
+1158:             `expectedHard=[${(
+
+================================================================================
+backend\scripts\autoRepairToday.js
+Encontrados: 09:00, 11:00, 14:00, 16:00, 18:00, 21:00
+
+0040: function getExpectedPtRioHours(ymd, hasFederal) {
+0041:   const dow = getDowLocal(ymd);
+0042: 
+0043:   if (dow === 0) return ["09:00", "11:00", "14:00", "16:00"];
+0044: 
+0045:   const expected = ["09:00", "11:00", "14:00", "16:00", "21:00"];
+0046:   if (!hasFederal) expected.push("18:00");
+
+0042: 
+0043:   if (dow === 0) return ["09:00", "11:00", "14:00", "16:00"];
+0044: 
+0045:   const expected = ["09:00", "11:00", "14:00", "16:00", "21:00"];
+0046:   if (!hasFederal) expected.push("18:00");
+0047:   return expected.sort();
+0048: }
+
+0043:   if (dow === 0) return ["09:00", "11:00", "14:00", "16:00"];
+0044: 
+0045:   const expected = ["09:00", "11:00", "14:00", "16:00", "21:00"];
+0046:   if (!hasFederal) expected.push("18:00");
+0047:   return expected.sort();
+0048: }
+0049: 
+
+================================================================================
+backend\scripts\backtestTop3Official.js
+Encontrados: 09:00, 11:00, 14:00, 16:00, 18:00, 19:00, 20:00, 21:00
+
+0014: } = require("../engine/scoreEngineUnified");
+0015: 
+0016: const PT_RIO_SCHEDULE_NORMAL = [
+0017:   "09:00",
+0018:   "11:00",
+0019:   "14:00",
+0020:   "16:00",
+
+0015: 
+0016: const PT_RIO_SCHEDULE_NORMAL = [
+0017:   "09:00",
+0018:   "11:00",
+0019:   "14:00",
+0020:   "16:00",
+0021:   "18:00",
+
+0016: const PT_RIO_SCHEDULE_NORMAL = [
+0017:   "09:00",
+0018:   "11:00",
+0019:   "14:00",
+0020:   "16:00",
+0021:   "18:00",
+0022:   "21:00",
+
+0017:   "09:00",
+0018:   "11:00",
+0019:   "14:00",
+0020:   "16:00",
+0021:   "18:00",
+0022:   "21:00",
+0023: ];
+
+0018:   "11:00",
+0019:   "14:00",
+0020:   "16:00",
+0021:   "18:00",
+0022:   "21:00",
+0023: ];
+0024: 
+
+0019:   "14:00",
+0020:   "16:00",
+0021:   "18:00",
+0022:   "21:00",
+0023: ];
+0024: 
+0025: const PT_RIO_SCHEDULE_WED_SAT = [
+
+0023: ];
+0024: 
+0025: const PT_RIO_SCHEDULE_WED_SAT = [
+0026:   "09:00",
+0027:   "11:00",
+0028:   "14:00",
+0029:   "16:00",
+
+0024: 
+0025: const PT_RIO_SCHEDULE_WED_SAT = [
+0026:   "09:00",
+0027:   "11:00",
+0028:   "14:00",
+0029:   "16:00",
+0030:   "18:00",
+
+0025: const PT_RIO_SCHEDULE_WED_SAT = [
+0026:   "09:00",
+0027:   "11:00",
+0028:   "14:00",
+0029:   "16:00",
+0030:   "18:00",
+0031:   "21:00",
+
+0026:   "09:00",
+0027:   "11:00",
+0028:   "14:00",
+0029:   "16:00",
+0030:   "18:00",
+0031:   "21:00",
+0032: ];
+
+0027:   "11:00",
+0028:   "14:00",
+0029:   "16:00",
+0030:   "18:00",
+0031:   "21:00",
+0032: ];
+0033: 
+
+0028:   "14:00",
+0029:   "16:00",
+0030:   "18:00",
+0031:   "21:00",
+0032: ];
+0033: 
+0034: const FEDERAL_SCHEDULE = [
+
+0032: ];
+0033: 
+0034: const FEDERAL_SCHEDULE = [
+0035:   "19:00",
+0036:   "20:00",
+0037: ];
+0038: 
+
+0033: 
+0034: const FEDERAL_SCHEDULE = [
+0035:   "19:00",
+0036:   "20:00",
+0037: ];
+0038: 
+0039: function safeArray(value) {
+
+================================================================================
+backend\scripts\genPtRioCalendarRules.js
+Encontrados: 09:00, 11:00, 14:00, 16:00, 18:00, 21:00
+
+0006: 
+0007: (async () => {
+0008:   const lot = "PT_RIO";
+0009:   const HOURS = ["09:00", "11:00", "14:00", "16:00", "18:00", "21:00"];
+0010: 
+0011:   const CORE_MIN = 0.90;
+0012:   const OPT_MIN = 0.50;
+
+================================================================================
+backend\scripts\importKingApostas.js
+Encontrados: schedule, 09:00, 18:00, 20:00
+
+0368: 
+0369: /**
+0370:  * ✅ Normaliza close_hour para SLOT (campo de negócio)
+0371:  * - Para PT_RIO: força minutos = 00 (09:09 -> 09:00)
+0372:  * - Para outros: preserva raw
+0373:  *
+0374:  * Correção crítica:
+
+0385:   const raw0 = normalizeHHMM(value);
+0386:   if (!raw0 || !isHHMM(raw0)) return { raw: "", slot: "" };
+0387: 
+0388:   // ✅ FEDERAL: slot de negócio é sempre 20:00, mas preserva o raw
+0389:   if (lk === "FEDERAL") {
+0390:     return { raw: raw0, slot: "20:00" };
+0391:   }
+
+0387: 
+0388:   // ✅ FEDERAL: slot de negócio é sempre 20:00, mas preserva o raw
+0389:   if (lk === "FEDERAL") {
+0390:     return { raw: raw0, slot: "20:00" };
+0391:   }
+0392: 
+0393:   if (lk === "PT_RIO") {
+
+0403: }
+0404: 
+0405: /**
+0406:  * ✅ Normaliza o parâmetro closeHour (do CLI/scheduler) e evita log enganoso.
+0407:  * - Para FEDERAL: qualquer coisa vira slot=20:00, mas mantemos "requested" para log.
+0408:  */
+0409: function normalizeRequestedCloseHour(closeHour, lotteryKey) {
+
+0404: 
+0405: /**
+0406:  * ✅ Normaliza o parâmetro closeHour (do CLI/scheduler) e evita log enganoso.
+0407:  * - Para FEDERAL: qualquer coisa vira slot=20:00, mas mantemos "requested" para log.
+0408:  */
+0409: function normalizeRequestedCloseHour(closeHour, lotteryKey) {
+0410:   const lk = String(lotteryKey || "").trim().toUpperCase();
+
+0418:     return { requested, slot: null, note: "invalid" };
+0419:   }
+0420: 
+0421:   // FEDERAL: slot único 20:00 (não fingir que o usuário pediu 20:00)
+0422:   if (lk === "FEDERAL") {
+0423:     const slot = "20:00";
+0424:     const note = requested !== slot ? `FEDERAL_slot_fixed(${requested}->${slot})` : null;
+
+0420: 
+0421:   // FEDERAL: slot único 20:00 (não fingir que o usuário pediu 20:00)
+0422:   if (lk === "FEDERAL") {
+0423:     const slot = "20:00";
+0424:     const note = requested !== slot ? `FEDERAL_slot_fixed(${requested}->${slot})` : null;
+0425:     return { requested, slot, note };
+0426:   }
+
+0762:   const slot = normalizeCloseHourForLottery(closeHour || "", lk).slot;
+0763:   if (!slot || !isHHMM(slot)) return { ok: false, reason: "bad_slot" };
+0764: 
+0765:   // por enquanto: só PT_RIO 18:00 (não altera outros horários)
+0766:   if (!(lk === "PT_RIO" && slot === "18:00")) {
+0767:     return { ok: false, reason: "not_applicable" };
+0768:   }
+
+0763:   if (!slot || !isHHMM(slot)) return { ok: false, reason: "bad_slot" };
+0764: 
+0765:   // por enquanto: só PT_RIO 18:00 (não altera outros horários)
+0766:   if (!(lk === "PT_RIO" && slot === "18:00")) {
+0767:     return { ok: false, reason: "not_applicable" };
+0768:   }
+0769: 
+
+1026: 
+1027:       if (lkSnake !== lk && lkCamel !== lk) return;
+1028: 
+1029:       // ✅ compara por SLOT normalizado (pega legado "09:09" como "09:00")
+1030:       const storedSlot = normalizeCloseHourForLottery(d.close_hour || "", lk).slot;
+1031:       if (storedSlot !== targetSlot) return;
+1032: 
+
+1082:   let skippedCloseHour = 0;
+1083:   let skippedAlreadyComplete = 0;
+1084: 
+1085:   // Provas úteis para o scheduler (quando closeHour é informado)
+1086:   const proof = {
+1087:     filterClose: null,
+1088: 
+
+1282:       proof.alreadyCompleteAll = false;
+1283:     }
+1284: 
+1285:     // savedCount “forte” para o scheduler:
+1286:     if (!proof.apiHasPrizes) {
+1287:       proof.targetSavedCount = 0;
+1288:     } else if (skipIfAlreadyComplete && proof.alreadyCompleteAll) {
+
+1447:     };
+1448:   }
+1449: 
+1450:   // ✅ closeHour do scheduler: normaliza SEM log enganoso
+1451:   const norm = normalizeRequestedCloseHour(closeHour, lk);
+1452:   if (norm.note === "invalid") {
+1453:     throw new Error('Parâmetro "closeHour" inválido. Use HH:MM.');
+
+1456: 
+1457:   const startedAt = Date.now();
+1458: 
+1459:   // ✅ SOFT OVERRIDE: PT_RIO 18:00 fora do calendário (controlado por env)
+1460:   const allowSoftOverride18 =
+1461:     lk === "PT_RIO" &&
+1462:     normalizedClose === "18:00" &&
+
+1459:   // ✅ SOFT OVERRIDE: PT_RIO 18:00 fora do calendário (controlado por env)
+1460:   const allowSoftOverride18 =
+1461:     lk === "PT_RIO" &&
+1462:     normalizedClose === "18:00" &&
+1463:     String(process.env.PT_RIO_SOFT_OVERRIDE_18 || "1").trim() === "1";
+1464: 
+1465:   // ✅ GATE POR CALENDÁRIO (PT_RIO)
+
+1636:     payload,
+1637:     lotteryKey: lk,
+1638:     closeHour: normalizedClose,
+1639:     skipIfAlreadyComplete: Boolean(normalizedClose), // scheduler: evita regravar
+1640:   });
+1641: 
+1642:   const ms = Date.now() - startedAt;
+
+================================================================================
+backend\scripts\lintSourceGaps.js
+Encontrados: 21:00
+
+0027: }
+0028: 
+0029: function normHour(x) {
+0030:   // aceita 21, "21", "21h", "21:00", "21:30" -> "21"
+0031:   const m = String(x ?? "").trim().match(/\b(\d{1,2})\b/);
+0032:   if (!m) return "";
+0033:   const n = Number(m[1]);
+
+================================================================================
+backend\scripts\planBackfillFromAudit.js
+Encontrados: 09:00
+
+0033: 
+0034: /**
+0035:  * Hora robusta:
+0036:  * aceita "11:09", "11:09:00", "11h", "11hs", "11", "09-09", "09hs", etc.
+0037:  * retorna "HH" (2 dígitos) ou null
+0038:  */
+0039: function hourFromCloseHour(closeHour) {
+
+================================================================================
+backend\scripts\probeFederalSwitch.js
+Encontrados: 19:00, 20:00
+
+0025:     const ymd = String(d.ymd || d.date || "").slice(0, 10);
+0026:     const ch = hh(d.close_hour || d.close || d.close_hour_raw);
+0027: 
+0028:     if (ymd && ch === "20:00") {
+0029:       if (!first20 || ymd < first20) first20 = ymd;
+0030:     }
+0031:     if (ymd && ch === "19:00") {
+
+0028:     if (ymd && ch === "20:00") {
+0029:       if (!first20 || ymd < first20) first20 = ymd;
+0030:     }
+0031:     if (ymd && ch === "19:00") {
+0032:       if (!last19 || ymd > last19) last19 = ymd;
+0033:     }
+0034:   }
+
+================================================================================
+backend\scripts\ptRioCalendar.js
+Encontrados: 09:00, 11:00, 14:00, 16:00, 18:00, 20:00, 21:00
+
+0005: 
+0006: let _cache = null;
+0007: 
+0008: const PT_RIO_18 = "18:00";
+0009: 
+0010: function safeStr(v) {
+0011:   return String(v ?? "").trim();
+
+0300:     date,
+0301:     year,
+0302:     dow,
+0303:     core: ["11:00", "14:00", "16:00"],
+0304:     opcional: ["09:00"],
+0305:     rara: ["18:00", "21:00"],
+0306:     ...(note ? { note } : {}),
+
+0301:     year,
+0302:     dow,
+0303:     core: ["11:00", "14:00", "16:00"],
+0304:     opcional: ["09:00"],
+0305:     rara: ["18:00", "21:00"],
+0306:     ...(note ? { note } : {}),
+0307:   };
+
+0302:     dow,
+0303:     core: ["11:00", "14:00", "16:00"],
+0304:     opcional: ["09:00"],
+0305:     rara: ["18:00", "21:00"],
+0306:     ...(note ? { note } : {}),
+0307:   };
+0308: }
+
+0313:  * @param {string} ymd Data no formato YYYY-MM-DD.
+0314:  * @param {object|boolean} options
+0315:  * @param {boolean} options.federal20Exists
+0316:  *   true quando existir sorteio FEDERAL às 20:00
+0317:  *   no mesmo dia.
+0318:  */
+0319: function getPtRioSlotsByDate(ymd, options = {}) {
+
+================================================================================
+backend\scripts\ptRioCalendar.test.js
+Encontrados: 18:00
+
+0028:   );
+0029: 
+0030:   assert.strictEqual(
+0031:     allSlots(calendar).includes("18:00"),
+0032:     false,
+0033:     `${date}: 18:00 não poderia permanecer no calendário`
+0034:   );
+
+0030:   assert.strictEqual(
+0031:     allSlots(calendar).includes("18:00"),
+0032:     false,
+0033:     `${date}: 18:00 não poderia permanecer no calendário`
+0034:   );
+0035: 
+0036:   assert.ok(
+
+================================================================================
+backend\scripts\repairHistoricalHardGaps.js
+Encontrados: 09:00, 14:00, 16:00, 18:00, 21:00
+
+0003: const { runImport } = require("./importKingApostas");
+0004: 
+0005: const HARD_GAPS = [
+0006:   { date: "2024-02-25", hours: ["09:00"] },
+0007:   { date: "2024-03-03", hours: ["09:00"] },
+0008:   { date: "2024-03-10", hours: ["09:00"] },
+0009:   { date: "2024-03-17", hours: ["09:00"] },
+
+0004: 
+0005: const HARD_GAPS = [
+0006:   { date: "2024-02-25", hours: ["09:00"] },
+0007:   { date: "2024-03-03", hours: ["09:00"] },
+0008:   { date: "2024-03-10", hours: ["09:00"] },
+0009:   { date: "2024-03-17", hours: ["09:00"] },
+0010:   { date: "2024-03-24", hours: ["09:00"] },
+
+0005: const HARD_GAPS = [
+0006:   { date: "2024-02-25", hours: ["09:00"] },
+0007:   { date: "2024-03-03", hours: ["09:00"] },
+0008:   { date: "2024-03-10", hours: ["09:00"] },
+0009:   { date: "2024-03-17", hours: ["09:00"] },
+0010:   { date: "2024-03-24", hours: ["09:00"] },
+0011:   { date: "2024-03-31", hours: ["09:00"] },
+
+0006:   { date: "2024-02-25", hours: ["09:00"] },
+0007:   { date: "2024-03-03", hours: ["09:00"] },
+0008:   { date: "2024-03-10", hours: ["09:00"] },
+0009:   { date: "2024-03-17", hours: ["09:00"] },
+0010:   { date: "2024-03-24", hours: ["09:00"] },
+0011:   { date: "2024-03-31", hours: ["09:00"] },
+0012:   { date: "2024-04-07", hours: ["09:00"] },
+
+0007:   { date: "2024-03-03", hours: ["09:00"] },
+0008:   { date: "2024-03-10", hours: ["09:00"] },
+0009:   { date: "2024-03-17", hours: ["09:00"] },
+0010:   { date: "2024-03-24", hours: ["09:00"] },
+0011:   { date: "2024-03-31", hours: ["09:00"] },
+0012:   { date: "2024-04-07", hours: ["09:00"] },
+0013:   { date: "2026-03-18", hours: ["21:00"] },
+
+0008:   { date: "2024-03-10", hours: ["09:00"] },
+0009:   { date: "2024-03-17", hours: ["09:00"] },
+0010:   { date: "2024-03-24", hours: ["09:00"] },
+0011:   { date: "2024-03-31", hours: ["09:00"] },
+0012:   { date: "2024-04-07", hours: ["09:00"] },
+0013:   { date: "2026-03-18", hours: ["21:00"] },
+0014:   { date: "2026-03-24", hours: ["14:00", "16:00", "18:00", "21:00"] },
+
+0009:   { date: "2024-03-17", hours: ["09:00"] },
+0010:   { date: "2024-03-24", hours: ["09:00"] },
+0011:   { date: "2024-03-31", hours: ["09:00"] },
+0012:   { date: "2024-04-07", hours: ["09:00"] },
+0013:   { date: "2026-03-18", hours: ["21:00"] },
+0014:   { date: "2026-03-24", hours: ["14:00", "16:00", "18:00", "21:00"] },
+0015: ];
+
+0010:   { date: "2024-03-24", hours: ["09:00"] },
+0011:   { date: "2024-03-31", hours: ["09:00"] },
+0012:   { date: "2024-04-07", hours: ["09:00"] },
+0013:   { date: "2026-03-18", hours: ["21:00"] },
+0014:   { date: "2026-03-24", hours: ["14:00", "16:00", "18:00", "21:00"] },
+0015: ];
+0016: 
+
+0011:   { date: "2024-03-31", hours: ["09:00"] },
+0012:   { date: "2024-04-07", hours: ["09:00"] },
+0013:   { date: "2026-03-18", hours: ["21:00"] },
+0014:   { date: "2026-03-24", hours: ["14:00", "16:00", "18:00", "21:00"] },
+0015: ];
+0016: 
+0017: async function main() {
+
+================================================================================
+backend\scripts\runBackfillFromPlan.js
+Encontrados: 09:00
+
+0057: 
+0058: /**
+0059:  * Normaliza hour vindo do plan:
+0060:  * aceita "09", "9", "09:00", 9, etc -> "HH"
+0061:  */
+0062: function normalizeHH(raw) {
+0063:   const s = safeStr(raw);
+
+================================================================================
+backend\scripts\testPredictionRun.js
+Encontrados: 14:00
+
+0026:   const result = await createPredictionRun({
+0027:     lotteryKey: "PT_RIO",
+0028:     date: "2026-07-04",
+0029:     closeHour: "14:00",
+0030:     source: "integration-test",
+0031:     algorithm: "score_engine_unified_preview",
+0032:     metadata: {
+
+================================================================================
+src\constants\schedule.js
+Encontrados: 07:00, 09:00, 11:00, 14:00, 16:00, 18:00, 20:00, 21:00, 23:00
+
+0040: 
+0041: export const SCHEDULES = Object.freeze({
+0042:   PT_RIO: Object.freeze([
+0043:     "09:00",
+0044:     "11:00",
+0045:     "14:00",
+0046:     "16:00",
+
+0041: export const SCHEDULES = Object.freeze({
+0042:   PT_RIO: Object.freeze([
+0043:     "09:00",
+0044:     "11:00",
+0045:     "14:00",
+0046:     "16:00",
+0047:     "18:00",
+
+0042:   PT_RIO: Object.freeze([
+0043:     "09:00",
+0044:     "11:00",
+0045:     "14:00",
+0046:     "16:00",
+0047:     "18:00",
+0048:     "21:00",
+
+0043:     "09:00",
+0044:     "11:00",
+0045:     "14:00",
+0046:     "16:00",
+0047:     "18:00",
+0048:     "21:00",
+0049:   ]),
+
+0044:     "11:00",
+0045:     "14:00",
+0046:     "16:00",
+0047:     "18:00",
+0048:     "21:00",
+0049:   ]),
+0050:   FEDERAL: Object.freeze([
+
+0045:     "14:00",
+0046:     "16:00",
+0047:     "18:00",
+0048:     "21:00",
+0049:   ]),
+0050:   FEDERAL: Object.freeze([
+0051:     "20:00",
+
+0048:     "21:00",
+0049:   ]),
+0050:   FEDERAL: Object.freeze([
+0051:     "20:00",
+0052:   ]),
+0053:   LOOK: Object.freeze([
+0054:     "07:00",
+
+0051:     "20:00",
+0052:   ]),
+0053:   LOOK: Object.freeze([
+0054:     "07:00",
+0055:     "09:00",
+0056:     "11:00",
+0057:     "14:00",
+
+0052:   ]),
+0053:   LOOK: Object.freeze([
+0054:     "07:00",
+0055:     "09:00",
+0056:     "11:00",
+0057:     "14:00",
+0058:     "16:00",
+
+0053:   LOOK: Object.freeze([
+0054:     "07:00",
+0055:     "09:00",
+0056:     "11:00",
+0057:     "14:00",
+0058:     "16:00",
+0059:     "18:00",
+
+0054:     "07:00",
+0055:     "09:00",
+0056:     "11:00",
+0057:     "14:00",
+0058:     "16:00",
+0059:     "18:00",
+0060:     "21:00",
+
+0055:     "09:00",
+0056:     "11:00",
+0057:     "14:00",
+0058:     "16:00",
+0059:     "18:00",
+0060:     "21:00",
+0061:     "23:00",
+
+0056:     "11:00",
+0057:     "14:00",
+0058:     "16:00",
+0059:     "18:00",
+0060:     "21:00",
+0061:     "23:00",
+0062:   ]),
+
+0057:     "14:00",
+0058:     "16:00",
+0059:     "18:00",
+0060:     "21:00",
+0061:     "23:00",
+0062:   ]),
+0063:   NACIONAL: Object.freeze([
+
+0058:     "16:00",
+0059:     "18:00",
+0060:     "21:00",
+0061:     "23:00",
+0062:   ]),
+0063:   NACIONAL: Object.freeze([
+0064:     "02:00",
+
+0067:     "12:00",
+0068:     "15:00",
+0069:     "17:00",
+0070:     "21:00",
+0071:     "23:00",
+0072:   ]),
+0073: });
+
+0068:     "15:00",
+0069:     "17:00",
+0070:     "21:00",
+0071:     "23:00",
+0072:   ]),
+0073: });
+0074: 
+
+================================================================================
+src\pages\Dashboard\components\FiltersBar.jsx
+Encontrados: horariosRJ, horariosFED
+
+0245:     ];
+0246: 
+0247:     // ✅ PT_RIO (domínio fixo)
+0248:     const horariosRJ = [
+0249:       { label: "Todos", value: "Todos" },
+0250:       { label: "09h", value: "09h" },
+0251:       { label: "11h", value: "11h" },
+
+0256:     ];
+0257: 
+0258:     // ✅ FEDERAL (Todos/19h/20h)
+0259:     const horariosFED = [
+0260:       { label: "Todos", value: "Todos" },
+0261:       { label: "19h", value: "19h" },
+0262:       { label: "20h", value: "20h" },
+
+0343:         : diasSemanaDefault;
+0344: 
+0345:     // ✅ horário depende da loteria (PT_RIO x FEDERAL)
+0346:     const horarios = isFederal ? horariosFED : horariosRJ;
+0347: 
+0348:     const posicoesFromParent =
+0349:       posicoesFromOptionsMode === "respect" &&
+
+================================================================================
+src\pages\Results\Results.jsx
+Encontrados: 07:00, 09:00, 11:00, 14:00, 16:00, 18:00, 21:00, 23:00
+
+0196: const SCOPE_NACIONAL = "NACIONAL";
+0197: 
+0198: const LOOK_EXPECTED_HOURS_DESC = [
+0199:   "23:00",
+0200:   "21:00",
+0201:   "18:00",
+0202:   "16:00",
+
+0197: 
+0198: const LOOK_EXPECTED_HOURS_DESC = [
+0199:   "23:00",
+0200:   "21:00",
+0201:   "18:00",
+0202:   "16:00",
+0203:   "14:00",
+
+0198: const LOOK_EXPECTED_HOURS_DESC = [
+0199:   "23:00",
+0200:   "21:00",
+0201:   "18:00",
+0202:   "16:00",
+0203:   "14:00",
+0204:   "11:00",
+
+0199:   "23:00",
+0200:   "21:00",
+0201:   "18:00",
+0202:   "16:00",
+0203:   "14:00",
+0204:   "11:00",
+0205:   "09:00",
+
+0200:   "21:00",
+0201:   "18:00",
+0202:   "16:00",
+0203:   "14:00",
+0204:   "11:00",
+0205:   "09:00",
+0206:   "07:00",
+
+0201:   "18:00",
+0202:   "16:00",
+0203:   "14:00",
+0204:   "11:00",
+0205:   "09:00",
+0206:   "07:00",
+0207: ];
+
+0202:   "16:00",
+0203:   "14:00",
+0204:   "11:00",
+0205:   "09:00",
+0206:   "07:00",
+0207: ];
+0208: 
+
+0203:   "14:00",
+0204:   "11:00",
+0205:   "09:00",
+0206:   "07:00",
+0207: ];
+0208: 
+0209: const NACIONAL_EXPECTED_HOURS_DESC = [
+
+0207: ];
+0208: 
+0209: const NACIONAL_EXPECTED_HOURS_DESC = [
+0210:   "23:00",
+0211:   "21:00",
+0212:   "17:00",
+0213:   "15:00",
+
+0208: 
+0209: const NACIONAL_EXPECTED_HOURS_DESC = [
+0210:   "23:00",
+0211:   "21:00",
+0212:   "17:00",
+0213:   "15:00",
+0214:   "12:00",
+
+0228: ]);
+0229: 
+0230: const RJ_09H_START_YMD = "2024-01-05";
+0231: const RJ_EXPECTED_HOURS_BASE_DESC = ["21:00", "18:00", "16:00", "14:00", "11:00"];
+0232: 
+0233: function isFederalInput(scope) {
+0234:   const up = safeStr(scope).toUpperCase();
+
+0576: 
+0577:   const out =
+0578:     dow === 0
+0579:       ? ["16:00", "14:00", "11:00"]
+0580:       : [...RJ_EXPECTED_HOURS_BASE_DESC];
+0581: 
+0582:   if (isYMD(ymd) && ymd >= RJ_09H_START_YMD) {
+
+0580:       : [...RJ_EXPECTED_HOURS_BASE_DESC];
+0581: 
+0582:   if (isYMD(ymd) && ymd >= RJ_09H_START_YMD) {
+0583:     out.push("09:00");
+0584:   }
+0585: 
+0586:   return out;
+

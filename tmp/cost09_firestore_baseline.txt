@@ -1,0 +1,45 @@
+===== COST-09 — BASELINE PÓS-OTIMIZAÇÃO =====
+
+Data/Hora: 2026-07-22 10:10:15
+
+HEAD:
+ec73d10 perf: evita releitura hist├│rica for├ºada no dashboard e top3
+
+STATUS:
+
+===================================================
+https://palpitacojb.com.br/
+Tentativa 1: HTTP 200 - 223 ms - 2666 bytes
+Tentativa 2: HTTP 200 - 234 ms - 2666 bytes
+Tentativa 3: HTTP 200 - 195 ms - 2666 bytes
+Tentativa 4: HTTP 200 - 156 ms - 2666 bytes
+Tentativa 5: HTTP 200 - 149 ms - 2666 bytes
+
+Média: 191.4 ms
+Mínimo: 149 ms
+Máximo: 234 ms
+
+===================================================
+https://palpitacojb.com.br/results
+Tentativa 1: HTTP 200 - 159 ms - 2666 bytes
+Tentativa 2: HTTP 200 - 164 ms - 2666 bytes
+Tentativa 3: HTTP 200 - 174 ms - 2666 bytes
+Tentativa 4: HTTP 200 - 146 ms - 2666 bytes
+Tentativa 5: HTTP 200 - 142 ms - 2666 bytes
+
+Média: 157 ms
+Mínimo: 142 ms
+Máximo: 174 ms
+
+===================================================
+https://palpitacojb.com.br/top3
+Tentativa 1: HTTP 200 - 156 ms - 2666 bytes
+Tentativa 2: HTTP 200 - 159 ms - 2666 bytes
+Tentativa 3: HTTP 200 - 155 ms - 2666 bytes
+Tentativa 4: HTTP 200 - 157 ms - 2666 bytes
+Tentativa 5: HTTP 200 - 212 ms - 2666 bytes
+
+Média: 167.8 ms
+Mínimo: 155 ms
+Máximo: 212 ms
+

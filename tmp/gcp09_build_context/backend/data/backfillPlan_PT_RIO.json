@@ -1,0 +1,245 @@
+{
+  "lottery": "PT_RIO",
+  "backfillDays": [
+    {
+      "ymd": "2022-09-07",
+      "missingHours": [
+        "21"
+      ]
+    },
+    {
+      "ymd": "2022-09-08",
+      "missingHours": [
+        "18"
+      ]
+    },
+    {
+      "ymd": "2022-10-02",
+      "missingHours": [
+        "11",
+        "14",
+        "16"
+      ]
+    },
+    {
+      "ymd": "2022-10-12",
+      "missingHours": [
+        "21"
+      ]
+    },
+    {
+      "ymd": "2022-10-13",
+      "missingHours": [
+        "18"
+      ]
+    },
+    {
+      "ymd": "2022-11-02",
+      "missingHours": [
+        "11",
+        "14",
+        "16",
+        "21"
+      ]
+    },
+    {
+      "ymd": "2022-11-03",
+      "missingHours": [
+        "18"
+      ]
+    },
+    {
+      "ymd": "2022-11-15",
+      "missingHours": [
+        "18",
+        "21"
+      ]
+    },
+    {
+      "ymd": "2022-12-24",
+      "missingHours": [
+        "16",
+        "21"
+      ]
+    },
+    {
+      "ymd": "2022-12-25",
+      "missingHours": [
+        "11",
+        "14",
+        "16"
+      ]
+    },
+    {
+      "ymd": "2022-12-31",
+      "missingHours": [
+        "16",
+        "21"
+      ]
+    },
+    {
+      "ymd": "2023-01-01",
+      "missingHours": [
+        "11",
+        "14",
+        "16"
+      ]
+    },
+    {
+      "ymd": "2023-11-16",
+      "missingHours": [
+        "18"
+      ]
+    },
+    {
+      "ymd": "2024-02-25",
+      "missingHours": [
+        "9"
+      ]
+    },
+    {
+      "ymd": "2024-03-03",
+      "missingHours": [
+        "9"
+      ]
+    },
+    {
+      "ymd": "2024-03-10",
+      "missingHours": [
+        "9"
+      ]
+    },
+    {
+      "ymd": "2024-03-17",
+      "missingHours": [
+        "9"
+      ]
+    },
+    {
+      "ymd": "2024-03-24",
+      "missingHours": [
+        "9"
+      ]
+    },
+    {
+      "ymd": "2024-03-31",
+      "missingHours": [
+        "9"
+      ]
+    },
+    {
+      "ymd": "2024-04-07",
+      "missingHours": [
+        "9"
+      ]
+    },
+    {
+      "ymd": "2024-09-06",
+      "missingHours": [
+        "18"
+      ]
+    },
+    {
+      "ymd": "2024-10-06",
+      "missingHours": [
+        "11",
+        "14",
+        "16"
+      ]
+    },
+    {
+      "ymd": "2024-10-11",
+      "missingHours": [
+        "18"
+      ]
+    },
+    {
+      "ymd": "2024-11-01",
+      "missingHours": [
+        "18"
+      ]
+    },
+    {
+      "ymd": "2024-11-21",
+      "missingHours": [
+        "18"
+      ]
+    },
+    {
+      "ymd": "2024-12-24",
+      "missingHours": [
+        "18",
+        "21"
+      ]
+    },
+    {
+      "ymd": "2024-12-31",
+      "missingHours": [
+        "18",
+        "21"
+      ]
+    },
+    {
+      "ymd": "2025-11-14",
+      "missingHours": [
+        "18"
+      ]
+    },
+    {
+      "ymd": "2025-12-24",
+      "missingHours": [
+        "21"
+      ]
+    },
+    {
+      "ymd": "2025-12-31",
+      "missingHours": [
+        "21"
+      ]
+    },
+    {
+      "ymd": "2026-01-19",
+      "missingHours": [
+        "18"
+      ]
+    },
+    {
+      "ymd": "2026-01-20",
+      "missingHours": [
+        "18"
+      ]
+    },
+    {
+      "ymd": "2026-01-22",
+      "missingHours": [
+        "18"
+      ]
+    },
+    {
+      "ymd": "2026-01-23",
+      "missingHours": [
+        "18"
+      ]
+    },
+    {
+      "ymd": "2026-01-26",
+      "missingHours": [
+        "18"
+      ]
+    },
+    {
+      "ymd": "2026-01-27",
+      "missingHours": [
+        "18"
+      ]
+    },
+    {
+      "ymd": "2026-01-29",
+      "missingHours": [
+        "18"
+      ]
+    }
+  ],
+  "generatedAt": "2026-03-01T01:27:05.948Z",
+  "source": "backend\\data\\source_gaps\\PT_RIO.json"
+}

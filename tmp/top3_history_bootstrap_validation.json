@@ -1,0 +1,15 @@
+{
+  "ok": true,
+  "lotteryKey": "PT_RIO",
+  "bootstrapStatus": "complete",
+  "totalDraws": 7491,
+  "monthCount": 50,
+  "firstYmd": "2022-06-07",
+  "lastYmd": "2026-07-15",
+  "firstDrawId": "PT_RIO__2022-06-07__11-00__cbac7c11-e733-400b-ba4d-2dfe0cba4272",
+  "lastDrawId": "PT_RIO__2026-07-15__16-00__76c127b7-8157-46b6-a64a-ec7ed1574c9f",
+  "metadataTotalDraws": 7491,
+  "metadataMonthCount": 50,
+  "lastProcessedDrawId": "PT_RIO__2026-07-15__16-00__76c127b7-8157-46b6-a64a-ec7ed1574c9f",
+  "invalidMonths": []
+}

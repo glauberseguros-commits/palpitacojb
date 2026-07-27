@@ -1,0 +1,2589 @@
+
+================================================================================
+PADRÃO: export async function getKingResultsByRange
+================================================================================
+LINHA ENCONTRADA: 1300
+
+ 1285:   baseAll = baseAll.filter((x) => (x.ymd || normalizeToYMD(x.date)) === dayYmd);
+ 1286: 
+ 1287:   const ordered = sortDrawsLocal(baseAll);
+ 1288: 
+ 1289:   return ordered.map((d) => {
+ 1290:     const embedded = normalizeEmbeddedPrizesForAggregated(d?.prizes);
+ 1291:     return {
+ 1292:       ...d,
+ 1293:       prizes: embedded,
+ 1294:       prizesCount: embedded.length || Number(d?.prizesCount || 0),
+ 1295:       __mode: "aggregated",
+ 1296:     };
+ 1297:   });
+ 1298: }
+ 1299: 
+ 1300: export async function getKingResultsByRange({
+ 1301:   uf,
+ 1302:   dateFrom,
+ 1303:   dateTo,
+ 1304:   closeHour = null,
+ 1305:   closeHourBucket = null,
+ 1306:   positions = null,
+ 1307:   mode = "detailed",
+ 1308:   readPolicy = DEFAULT_READ_POLICY,
+ 1309:   bypassCache = false,
+ 1310: }) {
+ 1311:   if (!uf || !dateFrom || !dateTo) {
+ 1312:     throw new Error("Parâmetros obrigatórios: uf, dateFrom, dateTo");
+ 1313:   }
+ 1314: 
+ 1315:   const scopeKey = canonicalScopeKey(uf);
+ 1316: 
+ 1317:   const positionsArr = normalizePositions(positions);
+ 1318: 
+ 1319:   const ymdFrom = normalizeToYMD(dateFrom);
+ 1320:   const ymdTo = normalizeToYMD(dateTo);
+ 1321:   if (!ymdFrom || !ymdTo) return [];
+ 1322: 
+ 1323:   const hourFilter = resolveHourFilter({ closeHour, closeHourBucket });
+ 1324: 
+ 1325:   const effectiveMode = decideKingRangeMode({
+ 1326:     dateFrom: ymdFrom,
+ 1327:     dateTo: ymdTo,
+ 1328:     mode,
+ 1329:   });
+ 1330: 
+ 1331:   const rangeKey = drawsCacheKeyRange({
+ 1332:     scopeKey,
+ 1333:     from: ymdFrom,
+ 1334:     to: ymdTo,
+ 1335:     positionsArr,
+ 1336:     hourFilter,
+ 1337:     mode: effectiveMode,
+ 1338:   });
+ 1339:   if (!bypassCache) {
+ 1340:     const cached = cacheGet(DRAWS_CACHE, rangeKey);
+
+
+================================================================================
+PADRÃO: fetchDrawDocsPreferUf
+================================================================================
+LINHA ENCONTRADA: 641
+
+  626:   if (extraLimit) parts.push(extraLimit);
+  627: 
+  628:   const qRef = query(...parts);
+  629:   return safeGetDocsSmart(qRef, { policy });
+  630: }
+  631: 
+  632: function extractUfParam(maybeUfOrObj) {
+  633:   if (!maybeUfOrObj) return "";
+  634:   if (typeof maybeUfOrObj === "string") return maybeUfOrObj;
+  635:   if (typeof maybeUfOrObj === "object" && typeof maybeUfOrObj.uf === "string") {
+  636:     return maybeUfOrObj.uf;
+  637:   }
+  638:   return String(maybeUfOrObj || "");
+  639: }
+  640: 
+  641: async function fetchDrawDocsPreferUf({
+  642:   uf,
+  643:   extraWheres = [],
+  644:   extraOrderBy = null,
+  645:   extraLimit = null,
+  646:   policy = DEFAULT_READ_POLICY,
+  647: }) {
+  648:   const ufTrim = String(extractUfParam(uf) || "").trim();
+  649:   const ufUp = ufTrim.toUpperCase();
+  650: 
+  651:   if (isFederalInput(ufUp)) {
+  652:     for (const lk of FEDERAL_LOTTERY_KEYS) {
+  653:       const { snap, error } = await queryDrawsByField({
+  654:         fieldName: "lottery_key",
+  655:         uf: lk,
+  656:         extraWheres,
+  657:         extraOrderBy,
+  658:         extraLimit,
+  659:         policy,
+  660:       });
+  661: 
+  662:       if (error) return { docs: [], usedField: "lottery_key", error };
+  663:       if (snap?.docs?.length) {
+  664:         return { docs: snap.docs, usedField: "lottery_key", error: null };
+  665:       }
+  666:     }
+  667: 
+  668:     return { docs: [], usedField: "lottery_key", error: null };
+  669:   }
+  670: 
+  671:   {
+  672:     const { snap, error } = await queryDrawsByField({
+  673:       fieldName: "uf",
+  674:       uf: ufUp,
+  675:       extraWheres,
+  676:       extraOrderBy,
+  677:       extraLimit,
+  678:       policy,
+  679:     });
+  680: 
+  681:     if (!error && snap?.docs?.length) {
+
+LINHA ENCONTRADA: 737
+
+  722:   }
+  723: 
+  724:   return { minYmd, maxYmd };
+  725: }
+  726: 
+  727: /**
+  728:  * ✅ “Prova de vida” do maxYmd sem depender de índice composto nem de docId:
+  729:  * tenta dias recentes (==) desc até achar pelo menos 1 draw.
+  730:  */
+  731: async function probeRecentMaxYmd(uf, lookbackDays = 45) {
+  732:   const base = utcTodayYmd();
+  733:   const n = Math.max(3, Math.min(120, Number(lookbackDays) || 45));
+  734: 
+  735:   for (let i = 0; i <= n; i += 1) {
+  736:     const day = addDaysUTCLocal(base, -i);
+  737:     const { docs, error } = await fetchDrawDocsPreferUf({
+  738:       uf,
+  739:       extraWheres: [where("ymd", "==", day)],
+  740:       policy: "server",
+  741:       extraLimit: limit(5),
+  742:     });
+  743:     if (error) return { ok: false, maxYmd: null, error };
+  744:     if (docs && docs.length) return { ok: true, maxYmd: day, error: null };
+  745:   }
+  746: 
+  747:   return { ok: false, maxYmd: null, error: null };
+  748: }
+  749: 
+  750: /**
+  751:  * ✅ API bounds (backend) — fonte única preferencial
+  752:  */
+  753: async function fetchBoundsFromApi(ufOrObj) {
+  754:   const uf = String(extractUfParam(ufOrObj) || "").trim();
+  755:   if (!uf) return { ok: false, error: new Error("uf vazio") };
+  756: 
+  757:   const lot = canonicalScopeKey(uf) || String(uf).trim().toUpperCase();
+  758:   const url = apiUrl(`/api/bounds?lottery=${encodeURIComponent(lot)}`);
+  759:   try {
+  760:     const r = await fetch(url, { method: "GET" });
+  761:     const j = await r.json().catch(() => null);
+  762: 
+  763:     if (!r.ok || !j || !j.ok) {
+  764:       return {
+  765:         ok: false,
+  766:         error: new Error(`bounds api not ok: ${j?.message || r.status}`),
+  767:         payload: j || null,
+  768:       };
+  769:     }
+  770: 
+  771:     const minYmd = String(j.minYmd || "").trim();
+  772:     const maxYmd = String(j.maxYmd || "").trim();
+  773:     if (!isYMD(minYmd) || !isYMD(maxYmd)) {
+  774:       return {
+  775:         ok: false,
+  776:         error: new Error("bounds api retornou min/max inválidos"),
+  777:         payload: j,
+
+LINHA ENCONTRADA: 870
+
+  855:       merged,
+  856:       ok: merged.length > 0,
+  857:       errors: [asc?.error, last?.error].filter(Boolean),
+  858:       sources: [asc?.source, last?.source].filter(Boolean),
+  859:     };
+  860:   }
+  861: 
+  862:   {
+  863:     const orderAsc = [orderBy("ymd", "asc"), orderBy(DOC_ID)];
+  864:     const orderDesc = [orderBy("ymd", "desc"), orderBy(DOC_ID)];
+  865: 
+  866:     const {
+  867:       docs: minDocs,
+  868:       usedField: usedMin,
+  869:       error: eMin,
+  870:     } = await fetchDrawDocsPreferUf({
+  871:       uf,
+  872:       extraOrderBy: orderAsc,
+  873:       extraLimit: limit(SCAN_LIMIT),
+  874:       policy: "server",
+  875:     });
+  876: 
+  877:     const {
+  878:       docs: maxDocs,
+  879:       usedField: usedMax,
+  880:       error: eMax,
+  881:     } = await fetchDrawDocsPreferUf({
+  882:       uf,
+  883:       extraOrderBy: orderDesc,
+  884:       extraLimit: limit(SCAN_LIMIT),
+  885:       policy: "server",
+  886:     });
+  887: 
+  888:     if (eMin || eMax) {
+  889:       if (!isIndexError(eMin) && !isIndexError(eMax)) firstTryError = eMin || eMax;
+  890:     }
+  891: 
+  892:     if (minDocs.length && maxDocs.length && !eMin && !eMax) {
+  893:       const mappedMin = minDocs.map(mapDrawDoc);
+  894:       const mappedMax = maxDocs.map(mapDrawDoc);
+  895: 
+  896:       const { minYmd } = pickMinMaxFromMapped(mappedMin);
+  897:       const { maxYmd } = pickMinMaxFromMapped(mappedMax);
+  898: 
+  899:       if (minYmd && maxYmd) {
+  900:         return {
+  901:           ok: true,
+  902:           uf,
+  903:           minYmd,
+  904:           maxYmd,
+  905:           minDate: minYmd,
+  906:           maxDate: maxYmd,
+  907:           source: `ymd_scan${SCAN_LIMIT}:${usedMin}/${usedMax}`,
+  908:         };
+  909:       }
+  910:     }
+
+LINHA ENCONTRADA: 881
+
+  866:     const {
+  867:       docs: minDocs,
+  868:       usedField: usedMin,
+  869:       error: eMin,
+  870:     } = await fetchDrawDocsPreferUf({
+  871:       uf,
+  872:       extraOrderBy: orderAsc,
+  873:       extraLimit: limit(SCAN_LIMIT),
+  874:       policy: "server",
+  875:     });
+  876: 
+  877:     const {
+  878:       docs: maxDocs,
+  879:       usedField: usedMax,
+  880:       error: eMax,
+  881:     } = await fetchDrawDocsPreferUf({
+  882:       uf,
+  883:       extraOrderBy: orderDesc,
+  884:       extraLimit: limit(SCAN_LIMIT),
+  885:       policy: "server",
+  886:     });
+  887: 
+  888:     if (eMin || eMax) {
+  889:       if (!isIndexError(eMin) && !isIndexError(eMax)) firstTryError = eMin || eMax;
+  890:     }
+  891: 
+  892:     if (minDocs.length && maxDocs.length && !eMin && !eMax) {
+  893:       const mappedMin = minDocs.map(mapDrawDoc);
+  894:       const mappedMax = maxDocs.map(mapDrawDoc);
+  895: 
+  896:       const { minYmd } = pickMinMaxFromMapped(mappedMin);
+  897:       const { maxYmd } = pickMinMaxFromMapped(mappedMax);
+  898: 
+  899:       if (minYmd && maxYmd) {
+  900:         return {
+  901:           ok: true,
+  902:           uf,
+  903:           minYmd,
+  904:           maxYmd,
+  905:           minDate: minYmd,
+  906:           maxDate: maxYmd,
+  907:           source: `ymd_scan${SCAN_LIMIT}:${usedMin}/${usedMax}`,
+  908:         };
+  909:       }
+  910:     }
+  911:   }
+  912: 
+  913:   const recentProbe = await probeRecentMaxYmd(uf, 60);
+  914:   const recentMaxYmd = recentProbe?.ok ? recentProbe.maxYmd : null;
+  915: 
+  916:   const scopeKeyBounds = canonicalScopeKey(uf);
+  917:   {
+  918:     const idxInfo = (() => {
+  919:       const code = String(firstTryError?.code || "");
+  920:       const msg = String(firstTryError?.message || "");
+  921:       if (!code && !msg) return "";
+
+LINHA ENCONTRADA: 1144
+
+ 1129:   });
+ 1130: 
+ 1131:   const forceFreshServer = shouldForceFreshServerRead(ymdDate);
+ 1132:   const allowMemoryCache = !forceFreshServer;
+ 1133: 
+ 1134:   if (allowMemoryCache) {
+ 1135:     const cached = cacheGet(DRAWS_CACHE, dayKey);
+ 1136:     if (cached) return cached;
+ 1137:   }
+ 1138: 
+ 1139:   const readPolicy = forceFreshServer ? "server" : DEFAULT_READ_POLICY;
+ 1140: 
+ 1141:   const docCandidates = [];
+ 1142: 
+ 1143:   {
+ 1144:     const { docs: found, error } = await fetchDrawDocsPreferUf({
+ 1145:       uf,
+ 1146:       extraWheres: [where("ymd", "==", ymdDate)],
+ 1147:       policy: readPolicy,
+ 1148:     });
+ 1149:     if (error) throw error;
+ 1150:     if (found.length) docCandidates.push(...found);
+ 1151:   }
+ 1152: 
+ 1153:   if (!docCandidates.length) {
+ 1154:     const rawDate = String(date || "").trim();
+ 1155:     if (rawDate) {
+ 1156:       const { docs: found, error } = await fetchDrawDocsPreferUf({
+ 1157:         uf,
+ 1158:         extraWheres: [where("date", "==", rawDate)],
+ 1159:         policy: readPolicy,
+ 1160:       });
+ 1161:       if (error) throw error;
+ 1162:       if (found.length) docCandidates.push(...found);
+ 1163:     }
+ 1164:   }
+ 1165: 
+ 1166:   if (!docCandidates.length) {
+ 1167:     const { docs: found, error } = await fetchDrawDocsPreferUf({
+ 1168:       uf,
+ 1169:       extraWheres: [where("date", "==", ymdDate)],
+ 1170:       policy: readPolicy,
+ 1171:     });
+ 1172:     if (error) throw error;
+ 1173:     if (found.length) docCandidates.push(...found);
+ 1174:   }
+ 1175: 
+ 1176:   if (!docCandidates.length) {
+ 1177:     const brDate = ymdToBR(ymdDate);
+ 1178:     if (brDate) {
+ 1179:       const { docs: found, error } = await fetchDrawDocsPreferUf({
+ 1180:         uf,
+ 1181:         extraWheres: [where("date", "==", brDate)],
+ 1182:         policy: readPolicy,
+ 1183:       });
+ 1184:       if (error) throw error;
+
+LINHA ENCONTRADA: 1156
+
+ 1141:   const docCandidates = [];
+ 1142: 
+ 1143:   {
+ 1144:     const { docs: found, error } = await fetchDrawDocsPreferUf({
+ 1145:       uf,
+ 1146:       extraWheres: [where("ymd", "==", ymdDate)],
+ 1147:       policy: readPolicy,
+ 1148:     });
+ 1149:     if (error) throw error;
+ 1150:     if (found.length) docCandidates.push(...found);
+ 1151:   }
+ 1152: 
+ 1153:   if (!docCandidates.length) {
+ 1154:     const rawDate = String(date || "").trim();
+ 1155:     if (rawDate) {
+ 1156:       const { docs: found, error } = await fetchDrawDocsPreferUf({
+ 1157:         uf,
+ 1158:         extraWheres: [where("date", "==", rawDate)],
+ 1159:         policy: readPolicy,
+ 1160:       });
+ 1161:       if (error) throw error;
+ 1162:       if (found.length) docCandidates.push(...found);
+ 1163:     }
+ 1164:   }
+ 1165: 
+ 1166:   if (!docCandidates.length) {
+ 1167:     const { docs: found, error } = await fetchDrawDocsPreferUf({
+ 1168:       uf,
+ 1169:       extraWheres: [where("date", "==", ymdDate)],
+ 1170:       policy: readPolicy,
+ 1171:     });
+ 1172:     if (error) throw error;
+ 1173:     if (found.length) docCandidates.push(...found);
+ 1174:   }
+ 1175: 
+ 1176:   if (!docCandidates.length) {
+ 1177:     const brDate = ymdToBR(ymdDate);
+ 1178:     if (brDate) {
+ 1179:       const { docs: found, error } = await fetchDrawDocsPreferUf({
+ 1180:         uf,
+ 1181:         extraWheres: [where("date", "==", brDate)],
+ 1182:         policy: readPolicy,
+ 1183:       });
+ 1184:       if (error) throw error;
+ 1185:       if (found.length) docCandidates.push(...found);
+ 1186:     }
+ 1187:   }
+ 1188: 
+ 1189:   if (!docCandidates.length) return [];
+ 1190: 
+ 1191:   let baseAll = dedupeDrawsLocal(docCandidates.map(mapDrawDoc));
+ 1192:   baseAll = baseAll.filter((x) => (x.ymd || normalizeToYMD(x.date)) === ymdDate);
+ 1193: 
+ 1194:   const orderedAll = sortDrawsLocal(baseAll);
+ 1195: 
+ 1196:   const hydratedAll = await mapWithConcurrency(orderedAll, 6, async (item) => {
+
+LINHA ENCONTRADA: 1167
+
+ 1152: 
+ 1153:   if (!docCandidates.length) {
+ 1154:     const rawDate = String(date || "").trim();
+ 1155:     if (rawDate) {
+ 1156:       const { docs: found, error } = await fetchDrawDocsPreferUf({
+ 1157:         uf,
+ 1158:         extraWheres: [where("date", "==", rawDate)],
+ 1159:         policy: readPolicy,
+ 1160:       });
+ 1161:       if (error) throw error;
+ 1162:       if (found.length) docCandidates.push(...found);
+ 1163:     }
+ 1164:   }
+ 1165: 
+ 1166:   if (!docCandidates.length) {
+ 1167:     const { docs: found, error } = await fetchDrawDocsPreferUf({
+ 1168:       uf,
+ 1169:       extraWheres: [where("date", "==", ymdDate)],
+ 1170:       policy: readPolicy,
+ 1171:     });
+ 1172:     if (error) throw error;
+ 1173:     if (found.length) docCandidates.push(...found);
+ 1174:   }
+ 1175: 
+ 1176:   if (!docCandidates.length) {
+ 1177:     const brDate = ymdToBR(ymdDate);
+ 1178:     if (brDate) {
+ 1179:       const { docs: found, error } = await fetchDrawDocsPreferUf({
+ 1180:         uf,
+ 1181:         extraWheres: [where("date", "==", brDate)],
+ 1182:         policy: readPolicy,
+ 1183:       });
+ 1184:       if (error) throw error;
+ 1185:       if (found.length) docCandidates.push(...found);
+ 1186:     }
+ 1187:   }
+ 1188: 
+ 1189:   if (!docCandidates.length) return [];
+ 1190: 
+ 1191:   let baseAll = dedupeDrawsLocal(docCandidates.map(mapDrawDoc));
+ 1192:   baseAll = baseAll.filter((x) => (x.ymd || normalizeToYMD(x.date)) === ymdDate);
+ 1193: 
+ 1194:   const orderedAll = sortDrawsLocal(baseAll);
+ 1195: 
+ 1196:   const hydratedAll = await mapWithConcurrency(orderedAll, 6, async (item) => {
+ 1197:     const prizes = await fetchPrizesForDraw(item.drawId, positionsArr, item.prizes);
+ 1198:     const pc = Array.isArray(prizes) ? prizes.length : 0;
+ 1199:     return { ...item, prizes, prizesCount: pc, __mode: "detailed" };
+ 1200:   });
+ 1201: 
+ 1202:   let dayAll = dedupeDrawsLocal(hydratedAll);
+ 1203: 
+ 1204: if (scopeKey === FEDERAL_SCOPE_CODE) {
+ 1205:   dayAll = collapseFederalDailyCloneDraws(dayAll);
+ 1206: }
+ 1207: 
+
+LINHA ENCONTRADA: 1179
+
+ 1164:   }
+ 1165: 
+ 1166:   if (!docCandidates.length) {
+ 1167:     const { docs: found, error } = await fetchDrawDocsPreferUf({
+ 1168:       uf,
+ 1169:       extraWheres: [where("date", "==", ymdDate)],
+ 1170:       policy: readPolicy,
+ 1171:     });
+ 1172:     if (error) throw error;
+ 1173:     if (found.length) docCandidates.push(...found);
+ 1174:   }
+ 1175: 
+ 1176:   if (!docCandidates.length) {
+ 1177:     const brDate = ymdToBR(ymdDate);
+ 1178:     if (brDate) {
+ 1179:       const { docs: found, error } = await fetchDrawDocsPreferUf({
+ 1180:         uf,
+ 1181:         extraWheres: [where("date", "==", brDate)],
+ 1182:         policy: readPolicy,
+ 1183:       });
+ 1184:       if (error) throw error;
+ 1185:       if (found.length) docCandidates.push(...found);
+ 1186:     }
+ 1187:   }
+ 1188: 
+ 1189:   if (!docCandidates.length) return [];
+ 1190: 
+ 1191:   let baseAll = dedupeDrawsLocal(docCandidates.map(mapDrawDoc));
+ 1192:   baseAll = baseAll.filter((x) => (x.ymd || normalizeToYMD(x.date)) === ymdDate);
+ 1193: 
+ 1194:   const orderedAll = sortDrawsLocal(baseAll);
+ 1195: 
+ 1196:   const hydratedAll = await mapWithConcurrency(orderedAll, 6, async (item) => {
+ 1197:     const prizes = await fetchPrizesForDraw(item.drawId, positionsArr, item.prizes);
+ 1198:     const pc = Array.isArray(prizes) ? prizes.length : 0;
+ 1199:     return { ...item, prizes, prizesCount: pc, __mode: "detailed" };
+ 1200:   });
+ 1201: 
+ 1202:   let dayAll = dedupeDrawsLocal(hydratedAll);
+ 1203: 
+ 1204: if (scopeKey === FEDERAL_SCOPE_CODE) {
+ 1205:   dayAll = collapseFederalDailyCloneDraws(dayAll);
+ 1206: }
+ 1207: 
+ 1208:   const base = hourFilter?.kind
+ 1209:     ? dayAll.filter((d) => drawPassesHourFilter(d, hourFilter))
+ 1210:     : dayAll;
+ 1211: 
+ 1212:   let out = dedupeDrawsLocal(sortDrawsLocal(base));
+ 1213: 
+ 1214: if (scopeKey === FEDERAL_SCOPE_CODE) {
+ 1215:   out = collapseFederalDailyCloneDraws(out);
+ 1216: }
+ 1217: 
+ 1218:   if (allowMemoryCache) {
+ 1219:     cacheSet(DRAWS_CACHE, dayKey, out);
+
+LINHA ENCONTRADA: 1276
+
+ 1261:   if (mode === "detailed" || mode === "aggregated") return mode;
+ 1262:   if (mode !== "auto") return "detailed";
+ 1263: 
+ 1264:   const days = daysBetweenInclusiveUTC(ymdFrom, ymdTo);
+ 1265:   if (!Number.isFinite(days) || days <= 0) return "detailed";
+ 1266:   return "detailed";
+ 1267: }
+ 1268: 
+ 1269: /**
+ 1270:  * ✅ Fallback barato (SEM prizes): usado quando falta índice composto no RANGE,
+ 1271:  * ou quando você quer aggregated sem custo de hidratar.
+ 1272:  */
+ 1273: async function fetchDrawsDayNoPrizes({ uf, dayYmd }) {
+ 1274:   const readPolicy = shouldForceFreshServerRead(dayYmd) ? "server" : DEFAULT_READ_POLICY;
+ 1275: 
+ 1276:   const { docs, error } = await fetchDrawDocsPreferUf({
+ 1277:     uf,
+ 1278:     extraWheres: [where("ymd", "==", dayYmd)],
+ 1279:     policy: readPolicy,
+ 1280:   });
+ 1281:   if (error) throw error;
+ 1282:   if (!docs || !docs.length) return [];
+ 1283: 
+ 1284:   let baseAll = dedupeDrawsLocal(docs.map(mapDrawDoc));
+ 1285:   baseAll = baseAll.filter((x) => (x.ymd || normalizeToYMD(x.date)) === dayYmd);
+ 1286: 
+ 1287:   const ordered = sortDrawsLocal(baseAll);
+ 1288: 
+ 1289:   return ordered.map((d) => {
+ 1290:     const embedded = normalizeEmbeddedPrizesForAggregated(d?.prizes);
+ 1291:     return {
+ 1292:       ...d,
+ 1293:       prizes: embedded,
+ 1294:       prizesCount: embedded.length || Number(d?.prizesCount || 0),
+ 1295:       __mode: "aggregated",
+ 1296:     };
+ 1297:   });
+ 1298: }
+ 1299: 
+ 1300: export async function getKingResultsByRange({
+ 1301:   uf,
+ 1302:   dateFrom,
+ 1303:   dateTo,
+ 1304:   closeHour = null,
+ 1305:   closeHourBucket = null,
+ 1306:   positions = null,
+ 1307:   mode = "detailed",
+ 1308:   readPolicy = DEFAULT_READ_POLICY,
+ 1309:   bypassCache = false,
+ 1310: }) {
+ 1311:   if (!uf || !dateFrom || !dateTo) {
+ 1312:     throw new Error("Parâmetros obrigatórios: uf, dateFrom, dateTo");
+ 1313:   }
+ 1314: 
+ 1315:   const scopeKey = canonicalScopeKey(uf);
+ 1316: 
+
+LINHA ENCONTRADA: 1347
+
+ 1332:     scopeKey,
+ 1333:     from: ymdFrom,
+ 1334:     to: ymdTo,
+ 1335:     positionsArr,
+ 1336:     hourFilter,
+ 1337:     mode: effectiveMode,
+ 1338:   });
+ 1339:   if (!bypassCache) {
+ 1340:     const cached = cacheGet(DRAWS_CACHE, rangeKey);
+ 1341:     if (cached) return cached;
+ 1342:   }
+ 1343: 
+ 1344:   const DOC_ID = documentId();
+ 1345:   const rangeOrder = [orderBy("ymd", "asc"), orderBy(DOC_ID)];
+ 1346: 
+ 1347:   const { docs, error, usedField } = await fetchDrawDocsPreferUf({
+ 1348:     uf,
+ 1349:     extraWheres: [where("ymd", ">=", ymdFrom), where("ymd", "<=", ymdTo)],
+ 1350:     extraOrderBy: rangeOrder,
+ 1351:     policy: readPolicy,
+ 1352:   });
+ 1353: 
+ 1354:   if (error) {
+ 1355:     if (isIndexError(error)) {
+ 1356:       const days = daysBetweenInclusiveUTC(ymdFrom, ymdTo);
+ 1357:       const MAX_FALLBACK_DAYS = 31;
+ 1358: 
+ 1359:       if (Number.isFinite(days) && days > 0 && days <= MAX_FALLBACK_DAYS) {
+ 1360:         if (effectiveMode === "aggregated") {
+ 1361:           const all = [];
+ 1362:           for (let i = 0; i < days; i += 1) {
+ 1363:             const day = addDaysUTC(ymdFrom, i);
+ 1364:             const dayDraws = await fetchDrawsDayNoPrizes({ uf, dayYmd: day });
+ 1365:             if (dayDraws.length) all.push(...dayDraws);
+ 1366:           }
+ 1367: 
+ 1368:           const baseAll = dedupeDrawsLocal(all);
+ 1369:           const base = hourFilter?.kind
+ 1370:             ? baseAll.filter((d) => drawPassesHourFilter(d, hourFilter))
+ 1371:             : baseAll;
+ 1372: 
+ 1373:           let out = dedupeDrawsLocal(sortDrawsLocal(base));
+ 1374: 
+ 1375:           if (!bypassCache) {
+ 1376:       cacheSet(DRAWS_CACHE, rangeKey, out);
+ 1377:     }
+ 1378:           return out;
+ 1379:         }
+ 1380: 
+ 1381:         const all = [];
+ 1382:         for (let i = 0; i < days; i += 1) {
+ 1383:           const day = addDaysUTC(ymdFrom, i);
+ 1384:           const dayDraws = await getKingResultsByDate({
+ 1385:             uf,
+ 1386:             date: day,
+ 1387:             closeHour,
+
+
+================================================================================
+PADRÃO: const { docs, error, usedField }
+================================================================================
+LINHA ENCONTRADA: 1347
+
+ 1332:     scopeKey,
+ 1333:     from: ymdFrom,
+ 1334:     to: ymdTo,
+ 1335:     positionsArr,
+ 1336:     hourFilter,
+ 1337:     mode: effectiveMode,
+ 1338:   });
+ 1339:   if (!bypassCache) {
+ 1340:     const cached = cacheGet(DRAWS_CACHE, rangeKey);
+ 1341:     if (cached) return cached;
+ 1342:   }
+ 1343: 
+ 1344:   const DOC_ID = documentId();
+ 1345:   const rangeOrder = [orderBy("ymd", "asc"), orderBy(DOC_ID)];
+ 1346: 
+ 1347:   const { docs, error, usedField } = await fetchDrawDocsPreferUf({
+ 1348:     uf,
+ 1349:     extraWheres: [where("ymd", ">=", ymdFrom), where("ymd", "<=", ymdTo)],
+ 1350:     extraOrderBy: rangeOrder,
+ 1351:     policy: readPolicy,
+ 1352:   });
+ 1353: 
+ 1354:   if (error) {
+ 1355:     if (isIndexError(error)) {
+ 1356:       const days = daysBetweenInclusiveUTC(ymdFrom, ymdTo);
+ 1357:       const MAX_FALLBACK_DAYS = 31;
+ 1358: 
+ 1359:       if (Number.isFinite(days) && days > 0 && days <= MAX_FALLBACK_DAYS) {
+ 1360:         if (effectiveMode === "aggregated") {
+ 1361:           const all = [];
+ 1362:           for (let i = 0; i < days; i += 1) {
+ 1363:             const day = addDaysUTC(ymdFrom, i);
+ 1364:             const dayDraws = await fetchDrawsDayNoPrizes({ uf, dayYmd: day });
+ 1365:             if (dayDraws.length) all.push(...dayDraws);
+ 1366:           }
+ 1367: 
+ 1368:           const baseAll = dedupeDrawsLocal(all);
+ 1369:           const base = hourFilter?.kind
+ 1370:             ? baseAll.filter((d) => drawPassesHourFilter(d, hourFilter))
+ 1371:             : baseAll;
+ 1372: 
+ 1373:           let out = dedupeDrawsLocal(sortDrawsLocal(base));
+ 1374: 
+ 1375:           if (!bypassCache) {
+ 1376:       cacheSet(DRAWS_CACHE, rangeKey, out);
+ 1377:     }
+ 1378:           return out;
+ 1379:         }
+ 1380: 
+ 1381:         const all = [];
+ 1382:         for (let i = 0; i < days; i += 1) {
+ 1383:           const day = addDaysUTC(ymdFrom, i);
+ 1384:           const dayDraws = await getKingResultsByDate({
+ 1385:             uf,
+ 1386:             date: day,
+ 1387:             closeHour,
+
+
+================================================================================
+PADRÃO: const baseAll = dedupeDrawsLocal
+================================================================================
+LINHA ENCONTRADA: 1368
+
+ 1353: 
+ 1354:   if (error) {
+ 1355:     if (isIndexError(error)) {
+ 1356:       const days = daysBetweenInclusiveUTC(ymdFrom, ymdTo);
+ 1357:       const MAX_FALLBACK_DAYS = 31;
+ 1358: 
+ 1359:       if (Number.isFinite(days) && days > 0 && days <= MAX_FALLBACK_DAYS) {
+ 1360:         if (effectiveMode === "aggregated") {
+ 1361:           const all = [];
+ 1362:           for (let i = 0; i < days; i += 1) {
+ 1363:             const day = addDaysUTC(ymdFrom, i);
+ 1364:             const dayDraws = await fetchDrawsDayNoPrizes({ uf, dayYmd: day });
+ 1365:             if (dayDraws.length) all.push(...dayDraws);
+ 1366:           }
+ 1367: 
+ 1368:           const baseAll = dedupeDrawsLocal(all);
+ 1369:           const base = hourFilter?.kind
+ 1370:             ? baseAll.filter((d) => drawPassesHourFilter(d, hourFilter))
+ 1371:             : baseAll;
+ 1372: 
+ 1373:           let out = dedupeDrawsLocal(sortDrawsLocal(base));
+ 1374: 
+ 1375:           if (!bypassCache) {
+ 1376:       cacheSet(DRAWS_CACHE, rangeKey, out);
+ 1377:     }
+ 1378:           return out;
+ 1379:         }
+ 1380: 
+ 1381:         const all = [];
+ 1382:         for (let i = 0; i < days; i += 1) {
+ 1383:           const day = addDaysUTC(ymdFrom, i);
+ 1384:           const dayDraws = await getKingResultsByDate({
+ 1385:             uf,
+ 1386:             date: day,
+ 1387:             closeHour,
+ 1388:             closeHourBucket,
+ 1389:             positions: positionsArr,
+ 1390:           });
+ 1391:           if (Array.isArray(dayDraws) && dayDraws.length) all.push(...dayDraws);
+ 1392:         }
+ 1393: 
+ 1394:         const baseAll = dedupeDrawsLocal(all);
+ 1395:         const base = hourFilter?.kind
+ 1396:           ? baseAll.filter((d) => drawPassesHourFilter(d, hourFilter))
+ 1397:           : baseAll;
+ 1398: 
+ 1399:         let out = dedupeDrawsLocal(sortDrawsLocal(base));
+ 1400: 
+ 1401:         if (!bypassCache) {
+ 1402:       cacheSet(DRAWS_CACHE, rangeKey, out);
+ 1403:     }
+ 1404:         return out;
+ 1405:       }
+ 1406: 
+ 1407:       const rawCode = String(error?.code || "");
+ 1408:       const rawMsg = String(error?.message || "");
+
+LINHA ENCONTRADA: 1394
+
+ 1379:         }
+ 1380: 
+ 1381:         const all = [];
+ 1382:         for (let i = 0; i < days; i += 1) {
+ 1383:           const day = addDaysUTC(ymdFrom, i);
+ 1384:           const dayDraws = await getKingResultsByDate({
+ 1385:             uf,
+ 1386:             date: day,
+ 1387:             closeHour,
+ 1388:             closeHourBucket,
+ 1389:             positions: positionsArr,
+ 1390:           });
+ 1391:           if (Array.isArray(dayDraws) && dayDraws.length) all.push(...dayDraws);
+ 1392:         }
+ 1393: 
+ 1394:         const baseAll = dedupeDrawsLocal(all);
+ 1395:         const base = hourFilter?.kind
+ 1396:           ? baseAll.filter((d) => drawPassesHourFilter(d, hourFilter))
+ 1397:           : baseAll;
+ 1398: 
+ 1399:         let out = dedupeDrawsLocal(sortDrawsLocal(base));
+ 1400: 
+ 1401:         if (!bypassCache) {
+ 1402:       cacheSet(DRAWS_CACHE, rangeKey, out);
+ 1403:     }
+ 1404:         return out;
+ 1405:       }
+ 1406: 
+ 1407:       const rawCode = String(error?.code || "");
+ 1408:       const rawMsg = String(error?.message || "");
+ 1409: 
+ 1410:       throw new Error(
+ 1411:         `Firestore: falta índice composto para RANGE (campo ${usedField} + ymd).\n` +
+ 1412:           `Crie/valide o índice no console (Collection: draws | Fields: ${usedField} ASC, ymd ASC, __name__ (documentId) ASC).\n` +
+ 1413:           `Obs: fallback automático só é aplicado para ranges até ${MAX_FALLBACK_DAYS} dias.\n` +
+ 1414:           (rawCode || rawMsg ? `Detalhe: ${rawCode} ${rawMsg}` : "")
+ 1415:       );
+ 1416:     }
+ 1417: 
+ 1418:     throw error;
+ 1419:   }
+ 1420: 
+ 1421:   if (!docs || !docs.length) {
+ 1422:     const days = daysBetweenInclusiveUTC(ymdFrom, ymdTo);
+ 1423:     const MAX_EMPTY_RANGE_FALLBACK_DAYS = 120;
+ 1424: 
+ 1425:     if (
+ 1426:       Number.isFinite(days) &&
+ 1427:       days > 0 &&
+ 1428:       days <= MAX_EMPTY_RANGE_FALLBACK_DAYS
+ 1429:     ) {
+ 1430:       if (effectiveMode === "aggregated") {
+ 1431:         const all = [];
+ 1432:         for (let i = 0; i < days; i += 1) {
+ 1433:           const day = addDaysUTC(ymdFrom, i);
+ 1434:           const dayDraws = await fetchDrawsDayNoPrizes({ uf, dayYmd: day });
+
+LINHA ENCONTRADA: 1438
+
+ 1423:     const MAX_EMPTY_RANGE_FALLBACK_DAYS = 120;
+ 1424: 
+ 1425:     if (
+ 1426:       Number.isFinite(days) &&
+ 1427:       days > 0 &&
+ 1428:       days <= MAX_EMPTY_RANGE_FALLBACK_DAYS
+ 1429:     ) {
+ 1430:       if (effectiveMode === "aggregated") {
+ 1431:         const all = [];
+ 1432:         for (let i = 0; i < days; i += 1) {
+ 1433:           const day = addDaysUTC(ymdFrom, i);
+ 1434:           const dayDraws = await fetchDrawsDayNoPrizes({ uf, dayYmd: day });
+ 1435:           if (dayDraws.length) all.push(...dayDraws);
+ 1436:         }
+ 1437: 
+ 1438:         const baseAll = dedupeDrawsLocal(all);
+ 1439:         const base = hourFilter?.kind
+ 1440:           ? baseAll.filter((d) => drawPassesHourFilter(d, hourFilter))
+ 1441:           : baseAll;
+ 1442: 
+ 1443:         let out = dedupeDrawsLocal(sortDrawsLocal(base));
+ 1444: 
+ 1445:         if (!bypassCache) {
+ 1446:       cacheSet(DRAWS_CACHE, rangeKey, out);
+ 1447:     }
+ 1448:         return out;
+ 1449:       }
+ 1450: 
+ 1451:       const all = [];
+ 1452:       for (let i = 0; i < days; i += 1) {
+ 1453:         const day = addDaysUTC(ymdFrom, i);
+ 1454:         const dayDraws = await getKingResultsByDate({
+ 1455:           uf,
+ 1456:           date: day,
+ 1457:           closeHour,
+ 1458:           closeHourBucket,
+ 1459:           positions: positionsArr,
+ 1460:         });
+ 1461:         if (Array.isArray(dayDraws) && dayDraws.length) all.push(...dayDraws);
+ 1462:       }
+ 1463: 
+ 1464:       const baseAll = dedupeDrawsLocal(all);
+ 1465:       const base = hourFilter?.kind
+ 1466:         ? baseAll.filter((d) => drawPassesHourFilter(d, hourFilter))
+ 1467:         : baseAll;
+ 1468: 
+ 1469:       const ordered = sortDrawsLocal(base);
+ 1470: 
+ 1471:       const conc = chooseRangeConcurrency(ordered.length);
+ 1472:       const results = await mapWithConcurrency(ordered, conc, async (item) => {
+ 1473:         const prizes = await fetchPrizesForDraw(item.drawId, positionsArr, item.prizes);
+ 1474:         const pc = Array.isArray(prizes) ? prizes.length : 0;
+ 1475:         return { ...item, prizes, prizesCount: pc, __mode: "detailed" };
+ 1476:       });
+ 1477: 
+ 1478:       const out = dedupeDrawsLocal(results);
+
+LINHA ENCONTRADA: 1464
+
+ 1449:       }
+ 1450: 
+ 1451:       const all = [];
+ 1452:       for (let i = 0; i < days; i += 1) {
+ 1453:         const day = addDaysUTC(ymdFrom, i);
+ 1454:         const dayDraws = await getKingResultsByDate({
+ 1455:           uf,
+ 1456:           date: day,
+ 1457:           closeHour,
+ 1458:           closeHourBucket,
+ 1459:           positions: positionsArr,
+ 1460:         });
+ 1461:         if (Array.isArray(dayDraws) && dayDraws.length) all.push(...dayDraws);
+ 1462:       }
+ 1463: 
+ 1464:       const baseAll = dedupeDrawsLocal(all);
+ 1465:       const base = hourFilter?.kind
+ 1466:         ? baseAll.filter((d) => drawPassesHourFilter(d, hourFilter))
+ 1467:         : baseAll;
+ 1468: 
+ 1469:       const ordered = sortDrawsLocal(base);
+ 1470: 
+ 1471:       const conc = chooseRangeConcurrency(ordered.length);
+ 1472:       const results = await mapWithConcurrency(ordered, conc, async (item) => {
+ 1473:         const prizes = await fetchPrizesForDraw(item.drawId, positionsArr, item.prizes);
+ 1474:         const pc = Array.isArray(prizes) ? prizes.length : 0;
+ 1475:         return { ...item, prizes, prizesCount: pc, __mode: "detailed" };
+ 1476:       });
+ 1477: 
+ 1478:       const out = dedupeDrawsLocal(results);
+ 1479:       if (!bypassCache) {
+ 1480:       cacheSet(DRAWS_CACHE, rangeKey, out);
+ 1481:     }
+ 1482:       return out;
+ 1483:     }
+ 1484: 
+ 1485:     return [];
+ 1486:   }
+ 1487: 
+ 1488:   const baseAll = dedupeDrawsLocal(docs.map(mapDrawDoc));
+ 1489:   const base = hourFilter?.kind
+ 1490:     ? baseAll.filter((d) => drawPassesHourFilter(d, hourFilter))
+ 1491:     : baseAll;
+ 1492: 
+ 1493:   const ordered = sortDrawsLocal(base);
+ 1494: 
+ 1495:   if (effectiveMode === "aggregated") {
+ 1496:     const out = dedupeDrawsLocal(
+ 1497:       ordered.map((d) => {
+ 1498:         const embedded = normalizeEmbeddedPrizesForAggregated(d?.prizes);
+ 1499:         return {
+ 1500:           ...d,
+ 1501:           prizes: embedded,
+ 1502:           prizesCount: Number.isFinite(Number(d?.prizesCount))
+ 1503:             ? Number(d.prizesCount)
+ 1504:             : embedded.length || 0,
+
+LINHA ENCONTRADA: 1488
+
+ 1473:         const prizes = await fetchPrizesForDraw(item.drawId, positionsArr, item.prizes);
+ 1474:         const pc = Array.isArray(prizes) ? prizes.length : 0;
+ 1475:         return { ...item, prizes, prizesCount: pc, __mode: "detailed" };
+ 1476:       });
+ 1477: 
+ 1478:       const out = dedupeDrawsLocal(results);
+ 1479:       if (!bypassCache) {
+ 1480:       cacheSet(DRAWS_CACHE, rangeKey, out);
+ 1481:     }
+ 1482:       return out;
+ 1483:     }
+ 1484: 
+ 1485:     return [];
+ 1486:   }
+ 1487: 
+ 1488:   const baseAll = dedupeDrawsLocal(docs.map(mapDrawDoc));
+ 1489:   const base = hourFilter?.kind
+ 1490:     ? baseAll.filter((d) => drawPassesHourFilter(d, hourFilter))
+ 1491:     : baseAll;
+ 1492: 
+ 1493:   const ordered = sortDrawsLocal(base);
+ 1494: 
+ 1495:   if (effectiveMode === "aggregated") {
+ 1496:     const out = dedupeDrawsLocal(
+ 1497:       ordered.map((d) => {
+ 1498:         const embedded = normalizeEmbeddedPrizesForAggregated(d?.prizes);
+ 1499:         return {
+ 1500:           ...d,
+ 1501:           prizes: embedded,
+ 1502:           prizesCount: Number.isFinite(Number(d?.prizesCount))
+ 1503:             ? Number(d.prizesCount)
+ 1504:             : embedded.length || 0,
+ 1505:           __mode: "aggregated",
+ 1506:         };
+ 1507:       })
+ 1508:     );
+ 1509:     if (!bypassCache) {
+ 1510:       cacheSet(DRAWS_CACHE, rangeKey, out);
+ 1511:     }
+ 1512:     return out;
+ 1513:   }
+ 1514: 
+ 1515:   const conc = chooseRangeConcurrency(ordered.length);
+ 1516: 
+ 1517:   const results = await mapWithConcurrency(ordered, conc, async (item) => {
+ 1518:     const prizes = await fetchPrizesForDraw(item.drawId, positionsArr, item.prizes);
+ 1519:     const pc = Array.isArray(prizes) ? prizes.length : 0;
+ 1520:     return { ...item, prizes, prizesCount: pc, __mode: "detailed" };
+ 1521:   });
+ 1522: 
+ 1523:   const out = dedupeDrawsLocal(results);
+ 1524:   if (!bypassCache) {
+ 1525:       cacheSet(DRAWS_CACHE, rangeKey, out);
+ 1526:     }
+ 1527:   return out;
+ 1528: }
+
+
+================================================================================
+PADRÃO: const base = hourFilter
+================================================================================
+LINHA ENCONTRADA: 1208
+
+ 1193: 
+ 1194:   const orderedAll = sortDrawsLocal(baseAll);
+ 1195: 
+ 1196:   const hydratedAll = await mapWithConcurrency(orderedAll, 6, async (item) => {
+ 1197:     const prizes = await fetchPrizesForDraw(item.drawId, positionsArr, item.prizes);
+ 1198:     const pc = Array.isArray(prizes) ? prizes.length : 0;
+ 1199:     return { ...item, prizes, prizesCount: pc, __mode: "detailed" };
+ 1200:   });
+ 1201: 
+ 1202:   let dayAll = dedupeDrawsLocal(hydratedAll);
+ 1203: 
+ 1204: if (scopeKey === FEDERAL_SCOPE_CODE) {
+ 1205:   dayAll = collapseFederalDailyCloneDraws(dayAll);
+ 1206: }
+ 1207: 
+ 1208:   const base = hourFilter?.kind
+ 1209:     ? dayAll.filter((d) => drawPassesHourFilter(d, hourFilter))
+ 1210:     : dayAll;
+ 1211: 
+ 1212:   let out = dedupeDrawsLocal(sortDrawsLocal(base));
+ 1213: 
+ 1214: if (scopeKey === FEDERAL_SCOPE_CODE) {
+ 1215:   out = collapseFederalDailyCloneDraws(out);
+ 1216: }
+ 1217: 
+ 1218:   if (allowMemoryCache) {
+ 1219:     cacheSet(DRAWS_CACHE, dayKey, out);
+ 1220:   }
+ 1221: 
+ 1222:   return out;
+ 1223: }
+ 1224: 
+ 1225: /* =========================
+ 1226:    API: Range
+ 1227: ========================= */
+ 1228: 
+ 1229: function drawsCacheKeyRange({
+ 1230:   scopeKey,
+ 1231:   from,
+ 1232:   to,
+ 1233:   positionsArr,
+ 1234:   hourFilter,
+ 1235:   mode,
+ 1236: }) {
+ 1237:   const p = positionsArr && positionsArr.length ? positionsArr.join(",") : "all";
+ 1238:   const h =
+ 1239:     hourFilter?.kind === "bucket"
+ 1240:       ? `bucket:${hourFilter.bucket}`
+ 1241:       : hourFilter?.kind === "exact"
+ 1242:       ? `exact:${hourFilter.hhmm}`
+ 1243:       : "all";
+ 1244:   const m = mode ? String(mode) : "detailed";
+ 1245:   return `range::${scopeKey}::${from}..${to}::pos=${p}::h=${h}::mode=${m}`;
+ 1246: }
+ 1247: 
+ 1248: function chooseRangeConcurrency(drawCount) {
+
+LINHA ENCONTRADA: 1369
+
+ 1354:   if (error) {
+ 1355:     if (isIndexError(error)) {
+ 1356:       const days = daysBetweenInclusiveUTC(ymdFrom, ymdTo);
+ 1357:       const MAX_FALLBACK_DAYS = 31;
+ 1358: 
+ 1359:       if (Number.isFinite(days) && days > 0 && days <= MAX_FALLBACK_DAYS) {
+ 1360:         if (effectiveMode === "aggregated") {
+ 1361:           const all = [];
+ 1362:           for (let i = 0; i < days; i += 1) {
+ 1363:             const day = addDaysUTC(ymdFrom, i);
+ 1364:             const dayDraws = await fetchDrawsDayNoPrizes({ uf, dayYmd: day });
+ 1365:             if (dayDraws.length) all.push(...dayDraws);
+ 1366:           }
+ 1367: 
+ 1368:           const baseAll = dedupeDrawsLocal(all);
+ 1369:           const base = hourFilter?.kind
+ 1370:             ? baseAll.filter((d) => drawPassesHourFilter(d, hourFilter))
+ 1371:             : baseAll;
+ 1372: 
+ 1373:           let out = dedupeDrawsLocal(sortDrawsLocal(base));
+ 1374: 
+ 1375:           if (!bypassCache) {
+ 1376:       cacheSet(DRAWS_CACHE, rangeKey, out);
+ 1377:     }
+ 1378:           return out;
+ 1379:         }
+ 1380: 
+ 1381:         const all = [];
+ 1382:         for (let i = 0; i < days; i += 1) {
+ 1383:           const day = addDaysUTC(ymdFrom, i);
+ 1384:           const dayDraws = await getKingResultsByDate({
+ 1385:             uf,
+ 1386:             date: day,
+ 1387:             closeHour,
+ 1388:             closeHourBucket,
+ 1389:             positions: positionsArr,
+ 1390:           });
+ 1391:           if (Array.isArray(dayDraws) && dayDraws.length) all.push(...dayDraws);
+ 1392:         }
+ 1393: 
+ 1394:         const baseAll = dedupeDrawsLocal(all);
+ 1395:         const base = hourFilter?.kind
+ 1396:           ? baseAll.filter((d) => drawPassesHourFilter(d, hourFilter))
+ 1397:           : baseAll;
+ 1398: 
+ 1399:         let out = dedupeDrawsLocal(sortDrawsLocal(base));
+ 1400: 
+ 1401:         if (!bypassCache) {
+ 1402:       cacheSet(DRAWS_CACHE, rangeKey, out);
+ 1403:     }
+ 1404:         return out;
+ 1405:       }
+ 1406: 
+ 1407:       const rawCode = String(error?.code || "");
+ 1408:       const rawMsg = String(error?.message || "");
+ 1409: 
+
+LINHA ENCONTRADA: 1395
+
+ 1380: 
+ 1381:         const all = [];
+ 1382:         for (let i = 0; i < days; i += 1) {
+ 1383:           const day = addDaysUTC(ymdFrom, i);
+ 1384:           const dayDraws = await getKingResultsByDate({
+ 1385:             uf,
+ 1386:             date: day,
+ 1387:             closeHour,
+ 1388:             closeHourBucket,
+ 1389:             positions: positionsArr,
+ 1390:           });
+ 1391:           if (Array.isArray(dayDraws) && dayDraws.length) all.push(...dayDraws);
+ 1392:         }
+ 1393: 
+ 1394:         const baseAll = dedupeDrawsLocal(all);
+ 1395:         const base = hourFilter?.kind
+ 1396:           ? baseAll.filter((d) => drawPassesHourFilter(d, hourFilter))
+ 1397:           : baseAll;
+ 1398: 
+ 1399:         let out = dedupeDrawsLocal(sortDrawsLocal(base));
+ 1400: 
+ 1401:         if (!bypassCache) {
+ 1402:       cacheSet(DRAWS_CACHE, rangeKey, out);
+ 1403:     }
+ 1404:         return out;
+ 1405:       }
+ 1406: 
+ 1407:       const rawCode = String(error?.code || "");
+ 1408:       const rawMsg = String(error?.message || "");
+ 1409: 
+ 1410:       throw new Error(
+ 1411:         `Firestore: falta índice composto para RANGE (campo ${usedField} + ymd).\n` +
+ 1412:           `Crie/valide o índice no console (Collection: draws | Fields: ${usedField} ASC, ymd ASC, __name__ (documentId) ASC).\n` +
+ 1413:           `Obs: fallback automático só é aplicado para ranges até ${MAX_FALLBACK_DAYS} dias.\n` +
+ 1414:           (rawCode || rawMsg ? `Detalhe: ${rawCode} ${rawMsg}` : "")
+ 1415:       );
+ 1416:     }
+ 1417: 
+ 1418:     throw error;
+ 1419:   }
+ 1420: 
+ 1421:   if (!docs || !docs.length) {
+ 1422:     const days = daysBetweenInclusiveUTC(ymdFrom, ymdTo);
+ 1423:     const MAX_EMPTY_RANGE_FALLBACK_DAYS = 120;
+ 1424: 
+ 1425:     if (
+ 1426:       Number.isFinite(days) &&
+ 1427:       days > 0 &&
+ 1428:       days <= MAX_EMPTY_RANGE_FALLBACK_DAYS
+ 1429:     ) {
+ 1430:       if (effectiveMode === "aggregated") {
+ 1431:         const all = [];
+ 1432:         for (let i = 0; i < days; i += 1) {
+ 1433:           const day = addDaysUTC(ymdFrom, i);
+ 1434:           const dayDraws = await fetchDrawsDayNoPrizes({ uf, dayYmd: day });
+ 1435:           if (dayDraws.length) all.push(...dayDraws);
+
+LINHA ENCONTRADA: 1439
+
+ 1424: 
+ 1425:     if (
+ 1426:       Number.isFinite(days) &&
+ 1427:       days > 0 &&
+ 1428:       days <= MAX_EMPTY_RANGE_FALLBACK_DAYS
+ 1429:     ) {
+ 1430:       if (effectiveMode === "aggregated") {
+ 1431:         const all = [];
+ 1432:         for (let i = 0; i < days; i += 1) {
+ 1433:           const day = addDaysUTC(ymdFrom, i);
+ 1434:           const dayDraws = await fetchDrawsDayNoPrizes({ uf, dayYmd: day });
+ 1435:           if (dayDraws.length) all.push(...dayDraws);
+ 1436:         }
+ 1437: 
+ 1438:         const baseAll = dedupeDrawsLocal(all);
+ 1439:         const base = hourFilter?.kind
+ 1440:           ? baseAll.filter((d) => drawPassesHourFilter(d, hourFilter))
+ 1441:           : baseAll;
+ 1442: 
+ 1443:         let out = dedupeDrawsLocal(sortDrawsLocal(base));
+ 1444: 
+ 1445:         if (!bypassCache) {
+ 1446:       cacheSet(DRAWS_CACHE, rangeKey, out);
+ 1447:     }
+ 1448:         return out;
+ 1449:       }
+ 1450: 
+ 1451:       const all = [];
+ 1452:       for (let i = 0; i < days; i += 1) {
+ 1453:         const day = addDaysUTC(ymdFrom, i);
+ 1454:         const dayDraws = await getKingResultsByDate({
+ 1455:           uf,
+ 1456:           date: day,
+ 1457:           closeHour,
+ 1458:           closeHourBucket,
+ 1459:           positions: positionsArr,
+ 1460:         });
+ 1461:         if (Array.isArray(dayDraws) && dayDraws.length) all.push(...dayDraws);
+ 1462:       }
+ 1463: 
+ 1464:       const baseAll = dedupeDrawsLocal(all);
+ 1465:       const base = hourFilter?.kind
+ 1466:         ? baseAll.filter((d) => drawPassesHourFilter(d, hourFilter))
+ 1467:         : baseAll;
+ 1468: 
+ 1469:       const ordered = sortDrawsLocal(base);
+ 1470: 
+ 1471:       const conc = chooseRangeConcurrency(ordered.length);
+ 1472:       const results = await mapWithConcurrency(ordered, conc, async (item) => {
+ 1473:         const prizes = await fetchPrizesForDraw(item.drawId, positionsArr, item.prizes);
+ 1474:         const pc = Array.isArray(prizes) ? prizes.length : 0;
+ 1475:         return { ...item, prizes, prizesCount: pc, __mode: "detailed" };
+ 1476:       });
+ 1477: 
+ 1478:       const out = dedupeDrawsLocal(results);
+ 1479:       if (!bypassCache) {
+
+LINHA ENCONTRADA: 1465
+
+ 1450: 
+ 1451:       const all = [];
+ 1452:       for (let i = 0; i < days; i += 1) {
+ 1453:         const day = addDaysUTC(ymdFrom, i);
+ 1454:         const dayDraws = await getKingResultsByDate({
+ 1455:           uf,
+ 1456:           date: day,
+ 1457:           closeHour,
+ 1458:           closeHourBucket,
+ 1459:           positions: positionsArr,
+ 1460:         });
+ 1461:         if (Array.isArray(dayDraws) && dayDraws.length) all.push(...dayDraws);
+ 1462:       }
+ 1463: 
+ 1464:       const baseAll = dedupeDrawsLocal(all);
+ 1465:       const base = hourFilter?.kind
+ 1466:         ? baseAll.filter((d) => drawPassesHourFilter(d, hourFilter))
+ 1467:         : baseAll;
+ 1468: 
+ 1469:       const ordered = sortDrawsLocal(base);
+ 1470: 
+ 1471:       const conc = chooseRangeConcurrency(ordered.length);
+ 1472:       const results = await mapWithConcurrency(ordered, conc, async (item) => {
+ 1473:         const prizes = await fetchPrizesForDraw(item.drawId, positionsArr, item.prizes);
+ 1474:         const pc = Array.isArray(prizes) ? prizes.length : 0;
+ 1475:         return { ...item, prizes, prizesCount: pc, __mode: "detailed" };
+ 1476:       });
+ 1477: 
+ 1478:       const out = dedupeDrawsLocal(results);
+ 1479:       if (!bypassCache) {
+ 1480:       cacheSet(DRAWS_CACHE, rangeKey, out);
+ 1481:     }
+ 1482:       return out;
+ 1483:     }
+ 1484: 
+ 1485:     return [];
+ 1486:   }
+ 1487: 
+ 1488:   const baseAll = dedupeDrawsLocal(docs.map(mapDrawDoc));
+ 1489:   const base = hourFilter?.kind
+ 1490:     ? baseAll.filter((d) => drawPassesHourFilter(d, hourFilter))
+ 1491:     : baseAll;
+ 1492: 
+ 1493:   const ordered = sortDrawsLocal(base);
+ 1494: 
+ 1495:   if (effectiveMode === "aggregated") {
+ 1496:     const out = dedupeDrawsLocal(
+ 1497:       ordered.map((d) => {
+ 1498:         const embedded = normalizeEmbeddedPrizesForAggregated(d?.prizes);
+ 1499:         return {
+ 1500:           ...d,
+ 1501:           prizes: embedded,
+ 1502:           prizesCount: Number.isFinite(Number(d?.prizesCount))
+ 1503:             ? Number(d.prizesCount)
+ 1504:             : embedded.length || 0,
+ 1505:           __mode: "aggregated",
+
+LINHA ENCONTRADA: 1489
+
+ 1474:         const pc = Array.isArray(prizes) ? prizes.length : 0;
+ 1475:         return { ...item, prizes, prizesCount: pc, __mode: "detailed" };
+ 1476:       });
+ 1477: 
+ 1478:       const out = dedupeDrawsLocal(results);
+ 1479:       if (!bypassCache) {
+ 1480:       cacheSet(DRAWS_CACHE, rangeKey, out);
+ 1481:     }
+ 1482:       return out;
+ 1483:     }
+ 1484: 
+ 1485:     return [];
+ 1486:   }
+ 1487: 
+ 1488:   const baseAll = dedupeDrawsLocal(docs.map(mapDrawDoc));
+ 1489:   const base = hourFilter?.kind
+ 1490:     ? baseAll.filter((d) => drawPassesHourFilter(d, hourFilter))
+ 1491:     : baseAll;
+ 1492: 
+ 1493:   const ordered = sortDrawsLocal(base);
+ 1494: 
+ 1495:   if (effectiveMode === "aggregated") {
+ 1496:     const out = dedupeDrawsLocal(
+ 1497:       ordered.map((d) => {
+ 1498:         const embedded = normalizeEmbeddedPrizesForAggregated(d?.prizes);
+ 1499:         return {
+ 1500:           ...d,
+ 1501:           prizes: embedded,
+ 1502:           prizesCount: Number.isFinite(Number(d?.prizesCount))
+ 1503:             ? Number(d.prizesCount)
+ 1504:             : embedded.length || 0,
+ 1505:           __mode: "aggregated",
+ 1506:         };
+ 1507:       })
+ 1508:     );
+ 1509:     if (!bypassCache) {
+ 1510:       cacheSet(DRAWS_CACHE, rangeKey, out);
+ 1511:     }
+ 1512:     return out;
+ 1513:   }
+ 1514: 
+ 1515:   const conc = chooseRangeConcurrency(ordered.length);
+ 1516: 
+ 1517:   const results = await mapWithConcurrency(ordered, conc, async (item) => {
+ 1518:     const prizes = await fetchPrizesForDraw(item.drawId, positionsArr, item.prizes);
+ 1519:     const pc = Array.isArray(prizes) ? prizes.length : 0;
+ 1520:     return { ...item, prizes, prizesCount: pc, __mode: "detailed" };
+ 1521:   });
+ 1522: 
+ 1523:   const out = dedupeDrawsLocal(results);
+ 1524:   if (!bypassCache) {
+ 1525:       cacheSet(DRAWS_CACHE, rangeKey, out);
+ 1526:     }
+ 1527:   return out;
+ 1528: }
+ 1529: 
+
+
+================================================================================
+PADRÃO: const ordered = sortDrawsLocal
+================================================================================
+LINHA ENCONTRADA: 1287
+
+ 1272:  */
+ 1273: async function fetchDrawsDayNoPrizes({ uf, dayYmd }) {
+ 1274:   const readPolicy = shouldForceFreshServerRead(dayYmd) ? "server" : DEFAULT_READ_POLICY;
+ 1275: 
+ 1276:   const { docs, error } = await fetchDrawDocsPreferUf({
+ 1277:     uf,
+ 1278:     extraWheres: [where("ymd", "==", dayYmd)],
+ 1279:     policy: readPolicy,
+ 1280:   });
+ 1281:   if (error) throw error;
+ 1282:   if (!docs || !docs.length) return [];
+ 1283: 
+ 1284:   let baseAll = dedupeDrawsLocal(docs.map(mapDrawDoc));
+ 1285:   baseAll = baseAll.filter((x) => (x.ymd || normalizeToYMD(x.date)) === dayYmd);
+ 1286: 
+ 1287:   const ordered = sortDrawsLocal(baseAll);
+ 1288: 
+ 1289:   return ordered.map((d) => {
+ 1290:     const embedded = normalizeEmbeddedPrizesForAggregated(d?.prizes);
+ 1291:     return {
+ 1292:       ...d,
+ 1293:       prizes: embedded,
+ 1294:       prizesCount: embedded.length || Number(d?.prizesCount || 0),
+ 1295:       __mode: "aggregated",
+ 1296:     };
+ 1297:   });
+ 1298: }
+ 1299: 
+ 1300: export async function getKingResultsByRange({
+ 1301:   uf,
+ 1302:   dateFrom,
+ 1303:   dateTo,
+ 1304:   closeHour = null,
+ 1305:   closeHourBucket = null,
+ 1306:   positions = null,
+ 1307:   mode = "detailed",
+ 1308:   readPolicy = DEFAULT_READ_POLICY,
+ 1309:   bypassCache = false,
+ 1310: }) {
+ 1311:   if (!uf || !dateFrom || !dateTo) {
+ 1312:     throw new Error("Parâmetros obrigatórios: uf, dateFrom, dateTo");
+ 1313:   }
+ 1314: 
+ 1315:   const scopeKey = canonicalScopeKey(uf);
+ 1316: 
+ 1317:   const positionsArr = normalizePositions(positions);
+ 1318: 
+ 1319:   const ymdFrom = normalizeToYMD(dateFrom);
+ 1320:   const ymdTo = normalizeToYMD(dateTo);
+ 1321:   if (!ymdFrom || !ymdTo) return [];
+ 1322: 
+ 1323:   const hourFilter = resolveHourFilter({ closeHour, closeHourBucket });
+ 1324: 
+ 1325:   const effectiveMode = decideKingRangeMode({
+ 1326:     dateFrom: ymdFrom,
+ 1327:     dateTo: ymdTo,
+
+LINHA ENCONTRADA: 1469
+
+ 1454:         const dayDraws = await getKingResultsByDate({
+ 1455:           uf,
+ 1456:           date: day,
+ 1457:           closeHour,
+ 1458:           closeHourBucket,
+ 1459:           positions: positionsArr,
+ 1460:         });
+ 1461:         if (Array.isArray(dayDraws) && dayDraws.length) all.push(...dayDraws);
+ 1462:       }
+ 1463: 
+ 1464:       const baseAll = dedupeDrawsLocal(all);
+ 1465:       const base = hourFilter?.kind
+ 1466:         ? baseAll.filter((d) => drawPassesHourFilter(d, hourFilter))
+ 1467:         : baseAll;
+ 1468: 
+ 1469:       const ordered = sortDrawsLocal(base);
+ 1470: 
+ 1471:       const conc = chooseRangeConcurrency(ordered.length);
+ 1472:       const results = await mapWithConcurrency(ordered, conc, async (item) => {
+ 1473:         const prizes = await fetchPrizesForDraw(item.drawId, positionsArr, item.prizes);
+ 1474:         const pc = Array.isArray(prizes) ? prizes.length : 0;
+ 1475:         return { ...item, prizes, prizesCount: pc, __mode: "detailed" };
+ 1476:       });
+ 1477: 
+ 1478:       const out = dedupeDrawsLocal(results);
+ 1479:       if (!bypassCache) {
+ 1480:       cacheSet(DRAWS_CACHE, rangeKey, out);
+ 1481:     }
+ 1482:       return out;
+ 1483:     }
+ 1484: 
+ 1485:     return [];
+ 1486:   }
+ 1487: 
+ 1488:   const baseAll = dedupeDrawsLocal(docs.map(mapDrawDoc));
+ 1489:   const base = hourFilter?.kind
+ 1490:     ? baseAll.filter((d) => drawPassesHourFilter(d, hourFilter))
+ 1491:     : baseAll;
+ 1492: 
+ 1493:   const ordered = sortDrawsLocal(base);
+ 1494: 
+ 1495:   if (effectiveMode === "aggregated") {
+ 1496:     const out = dedupeDrawsLocal(
+ 1497:       ordered.map((d) => {
+ 1498:         const embedded = normalizeEmbeddedPrizesForAggregated(d?.prizes);
+ 1499:         return {
+ 1500:           ...d,
+ 1501:           prizes: embedded,
+ 1502:           prizesCount: Number.isFinite(Number(d?.prizesCount))
+ 1503:             ? Number(d.prizesCount)
+ 1504:             : embedded.length || 0,
+ 1505:           __mode: "aggregated",
+ 1506:         };
+ 1507:       })
+ 1508:     );
+ 1509:     if (!bypassCache) {
+
+LINHA ENCONTRADA: 1493
+
+ 1478:       const out = dedupeDrawsLocal(results);
+ 1479:       if (!bypassCache) {
+ 1480:       cacheSet(DRAWS_CACHE, rangeKey, out);
+ 1481:     }
+ 1482:       return out;
+ 1483:     }
+ 1484: 
+ 1485:     return [];
+ 1486:   }
+ 1487: 
+ 1488:   const baseAll = dedupeDrawsLocal(docs.map(mapDrawDoc));
+ 1489:   const base = hourFilter?.kind
+ 1490:     ? baseAll.filter((d) => drawPassesHourFilter(d, hourFilter))
+ 1491:     : baseAll;
+ 1492: 
+ 1493:   const ordered = sortDrawsLocal(base);
+ 1494: 
+ 1495:   if (effectiveMode === "aggregated") {
+ 1496:     const out = dedupeDrawsLocal(
+ 1497:       ordered.map((d) => {
+ 1498:         const embedded = normalizeEmbeddedPrizesForAggregated(d?.prizes);
+ 1499:         return {
+ 1500:           ...d,
+ 1501:           prizes: embedded,
+ 1502:           prizesCount: Number.isFinite(Number(d?.prizesCount))
+ 1503:             ? Number(d.prizesCount)
+ 1504:             : embedded.length || 0,
+ 1505:           __mode: "aggregated",
+ 1506:         };
+ 1507:       })
+ 1508:     );
+ 1509:     if (!bypassCache) {
+ 1510:       cacheSet(DRAWS_CACHE, rangeKey, out);
+ 1511:     }
+ 1512:     return out;
+ 1513:   }
+ 1514: 
+ 1515:   const conc = chooseRangeConcurrency(ordered.length);
+ 1516: 
+ 1517:   const results = await mapWithConcurrency(ordered, conc, async (item) => {
+ 1518:     const prizes = await fetchPrizesForDraw(item.drawId, positionsArr, item.prizes);
+ 1519:     const pc = Array.isArray(prizes) ? prizes.length : 0;
+ 1520:     return { ...item, prizes, prizesCount: pc, __mode: "detailed" };
+ 1521:   });
+ 1522: 
+ 1523:   const out = dedupeDrawsLocal(results);
+ 1524:   if (!bypassCache) {
+ 1525:       cacheSet(DRAWS_CACHE, rangeKey, out);
+ 1526:     }
+ 1527:   return out;
+ 1528: }
+ 1529: 
+ 1530: /* =========================
+ 1531:    ✅ Hidratação de prizes (para UX no "Todos")
+ 1532: ========================= */
+ 1533: 
+
+
+================================================================================
+PADRÃO: return out;
+================================================================================
+LINHA ENCONTRADA: 1222
+
+ 1207: 
+ 1208:   const base = hourFilter?.kind
+ 1209:     ? dayAll.filter((d) => drawPassesHourFilter(d, hourFilter))
+ 1210:     : dayAll;
+ 1211: 
+ 1212:   let out = dedupeDrawsLocal(sortDrawsLocal(base));
+ 1213: 
+ 1214: if (scopeKey === FEDERAL_SCOPE_CODE) {
+ 1215:   out = collapseFederalDailyCloneDraws(out);
+ 1216: }
+ 1217: 
+ 1218:   if (allowMemoryCache) {
+ 1219:     cacheSet(DRAWS_CACHE, dayKey, out);
+ 1220:   }
+ 1221: 
+ 1222:   return out;
+ 1223: }
+ 1224: 
+ 1225: /* =========================
+ 1226:    API: Range
+ 1227: ========================= */
+ 1228: 
+ 1229: function drawsCacheKeyRange({
+ 1230:   scopeKey,
+ 1231:   from,
+ 1232:   to,
+ 1233:   positionsArr,
+ 1234:   hourFilter,
+ 1235:   mode,
+ 1236: }) {
+ 1237:   const p = positionsArr && positionsArr.length ? positionsArr.join(",") : "all";
+ 1238:   const h =
+ 1239:     hourFilter?.kind === "bucket"
+ 1240:       ? `bucket:${hourFilter.bucket}`
+ 1241:       : hourFilter?.kind === "exact"
+ 1242:       ? `exact:${hourFilter.hhmm}`
+ 1243:       : "all";
+ 1244:   const m = mode ? String(mode) : "detailed";
+ 1245:   return `range::${scopeKey}::${from}..${to}::pos=${p}::h=${h}::mode=${m}`;
+ 1246: }
+ 1247: 
+ 1248: function chooseRangeConcurrency(drawCount) {
+ 1249:   if (!Number.isFinite(drawCount)) return 6;
+ 1250:   if (drawCount <= 50) return 4;
+ 1251:   if (drawCount <= 300) return 6;
+ 1252:   if (drawCount <= 1200) return 8;
+ 1253:   return 10;
+ 1254: }
+ 1255: 
+ 1256: export function decideKingRangeMode({ dateFrom, dateTo, mode = "detailed" }) {
+ 1257:   const ymdFrom = normalizeToYMD(dateFrom);
+ 1258:   const ymdTo = normalizeToYMD(dateTo);
+ 1259:   if (!ymdFrom || !ymdTo) return "detailed";
+ 1260: 
+ 1261:   if (mode === "detailed" || mode === "aggregated") return mode;
+ 1262:   if (mode !== "auto") return "detailed";
+
+LINHA ENCONTRADA: 1378
+
+ 1363:             const day = addDaysUTC(ymdFrom, i);
+ 1364:             const dayDraws = await fetchDrawsDayNoPrizes({ uf, dayYmd: day });
+ 1365:             if (dayDraws.length) all.push(...dayDraws);
+ 1366:           }
+ 1367: 
+ 1368:           const baseAll = dedupeDrawsLocal(all);
+ 1369:           const base = hourFilter?.kind
+ 1370:             ? baseAll.filter((d) => drawPassesHourFilter(d, hourFilter))
+ 1371:             : baseAll;
+ 1372: 
+ 1373:           let out = dedupeDrawsLocal(sortDrawsLocal(base));
+ 1374: 
+ 1375:           if (!bypassCache) {
+ 1376:       cacheSet(DRAWS_CACHE, rangeKey, out);
+ 1377:     }
+ 1378:           return out;
+ 1379:         }
+ 1380: 
+ 1381:         const all = [];
+ 1382:         for (let i = 0; i < days; i += 1) {
+ 1383:           const day = addDaysUTC(ymdFrom, i);
+ 1384:           const dayDraws = await getKingResultsByDate({
+ 1385:             uf,
+ 1386:             date: day,
+ 1387:             closeHour,
+ 1388:             closeHourBucket,
+ 1389:             positions: positionsArr,
+ 1390:           });
+ 1391:           if (Array.isArray(dayDraws) && dayDraws.length) all.push(...dayDraws);
+ 1392:         }
+ 1393: 
+ 1394:         const baseAll = dedupeDrawsLocal(all);
+ 1395:         const base = hourFilter?.kind
+ 1396:           ? baseAll.filter((d) => drawPassesHourFilter(d, hourFilter))
+ 1397:           : baseAll;
+ 1398: 
+ 1399:         let out = dedupeDrawsLocal(sortDrawsLocal(base));
+ 1400: 
+ 1401:         if (!bypassCache) {
+ 1402:       cacheSet(DRAWS_CACHE, rangeKey, out);
+ 1403:     }
+ 1404:         return out;
+ 1405:       }
+ 1406: 
+ 1407:       const rawCode = String(error?.code || "");
+ 1408:       const rawMsg = String(error?.message || "");
+ 1409: 
+ 1410:       throw new Error(
+ 1411:         `Firestore: falta índice composto para RANGE (campo ${usedField} + ymd).\n` +
+ 1412:           `Crie/valide o índice no console (Collection: draws | Fields: ${usedField} ASC, ymd ASC, __name__ (documentId) ASC).\n` +
+ 1413:           `Obs: fallback automático só é aplicado para ranges até ${MAX_FALLBACK_DAYS} dias.\n` +
+ 1414:           (rawCode || rawMsg ? `Detalhe: ${rawCode} ${rawMsg}` : "")
+ 1415:       );
+ 1416:     }
+ 1417: 
+ 1418:     throw error;
+
+LINHA ENCONTRADA: 1404
+
+ 1389:             positions: positionsArr,
+ 1390:           });
+ 1391:           if (Array.isArray(dayDraws) && dayDraws.length) all.push(...dayDraws);
+ 1392:         }
+ 1393: 
+ 1394:         const baseAll = dedupeDrawsLocal(all);
+ 1395:         const base = hourFilter?.kind
+ 1396:           ? baseAll.filter((d) => drawPassesHourFilter(d, hourFilter))
+ 1397:           : baseAll;
+ 1398: 
+ 1399:         let out = dedupeDrawsLocal(sortDrawsLocal(base));
+ 1400: 
+ 1401:         if (!bypassCache) {
+ 1402:       cacheSet(DRAWS_CACHE, rangeKey, out);
+ 1403:     }
+ 1404:         return out;
+ 1405:       }
+ 1406: 
+ 1407:       const rawCode = String(error?.code || "");
+ 1408:       const rawMsg = String(error?.message || "");
+ 1409: 
+ 1410:       throw new Error(
+ 1411:         `Firestore: falta índice composto para RANGE (campo ${usedField} + ymd).\n` +
+ 1412:           `Crie/valide o índice no console (Collection: draws | Fields: ${usedField} ASC, ymd ASC, __name__ (documentId) ASC).\n` +
+ 1413:           `Obs: fallback automático só é aplicado para ranges até ${MAX_FALLBACK_DAYS} dias.\n` +
+ 1414:           (rawCode || rawMsg ? `Detalhe: ${rawCode} ${rawMsg}` : "")
+ 1415:       );
+ 1416:     }
+ 1417: 
+ 1418:     throw error;
+ 1419:   }
+ 1420: 
+ 1421:   if (!docs || !docs.length) {
+ 1422:     const days = daysBetweenInclusiveUTC(ymdFrom, ymdTo);
+ 1423:     const MAX_EMPTY_RANGE_FALLBACK_DAYS = 120;
+ 1424: 
+ 1425:     if (
+ 1426:       Number.isFinite(days) &&
+ 1427:       days > 0 &&
+ 1428:       days <= MAX_EMPTY_RANGE_FALLBACK_DAYS
+ 1429:     ) {
+ 1430:       if (effectiveMode === "aggregated") {
+ 1431:         const all = [];
+ 1432:         for (let i = 0; i < days; i += 1) {
+ 1433:           const day = addDaysUTC(ymdFrom, i);
+ 1434:           const dayDraws = await fetchDrawsDayNoPrizes({ uf, dayYmd: day });
+ 1435:           if (dayDraws.length) all.push(...dayDraws);
+ 1436:         }
+ 1437: 
+ 1438:         const baseAll = dedupeDrawsLocal(all);
+ 1439:         const base = hourFilter?.kind
+ 1440:           ? baseAll.filter((d) => drawPassesHourFilter(d, hourFilter))
+ 1441:           : baseAll;
+ 1442: 
+ 1443:         let out = dedupeDrawsLocal(sortDrawsLocal(base));
+ 1444: 
+
+LINHA ENCONTRADA: 1448
+
+ 1433:           const day = addDaysUTC(ymdFrom, i);
+ 1434:           const dayDraws = await fetchDrawsDayNoPrizes({ uf, dayYmd: day });
+ 1435:           if (dayDraws.length) all.push(...dayDraws);
+ 1436:         }
+ 1437: 
+ 1438:         const baseAll = dedupeDrawsLocal(all);
+ 1439:         const base = hourFilter?.kind
+ 1440:           ? baseAll.filter((d) => drawPassesHourFilter(d, hourFilter))
+ 1441:           : baseAll;
+ 1442: 
+ 1443:         let out = dedupeDrawsLocal(sortDrawsLocal(base));
+ 1444: 
+ 1445:         if (!bypassCache) {
+ 1446:       cacheSet(DRAWS_CACHE, rangeKey, out);
+ 1447:     }
+ 1448:         return out;
+ 1449:       }
+ 1450: 
+ 1451:       const all = [];
+ 1452:       for (let i = 0; i < days; i += 1) {
+ 1453:         const day = addDaysUTC(ymdFrom, i);
+ 1454:         const dayDraws = await getKingResultsByDate({
+ 1455:           uf,
+ 1456:           date: day,
+ 1457:           closeHour,
+ 1458:           closeHourBucket,
+ 1459:           positions: positionsArr,
+ 1460:         });
+ 1461:         if (Array.isArray(dayDraws) && dayDraws.length) all.push(...dayDraws);
+ 1462:       }
+ 1463: 
+ 1464:       const baseAll = dedupeDrawsLocal(all);
+ 1465:       const base = hourFilter?.kind
+ 1466:         ? baseAll.filter((d) => drawPassesHourFilter(d, hourFilter))
+ 1467:         : baseAll;
+ 1468: 
+ 1469:       const ordered = sortDrawsLocal(base);
+ 1470: 
+ 1471:       const conc = chooseRangeConcurrency(ordered.length);
+ 1472:       const results = await mapWithConcurrency(ordered, conc, async (item) => {
+ 1473:         const prizes = await fetchPrizesForDraw(item.drawId, positionsArr, item.prizes);
+ 1474:         const pc = Array.isArray(prizes) ? prizes.length : 0;
+ 1475:         return { ...item, prizes, prizesCount: pc, __mode: "detailed" };
+ 1476:       });
+ 1477: 
+ 1478:       const out = dedupeDrawsLocal(results);
+ 1479:       if (!bypassCache) {
+ 1480:       cacheSet(DRAWS_CACHE, rangeKey, out);
+ 1481:     }
+ 1482:       return out;
+ 1483:     }
+ 1484: 
+ 1485:     return [];
+ 1486:   }
+ 1487: 
+ 1488:   const baseAll = dedupeDrawsLocal(docs.map(mapDrawDoc));
+
+LINHA ENCONTRADA: 1482
+
+ 1467:         : baseAll;
+ 1468: 
+ 1469:       const ordered = sortDrawsLocal(base);
+ 1470: 
+ 1471:       const conc = chooseRangeConcurrency(ordered.length);
+ 1472:       const results = await mapWithConcurrency(ordered, conc, async (item) => {
+ 1473:         const prizes = await fetchPrizesForDraw(item.drawId, positionsArr, item.prizes);
+ 1474:         const pc = Array.isArray(prizes) ? prizes.length : 0;
+ 1475:         return { ...item, prizes, prizesCount: pc, __mode: "detailed" };
+ 1476:       });
+ 1477: 
+ 1478:       const out = dedupeDrawsLocal(results);
+ 1479:       if (!bypassCache) {
+ 1480:       cacheSet(DRAWS_CACHE, rangeKey, out);
+ 1481:     }
+ 1482:       return out;
+ 1483:     }
+ 1484: 
+ 1485:     return [];
+ 1486:   }
+ 1487: 
+ 1488:   const baseAll = dedupeDrawsLocal(docs.map(mapDrawDoc));
+ 1489:   const base = hourFilter?.kind
+ 1490:     ? baseAll.filter((d) => drawPassesHourFilter(d, hourFilter))
+ 1491:     : baseAll;
+ 1492: 
+ 1493:   const ordered = sortDrawsLocal(base);
+ 1494: 
+ 1495:   if (effectiveMode === "aggregated") {
+ 1496:     const out = dedupeDrawsLocal(
+ 1497:       ordered.map((d) => {
+ 1498:         const embedded = normalizeEmbeddedPrizesForAggregated(d?.prizes);
+ 1499:         return {
+ 1500:           ...d,
+ 1501:           prizes: embedded,
+ 1502:           prizesCount: Number.isFinite(Number(d?.prizesCount))
+ 1503:             ? Number(d.prizesCount)
+ 1504:             : embedded.length || 0,
+ 1505:           __mode: "aggregated",
+ 1506:         };
+ 1507:       })
+ 1508:     );
+ 1509:     if (!bypassCache) {
+ 1510:       cacheSet(DRAWS_CACHE, rangeKey, out);
+ 1511:     }
+ 1512:     return out;
+ 1513:   }
+ 1514: 
+ 1515:   const conc = chooseRangeConcurrency(ordered.length);
+ 1516: 
+ 1517:   const results = await mapWithConcurrency(ordered, conc, async (item) => {
+ 1518:     const prizes = await fetchPrizesForDraw(item.drawId, positionsArr, item.prizes);
+ 1519:     const pc = Array.isArray(prizes) ? prizes.length : 0;
+ 1520:     return { ...item, prizes, prizesCount: pc, __mode: "detailed" };
+ 1521:   });
+ 1522: 
+
+LINHA ENCONTRADA: 1512
+
+ 1497:       ordered.map((d) => {
+ 1498:         const embedded = normalizeEmbeddedPrizesForAggregated(d?.prizes);
+ 1499:         return {
+ 1500:           ...d,
+ 1501:           prizes: embedded,
+ 1502:           prizesCount: Number.isFinite(Number(d?.prizesCount))
+ 1503:             ? Number(d.prizesCount)
+ 1504:             : embedded.length || 0,
+ 1505:           __mode: "aggregated",
+ 1506:         };
+ 1507:       })
+ 1508:     );
+ 1509:     if (!bypassCache) {
+ 1510:       cacheSet(DRAWS_CACHE, rangeKey, out);
+ 1511:     }
+ 1512:     return out;
+ 1513:   }
+ 1514: 
+ 1515:   const conc = chooseRangeConcurrency(ordered.length);
+ 1516: 
+ 1517:   const results = await mapWithConcurrency(ordered, conc, async (item) => {
+ 1518:     const prizes = await fetchPrizesForDraw(item.drawId, positionsArr, item.prizes);
+ 1519:     const pc = Array.isArray(prizes) ? prizes.length : 0;
+ 1520:     return { ...item, prizes, prizesCount: pc, __mode: "detailed" };
+ 1521:   });
+ 1522: 
+ 1523:   const out = dedupeDrawsLocal(results);
+ 1524:   if (!bypassCache) {
+ 1525:       cacheSet(DRAWS_CACHE, rangeKey, out);
+ 1526:     }
+ 1527:   return out;
+ 1528: }
+ 1529: 
+ 1530: /* =========================
+ 1531:    ✅ Hidratação de prizes (para UX no "Todos")
+ 1532: ========================= */
+ 1533: 
+ 1534: export async function hydrateKingDrawsWithPrizes({
+ 1535:   draws,
+ 1536:   positions = null,
+ 1537:   concurrency = null,
+ 1538: }) {
+ 1539:   const arr = Array.isArray(draws) ? draws : [];
+ 1540:   if (!arr.length) return [];
+ 1541: 
+ 1542:   const positionsArr = normalizePositions(positions);
+ 1543: 
+ 1544:   const conc =
+ 1545:     Number.isFinite(Number(concurrency)) && Number(concurrency) > 0
+ 1546:       ? Number(concurrency)
+ 1547:       : chooseRangeConcurrency(arr.length);
+ 1548: 
+ 1549:   const results = await mapWithConcurrency(arr, conc, async (item) => {
+ 1550:     const prizes = await fetchPrizesForDraw(item.drawId, positionsArr, item.prizes);
+ 1551:     const pc = Array.isArray(prizes) ? prizes.length : 0;
+ 1552:     return { ...item, prizes, prizesCount: pc, __mode: "detailed" };
+
+LINHA ENCONTRADA: 1527
+
+ 1512:     return out;
+ 1513:   }
+ 1514: 
+ 1515:   const conc = chooseRangeConcurrency(ordered.length);
+ 1516: 
+ 1517:   const results = await mapWithConcurrency(ordered, conc, async (item) => {
+ 1518:     const prizes = await fetchPrizesForDraw(item.drawId, positionsArr, item.prizes);
+ 1519:     const pc = Array.isArray(prizes) ? prizes.length : 0;
+ 1520:     return { ...item, prizes, prizesCount: pc, __mode: "detailed" };
+ 1521:   });
+ 1522: 
+ 1523:   const out = dedupeDrawsLocal(results);
+ 1524:   if (!bypassCache) {
+ 1525:       cacheSet(DRAWS_CACHE, rangeKey, out);
+ 1526:     }
+ 1527:   return out;
+ 1528: }
+ 1529: 
+ 1530: /* =========================
+ 1531:    ✅ Hidratação de prizes (para UX no "Todos")
+ 1532: ========================= */
+ 1533: 
+ 1534: export async function hydrateKingDrawsWithPrizes({
+ 1535:   draws,
+ 1536:   positions = null,
+ 1537:   concurrency = null,
+ 1538: }) {
+ 1539:   const arr = Array.isArray(draws) ? draws : [];
+ 1540:   if (!arr.length) return [];
+ 1541: 
+ 1542:   const positionsArr = normalizePositions(positions);
+ 1543: 
+ 1544:   const conc =
+ 1545:     Number.isFinite(Number(concurrency)) && Number(concurrency) > 0
+ 1546:       ? Number(concurrency)
+ 1547:       : chooseRangeConcurrency(arr.length);
+ 1548: 
+ 1549:   const results = await mapWithConcurrency(arr, conc, async (item) => {
+ 1550:     const prizes = await fetchPrizesForDraw(item.drawId, positionsArr, item.prizes);
+ 1551:     const pc = Array.isArray(prizes) ? prizes.length : 0;
+ 1552:     return { ...item, prizes, prizesCount: pc, __mode: "detailed" };
+ 1553:   });
+ 1554: 
+ 1555:   return dedupeDrawsLocal(results);
+ 1556: }
+ 1557: 
+ 1558: /* =========================
+ 1559:    ✅ ATRASADOS (Late) — 100% baseado na SUA base
+ 1560: ========================= */
+ 1561: 
+ 1562: function normalizeLotteriesList(lotteries) {
+ 1563:   const arr = Array.isArray(lotteries) ? lotteries : [];
+ 1564:   const cleaned = arr
+ 1565:     .map((x) => String(x ?? "").trim().toUpperCase())
+ 1566:     .filter(Boolean);
+ 1567:   return cleaned.length ? Array.from(new Set(cleaned)) : null;
+
+LINHA ENCONTRADA: 1750
+
+ 1735:   const sorted = [...rows].sort((a, b) => {
+ 1736:     const aa = Number.isFinite(Number(a?.atrasoDias)) ? Number(a.atrasoDias) : -1;
+ 1737:     const bb = Number.isFinite(Number(b?.atrasoDias)) ? Number(b.atrasoDias) : -1;
+ 1738:     if (bb !== aa) return bb - aa;
+ 1739: 
+ 1740:     const ha = hourToNumSafe(a?.lastHour);
+ 1741:     const hb = hourToNumSafe(b?.lastHour);
+ 1742:     if (ha !== hb) return ha - hb;
+ 1743: 
+ 1744:     return Number(a?.grupo || 0) - Number(b?.grupo || 0);
+ 1745:   });
+ 1746: 
+ 1747:   const out = sorted.map((r, idx) => ({ ...r, pos: idx + 1 }));
+ 1748: 
+ 1749:   cacheSet(LATE_CACHE, cacheKey, out);
+ 1750:   return out;
+ 1751: }
+
+
+================================================================================
+PADRÃO: return [];
+================================================================================
+LINHA ENCONTRADA: 166
+
+  151:   if (up === RJ_STATE_CODE) return RJ_LOTTERY_KEY;
+  152:   if (isFederalInput(up)) return FEDERAL_SCOPE_CODE;
+  153: 
+  154:   return up;
+  155: }
+  156: 
+  157: /**
+  158:  * Quando for consultar por campo "uf", adiciona trava de lottery_key para RJ.
+  159:  * Isso elimina o vazamento de Federal para o Rio.
+  160:  */
+  161: function buildRJLockWhereIfNeeded(fieldName, ufInput) {
+  162:   const ufUp = String(ufInput || "").trim().toUpperCase();
+  163:   if (fieldName === "uf" && ufUp === RJ_STATE_CODE) {
+  164:     return [where("lottery_key", "==", RJ_LOTTERY_KEY)];
+  165:   }
+  166:   return [];
+  167: }
+  168: 
+  169: /* =========================
+  170:    ✅ FIX silencioso: normalizar valor do WHERE por campo
+  171: ========================= */
+  172: 
+  173: function normalizeValueForField(fieldName, valueInput) {
+  174:   const s = String(valueInput || "").trim();
+  175:   if (!s) return "";
+  176: 
+  177:   if (fieldName === "uf") {
+  178:     const up = s.toUpperCase();
+  179:     if (isFederalInput(up)) return FEDERAL_SCOPE_CODE;
+  180:     return up;
+  181:   }
+  182: 
+  183:   if (fieldName === "lottery_key") {
+  184:     const up = s.toUpperCase();
+  185:     if (up === RJ_STATE_CODE) return RJ_LOTTERY_KEY; // ✅ PREVENTIVO: RJ -> PT_RIO
+  186:     if (isFederalInput(up)) return FEDERAL_SCOPE_CODE;
+  187:     return up;
+  188:   }
+  189: 
+  190:   return s;
+  191: }
+  192: 
+  193: /* =========================
+  194:    Utils
+  195: ========================= */
+  196: 
+  197: /**
+  198:  * ✅ Normaliza "horário" para HH:MM
+  199:  */
+  200: function normalizeHourLike(value) {
+  201:   const s0 = String(value ?? "").trim();
+  202:   if (!s0) return "";
+  203: 
+  204:   const s = s0.replace(/\s+/g, "");
+  205: 
+  206:   const mhx = s.match(/^(\d{1,2})(?:h|hs|hr|hrs)$/i);
+
+LINHA ENCONTRADA: 498
+
+  483: /* =========================
+  484:    Prizes (ROBUSTO + CACHE)
+  485: ========================= */
+  486: 
+  487: function prizesCacheKeyAll(drawId) {
+  488:   return `all::${String(drawId)}`;
+  489: }
+  490: 
+  491: /**
+  492:  * ✅ FIX DEFINITIVO:
+  493:  * Se existir embeddedPrizes mas vier "agregado/incompleto" (sem grupo/posição válidos),
+  494:  * faz fallback e busca a subcollection draws/{id}/prizes.
+  495:  */
+  496: async function fetchPrizesForDraw(drawId, positionsArr, embeddedPrizes) {
+  497:   const drawKey = String(drawId || "").trim();
+  498:   if (!drawKey) return [];
+  499: 
+  500:   if (Array.isArray(embeddedPrizes) && embeddedPrizes.length) {
+  501:     const normalized = embeddedPrizes.map((p, idx) =>
+  502:       normalizePrize(p, p?.prizeId ?? `emb_${idx}`)
+  503:     );
+  504: 
+  505:     const cleaned = normalized.filter(
+  506:       (x) => isValidGrupo(x?.grupo) && isValidPosition(x?.position)
+  507:     );
+  508: 
+  509:     if (cleaned.length) {
+  510:       const allSorted = sortPrizesByPosition(cleaned);
+  511:       return filterPrizesByPositions(allSorted, positionsArr);
+  512:     }
+  513:   }
+  514: 
+  515:   const allKey = prizesCacheKeyAll(drawKey);
+  516:   const cachedAll = cacheGet(PRIZES_CACHE, allKey);
+  517:   if (Array.isArray(cachedAll) && cachedAll.length > 0) {
+  518:     return filterPrizesByPositions(cachedAll, positionsArr);
+  519:   }
+  520: 
+  521:   const prizesCol = collection(db, "draws", drawKey, "prizes");
+  522: 
+  523:   const { snap, error } = await safeGetDocsSmart(prizesCol, { policy: "server" });
+  524:   if (error) throw error;
+  525: 
+  526:   const allRaw = snap.docs.map((d) => normalizePrize(d.data(), d.id));
+  527: 
+  528:   // console.log("DEBUG allRaw:", allRaw);
+  529: 
+  530: const all = allRaw.filter(
+  531:   (x) => isValidGrupo(x?.grupo) && isValidPosition(x?.position)
+  532: );
+  533: 
+  534: // console.log("DEBUG allFiltered:", all);
+  535: 
+  536:   const allSorted = sortPrizesByPosition(all);
+  537:   cacheSet(PRIZES_CACHE, allKey, allSorted);
+  538: 
+
+LINHA ENCONTRADA: 600
+
+  585:     prizesCount: d.prizesCount,
+  586:     prizes: embeddedPrizes,
+  587:   };
+  588: }
+  589: 
+  590: /* =========================
+  591:    Compat: uf OU lottery_key
+  592: ========================= */
+  593: 
+  594: function buildUfWhereClauses(fieldName, uf) {
+  595:   const normalized = normalizeValueForField(fieldName, uf);
+  596:   return [where(fieldName, "==", normalized)];
+  597: }
+  598: 
+  599: function normalizeOrderBys(extraOrderBy) {
+  600:   if (!extraOrderBy) return [];
+  601:   return Array.isArray(extraOrderBy)
+  602:     ? extraOrderBy.filter(Boolean)
+  603:     : [extraOrderBy];
+  604: }
+  605: 
+  606: async function queryDrawsByField({
+  607:   fieldName,
+  608:   uf,
+  609:   extraWheres = [],
+  610:   extraOrderBy = null,
+  611:   extraLimit = null,
+  612:   policy = DEFAULT_READ_POLICY,
+  613: }) {
+  614:   const drawsCol = collection(db, "draws");
+  615: 
+  616:   const parts = [
+  617:     drawsCol,
+  618:     ...buildUfWhereClauses(fieldName, uf),
+  619:     ...buildRJLockWhereIfNeeded(fieldName, uf),
+  620:     ...(extraWheres || []),
+  621:   ];
+  622: 
+  623:   const orderBys = normalizeOrderBys(extraOrderBy);
+  624:   for (const ob of orderBys) parts.push(ob);
+  625: 
+  626:   if (extraLimit) parts.push(extraLimit);
+  627: 
+  628:   const qRef = query(...parts);
+  629:   return safeGetDocsSmart(qRef, { policy });
+  630: }
+  631: 
+  632: function extractUfParam(maybeUfOrObj) {
+  633:   if (!maybeUfOrObj) return "";
+  634:   if (typeof maybeUfOrObj === "string") return maybeUfOrObj;
+  635:   if (typeof maybeUfOrObj === "object" && typeof maybeUfOrObj.uf === "string") {
+  636:     return maybeUfOrObj.uf;
+  637:   }
+  638:   return String(maybeUfOrObj || "");
+  639: }
+  640: 
+
+LINHA ENCONTRADA: 1120
+
+ 1105: }
+ 1106: 
+ 1107: export async function getKingResultsByDate({
+ 1108:   uf,
+ 1109:   date,
+ 1110:   closeHour = null,
+ 1111:   closeHourBucket = null,
+ 1112:   positions = null,
+ 1113: }) {
+ 1114:   if (!uf || !date) throw new Error("Parâmetros obrigatórios: uf e date");
+ 1115: 
+ 1116:   const scopeKey = canonicalScopeKey(uf);
+ 1117: 
+ 1118:   const positionsArr = normalizePositions(positions);
+ 1119:   const ymdDate = normalizeToYMD(date);
+ 1120:   if (!ymdDate) return [];
+ 1121: 
+ 1122:   const hourFilter = resolveHourFilter({ closeHour, closeHourBucket });
+ 1123: 
+ 1124:   const dayKey = drawsCacheKeyDay({
+ 1125:     scopeKey,
+ 1126:     ymd: ymdDate,
+ 1127:     positionsArr,
+ 1128:     hourFilter,
+ 1129:   });
+ 1130: 
+ 1131:   const forceFreshServer = shouldForceFreshServerRead(ymdDate);
+ 1132:   const allowMemoryCache = !forceFreshServer;
+ 1133: 
+ 1134:   if (allowMemoryCache) {
+ 1135:     const cached = cacheGet(DRAWS_CACHE, dayKey);
+ 1136:     if (cached) return cached;
+ 1137:   }
+ 1138: 
+ 1139:   const readPolicy = forceFreshServer ? "server" : DEFAULT_READ_POLICY;
+ 1140: 
+ 1141:   const docCandidates = [];
+ 1142: 
+ 1143:   {
+ 1144:     const { docs: found, error } = await fetchDrawDocsPreferUf({
+ 1145:       uf,
+ 1146:       extraWheres: [where("ymd", "==", ymdDate)],
+ 1147:       policy: readPolicy,
+ 1148:     });
+ 1149:     if (error) throw error;
+ 1150:     if (found.length) docCandidates.push(...found);
+ 1151:   }
+ 1152: 
+ 1153:   if (!docCandidates.length) {
+ 1154:     const rawDate = String(date || "").trim();
+ 1155:     if (rawDate) {
+ 1156:       const { docs: found, error } = await fetchDrawDocsPreferUf({
+ 1157:         uf,
+ 1158:         extraWheres: [where("date", "==", rawDate)],
+ 1159:         policy: readPolicy,
+ 1160:       });
+
+LINHA ENCONTRADA: 1189
+
+ 1174:   }
+ 1175: 
+ 1176:   if (!docCandidates.length) {
+ 1177:     const brDate = ymdToBR(ymdDate);
+ 1178:     if (brDate) {
+ 1179:       const { docs: found, error } = await fetchDrawDocsPreferUf({
+ 1180:         uf,
+ 1181:         extraWheres: [where("date", "==", brDate)],
+ 1182:         policy: readPolicy,
+ 1183:       });
+ 1184:       if (error) throw error;
+ 1185:       if (found.length) docCandidates.push(...found);
+ 1186:     }
+ 1187:   }
+ 1188: 
+ 1189:   if (!docCandidates.length) return [];
+ 1190: 
+ 1191:   let baseAll = dedupeDrawsLocal(docCandidates.map(mapDrawDoc));
+ 1192:   baseAll = baseAll.filter((x) => (x.ymd || normalizeToYMD(x.date)) === ymdDate);
+ 1193: 
+ 1194:   const orderedAll = sortDrawsLocal(baseAll);
+ 1195: 
+ 1196:   const hydratedAll = await mapWithConcurrency(orderedAll, 6, async (item) => {
+ 1197:     const prizes = await fetchPrizesForDraw(item.drawId, positionsArr, item.prizes);
+ 1198:     const pc = Array.isArray(prizes) ? prizes.length : 0;
+ 1199:     return { ...item, prizes, prizesCount: pc, __mode: "detailed" };
+ 1200:   });
+ 1201: 
+ 1202:   let dayAll = dedupeDrawsLocal(hydratedAll);
+ 1203: 
+ 1204: if (scopeKey === FEDERAL_SCOPE_CODE) {
+ 1205:   dayAll = collapseFederalDailyCloneDraws(dayAll);
+ 1206: }
+ 1207: 
+ 1208:   const base = hourFilter?.kind
+ 1209:     ? dayAll.filter((d) => drawPassesHourFilter(d, hourFilter))
+ 1210:     : dayAll;
+ 1211: 
+ 1212:   let out = dedupeDrawsLocal(sortDrawsLocal(base));
+ 1213: 
+ 1214: if (scopeKey === FEDERAL_SCOPE_CODE) {
+ 1215:   out = collapseFederalDailyCloneDraws(out);
+ 1216: }
+ 1217: 
+ 1218:   if (allowMemoryCache) {
+ 1219:     cacheSet(DRAWS_CACHE, dayKey, out);
+ 1220:   }
+ 1221: 
+ 1222:   return out;
+ 1223: }
+ 1224: 
+ 1225: /* =========================
+ 1226:    API: Range
+ 1227: ========================= */
+ 1228: 
+ 1229: function drawsCacheKeyRange({
+
+LINHA ENCONTRADA: 1282
+
+ 1267: }
+ 1268: 
+ 1269: /**
+ 1270:  * ✅ Fallback barato (SEM prizes): usado quando falta índice composto no RANGE,
+ 1271:  * ou quando você quer aggregated sem custo de hidratar.
+ 1272:  */
+ 1273: async function fetchDrawsDayNoPrizes({ uf, dayYmd }) {
+ 1274:   const readPolicy = shouldForceFreshServerRead(dayYmd) ? "server" : DEFAULT_READ_POLICY;
+ 1275: 
+ 1276:   const { docs, error } = await fetchDrawDocsPreferUf({
+ 1277:     uf,
+ 1278:     extraWheres: [where("ymd", "==", dayYmd)],
+ 1279:     policy: readPolicy,
+ 1280:   });
+ 1281:   if (error) throw error;
+ 1282:   if (!docs || !docs.length) return [];
+ 1283: 
+ 1284:   let baseAll = dedupeDrawsLocal(docs.map(mapDrawDoc));
+ 1285:   baseAll = baseAll.filter((x) => (x.ymd || normalizeToYMD(x.date)) === dayYmd);
+ 1286: 
+ 1287:   const ordered = sortDrawsLocal(baseAll);
+ 1288: 
+ 1289:   return ordered.map((d) => {
+ 1290:     const embedded = normalizeEmbeddedPrizesForAggregated(d?.prizes);
+ 1291:     return {
+ 1292:       ...d,
+ 1293:       prizes: embedded,
+ 1294:       prizesCount: embedded.length || Number(d?.prizesCount || 0),
+ 1295:       __mode: "aggregated",
+ 1296:     };
+ 1297:   });
+ 1298: }
+ 1299: 
+ 1300: export async function getKingResultsByRange({
+ 1301:   uf,
+ 1302:   dateFrom,
+ 1303:   dateTo,
+ 1304:   closeHour = null,
+ 1305:   closeHourBucket = null,
+ 1306:   positions = null,
+ 1307:   mode = "detailed",
+ 1308:   readPolicy = DEFAULT_READ_POLICY,
+ 1309:   bypassCache = false,
+ 1310: }) {
+ 1311:   if (!uf || !dateFrom || !dateTo) {
+ 1312:     throw new Error("Parâmetros obrigatórios: uf, dateFrom, dateTo");
+ 1313:   }
+ 1314: 
+ 1315:   const scopeKey = canonicalScopeKey(uf);
+ 1316: 
+ 1317:   const positionsArr = normalizePositions(positions);
+ 1318: 
+ 1319:   const ymdFrom = normalizeToYMD(dateFrom);
+ 1320:   const ymdTo = normalizeToYMD(dateTo);
+ 1321:   if (!ymdFrom || !ymdTo) return [];
+ 1322: 
+
+LINHA ENCONTRADA: 1321
+
+ 1306:   positions = null,
+ 1307:   mode = "detailed",
+ 1308:   readPolicy = DEFAULT_READ_POLICY,
+ 1309:   bypassCache = false,
+ 1310: }) {
+ 1311:   if (!uf || !dateFrom || !dateTo) {
+ 1312:     throw new Error("Parâmetros obrigatórios: uf, dateFrom, dateTo");
+ 1313:   }
+ 1314: 
+ 1315:   const scopeKey = canonicalScopeKey(uf);
+ 1316: 
+ 1317:   const positionsArr = normalizePositions(positions);
+ 1318: 
+ 1319:   const ymdFrom = normalizeToYMD(dateFrom);
+ 1320:   const ymdTo = normalizeToYMD(dateTo);
+ 1321:   if (!ymdFrom || !ymdTo) return [];
+ 1322: 
+ 1323:   const hourFilter = resolveHourFilter({ closeHour, closeHourBucket });
+ 1324: 
+ 1325:   const effectiveMode = decideKingRangeMode({
+ 1326:     dateFrom: ymdFrom,
+ 1327:     dateTo: ymdTo,
+ 1328:     mode,
+ 1329:   });
+ 1330: 
+ 1331:   const rangeKey = drawsCacheKeyRange({
+ 1332:     scopeKey,
+ 1333:     from: ymdFrom,
+ 1334:     to: ymdTo,
+ 1335:     positionsArr,
+ 1336:     hourFilter,
+ 1337:     mode: effectiveMode,
+ 1338:   });
+ 1339:   if (!bypassCache) {
+ 1340:     const cached = cacheGet(DRAWS_CACHE, rangeKey);
+ 1341:     if (cached) return cached;
+ 1342:   }
+ 1343: 
+ 1344:   const DOC_ID = documentId();
+ 1345:   const rangeOrder = [orderBy("ymd", "asc"), orderBy(DOC_ID)];
+ 1346: 
+ 1347:   const { docs, error, usedField } = await fetchDrawDocsPreferUf({
+ 1348:     uf,
+ 1349:     extraWheres: [where("ymd", ">=", ymdFrom), where("ymd", "<=", ymdTo)],
+ 1350:     extraOrderBy: rangeOrder,
+ 1351:     policy: readPolicy,
+ 1352:   });
+ 1353: 
+ 1354:   if (error) {
+ 1355:     if (isIndexError(error)) {
+ 1356:       const days = daysBetweenInclusiveUTC(ymdFrom, ymdTo);
+ 1357:       const MAX_FALLBACK_DAYS = 31;
+ 1358: 
+ 1359:       if (Number.isFinite(days) && days > 0 && days <= MAX_FALLBACK_DAYS) {
+ 1360:         if (effectiveMode === "aggregated") {
+ 1361:           const all = [];
+
+LINHA ENCONTRADA: 1485
+
+ 1470: 
+ 1471:       const conc = chooseRangeConcurrency(ordered.length);
+ 1472:       const results = await mapWithConcurrency(ordered, conc, async (item) => {
+ 1473:         const prizes = await fetchPrizesForDraw(item.drawId, positionsArr, item.prizes);
+ 1474:         const pc = Array.isArray(prizes) ? prizes.length : 0;
+ 1475:         return { ...item, prizes, prizesCount: pc, __mode: "detailed" };
+ 1476:       });
+ 1477: 
+ 1478:       const out = dedupeDrawsLocal(results);
+ 1479:       if (!bypassCache) {
+ 1480:       cacheSet(DRAWS_CACHE, rangeKey, out);
+ 1481:     }
+ 1482:       return out;
+ 1483:     }
+ 1484: 
+ 1485:     return [];
+ 1486:   }
+ 1487: 
+ 1488:   const baseAll = dedupeDrawsLocal(docs.map(mapDrawDoc));
+ 1489:   const base = hourFilter?.kind
+ 1490:     ? baseAll.filter((d) => drawPassesHourFilter(d, hourFilter))
+ 1491:     : baseAll;
+ 1492: 
+ 1493:   const ordered = sortDrawsLocal(base);
+ 1494: 
+ 1495:   if (effectiveMode === "aggregated") {
+ 1496:     const out = dedupeDrawsLocal(
+ 1497:       ordered.map((d) => {
+ 1498:         const embedded = normalizeEmbeddedPrizesForAggregated(d?.prizes);
+ 1499:         return {
+ 1500:           ...d,
+ 1501:           prizes: embedded,
+ 1502:           prizesCount: Number.isFinite(Number(d?.prizesCount))
+ 1503:             ? Number(d.prizesCount)
+ 1504:             : embedded.length || 0,
+ 1505:           __mode: "aggregated",
+ 1506:         };
+ 1507:       })
+ 1508:     );
+ 1509:     if (!bypassCache) {
+ 1510:       cacheSet(DRAWS_CACHE, rangeKey, out);
+ 1511:     }
+ 1512:     return out;
+ 1513:   }
+ 1514: 
+ 1515:   const conc = chooseRangeConcurrency(ordered.length);
+ 1516: 
+ 1517:   const results = await mapWithConcurrency(ordered, conc, async (item) => {
+ 1518:     const prizes = await fetchPrizesForDraw(item.drawId, positionsArr, item.prizes);
+ 1519:     const pc = Array.isArray(prizes) ? prizes.length : 0;
+ 1520:     return { ...item, prizes, prizesCount: pc, __mode: "detailed" };
+ 1521:   });
+ 1522: 
+ 1523:   const out = dedupeDrawsLocal(results);
+ 1524:   if (!bypassCache) {
+ 1525:       cacheSet(DRAWS_CACHE, rangeKey, out);
+
+LINHA ENCONTRADA: 1540
+
+ 1525:       cacheSet(DRAWS_CACHE, rangeKey, out);
+ 1526:     }
+ 1527:   return out;
+ 1528: }
+ 1529: 
+ 1530: /* =========================
+ 1531:    ✅ Hidratação de prizes (para UX no "Todos")
+ 1532: ========================= */
+ 1533: 
+ 1534: export async function hydrateKingDrawsWithPrizes({
+ 1535:   draws,
+ 1536:   positions = null,
+ 1537:   concurrency = null,
+ 1538: }) {
+ 1539:   const arr = Array.isArray(draws) ? draws : [];
+ 1540:   if (!arr.length) return [];
+ 1541: 
+ 1542:   const positionsArr = normalizePositions(positions);
+ 1543: 
+ 1544:   const conc =
+ 1545:     Number.isFinite(Number(concurrency)) && Number(concurrency) > 0
+ 1546:       ? Number(concurrency)
+ 1547:       : chooseRangeConcurrency(arr.length);
+ 1548: 
+ 1549:   const results = await mapWithConcurrency(arr, conc, async (item) => {
+ 1550:     const prizes = await fetchPrizesForDraw(item.drawId, positionsArr, item.prizes);
+ 1551:     const pc = Array.isArray(prizes) ? prizes.length : 0;
+ 1552:     return { ...item, prizes, prizesCount: pc, __mode: "detailed" };
+ 1553:   });
+ 1554: 
+ 1555:   return dedupeDrawsLocal(results);
+ 1556: }
+ 1557: 
+ 1558: /* =========================
+ 1559:    ✅ ATRASADOS (Late) — 100% baseado na SUA base
+ 1560: ========================= */
+ 1561: 
+ 1562: function normalizeLotteriesList(lotteries) {
+ 1563:   const arr = Array.isArray(lotteries) ? lotteries : [];
+ 1564:   const cleaned = arr
+ 1565:     .map((x) => String(x ?? "").trim().toUpperCase())
+ 1566:     .filter(Boolean);
+ 1567:   return cleaned.length ? Array.from(new Set(cleaned)) : null;
+ 1568: }
+ 1569: 
+ 1570: function drawPassesLotteriesFilter(draw, lotteriesArr) {
+ 1571:   if (!lotteriesArr || !lotteriesArr.length) return true;
+ 1572:   const code = String(draw?.lottery_code ?? "").trim().toUpperCase();
+ 1573:   if (!code) return false;
+ 1574:   return lotteriesArr.includes(code);
+ 1575: }
+ 1576: 
+ 1577: function lateCacheKey({
+ 1578:   scopeKey,
+ 1579:   fromYmd,
+ 1580:   toYmd,
+
+LINHA ENCONTRADA: 1625
+
+ 1610:   baseDate = null,
+ 1611:   lotteries = null,
+ 1612:   prizePosition = 1,
+ 1613:   closeHour = null,
+ 1614:   closeHourBucket = null,
+ 1615:   chunkDays = 15,
+ 1616: }) {
+ 1617:   if (!uf || !dateFrom || !dateTo) {
+ 1618:     throw new Error("Parâmetros obrigatórios: uf, dateFrom, dateTo");
+ 1619:   }
+ 1620: 
+ 1621:   const scopeKey = canonicalScopeKey(uf);
+ 1622: 
+ 1623:   const fromYmd = normalizeToYMD(dateFrom);
+ 1624:   const toYmd = normalizeToYMD(dateTo);
+ 1625:   if (!fromYmd || !toYmd) return [];
+ 1626: 
+ 1627:   const baseYmd = normalizeToYMD(baseDate) || toYmd;
+ 1628: 
+ 1629:   const hourFilter = resolveHourFilter({ closeHour, closeHourBucket });
+ 1630:   const lotteriesArr = normalizeLotteriesList(lotteries);
+ 1631: 
+ 1632:   const cacheKey = lateCacheKey({
+ 1633:     scopeKey,
+ 1634:     fromYmd,
+ 1635:     toYmd,
+ 1636:     baseYmd,
+ 1637:     prizePosition,
+ 1638:     hourFilter,
+ 1639:     lotteriesArr,
+ 1640:     chunkDays,
+ 1641:   });
+ 1642: 
+ 1643:   const cached = cacheGet(LATE_CACHE, cacheKey);
+ 1644:   if (cached) return cached;
+ 1645: 
+ 1646:   const posNum = Number(prizePosition) || 1;
+ 1647: 
+ 1648:   const lastSeen = new Map();
+ 1649: 
+ 1650:   let cursorTo = toYmd;
+ 1651:   const chunk = Math.max(3, Math.min(60, Number(chunkDays) || 15));
+ 1652: 
+ 1653:   if (cursorTo < fromYmd) {
+ 1654:     const outEmpty = Array.from({ length: 25 }, (_, i) => ({
+ 1655:       pos: i + 1,
+ 1656:       grupo: i + 1,
+ 1657:       lastYmd: null,
+ 1658:       lastHour: null,
+ 1659:       lastDrawId: null,
+ 1660:       lastLottery: null,
+ 1661:       atrasoDias: null,
+ 1662:     }));
+ 1663:     cacheSet(LATE_CACHE, cacheKey, outEmpty);
+ 1664:     return outEmpty;
+ 1665:   }
+

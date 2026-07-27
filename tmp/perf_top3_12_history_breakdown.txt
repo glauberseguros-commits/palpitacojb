@@ -1,0 +1,126 @@
+====================================================================================================
+PERF-TOP3-12 ÔÇö DECOMPOSI├ç├âO DA LEITURA DO HIST├ôRICO
+====================================================================================================
+Loteria: PT_RIO
+Execu├º├Áes: 3
+Firebase init: 198.69ms
+
+===== EXECU├ç├âO 1/3 =====
+{
+  "run": 1,
+  "lotteryKey": "PT_RIO",
+  "monthDocuments": 50,
+  "rawDraws": 7533,
+  "finalDraws": 7533,
+  "removedDuplicates": 0,
+  "firestoreGetMs": 7001.48,
+  "documentDataMs": 55.49,
+  "sortMonthsMs": 13.23,
+  "flattenMs": 0.12,
+  "deduplicateMs": 40.16,
+  "totalMs": 7110.51
+}
+
+===== EXECU├ç├âO 2/3 =====
+{
+  "run": 2,
+  "lotteryKey": "PT_RIO",
+  "monthDocuments": 50,
+  "rawDraws": 7533,
+  "finalDraws": 7533,
+  "removedDuplicates": 0,
+  "firestoreGetMs": 5917.76,
+  "documentDataMs": 36.92,
+  "sortMonthsMs": 0.06,
+  "flattenMs": 0.2,
+  "deduplicateMs": 25.43,
+  "totalMs": 5980.38
+}
+
+===== EXECU├ç├âO 3/3 =====
+{
+  "run": 3,
+  "lotteryKey": "PT_RIO",
+  "monthDocuments": 50,
+  "rawDraws": 7533,
+  "finalDraws": 7533,
+  "removedDuplicates": 0,
+  "firestoreGetMs": 5791.64,
+  "documentDataMs": 45.98,
+  "sortMonthsMs": 0.04,
+  "flattenMs": 0.07,
+  "deduplicateMs": 25.57,
+  "totalMs": 5863.32
+}
+
+===== PERF-TOP3-12 ÔÇö RESUMO =====
+{
+  "ok": true,
+  "lotteryKey": "PT_RIO",
+  "runs": 3,
+  "firebaseInitMs": 198.69,
+  "monthDocuments": 50,
+  "rawDraws": 7533,
+  "finalDraws": 7533,
+  "removedDuplicates": 0,
+  "averages": {
+    "firestoreGetMs": 6236.96,
+    "documentDataMs": 46.13,
+    "sortMonthsMs": 4.44,
+    "flattenMs": 0.13,
+    "deduplicateMs": 30.39,
+    "totalMs": 6318.07
+  },
+  "medians": {
+    "firestoreGetMs": 5917.76,
+    "documentDataMs": 45.98,
+    "sortMonthsMs": 0.06,
+    "flattenMs": 0.12,
+    "deduplicateMs": 25.57,
+    "totalMs": 5980.38
+  },
+  "executions": [
+    {
+      "run": 1,
+      "lotteryKey": "PT_RIO",
+      "monthDocuments": 50,
+      "rawDraws": 7533,
+      "finalDraws": 7533,
+      "removedDuplicates": 0,
+      "firestoreGetMs": 7001.48,
+      "documentDataMs": 55.49,
+      "sortMonthsMs": 13.23,
+      "flattenMs": 0.12,
+      "deduplicateMs": 40.16,
+      "totalMs": 7110.51
+    },
+    {
+      "run": 2,
+      "lotteryKey": "PT_RIO",
+      "monthDocuments": 50,
+      "rawDraws": 7533,
+      "finalDraws": 7533,
+      "removedDuplicates": 0,
+      "firestoreGetMs": 5917.76,
+      "documentDataMs": 36.92,
+      "sortMonthsMs": 0.06,
+      "flattenMs": 0.2,
+      "deduplicateMs": 25.43,
+      "totalMs": 5980.38
+    },
+    {
+      "run": 3,
+      "lotteryKey": "PT_RIO",
+      "monthDocuments": 50,
+      "rawDraws": 7533,
+      "finalDraws": 7533,
+      "removedDuplicates": 0,
+      "firestoreGetMs": 5791.64,
+      "documentDataMs": 45.98,
+      "sortMonthsMs": 0.04,
+      "flattenMs": 0.07,
+      "deduplicateMs": 25.57,
+      "totalMs": 5863.32
+    }
+  ]
+}

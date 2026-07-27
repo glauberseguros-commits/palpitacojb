@@ -1,0 +1,82 @@
+====================================================================================================
+TOP3-UI-06 — COMPONENTE COMPLETO COMPACTTOP3RESULT
+====================================================================================================
+Gerado em: 25/07/2026 20:21:26
+Arquivo: .\src\pages\Top3\Top3View.jsx
+Linha inicial: 1190
+====================================================================================================
+
+01190: function CompactTop3Result({ slot, status, statusLabel, statusDetail }) {
+01191:   const slotTop3 = Array.isArray(slot?.top3) ? slot.top3.slice(0, 3) : [];
+01192:   const resultGrupo = getSlotResultGrupo(slot);
+01193:   const hasResult = Number.isFinite(resultGrupo) && resultGrupo >= 1 && resultGrupo <= 25;
+01194:   const resultAnimal = hasResult ? String(getAnimalLabel(resultGrupo) || "") : "";
+01195:   const resultImg = hasResult ? getImgFromGrupo(resultGrupo, 64) : "";
+01196: 
+01197:   return (
+01198:     <div className="timeline-compact">
+01199:       <div className="timeline-compact__grid">
+01200:         <div className="timeline-compact__predictions">
+01201:           {slotTop3.map((item, idx) => {
+01202:             const grupo = Number(item?.grupo);
+01203:             const animal = String(item?.animal || getAnimalLabel(grupo) || "").trim();
+01204:             const img = Number.isFinite(grupo) ? getImgFromGrupo(grupo, 64) : "";
+01205: 
+01206:             return (
+01207:               <div
+01208:                 key={`${String(slot?.targetYmd || "y")}_${String(slot?.targetHour || "h")}_${idx}_${grupo}`}
+01209:                 className="timeline-compact__pick"
+01210:               >
+01211:                 <div className="timeline-compact__pickRank">{idx + 1}</div>
+01212:                 <ImgWithFallback
+01213:                   srcs={img ? [img] : []}
+01214:                   alt={animal || `G${formatGrupo(grupo)}`}
+01215:                   size={44}
+01216:                   style={{ borderRadius: 10 }}
+01217:                 />
+01218:                 <div className="timeline-compact__pickText">
+01219:                   <div className="timeline-compact__pickGroup">G{formatGrupo(grupo)}</div>
+01220:                   <div className="timeline-compact__pickAnimal">
+01221:                     {animal ? animal.toUpperCase() : "—"}
+01222:                   </div>
+01223:                 </div>
+01224:               </div>
+01225:             );
+01226:           })}
+01227:         </div>
+01228: 
+01229:         <div className="timeline-compact__result">
+01230:           <div className="timeline-compact__resultLabel">Resultado</div>
+01231: 
+01232:           {hasResult ? (
+01233:             <div className="timeline-compact__resultBox">
+01234:               <ImgWithFallback
+01235:                 srcs={resultImg ? [resultImg] : []}
+01236:                 alt={resultAnimal}
+01237:                 size={48}
+01238:                 style={{ borderRadius: 10 }}
+01239:               />
+01240:               <div className="timeline-compact__resultText">
+01241:                 <div className="timeline-compact__resultGroup">G{formatGrupo(resultGrupo)}</div>
+01242:                 <div className="timeline-compact__resultAnimal">
+01243:                   {String(resultAnimal || "").toUpperCase()}
+01244:                 </div>
+01245:               </div>
+01246:             </div>
+01247:           ) : (
+01248:             <div className="timeline-compact__resultPending">PENDENTE</div>
+01249:           )}
+01250:         </div>
+01251: 
+01252:         <div className="timeline-compact__performance">
+01253:           <div
+01254:             className={`timeline-compact__performanceBadge timeline-compact__performanceBadge--${status}`}
+01255:           >
+01256:             {statusLabel}
+01257:           </div>
+01258:           <div className="timeline-compact__performanceText">{statusDetail}</div>
+01259:         </div>
+01260:       </div>
+01261:     </div>
+01262:   );
+01263: }

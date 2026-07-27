@@ -1,0 +1,66 @@
+====================================================================================================
+PERF-TOP3-14 ÔÇö TAMANHO E COMPACTA├ç├âO DO HIST├ôRICO
+====================================================================================================
+Loteria: PT_RIO
+
+===== PERF-TOP3-14 ÔÇö RESUMO =====
+{
+  "ok": true,
+  "lotteryKey": "PT_RIO",
+  "firestoreGetMs": 6369.08,
+  "monthDocuments": 50,
+  "draws": 7533,
+  "prizes": 52803,
+  "estimatedPayloads": {
+    "currentMonths": {
+      "bytes": 6095069,
+      "mib": 5.81,
+      "gzipBytes": 552651,
+      "gzipMib": 0.53
+    },
+    "drawsOnly": {
+      "bytes": 6077046,
+      "mib": 5.8,
+      "reductionPct": 0.3,
+      "gzipBytes": 542589,
+      "gzipMib": 0.52
+    },
+    "level1KeepNamedFields": {
+      "description": "drawId, ymd, closeHour e position/grupo/milhar/centena/dezena",
+      "bytes": 4696043,
+      "mib": 4.48,
+      "reductionPct": 22.95,
+      "gzipBytes": 488556,
+      "gzipMib": 0.47
+    },
+    "level2EssentialNamedFields": {
+      "description": "ymd, closeHour e position/grupo/milhar",
+      "bytes": 2590497,
+      "mib": 2.47,
+      "reductionPct": 57.5,
+      "gzipBytes": 302498,
+      "gzipMib": 0.29
+    },
+    "level3CompactArrays": {
+      "description": "d, h e pr├¬mios como [position,grupo,milhar]",
+      "bytes": 999018,
+      "mib": 0.95,
+      "reductionPct": 83.61,
+      "gzipBytes": 247306,
+      "gzipMib": 0.24
+    }
+  },
+  "fieldPresence": {
+    "drawsWithDrawId": 7533,
+    "drawsWithYmd": 7533,
+    "drawsWithHour": 7533,
+    "prizesWithPosition": 52803,
+    "prizesWithGrupo": 52803,
+    "prizesWithMilhar": 52803,
+    "prizesWithCentena": 52796,
+    "prizesWithDezena": 52796
+  }
+}
+
+OBSERVA├ç├âO:
+Este relat├│rio apenas mede tamanhos. Nenhuma estrutura foi gravada no Firestore.

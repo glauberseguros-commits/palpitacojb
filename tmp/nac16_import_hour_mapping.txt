@@ -1,0 +1,1046 @@
+====================================================================================================
+FUNÇÃO normalizeDrawCloseHour
+====================================================================================================
+
+function normalizeDrawCloseHour(draw, lotteryKey) {
+  const base = normalizeCloseHourForLottery(
+    draw?.close_hour || "",
+    lotteryKey
+  );
+
+  const lk = String(lotteryKey || "").trim().toUpperCase();
+
+  if (lk !== "NACIONAL") {
+    return base;
+  }
+
+  const lotteryName = String(
+    draw?.lottery_name ||
+    draw?.name ||
+    ""
+  );
+
+  const m = lotteryName.match(/(\d{1,2})\s*HS/i);
+
+  if (!m) {
+    return base;
+  }
+
+  return {
+    raw: base.raw,
+    slot: `${String(m[1]).padStart(2,"0")}:00`
+  };
+}
+
+====================================================================================================
+OCORRÊNCIAS DOS CAMPOS
+====================================================================================================
+
+
+----- LINHAS 366-374 -----
+00366:   return "";
+00367: }
+00368: 
+00369: /**
+00370:  * ✅ Normaliza close_hour para SLOT (campo de negócio)
+00371:  * - Para PT_RIO: força minutos = 00 (09:09 -> 09:00)
+00372:  * - Para outros: preserva raw
+00373:  *
+00374:  * Correção crítica:
+
+
+----- LINHAS 373-381 -----
+00373:  *
+00374:  * Correção crítica:
+00375:  * - A API do PT_RIO costuma devolver HH:09 como "marcação" e NÃO um minuto real.
+00376:  * - Portanto, para PT_RIO, se raw terminar em ":09", tratamos como "sem minuto real"
+00377:  *   e NÃO persistimos close_hour_raw (vira "").
+00378:  *
+00379:  * Retorna:
+00380:  * - raw: HH:MM (normalizado) OU "" quando for "sintético" (PT_RIO HH:09)
+00381:  * - slot: HH:MM (normalizado para o que o sistema deve usar em consultas/ID)
+
+
+----- LINHAS 379-387 -----
+00379:  * Retorna:
+00380:  * - raw: HH:MM (normalizado) OU "" quando for "sintético" (PT_RIO HH:09)
+00381:  * - slot: HH:MM (normalizado para o que o sistema deve usar em consultas/ID)
+00382:  */
+00383: function normalizeCloseHourForLottery(value, lotteryKey) {
+00384:   const lk = String(lotteryKey || "").trim().toUpperCase();
+00385:   const raw0 = normalizeHHMM(value);
+00386:   if (!raw0 || !isHHMM(raw0)) return { raw: "", slot: "" };
+00387: 
+
+
+----- LINHAS 393-401 -----
+00393:   if (lk === "PT_RIO") {
+00394:     const hh = raw0.slice(0, 2);
+00395:     const mm = raw0.slice(3, 5);
+00396: 
+00397:     // ✅ se vier HH:09, é marcação (não minuto real) -> não grava close_hour_raw
+00398:     const raw = mm === "09" ? "" : raw0;
+00399:     return { raw, slot: `${hh}:00` };
+00400:   }
+00401: 
+
+
+----- LINHAS 404-412 -----
+00404: 
+00405: 
+00406: /**
+00407:  * NACIONAL:
+00408:  * usa lottery_name para obter o horário oficial do sorteio.
+00409:  */
+00410: function normalizeDrawCloseHour(draw, lotteryKey) {
+00411:   const base = normalizeCloseHourForLottery(
+00412:     draw?.close_hour || "",
+
+
+----- LINHAS 406-414 -----
+00406: /**
+00407:  * NACIONAL:
+00408:  * usa lottery_name para obter o horário oficial do sorteio.
+00409:  */
+00410: function normalizeDrawCloseHour(draw, lotteryKey) {
+00411:   const base = normalizeCloseHourForLottery(
+00412:     draw?.close_hour || "",
+00413:     lotteryKey
+00414:   );
+
+
+----- LINHAS 407-415 -----
+00407:  * NACIONAL:
+00408:  * usa lottery_name para obter o horário oficial do sorteio.
+00409:  */
+00410: function normalizeDrawCloseHour(draw, lotteryKey) {
+00411:   const base = normalizeCloseHourForLottery(
+00412:     draw?.close_hour || "",
+00413:     lotteryKey
+00414:   );
+00415: 
+
+
+----- LINHAS 408-416 -----
+00408:  * usa lottery_name para obter o horário oficial do sorteio.
+00409:  */
+00410: function normalizeDrawCloseHour(draw, lotteryKey) {
+00411:   const base = normalizeCloseHourForLottery(
+00412:     draw?.close_hour || "",
+00413:     lotteryKey
+00414:   );
+00415: 
+00416:   const lk = String(lotteryKey || "").trim().toUpperCase();
+
+
+----- LINHAS 419-427 -----
+00419:     return base;
+00420:   }
+00421: 
+00422:   const lotteryName = String(
+00423:     draw?.lottery_name ||
+00424:     draw?.name ||
+00425:     ""
+00426:   );
+00427: 
+
+
+----- LINHAS 438-446 -----
+00438: }
+00439: 
+00440: 
+00441: /**
+00442:  * ✅ Normaliza o parâmetro closeHour (do CLI/scheduler) e evita log enganoso.
+00443:  * - Para FEDERAL: qualquer coisa vira slot=20:00, mas mantemos "requested" para log.
+00444:  */
+00445: function normalizeRequestedCloseHour(closeHour, lotteryKey) {
+00446:   const lk = String(lotteryKey || "").trim().toUpperCase();
+
+
+----- LINHAS 441-449 -----
+00441: /**
+00442:  * ✅ Normaliza o parâmetro closeHour (do CLI/scheduler) e evita log enganoso.
+00443:  * - Para FEDERAL: qualquer coisa vira slot=20:00, mas mantemos "requested" para log.
+00444:  */
+00445: function normalizeRequestedCloseHour(closeHour, lotteryKey) {
+00446:   const lk = String(lotteryKey || "").trim().toUpperCase();
+00447:   const requested = closeHour ? normalizeHHMM(closeHour) : null;
+00448:   const requestedIsValid = requested ? isHHMM(requested) : false;
+00449: 
+
+
+----- LINHAS 443-451 -----
+00443:  * - Para FEDERAL: qualquer coisa vira slot=20:00, mas mantemos "requested" para log.
+00444:  */
+00445: function normalizeRequestedCloseHour(closeHour, lotteryKey) {
+00446:   const lk = String(lotteryKey || "").trim().toUpperCase();
+00447:   const requested = closeHour ? normalizeHHMM(closeHour) : null;
+00448:   const requestedIsValid = requested ? isHHMM(requested) : false;
+00449: 
+00450:   if (!requested) {
+00451:     return { requested: null, slot: null, note: null };
+
+
+----- LINHAS 461-469 -----
+00461:     return { requested, slot, note };
+00462:   }
+00463: 
+00464:   // outros: normalização normal por lotteryKey (PT_RIO min->00 etc.)
+00465:   const slot = normalizeCloseHourForLottery(requested, lk).slot;
+00466:   return { requested, slot: slot || null, note: null };
+00467: }
+00468: 
+00469: /**
+
+
+----- LINHAS 496-504 -----
+00496: }
+00497: 
+00498: /**
+00499:  * Loterias (IDs) capturadas do Network.
+00500:  * Observação: a API pode consolidar em 1 draw por close_hour, mesmo havendo múltiplos IDs aqui.
+00501:  *
+00502:  * ✅ Agora aceita override via ENV:
+00503:  * - KING_LOTTERIES_PT_RIO="uuid1,uuid2,..."
+00504:  * - KING_LOTTERIES_FEDERAL="uuid1,uuid2,..."
+
+
+----- LINHAS 792-800 -----
+00792: 
+00793:   return out;
+00794: }
+00795: 
+00796: async function tryHtmlDetailsFallback({ date, lotteryKey, closeHour }) {
+00797:   const lk = String(lotteryKey || "").trim().toUpperCase();
+00798:   const slot = normalizeCloseHourForLottery(closeHour || "", lk).slot;
+00799:   if (!slot || !isHHMM(slot)) return { ok: false, reason: "bad_slot" };
+00800: 
+
+
+----- LINHAS 794-802 -----
+00794: }
+00795: 
+00796: async function tryHtmlDetailsFallback({ date, lotteryKey, closeHour }) {
+00797:   const lk = String(lotteryKey || "").trim().toUpperCase();
+00798:   const slot = normalizeCloseHourForLottery(closeHour || "", lk).slot;
+00799:   if (!slot || !isHHMM(slot)) return { ok: false, reason: "bad_slot" };
+00800: 
+00801:   // por enquanto: só PT_RIO 18:00 (não altera outros horários)
+00802:   if (!(lk === "PT_RIO" && slot === "18:00")) {
+
+
+----- LINHAS 818-826 -----
+00818: }
+00819: 
+00820: /**
+00821:  * ✅ Merge + dedup de draws vindos de múltiplos requests
+00822:  * Dedup key: date + close_hour(SLOT) + lottery_id (se existir)
+00823:  */
+00824: function mergeAndDedupDraws(arrays, lotteryKey) {
+00825:   const map = new Map();
+00826: 
+
+
+----- LINHAS 827-835 -----
+00827:   for (const a of arrays) {
+00828:     const list = Array.isArray(a) ? a : [];
+00829:     for (const d of list) {
+00830:       const date = String(d?.date || "").trim();
+00831:       const { slot } = normalizeDrawCloseHour(d, lotteryKey);
+00832: 
+00833:       const lid =
+00834:         pickLotteryId(d) ||
+00835:         String(d?.lottery_name || d?.name || "").trim() ||
+
+
+----- LINHAS 831-839 -----
+00831:       const { slot } = normalizeDrawCloseHour(d, lotteryKey);
+00832: 
+00833:       const lid =
+00834:         pickLotteryId(d) ||
+00835:         String(d?.lottery_name || d?.name || "").trim() ||
+00836:         "NA";
+00837:       const key = `${date}__${slot}__${lid}`;
+00838: 
+00839:       if (!map.has(key)) {
+
+
+----- LINHAS 860-868 -----
+00860:   }
+00861:   return c;
+00862: }
+00863: 
+00864: function summarizeCloseHours(draws, lotteryKey) {
+00865:   const set = new Set();
+00866: 
+00867:   for (const d of draws) {
+00868:     const { slot } = normalizeDrawCloseHour(
+
+
+----- LINHAS 864-872 -----
+00864: function summarizeCloseHours(draws, lotteryKey) {
+00865:   const set = new Set();
+00866: 
+00867:   for (const d of draws) {
+00868:     const { slot } = normalizeDrawCloseHour(
+00869:       d,
+00870:       lotteryKey
+00871:     );
+00872: 
+
+
+----- LINHAS 906-914 -----
+00906:   const errors = [];
+00907: 
+00908:   // helper local: extrai e normaliza closes vindos nesse UUID
+00909:   const closeFromDraw = (d) =>
+00910:     normalizeHHMM(d?.close_hour ?? d?.closeHour ?? d?.horario ?? d?.close ?? "");
+00911: 
+00912:   const summarizeCloseHoursPart = (list) => {
+00913:     const set = new Set();
+00914:     for (const d of Array.isArray(list) ? list : []) {
+
+
+----- LINHAS 908-916 -----
+00908:   // helper local: extrai e normaliza closes vindos nesse UUID
+00909:   const closeFromDraw = (d) =>
+00910:     normalizeHHMM(d?.close_hour ?? d?.closeHour ?? d?.horario ?? d?.close ?? "");
+00911: 
+00912:   const summarizeCloseHoursPart = (list) => {
+00913:     const set = new Set();
+00914:     for (const d of Array.isArray(list) ? list : []) {
+00915:       const c = closeFromDraw(d);
+00916:       if (c) set.add(c);
+
+
+----- LINHAS 935-943 -----
+00935:       const list = Array.isArray(data?.data) ? data.data : [];
+00936:       parts.push(list);
+00937: 
+00938:       if (KING_FETCH_DEBUG) {
+00939:         const closesPart = summarizeCloseHoursPart(list);
+00940:         console.log(
+00941:           `[FETCH:PART] ${lk} ${date} lotteryId=${lotteryId} draws=${list.length} close_hours=[${closesPart.join(
+00942:             ", "
+00943:           )}]`
+
+
+----- LINHAS 937-945 -----
+00937: 
+00938:       if (KING_FETCH_DEBUG) {
+00939:         const closesPart = summarizeCloseHoursPart(list);
+00940:         console.log(
+00941:           `[FETCH:PART] ${lk} ${date} lotteryId=${lotteryId} draws=${list.length} close_hours=[${closesPart.join(
+00942:             ", "
+00943:           )}]`
+00944:         );
+00945:       }
+
+
+----- LINHAS 959-967 -----
+00959:     }
+00960:   }
+00961: 
+00962:   const merged = mergeAndDedupDraws(parts, lk);
+00963:   const closes = summarizeCloseHours(merged, lk);
+00964:   const errInfo =
+00965:     KING_FETCH_DEBUG && errors.length
+00966:       ? ` errors=${errors.length} ids=[${errors.map((x) => x.lotteryId).join(",")}]`
+00967:       : "";
+
+
+----- LINHAS 968-976 -----
+00968: 
+00969:   console.log(
+00970:     `[FETCH] ${lk} ${date} per-lottery=${lotteries.length} -> merged_draws=${
+00971:       merged.length
+00972:     } close_hours=[${closes.join(", ")}]${errInfo}`
+00973:   );
+00974:   return { success: true, data: merged };
+00975: }
+00976: 
+
+
+----- LINHAS 988-996 -----
+00988: }
+00989: 
+00990: /**
+00991:  * Gera drawId e drawRef no mesmo padrão do seu projeto.
+00992:  * ✅ Agora usa close_hour SLOT no ID e guarda close_hour_raw (quando fizer sentido).
+00993:  */
+00994: function buildDrawRef({ draw, lotteryKey }) {
+00995:   const date = String(draw?.date || "").trim();
+00996: 
+
+
+----- LINHAS 993-1001 -----
+00993:  */
+00994: function buildDrawRef({ draw, lotteryKey }) {
+00995:   const date = String(draw?.date || "").trim();
+00996: 
+00997:   const { raw: closeRaw, slot: closeSlot } = normalizeDrawCloseHour(
+00998:     draw,
+00999:     lotteryKey
+01000:   );
+01001: 
+
+
+----- LINHAS 998-1006 -----
+00998:     draw,
+00999:     lotteryKey
+01000:   );
+01001: 
+01002:   const lotteryName = String(draw?.lottery_name || draw?.name || "SEM_NOME").trim();
+01003: 
+01004:   const lotteryIdFromDraw = pickLotteryId(draw);
+01005:   const lotteryIdPart = safeIdPart(lotteryIdFromDraw || lotteryName);
+01006: 
+
+
+----- LINHAS 1044-1052 -----
+01044: 
+01045: /**
+01046:  * ✅ Prova forte por SLOT (anti-índice composto)
+01047:  * - Query filtra SOMENTE por date
+01048:  * - close_hour + lottery_key/lotteryKey filtrados em memória
+01049:  *
+01050:  * ✅ FIX CRÍTICO:
+01051:  * - Normaliza o close_hour armazenado (pode existir legado "09:09")
+01052:  *   e compara por SLOT (HH:00), para não “perder” doc existente.
+
+
+----- LINHAS 1047-1055 -----
+01047:  * - Query filtra SOMENTE por date
+01048:  * - close_hour + lottery_key/lotteryKey filtrados em memória
+01049:  *
+01050:  * ✅ FIX CRÍTICO:
+01051:  * - Normaliza o close_hour armazenado (pode existir legado "09:09")
+01052:  *   e compara por SLOT (HH:00), para não “perder” doc existente.
+01053:  */
+01054: async function checkSlotCompletion({ date, closeHour, lotteryKey }) {
+01055:   try {
+
+
+----- LINHAS 1050-1058 -----
+01050:  * ✅ FIX CRÍTICO:
+01051:  * - Normaliza o close_hour armazenado (pode existir legado "09:09")
+01052:  *   e compara por SLOT (HH:00), para não “perder” doc existente.
+01053:  */
+01054: async function checkSlotCompletion({ date, closeHour, lotteryKey }) {
+01055:   try {
+01056:     const lk = String(lotteryKey || "").trim().toUpperCase();
+01057:     const targetSlot = normalizeCloseHourForLottery(closeHour || "", lk).slot;
+01058:     if (!targetSlot || !isHHMM(targetSlot)) return { docs: 0, complete: 0 };
+
+
+----- LINHAS 1053-1061 -----
+01053:  */
+01054: async function checkSlotCompletion({ date, closeHour, lotteryKey }) {
+01055:   try {
+01056:     const lk = String(lotteryKey || "").trim().toUpperCase();
+01057:     const targetSlot = normalizeCloseHourForLottery(closeHour || "", lk).slot;
+01058:     if (!targetSlot || !isHHMM(targetSlot)) return { docs: 0, complete: 0 };
+01059: 
+01060:     // query mínima
+01061:     const snap = await db.collection("draws").where("date", "==", date).get();
+
+
+----- LINHAS 1070-1078 -----
+01070: 
+01071:       if (lkSnake !== lk && lkCamel !== lk) return;
+01072: 
+01073:       // ✅ compara por SLOT normalizado (pega legado "09:09" como "09:00")
+01074:       const storedSlot = normalizeCloseHourForLottery(d.close_hour || "", lk).slot;
+01075:       if (storedSlot !== targetSlot) return;
+01076: 
+01077:       refs.push(doc.ref);
+01078:     });
+
+
+----- LINHAS 1092-1100 -----
+01092: }
+01093: 
+01094: /**
+01095:  * Importa payload para o Firestore.
+01096:  * closeHour (opcional): se informado, importa SOMENTE draws daquele horário (SLOT).
+01097:  *
+01098:  * Opts extras:
+01099:  * - skipIfAlreadyComplete (boolean): se true, e o draw do closeHour já estiver completo no FS,
+01100:  *   então NÃO escreve nada (evita ruído e falsos positivos).
+
+
+----- LINHAS 1095-1103 -----
+01095:  * Importa payload para o Firestore.
+01096:  * closeHour (opcional): se informado, importa SOMENTE draws daquele horário (SLOT).
+01097:  *
+01098:  * Opts extras:
+01099:  * - skipIfAlreadyComplete (boolean): se true, e o draw do closeHour já estiver completo no FS,
+01100:  *   então NÃO escreve nada (evita ruído e falsos positivos).
+01101:  */
+01102: async function importFromPayload({
+01103:   payload,
+
+
+----- LINHAS 1101-1109 -----
+01101:  */
+01102: async function importFromPayload({
+01103:   payload,
+01104:   lotteryKey,
+01105:   closeHour = null,
+01106:   skipIfAlreadyComplete = false,
+01107: } = {}) {
+01108:   const lk = String(lotteryKey || "").trim().toUpperCase();
+01109:   const uf = resolveUfFromLotteryKey(lk); // ✅ UF correta (ex.: RJ)
+
+
+----- LINHAS 1122-1130 -----
+01122:   let totalPrizesSaved = 0;
+01123: 
+01124:   let skippedInvalid = 0;
+01125:   let skippedEmpty = 0;
+01126:   let skippedCloseHour = 0;
+01127:   let skippedAlreadyComplete = 0;
+01128: 
+01129:   // Provas úteis para o scheduler (quando closeHour é informado)
+01130:   const proof = {
+
+
+----- LINHAS 1125-1133 -----
+01125:   let skippedEmpty = 0;
+01126:   let skippedCloseHour = 0;
+01127:   let skippedAlreadyComplete = 0;
+01128: 
+01129:   // Provas úteis para o scheduler (quando closeHour é informado)
+01130:   const proof = {
+01131:     filterClose: null,
+01132: 
+01133:     apiHasPrizes: false,
+
+
+----- LINHAS 1130-1138 -----
+01130:   const proof = {
+01131:     filterClose: null,
+01132: 
+01133:     apiHasPrizes: false,
+01134:     apiReturnedTargetDraws: 0, // draws válidos do closeHour com prizes
+01135:     targetDrawIds: [],
+01136:     inferredDate: null, // date do slot (inferido a partir do payload)
+01137: 
+01138:     expectedTargets: 0, // = max(1, apiReturnedTargetDraws)
+
+
+----- LINHAS 1145-1153 -----
+01145:     targetSavedCount: 0,
+01146:   };
+01147: 
+01148:   // ✅ filtro deve ser SLOT também
+01149:   const filterClose = closeHour
+01150:     ? normalizeCloseHourForLottery(closeHour, lk).slot
+01151:     : null;
+01152:   if (filterClose && !isHHMM(filterClose)) {
+01153:     throw new Error('Parâmetro "closeHour" inválido. Use HH:MM.');
+
+
+----- LINHAS 1146-1154 -----
+01146:   };
+01147: 
+01148:   // ✅ filtro deve ser SLOT também
+01149:   const filterClose = closeHour
+01150:     ? normalizeCloseHourForLottery(closeHour, lk).slot
+01151:     : null;
+01152:   if (filterClose && !isHHMM(filterClose)) {
+01153:     throw new Error('Parâmetro "closeHour" inválido. Use HH:MM.');
+01154:   }
+
+
+----- LINHAS 1149-1157 -----
+01149:   const filterClose = closeHour
+01150:     ? normalizeCloseHourForLottery(closeHour, lk).slot
+01151:     : null;
+01152:   if (filterClose && !isHHMM(filterClose)) {
+01153:     throw new Error('Parâmetro "closeHour" inválido. Use HH:MM.');
+01154:   }
+01155:   proof.filterClose = filterClose;
+01156: 
+01157:   const apiArr = Array.isArray(payload?.data) ? payload.data : [];
+
+
+----- LINHAS 1159-1167 -----
+01159:   for (const draw of apiArr) {
+01160:     totalDrawsFromApi++;
+01161: 
+01162:     const date = String(draw?.date || "").trim();
+01163:     const { raw: closeRaw, slot: closeSlot } = normalizeDrawCloseHour(
+01164:       draw,
+01165:       lk
+01166:     );
+01167: 
+
+
+----- LINHAS 1167-1175 -----
+01167: 
+01168:     // filtro por horário (SLOT)
+01169:     if (filterClose) {
+01170:       if (closeSlot !== filterClose) {
+01171:         skippedCloseHour++;
+01172:         continue;
+01173:       }
+01174:     }
+01175: 
+
+
+----- LINHAS 1204-1212 -----
+01204:     });
+01205: 
+01206:     if (filterClose) proof.targetDrawIds.push(drawId);
+01207: 
+01208:     // Em closeHour: checa “já completo” e, se configurado, pula escrita (por draw)
+01209:     if (filterClose) {
+01210:       const already = await checkAlreadyComplete(drawRef);
+01211:       if (skipIfAlreadyComplete && already) {
+01212:         skippedAlreadyComplete++;
+
+
+----- LINHAS 1234-1242 -----
+01234: 
+01235:         uf: uf || null,
+01236:         lottery_key: lk,
+01237: 
+01238:         lottery_name: lotteryName,
+01239:         lottery_id: lotteryIdFromDraw || null,
+01240:         drawId,
+01241: 
+01242:         date,
+
+
+----- LINHAS 1242-1250 -----
+01242:         date,
+01243:         ymd,
+01244: 
+01245:         // ✅ campo de negócio (SLOT)
+01246:         close_hour: closeSlot,
+01247: 
+01248:         // ✅ compat: campos usados no front (evita undefined)
+01249:         hour: closeSlot ? String(closeSlot).slice(0, 2) : null,
+01250:         close: closeSlot || null,
+
+
+----- LINHAS 1250-1258 -----
+01250:         close: closeSlot || null,
+01251: 
+01252:         // ✅ guarda o que veio da API SOMENTE quando fizer sentido
+01253:         // (PT_RIO HH:09 vira "", então cai em null)
+01254:         close_hour_raw: closeRaw || null,
+01255: 
+01256:         prizesCount: prizes.length,
+01257:         importedAt: admin.firestore.FieldValue.serverTimestamp(),
+01258:       },
+
+
+----- LINHAS 1310-1318 -----
+01310: 
+01311:     if (slotDate) {
+01312:       const { docs, complete } = await checkSlotCompletion({
+01313:         date: slotDate,
+01314:         closeHour: proof.filterClose,
+01315:         lotteryKey: lk,
+01316:       });
+01317: 
+01318:       proof.slotDocsFound = docs;
+
+
+----- LINHAS 1339-1347 -----
+01339:   console.log(
+01340:     `[IMPORT] API draws=${totalDrawsFromApi} | match_close=${totalDrawsMatchedClose} | validos=${totalDrawsValid}` +
+01341:       ` | draws_upserted=${totalDrawsUpserted} | draws_novos=${totalDrawsSaved}` +
+01342:       ` | prizes_upserted=${totalPrizesUpserted} | prizes_novos=${totalPrizesSaved}` +
+01343:       ` | skip_vazio=${skippedEmpty} | skip_invalido=${skippedInvalid} | skip_close=${skippedCloseHour}` +
+01344:       ` | skip_complete=${skippedAlreadyComplete}` +
+01345:       ` | CHECK_EXISTENCE=${CHECK_EXISTENCE ? "ON" : "OFF"}` +
+01346:       ` | uf=${uf || "NULL"} lottery_key=${lk}` +
+01347:       (proof.filterClose
+
+
+----- LINHAS 1361-1369 -----
+01361:     totalPrizesUpserted,
+01362: 
+01363:     skippedEmpty,
+01364:     skippedInvalid,
+01365:     skippedCloseHour,
+01366:     skippedAlreadyComplete,
+01367: 
+01368:     proof,
+01369:   };
+
+
+----- LINHAS 1387-1395 -----
+01387:   );
+01388: 
+01389:   const bySlot = new Map();
+01390:   for (const r of mine) {
+01391:     const slot = String(r.close_hour || "").trim();
+01392:     if (!slot) continue;
+01393:     if (!bySlot.has(slot)) bySlot.set(slot, []);
+01394:     bySlot.get(slot).push(r);
+01395:   }
+
+
+----- LINHAS 1423-1431 -----
+01423: 
+01424:   return { ok: true, deleted, slots };
+01425: }
+01426: 
+01427: async function runImport({ date, lotteryKey = "PT_RIO", closeHour = null } = {}) {
+01428:   if (!date || !isISODate(date)) {
+01429:     throw new Error('Parâmetro "date" inválido. Use YYYY-MM-DD.');
+01430:   }
+01431: 
+
+
+----- LINHAS 1436-1444 -----
+01436: 
+01437:   // ✅ BLINDAGEM: nunca importar data futura (evita “sujar” FS por engano)
+01438:   const todayBR = todayYMDLocal();
+01439:   if (!ALLOW_FUTURE_DATE && isFutureISODate(date)) {
+01440:     const norm = normalizeRequestedCloseHour(closeHour, lk);
+01441:     return {
+01442:       ok: true,
+01443:       lotteryKey: lk,
+01444:       date,
+
+
+----- LINHAS 1441-1449 -----
+01441:     return {
+01442:       ok: true,
+01443:       lotteryKey: lk,
+01444:       date,
+01445:       closeHour: norm.slot || null,
+01446: 
+01447:       requestedCloseHour: norm.requested || null,
+01448: 
+01449:       blocked: true,
+
+
+----- LINHAS 1443-1451 -----
+01443:       lotteryKey: lk,
+01444:       date,
+01445:       closeHour: norm.slot || null,
+01446: 
+01447:       requestedCloseHour: norm.requested || null,
+01448: 
+01449:       blocked: true,
+01450:       blockedReason: "future_date",
+01451:       todayBR,
+
+
+----- LINHAS 1471-1479 -----
+01471:       totalPrizesSaved: 0,
+01472:       totalPrizesUpserted: 0,
+01473:       skippedEmpty: 0,
+01474:       skippedInvalid: 0,
+01475:       skippedCloseHour: 0,
+01476:       skippedAlreadyComplete: 0,
+01477:       proof: {
+01478:         filterClose: norm.slot || null,
+01479:         apiHasPrizes: false,
+
+
+----- LINHAS 1490-1498 -----
+01490:       },
+01491:     };
+01492:   }
+01493: 
+01494:   // ✅ closeHour do scheduler: normaliza SEM log enganoso
+01495:   const norm = normalizeRequestedCloseHour(closeHour, lk);
+01496:   if (norm.note === "invalid") {
+01497:     throw new Error('Parâmetro "closeHour" inválido. Use HH:MM.');
+01498:   }
+
+
+----- LINHAS 1491-1499 -----
+01491:     };
+01492:   }
+01493: 
+01494:   // ✅ closeHour do scheduler: normaliza SEM log enganoso
+01495:   const norm = normalizeRequestedCloseHour(closeHour, lk);
+01496:   if (norm.note === "invalid") {
+01497:     throw new Error('Parâmetro "closeHour" inválido. Use HH:MM.');
+01498:   }
+01499:   const normalizedClose = norm.slot || null;
+
+
+----- LINHAS 1493-1501 -----
+01493: 
+01494:   // ✅ closeHour do scheduler: normaliza SEM log enganoso
+01495:   const norm = normalizeRequestedCloseHour(closeHour, lk);
+01496:   if (norm.note === "invalid") {
+01497:     throw new Error('Parâmetro "closeHour" inválido. Use HH:MM.');
+01498:   }
+01499:   const normalizedClose = norm.slot || null;
+01500: 
+01501:   const startedAt = Date.now();
+
+
+----- LINHAS 1527-1535 -----
+01527:         return {
+01528:           ok: true,
+01529:           lotteryKey: lk,
+01530:           date,
+01531:           closeHour: normalizedClose,
+01532:           requestedCloseHour: norm.requested || null,
+01533: 
+01534:           blocked: true,
+01535:           blockedReason: "no_draw_for_slot_calendar",
+
+
+----- LINHAS 1528-1536 -----
+01528:           ok: true,
+01529:           lotteryKey: lk,
+01530:           date,
+01531:           closeHour: normalizedClose,
+01532:           requestedCloseHour: norm.requested || null,
+01533: 
+01534:           blocked: true,
+01535:           blockedReason: "no_draw_for_slot_calendar",
+01536:           todayBR,
+
+
+----- LINHAS 1554-1562 -----
+01554:           totalPrizesSaved: 0,
+01555:           totalPrizesUpserted: 0,
+01556:           skippedEmpty: 0,
+01557:           skippedInvalid: 0,
+01558:           skippedCloseHour: 0,
+01559:           skippedAlreadyComplete: 0,
+01560:           proof: {
+01561:             filterClose: normalizedClose,
+01562:             apiHasPrizes: false,
+
+
+----- LINHAS 1578-1586 -----
+01578: 
+01579:   // ✅ Fetch API (JSON)
+01580:   let payload = await fetchKingResults({ date, lotteryKey: lk });
+01581: 
+01582:   // ✅ Se pediram closeHour e ele NÃO existe no dia (close_hours do FETCH), retorna blocked/api_missing_slot
+01583:   if (normalizedClose) {
+01584:     const closes = summarizeCloseHours(
+01585:       Array.isArray(payload?.data) ? payload.data : [],
+01586:       lk
+
+
+----- LINHAS 1580-1588 -----
+01580:   let payload = await fetchKingResults({ date, lotteryKey: lk });
+01581: 
+01582:   // ✅ Se pediram closeHour e ele NÃO existe no dia (close_hours do FETCH), retorna blocked/api_missing_slot
+01583:   if (normalizedClose) {
+01584:     const closes = summarizeCloseHours(
+01585:       Array.isArray(payload?.data) ? payload.data : [],
+01586:       lk
+01587:     );
+01588:     const hasTarget = closes.includes(normalizedClose);
+
+
+----- LINHAS 1592-1600 -----
+01592:       try {
+01593:         const fb = await tryHtmlDetailsFallback({
+01594:           date,
+01595:           lotteryKey: lk,
+01596:           closeHour: normalizedClose,
+01597:         });
+01598: 
+01599:         if (fb.ok) {
+01600:           console.warn(
+
+
+----- LINHAS 1623-1631 -----
+01623:       return {
+01624:         ok: true,
+01625:         lotteryKey: lk,
+01626:         date,
+01627:         closeHour: normalizedClose,
+01628:         requestedCloseHour: norm.requested || null,
+01629: 
+01630:         blocked: true,
+01631:         blockedReason: "api_missing_slot",
+
+
+----- LINHAS 1624-1632 -----
+01624:         ok: true,
+01625:         lotteryKey: lk,
+01626:         date,
+01627:         closeHour: normalizedClose,
+01628:         requestedCloseHour: norm.requested || null,
+01629: 
+01630:         blocked: true,
+01631:         blockedReason: "api_missing_slot",
+01632:         todayBR,
+
+
+----- LINHAS 1655-1663 -----
+01655:         totalPrizesSaved: 0,
+01656:         totalPrizesUpserted: 0,
+01657:         skippedEmpty: 0,
+01658:         skippedInvalid: 0,
+01659:         skippedCloseHour: 0,
+01660:         skippedAlreadyComplete: 0,
+01661:         proof: {
+01662:           filterClose: normalizedClose,
+01663:           apiHasPrizes: false,
+
+
+----- LINHAS 1678-1686 -----
+01678: 
+01679:   const result = await importFromPayload({
+01680:     payload,
+01681:     lotteryKey: lk,
+01682:     closeHour: normalizedClose,
+01683:     skipIfAlreadyComplete: Boolean(normalizedClose), // scheduler: evita regravar
+01684:   });
+01685: 
+01686:   const ms = Date.now() - startedAt;
+
+
+----- LINHAS 1692-1700 -----
+01692:   const alreadyCompleteAll = Boolean(proof.alreadyCompleteAll);
+01693: 
+01694:   const alreadyCompleteAny = normalizedClose ? alreadyCompleteAnyReal : null;
+01695: 
+01696:   // ✅ Captured “verdadeiro” (modo closeHour):
+01697:   // - API liberou prizes para o horário, OU
+01698:   // - slot já está completo no Firestore
+01699:   const captured = normalizedClose
+01700:     ? apiHasPrizes || alreadyCompleteAnyReal
+
+
+----- LINHAS 1711-1719 -----
+01711:   const response = {
+01712:     ok: true,
+01713:     lotteryKey: lk,
+01714:     date,
+01715:     closeHour: normalizedClose || null,
+01716:     requestedCloseHour: norm.requested || null,
+01717: 
+01718:     blocked: false,
+01719:     blockedReason: null,
+
+
+----- LINHAS 1712-1720 -----
+01712:     ok: true,
+01713:     lotteryKey: lk,
+01714:     date,
+01715:     closeHour: normalizedClose || null,
+01716:     requestedCloseHour: norm.requested || null,
+01717: 
+01718:     blocked: false,
+01719:     blockedReason: null,
+01720:     todayBR,
+
+
+----- LINHAS 1778-1786 -----
+01778:         const generated =
+01779:           await createTop3PredictionRun({
+01780:             lotteryKey: lk,
+01781:             date: nextYmd,
+01782:             closeHour: nextHour,
+01783:             historySource: "auto",
+01784:             source: "auto-import",
+01785:             metadata: {
+01786:               triggeredByImport: true,
+
+
+----- LINHAS 1843-1851 -----
+01843:         response.blocked === true
+01844:           ? "import_blocked"
+01845:           : response.captured !== true
+01846:           ? "result_not_captured"
+01847:           : "close_hour_missing",
+01848:     };
+01849:   }
+01850: 
+01851:   return {
+
+
+----- LINHAS 1860-1868 -----
+01860:  */
+01861: async function main() {
+01862:   const date = process.argv[2];
+01863:   const lotteryKey = process.argv[3] || "PT_RIO";
+01864:   const closeHour = process.argv[4] || null;
+01865: 
+01866:   if (!date || !isISODate(date)) {
+01867:     throw new Error(
+01868:       "Uso: node backend/scripts/importKingApostas.js YYYY-MM-DD [PT_RIO|FEDERAL|LOOK|NACIONAL] [HH:MM]"
+
+
+----- LINHAS 1884-1892 -----
+01884:     );
+01885:     process.exit(2);
+01886:   }
+01887: 
+01888:   const norm = normalizeRequestedCloseHour(closeHour, lk);
+01889:   if (norm.note === "invalid") {
+01890:     throw new Error(
+01891:       "Uso: node backend/scripts/importKingApostas.js YYYY-MM-DD [PT_RIO|FEDERAL|LOOK|NACIONAL] [HH:MM]"
+01892:     );
+
+
+----- LINHAS 1908-1916 -----
+01908:   console.log(`STEP 1/3 Buscando API: ${lk} ${date}${closeInfo}`);
+01909: 
+01910:   let payload = await fetchKingResults({ date, lotteryKey: lk });
+01911: 
+01912:   // ✅ NOVO (CLI também): se pediram closeHour e ele não existe no dia, avisa e sai 0
+01913:   if (normalizedClose) {
+01914:     const closes = summarizeCloseHours(
+01915:       Array.isArray(payload?.data) ? payload.data : [],
+01916:       lk
+
+
+----- LINHAS 1910-1918 -----
+01910:   let payload = await fetchKingResults({ date, lotteryKey: lk });
+01911: 
+01912:   // ✅ NOVO (CLI também): se pediram closeHour e ele não existe no dia, avisa e sai 0
+01913:   if (normalizedClose) {
+01914:     const closes = summarizeCloseHours(
+01915:       Array.isArray(payload?.data) ? payload.data : [],
+01916:       lk
+01917:     );
+01918:     const hasTarget = closes.includes(normalizedClose);
+
+
+----- LINHAS 1918-1926 -----
+01918:     const hasTarget = closes.includes(normalizedClose);
+01919: 
+01920:     if (!hasTarget) {
+01921:       console.warn(
+01922:         `[NO_DRAW_FOR_SLOT] ${lk} ${date} slot=${normalizedClose} close_hours=[${closes.join(", ")}]`
+01923:       );
+01924: 
+01925:       // tenta fallback apenas pra logar
+01926:       try {
+
+
+----- LINHAS 1926-1934 -----
+01926:       try {
+01927:         const fb = await tryHtmlDetailsFallback({
+01928:           date,
+01929:           lotteryKey: lk,
+01930:           closeHour: normalizedClose,
+01931:         });
+01932:         if (fb.ok) {
+01933:           console.warn(
+01934:             `[FALLBACK:DETAILS] lk=${lk} date=${date} slot=${fb.slot} kind=${fb.kind} hasSlot=${fb.hasSlot} hasAnyPrize=${fb.hasAnyPrize} url=${fb.url}`
+
+
+----- LINHAS 1947-1955 -----
+01947: 
+01948:   await importFromPayload({
+01949:     payload,
+01950:     lotteryKey: lk,
+01951:     closeHour: normalizedClose,
+01952:     skipIfAlreadyComplete: false, // CLI regrava
+01953:   });
+01954: 
+01955:   console.log(
+

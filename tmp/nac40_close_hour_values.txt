@@ -1,0 +1,14 @@
+NAC-40
+
+Procure no Console do navegador os blocos NAC-39.
+Precisamos comparar os valores reais de close_hour dos horários:
+
+- 02h
+- 10h
+- 12h
+- 15h
+- 17h
+- 21h
+- 23h
+
+Se os blocos NAC-39 não aparecerem no Console, então o código instrumentado não está sendo executado (build/cache).

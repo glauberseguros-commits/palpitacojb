@@ -1,0 +1,57 @@
+===== RESUMO =====
+
+STATUS=REPROVADO
+helper_definitions=1
+helper_calls=3
+helper_occurrences_total=4
+
+===== CHAMADAS ESPERADAS =====
+
+mergeAndDedupDraws=1
+buildDrawRef=2
+importFromPayload=1
+
+===== CHAMADAS ANTIGAS REMANESCENTES =====
+
+old_merge=1
+old_build=1
+old_import=0
+
+===== TODAS AS OCORRÊNCIAS DA NOVA FUNÇÃO =====
+
+  410: function normalizeDrawCloseHour(draw, lotteryKey) {
+  831: const { slot } = normalizeDrawCloseHour(d, lotteryKey);
+  989: const { raw: closeRaw, slot: closeSlot } = normalizeDrawCloseHour(
+ 1155: const { raw: closeRaw, slot: closeSlot } = normalizeDrawCloseHour(
+
+===== IMPLEMENTAÇÃO DA NOVA FUNÇÃO =====
+
+  410: function normalizeDrawCloseHour(draw, lotteryKey) {
+  411:   const base = normalizeCloseHourForLottery(
+  412:     draw?.close_hour || "",
+  413:     lotteryKey
+  414:   );
+  415: 
+  416:   const lk = String(lotteryKey || "").trim().toUpperCase();
+  417: 
+  418:   if (lk !== "NACIONAL") {
+  419:     return base;
+  420:   }
+  421: 
+  422:   const lotteryName = String(
+  423:     draw?.lottery_name ||
+  424:     draw?.name ||
+  425:     ""
+  426:   );
+  427: 
+  428:   const m = lotteryName.match(/(\d{1,2})\s*HS/i);
+  429: 
+  430:   if (!m) {
+  431:     return base;
+  432:   }
+  433: 
+  434:   return {
+  435:     raw: base.raw,
+  436:     slot: `${String(m[1]).padStart(2,"0")}:00`
+  437:   };
+  438: }

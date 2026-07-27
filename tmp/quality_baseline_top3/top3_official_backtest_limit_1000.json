@@ -1,0 +1,208 @@
+{
+  "ok": true,
+  "lotteryKey": "PT_RIO",
+  "engine": "top3_statistical_v3",
+  "historySource": "snapshot",
+  "historyLoaded": 7498,
+  "eligibleCases": 7398,
+  "selectedCases": 1000,
+  "skipped": 0,
+  "minHistory": 100,
+  "limit": 1000,
+  "historyPeriod": {
+    "from": "2022-06-07",
+    "to": "2026-07-16"
+  },
+  "evaluationPeriod": {
+    "from": "2022-06-29",
+    "to": "2023-02-15"
+  },
+  "global": {
+    "evaluated": 1000,
+    "top1Hits": 60,
+    "top3Hits": 130,
+    "errors": 0,
+    "top1Rate": 6,
+    "top3Rate": 13
+  },
+  "byHour": {
+    "16:00": {
+      "evaluated": 225,
+      "top1Hits": 10,
+      "top3Hits": 25,
+      "errors": 0,
+      "top1Rate": 4.4444,
+      "top3Rate": 11.1111
+    },
+    "21:00": {
+      "evaluated": 192,
+      "top1Hits": 14,
+      "top3Hits": 25,
+      "errors": 0,
+      "top1Rate": 7.2917,
+      "top3Rate": 13.0208
+    },
+    "11:00": {
+      "evaluated": 227,
+      "top1Hits": 18,
+      "top3Hits": 33,
+      "errors": 0,
+      "top1Rate": 7.9295,
+      "top3Rate": 14.5374
+    },
+    "14:00": {
+      "evaluated": 226,
+      "top1Hits": 12,
+      "top3Hits": 26,
+      "errors": 0,
+      "top1Rate": 5.3097,
+      "top3Rate": 11.5044
+    },
+    "18:00": {
+      "evaluated": 130,
+      "top1Hits": 6,
+      "top3Hits": 21,
+      "errors": 0,
+      "top1Rate": 4.6154,
+      "top3Rate": 16.1538
+    }
+  },
+  "byWeekday": {
+    "0": {
+      "evaluated": 90,
+      "top1Hits": 2,
+      "top3Hits": 8,
+      "errors": 0,
+      "top1Rate": 2.2222,
+      "top3Rate": 8.8889
+    },
+    "1": {
+      "evaluated": 165,
+      "top1Hits": 9,
+      "top3Hits": 23,
+      "errors": 0,
+      "top1Rate": 5.4545,
+      "top3Rate": 13.9394
+    },
+    "2": {
+      "evaluated": 163,
+      "top1Hits": 13,
+      "top3Hits": 24,
+      "errors": 0,
+      "top1Rate": 7.9755,
+      "top3Rate": 14.7239
+    },
+    "3": {
+      "evaluated": 127,
+      "top1Hits": 5,
+      "top3Hits": 17,
+      "errors": 0,
+      "top1Rate": 3.937,
+      "top3Rate": 13.3858
+    },
+    "4": {
+      "evaluated": 162,
+      "top1Hits": 11,
+      "top3Hits": 17,
+      "errors": 0,
+      "top1Rate": 6.7901,
+      "top3Rate": 10.4938
+    },
+    "5": {
+      "evaluated": 165,
+      "top1Hits": 10,
+      "top3Hits": 23,
+      "errors": 0,
+      "top1Rate": 6.0606,
+      "top3Rate": 13.9394
+    },
+    "6": {
+      "evaluated": 128,
+      "top1Hits": 10,
+      "top3Hits": 18,
+      "errors": 0,
+      "top1Rate": 7.8125,
+      "top3Rate": 14.0625
+    }
+  },
+  "byMonth": {
+    "2022-06": {
+      "evaluated": 7,
+      "top1Hits": 0,
+      "top3Hits": 1,
+      "errors": 0,
+      "top1Rate": 0,
+      "top3Rate": 14.2857
+    },
+    "2022-07": {
+      "evaluated": 136,
+      "top1Hits": 8,
+      "top3Hits": 18,
+      "errors": 0,
+      "top1Rate": 5.8824,
+      "top3Rate": 13.2353
+    },
+    "2022-08": {
+      "evaluated": 138,
+      "top1Hits": 8,
+      "top3Hits": 16,
+      "errors": 0,
+      "top1Rate": 5.7971,
+      "top3Rate": 11.5942
+    },
+    "2022-09": {
+      "evaluated": 132,
+      "top1Hits": 8,
+      "top3Hits": 19,
+      "errors": 0,
+      "top1Rate": 6.0606,
+      "top3Rate": 14.3939
+    },
+    "2022-10": {
+      "evaluated": 131,
+      "top1Hits": 9,
+      "top3Hits": 22,
+      "errors": 0,
+      "top1Rate": 6.8702,
+      "top3Rate": 16.7939
+    },
+    "2022-11": {
+      "evaluated": 126,
+      "top1Hits": 10,
+      "top3Hits": 20,
+      "errors": 0,
+      "top1Rate": 7.9365,
+      "top3Rate": 15.873
+    },
+    "2022-12": {
+      "evaluated": 133,
+      "top1Hits": 4,
+      "top3Hits": 13,
+      "errors": 0,
+      "top1Rate": 3.0075,
+      "top3Rate": 9.7744
+    },
+    "2023-01": {
+      "evaluated": 134,
+      "top1Hits": 9,
+      "top3Hits": 15,
+      "errors": 0,
+      "top1Rate": 6.7164,
+      "top3Rate": 11.194
+    },
+    "2023-02": {
+      "evaluated": 63,
+      "top1Hits": 4,
+      "top3Hits": 6,
+      "errors": 0,
+      "top1Rate": 6.3492,
+      "top3Rate": 9.5238
+    }
+  },
+  "metadata": {
+    "bootstrapStatus": "complete",
+    "totalStored": 7498,
+    "lastProcessedDrawId": "PT_RIO__2026-07-16__21-00__d5123f7e-629d-43e9-a8fb-1385ff1cba45"
+  },
+  "tookMs": 62948
+}

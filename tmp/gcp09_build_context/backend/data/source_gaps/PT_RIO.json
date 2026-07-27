@@ -1,0 +1,214 @@
+{
+  "gapsByDay": {
+    "2022-09-07": {
+      "removedHard": [
+        21
+      ]
+    },
+    "2022-10-12": {
+      "removedHard": [
+        21
+      ]
+    },
+    "2022-11-02": {
+      "removedHard": [
+        11,
+        14,
+        16,
+        21
+      ]
+    },
+    "2022-11-15": {
+      "removedHard": [
+        18,
+        21
+      ]
+    },
+    "2022-12-24": {
+      "removedHard": [
+        16,
+        21
+      ]
+    },
+    "2022-12-31": {
+      "removedHard": [
+        16,
+        21
+      ]
+    },
+    "2024-02-25": {
+      "removedSoft": [
+        9
+      ]
+    },
+    "2024-03-03": {
+      "removedSoft": [
+        9
+      ]
+    },
+    "2024-03-10": {
+      "removedSoft": [
+        9
+      ]
+    },
+    "2024-03-17": {
+      "removedSoft": [
+        9
+      ]
+    },
+    "2024-03-24": {
+      "removedSoft": [
+        9
+      ]
+    },
+    "2024-03-31": {
+      "removedSoft": [
+        9
+      ]
+    },
+    "2024-04-07": {
+      "removedSoft": [
+        9
+      ]
+    },
+    "2024-12-24": {
+      "removedHard": [
+        18,
+        21
+      ]
+    },
+    "2024-12-31": {
+      "removedHard": [
+        18,
+        21
+      ]
+    },
+    "2025-12-24": {
+      "removedHard": [
+        21
+      ]
+    },
+    "2025-12-31": {
+      "removedHard": [
+        21
+      ]
+    },
+    "2022-09-08": {
+      "removedHard": [
+        18
+      ],
+      "removedSoft": []
+    },
+    "2022-10-13": {
+      "removedHard": [
+        18
+      ],
+      "removedSoft": []
+    },
+    "2022-11-03": {
+      "removedHard": [
+        18
+      ],
+      "removedSoft": []
+    },
+    "2023-11-16": {
+      "removedHard": [
+        18
+      ],
+      "removedSoft": []
+    },
+    "2024-09-06": {
+      "removedHard": [
+        18
+      ],
+      "removedSoft": []
+    },
+    "2024-10-11": {
+      "removedHard": [
+        18
+      ],
+      "removedSoft": []
+    },
+    "2024-11-01": {
+      "removedHard": [
+        18
+      ],
+      "removedSoft": []
+    },
+    "2024-11-21": {
+      "removedHard": [
+        18
+      ],
+      "removedSoft": []
+    },
+    "2025-11-14": {
+      "removedHard": [
+        18
+      ],
+      "removedSoft": []
+    },
+    "2022-10-02": {
+      "removedHard": [
+        11,
+        14,
+        16
+      ]
+    },
+    "2022-12-25": {
+      "removedHard": [
+        11,
+        14,
+        16
+      ]
+    },
+    "2023-01-01": {
+      "removedHard": [
+        11,
+        14,
+        16
+      ]
+    },
+    "2024-10-06": {
+      "removedHard": [
+        11,
+        14,
+        16
+      ]
+    },
+    "2026-01-19": {
+      "removedHard": [
+        18
+      ]
+    },
+    "2026-01-20": {
+      "removedHard": [
+        18
+      ]
+    },
+    "2026-01-22": {
+      "removedHard": [
+        18
+      ]
+    },
+    "2026-01-23": {
+      "removedHard": [
+        18
+      ]
+    },
+    "2026-01-26": {
+      "removedHard": [
+        18
+      ]
+    },
+    "2026-01-27": {
+      "removedHard": [
+        18
+      ]
+    },
+    "2026-01-29": {
+      "removedHard": [
+        18
+      ]
+    }
+  }
+}

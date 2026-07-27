@@ -1,0 +1,6 @@
+===== https://palpitacojb.com.br =====
+STATUS=200
+===== https://www.palpitacojb.com.br =====
+STATUS=200
+===== https://palpitacojb.vercel.app =====
+STATUS=200

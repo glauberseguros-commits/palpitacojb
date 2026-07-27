@@ -1,0 +1,3121 @@
+====================================================================================================
+TOP3-HIT-24 — DIAGNÓSTICO DO DETALHAMENTO DE ACERTOS
+Modo: SOMENTE LEITURA
+Gerado em: 26/07/2026 12:27:22
+====================================================================================================
+
+ARQUIVOS DO FLUXO
+OK: src/pages/Top3/Top3View.jsx
+OK: src/pages/Top3/top3.hooks.js
+OK: src/pages/Top3/top3.firestore.js
+OK: src/pages/Top3/modules/top3.timeline.js
+OK: backend/engine/top3PredictionService.js
+OK: backend/engine/drawRepository.js
+
+====================================================================================================
+OCORRÊNCIAS RELEVANTES
+====================================================================================================
+
+ARQUIVO: src/pages/Top3/Top3View.jsx
+00004: import { getAnimalLabel, getImgFromGrupo } from "../../constants/bichoMap";
+00006: function extractPrizeMilharByPosition(slot, position) {
+00022: prize?.milhar ??
+00033: function extractResultMilhar(slot) {
+00034: const persistedMilhar = normalizeMilharStr(
+00035: slot?.resultMilhar ??
+00036: slot?.milhar ??
+00037: slot?.result?.milhar ??
+00038: slot?.resultado?.milhar ??
+00042: if (persistedMilhar) {
+00043: return persistedMilhar;
+00047: slot?.resultTop3Milhares
+00049: ? slot.resultTop3Milhares
+00052: const persistedPrimeira = normalizeMilharStr(
+00060: return extractPrizeMilharByPosition(slot, 1);
+00063: function getPrizeGrupoByPosition(slot, position) {
+00065: slot?.resultTop3Groups
+00067: ? Number(slot.resultTop3Groups[position - 1])
+00090: prize?.grupo ??
+00092: prize?.animal_grupo ??
+00093: prize?.grupo2
+00104: const milhar = extractPrizeMilharByPosition(
+00109: if (!milhar) return NaN;
+00111: const dezena = Number(milhar.slice(-2));
+00112: const normalizedDezena = dezena === 0 ? 100 : dezena;
+00113: const grupo = Math.ceil(normalizedDezena / 4);
+00115: return grupo >= 1 && grupo <= 25
+00116: ? grupo
+00123: const grupo = getPrizeGrupoByPosition(
+00129: !Number.isFinite(grupo) ||
+00130: grupo < 1 ||
+00131: grupo > 25
+00136: const persistedMilhares = Array.isArray(
+00137: slot?.resultTop3Milhares
+00139: ? slot.resultTop3Milhares
+00142: const milhar =
+00144: persistedMilhares[position - 1] || ""
+00146: extractPrizeMilharByPosition(slot, position);
+00150: grupo,
+00151: milhar: milhar
+00152: ? milhar.slice(-4).padStart(4, "0")
+00173: function formatGrupo(grupo) {
+00174: const g = Number(grupo);
+00179: function normalizeMilharStr(v) {
+00187: function centenaFromMilhar(m4) {
+00188: const s = normalizeMilharStr(m4);
+00192: function dezenaFromMilhar(m4) {
+00193: const s = normalizeMilharStr(m4);
+00253: function wrapToDezena2(n) {
+00260: function getDezenasFixasFromGrupo(grupo) {
+00261: const g = Number(grupo);
+00268: out.push(wrapToDezena2(start + i));
+00274: function clampColsFromItemMilharesCols(milharesCols, expectedCols = 4, perCol = 5) {
+00275: const colsArr = Array.isArray(milharesCols) ? milharesCols : [];
+00279: const dz = String(colsArr[i]?.dezena || "").trim();
+00283: .map(normalizeMilharStr)
+00288: out.push({ dezena: dz, items });
+00292: out.push({ dezena: "", items: Array(perCol).fill("") });
+00298: function build20ByDezena({ grupo, baseMilhares, perCol = 5 }) {
+00299: const g = Number(grupo);
+00300: const dezenas = getDezenasFixasFromGrupo(g);
+00302: if (!dezenas.length) {
+00303: return { dezenas: [], rows: [], flat20: [] };
+00306: const input = Array.isArray(baseMilhares) ? baseMilhares : [];
+00308: .map(normalizeMilharStr)
+00312: for (const dz of dezenas) byDz.set(dz, []);
+00315: const dz = dezenaFromMilhar(m4);
+00320: const seenMilhar = new Set();
+00323: for (const dz of dezenas) cols[dz] = [];
+00326: const mm = normalizeMilharStr(m4);
+00329: const c3 = centenaFromMilhar(mm);
+00333: if (seenMilhar.has(mm)) return false;
+00337: seenMilhar.add(mm);
+00341: for (const dz of dezenas) {
+00349: for (const dz of dezenas) {
+00356: rows.push(dezenas.map((dz) => cols[dz][r] || ""));
+00360: return { dezenas, rows, flat20 };
+00375: function getSlotResultGrupo(slot) {
+00377: slot?.resultGrupo ??
+00378: slot?.grupo ??
+00379: slot?.result?.grupo ??
+00380: slot?.resultado?.grupo
+00390: p1?.grupo ??
+00392: p1?.animal_grupo ??
+00393: p1?.grupo2
+00405: const grupo = getSlotResultGrupo(slot);
+00406: if (Number.isFinite(grupo) && grupo >= 1 && grupo <= 25) return true;
+00408: const milhar = extractResultMilhar(slot);
+00409: return /^\d{4}$/.test(milhar);
+00412: function analyzeTop3Hit(top3, resultSource, resultMilhar) {
+00418: predictionPosition: -1,
+00419: resultPosition: -1,
+00422: matchedGrupo: null,
+00431: grupo: Number(resultSource),
+00432: milhar: normalizeMilharStr(resultMilhar),
+00436: Number.isFinite(item.grupo) &&
+00437: item.grupo >= 1 &&
+00438: item.grupo <= 25
+00446: predictionPosition: -1,
+00447: resultPosition: -1,
+00450: matchedGrupo: null,
+00455: const grupoNum = Number(officialPrize?.grupo);
+00456: const milhar = normalizeMilharStr(
+00457: officialPrize?.milhar
+00459: const centena = milhar
+00460: ? milhar.slice(-3)
+00469: const grupo = Number(item?.grupo);
+00471: const milhares = (
+00472: Array.isArray(item?.milhares20)
+00473: ? item.milhares20
+00474: : Array.isArray(item?.milhares)
+00475: ? item.milhares
+00478: .map(normalizeMilharStr)
+00481: const centenas = milhares
+00482: .map((value) => centenaFromMilhar(value))
+00490: milhar &&
+00491: milhares.includes(milhar)
+00495: matchedValue = milhar;
+00497: centena &&
+00498: centenas.includes(centena)
+00500: type = "hit_centena";
+00502: matchedValue = centena;
+00504: Number.isFinite(grupoNum) &&
+00505: grupo === grupoNum
+00507: type = "hit_grupo";
+00509: matchedValue = milhar
+00510: ? milhar.slice(-2)
+00511: : formatGrupo(grupoNum);
+00515: const resultPosition = Number(
+00523: predictionPosition: predictionIndex + 1,
+00524: resultPosition,
+00526: podiumMedalFromPosition(resultPosition),
+00528: matchedGrupo: grupoNum,
+00538: predictionPosition: -1,
+00539: resultPosition: -1,
+00542: matchedGrupo: null,
+00635: buildMilhares,
+00640: const grupoTxt = formatGrupo(item?.grupo);
+00672: Array.isArray(item?.milharesCols) &&
+00673: item.milharesCols.length >= 4 &&
+00674: Array.isArray(item.milharesCols[0]?.items);
+00676: let dezenasHeader = [];
+00681: const cols4 = clampColsFromItemMilharesCols(item.milharesCols, 4, 5);
+00682: dezenasHeader = cols4.map((c) => String(c.dezena || ""));
+00688: let milharesBase = [];
+00690: const m20 = Array.isArray(item?.milhares20) ? item.milhares20 : null;
+00691: const mAny = Array.isArray(item?.milhares) ? item.milhares : null;
+00693: if (m20 && m20.length) milharesBase = m20.slice(0);
+00694: else if (mAny && mAny.length) milharesBase = mAny.slice(0);
+00696: if (!milharesBase.length) {
+00697: const g = Number(item?.grupo);
+00703: milharesBase = slots20.map((x) => x?.milhar).filter(Boolean);
+00704: } else if (typeof buildMilhares === "function") {
+00705: const out = buildMilhares(g, 20);
+00707: milharesBase = out.slice(0);
+00709: milharesBase = out.slots.map((x) => x?.milhar).filter(Boolean);
+00714: milharesBase = slots16.map((x) => x?.milhar).filter(Boolean);
+00719: const grupoNum = Number(item?.grupo);
+00720: const grid = build20ByDezena({
+00721: grupo: grupoNum,
+00722: baseMilhares: milharesBase,
+00726: dezenasHeader = grid.dezenas;
+00731: const key = `${String(item?.grupo ?? "g")}__${animal || "x"}__${idx}`;
+00767: const baseGrupo = formatGrupo(item?.meta?.trigger?.grupo);
+00783: `Após G${baseGrupo} às ${baseHour}, G${grupoTxt} apareceu ${first}x em 1º e ${top5}x no TOP3 para o alvo ${targetHour}.`
+00796: `No horário ${targetHour}, G${grupoTxt} apareceu ${first}x em 1º e ${top5}x no TOP3.`
+00805: `No mesmo dia da semana, G${grupoTxt} apareceu ${first}x em 1º e ${top5}x no TOP3.`
+00815: smartReasons.push(`Probabilidade final do G${grupoTxt}: ${pct.toFixed(2)}%.`);
+00849: ? String(getAnimalLabel(Number(item?.meta?.trigger?.grupo)) || "").trim()
+00853: ? `${baseAnimalName} (G${baseGrupo})`
+00854: : `G${baseGrupo}`;
+00857: ? `${animal} (G${grupoTxt})`
+00858: : `G${grupoTxt}`;
+00897: const mm = normalizeMilharStr(m);
+00917: alt={animal ? animal : `G${grupoTxt}`}
+00922: <div className="top3-card__group">GRUPO {grupoTxt}</div>
+00982: alt={animal ? animal : `G${grupoTxt}`}
+00989: <div className="top3-card__group">GRUPO {grupoTxt}</div>
+01171: title="Copiar as 20 milhares"
+01177: {dezenasHeader.length ? (
+01179: {dezenasHeader.map((dz, i) => (
+01191: const mm = normalizeMilharStr(m);
+01217: function CompactTop3Result({
+01228: const resultGrupo = getSlotResultGrupo(slot);
+01231: Number.isFinite(resultGrupo) &&
+01232: resultGrupo >= 1 &&
+01233: resultGrupo <= 25;
+01236: ? String(getAnimalLabel(resultGrupo) || "")
+01240: ? getImgFromGrupo(resultGrupo, 64)
+01243: const resultMilhar = extractResultMilhar(slot);
+01251: const resultPosition = Number(
+01252: analysis?.resultPosition
+01258: : resultPosition === 1
+01260: : resultPosition === 2
+01262: : resultPosition === 3
+01307: const grupo = Number(item?.grupo);
+01311: getAnimalLabel(grupo) ||
+01315: const img = Number.isFinite(grupo)
+01316: ? getImgFromGrupo(grupo, 64)
+01329: )}_${idx}_${grupo}`}
+01345: title={`${animal || "Animal"} — G${formatGrupo(
+01346: grupo
+01361: `G${formatGrupo(grupo)}`
+01399: G{formatGrupo(grupo)}
+01419: ? `${resultAnimal} — G${formatGrupo(
+01420: resultGrupo
+01422: resultMilhar
+01423: ? ` — ${resultMilhar}`
+01446: G{formatGrupo(resultGrupo)}
+01447: {resultMilhar
+01448: ? ` • ${resultMilhar}`
+01479: buildMilhares,
+01485: const resultGrupo = getSlotResultGrupo(slot);
+01488: hasResult && Number.isFinite(resultGrupo)
+01489: ? String(getAnimalLabel(resultGrupo) || "")
+01510: ? "🎯 MILHAR (100%)"
+01511: : analysis.type === "hit_centena"
+01512: ? "🟡 CENTENA (66,67%)"
+01513: : analysis.type === "hit_grupo"
+01514: ? "✅ DEZENA/GRUPO (33,33%)"
+01521: ? `Milhar exata acertada no palpite #${analysis.position}.`
+01522: : analysis.type === "hit_centena"
+01523: ? `Centena acertada no palpite #${analysis.position}.`
+01524: : analysis.type === "hit_grupo"
+01525: ? `Grupo acertado no palpite #${analysis.position}.`
+01568: ? `G${formatGrupo(
+01569: resultGrupo
+01594: key={`${slot?.targetYmd || "y"}_${slot?.targetHour || "h"}_${String(item?.grupo ?? i)}`}
+01604: buildMilhares={buildMilhares}
+01610: <CompactTop3Result
+01638: buildMilhares,
+01798: .filter((slot) => String(slot?.status || "").toLowerCase() === "validated")
+01822: const snapshot = Array.isArray(entry?.snapshot)
+01823: ? entry.snapshot.slice(0, 3)
+01826: const resultGrupo = Number(entry?.resultGrupo);
+01828: Number.isFinite(resultGrupo) &&
+01829: resultGrupo >= 1 &&
+01830: resultGrupo <= 25;
+01842: : snapshot
+01843: .map((item) => Number(item?.grupo))
+01845: top3: snapshot,
+01846: result: hasResult ? resultGrupo : null,
+01847: grupo: hasResult ? resultGrupo : null,
+01851: getAnimalLabel(resultGrupo) ||
+01855: resultMilhar: String(
+01856: entry?.resultMilhar || ""
+01860: hitType: String(entry?.hitType || ""),
+01862: hitPosition: Number(
+01863: entry?.hitPosition ?? -1
+01865: predictionPosition: Number(
+01866: entry?.predictionPosition ??
+01867: entry?.hitPosition ??
+01870: resultPosition: Number(
+01871: entry?.resultPosition ?? -1
+01876: resultTop3Groups: Array.isArray(
+01877: entry?.resultTop3Groups
+01879: ? entry.resultTop3Groups
+01881: resultTop3Milhares: Array.isArray(
+01882: entry?.resultTop3Milhares
+01884: ? entry.resultTop3Milhares
+01887: type: String(entry?.hitType || ""),
+01890: entry?.hitPosition ?? -1
+01892: predictionPosition: Number(
+01893: entry?.predictionPosition ??
+01894: entry?.hitPosition ??
+01897: resultPosition: Number(
+01898: entry?.resultPosition ?? -1
+01923: const resultGrupo = getSlotResultGrupo(slot);
+01926: Number.isFinite(resultGrupo) &&
+01927: resultGrupo >= 1 &&
+01928: resultGrupo <= 25;
+01930: const resultMilhar =
+01931: extractResultMilhar(slot);
+01950: .map((item) => Number(item?.grupo))
+01954: ? Number(resultGrupo)
+01956: grupo: hasResult
+01957: ? Number(resultGrupo)
+01960: ? getAnimalLabel(resultGrupo)
+01962: resultMilhar,
+01963: resultTop3Groups: officialPodium.map(
+01964: (item) => Number(item?.grupo)
+01966: resultTop3Milhares: officialPodium.map(
+01967: (item) => String(item?.milhar || "")
+01976: hitType: analysis.type,
+01978: hitPosition: Number(
+02008: const resultGrupo = Number(timelineRow.result);
+02009: const resultMilhar = String(
+02010: timelineRow?.resultMilhar || ""
+02022: result: resultGrupo,
+02023: grupo: resultGrupo,
+02026: getAnimalLabel(resultGrupo) ||
+02028: resultMilhar,
+02033: hitType: analysis.type,
+02035: hitPosition: Number(
+02059: const validated = historyRows.filter(
+02063: const exact = validated.filter(
+02064: (item) => item?.hitType === "hit_exact"
+02067: const centena = validated.filter(
+02068: (item) => item?.hitType === "hit_centena"
+02071: const grupo = validated.filter(
+02072: (item) => item?.hitType === "hit_grupo"
+02075: const misses = validated.filter(
+02077: item?.hitType === "miss" ||
+02078: item?.hitType === "none"
+02081: const totalScore = validated.reduce(
+02087: validated.length > 0
+02088: ? totalScore / validated.length
+02093: validated: validated.length,
+02094: pending: Math.max(0, historyRows.length - validated.length),
+02096: centena,
+02097: grupo,
+03424: Escolha uma data para consultar as previsões, os resultados e a taxa de acerto de cada horário.
+03515: key={`${String(item?.grupo ?? "g")}__${String(
+03527: buildMilhares={buildMilhares}
+03554: buildMilhares={buildMilhares}
+03577: {historySummary.validated}
+03582: <div className="top3-historyMetric__label">Grupo/dezena</div>
+03584: {historySummary.grupo}
+03589: <div className="top3-historyMetric__label">Centena</div>
+03591: {historySummary.centena}
+03596: <div className="top3-historyMetric__label">Milhar</div>
+03642: .map((grupo) => ({
+03643: grupo: Number(grupo),
+03646: Number(grupo)
+03650: const resultGrupo = Number(
+03652: item?.grupo ??
+03653: item?.prizes?.[0]?.grupo
+03657: Number.isFinite(resultGrupo) &&
+03658: resultGrupo >= 1 &&
+03659: resultGrupo <= 25;
+03665: resultGrupo
+03672: ? getImgFromGrupo(
+03673: resultGrupo,
+03678: const resultMilhar =
+03679: normalizeMilharStr(
+03680: item?.resultMilhar ||
+03682: ?.resultTop3Milhares?.[0] ||
+03686: const resultCentena =
+03687: resultMilhar
+03688: ? resultMilhar.slice(-3)
+03691: const resultDezena =
+03692: resultMilhar
+03693: ? resultMilhar.slice(-2)
+03703: const predictionPosition =
+03707: ?.predictionPosition ??
+03709: ?.predictionPosition ??
+03710: item?.hitPosition ??
+03716: predictionPosition
+03718: predictionPosition >= 1
+03719: ? predictionPosition - 1
+03722: const resultPosition = Number(
+03723: analysis?.resultPosition ??
+03724: item?.resultPosition ??
+03728: const hitType = String(
+03730: analysis?.hitType ??
+03731: item?.hitType ??
+03742: resultPosition === 1
+03744: : resultPosition === 2
+03746: : resultPosition === 3
+03751: resultPosition === 1
+03753: : resultPosition === 2
+03755: : resultPosition === 3
+03760: resultPosition === 1
+03762: : resultPosition === 2
+03764: : resultPosition === 3
+03769: resultPosition >= 1 &&
+03770: resultPosition <= 3
+03771: ? resultPosition - 1
+03774: const matchedResultGrupoRaw =
+03777: item?.resultTop3Groups?.[
+03780: analysis?.matchedGrupo ??
+03785: const matchedResultGrupo =
+03787: matchedResultGrupoRaw
+03789: matchedResultGrupoRaw >= 1 &&
+03790: matchedResultGrupoRaw <= 25
+03791: ? matchedResultGrupoRaw
+03794: const matchedResultMilhar =
+03796: ? normalizeMilharStr(
+03797: item?.resultTop3Milhares?.[
+03801: resultPosition === 1
+03802: ? resultMilhar
+03808: const matchedResultCentena =
+03809: matchedResultMilhar
+03810: ? matchedResultMilhar.slice(-3)
+03813: const matchedResultDezena =
+03814: matchedResultMilhar
+03815: ? matchedResultMilhar.slice(-2)
+03819: hitType === "hit_exact";
+03821: const hasCentenaHit =
+03822: hitType === "hit_centena" ||
+03825: const hasDezenaHit =
+03826: hitType === "hit_grupo" ||
+03827: hasCentenaHit ||
+03830: const hitGrupo =
+03833: matchedResultGrupo
+03835: ? formatGrupo(
+03836: matchedResultGrupo
+03840: const hitDezena =
+03842: hasDezenaHit
+03843: ? matchedResultDezena
+03846: const hitCentena =
+03848: hasCentenaHit
+03849: ? matchedResultCentena
+03852: const hitMilhar =
+03855: ? matchedResultMilhar
+03898: const grupo =
+03900: pick?.grupo
+03907: grupo
+03914: grupo
+03916: ? getImgFromGrupo(
+03917: grupo,
+03929: key={`${y}_${h}_${idx}_${grupo}`}
+03943: } — G${formatGrupo(
+03944: grupo
+03967: `G${formatGrupo(
+03968: grupo
+04017: {formatGrupo(
+04018: grupo
+04066: ACERTO
+04079: <span>Grupo</span>
+04081: {hitGrupo
+04082: ? `G${hitGrupo} ✓`
+04086: <span>Dezena</span>
+04088: {hitDezena
+04089: ? `${hitDezena} ✓`
+04093: <span>Centena</span>
+04095: {hitCentena
+04096: ? `${hitCentena} ✓`
+04100: <span>Milhar</span>
+04102: {hitMilhar
+04103: ? `${hitMilhar} ✓`
+04118: ❌ SEM ACERTO
+04143: ? `${resultAnimal} — G${formatGrupo(
+04144: resultGrupo
+04146: resultMilhar
+04147: ? ` — ${resultMilhar}`
+04178: resultPosition === 1
+04214: {formatGrupo(
+04215: resultGrupo
+04234: Milhar sorteada
+04245: {resultMilhar ||
+
+ARQUIVO: src/pages/Top3/top3.hooks.js
+00013: getCentena3,
+00030: pickPrize1GrupoFromDraw,
+00032: build16MilharesForGrupo,
+00033: buildMilharesForGrupo,
+00042: reconcilePendingTop3Log,
+00047: saveTop3PredictionSnapshot,
+00049: reconcileTop3PredictionDay,
+00072: buildTop3MilharesCols,
+00078: getGrupoImgSrc,
+00083: const top3ReconcileRunKeys = new Set();
+00084: const top3ReconcileRetryCounts = new Map();
+00086: const TOP3_RECONCILE_MAX_RETRIES = 3;
+00087: const TOP3_RECONCILE_RETRY_DELAY_MS = 1200;
+00254: const snapshot = Array.isArray(entry?.snapshot)
+00255: ? entry.snapshot.slice(0, 3)
+00258: return snapshot
+00260: const grupo = Number(item?.grupo);
+00263: !Number.isFinite(grupo) ||
+00264: grupo < 1 ||
+00265: grupo > 25
+00273: : [getGrupoImgSrc(grupo, 512)].filter(Boolean);
+00278: : buildResultStyleImgVariants(grupo, 96);
+00283: grupo,
+00286: safeStr(getAnimalLabel(grupo)),
+00289: milhares20: Array.isArray(item?.milhares20)
+00290: ? item.milhares20.slice(0, 20)
+00292: milharesCols: Array.isArray(item?.milharesCols)
+00293: ? item.milharesCols
+00297: persistedSnapshot: true,
+00355: // TOP3_REF_04_MILHARES_CACHE
+00357: // funcional da geração de milhares muda.
+00358: const milharesCacheRef = useRef(new Map());
+00384: lastGrupo: null,
+00391: prevGrupo: null,
+00402: const [reconcileRetryNonce, setReconcileRetryNonce] = useState(0);
+00480: if (!prevInfo?.prevGrupo) return "—";
+00482: const g = Number(prevInfo.prevGrupo);
+00496: if (!lastInfo?.lastGrupo) return "—";
+00498: const g = Number(lastInfo.lastGrupo);
+00531: lastGrupo: null,
+00538: prevGrupo: null,
+00644: let baseGrupo = null;
+00736: baseGrupo = pickPrize1GrupoFromDraw(baseDraw);
+00737: baseAnimal = baseGrupo ? safeStr(getAnimalLabel(baseGrupo)) : "";
+00743: !Number.isFinite(Number(baseGrupo)) ||
+00744: Number(baseGrupo) < 1 ||
+00745: Number(baseGrupo) > 25 ||
+00810: baseGrupo,
+00829: lastGrupo: Number(baseGrupo),
+00834: const gPrev = pickPrize1GrupoFromDraw(resolvedPrev.draw);
+00839: prevGrupo: Number.isFinite(Number(gPrev)) ? Number(gPrev) : null,
+00847: prevGrupo: null,
+01058: "[TOP3 CURRENT SNAPSHOT LOAD]",
+01170: milharesCacheRef.current.clear();
+01179: const buildMilharesCached = useCallback(
+01180: ({ grupo2, count, targetYmd }) => {
+01181: const grupo = Number(grupo2);
+01190: Number.isFinite(grupo) ? grupo : "",
+01193: const cached = milharesCacheRef.current.get(cacheKey);
+01199: const generated = buildMilharesForGrupo({
+01203: grupo2,
+01208: milharesCacheRef.current.set(cacheKey, generated);
+01223: (grupo2) => {
+01224: return buildMilharesCached({
+01225: grupo2,
+01230: [buildMilharesCached, analysisYmd]
+01234: (grupo2, item = null) => {
+01235: return buildMilharesCached({
+01236: grupo2,
+01241: [buildMilharesCached, analysisYmd]
+01283: build4ColsFromEngineOut: buildTop3MilharesCols,
+01285: getGrupoImgSrc,
+01379: .map((x) => Number(x?.grupo))
+01395: const snapshot = top3.map((item, index) => ({
+01397: grupo: Number(item?.grupo),
+01401: milhares20: Array.isArray(item?.milhares20)
+01402: ? item.milhares20.slice(0, 20)
+01404: milharesCols: Array.isArray(item?.milharesCols)
+01405: ? item.milharesCols
+01420: snapshot,
+01424: saveTop3PredictionSnapshot({
+01429: snapshot,
+01465: snapshot,
+01574: debugTop3Effect("05_reconcile_history", {
+01616: const grupo = Number(
+01617: pickPrize1GrupoFromDraw(draw) || 0
+01626: const milhar = safeStr(
+01627: prize1?.milhar ??
+01635: return `${key}:${grupo}:${milhar}`;
+01639: const reconcileRunKey = [
+01646: if (top3ReconcileRunKeys.has(reconcileRunKey)) return;
+01648: top3ReconcileRunKeys.add(reconcileRunKey);
+01652: reconcilePendingTop3Log({
+01657: reconcileTop3PredictionDay({
+01665: top3ReconcileRunKeys.delete(reconcileRunKey);
+01666: top3ReconcileRetryCounts.delete(reconcileRunKey);
+01670: const reconciledHistory = Array.isArray(result?.history)
+01675: setPersistedTop3History(reconciledHistory);
+01684: const hasPendingResult = reconciledHistory.some((entry) => {
+01692: safeStr(entry?.status).toLowerCase() !== "validated"
+01699: top3ReconcileRetryCounts.delete(reconcileRunKey);
+01704: Number(top3ReconcileRetryCounts.get(reconcileRunKey) || 0) + 1;
+01706: if (retryCount > TOP3_RECONCILE_MAX_RETRIES) {
+01707: top3ReconcileRunKeys.delete(reconcileRunKey);
+01708: top3ReconcileRetryCounts.delete(reconcileRunKey);
+01712: "[TOP3 FIRESTORE RECONCILE RETRIES EXHAUSTED]",
+01714: reconcileRunKey,
+01716: historyLength: reconciledHistory.length,
+01724: top3ReconcileRetryCounts.set(
+01725: reconcileRunKey,
+01730: top3ReconcileRunKeys.delete(reconcileRunKey);
+01733: setReconcileRetryNonce((value) => value + 1);
+01735: }, TOP3_RECONCILE_RETRY_DELAY_MS);
+01738: top3ReconcileRunKeys.delete(reconcileRunKey);
+01739: top3ReconcileRetryCounts.delete(reconcileRunKey);
+01742: console.warn("[TOP3 FIRESTORE RECONCILE]", error);
+01758: reconcileRetryNonce,
+01803: getCentena3,
+
+ARQUIVO: src/pages/Top3/top3.firestore.js
+00021: pickPrize1GrupoFromDraw,
+00069: function normalizeMilhar(value) {
+00085: function extractPrize1Milhar(draw) {
+00088: return normalizeMilhar(
+00089: prize?.milhar ??
+00117: function normalizeSnapshot(snapshot) {
+00118: return (Array.isArray(snapshot) ? snapshot : [])
+00122: grupo: Number(item?.grupo),
+00126: milhares20: Array.isArray(item?.milhares20)
+00127: ? item.milhares20.map(normalizeMilhar).filter(Boolean).slice(0, 20)
+00129: milharesCols: Array.isArray(item?.milharesCols)
+00130: ? cleanFirestoreValue(item.milharesCols)
+00136: Number.isFinite(item.grupo) &&
+00137: item.grupo >= 1 &&
+00138: item.grupo <= 25
+00143: function extractPrizeGrupo(prize) {
+00145: prize?.grupo ??
+00147: prize?.animal_grupo ??
+00148: prize?.grupo2
+00159: const milhar = normalizeMilhar(
+00160: prize?.milhar ??
+00167: if (!milhar) return null;
+00169: const dezena = Number(milhar.slice(-2));
+00170: const normalizedDezena = dezena === 0 ? 100 : dezena;
+00171: const grupo = Math.ceil(normalizedDezena / 4);
+00173: return grupo >= 1 && grupo <= 25 ? grupo : null;
+00191: const grupo = extractPrizeGrupo(prize);
+00192: const milhar = normalizeMilhar(
+00193: prize?.milhar ??
+00201: !Number.isFinite(Number(grupo)) ||
+00202: Number(grupo) < 1 ||
+00203: Number(grupo) > 25
+00210: grupo: Number(grupo),
+00211: milhar,
+00224: function analyzeSnapshotHit(snapshot, officialPodium) {
+00225: const top3 = Array.isArray(snapshot)
+00226: ? snapshot.slice(0, 3)
+00235: hitType: "miss",
+00237: hitPosition: -1,
+00238: predictionPosition: -1,
+00239: resultPosition: -1,
+00242: matchedGrupo: null,
+00243: matchedMilhar: "",
+00249: const resultGrupo = Number(officialPrize?.grupo);
+00250: const resultMilhar = normalizeMilhar(
+00251: officialPrize?.milhar
+00253: const resultCentena = resultMilhar
+00254: ? resultMilhar.slice(-3)
+00263: const predictionGrupo = Number(prediction?.grupo);
+00265: const milhares = (
+00266: Array.isArray(prediction?.milhares20)
+00267: ? prediction.milhares20
+00268: : Array.isArray(prediction?.milhares)
+00269: ? prediction.milhares
+00272: .map(normalizeMilhar)
+00275: const centenas = milhares.map(
+00279: let hitType = "miss";
+00284: resultMilhar &&
+00285: milhares.includes(resultMilhar)
+00287: hitType = "hit_exact";
+00289: matchedValue = resultMilhar;
+00291: resultCentena &&
+00292: centenas.includes(resultCentena)
+00294: hitType = "hit_centena";
+00296: matchedValue = resultCentena;
+00298: Number.isFinite(resultGrupo) &&
+00299: predictionGrupo === resultGrupo
+00301: hitType = "hit_grupo";
+00303: matchedValue = resultMilhar
+00304: ? resultMilhar.slice(-2)
+00305: : String(resultGrupo).padStart(2, "0");
+00308: if (hitType !== "miss") {
+00309: const resultPosition = Number(
+00314: hitType,
+00316: hitPosition: predictionIndex + 1,
+00317: predictionPosition: predictionIndex + 1,
+00318: resultPosition,
+00320: podiumMedalFromPosition(resultPosition),
+00322: matchedGrupo: resultGrupo,
+00323: matchedMilhar: resultMilhar,
+00333: hitType: "miss",
+00335: hitPosition: -1,
+00336: predictionPosition: -1,
+00337: resultPosition: -1,
+00340: matchedGrupo: null,
+00341: matchedMilhar: "",
+00346: export async function saveTop3PredictionSnapshot({
+00351: snapshot,
+00392: const normalizedSnapshot = normalizeSnapshot(snapshot);
+00394: if (!normalizedSnapshot.length) {
+00398: reason: "EMPTY_SNAPSHOT",
+00419: snapshot: normalizedSnapshot,
+00422: resultGrupo: null,
+00423: resultMilhar: "",
+00425: hitType: "",
+00427: hitPosition: -1,
+00475: const snapshots = await Promise.all(
+00499: return snapshots
+00508: export async function reconcileTop3PredictionDay({
+00543: const reconciledHistory = [];
+00555: reconciledHistory.push(entry);
+00567: const resultGrupo = Number(
+00568: firstOfficialPrize?.grupo
+00572: !Number.isFinite(resultGrupo) ||
+00573: resultGrupo < 1 ||
+00574: resultGrupo > 25
+00576: reconciledHistory.push(entry);
+00580: const resultMilhar = normalizeMilhar(
+00581: firstOfficialPrize?.milhar
+00586: const savedGrupo = Number(entry?.resultGrupo);
+00587: const savedMilhar = normalizeMilhar(entry?.resultMilhar);
+00589: const analysis = analyzeSnapshotHit(
+00590: entry?.snapshot,
+00595: entry?.status === "validated" &&
+00597: savedGrupo === resultGrupo &&
+00598: savedMilhar === resultMilhar &&
+00599: safeStr(entry?.hitType) === analysis.hitType &&
+00601: Number(entry?.hitPosition) === analysis.hitPosition &&
+00602: Number(entry?.resultPosition ?? -1) ===
+00603: Number(analysis.resultPosition ?? -1) &&
+00609: reconciledHistory.push(entry);
+00617: resultGrupo,
+00618: resultMilhar,
+00625: resultTop3Groups: officialPodium.map(
+00626: (item) => Number(item?.grupo) || null
+00628: resultTop3Milhares: officialPodium.map(
+00629: (item) => normalizeMilhar(item?.milhar)
+00631: hitType: analysis.hitType,
+00633: hitPosition: analysis.hitPosition,
+00634: predictionPosition: analysis.predictionPosition,
+00635: resultPosition: analysis.resultPosition,
+00637: matchedGrupo: analysis.matchedGrupo,
+00638: matchedMilhar: analysis.matchedMilhar,
+00641: validatedAt: now,
+00642: validatedBy: user.uid,
+00644: status: "validated",
+00653: reconciledHistory.push({
+00664: history: reconciledHistory,
+
+ARQUIVO: src/pages/Top3/modules/top3.timeline.js
+00011: buildMilharesForGrupo,
+00016: import { getAnimalLabel, getImgFromGrupo } from "../../../constants/bichoMap";
+00029: function normalizeMilhar4(v) {
+00036: const dezenas = Array.isArray(out?.dezenas) ? out.dezenas : [];
+00040: for (const dz of dezenas.slice(0, expectedCols)) {
+00042: .filter((s) => String(s?.dezena || "") === String(dz))
+00043: .map((s) => normalizeMilhar4(s?.milhar))
+00048: cols.push({ dezena: dz, items });
+00052: cols.push({ dezena: "", items: Array(perCol).fill("") });
+00071: function buildResultStyleImgVariants(grupo, publicBase = "", size = 96) {
+00072: const g = Number(grupo);
+00075: const seeds = [getImgFromGrupo?.(g, size), getImgFromGrupo?.(g)]
+00179: const milharesCache = new Map();
+00189: const g = Number(x?.grupo);
+00195: const g = Number(x?.grupo);
+00200: let out = milharesCache.get(cacheKey);
+00203: out = buildMilharesForGrupo({
+00213: grupo2: g,
+00218: milharesCache.set(cacheKey, out);
+00221: const milharesCols = build4ColsFromEngineOut(out, 4, 5);
+00222: const milhares20 = milharesCols.flatMap((c) => c.items).slice(0, 20);
+00227: safeStr(getImgFromGrupo?.(g, 512) || getImgFromGrupo?.(g) || ""),
+00239: milharesCols,
+00240: milhares20,
+
+ARQUIVO: backend/engine/top3PredictionService.js
+00156: source !== "snapshot" &&
+00160: "historySource inválido. Utilize auto, snapshot ou range."
+00191: requestedSource === "snapshot"
+00201: const snapshotReady =
+00205: if (snapshotReady) {
+00227: source: "snapshot",
+00242: if (requestedSource === "snapshot") {
+00312: function normalizePublicMilhar(value) {
+00396: function buildPublicMilharesCols(
+00401: const dezenas = Array.isArray(engineOutput?.dezenas)
+00402: ? engineOutput.dezenas
+00411: for (const dezena of dezenas.slice(0, expectedCols)) {
+00415: String(slot?.dezena || "") ===
+00416: String(dezena || "")
+00420: normalizePublicMilhar(slot?.milhar)
+00423: (milhar) => /^\d{4}$/.test(milhar)
+00432: dezena: String(dezena || ""),
+00439: dezena: "",
+00447: function buildTop3PublicSnapshot({
+00466: const grupo = Number(item?.grupo);
+00469: !Number.isFinite(grupo) ||
+00470: grupo < 1 ||
+00471: grupo > 25
+00489: publicApi.build20MilharesForGrupo({
+00493: grupo2: grupo,
+00497: const milharesCols =
+00498: buildPublicMilharesCols(
+00504: const milhares20 = milharesCols
+00507: (milhar) => /^\d{4}$/.test(milhar)
+00513: grupo,
+00517: String(grupo).padStart(2, "0")
+00528: milhares20,
+00529: milharesCols,
+00540: snapshot,
+00551: const normalizedSnapshot =
+00552: Array.isArray(snapshot)
+00553: ? snapshot.slice(0, 3)
+00556: if (!normalizedSnapshot.length) {
+00558: "Snapshot público TOP3 vazio."
+00562: const picks = normalizedSnapshot
+00563: .map((item) => Number(item?.grupo))
+00565: (grupo) =>
+00566: Number.isFinite(grupo) &&
+00567: grupo >= 1 &&
+00568: grupo <= 25
+00594: snapshot: normalizedSnapshot,
+00597: resultGrupo: null,
+00598: resultMilhar: "",
+00600: hitType: "",
+00602: hitPosition: -1,
+00637: if (currentStatus === "validated") {
+00644: reason: "ALREADY_VALIDATED",
+00655: resultGrupo:
+00656: currentData.resultGrupo ?? null,
+00657: resultMilhar:
+00658: currentData.resultMilhar || "",
+00661: hitType:
+00662: currentData.hitType || "",
+00665: hitPosition:
+00667: Number(currentData.hitPosition)
+00669: ? Number(currentData.hitPosition)
+00697: const grupoNumber = Number(item?.grupo);
+00698: const grupo = String(grupoNumber).padStart(2, "0");
+00713: type: "grupo",
+00714: grupo,
+00717: ANIMALS[grupo] ||
+00741: .filter((item) => /^\d{2}$/.test(item.grupo));
+00855: const publicSnapshot =
+00856: buildTop3PublicSnapshot({
+00872: publicSnapshot.length !== 3 ||
+00873: publicSnapshot.some(
+00875: !Array.isArray(item?.milhares20) ||
+00876: item.milhares20.length !== 20
+00880: "O motor TOP3 não produziu 20 milhares válidas para cada grupo."
+00927: publicSnapshot,
+00951: snapshot: publicSnapshot,
+00958: publicSnapshot,
+00971: buildPublicMilharesCols,
+00972: buildTop3PublicSnapshot,
+
+ARQUIVO: backend/engine/drawRepository.js
+00009: function normalizeGrupo(v) {
+00028: grupo: normalizeGrupo(data.grupo),
+00032: .filter((p) => p.grupo && p.position);
+
+====================================================================================================
+BLOCOS EXATOS
+====================================================================================================
+
+====================================================================================================
+ARQUIVO: src/pages/Top3/Top3View.jsx
+====================================================================================================
+00003: import React, { useMemo, useState, useCallback, useEffect } from "react";
+00004: import { getAnimalLabel, getImgFromGrupo } from "../../constants/bichoMap";
+00005: 
+00006: function extractPrizeMilharByPosition(slot, position) {
+00007:   const prizes = Array.isArray(slot?.prizes)
+00008:     ? slot.prizes
+00009:     : [];
+00010: 
+00011:   const prize =
+00012:     prizes.find(
+00013:       (item) => Number(item?.position) === Number(position)
+00014:     ) ||
+00015:     prizes[Number(position) - 1] ||
+00016:     null;
+00017: 
+00018:   if (!prize) return "";
+00019: 
+00020:   const digits = String(
+00021:     prize?.numero ??
+00022:       prize?.milhar ??
+00023:       prize?.number ??
+00024:       prize?.valor ??
+00025:       ""
+00026:   ).replace(/\D/g, "");
+00027: 
+00028:   return digits
+00029:     ? digits.slice(-4).padStart(4, "0")
+00030:     : "";
+00031: }
+00032: 
+00033: function extractResultMilhar(slot) {
+00034:   const persistedMilhar = normalizeMilharStr(
+00035:     slot?.resultMilhar ??
+00036:       slot?.milhar ??
+00037:       slot?.result?.milhar ??
+00038:       slot?.resultado?.milhar ??
+00039:       ""
+00040:   );
+00041: 
+00042:   if (persistedMilhar) {
+00043:     return persistedMilhar;
+00044:   }
+00045: 
+00046:   const persistedTop3 = Array.isArray(
+00047:     slot?.resultTop3Milhares
+00048:   )
+00049:     ? slot.resultTop3Milhares
+00050:     : [];
+00051: 
+00052:   const persistedPrimeira = normalizeMilharStr(
+00053:     persistedTop3[0] ?? ""
+00054:   );
+00055: 
+00056:   if (persistedPrimeira) {
+00057:     return persistedPrimeira;
+00058:   }
+00059: 
+00060:   return extractPrizeMilharByPosition(slot, 1);
+00061: }
+00062: 
+00063: function getPrizeGrupoByPosition(slot, position) {
+00064:   const persisted = Array.isArray(
+00065:     slot?.resultTop3Groups
+00066:   )
+00067:     ? Number(slot.resultTop3Groups[position - 1])
+00068:     : NaN;
+00069: 
+00070:   if (
+00071:     Number.isFinite(persisted) &&
+00072:     persisted >= 1 &&
+00073:     persisted <= 25
+00074:   ) {
+00075:     return persisted;
+00076:   }
+00077: 
+00078:   const prizes = Array.isArray(slot?.prizes)
+00079:     ? slot.prizes
+00080:     : [];
+00081: 
+00082:   const prize =
+00083:     prizes.find(
+00084:       (item) => Number(item?.position) === Number(position)
+00085:     ) ||
+00086:     prizes[Number(position) - 1] ||
+00087:     null;
+00088: 
+00089:   const direct = Number(
+00090:     prize?.grupo ??
+00091:       prize?.group ??
+00092:       prize?.animal_grupo ??
+00093:       prize?.grupo2
+00094:   );
+00095: 
+00096:   if (
+00097:     Number.isFinite(direct) &&
+00098:     direct >= 1 &&
+00099:     direct <= 25
+00100:   ) {
+00101:     return direct;
+00102:   }
+00103: 
+00104:   const milhar = extractPrizeMilharByPosition(
+00105:     slot,
+00106:     position
+00107:   );
+00108: 
+00109:   if (!milhar) return NaN;
+00110: 
+00111:   const dezena = Number(milhar.slice(-2));
+00112:   const normalizedDezena = dezena === 0 ? 100 : dezena;
+00113:   const grupo = Math.ceil(normalizedDezena / 4);
+00114: 
+00115:   return grupo >= 1 && grupo <= 25
+00116:     ? grupo
+00117:     : NaN;
+00118: }
+00119: 
+00120: function getOfficialPodium(slot) {
+00121:   return [1, 2, 3]
+00122:     .map((position) => {
+00123:       const grupo = getPrizeGrupoByPosition(
+00124:         slot,
+00125:         position
+00126:       );
+00127: 
+00128:       if (
+00129:         !Number.isFinite(grupo) ||
+00130:         grupo < 1 ||
+00131:         grupo > 25
+00132:       ) {
+00133:         return null;
+00134:       }
+00135: 
+00136:       const persistedMilhares = Array.isArray(
+00137:         slot?.resultTop3Milhares
+00138:       )
+00139:         ? slot.resultTop3Milhares
+00140:         : [];
+00141: 
+00142:       const milhar =
+00143:         String(
+00144:           persistedMilhares[position - 1] || ""
+00145:         ).replace(/\D/g, "") ||
+00146:         extractPrizeMilharByPosition(slot, position);
+00147: 
+00148:       return {
+00149:         position,
+00150:         grupo,
+00151:         milhar: milhar
+00152:           ? milhar.slice(-4).padStart(4, "0")
+00153:           : "",
+00154:       };
+00155:     })
+00156:     .filter(Boolean);
+00157: }
+00158: 
+00159: function podiumMedalFromPosition(position) {
+00160:   if (Number(position) === 1) return "gold";
+00161:   if (Number(position) === 2) return "silver";
+00162:   if (Number(position) === 3) return "bronze";
+00163:   return "";
+00164: }
+00165: 
+00166: function toPercent(score) {
+00167:   const n = Number(score);
+00168:   if (!Number.isFinite(n)) return 0;
+00169:   const pct = n <= 1 ? n * 100 : n;
+00170:   return Math.max(0, Math.min(100, pct));
+00171: }
+00172: 
+00173: function formatGrupo(grupo) {
+00174:   const g = Number(grupo);
+00175:   if (!Number.isFinite(g) || g <= 0) return "—";
+00176:   return String(Math.trunc(g)).padStart(2, "0");
+00177: }
+00178: 
+00179: function normalizeMilharStr(v) {
+00180:   const s = String(v || "").trim();
+00181:   if (!s) return "";
+00182:   const dig = s.replace(/\D+/g, "");
+00183:   if (!dig) return "";
+00184:   return dig.length >= 4 ? dig.slice(-4) : dig.padStart(4, "0");
+00185: }
+00186: 
+00187: function centenaFromMilhar(m4) {
+00188:   const s = normalizeMilharStr(m4);
+00189:   return s ? s.slice(-3) : "";
+00190: }
+00191: 
+00192: function dezenaFromMilhar(m4) {
+00193:   const s = normalizeMilharStr(m4);
+00194:   return s ? s.slice(-2) : "";
+00195: }
+00196: 
+00197: function isYMD(s) {
+00198:   return /^\d{4}-\d{2}-\d{2}$/.test(String(s || "").trim());
+00199: }
+00200: 
+00201: function ymdToBR(ymd) {
+00202:   const s = String(ymd || "").trim();
+00203:   if (!isYMD(s)) return s || "—";
+00204:   const [y, m, d] = s.split("-");
+00205:   return `${d}/${m}/${y}`;
+00206: }
+00207: 
+00208: function addDaysYMDLocal(ymd, amount) {
+00209:   const s = String(ymd || "").trim();
+00378:       slot?.grupo ??
+00379:       slot?.result?.grupo ??
+00380:       slot?.resultado?.grupo
+00381:   );
+00382: 
+00383:   if (Number.isFinite(direct) && direct >= 1 && direct <= 25) {
+00384:     return direct;
+00385:   }
+00386: 
+00387:   if (Array.isArray(slot?.prizes)) {
+00388:     const p1 = slot.prizes.find((p) => Number(p?.position) === 1) || slot.prizes[0];
+00389:     const fromPrize = Number(
+00390:       p1?.grupo ??
+00391:         p1?.group ??
+00392:         p1?.animal_grupo ??
+00393:         p1?.grupo2
+00394:     );
+00395: 
+00396:     if (Number.isFinite(fromPrize) && fromPrize >= 1 && fromPrize <= 25) {
+00397:       return fromPrize;
+00398:     }
+00399:   }
+00400: 
+00401:   return NaN;
+00402: }
+00403: 
+00404: function hasOfficialResult(slot) {
+00405:   const grupo = getSlotResultGrupo(slot);
+00406:   if (Number.isFinite(grupo) && grupo >= 1 && grupo <= 25) return true;
+00407: 
+00408:   const milhar = extractResultMilhar(slot);
+00409:   return /^\d{4}$/.test(milhar);
+00410: }
+00411: 
+00412: function analyzeTop3Hit(top3, resultSource, resultMilhar) {
+00413:   if (!Array.isArray(top3) || !top3.length) {
+00414:     return {
+00415:       type: "none",
+00416:       score: 0,
+00417:       position: -1,
+00418:       predictionPosition: -1,
+00419:       resultPosition: -1,
+00420:       podiumMedal: "",
+00421:       matchedValue: "",
+00422:       matchedGrupo: null,
+00423:     };
+00424:   }
+00425: 
+00426:   const officialPodium = Array.isArray(resultSource)
+00427:     ? resultSource.filter(Boolean).slice(0, 3)
+00428:     : [
+00429:         {
+00430:           position: 1,
+00431:           grupo: Number(resultSource),
+00432:           milhar: normalizeMilharStr(resultMilhar),
+00433:         },
+00434:       ].filter(
+00435:         (item) =>
+00436:           Number.isFinite(item.grupo) &&
+00437:           item.grupo >= 1 &&
+00438:           item.grupo <= 25
+00439:       );
+00440: 
+00441:   if (!officialPodium.length) {
+00442:     return {
+00443:       type: "none",
+00444:       score: 0,
+00445:       position: -1,
+00446:       predictionPosition: -1,
+00447:       resultPosition: -1,
+00448:       podiumMedal: "",
+00449:       matchedValue: "",
+00450:       matchedGrupo: null,
+00451:     };
+00452:   }
+00453: 
+00454:   for (const officialPrize of officialPodium) {
+00455:     const grupoNum = Number(officialPrize?.grupo);
+00456:     const milhar = normalizeMilharStr(
+00457:       officialPrize?.milhar
+00458:     );
+00459:     const centena = milhar
+00460:       ? milhar.slice(-3)
+00461:       : "";
+00462: 
+00463:     for (
+00464:       let predictionIndex = 0;
+00465:       predictionIndex < top3.length;
+00466:       predictionIndex += 1
+00467:     ) {
+00468:       const item = top3[predictionIndex];
+00469:       const grupo = Number(item?.grupo);
+00470: 
+00471:       const milhares = (
+00472:         Array.isArray(item?.milhares20)
+00473:           ? item.milhares20
+00474:           : Array.isArray(item?.milhares)
+00475:             ? item.milhares
+00476:             : []
+00477:       )
+00478:         .map(normalizeMilharStr)
+00479:         .filter((value) => /^\d{4}$/.test(value));
+00480: 
+00481:       const centenas = milhares
+00482:         .map((value) => centenaFromMilhar(value))
+00483:         .filter((value) => /^\d{3}$/.test(value));
+00484: 
+00485:       let type = "miss";
+00486:       let score = 0;
+00487:       let matchedValue = "";
+00488: 
+00489:       if (
+00490:         milhar &&
+00491:         milhares.includes(milhar)
+00492:       ) {
+00493:         type = "hit_exact";
+00494:         score = 100;
+00495:         matchedValue = milhar;
+00496:       } else if (
+00497:         centena &&
+00498:         centenas.includes(centena)
+00499:       ) {
+00500:         type = "hit_centena";
+00501:         score = 66.67;
+00502:         matchedValue = centena;
+00503:       } else if (
+00504:         Number.isFinite(grupoNum) &&
+00505:         grupo === grupoNum
+00506:       ) {
+00507:         type = "hit_grupo";
+00508:         score = 33.33;
+00509:         matchedValue = milhar
+00510:           ? milhar.slice(-2)
+00511:           : formatGrupo(grupoNum);
+00512:       }
+00513: 
+00514:       if (type !== "miss") {
+00515:         const resultPosition = Number(
+00516:           officialPrize?.position
+00517:         );
+00518: 
+00519:         return {
+00520:           type,
+00521:           score,
+00522:           position: predictionIndex + 1,
+00523:           predictionPosition: predictionIndex + 1,
+00524:           resultPosition,
+00525:           podiumMedal:
+00526:             podiumMedalFromPosition(resultPosition),
+00527:           matchedValue,
+00528:           matchedGrupo: grupoNum,
+00529:         };
+00530:       }
+00531:     }
+00532:   }
+00533: 
+00534:   return {
+00535:     type: "miss",
+00536:     score: 0,
+00537:     position: -1,
+00538:     predictionPosition: -1,
+00539:     resultPosition: -1,
+00540:     podiumMedal: "",
+00541:     matchedValue: "",
+00542:     matchedGrupo: null,
+00543:   };
+00544: }
+00545: 
+00546: function ImgWithFallback({ srcs, alt, size = 84, style }) {
+00547:   const list = useMemo(
+00548:     () => (Array.isArray(srcs) ? srcs.filter(Boolean) : []),
+00549:     [srcs]
+00550:   );
+00551: 
+00552:   const [i, setI] = useState(0);
+00553:   const listKey = useMemo(() => list.join("|"), [list]);
+00554: 
+00555:   useEffect(() => {
+00556:     setI(0);
+00557:   }, [listKey]);
+00558: 
+00559:   const src = list[i] || "";
+00560: 
+00561:   const onError = () => {
+00562:     setI((prev) => (prev < list.length - 1 ? prev + 1 : prev));
+00563:   };
+00564: 
+00565:   return (
+00566:     <div
+00567:       style={{
+00568:         width: size,
+00569:         height: size,
+00570:         borderRadius: 16,
+00571:         border: "1px solid rgba(201,168,62,0.36)",
+00572:         background:
+00573:           "linear-gradient(180deg, rgba(255,255,255,0.04), rgba(0,0,0,0.28))",
+00574:         display: "grid",
+00575:         placeItems: "center",
+00576:         overflow: "hidden",
+00577:         boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.04)",
+00578:         ...style,
+00579:       }}
+00580:     >
+00581:       {src ? (
+00582:         <img
+00583:           src={src}
+00584:           alt={alt || ""}
+00585:           width={size}
+00586:           height={size}
+00587:           onError={onError}
+00588:           style={{
+00589:             width: "100%",
+00590:             height: "100%",
+00591:             objectFit: "cover",
+00592:             display: "block",
+00593:             imageRendering: "auto",
+00594:           }}
+00595:         />
+00596:       ) : (
+00597:         <div style={{ color: "rgba(255,255,255,0.55)", fontSize: 12 }}>
+00598:           sem imagem
+00599:         </div>
+00600:       )}
+00601:     </div>
+00602:   );
+00603: }
+00604: 
+00605: 
+00606: function getWeekdayNameBR(ymd) {
+00607:   const s = String(ymd || "").trim();
+00608:   const m = s.match(/^(\d{4})-(\d{2})-(\d{2})$/);
+00609:   if (!m) return "Dia da semana";
+01187:         <div className="pp-gridBox">
+01188:           {gridRows.map((row, rIdx) => (
+01189:             <div key={rIdx} className="pp-row">
+01190:               {row.map((m, cIdx) => {
+01191:                 const mm = normalizeMilharStr(m);
+01192:                 const empty = !mm ? "1" : "0";
+01193:                 const cKey = `${key}__${rIdx}__${cIdx}`;
+01194:                 const isCopied = copiedCellKey === cKey;
+01195: 
+01196:                 return (
+01197:                   <div
+01198:                     key={`${rIdx}-${cIdx}`}
+01199:                     className="pp-pill"
+01200:                     data-empty={empty}
+01201:                     title={mm ? "Clique para copiar" : ""}
+01202:                     onClick={() => doCopyOne(mm, rIdx, cIdx)}
+01203:                   >
+01204:                     {mm || "—"}
+01205:                     {isCopied ? <div className="pp-copiedBadge">COPIADO</div> : null}
+01206:                   </div>
+01207:                 );
+01208:               })}
+01209:             </div>
+01210:           ))}
+01211:         </div>
+01212:       </div>
+01213:     </article>
+01214:   );
+01215: }
+01216: 
+01217: function CompactTop3Result({
+01218:   slot,
+01219:   status,
+01220:   statusLabel,
+01221:   statusDetail,
+01222:   analysis,
+01223: }) {
+01224:   const slotTop3 = Array.isArray(slot?.top3)
+01225:     ? slot.top3.slice(0, 3)
+01226:     : [];
+01227: 
+01228:   const resultGrupo = getSlotResultGrupo(slot);
+01229: 
+01230:   const hasResult =
+01231:     Number.isFinite(resultGrupo) &&
+01232:     resultGrupo >= 1 &&
+01233:     resultGrupo <= 25;
+01234: 
+01235:   const resultAnimal = hasResult
+01236:     ? String(getAnimalLabel(resultGrupo) || "")
+01237:     : "";
+01238: 
+01239:   const resultImg = hasResult
+01240:     ? getImgFromGrupo(resultGrupo, 64)
+01241:     : "";
+01242: 
+01243:   const resultMilhar = extractResultMilhar(slot);
+01244: 
+01245:   const matchedPredictionIndex =
+01246:     Number.isFinite(Number(analysis?.position)) &&
+01247:     Number(analysis.position) >= 1
+01248:       ? Number(analysis.position) - 1
+01249:       : -1;
+01250: 
+01251:   const resultPosition = Number(
+01252:     analysis?.resultPosition
+01253:   );
+01254: 
+01255:   const medal =
+01256:     status !== "hit"
+01257:       ? ""
+01258:       : resultPosition === 1
+01259:         ? "🥇"
+01260:         : resultPosition === 2
+01261:           ? "🥈"
+01262:           : resultPosition === 3
+01263:             ? "🥉"
+01264:             : "";
+01265: 
+01266:   const dateLabel = formatYmdHour(
+01267:     slot?.targetYmd,
+01268:     slot?.targetHour
+01269:   );
+01270: 
+01271:   return (
+01272:     <div
+01273:       className="timeline-compact"
+01274:       title={statusDetail || statusLabel || ""}
+01275:       style={{
+01276:         width: "100%",
+01277:         overflowX: "auto",
+01278:       }}
+01279:     >
+01280:       <div
+01281:         className="timeline-compact__twoLine"
+01282:         style={{
+01283:           display: "grid",
+01284:           gridTemplateColumns:
+01285:             "minmax(112px, 1.35fr) repeat(3, minmax(54px, 0.72fr)) minmax(82px, 0.95fr)",
+01286:           alignItems: "center",
+01287:           gap: "6px",
+01288:           minWidth: "410px",
+01289:           padding: "8px 6px",
+01290:         }}
+01291:       >
+01292:         <div
+01293:           className="timeline-compact__date"
+01294:           style={{
+01295:             gridRow: "1 / span 2",
+01296:             alignSelf: "center",
+01297:             fontSize: "12px",
+01298:             fontWeight: 800,
+01299:             lineHeight: 1.2,
+01300:             whiteSpace: "nowrap",
+01301:           }}
+01302:         >
+01303:           {dateLabel}
+01304:         </div>
+01305: 
+01306:         {slotTop3.map((item, idx) => {
+01307:           const grupo = Number(item?.grupo);
+01308: 
+01309:           const animal = String(
+01310:             item?.animal ||
+01311:               getAnimalLabel(grupo) ||
+01312:               ""
+01313:           ).trim();
+01314: 
+01315:           const img = Number.isFinite(grupo)
+01316:             ? getImgFromGrupo(grupo, 64)
+01317:             : "";
+01318: 
+01319:           const isMatched =
+01320:             status === "hit" &&
+01321:             matchedPredictionIndex === idx;
+01322: 
+01323:           return (
+01324:             <div
+01325:               key={`${String(
+01326:                 slot?.targetYmd || "y"
+01327:               )}_${String(
+01328:                 slot?.targetHour || "h"
+01329:               )}_${idx}_${grupo}`}
+01330:               className={`timeline-compact__pick ${
+01331:                 isMatched
+01332:                   ? "timeline-compact__pick--matched"
+01392:                 style={{
+01393:                   fontSize: "12px",
+01394:                   fontWeight: 900,
+01395:                   lineHeight: 1,
+01396:                   whiteSpace: "nowrap",
+01397:                 }}
+01398:               >
+01399:                 G{formatGrupo(grupo)}
+01400:               </div>
+01401:             </div>
+01402:           );
+01403:         })}
+01404: 
+01405:         <div
+01406:           className="timeline-compact__official"
+01407:           style={{
+01408:             display: "grid",
+01409:             gridTemplateRows: "34px 18px",
+01410:             justifyItems: "center",
+01411:             alignItems: "center",
+01412:             minWidth: 0,
+01413:             paddingLeft: "6px",
+01414:             borderLeft:
+01415:               "1px solid rgba(255,255,255,0.14)",
+01416:           }}
+01417:           title={
+01418:             hasResult
+01419:               ? `${resultAnimal} — G${formatGrupo(
+01420:                   resultGrupo
+01421:                 )}${
+01422:                   resultMilhar
+01423:                     ? ` — ${resultMilhar}`
+01424:                     : ""
+01425:                 }`
+01426:               : "Resultado pendente"
+01427:           }
+01428:         >
+01429:           {hasResult ? (
+01430:             <>
+01431:               <ImgWithFallback
+01432:                 srcs={resultImg ? [resultImg] : []}
+01433:                 alt={resultAnimal}
+01434:                 size={34}
+01435:                 style={{ borderRadius: 8 }}
+01436:               />
+01437: 
+01438:               <div
+01439:                 style={{
+01440:                   fontSize: "11px",
+01441:                   fontWeight: 900,
+01442:                   lineHeight: 1,
+01443:                   whiteSpace: "nowrap",
+01444:                 }}
+01445:               >
+01446:                 G{formatGrupo(resultGrupo)}
+01447:                 {resultMilhar
+01448:                   ? ` • ${resultMilhar}`
+01449:                   : ""}
+01450:               </div>
+01451:             </>
+01452:           ) : (
+01453:             <div
+01454:               style={{
+01455:                 gridRow: "1 / span 2",
+01456:                 alignSelf: "center",
+01457:                 fontSize: "10px",
+01458:                 fontWeight: 800,
+01459:               }}
+01460:             >
+01461:               PENDENTE
+01462:             </div>
+01463:           )}
+01464:         </div>
+01465:       </div>
+01466:     </div>
+01467:   );
+01468: }
+01469: 
+01470: function TimelineSlot({
+01471:   slot,
+01472:   theme,
+01473:   copiedAllKey,
+01474:   copiedCellKey,
+01475:   setCopiedAllKey,
+01476:   setCopiedCellKey,
+01477:   copyText,
+01478:   build16,
+01479:   buildMilhares,
+01480:   build20,
+01481: }) {
+01482:   const t = theme;
+01483:   const slotTop3 = Array.isArray(slot?.top3) ? slot.top3.slice(0, 3) : [];
+01484: 
+01485:   const resultGrupo = getSlotResultGrupo(slot);
+01486:   const hasResult = hasOfficialResult(slot);
+01487:   const resultAnimal =
+01488:     hasResult && Number.isFinite(resultGrupo)
+01489:       ? String(getAnimalLabel(resultGrupo) || "")
+01490:       : "";
+01491: 
+01492:   const officialPodium = getOfficialPodium(slot);
+01493: 
+01494:   const analysis = analyzeTop3Hit(
+01495:     slotTop3,
+01496:     officialPodium
+01497:   );
+01498: 
+01499:   const status =
+01500:     !hasResult
+01501:       ? "pending"
+01502:       : analysis.type === "miss"
+01503:         ? "miss"
+01504:         : "hit";
+01505: 
+01506:   const statusLabel =
+01507:     !hasResult
+01508:       ? "⏳ PENDENTE"
+01509:       : analysis.type === "hit_exact"
+01510:         ? "🎯 MILHAR (100%)"
+01511:         : analysis.type === "hit_centena"
+01512:           ? "🟡 CENTENA (66,67%)"
+01513:           : analysis.type === "hit_grupo"
+01514:             ? "✅ DEZENA/GRUPO (33,33%)"
+01515:             : "❌ ERRO (0%)";
+01516: 
+01517:   const statusDetail =
+01518:     !hasResult
+01825: 
+01826:         const resultGrupo = Number(entry?.resultGrupo);
+01827:         const hasResult =
+01828:           Number.isFinite(resultGrupo) &&
+01829:           resultGrupo >= 1 &&
+01830:           resultGrupo <= 25;
+01831: 
+01832:         return {
+01833:           targetKey: String(
+01834:             entry?.id || entry?.targetKey || ""
+01835:           ),
+01836:           target: {
+01837:             ymd: String(entry?.targetYmd || ""),
+01838:             hour: String(entry?.targetHour || ""),
+01839:           },
+01840:           picks: Array.isArray(entry?.picks)
+01841:             ? entry.picks
+01842:             : snapshot
+01843:                 .map((item) => Number(item?.grupo))
+01844:                 .filter(Number.isFinite),
+01845:           top3: snapshot,
+01846:           result: hasResult ? resultGrupo : null,
+01847:           grupo: hasResult ? resultGrupo : null,
+01848:           animal: hasResult
+01849:             ? String(
+01850:                 entry?.resultAnimal ||
+01851:                   getAnimalLabel(resultGrupo) ||
+01852:                   ""
+01853:               )
+01854:             : "",
+01855:           resultMilhar: String(
+01856:             entry?.resultMilhar || ""
+01857:           ),
+01858:           hit:
+01859:             Number(entry?.hitScore || 0) > 0,
+01860:           hitType: String(entry?.hitType || ""),
+01861:           hitScore: Number(entry?.hitScore || 0),
+01862:           hitPosition: Number(
+01863:             entry?.hitPosition ?? -1
+01864:           ),
+01865:           predictionPosition: Number(
+01866:             entry?.predictionPosition ??
+01867:               entry?.hitPosition ??
+01868:               -1
+01869:           ),
+01870:           resultPosition: Number(
+01871:             entry?.resultPosition ?? -1
+01872:           ),
+01873:           podiumMedal: String(
+01874:             entry?.podiumMedal || ""
+01875:           ),
+01876:           resultTop3Groups: Array.isArray(
+01877:             entry?.resultTop3Groups
+01878:           )
+01879:             ? entry.resultTop3Groups
+01880:             : [],
+01881:           resultTop3Milhares: Array.isArray(
+01882:             entry?.resultTop3Milhares
+01883:           )
+01884:             ? entry.resultTop3Milhares
+01885:             : [],
+01886:           analysis: {
+01887:             type: String(entry?.hitType || ""),
+01888:             score: Number(entry?.hitScore || 0),
+01889:             position: Number(
+01890:               entry?.hitPosition ?? -1
+01891:             ),
+01892:             predictionPosition: Number(
+01893:               entry?.predictionPosition ??
+01894:                 entry?.hitPosition ??
+01895:                 -1
+01896:             ),
+01897:             resultPosition: Number(
+01898:               entry?.resultPosition ?? -1
+01899:             ),
+01900:             podiumMedal: String(
+01901:               entry?.podiumMedal || ""
+01902:             ),
+01903:             matchedValue: String(
+01904:               entry?.matchedValue || ""
+01905:             ),
+01906:           },
+01907:         };
+01908:       });
+01909: 
+01910:     const timelineRows = (
+01911:       Array.isArray(timeline) ? timeline : []
+01912:     )
+01913:       .filter(
+01914:         (slot) =>
+01915:           String(slot?.targetYmd || "").trim() ===
+01916:           historyAnchorYmd
+01917:       )
+01918:       .map((slot) => {
+01919:         const slotTop3 = Array.isArray(slot?.top3)
+01920:           ? slot.top3.slice(0, 3)
+01921:           : [];
+01922: 
+01923:         const resultGrupo = getSlotResultGrupo(slot);
+01924: 
+01925:         const hasResult =
+01926:           Number.isFinite(resultGrupo) &&
+01927:           resultGrupo >= 1 &&
+01928:           resultGrupo <= 25;
+01929: 
+01930:         const resultMilhar =
+01931:           extractResultMilhar(slot);
+01932: 
+01933:         const officialPodium =
+01934:           getOfficialPodium(slot);
+01935: 
+01936:         const analysis = analyzeTop3Hit(
+01937:           slotTop3,
+01938:           officialPodium
+01939:         );
+01940: 
+01941:         return {
+01942:           targetKey:
+01943:             `${String(slot?.targetYmd || "")}` +
+01944:             `__${String(slot?.targetHour || "")}`,
+01945:           target: {
+01946:             ymd: String(slot?.targetYmd || ""),
+01947:             hour: String(slot?.targetHour || ""),
+01948:           },
+01949:           picks: slotTop3
+01950:             .map((item) => Number(item?.grupo))
+01951:             .filter(Number.isFinite),
+01952:           top3: slotTop3,
+01953:           result: hasResult
+01954:             ? Number(resultGrupo)
+01955:             : null,
+01956:           grupo: hasResult
+01957:             ? Number(resultGrupo)
+01958:             : null,
+01959:           animal: hasResult
+01960:             ? getAnimalLabel(resultGrupo)
+01961:             : "",
+01962:           resultMilhar,
+01963:           resultTop3Groups: officialPodium.map(
+01964:             (item) => Number(item?.grupo)
+01965:           ),
+01966:           resultTop3Milhares: officialPodium.map(
+01967:             (item) => String(item?.milhar || "")
+01968:           ),
+01969:           prizes: Array.isArray(slot?.prizes)
+01970:             ? slot.prizes
+01971:             : [],
+01972:           analysis,
+01973:           hit:
+01974:             analysis.type !== "miss" &&
+01975:             analysis.type !== "none",
+01976:           hitType: analysis.type,
+01977:           hitScore: Number(analysis.score || 0),
+01978:           hitPosition: Number(
+01979:             analysis.position ?? -1
+01980:           ),
+01981:         };
+01982:       });
+01983: 
+01984:     // A timeline garante todos os horarios oficiais.
+01985:     // O registro persistido prevalece quando realmente existe.
+01986:     const rowsByTarget = new Map();
+01987: 
+01988:     for (const row of timelineRows) {
+01989:       const key =
+01990:         `${String(row?.target?.ymd || "")}` +
+01991:         `__${String(row?.target?.hour || "")}`;
+01992: 
+01993:       rowsByTarget.set(key, row);
+01994:     }
+01995: 
+01996:     for (const row of persistedRows) {
+01997:       const key =
+01998:         `${String(row?.target?.ymd || "")}` +
+01999:         `__${String(row?.target?.hour || "")}`;
+02000: 
+02001:       const timelineRow = rowsByTarget.get(key);
+02002: 
+02003:       if (!timelineRow || timelineRow?.result == null) {
+02004:         rowsByTarget.set(key, row);
+02005:         continue;
+02006:       }
+02007: 
+02008:       const resultGrupo = Number(timelineRow.result);
+02009:       const resultMilhar = String(
+02010:         timelineRow?.resultMilhar || ""
+02011:       );
+02012: 
+02013:       const officialPodium = getOfficialPodium(timelineRow);
+02014: 
+02015:       const analysis = analyzeTop3Hit(
+02016:         row?.top3,
+02017:         officialPodium
+02018:       );
+02019: 
+02020:       rowsByTarget.set(key, {
+02021:         ...row,
+02022:         result: resultGrupo,
+02023:         grupo: resultGrupo,
+02024:         animal:
+02025:           timelineRow?.animal ||
+02026:           getAnimalLabel(resultGrupo) ||
+02027:           "",
+02028:         resultMilhar,
+02029:         analysis,
+02030:         hit:
+02031:           analysis.type !== "miss" &&
+02032:           analysis.type !== "none",
+02033:         hitType: analysis.type,
+02034:         hitScore: Number(analysis.score || 0),
+02035:         hitPosition: Number(
+02036:           analysis.position ?? -1
+02037:         ),
+02038:       });
+02039:     }
+02040: 
+02041:     return Array.from(rowsByTarget.values())
+02042:       .sort((a, b) => {
+02043:         const ah = hourBucketToSortValue(
+02044:           a?.target?.hour
+02045:         );
+02046:         const bh = hourBucketToSortValue(
+02047:           b?.target?.hour
+02048:         );
+02049: 
+02050:         return ah - bh;
+02051:       });
+02052:   }, [
+02053:     timeline,
+02054:     historyAnchorYmd,
+02055:     persistedTop3History,
+02056:   ]);
+02057: 
+02058:   const historySummary = useMemo(() => {
+02059:     const validated = historyRows.filter(
+02060:       (item) => item?.result != null
+02061:     );
+02062: 
+02063:     const exact = validated.filter(
+02064:       (item) => item?.hitType === "hit_exact"
+02065:     ).length;
+02066: 
+02067:     const centena = validated.filter(
+02068:       (item) => item?.hitType === "hit_centena"
+02069:     ).length;
+02070: 
+02071:     const grupo = validated.filter(
+02072:       (item) => item?.hitType === "hit_grupo"
+02073:     ).length;
+02074: 
+02075:     const misses = validated.filter(
+02076:       (item) =>
+02077:         item?.hitType === "miss" ||
+02078:         item?.hitType === "none"
+02079:     ).length;
+02080: 
+02081:     const totalScore = validated.reduce(
+02082:       (sum, item) => sum + Number(item?.hitScore || 0),
+02083:       0
+02084:     );
+02085: 
+02086:     const average =
+02087:       validated.length > 0
+02088:         ? totalScore / validated.length
+02089:         : 0;
+02090: 
+02091:     return {
+02092:       total: historyRows.length,
+02093:       validated: validated.length,
+02094:       pending: Math.max(0, historyRows.length - validated.length),
+02095:       exact,
+02096:       centena,
+02097:       grupo,
+02098:       misses,
+02099:       average,
+02100:     };
+02101:   }, [historyRows]);
+02102: 
+02103:   const todayForCalendar = todayYMDLocalView();
+02104:   const selectedHistoryYmd = isYMD(ymdSafe)
+02105:     ? ymdSafe
+02106:     : todayForCalendar;
+02107: 
+02108:   const canGoNext =
+02109:     isYMD(selectedHistoryYmd) &&
+02110:     selectedHistoryYmd < todayForCalendar;
+02111: 
+02112:   const goToHistoryDate = useCallback(
+02113:     (nextYmd) => {
+02114:       if (!isYMD(nextYmd)) return;
+02115:       if (typeof setYmd !== "function") return;
+02116:       setYmd(nextYmd);
+02117:     },
+02118:     [setYmd]
+02119:   );
+02120: 
+02121:   return (
+02122:     <div
+02123:       style={{
+02124:         padding: 16,
+02125:         color: t.text,
+02126:         background: t.bg,
+02127:         minHeight: "100%",
+02128:         "--top3-bg": t.bg,
+02129:         "--top3-panel": t.panel,
+02130:         "--top3-border": t.border,
+02131:         "--top3-text": t.text,
+02132:         "--top3-muted": t.muted,
+02133:         "--top3-accent": t.accent,
+02134:       }}
+02135:     >
+02136:       <style>{`
+02137:         .top3-page{
+02138:           width: 100%;
+02139:           max-width: 1380px;
+02140:           margin: 0 auto;
+02141:           display: grid;
+02142:           gap: 18px;
+02143:         }
+02144: 
+02145:         .top3-shell{
+02146:           background:
+02147:             linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.00)),
+02148:             var(--top3-panel);
+03648:                         }));
+03649: 
+03650:                 const resultGrupo = Number(
+03651:                   item?.result ??
+03652:                     item?.grupo ??
+03653:                     item?.prizes?.[0]?.grupo
+03654:                 );
+03655: 
+03656:                 const hasResult =
+03657:                   Number.isFinite(resultGrupo) &&
+03658:                   resultGrupo >= 1 &&
+03659:                   resultGrupo <= 25;
+03660: 
+03661:                 const resultAnimal = hasResult
+03662:                   ? String(
+03663:                       item?.animal ||
+03664:                         getAnimalLabel(
+03665:                           resultGrupo
+03666:                         ) ||
+03667:                         ""
+03668:                     )
+03669:                   : "";
+03670: 
+03671:                 const resultImg = hasResult
+03672:                   ? getImgFromGrupo(
+03673:                       resultGrupo,
+03674:                       64
+03675:                     )
+03676:                   : "";
+03677: 
+03678:                 const resultMilhar =
+03679:                   normalizeMilharStr(
+03680:                     item?.resultMilhar ||
+03681:                       item
+03682:                         ?.resultTop3Milhares?.[0] ||
+03683:                       ""
+03684:                   );
+03685: 
+03686:                 const resultCentena =
+03687:                   resultMilhar
+03688:                     ? resultMilhar.slice(-3)
+03689:                     : "";
+03690: 
+03691:                 const resultDezena =
+03692:                   resultMilhar
+03693:                     ? resultMilhar.slice(-2)
+03694:                     : "";
+03695: 
+03696:                 const analysis =
+03697:                   item?.analysis &&
+03698:                   typeof item.analysis ===
+03699:                     "object"
+03700:                     ? item.analysis
+03701:                     : {};
+03702: 
+03703:                 const predictionPosition =
+03704:                   Number(
+03705:                     analysis?.position ??
+03706:                       analysis
+03707:                         ?.predictionPosition ??
+03708:                       item
+03709:                         ?.predictionPosition ??
+03710:                       item?.hitPosition ??
+03711:                       -1
+03712:                   );
+03713: 
+03714:                 const matchedPredictionIndex =
+03715:                   Number.isFinite(
+03716:                     predictionPosition
+03717:                   ) &&
+03718:                   predictionPosition >= 1
+03719:                     ? predictionPosition - 1
+03720:                     : -1;
+03721: 
+03722:                 const resultPosition = Number(
+03723:                   analysis?.resultPosition ??
+03724:                     item?.resultPosition ??
+03725:                     -1
+03726:                 );
+03727: 
+03728:                 const hitType = String(
+03729:                   analysis?.type ??
+03730:                     analysis?.hitType ??
+03731:                     item?.hitType ??
+03732:                     ""
+03733:                 )
+03734:                   .trim()
+03735:                   .toLowerCase();
+03736: 
+03737:                 const isHit =
+03738:                   hasResult &&
+03739:                   matchedPredictionIndex >= 0;
+03740: 
+03741:                 const medal =
+03742:                   resultPosition === 1
+03743:                     ? "🥇"
+03744:                     : resultPosition === 2
+03745:                       ? "🥈"
+03746:                       : resultPosition === 3
+03747:                         ? "🥉"
+03748:                         : "";
+03749: 
+03750:                 const prizeColor =
+03751:                   resultPosition === 1
+03752:                     ? "#d4af37"
+03753:                     : resultPosition === 2
+03754:                       ? "#c0c0c0"
+03755:                       : resultPosition === 3
+03756:                         ? "#cd7f32"
+03757:                         : "#d4af37";
+03758: 
+03759:                 const prizeGlow =
+03760:                   resultPosition === 1
+03761:                     ? "rgba(212,175,55,0.58)"
+03762:                     : resultPosition === 2
+03763:                       ? "rgba(192,192,192,0.46)"
+03764:                       : resultPosition === 3
+03765:                         ? "rgba(205,127,50,0.50)"
+03766:                         : "rgba(212,175,55,0.38)";
+03767: 
+03768:                 const matchedOfficialIndex =
+03769:                   resultPosition >= 1 &&
+03770:                   resultPosition <= 3
+03771:                     ? resultPosition - 1
+03772:                     : -1;
+03773: 
+03774:                 const matchedResultGrupoRaw =
+03775:                   matchedOfficialIndex >= 0
+03776:                     ? Number(
+03777:                         item?.resultTop3Groups?.[
+03778:                           matchedOfficialIndex
+03779:                         ] ??
+03780:                           analysis?.matchedGrupo ??
+03781:                           NaN
+03782:                       )
+03783:                     : NaN;
+03784: 
+03785:                 const matchedResultGrupo =
+03786:                   Number.isFinite(
+03787:                     matchedResultGrupoRaw
+03788:                   ) &&
+03789:                   matchedResultGrupoRaw >= 1 &&
+03790:                   matchedResultGrupoRaw <= 25
+03791:                     ? matchedResultGrupoRaw
+03792:                     : NaN;
+03793: 
+03794:                 const matchedResultMilhar =
+03795:                   matchedOfficialIndex >= 0
+03796:                     ? normalizeMilharStr(
+03797:                         item?.resultTop3Milhares?.[
+03798:                           matchedOfficialIndex
+03799:                         ] ||
+03800:                           (
+03801:                             resultPosition === 1
+03802:                               ? resultMilhar
+03803:                               : ""
+03804:                           )
+03805:                       )
+03806:                     : "";
+03807: 
+03808:                 const matchedResultCentena =
+03809:                   matchedResultMilhar
+03810:                     ? matchedResultMilhar.slice(-3)
+03811:                     : "";
+03812: 
+03813:                 const matchedResultDezena =
+03814:                   matchedResultMilhar
+03815:                     ? matchedResultMilhar.slice(-2)
+03816:                     : "";
+03817: 
+03818:                 const hasExactHit =
+03819:                   hitType === "hit_exact";
+03820: 
+03821:                 const hasCentenaHit =
+03822:                   hitType === "hit_centena" ||
+03823:                   hasExactHit;
+03824: 
+03825:                 const hasDezenaHit =
+03826:                   hitType === "hit_grupo" ||
+03827:                   hasCentenaHit ||
+03828:                   hasExactHit;
+03829: 
+03830:                 const hitGrupo =
+03831:                   isHit &&
+03832:                   Number.isFinite(
+03833:                     matchedResultGrupo
+03834:                   )
+03835:                     ? formatGrupo(
+03836:                         matchedResultGrupo
+03837:                       )
+03838:                     : "";
+03839: 
+03840:                 const hitDezena =
+03841:                   isHit &&
+03842:                   hasDezenaHit
+03843:                     ? matchedResultDezena
+03844:                     : "";
+03845: 
+03846:                 const hitCentena =
+03847:                   isHit &&
+03848:                   hasCentenaHit
+03849:                     ? matchedResultCentena
+03850:                     : "";
+03851: 
+03852:                 const hitMilhar =
+03853:                   isHit &&
+03854:                   hasExactHit
+03855:                     ? matchedResultMilhar
+03856:                     : "";
+03857: 
+03858:                 return (
+03859:                   <div
+03860:                     key={String(
+03861:                       item?.targetKey ||
+03862:                         `${y}_${h}`
+03863:                     )}
+03864:                     style={{
+03865:                       width: "100%",
+03866:                       overflowX: "auto",
+03867:                       border:
+03868:                         "1px solid rgba(255,255,255,0.08)",
+03869:                       borderRadius: 12,
+03870:                       background:
+03871:                         "rgba(255,255,255,0.025)",
+03872:                     }}
+03873:                   >
+03874:                     <div
+03875:                       style={{
+03876:                         display: "grid",
+03877:                         gridTemplateColumns:
+03878:                           "minmax(118px, 1.1fr) repeat(3, minmax(62px, 0.55fr)) minmax(138px, 0.95fr) minmax(165px, 1.1fr)",
+03879:                         alignItems: "center",
+03880:                         gap: 10,
+03881:                         minWidth: 760,
+03882:                         padding: "10px 12px",
+03883:                       }}
+03884:                     >
+03885:                       <div
+03886:                         style={{
+03887:                           fontSize: 12,
+03888:                           fontWeight: 900,
+03889:                           lineHeight: 1.25,
+03890:                           whiteSpace: "nowrap",
+03891:                         }}
+03892:                       >
+03893:                         {ymdToBR(y)} {h}
+03894:                       </div>
+03895: 
+03896:                       {top3Items.map(
+03897:                         (pick, idx) => {
+03898:                           const grupo =
+03899:                             Number(
+03900:                               pick?.grupo
+03901:                             );
+03902: 
+03903:                           const animal =
+03904:                             String(
+03905:                               pick?.animal ||
+03906:                                 getAnimalLabel(
+03907:                                   grupo
+03908:                                 ) ||
+03909:                                 ""
+03910:                             ).trim();
+03911: 
+03912:                           const img =
+03913:                             Number.isFinite(
+03914:                               grupo
+03915:                             )
+03916:                               ? getImgFromGrupo(
+03917:                                   grupo,
+03918:                                   64
+03919:                                 )
+03920:                               : "";
+03921: 
+03922:                           const isMatched =
+03923:                             isHit &&
+03924:                             matchedPredictionIndex ===
+03925:                               idx;
+04116:                             }}
+04117:                           >
+04118:                             ❌ SEM ACERTO
+04119:                           </div>
+04120:                         )}
+04121:                       </div>
+04122: 
+04123:                       <div
+04124:                         style={{
+04125:                           minHeight: 76,
+04126:                           display: "grid",
+04127:                           gridTemplateColumns:
+04128:                             "60px minmax(0, 1fr)",
+04129:                           alignItems: "center",
+04130:                           gap: 10,
+04131:                           minWidth: 0,
+04132:                           padding: "8px 10px",
+04133:                           borderRadius: 12,
+04134:                           border:
+04135:                             "1px solid rgba(255,255,255,0.14)",
+04136:                           background:
+04137:                             "rgba(255,255,255,0.025)",
+04138:                           boxShadow:
+04139:                             "inset 0 0 0 1px rgba(255,255,255,0.025)",
+04140:                         }}
+04141:                         title={
+04142:                           hasResult
+04143:                             ? `${resultAnimal} — G${formatGrupo(
+04144:                                 resultGrupo
+04145:                               )}${
+04146:                                 resultMilhar
+04147:                                   ? ` — ${resultMilhar}`
+04148:                                   : ""
+04149:                               }`
+04150:                             : "Resultado pendente"
+04151:                         }
+04152:                       >
+04153:                         {hasResult ? (
+04154:                           <>
+04155:                             <div
+04156:                               style={{
+04157:                                 position:
+04158:                                   "relative",
+04159:                                 display:
+04160:                                   "flex",
+04161:                                 alignItems:
+04162:                                   "center",
+04163:                                 justifyContent:
+04164:                                   "center",
+04165:                               }}
+04166:                             >
+04167:                               <ImgWithFallback
+04168:                                 srcs={
+04169:                                   resultImg
+04170:                                     ? [resultImg]
+04171:                                     : []
+04172:                                 }
+04173:                                 alt={
+04174:                                   resultAnimal
+04175:                                 }
+04176:                                 size={
+04177:                                   isHit &&
+04178:                                   resultPosition === 1
+04179:                                     ? 58
+04180:                                     : 48
+04181:                                 }
+04182:                                 style={{
+04183:                                   borderRadius: 10,
+04184:                                   border:
+04185:                                     "1px solid rgba(201,168,62,0.36)",
+04186:                                   boxShadow:
+04187:                                     "none",
+04188:                                 }}
+04189:                               />
+04190: 
+04191: 
+04192:                             </div>
+04193: 
+04194:                             <div
+04195:                               style={{
+04196:                                 minWidth: 0,
+04197:                                 display: "grid",
+04198:                                 gap: 3,
+04199:                               }}
+04200:                             >
+04201:                               <div
+04202:                                 style={{
+04203:                                   fontSize: 11,
+04204:                                   fontWeight: 1000,
+04205:                                   color: "inherit",
+04206:                                   whiteSpace:
+04207:                                     "nowrap",
+04208:                                   overflow: "hidden",
+04209:                                   textOverflow:
+04210:                                     "ellipsis",
+04211:                                 }}
+04212:                               >
+04213:                                 G
+04214:                                 {formatGrupo(
+04215:                                   resultGrupo
+04216:                                 )}{" "}
+04217:                                 {String(
+04218:                                   resultAnimal ||
+04219:                                     ""
+04220:                                 ).toUpperCase()}
+04221:                               </div>
+04222: 
+04223:                               <div
+04224:                                 style={{
+04225:                                   fontSize: 9,
+04226:                                   fontWeight: 800,
+04227:                                   opacity: 0.7,
+04228:                                   textTransform:
+04229:                                     "uppercase",
+04230:                                   letterSpacing:
+04231:                                     0.45,
+04232:                                 }}
+04233:                               >
+04234:                                 Milhar sorteada
+04235:                               </div>
+04236: 
+04237:                               <div
+04238:                                 style={{
+04239:                                   fontSize: 15,
+04240:                                   fontWeight: 1000,
+04241:                                   letterSpacing: 1,
+04242:                                   color: "inherit",
+04243:                                 }}
+04244:                               >
+04245:                                 {resultMilhar ||
+04246:                                   "—"}
+04247:                               </div>
+04248:                             </div>
+04249:                           </>
+04250:                         ) : (
+04251:                           <div
+04252:                             style={{
+04253:                               gridColumn:
+04254:                                 "1 / -1",
+04255:                               textAlign: "center",
+04256:                               fontSize: 10,
+04257:                               fontWeight: 900,
+04258:                             }}
+04259:                           >
+04260:                             ⏳ PENDENTE
+04261:                           </div>
+04262:                         )}
+04263:                       </div>
+04264:                     </div>
+04265:                   </div>
+04266:                 );
+04267:               })
+04268:             )}
+04269:           </div>
+04270:         </section>
+04271:       </div>
+04272:     </div>
+04273:   );
+04274: }
+
+====================================================================================================
+ARQUIVO: src/pages/Top3/top3.firestore.js
+====================================================================================================
+00205:       return null;
+00206:     }
+00207: 
+00208:     return {
+00209:       position,
+00210:       grupo: Number(grupo),
+00211:       milhar,
+00212:       animal: safeStr(prize?.animal || ""),
+00213:     };
+00214:   });
+00215: }
+00216: 
+00217: function podiumMedalFromPosition(position) {
+00218:   if (Number(position) === 1) return "gold";
+00219:   if (Number(position) === 2) return "silver";
+00220:   if (Number(position) === 3) return "bronze";
+00221:   return "";
+00222: }
+00223: 
+00224: function analyzeSnapshotHit(snapshot, officialPodium) {
+00225:   const top3 = Array.isArray(snapshot)
+00226:     ? snapshot.slice(0, 3)
+00227:     : [];
+00228: 
+00229:   const podium = Array.isArray(officialPodium)
+00230:     ? officialPodium.filter(Boolean).slice(0, 3)
+00231:     : [];
+00232: 
+00233:   if (!top3.length || !podium.length) {
+00234:     return {
+00235:       hitType: "miss",
+00236:       hitScore: 0,
+00237:       hitPosition: -1,
+00238:       predictionPosition: -1,
+00239:       resultPosition: -1,
+00240:       podiumMedal: "",
+00241:       matchedValue: "",
+00242:       matchedGrupo: null,
+00243:       matchedMilhar: "",
+00244:       matchedAnimal: "",
+00245:     };
+00246:   }
+00247: 
+00248:   for (const officialPrize of podium) {
+00249:     const resultGrupo = Number(officialPrize?.grupo);
+00250:     const resultMilhar = normalizeMilhar(
+00251:       officialPrize?.milhar
+00252:     );
+00253:     const resultCentena = resultMilhar
+00254:       ? resultMilhar.slice(-3)
+00255:       : "";
+00256: 
+00257:     for (
+00258:       let predictionIndex = 0;
+00259:       predictionIndex < top3.length;
+00260:       predictionIndex += 1
+00261:     ) {
+00262:       const prediction = top3[predictionIndex];
+00263:       const predictionGrupo = Number(prediction?.grupo);
+00264: 
+00265:       const milhares = (
+00266:         Array.isArray(prediction?.milhares20)
+00267:           ? prediction.milhares20
+00268:           : Array.isArray(prediction?.milhares)
+00269:             ? prediction.milhares
+00270:             : []
+00271:       )
+00272:         .map(normalizeMilhar)
+00273:         .filter(Boolean);
+00274: 
+00275:       const centenas = milhares.map(
+00276:         (value) => value.slice(-3)
+00277:       );
+00278: 
+00279:       let hitType = "miss";
+00280:       let hitScore = 0;
+00281:       let matchedValue = "";
+00282: 
+00283:       if (
+00284:         resultMilhar &&
+00285:         milhares.includes(resultMilhar)
+00286:       ) {
+00287:         hitType = "hit_exact";
+00288:         hitScore = 100;
+00289:         matchedValue = resultMilhar;
+00290:       } else if (
+00291:         resultCentena &&
+00292:         centenas.includes(resultCentena)
+00293:       ) {
+00294:         hitType = "hit_centena";
+00295:         hitScore = 66.67;
+00296:         matchedValue = resultCentena;
+00297:       } else if (
+00298:         Number.isFinite(resultGrupo) &&
+00299:         predictionGrupo === resultGrupo
+00300:       ) {
+00301:         hitType = "hit_grupo";
+00302:         hitScore = 33.33;
+00303:         matchedValue = resultMilhar
+00304:           ? resultMilhar.slice(-2)
+00305:           : String(resultGrupo).padStart(2, "0");
+00306:       }
+00307: 
+00308:       if (hitType !== "miss") {
+00309:         const resultPosition = Number(
+00310:           officialPrize?.position
+00311:         );
+00312: 
+00313:         return {
+00314:           hitType,
+00315:           hitScore,
+00316:           hitPosition: predictionIndex + 1,
+00317:           predictionPosition: predictionIndex + 1,
+00318:           resultPosition,
+00319:           podiumMedal:
+00320:             podiumMedalFromPosition(resultPosition),
+00321:           matchedValue,
+00322:           matchedGrupo: resultGrupo,
+00323:           matchedMilhar: resultMilhar,
+00324:           matchedAnimal: safeStr(
+00325:             officialPrize?.animal || ""
+00326:           ),
+00327:         };
+00328:       }
+00329:     }
+00330:   }
+00331: 
+00332:   return {
+00333:     hitType: "miss",
+00334:     hitScore: 0,
+00335:     hitPosition: -1,
+00336:     predictionPosition: -1,
+00337:     resultPosition: -1,
+00338:     podiumMedal: "",
+00339:     matchedValue: "",
+00340:     matchedGrupo: null,
+00341:     matchedMilhar: "",
+00342:     matchedAnimal: "",
+00343:   };
+00344: }
+00345: 
+00346: export async function saveTop3PredictionSnapshot({
+00347:   lotteryKey,
+00348:   targetYmd,
+00349:   targetHour,
+00350:   picks,
+00351:   snapshot,
+00352:   engineVersion,
+00353: }) {
+00354:   let user = null;
+00355: 
+00356:   try {
+00357:     user = await loginAnonymous();
+00358:   } catch (error) {
+00359:     return {
+00360:       ok: false,
+00361:       skipped: true,
+00362:       reason: "AUTH_FAILED",
+00363:       error: String(error?.message || error || ""),
+00364:     };
+00365:   }
+00366: 
+00367:   if (!user?.uid) {
+00368:     return {
+00369:       ok: false,
+00370:       skipped: true,
+00371:       reason: "AUTH_REQUIRED",
+00372:     };
+00373:   }
+00374: 
+00375:   const lottery = normalizeLotteryKey(lotteryKey);
+00376:   const ymd = safeStr(targetYmd);
+00377:   const hour = normalizeHour(targetHour);
+00378:   const ref = predictionRef({
+00379:     lotteryKey: lottery,
+00380:     targetYmd: ymd,
+00381:     targetHour: hour,
+00382:   });
+00383: 
+00384:   if (!ref || !isYMD(ymd) || !hour) {
+00385:     return {
+00386:       ok: false,
+00387:       skipped: true,
+00388:       reason: "INVALID_TARGET",
+00389:     };
+00390:   }
+00391: 
+00392:   const normalizedSnapshot = normalizeSnapshot(snapshot);
+00393: 
+00394:   if (!normalizedSnapshot.length) {
+00395:     return {
+00396:       ok: false,
+00397:       skipped: true,
+00398:       reason: "EMPTY_SNAPSHOT",
+00399:     };
+00400:   }
+00401: 
+00402:   const normalizedPicks = Array.from(
+00403:     new Set(
+00404:       (Array.isArray(picks) ? picks : [])
+00405:         .map(Number)
+00406:         .filter((value) => value >= 1 && value <= 25)
+00407:     )
+00408:   ).slice(0, 3);
+00409: 
+00410:   const now = Date.now();
+00411: 
+00412:   const payload = cleanFirestoreValue({
+00413:     id: ref.id,
+00414:     lotteryKey: lottery,
+00415:     targetYmd: ymd,
+00416:     targetHour: hour,
+00417:     targetKey: `${ymd}_${hour}`,
+00418:     picks: normalizedPicks,
+00419:     snapshot: normalizedSnapshot,
+00420:     engineVersion: safeStr(engineVersion || "V3_STATISTICAL"),
+00421:     status: "predicted",
+00422:     resultGrupo: null,
+00423:     resultMilhar: "",
+00424:     resultAnimal: "",
+00425:     hitType: "",
+00426:     hitScore: 0,
+00427:     hitPosition: -1,
+00428:     matchedValue: "",
+00429:     createdAt: now,
+00430:     updatedAt: now,
+00431:     createdBy: user.uid,
+00432:   });
+00433: 
+00434:   const result = await runTransaction(db, async (transaction) => {
+00435:     const current = await transaction.get(ref);
+00436: 
+00437:     if (current.exists()) {
+00438:       return {
+00439:         ok: true,
+00440:         created: false,
+00441:         existing: true,
+00442:       };
+00443:     }
+00444: 
+00445:     transaction.set(ref, payload);
+00446: 
+00447:     return {
+00448:       ok: true,
+00449:       created: true,
+00450:       existing: false,
+00451:     };
+00452:   });
+00453: 
+00454:   return result;
+00455: }
+00456: 
+00457: export async function loadTop3PredictionDay({
+00458:   lotteryKey,
+00459:   targetYmd,
+00460:   schedule,
+00461: }) {
+00462:   const lottery = normalizeLotteryKey(lotteryKey);
+00463:   const ymd = safeStr(targetYmd);
+00464: 
+00465:   if (!isYMD(ymd)) return [];
+00466: 
+00467:   const hours = Array.from(
+00468:     new Set(
+00469:       (Array.isArray(schedule) ? schedule : [])
+00470:         .map(normalizeHour)
+00471:         .filter(Boolean)
+00472:     )
+00473:   );
+00474: 
+00475:   const snapshots = await Promise.all(
+00476:     hours.map(async (hour) => {
+00477:       const ref = predictionRef({
+00478:         lotteryKey: lottery,
+00479:         targetYmd: ymd,
+00480:         targetHour: hour,
+00481:       });
+00482: 
+00483:       if (!ref) return null;
+00484: 
+00485:       try {
+00486:         const snap = await getDoc(ref);
+00487:         if (!snap.exists()) return null;
+00488: 
+00489:         return {
+00490:           id: snap.id,
+00491:           ...snap.data(),
+00492:         };
+00493:       } catch {
+00494:         return null;
+00495:       }
+00550:       targetYmd: entry?.targetYmd,
+00551:       targetHour: entry?.targetHour,
+00552:     });
+00553: 
+00554:     if (!realDraw) {
+00555:       reconciledHistory.push(entry);
+00556:       continue;
+00557:     }
+00558: 
+00559:     const officialPodium =
+00560:       extractOfficialPodium(realDraw);
+00561: 
+00562:     const firstOfficialPrize =
+00563:       officialPodium.find(
+00564:         (item) => Number(item?.position) === 1
+00565:       ) || null;
+00566: 
+00567:     const resultGrupo = Number(
+00568:       firstOfficialPrize?.grupo
+00569:     );
+00570: 
+00571:     if (
+00572:       !Number.isFinite(resultGrupo) ||
+00573:       resultGrupo < 1 ||
+00574:       resultGrupo > 25
+00575:     ) {
+00576:       reconciledHistory.push(entry);
+00577:       continue;
+00578:     }
+00579: 
+00580:     const resultMilhar = normalizeMilhar(
+00581:       firstOfficialPrize?.milhar
+00582:     );
+00583:     const savedLottery = safeStr(
+00584:       entry?.resultLotteryKey
+00585:     ).toUpperCase();
+00586:     const savedGrupo = Number(entry?.resultGrupo);
+00587:     const savedMilhar = normalizeMilhar(entry?.resultMilhar);
+00588: 
+00589:     const analysis = analyzeSnapshotHit(
+00590:       entry?.snapshot,
+00591:       officialPodium
+00592:     );
+00593: 
+00594:     const alreadyMatchesRealResult =
+00595:       entry?.status === "validated" &&
+00596:       savedLottery === lottery &&
+00597:       savedGrupo === resultGrupo &&
+00598:       savedMilhar === resultMilhar &&
+00599:       safeStr(entry?.hitType) === analysis.hitType &&
+00600:       Number(entry?.hitScore) === analysis.hitScore &&
+00601:       Number(entry?.hitPosition) === analysis.hitPosition &&
+00602:       Number(entry?.resultPosition ?? -1) ===
+00603:         Number(analysis.resultPosition ?? -1) &&
+00604:       safeStr(entry?.podiumMedal) ===
+00605:         safeStr(analysis.podiumMedal) &&
+00606:       safeStr(entry?.matchedValue) === analysis.matchedValue;
+00607: 
+00608:     if (alreadyMatchesRealResult) {
+00609:       reconciledHistory.push(entry);
+00610:       continue;
+00611:     }
+00612: 
+00613:     const ref = doc(db, COLLECTION, entry.id);
+00614:     const now = Date.now();
+00615: 
+00616:     const validationPayload = {
+00617:       resultGrupo,
+00618:       resultMilhar,
+00619:       resultLotteryKey: lottery,
+00620:       resultAnimal: safeStr(
+00621:         firstOfficialPrize?.animal ||
+00622:           extractPrize1(realDraw)?.animal ||
+00623:           ""
+00624:       ),
+00625:       resultTop3Groups: officialPodium.map(
+00626:         (item) => Number(item?.grupo) || null
+00627:       ),
+00628:       resultTop3Milhares: officialPodium.map(
+00629:         (item) => normalizeMilhar(item?.milhar)
+00630:       ),
+00631:       hitType: analysis.hitType,
+00632:       hitScore: analysis.hitScore,
+00633:       hitPosition: analysis.hitPosition,
+00634:       predictionPosition: analysis.predictionPosition,
+00635:       resultPosition: analysis.resultPosition,
+00636:       podiumMedal: analysis.podiumMedal,
+00637:       matchedGrupo: analysis.matchedGrupo,
+00638:       matchedMilhar: analysis.matchedMilhar,
+00639:       matchedAnimal: analysis.matchedAnimal,
+00640:       matchedValue: analysis.matchedValue,
+00641:       validatedAt: now,
+00642:       validatedBy: user.uid,
+00643:       updatedAt: now,
+00644:       status: "validated",
+00645:     };
+00646: 
+00647:     await setDoc(
+00648:       ref,
+00649:       validationPayload,
+00650:       { merge: true }
+00651:     );
+00652: 
+00653:     reconciledHistory.push({
+00654:       ...entry,
+00655:       ...validationPayload,
+00656:     });
+00657: 
+00658:     updated += 1;
+00659:   }
+00660: 
+00661:   return {
+00662:     ok: true,
+00663:     updated,
+00664:     history: reconciledHistory,
+00665:   };
+00666: }
+
+====================================================================================================
+ARQUIVO: backend/engine/top3PredictionService.js
+====================================================================================================
+00568:         grupo <= 25
+00569:     )
+00570:     .slice(0, 3);
+00571: 
+00572:   if (!picks.length) {
+00573:     throw new Error(
+00574:       "Picks públicos TOP3 inválidos."
+00575:     );
+00576:   }
+00577: 
+00578:   const database = getDb();
+00579:   const ref = database
+00580:     .collection("top3_predictions")
+00581:     .doc(id);
+00582: 
+00583:   const now = Date.now();
+00584: 
+00585:   const payload = {
+00586:     id,
+00587:     lotteryKey: lottery,
+00588:     targetYmd: date,
+00589:     targetHour:
+00590:       `${hourCode}h`,
+00591:     targetKey:
+00592:       `${date}_${hourCode}h`,
+00593:     picks,
+00594:     snapshot: normalizedSnapshot,
+00595:     engineVersion,
+00596:     status: "predicted",
+00597:     resultGrupo: null,
+00598:     resultMilhar: "",
+00599:     resultAnimal: "",
+00600:     hitType: "",
+00601:     hitScore: 0,
+00602:     hitPosition: -1,
+00603:     matchedValue: "",
+00604:     createdAt: now,
+00605:     updatedAt: now,
+00606:     createdBy: source,
+00607:     source,
+00608:   };
+00609: 
+00610:   return database.runTransaction(
+00611:     async (transaction) => {
+00612:       const current =
+00613:         await transaction.get(ref);
+00614: 
+00615:       if (!current.exists) {
+00616:         transaction.set(ref, payload);
+00617: 
+00618:         return {
+00619:           ok: true,
+00620:           created: true,
+00621:           updated: false,
+00622:           existing: false,
+00623:           protected: false,
+00624:           id,
+00625:         };
+00626:       }
+00627: 
+00628:       const currentData =
+00629:         current.data() || {};
+00630: 
+00631:       const currentStatus = String(
+00632:         currentData.status || ""
+00633:       )
+00634:         .trim()
+00635:         .toLowerCase();
+00636: 
+00637:       if (currentStatus === "validated") {
+00638:         return {
+00639:           ok: true,
+00640:           created: false,
+00641:           updated: false,
+00642:           existing: true,
+00643:           protected: true,
+00644:           reason: "ALREADY_VALIDATED",
+00645:           id,
+00646:         };
+00647:       }
+00648: 
+00649:       const updatedPayload = {
+00650:         ...payload,
+00651:         createdAt:
+00652:           currentData.createdAt ||
+00653:           payload.createdAt,
+00654:         updatedAt: Date.now(),
+00655:         resultGrupo:
+00656:           currentData.resultGrupo ?? null,
+00657:         resultMilhar:
+00658:           currentData.resultMilhar || "",
+00659:         resultAnimal:
+00660:           currentData.resultAnimal || "",
+00661:         hitType:
+00662:           currentData.hitType || "",
+00663:         hitScore:
+00664:           Number(currentData.hitScore || 0),
+00665:         hitPosition:
+00666:           Number.isFinite(
+00667:             Number(currentData.hitPosition)
+00668:           )
+00669:             ? Number(currentData.hitPosition)
+00670:             : -1,
+00671:         matchedValue:
+00672:           currentData.matchedValue || "",
+00673:       };
+00674: 
+00675:       transaction.set(
+00676:         ref,
+00677:         updatedPayload,
+00678:         { merge: true }
+00679:       );
+00680: 
+00681:       return {
+00682:         ok: true,
+00683:         created: false,
+00684:         updated: true,
+00685:         existing: true,
+00686:         protected: false,
+00687:         id,
+00688:       };
+00689:     }
+00690:   );
+00691: }
+00692: 
+00693: function mapTop3ToPredictions(top = []) {
+00694:   return (Array.isArray(top) ? top : [])
+00695:     .slice(0, 3)
+00696:     .map((item, index) => {
+00697:       const grupoNumber = Number(item?.grupo);
+00698:       const grupo = String(grupoNumber).padStart(2, "0");
+00699: 
+00700:       const probability = Number(
+00701:         item?.scoreProb ??
+00702:         item?.probability ??
+00703:         item?.confidence ??
+00704:         0
+00705:       );
+00706: 
+00707:       const percentage =
+00708:         probability > 0 && probability <= 1
+00709:           ? probability * 100
+00710:           : probability;
+00711: 
+00712:       return {
+00713:         type: "grupo",
+00714:         grupo,
+00715:         animal:
+00716:           item?.animal ||
+00717:           ANIMALS[grupo] ||
+00718:           null,
+00719:         score: Number(
+00720:           Number.isFinite(percentage)
+00721:             ? percentage.toFixed(4)
+00722:             : 0
+00723:         ),
+00724:         confidence: Number(
+00725:           Number.isFinite(percentage)
+00726:             ? percentage.toFixed(4)
+00727:             : 0
+00728:         ),
+00729:         reasons: Array.isArray(item?.reasons)
+00730:           ? item.reasons.filter(Boolean)
+00731:           : [],
+00732:         signals: {
+
+====================================================================================================
+BUSCA GLOBAL — src/pages/Top3 E backend
+====================================================================================================
+
+PADRÃO: resultMilhar
+src\pages\Top3\top3.firestore.js:250: const resultMilhar = normalizeMilhar(
+src\pages\Top3\top3.firestore.js:253: const resultCentena = resultMilhar
+src\pages\Top3\top3.firestore.js:254: ? resultMilhar.slice(-3)
+src\pages\Top3\top3.firestore.js:284: resultMilhar &&
+src\pages\Top3\top3.firestore.js:285: milhares.includes(resultMilhar)
+src\pages\Top3\top3.firestore.js:289: matchedValue = resultMilhar;
+src\pages\Top3\top3.firestore.js:303: matchedValue = resultMilhar
+src\pages\Top3\top3.firestore.js:304: ? resultMilhar.slice(-2)
+src\pages\Top3\top3.firestore.js:323: matchedMilhar: resultMilhar,
+src\pages\Top3\top3.firestore.js:423: resultMilhar: "",
+src\pages\Top3\top3.firestore.js:580: const resultMilhar = normalizeMilhar(
+src\pages\Top3\top3.firestore.js:587: const savedMilhar = normalizeMilhar(entry?.resultMilhar);
+src\pages\Top3\top3.firestore.js:598: savedMilhar === resultMilhar &&
+src\pages\Top3\top3.firestore.js:618: resultMilhar,
+src\pages\Top3\Top3View.jsx:33: function extractResultMilhar(slot) {
+src\pages\Top3\Top3View.jsx:35: slot?.resultMilhar ??
+src\pages\Top3\Top3View.jsx:408: const milhar = extractResultMilhar(slot);
+src\pages\Top3\Top3View.jsx:412: function analyzeTop3Hit(top3, resultSource, resultMilhar) {
+src\pages\Top3\Top3View.jsx:432: milhar: normalizeMilharStr(resultMilhar),
+src\pages\Top3\Top3View.jsx:1243: const resultMilhar = extractResultMilhar(slot);
+src\pages\Top3\Top3View.jsx:1422: resultMilhar
+src\pages\Top3\Top3View.jsx:1423: ? ` — ${resultMilhar}`
+src\pages\Top3\Top3View.jsx:1447: {resultMilhar
+src\pages\Top3\Top3View.jsx:1448: ? ` • ${resultMilhar}`
+src\pages\Top3\Top3View.jsx:1855: resultMilhar: String(
+src\pages\Top3\Top3View.jsx:1856: entry?.resultMilhar || ""
+src\pages\Top3\Top3View.jsx:1930: const resultMilhar =
+src\pages\Top3\Top3View.jsx:1931: extractResultMilhar(slot);
+src\pages\Top3\Top3View.jsx:1962: resultMilhar,
+src\pages\Top3\Top3View.jsx:2009: const resultMilhar = String(
+src\pages\Top3\Top3View.jsx:2010: timelineRow?.resultMilhar || ""
+src\pages\Top3\Top3View.jsx:2028: resultMilhar,
+src\pages\Top3\Top3View.jsx:3678: const resultMilhar =
+src\pages\Top3\Top3View.jsx:3680: item?.resultMilhar ||
+src\pages\Top3\Top3View.jsx:3687: resultMilhar
+src\pages\Top3\Top3View.jsx:3688: ? resultMilhar.slice(-3)
+src\pages\Top3\Top3View.jsx:3692: resultMilhar
+src\pages\Top3\Top3View.jsx:3693: ? resultMilhar.slice(-2)
+src\pages\Top3\Top3View.jsx:3794: const matchedResultMilhar =
+src\pages\Top3\Top3View.jsx:3802: ? resultMilhar
+src\pages\Top3\Top3View.jsx:3809: matchedResultMilhar
+src\pages\Top3\Top3View.jsx:3810: ? matchedResultMilhar.slice(-3)
+src\pages\Top3\Top3View.jsx:3814: matchedResultMilhar
+src\pages\Top3\Top3View.jsx:3815: ? matchedResultMilhar.slice(-2)
+src\pages\Top3\Top3View.jsx:3855: ? matchedResultMilhar
+src\pages\Top3\Top3View.jsx:4146: resultMilhar
+src\pages\Top3\Top3View.jsx:4147: ? ` — ${resultMilhar}`
+src\pages\Top3\Top3View.jsx:4245: {resultMilhar ||
+src\pages\Top3\Top3View.premium.backup.jsx:5: function extractResultMilhar(slot) {
+src\pages\Top3\Top3View.premium.backup.jsx:238: const milhar = extractResultMilhar(slot);
+src\pages\Top3\Top3View.premium.backup.jsx:242: function analyzeTop3Hit(top3, resultGrupo, resultMilhar) {
+src\pages\Top3\Top3View.premium.backup.jsx:248: const milhar = normalizeMilharStr(resultMilhar);
+src\pages\Top3\Top3View.premium.backup.jsx:858: extractResultMilhar(slot)
+src\pages\Top3\Top3View.premium.backup.jsx:1138: extractResultMilhar(slot)
+backend\engine\top3PredictionService.js:598: resultMilhar: "",
+backend\engine\top3PredictionService.js:657: resultMilhar:
+backend\engine\top3PredictionService.js:658: currentData.resultMilhar || "",
+
+PADRÃO: resultTop3Milhares
+src\pages\Top3\top3.firestore.js:628: resultTop3Milhares: officialPodium.map(
+src\pages\Top3\Top3View.jsx:47: slot?.resultTop3Milhares
+src\pages\Top3\Top3View.jsx:49: ? slot.resultTop3Milhares
+src\pages\Top3\Top3View.jsx:137: slot?.resultTop3Milhares
+src\pages\Top3\Top3View.jsx:139: ? slot.resultTop3Milhares
+src\pages\Top3\Top3View.jsx:1881: resultTop3Milhares: Array.isArray(
+src\pages\Top3\Top3View.jsx:1882: entry?.resultTop3Milhares
+src\pages\Top3\Top3View.jsx:1884: ? entry.resultTop3Milhares
+src\pages\Top3\Top3View.jsx:1966: resultTop3Milhares: officialPodium.map(
+src\pages\Top3\Top3View.jsx:3682: ?.resultTop3Milhares?.[0] ||
+src\pages\Top3\Top3View.jsx:3797: item?.resultTop3Milhares?.[
+
+PADRÃO: resultTop3Groups
+src\pages\Top3\top3.engine.js:4076: const source = Array.isArray(slot?.resultTop3Groups)
+src\pages\Top3\top3.engine.js:4077: ? slot.resultTop3Groups
+src\pages\Top3\top3.engine.js:4570: const resultTop3Groups = currentDraw
+src\pages\Top3\top3.engine.js:4574: const resultGrupo = Number(resultTop3Groups[0]);
+src\pages\Top3\top3.engine.js:4583: const hitPrizePositions = resultTop3Groups.map(
+src\pages\Top3\top3.engine.js:4598: resultTop3Groups.some(
+src\pages\Top3\top3.engine.js:4615: resultTop3Groups,
+src\pages\Top3\top3.firestore.js:625: resultTop3Groups: officialPodium.map(
+src\pages\Top3\Top3View.jsx:65: slot?.resultTop3Groups
+src\pages\Top3\Top3View.jsx:67: ? Number(slot.resultTop3Groups[position - 1])
+src\pages\Top3\Top3View.jsx:1876: resultTop3Groups: Array.isArray(
+src\pages\Top3\Top3View.jsx:1877: entry?.resultTop3Groups
+src\pages\Top3\Top3View.jsx:1879: ? entry.resultTop3Groups
+src\pages\Top3\Top3View.jsx:1963: resultTop3Groups: officialPodium.map(
+src\pages\Top3\Top3View.jsx:3777: item?.resultTop3Groups?.[
+
+PADRÃO: hitType
+src\pages\Top3\top3.firestore.js:235: hitType: "miss",
+src\pages\Top3\top3.firestore.js:279: let hitType = "miss";
+src\pages\Top3\top3.firestore.js:287: hitType = "hit_exact";
+src\pages\Top3\top3.firestore.js:294: hitType = "hit_centena";
+src\pages\Top3\top3.firestore.js:301: hitType = "hit_grupo";
+src\pages\Top3\top3.firestore.js:308: if (hitType !== "miss") {
+src\pages\Top3\top3.firestore.js:314: hitType,
+src\pages\Top3\top3.firestore.js:333: hitType: "miss",
+src\pages\Top3\top3.firestore.js:425: hitType: "",
+src\pages\Top3\top3.firestore.js:599: safeStr(entry?.hitType) === analysis.hitType &&
+src\pages\Top3\top3.firestore.js:631: hitType: analysis.hitType,
+src\pages\Top3\Top3View.jsx:1860: hitType: String(entry?.hitType || ""),
+src\pages\Top3\Top3View.jsx:1887: type: String(entry?.hitType || ""),
+src\pages\Top3\Top3View.jsx:1976: hitType: analysis.type,
+src\pages\Top3\Top3View.jsx:2033: hitType: analysis.type,
+src\pages\Top3\Top3View.jsx:2064: (item) => item?.hitType === "hit_exact"
+src\pages\Top3\Top3View.jsx:2068: (item) => item?.hitType === "hit_centena"
+src\pages\Top3\Top3View.jsx:2072: (item) => item?.hitType === "hit_grupo"
+src\pages\Top3\Top3View.jsx:2077: item?.hitType === "miss" ||
+src\pages\Top3\Top3View.jsx:2078: item?.hitType === "none"
+src\pages\Top3\Top3View.jsx:3728: const hitType = String(
+src\pages\Top3\Top3View.jsx:3730: analysis?.hitType ??
+src\pages\Top3\Top3View.jsx:3731: item?.hitType ??
+src\pages\Top3\Top3View.jsx:3819: hitType === "hit_exact";
+src\pages\Top3\Top3View.jsx:3822: hitType === "hit_centena" ||
+src\pages\Top3\Top3View.jsx:3826: hitType === "hit_grupo" ||
+backend\engine\top3PredictionService.js:600: hitType: "",
+backend\engine\top3PredictionService.js:661: hitType:
+backend\engine\top3PredictionService.js:662: currentData.hitType || "",
+
+PADRÃO: hitPosition
+src\pages\Top3\top3.firestore.js:237: hitPosition: -1,
+src\pages\Top3\top3.firestore.js:316: hitPosition: predictionIndex + 1,
+src\pages\Top3\top3.firestore.js:335: hitPosition: -1,
+src\pages\Top3\top3.firestore.js:427: hitPosition: -1,
+src\pages\Top3\top3.firestore.js:601: Number(entry?.hitPosition) === analysis.hitPosition &&
+src\pages\Top3\top3.firestore.js:633: hitPosition: analysis.hitPosition,
+src\pages\Top3\Top3View.jsx:1862: hitPosition: Number(
+src\pages\Top3\Top3View.jsx:1863: entry?.hitPosition ?? -1
+src\pages\Top3\Top3View.jsx:1867: entry?.hitPosition ??
+src\pages\Top3\Top3View.jsx:1890: entry?.hitPosition ?? -1
+src\pages\Top3\Top3View.jsx:1894: entry?.hitPosition ??
+src\pages\Top3\Top3View.jsx:1978: hitPosition: Number(
+src\pages\Top3\Top3View.jsx:2035: hitPosition: Number(
+src\pages\Top3\Top3View.jsx:3710: item?.hitPosition ??
+backend\engine\top3PredictionService.js:602: hitPosition: -1,
+backend\engine\top3PredictionService.js:665: hitPosition:
+backend\engine\top3PredictionService.js:667: Number(currentData.hitPosition)
+backend\engine\top3PredictionService.js:669: ? Number(currentData.hitPosition)
+
+PADRÃO: predictionPosition
+src\pages\Top3\top3.firestore.js:238: predictionPosition: -1,
+src\pages\Top3\top3.firestore.js:317: predictionPosition: predictionIndex + 1,
+src\pages\Top3\top3.firestore.js:336: predictionPosition: -1,
+src\pages\Top3\top3.firestore.js:634: predictionPosition: analysis.predictionPosition,
+src\pages\Top3\Top3View.jsx:418: predictionPosition: -1,
+src\pages\Top3\Top3View.jsx:446: predictionPosition: -1,
+src\pages\Top3\Top3View.jsx:523: predictionPosition: predictionIndex + 1,
+src\pages\Top3\Top3View.jsx:538: predictionPosition: -1,
+src\pages\Top3\Top3View.jsx:1865: predictionPosition: Number(
+src\pages\Top3\Top3View.jsx:1866: entry?.predictionPosition ??
+src\pages\Top3\Top3View.jsx:1892: predictionPosition: Number(
+src\pages\Top3\Top3View.jsx:1893: entry?.predictionPosition ??
+src\pages\Top3\Top3View.jsx:3703: const predictionPosition =
+src\pages\Top3\Top3View.jsx:3707: ?.predictionPosition ??
+src\pages\Top3\Top3View.jsx:3709: ?.predictionPosition ??
+src\pages\Top3\Top3View.jsx:3716: predictionPosition
+src\pages\Top3\Top3View.jsx:3718: predictionPosition >= 1
+src\pages\Top3\Top3View.jsx:3719: ? predictionPosition - 1
+
+PADRÃO: resultPosition
+src\pages\Top3\top3.firestore.js:239: resultPosition: -1,
+src\pages\Top3\top3.firestore.js:309: const resultPosition = Number(
+src\pages\Top3\top3.firestore.js:318: resultPosition,
+src\pages\Top3\top3.firestore.js:320: podiumMedalFromPosition(resultPosition),
+src\pages\Top3\top3.firestore.js:337: resultPosition: -1,
+src\pages\Top3\top3.firestore.js:602: Number(entry?.resultPosition ?? -1) ===
+src\pages\Top3\top3.firestore.js:603: Number(analysis.resultPosition ?? -1) &&
+src\pages\Top3\top3.firestore.js:635: resultPosition: analysis.resultPosition,
+src\pages\Top3\Top3View.jsx:419: resultPosition: -1,
+src\pages\Top3\Top3View.jsx:447: resultPosition: -1,
+src\pages\Top3\Top3View.jsx:515: const resultPosition = Number(
+src\pages\Top3\Top3View.jsx:524: resultPosition,
+src\pages\Top3\Top3View.jsx:526: podiumMedalFromPosition(resultPosition),
+src\pages\Top3\Top3View.jsx:539: resultPosition: -1,
+src\pages\Top3\Top3View.jsx:1251: const resultPosition = Number(
+src\pages\Top3\Top3View.jsx:1252: analysis?.resultPosition
+src\pages\Top3\Top3View.jsx:1258: : resultPosition === 1
+src\pages\Top3\Top3View.jsx:1260: : resultPosition === 2
+src\pages\Top3\Top3View.jsx:1262: : resultPosition === 3
+src\pages\Top3\Top3View.jsx:1870: resultPosition: Number(
+src\pages\Top3\Top3View.jsx:1871: entry?.resultPosition ?? -1
+src\pages\Top3\Top3View.jsx:1897: resultPosition: Number(
+src\pages\Top3\Top3View.jsx:1898: entry?.resultPosition ?? -1
+src\pages\Top3\Top3View.jsx:3722: const resultPosition = Number(
+src\pages\Top3\Top3View.jsx:3723: analysis?.resultPosition ??
+src\pages\Top3\Top3View.jsx:3724: item?.resultPosition ??
+src\pages\Top3\Top3View.jsx:3742: resultPosition === 1
+src\pages\Top3\Top3View.jsx:3744: : resultPosition === 2
+src\pages\Top3\Top3View.jsx:3746: : resultPosition === 3
+src\pages\Top3\Top3View.jsx:3751: resultPosition === 1
+src\pages\Top3\Top3View.jsx:3753: : resultPosition === 2
+src\pages\Top3\Top3View.jsx:3755: : resultPosition === 3
+src\pages\Top3\Top3View.jsx:3760: resultPosition === 1
+src\pages\Top3\Top3View.jsx:3762: : resultPosition === 2
+src\pages\Top3\Top3View.jsx:3764: : resultPosition === 3
+src\pages\Top3\Top3View.jsx:3769: resultPosition >= 1 &&
+src\pages\Top3\Top3View.jsx:3770: resultPosition <= 3
+src\pages\Top3\Top3View.jsx:3771: ? resultPosition - 1
+src\pages\Top3\Top3View.jsx:3801: resultPosition === 1
+src\pages\Top3\Top3View.jsx:4178: resultPosition === 1
+
+====================================================================================================
+GIT
+====================================================================================================
+
+ÚLTIMOS COMMITS:
+4bd1e58 fix: exibe sorteio RJ de s├íbado ├ás 19:30
+6f6a8a9 fix(top3): congela previsao persistida em todas as loterias
+19f83dd fix(top3): usa milhar persistida no historico
+eb3e6b1 fix: corrige contagem de premios no ranking de frequencias
+b865fb9 fix: normaliza horarios historicos da Nacional nas frequencias
+75f0a8a fix(top3): retry pending Firestore reconciliation
+ed45024 perf(top3): adia analytics e gera├º├úo dos palpites
+c0a74d0 chore(lint): estabelece baseline limpa no build CI
+e692682 TOP3: corrige hist├│rico de acertos e resultado oficial
+a4649a2 TOP3: destaca acertos e resultado oficial
+e60de71 TOP3: compacta hist├│rico vis├¡vel com imagens
+e583cd2 TOP3: compacta hist├│rico recente em duas linhas
+
+STATUS RASTREADO:
+LIMPO

@@ -1,0 +1,98 @@
+{
+  "ok": true,
+  "generatedAt": "2026-07-18T19:54:24.020Z",
+  "experiment": "TPP-03.07",
+  "lotteryKey": "PT_RIO",
+  "limit": 500,
+  "baselineConsistency": [
+    {
+      "reference": "A00",
+      "compared": "A01",
+      "referenceCases": 500,
+      "comparedCases": 500,
+      "differences": 0,
+      "equivalent": true
+    },
+    {
+      "reference": "A00",
+      "compared": "A02",
+      "referenceCases": 500,
+      "comparedCases": 500,
+      "differences": 0,
+      "equivalent": true
+    }
+  ],
+  "controls": {
+    "baselineConsistent": true,
+    "a00RankingEquivalent": true,
+    "a00ChangedCases": 0
+  },
+  "comparisons": [
+    {
+      "code": "A00",
+      "name": "BASELINE_COMPLETO",
+      "summary": {
+        "totalCases": 500,
+        "identicalCases": 500,
+        "changedCases": 0,
+        "top1Changed": 0,
+        "top3ExactOrderChanged": 0,
+        "top3MembershipChanged": 0,
+        "orderOnlyChanged": 0,
+        "groupsEnteredTop3": 0,
+        "groupsExitedTop3": 0,
+        "top1Improvements": 0,
+        "top1Regressions": 0,
+        "top3Improvements": 0,
+        "top3Regressions": 0,
+        "changedWithoutHitImpact": 0,
+        "candidateScoreChangedCases": 0
+      },
+      "changedCases": []
+    },
+    {
+      "code": "A01",
+      "name": "SEM_FREQUENCY",
+      "summary": {
+        "totalCases": 500,
+        "identicalCases": 500,
+        "changedCases": 0,
+        "top1Changed": 0,
+        "top3ExactOrderChanged": 0,
+        "top3MembershipChanged": 0,
+        "orderOnlyChanged": 0,
+        "groupsEnteredTop3": 0,
+        "groupsExitedTop3": 0,
+        "top1Improvements": 0,
+        "top1Regressions": 0,
+        "top3Improvements": 0,
+        "top3Regressions": 0,
+        "changedWithoutHitImpact": 0,
+        "candidateScoreChangedCases": 0
+      },
+      "changedCases": []
+    },
+    {
+      "code": "A02",
+      "name": "SEM_CONTEXT",
+      "summary": {
+        "totalCases": 500,
+        "identicalCases": 500,
+        "changedCases": 0,
+        "top1Changed": 0,
+        "top3ExactOrderChanged": 0,
+        "top3MembershipChanged": 0,
+        "orderOnlyChanged": 0,
+        "groupsEnteredTop3": 0,
+        "groupsExitedTop3": 0,
+        "top1Improvements": 0,
+        "top1Regressions": 0,
+        "top3Improvements": 0,
+        "top3Regressions": 0,
+        "changedWithoutHitImpact": 0,
+        "candidateScoreChangedCases": 0
+      },
+      "changedCases": []
+    }
+  ]
+}

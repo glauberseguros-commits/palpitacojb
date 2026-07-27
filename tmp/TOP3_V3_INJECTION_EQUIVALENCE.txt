@@ -1,0 +1,34 @@
+===== VALIDAÇÃO DA INJEÇÃO — V3 NATIVO × V3 INJETADO =====
+
+Loteria.................: PT_RIO
+Casos solicitados.......: 100
+Histórico mínimo........: 100
+
+===== CAMINHO NATIVO =====
+Casos avaliados.........: 100
+Acertos Top1............: 6
+Acertos Top3............: 13
+Taxa Top1...............: 6%
+Taxa Top3...............: 13%
+Casos de telemetria.....: 0
+Tempo...................: 10086 ms
+
+===== CAMINHO INJETADO =====
+Casos avaliados.........: 100
+Acertos Top1............: 6
+Acertos Top3............: 13
+Taxa Top1...............: 6%
+Taxa Top3...............: 13%
+Casos de telemetria.....: 0
+Tempo...................: 6675 ms
+
+===== EQUIVALÊNCIA =====
+Métricas agregadas......: IDÊNTICAS
+Casos individuais.......: IDÊNTICOS
+Diferenças encontradas..: 0
+Resultado final.........: APROVADO
+
+Nenhum algoritmo foi alterado.
+Nenhum peso foi alterado.
+Nenhum commit foi realizado.
+Nenhum deploy foi realizado.

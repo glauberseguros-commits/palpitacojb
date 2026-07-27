@@ -1,0 +1,2587 @@
+========================================================================================
+E08.1 - PREPARACAO PARA REORDENACAO DOS CANDIDATOS DA V3
+========================================================================================
+
+OBJETIVO
+Localizar o contrato exato do ranking da V3 e o ponto seguro para testar apenas reordenacao experimental.
+
+RESTRICOES
+- Nao alterar V3.
+- Nao alterar producao.
+- Nao alterar pesos oficiais.
+- Nao realizar deploy.
+- Nao realizar commit.
+
+========================================================================================
+ARQUIVOS PRIORITARIOS
+========================================================================================
+OK       backend/engine/scoreEngineUnified.js
+OK       backend/engine/scoreEngineV4Experimental.js
+OK       backend/scripts/backtestTop3Official.js
+OK       backend/scripts/backtestTop3E07Experimental.js
+OK       src/pages/Top3/top3.engine.js
+
+========================================================================================
+SIMBOLOS CRITICOS
+========================================================================================
+
+[computeStatisticalTop3V3]
+  backend/engine/scoreEngineUnified.js:88
+  backend/engine/scoreEngineUnified.js:93
+  backend/engine/scoreEngineUnified.js:102
+  backend/engine/scoreEngineV4Experimental.js:4
+  backend/engine/scoreEngineV4Experimental.js:684
+  backend/engine/top3PredictionService.js:13
+  backend/engine/top3PredictionService.js:757
+  backend/scripts/backtestTop3Official.js:12
+  backend/scripts/backtestTop3Official.js:516
+  src/pages/Top3/__tests__/top3.public-api.node.test.js:19
+  src/pages/Top3/modules/top3.analytics.js:13
+  src/pages/Top3/modules/top3.analytics.js:193
+  src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:2880
+  src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:4106
+  src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:2880
+  src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:4106
+  src/pages/Top3/top3.engine.js:2834
+  src/pages/Top3/top3.engine.js:4072
+  src/pages/Top3/top3.public-api.js:15
+
+[scoreRanking]
+  backend/engine/scoreEngineV2.js:73
+  backend/engine/scoreEngineV2.js:93
+  src/pages/Top3/__tests__/top3.public-api.node.test.js:34
+  src/pages/Top3/modules/scoreEngine/scoreEngineV2.backup.js:73
+  src/pages/Top3/modules/scoreEngine/scoreEngineV2.backup.js:93
+  src/pages/Top3/modules/scoreEngine/scoreEngineV2.js:103
+  src/pages/Top3/modules/scoreEngine/scoreEngineV2.js:123
+  src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:18
+  src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:3109
+  src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:18
+  src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:3109
+  src/pages/Top3/top3.engine.js:18
+  src/pages/Top3/top3.engine.js:3063
+  src/pages/Top3/top3.public-api.js:49
+
+[scoreItem]
+  backend/engine/scoreEngineV2.js:53
+  backend/engine/scoreEngineV2.js:76
+  backend/engine/scoreEngineV2.js:92
+  src/pages/Top3/__tests__/top3.public-api.node.test.js:33
+  src/pages/Top3/modules/scoreEngine/scoreEngineV2.backup.js:53
+  src/pages/Top3/modules/scoreEngine/scoreEngineV2.backup.js:76
+  src/pages/Top3/modules/scoreEngine/scoreEngineV2.backup.js:92
+  src/pages/Top3/modules/scoreEngine/scoreEngineV2.js:53
+  src/pages/Top3/modules/scoreEngine/scoreEngineV2.js:106
+  src/pages/Top3/modules/scoreEngine/scoreEngineV2.js:122
+  src/pages/Top3/top3.public-api.js:50
+
+[collectEvidence]
+  backend/engine/evidenceEngine.js:18
+  backend/engine/evidenceEngine.js:68
+  backend/engine/scoreEngineV2.js:4
+  backend/engine/scoreEngineV2.js:54
+  src/pages/Top3/__tests__/top3.public-api.node.test.js:15
+  src/pages/Top3/modules/scoreEngine/evidenceEngine.js:18
+  src/pages/Top3/modules/scoreEngine/evidenceEngine.js:68
+  src/pages/Top3/modules/scoreEngine/scoreEngineV2.backup.js:4
+  src/pages/Top3/modules/scoreEngine/scoreEngineV2.backup.js:54
+  src/pages/Top3/modules/scoreEngine/scoreEngineV2.js:4
+  src/pages/Top3/modules/scoreEngine/scoreEngineV2.js:54
+  src/pages/Top3/top3.public-api.js:55
+
+[runOfficialBacktest]
+  backend/scripts/backtestTop3E07Experimental.js:7
+  backend/scripts/backtestTop3E07Experimental.js:163
+  backend/scripts/backtestTop3E07Experimental.js:173
+  backend/scripts/backtestTop3Official.js:490
+  backend/scripts/backtestTop3Official.js:999
+  backend/scripts/backtestTop3Official.js:1080
+
+[computeTop3]
+  backend/engine/top3PredictionService.js:755
+  backend/engine/top3PredictionService.js:756
+  backend/engine/top3PredictionService.js:831
+  backend/scripts/backtestTop3E07Experimental.js:176
+  backend/scripts/backtestTop3Official.js:514
+  backend/scripts/backtestTop3Official.js:515
+  backend/scripts/backtestTop3Official.js:703
+
+[rankingScored]
+  backend/engine/bootstrapSnapshot.js:25
+  backend/engine/bootstrapSnapshot.js:37
+  backend/engine/bootstrapSnapshot.js:38
+  backend/engine/bootstrapSnapshot.js:47
+
+[top1Hits]
+  backend/scripts/backtestTop3E07Experimental.js:194
+  backend/scripts/backtestTop3E07Experimental.js:195
+  backend/scripts/backtestTop3E07Experimental.js:210
+  backend/scripts/backtestTop3E07Experimental.js:211
+  backend/scripts/backtestTop3E07Experimental.js:220
+  backend/scripts/backtestTop3E07Experimental.js:221
+  backend/scripts/backtestTop3E07Experimental.js:222
+  backend/scripts/backtestTop3E07Experimental.js:277
+  backend/scripts/backtestTop3E07Experimental.js:282
+  backend/scripts/backtestTop3E07Experimental.js:287
+  backend/scripts/backtestTop3Official.js:315
+  backend/scripts/backtestTop3Official.js:329
+  backend/scripts/backtestTop3Official.js:330
+  backend/scripts/backtestTop3Official.js:339
+  backend/scripts/backtestTop3Official.js:348
+  backend/scripts/backtestTop3Official.js:440
+  backend/scripts/backtestTop3Official.js:613
+  backend/scripts/backtestTop3Official.js:839
+  src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:3853
+  src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:3879
+  src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:3888
+  src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:3897
+  src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:3909
+  src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:3911
+  src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:3853
+  src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:3879
+  src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:3888
+  src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:3897
+  src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:3909
+  src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:3911
+  ... mais 6 ocorrencias
+
+[top3Hits]
+  backend/scripts/backtestTop3E07Experimental.js:198
+  backend/scripts/backtestTop3E07Experimental.js:199
+  backend/scripts/backtestTop3E07Experimental.js:214
+  backend/scripts/backtestTop3E07Experimental.js:215
+  backend/scripts/backtestTop3E07Experimental.js:226
+  backend/scripts/backtestTop3E07Experimental.js:227
+  backend/scripts/backtestTop3E07Experimental.js:228
+  backend/scripts/backtestTop3E07Experimental.js:278
+  backend/scripts/backtestTop3E07Experimental.js:283
+  backend/scripts/backtestTop3E07Experimental.js:289
+  backend/scripts/backtestTop3Official.js:316
+  backend/scripts/backtestTop3Official.js:333
+  backend/scripts/backtestTop3Official.js:334
+  backend/scripts/backtestTop3Official.js:340
+  backend/scripts/backtestTop3Official.js:358
+  backend/scripts/backtestTop3Official.js:444
+  backend/scripts/backtestTop3Official.js:614
+  backend/scripts/backtestTop3Official.js:843
+  src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:3859
+  src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:3880
+  src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:3889
+  src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:3898
+  src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:3910
+  src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js:3912
+  src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:3859
+  src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:3880
+  src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:3889
+  src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:3898
+  src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:3910
+  src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js:3912
+  ... mais 6 ocorrencias
+
+[actualGroup]
+  backend/scripts/backtestTop3Official.js:649
+  backend/scripts/backtestTop3Official.js:666
+  backend/scripts/backtestTop3Official.js:733
+  backend/scripts/backtestTop3Official.js:737
+  backend/scripts/backtestTop3Official.js:769
+
+========================================================================================
+MAPA DE PADROES RELEVANTES
+========================================================================================
+
+ARQUIVO: backend/engine/bootstrapSnapshot.js
+CATEGORIAS: Ranking, TOP retornado
+  L21     [Ranking] ranking
+  L22     [Ranking] ranking
+  L25     [Ranking] ranking
+  L25     [Ranking] rankingScored
+  L36     [Ranking] ranking
+  L37     [Ranking] rankingScored
+  L38     [Ranking] rankingScored
+  L38     [TOP retornado] .slice(0,3)
+  L38     [TOP retornado] top3
+  L46     [Ranking] ranking
+  L47     [Ranking] rankingScored
+  L47     [TOP retornado] .slice(0,3)
+  L47     [TOP retornado] top3
+
+ARQUIVO: backend/engine/contextEvidence.js
+CATEGORIAS: Grupo, Score, Evidencias
+  L4      [Evidencias] Evidence
+  L8      [Score] score
+  L18     [Evidencias] reasons
+  L20     [Evidencias] reasons
+  L23     [Evidencias] reasons
+  L26     [Evidencias] reasons
+  L29     [Evidencias] reasons
+  L32     [Evidencias] reasons
+  L32     [Grupo] Grupo
+  L35     [Evidencias] reasons
+  L37     [Evidencias] reasons
+  L42     [Evidencias] evidence
+  L72     [Evidencias] evidence
+  L74     [Evidencias] evidence
+  L74     [Evidencias] reasons
+
+ARQUIVO: backend/engine/drawRepository.js
+CATEGORIAS: TOP retornado, Grupo
+  L28     [Grupo] grupo
+  L32     [Grupo] grupo
+  L126    [TOP retornado] TOP3
+  L156    [TOP retornado] TOP3
+
+ARQUIVO: backend/engine/evidenceEngine.js
+CATEGORIAS: Evidencias
+  L7      [Evidencias] Evidence
+  L18     [Evidencias] collectEvidence
+  L24     [Evidencias] evidence
+  L38     [Evidencias] evidence
+  L43     [Evidencias] evidence
+  L55     [Evidencias] evidence
+  L57     [Evidencias] evidence
+  L61     [Evidencias] evidence
+  L68     [Evidencias] collectEvidence
+
+ARQUIVO: backend/engine/frequencyEvidence.js
+CATEGORIAS: Score, Evidencias
+  L5      [Evidencias] Evidence
+  L9      [Score] score
+  L41     [Evidencias] reasons
+  L43     [Evidencias] reasons
+  L46     [Evidencias] reasons
+  L51     [Evidencias] reasons
+  L55     [Evidencias] reasons
+  L59     [Evidencias] reasons
+  L63     [Evidencias] reasons
+  L67     [Evidencias] reasons
+  L70     [Evidencias] reasons
+  L102    [Evidencias] evidence
+  L115    [Evidencias] reasons
+
+ARQUIVO: backend/engine/historicalQueryEngine.js
+CATEGORIAS: Grupo
+  L128    [Grupo] grupo
+
+ARQUIVO: backend/engine/hypothesisEngine.js
+CATEGORIAS: Grupo, Score, Evidencias
+  L23     [Evidencias] evidences
+  L39     [Grupo] grupo
+  L61     [Evidencias] evidences
+  L62     [Evidencias] evidences
+  L83     [Score] score
+
+ARQUIVO: backend/engine/predictionModel.js
+CATEGORIAS: Grupo, Score, Evidencias
+  L4      [Score] Score
+  L56     [Grupo] grupo
+  L57     [Grupo] grupo
+  L62     [Score] score
+  L64     [Evidencias] reasons
+  L67     [Grupo] grupo
+  L73     [Grupo] grupo
+  L78     [Score] score
+  L80     [Evidencias] reasons
+
+ARQUIVO: backend/engine/predictionRepository.js
+CATEGORIAS: TOP retornado
+  L58     [TOP retornado] .slice(0, 3)
+
+ARQUIVO: backend/engine/scoreConfig.js
+CATEGORIAS: Score, Atraso
+  L4      [Score] Score
+  L28     [Atraso] delay
+
+ARQUIVO: backend/engine/scoreEngineUnified.js
+CATEGORIAS: V3 principal, TOP retornado
+  L7      [TOP retornado] Top3
+  L13     [TOP retornado] TOP3
+  L15     [TOP retornado] TOP3
+  L46     [TOP retornado] Top3
+  L55     [TOP retornado] TOP3
+  L88     [V3 principal] computeStatisticalTop3V3
+  L93     [V3 principal] computeStatisticalTop3V3
+  L102    [V3 principal] computeStatisticalTop3V3
+
+ARQUIVO: backend/engine/scoreEngineV1.js
+CATEGORIAS: Ranking, Grupo, Score, Evidencias
+  L40     [Ranking] ranking
+  L43     [Ranking] ranking
+  L45     [Grupo] group
+  L45     [Grupo] grupo
+  L49     [Grupo] grupo
+  L50     [Grupo] grupo
+  L55     [Grupo] grupo
+  L56     [Grupo] grupo
+  L62     [Score] score
+  L63     [Score] score
+  L66     [Grupo] grupo
+  L67     [Grupo] grupo
+  L69     [Score] score
+  L71     [Evidencias] reasons
+  L72     [Ranking] Ranking
+
+ARQUIVO: backend/engine/scoreEngineV2.js
+CATEGORIAS: Ranking, Score, Evidencias
+  L4      [Evidencias] collectEvidence
+  L7      [Score] Score
+  L24     [Score] score
+  L26     [Evidencias] reasons
+  L35     [Score] score
+  L36     [Score] score
+  L38     [Evidencias] reasons
+  L42     [Evidencias] evidence
+  L46     [Score] score
+  L48     [Evidencias] reasons
+  L54     [Evidencias] collectEvidence
+  L60     [Evidencias] evidence
+  L64     [Score] score
+  L66     [Evidencias] reasons
+  L73     [Ranking] scoreRanking
+  L79     [Score] score
+  L80     [Score] score
+  L85     [Score] scoreProb
+  L93     [Ranking] scoreRanking
+
+ARQUIVO: backend/engine/scoreEngineV4Experimental.js
+CATEGORIAS: V3 principal, Ranking, TOP retornado, Grupo, Score, Evidencias, Atraso, Frequencia por horario
+  L4      [V3 principal] computeStatisticalTop3V3
+  L107    [Grupo] group
+  L109    [Grupo] group
+  L110    [Grupo] group
+  L135    [Grupo] grupo
+  L136    [Grupo] group
+  L146    [Grupo] group
+  L149    [Grupo] group
+  L150    [Grupo] group
+  L151    [Grupo] group
+  L153    [Grupo] group
+  L176    [Grupo] group
+  L180    [Grupo] group
+  L181    [Grupo] group
+  L198    [Grupo] group
+  L200    [Grupo] group
+  L201    [Grupo] group
+  L220    [Grupo] group
+  L223    [Grupo] group
+  L224    [Grupo] group
+  L225    [Grupo] group
+  L227    [Grupo] group
+  L271    [Grupo] group
+  L272    [Grupo] group
+  L273    [Grupo] group
+  L275    [Grupo] group
+  L281    [Grupo] group
+  L282    [Grupo] group
+  L320    [Grupo] group
+  L321    [Grupo] group
+  L322    [Grupo] group
+  L325    [Grupo] group
+  L329    [Grupo] group
+  L342    [Grupo] group
+  L343    [Grupo] group
+  L364    [Frequencia por horario] targetHour
+  L383    [Grupo] group
+  L389    [Grupo] group
+  L396    [Grupo] group
+  L400    [Frequencia por horario] targetHour
+  L401    [Frequencia por horario] targetHour
+  L406    [Grupo] group
+  L466    [Frequencia por horario] targetHour
+  L468    [Frequencia por horario] targetHour
+  L527    [Ranking] ranking
+  L532    [Grupo] group
+  L535    [Grupo] group
+  L535    [Grupo] grupo
+  L536    [Score] scoreProb
+  L537    [Grupo] group
+  L539    [Score] score
+  L541    [Grupo] group
+  L544    [Grupo] group
+  L547    [Grupo] group
+  L550    [Grupo] group
+  L553    [Grupo] group
+  L558    [Score] score
+  L559    [Score] score
+  L566    [Grupo] grupo
+  L577    [Grupo] group
+  L583    [Frequencia por horario] targetHour
+  L587    [Frequencia por horario] sameHour
+  L594    [Frequencia por horario] sameHour
+  L602    [Frequencia por horario] sameHour
+  L607    [Ranking] ranking
+  L612    [Evidencias] evidence
+  L616    [Evidencias] evidence
+  L616    [Ranking] ranking
+  L634    [Grupo] grupo
+  L635    [Score] scoreProb
+  L636    [Score] scoreProb
+  L637    [Score] rawScoreProb
+  L638    [Score] scoreProb
+  L639    [Score] score
+  L640    [Score] score
+
+ARQUIVO: backend/engine/top3HistoryRepository.js
+CATEGORIAS: Grupo
+  L107    [Grupo] grupo
+  L113    [Grupo] grupo
+  L114    [Grupo] grupo
+  L115    [Grupo] grupo
+  L125    [Grupo] grupo
+
+ARQUIVO: backend/engine/top3HistorySync.js
+CATEGORIAS: TOP retornado
+  L210    [TOP retornado] TOP3
+  L363    [TOP retornado] TOP3
+  L379    [TOP retornado] TOP3
+
+ARQUIVO: backend/engine/top3PredictionService.js
+CATEGORIAS: V3 principal, TOP retornado, Grupo, Score, Evidencias, Frequencia por horario, Backtest
+  L13     [V3 principal] computeStatisticalTop3V3
+  L221    [TOP retornado] TOP3
+  L238    [TOP retornado] TOP3
+  L244    [TOP retornado] TOP3
+  L343    [TOP retornado] TOP3
+  L464    [TOP retornado] .slice(0, 3)
+  L466    [Grupo] grupo
+  L469    [Grupo] grupo
+  L470    [Grupo] grupo
+  L471    [Grupo] grupo
+  L476    [Score] probability
+  L477    [Score] scoreProb
+  L478    [Score] probability
+  L484    [Score] probability
+  L485    [Score] probability
+  L486    [Score] probability
+  L493    [Grupo] grupo
+  L513    [Grupo] grupo
+  L517    [Grupo] grupo
+  L542    [TOP retornado] top3
+  L553    [TOP retornado] .slice(0, 3)
+  L558    [TOP retornado] TOP3
+  L563    [Grupo] grupo
+  L565    [Grupo] grupo
+  L566    [Grupo] grupo
+  L567    [Grupo] grupo
+  L568    [Grupo] grupo
+  L570    [TOP retornado] .slice(0, 3)
+  L574    [TOP retornado] TOP3
+  L589    [Frequencia por horario] targetHour
+  L694    [TOP retornado] top :
+  L695    [TOP retornado] .slice(0, 3)
+  L697    [Grupo] grupo
+  L698    [Grupo] grupo
+  L700    [Score] probability
+  L701    [Score] scoreProb
+  L702    [Score] probability
+  L708    [Score] probability
+  L709    [Score] probability
+  L710    [Score] probability
+  L713    [Grupo] grupo
+  L714    [Grupo] grupo
+  L717    [Grupo] grupo
+  L719    [Score] score
+  L729    [Evidencias] reasons
+  L730    [Evidencias] reasons
+  L735    [Score] scoreProb
+  L736    [Score] score
+  L741    [Grupo] grupo
+  L755    [Backtest] computeTop3
+  L756    [Backtest] computeTop3
+  L757    [V3 principal] computeStatisticalTop3V3
+  L831    [Backtest] computeTop3
+  L859    [TOP retornado] TOP3
+  L872    [Grupo] grupo
+  L872    [TOP retornado] TOP3
+  L894    [Frequencia por horario] targetHour
+  L911    [Frequencia por horario] targetHour
+  L926    [TOP retornado] top3
+
+ARQUIVO: backend/scripts/auditBounds.js
+CATEGORIAS: TOP retornado
+  L277    [TOP retornado] .slice(0, 3)
+
+ARQUIVO: backend/scripts/auditFederalContestDuplicates.js
+CATEGORIAS: Score
+  L88     [Score] score
+  L89     [Score] score
+  L90     [Score] score
+  L91     [Score] score
+  L92     [Score] score
+  L93     [Score] score
+  L94     [Score] score
+  L95     [Score] score
+  L96     [Score] score
+  L97     [Score] score
+  L135    [Score] score
+  L153    [Score] score
+  L181    [Score] score
+  L188    [Score] score
+
+ARQUIVO: backend/scripts/auditPredictionRuns.js
+CATEGORIAS: TOP retornado, Grupo, Score
+  L41     [TOP retornado] .slice(0,3)
+  L47     [Grupo] grupo
+  L49     [Score] score
+
+ARQUIVO: backend/scripts/backtestTop3E07Experimental.js
+CATEGORIAS: TOP retornado, Backtest
+  L7      [Backtest] runOfficialBacktest
+  L163    [Backtest] runOfficialBacktest
+  L173    [Backtest] runOfficialBacktest
+  L176    [Backtest] computeTop3
+  L194    [Backtest] top1Hits
+  L195    [Backtest] top1Hits
+  L198    [Backtest] top3Hits
+  L199    [Backtest] top3Hits
+  L210    [Backtest] top1Hits
+  L211    [Backtest] top1Hits
+  L214    [Backtest] top3Hits
+  L215    [Backtest] top3Hits
+  L220    [Backtest] top1Hits
+  L221    [Backtest] top1Hits
+  L222    [Backtest] top1Hits
+  L226    [Backtest] top3Hits
+  L227    [Backtest] top3Hits
+  L228    [Backtest] top3Hits
+  L277    [Backtest] top1Hits
+  L278    [Backtest] top3Hits
+  L278    [TOP retornado] TOP3
+  L282    [Backtest] top1Hits
+  L283    [Backtest] top3Hits
+  L283    [TOP retornado] TOP3
+  L287    [Backtest] top1Hits
+  L289    [Backtest] top3Hits
+  L289    [TOP retornado] TOP3
+  L290    [TOP retornado] TOP3
+  L297    [TOP retornado] TOP3
+
+ARQUIVO: backend/scripts/backtestTop3Official.js
+CATEGORIAS: V3 principal, Ranking, TOP retornado, Grupo, Score, Evidencias, Frequencia por horario, Backtest
+  L12     [V3 principal] computeStatisticalTop3V3
+  L271    [Grupo] group
+  L274    [Grupo] group
+  L275    [Grupo] group
+  L276    [Grupo] group
+  L281    [Grupo] group
+  L290    [Ranking] ranking
+  L295    [Grupo] grupo
+  L296    [Grupo] group
+  L300    [Grupo] group
+  L301    [Grupo] group
+  L302    [Grupo] group
+  L303    [Grupo] group
+  L305    [TOP retornado] .slice(0, 3)
+  L315    [Backtest] top1Hits
+  L316    [Backtest] top3Hits
+  L329    [Backtest] top1Hits
+  L330    [Backtest] top1Hits
+  L333    [Backtest] top3Hits
+  L334    [Backtest] top3Hits
+  L339    [Backtest] top1Hits
+  L340    [Backtest] top3Hits
+  L348    [Backtest] top1Hits
+  L358    [Backtest] top3Hits
+  L394    [TOP retornado] TOP3
+  L440    [Backtest] top1Hits
+  L444    [Backtest] top3Hits
+  L444    [TOP retornado] TOP3
+  L459    [TOP retornado] TOP3
+  L471    [TOP retornado] TOP3
+  L483    [TOP retornado] TOP3
+  L490    [Backtest] runOfficialBacktest
+  L514    [Backtest] computeTop3
+  L515    [Backtest] computeTop3
+  L516    [V3 principal] computeStatisticalTop3V3
+  L528    [TOP retornado] TOP3
+  L550    [TOP retornado] TOP3
+  L613    [Backtest] top1Hits
+  L614    [Backtest] top3Hits
+  L644    [Frequencia por horario] targetHour
+  L649    [Backtest] actualGroup
+  L665    [Frequencia por horario] targetHour
+  L666    [Backtest] actualGroup
+  L685    [Frequencia por horario] targetHour
+  L686    [Frequencia por horario] targetHour
+  L703    [Backtest] computeTop3
+  L715    [Frequencia por horario] targetHour
+  L733    [Backtest] actualGroup
+  L737    [Backtest] actualGroup
+  L751    [Frequencia por horario] targetHour
+  L752    [Frequencia por horario] targetHour
+  L769    [Backtest] actualGroup
+  L769    [Grupo] group
+  L777    [TOP retornado] .slice(0, 3)
+  L780    [Grupo] grupo
+  L781    [Grupo] grupo
+  L782    [Grupo] group
+  L784    [Score] score
+  L785    [Score] score
+  L787    [Score] score
+  L789    [Score] scoreProb
+  L790    [Score] scoreProb
+  L792    [Score] scoreProb
+  L794    [Score] probability
+  L795    [Score] probability
+  L797    [Score] probability
+  L815    [Evidencias] reasons
+  L816    [Evidencias] reasons
+  L820    [Evidencias] evidence
+  L821    [Evidencias] evidence
+  L839    [Backtest] top1Hits
+  L843    [Backtest] top3Hits
+  L863    [Frequencia por horario] targetHour
+  L968    [TOP retornado] TOP3
+  L999    [Backtest] runOfficialBacktest
+  L1080   [Backtest] runOfficialBacktest
+
+ARQUIVO: backend/scripts/fixFederalContestDuplicates.js
+CATEGORIAS: Score
+  L74     [Score] score
+  L75     [Score] score
+  L76     [Score] score
+  L77     [Score] score
+  L78     [Score] score
+  L79     [Score] score
+  L80     [Score] score
+  L81     [Score] score
+  L82     [Score] score
+  L83     [Score] score
+  L119    [Score] score
+  L137    [Score] score
+  L165    [Score] score
+  L172    [Score] score
+
+ARQUIVO: backend/scripts/fixLegacyIdDuplicates.js
+CATEGORIAS: Evidencias
+  L60     [Evidencias] reasons
+  L76     [Evidencias] reasons
+  L102    [Evidencias] reasons
+
+ARQUIVO: backend/scripts/fixMinuteVariantDuplicates.js
+CATEGORIAS: Evidencias
+  L78     [Evidencias] reasons
+  L109    [Evidencias] reasons
+  L125    [Evidencias] reasons
+  L156    [Evidencias] reasons
+
+ARQUIVO: backend/scripts/fixReceiveDuplicates.js
+CATEGORIAS: Evidencias
+  L59     [Evidencias] reasons
+  L84     [Evidencias] reasons
+  L111    [Evidencias] reasons
+
+ARQUIVO: backend/scripts/genPtRioCalendarRules.js
+CATEGORIAS: Grupo
+  L99     [Grupo] grupo
+
+ARQUIVO: backend/scripts/importKingApostas.js
+CATEGORIAS: TOP retornado, Grupo, Frequencia por horario
+  L276    [Grupo] Grupo
+  L309    [Grupo] grupo
+  L321    [Grupo] grupo
+  L322    [Grupo] grupo
+  L323    [Grupo] grupo
+  L1693   [Frequencia por horario] targetHour
+  L1701   [TOP retornado] TOP3
+  L1713   [TOP retornado] TOP3
+  L1729   [TOP retornado] TOP3
+
+ARQUIVO: backend/scripts/importKingRange.js
+CATEGORIAS: Atraso
+  L350    [Atraso] delay
+
+ARQUIVO: backend/scripts/testPredictionRun.js
+CATEGORIAS: Ranking, Grupo, Score
+  L4      [Score] Score
+  L7      [Score] Score
+  L14     [Ranking] ranking
+  L15     [Grupo] grupo
+  L16     [Grupo] grupo
+  L17     [Grupo] grupo
+  L18     [Grupo] grupo
+  L19     [Grupo] grupo
+  L22     [Ranking] ranking
+
+ARQUIVO: src/pages/Top3/__tests__/top3.backtest.layers.test.js
+CATEGORIAS: TOP retornado, Grupo, Score
+  L10     [TOP retornado] top3
+  L16     [TOP retornado] top3
+  L18     [TOP retornado] top3
+  L68     [Grupo] grupo
+  L96     [TOP retornado] TOP3
+  L107    [TOP retornado] .slice(0, 3)
+  L112    [TOP retornado] TOP3
+  L123    [Grupo] grupo
+  L125    [Grupo] grupo
+  L126    [Grupo] Grupo
+  L126    [TOP retornado] TOP3
+  L129    [Grupo] grupo
+  L130    [Grupo] Grupo
+  L130    [TOP retornado] TOP3
+  L133    [Grupo] grupo
+  L138    [Score] scoreProb
+  L144    [TOP retornado] TOP3
+  L148    [TOP retornado] TOP3
+  L153    [TOP retornado] TOP3
+  L244    [Grupo] grupo
+  L244    [TOP retornado] .slice(0, 3)
+  L248    [Grupo] grupo
+  L249    [Grupo] grupo
+  L265    [Grupo] grupo
+  L285    [TOP retornado] TOP3
+
+ARQUIVO: src/pages/Top3/__tests__/top3.backtest.test.js
+CATEGORIAS: TOP retornado, Grupo, Score, Frequencia por horario
+  L10     [TOP retornado] top3
+  L16     [TOP retornado] top3
+  L18     [TOP retornado] top3
+  L69     [Grupo] grupo
+  L101    [TOP retornado] TOP3
+  L114    [TOP retornado] .slice(0, 3)
+  L119    [TOP retornado] TOP3
+  L134    [Grupo] grupo
+  L136    [Grupo] grupo
+  L137    [Grupo] Grupo
+  L137    [TOP retornado] TOP3
+  L140    [Grupo] grupo
+  L141    [Grupo] Grupo
+  L141    [TOP retornado] TOP3
+  L144    [Grupo] grupo
+  L149    [Score] scoreProb
+  L155    [TOP retornado] TOP3
+  L159    [TOP retornado] TOP3
+  L164    [TOP retornado] TOP3
+  L252    [Grupo] grupo
+  L252    [TOP retornado] .slice(0, 3)
+  L256    [Grupo] grupo
+  L257    [Grupo] grupo
+  L270    [Frequencia por horario] targetHour
+  L273    [Frequencia por horario] targetHour
+  L279    [TOP retornado] TOP3
+  L283    [TOP retornado] TOP3
+  L289    [TOP retornado] TOP3
+
+ARQUIVO: src/pages/Top3/__tests__/top3.public-api.node.test.js
+CATEGORIAS: V3 principal, Ranking, TOP retornado, Evidencias
+  L3      [TOP retornado] top3
+  L15     [Evidencias] collectEvidence
+  L19     [V3 principal] computeStatisticalTop3V3
+  L34     [Ranking] scoreRanking
+  L37     [TOP retornado] TOP3
+  L79     [Evidencias] evidence
+  L93     [Evidencias] evidence
+
+ARQUIVO: src/pages/Top3/modules/scoreEngine/contextEvidence.js
+CATEGORIAS: Grupo, Score, Evidencias
+  L4      [Evidencias] Evidence
+  L8      [Score] score
+  L18     [Evidencias] reasons
+  L20     [Evidencias] reasons
+  L23     [Evidencias] reasons
+  L26     [Evidencias] reasons
+  L29     [Evidencias] reasons
+  L32     [Evidencias] reasons
+  L32     [Grupo] Grupo
+  L35     [Evidencias] reasons
+  L37     [Evidencias] reasons
+  L42     [Evidencias] evidence
+  L72     [Evidencias] evidence
+  L74     [Evidencias] evidence
+  L74     [Evidencias] reasons
+
+ARQUIVO: src/pages/Top3/modules/scoreEngine/evidenceEngine.js
+CATEGORIAS: Evidencias
+  L7      [Evidencias] Evidence
+  L18     [Evidencias] collectEvidence
+  L24     [Evidencias] evidence
+  L38     [Evidencias] evidence
+  L43     [Evidencias] evidence
+  L55     [Evidencias] evidence
+  L57     [Evidencias] evidence
+  L61     [Evidencias] evidence
+  L68     [Evidencias] collectEvidence
+
+ARQUIVO: src/pages/Top3/modules/scoreEngine/frequencyEvidence.js
+CATEGORIAS: Score, Evidencias
+  L4      [Evidencias] Evidence
+  L8      [Score] score
+  L40     [Evidencias] reasons
+  L42     [Evidencias] reasons
+  L45     [Evidencias] reasons
+  L50     [Evidencias] reasons
+  L54     [Evidencias] reasons
+  L58     [Evidencias] reasons
+  L62     [Evidencias] reasons
+  L66     [Evidencias] reasons
+  L69     [Evidencias] reasons
+  L101    [Evidencias] evidence
+  L114    [Evidencias] reasons
+
+ARQUIVO: src/pages/Top3/modules/scoreEngine/scoreConfig.js
+CATEGORIAS: Atraso
+  L19     [Atraso] delay
+
+ARQUIVO: src/pages/Top3/modules/scoreEngine/scoreEngineV2.backup.js
+CATEGORIAS: Ranking, Score, Evidencias
+  L4      [Evidencias] collectEvidence
+  L7      [Score] Score
+  L24     [Score] score
+  L26     [Evidencias] reasons
+  L35     [Score] score
+  L36     [Score] score
+  L38     [Evidencias] reasons
+  L42     [Evidencias] evidence
+  L46     [Score] score
+  L48     [Evidencias] reasons
+  L54     [Evidencias] collectEvidence
+  L60     [Evidencias] evidence
+  L64     [Score] score
+  L66     [Evidencias] reasons
+  L73     [Ranking] scoreRanking
+  L79     [Score] score
+  L80     [Score] score
+  L85     [Score] scoreProb
+  L93     [Ranking] scoreRanking
+
+ARQUIVO: src/pages/Top3/modules/scoreEngine/scoreEngineV2.js
+CATEGORIAS: Ranking, Score, Evidencias
+  L4      [Evidencias] collectEvidence
+  L7      [Score] Score
+  L24     [Score] score
+  L26     [Evidencias] reasons
+  L35     [Score] score
+  L36     [Score] score
+  L38     [Evidencias] reasons
+  L42     [Evidencias] evidence
+  L46     [Score] score
+  L48     [Evidencias] reasons
+  L54     [Evidencias] collectEvidence
+  L60     [Evidencias] evidence
+  L62     [Score] probability
+  L66     [Score] rawScoreProb
+  L66     [Score] scoreProb
+  L71     [Score] score
+  L72     [Score] probability
+  L77     [Score] probability
+  L83     [Score] score
+  L87     [Evidencias] reasons
+  L88     [Evidencias] reasons
+  L89     [Score] probability
+  L94     [Score] probability
+  L103    [Ranking] scoreRanking
+  L109    [Score] score
+  L110    [Score] score
+  L115    [Score] scoreProb
+  L123    [Ranking] scoreRanking
+
+ARQUIVO: src/pages/Top3/modules/top3.analytics.js
+CATEGORIAS: V3 principal, TOP retornado, Grupo, Score, Frequencia por horario
+  L1      [TOP retornado] top3
+  L7      [TOP retornado] top3
+  L13     [V3 principal] computeStatisticalTop3V3
+  L14     [TOP retornado] top3
+  L17     [TOP retornado] top:
+  L32     [Frequencia por horario] targetHour
+  L34     [Frequencia por horario] targetHour
+  L55     [TOP retornado] top :
+  L56     [Grupo] grupo
+  L60     [Grupo] grupo
+  L61     [Grupo] grupo
+  L66     [Score] scoreProb
+  L73     [Grupo] grupo
+  L77     [Grupo] grupo
+  L84     [Score] scoreProb
+  L85     [Score] scoreProb
+  L193    [V3 principal] computeStatisticalTop3V3
+  L214    [TOP retornado] top:
+
+ARQUIVO: src/pages/Top3/modules/top3.prediction.js
+CATEGORIAS: TOP retornado, Grupo
+  L26     [TOP retornado] top :
+  L30     [Grupo] grupo
+  L31     [TOP retornado] .slice(0, 3)
+  L33     [Grupo] grupo
+
+ARQUIVO: src/pages/Top3/modules/top3.state.js
+CATEGORIAS: TOP retornado
+  L6      [TOP retornado] top:
+
+ARQUIVO: src/pages/Top3/modules/top3.timeline.js
+CATEGORIAS: TOP retornado, Grupo, Score, Frequencia por horario
+  L1      [TOP retornado] top3
+  L7      [TOP retornado] top3
+  L14     [TOP retornado] top3
+  L26     [Score] scoreProb
+  L71     [Grupo] grupo
+  L72     [Grupo] grupo
+  L111    [Frequencia por horario] targetHour
+  L157    [TOP retornado] TOP3
+  L163    [TOP retornado] TOP3
+  L180    [TOP retornado] top3
+  L183    [Frequencia por horario] targetHour
+  L187    [Grupo] grupo
+  L191    [TOP retornado] .slice(0, 3)
+  L193    [Grupo] grupo
+  L244    [TOP retornado] top3
+
+ARQUIVO: src/pages/Top3/modules/top3.viewmodel.js
+CATEGORIAS: TOP retornado, Grupo, Score
+  L1      [TOP retornado] top3
+  L2      [TOP retornado] top3
+  L13     [Score] scoreProb
+  L58     [Grupo] grupo
+  L59     [Grupo] grupo
+  L103    [Grupo] grupo
+  L110    [Grupo] grupo
+
+ARQUIVO: src/pages/Top3/top3.chain.js
+CATEGORIAS: TOP retornado, Grupo, Frequencia por horario
+  L5      [TOP retornado] top3
+  L7      [TOP retornado] top3
+  L10     [TOP retornado] TOP3
+  L180    [Grupo] grupo
+  L185    [Grupo] grupo
+  L219    [Frequencia por horario] targetHour
+  L228    [Frequencia por horario] targetHour
+  L231    [Frequencia por horario] targetHour
+  L236    [Frequencia por horario] targetHour
+  L261    [Frequencia por horario] targetHour
+  L279    [Frequencia por horario] targetHour
+
+ARQUIVO: src/pages/Top3/top3.constants.js
+CATEGORIAS: TOP retornado
+  L1      [TOP retornado] Top3
+  L59     [TOP retornado] TOP3
+
+ARQUIVO: src/pages/Top3/top3.engine.before-history-stats-20260710_111832.js
+CATEGORIAS: V3 principal, Ranking, TOP retornado, Grupo, Score, Evidencias, Atraso, Frequencia por horario, Backtest
+  L1      [TOP retornado] Top3
+  L16     [TOP retornado] top3
+  L18     [Ranking] scoreRanking
+  L30     [TOP retornado] top3
+  L73     [Score] score
+  L74     [Score] score
+  L75     [Score] score
+  L76     [Score] score
+  L79     [Score] score
+  L81     [Score] score
+  L102    [Grupo] grupo
+  L103    [Grupo] group
+  L545    [Grupo] grupo
+  L644    [Grupo] grupo
+  L655    [Grupo] grupo
+  L657    [Grupo] grupo
+  L686    [Frequencia por horario] targetHour
+  L692    [Frequencia por horario] targetHour
+  L716    [Grupo] grupo
+  L730    [Score] scoreProb
+  L788    [Grupo] grupo
+  L803    [Grupo] grupo
+  L816    [Grupo] grupo
+  L875    [Frequencia por horario] targetHour
+  L883    [Grupo] grupo
+  L891    [Grupo] grupo
+  L913    [Grupo] grupo
+  L920    [Frequencia por horario] targetHour
+  L924    [Grupo] grupo
+  L930    [Frequencia por horario] targetHour
+  L934    [Grupo] grupo
+  L939    [Frequencia por horario] targetHour
+  L947    [Frequencia por horario] targetHour
+  L955    [Frequencia por horario] targetHour
+  L961    [Frequencia por horario] targetHour
+  L969    [Frequencia por horario] targetHour
+  L987    [Frequencia por horario] targetHour
+  L1037   [Frequencia por horario] targetHour
+  L1095   [TOP retornado] top:
+  L1110   [TOP retornado] top:
+  L1141   [TOP retornado] top:
+  L1147   [Frequencia por horario] targetHour
+  L1170   [Score] scoreProb
+  L1216   [Grupo] grupo
+  L1217   [Grupo] grupo
+  L1218   [Grupo] grupo
+  L1219   [Grupo] grupo
+  L1220   [Grupo] grupo
+  L1223   [Grupo] grupo
+  L1235   [Atraso] lateBonus
+  L1237   [Grupo] grupo
+  L1259   [Atraso] lateBonus
+  L1292   [Grupo] grupo
+  L1296   [Score] scoreProb
+  L1299   [Score] score
+  L1300   [Atraso] lateBonus
+  L1313   [Score] score
+  L1314   [Score] scoreProb
+  L1317   [Grupo] grupo
+  L1331   [Grupo] grupo
+  L1332   [Score] scoreProb
+  L1344   [Grupo] grupo
+  L1345   [Score] scoreProb
+
+ARQUIVO: src/pages/Top3/top3.engine.before-history-stats-20260710_112326.js
+CATEGORIAS: V3 principal, Ranking, TOP retornado, Grupo, Score, Evidencias, Atraso, Frequencia por horario, Backtest
+  L1      [TOP retornado] Top3
+  L16     [TOP retornado] top3
+  L18     [Ranking] scoreRanking
+  L30     [TOP retornado] top3
+  L73     [Score] score
+  L74     [Score] score
+  L75     [Score] score
+  L76     [Score] score
+  L79     [Score] score
+  L81     [Score] score
+  L102    [Grupo] grupo
+  L103    [Grupo] group
+  L545    [Grupo] grupo
+  L644    [Grupo] grupo
+  L655    [Grupo] grupo
+  L657    [Grupo] grupo
+  L686    [Frequencia por horario] targetHour
+  L692    [Frequencia por horario] targetHour
+  L716    [Grupo] grupo
+  L730    [Score] scoreProb
+  L788    [Grupo] grupo
+  L803    [Grupo] grupo
+  L816    [Grupo] grupo
+  L875    [Frequencia por horario] targetHour
+  L883    [Grupo] grupo
+  L891    [Grupo] grupo
+  L913    [Grupo] grupo
+  L920    [Frequencia por horario] targetHour
+  L924    [Grupo] grupo
+  L930    [Frequencia por horario] targetHour
+  L934    [Grupo] grupo
+  L939    [Frequencia por horario] targetHour
+  L947    [Frequencia por horario] targetHour
+  L955    [Frequencia por horario] targetHour
+  L961    [Frequencia por horario] targetHour
+  L969    [Frequencia por horario] targetHour
+  L987    [Frequencia por horario] targetHour
+  L1037   [Frequencia por horario] targetHour
+  L1095   [TOP retornado] top:
+  L1110   [TOP retornado] top:
+  L1141   [TOP retornado] top:
+  L1147   [Frequencia por horario] targetHour
+  L1170   [Score] scoreProb
+  L1216   [Grupo] grupo
+  L1217   [Grupo] grupo
+  L1218   [Grupo] grupo
+  L1219   [Grupo] grupo
+  L1220   [Grupo] grupo
+  L1223   [Grupo] grupo
+  L1235   [Atraso] lateBonus
+  L1237   [Grupo] grupo
+  L1259   [Atraso] lateBonus
+  L1292   [Grupo] grupo
+  L1296   [Score] scoreProb
+  L1299   [Score] score
+  L1300   [Atraso] lateBonus
+  L1313   [Score] score
+  L1314   [Score] scoreProb
+  L1317   [Grupo] grupo
+  L1331   [Grupo] grupo
+  L1332   [Score] scoreProb
+  L1344   [Grupo] grupo
+  L1345   [Score] scoreProb
+
+ARQUIVO: src/pages/Top3/top3.engine.js
+CATEGORIAS: V3 principal, Ranking, TOP retornado, Grupo, Score, Evidencias, Atraso, Frequencia por horario, Backtest
+  L1      [TOP retornado] Top3
+  L16     [TOP retornado] top3
+  L18     [Ranking] scoreRanking
+  L30     [TOP retornado] top3
+  L73     [Score] score
+  L74     [Score] score
+  L75     [Score] score
+  L76     [Score] score
+  L79     [Score] score
+  L81     [Score] score
+  L102    [Grupo] grupo
+  L103    [Grupo] group
+  L545    [Grupo] grupo
+  L644    [Grupo] grupo
+  L655    [Grupo] grupo
+  L657    [Grupo] grupo
+  L686    [Frequencia por horario] targetHour
+  L692    [Frequencia por horario] targetHour
+  L716    [Grupo] grupo
+  L730    [Score] scoreProb
+  L788    [Grupo] grupo
+  L803    [Grupo] grupo
+  L816    [Grupo] grupo
+  L875    [Frequencia por horario] targetHour
+  L883    [Grupo] grupo
+  L891    [Grupo] grupo
+  L913    [Grupo] grupo
+  L920    [Frequencia por horario] targetHour
+  L924    [Grupo] grupo
+  L930    [Frequencia por horario] targetHour
+  L934    [Grupo] grupo
+  L939    [Frequencia por horario] targetHour
+  L947    [Frequencia por horario] targetHour
+  L955    [Frequencia por horario] targetHour
+  L961    [Frequencia por horario] targetHour
+  L969    [Frequencia por horario] targetHour
+  L987    [Frequencia por horario] targetHour
+  L1037   [Frequencia por horario] targetHour
+  L1095   [TOP retornado] top:
+  L1110   [TOP retornado] top:
+  L1141   [TOP retornado] top:
+  L1147   [Frequencia por horario] targetHour
+  L1170   [Score] scoreProb
+  L1216   [Grupo] grupo
+  L1217   [Grupo] grupo
+  L1218   [Grupo] grupo
+  L1219   [Grupo] grupo
+  L1220   [Grupo] grupo
+  L1223   [Grupo] grupo
+  L1235   [Atraso] lateBonus
+  L1237   [Grupo] grupo
+  L1259   [Atraso] lateBonus
+  L1292   [Grupo] grupo
+  L1296   [Score] scoreProb
+  L1299   [Score] score
+  L1300   [Atraso] lateBonus
+  L1313   [Score] score
+  L1314   [Score] scoreProb
+  L1317   [Grupo] grupo
+  L1331   [Grupo] grupo
+  L1332   [Score] scoreProb
+  L1344   [Grupo] grupo
+  L1345   [Score] scoreProb
+
+ARQUIVO: src/pages/Top3/top3.firestore.js
+CATEGORIAS: TOP retornado, Grupo, Frequencia por horario
+  L15     [TOP retornado] top3
+  L21     [TOP retornado] top3
+  L37     [Frequencia por horario] targetHour
+  L40     [Frequencia por horario] targetHour
+  L100    [Frequencia por horario] targetHour
+  L103    [Frequencia por horario] targetHour
+  L119    [TOP retornado] .slice(0, 3)
+  L122    [Grupo] grupo
+  L136    [Grupo] grupo
+  L137    [Grupo] grupo
+  L138    [Grupo] grupo
+  L144    [TOP retornado] .slice(0, 3)
+  L144    [TOP retornado] top3
+  L145    [Grupo] grupo
+  L156    [TOP retornado] top3
+  L157    [Grupo] grupo
+  L194    [Grupo] grupo
+  L195    [Grupo] grupo
+  L201    [Grupo] grupo
+  L212    [Frequencia por horario] targetHour
+  L240    [Frequencia por horario] targetHour
+  L244    [Frequencia por horario] targetHour
+  L271    [TOP retornado] .slice(0, 3)
+  L279    [Frequencia por horario] targetHour
+  L343    [Frequencia por horario] targetHour
+  L365    [Frequencia por horario] targetHour
+  L366    [Frequencia por horario] targetHour
+  L412    [Frequencia por horario] targetHour
+
+ARQUIVO: src/pages/Top3/top3.formatters.js
+CATEGORIAS: TOP retornado, Grupo
+  L1      [TOP retornado] Top3
+  L266    [TOP retornado] TOP3
+  L330    [Grupo] grupo
+  L332    [Grupo] grupo
+  L333    [Grupo] grupo
+
+ARQUIVO: src/pages/Top3/top3.hooks.js
+CATEGORIAS: TOP retornado, Grupo, Frequencia por horario
+  L13     [TOP retornado] top3
+  L22     [TOP retornado] top3
+  L35     [TOP retornado] top3
+  L37     [TOP retornado] top3
+  L43     [TOP retornado] top3
+  L49     [TOP retornado] top3
+  L62     [TOP retornado] top3
+  L64     [TOP retornado] top3
+  L66     [TOP retornado] top3
+  L68     [TOP retornado] top3
+  L73     [TOP retornado] top3
+  L79     [TOP retornado] top3
+  L82     [TOP retornado] top:
+  L165    [Frequencia por horario] targetHour
+  L167    [Frequencia por horario] targetHour
+  L172    [Frequencia por horario] targetHour
+  L278    [TOP retornado] TOP3
+  L660    [TOP retornado] TOP3
+  L714    [TOP retornado] TOP3
+  L724    [Frequencia por horario] targetHour
+  L791    [TOP retornado] TOP3
+  L840    [TOP retornado] TOP3
+  L915    [TOP retornado] top3
+  L945    [Frequencia por horario] targetHour
+  L965    [TOP retornado] top3
+  L966    [TOP retornado] top3
+  L971    [TOP retornado] top3
+  L975    [TOP retornado] top3
+  L976    [Grupo] grupo
+  L978    [TOP retornado] .slice(0, 3)
+  L982    [TOP retornado] top3
+  L984    [Grupo] grupo
+  L998    [TOP retornado] top3
+  L999    [TOP retornado] top3
+  L1005   [Frequencia por horario] targetHour
+  L1014   [Frequencia por horario] targetHour
+  L1024   [Frequencia por horario] targetHour
+  L1040   [TOP retornado] TOP3
+  L1045   [TOP retornado] TOP3
+  L1055   [Frequencia por horario] targetHour
+  L1070   [TOP retornado] TOP3
+  L1077   [TOP retornado] top3
+  L1181   [TOP retornado] TOP3
+  L1220   [TOP retornado] top3
+
+ARQUIVO: src/pages/Top3/top3.images.js
+CATEGORIAS: Grupo
+  L19     [Grupo] grupo
+  L20     [Grupo] grupo
+  L28     [Grupo] grupo
+  L29     [Grupo] grupo
+
+ARQUIVO: src/pages/Top3/Top3.jsx
+CATEGORIAS: TOP retornado
+  L1      [TOP retornado] Top3
+  L3      [TOP retornado] top3
+  L6      [TOP retornado] Top3
+
+ARQUIVO: src/pages/Top3/top3.public-api.js
+CATEGORIAS: V3 principal, Ranking, TOP retornado, Evidencias
+  L1      [TOP retornado] Top3
+  L3      [TOP retornado] TOP3
+  L15     [V3 principal] computeStatisticalTop3V3
+  L46     [TOP retornado] top3
+  L49     [Ranking] scoreRanking
+  L55     [Evidencias] collectEvidence
+
+ARQUIVO: src/pages/Top3/top3.selectors.js
+CATEGORIAS: TOP retornado, Grupo
+  L1      [TOP retornado] top3
+  L99     [Grupo] grupo
+  L104    [Grupo] grupo
+
+ARQUIVO: src/pages/Top3/top3.storage.js
+CATEGORIAS: TOP retornado, Score, Frequencia por horario
+  L1      [TOP retornado] top3
+  L8      [TOP retornado] top3
+  L14     [TOP retornado] top3
+  L17     [TOP retornado] TOP3
+  L63     [TOP retornado] .slice(0, 3)
+  L112    [Score] score
+  L113    [Score] score
+  L114    [Score] score
+  L115    [Score] score
+  L116    [Score] score
+  L117    [Score] score
+  L119    [Score] score
+  L163    [Frequencia por horario] targetHour
+  L169    [Frequencia por horario] targetHour
+  L252    [Frequencia por horario] targetHour
+  L254    [Frequencia por horario] targetHour
+  L280    [Frequencia por horario] targetHour
+  L282    [Frequencia por horario] targetHour
+  L283    [Frequencia por horario] targetHour
+  L287    [Frequencia por horario] targetHour
+
+ARQUIVO: src/pages/Top3/Top3View.jsx
+CATEGORIAS: TOP retornado, Grupo, Score, Evidencias, Frequencia por horario
+  L1      [TOP retornado] Top3
+  L22     [Score] score
+  L23     [Score] score
+  L29     [Grupo] grupo
+  L30     [Grupo] grupo
+  L116    [Grupo] grupo
+  L117    [Grupo] grupo
+  L154    [Grupo] grupo
+  L155    [Grupo] grupo
+  L234    [Grupo] grupo
+  L235    [Grupo] grupo
+  L236    [Grupo] grupo
+  L246    [Grupo] grupo
+  L247    [Grupo] group
+  L261    [Grupo] grupo
+  L262    [Grupo] grupo
+  L268    [TOP retornado] top3
+  L269    [TOP retornado] top3
+  L270    [Score] score
+  L281    [Score] score
+  L284    [Score] score
+  L286    [TOP retornado] top3
+  L287    [Grupo] grupo
+  L303    [Score] score
+  L308    [Score] score
+  L312    [Score] score
+  L316    [Score] score
+  L321    [Score] score
+  L324    [Score] score
+  L428    [Grupo] grupo
+  L448    [Score] score
+  L485    [Grupo] grupo
+  L507    [Grupo] grupo
+  L509    [Grupo] grupo
+  L519    [Grupo] grupo
+  L526    [Score] score
+  L553    [Grupo] grupo
+  L555    [Frequencia por horario] targetHour
+  L569    [Frequencia por horario] targetHour
+  L569    [TOP retornado] TOP3
+  L582    [Frequencia por horario] targetHour
+  L582    [TOP retornado] TOP3
+  L591    [TOP retornado] TOP3
+  L604    [Evidencias] reasons
+  L635    [Grupo] grupo
+  L692    [TOP retornado] top3
+  L694    [TOP retornado] top3
+  L695    [TOP retornado] top3
+  L696    [TOP retornado] top3
+  L699    [TOP retornado] top3
+  L700    [TOP retornado] top3
+  L707    [TOP retornado] top3
+  L708    [Grupo] GRUPO
+  L708    [TOP retornado] top3
+  L709    [TOP retornado] top3
+  L715    [TOP retornado] top3
+  L716    [TOP retornado] top3
+  L717    [TOP retornado] top3
+  L718    [TOP retornado] top3
+  L720    [TOP retornado] top3
+  L728    [TOP retornado] top3
+  L751    [TOP retornado] top3
+  L752    [TOP retornado] top3
+  L775    [Grupo] GRUPO
+  L775    [TOP retornado] top3
+  L776    [TOP retornado] top3
+  L789    [Score] SCORE
+  L789    [TOP retornado] top3
+  L805    [TOP retornado] top3
+  L807    [TOP retornado] top3
+  L820    [TOP retornado] top3
+  L821    [TOP retornado] top3
+
+ARQUIVO: src/pages/Top3/Top3View.premium.backup.jsx
+CATEGORIAS: TOP retornado, Grupo, Score, Evidencias, Frequencia por horario
+  L1      [TOP retornado] Top3
+  L22     [Score] score
+  L23     [Score] score
+  L29     [Grupo] grupo
+  L30     [Grupo] grupo
+  L90     [Grupo] grupo
+  L91     [Grupo] grupo
+  L128    [Grupo] grupo
+  L129    [Grupo] grupo
+  L208    [Grupo] grupo
+  L209    [Grupo] grupo
+  L210    [Grupo] grupo
+  L220    [Grupo] grupo
+  L221    [Grupo] group
+  L235    [Grupo] grupo
+  L236    [Grupo] grupo
+  L242    [TOP retornado] top3
+  L243    [TOP retornado] top3
+  L244    [Score] score
+  L255    [Score] score
+  L258    [Score] score
+  L260    [TOP retornado] top3
+  L261    [Grupo] grupo
+  L271    [Score] score
+  L275    [Score] score
+  L278    [Score] score
+  L281    [Score] score
+  L285    [Score] score
+  L288    [Score] score
+  L371    [Grupo] grupo
+  L391    [Score] score
+  L428    [Grupo] grupo
+  L450    [Grupo] grupo
+  L452    [Grupo] grupo
+  L462    [Grupo] grupo
+  L469    [Score] score
+  L497    [Grupo] grupo
+  L499    [Frequencia por horario] targetHour
+  L513    [Frequencia por horario] targetHour
+  L513    [TOP retornado] TOP3
+  L526    [Frequencia por horario] targetHour
+  L526    [TOP retornado] TOP3
+  L535    [TOP retornado] TOP3
+  L548    [Evidencias] reasons
+  L597    [TOP retornado] top3
+  L599    [TOP retornado] top3
+  L600    [TOP retornado] top3
+  L601    [TOP retornado] top3
+  L604    [TOP retornado] top3
+  L605    [TOP retornado] top3
+  L612    [TOP retornado] top3
+  L613    [Grupo] GRUPO
+  L613    [TOP retornado] top3
+  L614    [TOP retornado] top3
+  L620    [TOP retornado] top3
+  L621    [TOP retornado] top3
+  L622    [TOP retornado] top3
+  L623    [TOP retornado] top3
+  L625    [TOP retornado] top3
+  L633    [TOP retornado] top3
+  L648    [TOP retornado] top3
+  L649    [Score] Score
+  L649    [TOP retornado] top3
+  L650    [TOP retornado] top3
+  L655    [TOP retornado] top3
+  L656    [TOP retornado] top3
+  L657    [TOP retornado] top3
+  L660    [TOP retornado] top3
+  L661    [TOP retornado] top3
+  L662    [TOP retornado] top3
+  L678    [TOP retornado] .slice(0, 3)
+  L687    [Grupo] grupo
+  L687    [TOP retornado] top3
+
+========================================================================================
+EXTRATOS DOS ARQUIVOS PRIORITARIOS
+========================================================================================
+
+----------------------------------------------------------------------------------------
+ARQUIVO: backend/engine/scoreEngineUnified.js
+----------------------------------------------------------------------------------------
+   76:   )(input);
+   77: }
+   78: 
+   79: function computeConditionalNextTop3V2(input = {}) {
+   80:   const api = loadTop3PublicApi();
+   81: 
+   82:   return assertFunction(
+   83:     api,
+   84:     "computeConditionalNextTop3V2"
+   85:   )(input);
+   86: }
+   87: 
+   88: function computeStatisticalTop3V3(input = {}) {
+   89:   const api = loadTop3PublicApi();
+   90: 
+   91:   return assertFunction(
+   92:     api,
+   93:     "computeStatisticalTop3V3"
+   94:   )(input);
+   95: }
+   96: 
+   97: module.exports = {
+   98:   loadTop3PublicApi,
+   99:   getTop3Capabilities,
+  100:   computeConditionalNextTop3,
+  101:   computeConditionalNextTop3V2,
+  102:   computeStatisticalTop3V3,
+  103: };
+
+----------------------------------------------------------------------------------------
+ARQUIVO: backend/engine/scoreEngineV4Experimental.js
+----------------------------------------------------------------------------------------
+    1: "use strict";
+    2: 
+    3: const {
+    4:   computeStatisticalTop3V3,
+    5: } = require("./scoreEngineUnified");
+    6: 
+    7: const GROUPS_K = 25;
+    8: const LAPLACE_ALPHA = 1;
+    9: 
+   10: function safeArray(value) {
+   11:   return Array.isArray(value) ? value : [];
+   12: }
+   13: 
+   14: function normalizeHour(value) {
+   15:   const raw = String(value ?? "").trim();
+   16: 
+   17:   if (!raw) {
+   18:     return "";
+   19:   }
+   20: 
+   21:   const match = raw.match(/^(\d{1,2})(?::?(\d{2}))?/);
+   22: 
+   23:   if (!match) {
+   24:     return "";
+   25:   }
+   26: 
+   27:   const hour = Number(match[1]);
+   28:   const minute = Number(match[2] || 0);
+   29: 
+   30:   if (
+   31:     !Number.isFinite(hour) ||
+   32:     hour < 0 ||
+  ...
+  672:             evidence.previous,
+  673:           target:
+  674:             evidence.target,
+  675:         },
+  676:       })
+  677:     );
+  678: }
+  679: 
+  680: function computeStatisticalTop3V4Experimental(
+  681:   input = {}
+  682: ) {
+  683:   const baseline =
+  684:     computeStatisticalTop3V3(
+  685:       input
+  686:     );
+  687: 
+  688:   const evidence =
+  689:     collectTransitionEvidence(
+  690:       input
+  691:     );
+  692: 
+  693:   const experimentalTop =
+  694:     buildExperimentalTop(
+  695:       evidence,
+  696:       input.topN || 3
+  697:     );
+  698: 
+  699:   return {
+  700:     ...baseline,
+  701:     top:
+  702:       experimentalTop.length
+  703:         ? experimentalTop
+  704:         : safeArray(baseline?.top),
+  705:     ranking:
+  706:       experimentalTop.length
+  707:         ? experimentalTop
+  708:         : safeArray(
+  709:             baseline?.ranking
+  710:           ),
+  711:     baselineTop:
+  712:       safeArray(baseline?.top),
+
+----------------------------------------------------------------------------------------
+ARQUIVO: backend/scripts/backtestTop3Official.js
+----------------------------------------------------------------------------------------
+    1: "use strict";
+    2: 
+    3: const fs = require("fs");
+    4: const path = require("path");
+    5: 
+    6: const {
+    7:   readFullHistory,
+    8:   readMetadata,
+    9: } = require("../engine/top3HistoryRepository");
+   10: 
+   11: const {
+   12:   computeStatisticalTop3V3,
+   13:   loadTop3PublicApi,
+   14: } = require("../engine/scoreEngineUnified");
+   15: 
+   16: const PT_RIO_SCHEDULE_NORMAL = [
+   17:   "09:00",
+   18:   "11:00",
+   19:   "14:00",
+   20:   "16:00",
+   21:   "18:00",
+   22:   "21:00",
+   23: ];
+   24: 
+   25: const PT_RIO_SCHEDULE_WED_SAT = [
+   26:   "09:00",
+   27:   "11:00",
+   28:   "14:00",
+   29:   "16:00",
+   30:   "18:00",
+   31:   "21:00",
+   32: ];
+   33: 
+   34: const FEDERAL_SCHEDULE = [
+   35:   "19:00",
+   36:   "20:00",
+   37: ];
+   38: 
+   39: function safeArray(value) {
+   40:   return Array.isArray(value)
+  ...
+  303:         group <= 25
+  304:     )
+  305:     .slice(0, 3);
+  306: }
+  307: 
+  308: function ensureBucket(
+  309:   map,
+  310:   key
+  311: ) {
+  312:   if (!map[key]) {
+  313:     map[key] = {
+  314:       evaluated: 0,
+  315:       top1Hits: 0,
+  316:       top3Hits: 0,
+  317:       errors: 0,
+  318:     };
+  319:   }
+  320: 
+  321:   return map[key];
+  322: }
+  323: 
+  324: function finalizeBucket(bucket = {}) {
+  325:   const evaluated = Number(
+  326:     bucket.evaluated || 0
+  327:   );
+  328: 
+  329:   const top1Hits = Number(
+  330:     bucket.top1Hits || 0
+  331:   );
+  332: 
+  333:   const top3Hits = Number(
+  334:     bucket.top3Hits || 0
+  335:   );
+  336: 
+  337:   return {
+  338:     evaluated,
+  339:     top1Hits,
+  340:     top3Hits,
+  341:     errors: Number(
+  342:       bucket.errors || 0
+  343:     ),
+  344:     top1Rate:
+  345:       evaluated > 0
+  346:         ? Number(
+  347:             (
+  348:               top1Hits /
+  349:               evaluated *
+  350:               100
+  351:             ).toFixed(4)
+  352:           )
+  353:         : 0,
+  354:     top3Rate:
+  355:       evaluated > 0
+  356:         ? Number(
+  357:             (
+  358:               top3Hits /
+  359:               evaluated *
+  360:               100
+  361:             ).toFixed(4)
+  362:           )
+  363:         : 0,
+  364:   };
+  365: }
+  366: 
+  367: function finalizeMap(map = {}) {
+  368:   const result = {};
+  369: 
+  370:   for (
+  371:     const [key, bucket]
+  372:     of Object.entries(map)
+  373:   ) {
+  374:     result[key] = finalizeBucket(
+  375:       bucket
+  376:     );
+  377:   }
+  378: 
+  379:   return result;
+  380: }
+  381: 
+  382: function formatPercent(value) {
+  383:   return `${Number(value || 0).toFixed(2)}%`;
+  384: }
+  385: 
+  386: function buildTextReport(result) {
+  ...
+  428:     `Erros...............: ${result.global.errors}`
+  429:   );
+  430: 
+  431:   lines.push(
+  432:     `Período histórico...: ${result.historyPeriod.from} até ${result.historyPeriod.to}`
+  433:   );
+  434: 
+  435:   lines.push(
+  436:     `Período avaliado....: ${result.evaluationPeriod.from || "-"} até ${result.evaluationPeriod.to || "-"}`
+  437:   );
+  438: 
+  439:   lines.push(
+  440:     `TOP1................: ${result.global.top1Hits} (${formatPercent(result.global.top1Rate)})`
+  441:   );
+  442: 
+  443:   lines.push(
+  444:     `TOP3................: ${result.global.top3Hits} (${formatPercent(result.global.top3Rate)})`
+  445:   );
+  446: 
+  447:   lines.push(
+  448:     `Tempo total.........: ${result.tookMs} ms`
+  449:   );
+  450: 
+  451:   lines.push("");
+  452:   lines.push("POR HORÁRIO");
+  453: 
+  454:   for (
+  455:     const [hour, bucket]
+  456:     of Object.entries(result.byHour)
+  457:   ) {
+  458:     lines.push(
+  459:       `${hour.padEnd(8)} avaliados=${String(bucket.evaluated).padStart(5)} | TOP1=${formatPercent(bucket.top1Rate).padStart(8)} | TOP3=${formatPercent(bucket.top3Rate).padStart(8)} | erros=${bucket.errors}`
+  460:     );
+  461:   }
+  462: 
+  463:   lines.push("");
+  464:   lines.push("POR DIA DA SEMANA");
+  465: 
+  466:   for (
+  467:     const [weekday, bucket]
+  468:     of Object.entries(result.byWeekday)
+  469:   ) {
+  470:     lines.push(
+  471:       `${weekday.padEnd(3)} avaliados=${String(bucket.evaluated).padStart(5)} | TOP1=${formatPercent(bucket.top1Rate).padStart(8)} | TOP3=${formatPercent(bucket.top3Rate).padStart(8)} | erros=${bucket.errors}`
+  472:     );
+  ...
+  478:   for (
+  479:     const [month, bucket]
+  480:     of Object.entries(result.byMonth)
+  481:   ) {
+  482:     lines.push(
+  483:       `${month} avaliados=${String(bucket.evaluated).padStart(5)} | TOP1=${formatPercent(bucket.top1Rate).padStart(8)} | TOP3=${formatPercent(bucket.top3Rate).padStart(8)} | erros=${bucket.errors}`
+  484:     );
+  485:   }
+  486: 
+  487:   return lines.join("\n");
+  488: }
+  489: 
+  490: async function runOfficialBacktest(
+  491:   options = {},
+  492:   dependencies = {}
+  493: ) {
+  494:   const startedAt = Date.now();
+  495: 
+  496:   const lotteryKey =
+  497:     normalizeLotteryKey(
+  498:       options.lotteryKey ||
+  499:       "PT_RIO"
+  500:     );
+  501: 
+  502:   const publicApi =
+  503:     dependencies.publicApi ||
+  504:     loadTop3PublicApi();
+  505: 
+  506:   const loadHistory =
+  507:     dependencies.readFullHistory ||
+  508:     readFullHistory;
+  509: 
+  510:   const loadMetadata =
+  511:     dependencies.readMetadata ||
+  512:     readMetadata;
+  513: 
+  514:   const computeTop3 =
+  515:     dependencies.computeTop3 ||
+  516:     computeStatisticalTop3V3;
+  517: 
+  518:   const history = sortDraws(
+  519:     await loadHistory(
+  520:       lotteryKey,
+  521:       dependencies.historyDependencies || {}
+  522:     ),
+  523:     publicApi
+  524:   );
+  525: 
+  526:   if (!history.length) {
+  527:     throw new Error(
+  528:       "Histórico TOP3 vazio."
+  529:     );
+  530:   }
+  531: 
+  532:   const metadataResult =
+  533:     await loadMetadata(
+  534:       lotteryKey,
+  535:       dependencies.historyDependencies || {}
+  536:     );
+  537: 
+  538:   const metadata =
+  539:     metadataResult?.data || null;
+  540: 
+  541:   if (
+  542:     dependencies.allowIncompleteSnapshot !== true &&
+  543:     (
+  544:       metadataResult?.exists !== true ||
+  ...
+  601:   }
+  602: 
+  603:   const selectedIndexes =
+  604:     options.limit
+  605:       ? eligibleIndexes.slice(
+  606:           0,
+  607:           Number(options.limit)
+  608:         )
+  609:       : eligibleIndexes;
+  610: 
+  611:   const globalBucket = {
+  612:     evaluated: 0,
+  613:     top1Hits: 0,
+  614:     top3Hits: 0,
+  615:     errors: 0,
+  616:   };
+  617: 
+  618:   const byHour = {};
+  619:   const byWeekday = {};
+  620:   const byMonth = {};
+  621: 
+  622:   const telemetryCases = [];
+  623: 
+  624:   let skipped = 0;
+  625:   let evaluationFrom = null;
+  626:   let evaluationTo = null;
+  627: 
+  628:   for (
+  629:     let position = 0;
+  630:     position < selectedIndexes.length;
+  631:     position += 1
+  632:   ) {
+  633:     const index =
+  634:       selectedIndexes[position];
+  635: 
+  636:     const targetDraw =
+  637:       history[index];
+  638: 
+  639:     const targetYmd =
+  640:       publicApi.pickDrawYMD(
+  641:         targetDraw
+  642:       );
+  643: 
+  644:     const targetHour =
+  645:       publicApi.pickDrawHour(
+  646:         targetDraw
+  647:       );
+  648: 
+  649:     const actualGroup =
+  650:       getFirstPrizeGroup(
+  651:         targetDraw,
+  652:         publicApi
+  653:       );
+  654: 
+  655:     const historyBefore =
+  656:       history.slice(0, index);
+  657: 
+  658:     const drawLast =
+  659:       historyBefore[
+  660:         historyBefore.length - 1
+  661:       ];
+  662: 
+  663:     if (
+  664:       !targetYmd ||
+  665:       !targetHour ||
+  666:       actualGroup == null ||
+  667:       !drawLast
+  668:     ) {
+  669:       skipped += 1;
+  670:       continue;
+  671:     }
+  672: 
+  673:     const weekday = String(
+  674:       new Date(
+  675:         `${targetYmd}T12:00:00Z`
+  676:       ).getUTCDay()
+  677:     );
+  678: 
+  679:     const month =
+  680:       targetYmd.slice(0, 7);
+  681: 
+  682:     const hourBucket =
+  683:       ensureBucket(
+  684:         byHour,
+  685:         normalizeHour(targetHour) ||
+  686:         targetHour
+  687:       );
+  688: 
+  689:     const weekdayBucket =
+  690:       ensureBucket(
+  691:         byWeekday,
+  692:         weekday
+  693:       );
+  694: 
+  695:     const monthBucket =
+  696:       ensureBucket(
+  697:         byMonth,
+  698:         month
+  699:       );
+  700: 
+  701:     try {
+  702:       const computed =
+  703:         computeTop3({
+  704:           lotteryKey,
+  705:           drawsRange:
+  706:             historyBefore,
+  707:           drawLast,
+  708:           PT_RIO_SCHEDULE_NORMAL,
+  709:           PT_RIO_SCHEDULE_WED_SAT,
+  710:           FEDERAL_SCHEDULE,
+  711:           topN: 3,
+  712:           targetYmdOverride:
+  713:             targetYmd,
+  714:           targetHourOverride:
+  715:             targetHour,
+  716:         });
+  717: 
+  718:       const predictionGroups =
+  719:         getPredictionGroups(
+  720:           computed
+  721:         );
+  722: 
+  723:       if (
+  724:         predictionGroups.length < 3
+  725:       ) {
+  726:         throw new Error(
+  727:           "Motor retornou menos de 3 grupos."
+  728:         );
+  729:       }
+  730: 
+  731:       const top1Hit =
+  732:         predictionGroups[0] ===
+  733:         actualGroup;
+  734: 
+  735:       const top3Hit =
+  736:         predictionGroups.includes(
+  737:           actualGroup
+  738:         );
+  739: 
+  740:       if (options.telemetry === true) {
+  741:         const computedTop = safeArray(
+  742:           computed?.top
+  743:         );
+  744: 
+  745:         telemetryCases.push({
+  746:           caseNumber: position + 1,
+  747:           historyIndex: index,
+  748:           target: {
+  749:             ymd: targetYmd,
+  750:             hour:
+  751:               normalizeHour(targetHour) ||
+  752:               targetHour,
+  753:             weekday,
+  754:             month,
+  755:           },
+  756:           history: {
+  757:             availableBefore:
+  758:               historyBefore.length,
+  759:             lastDrawYmd:
+  760:               publicApi.pickDrawYMD(
+  761:                 drawLast
+  762:               ) || null,
+  763:             lastDrawHour:
+  764:               publicApi.pickDrawHour(
+  765:                 drawLast
+  766:               ) || null,
+  767:           },
+  768:           actual: {
+  769:             group: actualGroup,
+  770:           },
+  771:           prediction: {
+  772:             groups: predictionGroups,
+  773:             top1Hit,
+  774:             top3Hit,
+  775:           },
+  776:           candidates: computedTop
+  777:             .slice(0, 3)
+  778:             .map((item, rankIndex) => ({
+  779:               rank: rankIndex + 1,
+  780:               grupo: Number(
+  781:                 item?.grupo ??
+  782:                 item?.group
+  783:               ),
+  784:               score: Number.isFinite(
+  785:                 Number(item?.score)
+  786:               )
+  787:                 ? Number(item.score)
+  788:                 : null,
+  789:               scoreProb: Number.isFinite(
+  790:                 Number(item?.scoreProb)
+  791:               )
+  792:                 ? Number(item.scoreProb)
+  793:                 : null,
+  794:               probability: Number.isFinite(
+  795:                 Number(item?.probability)
+  796:               )
+  797:                 ? Number(item.probability)
+  ...
+  827:         });
+  828:       }
+  829: 
+  830:       for (const bucket of [
+  831:         globalBucket,
+  832:         hourBucket,
+  833:         weekdayBucket,
+  834:         monthBucket,
+  835:       ]) {
+  836:         bucket.evaluated += 1;
+  837: 
+  838:         if (top1Hit) {
+  839:           bucket.top1Hits += 1;
+  840:         }
+  841: 
+  842:         if (top3Hit) {
+  843:           bucket.top3Hits += 1;
+  844:         }
+  845:       }
+  846: 
+  847:       evaluationFrom =
+  848:         evaluationFrom || targetYmd;
+  849: 
+  850:       evaluationTo = targetYmd;
+  851:     } catch (error) {
+  852:       globalBucket.errors += 1;
+  853:       hourBucket.errors += 1;
+  854:       weekdayBucket.errors += 1;
+  855:       monthBucket.errors += 1;
+  856: 
+  857:       if (
+  858:         dependencies.onCaseError
+  859:       ) {
+  860:         dependencies.onCaseError({
+  861:           index,
+  862:           targetYmd,
+  863:           targetHour,
+  864:           error,
+  865:         });
+  866:       }
+  867:     }
+  868: 
+  869:     const done = position + 1;
+  870: 
+  871:     if (
+  ...
+  987:     "Período............:",
+  988:     `${options.from || "início"} até ${options.to || "fim"}`
+  989:   );
+  990:   console.log(
+  991:     "Telemetria.........:",
+  992:     options.telemetry
+  993:       ? "ATIVA"
+  994:       : "DESATIVADA"
+  995:   );
+  996:   console.log("");
+  997: 
+  998:   const result =
+  999:     await runOfficialBacktest(
+ 1000:       options
+ 1001:     );
+ 1002: 
+ 1003:   const outputDir = path.resolve(
+ 1004:     options.outputDir
+ 1005:   );
+ 1006: 
+ 1007:   fs.mkdirSync(
+ 1008:     outputDir,
+ 1009:     {
+ 1010:       recursive: true,
+ 1011:     }
+ 1012:   );
+ 1013: 
+ 1014:   const suffix =
+ 1015:     options.limit
+ 1016:       ? `limit_${options.limit}`
+ 1017:       : "full";
+ 1018: 
+ 1019:   const jsonPath = path.join(
+ 1020:     outputDir,
+ 1021:     `top3_official_backtest_${suffix}.json`
+ 1022:   );
+ 1023: 
+ 1024:   const txtPath = path.join(
+ 1025:     outputDir,
+ 1026:     `top3_official_backtest_${suffix}.txt`
+ 1027:   );
+  ...
+ 1068:     process.exit(1);
+ 1069:   });
+ 1070: }
+ 1071: 
+ 1072: module.exports = {
+ 1073:   parseBooleanFlag,
+ 1074:   parseCliArgs,
+ 1075:   sortDraws,
+ 1076:   getFirstPrizeGroup,
+ 1077:   getPredictionGroups,
+ 1078:   finalizeBucket,
+ 1079:   buildTextReport,
+ 1080:   runOfficialBacktest,
+ 1081: };
+
+----------------------------------------------------------------------------------------
+ARQUIVO: backend/scripts/backtestTop3E07Experimental.js
+----------------------------------------------------------------------------------------
+    1: "use strict";
+    2: 
+    3: const fs = require("fs");
+    4: const path = require("path");
+    5: 
+    6: const {
+    7:   runOfficialBacktest,
+    8: } = require("./backtestTop3Official");
+    9: 
+   10: const {
+   11:   computeStatisticalTop3V4Experimental,
+   12: } = require("../engine/scoreEngineV4Experimental");
+   13: 
+   14: function parseIntegerFlag(
+   15:   flags,
+   16:   name,
+   17:   fallback
+   18: ) {
+   19:   const prefix = `--${name}=`;
+   20: 
+   21:   const raw = flags.find(
+   22:     (flag) =>
+   23:       String(flag).startsWith(prefix)
+   24:   );
+   25: 
+   26:   if (!raw) {
+   27:     return fallback;
+   28:   }
+   29: 
+   30:   const value = Number(
+   31:     String(raw).slice(
+   32:       prefix.length
+   33:     )
+   34:   );
+   35: 
+  ...
+  151:   );
+  152:   console.log(
+  153:     "Historico minimo:",
+  154:     minHistory
+  155:   );
+  156:   console.log("");
+  157: 
+  158:   console.log(
+  159:     "[1/2] Executando baseline V3..."
+  160:   );
+  161: 
+  162:   const baseline =
+  163:     await runOfficialBacktest(
+  164:       commonOptions
+  165:     );
+  166: 
+  167:   console.log("");
+  168:   console.log(
+  169:     "[2/2] Executando E07 experimental..."
+  170:   );
+  171: 
+  172:   const experimental =
+  173:     await runOfficialBacktest(
+  174:       commonOptions,
+  175:       {
+  176:         computeTop3:
+  177:           computeStatisticalTop3V4Experimental,
+  178:       }
+  179:     );
+  180: 
+  181:   const comparison = {
+  182:     ok: true,
+  183:     experiment: "E07",
+  184:     lotteryKey,
+  185:     limit,
+  186:     minHistory,
+  187:     baseline: {
+  188:       engine:
+  189:         "top3_statistical_v3",
+  190:       evaluated:
+  191:         baseline.global.evaluated,
+  192:       errors:
+  193:         baseline.global.errors,
+  194:       top1Hits:
+  195:         baseline.global.top1Hits,
+  196:       top1Rate:
+  197:         baseline.global.top1Rate,
+  198:       top3Hits:
+  199:         baseline.global.top3Hits,
+  200:       top3Rate:
+  201:         baseline.global.top3Rate,
+  202:     },
+  203:     experimental: {
+  204:       engine:
+  205:         "top3_v4_experimental_e07",
+  206:       evaluated:
+  207:         experimental.global.evaluated,
+  208:       errors:
+  209:         experimental.global.errors,
+  210:       top1Hits:
+  211:         experimental.global.top1Hits,
+  212:       top1Rate:
+  213:         experimental.global.top1Rate,
+  214:       top3Hits:
+  215:         experimental.global.top3Hits,
+  216:       top3Rate:
+  217:         experimental.global.top3Rate,
+  218:     },
+  219:     delta: {
+  220:       top1Hits:
+  221:         experimental.global.top1Hits -
+  222:         baseline.global.top1Hits,
+  223:       top1Rate:
+  224:         experimental.global.top1Rate -
+  225:         baseline.global.top1Rate,
+  226:       top3Hits:
+  227:         experimental.global.top3Hits -
+  228:         baseline.global.top3Hits,
+  229:       top3Rate:
+  230:         experimental.global.top3Rate -
+  231:         baseline.global.top3Rate,
+  232:     },
+  233:     byHour: {
+  234:       baseline:
+  235:         baseline.byHour,
+  236:       experimental:
+  237:         experimental.byHour,
+  238:     },
+  239:     periods: {
+  240:       history:
+  241:         baseline.historyPeriod,
+  242:       evaluation:
+  243:         baseline.evaluationPeriod,
+  244:     },
+  245:     generatedAt:
+  246:       new Date().toISOString(),
+  247:   };
+  248: 
+  249:   const suffix =
+  250:     limit
+  251:       ? `limit_${limit}`
+  252:       : "full";
+  253: 
+  254:   const jsonPath =
+  255:     path.join(
+  256:       outputDir,
+  ...
+  265: 
+  266:   const lines = [
+  267:     "==============================================",
+  268:     "E07 - COMPARACAO V3 x TRANSICOES",
+  269:     "==============================================",
+  270:     "",
+  271:     `Loteria.............: ${lotteryKey}`,
+  272:     `Casos avaliados.....: ${baseline.global.evaluated}`,
+  273:     `Historico minimo....: ${minHistory}`,
+  274:     `Periodo avaliado....: ${baseline.evaluationPeriod.from || "-"} ate ${baseline.evaluationPeriod.to || "-"}`,
+  275:     "",
+  276:     "BASELINE V3",
+  277:     `TOP1................: ${baseline.global.top1Hits} (${percent(baseline.global.top1Rate)})`,
+  278:     `TOP3................: ${baseline.global.top3Hits} (${percent(baseline.global.top3Rate)})`,
+  279:     `Erros...............: ${baseline.global.errors}`,
+  280:     "",
+  281:     "EXPERIMENTAL E07",
+  282:     `TOP1................: ${experimental.global.top1Hits} (${percent(experimental.global.top1Rate)})`,
+  283:     `TOP3................: ${experimental.global.top3Hits} (${percent(experimental.global.top3Rate)})`,
+  284:     `Erros...............: ${experimental.global.errors}`,
+  285:     "",
+  286:     "DELTA E07 - V3",
+  287:     `TOP1 acertos........: ${comparison.delta.top1Hits}`,
+  288:     `TOP1 taxa...........: ${percent(comparison.delta.top1Rate)}`,
+  289:     `TOP3 acertos........: ${comparison.delta.top3Hits}`,
+  290:     `TOP3 taxa...........: ${percent(comparison.delta.top3Rate)}`,
+  291:     "",
+  292:     "POR HORARIO - E07",
+  293:     ...Object.entries(
+  294:       experimental.byHour || {}
+  295:     ).map(
+  296:       ([hour, bucket]) =>
+  297:         `${hour} | avaliados=${bucket.evaluated} | TOP1=${percent(bucket.top1Rate)} | TOP3=${percent(bucket.top3Rate)} | erros=${bucket.errors}`
+  298:     ),
+  299:     "",
+  300:     "Nenhuma alteracao foi aplicada a producao.",
+  301:     "Nenhum peso oficial da V3 foi alterado.",
+  302:     "Nenhum deploy ou commit foi realizado.",
+  303:   ];
+  304: 
+  305:   fs.writeFileSync(
+  306:     jsonPath,
+  307:     JSON.stringify(
+  308:       comparison,
+  309:       null,
+  310:       2
+  311:     ),
+  312:     "utf8"
+  313:   );
+  314: 
+  315:   fs.writeFileSync(
+  316:     textPath,
+  317:     lines.join("\n"),
+
+----------------------------------------------------------------------------------------
+ARQUIVO: src/pages/Top3/top3.engine.js
+----------------------------------------------------------------------------------------
+    6:   addDaysYMD,
+    7:   normalizeHourLike,
+    8:   toHourBucket,
+    9:   hourToInt,
+   10:   getDowKey,
+   11:   pickPrizeMilhar4,
+   12:   getDezena2,
+   13:   getCentena3,
+   14:   milharCompareAsc,
+   15:   wrapToDezena2,
+   16: } from "./top3.formatters";
+   17: 
+   18: import { scoreRanking } from "./modules/scoreEngine/scoreEngineV2";
+   19: 
+   20: import {
+   21:   TOP3_NEXTDRAW_SCAN_MAX_STEPS,
+   22:   TOP3_NEXTDRAW_SCAN_MAX_DAYS,
+   23:   TOP3_GROUPS_K,
+   24:   TOP3_SMOOTH_ALPHA,
+   25:   TOP3_SCENE_WEIGHT,
+   26:   TOP3_SCENE_SAMPLE_TARGET,
+   27:   TOP3_SCENE_BLEND_SCENE,
+   28:   TOP3_SCENE_BLEND_UNIFORM,
+   29:   PT_RIO_SCHEDULE_SUNDAY,
+   30: } from "./top3.constants";
+   31: 
+   32: function findPreviousValidDraw(draws, currentYmd, currentHour) {
+   33:   const list = Array.isArray(draws) ? draws : [];
+   34:   const targetY = safeStr(currentYmd);
+   35:   const targetH = toHourBucket(currentHour);
+   36: 
+   37:   if (!isYMD(targetY) || !targetH) return null;
+   38: 
+   39:   const targetTs = ymdHourToTs(targetY, targetH);
+   40: 
+   41:   return list
+   42:     .filter((draw) => Array.isArray(draw?.prizes) && draw.prizes.length > 0)
+   43:     .map((draw) => {
+   44:       const y = pickDrawYMD(draw);
+   45:       const h = toHourBucket(pickDrawHour(draw));
+   46:       return { draw, ts: ymdHourToTs(y, h) };
+  ...
+ 2822:     out.set(g, (count + a) / denom);
+ 2823:   }
+ 2824: 
+ 2825:   return out;
+ 2826: }
+ 2827: 
+ 2828: function sampleConfidence(samples, fullAt = 30) {
+ 2829:   const n = Number(samples || 0);
+ 2830:   const lim = Math.max(1, Number(fullAt || 30));
+ 2831:   return Math.max(0, Math.min(1, n / lim));
+ 2832: }
+ 2833: 
+ 2834: export function computeStatisticalTop3V3({
+ 2835:   lotteryKey,
+ 2836:   drawsRange,
+ 2837:   drawLast,
+ 2838:   PT_RIO_SCHEDULE_NORMAL,
+ 2839:   PT_RIO_SCHEDULE_WED_SAT,
+ 2840:   FEDERAL_SCHEDULE,
+ 2841:   topN = 3,
+ 2842:   targetYmdOverride = "",
+ 2843:   targetHourOverride = "",
+ 2844: }) {
+ 2845:   const list = sortDrawsAsc(Array.isArray(drawsRange) ? drawsRange : []);
+ 2846:   if (!list.length || !drawLast) return { top: [], meta: null };
+ 2847: 
+ 2848:   const key = safeStr(lotteryKey).toUpperCase();
+ 2849: 
+ 2850:   const lastY = pickDrawYMD(drawLast);
+ 2851:   const lastH = toHourBucket(pickDrawHour(drawLast));
+ 2852:   const prevGrupo = getFirstGrupoFromDraw(drawLast);
+ 2853: 
+ 2854:   if (
+ 2855:     !isYMD(lastY) ||
+ 2856:     !lastH ||
+ 2857:     !Number.isFinite(Number(prevGrupo)) ||
+ 2858:     Number(prevGrupo) < 1 ||
+ 2859:     Number(prevGrupo) > TOP3_GROUPS_K
+ 2860:   ) {
+ 2861:     return { top: [], meta: null };
+ 2862:   }
+  ...
+ 3051:       grupo,
+ 3052:       scoreProb,
+ 3053:       score: scoreProb * 1000,
+ 3054:       details,
+ 3055:     };
+ 3056:   })
+ 3057:     .sort((a, b) => {
+ 3058:       if (b.score !== a.score) return b.score - a.score;
+ 3059:       return a.grupo - b.grupo;
+ 3060:     })
+ 3061:     .slice(0, Math.max(1, Number(topN || 3)));
+ 3062: 
+ 3063:   const rankedScored = scoreRanking(
+ 3064:     ranked,
+ 3065:     {
+ 3066:       lotteryKey,
+ 3067:       targetYmd: targetY,
+ 3068:       targetHour: targetH,
+ 3069:       previousGroup: prevGrupo,
+ 3070:       totalDraws: history.length,
+ 3071:     }
+ 3072:   );
+ 3073: 
+ 3074:   const top = rankedScored.map((x, idx) => {
+ 3075:     const g2 = String(x.grupo).padStart(2, "0");
+ 3076:     const rawScoreProb = Number(x.scoreProb || 0);
+ 3077: 
+ 3078:     const strongest = Object.values(x.details)
+ 3079:       .filter((d) => Number(d.probability || 0) > 0)
+ 3080:       .sort((a, b) => (b.probability * b.weight) - (a.probability * a.weight))
+ 3081:       .slice(0, 3);
+ 3082: 
+ 3083:     return {
+ 3084:       rank: idx + 1,
+ 3085:       title:
+ 3086:         idx === 0
+ 3087:           ? "Mais provável"
+ 3088:           : idx === 1
+ 3089:             ? "2º mais provável"
+ 3090:             : "3º mais provável",
+ 3091:       grupo: x.grupo,
+  ...
+ 3773:   timeline,
+ 3774:   lotteryKey = "",
+ 3775: }) {
+ 3776:   const rows = Array.isArray(timeline) ? timeline : [];
+ 3777: 
+ 3778:   const validated = rows.filter((slot) => {
+ 3779:     const status = String(slot?.status || "").toLowerCase();
+ 3780:     return status === "validated" && Number.isFinite(Number(slot?.resultGrupo));
+ 3781:   });
+ 3782: 
+ 3783:   const total = validated.length;
+ 3784: 
+ 3785:   const top1Hits = validated.filter((slot) => {
+ 3786:     const result = Number(slot.resultGrupo);
+ 3787:     const first = Number(slot?.top3?.[0]?.grupo);
+ 3788:     return Number.isFinite(first) && first === result;
+ 3789:   }).length;
+ 3790: 
+ 3791:   const top3Hits = validated.filter((slot) => {
+ 3792:     const result = Number(slot.resultGrupo);
+ 3793:     return (Array.isArray(slot?.top3) ? slot.top3 : [])
+ 3794:       .slice(0, 3)
+ 3795:       .some((item) => Number(item?.grupo) === result);
+ 3796:   }).length;
+ 3797: 
+ 3798:   function pct(n, d) {
+ 3799:     if (!d) return 0;
+ 3800:     return Number(((Number(n || 0) / Number(d || 1)) * 100).toFixed(2));
+ 3801:   }
+ 3802: 
+ 3803:   function groupBy(keyFn) {
+ 3804:     const map = new Map();
+ 3805: 
+ 3806:     for (const slot of validated) {
+ 3807:       const key = keyFn(slot);
+ 3808:       const current = map.get(key) || {
+ 3809:         key,
+ 3810:         total: 0,
+ 3811:         top1Hits: 0,
+ 3812:         top3Hits: 0,
+ 3813:       };
+ 3814: 
+ 3815:       const result = Number(slot.resultGrupo);
+ 3816:       const first = Number(slot?.top3?.[0]?.grupo);
+ 3817:       const picks = Array.isArray(slot?.top3) ? slot.top3.slice(0, 3) : [];
+ 3818: 
+ 3819:       current.total += 1;
+ 3820:       if (Number.isFinite(first) && first === result) current.top1Hits += 1;
+ 3821:       if (picks.some((item) => Number(item?.grupo) === result)) current.top3Hits += 1;
+ 3822: 
+ 3823:       map.set(key, current);
+ 3824:     }
+ 3825: 
+ 3826:     return Array.from(map.values())
+ 3827:       .map((x) => ({
+ 3828:         ...x,
+ 3829:         top1Rate: pct(x.top1Hits, x.total),
+ 3830:         top3Rate: pct(x.top3Hits, x.total),
+ 3831:       }))
+ 3832:       .sort((a, b) => {
+ 3833:         if (b.top3Rate !== a.top3Rate) return b.top3Rate - a.top3Rate;
+ 3834:         return b.total - a.total;
+ 3835:       });
+ 3836:   }
+ 3837: 
+ 3838:   return {
+ 3839:     lotteryKey,
+ 3840:     total,
+ 3841:     top1Hits,
+ 3842:     top3Hits,
+ 3843:     top1Rate: pct(top1Hits, total),
+ 3844:     top3Rate: pct(top3Hits, total),
+ 3845:     byHour: groupBy((slot) => String(slot?.targetHour || "")),
+ 3846:     byDate: groupBy((slot) => String(slot?.targetYmd || "")),
+ 3847:     rows: validated.map((slot) => ({
+ 3848:       ymd: slot.targetYmd,
+ 3849:       hour: slot.targetHour,
+ 3850:       baseYmd: slot.baseYmd,
+ 3851:       baseHour: slot.baseHour,
+ 3852:       resultGrupo: slot.resultGrupo,
+ 3853:       top3: (Array.isArray(slot.top3) ? slot.top3 : [])
+ 3854:         .slice(0, 3)
+ 3855:         .map((x) => Number(x?.grupo)),
+ 3856:       top1Hit:
+ 3857:         Number(slot?.top3?.[0]?.grupo) === Number(slot.resultGrupo),
+ 3858:       top3Hit: (Array.isArray(slot.top3) ? slot.top3 : [])
+ 3859:         .slice(0, 3)
+ 3860:         .some((x) => Number(x?.grupo) === Number(slot.resultGrupo)),
+ 3861:       historyStats: slot.historyStats || null,
+ 3862:     })),
+ 3863:   };
+ 3864: }
+ 3865: 
+ 3866: 
+ 3867: function buildTimelineForDate({
+ 3868:   ymd,
+ 3869:   drawsToday,
+ 3870:   drawsRange,
+ 3871:   lotteryKey,
+ 3872:   PT_RIO_SCHEDULE_NORMAL,
+  ...
+ 4060:         const ts = ymdHourToTs(
+ 4061:           pickDrawYMD(d),
+ 4062:           toHourBucket(pickDrawHour(d))
+ 4063:         );
+ 4064:         return Number.isFinite(ts) && ts <= baseTs;
+ 4065:       })
+ 4066:       .sort((a, b) => {
+ 4067:         const ta = ymdHourToTs(pickDrawYMD(a), toHourBucket(pickDrawHour(a)));
+ 4068:         const tb = ymdHourToTs(pickDrawYMD(b), toHourBucket(pickDrawHour(b)));
+ 4069:         return ta - tb;
+ 4070:       });
+ 4071: 
+ 4072:     const computed = computeStatisticalTop3V3({
+ 4073:       lotteryKey,
+ 4074:       drawsRange: [...usableHistory, ...usableTodayContext],
+ 4075:       drawLast: baseDraw,
+ 4076:       drawsToday: usableTodayContext,
+ 4077:       PT_RIO_SCHEDULE_NORMAL,
+ 4078:       PT_RIO_SCHEDULE_WED_SAT,
+ 4079:       FEDERAL_SCHEDULE,
+ 4080:       topN: 3,
+ 4081:       targetYmdOverride: targetYmd,
+ 4082:       targetHourOverride: slotHour,
+ 4083:     });
+ 4084: 
+ 4085: 
+ 4086:     const computedNextYmd = safeStr(computed?.meta?.next?.ymd || "");
+ 4087:     const computedNextHour = toHourBucket(computed?.meta?.next?.hour || "");
+ 4088:     const computedForSlot =
+ 4089:       computedNextYmd === targetYmd && computedNextHour === slotHour;
+ 4090: 
+ 4091:     const top3 =
+ 4092:       computedForSlot && Array.isArray(computed?.top)
+ 4093:         ? computed.top.slice(0, 3)
+ 4094:         : [];
+ 4095: 
+ 4096:     const resultGrupo = currentDraw ? pickPrize1GrupoFromDraw(currentDraw) : null;
+ 4097: 
+ 4098:     const hit =
+ 4099:       Number.isFinite(Number(resultGrupo)) && top3.length
+ 4100:         ? top3.some((t) => Number(t?.grupo) === Number(resultGrupo))
+
+========================================================================================
+VALIDACOES AUTOMATICAS
+========================================================================================
+OK       Motor V3 localizado
+OK       Backtest oficial localizado
+OK       Injecao computeTop3 localizada
+OK       Metricas TOP1 localizadas
+OK       Metricas TOP3 localizadas
+
+========================================================================================
+DECISAO DE PRONTIDAO
+========================================================================================
+PRONTO PARA E08.2: criar wrapper experimental que preserve os candidatos da V3 e altere apenas sua ordem.
+
+Arquivos analisados : 107
+Arquivos relevantes : 59

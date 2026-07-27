@@ -1,0 +1,697 @@
+===== REFERÊNCIA HISTÓRICA CORRETA =====
+PT_RIO   : 2022-06-07
+LOOK     : 2022-06-07
+NACIONAL : 2022-06-07
+FEDERAL  : 2022-06-08
+
+===== ARQUIVOS CANDIDATOS =====
+
+====================================================================================================
+backend/server.js
+====================================================================================================
+  685: const { runImport } = require("./scripts/importKingApostas");
+
+====================================================================================================
+backend/engine/bootstrapSnapshot.js
+====================================================================================================
+   10: async function bootstrapSnapshot(lottery = "PT_RIO") {
+   52:   bootstrapSnapshot,
+
+====================================================================================================
+backend/engine/drawRepository.js
+====================================================================================================
+   55: async function fetchDrawsWithPrizesByRange({
+   71:       "fetchDrawsWithPrizesByRange exige startYmd em YYYY-MM-DD."
+   77:       "fetchDrawsWithPrizesByRange exige endYmd em YYYY-MM-DD."
+  197:     console.log(`[BOOTSTRAP] Buscando página ${page}...`);
+  222:       `[BOOTSTRAP] Página ${page}: ${snap.docs.length} draws | total=${draws.length}`
+  235:   fetchDrawsWithPrizesByRange,
+
+====================================================================================================
+backend/engine/hypothesisEngine.js
+====================================================================================================
+    8:  * pelo HistoricalQueryEngine e posteriormente
+
+====================================================================================================
+backend/engine/scoreConfig.js
+====================================================================================================
+   40:     history: {
+
+====================================================================================================
+backend/engine/scoreEngineE08Experimental.js
+====================================================================================================
+  108:   for (const value of candidates) {
+  251:   drawsRange,
+  268:     of safeArray(drawsRange)
+  381:       input.drawsRange,
+
+====================================================================================================
+backend/engine/scoreEngineV4Experimental.js
+====================================================================================================
+  122:   for (const value of candidates) {
+  145:   for (const value of directCandidates) {
+  168:   for (const value of numberCandidates) {
+  219:   for (const value of directCandidates) {
+  352:     input.drawsRange
+  422:     const historicalPreviousGroup =
+  427:     const historicalPreviousHour =
+  432:     const historicalNextGroup =
+  437:     const historicalNextHour =
+  443:       historicalPreviousGroup == null ||
+  444:       historicalNextGroup == null ||
+  445:       !historicalPreviousHour ||
+  446:       !historicalNextHour
+  452:       Number(historicalPreviousGroup) !==
+  459:       historicalPreviousHour !==
+  467:       historicalNextHour !==
+  477:       historicalNextGroup
+  658:           `Historico global: ${evidence.samples.global}`,
+
+====================================================================================================
+backend/engine/snapshotManager.js
+====================================================================================================
+   17:       requiresBootstrap: true,
+   34:     requiresBootstrap: false,
+   96:     requiresBootstrap: pending.requiresBootstrap,
+  102:     mode: pending.requiresBootstrap
+  103:       ? "bootstrap_required"
+  112:     requiresBootstrap: pending.requiresBootstrap,
+  114:     nextStep: pending.requiresBootstrap
+  115:       ? "IMPLEMENT_BOOTSTRAP_SNAPSHOT"
+
+====================================================================================================
+backend/engine/top3HistoryRepository.js
+====================================================================================================
+    7: const ROOT_COLLECTION = "top3_history";
+   65: function historyRootRef(
+   74: function historyMonthRef(
+   79:   return historyRootRef(
+   91:   return historyRootRef(
+  221: async function readHistoryMonth(
+  228:   const snap = await historyMonthRef(
+  263: async function writeHistoryMonth(
+  303:   await historyMonthRef(
+  317: async function upsertHistoryMonth(
+  323:   const current = await readHistoryMonth(
+  334:   return writeHistoryMonth(
+  397: async function listHistoryMonths(
+  404:   const snap = await historyRootRef(
+  425: async function readFullHistory(
+  429:   const months = await listHistoryMonths(
+  454:   readHistoryMonth,
+  455:   writeHistoryMonth,
+  456:   upsertHistoryMonth,
+  459:   listHistoryMonths,
+  460:   readFullHistory,
+
+====================================================================================================
+backend/engine/top3HistorySync.js
+====================================================================================================
+   10:   upsertHistoryMonth,
+   11:   listHistoryMonths,
+   13: } = require("./top3HistoryRepository");
+  181: async function markHistoryStale(
+  194:         bootstrapStatus: "stale",
+  210:       "[TOP3-HISTORY] Falha também ao marcar snapshot como stale:",
+  219: async function syncImportedResultToTop3History(
+  232:     dependencies.upsertHistoryMonth ||
+  233:     upsertHistoryMonth;
+  236:     dependencies.listHistoryMonths ||
+  237:     listHistoryMonths;
+  268:       metadata?.bootstrapStatus !== "complete"
+  273:         reason: "bootstrap_not_complete",
+  335:         bootstrapStatus: "complete",
+  357:           "bootstrap_plus_incremental",
+  363:       `[TOP3-HISTORY] Incremental OK | ${lotteryKey} | ` +
+  379:       "[TOP3-HISTORY] Incremental falhou:",
+  385:     const markedStale = await markHistoryStale(
+  410:   markHistoryStale,
+  411:   syncImportedResultToTop3History,
+
+====================================================================================================
+backend/engine/top3PredictionService.js
+====================================================================================================
+    4:   fetchDrawsWithPrizesByRange,
+    8:   readFullHistory,
+   10: } = require("./top3HistoryRepository");
+  116:     throw new Error("Horário fora do intervalo válido.");
+  149: function normalizeHistorySource(value) {
+  157:     source !== "range"
+  160:       "historySource inválido. Utilize auto, snapshot ou range."
+  167: async function loadPredictionHistory({
+  173:   const requestedSource = normalizeHistorySource(
+  174:     input.historySource
+  178:     dependencies.readHistoryMetadata ||
+  181:   const loadFullHistory =
+  182:     dependencies.readFullHistory ||
+  183:     readFullHistory;
+  185:   const loadRangeHistory =
+  187:     fetchDrawsWithPrizesByRange;
+  195:       dependencies.historyDependencies || {}
+  203:       metadata?.bootstrapStatus === "complete";
+  206:       const draws = await loadFullHistory(
+  208:         dependencies.historyDependencies || {}
+  270:   const rawDraws = await loadRangeHistory({
+  282:     source: "range_fallback",
+  303:   for (const candidate of candidates) {
+  449:   history,
+  490:           rangeDraws: history,
+  767:   const historyLoad = await loadPredictionHistory({
+  775:     historyLoad.draws
+  779:     source: historySource,
+  780:     metadata: historyMetadata,
+  784:   } = historyLoad;
+  794:   const history = allDraws
+  819:   if (!history.length) {
+  825:   const drawLast = history[history.length - 1];
+  827:   const drawsToday = history.filter(
+  833:     drawsRange: history,
+  850:       history,
+  879:     historyDraws: history.length,
+  881:     historySource,
+  882:     historyBootstrapStatus:
+  883:       historyMetadata?.bootstrapStatus || null,
+  884:     historyTotalStored:
+  885:       Number(historyMetadata?.totalDraws || 0) || null,
+  900:     historyDraws: history.length,
+  902:     historySource,
+  903:     historyBootstrapStatus:
+  904:       historyMetadata?.bootstrapStatus || null,
+  905:     historyTotalStored:
+  906:       Number(historyMetadata?.totalDraws || 0) || null,
+  961:   normalizeHistorySource,
+  962:   loadPredictionHistory,
+
+====================================================================================================
+backend/routes/kingDraws.js
+====================================================================================================
+  150: function inRangeHHMM(hhmm, from, to) {
+  328:     return inRangeHHMM(d.close_hour, from || "", to || "");
+  431: router.get("/results/range", redirect308("/draws/range"));
+  482: async function handleRange(req, res) {
+  486:     const dateFrom = String(req.query.dateFrom || "").trim();
+  487:     const dateTo = String(req.query.dateTo || "").trim();
+  492:     if (!isISODate(dateFrom) || !isISODate(dateTo)) {
+  495:         error: "Parâmetro inválido: dateFrom/dateTo (use YYYY-MM-DD)",
+  499:     if (dateFrom > dateTo) {
+  502:         error: "Parâmetro inválido: dateFrom não pode ser maior que dateTo",
+  514:       .where("ymd", ">=", dateFrom)
+  515:       .where("ymd", "<=", dateTo)
+  559:       mode: "range",
+  561:       dateFrom,
+  562:       dateTo,
+  576: router.get("/draws/range", handleRange);
+
+====================================================================================================
+backend/routes/pitacoResults.js
+====================================================================================================
+  267:   for (const doc of snapDate.docs) byId.set(doc.id, doc);
+  376: function pickRangeForDate(ranges, ymd) {
+  377:   for (const r of Array.isArray(ranges) ? ranges : []) {
+  419:   const ranges = Array.isArray(scheduleRaw) ? scheduleRaw : scheduleRaw?.ranges;
+  420:   const r = pickRangeForDate(ranges, ymd);
+
+====================================================================================================
+backend/scripts/auditCoverage.js
+====================================================================================================
+    6: const START = "2022-06-07";
+
+====================================================================================================
+backend/scripts/auditDrawsBoundsAndCounts.js
+====================================================================================================
+   11: function formatDateToYMDInTZ(date, timeZone = "America/Sao_Paulo") {
+   42:     const ymd = formatDateToYMDInTZ(d, timeZone);
+   53:     const ymd = formatDateToYMDInTZ(d, timeZone);
+   59:     const ymd = formatDateToYMDInTZ(input, timeZone);
+  155: async function fetchRowsForRange(db, { lotteryKey, fromYmd, toYmd, pageSize = 2000, maxPages = 80 } = {}) {
+  158:   // 1) tentativa indexada (aceita range parcial)
+  224:   const fr = await fetchRowsForRange(db, { lotteryKey, fromYmd, toYmd, pageSize, maxPages });
+  229:   console.log(`range: ${fromYmd || "N/A"} -> ${toYmd || "N/A"}`);
+
+====================================================================================================
+backend/scripts/auditDrawSlotsRange.js
+====================================================================================================
+   46:   d.setDate(d.getDate() + days);
+  109:   node backend/scripts/auditDrawSlotsRange.js PT_RIO 2022-06-07 2026-01-21 [--details] [--limit=50]
+  110:   node backend/scripts/auditDrawSlotsRange.js PT_RIO 2022-06-07 [--details] [--limit=50]
+  126:                             se agenda existir e não bater (sem range para a data), ERRA (ao invés de cair no fallback)
+  231:   const ranges = Array.isArray(schedule.ranges) ? schedule.ranges : [];
+  233:   schedule.ranges = ranges
+  245: function pickRangeForDate(schedule, ymd) {
+  246:   if (!schedule || !Array.isArray(schedule.ranges)) return null;
+  248:   for (const r of schedule.ranges) {
+  258:   const r = pickRangeForDate(schedule, ymd);
+  269:       range: { from: r.from, to: r.to },
+  280:     range: { from: r.from, to: r.to },
+  295:     const ranges = Array.isArray(raw.ranges) ? raw.ranges : [];
+  300:     for (const r of ranges) {
+  319:       rangesCount: ranges.length,
+  478:   const startYmd = String(process.argv[3] || "2022-06-07").trim();
+  495:       `Intervalo inválido. Use: YYYY-MM-DD YYYY-MM-DD. Recebido: ${startYmd}..${endYmd}`
+  534:   console.log(`range: ${startYmd} -> ${endYmd}`);
+  582:   const scheduleRangeByDay = [];
+  599:           scheduleMissByDay.push({ ymd, dow, reason: "NO_RANGE" });
+  600:           expected = { expectedHard: [], expectedSoft: [], mode: "schedule_strict_no_range" };
+  605:         scheduleRangeByDay.push({ ymd, dow, range: expected.range });
+  761:       missingDaysNoRange: scheduleMissByDay.length,
+  804:     scheduleRangeByDay: details ? scheduleRangeByDay : undefined,
+  838:       `[SCHEDULE] strict=${strictSchedule ? "YES" : "NO"} missingNoRangeDays=${scheduleMissByDay.length}`
+  855:       `\n[SCHEDULE-MISS] primeiros ${Math.min(limitPrint, scheduleMissByDay.length)} dias sem range:`
+  870:     console.log("\n[MISSING-HARD] nenhum buraco duro detectado no intervalo.");
+  881:     console.log("\n[MISSING-SOFT] nenhum buraco soft detectado no intervalo.");
+  891:     console.log("\n[DUP] nenhuma duplicidade detectada no intervalo.");
+  906:       console.log("\n[UNEXPECTED] nenhum slot inesperado detectado no intervalo.");
+
+====================================================================================================
+backend/scripts/auditFastPtRio.js
+====================================================================================================
+    6: const START = "2022-06-07";
+
+====================================================================================================
+backend/scripts/auditFederalCompleteness.js
+====================================================================================================
+   13:   x.setDate(x.getDate() + n);
+   20:   const start = "2022-06-08";
+
+====================================================================================================
+backend/scripts/auditFederalContent.js
+====================================================================================================
+    6: const { fetchKingResults } = require("./importKingApostas");
+    8: const START = process.argv[2] || "2022-06-07";
+
+====================================================================================================
+backend/scripts/auditFederalContestContent.js
+====================================================================================================
+    7: const { fetchKingResults } = require("./importKingApostas");
+    9: const START = process.argv[2] || "2022-06-08";
+
+====================================================================================================
+backend/scripts/auditFederalContestDuplicates.js
+====================================================================================================
+   53: const START = process.argv[2] || "2022-06-08";
+
+====================================================================================================
+backend/scripts/auditFederalDateContent.js
+====================================================================================================
+    6: const { fetchKingResults } = require("./importKingApostas");
+    8: const START = process.argv[2] || "2022-06-08";
+
+====================================================================================================
+backend/scripts/auditFederalStructure.js
+====================================================================================================
+   78:     for (const [date, rows] of duplicatedDates) {
+
+====================================================================================================
+backend/scripts/auditFirestorePtRioRange.js
+====================================================================================================
+    5: const START = "2022-06-07";
+
+====================================================================================================
+backend/scripts/auditHistoricalGaps.js
+====================================================================================================
+    7: const START = "2022-06-07";
+   95: function pickRangeForDate(ranges, ymd) {
+   96:   for (const r of Array.isArray(ranges) ? ranges : []) {
+  128:   const ranges = Array.isArray(slotSchedule) ? slotSchedule : slotSchedule?.ranges;
+  129:   const r = pickRangeForDate(ranges, ymd);
+  215:   while (date <= END) {
+
+====================================================================================================
+backend/scripts/auditOfficialSource.js
+====================================================================================================
+    6: const START = process.argv[2] || "2022-06-07";
+
+====================================================================================================
+backend/scripts/auditPtRioContent.js
+====================================================================================================
+    6: const { fetchKingResults } = require("./importKingApostas");
+    8: const START = process.argv[2] || "2022-06-07";
+
+====================================================================================================
+backend/scripts/auditRealGradePtRio.js
+====================================================================================================
+    6: const START = "2022-06-07";
+
+====================================================================================================
+backend/scripts/auditTop3E08DifferencesExperimental.js
+====================================================================================================
+   15:   readFullHistory,
+   17: } = require("../engine/top3HistoryRepository");
+   97:   const minHistory = Number(
+  111:     !Number.isInteger(minHistory) ||
+  112:     minHistory <= 0
+  146:   const history =
+  147:     await readFullHistory(
+  157:     readFullHistory:
+  158:       async () => history,
+  167:     minHistory,
+  388:     minHistory,
+  457:     `Histórico mínimo......: ${minHistory}`,
+
+====================================================================================================
+backend/scripts/autoImportToday.js
+====================================================================================================
+   20: const { runImport } = require("./importKingApostas");
+ 1321:       for (const closeHour of candidates) {
+
+====================================================================================================
+backend/scripts/autoMaintainBackfill.js
+====================================================================================================
+   95:   d.setDate(d.getDate() + n);
+  131:           res.resume();
+  190:   // e.g. auditSlots-PT_RIO-2022-06-07_to_2026-02-28.json
+  227:   return pickLogFile({ kind: "backfillPlan", lottery, start, end });
+  251:   const auditScript = path.join(__dirname, "auditDrawSlotsRange.js");
+  252:   const planScript = path.join(__dirname, "planBackfillFromAudit.js");
+  253:   const runScript = path.join(__dirname, "runBackfillFromPlan.js");
+  260:   // ✅ por padrão, NUNCA rodar backfill para o dia atual (só se forçar)
+  261:   const allowTodayBackfill = hasFlag("allowTodayBackfill");
+  269:   console.log(`allowTodayBackfill=${allowTodayBackfill ? "YES" : "NO"}`);
+  309:     console.log("[MAINTAIN] Não achei backfillPlan gerado.");
+  323:   // Por padrão, NÃO fazemos backfill para o dia atual.
+  328:     if (!r || !r.shouldBackfill) return false;
+  330:     if (!allowTodayBackfill && ymd === todayYmd) return false;
+  335:     const rawShould = rows.filter((r) => r && r.shouldBackfill);
+  340:         `[MAINTAIN] Plan tinha slots marcados para HOJE (${todayYmd}), mas backfill do dia atual está desativado (por padrão).`
+  342:       console.log(`[MAINTAIN] Se quiser forçar: acrescente --allowTodayBackfill`);
+  344:       console.log(`[MAINTAIN] Plan com 0 slots para backfill. Nada a fazer.`);
+  349:   console.log(`[MAINTAIN] Backfill necessário (excluindo hoje): days=${should.length}`);
+  353:   // ✅ re-audit após backfill (com os mesmos parâmetros)
+
+====================================================================================================
+backend/scripts/autoRepairToday.js
+====================================================================================================
+    3: const { runImport } = require("./importKingApostas");
+
+====================================================================================================
+backend/scripts/backtestTop3AblationExperimental.js
+====================================================================================================
+  472:   const minHistory =
+  475:       "min-history",
+  511:     minHistory,
+  539:     minHistory
+  593:     minHistory,
+  648:     `Histórico mínimo: ${minHistory}`,
+
+====================================================================================================
+backend/scripts/backtestTop3E07Experimental.js
+====================================================================================================
+   87:   const minHistory =
+   90:       "min-history",
+  127:     minHistory,
+  153:     "Historico minimo:",
+  154:     minHistory
+  186:     minHistory,
+  240:       history:
+  241:         baseline.historyPeriod,
+  273:     `Historico minimo....: ${minHistory}`,
+
+====================================================================================================
+backend/scripts/backtestTop3E08Experimental.js
+====================================================================================================
+   15:   readFullHistory,
+   17: } = require("../engine/top3HistoryRepository");
+   81:   const minHistory =
+   84:       "min-history",
+  101:     minHistory,
+  125:     "Historico minimo:",
+  126:     minHistory
+  134:   const sharedHistory =
+  135:     await readFullHistory(
+  147:     readFullHistory:
+  148:       async () => sharedHistory,
+  154:     `[SNAPSHOT] Sorteios congelados: ${sharedHistory.length}`
+  226:     minHistory,
+  294:       history:
+  295:         baseline.historyPeriod,
+  360:     `Historico minimo....: ${minHistory}`,
+  365:     "usando a frequencia historica do mesmo horario.",
+
+====================================================================================================
+backend/scripts/backtestTop3Official.js
+====================================================================================================
+    7:   readFullHistory,
+    9: } = require("../engine/top3HistoryRepository");
+  198:     minHistory: parseIntegerFlag(
+  200:       "min-history",
+  412:     `Histórico carregado.: ${result.historyLoaded}`
+  432:     `Período histórico...: ${result.historyPeriod.from} até ${result.historyPeriod.to}`
+  506:   const loadHistory =
+  507:     dependencies.readFullHistory ||
+  508:     readFullHistory;
+  518:   const history = sortDraws(
+  519:     await loadHistory(
+  521:       dependencies.historyDependencies || {}
+  526:   if (!history.length) {
+  535:       dependencies.historyDependencies || {}
+  545:       metadata?.bootstrapStatus !==
+  554:   const minHistory = Number(
+  555:     options.minHistory || 100
+  567:     let index = minHistory;
+  568:     index < history.length;
+  571:     const draw = history[index];
+  637:       history[index];
+  655:     const historyBefore =
+  656:       history.slice(0, index);
+  659:       historyBefore[
+  660:         historyBefore.length - 1
+  705:           drawsRange:
+  706:             historyBefore,
+  747:           historyIndex: index,
+  756:           history: {
+  758:               historyBefore.length,
+  889:     historySource:
+  891:     historyLoaded:
+  892:       history.length,
+  898:     minHistory,
+  901:     historyPeriod: {
+  904:           history[0]
+  908:           history[
+  909:             history.length - 1
+  940:       bootstrapStatus:
+  941:         metadata?.bootstrapStatus ||
+  984:     options.minHistory
+
+====================================================================================================
+backend/scripts/buildFederalNoDrawFromAudit.js
+====================================================================================================
+   78:     "auditSlots-FEDERAL-2022-06-08_to_2026-02-13.json"
+
+====================================================================================================
+backend/scripts/checkOneDraw.js
+====================================================================================================
+   12:   console.log("  node backend/scripts/checkOneDraw.js PT_RIO 2022-06-07 09:09");
+   13:   console.log("  node backend/scripts/checkOneDraw.js PT_RIO 2022-06-07 09:09 --list");
+   14:   console.log("  node backend/scripts/checkOneDraw.js PT_RIO 2022-06-07 09:09 --tol=2");
+   15:   console.log("  node backend/scripts/checkOneDraw.js PT_RIO 2022-06-07 09:09 --prizes");
+  149:   for (let i = 0; i < candidates.length; i += 10) {
+
+====================================================================================================
+backend/scripts/cleanSourceGapsFromBackfillReport.js
+====================================================================================================
+   22:   node backend/scripts/cleanSourceGapsFromBackfillReport.js <backfillRun.json> [source_gaps.json]
+   26:   --report <arquivo>      (alternativo) caminho do backfillRun.json
+   30:   node backend/scripts/cleanSourceGapsFromBackfillReport.js logs/backfillRun-PT_RIO-20260228-225534.json
+   31:   node backend/scripts/cleanSourceGapsFromBackfillReport.js logs/backfillRun-PT_RIO-20260228-225534.json backend/data/source_gaps/PT_RIO.json
+   32:   node backend/scripts/cleanSourceGapsFromBackfillReport.js --report logs/backfillRun-PT_RIO-20260228-225534.json --gaps backend/data/source_gaps/PT_RIO.json
+   88:     console.error("Erro: informe o caminho do backfillRun.json.\n");
+
+====================================================================================================
+backend/scripts/findDuplicatesDraws.js
+====================================================================================================
+    6: // ✅ usa o bootstrap oficial do seu projeto (service account / config já pronta)
+   86: function ymdInRange(ymd, from, to) {
+  115:     if (from && to && from > to) throw new Error(`intervalo inválido: from (${from}) > to (${to})`);
+  142:         if (!ymdInRange(ymd, from, to)) continue;
+
+====================================================================================================
+backend/scripts/fixFederalContestDuplicates.js
+====================================================================================================
+   53: const START = process.argv[2] || "2022-06-08";
+
+====================================================================================================
+backend/scripts/fixLegacyIdDuplicates.js
+====================================================================================================
+   44:     // pega docs do range (pela ymd preenchida); os legacy podem ter ymd null,
+   47:     // Para não fazer scan global, vamos buscar por lottery_key + range e coletar ids.
+   56:     // inclui também docs legacy que possam estar no range mas com ymd faltando:
+
+====================================================================================================
+backend/scripts/fixMinuteVariantDuplicates.js
+====================================================================================================
+   81:     // Build an idSet for quick sibling checks (within range + lottery)
+  131:     console.log("Scanned docs (range):", scanned);
+
+====================================================================================================
+backend/scripts/fixPtRioContentAudit.js
+====================================================================================================
+    6: const { fetchKingResults, importFromPayload } = require("./importKingApostas");
+    8: const START = process.argv[2] || "2022-06-07";
+   58: async function reimportSlot(date, slot) {
+   74:   let reimportedSlots = 0;
+   88:     // 1) Documento extra quando não havia sorteio previsto: apaga e NÃO reimporta
+  100:     // 2) Conteúdo divergente: apaga docs errados e reimporta o slot correto
+  108:       const r = await reimportSlot(date, slot);
+  109:       reimportedSlots++;
+  110:       console.log(`[REIMPORT] ${date} ${slot} validos=${r.totalDrawsValid} prizes=${r.totalPrizesUpserted}`);
+  112:       actions.push({ date, slot, action: "delete_and_reimport", docIds });
+  116:     // 3) Furo real: só reimporta
+  118:       const r = await reimportSlot(date, slot);
+  119:       reimportedSlots++;
+  120:       console.log(`[REIMPORT MISSING] ${date} ${slot} validos=${r.totalDrawsValid} prizes=${r.totalPrizesUpserted}`);
+  122:       actions.push({ date, slot, action: "reimport_missing" });
+  136:     reimportedSlots,
+  155:   console.log(`Slots reimportados: ${reimportedSlots}`);
+
+====================================================================================================
+backend/scripts/fixReceiveDuplicates.js
+====================================================================================================
+   55:     // Solução prática: também varrer TODOS os docs retornados e agir sobre RECEIVE que estejam dentro do range pelo ID.
+
+====================================================================================================
+backend/scripts/importKingApostas.js
+====================================================================================================
+    4:  * importKingApostas.js
+  152:   syncImportedResultToTop3History,
+  153: } = require("../engine/top3HistorySync");
+  491:   for (const c of candidates) {
+ 1732:   const top3HistorySync =
+ 1733:     await syncImportedResultToTop3History(
+ 1775:             historySource: "auto",
+ 1845:     top3HistorySync,
+ 1860:       "Uso: node backend/scripts/importKingApostas.js YYYY-MM-DD [PT_RIO|FEDERAL|LOOK|NACIONAL] [HH:MM]"
+ 1867:       "Uso: node backend/scripts/importKingApostas.js YYYY-MM-DD [PT_RIO|FEDERAL|LOOK|NACIONAL] [HH:MM]"
+ 1883:       "Uso: node backend/scripts/importKingApostas.js YYYY-MM-DD [PT_RIO|FEDERAL|LOOK|NACIONAL] [HH:MM]"
+
+====================================================================================================
+backend/scripts/importKingRange.js
+====================================================================================================
+    1: // backend/scripts/importKingRange.js
+   48:  * Configuração de range
+   53:   PT_RIO: "2022-06-07",
+   54:   FEDERAL: "2022-06-08",
+   63: const MAX_RANGE_DAYS = Number.isFinite(Number(process.env.MAX_RANGE_DAYS))
+   64:   ? Number(process.env.MAX_RANGE_DAYS)
+   96:     while (Date.now() < end) {}
+  293:         "  node backend/scripts/importKingRange.js YYYY-MM-DD YYYY-MM-DD [PT_RIO]\n" +
+  295:         "  node backend/scripts/importKingRange.js YYYY [PT_RIO]\n\n" +
+  299:         "  MAX_RANGE_DAYS=400\n" +
+  317:       `[ABORTADO] Intervalo fora do range global (${fmt(gMin)} → ${fmt(gMax)}).`
+  337:   if (totalDays > MAX_RANGE_DAYS) {
+  339:       `ERRO: range muito grande (${totalDays} dias). Limite: ${MAX_RANGE_DAYS}.`
+  345:     `[RANGE] ${lotteryKey} de ${fmt(d1)} até ${fmt(d2)} (${totalDays} dias)` +
+  353:   const importApostasPath = path.join(__dirname, "importKingApostas.js");
+  387:       `Dica: rode um range menor só nessas datas (ou aumente IMPORT_TIMEOUT_MS / IMPORT_RETRIES).`
+
+====================================================================================================
+backend/scripts/integrityCheck.js
+====================================================================================================
+    2: const { runImport } = require("./importKingApostas");
+
+====================================================================================================
+backend/scripts/lintSourceGaps.js
+====================================================================================================
+   71:   const from = String(process.argv[3] || "2022-06-07").trim();
+   75:     console.error(`ERRO: range inválido. Use YYYY-MM-DD. from=${from} to=${to}`);
+  117:   console.log(`[LINT] lottery=${lotteryKey} range=${from}..${to}`);
+
+====================================================================================================
+backend/scripts/listDrawDuplicates.js
+====================================================================================================
+   83: function ymdInRange(ymd, from, to) {
+  119:       throw new Error(`intervalo inválido: from (${from}) > to (${to})`);
+  150:         if (!ymdInRange(ymd, from, to)) continue;
+
+====================================================================================================
+backend/scripts/planBackfillFromAudit.js
+====================================================================================================
+  138:   for (const d of candidatesDirs) {
+  280:         "Uso: node backend/scripts/planBackfillFromAudit.js <audit-json-path> [baseUrl] [lottery]\n" +
+  330:         `Plano de backfill ficará zerado. auditFile=${auditPath}`
+  359:   for (const ymd of dates) {
+  387:     const shouldBackfill = !dayNoDraw && missing.length > 0;
+  397:       shouldBackfill,
+  410:       daysToBackfill: rows.filter((r) => r.shouldBackfill).length,
+  411:       slotsToBackfill: rows
+  412:         .filter((r) => r.shouldBackfill)
+  416:     backfillDays: rows
+  417:       .filter((r) => r.shouldBackfill)
+  429:     `backfillPlan-${lottery}-${String(audit?.startYmd || "start")}_to_${String(
+  438:   console.log("[PLAN] Backfill gerado:");
+
+====================================================================================================
+backend/scripts/reconcileKingFirestore.js
+====================================================================================================
+    4: const { fetchKingResults, runImport } = require("./importKingApostas");
+
+====================================================================================================
+backend/scripts/repairHistoricalHardGaps.js
+====================================================================================================
+    3: const { runImport } = require("./importKingApostas");
+
+====================================================================================================
+backend/scripts/runBackfillFromPlan.js
+====================================================================================================
+    7: const { runImport } = require("./importKingApostas");
+  126:       "Uso: node backend/scripts/runBackfillFromPlan.js <backfillPlan.json> [--limitDays=5] [--baseMins=9] [--tolMin=2]"
+  140:   // ✅ Fonte preferencial: plan.backfillDays (já vem pronto do planBackfillFromAudit.js)
+  141:   const planBackfillDays = Array.isArray(plan?.backfillDays) ? plan.backfillDays : [];
+  143:   let backfillDays = planBackfillDays
+  158:   // ✅ Fallback compat: plan.rows com shouldBackfill + missingHard
+  159:   if (!backfillDays.length) {
+  161:     backfillDays = rows
+  162:       .filter((r) => r && r.shouldBackfill)
+  178:   if (!backfillDays.length) {
+  179:     console.log("[BACKFILL] Nenhum dia para backfill.");
+  187:   const outFile = path.join(LOG_DIR, `backfillRun-${lottery}-${runId}.json`);
+  188:   const picked = backfillDays.slice(0, limitDays);
+  191:   console.log(`[BACKFILL] lottery=${lottery}`);
+  192:   console.log(`[BACKFILL] plan=${planPath}`);
+  194:     `[BACKFILL] days in plan=${backfillDays.length} | running now=${picked.length} (limitDays=${limitDays})`
+  196:   console.log(`[BACKFILL] baseMins=${baseMins.join(",")} tolMin=${tolMin}`);
+  197:   console.log(`[BACKFILL] attemptTimeoutMs=${envInt("IMPORT_ATTEMPT_TIMEOUT_MS", 60_000)}`);
+  198:   console.log(`[BACKFILL] output=${outFile}`);
+  249:       for (let idx = 0; idx < candidates.length; idx++) {
+  282:         // Para backfill, isso deve encerrar o slot como API_NO_SLOT imediatamente.
+  442:   console.log("[BACKFILL] FINAL");
+  444:   console.log("[BACKFILL] saved:", outFile);
+
+====================================================================================================
+backend/scripts/maintenance/backfillYmdDraws.js
+====================================================================================================
+    4:  * Backfill de ymd na coleção draws
+   10:  *    node scripts/maintenance/backfillYmdDraws.js --dry
+   13:  *    node scripts/maintenance/backfillYmdDraws.js
+   45: function dateToYMD_TZ(d, timeZone = TZ) {
+   77:     return dateToYMD_TZ(input.toDate());
+   89:     return dateToYMD_TZ(new Date(sec * 1000));
+   94:     return dateToYMD_TZ(input);
+  100:     return dateToYMD_TZ(new Date(ms));
+  110:     return dateToYMD_TZ(new Date(ms));
+  184:   console.log("[BACKFILL] draws.ymd");
+
+====================================================================================================
+backend/workers/bootstrapTop3History.js
+====================================================================================================
+   11:   writeHistoryMonth,
+   14: } = require("../engine/top3HistoryRepository");
+   21:  * O bootstrap é interrompido antes de tentar gravar
+   73: function buildBootstrapPlan({
+  175: async function bootstrapTop3History(
+  193:     dependencies.writeHistoryMonth ||
+  194:     writeHistoryMonth;
+  203:     `[TOP3-HISTORY] Iniciando bootstrap ${lotteryKey} | dryRun=${dryRun}`
+  218:   const plan = buildBootstrapPlan({
+  239:       "Bootstrap bloqueado: documento mensal acima do limite seguro. " +
+  245:     `[TOP3-HISTORY] Draws=${plan.totalDraws} | meses=${plan.months.length}`
+  250:       `[TOP3-HISTORY] ${month.yearMonth} | draws=${month.drawCount} | bytes≈${month.estimatedBytes}`
+  288:       `[TOP3-HISTORY] Gravado ${month.yearMonth}: ${month.drawCount} draws`
+  299:         bootstrapStatus:
+  301:         bootstrapCompletedAt:
+  380:     "===== TOP3 HISTORY BOOTSTRAP ====="
+  395:     await bootstrapTop3History(
+  426:   buildBootstrapPlan,
+  427:   bootstrapTop3History,
+
+
+TOTAL DE ARQUIVOS CANDIDATOS: 56

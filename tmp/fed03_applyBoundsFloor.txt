@@ -1,0 +1,664 @@
+====================================================================================================
+Ocorrência na linha 85
+====================================================================================================
+
+00045: 
+00046: const PRIZES_CACHE = new Map(); // key -> { ts, data: prizesAllSorted }
+00047: const DRAWS_CACHE = new Map(); // key -> { ts, data: mappedDrawDocs[] }
+00048: 
+00049: // ✅ cache específico para ATRASADOS (Late)
+00050: const LATE_CACHE = new Map(); // key -> { ts, data: lateRows[] }
+00051: 
+00052: // ✅ corte seguro (modo auto) — acima disso, tende a ser "agregado" (sem prizes)
+00053: export const AGGREGATED_AUTO_DAYS = Number.POSITIVE_INFINITY;
+00054: 
+00055: /* =========================
+00056:    Constantes / helpers base
+00057: ========================= */
+00058: 
+00059: const DEFAULT_READ_POLICY = "cache";
+00060: 
+00061: const RJ_STATE_CODE = "RJ";
+00062: const RJ_LOTTERY_KEY = "PT_RIO";
+00063: 
+00064: export const FEDERAL_SCOPE_CODE = "FEDERAL";
+00065: export const FEDERAL_19H_TO_20H_CHANGE_YMD = "2025-11-03";
+00066: 
+00067: const FEDERAL_LOTTERY_KEYS = [
+00068:   "FEDERAL",
+00069:   "LOTERIA_FEDERAL",
+00070:   "LT_FEDERAL",
+00071:   "FED",
+00072: ];
+00073: 
+00074: const FEDERAL_INPUT_ALIASES = new Set([
+00075:   "FEDERAL",
+00076:   "LOTERIA FEDERAL",
+00077:   "LOTERIA_FEDERAL",
+00078:   "LT FEDERAL",
+00079:   "LT_FEDERAL",
+00080:   "FED",
+00081: ]);
+00082: 
+00083: export const FEDERAL_DRAW_DOW = ["WEDNESDAY", "SATURDAY"]; // referência (UI)
+00084: 
+00085: function applyBoundsFloor(_scopeKey, { minYmd, maxYmd }) {
+00086:   return { minYmd: minYmd || null, maxYmd: maxYmd || null };
+00087: }
+00088: 
+00089: /**
+00090:  * ✅ Regra histórica da Federal
+00091:  * - até 2025-11-02: 19h
+00092:  * - a partir de 2025-11-03: 20h
+00093:  */
+00094: export function getFederalPreferredHourForYmd(ymd) {
+00095:   const y = String(ymd || "").trim();
+00096:   if (/^\d{4}-\d{2}-\d{2}$/.test(y) && y >= FEDERAL_19H_TO_20H_CHANGE_YMD) {
+00097:     return "20:00";
+00098:   }
+00099:   return "19:00";
+00100: }
+00101: 
+00102: export function getFederalPreferredBucketForYmd(ymd) {
+00103:   return getFederalPreferredHourForYmd(ymd) === "20:00" ? "20h" : "19h";
+00104: }
+00105: 
+00106: /**
+00107:  * Detecta se o usuário está pedindo Federal (por input/alias).
+00108:  */
+00109: function isFederalInput(scopeInput) {
+00110:   const up = String(scopeInput || "").trim().toUpperCase();
+00111:   if (!up) return false;
+00112:   if (up === FEDERAL_SCOPE_CODE) return true;
+00113:   if (FEDERAL_INPUT_ALIASES.has(up)) return true;
+00114: 
+00115:   // normaliza espaços/underscores pra captar variações
+00116:   const compact = up.replace(/[\s_]+/g, " ").trim();
+00117:   return (
+00118:     FEDERAL_INPUT_ALIASES.has(compact) ||
+00119:     FEDERAL_INPUT_ALIASES.has(up.replace(/[\s_]+/g, "_"))
+00120:   );
+00121: }
+00122: 
+00123: /**
+00124:  * Resolve qual lottery_key usar quando o usuário passar:
+00125:  * - "RJ" -> "PT_RIO"
+00126:  * - "FEDERAL"/aliases -> "FEDERAL" (canônico)
+00127:  * - outros -> mantém o valor original (compatível com seu app atual)
+00128:  */
+00129: function resolveLotteryKeyForQuery(ufInput) {
+00130:   const uf = String(ufInput || "").trim();
+00131:   if (!uf) return "";
+00132:   const up = uf.toUpperCase();
+00133: 
+00134:   if (up === RJ_STATE_CODE) return RJ_LOTTERY_KEY;
+00135:   if (isFederalInput(up)) return FEDERAL_SCOPE_CODE;
+00136: 
+00137:   return uf;
+00138: }
+00139: 
+00140: /**
+00141:  * ✅ Chave canônica para CACHE:
+00142:  * - "RJ" -> "PT_RIO"
+00143:  * - Federal (qualquer alias) -> "FEDERAL"
+00144:  * - outros -> UPPER(TRIM)
+00145:  */
+00146: function canonicalScopeKey(ufInput) {
+00147:   const s = String(ufInput || "").trim();
+00148:   if (!s) return "";
+00149:   const up = s.toUpperCase();
+00150: 
+00151:   if (up === RJ_STATE_CODE) return RJ_LOTTERY_KEY;
+00152:   if (isFederalInput(up)) return FEDERAL_SCOPE_CODE;
+00153: 
+00154:   return up;
+00155: }
+00156: 
+00157: /**
+00158:  * Quando for consultar por campo "uf", adiciona trava de lottery_key para RJ.
+00159:  * Isso elimina o vazamento de Federal para o Rio.
+00160:  */
+00161: function buildRJLockWhereIfNeeded(fieldName, ufInput) {
+00162:   const ufUp = String(ufInput || "").trim().toUpperCase();
+00163:   if (fieldName === "uf" && ufUp === RJ_STATE_CODE) {
+00164:     return [where("lottery_key", "==", RJ_LOTTERY_KEY)];
+00165:   }
+00166:   return [];
+00167: }
+00168: 
+00169: /* =========================
+00170:    ✅ FIX silencioso: normalizar valor do WHERE por campo
+00171: ========================= */
+00172: 
+00173: function normalizeValueForField(fieldName, valueInput) {
+00174:   const s = String(valueInput || "").trim();
+00175:   if (!s) return "";
+00176: 
+00177:   if (fieldName === "uf") {
+00178:     const up = s.toUpperCase();
+00179:     if (isFederalInput(up)) return FEDERAL_SCOPE_CODE;
+00180:     return up;
+00181:   }
+00182: 
+00183:   if (fieldName === "lottery_key") {
+00184:     const up = s.toUpperCase();
+00185:     if (up === RJ_STATE_CODE) return RJ_LOTTERY_KEY; // ✅ PREVENTIVO: RJ -> PT_RIO
+00186:     if (isFederalInput(up)) return FEDERAL_SCOPE_CODE;
+00187:     return up;
+00188:   }
+00189: 
+00190:   return s;
+00191: }
+00192: 
+00193: /* =========================
+00194:    Utils
+00195: ========================= */
+00196: 
+00197: /**
+00198:  * ✅ Normaliza "horário" para HH:MM
+00199:  */
+00200: function normalizeHourLike(value) {
+00201:   const s0 = String(value ?? "").trim();
+00202:   if (!s0) return "";
+00203: 
+00204:   const s = s0.replace(/\s+/g, "");
+
+
+====================================================================================================
+Ocorrência na linha 803
+====================================================================================================
+
+00763:     if (!r.ok || !j || !j.ok) {
+00764:       return {
+00765:         ok: false,
+00766:         error: new Error(`bounds api not ok: ${j?.message || r.status}`),
+00767:         payload: j || null,
+00768:       };
+00769:     }
+00770: 
+00771:     const minYmd = String(j.minYmd || "").trim();
+00772:     const maxYmd = String(j.maxYmd || "").trim();
+00773:     if (!isYMD(minYmd) || !isYMD(maxYmd)) {
+00774:       return {
+00775:         ok: false,
+00776:         error: new Error("bounds api retornou min/max inválidos"),
+00777:         payload: j,
+00778:       };
+00779:     }
+00780: 
+00781:     return {
+00782:       ok: true,
+00783:       uf,
+00784:       lottery: String(j.lottery || lot).trim(),
+00785:       minYmd,
+00786:       maxYmd,
+00787:       minDocId: j.minDocId || null,
+00788:       maxDocId: j.maxDocId || null,
+00789:       source: String(j.source || "api_bounds"),
+00790:     };
+00791:   } catch (e) {
+00792:     return { ok: false, error: e };
+00793:   }
+00794: }
+00795: 
+00796: export async function getKingBoundsByUf(ufOrObj) {
+00797:   const uf = String(extractUfParam(ufOrObj) || "").trim();
+00798:   if (!uf) throw new Error("Parâmetro obrigatório: uf");
+00799: 
+00800:   const apiTry = await fetchBoundsFromApi(ufOrObj);
+00801:   if (apiTry?.ok) {
+00802:     const scopeKey = canonicalScopeKey(uf);
+00803:     const floored = applyBoundsFloor(scopeKey, {
+00804:       minYmd: apiTry.minYmd,
+00805:       maxYmd: apiTry.maxYmd,
+00806:     });
+00807: 
+00808:     return {
+00809:       ok: true,
+00810:       uf,
+00811: 
+00812:       minYmd: floored.minYmd,
+00813:       maxYmd: floored.maxYmd,
+00814: 
+00815:       minDate: floored.minYmd,
+00816:       maxDate: floored.maxYmd,
+00817: 
+00818:       minDocId: apiTry.minDocId || null,
+00819:       maxDocId: apiTry.maxDocId || null,
+00820: 
+00821:       source: `api_bounds:${apiTry.source}`,
+00822:     };
+00823:   }
+00824: 
+00825:   const SCAN_LIMIT = 50;
+00826:   const FALLBACK_EDGE_LIMIT = 600;
+00827: 
+00828:   let firstTryError = null;
+00829: 
+00830:   const DOC_ID = documentId();
+00831: 
+00832:   async function sampleEdgesByDocId(fieldName, ufValue) {
+00833:     const asc = await queryDrawsByField({
+00834:       fieldName,
+00835:       uf: ufValue,
+00836:       extraOrderBy: [orderBy(DOC_ID)],
+00837:       extraLimit: limit(FALLBACK_EDGE_LIMIT),
+00838:       policy: "server",
+00839:     });
+00840: 
+00841:     const last = await queryDrawsByField({
+00842:       fieldName,
+00843:       uf: ufValue,
+00844:       extraOrderBy: [orderBy(DOC_ID)],
+00845:       extraLimit: limitToLast(FALLBACK_EDGE_LIMIT),
+00846:       policy: "server",
+00847:     });
+00848: 
+00849:     const mappedA = (asc?.snap?.docs || []).map(mapDrawDoc);
+00850:     const mappedB = (last?.snap?.docs || []).map(mapDrawDoc);
+00851: 
+00852:     const merged = dedupeDrawsLocal([...mappedA, ...mappedB]);
+00853: 
+00854:     return {
+00855:       merged,
+00856:       ok: merged.length > 0,
+00857:       errors: [asc?.error, last?.error].filter(Boolean),
+00858:       sources: [asc?.source, last?.source].filter(Boolean),
+00859:     };
+00860:   }
+00861: 
+00862:   {
+00863:     const orderAsc = [orderBy("ymd", "asc"), orderBy(DOC_ID)];
+00864:     const orderDesc = [orderBy("ymd", "desc"), orderBy(DOC_ID)];
+00865: 
+00866:     const {
+00867:       docs: minDocs,
+00868:       usedField: usedMin,
+00869:       error: eMin,
+00870:     } = await fetchDrawDocsPreferUf({
+00871:       uf,
+00872:       extraOrderBy: orderAsc,
+00873:       extraLimit: limit(SCAN_LIMIT),
+00874:       policy: "server",
+00875:     });
+00876: 
+00877:     const {
+00878:       docs: maxDocs,
+00879:       usedField: usedMax,
+00880:       error: eMax,
+00881:     } = await fetchDrawDocsPreferUf({
+00882:       uf,
+00883:       extraOrderBy: orderDesc,
+00884:       extraLimit: limit(SCAN_LIMIT),
+00885:       policy: "server",
+00886:     });
+00887: 
+00888:     if (eMin || eMax) {
+00889:       if (!isIndexError(eMin) && !isIndexError(eMax)) firstTryError = eMin || eMax;
+00890:     }
+00891: 
+00892:     if (minDocs.length && maxDocs.length && !eMin && !eMax) {
+00893:       const mappedMin = minDocs.map(mapDrawDoc);
+00894:       const mappedMax = maxDocs.map(mapDrawDoc);
+00895: 
+00896:       const { minYmd } = pickMinMaxFromMapped(mappedMin);
+00897:       const { maxYmd } = pickMinMaxFromMapped(mappedMax);
+00898: 
+00899:       if (minYmd && maxYmd) {
+00900:         return {
+00901:           ok: true,
+00902:           uf,
+00903:           minYmd,
+00904:           maxYmd,
+00905:           minDate: minYmd,
+00906:           maxDate: maxYmd,
+00907:           source: `ymd_scan${SCAN_LIMIT}:${usedMin}/${usedMax}`,
+00908:         };
+00909:       }
+00910:     }
+00911:   }
+00912: 
+00913:   const recentProbe = await probeRecentMaxYmd(uf, 60);
+00914:   const recentMaxYmd = recentProbe?.ok ? recentProbe.maxYmd : null;
+00915: 
+00916:   const scopeKeyBounds = canonicalScopeKey(uf);
+00917:   {
+00918:     const idxInfo = (() => {
+00919:       const code = String(firstTryError?.code || "");
+00920:       const msg = String(firstTryError?.message || "");
+00921:       if (!code && !msg) return "";
+00922:       return `:firstTryError=${code || "err"}`;
+
+
+====================================================================================================
+Ocorrência na linha 940
+====================================================================================================
+
+00900:         return {
+00901:           ok: true,
+00902:           uf,
+00903:           minYmd,
+00904:           maxYmd,
+00905:           minDate: minYmd,
+00906:           maxDate: maxYmd,
+00907:           source: `ymd_scan${SCAN_LIMIT}:${usedMin}/${usedMax}`,
+00908:         };
+00909:       }
+00910:     }
+00911:   }
+00912: 
+00913:   const recentProbe = await probeRecentMaxYmd(uf, 60);
+00914:   const recentMaxYmd = recentProbe?.ok ? recentProbe.maxYmd : null;
+00915: 
+00916:   const scopeKeyBounds = canonicalScopeKey(uf);
+00917:   {
+00918:     const idxInfo = (() => {
+00919:       const code = String(firstTryError?.code || "");
+00920:       const msg = String(firstTryError?.message || "");
+00921:       if (!code && !msg) return "";
+00922:       return `:firstTryError=${code || "err"}`;
+00923:     })();
+00924: 
+00925:     const a = await sampleEdgesByDocId("uf", String(uf).toUpperCase());
+00926: 
+00927:     const ufUp = String(uf || "").trim().toUpperCase();
+00928: 
+00929:     if (!a.ok && isFederalInput(ufUp)) {
+00930:       for (const lk of FEDERAL_LOTTERY_KEYS) {
+00931:         const b = await sampleEdgesByDocId("lottery_key", lk);
+00932:         if (b.ok) {
+00933:           const mm = pickMinMaxFromMapped(b.merged);
+00934: 
+00935:           const maxFixed =
+00936:             recentMaxYmd && (!mm.maxYmd || recentMaxYmd > mm.maxYmd)
+00937:               ? recentMaxYmd
+00938:               : mm.maxYmd;
+00939: 
+00940:           const floored = applyBoundsFloor(scopeKeyBounds, {
+00941:             minYmd: mm.minYmd || null,
+00942:             maxYmd: maxFixed || null,
+00943:           });
+00944: 
+00945:           return {
+00946:             ok: !!(floored.minYmd && floored.maxYmd),
+00947:             uf,
+00948: 
+00949:             minYmd: floored.minYmd,
+00950:             maxYmd: floored.maxYmd,
+00951: 
+00952:             minDate: floored.minYmd,
+00953:             maxDate: floored.maxYmd,
+00954: 
+00955:             source: `fallback_edges_docId_limit=${FALLBACK_EDGE_LIMIT}:lottery_key(${lk}):sampleCount=${b.merged.length}${
+00956:               recentMaxYmd ? ":max_probe" : ""
+00957:             }${idxInfo}`,
+00958:           };
+00959:         }
+00960:       }
+00961:     }
+00962: 
+00963:     const lotteryKey =
+00964:       ufUp === RJ_STATE_CODE ? RJ_LOTTERY_KEY : resolveLotteryKeyForQuery(uf);
+00965: 
+00966:     const b = a.ok
+00967:       ? null
+00968:       : await sampleEdgesByDocId("lottery_key", String(lotteryKey).toUpperCase());
+00969: 
+00970:     const merged = a.ok ? a.merged : b?.merged || [];
+00971:     const mm = pickMinMaxFromMapped(merged);
+00972: 
+00973:     const maxFixed =
+00974:       recentMaxYmd && (!mm.maxYmd || recentMaxYmd > mm.maxYmd)
+00975:         ? recentMaxYmd
+00976:         : mm.maxYmd;
+00977: 
+00978:     const floored = applyBoundsFloor(scopeKeyBounds, {
+00979:       minYmd: mm.minYmd || null,
+00980:       maxYmd: maxFixed || null,
+00981:     });
+00982: 
+00983:     return {
+00984:       ok: !!(floored.minYmd && floored.maxYmd),
+00985:       uf,
+00986: 
+00987:       minYmd: floored.minYmd,
+00988:       maxYmd: floored.maxYmd,
+00989: 
+00990:       minDate: floored.minYmd,
+00991:       maxDate: floored.maxYmd,
+00992: 
+00993:       source: `fallback_edges_docId_limit=${FALLBACK_EDGE_LIMIT}:${
+00994:         a.ok ? "uf" : "lottery_key"
+00995:       }:sampleCount=${merged.length}${recentMaxYmd ? ":max_probe" : ""}${idxInfo}`,
+00996:     };
+00997:   }
+00998: }
+00999: 
+01000: /* =========================
+01001:    API: Day
+01002: ========================= */
+01003: 
+01004: function buildPrizeSignature(draw) {
+01005:   const prizes = Array.isArray(draw?.prizes) ? draw.prizes : [];
+01006:   if (!prizes.length) return "";
+01007: 
+01008:   const parts = prizes
+01009:     .map((p) => {
+01010:       const pos = Number(p?.position);
+01011:       const grupo = Number(p?.grupo);
+01012:       const numero = toPrizeDigitsByPosition(
+01013:         p?.numero ?? p?.milhar ?? p?.number ?? p?.num ?? p?.valor ?? "",
+01014:         pos
+01015:       );
+01016: 
+01017:       if (!Number.isFinite(pos) || !Number.isFinite(grupo) || !numero) return "";
+01018:       return `${pad2(pos)}:${pad2(grupo)}:${numero}`;
+01019:     })
+01020:     .filter(Boolean)
+01021:     .sort();
+01022: 
+01023:   return parts.join("|");
+01024: }
+01025: 
+01026: function federalHourPriority(draw) {
+01027:   const h = normalizeHourLike(
+01028:     draw?.close_hour || draw?.closeHour || draw?.hour || draw?.hora || ""
+01029:   );
+01030:   const ymd = String(draw?.ymd || normalizeToYMD(draw?.date) || "").trim();
+01031:   const n = hourToNumSafe(h);
+01032: 
+01033:   const prefer20h = getFederalPreferredHourForYmd(ymd) === "20:00";
+01034: 
+01035:   if (prefer20h) {
+01036:     if (h === "20:00") return 200000 + n;
+01037:     if (h === "19:00") return 190000 + n;
+01038:     return 100000 + n;
+01039:   }
+01040: 
+01041:   if (h === "19:00") return 200000 + n;
+01042:   if (h === "20:00") return 190000 + n;
+01043:   return 100000 + n;
+01044: }
+01045: 
+01046: function pickBetterFederalClone(a, b) {
+01047:   const pa = Number.isFinite(Number(a?.prizesCount))
+01048:     ? Number(a.prizesCount)
+01049:     : Array.isArray(a?.prizes)
+01050:     ? a.prizes.length
+01051:     : 0;
+01052: 
+01053:   const pb = Number.isFinite(Number(b?.prizesCount))
+01054:     ? Number(b.prizesCount)
+01055:     : Array.isArray(b?.prizes)
+01056:     ? b.prizes.length
+01057:     : 0;
+01058: 
+01059:   if (pa !== pb) return pb > pa ? b : a;
+
+
+====================================================================================================
+Ocorrência na linha 978
+====================================================================================================
+
+00938:               : mm.maxYmd;
+00939: 
+00940:           const floored = applyBoundsFloor(scopeKeyBounds, {
+00941:             minYmd: mm.minYmd || null,
+00942:             maxYmd: maxFixed || null,
+00943:           });
+00944: 
+00945:           return {
+00946:             ok: !!(floored.minYmd && floored.maxYmd),
+00947:             uf,
+00948: 
+00949:             minYmd: floored.minYmd,
+00950:             maxYmd: floored.maxYmd,
+00951: 
+00952:             minDate: floored.minYmd,
+00953:             maxDate: floored.maxYmd,
+00954: 
+00955:             source: `fallback_edges_docId_limit=${FALLBACK_EDGE_LIMIT}:lottery_key(${lk}):sampleCount=${b.merged.length}${
+00956:               recentMaxYmd ? ":max_probe" : ""
+00957:             }${idxInfo}`,
+00958:           };
+00959:         }
+00960:       }
+00961:     }
+00962: 
+00963:     const lotteryKey =
+00964:       ufUp === RJ_STATE_CODE ? RJ_LOTTERY_KEY : resolveLotteryKeyForQuery(uf);
+00965: 
+00966:     const b = a.ok
+00967:       ? null
+00968:       : await sampleEdgesByDocId("lottery_key", String(lotteryKey).toUpperCase());
+00969: 
+00970:     const merged = a.ok ? a.merged : b?.merged || [];
+00971:     const mm = pickMinMaxFromMapped(merged);
+00972: 
+00973:     const maxFixed =
+00974:       recentMaxYmd && (!mm.maxYmd || recentMaxYmd > mm.maxYmd)
+00975:         ? recentMaxYmd
+00976:         : mm.maxYmd;
+00977: 
+00978:     const floored = applyBoundsFloor(scopeKeyBounds, {
+00979:       minYmd: mm.minYmd || null,
+00980:       maxYmd: maxFixed || null,
+00981:     });
+00982: 
+00983:     return {
+00984:       ok: !!(floored.minYmd && floored.maxYmd),
+00985:       uf,
+00986: 
+00987:       minYmd: floored.minYmd,
+00988:       maxYmd: floored.maxYmd,
+00989: 
+00990:       minDate: floored.minYmd,
+00991:       maxDate: floored.maxYmd,
+00992: 
+00993:       source: `fallback_edges_docId_limit=${FALLBACK_EDGE_LIMIT}:${
+00994:         a.ok ? "uf" : "lottery_key"
+00995:       }:sampleCount=${merged.length}${recentMaxYmd ? ":max_probe" : ""}${idxInfo}`,
+00996:     };
+00997:   }
+00998: }
+00999: 
+01000: /* =========================
+01001:    API: Day
+01002: ========================= */
+01003: 
+01004: function buildPrizeSignature(draw) {
+01005:   const prizes = Array.isArray(draw?.prizes) ? draw.prizes : [];
+01006:   if (!prizes.length) return "";
+01007: 
+01008:   const parts = prizes
+01009:     .map((p) => {
+01010:       const pos = Number(p?.position);
+01011:       const grupo = Number(p?.grupo);
+01012:       const numero = toPrizeDigitsByPosition(
+01013:         p?.numero ?? p?.milhar ?? p?.number ?? p?.num ?? p?.valor ?? "",
+01014:         pos
+01015:       );
+01016: 
+01017:       if (!Number.isFinite(pos) || !Number.isFinite(grupo) || !numero) return "";
+01018:       return `${pad2(pos)}:${pad2(grupo)}:${numero}`;
+01019:     })
+01020:     .filter(Boolean)
+01021:     .sort();
+01022: 
+01023:   return parts.join("|");
+01024: }
+01025: 
+01026: function federalHourPriority(draw) {
+01027:   const h = normalizeHourLike(
+01028:     draw?.close_hour || draw?.closeHour || draw?.hour || draw?.hora || ""
+01029:   );
+01030:   const ymd = String(draw?.ymd || normalizeToYMD(draw?.date) || "").trim();
+01031:   const n = hourToNumSafe(h);
+01032: 
+01033:   const prefer20h = getFederalPreferredHourForYmd(ymd) === "20:00";
+01034: 
+01035:   if (prefer20h) {
+01036:     if (h === "20:00") return 200000 + n;
+01037:     if (h === "19:00") return 190000 + n;
+01038:     return 100000 + n;
+01039:   }
+01040: 
+01041:   if (h === "19:00") return 200000 + n;
+01042:   if (h === "20:00") return 190000 + n;
+01043:   return 100000 + n;
+01044: }
+01045: 
+01046: function pickBetterFederalClone(a, b) {
+01047:   const pa = Number.isFinite(Number(a?.prizesCount))
+01048:     ? Number(a.prizesCount)
+01049:     : Array.isArray(a?.prizes)
+01050:     ? a.prizes.length
+01051:     : 0;
+01052: 
+01053:   const pb = Number.isFinite(Number(b?.prizesCount))
+01054:     ? Number(b.prizesCount)
+01055:     : Array.isArray(b?.prizes)
+01056:     ? b.prizes.length
+01057:     : 0;
+01058: 
+01059:   if (pa !== pb) return pb > pa ? b : a;
+01060: 
+01061:   const ha = federalHourPriority(a);
+01062:   const hb = federalHourPriority(b);
+01063:   if (ha !== hb) return hb > ha ? b : a;
+01064: 
+01065:   const ia = String(a?.drawId || a?.id || "");
+01066:   const ib = String(b?.drawId || b?.id || "");
+01067:   return ib.localeCompare(ia) > 0 ? b : a;
+01068: }
+01069: 
+01070: function collapseFederalDailyCloneDraws(draws) {
+01071:   const arr = Array.isArray(draws) ? draws : [];
+01072:   const byKey = new Map();
+01073: 
+01074:   for (const d of arr) {
+01075:     const ymd = String(d?.ymd || normalizeToYMD(d?.date) || "").trim();
+01076:     const sig = buildPrizeSignature(d);
+01077: 
+01078:     if (!ymd || !sig) {
+01079:       const fallbackKey = `id::${String(
+01080:         d?.drawId || d?.id || Math.random()
+01081:       )}`;
+01082:       if (!byKey.has(fallbackKey)) byKey.set(fallbackKey, d);
+01083:       continue;
+01084:     }
+01085: 
+01086:     const key = `${ymd}__${sig}`;
+01087:     const prev = byKey.get(key);
+01088: 
+01089:     if (!prev) byKey.set(key, d);
+01090:     else byKey.set(key, pickBetterFederalClone(prev, d));
+01091:   }
+01092: 
+01093:   return sortDrawsLocal(Array.from(byKey.values()));
+01094: }
+01095: 
+01096: function drawsCacheKeyDay({ scopeKey, ymd, positionsArr, hourFilter }) {
+01097:   const p = positionsArr && positionsArr.length ? positionsArr.join(",") : "all";
+
+

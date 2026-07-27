@@ -1,0 +1,649 @@
+  230:     if (ma != null && mb != null && ma !== mb) return ma - mb;
+  231:     if (ma == null && mb != null) return 1;
+  232:     if (ma != null && mb == null) return -1;
+  233: 
+  234:     return a.grupo - b.grupo;
+  235:   });
+  236: 
+  237:   return out.map((r, idx) => ({ ...r, pos: idx + 1 }));
+  238: }
+  239: 
+  240: /* =========================
+  241:    ✅ Bounds helpers (FIX UI)
+  242: ========================= */
+  243: 
+  244: function clampYmd(ymd, minYmd, maxYmd) {
+  245:   const d = safeStr(ymd);
+  246:   if (!isYMD(d)) return null;
+  247: 
+  248:   let out = d;
+  249:   const min = safeStr(minYmd);
+  250:   const max = safeStr(maxYmd);
+  251: 
+  252:   if (isYMD(min) && out < min) out = min;
+  253:   if (isYMD(max) && out > max) out = max;
+  254: 
+  255:   return out;
+  256: }
+  257: 
+  258: function normalizeSingleDateWithBounds(dateIn, minYmd, maxYmd) {
+  259:   const d = clampYmd(dateIn, minYmd, maxYmd);
+  260:   if (d) return d;
+  261: 
+  262:   const fallback =
+  263:     clampYmd(todayYMDLocal(), minYmd, maxYmd) ||
+  264:     (isYMD(maxYmd) ? maxYmd : null) ||
+  265:     (isYMD(minYmd) ? minYmd : null) ||
+  266:     todayYMDLocal();
+  267: 
+  268:   return fallback;
+  269: }
+  270: 
+  271: /* =========================
+  272:    ✅ Bounds normalize (PATCH)
+  273: ========================= */
+  274: function normalizeBoundsResponse(b) {
+  275:   const minRaw = safeStr(b?.minYmd || b?.minDate || b?.min || "");
+  276:   const maxRaw = safeStr(b?.maxYmd || b?.maxDate || b?.max || "");
+  277:   const minYmd = isYMD(minRaw) ? minRaw : null;
+  278:   const maxYmd = isYMD(maxRaw) ? maxRaw : null;
+  279:   return { minYmd, maxYmd, source: safeStr(b?.source || "") };
+  280: }
+  281: 
+  282: const LATE_LOTTERY_OPTIONS = [
+  283:   {
+  284:     id: "PT_RIO",
+  285:     label: "Rio de Janeiro",
+  286:     lotteries: ["PT_RIO"],
+  287:     uf: "RJ",
+  288:   },
+  289:   {
+  290:     id: "FEDERAL",
+  291:     label: "Federal",
+  292:     lotteries: ["FEDERAL"],
+  293:     uf: "FEDERAL",
+  294:   },
+  295:   {
+  296:     id: "LOOK",
+  297:     label: "LOOK",
+  298:     lotteries: ["LOOK"],
+  299:     uf: "GO",
+  300:   },
+  301:   {
+  302:     id: "NACIONAL",
+  303:     label: "Nacional",
+  304:     lotteries: ["NACIONAL"],
+  305:     uf: "NACIONAL",
+  306:   },
+  307: ];
+  308: 
+  309: const LATE_HOUR_OPTIONS = {
+  310:   PT_RIO: [
+  311:     { id: "ALL", label: "Todos os horários", closeHour: null },
+  312:     { id: "09", label: "09h", closeHour: "09:00" },
+  313:     { id: "11", label: "11h", closeHour: "11:00" },
+  314:     { id: "14", label: "14h", closeHour: "14:00" },
+  315:     { id: "16", label: "16h", closeHour: "16:00" },
+  316:     { id: "18", label: "18h", closeHour: "18:00" },
+  317:     { id: "21", label: "21h", closeHour: "21:00" },
+  318:   ],
+  319: 
+  320:   FEDERAL: [
+  321:     { id: "ALL", label: "Todos os horários", closeHour: null },
+  322:     { id: "20", label: "20h", closeHour: "20:00" },
+  323:   ],
+  324: 
+  325:   LOOK: [
+  326:     { id: "ALL", label: "Todos os horários", closeHour: null },
+  327:   ],
+  328: 
+  329:   NACIONAL: [
+  330:     { id: "ALL", label: "Todos os horários", closeHour: null },
+  331:   ],
+  332: };
+  333: 
+  334: export default function Late() {
+  335: 
+  336: 
+  337:   // UI
+  338:   const [lotteryOptId, setLotteryOptId] = useState("ALL");
+  339: 
+  340:   const [selectedLotteryId, setSelectedLotteryId] = useState("PT_RIO");
+  341:   const [kind, setKind] = useState("grupo");
+  342:   const [prizeMode, setPrizeMode] = useState("1");
+  343:   const [dateYmd, setDateYmd] = useState(todayYMDLocal());
+  344: 
+  345:   // Data
+  346:   const [bounds, setBounds] = useState({
+  347:     minYmd: null,
+  348:     maxYmd: null,
+  349:     source: "",
+  350:   });
+  351:   const [loading, setLoading] = useState(false);
+  352:   const [error, setError] = useState("");
+  353:   const [rows, setRows] = useState([]);
+  354: 
+  355:   // Último sorteio importado (INDEPENDENTE do prizeMode / filtro)
+  356:   const [lastImported, setLastImported] = useState({
+  357:     ymd: "",
+  358:     closeHour: "",
+  359:   });
+  360: 
+  361:   const lastImportedRef = useRef(lastImported);
+  362:   useEffect(() => {
+  363:     lastImportedRef.current = lastImported;
+  364:   }, [lastImported]);
+  365: 
+  366:   const [meta, setMeta] = useState({
+  367:     effectiveTargetYmd: "",
+  368:   });
+  369: 
+  370:   const abortedRef = useRef(false);
+  371:   const pollRef = useRef(null);
+  372:   const selectedHourOptions = useMemo(
+  373:     () =>
+  374:       LATE_HOUR_OPTIONS[selectedLotteryId] ||
+  375:       LATE_HOUR_OPTIONS.PT_RIO,
+  376:     [selectedLotteryId]
+  377:   );
+  378: 
+  379:   const selectedHourOption = useMemo(
+  380:     () =>
+  381:       selectedHourOptions.find(
+  382:         (option) => option.id === lotteryOptId
+  383:       ) || selectedHourOptions[0],
+  384:     [lotteryOptId, selectedHourOptions]
+  385:   );
+  386: 
+  387: 
+  388:   // ✅ bucket "09h" etc (preferível pra bater na base)
+  389:   const selectedLateLottery = useMemo(
+  390:     () =>
+  391:       LATE_LOTTERY_OPTIONS.find(
+  392:         (option) => option.id === selectedLotteryId
+  393:       ) || LATE_LOTTERY_OPTIONS[0],
+  394:     [selectedLotteryId]
+  395:   );
+  396: 
+  397:   const selectedLateLotteries = useMemo(
+  398:     () => selectedLateLottery.lotteries,
+  399:     [selectedLateLottery]
+  400:   );
+  401: 
+  402:   const selectedLateUf = selectedLateLottery.uf;
+  403: 
+  404:   const LOTTERY_DISPLAY = selectedLateLottery.label;
+  405: 
+  406: 
+  407: 
+  408:   const selectedCloseHourBucket = useMemo(() => {
+  409:     const raw = selectedHourOption?.closeHour;
+  410:     if (!raw) return null;
+  411:     return String(raw).includes("h") ? String(raw).trim() : toHourBucket(raw);
+  412:   }, [selectedHourOption]);
+  413: 
+  414:   const prizePositions = useMemo(() => {
+  415:     if (prizeMode === "1-5") return [1, 2, 3, 4, 5];
+  416:     const n = Number(prizeMode);
+  417:     if (Number.isFinite(n) && n >= 1 && n <= 5) return [n];
+  418:     return [1];
+  419:   }, [prizeMode]);
+  420: 
+  421:   const boundsReady = !!(bounds?.minYmd && bounds?.maxYmd);
+  422: 
+  423:   // ✅ label e img robustos (assinam variações)
+  424:   const safeGetAnimalLabel = useCallback((grupoNum) => {
+  425:     const g = Number(grupoNum);
+  426:     if (!Number.isFinite(g)) return "";
+  427:     try {
+  428:       if (typeof getAnimalLabelFn === "function") {
+  429:         const a1 = getAnimalLabelFn({ grupo: g, animal: "" });
+  430:         const s1 = String(a1 ?? "").trim();
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:276:  const maxRaw = safeStr(b?.maxYmd || b?.maxDate || b?.max || "");
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:277:  const minYmd = isYMD(minRaw) ? minRaw : null;
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:278:  const maxYmd = isYMD(maxRaw) ? maxRaw : null;
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:279:  return { minYmd, maxYmd, source: safeStr(b?.source || "") };
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:280:}
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:281:
+> C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:282:const LATE_LOTTERY_OPTIONS = [
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:283:  {
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:284:    id: "PT_RIO",
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:285:    label: "Rio de Janeiro",
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:286:    lotteries: ["PT_RIO"],
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:287:    uf: "RJ",
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:288:  },
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:289:  {
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:290:    id: "FEDERAL",
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:291:    label: "Federal",
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:292:    lotteries: ["FEDERAL"],
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:332:};
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:333:
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:334:export default function Late() {
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:335:
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:336:
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:337:  // UI
+> C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:338:  const [lotteryOptId, setLotteryOptId] = useState("ALL");
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:339:
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:340:  const [selectedLotteryId, setSelectedLotteryId] = useState("PT_RIO");
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:341:  const [kind, setKind] = useState("grupo");
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:342:  const [prizeMode, setPrizeMode] = useState("1");
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:343:  const [dateYmd, setDateYmd] = useState(todayYMDLocal());
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:344:
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:345:  // Data
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:346:  const [bounds, setBounds] = useState({
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:347:    minYmd: null,
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:348:    maxYmd: null,
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:366:  const [meta, setMeta] = useState({
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:367:    effectiveTargetYmd: "",
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:368:  });
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:369:
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:370:  const abortedRef = useRef(false);
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:371:  const pollRef = useRef(null);
+> C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:372:  const selectedHourOptions = useMemo(
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:373:    () =>
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:374:      LATE_HOUR_OPTIONS[selectedLotteryId] ||
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:375:      LATE_HOUR_OPTIONS.PT_RIO,
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:376:    [selectedLotteryId]
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:377:  );
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:378:
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:379:  const selectedHourOption = useMemo(
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:380:    () =>
+> C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:381:      selectedHourOptions.find(
+> C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:382:        (option) => option.id === lotteryOptId
+> C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:383:      ) || selectedHourOptions[0],
+> C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:384:    [lotteryOptId, selectedHourOptions]
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:385:  );
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:386:
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:387:
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:388:  // ✅ bucket "09h" etc (preferível pra bater na base)
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:389:  const selectedLateLottery = useMemo(
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:390:    () =>
+> C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:391:      LATE_LOTTERY_OPTIONS.find(
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:392:        (option) => option.id === selectedLotteryId
+> C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:393:      ) || LATE_LOTTERY_OPTIONS[0],
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:394:    [selectedLotteryId]
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:395:  );
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:396:
+> C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:397:  const selectedLateLotteries = useMemo(
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:398:    () => selectedLateLottery.lotteries,
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:399:    [selectedLateLottery]
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:400:  );
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:401:
+> C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:402:  const selectedLateUf = selectedLateLottery.uf;
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:403:
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:404:  const LOTTERY_DISPLAY = selectedLateLottery.label;
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:405:
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:406:
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:407:
+> C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:408:  const selectedCloseHourBucket = useMemo(() => {
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:409:    const raw = selectedHourOption?.closeHour;
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:410:    if (!raw) return null;
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:411:    return String(raw).includes("h") ? String(raw).trim() : toHourBucket(raw);
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:412:  }, [selectedHourOption]);
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:413:
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:414:  const prizePositions = useMemo(() => {
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:415:    if (prizeMode === "1-5") return [1, 2, 3, 4, 5];
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:416:    const n = Number(prizeMode);
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:417:    if (Number.isFinite(n) && n >= 1 && n <= 5) return [n];
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:418:    return [1];
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:464:   * sempre calcula por (maxYmd + maior close_hour do dia), sem depender do prizeMode/lottery selecionada.
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:465:   */
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:466:  async function fetchLastImportedFromMaxYmd(maxYmd) {
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:467:    if (!maxYmd) return { ymd: "", closeHour: "" };
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:468:
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:469:    const dayResult = await getKingResultsByDate({
+> C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:470:      uf: selectedLateUf,
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:471:      date: maxYmd,
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:472:      closeHour: null,
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:473:      closeHourBucket: null,
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:474:      positions: [1],
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:475:    });
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:476:
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:477:    const latest = pickLatestCloseHour(dayResult);
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:478:    if (latest?.ymd && latest?.closeHour) {
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:479:      return { ymd: String(latest.ymd || maxYmd), closeHour: String(latest.closeHour || "") };
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:480:    }
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:481:    return { ymd: maxYmd, closeHour: "" };
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:482:  }
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:483:
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:484:  async function refreshBoundsAndLastDraw() {
+> C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:485:    const b = await getKingBoundsByUf({ uf: selectedLateUf });
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:486:
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:487:    // ✅ PATCH: aceita minDate/maxDate também
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:488:    const nb = normalizeBoundsResponse(b);
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:489:    const minYmd = nb.minYmd;
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:490:    const maxYmd = nb.maxYmd;
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:491:
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:492:    setBounds({ minYmd, maxYmd, source: nb.source });
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:493:
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:494:    if (maxYmd) {
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:495:      const li = await fetchLastImportedFromMaxYmd(maxYmd);
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:525:    }
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:526:
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:527:    // 1) Consulta atrasados por posição (1 ou várias) via SUA base
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:528:    const lists = [];
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:529:    for (const pos of prizePositions) {
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:530:      const list = await getKingLateByRange({
+> C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:531:        uf: selectedLateUf,
+> C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:532:        lotteries: selectedLateLotteries,
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:533:        dateFrom: minYmd,
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:534:        dateTo: safeTarget,
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:535:        baseDate: safeTarget,
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:536:        prizePosition: pos,
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:537:
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:538:        closeHour: null,
+> C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:539:        closeHourBucket: selectedCloseHourBucket || null,
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:540:
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:541:        chunkDays: 15,
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:542:      });
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:543:
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:544:      const mapped = (Array.isArray(list) ? list : []).map((r) => ({
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:545:        grupo: Number(r?.grupo),
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:546:        lastYmd: r?.lastYmd || null,
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:547:        lastCloseHour: r?.lastHour || r?.lastCloseHour || "",
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:548:      }));
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:549:
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:621:      }
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:622:    },
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:623:    [
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:624:      dateYmd,
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:625:      kind,
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:626:      prizePositions,
+> C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:627:      selectedCloseHourBucket,
+> C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:628:      selectedLateUf,
+> C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:629:      selectedLateLotteries,
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:630:    ] // eslint-disable-line react-hooks/exhaustive-deps
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:631:  );
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:632:
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:633:  useEffect(() => {
+> C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:634:    setLotteryOptId("ALL");
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:635:  }, [selectedLotteryId]);
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:636:
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:637:
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:638:
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:639:  // primeiro load
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:640:  useEffect(() => {
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:641:    let alive = true;
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:642:    (async () => {
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:643:      setError("");
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:644:      try {
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:672:    refresh();
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:673:    // eslint-disable-next-line react-hooks/exhaustive-deps
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:674:  }, [
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:675:    boundsReady,
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:676:    dateYmd,
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:677:    prizeMode,
+> C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:678:    lotteryOptId,
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:679:    selectedLotteryId,
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:680:  ]);
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:681:
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:682:  // polling: atualiza quando entrar sorteio novo
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:683:  useEffect(() => {
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:684:    if (pollRef.current) clearInterval(pollRef.current);
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:685:
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:686:    pollRef.current = setInterval(async () => {
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:687:      if (abortedRef.current) return;
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:688:
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:689:      try {
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:690:        const prev = lastImportedRef.current;
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:691:
+> C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:692:        const b = await getKingBoundsByUf({ uf: selectedLateUf });
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:693:        const nb = normalizeBoundsResponse(b);
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:694:        const maxYmd = nb.maxYmd || "";
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:695:        if (!maxYmd) return;
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:696:
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:697:        const next = await fetchLastImportedFromMaxYmd(maxYmd);
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:698:
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:699:        const changed =
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:700:          String(prev?.ymd || "") !== String(next.ymd || "") ||
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:701:          String(prev?.closeHour || "") !== String(next.closeHour || "");
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:702:
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:894:          <h1 className="ppLateTitle">Atrasados</h1>
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:895:
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:896:          <div className="ppLateSubtitle">
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:897:            Leitura de atraso por <b>Grupo</b> · Prêmio{" "}
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:898:            <b>{prizeMode === "1-5" ? "1º ao 5º" : `${prizeMode}º`}</b> · Data{" "}
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:899:            <b>{titleDateBR}</b> · <b>{
+> C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:900:LATE_LOTTERY_OPTIONS.find(
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:901:  option => option.id === selectedLotteryId
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:902:)?.label || selectedLotteryId
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:903:}</b> · Loteria{" "}
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:904:            <b>{LOTTERY_DISPLAY}</b>
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:905:            {meta?.effectiveTargetYmd && meta.effectiveTargetYmd !== dateYmd ? (
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:906:              <>
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:907:                {" · "}
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:908:                Data efetiva <b>{effectiveDateBR}</b>
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:909:              </>
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:910:            ) : null}
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:928:              value={selectedLotteryId}
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:929:              onChange={(event) =>
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:930:                setSelectedLotteryId(event.target.value)
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:931:              }
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:932:              disabled={loading}
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:933:            >
+> C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:934:              {LATE_LOTTERY_OPTIONS.map((option) => (
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:935:                <option
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:936:                  key={option.id}
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:937:                  value={option.id}
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:938:                >
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:939:                  {option.label}
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:940:                </option>
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:941:              ))}
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:942:            </select>
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:943:          </div>
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:944:          <div className="ppCtl">
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:945:            <label htmlFor="lateHour">Horário</label>
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:946:
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:947:            <select
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:948:              id="lateHour"
+> C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:949:              value={lotteryOptId}
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:950:              onChange={(event) =>
+> C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:951:                setLotteryOptId(
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:952:                  String(event.target.value || "ALL")
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:953:                )
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:954:              }
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:955:              disabled={loading}
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:956:            >
+> C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:957:              {selectedHourOptions.map((option) => (
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:958:                <option
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:959:                  key={option.id}
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:960:                  value={option.id}
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:961:                >
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:962:                  {option.label}
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:963:                </option>
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:964:              ))}
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:965:            </select>
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:966:          </div>
+  C:\Users\glaub\palpitaco\src\pages\Late\Late.jsx:967:
+  546: function mapDrawDoc(doc) {
+  547:   const d = doc.data();
+  548: 
+  549:   const ymd = d.ymd || normalizeToYMD(getDocDateRaw(d));
+  550:   const hourNorm = normalizeHourLike(
+  551:     d.close_hour ?? d.closeHour ?? d.hour ?? d.hora ?? ""
+  552:   );
+  553: 
+  554:   const embeddedPrizes = Array.isArray(d.prizes) && d.prizes.length > 0 ? d.prizes : null;
+  555: 
+  556:   const ufRaw = d.uf ?? null;
+  557:   const lotteryKeyRaw = d.lottery_key ?? d.lotteryKey ?? d.lottery ?? null;
+  558: 
+  559:   const lotteryCodeRaw =
+  560:     d.lottery_code ??
+  561:     d.lotteryCode ??
+  562:     d.lot_code ??
+  563:     d.lotCode ??
+  564:     d.lot ??
+  565:     d.code ??
+  566:     d.lottery_id ??
+  567:     d.lotteryId ??
+  568:     null;
+  569: 
+  570:   return {
+  571:     drawId: doc.id,
+  572:     id: doc.id,
+  573: 
+  574:     date: d.date ?? d.data ?? d.dt ?? d.draw_date ?? d.close_date ?? null,
+  575:     ymd,
+  576: 
+  577:     close_hour: hourNorm,
+  578:     closeHour: hourNorm,
+  579: 
+  580:     uf: ufRaw,
+  581:     lottery_key: lotteryKeyRaw,
+  582: 
+  583:     lottery_code: lotteryCodeRaw ? String(lotteryCodeRaw).toUpperCase() : null,
+  584: 
+  585:     lottery_name: d.lottery_name ?? d.lotteryName ?? null,
+  586:     lottery_label: d.lottery_label ?? d.lotteryLabel ?? null,
+  587: 
+  588:     prizesCount: d.prizesCount,
+  589:     prizes: embeddedPrizes,
+  590:   };
+  591: }
+  592: 
+  593: /* =========================
+  594:    Compat: uf OU lottery_key
+  595: ========================= */
+ 1565: function normalizeLotteriesList(lotteries) {
+ 1566:   const arr = Array.isArray(lotteries) ? lotteries : [];
+ 1567:   const cleaned = arr
+ 1568:     .map((x) => String(x ?? "").trim().toUpperCase())
+ 1569:     .filter(Boolean);
+ 1570:   return cleaned.length ? Array.from(new Set(cleaned)) : null;
+ 1571: }
+ 1572: 
+ 1573: function drawPassesLotteriesFilter(draw, lotteriesArr) {
+ 1574:   if (!lotteriesArr || !lotteriesArr.length) return true;
+ 1575:   const code = String(draw?.lottery_code ?? "").trim().toUpperCase();
+ 1576:   if (!code) return false;
+ 1577:   return lotteriesArr.includes(code);
+ 1578: }
+ 1579: 
+ 1580: function lateCacheKey({
+ 1609: export async function getKingLateByRange({
+ 1610:   uf,
+ 1611:   dateFrom,
+ 1612:   dateTo,
+ 1613:   baseDate = null,
+ 1614:   lotteries = null,
+ 1615:   prizePosition = 1,
+ 1616:   closeHour = null,
+ 1617:   closeHourBucket = null,
+ 1618:   chunkDays = 15,
+ 1619: }) {
+ 1620:   if (!uf || !dateFrom || !dateTo) {
+ 1621:     throw new Error("Parâmetros obrigatórios: uf, dateFrom, dateTo");
+ 1622:   }
+ 1623: 
+ 1624:   const scopeKey = canonicalScopeKey(uf);
+ 1625: 
+ 1626:   const fromYmd = normalizeToYMD(dateFrom);
+ 1627:   const toYmd = normalizeToYMD(dateTo);
+ 1628:   if (!fromYmd || !toYmd) return [];
+ 1629: 
+ 1630:   const baseYmd = normalizeToYMD(baseDate) || toYmd;
+ 1631: 
+ 1632:   const hourFilter = resolveHourFilter({ closeHour, closeHourBucket });
+ 1633:   const lotteriesArr = normalizeLotteriesList(lotteries);
+ 1634: 
+ 1635:   const cacheKey = lateCacheKey({
+ 1636:     scopeKey,
+ 1637:     fromYmd,
+ 1638:     toYmd,
+ 1639:     baseYmd,
+ 1640:     prizePosition,
+ 1641:     hourFilter,
+ 1642:     lotteriesArr,
+ 1643:     chunkDays,
+ 1644:   });
+ 1645: 
+ 1646:   const cached = cacheGet(LATE_CACHE, cacheKey);
+ 1647:   if (cached) return cached;
+ 1648: 
+ 1649:   const posNum = Number(prizePosition) || 1;
+ 1650: 
+ 1651:   const lastSeen = new Map();
+ 1652: 
+ 1653:   let cursorTo = toYmd;
+ 1654:   const chunk = Math.max(3, Math.min(60, Number(chunkDays) || 15));
+ 1655: 
+ 1656:   if (cursorTo < fromYmd) {
+ 1657:     const outEmpty = Array.from({ length: 25 }, (_, i) => ({
+ 1658:       pos: i + 1,
+ 1659:       grupo: i + 1,
+ 1660:       lastYmd: null,
+ 1661:       lastHour: null,
+ 1662:       lastDrawId: null,
+ 1663:       lastLottery: null,
+ 1664:       atrasoDias: null,
+ 1665:     }));
+ 1666:     cacheSet(LATE_CACHE, cacheKey, outEmpty);
+ 1667:     return outEmpty;
+ 1668:   }
+ 1669: 
+ 1670:   while (cursorTo >= fromYmd && lastSeen.size < 25) {
+ 1671:     let chunkFrom = addDaysUTC(cursorTo, -(chunk - 1));
+ 1672:     if (chunkFrom < fromYmd) chunkFrom = fromYmd;
+ 1673: 
+ 1674:     const draws = await getKingResultsByRange({
+ 1675:       uf,
+ 1676:       dateFrom: chunkFrom,
+ 1677:       dateTo: cursorTo,
+ 1678:       closeHour,
+ 1679:       closeHourBucket,
+ 1680:       positions: [posNum],
+ 1681:       mode: "detailed",
+ 1682:     });
+ 1683: 
+ 1684:     const desc = sortDrawsLocalDesc(dedupeDrawsLocal(draws));
+ 1685: 
+ 1686:     for (const d of desc) {
+ 1687:       if (!d) continue;
+ 1688: 
+ 1689:       if (hourFilter?.kind && !drawPassesHourFilter(d, hourFilter)) continue;
+ 1690:       if (lotteriesArr && !drawPassesLotteriesFilter(d, lotteriesArr)) continue;
+ 1691: 
+ 1692:       const ymd = d.ymd || normalizeToYMD(d.date);
+ 1693:       if (!ymd || !isYMD(ymd)) continue;
+ 1694: 
+ 1695:       const p = Array.isArray(d.prizes)
+ 1696:         ? d.prizes.find(
+ 1697:             (x) => Number(x?.position) === posNum && isValidGrupo(x?.grupo)
+ 1698:           )
+ 1699:         : null;
+ 1700: 
+ 1701:       const g = p?.grupo;
+ 1702:       if (!isValidGrupo(g)) continue;
+ 1703: 
+ 1704:       if (!lastSeen.has(g)) {
+ 1705:         lastSeen.set(g, {
+ 1706:           ymd,
+ 1707:           hour: d.close_hour || d.closeHour || "",
+ 1708:           drawId: d.drawId || d.id || null,
+ 1709:           lottery_code: d.lottery_code || null,
+ 1710:         });
+ 1711: 
+ 1712:         if (lastSeen.size >= 25) break;
+ 1713:       }
+ 1714:     }
+ 1715: 
+ 1716:     cursorTo = addDaysUTC(chunkFrom, -1);
+ 1717:   }
+ 1718: 
+ 1719:   const rows = [];
+ 1720:   for (let g = 1; g <= 25; g += 1) {
+ 1721:     const seen = lastSeen.get(g) || null;
+ 1722:     const lastYmd = seen?.ymd || null;
+ 1723:     const diff = lastYmd ? daysDiffUTC(lastYmd, baseYmd) : NaN;
+ 1724:     const atrasoDias =
+ 1725:       lastYmd && Number.isFinite(diff) ? Math.max(0, diff) : null;
+
+id                                                              drawId                                                          lottery_key lottery_code lottery_id
+--                                                              ------                                                          ----------- ------------ ----------                          
+PT_RIO__2026-07-21__09-00__c168d9b3-97b7-42dc-a332-7815edaa51e2 PT_RIO__2026-07-21__09-00__c168d9b3-97b7-42dc-a332-7815edaa51e2 PT_RIO                   c168d9b3-97b7-42dc-a332-7815edaa51e2
+PT_RIO__2026-07-21__11-00__cbac7c11-e733-400b-ba4d-2dfe0cba4272 PT_RIO__2026-07-21__11-00__cbac7c11-e733-400b-ba4d-2dfe0cba4272 PT_RIO                   cbac7c11-e733-400b-ba4d-2dfe0cba4272
+PT_RIO__2026-07-21__14-00__98352455-8fd3-447d-ab3d-701dc3f7865f PT_RIO__2026-07-21__14-00__98352455-8fd3-447d-ab3d-701dc3f7865f PT_RIO                   98352455-8fd3-447d-ab3d-701dc3f7865f
+PT_RIO__2026-07-21__16-00__76c127b7-8157-46b6-a64a-ec7ed1574c9f PT_RIO__2026-07-21__16-00__76c127b7-8157-46b6-a64a-ec7ed1574c9f PT_RIO                   76c127b7-8157-46b6-a64a-ec7ed1574c9f
+PT_RIO__2026-07-21__18-00__8290329b-aac0-4a6a-9649-5feb6182cf4f PT_RIO__2026-07-21__18-00__8290329b-aac0-4a6a-9649-5feb6182cf4f PT_RIO                   8290329b-aac0-4a6a-9649-5feb6182cf4f
+

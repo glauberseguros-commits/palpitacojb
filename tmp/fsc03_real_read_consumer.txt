@@ -1,0 +1,250 @@
+.\src\pages\Top3\top3.hooks.js:1004:    saveTop3PredictionSnapshot({
+.\src\pages\Top3\top3.firestore.js:209:export async function saveTop3PredictionSnapshot({
+164:    return [where("lottery_key", "==", RJ_LOTTERY_KEY)];
+521:  const prizesCol = collection(db, "draws", drawKey, "prizes");
+599:  return [where(fieldName, "==", normalized)];
+617:  const drawsCol = collection(db, "draws");
+742:      extraWheres: [where("ymd", "==", day)],
+744:      extraLimit: limit(5),
+840:      extraLimit: limit(FALLBACK_EDGE_LIMIT),
+876:      extraLimit: limit(SCAN_LIMIT),
+887:      extraLimit: limit(SCAN_LIMIT),
+1149:      extraWheres: [where("ymd", "==", ymdDate)],
+1161:        extraWheres: [where("date", "==", rawDate)],
+1172:      extraWheres: [where("date", "==", ymdDate)],
+1184:        extraWheres: [where("date", "==", brDate)],
+1281:    extraWheres: [where("ymd", "==", dayYmd)],
+1352:    extraWheres: [where("ymd", ">=", ymdFrom), where("ymd", "<=", ymdTo)],
+.\backend\engine\historicalQueryEngine.js:38:async function queryOccurrences({
+.\backend\workers\bootstrapTop3History.js:175:async function bootstrapTop3History(
+.\backend\workers\bootstrapTop3History.js:395:    await bootstrapTop3History(
+.\backend\workers\bootstrapTop3History.js:427:  bootstrapTop3History,
+.\backend\engine\bootstrapSnapshot.js:10:async function bootstrapSnapshot(lottery = "PT_RIO") {
+.\backend\engine\bootstrapSnapshot.js:12:  const draws = await fetchAllDrawsWithPrizes({
+.\backend\engine\drawRepository.js:170:async function fetchAllDrawsWithPrizes({
+.\package.json:23:    "stats:update": "node backend/workers/updateStatistics.js",
+.\backend\workers\updateStatistics.js:3:const { updateSnapshot } = require("../engine/snapshotManager");
+.\backend\workers\updateStatistics.js:20:    const result = await updateSnapshot({
+.\backend\engine\snapshotManager.js:42:async function updateSnapshot({
+.\.github\workflows\auto-maintain-backfill.yml:11:        description: "Limite de dias por execu├º├úo de backfill"
+.\.github\workflows\auto-maintain-backfill.yml:19:  group: autopitaco-maintain-backfill
+.\.github\workflows\auto-maintain-backfill.yml:26:  maintain:
+.\backend\scripts\auditCoverage.js:129:      `auditCoverage-${LOTTERY}.json`
+.\backend\scripts\autoMaintainBackfill.js:227:  return pickLogFile({ kind: "backfillPlan", lottery, start, end });
+.\backend\scripts\autoMaintainBackfill.js:260:  // Ô£à por padr├úo, NUNCA rodar backfill para o dia atual (s├│ se for├ºar)
+.\backend\scripts\autoMaintainBackfill.js:309:    console.log("[MAINTAIN] N├úo achei backfillPlan gerado.");
+.\backend\scripts\autoMaintainBackfill.js:323:  // Por padr├úo, N├âO fazemos backfill para o dia atual.
+.\backend\scripts\autoMaintainBackfill.js:340:        `[MAINTAIN] Plan tinha slots marcados para HOJE (${todayYmd}), mas backfill do dia atual est├í desativado (por padr├úo).`
+.\backend\scripts\autoMaintainBackfill.js:344:      console.log(`[MAINTAIN] Plan com 0 slots para backfill. Nada a fazer.`);
+.\backend\scripts\autoMaintainBackfill.js:353:  // Ô£à re-audit ap├│s backfill (com os mesmos par├ómetros)
+.\backend\scripts\cleanSourceGapsFromBackfillReport.js:22:  node backend/scripts/cleanSourceGapsFromBackfillReport.js <backfillRun.json> [source_gaps.json]
+.\backend\scripts\cleanSourceGapsFromBackfillReport.js:26:  --report <arquivo>      (alternativo) caminho do backfillRun.json
+.\backend\scripts\cleanSourceGapsFromBackfillReport.js:30:  node backend/scripts/cleanSourceGapsFromBackfillReport.js logs/backfillRun-PT_RIO-20260228-225534.json
+.\backend\scripts\cleanSourceGapsFromBackfillReport.js:31:  node backend/scripts/cleanSourceGapsFromBackfillReport.js logs/backfillRun-PT_RIO-20260228-225534.json backend/data/source_gaps/PT_RIO.json
+.\backend\scripts\cleanSourceGapsFromBackfillReport.js:32:  node backend/scripts/cleanSourceGapsFromBackfillReport.js --report logs/backfillRun-PT_RIO-20260228-225534.json --gaps backend/data/source_gaps/PT_RIO.json
+.\backend\scripts\cleanSourceGapsFromBackfillReport.js:88:    console.error("Erro: informe o caminho do backfillRun.json.\n");
+.\backend\scripts\planBackfillFromAudit.js:330:        `Plano de backfill ficar├í zerado. auditFile=${auditPath}`
+.\backend\scripts\planBackfillFromAudit.js:416:    backfillDays: rows
+.\backend\scripts\planBackfillFromAudit.js:429:    `backfillPlan-${lottery}-${String(audit?.startYmd || "start")}_to_${String(
+.\backend\scripts\maintenance\backfillYmdDraws.js:10: *    node scripts/maintenance/backfillYmdDraws.js --dry
+.\backend\scripts\maintenance\backfillYmdDraws.js:13: *    node scripts/maintenance/backfillYmdDraws.js
+.\backend\scripts\runBackfillFromPlan.js:126:      "Uso: node backend/scripts/runBackfillFromPlan.js <backfillPlan.json> [--limitDays=5] [--baseMins=9] [--tolMin=2]"
+.\backend\scripts\runBackfillFromPlan.js:140:  // Ô£à Fonte preferencial: plan.backfillDays (j├í vem pronto do planBackfillFromAudit.js)
+.\backend\scripts\runBackfillFromPlan.js:141:  const planBackfillDays = Array.isArray(plan?.backfillDays) ? plan.backfillDays : [];
+.\backend\scripts\runBackfillFromPlan.js:143:  let backfillDays = planBackfillDays
+.\backend\scripts\runBackfillFromPlan.js:159:  if (!backfillDays.length) {
+.\backend\scripts\runBackfillFromPlan.js:161:    backfillDays = rows
+.\backend\scripts\runBackfillFromPlan.js:178:  if (!backfillDays.length) {
+.\backend\scripts\runBackfillFromPlan.js:179:    console.log("[BACKFILL] Nenhum dia para backfill.");
+.\backend\scripts\runBackfillFromPlan.js:187:  const outFile = path.join(LOG_DIR, `backfillRun-${lottery}-${runId}.json`);
+.\backend\scripts\runBackfillFromPlan.js:188:  const picked = backfillDays.slice(0, limitDays);
+.\backend\scripts\runBackfillFromPlan.js:194:    `[BACKFILL] days in plan=${backfillDays.length} | running now=${picked.length} (limitDays=${limitDays})`
+.\backend\scripts\runBackfillFromPlan.js:282:        // Para backfill, isso deve encerrar o slot como API_NO_SLOT imediatamente.
+   1: name: Auto Maintain Backfill (PT_RIO)
+   2: 
+   3: on:
+   4:   workflow_dispatch:
+   5:     inputs:
+   6:       days:
+   7:         description: "Janela de auditoria (dias)"
+   8:         required: true
+   9:         default: "60"
+  10:       limitDays:
+  11:         description: "Limite de dias por execução de backfill"
+  12:         required: true
+  13:         default: "14"
+  14:   schedule:
+  15:     # Domingo 06:15 (BRT = UTC-3) => 09:15 UTC
+  16:     - cron: "15 9 * * 0"
+  17: 
+  18: concurrency:
+  19:   group: autopitaco-maintain-backfill
+  20:   cancel-in-progress: false
+  21: 
+  22: permissions:
+  23:   contents: read
+  24: 
+  25: jobs:
+  26:   maintain:
+  27:     runs-on: ubuntu-latest
+  28:     timeout-minutes: 45
+  29:     env:
+  30:       TZ: America/Sao_Paulo
+  31:       PITACO_API_BASE: ${{ vars.PITACO_API_BASE }}
+  32:       # ✅ robusto no Actions (sem quebra de newline)
+  33:       FIREBASE_ADMIN_SA_BASE64: ${{ secrets.FIREBASE_ADMIN_SA_BASE64 }}
+  34: 
+  35:       # ✅ garante projectId pro Firestore (evita "Unable to detect a Project Id")
+  36:       GOOGLE_CLOUD_PROJECT: palpitacojb-app
+  37:       GCLOUD_PROJECT: palpitacojb-app
+  38: 
+  39:       # Defaults (schedule)
+  40:       DAYS_DEFAULT: "60"
+  41:       LIMIT_DAYS_DEFAULT: "14"
+  42: 
+  43:       # 🔒 Guardrails CI
+  44:       MAX_DAYS: "60"
+  45:       MAX_LIMIT_DAYS: "14"
+  46: 
+  47:     steps:
+  48:       - name: Checkout
+  49:         uses: actions/checkout@v4
+  50: 
+  51:       - name: Setup Node
+  52:         uses: actions/setup-node@v4
+  53:         with:
+  54:           node-version: "22"
+  55:           cache: "npm"
+  56:           cache-dependency-path: backend/package-lock.json
+  57: 
+  58:       - name: Install deps (backend)
+  59:         working-directory: backend
+  60:         run: npm ci
+  61: 
+  62:       - name: Guardrails (validate inputs)
+  63:         shell: bash
+  64:         run: |
+  65:           set -euo pipefail
+  66: 
+  67:           DAYS="${{ github.event_name == 'workflow_dispatch' && inputs.days || env.DAYS_DEFAULT }}"
+  68:           LIMIT_DAYS="${{ github.event_name == 'workflow_dispatch' && inputs.limitDays || env.LIMIT_DAYS_DEFAULT }}"
+  69: 
+  70:           is_int() { [[ "$1" =~ ^[0-9]+$ ]]; }
+  71: 
+  72:           if ! is_int "$DAYS"; then
+  73:             echo "::error::Input 'days' inválido (precisa ser inteiro). Recebido: $DAYS"
+  74:             exit 1
+  75:           fi
+  76: 
+  77:           if ! is_int "$LIMIT_DAYS"; then
+  78:             echo "::error::Input 'limitDays' inválido (precisa ser inteiro). Recebido: $LIMIT_DAYS"
+  79:             exit 1
+  80:           fi
+  81: 
+  82:           if (( DAYS > ${MAX_DAYS} )); then
+  83:             echo "::error::Guardrail: days=$DAYS excede MAX_DAYS=${MAX_DAYS}. Use <= ${MAX_DAYS}."
+  84:             exit 1
+  85:           fi
+  86: 
+  87:           if (( LIMIT_DAYS > ${MAX_LIMIT_DAYS} )); then
+  88:             echo "::error::Guardrail: limitDays=$LIMIT_DAYS excede MAX_LIMIT_DAYS=${MAX_LIMIT_DAYS}. Use <= ${MAX_LIMIT_DAYS}."
+  89:             exit 1
+  90:           fi
+  91: 
+  92:           echo "DAYS=$DAYS" >> "$GITHUB_ENV"
+  93:           echo "LIMIT_DAYS=$LIMIT_DAYS" >> "$GITHUB_ENV"
+  94: 
+  95:           echo "Resolved inputs:"
+  96:           echo "  DAYS=$DAYS"
+  97:           echo "  LIMIT_DAYS=$LIMIT_DAYS"
+  98: 
+  99:       - name: Run autoMaintainBackfill (PT_RIO)
+ 100:         run: node backend/scripts/autoMaintainBackfill.js --lottery=PT_RIO --days=${{ env.DAYS }} --limitDays=${{ env.LIMIT_DAYS }} --baseMins=0,9 --tolMin=2 --baseUrl="${{ vars.PITACO_API_BASE }}"
+
+ databaseId event             status    conclusion createdAt           updatedAt           headSha                                  url
+ ---------- -----             ------    ---------- ---------           ---------           -------                                  ---
+29683819661 schedule          completed failure    19/07/2026 10:42:40 19/07/2026 10:42:57 942b5f4de8617cb762ed9b1e4664e22c16a2ed36 https://github.com/glauberseguros-commits/palpitacojb/actions/runs/296838
+                                                                                                                                    19661
+29263322025 workflow_dispatch completed success    13/07/2026 15:41:58 13/07/2026 15:44:01 44007fa4770e89144623f6a7af4a6f3f27618fa2 https://github.com/glauberseguros-commits/palpitacojb/actions/runs/292633
+                                                                                                                                    22025
+29260461892 workflow_dispatch completed success    13/07/2026 15:01:33 13/07/2026 15:04:20 de002cdc926a6a02b9c85b107f5806dc6d9880b9 https://github.com/glauberseguros-commits/palpitacojb/actions/runs/292604
+                                                                                                                                    61892
+29255393088 workflow_dispatch completed failure    13/07/2026 13:50:28 13/07/2026 13:50:44 eda343d4e83e29e45d465a29b302ac7a251f1e63 https://github.com/glauberseguros-commits/palpitacojb/actions/runs/292553
+                                                                                                                                    93088
+26710862642 schedule          completed failure    31/05/2026 11:05:02 31/05/2026 11:05:14 1f12226d29f45ae48cdbb909977ad75aa340fb7a https://github.com/glauberseguros-commits/palpitacojb/actions/runs/267108
+                                                                                                                                    62642
+26359189379 schedule          completed failure    24/05/2026 10:49:09 24/05/2026 10:49:23 1f12226d29f45ae48cdbb909977ad75aa340fb7a https://github.com/glauberseguros-commits/palpitacojb/actions/runs/263591
+                                                                                                                                    89379
+25988534630 schedule          completed failure    17/05/2026 10:38:30 17/05/2026 10:38:45 1f12226d29f45ae48cdbb909977ad75aa340fb7a https://github.com/glauberseguros-commits/palpitacojb/actions/runs/259885
+                                                                                                                                    34630
+25626496644 schedule          completed failure    10/05/2026 10:35:34 10/05/2026 10:35:46 1f12226d29f45ae48cdbb909977ad75aa340fb7a https://github.com/glauberseguros-commits/palpitacojb/actions/runs/256264
+                                                                                                                                    96644
+25276400267 schedule          completed failure    03/05/2026 10:14:55 03/05/2026 10:15:09 1f12226d29f45ae48cdbb909977ad75aa340fb7a https://github.com/glauberseguros-commits/palpitacojb/actions/runs/252764
+                                                                                                                                    00267
+24953992386 schedule          completed failure    26/04/2026 10:04:53 26/04/2026 10:05:10 1f12226d29f45ae48cdbb909977ad75aa340fb7a https://github.com/glauberseguros-commits/palpitacojb/actions/runs/249539
+                                                                                                                                    92386
+24626431316 schedule          completed failure    19/04/2026 09:59:28 19/04/2026 09:59:45 1f12226d29f45ae48cdbb909977ad75aa340fb7a https://github.com/glauberseguros-commits/palpitacojb/actions/runs/246264
+                                                                                                                                    31316
+24304027224 schedule          completed failure    12/04/2026 09:58:40 12/04/2026 09:58:58 1f12226d29f45ae48cdbb909977ad75aa340fb7a https://github.com/glauberseguros-commits/palpitacojb/actions/runs/243040
+                                                                                                                                    27224
+23999118041 schedule          completed failure    05/04/2026 09:54:54 05/04/2026 09:55:14 1f12226d29f45ae48cdbb909977ad75aa340fb7a https://github.com/glauberseguros-commits/palpitacojb/actions/runs/239991
+                                                                                                                                    18041
+23706434151 schedule          completed failure    29/03/2026 09:51:43 29/03/2026 09:51:56 1f12226d29f45ae48cdbb909977ad75aa340fb7a https://github.com/glauberseguros-commits/palpitacojb/actions/runs/237064
+                                                                                                                                    34151
+23400437576 schedule          completed failure    22/03/2026 09:46:36 22/03/2026 09:46:52 5144dbd8b3bb43f99983716bab36189616d0aa5c https://github.com/glauberseguros-commits/palpitacojb/actions/runs/234004
+                                                                                                                                    37576
+23107915260 schedule          completed failure    15/03/2026 09:48:32 15/03/2026 09:48:43 2cc9dabd2a6973615f2e434a598059383bae82c4 https://github.com/glauberseguros-commits/palpitacojb/actions/runs/231079
+                                                                                                                                    15260
+22818517073 schedule          completed failure    08/03/2026 09:43:21 08/03/2026 09:43:38 46825bffe69b89aeec6f96b046cc7fddd3c2ae6d https://github.com/glauberseguros-commits/palpitacojb/actions/runs/228185
+                                                                                                                                    17073
+22540741356 schedule          completed failure    01/03/2026 09:43:25 01/03/2026 09:43:39 d0acc60083bd57287470444eb44c377887a284b4 https://github.com/glauberseguros-commits/palpitacojb/actions/runs/225407
+                                                                                                                                    41356
+22274742548 schedule          completed failure    22/02/2026 09:45:01 22/02/2026 09:45:15 ab6dec3e71bdd11164302068df9cddbdec2d6202 https://github.com/glauberseguros-commits/palpitacojb/actions/runs/222747
+                                                                                                                                    42548
+22033532092 schedule          completed failure    15/02/2026 09:46:12 15/02/2026 09:46:32 f32dd5f5e052a8a7633d5e5bc3a03856ce7aa562 https://github.com/glauberseguros-commits/palpitacojb/actions/runs/220335
+                                                                                                                                    32092
+
+
+ databaseId event             status    conclusion createdAt           updatedAt           headSha                                  url
+ ---------- -----             ------    ---------- ---------           ---------           -------                                  ---
+29862664249 schedule          completed success    21/07/2026 19:42:38 21/07/2026 19:44:26 a2a9141f4dcc1a61ee337fbd4065d630da6becc5 https://github.com/glauberseguros-commits/palpitacojb/actions/runs/298626
+                                                                                                                                    64249
+29859496719 schedule          completed success    21/07/2026 18:58:16 21/07/2026 18:58:52 a2a9141f4dcc1a61ee337fbd4065d630da6becc5 https://github.com/glauberseguros-commits/palpitacojb/actions/runs/298594
+                                                                                                                                    96719
+29859150203 schedule          completed success    21/07/2026 18:53:32 21/07/2026 18:53:56 a2a9141f4dcc1a61ee337fbd4065d630da6becc5 https://github.com/glauberseguros-commits/palpitacojb/actions/runs/298591
+                                                                                                                                    50203
+29858997064 schedule          completed success    21/07/2026 18:51:23 21/07/2026 18:53:14 a2a9141f4dcc1a61ee337fbd4065d630da6becc5 https://github.com/glauberseguros-commits/palpitacojb/actions/runs/298589
+                                                                                                                                    97064
+29848552600 workflow_dispatch completed success    21/07/2026 16:25:56 21/07/2026 16:28:20 02339561031ab08962172dd017a3a7d24074ca88 https://github.com/glauberseguros-commits/palpitacojb/actions/runs/298485
+                                                                                                                                    52600
+29845791547 schedule          completed failure    21/07/2026 15:49:39 21/07/2026 15:51:00 01d2f27d4a420c024c8585aea9949a202b04ab50 https://github.com/glauberseguros-commits/palpitacojb/actions/runs/298457
+                                                                                                                                    91547
+29845775037 schedule          completed failure    21/07/2026 15:49:26 21/07/2026 15:50:22 01d2f27d4a420c024c8585aea9949a202b04ab50 https://github.com/glauberseguros-commits/palpitacojb/actions/runs/298457
+                                                                                                                                    75037
+29842523676 schedule          completed failure    21/07/2026 15:08:14 21/07/2026 15:09:05 01d2f27d4a420c024c8585aea9949a202b04ab50 https://github.com/glauberseguros-commits/palpitacojb/actions/runs/298425
+                                                                                                                                    23676
+29838349026 schedule          completed success    21/07/2026 14:16:52 21/07/2026 14:17:14 01d2f27d4a420c024c8585aea9949a202b04ab50 https://github.com/glauberseguros-commits/palpitacojb/actions/runs/298383
+                                                                                                                                    49026
+29838153527 schedule          completed failure    21/07/2026 14:14:22 21/07/2026 14:15:00 01d2f27d4a420c024c8585aea9949a202b04ab50 https://github.com/glauberseguros-commits/palpitacojb/actions/runs/298381
+                                                                                                                                    53527
+29830056934 schedule          completed failure    21/07/2026 12:25:52 21/07/2026 12:26:56 01d2f27d4a420c024c8585aea9949a202b04ab50 https://github.com/glauberseguros-commits/palpitacojb/actions/runs/298300
+                                                                                                                                    56934
+29827549300 schedule          completed success    21/07/2026 11:48:26 21/07/2026 11:49:23 01d2f27d4a420c024c8585aea9949a202b04ab50 https://github.com/glauberseguros-commits/palpitacojb/actions/runs/298275
+                                                                                                                                    49300
+29811240483 schedule          completed failure    21/07/2026 07:39:09 21/07/2026 07:39:40 01d2f27d4a420c024c8585aea9949a202b04ab50 https://github.com/glauberseguros-commits/palpitacojb/actions/runs/298112
+                                                                                                                                    40483
+29804091494 schedule          completed success    21/07/2026 05:28:28 21/07/2026 05:29:20 01d2f27d4a420c024c8585aea9949a202b04ab50 https://github.com/glauberseguros-commits/palpitacojb/actions/runs/298040
+                                                                                                                                    91494
+29804076672 schedule          completed success    21/07/2026 05:28:09 21/07/2026 05:29:00 01d2f27d4a420c024c8585aea9949a202b04ab50 https://github.com/glauberseguros-commits/palpitacojb/actions/runs/298040
+                                                                                                                                    76672
+29798958336 schedule          completed success    21/07/2026 03:36:12 21/07/2026 03:36:34 01d2f27d4a420c024c8585aea9949a202b04ab50 https://github.com/glauberseguros-commits/palpitacojb/actions/runs/297989
+                                                                                                                                    58336
+29798919744 schedule          completed success    21/07/2026 03:35:18 21/07/2026 03:35:50 01d2f27d4a420c024c8585aea9949a202b04ab50 https://github.com/glauberseguros-commits/palpitacojb/actions/runs/297989
+                                                                                                                                    19744
+29796612364 schedule          completed failure    21/07/2026 02:44:07 21/07/2026 02:44:48 01d2f27d4a420c024c8585aea9949a202b04ab50 https://github.com/glauberseguros-commits/palpitacojb/actions/runs/297966
+                                                                                                                                    12364
+29782873970 schedule          completed success    20/07/2026 22:08:46 20/07/2026 22:09:09 d4f136706a3c1e918dbb9ce7ce388eff70051c7a https://github.com/glauberseguros-commits/palpitacojb/actions/runs/297828
+                                                                                                                                    73970
+29782633590 schedule          completed failure    20/07/2026 22:04:51 20/07/2026 22:05:23 d4f136706a3c1e918dbb9ce7ce388eff70051c7a https://github.com/glauberseguros-commits/palpitacojb/actions/runs/297826
+                                                                                                                                    33590
+

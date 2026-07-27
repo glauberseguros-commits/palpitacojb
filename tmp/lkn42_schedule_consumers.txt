@@ -1,0 +1,3985 @@
+
+==========================================================================================
+TOKEN: getScheduleByLottery
+
+
+src\constants\schedule.js:78
+   0075: /**
+   0076:  * Retorna os horários da loteria (normalizado e seguro)
+   0077:  */
+>> 0078: export function getScheduleByLottery(lottery = "PT_RIO") {
+   0079:   const key = normalizeLotteryKey(lottery);
+   0080: 
+   0081:   const list = SCHEDULES[key];
+
+src\constants\schedule.js:104
+   0101:  * Verifica se horário pertence à loteria
+   0102:  */
+   0103: export function isValidLotteryHour(lottery, hour) {
+>> 0104:   const list = getScheduleByLottery(lottery);
+   0105:   return list.includes(String(hour || "").trim());
+   0106: }
+
+==========================================================================================
+TOKEN: getScheduleForLottery
+
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js:232
+   0229:   return PT_RIO_SCHEDULE_NORMAL;
+   0230: }
+   0231: 
+>> 0232: export function getScheduleForLottery({
+   0233:   lotteryKey,
+   0234:   ymd,
+   0235:   PT_RIO_SCHEDULE_NORMAL,
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js:326
+   0323:   for (let i = 1; i <= maxBackDays; i += 1) {
+   0324:     const day = addDaysYMD(ymdTarget, -i);
+   0325: 
+>> 0326:     const daySchedule = getScheduleForLottery({
+   0327:       lotteryKey,
+   0328:       ymd: day,
+   0329:       PT_RIO_SCHEDULE_NORMAL,
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js:385
+   0382:   if (key === "FEDERAL") {
+   0383:     for (let i = 1; i <= maxForwardDays; i += 1) {
+   0384:       const day = addDaysYMD(y0, i);
+>> 0385:       const sch = getScheduleForLottery({
+   0386:         lotteryKey: key,
+   0387:         ymd: day,
+   0388:         PT_RIO_SCHEDULE_NORMAL,
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js:399
+   0396:     return { ymd: "", hour: "" };
+   0397:   }
+   0398: 
+>> 0399:   const sch0 = getScheduleForLottery({
+   0400:     lotteryKey: key,
+   0401:     ymd: y0,
+   0402:     hourBucket: h0,
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js:418
+   0415: 
+   0416:   for (let i = 1; i <= maxForwardDays; i += 1) {
+   0417:     const day = addDaysYMD(y0, i);
+>> 0418:     const sch = getScheduleForLottery({
+   0419:       lotteryKey: key,
+   0420:       ymd: day,
+   0421:       PT_RIO_SCHEDULE_NORMAL,
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js:461
+   0458:     let daysWalked = 0;
+   0459: 
+   0460:     while (steps < maxSteps && daysWalked <= maxDays) {
+>> 0461:       const sch = getScheduleForLottery({
+   0462:         lotteryKey: key,
+   0463:         ymd: curY,
+   0464:         PT_RIO_SCHEDULE_NORMAL,
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js:507
+   0504: 
+   0505:     if (d) return { slot: { ymd: curY, hour: toHourBucket(curH) }, draw: d };
+   0506: 
+>> 0507:     const sch = getScheduleForLottery({
+   0508:       lotteryKey: key,
+   0509:       ymd: curY,
+   0510:       PT_RIO_SCHEDULE_NORMAL,
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js:525
+   0522:       curY = addDaysYMD(curY, 1);
+   0523:       daysWalked += 1;
+   0524: 
+>> 0525:       const sch2 = getScheduleForLottery({
+   0526:         lotteryKey: key,
+   0527:         ymd: curY,
+   0528:         PT_RIO_SCHEDULE_NORMAL,
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js:3949
+   3946: 
+   3947:   if (!isYMD(targetYmd) || !range.length) return [];
+   3948: 
+>> 3949:   const schedule = getScheduleForLottery({
+   3950:     lotteryKey,
+   3951:     ymd: targetYmd,
+   3952:     PT_RIO_SCHEDULE_NORMAL,
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js:232
+   0229:   return PT_RIO_SCHEDULE_NORMAL;
+   0230: }
+   0231: 
+>> 0232: export function getScheduleForLottery({
+   0233:   lotteryKey,
+   0234:   ymd,
+   0235:   PT_RIO_SCHEDULE_NORMAL,
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js:326
+   0323:   for (let i = 1; i <= maxBackDays; i += 1) {
+   0324:     const day = addDaysYMD(ymdTarget, -i);
+   0325: 
+>> 0326:     const daySchedule = getScheduleForLottery({
+   0327:       lotteryKey,
+   0328:       ymd: day,
+   0329:       PT_RIO_SCHEDULE_NORMAL,
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js:385
+   0382:   if (key === "FEDERAL") {
+   0383:     for (let i = 1; i <= maxForwardDays; i += 1) {
+   0384:       const day = addDaysYMD(y0, i);
+>> 0385:       const sch = getScheduleForLottery({
+   0386:         lotteryKey: key,
+   0387:         ymd: day,
+   0388:         PT_RIO_SCHEDULE_NORMAL,
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js:399
+   0396:     return { ymd: "", hour: "" };
+   0397:   }
+   0398: 
+>> 0399:   const sch0 = getScheduleForLottery({
+   0400:     lotteryKey: key,
+   0401:     ymd: y0,
+   0402:     hourBucket: h0,
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js:418
+   0415: 
+   0416:   for (let i = 1; i <= maxForwardDays; i += 1) {
+   0417:     const day = addDaysYMD(y0, i);
+>> 0418:     const sch = getScheduleForLottery({
+   0419:       lotteryKey: key,
+   0420:       ymd: day,
+   0421:       PT_RIO_SCHEDULE_NORMAL,
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js:461
+   0458:     let daysWalked = 0;
+   0459: 
+   0460:     while (steps < maxSteps && daysWalked <= maxDays) {
+>> 0461:       const sch = getScheduleForLottery({
+   0462:         lotteryKey: key,
+   0463:         ymd: curY,
+   0464:         PT_RIO_SCHEDULE_NORMAL,
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js:507
+   0504: 
+   0505:     if (d) return { slot: { ymd: curY, hour: toHourBucket(curH) }, draw: d };
+   0506: 
+>> 0507:     const sch = getScheduleForLottery({
+   0508:       lotteryKey: key,
+   0509:       ymd: curY,
+   0510:       PT_RIO_SCHEDULE_NORMAL,
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js:525
+   0522:       curY = addDaysYMD(curY, 1);
+   0523:       daysWalked += 1;
+   0524: 
+>> 0525:       const sch2 = getScheduleForLottery({
+   0526:         lotteryKey: key,
+   0527:         ymd: curY,
+   0528:         PT_RIO_SCHEDULE_NORMAL,
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js:3949
+   3946: 
+   3947:   if (!isYMD(targetYmd) || !range.length) return [];
+   3948: 
+>> 3949:   const schedule = getScheduleForLottery({
+   3950:     lotteryKey,
+   3951:     ymd: targetYmd,
+   3952:     PT_RIO_SCHEDULE_NORMAL,
+
+src\pages\Top3\top3.engine.js:255
+   0252:   return PT_RIO_SCHEDULE_NORMAL;
+   0253: }
+   0254: 
+>> 0255: export function getScheduleForLottery({
+   0256:   lotteryKey,
+   0257:   ymd,
+   0258:   PT_RIO_SCHEDULE_NORMAL,
+
+src\pages\Top3\top3.engine.js:349
+   0346:   for (let i = 1; i <= maxBackDays; i += 1) {
+   0347:     const day = addDaysYMD(ymdTarget, -i);
+   0348: 
+>> 0349:     const daySchedule = getScheduleForLottery({
+   0350:       lotteryKey,
+   0351:       ymd: day,
+   0352:       PT_RIO_SCHEDULE_NORMAL,
+
+src\pages\Top3\top3.engine.js:408
+   0405:   if (key === "FEDERAL") {
+   0406:     for (let i = 1; i <= maxForwardDays; i += 1) {
+   0407:       const day = addDaysYMD(y0, i);
+>> 0408:       const sch = getScheduleForLottery({
+   0409:         lotteryKey: key,
+   0410:         ymd: day,
+   0411:         PT_RIO_SCHEDULE_NORMAL,
+
+src\pages\Top3\top3.engine.js:422
+   0419:     return { ymd: "", hour: "" };
+   0420:   }
+   0421: 
+>> 0422:   const sch0 = getScheduleForLottery({
+   0423:     lotteryKey: key,
+   0424:     ymd: y0,
+   0425:     hourBucket: h0,
+
+src\pages\Top3\top3.engine.js:441
+   0438: 
+   0439:   for (let i = 1; i <= maxForwardDays; i += 1) {
+   0440:     const day = addDaysYMD(y0, i);
+>> 0441:     const sch = getScheduleForLottery({
+   0442:       lotteryKey: key,
+   0443:       ymd: day,
+   0444:       PT_RIO_SCHEDULE_NORMAL,
+
+src\pages\Top3\top3.engine.js:484
+   0481:     let daysWalked = 0;
+   0482: 
+   0483:     while (steps < maxSteps && daysWalked <= maxDays) {
+>> 0484:       const sch = getScheduleForLottery({
+   0485:         lotteryKey: key,
+   0486:         ymd: curY,
+   0487:         PT_RIO_SCHEDULE_NORMAL,
+
+src\pages\Top3\top3.engine.js:530
+   0527: 
+   0528:     if (d) return { slot: { ymd: curY, hour: toHourBucket(curH) }, draw: d };
+   0529: 
+>> 0530:     const sch = getScheduleForLottery({
+   0531:       lotteryKey: key,
+   0532:       ymd: curY,
+   0533:       PT_RIO_SCHEDULE_NORMAL,
+
+src\pages\Top3\top3.engine.js:548
+   0545:       curY = addDaysYMD(curY, 1);
+   0546:       daysWalked += 1;
+   0547: 
+>> 0548:       const sch2 = getScheduleForLottery({
+   0549:         lotteryKey: key,
+   0550:         ymd: curY,
+   0551:         PT_RIO_SCHEDULE_NORMAL,
+
+src\pages\Top3\top3.engine.js:3905
+   3902: 
+   3903:   if (!isYMD(targetYmd) || !range.length) return [];
+   3904: 
+>> 3905:   const schedule = getScheduleForLottery({
+   3906:     lotteryKey,
+   3907:     ymd: targetYmd,
+   3908:     PT_RIO_SCHEDULE_NORMAL,
+
+src\pages\Top3\top3.hooks.js:25
+   0022: } from "./top3.constants";
+   0023: 
+   0024: import {
+>> 0025:   getScheduleForLottery,
+   0026:   findLastDrawInList,
+   0027:   pickDrawHour,
+   0028:   pickDrawYMD,
+
+src\pages\Top3\top3.hooks.js:143
+   0140: 
+   0141:   if (!isYMD(y) || !h) return false;
+   0142: 
+>> 0143:   const schedule = getScheduleForLottery({
+   0144:     lotteryKey,
+   0145:     ymd: y,
+   0146:     PT_RIO_SCHEDULE_NORMAL,
+
+src\pages\Top3\top3.hooks.js:369
+   0366:         ? loadedYmd
+   0367:         : ymdSafe;
+   0368: 
+>> 0369:     return getScheduleForLottery({
+   0370:       lotteryKey: lotteryKeySafe,
+   0371:       ymd: y,
+   0372:       PT_RIO_SCHEDULE_NORMAL,
+
+src\pages\Top3\top3.hooks.js:505
+   0502:       setLoadedYmd(effectiveYmd);
+   0503:       setTodayDraws(today);
+   0504: 
+>> 0505:       let todaySchedule = getScheduleForLottery({
+   0506:         lotteryKey: lKey,
+   0507:         ymd: effectiveYmd,
+   0508:         PT_RIO_SCHEDULE_NORMAL,
+
+src\pages\Top3\top3.hooks.js:666
+   0663:               readPolicy: "server",
+   0664:             })) || [];
+   0665: 
+>> 0666:       const baseDaySchedule = getScheduleForLottery({
+   0667:         lotteryKey: lKey,
+   0668:         ymd: baseY,
+   0669:         PT_RIO_SCHEDULE_NORMAL,
+
+src\pages\Top3\top3.public-api.js:28
+   0025:   build20MilharesForGrupo,
+   0026: 
+   0027:   // Agenda e slots
+>> 0028:   getScheduleForLottery,
+   0029:   getPtRioScheduleForYmd,
+   0030:   getNextSlotForLottery,
+   0031:   isFederalDrawDay,
+
+src\pages\Top3\top3.storage.js:7
+   0004:   pickDrawYMD,
+   0005:   pickDrawHour,
+   0006:   pickPrize1GrupoFromDraw,
+>> 0007:   getScheduleForLottery,
+   0008: } from "./top3.engine";
+   0009: 
+   0010: import {
+
+src\pages\Top3\top3.storage.js:317
+   0314: function ensureDayTimeline({ ymd, lotteryKey }) {
+   0315:   if (!isYMD(ymd)) return;
+   0316: 
+>> 0317:   const schedule = getScheduleForLottery({
+   0318:     lotteryKey,
+   0319:     ymd,
+   0320:     PT_RIO_SCHEDULE_NORMAL,
+
+src\pages\Top3\modules\top3.timeline.js:10
+   0007: } from "../top3.constants";
+   0008: 
+   0009: import {
+>> 0010:   getScheduleForLottery,
+   0011:   buildMilharesForGrupo,
+   0012:   buildTimelineTop3,
+   0013:   auditTop3Timeline,
+
+src\pages\Top3\modules\top3.timeline.js:204
+   0201:           out = buildMilharesForGrupo({
+   0202:             rangeDraws: range,
+   0203:             analysisHourBucket: slotHour,
+>> 0204:             schedule: getScheduleForLottery({
+   0205:               lotteryKey: lotteryKeySafe,
+   0206:               ymd: slotYmd,
+   0207:               PT_RIO_SCHEDULE_NORMAL,
+
+src\pages\Top3\__tests__\top3.public-api.node.test.js:23
+   0020:   "countAparicoesByGrupoInDraw",
+   0021:   "getNextSlotForLottery",
+   0022:   "getPtRioScheduleForYmd",
+>> 0023:   "getScheduleForLottery",
+   0024:   "guessPrizeGrupo",
+   0025:   "guessPrizePos",
+   0026:   "indexDrawsByYmdHour",
+
+==========================================================================================
+TOKEN: PT_RIO_SCHEDULE_NORMAL
+
+
+src\dev\runAuditTop3.js:14
+   0011: } from "../pages/Top3/top3.engine";
+   0012: 
+   0013: import {
+>> 0014:   PT_RIO_SCHEDULE_NORMAL,
+   0015:   PT_RIO_SCHEDULE_WED_SAT,
+   0016:   FEDERAL_SCHEDULE,
+   0017: } from "../pages/Top3/top3.constants";
+
+src\dev\runAuditTop3.js:126
+   0123:   const report = auditTop3Backtest({
+   0124:     drawsRange: draws,
+   0125:     lotteryKey,
+>> 0126:     PT_RIO_SCHEDULE_NORMAL,
+   0127:     PT_RIO_SCHEDULE_WED_SAT,
+   0128:     FEDERAL_SCHEDULE,
+   0129:   });
+
+src\pages\Top3\top3.constants.js:24
+   0021: ];
+   0022: 
+   0023: // Grades
+>> 0024: export const PT_RIO_SCHEDULE_NORMAL = [
+   0025:   "09:00",
+   0026:   "11:00",
+   0027:   "14:00",
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js:223
+   0220: 
+   0221: export function getPtRioScheduleForYmd(
+   0222:   ymd,
+>> 0223:   PT_RIO_SCHEDULE_NORMAL,
+   0224:   PT_RIO_SCHEDULE_WED_SAT
+   0225: ) {
+   0226:   const dow = getDowKey(ymd);
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js:229
+   0226:   const dow = getDowKey(ymd);
+   0227:   if (dow === 0) return PT_RIO_SCHEDULE_SUNDAY;
+   0228:   if (dow === 3 || dow === 6) return PT_RIO_SCHEDULE_WED_SAT;
+>> 0229:   return PT_RIO_SCHEDULE_NORMAL;
+   0230: }
+   0231: 
+   0232: export function getScheduleForLottery({
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js:235
+   0232: export function getScheduleForLottery({
+   0233:   lotteryKey,
+   0234:   ymd,
+>> 0235:   PT_RIO_SCHEDULE_NORMAL,
+   0236:   PT_RIO_SCHEDULE_WED_SAT,
+   0237:   FEDERAL_SCHEDULE,
+   0238: }) {
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js:247
+   0244: 
+   0245:   return getPtRioScheduleForYmd(
+   0246:     ymd,
+>> 0247:     PT_RIO_SCHEDULE_NORMAL,
+   0248:     PT_RIO_SCHEDULE_WED_SAT
+   0249:   );
+   0250: }
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js:304
+   0301:   todayDraws,
+   0302:   schedule,
+   0303:   maxBackDays = 10,
+>> 0304:   PT_RIO_SCHEDULE_NORMAL,
+   0305:   PT_RIO_SCHEDULE_WED_SAT,
+   0306:   FEDERAL_SCHEDULE,
+   0307: }) {
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js:329
+   0326:     const daySchedule = getScheduleForLottery({
+   0327:       lotteryKey,
+   0328:       ymd: day,
+>> 0329:       PT_RIO_SCHEDULE_NORMAL,
+   0330:       PT_RIO_SCHEDULE_WED_SAT,
+   0331:       FEDERAL_SCHEDULE,
+   0332:     });
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js:371
+   0368:   lotteryKey,
+   0369:   ymd,
+   0370:   hourBucket,
+>> 0371:   PT_RIO_SCHEDULE_NORMAL,
+   0372:   PT_RIO_SCHEDULE_WED_SAT,
+   0373:   FEDERAL_SCHEDULE,
+   0374:   maxForwardDays = 21,
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js:388
+   0385:       const sch = getScheduleForLottery({
+   0386:         lotteryKey: key,
+   0387:         ymd: day,
+>> 0388:         PT_RIO_SCHEDULE_NORMAL,
+   0389:         PT_RIO_SCHEDULE_WED_SAT,
+   0390:         FEDERAL_SCHEDULE,
+   0391:       });
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js:403
+   0400:     lotteryKey: key,
+   0401:     ymd: y0,
+   0402:     hourBucket: h0,
+>> 0403:     PT_RIO_SCHEDULE_NORMAL,
+   0404:     PT_RIO_SCHEDULE_WED_SAT,
+   0405:     FEDERAL_SCHEDULE,
+   0406:   });
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js:421
+   0418:     const sch = getScheduleForLottery({
+   0419:       lotteryKey: key,
+   0420:       ymd: day,
+>> 0421:       PT_RIO_SCHEDULE_NORMAL,
+   0422:       PT_RIO_SCHEDULE_WED_SAT,
+   0423:       FEDERAL_SCHEDULE,
+   0424:     });
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js:441
+   0438:   lotteryKey,
+   0439:   startSlot,
+   0440:   drawsIndex,
+>> 0441:   PT_RIO_SCHEDULE_NORMAL,
+   0442:   PT_RIO_SCHEDULE_WED_SAT,
+   0443:   FEDERAL_SCHEDULE,
+   0444:   maxSteps = TOP3_NEXTDRAW_SCAN_MAX_STEPS,
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js:464
+   0461:       const sch = getScheduleForLottery({
+   0462:         lotteryKey: key,
+   0463:         ymd: curY,
+>> 0464:         PT_RIO_SCHEDULE_NORMAL,
+   0465:         PT_RIO_SCHEDULE_WED_SAT,
+   0466:         FEDERAL_SCHEDULE,
+   0467:       });
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js:510
+   0507:     const sch = getScheduleForLottery({
+   0508:       lotteryKey: key,
+   0509:       ymd: curY,
+>> 0510:       PT_RIO_SCHEDULE_NORMAL,
+   0511:       PT_RIO_SCHEDULE_WED_SAT,
+   0512:       FEDERAL_SCHEDULE,
+   0513:     });
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js:528
+   0525:       const sch2 = getScheduleForLottery({
+   0526:         lotteryKey: key,
+   0527:         ymd: curY,
+>> 0528:         PT_RIO_SCHEDULE_NORMAL,
+   0529:         PT_RIO_SCHEDULE_WED_SAT,
+   0530:         FEDERAL_SCHEDULE,
+   0531:       });
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js:974
+   0971:   targetDayOfMonth,
+   0972:   prevHour,
+   0973:   prevGrupo,
+>> 0974:   PT_RIO_SCHEDULE_NORMAL,
+   0975:   PT_RIO_SCHEDULE_WED_SAT,
+   0976:   FEDERAL_SCHEDULE,
+   0977: }) {
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js:1012
+   1009:       lotteryKey,
+   1010:       ymd: prevY,
+   1011:       hourBucket: prevH,
+>> 1012:       PT_RIO_SCHEDULE_NORMAL,
+   1013:       PT_RIO_SCHEDULE_WED_SAT,
+   1014:       FEDERAL_SCHEDULE,
+   1015:     });
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js:1023
+   1020:       lotteryKey,
+   1021:       startSlot: { ymd: ns.ymd, hour: ns.hour },
+   1022:       drawsIndex,
+>> 1023:       PT_RIO_SCHEDULE_NORMAL,
+   1024:       PT_RIO_SCHEDULE_WED_SAT,
+   1025:       FEDERAL_SCHEDULE,
+   1026:     });
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js:1086
+   1083:   lotteryKey,
+   1084:   drawsRange,
+   1085:   drawLast,
+>> 1086:   PT_RIO_SCHEDULE_NORMAL,
+   1087:   PT_RIO_SCHEDULE_WED_SAT,
+   1088:   FEDERAL_SCHEDULE,
+   1089:   topN = 3,
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js:1117
+   1114:     lotteryKey,
+   1115:     ymd: lastY,
+   1116:     hourBucket: lastH,
+>> 1117:     PT_RIO_SCHEDULE_NORMAL,
+   1118:     PT_RIO_SCHEDULE_WED_SAT,
+   1119:     FEDERAL_SCHEDULE,
+   1120:   });
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js:1152
+   1149:     targetDayOfMonth,
+   1150:     prevHour: lastH,
+   1151:     prevGrupo: Number(prevGrupo),
+>> 1152:     PT_RIO_SCHEDULE_NORMAL,
+   1153:     PT_RIO_SCHEDULE_WED_SAT,
+   1154:     FEDERAL_SCHEDULE,
+   1155:   });
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js:2036
+   2033:   targetDow,
+   2034:   targetDayOfMonth,
+   2035:   prevPair,
+>> 2036:   PT_RIO_SCHEDULE_NORMAL,
+   2037:   PT_RIO_SCHEDULE_WED_SAT,
+   2038:   FEDERAL_SCHEDULE,
+   2039:   groupsK = TOP3_GROUPS_K,
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js:2207
+   2204:   drawsRange,
+   2205:   drawLast,
+   2206:   drawsToday,
+>> 2207:   PT_RIO_SCHEDULE_NORMAL,
+   2208:   PT_RIO_SCHEDULE_WED_SAT,
+   2209:   FEDERAL_SCHEDULE,
+   2210:   topN = 3,
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js:2238
+   2235:     lotteryKey,
+   2236:     ymd: lastY,
+   2237:     hourBucket: lastH,
+>> 2238:     PT_RIO_SCHEDULE_NORMAL,
+   2239:     PT_RIO_SCHEDULE_WED_SAT,
+   2240:     FEDERAL_SCHEDULE,
+   2241:   });
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js:2275
+   2272:     targetDow,
+   2273:     targetDayOfMonth,
+   2274:     prevPair,
+>> 2275:     PT_RIO_SCHEDULE_NORMAL,
+   2276:     PT_RIO_SCHEDULE_WED_SAT,
+   2277:     FEDERAL_SCHEDULE,
+   2278:     groupsK: TOP3_GROUPS_K,
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js:2294
+   2291:     targetDayOfMonth,
+   2292:     prevHour: lastH,
+   2293:     prevGrupo: Number(prevGrupo),
+>> 2294:     PT_RIO_SCHEDULE_NORMAL,
+   2295:     PT_RIO_SCHEDULE_WED_SAT,
+   2296:     FEDERAL_SCHEDULE,
+   2297:   });
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js:2884
+   2881:   lotteryKey,
+   2882:   drawsRange,
+   2883:   drawLast,
+>> 2884:   PT_RIO_SCHEDULE_NORMAL,
+   2885:   PT_RIO_SCHEDULE_WED_SAT,
+   2886:   FEDERAL_SCHEDULE,
+   2887:   topN = 3,
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js:2914
+   2911:     lotteryKey: key,
+   2912:     ymd: lastY,
+   2913:     hourBucket: lastH,
+>> 2914:     PT_RIO_SCHEDULE_NORMAL,
+   2915:     PT_RIO_SCHEDULE_WED_SAT,
+   2916:     FEDERAL_SCHEDULE,
+   2917:   });
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js:2984
+   2981:       lotteryKey: key,
+   2982:       ymd: py,
+   2983:       hourBucket: ph,
+>> 2984:       PT_RIO_SCHEDULE_NORMAL,
+   2985:       PT_RIO_SCHEDULE_WED_SAT,
+   2986:       FEDERAL_SCHEDULE,
+   2987:     });
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js:3939
+   3936:   drawsToday,
+   3937:   drawsRange,
+   3938:   lotteryKey,
+>> 3939:   PT_RIO_SCHEDULE_NORMAL,
+   3940:   PT_RIO_SCHEDULE_WED_SAT,
+   3941:   FEDERAL_SCHEDULE,
+   3942: }) {
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js:3952
+   3949:   const schedule = getScheduleForLottery({
+   3950:     lotteryKey,
+   3951:     ymd: targetYmd,
+>> 3952:     PT_RIO_SCHEDULE_NORMAL,
+   3953:     PT_RIO_SCHEDULE_WED_SAT,
+   3954:     FEDERAL_SCHEDULE,
+   3955:   });
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js:4111
+   4108:       drawsRange: [...usableHistory, ...usableTodayContext],
+   4109:       drawLast: baseDraw,
+   4110:       drawsToday: usableTodayContext,
+>> 4111:       PT_RIO_SCHEDULE_NORMAL,
+   4112:       PT_RIO_SCHEDULE_WED_SAT,
+   4113:       FEDERAL_SCHEDULE,
+   4114:       topN: 3,
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js:4166
+   4163: export function auditTop3Backtest({
+   4164:   drawsRange,
+   4165:   lotteryKey,
+>> 4166:   PT_RIO_SCHEDULE_NORMAL,
+   4167:   PT_RIO_SCHEDULE_WED_SAT,
+   4168:   FEDERAL_SCHEDULE,
+   4169: }) {
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js:4189
+   4186:       drawsToday,
+   4187:       drawsRange: range,
+   4188:       lotteryKey,
+>> 4189:       PT_RIO_SCHEDULE_NORMAL,
+   4190:       PT_RIO_SCHEDULE_WED_SAT,
+   4191:       FEDERAL_SCHEDULE,
+   4192:     });
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js:223
+   0220: 
+   0221: export function getPtRioScheduleForYmd(
+   0222:   ymd,
+>> 0223:   PT_RIO_SCHEDULE_NORMAL,
+   0224:   PT_RIO_SCHEDULE_WED_SAT
+   0225: ) {
+   0226:   const dow = getDowKey(ymd);
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js:229
+   0226:   const dow = getDowKey(ymd);
+   0227:   if (dow === 0) return PT_RIO_SCHEDULE_SUNDAY;
+   0228:   if (dow === 3 || dow === 6) return PT_RIO_SCHEDULE_WED_SAT;
+>> 0229:   return PT_RIO_SCHEDULE_NORMAL;
+   0230: }
+   0231: 
+   0232: export function getScheduleForLottery({
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js:235
+   0232: export function getScheduleForLottery({
+   0233:   lotteryKey,
+   0234:   ymd,
+>> 0235:   PT_RIO_SCHEDULE_NORMAL,
+   0236:   PT_RIO_SCHEDULE_WED_SAT,
+   0237:   FEDERAL_SCHEDULE,
+   0238: }) {
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js:247
+   0244: 
+   0245:   return getPtRioScheduleForYmd(
+   0246:     ymd,
+>> 0247:     PT_RIO_SCHEDULE_NORMAL,
+   0248:     PT_RIO_SCHEDULE_WED_SAT
+   0249:   );
+   0250: }
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js:304
+   0301:   todayDraws,
+   0302:   schedule,
+   0303:   maxBackDays = 10,
+>> 0304:   PT_RIO_SCHEDULE_NORMAL,
+   0305:   PT_RIO_SCHEDULE_WED_SAT,
+   0306:   FEDERAL_SCHEDULE,
+   0307: }) {
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js:329
+   0326:     const daySchedule = getScheduleForLottery({
+   0327:       lotteryKey,
+   0328:       ymd: day,
+>> 0329:       PT_RIO_SCHEDULE_NORMAL,
+   0330:       PT_RIO_SCHEDULE_WED_SAT,
+   0331:       FEDERAL_SCHEDULE,
+   0332:     });
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js:371
+   0368:   lotteryKey,
+   0369:   ymd,
+   0370:   hourBucket,
+>> 0371:   PT_RIO_SCHEDULE_NORMAL,
+   0372:   PT_RIO_SCHEDULE_WED_SAT,
+   0373:   FEDERAL_SCHEDULE,
+   0374:   maxForwardDays = 21,
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js:388
+   0385:       const sch = getScheduleForLottery({
+   0386:         lotteryKey: key,
+   0387:         ymd: day,
+>> 0388:         PT_RIO_SCHEDULE_NORMAL,
+   0389:         PT_RIO_SCHEDULE_WED_SAT,
+   0390:         FEDERAL_SCHEDULE,
+   0391:       });
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js:403
+   0400:     lotteryKey: key,
+   0401:     ymd: y0,
+   0402:     hourBucket: h0,
+>> 0403:     PT_RIO_SCHEDULE_NORMAL,
+   0404:     PT_RIO_SCHEDULE_WED_SAT,
+   0405:     FEDERAL_SCHEDULE,
+   0406:   });
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js:421
+   0418:     const sch = getScheduleForLottery({
+   0419:       lotteryKey: key,
+   0420:       ymd: day,
+>> 0421:       PT_RIO_SCHEDULE_NORMAL,
+   0422:       PT_RIO_SCHEDULE_WED_SAT,
+   0423:       FEDERAL_SCHEDULE,
+   0424:     });
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js:441
+   0438:   lotteryKey,
+   0439:   startSlot,
+   0440:   drawsIndex,
+>> 0441:   PT_RIO_SCHEDULE_NORMAL,
+   0442:   PT_RIO_SCHEDULE_WED_SAT,
+   0443:   FEDERAL_SCHEDULE,
+   0444:   maxSteps = TOP3_NEXTDRAW_SCAN_MAX_STEPS,
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js:464
+   0461:       const sch = getScheduleForLottery({
+   0462:         lotteryKey: key,
+   0463:         ymd: curY,
+>> 0464:         PT_RIO_SCHEDULE_NORMAL,
+   0465:         PT_RIO_SCHEDULE_WED_SAT,
+   0466:         FEDERAL_SCHEDULE,
+   0467:       });
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js:510
+   0507:     const sch = getScheduleForLottery({
+   0508:       lotteryKey: key,
+   0509:       ymd: curY,
+>> 0510:       PT_RIO_SCHEDULE_NORMAL,
+   0511:       PT_RIO_SCHEDULE_WED_SAT,
+   0512:       FEDERAL_SCHEDULE,
+   0513:     });
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js:528
+   0525:       const sch2 = getScheduleForLottery({
+   0526:         lotteryKey: key,
+   0527:         ymd: curY,
+>> 0528:         PT_RIO_SCHEDULE_NORMAL,
+   0529:         PT_RIO_SCHEDULE_WED_SAT,
+   0530:         FEDERAL_SCHEDULE,
+   0531:       });
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js:974
+   0971:   targetDayOfMonth,
+   0972:   prevHour,
+   0973:   prevGrupo,
+>> 0974:   PT_RIO_SCHEDULE_NORMAL,
+   0975:   PT_RIO_SCHEDULE_WED_SAT,
+   0976:   FEDERAL_SCHEDULE,
+   0977: }) {
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js:1012
+   1009:       lotteryKey,
+   1010:       ymd: prevY,
+   1011:       hourBucket: prevH,
+>> 1012:       PT_RIO_SCHEDULE_NORMAL,
+   1013:       PT_RIO_SCHEDULE_WED_SAT,
+   1014:       FEDERAL_SCHEDULE,
+   1015:     });
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js:1023
+   1020:       lotteryKey,
+   1021:       startSlot: { ymd: ns.ymd, hour: ns.hour },
+   1022:       drawsIndex,
+>> 1023:       PT_RIO_SCHEDULE_NORMAL,
+   1024:       PT_RIO_SCHEDULE_WED_SAT,
+   1025:       FEDERAL_SCHEDULE,
+   1026:     });
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js:1086
+   1083:   lotteryKey,
+   1084:   drawsRange,
+   1085:   drawLast,
+>> 1086:   PT_RIO_SCHEDULE_NORMAL,
+   1087:   PT_RIO_SCHEDULE_WED_SAT,
+   1088:   FEDERAL_SCHEDULE,
+   1089:   topN = 3,
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js:1117
+   1114:     lotteryKey,
+   1115:     ymd: lastY,
+   1116:     hourBucket: lastH,
+>> 1117:     PT_RIO_SCHEDULE_NORMAL,
+   1118:     PT_RIO_SCHEDULE_WED_SAT,
+   1119:     FEDERAL_SCHEDULE,
+   1120:   });
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js:1152
+   1149:     targetDayOfMonth,
+   1150:     prevHour: lastH,
+   1151:     prevGrupo: Number(prevGrupo),
+>> 1152:     PT_RIO_SCHEDULE_NORMAL,
+   1153:     PT_RIO_SCHEDULE_WED_SAT,
+   1154:     FEDERAL_SCHEDULE,
+   1155:   });
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js:2036
+   2033:   targetDow,
+   2034:   targetDayOfMonth,
+   2035:   prevPair,
+>> 2036:   PT_RIO_SCHEDULE_NORMAL,
+   2037:   PT_RIO_SCHEDULE_WED_SAT,
+   2038:   FEDERAL_SCHEDULE,
+   2039:   groupsK = TOP3_GROUPS_K,
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js:2207
+   2204:   drawsRange,
+   2205:   drawLast,
+   2206:   drawsToday,
+>> 2207:   PT_RIO_SCHEDULE_NORMAL,
+   2208:   PT_RIO_SCHEDULE_WED_SAT,
+   2209:   FEDERAL_SCHEDULE,
+   2210:   topN = 3,
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js:2238
+   2235:     lotteryKey,
+   2236:     ymd: lastY,
+   2237:     hourBucket: lastH,
+>> 2238:     PT_RIO_SCHEDULE_NORMAL,
+   2239:     PT_RIO_SCHEDULE_WED_SAT,
+   2240:     FEDERAL_SCHEDULE,
+   2241:   });
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js:2275
+   2272:     targetDow,
+   2273:     targetDayOfMonth,
+   2274:     prevPair,
+>> 2275:     PT_RIO_SCHEDULE_NORMAL,
+   2276:     PT_RIO_SCHEDULE_WED_SAT,
+   2277:     FEDERAL_SCHEDULE,
+   2278:     groupsK: TOP3_GROUPS_K,
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js:2294
+   2291:     targetDayOfMonth,
+   2292:     prevHour: lastH,
+   2293:     prevGrupo: Number(prevGrupo),
+>> 2294:     PT_RIO_SCHEDULE_NORMAL,
+   2295:     PT_RIO_SCHEDULE_WED_SAT,
+   2296:     FEDERAL_SCHEDULE,
+   2297:   });
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js:2884
+   2881:   lotteryKey,
+   2882:   drawsRange,
+   2883:   drawLast,
+>> 2884:   PT_RIO_SCHEDULE_NORMAL,
+   2885:   PT_RIO_SCHEDULE_WED_SAT,
+   2886:   FEDERAL_SCHEDULE,
+   2887:   topN = 3,
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js:2914
+   2911:     lotteryKey: key,
+   2912:     ymd: lastY,
+   2913:     hourBucket: lastH,
+>> 2914:     PT_RIO_SCHEDULE_NORMAL,
+   2915:     PT_RIO_SCHEDULE_WED_SAT,
+   2916:     FEDERAL_SCHEDULE,
+   2917:   });
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js:2984
+   2981:       lotteryKey: key,
+   2982:       ymd: py,
+   2983:       hourBucket: ph,
+>> 2984:       PT_RIO_SCHEDULE_NORMAL,
+   2985:       PT_RIO_SCHEDULE_WED_SAT,
+   2986:       FEDERAL_SCHEDULE,
+   2987:     });
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js:3939
+   3936:   drawsToday,
+   3937:   drawsRange,
+   3938:   lotteryKey,
+>> 3939:   PT_RIO_SCHEDULE_NORMAL,
+   3940:   PT_RIO_SCHEDULE_WED_SAT,
+   3941:   FEDERAL_SCHEDULE,
+   3942: }) {
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js:3952
+   3949:   const schedule = getScheduleForLottery({
+   3950:     lotteryKey,
+   3951:     ymd: targetYmd,
+>> 3952:     PT_RIO_SCHEDULE_NORMAL,
+   3953:     PT_RIO_SCHEDULE_WED_SAT,
+   3954:     FEDERAL_SCHEDULE,
+   3955:   });
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js:4111
+   4108:       drawsRange: [...usableHistory, ...usableTodayContext],
+   4109:       drawLast: baseDraw,
+   4110:       drawsToday: usableTodayContext,
+>> 4111:       PT_RIO_SCHEDULE_NORMAL,
+   4112:       PT_RIO_SCHEDULE_WED_SAT,
+   4113:       FEDERAL_SCHEDULE,
+   4114:       topN: 3,
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js:4166
+   4163: export function auditTop3Backtest({
+   4164:   drawsRange,
+   4165:   lotteryKey,
+>> 4166:   PT_RIO_SCHEDULE_NORMAL,
+   4167:   PT_RIO_SCHEDULE_WED_SAT,
+   4168:   FEDERAL_SCHEDULE,
+   4169: }) {
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js:4189
+   4186:       drawsToday,
+   4187:       drawsRange: range,
+   4188:       lotteryKey,
+>> 4189:       PT_RIO_SCHEDULE_NORMAL,
+   4190:       PT_RIO_SCHEDULE_WED_SAT,
+   4191:       FEDERAL_SCHEDULE,
+   4192:     });
+
+src\pages\Top3\top3.engine.js:223
+   0220: 
+   0221: export function getPtRioScheduleForYmd(
+   0222:   ymd,
+>> 0223:   PT_RIO_SCHEDULE_NORMAL,
+   0224:   PT_RIO_SCHEDULE_WED_SAT
+   0225: ) {
+   0226:   const dow = getDowKey(ymd);
+
+src\pages\Top3\top3.engine.js:252
+   0249:     return baseSchedule;
+   0250:   }
+   0251: 
+>> 0252:   return PT_RIO_SCHEDULE_NORMAL;
+   0253: }
+   0254: 
+   0255: export function getScheduleForLottery({
+
+src\pages\Top3\top3.engine.js:258
+   0255: export function getScheduleForLottery({
+   0256:   lotteryKey,
+   0257:   ymd,
+>> 0258:   PT_RIO_SCHEDULE_NORMAL,
+   0259:   PT_RIO_SCHEDULE_WED_SAT,
+   0260:   FEDERAL_SCHEDULE,
+   0261: }) {
+
+src\pages\Top3\top3.engine.js:270
+   0267: 
+   0268:   return getPtRioScheduleForYmd(
+   0269:     ymd,
+>> 0270:     PT_RIO_SCHEDULE_NORMAL,
+   0271:     PT_RIO_SCHEDULE_WED_SAT
+   0272:   );
+   0273: }
+
+src\pages\Top3\top3.engine.js:327
+   0324:   todayDraws,
+   0325:   schedule,
+   0326:   maxBackDays = 10,
+>> 0327:   PT_RIO_SCHEDULE_NORMAL,
+   0328:   PT_RIO_SCHEDULE_WED_SAT,
+   0329:   FEDERAL_SCHEDULE,
+   0330: }) {
+
+src\pages\Top3\top3.engine.js:352
+   0349:     const daySchedule = getScheduleForLottery({
+   0350:       lotteryKey,
+   0351:       ymd: day,
+>> 0352:       PT_RIO_SCHEDULE_NORMAL,
+   0353:       PT_RIO_SCHEDULE_WED_SAT,
+   0354:       FEDERAL_SCHEDULE,
+   0355:     });
+
+src\pages\Top3\top3.engine.js:394
+   0391:   lotteryKey,
+   0392:   ymd,
+   0393:   hourBucket,
+>> 0394:   PT_RIO_SCHEDULE_NORMAL,
+   0395:   PT_RIO_SCHEDULE_WED_SAT,
+   0396:   FEDERAL_SCHEDULE,
+   0397:   maxForwardDays = 21,
+
+src\pages\Top3\top3.engine.js:411
+   0408:       const sch = getScheduleForLottery({
+   0409:         lotteryKey: key,
+   0410:         ymd: day,
+>> 0411:         PT_RIO_SCHEDULE_NORMAL,
+   0412:         PT_RIO_SCHEDULE_WED_SAT,
+   0413:         FEDERAL_SCHEDULE,
+   0414:       });
+
+src\pages\Top3\top3.engine.js:426
+   0423:     lotteryKey: key,
+   0424:     ymd: y0,
+   0425:     hourBucket: h0,
+>> 0426:     PT_RIO_SCHEDULE_NORMAL,
+   0427:     PT_RIO_SCHEDULE_WED_SAT,
+   0428:     FEDERAL_SCHEDULE,
+   0429:   });
+
+src\pages\Top3\top3.engine.js:444
+   0441:     const sch = getScheduleForLottery({
+   0442:       lotteryKey: key,
+   0443:       ymd: day,
+>> 0444:       PT_RIO_SCHEDULE_NORMAL,
+   0445:       PT_RIO_SCHEDULE_WED_SAT,
+   0446:       FEDERAL_SCHEDULE,
+   0447:     });
+
+src\pages\Top3\top3.engine.js:464
+   0461:   lotteryKey,
+   0462:   startSlot,
+   0463:   drawsIndex,
+>> 0464:   PT_RIO_SCHEDULE_NORMAL,
+   0465:   PT_RIO_SCHEDULE_WED_SAT,
+   0466:   FEDERAL_SCHEDULE,
+   0467:   maxSteps = TOP3_NEXTDRAW_SCAN_MAX_STEPS,
+
+src\pages\Top3\top3.engine.js:487
+   0484:       const sch = getScheduleForLottery({
+   0485:         lotteryKey: key,
+   0486:         ymd: curY,
+>> 0487:         PT_RIO_SCHEDULE_NORMAL,
+   0488:         PT_RIO_SCHEDULE_WED_SAT,
+   0489:         FEDERAL_SCHEDULE,
+   0490:       });
+
+src\pages\Top3\top3.engine.js:533
+   0530:     const sch = getScheduleForLottery({
+   0531:       lotteryKey: key,
+   0532:       ymd: curY,
+>> 0533:       PT_RIO_SCHEDULE_NORMAL,
+   0534:       PT_RIO_SCHEDULE_WED_SAT,
+   0535:       FEDERAL_SCHEDULE,
+   0536:     });
+
+src\pages\Top3\top3.engine.js:551
+   0548:       const sch2 = getScheduleForLottery({
+   0549:         lotteryKey: key,
+   0550:         ymd: curY,
+>> 0551:         PT_RIO_SCHEDULE_NORMAL,
+   0552:         PT_RIO_SCHEDULE_WED_SAT,
+   0553:         FEDERAL_SCHEDULE,
+   0554:       });
+
+src\pages\Top3\top3.engine.js:997
+   0994:   targetDayOfMonth,
+   0995:   prevHour,
+   0996:   prevGrupo,
+>> 0997:   PT_RIO_SCHEDULE_NORMAL,
+   0998:   PT_RIO_SCHEDULE_WED_SAT,
+   0999:   FEDERAL_SCHEDULE,
+   1000: }) {
+
+src\pages\Top3\top3.engine.js:1035
+   1032:       lotteryKey,
+   1033:       ymd: prevY,
+   1034:       hourBucket: prevH,
+>> 1035:       PT_RIO_SCHEDULE_NORMAL,
+   1036:       PT_RIO_SCHEDULE_WED_SAT,
+   1037:       FEDERAL_SCHEDULE,
+   1038:     });
+
+src\pages\Top3\top3.engine.js:1046
+   1043:       lotteryKey,
+   1044:       startSlot: { ymd: ns.ymd, hour: ns.hour },
+   1045:       drawsIndex,
+>> 1046:       PT_RIO_SCHEDULE_NORMAL,
+   1047:       PT_RIO_SCHEDULE_WED_SAT,
+   1048:       FEDERAL_SCHEDULE,
+   1049:     });
+
+src\pages\Top3\top3.engine.js:1109
+   1106:   lotteryKey,
+   1107:   drawsRange,
+   1108:   drawLast,
+>> 1109:   PT_RIO_SCHEDULE_NORMAL,
+   1110:   PT_RIO_SCHEDULE_WED_SAT,
+   1111:   FEDERAL_SCHEDULE,
+   1112:   topN = 3,
+
+src\pages\Top3\top3.engine.js:1140
+   1137:     lotteryKey,
+   1138:     ymd: lastY,
+   1139:     hourBucket: lastH,
+>> 1140:     PT_RIO_SCHEDULE_NORMAL,
+   1141:     PT_RIO_SCHEDULE_WED_SAT,
+   1142:     FEDERAL_SCHEDULE,
+   1143:   });
+
+src\pages\Top3\top3.engine.js:1175
+   1172:     targetDayOfMonth,
+   1173:     prevHour: lastH,
+   1174:     prevGrupo: Number(prevGrupo),
+>> 1175:     PT_RIO_SCHEDULE_NORMAL,
+   1176:     PT_RIO_SCHEDULE_WED_SAT,
+   1177:     FEDERAL_SCHEDULE,
+   1178:   });
+
+src\pages\Top3\top3.engine.js:2059
+   2056:   targetDow,
+   2057:   targetDayOfMonth,
+   2058:   prevPair,
+>> 2059:   PT_RIO_SCHEDULE_NORMAL,
+   2060:   PT_RIO_SCHEDULE_WED_SAT,
+   2061:   FEDERAL_SCHEDULE,
+   2062:   groupsK = TOP3_GROUPS_K,
+
+src\pages\Top3\top3.engine.js:2230
+   2227:   drawsRange,
+   2228:   drawLast,
+   2229:   drawsToday,
+>> 2230:   PT_RIO_SCHEDULE_NORMAL,
+   2231:   PT_RIO_SCHEDULE_WED_SAT,
+   2232:   FEDERAL_SCHEDULE,
+   2233:   topN = 3,
+
+src\pages\Top3\top3.engine.js:2261
+   2258:     lotteryKey,
+   2259:     ymd: lastY,
+   2260:     hourBucket: lastH,
+>> 2261:     PT_RIO_SCHEDULE_NORMAL,
+   2262:     PT_RIO_SCHEDULE_WED_SAT,
+   2263:     FEDERAL_SCHEDULE,
+   2264:   });
+
+src\pages\Top3\top3.engine.js:2298
+   2295:     targetDow,
+   2296:     targetDayOfMonth,
+   2297:     prevPair,
+>> 2298:     PT_RIO_SCHEDULE_NORMAL,
+   2299:     PT_RIO_SCHEDULE_WED_SAT,
+   2300:     FEDERAL_SCHEDULE,
+   2301:     groupsK: TOP3_GROUPS_K,
+
+src\pages\Top3\top3.engine.js:2317
+   2314:     targetDayOfMonth,
+   2315:     prevHour: lastH,
+   2316:     prevGrupo: Number(prevGrupo),
+>> 2317:     PT_RIO_SCHEDULE_NORMAL,
+   2318:     PT_RIO_SCHEDULE_WED_SAT,
+   2319:     FEDERAL_SCHEDULE,
+   2320:   });
+
+src\pages\Top3\top3.engine.js:2861
+   2858:   lotteryKey,
+   2859:   drawsRange,
+   2860:   drawLast,
+>> 2861:   PT_RIO_SCHEDULE_NORMAL,
+   2862:   PT_RIO_SCHEDULE_WED_SAT,
+   2863:   FEDERAL_SCHEDULE,
+   2864:   topN = 3,
+
+src\pages\Top3\top3.engine.js:2891
+   2888:     lotteryKey: key,
+   2889:     ymd: lastY,
+   2890:     hourBucket: lastH,
+>> 2891:     PT_RIO_SCHEDULE_NORMAL,
+   2892:     PT_RIO_SCHEDULE_WED_SAT,
+   2893:     FEDERAL_SCHEDULE,
+   2894:   });
+
+src\pages\Top3\top3.engine.js:2961
+   2958:       lotteryKey: key,
+   2959:       ymd: py,
+   2960:       hourBucket: ph,
+>> 2961:       PT_RIO_SCHEDULE_NORMAL,
+   2962:       PT_RIO_SCHEDULE_WED_SAT,
+   2963:       FEDERAL_SCHEDULE,
+   2964:     });
+
+src\pages\Top3\top3.engine.js:3895
+   3892:   drawsToday,
+   3893:   drawsRange,
+   3894:   lotteryKey,
+>> 3895:   PT_RIO_SCHEDULE_NORMAL,
+   3896:   PT_RIO_SCHEDULE_WED_SAT,
+   3897:   FEDERAL_SCHEDULE,
+   3898: }) {
+
+src\pages\Top3\top3.engine.js:3908
+   3905:   const schedule = getScheduleForLottery({
+   3906:     lotteryKey,
+   3907:     ymd: targetYmd,
+>> 3908:     PT_RIO_SCHEDULE_NORMAL,
+   3909:     PT_RIO_SCHEDULE_WED_SAT,
+   3910:     FEDERAL_SCHEDULE,
+   3911:   });
+
+src\pages\Top3\top3.engine.js:4100
+   4097:       drawsRange: [...usableHistory, ...usableTodayContext],
+   4098:       drawLast: baseDraw,
+   4099:       drawsToday: usableTodayContext,
+>> 4100:       PT_RIO_SCHEDULE_NORMAL,
+   4101:       PT_RIO_SCHEDULE_WED_SAT,
+   4102:       FEDERAL_SCHEDULE,
+   4103:       topN: 3,
+
+src\pages\Top3\top3.engine.js:4156
+   4153: export function auditTop3Backtest({
+   4154:   drawsRange,
+   4155:   lotteryKey,
+>> 4156:   PT_RIO_SCHEDULE_NORMAL,
+   4157:   PT_RIO_SCHEDULE_WED_SAT,
+   4158:   FEDERAL_SCHEDULE,
+   4159: }) {
+
+src\pages\Top3\top3.engine.js:4179
+   4176:       drawsToday,
+   4177:       drawsRange: range,
+   4178:       lotteryKey,
+>> 4179:       PT_RIO_SCHEDULE_NORMAL,
+   4180:       PT_RIO_SCHEDULE_WED_SAT,
+   4181:       FEDERAL_SCHEDULE,
+   4182:     });
+
+src\pages\Top3\top3.hooks.js:19
+   0016:   LOOKBACK_ALL,
+   0017:   LOOKBACK_OPTIONS,
+   0018:   LOTTERY_OPTIONS,
+>> 0019:   PT_RIO_SCHEDULE_NORMAL,
+   0020:   PT_RIO_SCHEDULE_WED_SAT,
+   0021:   FEDERAL_SCHEDULE,
+   0022: } from "./top3.constants";
+
+src\pages\Top3\top3.hooks.js:146
+   0143:   const schedule = getScheduleForLottery({
+   0144:     lotteryKey,
+   0145:     ymd: y,
+>> 0146:     PT_RIO_SCHEDULE_NORMAL,
+   0147:     PT_RIO_SCHEDULE_WED_SAT,
+   0148:     FEDERAL_SCHEDULE,
+   0149:   });
+
+src\pages\Top3\top3.hooks.js:372
+   0369:     return getScheduleForLottery({
+   0370:       lotteryKey: lotteryKeySafe,
+   0371:       ymd: y,
+>> 0372:       PT_RIO_SCHEDULE_NORMAL,
+   0373:       PT_RIO_SCHEDULE_WED_SAT,
+   0374:       FEDERAL_SCHEDULE,
+   0375:     });
+
+src\pages\Top3\top3.hooks.js:508
+   0505:       let todaySchedule = getScheduleForLottery({
+   0506:         lotteryKey: lKey,
+   0507:         ymd: effectiveYmd,
+>> 0508:         PT_RIO_SCHEDULE_NORMAL,
+   0509:         PT_RIO_SCHEDULE_WED_SAT,
+   0510:         FEDERAL_SCHEDULE,
+   0511:       });
+
+src\pages\Top3\top3.hooks.js:579
+   0576:             lotteryKey: lKey,
+   0577:             ymd: baseY,
+   0578:             hourBucket: baseH,
+>> 0579:             PT_RIO_SCHEDULE_NORMAL,
+   0580:             PT_RIO_SCHEDULE_WED_SAT,
+   0581:             FEDERAL_SCHEDULE,
+   0582:           });
+
+src\pages\Top3\top3.hooks.js:608
+   0605:           targetHourBucket: firstHourToday,
+   0606:           todayDraws: today,
+   0607:           schedule: todaySchedule,
+>> 0608:           PT_RIO_SCHEDULE_NORMAL,
+   0609:           PT_RIO_SCHEDULE_WED_SAT,
+   0610:           FEDERAL_SCHEDULE,
+   0611:         });
+
+src\pages\Top3\top3.hooks.js:669
+   0666:       const baseDaySchedule = getScheduleForLottery({
+   0667:         lotteryKey: lKey,
+   0668:         ymd: baseY,
+>> 0669:         PT_RIO_SCHEDULE_NORMAL,
+   0670:         PT_RIO_SCHEDULE_WED_SAT,
+   0671:         FEDERAL_SCHEDULE,
+   0672:       });
+
+src\pages\Top3\top3.hooks.js:681
+   0678:         targetHourBucket: baseH,
+   0679:         todayDraws: baseDayDraws,
+   0680:         schedule: baseDaySchedule,
+>> 0681:         PT_RIO_SCHEDULE_NORMAL,
+   0682:         PT_RIO_SCHEDULE_WED_SAT,
+   0683:         FEDERAL_SCHEDULE,
+   0684:       });
+
+src\pages\Top3\top3.storage.js:11
+   0008: } from "./top3.engine";
+   0009: 
+   0010: import {
+>> 0011:   PT_RIO_SCHEDULE_NORMAL,
+   0012:   PT_RIO_SCHEDULE_WED_SAT,
+   0013:   FEDERAL_SCHEDULE,
+   0014: } from "./top3.constants";
+
+src\pages\Top3\top3.storage.js:320
+   0317:   const schedule = getScheduleForLottery({
+   0318:     lotteryKey,
+   0319:     ymd,
+>> 0320:     PT_RIO_SCHEDULE_NORMAL,
+   0321:     PT_RIO_SCHEDULE_WED_SAT,
+   0322:     FEDERAL_SCHEDULE,
+   0323:   });
+
+src\pages\Top3\modules\top3.analytics.js:4
+   0001: import { isYMD, toHourBucket } from "../top3.formatters";
+   0002: 
+   0003: import {
+>> 0004:   PT_RIO_SCHEDULE_NORMAL,
+   0005:   PT_RIO_SCHEDULE_WED_SAT,
+   0006:   FEDERAL_SCHEDULE,
+   0007: } from "../top3.constants";
+
+src\pages\Top3\modules\top3.analytics.js:198
+   0195:       drawsRange: safeHistoricalList,
+   0196:       drawLast,
+   0197:       drawsToday: Array.isArray(todayDraws) ? todayDraws : [],
+>> 0198:       PT_RIO_SCHEDULE_NORMAL,
+   0199:       PT_RIO_SCHEDULE_WED_SAT,
+   0200:       FEDERAL_SCHEDULE,
+   0201:       topN: 3,
+
+src\pages\Top3\modules\top3.timeline.js:4
+   0001: import { safeStr, isYMD, toHourBucket } from "../top3.formatters";
+   0002: 
+   0003: import {
+>> 0004:   PT_RIO_SCHEDULE_NORMAL,
+   0005:   PT_RIO_SCHEDULE_WED_SAT,
+   0006:   FEDERAL_SCHEDULE,
+   0007: } from "../top3.constants";
+
+src\pages\Top3\modules\top3.timeline.js:144
+   0141:     drawsToday: day,
+   0142:     drawsRange: range,
+   0143:     lotteryKey: lotteryKeySafe,
+>> 0144:     PT_RIO_SCHEDULE_NORMAL,
+   0145:     PT_RIO_SCHEDULE_WED_SAT,
+   0146:     FEDERAL_SCHEDULE,
+   0147:   });
+
+src\pages\Top3\modules\top3.timeline.js:207
+   0204:             schedule: getScheduleForLottery({
+   0205:               lotteryKey: lotteryKeySafe,
+   0206:               ymd: slotYmd,
+>> 0207:               PT_RIO_SCHEDULE_NORMAL,
+   0208:               PT_RIO_SCHEDULE_WED_SAT,
+   0209:               FEDERAL_SCHEDULE,
+   0210:             }),
+
+src\pages\Top3\__tests__\top3.backtest.layers.test.js:13
+   0010: } from "../top3.engine";
+   0011: 
+   0012: import {
+>> 0013:   PT_RIO_SCHEDULE_NORMAL,
+   0014:   PT_RIO_SCHEDULE_WED_SAT,
+   0015:   FEDERAL_SCHEDULE,
+   0016: } from "../top3.constants";
+
+src\pages\Top3\__tests__\top3.backtest.layers.test.js:194
+   0191:       lotteryKey: "PT_RIO",
+   0192:       ymd: lastY,
+   0193:       hourBucket: lastH,
+>> 0194:       PT_RIO_SCHEDULE_NORMAL,
+   0195:       PT_RIO_SCHEDULE_WED_SAT,
+   0196:       FEDERAL_SCHEDULE,
+   0197:     });
+
+src\pages\Top3\__tests__\top3.backtest.layers.test.js:205
+   0202:       lotteryKey: "PT_RIO",
+   0203:       startSlot: { ymd: nextSlot.ymd, hour: nextSlot.hour },
+   0204:       drawsIndex,
+>> 0205:       PT_RIO_SCHEDULE_NORMAL,
+   0206:       PT_RIO_SCHEDULE_WED_SAT,
+   0207:       FEDERAL_SCHEDULE,
+   0208:     });
+
+src\pages\Top3\__tests__\top3.backtest.layers.test.js:224
+   0221:       lotteryKey: "PT_RIO",
+   0222:       drawsRange: history,
+   0223:       drawLast,
+>> 0224:       PT_RIO_SCHEDULE_NORMAL,
+   0225:       PT_RIO_SCHEDULE_WED_SAT,
+   0226:       FEDERAL_SCHEDULE,
+   0227:       topN: 3,
+
+src\pages\Top3\__tests__\top3.backtest.test.js:13
+   0010: } from "../top3.engine";
+   0011: 
+   0012: import {
+>> 0013:   PT_RIO_SCHEDULE_NORMAL,
+   0014:   PT_RIO_SCHEDULE_WED_SAT,
+   0015:   FEDERAL_SCHEDULE,
+   0016: } from "../top3.constants";
+
+src\pages\Top3\__tests__\top3.backtest.test.js:205
+   0202:       lotteryKey: "PT_RIO",
+   0203:       ymd: lastY,
+   0204:       hourBucket: lastH,
+>> 0205:       PT_RIO_SCHEDULE_NORMAL,
+   0206:       PT_RIO_SCHEDULE_WED_SAT,
+   0207:       FEDERAL_SCHEDULE,
+   0208:     });
+
+src\pages\Top3\__tests__\top3.backtest.test.js:216
+   0213:       lotteryKey: "PT_RIO",
+   0214:       startSlot: { ymd: nextSlot.ymd, hour: nextSlot.hour },
+   0215:       drawsIndex,
+>> 0216:       PT_RIO_SCHEDULE_NORMAL,
+   0217:       PT_RIO_SCHEDULE_WED_SAT,
+   0218:       FEDERAL_SCHEDULE,
+   0219:     });
+
+src\pages\Top3\__tests__\top3.backtest.test.js:232
+   0229:       lotteryKey: "PT_RIO",
+   0230:       drawsRange: history,
+   0231:       drawLast,
+>> 0232:       PT_RIO_SCHEDULE_NORMAL,
+   0233:       PT_RIO_SCHEDULE_WED_SAT,
+   0234:       FEDERAL_SCHEDULE,
+   0235:       topN: 3,
+
+backend\engine\top3PredictionService.js:25
+   0022:   getDb,
+   0023: } = require("../service/firebaseAdmin");
+   0024: 
+>> 0025: const PT_RIO_SCHEDULE_NORMAL = [
+   0026:   "09:00",
+   0027:   "11:00",
+   0028:   "14:00",
+
+backend\engine\top3PredictionService.js:352
+   0349:       lotteryKey: normalizeLotteryKey(lotteryKey),
+   0350:       ymd: normalizeYmd(ymd),
+   0351:       hourBucket: normalizeHour(hour),
+>> 0352:       PT_RIO_SCHEDULE_NORMAL,
+   0353:       PT_RIO_SCHEDULE_WED_SAT,
+   0354:       FEDERAL_SCHEDULE,
+   0355:     });
+
+backend\engine\top3PredictionService.js:393
+   0390:     return [...PT_RIO_SCHEDULE_WED_SAT];
+   0391:   }
+   0392: 
+>> 0393:   return [...PT_RIO_SCHEDULE_NORMAL];
+   0394: }
+   0395: 
+   0396: function buildPublicMilharesCols(
+
+backend\engine\top3PredictionService.js:835
+   0832:     lotteryKey,
+   0833:     drawsRange: history,
+   0834:     drawLast,
+>> 0835:     PT_RIO_SCHEDULE_NORMAL,
+   0836:     PT_RIO_SCHEDULE_WED_SAT,
+   0837:     FEDERAL_SCHEDULE,
+   0838:     topN: 3,
+
+backend\scripts\backtestTop3Official.js:16
+   0013:   loadTop3PublicApi,
+   0014: } = require("../engine/scoreEngineUnified");
+   0015: 
+>> 0016: const PT_RIO_SCHEDULE_NORMAL = [
+   0017:   "09:00",
+   0018:   "11:00",
+   0019:   "14:00",
+
+backend\scripts\backtestTop3Official.js:708
+   0705:           drawsRange:
+   0706:             historyBefore,
+   0707:           drawLast,
+>> 0708:           PT_RIO_SCHEDULE_NORMAL,
+   0709:           PT_RIO_SCHEDULE_WED_SAT,
+   0710:           FEDERAL_SCHEDULE,
+   0711:           topN: 3,
+
+==========================================================================================
+TOKEN: PT_RIO_SCHEDULE_WED_SAT
+
+
+src\dev\runAuditTop3.js:15
+   0012: 
+   0013: import {
+   0014:   PT_RIO_SCHEDULE_NORMAL,
+>> 0015:   PT_RIO_SCHEDULE_WED_SAT,
+   0016:   FEDERAL_SCHEDULE,
+   0017: } from "../pages/Top3/top3.constants";
+   0018: 
+
+src\dev\runAuditTop3.js:127
+   0124:     drawsRange: draws,
+   0125:     lotteryKey,
+   0126:     PT_RIO_SCHEDULE_NORMAL,
+>> 0127:     PT_RIO_SCHEDULE_WED_SAT,
+   0128:     FEDERAL_SCHEDULE,
+   0129:   });
+   0130: 
+
+src\pages\Top3\top3.constants.js:46
+   0043:  * A ausência eventual do sorteio deve ser tratada pelo motor/dados reais,
+   0044:  * não pela exclusão rígida da grade.
+   0045:  */
+>> 0046: export const PT_RIO_SCHEDULE_WED_SAT = [
+   0047:   "09:00",
+   0048:   "11:00",
+   0049:   "14:00",
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js:224
+   0221: export function getPtRioScheduleForYmd(
+   0222:   ymd,
+   0223:   PT_RIO_SCHEDULE_NORMAL,
+>> 0224:   PT_RIO_SCHEDULE_WED_SAT
+   0225: ) {
+   0226:   const dow = getDowKey(ymd);
+   0227:   if (dow === 0) return PT_RIO_SCHEDULE_SUNDAY;
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js:228
+   0225: ) {
+   0226:   const dow = getDowKey(ymd);
+   0227:   if (dow === 0) return PT_RIO_SCHEDULE_SUNDAY;
+>> 0228:   if (dow === 3 || dow === 6) return PT_RIO_SCHEDULE_WED_SAT;
+   0229:   return PT_RIO_SCHEDULE_NORMAL;
+   0230: }
+   0231: 
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js:236
+   0233:   lotteryKey,
+   0234:   ymd,
+   0235:   PT_RIO_SCHEDULE_NORMAL,
+>> 0236:   PT_RIO_SCHEDULE_WED_SAT,
+   0237:   FEDERAL_SCHEDULE,
+   0238: }) {
+   0239:   const key = safeStr(lotteryKey).toUpperCase();
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js:248
+   0245:   return getPtRioScheduleForYmd(
+   0246:     ymd,
+   0247:     PT_RIO_SCHEDULE_NORMAL,
+>> 0248:     PT_RIO_SCHEDULE_WED_SAT
+   0249:   );
+   0250: }
+   0251: 
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js:305
+   0302:   schedule,
+   0303:   maxBackDays = 10,
+   0304:   PT_RIO_SCHEDULE_NORMAL,
+>> 0305:   PT_RIO_SCHEDULE_WED_SAT,
+   0306:   FEDERAL_SCHEDULE,
+   0307: }) {
+   0308:   const prevSameDay = findPrevDrawBeforeTargetInSameDay(
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js:330
+   0327:       lotteryKey,
+   0328:       ymd: day,
+   0329:       PT_RIO_SCHEDULE_NORMAL,
+>> 0330:       PT_RIO_SCHEDULE_WED_SAT,
+   0331:       FEDERAL_SCHEDULE,
+   0332:     });
+   0333: 
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js:372
+   0369:   ymd,
+   0370:   hourBucket,
+   0371:   PT_RIO_SCHEDULE_NORMAL,
+>> 0372:   PT_RIO_SCHEDULE_WED_SAT,
+   0373:   FEDERAL_SCHEDULE,
+   0374:   maxForwardDays = 21,
+   0375: }) {
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js:389
+   0386:         lotteryKey: key,
+   0387:         ymd: day,
+   0388:         PT_RIO_SCHEDULE_NORMAL,
+>> 0389:         PT_RIO_SCHEDULE_WED_SAT,
+   0390:         FEDERAL_SCHEDULE,
+   0391:       });
+   0392:       if (Array.isArray(sch) && sch.length) {
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js:404
+   0401:     ymd: y0,
+   0402:     hourBucket: h0,
+   0403:     PT_RIO_SCHEDULE_NORMAL,
+>> 0404:     PT_RIO_SCHEDULE_WED_SAT,
+   0405:     FEDERAL_SCHEDULE,
+   0406:   });
+   0407: 
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js:422
+   0419:       lotteryKey: key,
+   0420:       ymd: day,
+   0421:       PT_RIO_SCHEDULE_NORMAL,
+>> 0422:       PT_RIO_SCHEDULE_WED_SAT,
+   0423:       FEDERAL_SCHEDULE,
+   0424:     });
+   0425:     if (Array.isArray(sch) && sch.length) {
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js:442
+   0439:   startSlot,
+   0440:   drawsIndex,
+   0441:   PT_RIO_SCHEDULE_NORMAL,
+>> 0442:   PT_RIO_SCHEDULE_WED_SAT,
+   0443:   FEDERAL_SCHEDULE,
+   0444:   maxSteps = TOP3_NEXTDRAW_SCAN_MAX_STEPS,
+   0445:   maxDays = TOP3_NEXTDRAW_SCAN_MAX_DAYS,
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js:465
+   0462:         lotteryKey: key,
+   0463:         ymd: curY,
+   0464:         PT_RIO_SCHEDULE_NORMAL,
+>> 0465:         PT_RIO_SCHEDULE_WED_SAT,
+   0466:         FEDERAL_SCHEDULE,
+   0467:       });
+   0468: 
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js:511
+   0508:       lotteryKey: key,
+   0509:       ymd: curY,
+   0510:       PT_RIO_SCHEDULE_NORMAL,
+>> 0511:       PT_RIO_SCHEDULE_WED_SAT,
+   0512:       FEDERAL_SCHEDULE,
+   0513:     });
+   0514: 
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js:529
+   0526:         lotteryKey: key,
+   0527:         ymd: curY,
+   0528:         PT_RIO_SCHEDULE_NORMAL,
+>> 0529:         PT_RIO_SCHEDULE_WED_SAT,
+   0530:         FEDERAL_SCHEDULE,
+   0531:       });
+   0532: 
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js:975
+   0972:   prevHour,
+   0973:   prevGrupo,
+   0974:   PT_RIO_SCHEDULE_NORMAL,
+>> 0975:   PT_RIO_SCHEDULE_WED_SAT,
+   0976:   FEDERAL_SCHEDULE,
+   0977: }) {
+   0978:   const list = Array.isArray(drawsRange) ? drawsRange : [];
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js:1013
+   1010:       ymd: prevY,
+   1011:       hourBucket: prevH,
+   1012:       PT_RIO_SCHEDULE_NORMAL,
+>> 1013:       PT_RIO_SCHEDULE_WED_SAT,
+   1014:       FEDERAL_SCHEDULE,
+   1015:     });
+   1016: 
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js:1024
+   1021:       startSlot: { ymd: ns.ymd, hour: ns.hour },
+   1022:       drawsIndex,
+   1023:       PT_RIO_SCHEDULE_NORMAL,
+>> 1024:       PT_RIO_SCHEDULE_WED_SAT,
+   1025:       FEDERAL_SCHEDULE,
+   1026:     });
+   1027: 
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js:1087
+   1084:   drawsRange,
+   1085:   drawLast,
+   1086:   PT_RIO_SCHEDULE_NORMAL,
+>> 1087:   PT_RIO_SCHEDULE_WED_SAT,
+   1088:   FEDERAL_SCHEDULE,
+   1089:   topN = 3,
+   1090:   targetYmdOverride = "",
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js:1118
+   1115:     ymd: lastY,
+   1116:     hourBucket: lastH,
+   1117:     PT_RIO_SCHEDULE_NORMAL,
+>> 1118:     PT_RIO_SCHEDULE_WED_SAT,
+   1119:     FEDERAL_SCHEDULE,
+   1120:   });
+   1121: 
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js:1153
+   1150:     prevHour: lastH,
+   1151:     prevGrupo: Number(prevGrupo),
+   1152:     PT_RIO_SCHEDULE_NORMAL,
+>> 1153:     PT_RIO_SCHEDULE_WED_SAT,
+   1154:     FEDERAL_SCHEDULE,
+   1155:   });
+   1156: 
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js:2037
+   2034:   targetDayOfMonth,
+   2035:   prevPair,
+   2036:   PT_RIO_SCHEDULE_NORMAL,
+>> 2037:   PT_RIO_SCHEDULE_WED_SAT,
+   2038:   FEDERAL_SCHEDULE,
+   2039:   groupsK = TOP3_GROUPS_K,
+   2040: }) {
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js:2208
+   2205:   drawLast,
+   2206:   drawsToday,
+   2207:   PT_RIO_SCHEDULE_NORMAL,
+>> 2208:   PT_RIO_SCHEDULE_WED_SAT,
+   2209:   FEDERAL_SCHEDULE,
+   2210:   topN = 3,
+   2211:   targetYmdOverride = "",
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js:2239
+   2236:     ymd: lastY,
+   2237:     hourBucket: lastH,
+   2238:     PT_RIO_SCHEDULE_NORMAL,
+>> 2239:     PT_RIO_SCHEDULE_WED_SAT,
+   2240:     FEDERAL_SCHEDULE,
+   2241:   });
+   2242: 
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js:2276
+   2273:     targetDayOfMonth,
+   2274:     prevPair,
+   2275:     PT_RIO_SCHEDULE_NORMAL,
+>> 2276:     PT_RIO_SCHEDULE_WED_SAT,
+   2277:     FEDERAL_SCHEDULE,
+   2278:     groupsK: TOP3_GROUPS_K,
+   2279:   });
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js:2295
+   2292:     prevHour: lastH,
+   2293:     prevGrupo: Number(prevGrupo),
+   2294:     PT_RIO_SCHEDULE_NORMAL,
+>> 2295:     PT_RIO_SCHEDULE_WED_SAT,
+   2296:     FEDERAL_SCHEDULE,
+   2297:   });
+   2298: 
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js:2885
+   2882:   drawsRange,
+   2883:   drawLast,
+   2884:   PT_RIO_SCHEDULE_NORMAL,
+>> 2885:   PT_RIO_SCHEDULE_WED_SAT,
+   2886:   FEDERAL_SCHEDULE,
+   2887:   topN = 3,
+   2888:   targetYmdOverride = "",
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js:2915
+   2912:     ymd: lastY,
+   2913:     hourBucket: lastH,
+   2914:     PT_RIO_SCHEDULE_NORMAL,
+>> 2915:     PT_RIO_SCHEDULE_WED_SAT,
+   2916:     FEDERAL_SCHEDULE,
+   2917:   });
+   2918: 
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js:2985
+   2982:       ymd: py,
+   2983:       hourBucket: ph,
+   2984:       PT_RIO_SCHEDULE_NORMAL,
+>> 2985:       PT_RIO_SCHEDULE_WED_SAT,
+   2986:       FEDERAL_SCHEDULE,
+   2987:     });
+   2988: 
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js:3940
+   3937:   drawsRange,
+   3938:   lotteryKey,
+   3939:   PT_RIO_SCHEDULE_NORMAL,
+>> 3940:   PT_RIO_SCHEDULE_WED_SAT,
+   3941:   FEDERAL_SCHEDULE,
+   3942: }) {
+   3943:   const targetYmd = safeStr(ymd);
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js:3953
+   3950:     lotteryKey,
+   3951:     ymd: targetYmd,
+   3952:     PT_RIO_SCHEDULE_NORMAL,
+>> 3953:     PT_RIO_SCHEDULE_WED_SAT,
+   3954:     FEDERAL_SCHEDULE,
+   3955:   });
+   3956: 
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js:4112
+   4109:       drawLast: baseDraw,
+   4110:       drawsToday: usableTodayContext,
+   4111:       PT_RIO_SCHEDULE_NORMAL,
+>> 4112:       PT_RIO_SCHEDULE_WED_SAT,
+   4113:       FEDERAL_SCHEDULE,
+   4114:       topN: 3,
+   4115:       targetYmdOverride: targetYmd,
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js:4167
+   4164:   drawsRange,
+   4165:   lotteryKey,
+   4166:   PT_RIO_SCHEDULE_NORMAL,
+>> 4167:   PT_RIO_SCHEDULE_WED_SAT,
+   4168:   FEDERAL_SCHEDULE,
+   4169: }) {
+   4170:   const range = Array.isArray(drawsRange) ? drawsRange : [];
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js:4190
+   4187:       drawsRange: range,
+   4188:       lotteryKey,
+   4189:       PT_RIO_SCHEDULE_NORMAL,
+>> 4190:       PT_RIO_SCHEDULE_WED_SAT,
+   4191:       FEDERAL_SCHEDULE,
+   4192:     });
+   4193: 
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js:224
+   0221: export function getPtRioScheduleForYmd(
+   0222:   ymd,
+   0223:   PT_RIO_SCHEDULE_NORMAL,
+>> 0224:   PT_RIO_SCHEDULE_WED_SAT
+   0225: ) {
+   0226:   const dow = getDowKey(ymd);
+   0227:   if (dow === 0) return PT_RIO_SCHEDULE_SUNDAY;
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js:228
+   0225: ) {
+   0226:   const dow = getDowKey(ymd);
+   0227:   if (dow === 0) return PT_RIO_SCHEDULE_SUNDAY;
+>> 0228:   if (dow === 3 || dow === 6) return PT_RIO_SCHEDULE_WED_SAT;
+   0229:   return PT_RIO_SCHEDULE_NORMAL;
+   0230: }
+   0231: 
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js:236
+   0233:   lotteryKey,
+   0234:   ymd,
+   0235:   PT_RIO_SCHEDULE_NORMAL,
+>> 0236:   PT_RIO_SCHEDULE_WED_SAT,
+   0237:   FEDERAL_SCHEDULE,
+   0238: }) {
+   0239:   const key = safeStr(lotteryKey).toUpperCase();
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js:248
+   0245:   return getPtRioScheduleForYmd(
+   0246:     ymd,
+   0247:     PT_RIO_SCHEDULE_NORMAL,
+>> 0248:     PT_RIO_SCHEDULE_WED_SAT
+   0249:   );
+   0250: }
+   0251: 
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js:305
+   0302:   schedule,
+   0303:   maxBackDays = 10,
+   0304:   PT_RIO_SCHEDULE_NORMAL,
+>> 0305:   PT_RIO_SCHEDULE_WED_SAT,
+   0306:   FEDERAL_SCHEDULE,
+   0307: }) {
+   0308:   const prevSameDay = findPrevDrawBeforeTargetInSameDay(
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js:330
+   0327:       lotteryKey,
+   0328:       ymd: day,
+   0329:       PT_RIO_SCHEDULE_NORMAL,
+>> 0330:       PT_RIO_SCHEDULE_WED_SAT,
+   0331:       FEDERAL_SCHEDULE,
+   0332:     });
+   0333: 
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js:372
+   0369:   ymd,
+   0370:   hourBucket,
+   0371:   PT_RIO_SCHEDULE_NORMAL,
+>> 0372:   PT_RIO_SCHEDULE_WED_SAT,
+   0373:   FEDERAL_SCHEDULE,
+   0374:   maxForwardDays = 21,
+   0375: }) {
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js:389
+   0386:         lotteryKey: key,
+   0387:         ymd: day,
+   0388:         PT_RIO_SCHEDULE_NORMAL,
+>> 0389:         PT_RIO_SCHEDULE_WED_SAT,
+   0390:         FEDERAL_SCHEDULE,
+   0391:       });
+   0392:       if (Array.isArray(sch) && sch.length) {
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js:404
+   0401:     ymd: y0,
+   0402:     hourBucket: h0,
+   0403:     PT_RIO_SCHEDULE_NORMAL,
+>> 0404:     PT_RIO_SCHEDULE_WED_SAT,
+   0405:     FEDERAL_SCHEDULE,
+   0406:   });
+   0407: 
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js:422
+   0419:       lotteryKey: key,
+   0420:       ymd: day,
+   0421:       PT_RIO_SCHEDULE_NORMAL,
+>> 0422:       PT_RIO_SCHEDULE_WED_SAT,
+   0423:       FEDERAL_SCHEDULE,
+   0424:     });
+   0425:     if (Array.isArray(sch) && sch.length) {
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js:442
+   0439:   startSlot,
+   0440:   drawsIndex,
+   0441:   PT_RIO_SCHEDULE_NORMAL,
+>> 0442:   PT_RIO_SCHEDULE_WED_SAT,
+   0443:   FEDERAL_SCHEDULE,
+   0444:   maxSteps = TOP3_NEXTDRAW_SCAN_MAX_STEPS,
+   0445:   maxDays = TOP3_NEXTDRAW_SCAN_MAX_DAYS,
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js:465
+   0462:         lotteryKey: key,
+   0463:         ymd: curY,
+   0464:         PT_RIO_SCHEDULE_NORMAL,
+>> 0465:         PT_RIO_SCHEDULE_WED_SAT,
+   0466:         FEDERAL_SCHEDULE,
+   0467:       });
+   0468: 
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js:511
+   0508:       lotteryKey: key,
+   0509:       ymd: curY,
+   0510:       PT_RIO_SCHEDULE_NORMAL,
+>> 0511:       PT_RIO_SCHEDULE_WED_SAT,
+   0512:       FEDERAL_SCHEDULE,
+   0513:     });
+   0514: 
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js:529
+   0526:         lotteryKey: key,
+   0527:         ymd: curY,
+   0528:         PT_RIO_SCHEDULE_NORMAL,
+>> 0529:         PT_RIO_SCHEDULE_WED_SAT,
+   0530:         FEDERAL_SCHEDULE,
+   0531:       });
+   0532: 
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js:975
+   0972:   prevHour,
+   0973:   prevGrupo,
+   0974:   PT_RIO_SCHEDULE_NORMAL,
+>> 0975:   PT_RIO_SCHEDULE_WED_SAT,
+   0976:   FEDERAL_SCHEDULE,
+   0977: }) {
+   0978:   const list = Array.isArray(drawsRange) ? drawsRange : [];
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js:1013
+   1010:       ymd: prevY,
+   1011:       hourBucket: prevH,
+   1012:       PT_RIO_SCHEDULE_NORMAL,
+>> 1013:       PT_RIO_SCHEDULE_WED_SAT,
+   1014:       FEDERAL_SCHEDULE,
+   1015:     });
+   1016: 
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js:1024
+   1021:       startSlot: { ymd: ns.ymd, hour: ns.hour },
+   1022:       drawsIndex,
+   1023:       PT_RIO_SCHEDULE_NORMAL,
+>> 1024:       PT_RIO_SCHEDULE_WED_SAT,
+   1025:       FEDERAL_SCHEDULE,
+   1026:     });
+   1027: 
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js:1087
+   1084:   drawsRange,
+   1085:   drawLast,
+   1086:   PT_RIO_SCHEDULE_NORMAL,
+>> 1087:   PT_RIO_SCHEDULE_WED_SAT,
+   1088:   FEDERAL_SCHEDULE,
+   1089:   topN = 3,
+   1090:   targetYmdOverride = "",
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js:1118
+   1115:     ymd: lastY,
+   1116:     hourBucket: lastH,
+   1117:     PT_RIO_SCHEDULE_NORMAL,
+>> 1118:     PT_RIO_SCHEDULE_WED_SAT,
+   1119:     FEDERAL_SCHEDULE,
+   1120:   });
+   1121: 
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js:1153
+   1150:     prevHour: lastH,
+   1151:     prevGrupo: Number(prevGrupo),
+   1152:     PT_RIO_SCHEDULE_NORMAL,
+>> 1153:     PT_RIO_SCHEDULE_WED_SAT,
+   1154:     FEDERAL_SCHEDULE,
+   1155:   });
+   1156: 
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js:2037
+   2034:   targetDayOfMonth,
+   2035:   prevPair,
+   2036:   PT_RIO_SCHEDULE_NORMAL,
+>> 2037:   PT_RIO_SCHEDULE_WED_SAT,
+   2038:   FEDERAL_SCHEDULE,
+   2039:   groupsK = TOP3_GROUPS_K,
+   2040: }) {
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js:2208
+   2205:   drawLast,
+   2206:   drawsToday,
+   2207:   PT_RIO_SCHEDULE_NORMAL,
+>> 2208:   PT_RIO_SCHEDULE_WED_SAT,
+   2209:   FEDERAL_SCHEDULE,
+   2210:   topN = 3,
+   2211:   targetYmdOverride = "",
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js:2239
+   2236:     ymd: lastY,
+   2237:     hourBucket: lastH,
+   2238:     PT_RIO_SCHEDULE_NORMAL,
+>> 2239:     PT_RIO_SCHEDULE_WED_SAT,
+   2240:     FEDERAL_SCHEDULE,
+   2241:   });
+   2242: 
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js:2276
+   2273:     targetDayOfMonth,
+   2274:     prevPair,
+   2275:     PT_RIO_SCHEDULE_NORMAL,
+>> 2276:     PT_RIO_SCHEDULE_WED_SAT,
+   2277:     FEDERAL_SCHEDULE,
+   2278:     groupsK: TOP3_GROUPS_K,
+   2279:   });
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js:2295
+   2292:     prevHour: lastH,
+   2293:     prevGrupo: Number(prevGrupo),
+   2294:     PT_RIO_SCHEDULE_NORMAL,
+>> 2295:     PT_RIO_SCHEDULE_WED_SAT,
+   2296:     FEDERAL_SCHEDULE,
+   2297:   });
+   2298: 
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js:2885
+   2882:   drawsRange,
+   2883:   drawLast,
+   2884:   PT_RIO_SCHEDULE_NORMAL,
+>> 2885:   PT_RIO_SCHEDULE_WED_SAT,
+   2886:   FEDERAL_SCHEDULE,
+   2887:   topN = 3,
+   2888:   targetYmdOverride = "",
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js:2915
+   2912:     ymd: lastY,
+   2913:     hourBucket: lastH,
+   2914:     PT_RIO_SCHEDULE_NORMAL,
+>> 2915:     PT_RIO_SCHEDULE_WED_SAT,
+   2916:     FEDERAL_SCHEDULE,
+   2917:   });
+   2918: 
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js:2985
+   2982:       ymd: py,
+   2983:       hourBucket: ph,
+   2984:       PT_RIO_SCHEDULE_NORMAL,
+>> 2985:       PT_RIO_SCHEDULE_WED_SAT,
+   2986:       FEDERAL_SCHEDULE,
+   2987:     });
+   2988: 
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js:3940
+   3937:   drawsRange,
+   3938:   lotteryKey,
+   3939:   PT_RIO_SCHEDULE_NORMAL,
+>> 3940:   PT_RIO_SCHEDULE_WED_SAT,
+   3941:   FEDERAL_SCHEDULE,
+   3942: }) {
+   3943:   const targetYmd = safeStr(ymd);
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js:3953
+   3950:     lotteryKey,
+   3951:     ymd: targetYmd,
+   3952:     PT_RIO_SCHEDULE_NORMAL,
+>> 3953:     PT_RIO_SCHEDULE_WED_SAT,
+   3954:     FEDERAL_SCHEDULE,
+   3955:   });
+   3956: 
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js:4112
+   4109:       drawLast: baseDraw,
+   4110:       drawsToday: usableTodayContext,
+   4111:       PT_RIO_SCHEDULE_NORMAL,
+>> 4112:       PT_RIO_SCHEDULE_WED_SAT,
+   4113:       FEDERAL_SCHEDULE,
+   4114:       topN: 3,
+   4115:       targetYmdOverride: targetYmd,
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js:4167
+   4164:   drawsRange,
+   4165:   lotteryKey,
+   4166:   PT_RIO_SCHEDULE_NORMAL,
+>> 4167:   PT_RIO_SCHEDULE_WED_SAT,
+   4168:   FEDERAL_SCHEDULE,
+   4169: }) {
+   4170:   const range = Array.isArray(drawsRange) ? drawsRange : [];
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js:4190
+   4187:       drawsRange: range,
+   4188:       lotteryKey,
+   4189:       PT_RIO_SCHEDULE_NORMAL,
+>> 4190:       PT_RIO_SCHEDULE_WED_SAT,
+   4191:       FEDERAL_SCHEDULE,
+   4192:     });
+   4193: 
+
+src\pages\Top3\top3.engine.js:224
+   0221: export function getPtRioScheduleForYmd(
+   0222:   ymd,
+   0223:   PT_RIO_SCHEDULE_NORMAL,
+>> 0224:   PT_RIO_SCHEDULE_WED_SAT
+   0225: ) {
+   0226:   const dow = getDowKey(ymd);
+   0227: 
+
+src\pages\Top3\top3.engine.js:231
+   0228:   if (dow === 0) return PT_RIO_SCHEDULE_SUNDAY;
+   0229: 
+   0230:   if (dow === 3 || dow === 6) {
+>> 0231:     const baseSchedule = Array.isArray(PT_RIO_SCHEDULE_WED_SAT)
+   0232:       ? PT_RIO_SCHEDULE_WED_SAT
+   0233:       : [];
+   0234: 
+
+src\pages\Top3\top3.engine.js:232
+   0229: 
+   0230:   if (dow === 3 || dow === 6) {
+   0231:     const baseSchedule = Array.isArray(PT_RIO_SCHEDULE_WED_SAT)
+>> 0232:       ? PT_RIO_SCHEDULE_WED_SAT
+   0233:       : [];
+   0234: 
+   0235:     // A Federal mudou de 19h para 20h em 03/11/2025.
+
+src\pages\Top3\top3.engine.js:259
+   0256:   lotteryKey,
+   0257:   ymd,
+   0258:   PT_RIO_SCHEDULE_NORMAL,
+>> 0259:   PT_RIO_SCHEDULE_WED_SAT,
+   0260:   FEDERAL_SCHEDULE,
+   0261: }) {
+   0262:   const key = safeStr(lotteryKey).toUpperCase();
+
+src\pages\Top3\top3.engine.js:271
+   0268:   return getPtRioScheduleForYmd(
+   0269:     ymd,
+   0270:     PT_RIO_SCHEDULE_NORMAL,
+>> 0271:     PT_RIO_SCHEDULE_WED_SAT
+   0272:   );
+   0273: }
+   0274: 
+
+src\pages\Top3\top3.engine.js:328
+   0325:   schedule,
+   0326:   maxBackDays = 10,
+   0327:   PT_RIO_SCHEDULE_NORMAL,
+>> 0328:   PT_RIO_SCHEDULE_WED_SAT,
+   0329:   FEDERAL_SCHEDULE,
+   0330: }) {
+   0331:   const prevSameDay = findPrevDrawBeforeTargetInSameDay(
+
+src\pages\Top3\top3.engine.js:353
+   0350:       lotteryKey,
+   0351:       ymd: day,
+   0352:       PT_RIO_SCHEDULE_NORMAL,
+>> 0353:       PT_RIO_SCHEDULE_WED_SAT,
+   0354:       FEDERAL_SCHEDULE,
+   0355:     });
+   0356: 
+
+src\pages\Top3\top3.engine.js:395
+   0392:   ymd,
+   0393:   hourBucket,
+   0394:   PT_RIO_SCHEDULE_NORMAL,
+>> 0395:   PT_RIO_SCHEDULE_WED_SAT,
+   0396:   FEDERAL_SCHEDULE,
+   0397:   maxForwardDays = 21,
+   0398: }) {
+
+src\pages\Top3\top3.engine.js:412
+   0409:         lotteryKey: key,
+   0410:         ymd: day,
+   0411:         PT_RIO_SCHEDULE_NORMAL,
+>> 0412:         PT_RIO_SCHEDULE_WED_SAT,
+   0413:         FEDERAL_SCHEDULE,
+   0414:       });
+   0415:       if (Array.isArray(sch) && sch.length) {
+
+src\pages\Top3\top3.engine.js:427
+   0424:     ymd: y0,
+   0425:     hourBucket: h0,
+   0426:     PT_RIO_SCHEDULE_NORMAL,
+>> 0427:     PT_RIO_SCHEDULE_WED_SAT,
+   0428:     FEDERAL_SCHEDULE,
+   0429:   });
+   0430: 
+
+src\pages\Top3\top3.engine.js:445
+   0442:       lotteryKey: key,
+   0443:       ymd: day,
+   0444:       PT_RIO_SCHEDULE_NORMAL,
+>> 0445:       PT_RIO_SCHEDULE_WED_SAT,
+   0446:       FEDERAL_SCHEDULE,
+   0447:     });
+   0448:     if (Array.isArray(sch) && sch.length) {
+
+src\pages\Top3\top3.engine.js:465
+   0462:   startSlot,
+   0463:   drawsIndex,
+   0464:   PT_RIO_SCHEDULE_NORMAL,
+>> 0465:   PT_RIO_SCHEDULE_WED_SAT,
+   0466:   FEDERAL_SCHEDULE,
+   0467:   maxSteps = TOP3_NEXTDRAW_SCAN_MAX_STEPS,
+   0468:   maxDays = TOP3_NEXTDRAW_SCAN_MAX_DAYS,
+
+src\pages\Top3\top3.engine.js:488
+   0485:         lotteryKey: key,
+   0486:         ymd: curY,
+   0487:         PT_RIO_SCHEDULE_NORMAL,
+>> 0488:         PT_RIO_SCHEDULE_WED_SAT,
+   0489:         FEDERAL_SCHEDULE,
+   0490:       });
+   0491: 
+
+src\pages\Top3\top3.engine.js:534
+   0531:       lotteryKey: key,
+   0532:       ymd: curY,
+   0533:       PT_RIO_SCHEDULE_NORMAL,
+>> 0534:       PT_RIO_SCHEDULE_WED_SAT,
+   0535:       FEDERAL_SCHEDULE,
+   0536:     });
+   0537: 
+
+src\pages\Top3\top3.engine.js:552
+   0549:         lotteryKey: key,
+   0550:         ymd: curY,
+   0551:         PT_RIO_SCHEDULE_NORMAL,
+>> 0552:         PT_RIO_SCHEDULE_WED_SAT,
+   0553:         FEDERAL_SCHEDULE,
+   0554:       });
+   0555: 
+
+src\pages\Top3\top3.engine.js:998
+   0995:   prevHour,
+   0996:   prevGrupo,
+   0997:   PT_RIO_SCHEDULE_NORMAL,
+>> 0998:   PT_RIO_SCHEDULE_WED_SAT,
+   0999:   FEDERAL_SCHEDULE,
+   1000: }) {
+   1001:   const list = Array.isArray(drawsRange) ? drawsRange : [];
+
+src\pages\Top3\top3.engine.js:1036
+   1033:       ymd: prevY,
+   1034:       hourBucket: prevH,
+   1035:       PT_RIO_SCHEDULE_NORMAL,
+>> 1036:       PT_RIO_SCHEDULE_WED_SAT,
+   1037:       FEDERAL_SCHEDULE,
+   1038:     });
+   1039: 
+
+src\pages\Top3\top3.engine.js:1047
+   1044:       startSlot: { ymd: ns.ymd, hour: ns.hour },
+   1045:       drawsIndex,
+   1046:       PT_RIO_SCHEDULE_NORMAL,
+>> 1047:       PT_RIO_SCHEDULE_WED_SAT,
+   1048:       FEDERAL_SCHEDULE,
+   1049:     });
+   1050: 
+
+src\pages\Top3\top3.engine.js:1110
+   1107:   drawsRange,
+   1108:   drawLast,
+   1109:   PT_RIO_SCHEDULE_NORMAL,
+>> 1110:   PT_RIO_SCHEDULE_WED_SAT,
+   1111:   FEDERAL_SCHEDULE,
+   1112:   topN = 3,
+   1113:   targetYmdOverride = "",
+
+src\pages\Top3\top3.engine.js:1141
+   1138:     ymd: lastY,
+   1139:     hourBucket: lastH,
+   1140:     PT_RIO_SCHEDULE_NORMAL,
+>> 1141:     PT_RIO_SCHEDULE_WED_SAT,
+   1142:     FEDERAL_SCHEDULE,
+   1143:   });
+   1144: 
+
+src\pages\Top3\top3.engine.js:1176
+   1173:     prevHour: lastH,
+   1174:     prevGrupo: Number(prevGrupo),
+   1175:     PT_RIO_SCHEDULE_NORMAL,
+>> 1176:     PT_RIO_SCHEDULE_WED_SAT,
+   1177:     FEDERAL_SCHEDULE,
+   1178:   });
+   1179: 
+
+src\pages\Top3\top3.engine.js:2060
+   2057:   targetDayOfMonth,
+   2058:   prevPair,
+   2059:   PT_RIO_SCHEDULE_NORMAL,
+>> 2060:   PT_RIO_SCHEDULE_WED_SAT,
+   2061:   FEDERAL_SCHEDULE,
+   2062:   groupsK = TOP3_GROUPS_K,
+   2063: }) {
+
+src\pages\Top3\top3.engine.js:2231
+   2228:   drawLast,
+   2229:   drawsToday,
+   2230:   PT_RIO_SCHEDULE_NORMAL,
+>> 2231:   PT_RIO_SCHEDULE_WED_SAT,
+   2232:   FEDERAL_SCHEDULE,
+   2233:   topN = 3,
+   2234:   targetYmdOverride = "",
+
+src\pages\Top3\top3.engine.js:2262
+   2259:     ymd: lastY,
+   2260:     hourBucket: lastH,
+   2261:     PT_RIO_SCHEDULE_NORMAL,
+>> 2262:     PT_RIO_SCHEDULE_WED_SAT,
+   2263:     FEDERAL_SCHEDULE,
+   2264:   });
+   2265: 
+
+src\pages\Top3\top3.engine.js:2299
+   2296:     targetDayOfMonth,
+   2297:     prevPair,
+   2298:     PT_RIO_SCHEDULE_NORMAL,
+>> 2299:     PT_RIO_SCHEDULE_WED_SAT,
+   2300:     FEDERAL_SCHEDULE,
+   2301:     groupsK: TOP3_GROUPS_K,
+   2302:   });
+
+src\pages\Top3\top3.engine.js:2318
+   2315:     prevHour: lastH,
+   2316:     prevGrupo: Number(prevGrupo),
+   2317:     PT_RIO_SCHEDULE_NORMAL,
+>> 2318:     PT_RIO_SCHEDULE_WED_SAT,
+   2319:     FEDERAL_SCHEDULE,
+   2320:   });
+   2321: 
+
+src\pages\Top3\top3.engine.js:2862
+   2859:   drawsRange,
+   2860:   drawLast,
+   2861:   PT_RIO_SCHEDULE_NORMAL,
+>> 2862:   PT_RIO_SCHEDULE_WED_SAT,
+   2863:   FEDERAL_SCHEDULE,
+   2864:   topN = 3,
+   2865:   targetYmdOverride = "",
+
+src\pages\Top3\top3.engine.js:2892
+   2889:     ymd: lastY,
+   2890:     hourBucket: lastH,
+   2891:     PT_RIO_SCHEDULE_NORMAL,
+>> 2892:     PT_RIO_SCHEDULE_WED_SAT,
+   2893:     FEDERAL_SCHEDULE,
+   2894:   });
+   2895: 
+
+src\pages\Top3\top3.engine.js:2962
+   2959:       ymd: py,
+   2960:       hourBucket: ph,
+   2961:       PT_RIO_SCHEDULE_NORMAL,
+>> 2962:       PT_RIO_SCHEDULE_WED_SAT,
+   2963:       FEDERAL_SCHEDULE,
+   2964:     });
+   2965: 
+
+src\pages\Top3\top3.engine.js:3896
+   3893:   drawsRange,
+   3894:   lotteryKey,
+   3895:   PT_RIO_SCHEDULE_NORMAL,
+>> 3896:   PT_RIO_SCHEDULE_WED_SAT,
+   3897:   FEDERAL_SCHEDULE,
+   3898: }) {
+   3899:   const targetYmd = safeStr(ymd);
+
+src\pages\Top3\top3.engine.js:3909
+   3906:     lotteryKey,
+   3907:     ymd: targetYmd,
+   3908:     PT_RIO_SCHEDULE_NORMAL,
+>> 3909:     PT_RIO_SCHEDULE_WED_SAT,
+   3910:     FEDERAL_SCHEDULE,
+   3911:   });
+   3912: 
+
+src\pages\Top3\top3.engine.js:4101
+   4098:       drawLast: baseDraw,
+   4099:       drawsToday: usableTodayContext,
+   4100:       PT_RIO_SCHEDULE_NORMAL,
+>> 4101:       PT_RIO_SCHEDULE_WED_SAT,
+   4102:       FEDERAL_SCHEDULE,
+   4103:       topN: 3,
+   4104:       targetYmdOverride: targetYmd,
+
+src\pages\Top3\top3.engine.js:4157
+   4154:   drawsRange,
+   4155:   lotteryKey,
+   4156:   PT_RIO_SCHEDULE_NORMAL,
+>> 4157:   PT_RIO_SCHEDULE_WED_SAT,
+   4158:   FEDERAL_SCHEDULE,
+   4159: }) {
+   4160:   const range = Array.isArray(drawsRange) ? drawsRange : [];
+
+src\pages\Top3\top3.engine.js:4180
+   4177:       drawsRange: range,
+   4178:       lotteryKey,
+   4179:       PT_RIO_SCHEDULE_NORMAL,
+>> 4180:       PT_RIO_SCHEDULE_WED_SAT,
+   4181:       FEDERAL_SCHEDULE,
+   4182:     });
+   4183: 
+
+src\pages\Top3\top3.hooks.js:20
+   0017:   LOOKBACK_OPTIONS,
+   0018:   LOTTERY_OPTIONS,
+   0019:   PT_RIO_SCHEDULE_NORMAL,
+>> 0020:   PT_RIO_SCHEDULE_WED_SAT,
+   0021:   FEDERAL_SCHEDULE,
+   0022: } from "./top3.constants";
+   0023: 
+
+src\pages\Top3\top3.hooks.js:147
+   0144:     lotteryKey,
+   0145:     ymd: y,
+   0146:     PT_RIO_SCHEDULE_NORMAL,
+>> 0147:     PT_RIO_SCHEDULE_WED_SAT,
+   0148:     FEDERAL_SCHEDULE,
+   0149:   });
+   0150: 
+
+src\pages\Top3\top3.hooks.js:373
+   0370:       lotteryKey: lotteryKeySafe,
+   0371:       ymd: y,
+   0372:       PT_RIO_SCHEDULE_NORMAL,
+>> 0373:       PT_RIO_SCHEDULE_WED_SAT,
+   0374:       FEDERAL_SCHEDULE,
+   0375:     });
+   0376:   }, [lotteryKeySafe, ymdSafe, loadedYmd, analysisYmd]);
+
+src\pages\Top3\top3.hooks.js:509
+   0506:         lotteryKey: lKey,
+   0507:         ymd: effectiveYmd,
+   0508:         PT_RIO_SCHEDULE_NORMAL,
+>> 0509:         PT_RIO_SCHEDULE_WED_SAT,
+   0510:         FEDERAL_SCHEDULE,
+   0511:       });
+   0512: 
+
+src\pages\Top3\top3.hooks.js:580
+   0577:             ymd: baseY,
+   0578:             hourBucket: baseH,
+   0579:             PT_RIO_SCHEDULE_NORMAL,
+>> 0580:             PT_RIO_SCHEDULE_WED_SAT,
+   0581:             FEDERAL_SCHEDULE,
+   0582:           });
+   0583: 
+
+src\pages\Top3\top3.hooks.js:609
+   0606:           todayDraws: today,
+   0607:           schedule: todaySchedule,
+   0608:           PT_RIO_SCHEDULE_NORMAL,
+>> 0609:           PT_RIO_SCHEDULE_WED_SAT,
+   0610:           FEDERAL_SCHEDULE,
+   0611:         });
+   0612: 
+
+src\pages\Top3\top3.hooks.js:670
+   0667:         lotteryKey: lKey,
+   0668:         ymd: baseY,
+   0669:         PT_RIO_SCHEDULE_NORMAL,
+>> 0670:         PT_RIO_SCHEDULE_WED_SAT,
+   0671:         FEDERAL_SCHEDULE,
+   0672:       });
+   0673: 
+
+src\pages\Top3\top3.hooks.js:682
+   0679:         todayDraws: baseDayDraws,
+   0680:         schedule: baseDaySchedule,
+   0681:         PT_RIO_SCHEDULE_NORMAL,
+>> 0682:         PT_RIO_SCHEDULE_WED_SAT,
+   0683:         FEDERAL_SCHEDULE,
+   0684:       });
+   0685: 
+
+src\pages\Top3\top3.storage.js:12
+   0009: 
+   0010: import {
+   0011:   PT_RIO_SCHEDULE_NORMAL,
+>> 0012:   PT_RIO_SCHEDULE_WED_SAT,
+   0013:   FEDERAL_SCHEDULE,
+   0014: } from "./top3.constants";
+   0015: 
+
+src\pages\Top3\top3.storage.js:321
+   0318:     lotteryKey,
+   0319:     ymd,
+   0320:     PT_RIO_SCHEDULE_NORMAL,
+>> 0321:     PT_RIO_SCHEDULE_WED_SAT,
+   0322:     FEDERAL_SCHEDULE,
+   0323:   });
+   0324: 
+
+src\pages\Top3\modules\top3.analytics.js:5
+   0002: 
+   0003: import {
+   0004:   PT_RIO_SCHEDULE_NORMAL,
+>> 0005:   PT_RIO_SCHEDULE_WED_SAT,
+   0006:   FEDERAL_SCHEDULE,
+   0007: } from "../top3.constants";
+   0008: 
+
+src\pages\Top3\modules\top3.analytics.js:199
+   0196:       drawLast,
+   0197:       drawsToday: Array.isArray(todayDraws) ? todayDraws : [],
+   0198:       PT_RIO_SCHEDULE_NORMAL,
+>> 0199:       PT_RIO_SCHEDULE_WED_SAT,
+   0200:       FEDERAL_SCHEDULE,
+   0201:       topN: 3,
+   0202:       targetYmdOverride: forcedTargetY,
+
+src\pages\Top3\modules\top3.timeline.js:5
+   0002: 
+   0003: import {
+   0004:   PT_RIO_SCHEDULE_NORMAL,
+>> 0005:   PT_RIO_SCHEDULE_WED_SAT,
+   0006:   FEDERAL_SCHEDULE,
+   0007: } from "../top3.constants";
+   0008: 
+
+src\pages\Top3\modules\top3.timeline.js:145
+   0142:     drawsRange: range,
+   0143:     lotteryKey: lotteryKeySafe,
+   0144:     PT_RIO_SCHEDULE_NORMAL,
+>> 0145:     PT_RIO_SCHEDULE_WED_SAT,
+   0146:     FEDERAL_SCHEDULE,
+   0147:   });
+   0148: 
+
+src\pages\Top3\modules\top3.timeline.js:208
+   0205:               lotteryKey: lotteryKeySafe,
+   0206:               ymd: slotYmd,
+   0207:               PT_RIO_SCHEDULE_NORMAL,
+>> 0208:               PT_RIO_SCHEDULE_WED_SAT,
+   0209:               FEDERAL_SCHEDULE,
+   0210:             }),
+   0211:             grupo2: g,
+
+src\pages\Top3\__tests__\top3.backtest.layers.test.js:14
+   0011: 
+   0012: import {
+   0013:   PT_RIO_SCHEDULE_NORMAL,
+>> 0014:   PT_RIO_SCHEDULE_WED_SAT,
+   0015:   FEDERAL_SCHEDULE,
+   0016: } from "../top3.constants";
+   0017: 
+
+src\pages\Top3\__tests__\top3.backtest.layers.test.js:195
+   0192:       ymd: lastY,
+   0193:       hourBucket: lastH,
+   0194:       PT_RIO_SCHEDULE_NORMAL,
+>> 0195:       PT_RIO_SCHEDULE_WED_SAT,
+   0196:       FEDERAL_SCHEDULE,
+   0197:     });
+   0198: 
+
+src\pages\Top3\__tests__\top3.backtest.layers.test.js:206
+   0203:       startSlot: { ymd: nextSlot.ymd, hour: nextSlot.hour },
+   0204:       drawsIndex,
+   0205:       PT_RIO_SCHEDULE_NORMAL,
+>> 0206:       PT_RIO_SCHEDULE_WED_SAT,
+   0207:       FEDERAL_SCHEDULE,
+   0208:     });
+   0209: 
+
+src\pages\Top3\__tests__\top3.backtest.layers.test.js:225
+   0222:       drawsRange: history,
+   0223:       drawLast,
+   0224:       PT_RIO_SCHEDULE_NORMAL,
+>> 0225:       PT_RIO_SCHEDULE_WED_SAT,
+   0226:       FEDERAL_SCHEDULE,
+   0227:       topN: 3,
+   0228:     });
+
+src\pages\Top3\__tests__\top3.backtest.test.js:14
+   0011: 
+   0012: import {
+   0013:   PT_RIO_SCHEDULE_NORMAL,
+>> 0014:   PT_RIO_SCHEDULE_WED_SAT,
+   0015:   FEDERAL_SCHEDULE,
+   0016: } from "../top3.constants";
+   0017: 
+
+src\pages\Top3\__tests__\top3.backtest.test.js:206
+   0203:       ymd: lastY,
+   0204:       hourBucket: lastH,
+   0205:       PT_RIO_SCHEDULE_NORMAL,
+>> 0206:       PT_RIO_SCHEDULE_WED_SAT,
+   0207:       FEDERAL_SCHEDULE,
+   0208:     });
+   0209: 
+
+src\pages\Top3\__tests__\top3.backtest.test.js:217
+   0214:       startSlot: { ymd: nextSlot.ymd, hour: nextSlot.hour },
+   0215:       drawsIndex,
+   0216:       PT_RIO_SCHEDULE_NORMAL,
+>> 0217:       PT_RIO_SCHEDULE_WED_SAT,
+   0218:       FEDERAL_SCHEDULE,
+   0219:     });
+   0220: 
+
+src\pages\Top3\__tests__\top3.backtest.test.js:233
+   0230:       drawsRange: history,
+   0231:       drawLast,
+   0232:       PT_RIO_SCHEDULE_NORMAL,
+>> 0233:       PT_RIO_SCHEDULE_WED_SAT,
+   0234:       FEDERAL_SCHEDULE,
+   0235:       topN: 3,
+   0236:     });
+
+backend\engine\top3PredictionService.js:34
+   0031:   "21:00",
+   0032: ];
+   0033: 
+>> 0034: const PT_RIO_SCHEDULE_WED_SAT = [
+   0035:   "09:00",
+   0036:   "11:00",
+   0037:   "14:00",
+
+backend\engine\top3PredictionService.js:353
+   0350:       ymd: normalizeYmd(ymd),
+   0351:       hourBucket: normalizeHour(hour),
+   0352:       PT_RIO_SCHEDULE_NORMAL,
+>> 0353:       PT_RIO_SCHEDULE_WED_SAT,
+   0354:       FEDERAL_SCHEDULE,
+   0355:     });
+   0356: 
+
+backend\engine\top3PredictionService.js:390
+   0387:   const dow = parsed.getUTCDay();
+   0388: 
+   0389:   if (dow === 3 || dow === 6) {
+>> 0390:     return [...PT_RIO_SCHEDULE_WED_SAT];
+   0391:   }
+   0392: 
+   0393:   return [...PT_RIO_SCHEDULE_NORMAL];
+
+backend\engine\top3PredictionService.js:836
+   0833:     drawsRange: history,
+   0834:     drawLast,
+   0835:     PT_RIO_SCHEDULE_NORMAL,
+>> 0836:     PT_RIO_SCHEDULE_WED_SAT,
+   0837:     FEDERAL_SCHEDULE,
+   0838:     topN: 3,
+   0839:     targetYmdOverride: date,
+
+backend\scripts\backtestTop3Official.js:25
+   0022:   "21:00",
+   0023: ];
+   0024: 
+>> 0025: const PT_RIO_SCHEDULE_WED_SAT = [
+   0026:   "09:00",
+   0027:   "11:00",
+   0028:   "14:00",
+
+backend\scripts\backtestTop3Official.js:709
+   0706:             historyBefore,
+   0707:           drawLast,
+   0708:           PT_RIO_SCHEDULE_NORMAL,
+>> 0709:           PT_RIO_SCHEDULE_WED_SAT,
+   0710:           FEDERAL_SCHEDULE,
+   0711:           topN: 3,
+   0712:           targetYmdOverride:
+
+==========================================================================================
+TOKEN: PT_RIO_SCHEDULE_SUNDAY
+
+
+src\pages\Top3\top3.constants.js:33
+   0030:   "21:00",
+   0031: ];
+   0032: 
+>> 0033: export const PT_RIO_SCHEDULE_SUNDAY = [
+   0034:   "09:00",
+   0035:   "11:00",
+   0036:   "14:00",
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js:29
+   0026:   TOP3_SCENE_SAMPLE_TARGET,
+   0027:   TOP3_SCENE_BLEND_SCENE,
+   0028:   TOP3_SCENE_BLEND_UNIFORM,
+>> 0029:   PT_RIO_SCHEDULE_SUNDAY,
+   0030: } from "./top3.constants";
+   0031: 
+   0032: function findPreviousValidDraw(draws, currentYmd, currentHour) {
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js:227
+   0224:   PT_RIO_SCHEDULE_WED_SAT
+   0225: ) {
+   0226:   const dow = getDowKey(ymd);
+>> 0227:   if (dow === 0) return PT_RIO_SCHEDULE_SUNDAY;
+   0228:   if (dow === 3 || dow === 6) return PT_RIO_SCHEDULE_WED_SAT;
+   0229:   return PT_RIO_SCHEDULE_NORMAL;
+   0230: }
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js:29
+   0026:   TOP3_SCENE_SAMPLE_TARGET,
+   0027:   TOP3_SCENE_BLEND_SCENE,
+   0028:   TOP3_SCENE_BLEND_UNIFORM,
+>> 0029:   PT_RIO_SCHEDULE_SUNDAY,
+   0030: } from "./top3.constants";
+   0031: 
+   0032: function findPreviousValidDraw(draws, currentYmd, currentHour) {
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js:227
+   0224:   PT_RIO_SCHEDULE_WED_SAT
+   0225: ) {
+   0226:   const dow = getDowKey(ymd);
+>> 0227:   if (dow === 0) return PT_RIO_SCHEDULE_SUNDAY;
+   0228:   if (dow === 3 || dow === 6) return PT_RIO_SCHEDULE_WED_SAT;
+   0229:   return PT_RIO_SCHEDULE_NORMAL;
+   0230: }
+
+src\pages\Top3\top3.engine.js:29
+   0026:   TOP3_SCENE_SAMPLE_TARGET,
+   0027:   TOP3_SCENE_BLEND_SCENE,
+   0028:   TOP3_SCENE_BLEND_UNIFORM,
+>> 0029:   PT_RIO_SCHEDULE_SUNDAY,
+   0030: } from "./top3.constants";
+   0031: 
+   0032: function findPreviousValidDraw(draws, currentYmd, currentHour) {
+
+src\pages\Top3\top3.engine.js:228
+   0225: ) {
+   0226:   const dow = getDowKey(ymd);
+   0227: 
+>> 0228:   if (dow === 0) return PT_RIO_SCHEDULE_SUNDAY;
+   0229: 
+   0230:   if (dow === 3 || dow === 6) {
+   0231:     const baseSchedule = Array.isArray(PT_RIO_SCHEDULE_WED_SAT)
+
+==========================================================================================
+TOKEN: FEDERAL_SCHEDULE
+
+
+src\dev\runAuditTop3.js:16
+   0013: import {
+   0014:   PT_RIO_SCHEDULE_NORMAL,
+   0015:   PT_RIO_SCHEDULE_WED_SAT,
+>> 0016:   FEDERAL_SCHEDULE,
+   0017: } from "../pages/Top3/top3.constants";
+   0018: 
+   0019: function safeStr(value) {
+
+src\dev\runAuditTop3.js:128
+   0125:     lotteryKey,
+   0126:     PT_RIO_SCHEDULE_NORMAL,
+   0127:     PT_RIO_SCHEDULE_WED_SAT,
+>> 0128:     FEDERAL_SCHEDULE,
+   0129:   });
+   0130: 
+   0131:   const debugYmd = safeStr(process.env.DEBUG_YMD);
+
+src\pages\Top3\top3.constants.js:56
+   0053: ];
+   0054: 
+   0055: // Federal: travado em 20h
+>> 0056: export const FEDERAL_SCHEDULE = ["20:00"];
+   0057: 
+   0058: /* =========================
+   0059:    Parâmetros do motor TOP3
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js:237
+   0234:   ymd,
+   0235:   PT_RIO_SCHEDULE_NORMAL,
+   0236:   PT_RIO_SCHEDULE_WED_SAT,
+>> 0237:   FEDERAL_SCHEDULE,
+   0238: }) {
+   0239:   const key = safeStr(lotteryKey).toUpperCase();
+   0240: 
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js:242
+   0239:   const key = safeStr(lotteryKey).toUpperCase();
+   0240: 
+   0241:   if (key === "FEDERAL") {
+>> 0242:     return isFederalDrawDay(ymd) ? FEDERAL_SCHEDULE : [];
+   0243:   }
+   0244: 
+   0245:   return getPtRioScheduleForYmd(
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js:306
+   0303:   maxBackDays = 10,
+   0304:   PT_RIO_SCHEDULE_NORMAL,
+   0305:   PT_RIO_SCHEDULE_WED_SAT,
+>> 0306:   FEDERAL_SCHEDULE,
+   0307: }) {
+   0308:   const prevSameDay = findPrevDrawBeforeTargetInSameDay(
+   0309:     todayDraws,
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js:331
+   0328:       ymd: day,
+   0329:       PT_RIO_SCHEDULE_NORMAL,
+   0330:       PT_RIO_SCHEDULE_WED_SAT,
+>> 0331:       FEDERAL_SCHEDULE,
+   0332:     });
+   0333: 
+   0334:     if (
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js:373
+   0370:   hourBucket,
+   0371:   PT_RIO_SCHEDULE_NORMAL,
+   0372:   PT_RIO_SCHEDULE_WED_SAT,
+>> 0373:   FEDERAL_SCHEDULE,
+   0374:   maxForwardDays = 21,
+   0375: }) {
+   0376:   const key = safeStr(lotteryKey).toUpperCase();
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js:390
+   0387:         ymd: day,
+   0388:         PT_RIO_SCHEDULE_NORMAL,
+   0389:         PT_RIO_SCHEDULE_WED_SAT,
+>> 0390:         FEDERAL_SCHEDULE,
+   0391:       });
+   0392:       if (Array.isArray(sch) && sch.length) {
+   0393:         return { ymd: day, hour: toHourBucket(sch[0]) };
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js:405
+   0402:     hourBucket: h0,
+   0403:     PT_RIO_SCHEDULE_NORMAL,
+   0404:     PT_RIO_SCHEDULE_WED_SAT,
+>> 0405:     FEDERAL_SCHEDULE,
+   0406:   });
+   0407: 
+   0408:   const idx = (Array.isArray(sch0) ? sch0 : []).findIndex(
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js:423
+   0420:       ymd: day,
+   0421:       PT_RIO_SCHEDULE_NORMAL,
+   0422:       PT_RIO_SCHEDULE_WED_SAT,
+>> 0423:       FEDERAL_SCHEDULE,
+   0424:     });
+   0425:     if (Array.isArray(sch) && sch.length) {
+   0426:       return { ymd: day, hour: toHourBucket(sch[0]) };
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js:443
+   0440:   drawsIndex,
+   0441:   PT_RIO_SCHEDULE_NORMAL,
+   0442:   PT_RIO_SCHEDULE_WED_SAT,
+>> 0443:   FEDERAL_SCHEDULE,
+   0444:   maxSteps = TOP3_NEXTDRAW_SCAN_MAX_STEPS,
+   0445:   maxDays = TOP3_NEXTDRAW_SCAN_MAX_DAYS,
+   0446: }) {
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js:466
+   0463:         ymd: curY,
+   0464:         PT_RIO_SCHEDULE_NORMAL,
+   0465:         PT_RIO_SCHEDULE_WED_SAT,
+>> 0466:         FEDERAL_SCHEDULE,
+   0467:       });
+   0468: 
+   0469:       if (Array.isArray(sch) && sch.length) {
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js:512
+   0509:       ymd: curY,
+   0510:       PT_RIO_SCHEDULE_NORMAL,
+   0511:       PT_RIO_SCHEDULE_WED_SAT,
+>> 0512:       FEDERAL_SCHEDULE,
+   0513:     });
+   0514: 
+   0515:     const arr = Array.isArray(sch) ? sch.map(toHourBucket) : [];
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js:530
+   0527:         ymd: curY,
+   0528:         PT_RIO_SCHEDULE_NORMAL,
+   0529:         PT_RIO_SCHEDULE_WED_SAT,
+>> 0530:         FEDERAL_SCHEDULE,
+   0531:       });
+   0532: 
+   0533:       const arr2 = Array.isArray(sch2) ? sch2.map(toHourBucket) : [];
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js:976
+   0973:   prevGrupo,
+   0974:   PT_RIO_SCHEDULE_NORMAL,
+   0975:   PT_RIO_SCHEDULE_WED_SAT,
+>> 0976:   FEDERAL_SCHEDULE,
+   0977: }) {
+   0978:   const list = Array.isArray(drawsRange) ? drawsRange : [];
+   0979:   const drawsIndex = indexDrawsByYmdHour(list);
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js:1014
+   1011:       hourBucket: prevH,
+   1012:       PT_RIO_SCHEDULE_NORMAL,
+   1013:       PT_RIO_SCHEDULE_WED_SAT,
+>> 1014:       FEDERAL_SCHEDULE,
+   1015:     });
+   1016: 
+   1017:     if (!ns?.ymd || !ns?.hour) continue;
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js:1025
+   1022:       drawsIndex,
+   1023:       PT_RIO_SCHEDULE_NORMAL,
+   1024:       PT_RIO_SCHEDULE_WED_SAT,
+>> 1025:       FEDERAL_SCHEDULE,
+   1026:     });
+   1027: 
+   1028:     const nextDraw = found?.draw || null;
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js:1088
+   1085:   drawLast,
+   1086:   PT_RIO_SCHEDULE_NORMAL,
+   1087:   PT_RIO_SCHEDULE_WED_SAT,
+>> 1088:   FEDERAL_SCHEDULE,
+   1089:   topN = 3,
+   1090:   targetYmdOverride = "",
+   1091:   targetHourOverride = "",
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js:1119
+   1116:     hourBucket: lastH,
+   1117:     PT_RIO_SCHEDULE_NORMAL,
+   1118:     PT_RIO_SCHEDULE_WED_SAT,
+>> 1119:     FEDERAL_SCHEDULE,
+   1120:   });
+   1121: 
+   1122:   const forcedTargetY = safeStr(targetYmdOverride);
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js:1154
+   1151:     prevGrupo: Number(prevGrupo),
+   1152:     PT_RIO_SCHEDULE_NORMAL,
+   1153:     PT_RIO_SCHEDULE_WED_SAT,
+>> 1154:     FEDERAL_SCHEDULE,
+   1155:   });
+   1156: 
+   1157:   const chosen = layerOut.chosen;
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js:2038
+   2035:   prevPair,
+   2036:   PT_RIO_SCHEDULE_NORMAL,
+   2037:   PT_RIO_SCHEDULE_WED_SAT,
+>> 2038:   FEDERAL_SCHEDULE,
+   2039:   groupsK = TOP3_GROUPS_K,
+   2040: }) {
+   2041:   const seq = buildComparableFirstSequence(
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js:2209
+   2206:   drawsToday,
+   2207:   PT_RIO_SCHEDULE_NORMAL,
+   2208:   PT_RIO_SCHEDULE_WED_SAT,
+>> 2209:   FEDERAL_SCHEDULE,
+   2210:   topN = 3,
+   2211:   targetYmdOverride = "",
+   2212:   targetHourOverride = "",
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js:2240
+   2237:     hourBucket: lastH,
+   2238:     PT_RIO_SCHEDULE_NORMAL,
+   2239:     PT_RIO_SCHEDULE_WED_SAT,
+>> 2240:     FEDERAL_SCHEDULE,
+   2241:   });
+   2242: 
+   2243:   const forcedTargetY = safeStr(targetYmdOverride);
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js:2277
+   2274:     prevPair,
+   2275:     PT_RIO_SCHEDULE_NORMAL,
+   2276:     PT_RIO_SCHEDULE_WED_SAT,
+>> 2277:     FEDERAL_SCHEDULE,
+   2278:     groupsK: TOP3_GROUPS_K,
+   2279:   });
+   2280: 
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js:2296
+   2293:     prevGrupo: Number(prevGrupo),
+   2294:     PT_RIO_SCHEDULE_NORMAL,
+   2295:     PT_RIO_SCHEDULE_WED_SAT,
+>> 2296:     FEDERAL_SCHEDULE,
+   2297:   });
+   2298: 
+   2299:   const chosen = layerOut?.chosen || null;
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js:2886
+   2883:   drawLast,
+   2884:   PT_RIO_SCHEDULE_NORMAL,
+   2885:   PT_RIO_SCHEDULE_WED_SAT,
+>> 2886:   FEDERAL_SCHEDULE,
+   2887:   topN = 3,
+   2888:   targetYmdOverride = "",
+   2889:   targetHourOverride = "",
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js:2916
+   2913:     hourBucket: lastH,
+   2914:     PT_RIO_SCHEDULE_NORMAL,
+   2915:     PT_RIO_SCHEDULE_WED_SAT,
+>> 2916:     FEDERAL_SCHEDULE,
+   2917:   });
+   2918: 
+   2919:   const forcedTargetY = safeStr(targetYmdOverride);
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js:2986
+   2983:       hourBucket: ph,
+   2984:       PT_RIO_SCHEDULE_NORMAL,
+   2985:       PT_RIO_SCHEDULE_WED_SAT,
+>> 2986:       FEDERAL_SCHEDULE,
+   2987:     });
+   2988: 
+   2989:     if (toHourBucket(ns?.hour) !== targetH) continue;
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js:3941
+   3938:   lotteryKey,
+   3939:   PT_RIO_SCHEDULE_NORMAL,
+   3940:   PT_RIO_SCHEDULE_WED_SAT,
+>> 3941:   FEDERAL_SCHEDULE,
+   3942: }) {
+   3943:   const targetYmd = safeStr(ymd);
+   3944:   const day = Array.isArray(drawsToday) ? [...drawsToday] : [];
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js:3954
+   3951:     ymd: targetYmd,
+   3952:     PT_RIO_SCHEDULE_NORMAL,
+   3953:     PT_RIO_SCHEDULE_WED_SAT,
+>> 3954:     FEDERAL_SCHEDULE,
+   3955:   });
+   3956: 
+   3957:   const normalizedSchedule = (Array.isArray(schedule) ? schedule : [])
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js:4113
+   4110:       drawsToday: usableTodayContext,
+   4111:       PT_RIO_SCHEDULE_NORMAL,
+   4112:       PT_RIO_SCHEDULE_WED_SAT,
+>> 4113:       FEDERAL_SCHEDULE,
+   4114:       topN: 3,
+   4115:       targetYmdOverride: targetYmd,
+   4116:       targetHourOverride: slotHour,
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js:4168
+   4165:   lotteryKey,
+   4166:   PT_RIO_SCHEDULE_NORMAL,
+   4167:   PT_RIO_SCHEDULE_WED_SAT,
+>> 4168:   FEDERAL_SCHEDULE,
+   4169: }) {
+   4170:   const range = Array.isArray(drawsRange) ? drawsRange : [];
+   4171:   const dates = Array.from(
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js:4191
+   4188:       lotteryKey,
+   4189:       PT_RIO_SCHEDULE_NORMAL,
+   4190:       PT_RIO_SCHEDULE_WED_SAT,
+>> 4191:       FEDERAL_SCHEDULE,
+   4192:     });
+   4193: 
+   4194:     allTimeline.push(...(Array.isArray(dayTimeline) ? dayTimeline : []));
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js:237
+   0234:   ymd,
+   0235:   PT_RIO_SCHEDULE_NORMAL,
+   0236:   PT_RIO_SCHEDULE_WED_SAT,
+>> 0237:   FEDERAL_SCHEDULE,
+   0238: }) {
+   0239:   const key = safeStr(lotteryKey).toUpperCase();
+   0240: 
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js:242
+   0239:   const key = safeStr(lotteryKey).toUpperCase();
+   0240: 
+   0241:   if (key === "FEDERAL") {
+>> 0242:     return isFederalDrawDay(ymd) ? FEDERAL_SCHEDULE : [];
+   0243:   }
+   0244: 
+   0245:   return getPtRioScheduleForYmd(
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js:306
+   0303:   maxBackDays = 10,
+   0304:   PT_RIO_SCHEDULE_NORMAL,
+   0305:   PT_RIO_SCHEDULE_WED_SAT,
+>> 0306:   FEDERAL_SCHEDULE,
+   0307: }) {
+   0308:   const prevSameDay = findPrevDrawBeforeTargetInSameDay(
+   0309:     todayDraws,
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js:331
+   0328:       ymd: day,
+   0329:       PT_RIO_SCHEDULE_NORMAL,
+   0330:       PT_RIO_SCHEDULE_WED_SAT,
+>> 0331:       FEDERAL_SCHEDULE,
+   0332:     });
+   0333: 
+   0334:     if (
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js:373
+   0370:   hourBucket,
+   0371:   PT_RIO_SCHEDULE_NORMAL,
+   0372:   PT_RIO_SCHEDULE_WED_SAT,
+>> 0373:   FEDERAL_SCHEDULE,
+   0374:   maxForwardDays = 21,
+   0375: }) {
+   0376:   const key = safeStr(lotteryKey).toUpperCase();
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js:390
+   0387:         ymd: day,
+   0388:         PT_RIO_SCHEDULE_NORMAL,
+   0389:         PT_RIO_SCHEDULE_WED_SAT,
+>> 0390:         FEDERAL_SCHEDULE,
+   0391:       });
+   0392:       if (Array.isArray(sch) && sch.length) {
+   0393:         return { ymd: day, hour: toHourBucket(sch[0]) };
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js:405
+   0402:     hourBucket: h0,
+   0403:     PT_RIO_SCHEDULE_NORMAL,
+   0404:     PT_RIO_SCHEDULE_WED_SAT,
+>> 0405:     FEDERAL_SCHEDULE,
+   0406:   });
+   0407: 
+   0408:   const idx = (Array.isArray(sch0) ? sch0 : []).findIndex(
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js:423
+   0420:       ymd: day,
+   0421:       PT_RIO_SCHEDULE_NORMAL,
+   0422:       PT_RIO_SCHEDULE_WED_SAT,
+>> 0423:       FEDERAL_SCHEDULE,
+   0424:     });
+   0425:     if (Array.isArray(sch) && sch.length) {
+   0426:       return { ymd: day, hour: toHourBucket(sch[0]) };
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js:443
+   0440:   drawsIndex,
+   0441:   PT_RIO_SCHEDULE_NORMAL,
+   0442:   PT_RIO_SCHEDULE_WED_SAT,
+>> 0443:   FEDERAL_SCHEDULE,
+   0444:   maxSteps = TOP3_NEXTDRAW_SCAN_MAX_STEPS,
+   0445:   maxDays = TOP3_NEXTDRAW_SCAN_MAX_DAYS,
+   0446: }) {
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js:466
+   0463:         ymd: curY,
+   0464:         PT_RIO_SCHEDULE_NORMAL,
+   0465:         PT_RIO_SCHEDULE_WED_SAT,
+>> 0466:         FEDERAL_SCHEDULE,
+   0467:       });
+   0468: 
+   0469:       if (Array.isArray(sch) && sch.length) {
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js:512
+   0509:       ymd: curY,
+   0510:       PT_RIO_SCHEDULE_NORMAL,
+   0511:       PT_RIO_SCHEDULE_WED_SAT,
+>> 0512:       FEDERAL_SCHEDULE,
+   0513:     });
+   0514: 
+   0515:     const arr = Array.isArray(sch) ? sch.map(toHourBucket) : [];
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js:530
+   0527:         ymd: curY,
+   0528:         PT_RIO_SCHEDULE_NORMAL,
+   0529:         PT_RIO_SCHEDULE_WED_SAT,
+>> 0530:         FEDERAL_SCHEDULE,
+   0531:       });
+   0532: 
+   0533:       const arr2 = Array.isArray(sch2) ? sch2.map(toHourBucket) : [];
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js:976
+   0973:   prevGrupo,
+   0974:   PT_RIO_SCHEDULE_NORMAL,
+   0975:   PT_RIO_SCHEDULE_WED_SAT,
+>> 0976:   FEDERAL_SCHEDULE,
+   0977: }) {
+   0978:   const list = Array.isArray(drawsRange) ? drawsRange : [];
+   0979:   const drawsIndex = indexDrawsByYmdHour(list);
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js:1014
+   1011:       hourBucket: prevH,
+   1012:       PT_RIO_SCHEDULE_NORMAL,
+   1013:       PT_RIO_SCHEDULE_WED_SAT,
+>> 1014:       FEDERAL_SCHEDULE,
+   1015:     });
+   1016: 
+   1017:     if (!ns?.ymd || !ns?.hour) continue;
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js:1025
+   1022:       drawsIndex,
+   1023:       PT_RIO_SCHEDULE_NORMAL,
+   1024:       PT_RIO_SCHEDULE_WED_SAT,
+>> 1025:       FEDERAL_SCHEDULE,
+   1026:     });
+   1027: 
+   1028:     const nextDraw = found?.draw || null;
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js:1088
+   1085:   drawLast,
+   1086:   PT_RIO_SCHEDULE_NORMAL,
+   1087:   PT_RIO_SCHEDULE_WED_SAT,
+>> 1088:   FEDERAL_SCHEDULE,
+   1089:   topN = 3,
+   1090:   targetYmdOverride = "",
+   1091:   targetHourOverride = "",
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js:1119
+   1116:     hourBucket: lastH,
+   1117:     PT_RIO_SCHEDULE_NORMAL,
+   1118:     PT_RIO_SCHEDULE_WED_SAT,
+>> 1119:     FEDERAL_SCHEDULE,
+   1120:   });
+   1121: 
+   1122:   const forcedTargetY = safeStr(targetYmdOverride);
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js:1154
+   1151:     prevGrupo: Number(prevGrupo),
+   1152:     PT_RIO_SCHEDULE_NORMAL,
+   1153:     PT_RIO_SCHEDULE_WED_SAT,
+>> 1154:     FEDERAL_SCHEDULE,
+   1155:   });
+   1156: 
+   1157:   const chosen = layerOut.chosen;
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js:2038
+   2035:   prevPair,
+   2036:   PT_RIO_SCHEDULE_NORMAL,
+   2037:   PT_RIO_SCHEDULE_WED_SAT,
+>> 2038:   FEDERAL_SCHEDULE,
+   2039:   groupsK = TOP3_GROUPS_K,
+   2040: }) {
+   2041:   const seq = buildComparableFirstSequence(
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js:2209
+   2206:   drawsToday,
+   2207:   PT_RIO_SCHEDULE_NORMAL,
+   2208:   PT_RIO_SCHEDULE_WED_SAT,
+>> 2209:   FEDERAL_SCHEDULE,
+   2210:   topN = 3,
+   2211:   targetYmdOverride = "",
+   2212:   targetHourOverride = "",
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js:2240
+   2237:     hourBucket: lastH,
+   2238:     PT_RIO_SCHEDULE_NORMAL,
+   2239:     PT_RIO_SCHEDULE_WED_SAT,
+>> 2240:     FEDERAL_SCHEDULE,
+   2241:   });
+   2242: 
+   2243:   const forcedTargetY = safeStr(targetYmdOverride);
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js:2277
+   2274:     prevPair,
+   2275:     PT_RIO_SCHEDULE_NORMAL,
+   2276:     PT_RIO_SCHEDULE_WED_SAT,
+>> 2277:     FEDERAL_SCHEDULE,
+   2278:     groupsK: TOP3_GROUPS_K,
+   2279:   });
+   2280: 
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js:2296
+   2293:     prevGrupo: Number(prevGrupo),
+   2294:     PT_RIO_SCHEDULE_NORMAL,
+   2295:     PT_RIO_SCHEDULE_WED_SAT,
+>> 2296:     FEDERAL_SCHEDULE,
+   2297:   });
+   2298: 
+   2299:   const chosen = layerOut?.chosen || null;
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js:2886
+   2883:   drawLast,
+   2884:   PT_RIO_SCHEDULE_NORMAL,
+   2885:   PT_RIO_SCHEDULE_WED_SAT,
+>> 2886:   FEDERAL_SCHEDULE,
+   2887:   topN = 3,
+   2888:   targetYmdOverride = "",
+   2889:   targetHourOverride = "",
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js:2916
+   2913:     hourBucket: lastH,
+   2914:     PT_RIO_SCHEDULE_NORMAL,
+   2915:     PT_RIO_SCHEDULE_WED_SAT,
+>> 2916:     FEDERAL_SCHEDULE,
+   2917:   });
+   2918: 
+   2919:   const forcedTargetY = safeStr(targetYmdOverride);
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js:2986
+   2983:       hourBucket: ph,
+   2984:       PT_RIO_SCHEDULE_NORMAL,
+   2985:       PT_RIO_SCHEDULE_WED_SAT,
+>> 2986:       FEDERAL_SCHEDULE,
+   2987:     });
+   2988: 
+   2989:     if (toHourBucket(ns?.hour) !== targetH) continue;
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js:3941
+   3938:   lotteryKey,
+   3939:   PT_RIO_SCHEDULE_NORMAL,
+   3940:   PT_RIO_SCHEDULE_WED_SAT,
+>> 3941:   FEDERAL_SCHEDULE,
+   3942: }) {
+   3943:   const targetYmd = safeStr(ymd);
+   3944:   const day = Array.isArray(drawsToday) ? [...drawsToday] : [];
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js:3954
+   3951:     ymd: targetYmd,
+   3952:     PT_RIO_SCHEDULE_NORMAL,
+   3953:     PT_RIO_SCHEDULE_WED_SAT,
+>> 3954:     FEDERAL_SCHEDULE,
+   3955:   });
+   3956: 
+   3957:   const normalizedSchedule = (Array.isArray(schedule) ? schedule : [])
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js:4113
+   4110:       drawsToday: usableTodayContext,
+   4111:       PT_RIO_SCHEDULE_NORMAL,
+   4112:       PT_RIO_SCHEDULE_WED_SAT,
+>> 4113:       FEDERAL_SCHEDULE,
+   4114:       topN: 3,
+   4115:       targetYmdOverride: targetYmd,
+   4116:       targetHourOverride: slotHour,
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js:4168
+   4165:   lotteryKey,
+   4166:   PT_RIO_SCHEDULE_NORMAL,
+   4167:   PT_RIO_SCHEDULE_WED_SAT,
+>> 4168:   FEDERAL_SCHEDULE,
+   4169: }) {
+   4170:   const range = Array.isArray(drawsRange) ? drawsRange : [];
+   4171:   const dates = Array.from(
+
+src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js:4191
+   4188:       lotteryKey,
+   4189:       PT_RIO_SCHEDULE_NORMAL,
+   4190:       PT_RIO_SCHEDULE_WED_SAT,
+>> 4191:       FEDERAL_SCHEDULE,
+   4192:     });
+   4193: 
+   4194:     allTimeline.push(...(Array.isArray(dayTimeline) ? dayTimeline : []));
+
+src\pages\Top3\top3.engine.js:260
+   0257:   ymd,
+   0258:   PT_RIO_SCHEDULE_NORMAL,
+   0259:   PT_RIO_SCHEDULE_WED_SAT,
+>> 0260:   FEDERAL_SCHEDULE,
+   0261: }) {
+   0262:   const key = safeStr(lotteryKey).toUpperCase();
+   0263: 
+
+src\pages\Top3\top3.engine.js:265
+   0262:   const key = safeStr(lotteryKey).toUpperCase();
+   0263: 
+   0264:   if (key === "FEDERAL") {
+>> 0265:     return isFederalDrawDay(ymd) ? FEDERAL_SCHEDULE : [];
+   0266:   }
+   0267: 
+   0268:   return getPtRioScheduleForYmd(
+
+src\pages\Top3\top3.engine.js:329
+   0326:   maxBackDays = 10,
+   0327:   PT_RIO_SCHEDULE_NORMAL,
+   0328:   PT_RIO_SCHEDULE_WED_SAT,
+>> 0329:   FEDERAL_SCHEDULE,
+   0330: }) {
+   0331:   const prevSameDay = findPrevDrawBeforeTargetInSameDay(
+   0332:     todayDraws,
+
+src\pages\Top3\top3.engine.js:354
+   0351:       ymd: day,
+   0352:       PT_RIO_SCHEDULE_NORMAL,
+   0353:       PT_RIO_SCHEDULE_WED_SAT,
+>> 0354:       FEDERAL_SCHEDULE,
+   0355:     });
+   0356: 
+   0357:     if (
+
+src\pages\Top3\top3.engine.js:396
+   0393:   hourBucket,
+   0394:   PT_RIO_SCHEDULE_NORMAL,
+   0395:   PT_RIO_SCHEDULE_WED_SAT,
+>> 0396:   FEDERAL_SCHEDULE,
+   0397:   maxForwardDays = 21,
+   0398: }) {
+   0399:   const key = safeStr(lotteryKey).toUpperCase();
+
+src\pages\Top3\top3.engine.js:413
+   0410:         ymd: day,
+   0411:         PT_RIO_SCHEDULE_NORMAL,
+   0412:         PT_RIO_SCHEDULE_WED_SAT,
+>> 0413:         FEDERAL_SCHEDULE,
+   0414:       });
+   0415:       if (Array.isArray(sch) && sch.length) {
+   0416:         return { ymd: day, hour: toHourBucket(sch[0]) };
+
+src\pages\Top3\top3.engine.js:428
+   0425:     hourBucket: h0,
+   0426:     PT_RIO_SCHEDULE_NORMAL,
+   0427:     PT_RIO_SCHEDULE_WED_SAT,
+>> 0428:     FEDERAL_SCHEDULE,
+   0429:   });
+   0430: 
+   0431:   const idx = (Array.isArray(sch0) ? sch0 : []).findIndex(
+
+src\pages\Top3\top3.engine.js:446
+   0443:       ymd: day,
+   0444:       PT_RIO_SCHEDULE_NORMAL,
+   0445:       PT_RIO_SCHEDULE_WED_SAT,
+>> 0446:       FEDERAL_SCHEDULE,
+   0447:     });
+   0448:     if (Array.isArray(sch) && sch.length) {
+   0449:       return { ymd: day, hour: toHourBucket(sch[0]) };
+
+src\pages\Top3\top3.engine.js:466
+   0463:   drawsIndex,
+   0464:   PT_RIO_SCHEDULE_NORMAL,
+   0465:   PT_RIO_SCHEDULE_WED_SAT,
+>> 0466:   FEDERAL_SCHEDULE,
+   0467:   maxSteps = TOP3_NEXTDRAW_SCAN_MAX_STEPS,
+   0468:   maxDays = TOP3_NEXTDRAW_SCAN_MAX_DAYS,
+   0469: }) {
+
+src\pages\Top3\top3.engine.js:489
+   0486:         ymd: curY,
+   0487:         PT_RIO_SCHEDULE_NORMAL,
+   0488:         PT_RIO_SCHEDULE_WED_SAT,
+>> 0489:         FEDERAL_SCHEDULE,
+   0490:       });
+   0491: 
+   0492:       if (Array.isArray(sch) && sch.length) {
+
+src\pages\Top3\top3.engine.js:535
+   0532:       ymd: curY,
+   0533:       PT_RIO_SCHEDULE_NORMAL,
+   0534:       PT_RIO_SCHEDULE_WED_SAT,
+>> 0535:       FEDERAL_SCHEDULE,
+   0536:     });
+   0537: 
+   0538:     const arr = Array.isArray(sch) ? sch.map(toHourBucket) : [];
+
+src\pages\Top3\top3.engine.js:553
+   0550:         ymd: curY,
+   0551:         PT_RIO_SCHEDULE_NORMAL,
+   0552:         PT_RIO_SCHEDULE_WED_SAT,
+>> 0553:         FEDERAL_SCHEDULE,
+   0554:       });
+   0555: 
+   0556:       const arr2 = Array.isArray(sch2) ? sch2.map(toHourBucket) : [];
+
+src\pages\Top3\top3.engine.js:999
+   0996:   prevGrupo,
+   0997:   PT_RIO_SCHEDULE_NORMAL,
+   0998:   PT_RIO_SCHEDULE_WED_SAT,
+>> 0999:   FEDERAL_SCHEDULE,
+   1000: }) {
+   1001:   const list = Array.isArray(drawsRange) ? drawsRange : [];
+   1002:   const drawsIndex = indexDrawsByYmdHour(list);
+
+src\pages\Top3\top3.engine.js:1037
+   1034:       hourBucket: prevH,
+   1035:       PT_RIO_SCHEDULE_NORMAL,
+   1036:       PT_RIO_SCHEDULE_WED_SAT,
+>> 1037:       FEDERAL_SCHEDULE,
+   1038:     });
+   1039: 
+   1040:     if (!ns?.ymd || !ns?.hour) continue;
+
+src\pages\Top3\top3.engine.js:1048
+   1045:       drawsIndex,
+   1046:       PT_RIO_SCHEDULE_NORMAL,
+   1047:       PT_RIO_SCHEDULE_WED_SAT,
+>> 1048:       FEDERAL_SCHEDULE,
+   1049:     });
+   1050: 
+   1051:     const nextDraw = found?.draw || null;
+
+src\pages\Top3\top3.engine.js:1111
+   1108:   drawLast,
+   1109:   PT_RIO_SCHEDULE_NORMAL,
+   1110:   PT_RIO_SCHEDULE_WED_SAT,
+>> 1111:   FEDERAL_SCHEDULE,
+   1112:   topN = 3,
+   1113:   targetYmdOverride = "",
+   1114:   targetHourOverride = "",
+
+src\pages\Top3\top3.engine.js:1142
+   1139:     hourBucket: lastH,
+   1140:     PT_RIO_SCHEDULE_NORMAL,
+   1141:     PT_RIO_SCHEDULE_WED_SAT,
+>> 1142:     FEDERAL_SCHEDULE,
+   1143:   });
+   1144: 
+   1145:   const forcedTargetY = safeStr(targetYmdOverride);
+
+src\pages\Top3\top3.engine.js:1177
+   1174:     prevGrupo: Number(prevGrupo),
+   1175:     PT_RIO_SCHEDULE_NORMAL,
+   1176:     PT_RIO_SCHEDULE_WED_SAT,
+>> 1177:     FEDERAL_SCHEDULE,
+   1178:   });
+   1179: 
+   1180:   const chosen = layerOut.chosen;
+
+src\pages\Top3\top3.engine.js:2061
+   2058:   prevPair,
+   2059:   PT_RIO_SCHEDULE_NORMAL,
+   2060:   PT_RIO_SCHEDULE_WED_SAT,
+>> 2061:   FEDERAL_SCHEDULE,
+   2062:   groupsK = TOP3_GROUPS_K,
+   2063: }) {
+   2064:   const seq = buildComparableFirstSequence(
+
+src\pages\Top3\top3.engine.js:2232
+   2229:   drawsToday,
+   2230:   PT_RIO_SCHEDULE_NORMAL,
+   2231:   PT_RIO_SCHEDULE_WED_SAT,
+>> 2232:   FEDERAL_SCHEDULE,
+   2233:   topN = 3,
+   2234:   targetYmdOverride = "",
+   2235:   targetHourOverride = "",
+
+src\pages\Top3\top3.engine.js:2263
+   2260:     hourBucket: lastH,
+   2261:     PT_RIO_SCHEDULE_NORMAL,
+   2262:     PT_RIO_SCHEDULE_WED_SAT,
+>> 2263:     FEDERAL_SCHEDULE,
+   2264:   });
+   2265: 
+   2266:   const forcedTargetY = safeStr(targetYmdOverride);
+
+src\pages\Top3\top3.engine.js:2300
+   2297:     prevPair,
+   2298:     PT_RIO_SCHEDULE_NORMAL,
+   2299:     PT_RIO_SCHEDULE_WED_SAT,
+>> 2300:     FEDERAL_SCHEDULE,
+   2301:     groupsK: TOP3_GROUPS_K,
+   2302:   });
+   2303: 
+
+src\pages\Top3\top3.engine.js:2319
+   2316:     prevGrupo: Number(prevGrupo),
+   2317:     PT_RIO_SCHEDULE_NORMAL,
+   2318:     PT_RIO_SCHEDULE_WED_SAT,
+>> 2319:     FEDERAL_SCHEDULE,
+   2320:   });
+   2321: 
+   2322:   const chosen = layerOut?.chosen || null;
+
+src\pages\Top3\top3.engine.js:2863
+   2860:   drawLast,
+   2861:   PT_RIO_SCHEDULE_NORMAL,
+   2862:   PT_RIO_SCHEDULE_WED_SAT,
+>> 2863:   FEDERAL_SCHEDULE,
+   2864:   topN = 3,
+   2865:   targetYmdOverride = "",
+   2866:   targetHourOverride = "",
+
+src\pages\Top3\top3.engine.js:2893
+   2890:     hourBucket: lastH,
+   2891:     PT_RIO_SCHEDULE_NORMAL,
+   2892:     PT_RIO_SCHEDULE_WED_SAT,
+>> 2893:     FEDERAL_SCHEDULE,
+   2894:   });
+   2895: 
+   2896:   const forcedTargetY = safeStr(targetYmdOverride);
+
+src\pages\Top3\top3.engine.js:2963
+   2960:       hourBucket: ph,
+   2961:       PT_RIO_SCHEDULE_NORMAL,
+   2962:       PT_RIO_SCHEDULE_WED_SAT,
+>> 2963:       FEDERAL_SCHEDULE,
+   2964:     });
+   2965: 
+   2966:     if (toHourBucket(ns?.hour) !== targetH) continue;
+
+src\pages\Top3\top3.engine.js:3897
+   3894:   lotteryKey,
+   3895:   PT_RIO_SCHEDULE_NORMAL,
+   3896:   PT_RIO_SCHEDULE_WED_SAT,
+>> 3897:   FEDERAL_SCHEDULE,
+   3898: }) {
+   3899:   const targetYmd = safeStr(ymd);
+   3900:   const day = Array.isArray(drawsToday) ? [...drawsToday] : [];
+
+src\pages\Top3\top3.engine.js:3910
+   3907:     ymd: targetYmd,
+   3908:     PT_RIO_SCHEDULE_NORMAL,
+   3909:     PT_RIO_SCHEDULE_WED_SAT,
+>> 3910:     FEDERAL_SCHEDULE,
+   3911:   });
+   3912: 
+   3913:   const normalizedSchedule = (Array.isArray(schedule) ? schedule : [])
+
+src\pages\Top3\top3.engine.js:4102
+   4099:       drawsToday: usableTodayContext,
+   4100:       PT_RIO_SCHEDULE_NORMAL,
+   4101:       PT_RIO_SCHEDULE_WED_SAT,
+>> 4102:       FEDERAL_SCHEDULE,
+   4103:       topN: 3,
+   4104:       targetYmdOverride: targetYmd,
+   4105:       targetHourOverride: slotHour,
+
+src\pages\Top3\top3.engine.js:4158
+   4155:   lotteryKey,
+   4156:   PT_RIO_SCHEDULE_NORMAL,
+   4157:   PT_RIO_SCHEDULE_WED_SAT,
+>> 4158:   FEDERAL_SCHEDULE,
+   4159: }) {
+   4160:   const range = Array.isArray(drawsRange) ? drawsRange : [];
+   4161:   const dates = Array.from(
+
+src\pages\Top3\top3.engine.js:4181
+   4178:       lotteryKey,
+   4179:       PT_RIO_SCHEDULE_NORMAL,
+   4180:       PT_RIO_SCHEDULE_WED_SAT,
+>> 4181:       FEDERAL_SCHEDULE,
+   4182:     });
+   4183: 
+   4184:     allTimeline.push(...(Array.isArray(dayTimeline) ? dayTimeline : []));
+
+src\pages\Top3\top3.hooks.js:21
+   0018:   LOTTERY_OPTIONS,
+   0019:   PT_RIO_SCHEDULE_NORMAL,
+   0020:   PT_RIO_SCHEDULE_WED_SAT,
+>> 0021:   FEDERAL_SCHEDULE,
+   0022: } from "./top3.constants";
+   0023: 
+   0024: import {
+
+src\pages\Top3\top3.hooks.js:148
+   0145:     ymd: y,
+   0146:     PT_RIO_SCHEDULE_NORMAL,
+   0147:     PT_RIO_SCHEDULE_WED_SAT,
+>> 0148:     FEDERAL_SCHEDULE,
+   0149:   });
+   0150: 
+   0151:   const normalizedSchedule = Array.isArray(schedule)
+
+src\pages\Top3\top3.hooks.js:374
+   0371:       ymd: y,
+   0372:       PT_RIO_SCHEDULE_NORMAL,
+   0373:       PT_RIO_SCHEDULE_WED_SAT,
+>> 0374:       FEDERAL_SCHEDULE,
+   0375:     });
+   0376:   }, [lotteryKeySafe, ymdSafe, loadedYmd, analysisYmd]);
+   0377: 
+
+src\pages\Top3\top3.hooks.js:510
+   0507:         ymd: effectiveYmd,
+   0508:         PT_RIO_SCHEDULE_NORMAL,
+   0509:         PT_RIO_SCHEDULE_WED_SAT,
+>> 0510:         FEDERAL_SCHEDULE,
+   0511:       });
+   0512: 
+   0513:       const shouldSkipPtRio18 =
+
+src\pages\Top3\top3.hooks.js:581
+   0578:             hourBucket: baseH,
+   0579:             PT_RIO_SCHEDULE_NORMAL,
+   0580:             PT_RIO_SCHEDULE_WED_SAT,
+>> 0581:             FEDERAL_SCHEDULE,
+   0582:           });
+   0583: 
+   0584:           resolvedTargetY = safeStr(nextSlot?.ymd || "");
+
+src\pages\Top3\top3.hooks.js:610
+   0607:           schedule: todaySchedule,
+   0608:           PT_RIO_SCHEDULE_NORMAL,
+   0609:           PT_RIO_SCHEDULE_WED_SAT,
+>> 0610:           FEDERAL_SCHEDULE,
+   0611:         });
+   0612: 
+   0613:         const previousResolved = previousForFirstSlot?.draw
+
+src\pages\Top3\top3.hooks.js:671
+   0668:         ymd: baseY,
+   0669:         PT_RIO_SCHEDULE_NORMAL,
+   0670:         PT_RIO_SCHEDULE_WED_SAT,
+>> 0671:         FEDERAL_SCHEDULE,
+   0672:       });
+   0673: 
+   0674:       resolvedPrev = await getPreviousDrawRobust({
+
+src\pages\Top3\top3.hooks.js:683
+   0680:         schedule: baseDaySchedule,
+   0681:         PT_RIO_SCHEDULE_NORMAL,
+   0682:         PT_RIO_SCHEDULE_WED_SAT,
+>> 0683:         FEDERAL_SCHEDULE,
+   0684:       });
+   0685: 
+   0686:       if (!resolvedPrev?.draw) {
+
+src\pages\Top3\top3.storage.js:13
+   0010: import {
+   0011:   PT_RIO_SCHEDULE_NORMAL,
+   0012:   PT_RIO_SCHEDULE_WED_SAT,
+>> 0013:   FEDERAL_SCHEDULE,
+   0014: } from "./top3.constants";
+   0015: 
+   0016: // ===============================
+
+src\pages\Top3\top3.storage.js:322
+   0319:     ymd,
+   0320:     PT_RIO_SCHEDULE_NORMAL,
+   0321:     PT_RIO_SCHEDULE_WED_SAT,
+>> 0322:     FEDERAL_SCHEDULE,
+   0323:   });
+   0324: 
+   0325:   if (!Array.isArray(schedule) || !schedule.length) return;
+
+src\pages\Top3\modules\top3.analytics.js:6
+   0003: import {
+   0004:   PT_RIO_SCHEDULE_NORMAL,
+   0005:   PT_RIO_SCHEDULE_WED_SAT,
+>> 0006:   FEDERAL_SCHEDULE,
+   0007: } from "../top3.constants";
+   0008: 
+   0009: import {
+
+src\pages\Top3\modules\top3.analytics.js:200
+   0197:       drawsToday: Array.isArray(todayDraws) ? todayDraws : [],
+   0198:       PT_RIO_SCHEDULE_NORMAL,
+   0199:       PT_RIO_SCHEDULE_WED_SAT,
+>> 0200:       FEDERAL_SCHEDULE,
+   0201:       topN: 3,
+   0202:       targetYmdOverride: forcedTargetY,
+   0203:       targetHourOverride: forcedTargetH,
+
+src\pages\Top3\modules\top3.timeline.js:6
+   0003: import {
+   0004:   PT_RIO_SCHEDULE_NORMAL,
+   0005:   PT_RIO_SCHEDULE_WED_SAT,
+>> 0006:   FEDERAL_SCHEDULE,
+   0007: } from "../top3.constants";
+   0008: 
+   0009: import {
+
+src\pages\Top3\modules\top3.timeline.js:146
+   0143:     lotteryKey: lotteryKeySafe,
+   0144:     PT_RIO_SCHEDULE_NORMAL,
+   0145:     PT_RIO_SCHEDULE_WED_SAT,
+>> 0146:     FEDERAL_SCHEDULE,
+   0147:   });
+   0148: 
+   0149:   const timelineAudit = auditTop3Timeline({
+
+src\pages\Top3\modules\top3.timeline.js:209
+   0206:               ymd: slotYmd,
+   0207:               PT_RIO_SCHEDULE_NORMAL,
+   0208:               PT_RIO_SCHEDULE_WED_SAT,
+>> 0209:               FEDERAL_SCHEDULE,
+   0210:             }),
+   0211:             grupo2: g,
+   0212:             count: 20,
+
+src\pages\Top3\__tests__\top3.backtest.layers.test.js:15
+   0012: import {
+   0013:   PT_RIO_SCHEDULE_NORMAL,
+   0014:   PT_RIO_SCHEDULE_WED_SAT,
+>> 0015:   FEDERAL_SCHEDULE,
+   0016: } from "../top3.constants";
+   0017: 
+   0018: import { toHourBucket, hourToInt, addDaysYMD } from "../top3.formatters";
+
+src\pages\Top3\__tests__\top3.backtest.layers.test.js:196
+   0193:       hourBucket: lastH,
+   0194:       PT_RIO_SCHEDULE_NORMAL,
+   0195:       PT_RIO_SCHEDULE_WED_SAT,
+>> 0196:       FEDERAL_SCHEDULE,
+   0197:     });
+   0198: 
+   0199:     if (!nextSlot?.ymd || !nextSlot?.hour) continue;
+
+src\pages\Top3\__tests__\top3.backtest.layers.test.js:207
+   0204:       drawsIndex,
+   0205:       PT_RIO_SCHEDULE_NORMAL,
+   0206:       PT_RIO_SCHEDULE_WED_SAT,
+>> 0207:       FEDERAL_SCHEDULE,
+   0208:     });
+   0209: 
+   0210:     const nextDraw = found?.draw || null;
+
+src\pages\Top3\__tests__\top3.backtest.layers.test.js:226
+   0223:       drawLast,
+   0224:       PT_RIO_SCHEDULE_NORMAL,
+   0225:       PT_RIO_SCHEDULE_WED_SAT,
+>> 0226:       FEDERAL_SCHEDULE,
+   0227:       topN: 3,
+   0228:     });
+   0229: 
+
+src\pages\Top3\__tests__\top3.backtest.test.js:15
+   0012: import {
+   0013:   PT_RIO_SCHEDULE_NORMAL,
+   0014:   PT_RIO_SCHEDULE_WED_SAT,
+>> 0015:   FEDERAL_SCHEDULE,
+   0016: } from "../top3.constants";
+   0017: 
+   0018: import { toHourBucket, hourToInt, addDaysYMD } from "../top3.formatters";
+
+src\pages\Top3\__tests__\top3.backtest.test.js:207
+   0204:       hourBucket: lastH,
+   0205:       PT_RIO_SCHEDULE_NORMAL,
+   0206:       PT_RIO_SCHEDULE_WED_SAT,
+>> 0207:       FEDERAL_SCHEDULE,
+   0208:     });
+   0209: 
+   0210:     if (!nextSlot?.ymd || !nextSlot?.hour) continue;
+
+src\pages\Top3\__tests__\top3.backtest.test.js:218
+   0215:       drawsIndex,
+   0216:       PT_RIO_SCHEDULE_NORMAL,
+   0217:       PT_RIO_SCHEDULE_WED_SAT,
+>> 0218:       FEDERAL_SCHEDULE,
+   0219:     });
+   0220: 
+   0221:     const nextDraw = found?.draw || null;
+
+src\pages\Top3\__tests__\top3.backtest.test.js:234
+   0231:       drawLast,
+   0232:       PT_RIO_SCHEDULE_NORMAL,
+   0233:       PT_RIO_SCHEDULE_WED_SAT,
+>> 0234:       FEDERAL_SCHEDULE,
+   0235:       topN: 3,
+   0236:     });
+   0237: 
+
+backend\engine\top3PredictionService.js:42
+   0039:   "21:00",
+   0040: ];
+   0041: 
+>> 0042: const FEDERAL_SCHEDULE = [
+   0043:   "20:00",
+   0044: ];
+   0045: 
+
+backend\engine\top3PredictionService.js:354
+   0351:       hourBucket: normalizeHour(hour),
+   0352:       PT_RIO_SCHEDULE_NORMAL,
+   0353:       PT_RIO_SCHEDULE_WED_SAT,
+>> 0354:       FEDERAL_SCHEDULE,
+   0355:     });
+   0356: 
+   0357:   const rawHour = String(
+
+backend\engine\top3PredictionService.js:383
+   0380:   date
+   0381: ) {
+   0382:   if (normalizeLotteryKey(lotteryKey) === "FEDERAL") {
+>> 0383:     return [...FEDERAL_SCHEDULE];
+   0384:   }
+   0385: 
+   0386:   const parsed = new Date(`${date}T12:00:00Z`);
+
+backend\engine\top3PredictionService.js:837
+   0834:     drawLast,
+   0835:     PT_RIO_SCHEDULE_NORMAL,
+   0836:     PT_RIO_SCHEDULE_WED_SAT,
+>> 0837:     FEDERAL_SCHEDULE,
+   0838:     topN: 3,
+   0839:     targetYmdOverride: date,
+   0840:     targetHourOverride: closeHour,
+
+backend\scripts\backtestTop3Official.js:34
+   0031:   "21:00",
+   0032: ];
+   0033: 
+>> 0034: const FEDERAL_SCHEDULE = [
+   0035:   "19:00",
+   0036:   "20:00",
+   0037: ];
+
+backend\scripts\backtestTop3Official.js:710
+   0707:           drawLast,
+   0708:           PT_RIO_SCHEDULE_NORMAL,
+   0709:           PT_RIO_SCHEDULE_WED_SAT,
+>> 0710:           FEDERAL_SCHEDULE,
+   0711:           topN: 3,
+   0712:           targetYmdOverride:
+   0713:             targetYmd,
+
+==========================================================================================
+TOKEN: RJ_EXPECTED_HOURS
+
+NENHUMA OCORRÊNCIA
+
+==========================================================================================
+TOKEN: RJ_EXPECTED_HOURS_BASE
+
+NENHUMA OCORRÊNCIA
+
+==========================================================================================
+TOKEN: RJ_EXPECTED_HOURS_BASE_DESC
+
+
+src\pages\Results\Results.jsx:231
+   0228: ]);
+   0229: 
+   0230: const RJ_09H_START_YMD = "2024-01-05";
+>> 0231: const RJ_EXPECTED_HOURS_BASE_DESC = ["21:00", "18:00", "16:00", "14:00", "11:00"];
+   0232: 
+   0233: function isFederalInput(scope) {
+   0234:   const up = safeStr(scope).toUpperCase();
+
+src\pages\Results\Results.jsx:580
+   0577:   const out =
+   0578:     dow === 0
+   0579:       ? ["16:00", "14:00", "11:00"]
+>> 0580:       : [...RJ_EXPECTED_HOURS_BASE_DESC];
+   0581: 
+   0582:   if (isYMD(ymd) && ymd >= RJ_09H_START_YMD) {
+   0583:     out.push("09:00");
+
+==========================================================================================
+TOKEN: FEDERAL_EXPECTED_HOURS
+
+NENHUMA OCORRÊNCIA
+
+==========================================================================================
+TOKEN: LOOK_EXPECTED_HOURS
+
+NENHUMA OCORRÊNCIA
+
+==========================================================================================
+TOKEN: NACIONAL_EXPECTED_HOURS
+
+NENHUMA OCORRÊNCIA

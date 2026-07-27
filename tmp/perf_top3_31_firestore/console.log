@@ -1,0 +1,708 @@
+[AUDIT] PT_RIO
+[AUDIT] FEDERAL
+[AUDIT] LOOK
+[AUDIT] NACIONAL
+{
+  "generatedAt": "2026-07-24T12:28:54.673Z",
+  "project": "palpitacojb-app",
+  "lotteries": [
+    {
+      "lotteryKey": "PT_RIO",
+      "history": {
+        "lotteryKey": "PT_RIO",
+        "rootExists": false,
+        "metadataExists": true,
+        "metadata": {
+          "firstDrawId": "PT_RIO__2022-06-07__11-00__cbac7c11-e733-400b-ba4d-2dfe0cba4272",
+          "months": [
+            "2022-06",
+            "2022-07",
+            "2022-08",
+            "2022-09",
+            "2022-10",
+            "2022-11",
+            "2022-12",
+            "2023-01",
+            "2023-02",
+            "2023-03",
+            "2023-04",
+            "2023-05",
+            "2023-06",
+            "2023-07",
+            "2023-08",
+            "2023-09",
+            "2023-10",
+            "2023-11",
+            "2023-12",
+            "2024-01",
+            "2024-02",
+            "2024-03",
+            "2024-04",
+            "2024-05",
+            "2024-06",
+            "2024-07",
+            "2024-08",
+            "2024-09",
+            "2024-10",
+            "2024-11",
+            "2024-12",
+            "2025-01",
+            "2025-02",
+            "2025-03",
+            "2025-04",
+            "2025-05",
+            "2025-06",
+            "2025-07",
+            "2025-08",
+            "2025-09",
+            "2025-10",
+            "2025-11",
+            "2025-12",
+            "2026-01",
+            "2026-02",
+            "2026-03",
+            "2026-04",
+            "2026-05",
+            "2026-06",
+            "2026-07"
+          ],
+          "schemaVersion": 1,
+          "lotteryKey": "PT_RIO",
+          "monthCount": 50,
+          "bootstrapStatus": "complete",
+          "bootstrapCompletedAt": "2026-07-15T21:28:23.351Z",
+          "firstYmd": "2022-06-07",
+          "staleAt": null,
+          "source": "bootstrap_plus_incremental",
+          "staleReason": null,
+          "lastYmd": "2026-07-23",
+          "lastDrawId": "PT_RIO__2026-07-23__21-00__d5123f7e-629d-43e9-a8fb-1385ff1cba45",
+          "lastProcessedDrawId": "PT_RIO__2026-07-23__21-00__d5123f7e-629d-43e9-a8fb-1385ff1cba45",
+          "totalDraws": 7533,
+          "incrementalUpdatedAt": "2026-07-24T04:48:45.233Z",
+          "updatedAt": {
+            "_seconds": 1784868525,
+            "_nanoseconds": 234000000
+          }
+        },
+        "manifestExists": true,
+        "manifest": {
+          "firstDrawId": "PT_RIO__2022-06-07__11-00__cbac7c11-e733-400b-ba4d-2dfe0cba4272",
+          "migratedAt": "2026-07-24T04:48:23.880Z",
+          "schemaVersion": 1,
+          "yearCount": 5,
+          "lastYmd": "2026-07-23",
+          "lotteryKey": "PT_RIO",
+          "years": [
+            "2022",
+            "2023",
+            "2024",
+            "2025",
+            "2026"
+          ],
+          "lastDrawId": "PT_RIO__2026-07-23__21-00__d5123f7e-629d-43e9-a8fb-1385ff1cba45",
+          "firstYmd": "2022-06-07",
+          "totalDraws": 7533,
+          "status": "complete",
+          "staleAt": null,
+          "incrementalUpdatedAt": "2026-07-24T04:48:45.146Z",
+          "source": "bootstrap_plus_incremental",
+          "staleReason": null,
+          "updatedAt": {
+            "_seconds": 1784868525,
+            "_nanoseconds": 146000000
+          }
+        },
+        "compactDocumentCount": 5,
+        "compactYears": [
+          {
+            "id": "2022",
+            "drawCount": 903,
+            "rows": 903,
+            "firstYmd": "2022-06-07",
+            "lastYmd": "2022-12-31",
+            "updatedAt": "2026-07-24T04:48:17.866Z"
+          },
+          {
+            "id": "2023",
+            "drawCount": 1600,
+            "rows": 1600,
+            "firstYmd": "2023-01-02",
+            "lastYmd": "2023-12-31",
+            "updatedAt": "2026-07-24T04:48:18.687Z"
+          },
+          {
+            "id": "2024",
+            "drawCount": 1956,
+            "rows": 1956,
+            "firstYmd": "2024-01-02",
+            "lastYmd": "2024-12-31",
+            "updatedAt": "2026-07-24T04:48:20.238Z"
+          },
+          {
+            "id": "2025",
+            "drawCount": 1972,
+            "rows": 1972,
+            "firstYmd": "2025-01-02",
+            "lastYmd": "2025-12-31",
+            "updatedAt": "2026-07-24T04:48:21.743Z"
+          },
+          {
+            "id": "2026",
+            "drawCount": 1102,
+            "rows": 1102,
+            "firstYmd": "2026-01-02",
+            "lastYmd": "2026-07-23",
+            "updatedAt": "2026-07-24T04:48:44.250Z"
+          }
+        ],
+        "monthlyDocumentCount": 50,
+        "monthlyTotalDraws": 7533,
+        "months": [
+          {
+            "id": "2022-06",
+            "drawCount": 107,
+            "draws": 107,
+            "firstYmd": "2022-06-07",
+            "lastYmd": "2022-06-30"
+          },
+          {
+            "id": "2022-07",
+            "drawCount": 136,
+            "draws": 136,
+            "firstYmd": "2022-07-01",
+            "lastYmd": "2022-07-31"
+          },
+          {
+            "id": "2022-08",
+            "drawCount": 138,
+            "draws": 138,
+            "firstYmd": "2022-08-01",
+            "lastYmd": "2022-08-31"
+          },
+          {
+            "id": "2022-09",
+            "drawCount": 132,
+            "draws": 132,
+            "firstYmd": "2022-09-01",
+            "lastYmd": "2022-09-30"
+          },
+          {
+            "id": "2022-10",
+            "drawCount": 131,
+            "draws": 131,
+            "firstYmd": "2022-10-01",
+            "lastYmd": "2022-10-31"
+          },
+          {
+            "id": "2022-11",
+            "drawCount": 126,
+            "draws": 126,
+            "firstYmd": "2022-11-01",
+            "lastYmd": "2022-11-30"
+          },
+          {
+            "id": "2022-12",
+            "drawCount": 133,
+            "draws": 133,
+            "firstYmd": "2022-12-01",
+            "lastYmd": "2022-12-31"
+          },
+          {
+            "id": "2023-01",
+            "drawCount": 134,
+            "draws": 134,
+            "firstYmd": "2023-01-02",
+            "lastYmd": "2023-01-31"
+          },
+          {
+            "id": "2023-02",
+            "drawCount": 125,
+            "draws": 125,
+            "firstYmd": "2023-02-01",
+            "lastYmd": "2023-02-28"
+          },
+          {
+            "id": "2023-03",
+            "drawCount": 138,
+            "draws": 138,
+            "firstYmd": "2023-03-01",
+            "lastYmd": "2023-03-31"
+          },
+          {
+            "id": "2023-04",
+            "drawCount": 126,
+            "draws": 126,
+            "firstYmd": "2023-04-01",
+            "lastYmd": "2023-04-30"
+          },
+          {
+            "id": "2023-05",
+            "drawCount": 138,
+            "draws": 138,
+            "firstYmd": "2023-05-01",
+            "lastYmd": "2023-05-31"
+          },
+          {
+            "id": "2023-06",
+            "drawCount": 134,
+            "draws": 134,
+            "firstYmd": "2023-06-01",
+            "lastYmd": "2023-06-30"
+          },
+          {
+            "id": "2023-07",
+            "drawCount": 136,
+            "draws": 136,
+            "firstYmd": "2023-07-01",
+            "lastYmd": "2023-07-31"
+          },
+          {
+            "id": "2023-08",
+            "drawCount": 138,
+            "draws": 138,
+            "firstYmd": "2023-08-01",
+            "lastYmd": "2023-08-31"
+          },
+          {
+            "id": "2023-09",
+            "drawCount": 133,
+            "draws": 133,
+            "firstYmd": "2023-09-01",
+            "lastYmd": "2023-09-30"
+          },
+          {
+            "id": "2023-10",
+            "drawCount": 137,
+            "draws": 137,
+            "firstYmd": "2023-10-01",
+            "lastYmd": "2023-10-31"
+          },
+          {
+            "id": "2023-11",
+            "drawCount": 128,
+            "draws": 128,
+            "firstYmd": "2023-11-01",
+            "lastYmd": "2023-11-30"
+          },
+          {
+            "id": "2023-12",
+            "drawCount": 133,
+            "draws": 133,
+            "firstYmd": "2023-12-01",
+            "lastYmd": "2023-12-31"
+          },
+          {
+            "id": "2024-01",
+            "drawCount": 160,
+            "draws": 160,
+            "firstYmd": "2024-01-02",
+            "lastYmd": "2024-01-31"
+          },
+          {
+            "id": "2024-02",
+            "drawCount": 158,
+            "draws": 158,
+            "firstYmd": "2024-02-01",
+            "lastYmd": "2024-02-29"
+          },
+          {
+            "id": "2024-03",
+            "drawCount": 156,
+            "draws": 156,
+            "firstYmd": "2024-03-01",
+            "lastYmd": "2024-03-31"
+          },
+          {
+            "id": "2024-04",
+            "drawCount": 163,
+            "draws": 163,
+            "firstYmd": "2024-04-01",
+            "lastYmd": "2024-04-30"
+          },
+          {
+            "id": "2024-05",
+            "drawCount": 170,
+            "draws": 170,
+            "firstYmd": "2024-05-01",
+            "lastYmd": "2024-05-31"
+          },
+          {
+            "id": "2024-06",
+            "drawCount": 161,
+            "draws": 161,
+            "firstYmd": "2024-06-01",
+            "lastYmd": "2024-06-30"
+          },
+          {
+            "id": "2024-07",
+            "drawCount": 169,
+            "draws": 169,
+            "firstYmd": "2024-07-01",
+            "lastYmd": "2024-07-31"
+          },
+          {
+            "id": "2024-08",
+            "drawCount": 169,
+            "draws": 169,
+            "firstYmd": "2024-08-01",
+            "lastYmd": "2024-08-31"
+          },
+          {
+            "id": "2024-09",
+            "drawCount": 162,
+            "draws": 162,
+            "firstYmd": "2024-09-01",
+            "lastYmd": "2024-09-30"
+          },
+          {
+            "id": "2024-10",
+            "drawCount": 165,
+            "draws": 165,
+            "firstYmd": "2024-10-01",
+            "lastYmd": "2024-10-31"
+          },
+          {
+            "id": "2024-11",
+            "drawCount": 163,
+            "draws": 163,
+            "firstYmd": "2024-11-01",
+            "lastYmd": "2024-11-30"
+          },
+          {
+            "id": "2024-12",
+            "drawCount": 160,
+            "draws": 160,
+            "firstYmd": "2024-12-01",
+            "lastYmd": "2024-12-31"
+          },
+          {
+            "id": "2025-01",
+            "drawCount": 164,
+            "draws": 164,
+            "firstYmd": "2025-01-02",
+            "lastYmd": "2025-01-31"
+          },
+          {
+            "id": "2025-02",
+            "drawCount": 152,
+            "draws": 152,
+            "firstYmd": "2025-02-01",
+            "lastYmd": "2025-02-28"
+          },
+          {
+            "id": "2025-03",
+            "drawCount": 168,
+            "draws": 168,
+            "firstYmd": "2025-03-01",
+            "lastYmd": "2025-03-31"
+          },
+          {
+            "id": "2025-04",
+            "drawCount": 164,
+            "draws": 164,
+            "firstYmd": "2025-04-01",
+            "lastYmd": "2025-04-30"
+          },
+          {
+            "id": "2025-05",
+            "drawCount": 169,
+            "draws": 169,
+            "firstYmd": "2025-05-01",
+            "lastYmd": "2025-05-31"
+          },
+          {
+            "id": "2025-06",
+            "drawCount": 162,
+            "draws": 162,
+            "firstYmd": "2025-06-01",
+            "lastYmd": "2025-06-30"
+          },
+          {
+            "id": "2025-07",
+            "drawCount": 169,
+            "draws": 169,
+            "firstYmd": "2025-07-01",
+            "lastYmd": "2025-07-31"
+          },
+          {
+            "id": "2025-08",
+            "drawCount": 167,
+            "draws": 167,
+            "firstYmd": "2025-08-01",
+            "lastYmd": "2025-08-31"
+          },
+          {
+            "id": "2025-09",
+            "drawCount": 164,
+            "draws": 164,
+            "firstYmd": "2025-09-01",
+            "lastYmd": "2025-09-30"
+          },
+          {
+            "id": "2025-10",
+            "drawCount": 169,
+            "draws": 169,
+            "firstYmd": "2025-10-01",
+            "lastYmd": "2025-10-31"
+          },
+          {
+            "id": "2025-11",
+            "drawCount": 161,
+            "draws": 161,
+            "firstYmd": "2025-11-01",
+            "lastYmd": "2025-11-30"
+          },
+          {
+            "id": "2025-12",
+            "drawCount": 163,
+            "draws": 163,
+            "firstYmd": "2025-12-01",
+            "lastYmd": "2025-12-31"
+          },
+          {
+            "id": "2026-01",
+            "drawCount": 163,
+            "draws": 163,
+            "firstYmd": "2026-01-02",
+            "lastYmd": "2026-01-31"
+          },
+          {
+            "id": "2026-02",
+            "drawCount": 153,
+            "draws": 153,
+            "firstYmd": "2026-02-01",
+            "lastYmd": "2026-02-28"
+          },
+          {
+            "id": "2026-03",
+            "drawCount": 169,
+            "draws": 169,
+            "firstYmd": "2026-03-01",
+            "lastYmd": "2026-03-31"
+          },
+          {
+            "id": "2026-04",
+            "drawCount": 164,
+            "draws": 164,
+            "firstYmd": "2026-04-01",
+            "lastYmd": "2026-04-30"
+          },
+          {
+            "id": "2026-05",
+            "drawCount": 167,
+            "draws": 167,
+            "firstYmd": "2026-05-01",
+            "lastYmd": "2026-05-31"
+          },
+          {
+            "id": "2026-06",
+            "drawCount": 164,
+            "draws": 164,
+            "firstYmd": "2026-06-01",
+            "lastYmd": "2026-06-30"
+          },
+          {
+            "id": "2026-07",
+            "drawCount": 122,
+            "draws": 122,
+            "firstYmd": "2026-07-01",
+            "lastYmd": "2026-07-23"
+          }
+        ]
+      },
+      "sourceCandidates": [
+        {
+          "collection": "draws",
+          "field": "lottery_key",
+          "ok": true,
+          "count": 5000,
+          "firstIds": [
+            "PT_RIO_2026-03-16_21:00",
+            "PT_RIO__2022-06-07__11-00__cbac7c11-e733-400b-ba4d-2dfe0cba4272",
+            "PT_RIO__2022-06-07__14-00__98352455-8fd3-447d-ab3d-701dc3f7865f",
+            "PT_RIO__2022-06-07__16-00__76c127b7-8157-46b6-a64a-ec7ed1574c9f",
+            "PT_RIO__2022-06-07__18-00__8290329b-aac0-4a6a-9649-5feb6182cf4f"
+          ]
+        },
+        {
+          "collection": "draws",
+          "field": "lotteryKey",
+          "ok": true,
+          "count": 0,
+          "firstIds": []
+        },
+        {
+          "collection": "results",
+          "field": "lottery_key",
+          "ok": true,
+          "count": 0,
+          "firstIds": []
+        },
+        {
+          "collection": "results",
+          "field": "lotteryKey",
+          "ok": true,
+          "count": 0,
+          "firstIds": []
+        }
+      ]
+    },
+    {
+      "lotteryKey": "FEDERAL",
+      "history": {
+        "lotteryKey": "FEDERAL",
+        "rootExists": false,
+        "metadataExists": false,
+        "metadata": null,
+        "manifestExists": false,
+        "manifest": null,
+        "compactDocumentCount": 0,
+        "compactYears": [],
+        "monthlyDocumentCount": 0,
+        "monthlyTotalDraws": 0,
+        "months": []
+      },
+      "sourceCandidates": [
+        {
+          "collection": "draws",
+          "field": "lottery_key",
+          "ok": true,
+          "count": 416,
+          "firstIds": [
+            "FEDERAL__2022-06-08__20-00__9519c673-c3b8-4cb9-bcfe-9ddece3b03f3",
+            "FEDERAL__2022-06-11__18-54__LT_FEDERAL_19HS",
+            "FEDERAL__2022-06-15__18-54__LT_FEDERAL_19HS",
+            "FEDERAL__2022-06-18__18-54__LT_FEDERAL_19HS",
+            "FEDERAL__2022-06-22__18-54__LT_FEDERAL_19HS"
+          ]
+        },
+        {
+          "collection": "draws",
+          "field": "lotteryKey",
+          "ok": true,
+          "count": 0,
+          "firstIds": []
+        },
+        {
+          "collection": "results",
+          "field": "lottery_key",
+          "ok": true,
+          "count": 0,
+          "firstIds": []
+        },
+        {
+          "collection": "results",
+          "field": "lotteryKey",
+          "ok": true,
+          "count": 0,
+          "firstIds": []
+        }
+      ]
+    },
+    {
+      "lotteryKey": "LOOK",
+      "history": {
+        "lotteryKey": "LOOK",
+        "rootExists": false,
+        "metadataExists": false,
+        "metadata": null,
+        "manifestExists": false,
+        "manifest": null,
+        "compactDocumentCount": 0,
+        "compactYears": [],
+        "monthlyDocumentCount": 0,
+        "monthlyTotalDraws": 0,
+        "months": []
+      },
+      "sourceCandidates": [
+        {
+          "collection": "draws",
+          "field": "lottery_key",
+          "ok": true,
+          "count": 5000,
+          "firstIds": [
+            "LOOK__2022-06-07__11-10__fe478ce4-0387-4985-b35a-4656ecc40382",
+            "LOOK__2022-06-07__14-10__961f5fb2-0540-41a6-9542-69e4fef7e68d",
+            "LOOK__2022-06-07__16-10__502d50e3-4092-4730-bb81-a80462044256",
+            "LOOK__2022-06-07__18-10__60c70d87-e86f-4501-8bc2-c0e71aa20e1a",
+            "LOOK__2022-06-08__11-10__fe478ce4-0387-4985-b35a-4656ecc40382"
+          ]
+        },
+        {
+          "collection": "draws",
+          "field": "lotteryKey",
+          "ok": true,
+          "count": 0,
+          "firstIds": []
+        },
+        {
+          "collection": "results",
+          "field": "lottery_key",
+          "ok": true,
+          "count": 0,
+          "firstIds": []
+        },
+        {
+          "collection": "results",
+          "field": "lotteryKey",
+          "ok": true,
+          "count": 0,
+          "firstIds": []
+        }
+      ]
+    },
+    {
+      "lotteryKey": "NACIONAL",
+      "history": {
+        "lotteryKey": "NACIONAL",
+        "rootExists": false,
+        "metadataExists": false,
+        "metadata": null,
+        "manifestExists": false,
+        "manifest": null,
+        "compactDocumentCount": 0,
+        "compactYears": [],
+        "monthlyDocumentCount": 0,
+        "monthlyTotalDraws": 0,
+        "months": []
+      },
+      "sourceCandidates": [
+        {
+          "collection": "draws",
+          "field": "lottery_key",
+          "ok": true,
+          "count": 5000,
+          "firstIds": [
+            "NACIONAL__2022-06-07__01-50__6c2b52ec-d613-4383-9c07-ff5ac7e04611",
+            "NACIONAL__2022-06-07__07-50__76a3feee-faa6-4b6c-aae5-656fd6af7b6b",
+            "NACIONAL__2022-06-07__09-50__4dda728b-bbd9-43eb-a17b-acf968b1eca0",
+            "NACIONAL__2022-06-07__11-50__8efc7c5a-8883-48a3-ab7f-cf3d0f7eebd4",
+            "NACIONAL__2022-06-07__14-50__3bafbe99-632b-4445-9b73-12e78ee45283"
+          ]
+        },
+        {
+          "collection": "draws",
+          "field": "lotteryKey",
+          "ok": true,
+          "count": 0,
+          "firstIds": []
+        },
+        {
+          "collection": "results",
+          "field": "lottery_key",
+          "ok": true,
+          "count": 0,
+          "firstIds": []
+        },
+        {
+          "collection": "results",
+          "field": "lotteryKey",
+          "ok": true,
+          "count": 0,
+          "firstIds": []
+        }
+      ]
+    }
+  ]
+}

@@ -1,0 +1,491 @@
+========================================================================================================================
+TERNO-GRUPO-02 — 04_top3_score_engine.txt
+Gerado em: 26/07/2026 19:02:31
+========================================================================================================================
+
+########################################################################################################################
+ARQUIVO COMPLETO: .\src\pages\Top3\modules\scoreEngine\scoreConfig.js
+########################################################################################################################
+00001: const scoreConfig = {
+00002:   version: "2.2.0",
+00003: 
+00004:   evidenceModules: {
+00005:     frequency: {
+00006:       enabled: true,
+00007:       weight: 1.0,
+00008:       description: "Frequência histórica."
+00009:     },
+00010: 
+00011:     context: {
+00012:       enabled: true,
+00013:       weight: 0.8,
+00014:       description: "Contexto do sorteio."
+00015:     },
+00016: 
+00017:     delay: {
+00018:       enabled: false,
+00019:       weight: 0.9,
+00020:       description: "Tempo desde a última ocorrência."
+00021:     },
+00022: 
+00023:     sequence: {
+00024:       enabled: false,
+00025:       weight: 0.8,
+00026:       description: "Sequências históricas."
+00027:     },
+00028: 
+00029:     history: {
+00030:       enabled: false,
+00031:       weight: 0.9,
+00032:       description: "Cenários históricos semelhantes."
+00033:     },
+00034: 
+00035:     weekday: {
+00036:       enabled: false,
+00037:       weight: 0.6,
+00038:       description: "Dia da semana."
+00039:     },
+00040: 
+00041:     hour: {
+00042:       enabled: false,
+00043:       weight: 0.7,
+00044:       description: "Horário do sorteio."
+00045:     },
+00046: 
+00047:     cycle: {
+00048:       enabled: false,
+00049:       weight: 0.85,
+00050:       description: "Ciclos estatísticos."
+00051:     },
+00052: 
+00053:     patterns: {
+00054:       enabled: false,
+00055:       weight: 0.75,
+00056:       description: "Padrões identificados."
+00057:     }
+00058:   },
+00059: 
+00060:   confidence: {
+00061:     excellent: 90,
+00062:     high: 75,
+00063:     medium: 60,
+00064:     low: 40
+00065:   },
+00066: 
+00067:   scoring: {
+00068:     maxScore: 100,
+00069:     normalize: true,
+00070:     minimumEvidence: 2
+00071:   },
+00072: 
+00073:   learning: {
+00074:     enabled: false,
+00075:     autoAdjust: false
+00076:   }
+00077: };
+00078: 
+00079: export default scoreConfig;
+
+########################################################################################################################
+ARQUIVO COMPLETO: .\src\pages\Top3\modules\scoreEngine\frequencyEvidence.js
+########################################################################################################################
+00001: /**
+00002:  * Frequency Evidence V2
+00003:  *
+00004:  * Responsabilidade:
+00005:  * Produzir evidências relacionadas à frequência.
+00006:  * Não calcula score.
+00007:  */
+00008: 
+00009: function normalize(value) {
+00010:   const n = Number(value);
+00011: 
+00012:   if (!Number.isFinite(n) || n < 0) {
+00013:     return 0;
+00014:   }
+00015: 
+00016:   return n;
+00017: }
+00018: 
+00019: function normalizePercent(value) {
+00020:   const n = Number(value);
+00021: 
+00022:   if (!Number.isFinite(n) || n < 0) {
+00023:     return 0;
+00024:   }
+00025: 
+00026:   return Math.min(100, n);
+00027: }
+00028: 
+00029: function classifyFrequency(percent) {
+00030:   if (percent >= 70) return "very_high";
+00031:   if (percent >= 50) return "high";
+00032:   if (percent >= 30) return "medium";
+00033:   if (percent >= 15) return "low";
+00034:   return "very_low";
+00035: }
+00036: 
+00037: function buildReasons(frequency, percent, level) {
+00038:   const reasons = [];
+00039: 
+00040:   reasons.push(`Frequência histórica: ${frequency}`);
+00041: 
+00042:   if (percent > 0) {
+00043:     reasons.push(`Participação: ${percent.toFixed(1)}%`);
+00044:   }
+00045: 
+00046:   switch (level) {
+00047:     case "very_high":
+00048:       reasons.push("Frequência muito elevada.");
+00049:       break;
+00050: 
+00051:     case "high":
+00052:       reasons.push("Frequência elevada.");
+00053:       break;
+00054: 
+00055:     case "medium":
+00056:       reasons.push("Frequência intermediária.");
+00057:       break;
+00058: 
+00059:     case "low":
+00060:       reasons.push("Frequência baixa.");
+00061:       break;
+00062: 
+00063:     default:
+00064:       reasons.push("Pouca evidência de frequência.");
+00065:   }
+00066: 
+00067:   return reasons;
+00068: }
+00069: 
+00070: function buildFrequencyEvidence(item = {}, context = {}) {
+00071:   const frequency = normalize(
+00072:     item.frequency ??
+00073:     item.total ??
+00074:     item.count ??
+00075:     item.appearances
+00076:   );
+00077: 
+00078:   const totalUniverse = normalize(
+00079:     context.totalDraws ??
+00080:     context.windowSize ??
+00081:     context.sampleSize
+00082:   );
+00083: 
+00084:   const percent =
+00085:     totalUniverse > 0
+00086:       ? normalizePercent((frequency / totalUniverse) * 100)
+00087:       : normalizePercent(
+00088:           item.frequencyPercent ??
+00089:           item.frequencyRate
+00090:         );
+00091: 
+00092:   const level = classifyFrequency(percent);
+00093: 
+00094:   return {
+00095:     module: "frequency",
+00096: 
+00097:     value: percent,
+00098: 
+00099:     evidence: {
+00100:       frequency,
+00101:       percent,
+00102:       level,
+00103:       totalUniverse,
+00104: 
+00105:       window: context.window || null,
+00106:       lotteryKey: context.lotteryKey || null,
+00107:       position: context.position || null,
+00108:       weekday: context.weekday || null,
+00109:       hour: context.hour || null,
+00110:     },
+00111: 
+00112:     reasons: buildReasons(frequency, percent, level),
+00113:   };
+00114: }
+00115: 
+00116: export {
+00117: buildFrequencyEvidence,
+00118: };
+
+########################################################################################################################
+ARQUIVO COMPLETO: .\src\pages\Top3\modules\scoreEngine\contextEvidence.js
+########################################################################################################################
+00001: /**
+00002:  * Context Evidence V2
+00003:  *
+00004:  * Responsabilidade:
+00005:  * Produzir evidências do contexto do sorteio.
+00006:  * Não calcula score.
+00007:  */
+00008: 
+00009: function normalize(value) {
+00010:     const n = Number(value);
+00011:     return Number.isFinite(n) ? n : null;
+00012: }
+00013: 
+00014: function buildReasons(ctx) {
+00015: 
+00016:     const reasons = [];
+00017: 
+00018:     reasons.push("Contexto histórico identificado.");
+00019: 
+00020:     if (ctx.lotteryKey)
+00021:         reasons.push(`Loteria: ${ctx.lotteryKey}`);
+00022: 
+00023:     if (ctx.weekday)
+00024:         reasons.push(`Dia da semana: ${ctx.weekday}`);
+00025: 
+00026:     if (ctx.closeHour)
+00027:         reasons.push(`Horário: ${ctx.closeHour}`);
+00028: 
+00029:     if (ctx.previousGroup != null)
+00030:         reasons.push(`Grupo anterior: ${ctx.previousGroup}`);
+00031: 
+00032:     if (ctx.previousAnimal)
+00033:         reasons.push(`Animal anterior: ${ctx.previousAnimal}`);
+00034: 
+00035:     return reasons;
+00036: }
+00037: 
+00038: function buildContextEvidence(item = {}, context = {}) {
+00039: 
+00040:     const evidence = {
+00041: 
+00042:         lotteryKey: context.lotteryKey || null,
+00043: 
+00044:         ymd: context.ymd || null,
+00045: 
+00046:         weekday: context.weekday || null,
+00047: 
+00048:         closeHour: context.hour || null,
+00049: 
+00050:         prize: normalize(context.prize),
+00051: 
+00052:         previousAnimal: context.previousAnimal || null,
+00053: 
+00054:         previousGroup: normalize(context.previousGroup),
+00055: 
+00056:         previousHour: context.previousHour || null,
+00057: 
+00058:         lookback: normalize(context.lookback),
+00059: 
+00060:         window: normalize(context.window),
+00061: 
+00062:     };
+00063: 
+00064:     return {
+00065: 
+00066:         module: "context",
+00067: 
+00068:         value: 1,
+00069: 
+00070:         evidence,
+00071: 
+00072:         reasons: buildReasons(evidence),
+00073: 
+00074:     };
+00075: 
+00076: }
+00077: 
+00078: export {
+00079: buildContextEvidence,
+00080: };
+
+########################################################################################################################
+ARQUIVO COMPLETO: .\src\pages\Top3\modules\scoreEngine\evidenceEngine.js
+########################################################################################################################
+00001: import { buildFrequencyEvidence } from "./frequencyEvidence";
+00002: import { buildContextEvidence } from "./contextEvidence";
+00003: 
+00004: /**
+00005:  * Evidence Engine
+00006:  *
+00007:  * Centraliza todos os módulos de evidência.
+00008:  * Cada módulo produz fatos; nenhum decide o resultado.
+00009:  */
+00010: 
+00011: const MODULES = {
+00012:   frequency: buildFrequencyEvidence,
+00013:   context: buildContextEvidence,
+00014: };
+00015: 
+00016: function collectEvidence({
+00017:   item = {},
+00018:   context = {},
+00019:   config = {},
+00020: } = {}) {
+00021: 
+00022:   const evidence = [];
+00023:   const enabled = config.evidenceModules || {};
+00024: 
+00025:   for (const [name, builder] of Object.entries(MODULES)) {
+00026: 
+00027:     if (!enabled[name]?.enabled) {
+00028:       continue;
+00029:     }
+00030: 
+00031:     try {
+00032: 
+00033:       const result = builder(item, context);
+00034: 
+00035:       if (result) {
+00036:         evidence.push(result);
+00037:       }
+00038: 
+00039:     } catch (err) {
+00040: 
+00041:       evidence.push({
+00042:         module: name,
+00043:         error: true,
+00044:         message: err.message,
+00045:       });
+00046: 
+00047:     }
+00048: 
+00049:   }
+00050: 
+00051:   return {
+00052: 
+00053:     count: evidence.filter(e => !e.error).length,
+00054: 
+00055:     modules: evidence
+00056:       .filter(e => !e.error)
+00057:       .map(e => e.module),
+00058: 
+00059:     evidence,
+00060: 
+00061:   };
+00062: 
+00063: }
+00064: 
+00065: export {
+00066: collectEvidence,
+00067: };
+
+########################################################################################################################
+ARQUIVO COMPLETO: .\src\pages\Top3\modules\scoreEngine\scoreEngineV2.js
+########################################################################################################################
+00001: import scoreConfig from "./scoreConfig";
+00002: import { collectEvidence } from "./evidenceEngine";
+00003: 
+00004: /**
+00005:  * Score Engine V2 inicial
+00006:  *
+00007:  * Consome evidências.
+00008:  * Não aplica regra cega isolada.
+00009:  */
+00010: 
+00011: function normalizeEvidenceValue(value) {
+00012:   const n = Number(value);
+00013:   if (!Number.isFinite(n) || n <= 0) return 0;
+00014:   return n;
+00015: }
+00016: 
+00017: function calculateEvidenceStrength(evidenceList = []) {
+00018:   const list = Array.isArray(evidenceList) ? evidenceList : [];
+00019: 
+00020:   if (!list.length) {
+00021:     return {
+00022:       score: 0,
+00023:       confidence: 0,
+00024:       reasons: ["Sem evidências suficientes."],
+00025:       signals: {},
+00026:     };
+00027:   }
+00028: 
+00029:   const values = list.map((e) => normalizeEvidenceValue(e.value));
+00030:   const total = values.reduce((acc, v) => acc + v, 0);
+00031:   const max = Math.max(...values, 1);
+00032: 
+00033:   const score = Math.min(100, Math.round((total / max) * 50));
+00034:   const confidence = Math.min(100, Math.round(score * Math.min(1, list.length / 3)));
+00035: 
+00036:   const reasons = list.flatMap((e) => Array.isArray(e.reasons) ? e.reasons : []);
+00037: 
+00038:   const signals = {};
+00039:   for (const e of list) {
+00040:     signals[e.module] = e.evidence || {};
+00041:   }
+00042: 
+00043:   return {
+00044:     score,
+00045:     confidence,
+00046:     reasons,
+00047:     signals,
+00048:   };
+00049: }
+00050: 
+00051: function scoreItem(item = {}, context = {}) {
+00052:   const collected = collectEvidence({
+00053:     item,
+00054:     context,
+00055:     config: scoreConfig,
+00056:   });
+00057: 
+00058:   const strength = calculateEvidenceStrength(collected.evidence);
+00059: 
+00060:   const probability = Math.max(
+00061:     0,
+00062:     Math.min(
+00063:       100,
+00064:       Number(item.scoreProb || item.rawScoreProb || 0) * 100
+00065:     )
+00066:   );
+00067: 
+00068:   const finalScore = Math.round(
+00069:     (strength.score * 0.45) +
+00070:     (probability * 0.55)
+00071:   );
+00072: 
+00073:   const finalConfidence = Math.round(
+00074:     (strength.confidence * 0.40) +
+00075:     (probability * 0.60)
+00076:   );
+00077: 
+00078:   return {
+00079:     ...item,
+00080: 
+00081:     score: finalScore,
+00082: 
+00083:     confidence: finalConfidence,
+00084: 
+00085:     reasons: [
+00086:       ...strength.reasons,
+00087:       `Probabilidade V3: ${probability.toFixed(2)}%`,
+00088:     ],
+00089: 
+00090:     signals: {
+00091:       ...strength.signals,
+00092:       probability,
+00093:     },
+00094: 
+00095:     evidenceCount: collected.count,
+00096: 
+00097:     evidenceModules: collected.modules,
+00098:   };
+00099: }
+00100: 
+00101: function scoreRanking(items = [], context = {}) {
+00102: 
+00103:   return (Array.isArray(items) ? items : [])
+00104:     .map(item => scoreItem(item, context))
+00105:     .sort((a, b) => {
+00106: 
+00107:       if (b.score !== a.score)
+00108:         return b.score - a.score;
+00109: 
+00110:       if (b.confidence !== a.confidence)
+00111:         return b.confidence - a.confidence;
+00112: 
+00113:       return (Number(b.scoreProb || 0) - Number(a.scoreProb || 0));
+00114: 
+00115:     });
+00116: 
+00117: }
+00118: 
+00119: export {
+00120: scoreItem,
+00121:   scoreRanking,
+00122:   calculateEvidenceStrength,
+00123: };

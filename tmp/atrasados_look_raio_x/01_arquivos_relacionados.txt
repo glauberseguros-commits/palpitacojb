@@ -1,0 +1,11 @@
+.\backend\data\slot_schedule\FEDERAL.json
+.\backend\data\slot_schedule\PT_RIO.json
+.\backend\routes\pitacoResults.js
+.\backend\routes\receiveResults.js
+.\backend\scripts\probeKingLotteryIds.js
+.\src\constants\schedule.js
+.\src\pages\Dashboard\components\SearchResultsTable.jsx
+.\src\pages\Results\Results.jsx
+.\src\pages\Top3\__tests__\top3.schedule-calendar-rules.node.test.js
+.\src\pages\Top3\__tests__\top3.schedule-transition.test.js
+.\src\services\kingResultsService.js

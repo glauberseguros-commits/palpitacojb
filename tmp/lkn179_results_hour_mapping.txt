@@ -1,0 +1,1498 @@
+==========================================================================================
+ARQUIVO: src\pages\Results\Results.jsx
+==========================================================================================
+00036:   return `${m[3]}/${m[2]}/${m[1]}`;
+00037: }
+00038: 
+00039: function nowLocal() {
+00040:   return new Date();
+00041: }
+00042: 
+00043: function todayYMDLocal() {
+00044:   const d = nowLocal();
+00045:   return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+00046: }
+00047: 
+00048: function currentHourNumLocal() {
+00049:   const d = nowLocal();
+00050:   return d.getHours() * 100 + d.getMinutes();
+00051: }
+00052: 
+00053: function ymdToDateLocal(ymd) {
+00054:   const m = String(ymd || "")
+00055:     .trim()
+00056:     .match(/^(\d{4})-(\d{2})-(\d{2})$/);
+00057:   if (!m) return null;
+00058:   return new Date(Number(m[1]), Number(m[2]) - 1, Number(m[3]), 12, 0, 0);
+00059: }
+00060: 
+00061: function dateToYMDLocal(d) {
+00062:   if (!(d instanceof Date) || Number.isNaN(d.getTime())) return "";
+00063:   return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+00064: }
+
+------------------------------------------------------------------------------------------
+
+00099:   start.setDate(first.getDate() - first.getDay());
+00100: 
+00101:   return Array.from({ length: 42 }, (_, idx) => {
+00102:     const d = new Date(start);
+00103:     d.setDate(start.getDate() + idx);
+00104:     const ymd = dateToYMDLocal(d);
+00105:     return {
+00106:       ymd,
+00107:       day: d.getDate(),
+00108:       inMonth: d.getMonth() === first.getMonth(),
+00109:     };
+00110:   });
+00111: }
+00112: 
+00113: function normalizeHourLike(value) {
+00114:   const s0 = safeStr(value);
+00115:   if (!s0) return "";
+00116: 
+00117:   const s = s0.replace(/\s+/g, "");
+00118: 
+00119:   const mhx = s.match(/^(\d{1,2})(?:h|hs|hr|hrs)$/i);
+00120:   if (mhx) return `${pad2(mhx[1])}:00`;
+00121: 
+00122:   const mISO = s.match(/^(\d{1,2}):(\d{1,2})(?::(\d{1,2}))?$/);
+00123:   if (mISO) {
+00124:     return `${pad2(mISO[1])}:00`;
+00125:   }
+00126: 
+00127:   const m2 = s.match(/^(\d{1,2})$/);
+00128:   if (m2) return `${pad2(m2[1])}:00`;
+00129: 
+00130:   return s0;
+00131: }
+00132: 
+00133: function hourToNum(h) {
+00134:   const s = normalizeHourLike(h);
+00135:   const m = s.match(/^(\d{2}):(\d{2})$/);
+00136:   if (!m) return -1;
+00137:   return Number(m[1]) * 100 + Number(m[2]);
+00138: }
+00139: 
+00140: function unwrapDraws(maybe) {
+00141:   if (Array.isArray(maybe)) return maybe;
+00142:   if (maybe && typeof maybe === "object") {
+00143:     if (Array.isArray(maybe.drawsRaw)) return maybe.drawsRaw;
+00144:     if (Array.isArray(maybe.draws)) return maybe.draws;
+00145:     if (Array.isArray(maybe.rows)) return maybe.rows;
+00146:     if (Array.isArray(maybe.data)) return maybe.data;
+00147:     if (maybe.result && Array.isArray(maybe.result)) return maybe.result;
+00148:   }
+
+------------------------------------------------------------------------------------------
+
+00184:     (isYMD(maxYmd) ? maxYmd : null) ||
+00185:     (isYMD(minYmd) ? minYmd : null) ||
+00186:     todayYMDLocal();
+00187: 
+00188:   return fallback;
+00189: }
+00190: 
+00191: /* =========================
+00192:    Escopos
+00193: ========================= */
+00194: 
+00195: const SCOPE_RJ = "RJ";
+00196: const SCOPE_FEDERAL = "FEDERAL";
+00197: const SCOPE_LOOK = "LOOK";
+00198: const SCOPE_NACIONAL = "NACIONAL";
+00199: 
+00200: const LOOK_EXPECTED_HOURS_DESC = [
+00201:   "23:00",
+00202:   "21:00",
+00203:   "18:00",
+00204:   "16:00",
+00205:   "14:00",
+00206:   "11:00",
+00207:   "09:00",
+00208:   "07:00",
+00209: ];
+00210: 
+00211: const NACIONAL_EXPECTED_HOURS_DESC = [
+00212:   "23:00",
+00213:   "21:00",
+00214:   "17:00",
+00215:   "15:00",
+00216:   "12:00",
+00217:   "10:00",
+00218:   "08:00",
+00219:   "02:00",
+00220: ];
+00221: 
+00222: const FEDERAL_INPUT_ALIASES = new Set([
+00223:   "FEDERAL",
+00224:   "FED",
+00225:   "LOTERIA FEDERAL",
+00226:   "LOTERIA_FEDERAL",
+00227:   "LOT FEDERAL",
+00228:   "LT_FEDERAL",
+00229:   "FED_BR",
+00230: ]);
+00231: 
+00232: const RJ_09H_START_YMD = "2024-01-05";
+00233: const RJ_EXPECTED_HOURS_BASE_DESC = ["21:00", "18:00", "16:00", "14:00", "11:00"];
+00234: 
+00235: function isFederalInput(scope) {
+00236:   const up = safeStr(scope).toUpperCase();
+00237:   if (!up) return false;
+00238:   if (up === SCOPE_FEDERAL) return true;
+00239:   if (FEDERAL_INPUT_ALIASES.has(up)) return true;
+00240:   const compact = up.replace(/[\s_]+/g, " ").trim();
+00241:   if (FEDERAL_INPUT_ALIASES.has(compact)) return true;
+00242:   const unders = up.replace(/[\s_]+/g, "_");
+00243:   if (FEDERAL_INPUT_ALIASES.has(unders)) return true;
+00244:   return false;
+00245: }
+00246: 
+00247: function normalizeScopeInput(input) {
+
+------------------------------------------------------------------------------------------
+
+00252: 
+00253:   if (s === SCOPE_RJ || compact === "PTRIO" || compact === "RIO") {
+00254:     return SCOPE_RJ;
+00255:   }
+00256: 
+00257:   if (isFederalInput(s)) {
+00258:     return SCOPE_FEDERAL;
+00259:   }
+00260: 
+00261:   if (s === SCOPE_LOOK || compact === "LOOK" || compact === "GO") {
+00262:     return SCOPE_LOOK;
+00263:   }
+00264: 
+00265:   if (
+00266:     s === SCOPE_NACIONAL ||
+00267:     compact === "NACIONAL" ||
+00268:     compact === "LTNACIONAL"
+00269:   ) {
+00270:     return SCOPE_NACIONAL;
+00271:   }
+00272: 
+00273:   return s;
+00274: }
+00275: 
+00276: function scopeDisplayName(scope) {
+00277:   const up = normalizeScopeInput(scope);
+00278: 
+00279:   if (up === SCOPE_RJ) return "RIO DE JANEIRO";
+00280:   if (up === SCOPE_FEDERAL) return "FEDERAL";
+00281:   if (up === SCOPE_LOOK) return "LOOK";
+00282:   if (up === SCOPE_NACIONAL) return "NACIONAL";
+00283: 
+00284:   return up;
+00285: }
+00286: 
+00287: /* =========================
+00288:    prizeNumber
+00289: ========================= */
+00290: 
+00291: function guessPrizeNumber(p) {
+00292:   if (!p) return "";
+00293: 
+00294:   const direct = safeStr(p?.numero);
+00295:   if (direct) return direct;
+00296: 
+
+------------------------------------------------------------------------------------------
+
+00413: function makeImgVariantsFromGrupo(grupo, size) {
+00414:   const g = Number(grupo);
+00415:   if (!Number.isFinite(g) || g <= 0) return [];
+00416: 
+00417:   const s = Number(size) || 96;
+00418:   const g2 = pad2(g);
+00419:   const slug = safeStr(getSlugByGrupo(g));
+00420:   if (!slug) return [];
+00421: 
+00422:   const primary = normalizeImgSrc(getImgFromGrupo(g, s));
+00423: 
+00424:   const base = publicBase();
+00425:   const sizedName = `${base}/assets/animals/animais_${s}_png/${g2}_${slug}_${s}.png`;
+00426: 
+00427:   const seeds = [primary, sizedName].filter(Boolean);
+00428: 
+00429:   const out = [];
+00430:   for (const seed of seeds) {
+00431:     const clean = String(seed).split("?")[0];
+00432:     if (!clean) continue;
+00433: 
+00434:     out.push(clean);
+00435: 
+00436:     if (clean.match(/\.png$/)) out.push(clean.replace(/\.png$/, ".PNG"));
+00437:     if (clean.match(/\.PNG$/)) out.push(clean.replace(/\.PNG$/, ".png"));
+00438: 
+00439:     out.push(clean.replace(/\.(png|PNG)$/i, ".jpg"));
+00440:     out.push(clean.replace(/\.(png|PNG|jpg)$/i, ".jpeg"));
+00441:   }
+00442: 
+00443:   return Array.from(new Set(out.filter(Boolean)));
+00444: }
+00445: 
+00446: function RowImg({ variants, alt, fallbackText }) {
+00447:   const [failed, setFailed] = useState(false);
+00448: 
+00449:   if (!variants.length || failed) {
+00450:     return <div className="pp_imgFallback">{fallbackText || "ÔÇö"}</div>;
+00451:   }
+00452: 
+00453:   return (
+00454:     <img
+00455:       className="pp_img"
+00456:       src={variants[0]}
+00457:       alt={alt}
+
+------------------------------------------------------------------------------------------
+
+00481:     const label = safeGetAnimalLabel(grupo, animalRaw);
+00482:     const variants = makeImgVariantsFromGrupo(grupo, 96);
+00483:     return { grupo, label, imgVariants: variants };
+00484:   }
+00485: 
+00486:   const label = animalRaw ? animalRaw : "";
+00487:   return { grupo: null, label, imgVariants: [] };
+00488: }
+00489: 
+00490: /* =========================
+00491:    Dedup de draws
+00492: ========================= */
+00493: 
+00494: function drawKeyForDedup(d, scopeKey, ymd) {
+00495:   const hour = normalizeHourLike(
+00496:     d?.close_hour || d?.closeHour || d?.hour || d?.hora || ""
+00497:   );
+00498:   if (hour) return `HOUR:${scopeKey}|${ymd}|${hour}`;
+00499:   const id = safeStr(d?.drawId || d?.id || "");
+00500:   return `ID:${scopeKey}|${ymd}|${id || "?"}`;
+00501: }
+00502: 
+00503: function countPrizes(d) {
+00504:   return Array.isArray(d?.prizes) ? d.prizes.length : 0;
+00505: }
+00506: 
+00507: function pickBetterDraw(a, b) {
+00508:   const pa = countPrizes(a);
+00509:   const pb = countPrizes(b);
+00510:   if (pa !== pb) return pb > pa ? b : a;
+00511: 
+00512:   const ha = safeStr(a?.close_hour || a?.closeHour || a?.hour || a?.hora);
+00513:   const hb = safeStr(b?.close_hour || b?.closeHour || b?.hour || b?.hora);
+00514:   if (!!hb !== !!ha) return hb ? b : a;
+00515: 
+00516:   return a;
+00517: }
+00518: 
+00519: function dedupeDraws(list, scopeKey, ymd) {
+00520:   const arr = Array.isArray(list) ? list : [];
+00521:   const map = new Map();
+00522: 
+00523:   for (const d of arr) {
+00524:     const k = drawKeyForDedup(d, scopeKey, ymd);
+00525:     const prev = map.get(k);
+00526:     if (!prev) map.set(k, d);
+00527:     else map.set(k, pickBetterDraw(prev, d));
+
+------------------------------------------------------------------------------------------
+
+00561: 
+00562: function scopePillClass(active) {
+00563:   return active ? "pp_pill isActive" : "pp_pill";
+00564: }
+00565: 
+00566: function stopEvt(e) {
+00567:   e.preventDefault();
+00568:   e.stopPropagation();
+00569: }
+00570: 
+00571: function stopOnly(e) {
+00572:   e.stopPropagation();
+00573: }
+00574: 
+00575: function getExpectedRjHoursDesc(ymd) {
+00576:   const d = ymdToDateLocal(ymd);
+00577:   const dow = d instanceof Date && !Number.isNaN(d.getTime()) ? d.getDay() : -1;
+00578: 
+00579:   const out =
+00580:     dow === 0
+00581:       ? ["16:00", "14:00", "11:00"]
+00582:       : [...RJ_EXPECTED_HOURS_BASE_DESC];
+00583: 
+00584:   if (isYMD(ymd) && ymd >= RJ_09H_START_YMD) {
+00585:     out.push("09:00");
+00586:   }
+00587: 
+00588:   return out;
+00589: }
+00590: 
+00591: function shouldShowExpectedHour(ymd, hour) {
+00592:   const hNum = hourToNum(hour);
+00593:   if (hNum < 0) return true;
+00594: 
+00595:   if (safeStr(ymd) !== todayYMDLocal()) return true;
+00596: 
+00597:   return hNum <= currentHourNumLocal();
+00598: }
+00599: 
+00600: function buildExpectedDrawsForScope(scopeKey, orderedDraws, ymd) {
+00601:   const list = Array.isArray(orderedDraws) ? orderedDraws : [];
+00602:   const byHour = new Map();
+00603: 
+00604:   for (const d of list) {
+00605:     const h = normalizeHourLike(
+00606:       d?.close_hour || d?.closeHour || d?.hour || d?.hora || ""
+00607:     );
+00608:     if (!h) continue;
+00609:     if (!byHour.has(h)) byHour.set(h, d);
+00610:   }
+00611: 
+00612:   if (scopeKey === SCOPE_FEDERAL) {
+00613:     return [...list].sort((a, b) => {
+00614:       const ha = hourToNum(
+00615:         a?.__slotHour || a?.close_hour || a?.closeHour || a?.hour || a?.hora
+00616:       );
+00617:       const hb = hourToNum(
+00618:         b?.__slotHour || b?.close_hour || b?.closeHour || b?.hour || b?.hora
+00619:       );
+00620:       return hb - ha;
+00621:     });
+00622:   }
+00623: 
+00624:   let expectedHours = [];
+00625: 
+00626:   if (scopeKey === SCOPE_RJ) {
+00627:     expectedHours = getExpectedRjHoursDesc(ymd);
+00628:   } else if (scopeKey === SCOPE_LOOK) {
+00629:     expectedHours = LOOK_EXPECTED_HOURS_DESC;
+00630:   } else if (scopeKey === SCOPE_NACIONAL) {
+00631:     expectedHours = NACIONAL_EXPECTED_HOURS_DESC;
+00632:   }
+00633: 
+00634:   const visibleExpectedHours = expectedHours.filter((hour) =>
+00635:     shouldShowExpectedHour(ymd, hour)
+00636:   );
+00637: 
+00638:   const result = visibleExpectedHours.map((hour) => {
+00639:     const found = byHour.get(hour);
+00640:     if (found) return found;
+00641: 
+00642:     return {
+00643:       __placeholder: true,
+00644:       __slotHour: hour,
+00645:       __placeholderKind: "compact",
+00646:       drawId: `placeholder_${scopeKey}_${hour}`,
+00647:       id: `placeholder_${scopeKey}_${hour}`,
+00648:       close_hour: hour,
+00649:       closeHour: hour,
+00650:       prizes: [],
+00651:     };
+00652:   });
+00653: 
+00654:   const extraActual = list.filter((d) => {
+00655:     const h = normalizeHourLike(
+00656:       d?.close_hour || d?.closeHour || d?.hour || d?.hora || ""
+00657:     );
+00658:     return h && !visibleExpectedHours.includes(h);
+00659:   });
+00660: 
+00661:   return [...result, ...extraActual].sort((a, b) => {
+00662:     const ha = hourToNum(
+00663:       a?.__slotHour || a?.close_hour || a?.closeHour || a?.hour || a?.hora
+00664:     );
+00665:     const hb = hourToNum(
+00666:       b?.__slotHour || b?.close_hour || b?.closeHour || b?.hour || b?.hora
+00667:     );
+00668:     return hb - ha;
+00669:   });
+00670: }
+00671: 
+00672: function monthDaysWithDraws(draws) {
+00673:   const out = new Set();
+00674:   for (const d of Array.isArray(draws) ? draws : []) {
+00675:     const y = safeStr(d?.ymd || d?.date || "");
+00676:     if (isYMD(y)) out.add(y);
+00677:   }
+00678:   return out;
+00679: }
+00680: 
+
+------------------------------------------------------------------------------------------
+
+00828:         closeHour: null,
+00829:         closeHourBucket: null,
+00830:         positions: [1, 2, 3, 4, 5, 6, 7],
+00831:       });
+00832: 
+00833:       const list = unwrapDraws(out);
+00834:       const deduped = dedupeDraws(list, sKey, d);
+00835: 
+00836:       console.log("[RESULTS_DEBUG]", {
+00837:         scope: sKey,
+00838:         date: d,
+00839:         rawLen: Array.isArray(out) ? out.length : null,
+00840:         listLen: Array.isArray(list) ? list.length : null,
+00841:         dedupedLen: Array.isArray(deduped) ? deduped.length : null,
+00842:         hours: deduped.map((x) => ({
+00843:           id: x?.drawId || x?.id || null,
+00844:           hour: x?.close_hour || x?.closeHour || x?.hour || x?.hora || null,
+00845:           ymd: x?.ymd || x?.date || null,
+00846:           prizesLen: Array.isArray(x?.prizes) ? x.prizes.length : null,
+00847:           prizesCount: x?.prizesCount ?? null,
+00848:           placeholder: !!x?.__placeholder,
+00849:         })),
+00850:       });
+00851: 
+00852:       return deduped;
+00853:     },
+00854:     staleTime: ymdClamped === todayYMDLocal() ? 60 * 1000 : 10 * 60 * 1000,
+00855:     gcTime: 2 * 60 * 60 * 1000,
+00856:     placeholderData: (prev) => prev ?? [],
+00857:     refetchOnMount: false,
+00858:     refetchOnWindowFocus: false,
+
+------------------------------------------------------------------------------------------
+
+00903: 
+00904:     return () => {
+00905:       document.removeEventListener("mousedown", onDocPointerDown);
+00906:       document.removeEventListener("keydown", onDocKeyDown);
+00907:     };
+00908:   }, [calendarOpen]);
+00909: 
+00910:   useEffect(() => {
+00911:     setShowAll(true);
+00912:   }, [scopeKey, ymdClamped]);
+00913: 
+00914:   const drawsOrdered = useMemo(() => {
+00915:     const list = Array.isArray(draws) ? draws : [];
+00916:     return [...list].sort((a, b) => {
+00917:       const ha = hourToNum(a?.close_hour || a?.closeHour || a?.hour || a?.hora);
+00918:       const hb = hourToNum(b?.close_hour || b?.closeHour || b?.hour || b?.hora);
+00919:       if (ha !== hb) return hb - ha;
+00920: 
+00921:       const la = safeStr(a?.lottery_code || a?.lotteryCode || "");
+00922:       const lb = safeStr(b?.lottery_code || b?.lotteryCode || "");
+00923:       if (la !== lb) return lb.localeCompare(la);
+00924: 
+00925:       const ia = safeStr(a?.drawId || a?.id || "");
+00926:       const ib = safeStr(b?.drawId || b?.id || "");
+00927:       return ib.localeCompare(ia);
+00928:     });
+00929:   }, [draws]);
+00930: 
+00931:   const drawsDisplayBase = useMemo(() => {
+00932:     return buildExpectedDrawsForScope(scopeKey, drawsOrdered, ymdClamped);
+00933:   }, [scopeKey, drawsOrdered, ymdClamped]);
+00934: 
+00935:   useEffect(() => {
+00936:     setNeedsToggle(drawsDisplayBase.length > 6);
+00937:   }, [drawsDisplayBase.length]);
+00938: 
+00939:   const drawsForView = useMemo(() => {
+00940:     if (!drawsDisplayBase.length) return [];
+00941:     if (!needsToggle) return drawsDisplayBase;
+00942:     if (showAll) return drawsDisplayBase;
+00943:     return drawsDisplayBase.slice(0, 6);
+00944:   }, [drawsDisplayBase, needsToggle, showAll]);
+00945: 
+00946:   const canGoPrevMonth = useMemo(() => {
+
+------------------------------------------------------------------------------------------
+
+01577:               <button
+01578:                 type="button"
+01579:                 className={scopePillClass(scopeKey === SCOPE_LOOK)}
+01580:                 onClick={(e) => {
+01581:                   stopEvt(e);
+01582:                   setScopeUi(SCOPE_LOOK);
+01583:                 }}
+01584:                 title="Resultados da LOOK"
+01585:               >
+01586:                 LOOK
+01587:               </button>
+01588: 
+01589:               <button
+01590:                 type="button"
+01591:                 className={scopePillClass(scopeKey === SCOPE_NACIONAL)}
+01592:                 onClick={(e) => {
+01593:                   stopEvt(e);
+01594:                   setScopeUi(SCOPE_NACIONAL);
+01595:                 }}
+01596:                 title="Resultados da Nacional"
+01597:               >
+01598:                 NACIONAL
+01599:               </button>
+01600:             </div>
+01601: 
+01602:             <div className="pp_dateWrap" ref={calendarRef}>
+01603:               <button
+01604:                 type="button"
+01605:                 className="pp_btn pp_dateBtn"
+01606:                 title="Calend├írio"
+01607:                 aria-label={`Selecionar data. Atual: ${dateBR}`}
+01608:                 onClick={(e) => {
+01609:                   stopEvt(e);
+01610:                   setCalendarOpen((v) => !v);
+01611:                 }}
+01612:               >
+
+------------------------------------------------------------------------------------------
+
+01674:                       const isSelected = cell.ymd === ymdClamped;
+01675:                       const isToday = cell.ymd === todayYMDLocal();
+01676:                       const isLastDraw =
+01677:                         isFederal && cell.ymd === effectiveBounds?.maxYmd;
+01678: 
+01679:                       const cls = [
+01680:                         "pp_calDay",
+01681:                         !cell.inMonth ? "isMuted" : "",
+01682:                         disabled ? "isDisabled" : "",
+01683:                         isMarked ? "isMarked" : "",
+01684:                         isSelected ? "isSelected" : "",
+01685:                         isToday ? "isToday" : "",
+01686:                         isLastDraw ? "isLastDraw" : "",
+01687:                       ]
+01688:                         .filter(Boolean)
+01689:                         .join(" ");
+01690: 
+01691:                       return (
+01692:                         <button
+01693:                           key={cell.ymd}
+01694:                           type="button"
+01695:                           className={cls}
+01696:                           disabled={disabled}
+01697:                           onClick={(e) => {
+01698:                             stopEvt(e);
+01699:                             if (!disabled) handleSelectYmd(cell.ymd);
+01700:                           }}
+01701:                           title={ymdToBR(cell.ymd)}
+01702:                         >
+
+------------------------------------------------------------------------------------------
+
+01769:                       type="button"
+01770:                       onClick={(e) => {
+01771:                         stopEvt(e);
+01772:                         setShowAll((v) => !v);
+01773:                       }}
+01774:                       title={showAll ? "Ver menos" : "Ver mais"}
+01775:                     >
+01776:                       {showAll ? "Ver menos" : "Ver mais"}
+01777:                     </button>
+01778:                   ) : null}
+01779:                 </div>
+01780: 
+01781:                 <div className="pp_grid2">
+01782:                   {drawsForView.map((d, idx) => {
+01783:                     const hour = normalizeHourLike(
+01784:                       d?.close_hour || d?.closeHour || d?.hour || d?.hora || ""
+01785:                     );
+01786:                     const id = safeStr(d?.drawId || d?.id || `idx_${idx}`);
+01787:                     const prizesRaw = Array.isArray(d?.prizes) ? d.prizes : [];
+01788:                     const hs = hour ? `${hour.slice(0, 2)}HS` : "ÔÇö";
+01789: 
+01790:                     const byPos = new Map();
+01791:                     for (const p of prizesRaw) {
+01792:                       const pos = guessPrizePos(p);
+01793:                       if (!pos) continue;
+01794:                       if (!byPos.has(pos)) byPos.set(pos, p);
+01795:                     }
+01796: 
+01797:                     const rows = Array.from({ length: 7 }, (_, i) => {
+01798:                       const posWanted = i + 1;
+
+==========================================================================================
+ARQUIVO: src\services\kingResultsService.js
+==========================================================================================
+00186:     if (isFederalInput(up)) return FEDERAL_SCOPE_CODE;
+00187:     return up;
+00188:   }
+00189: 
+00190:   return s;
+00191: }
+00192: 
+00193: /* =========================
+00194:    Utils
+00195: ========================= */
+00196: 
+00197: /**
+00198:  * Ô£à Normaliza "hor├írio" para HH:MM
+00199:  */
+00200: function normalizeHourLike(value) {
+00201:   const s0 = String(value ?? "").trim();
+00202:   if (!s0) return "";
+00203: 
+00204:   const s = s0.replace(/\s+/g, "");
+00205: 
+00206:   const mhx = s.match(/^(\d{1,2})(?:h|hs|hr|hrs)$/i);
+00207:   if (mhx) return `${pad2(mhx[1])}:00`;
+00208: 
+00209:   const mISO = s.match(/^(\d{1,2}):(\d{1,2})(?::(\d{1,2}))?$/);
+00210:   if (mISO) return `${pad2(mISO[1])}:${pad2(mISO[2])}`;
+00211: 
+00212:   const mHm = s.match(/^(\d{3,4})$/);
+00213:   if (mHm) {
+00214:     const hh = String(mHm[1]).slice(0, -2);
+
+------------------------------------------------------------------------------------------
+
+00250: 
+00251:   const m4 = s.match(/^(\d{3,4})$/);
+00252:   if (m4) return `${pad2(mhxToInt(String(m4[1]).slice(0, -2)))}h`;
+00253: 
+00254:   return null;
+00255: }
+00256: 
+00257: /* =========================
+00258:    Ô£à FIX DEFINITIVO: filtro de hor├írio (bucket vs exato)
+00259:    - bucket SOMENTE via closeHourBucket
+00260:    - exact  SOMENTE via closeHour
+00261:    (elimina ambiguidade e "filtro fantasma")
+00262: ========================= */
+00263: 
+00264: function resolveHourFilter({ closeHour = null, closeHourBucket = null }) {
+00265:   const bucket = toHourBucket(closeHourBucket);
+00266:   if (bucket) return { kind: "bucket", bucket, hhmm: null };
+00267: 
+00268:   const hhmm = closeHour ? normalizeHourLike(closeHour) : null;
+00269:   if (hhmm) return { kind: "exact", bucket: null, hhmm };
+00270: 
+00271:   return { kind: null, bucket: null, hhmm: null };
+00272: }
+00273: 
+00274: function drawPassesHourFilter(draw, hourFilter) {
+00275:   if (!hourFilter || !hourFilter.kind) return true;
+00276: 
+00277:   const raw =
+00278:     draw?.close_hour ?? draw?.closeHour ?? draw?.hour ?? draw?.hora ?? "";
+00279:   const norm = normalizeHourLike(raw);
+00280: 
+00281:   if (hourFilter.kind === "exact") {
+00282:     return norm === normalizeHourLike(hourFilter.hhmm);
+00283:   }
+00284: 
+00285:   if (hourFilter.kind === "bucket") {
+00286:     return toHourBucket(norm) === toHourBucket(hourFilter.bucket);
+00287:   }
+00288: 
+00289:   return true;
+00290: }
+00291: 
+00292: /* =========================
+00293:    Date utils
+00294: ========================= */
+00295: 
+00296: /* =========================
+
+------------------------------------------------------------------------------------------
+
+00309:   const raw =
+00310:     d?.lottery_code ??
+00311:     d?.lotteryCode ??
+00312:     d?.lot_code ??
+00313:     d?.lotCode ??
+00314:     d?.lot ??
+00315:     d?.code ??
+00316:     null;
+00317:   const up = raw ? String(raw).trim().toUpperCase() : "";
+00318:   return up || "";
+00319: }
+00320: 
+00321: function sortDrawsLocal(draws) {
+00322:   const toNum = (h) => {
+00323:     const s = normalizeHourLike(h);
+00324:     const m = s.match(/^(\d{2}):(\d{2})$/);
+00325:     if (!m) return 0;
+00326:     return Number(m[1]) * 100 + Number(m[2]);
+00327:   };
+00328: 
+00329:   return [...(draws || [])].sort((a, b) => {
+00330:     const ya = String(a?.ymd || "");
+00331:     const yb = String(b?.ymd || "");
+00332:     if (ya !== yb) return ya.localeCompare(yb);
+00333: 
+00334:     const ha = toNum(a?.close_hour);
+00335:     const hb = toNum(b?.close_hour);
+00336:     if (ha !== hb) return ha - hb;
+00337: 
+00338:     const la = normalizeLotteryCodeAny(a);
+00339:     const lb = normalizeLotteryCodeAny(b);
+00340:     if (la !== lb) return la.localeCompare(lb);
+00341: 
+00342:     const ia = String(a?.drawId || a?.id || "");
+00343:     const ib = String(b?.drawId || b?.id || "");
+00344:     return ia.localeCompare(ib);
+00345:   });
+00346: }
+00347: 
+00348: function sortDrawsLocalDesc(draws) {
+00349:   const toNum = (h) => {
+00350:     const s = normalizeHourLike(h);
+00351:     const m = s.match(/^(\d{2}):(\d{2})$/);
+00352:     if (!m) return 0;
+00353:     return Number(m[1]) * 100 + Number(m[2]);
+00354:   };
+00355: 
+00356:   return [...(draws || [])].sort((a, b) => {
+00357:     const ya = String(a?.ymd || "");
+00358:     const yb = String(b?.ymd || "");
+00359:     if (ya !== yb) return yb.localeCompare(ya);
+00360: 
+00361:     const ha = toNum(a?.close_hour);
+00362:     const hb = toNum(b?.close_hour);
+00363:     if (ha !== hb) return hb - ha;
+00364: 
+00365:     const la = normalizeLotteryCodeAny(a);
+00366:     const lb = normalizeLotteryCodeAny(b);
+00367:     if (la !== lb) return lb.localeCompare(la);
+00368: 
+00369:     const ia = String(a?.drawId || a?.id || "");
+00370:     const ib = String(b?.drawId || b?.id || "");
+00371:     return ib.localeCompare(ia);
+00372:   });
+00373: }
+00374: 
+00375: /**
+00376:  * Ô£à DEDUPE
+
+------------------------------------------------------------------------------------------
+
+00380:  * Ô£à FIX CR├ìTICO:
+00381:  * N├úo colapsar dois draws distintos do mesmo dia/hor├írio com lottery_code diferente.
+00382:  */
+00383: function dedupeDrawsLocal(draws) {
+00384:   const arr = Array.isArray(draws) ? draws : [];
+00385: 
+00386:   const byKey = new Map();
+00387:   const order = [];
+00388: 
+00389:   function score(d) {
+00390:     const prizesLen = Array.isArray(d?.prizes) ? d.prizes.length : 0;
+00391:     const pc = Number.isFinite(Number(d?.prizesCount))
+00392:       ? Number(d.prizesCount)
+00393:       : 0;
+00394:     const hasLogical = !!(d?.ymd && d?.close_hour);
+00395:     return prizesLen * 1_000_000 + pc * 1_000 + (hasLogical ? 10 : 0);
+00396:   }
+00397: 
+00398:   for (let i = 0; i < arr.length; i += 1) {
+00399:     const raw = arr[i] || {};
+00400: 
+00401:     const ymd = raw.ymd || normalizeToYMD(raw.date) || "";
+00402:     const hour = normalizeHourLike(raw.close_hour || raw.closeHour || "");
+00403: 
+00404:     const lotCode = normalizeLotteryCodeAny(raw);
+00405: 
+00406:     const drawId = raw.drawId ?? raw.id ?? raw.__name__ ?? null;
+00407:     const idStr = drawId != null ? String(drawId) : "";
+00408: 
+00409:     const hasLogical = !!(ymd && hour);
+00410: 
+00411:     const key = hasLogical
+00412:       ? lotCode
+00413:         ? `${ymd}__${hour}__${lotCode}`
+00414:         : `${ymd}__${hour}`
+00415:       : `id__${idStr || `idx_${i}`}`;
+00416: 
+00417:     const normalized = {
+00418:       ...raw,
+00419:       ymd: ymd || raw.ymd || null,
+00420:       close_hour: hour || raw.close_hour || raw.closeHour || "",
+00421:       closeHour: hour || raw.closeHour || raw.close_hour || "",
+00422:       lottery_code: lotCode || raw.lottery_code || raw.lotteryCode || null,
+00423:       drawId: raw.drawId || raw.id || raw.__name__ || null,
+00424:       id: raw.id || raw.drawId || raw.__name__ || null,
+00425:     };
+00426: 
+00427:     if (!byKey.has(key)) {
+00428:       byKey.set(key, normalized);
+00429:       order.push(key);
+00430:       continue;
+00431:     }
+00432: 
+00433:     const prev = byKey.get(key);
+00434:     if (score(normalized) > score(prev)) {
+00435:       byKey.set(key, normalized);
+00436:     }
+00437:   }
+00438: 
+00439:   return order.map((k) => byKey.get(k)).filter(Boolean);
+00440: }
+00441: 
+00442: async function mapWithConcurrency(items, limitN, mapper) {
+00443:   const arr = Array.isArray(items) ? items : [];
+00444:   const concurrency = Math.max(1, Number(limitN) || 6);
+00445:   const results = new Array(arr.length);
+00446:   let idx = 0;
+00447: 
+00448:   async function worker() {
+00449:     while (true) {
+00450:       const current = idx;
+00451:       idx += 1;
+00452:       if (current >= arr.length) break;
+00453:       results[current] = await mapper(arr[current], current);
+
+------------------------------------------------------------------------------------------
+
+00491: /**
+00492:  * Ô£à FIX DEFINITIVO:
+00493:  * Se existir embeddedPrizes mas vier "agregado/incompleto" (sem grupo/posi├º├úo v├ílidos),
+00494:  * faz fallback e busca a subcollection draws/{id}/prizes.
+00495:  */
+00496: async function fetchPrizesForDraw(drawId, positionsArr, embeddedPrizes) {
+00497:   const drawKey = String(drawId || "").trim();
+00498:   if (!drawKey) return [];
+00499: 
+00500:   if (Array.isArray(embeddedPrizes) && embeddedPrizes.length) {
+00501:     const normalized = embeddedPrizes.map((p, idx) =>
+00502:       normalizePrize(p, p?.prizeId ?? `emb_${idx}`)
+00503:     );
+00504: 
+00505:     const cleaned = normalized.filter(
+00506:       (x) => isValidGrupo(x?.grupo) && isValidPosition(x?.position)
+00507:     );
+00508: 
+00509:     if (cleaned.length) {
+00510:       const allSorted = sortPrizesByPosition(cleaned);
+00511:       return filterPrizesByPositions(allSorted, positionsArr);
+00512:     }
+00513:   }
+00514: 
+00515:   const allKey = prizesCacheKeyAll(drawKey);
+00516:   const cachedAll = cacheGet(PRIZES_CACHE, allKey);
+00517:   if (Array.isArray(cachedAll) && cachedAll.length > 0) {
+00518:     return filterPrizesByPositions(cachedAll, positionsArr);
+00519:   }
+00520: 
+00521:   const prizesCol = collection(db, "draws", drawKey, "prizes");
+00522: 
+00523:   const { snap, error } = await safeGetDocsSmart(prizesCol, { policy: "server" });
+00524:   if (error) throw error;
+00525: 
+00526:   const allRaw = snap.docs.map((d) => normalizePrize(d.data(), d.id));
+00527: 
+00528:   // console.log("DEBUG allRaw:", allRaw);
+00529: 
+00530: const all = allRaw.filter(
+00531:   (x) => isValidGrupo(x?.grupo) && isValidPosition(x?.position)
+00532: );
+00533: 
+00534: // console.log("DEBUG allFiltered:", all);
+00535: 
+00536:   const allSorted = sortPrizesByPosition(all);
+00537:   cacheSet(PRIZES_CACHE, allKey, allSorted);
+00538: 
+00539:   return filterPrizesByPositions(allSorted, positionsArr);
+00540: }
+00541: 
+00542: /* =========================
+00543:    Map Draw
+00544: ========================= */
+00545: 
+00546: function mapDrawDoc(doc) {
+00547:   const d = doc.data();
+00548: 
+00549:   const ymd = d.ymd || normalizeToYMD(getDocDateRaw(d));
+00550:   const hourNorm = normalizeHourLike(
+00551:     d.close_hour ?? d.closeHour ?? d.hour ?? d.hora ?? ""
+00552:   );
+00553: 
+00554:   const embeddedPrizes = Array.isArray(d.prizes) && d.prizes.length > 0 ? d.prizes : null;
+00555: 
+00556:   const ufRaw = d.uf ?? null;
+00557:   const lotteryKeyRaw = d.lottery_key ?? d.lotteryKey ?? d.lottery ?? null;
+00558: 
+00559:   const lotteryCodeRaw =
+00560:     d.lottery_code ??
+00561:     d.lotteryCode ??
+00562:     d.lot_code ??
+00563:     d.lotCode ??
+00564:     d.lot ??
+00565:     d.code ??
+00566:     d.lottery_id ??
+00567:     d.lotteryId ??
+00568:     null;
+00569: 
+00570:   return {
+00571:     drawId: doc.id,
+00572:     id: doc.id,
+00573: 
+00574:     date: d.date ?? d.data ?? d.dt ?? d.draw_date ?? d.close_date ?? null,
+00575:     ymd,
+00576: 
+00577:     close_hour: hourNorm,
+00578:     closeHour: hourNorm,
+00579: 
+00580:     uf: ufRaw,
+00581:     lottery_key: lotteryKeyRaw,
+00582: 
+00583:     lottery_code: lotteryCodeRaw ? String(lotteryCodeRaw).toUpperCase() : null,
+00584: 
+00585:     prizesCount: d.prizesCount,
+00586:     prizes: embeddedPrizes,
+00587:   };
+00588: }
+00589: 
+00590: /* =========================
+00591:    Compat: uf OU lottery_key
+00592: ========================= */
+00593: 
+00594: function buildUfWhereClauses(fieldName, uf) {
+00595:   const normalized = normalizeValueForField(fieldName, uf);
+00596:   return [where(fieldName, "==", normalized)];
+00597: }
+00598: 
+00599: function normalizeOrderBys(extraOrderBy) {
+00600:   if (!extraOrderBy) return [];
+00601:   return Array.isArray(extraOrderBy)
+00602:     ? extraOrderBy.filter(Boolean)
+00603:     : [extraOrderBy];
+00604: }
+00605: 
+00606: async function queryDrawsByField({
+00607:   fieldName,
+00608:   uf,
+00609:   extraWheres = [],
+00610:   extraOrderBy = null,
+00611:   extraLimit = null,
+00612:   policy = DEFAULT_READ_POLICY,
+00613: }) {
+00614:   const drawsCol = collection(db, "draws");
+00615: 
+00616:   const parts = [
+
+------------------------------------------------------------------------------------------
+
+00843:       uf: ufValue,
+00844:       extraOrderBy: [orderBy(DOC_ID)],
+00845:       extraLimit: limitToLast(FALLBACK_EDGE_LIMIT),
+00846:       policy: "server",
+00847:     });
+00848: 
+00849:     const mappedA = (asc?.snap?.docs || []).map(mapDrawDoc);
+00850:     const mappedB = (last?.snap?.docs || []).map(mapDrawDoc);
+00851: 
+00852:     const merged = dedupeDrawsLocal([...mappedA, ...mappedB]);
+00853: 
+00854:     return {
+00855:       merged,
+00856:       ok: merged.length > 0,
+00857:       errors: [asc?.error, last?.error].filter(Boolean),
+00858:       sources: [asc?.source, last?.source].filter(Boolean),
+00859:     };
+00860:   }
+00861: 
+00862:   {
+00863:     const orderAsc = [orderBy("ymd", "asc"), orderBy(DOC_ID)];
+00864:     const orderDesc = [orderBy("ymd", "desc"), orderBy(DOC_ID)];
+00865: 
+00866:     const {
+00867:       docs: minDocs,
+00868:       usedField: usedMin,
+00869:       error: eMin,
+00870:     } = await fetchDrawDocsPreferUf({
+00871:       uf,
+00872:       extraOrderBy: orderAsc,
+
+------------------------------------------------------------------------------------------
+
+01006:   if (!prizes.length) return "";
+01007: 
+01008:   const parts = prizes
+01009:     .map((p) => {
+01010:       const pos = Number(p?.position);
+01011:       const grupo = Number(p?.grupo);
+01012:       const numero = toPrizeDigitsByPosition(
+01013:         p?.numero ?? p?.milhar ?? p?.number ?? p?.num ?? p?.valor ?? "",
+01014:         pos
+01015:       );
+01016: 
+01017:       if (!Number.isFinite(pos) || !Number.isFinite(grupo) || !numero) return "";
+01018:       return `${pad2(pos)}:${pad2(grupo)}:${numero}`;
+01019:     })
+01020:     .filter(Boolean)
+01021:     .sort();
+01022: 
+01023:   return parts.join("|");
+01024: }
+01025: 
+01026: function federalHourPriority(draw) {
+01027:   const h = normalizeHourLike(
+01028:     draw?.close_hour || draw?.closeHour || draw?.hour || draw?.hora || ""
+01029:   );
+01030:   const ymd = String(draw?.ymd || normalizeToYMD(draw?.date) || "").trim();
+01031:   const n = hourToNumSafe(h);
+01032: 
+01033:   const prefer20h = getFederalPreferredHourForYmd(ymd) === "20:00";
+01034: 
+01035:   if (prefer20h) {
+01036:     if (h === "20:00") return 200000 + n;
+01037:     if (h === "19:00") return 190000 + n;
+01038:     return 100000 + n;
+01039:   }
+01040: 
+01041:   if (h === "19:00") return 200000 + n;
+01042:   if (h === "20:00") return 190000 + n;
+
+------------------------------------------------------------------------------------------
+
+01108:   uf,
+01109:   date,
+01110:   closeHour = null,
+01111:   closeHourBucket = null,
+01112:   positions = null,
+01113: }) {
+01114:   if (!uf || !date) throw new Error("Par├ómetros obrigat├│rios: uf e date");
+01115: 
+01116:   const scopeKey = canonicalScopeKey(uf);
+01117: 
+01118:   const positionsArr = normalizePositions(positions);
+01119:   const ymdDate = normalizeToYMD(date);
+01120:   if (!ymdDate) return [];
+01121: 
+01122:   const hourFilter = resolveHourFilter({ closeHour, closeHourBucket });
+01123: 
+01124:   const dayKey = drawsCacheKeyDay({
+01125:     scopeKey,
+01126:     ymd: ymdDate,
+01127:     positionsArr,
+01128:     hourFilter,
+01129:   });
+01130: 
+01131:   const forceFreshServer = shouldForceFreshServerRead(ymdDate);
+01132:   const allowMemoryCache = !forceFreshServer;
+01133: 
+01134:   if (allowMemoryCache) {
+01135:     const cached = cacheGet(DRAWS_CACHE, dayKey);
+01136:     if (cached) return cached;
+
+------------------------------------------------------------------------------------------
+
+01178:     if (brDate) {
+01179:       const { docs: found, error } = await fetchDrawDocsPreferUf({
+01180:         uf,
+01181:         extraWheres: [where("date", "==", brDate)],
+01182:         policy: readPolicy,
+01183:       });
+01184:       if (error) throw error;
+01185:       if (found.length) docCandidates.push(...found);
+01186:     }
+01187:   }
+01188: 
+01189:   if (!docCandidates.length) return [];
+01190: 
+01191:   let baseAll = dedupeDrawsLocal(docCandidates.map(mapDrawDoc));
+01192:   baseAll = baseAll.filter((x) => (x.ymd || normalizeToYMD(x.date)) === ymdDate);
+01193: 
+01194:   const orderedAll = sortDrawsLocal(baseAll);
+01195: 
+01196:   const hydratedAll = await mapWithConcurrency(orderedAll, 6, async (item) => {
+01197:     const prizes = await fetchPrizesForDraw(item.drawId, positionsArr, item.prizes);
+01198:     const pc = Array.isArray(prizes) ? prizes.length : 0;
+01199:     return { ...item, prizes, prizesCount: pc, __mode: "detailed" };
+01200:   });
+01201: 
+01202:   let dayAll = dedupeDrawsLocal(hydratedAll);
+01203: 
+01204: if (scopeKey === FEDERAL_SCOPE_CODE) {
+01205:   dayAll = collapseFederalDailyCloneDraws(dayAll);
+01206: }
+01207: 
+01208:   const base = hourFilter?.kind
+01209:     ? dayAll.filter((d) => drawPassesHourFilter(d, hourFilter))
+01210:     : dayAll;
+01211: 
+01212:   let out = dedupeDrawsLocal(sortDrawsLocal(base));
+01213: 
+01214: if (scopeKey === FEDERAL_SCOPE_CODE) {
+01215:   out = collapseFederalDailyCloneDraws(out);
+01216: }
+01217: 
+01218:   if (allowMemoryCache) {
+01219:     cacheSet(DRAWS_CACHE, dayKey, out);
+01220:   }
+01221: 
+01222:   return out;
+01223: }
+
+------------------------------------------------------------------------------------------
+
+01271:  * ou quando voc├¬ quer aggregated sem custo de hidratar.
+01272:  */
+01273: async function fetchDrawsDayNoPrizes({ uf, dayYmd }) {
+01274:   const readPolicy = shouldForceFreshServerRead(dayYmd) ? "server" : DEFAULT_READ_POLICY;
+01275: 
+01276:   const { docs, error } = await fetchDrawDocsPreferUf({
+01277:     uf,
+01278:     extraWheres: [where("ymd", "==", dayYmd)],
+01279:     policy: readPolicy,
+01280:   });
+01281:   if (error) throw error;
+01282:   if (!docs || !docs.length) return [];
+01283: 
+01284:   let baseAll = dedupeDrawsLocal(docs.map(mapDrawDoc));
+01285:   baseAll = baseAll.filter((x) => (x.ymd || normalizeToYMD(x.date)) === dayYmd);
+01286: 
+01287:   const ordered = sortDrawsLocal(baseAll);
+01288: 
+01289:   return ordered.map((d) => {
+01290:     const embedded = normalizeEmbeddedPrizesForAggregated(d?.prizes);
+01291:     return {
+01292:       ...d,
+01293:       prizes: embedded,
+01294:       prizesCount: embedded.length || Number(d?.prizesCount || 0),
+01295:       __mode: "aggregated",
+01296:     };
+01297:   });
+01298: }
+01299: 
+
+------------------------------------------------------------------------------------------
+
+01309:   bypassCache = false,
+01310: }) {
+01311:   if (!uf || !dateFrom || !dateTo) {
+01312:     throw new Error("Par├ómetros obrigat├│rios: uf, dateFrom, dateTo");
+01313:   }
+01314: 
+01315:   const scopeKey = canonicalScopeKey(uf);
+01316: 
+01317:   const positionsArr = normalizePositions(positions);
+01318: 
+01319:   const ymdFrom = normalizeToYMD(dateFrom);
+01320:   const ymdTo = normalizeToYMD(dateTo);
+01321:   if (!ymdFrom || !ymdTo) return [];
+01322: 
+01323:   const hourFilter = resolveHourFilter({ closeHour, closeHourBucket });
+01324: 
+01325:   const effectiveMode = decideKingRangeMode({
+01326:     dateFrom: ymdFrom,
+01327:     dateTo: ymdTo,
+01328:     mode,
+01329:   });
+01330: 
+01331:   const rangeKey = drawsCacheKeyRange({
+01332:     scopeKey,
+01333:     from: ymdFrom,
+01334:     to: ymdTo,
+01335:     positionsArr,
+01336:     hourFilter,
+01337:     mode: effectiveMode,
+
+------------------------------------------------------------------------------------------
+
+01356:       const days = daysBetweenInclusiveUTC(ymdFrom, ymdTo);
+01357:       const MAX_FALLBACK_DAYS = 31;
+01358: 
+01359:       if (Number.isFinite(days) && days > 0 && days <= MAX_FALLBACK_DAYS) {
+01360:         if (effectiveMode === "aggregated") {
+01361:           const all = [];
+01362:           for (let i = 0; i < days; i += 1) {
+01363:             const day = addDaysUTC(ymdFrom, i);
+01364:             const dayDraws = await fetchDrawsDayNoPrizes({ uf, dayYmd: day });
+01365:             if (dayDraws.length) all.push(...dayDraws);
+01366:           }
+01367: 
+01368:           const baseAll = dedupeDrawsLocal(all);
+01369:           const base = hourFilter?.kind
+01370:             ? baseAll.filter((d) => drawPassesHourFilter(d, hourFilter))
+01371:             : baseAll;
+01372: 
+01373:           let out = dedupeDrawsLocal(sortDrawsLocal(base));
+01374: 
+01375:           if (!bypassCache) {
+01376:       cacheSet(DRAWS_CACHE, rangeKey, out);
+01377:     }
+01378:           return out;
+01379:         }
+01380: 
+01381:         const all = [];
+01382:         for (let i = 0; i < days; i += 1) {
+01383:           const day = addDaysUTC(ymdFrom, i);
+01384:           const dayDraws = await getKingResultsByDate({
+01385:             uf,
+01386:             date: day,
+01387:             closeHour,
+01388:             closeHourBucket,
+01389:             positions: positionsArr,
+01390:           });
+01391:           if (Array.isArray(dayDraws) && dayDraws.length) all.push(...dayDraws);
+01392:         }
+01393: 
+01394:         const baseAll = dedupeDrawsLocal(all);
+01395:         const base = hourFilter?.kind
+01396:           ? baseAll.filter((d) => drawPassesHourFilter(d, hourFilter))
+01397:           : baseAll;
+01398: 
+01399:         let out = dedupeDrawsLocal(sortDrawsLocal(base));
+01400: 
+01401:         if (!bypassCache) {
+01402:       cacheSet(DRAWS_CACHE, rangeKey, out);
+01403:     }
+01404:         return out;
+01405:       }
+01406: 
+01407:       const rawCode = String(error?.code || "");
+01408:       const rawMsg = String(error?.message || "");
+01409: 
+01410:       throw new Error(
+
+------------------------------------------------------------------------------------------
+
+01426:       Number.isFinite(days) &&
+01427:       days > 0 &&
+01428:       days <= MAX_EMPTY_RANGE_FALLBACK_DAYS
+01429:     ) {
+01430:       if (effectiveMode === "aggregated") {
+01431:         const all = [];
+01432:         for (let i = 0; i < days; i += 1) {
+01433:           const day = addDaysUTC(ymdFrom, i);
+01434:           const dayDraws = await fetchDrawsDayNoPrizes({ uf, dayYmd: day });
+01435:           if (dayDraws.length) all.push(...dayDraws);
+01436:         }
+01437: 
+01438:         const baseAll = dedupeDrawsLocal(all);
+01439:         const base = hourFilter?.kind
+01440:           ? baseAll.filter((d) => drawPassesHourFilter(d, hourFilter))
+01441:           : baseAll;
+01442: 
+01443:         let out = dedupeDrawsLocal(sortDrawsLocal(base));
+01444: 
+01445:         if (!bypassCache) {
+01446:       cacheSet(DRAWS_CACHE, rangeKey, out);
+01447:     }
+01448:         return out;
+01449:       }
+01450: 
+01451:       const all = [];
+01452:       for (let i = 0; i < days; i += 1) {
+01453:         const day = addDaysUTC(ymdFrom, i);
+01454:         const dayDraws = await getKingResultsByDate({
+01455:           uf,
+01456:           date: day,
+01457:           closeHour,
+01458:           closeHourBucket,
+01459:           positions: positionsArr,
+01460:         });
+01461:         if (Array.isArray(dayDraws) && dayDraws.length) all.push(...dayDraws);
+01462:       }
+01463: 
+01464:       const baseAll = dedupeDrawsLocal(all);
+01465:       const base = hourFilter?.kind
+01466:         ? baseAll.filter((d) => drawPassesHourFilter(d, hourFilter))
+01467:         : baseAll;
+01468: 
+01469:       const ordered = sortDrawsLocal(base);
+01470: 
+01471:       const conc = chooseRangeConcurrency(ordered.length);
+01472:       const results = await mapWithConcurrency(ordered, conc, async (item) => {
+01473:         const prizes = await fetchPrizesForDraw(item.drawId, positionsArr, item.prizes);
+01474:         const pc = Array.isArray(prizes) ? prizes.length : 0;
+01475:         return { ...item, prizes, prizesCount: pc, __mode: "detailed" };
+01476:       });
+01477: 
+01478:       const out = dedupeDrawsLocal(results);
+01479:       if (!bypassCache) {
+01480:       cacheSet(DRAWS_CACHE, rangeKey, out);
+01481:     }
+01482:       return out;
+01483:     }
+01484: 
+01485:     return [];
+01486:   }
+01487: 
+01488:   const baseAll = dedupeDrawsLocal(docs.map(mapDrawDoc));
+01489:   const base = hourFilter?.kind
+01490:     ? baseAll.filter((d) => drawPassesHourFilter(d, hourFilter))
+01491:     : baseAll;
+01492: 
+01493:   const ordered = sortDrawsLocal(base);
+01494: 
+01495:   if (effectiveMode === "aggregated") {
+01496:     const out = dedupeDrawsLocal(
+01497:       ordered.map((d) => {
+01498:         const embedded = normalizeEmbeddedPrizesForAggregated(d?.prizes);
+01499:         return {
+01500:           ...d,
+01501:           prizes: embedded,
+01502:           prizesCount: Number.isFinite(Number(d?.prizesCount))
+01503:             ? Number(d.prizesCount)
+01504:             : embedded.length || 0,
+
+------------------------------------------------------------------------------------------
+
+01552:     return { ...item, prizes, prizesCount: pc, __mode: "detailed" };
+01553:   });
+01554: 
+01555:   return dedupeDrawsLocal(results);
+01556: }
+01557: 
+01558: /* =========================
+01559:    Ô£à ATRASADOS (Late) ÔÇö 100% baseado na SUA base
+01560: ========================= */
+01561: 
+01562: function normalizeLotteriesList(lotteries) {
+01563:   const arr = Array.isArray(lotteries) ? lotteries : [];
+01564:   const cleaned = arr
+01565:     .map((x) => String(x ?? "").trim().toUpperCase())
+01566:     .filter(Boolean);
+01567:   return cleaned.length ? Array.from(new Set(cleaned)) : null;
+01568: }
+01569: 
+01570: function drawPassesLotteriesFilter(draw, lotteriesArr) {
+01571:   if (!lotteriesArr || !lotteriesArr.length) return true;
+01572:   const code = String(draw?.lottery_code ?? "").trim().toUpperCase();
+01573:   if (!code) return false;
+01574:   return lotteriesArr.includes(code);
+01575: }
+01576: 
+01577: function lateCacheKey({
+01578:   scopeKey,
+01579:   fromYmd,
+01580:   toYmd,
+01581:   baseYmd,
+01582:   prizePosition,
+01583:   hourFilter,
+01584:   lotteriesArr,
+
+------------------------------------------------------------------------------------------
+
+01586: }) {
+01587:   const h =
+01588:     hourFilter?.kind === "bucket"
+01589:       ? `bucket:${hourFilter.bucket}`
+01590:       : hourFilter?.kind === "exact"
+01591:       ? `exact:${hourFilter.hhmm}`
+01592:       : "all";
+01593:   const lots = lotteriesArr && lotteriesArr.length ? lotteriesArr.join(",") : "all";
+01594:   const cd = Number(chunkDays) || 15;
+01595:   const pos = Number(prizePosition) || 1;
+01596:   return `late::${scopeKey}::${fromYmd}..${toYmd}::base=${baseYmd}::pos=${pos}::h=${h}::lots=${lots}::chunk=${cd}`;
+01597: }
+01598: 
+01599: function hourToNumSafe(hhmm) {
+01600:   const s = normalizeHourLike(hhmm);
+01601:   const m = s.match(/^(\d{2}):(\d{2})$/);
+01602:   if (!m) return Number.POSITIVE_INFINITY;
+01603:   return Number(m[1]) * 100 + Number(m[2]);
+01604: }
+01605: 
+01606: export async function getKingLateByRange({
+01607:   uf,
+01608:   dateFrom,
+01609:   dateTo,
+01610:   baseDate = null,
+01611:   lotteries = null,
+01612:   prizePosition = 1,
+01613:   closeHour = null,
+01614:   closeHourBucket = null,
+01615:   chunkDays = 15,
+01616: }) {
+01617:   if (!uf || !dateFrom || !dateTo) {
+01618:     throw new Error("Par├ómetros obrigat├│rios: uf, dateFrom, dateTo");
+01619:   }
+01620: 
+01621:   const scopeKey = canonicalScopeKey(uf);
+01622: 
+01623:   const fromYmd = normalizeToYMD(dateFrom);
+01624:   const toYmd = normalizeToYMD(dateTo);
+01625:   if (!fromYmd || !toYmd) return [];
+01626: 
+01627:   const baseYmd = normalizeToYMD(baseDate) || toYmd;
+01628: 
+01629:   const hourFilter = resolveHourFilter({ closeHour, closeHourBucket });
+01630:   const lotteriesArr = normalizeLotteriesList(lotteries);
+01631: 
+01632:   const cacheKey = lateCacheKey({
+01633:     scopeKey,
+01634:     fromYmd,
+01635:     toYmd,
+01636:     baseYmd,
+01637:     prizePosition,
+01638:     hourFilter,
+01639:     lotteriesArr,
+01640:     chunkDays,
+01641:   });
+01642: 
+01643:   const cached = cacheGet(LATE_CACHE, cacheKey);
+
+------------------------------------------------------------------------------------------
+
+01672:       uf,
+01673:       dateFrom: chunkFrom,
+01674:       dateTo: cursorTo,
+01675:       closeHour,
+01676:       closeHourBucket,
+01677:       positions: [posNum],
+01678:       mode: "detailed",
+01679:     });
+01680: 
+01681:     const desc = sortDrawsLocalDesc(dedupeDrawsLocal(draws));
+01682: 
+01683:     for (const d of desc) {
+01684:       if (!d) continue;
+01685: 
+01686:       if (hourFilter?.kind && !drawPassesHourFilter(d, hourFilter)) continue;
+01687:       if (lotteriesArr && !drawPassesLotteriesFilter(d, lotteriesArr)) continue;
+01688: 
+01689:       const ymd = d.ymd || normalizeToYMD(d.date);
+01690:       if (!ymd || !isYMD(ymd)) continue;
+01691: 
+01692:       const p = Array.isArray(d.prizes)
+01693:         ? d.prizes.find(
+01694:             (x) => Number(x?.position) === posNum && isValidGrupo(x?.grupo)
+01695:           )
+01696:         : null;
+01697: 
+01698:       const g = p?.grupo;
+01699:       if (!isValidGrupo(g)) continue;
+01700: 
+01701:       if (!lastSeen.has(g)) {
+01702:         lastSeen.set(g, {
+01703:           ymd,
+01704:           hour: d.close_hour || d.closeHour || "",
+01705:           drawId: d.drawId || d.id || null,
+01706:           lottery_code: d.lottery_code || null,
+01707:         });
+01708: 
+01709:         if (lastSeen.size >= 25) break;
+01710:       }
+01711:     }
+01712: 
+01713:     cursorTo = addDaysUTC(chunkFrom, -1);
+01714:   }
+01715: 
+01716:   const rows = [];
+01717:   for (let g = 1; g <= 25; g += 1) {
+01718:     const seen = lastSeen.get(g) || null;
+01719:     const lastYmd = seen?.ymd || null;
+01720:     const diff = lastYmd ? daysDiffUTC(lastYmd, baseYmd) : NaN;
+01721:     const atrasoDias =
+01722:       lastYmd && Number.isFinite(diff) ? Math.max(0, diff) : null;
+01723: 
+01724:     rows.push({
+01725:       pos: 0,
+01726:       grupo: g,
+01727:       lastYmd,
+01728:       lastHour: seen?.hour ? normalizeHourLike(seen.hour) : null,
+01729:       lastDrawId: seen?.drawId || null,
+01730:       lastLottery: seen?.lottery_code || null,
+01731:       atrasoDias,
+01732:     });
+01733:   }
+01734: 
+01735:   const sorted = [...rows].sort((a, b) => {
+01736:     const aa = Number.isFinite(Number(a?.atrasoDias)) ? Number(a.atrasoDias) : -1;
+01737:     const bb = Number.isFinite(Number(b?.atrasoDias)) ? Number(b.atrasoDias) : -1;
+01738:     if (bb !== aa) return bb - aa;
+01739: 
+01740:     const ha = hourToNumSafe(a?.lastHour);
+01741:     const hb = hourToNumSafe(b?.lastHour);
+01742:     if (ha !== hb) return ha - hb;
+
+
+Relat├│rio salvo em: tmp\lkn179_results_hour_mapping.txt

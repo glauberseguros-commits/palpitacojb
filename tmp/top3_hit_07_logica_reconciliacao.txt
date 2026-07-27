@@ -1,0 +1,805 @@
+====================================================================================================
+TOP3-HIT-07 — COLETA INTEGRAL DA LÓGICA DE RECONCILIAÇÃO
+====================================================================================================
+Gerado em: 25/07/2026 23:45:54
+Arquivo: .\src\pages\Top3\top3.firestore.js
+Total de linhas: 666
+SHA256: CC90B13FFEF219ED13BFC918D5D11936212864DEC315447B20D57CF30BEBD049
+
+OBJETIVO:
+- confirmar o cálculo oficial de acerto
+- confirmar todos os campos gravados no Firestore
+- preparar reconciliação controlada do documento:
+  top3_predictions/PT_RIO__2026-07-25__09
+====================================================================================================
+
+
+====================================================================================================
+1. NORMALIZAÇÃO, IDS E EXTRAÇÃO DO RESULTADO OFICIAL
+LINHAS: 1 até 180
+====================================================================================================
+00001: /* eslint-disable no-unused-vars */
+00002: import {
+00003:   doc,
+00004:   getDoc,
+00005:   runTransaction,
+00006:   setDoc,
+00007: } from "firebase/firestore";
+00008: 
+00009: import { db } from "../../services/firebase";
+00010: import { loginAnonymous } from "../../services/auth";
+00011: 
+00012: import {
+00013:   safeStr,
+00014:   isYMD,
+00015:   toHourBucket,
+00016: } from "./top3.formatters";
+00017: 
+00018: import {
+00019:   pickDrawYMD,
+00020:   pickDrawHour,
+00021:   pickPrize1GrupoFromDraw,
+00022: } from "./top3.engine";
+00023: 
+00024: const COLLECTION = "top3_predictions";
+00025: 
+00026: function normalizeLotteryKey(value) {
+00027:   return safeStr(value).toUpperCase() || "PT_RIO";
+00028: }
+00029: 
+00030: function normalizeHour(value) {
+00031:   return toHourBucket(value) || "";
+00032: }
+00033: 
+00034: function hourCode(value) {
+00035:   return normalizeHour(value).replace(/\D/g, "").padStart(2, "0");
+00036: }
+00037: 
+00038: function makePredictionId({ lotteryKey, targetYmd, targetHour }) {
+00039:   const lottery = normalizeLotteryKey(lotteryKey);
+00040:   const ymd = safeStr(targetYmd);
+00041:   const hour = hourCode(targetHour);
+00042: 
+00043:   if (!lottery || !isYMD(ymd) || !hour) return "";
+00044: 
+00045:   return `${lottery}__${ymd}__${hour}`;
+00046: }
+00047: 
+00048: function predictionRef(params) {
+00049:   const id = makePredictionId(params);
+00050:   return id ? doc(db, COLLECTION, id) : null;
+00051: }
+00052: 
+00053: function cleanFirestoreValue(value) {
+00054:   try {
+00055:     return JSON.parse(
+00056:       JSON.stringify(value, (_key, current) => {
+00057:         if (current === undefined) return null;
+00058:         if (typeof current === "number" && !Number.isFinite(current)) {
+00059:           return null;
+00060:         }
+00061:         return current;
+00062:       })
+00063:     );
+00064:   } catch {
+00065:     return null;
+00066:   }
+00067: }
+00068: 
+00069: function normalizeMilhar(value) {
+00070:   const digits = String(value || "").replace(/\D/g, "");
+00071:   if (!digits) return "";
+00072:   return digits.slice(-4).padStart(4, "0");
+00073: }
+00074: 
+00075: function extractPrize1(draw) {
+00076:   const prizes = Array.isArray(draw?.prizes) ? draw.prizes : [];
+00077: 
+00078:   return (
+00079:     prizes.find((item) => Number(item?.position) === 1) ||
+00080:     prizes[0] ||
+00081:     null
+00082:   );
+00083: }
+00084: 
+00085: function extractPrize1Milhar(draw) {
+00086:   const prize = extractPrize1(draw);
+00087: 
+00088:   return normalizeMilhar(
+00089:     prize?.milhar ??
+00090:       prize?.numero ??
+00091:       prize?.number ??
+00092:       prize?.valor ??
+00093:       draw?.prize_1 ??
+00094:       ""
+00095:   );
+00096: }
+00097: 
+00098: function findDrawForTarget({
+00099:   draws,
+00100:   targetYmd,
+00101:   targetHour,
+00102: }) {
+00103:   const ymd = safeStr(targetYmd);
+00104:   const hour = normalizeHour(targetHour);
+00105: 
+00106:   if (!isYMD(ymd) || !hour) return null;
+00107: 
+00108:   return (
+00109:     (Array.isArray(draws) ? draws : []).find((draw) => {
+00110:       return (
+00111:         pickDrawYMD(draw) === ymd &&
+00112:         normalizeHour(pickDrawHour(draw)) === hour
+00113:       );
+00114:     }) || null
+00115:   );
+00116: }
+00117: function normalizeSnapshot(snapshot) {
+00118:   return (Array.isArray(snapshot) ? snapshot : [])
+00119:     .slice(0, 3)
+00120:     .map((item, index) => ({
+00121:       rank: Number(item?.rank || index + 1),
+00122:       grupo: Number(item?.grupo),
+00123:       animal: safeStr(item?.animal || ""),
+00124:       prob: Number(item?.prob || 0),
+00125:       probPct: Number(item?.probPct || 0),
+00126:       milhares20: Array.isArray(item?.milhares20)
+00127:         ? item.milhares20.map(normalizeMilhar).filter(Boolean).slice(0, 20)
+00128:         : [],
+00129:       milharesCols: Array.isArray(item?.milharesCols)
+00130:         ? cleanFirestoreValue(item.milharesCols)
+00131:         : [],
+00132:       meta: cleanFirestoreValue(item?.meta || null),
+00133:     }))
+00134:     .filter((item) => {
+00135:       return (
+00136:         Number.isFinite(item.grupo) &&
+00137:         item.grupo >= 1 &&
+00138:         item.grupo <= 25
+00139:       );
+00140:     });
+00141: }
+00142: 
+00143: function extractPrizeGrupo(prize) {
+00144:   const direct = Number(
+00145:     prize?.grupo ??
+00146:       prize?.group ??
+00147:       prize?.animal_grupo ??
+00148:       prize?.grupo2
+00149:   );
+00150: 
+00151:   if (
+00152:     Number.isFinite(direct) &&
+00153:     direct >= 1 &&
+00154:     direct <= 25
+00155:   ) {
+00156:     return direct;
+00157:   }
+00158: 
+00159:   const milhar = normalizeMilhar(
+00160:     prize?.milhar ??
+00161:       prize?.numero ??
+00162:       prize?.number ??
+00163:       prize?.valor ??
+00164:       ""
+00165:   );
+00166: 
+00167:   if (!milhar) return null;
+00168: 
+00169:   const dezena = Number(milhar.slice(-2));
+00170:   const normalizedDezena = dezena === 0 ? 100 : dezena;
+00171:   const grupo = Math.ceil(normalizedDezena / 4);
+00172: 
+00173:   return grupo >= 1 && grupo <= 25 ? grupo : null;
+00174: }
+00175: 
+00176: function extractOfficialPodium(draw) {
+00177:   const prizes = Array.isArray(draw?.prizes)
+00178:     ? draw.prizes
+00179:     : [];
+00180: 
+
+====================================================================================================
+2. ALGORITMO COMPLETO DE CLASSIFICAÇÃO DO ACERTO
+LINHAS: 181 até 344
+====================================================================================================
+00181:   return [1, 2, 3].map((position) => {
+00182:     const prize =
+00183:       prizes.find(
+00184:         (item) => Number(item?.position) === position
+00185:       ) ||
+00186:       prizes[position - 1] ||
+00187:       null;
+00188: 
+00189:     if (!prize) return null;
+00190: 
+00191:     const grupo = extractPrizeGrupo(prize);
+00192:     const milhar = normalizeMilhar(
+00193:       prize?.milhar ??
+00194:         prize?.numero ??
+00195:         prize?.number ??
+00196:         prize?.valor ??
+00197:         ""
+00198:     );
+00199: 
+00200:     if (
+00201:       !Number.isFinite(Number(grupo)) ||
+00202:       Number(grupo) < 1 ||
+00203:       Number(grupo) > 25
+00204:     ) {
+00205:       return null;
+00206:     }
+00207: 
+00208:     return {
+00209:       position,
+00210:       grupo: Number(grupo),
+00211:       milhar,
+00212:       animal: safeStr(prize?.animal || ""),
+00213:     };
+00214:   });
+00215: }
+00216: 
+00217: function podiumMedalFromPosition(position) {
+00218:   if (Number(position) === 1) return "gold";
+00219:   if (Number(position) === 2) return "silver";
+00220:   if (Number(position) === 3) return "bronze";
+00221:   return "";
+00222: }
+00223: 
+00224: function analyzeSnapshotHit(snapshot, officialPodium) {
+00225:   const top3 = Array.isArray(snapshot)
+00226:     ? snapshot.slice(0, 3)
+00227:     : [];
+00228: 
+00229:   const podium = Array.isArray(officialPodium)
+00230:     ? officialPodium.filter(Boolean).slice(0, 3)
+00231:     : [];
+00232: 
+00233:   if (!top3.length || !podium.length) {
+00234:     return {
+00235:       hitType: "miss",
+00236:       hitScore: 0,
+00237:       hitPosition: -1,
+00238:       predictionPosition: -1,
+00239:       resultPosition: -1,
+00240:       podiumMedal: "",
+00241:       matchedValue: "",
+00242:       matchedGrupo: null,
+00243:       matchedMilhar: "",
+00244:       matchedAnimal: "",
+00245:     };
+00246:   }
+00247: 
+00248:   for (const officialPrize of podium) {
+00249:     const resultGrupo = Number(officialPrize?.grupo);
+00250:     const resultMilhar = normalizeMilhar(
+00251:       officialPrize?.milhar
+00252:     );
+00253:     const resultCentena = resultMilhar
+00254:       ? resultMilhar.slice(-3)
+00255:       : "";
+00256: 
+00257:     for (
+00258:       let predictionIndex = 0;
+00259:       predictionIndex < top3.length;
+00260:       predictionIndex += 1
+00261:     ) {
+00262:       const prediction = top3[predictionIndex];
+00263:       const predictionGrupo = Number(prediction?.grupo);
+00264: 
+00265:       const milhares = (
+00266:         Array.isArray(prediction?.milhares20)
+00267:           ? prediction.milhares20
+00268:           : Array.isArray(prediction?.milhares)
+00269:             ? prediction.milhares
+00270:             : []
+00271:       )
+00272:         .map(normalizeMilhar)
+00273:         .filter(Boolean);
+00274: 
+00275:       const centenas = milhares.map(
+00276:         (value) => value.slice(-3)
+00277:       );
+00278: 
+00279:       let hitType = "miss";
+00280:       let hitScore = 0;
+00281:       let matchedValue = "";
+00282: 
+00283:       if (
+00284:         resultMilhar &&
+00285:         milhares.includes(resultMilhar)
+00286:       ) {
+00287:         hitType = "hit_exact";
+00288:         hitScore = 100;
+00289:         matchedValue = resultMilhar;
+00290:       } else if (
+00291:         resultCentena &&
+00292:         centenas.includes(resultCentena)
+00293:       ) {
+00294:         hitType = "hit_centena";
+00295:         hitScore = 66.67;
+00296:         matchedValue = resultCentena;
+00297:       } else if (
+00298:         Number.isFinite(resultGrupo) &&
+00299:         predictionGrupo === resultGrupo
+00300:       ) {
+00301:         hitType = "hit_grupo";
+00302:         hitScore = 33.33;
+00303:         matchedValue = resultMilhar
+00304:           ? resultMilhar.slice(-2)
+00305:           : String(resultGrupo).padStart(2, "0");
+00306:       }
+00307: 
+00308:       if (hitType !== "miss") {
+00309:         const resultPosition = Number(
+00310:           officialPrize?.position
+00311:         );
+00312: 
+00313:         return {
+00314:           hitType,
+00315:           hitScore,
+00316:           hitPosition: predictionIndex + 1,
+00317:           predictionPosition: predictionIndex + 1,
+00318:           resultPosition,
+00319:           podiumMedal:
+00320:             podiumMedalFromPosition(resultPosition),
+00321:           matchedValue,
+00322:           matchedGrupo: resultGrupo,
+00323:           matchedMilhar: resultMilhar,
+00324:           matchedAnimal: safeStr(
+00325:             officialPrize?.animal || ""
+00326:           ),
+00327:         };
+00328:       }
+00329:     }
+00330:   }
+00331: 
+00332:   return {
+00333:     hitType: "miss",
+00334:     hitScore: 0,
+00335:     hitPosition: -1,
+00336:     predictionPosition: -1,
+00337:     resultPosition: -1,
+00338:     podiumMedal: "",
+00339:     matchedValue: "",
+00340:     matchedGrupo: null,
+00341:     matchedMilhar: "",
+00342:     matchedAnimal: "",
+00343:   };
+00344: }
+
+====================================================================================================
+3. SALVAMENTO ORIGINAL DA PREVISÃO
+LINHAS: 345 até 455
+====================================================================================================
+00345: 
+00346: export async function saveTop3PredictionSnapshot({
+00347:   lotteryKey,
+00348:   targetYmd,
+00349:   targetHour,
+00350:   picks,
+00351:   snapshot,
+00352:   engineVersion,
+00353: }) {
+00354:   let user = null;
+00355: 
+00356:   try {
+00357:     user = await loginAnonymous();
+00358:   } catch (error) {
+00359:     return {
+00360:       ok: false,
+00361:       skipped: true,
+00362:       reason: "AUTH_FAILED",
+00363:       error: String(error?.message || error || ""),
+00364:     };
+00365:   }
+00366: 
+00367:   if (!user?.uid) {
+00368:     return {
+00369:       ok: false,
+00370:       skipped: true,
+00371:       reason: "AUTH_REQUIRED",
+00372:     };
+00373:   }
+00374: 
+00375:   const lottery = normalizeLotteryKey(lotteryKey);
+00376:   const ymd = safeStr(targetYmd);
+00377:   const hour = normalizeHour(targetHour);
+00378:   const ref = predictionRef({
+00379:     lotteryKey: lottery,
+00380:     targetYmd: ymd,
+00381:     targetHour: hour,
+00382:   });
+00383: 
+00384:   if (!ref || !isYMD(ymd) || !hour) {
+00385:     return {
+00386:       ok: false,
+00387:       skipped: true,
+00388:       reason: "INVALID_TARGET",
+00389:     };
+00390:   }
+00391: 
+00392:   const normalizedSnapshot = normalizeSnapshot(snapshot);
+00393: 
+00394:   if (!normalizedSnapshot.length) {
+00395:     return {
+00396:       ok: false,
+00397:       skipped: true,
+00398:       reason: "EMPTY_SNAPSHOT",
+00399:     };
+00400:   }
+00401: 
+00402:   const normalizedPicks = Array.from(
+00403:     new Set(
+00404:       (Array.isArray(picks) ? picks : [])
+00405:         .map(Number)
+00406:         .filter((value) => value >= 1 && value <= 25)
+00407:     )
+00408:   ).slice(0, 3);
+00409: 
+00410:   const now = Date.now();
+00411: 
+00412:   const payload = cleanFirestoreValue({
+00413:     id: ref.id,
+00414:     lotteryKey: lottery,
+00415:     targetYmd: ymd,
+00416:     targetHour: hour,
+00417:     targetKey: `${ymd}_${hour}`,
+00418:     picks: normalizedPicks,
+00419:     snapshot: normalizedSnapshot,
+00420:     engineVersion: safeStr(engineVersion || "V3_STATISTICAL"),
+00421:     status: "predicted",
+00422:     resultGrupo: null,
+00423:     resultMilhar: "",
+00424:     resultAnimal: "",
+00425:     hitType: "",
+00426:     hitScore: 0,
+00427:     hitPosition: -1,
+00428:     matchedValue: "",
+00429:     createdAt: now,
+00430:     updatedAt: now,
+00431:     createdBy: user.uid,
+00432:   });
+00433: 
+00434:   const result = await runTransaction(db, async (transaction) => {
+00435:     const current = await transaction.get(ref);
+00436: 
+00437:     if (current.exists()) {
+00438:       return {
+00439:         ok: true,
+00440:         created: false,
+00441:         existing: true,
+00442:       };
+00443:     }
+00444: 
+00445:     transaction.set(ref, payload);
+00446: 
+00447:     return {
+00448:       ok: true,
+00449:       created: true,
+00450:       existing: false,
+00451:     };
+00452:   });
+00453: 
+00454:   return result;
+00455: }
+
+====================================================================================================
+4. LEITURA E RECONCILIAÇÃO COMPLETA
+LINHAS: 456 até 666
+====================================================================================================
+00456: 
+00457: export async function loadTop3PredictionDay({
+00458:   lotteryKey,
+00459:   targetYmd,
+00460:   schedule,
+00461: }) {
+00462:   const lottery = normalizeLotteryKey(lotteryKey);
+00463:   const ymd = safeStr(targetYmd);
+00464: 
+00465:   if (!isYMD(ymd)) return [];
+00466: 
+00467:   const hours = Array.from(
+00468:     new Set(
+00469:       (Array.isArray(schedule) ? schedule : [])
+00470:         .map(normalizeHour)
+00471:         .filter(Boolean)
+00472:     )
+00473:   );
+00474: 
+00475:   const snapshots = await Promise.all(
+00476:     hours.map(async (hour) => {
+00477:       const ref = predictionRef({
+00478:         lotteryKey: lottery,
+00479:         targetYmd: ymd,
+00480:         targetHour: hour,
+00481:       });
+00482: 
+00483:       if (!ref) return null;
+00484: 
+00485:       try {
+00486:         const snap = await getDoc(ref);
+00487:         if (!snap.exists()) return null;
+00488: 
+00489:         return {
+00490:           id: snap.id,
+00491:           ...snap.data(),
+00492:         };
+00493:       } catch {
+00494:         return null;
+00495:       }
+00496:     })
+00497:   );
+00498: 
+00499:   return snapshots
+00500:     .filter(Boolean)
+00501:     .sort((a, b) => {
+00502:       return normalizeHour(a?.targetHour).localeCompare(
+00503:         normalizeHour(b?.targetHour)
+00504:       );
+00505:     });
+00506: }
+00507: 
+00508: export async function reconcileTop3PredictionDay({
+00509:   lotteryKey,
+00510:   targetYmd,
+00511:   schedule,
+00512:   draws,
+00513: }) {
+00514:   let user = null;
+00515: 
+00516:   try {
+00517:     user = await loginAnonymous();
+00518:   } catch (error) {
+00519:     return {
+00520:       ok: false,
+00521:       skipped: true,
+00522:       reason: "AUTH_FAILED",
+00523:       error: String(error?.message || error || ""),
+00524:     };
+00525:   }
+00526: 
+00527:   if (!user?.uid) {
+00528:     return {
+00529:       ok: false,
+00530:       skipped: true,
+00531:       reason: "AUTH_REQUIRED",
+00532:     };
+00533:   }
+00534: 
+00535:   const history = await loadTop3PredictionDay({
+00536:     lotteryKey,
+00537:     targetYmd,
+00538:     schedule,
+00539:   });
+00540: 
+00541:   const lottery = normalizeLotteryKey(lotteryKey);
+00542:   let updated = 0;
+00543:   const reconciledHistory = [];
+00544: 
+00545:   for (const entry of history) {
+00546:     if (!entry) continue;
+00547: 
+00548:     const realDraw = findDrawForTarget({
+00549:       draws,
+00550:       targetYmd: entry?.targetYmd,
+00551:       targetHour: entry?.targetHour,
+00552:     });
+00553: 
+00554:     if (!realDraw) {
+00555:       reconciledHistory.push(entry);
+00556:       continue;
+00557:     }
+00558: 
+00559:     const officialPodium =
+00560:       extractOfficialPodium(realDraw);
+00561: 
+00562:     const firstOfficialPrize =
+00563:       officialPodium.find(
+00564:         (item) => Number(item?.position) === 1
+00565:       ) || null;
+00566: 
+00567:     const resultGrupo = Number(
+00568:       firstOfficialPrize?.grupo
+00569:     );
+00570: 
+00571:     if (
+00572:       !Number.isFinite(resultGrupo) ||
+00573:       resultGrupo < 1 ||
+00574:       resultGrupo > 25
+00575:     ) {
+00576:       reconciledHistory.push(entry);
+00577:       continue;
+00578:     }
+00579: 
+00580:     const resultMilhar = normalizeMilhar(
+00581:       firstOfficialPrize?.milhar
+00582:     );
+00583:     const savedLottery = safeStr(
+00584:       entry?.resultLotteryKey
+00585:     ).toUpperCase();
+00586:     const savedGrupo = Number(entry?.resultGrupo);
+00587:     const savedMilhar = normalizeMilhar(entry?.resultMilhar);
+00588: 
+00589:     const analysis = analyzeSnapshotHit(
+00590:       entry?.snapshot,
+00591:       officialPodium
+00592:     );
+00593: 
+00594:     const alreadyMatchesRealResult =
+00595:       entry?.status === "validated" &&
+00596:       savedLottery === lottery &&
+00597:       savedGrupo === resultGrupo &&
+00598:       savedMilhar === resultMilhar &&
+00599:       safeStr(entry?.hitType) === analysis.hitType &&
+00600:       Number(entry?.hitScore) === analysis.hitScore &&
+00601:       Number(entry?.hitPosition) === analysis.hitPosition &&
+00602:       Number(entry?.resultPosition ?? -1) ===
+00603:         Number(analysis.resultPosition ?? -1) &&
+00604:       safeStr(entry?.podiumMedal) ===
+00605:         safeStr(analysis.podiumMedal) &&
+00606:       safeStr(entry?.matchedValue) === analysis.matchedValue;
+00607: 
+00608:     if (alreadyMatchesRealResult) {
+00609:       reconciledHistory.push(entry);
+00610:       continue;
+00611:     }
+00612: 
+00613:     const ref = doc(db, COLLECTION, entry.id);
+00614:     const now = Date.now();
+00615: 
+00616:     const validationPayload = {
+00617:       resultGrupo,
+00618:       resultMilhar,
+00619:       resultLotteryKey: lottery,
+00620:       resultAnimal: safeStr(
+00621:         firstOfficialPrize?.animal ||
+00622:           extractPrize1(realDraw)?.animal ||
+00623:           ""
+00624:       ),
+00625:       resultTop3Groups: officialPodium.map(
+00626:         (item) => Number(item?.grupo) || null
+00627:       ),
+00628:       resultTop3Milhares: officialPodium.map(
+00629:         (item) => normalizeMilhar(item?.milhar)
+00630:       ),
+00631:       hitType: analysis.hitType,
+00632:       hitScore: analysis.hitScore,
+00633:       hitPosition: analysis.hitPosition,
+00634:       predictionPosition: analysis.predictionPosition,
+00635:       resultPosition: analysis.resultPosition,
+00636:       podiumMedal: analysis.podiumMedal,
+00637:       matchedGrupo: analysis.matchedGrupo,
+00638:       matchedMilhar: analysis.matchedMilhar,
+00639:       matchedAnimal: analysis.matchedAnimal,
+00640:       matchedValue: analysis.matchedValue,
+00641:       validatedAt: now,
+00642:       validatedBy: user.uid,
+00643:       updatedAt: now,
+00644:       status: "validated",
+00645:     };
+00646: 
+00647:     await setDoc(
+00648:       ref,
+00649:       validationPayload,
+00650:       { merge: true }
+00651:     );
+00652: 
+00653:     reconciledHistory.push({
+00654:       ...entry,
+00655:       ...validationPayload,
+00656:     });
+00657: 
+00658:     updated += 1;
+00659:   }
+00660: 
+00661:   return {
+00662:     ok: true,
+00663:     updated,
+00664:     history: reconciledHistory,
+00665:   };
+00666: }
+
+====================================================================================================
+5. ÍNDICE DOS CAMPOS CRÍTICOS
+====================================================================================================
+00006: setDoc,
+00176: function extractOfficialPodium(draw) {
+00217: function podiumMedalFromPosition(position) {
+00224: function analyzeSnapshotHit(snapshot, officialPodium) {
+00235: hitType: "miss",
+00236: hitScore: 0,
+00237: hitPosition: -1,
+00238: predictionPosition: -1,
+00239: resultPosition: -1,
+00240: podiumMedal: "",
+00241: matchedValue: "",
+00242: matchedGrupo: null,
+00243: matchedMilhar: "",
+00244: matchedAnimal: "",
+00249: const resultGrupo = Number(officialPrize?.grupo);
+00250: const resultMilhar = normalizeMilhar(
+00253: const resultCentena = resultMilhar
+00254: ? resultMilhar.slice(-3)
+00279: let hitType = "miss";
+00280: let hitScore = 0;
+00281: let matchedValue = "";
+00284: resultMilhar &&
+00285: milhares.includes(resultMilhar)
+00287: hitType = "hit_exact";
+00288: hitScore = 100;
+00289: matchedValue = resultMilhar;
+00294: hitType = "hit_centena";
+00295: hitScore = 66.67;
+00296: matchedValue = resultCentena;
+00298: Number.isFinite(resultGrupo) &&
+00299: predictionGrupo === resultGrupo
+00301: hitType = "hit_grupo";
+00302: hitScore = 33.33;
+00303: matchedValue = resultMilhar
+00304: ? resultMilhar.slice(-2)
+00305: : String(resultGrupo).padStart(2, "0");
+00308: if (hitType !== "miss") {
+00309: const resultPosition = Number(
+00314: hitType,
+00315: hitScore,
+00316: hitPosition: predictionIndex + 1,
+00317: predictionPosition: predictionIndex + 1,
+00318: resultPosition,
+00319: podiumMedal:
+00320: podiumMedalFromPosition(resultPosition),
+00321: matchedValue,
+00322: matchedGrupo: resultGrupo,
+00323: matchedMilhar: resultMilhar,
+00324: matchedAnimal: safeStr(
+00333: hitType: "miss",
+00334: hitScore: 0,
+00335: hitPosition: -1,
+00336: predictionPosition: -1,
+00337: resultPosition: -1,
+00338: podiumMedal: "",
+00339: matchedValue: "",
+00340: matchedGrupo: null,
+00341: matchedMilhar: "",
+00342: matchedAnimal: "",
+00422: resultGrupo: null,
+00423: resultMilhar: "",
+00425: hitType: "",
+00426: hitScore: 0,
+00427: hitPosition: -1,
+00428: matchedValue: "",
+00567: const resultGrupo = Number(
+00572: !Number.isFinite(resultGrupo) ||
+00573: resultGrupo < 1 ||
+00574: resultGrupo > 25
+00580: const resultMilhar = normalizeMilhar(
+00586: const savedGrupo = Number(entry?.resultGrupo);
+00587: const savedMilhar = normalizeMilhar(entry?.resultMilhar);
+00597: savedGrupo === resultGrupo &&
+00598: savedMilhar === resultMilhar &&
+00599: safeStr(entry?.hitType) === analysis.hitType &&
+00600: Number(entry?.hitScore) === analysis.hitScore &&
+00601: Number(entry?.hitPosition) === analysis.hitPosition &&
+00602: Number(entry?.resultPosition ?? -1) ===
+00603: Number(analysis.resultPosition ?? -1) &&
+00604: safeStr(entry?.podiumMedal) ===
+00605: safeStr(analysis.podiumMedal) &&
+00606: safeStr(entry?.matchedValue) === analysis.matchedValue;
+00616: const validationPayload = {
+00617: resultGrupo,
+00618: resultMilhar,
+00625: resultTop3Groups: officialPodium.map(
+00628: resultTop3Milhares: officialPodium.map(
+00631: hitType: analysis.hitType,
+00632: hitScore: analysis.hitScore,
+00633: hitPosition: analysis.hitPosition,
+00634: predictionPosition: analysis.predictionPosition,
+00635: resultPosition: analysis.resultPosition,
+00636: podiumMedal: analysis.podiumMedal,
+00637: matchedGrupo: analysis.matchedGrupo,
+00638: matchedMilhar: analysis.matchedMilhar,
+00639: matchedAnimal: analysis.matchedAnimal,
+00640: matchedValue: analysis.matchedValue,
+00647: await setDoc(
+00649: validationPayload,
+00655: ...validationPayload,

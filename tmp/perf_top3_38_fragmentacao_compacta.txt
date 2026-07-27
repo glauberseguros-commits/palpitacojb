@@ -1,0 +1,4645 @@
+====================================================================================================
+PERF-TOP3-38 — AUDITORIA PARA FRAGMENTAÇÃO COMPACTA
+====================================================================================================
+Data: 2026-07-24 10:07:31
+HEAD: 28d88bf9000215e8fbf3ea782224bbc4188b038c
+Branch: main
+
+Objetivo:
+- localizar todos os consumidores da estrutura compact_years;
+- localizar testes existentes;
+- confirmar contratos de manifesto, leitura e incremental;
+- não alterar código nem Firestore.
+====================================================================================================
+
+====================================================================================================
+1. TODOS OS USOS DA ESTRUTURA COMPACTA
+====================================================================================================
+
+  backend\engine\top3HistoryRepository.js:7:const ROOT_COLLECTION = "top3_history";
+  backend\engine\top3HistoryRepository.js:8:const MONTHS_COLLECTION = "months";
+  backend\engine\top3HistoryRepository.js:9:const METADATA_COLLECTION = "metadata";
+  backend\engine\top3HistoryRepository.js:10:const CURRENT_METADATA_DOC = "current";
+  backend\engine\top3HistoryRepository.js:11:const SCHEMA_VERSION = 1;
+  backend\engine\top3HistoryRepository.js:12:
+> backend\engine\top3HistoryRepository.js:13:const COMPACT_COLLECTION = "compact_years";
+> backend\engine\top3HistoryRepository.js:14:const COMPACT_MANIFEST_DOC = "__manifest";
+  backend\engine\top3HistoryRepository.js:15:const COMPACT_SCHEMA_VERSION = 1;
+  backend\engine\top3HistoryRepository.js:16:
+  backend\engine\top3HistoryRepository.js:17:function normalizeLotteryKey(value) {
+  backend\engine\top3HistoryRepository.js:18:  const key = String(value || "PT_RIO")
+  backend\engine\top3HistoryRepository.js:19:    .trim()
+  backend\engine\top3HistoryRepository.js:20:    .toUpperCase();
+  backend\engine\top3HistoryRepository.js:21:
+  backend\engine\top3HistoryRepository.js:22:  if (!key) {
+  backend\engine\top3HistoryRepository.js:23:    throw new Error(
+  backend\engine\top3HistoryRepository.js:24:      "lotteryKey obrigatório."
+  backend\engine\top3HistoryRepository.js:25:    );
+  backend\engine\top3HistoryRepository.js:26:  }
+  backend\engine\top3HistoryRepository.js:116:  database,
+  backend\engine\top3HistoryRepository.js:117:  lotteryKey
+  backend\engine\top3HistoryRepository.js:118:) {
+  backend\engine\top3HistoryRepository.js:119:  return historyRootRef(
+  backend\engine\top3HistoryRepository.js:120:    database,
+  backend\engine\top3HistoryRepository.js:121:    lotteryKey
+> backend\engine\top3HistoryRepository.js:122:  ).collection(COMPACT_COLLECTION);
+  backend\engine\top3HistoryRepository.js:123:}
+  backend\engine\top3HistoryRepository.js:124:
+  backend\engine\top3HistoryRepository.js:125:function compactYearRef(
+  backend\engine\top3HistoryRepository.js:126:  database,
+  backend\engine\top3HistoryRepository.js:127:  lotteryKey,
+  backend\engine\top3HistoryRepository.js:128:  year
+  backend\engine\top3HistoryRepository.js:129:) {
+  backend\engine\top3HistoryRepository.js:130:  return compactCollectionRef(
+  backend\engine\top3HistoryRepository.js:131:    database,
+  backend\engine\top3HistoryRepository.js:132:    lotteryKey
+  backend\engine\top3HistoryRepository.js:133:  ).doc(normalizeYear(year));
+  backend\engine\top3HistoryRepository.js:134:}
+  backend\engine\top3HistoryRepository.js:137:  database,
+  backend\engine\top3HistoryRepository.js:138:  lotteryKey
+  backend\engine\top3HistoryRepository.js:139:) {
+  backend\engine\top3HistoryRepository.js:140:  return compactCollectionRef(
+  backend\engine\top3HistoryRepository.js:141:    database,
+  backend\engine\top3HistoryRepository.js:142:    lotteryKey
+> backend\engine\top3HistoryRepository.js:143:  ).doc(COMPACT_MANIFEST_DOC);
+  backend\engine\top3HistoryRepository.js:144:}
+  backend\engine\top3HistoryRepository.js:145:
+  backend\engine\top3HistoryRepository.js:146:function safeArray(value) {
+  backend\engine\top3HistoryRepository.js:147:  return Array.isArray(value)
+  backend\engine\top3HistoryRepository.js:148:    ? value
+  backend\engine\top3HistoryRepository.js:149:    : [];
+  backend\engine\top3HistoryRepository.js:150:}
+  backend\engine\top3HistoryRepository.js:151:
+  backend\engine\top3HistoryRepository.js:152:function normalizePrize(prize = {}) {
+  backend\engine\top3HistoryRepository.js:153:  const position = Number(prize.position);
+  backend\engine\top3HistoryRepository.js:154:  const grupo = Number(prize.grupo);
+  backend\engine\top3HistoryRepository.js:155:
+  backend\engine\top3HistoryRepository.js:560:    prizes: safeArray(row.p)
+  backend\engine\top3HistoryRepository.js:561:      .map(decodeCompactPrize)
+  backend\engine\top3HistoryRepository.js:562:      .filter(Boolean),
+  backend\engine\top3HistoryRepository.js:563:  });
+  backend\engine\top3HistoryRepository.js:564:}
+  backend\engine\top3HistoryRepository.js:565:
+> backend\engine\top3HistoryRepository.js:566:async function readCompactManifest(
+  backend\engine\top3HistoryRepository.js:567:  lotteryKey,
+  backend\engine\top3HistoryRepository.js:568:  dependencies = {}
+  backend\engine\top3HistoryRepository.js:569:) {
+  backend\engine\top3HistoryRepository.js:570:  const database = resolveDb(dependencies);
+  backend\engine\top3HistoryRepository.js:571:  const key = normalizeLotteryKey(lotteryKey);
+  backend\engine\top3HistoryRepository.js:572:
+  backend\engine\top3HistoryRepository.js:573:  const snap = await compactManifestRef(
+  backend\engine\top3HistoryRepository.js:574:    database,
+  backend\engine\top3HistoryRepository.js:575:    key
+  backend\engine\top3HistoryRepository.js:576:  ).get();
+  backend\engine\top3HistoryRepository.js:577:
+  backend\engine\top3HistoryRepository.js:578:  return {
+  backend\engine\top3HistoryRepository.js:581:    data: snap.exists
+  backend\engine\top3HistoryRepository.js:582:      ? snap.data() || {}
+  backend\engine\top3HistoryRepository.js:583:      : null,
+  backend\engine\top3HistoryRepository.js:584:  };
+  backend\engine\top3HistoryRepository.js:585:}
+  backend\engine\top3HistoryRepository.js:586:
+> backend\engine\top3HistoryRepository.js:587:async function writeCompactManifest(
+  backend\engine\top3HistoryRepository.js:588:  lotteryKey,
+  backend\engine\top3HistoryRepository.js:589:  metadata = {},
+  backend\engine\top3HistoryRepository.js:590:  dependencies = {}
+  backend\engine\top3HistoryRepository.js:591:) {
+  backend\engine\top3HistoryRepository.js:592:  const database = resolveDb(dependencies);
+  backend\engine\top3HistoryRepository.js:593:  const key = normalizeLotteryKey(lotteryKey);
+  backend\engine\top3HistoryRepository.js:594:
+  backend\engine\top3HistoryRepository.js:595:  const payload = {
+  backend\engine\top3HistoryRepository.js:596:    ...metadata,
+  backend\engine\top3HistoryRepository.js:597:    schemaVersion: COMPACT_SCHEMA_VERSION,
+  backend\engine\top3HistoryRepository.js:598:    lotteryKey: key,
+  backend\engine\top3HistoryRepository.js:599:    updatedAt: new Date(),
+  backend\engine\top3HistoryRepository.js:609:    }
+  backend\engine\top3HistoryRepository.js:610:  );
+  backend\engine\top3HistoryRepository.js:611:
+  backend\engine\top3HistoryRepository.js:612:  return payload;
+  backend\engine\top3HistoryRepository.js:613:}
+  backend\engine\top3HistoryRepository.js:614:
+> backend\engine\top3HistoryRepository.js:615:async function readCompactHistoryYear(
+  backend\engine\top3HistoryRepository.js:616:  lotteryKey,
+  backend\engine\top3HistoryRepository.js:617:  year,
+  backend\engine\top3HistoryRepository.js:618:  dependencies = {}
+  backend\engine\top3HistoryRepository.js:619:) {
+  backend\engine\top3HistoryRepository.js:620:  const database = resolveDb(dependencies);
+  backend\engine\top3HistoryRepository.js:621:  const key = normalizeLotteryKey(lotteryKey);
+  backend\engine\top3HistoryRepository.js:622:  const normalizedYear = normalizeYear(year);
+  backend\engine\top3HistoryRepository.js:623:
+  backend\engine\top3HistoryRepository.js:624:  const snap = await compactYearRef(
+  backend\engine\top3HistoryRepository.js:625:    database,
+  backend\engine\top3HistoryRepository.js:626:    key,
+  backend\engine\top3HistoryRepository.js:627:    normalizedYear
+  backend\engine\top3HistoryRepository.js:649:        .filter(Boolean)
+  backend\engine\top3HistoryRepository.js:650:    ),
+  backend\engine\top3HistoryRepository.js:651:    data,
+  backend\engine\top3HistoryRepository.js:652:  };
+  backend\engine\top3HistoryRepository.js:653:}
+  backend\engine\top3HistoryRepository.js:654:
+> backend\engine\top3HistoryRepository.js:655:async function writeCompactHistoryYear(
+  backend\engine\top3HistoryRepository.js:656:  lotteryKey,
+  backend\engine\top3HistoryRepository.js:657:  year,
+  backend\engine\top3HistoryRepository.js:658:  draws,
+  backend\engine\top3HistoryRepository.js:659:  dependencies = {}
+  backend\engine\top3HistoryRepository.js:660:) {
+  backend\engine\top3HistoryRepository.js:661:  const database = resolveDb(dependencies);
+  backend\engine\top3HistoryRepository.js:662:  const key = normalizeLotteryKey(lotteryKey);
+  backend\engine\top3HistoryRepository.js:663:  const normalizedYear = normalizeYear(year);
+  backend\engine\top3HistoryRepository.js:664:
+  backend\engine\top3HistoryRepository.js:665:  const normalizedDraws = deduplicateDraws(
+  backend\engine\top3HistoryRepository.js:666:    draws
+  backend\engine\top3HistoryRepository.js:667:  ).filter(
+  backend\engine\top3HistoryRepository.js:705:    }
+  backend\engine\top3HistoryRepository.js:706:  );
+  backend\engine\top3HistoryRepository.js:707:
+  backend\engine\top3HistoryRepository.js:708:  return payload;
+  backend\engine\top3HistoryRepository.js:709:}
+  backend\engine\top3HistoryRepository.js:710:
+> backend\engine\top3HistoryRepository.js:711:async function upsertCompactHistoryYear(
+  backend\engine\top3HistoryRepository.js:712:  lotteryKey,
+  backend\engine\top3HistoryRepository.js:713:  year,
+  backend\engine\top3HistoryRepository.js:714:  newDraws,
+  backend\engine\top3HistoryRepository.js:715:  dependencies = {}
+  backend\engine\top3HistoryRepository.js:716:) {
+  backend\engine\top3HistoryRepository.js:717:  const current =
+> backend\engine\top3HistoryRepository.js:718:    await readCompactHistoryYear(
+  backend\engine\top3HistoryRepository.js:719:      lotteryKey,
+  backend\engine\top3HistoryRepository.js:720:      year,
+  backend\engine\top3HistoryRepository.js:721:      dependencies
+  backend\engine\top3HistoryRepository.js:722:    );
+  backend\engine\top3HistoryRepository.js:723:
+  backend\engine\top3HistoryRepository.js:724:  const merged = deduplicateDraws([
+  backend\engine\top3HistoryRepository.js:725:    ...current.draws,
+  backend\engine\top3HistoryRepository.js:726:    ...safeArray(newDraws),
+  backend\engine\top3HistoryRepository.js:727:  ]);
+  backend\engine\top3HistoryRepository.js:728:
+  backend\engine\top3HistoryRepository.js:729:  const payload =
+> backend\engine\top3HistoryRepository.js:730:    await writeCompactHistoryYear(
+  backend\engine\top3HistoryRepository.js:731:      lotteryKey,
+  backend\engine\top3HistoryRepository.js:732:      year,
+  backend\engine\top3HistoryRepository.js:733:      merged,
+  backend\engine\top3HistoryRepository.js:734:      dependencies
+  backend\engine\top3HistoryRepository.js:735:    );
+  backend\engine\top3HistoryRepository.js:736:
+  backend\engine\top3HistoryRepository.js:737:  return {
+  backend\engine\top3HistoryRepository.js:738:    ...payload,
+  backend\engine\top3HistoryRepository.js:739:    previousDrawCount:
+  backend\engine\top3HistoryRepository.js:740:      current.draws.length,
+  backend\engine\top3HistoryRepository.js:741:  };
+  backend\engine\top3HistoryRepository.js:742:}
+  backend\engine\top3HistoryRepository.js:743:
+> backend\engine\top3HistoryRepository.js:744:async function readCompactFullHistory(
+  backend\engine\top3HistoryRepository.js:745:  lotteryKey,
+  backend\engine\top3HistoryRepository.js:746:  dependencies = {}
+  backend\engine\top3HistoryRepository.js:747:) {
+  backend\engine\top3HistoryRepository.js:748:  const key = normalizeLotteryKey(lotteryKey);
+  backend\engine\top3HistoryRepository.js:749:
+  backend\engine\top3HistoryRepository.js:750:  const manifestResult =
+> backend\engine\top3HistoryRepository.js:751:    await readCompactManifest(
+  backend\engine\top3HistoryRepository.js:752:      key,
+  backend\engine\top3HistoryRepository.js:753:      dependencies
+  backend\engine\top3HistoryRepository.js:754:    );
+  backend\engine\top3HistoryRepository.js:755:
+  backend\engine\top3HistoryRepository.js:756:  const manifest =
+  backend\engine\top3HistoryRepository.js:757:    manifestResult?.data || null;
+  backend\engine\top3HistoryRepository.js:758:
+  backend\engine\top3HistoryRepository.js:759:  if (
+  backend\engine\top3HistoryRepository.js:760:    manifestResult?.exists !== true ||
+  backend\engine\top3HistoryRepository.js:761:    manifest?.status !== "complete"
+  backend\engine\top3HistoryRepository.js:762:  ) {
+  backend\engine\top3HistoryRepository.js:763:    return [];
+  backend\engine\top3HistoryRepository.js:780:  }
+  backend\engine\top3HistoryRepository.js:781:
+  backend\engine\top3HistoryRepository.js:782:  const yearlyResults =
+  backend\engine\top3HistoryRepository.js:783:    await Promise.all(
+  backend\engine\top3HistoryRepository.js:784:      years.map(
+  backend\engine\top3HistoryRepository.js:785:        (year) =>
+> backend\engine\top3HistoryRepository.js:786:          readCompactHistoryYear(
+  backend\engine\top3HistoryRepository.js:787:            key,
+  backend\engine\top3HistoryRepository.js:788:            year,
+  backend\engine\top3HistoryRepository.js:789:            dependencies
+  backend\engine\top3HistoryRepository.js:790:          )
+  backend\engine\top3HistoryRepository.js:791:      )
+  backend\engine\top3HistoryRepository.js:792:    );
+  backend\engine\top3HistoryRepository.js:793:
+  backend\engine\top3HistoryRepository.js:794:  if (
+  backend\engine\top3HistoryRepository.js:795:    yearlyResults.some(
+  backend\engine\top3HistoryRepository.js:796:      (result) =>
+  backend\engine\top3HistoryRepository.js:797:        result.exists !== true
+  backend\engine\top3HistoryRepository.js:798:    )
+  backend\engine\top3HistoryRepository.js:853:) {
+  backend\engine\top3HistoryRepository.js:854:  if (
+  backend\engine\top3HistoryRepository.js:855:    dependencies.forceLegacy !== true
+  backend\engine\top3HistoryRepository.js:856:  ) {
+  backend\engine\top3HistoryRepository.js:857:    try {
+  backend\engine\top3HistoryRepository.js:858:      const compact =
+> backend\engine\top3HistoryRepository.js:859:        await readCompactFullHistory(
+  backend\engine\top3HistoryRepository.js:860:          lotteryKey,
+  backend\engine\top3HistoryRepository.js:861:          dependencies
+  backend\engine\top3HistoryRepository.js:862:        );
+  backend\engine\top3HistoryRepository.js:863:
+  backend\engine\top3HistoryRepository.js:864:      if (compact.length) {
+  backend\engine\top3HistoryRepository.js:865:        return compact;
+  backend\engine\top3HistoryRepository.js:866:      }
+  backend\engine\top3HistoryRepository.js:867:    } catch (error) {
+  backend\engine\top3HistoryRepository.js:868:      console.warn(
+  backend\engine\top3HistoryRepository.js:869:        "[TOP3-HISTORY] Snapshot compacto indisponível; " +
+  backend\engine\top3HistoryRepository.js:870:        "usando histórico mensal:",
+  backend\engine\top3HistoryRepository.js:871:        error?.message || error
+  backend\engine\top3HistoryRepository.js:881:
+  backend\engine\top3HistoryRepository.js:882:module.exports = {
+  backend\engine\top3HistoryRepository.js:883:  ROOT_COLLECTION,
+  backend\engine\top3HistoryRepository.js:884:  MONTHS_COLLECTION,
+  backend\engine\top3HistoryRepository.js:885:  METADATA_COLLECTION,
+  backend\engine\top3HistoryRepository.js:886:  SCHEMA_VERSION,
+> backend\engine\top3HistoryRepository.js:887:  COMPACT_COLLECTION,
+> backend\engine\top3HistoryRepository.js:888:  COMPACT_MANIFEST_DOC,
+  backend\engine\top3HistoryRepository.js:889:  COMPACT_SCHEMA_VERSION,
+  backend\engine\top3HistoryRepository.js:890:  normalizeLotteryKey,
+  backend\engine\top3HistoryRepository.js:891:  normalizeYearMonth,
+  backend\engine\top3HistoryRepository.js:892:  normalizeYear,
+  backend\engine\top3HistoryRepository.js:893:  normalizeDraw,
+  backend\engine\top3HistoryRepository.js:894:  deduplicateDraws,
+  backend\engine\top3HistoryRepository.js:895:  readHistoryMonth,
+  backend\engine\top3HistoryRepository.js:896:  writeHistoryMonth,
+  backend\engine\top3HistoryRepository.js:897:  upsertHistoryMonth,
+  backend\engine\top3HistoryRepository.js:898:  readMetadata,
+  backend\engine\top3HistoryRepository.js:899:  writeMetadata,
+  backend\engine\top3HistoryRepository.js:900:  listHistoryMonths,
+  backend\engine\top3HistoryRepository.js:901:  encodeCompactPrize,
+  backend\engine\top3HistoryRepository.js:902:  decodeCompactPrize,
+  backend\engine\top3HistoryRepository.js:903:  encodeCompactDraw,
+  backend\engine\top3HistoryRepository.js:904:  decodeCompactDraw,
+> backend\engine\top3HistoryRepository.js:905:  readCompactManifest,
+> backend\engine\top3HistoryRepository.js:906:  writeCompactManifest,
+> backend\engine\top3HistoryRepository.js:907:  readCompactHistoryYear,
+> backend\engine\top3HistoryRepository.js:908:  writeCompactHistoryYear,
+> backend\engine\top3HistoryRepository.js:909:  upsertCompactHistoryYear,
+> backend\engine\top3HistoryRepository.js:910:  readCompactFullHistory,
+  backend\engine\top3HistoryRepository.js:911:  readLegacyFullHistory,
+  backend\engine\top3HistoryRepository.js:912:  readFullHistory,
+  backend\engine\top3HistoryRepository.js:913:};
+  backend\engine\top3HistorySync.js:6:
+  backend\engine\top3HistorySync.js:7:const {
+  backend\engine\top3HistorySync.js:8:  readMetadata,
+  backend\engine\top3HistorySync.js:9:  writeMetadata,
+  backend\engine\top3HistorySync.js:10:  upsertHistoryMonth,
+  backend\engine\top3HistorySync.js:11:  deduplicateDraws,
+> backend\engine\top3HistorySync.js:12:  readCompactManifest,
+> backend\engine\top3HistorySync.js:13:  writeCompactManifest,
+> backend\engine\top3HistorySync.js:14:  upsertCompactHistoryYear,
+  backend\engine\top3HistorySync.js:15:} = require("./top3HistoryRepository");
+  backend\engine\top3HistorySync.js:16:
+  backend\engine\top3HistorySync.js:17:function safeArray(value) {
+  backend\engine\top3HistorySync.js:18:  return Array.isArray(value)
+  backend\engine\top3HistorySync.js:19:    ? value
+  backend\engine\top3HistorySync.js:20:    : [];
+  backend\engine\top3HistorySync.js:21:}
+  backend\engine\top3HistorySync.js:22:
+  backend\engine\top3HistorySync.js:23:function normalizeLotteryKey(value) {
+  backend\engine\top3HistorySync.js:24:  return String(value || "PT_RIO")
+  backend\engine\top3HistorySync.js:25:    .trim()
+  backend\engine\top3HistorySync.js:26:    .toUpperCase() || "PT_RIO";
+  backend\engine\top3HistorySync.js:244:
+  backend\engine\top3HistorySync.js:245:  const saveMetadata =
+  backend\engine\top3HistorySync.js:246:    dependencies.writeMetadata ||
+  backend\engine\top3HistorySync.js:247:    writeMetadata;
+  backend\engine\top3HistorySync.js:248:
+  backend\engine\top3HistorySync.js:249:  const loadCompactManifest =
+> backend\engine\top3HistorySync.js:250:    dependencies.readCompactManifest ||
+> backend\engine\top3HistorySync.js:251:    readCompactManifest;
+  backend\engine\top3HistorySync.js:252:
+  backend\engine\top3HistorySync.js:253:  const saveCompactManifest =
+> backend\engine\top3HistorySync.js:254:    dependencies.writeCompactManifest ||
+> backend\engine\top3HistorySync.js:255:    writeCompactManifest;
+  backend\engine\top3HistorySync.js:256:
+  backend\engine\top3HistorySync.js:257:  const saveCompactYear =
+> backend\engine\top3HistorySync.js:258:    dependencies.upsertCompactHistoryYear ||
+> backend\engine\top3HistorySync.js:259:    upsertCompactHistoryYear;
+  backend\engine\top3HistorySync.js:260:
+  backend\engine\top3HistorySync.js:261:  try {
+  backend\engine\top3HistorySync.js:262:    if (
+  backend\engine\top3HistorySync.js:263:      importResult.blocked === true ||
+  backend\engine\top3HistorySync.js:264:      !validYmd(importResult.date)
+  backend\engine\top3HistorySync.js:265:    ) {
+  backend\engine\top3HistorySync.js:266:      return {
+  backend\engine\top3HistorySync.js:267:        ok: true,
+  backend\engine\top3HistorySync.js:268:        skipped: true,
+  backend\engine\top3HistorySync.js:269:        reason:
+  backend\engine\top3HistorySync.js:270:          importResult.blocked === true
+  backend\engine\top3HistorySync.js:271:            ? "import_blocked"
+
+
+
+====================================================================================================
+2. TESTES RELACIONADOS AO HISTÓRICO TOP3
+====================================================================================================
+
+FullName                                                                                    Length LastWriteTime
+--------                                                                                    ------ -------------
+C:\Users\glaub\palpitaco\backend\scripts\backtestTop3AblationExperimental.js                 12492 18/07/2026 16:45:59
+C:\Users\glaub\palpitaco\backend\scripts\backtestTop3E07Experimental.js                       7110 17/07/2026 22:17:04
+C:\Users\glaub\palpitaco\backend\scripts\backtestTop3E08Experimental.js                       8956 18/07/2026 13:25:17
+C:\Users\glaub\palpitaco\backend\scripts\backtestTop3Official.js                             27561 23/07/2026 22:15:17
+C:\Users\glaub\palpitaco\src\pages\Top3\__tests__\top3.backtest.layers.test.js                9778 06/07/2026 16:05:38
+C:\Users\glaub\palpitaco\src\pages\Top3\__tests__\top3.backtest.test.js                       8196 06/07/2026 16:08:01
+C:\Users\glaub\palpitaco\src\pages\Top3\__tests__\top3.public-api.node.test.js                2773 15/07/2026 14:34:22
+C:\Users\glaub\palpitaco\src\pages\Top3\__tests__\top3.schedule-calendar-rules.node.test.js   2601 19/07/2026 17:13:02
+C:\Users\glaub\palpitaco\src\pages\Top3\__tests__\top3.schedule-transition.test.js            4841 21/07/2026 14:15:28
+
+
+
+====================================================================================================
+3. CONTEÚDO COMPLETO DOS TESTES RELEVANTES
+====================================================================================================
+
+----------------------------------------------------------------------------------------------------
+ARQUIVO: C:\Users\glaub\palpitaco\backend\scripts\backtestTop3AblationExperimental.js
+----------------------------------------------------------------------------------------------------
+    1: "use strict";
+    2: 
+    3: /**
+    4:  * TPP-01.04
+    5:  *
+    6:  * Harness experimental para medir a contribuição dos
+    7:  * módulos frequency e context no reranqueamento oficial.
+    8:  *
+    9:  * Este arquivo não é utilizado pela produção.
+   10:  */
+   11: 
+   12: const fs = require("fs");
+   13: const path = require("path");
+   14: 
+   15: const {
+   16:   runOfficialBacktest,
+   17: } = require("./backtestTop3Official");
+   18: 
+   19: const VALID_VARIANTS = new Map([
+   20:   ["A00", "BASELINE_COMPLETO"],
+   21:   ["BASELINE", "BASELINE_COMPLETO"],
+   22:   ["BASELINE_COMPLETO", "BASELINE_COMPLETO"],
+   23: 
+   24:   ["A01", "SEM_FREQUENCY"],
+   25:   ["SEM_FREQUENCY", "SEM_FREQUENCY"],
+   26: 
+   27:   ["A02", "SEM_CONTEXT"],
+   28:   ["SEM_CONTEXT", "SEM_CONTEXT"],
+   29: ]);
+   30: 
+   31: function parseStringFlag(
+   32:   args,
+   33:   name,
+   34:   fallback = null
+   35: ) {
+   36:   const prefix = `--${name}=`;
+   37: 
+   38:   const match = args.find(
+   39:     (arg) => String(arg).startsWith(prefix)
+   40:   );
+   41: 
+   42:   if (!match) return fallback;
+   43: 
+   44:   return String(match)
+   45:     .slice(prefix.length)
+   46:     .trim();
+   47: }
+   48: 
+   49: function parseIntegerFlag(
+   50:   args,
+   51:   name,
+   52:   fallback = null
+   53: ) {
+   54:   const raw = parseStringFlag(
+   55:     args,
+   56:     name,
+   57:     null
+   58:   );
+   59: 
+   60:   if (
+   61:     raw == null ||
+   62:     raw === ""
+   63:   ) {
+   64:     return fallback;
+   65:   }
+   66: 
+   67:   const value = Number(raw);
+   68: 
+   69:   if (
+   70:     !Number.isInteger(value) ||
+   71:     value <= 0
+   72:   ) {
+   73:     throw new Error(
+   74:       `Parâmetro --${name} inválido.`
+   75:     );
+   76:   }
+   77: 
+   78:   return value;
+   79: }
+   80: 
+   81: function normalizeVariant(value) {
+   82:   const key = String(
+   83:     value || "A00"
+   84:   )
+   85:     .trim()
+   86:     .toUpperCase();
+   87: 
+   88:   const normalized =
+   89:     VALID_VARIANTS.get(key);
+   90: 
+   91:   if (!normalized) {
+   92:     throw new Error(
+   93:       `Variante inválida: ${value}. ` +
+   94:       "Use A00, A01 ou A02."
+   95:     );
+   96:   }
+   97: 
+   98:   return normalized;
+   99: }
+  100: 
+  101: function firstFiniteNumber(
+  102:   values,
+  103:   fallback = null
+  104: ) {
+  105:   for (const value of values) {
+  106:     const number = Number(value);
+  107: 
+  108:     if (Number.isFinite(number)) {
+  109:       return number;
+  110:     }
+  111:   }
+  112: 
+  113:   return fallback;
+  114: }
+  115: 
+  116: function normalizeMetricBucket(
+  117:   bucket = {},
+  118:   fallbackTotal = null
+  119: ) {
+  120:   const hits = firstFiniteNumber(
+  121:     [
+  122:       bucket?.hits,
+  123:       bucket?.hit,
+  124:       bucket?.correct,
+  125:       bucket?.successes,
+  126:       bucket?.count,
+  127:     ],
+  128:     null
+  129:   );
+  130: 
+  131:   const total = firstFiniteNumber(
+  132:     [
+  133:       bucket?.total,
+  134:       bucket?.evaluated,
+  135:       bucket?.cases,
+  136:       bucket?.samples,
+  137:       fallbackTotal,
+  138:     ],
+  139:     null
+  140:   );
+  141: 
+  142:   let rate = firstFiniteNumber(
+  143:     [
+  144:       bucket?.rate,
+  145:       bucket?.percentage,
+  146:       bucket?.percent,
+  147:       bucket?.accuracy,
+  148:     ],
+  149:     null
+  150:   );
+  151: 
+  152:   if (
+  153:     rate == null &&
+  154:     hits != null &&
+  155:     total != null &&
+  156:     total > 0
+  157:   ) {
+  158:     rate =
+  159:       (hits / total) * 100;
+  160:   }
+  161: 
+  162:   return {
+  163:     hits,
+  164:     total,
+  165:     rate,
+  166:   };
+  167: }
+  168: 
+  169: function pickComparableResult(result = {}) {
+  170:   const globalBucket =
+  171:     result?.global ||
+  172:     result?.overall ||
+  173:     result?.summary ||
+  174:     result?.metrics ||
+  175:     {};
+  176: 
+  177:   const evaluated = firstFiniteNumber(
+  178:     [
+  179:       result?.evaluated,
+  180:       result?.evaluationCount,
+  181:       result?.casesEvaluated,
+  182:       result?.totalEvaluated,
+  183:       globalBucket?.evaluated,
+  184:       globalBucket?.total,
+  185:       globalBucket?.cases,
+  186:       globalBucket?.samples,
+  187:     ],
+  188:     null
+  189:   );
+  190: 
+  191:   const top1Bucket =
+  192:     globalBucket?.top1 ||
+  193:     result?.top1 ||
+  194:     result?.metrics?.top1 ||
+  195:     result?.summary?.top1 ||
+  196:     {};
+  197: 
+  198:   const top3Bucket =
+  199:     globalBucket?.top3 ||
+  200:     result?.top3 ||
+  201:     result?.metrics?.top3 ||
+  202:     result?.summary?.top3 ||
+  203:     {};
+  204: 
+  205:   const top1 = normalizeMetricBucket(
+  206:     {
+  207:       ...top1Bucket,
+  208:       hits: firstFiniteNumber(
+  209:         [
+  210:           top1Bucket?.hits,
+  211:           globalBucket?.top1Hits,
+  212:           result?.top1Hits,
+  213:           result?.metrics?.top1Hits,
+  214:           result?.summary?.top1Hits,
+  215:         ],
+  216:         null
+  217:       ),
+  218:       total: firstFiniteNumber(
+  219:         [
+  220:           top1Bucket?.total,
+  221:           globalBucket?.top1Total,
+  222:           result?.top1Total,
+  223:           evaluated,
+  224:         ],
+  225:         null
+  226:       ),
+  227:       rate: firstFiniteNumber(
+  228:         [
+  229:           top1Bucket?.rate,
+  230:           globalBucket?.top1Rate,
+  231:           result?.top1Rate,
+  232:           result?.metrics?.top1Rate,
+  233:           result?.summary?.top1Rate,
+  234:         ],
+  235:         null
+  236:       ),
+  237:     },
+  238:     evaluated
+  239:   );
+  240: 
+  241:   const top3 = normalizeMetricBucket(
+  242:     {
+  243:       ...top3Bucket,
+  244:       hits: firstFiniteNumber(
+  245:         [
+  246:           top3Bucket?.hits,
+  247:           globalBucket?.top3Hits,
+  248:           result?.top3Hits,
+  249:           result?.metrics?.top3Hits,
+  250:           result?.summary?.top3Hits,
+  251:         ],
+  252:         null
+  253:       ),
+  254:       total: firstFiniteNumber(
+  255:         [
+  256:           top3Bucket?.total,
+  257:           globalBucket?.top3Total,
+  258:           result?.top3Total,
+  259:           evaluated,
+  260:         ],
+  261:         null
+  262:       ),
+  263:       rate: firstFiniteNumber(
+  264:         [
+  265:           top3Bucket?.rate,
+  266:           globalBucket?.top3Rate,
+  267:           result?.top3Rate,
+  268:           result?.metrics?.top3Rate,
+  269:           result?.summary?.top3Rate,
+  270:         ],
+  271:         null
+  272:       ),
+  273:     },
+  274:     evaluated
+  275:   );
+  276: 
+  277:   const errors = firstFiniteNumber(
+  278:     [
+  279:       result?.errors,
+  280:       globalBucket?.errors,
+  281:       result?.errorCount,
+  282:       result?.summary?.errors,
+  283:       result?.metrics?.errors,
+  284:     ],
+  285:     0
+  286:   );
+  287: 
+  288:   return {
+  289:     ok: result.ok === true,
+  290:     lotteryKey:
+  291:       result.lotteryKey || null,
+  292:     engine:
+  293:       result.engine || null,
+  294:     evaluated,
+  295:     skipped: firstFiniteNumber(
+  296:       [
+  297:         result?.skipped,
+  298:         globalBucket?.skipped,
+  299:       ],
+  300:       0
+  301:     ),
+  302:     top1,
+  303:     top3,
+  304:     errors,
+  305:     byHour:
+  306:       result.byHour || {},
+  307:     byWeekday:
+  308:       result.byWeekday || {},
+  309:     byMonth:
+  310:       result.byMonth || {},
+  311:   };
+  312: }
+  313: 
+  314: function assertComparableMetrics(
+  315:   comparable,
+  316:   label
+  317: ) {
+  318:   const failures = [];
+  319: 
+  320:   if (
+  321:     !Number.isFinite(
+  322:       Number(comparable?.evaluated)
+  323:     ) ||
+  324:     Number(comparable.evaluated) <= 0
+  325:   ) {
+  326:     failures.push(
+  327:       "evaluated ausente ou igual a zero"
+  328:     );
+  329:   }
+  330: 
+  331:   if (
+  332:     !Number.isFinite(
+  333:       Number(comparable?.top1?.hits)
+  334:     )
+  335:   ) {
+  336:     failures.push(
+  337:       "TOP1 hits não localizado"
+  338:     );
+  339:   }
+  340: 
+  341:   if (
+  342:     !Number.isFinite(
+  343:       Number(comparable?.top1?.total)
+  344:     ) ||
+  345:     Number(comparable.top1.total) <= 0
+  346:   ) {
+  347:     failures.push(
+  348:       "TOP1 total ausente ou igual a zero"
+  349:     );
+  350:   }
+  351: 
+  352:   if (
+  353:     !Number.isFinite(
+  354:       Number(comparable?.top3?.hits)
+  355:     )
+  356:   ) {
+  357:     failures.push(
+  358:       "TOP3 hits não localizado"
+  359:     );
+  360:   }
+  361: 
+  362:   if (
+  363:     !Number.isFinite(
+  364:       Number(comparable?.top3?.total)
+  365:     ) ||
+  366:     Number(comparable.top3.total) <= 0
+  367:   ) {
+  368:     failures.push(
+  369:       "TOP3 total ausente ou igual a zero"
+  370:     );
+  371:   }
+  372: 
+  373:   if (failures.length) {
+  374:     throw new Error(
+  375:       `${label}: métricas inválidas — ` +
+  376:       failures.join("; ")
+  377:     );
+  378:   }
+  379: }
+  380: 
+  381: function stableSortObject(value) {
+  382:   if (Array.isArray(value)) {
+  383:     return value.map(stableSortObject);
+  384:   }
+  385: 
+  386:   if (
+  387:     value &&
+  388:     typeof value === "object"
+  389:   ) {
+  390:     return Object.keys(value)
+  391:       .sort()
+  392:       .reduce((out, key) => {
+  393:         out[key] =
+  394:           stableSortObject(value[key]);
+  395: 
+  396:         return out;
+  397:       }, {});
+  398:   }
+  399: 
+  400:   return value;
+  401: }
+  402: 
+  403: function stableJson(value) {
+  404:   return JSON.stringify(
+  405:     stableSortObject(value)
+  406:   );
+  407: }
+  408: 
+  409: async function runWithVariant(
+  410:   variant,
+  411:   options
+  412: ) {
+  413:   const previous =
+  414:     globalThis.__TOP3_ABLATION__;
+  415: 
+  416:   try {
+  417:     if (
+  418:       variant === "BASELINE_OFICIAL"
+  419:     ) {
+  420:       delete globalThis.__TOP3_ABLATION__;
+  421:     } else {
+  422:       globalThis.__TOP3_ABLATION__ =
+  423:         variant;
+  424:     }
+  425: 
+  426:     return await runOfficialBacktest(
+  427:       {
+  428:         ...options,
+  429:         progress: false,
+  430:         telemetry: true,
+  431:       }
+  432:     );
+  433:   } finally {
+  434:     if (previous == null) {
+  435:       delete globalThis.__TOP3_ABLATION__;
+  436:     } else {
+  437:       globalThis.__TOP3_ABLATION__ =
+  438:         previous;
+  439:     }
+  440:   }
+  441: }
+  442: 
+  443: async function main() {
+  444:   const args =
+  445:     process.argv.slice(2);
+  446: 
+  447:   const lotteryKey = String(
+  448:     args[0] || "PT_RIO"
+  449:   )
+  450:     .trim()
+  451:     .toUpperCase();
+  452: 
+  453:   const requestedVariant =
+  454:     parseStringFlag(
+  455:       args,
+  456:       "variant",
+  457:       "A00"
+  458:     );
+  459: 
+  460:   const variant =
+  461:     normalizeVariant(
+  462:       requestedVariant
+  463:     );
+  464: 
+  465:   const limit =
+  466:     parseIntegerFlag(
+  467:       args,
+  468:       "limit",
+  469:       100
+  470:     );
+  471: 
+  472:   const minHistory =
+  473:     parseIntegerFlag(
+  474:       args,
+  475:       "min-history",
+  476:       100
+  477:     );
+  478: 
+  479:   const from =
+  480:     parseStringFlag(
+  481:       args,
+  482:       "from",
+  483:       null
+  484:     );
+  485: 
+  486:   const to =
+  487:     parseStringFlag(
+  488:       args,
+  489:       "to",
+  490:       null
+  491:     );
+  492: 
+  493:   const outputDir = path.resolve(
+  494:     parseStringFlag(
+  495:       args,
+  496:       "output-dir",
+  497:       "tmp"
+  498:     )
+  499:   );
+  500: 
+  501:   fs.mkdirSync(
+  502:     outputDir,
+  503:     {
+  504:       recursive: true,
+  505:     }
+  506:   );
+  507: 
+  508:   const commonOptions = {
+  509:     lotteryKey,
+  510:     limit,
+  511:     minHistory,
+  512:     from,
+  513:     to,
+  514:   };
+  515: 
+  516:   console.log("");
+  517:   console.log(
+  518:     "===== TPP-01.04 - HARNESS DE ABLAÇÃO ====="
+  519:   );
+  520:   console.log("");
+  521:   console.log(
+  522:     "Loteria............:",
+  523:     lotteryKey
+  524:   );
+  525:   console.log(
+  526:     "Variante solicitada:",
+  527:     requestedVariant
+  528:   );
+  529:   console.log(
+  530:     "Variante normalizada:",
+  531:     variant
+  532:   );
+  533:   console.log(
+  534:     "Limite.............:",
+  535:     limit
+  536:   );
+  537:   console.log(
+  538:     "Histórico mínimo...:",
+  539:     minHistory
+  540:   );
+  541:   console.log("");
+  542: 
+  543:   const baselineOfficial =
+  544:     await runWithVariant(
+  545:       "BASELINE_OFICIAL",
+  546:       commonOptions
+  547:     );
+  548: 
+  549:   const variantResult =
+  550:     await runWithVariant(
+  551:       variant,
+  552:       commonOptions
+  553:     );
+  554: 
+  555:   const baselineComparable =
+  556:     pickComparableResult(
+  557:       baselineOfficial
+  558:     );
+  559: 
+  560:   const variantComparable =
+  561:     pickComparableResult(
+  562:       variantResult
+  563:     );
+  564: 
+  565:   assertComparableMetrics(
+  566:     baselineComparable,
+  567:     "BASELINE OFICIAL"
+  568:   );
+  569: 
+  570:   assertComparableMetrics(
+  571:     variantComparable,
+  572:     "VARIANTE"
+  573:   );
+  574: 
+  575:   const equivalent =
+  576:     stableJson(
+  577:       baselineComparable
+  578:     ) ===
+  579:     stableJson(
+  580:       variantComparable
+  581:     );
+  582: 
+  583:   const result = {
+  584:     ok: true,
+  585:     generatedAt:
+  586:       new Date().toISOString(),
+  587:     experiment:
+  588:       "TPP-01.04",
+  589:     lotteryKey,
+  590:     requestedVariant,
+  591:     variant,
+  592:     limit,
+  593:     minHistory,
+  594:     from,
+  595:     to,
+  596:     baselineOfficial:
+  597:       baselineComparable,
+  598: 
+  599:     baselineTelemetry:
+  600:       baselineOfficial.telemetry,
+  601:     variantResult:
+  602:       variantComparable,
+  603: 
+  604:     variantTelemetry:
+  605:       variantResult.telemetry,
+  606:     comparison: {
+  607:       equivalent,
+  608:       top1HitsDelta:
+  609:         variantComparable.top1.hits -
+  610:         baselineComparable.top1.hits,
+  611:       top3HitsDelta:
+  612:         variantComparable.top3.hits -
+  613:         baselineComparable.top3.hits,
+  614:       errorsDelta:
+  615:         variantComparable.errors -
+  616:         baselineComparable.errors,
+  617:     },
+  618:   };
+  619: 
+  620:   const jsonPath = path.join(
+  621:     outputDir,
+  622:     "tpp01_04_harness_validation.json"
+  623:   );
+  624: 
+  625:   const txtPath = path.join(
+  626:     outputDir,
+  627:     "tpp01_04_harness_validation.txt"
+  628:   );
+  629: 
+  630:   fs.writeFileSync(
+  631:     jsonPath,
+  632:     JSON.stringify(
+  633:       result,
+  634:       null,
+  635:       2
+  636:     ) + "\n",
+  637:     "utf8"
+  638:   );
+  639: 
+  640:   const lines = [
+  641:     "=".repeat(100),
+  642:     "TPP-01.04 - VALIDAÇÃO DO HARNESS",
+  643:     "=".repeat(100),
+  644:     "",
+  645:     `Loteria: ${lotteryKey}`,
+  646:     `Variante: ${variant}`,
+  647:     `Casos: ${limit}`,
+  648:     `Histórico mínimo: ${minHistory}`,
+  649:     "",
+  650:     `Casos avaliados no baseline: ${baselineComparable.evaluated}`,
+  651:     `Casos avaliados na variante: ${variantComparable.evaluated}`,
+  652:     "",
+  653:     "BASELINE OFICIAL",
+  654:     `TOP1: ${baselineComparable.top1.hits}`,
+  655:     `TOP3: ${baselineComparable.top3.hits}`,
+  656:     `Erros: ${baselineComparable.errors}`,
+  657:     "",
+  658:     "RESULTADO DA VARIANTE",
+  659:     `TOP1: ${variantComparable.top1.hits}`,
+  660:     `TOP3: ${variantComparable.top3.hits}`,
+  661:     `Erros: ${variantComparable.errors}`,
+  662:     "",
+  663:     "COMPARAÇÃO",
+  664:     `Equivalente: ${equivalent ? "SIM" : "NÃO"}`,
+  665:     `Delta TOP1: ${result.comparison.top1HitsDelta}`,
+  666:     `Delta TOP3: ${result.comparison.top3HitsDelta}`,
+  667:     `Delta erros: ${result.comparison.errorsDelta}`,
+  668:     "",
+  669:   ];
+  670: 
+  671:   if (
+  672:     variant === "BASELINE_COMPLETO" &&
+  673:     !equivalent
+  674:   ) {
+  675:     lines.push(
+  676:       "STATUS: FALHA — A00 divergiu do baseline oficial."
+  677:     );
+  678:   } else if (
+  679:     variant === "BASELINE_COMPLETO"
+  680:   ) {
+  681:     lines.push(
+  682:       "STATUS: OK — A00 equivalente ao baseline oficial."
+  683:     );
+  684:   } else {
+  685:     lines.push(
+  686:       "STATUS: VARIANTE EXPERIMENTAL EXECUTADA."
+  687:     );
+  688:   }
+  689: 
+  690:   fs.writeFileSync(
+  691:     txtPath,
+  692:     lines.join("\n") + "\n",
+  693:     "utf8"
+  694:   );
+  695: 
+  696:   console.log(
+  697:     lines.join("\n")
+  698:   );
+  699: 
+  700:   console.log("");
+  701:   console.log(
+  702:     `JSON: ${jsonPath}`
+  703:   );
+  704:   console.log(
+  705:     `TXT : ${txtPath}`
+  706:   );
+  707: 
+  708:   if (
+  709:     variant === "BASELINE_COMPLETO" &&
+  710:     !equivalent
+  711:   ) {
+  712:     process.exitCode = 2;
+  713:   }
+  714: }
+  715: 
+  716: main().catch((error) => {
+  717:   console.error("");
+  718:   console.error(
+  719:     "Falha no harness de ablação:"
+  720:   );
+  721:   console.error(
+  722:     error?.stack ||
+  723:     error?.message ||
+  724:     error
+  725:   );
+  726: 
+  727:   process.exitCode = 1;
+  728: });
+  729: 
+
+----------------------------------------------------------------------------------------------------
+ARQUIVO: C:\Users\glaub\palpitaco\backend\scripts\backtestTop3E07Experimental.js
+----------------------------------------------------------------------------------------------------
+    1: "use strict";
+    2: 
+    3: const fs = require("fs");
+    4: const path = require("path");
+    5: 
+    6: const {
+    7:   runOfficialBacktest,
+    8: } = require("./backtestTop3Official");
+    9: 
+   10: const {
+   11:   computeStatisticalTop3V4Experimental,
+   12: } = require("../engine/scoreEngineV4Experimental");
+   13: 
+   14: function parseIntegerFlag(
+   15:   flags,
+   16:   name,
+   17:   fallback
+   18: ) {
+   19:   const prefix = `--${name}=`;
+   20: 
+   21:   const raw = flags.find(
+   22:     (flag) =>
+   23:       String(flag).startsWith(prefix)
+   24:   );
+   25: 
+   26:   if (!raw) {
+   27:     return fallback;
+   28:   }
+   29: 
+   30:   const value = Number(
+   31:     String(raw).slice(
+   32:       prefix.length
+   33:     )
+   34:   );
+   35: 
+   36:   return Number.isFinite(value)
+   37:     ? value
+   38:     : fallback;
+   39: }
+   40: 
+   41: function parseStringFlag(
+   42:   flags,
+   43:   name,
+   44:   fallback = null
+   45: ) {
+   46:   const prefix = `--${name}=`;
+   47: 
+   48:   const raw = flags.find(
+   49:     (flag) =>
+   50:       String(flag).startsWith(prefix)
+   51:   );
+   52: 
+   53:   return raw
+   54:     ? String(raw).slice(
+   55:         prefix.length
+   56:       )
+   57:     : fallback;
+   58: }
+   59: 
+   60: function percent(value) {
+   61:   const number = Number(value || 0);
+   62: 
+   63:   return `${number.toFixed(4)}%`;
+   64: }
+   65: 
+   66: async function main() {
+   67:   const argv =
+   68:     process.argv.slice(2);
+   69: 
+   70:   const lotteryKey =
+   71:     String(
+   72:       argv[0] || "PT_RIO"
+   73:     )
+   74:       .trim()
+   75:       .toUpperCase();
+   76: 
+   77:   const flags =
+   78:     argv.slice(1);
+   79: 
+   80:   const limit =
+   81:     parseIntegerFlag(
+   82:       flags,
+   83:       "limit",
+   84:       100
+   85:     );
+   86: 
+   87:   const minHistory =
+   88:     parseIntegerFlag(
+   89:       flags,
+   90:       "min-history",
+   91:       100
+   92:     );
+   93: 
+   94:   const from =
+   95:     parseStringFlag(
+   96:       flags,
+   97:       "from",
+   98:       null
+   99:     );
+  100: 
+  101:   const to =
+  102:     parseStringFlag(
+  103:       flags,
+  104:       "to",
+  105:       null
+  106:     );
+  107: 
+  108:   const outputDir =
+  109:     path.resolve(
+  110:       parseStringFlag(
+  111:         flags,
+  112:         "output-dir",
+  113:         "tmp"
+  114:       )
+  115:     );
+  116: 
+  117:   fs.mkdirSync(
+  118:     outputDir,
+  119:     {
+  120:       recursive: true,
+  121:     }
+  122:   );
+  123: 
+  124:   const commonOptions = {
+  125:     lotteryKey,
+  126:     limit,
+  127:     minHistory,
+  128:     from,
+  129:     to,
+  130:     telemetry: false,
+  131:     progress: true,
+  132:   };
+  133: 
+  134:   console.log("");
+  135:   console.log(
+  136:     "========================================"
+  137:   );
+  138:   console.log(
+  139:     "E07 - BACKTEST COMPARATIVO"
+  140:   );
+  141:   console.log(
+  142:     "========================================"
+  143:   );
+  144:   console.log(
+  145:     "Loteria:",
+  146:     lotteryKey
+  147:   );
+  148:   console.log(
+  149:     "Limite:",
+  150:     limit
+  151:   );
+  152:   console.log(
+  153:     "Historico minimo:",
+  154:     minHistory
+  155:   );
+  156:   console.log("");
+  157: 
+  158:   console.log(
+  159:     "[1/2] Executando baseline V3..."
+  160:   );
+  161: 
+  162:   const baseline =
+  163:     await runOfficialBacktest(
+  164:       commonOptions
+  165:     );
+  166: 
+  167:   console.log("");
+  168:   console.log(
+  169:     "[2/2] Executando E07 experimental..."
+  170:   );
+  171: 
+  172:   const experimental =
+  173:     await runOfficialBacktest(
+  174:       commonOptions,
+  175:       {
+  176:         computeTop3:
+  177:           computeStatisticalTop3V4Experimental,
+  178:       }
+  179:     );
+  180: 
+  181:   const comparison = {
+  182:     ok: true,
+  183:     experiment: "E07",
+  184:     lotteryKey,
+  185:     limit,
+  186:     minHistory,
+  187:     baseline: {
+  188:       engine:
+  189:         "top3_statistical_v3",
+  190:       evaluated:
+  191:         baseline.global.evaluated,
+  192:       errors:
+  193:         baseline.global.errors,
+  194:       top1Hits:
+  195:         baseline.global.top1Hits,
+  196:       top1Rate:
+  197:         baseline.global.top1Rate,
+  198:       top3Hits:
+  199:         baseline.global.top3Hits,
+  200:       top3Rate:
+  201:         baseline.global.top3Rate,
+  202:     },
+  203:     experimental: {
+  204:       engine:
+  205:         "top3_v4_experimental_e07",
+  206:       evaluated:
+  207:         experimental.global.evaluated,
+  208:       errors:
+  209:         experimental.global.errors,
+  210:       top1Hits:
+  211:         experimental.global.top1Hits,
+  212:       top1Rate:
+  213:         experimental.global.top1Rate,
+  214:       top3Hits:
+  215:         experimental.global.top3Hits,
+  216:       top3Rate:
+  217:         experimental.global.top3Rate,
+  218:     },
+  219:     delta: {
+  220:       top1Hits:
+  221:         experimental.global.top1Hits -
+  222:         baseline.global.top1Hits,
+  223:       top1Rate:
+  224:         experimental.global.top1Rate -
+  225:         baseline.global.top1Rate,
+  226:       top3Hits:
+  227:         experimental.global.top3Hits -
+  228:         baseline.global.top3Hits,
+  229:       top3Rate:
+  230:         experimental.global.top3Rate -
+  231:         baseline.global.top3Rate,
+  232:     },
+  233:     byHour: {
+  234:       baseline:
+  235:         baseline.byHour,
+  236:       experimental:
+  237:         experimental.byHour,
+  238:     },
+  239:     periods: {
+  240:       history:
+  241:         baseline.historyPeriod,
+  242:       evaluation:
+  243:         baseline.evaluationPeriod,
+  244:     },
+  245:     generatedAt:
+  246:       new Date().toISOString(),
+  247:   };
+  248: 
+  249:   const suffix =
+  250:     limit
+  251:       ? `limit_${limit}`
+  252:       : "full";
+  253: 
+  254:   const jsonPath =
+  255:     path.join(
+  256:       outputDir,
+  257:       `e07_comparison_${lotteryKey}_${suffix}.json`
+  258:     );
+  259: 
+  260:   const textPath =
+  261:     path.join(
+  262:       outputDir,
+  263:       `e07_comparison_${lotteryKey}_${suffix}.txt`
+  264:     );
+  265: 
+  266:   const lines = [
+  267:     "==============================================",
+  268:     "E07 - COMPARACAO V3 x TRANSICOES",
+  269:     "==============================================",
+  270:     "",
+  271:     `Loteria.............: ${lotteryKey}`,
+  272:     `Casos avaliados.....: ${baseline.global.evaluated}`,
+  273:     `Historico minimo....: ${minHistory}`,
+  274:     `Periodo avaliado....: ${baseline.evaluationPeriod.from || "-"} ate ${baseline.evaluationPeriod.to || "-"}`,
+  275:     "",
+  276:     "BASELINE V3",
+  277:     `TOP1................: ${baseline.global.top1Hits} (${percent(baseline.global.top1Rate)})`,
+  278:     `TOP3................: ${baseline.global.top3Hits} (${percent(baseline.global.top3Rate)})`,
+  279:     `Erros...............: ${baseline.global.errors}`,
+  280:     "",
+  281:     "EXPERIMENTAL E07",
+  282:     `TOP1................: ${experimental.global.top1Hits} (${percent(experimental.global.top1Rate)})`,
+  283:     `TOP3................: ${experimental.global.top3Hits} (${percent(experimental.global.top3Rate)})`,
+  284:     `Erros...............: ${experimental.global.errors}`,
+  285:     "",
+  286:     "DELTA E07 - V3",
+  287:     `TOP1 acertos........: ${comparison.delta.top1Hits}`,
+  288:     `TOP1 taxa...........: ${percent(comparison.delta.top1Rate)}`,
+  289:     `TOP3 acertos........: ${comparison.delta.top3Hits}`,
+  290:     `TOP3 taxa...........: ${percent(comparison.delta.top3Rate)}`,
+  291:     "",
+  292:     "POR HORARIO - E07",
+  293:     ...Object.entries(
+  294:       experimental.byHour || {}
+  295:     ).map(
+  296:       ([hour, bucket]) =>
+  297:         `${hour} | avaliados=${bucket.evaluated} | TOP1=${percent(bucket.top1Rate)} | TOP3=${percent(bucket.top3Rate)} | erros=${bucket.errors}`
+  298:     ),
+  299:     "",
+  300:     "Nenhuma alteracao foi aplicada a producao.",
+  301:     "Nenhum peso oficial da V3 foi alterado.",
+  302:     "Nenhum deploy ou commit foi realizado.",
+  303:   ];
+  304: 
+  305:   fs.writeFileSync(
+  306:     jsonPath,
+  307:     JSON.stringify(
+  308:       comparison,
+  309:       null,
+  310:       2
+  311:     ),
+  312:     "utf8"
+  313:   );
+  314: 
+  315:   fs.writeFileSync(
+  316:     textPath,
+  317:     lines.join("\n"),
+  318:     "utf8"
+  319:   );
+  320: 
+  321:   console.log("");
+  322:   console.log(
+  323:     lines.join("\n")
+  324:   );
+  325: 
+  326:   console.log("");
+  327:   console.log(
+  328:     "JSON:",
+  329:     jsonPath
+  330:   );
+  331: 
+  332:   console.log(
+  333:     "TXT :",
+  334:     textPath
+  335:   );
+  336: }
+  337: 
+  338: if (
+  339:   require.main === module
+  340: ) {
+  341:   main().catch(
+  342:     (error) => {
+  343:       console.error(
+  344:         error?.stack ||
+  345:         error?.message ||
+  346:         error
+  347:       );
+  348: 
+  349:       process.exit(1);
+  350:     }
+  351:   );
+  352: }
+  353: 
+  354: module.exports = {
+  355:   main,
+  356: };
+
+----------------------------------------------------------------------------------------------------
+ARQUIVO: C:\Users\glaub\palpitaco\backend\scripts\backtestTop3E08Experimental.js
+----------------------------------------------------------------------------------------------------
+    1: "use strict";
+    2: 
+    3: const fs = require("fs");
+    4: const path = require("path");
+    5: 
+    6: const {
+    7:   runOfficialBacktest,
+    8: } = require("./backtestTop3Official");
+    9: 
+   10: const {
+   11:   computeStatisticalTop3E08Experimental,
+   12: } = require("../engine/scoreEngineE08Experimental");
+   13: 
+   14: const {
+   15:   readFullHistory,
+   16:   readMetadata,
+   17: } = require("../engine/top3HistoryRepository");
+   18: 
+   19: function parseIntegerFlag(
+   20:   flags,
+   21:   name,
+   22:   fallback
+   23: ) {
+   24:   const prefix = `--${name}=`;
+   25: 
+   26:   const raw = flags.find(
+   27:     (flag) =>
+   28:       String(flag).startsWith(prefix)
+   29:   );
+   30: 
+   31:   if (!raw) {
+   32:     return fallback;
+   33:   }
+   34: 
+   35:   const value = Number(
+   36:     String(raw).slice(
+   37:       prefix.length
+   38:     )
+   39:   );
+   40: 
+   41:   return Number.isFinite(value)
+   42:     ? value
+   43:     : fallback;
+   44: }
+   45: 
+   46: function percent(value) {
+   47:   return (
+   48:     `${Number(value || 0).toFixed(4)}%`
+   49:   );
+   50: }
+   51: 
+   52: function signed(value) {
+   53:   const number = Number(value || 0);
+   54: 
+   55:   return number > 0
+   56:     ? `+${number}`
+   57:     : String(number);
+   58: }
+   59: 
+   60: async function main() {
+   61:   const argv =
+   62:     process.argv.slice(2);
+   63: 
+   64:   const lotteryKey =
+   65:     String(
+   66:       argv[0] || "PT_RIO"
+   67:     )
+   68:       .trim()
+   69:       .toUpperCase();
+   70: 
+   71:   const flags =
+   72:     argv.slice(1);
+   73: 
+   74:   const limit =
+   75:     parseIntegerFlag(
+   76:       flags,
+   77:       "limit",
+   78:       0
+   79:     );
+   80: 
+   81:   const minHistory =
+   82:     parseIntegerFlag(
+   83:       flags,
+   84:       "min-history",
+   85:       100
+   86:     );
+   87: 
+   88:   const outputDir =
+   89:     path.resolve("tmp");
+   90: 
+   91:   fs.mkdirSync(
+   92:     outputDir,
+   93:     {
+   94:       recursive: true,
+   95:     }
+   96:   );
+   97: 
+   98:   const options = {
+   99:     lotteryKey,
+  100:     limit,
+  101:     minHistory,
+  102:     telemetry: false,
+  103:     progress: true,
+  104:   };
+  105: 
+  106:   console.log("");
+  107:   console.log(
+  108:     "========================================"
+  109:   );
+  110:   console.log(
+  111:     "E08 - BACKTEST DE RERANKING"
+  112:   );
+  113:   console.log(
+  114:     "========================================"
+  115:   );
+  116:   console.log(
+  117:     "Loteria:",
+  118:     lotteryKey
+  119:   );
+  120:   console.log(
+  121:     "Limite:",
+  122:     limit
+  123:   );
+  124:   console.log(
+  125:     "Historico minimo:",
+  126:     minHistory
+  127:   );
+  128:   console.log("");
+  129: 
+  130:   console.log(
+  131:     "[SNAPSHOT] Carregando histórico compartilhado..."
+  132:   );
+  133: 
+  134:   const sharedHistory =
+  135:     await readFullHistory(
+  136:       lotteryKey,
+  137:       {}
+  138:     );
+  139: 
+  140:   const sharedMetadata =
+  141:     await readMetadata(
+  142:       lotteryKey,
+  143:       {}
+  144:     );
+  145: 
+  146:   const sharedDependencies = {
+  147:     readFullHistory:
+  148:       async () => sharedHistory,
+  149:     readMetadata:
+  150:       async () => sharedMetadata,
+  151:   };
+  152: 
+  153:   console.log(
+  154:     `[SNAPSHOT] Sorteios congelados: ${sharedHistory.length}`
+  155:   );
+  156: 
+  157:   console.log("");
+  158:   console.log(
+  159:     "[1/2] Executando V3..."
+  160:   );
+  161: 
+  162:   const baseline =
+  163:     await runOfficialBacktest(
+  164:       options,
+  165:       sharedDependencies
+  166:     );
+  167: 
+  168:   console.log("");
+  169:   console.log(
+  170:     "[2/2] Executando E08..."
+  171:   );
+  172: 
+  173:   const experimental =
+  174:     await runOfficialBacktest(
+  175:       options,
+  176:       {
+  177:         ...sharedDependencies,
+  178:         computeTop3:
+  179:           computeStatisticalTop3E08Experimental,
+  180:       }
+  181:     );
+  182: 
+  183:   const top3Invariant =
+  184:     (
+  185:       baseline.global.top3Hits ===
+  186:       experimental.global.top3Hits
+  187:     );
+  188: 
+  189:   const evaluatedInvariant =
+  190:     (
+  191:       baseline.global.evaluated ===
+  192:       experimental.global.evaluated
+  193:     );
+  194: 
+  195:   const errorInvariant =
+  196:     (
+  197:       baseline.global.errors ===
+  198:       experimental.global.errors
+  199:     );
+  200: 
+  201:   if (!evaluatedInvariant) {
+  202:     throw new Error(
+  203:       "Quantidade avaliada divergiu entre V3 e E08."
+  204:     );
+  205:   }
+  206: 
+  207:   if (!errorInvariant) {
+  208:     throw new Error(
+  209:       "Quantidade de erros divergiu entre V3 e E08."
+  210:     );
+  211:   }
+  212: 
+  213:   if (!top3Invariant) {
+  214:     throw new Error(
+  215:       "O E08 alterou o conjunto TOP3. A invariancia falhou."
+  216:     );
+  217:   }
+  218: 
+  219:   const comparison = {
+  220:     ok: true,
+  221:     experiment: "E08",
+  222:     hypothesis:
+  223:       "Reordenar apenas os tres candidatos da V3 usando frequencia do mesmo horario.",
+  224:     lotteryKey,
+  225:     limit,
+  226:     minHistory,
+  227:     invariants: {
+  228:       evaluatedEqual:
+  229:         evaluatedInvariant,
+  230:       errorsEqual:
+  231:         errorInvariant,
+  232:       top3HitsEqual:
+  233:         top3Invariant,
+  234:       candidateSetPreserved:
+  235:         top3Invariant,
+  236:     },
+  237:     baseline: {
+  238:       evaluated:
+  239:         baseline.global.evaluated,
+  240:       errors:
+  241:         baseline.global.errors,
+  242:       top1Hits:
+  243:         baseline.global.top1Hits,
+  244:       top1Rate:
+  245:         baseline.global.top1Rate,
+  246:       top3Hits:
+  247:         baseline.global.top3Hits,
+  248:       top3Rate:
+  249:         baseline.global.top3Rate,
+  250:     },
+  251:     experimental: {
+  252:       evaluated:
+  253:         experimental.global.evaluated,
+  254:       errors:
+  255:         experimental.global.errors,
+  256:       top1Hits:
+  257:         experimental.global.top1Hits,
+  258:       top1Rate:
+  259:         experimental.global.top1Rate,
+  260:       top3Hits:
+  261:         experimental.global.top3Hits,
+  262:       top3Rate:
+  263:         experimental.global.top3Rate,
+  264:     },
+  265:     delta: {
+  266:       top1Hits:
+  267:         experimental.global.top1Hits -
+  268:         baseline.global.top1Hits,
+  269:       top1Rate:
+  270:         Number(
+  271:           (
+  272:             experimental.global.top1Rate -
+  273:             baseline.global.top1Rate
+  274:           ).toFixed(4)
+  275:         ),
+  276:       top3Hits:
+  277:         experimental.global.top3Hits -
+  278:         baseline.global.top3Hits,
+  279:       top3Rate:
+  280:         Number(
+  281:           (
+  282:             experimental.global.top3Rate -
+  283:             baseline.global.top3Rate
+  284:           ).toFixed(4)
+  285:         ),
+  286:     },
+  287:     byHour: {
+  288:       baseline:
+  289:         baseline.byHour,
+  290:       experimental:
+  291:         experimental.byHour,
+  292:     },
+  293:     periods: {
+  294:       history:
+  295:         baseline.historyPeriod,
+  296:       evaluation:
+  297:         baseline.evaluationPeriod,
+  298:     },
+  299:     generatedAt:
+  300:       new Date().toISOString(),
+  301:   };
+  302: 
+  303:   const suffix =
+  304:     limit
+  305:       ? `limit_${limit}`
+  306:       : "full";
+  307: 
+  308:   const jsonPath =
+  309:     path.join(
+  310:       outputDir,
+  311:       `e08_comparison_${lotteryKey}_${suffix}.json`
+  312:     );
+  313: 
+  314:   const textPath =
+  315:     path.join(
+  316:       outputDir,
+  317:       `e08_comparison_${lotteryKey}_${suffix}.txt`
+  318:     );
+  319: 
+  320:   const hourLines = [];
+  321: 
+  322:   const hours = Array.from(
+  323:     new Set([
+  324:       ...Object.keys(
+  325:         baseline.byHour || {}
+  326:       ),
+  327:       ...Object.keys(
+  328:         experimental.byHour || {}
+  329:       ),
+  330:     ])
+  331:   ).sort();
+  332: 
+  333:   for (const hour of hours) {
+  334:     const base =
+  335:       baseline.byHour?.[hour] || {};
+  336: 
+  337:     const exp =
+  338:       experimental.byHour?.[hour] || {};
+  339: 
+  340:     const deltaHits =
+  341:       Number(exp.top1Hits || 0) -
+  342:       Number(base.top1Hits || 0);
+  343: 
+  344:     const deltaRate =
+  345:       Number(exp.top1Rate || 0) -
+  346:       Number(base.top1Rate || 0);
+  347: 
+  348:     hourLines.push(
+  349:       `${hour} | avaliados=${base.evaluated || 0} | V3 TOP1=${percent(base.top1Rate)} | E08 TOP1=${percent(exp.top1Rate)} | delta=${signed(deltaHits)} acertos (${percent(deltaRate)})`
+  350:     );
+  351:   }
+  352: 
+  353:   const lines = [
+  354:     "================================================",
+  355:     "E08 - V3 ORIGINAL x V3 REORDENADA",
+  356:     "================================================",
+  357:     "",
+  358:     `Loteria.............: ${lotteryKey}`,
+  359:     `Casos avaliados.....: ${baseline.global.evaluated}`,
+  360:     `Historico minimo....: ${minHistory}`,
+  361:     `Periodo avaliado....: ${baseline.evaluationPeriod.from || "-"} ate ${baseline.evaluationPeriod.to || "-"}`,
+  362:     "",
+  363:     "HIPOTESE",
+  364:     "Reordenar somente os tres candidatos escolhidos pela V3",
+  365:     "usando a frequencia historica do mesmo horario.",
+  366:     "",
+  367:     "BASELINE V3",
+  368:     `TOP1................: ${baseline.global.top1Hits} (${percent(baseline.global.top1Rate)})`,
+  369:     `TOP3................: ${baseline.global.top3Hits} (${percent(baseline.global.top3Rate)})`,
+  370:     `Erros...............: ${baseline.global.errors}`,
+  371:     "",
+  372:     "EXPERIMENTAL E08",
+  373:     `TOP1................: ${experimental.global.top1Hits} (${percent(experimental.global.top1Rate)})`,
+  374:     `TOP3................: ${experimental.global.top3Hits} (${percent(experimental.global.top3Rate)})`,
+  375:     `Erros...............: ${experimental.global.errors}`,
+  376:     "",
+  377:     "DELTA E08 - V3",
+  378:     `TOP1 acertos........: ${signed(comparison.delta.top1Hits)}`,
+  379:     `TOP1 taxa...........: ${percent(comparison.delta.top1Rate)}`,
+  380:     `TOP3 acertos........: ${signed(comparison.delta.top3Hits)}`,
+  381:     `TOP3 taxa...........: ${percent(comparison.delta.top3Rate)}`,
+  382:     "",
+  383:     "INVARIANTES",
+  384:     `Mesma quantidade avaliada.: ${evaluatedInvariant ? "OK" : "FALHA"}`,
+  385:     `Mesma quantidade de erros.: ${errorInvariant ? "OK" : "FALHA"}`,
+  386:     `Mesmo conjunto TOP3.......: ${top3Invariant ? "OK" : "FALHA"}`,
+  387:     "",
+  388:     "TOP1 POR HORARIO",
+  389:     ...hourLines,
+  390:     "",
+  391:     "Nenhuma alteracao foi aplicada a producao.",
+  392:     "Nenhum peso oficial da V3 foi alterado.",
+  393:     "Nenhum candidato da V3 foi adicionado ou removido.",
+  394:     "Nenhum deploy ou commit foi realizado.",
+  395:   ];
+  396: 
+  397:   fs.writeFileSync(
+  398:     jsonPath,
+  399:     JSON.stringify(
+  400:       comparison,
+  401:       null,
+  402:       2
+  403:     ),
+  404:     "utf8"
+  405:   );
+  406: 
+  407:   fs.writeFileSync(
+  408:     textPath,
+  409:     lines.join("\n"),
+  410:     "utf8"
+  411:   );
+  412: 
+  413:   console.log("");
+  414:   console.log(
+  415:     lines.join("\n")
+  416:   );
+  417: 
+  418:   console.log("");
+  419:   console.log(
+  420:     "JSON:",
+  421:     jsonPath
+  422:   );
+  423: 
+  424:   console.log(
+  425:     "TXT :",
+  426:     textPath
+  427:   );
+  428: }
+  429: 
+  430: if (require.main === module) {
+  431:   main().catch(
+  432:     (error) => {
+  433:       console.error(
+  434:         error?.stack ||
+  435:         error?.message ||
+  436:         error
+  437:       );
+  438: 
+  439:       process.exit(1);
+  440:     }
+  441:   );
+  442: }
+  443: 
+  444: module.exports = {
+  445:   main,
+  446: };
+
+----------------------------------------------------------------------------------------------------
+ARQUIVO: C:\Users\glaub\palpitaco\backend\scripts\backtestTop3Official.js
+----------------------------------------------------------------------------------------------------
+    1: "use strict";
+    2: 
+    3: const fs = require("fs");
+    4: const path = require("path");
+    5: 
+    6: const {
+    7:   readFullHistory,
+    8:   readMetadata,
+    9: } = require("../engine/top3HistoryRepository");
+   10: 
+   11: const {
+   12:   computeStatisticalTop3V3,
+   13:   loadTop3PublicApi,
+   14: } = require("../engine/scoreEngineUnified");
+   15: 
+   16: const PT_RIO_SCHEDULE_NORMAL = [
+   17:   "09:00",
+   18:   "11:00",
+   19:   "14:00",
+   20:   "16:00",
+   21:   "18:00",
+   22:   "21:00",
+   23: ];
+   24: 
+   25: const PT_RIO_SCHEDULE_WED_SAT = [
+   26:   "09:00",
+   27:   "11:00",
+   28:   "14:00",
+   29:   "16:00",
+   30:   "18:00",
+   31:   "21:00",
+   32: ];
+   33: 
+   34: const FEDERAL_SCHEDULE = [
+   35:   "19:00",
+   36:   "20:00",
+   37: ];
+   38: 
+   39: function safeArray(value) {
+   40:   return Array.isArray(value)
+   41:     ? value
+   42:     : [];
+   43: }
+   44: 
+   45: function normalizeLotteryKey(value) {
+   46:   return String(value || "PT_RIO")
+   47:     .trim()
+   48:     .toUpperCase() || "PT_RIO";
+   49: }
+   50: 
+   51: function normalizeHour(value) {
+   52:   const raw = String(value || "")
+   53:     .trim()
+   54:     .replace("h", ":00");
+   55: 
+   56:   if (/^\d{1,2}$/.test(raw)) {
+   57:     return `${raw.padStart(2, "0")}:00`;
+   58:   }
+   59: 
+   60:   if (/^\d{1,2}:\d{2}$/.test(raw)) {
+   61:     const [hour, minute] = raw.split(":");
+   62: 
+   63:     return `${hour.padStart(2, "0")}:${minute}`;
+   64:   }
+   65: 
+   66:   return null;
+   67: }
+   68: 
+   69: function dateHourKey(ymd, hour) {
+   70:   return `${ymd}T${normalizeHour(hour) || hour}`;
+   71: }
+   72: 
+   73: function parseIntegerFlag(
+   74:   args,
+   75:   name,
+   76:   fallback = null
+   77: ) {
+   78:   const prefix = `--${name}=`;
+   79: 
+   80:   const match = args.find(
+   81:     (value) =>
+   82:       String(value).startsWith(prefix)
+   83:   );
+   84: 
+   85:   if (!match) {
+   86:     return fallback;
+   87:   }
+   88: 
+   89:   const number = Number(
+   90:     String(match).slice(prefix.length)
+   91:   );
+   92: 
+   93:   if (
+   94:     !Number.isInteger(number) ||
+   95:     number < 1
+   96:   ) {
+   97:     throw new Error(
+   98:       `Parâmetro --${name} inválido.`
+   99:     );
+  100:   }
+  101: 
+  102:   return number;
+  103: }
+  104: 
+  105: function parseBooleanFlag(
+  106:   args,
+  107:   name,
+  108:   fallback = false
+  109: ) {
+  110:   const exact = `--${name}`;
+  111:   const prefix = `--${name}=`;
+  112: 
+  113:   const match = args.find(
+  114:     (value) => {
+  115:       const text = String(value);
+  116: 
+  117:       return (
+  118:         text === exact ||
+  119:         text.startsWith(prefix)
+  120:       );
+  121:     }
+  122:   );
+  123: 
+  124:   if (!match) {
+  125:     return fallback;
+  126:   }
+  127: 
+  128:   if (String(match) === exact) {
+  129:     return true;
+  130:   }
+  131: 
+  132:   const raw = String(match)
+  133:     .slice(prefix.length)
+  134:     .trim()
+  135:     .toLowerCase();
+  136: 
+  137:   if (
+  138:     raw === "1" ||
+  139:     raw === "true" ||
+  140:     raw === "yes" ||
+  141:     raw === "on"
+  142:   ) {
+  143:     return true;
+  144:   }
+  145: 
+  146:   if (
+  147:     raw === "0" ||
+  148:     raw === "false" ||
+  149:     raw === "no" ||
+  150:     raw === "off"
+  151:   ) {
+  152:     return false;
+  153:   }
+  154: 
+  155:   throw new Error(
+  156:     `Parâmetro --${name} inválido.`
+  157:   );
+  158: }
+  159: 
+  160: 
+  161: function parseStringFlag(
+  162:   args,
+  163:   name,
+  164:   fallback = null
+  165: ) {
+  166:   const prefix = `--${name}=`;
+  167: 
+  168:   const match = args.find(
+  169:     (value) =>
+  170:       String(value).startsWith(prefix)
+  171:   );
+  172: 
+  173:   if (!match) {
+  174:     return fallback;
+  175:   }
+  176: 
+  177:   const value = String(match)
+  178:     .slice(prefix.length)
+  179:     .trim();
+  180: 
+  181:   return value || fallback;
+  182: }
+  183: 
+  184: function parseCliArgs(argv = []) {
+  185:   const lotteryKey = normalizeLotteryKey(
+  186:     argv[0] || "PT_RIO"
+  187:   );
+  188: 
+  189:   const flags = argv.slice(1);
+  190: 
+  191:   return {
+  192:     lotteryKey,
+  193:     limit: parseIntegerFlag(
+  194:       flags,
+  195:       "limit",
+  196:       null
+  197:     ),
+  198:     minHistory: parseIntegerFlag(
+  199:       flags,
+  200:       "min-history",
+  201:       100
+  202:     ),
+  203:     from: parseStringFlag(
+  204:       flags,
+  205:       "from",
+  206:       null
+  207:     ),
+  208:     to: parseStringFlag(
+  209:       flags,
+  210:       "to",
+  211:       null
+  212:     ),
+  213:     outputDir: parseStringFlag(
+  214:       flags,
+  215:       "output-dir",
+  216:       "tmp"
+  217:     ),
+  218:     telemetry: parseBooleanFlag(
+  219:       flags,
+  220:       "telemetry",
+  221:       false
+  222:     ),
+  223:   };
+  224: }
+  225: 
+  226: function sortDraws(draws = [], publicApi) {
+  227:   return [...safeArray(draws)]
+  228:     .filter(Boolean)
+  229:     .sort((a, b) => {
+  230:       const aYmd =
+  231:         publicApi.pickDrawYMD(a) || "";
+  232: 
+  233:       const bYmd =
+  234:         publicApi.pickDrawYMD(b) || "";
+  235: 
+  236:       const aHour =
+  237:         publicApi.pickDrawHour(a) || "";
+  238: 
+  239:       const bHour =
+  240:         publicApi.pickDrawHour(b) || "";
+  241: 
+  242:       const aId = String(
+  243:         a.drawId || a.id || ""
+  244:       );
+  245: 
+  246:       const bId = String(
+  247:         b.drawId || b.id || ""
+  248:       );
+  249: 
+  250:       return dateHourKey(
+  251:         aYmd,
+  252:         aHour
+  253:       ).localeCompare(
+  254:         dateHourKey(
+  255:           bYmd,
+  256:           bHour
+  257:         )
+  258:       ) || aId.localeCompare(bId);
+  259:     });
+  260: }
+  261: 
+  262: function getFirstPrizeGroup(
+  263:   draw,
+  264:   publicApi
+  265: ) {
+  266:   const value =
+  267:     publicApi.pickPrize1GrupoFromDraw(
+  268:       draw
+  269:     );
+  270: 
+  271:   const group = Number(value);
+  272: 
+  273:   if (
+  274:     !Number.isFinite(group) ||
+  275:     group < 1 ||
+  276:     group > 25
+  277:   ) {
+  278:     return null;
+  279:   }
+  280: 
+  281:   return group;
+  282: }
+  283: 
+  284: function fallbackPrizePosition(prize) {
+  285:   const candidates = [
+  286:     prize?.position,
+  287:     prize?.posicao,
+  288:     prize?.pos,
+  289:     prize?.colocacao,
+  290:   ];
+  291: 
+  292:   for (const value of candidates) {
+  293:     const position = Number(value);
+  294: 
+  295:     if (Number.isFinite(position)) {
+  296:       return position;
+  297:     }
+  298:   }
+  299: 
+  300:   return null;
+  301: }
+  302: 
+  303: function fallbackPrizeGroup(prize) {
+  304:   const directCandidates = [
+  305:     prize?.grupo2,
+  306:     prize?.group2,
+  307:     prize?.grupo,
+  308:     prize?.group,
+  309:     prize?.animal_grupo,
+  310:     prize?.grupo_animal,
+  311:     prize?.grupoAnimal,
+  312:     prize?.g,
+  313:   ];
+  314: 
+  315:   for (const value of directCandidates) {
+  316:     const group = Number(value);
+  317: 
+  318:     if (
+  319:       Number.isFinite(group) &&
+  320:       group >= 1 &&
+  321:       group <= 25
+  322:     ) {
+  323:       return group;
+  324:     }
+  325:   }
+  326: 
+  327:   const milharCandidates = [
+  328:     prize?.milhar,
+  329:     prize?.milhar4,
+  330:     prize?.numero,
+  331:     prize?.number,
+  332:     prize?.value,
+  333:     prize?.result,
+  334:     prize?.resultado,
+  335:     prize?.premio,
+  336:   ];
+  337: 
+  338:   for (const value of milharCandidates) {
+  339:     const digits = String(value ?? "")
+  340:       .replace(/\D+/g, "");
+  341: 
+  342:     if (!digits) {
+  343:       continue;
+  344:     }
+  345: 
+  346:     const dezenaRaw = Number(
+  347:       digits.padStart(2, "0").slice(-2)
+  348:     );
+  349: 
+  350:     if (
+  351:       !Number.isFinite(dezenaRaw) ||
+  352:       dezenaRaw < 0 ||
+  353:       dezenaRaw > 99
+  354:     ) {
+  355:       continue;
+  356:     }
+  357: 
+  358:     if (dezenaRaw === 0) {
+  359:       return 25;
+  360:     }
+  361: 
+  362:     const group = Math.ceil(
+  363:       dezenaRaw / 4
+  364:     );
+  365: 
+  366:     if (
+  367:       group >= 1 &&
+  368:       group <= 25
+  369:     ) {
+  370:       return group;
+  371:     }
+  372:   }
+  373: 
+  374:   return null;
+  375: }
+  376: 
+  377: function getPrizeGroupsByPosition(
+  378:   draw,
+  379:   publicApi,
+  380:   maxPosition = 3
+  381: ) {
+  382:   const limit = Math.max(
+  383:     1,
+  384:     Number(maxPosition || 3)
+  385:   );
+  386: 
+  387:   const prizes = safeArray(
+  388:     draw?.prizes
+  389:   );
+  390: 
+  391:   const guessPosition =
+  392:     typeof publicApi?.guessPrizePos ===
+  393:     "function"
+  394:       ? publicApi.guessPrizePos
+  395:       : fallbackPrizePosition;
+  396: 
+  397:   const guessGroup =
+  398:     typeof publicApi?.guessPrizeGrupo ===
+  399:     "function"
+  400:       ? publicApi.guessPrizeGrupo
+  401:       : fallbackPrizeGroup;
+  402: 
+  403:   const result = Array.from(
+  404:     {
+  405:       length: limit,
+  406:     },
+  407:     () => null
+  408:   );
+  409: 
+  410:   for (const prize of prizes) {
+  411:     const position = Number(
+  412:       guessPosition(prize)
+  413:     );
+  414: 
+  415:     if (
+  416:       !Number.isFinite(position) ||
+  417:       position < 1 ||
+  418:       position > limit
+  419:     ) {
+  420:       continue;
+  421:     }
+  422: 
+  423:     const group = Number(
+  424:       guessGroup(prize)
+  425:     );
+  426: 
+  427:     if (
+  428:       !Number.isFinite(group) ||
+  429:       group < 1 ||
+  430:       group > 25
+  431:     ) {
+  432:       continue;
+  433:     }
+  434: 
+  435:     result[position - 1] = group;
+  436:   }
+  437: 
+  438:   if (
+  439:     !Number.isFinite(
+  440:       Number(result[0])
+  441:     )
+  442:   ) {
+  443:     result[0] = getFirstPrizeGroup(
+  444:       draw,
+  445:       publicApi
+  446:     );
+  447:   }
+  448: 
+  449:   return result;
+  450: }
+  451: 
+  452: function getPredictionGroups(
+  453:   computed
+  454: ) {
+  455:   const candidates =
+  456:     safeArray(computed?.top).length
+  457:       ? safeArray(computed.top)
+  458:       : safeArray(computed?.ranking);
+  459: 
+  460:   return candidates
+  461:     .map((item) =>
+  462:       Number(
+  463:         item?.grupo ??
+  464:         item?.group
+  465:       )
+  466:     )
+  467:     .filter(
+  468:       (group) =>
+  469:         Number.isFinite(group) &&
+  470:         group >= 1 &&
+  471:         group <= 25
+  472:     )
+  473:     .slice(0, 3);
+  474: }
+  475: 
+  476: function ensureBucket(
+  477:   map,
+  478:   key
+  479: ) {
+  480:   if (!map[key]) {
+  481:     map[key] = {
+  482:       evaluated: 0,
+  483: 
+  484:       top1Hits: 0,
+  485:       top3Hits: 0,
+  486: 
+  487:       prize1Hits: 0,
+  488:       prize2Hits: 0,
+  489:       prize3Hits: 0,
+  490: 
+  491:       top3PrizeHits: 0,
+  492: 
+  493:       matchedPrizePositions: 0,
+  494:       matchedPredictions: 0,
+  495: 
+  496:       errors: 0,
+  497:     };
+  498:   }
+  499: 
+  500:   return map[key];
+  501: }
+  502: 
+  503: function finalizeBucket(bucket = {}) {
+  504:   const evaluated = Number(
+  505:     bucket.evaluated || 0
+  506:   );
+  507: 
+  508:   const top1Hits = Number(
+  509:     bucket.top1Hits || 0
+  510:   );
+  511: 
+  512:   const top3Hits = Number(
+  513:     bucket.top3Hits || 0
+  514:   );
+  515: 
+  516:   const prize1Hits = Number(
+  517:     bucket.prize1Hits || 0
+  518:   );
+  519: 
+  520:   const prize2Hits = Number(
+  521:     bucket.prize2Hits || 0
+  522:   );
+  523: 
+  524:   const prize3Hits = Number(
+  525:     bucket.prize3Hits || 0
+  526:   );
+  527: 
+  528:   const top3PrizeHits = Number(
+  529:     bucket.top3PrizeHits || 0
+  530:   );
+  531: 
+  532:   const matchedPrizePositions = Number(
+  533:     bucket.matchedPrizePositions || 0
+  534:   );
+  535: 
+  536:   const matchedPredictions = Number(
+  537:     bucket.matchedPredictions || 0
+  538:   );
+  539: 
+  540:   const rate = (hits) =>
+  541:     evaluated > 0
+  542:       ? Number(
+  543:           (
+  544:             Number(hits || 0) /
+  545:             evaluated *
+  546:             100
+  547:           ).toFixed(4)
+  548:         )
+  549:       : 0;
+  550: 
+  551:   return {
+  552:     evaluated,
+  553: 
+  554:     top1Hits,
+  555:     top3Hits,
+  556: 
+  557:     prize1Hits,
+  558:     prize2Hits,
+  559:     prize3Hits,
+  560: 
+  561:     top3PrizeHits,
+  562: 
+  563:     matchedPrizePositions,
+  564:     matchedPredictions,
+  565: 
+  566:     errors: Number(
+  567:       bucket.errors || 0
+  568:     ),
+  569: 
+  570:     top1Rate:
+  571:       rate(top1Hits),
+  572: 
+  573:     top3Rate:
+  574:       rate(top3Hits),
+  575: 
+  576:     prize1Rate:
+  577:       rate(prize1Hits),
+  578: 
+  579:     prize2Rate:
+  580:       rate(prize2Hits),
+  581: 
+  582:     prize3Rate:
+  583:       rate(prize3Hits),
+  584: 
+  585:     top3PrizeRate:
+  586:       rate(top3PrizeHits),
+  587: 
+  588:     averageMatchedPrizePositions:
+  589:       evaluated > 0
+  590:         ? Number(
+  591:             (
+  592:               matchedPrizePositions /
+  593:               evaluated
+  594:             ).toFixed(4)
+  595:           )
+  596:         : 0,
+  597: 
+  598:     averageMatchedPredictions:
+  599:       evaluated > 0
+  600:         ? Number(
+  601:             (
+  602:               matchedPredictions /
+  603:               evaluated
+  604:             ).toFixed(4)
+  605:           )
+  606:         : 0,
+  607:   };
+  608: }
+  609: 
+  610: function finalizeMap(map = {}) {
+  611:   const OFFICIAL_BASELINE = {
+  612:   baselineVersion: "TOP3_STATISTICAL_V3_V1",
+  613:   baselineDescription: "Primeira versão oficial do motor estatístico.",
+  614:   baselineMetric: "TOP3_PRIZE_ANY_ORDER",
+  615:   baselineRate: 31.7411,
+  616:   baselineCases: 7432,
+  617:   baselineValidatedAt: "2026-07-23"
+  618: };
+  619: 
+  620: const result = {};
+  621: 
+  622:   for (
+  623:     const [key, bucket]
+  624:     of Object.entries(map)
+  625:   ) {
+  626:     result[key] = finalizeBucket(
+  627:       bucket
+  628:     );
+  629:   }
+  630: 
+  631:   return result;
+  632: }
+  633: 
+  634: function formatPercent(value) {
+  635:   return `${Number(value || 0).toFixed(2)}%`;
+  636: }
+  637: 
+  638: function buildTextReport(result) {
+  639:   const lines = [];
+  640: 
+  641:   lines.push(
+  642:     "=============================================="
+  643:   );
+  644: 
+  645:   lines.push(
+  646:     "TOP3 OFFICIAL BACKTEST"
+  647:   );
+  648: 
+  649:   lines.push(
+  650:     "=============================================="
+  651:   );
+  652: 
+  653:   lines.push("");
+  654: 
+  655:   lines.push(
+  656:     `Loteria.............: ${result.lotteryKey}`
+  657:   );
+  658: 
+  659:   lines.push(
+  660:     `Engine..............: ${result.engine}`
+  661:   );
+  662: 
+  663:   lines.push(
+  664:     `Histórico carregado.: ${result.historyLoaded}`
+  665:   );
+  666: 
+  667:   lines.push(
+  668:     `Casos elegíveis.....: ${result.eligibleCases}`
+  669:   );
+  670: 
+  671:   lines.push(
+  672:     `Casos avaliados.....: ${result.global.evaluated}`
+  673:   );
+  674: 
+  675:   lines.push(
+  676:     `Casos ignorados.....: ${result.skipped}`
+  677:   );
+  678: 
+  679:   lines.push(
+  680:     `Erros...............: ${result.global.errors}`
+  681:   );
+  682: 
+  683:   lines.push(
+  684:     `Período histórico...: ${result.historyPeriod.from} até ${result.historyPeriod.to}`
+  685:   );
+  686: 
+  687:   lines.push(
+  688:     `Período avaliado....: ${result.evaluationPeriod.from || "-"} até ${result.evaluationPeriod.to || "-"}`
+  689:   );
+  690: 
+  691:   lines.push(
+  692:     `TOP1................: ${result.global.top1Hits} (${formatPercent(result.global.top1Rate)})`
+  693:   );
+  694: 
+  695:   lines.push(
+  696:     `TOP3 no 1º prêmio...: ${result.global.top3Hits} (${formatPercent(result.global.top3Rate)})`
+  697:   );
+  698: 
+  699:   lines.push(
+  700:     `Acerto no 1º prêmio.: ${result.global.prize1Hits} (${formatPercent(result.global.prize1Rate)})`
+  701:   );
+  702: 
+  703:   lines.push(
+  704:     `Acerto no 2º prêmio.: ${result.global.prize2Hits} (${formatPercent(result.global.prize2Rate)})`
+  705:   );
+  706: 
+  707:   lines.push(
+  708:     `Acerto no 3º prêmio.: ${result.global.prize3Hits} (${formatPercent(result.global.prize3Rate)})`
+  709:   );
+  710: 
+  711:   lines.push(
+  712:     `Algum acerto 1º-3º..: ${result.global.top3PrizeHits} (${formatPercent(result.global.top3PrizeRate)})`
+  713:   );
+  714: 
+  715:   lines.push(
+  716:     `Posições atingidas..: ${result.global.matchedPrizePositions}`
+  717:   );
+  718: 
+  719:   lines.push(
+  720:     `Média posições/caso.: ${Number(result.global.averageMatchedPrizePositions || 0).toFixed(4)}`
+  721:   );
+  722: 
+  723:   lines.push(
+  724:     `Palpites atingidos..: ${result.global.matchedPredictions}`
+  725:   );
+  726: 
+  727:   lines.push(
+  728:     `Média palpites/caso.: ${Number(result.global.averageMatchedPredictions || 0).toFixed(4)}`
+  729:   );
+  730: 
+  731:   lines.push(
+  732:     `Tempo total.........: ${result.tookMs} ms`
+  733:   );
+  734: 
+  735:   lines.push("");
+  736:   lines.push("POR HORÁRIO");
+  737: 
+  738:   for (
+  739:     const [hour, bucket]
+  740:     of Object.entries(result.byHour)
+  741:   ) {
+  742:     lines.push(
+  743:       `${hour.padEnd(8)} avaliados=${String(bucket.evaluated).padStart(5)} | TOP1=${formatPercent(bucket.top1Rate).padStart(8)} | 1º=${formatPercent(bucket.prize1Rate).padStart(8)} | 2º=${formatPercent(bucket.prize2Rate).padStart(8)} | 3º=${formatPercent(bucket.prize3Rate).padStart(8)} | QUALQUER=${formatPercent(bucket.top3PrizeRate).padStart(8)} | erros=${bucket.errors}`
+  744:     );
+  745:   }
+  746: 
+  747:   lines.push("");
+  748:   lines.push("POR DIA DA SEMANA");
+  749: 
+  750:   for (
+  751:     const [weekday, bucket]
+  752:     of Object.entries(result.byWeekday)
+  753:   ) {
+  754:     lines.push(
+  755:       `${weekday.padEnd(3)} avaliados=${String(bucket.evaluated).padStart(5)} | TOP1=${formatPercent(bucket.top1Rate).padStart(8)} | 1º=${formatPercent(bucket.prize1Rate).padStart(8)} | 2º=${formatPercent(bucket.prize2Rate).padStart(8)} | 3º=${formatPercent(bucket.prize3Rate).padStart(8)} | QUALQUER=${formatPercent(bucket.top3PrizeRate).padStart(8)} | erros=${bucket.errors}`
+  756:     );
+  757:   }
+  758: 
+  759:   lines.push("");
+  760:   lines.push("POR MÊS");
+  761: 
+  762:   for (
+  763:     const [month, bucket]
+  764:     of Object.entries(result.byMonth)
+  765:   ) {
+  766:     lines.push(
+  767:       `${month} avaliados=${String(bucket.evaluated).padStart(5)} | TOP1=${formatPercent(bucket.top1Rate).padStart(8)} | 1º=${formatPercent(bucket.prize1Rate).padStart(8)} | 2º=${formatPercent(bucket.prize2Rate).padStart(8)} | 3º=${formatPercent(bucket.prize3Rate).padStart(8)} | QUALQUER=${formatPercent(bucket.top3PrizeRate).padStart(8)} | erros=${bucket.errors}`
+  768:     );
+  769:   }
+  770: 
+  771:   return lines.join("\n");
+  772: }
+  773: 
+  774: async function runOfficialBacktest(
+  775:   options = {},
+  776:   dependencies = {}
+  777: ) {
+  778:   const startedAt = Date.now();
+  779: 
+  780:   const lotteryKey =
+  781:     normalizeLotteryKey(
+  782:       options.lotteryKey ||
+  783:       "PT_RIO"
+  784:     );
+  785: 
+  786:   const publicApi =
+  787:     dependencies.publicApi ||
+  788:     loadTop3PublicApi();
+  789: 
+  790:   const loadHistory =
+  791:     dependencies.readFullHistory ||
+  792:     readFullHistory;
+  793: 
+  794:   const loadMetadata =
+  795:     dependencies.readMetadata ||
+  796:     readMetadata;
+  797: 
+  798:   const computeTop3 =
+  799:     dependencies.computeTop3 ||
+  800:     computeStatisticalTop3V3;
+  801: 
+  802:   const history = sortDraws(
+  803:     await loadHistory(
+  804:       lotteryKey,
+  805:       dependencies.historyDependencies || {}
+  806:     ),
+  807:     publicApi
+  808:   );
+  809: 
+  810:   if (!history.length) {
+  811:     throw new Error(
+  812:       "Histórico TOP3 vazio."
+  813:     );
+  814:   }
+  815: 
+  816:   const metadataResult =
+  817:     await loadMetadata(
+  818:       lotteryKey,
+  819:       dependencies.historyDependencies || {}
+  820:     );
+  821: 
+  822:   const metadata =
+  823:     metadataResult?.data || null;
+  824: 
+  825:   if (
+  826:     dependencies.allowIncompleteSnapshot !== true &&
+  827:     (
+  828:       metadataResult?.exists !== true ||
+  829:       metadata?.bootstrapStatus !==
+  830:         "complete"
+  831:     )
+  832:   ) {
+  833:     throw new Error(
+  834:       "Histórico TOP3 não está marcado como completo."
+  835:     );
+  836:   }
+  837: 
+  838:   const minHistory = Number(
+  839:     options.minHistory || 100
+  840:   );
+  841: 
+  842:   const from =
+  843:     options.from || null;
+  844: 
+  845:   const to =
+  846:     options.to || null;
+  847: 
+  848:   const eligibleIndexes = [];
+  849: 
+  850:   for (
+  851:     let index = minHistory;
+  852:     index < history.length;
+  853:     index += 1
+  854:   ) {
+  855:     const draw = history[index];
+  856: 
+  857:     const ymd =
+  858:       publicApi.pickDrawYMD(draw);
+  859: 
+  860:     const hour =
+  861:       publicApi.pickDrawHour(draw);
+  862: 
+  863:     if (!ymd || !hour) {
+  864:       continue;
+  865:     }
+  866: 
+  867:     if (from && ymd < from) {
+  868:       continue;
+  869:     }
+  870: 
+  871:     if (to && ymd > to) {
+  872:       continue;
+  873:     }
+  874: 
+  875:     if (
+  876:       getFirstPrizeGroup(
+  877:         draw,
+  878:         publicApi
+  879:       ) == null
+  880:     ) {
+  881:       continue;
+  882:     }
+  883: 
+  884:     eligibleIndexes.push(index);
+  885:   }
+  886: 
+  887:   const selectedIndexes =
+  888:     options.limit
+  889:       ? eligibleIndexes.slice(
+  890:           0,
+  891:           Number(options.limit)
+  892:         )
+  893:       : eligibleIndexes;
+  894: 
+  895:   const globalBucket = {
+  896:     evaluated: 0,
+  897: 
+  898:     top1Hits: 0,
+  899:     top3Hits: 0,
+  900: 
+  901:     prize1Hits: 0,
+  902:     prize2Hits: 0,
+  903:     prize3Hits: 0,
+  904: 
+  905:     top3PrizeHits: 0,
+  906: 
+  907:     matchedPrizePositions: 0,
+  908:     matchedPredictions: 0,
+  909: 
+  910:     errors: 0,
+  911:   };
+  912: 
+  913:   const byHour = {};
+  914:   const byWeekday = {};
+  915:   const byMonth = {};
+  916: 
+  917:   const telemetryCases = [];
+  918: 
+  919:   let skipped = 0;
+  920:   let evaluationFrom = null;
+  921:   let evaluationTo = null;
+  922: 
+  923:   for (
+  924:     let position = 0;
+  925:     position < selectedIndexes.length;
+  926:     position += 1
+  927:   ) {
+  928:     const index =
+  929:       selectedIndexes[position];
+  930: 
+  931:     const targetDraw =
+  932:       history[index];
+  933: 
+  934:     const targetYmd =
+  935:       publicApi.pickDrawYMD(
+  936:         targetDraw
+  937:       );
+  938: 
+  939:     const targetHour =
+  940:       publicApi.pickDrawHour(
+  941:         targetDraw
+  942:       );
+  943: 
+  944:     const actualTop3Groups =
+  945:       getPrizeGroupsByPosition(
+  946:         targetDraw,
+  947:         publicApi,
+  948:         3
+  949:       );
+  950: 
+  951:     const actualGroup =
+  952:       Number(
+  953:         actualTop3Groups[0]
+  954:       );
+  955: 
+  956:     const historyBefore =
+  957:       history.slice(0, index);
+  958: 
+  959:     const drawLast =
+  960:       historyBefore[
+  961:         historyBefore.length - 1
+  962:       ];
+  963: 
+  964:     if (
+  965:       !targetYmd ||
+  966:       !targetHour ||
+  967:       actualGroup == null ||
+  968:       !drawLast
+  969:     ) {
+  970:       skipped += 1;
+  971:       continue;
+  972:     }
+  973: 
+  974:     const weekday = String(
+  975:       new Date(
+  976:         `${targetYmd}T12:00:00Z`
+  977:       ).getUTCDay()
+  978:     );
+  979: 
+  980:     const month =
+  981:       targetYmd.slice(0, 7);
+  982: 
+  983:     const hourBucket =
+  984:       ensureBucket(
+  985:         byHour,
+  986:         normalizeHour(targetHour) ||
+  987:         targetHour
+  988:       );
+  989: 
+  990:     const weekdayBucket =
+  991:       ensureBucket(
+  992:         byWeekday,
+  993:         weekday
+  994:       );
+  995: 
+  996:     const monthBucket =
+  997:       ensureBucket(
+  998:         byMonth,
+  999:         month
+ 1000:       );
+ 1001: 
+ 1002:     try {
+ 1003:       const computed =
+ 1004:         computeTop3({
+ 1005:           lotteryKey,
+ 1006:           drawsRange:
+ 1007:             historyBefore,
+ 1008:           drawLast,
+ 1009:           PT_RIO_SCHEDULE_NORMAL,
+ 1010:           PT_RIO_SCHEDULE_WED_SAT,
+ 1011:           FEDERAL_SCHEDULE,
+ 1012:           topN: 3,
+ 1013:           targetYmdOverride:
+ 1014:             targetYmd,
+ 1015:           targetHourOverride:
+ 1016:             targetHour,
+ 1017:         });
+ 1018: 
+ 1019:       const predictionGroups =
+ 1020:         getPredictionGroups(
+ 1021:           computed
+ 1022:         );
+ 1023: 
+ 1024:       if (
+ 1025:         predictionGroups.length < 3
+ 1026:       ) {
+ 1027:         throw new Error(
+ 1028:           "Motor retornou menos de 3 grupos."
+ 1029:         );
+ 1030:       }
+ 1031: 
+ 1032:       const top1Hit =
+ 1033:         predictionGroups[0] ===
+ 1034:         actualGroup;
+ 1035: 
+ 1036:       const top3Hit =
+ 1037:         predictionGroups.includes(
+ 1038:           actualGroup
+ 1039:         );
+ 1040: 
+ 1041:       const prizePositionHits =
+ 1042:         actualTop3Groups.map(
+ 1043:           (group) =>
+ 1044:             Number.isFinite(
+ 1045:               Number(group)
+ 1046:             ) &&
+ 1047:             predictionGroups.includes(
+ 1048:               Number(group)
+ 1049:             )
+ 1050:         );
+ 1051: 
+ 1052:       const predictionHits =
+ 1053:         predictionGroups.map(
+ 1054:           (group) =>
+ 1055:             actualTop3Groups.some(
+ 1056:               (actual) =>
+ 1057:                 Number.isFinite(
+ 1058:                   Number(actual)
+ 1059:                 ) &&
+ 1060:                 Number(actual) ===
+ 1061:                 Number(group)
+ 1062:             )
+ 1063:         );
+ 1064: 
+ 1065:       const prize1Hit =
+ 1066:         Boolean(
+ 1067:           prizePositionHits[0]
+ 1068:         );
+ 1069: 
+ 1070:       const prize2Hit =
+ 1071:         Boolean(
+ 1072:           prizePositionHits[1]
+ 1073:         );
+ 1074: 
+ 1075:       const prize3Hit =
+ 1076:         Boolean(
+ 1077:           prizePositionHits[2]
+ 1078:         );
+ 1079: 
+ 1080:       const matchedPrizePositions =
+ 1081:         prizePositionHits.filter(
+ 1082:           Boolean
+ 1083:         ).length;
+ 1084: 
+ 1085:       const matchedPredictions =
+ 1086:         predictionHits.filter(
+ 1087:           Boolean
+ 1088:         ).length;
+ 1089: 
+ 1090:       const top3PrizeHit =
+ 1091:         matchedPrizePositions > 0;
+ 1092: 
+ 1093:       if (options.telemetry === true) {
+ 1094:         const computedTop = safeArray(
+ 1095:           computed?.top
+ 1096:         );
+ 1097: 
+ 1098:         telemetryCases.push({
+ 1099:           caseNumber: position + 1,
+ 1100:           historyIndex: index,
+ 1101:           target: {
+ 1102:             ymd: targetYmd,
+ 1103:             hour:
+ 1104:               normalizeHour(targetHour) ||
+ 1105:               targetHour,
+ 1106:             weekday,
+ 1107:             month,
+ 1108:           },
+ 1109:           history: {
+ 1110:             availableBefore:
+ 1111:               historyBefore.length,
+ 1112:             lastDrawYmd:
+ 1113:               publicApi.pickDrawYMD(
+ 1114:                 drawLast
+ 1115:               ) || null,
+ 1116:             lastDrawHour:
+ 1117:               publicApi.pickDrawHour(
+ 1118:                 drawLast
+ 1119:               ) || null,
+ 1120:           },
+ 1121:           actual: {
+ 1122:             group: actualGroup,
+ 1123:             top3Groups:
+ 1124:               actualTop3Groups,
+ 1125:           },
+ 1126:           prediction: {
+ 1127:             groups:
+ 1128:               predictionGroups,
+ 1129: 
+ 1130:             top1Hit,
+ 1131:             top3Hit,
+ 1132: 
+ 1133:             prize1Hit,
+ 1134:             prize2Hit,
+ 1135:             prize3Hit,
+ 1136: 
+ 1137:             top3PrizeHit,
+ 1138: 
+ 1139:             matchedPrizePositions,
+ 1140:             matchedPredictions,
+ 1141: 
+ 1142:             prizePositionHits,
+ 1143:             predictionHits,
+ 1144:           },
+ 1145:           candidates: computedTop
+ 1146:             .slice(0, 3)
+ 1147:             .map((item, rankIndex) => ({
+ 1148:               rank: rankIndex + 1,
+ 1149:               grupo: Number(
+ 1150:                 item?.grupo ??
+ 1151:                 item?.group
+ 1152:               ),
+ 1153:               score: Number.isFinite(
+ 1154:                 Number(item?.score)
+ 1155:               )
+ 1156:                 ? Number(item.score)
+ 1157:                 : null,
+ 1158:               scoreProb: Number.isFinite(
+ 1159:                 Number(item?.scoreProb)
+ 1160:               )
+ 1161:                 ? Number(item.scoreProb)
+ 1162:                 : null,
+ 1163:               probability: Number.isFinite(
+ 1164:                 Number(item?.probability)
+ 1165:               )
+ 1166:                 ? Number(item.probability)
+ 1167:                 : null,
+ 1168:               confidence: Number.isFinite(
+ 1169:                 Number(item?.confidence)
+ 1170:               )
+ 1171:                 ? Number(item.confidence)
+ 1172:                 : null,
+ 1173:               frequency: Number.isFinite(
+ 1174:                 Number(
+ 1175:                   item?.freq ??
+ 1176:                   item?.frequency
+ 1177:                 )
+ 1178:               )
+ 1179:                 ? Number(
+ 1180:                     item?.freq ??
+ 1181:                     item?.frequency
+ 1182:                   )
+ 1183:                 : null,
+ 1184:               reasons: safeArray(
+ 1185:                 item?.reasons
+ 1186:               ),
+ 1187:               signals:
+ 1188:                 item?.signals || null,
+ 1189:               evidence:
+ 1190:                 item?.evidence || null,
+ 1191:               meta:
+ 1192:                 item?.meta || null,
+ 1193:             })),
+ 1194:           engineMeta:
+ 1195:             computed?.meta || null,
+ 1196:         });
+ 1197:       }
+ 1198: 
+ 1199:       for (const bucket of [
+ 1200:         globalBucket,
+ 1201:         hourBucket,
+ 1202:         weekdayBucket,
+ 1203:         monthBucket,
+ 1204:       ]) {
+ 1205:         bucket.evaluated += 1;
+ 1206: 
+ 1207:         if (top1Hit) {
+ 1208:           bucket.top1Hits += 1;
+ 1209:         }
+ 1210: 
+ 1211:         if (top3Hit) {
+ 1212:           bucket.top3Hits += 1;
+ 1213:         }
+ 1214: 
+ 1215:         if (prize1Hit) {
+ 1216:           bucket.prize1Hits += 1;
+ 1217:         }
+ 1218: 
+ 1219:         if (prize2Hit) {
+ 1220:           bucket.prize2Hits += 1;
+ 1221:         }
+ 1222: 
+ 1223:         if (prize3Hit) {
+ 1224:           bucket.prize3Hits += 1;
+ 1225:         }
+ 1226: 
+ 1227:         if (top3PrizeHit) {
+ 1228:           bucket.top3PrizeHits += 1;
+ 1229:         }
+ 1230: 
+ 1231:         bucket.matchedPrizePositions +=
+ 1232:           matchedPrizePositions;
+ 1233: 
+ 1234:         bucket.matchedPredictions +=
+ 1235:           matchedPredictions;
+ 1236:       }
+ 1237: 
+ 1238:       evaluationFrom =
+ 1239:         evaluationFrom || targetYmd;
+ 1240: 
+ 1241:       evaluationTo = targetYmd;
+ 1242:     } catch (error) {
+ 1243:       globalBucket.errors += 1;
+ 1244:       hourBucket.errors += 1;
+ 1245:       weekdayBucket.errors += 1;
+ 1246:       monthBucket.errors += 1;
+ 1247: 
+ 1248:       if (
+ 1249:         dependencies.onCaseError
+ 1250:       ) {
+ 1251:         dependencies.onCaseError({
+ 1252:           index,
+ 1253:           targetYmd,
+ 1254:           targetHour,
+ 1255:           error,
+ 1256:         });
+ 1257:       }
+ 1258:     }
+ 1259: 
+ 1260:     const done = position + 1;
+ 1261: 
+ 1262:     if (
+ 1263:       options.progress !== false &&
+ 1264:       (
+ 1265:         done % 25 === 0 ||
+ 1266:         done === selectedIndexes.length
+ 1267:       )
+ 1268:     ) {
+ 1269:       console.log(
+ 1270:         `[BACKTEST] ${done}/${selectedIndexes.length} | avaliados=${globalBucket.evaluated} | erros=${globalBucket.errors}`
+ 1271:       );
+ 1272:     }
+ 1273:   }
+ 1274: 
+ 1275:   const OFFICIAL_BASELINE = {
+ 1276:   baselineVersion: "TOP3_STATISTICAL_V3_V1",
+ 1277:   baselineDescription: "Primeira versão oficial do motor estatístico.",
+ 1278:   baselineMetric: "TOP3_PRIZE_ANY_ORDER",
+ 1279:   baselineRate: 31.7411,
+ 1280:   baselineCases: 7432,
+ 1281:   baselineValidatedAt: "2026-07-23"
+ 1282: };
+ 1283: 
+ 1284: const result = {
+ 1285:     ok: true,
+ 1286:     lotteryKey,
+ 1287:     engine:
+ 1288:       "top3_statistical_v3",
+ 1289:     baseline: OFFICIAL_BASELINE,
+ 1290:     historySource:
+ 1291:       "snapshot",
+ 1292:     historyLoaded:
+ 1293:       history.length,
+ 1294:     eligibleCases:
+ 1295:       eligibleIndexes.length,
+ 1296:     selectedCases:
+ 1297:       selectedIndexes.length,
+ 1298:     skipped,
+ 1299:     minHistory,
+ 1300:     limit:
+ 1301:       options.limit || null,
+ 1302:     historyPeriod: {
+ 1303:       from:
+ 1304:         publicApi.pickDrawYMD(
+ 1305:           history[0]
+ 1306:         ) || null,
+ 1307:       to:
+ 1308:         publicApi.pickDrawYMD(
+ 1309:           history[
+ 1310:             history.length - 1
+ 1311:           ]
+ 1312:         ) || null,
+ 1313:     },
+ 1314:     evaluationPeriod: {
+ 1315:       from: evaluationFrom,
+ 1316:       to: evaluationTo,
+ 1317:     },
+ 1318:     global:
+ 1319:       finalizeBucket(
+ 1320:         globalBucket
+ 1321:       ),
+ 1322:     byHour:
+ 1323:       finalizeMap(byHour),
+ 1324:     byWeekday:
+ 1325:       finalizeMap(byWeekday),
+ 1326:     byMonth:
+ 1327:       finalizeMap(byMonth),
+ 1328:     telemetry:
+ 1329:       options.telemetry === true
+ 1330:         ? {
+ 1331:             enabled: true,
+ 1332:             schemaVersion: 1,
+ 1333:             cases: telemetryCases,
+ 1334:           }
+ 1335:         : {
+ 1336:             enabled: false,
+ 1337:             schemaVersion: 1,
+ 1338:             cases: [],
+ 1339:           },
+ 1340:     metadata: {
+ 1341:       bootstrapStatus:
+ 1342:         metadata?.bootstrapStatus ||
+ 1343:         null,
+ 1344:       totalStored:
+ 1345:         Number(
+ 1346:           metadata?.totalDraws || 0
+ 1347:         ) || null,
+ 1348:       lastProcessedDrawId:
+ 1349:         metadata?.lastProcessedDrawId ||
+ 1350:         null,
+ 1351:     },
+ 1352:     tookMs:
+ 1353:       Date.now() - startedAt,
+ 1354:   };
+ 1355: 
+ 1356:   return result;
+ 1357: }
+ 1358: 
+ 1359: async function main() {
+ 1360:   const options = parseCliArgs(
+ 1361:     process.argv.slice(2)
+ 1362:   );
+ 1363: 
+ 1364:   console.log("");
+ 1365:   console.log(
+ 1366:     "===================================="
+ 1367:   );
+ 1368:   console.log(
+ 1369:     "TOP3 OFFICIAL BACKTEST"
+ 1370:   );
+ 1371:   console.log(
+ 1372:     "===================================="
+ 1373:   );
+ 1374:   console.log("");
+ 1375:   console.log(
+ 1376:     "Loteria............:",
+ 1377:     options.lotteryKey
+ 1378:   );
+ 1379:   console.log(
+ 1380:     "Limite.............:",
+ 1381:     options.limit || "TODOS"
+ 1382:   );
+ 1383:   console.log(
+ 1384:     "Histórico mínimo...:",
+ 1385:     options.minHistory
+ 1386:   );
+ 1387:   console.log(
+ 1388:     "Período............:",
+ 1389:     `${options.from || "início"} até ${options.to || "fim"}`
+ 1390:   );
+ 1391:   console.log(
+ 1392:     "Telemetria.........:",
+ 1393:     options.telemetry
+ 1394:       ? "ATIVA"
+ 1395:       : "DESATIVADA"
+ 1396:   );
+ 1397:   console.log("");
+ 1398: 
+ 1399:   const result =
+ 1400:     await runOfficialBacktest(
+ 1401:       options
+ 1402:     );
+ 1403: 
+ 1404:   const outputDir = path.resolve(
+ 1405:     options.outputDir
+ 1406:   );
+ 1407: 
+ 1408:   fs.mkdirSync(
+ 1409:     outputDir,
+ 1410:     {
+ 1411:       recursive: true,
+ 1412:     }
+ 1413:   );
+ 1414: 
+ 1415:   const lotterySuffix =
+ 1416:     String(options.lotteryKey || "PT_RIO")
+ 1417:       .trim()
+ 1418:       .toLowerCase();
+ 1419: 
+ 1420:   const suffix =
+ 1421:     options.limit
+ 1422:       ? `${lotterySuffix}_limit_${options.limit}`
+ 1423:       : `${lotterySuffix}_full`;
+ 1424: 
+ 1425:   const jsonPath = path.join(
+ 1426:     outputDir,
+ 1427:     `top3_official_backtest_${suffix}.json`
+ 1428:   );
+ 1429: 
+ 1430:   const txtPath = path.join(
+ 1431:     outputDir,
+ 1432:     `top3_official_backtest_${suffix}.txt`
+ 1433:   );
+ 1434: 
+ 1435:   fs.writeFileSync(
+ 1436:     jsonPath,
+ 1437:     JSON.stringify(
+ 1438:       result,
+ 1439:       null,
+ 1440:       2
+ 1441:     ),
+ 1442:     "utf8"
+ 1443:   );
+ 1444: 
+ 1445:   fs.writeFileSync(
+ 1446:     txtPath,
+ 1447:     buildTextReport(result),
+ 1448:     "utf8"
+ 1449:   );
+ 1450: 
+ 1451:   console.log("");
+ 1452:   console.log(
+ 1453:     buildTextReport(result)
+ 1454:   );
+ 1455:   console.log("");
+ 1456:   console.log(
+ 1457:     "JSON:",
+ 1458:     jsonPath
+ 1459:   );
+ 1460:   console.log(
+ 1461:     "TXT :",
+ 1462:     txtPath
+ 1463:   );
+ 1464: }
+ 1465: 
+ 1466: if (require.main === module) {
+ 1467:   main().catch((error) => {
+ 1468:     console.error(
+ 1469:       error?.stack ||
+ 1470:       error?.message ||
+ 1471:       error
+ 1472:     );
+ 1473: 
+ 1474:     process.exit(1);
+ 1475:   });
+ 1476: }
+ 1477: 
+ 1478: module.exports = {
+ 1479:   parseBooleanFlag,
+ 1480:   parseCliArgs,
+ 1481:   sortDraws,
+ 1482:   getFirstPrizeGroup,
+ 1483:   getPrizeGroupsByPosition,
+ 1484:   getPredictionGroups,
+ 1485:   finalizeBucket,
+ 1486:   buildTextReport,
+ 1487:   runOfficialBacktest,
+ 1488: };
+ 1489: 
+
+----------------------------------------------------------------------------------------------------
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Top3\__tests__\top3.backtest.layers.test.js
+----------------------------------------------------------------------------------------------------
+    1: import {
+    2:   computeConditionalNextTop3,
+    3:   getNextSlotForLottery,
+    4:   findNextExistingDrawFromSlot,
+    5:   indexDrawsByYmdHour,
+    6:   pickDrawYMD,
+    7:   pickDrawHour,
+    8:   guessPrizePos,
+    9:   guessPrizeGrupo,
+   10: } from "../top3.engine";
+   11: 
+   12: import {
+   13:   PT_RIO_SCHEDULE_NORMAL,
+   14:   PT_RIO_SCHEDULE_WED_SAT,
+   15:   FEDERAL_SCHEDULE,
+   16: } from "../top3.constants";
+   17: 
+   18: import { toHourBucket, hourToInt, addDaysYMD } from "../top3.formatters";
+   19: 
+   20: import {
+   21:   getKingBoundsByUf,
+   22:   getKingResultsByRange,
+   23: } from "../../../services/kingResultsService";
+   24: 
+   25: jest.setTimeout(300000);
+   26: 
+   27: function drawTs(draw) {
+   28:   const y = pickDrawYMD(draw);
+   29:   const h = toHourBucket(pickDrawHour(draw));
+   30:   if (!y || !h) return Number.POSITIVE_INFINITY;
+   31: 
+   32:   const [Y, M, D] = y.split("-").map(Number);
+   33:   const base = Date.UTC(Y, M - 1, D);
+   34:   const mins = hourToInt(h);
+   35:   const add = mins >= 0 ? mins * 60 * 1000 : 0;
+   36:   return base + add;
+   37: }
+   38: 
+   39: function drawKey(draw) {
+   40:   const y = pickDrawYMD(draw);
+   41:   const h = toHourBucket(pickDrawHour(draw));
+   42:   if (!y || !h) return "";
+   43:   return `${y}|${h}`;
+   44: }
+   45: 
+   46: function dedupeAndSort(draws) {
+   47:   const map = new Map();
+   48: 
+   49:   for (const d of Array.isArray(draws) ? draws : []) {
+   50:     const key = drawKey(d);
+   51:     if (!key) continue;
+   52:     if (!map.has(key)) map.set(key, d);
+   53:   }
+   54: 
+   55:   return Array.from(map.values()).sort((a, b) => drawTs(a) - drawTs(b));
+   56: }
+   57: 
+   58: function top5Groups(draw) {
+   59:   const out = [];
+   60: 
+   61:   for (const p of Array.isArray(draw?.prizes) ? draw.prizes : []) {
+   62:     const pos = Number(guessPrizePos(p));
+   63:     const g = Number(guessPrizeGrupo(p));
+   64: 
+   65:     if (!Number.isFinite(pos) || pos < 1 || pos > 5) continue;
+   66:     if (!Number.isFinite(g) || g < 1 || g > 25) continue;
+   67: 
+   68:     out.push({ pos, grupo: g });
+   69:   }
+   70: 
+   71:   return out.sort((a, b) => a.pos - b.pos);
+   72: }
+   73: 
+   74: function ensureRow(map, key) {
+   75:   if (!map.has(key)) {
+   76:     map.set(key, { total: 0, hitTop5: 0, hitFirst: 0 });
+   77:   }
+   78: 
+   79:   return map.get(key);
+   80: }
+   81: 
+   82: function pct(n, d) {
+   83:   return d ? ((n / d) * 100).toFixed(2) : "0.00";
+   84: }
+   85: 
+   86: function assertComputedSlotMatchesNextDraw({ computed, found, nextSlot, drawLast }) {
+   87:   const computedNextYmd = computed?.meta?.next?.ymd || "";
+   88:   const computedNextHour = toHourBucket(computed?.meta?.next?.hour || "");
+   89: 
+   90:   const expectedYmd = found?.ymd || nextSlot?.ymd || "";
+   91:   const expectedHour = toHourBucket(found?.hour || nextSlot?.hour || "");
+   92: 
+   93:   if (computedNextYmd !== expectedYmd || computedNextHour !== expectedHour) {
+   94:     throw new Error(
+   95:       [
+   96:         "TOP3 calculou slot diferente do próximo sorteio real.",
+   97:         `Último sorteio: ${pickDrawYMD(drawLast)} ${toHourBucket(pickDrawHour(drawLast))}`,
+   98:         `Esperado: ${expectedYmd} ${expectedHour}`,
+   99:         `Calculado: ${computedNextYmd} ${computedNextHour}`,
+  100:         `Scenario: ${computed?.meta?.scenario || "NONE"}`,
+  101:       ].join("\n")
+  102:     );
+  103:   }
+  104: }
+  105: 
+  106: function assertPredictionIntegrity({ computed, drawLast, nextDraw }) {
+  107:   const top = Array.isArray(computed?.top) ? computed.top.slice(0, 3) : [];
+  108: 
+  109:   if (!top.length) {
+  110:     throw new Error(
+  111:       [
+  112:         "TOP3 vazio para caso com próximo sorteio real.",
+  113:         `Último sorteio: ${pickDrawYMD(drawLast)} ${toHourBucket(pickDrawHour(drawLast))}`,
+  114:         `Próximo sorteio: ${pickDrawYMD(nextDraw)} ${toHourBucket(pickDrawHour(nextDraw))}`,
+  115:         `Scenario: ${computed?.meta?.scenario || "NONE"}`,
+  116:       ].join("\n")
+  117:     );
+  118:   }
+  119: 
+  120:   const seen = new Set();
+  121: 
+  122:   for (const item of top) {
+  123:     const grupo = Number(item?.grupo);
+  124: 
+  125:     if (!Number.isFinite(grupo) || grupo < 1 || grupo > 25) {
+  126:       throw new Error(`Grupo inválido no TOP3: ${JSON.stringify(item)}`);
+  127:     }
+  128: 
+  129:     if (seen.has(grupo)) {
+  130:       throw new Error(`Grupo repetido no TOP3: ${JSON.stringify(top)}`);
+  131:     }
+  132: 
+  133:     seen.add(grupo);
+  134: 
+  135:     const confidence = Number(
+  136:       item?.displayConfidence ??
+  137:         item?.confidence ??
+  138:         item?.scoreProb ??
+  139:         item?.prob ??
+  140:         0
+  141:     );
+  142: 
+  143:     if (!Number.isFinite(confidence)) {
+  144:       throw new Error(`Confiança inválida no TOP3: ${JSON.stringify(item)}`);
+  145:     }
+  146: 
+  147:     if (confidence < 0) {
+  148:       throw new Error(`Confiança negativa no TOP3: ${JSON.stringify(item)}`);
+  149:     }
+  150:   }
+  151: }
+  152: 
+  153: test("backtest TOP3 PT_RIO - camadas e transições", async () => {
+  154:   const bounds = await getKingBoundsByUf({ uf: "PT_RIO" });
+  155:   const maxDate = bounds?.maxYmd || bounds?.maxDate;
+  156:   expect(maxDate).toBeTruthy();
+  157: 
+  158:   const from = addDaysYMD(maxDate, -179);
+  159:   const toExclusive = addDaysYMD(maxDate, 1);
+  160: 
+  161:   const raw = await getKingResultsByRange({
+  162:     uf: "PT_RIO",
+  163:     dateFrom: from,
+  164:     dateTo: toExclusive,
+  165:     mode: "detailed",
+  166:     readPolicy: "server",
+  167:   });
+  168: 
+  169:   const allDraws = dedupeAndSort(raw);
+  170:   const drawsIndex = indexDrawsByYmdHour(allDraws);
+  171: 
+  172:   expect(allDraws.length).toBeGreaterThan(30);
+  173: 
+  174:   let totalCases = 0;
+  175:   let hitTop5 = 0;
+  176:   let hitFirst = 0;
+  177: 
+  178:   const byScenario = new Map();
+  179:   const byEdge = new Map();
+  180:   const byPrevGrupo = new Map();
+  181: 
+  182:   for (let i = 0; i < allDraws.length - 1; i += 1) {
+  183:     const drawLast = allDraws[i];
+  184:     const history = allDraws.slice(0, i + 1);
+  185: 
+  186:     const lastY = pickDrawYMD(drawLast);
+  187:     const lastH = toHourBucket(pickDrawHour(drawLast));
+  188:     if (!lastY || !lastH) continue;
+  189: 
+  190:     const nextSlot = getNextSlotForLottery({
+  191:       lotteryKey: "PT_RIO",
+  192:       ymd: lastY,
+  193:       hourBucket: lastH,
+  194:       PT_RIO_SCHEDULE_NORMAL,
+  195:       PT_RIO_SCHEDULE_WED_SAT,
+  196:       FEDERAL_SCHEDULE,
+  197:     });
+  198: 
+  199:     if (!nextSlot?.ymd || !nextSlot?.hour) continue;
+  200: 
+  201:     const found = findNextExistingDrawFromSlot({
+  202:       lotteryKey: "PT_RIO",
+  203:       startSlot: { ymd: nextSlot.ymd, hour: nextSlot.hour },
+  204:       drawsIndex,
+  205:       PT_RIO_SCHEDULE_NORMAL,
+  206:       PT_RIO_SCHEDULE_WED_SAT,
+  207:       FEDERAL_SCHEDULE,
+  208:     });
+  209: 
+  210:     const nextDraw = found?.draw || null;
+  211:     if (!nextDraw) continue;
+  212: 
+  213:     const historyLastKey = drawKey(history[history.length - 1]);
+  214:     const nextDrawKey = drawKey(nextDraw);
+  215: 
+  216:     if (historyLastKey === nextDrawKey) {
+  217:       throw new Error(`Vazamento de futuro no histórico: ${nextDrawKey}`);
+  218:     }
+  219: 
+  220:     const computed = computeConditionalNextTop3({
+  221:       lotteryKey: "PT_RIO",
+  222:       drawsRange: history,
+  223:       drawLast,
+  224:       PT_RIO_SCHEDULE_NORMAL,
+  225:       PT_RIO_SCHEDULE_WED_SAT,
+  226:       FEDERAL_SCHEDULE,
+  227:       topN: 3,
+  228:     });
+  229: 
+  230:     assertComputedSlotMatchesNextDraw({
+  231:       computed,
+  232:       found,
+  233:       nextSlot,
+  234:       drawLast,
+  235:     });
+  236: 
+  237:     assertPredictionIntegrity({
+  238:       computed,
+  239:       drawLast,
+  240:       nextDraw,
+  241:     });
+  242: 
+  243:     const pred = Array.isArray(computed?.top)
+  244:       ? computed.top.slice(0, 3).map((x) => Number(x.grupo))
+  245:       : [];
+  246: 
+  247:     const actualTop5 = top5Groups(nextDraw);
+  248:     const actualGroups = actualTop5.map((x) => Number(x.grupo));
+  249:     const actualFirst = actualTop5.find((x) => x.pos === 1)?.grupo ?? null;
+  250: 
+  251:     if (!actualGroups.length || !Number.isFinite(Number(actualFirst))) {
+  252:       continue;
+  253:     }
+  254: 
+  255:     const hasTop5 = pred.some((g) => actualGroups.includes(g));
+  256:     const hasFirst = pred.includes(Number(actualFirst));
+  257: 
+  258:     totalCases += 1;
+  259:     if (hasTop5) hitTop5 += 1;
+  260:     if (hasFirst) hitFirst += 1;
+  261: 
+  262:     const scenario = computed?.meta?.scenario || "NONE";
+  263:     const prevHour = toHourBucket(computed?.meta?.trigger?.hour || "") || "";
+  264:     const nextHour = toHourBucket(computed?.meta?.next?.hour || "") || "";
+  265:     const prevGrupo = Number(computed?.meta?.trigger?.grupo || 0);
+  266:     const edge = `${prevHour}->${nextHour}`;
+  267: 
+  268:     const rowScenario = ensureRow(byScenario, scenario);
+  269:     rowScenario.total += 1;
+  270:     if (hasTop5) rowScenario.hitTop5 += 1;
+  271:     if (hasFirst) rowScenario.hitFirst += 1;
+  272: 
+  273:     const rowEdge = ensureRow(byEdge, edge);
+  274:     rowEdge.total += 1;
+  275:     if (hasTop5) rowEdge.hitTop5 += 1;
+  276:     if (hasFirst) rowEdge.hitFirst += 1;
+  277: 
+  278:     const prevGrupoKey = String(prevGrupo).padStart(2, "0");
+  279:     const rowPrevGrupo = ensureRow(byPrevGrupo, prevGrupoKey);
+  280:     rowPrevGrupo.total += 1;
+  281:     if (hasTop5) rowPrevGrupo.hitTop5 += 1;
+  282:     if (hasFirst) rowPrevGrupo.hitFirst += 1;
+  283:   }
+  284: 
+  285:   console.log("\n================ BACKTEST TOP3 PT_RIO (CAMADAS) ================");
+  286:   console.log(`Janela: ${from} até ${maxDate}`);
+  287:   console.log(`Casos testados: ${totalCases}`);
+  288:   console.log(`TOP5 geral: ${hitTop5}/${totalCases} (${pct(hitTop5, totalCases)}%)`);
+  289:   console.log(`1º geral: ${hitFirst}/${totalCases} (${pct(hitFirst, totalCases)}%)`);
+  290:   console.log("----------------------------------------------------------------");
+  291: 
+  292:   console.log("POR CENÁRIO:");
+  293:   for (const [key, row] of Array.from(byScenario.entries()).sort(
+  294:     (a, b) => b[1].total - a[1].total
+  295:   )) {
+  296:     console.log(
+  297:       `${key} | casos=${row.total} | top5=${row.hitTop5}/${row.total} (${pct(
+  298:         row.hitTop5,
+  299:         row.total
+  300:       )}%) | primeiro=${row.hitFirst}/${row.total} (${pct(
+  301:         row.hitFirst,
+  302:         row.total
+  303:       )}%)`
+  304:     );
+  305:   }
+  306: 
+  307:   console.log("----------------------------------------------------------------");
+  308:   console.log("POR TRANSIÇÃO:");
+  309:   for (const [key, row] of Array.from(byEdge.entries()).sort()) {
+  310:     console.log(
+  311:       `${key} | casos=${row.total} | top5=${row.hitTop5}/${row.total} (${pct(
+  312:         row.hitTop5,
+  313:         row.total
+  314:       )}%) | primeiro=${row.hitFirst}/${row.total} (${pct(
+  315:         row.hitFirst,
+  316:         row.total
+  317:       )}%)`
+  318:     );
+  319:   }
+  320: 
+  321:   console.log("----------------------------------------------------------------");
+  322:   console.log("TOP 15 GATILHOS ANTERIORES (por volume):");
+  323:   for (const [key, row] of Array.from(byPrevGrupo.entries())
+  324:     .sort((a, b) => b[1].total - a[1].total)
+  325:     .slice(0, 15)) {
+  326:     console.log(
+  327:       `G${key} | casos=${row.total} | top5=${row.hitTop5}/${row.total} (${pct(
+  328:         row.hitTop5,
+  329:         row.total
+  330:       )}%) | primeiro=${row.hitFirst}/${row.total} (${pct(
+  331:         row.hitFirst,
+  332:         row.total
+  333:       )}%)`
+  334:     );
+  335:   }
+  336: 
+  337:   console.log("================================================================\n");
+  338: 
+  339:   expect(totalCases).toBeGreaterThan(0);
+  340: });
+
+----------------------------------------------------------------------------------------------------
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Top3\__tests__\top3.backtest.test.js
+----------------------------------------------------------------------------------------------------
+    1: import {
+    2:   computeConditionalNextTop3,
+    3:   getNextSlotForLottery,
+    4:   findNextExistingDrawFromSlot,
+    5:   indexDrawsByYmdHour,
+    6:   pickDrawYMD,
+    7:   pickDrawHour,
+    8:   guessPrizePos,
+    9:   guessPrizeGrupo,
+   10: } from "../top3.engine";
+   11: 
+   12: import {
+   13:   PT_RIO_SCHEDULE_NORMAL,
+   14:   PT_RIO_SCHEDULE_WED_SAT,
+   15:   FEDERAL_SCHEDULE,
+   16: } from "../top3.constants";
+   17: 
+   18: import { toHourBucket, hourToInt, addDaysYMD } from "../top3.formatters";
+   19: 
+   20: import {
+   21:   getKingBoundsByUf,
+   22:   getKingResultsByRange,
+   23: } from "../../../services/kingResultsService";
+   24: 
+   25: jest.setTimeout(300000);
+   26: 
+   27: function drawTs(draw) {
+   28:   const y = pickDrawYMD(draw);
+   29:   const h = toHourBucket(pickDrawHour(draw));
+   30:   if (!y || !h) return Number.POSITIVE_INFINITY;
+   31: 
+   32:   const [Y, M, D] = y.split("-").map(Number);
+   33:   const base = Date.UTC(Y, M - 1, D);
+   34:   const mins = hourToInt(h);
+   35:   const add = mins >= 0 ? mins * 60 * 1000 : 0;
+   36: 
+   37:   return base + add;
+   38: }
+   39: 
+   40: function drawKey(draw) {
+   41:   const y = pickDrawYMD(draw);
+   42:   const h = toHourBucket(pickDrawHour(draw));
+   43:   if (!y || !h) return "";
+   44:   return `${y}|${h}`;
+   45: }
+   46: 
+   47: function dedupeAndSort(draws) {
+   48:   const map = new Map();
+   49: 
+   50:   for (const d of Array.isArray(draws) ? draws : []) {
+   51:     const key = drawKey(d);
+   52:     if (!key) continue;
+   53:     if (!map.has(key)) map.set(key, d);
+   54:   }
+   55: 
+   56:   return Array.from(map.values()).sort((a, b) => drawTs(a) - drawTs(b));
+   57: }
+   58: 
+   59: function top5Groups(draw) {
+   60:   const out = [];
+   61: 
+   62:   for (const p of Array.isArray(draw?.prizes) ? draw.prizes : []) {
+   63:     const pos = Number(guessPrizePos(p));
+   64:     const g = Number(guessPrizeGrupo(p));
+   65: 
+   66:     if (!Number.isFinite(pos) || pos < 1 || pos > 5) continue;
+   67:     if (!Number.isFinite(g) || g < 1 || g > 25) continue;
+   68: 
+   69:     out.push({ pos, grupo: g });
+   70:   }
+   71: 
+   72:   return out.sort((a, b) => a.pos - b.pos);
+   73: }
+   74: 
+   75: function pct(n, d) {
+   76:   return d ? ((n / d) * 100).toFixed(2) : "0.00";
+   77: }
+   78: 
+   79: function ensureHourRow(map, hour) {
+   80:   const key = toHourBucket(hour || "") || "SEM_HORA";
+   81: 
+   82:   if (!map.has(key)) {
+   83:     map.set(key, { total: 0, hitTop5: 0, hitFirst: 0 });
+   84:   }
+   85: 
+   86:   return map.get(key);
+   87: }
+   88: 
+   89: function assertComputedSlotMatchesNextDraw({ computed, found, nextSlot, drawLast }) {
+   90:   const computedNextYmd = computed?.meta?.next?.ymd || "";
+   91:   const computedNextHour = toHourBucket(computed?.meta?.next?.hour || "");
+   92: 
+   93:   const expectedYmd = found?.ymd || found?.slot?.ymd || nextSlot?.ymd || "";
+   94:   const expectedHour = toHourBucket(
+   95:     found?.hour || found?.slot?.hour || nextSlot?.hour || ""
+   96:   );
+   97: 
+   98:   if (computedNextYmd !== expectedYmd || computedNextHour !== expectedHour) {
+   99:     throw new Error(
+  100:       [
+  101:         "TOP3 calculou slot diferente do próximo sorteio real.",
+  102:         `Último sorteio: ${pickDrawYMD(drawLast)} ${toHourBucket(
+  103:           pickDrawHour(drawLast)
+  104:         )}`,
+  105:         `Esperado: ${expectedYmd} ${expectedHour}`,
+  106:         `Calculado: ${computedNextYmd} ${computedNextHour}`,
+  107:         `Scenario: ${computed?.meta?.scenario || "NONE"}`,
+  108:       ].join("\n")
+  109:     );
+  110:   }
+  111: }
+  112: 
+  113: function assertPredictionIntegrity({ computed, drawLast, nextDraw }) {
+  114:   const top = Array.isArray(computed?.top) ? computed.top.slice(0, 3) : [];
+  115: 
+  116:   if (!top.length) {
+  117:     throw new Error(
+  118:       [
+  119:         "TOP3 vazio para caso com próximo sorteio real.",
+  120:         `Último sorteio: ${pickDrawYMD(drawLast)} ${toHourBucket(
+  121:           pickDrawHour(drawLast)
+  122:         )}`,
+  123:         `Próximo sorteio: ${pickDrawYMD(nextDraw)} ${toHourBucket(
+  124:           pickDrawHour(nextDraw)
+  125:         )}`,
+  126:         `Scenario: ${computed?.meta?.scenario || "NONE"}`,
+  127:       ].join("\n")
+  128:     );
+  129:   }
+  130: 
+  131:   const seen = new Set();
+  132: 
+  133:   for (const item of top) {
+  134:     const grupo = Number(item?.grupo);
+  135: 
+  136:     if (!Number.isFinite(grupo) || grupo < 1 || grupo > 25) {
+  137:       throw new Error(`Grupo inválido no TOP3: ${JSON.stringify(item)}`);
+  138:     }
+  139: 
+  140:     if (seen.has(grupo)) {
+  141:       throw new Error(`Grupo repetido no TOP3: ${JSON.stringify(top)}`);
+  142:     }
+  143: 
+  144:     seen.add(grupo);
+  145: 
+  146:     const confidence = Number(
+  147:       item?.displayConfidence ??
+  148:         item?.confidence ??
+  149:         item?.scoreProb ??
+  150:         item?.prob ??
+  151:         0
+  152:     );
+  153: 
+  154:     if (!Number.isFinite(confidence)) {
+  155:       throw new Error(`Confiança inválida no TOP3: ${JSON.stringify(item)}`);
+  156:     }
+  157: 
+  158:     if (confidence < 0) {
+  159:       throw new Error(`Confiança negativa no TOP3: ${JSON.stringify(item)}`);
+  160:     }
+  161:   }
+  162: }
+  163: 
+  164: test("backtest TOP3 PT_RIO - últimos 180 dias", async () => {
+  165:   const bounds = await getKingBoundsByUf({ uf: "PT_RIO" });
+  166:   const maxDate = bounds?.maxYmd || bounds?.maxDate;
+  167: 
+  168:   expect(maxDate).toBeTruthy();
+  169: 
+  170:   const from = addDaysYMD(maxDate, -179);
+  171:   const toExclusive = addDaysYMD(maxDate, 1);
+  172: 
+  173:   const raw = await getKingResultsByRange({
+  174:     uf: "PT_RIO",
+  175:     dateFrom: from,
+  176:     dateTo: toExclusive,
+  177:     mode: "detailed",
+  178:     readPolicy: "server",
+  179:   });
+  180: 
+  181:   const allDraws = dedupeAndSort(raw);
+  182:   const drawsIndex = indexDrawsByYmdHour(allDraws);
+  183: 
+  184:   expect(allDraws.length).toBeGreaterThan(30);
+  185: 
+  186:   let totalCases = 0;
+  187:   let hitTop5 = 0;
+  188:   let hitFirst = 0;
+  189: 
+  190:   const byTargetHour = new Map();
+  191: 
+  192:   for (let i = 0; i < allDraws.length - 1; i += 1) {
+  193:     const drawLast = allDraws[i];
+  194:     const history = allDraws.slice(0, i + 1);
+  195: 
+  196:     const lastY = pickDrawYMD(drawLast);
+  197:     const lastH = toHourBucket(pickDrawHour(drawLast));
+  198: 
+  199:     if (!lastY || !lastH) continue;
+  200: 
+  201:     const nextSlot = getNextSlotForLottery({
+  202:       lotteryKey: "PT_RIO",
+  203:       ymd: lastY,
+  204:       hourBucket: lastH,
+  205:       PT_RIO_SCHEDULE_NORMAL,
+  206:       PT_RIO_SCHEDULE_WED_SAT,
+  207:       FEDERAL_SCHEDULE,
+  208:     });
+  209: 
+  210:     if (!nextSlot?.ymd || !nextSlot?.hour) continue;
+  211: 
+  212:     const found = findNextExistingDrawFromSlot({
+  213:       lotteryKey: "PT_RIO",
+  214:       startSlot: { ymd: nextSlot.ymd, hour: nextSlot.hour },
+  215:       drawsIndex,
+  216:       PT_RIO_SCHEDULE_NORMAL,
+  217:       PT_RIO_SCHEDULE_WED_SAT,
+  218:       FEDERAL_SCHEDULE,
+  219:     });
+  220: 
+  221:     const nextDraw = found?.draw || null;
+  222:     if (!nextDraw) continue;
+  223: 
+  224:     if (drawKey(history[history.length - 1]) === drawKey(nextDraw)) {
+  225:       throw new Error(`Vazamento de futuro no histórico: ${drawKey(nextDraw)}`);
+  226:     }
+  227: 
+  228:     const computed = computeConditionalNextTop3({
+  229:       lotteryKey: "PT_RIO",
+  230:       drawsRange: history,
+  231:       drawLast,
+  232:       PT_RIO_SCHEDULE_NORMAL,
+  233:       PT_RIO_SCHEDULE_WED_SAT,
+  234:       FEDERAL_SCHEDULE,
+  235:       topN: 3,
+  236:     });
+  237: 
+  238:     assertComputedSlotMatchesNextDraw({
+  239:       computed,
+  240:       found,
+  241:       nextSlot,
+  242:       drawLast,
+  243:     });
+  244: 
+  245:     assertPredictionIntegrity({
+  246:       computed,
+  247:       drawLast,
+  248:       nextDraw,
+  249:     });
+  250: 
+  251:     const pred = Array.isArray(computed?.top)
+  252:       ? computed.top.slice(0, 3).map((x) => Number(x.grupo))
+  253:       : [];
+  254: 
+  255:     const actualTop5 = top5Groups(nextDraw);
+  256:     const actualGroups = actualTop5.map((x) => Number(x.grupo));
+  257:     const actualFirst = actualTop5.find((x) => x.pos === 1)?.grupo ?? null;
+  258: 
+  259:     if (!actualGroups.length || !Number.isFinite(Number(actualFirst))) {
+  260:       continue;
+  261:     }
+  262: 
+  263:     const hasTop5 = pred.some((g) => actualGroups.includes(g));
+  264:     const hasFirst = pred.includes(Number(actualFirst));
+  265: 
+  266:     totalCases += 1;
+  267:     if (hasTop5) hitTop5 += 1;
+  268:     if (hasFirst) hitFirst += 1;
+  269: 
+  270:     const targetHour =
+  271:       found?.hour || found?.slot?.hour || pickDrawHour(nextDraw) || "";
+  272: 
+  273:     const row = ensureHourRow(byTargetHour, targetHour);
+  274:     row.total += 1;
+  275:     if (hasTop5) row.hitTop5 += 1;
+  276:     if (hasFirst) row.hitFirst += 1;
+  277:   }
+  278: 
+  279:   console.log("\n================ BACKTEST TOP3 PT_RIO ================");
+  280:   console.log(`Janela: ${from} até ${maxDate}`);
+  281:   console.log(`Casos testados: ${totalCases}`);
+  282:   console.log(
+  283:     `Acerto TOP3 dentro do TOP5: ${hitTop5} / ${totalCases} = ${pct(
+  284:       hitTop5,
+  285:       totalCases
+  286:     )}%`
+  287:   );
+  288:   console.log(
+  289:     `Acerto TOP3 contendo o 1º prêmio: ${hitFirst} / ${totalCases} = ${pct(
+  290:       hitFirst,
+  291:       totalCases
+  292:     )}%`
+  293:   );
+  294:   console.log("------------------------------------------------------");
+  295: 
+  296:   for (const [hour, row] of Array.from(byTargetHour.entries()).sort()) {
+  297:     console.log(
+  298:       `${hour} | casos=${row.total} | top5=${row.hitTop5}/${row.total} (${pct(
+  299:         row.hitTop5,
+  300:         row.total
+  301:       )}%) | primeiro=${row.hitFirst}/${row.total} (${pct(
+  302:         row.hitFirst,
+  303:         row.total
+  304:       )}%)`
+  305:     );
+  306:   }
+  307: 
+  308:   console.log("======================================================\n");
+  309: 
+  310:   expect(totalCases).toBeGreaterThan(0);
+  311: });
+
+----------------------------------------------------------------------------------------------------
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Top3\__tests__\top3.public-api.node.test.js
+----------------------------------------------------------------------------------------------------
+    1: /** @jest-environment node */
+    2: 
+    3: import * as publicApi from "../top3.public-api";
+    4: 
+    5: const EXPECTED_EXPORTS = [
+    6:   "auditTop3Backtest",
+    7:   "auditTop3Timeline",
+    8:   "build16MilharesForGrupo",
+    9:   "build20MilharesForGrupo",
+   10:   "buildContextEvidence",
+   11:   "buildFrequencyEvidence",
+   12:   "buildMilharesForGrupo",
+   13:   "buildTimelineTop3",
+   14:   "calculateEvidenceStrength",
+   15:   "collectEvidence",
+   16:   "computeConditionalNextTop3",
+   17:   "computeConditionalNextTop3V2",
+   18:   "computeLastSeenByGrupo",
+   19:   "computeStatisticalTop3V3",
+   20:   "countAparicoesByGrupoInDraw",
+   21:   "getNextSlotForLottery",
+   22:   "getPtRioScheduleForYmd",
+   23:   "getScheduleForLottery",
+   24:   "guessPrizeGrupo",
+   25:   "guessPrizePos",
+   26:   "indexDrawsByYmdHour",
+   27:   "isFederalDrawDay",
+   28:   "isHourInSchedule",
+   29:   "pickDrawHour",
+   30:   "pickDrawYMD",
+   31:   "pickPrize1GrupoFromDraw",
+   32:   "scheduleSet",
+   33:   "scoreItem",
+   34:   "scoreRanking",
+   35: ];
+   36: 
+   37: describe("TOP3 public API contract", () => {
+   38:   test("executa em ambiente Node sem APIs do navegador", () => {
+   39:     expect(typeof window).toBe("undefined");
+   40:     expect(typeof document).toBe("undefined");
+   41:     expect(typeof navigator).toBe("undefined");
+   42:   });
+   43: 
+   44:   test("expõe exatamente o contrato público aprovado", () => {
+   45:     expect(
+   46:       Object.keys(publicApi).sort()
+   47:     ).toEqual(
+   48:       [...EXPECTED_EXPORTS].sort()
+   49:     );
+   50:   });
+   51: 
+   52:   test("todas as exportações públicas são funções", () => {
+   53:     for (const name of EXPECTED_EXPORTS) {
+   54:       expect(typeof publicApi[name]).toBe("function");
+   55:     }
+   56:   });
+   57: 
+   58:   test("executa funções básicas através da fachada", () => {
+   59:     expect(
+   60:       publicApi.isHourInSchedule(
+   61:         ["09h", "11h", "14h"],
+   62:         "11:00"
+   63:       )
+   64:     ).toBe(true);
+   65: 
+   66:     const context = publicApi.buildContextEvidence(
+   67:       {},
+   68:       {
+   69:         lotteryKey: "PT_RIO",
+   70:         ymd: "2026-07-15",
+   71:         weekday: "quarta-feira",
+   72:         hour: "14h",
+   73:         previousGroup: 10,
+   74:         window: 90,
+   75:       }
+   76:     );
+   77: 
+   78:     expect(context.module).toBe("context");
+   79:     expect(context.evidence.window).toBe(90);
+   80: 
+   81:     const frequency = publicApi.buildFrequencyEvidence(
+   82:       {
+   83:         frequency: 18,
+   84:       },
+   85:       {
+   86:         totalDraws: 90,
+   87:         window: 90,
+   88:         lotteryKey: "PT_RIO",
+   89:       }
+   90:     );
+   91: 
+   92:     expect(frequency.module).toBe("frequency");
+   93:     expect(frequency.evidence.percent).toBe(20);
+   94:   });
+   95: 
+   96:   test("não expõe helpers internos do motor", () => {
+   97:     const forbiddenInternalExports = [
+   98:       "buildSceneFromDraw",
+   99:       "compareScenes",
+  100:       "buildConditionalLayerDistribution",
+  101:       "buildDayContext",
+  102:       "ymdHourToTs",
+  103:       "safeInt",
+  104:       "normalizeMetric",
+  105:     ];
+  106: 
+  107:     for (const name of forbiddenInternalExports) {
+  108:       expect(publicApi[name]).toBeUndefined();
+  109:     }
+  110:   });
+  111: });
+
+----------------------------------------------------------------------------------------------------
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Top3\__tests__\top3.schedule-calendar-rules.node.test.js
+----------------------------------------------------------------------------------------------------
+    1: import test from "node:test";
+    2: import assert from "node:assert/strict";
+    3: 
+    4: import {
+    5:   getScheduleForLottery,
+    6:   isFederalDrawDay,
+    7: } from "../top3.engine.js";
+    8: 
+    9: import {
+   10:   FEDERAL_SCHEDULE,
+   11:   PT_RIO_SCHEDULE_NORMAL,
+   12:   PT_RIO_SCHEDULE_WED_SAT,
+   13: } from "../top3.constants.js";
+   14: 
+   15: function schedule(lotteryKey, ymd) {
+   16:   return getScheduleForLottery({
+   17:     lotteryKey,
+   18:     ymd,
+   19:     PT_RIO_SCHEDULE_NORMAL,
+   20:     PT_RIO_SCHEDULE_WED_SAT,
+   21:     FEDERAL_SCHEDULE,
+   22:   });
+   23: }
+   24: 
+   25: test("Federal histórica: quarta-feira às 20h", () => {
+   26:   assert.equal(
+   27:     isFederalDrawDay("2026-07-15"),
+   28:     true
+   29:   );
+   30: 
+   31:   assert.deepEqual(
+   32:     schedule("FEDERAL", "2026-07-15"),
+   33:     ["20:00"]
+   34:   );
+   35: });
+   36: 
+   37: test("Federal histórica: sábado às 20h até 18/07/2026", () => {
+   38:   assert.equal(
+   39:     isFederalDrawDay("2026-07-18"),
+   40:     true
+   41:   );
+   42: 
+   43:   assert.deepEqual(
+   44:     schedule("FEDERAL", "2026-07-18"),
+   45:     ["20:00"]
+   46:   );
+   47: });
+   48: 
+   49: test("Federal nova: domingo às 11h desde 19/07/2026", () => {
+   50:   assert.equal(
+   51:     isFederalDrawDay("2026-07-19"),
+   52:     true
+   53:   );
+   54: 
+   55:   assert.deepEqual(
+   56:     schedule("FEDERAL", "2026-07-19"),
+   57:     ["11:00"]
+   58:   );
+   59: });
+   60: 
+   61: test("Federal nova: quarta-feira continua às 20h", () => {
+   62:   assert.equal(
+   63:     isFederalDrawDay("2026-07-22"),
+   64:     true
+   65:   );
+   66: 
+   67:   assert.deepEqual(
+   68:     schedule("FEDERAL", "2026-07-22"),
+   69:     ["20:00"]
+   70:   );
+   71: });
+   72: 
+   73: test("Federal nova: sábado deixa de ter sorteio", () => {
+   74:   assert.equal(
+   75:     isFederalDrawDay("2026-07-25"),
+   76:     false
+   77:   );
+   78: 
+   79:   assert.deepEqual(
+   80:     schedule("FEDERAL", "2026-07-25"),
+   81:     []
+   82:   );
+   83: });
+   84: 
+   85: test("PT Rio: quarta-feira mantém 18h", () => {
+   86:   assert.deepEqual(
+   87:     schedule("PT_RIO", "2026-07-22"),
+   88:     [
+   89:       "09:00",
+   90:       "11:00",
+   91:       "14:00",
+   92:       "16:00",
+   93:       "18:00",
+   94:       "21:00",
+   95:     ]
+   96:   );
+   97: });
+   98: 
+   99: test("PT Rio: segunda-feira mantém grade normal com 18h", () => {
+  100:   assert.deepEqual(
+  101:     schedule("PT_RIO", "2026-07-20"),
+  102:     [
+  103:       "09:00",
+  104:       "11:00",
+  105:       "14:00",
+  106:       "16:00",
+  107:       "18:00",
+  108:       "21:00",
+  109:     ]
+  110:   );
+  111: });
+  112: 
+  113: test("PT Rio: sábado histórico mantém 18h", () => {
+  114:   assert.deepEqual(
+  115:     schedule("PT_RIO", "2026-07-11"),
+  116:     [
+  117:       "09:00",
+  118:       "11:00",
+  119:       "14:00",
+  120:       "16:00",
+  121:       "18:00",
+  122:       "21:00",
+  123:     ]
+  124:   );
+  125: });
+  126: 
+  127: test("PT Rio: sábado desde 18/07/2026 troca 18h por 19h", () => {
+  128:   assert.deepEqual(
+  129:     schedule("PT_RIO", "2026-07-18"),
+  130:     [
+  131:       "09:00",
+  132:       "11:00",
+  133:       "14:00",
+  134:       "16:00",
+  135:       "19:00",
+  136:       "21:00",
+  137:     ]
+  138:   );
+  139: });
+  140: 
+  141: test("PT Rio: domingo desde 19/07/2026 tem apenas 14h e 16h", () => {
+  142:   assert.deepEqual(
+  143:     schedule("PT_RIO", "2026-07-19"),
+  144:     [
+  145:       "14:00",
+  146:       "16:00",
+  147:     ]
+  148:   );
+  149: });
+
+----------------------------------------------------------------------------------------------------
+ARQUIVO: C:\Users\glaub\palpitaco\src\pages\Top3\__tests__\top3.schedule-transition.test.js
+----------------------------------------------------------------------------------------------------
+    1: import {
+    2:   getScheduleForLottery,
+    3:   getPtRioScheduleForYmd,
+    4:   getNextSlotForLottery,
+    5:   isFederalDrawDay,
+    6: } from "../top3.public-api";
+    7: 
+    8: import {
+    9:   PT_RIO_SCHEDULE_NORMAL,
+   10:   PT_RIO_SCHEDULE_WED_SAT,
+   11:   FEDERAL_SCHEDULE,
+   12: } from "../top3.constants";
+   13: 
+   14: function schedule(lotteryKey, ymd) {
+   15:   return getScheduleForLottery({
+   16:     lotteryKey,
+   17:     ymd,
+   18:     PT_RIO_SCHEDULE_NORMAL,
+   19:     PT_RIO_SCHEDULE_WED_SAT,
+   20:     FEDERAL_SCHEDULE,
+   21:   });
+   22: }
+   23: 
+   24: function normalizeSchedule(hours) {
+   25:   return [...hours]
+   26:     .map((hour) => {
+   27:       const value = String(hour).trim();
+   28: 
+   29:       if (/^\d{1,2}h$/.test(value)) {
+   30:         return (
+   31:           value
+   32:             .replace("h", "")
+   33:             .padStart(2, "0")
+   34:           + ":00"
+   35:         );
+   36:       }
+   37: 
+   38:       if (/^\d{1,2}:\d{2}$/.test(value)) {
+   39:         const [hh, mm] = value.split(":");
+   40: 
+   41:         return `${hh.padStart(2, "0")}:${mm}`;
+   42:       }
+   43: 
+   44:       return value;
+   45:     })
+   46:     .sort();
+   47: }
+   48: 
+   49: function rioSchedule(ymd) {
+   50:   return normalizeSchedule(
+   51:     getPtRioScheduleForYmd(
+   52:       ymd,
+   53:       PT_RIO_SCHEDULE_NORMAL,
+   54:       PT_RIO_SCHEDULE_WED_SAT
+   55:     )
+   56:   );
+   57: }
+   58: 
+   59: describe("TOP3 — transição oficial de horários", () => {
+   60:   test("Federal histórica funciona no sábado 18/07/2026 às 20h", () => {
+   61:     expect(isFederalDrawDay("2026-07-18")).toBe(true);
+   62: 
+   63:     expect(
+   64:       normalizeSchedule(
+   65:         schedule("FEDERAL", "2026-07-18")
+   66:       )
+   67:     ).toEqual(["20:00"]);
+   68:   });
+   69: 
+   70:   test("Federal passa para domingo 19/07/2026 às 11h", () => {
+   71:     expect(isFederalDrawDay("2026-07-19")).toBe(true);
+   72: 
+   73:     expect(
+   74:       normalizeSchedule(
+   75:         schedule("FEDERAL", "2026-07-19")
+   76:       )
+   77:     ).toEqual(["11:00"]);
+   78:   });
+   79: 
+   80:   test("Federal deixa de funcionar aos sábados após a transição", () => {
+   81:     expect(isFederalDrawDay("2026-07-25")).toBe(false);
+   82:     expect(schedule("FEDERAL", "2026-07-25")).toEqual([]);
+   83:   });
+   84: 
+   85:   test("Federal continua funcionando na quarta-feira às 20h", () => {
+   86:     expect(isFederalDrawDay("2026-07-22")).toBe(true);
+   87: 
+   88:     expect(
+   89:       normalizeSchedule(
+   90:         schedule("FEDERAL", "2026-07-22")
+   91:       )
+   92:     ).toEqual(["20:00"]);
+   93:   });
+   94: 
+   95:   test("PT Rio preserva domingo histórico anterior à mudança", () => {
+   96:     expect(rioSchedule("2026-07-12")).toEqual([
+   97:       "09:00",
+   98:       "11:00",
+   99:       "14:00",
+  100:       "16:00",
+  101:     ]);
+  102:   });
+  103: 
+  104:   test("PT Rio passa a ter somente 14h e 16h no domingo", () => {
+  105:     expect(rioSchedule("2026-07-19")).toEqual([
+  106:       "14:00",
+  107:       "16:00",
+  108:     ]);
+  109:   });
+  110: 
+  111:   test("PT Rio preserva sábado histórico com 18h", () => {
+  112:     const result = rioSchedule("2026-07-11");
+  113: 
+  114:     expect(result).toContain("18:00");
+  115:     expect(result).not.toContain("19:00");
+  116:   });
+  117: 
+  118:   test("PT Rio substitui 18h por 19h em 18/07/2026", () => {
+  119:     expect(rioSchedule("2026-07-18")).toEqual([
+  120:       "09:00",
+  121:       "11:00",
+  122:       "14:00",
+  123:       "16:00",
+  124:       "19:00",
+  125:       "21:00",
+  126:     ]);
+  127:   });
+  128: 
+  129:   test("PT Rio mantém 19h nos sábados posteriores", () => {
+  130:     expect(rioSchedule("2026-07-25")).toEqual([
+  131:       "09:00",
+  132:       "11:00",
+  133:       "14:00",
+  134:       "16:00",
+  135:       "19:00",
+  136:       "21:00",
+  137:     ]);
+  138:   });
+  139: 
+  140:   test("PT Rio mantém 18h na quarta-feira", () => {
+  141:     const result = rioSchedule("2026-07-22");
+  142: 
+  143:     expect(result).toContain("18:00");
+  144:     expect(result).not.toContain("19:00");
+  145:   });
+  146: 
+  147:   test("PT Rio mantém 18h nos demais dias úteis", () => {
+  148:     const result = rioSchedule("2026-07-20");
+  149: 
+  150:     expect(result).toContain("18:00");
+  151:     expect(result).not.toContain("19:00");
+  152:   });
+  153: 
+  154:   test("LOOK usa a grade oficial completa", () => {
+  155:     expect(
+  156:       normalizeSchedule(
+  157:         schedule("LOOK", "2026-07-21")
+  158:       )
+  159:     ).toEqual([
+  160:       "07:00",
+  161:       "09:00",
+  162:       "11:00",
+  163:       "14:00",
+  164:       "16:00",
+  165:       "18:00",
+  166:       "21:00",
+  167:       "23:00",
+  168:     ]);
+  169:   });
+  170: 
+  171:   test("LOOK faz a transicao 23h para 7h do dia seguinte", () => {
+  172:     expect(
+  173:       getNextSlotForLottery({
+  174:         lotteryKey: "LOOK",
+  175:         ymd: "2026-07-20",
+  176:         hourBucket: "23:00",
+  177:         PT_RIO_SCHEDULE_NORMAL,
+  178:         PT_RIO_SCHEDULE_WED_SAT,
+  179:         FEDERAL_SCHEDULE,
+  180:       })
+  181:     ).toEqual({
+  182:       ymd: "2026-07-21",
+  183:       hour: "07h",
+  184:     });
+  185:   });
+  186: 
+  187:   test("Nacional usa somente os oito horarios oficiais", () => {
+  188:     const nacional = normalizeSchedule(
+  189:       schedule("NACIONAL", "2026-07-21")
+  190:     );
+  191: 
+  192:     expect(nacional).toEqual([
+  193:       "02:00",
+  194:       "08:00",
+  195:       "10:00",
+  196:       "12:00",
+  197:       "15:00",
+  198:       "17:00",
+  199:       "21:00",
+  200:       "23:00",
+  201:     ]);
+  202: 
+  203:     expect(nacional).not.toContain("09:00");
+  204:   });
+  205: 
+  206:   test("Nacional faz a transicao 23h para 2h do dia seguinte", () => {
+  207:     expect(
+  208:       getNextSlotForLottery({
+  209:         lotteryKey: "NACIONAL",
+  210:         ymd: "2026-07-20",
+  211:         hourBucket: "23:00",
+  212:         PT_RIO_SCHEDULE_NORMAL,
+  213:         PT_RIO_SCHEDULE_WED_SAT,
+  214:         FEDERAL_SCHEDULE,
+  215:       })
+  216:     ).toEqual({
+  217:       ymd: "2026-07-21",
+  218:       hour: "02h",
+  219:     });
+  220:   });
+  221: 
+  222: });
+
+====================================================================================================
+4. PACKAGE.JSON — COMANDOS DE TESTE
+====================================================================================================
+{
+  "name": "palpitaco",
+  "version": "0.1.0",
+  "private": true,
+  "dependencies": {
+    "@tanstack/react-query": "^5.91.0",
+    "axios": "^1.13.2",
+    "crypto-js": "^4.2.0",
+    "firebase": "^12.7.0",
+    "jspdf": "^4.0.0",
+    "jspdf-autotable": "^5.0.7",
+    "react": "^19.1.0",
+    "react-dom": "^19.1.0",
+    "react-router-dom": "^7.13.0",
+    "react-scripts": "5.0.1",
+    "react-tsparticles": "^2.12.2",
+    "recharts": "^3.0.2",
+    "web-vitals": "^5.0.3",
+    "xlsx": "^0.18.5"
+  },
+  "scripts": {
+    "backend:server": "node backend/server.js",
+    "stats:update": "node backend/workers/updateStatistics.js",
+    "dev": "react-scripts start",
+    "auto:pt_rio": "node backend/scripts/autoImportToday.js",
+    "build": "react-scripts build",
+    "eject": "react-scripts eject",
+    "test": "react-scripts test",
+    "start": "react-scripts start",
+    "auto:federal": "powershell -NoProfile -Command \"$env:LOTTERY='FEDERAL'; node backend/scripts/autoImportToday.js\"",
+    "vitenode:import": "powershell -ExecutionPolicy Bypass -File .\\tools\\run-vitenode.ps1 -Entry",
+    "build:vercel": "REACT_APP_BUILD_SHA=$VERCEL_GIT_COMMIT_SHA REACT_APP_BUILD_REF=$VERCEL_GIT_COMMIT_REF REACT_APP_BUILD_TIME=$VERCEL_BUILD_TIME react-scripts build"
+  },
+  "eslintConfig": {
+    "extends": [
+      "react-app",
+      "react-app/jest"
+    ]
+  },
+  "browserslist": {
+    "production": [
+      ">0.2%",
+      "not dead",
+      "not op_mini all"
+    ],
+    "development": [
+      "last 1 chrome version",
+      "last 1 firefox version",
+      "last 1 safari version"
+    ]
+  },
+  "devDependencies": {
+    "firebase-admin": "^13.6.1",
+    "playwright": "^1.58.1"
+  }
+  
+}
+
+
+
+
+----------------------------------------------------------------------------------------------------
+backend/package.json
+----------------------------------------------------------------------------------------------------
+{
+  "name": "palpitaco-backend",
+  "version": "1.0.0",
+  "private": true,
+  "type": "commonjs",
+  "main": "server.js",
+  "engines": {
+    "node": ">=20"
+  },
+  "dependencies": {
+    "@babel/core": "^7.29.7",
+    "@babel/plugin-transform-modules-commonjs": "^7.29.7",
+    "@babel/register": "^7.29.7",
+    "axios": "^1.13.2",
+    "express": "^4.22.1",
+    "firebase-admin": "^13.6.0"
+  },
+  "scripts": {
+    "dev": "node server.js",
+    "start": "node server.js"
+  }
+}
+
+====================================================================================================
+RESULTADO
+====================================================================================================
+Auditoria concluída.
+
+Nenhum código foi alterado.
+Nenhuma gravação no Firestore foi realizada.
+Nenhum commit foi criado.
+Nenhum push foi executado.
+====================================================================================================

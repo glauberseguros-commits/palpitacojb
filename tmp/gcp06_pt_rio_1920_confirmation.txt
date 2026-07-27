@@ -1,0 +1,740 @@
+Activated [palpitacojb].
+"use strict";
+
+const fs = require("fs");
+const path = require("path");
+
+let _cache = null;
+
+const PT_RIO_18 = "18:00";
+
+function safeStr(v) {
+  return String(v ?? "").trim();
+}
+
+function isISODate(ymd) {
+  const str = safeStr(ymd);
+
+  if (!/^\d{4}-\d{2}-\d{2}$/.test(str)) {
+    return false;
+  }
+
+  const [y, m, d] = str.split("-").map(Number);
+  const dt = new Date(Date.UTC(y, m - 1, d));
+
+  return (
+    dt.getUTCFullYear() === y &&
+    dt.getUTCMonth() === m - 1 &&
+    dt.getUTCDate() === d
+  );
+}
+
+function ymdDow(ymd) {
+  return new Date(`${ymd}T00:00:00Z`).getUTCDay();
+}
+
+function pad2(n) {
+  return String(n).padStart(2, "0");
+}
+
+function normalizeHHMM(v) {
+  const s = safeStr(v);
+
+  if (!s) {
+    return null;
+  }
+
+  const hhmmss = s.match(
+    /^(\d{1,2}):(\d{1,2}):(\d{1,2})$/
+  );
+
+  if (hhmmss) {
+    const hh = Number(hhmmss[1]);
+    const mm = Number(hhmmss[2]);
+    const ss = Number(hhmmss[3]);
+
+    if (
+      !Number.isInteger(hh) ||
+      !Number.isInteger(mm) ||
+      !Number.isInteger(ss) ||
+      hh < 0 ||
+      hh > 23 ||
+      mm < 0 ||
+      mm > 59 ||
+      ss < 0 ||
+      ss > 59
+    ) {
+      return null;
+    }
+
+    return `${pad2(hh)}:${pad2(mm)}`;
+  }
+
+  const hhmm = s.match(/^(\d{1,2}):(\d{1,2})$/);
+
+  if (hhmm) {
+    const hh = Number(hhmm[1]);
+    const mm = Number(hhmm[2]);
+
+    if (
+      !Number.isInteger(hh) ||
+      !Number.isInteger(mm) ||
+      hh < 0 ||
+      hh > 23 ||
+      mm < 0 ||
+      mm > 59
+    ) {
+      return null;
+    }
+
+    return `${pad2(hh)}:${pad2(mm)}`;
+  }
+
+  const hourOnly = s.match(
+    /^(\d{1,2})(?:\s*h(?:s)?)?$/i
+  );
+
+  if (hourOnly) {
+    const hh = Number(hourOnly[1]);
+
+    if (
+      !Number.isInteger(hh) ||
+      hh < 0 ||
+      hh > 23
+    ) {
+      return null;
+    }
+
+    return `${pad2(hh)}:00`;
+  }
+
+  // Compatibilidade com o comportamento anterior:
+  // aceita textos legados que contenham uma hora.
+  const embeddedHour = s.match(/(\d{1,2})/);
+
+  if (embeddedHour) {
+    const hh = Number(embeddedHour[1]);
+
+    if (
+      !Number.isInteger(hh) ||
+      hh < 0 ||
+      hh > 23
+    ) {
+      return null;
+    }
+
+    return `${pad2(hh)}:00`;
+  }
+
+  return null;
+}
+
+function uniqSorted(arr) {
+  return Array.from(new Set(arr)).sort();
+}
+
+function normalizeSlots(arr) {
+  if (!Array.isArray(arr)) {
+    return [];
+  }
+
+  return uniqSorted(
+    arr
+      .map(normalizeHHMM)
+      .filter(
+        (slot) =>
+          typeof slot === "string" &&
+          /^\d{2}:\d{2}$/.test(slot)
+      )
+  );
+}
+
+function removeSlot(slots, slot) {
+  return normalizeSlots(slots).filter(
+    (value) => value !== slot
+  );
+}
+
+function normalizeOptions(options) {
+  if (typeof options === "boolean") {
+    return {
+      federal20Exists: options,
+    };
+  }
+
+  if (!options || typeof options !== "object") {
+    return {
+      federal20Exists: false,
+    };
+  }
+
+  return {
+    federal20Exists:
+      options.federal20Exists === true ||
+      options.hasFederal20 === true ||
+      options.hasFederal === true,
+  };
+}
+
+function loadRules() {
+  if (_cache) {
+    return _cache;
+  }
+
+  const file = path.join(
+    __dirname,
+    "..",
+    "data",
+    "pt_rio_calendar_rules.json"
+  );
+
+  if (!fs.existsSync(file)) {
+    _cache = {
+      ok: false,
+      error: "RULES_FILE_NOT_FOUND",
+      rules: [],
+      map: new Map(),
+      file,
+    };
+
+    return _cache;
+  }
+
+  try {
+    const parsed = JSON.parse(
+      fs.readFileSync(file, "utf8")
+    );
+
+    const rules = Array.isArray(parsed?.rules)
+      ? parsed.rules
+      : [];
+
+    const map = new Map();
+
+    for (const rule of rules) {
+      const year = Number(rule?.year);
+      const dow = Number(rule?.dow);
+
+      if (
+        !Number.isInteger(year) ||
+        year < 2000 ||
+        year > 2100 ||
+        !Number.isInteger(dow) ||
+        dow < 0 ||
+        dow > 6
+      ) {
+        continue;
+      }
+
+      map.set(`${year}:${dow}`, {
+        CORE: normalizeSlots(rule?.CORE),
+        OPCIONAL: normalizeSlots(rule?.OPCIONAL),
+        RARA: normalizeSlots(rule?.RARA),
+      });
+    }
+
+    _cache = {
+      ok: true,
+      rules,
+      map,
+      file,
+    };
+
+    return _cache;
+  } catch (error) {
+    _cache = {
+      ok: false,
+      error: "RULES_FILE_INVALID_JSON",
+      rules: [],
+      map: new Map(),
+      file,
+      message: error?.message || String(error),
+    };
+
+    return _cache;
+  }
+}
+
+function applyOperationalRules(calendar, options) {
+  const normalizedOptions = normalizeOptions(options);
+  const federal20Exists =
+    normalizedOptions.federal20Exists === true;
+
+  const result = {
+    ...calendar,
+    core: normalizeSlots(calendar?.core),
+    opcional: normalizeSlots(calendar?.opcional),
+    rara: normalizeSlots(calendar?.rara),
+    federal20Exists,
+    ptRio18Expected: true,
+    operationalRulesApplied: [],
+  };
+
+  if (!federal20Exists) {
+    return result;
+  }
+
+  result.core = removeSlot(result.core, PT_RIO_18);
+  result.opcional = removeSlot(
+    result.opcional,
+    PT_RIO_18
+  );
+  result.rara = removeSlot(result.rara, PT_RIO_18);
+
+  result.ptRio18Expected = false;
+  result.operationalRulesApplied.push(
+    "FEDERAL_20_REMOVES_PT_RIO_18"
+  );
+
+  return result;
+}
+
+function fallbackCalendar({
+  date,
+  year = null,
+  dow = null,
+  note = null,
+}) {
+  return {
+    ok: true,
+    source: "fallback",
+    date,
+    year,
+    dow,
+    core: ["11:00", "14:00", "16:00"],
+    opcional: ["09:00"],
+    rara: ["18:00", "21:00"],
+    ...(note ? { note } : {}),
+  };
+}
+
+/**
+ * Fonte oficial do calendário operacional do PT_RIO.
+ *
+ * @param {string} ymd Data no formato YYYY-MM-DD.
+ * @param {object|boolean} options
+ * @param {boolean} options.federal20Exists
+ *   true quando existir sorteio FEDERAL às 20:00
+ *   no mesmo dia.
+ */
+function getPtRioSlotsByDate(ymd, options = {}) {
+  const date = safeStr(ymd);
+
+  if (!isISODate(date)) {
+    return applyOperationalRules(
+      fallbackCalendar({
+        date,
+        note: "INVALID_YMD_FORMAT",
+      }),
+      options
+    );
+  }
+
+  const year = Number(date.slice(0, 4));
+  const dow = ymdDow(date);
+
+  if (
+    !Number.isInteger(year) ||
+    !Number.isInteger(dow)
+  ) {
+    return applyOperationalRules(
+      fallbackCalendar({
+        date,
+        year: Number.isInteger(year)
+          ? year
+          : null,
+        dow: Number.isInteger(dow)
+          ? dow
+          : null,
+        note: "INVALID_YEAR_OR_DOW",
+      }),
+      options
+    );
+  }
+
+  const loaded = loadRules();
+
+  if (loaded.ok && loaded.map) {
+    const rule = loaded.map.get(`${year}:${dow}`);
+
+    if (rule) {
+      return applyOperationalRules(
+        {
+          ok: true,
+          source:
+            "pt_rio_calendar_rules.json",
+          date,
+          year,
+          dow,
+          core: rule.CORE,
+          opcional: rule.OPCIONAL,
+          rara: rule.RARA,
+        },
+        options
+      );
+    }
+  }
+
+  return applyOperationalRules(
+    fallbackCalendar({
+      date,
+      year,
+      dow,
+    }),
+    options
+  );
+}
+
+function isPtRio18Expected(
+  ymd,
+  options = {}
+) {
+  return (
+    getPtRioSlotsByDate(ymd, options)
+      .ptRio18Expected === true
+  );
+}
+
+function clearCache() {
+  _cache = null;
+}
+
+module.exports = {
+  getPtRioSlotsByDate,
+  isPtRio18Expected,
+  normalizeHHMM,
+  clearCache,
+};
+
+if (require.main === module) {
+  const argv = process.argv.slice(2);
+
+  const pick = (key) => {
+    const index = argv.indexOf(key);
+
+    if (
+      index >= 0 &&
+      argv[index + 1]
+    ) {
+      return argv[index + 1];
+    }
+
+    return null;
+  };
+
+  const ymd =
+    pick("--date") ||
+    argv.find((value) =>
+      /^\d{4}-\d{2}-\d{2}$/.test(
+        safeStr(value)
+      )
+    ) ||
+    null;
+
+  const federal20Exists =
+    argv.includes("--federal20") ||
+    argv.includes("--has-federal20");
+
+  if (!ymd) {
+    console.log(
+      "usage: node backend/scripts/ptRioCalendar.js --date YYYY-MM-DD [--federal20]"
+    );
+    process.exit(2);
+  }
+
+  try {
+    const result = getPtRioSlotsByDate(
+      ymd,
+      { federal20Exists }
+    );
+
+    console.log(
+      JSON.stringify(result, null, 2)
+    );
+
+    process.exit(0);
+  } catch (error) {
+    console.error(
+      error?.stack || error
+    );
+
+    process.exit(1);
+  }
+}
+{
+  "lotteryKey": "PT_RIO",
+  "ranges": [
+    {
+      "to": "2024-01-04",
+      "from": "2022-06-07",
+      "dow": {
+        "1": {
+          "hard": [
+            "11",
+            "14",
+            "16",
+            "18",
+            "21"
+          ],
+          "soft": []
+        },
+        "4": {
+          "hard": [
+            "11",
+            "14",
+            "16",
+            "18",
+            "21"
+          ],
+          "soft": []
+        },
+        "0": {
+          "hard": [
+            "11",
+            "14",
+            "16"
+          ],
+          "soft": []
+        },
+        "3": {
+          "hard": [
+            "11",
+            "14",
+            "16",
+            "21"
+          ],
+          "soft": [
+            "18"
+          ]
+        },
+        "5": {
+          "hard": [
+            "11",
+            "14",
+            "16",
+            "18",
+            "21"
+          ],
+          "soft": []
+        },
+        "6": {
+          "hard": [
+            "11",
+            "14",
+            "16",
+            "21"
+          ],
+          "soft": [
+            "18"
+          ]
+        },
+        "2": {
+          "hard": [
+            "11",
+            "14",
+            "16",
+            "18",
+            "21"
+          ],
+          "soft": []
+        }
+      }
+    },
+    {
+      "to": "2099-12-31",
+      "from": "2024-01-05",
+      "dow": {
+        "1": {
+          "hard": [
+            "09",
+            "11",
+            "14",
+            "16",
+            "18",
+            "21"
+          ],
+          "soft": []
+        },
+        "4": {
+          "hard": [
+            "09",
+            "11",
+            "14",
+            "16",
+            "18",
+            "21"
+          ],
+          "soft": []
+        },
+        "0": {
+          "hard": [
+            "09",
+            "11",
+            "14",
+            "16"
+          ],
+          "soft": []
+        },
+        "3": {
+          "hard": [
+            "09",
+            "11",
+            "14",
+            "16",
+            "21"
+          ],
+          "soft": [
+            "18"
+          ]
+        },
+        "5": {
+          "hard": [
+            "09",
+            "11",
+            "14",
+            "16",
+            "18",
+            "21"
+          ],
+          "soft": []
+        },
+        "6": {
+          "hard": [
+            "09",
+            "11",
+            "14",
+            "16",
+            "21"
+          ],
+          "soft": [
+            "18"
+          ]
+        },
+        "2": {
+          "hard": [
+            "09",
+            "11",
+            "14",
+            "16",
+            "18",
+            "21"
+          ],
+          "soft": []
+        }
+      }
+    }
+  ]
+}
+  C:\Users\glaub\palpitaco\backend\scripts\autoImportToday.js:22:  getFederalScheduleForDate,
+  C:\Users\glaub\palpitaco\backend\scripts\autoImportToday.js:23:} = require("./federalCalendar");
+> C:\Users\glaub\palpitaco\backend\scripts\autoImportToday.js:24:const { isPtRio18Expected } = require("./ptRioCalendar");
+  C:\Users\glaub\palpitaco\backend\scripts\autoImportToday.js:25:
+  C:\Users\glaub\palpitaco\backend\scripts\autoImportToday.js:26:// ✅ LOTTERY parametrizável por env (default PT_RIO)
+  C:\Users\glaub\palpitaco\backend\scripts\autoImportToday.js:27:const LOTTERY = String(process.env.LOTTERY || "PT_RIO").trim().toUpperCase() || "PT_RIO";
+  C:\Users\glaub\palpitaco\backend\scripts\autoImportToday.js:132:========================= */
+  C:\Users\glaub\palpitaco\backend\scripts\autoImportToday.js:133:const SCHEDULES = {
+> C:\Users\glaub\palpitaco\backend\scripts\autoImportToday.js:134:  PT_RIO: [
+  C:\Users\glaub\palpitaco\backend\scripts\autoImportToday.js:135:    { hour: "09:00", windowStart: "09:05", releaseAt: "09:29", windowEnd: "09:35" },
+  C:\Users\glaub\palpitaco\backend\scripts\autoImportToday.js:136:    { hour: "11:00", windowStart: "11:05", releaseAt: "11:29", windowEnd: "11:35" },
+  C:\Users\glaub\palpitaco\backend\scripts\autoImportToday.js:137:    { hour: "14:00", windowStart: "14:05", releaseAt: "14:29", windowEnd: "14:35" },
+  C:\Users\glaub\palpitaco\backend\scripts\autoImportToday.js:138:    { hour: "16:00", windowStart: "16:05", releaseAt: "16:29", windowEnd: "16:35" },
+> C:\Users\glaub\palpitaco\backend\scripts\autoImportToday.js:139:    { hour: "18:00", windowStart: "18:05", releaseAt: "18:29", windowEnd: "18:35" },
+  C:\Users\glaub\palpitaco\backend\scripts\autoImportToday.js:140:    // 21h: janela longa
+  C:\Users\glaub\palpitaco\backend\scripts\autoImportToday.js:141:    { hour: "21:00", windowStart: "21:05", releaseAt: "21:05", windowEnd: "21:45" },
+  C:\Users\glaub\palpitaco\backend\scripts\autoImportToday.js:142:  ],
+  C:\Users\glaub\palpitaco\backend\scripts\autoImportToday.js:148:  FEDERAL: [
+  C:\Users\glaub\palpitaco\backend\scripts\autoImportToday.js:149:    { hour: "11:00", windowStart: "11:05", releaseAt: "11:05", windowEnd: "11:35" },
+> C:\Users\glaub\palpitaco\backend\scripts\autoImportToday.js:150:    { hour: "19:00", windowStart: "18:50", releaseAt: "19:00", windowEnd: "19:20" },
+  C:\Users\glaub\palpitaco\backend\scripts\autoImportToday.js:151:    { hour: "20:00", windowStart: "19:50", releaseAt: "20:00", windowEnd: "20:20" },
+  C:\Users\glaub\palpitaco\backend\scripts\autoImportToday.js:152:  ],
+  C:\Users\glaub\palpitaco\backend\scripts\autoImportToday.js:153:
+  C:\Users\glaub\palpitaco\backend\scripts\autoImportToday.js:158:    { hour: "14:00", windowStart: "14:05", releaseAt: "14:29", windowEnd: "14:35" },
+  C:\Users\glaub\palpitaco\backend\scripts\autoImportToday.js:159:    { hour: "16:00", windowStart: "16:05", releaseAt: "16:29", windowEnd: "16:35" },
+> C:\Users\glaub\palpitaco\backend\scripts\autoImportToday.js:160:    { hour: "18:00", windowStart: "18:05", releaseAt: "18:29", windowEnd: "18:35" },
+  C:\Users\glaub\palpitaco\backend\scripts\autoImportToday.js:161:    { hour: "21:00", windowStart: "21:05", releaseAt: "21:05", windowEnd: "21:45" },
+  C:\Users\glaub\palpitaco\backend\scripts\autoImportToday.js:162:    { hour: "23:00", windowStart: "23:05", releaseAt: "23:29", windowEnd: "23:35" },
+  C:\Users\glaub\palpitaco\backend\scripts\autoImportToday.js:163:  ],
+  C:\Users\glaub\palpitaco\backend\scripts\autoImportToday.js:509:   Regras de aplicabilidade
+  C:\Users\glaub\palpitaco\backend\scripts\autoImportToday.js:510:========================= */
+> C:\Users\glaub\palpitaco\backend\scripts\autoImportToday.js:511:function buildTodaySlotStatusMapPT_RIO(
+  C:\Users\glaub\palpitaco\backend\scripts\autoImportToday.js:512:  dateYMD,
+  C:\Users\glaub\palpitaco\backend\scripts\autoImportToday.js:513:  dow,
+  C:\Users\glaub\palpitaco\backend\scripts\autoImportToday.js:514:  { federal20Exists = false } = {}
+  C:\Users\glaub\palpitaco\backend\scripts\autoImportToday.js:525:    if (isSunday) {
+  C:\Users\glaub\palpitaco\backend\scripts\autoImportToday.js:526:      if (
+> C:\Users\glaub\palpitaco\backend\scripts\autoImportToday.js:527:        hh === "18:00" ||
+  C:\Users\glaub\palpitaco\backend\scripts\autoImportToday.js:528:        hh === "21:00"
+  C:\Users\glaub\palpitaco\backend\scripts\autoImportToday.js:529:      ) {
+  C:\Users\glaub\palpitaco\backend\scripts\autoImportToday.js:530:        map.set(hh, "OFF");
+  C:\Users\glaub\palpitaco\backend\scripts\autoImportToday.js:537:
+  C:\Users\glaub\palpitaco\backend\scripts\autoImportToday.js:538:    if (isWed || isSat) {
+> C:\Users\glaub\palpitaco\backend\scripts\autoImportToday.js:539:      if (hh === "18:00") {
+  C:\Users\glaub\palpitaco\backend\scripts\autoImportToday.js:540:        map.set(hh, "SOFT");
+  C:\Users\glaub\palpitaco\backend\scripts\autoImportToday.js:541:      } else {
+  C:\Users\glaub\palpitaco\backend\scripts\autoImportToday.js:542:        map.set(hh, "HARD");
+  C:\Users\glaub\palpitaco\backend\scripts\autoImportToday.js:550:
+  C:\Users\glaub\palpitaco\backend\scripts\autoImportToday.js:551:  const ptRio18Expected =
+> C:\Users\glaub\palpitaco\backend\scripts\autoImportToday.js:552:    isPtRio18Expected(
+  C:\Users\glaub\palpitaco\backend\scripts\autoImportToday.js:553:      dateYMD,
+  C:\Users\glaub\palpitaco\backend\scripts\autoImportToday.js:554:      { federal20Exists }
+  C:\Users\glaub\palpitaco\backend\scripts\autoImportToday.js:555:    );
+  C:\Users\glaub\palpitaco\backend\scripts\autoImportToday.js:556:
+  C:\Users\glaub\palpitaco\backend\scripts\autoImportToday.js:557:  if (!ptRio18Expected) {
+> C:\Users\glaub\palpitaco\backend\scripts\autoImportToday.js:558:    map.set("18:00", "OFF");
+  C:\Users\glaub\palpitaco\backend\scripts\autoImportToday.js:559:
+  C:\Users\glaub\palpitaco\backend\scripts\autoImportToday.js:560:    logLine(
+> C:\Users\glaub\palpitaco\backend\scripts\autoImportToday.js:561:      `[CAL] PT_RIO 18:00 OFF: ` +
+  C:\Users\glaub\palpitaco\backend\scripts\autoImportToday.js:562:        `date=${dateYMD} ` +
+  C:\Users\glaub\palpitaco\backend\scripts\autoImportToday.js:563:        `reason=FEDERAL_20_SCHEDULED`,
+  C:\Users\glaub\palpitaco\backend\scripts\autoImportToday.js:564:      "INFO"
+  C:\Users\glaub\palpitaco\backend\scripts\autoImportToday.js:630:
+  C:\Users\glaub\palpitaco\backend\scripts\autoImportToday.js:631:    if (
+> C:\Users\glaub\palpitaco\backend\scripts\autoImportToday.js:632:      sched.hour === "19:00" &&
+  C:\Users\glaub\palpitaco\backend\scripts\autoImportToday.js:633:      official.has("20:00")
+  C:\Users\glaub\palpitaco\backend\scripts\autoImportToday.js:634:    ) {
+  C:\Users\glaub\palpitaco\backend\scripts\autoImportToday.js:635:      map.set(sched.hour, "SOFT");
+  C:\Users\glaub\palpitaco\backend\scripts\autoImportToday.js:1206:
+  C:\Users\glaub\palpitaco\backend\scripts\autoImportToday.js:1207:      statusMap =
+> C:\Users\glaub\palpitaco\backend\scripts\autoImportToday.js:1208:        buildTodaySlotStatusMapPT_RIO(
+  C:\Users\glaub\palpitaco\backend\scripts\autoImportToday.js:1209:          date,
+  C:\Users\glaub\palpitaco\backend\scripts\autoImportToday.js:1210:          dow,
+  C:\Users\glaub\palpitaco\backend\scripts\autoImportToday.js:1211:          { federal20Exists }
+EXPORTS=getPtRioSlotsByDate,isPtRio18Expected,normalizeHHMM,clearCache
+{"date":"2026-07-17","slots":{"ok":true,"source":"pt_rio_calendar_rules.json","date":"2026-07-17","year":2026,"dow":5,"core":["09:00","11:00","14:00","16:00","18:00","21:00"],"opcional":[],"rara":[],"federal20Exists":false,"ptRio18Expected":true,"operationalRulesApplied":[]},"ptRio18WithoutFederal":true,"ptRio18WithFederal":false}
+{"date":"2026-07-18","slots":{"ok":true,"source":"pt_rio_calendar_rules.json","date":"2026-07-18","year":2026,"dow":6,"core":["09:00","11:00","14:00","16:00","21:00"],"opcional":[],"rara":["18:00"],"federal20Exists":false,"ptRio18Expected":true,"operationalRulesApplied":[]},"ptRio18WithoutFederal":true,"ptRio18WithFederal":false}
+{"date":"2026-07-19","slots":{"ok":true,"source":"pt_rio_calendar_rules.json","date":"2026-07-19","year":2026,"dow":0,"core":["09:00","11:00","14:00","16:00"],"opcional":[],"rara":["18:00","21:00"],"federal20Exists":false,"ptRio18Expected":true,"operationalRulesApplied":[]},"ptRio18WithoutFederal":true,"ptRio18WithFederal":false}
+{"date":"2026-07-22","slots":{"ok":true,"source":"pt_rio_calendar_rules.json","date":"2026-07-22","year":2026,"dow":3,"core":["09:00","11:00","14:00","16:00","21:00"],"opcional":[],"rara":["18:00"],"federal20Exists":false,"ptRio18Expected":true,"operationalRulesApplied":[]},"ptRio18WithoutFederal":true,"ptRio18WithFederal":false}
+{"date":"2026-07-25","slots":{"ok":true,"source":"pt_rio_calendar_rules.json","date":"2026-07-25","year":2026,"dow":6,"core":["09:00","11:00","14:00","16:00","21:00"],"opcional":[],"rara":["18:00"],"federal20Exists":false,"ptRio18Expected":true,"operationalRulesApplied":[]},"ptRio18WithoutFederal":true,"ptRio18WithFederal":false}
+09
+11
+14
+16
+19
+21
+
+id                                                              date       lottery_name   close_hour_raw close_hour hour prizesCount
+--                                                              ----       ------------   -------------- ---------- ---- -----------
+PT_RIO__2026-07-18__09-00__c168d9b3-97b7-42dc-a332-7815edaa51e2 2026-07-18 LT PT RIO 09HS 09:00          09:00      09             7
+PT_RIO__2026-07-18__11-00__cbac7c11-e733-400b-ba4d-2dfe0cba4272 2026-07-18 LT PT RIO 11HS 11:00          11:00      11             7
+PT_RIO__2026-07-18__14-00__98352455-8fd3-447d-ab3d-701dc3f7865f 2026-07-18 LT PT RIO 14HS 14:00          14:00      14             7
+PT_RIO__2026-07-18__16-00__76c127b7-8157-46b6-a64a-ec7ed1574c9f 2026-07-18 LT PT RIO 16HS 16:00          16:00      16             7
+PT_RIO__2026-07-18__19-00__8290329b-aac0-4a6a-9649-5feb6182cf4f 2026-07-18 LT PT RIO 18HS 19:00          19:00      19             7
+PT_RIO__2026-07-18__21-00__d5123f7e-629d-43e9-a8fb-1385ff1cba45 2026-07-18 LT PT RIO 21HS 21:00          21:00      21             7
+
+{
+  "id": "PT_RIO__2026-07-18__19-00__8290329b-aac0-4a6a-9649-5feb6182cf4f",
+  "date": "2026-07-18",
+  "lottery_name": "LT PT RIO 18HS",
+  "close_hour_raw": "19:00",
+  "close_hour": "19:00",
+  "hour": "19",
+  "prizesCount": 7
+}
+.\backend\scripts\ptRioCalendar.test.js:6:  getPtRioSlotsByDate,
+.\backend\scripts\ptRioCalendar.test.js:7:  isPtRio18Expected,
+.\backend\scripts\ptRioCalendar.test.js:19:  const calendar = getPtRioSlotsByDate(
+.\backend\scripts\ptRioCalendar.test.js:38:      "FEDERAL_20_REMOVES_PT_RIO_18"
+.\backend\scripts\ptRioCalendar.test.js:44:    isPtRio18Expected(
+.\backend\scripts\ptRioCalendar.test.js:54:  const calendar = getPtRioSlotsByDate(
+.\backend\scripts\ptRioCalendar.test.js:66:    isPtRio18Expected(
+.\backend\scripts\ptRioCalendar.test.js:83:  "OK: regra FEDERAL 20h remove PT_RIO 18h."

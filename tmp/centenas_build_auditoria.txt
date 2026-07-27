@@ -1,0 +1,18 @@
+
+===== entriesBase =====
+
+===== setEntries =====
+
+===== setCentenas =====
+
+===== setLoading(false) =====
+
+===== setProgress =====
+
+===== return; =====
+
+===== catch ( =====
+
+===== finally =====
+
+===== build = useCallback =====

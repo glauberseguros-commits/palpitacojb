@@ -1,0 +1,12 @@
+LKN-69 aplicado com sucesso.
+
+Alterações:
+- documentação das loterias e horários
+- remoção da seleção binária isFederal
+- inclusão de LOOK e NACIONAL no seletor
+- criação dos horários próprios de LOOK e NACIONAL
+- seleção explícita dos horários por loteria
+- dependência do useMemo por loteria
+
+Arquivo alterado:
+src\pages\Dashboard\components\FiltersBar.jsx

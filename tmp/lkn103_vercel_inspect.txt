@@ -1,0 +1,27 @@
+Fetching deployment "palpitacojb-me1836ic8-glauber-oliveiras-projects.vercel.app" in glauber-oliveiras-projects
+> Fetched deployment "palpitacojb-me1836ic8-glauber-oliveiras-projects.vercel.app" in glauber-oliveiras-projects [468ms]
+
+  General
+
+    id		dpl_8JDEe6wKV1D7wcVJsdkts6CGxq6A
+    name	palpitacojb
+    target	production
+    status	● Ready
+    url		https://palpitacojb-me1836ic8-glauber-oliveiras-projects.vercel.app
+    created	Sun Jul 19 2026 23:47:46 GMT-0300 (Horário Padrão de Brasília) [6m ago]
+
+
+  Aliases
+
+    ╶ https://palpitacojb.com.br
+    ╶ https://palpitacojb.vercel.app
+    ╶ https://www.palpitacojb.com.br
+    ╶ https://palpitacojb-glauber-oliveiras-projects.vercel.app
+    ╶ https://palpitacojb-git-main-glauber-oliveiras-projects.vercel.app
+    
+
+  Builds
+
+    ╶ .        [0ms]
+    
+

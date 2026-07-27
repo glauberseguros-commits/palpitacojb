@@ -1,0 +1,2912 @@
+{
+  "global": {
+    "evaluated": 3,
+    "top1Hits": 0,
+    "top3Hits": 0,
+    "errors": 0,
+    "top1Rate": 0,
+    "top3Rate": 0
+  },
+  "resultKeys": [
+    "ok",
+    "lotteryKey",
+    "engine",
+    "historySource",
+    "historyLoaded",
+    "eligibleCases",
+    "selectedCases",
+    "skipped",
+    "minHistory",
+    "limit",
+    "historyPeriod",
+    "evaluationPeriod",
+    "global",
+    "byHour",
+    "byWeekday",
+    "byMonth",
+    "telemetry",
+    "metadata",
+    "tookMs"
+  ],
+  "telemetryEnabled": true,
+  "telemetryCaseCount": 3,
+  "telemetryCaseKeys": [
+    "caseNumber",
+    "historyIndex",
+    "target",
+    "history",
+    "actual",
+    "prediction",
+    "candidates",
+    "engineMeta"
+  ],
+  "telemetrySamples": [
+    {
+      "caseNumber": 1,
+      "historyIndex": 100,
+      "target": {
+        "ymd": "2022-06-29",
+        "hour": "16:00",
+        "weekday": "3",
+        "month": "2022-06"
+      },
+      "history": {
+        "availableBefore": 100,
+        "lastDrawYmd": "2022-06-29",
+        "lastDrawHour": "14:00"
+      },
+      "actual": {
+        "group": 4
+      },
+      "prediction": {
+        "groups": [
+          16,
+          3,
+          9
+        ],
+        "top1Hit": false,
+        "top3Hit": false
+      },
+      "candidates": [
+        {
+          "rank": 1,
+          "grupo": 16,
+          "score": null,
+          "scoreProb": 0.08590359444652305,
+          "probability": null,
+          "confidence": null,
+          "frequency": 3,
+          "reasons": [
+            "Motor: V3_STATISTICAL",
+            "Alvo: 2022-06-29 16h | DOW=3 | dia=29",
+            "Base: G22 @ 14h",
+            "Probabilidade final G16: 8.59%",
+            "frequência no horário 16h: 3x em 1º | 7x no TOP3 | amostras=22 | peso=82%",
+            "frequência no dia da semana + horário: 1x em 1º | 2x no TOP3 | amostras=3 | peso=9%",
+            "recência comparável: 1x em 1º | 2x no TOP3 | amostras=3 | peso=8%"
+          ],
+          "signals": null,
+          "evidence": null,
+          "meta": {
+            "trigger": {
+              "ymd": "2022-06-29",
+              "hour": "14h",
+              "grupo": 22
+            },
+            "next": {
+              "ymd": "2022-06-29",
+              "hour": "16h"
+            },
+            "samples": 100,
+            "period": {
+              "from": "2022-06-07",
+              "to": "2022-06-29"
+            },
+            "scenario": "V3_STATISTICAL",
+            "explain": {
+              "engine": "V3_STATISTICAL",
+              "targetDow": 3,
+              "targetDayOfMonth": 29,
+              "prevHour": "14h",
+              "prevGrupo": 22,
+              "activeWeights": {
+                "hour": 0.8157303370786516,
+                "dowHour": 0.09101123595505618,
+                "dayMonth": 0.00898876404494382,
+                "transition": 0,
+                "recent": 0.08426966292134831
+              },
+              "scene": {
+                "samples": 80,
+                "totalWeight": 1849,
+                "weight": 0.06,
+                "currentSignature": "22-21-16-07-08-22-21"
+              },
+              "layers": {
+                "hour": {
+                  "label": "frequência no horário 16h",
+                  "samples": 22,
+                  "weight": 0.8157303370786516
+                },
+                "dowHour": {
+                  "label": "frequência no dia da semana + horário",
+                  "samples": 3,
+                  "weight": 0.09101123595505618
+                },
+                "dayMonth": {
+                  "label": "frequência no dia 29",
+                  "samples": 2,
+                  "weight": 0.00898876404494382
+                },
+                "transition": {
+                  "label": "transição G22 @ 14h → 16h",
+                  "samples": 0,
+                  "weight": 0
+                },
+                "recent": {
+                  "label": "recência comparável",
+                  "samples": 3,
+                  "weight": 0.08426966292134831
+                }
+              },
+              "details": {
+                "hour": {
+                  "label": "frequência no horário 16h",
+                  "samples": 22,
+                  "firstCount": 3,
+                  "top3Count": 7,
+                  "probability": 0.09191489361702128,
+                  "weight": 0.8157303370786516
+                },
+                "dowHour": {
+                  "label": "frequência no dia da semana + horário",
+                  "samples": 3,
+                  "firstCount": 1,
+                  "top3Count": 2,
+                  "probability": 0.07428571428571429,
+                  "weight": 0.09101123595505618
+                },
+                "dayMonth": {
+                  "label": "frequência no dia 29",
+                  "samples": 2,
+                  "firstCount": 0,
+                  "top3Count": 1,
+                  "probability": 0.04,
+                  "weight": 0.00898876404494382
+                },
+                "transition": {
+                  "label": "transição G22 @ 14h → 16h",
+                  "samples": 0,
+                  "firstCount": 0,
+                  "top3Count": 0,
+                  "probability": 0.04,
+                  "weight": 0
+                },
+                "recent": {
+                  "label": "recência comparável",
+                  "samples": 3,
+                  "firstCount": 1,
+                  "top3Count": 2,
+                  "probability": 0.07428571428571429,
+                  "weight": 0.08426966292134831
+                },
+                "scene": {
+                  "label": "analogia histórica de cena",
+                  "samples": 80,
+                  "firstCount": 99,
+                  "top3Count": 0,
+                  "probability": 0.04744835045970795,
+                  "weight": 0.06
+                }
+              }
+            }
+          }
+        },
+        {
+          "rank": 2,
+          "grupo": 3,
+          "score": null,
+          "scoreProb": 0.06791296177493758,
+          "probability": null,
+          "confidence": null,
+          "frequency": 2,
+          "reasons": [
+            "Motor: V3_STATISTICAL",
+            "Alvo: 2022-06-29 16h | DOW=3 | dia=29",
+            "Base: G22 @ 14h",
+            "Probabilidade final G03: 6.79%",
+            "frequência no horário 16h: 2x em 1º | 5x no TOP3 | amostras=22 | peso=82%",
+            "frequência no dia da semana + horário: 1x em 1º | 1x no TOP3 | amostras=3 | peso=9%",
+            "recência comparável: 1x em 1º | 1x no TOP3 | amostras=3 | peso=8%"
+          ],
+          "signals": null,
+          "evidence": null,
+          "meta": {
+            "trigger": {
+              "ymd": "2022-06-29",
+              "hour": "14h",
+              "grupo": 22
+            },
+            "next": {
+              "ymd": "2022-06-29",
+              "hour": "16h"
+            },
+            "samples": 100,
+            "period": {
+              "from": "2022-06-07",
+              "to": "2022-06-29"
+            },
+            "scenario": "V3_STATISTICAL",
+            "explain": {
+              "engine": "V3_STATISTICAL",
+              "targetDow": 3,
+              "targetDayOfMonth": 29,
+              "prevHour": "14h",
+              "prevGrupo": 22,
+              "activeWeights": {
+                "hour": 0.8157303370786516,
+                "dowHour": 0.09101123595505618,
+                "dayMonth": 0.00898876404494382,
+                "transition": 0,
+                "recent": 0.08426966292134831
+              },
+              "scene": {
+                "samples": 80,
+                "totalWeight": 1849,
+                "weight": 0.06,
+                "currentSignature": "22-21-16-07-08-22-21"
+              },
+              "layers": {
+                "hour": {
+                  "label": "frequência no horário 16h",
+                  "samples": 22,
+                  "weight": 0.8157303370786516
+                },
+                "dowHour": {
+                  "label": "frequência no dia da semana + horário",
+                  "samples": 3,
+                  "weight": 0.09101123595505618
+                },
+                "dayMonth": {
+                  "label": "frequência no dia 29",
+                  "samples": 2,
+                  "weight": 0.00898876404494382
+                },
+                "transition": {
+                  "label": "transição G22 @ 14h → 16h",
+                  "samples": 0,
+                  "weight": 0
+                },
+                "recent": {
+                  "label": "recência comparável",
+                  "samples": 3,
+                  "weight": 0.08426966292134831
+                }
+              },
+              "details": {
+                "hour": {
+                  "label": "frequência no horário 16h",
+                  "samples": 22,
+                  "firstCount": 2,
+                  "top3Count": 5,
+                  "probability": 0.06893617021276596,
+                  "weight": 0.8157303370786516
+                },
+                "dowHour": {
+                  "label": "frequência no dia da semana + horário",
+                  "samples": 3,
+                  "firstCount": 1,
+                  "top3Count": 1,
+                  "probability": 0.07142857142857142,
+                  "weight": 0.09101123595505618
+                },
+                "dayMonth": {
+                  "label": "frequência no dia 29",
+                  "samples": 2,
+                  "firstCount": 0,
+                  "top3Count": 0,
+                  "probability": 0.03703703703703704,
+                  "weight": 0.00898876404494382
+                },
+                "transition": {
+                  "label": "transição G22 @ 14h → 16h",
+                  "samples": 0,
+                  "firstCount": 0,
+                  "top3Count": 0,
+                  "probability": 0.04,
+                  "weight": 0
+                },
+                "recent": {
+                  "label": "recência comparável",
+                  "samples": 3,
+                  "firstCount": 1,
+                  "top3Count": 1,
+                  "probability": 0.07142857142857142,
+                  "weight": 0.08426966292134831
+                },
+                "scene": {
+                  "label": "analogia histórica de cena",
+                  "samples": 80,
+                  "firstCount": 106,
+                  "top3Count": 0,
+                  "probability": 0.04953055705786912,
+                  "weight": 0.06
+                }
+              }
+            }
+          }
+        },
+        {
+          "rank": 3,
+          "grupo": 9,
+          "score": null,
+          "scoreProb": 0.05972390389192935,
+          "probability": null,
+          "confidence": null,
+          "frequency": 2,
+          "reasons": [
+            "Motor: V3_STATISTICAL",
+            "Alvo: 2022-06-29 16h | DOW=3 | dia=29",
+            "Base: G22 @ 14h",
+            "Probabilidade final G09: 5.97%",
+            "frequência no horário 16h: 2x em 1º | 4x no TOP3 | amostras=22 | peso=82%",
+            "frequência no dia da semana + horário: 0x em 1º | 0x no TOP3 | amostras=3 | peso=9%",
+            "recência comparável: 0x em 1º | 0x no TOP3 | amostras=3 | peso=8%"
+          ],
+          "signals": null,
+          "evidence": null,
+          "meta": {
+            "trigger": {
+              "ymd": "2022-06-29",
+              "hour": "14h",
+              "grupo": 22
+            },
+            "next": {
+              "ymd": "2022-06-29",
+              "hour": "16h"
+            },
+            "samples": 100,
+            "period": {
+              "from": "2022-06-07",
+              "to": "2022-06-29"
+            },
+            "scenario": "V3_STATISTICAL",
+            "explain": {
+              "engine": "V3_STATISTICAL",
+              "targetDow": 3,
+              "targetDayOfMonth": 29,
+              "prevHour": "14h",
+              "prevGrupo": 22,
+              "activeWeights": {
+                "hour": 0.8157303370786516,
+                "dowHour": 0.09101123595505618,
+                "dayMonth": 0.00898876404494382,
+                "transition": 0,
+                "recent": 0.08426966292134831
+              },
+              "scene": {
+                "samples": 80,
+                "totalWeight": 1849,
+                "weight": 0.06,
+                "currentSignature": "22-21-16-07-08-22-21"
+              },
+              "layers": {
+                "hour": {
+                  "label": "frequência no horário 16h",
+                  "samples": 22,
+                  "weight": 0.8157303370786516
+                },
+                "dowHour": {
+                  "label": "frequência no dia da semana + horário",
+                  "samples": 3,
+                  "weight": 0.09101123595505618
+                },
+                "dayMonth": {
+                  "label": "frequência no dia 29",
+                  "samples": 2,
+                  "weight": 0.00898876404494382
+                },
+                "transition": {
+                  "label": "transição G22 @ 14h → 16h",
+                  "samples": 0,
+                  "weight": 0
+                },
+                "recent": {
+                  "label": "recência comparável",
+                  "samples": 3,
+                  "weight": 0.08426966292134831
+                }
+              },
+              "details": {
+                "hour": {
+                  "label": "frequência no horário 16h",
+                  "samples": 22,
+                  "firstCount": 2,
+                  "top3Count": 4,
+                  "probability": 0.06723404255319149,
+                  "weight": 0.8157303370786516
+                },
+                "dowHour": {
+                  "label": "frequência no dia da semana + horário",
+                  "samples": 3,
+                  "firstCount": 0,
+                  "top3Count": 0,
+                  "probability": 0.03571428571428571,
+                  "weight": 0.09101123595505618
+                },
+                "dayMonth": {
+                  "label": "frequência no dia 29",
+                  "samples": 2,
+                  "firstCount": 0,
+                  "top3Count": 0,
+                  "probability": 0.03703703703703704,
+                  "weight": 0.00898876404494382
+                },
+                "transition": {
+                  "label": "transição G22 @ 14h → 16h",
+                  "samples": 0,
+                  "firstCount": 0,
+                  "top3Count": 0,
+                  "probability": 0.04,
+                  "weight": 0
+                },
+                "recent": {
+                  "label": "recência comparável",
+                  "samples": 3,
+                  "firstCount": 0,
+                  "top3Count": 0,
+                  "probability": 0.03571428571428571,
+                  "weight": 0.08426966292134831
+                },
+                "scene": {
+                  "label": "analogia histórica de cena",
+                  "samples": 80,
+                  "firstCount": 50,
+                  "top3Count": 0,
+                  "probability": 0.03287290427257977,
+                  "weight": 0.06
+                }
+              }
+            }
+          }
+        }
+      ],
+      "engineMeta": {
+        "trigger": {
+          "ymd": "2022-06-29",
+          "hour": "14h",
+          "grupo": 22
+        },
+        "next": {
+          "ymd": "2022-06-29",
+          "hour": "16h"
+        },
+        "samples": 100,
+        "scenario": "V3_STATISTICAL",
+        "explain": {
+          "engine": "V3_STATISTICAL",
+          "targetDow": 3,
+          "targetDayOfMonth": 29,
+          "prevHour": "14h",
+          "prevGrupo": 22,
+          "activeWeights": {
+            "hour": 0.8157303370786516,
+            "dowHour": 0.09101123595505618,
+            "dayMonth": 0.00898876404494382,
+            "transition": 0,
+            "recent": 0.08426966292134831
+          },
+          "layers": {
+            "hour": {
+              "label": "frequência no horário 16h",
+              "samples": 22,
+              "weight": 0.8157303370786516
+            },
+            "dowHour": {
+              "label": "frequência no dia da semana + horário",
+              "samples": 3,
+              "weight": 0.09101123595505618
+            },
+            "dayMonth": {
+              "label": "frequência no dia 29",
+              "samples": 2,
+              "weight": 0.00898876404494382
+            },
+            "transition": {
+              "label": "transição G22 @ 14h → 16h",
+              "samples": 0,
+              "weight": 0
+            },
+            "recent": {
+              "label": "recência comparável",
+              "samples": 3,
+              "weight": 0.08426966292134831
+            }
+          }
+        }
+      }
+    },
+    {
+      "caseNumber": 2,
+      "historyIndex": 101,
+      "target": {
+        "ymd": "2022-06-29",
+        "hour": "21:00",
+        "weekday": "3",
+        "month": "2022-06"
+      },
+      "history": {
+        "availableBefore": 101,
+        "lastDrawYmd": "2022-06-29",
+        "lastDrawHour": "16:00"
+      },
+      "actual": {
+        "group": 11
+      },
+      "prediction": {
+        "groups": [
+          7,
+          6,
+          3
+        ],
+        "top1Hit": false,
+        "top3Hit": false
+      },
+      "candidates": [
+        {
+          "rank": 1,
+          "grupo": 7,
+          "score": null,
+          "scoreProb": 0.08708656174163171,
+          "probability": null,
+          "confidence": null,
+          "frequency": 3,
+          "reasons": [
+            "Motor: V3_STATISTICAL",
+            "Alvo: 2022-06-29 21h | DOW=3 | dia=29",
+            "Base: G04 @ 16h",
+            "Probabilidade final G07: 8.71%",
+            "frequência no horário 21h: 3x em 1º | 5x no TOP3 | amostras=19 | peso=79%",
+            "frequência no dia da semana + horário: 1x em 1º | 1x no TOP3 | amostras=3 | peso=10%",
+            "recência comparável: 1x em 1º | 1x no TOP3 | amostras=3 | peso=9%"
+          ],
+          "signals": null,
+          "evidence": null,
+          "meta": {
+            "trigger": {
+              "ymd": "2022-06-29",
+              "hour": "16h",
+              "grupo": 4
+            },
+            "next": {
+              "ymd": "2022-06-29",
+              "hour": "21h"
+            },
+            "samples": 101,
+            "period": {
+              "from": "2022-06-07",
+              "to": "2022-06-29"
+            },
+            "scenario": "V3_STATISTICAL",
+            "explain": {
+              "engine": "V3_STATISTICAL",
+              "targetDow": 3,
+              "targetDayOfMonth": 29,
+              "prevHour": "16h",
+              "prevGrupo": 4,
+              "activeWeights": {
+                "hour": 0.7886792452830188,
+                "dowHour": 0.1018867924528302,
+                "dayMonth": 0.01509433962264151,
+                "transition": 0,
+                "recent": 0.09433962264150944
+              },
+              "scene": {
+                "samples": 80,
+                "totalWeight": 2538.5,
+                "weight": 0.06,
+                "currentSignature": "04-07-14-24-05-03-07"
+              },
+              "layers": {
+                "hour": {
+                  "label": "frequência no horário 21h",
+                  "samples": 19,
+                  "weight": 0.7886792452830188
+                },
+                "dowHour": {
+                  "label": "frequência no dia da semana + horário",
+                  "samples": 3,
+                  "weight": 0.1018867924528302
+                },
+                "dayMonth": {
+                  "label": "frequência no dia 29",
+                  "samples": 3,
+                  "weight": 0.01509433962264151
+                },
+                "transition": {
+                  "label": "transição G04 @ 16h → 21h",
+                  "samples": 0,
+                  "weight": 0
+                },
+                "recent": {
+                  "label": "recência comparável",
+                  "samples": 3,
+                  "weight": 0.09433962264150944
+                }
+              },
+              "details": {
+                "hour": {
+                  "label": "frequência no horário 21h",
+                  "samples": 19,
+                  "firstCount": 3,
+                  "top3Count": 5,
+                  "probability": 0.09454545454545456,
+                  "weight": 0.7886792452830188
+                },
+                "dowHour": {
+                  "label": "frequência no dia da semana + horário",
+                  "samples": 3,
+                  "firstCount": 1,
+                  "top3Count": 1,
+                  "probability": 0.07142857142857142,
+                  "weight": 0.1018867924528302
+                },
+                "dayMonth": {
+                  "label": "frequência no dia 29",
+                  "samples": 3,
+                  "firstCount": 0,
+                  "top3Count": 2,
+                  "probability": 0.041428571428571426,
+                  "weight": 0.01509433962264151
+                },
+                "transition": {
+                  "label": "transição G04 @ 16h → 21h",
+                  "samples": 0,
+                  "firstCount": 0,
+                  "top3Count": 0,
+                  "probability": 0.04,
+                  "weight": 0
+                },
+                "recent": {
+                  "label": "recência comparável",
+                  "samples": 3,
+                  "firstCount": 1,
+                  "top3Count": 1,
+                  "probability": 0.07142857142857142,
+                  "weight": 0.09433962264150944
+                },
+                "scene": {
+                  "label": "analogia histórica de cena",
+                  "samples": 80,
+                  "firstCount": 165.5,
+                  "top3Count": 0,
+                  "probability": 0.05385779003348434,
+                  "weight": 0.06
+                }
+              }
+            }
+          }
+        },
+        {
+          "rank": 2,
+          "grupo": 6,
+          "score": null,
+          "scoreProb": 0.06880909741994842,
+          "probability": null,
+          "confidence": null,
+          "frequency": 2,
+          "reasons": [
+            "Motor: V3_STATISTICAL",
+            "Alvo: 2022-06-29 21h | DOW=3 | dia=29",
+            "Base: G04 @ 16h",
+            "Probabilidade final G06: 6.88%",
+            "frequência no horário 21h: 2x em 1º | 7x no TOP3 | amostras=19 | peso=79%",
+            "frequência no dia da semana + horário: 0x em 1º | 1x no TOP3 | amostras=3 | peso=10%",
+            "analogia histórica de cena: 217x em 1º | 0x no TOP3 | amostras=80 | peso=6%"
+          ],
+          "signals": null,
+          "evidence": null,
+          "meta": {
+            "trigger": {
+              "ymd": "2022-06-29",
+              "hour": "16h",
+              "grupo": 4
+            },
+            "next": {
+              "ymd": "2022-06-29",
+              "hour": "21h"
+            },
+            "samples": 101,
+            "period": {
+              "from": "2022-06-07",
+              "to": "2022-06-29"
+            },
+            "scenario": "V3_STATISTICAL",
+            "explain": {
+              "engine": "V3_STATISTICAL",
+              "targetDow": 3,
+              "targetDayOfMonth": 29,
+              "prevHour": "16h",
+              "prevGrupo": 4,
+              "activeWeights": {
+                "hour": 0.7886792452830188,
+                "dowHour": 0.1018867924528302,
+                "dayMonth": 0.01509433962264151,
+                "transition": 0,
+                "recent": 0.09433962264150944
+              },
+              "scene": {
+                "samples": 80,
+                "totalWeight": 2538.5,
+                "weight": 0.06,
+                "currentSignature": "04-07-14-24-05-03-07"
+              },
+              "layers": {
+                "hour": {
+                  "label": "frequência no horário 21h",
+                  "samples": 19,
+                  "weight": 0.7886792452830188
+                },
+                "dowHour": {
+                  "label": "frequência no dia da semana + horário",
+                  "samples": 3,
+                  "weight": 0.1018867924528302
+                },
+                "dayMonth": {
+                  "label": "frequência no dia 29",
+                  "samples": 3,
+                  "weight": 0.01509433962264151
+                },
+                "transition": {
+                  "label": "transição G04 @ 16h → 21h",
+                  "samples": 0,
+                  "weight": 0
+                },
+                "recent": {
+                  "label": "recência comparável",
+                  "samples": 3,
+                  "weight": 0.09433962264150944
+                }
+              },
+              "details": {
+                "hour": {
+                  "label": "frequência no horário 21h",
+                  "samples": 19,
+                  "firstCount": 2,
+                  "top3Count": 7,
+                  "probability": 0.07727272727272727,
+                  "weight": 0.7886792452830188
+                },
+                "dowHour": {
+                  "label": "frequência no dia da semana + horário",
+                  "samples": 3,
+                  "firstCount": 0,
+                  "top3Count": 1,
+                  "probability": 0.03857142857142857,
+                  "weight": 0.1018867924528302
+                },
+                "dayMonth": {
+                  "label": "frequência no dia 29",
+                  "samples": 3,
+                  "firstCount": 0,
+                  "top3Count": 0,
+                  "probability": 0.03571428571428571,
+                  "weight": 0.01509433962264151
+                },
+                "transition": {
+                  "label": "transição G04 @ 16h → 21h",
+                  "samples": 0,
+                  "firstCount": 0,
+                  "top3Count": 0,
+                  "probability": 0.04,
+                  "weight": 0
+                },
+                "recent": {
+                  "label": "recência comparável",
+                  "samples": 3,
+                  "firstCount": 0,
+                  "top3Count": 1,
+                  "probability": 0.03857142857142857,
+                  "weight": 0.09433962264150944
+                },
+                "scene": {
+                  "label": "analogia histórica de cena",
+                  "samples": 80,
+                  "firstCount": 217,
+                  "top3Count": 0,
+                  "probability": 0.06501595430372267,
+                  "weight": 0.06
+                }
+              }
+            }
+          }
+        },
+        {
+          "rank": 3,
+          "grupo": 3,
+          "score": null,
+          "scoreProb": 0.06865250480604089,
+          "probability": null,
+          "confidence": null,
+          "frequency": 2,
+          "reasons": [
+            "Motor: V3_STATISTICAL",
+            "Alvo: 2022-06-29 21h | DOW=3 | dia=29",
+            "Base: G04 @ 16h",
+            "Probabilidade final G03: 6.87%",
+            "frequência no horário 21h: 2x em 1º | 3x no TOP3 | amostras=19 | peso=79%",
+            "frequência no dia da semana + horário: 1x em 1º | 1x no TOP3 | amostras=3 | peso=10%",
+            "recência comparável: 1x em 1º | 1x no TOP3 | amostras=3 | peso=9%"
+          ],
+          "signals": null,
+          "evidence": null,
+          "meta": {
+            "trigger": {
+              "ymd": "2022-06-29",
+              "hour": "16h",
+              "grupo": 4
+            },
+            "next": {
+              "ymd": "2022-06-29",
+              "hour": "21h"
+            },
+            "samples": 101,
+            "period": {
+              "from": "2022-06-07",
+              "to": "2022-06-29"
+            },
+            "scenario": "V3_STATISTICAL",
+            "explain": {
+              "engine": "V3_STATISTICAL",
+              "targetDow": 3,
+              "targetDayOfMonth": 29,
+              "prevHour": "16h",
+              "prevGrupo": 4,
+              "activeWeights": {
+                "hour": 0.7886792452830188,
+                "dowHour": 0.1018867924528302,
+                "dayMonth": 0.01509433962264151,
+                "transition": 0,
+                "recent": 0.09433962264150944
+              },
+              "scene": {
+                "samples": 80,
+                "totalWeight": 2538.5,
+                "weight": 0.06,
+                "currentSignature": "04-07-14-24-05-03-07"
+              },
+              "layers": {
+                "hour": {
+                  "label": "frequência no horário 21h",
+                  "samples": 19,
+                  "weight": 0.7886792452830188
+                },
+                "dowHour": {
+                  "label": "frequência no dia da semana + horário",
+                  "samples": 3,
+                  "weight": 0.1018867924528302
+                },
+                "dayMonth": {
+                  "label": "frequência no dia 29",
+                  "samples": 3,
+                  "weight": 0.01509433962264151
+                },
+                "transition": {
+                  "label": "transição G04 @ 16h → 21h",
+                  "samples": 0,
+                  "weight": 0
+                },
+                "recent": {
+                  "label": "recência comparável",
+                  "samples": 3,
+                  "weight": 0.09433962264150944
+                }
+              },
+              "details": {
+                "hour": {
+                  "label": "frequência no horário 21h",
+                  "samples": 19,
+                  "firstCount": 2,
+                  "top3Count": 3,
+                  "probability": 0.07,
+                  "weight": 0.7886792452830188
+                },
+                "dowHour": {
+                  "label": "frequência no dia da semana + horário",
+                  "samples": 3,
+                  "firstCount": 1,
+                  "top3Count": 1,
+                  "probability": 0.07142857142857142,
+                  "weight": 0.1018867924528302
+                },
+                "dayMonth": {
+                  "label": "frequência no dia 29",
+                  "samples": 3,
+                  "firstCount": 0,
+                  "top3Count": 0,
+                  "probability": 0.03571428571428571,
+                  "weight": 0.01509433962264151
+                },
+                "transition": {
+                  "label": "transição G04 @ 16h → 21h",
+                  "samples": 0,
+                  "firstCount": 0,
+                  "top3Count": 0,
+                  "probability": 0.04,
+                  "weight": 0
+                },
+                "recent": {
+                  "label": "recência comparável",
+                  "samples": 3,
+                  "firstCount": 1,
+                  "top3Count": 1,
+                  "probability": 0.07142857142857142,
+                  "weight": 0.09433962264150944
+                },
+                "scene": {
+                  "label": "analogia histórica de cena",
+                  "samples": 80,
+                  "firstCount": 153.5,
+                  "top3Count": 0,
+                  "probability": 0.05125782942682687,
+                  "weight": 0.06
+                }
+              }
+            }
+          }
+        }
+      ],
+      "engineMeta": {
+        "trigger": {
+          "ymd": "2022-06-29",
+          "hour": "16h",
+          "grupo": 4
+        },
+        "next": {
+          "ymd": "2022-06-29",
+          "hour": "21h"
+        },
+        "samples": 101,
+        "scenario": "V3_STATISTICAL",
+        "explain": {
+          "engine": "V3_STATISTICAL",
+          "targetDow": 3,
+          "targetDayOfMonth": 29,
+          "prevHour": "16h",
+          "prevGrupo": 4,
+          "activeWeights": {
+            "hour": 0.7886792452830188,
+            "dowHour": 0.1018867924528302,
+            "dayMonth": 0.01509433962264151,
+            "transition": 0,
+            "recent": 0.09433962264150944
+          },
+          "layers": {
+            "hour": {
+              "label": "frequência no horário 21h",
+              "samples": 19,
+              "weight": 0.7886792452830188
+            },
+            "dowHour": {
+              "label": "frequência no dia da semana + horário",
+              "samples": 3,
+              "weight": 0.1018867924528302
+            },
+            "dayMonth": {
+              "label": "frequência no dia 29",
+              "samples": 3,
+              "weight": 0.01509433962264151
+            },
+            "transition": {
+              "label": "transição G04 @ 16h → 21h",
+              "samples": 0,
+              "weight": 0
+            },
+            "recent": {
+              "label": "recência comparável",
+              "samples": 3,
+              "weight": 0.09433962264150944
+            }
+          }
+        }
+      }
+    },
+    {
+      "caseNumber": 3,
+      "historyIndex": 102,
+      "target": {
+        "ymd": "2022-06-30",
+        "hour": "11:00",
+        "weekday": "4",
+        "month": "2022-06"
+      },
+      "history": {
+        "availableBefore": 102,
+        "lastDrawYmd": "2022-06-29",
+        "lastDrawHour": "21:00"
+      },
+      "actual": {
+        "group": 13
+      },
+      "prediction": {
+        "groups": [
+          20,
+          14,
+          4
+        ],
+        "top1Hit": false,
+        "top3Hit": false
+      },
+      "candidates": [
+        {
+          "rank": 1,
+          "grupo": 20,
+          "score": null,
+          "scoreProb": 0.10449121670774401,
+          "probability": null,
+          "confidence": null,
+          "frequency": 4,
+          "reasons": [
+            "Motor: V3_STATISTICAL",
+            "Alvo: 2022-06-30 11h | DOW=4 | dia=30",
+            "Base: G11 @ 21h",
+            "Probabilidade final G20: 10.45%",
+            "frequência no horário 11h: 4x em 1º | 10x no TOP3 | amostras=23 | peso=83%",
+            "frequência no dia da semana + horário: 1x em 1º | 1x no TOP3 | amostras=3 | peso=9%",
+            "recência comparável: 1x em 1º | 1x no TOP3 | amostras=3 | peso=8%"
+          ],
+          "signals": null,
+          "evidence": null,
+          "meta": {
+            "trigger": {
+              "ymd": "2022-06-29",
+              "hour": "21h",
+              "grupo": 11
+            },
+            "next": {
+              "ymd": "2022-06-30",
+              "hour": "11h"
+            },
+            "samples": 102,
+            "period": {
+              "from": "2022-06-07",
+              "to": "2022-06-29"
+            },
+            "scenario": "V3_STATISTICAL",
+            "explain": {
+              "engine": "V3_STATISTICAL",
+              "targetDow": 4,
+              "targetDayOfMonth": 30,
+              "prevHour": "21h",
+              "prevGrupo": 11,
+              "activeWeights": {
+                "hour": 0.8295081967213114,
+                "dowHour": 0.08852459016393442,
+                "dayMonth": 0,
+                "transition": 0,
+                "recent": 0.08196721311475409
+              },
+              "scene": {
+                "samples": 80,
+                "totalWeight": 2404.5,
+                "weight": 0.06,
+                "currentSignature": "11-05-16-05-15-01-12"
+              },
+              "layers": {
+                "hour": {
+                  "label": "frequência no horário 11h",
+                  "samples": 23,
+                  "weight": 0.8295081967213114
+                },
+                "dowHour": {
+                  "label": "frequência no dia da semana + horário",
+                  "samples": 3,
+                  "weight": 0.08852459016393442
+                },
+                "dayMonth": {
+                  "label": "frequência no dia 30",
+                  "samples": 0,
+                  "weight": 0
+                },
+                "transition": {
+                  "label": "transição G11 @ 21h → 11h",
+                  "samples": 0,
+                  "weight": 0
+                },
+                "recent": {
+                  "label": "recência comparável",
+                  "samples": 3,
+                  "weight": 0.08196721311475409
+                }
+              },
+              "details": {
+                "hour": {
+                  "label": "frequência no horário 11h",
+                  "samples": 23,
+                  "firstCount": 4,
+                  "top3Count": 10,
+                  "probability": 0.11416666666666667,
+                  "weight": 0.8295081967213114
+                },
+                "dowHour": {
+                  "label": "frequência no dia da semana + horário",
+                  "samples": 3,
+                  "firstCount": 1,
+                  "top3Count": 1,
+                  "probability": 0.07142857142857142,
+                  "weight": 0.08852459016393442
+                },
+                "dayMonth": {
+                  "label": "frequência no dia 30",
+                  "samples": 0,
+                  "firstCount": 0,
+                  "top3Count": 0,
+                  "probability": 0.04,
+                  "weight": 0
+                },
+                "transition": {
+                  "label": "transição G11 @ 21h → 11h",
+                  "samples": 0,
+                  "firstCount": 0,
+                  "top3Count": 0,
+                  "probability": 0.04,
+                  "weight": 0
+                },
+                "recent": {
+                  "label": "recência comparável",
+                  "samples": 3,
+                  "firstCount": 1,
+                  "top3Count": 1,
+                  "probability": 0.07142857142857142,
+                  "weight": 0.08196721311475409
+                },
+                "scene": {
+                  "label": "analogia histórica de cena",
+                  "samples": 80,
+                  "firstCount": 214.5,
+                  "top3Count": 0,
+                  "probability": 0.06706425452276982,
+                  "weight": 0.06
+                }
+              }
+            }
+          }
+        },
+        {
+          "rank": 2,
+          "grupo": 14,
+          "score": null,
+          "scoreProb": 0.08304231662627108,
+          "probability": null,
+          "confidence": null,
+          "frequency": 3,
+          "reasons": [
+            "Motor: V3_STATISTICAL",
+            "Alvo: 2022-06-30 11h | DOW=4 | dia=30",
+            "Base: G11 @ 21h",
+            "Probabilidade final G14: 8.30%",
+            "frequência no horário 11h: 3x em 1º | 6x no TOP3 | amostras=23 | peso=83%",
+            "frequência no dia da semana + horário: 1x em 1º | 2x no TOP3 | amostras=3 | peso=9%",
+            "recência comparável: 1x em 1º | 2x no TOP3 | amostras=3 | peso=8%"
+          ],
+          "signals": null,
+          "evidence": null,
+          "meta": {
+            "trigger": {
+              "ymd": "2022-06-29",
+              "hour": "21h",
+              "grupo": 11
+            },
+            "next": {
+              "ymd": "2022-06-30",
+              "hour": "11h"
+            },
+            "samples": 102,
+            "period": {
+              "from": "2022-06-07",
+              "to": "2022-06-29"
+            },
+            "scenario": "V3_STATISTICAL",
+            "explain": {
+              "engine": "V3_STATISTICAL",
+              "targetDow": 4,
+              "targetDayOfMonth": 30,
+              "prevHour": "21h",
+              "prevGrupo": 11,
+              "activeWeights": {
+                "hour": 0.8295081967213114,
+                "dowHour": 0.08852459016393442,
+                "dayMonth": 0,
+                "transition": 0,
+                "recent": 0.08196721311475409
+              },
+              "scene": {
+                "samples": 80,
+                "totalWeight": 2404.5,
+                "weight": 0.06,
+                "currentSignature": "11-05-16-05-15-01-12"
+              },
+              "layers": {
+                "hour": {
+                  "label": "frequência no horário 11h",
+                  "samples": 23,
+                  "weight": 0.8295081967213114
+                },
+                "dowHour": {
+                  "label": "frequência no dia da semana + horário",
+                  "samples": 3,
+                  "weight": 0.08852459016393442
+                },
+                "dayMonth": {
+                  "label": "frequência no dia 30",
+                  "samples": 0,
+                  "weight": 0
+                },
+                "transition": {
+                  "label": "transição G11 @ 21h → 11h",
+                  "samples": 0,
+                  "weight": 0
+                },
+                "recent": {
+                  "label": "recência comparável",
+                  "samples": 3,
+                  "weight": 0.08196721311475409
+                }
+              },
+              "details": {
+                "hour": {
+                  "label": "frequência no horário 11h",
+                  "samples": 23,
+                  "firstCount": 3,
+                  "top3Count": 6,
+                  "probability": 0.08833333333333333,
+                  "weight": 0.8295081967213114
+                },
+                "dowHour": {
+                  "label": "frequência no dia da semana + horário",
+                  "samples": 3,
+                  "firstCount": 1,
+                  "top3Count": 2,
+                  "probability": 0.07428571428571429,
+                  "weight": 0.08852459016393442
+                },
+                "dayMonth": {
+                  "label": "frequência no dia 30",
+                  "samples": 0,
+                  "firstCount": 0,
+                  "top3Count": 0,
+                  "probability": 0.04,
+                  "weight": 0
+                },
+                "transition": {
+                  "label": "transição G11 @ 21h → 11h",
+                  "samples": 0,
+                  "firstCount": 0,
+                  "top3Count": 0,
+                  "probability": 0.04,
+                  "weight": 0
+                },
+                "recent": {
+                  "label": "recência comparável",
+                  "samples": 3,
+                  "firstCount": 1,
+                  "top3Count": 2,
+                  "probability": 0.07428571428571429,
+                  "weight": 0.08196721311475409
+                },
+                "scene": {
+                  "label": "analogia histórica de cena",
+                  "samples": 80,
+                  "firstCount": 86,
+                  "top3Count": 0,
+                  "probability": 0.03767144936577251,
+                  "weight": 0.06
+                }
+              }
+            }
+          }
+        },
+        {
+          "rank": 3,
+          "grupo": 4,
+          "score": null,
+          "scoreProb": 0.06289184415150555,
+          "probability": null,
+          "confidence": null,
+          "frequency": 2,
+          "reasons": [
+            "Motor: V3_STATISTICAL",
+            "Alvo: 2022-06-30 11h | DOW=4 | dia=30",
+            "Base: G11 @ 21h",
+            "Probabilidade final G04: 6.29%",
+            "frequência no horário 11h: 2x em 1º | 4x no TOP3 | amostras=23 | peso=83%",
+            "analogia histórica de cena: 346.5x em 1º | 0x no TOP3 | amostras=80 | peso=6%",
+            "frequência no dia da semana + horário: 0x em 1º | 0x no TOP3 | amostras=3 | peso=9%"
+          ],
+          "signals": null,
+          "evidence": null,
+          "meta": {
+            "trigger": {
+              "ymd": "2022-06-29",
+              "hour": "21h",
+              "grupo": 11
+            },
+            "next": {
+              "ymd": "2022-06-30",
+              "hour": "11h"
+            },
+            "samples": 102,
+            "period": {
+              "from": "2022-06-07",
+              "to": "2022-06-29"
+            },
+            "scenario": "V3_STATISTICAL",
+            "explain": {
+              "engine": "V3_STATISTICAL",
+              "targetDow": 4,
+              "targetDayOfMonth": 30,
+              "prevHour": "21h",
+              "prevGrupo": 11,
+              "activeWeights": {
+                "hour": 0.8295081967213114,
+                "dowHour": 0.08852459016393442,
+                "dayMonth": 0,
+                "transition": 0,
+                "recent": 0.08196721311475409
+              },
+              "scene": {
+                "samples": 80,
+                "totalWeight": 2404.5,
+                "weight": 0.06,
+                "currentSignature": "11-05-16-05-15-01-12"
+              },
+              "layers": {
+                "hour": {
+                  "label": "frequência no horário 11h",
+                  "samples": 23,
+                  "weight": 0.8295081967213114
+                },
+                "dowHour": {
+                  "label": "frequência no dia da semana + horário",
+                  "samples": 3,
+                  "weight": 0.08852459016393442
+                },
+                "dayMonth": {
+                  "label": "frequência no dia 30",
+                  "samples": 0,
+                  "weight": 0
+                },
+                "transition": {
+                  "label": "transição G11 @ 21h → 11h",
+                  "samples": 0,
+                  "weight": 0
+                },
+                "recent": {
+                  "label": "recência comparável",
+                  "samples": 3,
+                  "weight": 0.08196721311475409
+                }
+              },
+              "details": {
+                "hour": {
+                  "label": "frequência no horário 11h",
+                  "samples": 23,
+                  "firstCount": 2,
+                  "top3Count": 4,
+                  "probability": 0.06583333333333334,
+                  "weight": 0.8295081967213114
+                },
+                "dowHour": {
+                  "label": "frequência no dia da semana + horário",
+                  "samples": 3,
+                  "firstCount": 0,
+                  "top3Count": 0,
+                  "probability": 0.03571428571428571,
+                  "weight": 0.08852459016393442
+                },
+                "dayMonth": {
+                  "label": "frequência no dia 30",
+                  "samples": 0,
+                  "firstCount": 0,
+                  "top3Count": 0,
+                  "probability": 0.04,
+                  "weight": 0
+                },
+                "transition": {
+                  "label": "transição G11 @ 21h → 11h",
+                  "samples": 0,
+                  "firstCount": 0,
+                  "top3Count": 0,
+                  "probability": 0.04,
+                  "weight": 0
+                },
+                "recent": {
+                  "label": "recência comparável",
+                  "samples": 3,
+                  "firstCount": 0,
+                  "top3Count": 0,
+                  "probability": 0.03571428571428571,
+                  "weight": 0.08196721311475409
+                },
+                "scene": {
+                  "label": "analogia histórica de cena",
+                  "samples": 80,
+                  "firstCount": 346.5,
+                  "top3Count": 0,
+                  "probability": 0.0972576419213974,
+                  "weight": 0.06
+                }
+              }
+            }
+          }
+        }
+      ],
+      "engineMeta": {
+        "trigger": {
+          "ymd": "2022-06-29",
+          "hour": "21h",
+          "grupo": 11
+        },
+        "next": {
+          "ymd": "2022-06-30",
+          "hour": "11h"
+        },
+        "samples": 102,
+        "scenario": "V3_STATISTICAL",
+        "explain": {
+          "engine": "V3_STATISTICAL",
+          "targetDow": 4,
+          "targetDayOfMonth": 30,
+          "prevHour": "21h",
+          "prevGrupo": 11,
+          "activeWeights": {
+            "hour": 0.8295081967213114,
+            "dowHour": 0.08852459016393442,
+            "dayMonth": 0,
+            "transition": 0,
+            "recent": 0.08196721311475409
+          },
+          "layers": {
+            "hour": {
+              "label": "frequência no horário 11h",
+              "samples": 23,
+              "weight": 0.8295081967213114
+            },
+            "dowHour": {
+              "label": "frequência no dia da semana + horário",
+              "samples": 3,
+              "weight": 0.08852459016393442
+            },
+            "dayMonth": {
+              "label": "frequência no dia 30",
+              "samples": 0,
+              "weight": 0
+            },
+            "transition": {
+              "label": "transição G11 @ 21h → 11h",
+              "samples": 0,
+              "weight": 0
+            },
+            "recent": {
+              "label": "recência comparável",
+              "samples": 3,
+              "weight": 0.08196721311475409
+            }
+          }
+        }
+      }
+    }
+  ],
+  "intercepted": [
+    {
+      "inputKeys": [
+        "lotteryKey",
+        "drawsRange",
+        "drawLast",
+        "PT_RIO_SCHEDULE_NORMAL",
+        "PT_RIO_SCHEDULE_WED_SAT",
+        "FEDERAL_SCHEDULE",
+        "topN",
+        "targetYmdOverride",
+        "targetHourOverride"
+      ],
+      "targetYmd": "2022-06-29",
+      "targetHour": "16:00",
+      "outputKeys": [
+        "top",
+        "meta",
+        "experimental"
+      ],
+      "topType": "array",
+      "topSample": [
+        {
+          "rank": 1,
+          "title": "Mais provável",
+          "grupo": 16,
+          "scoreProb": 0.08590359444652305,
+          "rawScoreProb": 0.08590359444652305,
+          "probCond": 0.04,
+          "probBase": 0.09191489361702128,
+          "lateBonus": 0,
+          "freq": 3,
+          "freqCond": 0,
+          "freqBase": 3,
+          "freqZeroWhy": "",
+          "reasons": [
+            "Motor: V3_STATISTICAL",
+            "Alvo: 2022-06-29 16h | DOW=3 | dia=29",
+            "Base: G22 @ 14h",
+            "Probabilidade final G16: 8.59%",
+            "frequência no horário 16h: 3x em 1º | 7x no TOP3 | amostras=22 | peso=82%",
+            "frequência no dia da semana + horário: 1x em 1º | 2x no TOP3 | amostras=3 | peso=9%",
+            "recência comparável: 1x em 1º | 2x no TOP3 | amostras=3 | peso=8%"
+          ],
+          "meta": {
+            "trigger": {
+              "ymd": "2022-06-29",
+              "hour": "14h",
+              "grupo": 22
+            },
+            "next": {
+              "ymd": "2022-06-29",
+              "hour": "16h"
+            },
+            "samples": 100,
+            "period": {
+              "from": "2022-06-07",
+              "to": "2022-06-29"
+            },
+            "scenario": "V3_STATISTICAL",
+            "explain": {
+              "engine": "V3_STATISTICAL",
+              "targetDow": 3,
+              "targetDayOfMonth": 29,
+              "prevHour": "14h",
+              "prevGrupo": 22,
+              "activeWeights": {
+                "hour": 0.8157303370786516,
+                "dowHour": 0.09101123595505618,
+                "dayMonth": 0.00898876404494382,
+                "transition": 0,
+                "recent": 0.08426966292134831
+              },
+              "scene": {
+                "samples": 80,
+                "totalWeight": 1849,
+                "weight": 0.06,
+                "currentSignature": "22-21-16-07-08-22-21"
+              },
+              "layers": {
+                "hour": {
+                  "label": "frequência no horário 16h",
+                  "samples": 22,
+                  "weight": 0.8157303370786516
+                },
+                "dowHour": {
+                  "label": "frequência no dia da semana + horário",
+                  "samples": 3,
+                  "weight": 0.09101123595505618
+                },
+                "dayMonth": {
+                  "label": "frequência no dia 29",
+                  "samples": 2,
+                  "weight": 0.00898876404494382
+                },
+                "transition": {
+                  "label": "transição G22 @ 14h → 16h",
+                  "samples": 0,
+                  "weight": 0
+                },
+                "recent": {
+                  "label": "recência comparável",
+                  "samples": 3,
+                  "weight": 0.08426966292134831
+                }
+              },
+              "details": {
+                "hour": {
+                  "label": "frequência no horário 16h",
+                  "samples": 22,
+                  "firstCount": 3,
+                  "top3Count": 7,
+                  "probability": 0.09191489361702128,
+                  "weight": 0.8157303370786516
+                },
+                "dowHour": {
+                  "label": "frequência no dia da semana + horário",
+                  "samples": 3,
+                  "firstCount": 1,
+                  "top3Count": 2,
+                  "probability": 0.07428571428571429,
+                  "weight": 0.09101123595505618
+                },
+                "dayMonth": {
+                  "label": "frequência no dia 29",
+                  "samples": 2,
+                  "firstCount": 0,
+                  "top3Count": 1,
+                  "probability": 0.04,
+                  "weight": 0.00898876404494382
+                },
+                "transition": {
+                  "label": "transição G22 @ 14h → 16h",
+                  "samples": 0,
+                  "firstCount": 0,
+                  "top3Count": 0,
+                  "probability": 0.04,
+                  "weight": 0
+                },
+                "recent": {
+                  "label": "recência comparável",
+                  "samples": 3,
+                  "firstCount": 1,
+                  "top3Count": 2,
+                  "probability": 0.07428571428571429,
+                  "weight": 0.08426966292134831
+                },
+                "scene": {
+                  "label": "analogia histórica de cena",
+                  "samples": 80,
+                  "firstCount": 99,
+                  "top3Count": 0,
+                  "probability": 0.04744835045970795,
+                  "weight": 0.06
+                }
+              }
+            }
+          }
+        },
+        {
+          "rank": 2,
+          "title": "2º mais provável",
+          "grupo": 3,
+          "scoreProb": 0.06791296177493758,
+          "rawScoreProb": 0.06791296177493758,
+          "probCond": 0.04,
+          "probBase": 0.06893617021276596,
+          "lateBonus": 0,
+          "freq": 2,
+          "freqCond": 0,
+          "freqBase": 2,
+          "freqZeroWhy": "",
+          "reasons": [
+            "Motor: V3_STATISTICAL",
+            "Alvo: 2022-06-29 16h | DOW=3 | dia=29",
+            "Base: G22 @ 14h",
+            "Probabilidade final G03: 6.79%",
+            "frequência no horário 16h: 2x em 1º | 5x no TOP3 | amostras=22 | peso=82%",
+            "frequência no dia da semana + horário: 1x em 1º | 1x no TOP3 | amostras=3 | peso=9%",
+            "recência comparável: 1x em 1º | 1x no TOP3 | amostras=3 | peso=8%"
+          ],
+          "meta": {
+            "trigger": {
+              "ymd": "2022-06-29",
+              "hour": "14h",
+              "grupo": 22
+            },
+            "next": {
+              "ymd": "2022-06-29",
+              "hour": "16h"
+            },
+            "samples": 100,
+            "period": {
+              "from": "2022-06-07",
+              "to": "2022-06-29"
+            },
+            "scenario": "V3_STATISTICAL",
+            "explain": {
+              "engine": "V3_STATISTICAL",
+              "targetDow": 3,
+              "targetDayOfMonth": 29,
+              "prevHour": "14h",
+              "prevGrupo": 22,
+              "activeWeights": {
+                "hour": 0.8157303370786516,
+                "dowHour": 0.09101123595505618,
+                "dayMonth": 0.00898876404494382,
+                "transition": 0,
+                "recent": 0.08426966292134831
+              },
+              "scene": {
+                "samples": 80,
+                "totalWeight": 1849,
+                "weight": 0.06,
+                "currentSignature": "22-21-16-07-08-22-21"
+              },
+              "layers": {
+                "hour": {
+                  "label": "frequência no horário 16h",
+                  "samples": 22,
+                  "weight": 0.8157303370786516
+                },
+                "dowHour": {
+                  "label": "frequência no dia da semana + horário",
+                  "samples": 3,
+                  "weight": 0.09101123595505618
+                },
+                "dayMonth": {
+                  "label": "frequência no dia 29",
+                  "samples": 2,
+                  "weight": 0.00898876404494382
+                },
+                "transition": {
+                  "label": "transição G22 @ 14h → 16h",
+                  "samples": 0,
+                  "weight": 0
+                },
+                "recent": {
+                  "label": "recência comparável",
+                  "samples": 3,
+                  "weight": 0.08426966292134831
+                }
+              },
+              "details": {
+                "hour": {
+                  "label": "frequência no horário 16h",
+                  "samples": 22,
+                  "firstCount": 2,
+                  "top3Count": 5,
+                  "probability": 0.06893617021276596,
+                  "weight": 0.8157303370786516
+                },
+                "dowHour": {
+                  "label": "frequência no dia da semana + horário",
+                  "samples": 3,
+                  "firstCount": 1,
+                  "top3Count": 1,
+                  "probability": 0.07142857142857142,
+                  "weight": 0.09101123595505618
+                },
+                "dayMonth": {
+                  "label": "frequência no dia 29",
+                  "samples": 2,
+                  "firstCount": 0,
+                  "top3Count": 0,
+                  "probability": 0.03703703703703704,
+                  "weight": 0.00898876404494382
+                },
+                "transition": {
+                  "label": "transição G22 @ 14h → 16h",
+                  "samples": 0,
+                  "firstCount": 0,
+                  "top3Count": 0,
+                  "probability": 0.04,
+                  "weight": 0
+                },
+                "recent": {
+                  "label": "recência comparável",
+                  "samples": 3,
+                  "firstCount": 1,
+                  "top3Count": 1,
+                  "probability": 0.07142857142857142,
+                  "weight": 0.08426966292134831
+                },
+                "scene": {
+                  "label": "analogia histórica de cena",
+                  "samples": 80,
+                  "firstCount": 106,
+                  "top3Count": 0,
+                  "probability": 0.04953055705786912,
+                  "weight": 0.06
+                }
+              }
+            }
+          }
+        },
+        {
+          "rank": 3,
+          "title": "3º mais provável",
+          "grupo": 9,
+          "scoreProb": 0.05972390389192935,
+          "rawScoreProb": 0.05972390389192935,
+          "probCond": 0.04,
+          "probBase": 0.06723404255319149,
+          "lateBonus": 0,
+          "freq": 2,
+          "freqCond": 0,
+          "freqBase": 2,
+          "freqZeroWhy": "",
+          "reasons": [
+            "Motor: V3_STATISTICAL",
+            "Alvo: 2022-06-29 16h | DOW=3 | dia=29",
+            "Base: G22 @ 14h",
+            "Probabilidade final G09: 5.97%",
+            "frequência no horário 16h: 2x em 1º | 4x no TOP3 | amostras=22 | peso=82%",
+            "frequência no dia da semana + horário: 0x em 1º | 0x no TOP3 | amostras=3 | peso=9%",
+            "recência comparável: 0x em 1º | 0x no TOP3 | amostras=3 | peso=8%"
+          ],
+          "meta": {
+            "trigger": {
+              "ymd": "2022-06-29",
+              "hour": "14h",
+              "grupo": 22
+            },
+            "next": {
+              "ymd": "2022-06-29",
+              "hour": "16h"
+            },
+            "samples": 100,
+            "period": {
+              "from": "2022-06-07",
+              "to": "2022-06-29"
+            },
+            "scenario": "V3_STATISTICAL",
+            "explain": {
+              "engine": "V3_STATISTICAL",
+              "targetDow": 3,
+              "targetDayOfMonth": 29,
+              "prevHour": "14h",
+              "prevGrupo": 22,
+              "activeWeights": {
+                "hour": 0.8157303370786516,
+                "dowHour": 0.09101123595505618,
+                "dayMonth": 0.00898876404494382,
+                "transition": 0,
+                "recent": 0.08426966292134831
+              },
+              "scene": {
+                "samples": 80,
+                "totalWeight": 1849,
+                "weight": 0.06,
+                "currentSignature": "22-21-16-07-08-22-21"
+              },
+              "layers": {
+                "hour": {
+                  "label": "frequência no horário 16h",
+                  "samples": 22,
+                  "weight": 0.8157303370786516
+                },
+                "dowHour": {
+                  "label": "frequência no dia da semana + horário",
+                  "samples": 3,
+                  "weight": 0.09101123595505618
+                },
+                "dayMonth": {
+                  "label": "frequência no dia 29",
+                  "samples": 2,
+                  "weight": 0.00898876404494382
+                },
+                "transition": {
+                  "label": "transição G22 @ 14h → 16h",
+                  "samples": 0,
+                  "weight": 0
+                },
+                "recent": {
+                  "label": "recência comparável",
+                  "samples": 3,
+                  "weight": 0.08426966292134831
+                }
+              },
+              "details": {
+                "hour": {
+                  "label": "frequência no horário 16h",
+                  "samples": 22,
+                  "firstCount": 2,
+                  "top3Count": 4,
+                  "probability": 0.06723404255319149,
+                  "weight": 0.8157303370786516
+                },
+                "dowHour": {
+                  "label": "frequência no dia da semana + horário",
+                  "samples": 3,
+                  "firstCount": 0,
+                  "top3Count": 0,
+                  "probability": 0.03571428571428571,
+                  "weight": 0.09101123595505618
+                },
+                "dayMonth": {
+                  "label": "frequência no dia 29",
+                  "samples": 2,
+                  "firstCount": 0,
+                  "top3Count": 0,
+                  "probability": 0.03703703703703704,
+                  "weight": 0.00898876404494382
+                },
+                "transition": {
+                  "label": "transição G22 @ 14h → 16h",
+                  "samples": 0,
+                  "firstCount": 0,
+                  "top3Count": 0,
+                  "probability": 0.04,
+                  "weight": 0
+                },
+                "recent": {
+                  "label": "recência comparável",
+                  "samples": 3,
+                  "firstCount": 0,
+                  "top3Count": 0,
+                  "probability": 0.03571428571428571,
+                  "weight": 0.08426966292134831
+                },
+                "scene": {
+                  "label": "analogia histórica de cena",
+                  "samples": 80,
+                  "firstCount": 50,
+                  "top3Count": 0,
+                  "probability": 0.03287290427257977,
+                  "weight": 0.06
+                }
+              }
+            }
+          }
+        }
+      ],
+      "experimental": {
+        "enabled": true,
+        "version": 2,
+        "totalDraws": 100,
+        "firstPrizeGroupFrequency": {
+          "10": 3,
+          "11": 5,
+          "12": 3,
+          "13": 1,
+          "14": 4,
+          "15": 1,
+          "16": 4,
+          "17": 4,
+          "18": 3,
+          "19": 3,
+          "20": 6,
+          "21": 4,
+          "22": 4,
+          "23": 2,
+          "24": 3,
+          "25": 4,
+          "09": 2,
+          "06": 6,
+          "03": 5,
+          "05": 7,
+          "01": 6,
+          "04": 8,
+          "07": 7,
+          "08": 4,
+          "02": 1
+        },
+        "notes": [
+          "Experimental only",
+          "No influence on ranking"
+        ]
+      }
+    },
+    {
+      "inputKeys": [
+        "lotteryKey",
+        "drawsRange",
+        "drawLast",
+        "PT_RIO_SCHEDULE_NORMAL",
+        "PT_RIO_SCHEDULE_WED_SAT",
+        "FEDERAL_SCHEDULE",
+        "topN",
+        "targetYmdOverride",
+        "targetHourOverride"
+      ],
+      "targetYmd": "2022-06-29",
+      "targetHour": "21:00",
+      "outputKeys": [
+        "top",
+        "meta",
+        "experimental"
+      ],
+      "topType": "array",
+      "topSample": [
+        {
+          "rank": 1,
+          "title": "Mais provável",
+          "grupo": 7,
+          "scoreProb": 0.08708656174163171,
+          "rawScoreProb": 0.08708656174163171,
+          "probCond": 0.04,
+          "probBase": 0.09454545454545456,
+          "lateBonus": 0,
+          "freq": 3,
+          "freqCond": 0,
+          "freqBase": 3,
+          "freqZeroWhy": "",
+          "reasons": [
+            "Motor: V3_STATISTICAL",
+            "Alvo: 2022-06-29 21h | DOW=3 | dia=29",
+            "Base: G04 @ 16h",
+            "Probabilidade final G07: 8.71%",
+            "frequência no horário 21h: 3x em 1º | 5x no TOP3 | amostras=19 | peso=79%",
+            "frequência no dia da semana + horário: 1x em 1º | 1x no TOP3 | amostras=3 | peso=10%",
+            "recência comparável: 1x em 1º | 1x no TOP3 | amostras=3 | peso=9%"
+          ],
+          "meta": {
+            "trigger": {
+              "ymd": "2022-06-29",
+              "hour": "16h",
+              "grupo": 4
+            },
+            "next": {
+              "ymd": "2022-06-29",
+              "hour": "21h"
+            },
+            "samples": 101,
+            "period": {
+              "from": "2022-06-07",
+              "to": "2022-06-29"
+            },
+            "scenario": "V3_STATISTICAL",
+            "explain": {
+              "engine": "V3_STATISTICAL",
+              "targetDow": 3,
+              "targetDayOfMonth": 29,
+              "prevHour": "16h",
+              "prevGrupo": 4,
+              "activeWeights": {
+                "hour": 0.7886792452830188,
+                "dowHour": 0.1018867924528302,
+                "dayMonth": 0.01509433962264151,
+                "transition": 0,
+                "recent": 0.09433962264150944
+              },
+              "scene": {
+                "samples": 80,
+                "totalWeight": 2538.5,
+                "weight": 0.06,
+                "currentSignature": "04-07-14-24-05-03-07"
+              },
+              "layers": {
+                "hour": {
+                  "label": "frequência no horário 21h",
+                  "samples": 19,
+                  "weight": 0.7886792452830188
+                },
+                "dowHour": {
+                  "label": "frequência no dia da semana + horário",
+                  "samples": 3,
+                  "weight": 0.1018867924528302
+                },
+                "dayMonth": {
+                  "label": "frequência no dia 29",
+                  "samples": 3,
+                  "weight": 0.01509433962264151
+                },
+                "transition": {
+                  "label": "transição G04 @ 16h → 21h",
+                  "samples": 0,
+                  "weight": 0
+                },
+                "recent": {
+                  "label": "recência comparável",
+                  "samples": 3,
+                  "weight": 0.09433962264150944
+                }
+              },
+              "details": {
+                "hour": {
+                  "label": "frequência no horário 21h",
+                  "samples": 19,
+                  "firstCount": 3,
+                  "top3Count": 5,
+                  "probability": 0.09454545454545456,
+                  "weight": 0.7886792452830188
+                },
+                "dowHour": {
+                  "label": "frequência no dia da semana + horário",
+                  "samples": 3,
+                  "firstCount": 1,
+                  "top3Count": 1,
+                  "probability": 0.07142857142857142,
+                  "weight": 0.1018867924528302
+                },
+                "dayMonth": {
+                  "label": "frequência no dia 29",
+                  "samples": 3,
+                  "firstCount": 0,
+                  "top3Count": 2,
+                  "probability": 0.041428571428571426,
+                  "weight": 0.01509433962264151
+                },
+                "transition": {
+                  "label": "transição G04 @ 16h → 21h",
+                  "samples": 0,
+                  "firstCount": 0,
+                  "top3Count": 0,
+                  "probability": 0.04,
+                  "weight": 0
+                },
+                "recent": {
+                  "label": "recência comparável",
+                  "samples": 3,
+                  "firstCount": 1,
+                  "top3Count": 1,
+                  "probability": 0.07142857142857142,
+                  "weight": 0.09433962264150944
+                },
+                "scene": {
+                  "label": "analogia histórica de cena",
+                  "samples": 80,
+                  "firstCount": 165.5,
+                  "top3Count": 0,
+                  "probability": 0.05385779003348434,
+                  "weight": 0.06
+                }
+              }
+            }
+          }
+        },
+        {
+          "rank": 2,
+          "title": "2º mais provável",
+          "grupo": 6,
+          "scoreProb": 0.06880909741994842,
+          "rawScoreProb": 0.06880909741994842,
+          "probCond": 0.04,
+          "probBase": 0.07727272727272727,
+          "lateBonus": 0,
+          "freq": 2,
+          "freqCond": 0,
+          "freqBase": 2,
+          "freqZeroWhy": "",
+          "reasons": [
+            "Motor: V3_STATISTICAL",
+            "Alvo: 2022-06-29 21h | DOW=3 | dia=29",
+            "Base: G04 @ 16h",
+            "Probabilidade final G06: 6.88%",
+            "frequência no horário 21h: 2x em 1º | 7x no TOP3 | amostras=19 | peso=79%",
+            "frequência no dia da semana + horário: 0x em 1º | 1x no TOP3 | amostras=3 | peso=10%",
+            "analogia histórica de cena: 217x em 1º | 0x no TOP3 | amostras=80 | peso=6%"
+          ],
+          "meta": {
+            "trigger": {
+              "ymd": "2022-06-29",
+              "hour": "16h",
+              "grupo": 4
+            },
+            "next": {
+              "ymd": "2022-06-29",
+              "hour": "21h"
+            },
+            "samples": 101,
+            "period": {
+              "from": "2022-06-07",
+              "to": "2022-06-29"
+            },
+            "scenario": "V3_STATISTICAL",
+            "explain": {
+              "engine": "V3_STATISTICAL",
+              "targetDow": 3,
+              "targetDayOfMonth": 29,
+              "prevHour": "16h",
+              "prevGrupo": 4,
+              "activeWeights": {
+                "hour": 0.7886792452830188,
+                "dowHour": 0.1018867924528302,
+                "dayMonth": 0.01509433962264151,
+                "transition": 0,
+                "recent": 0.09433962264150944
+              },
+              "scene": {
+                "samples": 80,
+                "totalWeight": 2538.5,
+                "weight": 0.06,
+                "currentSignature": "04-07-14-24-05-03-07"
+              },
+              "layers": {
+                "hour": {
+                  "label": "frequência no horário 21h",
+                  "samples": 19,
+                  "weight": 0.7886792452830188
+                },
+                "dowHour": {
+                  "label": "frequência no dia da semana + horário",
+                  "samples": 3,
+                  "weight": 0.1018867924528302
+                },
+                "dayMonth": {
+                  "label": "frequência no dia 29",
+                  "samples": 3,
+                  "weight": 0.01509433962264151
+                },
+                "transition": {
+                  "label": "transição G04 @ 16h → 21h",
+                  "samples": 0,
+                  "weight": 0
+                },
+                "recent": {
+                  "label": "recência comparável",
+                  "samples": 3,
+                  "weight": 0.09433962264150944
+                }
+              },
+              "details": {
+                "hour": {
+                  "label": "frequência no horário 21h",
+                  "samples": 19,
+                  "firstCount": 2,
+                  "top3Count": 7,
+                  "probability": 0.07727272727272727,
+                  "weight": 0.7886792452830188
+                },
+                "dowHour": {
+                  "label": "frequência no dia da semana + horário",
+                  "samples": 3,
+                  "firstCount": 0,
+                  "top3Count": 1,
+                  "probability": 0.03857142857142857,
+                  "weight": 0.1018867924528302
+                },
+                "dayMonth": {
+                  "label": "frequência no dia 29",
+                  "samples": 3,
+                  "firstCount": 0,
+                  "top3Count": 0,
+                  "probability": 0.03571428571428571,
+                  "weight": 0.01509433962264151
+                },
+                "transition": {
+                  "label": "transição G04 @ 16h → 21h",
+                  "samples": 0,
+                  "firstCount": 0,
+                  "top3Count": 0,
+                  "probability": 0.04,
+                  "weight": 0
+                },
+                "recent": {
+                  "label": "recência comparável",
+                  "samples": 3,
+                  "firstCount": 0,
+                  "top3Count": 1,
+                  "probability": 0.03857142857142857,
+                  "weight": 0.09433962264150944
+                },
+                "scene": {
+                  "label": "analogia histórica de cena",
+                  "samples": 80,
+                  "firstCount": 217,
+                  "top3Count": 0,
+                  "probability": 0.06501595430372267,
+                  "weight": 0.06
+                }
+              }
+            }
+          }
+        },
+        {
+          "rank": 3,
+          "title": "3º mais provável",
+          "grupo": 3,
+          "scoreProb": 0.06865250480604089,
+          "rawScoreProb": 0.06865250480604089,
+          "probCond": 0.04,
+          "probBase": 0.07,
+          "lateBonus": 0,
+          "freq": 2,
+          "freqCond": 0,
+          "freqBase": 2,
+          "freqZeroWhy": "",
+          "reasons": [
+            "Motor: V3_STATISTICAL",
+            "Alvo: 2022-06-29 21h | DOW=3 | dia=29",
+            "Base: G04 @ 16h",
+            "Probabilidade final G03: 6.87%",
+            "frequência no horário 21h: 2x em 1º | 3x no TOP3 | amostras=19 | peso=79%",
+            "frequência no dia da semana + horário: 1x em 1º | 1x no TOP3 | amostras=3 | peso=10%",
+            "recência comparável: 1x em 1º | 1x no TOP3 | amostras=3 | peso=9%"
+          ],
+          "meta": {
+            "trigger": {
+              "ymd": "2022-06-29",
+              "hour": "16h",
+              "grupo": 4
+            },
+            "next": {
+              "ymd": "2022-06-29",
+              "hour": "21h"
+            },
+            "samples": 101,
+            "period": {
+              "from": "2022-06-07",
+              "to": "2022-06-29"
+            },
+            "scenario": "V3_STATISTICAL",
+            "explain": {
+              "engine": "V3_STATISTICAL",
+              "targetDow": 3,
+              "targetDayOfMonth": 29,
+              "prevHour": "16h",
+              "prevGrupo": 4,
+              "activeWeights": {
+                "hour": 0.7886792452830188,
+                "dowHour": 0.1018867924528302,
+                "dayMonth": 0.01509433962264151,
+                "transition": 0,
+                "recent": 0.09433962264150944
+              },
+              "scene": {
+                "samples": 80,
+                "totalWeight": 2538.5,
+                "weight": 0.06,
+                "currentSignature": "04-07-14-24-05-03-07"
+              },
+              "layers": {
+                "hour": {
+                  "label": "frequência no horário 21h",
+                  "samples": 19,
+                  "weight": 0.7886792452830188
+                },
+                "dowHour": {
+                  "label": "frequência no dia da semana + horário",
+                  "samples": 3,
+                  "weight": 0.1018867924528302
+                },
+                "dayMonth": {
+                  "label": "frequência no dia 29",
+                  "samples": 3,
+                  "weight": 0.01509433962264151
+                },
+                "transition": {
+                  "label": "transição G04 @ 16h → 21h",
+                  "samples": 0,
+                  "weight": 0
+                },
+                "recent": {
+                  "label": "recência comparável",
+                  "samples": 3,
+                  "weight": 0.09433962264150944
+                }
+              },
+              "details": {
+                "hour": {
+                  "label": "frequência no horário 21h",
+                  "samples": 19,
+                  "firstCount": 2,
+                  "top3Count": 3,
+                  "probability": 0.07,
+                  "weight": 0.7886792452830188
+                },
+                "dowHour": {
+                  "label": "frequência no dia da semana + horário",
+                  "samples": 3,
+                  "firstCount": 1,
+                  "top3Count": 1,
+                  "probability": 0.07142857142857142,
+                  "weight": 0.1018867924528302
+                },
+                "dayMonth": {
+                  "label": "frequência no dia 29",
+                  "samples": 3,
+                  "firstCount": 0,
+                  "top3Count": 0,
+                  "probability": 0.03571428571428571,
+                  "weight": 0.01509433962264151
+                },
+                "transition": {
+                  "label": "transição G04 @ 16h → 21h",
+                  "samples": 0,
+                  "firstCount": 0,
+                  "top3Count": 0,
+                  "probability": 0.04,
+                  "weight": 0
+                },
+                "recent": {
+                  "label": "recência comparável",
+                  "samples": 3,
+                  "firstCount": 1,
+                  "top3Count": 1,
+                  "probability": 0.07142857142857142,
+                  "weight": 0.09433962264150944
+                },
+                "scene": {
+                  "label": "analogia histórica de cena",
+                  "samples": 80,
+                  "firstCount": 153.5,
+                  "top3Count": 0,
+                  "probability": 0.05125782942682687,
+                  "weight": 0.06
+                }
+              }
+            }
+          }
+        }
+      ],
+      "experimental": {
+        "enabled": true,
+        "version": 2,
+        "totalDraws": 101,
+        "firstPrizeGroupFrequency": {
+          "10": 3,
+          "11": 5,
+          "12": 3,
+          "13": 1,
+          "14": 4,
+          "15": 1,
+          "16": 4,
+          "17": 4,
+          "18": 3,
+          "19": 3,
+          "20": 6,
+          "21": 4,
+          "22": 4,
+          "23": 2,
+          "24": 3,
+          "25": 4,
+          "09": 2,
+          "06": 6,
+          "03": 5,
+          "05": 7,
+          "01": 6,
+          "04": 9,
+          "07": 7,
+          "08": 4,
+          "02": 1
+        },
+        "notes": [
+          "Experimental only",
+          "No influence on ranking"
+        ]
+      }
+    },
+    {
+      "inputKeys": [
+        "lotteryKey",
+        "drawsRange",
+        "drawLast",
+        "PT_RIO_SCHEDULE_NORMAL",
+        "PT_RIO_SCHEDULE_WED_SAT",
+        "FEDERAL_SCHEDULE",
+        "topN",
+        "targetYmdOverride",
+        "targetHourOverride"
+      ],
+      "targetYmd": "2022-06-30",
+      "targetHour": "11:00",
+      "outputKeys": [
+        "top",
+        "meta",
+        "experimental"
+      ],
+      "topType": "array",
+      "topSample": [
+        {
+          "rank": 1,
+          "title": "Mais provável",
+          "grupo": 20,
+          "scoreProb": 0.10449121670774401,
+          "rawScoreProb": 0.10449121670774401,
+          "probCond": 0.04,
+          "probBase": 0.11416666666666667,
+          "lateBonus": 0,
+          "freq": 4,
+          "freqCond": 0,
+          "freqBase": 4,
+          "freqZeroWhy": "",
+          "reasons": [
+            "Motor: V3_STATISTICAL",
+            "Alvo: 2022-06-30 11h | DOW=4 | dia=30",
+            "Base: G11 @ 21h",
+            "Probabilidade final G20: 10.45%",
+            "frequência no horário 11h: 4x em 1º | 10x no TOP3 | amostras=23 | peso=83%",
+            "frequência no dia da semana + horário: 1x em 1º | 1x no TOP3 | amostras=3 | peso=9%",
+            "recência comparável: 1x em 1º | 1x no TOP3 | amostras=3 | peso=8%"
+          ],
+          "meta": {
+            "trigger": {
+              "ymd": "2022-06-29",
+              "hour": "21h",
+              "grupo": 11
+            },
+            "next": {
+              "ymd": "2022-06-30",
+              "hour": "11h"
+            },
+            "samples": 102,
+            "period": {
+              "from": "2022-06-07",
+              "to": "2022-06-29"
+            },
+            "scenario": "V3_STATISTICAL",
+            "explain": {
+              "engine": "V3_STATISTICAL",
+              "targetDow": 4,
+              "targetDayOfMonth": 30,
+              "prevHour": "21h",
+              "prevGrupo": 11,
+              "activeWeights": {
+                "hour": 0.8295081967213114,
+                "dowHour": 0.08852459016393442,
+                "dayMonth": 0,
+                "transition": 0,
+                "recent": 0.08196721311475409
+              },
+              "scene": {
+                "samples": 80,
+                "totalWeight": 2404.5,
+                "weight": 0.06,
+                "currentSignature": "11-05-16-05-15-01-12"
+              },
+              "layers": {
+                "hour": {
+                  "label": "frequência no horário 11h",
+                  "samples": 23,
+                  "weight": 0.8295081967213114
+                },
+                "dowHour": {
+                  "label": "frequência no dia da semana + horário",
+                  "samples": 3,
+                  "weight": 0.08852459016393442
+                },
+                "dayMonth": {
+                  "label": "frequência no dia 30",
+                  "samples": 0,
+                  "weight": 0
+                },
+                "transition": {
+                  "label": "transição G11 @ 21h → 11h",
+                  "samples": 0,
+                  "weight": 0
+                },
+                "recent": {
+                  "label": "recência comparável",
+                  "samples": 3,
+                  "weight": 0.08196721311475409
+                }
+              },
+              "details": {
+                "hour": {
+                  "label": "frequência no horário 11h",
+                  "samples": 23,
+                  "firstCount": 4,
+                  "top3Count": 10,
+                  "probability": 0.11416666666666667,
+                  "weight": 0.8295081967213114
+                },
+                "dowHour": {
+                  "label": "frequência no dia da semana + horário",
+                  "samples": 3,
+                  "firstCount": 1,
+                  "top3Count": 1,
+                  "probability": 0.07142857142857142,
+                  "weight": 0.08852459016393442
+                },
+                "dayMonth": {
+                  "label": "frequência no dia 30",
+                  "samples": 0,
+                  "firstCount": 0,
+                  "top3Count": 0,
+                  "probability": 0.04,
+                  "weight": 0
+                },
+                "transition": {
+                  "label": "transição G11 @ 21h → 11h",
+                  "samples": 0,
+                  "firstCount": 0,
+                  "top3Count": 0,
+                  "probability": 0.04,
+                  "weight": 0
+                },
+                "recent": {
+                  "label": "recência comparável",
+                  "samples": 3,
+                  "firstCount": 1,
+                  "top3Count": 1,
+                  "probability": 0.07142857142857142,
+                  "weight": 0.08196721311475409
+                },
+                "scene": {
+                  "label": "analogia histórica de cena",
+                  "samples": 80,
+                  "firstCount": 214.5,
+                  "top3Count": 0,
+                  "probability": 0.06706425452276982,
+                  "weight": 0.06
+                }
+              }
+            }
+          }
+        },
+        {
+          "rank": 2,
+          "title": "2º mais provável",
+          "grupo": 14,
+          "scoreProb": 0.08304231662627108,
+          "rawScoreProb": 0.08304231662627108,
+          "probCond": 0.04,
+          "probBase": 0.08833333333333333,
+          "lateBonus": 0,
+          "freq": 3,
+          "freqCond": 0,
+          "freqBase": 3,
+          "freqZeroWhy": "",
+          "reasons": [
+            "Motor: V3_STATISTICAL",
+            "Alvo: 2022-06-30 11h | DOW=4 | dia=30",
+            "Base: G11 @ 21h",
+            "Probabilidade final G14: 8.30%",
+            "frequência no horário 11h: 3x em 1º | 6x no TOP3 | amostras=23 | peso=83%",
+            "frequência no dia da semana + horário: 1x em 1º | 2x no TOP3 | amostras=3 | peso=9%",
+            "recência comparável: 1x em 1º | 2x no TOP3 | amostras=3 | peso=8%"
+          ],
+          "meta": {
+            "trigger": {
+              "ymd": "2022-06-29",
+              "hour": "21h",
+              "grupo": 11
+            },
+            "next": {
+              "ymd": "2022-06-30",
+              "hour": "11h"
+            },
+            "samples": 102,
+            "period": {
+              "from": "2022-06-07",
+              "to": "2022-06-29"
+            },
+            "scenario": "V3_STATISTICAL",
+            "explain": {
+              "engine": "V3_STATISTICAL",
+              "targetDow": 4,
+              "targetDayOfMonth": 30,
+              "prevHour": "21h",
+              "prevGrupo": 11,
+              "activeWeights": {
+                "hour": 0.8295081967213114,
+                "dowHour": 0.08852459016393442,
+                "dayMonth": 0,
+                "transition": 0,
+                "recent": 0.08196721311475409
+              },
+              "scene": {
+                "samples": 80,
+                "totalWeight": 2404.5,
+                "weight": 0.06,
+                "currentSignature": "11-05-16-05-15-01-12"
+              },
+              "layers": {
+                "hour": {
+                  "label": "frequência no horário 11h",
+                  "samples": 23,
+                  "weight": 0.8295081967213114
+                },
+                "dowHour": {
+                  "label": "frequência no dia da semana + horário",
+                  "samples": 3,
+                  "weight": 0.08852459016393442
+                },
+                "dayMonth": {
+                  "label": "frequência no dia 30",
+                  "samples": 0,
+                  "weight": 0
+                },
+                "transition": {
+                  "label": "transição G11 @ 21h → 11h",
+                  "samples": 0,
+                  "weight": 0
+                },
+                "recent": {
+                  "label": "recência comparável",
+                  "samples": 3,
+                  "weight": 0.08196721311475409
+                }
+              },
+              "details": {
+                "hour": {
+                  "label": "frequência no horário 11h",
+                  "samples": 23,
+                  "firstCount": 3,
+                  "top3Count": 6,
+                  "probability": 0.08833333333333333,
+                  "weight": 0.8295081967213114
+                },
+                "dowHour": {
+                  "label": "frequência no dia da semana + horário",
+                  "samples": 3,
+                  "firstCount": 1,
+                  "top3Count": 2,
+                  "probability": 0.07428571428571429,
+                  "weight": 0.08852459016393442
+                },
+                "dayMonth": {
+                  "label": "frequência no dia 30",
+                  "samples": 0,
+                  "firstCount": 0,
+                  "top3Count": 0,
+                  "probability": 0.04,
+                  "weight": 0
+                },
+                "transition": {
+                  "label": "transição G11 @ 21h → 11h",
+                  "samples": 0,
+                  "firstCount": 0,
+                  "top3Count": 0,
+                  "probability": 0.04,
+                  "weight": 0
+                },
+                "recent": {
+                  "label": "recência comparável",
+                  "samples": 3,
+                  "firstCount": 1,
+                  "top3Count": 2,
+                  "probability": 0.07428571428571429,
+                  "weight": 0.08196721311475409
+                },
+                "scene": {
+                  "label": "analogia histórica de cena",
+                  "samples": 80,
+                  "firstCount": 86,
+                  "top3Count": 0,
+                  "probability": 0.03767144936577251,
+                  "weight": 0.06
+                }
+              }
+            }
+          }
+        },
+        {
+          "rank": 3,
+          "title": "3º mais provável",
+          "grupo": 4,
+          "scoreProb": 0.06289184415150555,
+          "rawScoreProb": 0.06289184415150555,
+          "probCond": 0.04,
+          "probBase": 0.06583333333333334,
+          "lateBonus": 0,
+          "freq": 2,
+          "freqCond": 0,
+          "freqBase": 2,
+          "freqZeroWhy": "",
+          "reasons": [
+            "Motor: V3_STATISTICAL",
+            "Alvo: 2022-06-30 11h | DOW=4 | dia=30",
+            "Base: G11 @ 21h",
+            "Probabilidade final G04: 6.29%",
+            "frequência no horário 11h: 2x em 1º | 4x no TOP3 | amostras=23 | peso=83%",
+            "analogia histórica de cena: 346.5x em 1º | 0x no TOP3 | amostras=80 | peso=6%",
+            "frequência no dia da semana + horário: 0x em 1º | 0x no TOP3 | amostras=3 | peso=9%"
+          ],
+          "meta": {
+            "trigger": {
+              "ymd": "2022-06-29",
+              "hour": "21h",
+              "grupo": 11
+            },
+            "next": {
+              "ymd": "2022-06-30",
+              "hour": "11h"
+            },
+            "samples": 102,
+            "period": {
+              "from": "2022-06-07",
+              "to": "2022-06-29"
+            },
+            "scenario": "V3_STATISTICAL",
+            "explain": {
+              "engine": "V3_STATISTICAL",
+              "targetDow": 4,
+              "targetDayOfMonth": 30,
+              "prevHour": "21h",
+              "prevGrupo": 11,
+              "activeWeights": {
+                "hour": 0.8295081967213114,
+                "dowHour": 0.08852459016393442,
+                "dayMonth": 0,
+                "transition": 0,
+                "recent": 0.08196721311475409
+              },
+              "scene": {
+                "samples": 80,
+                "totalWeight": 2404.5,
+                "weight": 0.06,
+                "currentSignature": "11-05-16-05-15-01-12"
+              },
+              "layers": {
+                "hour": {
+                  "label": "frequência no horário 11h",
+                  "samples": 23,
+                  "weight": 0.8295081967213114
+                },
+                "dowHour": {
+                  "label": "frequência no dia da semana + horário",
+                  "samples": 3,
+                  "weight": 0.08852459016393442
+                },
+                "dayMonth": {
+                  "label": "frequência no dia 30",
+                  "samples": 0,
+                  "weight": 0
+                },
+                "transition": {
+                  "label": "transição G11 @ 21h → 11h",
+                  "samples": 0,
+                  "weight": 0
+                },
+                "recent": {
+                  "label": "recência comparável",
+                  "samples": 3,
+                  "weight": 0.08196721311475409
+                }
+              },
+              "details": {
+                "hour": {
+                  "label": "frequência no horário 11h",
+                  "samples": 23,
+                  "firstCount": 2,
+                  "top3Count": 4,
+                  "probability": 0.06583333333333334,
+                  "weight": 0.8295081967213114
+                },
+                "dowHour": {
+                  "label": "frequência no dia da semana + horário",
+                  "samples": 3,
+                  "firstCount": 0,
+                  "top3Count": 0,
+                  "probability": 0.03571428571428571,
+                  "weight": 0.08852459016393442
+                },
+                "dayMonth": {
+                  "label": "frequência no dia 30",
+                  "samples": 0,
+                  "firstCount": 0,
+                  "top3Count": 0,
+                  "probability": 0.04,
+                  "weight": 0
+                },
+                "transition": {
+                  "label": "transição G11 @ 21h → 11h",
+                  "samples": 0,
+                  "firstCount": 0,
+                  "top3Count": 0,
+                  "probability": 0.04,
+                  "weight": 0
+                },
+                "recent": {
+                  "label": "recência comparável",
+                  "samples": 3,
+                  "firstCount": 0,
+                  "top3Count": 0,
+                  "probability": 0.03571428571428571,
+                  "weight": 0.08196721311475409
+                },
+                "scene": {
+                  "label": "analogia histórica de cena",
+                  "samples": 80,
+                  "firstCount": 346.5,
+                  "top3Count": 0,
+                  "probability": 0.0972576419213974,
+                  "weight": 0.06
+                }
+              }
+            }
+          }
+        }
+      ],
+      "experimental": {
+        "enabled": true,
+        "version": 2,
+        "totalDraws": 102,
+        "firstPrizeGroupFrequency": {
+          "10": 3,
+          "11": 6,
+          "12": 3,
+          "13": 1,
+          "14": 4,
+          "15": 1,
+          "16": 4,
+          "17": 4,
+          "18": 3,
+          "19": 3,
+          "20": 6,
+          "21": 4,
+          "22": 4,
+          "23": 2,
+          "24": 3,
+          "25": 4,
+          "09": 2,
+          "06": 6,
+          "03": 5,
+          "05": 7,
+          "01": 6,
+          "04": 9,
+          "07": 7,
+          "08": 4,
+          "02": 1
+        },
+        "notes": [
+          "Experimental only",
+          "No influence on ranking"
+        ]
+      }
+    }
+  ]
+}

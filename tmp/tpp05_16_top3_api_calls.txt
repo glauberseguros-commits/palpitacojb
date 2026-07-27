@@ -1,0 +1,75 @@
+
+===== src\pages\Top3\top3.hooks.js =====
+  13: } from "./top3.formatters";
+  22: } from "./top3.constants";
+  35: } from "./top3.engine";
+  37: import { lotteryLabel } from "./top3.selectors";
+  43: } from "./top3.storage";
+  47:   loadTop3PredictionDay,
+  49: } from "./top3.firestore";
+  61:   loadHistoryRange,
+  62: } from "./modules/top3.loader";
+  64: import { computeTop3Analytics } from "./modules/top3.analytics";
+  66: import { buildTop3Predictions } from "./modules/top3.prediction";
+  68: import { buildTop3TimelineViewModel } from "./modules/top3.timeline";
+  73: } from "./modules/top3.viewmodel";
+  79: } from "./top3.images";
+ 300:   const [loading, setLoading] = useState(false);
+ 301:   const [loadingStage, setLoadingStage] = useState({
+ 311:   const [loadedYmd, setLoadedYmd] = useState("");
+ 358:     if (isYMD(loadedYmd)) return loadedYmd;
+ 360:   }, [loadedYmd, ymdSafe]);
+ 365:       : isYMD(loadedYmd)
+ 366:         ? loadedYmd
+ 376:   }, [lotteryKeySafe, ymdSafe, loadedYmd, analysisYmd]);
+ 452:   const load = useCallback(async () => {
+ 710:             loadedYmd: effectiveYmd,
+ 771:       const histRaw = await loadHistoryRange({
+ 845:     debugTop3Effect("01_load", {
+ 851:     load();
+ 852:   }, [load]);
+1076:     debugTop3Effect("04_load_persisted_history", {
+1092:     async function loadPersistedHistory() {
+1099:         const history = await loadTop3PredictionDay({
+1115:     loadPersistedHistory();
+1162:         const history = await loadTop3PredictionDay({
+1193:     loadedYmd,
+1195:     loading,
+1196:     loadingStage,
+1220:     load,
+
+===== src\pages\Top3\Top3View.jsx =====
+ 675:     const payload = flat20.join(" ").trim();
+ 676:     if (!payload) return;
+ 678:     const ok = await copyText(payload);
+1222:     loading,
+1240:     loadedYmd,
+1387:   const loaded = String(loadedYmd || "").trim();
+1388:   if (isYMD(loaded)) return loaded;
+1404: }, [loadedYmd, ymdSafe, timeline]);
+2759:         {loading ? (
+
+===== src\services\auditKingCounts.js =====
+ 181:    - usa id/drawId quando existir
+
+===== src\services\kingResultsService.js =====
+ 758:   const url = apiUrl(`/api/bounds?lottery=${encodeURIComponent(lot)}`);
+ 760:     const r = await fetch(url, { method: "GET" });
+ 767:         payload: j || null,
+ 777:         payload: j,
+
+===== src\services\planService.js =====
+ 180: export async function activatePremium30d(uid, payload = {}) {
+ 205:       amount: safeNum(payload.amount),
+ 206:       provider: normalizeProvider(payload.provider || "mercadopago"),
+ 207:       paymentId: normalizePaymentId(payload.paymentId),
+
+===== src\services\predictionService.js =====
+   6: export async function runPrediction(payload = {}) {
+   9:     "/predictions/run",
+  10:     payload
+
+===== src\services\statisticsEngine.js =====
+  60:   const payload = {
+  78:   await setDoc(snapshotDocRef(uf, scope), payload, { merge: true });
+  80:   return payload;

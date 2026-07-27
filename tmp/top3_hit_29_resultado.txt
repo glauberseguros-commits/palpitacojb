@@ -1,0 +1,189 @@
+OK: substitui analyzeTop3Hit completa
+OK: preserva campos no objeto persistido
+OK: preserva campos dentro de analysis
+OK: completa combina├º├úo timeline e snapshot
+OK: fallback do grupo acertado
+OK: fallback da milhar acertada
+PATCH APLICADO: src/pages/Top3/Top3View.jsx
+OK: matchedMilhar: milhar, — 1 ocorrência(s)
+OK: entry?.matchedGrupo ?? NaN — 2 ocorrência(s)
+OK: entry?.matchedMilhar || — 2 ocorrência(s)
+OK: timelineRow?.resultTop3Groups — 1 ocorrência(s)
+OK: timelineRow?.resultTop3Milhares — 1 ocorrência(s)
+OK: item?.matchedGrupo ?? — 1 ocorrência(s)
+OK: item?.matchedMilhar || — 1 ocorrência(s)
+OK: analysis?.matchedMilhar || — 2 ocorrência(s)
+
+> palpitaco@0.1.0 build
+> react-scripts build
+
+Creating an optimized production build...
+Compiled successfully.
+
+File sizes after gzip:
+
+  264.35 kB (+4 B)   build\static\js\main.a436357c.js
+  138.8 kB           build\static\js\238.133659d3.chunk.js
+  128.07 kB          build\static\js\389.21aa2d35.chunk.js
+  46.35 kB           build\static\js\239.6b4eaf90.chunk.js
+  42.9 kB            build\static\js\455.7220bbdf.chunk.js
+  37.52 kB (+138 B)  build\static\js\741.57d1b24a.chunk.js
+  10.7 kB            build\static\js\916.71c8a438.chunk.js
+  9.79 kB            build\static\js\857.e51a2e06.chunk.js
+  9.28 kB            build\static\js\411.e6411a40.chunk.js
+  9.01 kB            build\static\js\848.8045fd05.chunk.js
+  8.96 kB            build\static\js\812.eb0d3036.chunk.js
+  8.89 kB            build\static\js\188.c75767d6.chunk.js
+  8.69 kB            build\static\js\977.efeedf50.chunk.js
+  6.73 kB            build\static\js\960.417ace1e.chunk.js
+  6.07 kB            build\static\js\886.320165d3.chunk.js
+  4.2 kB             build\static\js\854.7290a099.chunk.js
+  3.89 kB            build\static\js\532.86885c87.chunk.js
+  3.11 kB            build\static\css\960.a7d00216.chunk.css
+  2.87 kB            build\static\css\main.f1823042.css
+  1.82 kB            build\static\js\611.337809cd.chunk.js
+  1.53 kB            build\static\css\611.3878f01e.chunk.css
+  775 B              build\static\js\784.e009081b.chunk.js
+
+The project was built assuming it is hosted at /.
+You can control this with the homepage field in your package.json.
+
+The build folder is ready to be deployed.
+You may serve it with a static server:
+
+  serve -s build
+
+Find out more about deployment here:
+
+  https://cra.link/deployment
+
+diff --git a/src/pages/Top3/Top3View.jsx b/src/pages/Top3/Top3View.jsx
+index 3fea507..dbba7b2 100644
+--- a/src/pages/Top3/Top3View.jsx
++++ b/src/pages/Top3/Top3View.jsx
+@@ -420,6 +420,7 @@ function analyzeTop3Hit(top3, resultSource, resultMilhar) {
+       podiumMedal: "",
+       matchedValue: "",
+       matchedGrupo: null,
++      matchedMilhar: "",
+     };
+   }
+ 
+@@ -448,6 +449,7 @@ function analyzeTop3Hit(top3, resultSource, resultMilhar) {
+       podiumMedal: "",
+       matchedValue: "",
+       matchedGrupo: null,
++      matchedMilhar: "",
+     };
+   }
+ 
+@@ -486,17 +488,11 @@ function analyzeTop3Hit(top3, resultSource, resultMilhar) {
+       let score = 0;
+       let matchedValue = "";
+ 
+-      if (
+-        milhar &&
+-        milhares.includes(milhar)
+-      ) {
++      if (milhar && milhares.includes(milhar)) {
+         type = "hit_exact";
+         score = 100;
+         matchedValue = milhar;
+-      } else if (
+-        centena &&
+-        centenas.includes(centena)
+-      ) {
++      } else if (centena && centenas.includes(centena)) {
+         type = "hit_centena";
+         score = 66.67;
+         matchedValue = centena;
+@@ -526,6 +522,7 @@ function analyzeTop3Hit(top3, resultSource, resultMilhar) {
+             podiumMedalFromPosition(resultPosition),
+           matchedValue,
+           matchedGrupo: grupoNum,
++          matchedMilhar: milhar,
+         };
+       }
+     }
+@@ -540,6 +537,7 @@ function analyzeTop3Hit(top3, resultSource, resultMilhar) {
+     podiumMedal: "",
+     matchedValue: "",
+     matchedGrupo: null,
++    matchedMilhar: "",
+   };
+ }
+ 
+@@ -1883,6 +1881,12 @@ const list = Array.isArray(top3)
+           )
+             ? entry.resultTop3Milhares
+             : [],
++          matchedGrupo: Number(
++            entry?.matchedGrupo ?? NaN
++          ),
++          matchedMilhar: normalizeMilharStr(
++            entry?.matchedMilhar || ""
++          ),
+           analysis: {
+             type: String(entry?.hitType || ""),
+             score: Number(entry?.hitScore || 0),
+@@ -1903,6 +1907,12 @@ const list = Array.isArray(top3)
+             matchedValue: String(
+               entry?.matchedValue || ""
+             ),
++            matchedGrupo: Number(
++              entry?.matchedGrupo ?? NaN
++            ),
++            matchedMilhar: normalizeMilharStr(
++              entry?.matchedMilhar || ""
++            ),
+           },
+         };
+       });
+@@ -2026,6 +2036,22 @@ const list = Array.isArray(top3)
+           getAnimalLabel(resultGrupo) ||
+           "",
+         resultMilhar,
++        resultTop3Groups: Array.isArray(
++          timelineRow?.resultTop3Groups
++        )
++          ? timelineRow.resultTop3Groups
++          : row?.resultTop3Groups || [],
++        resultTop3Milhares: Array.isArray(
++          timelineRow?.resultTop3Milhares
++        )
++          ? timelineRow.resultTop3Milhares
++          : row?.resultTop3Milhares || [],
++        matchedGrupo: Number(
++          analysis?.matchedGrupo ?? NaN
++        ),
++        matchedMilhar: normalizeMilharStr(
++          analysis?.matchedMilhar || ""
++        ),
+         analysis,
+         hit:
+           analysis.type !== "miss" &&
+@@ -3777,6 +3803,7 @@ const list = Array.isArray(top3)
+                         item?.resultTop3Groups?.[
+                           matchedOfficialIndex
+                         ] ??
++                          item?.matchedGrupo ??
+                           analysis?.matchedGrupo ??
+                           NaN
+                       )
+@@ -3797,6 +3824,8 @@ const list = Array.isArray(top3)
+                         item?.resultTop3Milhares?.[
+                           matchedOfficialIndex
+                         ] ||
++                          item?.matchedMilhar ||
++                          analysis?.matchedMilhar ||
+                           (
+                             resultPosition === 1
+                               ? resultMilhar
+[main 0e387af] fix(top3): restaura detalhes completos dos acertos
+ 1 file changed, 37 insertions(+), 8 deletions(-)
+To https://github.com/glauberseguros-commits/palpitacojb.git
+   4bd1e58..0e387af  main -> main
+
+TOP3-HIT-29 APROVADO
+LOCAL:  0e387afd16dca0a8fc5fb8b22bda5cff3ce6b84b
+REMOTO: 0e387afd16dca0a8fc5fb8b22bda5cff3ce6b84b

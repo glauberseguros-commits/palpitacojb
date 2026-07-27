@@ -1,0 +1,865 @@
+
+===== backend\engine\contextEvidence.js =====
+   28:     if (ctx.closeHour)
+   29:         reasons.push(`Horário: ${ctx.closeHour}`);
+   50:         closeHour: context.hour || null,
+   60:         lookback: normalize(context.lookback),
+
+===== backend\engine\top3PredictionService.js =====
+   25: const PT_RIO_SCHEDULE_NORMAL = [
+   26:   "09:00",
+   27:   "11:00",
+   28:   "14:00",
+   29:   "16:00",
+   30:   "18:00",
+   31:   "21:00",
+   34: const PT_RIO_SCHEDULE_WED_SAT = [
+   35:   "09:00",
+   36:   "11:00",
+   37:   "14:00",
+   38:   "16:00",
+   39:   "21:00",
+   42: const FEDERAL_SCHEDULE = [
+   43:   "20:00",
+  230:           lookbackDays: null,
+  249:   const lookbackDays = Math.max(
+  253:       Number(input.lookbackDays || 180)
+  267:     lookbackDays
+  285:     lookbackDays,
+  352:       PT_RIO_SCHEDULE_NORMAL,
+  353:       PT_RIO_SCHEDULE_WED_SAT,
+  354:       FEDERAL_SCHEDULE,
+  378: function scheduleForPublicProjection(
+  383:     return [...FEDERAL_SCHEDULE];
+  390:     return [...PT_RIO_SCHEDULE_WED_SAT];
+  393:   return [...PT_RIO_SCHEDULE_NORMAL];
+  452:   closeHour,
+  455:   const schedule = scheduleForPublicProjection(
+  491:           analysisHourBucket: closeHour,
+  492:           schedule,
+  539:   closeHour,
+  545:   const hour = normalizeHour(closeHour);
+  753:   const closeHour = normalizeHour(input.closeHour);
+  781:     lookbackDays,
+  792:   const targetKey = dateHourKey(date, closeHour);
+  797:       const hour = publicApi.pickDrawHour(draw);
+  808:         publicApi.pickDrawHour(a)
+  813:         publicApi.pickDrawHour(b)
+  835:     PT_RIO_SCHEDULE_NORMAL,
+  836:     PT_RIO_SCHEDULE_WED_SAT,
+  837:     FEDERAL_SCHEDULE,
+  840:     targetHourOverride: closeHour,
+  853:       closeHour,
+  886:     lookbackDays,
+  891:     lastDrawHour:
+  892:       publicApi.pickDrawHour(drawLast) || null,
+  894:     targetHour: closeHour,
+  907:     lookbackDays,
+  911:     targetHour: closeHour,
+  931:     closeHour,
+  942:       closeHour,
+
+===== backend\package-lock.json =====
+ 2500:       "integrity": "sha512-sPU4uV7dYlvtWJxwwxHD0PuihVNiE7TyAbQ5SWxDCB9mUYvOgroQOwYQQOKPJ8CIbE+1ETVlOoK1UC2nU3gYvg==",
+
+===== backend\routes\bounds.js =====
+   19:   if (["LOOK", "GO"].includes(s)) return "LOOK";
+   21:   if (["NACIONAL", "LT_NACIONAL", "LT-NACIONAL"].includes(s)) {
+   22:     return "NACIONAL";
+
+===== backend\routes\pitacoResults.js =====
+   78:   if (s === "LOOK" || s === "GO") return "LOOK";
+   80:     s === "NACIONAL" ||
+   81:     s === "LT_NACIONAL" ||
+   82:     s === "LT-NACIONAL" ||
+   83:     s === "LT NACIONAL"
+   85:     return "NACIONAL";
+  210:  * Pega o melhor candidato de close_hour em docs legados.
+  215:       d?.close_hour ??
+  217:       d?.close_hour_raw ??
+  218:       d?.closeHour ??
+  219:       d?.horario ??
+  229:  * Normaliza close_hour para SLOT (compatível com import):
+  233: function normalizeCloseHourForLottery(value, lotteryKey) {
+  248: function hourFromCloseHourSlot(closeHour, lotteryKey) {
+  249:   const { slot } = normalizeCloseHourForLottery(closeHour, lotteryKey);
+  313:    SLOT SCHEDULE
+  316: const DEFAULT_SCHEDULE_DIR = path.join(__dirname, "..", "data", "slot_schedule");
+  367:     return { hard, soft, mode: "fallback", scheduleFile: false };
+  373:   return { hard, soft, mode: "fallback", scheduleFile: false };
+  400: function parseScheduleGlobal(scheduleRaw) {
+  401:   const hard = normalizeHourList(scheduleRaw?.hard || scheduleRaw?.expectedHard || []);
+  402:   const soft = normalizeHourList(scheduleRaw?.soft || scheduleRaw?.expectedSoft || []);
+  403:   const hours = normalizeHourList(scheduleRaw?.hours || []);
+  404:   if (hours.length) return { hard: hours, soft: [], mode: "schedule", scheduleFile: true };
+  405:   if (hard.length || soft.length) return { hard, soft, mode: "schedule", scheduleFile: true };
+  410:   const p = path.join(DEFAULT_SCHEDULE_DIR, `${lotteryKey}.json`);
+  411:   const scheduleRaw = safeReadJson(p, null);
+  412:   const scheduleFile = !!scheduleRaw;
+  414:   if (scheduleRaw) {
+  415:     const global = parseScheduleGlobal(scheduleRaw);
+  419:   const ranges = Array.isArray(scheduleRaw) ? scheduleRaw : scheduleRaw?.ranges;
+  432:       if (hours.length) return { hard: hours, soft: [], mode: "schedule", scheduleFile: true };
+  433:       return { hard, soft, mode: "schedule", scheduleFile: true };
+  439:     if (hours.length) return { hard: hours, soft: [], mode: "schedule", scheduleFile: true };
+  440:     return { hard, soft, mode: "schedule", scheduleFile: true };
+  447:   return { hard: [], soft: [], mode: "none", scheduleFile };
+  560:     scheduleAll,
+  575:   return (Array.isArray(scheduleAll) ? scheduleAll : []).map((hh) => {
+  615:       hint: "Use: ?date=YYYY-MM-DD&lottery=PT_RIO|FEDERAL|LOOK|NACIONAL  (ou)  ?date=YYYY-MM-DD&uf=RJ|BR",
+  648:         error: "lottery inválida: " + lotteryRaw + " (use lottery=PT_RIO|FEDERAL|LOOK|NACIONAL ou aliases RJ|BR)",
+  813:     const scheduleAll = uniqSorted([...baseHard, ...baseSoft]);
+  835:         const { raw, slot } = normalizeCloseHourForLottery(cand, lotteryKey);
+  839:           close_hour: slot || normalizeHHMM(d.close_hour),
+  840:           close_hour_raw: raw || d.close_hour_raw || null,
+  845:       drawsNoPrizes.sort((a, b) => cmpHHMM(a.close_hour, b.close_hour));
+  849:         const hh = hourFromCloseHourSlot(dr?.close_hour, lotteryKey);
+  855:           const a = String(prev.close_hour || "");
+  856:           const b = String(dr.close_hour || "");
+  864:         scheduleAll,
+  884:         scheduleFile: !!expectedBase?.scheduleFile,
+  885:         scheduleHard: baseHard.length,
+  886:         scheduleSoft: baseSoft.length,
+  887:         scheduleAll: scheduleAll.length,
+  940:       const { raw, slot } = normalizeCloseHourForLottery(cand, lotteryKey);
+  947:         close_hour: slot || normalizeHHMM(d.close_hour),
+  948:         close_hour_raw: raw || d.close_hour_raw || null,
+  953:     draws.sort((a, b) => cmpHHMM(a.close_hour, b.close_hour));
+  957:       const hh = hourFromCloseHourSlot(dr?.close_hour, lotteryKey);
+  963:         const a = String(prev.close_hour || "");
+  964:         const b = String(dr.close_hour || "");
+  972:       scheduleAll,
+  992:       scheduleFile: !!expectedBase?.scheduleFile,
+  993:       scheduleHard: baseHard.length,
+  994:       scheduleSoft: baseSoft.length,
+  995:       scheduleAll: scheduleAll.length,
+
+===== backend\scripts\autoImportToday.js =====
+  128:    Schedules (por loteria)
+  130: const SCHEDULES = {
+  132:     { hour: "09:00", windowStart: "09:05", releaseAt: "09:29", windowEnd: "09:35" },
+  133:     { hour: "11:00", windowStart: "11:05", releaseAt: "11:29", windowEnd: "11:35" },
+  134:     { hour: "14:00", windowStart: "14:05", releaseAt: "14:29", windowEnd: "14:35" },
+  135:     { hour: "16:00", windowStart: "16:05", releaseAt: "16:29", windowEnd: "16:35" },
+  136:     { hour: "18:00", windowStart: "18:05", releaseAt: "18:29", windowEnd: "18:35" },
+  138:     { hour: "21:00", windowStart: "21:05", releaseAt: "21:05", windowEnd: "21:45" },
+  142:   // - 19:00 = PROBE (SOFT)
+  143:   // - 20:00 = HARD (padrão)
+  145:     { hour: "19:00", windowStart: "18:50", releaseAt: "19:00", windowEnd: "19:20" }, // PROBE (SOFT)
+  146:     { hour: "20:00", windowStart: "19:50", releaseAt: "20:00", windowEnd: "20:20" }, // HARD
+  150: const SCHEDULE = Array.isArray(SCHEDULES[LOTTERY]) ? SCHEDULES[LOTTERY] : SCHEDULES.PT_RIO;
+  279:   for (const s of SCHEDULE) {
+  320:   for (const s of SCHEDULE) {
+  354:   for (const sched of SCHEDULE) {
+  376:   if (LOTTERY === "PT_RIO" && s === "21:00") {
+  378:       "21:00", "21:01", "21:02",
+  459: function hasFederal20Scheduled(dayStatus) {
+  478:   return expected.has("20:00");
+  495:   for (const sched of SCHEDULE) {
+  500:         hh === "18:00" ||
+  501:         hh === "21:00"
+  512:       if (hh === "18:00") {
+  531:     map.set("18:00", "OFF");
+  534:       `[CAL] PT_RIO 18:00 OFF: ` +
+  536:         `reason=FEDERAL_20_SCHEDULED`,
+  545:   for (const sched of SCHEDULE) {
+  575:  * - demais dias: 19:00 = SOFT (PROBE), 20:00 = HARD (padrão)
+  585:   for (const sched of SCHEDULE) {
+  591:     if (sched.hour === "19:00") {
+  596:     if (sched.hour === "20:00") {
+  615: function slotWindow(schedule) {
+  616:   const ws = parseHHMM(schedule.windowStart);
+  617:   const ra = parseHHMM(schedule.releaseAt);
+  618:   const we = parseHHMM(schedule.windowEnd);
+  621:     const { h } = parseHH(schedule.hour);
+  640:     startLabel: schedule.windowStart,
+  641:     releaseLabel: schedule.releaseAt,
+  642:     endLabel: schedule.windowEnd,
+  723:   for (const sched of SCHEDULE) {
+  768: function upsertMissingSlot({ date, slotHour, calendar, closeHourTried, reason, meta }) {
+  789:     closeHourTried: closeHourTried || null,
+  808: function drawLooksLikeSlot(draw, slotHH) {
+  814:       (draw.close_hour ||
+  815:         draw.closeHour ||
+  820:         draw.close_hour_raw)) ??
+  847:     const foundInDraws = draws.some((d) => drawLooksLikeSlot(d, slotHHMM));
+  854:       const v = (s && (s.hour || s.close_hour || s.closeHour || s.close || s.slot || s.time || s.close_hour_raw)) ?? "";
+  870: async function guardPersistedOrCritical({ date, slotHHMM, calendar, closeHourTried, meta }) {
+  892:     closeHourTried,
+  898:     `[BIRTH-GUARD] CRITICAL slot=${slotHHMM} date=${date} calendar=${calendar || "—"} closeTried=${closeHourTried || "—"} reason=${
+  910:  * Reconcilia o state temporário do runner com os horários
+  941:   for (const sched of SCHEDULE) {
+  989:   for (const sched of SCHEDULE) {
+ 1056:   for (const sched of SCHEDULE) {
+ 1143:         hasFederal20Scheduled(
+ 1155:           `[CAL] FEDERAL schedule: ` +
+ 1184:       for (const sched of SCHEDULE) {
+ 1225:     for (const sched of SCHEDULE) {
+ 1264:     for (const sched of SCHEDULE) {
+ 1321:       for (const closeHour of candidates) {
+ 1325:           r = await runImport({ date, lotteryKey: LOTTERY, closeHour });
+ 1328:           slot.lastResult = { ok: false, error: lastErr, closeHourTried: closeHour };
+ 1330:           logLine(`[AUTO] erro no import close=${closeHour}: ${lastErr}`, "ERROR");
+ 1344:             closeHourTried: closeHour,
+ 1360:             closeHourTried: closeHour,
+ 1368:             `[AUTO] api_missing_slot slot=${sched.hour} (${st}) close=${closeHour} -> parando closes candidatos (vai retry depois)`,
+ 1377:           slot.lastResult = { ok: true, closeHourTried: closeHour, blocked: true, blockedReason };
+ 1392:           closeHourTried: closeHour,
+ 1419:               `[AUTO] FEDERAL PROBE mismatch: slot=${sched.hour} close=${closeHour} targetDrawIds=${
+ 1435:             logLine(`[AUTO] FS já tem slot=${sched.hour} COMPLETO (close=${closeHour}) -> DONE`, "INFO");
+ 1440:               closeHourTried: closeHour,
+ 1444:             logLine(`[AUTO] CAPTURADO slot=${sched.hour} (close=${closeHour}) saved=${savedCount} writes=${writeCount} -> DONE`, "INFO");
+ 1449:               closeHourTried: closeHour,
+
+===== backend\scripts\fixReceiveDuplicates.js =====
+   51:     // Monta set de ids para lookup rápido
+   72:       // fazemos lookup no conjunto local (idSet).
+
+===== backend\scripts\importKingApostas.js =====
+  227: const LOOK_STATE_CODE = "GO";
+  228: const LOOK_LOTTERY_KEY = "LOOK";
+  230: const NACIONAL_STATE_CODE = "BR";
+  231: const NACIONAL_LOTTERY_KEY = "NACIONAL";
+  238:   if (lk === LOOK_LOTTERY_KEY) return LOOK_STATE_CODE;
+  239:   if (lk === NACIONAL_LOTTERY_KEY) return NACIONAL_STATE_CODE;
+  370:  * ✅ Normaliza close_hour para SLOT (campo de negócio)
+  371:  * - Para PT_RIO: força minutos = 00 (09:09 -> 09:00)
+  377:  *   e NÃO persistimos close_hour_raw (vira "").
+  383: function normalizeCloseHourForLottery(value, lotteryKey) {
+  388:   // ✅ FEDERAL: slot de negócio é sempre 20:00, mas preserva o raw
+  390:     return { raw: raw0, slot: "20:00" };
+  397:     // ✅ se vier HH:09, é marcação (não minuto real) -> não grava close_hour_raw
+  407:  * NACIONAL:
+  410: function normalizeDrawCloseHour(draw, lotteryKey) {
+  411:   const base = normalizeCloseHourForLottery(
+  412:     draw?.close_hour || "",
+  418:   if (lk !== "NACIONAL") {
+  442:  * ✅ Normaliza o parâmetro closeHour (do CLI/scheduler) e evita log enganoso.
+  443:  * - Para FEDERAL: qualquer coisa vira slot=20:00, mas mantemos "requested" para log.
+  445: function normalizeRequestedCloseHour(closeHour, lotteryKey) {
+  447:   const requested = closeHour ? normalizeHHMM(closeHour) : null;
+  457:   // FEDERAL: slot único 20:00 (não fingir que o usuário pediu 20:00)
+  459:     const slot = "20:00";
+  465:   const slot = normalizeCloseHourForLottery(requested, lk).slot;
+  500:  * Observação: a API pode consolidar em 1 draw por close_hour, mesmo havendo múltiplos IDs aqui.
+  505:  * - KING_LOTTERIES_LOOK="uuid1,uuid2,..."
+  506:  * - KING_LOTTERIES_NACIONAL="uuid1,uuid2,..."
+  518:     LOOK: [
+  528:     NACIONAL: [
+  560:     const rawLook = String(process.env.KING_LOTTERIES_LOOK || "").trim();
+  561:     if (rawLook) {
+  562:       const arrLook = rawLook
+  566:       if (arrLook.length) LOTTERIES_BY_KEY.LOOK = arrLook;
+  569:     const rawNacional = String(
+  570:       process.env.KING_LOTTERIES_NACIONAL || ""
+  572:     if (rawNacional) {
+  573:       const arrNacional = rawNacional
+  577:       if (arrNacional.length) LOTTERIES_BY_KEY.NACIONAL = arrNacional;
+  592:           `LOOK lotteries=${counts.LOOK} | ` +
+  593:           `NACIONAL lotteries=${counts.NACIONAL}`
+  796: async function tryHtmlDetailsFallback({ date, lotteryKey, closeHour }) {
+  798:   const slot = normalizeCloseHourForLottery(closeHour || "", lk).slot;
+  801:   // por enquanto: só PT_RIO 18:00 (não altera outros horários)
+  802:   if (!(lk === "PT_RIO" && slot === "18:00")) {
+  822:  * Dedup key: date + close_hour(SLOT) + lottery_id (se existir)
+  831:       const { slot } = normalizeDrawCloseHour(d, lotteryKey);
+  864: function summarizeCloseHours(draws, lotteryKey) {
+  867:     const { slot } = normalizeCloseHourForLottery(d?.close_hour || "", lotteryKey);
+  902:     normalizeHHMM(d?.close_hour ?? d?.closeHour ?? d?.horario ?? d?.close ?? "");
+  904:   const summarizeCloseHoursPart = (list) => {
+  931:         const closesPart = summarizeCloseHoursPart(list);
+  933:           `[FETCH:PART] ${lk} ${date} lotteryId=${lotteryId} draws=${list.length} close_hours=[${closesPart.join(
+  955:   const closes = summarizeCloseHours(merged, lk);
+  964:     } close_hours=[${closes.join(", ")}]${errInfo}`
+  984:  * ✅ Agora usa close_hour SLOT no ID e guarda close_hour_raw (quando fizer sentido).
+  989:   const { raw: closeRaw, slot: closeSlot } = normalizeDrawCloseHour(
+ 1040:  * - close_hour + lottery_key/lotteryKey filtrados em memória
+ 1043:  * - Normaliza o close_hour armazenado (pode existir legado "09:09")
+ 1046: async function checkSlotCompletion({ date, closeHour, lotteryKey }) {
+ 1049:     const targetSlot = normalizeCloseHourForLottery(closeHour || "", lk).slot;
+ 1065:       // ✅ compara por SLOT normalizado (pega legado "09:09" como "09:00")
+ 1066:       const storedSlot = normalizeCloseHourForLottery(d.close_hour || "", lk).slot;
+ 1088:  * closeHour (opcional): se informado, importa SOMENTE draws daquele horário (SLOT).
+ 1091:  * - skipIfAlreadyComplete (boolean): se true, e o draw do closeHour já estiver completo no FS,
+ 1097:   closeHour = null,
+ 1118:   let skippedCloseHour = 0;
+ 1121:   // Provas úteis para o scheduler (quando closeHour é informado)
+ 1126:     apiReturnedTargetDraws: 0, // draws válidos do closeHour com prizes
+ 1141:   const filterClose = closeHour
+ 1142:     ? normalizeCloseHourForLottery(closeHour, lk).slot
+ 1145:     throw new Error('Parâmetro "closeHour" inválido. Use HH:MM.');
+ 1155:     const { raw: closeRaw, slot: closeSlot } = normalizeDrawCloseHour(
+ 1163:         skippedCloseHour++;
+ 1200:     // Em closeHour: checa “já completo” e, se configurado, pula escrita (por draw)
+ 1238:         close_hour: closeSlot,
+ 1246:         close_hour_raw: closeRaw || null,
+ 1306:         closeHour: proof.filterClose,
+ 1321:     // savedCount “forte” para o scheduler:
+ 1335:       ` | skip_vazio=${skippedEmpty} | skip_invalido=${skippedInvalid} | skip_close=${skippedCloseHour}` +
+ 1357:     skippedCloseHour,
+ 1383:     const slot = String(r.close_hour || "").trim();
+ 1419: async function runImport({ date, lotteryKey = "PT_RIO", closeHour = null } = {}) {
+ 1432:     const norm = normalizeRequestedCloseHour(closeHour, lk);
+ 1437:       closeHour: norm.slot || null,
+ 1439:       requestedCloseHour: norm.requested || null,
+ 1467:       skippedCloseHour: 0,
+ 1486:   // ✅ closeHour do scheduler: normaliza SEM log enganoso
+ 1487:   const norm = normalizeRequestedCloseHour(closeHour, lk);
+ 1489:     throw new Error('Parâmetro "closeHour" inválido. Use HH:MM.');
+ 1495:   // ✅ SOFT OVERRIDE: PT_RIO 18:00 fora do calendário (controlado por env)
+ 1498:     normalizedClose === "18:00" &&
+ 1523:           closeHour: normalizedClose,
+ 1524:           requestedCloseHour: norm.requested || null,
+ 1550:           skippedCloseHour: 0,
+ 1574:   // ✅ Se pediram closeHour e ele NÃO existe no dia (close_hours do FETCH), retorna blocked/api_missing_slot
+ 1576:     const closes = summarizeCloseHours(
+ 1588:           closeHour: normalizedClose,
+ 1619:         closeHour: normalizedClose,
+ 1620:         requestedCloseHour: norm.requested || null,
+ 1651:         skippedCloseHour: 0,
+ 1674:     closeHour: normalizedClose,
+ 1675:     skipIfAlreadyComplete: Boolean(normalizedClose), // scheduler: evita regravar
+ 1688:   // ✅ Captured “verdadeiro” (modo closeHour):
+ 1707:     closeHour: normalizedClose || null,
+ 1708:     requestedCloseHour: norm.requested || null,
+ 1774:             closeHour: nextHour,
+ 1839:           : "close_hour_missing",
+ 1856:   const closeHour = process.argv[4] || null;
+ 1860:       "Uso: node backend/scripts/importKingApostas.js YYYY-MM-DD [PT_RIO|FEDERAL|LOOK|NACIONAL] [HH:MM]"
+ 1867:       "Uso: node backend/scripts/importKingApostas.js YYYY-MM-DD [PT_RIO|FEDERAL|LOOK|NACIONAL] [HH:MM]"
+ 1880:   const norm = normalizeRequestedCloseHour(closeHour, lk);
+ 1883:       "Uso: node backend/scripts/importKingApostas.js YYYY-MM-DD [PT_RIO|FEDERAL|LOOK|NACIONAL] [HH:MM]"
+ 1904:   // ✅ NOVO (CLI também): se pediram closeHour e ele não existe no dia, avisa e sai 0
+ 1906:     const closes = summarizeCloseHours(
+ 1914:         `[NO_DRAW_FOR_SLOT] ${lk} ${date} slot=${normalizedClose} close_hours=[${closes.join(", ")}]`
+ 1922:           closeHour: normalizedClose,
+ 1943:     closeHour: normalizedClose,
+
+===== backend\scripts\planBackfillFromAudit.js =====
+   36:  * aceita "11:09", "11:09:00", "11h", "11hs", "11", "09-09", "09hs", etc.
+   39: function hourFromCloseHour(closeHour) {
+   40:   const s0 = String(closeHour ?? "").trim();
+   75: function looksLikeAuditJson(j) {
+  155:       if (!looksLikeAuditJson(j)) continue;
+  308:   if (!looksLikeAuditJson(audit)) {
+  374:           hourFromCloseHour(d?.close_hour ?? d?.closeHour ?? d?.hora ?? d?.hour)
+
+===== backend\server.js =====
+  392:     version: "PATCH_CLOSEHOUR_V1",
+  444:     const closeHour = safeStr(req.query.closeHour || "");
+  445:     const closeHourBucket = safeStr(req.query.closeHourBucket || req.query.hour || "");
+  446:     const hourBucket = toHourBucket(closeHourBucket || closeHour);
+  451:     const PROBE_LOOKBACK_DAYS = 60;
+  475:         const close_hour = normalizeHourLike(
+  476:           d.close_hour ?? d.closeHour ?? d.hour ?? d.hora ?? ""
+  500:           if (toHourBucket(close_hour) !== hourBucket) return;
+  506:           close_hour,
+  514:       draws.sort((a, b) => hourToNumSafe(b.close_hour) - hourToNumSafe(a.close_hour));
+  547:     async function probeRecentMaxYmd(lookbackDays = 60) {
+  549:       const n = Math.max(3, Math.min(180, Number(lookbackDays) || 60));
+  559:     const scanStartYmd = baseYmd || (await probeRecentMaxYmd(PROBE_LOOKBACK_DAYS));
+  576:           lastCloseHour: null,
+  581:         note: "Sem draws recentes no lookback. Informe baseDate=YYYY-MM-DD para forçar.",
+  585:     const lastSeen = new Map(); // grupo -> { ymd, closeHour, drawId, lottery_code }
+  586:     const MAX_LOOKBACK_DAYS = 370;
+  589:     for (let iter = 0; iter < MAX_LOOKBACK_DAYS && lastSeen.size < 25; iter += 1) {
+  602:             closeHour: d.close_hour || "",
+  619:       const lastCloseHour = seen?.closeHour ? normalizeHourLike(seen.closeHour) : null;
+  627:         lastCloseHour,
+  639:       const ha = hourToNumSafe(a?.lastCloseHour);
+  640:       const hb = hourToNumSafe(b?.lastCloseHour);
+  666:       probeLookbackDays: PROBE_LOOKBACK_DAYS,
+  669:         maxLookbackDays: MAX_LOOKBACK_DAYS,
+  692:     // aceita: closeHour, close, hour
+  693:     const closeHourRaw =
+  694:       req.query.closeHour ??
+  699:     const closeHour = closeHourRaw ? String(closeHourRaw).trim() : null;
+  704:     if (closeHour && !isHHMM(closeHour)) {
+  711:       closeHour: closeHour || null,
+  719:       closeHour,
+  758:       const r = await runImport({ date, lotteryKey: lk, closeHour: h });
+  767:         skippedCloseHour: r.skippedCloseHour,
+
+===== src\constants\bichoMap.js =====
+  169:    Lookups
+
+===== src\constants\schedule.js =====
+    2:  * Schedule oficial do PalPitaco (FRONT)
+    3:  * Fonte única de horários por loteria
+   19:   if (s === "LOOK") return "LOOK";
+   20:   if (s === "GO") return "LOOK";
+   22:   if (s === "NACIONAL") return "NACIONAL";
+   23:   if (s === "LT_NACIONAL") return "NACIONAL";
+   24:   if (s === "LT-NACIONAL") return "NACIONAL";
+   41: export const SCHEDULES = Object.freeze({
+   43:     "09:00",
+   44:     "11:00",
+   45:     "14:00",
+   46:     "16:00",
+   47:     "18:00",
+   48:     "21:00",
+   51:     "20:00",
+   53:   LOOK: Object.freeze([
+   54:     "07:00",
+   55:     "09:00",
+   56:     "11:00",
+   57:     "14:00",
+   58:     "16:00",
+   59:     "18:00",
+   60:     "21:00",
+   61:     "23:00",
+   63:   NACIONAL: Object.freeze([
+   64:     "02:00",
+   65:     "08:00",
+   66:     "10:00",
+   67:     "12:00",
+   68:     "15:00",
+   69:     "17:00",
+   70:     "21:00",
+   71:     "23:00",
+   76:  * Retorna os horários da loteria (normalizado e seguro)
+   78: export function getScheduleByLottery(lottery = "PT_RIO") {
+   81:   const list = SCHEDULES[key];
+   89:  * Retorna todos os horários conhecidos (flat + únicos + ordenados corretamente)
+   91: export function getAllScheduleHours() {
+   92:   const all = Object.values(SCHEDULES)
+  104:   const list = getScheduleByLottery(lottery);
+
+===== src\pages\Account\Account.jsx =====
+  200:     // Se vier com +55 / 55 na frente e total BR internacional
+
+===== src\pages\Centenas\CentenasView.jsx =====
+   17:  * - cache em memória por (lottery + closeHour + positions)
+   28:  * - Firestore/King pode salvar close_hour como 21:10 / 11:10 etc.
+   47:   LOOK: "LOOK",
+   48:   NACIONAL: "NACIONAL",
+  115:  * Ex: "21:10" -> "21:00", "21h" -> "21:00", "09:00" -> "09:00"
+  155: function pickDrawHour(draw) {
+  156:   const directCandidates = [draw?.closeHour, draw?.hour, draw?.horario, draw?.close_hour, draw?.close];
+  165:       nested?.closeHour,
+  166:       nested?.close_hour,
+  168:       nested?.horario,
+  170:       nested?.drawHour,
+  397:     prize?.closeHour,
+  398:     prize?.close_hour,
+  400:     prize?.horario,
+  401:     prize?.drawHour,
+  403:     prize?.lotteryCloseHour,
+  487:           LOTTERY_KEYS.LOOK,
+  488:           LOTTERY_KEYS.NACIONAL,
+  506:         id: LOTTERY_KEYS.LOOK,
+  507:         label: "LOOK",
+  509:           LOTTERY_KEYS.LOOK,
+  513:         id: LOTTERY_KEYS.NACIONAL,
+  514:         label: "Nacional",
+  516:           LOTTERY_KEYS.NACIONAL,
+  533:   const [fHorario, setFHorario] = useState("Todos");
+  560:   const requestedCloseHour = useMemo(
+  562:       isTodos(fHorario)
+  564:         : normalizeHourLike(fHorario),
+  565:     [fHorario]
+  637:           if (saved.fHorario) setFHorario(String(saved.fHorario));
+  657:             fHorario,
+  667:   }, [lotteryOptId, fMes, fDiaMes, fDiaSemana, fHorario, fAnimal, fPosicao, showOnlyHits, openGrupo]);
+  691:   const horarioOptions = useMemo(() => {
+  693:       "09:00",
+  694:       "11:00",
+  695:       "14:00",
+  696:       "16:00",
+  697:       "18:00",
+  698:       "21:00",
+  702:       "20:00",
+  726:         LOTTERY_KEYS.LOOK
+  730:         "07:00",
+  731:         "09:00",
+  732:         "11:00",
+  733:         "14:00",
+  734:         "16:00",
+  735:         "18:00",
+  736:         "21:00",
+  737:         "23:00"
+  743:         LOTTERY_KEYS.NACIONAL
+  747:         "02:00",
+  748:         "08:00",
+  749:         "10:00",
+  750:         "12:00",
+  751:         "15:00",
+  752:         "17:00",
+  753:         "21:00",
+  754:         "23:00"
+  773:     if (isTodos(fHorario)) return;
+  776:       horarioOptions.map(
+  781:     if (!validHours.has(fHorario)) {
+  782:       setFHorario("Todos");
+  784:   }, [horarioOptions, fHorario]);
+  945:       if (!isTodos(fHorario)) {
+  946:         const want = toHourBucketHH00(fHorario);
+  953:     [fMes, fDiaMes, fDiaSemana, fHorario]
+  980:   // ========= build base dataset (cacheado por closeHour) =========
+  985:       `::close=${requestedCloseHour || "all"}` +
+  989:       requestedCloseHour,
+ 1028:                       closeHour:
+ 1029:                         requestedCloseHour,
+ 1079:             const hrRaw = pickDrawHour(d);
+ 1309:     requestedCloseHour,
+ 1330:   }, [boundsReady, build, fMes, fDiaMes, fDiaSemana, fHorario, fAnimal, fPosicao, lotteryOptId]);
+ 1985:             <select className="cx0_sel" value={fHorario} onChange={(e) => setFHorario(String(e.target.value || "Todos"))}>
+ 1986:               {horarioOptions.map((o) => (
+
+===== src\pages\Dashboard\components\FiltersBar.jsx =====
+    8:  * - filters.loteria: "PT_RIO" | "FEDERAL" | "LOOK" | "NACIONAL"
+   14:  * - LOOK: Todos + 07h/09h/11h/14h/16h/18h/21h/23h
+   15:  * - NACIONAL: Todos + 02h/08h/10h/12h/15h/17h/21h/23h
+   19:  *   horario -> "Todos"
+  200:     horario: "Todos",
+  219:       { label: "LOOK", value: "LOOK" },
+  220:       { label: "NACIONAL", value: "NACIONAL" },
+  251:     const horariosRJ = [
+  262:     const horariosFED = [
+  268:     // ✅ LOOK
+  269:     const horariosLOOK = [
+  281:     // ✅ NACIONAL
+  282:     const horariosNACIONAL = [
+  374:     // ✅ Cada loteria mantém seu próprio domínio de horários.
+  375:     const horariosPorLoteria = {
+  376:       PT_RIO: horariosRJ,
+  377:       FEDERAL: horariosFED,
+  378:       LOOK: horariosLOOK,
+  379:       NACIONAL: horariosNACIONAL,
+  382:     const horarios = horariosPorLoteria[loteria] || horariosRJ;
+  416:       horarios,
+  443:     spanHorario: { gridColumn: "span 1", minWidth: 0 },
+  510:         .pp_f_horario{ grid-column: span 2 !important; }
+  520:         .pp_f_horario,
+  582:         onChange("horario", "Todos");
+  696:   const horarioForcedValue = null;
+  697:   const horarioDisabled = false;
+  742:           name="horario"
+  743:           value={filters.horario}
+  744:           list={defaultOptions.horarios}
+  745:           wrapClassName="pp_f_horario"
+  746:           wrapStyle={ui.spanHorario}
+  747:           disabled={horarioDisabled}
+  748:           forceValue={horarioForcedValue}
+
+===== src\pages\Late\Late.jsx =====
+   22:  * - Detecta "último sorteio importado" (maxYmd + maior close_hour do dia)
+   23:  * - Se mudar maxYmd ou close_hour do último sorteio -> refresh automático
+   84:  * "09h" / "09HS" / "9" / "09:10" -> "09:00" ou "09:10"
+  104:  * Converte "09:00" -> 540
+  117:  * Converte um label de loteria (closeHour) pra bucket "09h"
+  118:  * Aceita "09:00" / "09h" / "09HS" / "9" etc.
+  142:  * ✅ Pega a maior close_hour existente em um conjunto de draws
+  143:  * Retorna { ymd, closeHour }.
+  145: function pickLatestCloseHour(drawsLike) {
+  151:     const ch = normalizeHourLike(d?.close_hour || d?.closeHour || d?.hour || d?.hora || "");
+  156:       best = { ymd: d?.ymd || d?.date || "", closeHour: ch || "" };
+  163: // escolhe "mais recente" entre (ymd + closeHour)
+  169:   const am = hourToMinutes(a?.lastCloseHour || "");
+  170:   const bm = hourToMinutes(b?.lastCloseHour || "");
+  193:         lastCloseHour: r?.lastCloseHour ? normalizeHourLike(r.lastCloseHour) : "",
+  208:     const rec = byGrupo.get(g) || { grupo: g, lastYmd: null, lastCloseHour: "" };
+  210:     const lastCloseHour = rec?.lastCloseHour ? normalizeHourLike(rec.lastCloseHour) : "";
+  217:       lastCloseHour,
+  228:     const ma = hourToMinutes(a.lastCloseHour);
+  229:     const mb = hourToMinutes(b.lastCloseHour);
+  296:     id: "LOOK",
+  297:     label: "LOOK",
+  298:     lotteries: ["LOOK"],
+  302:     id: "NACIONAL",
+  303:     label: "Nacional",
+  304:     lotteries: ["NACIONAL"],
+  305:     uf: "NACIONAL",
+  311:     { id: "ALL", label: "Todos os horários", closeHour: null },
+  312:     { id: "09", label: "09h", closeHour: "09:00" },
+  313:     { id: "11", label: "11h", closeHour: "11:00" },
+  314:     { id: "14", label: "14h", closeHour: "14:00" },
+  315:     { id: "16", label: "16h", closeHour: "16:00" },
+  316:     { id: "18", label: "18h", closeHour: "18:00" },
+  317:     { id: "21", label: "21h", closeHour: "21:00" },
+  321:     { id: "ALL", label: "Todos os horários", closeHour: null },
+  322:     { id: "20", label: "20h", closeHour: "20:00" },
+  325:   LOOK: [
+  326:     { id: "ALL", label: "Todos os horários", closeHour: null },
+  329:   NACIONAL: [
+  330:     { id: "ALL", label: "Todos os horários", closeHour: null },
+  358:     closeHour: "",
+  408:   const selectedCloseHourBucket = useMemo(() => {
+  409:     const raw = selectedHourOption?.closeHour;
+  464:    * sempre calcula por (maxYmd + maior close_hour do dia), sem depender do prizeMode/lottery selecionada.
+  467:     if (!maxYmd) return { ymd: "", closeHour: "" };
+  472:       closeHour: null,
+  473:       closeHourBucket: null,
+  477:     const latest = pickLatestCloseHour(dayResult);
+  478:     if (latest?.ymd && latest?.closeHour) {
+  479:       return { ymd: String(latest.ymd || maxYmd), closeHour: String(latest.closeHour || "") };
+  481:     return { ymd: maxYmd, closeHour: "" };
+  538:         closeHour: null,
+  539:         closeHourBucket: selectedCloseHourBucket || null,
+  547:         lastCloseHour: r?.lastHour || r?.lastCloseHour || "",
+  567:         lastCloseHour: r?.lastCloseHour ? normalizeHourLike(r.lastCloseHour) : "",
+  577:       const ma = hourToMinutes(a.lastCloseHour);
+  578:       const mb = hourToMinutes(b.lastCloseHour);
+  627:       selectedCloseHourBucket,
+  701:           String(prev?.closeHour || "") !== String(next.closeHour || "");
+  737:     const h = lastImported?.closeHour ? lastImported.closeHour : "";
+ 1027:                 const hh = r.lastCloseHour ? normalizeHourLike(r.lastCloseHour) : "";
+
+===== src\pages\Results\Results.jsx =====
+  195: const SCOPE_LOOK = "LOOK";
+  196: const SCOPE_NACIONAL = "NACIONAL";
+  198: const LOOK_EXPECTED_HOURS_DESC = [
+  199:   "23:00",
+  200:   "21:00",
+  201:   "18:00",
+  202:   "16:00",
+  203:   "14:00",
+  204:   "11:00",
+  205:   "09:00",
+  206:   "07:00",
+  209: const NACIONAL_EXPECTED_HOURS_DESC = [
+  210:   "23:00",
+  211:   "21:00",
+  212:   "17:00",
+  213:   "15:00",
+  214:   "12:00",
+  215:   "10:00",
+  216:   "08:00",
+  217:   "02:00",
+  231: const RJ_EXPECTED_HOURS_BASE_DESC = ["21:00", "18:00", "16:00", "14:00", "11:00"];
+  259:   if (s === SCOPE_LOOK || compact === "LOOK" || compact === "GO") {
+  260:     return SCOPE_LOOK;
+  264:     s === SCOPE_NACIONAL ||
+  265:     compact === "NACIONAL" ||
+  266:     compact === "LTNACIONAL"
+  268:     return SCOPE_NACIONAL;
+  279:   if (up === SCOPE_LOOK) return "LOOK";
+  280:   if (up === SCOPE_NACIONAL) return "NACIONAL";
+  494:     d?.close_hour || d?.closeHour || d?.hour || d?.hora || ""
+  510:   const ha = safeStr(a?.close_hour || a?.closeHour || a?.hour || a?.hora);
+  511:   const hb = safeStr(b?.close_hour || b?.closeHour || b?.hour || b?.hora);
+  579:       ? ["16:00", "14:00", "11:00"]
+  583:     out.push("09:00");
+  604:       d?.close_hour || d?.closeHour || d?.hour || d?.hora || ""
+  613:         a?.__slotHour || a?.close_hour || a?.closeHour || a?.hour || a?.hora
+  616:         b?.__slotHour || b?.close_hour || b?.closeHour || b?.hour || b?.hora
+  626:   } else if (scopeKey === SCOPE_LOOK) {
+  627:     expectedHours = LOOK_EXPECTED_HOURS_DESC;
+  628:   } else if (scopeKey === SCOPE_NACIONAL) {
+  629:     expectedHours = NACIONAL_EXPECTED_HOURS_DESC;
+  646:       close_hour: hour,
+  647:       closeHour: hour,
+  654:       d?.close_hour || d?.closeHour || d?.hour || d?.hora || ""
+  661:       a?.__slotHour || a?.close_hour || a?.closeHour || a?.hour || a?.hora
+  664:       b?.__slotHour || b?.close_hour || b?.closeHour || b?.hour || b?.hora
+  826:         closeHour: null,
+  827:         closeHourBucket: null,
+  842:           hour: x?.close_hour || x?.closeHour || x?.hour || x?.hora || null,
+  915:       const ha = hourToNum(a?.close_hour || a?.closeHour || a?.hour || a?.hora);
+  916:       const hb = hourToNum(b?.close_hour || b?.closeHour || b?.hour || b?.hora);
+ 1577:                 className={scopePillClass(scopeKey === SCOPE_LOOK)}
+ 1580:                   setScopeUi(SCOPE_LOOK);
+ 1582:                 title="Resultados da LOOK"
+ 1584:                 LOOK
+ 1589:                 className={scopePillClass(scopeKey === SCOPE_NACIONAL)}
+ 1592:                   setScopeUi(SCOPE_NACIONAL);
+ 1594:                 title="Resultados da Nacional"
+ 1596:                 NACIONAL
+ 1782:                       d?.close_hour || d?.closeHour || d?.hour || d?.hora || ""
+
+===== src\pages\Top3\modules\scoreEngine\contextEvidence.js =====
+   28:     if (ctx.closeHour)
+   29:         reasons.push(`Horário: ${ctx.closeHour}`);
+   50:         closeHour: context.hour || null,
+   60:         lookback: normalize(context.lookback),
+
+===== src\pages\Top3\modules\top3.analytics.js =====
+    4:   PT_RIO_SCHEDULE_NORMAL,
+    5:   PT_RIO_SCHEDULE_WED_SAT,
+    6:   FEDERAL_SCHEDULE,
+   10:   pickDrawHour,
+  100:   lookback,
+  121:   const lastH = toHourBucket(pickDrawHour(drawLast)) || "";
+  164:     .map((d) => `${pickDrawYMD(d) || ""}@${toHourBucket(pickDrawHour(d)) || ""}`)
+  171:     lookback,
+  178:     firstDraw ? toHourBucket(pickDrawHour(firstDraw)) || "" : "",
+  180:     lastDrawInRange ? toHourBucket(pickDrawHour(lastDrawInRange)) || "" : "",
+  198:       PT_RIO_SCHEDULE_NORMAL,
+  199:       PT_RIO_SCHEDULE_WED_SAT,
+  200:       FEDERAL_SCHEDULE,
+
+===== src\pages\Top3\modules\top3.state.js =====
+    3: export function useTop3State({ defaultLottery, defaultYmd, defaultLookback }) {
+   12:   const [lookback, setLookback] = useState(Number(defaultLookback) || 120);
+   55:     lookback,
+   56:     setLookback,
+
+===== src\pages\Top3\top3.constants.js =====
+    3: export const LOOKBACK_ALL = "ALL";
+    5: export const LOOKBACK_OPTIONS = [
+    6:   { value: LOOKBACK_ALL, label: "Todos" },
+   21:   { key: "LOOK", value: "LOOK", label: "LOOK" },
+   22:   { key: "NACIONAL", value: "NACIONAL", label: "Nacional" },
+   26: export const PT_RIO_SCHEDULE_NORMAL = [
+   27:   "09:00",
+   28:   "11:00",
+   29:   "14:00",
+   30:   "16:00",
+   31:   "18:00",
+   32:   "21:00",
+   35: export const PT_RIO_SCHEDULE_SUNDAY = [
+   36:   "09:00",
+   37:   "11:00",
+   38:   "14:00",
+   39:   "16:00",
+   44:  * Mantém 18:00 porque existem ocorrências históricas nesse horário.
+   48: export const PT_RIO_SCHEDULE_WED_SAT = [
+   49:   "09:00",
+   50:   "11:00",
+   51:   "14:00",
+   52:   "16:00",
+   53:   "18:00",
+   54:   "21:00",
+   58: export const FEDERAL_SCHEDULE = ["20:00"];
+
+===== src\pages\Top3\top3.hooks.js =====
+   16:   LOOKBACK_ALL,
+   17:   LOOKBACK_OPTIONS,
+   19:   PT_RIO_SCHEDULE_NORMAL,
+   20:   PT_RIO_SCHEDULE_WED_SAT,
+   21:   FEDERAL_SCHEDULE,
+   25:   getScheduleForLottery,
+   27:   pickDrawHour,
+   87:   const h = toHourBucket(pickDrawHour(draw));
+  103:   const h = toHourBucket(pickDrawHour(draw));
+  112:     const h = toHourBucket(pickDrawHour(d));
+  137: function isDrawValidForLotterySchedule(draw, lotteryKey) {
+  139:   const h = toHourBucket(pickDrawHour(draw));
+  143:   const schedule = getScheduleForLottery({
+  146:     PT_RIO_SCHEDULE_NORMAL,
+  147:     PT_RIO_SCHEDULE_WED_SAT,
+  148:     FEDERAL_SCHEDULE,
+  151:   const normalizedSchedule = Array.isArray(schedule)
+  152:     ? schedule.map(toHourBucket).filter(Boolean)
+  155:   return normalizedSchedule.includes(h);
+  179:     if (!isDrawValidForLotterySchedule(d, lotteryKey)) continue;
+  198:     hour: toHourBucket(pickDrawHour(best)) || "",
+  210:     .filter((d) => isDrawValidForLotterySchedule(d, lotteryKey))
+  298:   const [lookback, setLookback] = useState(LOOKBACK_ALL);
+  362:   const schedule = useMemo(() => {
+  369:     return getScheduleForLottery({
+  372:       PT_RIO_SCHEDULE_NORMAL,
+  373:       PT_RIO_SCHEDULE_WED_SAT,
+  374:       FEDERAL_SCHEDULE,
+  505:       let todaySchedule = getScheduleForLottery({
+  508:         PT_RIO_SCHEDULE_NORMAL,
+  509:         PT_RIO_SCHEDULE_WED_SAT,
+  510:         FEDERAL_SCHEDULE,
+  519:         todaySchedule = Array.from(
+  521:             ...(Array.isArray(todaySchedule) ? todaySchedule : [])
+  523:               .filter((h) => h && h !== "18:00"),
+  524:             "19:00",
+  536:       if (!Array.isArray(todaySchedule) || !todaySchedule.length) {
+  542:       const todayLast = findLastDrawInList(today, todaySchedule);
+  561:         baseH = toHourBucket(pickDrawHour(todayLast));
+  563:         const effectiveTodaySchedule = (Array.isArray(todaySchedule) ? todaySchedule : [])
+  568:           ? effectiveTodaySchedule.indexOf(baseH)
+  571:         if (baseIdx >= 0 && baseIdx < effectiveTodaySchedule.length - 1) {
+  573:           resolvedTargetH = effectiveTodaySchedule[baseIdx + 1];
+  579:             PT_RIO_SCHEDULE_NORMAL,
+  580:             PT_RIO_SCHEDULE_WED_SAT,
+  581:             FEDERAL_SCHEDULE,
+  588:         const firstHourToday = toHourBucket(todaySchedule?.[0]);
+  607:           schedule: todaySchedule,
+  608:           PT_RIO_SCHEDULE_NORMAL,
+  609:           PT_RIO_SCHEDULE_WED_SAT,
+  610:           FEDERAL_SCHEDULE,
+  666:       const baseDaySchedule = getScheduleForLottery({
+  669:         PT_RIO_SCHEDULE_NORMAL,
+  670:         PT_RIO_SCHEDULE_WED_SAT,
+  671:         FEDERAL_SCHEDULE,
+  680:         schedule: baseDaySchedule,
+  681:         PT_RIO_SCHEDULE_NORMAL,
+  682:         PT_RIO_SCHEDULE_WED_SAT,
+  683:         FEDERAL_SCHEDULE,
+  759:       if (lookback === LOOKBACK_ALL) {
+  762:         const days = Math.max(1, Number(lookback || 30));
+  811:                     hour: toHourBucket(pickDrawHour(hist[0])),
+  820:                       pickDrawHour(hist[hist.length - 1])
+  842:   }, [lotteryKeySafe, ymdSafe, lookback, resetStateForNoData]);
+  848:       lookback,
+  872:       lookback,
+  883:     lookback,
+  895:         schedule,
+  901:     [rangeDraws, analysisHourBucket, schedule, analysisYmd]
+  939:         return !(y === timelineYmd && h === "18:00");
+ 1079:       scheduleLength: Array.isArray(schedule)
+ 1080:         ? schedule.length
+ 1102:           schedule,
+ 1123:     schedule,
+ 1132:       scheduleLength: Array.isArray(schedule)
+ 1133:         ? schedule.length
+ 1158:       schedule,
+ 1165:           schedule,
+ 1182:     schedule,
+ 1187:     LOOKBACK_ALL,
+ 1188:     LOOKBACK_OPTIONS,
+ 1194:     lookback,
+ 1199:     schedule,
+ 1219:     setLookback,
+ 1229:         schedule,
+
+===== src\pages\Top3\Top3View.jsx =====
+ 1344:     { value: "LOOK", label: "LOOK" },
+ 1345:     { value: "NACIONAL", label: "Nacional" },
+ 1365:     map.get("LOOK"),
+ 1366:     map.get("NACIONAL"),
+ 1372:           "LOOK",
+ 1373:           "NACIONAL",
+ 2842:               <div className="top3-historyMetric__label">Horários</div>
+
+===== src\services\kingResultsService.js =====
+   97:     return "20:00";
+   99:   return "19:00";
+  103:   return getFederalPreferredHourForYmd(ymd) === "20:00" ? "20h" : "19h";
+  259:    - bucket SOMENTE via closeHourBucket
+  260:    - exact  SOMENTE via closeHour
+  264: function resolveHourFilter({ closeHour = null, closeHourBucket = null }) {
+  265:   const bucket = toHourBucket(closeHourBucket);
+  268:   const hhmm = closeHour ? normalizeHourLike(closeHour) : null;
+  278:     draw?.close_hour ?? draw?.closeHour ?? draw?.hour ?? draw?.hora ?? "";
+  334:     const ha = toNum(a?.close_hour);
+  335:     const hb = toNum(b?.close_hour);
+  361:     const ha = toNum(a?.close_hour);
+  362:     const hb = toNum(b?.close_hour);
+  394:     const hasLogical = !!(d?.ymd && d?.close_hour);
+  402:     const hour = normalizeHourLike(raw.close_hour || raw.closeHour || "");
+  420:       close_hour: hour || raw.close_hour || raw.closeHour || "",
+  421:       closeHour: hour || raw.closeHour || raw.close_hour || "",
+  551:     d.close_hour ?? d.closeHour ?? d.hour ?? d.hora ?? ""
+  577:     close_hour: hourNorm,
+  578:     closeHour: hourNorm,
+  731: async function probeRecentMaxYmd(uf, lookbackDays = 45) {
+  733:   const n = Math.max(3, Math.min(120, Number(lookbackDays) || 45));
+ 1028:     draw?.close_hour || draw?.closeHour || draw?.hour || draw?.hora || ""
+ 1033:   const prefer20h = getFederalPreferredHourForYmd(ymd) === "20:00";
+ 1036:     if (h === "20:00") return 200000 + n;
+ 1037:     if (h === "19:00") return 190000 + n;
+ 1041:   if (h === "19:00") return 200000 + n;
+ 1042:   if (h === "20:00") return 190000 + n;
+ 1110:   closeHour = null,
+ 1111:   closeHourBucket = null,
+ 1122:   const hourFilter = resolveHourFilter({ closeHour, closeHourBucket });
+ 1304:   closeHour = null,
+ 1305:   closeHourBucket = null,
+ 1323:   const hourFilter = resolveHourFilter({ closeHour, closeHourBucket });
+ 1387:             closeHour,
+ 1388:             closeHourBucket,
+ 1457:           closeHour,
+ 1458:           closeHourBucket,
+ 1613:   closeHour = null,
+ 1614:   closeHourBucket = null,
+ 1629:   const hourFilter = resolveHourFilter({ closeHour, closeHourBucket });
+ 1675:       closeHour,
+ 1676:       closeHourBucket,
+ 1704:           hour: d.close_hour || d.closeHour || "",

@@ -1,0 +1,544 @@
+====================================================================================================
+TOP3-HISTORY-01 — DIAGNÓSTICO DO REPOSITÓRIO DE HISTÓRICO
+====================================================================================================
+Gerado em: 07/24/2026 00:25:52
+====================================================================================================
+
+OK -> .\backend\engine\top3HistoryRepository.js
+C:\Users\glaub\palpitaco\backend\engine\bootstrapSnapshot.js
+C:\Users\glaub\palpitaco\backend\engine\snapshotManager.js
+C:\Users\glaub\palpitaco\backend\engine\snapshotMetadata.js
+C:\Users\glaub\palpitaco\backend\engine\top3HistoryRepository.js
+C:\Users\glaub\palpitaco\backend\engine\top3HistorySync.js
+C:\Users\glaub\palpitaco\backend\node_modules\@firebase\database-compat\dist\database-compat\test\datasnapshot.test.d.ts
+C:\Users\glaub\palpitaco\backend\node_modules\@firebase\database-compat\dist\node-esm\database-compat\test\datasnapshot.test.d.ts
+C:\Users\glaub\palpitaco\backend\node_modules\@firebase\database\dist\node-esm\src\core\SnapshotHolder.d.ts
+C:\Users\glaub\palpitaco\backend\node_modules\@firebase\database\dist\node-esm\src\core\SparseSnapshotTree.d.ts
+C:\Users\glaub\palpitaco\backend\node_modules\@firebase\database\dist\src\core\SnapshotHolder.d.ts
+C:\Users\glaub\palpitaco\backend\node_modules\@firebase\database\dist\src\core\SparseSnapshotTree.d.ts
+C:\Users\glaub\palpitaco\backend\node_modules\@google-cloud\firestore\build\src\reference\aggregate-query-snapshot.d.ts
+C:\Users\glaub\palpitaco\backend\node_modules\@google-cloud\firestore\build\src\reference\aggregate-query-snapshot.js
+C:\Users\glaub\palpitaco\backend\node_modules\@google-cloud\firestore\build\src\reference\query-snapshot.d.ts
+C:\Users\glaub\palpitaco\backend\node_modules\@google-cloud\firestore\build\src\reference\query-snapshot.js
+C:\Users\glaub\palpitaco\backend\node_modules\@google-cloud\firestore\build\src\reference\vector-query-snapshot.d.ts
+C:\Users\glaub\palpitaco\backend\node_modules\@google-cloud\firestore\build\src\reference\vector-query-snapshot.js
+C:\Users\glaub\palpitaco\backend\workers\bootstrapTop3History.js
+C:\Users\glaub\palpitaco\node_modules\@firebase\database-compat\dist\database-compat\test\datasnapshot.test.d.ts
+C:\Users\glaub\palpitaco\node_modules\@firebase\database-compat\dist\node-esm\database-compat\test\datasnapshot.test.d.ts
+C:\Users\glaub\palpitaco\node_modules\@firebase\database\dist\node-esm\src\core\SnapshotHolder.d.ts
+C:\Users\glaub\palpitaco\node_modules\@firebase\database\dist\node-esm\src\core\SparseSnapshotTree.d.ts
+C:\Users\glaub\palpitaco\node_modules\@firebase\database\dist\src\core\SnapshotHolder.d.ts
+C:\Users\glaub\palpitaco\node_modules\@firebase\database\dist\src\core\SparseSnapshotTree.d.ts
+C:\Users\glaub\palpitaco\node_modules\@firebase\firestore\dist\firestore\src\api\snapshot.d.ts
+C:\Users\glaub\palpitaco\node_modules\@firebase\firestore\dist\firestore\src\core\snapshot_version.d.ts
+C:\Users\glaub\palpitaco\node_modules\@firebase\firestore\dist\firestore\src\core\view_snapshot.d.ts
+C:\Users\glaub\palpitaco\node_modules\@firebase\firestore\dist\firestore\src\lite-api\snapshot.d.ts
+C:\Users\glaub\palpitaco\node_modules\@firebase\firestore\dist\firestore\src\platform\browser_lite\snapshot_to_json.d.ts
+C:\Users\glaub\palpitaco\node_modules\@firebase\firestore\dist\firestore\src\platform\browser\snapshot_to_json.d.ts
+C:\Users\glaub\palpitaco\node_modules\@firebase\firestore\dist\firestore\src\platform\node_lite\snapshot_to_json.d.ts
+C:\Users\glaub\palpitaco\node_modules\@firebase\firestore\dist\firestore\src\platform\node\snapshot_to_json.d.ts
+C:\Users\glaub\palpitaco\node_modules\@firebase\firestore\dist\firestore\src\platform\rn_lite\snapshot_to_json.d.ts
+C:\Users\glaub\palpitaco\node_modules\@firebase\firestore\dist\firestore\src\platform\rn\snapshot_to_json.d.ts
+C:\Users\glaub\palpitaco\node_modules\@firebase\firestore\dist\firestore\src\platform\snapshot_to_json.d.ts
+C:\Users\glaub\palpitaco\node_modules\@firebase\firestore\dist\firestore\test\integration\api\snapshot_listener_source.test.d.ts
+C:\Users\glaub\palpitaco\node_modules\@firebase\firestore\dist\intermediate\firestore\src\api\snapshot.d.ts
+C:\Users\glaub\palpitaco\node_modules\@firebase\firestore\dist\intermediate\firestore\src\core\snapshot_version.d.ts
+C:\Users\glaub\palpitaco\node_modules\@firebase\firestore\dist\intermediate\firestore\src\core\view_snapshot.d.ts
+C:\Users\glaub\palpitaco\node_modules\@firebase\firestore\dist\intermediate\firestore\src\lite-api\snapshot.d.ts
+C:\Users\glaub\palpitaco\node_modules\@firebase\firestore\dist\intermediate\firestore\src\platform\browser_lite\snapshot_to_json.d.ts
+C:\Users\glaub\palpitaco\node_modules\@firebase\firestore\dist\intermediate\firestore\src\platform\browser\snapshot_to_json.d.ts
+C:\Users\glaub\palpitaco\node_modules\@firebase\firestore\dist\intermediate\firestore\src\platform\node_lite\snapshot_to_json.d.ts
+C:\Users\glaub\palpitaco\node_modules\@firebase\firestore\dist\intermediate\firestore\src\platform\node\snapshot_to_json.d.ts
+C:\Users\glaub\palpitaco\node_modules\@firebase\firestore\dist\intermediate\firestore\src\platform\rn_lite\snapshot_to_json.d.ts
+C:\Users\glaub\palpitaco\node_modules\@firebase\firestore\dist\intermediate\firestore\src\platform\rn\snapshot_to_json.d.ts
+C:\Users\glaub\palpitaco\node_modules\@firebase\firestore\dist\intermediate\firestore\src\platform\snapshot_to_json.d.ts
+C:\Users\glaub\palpitaco\node_modules\@firebase\firestore\dist\intermediate\lite\firestore\src\api\snapshot.d.ts
+C:\Users\glaub\palpitaco\node_modules\@firebase\firestore\dist\intermediate\lite\firestore\src\core\snapshot_version.d.ts
+C:\Users\glaub\palpitaco\node_modules\@firebase\firestore\dist\intermediate\lite\firestore\src\core\view_snapshot.d.ts
+C:\Users\glaub\palpitaco\node_modules\@firebase\firestore\dist\intermediate\lite\firestore\src\lite-api\snapshot.d.ts
+C:\Users\glaub\palpitaco\node_modules\@firebase\firestore\dist\intermediate\lite\firestore\src\platform\browser_lite\snapshot_to_json.d.ts
+C:\Users\glaub\palpitaco\node_modules\@firebase\firestore\dist\intermediate\lite\firestore\src\platform\browser\snapshot_to_json.d.ts
+C:\Users\glaub\palpitaco\node_modules\@firebase\firestore\dist\intermediate\lite\firestore\src\platform\node_lite\snapshot_to_json.d.ts
+C:\Users\glaub\palpitaco\node_modules\@firebase\firestore\dist\intermediate\lite\firestore\src\platform\node\snapshot_to_json.d.ts
+C:\Users\glaub\palpitaco\node_modules\@firebase\firestore\dist\intermediate\lite\firestore\src\platform\rn_lite\snapshot_to_json.d.ts
+C:\Users\glaub\palpitaco\node_modules\@firebase\firestore\dist\intermediate\lite\firestore\src\platform\rn\snapshot_to_json.d.ts
+C:\Users\glaub\palpitaco\node_modules\@firebase\firestore\dist\intermediate\lite\firestore\src\platform\snapshot_to_json.d.ts
+C:\Users\glaub\palpitaco\node_modules\@firebase\firestore\dist\intermediate\lite\firestore\test\integration\api\snapshot_listener_source.test.d.ts
+C:\Users\glaub\palpitaco\node_modules\@firebase\firestore\dist\lite\firestore\src\api\snapshot.d.ts
+C:\Users\glaub\palpitaco\node_modules\@firebase\firestore\dist\lite\firestore\src\core\snapshot_version.d.ts
+C:\Users\glaub\palpitaco\node_modules\@firebase\firestore\dist\lite\firestore\src\core\view_snapshot.d.ts
+C:\Users\glaub\palpitaco\node_modules\@firebase\firestore\dist\lite\firestore\src\lite-api\snapshot.d.ts
+C:\Users\glaub\palpitaco\node_modules\@firebase\firestore\dist\lite\firestore\src\platform\browser_lite\snapshot_to_json.d.ts
+C:\Users\glaub\palpitaco\node_modules\@firebase\firestore\dist\lite\firestore\src\platform\browser\snapshot_to_json.d.ts
+C:\Users\glaub\palpitaco\node_modules\@firebase\firestore\dist\lite\firestore\src\platform\node_lite\snapshot_to_json.d.ts
+C:\Users\glaub\palpitaco\node_modules\@firebase\firestore\dist\lite\firestore\src\platform\node\snapshot_to_json.d.ts
+C:\Users\glaub\palpitaco\node_modules\@firebase\firestore\dist\lite\firestore\src\platform\rn_lite\snapshot_to_json.d.ts
+C:\Users\glaub\palpitaco\node_modules\@firebase\firestore\dist\lite\firestore\src\platform\rn\snapshot_to_json.d.ts
+C:\Users\glaub\palpitaco\node_modules\@firebase\firestore\dist\lite\firestore\src\platform\snapshot_to_json.d.ts
+C:\Users\glaub\palpitaco\node_modules\@firebase\firestore\dist\lite\firestore\test\integration\api\snapshot_listener_source.test.d.ts
+C:\Users\glaub\palpitaco\node_modules\@firebase\storage-compat\dist\esm\src\tasksnapshot.d.ts
+C:\Users\glaub\palpitaco\node_modules\@firebase\storage-compat\dist\src\tasksnapshot.d.ts
+C:\Users\glaub\palpitaco\node_modules\@google-cloud\firestore\build\src\reference\aggregate-query-snapshot.d.ts
+C:\Users\glaub\palpitaco\node_modules\@google-cloud\firestore\build\src\reference\aggregate-query-snapshot.js
+C:\Users\glaub\palpitaco\node_modules\@google-cloud\firestore\build\src\reference\query-snapshot.d.ts
+C:\Users\glaub\palpitaco\node_modules\@google-cloud\firestore\build\src\reference\query-snapshot.js
+C:\Users\glaub\palpitaco\node_modules\@google-cloud\firestore\build\src\reference\vector-query-snapshot.d.ts
+C:\Users\glaub\palpitaco\node_modules\@google-cloud\firestore\build\src\reference\vector-query-snapshot.js
+C:\Users\glaub\palpitaco\node_modules\@jest\core\build\plugins\UpdateSnapshots.d.ts
+C:\Users\glaub\palpitaco\node_modules\@jest\core\build\plugins\UpdateSnapshots.js
+C:\Users\glaub\palpitaco\node_modules\@jest\core\build\plugins\UpdateSnapshotsInteractive.d.ts
+C:\Users\glaub\palpitaco\node_modules\@jest\core\build\plugins\UpdateSnapshotsInteractive.js
+C:\Users\glaub\palpitaco\node_modules\@jest\core\build\SnapshotInteractiveMode.d.ts
+C:\Users\glaub\palpitaco\node_modules\@jest\core\build\SnapshotInteractiveMode.js
+C:\Users\glaub\palpitaco\node_modules\@jest\reporters\build\getSnapshotStatus.d.ts
+C:\Users\glaub\palpitaco\node_modules\@jest\reporters\build\getSnapshotStatus.js
+C:\Users\glaub\palpitaco\node_modules\@jest\reporters\build\getSnapshotSummary.d.ts
+C:\Users\glaub\palpitaco\node_modules\@jest\reporters\build\getSnapshotSummary.js
+C:\Users\glaub\palpitaco\node_modules\eslint-plugin-jest\docs\rules\no-interpolation-in-snapshots.md
+C:\Users\glaub\palpitaco\node_modules\eslint-plugin-jest\docs\rules\no-large-snapshots.md
+C:\Users\glaub\palpitaco\node_modules\eslint-plugin-jest\lib\processors\snapshot-processor.js
+C:\Users\glaub\palpitaco\node_modules\eslint-plugin-jest\lib\rules\no-interpolation-in-snapshots.js
+C:\Users\glaub\palpitaco\node_modules\eslint-plugin-jest\lib\rules\no-large-snapshots.js
+C:\Users\glaub\palpitaco\node_modules\eslint-plugin-testing-library\rules\no-wait-for-snapshot.js
+C:\Users\glaub\palpitaco\node_modules\jest-snapshot\build\InlineSnapshots.d.ts
+C:\Users\glaub\palpitaco\node_modules\jest-snapshot\build\InlineSnapshots.js
+C:\Users\glaub\palpitaco\node_modules\jest-snapshot\build\printSnapshot.d.ts
+C:\Users\glaub\palpitaco\node_modules\jest-snapshot\build\printSnapshot.js
+C:\Users\glaub\palpitaco\node_modules\jest-snapshot\build\SnapshotResolver.d.ts
+C:\Users\glaub\palpitaco\node_modules\jest-snapshot\build\SnapshotResolver.js
+C:\Users\glaub\palpitaco\node_modules\playwright-core\lib\server\trace\recorder\snapshotter.js
+C:\Users\glaub\palpitaco\node_modules\playwright-core\lib\server\trace\recorder\snapshotterInjected.js
+C:\Users\glaub\palpitaco\node_modules\playwright-core\lib\utils\isomorphic\ariaSnapshot.js
+C:\Users\glaub\palpitaco\node_modules\playwright-core\lib\utils\isomorphic\trace\snapshotRenderer.js
+C:\Users\glaub\palpitaco\node_modules\playwright-core\lib\utils\isomorphic\trace\snapshotServer.js
+C:\Users\glaub\palpitaco\node_modules\playwright-core\lib\utils\isomorphic\trace\snapshotStorage.js
+C:\Users\glaub\palpitaco\node_modules\playwright-core\lib\vite\traceViewer\snapshot.html
+C:\Users\glaub\palpitaco\node_modules\playwright\lib\matchers\toMatchAriaSnapshot.js
+C:\Users\glaub\palpitaco\node_modules\playwright\lib\matchers\toMatchSnapshot.js
+C:\Users\glaub\palpitaco\node_modules\playwright\lib\mcp\browser\tools\snapshot.js
+C:\Users\glaub\palpitaco\node_modules\undici-types\snapshot-agent.d.ts
+C:\Users\glaub\palpitaco\patch_top3_history_analysis.py
+C:\Users\glaub\palpitaco\src\pages\Dashboard\dashboard.snapshot.loader.js
+C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js
+C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js
+C:\Users\glaub\palpitaco\src\pages\Top3\Top3View.jsx.bak_history_from_timeline_20260326_131646
+C:\Users\glaub\palpitaco\tmp\backtestTop3E08Experimental.before_shared_snapshot.js
+C:\Users\glaub\palpitaco\tmp\backup_top3_core_commit1_20260715_125156\top3.engine.before-history-stats-20260710_111832.js
+C:\Users\glaub\palpitaco\tmp\backup_top3_core_commit1_20260715_125156\top3.engine.before-history-stats-20260710_112326.js
+C:\Users\glaub\palpitaco\tmp\bootstrapTop3History_auditoria.txt
+C:\Users\glaub\palpitaco\tmp\cost03_integridade_snapshots_backend.txt
+C:\Users\glaub\palpitaco\tmp\e08_full_shared_snapshot_console.log
+C:\Users\glaub\palpitaco\tmp\e08_shared_snapshot_plan.txt
+C:\Users\glaub\palpitaco\tmp\e08_snapshot_strategy.txt
+C:\Users\glaub\palpitaco\tmp\fed14_snapshot_consumers.txt
+C:\Users\glaub\palpitaco\tmp\gcp09_build_context\backend\engine\bootstrapSnapshot.js
+C:\Users\glaub\palpitaco\tmp\gcp09_build_context\backend\engine\snapshotManager.js
+C:\Users\glaub\palpitaco\tmp\gcp09_build_context\backend\engine\snapshotMetadata.js
+C:\Users\glaub\palpitaco\tmp\gcp09_build_context\backend\engine\top3HistoryRepository.js
+C:\Users\glaub\palpitaco\tmp\gcp09_build_context\backend\engine\top3HistorySync.js
+C:\Users\glaub\palpitaco\tmp\gcp09_build_context\backend\workers\bootstrapTop3History.js
+C:\Users\glaub\palpitaco\tmp\inspect_v4_snapshot.js
+C:\Users\glaub\palpitaco\tmp\lkn133_top3_history_metadata.txt
+C:\Users\glaub\palpitaco\tmp\snapshot_consumption_map.txt
+C:\Users\glaub\palpitaco\tmp\top3_history_bootstrap_commit.log
+C:\Users\glaub\palpitaco\tmp\top3_history_bootstrap_validation.json
+C:\Users\glaub\palpitaco\tmp\top3_history_reader_map.txt
+C:\Users\glaub\palpitaco\tmp\top3_history_repository_audit.txt
+C:\Users\glaub\palpitaco\tmp\top3_history_update_hook.txt
+C:\Users\glaub\palpitaco\tmp\top3_snapshot_infraestrutura_existente.txt
+C:\Users\glaub\palpitaco\tmp\v4_real_input_snapshot.json
+C:\Users\glaub\palpitaco\tmp\v4_snapshot_report.json
+top3HistoryRepository.js:13
+function normalizeLotteryKey(value) {
+
+top3HistoryRepository.js:14
+const key = String(value || "PT_RIO")
+
+top3HistoryRepository.js:20
+"lotteryKey obrigatório."
+
+top3HistoryRepository.js:67
+lotteryKey
+
+top3HistoryRepository.js:71
+.doc(normalizeLotteryKey(lotteryKey));
+
+top3HistoryRepository.js:76
+lotteryKey,
+
+top3HistoryRepository.js:81
+lotteryKey
+
+top3HistoryRepository.js:89
+lotteryKey
+
+top3HistoryRepository.js:93
+lotteryKey
+
+top3HistoryRepository.js:178
+lotteryKey: normalizeLotteryKey(
+
+top3HistoryRepository.js:180
+draw.lotteryKey ||
+
+top3HistoryRepository.js:181
+"PT_RIO"
+
+top3HistoryRepository.js:222
+lotteryKey,
+
+top3HistoryRepository.js:230
+lotteryKey,
+
+top3HistoryRepository.js:237
+lotteryKey: normalizeLotteryKey(
+
+top3HistoryRepository.js:238
+lotteryKey
+
+top3HistoryRepository.js:252
+lotteryKey: normalizeLotteryKey(
+
+top3HistoryRepository.js:253
+lotteryKey
+
+top3HistoryRepository.js:264
+lotteryKey,
+
+top3HistoryRepository.js:270
+const key = normalizeLotteryKey(lotteryKey);
+
+top3HistoryRepository.js:290
+lotteryKey: key,
+
+top3HistoryRepository.js:318
+lotteryKey,
+
+top3HistoryRepository.js:324
+lotteryKey,
+
+top3HistoryRepository.js:335
+lotteryKey,
+
+top3HistoryRepository.js:342
+async function readMetadata(
+
+top3HistoryRepository.js:343
+lotteryKey,
+
+top3HistoryRepository.js:347
+const key = normalizeLotteryKey(lotteryKey);
+
+top3HistoryRepository.js:357
+lotteryKey: key,
+
+top3HistoryRepository.js:364
+lotteryKey: key,
+
+top3HistoryRepository.js:370
+lotteryKey,
+
+top3HistoryRepository.js:375
+const key = normalizeLotteryKey(lotteryKey);
+
+top3HistoryRepository.js:380
+lotteryKey: key,
+
+top3HistoryRepository.js:398
+lotteryKey,
+
+top3HistoryRepository.js:402
+const key = normalizeLotteryKey(lotteryKey);
+
+top3HistoryRepository.js:425
+async function readFullHistory(
+
+top3HistoryRepository.js:426
+lotteryKey,
+
+top3HistoryRepository.js:430
+lotteryKey,
+
+top3HistoryRepository.js:450
+normalizeLotteryKey,
+
+top3HistoryRepository.js:457
+readMetadata,
+
+top3HistoryRepository.js:460
+readFullHistory,
+
+
+FullName                                                                                                                                           Length
+--------                                                                                                                                           ------
+C:\Users\glaub\palpitaco\patch_top3_history_analysis.py                                                                                              1699
+C:\Users\glaub\palpitaco\backend\engine\bootstrapSnapshot.js                                                                                         1368
+C:\Users\glaub\palpitaco\backend\engine\snapshotManager.js                                                                                           2878
+C:\Users\glaub\palpitaco\backend\engine\snapshotMetadata.js                                                                                           729
+C:\Users\glaub\palpitaco\backend\engine\top3HistoryRepository.js                                                                                     8308
+C:\Users\glaub\palpitaco\backend\engine\top3HistorySync.js                                                                                           8255
+C:\Users\glaub\palpitaco\backend\node_modules\@firebase\database\dist\node-esm\src\core\SnapshotHolder.d.ts                                           934
+C:\Users\glaub\palpitaco\backend\node_modules\@firebase\database\dist\node-esm\src\core\SparseSnapshotTree.d.ts                                      2548
+C:\Users\glaub\palpitaco\backend\node_modules\@firebase\database\dist\src\core\SnapshotHolder.d.ts                                                    934
+C:\Users\glaub\palpitaco\backend\node_modules\@firebase\database\dist\src\core\SparseSnapshotTree.d.ts                                               2548
+C:\Users\glaub\palpitaco\backend\node_modules\@firebase\database-compat\dist\database-compat\test\datasnapshot.test.d.ts                              616
+C:\Users\glaub\palpitaco\backend\node_modules\@firebase\database-compat\dist\node-esm\database-compat\test\datasnapshot.test.d.ts                     616
+C:\Users\glaub\palpitaco\backend\node_modules\@google-cloud\firestore\build\src\reference\aggregate-query-snapshot.d.ts                              2916
+C:\Users\glaub\palpitaco\backend\node_modules\@google-cloud\firestore\build\src\reference\aggregate-query-snapshot.js                                3055
+C:\Users\glaub\palpitaco\backend\node_modules\@google-cloud\firestore\build\src\reference\query-snapshot.d.ts                                        6883
+C:\Users\glaub\palpitaco\backend\node_modules\@google-cloud\firestore\build\src\reference\query-snapshot.js                                          8079
+C:\Users\glaub\palpitaco\backend\node_modules\@google-cloud\firestore\build\src\reference\vector-query-snapshot.d.ts                                 6957
+C:\Users\glaub\palpitaco\backend\node_modules\@google-cloud\firestore\build\src\reference\vector-query-snapshot.js                                   8147
+C:\Users\glaub\palpitaco\backend\node_modules\accepts\HISTORY.md                                                                                     5096
+C:\Users\glaub\palpitaco\backend\node_modules\body-parser\HISTORY.md                                                                                16893
+C:\Users\glaub\palpitaco\backend\node_modules\bytes\History.md                                                                                       1775
+C:\Users\glaub\palpitaco\backend\node_modules\caniuse-lite\data\features\history.js                                                                   424
+C:\Users\glaub\palpitaco\backend\node_modules\content-disposition\HISTORY.md                                                                         1020
+C:\Users\glaub\palpitaco\backend\node_modules\content-type\HISTORY.md                                                                                 523
+C:\Users\glaub\palpitaco\backend\node_modules\cookie-signature\History.md                                                                             818
+C:\Users\glaub\palpitaco\backend\node_modules\depd\History.md                                                                                        2256
+C:\Users\glaub\palpitaco\backend\node_modules\etag\HISTORY.md                                                                                        1732
+C:\Users\glaub\palpitaco\backend\node_modules\express\History.md                                                                                   115669
+C:\Users\glaub\palpitaco\backend\node_modules\finalhandler\HISTORY.md                                                                                4662
+C:\Users\glaub\palpitaco\backend\node_modules\forwarded\HISTORY.md                                                                                    400
+C:\Users\glaub\palpitaco\backend\node_modules\fresh\HISTORY.md                                                                                       1500
+C:\Users\glaub\palpitaco\backend\node_modules\http-errors\HISTORY.md                                                                                 4094
+C:\Users\glaub\palpitaco\backend\node_modules\media-typer\HISTORY.md                                                                                  461
+C:\Users\glaub\palpitaco\backend\node_modules\merge-descriptors\HISTORY.md                                                                            363
+C:\Users\glaub\palpitaco\backend\node_modules\methods\HISTORY.md                                                                                      427
+C:\Users\glaub\palpitaco\backend\node_modules\mime-db\HISTORY.md                                                                                    12581
+C:\Users\glaub\palpitaco\backend\node_modules\mime-types\HISTORY.md                                                                                  8812
+C:\Users\glaub\palpitaco\backend\node_modules\negotiator\HISTORY.md                                                                                  2499
+C:\Users\glaub\palpitaco\backend\node_modules\on-finished\HISTORY.md                                                                                 1865
+C:\Users\glaub\palpitaco\backend\node_modules\parseurl\HISTORY.md                                                                                    1043
+C:\Users\glaub\palpitaco\backend\node_modules\proxy-addr\HISTORY.md                                                                                  2991
+C:\Users\glaub\palpitaco\backend\node_modules\range-parser\HISTORY.md                                                                                 917
+C:\Users\glaub\palpitaco\backend\node_modules\send\HISTORY.md                                                                                       13594
+C:\Users\glaub\palpitaco\backend\node_modules\serve-static\HISTORY.md                                                                               10854
+C:\Users\glaub\palpitaco\backend\node_modules\statuses\HISTORY.md                                                                                    1628
+C:\Users\glaub\palpitaco\backend\node_modules\toidentifier\HISTORY.md                                                                                 128
+C:\Users\glaub\palpitaco\backend\node_modules\type-is\HISTORY.md                                                                                     5447
+C:\Users\glaub\palpitaco\backend\node_modules\unpipe\HISTORY.md                                                                                        59
+C:\Users\glaub\palpitaco\backend\node_modules\util-deprecate\History.md                                                                               282
+C:\Users\glaub\palpitaco\backend\node_modules\vary\HISTORY.md                                                                                         792
+C:\Users\glaub\palpitaco\backend\workers\bootstrapTop3History.js                                                                                     8427
+C:\Users\glaub\palpitaco\node_modules\@firebase\database\dist\node-esm\src\core\SnapshotHolder.d.ts                                                   934
+C:\Users\glaub\palpitaco\node_modules\@firebase\database\dist\node-esm\src\core\SparseSnapshotTree.d.ts                                              2548
+C:\Users\glaub\palpitaco\node_modules\@firebase\database\dist\src\core\SnapshotHolder.d.ts                                                            934
+C:\Users\glaub\palpitaco\node_modules\@firebase\database\dist\src\core\SparseSnapshotTree.d.ts                                                       2548
+C:\Users\glaub\palpitaco\node_modules\@firebase\database-compat\dist\database-compat\test\datasnapshot.test.d.ts                                      616
+C:\Users\glaub\palpitaco\node_modules\@firebase\database-compat\dist\node-esm\database-compat\test\datasnapshot.test.d.ts                             616
+C:\Users\glaub\palpitaco\node_modules\@firebase\firestore\dist\firestore\src\api\snapshot.d.ts                                                      26464
+C:\Users\glaub\palpitaco\node_modules\@firebase\firestore\dist\firestore\src\core\snapshot_version.d.ts                                              1265
+C:\Users\glaub\palpitaco\node_modules\@firebase\firestore\dist\firestore\src\core\view_snapshot.d.ts                                                 2277
+C:\Users\glaub\palpitaco\node_modules\@firebase\firestore\dist\firestore\src\lite-api\snapshot.d.ts                                                 17237
+C:\Users\glaub\palpitaco\node_modules\@firebase\firestore\dist\firestore\src\platform\snapshot_to_json.d.ts                                          1305
+C:\Users\glaub\palpitaco\node_modules\@firebase\firestore\dist\firestore\src\platform\browser\snapshot_to_json.d.ts                                  1201
+C:\Users\glaub\palpitaco\node_modules\@firebase\firestore\dist\firestore\src\platform\browser_lite\snapshot_to_json.d.ts                              650
+C:\Users\glaub\palpitaco\node_modules\@firebase\firestore\dist\firestore\src\platform\node\snapshot_to_json.d.ts                                     1201
+C:\Users\glaub\palpitaco\node_modules\@firebase\firestore\dist\firestore\src\platform\node_lite\snapshot_to_json.d.ts                                 647
+C:\Users\glaub\palpitaco\node_modules\@firebase\firestore\dist\firestore\src\platform\rn\snapshot_to_json.d.ts                                        714
+C:\Users\glaub\palpitaco\node_modules\@firebase\firestore\dist\firestore\src\platform\rn_lite\snapshot_to_json.d.ts                                   782
+C:\Users\glaub\palpitaco\node_modules\@firebase\firestore\dist\firestore\test\integration\api\snapshot_listener_source.test.d.ts                      616
+C:\Users\glaub\palpitaco\node_modules\@firebase\firestore\dist\intermediate\firestore\src\api\snapshot.d.ts                                         26464
+C:\Users\glaub\palpitaco\node_modules\@firebase\firestore\dist\intermediate\firestore\src\core\snapshot_version.d.ts                                 1265
+C:\Users\glaub\palpitaco\node_modules\@firebase\firestore\dist\intermediate\firestore\src\core\view_snapshot.d.ts                                    2277
+C:\Users\glaub\palpitaco\node_modules\@firebase\firestore\dist\intermediate\firestore\src\lite-api\snapshot.d.ts                                    17237
+C:\Users\glaub\palpitaco\node_modules\@firebase\firestore\dist\intermediate\firestore\src\platform\snapshot_to_json.d.ts                             1305
+C:\Users\glaub\palpitaco\node_modules\@firebase\firestore\dist\intermediate\firestore\src\platform\browser\snapshot_to_json.d.ts                     1201
+C:\Users\glaub\palpitaco\node_modules\@firebase\firestore\dist\intermediate\firestore\src\platform\browser_lite\snapshot_to_json.d.ts                 650
+C:\Users\glaub\palpitaco\node_modules\@firebase\firestore\dist\intermediate\firestore\src\platform\node\snapshot_to_json.d.ts                        1201
+C:\Users\glaub\palpitaco\node_modules\@firebase\firestore\dist\intermediate\firestore\src\platform\node_lite\snapshot_to_json.d.ts                    647
+C:\Users\glaub\palpitaco\node_modules\@firebase\firestore\dist\intermediate\firestore\src\platform\rn\snapshot_to_json.d.ts                           714
+C:\Users\glaub\palpitaco\node_modules\@firebase\firestore\dist\intermediate\firestore\src\platform\rn_lite\snapshot_to_json.d.ts                      782
+C:\Users\glaub\palpitaco\node_modules\@firebase\firestore\dist\intermediate\lite\firestore\src\api\snapshot.d.ts                                    26464
+C:\Users\glaub\palpitaco\node_modules\@firebase\firestore\dist\intermediate\lite\firestore\src\core\snapshot_version.d.ts                            1265
+C:\Users\glaub\palpitaco\node_modules\@firebase\firestore\dist\intermediate\lite\firestore\src\core\view_snapshot.d.ts                               2277
+C:\Users\glaub\palpitaco\node_modules\@firebase\firestore\dist\intermediate\lite\firestore\src\lite-api\snapshot.d.ts                               17237
+C:\Users\glaub\palpitaco\node_modules\@firebase\firestore\dist\intermediate\lite\firestore\src\platform\snapshot_to_json.d.ts                        1305
+C:\Users\glaub\palpitaco\node_modules\@firebase\firestore\dist\intermediate\lite\firestore\src\platform\browser\snapshot_to_json.d.ts                1201
+C:\Users\glaub\palpitaco\node_modules\@firebase\firestore\dist\intermediate\lite\firestore\src\platform\browser_lite\snapshot_to_json.d.ts            650
+C:\Users\glaub\palpitaco\node_modules\@firebase\firestore\dist\intermediate\lite\firestore\src\platform\node\snapshot_to_json.d.ts                   1201
+C:\Users\glaub\palpitaco\node_modules\@firebase\firestore\dist\intermediate\lite\firestore\src\platform\node_lite\snapshot_to_json.d.ts               647
+C:\Users\glaub\palpitaco\node_modules\@firebase\firestore\dist\intermediate\lite\firestore\src\platform\rn\snapshot_to_json.d.ts                      714
+C:\Users\glaub\palpitaco\node_modules\@firebase\firestore\dist\intermediate\lite\firestore\src\platform\rn_lite\snapshot_to_json.d.ts                 782
+C:\Users\glaub\palpitaco\node_modules\@firebase\firestore\dist\intermediate\lite\firestore\test\integration\api\snapshot_listener_source.test.d.ts    616
+C:\Users\glaub\palpitaco\node_modules\@firebase\firestore\dist\lite\firestore\src\api\snapshot.d.ts                                                 26464
+C:\Users\glaub\palpitaco\node_modules\@firebase\firestore\dist\lite\firestore\src\core\snapshot_version.d.ts                                         1265
+C:\Users\glaub\palpitaco\node_modules\@firebase\firestore\dist\lite\firestore\src\core\view_snapshot.d.ts                                            2277
+C:\Users\glaub\palpitaco\node_modules\@firebase\firestore\dist\lite\firestore\src\lite-api\snapshot.d.ts                                            17237
+C:\Users\glaub\palpitaco\node_modules\@firebase\firestore\dist\lite\firestore\src\platform\snapshot_to_json.d.ts                                     1305
+C:\Users\glaub\palpitaco\node_modules\@firebase\firestore\dist\lite\firestore\src\platform\browser\snapshot_to_json.d.ts                             1201
+C:\Users\glaub\palpitaco\node_modules\@firebase\firestore\dist\lite\firestore\src\platform\browser_lite\snapshot_to_json.d.ts                         650
+C:\Users\glaub\palpitaco\node_modules\@firebase\firestore\dist\lite\firestore\src\platform\node\snapshot_to_json.d.ts                                1201
+C:\Users\glaub\palpitaco\node_modules\@firebase\firestore\dist\lite\firestore\src\platform\node_lite\snapshot_to_json.d.ts                            647
+C:\Users\glaub\palpitaco\node_modules\@firebase\firestore\dist\lite\firestore\src\platform\rn\snapshot_to_json.d.ts                                   714
+C:\Users\glaub\palpitaco\node_modules\@firebase\firestore\dist\lite\firestore\src\platform\rn_lite\snapshot_to_json.d.ts                              782
+C:\Users\glaub\palpitaco\node_modules\@firebase\firestore\dist\lite\firestore\test\integration\api\snapshot_listener_source.test.d.ts                 616
+C:\Users\glaub\palpitaco\node_modules\@firebase\storage-compat\dist\esm\src\tasksnapshot.d.ts                                                        1297
+C:\Users\glaub\palpitaco\node_modules\@firebase\storage-compat\dist\src\tasksnapshot.d.ts                                                            1297
+C:\Users\glaub\palpitaco\node_modules\@google-cloud\firestore\build\src\reference\aggregate-query-snapshot.d.ts                                      2916
+C:\Users\glaub\palpitaco\node_modules\@google-cloud\firestore\build\src\reference\aggregate-query-snapshot.js                                        3055
+C:\Users\glaub\palpitaco\node_modules\@google-cloud\firestore\build\src\reference\query-snapshot.d.ts                                                6883
+C:\Users\glaub\palpitaco\node_modules\@google-cloud\firestore\build\src\reference\query-snapshot.js                                                  8079
+C:\Users\glaub\palpitaco\node_modules\@google-cloud\firestore\build\src\reference\vector-query-snapshot.d.ts                                         6957
+C:\Users\glaub\palpitaco\node_modules\@google-cloud\firestore\build\src\reference\vector-query-snapshot.js                                           8147
+C:\Users\glaub\palpitaco\node_modules\@jest\core\build\SnapshotInteractiveMode.d.ts                                                                  1085
+C:\Users\glaub\palpitaco\node_modules\@jest\core\build\SnapshotInteractiveMode.js                                                                    7409
+C:\Users\glaub\palpitaco\node_modules\@jest\core\build\plugins\UpdateSnapshots.d.ts                                                                   834
+C:\Users\glaub\palpitaco\node_modules\@jest\core\build\plugins\UpdateSnapshots.js                                                                    1307
+C:\Users\glaub\palpitaco\node_modules\@jest\core\build\plugins\UpdateSnapshotsInteractive.d.ts                                                        931
+C:\Users\glaub\palpitaco\node_modules\@jest\core\build\plugins\UpdateSnapshotsInteractive.js                                                         3299
+C:\Users\glaub\palpitaco\node_modules\@jest\reporters\build\getSnapshotStatus.d.ts                                                                    377
+C:\Users\glaub\palpitaco\node_modules\@jest\reporters\build\getSnapshotStatus.js                                                                     2280
+C:\Users\glaub\palpitaco\node_modules\@jest\reporters\build\getSnapshotSummary.d.ts                                                                   456
+C:\Users\glaub\palpitaco\node_modules\@jest\reporters\build\getSnapshotSummary.js                                                                    4891
+C:\Users\glaub\palpitaco\node_modules\accepts\HISTORY.md                                                                                             5096
+C:\Users\glaub\palpitaco\node_modules\accepts\node_modules\negotiator\HISTORY.md                                                                     2499
+C:\Users\glaub\palpitaco\node_modules\axe-core\sri-history.json                                                                                     16113
+C:\Users\glaub\palpitaco\node_modules\batch\History.md                                                                                               1662
+C:\Users\glaub\palpitaco\node_modules\bfj\HISTORY.md                                                                                                 7068
+C:\Users\glaub\palpitaco\node_modules\body-parser\HISTORY.md                                                                                        16893
+C:\Users\glaub\palpitaco\node_modules\bytes\History.md                                                                                               1775
+C:\Users\glaub\palpitaco\node_modules\caniuse-lite\data\features\history.js                                                                           424
+C:\Users\glaub\palpitaco\node_modules\clean-css\History.md                                                                                          85370
+C:\Users\glaub\palpitaco\node_modules\co\History.md                                                                                                  3629
+C:\Users\glaub\palpitaco\node_modules\compressible\HISTORY.md                                                                                        1976
+C:\Users\glaub\palpitaco\node_modules\compression\HISTORY.md                                                                                         8097
+C:\Users\glaub\palpitaco\node_modules\content-disposition\HISTORY.md                                                                                 1020
+C:\Users\glaub\palpitaco\node_modules\content-type\HISTORY.md                                                                                         523
+C:\Users\glaub\palpitaco\node_modules\cookie-signature\History.md                                                                                     818
+C:\Users\glaub\palpitaco\node_modules\depd\History.md                                                                                                2256
+C:\Users\glaub\palpitaco\node_modules\detect-port-alt\HISTORY.md                                                                                      627
+C:\Users\glaub\palpitaco\node_modules\eslint-plugin-jest\docs\rules\no-interpolation-in-snapshots.md                                                 1275
+C:\Users\glaub\palpitaco\node_modules\eslint-plugin-jest\docs\rules\no-large-snapshots.md                                                            3685
+C:\Users\glaub\palpitaco\node_modules\eslint-plugin-jest\lib\processors\snapshot-processor.js                                                         574
+C:\Users\glaub\palpitaco\node_modules\eslint-plugin-jest\lib\rules\no-interpolation-in-snapshots.js                                                  1581
+C:\Users\glaub\palpitaco\node_modules\eslint-plugin-jest\lib\rules\no-large-snapshots.js                                                             3552
+C:\Users\glaub\palpitaco\node_modules\eslint-plugin-testing-library\rules\no-wait-for-snapshot.js                                                    2578
+C:\Users\glaub\palpitaco\node_modules\etag\HISTORY.md                                                                                                1732
+C:\Users\glaub\palpitaco\node_modules\events\History.md                                                                                              3253
+C:\Users\glaub\palpitaco\node_modules\express\History.md                                                                                           115669
+C:\Users\glaub\palpitaco\node_modules\finalhandler\HISTORY.md                                                                                        4662
+C:\Users\glaub\palpitaco\node_modules\forwarded\HISTORY.md                                                                                            400
+C:\Users\glaub\palpitaco\node_modules\fresh\HISTORY.md                                                                                               1500
+C:\Users\glaub\palpitaco\node_modules\http-errors\HISTORY.md                                                                                         4094
+C:\Users\glaub\palpitaco\node_modules\jest-snapshot\build\InlineSnapshots.d.ts                                                                        566
+C:\Users\glaub\palpitaco\node_modules\jest-snapshot\build\InlineSnapshots.js                                                                        14665
+C:\Users\glaub\palpitaco\node_modules\jest-snapshot\build\printSnapshot.d.ts                                                                         1429
+C:\Users\glaub\palpitaco\node_modules\jest-snapshot\build\printSnapshot.js                                                                          10904
+C:\Users\glaub\palpitaco\node_modules\jest-snapshot\build\SnapshotResolver.d.ts                                                                       875
+C:\Users\glaub\palpitaco\node_modules\jest-snapshot\build\SnapshotResolver.js                                                                        5206
+C:\Users\glaub\palpitaco\node_modules\jsdom\lib\jsdom\living\generated\History.js                                                                    7982
+C:\Users\glaub\palpitaco\node_modules\jsdom\lib\jsdom\living\window\History-impl.js                                                                  4483
+C:\Users\glaub\palpitaco\node_modules\jsdom\lib\jsdom\living\window\SessionHistory.js                                                                5850
+C:\Users\glaub\palpitaco\node_modules\media-typer\HISTORY.md                                                                                          461
+C:\Users\glaub\palpitaco\node_modules\merge-descriptors\HISTORY.md                                                                                    363
+C:\Users\glaub\palpitaco\node_modules\methods\HISTORY.md                                                                                              427
+C:\Users\glaub\palpitaco\node_modules\mime-db\HISTORY.md                                                                                            12581
+C:\Users\glaub\palpitaco\node_modules\mime-types\HISTORY.md                                                                                          8812
+C:\Users\glaub\palpitaco\node_modules\mz\HISTORY.md                                                                                                  1137
+C:\Users\glaub\palpitaco\node_modules\negotiator\HISTORY.md                                                                                          2581
+C:\Users\glaub\palpitaco\node_modules\on-finished\HISTORY.md                                                                                         1865
+C:\Users\glaub\palpitaco\node_modules\on-headers\HISTORY.md                                                                                           602
+C:\Users\glaub\palpitaco\node_modules\parseurl\HISTORY.md                                                                                            1043
+C:\Users\glaub\palpitaco\node_modules\playwright\lib\matchers\toMatchAriaSnapshot.js                                                                 7022
+C:\Users\glaub\palpitaco\node_modules\playwright\lib\matchers\toMatchSnapshot.js                                                                    17372
+C:\Users\glaub\palpitaco\node_modules\playwright\lib\mcp\browser\tools\snapshot.js                                                                   6769
+C:\Users\glaub\palpitaco\node_modules\playwright-core\lib\server\trace\recorder\snapshotter.js                                                       5843
+C:\Users\glaub\palpitaco\node_modules\playwright-core\lib\server\trace\recorder\snapshotterInjected.js                                              22105
+C:\Users\glaub\palpitaco\node_modules\playwright-core\lib\utils\isomorphic\ariaSnapshot.js                                                          15015
+C:\Users\glaub\palpitaco\node_modules\playwright-core\lib\utils\isomorphic\trace\snapshotRenderer.js                                                23006
+C:\Users\glaub\palpitaco\node_modules\playwright-core\lib\utils\isomorphic\trace\snapshotServer.js                                                   4691
+C:\Users\glaub\palpitaco\node_modules\playwright-core\lib\utils\isomorphic\trace\snapshotStorage.js                                                  3588
+C:\Users\glaub\palpitaco\node_modules\playwright-core\lib\vite\traceViewer\snapshot.html                                                              935
+C:\Users\glaub\palpitaco\node_modules\proxy-addr\HISTORY.md                                                                                          2991
+C:\Users\glaub\palpitaco\node_modules\range-parser\HISTORY.md                                                                                         917
+C:\Users\glaub\palpitaco\node_modules\send\HISTORY.md                                                                                               13594
+C:\Users\glaub\palpitaco\node_modules\serve-index\node_modules\depd\History.md                                                                       2060
+C:\Users\glaub\palpitaco\node_modules\serve-index\node_modules\http-errors\HISTORY.md                                                                3418
+C:\Users\glaub\palpitaco\node_modules\serve-index\node_modules\statuses\HISTORY.md                                                                   1023
+C:\Users\glaub\palpitaco\node_modules\serve-static\HISTORY.md                                                                                       10854
+C:\Users\glaub\palpitaco\node_modules\statuses\HISTORY.md                                                                                            1628
+C:\Users\glaub\palpitaco\node_modules\thenify\History.md                                                                                              317
+C:\Users\glaub\palpitaco\node_modules\thenify-all\History.md                                                                                          180
+C:\Users\glaub\palpitaco\node_modules\toidentifier\HISTORY.md                                                                                         128
+C:\Users\glaub\palpitaco\node_modules\type-is\HISTORY.md                                                                                             5447
+C:\Users\glaub\palpitaco\node_modules\undici-types\mock-call-history.d.ts                                                                            5558
+C:\Users\glaub\palpitaco\node_modules\undici-types\snapshot-agent.d.ts                                                                               3048
+C:\Users\glaub\palpitaco\node_modules\unpipe\HISTORY.md                                                                                                59
+C:\Users\glaub\palpitaco\node_modules\util-deprecate\History.md                                                                                       282
+C:\Users\glaub\palpitaco\node_modules\vary\HISTORY.md                                                                                                 792
+C:\Users\glaub\palpitaco\src\pages\Dashboard\dashboard.snapshot.loader.js                                                                             309
+C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js                                                        120046
+C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js                                                        120046
+C:\Users\glaub\palpitaco\src\pages\Top3\Top3View.jsx.bak_history_from_timeline_20260326_131646                                                      62763
+C:\Users\glaub\palpitaco\tmp\backtestTop3E08Experimental.before_shared_snapshot.js                                                                   8318
+C:\Users\glaub\palpitaco\tmp\bootstrapTop3History_auditoria.txt                                                                                     86230
+C:\Users\glaub\palpitaco\tmp\cost03_integridade_snapshots_backend.txt                                                                              376153
+C:\Users\glaub\palpitaco\tmp\e08_full_shared_snapshot_console.log                                                                                    2317
+C:\Users\glaub\palpitaco\tmp\e08_history_builder_audit.txt                                                                                          10851
+C:\Users\glaub\palpitaco\tmp\e08_shared_snapshot_plan.txt                                                                                            7086
+C:\Users\glaub\palpitaco\tmp\e08_snapshot_strategy.txt                                                                                              13247
+C:\Users\glaub\palpitaco\tmp\fed14_snapshot_consumers.txt                                                                                          605494
+C:\Users\glaub\palpitaco\tmp\hist01_history_version_diagnostic.txt                                                                                  16876
+C:\Users\glaub\palpitaco\tmp\inspect_v4_snapshot.js                                                                                                  1628
+C:\Users\glaub\palpitaco\tmp\lkn127_git_history_normalization.txt                                                                                   35994
+C:\Users\glaub\palpitaco\tmp\lkn133_top3_history_metadata.txt                                                                                         691
+C:\Users\glaub\palpitaco\tmp\snapshot_consumption_map.txt                                                                                            6414
+C:\Users\glaub\palpitaco\tmp\top3_history_bootstrap_commit.log                                                                                       9185
+C:\Users\glaub\palpitaco\tmp\top3_history_bootstrap_validation.json                                                                                   512
+C:\Users\glaub\palpitaco\tmp\top3_history_reader_map.txt                                                                                            11916
+C:\Users\glaub\palpitaco\tmp\top3_history_repository_audit.txt                                                                                      16708
+C:\Users\glaub\palpitaco\tmp\top3_history_update_hook.txt                                                                                           98347
+C:\Users\glaub\palpitaco\tmp\top3_snapshot_infraestrutura_existente.txt                                                                             48800
+C:\Users\glaub\palpitaco\tmp\tpp04_32_history_schedule_audit.txt                                                                                    44879
+C:\Users\glaub\palpitaco\tmp\v4_real_input_snapshot.json                                                                                           153832
+C:\Users\glaub\palpitaco\tmp\v4_snapshot_report.json                                                                                                 3426
+C:\Users\glaub\palpitaco\tmp\backup_top3_core_commit1_20260715_125156\top3.engine.before-history-stats-20260710_111832.js                          120046
+C:\Users\glaub\palpitaco\tmp\backup_top3_core_commit1_20260715_125156\top3.engine.before-history-stats-20260710_112326.js                          120046
+C:\Users\glaub\palpitaco\tmp\gcp09_build_context\backend\engine\bootstrapSnapshot.js                                                                 1368
+C:\Users\glaub\palpitaco\tmp\gcp09_build_context\backend\engine\snapshotManager.js                                                                   2878
+C:\Users\glaub\palpitaco\tmp\gcp09_build_context\backend\engine\snapshotMetadata.js                                                                   767
+C:\Users\glaub\palpitaco\tmp\gcp09_build_context\backend\engine\top3HistoryRepository.js                                                             8308
+C:\Users\glaub\palpitaco\tmp\gcp09_build_context\backend\engine\top3HistorySync.js                                                                   8255
+C:\Users\glaub\palpitaco\tmp\gcp09_build_context\backend\workers\bootstrapTop3History.js                                                             8427
+C:\Users\glaub\palpitaco\tmp\look_nacional_historico\importLookNacionalHistory.js                                                                   11607
+
+
+C:\Users\glaub\palpitaco\backend\engine\top3HistorySync.js:194
+bootstrapStatus: "stale",
+
+C:\Users\glaub\palpitaco\backend\engine\top3HistorySync.js:268
+metadata?.bootstrapStatus !== "complete"
+
+C:\Users\glaub\palpitaco\backend\engine\top3HistorySync.js:335
+bootstrapStatus: "complete",
+
+C:\Users\glaub\palpitaco\backend\engine\top3PredictionService.js:203
+metadata?.bootstrapStatus === "complete";
+
+C:\Users\glaub\palpitaco\backend\engine\top3PredictionService.js:882
+historyBootstrapStatus:
+
+C:\Users\glaub\palpitaco\backend\engine\top3PredictionService.js:883
+historyMetadata?.bootstrapStatus || null,
+
+C:\Users\glaub\palpitaco\backend\engine\top3PredictionService.js:903
+historyBootstrapStatus:
+
+C:\Users\glaub\palpitaco\backend\engine\top3PredictionService.js:904
+historyMetadata?.bootstrapStatus || null,
+
+C:\Users\glaub\palpitaco\backend\scripts\backtestTop3Official.js:829
+metadata?.bootstrapStatus !==
+
+C:\Users\glaub\palpitaco\backend\scripts\backtestTop3Official.js:1341
+bootstrapStatus:
+
+C:\Users\glaub\palpitaco\backend\scripts\backtestTop3Official.js:1342
+metadata?.bootstrapStatus ||
+
+C:\Users\glaub\palpitaco\backend\workers\bootstrapTop3History.js:299
+bootstrapStatus:
+

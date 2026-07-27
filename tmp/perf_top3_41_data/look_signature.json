@@ -1,0 +1,2512 @@
+{
+  "lotteryKey": "LOOK",
+  "historyLoaded": 10219,
+  "eligibleCases": 10119,
+  "evaluated": 100,
+  "errors": 0,
+  "top1Hits": 4,
+  "top3Hits": 15,
+  "cases": [
+    {
+      "caseNumber": 1,
+      "historyIndex": 100,
+      "target": {
+        "ymd": "2022-07-02",
+        "hour": "11:10"
+      },
+      "actual": {
+        "group": 7,
+        "top3Groups": [
+          7,
+          6,
+          23
+        ]
+      },
+      "prediction": {
+        "groups": [
+          6,
+          16,
+          13
+        ],
+        "top1Hit": false,
+        "top3Hit": false
+      }
+    },
+    {
+      "caseNumber": 2,
+      "historyIndex": 101,
+      "target": {
+        "ymd": "2022-07-02",
+        "hour": "14:10"
+      },
+      "actual": {
+        "group": 10,
+        "top3Groups": [
+          10,
+          7,
+          24
+        ]
+      },
+      "prediction": {
+        "groups": [
+          10,
+          18,
+          25
+        ],
+        "top1Hit": true,
+        "top3Hit": true
+      }
+    },
+    {
+      "caseNumber": 3,
+      "historyIndex": 102,
+      "target": {
+        "ymd": "2022-07-02",
+        "hour": "16:10"
+      },
+      "actual": {
+        "group": 14,
+        "top3Groups": [
+          14,
+          10,
+          15
+        ]
+      },
+      "prediction": {
+        "groups": [
+          2,
+          22,
+          3
+        ],
+        "top1Hit": false,
+        "top3Hit": false
+      }
+    },
+    {
+      "caseNumber": 4,
+      "historyIndex": 103,
+      "target": {
+        "ymd": "2022-07-02",
+        "hour": "18:10"
+      },
+      "actual": {
+        "group": 1,
+        "top3Groups": [
+          1,
+          14,
+          18
+        ]
+      },
+      "prediction": {
+        "groups": [
+          17,
+          7,
+          4
+        ],
+        "top1Hit": false,
+        "top3Hit": false
+      }
+    },
+    {
+      "caseNumber": 5,
+      "historyIndex": 104,
+      "target": {
+        "ymd": "2022-07-03",
+        "hour": "11:10"
+      },
+      "actual": {
+        "group": 10,
+        "top3Groups": [
+          10,
+          9,
+          2
+        ]
+      },
+      "prediction": {
+        "groups": [
+          6,
+          16,
+          17
+        ],
+        "top1Hit": false,
+        "top3Hit": false
+      }
+    },
+    {
+      "caseNumber": 6,
+      "historyIndex": 105,
+      "target": {
+        "ymd": "2022-07-03",
+        "hour": "14:10"
+      },
+      "actual": {
+        "group": 7,
+        "top3Groups": [
+          7,
+          5,
+          20
+        ]
+      },
+      "prediction": {
+        "groups": [
+          10,
+          18,
+          6
+        ],
+        "top1Hit": false,
+        "top3Hit": false
+      }
+    },
+    {
+      "caseNumber": 7,
+      "historyIndex": 106,
+      "target": {
+        "ymd": "2022-07-03",
+        "hour": "16:10"
+      },
+      "actual": {
+        "group": 23,
+        "top3Groups": [
+          23,
+          24,
+          2
+        ]
+      },
+      "prediction": {
+        "groups": [
+          2,
+          3,
+          5
+        ],
+        "top1Hit": false,
+        "top3Hit": false
+      }
+    },
+    {
+      "caseNumber": 8,
+      "historyIndex": 107,
+      "target": {
+        "ymd": "2022-07-03",
+        "hour": "18:10"
+      },
+      "actual": {
+        "group": 16,
+        "top3Groups": [
+          16,
+          2,
+          23
+        ]
+      },
+      "prediction": {
+        "groups": [
+          7,
+          1,
+          17
+        ],
+        "top1Hit": false,
+        "top3Hit": false
+      }
+    },
+    {
+      "caseNumber": 9,
+      "historyIndex": 108,
+      "target": {
+        "ymd": "2022-07-04",
+        "hour": "11:10"
+      },
+      "actual": {
+        "group": 12,
+        "top3Groups": [
+          12,
+          16,
+          11
+        ]
+      },
+      "prediction": {
+        "groups": [
+          6,
+          16,
+          1
+        ],
+        "top1Hit": false,
+        "top3Hit": false
+      }
+    },
+    {
+      "caseNumber": 10,
+      "historyIndex": 109,
+      "target": {
+        "ymd": "2022-07-04",
+        "hour": "14:10"
+      },
+      "actual": {
+        "group": 23,
+        "top3Groups": [
+          23,
+          25,
+          2
+        ]
+      },
+      "prediction": {
+        "groups": [
+          10,
+          18,
+          25
+        ],
+        "top1Hit": false,
+        "top3Hit": false
+      }
+    },
+    {
+      "caseNumber": 11,
+      "historyIndex": 110,
+      "target": {
+        "ymd": "2022-07-04",
+        "hour": "16:10"
+      },
+      "actual": {
+        "group": 12,
+        "top3Groups": [
+          12,
+          7,
+          17
+        ]
+      },
+      "prediction": {
+        "groups": [
+          2,
+          7,
+          5
+        ],
+        "top1Hit": false,
+        "top3Hit": false
+      }
+    },
+    {
+      "caseNumber": 12,
+      "historyIndex": 111,
+      "target": {
+        "ymd": "2022-07-04",
+        "hour": "18:10"
+      },
+      "actual": {
+        "group": 14,
+        "top3Groups": [
+          14,
+          12,
+          20
+        ]
+      },
+      "prediction": {
+        "groups": [
+          17,
+          7,
+          1
+        ],
+        "top1Hit": false,
+        "top3Hit": false
+      }
+    },
+    {
+      "caseNumber": 13,
+      "historyIndex": 112,
+      "target": {
+        "ymd": "2022-07-05",
+        "hour": "11:10"
+      },
+      "actual": {
+        "group": 22,
+        "top3Groups": [
+          22,
+          21,
+          3
+        ]
+      },
+      "prediction": {
+        "groups": [
+          16,
+          6,
+          17
+        ],
+        "top1Hit": false,
+        "top3Hit": false
+      }
+    },
+    {
+      "caseNumber": 14,
+      "historyIndex": 113,
+      "target": {
+        "ymd": "2022-07-05",
+        "hour": "14:10"
+      },
+      "actual": {
+        "group": 6,
+        "top3Groups": [
+          6,
+          12,
+          10
+        ]
+      },
+      "prediction": {
+        "groups": [
+          10,
+          18,
+          23
+        ],
+        "top1Hit": false,
+        "top3Hit": false
+      }
+    },
+    {
+      "caseNumber": 15,
+      "historyIndex": 114,
+      "target": {
+        "ymd": "2022-07-05",
+        "hour": "16:10"
+      },
+      "actual": {
+        "group": 15,
+        "top3Groups": [
+          15,
+          7,
+          7
+        ]
+      },
+      "prediction": {
+        "groups": [
+          2,
+          3,
+          1
+        ],
+        "top1Hit": false,
+        "top3Hit": false
+      }
+    },
+    {
+      "caseNumber": 16,
+      "historyIndex": 115,
+      "target": {
+        "ymd": "2022-07-05",
+        "hour": "18:10"
+      },
+      "actual": {
+        "group": 4,
+        "top3Groups": [
+          4,
+          10,
+          21
+        ]
+      },
+      "prediction": {
+        "groups": [
+          7,
+          17,
+          1
+        ],
+        "top1Hit": false,
+        "top3Hit": false
+      }
+    },
+    {
+      "caseNumber": 17,
+      "historyIndex": 116,
+      "target": {
+        "ymd": "2022-07-06",
+        "hour": "11:10"
+      },
+      "actual": {
+        "group": 8,
+        "top3Groups": [
+          8,
+          12,
+          11
+        ]
+      },
+      "prediction": {
+        "groups": [
+          6,
+          16,
+          13
+        ],
+        "top1Hit": false,
+        "top3Hit": false
+      }
+    },
+    {
+      "caseNumber": 18,
+      "historyIndex": 117,
+      "target": {
+        "ymd": "2022-07-06",
+        "hour": "14:10"
+      },
+      "actual": {
+        "group": 6,
+        "top3Groups": [
+          6,
+          4,
+          16
+        ]
+      },
+      "prediction": {
+        "groups": [
+          10,
+          23,
+          6
+        ],
+        "top1Hit": false,
+        "top3Hit": true
+      }
+    },
+    {
+      "caseNumber": 19,
+      "historyIndex": 118,
+      "target": {
+        "ymd": "2022-07-06",
+        "hour": "16:10"
+      },
+      "actual": {
+        "group": 20,
+        "top3Groups": [
+          20,
+          21,
+          15
+        ]
+      },
+      "prediction": {
+        "groups": [
+          2,
+          3,
+          7
+        ],
+        "top1Hit": false,
+        "top3Hit": false
+      }
+    },
+    {
+      "caseNumber": 20,
+      "historyIndex": 119,
+      "target": {
+        "ymd": "2022-07-06",
+        "hour": "18:10"
+      },
+      "actual": {
+        "group": 10,
+        "top3Groups": [
+          10,
+          7,
+          2
+        ]
+      },
+      "prediction": {
+        "groups": [
+          17,
+          7,
+          4
+        ],
+        "top1Hit": false,
+        "top3Hit": false
+      }
+    },
+    {
+      "caseNumber": 21,
+      "historyIndex": 120,
+      "target": {
+        "ymd": "2022-07-07",
+        "hour": "11:10"
+      },
+      "actual": {
+        "group": 7,
+        "top3Groups": [
+          7,
+          9,
+          1
+        ]
+      },
+      "prediction": {
+        "groups": [
+          6,
+          16,
+          12
+        ],
+        "top1Hit": false,
+        "top3Hit": false
+      }
+    },
+    {
+      "caseNumber": 22,
+      "historyIndex": 121,
+      "target": {
+        "ymd": "2022-07-07",
+        "hour": "14:10"
+      },
+      "actual": {
+        "group": 15,
+        "top3Groups": [
+          15,
+          9,
+          20
+        ]
+      },
+      "prediction": {
+        "groups": [
+          10,
+          6,
+          23
+        ],
+        "top1Hit": false,
+        "top3Hit": false
+      }
+    },
+    {
+      "caseNumber": 23,
+      "historyIndex": 122,
+      "target": {
+        "ymd": "2022-07-07",
+        "hour": "16:10"
+      },
+      "actual": {
+        "group": 7,
+        "top3Groups": [
+          7,
+          10,
+          8
+        ]
+      },
+      "prediction": {
+        "groups": [
+          2,
+          18,
+          7
+        ],
+        "top1Hit": false,
+        "top3Hit": true
+      }
+    },
+    {
+      "caseNumber": 24,
+      "historyIndex": 123,
+      "target": {
+        "ymd": "2022-07-07",
+        "hour": "18:10"
+      },
+      "actual": {
+        "group": 19,
+        "top3Groups": [
+          19,
+          14,
+          1
+        ]
+      },
+      "prediction": {
+        "groups": [
+          1,
+          7,
+          17
+        ],
+        "top1Hit": false,
+        "top3Hit": false
+      }
+    },
+    {
+      "caseNumber": 25,
+      "historyIndex": 124,
+      "target": {
+        "ymd": "2022-07-08",
+        "hour": "11:10"
+      },
+      "actual": {
+        "group": 5,
+        "top3Groups": [
+          5,
+          24,
+          22
+        ]
+      },
+      "prediction": {
+        "groups": [
+          6,
+          16,
+          1
+        ],
+        "top1Hit": false,
+        "top3Hit": false
+      }
+    },
+    {
+      "caseNumber": 26,
+      "historyIndex": 125,
+      "target": {
+        "ymd": "2022-07-08",
+        "hour": "14:10"
+      },
+      "actual": {
+        "group": 5,
+        "top3Groups": [
+          5,
+          22,
+          12
+        ]
+      },
+      "prediction": {
+        "groups": [
+          10,
+          6,
+          23
+        ],
+        "top1Hit": false,
+        "top3Hit": false
+      }
+    },
+    {
+      "caseNumber": 27,
+      "historyIndex": 126,
+      "target": {
+        "ymd": "2022-07-08",
+        "hour": "16:10"
+      },
+      "actual": {
+        "group": 16,
+        "top3Groups": [
+          16,
+          20,
+          3
+        ]
+      },
+      "prediction": {
+        "groups": [
+          2,
+          7,
+          5
+        ],
+        "top1Hit": false,
+        "top3Hit": false
+      }
+    },
+    {
+      "caseNumber": 28,
+      "historyIndex": 127,
+      "target": {
+        "ymd": "2022-07-08",
+        "hour": "18:10"
+      },
+      "actual": {
+        "group": 18,
+        "top3Groups": [
+          18,
+          7,
+          24
+        ]
+      },
+      "prediction": {
+        "groups": [
+          4,
+          1,
+          17
+        ],
+        "top1Hit": false,
+        "top3Hit": false
+      }
+    },
+    {
+      "caseNumber": 29,
+      "historyIndex": 128,
+      "target": {
+        "ymd": "2022-07-09",
+        "hour": "11:10"
+      },
+      "actual": {
+        "group": 12,
+        "top3Groups": [
+          12,
+          4,
+          18
+        ]
+      },
+      "prediction": {
+        "groups": [
+          6,
+          16,
+          13
+        ],
+        "top1Hit": false,
+        "top3Hit": false
+      }
+    },
+    {
+      "caseNumber": 30,
+      "historyIndex": 129,
+      "target": {
+        "ymd": "2022-07-09",
+        "hour": "14:10"
+      },
+      "actual": {
+        "group": 1,
+        "top3Groups": [
+          1,
+          22,
+          19
+        ]
+      },
+      "prediction": {
+        "groups": [
+          10,
+          6,
+          23
+        ],
+        "top1Hit": false,
+        "top3Hit": false
+      }
+    },
+    {
+      "caseNumber": 31,
+      "historyIndex": 130,
+      "target": {
+        "ymd": "2022-07-09",
+        "hour": "16:10"
+      },
+      "actual": {
+        "group": 19,
+        "top3Groups": [
+          19,
+          13,
+          9
+        ]
+      },
+      "prediction": {
+        "groups": [
+          2,
+          7,
+          14
+        ],
+        "top1Hit": false,
+        "top3Hit": false
+      }
+    },
+    {
+      "caseNumber": 32,
+      "historyIndex": 131,
+      "target": {
+        "ymd": "2022-07-09",
+        "hour": "18:10"
+      },
+      "actual": {
+        "group": 13,
+        "top3Groups": [
+          13,
+          6,
+          21
+        ]
+      },
+      "prediction": {
+        "groups": [
+          1,
+          4,
+          17
+        ],
+        "top1Hit": false,
+        "top3Hit": false
+      }
+    },
+    {
+      "caseNumber": 33,
+      "historyIndex": 132,
+      "target": {
+        "ymd": "2022-07-10",
+        "hour": "11:10"
+      },
+      "actual": {
+        "group": 16,
+        "top3Groups": [
+          16,
+          20,
+          21
+        ]
+      },
+      "prediction": {
+        "groups": [
+          6,
+          12,
+          16
+        ],
+        "top1Hit": false,
+        "top3Hit": true
+      }
+    },
+    {
+      "caseNumber": 34,
+      "historyIndex": 133,
+      "target": {
+        "ymd": "2022-07-10",
+        "hour": "14:10"
+      },
+      "actual": {
+        "group": 17,
+        "top3Groups": [
+          17,
+          13,
+          23
+        ]
+      },
+      "prediction": {
+        "groups": [
+          10,
+          6,
+          1
+        ],
+        "top1Hit": false,
+        "top3Hit": false
+      }
+    },
+    {
+      "caseNumber": 35,
+      "historyIndex": 134,
+      "target": {
+        "ymd": "2022-07-10",
+        "hour": "16:10"
+      },
+      "actual": {
+        "group": 8,
+        "top3Groups": [
+          8,
+          14,
+          12
+        ]
+      },
+      "prediction": {
+        "groups": [
+          7,
+          2,
+          3
+        ],
+        "top1Hit": false,
+        "top3Hit": false
+      }
+    },
+    {
+      "caseNumber": 36,
+      "historyIndex": 135,
+      "target": {
+        "ymd": "2022-07-10",
+        "hour": "18:10"
+      },
+      "actual": {
+        "group": 8,
+        "top3Groups": [
+          8,
+          9,
+          11
+        ]
+      },
+      "prediction": {
+        "groups": [
+          1,
+          4,
+          7
+        ],
+        "top1Hit": false,
+        "top3Hit": false
+      }
+    },
+    {
+      "caseNumber": 37,
+      "historyIndex": 136,
+      "target": {
+        "ymd": "2022-07-11",
+        "hour": "11:10"
+      },
+      "actual": {
+        "group": 24,
+        "top3Groups": [
+          24,
+          19,
+          21
+        ]
+      },
+      "prediction": {
+        "groups": [
+          16,
+          6,
+          12
+        ],
+        "top1Hit": false,
+        "top3Hit": false
+      }
+    },
+    {
+      "caseNumber": 38,
+      "historyIndex": 137,
+      "target": {
+        "ymd": "2022-07-11",
+        "hour": "14:10"
+      },
+      "actual": {
+        "group": 12,
+        "top3Groups": [
+          12,
+          6,
+          13
+        ]
+      },
+      "prediction": {
+        "groups": [
+          10,
+          6,
+          18
+        ],
+        "top1Hit": false,
+        "top3Hit": false
+      }
+    },
+    {
+      "caseNumber": 39,
+      "historyIndex": 138,
+      "target": {
+        "ymd": "2022-07-11",
+        "hour": "16:10"
+      },
+      "actual": {
+        "group": 15,
+        "top3Groups": [
+          15,
+          23,
+          24
+        ]
+      },
+      "prediction": {
+        "groups": [
+          2,
+          7,
+          14
+        ],
+        "top1Hit": false,
+        "top3Hit": false
+      }
+    },
+    {
+      "caseNumber": 40,
+      "historyIndex": 139,
+      "target": {
+        "ymd": "2022-07-11",
+        "hour": "18:10"
+      },
+      "actual": {
+        "group": 4,
+        "top3Groups": [
+          4,
+          19,
+          7
+        ]
+      },
+      "prediction": {
+        "groups": [
+          17,
+          13,
+          4
+        ],
+        "top1Hit": false,
+        "top3Hit": true
+      }
+    },
+    {
+      "caseNumber": 41,
+      "historyIndex": 140,
+      "target": {
+        "ymd": "2022-07-12",
+        "hour": "11:10"
+      },
+      "actual": {
+        "group": 13,
+        "top3Groups": [
+          13,
+          4,
+          19
+        ]
+      },
+      "prediction": {
+        "groups": [
+          16,
+          12,
+          6
+        ],
+        "top1Hit": false,
+        "top3Hit": false
+      }
+    },
+    {
+      "caseNumber": 42,
+      "historyIndex": 141,
+      "target": {
+        "ymd": "2022-07-12",
+        "hour": "14:10"
+      },
+      "actual": {
+        "group": 8,
+        "top3Groups": [
+          8,
+          25,
+          16
+        ]
+      },
+      "prediction": {
+        "groups": [
+          10,
+          6,
+          1
+        ],
+        "top1Hit": false,
+        "top3Hit": false
+      }
+    },
+    {
+      "caseNumber": 43,
+      "historyIndex": 142,
+      "target": {
+        "ymd": "2022-07-12",
+        "hour": "16:10"
+      },
+      "actual": {
+        "group": 15,
+        "top3Groups": [
+          15,
+          25,
+          8
+        ]
+      },
+      "prediction": {
+        "groups": [
+          2,
+          7,
+          15
+        ],
+        "top1Hit": false,
+        "top3Hit": true
+      }
+    },
+    {
+      "caseNumber": 44,
+      "historyIndex": 143,
+      "target": {
+        "ymd": "2022-07-12",
+        "hour": "18:10"
+      },
+      "actual": {
+        "group": 7,
+        "top3Groups": [
+          7,
+          25,
+          7
+        ]
+      },
+      "prediction": {
+        "groups": [
+          4,
+          7,
+          1
+        ],
+        "top1Hit": false,
+        "top3Hit": true
+      }
+    },
+    {
+      "caseNumber": 45,
+      "historyIndex": 144,
+      "target": {
+        "ymd": "2022-07-13",
+        "hour": "11:10"
+      },
+      "actual": {
+        "group": 1,
+        "top3Groups": [
+          1,
+          16,
+          12
+        ]
+      },
+      "prediction": {
+        "groups": [
+          16,
+          12,
+          6
+        ],
+        "top1Hit": false,
+        "top3Hit": false
+      }
+    },
+    {
+      "caseNumber": 46,
+      "historyIndex": 145,
+      "target": {
+        "ymd": "2022-07-13",
+        "hour": "14:10"
+      },
+      "actual": {
+        "group": 20,
+        "top3Groups": [
+          20,
+          18,
+          22
+        ]
+      },
+      "prediction": {
+        "groups": [
+          10,
+          6,
+          23
+        ],
+        "top1Hit": false,
+        "top3Hit": false
+      }
+    },
+    {
+      "caseNumber": 47,
+      "historyIndex": 146,
+      "target": {
+        "ymd": "2022-07-13",
+        "hour": "16:10"
+      },
+      "actual": {
+        "group": 18,
+        "top3Groups": [
+          18,
+          14,
+          22
+        ]
+      },
+      "prediction": {
+        "groups": [
+          7,
+          2,
+          15
+        ],
+        "top1Hit": false,
+        "top3Hit": false
+      }
+    },
+    {
+      "caseNumber": 48,
+      "historyIndex": 147,
+      "target": {
+        "ymd": "2022-07-13",
+        "hour": "18:10"
+      },
+      "actual": {
+        "group": 14,
+        "top3Groups": [
+          14,
+          11,
+          8
+        ]
+      },
+      "prediction": {
+        "groups": [
+          7,
+          4,
+          17
+        ],
+        "top1Hit": false,
+        "top3Hit": false
+      }
+    },
+    {
+      "caseNumber": 49,
+      "historyIndex": 148,
+      "target": {
+        "ymd": "2022-07-14",
+        "hour": "11:10"
+      },
+      "actual": {
+        "group": 3,
+        "top3Groups": [
+          3,
+          20,
+          11
+        ]
+      },
+      "prediction": {
+        "groups": [
+          16,
+          1,
+          12
+        ],
+        "top1Hit": false,
+        "top3Hit": false
+      }
+    },
+    {
+      "caseNumber": 50,
+      "historyIndex": 149,
+      "target": {
+        "ymd": "2022-07-14",
+        "hour": "14:10"
+      },
+      "actual": {
+        "group": 2,
+        "top3Groups": [
+          2,
+          19,
+          20
+        ]
+      },
+      "prediction": {
+        "groups": [
+          10,
+          6,
+          1
+        ],
+        "top1Hit": false,
+        "top3Hit": false
+      }
+    },
+    {
+      "caseNumber": 51,
+      "historyIndex": 150,
+      "target": {
+        "ymd": "2022-07-14",
+        "hour": "16:10"
+      },
+      "actual": {
+        "group": 22,
+        "top3Groups": [
+          22,
+          24,
+          7
+        ]
+      },
+      "prediction": {
+        "groups": [
+          2,
+          7,
+          18
+        ],
+        "top1Hit": false,
+        "top3Hit": false
+      }
+    },
+    {
+      "caseNumber": 52,
+      "historyIndex": 151,
+      "target": {
+        "ymd": "2022-07-14",
+        "hour": "18:10"
+      },
+      "actual": {
+        "group": 21,
+        "top3Groups": [
+          21,
+          16,
+          22
+        ]
+      },
+      "prediction": {
+        "groups": [
+          1,
+          7,
+          4
+        ],
+        "top1Hit": false,
+        "top3Hit": false
+      }
+    },
+    {
+      "caseNumber": 53,
+      "historyIndex": 152,
+      "target": {
+        "ymd": "2022-07-15",
+        "hour": "11:10"
+      },
+      "actual": {
+        "group": 11,
+        "top3Groups": [
+          11,
+          24,
+          24
+        ]
+      },
+      "prediction": {
+        "groups": [
+          16,
+          1,
+          6
+        ],
+        "top1Hit": false,
+        "top3Hit": false
+      }
+    },
+    {
+      "caseNumber": 54,
+      "historyIndex": 153,
+      "target": {
+        "ymd": "2022-07-15",
+        "hour": "14:10"
+      },
+      "actual": {
+        "group": 25,
+        "top3Groups": [
+          25,
+          17,
+          7
+        ]
+      },
+      "prediction": {
+        "groups": [
+          10,
+          6,
+          23
+        ],
+        "top1Hit": false,
+        "top3Hit": false
+      }
+    },
+    {
+      "caseNumber": 55,
+      "historyIndex": 154,
+      "target": {
+        "ymd": "2022-07-15",
+        "hour": "16:10"
+      },
+      "actual": {
+        "group": 12,
+        "top3Groups": [
+          12,
+          17,
+          24
+        ]
+      },
+      "prediction": {
+        "groups": [
+          18,
+          7,
+          2
+        ],
+        "top1Hit": false,
+        "top3Hit": false
+      }
+    },
+    {
+      "caseNumber": 56,
+      "historyIndex": 155,
+      "target": {
+        "ymd": "2022-07-15",
+        "hour": "18:10"
+      },
+      "actual": {
+        "group": 16,
+        "top3Groups": [
+          16,
+          15,
+          6
+        ]
+      },
+      "prediction": {
+        "groups": [
+          7,
+          4,
+          1
+        ],
+        "top1Hit": false,
+        "top3Hit": false
+      }
+    },
+    {
+      "caseNumber": 57,
+      "historyIndex": 156,
+      "target": {
+        "ymd": "2022-07-16",
+        "hour": "11:10"
+      },
+      "actual": {
+        "group": 8,
+        "top3Groups": [
+          8,
+          7,
+          10
+        ]
+      },
+      "prediction": {
+        "groups": [
+          16,
+          12,
+          13
+        ],
+        "top1Hit": false,
+        "top3Hit": false
+      }
+    },
+    {
+      "caseNumber": 58,
+      "historyIndex": 157,
+      "target": {
+        "ymd": "2022-07-16",
+        "hour": "14:10"
+      },
+      "actual": {
+        "group": 24,
+        "top3Groups": [
+          24,
+          9,
+          16
+        ]
+      },
+      "prediction": {
+        "groups": [
+          10,
+          6,
+          25
+        ],
+        "top1Hit": false,
+        "top3Hit": false
+      }
+    },
+    {
+      "caseNumber": 59,
+      "historyIndex": 158,
+      "target": {
+        "ymd": "2022-07-16",
+        "hour": "16:10"
+      },
+      "actual": {
+        "group": 15,
+        "top3Groups": [
+          15,
+          23,
+          3
+        ]
+      },
+      "prediction": {
+        "groups": [
+          7,
+          2,
+          18
+        ],
+        "top1Hit": false,
+        "top3Hit": false
+      }
+    },
+    {
+      "caseNumber": 60,
+      "historyIndex": 159,
+      "target": {
+        "ymd": "2022-07-16",
+        "hour": "18:10"
+      },
+      "actual": {
+        "group": 2,
+        "top3Groups": [
+          2,
+          20,
+          21
+        ]
+      },
+      "prediction": {
+        "groups": [
+          4,
+          7,
+          1
+        ],
+        "top1Hit": false,
+        "top3Hit": false
+      }
+    },
+    {
+      "caseNumber": 61,
+      "historyIndex": 160,
+      "target": {
+        "ymd": "2022-07-17",
+        "hour": "11:10"
+      },
+      "actual": {
+        "group": 16,
+        "top3Groups": [
+          16,
+          8,
+          7
+        ]
+      },
+      "prediction": {
+        "groups": [
+          16,
+          17,
+          12
+        ],
+        "top1Hit": true,
+        "top3Hit": true
+      }
+    },
+    {
+      "caseNumber": 62,
+      "historyIndex": 161,
+      "target": {
+        "ymd": "2022-07-17",
+        "hour": "14:10"
+      },
+      "actual": {
+        "group": 3,
+        "top3Groups": [
+          3,
+          18,
+          18
+        ]
+      },
+      "prediction": {
+        "groups": [
+          10,
+          6,
+          17
+        ],
+        "top1Hit": false,
+        "top3Hit": false
+      }
+    },
+    {
+      "caseNumber": 63,
+      "historyIndex": 162,
+      "target": {
+        "ymd": "2022-07-17",
+        "hour": "16:10"
+      },
+      "actual": {
+        "group": 11,
+        "top3Groups": [
+          11,
+          5,
+          23
+        ]
+      },
+      "prediction": {
+        "groups": [
+          15,
+          7,
+          2
+        ],
+        "top1Hit": false,
+        "top3Hit": false
+      }
+    },
+    {
+      "caseNumber": 64,
+      "historyIndex": 163,
+      "target": {
+        "ymd": "2022-07-17",
+        "hour": "18:10"
+      },
+      "actual": {
+        "group": 4,
+        "top3Groups": [
+          4,
+          20,
+          23
+        ]
+      },
+      "prediction": {
+        "groups": [
+          7,
+          16,
+          4
+        ],
+        "top1Hit": false,
+        "top3Hit": true
+      }
+    },
+    {
+      "caseNumber": 65,
+      "historyIndex": 164,
+      "target": {
+        "ymd": "2022-07-18",
+        "hour": "11:10"
+      },
+      "actual": {
+        "group": 10,
+        "top3Groups": [
+          10,
+          3,
+          25
+        ]
+      },
+      "prediction": {
+        "groups": [
+          16,
+          12,
+          6
+        ],
+        "top1Hit": false,
+        "top3Hit": false
+      }
+    },
+    {
+      "caseNumber": 66,
+      "historyIndex": 165,
+      "target": {
+        "ymd": "2022-07-18",
+        "hour": "14:10"
+      },
+      "actual": {
+        "group": 17,
+        "top3Groups": [
+          17,
+          23,
+          11
+        ]
+      },
+      "prediction": {
+        "groups": [
+          10,
+          6,
+          18
+        ],
+        "top1Hit": false,
+        "top3Hit": false
+      }
+    },
+    {
+      "caseNumber": 67,
+      "historyIndex": 166,
+      "target": {
+        "ymd": "2022-07-18",
+        "hour": "16:10"
+      },
+      "actual": {
+        "group": 4,
+        "top3Groups": [
+          4,
+          17,
+          1
+        ]
+      },
+      "prediction": {
+        "groups": [
+          15,
+          7,
+          2
+        ],
+        "top1Hit": false,
+        "top3Hit": false
+      }
+    },
+    {
+      "caseNumber": 68,
+      "historyIndex": 167,
+      "target": {
+        "ymd": "2022-07-18",
+        "hour": "18:10"
+      },
+      "actual": {
+        "group": 14,
+        "top3Groups": [
+          14,
+          13,
+          8
+        ]
+      },
+      "prediction": {
+        "groups": [
+          4,
+          7,
+          17
+        ],
+        "top1Hit": false,
+        "top3Hit": false
+      }
+    },
+    {
+      "caseNumber": 69,
+      "historyIndex": 168,
+      "target": {
+        "ymd": "2022-07-19",
+        "hour": "11:10"
+      },
+      "actual": {
+        "group": 10,
+        "top3Groups": [
+          10,
+          22,
+          17
+        ]
+      },
+      "prediction": {
+        "groups": [
+          16,
+          13,
+          12
+        ],
+        "top1Hit": false,
+        "top3Hit": false
+      }
+    },
+    {
+      "caseNumber": 70,
+      "historyIndex": 169,
+      "target": {
+        "ymd": "2022-07-19",
+        "hour": "14:10"
+      },
+      "actual": {
+        "group": 11,
+        "top3Groups": [
+          11,
+          19,
+          25
+        ]
+      },
+      "prediction": {
+        "groups": [
+          6,
+          10,
+          17
+        ],
+        "top1Hit": false,
+        "top3Hit": false
+      }
+    },
+    {
+      "caseNumber": 71,
+      "historyIndex": 170,
+      "target": {
+        "ymd": "2022-07-19",
+        "hour": "16:10"
+      },
+      "actual": {
+        "group": 16,
+        "top3Groups": [
+          16,
+          14,
+          5
+        ]
+      },
+      "prediction": {
+        "groups": [
+          15,
+          2,
+          12
+        ],
+        "top1Hit": false,
+        "top3Hit": false
+      }
+    },
+    {
+      "caseNumber": 72,
+      "historyIndex": 171,
+      "target": {
+        "ymd": "2022-07-19",
+        "hour": "18:10"
+      },
+      "actual": {
+        "group": 7,
+        "top3Groups": [
+          7,
+          19,
+          23
+        ]
+      },
+      "prediction": {
+        "groups": [
+          7,
+          4,
+          17
+        ],
+        "top1Hit": true,
+        "top3Hit": true
+      }
+    },
+    {
+      "caseNumber": 73,
+      "historyIndex": 172,
+      "target": {
+        "ymd": "2022-07-20",
+        "hour": "11:10"
+      },
+      "actual": {
+        "group": 7,
+        "top3Groups": [
+          7,
+          24,
+          1
+        ]
+      },
+      "prediction": {
+        "groups": [
+          16,
+          10,
+          12
+        ],
+        "top1Hit": false,
+        "top3Hit": false
+      }
+    },
+    {
+      "caseNumber": 74,
+      "historyIndex": 173,
+      "target": {
+        "ymd": "2022-07-20",
+        "hour": "14:10"
+      },
+      "actual": {
+        "group": 1,
+        "top3Groups": [
+          1,
+          11,
+          1
+        ]
+      },
+      "prediction": {
+        "groups": [
+          10,
+          6,
+          11
+        ],
+        "top1Hit": false,
+        "top3Hit": false
+      }
+    },
+    {
+      "caseNumber": 75,
+      "historyIndex": 174,
+      "target": {
+        "ymd": "2022-07-20",
+        "hour": "16:10"
+      },
+      "actual": {
+        "group": 20,
+        "top3Groups": [
+          20,
+          5,
+          8
+        ]
+      },
+      "prediction": {
+        "groups": [
+          2,
+          15,
+          18
+        ],
+        "top1Hit": false,
+        "top3Hit": false
+      }
+    },
+    {
+      "caseNumber": 76,
+      "historyIndex": 175,
+      "target": {
+        "ymd": "2022-07-20",
+        "hour": "18:10"
+      },
+      "actual": {
+        "group": 13,
+        "top3Groups": [
+          13,
+          11,
+          14
+        ]
+      },
+      "prediction": {
+        "groups": [
+          7,
+          4,
+          17
+        ],
+        "top1Hit": false,
+        "top3Hit": false
+      }
+    },
+    {
+      "caseNumber": 77,
+      "historyIndex": 176,
+      "target": {
+        "ymd": "2022-07-21",
+        "hour": "11:10"
+      },
+      "actual": {
+        "group": 22,
+        "top3Groups": [
+          22,
+          10,
+          8
+        ]
+      },
+      "prediction": {
+        "groups": [
+          16,
+          10,
+          7
+        ],
+        "top1Hit": false,
+        "top3Hit": false
+      }
+    },
+    {
+      "caseNumber": 78,
+      "historyIndex": 177,
+      "target": {
+        "ymd": "2022-07-21",
+        "hour": "14:10"
+      },
+      "actual": {
+        "group": 11,
+        "top3Groups": [
+          11,
+          15,
+          7
+        ]
+      },
+      "prediction": {
+        "groups": [
+          10,
+          1,
+          6
+        ],
+        "top1Hit": false,
+        "top3Hit": false
+      }
+    },
+    {
+      "caseNumber": 79,
+      "historyIndex": 178,
+      "target": {
+        "ymd": "2022-07-21",
+        "hour": "16:10"
+      },
+      "actual": {
+        "group": 9,
+        "top3Groups": [
+          9,
+          25,
+          17
+        ]
+      },
+      "prediction": {
+        "groups": [
+          2,
+          7,
+          15
+        ],
+        "top1Hit": false,
+        "top3Hit": false
+      }
+    },
+    {
+      "caseNumber": 80,
+      "historyIndex": 179,
+      "target": {
+        "ymd": "2022-07-21",
+        "hour": "18:10"
+      },
+      "actual": {
+        "group": 25,
+        "top3Groups": [
+          25,
+          3,
+          3
+        ]
+      },
+      "prediction": {
+        "groups": [
+          7,
+          4,
+          1
+        ],
+        "top1Hit": false,
+        "top3Hit": false
+      }
+    },
+    {
+      "caseNumber": 81,
+      "historyIndex": 180,
+      "target": {
+        "ymd": "2022-07-22",
+        "hour": "11:10"
+      },
+      "actual": {
+        "group": 25,
+        "top3Groups": [
+          25,
+          5,
+          19
+        ]
+      },
+      "prediction": {
+        "groups": [
+          16,
+          1,
+          10
+        ],
+        "top1Hit": false,
+        "top3Hit": false
+      }
+    },
+    {
+      "caseNumber": 82,
+      "historyIndex": 181,
+      "target": {
+        "ymd": "2022-07-22",
+        "hour": "14:10"
+      },
+      "actual": {
+        "group": 11,
+        "top3Groups": [
+          11,
+          21,
+          6
+        ]
+      },
+      "prediction": {
+        "groups": [
+          10,
+          11,
+          6
+        ],
+        "top1Hit": false,
+        "top3Hit": true
+      }
+    },
+    {
+      "caseNumber": 83,
+      "historyIndex": 182,
+      "target": {
+        "ymd": "2022-07-22",
+        "hour": "16:10"
+      },
+      "actual": {
+        "group": 10,
+        "top3Groups": [
+          10,
+          2,
+          18
+        ]
+      },
+      "prediction": {
+        "groups": [
+          16,
+          18,
+          15
+        ],
+        "top1Hit": false,
+        "top3Hit": false
+      }
+    },
+    {
+      "caseNumber": 84,
+      "historyIndex": 183,
+      "target": {
+        "ymd": "2022-07-22",
+        "hour": "18:10"
+      },
+      "actual": {
+        "group": 20,
+        "top3Groups": [
+          20,
+          4,
+          24
+        ]
+      },
+      "prediction": {
+        "groups": [
+          4,
+          7,
+          13
+        ],
+        "top1Hit": false,
+        "top3Hit": false
+      }
+    },
+    {
+      "caseNumber": 85,
+      "historyIndex": 184,
+      "target": {
+        "ymd": "2022-07-23",
+        "hour": "11:10"
+      },
+      "actual": {
+        "group": 7,
+        "top3Groups": [
+          7,
+          2,
+          24
+        ]
+      },
+      "prediction": {
+        "groups": [
+          16,
+          10,
+          13
+        ],
+        "top1Hit": false,
+        "top3Hit": false
+      }
+    },
+    {
+      "caseNumber": 86,
+      "historyIndex": 185,
+      "target": {
+        "ymd": "2022-07-23",
+        "hour": "14:10"
+      },
+      "actual": {
+        "group": 5,
+        "top3Groups": [
+          5,
+          16,
+          8
+        ]
+      },
+      "prediction": {
+        "groups": [
+          10,
+          1,
+          11
+        ],
+        "top1Hit": false,
+        "top3Hit": false
+      }
+    },
+    {
+      "caseNumber": 87,
+      "historyIndex": 186,
+      "target": {
+        "ymd": "2022-07-23",
+        "hour": "16:10"
+      },
+      "actual": {
+        "group": 2,
+        "top3Groups": [
+          2,
+          9,
+          20
+        ]
+      },
+      "prediction": {
+        "groups": [
+          15,
+          2,
+          7
+        ],
+        "top1Hit": false,
+        "top3Hit": true
+      }
+    },
+    {
+      "caseNumber": 88,
+      "historyIndex": 187,
+      "target": {
+        "ymd": "2022-07-23",
+        "hour": "18:10"
+      },
+      "actual": {
+        "group": 25,
+        "top3Groups": [
+          25,
+          15,
+          19
+        ]
+      },
+      "prediction": {
+        "groups": [
+          7,
+          4,
+          1
+        ],
+        "top1Hit": false,
+        "top3Hit": false
+      }
+    },
+    {
+      "caseNumber": 89,
+      "historyIndex": 188,
+      "target": {
+        "ymd": "2022-07-24",
+        "hour": "11:10"
+      },
+      "actual": {
+        "group": 19,
+        "top3Groups": [
+          19,
+          25,
+          6
+        ]
+      },
+      "prediction": {
+        "groups": [
+          16,
+          10,
+          7
+        ],
+        "top1Hit": false,
+        "top3Hit": false
+      }
+    },
+    {
+      "caseNumber": 90,
+      "historyIndex": 189,
+      "target": {
+        "ymd": "2022-07-24",
+        "hour": "14:10"
+      },
+      "actual": {
+        "group": 5,
+        "top3Groups": [
+          5,
+          10,
+          10
+        ]
+      },
+      "prediction": {
+        "groups": [
+          11,
+          6,
+          10
+        ],
+        "top1Hit": false,
+        "top3Hit": false
+      }
+    },
+    {
+      "caseNumber": 91,
+      "historyIndex": 190,
+      "target": {
+        "ymd": "2022-07-24",
+        "hour": "16:10"
+      },
+      "actual": {
+        "group": 1,
+        "top3Groups": [
+          1,
+          4,
+          20
+        ]
+      },
+      "prediction": {
+        "groups": [
+          2,
+          7,
+          15
+        ],
+        "top1Hit": false,
+        "top3Hit": false
+      }
+    },
+    {
+      "caseNumber": 92,
+      "historyIndex": 191,
+      "target": {
+        "ymd": "2022-07-24",
+        "hour": "18:10"
+      },
+      "actual": {
+        "group": 4,
+        "top3Groups": [
+          4,
+          13,
+          2
+        ]
+      },
+      "prediction": {
+        "groups": [
+          4,
+          7,
+          16
+        ],
+        "top1Hit": true,
+        "top3Hit": true
+      }
+    },
+    {
+      "caseNumber": 93,
+      "historyIndex": 192,
+      "target": {
+        "ymd": "2022-07-25",
+        "hour": "11:10"
+      },
+      "actual": {
+        "group": 21,
+        "top3Groups": [
+          21,
+          7,
+          10
+        ]
+      },
+      "prediction": {
+        "groups": [
+          16,
+          10,
+          7
+        ],
+        "top1Hit": false,
+        "top3Hit": false
+      }
+    },
+    {
+      "caseNumber": 94,
+      "historyIndex": 193,
+      "target": {
+        "ymd": "2022-07-25",
+        "hour": "14:10"
+      },
+      "actual": {
+        "group": 21,
+        "top3Groups": [
+          21,
+          3,
+          15
+        ]
+      },
+      "prediction": {
+        "groups": [
+          11,
+          10,
+          18
+        ],
+        "top1Hit": false,
+        "top3Hit": false
+      }
+    },
+    {
+      "caseNumber": 95,
+      "historyIndex": 194,
+      "target": {
+        "ymd": "2022-07-25",
+        "hour": "16:10"
+      },
+      "actual": {
+        "group": 17,
+        "top3Groups": [
+          17,
+          25,
+          19
+        ]
+      },
+      "prediction": {
+        "groups": [
+          15,
+          2,
+          22
+        ],
+        "top1Hit": false,
+        "top3Hit": false
+      }
+    },
+    {
+      "caseNumber": 96,
+      "historyIndex": 195,
+      "target": {
+        "ymd": "2022-07-25",
+        "hour": "18:10"
+      },
+      "actual": {
+        "group": 12,
+        "top3Groups": [
+          12,
+          2,
+          11
+        ]
+      },
+      "prediction": {
+        "groups": [
+          4,
+          7,
+          13
+        ],
+        "top1Hit": false,
+        "top3Hit": false
+      }
+    },
+    {
+      "caseNumber": 97,
+      "historyIndex": 196,
+      "target": {
+        "ymd": "2022-07-26",
+        "hour": "11:10"
+      },
+      "actual": {
+        "group": 8,
+        "top3Groups": [
+          8,
+          22,
+          5
+        ]
+      },
+      "prediction": {
+        "groups": [
+          16,
+          10,
+          7
+        ],
+        "top1Hit": false,
+        "top3Hit": false
+      }
+    },
+    {
+      "caseNumber": 98,
+      "historyIndex": 197,
+      "target": {
+        "ymd": "2022-07-26",
+        "hour": "14:10"
+      },
+      "actual": {
+        "group": 6,
+        "top3Groups": [
+          6,
+          2,
+          20
+        ]
+      },
+      "prediction": {
+        "groups": [
+          11,
+          6,
+          10
+        ],
+        "top1Hit": false,
+        "top3Hit": true
+      }
+    },
+    {
+      "caseNumber": 99,
+      "historyIndex": 198,
+      "target": {
+        "ymd": "2022-07-26",
+        "hour": "16:10"
+      },
+      "actual": {
+        "group": 22,
+        "top3Groups": [
+          22,
+          7,
+          15
+        ]
+      },
+      "prediction": {
+        "groups": [
+          15,
+          2,
+          1
+        ],
+        "top1Hit": false,
+        "top3Hit": false
+      }
+    },
+    {
+      "caseNumber": 100,
+      "historyIndex": 199,
+      "target": {
+        "ymd": "2022-07-26",
+        "hour": "18:10"
+      },
+      "actual": {
+        "group": 4,
+        "top3Groups": [
+          4,
+          14,
+          5
+        ]
+      },
+      "prediction": {
+        "groups": [
+          7,
+          4,
+          13
+        ],
+        "top1Hit": false,
+        "top3Hit": true
+      }
+    }
+  ],
+  "signature": "D11B6930450A23CECD8F8322D0C9D948396A9F6A7349CB892929C863B200ECAA"
+}

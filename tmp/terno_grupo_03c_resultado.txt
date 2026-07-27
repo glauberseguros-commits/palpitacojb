@@ -1,0 +1,22 @@
+TERNO-GRUPO-03C — RESULTADO
+
+Gerado em: 26/07/2026 19:24:59
+Backup: .\tmp\terno_grupo_03c_backup_20260726_192346
+
+CORREÇÃO:
+- linhas vazias excedentes removidas do final dos arquivos
+- nenhum conteúdo funcional alterado nesta etapa
+
+VALIDAÇÃO:
+- git diff --cached --check aprovado
+- build de produção aprovado
+- commit criado
+- push concluído
+
+PÁGINA:
+- Terno de Grupo disponível na rota /terno-grupo
+- item incluído no menu
+- módulo independente da TOP3
+
+PRÓXIMO PASSO:
+- verificar no ambiente publicado se o item Terno de Grupo aparece no menu

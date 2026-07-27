@@ -1,0 +1,462 @@
+==========================================================================================
+Linha 7 | Padrão: runOfficialBacktest
+==========================================================================================
+    1: "use strict";
+    2: 
+    3: const fs = require("fs");
+    4: const path = require("path");
+    5: 
+    6: const {
+    7:   runOfficialBacktest,
+    8: } = require("./backtestTop3Official");
+    9: 
+   10: const {
+   11:   computeStatisticalTop3E08Experimental,
+   12: } = require("../engine/scoreEngineE08Experimental");
+   13: 
+   14: const {
+   15:   readFullHistory,
+   16:   readMetadata,
+   17: } = require("../engine/top3HistoryRepository");
+
+==========================================================================================
+Linha 19 | Padrão: parseIntegerFlag
+==========================================================================================
+   13: 
+   14: const {
+   15:   readFullHistory,
+   16:   readMetadata,
+   17: } = require("../engine/top3HistoryRepository");
+   18: 
+   19: function parseIntegerFlag(
+   20:   flags,
+   21:   name,
+   22:   fallback
+   23: ) {
+   24:   const prefix = `--${name}=`;
+   25: 
+   26:   const raw = flags.find(
+   27:     (flag) =>
+   28:       String(flag).startsWith(prefix)
+   29:   );
+
+==========================================================================================
+Linha 74 | Padrão: limit
+==========================================================================================
+   68:       .trim()
+   69:       .toUpperCase();
+   70: 
+   71:   const flags =
+   72:     argv.slice(1);
+   73: 
+   74:   const limit =
+   75:     parseIntegerFlag(
+   76:       flags,
+   77:       "limit",
+   78:       100
+   79:     );
+   80: 
+   81:   const minHistory =
+   82:     parseIntegerFlag(
+   83:       flags,
+   84:       "min-history",
+
+==========================================================================================
+Linha 75 | Padrão: parseIntegerFlag
+==========================================================================================
+   69:       .toUpperCase();
+   70: 
+   71:   const flags =
+   72:     argv.slice(1);
+   73: 
+   74:   const limit =
+   75:     parseIntegerFlag(
+   76:       flags,
+   77:       "limit",
+   78:       100
+   79:     );
+   80: 
+   81:   const minHistory =
+   82:     parseIntegerFlag(
+   83:       flags,
+   84:       "min-history",
+   85:       100
+
+==========================================================================================
+Linha 77 | Padrão: limit
+==========================================================================================
+   71:   const flags =
+   72:     argv.slice(1);
+   73: 
+   74:   const limit =
+   75:     parseIntegerFlag(
+   76:       flags,
+   77:       "limit",
+   78:       100
+   79:     );
+   80: 
+   81:   const minHistory =
+   82:     parseIntegerFlag(
+   83:       flags,
+   84:       "min-history",
+   85:       100
+   86:     );
+   87: 
+
+==========================================================================================
+Linha 81 | Padrão: minHistory
+==========================================================================================
+   75:     parseIntegerFlag(
+   76:       flags,
+   77:       "limit",
+   78:       100
+   79:     );
+   80: 
+   81:   const minHistory =
+   82:     parseIntegerFlag(
+   83:       flags,
+   84:       "min-history",
+   85:       100
+   86:     );
+   87: 
+   88:   const outputDir =
+   89:     path.resolve("tmp");
+   90: 
+   91:   fs.mkdirSync(
+
+==========================================================================================
+Linha 82 | Padrão: parseIntegerFlag
+==========================================================================================
+   76:       flags,
+   77:       "limit",
+   78:       100
+   79:     );
+   80: 
+   81:   const minHistory =
+   82:     parseIntegerFlag(
+   83:       flags,
+   84:       "min-history",
+   85:       100
+   86:     );
+   87: 
+   88:   const outputDir =
+   89:     path.resolve("tmp");
+   90: 
+   91:   fs.mkdirSync(
+   92:     outputDir,
+
+==========================================================================================
+Linha 98 | Padrão: options
+==========================================================================================
+   92:     outputDir,
+   93:     {
+   94:       recursive: true,
+   95:     }
+   96:   );
+   97: 
+   98:   const options = {
+   99:     lotteryKey,
+  100:     limit,
+  101:     minHistory,
+  102:     telemetry: false,
+  103:     progress: true,
+  104:   };
+  105: 
+  106:   console.log("");
+  107:   console.log(
+  108:     "========================================"
+
+==========================================================================================
+Linha 100 | Padrão: limit
+==========================================================================================
+   94:       recursive: true,
+   95:     }
+   96:   );
+   97: 
+   98:   const options = {
+   99:     lotteryKey,
+  100:     limit,
+  101:     minHistory,
+  102:     telemetry: false,
+  103:     progress: true,
+  104:   };
+  105: 
+  106:   console.log("");
+  107:   console.log(
+  108:     "========================================"
+  109:   );
+  110:   console.log(
+
+==========================================================================================
+Linha 101 | Padrão: minHistory
+==========================================================================================
+   95:     }
+   96:   );
+   97: 
+   98:   const options = {
+   99:     lotteryKey,
+  100:     limit,
+  101:     minHistory,
+  102:     telemetry: false,
+  103:     progress: true,
+  104:   };
+  105: 
+  106:   console.log("");
+  107:   console.log(
+  108:     "========================================"
+  109:   );
+  110:   console.log(
+  111:     "E08 - BACKTEST DE RERANKING"
+
+==========================================================================================
+Linha 121 | Padrão: limit
+==========================================================================================
+  115:   );
+  116:   console.log(
+  117:     "Loteria:",
+  118:     lotteryKey
+  119:   );
+  120:   console.log(
+  121:     "Limite:",
+  122:     limit
+  123:   );
+  124:   console.log(
+  125:     "Historico minimo:",
+  126:     minHistory
+  127:   );
+  128:   console.log("");
+  129: 
+  130:   console.log(
+  131:     "[SNAPSHOT] Carregando histórico compartilhado..."
+
+==========================================================================================
+Linha 122 | Padrão: limit
+==========================================================================================
+  116:   console.log(
+  117:     "Loteria:",
+  118:     lotteryKey
+  119:   );
+  120:   console.log(
+  121:     "Limite:",
+  122:     limit
+  123:   );
+  124:   console.log(
+  125:     "Historico minimo:",
+  126:     minHistory
+  127:   );
+  128:   console.log("");
+  129: 
+  130:   console.log(
+  131:     "[SNAPSHOT] Carregando histórico compartilhado..."
+  132:   );
+
+==========================================================================================
+Linha 126 | Padrão: minHistory
+==========================================================================================
+  120:   console.log(
+  121:     "Limite:",
+  122:     limit
+  123:   );
+  124:   console.log(
+  125:     "Historico minimo:",
+  126:     minHistory
+  127:   );
+  128:   console.log("");
+  129: 
+  130:   console.log(
+  131:     "[SNAPSHOT] Carregando histórico compartilhado..."
+  132:   );
+  133: 
+  134:   const sharedHistory =
+  135:     await readFullHistory(
+  136:       lotteryKey,
+
+==========================================================================================
+Linha 163 | Padrão: runOfficialBacktest
+==========================================================================================
+  157:   console.log("");
+  158:   console.log(
+  159:     "[1/2] Executando V3..."
+  160:   );
+  161: 
+  162:   const baseline =
+  163:     await runOfficialBacktest(
+  164:       options,
+  165:       sharedDependencies
+  166:     );
+  167: 
+  168:   console.log("");
+  169:   console.log(
+  170:     "[2/2] Executando E08..."
+  171:   );
+  172: 
+  173:   const experimental =
+
+==========================================================================================
+Linha 164 | Padrão: options
+==========================================================================================
+  158:   console.log(
+  159:     "[1/2] Executando V3..."
+  160:   );
+  161: 
+  162:   const baseline =
+  163:     await runOfficialBacktest(
+  164:       options,
+  165:       sharedDependencies
+  166:     );
+  167: 
+  168:   console.log("");
+  169:   console.log(
+  170:     "[2/2] Executando E08..."
+  171:   );
+  172: 
+  173:   const experimental =
+  174:     await runOfficialBacktest(
+
+==========================================================================================
+Linha 174 | Padrão: runOfficialBacktest
+==========================================================================================
+  168:   console.log("");
+  169:   console.log(
+  170:     "[2/2] Executando E08..."
+  171:   );
+  172: 
+  173:   const experimental =
+  174:     await runOfficialBacktest(
+  175:       options,
+  176:       {
+  177:         ...sharedDependencies,
+  178:         computeTop3:
+  179:           computeStatisticalTop3E08Experimental,
+  180:       }
+  181:     );
+  182: 
+  183:   const top3Invariant =
+  184:     (
+
+==========================================================================================
+Linha 175 | Padrão: options
+==========================================================================================
+  169:   console.log(
+  170:     "[2/2] Executando E08..."
+  171:   );
+  172: 
+  173:   const experimental =
+  174:     await runOfficialBacktest(
+  175:       options,
+  176:       {
+  177:         ...sharedDependencies,
+  178:         computeTop3:
+  179:           computeStatisticalTop3E08Experimental,
+  180:       }
+  181:     );
+  182: 
+  183:   const top3Invariant =
+  184:     (
+  185:       baseline.global.top3Hits ===
+
+==========================================================================================
+Linha 225 | Padrão: limit
+==========================================================================================
+  219:   const comparison = {
+  220:     ok: true,
+  221:     experiment: "E08",
+  222:     hypothesis:
+  223:       "Reordenar apenas os tres candidatos da V3 usando frequencia do mesmo horario.",
+  224:     lotteryKey,
+  225:     limit,
+  226:     minHistory,
+  227:     invariants: {
+  228:       evaluatedEqual:
+  229:         evaluatedInvariant,
+  230:       errorsEqual:
+  231:         errorInvariant,
+  232:       top3HitsEqual:
+  233:         top3Invariant,
+  234:       candidateSetPreserved:
+  235:         top3Invariant,
+
+==========================================================================================
+Linha 226 | Padrão: minHistory
+==========================================================================================
+  220:     ok: true,
+  221:     experiment: "E08",
+  222:     hypothesis:
+  223:       "Reordenar apenas os tres candidatos da V3 usando frequencia do mesmo horario.",
+  224:     lotteryKey,
+  225:     limit,
+  226:     minHistory,
+  227:     invariants: {
+  228:       evaluatedEqual:
+  229:         evaluatedInvariant,
+  230:       errorsEqual:
+  231:         errorInvariant,
+  232:       top3HitsEqual:
+  233:         top3Invariant,
+  234:       candidateSetPreserved:
+  235:         top3Invariant,
+  236:     },
+
+==========================================================================================
+Linha 304 | Padrão: limit
+==========================================================================================
+  298:     },
+  299:     generatedAt:
+  300:       new Date().toISOString(),
+  301:   };
+  302: 
+  303:   const suffix =
+  304:     limit
+  305:       ? `limit_${limit}`
+  306:       : "full";
+  307: 
+  308:   const jsonPath =
+  309:     path.join(
+  310:       outputDir,
+  311:       `e08_comparison_${lotteryKey}_${suffix}.json`
+  312:     );
+  313: 
+  314:   const textPath =
+
+==========================================================================================
+Linha 305 | Padrão: limit
+==========================================================================================
+  299:     generatedAt:
+  300:       new Date().toISOString(),
+  301:   };
+  302: 
+  303:   const suffix =
+  304:     limit
+  305:       ? `limit_${limit}`
+  306:       : "full";
+  307: 
+  308:   const jsonPath =
+  309:     path.join(
+  310:       outputDir,
+  311:       `e08_comparison_${lotteryKey}_${suffix}.json`
+  312:     );
+  313: 
+  314:   const textPath =
+  315:     path.join(
+
+==========================================================================================
+Linha 360 | Padrão: minHistory
+==========================================================================================
+  354:     "================================================",
+  355:     "E08 - V3 ORIGINAL x V3 REORDENADA",
+  356:     "================================================",
+  357:     "",
+  358:     `Loteria.............: ${lotteryKey}`,
+  359:     `Casos avaliados.....: ${baseline.global.evaluated}`,
+  360:     `Historico minimo....: ${minHistory}`,
+  361:     `Periodo avaliado....: ${baseline.evaluationPeriod.from || "-"} ate ${baseline.evaluationPeriod.to || "-"}`,
+  362:     "",
+  363:     "HIPOTESE",
+  364:     "Reordenar somente os tres candidatos escolhidos pela V3",
+  365:     "usando a frequencia historica do mesmo horario.",
+  366:     "",
+  367:     "BASELINE V3",
+  368:     `TOP1................: ${baseline.global.top1Hits} (${percent(baseline.global.top1Rate)})`,
+  369:     `TOP3................: ${baseline.global.top3Hits} (${percent(baseline.global.top3Rate)})`,
+  370:     `Erros...............: ${baseline.global.errors}`,
+

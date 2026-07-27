@@ -1,0 +1,26 @@
+Activated [palpitacojb].
+{
+  "name": "operations/finished.DONE_OPERATION",
+  "done": true,
+  "response": {
+    "@type": "type.googleapis.com/google.api.serviceusage.v1beta1.ServiceIdentity",
+    "email": "service-884770900140@gcp-sa-cloudscheduler.iam.gserviceaccount.com",
+    "uniqueId": "116049272723776518271"
+  }
+}
+EMAIL                                                        DISPLAY NAME               DISABLED
+palpitaco-scheduler@palpitacojb-app.iam.gserviceaccount.com  Palpitaco Cloud Scheduler  False
+ERROR: (gcloud.iam.service-accounts.describe) PERMISSION_DENIED: Permission 'iam.serviceAccounts.get' denied on resource '//iam.googleapis.com/projects/-/serviceAccounts/116049272723776518271' (or it may not exist). Remediate access with this Troubleshooter URL or share it with your administrator - https://console.cloud.google.com/iam-admin/troubleshooter/summary;errorId=CiQwMTlmODY5MS1iMTIxLTc2MTItYTU3My02ODhkODQ4YjRjMzkSMHByb2plY3RzLy0vc2VydmljZUFjY291bnRzLzExNjA0OTI3MjcyMzc3NjUxODI3MQ%3D%3D . This command is authenticated as glauber.seguros@gmail.com which is the active account specified by the [core/account] property.
+- '@type': type.googleapis.com/google.rpc.ErrorInfo
+  domain: iam.googleapis.com
+  metadata:
+    error_info_id: CiQwMTlmODY5MS1iMTIxLTc2MTItYTU3My02ODhkODQ4YjRjMzkSMHByb2plY3RzLy0vc2VydmljZUFjY291bnRzLzExNjA0OTI3MjcyMzc3NjUxODI3MQ==
+    permission: iam.serviceAccounts.get
+    resource: projects/-/serviceAccounts/116049272723776518271
+    troubleshooter_url: https://console.cloud.google.com/iam-admin/troubleshooter/summary;errorId=CiQwMTlmODY5MS1iMTIxLTc2MTItYTU3My02ODhkODQ4YjRjMzkSMHByb2plY3RzLy0vc2VydmljZUFjY291bnRzLzExNjA0OTI3MjcyMzc3NjUxODI3MQ%3D%3D
+  reason: IAM_PERMISSION_DENIED
+
+Role                              Member
+----                              ------
+roles/cloudscheduler.serviceAgent serviceAccount:service-884770900140@gcp-sa-cloudscheduler.iam.gserviceaccount.com
+

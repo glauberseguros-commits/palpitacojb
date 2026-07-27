@@ -1,0 +1,3342 @@
+===== ATP-09 — ORIGEM DO SELETOR ANTIGO DE ATRASADOS =====
+Data: 2026-07-18 19:54:05
+Repositório: C:\Users\glaub\palpitaco
+
+Padrões pesquisados:
+Todas as loterias
+LT PT RIO 09HS
+LT PT RIO 11HS
+LT PT RIO 14HS
+LT PT RIO 16HS
+LT PT RIO 18HS
+LT PT RIO 21HS
+<label>Loterias</label>
+Loterias
+
+============================================================
+
+===== OCORRÊNCIAS ENCONTRADAS =====
+
+Arquivo  : backend\logs\dayStatusCache-PT_RIO-2026-02-27.json
+Linha    : 56
+Padrao   : LT PT RIO 09HS
+Conteudo : "lottery_name": "LT PT RIO 09HS",
+
+Arquivo  : backend\logs\dayStatusCache-PT_RIO-2026-02-27.json
+Linha    : 146
+Padrao   : LT PT RIO 11HS
+Conteudo : "lottery_name": "LT PT RIO 11HS",
+
+Arquivo  : backend\logs\dayStatusCache-PT_RIO-2026-02-27.json
+Linha    : 236
+Padrao   : LT PT RIO 14HS
+Conteudo : "lottery_name": "LT PT RIO 14HS",
+
+Arquivo  : backend\logs\dayStatusCache-PT_RIO-2026-02-27.json
+Linha    : 326
+Padrao   : LT PT RIO 16HS
+Conteudo : "lottery_name": "LT PT RIO 16HS",
+
+Arquivo  : backend\logs\dayStatusCache-PT_RIO-2026-02-27.json
+Linha    : 416
+Padrao   : LT PT RIO 18HS
+Conteudo : "lottery_name": "LT PT RIO 18HS",
+
+Arquivo  : backend\logs\dayStatusCache-PT_RIO-2026-02-27.json
+Linha    : 506
+Padrao   : LT PT RIO 21HS
+Conteudo : "lottery_name": "LT PT RIO 21HS",
+
+Arquivo  : backend\logs\dayStatusCache-PT_RIO-2026-02-28.json
+Linha    : 56
+Padrao   : LT PT RIO 09HS
+Conteudo : "lottery_name": "LT PT RIO 09HS",
+
+Arquivo  : backend\logs\dayStatusCache-PT_RIO-2026-02-28.json
+Linha    : 146
+Padrao   : LT PT RIO 11HS
+Conteudo : "lottery_name": "LT PT RIO 11HS",
+
+Arquivo  : backend\logs\dayStatusCache-PT_RIO-2026-02-28.json
+Linha    : 236
+Padrao   : LT PT RIO 14HS
+Conteudo : "lottery_name": "LT PT RIO 14HS",
+
+Arquivo  : backend\logs\dayStatusCache-PT_RIO-2026-02-28.json
+Linha    : 326
+Padrao   : LT PT RIO 16HS
+Conteudo : "lottery_name": "LT PT RIO 16HS",
+
+Arquivo  : backend\logs\dayStatusCache-PT_RIO-2026-02-28.json
+Linha    : 422
+Padrao   : LT PT RIO 21HS
+Conteudo : "lottery_name": "LT PT RIO 21HS",
+
+Arquivo  : backend\logs\dayStatusCache-PT_RIO-2026-03-09.json
+Linha    : 55
+Padrao   : LT PT RIO 09HS
+Conteudo : "lottery_name": "LT PT RIO 09HS",
+
+Arquivo  : backend\logs\dayStatusCache-PT_RIO-2026-03-09.json
+Linha    : 145
+Padrao   : LT PT RIO 11HS
+Conteudo : "lottery_name": "LT PT RIO 11HS",
+
+Arquivo  : backend\logs\dayStatusCache-PT_RIO-2026-03-09.json
+Linha    : 235
+Padrao   : LT PT RIO 14HS
+Conteudo : "lottery_name": "LT PT RIO 14HS",
+
+Arquivo  : backend\logs\dayStatusCache-PT_RIO-2026-03-09.json
+Linha    : 325
+Padrao   : LT PT RIO 16HS
+Conteudo : "lottery_name": "LT PT RIO 16HS",
+
+Arquivo  : backend\logs\dayStatusCache-PT_RIO-2026-03-09.json
+Linha    : 415
+Padrao   : LT PT RIO 18HS
+Conteudo : "lottery_name": "LT PT RIO 18HS",
+
+Arquivo  : backend\logs\dayStatusCache-PT_RIO-2026-03-25.json
+Linha    : 56
+Padrao   : LT PT RIO 09HS
+Conteudo : "lottery_name": "LT PT RIO 09HS",
+
+Arquivo  : backend\logs\dayStatusCache-PT_RIO-2026-03-25.json
+Linha    : 146
+Padrao   : LT PT RIO 11HS
+Conteudo : "lottery_name": "LT PT RIO 11HS",
+
+Arquivo  : backend\logs\dayStatusCache-PT_RIO-2026-03-25.json
+Linha    : 236
+Padrao   : LT PT RIO 14HS
+Conteudo : "lottery_name": "LT PT RIO 14HS",
+
+Arquivo  : backend\logs\dayStatusCache-PT_RIO-2026-03-25.json
+Linha    : 326
+Padrao   : LT PT RIO 16HS
+Conteudo : "lottery_name": "LT PT RIO 16HS",
+
+Arquivo  : backend\logs\dayStatusCache-PT_RIO-2026-03-25.json
+Linha    : 422
+Padrao   : LT PT RIO 21HS
+Conteudo : "lottery_name": "LT PT RIO 21HS",
+
+Arquivo  : backend\logs\dayStatusCache-PT_RIO-2026-07-06.json
+Linha    : 56
+Padrao   : LT PT RIO 09HS
+Conteudo : "lottery_name": "LT PT RIO 09HS",
+
+Arquivo  : backend\logs\dayStatusCache-PT_RIO-2026-07-06.json
+Linha    : 146
+Padrao   : LT PT RIO 11HS
+Conteudo : "lottery_name": "LT PT RIO 11HS",
+
+Arquivo  : backend\logs\dayStatusCache-PT_RIO-2026-07-06.json
+Linha    : 236
+Padrao   : LT PT RIO 14HS
+Conteudo : "lottery_name": "LT PT RIO 14HS",
+
+Arquivo  : backend\logs\dayStatusCache-PT_RIO-2026-07-06.json
+Linha    : 326
+Padrao   : LT PT RIO 16HS
+Conteudo : "lottery_name": "LT PT RIO 16HS",
+
+Arquivo  : backend\logs\dayStatusCache-PT_RIO-2026-07-06.json
+Linha    : 416
+Padrao   : LT PT RIO 18HS
+Conteudo : "lottery_name": "LT PT RIO 18HS",
+
+Arquivo  : backend\logs\dayStatusCache-PT_RIO-2026-07-06.json
+Linha    : 506
+Padrao   : LT PT RIO 21HS
+Conteudo : "lottery_name": "LT PT RIO 21HS",
+
+Arquivo  : backend\logs\dayStatusCache-PT_RIO-2026-07-11.json
+Linha    : 60
+Padrao   : LT PT RIO 09HS
+Conteudo : "lottery_name": "LT PT RIO 09HS",
+
+Arquivo  : backend\logs\dayStatusCache-PT_RIO-2026-07-11.json
+Linha    : 150
+Padrao   : LT PT RIO 11HS
+Conteudo : "lottery_name": "LT PT RIO 11HS",
+
+Arquivo  : backend\logs\dayStatusCache-PT_RIO-2026-07-11.json
+Linha    : 240
+Padrao   : LT PT RIO 14HS
+Conteudo : "lottery_name": "LT PT RIO 14HS",
+
+Arquivo  : backend\logs\dayStatusCache-PT_RIO-2026-07-11.json
+Linha    : 330
+Padrao   : LT PT RIO 16HS
+Conteudo : "lottery_name": "LT PT RIO 16HS",
+
+Arquivo  : backend\logs\dayStatusCache-PT_RIO-2026-07-11.json
+Linha    : 426
+Padrao   : LT PT RIO 21HS
+Conteudo : "lottery_name": "LT PT RIO 21HS",
+
+Arquivo  : backend\logs\kingapostas_home.html
+Linha    : 1
+Padrao   : Loterias
+Conteudo : <!DOCTYPE html><!--YoZ_ZiVJt7rVJ78ysCnrm--><html lang="pt-br"><head><meta charSet="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover, user-scalable=no"/><link rel="preload" href="/_next/static/media/a1187f081f048286-s.p.woff2" as="font" crossorigin="" type="font/woff2"/><link rel="stylesheet" href="/_next/static/css/966b4e756660e40a.css" data-precedence="next"/><link rel="preload" as="script" fetchPriority="low" 
+           href="/_next/static/chunks/webpack-2acb5dc0e5246523.js"/><script src="/_next/static/chunks/52774a7f-60f03dd3f0fa9af2.js" async="" type="fc24b2d142c6605bfb7c4b28-text/javascript"></script><script src="/_next/static/chunks/4bd1b696-3ac1809334a83e92.js" async="" type="fc24b2d142c6605bfb7c4b28-text/javascript"></script><script src="/_next/static/chunks/5625-d7d8f3b80a1f8966.js" async="" type="fc24b2d142c6605bfb7c4b28-text/javascript"></script><script 
+           src="/_next/static/chunks/main-app-5e61b2b197727548.js" async="" type="fc24b2d142c6605bfb7c4b28-text/javascript"></script><script src="/_next/static/chunks/0e5ce63c-ce5d93874db0ee2b.js" async="" type="fc24b2d142c6605bfb7c4b28-text/javascript"></script><script src="/_next/static/chunks/4909-c1b5e4dc5a286f11.js" async="" type="fc24b2d142c6605bfb7c4b28-text/javascript"></script><script src="/_next/static/chunks/910-5232e6c7d644f39d.js" async="" 
+           type="fc24b2d142c6605bfb7c4b28-text/javascript"></script><script src="/_next/static/chunks/1356-756dbcd09b7cc4ff.js" async="" type="fc24b2d142c6605bfb7c4b28-text/javascript"></script><script src="/_next/static/chunks/1776-3c45bd6d128463c5.js" async="" type="fc24b2d142c6605bfb7c4b28-text/javascript"></script><script src="/_next/static/chunks/131-702f1aae7ba494e8.js" async="" type="fc24b2d142c6605bfb7c4b28-text/javascript"></script><script 
+           src="/_next/static/chunks/9511-c3956653a74146f7.js" async="" type="fc24b2d142c6605bfb7c4b28-text/javascript"></script><script src="/_next/static/chunks/4204-fe9280f4440cfb0c.js" async="" type="fc24b2d142c6605bfb7c4b28-text/javascript"></script><script src="/_next/static/chunks/5131-3275b511fab91a28.js" async="" type="fc24b2d142c6605bfb7c4b28-text/javascript"></script><script src="/_next/static/chunks/1355-431bd11c9881648a.js" async="" 
+           type="fc24b2d142c6605bfb7c4b28-text/javascript"></script><script src="/_next/static/chunks/9233-dc3dfbc09926698a.js" async="" type="fc24b2d142c6605bfb7c4b28-text/javascript"></script><script src="/_next/static/chunks/1808-2abad33e4811e797.js" async="" type="fc24b2d142c6605bfb7c4b28-text/javascript"></script><script src="/_next/static/chunks/268-e3888a7f5383f6e1.js" async="" type="fc24b2d142c6605bfb7c4b28-text/javascript"></script><script 
+           src="/_next/static/chunks/app/layout-3024d28c2df83250.js" async="" type="fc24b2d142c6605bfb7c4b28-text/javascript"></script><script src="/_next/static/chunks/ee560e2c-7298e859c1f65b85.js" async="" type="fc24b2d142c6605bfb7c4b28-text/javascript"></script><script src="/_next/static/chunks/9c4e2130-d0624d12f9f67a6a.js" async="" type="fc24b2d142c6605bfb7c4b28-text/javascript"></script><script src="/_next/static/chunks/795d4814-724fe09e910ebbfd.js" async="" 
+           type="fc24b2d142c6605bfb7c4b28-text/javascript"></script><script src="/_next/static/chunks/7618-f333da0cb104f5e7.js" async="" type="fc24b2d142c6605bfb7c4b28-text/javascript"></script><script src="/_next/static/chunks/6118-dd0308765d63db9c.js" async="" type="fc24b2d142c6605bfb7c4b28-text/javascript"></script><script src="/_next/static/chunks/4921-8877f018a009660c.js" async="" type="fc24b2d142c6605bfb7c4b28-text/javascript"></script><script 
+           src="/_next/static/chunks/5776-10031b2121742d95.js" async="" type="fc24b2d142c6605bfb7c4b28-text/javascript"></script><script src="/_next/static/chunks/9677-d82015a12ee4b5d3.js" async="" type="fc24b2d142c6605bfb7c4b28-text/javascript"></script><script src="/_next/static/chunks/app/not-found-1dcb8166d29332da.js" async="" type="fc24b2d142c6605bfb7c4b28-text/javascript"></script><script src="/_next/static/chunks/1760-332e55f7d7da4739.js" async="" 
+           type="fc24b2d142c6605bfb7c4b28-text/javascript"></script><script src="/_next/static/chunks/app/login/sign-in/page-b14e705d15b4e885.js" async="" type="fc24b2d142c6605bfb7c4b28-text/javascript"></script><script src="/_next/static/chunks/app/global-error-5ca6dea8c6a07da9.js" async="" type="fc24b2d142c6605bfb7c4b28-text/javascript"></script><link rel="preload" href="/_next/static/css/126dafa7a103ecc0.css" as="style"/><link rel="preload" href="https://player.vimeo.com/api/player.js" 
+           as="script"/><meta name="next-size-adjust" content=""/><link rel="icon" href="/variables/b8c79969-5741-4505-b790-97b72908005a/base/images/icon.png" sizes="any"/><title>King</title><meta name="description" content="King Loterias - Bingo e muito mais!"/><meta name="application-name" content="King"/><link rel="manifest" href="/manifest.webmanifest"/><meta name="generator" content="Next.js"/><meta name="format-detection" content="telephone=no"/><meta name="mobile-web-app-capable" 
+           content="yes"/><meta name="apple-mobile-web-app-title" content="King"/><meta name="apple-mobile-web-app-status-bar-style" content="black"/><meta property="og:title" content="King"/><meta property="og:description" content="King Loterias - Bingo e muito mais!"/><meta property="og:site_name" content="King"/><meta property="og:type" content="website"/><meta name="twitter:card" content="summary"/><meta name="twitter:title" content="King"/><meta name="twitter:description" content="King 
+           Loterias - Bingo e muito mais!"/><script src="/_next/static/chunks/polyfills-42372ed130431b0a.js" noModule="" type="fc24b2d142c6605bfb7c4b28-text/javascript"></script></head><body class="__className_ce0b29 relative"><div hidden=""><!--$--><!--/$--></div><!--$!--><template data-dgst="BAILOUT_TO_CLIENT_SIDE_RENDERING"></template><!--/$--><!--$!--><template data-dgst="BAILOUT_TO_CLIENT_SIDE_RENDERING"></template><!--/$--><div role="region" aria-label="Notifications (F8)" tabindex="-1" 
+           style="pointer-events:none"><ol tabindex="-1" class="fixed top-0 z-[10000] flex max-h-screen w-full flex-col-reverse p-4 sm:right-0 sm:flex-col md:max-w-[420px]"></ol></div><section aria-label="Notifications alt+T" tabindex="-1" aria-live="polite" aria-relevant="additions text" aria-atomic="false"></section><script src="/_next/static/chunks/webpack-2acb5dc0e5246523.js" id="_R_" async="" type="fc24b2d142c6605bfb7c4b28-text/javascript"></script><script 
+           type="fc24b2d142c6605bfb7c4b28-text/javascript">(self.__next_f=self.__next_f||[]).push([0])</script><script type="fc24b2d142c6605bfb7c4b28-text/javascript">self.__next_f.push([1,"1:\"$Sreact.fragment\"\n"])</script><script type="fc24b2d142c6605bfb7c4b28-text/javascript">self.__next_f.push([1,"2:I[41402,[\"5105\",\"static/chunks/0e5ce63c-ce5d93874db0ee2b.js\",\"4909\",\"static/chunks/4909-c1b5e4dc5a286f11.js\",\"910\",\"static/chunks/910-5232e6c7d644f39d.js\",\"1356\",\"static/chunks/1
+           356-756dbcd09b7cc4ff.js\",\"1776\",\"static/chunks/1776-3c45bd6d128463c5.js\",\"131\",\"static/chunks/131-702f1aae7ba494e8.js\",\"9511\",\"static/chunks/9511-c3956653a74146f7.js\",\"4204\",\"static/chunks/4204-fe9280f4440cfb0c.js\",\"5131\",\"static/chunks/5131-3275b511fab91a28.js\",\"1355\",\"static/chunks/1355-431bd11c9881648a.js\",\"9233\",\"static/chunks/9233-dc3dfbc09926698a.js\",\"1808\",\"static/chunks/1808-2abad33e4811e797.js\",\"268\",\"static/chunks/268-e3888a7f5383f6e1.js\"
+           ,\"7177\",\"static/chunks/app/layout-3024d28c2df83250.js\"],\"\"]\n"])</script><script type="fc24b2d142c6605bfb7c4b28-text/javascript">self.__next_f.push([1,"3:I[27935,[\"5105\",\"static/chunks/0e5ce63c-ce5d93874db0ee2b.js\",\"4909\",\"static/chunks/4909-c1b5e4dc5a286f11.js\",\"910\",\"static/chunks/910-5232e6c7d644f39d.js\",\"1356\",\"static/chunks/1356-756dbcd09b7cc4ff.js\",\"1776\",\"static/chunks/1776-3c45bd6d128463c5.js\",\"131\",\"static/chunks/131-702f1aae7ba494e8.js\",\"9511\"
+           ,\"static/chunks/9511-c3956653a74146f7.js\",\"4204\",\"static/chunks/4204-fe9280f4440cfb0c.js\",\"5131\",\"static/chunks/5131-3275b511fab91a28.js\",\"1355\",\"static/chunks/1355-431bd11c9881648a.js\",\"9233\",\"static/chunks/9233-dc3dfbc09926698a.js\",\"1808\",\"static/chunks/1808-2abad33e4811e797.js\",\"268\",\"static/chunks/268-e3888a7f5383f6e1.js\",\"7177\",\"static/chunks/app/layout-3024d28c2df83250.js\"],\"default\"]\n"])</script><script 
+           type="fc24b2d142c6605bfb7c4b28-text/javascript">self.__next_f.push([1,"4:\"$Sreact.suspense\"\n"])</script><script type="fc24b2d142c6605bfb7c4b28-text/javascript">self.__next_f.push([1,"5:I[12437,[\"5105\",\"static/chunks/0e5ce63c-ce5d93874db0ee2b.js\",\"4909\",\"static/chunks/4909-c1b5e4dc5a286f11.js\",\"910\",\"static/chunks/910-5232e6c7d644f39d.js\",\"1356\",\"static/chunks/1356-756dbcd09b7cc4ff.js\",\"1776\",\"static/chunks/1776-3c45bd6d128463c5.js\",\"131\",\"static/chunks/131-70
+           2f1aae7ba494e8.js\",\"9511\",\"static/chunks/9511-c3956653a74146f7.js\",\"4204\",\"static/chunks/4204-fe9280f4440cfb0c.js\",\"5131\",\"static/chunks/5131-3275b511fab91a28.js\",\"1355\",\"static/chunks/1355-431bd11c9881648a.js\",\"9233\",\"static/chunks/9233-dc3dfbc09926698a.js\",\"1808\",\"static/chunks/1808-2abad33e4811e797.js\",\"268\",\"static/chunks/268-e3888a7f5383f6e1.js\",\"7177\",\"static/chunks/app/layout-3024d28c2df83250.js\"],\"default\"]\n"])</script><script type="fc24b2d1
+           42c6605bfb7c4b28-text/javascript">self.__next_f.push([1,"6:I[61129,[\"5105\",\"static/chunks/0e5ce63c-ce5d93874db0ee2b.js\",\"4909\",\"static/chunks/4909-c1b5e4dc5a286f11.js\",\"910\",\"static/chunks/910-5232e6c7d644f39d.js\",\"1356\",\"static/chunks/1356-756dbcd09b7cc4ff.js\",\"1776\",\"static/chunks/1776-3c45bd6d128463c5.js\",\"131\",\"static/chunks/131-702f1aae7ba494e8.js\",\"9511\",\"static/chunks/9511-c3956653a74146f7.js\",\"4204\",\"static/chunks/4204-fe9280f4440cfb0c.js\",\"513
+           1\",\"static/chunks/5131-3275b511fab91a28.js\",\"1355\",\"static/chunks/1355-431bd11c9881648a.js\",\"9233\",\"static/chunks/9233-dc3dfbc09926698a.js\",\"1808\",\"static/chunks/1808-2abad33e4811e797.js\",\"268\",\"static/chunks/268-e3888a7f5383f6e1.js\",\"7177\",\"static/chunks/app/layout-3024d28c2df83250.js\"],\"default\"]\n"])</script><script type="fc24b2d142c6605bfb7c4b28-text/javascript">self.__next_f.push([1,"7:I[9766,[],\"\"]\n8:I[98924,[],\"\"]\n9:I[33486,[\"844\",\"static/chunk
+           s/ee560e2c-7298e859c1f65b85.js\",\"512\",\"static/chunks/9c4e2130-d0624d12f9f67a6a.js\",\"5479\",\"static/chunks/795d4814-724fe09e910ebbfd.js\",\"4909\",\"static/chunks/4909-c1b5e4dc5a286f11.js\",\"910\",\"static/chunks/910-5232e6c7d644f39d.js\",\"1356\",\"static/chunks/1356-756dbcd09b7cc4ff.js\",\"7618\",\"static/chunks/7618-f333da0cb104f5e7.js\",\"6118\",\"static/chunks/6118-dd0308765d63db9c.js\",\"4921\",\"static/chunks/4921-8877f018a009660c.js\",\"5776\",\"static/chunks/5776-10031
+           b2121742d95.js\",\"9677\",\"static/chunks/9677-d82015a12ee4b5d3.js\",\"4345\",\"static/chunks/app/not-found-1dcb8166d29332da.js\"],\"default\"]\n"])</script><script type="fc24b2d142c6605bfb7c4b28-text/javascript">self.__next_f.push([1,"a:I[18516,[\"5105\",\"static/chunks/0e5ce63c-ce5d93874db0ee2b.js\",\"4909\",\"static/chunks/4909-c1b5e4dc5a286f11.js\",\"910\",\"static/chunks/910-5232e6c7d644f39d.js\",\"1356\",\"static/chunks/1356-756dbcd09b7cc4ff.js\",\"1776\",\"static/chunks/1776-3c
+           45bd6d128463c5.js\",\"131\",\"static/chunks/131-702f1aae7ba494e8.js\",\"9511\",\"static/chunks/9511-c3956653a74146f7.js\",\"4204\",\"static/chunks/4204-fe9280f4440cfb0c.js\",\"5131\",\"static/chunks/5131-3275b511fab91a28.js\",\"1355\",\"static/chunks/1355-431bd11c9881648a.js\",\"9233\",\"static/chunks/9233-dc3dfbc09926698a.js\",\"1808\",\"static/chunks/1808-2abad33e4811e797.js\",\"268\",\"static/chunks/268-e3888a7f5383f6e1.js\",\"7177\",\"static/chunks/app/layout-3024d28c2df83250.js\"
+           ],\"Toaster\"]\n"])</script><script type="fc24b2d142c6605bfb7c4b28-text/javascript">self.__next_f.push([1,"b:I[4249,[\"5105\",\"static/chunks/0e5ce63c-ce5d93874db0ee2b.js\",\"4909\",\"static/chunks/4909-c1b5e4dc5a286f11.js\",\"910\",\"static/chunks/910-5232e6c7d644f39d.js\",\"1356\",\"static/chunks/1356-756dbcd09b7cc4ff.js\",\"1776\",\"static/chunks/1776-3c45bd6d128463c5.js\",\"131\",\"static/chunks/131-702f1aae7ba494e8.js\",\"9511\",\"static/chunks/9511-c3956653a74146f7.js\",\"4204\"
+           ,\"static/chunks/4204-fe9280f4440cfb0c.js\",\"5131\",\"static/chunks/5131-3275b511fab91a28.js\",\"1355\",\"static/chunks/1355-431bd11c9881648a.js\",\"9233\",\"static/chunks/9233-dc3dfbc09926698a.js\",\"1808\",\"static/chunks/1808-2abad33e4811e797.js\",\"268\",\"static/chunks/268-e3888a7f5383f6e1.js\",\"7177\",\"static/chunks/app/layout-3024d28c2df83250.js\"],\"Toaster\"]\n"])</script><script type="fc24b2d142c6605bfb7c4b28-text/javascript">self.__next_f.push([1,"c:I[38325,[\"5105\",\"s
+           tatic/chunks/0e5ce63c-ce5d93874db0ee2b.js\",\"4909\",\"static/chunks/4909-c1b5e4dc5a286f11.js\",\"910\",\"static/chunks/910-5232e6c7d644f39d.js\",\"1356\",\"static/chunks/1356-756dbcd09b7cc4ff.js\",\"1776\",\"static/chunks/1776-3c45bd6d128463c5.js\",\"131\",\"static/chunks/131-702f1aae7ba494e8.js\",\"9511\",\"static/chunks/9511-c3956653a74146f7.js\",\"4204\",\"static/chunks/4204-fe9280f4440cfb0c.js\",\"5131\",\"static/chunks/5131-3275b511fab91a28.js\",\"1355\",\"static/chunks/1355-431
+           bd11c9881648a.js\",\"9233\",\"static/chunks/9233-dc3dfbc09926698a.js\",\"1808\",\"static/chunks/1808-2abad33e4811e797.js\",\"268\",\"static/chunks/268-e3888a7f5383f6e1.js\",\"7177\",\"static/chunks/app/layout-3024d28c2df83250.js\"],\"default\"]\n"])</script><script type="fc24b2d142c6605bfb7c4b28-text/javascript">self.__next_f.push([1,"d:I[45516,[\"4909\",\"static/chunks/4909-c1b5e4dc5a286f11.js\",\"910\",\"static/chunks/910-5232e6c7d644f39d.js\",\"1356\",\"static/chunks/1356-756dbcd09
+           b7cc4ff.js\",\"131\",\"static/chunks/131-702f1aae7ba494e8.js\",\"1760\",\"static/chunks/1760-332e55f7d7da4739.js\",\"268\",\"static/chunks/268-e3888a7f5383f6e1.js\",\"4796\",\"static/chunks/app/login/sign-in/page-b14e705d15b4e885.js\"],\"FormLogin\"]\ne:I[24431,[],\"OutletBoundary\"]\n10:I[15278,[],\"AsyncMetadataOutlet\"]\n12:I[24431,[],\"ViewportBoundary\"]\n14:I[24431,[],\"MetadataBoundary\"]\n16:I[54062,[\"4219\",\"static/chunks/app/global-error-5ca6dea8c6a07da9.js\"],\"default\"]
+           \n:HL[\"/_next/static/media/a1187f081f048286-s.p.woff2\",\"font\",{\"crossOrigin\":\"\",\"type\":\"font/woff2\"}]\n:HL[\"/_next/static/css/966b4e756660e40a.css\",\"style\"]\n:HL[\"/_next/static/css/126dafa7a103ecc0.css\",\"style\"]\n"])</script><script type="fc24b2d142c6605bfb7c4b28-text/javascript">self.__next_f.push([1,"0:{\"P\":null,\"b\":\"YoZ-ZiVJt7rVJ78ysCnrm\",\"p\":\"\",\"c\":[\"\",\"login\",\"sign-in\"],\"i\":false,\"f\":[[[\"\",{\"children\":[\"login\",{\"children\":[\"sign-
+           in\",{\"children\":[\"__PAGE__\",{}]}]}]},\"$undefined\",\"$undefined\",true],[\"\",[\"$\",\"$1\",\"c\",{\"children\":[[[\"$\",\"link\",\"0\",{\"rel\":\"stylesheet\",\"href\":\"/_next/static/css/966b4e756660e40a.css\",\"precedence\":\"next\",\"crossOrigin\":\"$undefined\",\"nonce\":\"$undefined\"}]],[\"$\",\"html\",null,{\"lang\":\"pt-br\",\"children\":[[\"$\",\"head\",null,{\"children\":[[\"$\",\"link\",null,{\"rel\":\"icon\",\"href\":\"/variables/b8c79969-5741-4505-b790-97b72908005a
+           /base/images/icon.png\",\"sizes\":\"any\"}],false]}],[\"$\",\"$L2\",null,{\"src\":\"https://player.vimeo.com/api/player.js\"}],[\"$\",\"body\",null,{\"className\":\"__className_ce0b29 relative\",\"children\":[[\"$\",\"$L3\",null,{\"children\":[[\"$\",\"$4\",null,{\"children\":[[\"$\",\"$L5\",null,{}],[\"$\",\"$L6\",null,{}]]}],[\"$\",\"$L7\",null,{\"parallelRouterKey\":\"children\",\"error\":\"$undefined\",\"errorStyles\":\"$undefined\",\"errorScripts\":\"$undefined\",\"template\":[\"
+           $\",\"$L8\",null,{}],\"templateStyles\":\"$undefined\",\"templateScripts\":\"$undefined\",\"notFound\":[[\"$\",\"$L9\",null,{}],[[\"$\",\"link\",\"0\",{\"rel\":\"stylesheet\",\"href\":\"/_next/static/css/126dafa7a103ecc0.css\",\"precedence\":\"next\",\"crossOrigin\":\"$undefined\",\"nonce\":\"$undefined\"}]]],\"forbidden\":\"$undefined\",\"unauthorized\":\"$undefined\"}]]}],[\"$\",\"$La\",null,{}],[\"$\",\"$Lb\",null,{}],[\"$\",\"$Lc\",null,{}]]}]]}]]}],{\"children\":[\"login\",[\"$\"
+           ,\"$1\",\"c\",{\"children\":[null,[\"$\",\"$4\",null,{\"children\":[\"$\",\"section\",null,{\"className\":\"bg-primary-900 h-full pt-10 pb-20\",\"children\":[\"$\",\"div\",null,{\"children\":[\"$\",\"$L7\",null,{\"parallelRouterKey\":\"children\",\"error\":\"$undefined\",\"errorStyles\":\"$undefined\",\"errorScripts\":\"$undefined\",\"template\":[\"$\",\"$L8\",null,{}],\"templateStyles\":\"$undefined\",\"templateScripts\":\"$undefined\",\"notFound\":\"$undefined\",\"forbidden\":\"$und
+           efined\",\"unauthorized\":\"$undefined\"}]}]}]}]]}],{\"children\":[\"sign-in\",[\"$\",\"$1\",\"c\",{\"children\":[null,[\"$\",\"$L7\",null,{\"parallelRouterKey\":\"children\",\"error\":\"$undefined\",\"errorStyles\":\"$undefined\",\"errorScripts\":\"$undefined\",\"template\":[\"$\",\"$L8\",null,{}],\"templateStyles\":\"$undefined\",\"templateScripts\":\"$undefined\",\"notFound\":\"$undefined\",\"forbidden\":\"$undefined\",\"unauthorized\":\"$undefined\"}]]}],{\"children\":[\"__PAGE__\
+           ",[\"$\",\"$1\",\"c\",{\"children\":[[\"$\",\"div\",null,{\"className\":\"h-full bg-primary-900\",\"children\":[\"$\",\"$Ld\",null,{}]}],[[\"$\",\"link\",\"0\",{\"rel\":\"stylesheet\",\"href\":\"/_next/static/css/126dafa7a103ecc0.css\",\"precedence\":\"next\",\"crossOrigin\":\"$undefined\",\"nonce\":\"$undefined\"}]],[\"$\",\"$Le\",null,{\"children\":[\"$Lf\",[\"$\",\"$L10\",null,{\"promise\":\"$@11\"}]]}]]}],{},null,false]},null,false]},null,false]},null,false],[\"$\",\"$1\",\"h\",{\
+           "children\":[null,[[\"$\",\"$L12\",null,{\"children\":\"$L13\"}],[\"$\",\"meta\",null,{\"name\":\"next-size-adjust\",\"content\":\"\"}]],[\"$\",\"$L14\",null,{\"children\":[\"$\",\"div\",null,{\"hidden\":true,\"children\":[\"$\",\"$4\",null,{\"fallback\":null,\"children\":\"$L15\"}]}]}]]}],false]],\"m\":\"$undefined\",\"G\":[\"$16\",[]],\"s\":false,\"S\":true}\n"])</script><script 
+           type="fc24b2d142c6605bfb7c4b28-text/javascript">self.__next_f.push([1,"13:[[\"$\",\"meta\",\"0\",{\"charSet\":\"utf-8\"}],[\"$\",\"meta\",\"1\",{\"name\":\"viewport\",\"content\":\"width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover, user-scalable=no\"}]]\nf:null\n"])</script><script 
+           type="fc24b2d142c6605bfb7c4b28-text/javascript">self.__next_f.push([1,"11:{\"metadata\":[[\"$\",\"title\",\"0\",{\"children\":\"King\"}],[\"$\",\"meta\",\"1\",{\"name\":\"description\",\"content\":\"King Loterias - Bingo e muito mais!\"}],[\"$\",\"meta\",\"2\",{\"name\":\"application-name\",\"content\":\"King\"}],[\"$\",\"link\",\"3\",{\"rel\":\"manifest\",\"href\":\"/manifest.webmanifest\",\"crossOrigin\":\"$undefined\"}],[\"$\",\"meta\",\"4\",{\"name\":\"generator\",\"content\":\"Ne
+           xt.js\"}],[\"$\",\"meta\",\"5\",{\"name\":\"format-detection\",\"content\":\"telephone=no\"}],[\"$\",\"meta\",\"6\",{\"name\":\"mobile-web-app-capable\",\"content\":\"yes\"}],[\"$\",\"meta\",\"7\",{\"name\":\"apple-mobile-web-app-title\",\"content\":\"King\"}],[\"$\",\"meta\",\"8\",{\"name\":\"apple-mobile-web-app-status-bar-style\",\"content\":\"black\"}],[\"$\",\"meta\",\"9\",{\"property\":\"og:title\",\"content\":\"King\"}],[\"$\",\"meta\",\"10\",{\"property\":\"og:description\",\"
+           content\":\"King Loterias - Bingo e muito mais!\"}],[\"$\",\"meta\",\"11\",{\"property\":\"og:site_name\",\"content\":\"King\"}],[\"$\",\"meta\",\"12\",{\"property\":\"og:type\",\"content\":\"website\"}],[\"$\",\"meta\",\"13\",{\"name\":\"twitter:card\",\"content\":\"summary\"}],[\"$\",\"meta\",\"14\",{\"name\":\"twitter:title\",\"content\":\"King\"}],[\"$\",\"meta\",\"15\",{\"name\":\"twitter:description\",\"content\":\"King Loterias - Bingo e muito 
+           mais!\"}]],\"error\":null,\"digest\":\"$undefined\"}\n"])</script><script type="fc24b2d142c6605bfb7c4b28-text/javascript">self.__next_f.push([1,"15:\"$11:metadata\"\n"])</script><script src="/cdn-cgi/scripts/7d0fa10a/cloudflare-static/rocket-loader.min.js" data-cf-settings="fc24b2d142c6605bfb7c4b28-|49" defer></script><script defer src="https://static.cloudflareinsights.com/beacon.min.js/vcd15cbe7772f49c399c6a5babf22c1241717689176015" 
+           integrity="sha512-ZpsOmlRQV6y907TI0dKBHq9Md29nnaEIPlkf84rnaERnq6zvWvPUqr2ft8M1aS28oN72PdrCzSjY4U6VaAw1EQ==" data-cf-beacon='{"version":"2024.11.0","token":"c383d88231aa487b8175c6047353a678","server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>
+
+Arquivo  : backend\scripts\importKingApostas.js
+Linha    : 454
+Padrao   : Loterias
+Conteudo : * Loterias (IDs) capturadas do Network.
+
+Arquivo  : src\pages\Centenas\CentenasView.jsx
+Linha    : 481
+Padrao   : Loterias
+Conteudo : label: "Todas as loterias",
+
+Arquivo  : src\pages\Centenas\CentenasView.jsx
+Linha    : 481
+Padrao   : Todas as loterias
+Conteudo : label: "Todas as loterias",
+
+Arquivo  : src\pages\Centenas\CentenasView.jsx
+Linha    : 1288
+Padrao   : Loterias
+Conteudo : const lotTxt = selectedLottery?.label || "Todas as loterias";
+
+Arquivo  : src\pages\Centenas\CentenasView.jsx
+Linha    : 1288
+Padrao   : Todas as loterias
+Conteudo : const lotTxt = selectedLottery?.label || "Todas as loterias";
+
+Arquivo  : src\pages\Dashboard\components\FiltersBar.jsx
+Linha    : 215
+Padrao   : Loterias
+Conteudo : const loteriasDefault = [
+
+Arquivo  : src\pages\Dashboard\components\FiltersBar.jsx
+Linha    : 376
+Padrao   : Loterias
+Conteudo : loterias: loteriasDefault,
+
+Arquivo  : src\pages\Dashboard\components\FiltersBar.jsx
+Linha    : 672
+Padrao   : Loterias
+Conteudo : list={defaultOptions.loterias}
+
+
+
+============================================================
+ARQUIVO: src\pages\Centenas\CentenasView.jsx
+============================================================
+
+--- CONTEXTO LINHA 481 — 469 até 499 ---
+      469: 
+      470:   const payload = encodeURIComponent(list.join(","));
+      471: 
+      472:   // usando querystring (envia pro servidor)
+      473:   return `https://app.kingapostas.com/bet/guess?pp=${payload}`;
+      474: }
+      475: 
+      476: export default function CentenasView() {
+      477:   const LOTTERY_OPTIONS = useMemo(
+      478:     () => [
+      479:       {
+      480:         id: "ALL",
+>>>   481:         label: "Todas as loterias",
+      482:         lotteryKeys: [
+      483:           LOTTERY_KEYS.PT_RIO,
+      484:           LOTTERY_KEYS.FEDERAL,
+      485:         ],
+      486:       },
+      487:       {
+      488:         id: LOTTERY_KEYS.PT_RIO,
+      489:         label: "PT Rio",
+      490:         lotteryKeys: [
+      491:           LOTTERY_KEYS.PT_RIO,
+      492:         ],
+      493:       },
+      494:       {
+      495:         id: LOTTERY_KEYS.FEDERAL,
+      496:         label: "Federal",
+      497:         lotteryKeys: [
+      498:           LOTTERY_KEYS.FEDERAL,
+      499:         ],
+
+--- CONTEXTO LINHA 1288 — 1276 até 1306 ---
+     1276:     };
+     1277:   }, [boundsReady, build, fMes, fDiaMes, fDiaSemana, fHorario, fAnimal, fPosicao, lotteryOptId]);
+     1278: 
+     1279:   useEffect(() => {
+     1280:     return () => {
+     1281:       abortedRef.current = true;
+     1282:       // ✅ cleanup extra
+     1283:       if (autoTimerRef.current) clearTimeout(autoTimerRef.current);
+     1284:     };
+     1285:   }, []);
+     1286: 
+     1287:   const subtitle = useMemo(() => {
+>>>  1288:     const lotTxt = selectedLottery?.label || "Todas as loterias";
+     1289:     const rangeTxt =
+     1290:       boundsReady && bounds?.minYmd && bounds?.maxYmd ? `${ymdToBR(bounds.minYmd)} até ${ymdToBR(bounds.maxYmd)}` : "";
+     1291:     return `Frequência das 40 centenas · Prêmio 1º ao 7º · ${lotTxt}${
+     1292:       rangeTxt
+     1293:         ? ` · Período ${rangeTxt}`
+     1294:         : ""
+     1295:     }`;
+     1296:   }, [selectedLottery, boundsReady, bounds?.minYmd, bounds?.maxYmd]);
+     1297: 
+     1298:   const bannerGrupo = useMemo(() => {
+     1299:     if (!isTodos(fAnimal)) {
+     1300:       const g = Number(fAnimal);
+     1301:       if (Number.isFinite(g) && g >= 1 && g <= 25) return g;
+     1302:     }
+     1303:     if (openGrupo) return Number(openGrupo);
+     1304:     return Number(groups?.[0]?.grupo || 1);
+     1305:   }, [fAnimal, openGrupo, groups]);
+     1306: 
+
+============================================================
+ARQUIVO: src\pages\Dashboard\components\FiltersBar.jsx
+============================================================
+
+--- CONTEXTO LINHA 215 — 203 até 233 ---
+      203:   posicaoMode = "full",
+      204:   posicoesFromOptionsMode = "ignore",
+      205:   disabledAll = false,
+      206:   onBlocked = null,
+      207: }) {
+      208:   const loteria = useMemo(
+      209:     () => normalizeLoteriaInput(filters?.loteria),
+      210:     [filters?.loteria]
+      211:   );
+      212:   const isFederal = loteria === "FEDERAL";
+      213: 
+      214:   const defaultOptions = useMemo(() => {
+>>>   215:     const loteriasDefault = [
+      216:       { label: "RJ", value: "PT_RIO" },
+      217:       { label: "FEDERAL", value: "FEDERAL" },
+      218:     ];
+      219: 
+      220:     const mesesDefault = [
+      221:       "Todos",
+      222:       "Janeiro",
+      223:       "Fevereiro",
+      224:       "Março",
+      225:       "Abril",
+      226:       "Maio",
+      227:       "Junho",
+      228:       "Julho",
+      229:       "Agosto",
+      230:       "Setembro",
+      231:       "Outubro",
+      232:       "Novembro",
+      233:       "Dezembro",
+
+--- CONTEXTO LINHA 376 — 364 até 394 ---
+      364:                 if (x && typeof x === "object")
+      365:                   return String(x.value ?? x.label ?? "").trim();
+      366:                 return String(x ?? "").trim();
+      367:               })
+      368:               .filter(Boolean)
+      369:               .filter((x) => x.toLowerCase() !== "todos");
+      370:             const uniq = Array.from(new Set(cleaned));
+      371:             return ["Todos", ...uniq];
+      372:           })()
+      373:         : mesesDefault;
+      374: 
+      375:     return {
+>>>   376:       loterias: loteriasDefault,
+      377:       meses,
+      378:       diasMes,
+      379:       diasSemana: diasSemanaFromParent,
+      380:       horarios,
+      381:       animais,
+      382:       posicoes,
+      383:     };
+      384:   }, [options, posicaoMode, posicoesFromOptionsMode, isFederal]);
+      385: 
+      386:   const ui = {
+      387:     bar: {
+      388:       border: `1px solid ${PP.strokeStrong}`,
+      389:       borderRadius: PP.rCard,
+      390:       background: `linear-gradient(180deg, ${PP.surface}, ${PP.surface2})`,
+      391:       padding: 12,
+      392:       boxShadow: PP.shadowGlow,
+      393:       overflow: "hidden",
+      394:       minWidth: 0,
+
+--- CONTEXTO LINHA 672 — 660 até 690 ---
+      660:   const horarioForcedValue = null;
+      661:   const horarioDisabled = false;
+      662: 
+      663:   return (
+      664:     <div style={ui.bar}>
+      665:       <style>{ui.styleTag}</style>
+      666: 
+      667:       <div className="pp_filters_grid" style={ui.grid}>
+      668:         <Item
+      669:           label="Loteria"
+      670:           name="loteria"
+      671:           value={loteria}
+>>>   672:           list={defaultOptions.loterias}
+      673:           wrapClassName="pp_f_loteria"
+      674:           wrapStyle={ui.spanLoteria}
+      675:         />
+      676: 
+      677:         <Item
+      678:           label="Mês"
+      679:           name="mes"
+      680:           value={filters.mes}
+      681:           list={defaultOptions.meses}
+      682:           wrapClassName="pp_f_mes"
+      683:           wrapStyle={ui.spanMes}
+      684:         />
+      685: 
+      686:         <Item
+      687:           label="Dia do Mês"
+      688:           name="diaMes"
+      689:           value={filters.diaMes}
+      690:           list={defaultOptions.diasMes}
+
+============================================================
+ARQUIVO: backend\logs\dayStatusCache-PT_RIO-2026-02-27.json
+============================================================
+
+--- CONTEXTO LINHA 56 — 44 até 74 ---
+       44:         "kind": "hard",
+       45:         "status": "valid",
+       46:         "draw": {
+       47:           "id": "PT_RIO__2026-02-27__09-00__c168d9b3-97b7-42dc-a332-7815edaa51e2",
+       48:           "date": "2026-02-27",
+       49:           "close_hour_raw": null,
+       50:           "importedAt": {
+       51:             "_seconds": 1772197561,
+       52:             "_nanoseconds": 489000000
+       53:           },
+       54:           "drawId": "PT_RIO__2026-02-27__09-00__c168d9b3-97b7-42dc-a332-7815edaa51e2",
+       55:           "lottery_id": "c168d9b3-97b7-42dc-a332-7815edaa51e2",
+>>>    56:           "lottery_name": "LT PT RIO 09HS",
+       57:           "source": "kingapostas",
+       58:           "uf": "RJ",
+       59:           "ymd": "2026-02-27",
+       60:           "close_hour": "09:00",
+       61:           "hour": "09",
+       62:           "prizesCount": 7,
+       63:           "lottery_key": "PT_RIO",
+       64:           "close": "09:00",
+       65:           "prizes": [
+       66:             {
+       67:               "dezena": "97",
+       68:               "milhar": "0397",
+       69:               "centena": "397",
+       70:               "grupo": 25,
+       71:               "animal": "Vaca",
+       72:               "raw": "0397",
+       73:               "position": 1
+       74:             },
+
+--- CONTEXTO LINHA 146 — 134 até 164 ---
+      134:         "kind": "hard",
+      135:         "status": "valid",
+      136:         "draw": {
+      137:           "id": "PT_RIO__2026-02-27__11-00__cbac7c11-e733-400b-ba4d-2dfe0cba4272",
+      138:           "date": "2026-02-27",
+      139:           "close_hour_raw": null,
+      140:           "importedAt": {
+      141:             "_seconds": 1772202425,
+      142:             "_nanoseconds": 707000000
+      143:           },
+      144:           "drawId": "PT_RIO__2026-02-27__11-00__cbac7c11-e733-400b-ba4d-2dfe0cba4272",
+      145:           "lottery_id": "cbac7c11-e733-400b-ba4d-2dfe0cba4272",
+>>>   146:           "lottery_name": "LT PT RIO 11HS",
+      147:           "source": "kingapostas",
+      148:           "uf": "RJ",
+      149:           "ymd": "2026-02-27",
+      150:           "close_hour": "11:00",
+      151:           "hour": "11",
+      152:           "prizesCount": 7,
+      153:           "lottery_key": "PT_RIO",
+      154:           "close": "11:00",
+      155:           "prizes": [
+      156:             {
+      157:               "dezena": "31",
+      158:               "milhar": "4931",
+      159:               "centena": "931",
+      160:               "grupo": 8,
+      161:               "animal": "Camelo",
+      162:               "raw": "4931",
+      163:               "position": 1
+      164:             },
+
+--- CONTEXTO LINHA 236 — 224 até 254 ---
+      224:         "kind": "hard",
+      225:         "status": "valid",
+      226:         "draw": {
+      227:           "id": "PT_RIO__2026-02-27__14-00__98352455-8fd3-447d-ab3d-701dc3f7865f",
+      228:           "date": "2026-02-27",
+      229:           "close_hour_raw": null,
+      230:           "importedAt": {
+      231:             "_seconds": 1772214358,
+      232:             "_nanoseconds": 630000000
+      233:           },
+      234:           "drawId": "PT_RIO__2026-02-27__14-00__98352455-8fd3-447d-ab3d-701dc3f7865f",
+      235:           "lottery_id": "98352455-8fd3-447d-ab3d-701dc3f7865f",
+>>>   236:           "lottery_name": "LT PT RIO 14HS",
+      237:           "source": "kingapostas",
+      238:           "uf": "RJ",
+      239:           "ymd": "2026-02-27",
+      240:           "close_hour": "14:00",
+      241:           "hour": "14",
+      242:           "prizesCount": 7,
+      243:           "lottery_key": "PT_RIO",
+      244:           "close": "14:00",
+      245:           "prizes": [
+      246:             {
+      247:               "dezena": "52",
+      248:               "milhar": "3852",
+      249:               "centena": "852",
+      250:               "grupo": 13,
+      251:               "animal": "Galo",
+      252:               "raw": "3852",
+      253:               "position": 1
+      254:             },
+
+--- CONTEXTO LINHA 326 — 314 até 344 ---
+      314:         "kind": "hard",
+      315:         "status": "valid",
+      316:         "draw": {
+      317:           "id": "PT_RIO__2026-02-27__16-00__76c127b7-8157-46b6-a64a-ec7ed1574c9f",
+      318:           "date": "2026-02-27",
+      319:           "close_hour_raw": null,
+      320:           "importedAt": {
+      321:             "_seconds": 1772221360,
+      322:             "_nanoseconds": 845000000
+      323:           },
+      324:           "drawId": "PT_RIO__2026-02-27__16-00__76c127b7-8157-46b6-a64a-ec7ed1574c9f",
+      325:           "lottery_id": "76c127b7-8157-46b6-a64a-ec7ed1574c9f",
+>>>   326:           "lottery_name": "LT PT RIO 16HS",
+      327:           "source": "kingapostas",
+      328:           "uf": "RJ",
+      329:           "ymd": "2026-02-27",
+      330:           "close_hour": "16:00",
+      331:           "hour": "16",
+      332:           "prizesCount": 7,
+      333:           "lottery_key": "PT_RIO",
+      334:           "close": "16:00",
+      335:           "prizes": [
+      336:             {
+      337:               "dezena": "65",
+      338:               "milhar": "9265",
+      339:               "centena": "265",
+      340:               "grupo": 17,
+      341:               "animal": "Macaco",
+      342:               "raw": "9265",
+      343:               "position": 1
+      344:             },
+
+--- CONTEXTO LINHA 416 — 404 até 434 ---
+      404:         "kind": "hard",
+      405:         "status": "valid",
+      406:         "draw": {
+      407:           "id": "PT_RIO__2026-02-27__18-00__8290329b-aac0-4a6a-9649-5feb6182cf4f",
+      408:           "date": "2026-02-27",
+      409:           "close_hour_raw": null,
+      410:           "importedAt": {
+      411:             "_seconds": 1772228252,
+      412:             "_nanoseconds": 738000000
+      413:           },
+      414:           "drawId": "PT_RIO__2026-02-27__18-00__8290329b-aac0-4a6a-9649-5feb6182cf4f",
+      415:           "lottery_id": "8290329b-aac0-4a6a-9649-5feb6182cf4f",
+>>>   416:           "lottery_name": "LT PT RIO 18HS",
+      417:           "source": "kingapostas",
+      418:           "uf": "RJ",
+      419:           "ymd": "2026-02-27",
+      420:           "close_hour": "18:00",
+      421:           "hour": "18",
+      422:           "prizesCount": 7,
+      423:           "lottery_key": "PT_RIO",
+      424:           "close": "18:00",
+      425:           "prizes": [
+      426:             {
+      427:               "dezena": "97",
+      428:               "milhar": "3597",
+      429:               "centena": "597",
+      430:               "grupo": 25,
+      431:               "animal": "Vaca",
+      432:               "raw": "3597",
+      433:               "position": 1
+      434:             },
+
+--- CONTEXTO LINHA 506 — 494 até 524 ---
+      494:         "kind": "hard",
+      495:         "status": "valid",
+      496:         "draw": {
+      497:           "id": "PT_RIO__2026-02-27__21-00__d5123f7e-629d-43e9-a8fb-1385ff1cba45",
+      498:           "date": "2026-02-27",
+      499:           "close_hour_raw": null,
+      500:           "importedAt": {
+      501:             "_seconds": 1772240116,
+      502:             "_nanoseconds": 479000000
+      503:           },
+      504:           "drawId": "PT_RIO__2026-02-27__21-00__d5123f7e-629d-43e9-a8fb-1385ff1cba45",
+      505:           "lottery_id": "d5123f7e-629d-43e9-a8fb-1385ff1cba45",
+>>>   506:           "lottery_name": "LT PT RIO 21HS",
+      507:           "source": "kingapostas",
+      508:           "uf": "RJ",
+      509:           "ymd": "2026-02-27",
+      510:           "close_hour": "21:00",
+      511:           "hour": "21",
+      512:           "prizesCount": 7,
+      513:           "lottery_key": "PT_RIO",
+      514:           "close": "21:00",
+      515:           "prizes": [
+      516:             {
+      517:               "dezena": "66",
+      518:               "milhar": "9766",
+      519:               "centena": "766",
+      520:               "grupo": 17,
+      521:               "animal": "Macaco",
+      522:               "raw": "9766",
+      523:               "position": 1
+      524:             },
+
+============================================================
+ARQUIVO: backend\logs\dayStatusCache-PT_RIO-2026-02-28.json
+============================================================
+
+--- CONTEXTO LINHA 56 — 44 até 74 ---
+       44:         "kind": "hard",
+       45:         "status": "valid",
+       46:         "draw": {
+       47:           "id": "PT_RIO__2026-02-28__09-00__c168d9b3-97b7-42dc-a332-7815edaa51e2",
+       48:           "date": "2026-02-28",
+       49:           "close_hour_raw": "09:00",
+       50:           "importedAt": {
+       51:             "_seconds": 1772283159,
+       52:             "_nanoseconds": 536000000
+       53:           },
+       54:           "drawId": "PT_RIO__2026-02-28__09-00__c168d9b3-97b7-42dc-a332-7815edaa51e2",
+       55:           "lottery_id": "c168d9b3-97b7-42dc-a332-7815edaa51e2",
+>>>    56:           "lottery_name": "LT PT RIO 09HS",
+       57:           "source": "kingapostas",
+       58:           "uf": "RJ",
+       59:           "ymd": "2026-02-28",
+       60:           "close_hour": "09:00",
+       61:           "hour": "09",
+       62:           "prizesCount": 7,
+       63:           "lottery_key": "PT_RIO",
+       64:           "close": "09:00",
+       65:           "prizes": [
+       66:             {
+       67:               "dezena": "48",
+       68:               "milhar": "0648",
+       69:               "centena": "648",
+       70:               "grupo": 12,
+       71:               "animal": "Elefante",
+       72:               "raw": "0648",
+       73:               "position": 1
+       74:             },
+
+--- CONTEXTO LINHA 146 — 134 até 164 ---
+      134:         "kind": "hard",
+      135:         "status": "valid",
+      136:         "draw": {
+      137:           "id": "PT_RIO__2026-02-28__11-00__cbac7c11-e733-400b-ba4d-2dfe0cba4272",
+      138:           "date": "2026-02-28",
+      139:           "close_hour_raw": "11:00",
+      140:           "importedAt": {
+      141:             "_seconds": 1772289260,
+      142:             "_nanoseconds": 412000000
+      143:           },
+      144:           "drawId": "PT_RIO__2026-02-28__11-00__cbac7c11-e733-400b-ba4d-2dfe0cba4272",
+      145:           "lottery_id": "cbac7c11-e733-400b-ba4d-2dfe0cba4272",
+>>>   146:           "lottery_name": "LT PT RIO 11HS",
+      147:           "source": "kingapostas",
+      148:           "uf": "RJ",
+      149:           "ymd": "2026-02-28",
+      150:           "close_hour": "11:00",
+      151:           "hour": "11",
+      152:           "prizesCount": 7,
+      153:           "lottery_key": "PT_RIO",
+      154:           "close": "11:00",
+      155:           "prizes": [
+      156:             {
+      157:               "dezena": "68",
+      158:               "milhar": "6068",
+      159:               "centena": "068",
+      160:               "grupo": 17,
+      161:               "animal": "Macaco",
+      162:               "raw": "6068",
+      163:               "position": 1
+      164:             },
+
+--- CONTEXTO LINHA 236 — 224 até 254 ---
+      224:         "kind": "hard",
+      225:         "status": "valid",
+      226:         "draw": {
+      227:           "id": "PT_RIO__2026-02-28__14-00__98352455-8fd3-447d-ab3d-701dc3f7865f",
+      228:           "date": "2026-02-28",
+      229:           "close_hour_raw": "14:00",
+      230:           "importedAt": {
+      231:             "_seconds": 1772299807,
+      232:             "_nanoseconds": 506000000
+      233:           },
+      234:           "drawId": "PT_RIO__2026-02-28__14-00__98352455-8fd3-447d-ab3d-701dc3f7865f",
+      235:           "lottery_id": "98352455-8fd3-447d-ab3d-701dc3f7865f",
+>>>   236:           "lottery_name": "LT PT RIO 14HS",
+      237:           "source": "kingapostas",
+      238:           "uf": "RJ",
+      239:           "ymd": "2026-02-28",
+      240:           "close_hour": "14:00",
+      241:           "hour": "14",
+      242:           "prizesCount": 7,
+      243:           "lottery_key": "PT_RIO",
+      244:           "close": "14:00",
+      245:           "prizes": [
+      246:             {
+      247:               "dezena": "09",
+      248:               "milhar": "3009",
+      249:               "centena": "009",
+      250:               "grupo": 3,
+      251:               "animal": "Burro",
+      252:               "raw": "3009",
+      253:               "position": 1
+      254:             },
+
+--- CONTEXTO LINHA 326 — 314 até 344 ---
+      314:         "kind": "hard",
+      315:         "status": "valid",
+      316:         "draw": {
+      317:           "id": "PT_RIO__2026-02-28__16-00__76c127b7-8157-46b6-a64a-ec7ed1574c9f",
+      318:           "date": "2026-02-28",
+      319:           "close_hour_raw": "16:00",
+      320:           "importedAt": {
+      321:             "_seconds": 1772306969,
+      322:             "_nanoseconds": 528000000
+      323:           },
+      324:           "drawId": "PT_RIO__2026-02-28__16-00__76c127b7-8157-46b6-a64a-ec7ed1574c9f",
+      325:           "lottery_id": "76c127b7-8157-46b6-a64a-ec7ed1574c9f",
+>>>   326:           "lottery_name": "LT PT RIO 16HS",
+      327:           "source": "kingapostas",
+      328:           "uf": "RJ",
+      329:           "ymd": "2026-02-28",
+      330:           "close_hour": "16:00",
+      331:           "hour": "16",
+      332:           "prizesCount": 7,
+      333:           "lottery_key": "PT_RIO",
+      334:           "close": "16:00",
+      335:           "prizes": [
+      336:             {
+      337:               "dezena": "31",
+      338:               "milhar": "2331",
+      339:               "centena": "331",
+      340:               "grupo": 8,
+      341:               "animal": "Camelo",
+      342:               "raw": "2331",
+      343:               "position": 1
+      344:             },
+
+--- CONTEXTO LINHA 422 — 410 até 440 ---
+      410:         "kind": "hard",
+      411:         "status": "valid",
+      412:         "draw": {
+      413:           "id": "PT_RIO__2026-02-28__21-00__d5123f7e-629d-43e9-a8fb-1385ff1cba45",
+      414:           "date": "2026-02-28",
+      415:           "close_hour_raw": "21:00",
+      416:           "importedAt": {
+      417:             "_seconds": 1772325729,
+      418:             "_nanoseconds": 100000000
+      419:           },
+      420:           "drawId": "PT_RIO__2026-02-28__21-00__d5123f7e-629d-43e9-a8fb-1385ff1cba45",
+      421:           "lottery_id": "d5123f7e-629d-43e9-a8fb-1385ff1cba45",
+>>>   422:           "lottery_name": "LT PT RIO 21HS",
+      423:           "source": "kingapostas",
+      424:           "uf": "RJ",
+      425:           "ymd": "2026-02-28",
+      426:           "close_hour": "21:00",
+      427:           "hour": "21",
+      428:           "prizesCount": 7,
+      429:           "lottery_key": "PT_RIO",
+      430:           "close": "21:00",
+      431:           "prizes": [
+      432:             {
+      433:               "dezena": "58",
+      434:               "milhar": "8558",
+      435:               "centena": "558",
+      436:               "grupo": 15,
+      437:               "animal": "Jacaré",
+      438:               "raw": "8558",
+      439:               "position": 1
+      440:             },
+
+============================================================
+ARQUIVO: backend\logs\dayStatusCache-PT_RIO-2026-03-09.json
+============================================================
+
+--- CONTEXTO LINHA 55 — 43 até 73 ---
+       43:         "kind": "hard",
+       44:         "status": "valid",
+       45:         "draw": {
+       46:           "id": "PT_RIO__2026-03-09__09-00__c168d9b3-97b7-42dc-a332-7815edaa51e2",
+       47:           "date": "2026-03-09",
+       48:           "close_hour_raw": "09:00",
+       49:           "importedAt": {
+       50:             "_seconds": 1773059407,
+       51:             "_nanoseconds": 187000000
+       52:           },
+       53:           "drawId": "PT_RIO__2026-03-09__09-00__c168d9b3-97b7-42dc-a332-7815edaa51e2",
+       54:           "lottery_id": "c168d9b3-97b7-42dc-a332-7815edaa51e2",
+>>>    55:           "lottery_name": "LT PT RIO 09HS",
+       56:           "source": "kingapostas",
+       57:           "uf": "RJ",
+       58:           "ymd": "2026-03-09",
+       59:           "close_hour": "09:00",
+       60:           "hour": "09",
+       61:           "prizesCount": 7,
+       62:           "lottery_key": "PT_RIO",
+       63:           "close": "09:00",
+       64:           "prizes": [
+       65:             {
+       66:               "dezena": "92",
+       67:               "milhar": "0092",
+       68:               "centena": "092",
+       69:               "grupo": 23,
+       70:               "animal": "Urso",
+       71:               "raw": "0092",
+       72:               "position": 1
+       73:             },
+
+--- CONTEXTO LINHA 145 — 133 até 163 ---
+      133:         "kind": "hard",
+      134:         "status": "valid",
+      135:         "draw": {
+      136:           "id": "PT_RIO__2026-03-09__11-00__cbac7c11-e733-400b-ba4d-2dfe0cba4272",
+      137:           "date": "2026-03-09",
+      138:           "close_hour_raw": "11:00",
+      139:           "importedAt": {
+      140:             "_seconds": 1773066605,
+      141:             "_nanoseconds": 302000000
+      142:           },
+      143:           "drawId": "PT_RIO__2026-03-09__11-00__cbac7c11-e733-400b-ba4d-2dfe0cba4272",
+      144:           "lottery_id": "cbac7c11-e733-400b-ba4d-2dfe0cba4272",
+>>>   145:           "lottery_name": "LT PT RIO 11HS",
+      146:           "source": "kingapostas",
+      147:           "uf": "RJ",
+      148:           "ymd": "2026-03-09",
+      149:           "close_hour": "11:00",
+      150:           "hour": "11",
+      151:           "prizesCount": 7,
+      152:           "lottery_key": "PT_RIO",
+      153:           "close": "11:00",
+      154:           "prizes": [
+      155:             {
+      156:               "dezena": "98",
+      157:               "milhar": "6098",
+      158:               "centena": "098",
+      159:               "grupo": 25,
+      160:               "animal": "Vaca",
+      161:               "raw": "6098",
+      162:               "position": 1
+      163:             },
+
+--- CONTEXTO LINHA 235 — 223 até 253 ---
+      223:         "kind": "hard",
+      224:         "status": "valid",
+      225:         "draw": {
+      226:           "id": "PT_RIO__2026-03-09__14-00__98352455-8fd3-447d-ab3d-701dc3f7865f",
+      227:           "date": "2026-03-09",
+      228:           "close_hour_raw": "14:00",
+      229:           "importedAt": {
+      230:             "_seconds": 1773077407,
+      231:             "_nanoseconds": 106000000
+      232:           },
+      233:           "drawId": "PT_RIO__2026-03-09__14-00__98352455-8fd3-447d-ab3d-701dc3f7865f",
+      234:           "lottery_id": "98352455-8fd3-447d-ab3d-701dc3f7865f",
+>>>   235:           "lottery_name": "LT PT RIO 14HS",
+      236:           "source": "kingapostas",
+      237:           "uf": "RJ",
+      238:           "ymd": "2026-03-09",
+      239:           "close_hour": "14:00",
+      240:           "hour": "14",
+      241:           "prizesCount": 7,
+      242:           "lottery_key": "PT_RIO",
+      243:           "close": "14:00",
+      244:           "prizes": [
+      245:             {
+      246:               "dezena": "26",
+      247:               "milhar": "9926",
+      248:               "centena": "926",
+      249:               "grupo": 7,
+      250:               "animal": "Carneiro",
+      251:               "raw": "9926",
+      252:               "position": 1
+      253:             },
+
+--- CONTEXTO LINHA 325 — 313 até 343 ---
+      313:         "kind": "hard",
+      314:         "status": "valid",
+      315:         "draw": {
+      316:           "id": "PT_RIO__2026-03-09__16-00__76c127b7-8157-46b6-a64a-ec7ed1574c9f",
+      317:           "date": "2026-03-09",
+      318:           "close_hour_raw": "16:00",
+      319:           "importedAt": {
+      320:             "_seconds": 1773084607,
+      321:             "_nanoseconds": 423000000
+      322:           },
+      323:           "drawId": "PT_RIO__2026-03-09__16-00__76c127b7-8157-46b6-a64a-ec7ed1574c9f",
+      324:           "lottery_id": "76c127b7-8157-46b6-a64a-ec7ed1574c9f",
+>>>   325:           "lottery_name": "LT PT RIO 16HS",
+      326:           "source": "kingapostas",
+      327:           "uf": "RJ",
+      328:           "ymd": "2026-03-09",
+      329:           "close_hour": "16:00",
+      330:           "hour": "16",
+      331:           "prizesCount": 7,
+      332:           "lottery_key": "PT_RIO",
+      333:           "close": "16:00",
+      334:           "prizes": [
+      335:             {
+      336:               "dezena": "09",
+      337:               "milhar": "0009",
+      338:               "centena": "009",
+      339:               "grupo": 3,
+      340:               "animal": "Burro",
+      341:               "raw": "0009",
+      342:               "position": 1
+      343:             },
+
+--- CONTEXTO LINHA 415 — 403 até 433 ---
+      403:         "kind": "hard",
+      404:         "status": "valid",
+      405:         "draw": {
+      406:           "id": "PT_RIO__2026-03-09__18-00__8290329b-aac0-4a6a-9649-5feb6182cf4f",
+      407:           "date": "2026-03-09",
+      408:           "close_hour_raw": "18:00",
+      409:           "importedAt": {
+      410:             "_seconds": 1773091926,
+      411:             "_nanoseconds": 924000000
+      412:           },
+      413:           "drawId": "PT_RIO__2026-03-09__18-00__8290329b-aac0-4a6a-9649-5feb6182cf4f",
+      414:           "lottery_id": "8290329b-aac0-4a6a-9649-5feb6182cf4f",
+>>>   415:           "lottery_name": "LT PT RIO 18HS",
+      416:           "source": "kingapostas",
+      417:           "uf": "RJ",
+      418:           "ymd": "2026-03-09",
+      419:           "close_hour": "18:00",
+      420:           "hour": "18",
+      421:           "prizesCount": 7,
+      422:           "lottery_key": "PT_RIO",
+      423:           "close": "18:00",
+      424:           "prizes": [
+      425:             {
+      426:               "dezena": "06",
+      427:               "milhar": "3906",
+      428:               "centena": "906",
+      429:               "grupo": 2,
+      430:               "animal": "Águia",
+      431:               "raw": "3906",
+      432:               "position": 1
+      433:             },
+
+============================================================
+ARQUIVO: backend\logs\dayStatusCache-PT_RIO-2026-03-25.json
+============================================================
+
+--- CONTEXTO LINHA 56 — 44 até 74 ---
+       44:         "kind": "hard",
+       45:         "status": "valid",
+       46:         "draw": {
+       47:           "id": "PT_RIO__2026-03-25__09-00__c168d9b3-97b7-42dc-a332-7815edaa51e2",
+       48:           "date": "2026-03-25",
+       49:           "close_hour_raw": "09:00",
+       50:           "importedAt": {
+       51:             "_seconds": 1774444634,
+       52:             "_nanoseconds": 716000000
+       53:           },
+       54:           "drawId": "PT_RIO__2026-03-25__09-00__c168d9b3-97b7-42dc-a332-7815edaa51e2",
+       55:           "lottery_id": "c168d9b3-97b7-42dc-a332-7815edaa51e2",
+>>>    56:           "lottery_name": "LT PT RIO 09HS",
+       57:           "source": "kingapostas",
+       58:           "uf": "RJ",
+       59:           "ymd": "2026-03-25",
+       60:           "close_hour": "09:00",
+       61:           "hour": "09",
+       62:           "prizesCount": 7,
+       63:           "lottery_key": "PT_RIO",
+       64:           "close": "09:00",
+       65:           "prizes": [
+       66:             {
+       67:               "dezena": "93",
+       68:               "milhar": "2293",
+       69:               "centena": "293",
+       70:               "grupo": 24,
+       71:               "animal": "Veado",
+       72:               "raw": "2293",
+       73:               "position": 1
+       74:             },
+
+--- CONTEXTO LINHA 146 — 134 até 164 ---
+      134:         "kind": "hard",
+      135:         "status": "valid",
+      136:         "draw": {
+      137:           "id": "PT_RIO__2026-03-25__11-00__cbac7c11-e733-400b-ba4d-2dfe0cba4272",
+      138:           "date": "2026-03-25",
+      139:           "close_hour_raw": "11:00",
+      140:           "importedAt": {
+      141:             "_seconds": 1774448825,
+      142:             "_nanoseconds": 299000000
+      143:           },
+      144:           "drawId": "PT_RIO__2026-03-25__11-00__cbac7c11-e733-400b-ba4d-2dfe0cba4272",
+      145:           "lottery_id": "cbac7c11-e733-400b-ba4d-2dfe0cba4272",
+>>>   146:           "lottery_name": "LT PT RIO 11HS",
+      147:           "source": "kingapostas",
+      148:           "uf": "RJ",
+      149:           "ymd": "2026-03-25",
+      150:           "close_hour": "11:00",
+      151:           "hour": "11",
+      152:           "prizesCount": 7,
+      153:           "lottery_key": "PT_RIO",
+      154:           "close": "11:00",
+      155:           "prizes": [
+      156:             {
+      157:               "dezena": "00",
+      158:               "milhar": "6500",
+      159:               "centena": "500",
+      160:               "grupo": 25,
+      161:               "animal": "Vaca",
+      162:               "raw": "6500",
+      163:               "position": 1
+      164:             },
+
+--- CONTEXTO LINHA 236 — 224 até 254 ---
+      224:         "kind": "hard",
+      225:         "status": "valid",
+      226:         "draw": {
+      227:           "id": "PT_RIO__2026-03-25__14-00__98352455-8fd3-447d-ab3d-701dc3f7865f",
+      228:           "date": "2026-03-25",
+      229:           "close_hour_raw": "14:00",
+      230:           "importedAt": {
+      231:             "_seconds": 1774459807,
+      232:             "_nanoseconds": 774000000
+      233:           },
+      234:           "drawId": "PT_RIO__2026-03-25__14-00__98352455-8fd3-447d-ab3d-701dc3f7865f",
+      235:           "lottery_id": "98352455-8fd3-447d-ab3d-701dc3f7865f",
+>>>   236:           "lottery_name": "LT PT RIO 14HS",
+      237:           "source": "kingapostas",
+      238:           "uf": "RJ",
+      239:           "ymd": "2026-03-25",
+      240:           "close_hour": "14:00",
+      241:           "hour": "14",
+      242:           "prizesCount": 7,
+      243:           "lottery_key": "PT_RIO",
+      244:           "close": "14:00",
+      245:           "prizes": [
+      246:             {
+      247:               "dezena": "96",
+      248:               "milhar": "1896",
+      249:               "centena": "896",
+      250:               "grupo": 24,
+      251:               "animal": "Veado",
+      252:               "raw": "1896",
+      253:               "position": 1
+      254:             },
+
+--- CONTEXTO LINHA 326 — 314 até 344 ---
+      314:         "kind": "hard",
+      315:         "status": "valid",
+      316:         "draw": {
+      317:           "id": "PT_RIO__2026-03-25__16-00__76c127b7-8157-46b6-a64a-ec7ed1574c9f",
+      318:           "date": "2026-03-25",
+      319:           "close_hour_raw": "16:00",
+      320:           "importedAt": {
+      321:             "_seconds": 1774468303,
+      322:             "_nanoseconds": 139000000
+      323:           },
+      324:           "drawId": "PT_RIO__2026-03-25__16-00__76c127b7-8157-46b6-a64a-ec7ed1574c9f",
+      325:           "lottery_id": "76c127b7-8157-46b6-a64a-ec7ed1574c9f",
+>>>   326:           "lottery_name": "LT PT RIO 16HS",
+      327:           "source": "kingapostas",
+      328:           "uf": "RJ",
+      329:           "ymd": "2026-03-25",
+      330:           "close_hour": "16:00",
+      331:           "hour": "16",
+      332:           "prizesCount": 7,
+      333:           "lottery_key": "PT_RIO",
+      334:           "close": "16:00",
+      335:           "prizes": [
+      336:             {
+      337:               "dezena": "62",
+      338:               "milhar": "7562",
+      339:               "centena": "562",
+      340:               "grupo": 16,
+      341:               "animal": "Leão",
+      342:               "raw": "7562",
+      343:               "position": 1
+      344:             },
+
+--- CONTEXTO LINHA 422 — 410 até 440 ---
+      410:         "kind": "hard",
+      411:         "status": "valid",
+      412:         "draw": {
+      413:           "id": "PT_RIO__2026-03-25__21-00__d5123f7e-629d-43e9-a8fb-1385ff1cba45",
+      414:           "date": "2026-03-25",
+      415:           "close_hour_raw": "21:00",
+      416:           "importedAt": {
+      417:             "_seconds": 1774488725,
+      418:             "_nanoseconds": 842000000
+      419:           },
+      420:           "drawId": "PT_RIO__2026-03-25__21-00__d5123f7e-629d-43e9-a8fb-1385ff1cba45",
+      421:           "lottery_id": "d5123f7e-629d-43e9-a8fb-1385ff1cba45",
+>>>   422:           "lottery_name": "LT PT RIO 21HS",
+      423:           "source": "kingapostas",
+      424:           "uf": "RJ",
+      425:           "ymd": "2026-03-25",
+      426:           "close_hour": "21:00",
+      427:           "hour": "21",
+      428:           "prizesCount": 7,
+      429:           "lottery_key": "PT_RIO",
+      430:           "close": "21:00",
+      431:           "prizes": [
+      432:             {
+      433:               "dezena": "87",
+      434:               "milhar": "6987",
+      435:               "centena": "987",
+      436:               "grupo": 22,
+      437:               "animal": "Tigre",
+      438:               "raw": "6987",
+      439:               "position": 1
+      440:             },
+
+============================================================
+ARQUIVO: backend\logs\dayStatusCache-PT_RIO-2026-07-06.json
+============================================================
+
+--- CONTEXTO LINHA 56 — 44 até 74 ---
+       44:         "kind": "hard",
+       45:         "status": "valid",
+       46:         "draw": {
+       47:           "id": "PT_RIO__2026-07-06__09-00__c168d9b3-97b7-42dc-a332-7815edaa51e2",
+       48:           "date": "2026-07-06",
+       49:           "close_hour_raw": "09:00",
+       50:           "importedAt": {
+       51:             "_seconds": 1783341426,
+       52:             "_nanoseconds": 693000000
+       53:           },
+       54:           "drawId": "PT_RIO__2026-07-06__09-00__c168d9b3-97b7-42dc-a332-7815edaa51e2",
+       55:           "lottery_id": "c168d9b3-97b7-42dc-a332-7815edaa51e2",
+>>>    56:           "lottery_name": "LT PT RIO 09HS",
+       57:           "source": "kingapostas",
+       58:           "uf": "RJ",
+       59:           "ymd": "2026-07-06",
+       60:           "close_hour": "09:00",
+       61:           "hour": "09",
+       62:           "prizesCount": 7,
+       63:           "lottery_key": "PT_RIO",
+       64:           "close": "09:00",
+       65:           "prizes": [
+       66:             {
+       67:               "dezena": "33",
+       68:               "milhar": "0833",
+       69:               "centena": "833",
+       70:               "grupo": 9,
+       71:               "animal": "Cobra",
+       72:               "raw": "0833",
+       73:               "position": 1
+       74:             },
+
+--- CONTEXTO LINHA 146 — 134 até 164 ---
+      134:         "kind": "hard",
+      135:         "status": "valid",
+      136:         "draw": {
+      137:           "id": "PT_RIO__2026-07-06__11-00__cbac7c11-e733-400b-ba4d-2dfe0cba4272",
+      138:           "date": "2026-07-06",
+      139:           "close_hour_raw": "11:00",
+      140:           "importedAt": {
+      141:             "_seconds": 1783348629,
+      142:             "_nanoseconds": 862000000
+      143:           },
+      144:           "drawId": "PT_RIO__2026-07-06__11-00__cbac7c11-e733-400b-ba4d-2dfe0cba4272",
+      145:           "lottery_id": "cbac7c11-e733-400b-ba4d-2dfe0cba4272",
+>>>   146:           "lottery_name": "LT PT RIO 11HS",
+      147:           "source": "kingapostas",
+      148:           "uf": "RJ",
+      149:           "ymd": "2026-07-06",
+      150:           "close_hour": "11:00",
+      151:           "hour": "11",
+      152:           "prizesCount": 7,
+      153:           "lottery_key": "PT_RIO",
+      154:           "close": "11:00",
+      155:           "prizes": [
+      156:             {
+      157:               "dezena": "46",
+      158:               "milhar": "5646",
+      159:               "centena": "646",
+      160:               "grupo": 12,
+      161:               "animal": "Elefante",
+      162:               "raw": "5646",
+      163:               "position": 1
+      164:             },
+
+--- CONTEXTO LINHA 236 — 224 até 254 ---
+      224:         "kind": "hard",
+      225:         "status": "valid",
+      226:         "draw": {
+      227:           "id": "PT_RIO__2026-07-06__14-00__98352455-8fd3-447d-ab3d-701dc3f7865f",
+      228:           "date": "2026-07-06",
+      229:           "close_hour_raw": "14:00",
+      230:           "importedAt": {
+      231:             "_seconds": 1783359726,
+      232:             "_nanoseconds": 505000000
+      233:           },
+      234:           "drawId": "PT_RIO__2026-07-06__14-00__98352455-8fd3-447d-ab3d-701dc3f7865f",
+      235:           "lottery_id": "98352455-8fd3-447d-ab3d-701dc3f7865f",
+>>>   236:           "lottery_name": "LT PT RIO 14HS",
+      237:           "source": "kingapostas",
+      238:           "uf": "RJ",
+      239:           "ymd": "2026-07-06",
+      240:           "close_hour": "14:00",
+      241:           "hour": "14",
+      242:           "prizesCount": 7,
+      243:           "lottery_key": "PT_RIO",
+      244:           "close": "14:00",
+      245:           "prizes": [
+      246:             {
+      247:               "dezena": "10",
+      248:               "milhar": "0110",
+      249:               "centena": "110",
+      250:               "grupo": 3,
+      251:               "animal": "Burro",
+      252:               "raw": "0110",
+      253:               "position": 1
+      254:             },
+
+--- CONTEXTO LINHA 326 — 314 até 344 ---
+      314:         "kind": "hard",
+      315:         "status": "valid",
+      316:         "draw": {
+      317:           "id": "PT_RIO__2026-07-06__16-00__76c127b7-8157-46b6-a64a-ec7ed1574c9f",
+      318:           "date": "2026-07-06",
+      319:           "close_hour_raw": "16:00",
+      320:           "importedAt": {
+      321:             "_seconds": 1783366626,
+      322:             "_nanoseconds": 908000000
+      323:           },
+      324:           "drawId": "PT_RIO__2026-07-06__16-00__76c127b7-8157-46b6-a64a-ec7ed1574c9f",
+      325:           "lottery_id": "76c127b7-8157-46b6-a64a-ec7ed1574c9f",
+>>>   326:           "lottery_name": "LT PT RIO 16HS",
+      327:           "source": "kingapostas",
+      328:           "uf": "RJ",
+      329:           "ymd": "2026-07-06",
+      330:           "close_hour": "16:00",
+      331:           "hour": "16",
+      332:           "prizesCount": 7,
+      333:           "lottery_key": "PT_RIO",
+      334:           "close": "16:00",
+      335:           "prizes": [
+      336:             {
+      337:               "dezena": "19",
+      338:               "milhar": "2019",
+      339:               "centena": "019",
+      340:               "grupo": 5,
+      341:               "animal": "Cachorro",
+      342:               "raw": "2019",
+      343:               "position": 1
+      344:             },
+
+--- CONTEXTO LINHA 416 — 404 até 434 ---
+      404:         "kind": "hard",
+      405:         "status": "valid",
+      406:         "draw": {
+      407:           "id": "PT_RIO__2026-07-06__18-00__8290329b-aac0-4a6a-9649-5feb6182cf4f",
+      408:           "date": "2026-07-06",
+      409:           "close_hour_raw": "18:00",
+      410:           "importedAt": {
+      411:             "_seconds": 1783373825,
+      412:             "_nanoseconds": 200000000
+      413:           },
+      414:           "drawId": "PT_RIO__2026-07-06__18-00__8290329b-aac0-4a6a-9649-5feb6182cf4f",
+      415:           "lottery_id": "8290329b-aac0-4a6a-9649-5feb6182cf4f",
+>>>   416:           "lottery_name": "LT PT RIO 18HS",
+      417:           "source": "kingapostas",
+      418:           "uf": "RJ",
+      419:           "ymd": "2026-07-06",
+      420:           "close_hour": "18:00",
+      421:           "hour": "18",
+      422:           "prizesCount": 7,
+      423:           "lottery_key": "PT_RIO",
+      424:           "close": "18:00",
+      425:           "prizes": [
+      426:             {
+      427:               "dezena": "71",
+      428:               "milhar": "9471",
+      429:               "centena": "471",
+      430:               "grupo": 18,
+      431:               "animal": "Porco",
+      432:               "raw": "9471",
+      433:               "position": 1
+      434:             },
+
+--- CONTEXTO LINHA 506 — 494 até 524 ---
+      494:         "kind": "hard",
+      495:         "status": "valid",
+      496:         "draw": {
+      497:           "id": "PT_RIO__2026-07-06__21-00__d5123f7e-629d-43e9-a8fb-1385ff1cba45",
+      498:           "date": "2026-07-06",
+      499:           "close_hour_raw": "21:00",
+      500:           "importedAt": {
+      501:             "_seconds": 1783385705,
+      502:             "_nanoseconds": 514000000
+      503:           },
+      504:           "drawId": "PT_RIO__2026-07-06__21-00__d5123f7e-629d-43e9-a8fb-1385ff1cba45",
+      505:           "lottery_id": "d5123f7e-629d-43e9-a8fb-1385ff1cba45",
+>>>   506:           "lottery_name": "LT PT RIO 21HS",
+      507:           "source": "kingapostas",
+      508:           "uf": "RJ",
+      509:           "ymd": "2026-07-06",
+      510:           "close_hour": "21:00",
+      511:           "hour": "21",
+      512:           "prizesCount": 7,
+      513:           "lottery_key": "PT_RIO",
+      514:           "close": "21:00",
+      515:           "prizes": [
+      516:             {
+      517:               "dezena": "08",
+      518:               "milhar": "5508",
+      519:               "centena": "508",
+      520:               "grupo": 2,
+      521:               "animal": "Águia",
+      522:               "raw": "5508",
+      523:               "position": 1
+      524:             },
+
+============================================================
+ARQUIVO: backend\logs\dayStatusCache-PT_RIO-2026-07-11.json
+============================================================
+
+--- CONTEXTO LINHA 60 — 48 até 78 ---
+       48:         "kind": "hard",
+       49:         "status": "valid",
+       50:         "draw": {
+       51:           "id": "PT_RIO__2026-07-11__09-00__c168d9b3-97b7-42dc-a332-7815edaa51e2",
+       52:           "date": "2026-07-11",
+       53:           "close_hour_raw": "09:00",
+       54:           "importedAt": {
+       55:             "_seconds": 1783954959,
+       56:             "_nanoseconds": 9000000
+       57:           },
+       58:           "drawId": "PT_RIO__2026-07-11__09-00__c168d9b3-97b7-42dc-a332-7815edaa51e2",
+       59:           "lottery_id": "c168d9b3-97b7-42dc-a332-7815edaa51e2",
+>>>    60:           "lottery_name": "LT PT RIO 09HS",
+       61:           "source": "kingapostas",
+       62:           "uf": "RJ",
+       63:           "ymd": "2026-07-11",
+       64:           "close_hour": "09:00",
+       65:           "hour": "09",
+       66:           "prizesCount": 7,
+       67:           "lottery_key": "PT_RIO",
+       68:           "close": "09:00",
+       69:           "prizes": [
+       70:             {
+       71:               "dezena": "55",
+       72:               "milhar": "9955",
+       73:               "centena": "955",
+       74:               "grupo": 14,
+       75:               "animal": "Gato",
+       76:               "raw": "9955",
+       77:               "position": 1
+       78:             },
+
+--- CONTEXTO LINHA 150 — 138 até 168 ---
+      138:         "kind": "hard",
+      139:         "status": "valid",
+      140:         "draw": {
+      141:           "id": "PT_RIO__2026-07-11__11-00__cbac7c11-e733-400b-ba4d-2dfe0cba4272",
+      142:           "date": "2026-07-11",
+      143:           "close_hour_raw": "11:00",
+      144:           "importedAt": {
+      145:             "_seconds": 1783954961,
+      146:             "_nanoseconds": 316000000
+      147:           },
+      148:           "drawId": "PT_RIO__2026-07-11__11-00__cbac7c11-e733-400b-ba4d-2dfe0cba4272",
+      149:           "lottery_id": "cbac7c11-e733-400b-ba4d-2dfe0cba4272",
+>>>   150:           "lottery_name": "LT PT RIO 11HS",
+      151:           "source": "kingapostas",
+      152:           "uf": "RJ",
+      153:           "ymd": "2026-07-11",
+      154:           "close_hour": "11:00",
+      155:           "hour": "11",
+      156:           "prizesCount": 7,
+      157:           "lottery_key": "PT_RIO",
+      158:           "close": "11:00",
+      159:           "prizes": [
+      160:             {
+      161:               "dezena": "52",
+      162:               "milhar": "4052",
+      163:               "centena": "052",
+      164:               "grupo": 13,
+      165:               "animal": "Galo",
+      166:               "raw": "4052",
+      167:               "position": 1
+      168:             },
+
+--- CONTEXTO LINHA 240 — 228 até 258 ---
+      228:         "kind": "hard",
+      229:         "status": "valid",
+      230:         "draw": {
+      231:           "id": "PT_RIO__2026-07-11__14-00__98352455-8fd3-447d-ab3d-701dc3f7865f",
+      232:           "date": "2026-07-11",
+      233:           "close_hour_raw": "14:00",
+      234:           "importedAt": {
+      235:             "_seconds": 1783954963,
+      236:             "_nanoseconds": 449000000
+      237:           },
+      238:           "drawId": "PT_RIO__2026-07-11__14-00__98352455-8fd3-447d-ab3d-701dc3f7865f",
+      239:           "lottery_id": "98352455-8fd3-447d-ab3d-701dc3f7865f",
+>>>   240:           "lottery_name": "LT PT RIO 14HS",
+      241:           "source": "kingapostas",
+      242:           "uf": "RJ",
+      243:           "ymd": "2026-07-11",
+      244:           "close_hour": "14:00",
+      245:           "hour": "14",
+      246:           "prizesCount": 7,
+      247:           "lottery_key": "PT_RIO",
+      248:           "close": "14:00",
+      249:           "prizes": [
+      250:             {
+      251:               "dezena": "47",
+      252:               "milhar": "3147",
+      253:               "centena": "147",
+      254:               "grupo": 12,
+      255:               "animal": "Elefante",
+      256:               "raw": "3147",
+      257:               "position": 1
+      258:             },
+
+--- CONTEXTO LINHA 330 — 318 até 348 ---
+      318:         "kind": "hard",
+      319:         "status": "valid",
+      320:         "draw": {
+      321:           "id": "PT_RIO__2026-07-11__16-00__76c127b7-8157-46b6-a64a-ec7ed1574c9f",
+      322:           "date": "2026-07-11",
+      323:           "close_hour_raw": "16:00",
+      324:           "importedAt": {
+      325:             "_seconds": 1783954965,
+      326:             "_nanoseconds": 527000000
+      327:           },
+      328:           "drawId": "PT_RIO__2026-07-11__16-00__76c127b7-8157-46b6-a64a-ec7ed1574c9f",
+      329:           "lottery_id": "76c127b7-8157-46b6-a64a-ec7ed1574c9f",
+>>>   330:           "lottery_name": "LT PT RIO 16HS",
+      331:           "source": "kingapostas",
+      332:           "uf": "RJ",
+      333:           "ymd": "2026-07-11",
+      334:           "close_hour": "16:00",
+      335:           "hour": "16",
+      336:           "prizesCount": 7,
+      337:           "lottery_key": "PT_RIO",
+      338:           "close": "16:00",
+      339:           "prizes": [
+      340:             {
+      341:               "dezena": "08",
+      342:               "milhar": "5308",
+      343:               "centena": "308",
+      344:               "grupo": 2,
+      345:               "animal": "Águia",
+      346:               "raw": "5308",
+      347:               "position": 1
+      348:             },
+
+--- CONTEXTO LINHA 426 — 414 até 444 ---
+      414:         "kind": "hard",
+      415:         "status": "valid",
+      416:         "draw": {
+      417:           "id": "PT_RIO__2026-07-11__21-00__d5123f7e-629d-43e9-a8fb-1385ff1cba45",
+      418:           "date": "2026-07-11",
+      419:           "close_hour_raw": "21:00",
+      420:           "importedAt": {
+      421:             "_seconds": 1783958901,
+      422:             "_nanoseconds": 572000000
+      423:           },
+      424:           "drawId": "PT_RIO__2026-07-11__21-00__d5123f7e-629d-43e9-a8fb-1385ff1cba45",
+      425:           "lottery_id": "d5123f7e-629d-43e9-a8fb-1385ff1cba45",
+>>>   426:           "lottery_name": "LT PT RIO 21HS",
+      427:           "source": "kingapostas",
+      428:           "uf": "RJ",
+      429:           "ymd": "2026-07-11",
+      430:           "close_hour": "21:00",
+      431:           "hour": "21",
+      432:           "prizesCount": 7,
+      433:           "lottery_key": "PT_RIO",
+      434:           "close": "21:00",
+      435:           "prizes": [
+      436:             {
+      437:               "dezena": "52",
+      438:               "milhar": "7052",
+      439:               "centena": "052",
+      440:               "grupo": 13,
+      441:               "animal": "Galo",
+      442:               "raw": "7052",
+      443:               "position": 1
+      444:             },
+
+============================================================
+ARQUIVO: backend\logs\kingapostas_home.html
+============================================================
+
+--- CONTEXTO LINHA 1 — 1 até 2 ---
+>>>     1: <!DOCTYPE html><!--YoZ_ZiVJt7rVJ78ysCnrm--><html lang="pt-br"><head><meta charSet="utf-8"/><meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover, user-scalable=no"/><link rel="preload" href="/_next/static/media/a1187f081f048286-s.p.woff2" as="font" crossorigin="" type="font/woff2"/><link rel="stylesheet" href="/_next/static/css/966b4e756660e40a.css" data-precedence="next"/><link rel="preload" as="script" fetchPriority="low" href="/_next/static/chunks/webpack-2acb5dc0e5246523.js"/><script src="/_next/static/chunks/52774a7f-60f03dd3f0fa9af2.js" async="" type="fc24b2d142c6605bfb7c4b28-text/javascript"></script><script src="/_next/static/chunks/4bd1b696-3ac1809334a83e92.js" async="" type="fc24b2d142c6605bfb7c4b28-text/javascript"></script><script src="/_next/static/chunks/5625-d7d8f3b80a1f8966.js" async="" type="fc24b2d142c6605bfb7c4b28-text/javascript"></script><script src="/_next/static/chunks/main-app-5e61b2b197727548.js" async="" type="fc24b2d142c6605bfb7c4b28-text/javascript"></script><script src="/_next/static/chunks/0e5ce63c-ce5d93874db0ee2b.js" async="" type="fc24b2d142c6605bfb7c4b28-text/javascript"></script><script src="/_next/static/chunks/4909-c1b5e4dc5a286f11.js" async="" type="fc24b2d142c6605bfb7c4b28-text/javascript"></script><script src="/_next/static/chunks/910-5232e6c7d644f39d.js" async="" type="fc24b2d142c6605bfb7c4b28-text/javascript"></script><script src="/_next/static/chunks/1356-756dbcd09b7cc4ff.js" async="" type="fc24b2d142c6605bfb7c4b28-text/javascript"></script><script src="/_next/static/chunks/1776-3c45bd6d128463c5.js" async="" type="fc24b2d142c6605bfb7c4b28-text/javascript"></script><script src="/_next/static/chunks/131-702f1aae7ba494e8.js" async="" type="fc24b2d142c6605bfb7c4b28-text/javascript"></script><script src="/_next/static/chunks/9511-c3956653a74146f7.js" async="" type="fc24b2d142c6605bfb7c4b28-text/javascript"></script><script src="/_next/static/chunks/4204-fe9280f4440cfb0c.js" async="" type="fc24b2d142c6605bfb7c4b28-text/javascript"></script><script src="/_next/static/chunks/5131-3275b511fab91a28.js" async="" type="fc24b2d142c6605bfb7c4b28-text/javascript"></script><script src="/_next/static/chunks/1355-431bd11c9881648a.js" async="" type="fc24b2d142c6605bfb7c4b28-text/javascript"></script><script src="/_next/static/chunks/9233-dc3dfbc09926698a.js" async="" type="fc24b2d142c6605bfb7c4b28-text/javascript"></script><script src="/_next/static/chunks/1808-2abad33e4811e797.js" async="" type="fc24b2d142c6605bfb7c4b28-text/javascript"></script><script src="/_next/static/chunks/268-e3888a7f5383f6e1.js" async="" type="fc24b2d142c6605bfb7c4b28-text/javascript"></script><script src="/_next/static/chunks/app/layout-3024d28c2df83250.js" async="" type="fc24b2d142c6605bfb7c4b28-text/javascript"></script><script src="/_next/static/chunks/ee560e2c-7298e859c1f65b85.js" async="" type="fc24b2d142c6605bfb7c4b28-text/javascript"></script><script src="/_next/static/chunks/9c4e2130-d0624d12f9f67a6a.js" async="" type="fc24b2d142c6605bfb7c4b28-text/javascript"></script><script src="/_next/static/chunks/795d4814-724fe09e910ebbfd.js" async="" type="fc24b2d142c6605bfb7c4b28-text/javascript"></script><script src="/_next/static/chunks/7618-f333da0cb104f5e7.js" async="" type="fc24b2d142c6605bfb7c4b28-text/javascript"></script><script src="/_next/static/chunks/6118-dd0308765d63db9c.js" async="" type="fc24b2d142c6605bfb7c4b28-text/javascript"></script><script src="/_next/static/chunks/4921-8877f018a009660c.js" async="" type="fc24b2d142c6605bfb7c4b28-text/javascript"></script><script src="/_next/static/chunks/5776-10031b2121742d95.js" async="" type="fc24b2d142c6605bfb7c4b28-text/javascript"></script><script src="/_next/static/chunks/9677-d82015a12ee4b5d3.js" async="" type="fc24b2d142c6605bfb7c4b28-text/javascript"></script><script src="/_next/static/chunks/app/not-found-1dcb8166d29332da.js" async="" type="fc24b2d142c6605bfb7c4b28-text/javascript"></script><script src="/_next/static/chunks/1760-332e55f7d7da4739.js" async="" type="fc24b2d142c6605bfb7c4b28-text/javascript"></script><script src="/_next/static/chunks/app/login/sign-in/page-b14e705d15b4e885.js" async="" type="fc24b2d142c6605bfb7c4b28-text/javascript"></script><script src="/_next/static/chunks/app/global-error-5ca6dea8c6a07da9.js" async="" type="fc24b2d142c6605bfb7c4b28-text/javascript"></script><link rel="preload" href="/_next/static/css/126dafa7a103ecc0.css" as="style"/><link rel="preload" href="https://player.vimeo.com/api/player.js" as="script"/><meta name="next-size-adjust" content=""/><link rel="icon" href="/variables/b8c79969-5741-4505-b790-97b72908005a/base/images/icon.png" sizes="any"/><title>King</title><meta name="description" content="King Loterias - Bingo e muito mais!"/><meta name="application-name" content="King"/><link rel="manifest" href="/manifest.webmanifest"/><meta name="generator" content="Next.js"/><meta name="format-detection" content="telephone=no"/><meta name="mobile-web-app-capable" content="yes"/><meta name="apple-mobile-web-app-title" content="King"/><meta name="apple-mobile-web-app-status-bar-style" content="black"/><meta property="og:title" content="King"/><meta property="og:description" content="King Loterias - Bingo e muito mais!"/><meta property="og:site_name" content="King"/><meta property="og:type" content="website"/><meta name="twitter:card" content="summary"/><meta name="twitter:title" content="King"/><meta name="twitter:description" content="King Loterias - Bingo e muito mais!"/><script src="/_next/static/chunks/polyfills-42372ed130431b0a.js" noModule="" type="fc24b2d142c6605bfb7c4b28-text/javascript"></script></head><body class="__className_ce0b29 relative"><div hidden=""><!--$--><!--/$--></div><!--$!--><template data-dgst="BAILOUT_TO_CLIENT_SIDE_RENDERING"></template><!--/$--><!--$!--><template data-dgst="BAILOUT_TO_CLIENT_SIDE_RENDERING"></template><!--/$--><div role="region" aria-label="Notifications (F8)" tabindex="-1" style="pointer-events:none"><ol tabindex="-1" class="fixed top-0 z-[10000] flex max-h-screen w-full flex-col-reverse p-4 sm:right-0 sm:flex-col md:max-w-[420px]"></ol></div><section aria-label="Notifications alt+T" tabindex="-1" aria-live="polite" aria-relevant="additions text" aria-atomic="false"></section><script src="/_next/static/chunks/webpack-2acb5dc0e5246523.js" id="_R_" async="" type="fc24b2d142c6605bfb7c4b28-text/javascript"></script><script type="fc24b2d142c6605bfb7c4b28-text/javascript">(self.__next_f=self.__next_f||[]).push([0])</script><script type="fc24b2d142c6605bfb7c4b28-text/javascript">self.__next_f.push([1,"1:\"$Sreact.fragment\"\n"])</script><script type="fc24b2d142c6605bfb7c4b28-text/javascript">self.__next_f.push([1,"2:I[41402,[\"5105\",\"static/chunks/0e5ce63c-ce5d93874db0ee2b.js\",\"4909\",\"static/chunks/4909-c1b5e4dc5a286f11.js\",\"910\",\"static/chunks/910-5232e6c7d644f39d.js\",\"1356\",\"static/chunks/1356-756dbcd09b7cc4ff.js\",\"1776\",\"static/chunks/1776-3c45bd6d128463c5.js\",\"131\",\"static/chunks/131-702f1aae7ba494e8.js\",\"9511\",\"static/chunks/9511-c3956653a74146f7.js\",\"4204\",\"static/chunks/4204-fe9280f4440cfb0c.js\",\"5131\",\"static/chunks/5131-3275b511fab91a28.js\",\"1355\",\"static/chunks/1355-431bd11c9881648a.js\",\"9233\",\"static/chunks/9233-dc3dfbc09926698a.js\",\"1808\",\"static/chunks/1808-2abad33e4811e797.js\",\"268\",\"static/chunks/268-e3888a7f5383f6e1.js\",\"7177\",\"static/chunks/app/layout-3024d28c2df83250.js\"],\"\"]\n"])</script><script type="fc24b2d142c6605bfb7c4b28-text/javascript">self.__next_f.push([1,"3:I[27935,[\"5105\",\"static/chunks/0e5ce63c-ce5d93874db0ee2b.js\",\"4909\",\"static/chunks/4909-c1b5e4dc5a286f11.js\",\"910\",\"static/chunks/910-5232e6c7d644f39d.js\",\"1356\",\"static/chunks/1356-756dbcd09b7cc4ff.js\",\"1776\",\"static/chunks/1776-3c45bd6d128463c5.js\",\"131\",\"static/chunks/131-702f1aae7ba494e8.js\",\"9511\",\"static/chunks/9511-c3956653a74146f7.js\",\"4204\",\"static/chunks/4204-fe9280f4440cfb0c.js\",\"5131\",\"static/chunks/5131-3275b511fab91a28.js\",\"1355\",\"static/chunks/1355-431bd11c9881648a.js\",\"9233\",\"static/chunks/9233-dc3dfbc09926698a.js\",\"1808\",\"static/chunks/1808-2abad33e4811e797.js\",\"268\",\"static/chunks/268-e3888a7f5383f6e1.js\",\"7177\",\"static/chunks/app/layout-3024d28c2df83250.js\"],\"default\"]\n"])</script><script type="fc24b2d142c6605bfb7c4b28-text/javascript">self.__next_f.push([1,"4:\"$Sreact.suspense\"\n"])</script><script type="fc24b2d142c6605bfb7c4b28-text/javascript">self.__next_f.push([1,"5:I[12437,[\"5105\",\"static/chunks/0e5ce63c-ce5d93874db0ee2b.js\",\"4909\",\"static/chunks/4909-c1b5e4dc5a286f11.js\",\"910\",\"static/chunks/910-5232e6c7d644f39d.js\",\"1356\",\"static/chunks/1356-756dbcd09b7cc4ff.js\",\"1776\",\"static/chunks/1776-3c45bd6d128463c5.js\",\"131\",\"static/chunks/131-702f1aae7ba494e8.js\",\"9511\",\"static/chunks/9511-c3956653a74146f7.js\",\"4204\",\"static/chunks/4204-fe9280f4440cfb0c.js\",\"5131\",\"static/chunks/5131-3275b511fab91a28.js\",\"1355\",\"static/chunks/1355-431bd11c9881648a.js\",\"9233\",\"static/chunks/9233-dc3dfbc09926698a.js\",\"1808\",\"static/chunks/1808-2abad33e4811e797.js\",\"268\",\"static/chunks/268-e3888a7f5383f6e1.js\",\"7177\",\"static/chunks/app/layout-3024d28c2df83250.js\"],\"default\"]\n"])</script><script type="fc24b2d142c6605bfb7c4b28-text/javascript">self.__next_f.push([1,"6:I[61129,[\"5105\",\"static/chunks/0e5ce63c-ce5d93874db0ee2b.js\",\"4909\",\"static/chunks/4909-c1b5e4dc5a286f11.js\",\"910\",\"static/chunks/910-5232e6c7d644f39d.js\",\"1356\",\"static/chunks/1356-756dbcd09b7cc4ff.js\",\"1776\",\"static/chunks/1776-3c45bd6d128463c5.js\",\"131\",\"static/chunks/131-702f1aae7ba494e8.js\",\"9511\",\"static/chunks/9511-c3956653a74146f7.js\",\"4204\",\"static/chunks/4204-fe9280f4440cfb0c.js\",\"5131\",\"static/chunks/5131-3275b511fab91a28.js\",\"1355\",\"static/chunks/1355-431bd11c9881648a.js\",\"9233\",\"static/chunks/9233-dc3dfbc09926698a.js\",\"1808\",\"static/chunks/1808-2abad33e4811e797.js\",\"268\",\"static/chunks/268-e3888a7f5383f6e1.js\",\"7177\",\"static/chunks/app/layout-3024d28c2df83250.js\"],\"default\"]\n"])</script><script type="fc24b2d142c6605bfb7c4b28-text/javascript">self.__next_f.push([1,"7:I[9766,[],\"\"]\n8:I[98924,[],\"\"]\n9:I[33486,[\"844\",\"static/chunks/ee560e2c-7298e859c1f65b85.js\",\"512\",\"static/chunks/9c4e2130-d0624d12f9f67a6a.js\",\"5479\",\"static/chunks/795d4814-724fe09e910ebbfd.js\",\"4909\",\"static/chunks/4909-c1b5e4dc5a286f11.js\",\"910\",\"static/chunks/910-5232e6c7d644f39d.js\",\"1356\",\"static/chunks/1356-756dbcd09b7cc4ff.js\",\"7618\",\"static/chunks/7618-f333da0cb104f5e7.js\",\"6118\",\"static/chunks/6118-dd0308765d63db9c.js\",\"4921\",\"static/chunks/4921-8877f018a009660c.js\",\"5776\",\"static/chunks/5776-10031b2121742d95.js\",\"9677\",\"static/chunks/9677-d82015a12ee4b5d3.js\",\"4345\",\"static/chunks/app/not-found-1dcb8166d29332da.js\"],\"default\"]\n"])</script><script type="fc24b2d142c6605bfb7c4b28-text/javascript">self.__next_f.push([1,"a:I[18516,[\"5105\",\"static/chunks/0e5ce63c-ce5d93874db0ee2b.js\",\"4909\",\"static/chunks/4909-c1b5e4dc5a286f11.js\",\"910\",\"static/chunks/910-5232e6c7d644f39d.js\",\"1356\",\"static/chunks/1356-756dbcd09b7cc4ff.js\",\"1776\",\"static/chunks/1776-3c45bd6d128463c5.js\",\"131\",\"static/chunks/131-702f1aae7ba494e8.js\",\"9511\",\"static/chunks/9511-c3956653a74146f7.js\",\"4204\",\"static/chunks/4204-fe9280f4440cfb0c.js\",\"5131\",\"static/chunks/5131-3275b511fab91a28.js\",\"1355\",\"static/chunks/1355-431bd11c9881648a.js\",\"9233\",\"static/chunks/9233-dc3dfbc09926698a.js\",\"1808\",\"static/chunks/1808-2abad33e4811e797.js\",\"268\",\"static/chunks/268-e3888a7f5383f6e1.js\",\"7177\",\"static/chunks/app/layout-3024d28c2df83250.js\"],\"Toaster\"]\n"])</script><script type="fc24b2d142c6605bfb7c4b28-text/javascript">self.__next_f.push([1,"b:I[4249,[\"5105\",\"static/chunks/0e5ce63c-ce5d93874db0ee2b.js\",\"4909\",\"static/chunks/4909-c1b5e4dc5a286f11.js\",\"910\",\"static/chunks/910-5232e6c7d644f39d.js\",\"1356\",\"static/chunks/1356-756dbcd09b7cc4ff.js\",\"1776\",\"static/chunks/1776-3c45bd6d128463c5.js\",\"131\",\"static/chunks/131-702f1aae7ba494e8.js\",\"9511\",\"static/chunks/9511-c3956653a74146f7.js\",\"4204\",\"static/chunks/4204-fe9280f4440cfb0c.js\",\"5131\",\"static/chunks/5131-3275b511fab91a28.js\",\"1355\",\"static/chunks/1355-431bd11c9881648a.js\",\"9233\",\"static/chunks/9233-dc3dfbc09926698a.js\",\"1808\",\"static/chunks/1808-2abad33e4811e797.js\",\"268\",\"static/chunks/268-e3888a7f5383f6e1.js\",\"7177\",\"static/chunks/app/layout-3024d28c2df83250.js\"],\"Toaster\"]\n"])</script><script type="fc24b2d142c6605bfb7c4b28-text/javascript">self.__next_f.push([1,"c:I[38325,[\"5105\",\"static/chunks/0e5ce63c-ce5d93874db0ee2b.js\",\"4909\",\"static/chunks/4909-c1b5e4dc5a286f11.js\",\"910\",\"static/chunks/910-5232e6c7d644f39d.js\",\"1356\",\"static/chunks/1356-756dbcd09b7cc4ff.js\",\"1776\",\"static/chunks/1776-3c45bd6d128463c5.js\",\"131\",\"static/chunks/131-702f1aae7ba494e8.js\",\"9511\",\"static/chunks/9511-c3956653a74146f7.js\",\"4204\",\"static/chunks/4204-fe9280f4440cfb0c.js\",\"5131\",\"static/chunks/5131-3275b511fab91a28.js\",\"1355\",\"static/chunks/1355-431bd11c9881648a.js\",\"9233\",\"static/chunks/9233-dc3dfbc09926698a.js\",\"1808\",\"static/chunks/1808-2abad33e4811e797.js\",\"268\",\"static/chunks/268-e3888a7f5383f6e1.js\",\"7177\",\"static/chunks/app/layout-3024d28c2df83250.js\"],\"default\"]\n"])</script><script type="fc24b2d142c6605bfb7c4b28-text/javascript">self.__next_f.push([1,"d:I[45516,[\"4909\",\"static/chunks/4909-c1b5e4dc5a286f11.js\",\"910\",\"static/chunks/910-5232e6c7d644f39d.js\",\"1356\",\"static/chunks/1356-756dbcd09b7cc4ff.js\",\"131\",\"static/chunks/131-702f1aae7ba494e8.js\",\"1760\",\"static/chunks/1760-332e55f7d7da4739.js\",\"268\",\"static/chunks/268-e3888a7f5383f6e1.js\",\"4796\",\"static/chunks/app/login/sign-in/page-b14e705d15b4e885.js\"],\"FormLogin\"]\ne:I[24431,[],\"OutletBoundary\"]\n10:I[15278,[],\"AsyncMetadataOutlet\"]\n12:I[24431,[],\"ViewportBoundary\"]\n14:I[24431,[],\"MetadataBoundary\"]\n16:I[54062,[\"4219\",\"static/chunks/app/global-error-5ca6dea8c6a07da9.js\"],\"default\"]\n:HL[\"/_next/static/media/a1187f081f048286-s.p.woff2\",\"font\",{\"crossOrigin\":\"\",\"type\":\"font/woff2\"}]\n:HL[\"/_next/static/css/966b4e756660e40a.css\",\"style\"]\n:HL[\"/_next/static/css/126dafa7a103ecc0.css\",\"style\"]\n"])</script><script type="fc24b2d142c6605bfb7c4b28-text/javascript">self.__next_f.push([1,"0:{\"P\":null,\"b\":\"YoZ-ZiVJt7rVJ78ysCnrm\",\"p\":\"\",\"c\":[\"\",\"login\",\"sign-in\"],\"i\":false,\"f\":[[[\"\",{\"children\":[\"login\",{\"children\":[\"sign-in\",{\"children\":[\"__PAGE__\",{}]}]}]},\"$undefined\",\"$undefined\",true],[\"\",[\"$\",\"$1\",\"c\",{\"children\":[[[\"$\",\"link\",\"0\",{\"rel\":\"stylesheet\",\"href\":\"/_next/static/css/966b4e756660e40a.css\",\"precedence\":\"next\",\"crossOrigin\":\"$undefined\",\"nonce\":\"$undefined\"}]],[\"$\",\"html\",null,{\"lang\":\"pt-br\",\"children\":[[\"$\",\"head\",null,{\"children\":[[\"$\",\"link\",null,{\"rel\":\"icon\",\"href\":\"/variables/b8c79969-5741-4505-b790-97b72908005a/base/images/icon.png\",\"sizes\":\"any\"}],false]}],[\"$\",\"$L2\",null,{\"src\":\"https://player.vimeo.com/api/player.js\"}],[\"$\",\"body\",null,{\"className\":\"__className_ce0b29 relative\",\"children\":[[\"$\",\"$L3\",null,{\"children\":[[\"$\",\"$4\",null,{\"children\":[[\"$\",\"$L5\",null,{}],[\"$\",\"$L6\",null,{}]]}],[\"$\",\"$L7\",null,{\"parallelRouterKey\":\"children\",\"error\":\"$undefined\",\"errorStyles\":\"$undefined\",\"errorScripts\":\"$undefined\",\"template\":[\"$\",\"$L8\",null,{}],\"templateStyles\":\"$undefined\",\"templateScripts\":\"$undefined\",\"notFound\":[[\"$\",\"$L9\",null,{}],[[\"$\",\"link\",\"0\",{\"rel\":\"stylesheet\",\"href\":\"/_next/static/css/126dafa7a103ecc0.css\",\"precedence\":\"next\",\"crossOrigin\":\"$undefined\",\"nonce\":\"$undefined\"}]]],\"forbidden\":\"$undefined\",\"unauthorized\":\"$undefined\"}]]}],[\"$\",\"$La\",null,{}],[\"$\",\"$Lb\",null,{}],[\"$\",\"$Lc\",null,{}]]}]]}]]}],{\"children\":[\"login\",[\"$\",\"$1\",\"c\",{\"children\":[null,[\"$\",\"$4\",null,{\"children\":[\"$\",\"section\",null,{\"className\":\"bg-primary-900 h-full pt-10 pb-20\",\"children\":[\"$\",\"div\",null,{\"children\":[\"$\",\"$L7\",null,{\"parallelRouterKey\":\"children\",\"error\":\"$undefined\",\"errorStyles\":\"$undefined\",\"errorScripts\":\"$undefined\",\"template\":[\"$\",\"$L8\",null,{}],\"templateStyles\":\"$undefined\",\"templateScripts\":\"$undefined\",\"notFound\":\"$undefined\",\"forbidden\":\"$undefined\",\"unauthorized\":\"$undefined\"}]}]}]}]]}],{\"children\":[\"sign-in\",[\"$\",\"$1\",\"c\",{\"children\":[null,[\"$\",\"$L7\",null,{\"parallelRouterKey\":\"children\",\"error\":\"$undefined\",\"errorStyles\":\"$undefined\",\"errorScripts\":\"$undefined\",\"template\":[\"$\",\"$L8\",null,{}],\"templateStyles\":\"$undefined\",\"templateScripts\":\"$undefined\",\"notFound\":\"$undefined\",\"forbidden\":\"$undefined\",\"unauthorized\":\"$undefined\"}]]}],{\"children\":[\"__PAGE__\",[\"$\",\"$1\",\"c\",{\"children\":[[\"$\",\"div\",null,{\"className\":\"h-full bg-primary-900\",\"children\":[\"$\",\"$Ld\",null,{}]}],[[\"$\",\"link\",\"0\",{\"rel\":\"stylesheet\",\"href\":\"/_next/static/css/126dafa7a103ecc0.css\",\"precedence\":\"next\",\"crossOrigin\":\"$undefined\",\"nonce\":\"$undefined\"}]],[\"$\",\"$Le\",null,{\"children\":[\"$Lf\",[\"$\",\"$L10\",null,{\"promise\":\"$@11\"}]]}]]}],{},null,false]},null,false]},null,false]},null,false],[\"$\",\"$1\",\"h\",{\"children\":[null,[[\"$\",\"$L12\",null,{\"children\":\"$L13\"}],[\"$\",\"meta\",null,{\"name\":\"next-size-adjust\",\"content\":\"\"}]],[\"$\",\"$L14\",null,{\"children\":[\"$\",\"div\",null,{\"hidden\":true,\"children\":[\"$\",\"$4\",null,{\"fallback\":null,\"children\":\"$L15\"}]}]}]]}],false]],\"m\":\"$undefined\",\"G\":[\"$16\",[]],\"s\":false,\"S\":true}\n"])</script><script type="fc24b2d142c6605bfb7c4b28-text/javascript">self.__next_f.push([1,"13:[[\"$\",\"meta\",\"0\",{\"charSet\":\"utf-8\"}],[\"$\",\"meta\",\"1\",{\"name\":\"viewport\",\"content\":\"width=device-width, initial-scale=1, maximum-scale=1, viewport-fit=cover, user-scalable=no\"}]]\nf:null\n"])</script><script type="fc24b2d142c6605bfb7c4b28-text/javascript">self.__next_f.push([1,"11:{\"metadata\":[[\"$\",\"title\",\"0\",{\"children\":\"King\"}],[\"$\",\"meta\",\"1\",{\"name\":\"description\",\"content\":\"King Loterias - Bingo e muito mais!\"}],[\"$\",\"meta\",\"2\",{\"name\":\"application-name\",\"content\":\"King\"}],[\"$\",\"link\",\"3\",{\"rel\":\"manifest\",\"href\":\"/manifest.webmanifest\",\"crossOrigin\":\"$undefined\"}],[\"$\",\"meta\",\"4\",{\"name\":\"generator\",\"content\":\"Next.js\"}],[\"$\",\"meta\",\"5\",{\"name\":\"format-detection\",\"content\":\"telephone=no\"}],[\"$\",\"meta\",\"6\",{\"name\":\"mobile-web-app-capable\",\"content\":\"yes\"}],[\"$\",\"meta\",\"7\",{\"name\":\"apple-mobile-web-app-title\",\"content\":\"King\"}],[\"$\",\"meta\",\"8\",{\"name\":\"apple-mobile-web-app-status-bar-style\",\"content\":\"black\"}],[\"$\",\"meta\",\"9\",{\"property\":\"og:title\",\"content\":\"King\"}],[\"$\",\"meta\",\"10\",{\"property\":\"og:description\",\"content\":\"King Loterias - Bingo e muito mais!\"}],[\"$\",\"meta\",\"11\",{\"property\":\"og:site_name\",\"content\":\"King\"}],[\"$\",\"meta\",\"12\",{\"property\":\"og:type\",\"content\":\"website\"}],[\"$\",\"meta\",\"13\",{\"name\":\"twitter:card\",\"content\":\"summary\"}],[\"$\",\"meta\",\"14\",{\"name\":\"twitter:title\",\"content\":\"King\"}],[\"$\",\"meta\",\"15\",{\"name\":\"twitter:description\",\"content\":\"King Loterias - Bingo e muito mais!\"}]],\"error\":null,\"digest\":\"$undefined\"}\n"])</script><script type="fc24b2d142c6605bfb7c4b28-text/javascript">self.__next_f.push([1,"15:\"$11:metadata\"\n"])</script><script src="/cdn-cgi/scripts/7d0fa10a/cloudflare-static/rocket-loader.min.js" data-cf-settings="fc24b2d142c6605bfb7c4b28-|49" defer></script><script defer src="https://static.cloudflareinsights.com/beacon.min.js/vcd15cbe7772f49c399c6a5babf22c1241717689176015" integrity="sha512-ZpsOmlRQV6y907TI0dKBHq9Md29nnaEIPlkf84rnaERnq6zvWvPUqr2ft8M1aS28oN72PdrCzSjY4U6VaAw1EQ==" data-cf-beacon='{"version":"2024.11.0","token":"c383d88231aa487b8175c6047353a678","server_timing":{"name":{"cfCacheStatus":true,"cfEdge":true,"cfExtPri":true,"cfL4":true,"cfOrigin":true,"cfSpeedBrain":true},"location_startswith":null}}' crossorigin="anonymous"></script>
+        2: </body></html>
+
+============================================================
+ARQUIVO: backend\scripts\importKingApostas.js
+============================================================
+
+--- CONTEXTO LINHA 454 — 442 até 472 ---
+      442:     draw?.lotteryUuid,
+      443:     draw?.lottery,
+      444:     draw?.lottery_key,
+      445:   ];
+      446:   for (const c of candidates) {
+      447:     const s = String(c ?? "").trim();
+      448:     if (s) return s;
+      449:   }
+      450:   return null;
+      451: }
+      452: 
+      453: /**
+>>>   454:  * Loterias (IDs) capturadas do Network.
+      455:  * Observação: a API pode consolidar em 1 draw por close_hour, mesmo havendo múltiplos IDs aqui.
+      456:  *
+      457:  * ✅ Agora aceita override via ENV:
+      458:  * - KING_LOTTERIES_PT_RIO="uuid1,uuid2,..."
+      459:  * - KING_LOTTERIES_FEDERAL="uuid1,uuid2,..."
+      460:  */
+      461: const LOTTERIES_BY_KEY = {
+      462:   PT_RIO: [
+      463:     "c168d9b3-97b7-42dc-a332-7815edaa51e2",
+      464:     "cbac7c11-e733-400b-ba4d-2dfe0cba4272",
+      465:     "98352455-8fd3-447d-ab3d-701dc3f7865f",
+      466:     "76c127b7-8157-46b6-a64a-ec7ed1574c9f",
+      467:     "8290329b-aac0-4a6a-9649-5feb6182cf4f",
+      468:     "d5123f7e-629d-43e9-a8fb-1385ff1cba45",
+      469:   ],
+      470:   FEDERAL: [],
+      471: };
+      472: 
+
+===== ROTAS E IMPORTAÇÕES =====
+
+Arquivo  : src\App.jsx
+Linha    : 8
+Padrao   : /late
+Conteudo : import LateMod from "./pages/Late/Late";
+
+Arquivo  : src\App.jsx
+Linha    : 8
+Padrao   : Late
+Conteudo : import LateMod from "./pages/Late/Late";
+
+Arquivo  : src\App.jsx
+Linha    : 55
+Padrao   : Late
+Conteudo : LATE: "late",
+
+Arquivo  : src\App.jsx
+Linha    : 373
+Padrao   : Late
+Conteudo : case ROUTES.LATE:
+
+Arquivo  : src\App.jsx
+Linha    : 374
+Padrao   : /late
+Conteudo : return "/late";
+
+Arquivo  : src\App.jsx
+Linha    : 374
+Padrao   : Late
+Conteudo : return "/late";
+
+Arquivo  : src\App.jsx
+Linha    : 396
+Padrao   : /late
+Conteudo : if (p === "/late") return ROUTES.LATE;
+
+Arquivo  : src\App.jsx
+Linha    : 396
+Padrao   : Late
+Conteudo : if (p === "/late") return ROUTES.LATE;
+
+Arquivo  : src\App.jsx
+Linha    : 448
+Padrao   : Late
+Conteudo : const Late = useMemo(() => resolveComponent(LateMod, "Late"), []);
+
+Arquivo  : src\App.jsx
+Linha    : 662
+Padrao   : Late
+Conteudo : case ROUTES.LATE:
+
+Arquivo  : src\App.jsx
+Linha    : 663
+Padrao   : Late
+Conteudo : return <Late />;
+
+Arquivo  : src\pages\Account\account.ui.js
+Linha    : 81
+Padrao   : Late
+Conteudo : gridTemplateColumns: gridIsMobile ? "1fr" : "92px 1fr",
+
+Arquivo  : src\pages\Account\account.ui.js
+Linha    : 177
+Padrao   : Late
+Conteudo : gridTemplateColumns: gridIsMobile ? "1fr" : "140px 1fr",
+
+Arquivo  : src\pages\Admin\AdminLogin.jsx
+Linha    : 31
+Padrao   : Late
+Conteudo : function translateAuthError(error) {
+
+Arquivo  : src\pages\Admin\AdminLogin.jsx
+Linha    : 221
+Padrao   : Late
+Conteudo : translateAuthError(loginError)
+
+Arquivo  : src\pages\Centenas\centenas.styles.js
+Linha    : 22
+Padrao   : Late
+Conteudo : grid-template-columns: 1fr;
+
+Arquivo  : src\pages\Centenas\centenas.styles.js
+Linha    : 25
+Padrao   : Late
+Conteudo : @media (min-width: 720px){ .cx0_filters{ grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+Arquivo  : src\pages\Centenas\centenas.styles.js
+Linha    : 26
+Padrao   : Late
+Conteudo : @media (min-width: 1100px){ .cx0_filters{ grid-template-columns: repeat(6, minmax(0, 1fr)); } }
+
+Arquivo  : src\pages\Centenas\centenas.styles.js
+Linha    : 71
+Padrao   : Late
+Conteudo : transform:translateY(-50%);
+
+Arquivo  : src\pages\Centenas\centenas.styles.js
+Linha    : 155
+Padrao   : Late
+Conteudo : grid-template-columns: 1fr;
+
+Arquivo  : src\pages\Centenas\centenas.styles.js
+Linha    : 160
+Padrao   : Late
+Conteudo : @media (min-width: 980px){ .cx0_grid{ grid-template-columns: 320px 1fr; } }
+
+Arquivo  : src\pages\Centenas\centenas.styles.js
+Linha    : 191
+Padrao   : Late
+Conteudo : transform:translateZ(0);
+
+Arquivo  : src\pages\Centenas\centenas.styles.js
+Linha    : 269
+Padrao   : Late
+Conteudo : grid-template-columns: 90px 140px 140px 1fr;
+
+Arquivo  : src\pages\Centenas\centenas.styles.js
+Linha    : 307
+Padrao   : Late
+Conteudo : .cx0_row{ grid-template-columns: 70px 110px 110px 1fr; }
+
+Arquivo  : src\pages\Centenas\CentenasView.jsx
+Linha    : 1340
+Padrao   : Late
+Conteudo : grid-template-columns: 1fr;
+
+Arquivo  : src\pages\Centenas\CentenasView.jsx
+Linha    : 1343
+Padrao   : Late
+Conteudo : @media (min-width: 720px){ .cx0_filters{ grid-template-columns: repeat(2, minmax(0, 1fr)); } }
+
+Arquivo  : src\pages\Centenas\CentenasView.jsx
+Linha    : 1344
+Padrao   : Late
+Conteudo : @media (min-width: 1100px){ .cx0_filters{ grid-template-columns: repeat(6, minmax(0, 1fr)); } }
+
+Arquivo  : src\pages\Centenas\CentenasView.jsx
+Linha    : 1389
+Padrao   : Late
+Conteudo : transform:translateY(-50%);
+
+Arquivo  : src\pages\Centenas\CentenasView.jsx
+Linha    : 1509
+Padrao   : Late
+Conteudo : grid-template-columns:1fr;
+
+Arquivo  : src\pages\Centenas\CentenasView.jsx
+Linha    : 1514
+Padrao   : Late
+Conteudo : .cx0_modalBtns{ grid-template-columns:1fr 1fr; }
+
+Arquivo  : src\pages\Centenas\CentenasView.jsx
+Linha    : 1564
+Padrao   : Late
+Conteudo : grid-template-columns: 1fr;
+
+Arquivo  : src\pages\Centenas\CentenasView.jsx
+Linha    : 1569
+Padrao   : Late
+Conteudo : @media (min-width: 980px){ .cx0_grid{ grid-template-columns: 320px 1fr; } }
+
+Arquivo  : src\pages\Centenas\CentenasView.jsx
+Linha    : 1600
+Padrao   : Late
+Conteudo : transform:translateZ(0);
+
+Arquivo  : src\pages\Centenas\CentenasView.jsx
+Linha    : 1678
+Padrao   : Late
+Conteudo : grid-template-columns: 90px 140px 140px 1fr;
+
+Arquivo  : src\pages\Centenas\CentenasView.jsx
+Linha    : 1715
+Padrao   : Late
+Conteudo : .cx0_row{ grid-template-columns: 70px 110px 110px 1fr; }
+
+Arquivo  : src\pages\Dashboard\components\ChartsGrid.jsx
+Linha    : 1477
+Padrao   : Late
+Conteudo : gridTemplateColumns: "4.2fr 4.2fr 2.8fr",
+
+Arquivo  : src\pages\Dashboard\components\ChartsGrid.jsx
+Linha    : 1478
+Padrao   : Late
+Conteudo : gridTemplateRows: "minmax(0, 1fr) minmax(0, 1fr)",
+
+Arquivo  : src\pages\Dashboard\components\ChartsGrid.jsx
+Linha    : 1479
+Padrao   : Late
+Conteudo : gridTemplateAreas: `
+
+Arquivo  : src\pages\Dashboard\components\ChartsGrid.jsx
+Linha    : 1625
+Padrao   : Late
+Conteudo : gridTemplateColumns: "170px 1fr 92px",
+
+Arquivo  : src\pages\Dashboard\components\ChartsGrid.jsx
+Linha    : 1743
+Padrao   : Late
+Conteudo : gridTemplateColumns: "64px 1fr 84px",
+
+Arquivo  : src\pages\Dashboard\components\ChartsGrid.jsx
+Linha    : 1756
+Padrao   : Late
+Conteudo : gridTemplateColumns: "1fr 1fr 84px",
+
+Arquivo  : src\pages\Dashboard\components\ChartsGrid.jsx
+Linha    : 1878
+Padrao   : Late
+Conteudo : grid-template-columns: 1fr 1fr;
+
+Arquivo  : src\pages\Dashboard\components\ChartsGrid.jsx
+Linha    : 1879
+Padrao   : Late
+Conteudo : grid-template-rows: auto;
+
+Arquivo  : src\pages\Dashboard\components\ChartsGrid.jsx
+Linha    : 1880
+Padrao   : Late
+Conteudo : grid-template-areas:
+
+Arquivo  : src\pages\Dashboard\components\ChartsGrid.jsx
+Linha    : 1890
+Padrao   : Late
+Conteudo : grid-template-columns: 1fr;
+
+Arquivo  : src\pages\Dashboard\components\ChartsGrid.jsx
+Linha    : 1891
+Padrao   : Late
+Conteudo : grid-template-areas:
+
+Arquivo  : src\pages\Dashboard\components\DateRangeControl.jsx
+Linha    : 394
+Padrao   : Late
+Conteudo : gridTemplateColumns: "1fr 1fr",
+
+Arquivo  : src\pages\Dashboard\components\DateRangeControl.jsx
+Linha    : 430
+Padrao   : Late
+Conteudo : transform: "translateY(-50%)",
+
+Arquivo  : src\pages\Dashboard\components\DateRangeControl.jsx
+Linha    : 454
+Padrao   : Late
+Conteudo : isolation: "isolate", // ✅ stacking context consistente pro z-index
+
+Arquivo  : src\pages\Dashboard\components\DateRangeControl.jsx
+Linha    : 463
+Padrao   : Late
+Conteudo : transform: "translateY(-50%)",
+
+Arquivo  : src\pages\Dashboard\components\DateRangeControl.jsx
+Linha    : 476
+Padrao   : Late
+Conteudo : transform: "translateY(-50%)",
+
+Arquivo  : src\pages\Dashboard\components\DateRangeControl.jsx
+Linha    : 551
+Padrao   : Late
+Conteudo : transform: translateY(-50%) scale(1.03);
+
+Arquivo  : src\pages\Dashboard\components\DateRangeControl.jsx
+Linha    : 555
+Padrao   : Late
+Conteudo : transform: translateY(-50%) scale(0.98);
+
+Arquivo  : src\pages\Dashboard\components\DateRangeControl.jsx
+Linha    : 562
+Padrao   : Late
+Conteudo : transform: translateY(-1px);
+
+Arquivo  : src\pages\Dashboard\components\DateRangeControl.jsx
+Linha    : 573
+Padrao   : Late
+Conteudo : transform: translateY(-1px);
+
+Arquivo  : src\pages\Dashboard\components\DateRangeControl.jsx
+Linha    : 578
+Padrao   : Late
+Conteudo : .pp_range_row{ grid-template-columns: 1fr !important; }
+
+Arquivo  : src\pages\Dashboard\components\DateRangeControl.jsx
+Linha    : 582
+Padrao   : Late
+Conteudo : grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+
+Arquivo  : src\pages\Dashboard\components\FiltersBar.jsx
+Linha    : 398
+Padrao   : Late
+Conteudo : gridTemplateColumns: "repeat(12, minmax(0, 1fr))",
+
+Arquivo  : src\pages\Dashboard\components\FiltersBar.jsx
+Linha    : 456
+Padrao   : Late
+Conteudo : transform: "translateY(-50%)",
+
+Arquivo  : src\pages\Dashboard\components\FiltersBar.jsx
+Linha    : 469
+Padrao   : Late
+Conteudo : .pp_filters_grid{ grid-template-columns: repeat(8, minmax(0, 1fr)); }
+
+Arquivo  : src\pages\Dashboard\components\FiltersBar.jsx
+Linha    : 479
+Padrao   : Late
+Conteudo : .pp_filters_grid{ grid-template-columns: repeat(4, minmax(0, 1fr)); }
+
+Arquivo  : src\pages\Dashboard\components\KpiCards.jsx
+Linha    : 360
+Padrao   : Late
+Conteudo : gridTemplateColumns: `repeat(${cols}, minmax(0, 1fr))`,
+
+Arquivo  : src\pages\Dashboard\components\KpiCards.jsx
+Linha    : 375
+Padrao   : Late
+Conteudo : gridTemplateRows: "auto 1px 1fr",
+
+Arquivo  : src\pages\Dashboard\components\KpiCards.jsx
+Linha    : 441
+Padrao   : Late
+Conteudo : transform: "translateY(6px)",
+
+Arquivo  : src\pages\Dashboard\components\KpiCards.jsx
+Linha    : 474
+Padrao   : Late
+Conteudo : grid-template-columns: 1fr !important;
+
+Arquivo  : src\pages\Dashboard\components\LeftRankingTable.jsx
+Linha    : 642
+Padrao   : Late
+Conteudo : gridTemplateColumns: GRID_COLS,
+
+Arquivo  : src\pages\Dashboard\components\LeftRankingTable.jsx
+Linha    : 716
+Padrao   : Late
+Conteudo : transform: "translateY(-0.5px)",
+
+Arquivo  : src\pages\Dashboard\components\LeftRankingTable.jsx
+Linha    : 731
+Padrao   : Late
+Conteudo : gridTemplateColumns: GRID_COLS,
+
+Arquivo  : src\pages\Dashboard\components\SearchInput.jsx
+Linha    : 203
+Padrao   : Late
+Conteudo : transform:translateY(-1px);
+
+Arquivo  : src\pages\Dashboard\components\SearchSummary.jsx
+Linha    : 97
+Padrao   : Late
+Conteudo : grid-template-columns:1fr 1fr;
+
+Arquivo  : src\pages\Dashboard\components\SearchSummary.jsx
+Linha    : 130
+Padrao   : Late
+Conteudo : grid-template-columns: 1fr;
+
+Arquivo  : src\pages\Dashboard\components\Sidebar\AppShell.jsx
+Linha    : 13
+Padrao   : Late
+Conteudo : LATE: "late",
+
+Arquivo  : src\pages\Dashboard\components\Sidebar\AppShell.jsx
+Linha    : 269
+Padrao   : Late
+Conteudo : transform: sidebarOpen ? "translateX(0)" : "translateX(-110%)",
+
+Arquivo  : src\pages\Dashboard\components\Sidebar\AppShell.jsx
+Linha    : 467
+Padrao   : Atrasados
+Conteudo : { key: ROUTES.LATE, icon: "clock", title: "Atrasados" },
+
+Arquivo  : src\pages\Dashboard\components\Sidebar\AppShell.jsx
+Linha    : 467
+Padrao   : Late
+Conteudo : { key: ROUTES.LATE, icon: "clock", title: "Atrasados" },
+
+Arquivo  : src\pages\Dashboard\components\Sidebar\AppShell.jsx
+Linha    : 495
+Padrao   : Late
+Conteudo : e.currentTarget.style.transform = "translateY(-1px)";
+
+Arquivo  : src\pages\Dashboard\components\Sidebar\AppShell.jsx
+Linha    : 503
+Padrao   : Late
+Conteudo : e.currentTarget.style.transform = "translateY(0)";
+
+Arquivo  : src\pages\Dashboard\components\Sidebar\AppShell.jsx
+Linha    : 524
+Padrao   : Late
+Conteudo : <aside style={UI.sidebar} aria-label="Menu lateral">
+
+Arquivo  : src\pages\Dashboard\components\Sidebar\AppShell.jsx
+Linha    : 551
+Padrao   : Late
+Conteudo : e.currentTarget.style.transform = "translateY(-1px)";
+
+Arquivo  : src\pages\Dashboard\components\Sidebar\AppShell.jsx
+Linha    : 557
+Padrao   : Late
+Conteudo : e.currentTarget.style.transform = "translateY(0)";
+
+Arquivo  : src\pages\Dashboard\Dashboard.jsx
+Linha    : 439
+Padrao   : Late
+Conteudo : <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
+
+Arquivo  : src\pages\Downloads\Downloads.jsx
+Linha    : 972
+Padrao   : Late
+Conteudo : grid-template-columns:
+
+Arquivo  : src\pages\Downloads\Downloads.jsx
+Linha    : 989
+Padrao   : Late
+Conteudo : .pp-exportBar{ grid-template-columns: repeat(3, minmax(0, 1fr)); }
+
+Arquivo  : src\pages\Downloads\Downloads.jsx
+Linha    : 992
+Padrao   : Late
+Conteudo : .pp-exportBar{ grid-template-columns: repeat(2, minmax(0, 1fr)); }
+
+Arquivo  : src\pages\Downloads\Downloads.jsx
+Linha    : 995
+Padrao   : Late
+Conteudo : .pp-exportBar{ grid-template-columns: 1fr; }
+
+Arquivo  : src\pages\Downloads\Downloads.jsx
+Linha    : 1090
+Padrao   : Late
+Conteudo : .pp-btn:active{ transform: translateY(1px); }
+
+Arquivo  : src\pages\Late\Late.jsx
+Linha    : 1
+Padrao   : /late
+Conteudo : // src/pages/Late/Late.jsx
+
+Arquivo  : src\pages\Late\Late.jsx
+Linha    : 1
+Padrao   : Late
+Conteudo : // src/pages/Late/Late.jsx
+
+Arquivo  : src\pages\Late\Late.jsx
+Linha    : 6
+Padrao   : Late
+Conteudo : getKingLateByRange,
+
+Arquivo  : src\pages\Late\Late.jsx
+Linha    : 14
+Padrao   : Atrasados
+Conteudo : * Late (Atrasados) — Premium
+
+Arquivo  : src\pages\Late\Late.jsx
+Linha    : 14
+Padrao   : Late
+Conteudo : * Late (Atrasados) — Premium
+
+Arquivo  : src\pages\Late\Late.jsx
+Linha    : 17
+Padrao   : Late
+Conteudo : * - Usa getKingLateByRange() (varre histórico interno com prizes)
+
+Arquivo  : src\pages\Late\Late.jsx
+Linha    : 145
+Padrao   : Late
+Conteudo : function pickLatestCloseHour(drawsLike) {
+
+Arquivo  : src\pages\Late\Late.jsx
+Linha    : 180
+Padrao   : Late
+Conteudo : function mergeLateLists(lists, baseYmd) {
+
+Arquivo  : src\pages\Late\Late.jsx
+Linha    : 211
+Padrao   : Late
+Conteudo : const daysLate = lastYmd ? diffDaysUTC(lastYmd, baseYmd) : null;
+
+Arquivo  : src\pages\Late\Late.jsx
+Linha    : 218
+Padrao   : Late
+Conteudo : daysLate,
+
+Arquivo  : src\pages\Late\Late.jsx
+Linha    : 224
+Padrao   : Late
+Conteudo : const aa = a.daysLate == null ? 999999 : a.daysLate;
+
+Arquivo  : src\pages\Late\Late.jsx
+Linha    : 225
+Padrao   : Late
+Conteudo : const bb = b.daysLate == null ? 999999 : b.daysLate;
+
+Arquivo  : src\pages\Late\Late.jsx
+Linha    : 282
+Padrao   : Late
+Conteudo : const LATE_LOTTERY_OPTIONS = [
+
+Arquivo  : src\pages\Late\Late.jsx
+Linha    : 309
+Padrao   : Late
+Conteudo : const LATE_HOUR_OPTIONS = {
+
+Arquivo  : src\pages\Late\Late.jsx
+Linha    : 334
+Padrao   : Late
+Conteudo : export default function Late() {
+
+Arquivo  : src\pages\Late\Late.jsx
+Linha    : 374
+Padrao   : Late
+Conteudo : LATE_HOUR_OPTIONS[selectedLotteryId] ||
+
+Arquivo  : src\pages\Late\Late.jsx
+Linha    : 375
+Padrao   : Late
+Conteudo : LATE_HOUR_OPTIONS.PT_RIO,
+
+Arquivo  : src\pages\Late\Late.jsx
+Linha    : 389
+Padrao   : Late
+Conteudo : const selectedLateLottery = useMemo(
+
+Arquivo  : src\pages\Late\Late.jsx
+Linha    : 391
+Padrao   : Late
+Conteudo : LATE_LOTTERY_OPTIONS.find(
+
+Arquivo  : src\pages\Late\Late.jsx
+Linha    : 393
+Padrao   : Late
+Conteudo : ) || LATE_LOTTERY_OPTIONS[0],
+
+Arquivo  : src\pages\Late\Late.jsx
+Linha    : 397
+Padrao   : Late
+Conteudo : const selectedLateLotteries = useMemo(
+
+Arquivo  : src\pages\Late\Late.jsx
+Linha    : 398
+Padrao   : Late
+Conteudo : () => selectedLateLottery.lotteries,
+
+Arquivo  : src\pages\Late\Late.jsx
+Linha    : 399
+Padrao   : Late
+Conteudo : [selectedLateLottery]
+
+Arquivo  : src\pages\Late\Late.jsx
+Linha    : 402
+Padrao   : Late
+Conteudo : const selectedLateUf = selectedLateLottery.uf;
+
+Arquivo  : src\pages\Late\Late.jsx
+Linha    : 404
+Padrao   : Late
+Conteudo : const LOTTERY_DISPLAY = selectedLateLottery.label;
+
+Arquivo  : src\pages\Late\Late.jsx
+Linha    : 470
+Padrao   : Late
+Conteudo : uf: selectedLateUf,
+
+Arquivo  : src\pages\Late\Late.jsx
+Linha    : 477
+Padrao   : Late
+Conteudo : const latest = pickLatestCloseHour(dayResult);
+
+Arquivo  : src\pages\Late\Late.jsx
+Linha    : 478
+Padrao   : Late
+Conteudo : if (latest?.ymd && latest?.closeHour) {
+
+Arquivo  : src\pages\Late\Late.jsx
+Linha    : 479
+Padrao   : Late
+Conteudo : return { ymd: String(latest.ymd || maxYmd), closeHour: String(latest.closeHour || "") };
+
+Arquivo  : src\pages\Late\Late.jsx
+Linha    : 485
+Padrao   : Late
+Conteudo : const b = await getKingBoundsByUf({ uf: selectedLateUf });
+
+Arquivo  : src\pages\Late\Late.jsx
+Linha    : 518
+Padrao   : Late
+Conteudo : async function buildLateList({ targetYmd, effBounds }) {
+
+Arquivo  : src\pages\Late\Late.jsx
+Linha    : 527
+Padrao   : Atrasados
+Conteudo : // 1) Consulta atrasados por posição (1 ou várias) via SUA base
+
+Arquivo  : src\pages\Late\Late.jsx
+Linha    : 530
+Padrao   : Late
+Conteudo : const list = await getKingLateByRange({
+
+Arquivo  : src\pages\Late\Late.jsx
+Linha    : 531
+Padrao   : Late
+Conteudo : uf: selectedLateUf,
+
+Arquivo  : src\pages\Late\Late.jsx
+Linha    : 532
+Padrao   : Late
+Conteudo : lotteries: selectedLateLotteries,
+
+Arquivo  : src\pages\Late\Late.jsx
+Linha    : 553
+Padrao   : Late
+Conteudo : // 2) Merge (1-5) e cálculo de daysLate
+
+Arquivo  : src\pages\Late\Late.jsx
+Linha    : 554
+Padrao   : Late
+Conteudo : const merged = mergeLateLists(lists, safeTarget);
+
+Arquivo  : src\pages\Late\Late.jsx
+Linha    : 573
+Padrao   : Late
+Conteudo : const aa = a.daysLate == null ? 999999 : a.daysLate;
+
+Arquivo  : src\pages\Late\Late.jsx
+Linha    : 574
+Padrao   : Late
+Conteudo : const bb = b.daysLate == null ? 999999 : b.daysLate;
+
+Arquivo  : src\pages\Late\Late.jsx
+Linha    : 611
+Padrao   : Late
+Conteudo : const result = await buildLateList({ targetYmd: dateYmd, effBounds });
+
+Arquivo  : src\pages\Late\Late.jsx
+Linha    : 628
+Padrao   : Late
+Conteudo : selectedLateUf,
+
+Arquivo  : src\pages\Late\Late.jsx
+Linha    : 629
+Padrao   : Late
+Conteudo : selectedLateLotteries,
+
+Arquivo  : src\pages\Late\Late.jsx
+Linha    : 692
+Padrao   : Late
+Conteudo : const b = await getKingBoundsByUf({ uf: selectedLateUf });
+
+Arquivo  : src\pages\Late\Late.jsx
+Linha    : 753
+Padrao   : Late
+Conteudo : <div className="ppLate">
+
+Arquivo  : src\pages\Late\Late.jsx
+Linha    : 755
+Padrao   : Late
+Conteudo : .ppLate{
+
+Arquivo  : src\pages\Late\Late.jsx
+Linha    : 767
+Padrao   : Late
+Conteudo : .ppLateHeader{ display:grid; grid-template-columns:1fr; gap:8px; flex:0 0 auto; }
+
+Arquivo  : src\pages\Late\Late.jsx
+Linha    : 769
+Padrao   : Late
+Conteudo : .ppLateTitleWrap{ display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; }
+
+Arquivo  : src\pages\Late\Late.jsx
+Linha    : 770
+Padrao   : Late
+Conteudo : .ppLateTitle{ font-size:20px; font-weight:800; letter-spacing:0.6px; text-transform:uppercase; text-align:center; margin:0; line-height:1.05; }
+
+Arquivo  : src\pages\Late\Late.jsx
+Linha    : 771
+Padrao   : Late
+Conteudo : .ppLateSubtitle{ font-size:11px; color:rgba(233,233,233,0.72); text-align:center; line-height:1.15; }
+
+Arquivo  : src\pages\Late\Late.jsx
+Linha    : 772
+Padrao   : Late
+Conteudo : .ppLateSubtitle b{ color:#caa64b; font-weight:800; }
+
+Arquivo  : src\pages\Late\Late.jsx
+Linha    : 774
+Padrao   : Late
+Conteudo : .ppLateControls{ display:flex; justify-content:center; align-items:center; gap:8px; flex-wrap:wrap; }
+
+Arquivo  : src\pages\Late\Late.jsx
+Linha    : 788
+Padrao   : Late
+Conteudo : .ppBtn:hover{ transform:translateY(-1px); border-color:rgba(202,166,75,0.55); background:rgba(0,0,0,0.72); }
+
+Arquivo  : src\pages\Late\Late.jsx
+Linha    : 801
+Padrao   : Late
+Conteudo : .ppLatePanel{
+
+Arquivo  : src\pages\Late\Late.jsx
+Linha    : 815
+Padrao   : Late
+Conteudo : .ppLateTableWrap{
+
+Arquivo  : src\pages\Late\Late.jsx
+Linha    : 825
+Padrao   : Late
+Conteudo : .ppLateTable{
+
+Arquivo  : src\pages\Late\Late.jsx
+Linha    : 832
+Padrao   : Late
+Conteudo : .ppLateTable thead th,
+
+Arquivo  : src\pages\Late\Late.jsx
+Linha    : 833
+Padrao   : Late
+Conteudo : .ppLateTable tbody td{
+
+Arquivo  : src\pages\Late\Late.jsx
+Linha    : 837
+Padrao   : Late
+Conteudo : .ppLateTable thead th{
+
+Arquivo  : src\pages\Late\Late.jsx
+Linha    : 852
+Padrao   : Late
+Conteudo : .ppLateTable tbody td{
+
+Arquivo  : src\pages\Late\Late.jsx
+Linha    : 862
+Padrao   : Late
+Conteudo : .ppLateTable tbody tr:hover td{ background:rgba(202,166,75,0.06); }
+
+Arquivo  : src\pages\Late\Late.jsx
+Linha    : 886
+Padrao   : Late
+Conteudo : .ppLate{ padding:12px 12px 10px; }
+
+Arquivo  : src\pages\Late\Late.jsx
+Linha    : 887
+Padrao   : Late
+Conteudo : .ppLateTable{ width:100%; }
+
+Arquivo  : src\pages\Late\Late.jsx
+Linha    : 892
+Padrao   : Late
+Conteudo : <div className="ppLateHeader">
+
+Arquivo  : src\pages\Late\Late.jsx
+Linha    : 893
+Padrao   : Late
+Conteudo : <div className="ppLateTitleWrap">
+
+Arquivo  : src\pages\Late\Late.jsx
+Linha    : 894
+Padrao   : Atrasados
+Conteudo : <h1 className="ppLateTitle">Atrasados</h1>
+
+Arquivo  : src\pages\Late\Late.jsx
+Linha    : 894
+Padrao   : Late
+Conteudo : <h1 className="ppLateTitle">Atrasados</h1>
+
+Arquivo  : src\pages\Late\Late.jsx
+Linha    : 896
+Padrao   : Late
+Conteudo : <div className="ppLateSubtitle">
+
+Arquivo  : src\pages\Late\Late.jsx
+Linha    : 916
+Padrao   : Late
+Conteudo : <div className="ppLateControls">
+
+Arquivo  : src\pages\Late\Late.jsx
+Linha    : 920
+Padrao   : Late
+Conteudo : <label htmlFor="lateLottery">Loteria</label>
+
+Arquivo  : src\pages\Late\Late.jsx
+Linha    : 923
+Padrao   : Late
+Conteudo : id="lateLottery"
+
+Arquivo  : src\pages\Late\Late.jsx
+Linha    : 930
+Padrao   : Late
+Conteudo : {LATE_LOTTERY_OPTIONS.map((option) => (
+
+Arquivo  : src\pages\Late\Late.jsx
+Linha    : 941
+Padrao   : Late
+Conteudo : <label htmlFor="lateHour">Horário</label>
+
+Arquivo  : src\pages\Late\Late.jsx
+Linha    : 944
+Padrao   : Late
+Conteudo : id="lateHour"
+
+Arquivo  : src\pages\Late\Late.jsx
+Linha    : 1006
+Padrao   : Late
+Conteudo : <div className="ppLatePanel">
+
+Arquivo  : src\pages\Late\Late.jsx
+Linha    : 1007
+Padrao   : Late
+Conteudo : <div className="ppLateTableWrap">
+
+Arquivo  : src\pages\Late\Late.jsx
+Linha    : 1008
+Padrao   : Late
+Conteudo : <table className="ppLateTable">
+
+Arquivo  : src\pages\Late\Late.jsx
+Linha    : 1026
+Padrao   : Late
+Conteudo : const days = r.daysLate == null ? "—" : String(r.daysLate);
+
+Arquivo  : src\pages\Late\Late.jsx
+Linha    : 1049
+Padrao   : Late
+Conteudo : {r.daysLate == null ? (
+
+Arquivo  : src\pages\Results\Results.jsx
+Linha    : 952
+Padrao   : Late
+Conteudo : grid-template-rows: auto 1fr;
+
+Arquivo  : src\pages\Results\Results.jsx
+Linha    : 1048
+Padrao   : Late
+Conteudo : grid-template-rows: auto auto 1fr;
+
+Arquivo  : src\pages\Results\Results.jsx
+Linha    : 1073
+Padrao   : Late
+Conteudo : grid-template-columns: repeat(2, minmax(0, 460px));
+
+Arquivo  : src\pages\Results\Results.jsx
+Linha    : 1161
+Padrao   : Late
+Conteudo : grid-template-columns: 58px 1fr 110px;
+
+Arquivo  : src\pages\Results\Results.jsx
+Linha    : 1349
+Padrao   : Late
+Conteudo : grid-template-columns: repeat(7, 1fr);
+
+Arquivo  : src\pages\Results\Results.jsx
+Linha    : 1364
+Padrao   : Late
+Conteudo : grid-template-columns: repeat(7, 1fr);
+
+Arquivo  : src\pages\Results\Results.jsx
+Linha    : 1420
+Padrao   : Late
+Conteudo : transform:translateX(-50%);
+
+Arquivo  : src\pages\Results\Results.jsx
+Linha    : 1455
+Padrao   : Late
+Conteudo : .pp_grid2{ grid-template-columns: 1fr; }
+
+Arquivo  : src\pages\Results\Results.jsx
+Linha    : 1472
+Padrao   : Late
+Conteudo : .pp_row{ grid-template-columns: 56px 1fr 104px; padding: 10px 10px; }
+
+Arquivo  : src\pages\Search\Search.jsx
+Linha    : 1005
+Padrao   : Late
+Conteudo : transform:translateY(-1px);
+
+Arquivo  : src\pages\Search\Search.jsx
+Linha    : 1061
+Padrao   : Late
+Conteudo : .ppBtn:hover{ transform:translateY(-1px); border-color:rgba(202,166,75,0.55); background:rgba(0,0,0,0.72); }
+
+Arquivo  : src\pages\Top3\__tests__\top3.public-api.node.test.js
+Linha    : 14
+Padrao   : Late
+Conteudo : "calculateEvidenceStrength",
+
+Arquivo  : src\pages\Top3\modules\scoreEngine\scoreEngineV2.backup.js
+Linha    : 19
+Padrao   : Late
+Conteudo : function calculateEvidenceStrength(evidenceList = []) {
+
+Arquivo  : src\pages\Top3\modules\scoreEngine\scoreEngineV2.backup.js
+Linha    : 60
+Padrao   : Late
+Conteudo : const strength = calculateEvidenceStrength(collected.evidence);
+
+Arquivo  : src\pages\Top3\modules\scoreEngine\scoreEngineV2.backup.js
+Linha    : 94
+Padrao   : Late
+Conteudo : calculateEvidenceStrength,
+
+Arquivo  : src\pages\Top3\modules\scoreEngine\scoreEngineV2.js
+Linha    : 90
+Padrao   : Late
+Conteudo : function calculateEvidenceStrength(evidenceList = []) {
+
+Arquivo  : src\pages\Top3\modules\scoreEngine\scoreEngineV2.js
+Linha    : 131
+Padrao   : Late
+Conteudo : const strength = calculateEvidenceStrength(collected.evidence);
+
+Arquivo  : src\pages\Top3\modules\scoreEngine\scoreEngineV2.js
+Linha    : 195
+Padrao   : Late
+Conteudo : calculateEvidenceStrength,
+
+Arquivo  : src\pages\Top3\modules\top3.loader.js
+Linha    : 3
+Padrao   : Late
+Conteudo : findLatestHistoricalBaseDraw,
+
+Arquivo  : src\pages\Top3\modules\top3.loader.js
+Linha    : 35
+Padrao   : Late
+Conteudo : return findLatestHistoricalBaseDraw({
+
+Arquivo  : src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js
+Linha    : 1234
+Padrao   : Late
+Conteudo : const lateBonusRaw = Math.max(0, gapMs) / Math.max(1, maxGapMsBase);
+
+Arquivo  : src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js
+Linha    : 1235
+Padrao   : Late
+Conteudo : const lateBonus = Math.max(0, Math.min(1, lateBonusRaw));
+
+Arquivo  : src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js
+Linha    : 1258
+Padrao   : Late
+Conteudo : const smartLateBoost =
+
+Arquivo  : src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js
+Linha    : 1259
+Padrao   : Late
+Conteudo : lateBonus *
+
+Arquivo  : src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js
+Linha    : 1275
+Padrao   : Late
+Conteudo : (smartLateBoost * 10)
+
+Arquivo  : src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js
+Linha    : 1283
+Padrao   : Late
+Conteudo : (smartLateBoost * 16)
+
+Arquivo  : src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js
+Linha    : 1289
+Padrao   : Late
+Conteudo : (smartLateBoost * 18);
+
+Arquivo  : src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js
+Linha    : 1300
+Padrao   : Late
+Conteudo : lateBonus,
+
+Arquivo  : src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js
+Linha    : 1301
+Padrao   : Late
+Conteudo : smartLateBoost,
+
+Arquivo  : src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js
+Linha    : 1348
+Padrao   : Late
+Conteudo : lateBonus: Number(x.lateBonus || 0),
+
+Arquivo  : src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js
+Linha    : 1364
+Padrao   : Late
+Conteudo : `Bônus de atraso ajustado: ${(Number(x.smartLateBoost || 0) * 100).toFixed(2)}%`,
+
+Arquivo  : src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js
+Linha    : 1878
+Padrao   : Late
+Conteudo : late: 0.05,
+
+Arquivo  : src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js
+Linha    : 1889
+Padrao   : Late
+Conteudo : late: 0.1,
+
+Arquivo  : src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js
+Linha    : 1899
+Padrao   : Late
+Conteudo : late: 0.05,
+
+Arquivo  : src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js
+Linha    : 1910
+Padrao   : Late
+Conteudo : late: Number(weights?.late || 0),
+
+Arquivo  : src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js
+Linha    : 1921
+Padrao   : Late
+Conteudo : late: 0.05,
+
+Arquivo  : src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js
+Linha    : 1931
+Padrao   : Late
+Conteudo : late: safe.late / total,
+
+Arquivo  : src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js
+Linha    : 2415
+Padrao   : Late
+Conteudo : const lateSeen = computeComparableLastSeenByGrupo(
+
+Arquivo  : src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js
+Linha    : 2423
+Padrao   : Late
+Conteudo : const finiteSeen = Array.from(lateSeen.values()).filter((x) =>
+
+Arquivo  : src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js
+Linha    : 2446
+Padrao   : Late
+Conteudo : late: weights.late,
+
+Arquivo  : src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js
+Linha    : 2489
+Padrao   : Late
+Conteudo : const seenTs = Number(lateSeen.get(grupo));
+
+Arquivo  : src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js
+Linha    : 2495
+Padrao   : Late
+Conteudo : const lateNorm = Math.max(
+
+Arquivo  : src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js
+Linha    : 2550
+Padrao   : Late
+Conteudo : (lateNorm * adjustedWeights.late);
+
+Arquivo  : src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js
+Linha    : 2582
+Padrao   : Late
+Conteudo : lateNorm,
+
+Arquivo  : src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js
+Linha    : 2628
+Padrao   : Late
+Conteudo : atraso: (Number(x.lateNorm || 0) * 100).toFixed(2),
+
+Arquivo  : src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js
+Linha    : 2666
+Padrao   : Late
+Conteudo : `Pesos: mode=${mode} | transição=${(adjustedWeights.transition * 100).toFixed(0)}% | par=${(adjustedWeights.pair * 100).toFixed(0)}% | memória=${(adjustedWeights.memory * 100).toFixed(0)}% | recência=${(adjustedWeights.recent * 100).toFixed(0)}% | estrutural=${(adjustedWeights.structural * 100).toFixed(0)}% | atraso=${(adjustedWeights.late * 100).toFixed(0)}%`,
+
+Arquivo  : src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js
+Linha    : 2692
+Padrao   : Late
+Conteudo : lateBonus: Number(x.lateNorm || 0),
+
+Arquivo  : src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js
+Linha    : 2711
+Padrao   : Late
+Conteudo : `Grupo G${g2}: atraso normalizado=${(x.lateNorm * 100).toFixed(2)}%`,
+
+Arquivo  : src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js
+Linha    : 3142
+Padrao   : Late
+Conteudo : lateBonus: 0,
+
+Arquivo  : src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js
+Linha    : 1234
+Padrao   : Late
+Conteudo : const lateBonusRaw = Math.max(0, gapMs) / Math.max(1, maxGapMsBase);
+
+Arquivo  : src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js
+Linha    : 1235
+Padrao   : Late
+Conteudo : const lateBonus = Math.max(0, Math.min(1, lateBonusRaw));
+
+Arquivo  : src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js
+Linha    : 1258
+Padrao   : Late
+Conteudo : const smartLateBoost =
+
+Arquivo  : src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js
+Linha    : 1259
+Padrao   : Late
+Conteudo : lateBonus *
+
+Arquivo  : src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js
+Linha    : 1275
+Padrao   : Late
+Conteudo : (smartLateBoost * 10)
+
+Arquivo  : src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js
+Linha    : 1283
+Padrao   : Late
+Conteudo : (smartLateBoost * 16)
+
+Arquivo  : src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js
+Linha    : 1289
+Padrao   : Late
+Conteudo : (smartLateBoost * 18);
+
+Arquivo  : src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js
+Linha    : 1300
+Padrao   : Late
+Conteudo : lateBonus,
+
+Arquivo  : src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js
+Linha    : 1301
+Padrao   : Late
+Conteudo : smartLateBoost,
+
+Arquivo  : src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js
+Linha    : 1348
+Padrao   : Late
+Conteudo : lateBonus: Number(x.lateBonus || 0),
+
+Arquivo  : src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js
+Linha    : 1364
+Padrao   : Late
+Conteudo : `Bônus de atraso ajustado: ${(Number(x.smartLateBoost || 0) * 100).toFixed(2)}%`,
+
+Arquivo  : src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js
+Linha    : 1878
+Padrao   : Late
+Conteudo : late: 0.05,
+
+Arquivo  : src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js
+Linha    : 1889
+Padrao   : Late
+Conteudo : late: 0.1,
+
+Arquivo  : src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js
+Linha    : 1899
+Padrao   : Late
+Conteudo : late: 0.05,
+
+Arquivo  : src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js
+Linha    : 1910
+Padrao   : Late
+Conteudo : late: Number(weights?.late || 0),
+
+Arquivo  : src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js
+Linha    : 1921
+Padrao   : Late
+Conteudo : late: 0.05,
+
+Arquivo  : src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js
+Linha    : 1931
+Padrao   : Late
+Conteudo : late: safe.late / total,
+
+Arquivo  : src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js
+Linha    : 2415
+Padrao   : Late
+Conteudo : const lateSeen = computeComparableLastSeenByGrupo(
+
+Arquivo  : src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js
+Linha    : 2423
+Padrao   : Late
+Conteudo : const finiteSeen = Array.from(lateSeen.values()).filter((x) =>
+
+Arquivo  : src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js
+Linha    : 2446
+Padrao   : Late
+Conteudo : late: weights.late,
+
+Arquivo  : src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js
+Linha    : 2489
+Padrao   : Late
+Conteudo : const seenTs = Number(lateSeen.get(grupo));
+
+Arquivo  : src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js
+Linha    : 2495
+Padrao   : Late
+Conteudo : const lateNorm = Math.max(
+
+Arquivo  : src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js
+Linha    : 2550
+Padrao   : Late
+Conteudo : (lateNorm * adjustedWeights.late);
+
+Arquivo  : src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js
+Linha    : 2582
+Padrao   : Late
+Conteudo : lateNorm,
+
+Arquivo  : src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js
+Linha    : 2628
+Padrao   : Late
+Conteudo : atraso: (Number(x.lateNorm || 0) * 100).toFixed(2),
+
+Arquivo  : src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js
+Linha    : 2666
+Padrao   : Late
+Conteudo : `Pesos: mode=${mode} | transição=${(adjustedWeights.transition * 100).toFixed(0)}% | par=${(adjustedWeights.pair * 100).toFixed(0)}% | memória=${(adjustedWeights.memory * 100).toFixed(0)}% | recência=${(adjustedWeights.recent * 100).toFixed(0)}% | estrutural=${(adjustedWeights.structural * 100).toFixed(0)}% | atraso=${(adjustedWeights.late * 100).toFixed(0)}%`,
+
+Arquivo  : src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js
+Linha    : 2692
+Padrao   : Late
+Conteudo : lateBonus: Number(x.lateNorm || 0),
+
+Arquivo  : src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js
+Linha    : 2711
+Padrao   : Late
+Conteudo : `Grupo G${g2}: atraso normalizado=${(x.lateNorm * 100).toFixed(2)}%`,
+
+Arquivo  : src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js
+Linha    : 3142
+Padrao   : Late
+Conteudo : lateBonus: 0,
+
+Arquivo  : src\pages\Top3\top3.engine.js
+Linha    : 1234
+Padrao   : Late
+Conteudo : const lateBonusRaw = Math.max(0, gapMs) / Math.max(1, maxGapMsBase);
+
+Arquivo  : src\pages\Top3\top3.engine.js
+Linha    : 1235
+Padrao   : Late
+Conteudo : const lateBonus = Math.max(0, Math.min(1, lateBonusRaw));
+
+Arquivo  : src\pages\Top3\top3.engine.js
+Linha    : 1258
+Padrao   : Late
+Conteudo : const smartLateBoost =
+
+Arquivo  : src\pages\Top3\top3.engine.js
+Linha    : 1259
+Padrao   : Late
+Conteudo : lateBonus *
+
+Arquivo  : src\pages\Top3\top3.engine.js
+Linha    : 1275
+Padrao   : Late
+Conteudo : (smartLateBoost * 10)
+
+Arquivo  : src\pages\Top3\top3.engine.js
+Linha    : 1283
+Padrao   : Late
+Conteudo : (smartLateBoost * 16)
+
+Arquivo  : src\pages\Top3\top3.engine.js
+Linha    : 1289
+Padrao   : Late
+Conteudo : (smartLateBoost * 18);
+
+Arquivo  : src\pages\Top3\top3.engine.js
+Linha    : 1300
+Padrao   : Late
+Conteudo : lateBonus,
+
+Arquivo  : src\pages\Top3\top3.engine.js
+Linha    : 1301
+Padrao   : Late
+Conteudo : smartLateBoost,
+
+Arquivo  : src\pages\Top3\top3.engine.js
+Linha    : 1348
+Padrao   : Late
+Conteudo : lateBonus: Number(x.lateBonus || 0),
+
+Arquivo  : src\pages\Top3\top3.engine.js
+Linha    : 1364
+Padrao   : Late
+Conteudo : `Bônus de atraso ajustado: ${(Number(x.smartLateBoost || 0) * 100).toFixed(2)}%`,
+
+Arquivo  : src\pages\Top3\top3.engine.js
+Linha    : 1878
+Padrao   : Late
+Conteudo : late: 0.05,
+
+Arquivo  : src\pages\Top3\top3.engine.js
+Linha    : 1889
+Padrao   : Late
+Conteudo : late: 0.1,
+
+Arquivo  : src\pages\Top3\top3.engine.js
+Linha    : 1899
+Padrao   : Late
+Conteudo : late: 0.05,
+
+Arquivo  : src\pages\Top3\top3.engine.js
+Linha    : 1910
+Padrao   : Late
+Conteudo : late: Number(weights?.late || 0),
+
+Arquivo  : src\pages\Top3\top3.engine.js
+Linha    : 1921
+Padrao   : Late
+Conteudo : late: 0.05,
+
+Arquivo  : src\pages\Top3\top3.engine.js
+Linha    : 1931
+Padrao   : Late
+Conteudo : late: safe.late / total,
+
+Arquivo  : src\pages\Top3\top3.engine.js
+Linha    : 2415
+Padrao   : Late
+Conteudo : const lateSeen = computeComparableLastSeenByGrupo(
+
+Arquivo  : src\pages\Top3\top3.engine.js
+Linha    : 2423
+Padrao   : Late
+Conteudo : const finiteSeen = Array.from(lateSeen.values()).filter((x) =>
+
+Arquivo  : src\pages\Top3\top3.engine.js
+Linha    : 2446
+Padrao   : Late
+Conteudo : late: weights.late,
+
+Arquivo  : src\pages\Top3\top3.engine.js
+Linha    : 2489
+Padrao   : Late
+Conteudo : const seenTs = Number(lateSeen.get(grupo));
+
+Arquivo  : src\pages\Top3\top3.engine.js
+Linha    : 2495
+Padrao   : Late
+Conteudo : const lateNorm = Math.max(
+
+Arquivo  : src\pages\Top3\top3.engine.js
+Linha    : 2550
+Padrao   : Late
+Conteudo : (lateNorm * adjustedWeights.late);
+
+Arquivo  : src\pages\Top3\top3.engine.js
+Linha    : 2582
+Padrao   : Late
+Conteudo : lateNorm,
+
+Arquivo  : src\pages\Top3\top3.engine.js
+Linha    : 2620
+Padrao   : Late
+Conteudo : `Pesos: mode=${mode} | transição=${(adjustedWeights.transition * 100).toFixed(0)}% | par=${(adjustedWeights.pair * 100).toFixed(0)}% | memória=${(adjustedWeights.memory * 100).toFixed(0)}% | recência=${(adjustedWeights.recent * 100).toFixed(0)}% | estrutural=${(adjustedWeights.structural * 100).toFixed(0)}% | atraso=${(adjustedWeights.late * 100).toFixed(0)}%`,
+
+Arquivo  : src\pages\Top3\top3.engine.js
+Linha    : 2646
+Padrao   : Late
+Conteudo : lateBonus: Number(x.lateNorm || 0),
+
+Arquivo  : src\pages\Top3\top3.engine.js
+Linha    : 2665
+Padrao   : Late
+Conteudo : `Grupo G${g2}: atraso normalizado=${(x.lateNorm * 100).toFixed(2)}%`,
+
+Arquivo  : src\pages\Top3\top3.engine.js
+Linha    : 3096
+Padrao   : Late
+Conteudo : lateBonus: 0,
+
+Arquivo  : src\pages\Top3\top3.hooks.js
+Linha    : 158
+Padrao   : Late
+Conteudo : function findLatestHistoricalBaseDraw({
+
+Arquivo  : src\pages\Top3\top3.hooks.js
+Linha    : 624
+Padrao   : Late
+Conteudo : findLatestHistoricalBaseDraw,
+
+Arquivo  : src\pages\Top3\top3.hooks.js
+Linha    : 696
+Padrao   : Late
+Conteudo : findLatestHistoricalBaseDraw,
+
+Arquivo  : src\pages\Top3\top3.public-api.js
+Linha    : 51
+Padrao   : Late
+Conteudo : calculateEvidenceStrength,
+
+Arquivo  : src\pages\Top3\Top3View.jsx
+Linha    : 733
+Padrao   : Late
+Conteudo : gridTemplateColumns: isHero ? "300px minmax(0, 1fr)" : "1fr",
+
+Arquivo  : src\pages\Top3\Top3View.jsx
+Linha    : 816
+Padrao   : Late
+Conteudo : gridTemplateColumns: "1fr 1fr",
+
+Arquivo  : src\pages\Top3\Top3View.jsx
+Linha    : 846
+Padrao   : Late
+Conteudo : gridTemplateColumns: isHero
+
+Arquivo  : src\pages\Top3\Top3View.jsx
+Linha    : 949
+Padrao   : Late
+Conteudo : gridTemplateColumns: "repeat(4, minmax(0, 1fr))",
+
+Arquivo  : src\pages\Top3\Top3View.jsx
+Linha    : 1651
+Padrao   : Late
+Conteudo : transform: translateY(-1px);
+
+Arquivo  : src\pages\Top3\Top3View.jsx
+Linha    : 1665
+Padrao   : Late
+Conteudo : grid-template-columns: repeat(3, minmax(0, 1fr));
+
+Arquivo  : src\pages\Top3\Top3View.jsx
+Linha    : 1711
+Padrao   : Late
+Conteudo : grid-template-columns: repeat(2, minmax(0, 1fr));
+
+Arquivo  : src\pages\Top3\Top3View.jsx
+Linha    : 1720
+Padrao   : Late
+Conteudo : grid-template-columns: repeat(3, minmax(0, 1fr));
+
+Arquivo  : src\pages\Top3\Top3View.jsx
+Linha    : 1731
+Padrao   : Late
+Conteudo : grid-template-columns: minmax(0, 1.7fr) minmax(220px, 0.8fr) minmax(240px, 1fr);
+
+Arquivo  : src\pages\Top3\Top3View.jsx
+Linha    : 1753
+Padrao   : Late
+Conteudo : grid-template-columns: repeat(3, minmax(0, 1fr));
+
+Arquivo  : src\pages\Top3\Top3View.jsx
+Linha    : 1759
+Padrao   : Late
+Conteudo : grid-template-columns: 28px 44px minmax(0, 1fr);
+
+Arquivo  : src\pages\Top3\Top3View.jsx
+Linha    : 2067
+Padrao   : Late
+Conteudo : grid-template-columns: minmax(0, 1fr) 170px;
+
+Arquivo  : src\pages\Top3\Top3View.jsx
+Linha    : 2073
+Padrao   : Late
+Conteudo : grid-template-columns: minmax(0, 1fr) 190px;
+
+Arquivo  : src\pages\Top3\Top3View.jsx
+Linha    : 2183
+Padrao   : Late
+Conteudo : transform: translateY(-1px);
+
+Arquivo  : src\pages\Top3\Top3View.jsx
+Linha    : 2190
+Padrao   : Late
+Conteudo : transform: translateY(0px);
+
+Arquivo  : src\pages\Top3\Top3View.jsx
+Linha    : 2195
+Padrao   : Late
+Conteudo : grid-template-columns: repeat(4, minmax(0, 1fr));
+
+Arquivo  : src\pages\Top3\Top3View.jsx
+Linha    : 2238
+Padrao   : Late
+Conteudo : grid-template-columns: repeat(4, minmax(0, 1fr));
+
+Arquivo  : src\pages\Top3\Top3View.jsx
+Linha    : 2269
+Padrao   : Late
+Conteudo : transform: translateY(-1px);
+
+Arquivo  : src\pages\Top3\Top3View.jsx
+Linha    : 2276
+Padrao   : Late
+Conteudo : transform: translateY(0px);
+
+Arquivo  : src\pages\Top3\Top3View.jsx
+Linha    : 2305
+Padrao   : Late
+Conteudo : grid-template-columns: auto minmax(190px, 260px) auto auto;
+
+Arquivo  : src\pages\Top3\Top3View.jsx
+Linha    : 2326
+Padrao   : Late
+Conteudo : grid-template-columns: repeat(6, minmax(0, 1fr));
+
+Arquivo  : src\pages\Top3\Top3View.jsx
+Linha    : 2356
+Padrao   : Late
+Conteudo : grid-template-columns: 160px 1fr 220px 56px;
+
+Arquivo  : src\pages\Top3\Top3View.jsx
+Linha    : 2399
+Padrao   : Late
+Conteudo : grid-template-columns: 1fr;
+
+Arquivo  : src\pages\Top3\Top3View.jsx
+Linha    : 2403
+Padrao   : Late
+Conteudo : grid-template-columns: 1fr;
+
+Arquivo  : src\pages\Top3\Top3View.jsx
+Linha    : 2407
+Padrao   : Late
+Conteudo : grid-template-columns: 1fr;
+
+Arquivo  : src\pages\Top3\Top3View.jsx
+Linha    : 2423
+Padrao   : Late
+Conteudo : grid-template-columns: 1fr 1fr;
+
+Arquivo  : src\pages\Top3\Top3View.jsx
+Linha    : 2432
+Padrao   : Late
+Conteudo : grid-template-columns: 1fr;
+
+Arquivo  : src\pages\Top3\Top3View.jsx
+Linha    : 2444
+Padrao   : Late
+Conteudo : grid-template-columns: 1fr;
+
+Arquivo  : src\pages\Top3\Top3View.jsx
+Linha    : 2468
+Padrao   : Late
+Conteudo : grid-template-columns: 1fr 1fr;
+
+Arquivo  : src\pages\Top3\Top3View.jsx
+Linha    : 2476
+Padrao   : Late
+Conteudo : grid-template-columns: repeat(3, minmax(0, 1fr));
+
+Arquivo  : src\pages\Top3\Top3View.jsx
+Linha    : 2480
+Padrao   : Late
+Conteudo : grid-template-columns: 1fr;
+
+Arquivo  : src\pages\Top3\Top3View.jsx
+Linha    : 2492
+Padrao   : Late
+Conteudo : grid-template-columns: 26px 40px minmax(0, 1fr);
+
+Arquivo  : src\pages\Top3\Top3View.jsx
+Linha    : 2559
+Padrao   : Late
+Conteudo : grid-template-columns: repeat(2, minmax(0, 1fr));
+
+Arquivo  : src\pages\Top3\Top3View.jsx
+Linha    : 2563
+Padrao   : Late
+Conteudo : grid-template-columns: repeat(2, minmax(0, 1fr));
+
+Arquivo  : src\pages\Top3\Top3View.jsx
+Linha    : 2581
+Padrao   : Late
+Conteudo : grid-template-columns: 1fr;
+
+Arquivo  : src\pages\Top3\Top3View.jsx
+Linha    : 2585
+Padrao   : Late
+Conteudo : grid-template-columns: 1fr 1fr;
+
+Arquivo  : src\pages\Top3\Top3View.jsx
+Linha    : 2589
+Padrao   : Late
+Conteudo : grid-template-columns: repeat(2, minmax(0, 1fr));
+
+Arquivo  : src\pages\Top3\Top3View.premium.backup.jsx
+Linha    : 644
+Padrao   : Late
+Conteudo : gridTemplateColumns: "repeat(3, minmax(0, 1fr))",
+
+Arquivo  : src\pages\Top3\Top3View.premium.backup.jsx
+Linha    : 1242
+Padrao   : Late
+Conteudo : transform: translateY(-1px);
+
+Arquivo  : src\pages\Top3\Top3View.premium.backup.jsx
+Linha    : 1256
+Padrao   : Late
+Conteudo : grid-template-columns: repeat(3, minmax(0, 1fr));
+
+Arquivo  : src\pages\Top3\Top3View.premium.backup.jsx
+Linha    : 1302
+Padrao   : Late
+Conteudo : grid-template-columns: repeat(2, minmax(0, 1fr));
+
+Arquivo  : src\pages\Top3\Top3View.premium.backup.jsx
+Linha    : 1311
+Padrao   : Late
+Conteudo : grid-template-columns: repeat(3, minmax(0, 1fr));
+
+Arquivo  : src\pages\Top3\Top3View.premium.backup.jsx
+Linha    : 1322
+Padrao   : Late
+Conteudo : grid-template-columns: minmax(0, 1.7fr) minmax(220px, 0.8fr) minmax(240px, 1fr);
+
+Arquivo  : src\pages\Top3\Top3View.premium.backup.jsx
+Linha    : 1344
+Padrao   : Late
+Conteudo : grid-template-columns: repeat(3, minmax(0, 1fr));
+
+Arquivo  : src\pages\Top3\Top3View.premium.backup.jsx
+Linha    : 1350
+Padrao   : Late
+Conteudo : grid-template-columns: 28px 44px minmax(0, 1fr);
+
+Arquivo  : src\pages\Top3\Top3View.premium.backup.jsx
+Linha    : 1658
+Padrao   : Late
+Conteudo : grid-template-columns: minmax(0, 1fr) 170px;
+
+Arquivo  : src\pages\Top3\Top3View.premium.backup.jsx
+Linha    : 1664
+Padrao   : Late
+Conteudo : grid-template-columns: minmax(0, 1fr) 190px;
+
+Arquivo  : src\pages\Top3\Top3View.premium.backup.jsx
+Linha    : 1774
+Padrao   : Late
+Conteudo : transform: translateY(-1px);
+
+Arquivo  : src\pages\Top3\Top3View.premium.backup.jsx
+Linha    : 1781
+Padrao   : Late
+Conteudo : transform: translateY(0px);
+
+Arquivo  : src\pages\Top3\Top3View.premium.backup.jsx
+Linha    : 1786
+Padrao   : Late
+Conteudo : grid-template-columns: repeat(4, minmax(0, 1fr));
+
+Arquivo  : src\pages\Top3\Top3View.premium.backup.jsx
+Linha    : 1829
+Padrao   : Late
+Conteudo : grid-template-columns: repeat(4, minmax(0, 1fr));
+
+Arquivo  : src\pages\Top3\Top3View.premium.backup.jsx
+Linha    : 1860
+Padrao   : Late
+Conteudo : transform: translateY(-1px);
+
+Arquivo  : src\pages\Top3\Top3View.premium.backup.jsx
+Linha    : 1867
+Padrao   : Late
+Conteudo : transform: translateY(0px);
+
+Arquivo  : src\pages\Top3\Top3View.premium.backup.jsx
+Linha    : 1896
+Padrao   : Late
+Conteudo : grid-template-columns: 160px 1fr 220px 56px;
+
+Arquivo  : src\pages\Top3\Top3View.premium.backup.jsx
+Linha    : 1939
+Padrao   : Late
+Conteudo : grid-template-columns: 1fr;
+
+Arquivo  : src\pages\Top3\Top3View.premium.backup.jsx
+Linha    : 1943
+Padrao   : Late
+Conteudo : grid-template-columns: 1fr;
+
+Arquivo  : src\pages\Top3\Top3View.premium.backup.jsx
+Linha    : 1947
+Padrao   : Late
+Conteudo : grid-template-columns: 1fr;
+
+Arquivo  : src\pages\Top3\Top3View.premium.backup.jsx
+Linha    : 1963
+Padrao   : Late
+Conteudo : grid-template-columns: 1fr 1fr;
+
+Arquivo  : src\pages\Top3\Top3View.premium.backup.jsx
+Linha    : 1972
+Padrao   : Late
+Conteudo : grid-template-columns: 1fr;
+
+Arquivo  : src\pages\Top3\Top3View.premium.backup.jsx
+Linha    : 1984
+Padrao   : Late
+Conteudo : grid-template-columns: 1fr;
+
+Arquivo  : src\pages\Top3\Top3View.premium.backup.jsx
+Linha    : 2008
+Padrao   : Late
+Conteudo : grid-template-columns: 1fr;
+
+Arquivo  : src\pages\Top3\Top3View.premium.backup.jsx
+Linha    : 2020
+Padrao   : Late
+Conteudo : grid-template-columns: 26px 40px minmax(0, 1fr);
+
+Arquivo  : src\pages\Top3\Top3View.premium.backup.jsx
+Linha    : 2087
+Padrao   : Late
+Conteudo : grid-template-columns: repeat(2, minmax(0, 1fr));
+
+Arquivo  : src\pages\Top3\Top3View.premium.backup.jsx
+Linha    : 2091
+Padrao   : Late
+Conteudo : grid-template-columns: repeat(2, minmax(0, 1fr));
+
+Arquivo  : src\pages\Top3\Top3View.premium.backup.jsx
+Linha    : 2109
+Padrao   : Late
+Conteudo : grid-template-columns: 1fr;
+
+Arquivo  : src\services\kingResultsService.js
+Linha    : 49
+Padrao   : Atrasados
+Conteudo : // ✅ cache específico para ATRASADOS (Late)
+
+Arquivo  : src\services\kingResultsService.js
+Linha    : 49
+Padrao   : Late
+Conteudo : // ✅ cache específico para ATRASADOS (Late)
+
+Arquivo  : src\services\kingResultsService.js
+Linha    : 50
+Padrao   : Late
+Conteudo : const LATE_CACHE = new Map(); // key -> { ts, data: lateRows[] }
+
+Arquivo  : src\services\kingResultsService.js
+Linha    : 1559
+Padrao   : Atrasados
+Conteudo : ✅ ATRASADOS (Late) — 100% baseado na SUA base
+
+Arquivo  : src\services\kingResultsService.js
+Linha    : 1559
+Padrao   : Late
+Conteudo : ✅ ATRASADOS (Late) — 100% baseado na SUA base
+
+Arquivo  : src\services\kingResultsService.js
+Linha    : 1577
+Padrao   : Late
+Conteudo : function lateCacheKey({
+
+Arquivo  : src\services\kingResultsService.js
+Linha    : 1596
+Padrao   : Late
+Conteudo : return `late::${scopeKey}::${fromYmd}..${toYmd}::base=${baseYmd}::pos=${pos}::h=${h}::lots=${lots}::chunk=${cd}`;
+
+Arquivo  : src\services\kingResultsService.js
+Linha    : 1606
+Padrao   : Late
+Conteudo : export async function getKingLateByRange({
+
+Arquivo  : src\services\kingResultsService.js
+Linha    : 1632
+Padrao   : Late
+Conteudo : const cacheKey = lateCacheKey({
+
+Arquivo  : src\services\kingResultsService.js
+Linha    : 1643
+Padrao   : Late
+Conteudo : const cached = cacheGet(LATE_CACHE, cacheKey);
+
+Arquivo  : src\services\kingResultsService.js
+Linha    : 1663
+Padrao   : Late
+Conteudo : cacheSet(LATE_CACHE, cacheKey, outEmpty);
+
+Arquivo  : src\services\kingResultsService.js
+Linha    : 1749
+Padrao   : Late
+Conteudo : cacheSet(LATE_CACHE, cacheKey, out);
+
+
+Late.jsx | linha 282 | const LATE_LOTTERY_OPTIONS = [
+Late.jsx | linha 391 | LATE_LOTTERY_OPTIONS.find(
+Late.jsx | linha 393 | ) || LATE_LOTTERY_OPTIONS[0],
+Late.jsx | linha 930 | {LATE_LOTTERY_OPTIONS.map((option) => (
+Late.jsx | linha 309 | const LATE_HOUR_OPTIONS = {
+Late.jsx | linha 374 | LATE_HOUR_OPTIONS[selectedLotteryId] ||
+Late.jsx | linha 375 | LATE_HOUR_OPTIONS.PT_RIO,
+Late.jsx | linha 920 | <label htmlFor="lateLottery">Loteria</label>
+Late.jsx | linha 941 | <label htmlFor="lateHour">Horário</label>
+Late.jsx | linha 953 | {selectedHourOptions.map((option) => (
+
+===== HISTÓRICO GIT DE LATE.JSX =====
+350c13e (HEAD -> main, origin/main, origin/HEAD) fix(late): remove filtros legados e consolida loterias
+e25a2e3 fix(late): separa loteria e horario em atrasados
+7d49994 feat(late): adiciona filtro de loteria em atrasados
+1bf64ea chore: ui polish dashboard/results + remove stray dot
+a953b59 chore(eol): renormalize files to LF

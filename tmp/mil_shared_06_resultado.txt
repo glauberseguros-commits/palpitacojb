@@ -1,0 +1,16 @@
+====================================================================================================
+MIL-SHARED-06 — MIGRAÇÃO ESTRUTURAL DA CENTENAS+
+====================================================================================================
+Gerado em: 25/07/2026 11:46:59
+
+OBJETIVO
+
+- alterar somente o import do motor V3;
+- utilizar o contrato compartilhado;
+- preservar buildMilharRecommendationV3();
+- preservar diversifyMilharRecommendationsV3();
+- não alterar ranking;
+- não alterar filtros;
+- não alterar as milhares exibidas.
+
+====================================================================================================

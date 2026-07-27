@@ -1,0 +1,1196 @@
+====================================================================================================
+TOP3-HIT-21B ÔÇö ESTRUTURA REAL DOS RESULTADOS OFICIAIS
+Modo: SOMENTE LEITURA
+====================================================================================================
+Documentos lidos: 3000
+Documentos selecionados: 1
+Amostras exibidas: 1
+Contagem por loteria: {"FEDERAL":1}
+
+====================================================================================================
+ID: FEDERAL__2026-07-22__20-00__9519c673-c3b8-4cb9-bcfe-9ddece3b03f3
+LOTERIA: FEDERAL
+DATA DETECTADA: 2026-07-22
+CHAVES DE PRIMEIRO N├ìVEL:
+close, close_hour, close_hour_raw, date, drawId, hour, importedAt, lottery_id, lottery_key, lottery_name, prizesCount, source, uf, ymd
+CONTE├ÜDO COMPLETO:
+{
+  "date": "2026-07-22",
+  "close_hour_raw": "19:53",
+  "importedAt": "2026-07-22T23:13:17.444Z",
+  "drawId": "FEDERAL__2026-07-22__20-00__9519c673-c3b8-4cb9-bcfe-9ddece3b03f3",
+  "lottery_id": "9519c673-c3b8-4cb9-bcfe-9ddece3b03f3",
+  "lottery_name": "LT FEDERAL 20H",
+  "source": "kingapostas",
+  "uf": "BR",
+  "ymd": "2026-07-22",
+  "close_hour": "20:00",
+  "hour": "20",
+  "prizesCount": 7,
+  "lottery_key": "FEDERAL",
+  "close": "20:00"
+}
+
+====================================================================================================
+LEITORES OFICIAIS EXISTENTES NO PROJETO
+====================================================================================================
+
+==================== backend\engine\drawRepository.js ====================
+
+LINHAS 12-37
+00012: }
+00013: 
+00014: function normalizePosition(v) {
+00015:   const n = Number(v);
+00016:   return Number.isFinite(n) && n >= 1 && n <= 10 ? n : null;
+00017: }
+00018: 
+00019: async function fetchPrizesForDrawRef(drawRef) {
+00020:   const snap = await drawRef.collection("prizes").get();
+00021: 
+00022:   return snap.docs
+00023:     .map((doc) => {
+00024:       const data = doc.data() || {};
+00025:       return {
+00026:         id: doc.id,
+00027:         ...data,
+00028:         grupo: normalizeGrupo(data.grupo),
+00029:         position: normalizePosition(data.position),
+00030:       };
+00031:     })
+00032:     .filter((p) => p.grupo && p.position);
+00033: }
+00034: 
+00035: async function mapWithConcurrency(items, concurrency, mapper) {
+00036:   const arr = Array.isArray(items) ? items : [];
+00037:   const out = new Array(arr.length);
+
+LINHAS 20-45
+00020:   const snap = await drawRef.collection("prizes").get();
+00021: 
+00022:   return snap.docs
+00023:     .map((doc) => {
+00024:       const data = doc.data() || {};
+00025:       return {
+00026:         id: doc.id,
+00027:         ...data,
+00028:         grupo: normalizeGrupo(data.grupo),
+00029:         position: normalizePosition(data.position),
+00030:       };
+00031:     })
+00032:     .filter((p) => p.grupo && p.position);
+00033: }
+00034: 
+00035: async function mapWithConcurrency(items, concurrency, mapper) {
+00036:   const arr = Array.isArray(items) ? items : [];
+00037:   const out = new Array(arr.length);
+00038:   let index = 0;
+00039: 
+00040:   async function worker() {
+00041:     while (index < arr.length) {
+00042:       const i = index++;
+00043:       out[i] = await mapper(arr[i], i);
+00044:     }
+00045:   }
+
+LINHAS 21-46
+00021: 
+00022:   return snap.docs
+00023:     .map((doc) => {
+00024:       const data = doc.data() || {};
+00025:       return {
+00026:         id: doc.id,
+00027:         ...data,
+00028:         grupo: normalizeGrupo(data.grupo),
+00029:         position: normalizePosition(data.position),
+00030:       };
+00031:     })
+00032:     .filter((p) => p.grupo && p.position);
+00033: }
+00034: 
+00035: async function mapWithConcurrency(items, concurrency, mapper) {
+00036:   const arr = Array.isArray(items) ? items : [];
+00037:   const out = new Array(arr.length);
+00038:   let index = 0;
+00039: 
+00040:   async function worker() {
+00041:     while (index < arr.length) {
+00042:       const i = index++;
+00043:       out[i] = await mapper(arr[i], i);
+00044:     }
+00045:   }
+00046: 
+
+LINHAS 105-130
+00105: 
+00106:     const remaining = safeMaxDraws - draws.length;
+00107:     const currentLimit = Math.min(
+00108:       safePageSize,
+00109:       remaining
+00110:     );
+00111: 
+00112:     let q = db
+00113:       .collection("draws")
+00114:       .where("lottery_key", "==", lk)
+00115:       .where("ymd", ">=", start)
+00116:       .where("ymd", "<=", end)
+00117:       .orderBy("ymd", "asc")
+00118:       .orderBy(DOC_ID, "asc")
+00119:       .limit(currentLimit);
+00120: 
+00121:     if (lastDoc) {
+00122:       q = q.startAfter(lastDoc);
+00123:     }
+00124: 
+00125:     console.log(
+00126:       `[TOP3] P├ígina ${page} | ${start} at├® ${end} | limite=${currentLimit}`
+00127:     );
+00128: 
+00129:     const snap = await q.get();
+00130: 
+
+LINHAS 181-206
+00181:   const draws = [];
+00182:   let lastDoc = null;
+00183:   let page = 0;
+00184: 
+00185:   while (true) {
+00186:     page++;
+00187: 
+00188:     let q = db
+00189:       .collection("draws")
+00190:       .where("lottery_key", "==", lk)
+00191:       .orderBy("ymd", "asc")
+00192:       .orderBy(DOC_ID, "asc")
+00193:       .limit(pageSize);
+00194: 
+00195:     if (lastDoc) q = q.startAfter(lastDoc);
+00196: 
+00197:     console.log(`[BOOTSTRAP] Buscando p├ígina ${page}...`);
+00198: 
+00199:     const snap = await q.get();
+00200: 
+00201:     if (snap.empty) break;
+00202: 
+00203:     const pageDraws = await mapWithConcurrency(
+00204:       snap.docs,
+00205:       prizeConcurrency,
+00206:       async (doc) => {
+
+==================== backend\engine\top3PredictionService.js ====================
+
+LINHAS 589-614
+00589:     targetHour:
+00590:       `${hourCode}h`,
+00591:     targetKey:
+00592:       `${date}_${hourCode}h`,
+00593:     picks,
+00594:     snapshot: normalizedSnapshot,
+00595:     engineVersion,
+00596:     status: "predicted",
+00597:     resultGrupo: null,
+00598:     resultMilhar: "",
+00599:     resultAnimal: "",
+00600:     hitType: "",
+00601:     hitScore: 0,
+00602:     hitPosition: -1,
+00603:     matchedValue: "",
+00604:     createdAt: now,
+00605:     updatedAt: now,
+00606:     createdBy: source,
+00607:     source,
+00608:   };
+00609: 
+00610:   return database.runTransaction(
+00611:     async (transaction) => {
+00612:       const current =
+00613:         await transaction.get(ref);
+00614: 
+
+LINHAS 590-615
+00590:       `${hourCode}h`,
+00591:     targetKey:
+00592:       `${date}_${hourCode}h`,
+00593:     picks,
+00594:     snapshot: normalizedSnapshot,
+00595:     engineVersion,
+00596:     status: "predicted",
+00597:     resultGrupo: null,
+00598:     resultMilhar: "",
+00599:     resultAnimal: "",
+00600:     hitType: "",
+00601:     hitScore: 0,
+00602:     hitPosition: -1,
+00603:     matchedValue: "",
+00604:     createdAt: now,
+00605:     updatedAt: now,
+00606:     createdBy: source,
+00607:     source,
+00608:   };
+00609: 
+00610:   return database.runTransaction(
+00611:     async (transaction) => {
+00612:       const current =
+00613:         await transaction.get(ref);
+00614: 
+00615:       if (!current.exists) {
+
+LINHAS 594-619
+00594:     snapshot: normalizedSnapshot,
+00595:     engineVersion,
+00596:     status: "predicted",
+00597:     resultGrupo: null,
+00598:     resultMilhar: "",
+00599:     resultAnimal: "",
+00600:     hitType: "",
+00601:     hitScore: 0,
+00602:     hitPosition: -1,
+00603:     matchedValue: "",
+00604:     createdAt: now,
+00605:     updatedAt: now,
+00606:     createdBy: source,
+00607:     source,
+00608:   };
+00609: 
+00610:   return database.runTransaction(
+00611:     async (transaction) => {
+00612:       const current =
+00613:         await transaction.get(ref);
+00614: 
+00615:       if (!current.exists) {
+00616:         transaction.set(ref, payload);
+00617: 
+00618:         return {
+00619:           ok: true,
+
+LINHAS 647-672
+00647:       }
+00648: 
+00649:       const updatedPayload = {
+00650:         ...payload,
+00651:         createdAt:
+00652:           currentData.createdAt ||
+00653:           payload.createdAt,
+00654:         updatedAt: Date.now(),
+00655:         resultGrupo:
+00656:           currentData.resultGrupo ?? null,
+00657:         resultMilhar:
+00658:           currentData.resultMilhar || "",
+00659:         resultAnimal:
+00660:           currentData.resultAnimal || "",
+00661:         hitType:
+00662:           currentData.hitType || "",
+00663:         hitScore:
+00664:           Number(currentData.hitScore || 0),
+00665:         hitPosition:
+00666:           Number.isFinite(
+00667:             Number(currentData.hitPosition)
+00668:           )
+00669:             ? Number(currentData.hitPosition)
+00670:             : -1,
+00671:         matchedValue:
+00672:           currentData.matchedValue || "",
+
+LINHAS 649-674
+00649:       const updatedPayload = {
+00650:         ...payload,
+00651:         createdAt:
+00652:           currentData.createdAt ||
+00653:           payload.createdAt,
+00654:         updatedAt: Date.now(),
+00655:         resultGrupo:
+00656:           currentData.resultGrupo ?? null,
+00657:         resultMilhar:
+00658:           currentData.resultMilhar || "",
+00659:         resultAnimal:
+00660:           currentData.resultAnimal || "",
+00661:         hitType:
+00662:           currentData.hitType || "",
+00663:         hitScore:
+00664:           Number(currentData.hitScore || 0),
+00665:         hitPosition:
+00666:           Number.isFinite(
+00667:             Number(currentData.hitPosition)
+00668:           )
+00669:             ? Number(currentData.hitPosition)
+00670:             : -1,
+00671:         matchedValue:
+00672:           currentData.matchedValue || "",
+00673:       };
+00674: 
+
+LINHAS 657-682
+00657:         resultMilhar:
+00658:           currentData.resultMilhar || "",
+00659:         resultAnimal:
+00660:           currentData.resultAnimal || "",
+00661:         hitType:
+00662:           currentData.hitType || "",
+00663:         hitScore:
+00664:           Number(currentData.hitScore || 0),
+00665:         hitPosition:
+00666:           Number.isFinite(
+00667:             Number(currentData.hitPosition)
+00668:           )
+00669:             ? Number(currentData.hitPosition)
+00670:             : -1,
+00671:         matchedValue:
+00672:           currentData.matchedValue || "",
+00673:       };
+00674: 
+00675:       transaction.set(
+00676:         ref,
+00677:         updatedPayload,
+00678:         { merge: true }
+00679:       );
+00680: 
+00681:       return {
+00682:         ok: true,
+
+LINHAS 726-751
+00726:             ? percentage.toFixed(4)
+00727:             : 0
+00728:         ),
+00729:         reasons: Array.isArray(item?.reasons)
+00730:           ? item.reasons.filter(Boolean)
+00731:           : [],
+00732:         signals: {
+00733:           engine: "top3_statistical_v3",
+00734:           rankPosition: index + 1,
+00735:           scoreProb: Number(item?.scoreProb || 0),
+00736:           rawScore: Number(item?.score || 0),
+00737:           meta: item?.meta || null,
+00738:         },
+00739:       };
+00740:     })
+00741:     .filter((item) => /^\d{2}$/.test(item.grupo));
+00742: }
+00743: 
+00744: async function createTop3PredictionRun(
+00745:   input = {},
+00746:   dependencies = {}
+00747: ) {
+00748:   const lotteryKey = normalizeLotteryKey(
+00749:     input.lotteryKey
+00750:   );
+00751: 
+
+==================== src\services\kingResultsService.js ====================
+
+LINHAS 621-646
+00621:     lottery_key: lotteryKeyRaw,
+00622: 
+00623:     lottery_code: lotteryCodeRaw ? String(lotteryCodeRaw).toUpperCase() : null,
+00624: 
+00625:     lottery_name: d.lottery_name ?? d.lotteryName ?? null,
+00626:     lottery_label: d.lottery_label ?? d.lotteryLabel ?? null,
+00627: 
+00628:     prizesCount: d.prizesCount,
+00629:     prizes: embeddedPrizes,
+00630:   };
+00631: }
+00632: 
+00633: /* =========================
+00634:    Compat: uf OU lottery_key
+00635: ========================= */
+00636: 
+00637: function buildUfWhereClauses(fieldName, uf) {
+00638:   const normalized = normalizeValueForField(fieldName, uf);
+00639:   return [where(fieldName, "==", normalized)];
+00640: }
+00641: 
+00642: function normalizeOrderBys(extraOrderBy) {
+00643:   if (!extraOrderBy) return [];
+00644:   return Array.isArray(extraOrderBy)
+00645:     ? extraOrderBy.filter(Boolean)
+00646:     : [extraOrderBy];
+
+LINHAS 1384-1409
+01384:   baseAll = baseAll.filter((x) => (x.ymd || normalizeToYMD(x.date)) === dayYmd);
+01385: 
+01386:   const ordered = sortDrawsLocal(baseAll);
+01387: 
+01388:   return ordered.map((d) => {
+01389:     const embedded = normalizeEmbeddedPrizesForAggregated(d?.prizes);
+01390:     return {
+01391:       ...d,
+01392:       prizes: embedded,
+01393:       prizesCount: embedded.length || Number(d?.prizesCount || 0),
+01394:       __mode: "aggregated",
+01395:     };
+01396:   });
+01397: }
+01398: 
+01399: export async function getKingResultsByRange({
+01400:   uf,
+01401:   dateFrom,
+01402:   dateTo,
+01403:   closeHour = null,
+01404:   closeHourBucket = null,
+01405:   positions = null,
+01406:   mode = "detailed",
+01407:   readPolicy = DEFAULT_READ_POLICY,
+01408:   bypassCache = false,
+01409: }) {
+
+LINHAS 1592-1617
+01592:   const ordered = sortDrawsLocal(base);
+01593: 
+01594:   if (effectiveMode === "aggregated") {
+01595:     const out = dedupeDrawsLocal(
+01596:       ordered.map((d) => {
+01597:         const embedded = normalizeEmbeddedPrizesForAggregated(d?.prizes);
+01598:         return {
+01599:           ...d,
+01600:           prizes: embedded,
+01601:           prizesCount: Number.isFinite(Number(d?.prizesCount))
+01602:             ? Number(d.prizesCount)
+01603:             : embedded.length || 0,
+01604:           __mode: "aggregated",
+01605:         };
+01606:       })
+01607:     );
+01608:     if (!bypassCache) {
+01609:       cacheSet(DRAWS_CACHE, rangeKey, out);
+01610:     }
+01611:     return out;
+01612:   }
+01613: 
+01614:   const conc = chooseRangeConcurrency(ordered.length);
+01615: 
+01616:   const results = await mapWithConcurrency(ordered, conc, async (item) => {
+01617:     const prizes = await fetchPrizesForDraw(item.drawId, positionsArr, item.prizes);
+
+LINHAS 1761-1786
+01761:   const lastSeen = new Map();
+01762: 
+01763:   let cursorTo = toYmd;
+01764:   const chunk = Math.max(3, Math.min(60, Number(chunkDays) || 15));
+01765: 
+01766:   if (cursorTo < fromYmd) {
+01767:     const outEmpty = Array.from({ length: 25 }, (_, i) => ({
+01768:       pos: i + 1,
+01769:       grupo: i + 1,
+01770:       lastYmd: null,
+01771:       lastHour: null,
+01772:       lastDrawId: null,
+01773:       lastLottery: null,
+01774:       atrasoDias: null,
+01775:     }));
+01776:     cacheSet(LATE_CACHE, cacheKey, outEmpty);
+01777:     return outEmpty;
+01778:   }
+01779: 
+01780:   while (cursorTo >= fromYmd && lastSeen.size < 25) {
+01781:     let chunkFrom = addDaysUTC(cursorTo, -(chunk - 1));
+01782:     if (chunkFrom < fromYmd) chunkFrom = fromYmd;
+01783: 
+01784:     const draws = await getKingResultsByRange({
+01785:       uf,
+01786:       dateFrom: chunkFrom,
+
+LINHAS 1831-1856
+01831:     const seen = lastSeen.get(g) || null;
+01832:     const lastYmd = seen?.ymd || null;
+01833:     const diff = lastYmd ? daysDiffUTC(lastYmd, baseYmd) : NaN;
+01834:     const atrasoDias =
+01835:       lastYmd && Number.isFinite(diff) ? Math.max(0, diff) : null;
+01836: 
+01837:     rows.push({
+01838:       pos: 0,
+01839:       grupo: g,
+01840:       lastYmd,
+01841:       lastHour: seen?.hour ? normalizeHourLike(seen.hour) : null,
+01842:       lastDrawId: seen?.drawId || null,
+01843:       lastLottery: seen?.lottery_code || null,
+01844:       atrasoDias,
+01845:     });
+01846:   }
+01847: 
+01848:   const sorted = [...rows].sort((a, b) => {
+01849:     const aa = Number.isFinite(Number(a?.atrasoDias)) ? Number(a.atrasoDias) : -1;
+01850:     const bb = Number.isFinite(Number(b?.atrasoDias)) ? Number(b.atrasoDias) : -1;
+01851:     if (bb !== aa) return bb - aa;
+01852: 
+01853:     const ha = hourToNumSafe(a?.lastHour);
+01854:     const hb = hourToNumSafe(b?.lastHour);
+01855:     if (ha !== hb) return ha - hb;
+01856: 
+
+==================== src\pages\Top3\top3.firestore.js ====================
+
+LINHAS 114-139
+00114:     }) || null
+00115:   );
+00116: }
+00117: function normalizeSnapshot(snapshot) {
+00118:   return (Array.isArray(snapshot) ? snapshot : [])
+00119:     .slice(0, 3)
+00120:     .map((item, index) => ({
+00121:       rank: Number(item?.rank || index + 1),
+00122:       grupo: Number(item?.grupo),
+00123:       animal: safeStr(item?.animal || ""),
+00124:       prob: Number(item?.prob || 0),
+00125:       probPct: Number(item?.probPct || 0),
+00126:       milhares20: Array.isArray(item?.milhares20)
+00127:         ? item.milhares20.map(normalizeMilhar).filter(Boolean).slice(0, 20)
+00128:         : [],
+00129:       milharesCols: Array.isArray(item?.milharesCols)
+00130:         ? cleanFirestoreValue(item.milharesCols)
+00131:         : [],
+00132:       meta: cleanFirestoreValue(item?.meta || null),
+00133:     }))
+00134:     .filter((item) => {
+00135:       return (
+00136:         Number.isFinite(item.grupo) &&
+00137:         item.grupo >= 1 &&
+00138:         item.grupo <= 25
+00139:       );
+
+LINHAS 202-227
+00202:       Number(grupo) < 1 ||
+00203:       Number(grupo) > 25
+00204:     ) {
+00205:       return null;
+00206:     }
+00207: 
+00208:     return {
+00209:       position,
+00210:       grupo: Number(grupo),
+00211:       milhar,
+00212:       animal: safeStr(prize?.animal || ""),
+00213:     };
+00214:   });
+00215: }
+00216: 
+00217: function podiumMedalFromPosition(position) {
+00218:   if (Number(position) === 1) return "gold";
+00219:   if (Number(position) === 2) return "silver";
+00220:   if (Number(position) === 3) return "bronze";
+00221:   return "";
+00222: }
+00223: 
+00224: function analyzeSnapshotHit(snapshot, officialPodium) {
+00225:   const top3 = Array.isArray(snapshot)
+00226:     ? snapshot.slice(0, 3)
+00227:     : [];
+
+LINHAS 229-254
+00229:   const podium = Array.isArray(officialPodium)
+00230:     ? officialPodium.filter(Boolean).slice(0, 3)
+00231:     : [];
+00232: 
+00233:   if (!top3.length || !podium.length) {
+00234:     return {
+00235:       hitType: "miss",
+00236:       hitScore: 0,
+00237:       hitPosition: -1,
+00238:       predictionPosition: -1,
+00239:       resultPosition: -1,
+00240:       podiumMedal: "",
+00241:       matchedValue: "",
+00242:       matchedGrupo: null,
+00243:       matchedMilhar: "",
+00244:       matchedAnimal: "",
+00245:     };
+00246:   }
+00247: 
+00248:   for (const officialPrize of podium) {
+00249:     const resultGrupo = Number(officialPrize?.grupo);
+00250:     const resultMilhar = normalizeMilhar(
+00251:       officialPrize?.milhar
+00252:     );
+00253:     const resultCentena = resultMilhar
+00254:       ? resultMilhar.slice(-3)
+
+LINHAS 230-255
+00230:     ? officialPodium.filter(Boolean).slice(0, 3)
+00231:     : [];
+00232: 
+00233:   if (!top3.length || !podium.length) {
+00234:     return {
+00235:       hitType: "miss",
+00236:       hitScore: 0,
+00237:       hitPosition: -1,
+00238:       predictionPosition: -1,
+00239:       resultPosition: -1,
+00240:       podiumMedal: "",
+00241:       matchedValue: "",
+00242:       matchedGrupo: null,
+00243:       matchedMilhar: "",
+00244:       matchedAnimal: "",
+00245:     };
+00246:   }
+00247: 
+00248:   for (const officialPrize of podium) {
+00249:     const resultGrupo = Number(officialPrize?.grupo);
+00250:     const resultMilhar = normalizeMilhar(
+00251:       officialPrize?.milhar
+00252:     );
+00253:     const resultCentena = resultMilhar
+00254:       ? resultMilhar.slice(-3)
+00255:       : "";
+
+LINHAS 231-256
+00231:     : [];
+00232: 
+00233:   if (!top3.length || !podium.length) {
+00234:     return {
+00235:       hitType: "miss",
+00236:       hitScore: 0,
+00237:       hitPosition: -1,
+00238:       predictionPosition: -1,
+00239:       resultPosition: -1,
+00240:       podiumMedal: "",
+00241:       matchedValue: "",
+00242:       matchedGrupo: null,
+00243:       matchedMilhar: "",
+00244:       matchedAnimal: "",
+00245:     };
+00246:   }
+00247: 
+00248:   for (const officialPrize of podium) {
+00249:     const resultGrupo = Number(officialPrize?.grupo);
+00250:     const resultMilhar = normalizeMilhar(
+00251:       officialPrize?.milhar
+00252:     );
+00253:     const resultCentena = resultMilhar
+00254:       ? resultMilhar.slice(-3)
+00255:       : "";
+00256: 
+
+LINHAS 234-259
+00234:     return {
+00235:       hitType: "miss",
+00236:       hitScore: 0,
+00237:       hitPosition: -1,
+00238:       predictionPosition: -1,
+00239:       resultPosition: -1,
+00240:       podiumMedal: "",
+00241:       matchedValue: "",
+00242:       matchedGrupo: null,
+00243:       matchedMilhar: "",
+00244:       matchedAnimal: "",
+00245:     };
+00246:   }
+00247: 
+00248:   for (const officialPrize of podium) {
+00249:     const resultGrupo = Number(officialPrize?.grupo);
+00250:     const resultMilhar = normalizeMilhar(
+00251:       officialPrize?.milhar
+00252:     );
+00253:     const resultCentena = resultMilhar
+00254:       ? resultMilhar.slice(-3)
+00255:       : "";
+00256: 
+00257:     for (
+00258:       let predictionIndex = 0;
+00259:       predictionIndex < top3.length;
+
+LINHAS 235-260
+00235:       hitType: "miss",
+00236:       hitScore: 0,
+00237:       hitPosition: -1,
+00238:       predictionPosition: -1,
+00239:       resultPosition: -1,
+00240:       podiumMedal: "",
+00241:       matchedValue: "",
+00242:       matchedGrupo: null,
+00243:       matchedMilhar: "",
+00244:       matchedAnimal: "",
+00245:     };
+00246:   }
+00247: 
+00248:   for (const officialPrize of podium) {
+00249:     const resultGrupo = Number(officialPrize?.grupo);
+00250:     const resultMilhar = normalizeMilhar(
+00251:       officialPrize?.milhar
+00252:     );
+00253:     const resultCentena = resultMilhar
+00254:       ? resultMilhar.slice(-3)
+00255:       : "";
+00256: 
+00257:     for (
+00258:       let predictionIndex = 0;
+00259:       predictionIndex < top3.length;
+00260:       predictionIndex += 1
+
+LINHAS 308-333
+00308:       if (hitType !== "miss") {
+00309:         const resultPosition = Number(
+00310:           officialPrize?.position
+00311:         );
+00312: 
+00313:         return {
+00314:           hitType,
+00315:           hitScore,
+00316:           hitPosition: predictionIndex + 1,
+00317:           predictionPosition: predictionIndex + 1,
+00318:           resultPosition,
+00319:           podiumMedal:
+00320:             podiumMedalFromPosition(resultPosition),
+00321:           matchedValue,
+00322:           matchedGrupo: resultGrupo,
+00323:           matchedMilhar: resultMilhar,
+00324:           matchedAnimal: safeStr(
+00325:             officialPrize?.animal || ""
+00326:           ),
+00327:         };
+00328:       }
+00329:     }
+00330:   }
+00331: 
+00332:   return {
+00333:     hitType: "miss",
+
+LINHAS 309-334
+00309:         const resultPosition = Number(
+00310:           officialPrize?.position
+00311:         );
+00312: 
+00313:         return {
+00314:           hitType,
+00315:           hitScore,
+00316:           hitPosition: predictionIndex + 1,
+00317:           predictionPosition: predictionIndex + 1,
+00318:           resultPosition,
+00319:           podiumMedal:
+00320:             podiumMedalFromPosition(resultPosition),
+00321:           matchedValue,
+00322:           matchedGrupo: resultGrupo,
+00323:           matchedMilhar: resultMilhar,
+00324:           matchedAnimal: safeStr(
+00325:             officialPrize?.animal || ""
+00326:           ),
+00327:         };
+00328:       }
+00329:     }
+00330:   }
+00331: 
+00332:   return {
+00333:     hitType: "miss",
+00334:     hitScore: 0,
+
+LINHAS 314-339
+00314:           hitType,
+00315:           hitScore,
+00316:           hitPosition: predictionIndex + 1,
+00317:           predictionPosition: predictionIndex + 1,
+00318:           resultPosition,
+00319:           podiumMedal:
+00320:             podiumMedalFromPosition(resultPosition),
+00321:           matchedValue,
+00322:           matchedGrupo: resultGrupo,
+00323:           matchedMilhar: resultMilhar,
+00324:           matchedAnimal: safeStr(
+00325:             officialPrize?.animal || ""
+00326:           ),
+00327:         };
+00328:       }
+00329:     }
+00330:   }
+00331: 
+00332:   return {
+00333:     hitType: "miss",
+00334:     hitScore: 0,
+00335:     hitPosition: -1,
+00336:     predictionPosition: -1,
+00337:     resultPosition: -1,
+00338:     podiumMedal: "",
+00339:     matchedValue: "",
+
+LINHAS 315-340
+00315:           hitScore,
+00316:           hitPosition: predictionIndex + 1,
+00317:           predictionPosition: predictionIndex + 1,
+00318:           resultPosition,
+00319:           podiumMedal:
+00320:             podiumMedalFromPosition(resultPosition),
+00321:           matchedValue,
+00322:           matchedGrupo: resultGrupo,
+00323:           matchedMilhar: resultMilhar,
+00324:           matchedAnimal: safeStr(
+00325:             officialPrize?.animal || ""
+00326:           ),
+00327:         };
+00328:       }
+00329:     }
+00330:   }
+00331: 
+00332:   return {
+00333:     hitType: "miss",
+00334:     hitScore: 0,
+00335:     hitPosition: -1,
+00336:     predictionPosition: -1,
+00337:     resultPosition: -1,
+00338:     podiumMedal: "",
+00339:     matchedValue: "",
+00340:     matchedGrupo: null,
+
+LINHAS 327-352
+00327:         };
+00328:       }
+00329:     }
+00330:   }
+00331: 
+00332:   return {
+00333:     hitType: "miss",
+00334:     hitScore: 0,
+00335:     hitPosition: -1,
+00336:     predictionPosition: -1,
+00337:     resultPosition: -1,
+00338:     podiumMedal: "",
+00339:     matchedValue: "",
+00340:     matchedGrupo: null,
+00341:     matchedMilhar: "",
+00342:     matchedAnimal: "",
+00343:   };
+00344: }
+00345: 
+00346: export async function saveTop3PredictionSnapshot({
+00347:   lotteryKey,
+00348:   targetYmd,
+00349:   targetHour,
+00350:   picks,
+00351:   snapshot,
+00352:   engineVersion,
+
+LINHAS 328-353
+00328:       }
+00329:     }
+00330:   }
+00331: 
+00332:   return {
+00333:     hitType: "miss",
+00334:     hitScore: 0,
+00335:     hitPosition: -1,
+00336:     predictionPosition: -1,
+00337:     resultPosition: -1,
+00338:     podiumMedal: "",
+00339:     matchedValue: "",
+00340:     matchedGrupo: null,
+00341:     matchedMilhar: "",
+00342:     matchedAnimal: "",
+00343:   };
+00344: }
+00345: 
+00346: export async function saveTop3PredictionSnapshot({
+00347:   lotteryKey,
+00348:   targetYmd,
+00349:   targetHour,
+00350:   picks,
+00351:   snapshot,
+00352:   engineVersion,
+00353: }) {
+
+LINHAS 329-354
+00329:     }
+00330:   }
+00331: 
+00332:   return {
+00333:     hitType: "miss",
+00334:     hitScore: 0,
+00335:     hitPosition: -1,
+00336:     predictionPosition: -1,
+00337:     resultPosition: -1,
+00338:     podiumMedal: "",
+00339:     matchedValue: "",
+00340:     matchedGrupo: null,
+00341:     matchedMilhar: "",
+00342:     matchedAnimal: "",
+00343:   };
+00344: }
+00345: 
+00346: export async function saveTop3PredictionSnapshot({
+00347:   lotteryKey,
+00348:   targetYmd,
+00349:   targetHour,
+00350:   picks,
+00351:   snapshot,
+00352:   engineVersion,
+00353: }) {
+00354:   let user = null;
+
+LINHAS 332-357
+00332:   return {
+00333:     hitType: "miss",
+00334:     hitScore: 0,
+00335:     hitPosition: -1,
+00336:     predictionPosition: -1,
+00337:     resultPosition: -1,
+00338:     podiumMedal: "",
+00339:     matchedValue: "",
+00340:     matchedGrupo: null,
+00341:     matchedMilhar: "",
+00342:     matchedAnimal: "",
+00343:   };
+00344: }
+00345: 
+00346: export async function saveTop3PredictionSnapshot({
+00347:   lotteryKey,
+00348:   targetYmd,
+00349:   targetHour,
+00350:   picks,
+00351:   snapshot,
+00352:   engineVersion,
+00353: }) {
+00354:   let user = null;
+00355: 
+00356:   try {
+00357:     user = await loginAnonymous();
+
+LINHAS 333-358
+00333:     hitType: "miss",
+00334:     hitScore: 0,
+00335:     hitPosition: -1,
+00336:     predictionPosition: -1,
+00337:     resultPosition: -1,
+00338:     podiumMedal: "",
+00339:     matchedValue: "",
+00340:     matchedGrupo: null,
+00341:     matchedMilhar: "",
+00342:     matchedAnimal: "",
+00343:   };
+00344: }
+00345: 
+00346: export async function saveTop3PredictionSnapshot({
+00347:   lotteryKey,
+00348:   targetYmd,
+00349:   targetHour,
+00350:   picks,
+00351:   snapshot,
+00352:   engineVersion,
+00353: }) {
+00354:   let user = null;
+00355: 
+00356:   try {
+00357:     user = await loginAnonymous();
+00358:   } catch (error) {
+
+LINHAS 414-439
+00414:     lotteryKey: lottery,
+00415:     targetYmd: ymd,
+00416:     targetHour: hour,
+00417:     targetKey: `${ymd}_${hour}`,
+00418:     picks: normalizedPicks,
+00419:     snapshot: normalizedSnapshot,
+00420:     engineVersion: safeStr(engineVersion || "V3_STATISTICAL"),
+00421:     status: "predicted",
+00422:     resultGrupo: null,
+00423:     resultMilhar: "",
+00424:     resultAnimal: "",
+00425:     hitType: "",
+00426:     hitScore: 0,
+00427:     hitPosition: -1,
+00428:     matchedValue: "",
+00429:     createdAt: now,
+00430:     updatedAt: now,
+00431:     createdBy: user.uid,
+00432:   });
+00433: 
+00434:   const result = await runTransaction(db, async (transaction) => {
+00435:     const current = await transaction.get(ref);
+00436: 
+00437:     if (current.exists()) {
+00438:       return {
+00439:         ok: true,
+
+LINHAS 415-440
+00415:     targetYmd: ymd,
+00416:     targetHour: hour,
+00417:     targetKey: `${ymd}_${hour}`,
+00418:     picks: normalizedPicks,
+00419:     snapshot: normalizedSnapshot,
+00420:     engineVersion: safeStr(engineVersion || "V3_STATISTICAL"),
+00421:     status: "predicted",
+00422:     resultGrupo: null,
+00423:     resultMilhar: "",
+00424:     resultAnimal: "",
+00425:     hitType: "",
+00426:     hitScore: 0,
+00427:     hitPosition: -1,
+00428:     matchedValue: "",
+00429:     createdAt: now,
+00430:     updatedAt: now,
+00431:     createdBy: user.uid,
+00432:   });
+00433: 
+00434:   const result = await runTransaction(db, async (transaction) => {
+00435:     const current = await transaction.get(ref);
+00436: 
+00437:     if (current.exists()) {
+00438:       return {
+00439:         ok: true,
+00440:         created: false,
+
+LINHAS 419-444
+00419:     snapshot: normalizedSnapshot,
+00420:     engineVersion: safeStr(engineVersion || "V3_STATISTICAL"),
+00421:     status: "predicted",
+00422:     resultGrupo: null,
+00423:     resultMilhar: "",
+00424:     resultAnimal: "",
+00425:     hitType: "",
+00426:     hitScore: 0,
+00427:     hitPosition: -1,
+00428:     matchedValue: "",
+00429:     createdAt: now,
+00430:     updatedAt: now,
+00431:     createdBy: user.uid,
+00432:   });
+00433: 
+00434:   const result = await runTransaction(db, async (transaction) => {
+00435:     const current = await transaction.get(ref);
+00436: 
+00437:     if (current.exists()) {
+00438:       return {
+00439:         ok: true,
+00440:         created: false,
+00441:         existing: true,
+00442:       };
+00443:     }
+00444: 
+
+LINHAS 625-650
+00625:       resultTop3Groups: officialPodium.map(
+00626:         (item) => Number(item?.grupo) || null
+00627:       ),
+00628:       resultTop3Milhares: officialPodium.map(
+00629:         (item) => normalizeMilhar(item?.milhar)
+00630:       ),
+00631:       hitType: analysis.hitType,
+00632:       hitScore: analysis.hitScore,
+00633:       hitPosition: analysis.hitPosition,
+00634:       predictionPosition: analysis.predictionPosition,
+00635:       resultPosition: analysis.resultPosition,
+00636:       podiumMedal: analysis.podiumMedal,
+00637:       matchedGrupo: analysis.matchedGrupo,
+00638:       matchedMilhar: analysis.matchedMilhar,
+00639:       matchedAnimal: analysis.matchedAnimal,
+00640:       matchedValue: analysis.matchedValue,
+00641:       validatedAt: now,
+00642:       validatedBy: user.uid,
+00643:       updatedAt: now,
+00644:       status: "validated",
+00645:     };
+00646: 
+00647:     await setDoc(
+00648:       ref,
+00649:       validationPayload,
+00650:       { merge: true }
+
+LINHAS 626-651
+00626:         (item) => Number(item?.grupo) || null
+00627:       ),
+00628:       resultTop3Milhares: officialPodium.map(
+00629:         (item) => normalizeMilhar(item?.milhar)
+00630:       ),
+00631:       hitType: analysis.hitType,
+00632:       hitScore: analysis.hitScore,
+00633:       hitPosition: analysis.hitPosition,
+00634:       predictionPosition: analysis.predictionPosition,
+00635:       resultPosition: analysis.resultPosition,
+00636:       podiumMedal: analysis.podiumMedal,
+00637:       matchedGrupo: analysis.matchedGrupo,
+00638:       matchedMilhar: analysis.matchedMilhar,
+00639:       matchedAnimal: analysis.matchedAnimal,
+00640:       matchedValue: analysis.matchedValue,
+00641:       validatedAt: now,
+00642:       validatedBy: user.uid,
+00643:       updatedAt: now,
+00644:       status: "validated",
+00645:     };
+00646: 
+00647:     await setDoc(
+00648:       ref,
+00649:       validationPayload,
+00650:       { merge: true }
+00651:     );
+
+LINHAS 627-652
+00627:       ),
+00628:       resultTop3Milhares: officialPodium.map(
+00629:         (item) => normalizeMilhar(item?.milhar)
+00630:       ),
+00631:       hitType: analysis.hitType,
+00632:       hitScore: analysis.hitScore,
+00633:       hitPosition: analysis.hitPosition,
+00634:       predictionPosition: analysis.predictionPosition,
+00635:       resultPosition: analysis.resultPosition,
+00636:       podiumMedal: analysis.podiumMedal,
+00637:       matchedGrupo: analysis.matchedGrupo,
+00638:       matchedMilhar: analysis.matchedMilhar,
+00639:       matchedAnimal: analysis.matchedAnimal,
+00640:       matchedValue: analysis.matchedValue,
+00641:       validatedAt: now,
+00642:       validatedBy: user.uid,
+00643:       updatedAt: now,
+00644:       status: "validated",
+00645:     };
+00646: 
+00647:     await setDoc(
+00648:       ref,
+00649:       validationPayload,
+00650:       { merge: true }
+00651:     );
+00652: 
+
+LINHAS 629-654
+00629:         (item) => normalizeMilhar(item?.milhar)
+00630:       ),
+00631:       hitType: analysis.hitType,
+00632:       hitScore: analysis.hitScore,
+00633:       hitPosition: analysis.hitPosition,
+00634:       predictionPosition: analysis.predictionPosition,
+00635:       resultPosition: analysis.resultPosition,
+00636:       podiumMedal: analysis.podiumMedal,
+00637:       matchedGrupo: analysis.matchedGrupo,
+00638:       matchedMilhar: analysis.matchedMilhar,
+00639:       matchedAnimal: analysis.matchedAnimal,
+00640:       matchedValue: analysis.matchedValue,
+00641:       validatedAt: now,
+00642:       validatedBy: user.uid,
+00643:       updatedAt: now,
+00644:       status: "validated",
+00645:     };
+00646: 
+00647:     await setDoc(
+00648:       ref,
+00649:       validationPayload,
+00650:       { merge: true }
+00651:     );
+00652: 
+00653:     reconciledHistory.push({
+00654:       ...entry,
+
+LINHAS 630-655
+00630:       ),
+00631:       hitType: analysis.hitType,
+00632:       hitScore: analysis.hitScore,
+00633:       hitPosition: analysis.hitPosition,
+00634:       predictionPosition: analysis.predictionPosition,
+00635:       resultPosition: analysis.resultPosition,
+00636:       podiumMedal: analysis.podiumMedal,
+00637:       matchedGrupo: analysis.matchedGrupo,
+00638:       matchedMilhar: analysis.matchedMilhar,
+00639:       matchedAnimal: analysis.matchedAnimal,
+00640:       matchedValue: analysis.matchedValue,
+00641:       validatedAt: now,
+00642:       validatedBy: user.uid,
+00643:       updatedAt: now,
+00644:       status: "validated",
+00645:     };
+00646: 
+00647:     await setDoc(
+00648:       ref,
+00649:       validationPayload,
+00650:       { merge: true }
+00651:     );
+00652: 
+00653:     reconciledHistory.push({
+00654:       ...entry,
+00655:       ...validationPayload,
+
+====================================================================================================
+TOP3-HIT-21B CONCLU├ìDO ÔÇö estrutura real coletada.
+====================================================================================================

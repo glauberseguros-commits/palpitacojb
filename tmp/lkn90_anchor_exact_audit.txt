@@ -1,0 +1,82 @@
+===== LOCALIZAÇÃO =====
+
+FUNCTION_START_LINE=383
+FUNCTION_END_LINE=403
+
+====================================================================================================
+CONTEXTO EXATO
+====================================================================================================
+
+             375:  * - A API do PT_RIO costuma devolver HH:09 como "marcação" e NÃO um minuto real.
+             376:  * - Portanto, para PT_RIO, se raw terminar em ":09", tratamos como "sem minuto real"
+             377:  *   e NÃO persistimos close_hour_raw (vira "").
+             378:  *
+             379:  * Retorna:
+             380:  * - raw: HH:MM (normalizado) OU "" quando for "sintético" (PT_RIO HH:09)
+             381:  * - slot: HH:MM (normalizado para o que o sistema deve usar em consultas/ID)
+             382:  */
+>>> INÍCIO   383: function normalizeCloseHourForLottery(value, lotteryKey) {
+             384:   const lk = String(lotteryKey || "").trim().toUpperCase();
+             385:   const raw0 = normalizeHHMM(value);
+             386:   if (!raw0 || !isHHMM(raw0)) return { raw: "", slot: "" };
+             387: 
+             388:   // ✅ FEDERAL: slot de negócio é sempre 20:00, mas preserva o raw
+             389:   if (lk === "FEDERAL") {
+             390:     return { raw: raw0, slot: "20:00" };
+             391:   }
+             392: 
+             393:   if (lk === "PT_RIO") {
+             394:     const hh = raw0.slice(0, 2);
+             395:     const mm = raw0.slice(3, 5);
+             396: 
+             397:     // ✅ se vier HH:09, é marcação (não minuto real) -> não grava close_hour_raw
+             398:     const raw = mm === "09" ? "" : raw0;
+             399:     return { raw, slot: `${hh}:00` };
+             400:   }
+             401: 
+             402:   return { raw: raw0, slot: raw0 };
+>>> FIM      403: }
+             404: 
+             405: /**
+             406:  * ✅ Normaliza o parâmetro closeHour (do CLI/scheduler) e evita log enganoso.
+             407:  * - Para FEDERAL: qualquer coisa vira slot=20:00, mas mantemos "requested" para log.
+             408:  */
+             409: function normalizeRequestedCloseHour(closeHour, lotteryKey) {
+             410:   const lk = String(lotteryKey || "").trim().toUpperCase();
+             411:   const requested = closeHour ? normalizeHHMM(closeHour) : null;
+             412:   const requestedIsValid = requested ? isHHMM(requested) : false;
+             413: 
+             414:   if (!requested) {
+             415:     return { requested: null, slot: null, note: null };
+             416:   }
+             417:   if (!requestedIsValid) {
+             418:     return { requested, slot: null, note: "invalid" };
+             419:   }
+             420: 
+             421:   // FEDERAL: slot único 20:00 (não fingir que o usuário pediu 20:00)
+             422:   if (lk === "FEDERAL") {
+             423:     const slot = "20:00";
+             424:     const note = requested !== slot ? `FEDERAL_slot_fixed(${requested}->${slot})` : null;
+             425:     return { requested, slot, note };
+             426:   }
+             427: 
+             428:   // outros: normalização normal por lotteryKey (PT_RIO min->00 etc.)
+             429:   const slot = normalizeCloseHourForLottery(requested, lk).slot;
+             430:   return { requested, slot: slot || null, note: null };
+             431: }
+             432: 
+             433: /**
+             434:  * Sanitiza string para docId do Firestore.
+             435:  */
+             436: function safeIdPart(input) {
+             437:   const s = String(input ?? "").trim();
+
+====================================================================================================
+PRÓXIMAS DECLARAÇÕES DE FUNÇÃO
+====================================================================================================
+
+  409: function normalizeRequestedCloseHour(closeHour, lotteryKey) {
+  436: function safeIdPart(input) {
+  446: function pickLotteryId(draw) {
+  565: function buildResultsUrl({ date, lotteryKey, lotteryId = null }) {
+  594: function sleep(ms) {

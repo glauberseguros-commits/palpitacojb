@@ -1,0 +1,29 @@
+  788: function mergeAndDedupDraws(arrays, lotteryKey) {
+  789:   const map = new Map();
+  790: 
+  791:   for (const a of arrays) {
+  792:     const list = Array.isArray(a) ? a : [];
+  793:     for (const d of list) {
+  794:       const date = String(d?.date || "").trim();
+  795:       const { slot } = normalizeCloseHourForLottery(d?.close_hour || "", lotteryKey);
+  796: 
+  797:       const lid =
+  798:         pickLotteryId(d) ||
+  799:         String(d?.lottery_name || d?.name || "").trim() ||
+  800:         "NA";
+  801:       const key = `${date}__${slot}__${lid}`;
+  802: 
+  803:       if (!map.has(key)) {
+  804:         map.set(key, d);
+  805:       } else {
+  806:         // se duplicado, preferir o que tiver mais prizes preenchidos
+  807:         const prev = map.get(key);
+  808:         const prevCount = countPrizesInDraw(prev);
+  809:         const curCount = countPrizesInDraw(d);
+  810:         if (curCount > prevCount) map.set(key, d);
+  811:       }
+  812:     }
+  813:   }
+  814: 
+  815:   return Array.from(map.values());
+  816: }

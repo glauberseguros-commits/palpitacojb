@@ -1,0 +1,308 @@
+
+==============================================================================================================
+1. COMPARAÇÃO NORMALIZADA
+==============================================================================================================
+LOCAL: 976826e39de23b22ad112e8ef970b242c161cc5dc42dd5065b546e57eadbd80f
+ORIGIN_MAIN: 976826e39de23b22ad112e8ef970b242c161cc5dc42dd5065b546e57eadbd80f
+GITHUB_API: 976826e39de23b22ad112e8ef970b242c161cc5dc42dd5065b546e57eadbd80f
+
+RESULTADO: LOCAL, ORIGIN/MAIN E API POSSUEM O MESMO CONTEÚDO.
+
+LOCAL == ORIGIN_MAIN: SIM
+ORIGIN_MAIN == GITHUB_API: SIM
+LOCAL == GITHUB_API: SIM
+
+==============================================================================================================
+2. ESTRUTURA DECISIVA — LOCAL
+==============================================================================================================
+00003: on:
+00004:   schedule:
+00008:     - cron: "5-31 12 * * 0-6"
+00010:     - cron: "5-31 14 * * 0-6"
+00012:     - cron: "5-31 17 * * 0-6"
+00014:     - cron: "5-31 19 * * 0-6"
+00017:     - cron: "5-31 21 * * 1,2,4,5"
+00020:     - cron: "35 21 * * 3,6"
+00024:     - cron: "5-45 0 * * 0,2-6"
+00029:     - cron: "49-59 22 * * 3,6"
+00031:     - cron: "0-10 23 * * 3,6"
+00033:   workflow_dispatch:
+00035:       lottery:
+00046: concurrency:
+00048:   cancel-in-progress: false
+00058: jobs:
+00073:     if: |
+00074:       (github.event_name == 'schedule' &&
+00075:         github.event.schedule != '49-59 22 * * 3,6' &&
+00076:         github.event.schedule != '0-10 23 * * 3,6'
+00078:       || (github.event_name == 'workflow_dispatch' && inputs.lottery == 'PT_RIO')
+00097:           LOTTERY: PT_RIO
+00104:         run: node scripts/autoImportToday.js
+00120:     if: |
+00121:       (github.event_name == 'schedule' &&
+00122:         (github.event.schedule == '49-59 22 * * 3,6' || github.event.schedule == '0-10 23 * * 3,6')
+00124:       || (github.event_name == 'workflow_dispatch' && inputs.lottery == 'FEDERAL')
+00143:           LOTTERY: FEDERAL
+00149:         run: node scripts/autoImportToday.js
+
+==============================================================================================================
+2. ESTRUTURA DECISIVA — ORIGIN_MAIN
+==============================================================================================================
+00003: on:
+00004:   schedule:
+00008:     - cron: "5-31 12 * * 0-6"
+00010:     - cron: "5-31 14 * * 0-6"
+00012:     - cron: "5-31 17 * * 0-6"
+00014:     - cron: "5-31 19 * * 0-6"
+00017:     - cron: "5-31 21 * * 1,2,4,5"
+00020:     - cron: "35 21 * * 3,6"
+00024:     - cron: "5-45 0 * * 0,2-6"
+00029:     - cron: "49-59 22 * * 3,6"
+00031:     - cron: "0-10 23 * * 3,6"
+00033:   workflow_dispatch:
+00035:       lottery:
+00046: concurrency:
+00048:   cancel-in-progress: false
+00058: jobs:
+00073:     if: |
+00074:       (github.event_name == 'schedule' &&
+00075:         github.event.schedule != '49-59 22 * * 3,6' &&
+00076:         github.event.schedule != '0-10 23 * * 3,6'
+00078:       || (github.event_name == 'workflow_dispatch' && inputs.lottery == 'PT_RIO')
+00097:           LOTTERY: PT_RIO
+00104:         run: node scripts/autoImportToday.js
+00120:     if: |
+00121:       (github.event_name == 'schedule' &&
+00122:         (github.event.schedule == '49-59 22 * * 3,6' || github.event.schedule == '0-10 23 * * 3,6')
+00124:       || (github.event_name == 'workflow_dispatch' && inputs.lottery == 'FEDERAL')
+00143:           LOTTERY: FEDERAL
+00149:         run: node scripts/autoImportToday.js
+
+==============================================================================================================
+2. ESTRUTURA DECISIVA — GITHUB_API
+==============================================================================================================
+00003: on:
+00004:   schedule:
+00008:     - cron: "5-31 12 * * 0-6"
+00010:     - cron: "5-31 14 * * 0-6"
+00012:     - cron: "5-31 17 * * 0-6"
+00014:     - cron: "5-31 19 * * 0-6"
+00017:     - cron: "5-31 21 * * 1,2,4,5"
+00020:     - cron: "35 21 * * 3,6"
+00024:     - cron: "5-45 0 * * 0,2-6"
+00029:     - cron: "49-59 22 * * 3,6"
+00031:     - cron: "0-10 23 * * 3,6"
+00033:   workflow_dispatch:
+00035:       lottery:
+00046: concurrency:
+00048:   cancel-in-progress: false
+00058: jobs:
+00073:     if: |
+00074:       (github.event_name == 'schedule' &&
+00075:         github.event.schedule != '49-59 22 * * 3,6' &&
+00076:         github.event.schedule != '0-10 23 * * 3,6'
+00078:       || (github.event_name == 'workflow_dispatch' && inputs.lottery == 'PT_RIO')
+00097:           LOTTERY: PT_RIO
+00104:         run: node scripts/autoImportToday.js
+00120:     if: |
+00121:       (github.event_name == 'schedule' &&
+00122:         (github.event.schedule == '49-59 22 * * 3,6' || github.event.schedule == '0-10 23 * * 3,6')
+00124:       || (github.event_name == 'workflow_dispatch' && inputs.lottery == 'FEDERAL')
+00143:           LOTTERY: FEDERAL
+00149:         run: node scripts/autoImportToday.js
+
+==============================================================================================================
+3. CRONS DA ORIGIN/MAIN
+==============================================================================================================
+00008: - cron: "5-31 12 * * 0-6"
+00010: - cron: "5-31 14 * * 0-6"
+00012: - cron: "5-31 17 * * 0-6"
+00014: - cron: "5-31 19 * * 0-6"
+00017: - cron: "5-31 21 * * 1,2,4,5"
+00020: - cron: "35 21 * * 3,6"
+00024: - cron: "5-45 0 * * 0,2-6"
+00029: - cron: "49-59 22 * * 3,6"
+00031: - cron: "0-10 23 * * 3,6"
+
+==============================================================================================================
+4. CONDIÇÕES DOS JOBS
+==============================================================================================================
+00048:   cancel-in-progress: false
+00073:     if: |
+00074:       (github.event_name == 'schedule' &&
+00075:         github.event.schedule != '49-59 22 * * 3,6' &&
+00076:         github.event.schedule != '0-10 23 * * 3,6'
+00078:       || (github.event_name == 'workflow_dispatch' && inputs.lottery == 'PT_RIO')
+00097:           LOTTERY: PT_RIO
+00104:         run: node scripts/autoImportToday.js
+00120:     if: |
+00121:       (github.event_name == 'schedule' &&
+00122:         (github.event.schedule == '49-59 22 * * 3,6' || github.event.schedule == '0-10 23 * * 3,6')
+00124:       || (github.event_name == 'workflow_dispatch' && inputs.lottery == 'FEDERAL')
+00143:           LOTTERY: FEDERAL
+00149:         run: node scripts/autoImportToday.js
+
+==============================================================================================================
+5. VERIFICAÇÕES AUTOMÁTICAS
+==============================================================================================================
+Workflow possui schedule: SIM
+Workflow possui workflow_dispatch: SIM
+Cron 00:05–00:45 UTC existe: SIM
+Há condição baseada em github.event.schedule: SIM
+Há condição baseada em github.event_name: SIM
+Há cancel-in-progress: SIM
+cancel-in-progress está false: SIM
+Executa autoImportToday.js: SIM
+
+==============================================================================================================
+6. WORKFLOW ORIGIN/MAIN COMPLETO
+==============================================================================================================
+00001: name: Auto Import — PalPitaco JB
+00002: 
+00003: on:
+00004:   schedule:
+00005:     # =========================
+00006:     # PT_RIO (RJ) — janelas BRT (UTC-3) convertidas p/ UTC
+00007:     # BRT 09:05–09:31 => UTC 12:05–12:31
+00008:     - cron: "5-31 12 * * 0-6"
+00009:     # BRT 11:05–11:31 => UTC 14:05–14:31
+00010:     - cron: "5-31 14 * * 0-6"
+00011:     # BRT 14:05–14:31 => UTC 17:05–17:31
+00012:     - cron: "5-31 17 * * 0-6"
+00013:     # BRT 16:05–16:31 => UTC 19:05–19:31
+00014:     - cron: "5-31 19 * * 0-6"
+00015: 
+00016:     # BRT 18:05–18:31 => UTC 21:05–21:31 (SEG, TER, QUI, SEX)
+00017:     - cron: "5-31 21 * * 1,2,4,5"
+00018: 
+00019:     # BRT 18:35 (one-shot) => UTC 21:35 (QUA e SÁB)
+00020:     - cron: "35 21 * * 3,6"
+00021: 
+00022:     # BRT 21:05–21:45 => UTC 0:05–0:45 (vira o dia no UTC; TER–DOM)
+00023:     # (Isso representa SEG–SÁB em BRT)
+00024:     - cron: "5-45 0 * * 0,2-6"
+00025: 
+00026:     # =========================
+00027:     # FEDERAL — Quarta e Sábado — janela BRT 19:49–20:10
+00028:     # BRT 19:49–19:59 => UTC 22:49–22:59
+00029:     - cron: "49-59 22 * * 3,6"
+00030:     # BRT 20:00–20:10 => UTC 23:00–23:10
+00031:     - cron: "0-10 23 * * 3,6"
+00032: 
+00033:   workflow_dispatch:
+00034:     inputs:
+00035:       lottery:
+00036:         description: "Qual loteria executar"
+00037:         required: true
+00038:         type: choice
+00039:         options:
+00040:           - PT_RIO
+00041:           - FEDERAL
+00042: 
+00043: # ✅ Evita sobreposição de runs (você dispara várias vezes por minuto)
+00044: # - Mantém 1 execução por vez
+00045: # - Não cancela a run anterior (mais seguro para importação)
+00046: concurrency:
+00047:   group: auto-import-palpitaco-${{ github.ref }}
+00048:   cancel-in-progress: false
+00049: 
+00050: permissions:
+00051:   contents: read
+00052: 
+00053: # Garante que o Node rode em BRT (importante para regras de janela/slot no script)
+00054: env:
+00055:   TZ: America/Sao_Paulo
+00056:   PITACO_API_BASE: ${{ vars.PITACO_API_BASE }}
+00057: 
+00058: jobs:
+00059:   # ==========================================================
+00060:   # PT_RIO
+00061:   # ==========================================================
+00062:   run-import-pt-rio:
+00063:     name: run-import (PT_RIO)
+00064:     runs-on: ubuntu-latest
+00065:     timeout-minutes: 20
+00066:     defaults:
+00067:       run:
+00068:         working-directory: backend
+00069: 
+00070:     # Roda:
+00071:     # - em schedule, exceto quando for o schedule específico do FEDERAL
+00072:     # - ou manual quando input=PT_RIO
+00073:     if: |
+00074:       (github.event_name == 'schedule' &&
+00075:         github.event.schedule != '49-59 22 * * 3,6' &&
+00076:         github.event.schedule != '0-10 23 * * 3,6'
+00077:       )
+00078:       || (github.event_name == 'workflow_dispatch' && inputs.lottery == 'PT_RIO')
+00079: 
+00080:     steps:
+00081:       - name: Checkout do repositório
+00082:         uses: actions/checkout@v4
+00083: 
+00084:       - name: Setup Node.js
+00085:         uses: actions/setup-node@v4
+00086:         with:
+00087:           node-version: 20
+00088: 
+00089:       - name: Instalar dependências (backend)
+00090:         run: npm ci
+00091: 
+00092:       - name: Rodar importação automática (PT_RIO)
+00093:         env:
+00094:           # ✅ nome correto que o firebaseAdmin.js lê
+00095:           FIREBASE_ADMIN_SA_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_JSON }}
+00096: 
+00097:           LOTTERY: PT_RIO
+00098: 
+00099:           # ✅ ALERTA REAL (auditoria)
+00100:           # - Se houver furo CRÍTICO, o job falha (run vermelha)
+00101:           FAIL_ON_CRITICAL: "1"
+00102:           AUDIT_WARN_MIN: "20"
+00103:           AUDIT_CRIT_MIN: "60"
+00104:         run: node scripts/autoImportToday.js
+00105: 
+00106:   # ==========================================================
+00107:   # FEDERAL
+00108:   # ==========================================================
+00109:   run-import-federal:
+00110:     name: run-import (FEDERAL)
+00111:     runs-on: ubuntu-latest
+00112:     timeout-minutes: 20
+00113:     defaults:
+00114:       run:
+00115:         working-directory: backend
+00116: 
+00117:     # Roda:
+00118:     # - em schedule, SOMENTE nas duas regras do FEDERAL
+00119:     # - ou manual quando input=FEDERAL
+00120:     if: |
+00121:       (github.event_name == 'schedule' &&
+00122:         (github.event.schedule == '49-59 22 * * 3,6' || github.event.schedule == '0-10 23 * * 3,6')
+00123:       )
+00124:       || (github.event_name == 'workflow_dispatch' && inputs.lottery == 'FEDERAL')
+00125: 
+00126:     steps:
+00127:       - name: Checkout do repositório
+00128:         uses: actions/checkout@v4
+00129: 
+00130:       - name: Setup Node.js
+00131:         uses: actions/setup-node@v4
+00132:         with:
+00133:           node-version: 20
+00134: 
+00135:       - name: Instalar dependências (backend)
+00136:         run: npm ci
+00137: 
+00138:       - name: Rodar importação automática (FEDERAL)
+00139:         env:
+00140:           # ✅ nome correto que o firebaseAdmin.js lê
+00141:           FIREBASE_ADMIN_SA_JSON: ${{ secrets.FIREBASE_SERVICE_ACCOUNT_JSON }}
+00142: 
+00143:           LOTTERY: FEDERAL
+00144: 
+00145:           # ✅ ALERTA REAL (auditoria)
+00146:           FAIL_ON_CRITICAL: "1"
+00147:           AUDIT_WARN_MIN: "20"
+00148:           AUDIT_CRIT_MIN: "60"
+00149:         run: node scripts/autoImportToday.js

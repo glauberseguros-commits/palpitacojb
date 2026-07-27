@@ -1,0 +1,151 @@
+
+==============================================================================================================
+PADRÃO: rawScore
+LINHA: 658
+==============================================================================================================
+00634:           )
+00635:         )
+00636:       : 0;
+00637: 
+00638:   const individualSpread =
+00639:     Math.max(
+00640:       ...individualHistorical
+00641:     ) -
+00642:     Math.min(
+00643:       ...individualHistorical
+00644:     );
+00645: 
+00646:   const balance =
+00647:     1 - clamp01(individualSpread);
+00648: 
+00649:   const evidenceScore =
+00650:     individualStrength * 0.26 +
+00651:     pairStrength * 0.3 +
+00652:     tripleStrength * 0.24 +
+00653:     targetHourStrength * 0.12 +
+00654:     analyticsStrength * 0.06 +
+00655:     balance * 0.02;
+00656: 
+00657:   return {
+00658:     rawScore: clamp01(evidenceScore),
+00659: 
+00660:     components: {
+00661:       individualStrength,
+00662:       pairStrength,
+00663:       tripleStrength,
+00664:       targetHourStrength,
+00665:       analyticsStrength,
+00666:       balance,
+00667:     },
+00668: 
+00669:     occurrences: {
+00670:       tripleHistorical:
+00671:         getMapValue(
+00672:           stats.triple,
+00673:           combinationKey
+00674:         ),
+00675: 
+00676:       tripleRecent:
+00677:         getMapValue(
+00678:           stats.recentTriple,
+00679:           combinationKey
+00680:         ),
+00681: 
+00682:       tripleTargetHour:
+00683:         getMapValue(
+00684:           stats.targetHourTriple,
+00685:           combinationKey
+00686:         ),
+00687: 
+00688:       pairHistorical:
+00689:         pairKeys.map((key) =>
+00690:           getMapValue(stats.pair, key)
+00691:         ),
+00692:     },
+00693:   };
+00694: }
+00695: 
+00696: function buildAllCombinations({
+00697:   analytics,
+00698:   historicalDraws,
+00699:   targetHour,
+00700: }) {
+00701:   const analyticsMap =
+00702:     buildAnalyticsMap(analytics);
+00703: 
+00704:   const stats = buildHistoricalStats({
+00705:     historicalDraws,
+00706:     targetHour:
+00707:       normalizeHour(targetHour),
+00708:   });
+00709: 
+00710:   const normalization =
+00711:     buildNormalization(stats);
+00712: 
+00713:   const combinations = [];
+00714: 
+00715:   for (
+00716:     let first = GROUP_MIN;
+00717:     first <= GROUP_MAX - 2;
+00718:     first += 1
+00719:   ) {
+00720:     for (
+00721:       let second = first + 1;
+00722:       second <= GROUP_MAX - 1;
+00723:       second += 1
+00724:     ) {
+00725:       for (
+00726:         let third = second + 1;
+00727:         third <= GROUP_MAX;
+00728:         third += 1
+00729:       ) {
+00730:         const grupos = [
+00731:           first,
+00732:           second,
+00733:           third,
+00734:         ];
+00735: 
+00736:         const evidence =
+00737:           calculateCombinationEvidence({
+00738:             grupos,
+00739:             analyticsMap,
+00740:             stats,
+00741:             normalization,
+00742:           });
+00743: 
+00744:         combinations.push({
+00745:           key: tripleKey(grupos),
+00746:           grupos,
+00747:           items: grupos.map((grupo) => ({
+00748:             grupo,
+00749:             analyticsScore:
+00750:               Number(
+00751:                 analyticsMap.get(grupo) || 0
+00752:               ),
+00753:           })),
+00754:           rawScore: evidence.rawScore,
+00755:           components:
+00756:             evidence.components,
+00757:           occurrences:
+00758:             evidence.occurrences,
+00759:         });
+00760:       }
+00761:     }
+00762:   }
+00763: 
+00764:   return {
+00765:     combinations,
+00766:     stats,
+00767:   };
+00768: }
+00769: 
+00770: function applyRelativeStrength(
+00771:   combinations
+00772: ) {
+00773:   const scores = combinations
+00774:     .map((item) =>
+00775:       Number(item?.rawScore || 0)
+00776:     )
+00777:     .filter(Number.isFinite);
+00778: 
+00779:   const minimum = scores.length

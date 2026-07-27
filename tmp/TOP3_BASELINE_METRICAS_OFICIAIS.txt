@@ -1,0 +1,39 @@
+===== BASELINE ESTATÍSTICA OFICIAL — TOP3 V3 =====
+
+Data da baseline....: 2026-07-17
+Arquivo de origem...: tmp\top3_official_backtest_full.json
+Loteria..............: PT_RIO
+Motor................: top3_statistical_v3
+Fonte histórica......: snapshot
+
+===== PERÍODOS =====
+Histórico............: 2022-06-07 até 2026-07-15
+Avaliação............: 2022-06-29 até 2026-07-15
+
+===== VOLUME =====
+Histórico carregado..: 7491
+Casos elegíveis......: 7391
+Casos selecionados...: 7391
+Casos avaliados......: 7391
+Casos ignorados......: 0
+Histórico mínimo.....: 100
+
+===== RESULTADOS OFICIAIS =====
+Acertos Top1.........: 320
+Acertos Top3.........: 911
+Taxa Top1............: 4.3296%
+Taxa Top3............: 12.3258%
+Erros................: 0
+
+===== VALIDAÇÃO ARITMÉTICA =====
+Top1 recalculado.....: 4.3296%
+Top3 recalculado.....: 12.3258%
+Consistência Top1....: OK
+Consistência Top3....: OK
+
+===== EXECUÇÃO =====
+Tempo em ms...........: 2404093
+Tempo em minutos.....: 40.07
+
+===== REGRA DE COMPARAÇÃO =====
+Toda versão experimental deverá ser comparada contra esta baseline usando o mesmo histórico, o mesmo período de avaliação e os mesmos casos.

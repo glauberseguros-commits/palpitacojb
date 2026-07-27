@@ -1,0 +1,1035 @@
+133-  const msg = String(err?.message || "").toLowerCase();
+134-  const code = String(err?.code || "").toLowerCase();
+135-
+136-  return (
+137-    code.includes("failed-precondition") ||
+138-    msg.includes("failed_precondition") ||
+139-    (msg.includes("index") && msg.includes("create")) ||
+140-    (msg.includes("requires") && msg.includes("index"))
+141-  );
+142-}
+143-
+144-/* ======================================================
+145-   BOUNDS BY FIELD
+146-====================================================== */
+147-
+148-async function tryBoundsByField(db, lotteryKey, field, scanLimit = 50) {
+149-  const DOC_ID = admin.firestore.FieldPath.documentId();
+150-
+151:  const base = db.collection("draws").where("lottery_key", "==", lotteryKey);
+152-
+153-  const ascSnap = await base
+154-    .orderBy(field, "asc")
+155-    .orderBy(DOC_ID, "asc")
+156-    .limit(scanLimit)
+157-    .get();
+158-
+159-  const descSnap = await base
+160-    .orderBy(field, "desc")
+161-    .orderBy(DOC_ID, "desc")
+162-    .limit(scanLimit)
+163-    .get();
+164-
+165-  if (ascSnap.empty || descSnap.empty) {
+166-    return {
+167-      ok: false,
+168-      source: `where(lottery_key)+orderBy(${field})+docId(scan=${scanLimit})`,
+169-    };
+--
+187-
+188-  return {
+189-    ok: !!(minPick.ymd && maxPick.ymd),
+190-    minYmd: minPick.ymd,
+191-    maxYmd: maxPick.ymd,
+192-    source: `where(lottery_key)+orderBy(${field})+docId(scan=${scanLimit})`,
+193-    minDocId: minPick.docId,
+194-    maxDocId: maxPick.docId,
+195-  };
+196-}
+197-
+198-/* ======================================================
+199-   FALLBACK
+200-====================================================== */
+201-
+202-async function fallbackBoundsByDocIdEdges(db, lotteryKey, edgeLimit) {
+203-  const DOC_ID = admin.firestore.FieldPath.documentId();
+204-
+205:  const base = db.collection("draws").where("lottery_key", "==", lotteryKey);
+206-
+207-  const ascSnap = await base.orderBy(DOC_ID, "asc").limit(edgeLimit).get();
+208-  const descSnap = await base.orderBy(DOC_ID, "asc").limitToLast(edgeLimit).get();
+209-
+210-  const merged = [...ascSnap.docs, ...descSnap.docs];
+211-
+212-  const { minYmd, maxYmd } = pickMinMaxFromDocs(merged);
+213-
+214-  return {
+215-    ok: !!(minYmd && maxYmd),
+216-    minYmd: minYmd || null,
+217-    maxYmd: maxYmd || null,
+218-    source: `fallback_edges_docId(limit=${edgeLimit})`,
+219-    sampleCount: merged.length,
+220-    firstDocId: ascSnap.docs[0]?.id || null,
+221-    lastDocId: descSnap.docs[descSnap.docs.length - 1]?.id || null,
+222-  };
+223-}
+97-  const code = String(err?.code || "").toLowerCase();
+98-  return (
+99-    code.includes("failed-precondition") ||
+100-    msg.includes("failed_precondition") ||
+101-    (msg.includes("index") && msg.includes("create")) ||
+102-    (msg.includes("requires") && msg.includes("index"))
+103-  );
+104-}
+105-
+106-/**
+107- * Ô£à FIX: bounds por campo com SCAN curto (evita pegar 1 doc inv├ílido)
+108- * - Busca N docs ASC e pega o primeiro que vira ISO v├ílido
+109- * - Busca N docs DESC e pega o primeiro que vira ISO v├ílido
+110- * - Inclui desempate por docId (est├ível)
+111- */
+112-async function tryBoundsByField(db, lotteryKey, field, scanLimit = 50) {
+113-  const DOC_ID = admin.firestore.FieldPath.documentId();
+114-
+115:  const base = db.collection("draws").where("lottery_key", "==", lotteryKey);
+116-
+117-  const ascSnap = await base
+118-    .orderBy(field, "asc")
+119-    .orderBy(DOC_ID, "asc")
+120-    .limit(scanLimit)
+121-    .get();
+122-
+123-  const descSnap = await base
+124-    .orderBy(field, "desc")
+125-    .orderBy(DOC_ID, "desc")
+126-    .limit(scanLimit)
+127-    .get();
+128-
+129-  if (ascSnap.empty || descSnap.empty) {
+130-    return {
+131-      ok: false,
+132-      source: `where(lottery_key)+orderBy(${field})+docId(scan=${scanLimit})`,
+133-    };
+--
+146-
+147-  const minPick = pickFirstValidYmdFromDocs(ascSnap.docs, field);
+148-  const maxPick = pickFirstValidYmdFromDocs(descSnap.docs, field);
+149-
+150-  return {
+151-    ok: !!(minPick.ymd && maxPick.ymd),
+152-    minYmd: minPick.ymd,
+153-    maxYmd: maxPick.ymd,
+154-    source: `where(lottery_key)+orderBy(${field})+docId(scan=${scanLimit})`,
+155-    minDocId: minPick.docId,
+156-    maxDocId: maxPick.docId,
+157-    minRaw: minPick.raw ?? null,
+158-    maxRaw: maxPick.raw ?? null,
+159-  };
+160-}
+161-
+162-async function fallbackBoundsByDocIdEdges(db, lotteryKey, edgeLimit) {
+163-  const DOC_ID = admin.firestore.FieldPath.documentId();
+164:  const base = db.collection("draws").where("lottery_key", "==", lotteryKey);
+165-
+166-  const ascSnap = await base.orderBy(DOC_ID, "asc").limit(edgeLimit).get();
+167-  const descSnap = await base.orderBy(DOC_ID, "asc").limitToLast(edgeLimit).get();
+168-
+169-  const merged = [...ascSnap.docs, ...descSnap.docs];
+170-  const { minYmd, maxYmd } = pickMinMaxFromDocs(merged);
+171-
+172-  return {
+173-    ok: !!(minYmd && maxYmd),
+174-    minYmd: minYmd || null,
+175-    maxYmd: maxYmd || null,
+176-    source: `fallback_edges_docId(limit=${edgeLimit})`,
+177-    sampleCount: merged.length,
+178-    firstDocId: ascSnap.docs[0]?.id || null,
+179-    lastDocId: descSnap.docs[descSnap.docs.length - 1]?.id || null,
+180-  };
+181-}
+182-
+31-  // s├íbado
+32-  if(dow===6)
+33-    return ["09:00","11:00","14:00","16:00","21:00"];
+34-
+35-  return ["09:00","11:00","14:00","16:00","18:00","21:00"];
+36-}
+37-
+38-function normHour(v){
+39-  const m=String(v||"").match(/(\d{1,2})/);
+40-  if(!m) return "";
+41-  return String(Number(m[1])).padStart(2,"0")+":00";
+42-}
+43-
+44-(async()=>{
+45-
+46-  const db=getDb();
+47-
+48-  const snap=await db.collection("draws")
+49:    .where("lottery_key","==",LOTTERY)
+50-    .get();
+51-
+52-  const map=new Map();
+53-
+54-  for(const doc of snap.docs){
+55-
+56-      const d=doc.data();
+57-
+58-      const key=d.ymd+"|"+normHour(d.close_hour||d.hour);
+59-
+60-      const prizes=await doc.ref.collection("prizes").get();
+61-
+62-      map.set(key,{
+63-          id:doc.id,
+64-          prizes:prizes.size
+65-      });
+66-
+67-  }
+117-  }
+118-
+119-  return { minYmd, maxYmd };
+120-}
+121-
+122-function isIndexError(err) {
+123-  const msg = String(err?.message || "").toLowerCase();
+124-  const code = String(err?.code || "").toLowerCase();
+125-  return (
+126-    code.includes("failed-precondition") ||
+127-    msg.includes("failed_precondition") ||
+128-    (msg.includes("index") && msg.includes("create")) ||
+129-    (msg.includes("requires") && msg.includes("index"))
+130-  );
+131-}
+132-
+133-async function tryBoundsByField(db, lotteryKey, field, scanLimit = 50) {
+134-  const DOC_ID = admin.firestore.FieldPath.documentId();
+135:  const base = db.collection("draws").where("lottery_key", "==", lotteryKey);
+136-
+137-  const ascSnap = await base
+138-    .orderBy(field, "asc")
+139-    .orderBy(DOC_ID, "asc")
+140-    .limit(scanLimit)
+141-    .get();
+142-
+143-  const descSnap = await base
+144-    .orderBy(field, "desc")
+145-    .orderBy(DOC_ID, "desc")
+146-    .limit(scanLimit)
+147-    .get();
+148-
+149-  if (ascSnap.empty || descSnap.empty) {
+150-    return {
+151-      ok: false,
+152-      source: `where(lottery_key)+orderBy(${field})+docId(scan=${scanLimit})`,
+153-    };
+--
+166-
+167-  const minPick = pickFirstValidYmdFromDocs(ascSnap.docs, field);
+168-  const maxPick = pickFirstValidYmdFromDocs(descSnap.docs, field);
+169-
+170-  return {
+171-    ok: !!(minPick.ymd && maxPick.ymd),
+172-    minYmd: minPick.ymd,
+173-    maxYmd: maxPick.ymd,
+174-    source: `where(lottery_key)+orderBy(${field})+docId(scan=${scanLimit})`,
+175-    minDocId: minPick.docId,
+176-    maxDocId: maxPick.docId,
+177-    minRaw: minPick.raw ?? null,
+178-    maxRaw: maxPick.raw ?? null,
+179-  };
+180-}
+181-
+182-async function fallbackBoundsByDocIdEdges(db, lotteryKey, edgeLimit) {
+183-  const DOC_ID = admin.firestore.FieldPath.documentId();
+184:  const base = db.collection("draws").where("lottery_key", "==", lotteryKey);
+185-
+186-  const ascSnap = await base.orderBy(DOC_ID, "asc").limit(edgeLimit).get();
+187-  const descSnap = await base.orderBy(DOC_ID, "asc").limitToLast(edgeLimit).get();
+188-
+189-  const merged = [...ascSnap.docs, ...descSnap.docs];
+190-  const { minYmd, maxYmd } = pickMinMaxFromDocs(merged);
+191-
+192-  return {
+193-    ok: !!(minYmd && maxYmd),
+194-    minYmd: minYmd || null,
+195-    maxYmd: maxYmd || null,
+196-    source: `fallback_edges_docId(limit=${edgeLimit})`,
+197-    sampleCount: merged.length,
+198-    firstDocId: ascSnap.docs[0]?.id || null,
+199-    lastDocId: descSnap.docs[descSnap.docs.length - 1]?.id || null,
+200-  };
+201-}
+202-
+10-
+11-function addDays(d, n) {
+12-  const x = new Date(d);
+13-  x.setDate(x.getDate() + n);
+14-  return x;
+15-}
+16-
+17-(async () => {
+18-  const db = getDb();
+19-
+20-  const start = "2022-06-08";
+21-  const end = new Date().toISOString().slice(0, 10);
+22-
+23-  const noDraw = require("../data/no_draw_days/FEDERAL.json");
+24-  const noDrawSet = new Set(Array.isArray(noDraw.days) ? noDraw.days : []);
+25-
+26-  const snap = await db
+27-    .collection("draws")
+28:    .where("lottery_key", "==", "FEDERAL")
+29-    .orderBy("ymd", "asc")
+30-    .get();
+31-
+32-  const byDay = new Map();
+33-  const prizeIssues = [];
+34-
+35-  for (const doc of snap.docs) {
+36-    const data = doc.data() || {};
+37-    const day = data.ymd || data.date;
+38-
+39-    if (!byDay.has(day)) byDay.set(day, []);
+40-    byDay.get(day).push(doc.id);
+41-
+42-    const prizes = await doc.ref.collection("prizes").get();
+43-    if (prizes.size !== Number(data.prizesCount || 7)) {
+44-      prizeIssues.push({
+45-        drawId: doc.id,
+46-        ymd: day,
+12-  d.setUTCDate(d.getUTCDate() + n);
+13-  return d.toISOString().slice(0, 10);
+14-}
+15-
+16-function normHour(v) {
+17-  const s = String(v || "").trim();
+18-  const m = s.match(/(\d{1,2})[:hH]?(\d{2})?/);
+19-  if (!m) return "";
+20-  return `${String(Number(m[1])).padStart(2, "0")}:00`;
+21-}
+22-
+23-(async () => {
+24-  const db = getDb();
+25-
+26-  console.log("Buscando draws no Firestore...");
+27-
+28-  const snap = await db
+29-    .collection("draws")
+30:    .where("lottery_key", "==", LOTTERY)
+31-    .get();
+32-
+33-  const byKey = new Map();
+34-  const duplicates = [];
+35-
+36-  for (const doc of snap.docs) {
+37-    const d = doc.data();
+38-    const ymd = d.ymd || d.date;
+39-    const hour = normHour(d.close_hour || d.hour);
+40-    if (!ymd || !hour) continue;
+41-
+42-    const key = `${ymd}|${hour}`;
+43-    if (!byKey.has(key)) byKey.set(key, []);
+44-    byKey.get(key).push({ id: doc.id, ymd, hour });
+45-  }
+46-
+47-  const missing = [];
+48-
+639-      const allow = (h) => {
+640-        const hm = hourToMinutes(h);
+641-        if (!Number.isFinite(hm)) return false;
+642-        return nowMinLocal >= hm + grace;
+643-      };
+644-      expectedHard = Array.isArray(expectedHard) ? expectedHard.filter(allow) : [];
+645-      expectedSoft = Array.isArray(expectedSoft) ? expectedSoft.filter(allow) : [];
+646-    }
+647-
+648-    expectedHardSlotsTotal += expectedHard.length;
+649-    expectedSoftSlotsTotal += expectedSoft.length;
+650-
+651-    const expectedAllSet = new Set([...expectedHard, ...expectedSoft]);
+652-
+653-    // Firestore: filtra por ymd + lottery_key
+654-    const snap = await db
+655-      .collection("draws")
+656-      .where("ymd", "==", ymd)
+657:      .where("lottery_key", "==", lotteryKey)
+658-      .get();
+659-
+660-    const dayMap = new Map(); // hh -> countDocs
+661-
+662-    for (const doc of snap.docs) {
+663-      scannedDocs += 1;
+664-      const d = doc.data() || {};
+665-
+666-      const hh = hourFromCloseHour(
+667-        d.close_hour ??
+668-          d.closeHour ??
+669-          d.close_hour_raw ??
+670-          d.close_hourRaw ??
+671-          d.hour ??
+672-          d.hora
+673-      );
+674-
+675-      if (!hh) continue;
+143-
+144-  return {
+145-    docs_brutos: rows.length,
+146-    unique_ymd: setYmd.size,
+147-    unique_ymd_hour: setYmdHour.size,
+148-    invalid_ymd: invalidYmd,
+149-    keys_total: mapKeyCount.size,
+150-    keys_duplicadas: dupKeys.length,
+151-    top_duplicadas: dupKeys.slice(0, 15),
+152-  };
+153-}
+154-
+155-async function fetchRowsForRange(db, { lotteryKey, fromYmd, toYmd, pageSize = 2000, maxPages = 80 } = {}) {
+156-  const lot = lotteryKey ? String(lotteryKey).trim().toUpperCase() : null;
+157-
+158-  // 1) tentativa indexada (aceita range parcial)
+159-  try {
+160-    let q = db.collection("draws");
+161:    if (lot) q = q.where("lottery_key", "==", lot);
+162-    if (fromYmd) q = q.where("ymd", ">=", fromYmd);
+163-    if (toYmd) q = q.where("ymd", "<=", toYmd);
+164-
+165-    const snap = await q.get();
+166-    const rows = snap.docs.map((d) => ({ id: d.id, ...(d.data() || {}) }));
+167-    return { rows, source: "query: where(lottery_key)+where(ymd>=/<=)", usedFallback: false };
+168-  } catch (e) {
+169-    if (!isIndexError(e)) throw e;
+170-  }
+171-
+172-  // 2) fallback sem ├¡ndice: pagina por docId e filtra em mem├│ria
+173-  const DOC_ID = admin.firestore.FieldPath.documentId();
+174-  let q = db.collection("draws");
+175:  if (lot) q = q.where("lottery_key", "==", lot);
+176-  q = q.orderBy(DOC_ID, "asc");
+177-
+178-  let last = null;
+179-  const out = [];
+180-
+181-  for (let page = 1; page <= maxPages; page++) {
+182-    let qq = q.limit(pageSize);
+183-    if (last) qq = qq.startAfter(last);
+184-
+185-    const snap = await qq.get();
+186-    if (snap.empty) break;
+187-
+188-    for (const doc of snap.docs) {
+189-      const data = doc.data() || {};
+190-      const ymd = normalizeToYMD(data.ymd ?? data.date ?? data.draw_date ?? data.close_date ?? data.dt ?? data.data);
+191-      if (!ymd || !isISODateStrict(ymd)) continue;
+192-      if (fromYmd && ymd < fromYmd) continue;
+193-      if (toYmd && ymd > toYmd) continue;
+31-  } else {
+32-    hours = ["09:00", "11:00", "14:00", "16:00", "18:00", "21:00"];
+33-  }
+34-
+35-  if (ymd === END) {
+36-    hours = hours.filter(h => h <= END_LIMIT_HOUR);
+37-  }
+38-
+39-  return hours;
+40-}
+41-
+42-(async () => {
+43-  const db = getDb();
+44-
+45-  console.log("Buscando draws PT_RIO no Firestore...");
+46-
+47-  const snap = await db
+48-    .collection("draws")
+49:    .where("lottery_key", "==", LOTTERY)
+50-    .get();
+51-
+52-  const byKey = new Map();
+53-  const duplicates = [];
+54-
+55-  for (const doc of snap.docs) {
+56-    const d = doc.data();
+57-    const ymd = d.ymd || d.date;
+58-    const hour = normHour(d.close_hour || d.hour);
+59-    if (!ymd || !hour) continue;
+60-
+61-    const key = `${ymd}|${hour}`;
+62-    if (!byKey.has(key)) byKey.set(key, []);
+63-    byKey.get(key).push({ id: doc.id, ymd, hour });
+64-  }
+65-
+66-  const missing = [];
+67-  const daily = [];
+86-    .filter(Boolean);
+87-
+88-  const docs = [];
+89-
+90-  if (targetDrawIds.length) {
+91-    for (const drawId of targetDrawIds) {
+92-      const snap = await database
+93-        .collection("draws")
+94-        .doc(drawId)
+95-        .get();
+96-
+97-      if (snap.exists) {
+98-        docs.push(snap);
+99-      }
+100-    }
+101-  } else if (date) {
+102-    const snap = await database
+103-      .collection("draws")
+104:      .where("lottery_key", "==", lotteryKey)
+105-      .where("ymd", "==", date)
+106-      .get();
+107-
+108-    docs.push(...snap.docs);
+109-  }
+110-
+111-  const draws = [];
+112-
+113-  for (const doc of docs) {
+114-    const draw = await readDrawWithPrizes(
+115-      database,
+116-      doc
+117-    );
+118-
+119-    if (!draw) {
+120-      continue;
+121-    }
+122-
+74-      h -= 1;
+75-      m += 60;
+76-    } else if (m > 59) {
+77-      h += 1;
+78-      m -= 60;
+79-    }
+80-
+81-    if (h < 0 || h > 23) continue;
+82-
+83-    out.push(`${pad2(h)}:${pad2(m)}`);
+84-  }
+85-
+86-  return Array.from(new Set(out));
+87-}
+88-
+89-async function listDay(db, lotteryKey, ymd) {
+90-  const snap = await db
+91-    .collection("draws")
+92:    .where("lottery_key", "==", lotteryKey)
+93-    .where("ymd", "==", ymd)
+94-    .get();
+95-
+96-  if (snap.empty) {
+97-    console.log(`[LIST] Nenhum draw encontrado para ${lotteryKey} em ${ymd}.`);
+98-    return;
+99-  }
+100-
+101-  const hours = [];
+102-  for (const doc of snap.docs) {
+103-    const d = doc.data() || {};
+104-    const raw = d.close_hour ?? "";
+105-    const norm = normalizeHHMM(raw);
+106-    hours.push(norm || String(raw).trim());
+107-  }
+108-
+109-  hours.sort();
+110-  console.log(`[LIST] ${lotteryKey} ${ymd} close_hours (${hours.length}): ${hours.join(", ")}`);
+--
+136-    process.exit(1);
+137-  }
+138-
+139-  const db = getDb();
+140-  const candidates = closeCandidates(closeHour, tol);
+141-
+142-  console.log(
+143-    `[CHECK] lottery=${lotteryKey} ymd=${ymd} target=${closeHour} tol=${tol} candidates=${candidates.join(",")}`
+144-  );
+145-
+146-  const foundDocs = [];
+147-
+148-  // usa "in" em lotes de 10 (limite Firestore)
+149-  for (let i = 0; i < candidates.length; i += 10) {
+150-    const chunk = candidates.slice(i, i + 10);
+151-
+152-    const snap = await db
+153-      .collection("draws")
+154:      .where("lottery_key", "==", lotteryKey)
+155-      .where("ymd", "==", ymd)
+156-      .where("close_hour", "in", chunk)
+157-      .limit(50)
+158-      .get();
+159-
+160-    if (!snap.empty) {
+161-      for (const doc of snap.docs) foundDocs.push(doc);
+162-    }
+163-  }
+164-
+165-  if (!foundDocs.length) {
+166-    console.log(
+167-      `[CHECK] NOT FOUND: lottery=${lotteryKey} ymd=${ymd} close_hourÔëê${closeHour} (tol=${tol})`
+168-    );
+169-    if (doList) await listDay(db, lotteryKey, ymd);
+170-    process.exit(0);
+171-  }
+172-
+9-  readSnapshotMetadata,
+10-  writeSnapshotMetadata,
+11-} = require("./snapshotMetadata");
+12-
+13-
+14-async function fetchNewDrawsAfter(db, lottery, lastProcessedDrawId, limit = 25) {
+15-  if (!lastProcessedDrawId) {
+16-    return {
+17-      requiresBootstrap: true,
+18-      draws: [],
+19-    };
+20-  }
+21-
+22-  const admin = require("firebase-admin");
+23-  const DOC_ID = admin.firestore.FieldPath.documentId();
+24-
+25-  const snap = await db
+26-    .collection("draws")
+27:    .where("lottery_key", "==", String(lottery).toUpperCase())
+28-    .orderBy(DOC_ID, "asc")
+29-    .startAfter(String(lastProcessedDrawId))
+30-    .limit(limit)
+31-    .get();
+32-
+33-  return {
+34-    requiresBootstrap: false,
+35-    draws: snap.docs.map((doc) => ({
+36-      id: doc.id,
+37-      ...doc.data(),
+38-    })),
+39-  };
+40-}
+41-
+42-async function updateSnapshot({
+43-  lottery = "PT_RIO",
+44-  force = false,
+45-} = {}) {
+34- * - pagina├º├úo
+35- * - consultas paralelas
+36- * - filtros compostos
+37- */
+38-async function queryOccurrences({
+39-  lotteryKey,
+40-  entityType,
+41-  entityValue,
+42-  filters = {},
+43-  limitSamples = 20,
+44-} = {}) {
+45-
+46-  if (!lotteryKey) throw new Error("lotteryKey obrigat├│rio");
+47-  if (!entityType) throw new Error("entityType obrigat├│rio");
+48-
+49-  const db = getDb();
+50-
+51-  let q = db.collection("draws")
+52:    .where("lottery_key","==",lotteryKey);
+53-
+54-  if (filters.closeHour) {
+55-    q = q.where("close_hour","==",filters.closeHour);
+56-  }
+57-
+58-  const draws = await q.get();
+59-
+60-  const cache = {
+61-    draws: draws.size,
+62-    analyzed: 0,
+63-    matched: 0,
+64-  };
+65-
+66-
+67-  const wantedWeekday = normalizeWeekday(filters.weekday);
+68-
+69-  let drawsAnalyzed = 0;
+70-  let occurrences = 0;
+96-  const admin = require("firebase-admin");
+97-  const DOC_ID = admin.firestore.FieldPath.documentId();
+98-
+99-  const draws = [];
+100-  let lastDoc = null;
+101-  let page = 0;
+102-
+103-  while (draws.length < safeMaxDraws) {
+104-    page += 1;
+105-
+106-    const remaining = safeMaxDraws - draws.length;
+107-    const currentLimit = Math.min(
+108-      safePageSize,
+109-      remaining
+110-    );
+111-
+112-    let q = db
+113-      .collection("draws")
+114:      .where("lottery_key", "==", lk)
+115-      .where("ymd", ">=", start)
+116-      .where("ymd", "<=", end)
+117-      .orderBy("ymd", "asc")
+118-      .orderBy(DOC_ID, "asc")
+119-      .limit(currentLimit);
+120-
+121-    if (lastDoc) {
+122-      q = q.startAfter(lastDoc);
+123-    }
+124-
+125-    console.log(
+126-      `[TOP3] P├ígina ${page} | ${start} at├® ${end} | limite=${currentLimit}`
+127-    );
+128-
+129-    const snap = await q.get();
+130-
+131-    if (snap.empty) {
+132-      break;
+--
+172-  pageSize = 250,
+173-  prizeConcurrency = 12,
+174-} = {}) {
+175-  const db = getAdminDb();
+176-  const lk = normalizeLottery(lottery);
+177-
+178-  const admin = require("firebase-admin");
+179-  const DOC_ID = admin.firestore.FieldPath.documentId();
+180-
+181-  const draws = [];
+182-  let lastDoc = null;
+183-  let page = 0;
+184-
+185-  while (true) {
+186-    page++;
+187-
+188-    let q = db
+189-      .collection("draws")
+190:      .where("lottery_key", "==", lk)
+191-      .orderBy("ymd", "asc")
+192-      .orderBy(DOC_ID, "asc")
+193-      .limit(pageSize);
+194-
+195-    if (lastDoc) q = q.startAfter(lastDoc);
+196-
+197-    console.log(`[BOOTSTRAP] Buscando p├ígina ${page}...`);
+198-
+199-    const snap = await q.get();
+200-
+201-    if (snap.empty) break;
+202-
+203-    const pageDraws = await mapWithConcurrency(
+204-      snap.docs,
+205-      prizeConcurrency,
+206-      async (doc) => {
+207-        const data = doc.data() || {};
+208-        const prizes = await fetchPrizesForDrawRef(doc.ref);
+146-function canonicalScopeKey(ufInput) {
+147-  const s = String(ufInput || "").trim();
+148-  if (!s) return "";
+149-  const up = s.toUpperCase();
+150-
+151-  if (up === RJ_STATE_CODE) return RJ_LOTTERY_KEY;
+152-  if (isFederalInput(up)) return FEDERAL_SCOPE_CODE;
+153-
+154-  return up;
+155-}
+156-
+157-/**
+158- * Quando for consultar por campo "uf", adiciona trava de lottery_key para RJ.
+159- * Isso elimina o vazamento de Federal para o Rio.
+160- */
+161-function buildRJLockWhereIfNeeded(fieldName, ufInput) {
+162-  const ufUp = String(ufInput || "").trim().toUpperCase();
+163-  if (fieldName === "uf" && ufUp === RJ_STATE_CODE) {
+164:    return [where("lottery_key", "==", RJ_LOTTERY_KEY)];
+165-  }
+166-  return [];
+167-}
+168-
+169-/* =========================
+170-   Ô£à FIX silencioso: normalizar valor do WHERE por campo
+171-========================= */
+172-
+173-function normalizeValueForField(fieldName, valueInput) {
+174-  const s = String(valueInput || "").trim();
+175-  if (!s) return "";
+176-
+177-  if (fieldName === "uf") {
+178-    const up = s.toUpperCase();
+179-    if (isFederalInput(up)) return FEDERAL_SCOPE_CODE;
+180-    return up;
+181-  }
+182-
+31-    const to = arg("to");
+32-    const apply = arg("apply") === "1";
+33-    const dryRun = !apply;
+34-
+35-    if (!lottery) throw new Error("Informe --lottery (ex: PT_RIO)");
+36-    if (!from || !to) throw new Error("Informe --from e --to (YYYY-MM-DD)");
+37-
+38-    const db = getDb();
+39-    const col = db.collection("draws");
+40-
+41-    console.log("Mode:", dryRun ? "DRY-RUN (n├úo apaga)" : "APPLY (apagando)");
+42-    console.log("Filter:", { lottery, from, to });
+43-
+44-    // pega docs do range (pela ymd preenchida); os legacy podem ter ymd null,
+45-    // ent├úo vamos varrer por duplicatas espec├¡ficas com query direta no dia suspeito.
+46-    // Como voc├¬ j├í tem o DUP apontando o ID, vamos trabalhar por "id startsWith d_".
+47-    // Para n├úo fazer scan global, vamos buscar por lottery_key + range e coletar ids.
+48-    const snap = await col
+49:      .where("lottery_key", "==", lottery)
+50-      .where("ymd", ">=", from)
+51-      .where("ymd", "<=", to)
+52-      .get();
+53-
+54-    const idSet = new Set(snap.docs.map(d => d.id));
+55-
+56-    // inclui tamb├®m docs legacy que possam estar no range mas com ymd faltando:
+57-    // vamos usar o arquivo dups gerado pra achar, mas aqui faremos uma busca simples por ID conhecido:
+58-    // (fallback: se n├úo achar, voc├¬ me passa a lista e eu fa├ºo um scanner por id prefix)
+59-    const toDelete = [];
+60-    const reasons = [];
+61-
+62-    for (const id of idSet) {
+63-      if (!id.startsWith("d_")) continue;
+64-
+65-      const p = parseLegacyId(id);
+66-      if (!p) continue;
+67-      if (p.lottery !== lottery) continue;
+28-    const lottery = String(arg("lottery", "")).trim().toUpperCase();
+29-    const from = arg("from");
+30-    const to = arg("to");
+31-    const apply = arg("apply") === "1";
+32-    const dryRun = !apply;
+33-
+34-    if (!lottery) throw new Error("Informe --lottery (ex: PT_RIO)");
+35-    if (!from || !to) throw new Error("Informe --from e --to (YYYY-MM-DD)");
+36-
+37-    const db = getDb();
+38-    const col = db.collection("draws");
+39-
+40-    console.log("Mode:", dryRun ? "DRY-RUN (n├úo apaga)" : "APPLY (apagando)");
+41-    console.log("Filter:", { lottery, from, to });
+42-
+43-    // Busca por faixa de ymd (nos docs completos) para reduzir scan.
+44-    // Ainda assim, RECEIVE pode n├úo ter ymd preenchido -> ent├úo vamos tamb├®m filtrar por ID ap├│s coletar.
+45-    const snap = await col
+46:      .where("lottery_key", "==", lottery)
+47-      .where("ymd", ">=", from)
+48-      .where("ymd", "<=", to)
+49-      .get();
+50-
+51-    // Monta set de ids para lookup r├ípido
+52-    const idSet = new Set(snap.docs.map(d => d.id));
+53-
+54-    // Al├®m disso: pode haver RECEIVE sem ymd/lottery_key -> ent├úo precisamos varrer por ID?
+55-    // Solu├º├úo pr├ítica: tamb├®m varrer TODOS os docs retornados e agir sobre RECEIVE que estejam dentro do range pelo ID.
+56-    // (Se existir RECEIVE fora desse filtro, a gente faz um modo "scanAllReceive" depois.)
+57-
+58-    const toDelete = [];
+59-    const reasons = [];
+60-
+61-    for (const doc of snap.docs) {
+62-      const id = doc.id;
+63-      if (!id.endsWith("__RECEIVE")) continue;
+64-
+63-  }
+64-
+65-  function normalizeYMD(v) {
+66-    const s = String(v ?? "").trim();
+67-    if (isISODateStrict(s)) return s;
+68-    return "";
+69-  }
+70-
+71-  function dowOf(ymd) {
+72-    // 0=Dom..6=S├íb
+73-    return new Date(String(ymd) + "T00:00:00Z").getUTCDay();
+74-  }
+75-
+76-  const db = getDb();
+77-
+78-  // SELECT reduz leitura/custo/mem├│ria (traz s├│ o necess├írio)
+79-  const snap = await db
+80-    .collection("draws")
+81:    .where("lottery_key", "==", lot)
+82-    .select("ymd", "date", "close_hour")
+83-    .get();
+84-
+85-  const byYDowDays = new Map(); // yd -> Set(ymd)
+86-  const byYDowHourDays = new Map(); // yd__HH:MM -> Set(ymd)
+87-
+88-  snap.forEach((doc) => {
+89-    const d = doc.data() || {};
+90-
+91-    // usa ymd preferencialmente, com fallback em date
+92-    const ymd = normalizeYMD(d.ymd) || normalizeYMD(d.date);
+93-    const h = normalizeHHMM(d.close_hour);
+94-
+95-    if (!ymd || !h) return;
+96-
+97-    // filtra apenas hor├írios do calend├írio
+98-    if (!HOURS.includes(h)) {
+99-      // mesmo assim conta o "dia" para o grupo (ano+dow), pois o dia existiu
+1-const { getDb } = require("../service/firebaseAdmin");
+2-const { runImport } = require("./importKingApostas");
+3-
+4-const LOTTERY = "PT_RIO";
+5-
+6-function normalizeHour(v) {
+7-  const m = String(v || "").match(/(\d{1,2})/);
+8-  if (!m) return "";
+9-  return String(Number(m[1])).padStart(2, "0") + ":00";
+10-}
+11-
+12-async function readDay(db, ymd) {
+13-
+14-  const snap = await db
+15-    .collection("draws")
+16:    .where("lottery_key", "==", LOTTERY)
+17-    .where("ymd", "==", ymd)
+18-    .get();
+19-
+20-  const rows = [];
+21-
+22-  for (const doc of snap.docs) {
+23-
+24-    const d = doc.data();
+25-
+26-    const prizes = await doc.ref.collection("prizes").get();
+27-
+28-    rows.push({
+29-      id: doc.id,
+30-      hour: normalizeHour(d.close_hour || d.hour),
+31-      prizes: prizes.size
+32-    });
+33-
+34-  }
+36-}
+37-
+38-function readJson(p) {
+39-  try {
+40-    const raw = fs.readFileSync(p, "utf8");
+41-    return JSON.parse(raw);
+42-  } catch (err) {
+43-    const msg = err?.message || String(err);
+44-    throw new Error(`Falha ao ler/parsear JSON: ${p} | ${msg}`);
+45-  }
+46-}
+47-
+48-async function existsDraw(db, lotteryKey, ymd, hh) {
+49-  if (!hh) return false;
+50-  const close = `${hh}:00`;
+51-
+52-  const snap = await db
+53-    .collection("draws")
+54:    .where("lottery_key", "==", lotteryKey)
+55-    .where("ymd", "==", ymd)
+56-    .where("close_hour", "==", close)
+57-    .limit(1)
+58-    .get();
+59-
+60-  return !snap.empty;
+61-}
+62-
+63-async function main() {
+64-  const lotteryArg = process.argv[2] || "PT_RIO";
+65-  const lotteryKey = normalizeLotteryKey(lotteryArg);
+66-  if (!lotteryKey) {
+67-    console.error(`ERRO: lottery inv├ílida: ${String(lotteryArg)}`);
+68-    process.exit(1);
+69-  }
+70-
+71-  const from = String(process.argv[3] || "2022-06-07").trim();
+72-  const to = String(process.argv[4] || "2099-12-31").trim();
+1-"use strict";
+2-
+3-const { getDb } = require("../service/firebaseAdmin");
+4-
+5-function hh(v) {
+6-  const m = String(v || "").match(/(\d{1,2})/);
+7-  if (!m) return "";
+8-  const h = Number(m[1]);
+9-  if (!Number.isFinite(h) || h < 0 || h > 23) return "";
+10-  return `${String(h).padStart(2, "0")}:00`;
+11-}
+12-
+13-(async () => {
+14-  const db = getDb();
+15-  const snap = await db.collection("draws")
+16:    .where("lottery_key", "==", "FEDERAL")
+17-    .select("ymd", "date", "close_hour", "close", "close_hour_raw")
+18-    .get();
+19-
+20-  let first20 = null;
+21-  let last19 = null;
+22-
+23-  for (const doc of snap.docs) {
+24-    const d = doc.data() || {};
+25-    const ymd = String(d.ymd || d.date || "").slice(0, 10);
+26-    const ch = hh(d.close_hour || d.close || d.close_hour_raw);
+27-
+28-    if (ymd && ch === "20:00") {
+29-      if (!first20 || ymd < first20) first20 = ymd;
+30-    }
+31-    if (ymd && ch === "19:00") {
+32-      if (!last19 || ymd > last19) last19 = ymd;
+33-    }
+34-  }
+22-  if (Array.isArray(payload?.data)) return payload.data;
+23-  if (Array.isArray(payload?.data?.draws)) return payload.data.draws;
+24-  if (Array.isArray(payload?.data?.results)) return payload.data.results;
+25-  return [];
+26-}
+27-
+28-function countSourcePrizes(draw) {
+29-  if (Array.isArray(draw?.prizes)) return draw.prizes.length;
+30-  let n = 0;
+31-  for (let i = 1; i <= 15; i++) {
+32-    if (String(draw?.[`prize_${i}`] || "").trim()) n++;
+33-  }
+34-  return n;
+35-}
+36-
+37-async function readFirestoreDay(db, ymd, lotteryKey) {
+38-  const snap = await db
+39-    .collection("draws")
+40:    .where("lottery_key", "==", lotteryKey)
+41-    .where("ymd", "==", ymd)
+42-    .get();
+43-
+44-  const map = new Map();
+45-
+46-  for (const doc of snap.docs) {
+47-    const d = doc.data();
+48-    const hour = normHour(d.close_hour || d.hour);
+49-    const prizes = await doc.ref.collection("prizes").get();
+50-
+51-    if (hour) {
+52-      map.set(hour, {
+53-        id: doc.id,
+54-        hour,
+55-        prizes: prizes.size,
+56-      });
+57-    }
+58-  }
+dfbb591 | 2026-07-20 21:10:25 -0300 | Glauber Oliveira | LKN-187 - Corrige horarios historicos da Nacional
+deaae8a | 2026-07-19 14:28:44 -0300 | Glauber Oliveira | feat(results): integrar LOOK e NACIONAL ao frontend
+1554941 | 2026-07-15 18:38:11 -0300 | Glauber Oliveira | feat(top3): atualiza historico apos importacao
+75bb53e | 2026-07-15 16:49:21 -0300 | Glauber Oliveira | fix(top3): limita historico da previsao no backend
+8d27b91 | 2026-07-10 19:29:21 -0300 | Glauber Oliveira | ...
+90aa7c4 | 2026-07-08 17:24:38 -0300 | Glauber Oliveira | Valida historico PT_RIO e consolida auditoria da base
+dea8fa0 | 2026-07-08 13:58:37 -0300 | Glauber Oliveira | Revalida Firestore apos correcao da King
+2d7655b | 2026-07-06 19:02:47 -0300 | Glauber Oliveira | Adiciona infraestrutura inicial do Score Engine
+d8522c3 | 2026-07-03 18:31:06 -0300 | Glauber Oliveira | Implementa bootstrap inicial do snapshot estatistico
+3397322 | 2026-07-03 14:13:24 -0300 | Glauber Oliveira | Cria repositorio backend de draws com premios
+9f366fd | 2026-07-03 13:55:51 -0300 | Glauber Oliveira | Detecta necessidade de bootstrap do snapshot
+4f317aa | 2026-07-03 13:47:28 -0300 | Glauber Oliveira | Adiciona controle incremental inicial ao SnapshotManager
+e1fecb9 | 2026-07-03 13:32:57 -0300 | Glauber Oliveira | Cria SnapshotManager para orquestrar snapshots
+78a07b8 | 2026-07-03 13:29:35 -0300 | Glauber Oliveira | Exporta calculo de bounds para reutilizacao interna
+b53687b | 2026-07-03 12:17:37 -0300 | Glauber Oliveira | Forca ranking detalhado sem modo agregado automatico
+b9ecef5 | 2026-06-26 21:01:00 -0300 | Glauber Oliveira | Extrai leitura smart do Firestore
+e144b3d | 2026-06-26 20:33:56 -0300 | Glauber Oliveira | Limpa imports da normalizacao de premios
+817972c | 2026-06-26 20:30:20 -0300 | Glauber Oliveira | Extrai normalizacao de premios do KingResultsService
+74442a5 | 2026-06-26 19:59:32 -0300 | Glauber Oliveira | Otimiza leitura agregada do historico TOP3
+b94b737 | 2026-06-26 18:04:12 -0300 | Glauber Oliveira | Extrai utilitarios de data do KingResultsService
+6effcb7 | 2026-06-26 17:44:48 -0300 | Glauber Oliveira | Extrai cache do KingResultsService
+27a4afd | 2026-06-25 23:28:07 -0300 | Glauber Oliveira | Remove logs de debug do KingResultsService
+ff10a3d | 2026-06-25 22:48:21 -0300 | Glauber Oliveira | Refatora TOP3 separando storage do hook

@@ -1,0 +1,495 @@
+
+  src\pages\Top3\Top3View.jsx:1594:              idx={i}
+  src\pages\Top3\Top3View.jsx:1595:              theme={t}
+  src\pages\Top3\Top3View.jsx:1596:              copiedAllKey={copiedAllKey}
+  src\pages\Top3\Top3View.jsx:1597:              copiedCellKey={copiedCellKey}
+  src\pages\Top3\Top3View.jsx:1598:              setCopiedAllKey={setCopiedAllKey}
+  src\pages\Top3\Top3View.jsx:1599:              setCopiedCellKey={setCopiedCellKey}
+  src\pages\Top3\Top3View.jsx:1600:              copyText={copyText}
+  src\pages\Top3\Top3View.jsx:1601:              build16={build16}
+  src\pages\Top3\Top3View.jsx:1602:              buildMilhares={buildMilhares}
+  src\pages\Top3\Top3View.jsx:1603:              build20={build20}
+  src\pages\Top3\Top3View.jsx:1604:            />
+  src\pages\Top3\Top3View.jsx:1605:          ))}
+  src\pages\Top3\Top3View.jsx:1606:        </div>
+  src\pages\Top3\Top3View.jsx:1607:      ) : (
+  src\pages\Top3\Top3View.jsx:1608:        <CompactTop3Result
+  src\pages\Top3\Top3View.jsx:1609:          slot={slot}
+  src\pages\Top3\Top3View.jsx:1610:          status={status}
+  src\pages\Top3\Top3View.jsx:1611:          statusLabel={statusLabel}
+  src\pages\Top3\Top3View.jsx:1612:          statusDetail={statusDetail}
+  src\pages\Top3\Top3View.jsx:1613:          analysis={analysis}
+  src\pages\Top3\Top3View.jsx:1614:        />
+  src\pages\Top3\Top3View.jsx:1615:      )}
+  src\pages\Top3\Top3View.jsx:1616:    </section>
+  src\pages\Top3\Top3View.jsx:1617:  );
+  src\pages\Top3\Top3View.jsx:1618:}
+  src\pages\Top3\Top3View.jsx:1619:
+  src\pages\Top3\Top3View.jsx:1620:export default function Top3View(props) {
+  src\pages\Top3\Top3View.jsx:1621:  const {
+  src\pages\Top3\Top3View.jsx:1622:    loading,
+  src\pages\Top3\Top3View.jsx:1623:    error,
+  src\pages\Top3\Top3View.jsx:1624:    timelineTop3,
+  src\pages\Top3\Top3View.jsx:1625:    persistedTop3History,
+  src\pages\Top3\Top3View.jsx:1626:    top3,
+  src\pages\Top3\Top3View.jsx:1627:    layerMetaText,
+  src\pages\Top3\Top3View.jsx:1628:    lastLabel,
+  src\pages\Top3\Top3View.jsx:1629:    prevLabel,
+  src\pages\Top3\Top3View.jsx:1630:    theme,
+  src\pages\Top3\Top3View.jsx:1631:    LOTTERY_OPTIONS,
+  src\pages\Top3\Top3View.jsx:1632:    lotteryKeySafe,
+  src\pages\Top3\Top3View.jsx:1633:    setLotteryKey,
+> src\pages\Top3\Top3View.jsx:1634:    setYmd,
+  src\pages\Top3\Top3View.jsx:1635:    build16,
+  src\pages\Top3\Top3View.jsx:1636:    buildMilhares,
+  src\pages\Top3\Top3View.jsx:1637:    build20,
+  src\pages\Top3\Top3View.jsx:1638:    analysisYmd,
+  src\pages\Top3\Top3View.jsx:1639:    analysisHourBucket,
+  src\pages\Top3\Top3View.jsx:1640:    loadedYmd,
+  src\pages\Top3\Top3View.jsx:1641:    ymdSafe,
+  src\pages\Top3\Top3View.jsx:1642:    lastHourBucket,
+  src\pages\Top3\Top3View.jsx:1643:  } = props || {};
+  src\pages\Top3\Top3View.jsx:1644:
+  src\pages\Top3\Top3View.jsx:1645:  // TODO_BACKTEST_REAL
+  src\pages\Top3\Top3View.jsx:1646:// Os cards estatísticos deverão consumir auditTop3Backtest()
+  src\pages\Top3\Top3View.jsx:1647:// evitando cálculos paralelos na interface.
+  src\pages\Top3\Top3View.jsx:1648://
+  src\pages\Top3\Top3View.jsx:1649:// Fase atual:
+  src\pages\Top3\Top3View.jsx:1650:// apenas corrigindo nomenclatura para refletir o cálculo existente.
+  src\pages\Top3\Top3View.jsx:1651:
+  src\pages\Top3\Top3View.jsx:1652:const list = Array.isArray(top3)
+  src\pages\Top3\Top3View.jsx:1653:  ? top3.slice(0, 3)
+  src\pages\Top3\Top3View.jsx:1654:  : [];
+  src\pages\Top3\Top3View.jsx:1655:  const timeline = (Array.isArray(timelineTop3) ? timelineTop3 : [])
+  src\pages\Top3\Top3View.jsx:1656:  .slice()
+  src\pages\Top3\Top3View.jsx:1657:  .sort((a, b) => {
+  src\pages\Top3\Top3View.jsx:1658:    const ta = `${a?.targetYmd || ""} ${a?.targetHour || ""}`;
+  src\pages\Top3\Top3View.jsx:1659:    const tb = `${b?.targetYmd || ""} ${b?.targetHour || ""}`;
+  src\pages\Top3\Top3View.jsx:1660:    return ta.localeCompare(tb);
+  src\pages\Top3\Top3View.jsx:1661:  });
+  src\pages\Top3\Top3View.jsx:1662:
+  src\pages\Top3\Top3View.jsx:1663:  const showDetailedTimeline = false;
+  src\pages\Top3\Top3View.jsx:1664:
+  src\pages\Top3\Top3View.jsx:1665:  const meta = useMemo(() => {
+  src\pages\Top3\Top3View.jsx:1666:    const last = lastLabel || "—";
+  src\pages\Top3\Top3View.jsx:1667:    const prev = prevLabel || "—";
+  src\pages\Top3\Top3View.jsx:1668:    const layer = cleanLayerText(layerMetaText || "—");
+  src\pages\Top3\Top3View.jsx:1669:    return { last, prev, layer };
+  src\pages\Top3\Top3View.jsx:1670:  }, [lastLabel, prevLabel, layerMetaText]);
+  src\pages\Top3\Top3View.jsx:1671:
+  src\pages\Top3\Top3View.jsx:1672:  const headerBase = useMemo(() => meta.last || "—", [meta.last]);
+  src\pages\Top3\Top3View.jsx:1673:
+  src\pages\Top3\Top3View.jsx:1674:  const headerForecast = useMemo(() => {
+  src\pages\Top3\Top3View.jsx:1675:    return formatYmdHour(analysisYmd, analysisHourBucket);
+  src\pages\Top3\Top3View.jsx:1676:  }, [analysisYmd, analysisHourBucket]);
+  src\pages\Top3\Top3View.jsx:1677:
+  src\pages\Top3\Top3View.jsx:1678:  const headerTransition = useMemo(() => {
+  src\pages\Top3\Top3View.jsx:1679:    const from = String(lastHourBucket || "").trim();
+  src\pages\Top3\Top3View.jsx:1680:    const to = String(analysisHourBucket || "").trim();
+  src\pages\Top3\Top3View.jsx:1681:    if (from && to) return `${from} → ${to}`;
+  src\pages\Top3\Top3View.jsx:1682:    return "—";
+  src\pages\Top3\Top3View.jsx:1683:  }, [lastHourBucket, analysisHourBucket]);
+  src\pages\Top3\Top3View.jsx:1684:
+  src\pages\Top3\Top3View.jsx:1685:  const t = theme || {
+  src\pages\Top3\Top3View.jsx:1686:    bg: "#050505",
+  src\pages\Top3\Top3View.jsx:1687:    panel: "rgba(0,0,0,0.55)",
+  src\pages\Top3\Top3View.jsx:1688:    border: "rgba(255,255,255,0.18)",
+  src\pages\Top3\Top3View.jsx:1689:    text: "rgba(255,255,255,0.92)",
+  src\pages\Top3\Top3View.jsx:1690:    muted: "rgba(255,255,255,0.72)",
+  src\pages\Top3\Top3View.jsx:1691:    accent: "rgba(201,168,62,0.92)",
+  src\pages\Top3\Top3View.jsx:1692:  };
+  src\pages\Top3\Top3View.jsx:1693:
+  src\pages\Top3\Top3View.jsx:1694:  const [copiedAllKey, setCopiedAllKey] = useState("");
+  src\pages\Top3\Top3View.jsx:1695:  const [copiedCellKey, setCopiedCellKey] = useState("");
+  src\pages\Top3\Top3View.jsx:1696:
+  src\pages\Top3\Top3View.jsx:1697:
+  src\pages\Top3\Top3View.jsx:1698:  useEffect(() => {
+  src\pages\Top3\Top3View.jsx:1699:    if (!copiedAllKey) return;
+  src\pages\Top3\Top3View.jsx:1700:    const id = setTimeout(() => setCopiedAllKey(""), 900);
+  src\pages\Top3\Top3View.jsx:1701:    return () => clearTimeout(id);
+  src\pages\Top3\Top3View.jsx:1702:  }, [copiedAllKey]);
+  src\pages\Top3\Top3View.jsx:1703:
+  src\pages\Top3\Top3View.jsx:1704:  useEffect(() => {
+  src\pages\Top3\Top3View.jsx:1705:    if (!copiedCellKey) return;
+  src\pages\Top3\Top3View.jsx:1706:    const id = setTimeout(() => setCopiedCellKey(""), 750);
+  src\pages\Top3\Top3View.jsx:1707:    return () => clearTimeout(id);
+  src\pages\Top3\Top3View.jsx:1708:  }, [copiedCellKey]);
+  src\pages\Top3\Top3View.jsx:1709:
+  src\pages\Top3\Top3View.jsx:1710:  const copyText = useCallback(async (txt) => {
+  src\pages\Top3\Top3View.jsx:1711:    const s = String(txt || "").trim();
+  src\pages\Top3\Top3View.jsx:1712:    if (!s) return false;
+  src\pages\Top3\Top3View.jsx:1713:
+  src\pages\Top3\Top3View.jsx:1714:    try {
+  src\pages\Top3\Top3View.jsx:2089:    const exact = validated.filter(
+  src\pages\Top3\Top3View.jsx:2090:      (item) => item?.hitType === "hit_exact"
+  src\pages\Top3\Top3View.jsx:2091:    ).length;
+  src\pages\Top3\Top3View.jsx:2092:
+  src\pages\Top3\Top3View.jsx:2093:    const centena = validated.filter(
+  src\pages\Top3\Top3View.jsx:2094:      (item) => item?.hitType === "hit_centena"
+  src\pages\Top3\Top3View.jsx:2095:    ).length;
+  src\pages\Top3\Top3View.jsx:2096:
+  src\pages\Top3\Top3View.jsx:2097:    const grupo = validated.filter(
+  src\pages\Top3\Top3View.jsx:2098:      (item) => item?.hitType === "hit_grupo"
+  src\pages\Top3\Top3View.jsx:2099:    ).length;
+  src\pages\Top3\Top3View.jsx:2100:
+  src\pages\Top3\Top3View.jsx:2101:    const misses = validated.filter(
+  src\pages\Top3\Top3View.jsx:2102:      (item) =>
+  src\pages\Top3\Top3View.jsx:2103:        item?.hitType === "miss" ||
+  src\pages\Top3\Top3View.jsx:2104:        item?.hitType === "none"
+  src\pages\Top3\Top3View.jsx:2105:    ).length;
+  src\pages\Top3\Top3View.jsx:2106:
+  src\pages\Top3\Top3View.jsx:2107:    const totalScore = validated.reduce(
+  src\pages\Top3\Top3View.jsx:2108:      (sum, item) => sum + Number(item?.hitScore || 0),
+  src\pages\Top3\Top3View.jsx:2109:      0
+  src\pages\Top3\Top3View.jsx:2110:    );
+  src\pages\Top3\Top3View.jsx:2111:
+  src\pages\Top3\Top3View.jsx:2112:    const average =
+  src\pages\Top3\Top3View.jsx:2113:      validated.length > 0
+  src\pages\Top3\Top3View.jsx:2114:        ? totalScore / validated.length
+  src\pages\Top3\Top3View.jsx:2115:        : 0;
+  src\pages\Top3\Top3View.jsx:2116:
+  src\pages\Top3\Top3View.jsx:2117:    return {
+  src\pages\Top3\Top3View.jsx:2118:      total: historyRows.length,
+  src\pages\Top3\Top3View.jsx:2119:      validated: validated.length,
+  src\pages\Top3\Top3View.jsx:2120:      pending: Math.max(0, historyRows.length - validated.length),
+  src\pages\Top3\Top3View.jsx:2121:      exact,
+  src\pages\Top3\Top3View.jsx:2122:      centena,
+  src\pages\Top3\Top3View.jsx:2123:      grupo,
+  src\pages\Top3\Top3View.jsx:2124:      misses,
+  src\pages\Top3\Top3View.jsx:2125:      average,
+  src\pages\Top3\Top3View.jsx:2126:    };
+  src\pages\Top3\Top3View.jsx:2127:  }, [historyRows]);
+  src\pages\Top3\Top3View.jsx:2128:
+> src\pages\Top3\Top3View.jsx:2129:  const todayForCalendar = todayYMDLocalView();
+> src\pages\Top3\Top3View.jsx:2130:  const selectedHistoryYmd = isYMD(ymdSafe)
+  src\pages\Top3\Top3View.jsx:2131:    ? ymdSafe
+> src\pages\Top3\Top3View.jsx:2132:    : todayForCalendar;
+  src\pages\Top3\Top3View.jsx:2133:
+  src\pages\Top3\Top3View.jsx:2134:  const availableHistoryDates = useMemo(() => {
+  src\pages\Top3\Top3View.jsx:2135:    const dates = new Set();
+  src\pages\Top3\Top3View.jsx:2136:
+  src\pages\Top3\Top3View.jsx:2137:    (Array.isArray(timeline) ? timeline : []).forEach(
+  src\pages\Top3\Top3View.jsx:2138:      (slot) => {
+  src\pages\Top3\Top3View.jsx:2139:        const ymd = String(
+  src\pages\Top3\Top3View.jsx:2140:          slot?.targetYmd || ""
+  src\pages\Top3\Top3View.jsx:2141:        ).trim();
+  src\pages\Top3\Top3View.jsx:2142:
+> src\pages\Top3\Top3View.jsx:2143:        if (isYMD(ymd) && ymd <= todayForCalendar) {
+  src\pages\Top3\Top3View.jsx:2144:          dates.add(ymd);
+  src\pages\Top3\Top3View.jsx:2145:        }
+  src\pages\Top3\Top3View.jsx:2146:      }
+  src\pages\Top3\Top3View.jsx:2147:    );
+  src\pages\Top3\Top3View.jsx:2148:
+  src\pages\Top3\Top3View.jsx:2149:    (
+  src\pages\Top3\Top3View.jsx:2150:      Array.isArray(persistedTop3History)
+  src\pages\Top3\Top3View.jsx:2151:        ? persistedTop3History
+  src\pages\Top3\Top3View.jsx:2152:        : []
+  src\pages\Top3\Top3View.jsx:2153:    ).forEach((entry) => {
+  src\pages\Top3\Top3View.jsx:2154:      const ymd = String(
+  src\pages\Top3\Top3View.jsx:2155:        entry?.targetYmd || ""
+  src\pages\Top3\Top3View.jsx:2156:      ).trim();
+  src\pages\Top3\Top3View.jsx:2157:
+> src\pages\Top3\Top3View.jsx:2158:      if (isYMD(ymd) && ymd <= todayForCalendar) {
+  src\pages\Top3\Top3View.jsx:2159:        dates.add(ymd);
+  src\pages\Top3\Top3View.jsx:2160:      }
+  src\pages\Top3\Top3View.jsx:2161:    });
+  src\pages\Top3\Top3View.jsx:2162:
+  src\pages\Top3\Top3View.jsx:2163:    return Array.from(dates).sort();
+  src\pages\Top3\Top3View.jsx:2164:  }, [
+  src\pages\Top3\Top3View.jsx:2165:    timeline,
+  src\pages\Top3\Top3View.jsx:2166:    persistedTop3History,
+> src\pages\Top3\Top3View.jsx:2167:    todayForCalendar,
+  src\pages\Top3\Top3View.jsx:2168:  ]);
+  src\pages\Top3\Top3View.jsx:2169:
+  src\pages\Top3\Top3View.jsx:2170:  const previousAvailableDate = useMemo(() => {
+  src\pages\Top3\Top3View.jsx:2171:    for (
+  src\pages\Top3\Top3View.jsx:2172:      let index = availableHistoryDates.length - 1;
+  src\pages\Top3\Top3View.jsx:2173:      index >= 0;
+  src\pages\Top3\Top3View.jsx:2174:      index -= 1
+  src\pages\Top3\Top3View.jsx:2175:    ) {
+  src\pages\Top3\Top3View.jsx:2176:      if (
+  src\pages\Top3\Top3View.jsx:2177:        availableHistoryDates[index] <
+> src\pages\Top3\Top3View.jsx:2178:        selectedHistoryYmd
+  src\pages\Top3\Top3View.jsx:2179:      ) {
+  src\pages\Top3\Top3View.jsx:2180:        return availableHistoryDates[index];
+  src\pages\Top3\Top3View.jsx:2181:      }
+  src\pages\Top3\Top3View.jsx:2182:    }
+  src\pages\Top3\Top3View.jsx:2183:
+  src\pages\Top3\Top3View.jsx:2184:    return "";
+  src\pages\Top3\Top3View.jsx:2185:  }, [
+  src\pages\Top3\Top3View.jsx:2186:    availableHistoryDates,
+> src\pages\Top3\Top3View.jsx:2187:    selectedHistoryYmd,
+  src\pages\Top3\Top3View.jsx:2188:  ]);
+  src\pages\Top3\Top3View.jsx:2189:
+  src\pages\Top3\Top3View.jsx:2190:  const nextAvailableDate = useMemo(() => {
+  src\pages\Top3\Top3View.jsx:2191:    return (
+  src\pages\Top3\Top3View.jsx:2192:      availableHistoryDates.find(
+> src\pages\Top3\Top3View.jsx:2193:        (date) => date > selectedHistoryYmd
+  src\pages\Top3\Top3View.jsx:2194:      ) || ""
+  src\pages\Top3\Top3View.jsx:2195:    );
+  src\pages\Top3\Top3View.jsx:2196:  }, [
+  src\pages\Top3\Top3View.jsx:2197:    availableHistoryDates,
+> src\pages\Top3\Top3View.jsx:2198:    selectedHistoryYmd,
+  src\pages\Top3\Top3View.jsx:2199:  ]);
+  src\pages\Top3\Top3View.jsx:2200:
+  src\pages\Top3\Top3View.jsx:2201:  const canGoPrevious =
+  src\pages\Top3\Top3View.jsx:2202:    isYMD(previousAvailableDate);
+  src\pages\Top3\Top3View.jsx:2203:
+  src\pages\Top3\Top3View.jsx:2204:  const canGoNext =
+  src\pages\Top3\Top3View.jsx:2205:    isYMD(nextAvailableDate);
+  src\pages\Top3\Top3View.jsx:2206:
+> src\pages\Top3\Top3View.jsx:2207:  const goToHistoryDate = useCallback(
+  src\pages\Top3\Top3View.jsx:2208:    (nextYmd) => {
+  src\pages\Top3\Top3View.jsx:2209:      if (!isYMD(nextYmd)) return;
+> src\pages\Top3\Top3View.jsx:2210:      if (typeof setYmd !== "function") return;
+> src\pages\Top3\Top3View.jsx:2211:      setYmd(nextYmd);
+  src\pages\Top3\Top3View.jsx:2212:    },
+> src\pages\Top3\Top3View.jsx:2213:    [setYmd]
+  src\pages\Top3\Top3View.jsx:2214:  );
+  src\pages\Top3\Top3View.jsx:2215:
+  src\pages\Top3\Top3View.jsx:2216:  return (
+  src\pages\Top3\Top3View.jsx:2217:    <div
+  src\pages\Top3\Top3View.jsx:2218:      style={{
+  src\pages\Top3\Top3View.jsx:2219:        padding: 16,
+  src\pages\Top3\Top3View.jsx:2220:        color: t.text,
+  src\pages\Top3\Top3View.jsx:2221:        background: t.bg,
+  src\pages\Top3\Top3View.jsx:2222:        minHeight: "100%",
+  src\pages\Top3\Top3View.jsx:2223:        "--top3-bg": t.bg,
+  src\pages\Top3\Top3View.jsx:2224:        "--top3-panel": t.panel,
+  src\pages\Top3\Top3View.jsx:2225:        "--top3-border": t.border,
+  src\pages\Top3\Top3View.jsx:2226:        "--top3-text": t.text,
+  src\pages\Top3\Top3View.jsx:2227:        "--top3-muted": t.muted,
+  src\pages\Top3\Top3View.jsx:2228:        "--top3-accent": t.accent,
+  src\pages\Top3\Top3View.jsx:2229:      }}
+  src\pages\Top3\Top3View.jsx:2230:    >
+  src\pages\Top3\Top3View.jsx:2231:      <style>{`
+  src\pages\Top3\Top3View.jsx:2232:        .top3-page{
+  src\pages\Top3\Top3View.jsx:2233:          width: 100%;
+  src\pages\Top3\Top3View.jsx:2234:          max-width: 1380px;
+  src\pages\Top3\Top3View.jsx:2235:          margin: 0 auto;
+  src\pages\Top3\Top3View.jsx:2236:          display: grid;
+  src\pages\Top3\Top3View.jsx:2237:          gap: 18px;
+  src\pages\Top3\Top3View.jsx:2238:        }
+  src\pages\Top3\Top3View.jsx:2239:
+  src\pages\Top3\Top3View.jsx:2240:        .top3-shell{
+  src\pages\Top3\Top3View.jsx:2241:          background:
+  src\pages\Top3\Top3View.jsx:2242:            linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.00)),
+  src\pages\Top3\Top3View.jsx:2243:            var(--top3-panel);
+  src\pages\Top3\Top3View.jsx:2244:          border: 1px solid var(--top3-border);
+  src\pages\Top3\Top3View.jsx:2245:          border-radius: 20px;
+  src\pages\Top3\Top3View.jsx:2246:          padding: 18px;
+  src\pages\Top3\Top3View.jsx:2247:          box-shadow:
+  src\pages\Top3\Top3View.jsx:2248:            0 20px 50px rgba(0,0,0,0.34),
+  src\pages\Top3\Top3View.jsx:2249:            inset 0 0 0 1px rgba(255,255,255,0.03);
+  src\pages\Top3\Top3View.jsx:2250:        }
+  src\pages\Top3\Top3View.jsx:2251:
+  src\pages\Top3\Top3View.jsx:2252:        .top3-header{
+  src\pages\Top3\Top3View.jsx:2253:          display:grid;
+  src\pages\Top3\Top3View.jsx:2254:          gap:14px;
+  src\pages\Top3\Top3View.jsx:2255:        }
+  src\pages\Top3\Top3View.jsx:2256:
+  src\pages\Top3\Top3View.jsx:2257:        .top3-header__title{
+  src\pages\Top3\Top3View.jsx:2258:          font-weight: 950;
+  src\pages\Top3\Top3View.jsx:2259:          font-size: 18px;
+  src\pages\Top3\Top3View.jsx:2260:          letter-spacing: 0.2px;
+  src\pages\Top3\Top3View.jsx:2261:        }
+  src\pages\Top3\Top3View.jsx:2262:
+  src\pages\Top3\Top3View.jsx:2263:        .top3-context{
+  src\pages\Top3\Top3View.jsx:2264:          display:grid;
+  src\pages\Top3\Top3View.jsx:2265:          gap:6px;
+  src\pages\Top3\Top3View.jsx:2266:          color: rgba(255,255,255,0.92);
+  src\pages\Top3\Top3View.jsx:2267:          font-size: 13px;
+  src\pages\Top3\Top3View.jsx:2268:          line-height: 1.35;
+  src\pages\Top3\Top3View.jsx:2269:        }
+  src\pages\Top3\Top3View.jsx:2270:
+  src\pages\Top3\Top3View.jsx:2271:        .top3-context b{
+  src\pages\Top3\Top3View.jsx:2272:          color: rgba(255,255,255,0.98);
+  src\pages\Top3\Top3View.jsx:2273:        }
+  src\pages\Top3\Top3View.jsx:2274:
+  src\pages\Top3\Top3View.jsx:2275:        .top3-helper{
+  src\pages\Top3\Top3View.jsx:2276:          color: var(--top3-muted);
+  src\pages\Top3\Top3View.jsx:2277:          font-size: 13px;
+  src\pages\Top3\Top3View.jsx:2278:          line-height: 1.4;
+  src\pages\Top3\Top3View.jsx:2279:        }
+  src\pages\Top3\Top3View.jsx:2280:
+  src\pages\Top3\Top3View.jsx:2281:        /* TOP3 LOTTERY TABS SINGLE ROW */
+  src\pages\Top3\Top3View.jsx:2282:        .pp-tabs{
+  src\pages\Top3\Top3View.jsx:2283:          display:flex;
+  src\pages\Top3\Top3View.jsx:2284:          gap:8px;
+  src\pages\Top3\Top3View.jsx:2285:          flex-wrap:nowrap;
+  src\pages\Top3\Top3View.jsx:2286:          align-items:center;
+  src\pages\Top3\Top3View.jsx:2287:          max-width:100%;
+  src\pages\Top3\Top3View.jsx:2288:          margin-top:2px;
+  src\pages\Top3\Top3View.jsx:2289:          overflow-x:auto;
+  src\pages\Top3\Top3View.jsx:2290:          overflow-y:hidden;
+  src\pages\Top3\Top3View.jsx:2291:          scrollbar-width:none;
+  src\pages\Top3\Top3View.jsx:2292:          -webkit-overflow-scrolling:touch;
+  src\pages\Top3\Top3View.jsx:2293:        }
+  src\pages\Top3\Top3View.jsx:3489:                    style={{
+  src\pages\Top3\Top3View.jsx:3490:                      opacity: canSet ? 1 : 0.55,
+  src\pages\Top3\Top3View.jsx:3491:                      cursor: canSet ? "pointer" : "default",
+  src\pages\Top3\Top3View.jsx:3492:                    }}
+  src\pages\Top3\Top3View.jsx:3493:                  >
+  src\pages\Top3\Top3View.jsx:3494:                    {op?.label || k}
+  src\pages\Top3\Top3View.jsx:3495:                  </button>
+  src\pages\Top3\Top3View.jsx:3496:                );
+  src\pages\Top3\Top3View.jsx:3497:              })}
+  src\pages\Top3\Top3View.jsx:3498:            </div>
+  src\pages\Top3\Top3View.jsx:3499:
+  src\pages\Top3\Top3View.jsx:3500:            <div className="top3-metaGrid">
+  src\pages\Top3\Top3View.jsx:3501:              <div className="top3-metaItem">
+  src\pages\Top3\Top3View.jsx:3502:                <div className="top3-metaItem__label">Último</div>
+  src\pages\Top3\Top3View.jsx:3503:                <div className="top3-metaItem__value">{meta.last}</div>
+  src\pages\Top3\Top3View.jsx:3504:              </div>
+  src\pages\Top3\Top3View.jsx:3505:
+  src\pages\Top3\Top3View.jsx:3506:              <div className="top3-metaItem">
+  src\pages\Top3\Top3View.jsx:3507:                <div className="top3-metaItem__label">Anterior</div>
+  src\pages\Top3\Top3View.jsx:3508:                <div className="top3-metaItem__value">{meta.prev}</div>
+  src\pages\Top3\Top3View.jsx:3509:              </div>
+  src\pages\Top3\Top3View.jsx:3510:
+  src\pages\Top3\Top3View.jsx:3511:            </div>
+  src\pages\Top3\Top3View.jsx:3512:          </div>
+  src\pages\Top3\Top3View.jsx:3513:        </section>
+  src\pages\Top3\Top3View.jsx:3514:
+  src\pages\Top3\Top3View.jsx:3515:        <section className="top3-shell">
+  src\pages\Top3\Top3View.jsx:3516:          <div className="top3-header__title">Calendário do TOP3</div>
+  src\pages\Top3\Top3View.jsx:3517:
+  src\pages\Top3\Top3View.jsx:3518:          <div className="top3-helper">
+  src\pages\Top3\Top3View.jsx:3519:            Escolha uma data para consultar as previsões, os resultados e a taxa de acerto de cada horário.
+  src\pages\Top3\Top3View.jsx:3520:          </div>
+  src\pages\Top3\Top3View.jsx:3521:
+  src\pages\Top3\Top3View.jsx:3522:          <div className="top3-historyToolbar">
+  src\pages\Top3\Top3View.jsx:3523:            <button
+  src\pages\Top3\Top3View.jsx:3524:              type="button"
+  src\pages\Top3\Top3View.jsx:3525:              className="pp-btn"
+  src\pages\Top3\Top3View.jsx:3526:              disabled={!canGoPrevious}
+  src\pages\Top3\Top3View.jsx:3527:              onClick={() => {
+  src\pages\Top3\Top3View.jsx:3528:                if (!canGoPrevious) return;
+> src\pages\Top3\Top3View.jsx:3529:                goToHistoryDate(previousAvailableDate);
+  src\pages\Top3\Top3View.jsx:3530:              }}
+  src\pages\Top3\Top3View.jsx:3531:              style={{
+  src\pages\Top3\Top3View.jsx:3532:                opacity: canGoPrevious ? 1 : 0.45,
+  src\pages\Top3\Top3View.jsx:3533:                cursor: canGoPrevious
+  src\pages\Top3\Top3View.jsx:3534:                  ? "pointer"
+  src\pages\Top3\Top3View.jsx:3535:                  : "not-allowed",
+  src\pages\Top3\Top3View.jsx:3536:              }}
+  src\pages\Top3\Top3View.jsx:3537:            >
+> src\pages\Top3\Top3View.jsx:3538:              ◀ Dia anterior
+  src\pages\Top3\Top3View.jsx:3539:            </button>
+  src\pages\Top3\Top3View.jsx:3540:
+  src\pages\Top3\Top3View.jsx:3541:            <input
+> src\pages\Top3\Top3View.jsx:3542:              type="date"
+  src\pages\Top3\Top3View.jsx:3543:              className="top3-historyDate"
+> src\pages\Top3\Top3View.jsx:3544:              value={selectedHistoryYmd}
+> src\pages\Top3\Top3View.jsx:3545:              max={todayForCalendar}
+  src\pages\Top3\Top3View.jsx:3546:              onChange={(event) =>
+> src\pages\Top3\Top3View.jsx:3547:                goToHistoryDate(event.target.value)
+  src\pages\Top3\Top3View.jsx:3548:              }
+  src\pages\Top3\Top3View.jsx:3549:              aria-label="Selecionar data do histórico TOP3"
+  src\pages\Top3\Top3View.jsx:3550:            />
+  src\pages\Top3\Top3View.jsx:3551:
+  src\pages\Top3\Top3View.jsx:3552:            <button
+  src\pages\Top3\Top3View.jsx:3553:              type="button"
+  src\pages\Top3\Top3View.jsx:3554:              className="pp-btn"
+> src\pages\Top3\Top3View.jsx:3555:              onClick={() => goToHistoryDate(todayForCalendar)}
+  src\pages\Top3\Top3View.jsx:3556:            >
+  src\pages\Top3\Top3View.jsx:3557:              Hoje
+  src\pages\Top3\Top3View.jsx:3558:            </button>
+  src\pages\Top3\Top3View.jsx:3559:
+  src\pages\Top3\Top3View.jsx:3560:            <button
+  src\pages\Top3\Top3View.jsx:3561:              type="button"
+  src\pages\Top3\Top3View.jsx:3562:              className="pp-btn"
+  src\pages\Top3\Top3View.jsx:3563:              disabled={!canGoNext}
+  src\pages\Top3\Top3View.jsx:3564:              onClick={() => {
+  src\pages\Top3\Top3View.jsx:3565:                if (!canGoNext) return;
+> src\pages\Top3\Top3View.jsx:3566:                goToHistoryDate(nextAvailableDate);
+  src\pages\Top3\Top3View.jsx:3567:              }}
+  src\pages\Top3\Top3View.jsx:3568:              style={{
+  src\pages\Top3\Top3View.jsx:3569:                opacity: canGoNext ? 1 : 0.45,
+  src\pages\Top3\Top3View.jsx:3570:                cursor: canGoNext
+  src\pages\Top3\Top3View.jsx:3571:                  ? "pointer"
+  src\pages\Top3\Top3View.jsx:3572:                  : "not-allowed",
+  src\pages\Top3\Top3View.jsx:3573:              }}
+  src\pages\Top3\Top3View.jsx:3574:            >
+> src\pages\Top3\Top3View.jsx:3575:              Próximo dia ▶
+  src\pages\Top3\Top3View.jsx:3576:            </button>
+  src\pages\Top3\Top3View.jsx:3577:          </div>
+  src\pages\Top3\Top3View.jsx:3578:        </section>
+  src\pages\Top3\Top3View.jsx:3579:
+  src\pages\Top3\Top3View.jsx:3580:        {loading ? (
+  src\pages\Top3\Top3View.jsx:3581:          <section
+  src\pages\Top3\Top3View.jsx:3582:            className="top3-stage top3-stage--loading"
+  src\pages\Top3\Top3View.jsx:3583:            aria-label="Carregando previsões do TOP3"
+  src\pages\Top3\Top3View.jsx:3584:            aria-busy="true"
+  src\pages\Top3\Top3View.jsx:3585:          >
+  src\pages\Top3\Top3View.jsx:3586:            {[0, 1, 2].map((item) => (
+  src\pages\Top3\Top3View.jsx:3587:              <div className="top3-card top3-loadingCard" key={item}>
+  src\pages\Top3\Top3View.jsx:3588:                <div className="top3-loadingCard__header">
+  src\pages\Top3\Top3View.jsx:3589:                  <span className="top3-skeleton top3-skeleton--badge" />
+  src\pages\Top3\Top3View.jsx:3590:                  <span className="top3-skeleton top3-skeleton--title" />
+  src\pages\Top3\Top3View.jsx:3591:                </div>
+  src\pages\Top3\Top3View.jsx:3592:
+  src\pages\Top3\Top3View.jsx:3593:                <div className="top3-loadingCard__identity">
+  src\pages\Top3\Top3View.jsx:3594:                  <span className="top3-skeleton top3-skeleton--image" />
+  src\pages\Top3\Top3View.jsx:3595:
+  src\pages\Top3\Top3View.jsx:3596:                  <div className="top3-loadingCard__lines">
+  src\pages\Top3\Top3View.jsx:3597:                    <span className="top3-skeleton top3-skeleton--short" />
+  src\pages\Top3\Top3View.jsx:3598:                    <span className="top3-skeleton top3-skeleton--animal" />
+  src\pages\Top3\Top3View.jsx:3599:                  </div>
+  src\pages\Top3\Top3View.jsx:3600:                </div>
+  src\pages\Top3\Top3View.jsx:3601:
+  src\pages\Top3\Top3View.jsx:3602:                <span className="top3-skeleton top3-skeleton--block" />
+  src\pages\Top3\Top3View.jsx:3603:                <span className="top3-skeleton top3-skeleton--block" />
+  src\pages\Top3\Top3View.jsx:3604:              </div>
+  src\pages\Top3\Top3View.jsx:3605:            ))}
+  src\pages\Top3\Top3View.jsx:3606:          </section>
+  src\pages\Top3\Top3View.jsx:3607:        ) : error ? (
+  src\pages\Top3\Top3View.jsx:3608:          <div className="top3-error">{String(error)}</div>
+  src\pages\Top3\Top3View.jsx:3609:        ) : !list.length ? (
+  src\pages\Top3\Top3View.jsx:3610:          <div className="top3-empty">Sem dados para calcular TOP3.</div>
+  src\pages\Top3\Top3View.jsx:3611:        ) : (
+  src\pages\Top3\Top3View.jsx:3612:          <section className="top3-stage top3-stage--predictions">
+  src\pages\Top3\Top3View.jsx:3613:            {visibleTop3.map((item, idx) => (
+  src\pages\Top3\Top3View.jsx:3614:              <Top3Card
+  src\pages\Top3\Top3View.jsx:3615:                key={`${String(item?.grupo ?? "g")}__${String(
+  src\pages\Top3\Top3View.jsx:3616:                  item?.animal || ""
+  src\pages\Top3\Top3View.jsx:3617:                )}__${idx}`}
+  src\pages\Top3\Top3View.jsx:3618:                item={item}
+  src\pages\Top3\Top3View.jsx:3619:                idx={idx}
+  src\pages\Top3\Top3View.jsx:3620:                theme={t}
+  src\pages\Top3\Top3View.jsx:3621:                copiedAllKey={copiedAllKey}
+  src\pages\Top3\Top3View.jsx:3622:                copiedCellKey={copiedCellKey}
+  src\pages\Top3\Top3View.jsx:3623:                setCopiedAllKey={setCopiedAllKey}
+  src\pages\Top3\Top3View.jsx:3624:                setCopiedCellKey={setCopiedCellKey}
+  src\pages\Top3\Top3View.jsx:3625:                copyText={copyText}
+  src\pages\Top3\Top3View.jsx:3626:                build16={build16}
+  src\pages\Top3\Top3View.jsx:3627:                buildMilhares={buildMilhares}
+  src\pages\Top3\Top3View.jsx:3628:                build20={build20}
+  src\pages\Top3\Top3View.jsx:3629:              />
+  src\pages\Top3\Top3View.jsx:3630:            ))}
+  src\pages\Top3\Top3View.jsx:3631:          </section>
+  src\pages\Top3\Top3View.jsx:3632:        )}
+  src\pages\Top3\Top3View.jsx:3633:
+  src\pages\Top3\Top3View.jsx:3634:        {showDetailedTimeline && timeline.length > 0 ? (
+  src\pages\Top3\Top3View.jsx:3635:          <section className="top3-stage">
+  src\pages\Top3\Top3View.jsx:3636:            <section className="top3-shell">
+  src\pages\Top3\Top3View.jsx:3637:              <div className="top3-header__title">Leitura do dia — Timeline completa</div>
+  src\pages\Top3\Top3View.jsx:3638:              <div className="top3-helper">
+  src\pages\Top3\Top3View.jsx:3639:                Cada bloco abaixo mostra o Top3 calculado para o horário alvo, a base usada e o resultado real quando disponível.
+  src\pages\Top3\Top3View.jsx:3640:              </div>
+  src\pages\Top3\Top3View.jsx:3641:            </section>
+  src\pages\Top3\Top3View.jsx:3642:
+  src\pages\Top3\Top3View.jsx:3643:            {timeline.map((slot, idx) => (
+  src\pages\Top3\Top3View.jsx:3644:              <TimelineSlot
+  src\pages\Top3\Top3View.jsx:3645:                key={`${String(slot?.targetYmd || "y")}_${String(slot?.targetHour || "h")}_${idx}`}
+  src\pages\Top3\Top3View.jsx:3646:                slot={slot}
+  src\pages\Top3\Top3View.jsx:3647:                theme={t}
+  src\pages\Top3\Top3View.jsx:3648:                copiedAllKey={copiedAllKey}
+  src\pages\Top3\Top3View.jsx:3649:                copiedCellKey={copiedCellKey}
+  src\pages\Top3\Top3View.jsx:3650:                setCopiedAllKey={setCopiedAllKey}
+  src\pages\Top3\Top3View.jsx:3651:                setCopiedCellKey={setCopiedCellKey}
+  src\pages\Top3\Top3View.jsx:3652:                copyText={copyText}
+  src\pages\Top3\Top3View.jsx:3653:                build16={build16}
+  src\pages\Top3\Top3View.jsx:3654:                buildMilhares={buildMilhares}
+  src\pages\Top3\Top3View.jsx:3655:                build20={build20}
+

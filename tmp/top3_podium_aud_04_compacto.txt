@@ -1,0 +1,2160 @@
+====================================================================================================
+TOP3-PODIUM-AUD-04 — EXTRAÇÃO COMPACTA DOS BLOCOS REAIS
+====================================================================================================
+Gerado em: 25/07/2026 14:29:26
+
+Objetivo: obter os blocos reais necessários para corrigir a validação do pódio.
+Código alterado: NÃO
+
+====================================================================================================
+ARQUIVO: src\pages\Top3\top3.firestore.js
+====================================================================================================
+
+FUNÇÕES RELEVANTES COMPLETAS
+----------------------------------------------------------------------------------------------------
+
+FUNÇÃO: extractPrize1 | LINHA INICIAL: 74
+----------------------------------------------------------------------------------------------------
+74 | function extractPrize1(draw) {
+75 |   const prizes = Array.isArray(draw?.prizes) ? draw.prizes : [];
+76 | 
+77 |   return (
+78 |     prizes.find((item) => Number(item?.position) === 1) ||
+79 |     prizes[0] ||
+80 |     null
+81 |   );
+82 | }
+
+FUNÇÃO: extractPrize1Milhar | LINHA INICIAL: 84
+----------------------------------------------------------------------------------------------------
+84 | function extractPrize1Milhar(draw) {
+85 |   const prize = extractPrize1(draw);
+86 | 
+87 |   return normalizeMilhar(
+88 |     prize?.milhar ??
+89 |       prize?.numero ??
+90 |       prize?.number ??
+91 |       prize?.valor ??
+92 |       draw?.prize_1 ??
+93 |       ""
+94 |   );
+95 | }
+
+FUNÇÃO: saveTop3PredictionSnapshot | LINHA INICIAL: 208
+----------------------------------------------------------------------------------------------------
+208 | export async function saveTop3PredictionSnapshot({
+209 |   lotteryKey,
+210 |   targetYmd,
+211 |   targetHour,
+212 |   picks,
+213 |   snapshot,
+214 |   engineVersion,
+215 | }
+
+FUNÇÃO: result | LINHA INICIAL: 296
+----------------------------------------------------------------------------------------------------
+296 | const result = await runTransaction(db, async (transaction) => {
+297 |     const current = await transaction.get(ref);
+298 | 
+299 |     if (current.exists()) {
+300 |       return {
+301 |         ok: true,
+302 |         created: false,
+303 |         existing: true,
+304 |       };
+305 |     }
+306 | 
+307 |     transaction.set(ref, payload);
+308 | 
+309 |     return {
+310 |       ok: true,
+311 |       created: true,
+312 |       existing: false,
+313 |     };
+314 |   }
+
+FUNÇÃO: loadTop3PredictionDay | LINHA INICIAL: 319
+----------------------------------------------------------------------------------------------------
+319 | export async function loadTop3PredictionDay({
+320 |   lotteryKey,
+321 |   targetYmd,
+322 |   schedule,
+323 | }
+
+FUNÇÃO: reconcileTop3PredictionDay | LINHA INICIAL: 370
+----------------------------------------------------------------------------------------------------
+370 | export async function reconcileTop3PredictionDay({
+371 |   lotteryKey,
+372 |   targetYmd,
+373 |   schedule,
+374 |   draws,
+375 | }
+
+CONTEXTOS RELEVANTES
+----------------------------------------------------------------------------------------------------
+
+CONTEXTO A PARTIR DA LINHA: 12
+----------------------------------------------------------------------------------------------------
+12 |   safeStr,
+13 |   isYMD,
+14 |   toHourBucket,
+15 | } from "./top3.formatters";
+16 | 
+17 | import {
+18 |   pickDrawYMD,
+19 |   pickDrawHour,
+20 |   pickPrize1GrupoFromDraw,
+21 | } from "./top3.engine";
+22 | 
+23 | const COLLECTION = "top3_predictions";
+24 | 
+25 | function normalizeLotteryKey(value) {
+26 |   return safeStr(value).toUpperCase() || "PT_RIO";
+27 | }
+
+CONTEXTO A PARTIR DA LINHA: 66
+----------------------------------------------------------------------------------------------------
+66 | }
+67 | 
+68 | function normalizeMilhar(value) {
+69 |   const digits = String(value || "").replace(/\D/g, "");
+70 |   if (!digits) return "";
+71 |   return digits.slice(-4).padStart(4, "0");
+72 | }
+73 | 
+74 | function extractPrize1(draw) {
+75 |   const prizes = Array.isArray(draw?.prizes) ? draw.prizes : [];
+76 | 
+77 |   return (
+78 |     prizes.find((item) => Number(item?.position) === 1) ||
+79 |     prizes[0] ||
+80 |     null
+81 |   );
+82 | }
+83 | 
+84 | function extractPrize1Milhar(draw) {
+85 |   const prize = extractPrize1(draw);
+86 | 
+87 |   return normalizeMilhar(
+88 |     prize?.milhar ??
+89 |       prize?.numero ??
+90 |       prize?.number ??
+91 |       prize?.valor ??
+92 |       draw?.prize_1 ??
+93 |       ""
+
+CONTEXTO A PARTIR DA LINHA: 134
+----------------------------------------------------------------------------------------------------
+134 |       return (
+135 |         Number.isFinite(item.grupo) &&
+136 |         item.grupo >= 1 &&
+137 |         item.grupo <= 25
+138 |       );
+139 |     });
+140 | }
+141 | 
+142 | function analyzeSnapshotHit(snapshot, resultGrupo, resultMilhar) {
+143 |   const top3 = Array.isArray(snapshot) ? snapshot.slice(0, 3) : [];
+144 |   const grupo = Number(resultGrupo);
+145 |   const milhar = normalizeMilhar(resultMilhar);
+146 |   const centena = milhar ? milhar.slice(-3) : "";
+147 | 
+148 |   let best = {
+149 |     hitType: "miss",
+150 |     hitScore: 0,
+151 |     hitPosition: -1,
+152 |     matchedValue: "",
+153 |   };
+154 | 
+155 |   top3.forEach((item, index) => {
+156 |     const itemGrupo = Number(item?.grupo);
+157 | 
+158 |     const milhares = (Array.isArray(item?.milhares20)
+159 |       ? item.milhares20
+160 |       : []
+161 |     )
+162 |       .map(normalizeMilhar)
+163 |       .filter(Boolean);
+164 | 
+165 |     const centenas = milhares.map((value) => value.slice(-3));
+166 | 
+167 |     if (milhar && milhares.includes(milhar)) {
+168 |       best = {
+169 |         hitType: "hit_exact",
+170 |         hitScore: 100,
+171 |         hitPosition: index + 1,
+172 |         matchedValue: milhar,
+173 |       };
+174 |       return;
+175 |     }
+176 | 
+177 |     if (
+178 |       best.hitScore < 66.67 &&
+179 |       centena &&
+180 |       centenas.includes(centena)
+181 |     ) {
+182 |       best = {
+183 |         hitType: "hit_centena",
+184 |         hitScore: 66.67,
+185 |         hitPosition: index + 1,
+186 |         matchedValue: centena,
+187 |       };
+188 |       return;
+189 |     }
+190 | 
+191 |     if (
+192 |       best.hitScore < 33.33 &&
+193 |       Number.isFinite(grupo) &&
+194 |       itemGrupo === grupo
+195 |     ) {
+196 |       best = {
+197 |         hitType: "hit_grupo",
+198 |         hitScore: 33.33,
+199 |         hitPosition: index + 1,
+200 |         matchedValue: milhar ? milhar.slice(-2) : "",
+201 |       };
+202 |     }
+203 |   });
+204 | 
+205 |   return best;
+206 | }
+207 | 
+208 | export async function saveTop3PredictionSnapshot({
+209 |   lotteryKey,
+210 |   targetYmd,
+211 |   targetHour,
+212 |   picks,
+213 |   snapshot,
+214 |   engineVersion,
+215 | }) {
+216 |   let user = null;
+
+CONTEXTO A PARTIR DA LINHA: 276
+----------------------------------------------------------------------------------------------------
+276 |     lotteryKey: lottery,
+277 |     targetYmd: ymd,
+278 |     targetHour: hour,
+279 |     targetKey: `${ymd}_${hour}`,
+280 |     picks: normalizedPicks,
+281 |     snapshot: normalizedSnapshot,
+282 |     engineVersion: safeStr(engineVersion || "V3_STATISTICAL"),
+283 |     status: "predicted",
+284 |     resultGrupo: null,
+285 |     resultMilhar: "",
+286 |     resultAnimal: "",
+287 |     hitType: "",
+288 |     hitScore: 0,
+289 |     hitPosition: -1,
+290 |     matchedValue: "",
+291 |     createdAt: now,
+292 |     updatedAt: now,
+293 |     createdBy: user.uid,
+294 |   });
+295 | 
+296 |   const result = await runTransaction(db, async (transaction) => {
+297 |     const current = await transaction.get(ref);
+
+CONTEXTO A PARTIR DA LINHA: 311
+----------------------------------------------------------------------------------------------------
+311 |       created: true,
+312 |       existing: false,
+313 |     };
+314 |   });
+315 | 
+316 |   return result;
+317 | }
+318 | 
+319 | export async function loadTop3PredictionDay({
+320 |   lotteryKey,
+321 |   targetYmd,
+322 |   schedule,
+323 | }) {
+324 |   const lottery = normalizeLotteryKey(lotteryKey);
+325 |   const ymd = safeStr(targetYmd);
+326 | 
+327 |   if (!isYMD(ymd)) return [];
+
+CONTEXTO A PARTIR DA LINHA: 362
+----------------------------------------------------------------------------------------------------
+362 |     .filter(Boolean)
+363 |     .sort((a, b) => {
+364 |       return normalizeHour(a?.targetHour).localeCompare(
+365 |         normalizeHour(b?.targetHour)
+366 |       );
+367 |     });
+368 | }
+369 | 
+370 | export async function reconcileTop3PredictionDay({
+371 |   lotteryKey,
+372 |   targetYmd,
+373 |   schedule,
+374 |   draws,
+375 | }) {
+376 |   let user = null;
+377 | 
+378 |   try {
+
+CONTEXTO A PARTIR DA LINHA: 389
+----------------------------------------------------------------------------------------------------
+389 |   if (!user?.uid) {
+390 |     return {
+391 |       ok: false,
+392 |       skipped: true,
+393 |       reason: "AUTH_REQUIRED",
+394 |     };
+395 |   }
+396 | 
+397 |   const history = await loadTop3PredictionDay({
+398 |     lotteryKey,
+399 |     targetYmd,
+400 |     schedule,
+401 |   });
+402 | 
+403 |   const lottery = normalizeLotteryKey(lotteryKey);
+404 |   let updated = 0;
+405 |   const reconciledHistory = [];
+
+CONTEXTO A PARTIR DA LINHA: 413
+----------------------------------------------------------------------------------------------------
+413 |       targetHour: entry?.targetHour,
+414 |     });
+415 | 
+416 |     if (!realDraw) {
+417 |       reconciledHistory.push(entry);
+418 |       continue;
+419 |     }
+420 | 
+421 |     const resultGrupo = Number(
+422 |       pickPrize1GrupoFromDraw(realDraw)
+423 |     );
+424 | 
+425 |     if (
+426 |       !Number.isFinite(resultGrupo) ||
+427 |       resultGrupo < 1 ||
+428 |       resultGrupo > 25
+429 |     ) {
+430 |       reconciledHistory.push(entry);
+431 |       continue;
+432 |     }
+433 | 
+434 |     const resultMilhar = extractPrize1Milhar(realDraw);
+435 |     const savedLottery = safeStr(
+436 |       entry?.resultLotteryKey
+437 |     ).toUpperCase();
+438 |     const savedGrupo = Number(entry?.resultGrupo);
+439 |     const savedMilhar = normalizeMilhar(entry?.resultMilhar);
+440 | 
+441 |     const analysis = analyzeSnapshotHit(
+442 |       entry?.snapshot,
+443 |       resultGrupo,
+444 |       resultMilhar
+445 |     );
+446 | 
+447 |     const alreadyMatchesRealResult =
+448 |       entry?.status === "validated" &&
+449 |       savedLottery === lottery &&
+450 |       savedGrupo === resultGrupo &&
+451 |       savedMilhar === resultMilhar &&
+452 |       safeStr(entry?.hitType) === analysis.hitType &&
+453 |       Number(entry?.hitScore) === analysis.hitScore &&
+454 |       Number(entry?.hitPosition) === analysis.hitPosition &&
+455 |       safeStr(entry?.matchedValue) === analysis.matchedValue;
+456 | 
+457 |     if (alreadyMatchesRealResult) {
+458 |       reconciledHistory.push(entry);
+459 |       continue;
+460 |     }
+461 | 
+462 |     const ref = doc(db, COLLECTION, entry.id);
+463 |     const now = Date.now();
+464 | 
+465 |     const validationPayload = {
+466 |       resultGrupo,
+467 |       resultMilhar,
+468 |       resultLotteryKey: lottery,
+469 |       resultAnimal: safeStr(
+470 |         extractPrize1(realDraw)?.animal || ""
+471 |       ),
+472 |       hitType: analysis.hitType,
+473 |       hitScore: analysis.hitScore,
+474 |       hitPosition: analysis.hitPosition,
+475 |       matchedValue: analysis.matchedValue,
+476 |       validatedAt: now,
+477 |       validatedBy: user.uid,
+478 |       updatedAt: now,
+479 |       status: "validated",
+480 |     };
+481 | 
+482 |     await setDoc(
+483 |       ref,
+
+====================================================================================================
+ARQUIVO: src\pages\Top3\Top3View.jsx
+====================================================================================================
+
+FUNÇÕES RELEVANTES COMPLETAS
+----------------------------------------------------------------------------------------------------
+
+FUNÇÃO: extractResultMilhar | LINHA INICIAL: 5
+----------------------------------------------------------------------------------------------------
+ 5 | function extractResultMilhar(slot) {
+ 6 |   if (!slot || !Array.isArray(slot.prizes)) return "";
+ 7 | 
+ 8 |   const p1 = slot.prizes.find((p) => Number(p.position) === 1);
+ 9 |   if (!p1) return "";
+10 | 
+11 |   const num = String(
+12 |     p1.numero ||
+13 |       p1.milhar ||
+14 |       p1.number ||
+15 |       p1.valor ||
+16 |       ""
+17 |   ).replace(/\D/g, "");
+18 | 
+19 |   return num.padStart(4, "0");
+20 | }
+
+FUNÇÃO: getSlotResultGrupo | LINHA INICIAL: 231
+----------------------------------------------------------------------------------------------------
+231 | function getSlotResultGrupo(slot) {
+232 |   const direct = Number(
+233 |     slot?.resultGrupo ??
+234 |       slot?.grupo ??
+235 |       slot?.result?.grupo ??
+236 |       slot?.resultado?.grupo
+237 |   );
+238 | 
+239 |   if (Number.isFinite(direct) && direct >= 1 && direct <= 25) {
+240 |     return direct;
+241 |   }
+242 | 
+243 |   if (Array.isArray(slot?.prizes)) {
+244 |     const p1 = slot.prizes.find((p) => Number(p?.position) === 1) || slot.prizes[0];
+245 |     const fromPrize = Number(
+246 |       p1?.grupo ??
+247 |         p1?.group ??
+248 |         p1?.animal_grupo ??
+249 |         p1?.grupo2
+250 |     );
+251 | 
+252 |     if (Number.isFinite(fromPrize) && fromPrize >= 1 && fromPrize <= 25) {
+253 |       return fromPrize;
+254 |     }
+255 |   }
+256 | 
+257 |   return NaN;
+258 | }
+
+FUNÇÃO: hasOfficialResult | LINHA INICIAL: 260
+----------------------------------------------------------------------------------------------------
+260 | function hasOfficialResult(slot) {
+261 |   const grupo = getSlotResultGrupo(slot);
+262 |   if (Number.isFinite(grupo) && grupo >= 1 && grupo <= 25) return true;
+263 | 
+264 |   const milhar = extractResultMilhar(slot);
+265 |   return /^\d{4}$/.test(milhar);
+266 | }
+
+FUNÇÃO: historyRows | LINHA INICIAL: 1393
+----------------------------------------------------------------------------------------------------
+1393 | const historyRows = useMemo(() => {
+1394 |     const persistedRows = (
+1395 |       Array.isArray(persistedTop3History)
+1396 |         ? persistedTop3History
+1397 |         : []
+1398 |     )
+1399 |       .filter(
+1400 |         (entry) =>
+1401 |           String(entry?.targetYmd || "").trim() ===
+1402 |           historyAnchorYmd
+1403 |       )
+1404 |       .map((entry) => {
+1405 |         const snapshot = Array.isArray(entry?.snapshot)
+1406 |           ? entry.snapshot.slice(0, 3)
+1407 |           : [];
+1408 | 
+1409 |         const resultGrupo = Number(entry?.resultGrupo);
+1410 |         const hasResult =
+1411 |           Number.isFinite(resultGrupo) &&
+1412 |           resultGrupo >= 1 &&
+1413 |           resultGrupo <= 25;
+1414 | 
+1415 |         return {
+1416 |           targetKey: String(
+1417 |             entry?.id || entry?.targetKey || ""
+1418 |           ),
+1419 |           target: {
+1420 |             ymd: String(entry?.targetYmd || ""),
+1421 |             hour: String(entry?.targetHour || ""),
+1422 |           },
+1423 |           picks: Array.isArray(entry?.picks)
+1424 |             ? entry.picks
+1425 |             : snapshot
+1426 |                 .map((item) => Number(item?.grupo))
+1427 |                 .filter(Number.isFinite),
+1428 |           top3: snapshot,
+1429 |           result: hasResult ? resultGrupo : null,
+1430 |           grupo: hasResult ? resultGrupo : null,
+1431 |           animal: hasResult
+1432 |             ? String(
+1433 |                 entry?.resultAnimal ||
+1434 |                   getAnimalLabel(resultGrupo) ||
+1435 |                   ""
+1436 |               )
+1437 |             : "",
+1438 |           resultMilhar: String(
+1439 |             entry?.resultMilhar || ""
+1440 |           ),
+1441 |           hit:
+1442 |             Number(entry?.hitScore || 0) > 0,
+1443 |           hitType: String(entry?.hitType || ""),
+1444 |           hitScore: Number(entry?.hitScore || 0),
+1445 |           hitPosition: Number(
+1446 |             entry?.hitPosition ?? -1
+1447 |           ),
+1448 |           analysis: {
+1449 |             type: String(entry?.hitType || ""),
+1450 |             score: Number(entry?.hitScore || 0),
+1451 |             position: Number(
+1452 |               entry?.hitPosition ?? -1
+1453 |             ),
+1454 |             matchedValue: String(
+1455 |               entry?.matchedValue || ""
+1456 |             ),
+1457 |           },
+1458 |         };
+1459 |       });
+1460 | 
+1461 |     const timelineRows = (
+1462 |       Array.isArray(timeline) ? timeline : []
+1463 |     )
+1464 |       .filter(
+1465 |         (slot) =>
+1466 |           String(slot?.targetYmd || "").trim() ===
+1467 |           historyAnchorYmd
+1468 |       )
+1469 |       .map((slot) => {
+1470 |         const slotTop3 = Array.isArray(slot?.top3)
+1471 |           ? slot.top3.slice(0, 3)
+1472 |           : [];
+1473 | 
+1474 |         const resultGrupo = getSlotResultGrupo(slot);
+1475 | 
+1476 |         const hasResult =
+1477 |           Number.isFinite(resultGrupo) &&
+1478 |           resultGrupo >= 1 &&
+1479 |           resultGrupo <= 25;
+1480 | 
+1481 |         const resultMilhar =
+1482 |           extractResultMilhar(slot);
+1483 | 
+1484 |         const analysis = analyzeTop3Hit(
+1485 |           slotTop3,
+1486 |           resultGrupo,
+1487 |           resultMilhar
+1488 |         );
+1489 | 
+1490 |         return {
+1491 |           targetKey:
+1492 |             `${String(slot?.targetYmd || "")}` +
+1493 |             `__${String(slot?.targetHour || "")}`,
+1494 |           target: {
+1495 |             ymd: String(slot?.targetYmd || ""),
+1496 |             hour: String(slot?.targetHour || ""),
+1497 |           },
+1498 |           picks: slotTop3
+1499 |             .map((item) => Number(item?.grupo))
+1500 |             .filter(Number.isFinite),
+1501 |           top3: slotTop3,
+1502 |           result: hasResult
+1503 |             ? Number(resultGrupo)
+1504 |             : null,
+1505 |           grupo: hasResult
+1506 |             ? Number(resultGrupo)
+1507 |             : null,
+1508 |           animal: hasResult
+1509 |             ? getAnimalLabel(resultGrupo)
+1510 |             : "",
+1511 |           resultMilhar,
+1512 |           analysis,
+1513 |           hit:
+1514 |             analysis.type !== "miss" &&
+1515 |             analysis.type !== "none",
+1516 |           hitType: analysis.type,
+1517 |           hitScore: Number(analysis.score || 0),
+1518 |           hitPosition: Number(
+1519 |             analysis.position ?? -1
+1520 |           ),
+1521 |         };
+1522 |       });
+1523 | 
+1524 |     // A timeline garante todos os horarios oficiais.
+1525 |     // O registro persistido prevalece quando realmente existe.
+1526 |     const rowsByTarget = new Map();
+1527 | 
+1528 |     for (const row of timelineRows) {
+1529 |       const key =
+1530 |         `${String(row?.target?.ymd || "")}` +
+1531 |         `__${String(row?.target?.hour || "")}`;
+1532 | 
+1533 |       rowsByTarget.set(key, row);
+1534 |     }
+1535 | 
+1536 |     for (const row of persistedRows) {
+1537 |       const key =
+1538 |         `${String(row?.target?.ymd || "")}` +
+1539 |         `__${String(row?.target?.hour || "")}`;
+1540 | 
+1541 |       const timelineRow = rowsByTarget.get(key);
+1542 | 
+1543 |       if (!timelineRow || timelineRow?.result == null) {
+1544 |         rowsByTarget.set(key, row);
+1545 |         continue;
+1546 |       }
+1547 | 
+1548 |       const resultGrupo = Number(timelineRow.result);
+1549 |       const resultMilhar = String(
+1550 |         timelineRow?.resultMilhar || ""
+1551 |       );
+1552 | 
+1553 |       const analysis = analyzeTop3Hit(
+1554 |         row?.top3,
+1555 |         resultGrupo,
+1556 |         resultMilhar
+1557 |       );
+1558 | 
+1559 |       rowsByTarget.set(key, {
+1560 |         ...row,
+1561 |         result: resultGrupo,
+1562 |         grupo: resultGrupo,
+1563 |         animal:
+1564 |           timelineRow?.animal ||
+1565 |           getAnimalLabel(resultGrupo) ||
+1566 |           "",
+1567 |         resultMilhar,
+1568 |         analysis,
+1569 |         hit:
+1570 |           analysis.type !== "miss" &&
+1571 |           analysis.type !== "none",
+1572 |         hitType: analysis.type,
+1573 |         hitScore: Number(analysis.score || 0),
+1574 |         hitPosition: Number(
+1575 |           analysis.position ?? -1
+1576 |         ),
+1577 |       });
+1578 |     }
+1579 | 
+1580 |     return Array.from(rowsByTarget.values())
+1581 |       .sort((a, b) => {
+1582 |         const ah = hourBucketToSortValue(
+1583 |           a?.target?.hour
+1584 |         );
+1585 |         const bh = hourBucketToSortValue(
+1586 |           b?.target?.hour
+1587 |         );
+1588 | 
+1589 |         return ah - bh;
+1590 |       });
+1591 |   }
+
+FUNÇÃO: historySummary | LINHA INICIAL: 1597
+----------------------------------------------------------------------------------------------------
+1597 | const historySummary = useMemo(() => {
+1598 |     const validated = historyRows.filter(
+1599 |       (item) => item?.result != null
+1600 |     );
+1601 | 
+1602 |     const exact = validated.filter(
+1603 |       (item) => item?.hitType === "hit_exact"
+1604 |     ).length;
+1605 | 
+1606 |     const centena = validated.filter(
+1607 |       (item) => item?.hitType === "hit_centena"
+1608 |     ).length;
+1609 | 
+1610 |     const grupo = validated.filter(
+1611 |       (item) => item?.hitType === "hit_grupo"
+1612 |     ).length;
+1613 | 
+1614 |     const misses = validated.filter(
+1615 |       (item) =>
+1616 |         item?.hitType === "miss" ||
+1617 |         item?.hitType === "none"
+1618 |     ).length;
+1619 | 
+1620 |     const totalScore = validated.reduce(
+1621 |       (sum, item) => sum + Number(item?.hitScore || 0),
+1622 |       0
+1623 |     );
+1624 | 
+1625 |     const average =
+1626 |       validated.length > 0
+1627 |         ? totalScore / validated.length
+1628 |         : 0;
+1629 | 
+1630 |     return {
+1631 |       total: historyRows.length,
+1632 |       validated: validated.length,
+1633 |       pending: Math.max(0, historyRows.length - validated.length),
+1634 |       exact,
+1635 |       centena,
+1636 |       grupo,
+1637 |       misses,
+1638 |       average,
+1639 |     };
+1640 |   }
+
+CONTEXTOS RELEVANTES
+----------------------------------------------------------------------------------------------------
+
+CONTEXTO A PARTIR DA LINHA: 1
+----------------------------------------------------------------------------------------------------
+ 1 | // src/pages/Top3/Top3View.jsx
+ 2 | import React, { useMemo, useState, useCallback, useEffect } from "react";
+ 3 | import { getAnimalLabel, getImgFromGrupo } from "../../constants/bichoMap";
+ 4 | 
+ 5 | function extractResultMilhar(slot) {
+ 6 |   if (!slot || !Array.isArray(slot.prizes)) return "";
+ 7 | 
+ 8 |   const p1 = slot.prizes.find((p) => Number(p.position) === 1);
+ 9 |   if (!p1) return "";
+10 | 
+11 |   const num = String(
+12 |     p1.numero ||
+13 |       p1.milhar ||
+
+CONTEXTO A PARTIR DA LINHA: 223
+----------------------------------------------------------------------------------------------------
+223 |   const noSamples = raw
+224 |     .replace(/\s*[•\-|]\s*Amostras:\s*\d+\s*$/i, "")
+225 |     .replace(/\s*Amostras:\s*\d+\s*$/i, "")
+226 |     .trim();
+227 | 
+228 |   return noSamples || "—";
+229 | }
+230 | 
+231 | function getSlotResultGrupo(slot) {
+232 |   const direct = Number(
+233 |     slot?.resultGrupo ??
+234 |       slot?.grupo ??
+235 |       slot?.result?.grupo ??
+236 |       slot?.resultado?.grupo
+237 |   );
+238 | 
+239 |   if (Number.isFinite(direct) && direct >= 1 && direct <= 25) {
+240 |     return direct;
+241 |   }
+
+CONTEXTO A PARTIR DA LINHA: 252
+----------------------------------------------------------------------------------------------------
+252 |     if (Number.isFinite(fromPrize) && fromPrize >= 1 && fromPrize <= 25) {
+253 |       return fromPrize;
+254 |     }
+255 |   }
+256 | 
+257 |   return NaN;
+258 | }
+259 | 
+260 | function hasOfficialResult(slot) {
+261 |   const grupo = getSlotResultGrupo(slot);
+262 |   if (Number.isFinite(grupo) && grupo >= 1 && grupo <= 25) return true;
+263 | 
+264 |   const milhar = extractResultMilhar(slot);
+265 |   return /^\d{4}$/.test(milhar);
+266 | }
+267 | 
+268 | function analyzeTop3Hit(top3, resultGrupo, resultMilhar) {
+269 |   if (!Array.isArray(top3) || !top3.length) {
+270 |     return { type: "none", score: 0, position: -1, matchedValue: "" };
+271 |   }
+272 | 
+273 |   const grupoNum = Number(resultGrupo);
+274 |   const milhar = normalizeMilharStr(resultMilhar);
+275 |   const centena = milhar ? milhar.slice(-3) : "";
+276 | 
+277 |   const hasGrupo = Number.isFinite(grupoNum) && grupoNum >= 1 && grupoNum <= 25;
+278 |   const hasMilhar = /^\d{4}$/.test(milhar);
+279 | 
+280 |   if (!hasGrupo && !hasMilhar) {
+281 |     return { type: "none", score: 0, position: -1, matchedValue: "" };
+282 |   }
+283 | 
+284 |   let best = { type: "miss", score: 0, position: -1, matchedValue: "" };
+285 | 
+286 |   top3.forEach((item, idx) => {
+287 |     const g = Number(item?.grupo);
+288 | 
+289 |     const milharesRaw = Array.isArray(item?.milhares20)
+290 |       ? item.milhares20
+291 |       : Array.isArray(item?.milhares)
+292 |         ? item.milhares
+
+CONTEXTO A PARTIR DA LINHA: 297
+----------------------------------------------------------------------------------------------------
+297 |       .filter((m) => /^\d{4}$/.test(m));
+298 | 
+299 |     const centenas = milhares
+300 |       .map((m) => centenaFromMilhar(m))
+301 |       .filter((c) => /^\d{3}$/.test(c));
+302 | 
+303 |     let score = 0;
+304 |     let type = "miss";
+305 |     let matchedValue = "";
+306 | 
+307 |     if (hasMilhar && milhares.includes(milhar)) {
+308 |       score = 100;
+309 |       type = "hit_exact";
+310 |       matchedValue = milhar;
+311 |     } else if (centena && centenas.includes(centena)) {
+312 |       score = 66.67;
+313 |       type = "hit_centena";
+314 |       matchedValue = centena;
+315 |     } else if (hasGrupo && g === grupoNum) {
+316 |       score = 33.33;
+317 |       type = "hit_grupo";
+318 |       matchedValue = hasMilhar ? milhar.slice(-2) : formatGrupo(grupoNum);
+319 |     }
+320 | 
+321 |     if (score > best.score) {
+322 |       best = {
+323 |         type,
+324 |         score,
+325 |         position: idx + 1,
+326 |         matchedValue,
+327 |       };
+328 |     }
+329 |   });
+330 | 
+331 |   return best;
+332 | }
+333 | 
+334 | function ImgWithFallback({ srcs, alt, size = 84, style }) {
+
+CONTEXTO A PARTIR DA LINHA: 999
+----------------------------------------------------------------------------------------------------
+ 999 |         </div>
+1000 |       </div>
+1001 |     </article>
+1002 |   );
+1003 | }
+1004 | 
+1005 | function CompactTop3Result({ slot, status, statusLabel, statusDetail }) {
+1006 |   const slotTop3 = Array.isArray(slot?.top3) ? slot.top3.slice(0, 3) : [];
+1007 |   const resultGrupo = getSlotResultGrupo(slot);
+1008 |   const hasResult = Number.isFinite(resultGrupo) && resultGrupo >= 1 && resultGrupo <= 25;
+1009 |   const resultAnimal = hasResult ? String(getAnimalLabel(resultGrupo) || "") : "";
+1010 |   const resultImg = hasResult ? getImgFromGrupo(resultGrupo, 64) : "";
+1011 | 
+1012 |   return (
+1013 |     <div className="timeline-compact">
+1014 |       <div className="timeline-compact__grid">
+1015 |         <div className="timeline-compact__predictions">
+1016 |           {slotTop3.map((item, idx) => {
+1017 |             const grupo = Number(item?.grupo);
+1018 |             const animal = String(item?.animal || getAnimalLabel(grupo) || "").trim();
+
+CONTEXTO A PARTIR DA LINHA: 1043
+----------------------------------------------------------------------------------------------------
+1043 | 
+1044 |         <div className="timeline-compact__result">
+1045 |           <div className="timeline-compact__resultLabel">Resultado</div>
+1046 | 
+1047 |           {hasResult ? (
+1048 |             <div className="timeline-compact__resultBox">
+1049 |               <ImgWithFallback
+1050 |                 srcs={resultImg ? [resultImg] : []}
+1051 |                 alt={resultAnimal}
+1052 |                 size={48}
+1053 |                 style={{ borderRadius: 10 }}
+1054 |               />
+1055 |               <div className="timeline-compact__resultText">
+1056 |                 <div className="timeline-compact__resultGroup">G{formatGrupo(resultGrupo)}</div>
+1057 |                 <div className="timeline-compact__resultAnimal">
+1058 |                   {String(resultAnimal || "").toUpperCase()}
+1059 |                 </div>
+1060 |               </div>
+1061 |             </div>
+1062 |           ) : (
+1063 |             <div className="timeline-compact__resultPending">PENDENTE</div>
+1064 |           )}
+1065 |         </div>
+
+CONTEXTO A PARTIR DA LINHA: 1087
+----------------------------------------------------------------------------------------------------
+1087 |   copyText,
+1088 |   build16,
+1089 |   buildMilhares,
+1090 |   build20,
+1091 | }) {
+1092 |   const t = theme;
+1093 |   const slotTop3 = Array.isArray(slot?.top3) ? slot.top3.slice(0, 3) : [];
+1094 | 
+1095 |   const resultGrupo = getSlotResultGrupo(slot);
+1096 |   const hasResult = hasOfficialResult(slot);
+1097 |   const resultAnimal =
+1098 |     hasResult && Number.isFinite(resultGrupo)
+1099 |       ? String(getAnimalLabel(resultGrupo) || "")
+1100 |       : "";
+1101 | 
+1102 |   const analysis = analyzeTop3Hit(
+1103 |     slotTop3,
+1104 |     resultGrupo,
+1105 |     extractResultMilhar(slot)
+1106 |   );
+1107 | 
+1108 |   const status =
+1109 |     !hasResult
+1110 |       ? "pending"
+1111 |       : analysis.type === "miss"
+1112 |         ? "miss"
+1113 |         : "hit";
+
+CONTEXTO A PARTIR DA LINHA: 1153
+----------------------------------------------------------------------------------------------------
+1153 |             {formatYmdHour(slot?.baseYmd, slot?.baseHour)}
+1154 |           </div>
+1155 |         </div>
+1156 | 
+1157 |         <div className="top3-metaItem">
+1158 |           <div className="top3-metaItem__label">Resultado real</div>
+1159 |           <div className="top3-metaItem__value">
+1160 |             {hasResult
+1161 |               ? `G${formatGrupo(resultGrupo)} • ${resultAnimal.toUpperCase()}`
+1162 |               : "Pendente"}
+1163 |           </div>
+1164 |         </div>
+1165 | 
+1166 |         <div className="top3-metaItem">
+1167 |           <div className="top3-metaItem__label">Status</div>
+1168 |           <div className="top3-metaItem__value">{statusDetail}</div>
+1169 |         </div>
+
+CONTEXTO A PARTIR DA LINHA: 1385
+----------------------------------------------------------------------------------------------------
+1385 |       const tb = `${b?.targetYmd || ""} ${b?.targetHour || ""}`;
+1386 |       return tb.localeCompare(ta);
+1387 |     });
+1388 | 
+1389 |   const fallback = String(realized?.[0]?.targetYmd || "").trim();
+1390 |   return isYMD(fallback) ? fallback : "";
+1391 | }, [loadedYmd, ymdSafe, timeline]);
+1392 | 
+1393 |   const historyRows = useMemo(() => {
+1394 |     const persistedRows = (
+1395 |       Array.isArray(persistedTop3History)
+1396 |         ? persistedTop3History
+1397 |         : []
+1398 |     )
+1399 |       .filter(
+1400 |         (entry) =>
+1401 |           String(entry?.targetYmd || "").trim() ===
+1402 |           historyAnchorYmd
+1403 |       )
+1404 |       .map((entry) => {
+1405 |         const snapshot = Array.isArray(entry?.snapshot)
+1406 |           ? entry.snapshot.slice(0, 3)
+1407 |           : [];
+1408 | 
+1409 |         const resultGrupo = Number(entry?.resultGrupo);
+1410 |         const hasResult =
+1411 |           Number.isFinite(resultGrupo) &&
+1412 |           resultGrupo >= 1 &&
+1413 |           resultGrupo <= 25;
+1414 | 
+1415 |         return {
+1416 |           targetKey: String(
+1417 |             entry?.id || entry?.targetKey || ""
+1418 |           ),
+1419 |           target: {
+1420 |             ymd: String(entry?.targetYmd || ""),
+1421 |             hour: String(entry?.targetHour || ""),
+1422 |           },
+1423 |           picks: Array.isArray(entry?.picks)
+1424 |             ? entry.picks
+1425 |             : snapshot
+1426 |                 .map((item) => Number(item?.grupo))
+1427 |                 .filter(Number.isFinite),
+1428 |           top3: snapshot,
+1429 |           result: hasResult ? resultGrupo : null,
+1430 |           grupo: hasResult ? resultGrupo : null,
+1431 |           animal: hasResult
+1432 |             ? String(
+1433 |                 entry?.resultAnimal ||
+1434 |                   getAnimalLabel(resultGrupo) ||
+1435 |                   ""
+1436 |               )
+1437 |             : "",
+1438 |           resultMilhar: String(
+1439 |             entry?.resultMilhar || ""
+1440 |           ),
+1441 |           hit:
+1442 |             Number(entry?.hitScore || 0) > 0,
+1443 |           hitType: String(entry?.hitType || ""),
+1444 |           hitScore: Number(entry?.hitScore || 0),
+1445 |           hitPosition: Number(
+1446 |             entry?.hitPosition ?? -1
+1447 |           ),
+1448 |           analysis: {
+1449 |             type: String(entry?.hitType || ""),
+1450 |             score: Number(entry?.hitScore || 0),
+1451 |             position: Number(
+1452 |               entry?.hitPosition ?? -1
+1453 |             ),
+1454 |             matchedValue: String(
+1455 |               entry?.matchedValue || ""
+1456 |             ),
+1457 |           },
+1458 |         };
+1459 |       });
+1460 | 
+1461 |     const timelineRows = (
+1462 |       Array.isArray(timeline) ? timeline : []
+1463 |     )
+1464 |       .filter(
+1465 |         (slot) =>
+1466 |           String(slot?.targetYmd || "").trim() ===
+1467 |           historyAnchorYmd
+1468 |       )
+1469 |       .map((slot) => {
+1470 |         const slotTop3 = Array.isArray(slot?.top3)
+1471 |           ? slot.top3.slice(0, 3)
+1472 |           : [];
+1473 | 
+1474 |         const resultGrupo = getSlotResultGrupo(slot);
+1475 | 
+1476 |         const hasResult =
+1477 |           Number.isFinite(resultGrupo) &&
+1478 |           resultGrupo >= 1 &&
+1479 |           resultGrupo <= 25;
+1480 | 
+1481 |         const resultMilhar =
+1482 |           extractResultMilhar(slot);
+1483 | 
+1484 |         const analysis = analyzeTop3Hit(
+1485 |           slotTop3,
+1486 |           resultGrupo,
+1487 |           resultMilhar
+1488 |         );
+1489 | 
+1490 |         return {
+1491 |           targetKey:
+1492 |             `${String(slot?.targetYmd || "")}` +
+1493 |             `__${String(slot?.targetHour || "")}`,
+1494 |           target: {
+1495 |             ymd: String(slot?.targetYmd || ""),
+1496 |             hour: String(slot?.targetHour || ""),
+1497 |           },
+1498 |           picks: slotTop3
+1499 |             .map((item) => Number(item?.grupo))
+1500 |             .filter(Number.isFinite),
+1501 |           top3: slotTop3,
+1502 |           result: hasResult
+1503 |             ? Number(resultGrupo)
+1504 |             : null,
+1505 |           grupo: hasResult
+1506 |             ? Number(resultGrupo)
+1507 |             : null,
+1508 |           animal: hasResult
+1509 |             ? getAnimalLabel(resultGrupo)
+1510 |             : "",
+1511 |           resultMilhar,
+1512 |           analysis,
+1513 |           hit:
+1514 |             analysis.type !== "miss" &&
+1515 |             analysis.type !== "none",
+1516 |           hitType: analysis.type,
+1517 |           hitScore: Number(analysis.score || 0),
+1518 |           hitPosition: Number(
+1519 |             analysis.position ?? -1
+1520 |           ),
+1521 |         };
+1522 |       });
+1523 | 
+1524 |     // A timeline garante todos os horarios oficiais.
+1525 |     // O registro persistido prevalece quando realmente existe.
+1526 |     const rowsByTarget = new Map();
+
+CONTEXTO A PARTIR DA LINHA: 1540
+----------------------------------------------------------------------------------------------------
+1540 | 
+1541 |       const timelineRow = rowsByTarget.get(key);
+1542 | 
+1543 |       if (!timelineRow || timelineRow?.result == null) {
+1544 |         rowsByTarget.set(key, row);
+1545 |         continue;
+1546 |       }
+1547 | 
+1548 |       const resultGrupo = Number(timelineRow.result);
+1549 |       const resultMilhar = String(
+1550 |         timelineRow?.resultMilhar || ""
+1551 |       );
+1552 | 
+1553 |       const analysis = analyzeTop3Hit(
+1554 |         row?.top3,
+1555 |         resultGrupo,
+1556 |         resultMilhar
+1557 |       );
+1558 | 
+1559 |       rowsByTarget.set(key, {
+1560 |         ...row,
+1561 |         result: resultGrupo,
+1562 |         grupo: resultGrupo,
+1563 |         animal:
+1564 |           timelineRow?.animal ||
+1565 |           getAnimalLabel(resultGrupo) ||
+1566 |           "",
+1567 |         resultMilhar,
+1568 |         analysis,
+1569 |         hit:
+1570 |           analysis.type !== "miss" &&
+1571 |           analysis.type !== "none",
+1572 |         hitType: analysis.type,
+1573 |         hitScore: Number(analysis.score || 0),
+1574 |         hitPosition: Number(
+1575 |           analysis.position ?? -1
+1576 |         ),
+1577 |       });
+1578 |     }
+1579 | 
+1580 |     return Array.from(rowsByTarget.values())
+1581 |       .sort((a, b) => {
+1582 |         const ah = hourBucketToSortValue(
+
+CONTEXTO A PARTIR DA LINHA: 1589
+----------------------------------------------------------------------------------------------------
+1589 |         return ah - bh;
+1590 |       });
+1591 |   }, [
+1592 |     timeline,
+1593 |     historyAnchorYmd,
+1594 |     persistedTop3History,
+1595 |   ]);
+1596 | 
+1597 |   const historySummary = useMemo(() => {
+1598 |     const validated = historyRows.filter(
+1599 |       (item) => item?.result != null
+1600 |     );
+1601 | 
+1602 |     const exact = validated.filter(
+1603 |       (item) => item?.hitType === "hit_exact"
+1604 |     ).length;
+1605 | 
+1606 |     const centena = validated.filter(
+1607 |       (item) => item?.hitType === "hit_centena"
+1608 |     ).length;
+1609 | 
+1610 |     const grupo = validated.filter(
+1611 |       (item) => item?.hitType === "hit_grupo"
+1612 |     ).length;
+1613 | 
+1614 |     const misses = validated.filter(
+1615 |       (item) =>
+1616 |         item?.hitType === "miss" ||
+1617 |         item?.hitType === "none"
+1618 |     ).length;
+1619 | 
+1620 |     const totalScore = validated.reduce(
+1621 |       (sum, item) => sum + Number(item?.hitScore || 0),
+1622 |       0
+1623 |     );
+1624 | 
+1625 |     const average =
+1626 |       validated.length > 0
+1627 |         ? totalScore / validated.length
+1628 |         : 0;
+1629 | 
+1630 |     return {
+1631 |       total: historyRows.length,
+1632 |       validated: validated.length,
+1633 |       pending: Math.max(0, historyRows.length - validated.length),
+1634 |       exact,
+1635 |       centena,
+1636 |       grupo,
+1637 |       misses,
+1638 |       average,
+1639 |     };
+1640 |   }, [historyRows]);
+1641 | 
+1642 |   const todayForCalendar = todayYMDLocalView();
+1643 |   const selectedHistoryYmd = isYMD(ymdSafe)
+1644 |     ? ymdSafe
+1645 |     : todayForCalendar;
+1646 | 
+1647 |   const canGoNext =
+1648 |     isYMD(selectedHistoryYmd) &&
+
+CONTEXTO A PARTIR DA LINHA: 1949
+----------------------------------------------------------------------------------------------------
+1949 |         .timeline-compact__resultGroup{
+1950 |           font-size: 20px;
+1951 |           font-weight: 1000;
+1952 |           line-height: 1;
+1953 |           color: var(--top3-accent);
+1954 |           text-shadow: 0 0 8px rgba(201,168,62,0.35);
+1955 |         }
+1956 | 
+1957 |         .timeline-compact__resultAnimal{
+1958 |           font-size: 12px;
+1959 |           color: var(--top3-muted);
+1960 |           text-transform: uppercase;
+1961 |           letter-spacing: 0.5px;
+1962 |         }
+1963 | 
+1964 |         .timeline-compact__resultPending{
+1965 |           font-size: 14px;
+
+CONTEXTO A PARTIR DA LINHA: 2077
+----------------------------------------------------------------------------------------------------
+2077 |         }
+2078 | 
+2079 |         .timeline-slot__resultGroup{
+2080 |           font-weight: 1000;
+2081 |           font-size: 18px;
+2082 |           line-height: 1;
+2083 |         }
+2084 | 
+2085 |         .timeline-slot__resultAnimal{
+2086 |           font-size: 12px;
+2087 |           color: var(--top3-muted);
+2088 |           text-transform: uppercase;
+2089 |           letter-spacing: 0.6px;
+2090 |         }
+2091 | 
+2092 |         .timeline-slot__insightBox{
+2093 |           margin-top: 12px;
+
+CONTEXTO A PARTIR DA LINHA: 2425
+----------------------------------------------------------------------------------------------------
+2425 |           background: rgba(0,0,0,0.38);
+2426 |           color: var(--top3-text);
+2427 |           padding: 9px 12px;
+2428 |           font-size: 14px;
+2429 |           font-weight: 900;
+2430 |           color-scheme: dark;
+2431 |         }
+2432 | 
+2433 |         .top3-historySummary{
+2434 |           display: grid;
+2435 |           grid-template-columns: repeat(6, minmax(0, 1fr));
+2436 |           gap: 10px;
+2437 |           margin-top: 14px;
+2438 |         }
+2439 | 
+2440 |         .top3-historyMetric{
+2441 |           border-radius: 14px;
+
+CONTEXTO A PARTIR DA LINHA: 2484
+----------------------------------------------------------------------------------------------------
+2484 |           gap:2px;
+2485 |           min-width:0;
+2486 |         }
+2487 | 
+2488 |         .top3-historyResultGroup{
+2489 |           font-weight:900;
+2490 |         }
+2491 | 
+2492 |         .top3-historyResultAnimal{
+2493 |           font-size:10px;
+2494 |           color: var(--top3-muted);
+2495 |           text-transform: uppercase;
+2496 |           white-space: nowrap;
+2497 |           overflow: hidden;
+2498 |           text-overflow: ellipsis;
+2499 |           letter-spacing: 0.5px;
+2500 |         }
+
+CONTEXTO A PARTIR DA LINHA: 2576
+----------------------------------------------------------------------------------------------------
+2576 |           .top3-historyToolbar{
+2577 |             grid-template-columns: 1fr 1fr;
+2578 |           }
+2579 | 
+2580 |           .top3-historyDate{
+2581 |             grid-column: 1 / -1;
+2582 |           }
+2583 | 
+2584 |           .top3-historySummary{
+2585 |             grid-template-columns: repeat(3, minmax(0, 1fr));
+2586 |           }
+2587 | 
+2588 |           .top3-historyRow{
+2589 |             grid-template-columns: 1fr;
+2590 |             align-items:start;
+2591 |           }
+
+CONTEXTO A PARTIR DA LINHA: 2689
+----------------------------------------------------------------------------------------------------
+2689 |           .timeline-slot__metaGrid{
+2690 |             grid-template-columns: 1fr;
+2691 |           }
+2692 | 
+2693 |           .top3-historyToolbar{
+2694 |             grid-template-columns: 1fr 1fr;
+2695 |           }
+2696 | 
+2697 |           .top3-historySummary{
+2698 |             grid-template-columns: repeat(2, minmax(0, 1fr));
+2699 |           }
+2700 |         }
+2701 | 
+2702 |         @media (max-width: 420px){
+2703 |           .top3-shell{
+2704 |             padding: 10px;
+2705 |           }
+
+CONTEXTO A PARTIR DA LINHA: 3097
+----------------------------------------------------------------------------------------------------
+3097 |           </section>
+3098 |         ) : null}
+3099 | 
+3100 |         <section className="top3-shell">
+3101 |           <div className="top3-header__title">
+3102 |             Histórico recente {historyAnchorYmd ? `— ${ymdToBR(historyAnchorYmd)}` : ""}
+3103 |           </div>
+3104 | 
+3105 |           <div className="top3-historySummary">
+3106 |             <div className="top3-historyMetric">
+3107 |               <div className="top3-historyMetric__label">Horários</div>
+3108 |               <div className="top3-historyMetric__value">
+3109 |                 {historySummary.total}
+3110 |               </div>
+3111 |             </div>
+3112 | 
+3113 |             <div className="top3-historyMetric">
+3114 |               <div className="top3-historyMetric__label">Validados</div>
+3115 |               <div className="top3-historyMetric__value">
+3116 |                 {historySummary.validated}
+3117 |               </div>
+3118 |             </div>
+3119 | 
+3120 |             <div className="top3-historyMetric">
+3121 |               <div className="top3-historyMetric__label">Grupo/dezena</div>
+3122 |               <div className="top3-historyMetric__value">
+3123 |                 {historySummary.grupo}
+3124 |               </div>
+3125 |             </div>
+3126 | 
+3127 |             <div className="top3-historyMetric">
+3128 |               <div className="top3-historyMetric__label">Centena</div>
+3129 |               <div className="top3-historyMetric__value">
+3130 |                 {historySummary.centena}
+3131 |               </div>
+3132 |             </div>
+3133 | 
+3134 |             <div className="top3-historyMetric">
+3135 |               <div className="top3-historyMetric__label">Milhar</div>
+3136 |               <div className="top3-historyMetric__value">
+3137 |                 {historySummary.exact}
+3138 |               </div>
+3139 |             </div>
+3140 | 
+3141 |             <div className="top3-historyMetric">
+3142 |               <div className="top3-historyMetric__label">Índice médio</div>
+3143 |               <div className="top3-historyMetric__value">
+3144 |                 {historySummary.average.toFixed(2)}%
+3145 |               </div>
+3146 |             </div>
+3147 |           </div>
+3148 | 
+3149 |           <div style={{ display: "grid", gap: 10, marginTop: 12 }}>
+3150 |             {!historyRows.length ? (
+3151 |               <div className="top3-empty">Sem histórico para a data analisada.</div>
+3152 |             ) : (
+3153 |               historyRows.map((item) => {
+3154 |                 const y = String(item?.target?.ymd || "");
+3155 |                 const h = String(item?.target?.hour || "");
+3156 | 
+3157 |                 const picks = Array.isArray(item?.picks) && item.picks.length
+3158 |   ? item.picks.map((g) => formatGrupo(g)).join(" - ")
+3159 |   : Array.isArray(item?.top3)
+3160 |     ? item.top3.map((t) => formatGrupo(t?.grupo)).join(" - ")
+3161 |     : "--- - --- - ---";
+3162 | 
+3163 |                 const resultGrupo = Number(
+3164 |                   item?.result ?? item?.grupo ?? item?.prizes?.[0]?.grupo
+3165 |                 );
+3166 |                 const hasResult =
+3167 |                   Number.isFinite(resultGrupo) && resultGrupo >= 1 && resultGrupo <= 25;
+3168 | 
+3169 |                 const resultAnimal = hasResult
+3170 |                   ? (item?.animal || getAnimalLabel(resultGrupo))
+3171 |                   : "";
+3172 |                 const resultImg = hasResult
+3173 |                   ? getImgFromGrupo(resultGrupo, 64)
+3174 |                   : "";
+3175 | 
+3176 |                 const hitType = String(item?.hitType || item?.analysis?.type || "").trim();
+3177 |                 const matchedValue = String(item?.analysis?.matchedValue || "").trim();
+3178 | 
+3179 |                 const hitMark = !hasResult
+3180 |                   ? "⏳"
+3181 |                   : hitType === "hit_exact"
+3182 |                     ? `🏆 100% · Milhar ${matchedValue || "—"}`
+3183 |                     : hitType === "hit_centena"
+3184 |                       ? `✅✅ 66,67% · Centena ${matchedValue || "—"}`
+3185 |                       : hitType === "hit_grupo"
+3186 |                         ? `✅ 33,33% · Dezena ${matchedValue || "—"}`
+3187 |                         : "❌ 0%";
+3188 | 
+3189 |                 return (
+3190 |                   <div
+3191 |                     key={String(item?.targetKey || `${y}_${h}`)}
+3192 |                     className="top3-historyRow"
+3193 |                   >
+3194 |                     <div style={{ fontWeight: 800 }}>
+
+CONTEXTO A PARTIR DA LINHA: 3199
+----------------------------------------------------------------------------------------------------
+3199 |                       {picks}
+3200 |                     </div>
+3201 | 
+3202 |                     <div className="top3-historyResult">
+3203 |                       {hasResult ? (
+3204 |                         <>
+3205 |                           <ImgWithFallback
+3206 |                             srcs={[resultImg]}
+3207 |                             alt={resultAnimal}
+3208 |                             size={36}
+3209 |                             style={{ borderRadius: 8 }}
+3210 |                           />
+3211 |                           <div className="top3-historyResultText">
+3212 |                             <div className="top3-historyResultGroup">
+3213 |                               G{formatGrupo(resultGrupo)}
+3214 |                             </div>
+3215 |                             <div className="top3-historyResultAnimal">
+3216 |                               {String(resultAnimal || "").toUpperCase()}
+3217 |                             </div>
+3218 |                           </div>
+3219 |                         </>
+3220 |                       ) : (
+3221 |                         <>
+3222 |                           <ImgWithFallback
+3223 |                             srcs={[]}
+3224 |                             alt="pendente"
+3225 |                             size={36}
+3226 |                             style={{ borderRadius: 8 }}
+3227 |                           />
+3228 |                           <div className="top3-historyResultText">
+3229 |                             <div className="top3-historyResultGroup">G—</div>
+3230 |                             <div className="top3-historyResultAnimal">PENDENTE</div>
+3231 |                           </div>
+3232 |                         </>
+3233 |                       )}
+3234 |                     </div>
+3235 | 
+3236 |                     <div style={{ textAlign: "center", fontSize: 16 }}>
+3237 |                       {hitMark}
+3238 |                     </div>
+3239 |                   </div>
+3240 |                 );
+3241 |               })
+3242 |             )}
+3243 |           </div>
+3244 |         </section>
+3245 |       </div>
+
+====================================================================================================
+ARQUIVO: src\pages\Top3\top3.engine.js
+====================================================================================================
+
+FUNÇÕES RELEVANTES COMPLETAS
+----------------------------------------------------------------------------------------------------
+
+FUNÇÃO: pickPrize1GrupoFromDraw | LINHA INICIAL: 154
+----------------------------------------------------------------------------------------------------
+154 | export function pickPrize1GrupoFromDraw(draw) {
+155 |   const prizes = Array.isArray(draw?.prizes) ? draw.prizes : [];
+156 |   if (prizes.length) {
+157 |     const p1 = prizes.find((p) => guessPrizePos(p) === 1) || null;
+158 |     if (p1) {
+159 |       const g = guessPrizeGrupo(p1);
+160 |       return Number.isFinite(Number(g)) ? Number(g) : null;
+161 |     }
+162 |   }
+163 | 
+164 |   const candidates = [
+165 |     draw?.grupo1,
+166 |     draw?.group1,
+167 |     draw?.primeiro_grupo,
+168 |     draw?.first_grupo,
+169 |     draw?.prize1_grupo,
+170 |     draw?.prize1Grupo,
+171 |     draw?.p1_grupo2,
+172 |     draw?.p1Grupo2,
+173 |     draw?.g1,
+174 |     draw?.grupo_1,
+175 |     draw?.grupoPrimeiro,
+176 |   ];
+177 | 
+178 |   for (const v of candidates) {
+179 |     if (Number.isFinite(Number(v))) return Number(v);
+180 |   }
+181 | 
+182 |   return null;
+183 | }
+
+FUNÇÃO: top | LINHA INICIAL: 1483
+----------------------------------------------------------------------------------------------------
+1483 | const top = ranked.map((x, idx) => {
+1484 |     const g2 = String(x.grupo).padStart(2, "0");
+1485 |     const pct = (x.scoreProb * 100).toFixed(2);
+1486 |     const pctCond = (x.probCond * 100).toFixed(2);
+1487 |     const pctBase = (x.probBase * 100).toFixed(2);
+1488 | 
+1489 |     return {
+1490 |       rank: idx + 1,
+1491 |       title:
+1492 |         idx === 0
+1493 |           ? "Mais provável"
+1494 |           : idx === 1
+1495 |             ? "2º mais provável"
+1496 |             : "3º mais provável",
+1497 |       grupo: x.grupo,
+1498 |       scoreProb: Number(x.scoreProb || 0),
+1499 |       probCond: Number(x.probCond || 0),
+1500 |       probBase: Number(x.probBase || 0),
+1501 |       lateBonus: Number(x.lateBonus || 0),
+1502 |       freq: x.aparicoes,
+1503 |       freqCond: x.aparicoes,
+1504 |       freqBase: 0,
+1505 |       freqZeroWhy:
+1506 |         x.aparicoes <= 0
+1507 |           ? `Sem ocorrência nesta camada (${chosen?.label || "—"}).`
+1508 |           : "",
+1509 |       reasons: [
+1510 |         ...reasonsBase,
+1511 |         `Grupo G${g2}: aparições=${x.aparicoes} em ${samples} amostras do próximo sorteio`,
+1512 |         `Grupo G${g2}: primeiros lugares=${x.primeiros}`,
+1513 |         `Probabilidade final estimada no TOP3: ${pct}%`,
+1514 |         `Composição da probabilidade: condicional=${pctCond}% | estrutural=${pctBase}%`,
+1515 |         `Presença indireta recente (2º-4º): ${x.recentIndirect}`,
+1516 |         `Persistência curta recente: ${x.recentPrizePresence}`,
+1517 |         `Bônus de atraso ajustado: ${(Number(x.smartLateBoost || 0) * 100).toFixed(2)}%`,
+1518 |       ],
+1519 |       meta: {
+1520 |         trigger: {
+1521 |           ymd: lastY,
+1522 |           hour: lastH,
+1523 |           grupo: Number(prevGrupo),
+1524 |         },
+1525 |         next: {
+1526 |           ymd: safeStr(targetY),
+1527 |           hour: safeStr(targetH),
+1528 |         },
+1529 |         samples,
+1530 |         scenario: chosen?.key || "NONE",
+1531 |         explain: {
+1532 |           layerKey: chosen?.key || "NONE",
+1533 |           layerLabel: chosen?.label || "—",
+1534 |           layerSamples: samples,
+1535 |           baseSamples: Number(structural?.totalSamples || 0),
+1536 |           condWeight,
+1537 |           baseWeight,
+1538 |           targetDow,
+1539 |           targetDayOfMonth,
+1540 |           prevHour: lastH,
+1541 |           prevGrupo: Number(prevGrupo),
+1542 |           recentPrizePresence: x.recentPrizePresence,
+1543 |           recentIndirect: x.recentIndirect,
+1544 |           recentFirst: x.recentFirst,
+1545 |           recentLast1First: x.recentLast1First,
+1546 |           recentLast2PrizePresence: x.recentLast2PrizePresence,
+1547 |           allLayers: (layerOut?.layers || []).map((layer) => ({
+1548 |             key: layer.key,
+1549 |             label: layer.label,
+1550 |             samples: layer.samples,
+1551 |             minSamples: layer.minSamples,
+1552 |           })),
+1553 |         },
+1554 |       },
+1555 |     };
+1556 |   }
+
+FUNÇÃO: top | LINHA INICIAL: 2784
+----------------------------------------------------------------------------------------------------
+2784 | const top = ranked.map((x, idx) => {
+2785 |     const g2 = String(x.grupo).padStart(2, "0");
+2786 | 
+2787 |     return {
+2788 |       rank: idx + 1,
+2789 |       title:
+2790 |         idx === 0
+2791 |           ? "Mais provável"
+2792 |           : idx === 1
+2793 |             ? "2º mais provável"
+2794 |             : "3º mais provável",
+2795 |       grupo: x.grupo,
+2796 |       scoreProb: Number(x.scoreProb || 0),
+2797 |       probCond: Number(x.probTransition || 0),
+2798 |       probBase: Number(x.probStructuralFirst || 0),
+2799 |       lateBonus: Number(x.lateNorm || 0),
+2800 |       freq: x.condFirstCount,
+2801 |       freqCond: x.condFirstCount,
+2802 |       freqBase: x.structuralFirstCount,
+2803 |       freqZeroWhy:
+2804 |         x.condFirstCount <= 0
+2805 |           ? `Sem 1º lugar nesta camada (${chosen?.label || "—"}).`
+2806 |           : "",
+2807 |       reasons: [
+2808 |         ...reasonsBase,
+2809 |         `Grupo G${g2}: transição para 1º=${(x.probTransition * 100).toFixed(2)}%`,
+2810 |         `Grupo G${g2}: estrutural de 1º=${(x.probStructuralFirst * 100).toFixed(2)}%`,
+2811 |         `Grupo G${g2}: estrutural de TOP3=${(x.probStructuralPrizePresence * 100).toFixed(2)}%`,
+2812 |         `Grupo G${g2}: duplicação histórica=${(x.probDuplication * 100).toFixed(2)}%`,
+2813 |         `Grupo G${g2}: sequência ordem 2=${(x.probSeq2 * 100).toFixed(2)}%`,
+2814 |         `Grupo G${g2}: par do dia=${(x.probPair * 100).toFixed(2)}% | confiança=${(x.pairConfidence * 100).toFixed(2)}%`,
+2815 |         `Grupo G${g2}: boost de repetição=${(x.repeatBoost * 100).toFixed(2)}%`,
+2816 |         `Grupo G${g2}: memória curta=${(x.probMemory * 100).toFixed(2)}%`,
+2817 |         `Grupo G${g2}: recência composta=${(x.recentComposite * 100).toFixed(2)}%`,
+2818 |         `Grupo G${g2}: atraso normalizado=${(x.lateNorm * 100).toFixed(2)}%`,
+2819 |         `Grupo G${g2}: 1ºs na camada=${x.condFirstCount}`,
+2820 |         `Grupo G${g2}: 1ºs estruturais=${x.structuralFirstCount}`,
+2821 |         `Grupo G${g2}: TOP3 estruturais=${x.structuralPrizePresenceCount}`,
+2822 |         `Grupo G${g2}: draws com duplicação=${x.duplicationCount}`,
+2823 |         `Grupo G${g2}: peso de memória=${Number(x.memoryWeight || 0).toFixed(2)}`,
+2824 |         `Grupo G${g2}: frequência no dia=${x.dayFreq}`,
+2825 |         `Grupo G${g2}: 1ºs no dia=${x.dayFirstFreq}`,
+2826 |         `Grupo G${g2}: dominante no dia=${x.isDominantToday ? "sim" : "não"}`,
+2827 |         `Grupo G${g2}: score do fluxo do dia=${Number(x.dayFlowScore || 0).toFixed(2)} | confiança=${(Number(x.dayFlowConfidence || 0) * 100).toFixed(0)}%`,
+2828 |         `Grupo G${g2}: sequência ${Array.isArray(prevPair) && prevPair.length === 2 ? prevPair.map((n) => String(n).padStart(2, "0")).join("→") : "--"} | amostras=${x.pairSamples} | amostras ponderadas=${Number(x.pairWeightedSamples || 0).toFixed(2)} | DOM exato=${x.pairExactDomSamples} | ocorrências=${Number(x.pairCount || 0).toFixed(2)} | prob=${(Number(x.pairProb || 0) * 100).toFixed(2)}% | score=${Number(x.pairSequenceScore || 0).toFixed(2)}`,
+2829 |         `Probabilidade final BICHO=${(x.scoreProb * 100).toFixed(2)}%`,
+2830 |       ],
+2831 |       meta: {
+2832 |         trigger: {
+2833 |           ymd: lastY,
+2834 |           hour: lastH,
+2835 |           grupo: Number(prevGrupo),
+2836 |         },
+2837 |         next: {
+2838 |           ymd: safeStr(targetY),
+2839 |           hour: safeStr(targetH),
+2840 |         },
+2841 |         samples: condSamples,
+2842 |         scenario: `V2_BICHO_${safeStr(regime).toUpperCase()}`,
+2843 |         explain: {
+2844 |           engine: "V2_BICHO",
+2845 |           mode,
+2846 |           regime,
+2847 |           repeatRate: Number(regimeInfo?.repeatRate || 0),
+2848 |           uniqueRate: Number(regimeInfo?.uniqueRate || 0),
+2849 |           weights: adjustedWeights,
+2850 |           layerKey: chosen?.key || "NONE",
+2851 |           layerLabel: chosen?.label || "—",
+2852 |           layerSamples: condSamples,
+2853 |           structuralFirstSamples: Number(structuralFirst?.totalSamples || 0),
+2854 |           structuralPrizePresenceSamples: Number(structuralPrizePresence?.totalSamples || 0),
+2855 |           duplicationSamples: Number(duplication?.totalSamples || 0),
+2856 |           memoryMatchedSamples: Number(memoryOut?.matchedSamples || 0),
+2857 |           memoryTotalWeight: Number(memoryOut?.totalWeight || 0),
+2858 |           seq2Samples: Number(seq2Out?.samples || 0),
+2859 |           seq2Prev2: Number(seq2Out?.prev2 || 0),
+2860 |           seq2Prev1: Number(seq2Out?.prev1 || 0),
+2861 |           pairSamples: Number(pairOut?.samples || 0),
+2862 |           pairWeightedSamples: Number(pairOut?.weightedSamples || 0),
+2863 |           pairExactDomSamples: Number(pairOut?.exactDomSamples || 0),
+2864 |           pairConfidence,
+2865 |           repeatWindowSize: Number(repeatBoostOut?.windowSize || 0),
+2866 |           repeatWindowConsidered: Number(repeatBoostOut?.considered || 0),
+2867 |           currentState,
+2868 |           targetDow,
+2869 |           targetDayOfMonth,
+2870 |           prevHour: lastH,
+2871 |           prevGrupo: Number(prevGrupo),
+2872 |           dayContextTotal: Number(dayContext?.total || 0),
+2873 |           dayFlowConfidence,
+2874 |           dominanceScore: x.dominanceScore,
+2875 |           recentComposite: x.recentComposite,
+2876 |           recentPrizePresence: x.recentPrizePresence,
+2877 |           recentFirst: x.recentFirst,
+2878 |           recentDupDraws: x.recentDupDraws,
+2879 |           allLayers: (layerOut?.layers || []).map((layer) => ({
+2880 |             key: layer.key,
+2881 |             label: layer.label,
+2882 |             samples: layer.samples,
+2883 |             minSamples: layer.minSamples,
+2884 |           })),
+2885 |         },
+2886 |       },
+2887 |     };
+2888 |   }
+
+FUNÇÃO: history | LINHA INICIAL: 3052
+----------------------------------------------------------------------------------------------------
+3052 | const history = list.filter((d) => {
+3053 |     const y = pickDrawYMD(d);
+3054 |     const h = toHourBucket(pickDrawHour(d));
+3055 |     const ts = ymdHourToTs(y, h);
+3056 |     return isYMD(y) && h && Number.isFinite(ts) && ts < targetTs;
+3057 |   }
+
+FUNÇÃO: top | LINHA INICIAL: 3247
+----------------------------------------------------------------------------------------------------
+3247 | const top = rankedScored.map((x, idx) => {
+3248 |     const g2 = String(x.grupo).padStart(2, "0");
+3249 |     const rawScoreProb = Number(x.scoreProb || 0);
+3250 | 
+3251 |     const strongest = Object.values(x.details)
+3252 |       .filter((d) => Number(d.probability || 0) > 0)
+3253 |       .sort((a, b) => (b.probability * b.weight) - (a.probability * a.weight))
+3254 |       .slice(0, 3);
+3255 | 
+3256 |     return {
+3257 |       rank: idx + 1,
+3258 |       title:
+3259 |         idx === 0
+3260 |           ? "Mais provável"
+3261 |           : idx === 1
+3262 |             ? "2º mais provável"
+3263 |             : "3º mais provável",
+3264 |       grupo: x.grupo,
+3265 |       scoreProb: Number(rawScoreProb || 0),
+3266 |       rawScoreProb: Number(rawScoreProb || 0),
+3267 |       probCond: Number(x.details.transition?.probability || 0),
+3268 |       probBase: Number(x.details.hour?.probability || 0),
+3269 |       lateBonus: 0,
+3270 |       freq: Number(x.details.hour?.firstCount || 0),
+3271 |       freqCond: Number(x.details.transition?.firstCount || 0),
+3272 |       freqBase: Number(x.details.hour?.firstCount || 0),
+3273 |       freqZeroWhy: "",
+3274 |       reasons: [
+3275 |         `Motor: V3_STATISTICAL`,
+3276 |         `Alvo: ${targetY} ${targetH} | DOW=${targetDow} | dia=${String(targetDayOfMonth).padStart(2, "0")}`,
+3277 |         `Base: G${String(prevGrupo).padStart(2, "0")} @ ${lastH}`,
+3278 |         `Probabilidade final G${g2}: ${(Number(rawScoreProb || 0) * 100).toFixed(2)}%`,
+3279 |         ...strongest.map((d) =>
+3280 |           `${d.label}: ${d.firstCount}x em 1º | ${d.top3Count}x no TOP3 | amostras=${d.samples} | peso=${(d.weight * 100).toFixed(0)}%`
+3281 |         ),
+3282 |       ],
+3283 |       meta: {
+3284 |         trigger: {
+3285 |           ymd: lastY,
+3286 |           hour: lastH,
+3287 |           grupo: Number(prevGrupo),
+3288 |         },
+3289 |         next: {
+3290 |           ymd: safeStr(targetY),
+3291 |           hour: safeStr(targetH),
+3292 |         },
+3293 |         samples: history.length,
+3294 |         period: {
+3295 |           from: pickDrawYMD(history[0]) || "",
+3296 |           to: pickDrawYMD(history[history.length - 1]) || "",
+3297 |         },
+3298 |         scenario: "V3_STATISTICAL",
+3299 |         explain: {
+3300 |           engine: "V3_STATISTICAL",
+3301 |           targetDow,
+3302 |           targetDayOfMonth,
+3303 |           prevHour: lastH,
+3304 |           prevGrupo: Number(prevGrupo),
+3305 |           activeWeights,
+3306 |           scene: {
+3307 |             samples: Number(sceneHypothesis?.samples || 0),
+3308 |             totalWeight: Number(sceneHypothesis?.totalWeight || 0),
+3309 |             weight: Number(sceneWeight || 0),
+3310 |             currentSignature: currentScene?.signature || "",
+3311 |           },
+3312 |           layers: Object.fromEntries(
+3313 |             Object.entries(layers).map(([k, v]) => [
+3314 |               k,
+3315 |               {
+3316 |                 label: v.label,
+3317 |                 samples: v.samples,
+3318 |                 weight: activeWeights[k],
+3319 |               },
+3320 |             ])
+3321 |           ),
+3322 |           details: x.details,
+3323 |         },
+3324 |       },
+3325 |     };
+3326 |   }
+
+CONTEXTOS RELEVANTES
+----------------------------------------------------------------------------------------------------
+
+CONTEXTO A PARTIR DA LINHA: 146
+----------------------------------------------------------------------------------------------------
+146 |     normalizeToYMD(draw?.drawDate) ||
+147 |     normalizeToYMD(draw?.close_date) ||
+148 |     normalizeToYMD(draw?.closeDate) ||
+149 |     null;
+150 | 
+151 |   return y;
+152 | }
+153 | 
+154 | export function pickPrize1GrupoFromDraw(draw) {
+155 |   const prizes = Array.isArray(draw?.prizes) ? draw.prizes : [];
+156 |   if (prizes.length) {
+157 |     const p1 = prizes.find((p) => guessPrizePos(p) === 1) || null;
+158 |     if (p1) {
+159 |       const g = guessPrizeGrupo(p1);
+160 |       return Number.isFinite(Number(g)) ? Number(g) : null;
+161 |     }
+162 |   }
+
+CONTEXTO A PARTIR DA LINHA: 751
+----------------------------------------------------------------------------------------------------
+751 | 
+752 | function getFirstGrupoFromDraw(draw) {
+753 |   const ps = Array.isArray(draw?.prizes) ? draw.prizes : [];
+754 |   const p1 = ps.find((p) => guessPrizePos(p) === 1) || null;
+755 |   if (p1) {
+756 |     const g = guessPrizeGrupo(p1);
+757 |     return Number.isFinite(Number(g)) ? Number(g) : null;
+758 |   }
+759 |   return pickPrize1GrupoFromDraw(draw);
+760 | }
+761 | 
+762 | function getPrizeGroupsByPosition(draw, maxPosition = 3) {
+763 |   const limit = Math.max(1, Number(maxPosition || 3));
+764 |   const prizes = Array.isArray(draw?.prizes) ? draw.prizes : [];
+765 | 
+766 |   return Array.from({ length: limit }, (_, index) => {
+767 |     const position = index + 1;
+
+CONTEXTO A PARTIR DA LINHA: 3567
+----------------------------------------------------------------------------------------------------
+3567 | 
+3568 |   const freq = new Map();
+3569 |   for (let g = 1; g <= k; g += 1) freq.set(g, 0);
+3570 | 
+3571 |   let totalWeight = 0;
+3572 | 
+3573 |   for (const item of ranking) {
+3574 |     const score = Math.max(0, Number(item?.score || 0));
+3575 |     const nextGrupo = Number(item?.nextDraw ? pickPrize1GrupoFromDraw(item.nextDraw) : null);
+3576 | 
+3577 |     if (!Number.isFinite(nextGrupo) || nextGrupo < 1 || nextGrupo > k) continue;
+3578 |     if (score <= 0) continue;
+3579 | 
+3580 |     freq.set(nextGrupo, Number(freq.get(nextGrupo) || 0) + score);
+3581 |     totalWeight += score;
+3582 |   }
+
+CONTEXTO A PARTIR DA LINHA: 4054
+----------------------------------------------------------------------------------------------------
+4054 | }) {
+4055 |   const rows = Array.isArray(timeline) ? timeline : [];
+4056 | 
+4057 |   const validated = rows.filter((slot) => {
+4058 |     const status = String(slot?.status || "").toLowerCase();
+4059 | 
+4060 |     return (
+4061 |       status === "validated" &&
+4062 |       Number.isFinite(Number(slot?.resultGrupo))
+4063 |     );
+4064 |   });
+4065 | 
+4066 |   function pct(n, d) {
+4067 |     if (!d) return 0;
+4068 | 
+4069 |     return Number(
+4070 |       ((Number(n || 0) / Number(d || 1)) * 100).toFixed(2)
+
+CONTEXTO A PARTIR DA LINHA: 4088
+----------------------------------------------------------------------------------------------------
+4088 |           : null;
+4089 |       });
+4090 | 
+4091 |     while (normalized.length < 3) {
+4092 |       normalized.push(null);
+4093 |     }
+4094 | 
+4095 |     if (!Number.isFinite(Number(normalized[0]))) {
+4096 |       const fallback = Number(slot?.resultGrupo);
+4097 | 
+4098 |       normalized[0] =
+4099 |         Number.isFinite(fallback) &&
+4100 |         fallback >= 1 &&
+4101 |         fallback <= TOP3_GROUPS_K
+4102 |           ? fallback
+4103 |           : null;
+4104 |     }
+
+CONTEXTO A PARTIR DA LINHA: 4113
+----------------------------------------------------------------------------------------------------
+4113 |       .filter(
+4114 |         (grupo) =>
+4115 |           Number.isFinite(grupo) &&
+4116 |           grupo >= 1 &&
+4117 |           grupo <= TOP3_GROUPS_K
+4118 |       );
+4119 | 
+4120 |     const resultTop3 = normalizeResultTop3(slot);
+4121 |     const resultGrupo = Number(resultTop3[0]);
+4122 | 
+4123 |     const top1Hit =
+4124 |       picks.length > 0 &&
+4125 |       Number.isFinite(resultGrupo) &&
+4126 |       Number(picks[0]) === resultGrupo;
+4127 | 
+4128 |     const top3Hit =
+4129 |       Number.isFinite(resultGrupo) &&
+4130 |       picks.some(
+4131 |         (grupo) => Number(grupo) === resultGrupo
+4132 |       );
+4133 | 
+4134 |     const prizePositionHits = resultTop3.map(
+4135 |       (grupo) =>
+4136 |         Number.isFinite(Number(grupo)) &&
+4137 |         picks.some(
+4138 |           (pick) => Number(pick) === Number(grupo)
+4139 |         )
+
+CONTEXTO A PARTIR DA LINHA: 4151
+----------------------------------------------------------------------------------------------------
+4151 |       prizePositionHits.filter(Boolean).length;
+4152 | 
+4153 |     const matchedPredictions =
+4154 |       predictionHits.filter(Boolean).length;
+4155 | 
+4156 |     return {
+4157 |       picks,
+4158 |       resultTop3,
+4159 |       resultGrupo,
+4160 | 
+4161 |       top1Hit,
+4162 |       top3Hit,
+4163 | 
+4164 |       prize1Hit: Boolean(prizePositionHits[0]),
+4165 |       prize2Hit: Boolean(prizePositionHits[1]),
+4166 |       prize3Hit: Boolean(prizePositionHits[2]),
+
+CONTEXTO A PARTIR DA LINHA: 4300
+----------------------------------------------------------------------------------------------------
+4300 | 
+4301 |     rows: evaluated.map(({ slot, metrics }) => ({
+4302 |       ymd: slot.targetYmd,
+4303 |       hour: slot.targetHour,
+4304 | 
+4305 |       baseYmd: slot.baseYmd,
+4306 |       baseHour: slot.baseHour,
+4307 | 
+4308 |       resultGrupo: metrics.resultGrupo,
+4309 |       resultTop3: metrics.resultTop3,
+4310 | 
+4311 |       top3: metrics.picks,
+4312 | 
+4313 |       top1Hit: metrics.top1Hit,
+4314 |       top3Hit: metrics.top3Hit,
+4315 | 
+4316 |       prize1Hit: metrics.prize1Hit,
+
+CONTEXTO A PARTIR DA LINHA: 4404
+----------------------------------------------------------------------------------------------------
+4404 | 
+4405 |     if (!currentDraw && pendingPredictionAlreadyShown) {
+4406 |       timeline.push({
+4407 |         targetYmd,
+4408 |         targetHour: slotHour,
+4409 |         baseYmd: "",
+4410 |         baseHour: "",
+4411 |         top3: [],
+4412 |         resultGrupo: null,
+4413 |         hit: null,
+4414 |         status: "pending",
+4415 |       });
+4416 |       continue;
+4417 |     }
+4418 | 
+4419 |     let baseDraw = null;
+
+CONTEXTO A PARTIR DA LINHA: 4470
+----------------------------------------------------------------------------------------------------
+4470 | 
+4471 |     if (!baseDraw) {
+4472 |       timeline.push({
+4473 |         targetYmd,
+4474 |         targetHour: slotHour,
+4475 |         baseYmd: "",
+4476 |         baseHour: "",
+4477 |         top3: [],
+4478 |         resultGrupo: null,
+4479 |         hit: null,
+4480 |         status: "pending",
+4481 |       });
+4482 |       continue;
+4483 |     }
+4484 | 
+4485 |     const baseTs = ymdHourToTs(
+4486 |       pickDrawYMD(baseDraw),
+
+CONTEXTO A PARTIR DA LINHA: 4565
+----------------------------------------------------------------------------------------------------
+4565 |       computedForSlot && Array.isArray(computed?.top)
+4566 |         ? computed.top.slice(0, 3)
+4567 |         : [];
+4568 | 
+4569 |     const resultTop3Groups = currentDraw
+4570 |       ? getPrizeGroupsByPosition(currentDraw, 3)
+4571 |       : [null, null, null];
+4572 | 
+4573 |     const resultGrupo = Number(resultTop3Groups[0]);
+4574 | 
+4575 |     const normalizedResultGrupo =
+4576 |       Number.isFinite(resultGrupo) &&
+4577 |       resultGrupo >= 1 &&
+4578 |       resultGrupo <= TOP3_GROUPS_K
+4579 |         ? resultGrupo
+4580 |         : null;
+4581 | 
+4582 |     const hitPrizePositions = resultTop3Groups.map(
+4583 |       (resultGroup) =>
+4584 |         Number.isFinite(Number(resultGroup)) &&
+4585 |         top3.some(
+4586 |           (item) =>
+4587 |             Number(item?.grupo) ===
+
+CONTEXTO A PARTIR DA LINHA: 4605
+----------------------------------------------------------------------------------------------------
+4605 |       targetYmd,
+4606 |       targetHour: slotHour,
+4607 | 
+4608 |       baseYmd: pickDrawYMD(baseDraw) || "",
+4609 |       baseHour: toHourBucket(pickDrawHour(baseDraw)) || "",
+4610 | 
+4611 |       top3,
+4612 | 
+4613 |       resultGrupo: normalizedResultGrupo,
+4614 |       resultTop3Groups,
+4615 | 
+4616 |       hit,
+4617 |       top3PrizeHit: hit,
+4618 |       hitPrizePositions,
+4619 |       matchedPrizePositions,
+4620 | 
+4621 |       status: Number.isFinite(
+4622 |         Number(normalizedResultGrupo)
+4623 |       )
+4624 |         ? "validated"
+4625 |         : "pending",
+4626 | 
+4627 |       historyStats,
+4628 |     });
+4629 | 
+4630 |     if (currentDraw) {
+
+====================================================================================================
+ARQUIVO: src\pages\Top3\top3.storage.js
+====================================================================================================
+
+FUNÇÕES RELEVANTES COMPLETAS
+----------------------------------------------------------------------------------------------------
+
+FUNÇÃO: reconcilePendingTop3Log | LINHA INICIAL: 270
+----------------------------------------------------------------------------------------------------
+270 | function reconcilePendingTop3Log({ todayDraws, rangeDraws }
+
+CONTEXTOS RELEVANTES
+----------------------------------------------------------------------------------------------------
+
+CONTEXTO A PARTIR DA LINHA: 1
+----------------------------------------------------------------------------------------------------
+ 1 | import { safeStr, isYMD, toHourBucket } from "./top3.formatters";
+ 2 | 
+ 3 | import {
+ 4 |   pickDrawYMD,
+ 5 |   pickDrawHour,
+ 6 |   pickPrize1GrupoFromDraw,
+ 7 |   getScheduleForLottery,
+ 8 | } from "./top3.engine";
+ 9 | 
+10 | import {
+11 |   PT_RIO_SCHEDULE_NORMAL,
+12 |   PT_RIO_SCHEDULE_WED_SAT,
+13 |   FEDERAL_SCHEDULE,
+14 | } from "./top3.constants";
+
+CONTEXTO A PARTIR DA LINHA: 217
+----------------------------------------------------------------------------------------------------
+217 |       createdAt: Date.now(),
+218 |       status,
+219 |     });
+220 |   }
+221 | 
+222 |   saveTop3Log(log);
+223 | }
+224 | 
+225 | function registerResult({ targetKey, resultGrupo }) {
+226 |   const log = getTop3Log();
+227 |   const normalizedTargetKey = safeStr(targetKey);
+228 |   const result = normalizeResult(resultGrupo);
+229 | 
+230 |   if (!normalizedTargetKey || result == null) return;
+231 | 
+232 |   const idx = log.findIndex(
+233 |     (l) => String(l?.targetKey || "") === String(normalizedTargetKey)
+234 |   );
+235 | 
+236 |   if (idx === -1) return;
+
+CONTEXTO A PARTIR DA LINHA: 262
+----------------------------------------------------------------------------------------------------
+262 |     (Array.isArray(todayDraws) ? todayDraws : []).find(sameTarget) || null;
+263 | 
+264 |   const realRange =
+265 |     (Array.isArray(rangeDraws) ? rangeDraws : []).find(sameTarget) || null;
+266 | 
+267 |   return realToday || realRange || null;
+268 | }
+269 | 
+270 | function reconcilePendingTop3Log({ todayDraws, rangeDraws }) {
+271 |   const log = getTop3Log();
+272 |   if (!Array.isArray(log) || !log.length) return;
+273 | 
+274 |   let changed = false;
+275 | 
+276 |   const nextLog = log.map((entry) => {
+277 |     if (!entry || entry.result != null) return entry;
+
+CONTEXTO A PARTIR DA LINHA: 286
+----------------------------------------------------------------------------------------------------
+286 |       targetYmd,
+287 |       targetHour,
+288 |       todayDraws,
+289 |       rangeDraws,
+290 |     });
+291 | 
+292 |     if (!real) return entry;
+293 | 
+294 |     const result = normalizeResult(pickPrize1GrupoFromDraw(real));
+295 |     if (result == null) return entry;
+296 | 
+297 |     const picks = normalizePicks(entry?.picks);
+298 | 
+299 |     changed = true;
+300 | 
+301 |     return {
+302 |       ...entry,
+
+CONTEXTO A PARTIR DA LINHA: 370
+----------------------------------------------------------------------------------------------------
+370 |   saveTop3Log(log);
+371 | }
+372 | 
+373 | export {
+374 |   getTop3Log,
+375 |   saveTop3Log,
+376 |   registerPrediction,
+377 |   registerResult,
+378 |   reconcilePendingTop3Log,
+379 |   ensureDayTimeline,
+380 |   isFutureTarget,
+381 |   makeKey,
+382 | };
+
+====================================================================================================
+ARQUIVO: src\pages\Top3\modules\top3.timeline.js
+====================================================================================================
+
+Nenhuma função nomeada relevante foi encontrada automaticamente.
+
+====================================================================================================
+RESUMO
+====================================================================================================
+Arquivos analisados: 5
+Funções completas extraídas: 17
+Código alterado: NÃO
+Status: OK
+====================================================================================================

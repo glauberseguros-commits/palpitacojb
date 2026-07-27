@@ -1,0 +1,503 @@
+.terno-grupo-page {
+  min-height: 100vh;
+  padding: 28px 18px 54px;
+  color: rgba(255, 255, 255, 0.94);
+  background:
+    radial-gradient(
+      circle at 50% 0%,
+      rgba(201, 168, 62, 0.12),
+      transparent 34%
+    ),
+    #050505;
+}
+
+.terno-grupo-container {
+  width: min(1120px, 100%);
+  margin: 0 auto;
+}
+
+.terno-grupo-hero {
+  display: flex;
+  align-items: flex-end;
+  justify-content: space-between;
+  gap: 24px;
+  margin-bottom: 22px;
+}
+
+.terno-grupo-eyebrow {
+  margin-bottom: 7px;
+  color: #d6b84b;
+  font-size: 12px;
+  font-weight: 900;
+  letter-spacing: 0.18em;
+}
+
+.terno-grupo-hero h1 {
+  margin: 0;
+  font-size: clamp(30px, 5vw, 54px);
+  line-height: 1;
+}
+
+.terno-grupo-hero p {
+  max-width: 650px;
+  margin: 13px 0 0;
+  color: rgba(255, 255, 255, 0.68);
+  font-size: 15px;
+  line-height: 1.55;
+}
+
+.terno-grupo-hero__limit {
+  min-width: 170px;
+  padding: 15px 18px;
+  border: 1px solid rgba(214, 184, 75, 0.34);
+  border-radius: 18px;
+  text-align: right;
+  background: rgba(214, 184, 75, 0.065);
+}
+
+.terno-grupo-hero__limit strong,
+.terno-grupo-hero__limit span {
+  display: block;
+}
+
+.terno-grupo-hero__limit strong {
+  color: #d6b84b;
+  font-size: 29px;
+  line-height: 1;
+}
+
+.terno-grupo-hero__limit span {
+  margin-top: 5px;
+  color: rgba(255, 255, 255, 0.62);
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.terno-grupo-panel {
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.13);
+  border-radius: 22px;
+  background:
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.045),
+      rgba(255, 255, 255, 0.016)
+    );
+  box-shadow: 0 22px 60px rgba(0, 0, 0, 0.34);
+}
+
+.terno-grupo-filters {
+  display: grid;
+  grid-template-columns:
+    minmax(180px, 1fr)
+    minmax(180px, 1fr)
+    minmax(220px, 1.3fr);
+  gap: 12px;
+  padding: 17px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.terno-grupo-filters label,
+.terno-grupo-target {
+  display: grid;
+  gap: 7px;
+}
+
+.terno-grupo-filters label > span,
+.terno-grupo-target > span {
+  color: rgba(255, 255, 255, 0.56);
+  font-size: 11px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.terno-grupo-filters select,
+.terno-grupo-filters input,
+.terno-grupo-target strong {
+  min-height: 46px;
+  box-sizing: border-box;
+  border: 1px solid rgba(255, 255, 255, 0.14);
+  border-radius: 13px;
+  color: rgba(255, 255, 255, 0.94);
+  background: rgba(0, 0, 0, 0.36);
+  font: inherit;
+  font-weight: 800;
+}
+
+.terno-grupo-filters select,
+.terno-grupo-filters input {
+  width: 100%;
+  padding: 0 13px;
+}
+
+.terno-grupo-filters select option {
+  color: #111;
+}
+
+.terno-grupo-target strong {
+  display: flex;
+  align-items: center;
+  padding: 0 13px;
+}
+
+.terno-grupo-generator {
+  padding: 22px;
+}
+
+.terno-grupo-generator__copy h2 {
+  margin: 0;
+  font-size: 22px;
+}
+
+.terno-grupo-generator__copy p {
+  margin: 7px 0 0;
+  color: rgba(255, 255, 255, 0.62);
+  font-size: 13px;
+  line-height: 1.5;
+}
+
+.terno-grupo-generator__controls {
+  display: flex;
+  align-items: stretch;
+  gap: 12px;
+  margin-top: 20px;
+}
+
+.terno-grupo-stepper {
+  display: grid;
+  grid-template-columns: 52px minmax(95px, 150px) 52px;
+  overflow: hidden;
+  border: 1px solid rgba(214, 184, 75, 0.38);
+  border-radius: 15px;
+  background: rgba(0, 0, 0, 0.34);
+}
+
+.terno-grupo-stepper button,
+.terno-grupo-stepper input {
+  min-height: 54px;
+  border: 0;
+  color: #fff;
+  background: transparent;
+  font: inherit;
+}
+
+.terno-grupo-stepper button {
+  cursor: pointer;
+  color: #d6b84b;
+  font-size: 27px;
+  font-weight: 900;
+}
+
+.terno-grupo-stepper button:disabled {
+  cursor: not-allowed;
+  opacity: 0.3;
+}
+
+.terno-grupo-stepper input {
+  width: 100%;
+  border-right: 1px solid rgba(255, 255, 255, 0.1);
+  border-left: 1px solid rgba(255, 255, 255, 0.1);
+  outline: none;
+  text-align: center;
+  font-size: 20px;
+  font-weight: 900;
+}
+
+.terno-grupo-generate {
+  min-width: 150px;
+  min-height: 54px;
+  padding: 0 25px;
+  cursor: pointer;
+  border: 0;
+  border-radius: 15px;
+  color: #090909;
+  background:
+    linear-gradient(
+      180deg,
+      #e2c85e,
+      #b8962f
+    );
+  box-shadow: 0 12px 30px rgba(201, 168, 62, 0.2);
+  font-size: 14px;
+  font-weight: 1000;
+  letter-spacing: 0.08em;
+}
+
+.terno-grupo-generate:disabled {
+  cursor: not-allowed;
+  opacity: 0.5;
+}
+
+.terno-grupo-generator__message {
+  min-height: 18px;
+  margin-top: 10px;
+  color: rgba(255, 255, 255, 0.54);
+  font-size: 12px;
+}
+
+.terno-grupo-generator__message--error {
+  color: #ff8d8d;
+  font-weight: 800;
+}
+
+.terno-grupo-results {
+  margin-top: 22px;
+}
+
+.terno-grupo-results__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 18px;
+  margin-bottom: 13px;
+}
+
+.terno-grupo-results__header > div {
+  display: grid;
+  gap: 3px;
+}
+
+.terno-grupo-results__header > div:last-child {
+  text-align: right;
+}
+
+.terno-grupo-results__header span {
+  color: rgba(255, 255, 255, 0.48);
+  font-size: 10px;
+  font-weight: 900;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+}
+
+.terno-grupo-results__header strong {
+  font-size: 18px;
+}
+
+.terno-grupo-list {
+  display: grid;
+  gap: 14px;
+}
+
+.terno-grupo-card {
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.13);
+  border-radius: 20px;
+  background:
+    linear-gradient(
+      180deg,
+      rgba(255, 255, 255, 0.045),
+      rgba(255, 255, 255, 0.012)
+    );
+  box-shadow: 0 18px 44px rgba(0, 0, 0, 0.27);
+}
+
+.terno-grupo-card:first-child {
+  border-color: rgba(214, 184, 75, 0.5);
+  box-shadow:
+    0 18px 48px rgba(0, 0, 0, 0.32),
+    inset 0 1px 0 rgba(214, 184, 75, 0.12);
+}
+
+.terno-grupo-card__header {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 15px;
+  padding: 15px 18px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.09);
+}
+
+.terno-grupo-card__rank {
+  color: #d6b84b;
+  font-size: 14px;
+  font-weight: 1000;
+  letter-spacing: 0.06em;
+}
+
+.terno-grupo-card__strength {
+  margin-top: 3px;
+  color: rgba(255, 255, 255, 0.54);
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+}
+
+.terno-grupo-card__score {
+  display: grid;
+  text-align: right;
+}
+
+.terno-grupo-card__score span {
+  color: rgba(255, 255, 255, 0.5);
+  font-size: 10px;
+  font-weight: 900;
+  text-transform: uppercase;
+}
+
+.terno-grupo-card__score strong {
+  margin-top: 2px;
+  font-size: 22px;
+}
+
+.terno-grupo-card__animals {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 12px;
+  padding: 18px;
+}
+
+.terno-grupo-animal {
+  min-width: 0;
+  padding: 14px 10px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 17px;
+  text-align: center;
+  background: rgba(0, 0, 0, 0.23);
+}
+
+.terno-grupo-animal__image {
+  display: grid;
+  width: 82px;
+  height: 82px;
+  margin: 0 auto 10px;
+  place-items: center;
+  overflow: hidden;
+  border: 1px solid rgba(214, 184, 75, 0.29);
+  border-radius: 18px;
+  color: #d6b84b;
+  background: rgba(0, 0, 0, 0.38);
+  font-weight: 900;
+}
+
+.terno-grupo-animal__image img {
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+}
+
+.terno-grupo-animal__group {
+  color: #d6b84b;
+  font-size: 11px;
+  font-weight: 1000;
+}
+
+.terno-grupo-animal__name {
+  overflow: hidden;
+  margin-top: 3px;
+  font-size: 14px;
+  font-weight: 1000;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.terno-grupo-card__footer {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 12px 18px 15px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.terno-grupo-card__footer span {
+  padding: 6px 9px;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  border-radius: 999px;
+  color: rgba(255, 255, 255, 0.59);
+  background: rgba(255, 255, 255, 0.025);
+  font-size: 10px;
+  font-weight: 800;
+}
+
+.terno-grupo-error,
+.terno-grupo-loading,
+.terno-grupo-empty {
+  margin-top: 17px;
+  padding: 17px;
+  border: 1px solid rgba(255, 255, 255, 0.12);
+  border-radius: 16px;
+  text-align: center;
+  background: rgba(255, 255, 255, 0.025);
+}
+
+.terno-grupo-error {
+  border-color: rgba(255, 104, 104, 0.35);
+  color: #ff9d9d;
+}
+
+@media (max-width: 720px) {
+  .terno-grupo-page {
+    padding: 20px 12px 42px;
+  }
+
+  .terno-grupo-hero {
+    display: grid;
+    align-items: stretch;
+  }
+
+  .terno-grupo-hero__limit {
+    min-width: 0;
+    text-align: left;
+  }
+
+  .terno-grupo-filters {
+    grid-template-columns: 1fr;
+  }
+
+  .terno-grupo-generator {
+    padding: 17px;
+  }
+
+  .terno-grupo-generator__controls {
+    display: grid;
+  }
+
+  .terno-grupo-stepper {
+    grid-template-columns: 52px 1fr 52px;
+  }
+
+  .terno-grupo-generate {
+    width: 100%;
+  }
+
+  .terno-grupo-card__animals {
+    gap: 7px;
+    padding: 12px;
+  }
+
+  .terno-grupo-animal {
+    padding: 10px 5px;
+  }
+
+  .terno-grupo-animal__image {
+    width: 64px;
+    height: 64px;
+    border-radius: 14px;
+  }
+
+  .terno-grupo-animal__group {
+    font-size: 9px;
+  }
+
+  .terno-grupo-animal__name {
+    font-size: 11px;
+  }
+}
+
+@media (max-width: 360px) {
+  .terno-grupo-card__animals {
+    gap: 5px;
+    padding: 9px;
+  }
+
+  .terno-grupo-animal {
+    padding-right: 3px;
+    padding-left: 3px;
+  }
+
+  .terno-grupo-animal__image {
+    width: 56px;
+    height: 56px;
+  }
+}

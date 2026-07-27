@@ -1,0 +1,20 @@
+C:\Users\glaub\palpitaco\tmp\top3_hit_25b_patch.cjs:12
+    throw new Error(
+    ^
+
+Error: propaga matchedGrupo e matchedMilhar: esperado 1 bloco, encontrado 3.
+    at replaceRegexOnce (C:\Users\glaub\palpitaco\tmp\top3_hit_25b_patch.cjs:12:11)
+    at Object.<anonymous> (C:\Users\glaub\palpitaco\tmp\top3_hit_25b_patch.cjs:25:1)
+    at Module._compile (node:internal/modules/cjs/loader:1730:14)
+    at Object..js (node:internal/modules/cjs/loader:1895:10)
+    at Module.load (node:internal/modules/cjs/loader:1465:32)
+    at Function._load (node:internal/modules/cjs/loader:1282:12)
+    at TracingChannel.traceSync (node:diagnostics_channel:322:14)
+    at wrapModuleLoad (node:internal/modules/cjs/loader:235:24)
+    at Function.executeUserEntryPoint [as runMain] (node:internal/modules/run_main:171:5)
+    at node:internal/main/run_main_module:36:49
+
+Node.js v22.16.0
+
+TOP3-HIT-25B REPROVADO
+Falha ao aplicar o patch.

@@ -1,0 +1,5063 @@
+
+======================================================================================================================================================
+1. OBJETIVO
+======================================================================================================================================================
+Regra de negócio:
+Se houver FEDERAL às 20:00 no dia, PT_RIO 18:00 não é esperado.
+
+A extração separa os arquivos que realmente decidem:
+- expectativa de slots;
+- classificação HARD/SOFT/OFF;
+- auditoria de ausências;
+- tentativa automática de importação;
+- reparo/backfill.
+
+======================================================================================================================================================
+2. ARQUIVOS COMPLETOS
+======================================================================================================================================================
+
+======================================================================================================================================================
+ARQUIVO: backend/routes/kingDraws.js
+======================================================================================================================================================
+00001: "use strict";
+00002: 
+00003: const express = require("express");
+00004: const { getDb } = require("../service/firebaseAdmin");
+00005: 
+00006: const router = express.Router();
+00007: 
+00008: console.log("[KING] routes loaded from:", __filename);
+00009: 
+00010: /* =========================
+00011:    NORMALIZAÇÃO
+00012: ========================= */
+00013: function normalizeLotteryKey(v) {
+00014:   const s = String(v ?? "").trim().toUpperCase();
+00015: 
+00016:   if (s === "RJ" || s === "RIO" || s === "PT-RIO" || s === "PT_RIO") return "PT_RIO";
+00017:   if (s === "FED" || s === "FEDERAL" || s === "BR") return "FEDERAL";
+00018: 
+00019:   return "";
+00020: }
+00021: 
+00022: /* =========================
+00023:    REGRAS DE HORÁRIOS
+00024: ========================= */
+00025: function getExpectedHours(lottery, date, hasFederal) {
+00026:   if (lottery !== "PT_RIO") return [];
+00027: 
+00028:   const dt = new Date(`${date}T12:00:00`);
+00029:   const dow = dt.getDay(); // 0 = domingo
+00030: 
+00031:   // Domingo: só 09, 11, 14, 16
+00032:   if (dow === 0) {
+00033:     return ["09:00", "11:00", "14:00", "16:00"];
+00034:   }
+00035: 
+00036:   // Base fixa todos os outros dias
+00037:   const expected = ["09:00", "11:00", "14:00", "16:00"];
+00038: 
+00039:   // 21h existe fora domingo
+00040:   expected.push("21:00");
+00041: 
+00042:   // 18h só se NÃO tiver Federal no dia
+00043:   if (!hasFederal) {
+00044:     expected.push("18:00");
+00045:   }
+00046: 
+00047:   return expected.sort();
+00048: }
+00049: 
+00050: function checkDrawIntegrity(draws, lottery, date, hasFederal) {
+00051:   const expectedHours = getExpectedHours(lottery, date, hasFederal);
+00052: 
+00053:   if (!expectedHours.length) {
+00054:     return {
+00055:       ok: true,
+00056:       missing: [],
+00057:       extra: [],
+00058:       expectedHours: [],
+00059:       hasFederal: Boolean(hasFederal),
+00060:     };
+00061:   }
+00062: 
+00063:   const gotHours = (Array.isArray(draws) ? draws : [])
+00064:     .map((d) => String(d?.close_hour || "").trim())
+00065:     .filter(Boolean);
+00066: 
+00067:   const missing = expectedHours.filter((h) => !gotHours.includes(h));
+00068:   const extra = gotHours.filter((h) => !expectedHours.includes(h));
+00069: 
+00070:   if (missing.length || extra.length) {
+00071:     console.warn(
+00072:       `[DRAW ALERT] ${lottery} ${date} missing=${missing.join(", ")} extra=${extra.join(", ")} hasFederal=${hasFederal ? "1" : "0"}`
+00073:     );
+00074:   }
+00075: 
+00076:   return {
+00077:     ok: missing.length === 0 && extra.length === 0,
+00078:     missing,
+00079:     extra,
+00080:     expectedHours,
+00081:     hasFederal: Boolean(hasFederal),
+00082:   };
+00083: }
+00084: 
+00085: /* =========================
+00086:    HELPERS
+00087: ========================= */
+00088: function isISODate(s) {
+00089:   const str = String(s || "").trim();
+00090:   if (!/^\d{4}-\d{2}-\d{2}$/.test(str)) return false;
+00091: 
+00092:   const [y, m, d] = str.split("-").map(Number);
+00093:   const dt = new Date(Date.UTC(y, m - 1, d));
+00094: 
+00095:   return (
+00096:     dt.getUTCFullYear() === y &&
+00097:     dt.getUTCMonth() === m - 1 &&
+00098:     dt.getUTCDate() === d
+00099:   );
+00100: }
+00101: 
+00102: function isHHMM(s) {
+00103:   const str = String(s || "").trim();
+00104:   const m = str.match(/^(\d{2}):(\d{2})$/);
+00105:   if (!m) return false;
+00106: 
+00107:   const hh = Number(m[1]);
+00108:   const mm = Number(m[2]);
+00109: 
+00110:   return hh >= 0 && hh <= 23 && mm >= 0 && mm <= 59;
+00111: }
+00112: 
+00113: function normalizeHHMM(value) {
+00114:   const s = String(value ?? "").trim();
+00115:   if (!s) return "";
+00116: 
+00117:   if (isHHMM(s)) return s;
+00118: 
+00119:   const m1 = s.match(/^(\d{1,2})h$/i);
+00120:   if (m1) {
+00121:     const hh = Number(m1[1]);
+00122:     if (hh >= 0 && hh <= 23) return `${String(hh).padStart(2, "0")}:00`;
+00123:     return "";
+00124:   }
+00125: 
+00126:   const m2 = s.match(/^(\d{1,2})$/);
+00127:   if (m2) {
+00128:     const hh = Number(m2[1]);
+00129:     if (hh >= 0 && hh <= 23) return `${String(hh).padStart(2, "0")}:00`;
+00130:     return "";
+00131:   }
+00132: 
+00133:   const m3 = s.match(/^(\d{1,2}):(\d{1,2})$/);
+00134:   if (m3) {
+00135:     const hh = Number(m3[1]);
+00136:     const mm = Number(m3[2]);
+00137:     if (hh >= 0 && hh <= 23 && mm >= 0 && mm <= 59) {
+00138:       return `${String(hh).padStart(2, "0")}:${String(mm).padStart(2, "0")}`;
+00139:     }
+00140:     return "";
+00141:   }
+00142: 
+00143:   return "";
+00144: }
+00145: 
+00146: function cmpHHMM(a, b) {
+00147:   return String(a || "").localeCompare(String(b || ""));
+00148: }
+00149: 
+00150: function inRangeHHMM(hhmm, from, to) {
+00151:   const h = String(hhmm || "").trim();
+00152:   if (!h || !isHHMM(h)) return false;
+00153:   if (from && cmpHHMM(h, from) < 0) return false;
+00154:   if (to && cmpHHMM(h, to) > 0) return false;
+00155:   return true;
+00156: }
+00157: 
+00158: function upTrim(v) {
+00159:   return String(v ?? "").trim().toUpperCase();
+00160: }
+00161: 
+00162: function parseIncludePrizes(v, defBool) {
+00163:   const raw = String(v ?? (defBool ? "1" : "0")).trim().toLowerCase();
+00164:   return raw === "1" || raw === "true" || raw === "yes";
+00165: }
+00166: 
+00167: function getLotteryFromQuery(req) {
+00168:   return normalizeLotteryKey(req.query.lotteryKey ?? req.query.lottery ?? req.query.uf);
+00169: }
+00170: 
+00171: function getWindowFromQuery(req) {
+00172:   const fromRaw = req.query.from != null ? String(req.query.from).trim() : "";
+00173:   const toRaw = req.query.to != null ? String(req.query.to).trim() : "";
+00174: 
+00175:   const from = fromRaw ? normalizeHHMM(fromRaw) : "";
+00176:   const to = toRaw ? normalizeHHMM(toRaw) : "";
+00177: 
+00178:   if (fromRaw && !from) {
+00179:     return { error: "Parâmetro inválido: from (use HH:MM, 10h ou 10)" };
+00180:   }
+00181:   if (toRaw && !to) {
+00182:     return { error: "Parâmetro inválido: to (use HH:MM, 10h ou 10)" };
+00183:   }
+00184: 
+00185:   return { from, to };
+00186: }
+00187: 
+00188: function parsePositionsParam(v) {
+00189:   const raw = String(v ?? "").trim().toLowerCase();
+00190:   if (!raw) return { positions: null, maxPos: null };
+00191: 
+00192:   const m = raw.match(/^(\d+)\s*(?:\-|\.\.)\s*(\d+)$/);
+00193:   if (m) {
+00194:     const a = Math.max(1, Number(m[1]));
+00195:     const b = Math.max(1, Number(m[2]));
+00196:     const lo = Math.min(a, b);
+00197:     const hi = Math.max(a, b);
+00198:     const positions = [];
+00199:     for (let i = lo; i <= hi; i += 1) positions.push(i);
+00200:     return { positions, maxPos: hi };
+00201:   }
+00202: 
+00203:   const parts = raw
+00204:     .split(",")
+00205:     .map((s) => Number(String(s).trim()))
+00206:     .filter((n) => Number.isFinite(n) && n >= 1);
+00207: 
+00208:   if (!parts.length) return { positions: null, maxPos: null };
+00209: 
+00210:   const uniq = Array.from(new Set(parts)).sort((a, b) => a - b);
+00211:   return { positions: uniq, maxPos: uniq[uniq.length - 1] };
+00212: }
+00213: 
+00214: /* =========================
+00215:    FIRESTORE
+00216: ========================= */
+00217: async function fetchDayDraws(db, ymd) {
+00218:   const [s1, s2] = await Promise.all([
+00219:     db.collection("draws").where("ymd", "==", ymd).get(),
+00220:     db.collection("draws").where("date", "==", ymd).get(),
+00221:   ]);
+00222: 
+00223:   const map = new Map();
+00224: 
+00225:   for (const doc of s1.docs) map.set(doc.id, doc);
+00226:   for (const doc of s2.docs) map.set(doc.id, doc);
+00227: 
+00228:   return Array.from(map.values());
+00229: }
+00230: 
+00231: async function mapWithConcurrency(items, limitN, mapper) {
+00232:   const arr = Array.isArray(items) ? items : [];
+00233:   const concurrency = Math.max(1, Number(limitN) || 6);
+00234:   const results = new Array(arr.length);
+00235:   let idx = 0;
+00236: 
+00237:   async function worker() {
+00238:     while (true) {
+00239:       const current = idx;
+00240:       idx += 1;
+00241:       if (current >= arr.length) break;
+00242:       results[current] = await mapper(arr[current], current);
+00243:     }
+00244:   }
+00245: 
+00246:   await Promise.all(
+00247:     Array.from({ length: Math.min(concurrency, arr.length) }, () => worker())
+00248:   );
+00249: 
+00250:   return results;
+00251: }
+00252: 
+00253: async function loadPrizesForDraws(db, drawsWindow, includePrizes, positionsInfo) {
+00254:   if (!includePrizes) return drawsWindow;
+00255: 
+00256:   const posArr =
+00257:     positionsInfo && Array.isArray(positionsInfo.positions)
+00258:       ? positionsInfo.positions
+00259:       : null;
+00260: 
+00261:   const posSet =
+00262:     posArr && posArr.length
+00263:       ? new Set(posArr.map((n) => Number(n)))
+00264:       : null;
+00265: 
+00266:   const draws = await mapWithConcurrency(drawsWindow, 6, async (d) => {
+00267:     let q = db
+00268:       .collection("draws")
+00269:       .doc(d.id)
+00270:       .collection("prizes")
+00271:       .orderBy("position", "asc");
+00272: 
+00273:     if (positionsInfo && positionsInfo.maxPos && posArr) {
+00274:       const maxPos = Number(positionsInfo.maxPos) || null;
+00275:       const contiguousFrom1 =
+00276:         maxPos &&
+00277:         posArr.length === maxPos &&
+00278:         Number(posArr[0]) === 1 &&
+00279:         Number(posArr[posArr.length - 1]) === maxPos;
+00280: 
+00281:       if (contiguousFrom1) q = q.limit(maxPos);
+00282:     }
+00283: 
+00284:     const prizesSnap = await q.get();
+00285:     const rows = prizesSnap.docs.map((p) => p.data());
+00286:     const prizes = posSet
+00287:       ? rows.filter((r) => posSet.has(Number(r.position)))
+00288:       : rows;
+00289: 
+00290:     return { ...d, prizes };
+00291:   });
+00292: 
+00293:   return draws;
+00294: }
+00295: 
+00296: /* =========================
+00297:    NORMALIZAÇÃO DE DRAW
+00298: ========================= */
+00299: function normalizeDrawDoc(doc) {
+00300:   const data = doc.data() || {};
+00301:   return {
+00302:     id: doc.id,
+00303:     ...data,
+00304:     close_hour: normalizeHHMM(data.close_hour ?? data.close ?? data.hour),
+00305:   };
+00306: }
+00307: 
+00308: function sortDrawsByHourOnly(a, b) {
+00309:   return cmpHHMM(a.close_hour, b.close_hour);
+00310: }
+00311: 
+00312: function sortDrawsByDateThenHour(a, b) {
+00313:   const da = String(a.ymd || a.date || "");
+00314:   const db = String(b.ymd || b.date || "");
+00315:   if (da !== db) return da.localeCompare(db);
+00316:   return cmpHHMM(a.close_hour, b.close_hour);
+00317: }
+00318: 
+00319: function applyLotteryFilter(draws, lottery) {
+00320:   return (Array.isArray(draws) ? draws : []).filter(
+00321:     (d) => upTrim(d.lottery_key) === lottery
+00322:   );
+00323: }
+00324: 
+00325: function applyHourWindow(draws, from, to) {
+00326:   return (Array.isArray(draws) ? draws : []).filter((d) => {
+00327:     if (!from && !to) return true;
+00328:     return inRangeHHMM(d.close_hour, from || "", to || "");
+00329:   });
+00330: }
+00331: 
+00332: function hasFederalInDraws(draws) {
+00333:   return (Array.isArray(draws) ? draws : []).some(
+00334:     (d) => upTrim(d.lottery_key) === "FEDERAL"
+00335:   );
+00336: }
+00337: 
+00338: /* =========================
+00339:    REDIRECT / VALIDATION
+00340: ========================= */
+00341: function redirect308(destPath) {
+00342:   return (req, res) => {
+00343:     const q = req.url.includes("?") ? req.url.slice(req.url.indexOf("?")) : "";
+00344:     return res.redirect(308, `${req.baseUrl}${destPath}${q}`);
+00345:   };
+00346: }
+00347: 
+00348: function requireLotteryOr400(lottery, res) {
+00349:   if (!lottery) {
+00350:     res.status(400).json({
+00351:       ok: false,
+00352:       error: "Parâmetro inválido: lottery (use RJ/PT_RIO ou FED/FEDERAL)",
+00353:     });
+00354:     return false;
+00355:   }
+00356:   return true;
+00357: }
+00358: 
+00359: /* =========================
+00360:    ENDPOINT LEGADO
+00361: ========================= */
+00362: router.get("/draws", async (req, res) => {
+00363:   try {
+00364:     const db = getDb();
+00365: 
+00366:     const date = String(req.query.date || "").trim();
+00367:     const lottery = getLotteryFromQuery(req);
+00368: 
+00369:     const fromRaw = req.query.from != null ? String(req.query.from).trim() : "";
+00370:     const toRaw = req.query.to != null ? String(req.query.to).trim() : "";
+00371: 
+00372:     const from = fromRaw ? normalizeHHMM(fromRaw) : "";
+00373:     const to = toRaw ? normalizeHHMM(toRaw) : "";
+00374: 
+00375:     const includePrizes = parseIncludePrizes(req.query.includePrizes, true);
+00376:     const positionsInfo = parsePositionsParam(req.query.positions);
+00377: 
+00378:     if (!isISODate(date)) {
+00379:       return res.status(400).json({
+00380:         ok: false,
+00381:         error: "Parâmetro inválido: date (use YYYY-MM-DD)",
+00382:       });
+00383:     }
+00384: 
+00385:     if (!requireLotteryOr400(lottery, res)) return;
+00386: 
+00387:     if (fromRaw && !from) {
+00388:       return res.status(400).json({
+00389:         ok: false,
+00390:         error: "Parâmetro inválido: from (use HH:MM, 10h ou 10)",
+00391:       });
+00392:     }
+00393: 
+00394:     if (toRaw && !to) {
+00395:       return res.status(400).json({
+00396:         ok: false,
+00397:         error: "Parâmetro inválido: to (use HH:MM, 10h ou 10)",
+00398:       });
+00399:     }
+00400: 
+00401:     const docs = await fetchDayDraws(db, date);
+00402:     const rawDraws = docs.map(normalizeDrawDoc);
+00403:     const hasFederal = hasFederalInDraws(rawDraws);
+00404: 
+00405:     const byLottery = applyLotteryFilter(rawDraws, lottery).sort(sortDrawsByHourOnly);
+00406:     const drawsWindow = applyHourWindow(byLottery, from || "", to || "");
+00407:     const draws = await loadPrizesForDraws(db, drawsWindow, includePrizes, positionsInfo);
+00408: 
+00409:     const integrity = checkDrawIntegrity(draws, lottery, date, hasFederal);
+00410: 
+00411:     return res.json({
+00412:       ok: true,
+00413:       integrity,
+00414:       date,
+00415:       lottery,
+00416:       from: from || null,
+00417:       to: to || null,
+00418:       includePrizes,
+00419:       count: draws.length,
+00420:       draws,
+00421:     });
+00422:   } catch (e) {
+00423:     return res.status(500).json({ ok: false, error: e?.message || "erro" });
+00424:   }
+00425: });
+00426: 
+00427: /* =========================
+00428:    ROTAS CANÔNICAS
+00429: ========================= */
+00430: router.get("/results/day", redirect308("/draws/day"));
+00431: router.get("/results/range", redirect308("/draws/range"));
+00432: 
+00433: async function handleDay(req, res) {
+00434:   try {
+00435:     const db = getDb();
+00436: 
+00437:     const date = String(req.query.date || "").trim();
+00438:     const lottery = getLotteryFromQuery(req);
+00439: 
+00440:     if (!requireLotteryOr400(lottery, res)) return;
+00441: 
+00442:     if (!isISODate(date)) {
+00443:       return res.status(400).json({
+00444:         ok: false,
+00445:         error: "Parâmetro inválido: date (use YYYY-MM-DD)",
+00446:       });
+00447:     }
+00448: 
+00449:     const win = getWindowFromQuery(req);
+00450:     if (win.error) return res.status(400).json({ ok: false, error: win.error });
+00451: 
+00452:     const includePrizes = parseIncludePrizes(req.query.includePrizes, true);
+00453:     const positionsInfo = parsePositionsParam(req.query.positions);
+00454: 
+00455:     const docs = await fetchDayDraws(db, date);
+00456:     const rawDraws = docs.map(normalizeDrawDoc);
+00457:     const hasFederal = hasFederalInDraws(rawDraws);
+00458: 
+00459:     const byLottery = applyLotteryFilter(rawDraws, lottery).sort(sortDrawsByHourOnly);
+00460:     const drawsWindow = applyHourWindow(byLottery, win.from || "", win.to || "");
+00461:     const draws = await loadPrizesForDraws(db, drawsWindow, includePrizes, positionsInfo);
+00462: 
+00463:     const integrity = checkDrawIntegrity(draws, lottery, date, hasFederal);
+00464: 
+00465:     return res.json({
+00466:       ok: true,
+00467:       mode: "day",
+00468:       integrity,
+00469:       date,
+00470:       lottery,
+00471:       from: win.from || null,
+00472:       to: win.to || null,
+00473:       includePrizes,
+00474:       count: draws.length,
+00475:       draws,
+00476:     });
+00477:   } catch (e) {
+00478:     return res.status(500).json({ ok: false, error: e?.message || "erro" });
+00479:   }
+00480: }
+00481: 
+00482: async function handleRange(req, res) {
+00483:   try {
+00484:     const db = getDb();
+00485: 
+00486:     const dateFrom = String(req.query.dateFrom || "").trim();
+00487:     const dateTo = String(req.query.dateTo || "").trim();
+00488:     const lottery = getLotteryFromQuery(req);
+00489: 
+00490:     if (!requireLotteryOr400(lottery, res)) return;
+00491: 
+00492:     if (!isISODate(dateFrom) || !isISODate(dateTo)) {
+00493:       return res.status(400).json({
+00494:         ok: false,
+00495:         error: "Parâmetro inválido: dateFrom/dateTo (use YYYY-MM-DD)",
+00496:       });
+00497:     }
+00498: 
+00499:     if (dateFrom > dateTo) {
+00500:       return res.status(400).json({
+00501:         ok: false,
+00502:         error: "Parâmetro inválido: dateFrom não pode ser maior que dateTo",
+00503:       });
+00504:     }
+00505: 
+00506:     const win = getWindowFromQuery(req);
+00507:     if (win.error) return res.status(400).json({ ok: false, error: win.error });
+00508: 
+00509:     const includePrizes = parseIncludePrizes(req.query.includePrizes, false);
+00510:     const positionsInfo = parsePositionsParam(req.query.positions);
+00511: 
+00512:     const snap = await db
+00513:       .collection("draws")
+00514:       .where("ymd", ">=", dateFrom)
+00515:       .where("ymd", "<=", dateTo)
+00516:       .orderBy("ymd", "asc")
+00517:       .get();
+00518: 
+00519:     const rawDraws = snap.docs.map(normalizeDrawDoc);
+00520:     const byLottery = applyLotteryFilter(rawDraws, lottery).sort(sortDrawsByDateThenHour);
+00521:     const drawsWindow = applyHourWindow(byLottery, win.from || "", win.to || "");
+00522:     const draws = await loadPrizesForDraws(db, drawsWindow, includePrizes, positionsInfo);
+00523: 
+00524:     const groupedIntegrity = {};
+00525:     if (lottery === "PT_RIO") {
+00526:       const rawByDay = rawDraws.reduce((acc, d) => {
+00527:         const ymd = String(d.ymd || d.date || "").trim();
+00528:         if (!ymd) return acc;
+00529:         if (!acc[ymd]) acc[ymd] = [];
+00530:         acc[ymd].push(d);
+00531:         return acc;
+00532:       }, {});
+00533: 
+00534:       const filteredByDay = draws.reduce((acc, d) => {
+00535:         const ymd = String(d.ymd || d.date || "").trim();
+00536:         if (!ymd) return acc;
+00537:         if (!acc[ymd]) acc[ymd] = [];
+00538:         acc[ymd].push(d);
+00539:         return acc;
+00540:       }, {});
+00541: 
+00542:       const allDays = Array.from(
+00543:         new Set([
+00544:           ...Object.keys(rawByDay),
+00545:           ...Object.keys(filteredByDay),
+00546:         ])
+00547:       ).sort();
+00548: 
+00549:       for (const ymd of allDays) {
+00550:         const dayRaw = rawByDay[ymd] || [];
+00551:         const dayFiltered = filteredByDay[ymd] || [];
+00552:         const hasFederal = hasFederalInDraws(dayRaw);
+00553:         groupedIntegrity[ymd] = checkDrawIntegrity(dayFiltered, lottery, ymd, hasFederal);
+00554:       }
+00555:     }
+00556: 
+00557:     return res.json({
+00558:       ok: true,
+00559:       mode: "range",
+00560:       integrityByDay: groupedIntegrity,
+00561:       dateFrom,
+00562:       dateTo,
+00563:       lottery,
+00564:       from: win.from || null,
+00565:       to: win.to || null,
+00566:       includePrizes,
+00567:       count: draws.length,
+00568:       draws,
+00569:     });
+00570:   } catch (e) {
+00571:     return res.status(500).json({ ok: false, error: e?.message || "erro" });
+00572:   }
+00573: }
+00574: 
+00575: router.get("/draws/day", handleDay);
+00576: router.get("/draws/range", handleRange);
+00577: 
+00578: module.exports = router;
+
+======================================================================================================================================================
+ARQUIVO: backend/routes/pitacoResults.js
+======================================================================================================================================================
+00001: "use strict";
+00002: 
+00003: const express = require("express");
+00004: const fs = require("fs");
+00005: const path = require("path");
+00006: const { getDb } = require("../service/firebaseAdmin");
+00007: 
+00008: const router = express.Router();
+00009: 
+00010: /* =========================
+00011:    TIME (America/Sao_Paulo)
+00012: ========================= */
+00013: 
+00014: function todayYMDInSaoPaulo() {
+00015:   try {
+00016:     const parts = new Intl.DateTimeFormat("en-CA", {
+00017:       timeZone: "America/Sao_Paulo",
+00018:       year: "numeric",
+00019:       month: "2-digit",
+00020:       day: "2-digit",
+00021:     }).formatToParts(new Date());
+00022:     const y = parts.find((p) => p.type === "year")?.value || "1970";
+00023:     const m = parts.find((p) => p.type === "month")?.value || "01";
+00024:     const d = parts.find((p) => p.type === "day")?.value || "01";
+00025:     return `${y}-${m}-${d}`;
+00026:   } catch {
+00027:     const d = new Date();
+00028:     const y = d.getFullYear();
+00029:     const m = String(d.getMonth() + 1).padStart(2, "0");
+00030:     const dd = String(d.getDate()).padStart(2, "0");
+00031:     return `${y}-${m}-${dd}`;
+00032:   }
+00033: }
+00034: 
+00035: function nowMinutesInSaoPaulo() {
+00036:   try {
+00037:     const parts = new Intl.DateTimeFormat("en-GB", {
+00038:       timeZone: "America/Sao_Paulo",
+00039:       hour: "2-digit",
+00040:       minute: "2-digit",
+00041:       hour12: false,
+00042:     }).formatToParts(new Date());
+00043: 
+00044:     const hh = Number(parts.find((p) => p.type === "hour")?.value || "0");
+00045:     const mm = Number(parts.find((p) => p.type === "minute")?.value || "0");
+00046:     if (!Number.isFinite(hh) || !Number.isFinite(mm)) return 0;
+00047:     return hh * 60 + mm;
+00048:   } catch {
+00049:     const d = new Date();
+00050:     return d.getHours() * 60 + d.getMinutes();
+00051:   }
+00052: }
+00053: 
+00054: function hourToMinutes(hh) {
+00055:   const n = Number(String(hh ?? "").trim());
+00056:   if (!Number.isFinite(n)) return NaN;
+00057:   return n * 60;
+00058: }
+00059: 
+00060: function isSlotPublishedToday(hh, nowMin, graceMin) {
+00061:   const hm = hourToMinutes(hh);
+00062:   if (!Number.isFinite(hm)) return false;
+00063:   const g = Number.isFinite(graceMin) ? graceMin : 25;
+00064:   return nowMin >= hm + g;
+00065: }
+00066: 
+00067: /* =========================
+00068:    LOTTERY KEY NORMALIZATION
+00069: ========================= */
+00070: 
+00071: function normalizeLotteryKey(v) {
+00072:   const s = String(v ?? "").trim().toUpperCase();
+00073: 
+00074:   if (s === "RJ" || s === "RIO" || s === "PT-RIO" || s === "PT_RIO") return "PT_RIO";
+00075:   if (s === "FED" || s === "FEDERAL" || s === "BR") return "FEDERAL";
+00076: 
+00077:   return "";
+00078: }
+00079: 
+00080: /* =========================
+00081:    HELPERS
+00082: ========================= */
+00083: 
+00084: function isISODate(s) {
+00085:   const str = String(s || "").trim();
+00086:   if (!/^\d{4}-\d{2}-\d{2}$/.test(str)) return false;
+00087: 
+00088:   const [y, m, d] = str.split("-").map(Number);
+00089:   const dt = new Date(Date.UTC(y, m - 1, d));
+00090: 
+00091:   return (
+00092:     dt.getUTCFullYear() === y &&
+00093:     dt.getUTCMonth() === m - 1 &&
+00094:     dt.getUTCDate() === d
+00095:   );
+00096: }
+00097: 
+00098: function isHHMM(s) {
+00099:   const str = String(s || "").trim();
+00100:   const m = str.match(/^(\d{2}):(\d{2})$/);
+00101:   if (!m) return false;
+00102: 
+00103:   const hh = Number(m[1]);
+00104:   const mm = Number(m[2]);
+00105: 
+00106:   return hh >= 0 && hh <= 23 && mm >= 0 && mm <= 59;
+00107: }
+00108: 
+00109: function pad2(n) {
+00110:   return String(n).padStart(2, "0");
+00111: }
+00112: 
+00113: function normalizeHHMM(value) {
+00114:   const s = String(value ?? "").trim();
+00115:   if (!s) return "";
+00116: 
+00117:   if (isHHMM(s)) return s;
+00118: 
+00119:   const m1 = s.match(/^(\d{1,2})h$/i);
+00120:   if (m1) {
+00121:     const hh = Number(m1[1]);
+00122:     if (hh >= 0 && hh <= 23) return `${pad2(hh)}:00`;
+00123:     return "";
+00124:   }
+00125: 
+00126:   const m2 = s.match(/^(\d{1,2})$/);
+00127:   if (m2) {
+00128:     const hh = Number(m2[1]);
+00129:     if (hh >= 0 && hh <= 23) return `${pad2(hh)}:00`;
+00130:     return "";
+00131:   }
+00132: 
+00133:   const m3 = s.match(/^(\d{1,2}):(\d{1,2})$/);
+00134:   if (m3) {
+00135:     const hh = Number(m3[1]);
+00136:     const mm = Number(m3[2]);
+00137:     if (hh >= 0 && hh <= 23 && mm >= 0 && mm <= 59) {
+00138:       return `${pad2(hh)}:${pad2(mm)}`;
+00139:     }
+00140:     return "";
+00141:   }
+00142: 
+00143:   return "";
+00144: }
+00145: 
+00146: function upTrim(v) {
+00147:   return String(v ?? "").trim().toUpperCase();
+00148: }
+00149: 
+00150: function cmpHHMM(a, b) {
+00151:   return String(a || "").localeCompare(String(b || ""));
+00152: }
+00153: 
+00154: function parseBool01(v) {
+00155:   const s = String(v ?? "").trim().toLowerCase();
+00156:   return s === "1" || s === "true" || s === "yes" || s === "y";
+00157: }
+00158: 
+00159: function parsePosInt(v, def, min, max) {
+00160:   const s = String(v ?? "").trim();
+00161:   if (!s) return def;
+00162: 
+00163:   const n = Number(s);
+00164:   if (!Number.isFinite(n)) return def;
+00165: 
+00166:   const i = Math.trunc(n);
+00167:   if (Number.isFinite(min) && i < min) return min;
+00168:   if (Number.isFinite(max) && i > max) return max;
+00169:   return i;
+00170: }
+00171: 
+00172: function uniqSorted(arr) {
+00173:   return Array.from(new Set((Array.isArray(arr) ? arr : []).filter(Boolean))).sort();
+00174: }
+00175: 
+00176: function setDiff(a, bSet) {
+00177:   const out = [];
+00178:   for (const v of Array.isArray(a) ? a : []) {
+00179:     if (!bSet.has(v)) out.push(v);
+00180:   }
+00181:   return out;
+00182: }
+00183: 
+00184: function intersectToSet(a, bSet) {
+00185:   const out = new Set();
+00186:   for (const v of Array.isArray(a) ? a : []) {
+00187:     if (bSet.has(v)) out.add(v);
+00188:   }
+00189:   return out;
+00190: }
+00191: 
+00192: function isFutureISODate(ymd) {
+00193:   if (!isISODate(ymd)) return false;
+00194:   const todayBR = todayYMDInSaoPaulo();
+00195:   return String(ymd) > String(todayBR);
+00196: }
+00197: 
+00198: /**
+00199:  * Pega o melhor candidato de close_hour em docs legados.
+00200:  */
+00201: function getCloseCandidate(d) {
+00202:   try {
+00203:     const v =
+00204:       d?.close_hour ??
+00205:       d?.close ??
+00206:       d?.close_hour_raw ??
+00207:       d?.closeHour ??
+00208:       d?.horario ??
+00209:       d?.hour ??
+00210:       "";
+00211:     return String(v ?? "").trim();
+00212:   } catch {
+00213:     return "";
+00214:   }
+00215: }
+00216: 
+00217: /**
+00218:  * Normaliza close_hour para SLOT (compatível com import):
+00219:  * - PT_RIO: HH:09 => slot HH:00
+00220:  * - outros: preserva HH:MM
+00221:  */
+00222: function normalizeCloseHourForLottery(value, lotteryKey) {
+00223:   const lk = upTrim(lotteryKey || "");
+00224:   const raw0 = normalizeHHMM(value);
+00225:   if (!raw0 || !isHHMM(raw0)) return { raw: "", slot: "" };
+00226: 
+00227:   if (lk === "PT_RIO") {
+00228:     const hh = raw0.slice(0, 2);
+00229:     const mm = raw0.slice(3, 5);
+00230:     const raw = mm === "09" ? "" : raw0;
+00231:     return { raw, slot: `${hh}:00` };
+00232:   }
+00233: 
+00234:   return { raw: raw0, slot: raw0 };
+00235: }
+00236: 
+00237: function hourFromCloseHourSlot(closeHour, lotteryKey) {
+00238:   const { slot } = normalizeCloseHourForLottery(closeHour, lotteryKey);
+00239:   const s0 = String(slot ?? "").trim();
+00240:   if (!s0) return null;
+00241:   const m = s0.match(/(\d{1,2})/);
+00242:   if (!m) return null;
+00243:   const hh = Number(m[1]);
+00244:   if (!Number.isFinite(hh) || hh < 0 || hh > 23) return null;
+00245:   return pad2(hh);
+00246: }
+00247: 
+00248: async function fetchDayDrawDocs(db, date) {
+00249:   const [snapDate, snapYmd] = await Promise.all([
+00250:     db.collection("draws").where("date", "==", date).get(),
+00251:     db.collection("draws").where("ymd", "==", date).get(),
+00252:   ]);
+00253: 
+00254:   const byId = new Map();
+00255: 
+00256:   for (const doc of snapDate.docs) byId.set(doc.id, doc);
+00257:   for (const doc of snapYmd.docs) byId.set(doc.id, doc);
+00258: 
+00259:   return Array.from(byId.values());
+00260: }
+00261: 
+00262: /* =========================
+00263:    Day Status cache
+00264: ========================= */
+00265: 
+00266: const _dayStatusCache = new Map();
+00267: const DAY_STATUS_TTL_MS = 60_000;
+00268: 
+00269: function readDayStatusMap(lottery, opts) {
+00270:   const key = upTrim(lottery || "PT_RIO") || "PT_RIO";
+00271:   const reload = !!(opts && opts.reload);
+00272: 
+00273:   const cached = _dayStatusCache.get(key);
+00274:   if (!reload && cached && Date.now() - cached.loadedAt < DAY_STATUS_TTL_MS) {
+00275:     return cached.map;
+00276:   }
+00277: 
+00278:   const p = path.join(__dirname, "..", "data", "day_status", `${key}.json`);
+00279:   let map = {};
+00280:   try {
+00281:     if (fs.existsSync(p)) {
+00282:       const raw = fs.readFileSync(p, "utf8");
+00283:       const j = raw ? JSON.parse(raw) : {};
+00284:       if (j && typeof j === "object") map = j;
+00285:     }
+00286:   } catch {
+00287:     map = {};
+00288:   }
+00289: 
+00290:   _dayStatusCache.set(key, { loadedAt: Date.now(), map });
+00291:   return map;
+00292: }
+00293: 
+00294: function shouldBlockDayStatus(dayStatus, strict) {
+00295:   if (dayStatus === "holiday_no_draw") return true;
+00296:   if (dayStatus === "incomplete") return true;
+00297:   if (strict && dayStatus === "partial_hard") return true;
+00298:   return false;
+00299: }
+00300: 
+00301: /* =========================
+00302:    SLOT SCHEDULE
+00303: ========================= */
+00304: 
+00305: const DEFAULT_SCHEDULE_DIR = path.join(__dirname, "..", "data", "slot_schedule");
+00306: const DEFAULT_GAPS_DIR = path.join(__dirname, "..", "data", "source_gaps");
+00307: 
+00308: function safeReadJson(p, fallback) {
+00309:   try {
+00310:     if (!fs.existsSync(p)) return fallback;
+00311:     const raw = fs.readFileSync(p, "utf8");
+00312:     const j = JSON.parse(raw || "{}");
+00313:     return j && typeof j === "object" ? j : fallback;
+00314:   } catch {
+00315:     return fallback;
+00316:   }
+00317: }
+00318: 
+00319: function normalizeHourList(arr) {
+00320:   const out = [];
+00321:   const seen = new Set();
+00322:   for (const v of Array.isArray(arr) ? arr : []) {
+00323:     const m = String(v ?? "").match(/\d{1,2}/);
+00324:     if (!m) continue;
+00325:     const hh = pad2(Number(m[0]));
+00326:     const n = Number(hh);
+00327:     if (!Number.isFinite(n) || n < 0 || n > 23) continue;
+00328:     if (!seen.has(hh)) {
+00329:       seen.add(hh);
+00330:       out.push(hh);
+00331:     }
+00332:   }
+00333:   return out.sort();
+00334: }
+00335: 
+00336: function shouldInclude09ForDate(ymd, include09FromYmd) {
+00337:   if (include09FromYmd && isISODate(include09FromYmd)) return ymd >= include09FromYmd;
+00338:   return false;
+00339: }
+00340: 
+00341: function expectedHoursPT_RIO_FALLBACK(ymd, include09FromYmd) {
+00342:   const d = new Date(`${ymd}T12:00:00-03:00`);
+00343:   const dow = d.getDay();
+00344: 
+00345:   const has09 = shouldInclude09ForDate(ymd, include09FromYmd);
+00346: 
+00347:   const hardWeek = ["11", "14", "16", "18", "21"];
+00348:   const hardSun = ["11", "14", "16"];
+00349: 
+00350:   const hard = [];
+00351:   const soft = [];
+00352: 
+00353:   if (dow === 0) {
+00354:     hard.push(...hardSun);
+00355:     if (has09) soft.push("09");
+00356:     return { hard, soft, mode: "fallback", scheduleFile: false };
+00357:   }
+00358: 
+00359:   if (has09) hard.push("09");
+00360:   hard.push(...hardWeek);
+00361: 
+00362:   return { hard, soft, mode: "fallback", scheduleFile: false };
+00363: }
+00364: 
+00365: function pickRangeForDate(ranges, ymd) {
+00366:   for (const r of Array.isArray(ranges) ? ranges : []) {
+00367:     const from0 = String(r?.from || "").trim();
+00368:     const to0 = String(r?.to || "").trim();
+00369: 
+00370:     const hasFrom = isISODate(from0);
+00371:     const hasTo = isISODate(to0);
+00372: 
+00373:     if (!hasFrom && !hasTo) return r;
+00374: 
+00375:     if (!hasFrom && hasTo) {
+00376:       if (ymd <= to0) return r;
+00377:       continue;
+00378:     }
+00379:     if (hasFrom && !hasTo) {
+00380:       if (ymd >= from0) return r;
+00381:       continue;
+00382:     }
+00383: 
+00384:     if (hasFrom && hasTo && ymd >= from0 && ymd <= to0) return r;
+00385:   }
+00386:   return null;
+00387: }
+00388: 
+00389: function parseScheduleGlobal(scheduleRaw) {
+00390:   const hard = normalizeHourList(scheduleRaw?.hard || scheduleRaw?.expectedHard || []);
+00391:   const soft = normalizeHourList(scheduleRaw?.soft || scheduleRaw?.expectedSoft || []);
+00392:   const hours = normalizeHourList(scheduleRaw?.hours || []);
+00393:   if (hours.length) return { hard: hours, soft: [], mode: "schedule", scheduleFile: true };
+00394:   if (hard.length || soft.length) return { hard, soft, mode: "schedule", scheduleFile: true };
+00395:   return null;
+00396: }
+00397: 
+00398: function getExpectedForDate(lotteryKey, ymd, include09FromYmdDefault) {
+00399:   const p = path.join(DEFAULT_SCHEDULE_DIR, `${lotteryKey}.json`);
+00400:   const scheduleRaw = safeReadJson(p, null);
+00401:   const scheduleFile = !!scheduleRaw;
+00402: 
+00403:   if (scheduleRaw) {
+00404:     const global = parseScheduleGlobal(scheduleRaw);
+00405:     if (global && (global.hard.length || global.soft.length)) return global;
+00406:   }
+00407: 
+00408:   const ranges = Array.isArray(scheduleRaw) ? scheduleRaw : scheduleRaw?.ranges;
+00409:   const r = pickRangeForDate(ranges, ymd);
+00410: 
+00411:   if (r) {
+00412:     if (r.dow && typeof r.dow === "object") {
+00413:       const d = new Date(String(ymd) + "T12:00:00-03:00");
+00414:       const dow = String(d.getDay());
+00415:       const block = r.dow[dow] || r.dow[Number(dow)] || null;
+00416: 
+00417:       const hard = normalizeHourList(block?.hard || block?.expectedHard || []);
+00418:       const soft = normalizeHourList(block?.soft || block?.expectedSoft || []);
+00419:       const hours = normalizeHourList(block?.hours || []);
+00420: 
+00421:       if (hours.length) return { hard: hours, soft: [], mode: "schedule", scheduleFile: true };
+00422:       return { hard, soft, mode: "schedule", scheduleFile: true };
+00423:     }
+00424: 
+00425:     const hard = normalizeHourList(r?.hard || r?.expectedHard || []);
+00426:     const soft = normalizeHourList(r?.soft || r?.expectedSoft || []);
+00427:     const hours = normalizeHourList(r?.hours || []);
+00428:     if (hours.length) return { hard: hours, soft: [], mode: "schedule", scheduleFile: true };
+00429:     return { hard, soft, mode: "schedule", scheduleFile: true };
+00430:   }
+00431: 
+00432:   if (lotteryKey === "PT_RIO") {
+00433:     return expectedHoursPT_RIO_FALLBACK(ymd, include09FromYmdDefault || "2024-01-05");
+00434:   }
+00435: 
+00436:   return { hard: [], soft: [], mode: "none", scheduleFile };
+00437: }
+00438: 
+00439: /* =========================
+00440:    SOURCE GAPS
+00441: ========================= */
+00442: 
+00443: const _gapsCache = new Map();
+00444: const GAPS_TTL_MS = 60_000;
+00445: 
+00446: function readGapsMap(lottery, opts) {
+00447:   const key = upTrim(lottery || "PT_RIO") || "PT_RIO";
+00448:   const reload = !!(opts && opts.reload);
+00449: 
+00450:   const cached = _gapsCache.get(key);
+00451:   if (!reload && cached && Date.now() - cached.loadedAt < GAPS_TTL_MS) {
+00452:     return cached.map;
+00453:   }
+00454: 
+00455:   const p = path.join(DEFAULT_GAPS_DIR, `${key}.json`);
+00456:   let map = {};
+00457:   try {
+00458:     if (fs.existsSync(p)) {
+00459:       const raw = fs.readFileSync(p, "utf8");
+00460:       const j = raw ? JSON.parse(raw) : {};
+00461:       if (j && typeof j === "object") map = j;
+00462:     }
+00463:   } catch {
+00464:     map = {};
+00465:   }
+00466: 
+00467:   _gapsCache.set(key, { loadedAt: Date.now(), map });
+00468:   return map;
+00469: }
+00470: 
+00471: function normalizeGapEntry(entry) {
+00472:   if (Array.isArray(entry)) {
+00473:     return {
+00474:       removedHard: normalizeHourList(entry),
+00475:       removedSoft: [],
+00476:     };
+00477:   }
+00478: 
+00479:   const obj = entry && typeof entry === "object" ? entry : {};
+00480:   const hard = obj.removedHard || obj.removeHard || obj.hard || obj.expectedRemovedHard || [];
+00481:   const soft = obj.removedSoft || obj.removeSoft || obj.soft || obj.expectedRemovedSoft || [];
+00482: 
+00483:   return {
+00484:     removedHard: normalizeHourList(hard),
+00485:     removedSoft: normalizeHourList(soft),
+00486:   };
+00487: }
+00488: 
+00489: function getGapsForDate(lotteryKey, ymd, opts) {
+00490:   const map = readGapsMap(lotteryKey, opts);
+00491:   const entry = map?.gapsByDay?.[ymd] ?? map?.[ymd];
+00492: 
+00493:   if (!entry) return { removedHard: [], removedSoft: [] };
+00494:   return normalizeGapEntry(entry);
+00495: }
+00496: 
+00497: /* =========================
+00498:    CONCURRENCY
+00499: ========================= */
+00500: 
+00501: async function mapWithConcurrency(items, limitN, mapper) {
+00502:   const arr = Array.isArray(items) ? items : [];
+00503:   const concurrency = Math.max(1, Number(limitN) || 6);
+00504:   const results = new Array(arr.length);
+00505:   let idx = 0;
+00506: 
+00507:   async function worker() {
+00508:     while (true) {
+00509:       const current = idx;
+00510:       idx += 1;
+00511:       if (current >= arr.length) break;
+00512:       results[current] = await mapper(arr[current], current);
+00513:     }
+00514:   }
+00515: 
+00516:   await Promise.all(
+00517:     Array.from({ length: Math.min(concurrency, arr.length) }, () => worker())
+00518:   );
+00519:   return results;
+00520: }
+00521: 
+00522: /* =========================
+00523:    ROUTE
+00524: ========================= */
+00525: 
+00526: function buildCalendarStatus({ slotsSummary, blocked = false, blockedReason = "", isToday = false }) {
+00527:   const expected = Number(slotsSummary?.expectedTotal || 0);
+00528:   const found = Number(slotsSummary?.foundTotal || 0);
+00529:   const missing = Number(slotsSummary?.missingTotal || 0);
+00530: 
+00531:   let status = "empty";
+00532:   if (blocked) status = blockedReason === "future_date" ? "future" : "blocked";
+00533:   else if (isToday && missing > 0) status = "pending";
+00534:   else if (expected > 0 && missing === 0) status = "complete";
+00535:   else if (found > 0 && missing > 0) status = "partial";
+00536:   else if (expected > 0 && found === 0) status = "empty";
+00537: 
+00538:   return {
+00539:     status,
+00540:     expected,
+00541:     found,
+00542:     missing,
+00543:     completionPct: Number(slotsSummary?.completionPct ?? 0),
+00544:   };
+00545: }
+00546: 
+00547: function buildSlots(opts) {
+00548:   const {
+00549:     scheduleAll,
+00550:     byHour,
+00551:     baseSoft,
+00552:     removedHardApplied,
+00553:     removedSoftApplied,
+00554:     expectedHard,
+00555:     expectedSoft,
+00556:     expectedHardPublished,
+00557:     expectedSoftPublished,
+00558:     capToday,
+00559:     isToday,
+00560:     nowMinBR,
+00561:     slotGraceMin,
+00562:   } = opts || {};
+00563: 
+00564:   return (Array.isArray(scheduleAll) ? scheduleAll : []).map((hh) => {
+00565:     const draw = byHour?.get ? byHour.get(hh) || null : null;
+00566: 
+00567:     const isSoft = Array.isArray(baseSoft) && baseSoft.includes(hh);
+00568:     const kind = isSoft ? "soft" : "hard";
+00569: 
+00570:     if (removedHardApplied?.has?.(hh) || removedSoftApplied?.has?.(hh)) {
+00571:       return { hour: hh, kind, status: "gap", reason: "source_gap", draw: null };
+00572:     }
+00573: 
+00574:     if (draw) return { hour: hh, kind, status: "valid", draw };
+00575: 
+00576:     if (
+00577:       capToday &&
+00578:       isToday &&
+00579:       ((expectedHard && expectedHard.includes(hh)) || (expectedSoft && expectedSoft.includes(hh)))
+00580:     ) {
+00581:       const published = isSlotPublishedToday(hh, nowMinBR, slotGraceMin);
+00582:       if (!published) {
+00583:         return { hour: hh, kind, status: "future", reason: "not_yet_published", draw: null };
+00584:       }
+00585:     }
+00586: 
+00587:     if (expectedHardPublished && expectedHardPublished.includes(hh)) {
+00588:       return { hour: hh, kind: "hard", status: "missing", draw: null };
+00589:     }
+00590:     if (expectedSoftPublished && expectedSoftPublished.includes(hh)) {
+00591:       return { hour: hh, kind: "soft", status: "soft_missing", draw: null };
+00592:     }
+00593: 
+00594:     return { hour: hh, kind, status: "gap", reason: "not_expected", draw: null };
+00595:   });
+00596: }
+00597: 
+00598: router.get("/results", async (req, res) => {
+00599:   if ((req.query.lotteryKey != null || req.query.lottery != null) && req.query.uf != null) {
+00600:     return res.status(400).json({
+00601:       ok: false,
+00602:       error:
+00603:         "Parâmetros conflitantes: quando 'lottery' (ou 'lotteryKey') é informado, 'uf' é ignorado. Remova 'uf' ou use apenas 'uf=RJ|BR' (legado).",
+00604:       hint: "Use: ?date=YYYY-MM-DD&lottery=PT_RIO|FEDERAL  (ou)  ?date=YYYY-MM-DD&uf=RJ|BR",
+00605:     });
+00606:   }
+00607: 
+00608:   const slotGraceMin = parsePosInt(req.query.slotGraceMin, 25, 0, 240);
+00609:   const noCapToday = parseBool01(req.query.noCapToday);
+00610:   const capToday = !noCapToday;
+00611: 
+00612:   const lotteryParam = req.query.lotteryKey ?? req.query.lottery ?? null;
+00613:   const legacyLottery = lotteryParam == null ? req.query.uf : null;
+00614: 
+00615:   const lotteryRaw = String(lotteryParam ?? legacyLottery ?? "").trim();
+00616:   const lotteryKey = normalizeLotteryKey(lotteryRaw);
+00617: 
+00618:   try {
+00619:     const date = String(req.query.date || "").trim();
+00620:     const lottery = lotteryKey;
+00621:     const strict = parseBool01(req.query.strict);
+00622:     const reloadDayStatus = parseBool01(req.query.reloadDayStatus);
+00623:     const reloadGaps = parseBool01(req.query.reloadGaps);
+00624: 
+00625:     const includePrizes =
+00626:       req.query.includePrizes == null ? true : parseBool01(req.query.includePrizes);
+00627:     const limitDocs = parsePosInt(req.query.limitDocs, 120, 20, 500);
+00628: 
+00629:     if (!date) return res.status(400).json({ ok: false, error: "date obrigatório" });
+00630:     if (!isISODate(date)) {
+00631:       return res.status(400).json({ ok: false, error: "date inválido (use YYYY-MM-DD)" });
+00632:     }
+00633:     if (!lotteryRaw) return res.status(400).json({ ok: false, error: "lottery obrigatório" });
+00634:     if (!lottery) {
+00635:       return res.status(400).json({
+00636:         ok: false,
+00637:         error: "lottery inválida: " + lotteryRaw + " (use lottery=PT_RIO|FEDERAL ou aliases RJ|BR)",
+00638:       });
+00639:     }
+00640: 
+00641:     if (isFutureISODate(date)) {
+00642:       const todayBR = todayYMDInSaoPaulo();
+00643:       return res.json({
+00644:         ok: true,
+00645:         date,
+00646:         lottery,
+00647:         strict,
+00648:         includePrizes,
+00649:         limitDocs,
+00650:         dayStatus: "",
+00651:         blocked: true,
+00652:         blockedReason: "future_date",
+00653:         todayBR,
+00654:         count: 0,
+00655:         draws: [],
+00656:         slots: [],
+00657:       });
+00658:     }
+00659: 
+00660:     const dayStatusMap = readDayStatusMap(lottery, { reload: reloadDayStatus });
+00661:     const dayStatus = String(dayStatusMap?.[date] || "").trim();
+00662: 
+00663:     const db = getDb();
+00664: 
+00665:     const docsDay = await fetchDayDrawDocs(db, date);
+00666: 
+00667:     const docsAll = docsDay.filter((doc) => {
+00668:       const d = doc.data() || {};
+00669:       const lkSnake = upTrim(d.lottery_key || "");
+00670:       const lkCamel = upTrim(d.lotteryKey || "");
+00671:       return lkSnake === lotteryKey || lkCamel === lotteryKey;
+00672:     });
+00673: 
+00674:     if (dayStatus && shouldBlockDayStatus(dayStatus, strict)) {
+00675:       if (!docsAll.length) {
+00676:         return res.json({
+00677:           ok: true,
+00678:           date,
+00679:           lottery,
+00680:           strict,
+00681:           includePrizes,
+00682:           limitDocs,
+00683:           dayStatus,
+00684:           blocked: true,
+00685:           blockedReason: "day_status_confirmed_no_docs",
+00686:           count: 0,
+00687:           draws: [],
+00688:           slots: [],
+00689:         });
+00690:       }
+00691:     }
+00692: 
+00693:     const docsFound = docsAll.length;
+00694:     const docs = docsAll.slice(0, limitDocs);
+00695:     const docsCapped = docs.length !== docsFound;
+00696: 
+00697:     const include09FromDefault = "2024-01-05";
+00698:     const expectedBase = getExpectedForDate(lottery, date, include09FromDefault);
+00699: 
+00700:     const baseHard = expectedBase?.hard || [];
+00701:     const baseSoft = expectedBase?.soft || [];
+00702: 
+00703:     const todayBR = todayYMDInSaoPaulo();
+00704:     const isToday = date === todayBR;
+00705:     const nowMinBR = nowMinutesInSaoPaulo();
+00706: 
+00707:     if (process.env.NODE_ENV === "development") {
+00708:       try {
+00709:         const dbg18 = isSlotPublishedToday("18", nowMinBR, slotGraceMin);
+00710:         const dbg21 = isSlotPublishedToday("21", nowMinBR, slotGraceMin);
+00711:         console.log("[pitaco/results][capToday]", {
+00712:           date,
+00713:           todayBR,
+00714:           isToday,
+00715:           nowMinBR,
+00716:           slotGraceMin,
+00717:           dbg18,
+00718:           dbg21,
+00719:         });
+00720:       } catch (e) {
+00721:         console.log("[pitaco/results][capToday] debug error", e?.message || e);
+00722:       }
+00723:     }
+00724: 
+00725:     const gaps = getGapsForDate(lottery, date, { reload: reloadGaps });
+00726:     const removedHardSet = new Set(gaps.removedHard || []);
+00727:     const removedSoftSet = new Set(gaps.removedSoft || []);
+00728: 
+00729:     const scheduleAll = uniqSorted([...baseHard, ...baseSoft]);
+00730: 
+00731:     const expectedHard = setDiff(baseHard, removedHardSet);
+00732:     const expectedSoft = setDiff(baseSoft, removedSoftSet);
+00733: 
+00734:     const expectedHardPublished =
+00735:       capToday && isToday
+00736:         ? expectedHard.filter((hh) => isSlotPublishedToday(hh, nowMinBR, slotGraceMin))
+00737:         : expectedHard;
+00738: 
+00739:     const expectedSoftPublished =
+00740:       capToday && isToday
+00741:         ? expectedSoft.filter((hh) => isSlotPublishedToday(hh, nowMinBR, slotGraceMin))
+00742:         : expectedSoft;
+00743: 
+00744:     const removedHardApplied = intersectToSet(baseHard, removedHardSet);
+00745:     const removedSoftApplied = intersectToSet(baseSoft, removedSoftSet);
+00746: 
+00747:     if (!includePrizes) {
+00748:       const drawsNoPrizes = docs.map((doc) => {
+00749:         const d = doc.data() || {};
+00750:         const cand = getCloseCandidate(d);
+00751:         const { raw, slot } = normalizeCloseHourForLottery(cand, lotteryKey);
+00752:         return {
+00753:           id: doc.id,
+00754:           ...d,
+00755:           close_hour: slot || normalizeHHMM(d.close_hour),
+00756:           close_hour_raw: raw || d.close_hour_raw || null,
+00757:           prizesCount: typeof d.prizesCount !== "undefined" ? d.prizesCount : undefined,
+00758:         };
+00759:       });
+00760: 
+00761:       drawsNoPrizes.sort((a, b) => cmpHHMM(a.close_hour, b.close_hour));
+00762: 
+00763:       const byHour = new Map();
+00764:       for (const dr of drawsNoPrizes) {
+00765:         const hh = hourFromCloseHourSlot(dr?.close_hour, lotteryKey);
+00766:         if (!hh) continue;
+00767:         const prev = byHour.get(hh);
+00768:         if (!prev) {
+00769:           byHour.set(hh, dr);
+00770:         } else {
+00771:           const a = String(prev.close_hour || "");
+00772:           const b = String(dr.close_hour || "");
+00773:           if (b && (!a || b < a)) byHour.set(hh, dr);
+00774:         }
+00775:       }
+00776: 
+00777:       const presentHours = uniqSorted(Array.from(byHour.keys()));
+00778: 
+00779:       const slots = buildSlots({
+00780:         scheduleAll,
+00781:         byHour,
+00782:         baseSoft,
+00783:         removedHardApplied,
+00784:         removedSoftApplied,
+00785:         expectedHard,
+00786:         expectedSoft,
+00787:         expectedHardPublished,
+00788:         expectedSoftPublished,
+00789:         capToday,
+00790:         isToday,
+00791:         nowMinBR,
+00792:         slotGraceMin,
+00793:       });
+00794: 
+00795:       const slotsSummary = {
+00796:         mode: expectedBase?.mode || "none",
+00797:         scheduleFile: !!expectedBase?.scheduleFile,
+00798:         scheduleHard: baseHard.length,
+00799:         scheduleSoft: baseSoft.length,
+00800:         scheduleAll: scheduleAll.length,
+00801:         expectedHard: expectedHard.length,
+00802:         expectedSoft: expectedSoft.length,
+00803:         expectedTotal: expectedHard.length + expectedSoft.length,
+00804:         presentHours: presentHours.length,
+00805:         foundTotal: presentHours.length,
+00806:         removedHard: removedHardApplied.size,
+00807:         removedSoft: removedSoftApplied.size,
+00808:         missingHard: slots.filter((s) => s.status === "missing").length,
+00809:         missingSoft: slots.filter((s) => s.status === "soft_missing").length,
+00810:         missingTotal:
+00811:           slots.filter((s) => s.status === "missing").length +
+00812:           slots.filter((s) => s.status === "soft_missing").length,
+00813:         completionPct:
+00814:           expectedHard.length + expectedSoft.length
+00815:             ? Number(
+00816:                 (
+00817:                   (presentHours.length /
+00818:                     (expectedHard.length + expectedSoft.length)) *
+00819:                   100
+00820:                 ).toFixed(1)
+00821:               )
+00822:             : 100,
+00823:       };
+00824: 
+00825:       return res.json({
+00826:         ok: true,
+00827:         date,
+00828:         lottery,
+00829:         strict,
+00830:         includePrizes,
+00831:         limitDocs,
+00832:         docsFound,
+00833:         docsCapped,
+00834:         dayStatus,
+00835:         blocked: false,
+00836:         count: drawsNoPrizes.length,
+00837:         draws: drawsNoPrizes,
+00838:         expectedHard,
+00839:         expectedSoft,
+00840:         presentHours,
+00841:         slotsSummary,
+00842:         calendarStatus: buildCalendarStatus({ slotsSummary, blocked: false, isToday }),
+00843:         slots,
+00844:       });
+00845:     }
+00846: 
+00847:     const draws = await mapWithConcurrency(docs, 6, async (doc) => {
+00848:       const d = doc.data() || {};
+00849:       const cand = getCloseCandidate(d);
+00850:       const { raw, slot } = normalizeCloseHourForLottery(cand, lotteryKey);
+00851: 
+00852:       const prizesSnap = await doc.ref.collection("prizes").orderBy("position", "asc").get();
+00853: 
+00854:       return {
+00855:         id: doc.id,
+00856:         ...d,
+00857:         close_hour: slot || normalizeHHMM(d.close_hour),
+00858:         close_hour_raw: raw || d.close_hour_raw || null,
+00859:         prizes: prizesSnap.docs.map((p) => p.data()),
+00860:       };
+00861:     });
+00862: 
+00863:     draws.sort((a, b) => cmpHHMM(a.close_hour, b.close_hour));
+00864: 
+00865:     const byHour = new Map();
+00866:     for (const dr of draws) {
+00867:       const hh = hourFromCloseHourSlot(dr?.close_hour, lotteryKey);
+00868:       if (!hh) continue;
+00869:       const prev = byHour.get(hh);
+00870:       if (!prev) {
+00871:         byHour.set(hh, dr);
+00872:       } else {
+00873:         const a = String(prev.close_hour || "");
+00874:         const b = String(dr.close_hour || "");
+00875:         if (b && (!a || b < a)) byHour.set(hh, dr);
+00876:       }
+00877:     }
+00878: 
+00879:     const presentHours = uniqSorted(Array.from(byHour.keys()));
+00880: 
+00881:     const slots = buildSlots({
+00882:       scheduleAll,
+00883:       byHour,
+00884:       baseSoft,
+00885:       removedHardApplied,
+00886:       removedSoftApplied,
+00887:       expectedHard,
+00888:       expectedSoft,
+00889:       expectedHardPublished,
+00890:       expectedSoftPublished,
+00891:       capToday,
+00892:       isToday,
+00893:       nowMinBR,
+00894:       slotGraceMin,
+00895:     });
+00896: 
+00897:     const slotsSummary = {
+00898:       mode: expectedBase?.mode || "none",
+00899:       scheduleFile: !!expectedBase?.scheduleFile,
+00900:       scheduleHard: baseHard.length,
+00901:       scheduleSoft: baseSoft.length,
+00902:       scheduleAll: scheduleAll.length,
+00903:       expectedHard: expectedHard.length,
+00904:       expectedSoft: expectedSoft.length,
+00905:       expectedTotal: expectedHard.length + expectedSoft.length,
+00906:       presentHours: presentHours.length,
+00907:       foundTotal: presentHours.length,
+00908:       removedHard: removedHardApplied.size,
+00909:       removedSoft: removedSoftApplied.size,
+00910:       missingHard: slots.filter((s) => s.status === "missing").length,
+00911:       missingSoft: slots.filter((s) => s.status === "soft_missing").length,
+00912:       missingTotal:
+00913:         slots.filter((s) => s.status === "missing").length +
+00914:         slots.filter((s) => s.status === "soft_missing").length,
+00915:       completionPct:
+00916:         expectedHard.length + expectedSoft.length
+00917:           ? Number(
+00918:               (
+00919:                 (presentHours.length /
+00920:                   (expectedHard.length + expectedSoft.length)) *
+00921:                 100
+00922:               ).toFixed(1)
+00923:             )
+00924:           : 100,
+00925:     };
+00926: 
+00927:     return res.json({
+00928:       ok: true,
+00929:       date,
+00930:       lottery,
+00931:       strict,
+00932:       includePrizes,
+00933:       limitDocs,
+00934:       docsFound,
+00935:       docsCapped,
+00936:       dayStatus,
+00937:       blocked: false,
+00938:       count: draws.length,
+00939:       draws,
+00940:       expectedHard,
+00941:       expectedSoft,
+00942:       presentHours,
+00943:       slotsSummary,
+00944:       calendarStatus: buildCalendarStatus({ slotsSummary, blocked: false, isToday }),
+00945:       slots,
+00946:     });
+00947:   } catch (e) {
+00948:     return res.status(500).json({ ok: false, error: e?.message || "erro" });
+00949:   }
+00950: });
+00951: 
+00952: module.exports = router;
+
+======================================================================================================================================================
+ARQUIVO: backend/scripts/auditFastPtRio.js
+======================================================================================================================================================
+00001: const fs = require("fs");
+00002: const path = require("path");
+00003: const { getDb } = require("../service/firebaseAdmin");
+00004: 
+00005: const LOTTERY = "PT_RIO";
+00006: const START = "2022-06-07";
+00007: const END = "2026-07-08";
+00008: const EXPECTED = ["09:00", "11:00", "14:00", "16:00", "18:00", "21:00"];
+00009: 
+00010: function addDays(ymd, n) {
+00011:   const d = new Date(ymd + "T00:00:00Z");
+00012:   d.setUTCDate(d.getUTCDate() + n);
+00013:   return d.toISOString().slice(0, 10);
+00014: }
+00015: 
+00016: function normHour(v) {
+00017:   const s = String(v || "").trim();
+00018:   const m = s.match(/(\d{1,2})[:hH]?(\d{2})?/);
+00019:   if (!m) return "";
+00020:   return `${String(Number(m[1])).padStart(2, "0")}:00`;
+00021: }
+00022: 
+00023: (async () => {
+00024:   const db = getDb();
+00025: 
+00026:   console.log("Buscando draws no Firestore...");
+00027: 
+00028:   const snap = await db
+00029:     .collection("draws")
+00030:     .where("lottery_key", "==", LOTTERY)
+00031:     .get();
+00032: 
+00033:   const byKey = new Map();
+00034:   const duplicates = [];
+00035: 
+00036:   for (const doc of snap.docs) {
+00037:     const d = doc.data();
+00038:     const ymd = d.ymd || d.date;
+00039:     const hour = normHour(d.close_hour || d.hour);
+00040:     if (!ymd || !hour) continue;
+00041: 
+00042:     const key = `${ymd}|${hour}`;
+00043:     if (!byKey.has(key)) byKey.set(key, []);
+00044:     byKey.get(key).push({ id: doc.id, ymd, hour });
+00045:   }
+00046: 
+00047:   const missing = [];
+00048: 
+00049:   for (let ymd = START; ymd <= END; ymd = addDays(ymd, 1)) {
+00050:     for (const hour of EXPECTED) {
+00051:       const rows = byKey.get(`${ymd}|${hour}`) || [];
+00052:       if (!rows.length) missing.push({ ymd, hour });
+00053:       if (rows.length > 1) duplicates.push({ ymd, hour, count: rows.length, ids: rows.map(x => x.id) });
+00054:     }
+00055:   }
+00056: 
+00057:   const report = {
+00058:     lottery: LOTTERY,
+00059:     start: START,
+00060:     end: END,
+00061:     totalDocs: snap.size,
+00062:     expectedPerDay: EXPECTED,
+00063:     missingCount: missing.length,
+00064:     duplicateCount: duplicates.length,
+00065:     missing,
+00066:     duplicates
+00067:   };
+00068: 
+00069:   const outJson = path.join(process.cwd(), "backend", "logs", `auditFast-${LOTTERY}-${START}_to_${END}.json`);
+00070:   fs.writeFileSync(outJson, JSON.stringify(report, null, 2), "utf8");
+00071: 
+00072:   const outCsv = path.join(process.cwd(), "backend", "logs", `auditFast-${LOTTERY}-${START}_to_${END}.csv`);
+00073:   fs.writeFileSync(
+00074:     outCsv,
+00075:     "type,ymd,hour,count,ids\n" +
+00076:       missing.map(x => `MISSING,${x.ymd},${x.hour},,`).join("\n") +
+00077:       "\n" +
+00078:       duplicates.map(x => `DUPLICATE,${x.ymd},${x.hour},${x.count},"${x.ids.join(" | ")}"`).join("\n"),
+00079:     "utf8"
+00080:   );
+00081: 
+00082:   console.log("\n========== AUDITORIA RÁPIDA ==========");
+00083:   console.log("Loteria:", LOTTERY);
+00084:   console.log("Docs encontrados:", snap.size);
+00085:   console.log("Furos:", missing.length);
+00086:   console.log("Duplicados:", duplicates.length);
+00087:   console.log("JSON:", outJson);
+00088:   console.log("CSV:", outCsv);
+00089: 
+00090:   console.log("\n--- ÚLTIMOS 80 FUROS ---");
+00091:   console.table(missing.slice(-80));
+00092: 
+00093:   console.log("\n--- ÚLTIMOS 20 DUPLICADOS ---");
+00094:   console.table(duplicates.slice(-20));
+00095: 
+00096:   process.exit(0);
+00097: })();
+
+======================================================================================================================================================
+ARQUIVO: backend/scripts/auditFirestorePtRioRange.js
+======================================================================================================================================================
+00001: const fs = require("fs");
+00002: const path = require("path");
+00003: const { getDb } = require("../service/firebaseAdmin");
+00004: 
+00005: const START = "2022-06-07";
+00006: const END = "2026-07-08";
+00007: const LOTTERY = "PT_RIO";
+00008: const EXPECTED = ["09:00", "11:00", "14:00", "16:00", "18:00", "21:00"];
+00009: 
+00010: function addDays(ymd, n) {
+00011:   const d = new Date(ymd + "T00:00:00Z");
+00012:   d.setUTCDate(d.getUTCDate() + n);
+00013:   return d.toISOString().slice(0, 10);
+00014: }
+00015: 
+00016: function normHour(v) {
+00017:   const s = String(v || "").trim();
+00018:   const m = s.match(/(\d{1,2})[:hH]?(\d{2})?/);
+00019:   if (!m) return "";
+00020:   return String(Number(m[1])).padStart(2, "0") + ":00";
+00021: }
+00022: 
+00023: (async () => {
+00024:   const db = getDb();
+00025: 
+00026:   const missing = [];
+00027:   const incomplete = [];
+00028:   const daily = [];
+00029: 
+00030:   for (let ymd = START; ymd <= END; ymd = addDays(ymd, 1)) {
+00031:     const snap = await db.collection("draws").where("ymd", "==", ymd).get();
+00032: 
+00033:     const byHour = new Map();
+00034: 
+00035:     for (const doc of snap.docs) {
+00036:       const d = doc.data();
+00037:       if (d.lottery_key !== LOTTERY) continue;
+00038: 
+00039:       const hour = normHour(d.close_hour || d.hour);
+00040:       if (!hour) continue;
+00041: 
+00042:       const prizes = await doc.ref.collection("prizes").get();
+00043: 
+00044:       byHour.set(hour, {
+00045:         id: doc.id,
+00046:         prizes: prizes.size,
+00047:       });
+00048:     }
+00049: 
+00050:     const found = [...byHour.keys()].sort();
+00051: 
+00052:     daily.push({
+00053:       ymd,
+00054:       found: found.length,
+00055:       hours: found,
+00056:     });
+00057: 
+00058:     for (const h of EXPECTED) {
+00059:       const row = byHour.get(h);
+00060: 
+00061:       if (!row) {
+00062:         missing.push({ ymd, hour: h });
+00063:       } else if (row.prizes < 7) {
+00064:         incomplete.push({ ymd, hour: h, prizes: row.prizes, id: row.id });
+00065:       }
+00066:     }
+00067:   }
+00068: 
+00069:   const report = {
+00070:     lottery: LOTTERY,
+00071:     start: START,
+00072:     end: END,
+00073:     expectedPerDay: EXPECTED,
+00074:     missingCount: missing.length,
+00075:     incompleteCount: incomplete.length,
+00076:     missing,
+00077:     incomplete,
+00078:     daily,
+00079:   };
+00080: 
+00081:   const out = path.join(process.cwd(), "backend", "logs", `auditFirestore-${LOTTERY}-${START}_to_${END}.json`);
+00082:   fs.writeFileSync(out, JSON.stringify(report, null, 2), "utf8");
+00083: 
+00084:   console.log("\n========== AUDITORIA FIRESTORE ==========");
+00085:   console.log("Loteria:", LOTTERY);
+00086:   console.log("Período:", START, "até", END);
+00087:   console.log("Furos:", missing.length);
+00088:   console.log("Incompletos:", incomplete.length);
+00089:   console.log("Arquivo:", out);
+00090: 
+00091:   console.log("\n--- ÚLTIMOS 80 FUROS ---");
+00092:   console.table(missing.slice(-80));
+00093: 
+00094:   console.log("\n--- ÚLTIMOS 40 INCOMPLETOS ---");
+00095:   console.table(incomplete.slice(-40));
+00096: 
+00097:   process.exit(0);
+00098: })();
+
+======================================================================================================================================================
+ARQUIVO: backend/scripts/auditRealGradePtRio.js
+======================================================================================================================================================
+00001: const fs = require("fs");
+00002: const path = require("path");
+00003: const { getDb } = require("../service/firebaseAdmin");
+00004: 
+00005: const LOTTERY = "PT_RIO";
+00006: const START = "2022-06-07";
+00007: const END = "2026-07-08";
+00008: const END_LIMIT_HOUR = "11:00";
+00009: 
+00010: function addDays(ymd, n) {
+00011:   const d = new Date(ymd + "T00:00:00Z");
+00012:   d.setUTCDate(d.getUTCDate() + n);
+00013:   return d.toISOString().slice(0, 10);
+00014: }
+00015: 
+00016: function normHour(v) {
+00017:   const s = String(v || "").trim();
+00018:   const m = s.match(/(\d{1,2})[:hH]?(\d{2})?/);
+00019:   if (!m) return "";
+00020:   return `${String(Number(m[1])).padStart(2, "0")}:00`;
+00021: }
+00022: 
+00023: function expectedHoursForDay(ymd) {
+00024:   const dow = new Date(ymd + "T00:00:00Z").getUTCDay();
+00025: 
+00026:   let hours;
+00027:   if (dow === 0) {
+00028:     hours = ["09:00", "11:00", "14:00", "16:00"];
+00029:   } else if (dow === 3 || dow === 6) {
+00030:     hours = ["09:00", "11:00", "14:00", "16:00", "18:00"];
+00031:   } else {
+00032:     hours = ["09:00", "11:00", "14:00", "16:00", "18:00", "21:00"];
+00033:   }
+00034: 
+00035:   if (ymd === END) {
+00036:     hours = hours.filter(h => h <= END_LIMIT_HOUR);
+00037:   }
+00038: 
+00039:   return hours;
+00040: }
+00041: 
+00042: (async () => {
+00043:   const db = getDb();
+00044: 
+00045:   console.log("Buscando draws PT_RIO no Firestore...");
+00046: 
+00047:   const snap = await db
+00048:     .collection("draws")
+00049:     .where("lottery_key", "==", LOTTERY)
+00050:     .get();
+00051: 
+00052:   const byKey = new Map();
+00053:   const duplicates = [];
+00054: 
+00055:   for (const doc of snap.docs) {
+00056:     const d = doc.data();
+00057:     const ymd = d.ymd || d.date;
+00058:     const hour = normHour(d.close_hour || d.hour);
+00059:     if (!ymd || !hour) continue;
+00060: 
+00061:     const key = `${ymd}|${hour}`;
+00062:     if (!byKey.has(key)) byKey.set(key, []);
+00063:     byKey.get(key).push({ id: doc.id, ymd, hour });
+00064:   }
+00065: 
+00066:   const missing = [];
+00067:   const daily = [];
+00068:   let expectedTotal = 0;
+00069: 
+00070:   for (let ymd = START; ymd <= END; ymd = addDays(ymd, 1)) {
+00071:     const expected = expectedHoursForDay(ymd);
+00072:     expectedTotal += expected.length;
+00073: 
+00074:     const found = expected.filter(h => (byKey.get(`${ymd}|${h}`) || []).length > 0);
+00075:     const absent = expected.filter(h => !(byKey.get(`${ymd}|${h}`) || []).length);
+00076: 
+00077:     daily.push({
+00078:       ymd,
+00079:       dow: new Date(ymd + "T00:00:00Z").getUTCDay(),
+00080:       expectedCount: expected.length,
+00081:       foundCount: found.length,
+00082:       missingCount: absent.length,
+00083:       expected,
+00084:       found,
+00085:       missing: absent,
+00086:     });
+00087: 
+00088:     for (const hour of expected) {
+00089:       const rows = byKey.get(`${ymd}|${hour}`) || [];
+00090:       if (!rows.length) missing.push({ ymd, hour });
+00091: 
+00092:       if (rows.length > 1) {
+00093:         duplicates.push({
+00094:           ymd,
+00095:           hour,
+00096:           count: rows.length,
+00097:           ids: rows.map(x => x.id),
+00098:         });
+00099:       }
+00100:     }
+00101:   }
+00102: 
+00103:   const report = {
+00104:     lottery: LOTTERY,
+00105:     start: START,
+00106:     end: END,
+00107:     endLimitHour: END_LIMIT_HOUR,
+00108:     totalDocsInFirestore: snap.size,
+00109:     expectedTotal,
+00110:     foundExpected: expectedTotal - missing.length,
+00111:     missingCount: missing.length,
+00112:     duplicateCount: duplicates.length,
+00113:     missing,
+00114:     duplicates,
+00115:     daily,
+00116:   };
+00117: 
+00118:   const base = `auditRealGrade-${LOTTERY}-${START}_to_${END}_until_${END_LIMIT_HOUR.replace(":","-")}`;
+00119:   const outJson = path.join(process.cwd(), "backend", "logs", `${base}.json`);
+00120:   const outCsv = path.join(process.cwd(), "backend", "logs", `${base}.csv`);
+00121: 
+00122:   fs.writeFileSync(outJson, JSON.stringify(report, null, 2), "utf8");
+00123: 
+00124:   fs.writeFileSync(
+00125:     outCsv,
+00126:     "type,ymd,hour,count,ids\n" +
+00127:       missing.map(x => `MISSING,${x.ymd},${x.hour},,`).join("\n") +
+00128:       "\n" +
+00129:       duplicates.map(x => `DUPLICATE,${x.ymd},${x.hour},${x.count},"${x.ids.join(" | ")}"`).join("\n"),
+00130:     "utf8"
+00131:   );
+00132: 
+00133:   console.log("\n========== AUDITORIA GRADE REAL PT_RIO ==========");
+00134:   console.log("Período:", START, "até", END, "limite", END_LIMIT_HOUR);
+00135:   console.log("Docs PT_RIO no Firestore:", snap.size);
+00136:   console.log("Sorteios esperados pela grade:", expectedTotal);
+00137:   console.log("Sorteios encontrados da grade:", expectedTotal - missing.length);
+00138:   console.log("Furos reais estimados:", missing.length);
+00139:   console.log("Duplicados:", duplicates.length);
+00140:   console.log("JSON:", outJson);
+00141:   console.log("CSV:", outCsv);
+00142: 
+00143:   console.log("\n--- ÚLTIMOS 80 FUROS REAIS ---");
+00144:   console.table(missing.slice(-80));
+00145: 
+00146:   console.log("\n--- DIAS COM MAIS FUROS ---");
+00147:   console.table(
+00148:     daily
+00149:       .filter(d => d.missingCount > 0)
+00150:       .sort((a,b) => b.missingCount - a.missingCount || b.ymd.localeCompare(a.ymd))
+00151:       .slice(0, 40)
+00152:       .map(d => ({
+00153:         ymd: d.ymd,
+00154:         esperado: d.expectedCount,
+00155:         encontrado: d.foundCount,
+00156:         faltando: d.missingCount,
+00157:         horas: d.missing.join(" ")
+00158:       }))
+00159:   );
+00160: 
+00161:   process.exit(0);
+00162: })();
+
+======================================================================================================================================================
+ARQUIVO: backend/scripts/autoImportToday.js
+======================================================================================================================================================
+00001: "use strict";
+00002: 
+00003: const fs = require("fs");
+00004: const path = require("path");
+00005: const axios = require("axios");
+00006: 
+00007: /* =========================
+00008:    DOW seguro para YYYY-MM-DD (independe de timezone)
+00009:    - calcula como UTC do próprio dia
+00010: ========================= */
+00011: function dowFromYMD(dateYMD) {
+00012:   const m = String(dateYMD || "").match(/^(\d{4})-(\d{2})-(\d{2})$/);
+00013:   if (!m) return new Date(dateYMD).getDay(); // fallback
+00014:   const y = Number(m[1]);
+00015:   const mo = Number(m[2]) - 1;
+00016:   const d = Number(m[3]);
+00017:   return new Date(Date.UTC(y, mo, d)).getUTCDay();
+00018: }
+00019: 
+00020: const { runImport } = require("./importKingApostas");
+00021: 
+00022: // ✅ LOTTERY parametrizável por env (default PT_RIO)
+00023: const LOTTERY = String(process.env.LOTTERY || "PT_RIO").trim().toUpperCase() || "PT_RIO";
+00024: 
+00025: const LOG_DIR = path.join(__dirname, "..", "logs");
+00026: 
+00027: // Logs (por loteria para não misturar)
+00028: const LOG_FILE = path.join(LOG_DIR, `autoImportToday-${LOTTERY}.log`);
+00029: 
+00030: // Lock para evitar concorrência (por loteria)
+00031: const LOCK_FILE = path.join(LOG_DIR, `autoImport-${LOTTERY}.lock`);
+00032: 
+00033: // TTL do lock (ambientes locais). Em GitHub Actions, o workspace é isolado por execução.
+00034: const LOCK_TTL_MS = 90 * 1000; // 1m30s
+00035: 
+00036: // Auditoria: thresholds (minutos)
+00037: const WARN_AFTER_MIN = Number(process.env.AUDIT_WARN_MIN || 20);
+00038: const CRIT_AFTER_MIN = Number(process.env.AUDIT_CRIT_MIN || 60);
+00039: const FAIL_ON_CRITICAL = String(process.env.FAIL_ON_CRITICAL || "0").trim() === "1";
+00040: 
+00041: // ✅ Limite de catch-up pós-janela (minutos após windowEnd)
+00042: // Default 90 (reduz spam em cron fora da janela)
+00043: const CATCHUP_MAX_AFTER_END_MIN = Number(process.env.CATCHUP_MAX_AFTER_END_MIN || 90);
+00044: 
+00045: // ✅ PROBE/SOFT da FEDERAL: limite de tentativas por slot/dia (anti-spam)
+00046: // default 2 (tenta 2 ticks e para, mesmo que o cron rode mais vezes)
+00047: const FEDERAL_SOFT_MAX_TRIES_PER_DAY = Number(process.env.FEDERAL_SOFT_MAX_TRIES_PER_DAY || 2);
+00048: 
+00049: /**
+00050:  * ✅ Base URL do backend (pra ler dayStatus sem duplicar regra)
+00051:  * - Local default: http://127.0.0.1:3333
+00052:  * - Override: PITACO_API_BASE="https://seu-dominio"
+00053:  */
+00054: let PITACO_API_BASE = String(process.env.PITACO_API_BASE || "http://127.0.0.1:3333").trim();
+00055: 
+00056: // ✅ hardening: se vier "localhost:3334" (ou 3333 errado), cai automaticamente pro backend local padrão
+00057: try {
+00058:   const u = new URL(PITACO_API_BASE);
+00059:   const host = String(u.hostname || "").toLowerCase();
+00060:   const port = String(u.port || "");
+00061:   if ((host === "localhost" || host === "127.0.0.1") && port === "3334") {
+00062:     PITACO_API_BASE = "http://127.0.0.1:3333";
+00063:   }
+00064: } catch {}
+00065: 
+00066: // ✅ log da base efetiva (ajuda a detectar env poluído)
+00067: try {
+00068:   const eff = PITACO_API_BASE;
+00069:   if (!globalThis.__PITACO_API_BASE_LOGGED__) {
+00070:     globalThis.__PITACO_API_BASE_LOGGED__ = true;
+00071:     console.log(`[CFG] PITACO_API_BASE efetivo => ${eff}`);
+00072:   }
+00073: } catch {}
+00074: 
+00075: /**
+00076:  * ✅ Cache do DayStatus (evita bater no backend a cada tick do cron)
+00077:  * - Arquivo por (loteria+dia)
+00078:  * - TTL default: 10 min
+00079:  */
+00080: const DAYSTATUS_CACHE_TTL_SEC = Number(process.env.DAYSTATUS_CACHE_TTL_SEC || 600);
+00081: 
+00082: function dayStatusCacheFile(dateYMD) {
+00083:   return path.join(LOG_DIR, `dayStatusCache-${LOTTERY}-${dateYMD}.json`);
+00084: }
+00085: 
+00086: function readJsonSafeFile(p) {
+00087:   try {
+00088:     if (!fs.existsSync(p)) return null;
+00089:     return JSON.parse(fs.readFileSync(p, "utf8"));
+00090:   } catch {
+00091:     return null;
+00092:   }
+00093: }
+00094: 
+00095: function writeJsonSafeFile(p, obj) {
+00096:   try {
+00097:     ensureLogDir();
+00098:     const tmp = `${p}.tmp`;
+00099:     fs.writeFileSync(tmp, JSON.stringify(obj, null, 2));
+00100:     fs.renameSync(tmp, p);
+00101:   } catch {}
+00102: }
+00103: 
+00104: async function fetchDayStatusCached({ date, lottery }) {
+00105:   const f = dayStatusCacheFile(date);
+00106:   const nowMs = Date.now();
+00107:   const cached = readJsonSafeFile(f);
+00108: 
+00109:   if (cached && cached.atMs && nowMs - Number(cached.atMs) < DAYSTATUS_CACHE_TTL_SEC * 1000) {
+00110:     return cached.value || null;
+00111:   }
+00112: 
+00113:   const value = await fetchDayStatusFromBackend({ date, lottery });
+00114:   writeJsonSafeFile(f, { atMs: nowMs, iso: new Date().toISOString(), value });
+00115:   return value;
+00116: }
+00117: 
+00118: /* =========================
+00119:    Schedules (por loteria)
+00120: ========================= */
+00121: const SCHEDULES = {
+00122:   PT_RIO: [
+00123:     { hour: "09:00", windowStart: "09:05", releaseAt: "09:29", windowEnd: "09:35" },
+00124:     { hour: "11:00", windowStart: "11:05", releaseAt: "11:29", windowEnd: "11:35" },
+00125:     { hour: "14:00", windowStart: "14:05", releaseAt: "14:29", windowEnd: "14:35" },
+00126:     { hour: "16:00", windowStart: "16:05", releaseAt: "16:29", windowEnd: "16:35" },
+00127:     { hour: "18:00", windowStart: "18:05", releaseAt: "18:29", windowEnd: "18:35" },
+00128:     // 21h: janela longa
+00129:     { hour: "21:00", windowStart: "21:05", releaseAt: "21:05", windowEnd: "21:45" },
+00130:   ],
+00131: 
+00132:   // FEDERAL
+00133:   // - 19:00 = PROBE (SOFT)
+00134:   // - 20:00 = HARD (padrão)
+00135:   FEDERAL: [
+00136:     { hour: "19:00", windowStart: "18:50", releaseAt: "19:00", windowEnd: "19:20" }, // PROBE (SOFT)
+00137:     { hour: "20:00", windowStart: "19:50", releaseAt: "20:00", windowEnd: "20:20" }, // HARD
+00138:   ],
+00139: };
+00140: 
+00141: const SCHEDULE = Array.isArray(SCHEDULES[LOTTERY]) ? SCHEDULES[LOTTERY] : SCHEDULES.PT_RIO;
+00142: 
+00143: /* =========================
+00144:    Utils
+00145: ========================= */
+00146: function ensureLogDir() {
+00147:   if (!fs.existsSync(LOG_DIR)) fs.mkdirSync(LOG_DIR, { recursive: true });
+00148: }
+00149: 
+00150: function tsLocal() {
+00151:   try {
+00152:     const fmt = new Intl.DateTimeFormat("pt-BR", {
+00153:       timeZone: "America/Sao_Paulo",
+00154:       year: "numeric",
+00155:       month: "2-digit",
+00156:       day: "2-digit",
+00157:       hour: "2-digit",
+00158:       minute: "2-digit",
+00159:       second: "2-digit",
+00160:       hour12: false,
+00161:     });
+00162:     return fmt.format(new Date()).replace(",", "");
+00163:   } catch {
+00164:     const d = new Date();
+00165:     const yyyy = d.getFullYear();
+00166:     const mm = String(d.getMonth() + 1).padStart(2, "0");
+00167:     const dd = String(d.getDate()).padStart(2, "0");
+00168:     const hh = String(d.getHours()).padStart(2, "0");
+00169:     const mi = String(d.getMinutes()).padStart(2, "0");
+00170:     const ss = String(d.getSeconds()).padStart(2, "0");
+00171:     return `${yyyy}-${mm}-${dd} ${hh}:${mi}:${ss}`;
+00172:   }
+00173: }
+00174: 
+00175: function logLine(msg, level = "INFO") {
+00176:   ensureLogDir();
+00177:   const line = `[${tsLocal()}] [${level}] [${LOTTERY}] ${msg}\n`;
+00178:   try {
+00179:     fs.appendFileSync(LOG_FILE, line);
+00180:   } catch {}
+00181:   if (level === "ERROR") console.error(msg);
+00182:   else console.log(msg);
+00183: }
+00184: 
+00185: function pad2(n) {
+00186:   return String(n).padStart(2, "0");
+00187: }
+00188: 
+00189: function isISODate(s) {
+00190:   return /^\d{4}-\d{2}-\d{2}$/.test(String(s || "").trim());
+00191: }
+00192: 
+00193: function todayYMDInSaoPaulo() {
+00194:   try {
+00195:     const fmt = new Intl.DateTimeFormat("en-CA", {
+00196:       timeZone: "America/Sao_Paulo",
+00197:       year: "numeric",
+00198:       month: "2-digit",
+00199:       day: "2-digit",
+00200:     });
+00201:     return fmt.format(new Date());
+00202:   } catch {
+00203:     const d = new Date();
+00204:     return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+00205:   }
+00206: }
+00207: 
+00208: function nowHMInSaoPaulo() {
+00209:   // ✅ Override para testes (sem mexer no relógio do sistema)
+00210:   const ov = String(process.env.NOW_HM || "").trim();
+00211:   const mOv = ov.match(/^(\d{2}):(\d{2})$/);
+00212:   if (mOv) {
+00213:     const h = Number(mOv[1]);
+00214:     const m = Number(mOv[2]);
+00215:     if (Number.isFinite(h) && Number.isFinite(m) && h >= 0 && h <= 23 && m >= 0 && m <= 59) {
+00216:       return { h, m };
+00217:     }
+00218:   }
+00219: 
+00220:   try {
+00221:     const parts = new Intl.DateTimeFormat("en-GB", {
+00222:       timeZone: "America/Sao_Paulo",
+00223:       hour: "2-digit",
+00224:       minute: "2-digit",
+00225:       hour12: false,
+00226:     })
+00227:       .format(new Date())
+00228:       .split(":");
+00229:     return { h: Number(parts[0]), m: Number(parts[1]) };
+00230:   } catch {
+00231:     const d = new Date();
+00232:     return { h: d.getHours(), m: d.getMinutes() };
+00233:   }
+00234: }
+00235: 
+00236: function isNowHmOverrideActive() {
+00237:   const ov = String(process.env.NOW_HM || "").trim();
+00238:   return /^\d{2}:\d{2}$/.test(ov);
+00239: }
+00240: 
+00241: function isFutureISODate(ymd) {
+00242:   if (!isISODate(ymd)) return false;
+00243:   const todayBR = todayYMDInSaoPaulo();
+00244:   return String(ymd) > String(todayBR);
+00245: }
+00246: 
+00247: function toMin(h, m) {
+00248:   return Number(h) * 60 + Number(m);
+00249: }
+00250: 
+00251: function parseHHMM(hhmm) {
+00252:   const s = String(hhmm || "").trim();
+00253:   const m = s.match(/^(\d{2}):(\d{2})$/);
+00254:   if (!m) return null;
+00255:   return { h: Number(m[1]), m: Number(m[2]) };
+00256: }
+00257: 
+00258: function parseHH(hhmm) {
+00259:   const h = Number(String(hhmm).slice(0, 2));
+00260:   const m = Number(String(hhmm).slice(3, 5));
+00261:   return { h, m };
+00262: }
+00263: 
+00264: function stateFile(date) {
+00265:   return path.join(LOG_DIR, `autoImportState-${LOTTERY}-${date}.json`);
+00266: }
+00267: 
+00268: function defaultState() {
+00269:   const init = {};
+00270:   for (const s of SCHEDULE) {
+00271:     init[s.hour] = {
+00272:       done: false,
+00273:       tries: 0,
+00274:       lastTryISO: null,
+00275:       lastResult: null,
+00276:       lastTriedCloses: null,
+00277:       na: false,
+00278:       naReason: null,
+00279:       alertMissedWindow: false,
+00280:       alertCritical: false,
+00281:     };
+00282:   }
+00283:   return init;
+00284: }
+00285: 
+00286: function safeWriteJson(filePath, obj) {
+00287:   ensureLogDir();
+00288:   const tmp = `${filePath}.tmp`;
+00289:   fs.writeFileSync(tmp, JSON.stringify(obj, null, 2));
+00290:   fs.renameSync(tmp, filePath);
+00291: }
+00292: 
+00293: function loadState(date) {
+00294:   const f = stateFile(date);
+00295:   if (!fs.existsSync(f)) {
+00296:     const init = defaultState();
+00297:     safeWriteJson(f, init);
+00298:     return init;
+00299:   }
+00300: 
+00301:   let parsed = null;
+00302:   try {
+00303:     parsed = JSON.parse(fs.readFileSync(f, "utf8"));
+00304:   } catch {
+00305:     const init = defaultState();
+00306:     safeWriteJson(f, init);
+00307:     return init;
+00308:   }
+00309: 
+00310:   const migrated = defaultState();
+00311:   for (const s of SCHEDULE) {
+00312:     const v = parsed?.[s.hour];
+00313: 
+00314:     if (typeof v === "boolean") {
+00315:       migrated[s.hour].done = v;
+00316:       continue;
+00317:     }
+00318: 
+00319:     if (v && typeof v === "object") {
+00320:       migrated[s.hour] = {
+00321:         ...migrated[s.hour],
+00322:         done: Boolean(v.done),
+00323:         tries: Number.isFinite(Number(v.tries)) ? Number(v.tries) : 0,
+00324:         lastTryISO: typeof v.lastTryISO === "string" ? v.lastTryISO : null,
+00325:         lastResult: v.lastResult ?? null,
+00326:         lastTriedCloses: Array.isArray(v.lastTriedCloses) ? v.lastTriedCloses : null,
+00327:         na: Boolean(v.na),
+00328:         naReason: typeof v.naReason === "string" ? v.naReason : null,
+00329:         alertMissedWindow: Boolean(v.alertMissedWindow),
+00330:         alertCritical: Boolean(v.alertCritical),
+00331:       };
+00332:     }
+00333:   }
+00334: 
+00335:   return migrated;
+00336: }
+00337: 
+00338: function saveState(date, state) {
+00339:   safeWriteJson(stateFile(date), state);
+00340: }
+00341: 
+00342: function isAllDoneHardOnly(state, statusMap) {
+00343:   let hardCount = 0;
+00344: 
+00345:   for (const sched of SCHEDULE) {
+00346:     const st = statusMap.get(sched.hour) || "OFF";
+00347:     if (st !== "HARD") continue;
+00348: 
+00349:     hardCount += 1;
+00350:     if (!state[sched.hour] || state[sched.hour].done !== true) {
+00351:       return false;
+00352:     }
+00353:   }
+00354: 
+00355:   if (hardCount === 0) return false;
+00356:   return true;
+00357: }
+00358: 
+00359: /**
+00360:  * Gera closes candidatos (tolerância de minutos)
+00361:  */
+00362: function closeCandidates(hhmm) {
+00363:   const s = String(hhmm || "").trim();
+00364: 
+00365:   // PT_RIO 21h pode sair como fechamento de 21:30.
+00366:   // Mantém os closes históricos e adiciona a faixa 21:29~21:32.
+00367:   if (LOTTERY === "PT_RIO" && s === "21:00") {
+00368:     return [
+00369:       "21:00", "21:01", "21:02",
+00370:       "21:09", "21:10", "21:11",
+00371:       "21:29", "21:30", "21:31", "21:32"
+00372:     ];
+00373:   }
+00374: 
+00375:   const parsed = parseHH(s);
+00376:   if (!parsed) return [];
+00377:   const { h } = parsed;
+00378: 
+00379:   const out = new Set();
+00380:   const bases = [0, 9];
+00381:   const deltas = [0, 1, 2];
+00382: 
+00383:   for (const base of bases) {
+00384:     for (const d of deltas) {
+00385:       const mm = base + d;
+00386:       if (mm >= 0 && mm <= 59) out.add(`${pad2(h)}:${pad2(mm)}`);
+00387:     }
+00388:   }
+00389:   return Array.from(out);
+00390: }
+00391: 
+00392: /* =========================
+00393:    FEDERAL PROBE: valida se o resultado pertence ao horário do slot
+00394:    - usa targetDrawIds no formato: FEDERAL__YYYY-MM-DD__20-00__uuid
+00395: ========================= */
+00396: function slotHourKey(slotHHMM) {
+00397:   const hh = String(slotHHMM || "").slice(0, 2);
+00398:   const mm = String(slotHHMM || "").slice(3, 5);
+00399:   if (!/^\d{2}$/.test(hh) || !/^\d{2}$/.test(mm)) return "";
+00400:   return hh + "-" + mm; // ex: "19-00"
+00401: }
+00402: 
+00403: function resultMatchesSlotHour(r, slotHHMM) {
+00404:   const key = slotHourKey(slotHHMM);
+00405:   if (!key) return true; // se não dá pra inferir, não bloqueia
+00406:   const ids = Array.isArray(r && r.targetDrawIds) ? r.targetDrawIds.map(String) : [];
+00407:   if (ids.length === 0) return true; // sem id, não bloqueia
+00408:   return ids.some((id) => String(id).includes("__" + key + "__"));
+00409: }
+00410: 
+00411: /* =========================
+00412:    Regras de aplicabilidade
+00413: ========================= */
+00414: function buildTodaySlotStatusMapPT_RIO(dateYMD, dow) {
+00415:   const map = new Map();
+00416: 
+00417:   const isSunday = dow === 0;
+00418:   const isWed = dow === 3;
+00419:   const isSat = dow === 6;
+00420: 
+00421:   for (const sched of SCHEDULE) {
+00422:     const hh = sched.hour;
+00423: 
+00424:     if (isSunday) {
+00425:       if (hh === "18:00" || hh === "21:00") map.set(hh, "OFF");
+00426:       else map.set(hh, "HARD");
+00427:       continue;
+00428:     }
+00429: 
+00430:     if (isWed || isSat) {
+00431:       if (hh === "18:00") map.set(hh, "SOFT");
+00432:       else map.set(hh, "HARD");
+00433:       continue;
+00434:     }
+00435: 
+00436:     map.set(hh, "HARD");
+00437:   }
+00438: 
+00439:   if (isSunday) {
+00440:     logLine(`[CAL] PT_RIO domingo: date=${dateYMD} dow=${dow} => HARD=[09,11,14,16] OFF=[18,21]`, "INFO");
+00441:   } else if (isWed || isSat) {
+00442:     logLine(`[CAL] PT_RIO qua/sab: date=${dateYMD} dow=${dow} => HARD=[09,11,14,16,21] SOFT=[18]`, "INFO");
+00443:   } else {
+00444:     logLine(`[CAL] PT_RIO seg-sex: date=${dateYMD} dow=${dow} => HARD=[09,11,14,16,18,21]`, "INFO");
+00445:   }
+00446: 
+00447:   return map;
+00448: }
+00449: 
+00450: /**
+00451:  * FEDERAL (robusto / independente de expectedHard do backend):
+00452:  * - domingo: OFF
+00453:  * - demais dias: 19:00 = SOFT (PROBE), 20:00 = HARD (padrão)
+00454:  * Obs: ainda logamos expectedHard/expectedSoft como debug, mas não usamos como "fonte da verdade".
+00455:  */
+00456: function buildTodaySlotStatusMapFEDERAL({ dateYMD, dow, ds }) {
+00457:   const map = new Map();
+00458:   const isSunday = dow === 0;
+00459: 
+00460:   const expectedHard = Array.isArray(ds?.expectedHard) ? ds.expectedHard.map(String) : [];
+00461:   const expectedSoft = Array.isArray(ds?.expectedSoft) ? ds.expectedSoft.map(String) : [];
+00462: 
+00463:   for (const sched of SCHEDULE) {
+00464:     if (isSunday) {
+00465:       map.set(sched.hour, "OFF");
+00466:       continue;
+00467:     }
+00468: 
+00469:     if (sched.hour === "19:00") {
+00470:       map.set(sched.hour, "SOFT");
+00471:       continue;
+00472:     }
+00473: 
+00474:     if (sched.hour === "20:00") {
+00475:       map.set(sched.hour, "HARD");
+00476:       continue;
+00477:     }
+00478: 
+00479:     // fallback (caso adicionem mais slots no futuro)
+00480:     map.set(sched.hour, "SOFT");
+00481:   }
+00482: 
+00483:   logLine(
+00484:     `[CAL] FEDERAL fixed: date=${dateYMD} dow=${dow} => 19:SOFT(PROBE) 20:HARD | backend expectedHard=[${expectedHard.join(
+00485:       ","
+00486:     )}] expectedSoft=[${expectedSoft.join(",")}]`,
+00487:     "INFO"
+00488:   );
+00489: 
+00490:   return map;
+00491: }
+00492: 
+00493: function slotWindow(schedule) {
+00494:   const ws = parseHHMM(schedule.windowStart);
+00495:   const ra = parseHHMM(schedule.releaseAt);
+00496:   const we = parseHHMM(schedule.windowEnd);
+00497: 
+00498:   if (!ws || !ra || !we) {
+00499:     const { h } = parseHH(schedule.hour);
+00500:     return {
+00501:       start: toMin(h, 5),
+00502:       release: toMin(h, 29),
+00503:       end: toMin(h, 31),
+00504:       startLabel: `${pad2(h)}:05`,
+00505:       releaseLabel: `${pad2(h)}:29`,
+00506:       endLabel: `${pad2(h)}:31`,
+00507:     };
+00508:   }
+00509: 
+00510:   const start = toMin(ws.h, ws.m);
+00511:   const release = toMin(ra.h, ra.m);
+00512:   const end = toMin(we.h, we.m);
+00513: 
+00514:   return {
+00515:     start,
+00516:     release,
+00517:     end,
+00518:     startLabel: schedule.windowStart,
+00519:     releaseLabel: schedule.releaseAt,
+00520:     endLabel: schedule.windowEnd,
+00521:   };
+00522: }
+00523: 
+00524: /* =========================
+00525:    Lock (anti-concorrência)
+00526: ========================= */
+00527: function acquireLock() {
+00528:   ensureLogDir();
+00529: 
+00530:   if (fs.existsSync(LOCK_FILE)) {
+00531:     try {
+00532:       const st = fs.statSync(LOCK_FILE);
+00533:       const age = Date.now() - st.mtimeMs;
+00534:       if (age < LOCK_TTL_MS) return { ok: false, reason: "LOCK_ATIVO" };
+00535:       fs.unlinkSync(LOCK_FILE);
+00536:     } catch {
+00537:       return { ok: false, reason: "LOCK_INACESSIVEL" };
+00538:     }
+00539:   }
+00540: 
+00541:   try {
+00542:     fs.writeFileSync(
+00543:       LOCK_FILE,
+00544:       JSON.stringify({ pid: process.pid, at: new Date().toISOString(), lottery: LOTTERY }, null, 2)
+00545:     );
+00546:     return { ok: true };
+00547:   } catch {
+00548:     return { ok: false, reason: "NAO_FOI_POSSIVEL_CRIAR_LOCK" };
+00549:   }
+00550: }
+00551: 
+00552: function releaseLock() {
+00553:   try {
+00554:     if (fs.existsSync(LOCK_FILE)) fs.unlinkSync(LOCK_FILE);
+00555:   } catch {}
+00556: }
+00557: 
+00558: /* =========================
+00559:    DayStatus guard + agenda dinâmica
+00560: ========================= */
+00561: async function fetchDayStatusFromBackend({ date, lottery }) {
+00562:   try {
+00563:     const base = PITACO_API_BASE.replace(/\/+$/, "");
+00564:     const u = `${base}/api/pitaco/results?date=${encodeURIComponent(String(date || "").trim())}&lottery=${encodeURIComponent(
+00565:       String(lottery || "").trim()
+00566:     )}`;
+00567: 
+00568:     const res = await axios.get(u, {
+00569:       timeout: 15000,
+00570:       validateStatus: (s) => s >= 200 && s < 400,
+00571:       headers: { "User-Agent": "palpitaco-autoImportToday" },
+00572:     });
+00573: 
+00574:     const j = res && res.data ? res.data : null;
+00575:     if (!j || typeof j !== "object") return null;
+00576: 
+00577:     return {
+00578:       ok: Boolean(j.ok),
+00579:       dayStatus: String(j.dayStatus || "").trim(),
+00580:       blocked: Boolean(j.blocked),
+00581:       blockedReason: String(j.blockedReason || "").trim(),
+00582:       count: Number.isFinite(Number(j.count)) ? Number(j.count) : null,
+00583: 
+00584:       // ✅ debug (não é fonte da verdade pro FEDERAL fixed)
+00585:       expectedHard: Array.isArray(j.expectedHard) ? j.expectedHard.map(String) : [],
+00586:       expectedSoft: Array.isArray(j.expectedSoft) ? j.expectedSoft.map(String) : [],
+00587:       presentHours: Array.isArray(j.presentHours) ? j.presentHours.map(String) : [],
+00588: 
+00589:       // debug útil
+00590:       slotsSummary: j.slotsSummary ?? null,
+00591:       slots: Array.isArray(j.slots) ? j.slots : [],
+00592:     };
+00593:   } catch {
+00594:     return null;
+00595:   }
+00596: }
+00597: 
+00598: function applyHolidayNoDrawToState({ state, statusMap, isoNow }) {
+00599:   let touched = 0;
+00600: 
+00601:   for (const sched of SCHEDULE) {
+00602:     let slot = state?.[sched.hour];
+00603: 
+00604:     if (!slot) {
+00605:       slot = { hour: sched.hour, done: false, na: false, tries: 0 };
+00606:       state[sched.hour] = slot;
+00607:     }
+00608: 
+00609:     const st = statusMap.get(sched.hour) || "OFF";
+00610:     const applies = st === "HARD" || st === "SOFT";
+00611:     if (!applies) continue;
+00612: 
+00613:     if (slot.done && slot.na && slot.naReason === "HOLIDAY_NO_DRAW") continue;
+00614: 
+00615:     slot.done = true;
+00616:     slot.na = true;
+00617:     slot.naReason = "HOLIDAY_NO_DRAW";
+00618:     slot.lastTryISO = isoNow;
+00619:     slot.lastResult = { ok: true, skipped: true, reason: "HOLIDAY_NO_DRAW" };
+00620:     touched += 1;
+00621:   }
+00622: 
+00623:   return touched;
+00624: }
+00625: 
+00626: /* =========================
+00627:    Verificação de persistência (BIRTH-GUARD)
+00628:    (mantido como no seu arquivo)
+00629: ========================= */
+00630: const VERIFY_PERSISTED = String(process.env.VERIFY_PERSISTED || "1").trim() === "1";
+00631: 
+00632: function missingSlotsMonthFile(dateYMD) {
+00633:   const ym = String(dateYMD || "").slice(0, 7);
+00634:   return path.join(LOG_DIR, `missingSlots-${LOTTERY}-${ym}.json`);
+00635: }
+00636: 
+00637: function readJsonSafe(p) {
+00638:   try {
+00639:     if (!fs.existsSync(p)) return null;
+00640:     return JSON.parse(fs.readFileSync(p, "utf8"));
+00641:   } catch {
+00642:     return null;
+00643:   }
+00644: }
+00645: 
+00646: function upsertMissingSlot({ date, slotHour, calendar, closeHourTried, reason, meta }) {
+00647:   ensureLogDir();
+00648:   const file = missingSlotsMonthFile(date);
+00649:   const j =
+00650:     readJsonSafe(file) || {
+00651:       ok: true,
+00652:       lottery: LOTTERY,
+00653:       month: String(date).slice(0, 7),
+00654:       items: {},
+00655:     };
+00656: 
+00657:   const key = `${date}::${slotHour}`;
+00658:   if (!j.items || typeof j.items !== "object") j.items = {};
+00659: 
+00660:   const prev = j.items[key] && typeof j.items[key] === "object" ? j.items[key] : null;
+00661:   const now = new Date().toISOString();
+00662: 
+00663:   j.items[key] = {
+00664:     date,
+00665:     slotHour,
+00666:     calendar: calendar || null,
+00667:     closeHourTried: closeHourTried || null,
+00668:     firstSeenISO: prev?.firstSeenISO || now,
+00669:     lastSeenISO: now,
+00670:     hits: (prev?.hits || 0) + 1,
+00671:     reason: reason || "NOT_PERSISTED",
+00672:     meta: meta || null,
+00673:   };
+00674: 
+00675:   safeWriteJson(file, j);
+00676:   return file;
+00677: }
+00678: 
+00679: function hhFromSlotHHMM(slotHHMM) {
+00680:   const s = String(slotHHMM || "").trim();
+00681:   if (/^\d{2}:\d{2}$/.test(s)) return s.slice(0, 2);
+00682:   if (/^\d{2}$/.test(s)) return s;
+00683:   return "";
+00684: }
+00685: 
+00686: function drawLooksLikeSlot(draw, slotHH) {
+00687:   const hh = hhFromSlotHHMM(slotHH);
+00688:   if (!hh) return false;
+00689: 
+00690:   const v =
+00691:     (draw &&
+00692:       (draw.close_hour ||
+00693:         draw.closeHour ||
+00694:         draw.close ||
+00695:         draw.hour ||
+00696:         draw.slot ||
+00697:         draw.time ||
+00698:         draw.close_hour_raw)) ??
+00699:     "";
+00700:   const s = String(v).trim();
+00701: 
+00702:   if (s.startsWith(hh)) return true;
+00703:   if (s.startsWith(`${hh}:`)) return true;
+00704:   if (s === hh) return true;
+00705:   if (s === `${hh}h`) return true;
+00706: 
+00707:   return false;
+00708: }
+00709: 
+00710: async function verifySlotPersistedViaBackend({ date, slotHHMM }) {
+00711:   try {
+00712:     const base = PITACO_API_BASE.replace(/\/+$/, "");
+00713:     const u = `${base}/api/pitaco/results?date=${encodeURIComponent(date)}&lottery=${encodeURIComponent(LOTTERY)}`;
+00714: 
+00715:     const res = await axios.get(u, {
+00716:       timeout: 15000,
+00717:       validateStatus: (s) => s >= 200 && s < 400,
+00718:       headers: { "User-Agent": "palpitaco-autoImportToday" },
+00719:     });
+00720: 
+00721:     const j = res && res.data ? res.data : null;
+00722:     if (!j || typeof j !== "object") return { ok: false, reason: "BAD_JSON" };
+00723: 
+00724:     const draws = Array.isArray(j.draws) ? j.draws : [];
+00725:     const foundInDraws = draws.some((d) => drawLooksLikeSlot(d, slotHHMM));
+00726:     if (foundInDraws) return { ok: true, where: "draws", drawsCount: draws.length };
+00727: 
+00728:     const slots = Array.isArray(j.slots) ? j.slots : [];
+00729:     const hh = hhFromSlotHHMM(slotHHMM);
+00730: 
+00731:     const foundInSlots = slots.some((s) => {
+00732:       const v = (s && (s.hour || s.close_hour || s.closeHour || s.close || s.slot || s.time || s.close_hour_raw)) ?? "";
+00733:       const t = String(v).trim();
+00734:       return t.startsWith(hh);
+00735:     });
+00736: 
+00737:     if (foundInSlots) return { ok: true, where: "slots", slotsCount: slots.length };
+00738: 
+00739:     return { ok: false, reason: "NOT_FOUND", drawsCount: draws.length, slotsCount: slots.length };
+00740:   } catch (e) {
+00741:     const code = e?.code || e?.cause?.code || "";
+00742:     const msg = e?.message || e?.cause?.message || String(e);
+00743:     const r = code ? `${code}:${msg}` : msg;
+00744:     return { ok: false, reason: `EX:${r}` };
+00745:   }
+00746: }
+00747: 
+00748: async function guardPersistedOrCritical({ date, slotHHMM, calendar, closeHourTried, meta }) {
+00749:   if (!VERIFY_PERSISTED) return { ok: true, skipped: true };
+00750: 
+00751:   if (meta && (meta.mode === "ALREADY_COMPLETE" || meta.mode === "NO_DRAW")) {
+00752:     return { ok: true, skipped: true, reason: `SKIP_${meta.mode}` };
+00753:   }
+00754: 
+00755:   if (meta && meta.mode === "CAPTURE_WRITE") {
+00756:     const sc = Number.isFinite(Number(meta.savedCount)) ? Number(meta.savedCount) : 0;
+00757:     const wc = Number.isFinite(Number(meta.writeCount)) ? Number(meta.writeCount) : 0;
+00758:     if (sc > 0 || wc > 0) {
+00759:       return { ok: true, verified: true, where: "import_return", skippedBackend: true };
+00760:     }
+00761:   }
+00762: 
+00763:   const v = await verifySlotPersistedViaBackend({ date, slotHHMM });
+00764:   if (v.ok) return { ok: true, verified: true, where: v.where };
+00765: 
+00766:   const file = upsertMissingSlot({
+00767:     date,
+00768:     slotHour: slotHHMM,
+00769:     calendar,
+00770:     closeHourTried,
+00771:     reason: v.reason || "NOT_PERSISTED",
+00772:     meta: { verify: v, ...(meta || {}) },
+00773:   });
+00774: 
+00775:   logLine(
+00776:     `[BIRTH-GUARD] CRITICAL slot=${slotHHMM} date=${date} calendar=${calendar || "—"} closeTried=${closeHourTried || "—"} reason=${
+00777:       v.reason || "NOT_PERSISTED"
+00778:     } file=${path.basename(file)}`,
+00779:     "ERROR"
+00780:   );
+00781: 
+00782:   if (FAIL_ON_CRITICAL) process.exitCode = 2;
+00783: 
+00784:   return { ok: false, verified: false, reason: v.reason || "NOT_PERSISTED", file };
+00785: }
+00786: 
+00787: /**
+00788:  * Reconcilia o state temporário do runner com os horários
+00789:  * realmente presentes no backend/Firestore.
+00790:  */
+00791: function syncStateFromBackendSnapshot({
+00792:   state,
+00793:   statusMap,
+00794:   daySnapshot,
+00795:   isoNow,
+00796: }) {
+00797:   const rawPresentHours = Array.isArray(daySnapshot?.presentHours)
+00798:     ? daySnapshot.presentHours
+00799:     : [];
+00800: 
+00801:   const presentHours = new Set(
+00802:     rawPresentHours
+00803:       .map((value) => {
+00804:         const match = String(value ?? "").trim().match(/(\d{1,2})/);
+00805:         if (!match) return "";
+00806: 
+00807:         const hour = Number(match[1]);
+00808:         if (!Number.isFinite(hour) || hour < 0 || hour > 23) return "";
+00809: 
+00810:         return pad2(hour);
+00811:       })
+00812:       .filter(Boolean)
+00813:   );
+00814: 
+00815:   if (!presentHours.size) return 0;
+00816: 
+00817:   let touched = 0;
+00818: 
+00819:   for (const sched of SCHEDULE) {
+00820:     const slot = state?.[sched.hour];
+00821:     if (!slot || slot.done || slot.na) continue;
+00822: 
+00823:     const calendar = statusMap.get(sched.hour) || "OFF";
+00824:     if (calendar !== "HARD" && calendar !== "SOFT") continue;
+00825: 
+00826:     const hour = String(sched.hour || "").slice(0, 2);
+00827:     if (!presentHours.has(hour)) continue;
+00828: 
+00829:     slot.done = true;
+00830:     slot.na = false;
+00831:     slot.naReason = null;
+00832:     slot.lastTryISO = slot.lastTryISO || isoNow;
+00833:     slot.lastResult = {
+00834:       ...(slot.lastResult || {}),
+00835:       ok: true,
+00836:       reconciledFromBackend: true,
+00837:       reason: "BACKEND_PRESENT_HOUR",
+00838:       presentHour: hour,
+00839:     };
+00840:     slot.alertMissedWindow = false;
+00841:     slot.alertCritical = false;
+00842: 
+00843:     touched += 1;
+00844: 
+00845:     logLine(
+00846:       `[STATE-SYNC] backend confirmou slot=${sched.hour} presente -> DONE`,
+00847:       "INFO"
+00848:     );
+00849:   }
+00850: 
+00851:   return touched;
+00852: }
+00853: 
+00854: /* =========================
+00855:    Auditoria de Furos (warning/critical)
+00856: ========================= */
+00857: function auditOutFile(dateYMD) {
+00858:   return path.join(LOG_DIR, `auditCritical-${LOTTERY}-${dateYMD}.json`);
+00859: }
+00860: 
+00861: function buildAuditReport({ date, nowMin, isoNow, dow, statusMap, state }) {
+00862:   const todayBR = todayYMDInSaoPaulo();
+00863:   const critical = [];
+00864:   const warning = [];
+00865:   const softLate = [];
+00866: 
+00867:   for (const sched of SCHEDULE) {
+00868:     const slotState = state?.[sched.hour];
+00869:     if (!slotState) continue;
+00870: 
+00871:     const st = statusMap.get(sched.hour) || "OFF";
+00872:     const isHard = st === "HARD";
+00873:     const isSoft = st === "SOFT";
+00874:     const applies = isHard || isSoft;
+00875:     if (!applies) continue;
+00876: 
+00877:     if (slotState.na) continue;
+00878:     if (slotState.done) continue;
+00879: 
+00880:     const w = slotWindow(sched);
+00881: 
+00882:     if (nowMin < w.release) continue;
+00883:     const since = nowMin - w.release;
+00884: 
+00885:     const item = {
+00886:       slot: sched.hour,
+00887:       calendar: st,
+00888:       rule: "window",
+00889:       releaseAt: w.releaseLabel,
+00890:       windowEnd: w.endLabel,
+00891:       sinceMinutes: since,
+00892:       tries: Number(slotState.tries || 0),
+00893:       lastTryISO: slotState.lastTryISO || null,
+00894:       lastResult: slotState.lastResult || null,
+00895:     };
+00896: 
+00897:     if (isSoft) {
+00898:       if (since >= WARN_AFTER_MIN) softLate.push(item);
+00899:       continue;
+00900:     }
+00901: 
+00902:     if (since >= CRIT_AFTER_MIN) critical.push(item);
+00903:     else if (since >= WARN_AFTER_MIN) warning.push(item);
+00904:   }
+00905: 
+00906:   let status = "ok";
+00907:   if (critical.length) status = "critical";
+00908:   else if (warning.length) status = "warning";
+00909: 
+00910:   return {
+00911:     ok: true,
+00912:     lottery: LOTTERY,
+00913:     date,
+00914:     todayBR,
+00915:     isoNow,
+00916:     dow,
+00917:     thresholds: { warnAfterMin: WARN_AFTER_MIN, critAfterMin: CRIT_AFTER_MIN },
+00918:     status,
+00919:     criticalCount: critical.length,
+00920:     warningCount: warning.length,
+00921:     softLateCount: softLate.length,
+00922:     critical,
+00923:     warning,
+00924:     softLate,
+00925:   };
+00926: }
+00927: 
+00928: /* =========================
+00929:    ALERTAS (HARD) anti-spam
+00930: ========================= */
+00931: function emitHardAlertsIfNeeded({ date, nowMin, state, statusMap }) {
+00932:   let touched = false;
+00933: 
+00934:   for (const sched of SCHEDULE) {
+00935:     let slot = state?.[sched.hour];
+00936: 
+00937:     if (!slot) {
+00938:       slot = { hour: sched.hour, done: false, na: false, tries: 0 };
+00939:       state[sched.hour] = slot;
+00940:     }
+00941: 
+00942:     if (slot.done || slot.na) continue;
+00943: 
+00944:     const st = statusMap.get(sched.hour) || "OFF";
+00945:     if (st !== "HARD") continue;
+00946: 
+00947:     const w = slotWindow(sched);
+00948:     if (nowMin < w.release) continue;
+00949: 
+00950:     const since = nowMin - w.release;
+00951: 
+00952:     if (nowMin > w.end && !slot.alertMissedWindow) {
+00953:       slot.alertMissedWindow = true;
+00954:       touched = true;
+00955:       logLine(
+00956:         `[ALERT] HARD slot perdeu janela: date=${date} slot=${sched.hour} releaseAt=${w.releaseLabel} windowEnd=${w.endLabel} tries=${slot.tries || 0}`,
+00957:         "ERROR"
+00958:       );
+00959:     }
+00960: 
+00961:     if (since >= CRIT_AFTER_MIN && !slot.alertCritical) {
+00962:       slot.alertCritical = true;
+00963:       touched = true;
+00964:       logLine(
+00965:         `[ALERT] HARD slot CRITICAL: date=${date} slot=${sched.hour} since=${since}min (>=${CRIT_AFTER_MIN}) tries=${slot.tries || 0}`,
+00966:         "ERROR"
+00967:       );
+00968:     }
+00969:   }
+00970: 
+00971:   return touched;
+00972: }
+00973: 
+00974: /* =========================
+00975:    Main
+00976: ========================= */
+00977: async function main() {
+00978:   const envDate = String(process.env.DATE || "").trim();
+00979:   const date = envDate && isISODate(envDate) ? envDate : todayYMDInSaoPaulo();
+00980: 
+00981:   if (isFutureISODate(date)) {
+00982:     const todayBR = todayYMDInSaoPaulo();
+00983:     logLine(`[GUARD] FUTURE_DATE_BLOCKED date=${date} todayBR=${todayBR} (não vamos importar)`, "ERROR");
+00984:     process.exit(2);
+00985:     return;
+00986:   }
+00987: 
+00988:   const now = nowHMInSaoPaulo();
+00989:   const nowMin = toMin(now.h, now.m);
+00990: 
+00991:   if (String(process.env.NOW_HM || "").trim()) {
+00992:     logLine(`[TIME] NOW_HM override ativo => ${pad2(now.h)}:${pad2(now.m)} (America/Sao_Paulo)`, "INFO");
+00993:   }
+00994: 
+00995:   const dow = dowFromYMD(date);
+00996:   const catchupTried = new Set();
+00997: 
+00998:   const lock = acquireLock();
+00999:   if (!lock.ok) {
+01000:     logLine(`[AUTO] abortado: ${lock.reason}`, "INFO");
+01001:     return;
+01002:   }
+01003: 
+01004:   try {
+01005:     const state = loadState(date);
+01006:     const isoNow = new Date().toISOString();
+01007: 
+01008:     // ✅ Buscar DS cedo (cache)
+01009:     const ds = await fetchDayStatusCached({ date, lottery: LOTTERY });
+01010: 
+01011:     let statusMap = null;
+01012:     if (LOTTERY === "PT_RIO") {
+01013:       statusMap = buildTodaySlotStatusMapPT_RIO(date, dow);
+01014:     } else if (LOTTERY === "FEDERAL") {
+01015:       statusMap = buildTodaySlotStatusMapFEDERAL({ dateYMD: date, dow, ds });
+01016:     } else {
+01017:       statusMap = new Map();
+01018:       for (const sched of SCHEDULE) statusMap.set(sched.hour, "HARD");
+01019:     }
+01020: 
+01021:     // O workspace do GitHub Actions é novo a cada execução.
+01022:     // Antes de auditar, sincroniza o state local com a fonte real.
+01023:     const syncedFromBackend = syncStateFromBackendSnapshot({
+01024:       state,
+01025:       statusMap,
+01026:       daySnapshot: ds,
+01027:       isoNow,
+01028:     });
+01029: 
+01030:     if (syncedFromBackend > 0) {
+01031:       saveState(date, state);
+01032:       logLine(
+01033:         `[STATE-SYNC] slots reconciliados pelo backend=${syncedFromBackend}`,
+01034:         "INFO"
+01035:       );
+01036:     }
+01037: 
+01038:     // ✅ Se o dia já está completo, gera audit e encerra
+01039:     if (isAllDoneHardOnly(state, statusMap)) {
+01040:       try {
+01041:         const report = buildAuditReport({ date, nowMin, isoNow: new Date().toISOString(), dow, statusMap, state });
+01042:         if (isNowHmOverrideActive()) {
+01043:           report.status = "ok";
+01044:           report.note = "NOW_HM override ativo: audit retroativo neutralizado (informativo).";
+01045:         }
+01046:         safeWriteJson(auditOutFile(date), report);
+01047:       } catch {}
+01048:       logLine(`[AUTO] DIA COMPLETO (${date}) — slots concluídos (skip import)`, "INFO");
+01049:       return;
+01050:     }
+01051: 
+01052:     // 1) Marca N/A slots OFF
+01053:     let stateTouched = false;
+01054:     for (const sched of SCHEDULE) {
+01055:       const slot = state[sched.hour];
+01056:       if (!slot) continue;
+01057: 
+01058:       const st = statusMap.get(sched.hour) || "OFF";
+01059:       const applies = st === "HARD" || st === "SOFT";
+01060: 
+01061:       if (!applies && !slot.done) {
+01062:         slot.done = true;
+01063:         slot.na = true;
+01064:         slot.naReason = LOTTERY === "FEDERAL" && dow === 0 ? "FEDERAL_DOMINGO_OFF" : "NAO_APLICA";
+01065:         slot.lastTryISO = isoNow;
+01066:         slot.lastResult = { ok: true, skipped: true, reason: slot.naReason };
+01067:         stateTouched = true;
+01068:         logLine(`[AUTO] N/A slot=${sched.hour} (${slot.naReason}) -> DONE`, "INFO");
+01069:       }
+01070:     }
+01071:     if (stateTouched) saveState(date, state);
+01072: 
+01073:     // 1.5) DayStatus guard: feriado sem sorteio
+01074:     if (ds && ds.blocked && String(ds.dayStatus || "") === "holiday_no_draw") {
+01075:       const touched = applyHolidayNoDrawToState({ state, statusMap, isoNow });
+01076:       if (touched > 0) saveState(date, state);
+01077: 
+01078:       try {
+01079:         const report = buildAuditReport({ date, nowMin, isoNow: new Date().toISOString(), dow, statusMap, state });
+01080:         safeWriteJson(auditOutFile(date), report);
+01081:       } catch {}
+01082: 
+01083:       logLine(
+01084:         `[DAY_STATUS] holiday_no_draw confirmado (blockedReason=${ds.blockedReason || "—"}). Slots aplicáveis -> N/A. Encerrando.`,
+01085:         "INFO"
+01086:       );
+01087:       return;
+01088:     }
+01089: 
+01090:     let didSomething = false;
+01091: 
+01092:     // 2) Processa slots aplicáveis (HARD/SOFT)
+01093:     for (const sched of SCHEDULE) {
+01094:       const slot = state[sched.hour];
+01095:       if (!slot) continue;
+01096:       if (slot.done) continue;
+01097: 
+01098:       const st = statusMap.get(sched.hour) || "OFF";
+01099:       const applies = st === "HARD" || st === "SOFT";
+01100:       if (!applies) continue;
+01101: 
+01102:       // ✅ anti-spam: PROBE/SOFT da FEDERAL para depois de N tentativas/dia
+01103:       if (LOTTERY === "FEDERAL" && st === "SOFT") {
+01104:         const tries = Number(slot.tries || 0);
+01105:         if (Number.isFinite(FEDERAL_SOFT_MAX_TRIES_PER_DAY) && FEDERAL_SOFT_MAX_TRIES_PER_DAY > 0) {
+01106:           if (tries >= FEDERAL_SOFT_MAX_TRIES_PER_DAY) {
+01107:             continue;
+01108:           }
+01109:         }
+01110:       }
+01111: 
+01112:       const w = slotWindow(sched);
+01113: 
+01114:       const inWindow = !(nowMin < w.start || nowMin > w.end);
+01115:       const afterRelease = nowMin >= w.start;
+01116: 
+01117:       if (!inWindow) {
+01118:         if (!afterRelease) continue;
+01119: 
+01120:         const extraCatchup = st === "SOFT" ? Math.max(CATCHUP_MAX_AFTER_END_MIN, 360) : CATCHUP_MAX_AFTER_END_MIN;
+01121:         const catchupLimit = w.end + extraCatchup;
+01122:         if (nowMin > catchupLimit) continue;
+01123: 
+01124:         const key = `${date}::${sched.hour}`;
+01125:         if (catchupTried.has(key)) continue;
+01126:         catchupTried.add(key);
+01127: 
+01128:         logLine(
+01129:           `[AUTO] CATCH-UP pós-release ${date} slot=${sched.hour} (${st}) releaseAt=${w.releaseLabel} window=${w.startLabel}~${w.endLabel} (fora da janela)`,
+01130:           "INFO"
+01131:         );
+01132:       }
+01133: 
+01134:       if (!afterRelease) continue;
+01135: 
+01136:       slot.tries = (slot.tries || 0) + 1;
+01137:       slot.lastTryISO = isoNow;
+01138: 
+01139:       const candidates = st === "SOFT" ? [sched.hour] : closeCandidates(sched.hour);
+01140:       slot.lastTriedCloses = candidates;
+01141:       saveState(date, state);
+01142: 
+01143:       logLine(
+01144:         `[AUTO] tentando ${date} slot=${sched.hour} (${st}) window=${w.startLabel}-${w.endLabel} closes=${candidates.join(",")}`,
+01145:         "INFO"
+01146:       );
+01147: 
+01148:       let lastErr = null;
+01149: 
+01150:       for (const closeHour of candidates) {
+01151:         let r = null;
+01152: 
+01153:         try {
+01154:           r = await runImport({ date, lotteryKey: LOTTERY, closeHour });
+01155:         } catch (e) {
+01156:           lastErr = e?.message || String(e);
+01157:           slot.lastResult = { ok: false, error: lastErr, closeHourTried: closeHour };
+01158:           saveState(date, state);
+01159:           logLine(`[AUTO] erro no import close=${closeHour}: ${lastErr}`, "ERROR");
+01160:           continue;
+01161:         }
+01162: 
+01163:         const blockedReason = String(r?.blockedReason || "").trim();
+01164: 
+01165:         if (
+01166:           r &&
+01167:           r.blocked === true &&
+01168:           (blockedReason === "no_draw_for_slot" || blockedReason === "no_draw_for_slot_calendar")
+01169:         ) {
+01170:           slot.lastResult = {
+01171:             ...(slot.lastResult || {}),
+01172:             ok: true,
+01173:             closeHourTried: closeHour,
+01174:             blocked: true,
+01175:             blockedReason,
+01176:             note: "no_draw_for_slot|no_draw_for_slot_calendar (will retry)",
+01177:           };
+01178:           saveState(date, state);
+01179: 
+01180:           logLine(`[AUTO] ${blockedReason} slot=${sched.hour} (${st}) -> mantendo PENDENTE p/ retry`, "INFO");
+01181:           didSomething = true;
+01182:           break;
+01183:         }
+01184: 
+01185:         if (r && r.blocked === true && blockedReason === "api_missing_slot") {
+01186:           slot.lastResult = {
+01187:             ...(slot.lastResult || {}),
+01188:             ok: true,
+01189:             closeHourTried: closeHour,
+01190:             blocked: true,
+01191:             blockedReason,
+01192:             note: "api_missing_slot (stop candidates; will retry later)",
+01193:           };
+01194:           saveState(date, state);
+01195: 
+01196:           logLine(
+01197:             `[AUTO] api_missing_slot slot=${sched.hour} (${st}) close=${closeHour} -> parando closes candidatos (vai retry depois)`,
+01198:             "INFO"
+01199:           );
+01200: 
+01201:           didSomething = true;
+01202:           break;
+01203:         }
+01204: 
+01205:         if (r && r.blocked === true && blockedReason === "future_date") {
+01206:           slot.lastResult = { ok: true, closeHourTried: closeHour, blocked: true, blockedReason };
+01207:           saveState(date, state);
+01208:           logLine(`[AUTO] future_date bloqueado pelo import (defensivo). date=${date} slot=${sched.hour}`, "ERROR");
+01209:           didSomething = true;
+01210:           break;
+01211:         }
+01212: 
+01213:         const savedCount = Number.isFinite(Number(r?.savedCount)) ? Number(r.savedCount) : 0;
+01214:         const writeCount = Number.isFinite(Number(r?.writeCount)) ? Number(r.writeCount) : 0;
+01215: 
+01216:         const alreadyCompleteAll = Boolean(r?.alreadyCompleteAll);
+01217:         const captured = Boolean(r?.captured);
+01218: 
+01219:         slot.lastResult = {
+01220:           ok: true,
+01221:           closeHourTried: closeHour,
+01222:           captured,
+01223:           alreadyCompleteAll,
+01224:           savedCount,
+01225:           writeCount,
+01226:           apiHasPrizes: r?.apiHasPrizes ?? null,
+01227:           targetDrawIds: r?.targetDrawIds ?? null,
+01228:           tookMs: r?.tookMs ?? null,
+01229:         };
+01230:         saveState(date, state);
+01231: 
+01232:         let doneByAlreadyComplete = alreadyCompleteAll === true;
+01233:         let doneByCaptureWrite = captured === true && (savedCount > 0 || writeCount > 0);
+01234: 
+01235:         // ✅ FEDERAL PROBE (SOFT): não marca DONE se o resultado não for do horário do slot
+01236:         if (LOTTERY === "FEDERAL" && st === "SOFT") {
+01237:           if (!resultMatchesSlotHour(r, sched.hour)) {
+01238:             doneByAlreadyComplete = false;
+01239:             doneByCaptureWrite = false;
+01240: 
+01241:             slot.lastResult = {
+01242:               ...(slot.lastResult || {}),
+01243:               note: "probe_result_mismatch_slot_hour (kept pending)",
+01244:             };
+01245:             saveState(date, state);
+01246: 
+01247:             logLine(
+01248:               `[AUTO] FEDERAL PROBE mismatch: slot=${sched.hour} close=${closeHour} targetDrawIds=${
+01249:                 Array.isArray(r && r.targetDrawIds) ? r.targetDrawIds.join(",") : "—"
+01250:               } -> mantendo PENDENTE`,
+01251:               "INFO"
+01252:             );
+01253: 
+01254:             didSomething = true;
+01255:             break; // SOFT tem 1 candidate, encerra loop
+01256:           }
+01257:         }
+01258: 
+01259:         if (doneByAlreadyComplete || doneByCaptureWrite) {
+01260:           slot.done = true;
+01261:           saveState(date, state);
+01262: 
+01263:           if (doneByAlreadyComplete) {
+01264:             logLine(`[AUTO] FS já tem slot=${sched.hour} COMPLETO (close=${closeHour}) -> DONE`, "INFO");
+01265:             await guardPersistedOrCritical({
+01266:               date,
+01267:               slotHHMM: sched.hour,
+01268:               calendar: st,
+01269:               closeHourTried: closeHour,
+01270:               meta: { mode: "ALREADY_COMPLETE", alreadyCompleteAll: true },
+01271:             });
+01272:           } else {
+01273:             logLine(`[AUTO] CAPTURADO slot=${sched.hour} (close=${closeHour}) saved=${savedCount} writes=${writeCount} -> DONE`, "INFO");
+01274:             await guardPersistedOrCritical({
+01275:               date,
+01276:               slotHHMM: sched.hour,
+01277:               calendar: st,
+01278:               closeHourTried: closeHour,
+01279:               meta: { mode: "CAPTURE_WRITE", savedCount, writeCount, captured: true },
+01280:             });
+01281:           }
+01282: 
+01283:           didSomething = true;
+01284:           break;
+01285:         }
+01286:       }
+01287: 
+01288:       if (!slot.done) {
+01289:         if (lastErr) {
+01290:           logLine(`[AUTO] falhou slot=${sched.hour} (erros em closes candidatos)`, "ERROR");
+01291:           didSomething = true;
+01292:         } else {
+01293:           logLine(`[AUTO] ainda indisponível slot=${sched.hour} (nenhum close candidato capturou)`, "INFO");
+01294:         }
+01295:       }
+01296:     }
+01297: 
+01298:     // 2.5) ALERTAS HARD (anti-spam)
+01299:     try {
+01300:       const isTestNowHm = isNowHmOverrideActive();
+01301:       if (!isTestNowHm) {
+01302:         const touchedAlerts = emitHardAlertsIfNeeded({ date, nowMin, state, statusMap });
+01303:         if (touchedAlerts) saveState(date, state);
+01304:       } else {
+01305:         logLine(`[ALERT] NOW_HM ativo => suprimindo alertas HARD retroativos (modo teste)`, "INFO");
+01306:       }
+01307:     } catch {}
+01308: 
+01309:     // 3) Auditoria pós-execução
+01310:     try {
+01311:       const report = buildAuditReport({ date, nowMin, isoNow: new Date().toISOString(), dow, statusMap, state });
+01312: 
+01313:       if (isNowHmOverrideActive()) {
+01314:         report.status = "ok";
+01315:         report.note = "NOW_HM override ativo: audit retroativo neutralizado (informativo).";
+01316:       }
+01317:       safeWriteJson(auditOutFile(date), report);
+01318: 
+01319:       if (report.status === "critical") {
+01320:         logLine(
+01321:           `[AUDIT] CRITICAL missing=${report.criticalCount} warning=${report.warningCount} softLate=${report.softLateCount} (relatório salvo em ${path.basename(
+01322:             auditOutFile(date)
+01323:           )})`,
+01324:           "ERROR"
+01325:         );
+01326:         if (FAIL_ON_CRITICAL) {
+01327:           logLine(`[AUDIT] FAIL_ON_CRITICAL=1 => exit(2)`, "ERROR");
+01328:           process.exitCode = 2;
+01329:         }
+01330:       } else if (report.status === "warning") {
+01331:         logLine(
+01332:           `[AUDIT] WARNING missing=${report.warningCount} softLate=${report.softLateCount} (relatório salvo em ${path.basename(
+01333:             auditOutFile(date)
+01334:           )})`,
+01335:           "INFO"
+01336:         );
+01337:       } else {
+01338:         logLine(`[AUDIT] OK (sem furos HARD acima de ${WARN_AFTER_MIN} min) softLate=${report.softLateCount}`, "INFO");
+01339:       }
+01340:     } catch (e) {
+01341:       logLine(`[AUDIT] erro ao gerar relatório: ${e?.message || e}`, "ERROR");
+01342:     }
+01343: 
+01344:     if (isAllDoneHardOnly(state, statusMap)) logLine(`[AUTO] DIA COMPLETO (${date}) — slots concluídos`, "INFO");
+01345:     else if (!didSomething) logLine(`[AUTO] nada para fazer agora (${date})`, "INFO");
+01346:   } finally {
+01347:     releaseLock();
+01348:   }
+01349: }
+01350: 
+01351: main().catch((e) => {
+01352:   logLine(`ERRO: ${e?.message || e}`, "ERROR");
+01353:   releaseLock();
+01354:   process.exit(1);
+01355: });
+
+======================================================================================================================================================
+ARQUIVO: backend/scripts/autoRepairToday.js
+======================================================================================================================================================
+00001: "use strict";
+00002: 
+00003: const { runImport } = require("./importKingApostas");
+00004: const { getDb } = require("../service/firebaseAdmin");
+00005: 
+00006: function pad2(n) {
+00007:   return String(n).padStart(2, "0");
+00008: }
+00009: 
+00010: function todayYMDLocal() {
+00011:   try {
+00012:     const fmt = new Intl.DateTimeFormat("en-CA", {
+00013:       timeZone: "America/Sao_Paulo",
+00014:       year: "numeric",
+00015:       month: "2-digit",
+00016:       day: "2-digit",
+00017:     });
+00018:     return fmt.format(new Date());
+00019:   } catch {
+00020:     const d = new Date();
+00021:     return `${d.getFullYear()}-${pad2(d.getMonth() + 1)}-${pad2(d.getDate())}`;
+00022:   }
+00023: }
+00024: 
+00025: function normalizeHHMM(v) {
+00026:   const s = String(v ?? "").trim();
+00027:   if (!s) return "";
+00028:   if (/^\d{2}:\d{2}$/.test(s)) return s;
+00029:   const m1 = s.match(/^(\d{1,2})h$/i);
+00030:   if (m1) return `${String(m1[1]).padStart(2, "0")}:00`;
+00031:   const m2 = s.match(/^(\d{1,2})$/);
+00032:   if (m2) return `${String(m2[1]).padStart(2, "0")}:00`;
+00033:   return "";
+00034: }
+00035: 
+00036: function getDowLocal(ymd) {
+00037:   return new Date(`${ymd}T12:00:00`).getDay();
+00038: }
+00039: 
+00040: function getExpectedPtRioHours(ymd, hasFederal) {
+00041:   const dow = getDowLocal(ymd);
+00042: 
+00043:   if (dow === 0) return ["09:00", "11:00", "14:00", "16:00"];
+00044: 
+00045:   const expected = ["09:00", "11:00", "14:00", "16:00", "21:00"];
+00046:   if (!hasFederal) expected.push("18:00");
+00047:   return expected.sort();
+00048: }
+00049: 
+00050: async function loadDay(ymd) {
+00051:   const db = getDb();
+00052:   const snap = await db.collection("draws").where("ymd", "==", ymd).get();
+00053: 
+00054:   const rows = snap.docs.map((doc) => {
+00055:     const d = doc.data() || {};
+00056:     return {
+00057:       lottery_key: String(d.lottery_key || "").trim().toUpperCase(),
+00058:       close_hour: normalizeHHMM(d.close_hour || d.close || d.hour || ""),
+00059:     };
+00060:   });
+00061: 
+00062:   const pt = Array.from(new Set(rows.filter(x => x.lottery_key === "PT_RIO").map(x => x.close_hour).filter(Boolean))).sort();
+00063:   const fed = Array.from(new Set(rows.filter(x => x.lottery_key === "FEDERAL").map(x => x.close_hour).filter(Boolean))).sort();
+00064: 
+00065:   return { pt, fed };
+00066: }
+00067: 
+00068: 
+00069: function nowHHMMLocal() {
+00070:   try {
+00071:     const fmt = new Intl.DateTimeFormat("en-GB", {
+00072:       timeZone: "America/Sao_Paulo",
+00073:       hour: "2-digit",
+00074:       minute: "2-digit",
+00075:       hour12: false,
+00076:     });
+00077:     return fmt.format(new Date()).replace(".", ":");
+00078:   } catch {
+00079:     const d = new Date();
+00080:     return `${pad2(d.getHours())}:${pad2(d.getMinutes())}`;
+00081:   }
+00082: }
+00083: 
+00084: function addMinutesToHHMM(hhmm, minutes) {
+00085:   const [h, m] = String(hhmm || "00:00").split(":").map(Number);
+00086:   const total = (h * 60) + m + Number(minutes || 0);
+00087:   const hh = Math.floor(total / 60);
+00088:   const mm = total % 60;
+00089:   return `${pad2(hh)}:${pad2(mm)}`;
+00090: }
+00091: 
+00092: function getDuePtRioHours(ymd, hasFederal) {
+00093:   const expected = getExpectedPtRioHours(ymd, hasFederal);
+00094:   const today = todayYMDLocal();
+00095: 
+00096:   if (ymd < today) return expected;
+00097:   if (ymd > today) return [];
+00098: 
+00099:   const now = nowHHMMLocal();
+00100:   const toleranceMin = 10;
+00101: 
+00102:   return expected.filter(h => addMinutesToHHMM(h, toleranceMin) <= now);
+00103: }
+00104: 
+00105: async function main() {
+00106:   const ymd = String(process.argv[2] || todayYMDLocal()).trim();
+00107:   const { pt, fed } = await loadDay(ymd);
+00108: 
+00109:   const expected = getDuePtRioHours(ymd, fed.length > 0);
+00110:   const missing = expected.filter(h => !pt.includes(h));
+00111: 
+00112:   console.log(`[AUDIT] ${ymd} present=[${pt.join(", ")}] expected=[${expected.join(", ")}] missing=[${missing.join(", ")}]`);
+00113: 
+00114:   if (!missing.length) {
+00115:     console.log("[OK] Nenhum gap HARD/CORE hoje.");
+00116:     process.exit(0);
+00117:   }
+00118: 
+00119:   for (const hour of missing) {
+00120:     console.log(`\n[REPAIR] ${ymd} ${hour}`);
+00121:     try {
+00122:       const r = await runImport({
+00123:         date: ymd,
+00124:         lotteryKey: "PT_RIO",
+00125:         closeHour: hour,
+00126:       });
+00127: 
+00128:       console.log(
+00129:         `[RESULT] blocked=${!!r?.blocked} reason=${r?.blockedReason || "-"} captured=${!!r?.captured} writeCount=${r?.writeCount ?? "-"} savedCount=${r?.savedCount ?? "-"}`
+00130:       );
+00131:     } catch (e) {
+00132:       console.error(`[ERR] ${ymd} ${hour} -> ${String(e?.message || e || "unknown")}`);
+00133:     }
+00134:   }
+00135: }
+00136: 
+00137: main().catch((e) => {
+00138:   console.error("ERRO FATAL:", e?.message || e);
+00139:   process.exit(1);
+00140: });
+00141: 
+00142: 
+00143: 
+
+======================================================================================================================================================
+ARQUIVO: backend/scripts/ptRioCalendar.js
+======================================================================================================================================================
+00001: "use strict";
+00002: 
+00003: const fs = require("fs");
+00004: const path = require("path");
+00005: 
+00006: let _cache = null;
+00007: 
+00008: function safeStr(v) {
+00009:   return String(v ?? "").trim();
+00010: }
+00011: 
+00012: function isISODate(ymd) {
+00013:   const str = String(ymd || "").trim();
+00014:   if (!/^\d{4}-\d{2}-\d{2}$/.test(str)) return false;
+00015:   const [y, m, d] = str.split("-").map(Number);
+00016:   const dt = new Date(Date.UTC(y, m - 1, d));
+00017:   return dt.getUTCFullYear() === y && dt.getUTCMonth() === (m - 1) && dt.getUTCDate() === d;
+00018: }
+00019: 
+00020: function ymdDow(ymd) {
+00021:   // 0=Dom..6=Sáb (UTC) — consistente com seu gerador
+00022:   // Requer YYYY-MM-DD válido
+00023:   return new Date(String(ymd) + "T00:00:00Z").getUTCDay();
+00024: }
+00025: 
+00026: function pad2(n) {
+00027:   return String(n).padStart(2, "0");
+00028: }
+00029: 
+00030: /**
+00031:  * Normaliza horários para HH:MM (robusto)
+00032:  * Aceita: "11", "11h", "11hs", "11:09", "11:9", "11:09:00", etc.
+00033:  * Retorna "HH:MM" ou null
+00034:  */
+00035: function normalizeHHMM(v) {
+00036:   const s = safeStr(v);
+00037:   if (!s) return null;
+00038: 
+00039:   // HH:MM:SS (aceita mm/ss 1-2 dígitos)
+00040:   const m1 = s.match(/^(\d{1,2}):(\d{1,2}):(\d{1,2})$/);
+00041:   if (m1) {
+00042:     const hh = Number(m1[1]);
+00043:     const mm = Number(m1[2]);
+00044:     const ss = Number(m1[3]);
+00045:     if (!Number.isFinite(hh) || hh < 0 || hh > 23) return null;
+00046:     if (!Number.isFinite(mm) || mm < 0 || mm > 59) return null;
+00047:     if (!Number.isFinite(ss) || ss < 0 || ss > 59) return null;
+00048:     return `${pad2(hh)}:${pad2(mm)}`;
+00049:   }
+00050: 
+00051:   // HH:MM (aceita minuto 1-2 dígitos, ex: 11:9)
+00052:   const m0 = s.match(/^(\d{1,2}):(\d{1,2})$/);
+00053:   if (m0) {
+00054:     const hh = Number(m0[1]);
+00055:     const mm = Number(m0[2]);
+00056:     if (!Number.isFinite(hh) || hh < 0 || hh > 23) return null;
+00057:     if (!Number.isFinite(mm) || mm < 0 || mm > 59) return null;
+00058:     return `${pad2(hh)}:${pad2(mm)}`;
+00059:   }
+00060: 
+00061:   // "11h" / "11hs" / "11"
+00062:   const m2 = s.match(/^(\d{1,2})(?:\s*h(?:s)?)?$/i);
+00063:   if (m2) {
+00064:     const hh = Number(m2[1]);
+00065:     if (!Number.isFinite(hh) || hh < 0 || hh > 23) return null;
+00066:     return `${pad2(hh)}:00`;
+00067:   }
+00068: 
+00069:   // fallback: pega o primeiro número como hora
+00070:   const m3 = s.match(/(\d{1,2})/);
+00071:   if (m3) {
+00072:     const hh = Number(m3[1]);
+00073:     if (!Number.isFinite(hh) || hh < 0 || hh > 23) return null;
+00074:     return `${pad2(hh)}:00`;
+00075:   }
+00076: 
+00077:   return null;
+00078: }
+00079: 
+00080: function uniqSorted(arr) {
+00081:   return Array.from(new Set(arr)).sort();
+00082: }
+00083: 
+00084: function normalizeSlots(arr) {
+00085:   if (!Array.isArray(arr)) return [];
+00086:   return uniqSorted(
+00087:     arr
+00088:       .map((x) => normalizeHHMM(x))
+00089:       .filter((x) => typeof x === "string" && /^\d{2}:\d{2}$/.test(x))
+00090:   );
+00091: }
+00092: 
+00093: function loadRules() {
+00094:   if (_cache) return _cache;
+00095: 
+00096:   const p = path.join(__dirname, "..", "data", "pt_rio_calendar_rules.json");
+00097:   if (!fs.existsSync(p)) {
+00098:     _cache = {
+00099:       ok: false,
+00100:       error: "RULES_FILE_NOT_FOUND",
+00101:       rules: [],
+00102:       map: new Map(),
+00103:       file: p,
+00104:     };
+00105:     return _cache;
+00106:   }
+00107: 
+00108:   try {
+00109:     const j = JSON.parse(fs.readFileSync(p, "utf8"));
+00110:     const rules = Array.isArray(j?.rules) ? j.rules : [];
+00111: 
+00112:     // Index: "year:dow" -> {CORE, OPCIONAL, RARA}
+00113:     const map = new Map();
+00114:     for (const r of rules) {
+00115:       const year = Number(r?.year);
+00116:       const dow = Number(r?.dow);
+00117:       if (!Number.isFinite(year) || year < 2000 || year > 2100) continue;
+00118:       if (!Number.isFinite(dow) || dow < 0 || dow > 6) continue;
+00119: 
+00120:       map.set(`${year}:${dow}`, {
+00121:         CORE: normalizeSlots(r?.CORE),
+00122:         OPCIONAL: normalizeSlots(r?.OPCIONAL),
+00123:         RARA: normalizeSlots(r?.RARA),
+00124:       });
+00125:     }
+00126: 
+00127:     _cache = { ok: true, rules, map, file: p };
+00128:     return _cache;
+00129:   } catch (e) {
+00130:     _cache = {
+00131:       ok: false,
+00132:       error: "RULES_FILE_INVALID_JSON",
+00133:       rules: [],
+00134:       map: new Map(),
+00135:       file: p,
+00136:       message: e?.message || String(e),
+00137:     };
+00138:     return _cache;
+00139:   }
+00140: }
+00141: 
+00142: /**
+00143:  * Retorna classificação CORE/OPCIONAL/RARA para a data.
+00144:  * - Usa ano+dow (regra estatística) gerada do seu Firestore.
+00145:  * - Se não houver regra (ou data inválida), faz fallback conservador:
+00146:  *   - Core mínimo: 11,14,16
+00147:  *   - Opcional: 09
+00148:  *   - Rara: 18,21
+00149:  */
+00150: function getPtRioSlotsByDate(ymd) {
+00151:   const date = safeStr(ymd);
+00152: 
+00153:   // Se data inválida, não “chuta” dow/ano — cai no fallback, mas deixa explícito.
+00154:   if (!isISODate(date)) {
+00155:     return {
+00156:       ok: true,
+00157:       source: "fallback",
+00158:       date,
+00159:       year: null,
+00160:       dow: null,
+00161:       core: ["11:00", "14:00", "16:00"],
+00162:       opcional: ["09:00"],
+00163:       rara: ["18:00", "21:00"],
+00164:       note: "INVALID_YMD_FORMAT",
+00165:     };
+00166:   }
+00167: 
+00168:   const year = Number(date.slice(0, 4));
+00169:   const dow = ymdDow(date);
+00170: 
+00171:   if (!Number.isFinite(year) || !Number.isFinite(dow)) {
+00172:     return {
+00173:       ok: true,
+00174:       source: "fallback",
+00175:       date,
+00176:       year: Number.isFinite(year) ? year : null,
+00177:       dow: Number.isFinite(dow) ? dow : null,
+00178:       core: ["11:00", "14:00", "16:00"],
+00179:       opcional: ["09:00"],
+00180:       rara: ["18:00", "21:00"],
+00181:       note: "INVALID_YEAR_OR_DOW",
+00182:     };
+00183:   }
+00184: 
+00185:   const loaded = loadRules();
+00186:   if (loaded.ok && loaded.map) {
+00187:     const hit = loaded.map.get(`${year}:${dow}`);
+00188:     if (hit) {
+00189:       return {
+00190:         ok: true,
+00191:         source: "pt_rio_calendar_rules.json",
+00192:         date,
+00193:         year,
+00194:         dow,
+00195:         core: hit.CORE,
+00196:         opcional: hit.OPCIONAL,
+00197:         rara: hit.RARA,
+00198:       };
+00199:     }
+00200:   }
+00201: 
+00202:   return {
+00203:     ok: true,
+00204:     source: "fallback",
+00205:     date,
+00206:     year,
+00207:     dow,
+00208:     core: ["11:00", "14:00", "16:00"],
+00209:     opcional: ["09:00"],
+00210:     rara: ["18:00", "21:00"],
+00211:   };
+00212: }
+00213: 
+00214: module.exports = { getPtRioSlotsByDate };
+00215: 
+00216: /**
+00217:  * CLI helper:
+00218:  *   node backend/scripts/ptRioCalendar.js --date 2026-02-09
+00219:  *   node backend/scripts/ptRioCalendar.js 2026-02-09
+00220:  */
+00221: if (require.main === module) {
+00222:   const argv = process.argv.slice(2);
+00223:   const pick = (k) => {
+00224:     const i = argv.indexOf(k);
+00225:     if (i >= 0 && argv[i + 1]) return argv[i + 1];
+00226:     return null;
+00227:   };
+00228:   const ymd = pick("--date") || argv.find((x) => /^\d{4}-\d{2}-\d{2}$/.test(String(x || ""))) || null;
+00229: 
+00230:   if (!ymd) {
+00231:     console.log("usage: node backend/scripts/ptRioCalendar.js --date YYYY-MM-DD");
+00232:     process.exit(2);
+00233:   }
+00234: 
+00235:   try {
+00236:     const out = module.exports.getPtRioSlotsByDate(ymd);
+00237:     console.log(JSON.stringify({ date: ymd, ...out }, null, 2));
+00238:     process.exit(0);
+00239:   } catch (e) {
+00240:     console.error(e && e.stack ? e.stack : e);
+00241:     process.exit(1);
+00242:   }
+00243: }
+00244: 
+
+======================================================================================================================================================
+ARQUIVO: backend/data/slot_schedule/PT_RIO.json
+======================================================================================================================================================
+00001: {
+00002:   "lotteryKey": "PT_RIO",
+00003:   "ranges": [
+00004:     {
+00005:       "to": "2024-01-04",
+00006:       "from": "2022-06-07",
+00007:       "dow": {
+00008:         "1": {
+00009:           "hard": [
+00010:             "11",
+00011:             "14",
+00012:             "16",
+00013:             "18",
+00014:             "21"
+00015:           ],
+00016:           "soft": []
+00017:         },
+00018:         "4": {
+00019:           "hard": [
+00020:             "11",
+00021:             "14",
+00022:             "16",
+00023:             "18",
+00024:             "21"
+00025:           ],
+00026:           "soft": []
+00027:         },
+00028:         "0": {
+00029:           "hard": [
+00030:             "11",
+00031:             "14",
+00032:             "16"
+00033:           ],
+00034:           "soft": []
+00035:         },
+00036:         "3": {
+00037:           "hard": [
+00038:             "11",
+00039:             "14",
+00040:             "16",
+00041:             "21"
+00042:           ],
+00043:           "soft": [
+00044:             "18"
+00045:           ]
+00046:         },
+00047:         "5": {
+00048:           "hard": [
+00049:             "11",
+00050:             "14",
+00051:             "16",
+00052:             "18",
+00053:             "21"
+00054:           ],
+00055:           "soft": []
+00056:         },
+00057:         "6": {
+00058:           "hard": [
+00059:             "11",
+00060:             "14",
+00061:             "16",
+00062:             "21"
+00063:           ],
+00064:           "soft": [
+00065:             "18"
+00066:           ]
+00067:         },
+00068:         "2": {
+00069:           "hard": [
+00070:             "11",
+00071:             "14",
+00072:             "16",
+00073:             "18",
+00074:             "21"
+00075:           ],
+00076:           "soft": []
+00077:         }
+00078:       }
+00079:     },
+00080:     {
+00081:       "to": "2099-12-31",
+00082:       "from": "2024-01-05",
+00083:       "dow": {
+00084:         "1": {
+00085:           "hard": [
+00086:             "09",
+00087:             "11",
+00088:             "14",
+00089:             "16",
+00090:             "18",
+00091:             "21"
+00092:           ],
+00093:           "soft": []
+00094:         },
+00095:         "4": {
+00096:           "hard": [
+00097:             "09",
+00098:             "11",
+00099:             "14",
+00100:             "16",
+00101:             "18",
+00102:             "21"
+00103:           ],
+00104:           "soft": []
+00105:         },
+00106:         "0": {
+00107:           "hard": [
+00108:             "09",
+00109:             "11",
+00110:             "14",
+00111:             "16"
+00112:           ],
+00113:           "soft": []
+00114:         },
+00115:         "3": {
+00116:           "hard": [
+00117:             "09",
+00118:             "11",
+00119:             "14",
+00120:             "16",
+00121:             "21"
+00122:           ],
+00123:           "soft": [
+00124:             "18"
+00125:           ]
+00126:         },
+00127:         "5": {
+00128:           "hard": [
+00129:             "09",
+00130:             "11",
+00131:             "14",
+00132:             "16",
+00133:             "18",
+00134:             "21"
+00135:           ],
+00136:           "soft": []
+00137:         },
+00138:         "6": {
+00139:           "hard": [
+00140:             "09",
+00141:             "11",
+00142:             "14",
+00143:             "16",
+00144:             "21"
+00145:           ],
+00146:           "soft": [
+00147:             "18"
+00148:           ]
+00149:         },
+00150:         "2": {
+00151:           "hard": [
+00152:             "09",
+00153:             "11",
+00154:             "14",
+00155:             "16",
+00156:             "18",
+00157:             "21"
+00158:           ],
+00159:           "soft": []
+00160:         }
+00161:       }
+00162:     }
+00163:   ]
+00164: }
+
+======================================================================================================================================================
+ARQUIVO: backend/data/pt_rio_calendar_rules.json
+======================================================================================================================================================
+00001: {
+00002:   "ok": true,
+00003:   "lot": "PT_RIO",
+00004:   "rules": [
+00005:     {
+00006:       "lottery_key": "PT_RIO",
+00007:       "year": 2022,
+00008:       "dow": 0,
+00009:       "days": 27,
+00010:       "CORE": [
+00011:         "11:00",
+00012:         "14:00",
+00013:         "16:00"
+00014:       ],
+00015:       "OPCIONAL": [],
+00016:       "RARA": [
+00017:         "09:00",
+00018:         "18:00",
+00019:         "21:00"
+00020:       ],
+00021:       "thresholds": {
+00022:         "CORE_MIN": 0.9,
+00023:         "OPT_MIN": 0.5,
+00024:         "MIN_DAYS_PER_GROUP": 20
+00025:       },
+00026:       "generatedAt": "2026-02-09T16:19:48.771Z"
+00027:     },
+00028:     {
+00029:       "lottery_key": "PT_RIO",
+00030:       "year": 2022,
+00031:       "dow": 1,
+00032:       "days": 29,
+00033:       "CORE": [
+00034:         "11:00",
+00035:         "14:00",
+00036:         "16:00",
+00037:         "18:00",
+00038:         "21:00"
+00039:       ],
+00040:       "OPCIONAL": [],
+00041:       "RARA": [
+00042:         "09:00"
+00043:       ],
+00044:       "thresholds": {
+00045:         "CORE_MIN": 0.9,
+00046:         "OPT_MIN": 0.5,
+00047:         "MIN_DAYS_PER_GROUP": 20
+00048:       },
+00049:       "generatedAt": "2026-02-09T16:19:48.771Z"
+00050:     },
+00051:     {
+00052:       "lottery_key": "PT_RIO",
+00053:       "year": 2022,
+00054:       "dow": 2,
+00055:       "days": 30,
+00056:       "CORE": [
+00057:         "11:00",
+00058:         "14:00",
+00059:         "16:00",
+00060:         "18:00",
+00061:         "21:00"
+00062:       ],
+00063:       "OPCIONAL": [],
+00064:       "RARA": [
+00065:         "09:00"
+00066:       ],
+00067:       "thresholds": {
+00068:         "CORE_MIN": 0.9,
+00069:         "OPT_MIN": 0.5,
+00070:         "MIN_DAYS_PER_GROUP": 20
+00071:       },
+00072:       "generatedAt": "2026-02-09T16:19:48.771Z"
+00073:     },
+00074:     {
+00075:       "lottery_key": "PT_RIO",
+00076:       "year": 2022,
+00077:       "dow": 3,
+00078:       "days": 29,
+00079:       "CORE": [
+00080:         "11:00",
+00081:         "14:00",
+00082:         "16:00",
+00083:         "21:00"
+00084:       ],
+00085:       "OPCIONAL": [],
+00086:       "RARA": [
+00087:         "09:00",
+00088:         "18:00"
+00089:       ],
+00090:       "thresholds": {
+00091:         "CORE_MIN": 0.9,
+00092:         "OPT_MIN": 0.5,
+00093:         "MIN_DAYS_PER_GROUP": 20
+00094:       },
+00095:       "generatedAt": "2026-02-09T16:19:48.772Z"
+00096:     },
+00097:     {
+00098:       "lottery_key": "PT_RIO",
+00099:       "year": 2022,
+00100:       "dow": 4,
+00101:       "days": 30,
+00102:       "CORE": [
+00103:         "11:00",
+00104:         "14:00",
+00105:         "16:00",
+00106:         "18:00",
+00107:         "21:00"
+00108:       ],
+00109:       "OPCIONAL": [],
+00110:       "RARA": [
+00111:         "09:00"
+00112:       ],
+00113:       "thresholds": {
+00114:         "CORE_MIN": 0.9,
+00115:         "OPT_MIN": 0.5,
+00116:         "MIN_DAYS_PER_GROUP": 20
+00117:       },
+00118:       "generatedAt": "2026-02-09T16:19:48.772Z"
+00119:     },
+00120:     {
+00121:       "lottery_key": "PT_RIO",
+00122:       "year": 2022,
+00123:       "dow": 5,
+00124:       "days": 30,
+00125:       "CORE": [
+00126:         "11:00",
+00127:         "14:00",
+00128:         "16:00",
+00129:         "18:00",
+00130:         "21:00"
+00131:       ],
+00132:       "OPCIONAL": [],
+00133:       "RARA": [
+00134:         "09:00"
+00135:       ],
+00136:       "thresholds": {
+00137:         "CORE_MIN": 0.9,
+00138:         "OPT_MIN": 0.5,
+00139:         "MIN_DAYS_PER_GROUP": 20
+00140:       },
+00141:       "generatedAt": "2026-02-09T16:19:48.772Z"
+00142:     },
+00143:     {
+00144:       "lottery_key": "PT_RIO",
+00145:       "year": 2022,
+00146:       "dow": 6,
+00147:       "days": 30,
+00148:       "CORE": [
+00149:         "11:00",
+00150:         "14:00",
+00151:         "16:00",
+00152:         "21:00"
+00153:       ],
+00154:       "OPCIONAL": [],
+00155:       "RARA": [
+00156:         "09:00",
+00157:         "18:00"
+00158:       ],
+00159:       "thresholds": {
+00160:         "CORE_MIN": 0.9,
+00161:         "OPT_MIN": 0.5,
+00162:         "MIN_DAYS_PER_GROUP": 20
+00163:       },
+00164:       "generatedAt": "2026-02-09T16:19:48.772Z"
+00165:     },
+00166:     {
+00167:       "lottery_key": "PT_RIO",
+00168:       "year": 2023,
+00169:       "dow": 0,
+00170:       "days": 52,
+00171:       "CORE": [
+00172:         "11:00",
+00173:         "14:00",
+00174:         "16:00"
+00175:       ],
+00176:       "OPCIONAL": [],
+00177:       "RARA": [
+00178:         "09:00",
+00179:         "18:00",
+00180:         "21:00"
+00181:       ],
+00182:       "thresholds": {
+00183:         "CORE_MIN": 0.9,
+00184:         "OPT_MIN": 0.5,
+00185:         "MIN_DAYS_PER_GROUP": 20
+00186:       },
+00187:       "generatedAt": "2026-02-09T16:19:48.772Z"
+00188:     },
+00189:     {
+00190:       "lottery_key": "PT_RIO",
+00191:       "year": 2023,
+00192:       "dow": 1,
+00193:       "days": 51,
+00194:       "CORE": [
+00195:         "11:00",
+00196:         "14:00",
+00197:         "16:00",
+00198:         "18:00",
+00199:         "21:00"
+00200:       ],
+00201:       "OPCIONAL": [],
+00202:       "RARA": [
+00203:         "09:00"
+00204:       ],
+00205:       "thresholds": {
+00206:         "CORE_MIN": 0.9,
+00207:         "OPT_MIN": 0.5,
+00208:         "MIN_DAYS_PER_GROUP": 20
+00209:       },
+00210:       "generatedAt": "2026-02-09T16:19:48.772Z"
+00211:     },
+00212:     {
+00213:       "lottery_key": "PT_RIO",
+00214:       "year": 2023,
+00215:       "dow": 2,
+00216:       "days": 52,
+00217:       "CORE": [
+00218:         "11:00",
+00219:         "14:00",
+00220:         "16:00",
+00221:         "18:00",
+00222:         "21:00"
+00223:       ],
+00224:       "OPCIONAL": [],
+00225:       "RARA": [
+00226:         "09:00"
+00227:       ],
+00228:       "thresholds": {
+00229:         "CORE_MIN": 0.9,
+00230:         "OPT_MIN": 0.5,
+00231:         "MIN_DAYS_PER_GROUP": 20
+00232:       },
+00233:       "generatedAt": "2026-02-09T16:19:48.772Z"
+00234:     },
+00235:     {
+00236:       "lottery_key": "PT_RIO",
+00237:       "year": 2023,
+00238:       "dow": 3,
+00239:       "days": 52,
+00240:       "CORE": [
+00241:         "11:00",
+00242:         "14:00",
+00243:         "16:00",
+00244:         "21:00"
+00245:       ],
+00246:       "OPCIONAL": [],
+00247:       "RARA": [
+00248:         "09:00",
+00249:         "18:00"
+00250:       ],
+00251:       "thresholds": {
+00252:         "CORE_MIN": 0.9,
+00253:         "OPT_MIN": 0.5,
+00254:         "MIN_DAYS_PER_GROUP": 20
+00255:       },
+00256:       "generatedAt": "2026-02-09T16:19:48.772Z"
+00257:     },
+00258:     {
+00259:       "lottery_key": "PT_RIO",
+00260:       "year": 2023,
+00261:       "dow": 4,
+00262:       "days": 51,
+00263:       "CORE": [
+00264:         "11:00",
+00265:         "14:00",
+00266:         "16:00",
+00267:         "18:00",
+00268:         "21:00"
+00269:       ],
+00270:       "OPCIONAL": [],
+00271:       "RARA": [
+00272:         "09:00"
+00273:       ],
+00274:       "thresholds": {
+00275:         "CORE_MIN": 0.9,
+00276:         "OPT_MIN": 0.5,
+00277:         "MIN_DAYS_PER_GROUP": 20
+00278:       },
+00279:       "generatedAt": "2026-02-09T16:19:48.772Z"
+00280:     },
+00281:     {
+00282:       "lottery_key": "PT_RIO",
+00283:       "year": 2023,
+00284:       "dow": 5,
+00285:       "days": 51,
+00286:       "CORE": [
+00287:         "11:00",
+00288:         "14:00",
+00289:         "16:00",
+00290:         "18:00",
+00291:         "21:00"
+00292:       ],
+00293:       "OPCIONAL": [],
+00294:       "RARA": [
+00295:         "09:00"
+00296:       ],
+00297:       "thresholds": {
+00298:         "CORE_MIN": 0.9,
+00299:         "OPT_MIN": 0.5,
+00300:         "MIN_DAYS_PER_GROUP": 20
+00301:       },
+00302:       "generatedAt": "2026-02-09T16:19:48.772Z"
+00303:     },
+00304:     {
+00305:       "lottery_key": "PT_RIO",
+00306:       "year": 2023,
+00307:       "dow": 6,
+00308:       "days": 52,
+00309:       "CORE": [
+00310:         "11:00",
+00311:         "14:00",
+00312:         "16:00",
+00313:         "21:00"
+00314:       ],
+00315:       "OPCIONAL": [],
+00316:       "RARA": [
+00317:         "09:00",
+00318:         "18:00"
+00319:       ],
+00320:       "thresholds": {
+00321:         "CORE_MIN": 0.9,
+00322:         "OPT_MIN": 0.5,
+00323:         "MIN_DAYS_PER_GROUP": 20
+00324:       },
+00325:       "generatedAt": "2026-02-09T16:19:48.772Z"
+00326:     },
+00327:     {
+00328:       "lottery_key": "PT_RIO",
+00329:       "year": 2024,
+00330:       "dow": 0,
+00331:       "days": 51,
+00332:       "CORE": [
+00333:         "11:00",
+00334:         "14:00",
+00335:         "16:00"
+00336:       ],
+00337:       "OPCIONAL": [
+00338:         "09:00"
+00339:       ],
+00340:       "RARA": [
+00341:         "18:00",
+00342:         "21:00"
+00343:       ],
+00344:       "thresholds": {
+00345:         "CORE_MIN": 0.9,
+00346:         "OPT_MIN": 0.5,
+00347:         "MIN_DAYS_PER_GROUP": 20
+00348:       },
+00349:       "generatedAt": "2026-02-09T16:19:48.772Z"
+00350:     },
+00351:     {
+00352:       "lottery_key": "PT_RIO",
+00353:       "year": 2024,
+00354:       "dow": 1,
+00355:       "days": 52,
+00356:       "CORE": [
+00357:         "09:00",
+00358:         "11:00",
+00359:         "14:00",
+00360:         "16:00",
+00361:         "18:00",
+00362:         "21:00"
+00363:       ],
+00364:       "OPCIONAL": [],
+00365:       "RARA": [],
+00366:       "thresholds": {
+00367:         "CORE_MIN": 0.9,
+00368:         "OPT_MIN": 0.5,
+00369:         "MIN_DAYS_PER_GROUP": 20
+00370:       },
+00371:       "generatedAt": "2026-02-09T16:19:48.772Z"
+00372:     },
+00373:     {
+00374:       "lottery_key": "PT_RIO",
+00375:       "year": 2024,
+00376:       "dow": 2,
+00377:       "days": 53,
+00378:       "CORE": [
+00379:         "09:00",
+00380:         "11:00",
+00381:         "14:00",
+00382:         "16:00",
+00383:         "18:00",
+00384:         "21:00"
+00385:       ],
+00386:       "OPCIONAL": [],
+00387:       "RARA": [],
+00388:       "thresholds": {
+00389:         "CORE_MIN": 0.9,
+00390:         "OPT_MIN": 0.5,
+00391:         "MIN_DAYS_PER_GROUP": 20
+00392:       },
+00393:       "generatedAt": "2026-02-09T16:19:48.772Z"
+00394:     },
+00395:     {
+00396:       "lottery_key": "PT_RIO",
+00397:       "year": 2024,
+00398:       "dow": 3,
+00399:       "days": 51,
+00400:       "CORE": [
+00401:         "09:00",
+00402:         "11:00",
+00403:         "14:00",
+00404:         "16:00",
+00405:         "21:00"
+00406:       ],
+00407:       "OPCIONAL": [],
+00408:       "RARA": [
+00409:         "18:00"
+00410:       ],
+00411:       "thresholds": {
+00412:         "CORE_MIN": 0.9,
+00413:         "OPT_MIN": 0.5,
+00414:         "MIN_DAYS_PER_GROUP": 20
+00415:       },
+00416:       "generatedAt": "2026-02-09T16:19:48.772Z"
+00417:     },
+00418:     {
+00419:       "lottery_key": "PT_RIO",
+00420:       "year": 2024,
+00421:       "dow": 4,
+00422:       "days": 52,
+00423:       "CORE": [
+00424:         "09:00",
+00425:         "11:00",
+00426:         "14:00",
+00427:         "16:00",
+00428:         "18:00",
+00429:         "21:00"
+00430:       ],
+00431:       "OPCIONAL": [],
+00432:       "RARA": [],
+00433:       "thresholds": {
+00434:         "CORE_MIN": 0.9,
+00435:         "OPT_MIN": 0.5,
+00436:         "MIN_DAYS_PER_GROUP": 20
+00437:       },
+00438:       "generatedAt": "2026-02-09T16:19:48.772Z"
+00439:     },
+00440:     {
+00441:       "lottery_key": "PT_RIO",
+00442:       "year": 2024,
+00443:       "dow": 5,
+00444:       "days": 51,
+00445:       "CORE": [
+00446:         "09:00",
+00447:         "11:00",
+00448:         "14:00",
+00449:         "16:00",
+00450:         "18:00",
+00451:         "21:00"
+00452:       ],
+00453:       "OPCIONAL": [],
+00454:       "RARA": [],
+00455:       "thresholds": {
+00456:         "CORE_MIN": 0.9,
+00457:         "OPT_MIN": 0.5,
+00458:         "MIN_DAYS_PER_GROUP": 20
+00459:       },
+00460:       "generatedAt": "2026-02-09T16:19:48.772Z"
+00461:     },
+00462:     {
+00463:       "lottery_key": "PT_RIO",
+00464:       "year": 2024,
+00465:       "dow": 6,
+00466:       "days": 52,
+00467:       "CORE": [
+00468:         "09:00",
+00469:         "11:00",
+00470:         "14:00",
+00471:         "16:00",
+00472:         "21:00"
+00473:       ],
+00474:       "OPCIONAL": [],
+00475:       "RARA": [
+00476:         "18:00"
+00477:       ],
+00478:       "thresholds": {
+00479:         "CORE_MIN": 0.9,
+00480:         "OPT_MIN": 0.5,
+00481:         "MIN_DAYS_PER_GROUP": 20
+00482:       },
+00483:       "generatedAt": "2026-02-09T16:19:48.772Z"
+00484:     },
+00485:     {
+00486:       "lottery_key": "PT_RIO",
+00487:       "year": 2025,
+00488:       "dow": 0,
+00489:       "days": 52,
+00490:       "CORE": [
+00491:         "09:00",
+00492:         "11:00",
+00493:         "14:00",
+00494:         "16:00"
+00495:       ],
+00496:       "OPCIONAL": [],
+00497:       "RARA": [
+00498:         "18:00",
+00499:         "21:00"
+00500:       ],
+00501:       "thresholds": {
+00502:         "CORE_MIN": 0.9,
+00503:         "OPT_MIN": 0.5,
+00504:         "MIN_DAYS_PER_GROUP": 20
+00505:       },
+00506:       "generatedAt": "2026-02-09T16:19:48.772Z"
+00507:     },
+00508:     {
+00509:       "lottery_key": "PT_RIO",
+00510:       "year": 2025,
+00511:       "dow": 1,
+00512:       "days": 52,
+00513:       "CORE": [
+00514:         "09:00",
+00515:         "11:00",
+00516:         "14:00",
+00517:         "16:00",
+00518:         "18:00",
+00519:         "21:00"
+00520:       ],
+00521:       "OPCIONAL": [],
+00522:       "RARA": [],
+00523:       "thresholds": {
+00524:         "CORE_MIN": 0.9,
+00525:         "OPT_MIN": 0.5,
+00526:         "MIN_DAYS_PER_GROUP": 20
+00527:       },
+00528:       "generatedAt": "2026-02-09T16:19:48.772Z"
+00529:     },
+00530:     {
+00531:       "lottery_key": "PT_RIO",
+00532:       "year": 2025,
+00533:       "dow": 2,
+00534:       "days": 52,
+00535:       "CORE": [
+00536:         "09:00",
+00537:         "11:00",
+00538:         "14:00",
+00539:         "16:00",
+00540:         "18:00",
+00541:         "21:00"
+00542:       ],
+00543:       "OPCIONAL": [],
+00544:       "RARA": [],
+00545:       "thresholds": {
+00546:         "CORE_MIN": 0.9,
+00547:         "OPT_MIN": 0.5,
+00548:         "MIN_DAYS_PER_GROUP": 20
+00549:       },
+00550:       "generatedAt": "2026-02-09T16:19:48.772Z"
+00551:     },
+00552:     {
+00553:       "lottery_key": "PT_RIO",
+00554:       "year": 2025,
+00555:       "dow": 3,
+00556:       "days": 52,
+00557:       "CORE": [
+00558:         "09:00",
+00559:         "11:00",
+00560:         "14:00",
+00561:         "16:00",
+00562:         "21:00"
+00563:       ],
+00564:       "OPCIONAL": [],
+00565:       "RARA": [
+00566:         "18:00"
+00567:       ],
+00568:       "thresholds": {
+00569:         "CORE_MIN": 0.9,
+00570:         "OPT_MIN": 0.5,
+00571:         "MIN_DAYS_PER_GROUP": 20
+00572:       },
+00573:       "generatedAt": "2026-02-09T16:19:48.772Z"
+00574:     },
+00575:     {
+00576:       "lottery_key": "PT_RIO",
+00577:       "year": 2025,
+00578:       "dow": 4,
+00579:       "days": 51,
+00580:       "CORE": [
+00581:         "09:00",
+00582:         "11:00",
+00583:         "14:00",
+00584:         "16:00",
+00585:         "18:00",
+00586:         "21:00"
+00587:       ],
+00588:       "OPCIONAL": [],
+00589:       "RARA": [],
+00590:       "thresholds": {
+00591:         "CORE_MIN": 0.9,
+00592:         "OPT_MIN": 0.5,
+00593:         "MIN_DAYS_PER_GROUP": 20
+00594:       },
+00595:       "generatedAt": "2026-02-09T16:19:48.772Z"
+00596:     },
+00597:     {
+00598:       "lottery_key": "PT_RIO",
+00599:       "year": 2025,
+00600:       "dow": 5,
+00601:       "days": 52,
+00602:       "CORE": [
+00603:         "09:00",
+00604:         "11:00",
+00605:         "14:00",
+00606:         "16:00",
+00607:         "18:00",
+00608:         "21:00"
+00609:       ],
+00610:       "OPCIONAL": [],
+00611:       "RARA": [],
+00612:       "thresholds": {
+00613:         "CORE_MIN": 0.9,
+00614:         "OPT_MIN": 0.5,
+00615:         "MIN_DAYS_PER_GROUP": 20
+00616:       },
+00617:       "generatedAt": "2026-02-09T16:19:48.772Z"
+00618:     },
+00619:     {
+00620:       "lottery_key": "PT_RIO",
+00621:       "year": 2025,
+00622:       "dow": 6,
+00623:       "days": 52,
+00624:       "CORE": [
+00625:         "09:00",
+00626:         "11:00",
+00627:         "14:00",
+00628:         "16:00",
+00629:         "21:00"
+00630:       ],
+00631:       "OPCIONAL": [],
+00632:       "RARA": [
+00633:         "18:00"
+00634:       ],
+00635:       "thresholds": {
+00636:         "CORE_MIN": 0.9,
+00637:         "OPT_MIN": 0.5,
+00638:         "MIN_DAYS_PER_GROUP": 20
+00639:       },
+00640:       "generatedAt": "2026-02-09T16:19:48.772Z"
+00641:     },
+00642:     {
+00643:       "lottery_key": "PT_RIO",
+00644:       "year": 2026,
+00645:       "dow": 0,
+00646:       "days": 6,
+00647:       "CORE": [
+00648:         "09:00",
+00649:         "11:00",
+00650:         "14:00",
+00651:         "16:00"
+00652:       ],
+00653:       "OPCIONAL": [],
+00654:       "RARA": [
+00655:         "18:00",
+00656:         "21:00"
+00657:       ],
+00658:       "thresholds": {
+00659:         "CORE_MIN": 0.9,
+00660:         "OPT_MIN": 0.5,
+00661:         "MIN_DAYS_PER_GROUP": 20,
+00662:         "MIN_DAYS_CURRENT_YEAR": 3
+00663:       },
+00664:       "generatedAt": "2026-02-09T16:19:48.772Z",
+00665:       "note": "PARTIAL_CURRENT_YEAR (days>=3)"
+00666:     },
+00667:     {
+00668:       "lottery_key": "PT_RIO",
+00669:       "year": 2026,
+00670:       "dow": 1,
+00671:       "days": 6,
+00672:       "CORE": [
+00673:         "09:00",
+00674:         "11:00"
+00675:       ],
+00676:       "OPCIONAL": [
+00677:         "14:00",
+00678:         "16:00",
+00679:         "18:00",
+00680:         "21:00"
+00681:       ],
+00682:       "RARA": [],
+00683:       "thresholds": {
+00684:         "CORE_MIN": 0.9,
+00685:         "OPT_MIN": 0.5,
+00686:         "MIN_DAYS_PER_GROUP": 20,
+00687:         "MIN_DAYS_CURRENT_YEAR": 3
+00688:       },
+00689:       "generatedAt": "2026-02-09T16:19:48.772Z",
+00690:       "note": "PARTIAL_CURRENT_YEAR (days>=3)"
+00691:     },
+00692:     {
+00693:       "lottery_key": "PT_RIO",
+00694:       "year": 2026,
+00695:       "dow": 2,
+00696:       "days": 5,
+00697:       "CORE": [
+00698:         "09:00",
+00699:         "11:00",
+00700:         "14:00",
+00701:         "16:00",
+00702:         "18:00",
+00703:         "21:00"
+00704:       ],
+00705:       "OPCIONAL": [],
+00706:       "RARA": [],
+00707:       "thresholds": {
+00708:         "CORE_MIN": 0.9,
+00709:         "OPT_MIN": 0.5,
+00710:         "MIN_DAYS_PER_GROUP": 20,
+00711:         "MIN_DAYS_CURRENT_YEAR": 3
+00712:       },
+00713:       "generatedAt": "2026-02-09T16:19:48.772Z",
+00714:       "note": "PARTIAL_CURRENT_YEAR (days>=3)"
+00715:     },
+00716:     {
+00717:       "lottery_key": "PT_RIO",
+00718:       "year": 2026,
+00719:       "dow": 3,
+00720:       "days": 5,
+00721:       "CORE": [
+00722:         "09:00",
+00723:         "11:00",
+00724:         "14:00",
+00725:         "16:00",
+00726:         "21:00"
+00727:       ],
+00728:       "OPCIONAL": [],
+00729:       "RARA": [
+00730:         "18:00"
+00731:       ],
+00732:       "thresholds": {
+00733:         "CORE_MIN": 0.9,
+00734:         "OPT_MIN": 0.5,
+00735:         "MIN_DAYS_PER_GROUP": 20,
+00736:         "MIN_DAYS_CURRENT_YEAR": 3
+00737:       },
+00738:       "generatedAt": "2026-02-09T16:19:48.772Z",
+00739:       "note": "PARTIAL_CURRENT_YEAR (days>=3)"
+00740:     },
+00741:     {
+00742:       "lottery_key": "PT_RIO",
+00743:       "year": 2026,
+00744:       "dow": 4,
+00745:       "days": 5,
+00746:       "CORE": [
+00747:         "09:00",
+00748:         "11:00",
+00749:         "14:00",
+00750:         "16:00",
+00751:         "18:00",
+00752:         "21:00"
+00753:       ],
+00754:       "OPCIONAL": [],
+00755:       "RARA": [],
+00756:       "thresholds": {
+00757:         "CORE_MIN": 0.9,
+00758:         "OPT_MIN": 0.5,
+00759:         "MIN_DAYS_PER_GROUP": 20,
+00760:         "MIN_DAYS_CURRENT_YEAR": 3
+00761:       },
+00762:       "generatedAt": "2026-02-09T16:19:48.772Z",
+00763:       "note": "PARTIAL_CURRENT_YEAR (days>=3)"
+00764:     },
+00765:     {
+00766:       "lottery_key": "PT_RIO",
+00767:       "year": 2026,
+00768:       "dow": 5,
+00769:       "days": 6,
+00770:       "CORE": [
+00771:         "09:00",
+00772:         "11:00",
+00773:         "14:00",
+00774:         "16:00",
+00775:         "18:00",
+00776:         "21:00"
+00777:       ],
+00778:       "OPCIONAL": [],
+00779:       "RARA": [],
+00780:       "thresholds": {
+00781:         "CORE_MIN": 0.9,
+00782:         "OPT_MIN": 0.5,
+00783:         "MIN_DAYS_PER_GROUP": 20,
+00784:         "MIN_DAYS_CURRENT_YEAR": 3
+00785:       },
+00786:       "generatedAt": "2026-02-09T16:19:48.772Z",
+00787:       "note": "PARTIAL_CURRENT_YEAR (days>=3)"
+00788:     },
+00789:     {
+00790:       "lottery_key": "PT_RIO",
+00791:       "year": 2026,
+00792:       "dow": 6,
+00793:       "days": 6,
+00794:       "CORE": [
+00795:         "09:00",
+00796:         "11:00",
+00797:         "14:00",
+00798:         "16:00",
+00799:         "21:00"
+00800:       ],
+00801:       "OPCIONAL": [],
+00802:       "RARA": [
+00803:         "18:00"
+00804:       ],
+00805:       "thresholds": {
+00806:         "CORE_MIN": 0.9,
+00807:         "OPT_MIN": 0.5,
+00808:         "MIN_DAYS_PER_GROUP": 20,
+00809:         "MIN_DAYS_CURRENT_YEAR": 3
+00810:       },
+00811:       "generatedAt": "2026-02-09T16:19:48.772Z",
+00812:       "note": "PARTIAL_CURRENT_YEAR (days>=3)"
+00813:     }
+00814:   ]
+00815: }
+
+======================================================================================================================================================
+ARQUIVO: backend/data/source_gaps/PT_RIO.json
+======================================================================================================================================================
+00001: {
+00002:   "gapsByDay": {
+00003:     "2022-09-07": {
+00004:       "removedHard": [
+00005:         21
+00006:       ]
+00007:     },
+00008:     "2022-10-12": {
+00009:       "removedHard": [
+00010:         21
+00011:       ]
+00012:     },
+00013:     "2022-11-02": {
+00014:       "removedHard": [
+00015:         11,
+00016:         14,
+00017:         16,
+00018:         21
+00019:       ]
+00020:     },
+00021:     "2022-11-15": {
+00022:       "removedHard": [
+00023:         18,
+00024:         21
+00025:       ]
+00026:     },
+00027:     "2022-12-24": {
+00028:       "removedHard": [
+00029:         16,
+00030:         21
+00031:       ]
+00032:     },
+00033:     "2022-12-31": {
+00034:       "removedHard": [
+00035:         16,
+00036:         21
+00037:       ]
+00038:     },
+00039:     "2024-02-25": {
+00040:       "removedSoft": [
+00041:         9
+00042:       ]
+00043:     },
+00044:     "2024-03-03": {
+00045:       "removedSoft": [
+00046:         9
+00047:       ]
+00048:     },
+00049:     "2024-03-10": {
+00050:       "removedSoft": [
+00051:         9
+00052:       ]
+00053:     },
+00054:     "2024-03-17": {
+00055:       "removedSoft": [
+00056:         9
+00057:       ]
+00058:     },
+00059:     "2024-03-24": {
+00060:       "removedSoft": [
+00061:         9
+00062:       ]
+00063:     },
+00064:     "2024-03-31": {
+00065:       "removedSoft": [
+00066:         9
+00067:       ]
+00068:     },
+00069:     "2024-04-07": {
+00070:       "removedSoft": [
+00071:         9
+00072:       ]
+00073:     },
+00074:     "2024-12-24": {
+00075:       "removedHard": [
+00076:         18,
+00077:         21
+00078:       ]
+00079:     },
+00080:     "2024-12-31": {
+00081:       "removedHard": [
+00082:         18,
+00083:         21
+00084:       ]
+00085:     },
+00086:     "2025-12-24": {
+00087:       "removedHard": [
+00088:         21
+00089:       ]
+00090:     },
+00091:     "2025-12-31": {
+00092:       "removedHard": [
+00093:         21
+00094:       ]
+00095:     },
+00096:     "2022-09-08": {
+00097:       "removedHard": [
+00098:         18
+00099:       ],
+00100:       "removedSoft": []
+00101:     },
+00102:     "2022-10-13": {
+00103:       "removedHard": [
+00104:         18
+00105:       ],
+00106:       "removedSoft": []
+00107:     },
+00108:     "2022-11-03": {
+00109:       "removedHard": [
+00110:         18
+00111:       ],
+00112:       "removedSoft": []
+00113:     },
+00114:     "2023-11-16": {
+00115:       "removedHard": [
+00116:         18
+00117:       ],
+00118:       "removedSoft": []
+00119:     },
+00120:     "2024-09-06": {
+00121:       "removedHard": [
+00122:         18
+00123:       ],
+00124:       "removedSoft": []
+00125:     },
+00126:     "2024-10-11": {
+00127:       "removedHard": [
+00128:         18
+00129:       ],
+00130:       "removedSoft": []
+00131:     },
+00132:     "2024-11-01": {
+00133:       "removedHard": [
+00134:         18
+00135:       ],
+00136:       "removedSoft": []
+00137:     },
+00138:     "2024-11-21": {
+00139:       "removedHard": [
+00140:         18
+00141:       ],
+00142:       "removedSoft": []
+00143:     },
+00144:     "2025-11-14": {
+00145:       "removedHard": [
+00146:         18
+00147:       ],
+00148:       "removedSoft": []
+00149:     },
+00150:     "2022-10-02": {
+00151:       "removedHard": [
+00152:         11,
+00153:         14,
+00154:         16
+00155:       ]
+00156:     },
+00157:     "2022-12-25": {
+00158:       "removedHard": [
+00159:         11,
+00160:         14,
+00161:         16
+00162:       ]
+00163:     },
+00164:     "2023-01-01": {
+00165:       "removedHard": [
+00166:         11,
+00167:         14,
+00168:         16
+00169:       ]
+00170:     },
+00171:     "2024-10-06": {
+00172:       "removedHard": [
+00173:         11,
+00174:         14,
+00175:         16
+00176:       ]
+00177:     },
+00178:     "2026-01-19": {
+00179:       "removedHard": [
+00180:         18
+00181:       ]
+00182:     },
+00183:     "2026-01-20": {
+00184:       "removedHard": [
+00185:         18
+00186:       ]
+00187:     },
+00188:     "2026-01-22": {
+00189:       "removedHard": [
+00190:         18
+00191:       ]
+00192:     },
+00193:     "2026-01-23": {
+00194:       "removedHard": [
+00195:         18
+00196:       ]
+00197:     },
+00198:     "2026-01-26": {
+00199:       "removedHard": [
+00200:         18
+00201:       ]
+00202:     },
+00203:     "2026-01-27": {
+00204:       "removedHard": [
+00205:         18
+00206:       ]
+00207:     },
+00208:     "2026-01-29": {
+00209:       "removedHard": [
+00210:         18
+00211:       ]
+00212:     }
+00213:   }
+00214: }
+
+======================================================================================================================================================
+3. REFERÊNCIAS CRUZADAS
+======================================================================================================================================================
+
+======================================================================================================================================================
+REFERÊNCIAS: backend/routes/kingDraws.js
+======================================================================================================================================================
+00017:   if (s === "FED" || s === "FEDERAL" || s === "BR") return "FEDERAL";
+00025: function getExpectedHours(lottery, date, hasFederal) {
+00042:   // 18h só se NÃO tiver Federal no dia
+00043:   if (!hasFederal) {
+00044:     expected.push("18:00");
+00050: function checkDrawIntegrity(draws, lottery, date, hasFederal) {
+00051:   const expectedHours = getExpectedHours(lottery, date, hasFederal);
+00059:       hasFederal: Boolean(hasFederal),
+00072:       `[DRAW ALERT] ${lottery} ${date} missing=${missing.join(", ")} extra=${extra.join(", ")} hasFederal=${hasFederal ? "1" : "0"}`
+00081:     hasFederal: Boolean(hasFederal),
+00332: function hasFederalInDraws(draws) {
+00334:     (d) => upTrim(d.lottery_key) === "FEDERAL"
+00352:       error: "Parâmetro inválido: lottery (use RJ/PT_RIO ou FED/FEDERAL)",
+00403:     const hasFederal = hasFederalInDraws(rawDraws);
+00409:     const integrity = checkDrawIntegrity(draws, lottery, date, hasFederal);
+00457:     const hasFederal = hasFederalInDraws(rawDraws);
+00463:     const integrity = checkDrawIntegrity(draws, lottery, date, hasFederal);
+00552:         const hasFederal = hasFederalInDraws(dayRaw);
+00553:         groupedIntegrity[ymd] = checkDrawIntegrity(dayFiltered, lottery, ymd, hasFederal);
+
+======================================================================================================================================================
+REFERÊNCIAS: backend/routes/pitacoResults.js
+======================================================================================================================================================
+00075:   if (s === "FED" || s === "FEDERAL" || s === "BR") return "FEDERAL";
+00390:   const hard = normalizeHourList(scheduleRaw?.hard || scheduleRaw?.expectedHard || []);
+00391:   const soft = normalizeHourList(scheduleRaw?.soft || scheduleRaw?.expectedSoft || []);
+00398: function getExpectedForDate(lotteryKey, ymd, include09FromYmdDefault) {
+00417:       const hard = normalizeHourList(block?.hard || block?.expectedHard || []);
+00418:       const soft = normalizeHourList(block?.soft || block?.expectedSoft || []);
+00425:     const hard = normalizeHourList(r?.hard || r?.expectedHard || []);
+00426:     const soft = normalizeHourList(r?.soft || r?.expectedSoft || []);
+00474:       removedHard: normalizeHourList(entry),
+00475:       removedSoft: [],
+00480:   const hard = obj.removedHard || obj.removeHard || obj.hard || obj.expectedRemovedHard || [];
+00481:   const soft = obj.removedSoft || obj.removeSoft || obj.soft || obj.expectedRemovedSoft || [];
+00484:     removedHard: normalizeHourList(hard),
+00485:     removedSoft: normalizeHourList(soft),
+00493:   if (!entry) return { removedHard: [], removedSoft: [] };
+00552:     removedHardApplied,
+00553:     removedSoftApplied,
+00554:     expectedHard,
+00555:     expectedSoft,
+00556:     expectedHardPublished,
+00557:     expectedSoftPublished,
+00570:     if (removedHardApplied?.has?.(hh) || removedSoftApplied?.has?.(hh)) {
+00579:       ((expectedHard && expectedHard.includes(hh)) || (expectedSoft && expectedSoft.includes(hh)))
+00587:     if (expectedHardPublished && expectedHardPublished.includes(hh)) {
+00590:     if (expectedSoftPublished && expectedSoftPublished.includes(hh)) {
+00604:       hint: "Use: ?date=YYYY-MM-DD&lottery=PT_RIO|FEDERAL  (ou)  ?date=YYYY-MM-DD&uf=RJ|BR",
+00637:         error: "lottery inválida: " + lotteryRaw + " (use lottery=PT_RIO|FEDERAL ou aliases RJ|BR)",
+00698:     const expectedBase = getExpectedForDate(lottery, date, include09FromDefault);
+00726:     const removedHardSet = new Set(gaps.removedHard || []);
+00727:     const removedSoftSet = new Set(gaps.removedSoft || []);
+00731:     const expectedHard = setDiff(baseHard, removedHardSet);
+00732:     const expectedSoft = setDiff(baseSoft, removedSoftSet);
+00734:     const expectedHardPublished =
+00736:         ? expectedHard.filter((hh) => isSlotPublishedToday(hh, nowMinBR, slotGraceMin))
+00737:         : expectedHard;
+00739:     const expectedSoftPublished =
+00741:         ? expectedSoft.filter((hh) => isSlotPublishedToday(hh, nowMinBR, slotGraceMin))
+00742:         : expectedSoft;
+00744:     const removedHardApplied = intersectToSet(baseHard, removedHardSet);
+00745:     const removedSoftApplied = intersectToSet(baseSoft, removedSoftSet);
+00783:         removedHardApplied,
+00784:         removedSoftApplied,
+00785:         expectedHard,
+00786:         expectedSoft,
+00787:         expectedHardPublished,
+00788:         expectedSoftPublished,
+00801:         expectedHard: expectedHard.length,
+00802:         expectedSoft: expectedSoft.length,
+00803:         expectedTotal: expectedHard.length + expectedSoft.length,
+00806:         removedHard: removedHardApplied.size,
+00807:         removedSoft: removedSoftApplied.size,
+00814:           expectedHard.length + expectedSoft.length
+00818:                     (expectedHard.length + expectedSoft.length)) *
+00838:         expectedHard,
+00839:         expectedSoft,
+00885:       removedHardApplied,
+00886:       removedSoftApplied,
+00887:       expectedHard,
+00888:       expectedSoft,
+00889:       expectedHardPublished,
+00890:       expectedSoftPublished,
+00903:       expectedHard: expectedHard.length,
+00904:       expectedSoft: expectedSoft.length,
+00905:       expectedTotal: expectedHard.length + expectedSoft.length,
+00908:       removedHard: removedHardApplied.size,
+00909:       removedSoft: removedSoftApplied.size,
+00916:         expectedHard.length + expectedSoft.length
+00920:                   (expectedHard.length + expectedSoft.length)) *
+00940:       expectedHard,
+00941:       expectedSoft,
+
+======================================================================================================================================================
+REFERÊNCIAS: backend/scripts/auditFastPtRio.js
+======================================================================================================================================================
+00008: const EXPECTED = ["09:00", "11:00", "14:00", "16:00", "18:00", "21:00"];
+
+======================================================================================================================================================
+REFERÊNCIAS: backend/scripts/auditFirestorePtRioRange.js
+======================================================================================================================================================
+00008: const EXPECTED = ["09:00", "11:00", "14:00", "16:00", "18:00", "21:00"];
+
+======================================================================================================================================================
+REFERÊNCIAS: backend/scripts/auditRealGradePtRio.js
+======================================================================================================================================================
+00030:     hours = ["09:00", "11:00", "14:00", "16:00", "18:00"];
+00032:     hours = ["09:00", "11:00", "14:00", "16:00", "18:00", "21:00"];
+
+======================================================================================================================================================
+REFERÊNCIAS: backend/scripts/autoImportToday.js
+======================================================================================================================================================
+00045: // ✅ PROBE/SOFT da FEDERAL: limite de tentativas por slot/dia (anti-spam)
+00047: const FEDERAL_SOFT_MAX_TRIES_PER_DAY = Number(process.env.FEDERAL_SOFT_MAX_TRIES_PER_DAY || 2);
+00127:     { hour: "18:00", windowStart: "18:05", releaseAt: "18:29", windowEnd: "18:35" },
+00132:   // FEDERAL
+00134:   // - 20:00 = HARD (padrão)
+00135:   FEDERAL: [
+00137:     { hour: "20:00", windowStart: "19:50", releaseAt: "20:00", windowEnd: "20:20" }, // HARD
+00393:    FEDERAL PROBE: valida se o resultado pertence ao horário do slot
+00394:    - usa targetDrawIds no formato: FEDERAL__YYYY-MM-DD__20-00__uuid
+00414: function buildTodaySlotStatusMapPT_RIO(dateYMD, dow) {
+00425:       if (hh === "18:00" || hh === "21:00") map.set(hh, "OFF");
+00431:       if (hh === "18:00") map.set(hh, "SOFT");
+00451:  * FEDERAL (robusto / independente de expectedHard do backend):
+00453:  * - demais dias: 19:00 = SOFT (PROBE), 20:00 = HARD (padrão)
+00454:  * Obs: ainda logamos expectedHard/expectedSoft como debug, mas não usamos como "fonte da verdade".
+00456: function buildTodaySlotStatusMapFEDERAL({ dateYMD, dow, ds }) {
+00460:   const expectedHard = Array.isArray(ds?.expectedHard) ? ds.expectedHard.map(String) : [];
+00461:   const expectedSoft = Array.isArray(ds?.expectedSoft) ? ds.expectedSoft.map(String) : [];
+00474:     if (sched.hour === "20:00") {
+00484:     `[CAL] FEDERAL fixed: date=${dateYMD} dow=${dow} => 19:SOFT(PROBE) 20:HARD | backend expectedHard=[${expectedHard.join(
+00486:     )}] expectedSoft=[${expectedSoft.join(",")}]`,
+00584:       // ✅ debug (não é fonte da verdade pro FEDERAL fixed)
+00585:       expectedHard: Array.isArray(j.expectedHard) ? j.expectedHard.map(String) : [],
+00586:       expectedSoft: Array.isArray(j.expectedSoft) ? j.expectedSoft.map(String) : [],
+01013:       statusMap = buildTodaySlotStatusMapPT_RIO(date, dow);
+01014:     } else if (LOTTERY === "FEDERAL") {
+01015:       statusMap = buildTodaySlotStatusMapFEDERAL({ dateYMD: date, dow, ds });
+01064:         slot.naReason = LOTTERY === "FEDERAL" && dow === 0 ? "FEDERAL_DOMINGO_OFF" : "NAO_APLICA";
+01102:       // ✅ anti-spam: PROBE/SOFT da FEDERAL para depois de N tentativas/dia
+01103:       if (LOTTERY === "FEDERAL" && st === "SOFT") {
+01105:         if (Number.isFinite(FEDERAL_SOFT_MAX_TRIES_PER_DAY) && FEDERAL_SOFT_MAX_TRIES_PER_DAY > 0) {
+01106:           if (tries >= FEDERAL_SOFT_MAX_TRIES_PER_DAY) {
+01235:         // ✅ FEDERAL PROBE (SOFT): não marca DONE se o resultado não for do horário do slot
+01236:         if (LOTTERY === "FEDERAL" && st === "SOFT") {
+01248:               `[AUTO] FEDERAL PROBE mismatch: slot=${sched.hour} close=${closeHour} targetDrawIds=${
+
+======================================================================================================================================================
+REFERÊNCIAS: backend/scripts/autoRepairToday.js
+======================================================================================================================================================
+00040: function getExpectedPtRioHours(ymd, hasFederal) {
+00046:   if (!hasFederal) expected.push("18:00");
+00063:   const fed = Array.from(new Set(rows.filter(x => x.lottery_key === "FEDERAL").map(x => x.close_hour).filter(Boolean))).sort();
+00092: function getDuePtRioHours(ymd, hasFederal) {
+00093:   const expected = getExpectedPtRioHours(ymd, hasFederal);
+
+======================================================================================================================================================
+REFERÊNCIAS: backend/scripts/ptRioCalendar.js
+======================================================================================================================================================
+00150: function getPtRioSlotsByDate(ymd) {
+00163:       rara: ["18:00", "21:00"],
+00180:       rara: ["18:00", "21:00"],
+00210:     rara: ["18:00", "21:00"],
+00214: module.exports = { getPtRioSlotsByDate };
+00236:     const out = module.exports.getPtRioSlotsByDate(ymd);
+
+======================================================================================================================================================
+4. ERROS
+======================================================================================================================================================
+Nenhum erro de leitura.

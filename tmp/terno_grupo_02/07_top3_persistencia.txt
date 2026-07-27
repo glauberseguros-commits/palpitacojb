@@ -1,0 +1,1128 @@
+========================================================================================================================
+TERNO-GRUPO-02 — 07_top3_persistencia.txt
+Gerado em: 26/07/2026 19:06:48
+========================================================================================================================
+
+########################################################################################################################
+ARQUIVO COMPLETO: .\src\pages\Top3\top3.firestore.js
+########################################################################################################################
+00001: /* eslint-disable no-unused-vars */
+00002: import {
+00003:   doc,
+00004:   getDoc,
+00005:   runTransaction,
+00006:   setDoc,
+00007: } from "firebase/firestore";
+00008: 
+00009: import { db } from "../../services/firebase";
+00010: import { loginAnonymous } from "../../services/auth";
+00011: 
+00012: import {
+00013:   safeStr,
+00014:   isYMD,
+00015:   toHourBucket,
+00016: } from "./top3.formatters";
+00017: 
+00018: import {
+00019:   pickDrawYMD,
+00020:   pickDrawHour,
+00021:   pickPrize1GrupoFromDraw,
+00022: } from "./top3.engine";
+00023: 
+00024: const COLLECTION = "top3_predictions";
+00025: 
+00026: function normalizeLotteryKey(value) {
+00027:   return safeStr(value).toUpperCase() || "PT_RIO";
+00028: }
+00029: 
+00030: function normalizeHour(value) {
+00031:   return toHourBucket(value) || "";
+00032: }
+00033: 
+00034: function hourCode(value) {
+00035:   return normalizeHour(value).replace(/\D/g, "").padStart(2, "0");
+00036: }
+00037: 
+00038: function makePredictionId({ lotteryKey, targetYmd, targetHour }) {
+00039:   const lottery = normalizeLotteryKey(lotteryKey);
+00040:   const ymd = safeStr(targetYmd);
+00041:   const hour = hourCode(targetHour);
+00042: 
+00043:   if (!lottery || !isYMD(ymd) || !hour) return "";
+00044: 
+00045:   return `${lottery}__${ymd}__${hour}`;
+00046: }
+00047: 
+00048: function predictionRef(params) {
+00049:   const id = makePredictionId(params);
+00050:   return id ? doc(db, COLLECTION, id) : null;
+00051: }
+00052: 
+00053: function cleanFirestoreValue(value) {
+00054:   try {
+00055:     return JSON.parse(
+00056:       JSON.stringify(value, (_key, current) => {
+00057:         if (current === undefined) return null;
+00058:         if (typeof current === "number" && !Number.isFinite(current)) {
+00059:           return null;
+00060:         }
+00061:         return current;
+00062:       })
+00063:     );
+00064:   } catch {
+00065:     return null;
+00066:   }
+00067: }
+00068: 
+00069: function normalizeMilhar(value) {
+00070:   const digits = String(value || "").replace(/\D/g, "");
+00071:   if (!digits) return "";
+00072:   return digits.slice(-4).padStart(4, "0");
+00073: }
+00074: 
+00075: function extractPrize1(draw) {
+00076:   const prizes = Array.isArray(draw?.prizes) ? draw.prizes : [];
+00077: 
+00078:   return (
+00079:     prizes.find((item) => Number(item?.position) === 1) ||
+00080:     prizes[0] ||
+00081:     null
+00082:   );
+00083: }
+00084: 
+00085: function extractPrize1Milhar(draw) {
+00086:   const prize = extractPrize1(draw);
+00087: 
+00088:   return normalizeMilhar(
+00089:     prize?.milhar ??
+00090:       prize?.numero ??
+00091:       prize?.number ??
+00092:       prize?.valor ??
+00093:       draw?.prize_1 ??
+00094:       ""
+00095:   );
+00096: }
+00097: 
+00098: function findDrawForTarget({
+00099:   draws,
+00100:   targetYmd,
+00101:   targetHour,
+00102: }) {
+00103:   const ymd = safeStr(targetYmd);
+00104:   const hour = normalizeHour(targetHour);
+00105: 
+00106:   if (!isYMD(ymd) || !hour) return null;
+00107: 
+00108:   return (
+00109:     (Array.isArray(draws) ? draws : []).find((draw) => {
+00110:       return (
+00111:         pickDrawYMD(draw) === ymd &&
+00112:         normalizeHour(pickDrawHour(draw)) === hour
+00113:       );
+00114:     }) || null
+00115:   );
+00116: }
+00117: function normalizeSnapshot(snapshot) {
+00118:   return (Array.isArray(snapshot) ? snapshot : [])
+00119:     .slice(0, 3)
+00120:     .map((item, index) => ({
+00121:       rank: Number(item?.rank || index + 1),
+00122:       grupo: Number(item?.grupo),
+00123:       animal: safeStr(item?.animal || ""),
+00124:       prob: Number(item?.prob || 0),
+00125:       probPct: Number(item?.probPct || 0),
+00126:       milhares20: Array.isArray(item?.milhares20)
+00127:         ? item.milhares20.map(normalizeMilhar).filter(Boolean).slice(0, 20)
+00128:         : [],
+00129:       milharesCols: Array.isArray(item?.milharesCols)
+00130:         ? cleanFirestoreValue(item.milharesCols)
+00131:         : [],
+00132:       meta: cleanFirestoreValue(item?.meta || null),
+00133:     }))
+00134:     .filter((item) => {
+00135:       return (
+00136:         Number.isFinite(item.grupo) &&
+00137:         item.grupo >= 1 &&
+00138:         item.grupo <= 25
+00139:       );
+00140:     });
+00141: }
+00142: 
+00143: function extractPrizeGrupo(prize) {
+00144:   const direct = Number(
+00145:     prize?.grupo ??
+00146:       prize?.group ??
+00147:       prize?.animal_grupo ??
+00148:       prize?.grupo2
+00149:   );
+00150: 
+00151:   if (
+00152:     Number.isFinite(direct) &&
+00153:     direct >= 1 &&
+00154:     direct <= 25
+00155:   ) {
+00156:     return direct;
+00157:   }
+00158: 
+00159:   const milhar = normalizeMilhar(
+00160:     prize?.milhar ??
+00161:       prize?.numero ??
+00162:       prize?.number ??
+00163:       prize?.valor ??
+00164:       ""
+00165:   );
+00166: 
+00167:   if (!milhar) return null;
+00168: 
+00169:   const dezena = Number(milhar.slice(-2));
+00170:   const normalizedDezena = dezena === 0 ? 100 : dezena;
+00171:   const grupo = Math.ceil(normalizedDezena / 4);
+00172: 
+00173:   return grupo >= 1 && grupo <= 25 ? grupo : null;
+00174: }
+00175: 
+00176: function extractOfficialPodium(draw) {
+00177:   const prizes = Array.isArray(draw?.prizes)
+00178:     ? draw.prizes
+00179:     : [];
+00180: 
+00181:   return [1, 2, 3].map((position) => {
+00182:     const prize =
+00183:       prizes.find(
+00184:         (item) => Number(item?.position) === position
+00185:       ) ||
+00186:       prizes[position - 1] ||
+00187:       null;
+00188: 
+00189:     if (!prize) return null;
+00190: 
+00191:     const grupo = extractPrizeGrupo(prize);
+00192:     const milhar = normalizeMilhar(
+00193:       prize?.milhar ??
+00194:         prize?.numero ??
+00195:         prize?.number ??
+00196:         prize?.valor ??
+00197:         ""
+00198:     );
+00199: 
+00200:     if (
+00201:       !Number.isFinite(Number(grupo)) ||
+00202:       Number(grupo) < 1 ||
+00203:       Number(grupo) > 25
+00204:     ) {
+00205:       return null;
+00206:     }
+00207: 
+00208:     return {
+00209:       position,
+00210:       grupo: Number(grupo),
+00211:       milhar,
+00212:       animal: safeStr(prize?.animal || ""),
+00213:     };
+00214:   });
+00215: }
+00216: 
+00217: function podiumMedalFromPosition(position) {
+00218:   if (Number(position) === 1) return "gold";
+00219:   if (Number(position) === 2) return "silver";
+00220:   if (Number(position) === 3) return "bronze";
+00221:   return "";
+00222: }
+00223: 
+00224: function analyzeSnapshotHit(snapshot, officialPodium) {
+00225:   const top3 = Array.isArray(snapshot)
+00226:     ? snapshot.slice(0, 3)
+00227:     : [];
+00228: 
+00229:   const podium = Array.isArray(officialPodium)
+00230:     ? officialPodium.filter(Boolean).slice(0, 3)
+00231:     : [];
+00232: 
+00233:   if (!top3.length || !podium.length) {
+00234:     return {
+00235:       hitType: "miss",
+00236:       hitScore: 0,
+00237:       hitPosition: -1,
+00238:       predictionPosition: -1,
+00239:       resultPosition: -1,
+00240:       podiumMedal: "",
+00241:       matchedValue: "",
+00242:       matchedGrupo: null,
+00243:       matchedMilhar: "",
+00244:       matchedAnimal: "",
+00245:     };
+00246:   }
+00247: 
+00248:   for (const officialPrize of podium) {
+00249:     const resultGrupo = Number(officialPrize?.grupo);
+00250:     const resultMilhar = normalizeMilhar(
+00251:       officialPrize?.milhar
+00252:     );
+00253:     const resultCentena = resultMilhar
+00254:       ? resultMilhar.slice(-3)
+00255:       : "";
+00256: 
+00257:     for (
+00258:       let predictionIndex = 0;
+00259:       predictionIndex < top3.length;
+00260:       predictionIndex += 1
+00261:     ) {
+00262:       const prediction = top3[predictionIndex];
+00263:       const predictionGrupo = Number(prediction?.grupo);
+00264: 
+00265:       const milhares = (
+00266:         Array.isArray(prediction?.milhares20)
+00267:           ? prediction.milhares20
+00268:           : Array.isArray(prediction?.milhares)
+00269:             ? prediction.milhares
+00270:             : []
+00271:       )
+00272:         .map(normalizeMilhar)
+00273:         .filter(Boolean);
+00274: 
+00275:       const centenas = milhares.map(
+00276:         (value) => value.slice(-3)
+00277:       );
+00278: 
+00279:       let hitType = "miss";
+00280:       let hitScore = 0;
+00281:       let matchedValue = "";
+00282: 
+00283:       if (
+00284:         resultMilhar &&
+00285:         milhares.includes(resultMilhar)
+00286:       ) {
+00287:         hitType = "hit_exact";
+00288:         hitScore = 100;
+00289:         matchedValue = resultMilhar;
+00290:       } else if (
+00291:         resultCentena &&
+00292:         centenas.includes(resultCentena)
+00293:       ) {
+00294:         hitType = "hit_centena";
+00295:         hitScore = 66.67;
+00296:         matchedValue = resultCentena;
+00297:       } else if (
+00298:         Number.isFinite(resultGrupo) &&
+00299:         predictionGrupo === resultGrupo
+00300:       ) {
+00301:         hitType = "hit_grupo";
+00302:         hitScore = 33.33;
+00303:         matchedValue = resultMilhar
+00304:           ? resultMilhar.slice(-2)
+00305:           : String(resultGrupo).padStart(2, "0");
+00306:       }
+00307: 
+00308:       if (hitType !== "miss") {
+00309:         const resultPosition = Number(
+00310:           officialPrize?.position
+00311:         );
+00312: 
+00313:         return {
+00314:           hitType,
+00315:           hitScore,
+00316:           hitPosition: predictionIndex + 1,
+00317:           predictionPosition: predictionIndex + 1,
+00318:           resultPosition,
+00319:           podiumMedal:
+00320:             podiumMedalFromPosition(resultPosition),
+00321:           matchedValue,
+00322:           matchedGrupo: resultGrupo,
+00323:           matchedMilhar: resultMilhar,
+00324:           matchedAnimal: safeStr(
+00325:             officialPrize?.animal || ""
+00326:           ),
+00327:         };
+00328:       }
+00329:     }
+00330:   }
+00331: 
+00332:   return {
+00333:     hitType: "miss",
+00334:     hitScore: 0,
+00335:     hitPosition: -1,
+00336:     predictionPosition: -1,
+00337:     resultPosition: -1,
+00338:     podiumMedal: "",
+00339:     matchedValue: "",
+00340:     matchedGrupo: null,
+00341:     matchedMilhar: "",
+00342:     matchedAnimal: "",
+00343:   };
+00344: }
+00345: 
+00346: export async function saveTop3PredictionSnapshot({
+00347:   lotteryKey,
+00348:   targetYmd,
+00349:   targetHour,
+00350:   picks,
+00351:   snapshot,
+00352:   engineVersion,
+00353: }) {
+00354:   let user = null;
+00355: 
+00356:   try {
+00357:     user = await loginAnonymous();
+00358:   } catch (error) {
+00359:     return {
+00360:       ok: false,
+00361:       skipped: true,
+00362:       reason: "AUTH_FAILED",
+00363:       error: String(error?.message || error || ""),
+00364:     };
+00365:   }
+00366: 
+00367:   if (!user?.uid) {
+00368:     return {
+00369:       ok: false,
+00370:       skipped: true,
+00371:       reason: "AUTH_REQUIRED",
+00372:     };
+00373:   }
+00374: 
+00375:   const lottery = normalizeLotteryKey(lotteryKey);
+00376:   const ymd = safeStr(targetYmd);
+00377:   const hour = normalizeHour(targetHour);
+00378:   const ref = predictionRef({
+00379:     lotteryKey: lottery,
+00380:     targetYmd: ymd,
+00381:     targetHour: hour,
+00382:   });
+00383: 
+00384:   if (!ref || !isYMD(ymd) || !hour) {
+00385:     return {
+00386:       ok: false,
+00387:       skipped: true,
+00388:       reason: "INVALID_TARGET",
+00389:     };
+00390:   }
+00391: 
+00392:   const normalizedSnapshot = normalizeSnapshot(snapshot);
+00393: 
+00394:   if (!normalizedSnapshot.length) {
+00395:     return {
+00396:       ok: false,
+00397:       skipped: true,
+00398:       reason: "EMPTY_SNAPSHOT",
+00399:     };
+00400:   }
+00401: 
+00402:   const normalizedPicks = Array.from(
+00403:     new Set(
+00404:       (Array.isArray(picks) ? picks : [])
+00405:         .map(Number)
+00406:         .filter((value) => value >= 1 && value <= 25)
+00407:     )
+00408:   ).slice(0, 3);
+00409: 
+00410:   const now = Date.now();
+00411: 
+00412:   const payload = cleanFirestoreValue({
+00413:     id: ref.id,
+00414:     lotteryKey: lottery,
+00415:     targetYmd: ymd,
+00416:     targetHour: hour,
+00417:     targetKey: `${ymd}_${hour}`,
+00418:     picks: normalizedPicks,
+00419:     snapshot: normalizedSnapshot,
+00420:     engineVersion: safeStr(engineVersion || "V3_STATISTICAL"),
+00421:     status: "predicted",
+00422:     resultGrupo: null,
+00423:     resultMilhar: "",
+00424:     resultAnimal: "",
+00425:     hitType: "",
+00426:     hitScore: 0,
+00427:     hitPosition: -1,
+00428:     matchedValue: "",
+00429:     createdAt: now,
+00430:     updatedAt: now,
+00431:     createdBy: user.uid,
+00432:   });
+00433: 
+00434:   const result = await runTransaction(db, async (transaction) => {
+00435:     const current = await transaction.get(ref);
+00436: 
+00437:     if (current.exists()) {
+00438:       return {
+00439:         ok: true,
+00440:         created: false,
+00441:         existing: true,
+00442:       };
+00443:     }
+00444: 
+00445:     transaction.set(ref, payload);
+00446: 
+00447:     return {
+00448:       ok: true,
+00449:       created: true,
+00450:       existing: false,
+00451:     };
+00452:   });
+00453: 
+00454:   return result;
+00455: }
+00456: 
+00457: export async function loadTop3PredictionDay({
+00458:   lotteryKey,
+00459:   targetYmd,
+00460:   schedule,
+00461: }) {
+00462:   const lottery = normalizeLotteryKey(lotteryKey);
+00463:   const ymd = safeStr(targetYmd);
+00464: 
+00465:   if (!isYMD(ymd)) return [];
+00466: 
+00467:   const hours = Array.from(
+00468:     new Set(
+00469:       (Array.isArray(schedule) ? schedule : [])
+00470:         .map(normalizeHour)
+00471:         .filter(Boolean)
+00472:     )
+00473:   );
+00474: 
+00475:   const snapshots = await Promise.all(
+00476:     hours.map(async (hour) => {
+00477:       const ref = predictionRef({
+00478:         lotteryKey: lottery,
+00479:         targetYmd: ymd,
+00480:         targetHour: hour,
+00481:       });
+00482: 
+00483:       if (!ref) return null;
+00484: 
+00485:       try {
+00486:         const snap = await getDoc(ref);
+00487:         if (!snap.exists()) return null;
+00488: 
+00489:         return {
+00490:           id: snap.id,
+00491:           ...snap.data(),
+00492:         };
+00493:       } catch {
+00494:         return null;
+00495:       }
+00496:     })
+00497:   );
+00498: 
+00499:   return snapshots
+00500:     .filter(Boolean)
+00501:     .sort((a, b) => {
+00502:       return normalizeHour(a?.targetHour).localeCompare(
+00503:         normalizeHour(b?.targetHour)
+00504:       );
+00505:     });
+00506: }
+00507: 
+00508: export async function reconcileTop3PredictionDay({
+00509:   lotteryKey,
+00510:   targetYmd,
+00511:   schedule,
+00512:   draws,
+00513: }) {
+00514:   let user = null;
+00515: 
+00516:   try {
+00517:     user = await loginAnonymous();
+00518:   } catch (error) {
+00519:     return {
+00520:       ok: false,
+00521:       skipped: true,
+00522:       reason: "AUTH_FAILED",
+00523:       error: String(error?.message || error || ""),
+00524:     };
+00525:   }
+00526: 
+00527:   if (!user?.uid) {
+00528:     return {
+00529:       ok: false,
+00530:       skipped: true,
+00531:       reason: "AUTH_REQUIRED",
+00532:     };
+00533:   }
+00534: 
+00535:   const history = await loadTop3PredictionDay({
+00536:     lotteryKey,
+00537:     targetYmd,
+00538:     schedule,
+00539:   });
+00540: 
+00541:   const lottery = normalizeLotteryKey(lotteryKey);
+00542:   let updated = 0;
+00543:   const reconciledHistory = [];
+00544: 
+00545:   for (const entry of history) {
+00546:     if (!entry) continue;
+00547: 
+00548:     const realDraw = findDrawForTarget({
+00549:       draws,
+00550:       targetYmd: entry?.targetYmd,
+00551:       targetHour: entry?.targetHour,
+00552:     });
+00553: 
+00554:     if (!realDraw) {
+00555:       reconciledHistory.push(entry);
+00556:       continue;
+00557:     }
+00558: 
+00559:     const officialPodium =
+00560:       extractOfficialPodium(realDraw);
+00561: 
+00562:     const firstOfficialPrize =
+00563:       officialPodium.find(
+00564:         (item) => Number(item?.position) === 1
+00565:       ) || null;
+00566: 
+00567:     const resultGrupo = Number(
+00568:       firstOfficialPrize?.grupo
+00569:     );
+00570: 
+00571:     if (
+00572:       !Number.isFinite(resultGrupo) ||
+00573:       resultGrupo < 1 ||
+00574:       resultGrupo > 25
+00575:     ) {
+00576:       reconciledHistory.push(entry);
+00577:       continue;
+00578:     }
+00579: 
+00580:     const resultMilhar = normalizeMilhar(
+00581:       firstOfficialPrize?.milhar
+00582:     );
+00583:     const savedLottery = safeStr(
+00584:       entry?.resultLotteryKey
+00585:     ).toUpperCase();
+00586:     const savedGrupo = Number(entry?.resultGrupo);
+00587:     const savedMilhar = normalizeMilhar(entry?.resultMilhar);
+00588: 
+00589:     const analysis = analyzeSnapshotHit(
+00590:       entry?.snapshot,
+00591:       officialPodium
+00592:     );
+00593: 
+00594:     const alreadyMatchesRealResult =
+00595:       entry?.status === "validated" &&
+00596:       savedLottery === lottery &&
+00597:       savedGrupo === resultGrupo &&
+00598:       savedMilhar === resultMilhar &&
+00599:       safeStr(entry?.hitType) === analysis.hitType &&
+00600:       Number(entry?.hitScore) === analysis.hitScore &&
+00601:       Number(entry?.hitPosition) === analysis.hitPosition &&
+00602:       Number(entry?.resultPosition ?? -1) ===
+00603:         Number(analysis.resultPosition ?? -1) &&
+00604:       safeStr(entry?.podiumMedal) ===
+00605:         safeStr(analysis.podiumMedal) &&
+00606:       safeStr(entry?.matchedValue) === analysis.matchedValue;
+00607: 
+00608:     if (alreadyMatchesRealResult) {
+00609:       reconciledHistory.push(entry);
+00610:       continue;
+00611:     }
+00612: 
+00613:     const ref = doc(db, COLLECTION, entry.id);
+00614:     const now = Date.now();
+00615: 
+00616:     const validationPayload = {
+00617:       resultGrupo,
+00618:       resultMilhar,
+00619:       resultLotteryKey: lottery,
+00620:       resultAnimal: safeStr(
+00621:         firstOfficialPrize?.animal ||
+00622:           extractPrize1(realDraw)?.animal ||
+00623:           ""
+00624:       ),
+00625:       resultTop3Groups: officialPodium.map(
+00626:         (item) => Number(item?.grupo) || null
+00627:       ),
+00628:       resultTop3Milhares: officialPodium.map(
+00629:         (item) => normalizeMilhar(item?.milhar)
+00630:       ),
+00631:       hitType: analysis.hitType,
+00632:       hitScore: analysis.hitScore,
+00633:       hitPosition: analysis.hitPosition,
+00634:       predictionPosition: analysis.predictionPosition,
+00635:       resultPosition: analysis.resultPosition,
+00636:       podiumMedal: analysis.podiumMedal,
+00637:       matchedGrupo: analysis.matchedGrupo,
+00638:       matchedMilhar: analysis.matchedMilhar,
+00639:       matchedAnimal: analysis.matchedAnimal,
+00640:       matchedValue: analysis.matchedValue,
+00641:       validatedAt: now,
+00642:       validatedBy: user.uid,
+00643:       updatedAt: now,
+00644:       status: "validated",
+00645:     };
+00646: 
+00647:     await setDoc(
+00648:       ref,
+00649:       validationPayload,
+00650:       { merge: true }
+00651:     );
+00652: 
+00653:     reconciledHistory.push({
+00654:       ...entry,
+00655:       ...validationPayload,
+00656:     });
+00657: 
+00658:     updated += 1;
+00659:   }
+00660: 
+00661:   return {
+00662:     ok: true,
+00663:     updated,
+00664:     history: reconciledHistory,
+00665:   };
+00666: }
+
+########################################################################################################################
+ARQUIVO COMPLETO: .\src\pages\Top3\top3.storage.js
+########################################################################################################################
+00001: import { safeStr, isYMD, toHourBucket } from "./top3.formatters";
+00002: 
+00003: import {
+00004:   pickDrawYMD,
+00005:   pickDrawHour,
+00006:   pickPrize1GrupoFromDraw,
+00007:   getScheduleForLottery,
+00008: } from "./top3.engine";
+00009: 
+00010: import {
+00011:   PT_RIO_SCHEDULE_NORMAL,
+00012:   PT_RIO_SCHEDULE_WED_SAT,
+00013:   FEDERAL_SCHEDULE,
+00014: } from "./top3.constants";
+00015: 
+00016: // ===============================
+00017: // TOP3 LOG SYSTEM (VALIDAÇÃO REAL)
+00018: // ===============================
+00019: 
+00020: function normHour(h) {
+00021:   return toHourBucket(h) || "";
+00022: }
+00023: 
+00024: function makeKey(ymd, hour) {
+00025:   const y = safeStr(ymd);
+00026:   const h = normHour(hour);
+00027:   return isYMD(y) && h ? `${y}_${h}` : "";
+00028: }
+00029: 
+00030: function parseTargetDate(ymd, hour) {
+00031:   if (!isYMD(ymd)) return null;
+00032: 
+00033:   const hourBucket = normHour(hour);
+00034:   const m = String(hourBucket || "").match(/^(\d{2})h$/);
+00035:   if (!m) return null;
+00036: 
+00037:   const [Y, M, D] = String(ymd).split("-").map(Number);
+00038:   const hh = Number(m[1]);
+00039: 
+00040:   const dt = new Date(Y, M - 1, D, hh, 0, 0, 0);
+00041:   return Number.isNaN(dt.getTime()) ? null : dt;
+00042: }
+00043: 
+00044: function isFutureTarget(ymd, hour) {
+00045:   const target = parseTargetDate(ymd, hour);
+00046:   if (!target) return false;
+00047:   return target.getTime() > Date.now();
+00048: }
+00049: 
+00050: function resolvePendingStatus(ymd, hour, picks) {
+00051:   const hasPicks = Array.isArray(picks) && picks.length > 0;
+00052:   if (!hasPicks) return "empty";
+00053:   return isFutureTarget(ymd, hour) ? "future" : "pending_result";
+00054: }
+00055: 
+00056: function normalizePicks(picks) {
+00057:   return Array.from(
+00058:     new Set(
+00059:       (Array.isArray(picks) ? picks : [])
+00060:         .map(Number)
+00061:         .filter((n) => Number.isFinite(n) && n >= 1 && n <= 25)
+00062:     )
+00063:   ).slice(0, 3);
+00064: }
+00065: 
+00066: function normalizeResult(resultValue) {
+00067:   const n = Number(resultValue);
+00068:   return Number.isFinite(n) && n >= 1 && n <= 25 ? n : null;
+00069: }
+00070: 
+00071: function normalizeLogEntry(entry) {
+00072:   if (!entry || typeof entry !== "object") return null;
+00073: 
+00074:   const ymd = safeStr(entry?.target?.ymd || "");
+00075:   const hour = normHour(entry?.target?.hour || "");
+00076:   const targetKey = makeKey(ymd, hour);
+00077: 
+00078:   if (!targetKey) return null;
+00079: 
+00080:   const picks = normalizePicks(entry?.picks);
+00081:   const result = normalizeResult(entry?.result);
+00082: 
+00083:   const hit =
+00084:     result != null && picks.length
+00085:       ? picks.includes(result)
+00086:       : typeof entry?.hit === "boolean"
+00087:         ? entry.hit
+00088:         : null;
+00089: 
+00090:   const status =
+00091:     result != null ? "validated" : resolvePendingStatus(ymd, hour, picks);
+00092: 
+00093:   return {
+00094:     ...entry,
+00095:     targetKey,
+00096:     target: { ymd, hour },
+00097:     picks,
+00098:     result,
+00099:     hit,
+00100:     createdAt: Number(entry?.createdAt) || Date.now(),
+00101:     validatedAt:
+00102:       result != null && Number(entry?.validatedAt)
+00103:         ? Number(entry.validatedAt)
+00104:         : undefined,
+00105:     status,
+00106:   };
+00107: }
+00108: 
+00109: function scoreLogEntry(entry) {
+00110:   if (!entry) return -1;
+00111: 
+00112:   let score = 0;
+00113:   if (Array.isArray(entry?.picks) && entry.picks.length) score += 20;
+00114:   if (entry?.result != null) score += 10;
+00115:   if (typeof entry?.hit === "boolean") score += 5;
+00116:   if (entry?.validatedAt) score += 2;
+00117:   if (entry?.createdAt) score += 1;
+00118: 
+00119:   return score;
+00120: }
+00121: 
+00122: function normalizeAndDedupeLog(log) {
+00123:   const list = Array.isArray(log) ? log : [];
+00124:   const byKey = new Map();
+00125: 
+00126:   for (const raw of list) {
+00127:     const entry = normalizeLogEntry(raw);
+00128:     if (!entry) continue;
+00129: 
+00130:     const prev = byKey.get(entry.targetKey);
+00131: 
+00132:     if (!prev || scoreLogEntry(entry) >= scoreLogEntry(prev)) {
+00133:       byKey.set(entry.targetKey, entry);
+00134:     }
+00135:   }
+00136: 
+00137:   return [...byKey.values()].sort((a, b) => {
+00138:     const aKey = `${a?.target?.ymd || ""}_${a?.target?.hour || ""}`;
+00139:     const bKey = `${b?.target?.ymd || ""}_${b?.target?.hour || ""}`;
+00140:     return aKey < bKey ? -1 : aKey > bKey ? 1 : 0;
+00141:   });
+00142: }
+00143: 
+00144: function getTop3Log() {
+00145:   try {
+00146:     const raw = JSON.parse(localStorage.getItem("top3_log") || "[]");
+00147:     return normalizeAndDedupeLog(raw);
+00148:   } catch {
+00149:     return [];
+00150:   }
+00151: }
+00152: 
+00153: function saveTop3Log(log) {
+00154:   try {
+00155:     const normalized = normalizeAndDedupeLog(log).slice(-200);
+00156:     localStorage.setItem("top3_log", JSON.stringify(normalized));
+00157:   } catch {}
+00158: }
+00159: 
+00160: function registerPrediction({
+00161:   targetKey,
+00162:   targetYmd,
+00163:   targetHour,
+00164:   picks,
+00165:   snapshot = [],
+00166:   engineVersion = "",
+00167: }) {
+00168:   const ymd = safeStr(targetYmd);
+00169:   const hour = normHour(targetHour);
+00170:   const normalizedKey = targetKey || makeKey(ymd, hour);
+00171: 
+00172:   if (!isYMD(ymd) || !hour || !normalizedKey) return;
+00173: 
+00174:   const normalizedPicks = normalizePicks(picks);
+00175:   if (!normalizedPicks.length) return;
+00176: 
+00177:   const log = getTop3Log();
+00178: 
+00179:   const idx = log.findIndex(
+00180:     (l) => String(l?.targetKey || "") === String(normalizedKey)
+00181:   );
+00182: 
+00183:   const status = resolvePendingStatus(ymd, hour, normalizedPicks);
+00184: 
+00185:   if (idx >= 0) {
+00186:     const prev = log[idx] || {};
+00187: 
+00188:     if (prev.result != null || prev.status === "validated") return;
+00189: 
+00190:     log[idx] = {
+00191:       ...prev,
+00192:       targetKey: normalizedKey,
+00193:       target: { ymd, hour },
+00194:       picks: normalizedPicks,
+00195:       result: null,
+00196:       hit: null,
+00197:       snapshot:
+00198:         Array.isArray(prev?.snapshot) && prev.snapshot.length
+00199:           ? prev.snapshot
+00200:           : Array.isArray(snapshot)
+00201:             ? snapshot
+00202:             : [],
+00203:       engineVersion:
+00204:         safeStr(prev?.engineVersion || engineVersion || "V3_STATISTICAL"),
+00205:       createdAt: prev.createdAt || Date.now(),
+00206:       status,
+00207:     };
+00208:   } else {
+00209:     log.push({
+00210:       targetKey: normalizedKey,
+00211:       target: { ymd, hour },
+00212:       picks: normalizedPicks,
+00213:       result: null,
+00214:       hit: null,
+00215:       snapshot: Array.isArray(snapshot) ? snapshot : [],
+00216:       engineVersion: safeStr(engineVersion || "V3_STATISTICAL"),
+00217:       createdAt: Date.now(),
+00218:       status,
+00219:     });
+00220:   }
+00221: 
+00222:   saveTop3Log(log);
+00223: }
+00224: 
+00225: function registerResult({ targetKey, resultGrupo }) {
+00226:   const log = getTop3Log();
+00227:   const normalizedTargetKey = safeStr(targetKey);
+00228:   const result = normalizeResult(resultGrupo);
+00229: 
+00230:   if (!normalizedTargetKey || result == null) return;
+00231: 
+00232:   const idx = log.findIndex(
+00233:     (l) => String(l?.targetKey || "") === String(normalizedTargetKey)
+00234:   );
+00235: 
+00236:   if (idx === -1) return;
+00237: 
+00238:   const picks = normalizePicks(log[idx]?.picks);
+00239: 
+00240:   log[idx] = {
+00241:     ...log[idx],
+00242:     picks,
+00243:     result,
+00244:     hit: picks.includes(result),
+00245:     validatedAt: Date.now(),
+00246:     status: "validated",
+00247:   };
+00248: 
+00249:   saveTop3Log(log);
+00250: }
+00251: 
+00252: function findRealDrawByTarget({ targetYmd, targetHour, todayDraws, rangeDraws }) {
+00253:   const ymd = safeStr(targetYmd);
+00254:   const hour = normHour(targetHour);
+00255: 
+00256:   if (!isYMD(ymd) || !hour) return null;
+00257: 
+00258:   const sameTarget = (d) =>
+00259:     pickDrawYMD(d) === ymd && normHour(pickDrawHour(d)) === hour;
+00260: 
+00261:   const realToday =
+00262:     (Array.isArray(todayDraws) ? todayDraws : []).find(sameTarget) || null;
+00263: 
+00264:   const realRange =
+00265:     (Array.isArray(rangeDraws) ? rangeDraws : []).find(sameTarget) || null;
+00266: 
+00267:   return realToday || realRange || null;
+00268: }
+00269: 
+00270: function reconcilePendingTop3Log({ todayDraws, rangeDraws }) {
+00271:   const log = getTop3Log();
+00272:   if (!Array.isArray(log) || !log.length) return;
+00273: 
+00274:   let changed = false;
+00275: 
+00276:   const nextLog = log.map((entry) => {
+00277:     if (!entry || entry.result != null) return entry;
+00278: 
+00279:     const targetYmd = safeStr(entry?.target?.ymd || "");
+00280:     const targetHour = normHour(entry?.target?.hour || "");
+00281: 
+00282:     if (!isYMD(targetYmd) || !targetHour) return entry;
+00283:     if (isFutureTarget(targetYmd, targetHour)) return entry;
+00284: 
+00285:     const real = findRealDrawByTarget({
+00286:       targetYmd,
+00287:       targetHour,
+00288:       todayDraws,
+00289:       rangeDraws,
+00290:     });
+00291: 
+00292:     if (!real) return entry;
+00293: 
+00294:     const result = normalizeResult(pickPrize1GrupoFromDraw(real));
+00295:     if (result == null) return entry;
+00296: 
+00297:     const picks = normalizePicks(entry?.picks);
+00298: 
+00299:     changed = true;
+00300: 
+00301:     return {
+00302:       ...entry,
+00303:       picks,
+00304:       result,
+00305:       hit: picks.includes(result),
+00306:       validatedAt: Date.now(),
+00307:       status: "validated",
+00308:     };
+00309:   });
+00310: 
+00311:   if (changed) saveTop3Log(nextLog);
+00312: }
+00313: 
+00314: function ensureDayTimeline({ ymd, lotteryKey }) {
+00315:   if (!isYMD(ymd)) return;
+00316: 
+00317:   const schedule = getScheduleForLottery({
+00318:     lotteryKey,
+00319:     ymd,
+00320:     PT_RIO_SCHEDULE_NORMAL,
+00321:     PT_RIO_SCHEDULE_WED_SAT,
+00322:     FEDERAL_SCHEDULE,
+00323:   });
+00324: 
+00325:   if (!Array.isArray(schedule) || !schedule.length) return;
+00326: 
+00327:   const log = getTop3Log();
+00328: 
+00329:   for (const h of schedule) {
+00330:     const hour = normHour(h);
+00331:     const targetKey = makeKey(ymd, hour);
+00332: 
+00333:     if (!targetKey) continue;
+00334: 
+00335:     const idx = log.findIndex(
+00336:       (l) => String(l?.targetKey || "") === String(targetKey)
+00337:     );
+00338: 
+00339:     if (idx >= 0) {
+00340:       const prev = log[idx] || {};
+00341:       const picks = normalizePicks(prev?.picks);
+00342:       const result = normalizeResult(prev?.result);
+00343:       const status =
+00344:         result != null ? "validated" : resolvePendingStatus(ymd, hour, picks);
+00345: 
+00346:       log[idx] = {
+00347:         ...prev,
+00348:         targetKey,
+00349:         target: { ymd, hour },
+00350:         picks,
+00351:         result,
+00352:         hit: result != null ? picks.includes(result) : prev?.hit ?? null,
+00353:         createdAt: prev?.createdAt || Date.now(),
+00354:         validatedAt: result != null ? prev?.validatedAt : undefined,
+00355:         status,
+00356:       };
+00357:     } else {
+00358:       log.push({
+00359:         targetKey,
+00360:         target: { ymd, hour },
+00361:         picks: [],
+00362:         result: null,
+00363:         hit: null,
+00364:         createdAt: Date.now(),
+00365:         status: "empty",
+00366:       });
+00367:     }
+00368:   }
+00369: 
+00370:   saveTop3Log(log);
+00371: }
+00372: 
+00373: export {
+00374:   getTop3Log,
+00375:   saveTop3Log,
+00376:   registerPrediction,
+00377:   registerResult,
+00378:   reconcilePendingTop3Log,
+00379:   ensureDayTimeline,
+00380:   isFutureTarget,
+00381:   makeKey,
+00382: };
+
+########################################################################################################################
+ARQUIVO COMPLETO: .\src\pages\Top3\top3.public-api.js
+########################################################################################################################
+00001: // src/pages/Top3/top3.public-api.js
+00002: //
+00003: // Contrato público e estável do núcleo TOP3.
+00004: //
+00005: // Regras:
+00006: // - não contém lógica própria;
+00007: // - não acessa navegador, React, Firebase ou armazenamento;
+00008: // - não expõe helpers internos do motor;
+00009: // - deve ser o único ponto de entrada compartilhado por consumidores externos.
+00010: 
+00011: export {
+00012:   // Predição principal
+00013:   computeConditionalNextTop3,
+00014:   computeConditionalNextTop3V2,
+00015:   computeStatisticalTop3V3,
+00016: 
+00017:   // Timeline e auditoria
+00018:   buildTimelineTop3,
+00019:   auditTop3Timeline,
+00020:   auditTop3Backtest,
+00021: 
+00022:   // Milhares
+00023:   buildMilharesForGrupo,
+00024:   build16MilharesForGrupo,
+00025:   build20MilharesForGrupo,
+00026: 
+00027:   // Agenda e slots
+00028:   getScheduleForLottery,
+00029:   getPtRioScheduleForYmd,
+00030:   getNextSlotForLottery,
+00031:   isFederalDrawDay,
+00032:   isHourInSchedule,
+00033:   scheduleSet,
+00034: 
+00035:   // Normalização e leitura de resultados
+00036:   pickDrawHour,
+00037:   pickDrawYMD,
+00038:   pickPrize1GrupoFromDraw,
+00039:   guessPrizeGrupo,
+00040:   guessPrizePos,
+00041: 
+00042:   // Índices e utilitários públicos
+00043:   indexDrawsByYmdHour,
+00044:   computeLastSeenByGrupo,
+00045:   countAparicoesByGrupoInDraw,
+00046: } from "./top3.engine";
+00047: 
+00048: export {
+00049:   scoreRanking,
+00050:   scoreItem,
+00051:   calculateEvidenceStrength,
+00052: } from "./modules/scoreEngine/scoreEngineV2";
+00053: 
+00054: export {
+00055:   collectEvidence,
+00056: } from "./modules/scoreEngine/evidenceEngine";
+00057: 
+00058: export {
+00059:   buildContextEvidence,
+00060: } from "./modules/scoreEngine/contextEvidence";
+00061: 
+00062: export {
+00063:   buildFrequencyEvidence,
+00064: } from "./modules/scoreEngine/frequencyEvidence";

@@ -1,0 +1,127 @@
+====================================================================================================
+CONSUMIDORES DO drawRepository
+====================================================================================================
+
+----------------------------------------------------------------------------------------------------
+backend/engine/bootstrapSnapshot.js
+----------------------------------------------------------------------------------------------------
+
+Ocorrências: linha 3 [fetchAllDrawsWithPrizes, drawRepository], linha 12 [fetchAllDrawsWithPrizes]
+        1: "use strict";
+        2: 
+>>>     3: const { fetchAllDrawsWithPrizes } = require("./drawRepository");
+        4: const { writeStatisticsSnapshot } = require("./statisticsEngine");
+        5: 
+        6: // Ajuste estes requires caso os arquivos estejam em outro caminho
+        7: const { buildRanking } = require("../../src/utils/buildRanking");
+        8: const { applyScoreEngine } = require("../../src/utils/scoreEngine");
+        9: 
+       10: async function bootstrapSnapshot(lottery = "PT_RIO") {
+       11: 
+>>>    12:   const draws = await fetchAllDrawsWithPrizes({
+       13:     lottery,
+       14:     pageSize: 500,
+       15:   });
+       16: 
+       17:   console.log("Draws carregados:", draws.length);
+       18: 
+       19:   const built = buildRanking(draws);
+
+----------------------------------------------------------------------------------------------------
+backend/engine/drawRepository.js
+----------------------------------------------------------------------------------------------------
+
+Ocorrências: linha 55 [fetchDrawsWithPrizesByRange]
+       51:   return out;
+       52: }
+       53: 
+       54: 
+>>>    55: async function fetchDrawsWithPrizesByRange({
+       56:   lottery = "PT_RIO",
+       57:   startYmd,
+       58:   endYmd,
+       59:   pageSize = 250,
+       60:   maxDraws = 1200,
+       61:   prizeConcurrency = 24,
+       62: } = {}) {
+
+Ocorrências: linha 71 [fetchDrawsWithPrizesByRange], linha 77 [fetchDrawsWithPrizesByRange]
+       67:   const end = String(endYmd || "").trim();
+       68: 
+       69:   if (!/^\d{4}-\d{2}-\d{2}$/.test(start)) {
+       70:     throw new Error(
+>>>    71:       "fetchDrawsWithPrizesByRange exige startYmd em YYYY-MM-DD."
+       72:     );
+       73:   }
+       74: 
+       75:   if (!/^\d{4}-\d{2}-\d{2}$/.test(end)) {
+       76:     throw new Error(
+>>>    77:       "fetchDrawsWithPrizesByRange exige endYmd em YYYY-MM-DD."
+       78:     );
+       79:   }
+       80: 
+       81:   const safePageSize = Math.max(
+       82:     25,
+       83:     Math.min(500, Number(pageSize || 250))
+       84:   );
+
+Ocorrências: linha 170 [fetchAllDrawsWithPrizes]
+      166:   return draws;
+      167: }
+      168: 
+      169: 
+>>>   170: async function fetchAllDrawsWithPrizes({
+      171:   lottery = "PT_RIO",
+      172:   pageSize = 250,
+      173:   prizeConcurrency = 12,
+      174: } = {}) {
+      175:   const db = getAdminDb();
+      176:   const lk = normalizeLottery(lottery);
+      177: 
+
+Ocorrências: linha 234 [fetchAllDrawsWithPrizes], linha 235 [fetchDrawsWithPrizesByRange]
+      230:   return draws;
+      231: }
+      232: 
+      233: module.exports = {
+>>>   234:   fetchAllDrawsWithPrizes,
+>>>   235:   fetchDrawsWithPrizesByRange,
+      236: };
+
+----------------------------------------------------------------------------------------------------
+backend/engine/top3PredictionService.js
+----------------------------------------------------------------------------------------------------
+
+Ocorrências: linha 4 [fetchDrawsWithPrizesByRange], linha 5 [drawRepository]
+        1: "use strict";
+        2: 
+        3: const {
+>>>     4:   fetchDrawsWithPrizesByRange,
+>>>     5: } = require("./drawRepository");
+        6: 
+        7: const {
+        8:   computeStatisticalTop3V3,
+        9:   loadTop3PublicApi,
+       10: } = require("./scoreEngineUnified");
+       11: 
+       12: const {
+
+Ocorrências: linha 225 [fetchDrawsWithPrizesByRange]
+      221:   const closeHour = normalizeHour(input.closeHour);
+      222: 
+      223:   const fetchDraws =
+      224:     dependencies.fetchDraws ||
+>>>   225:     fetchDrawsWithPrizesByRange;
+      226: 
+      227:   const computeTop3 =
+      228:     dependencies.computeTop3 ||
+      229:     computeStatisticalTop3V3;
+      230: 
+      231:   const persistRun =
+      232:     dependencies.persistRun ||
+
+====================================================================================================
+RESUMO
+====================================================================================================
+Arquivos com referências: 3
+Total de ocorrências: 11

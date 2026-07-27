@@ -1,0 +1,146 @@
+TOTAL: 16
+
+{
+  "id": "NACIONAL__2025-03-27__01-49__6c2b52ec-d613-4383-9c07-ff5ac7e04611",
+  "close_hour": "01:49",
+  "close_hour_raw": "01:49",
+  "hour": "01",
+  "close": "01:49",
+  "lottery_name": "LT NACIONAL 02HS",
+  "lottery_id": "6c2b52ec-d613-4383-9c07-ff5ac7e04611"
+}
+{
+  "id": "NACIONAL__2025-03-27__02-00__6c2b52ec-d613-4383-9c07-ff5ac7e04611",
+  "close_hour": "02:00",
+  "close_hour_raw": "01:49",
+  "hour": "02",
+  "close": "02:00",
+  "lottery_name": "LT NACIONAL 02HS",
+  "lottery_id": "6c2b52ec-d613-4383-9c07-ff5ac7e04611"
+}
+{
+  "id": "NACIONAL__2025-03-27__07-49__76a3feee-faa6-4b6c-aae5-656fd6af7b6b",
+  "close_hour": "07:49",
+  "close_hour_raw": "07:49",
+  "hour": "07",
+  "close": "07:49",
+  "lottery_name": "LT NACIONAL 08HS",
+  "lottery_id": "76a3feee-faa6-4b6c-aae5-656fd6af7b6b"
+}
+{
+  "id": "NACIONAL__2025-03-27__08-00__76a3feee-faa6-4b6c-aae5-656fd6af7b6b",
+  "close_hour": "08:00",
+  "close_hour_raw": "07:49",
+  "hour": "08",
+  "close": "08:00",
+  "lottery_name": "LT NACIONAL 08HS",
+  "lottery_id": "76a3feee-faa6-4b6c-aae5-656fd6af7b6b"
+}
+{
+  "id": "NACIONAL__2025-03-27__09-49__4dda728b-bbd9-43eb-a17b-acf968b1eca0",
+  "close_hour": "09:49",
+  "close_hour_raw": "09:49",
+  "hour": "09",
+  "close": "09:49",
+  "lottery_name": "LT NACIONAL 10HS",
+  "lottery_id": "4dda728b-bbd9-43eb-a17b-acf968b1eca0"
+}
+{
+  "id": "NACIONAL__2025-03-27__10-00__4dda728b-bbd9-43eb-a17b-acf968b1eca0",
+  "close_hour": "10:00",
+  "close_hour_raw": "09:49",
+  "hour": "10",
+  "close": "10:00",
+  "lottery_name": "LT NACIONAL 10HS",
+  "lottery_id": "4dda728b-bbd9-43eb-a17b-acf968b1eca0"
+}
+{
+  "id": "NACIONAL__2025-03-27__11-49__8efc7c5a-8883-48a3-ab7f-cf3d0f7eebd4",
+  "close_hour": "11:49",
+  "close_hour_raw": "11:49",
+  "hour": "11",
+  "close": "11:49",
+  "lottery_name": "LT NACIONAL 12HS",
+  "lottery_id": "8efc7c5a-8883-48a3-ab7f-cf3d0f7eebd4"
+}
+{
+  "id": "NACIONAL__2025-03-27__12-00__8efc7c5a-8883-48a3-ab7f-cf3d0f7eebd4",
+  "close_hour": "12:00",
+  "close_hour_raw": "11:49",
+  "hour": "12",
+  "close": "12:00",
+  "lottery_name": "LT NACIONAL 12HS",
+  "lottery_id": "8efc7c5a-8883-48a3-ab7f-cf3d0f7eebd4"
+}
+{
+  "id": "NACIONAL__2025-03-27__14-49__3bafbe99-632b-4445-9b73-12e78ee45283",
+  "close_hour": "14:49",
+  "close_hour_raw": "14:49",
+  "hour": "14",
+  "close": "14:49",
+  "lottery_name": "LT NACIONAL 15HS",
+  "lottery_id": "3bafbe99-632b-4445-9b73-12e78ee45283"
+}
+{
+  "id": "NACIONAL__2025-03-27__15-00__3bafbe99-632b-4445-9b73-12e78ee45283",
+  "close_hour": "15:00",
+  "close_hour_raw": "14:49",
+  "hour": "15",
+  "close": "15:00",
+  "lottery_name": "LT NACIONAL 15HS",
+  "lottery_id": "3bafbe99-632b-4445-9b73-12e78ee45283"
+}
+{
+  "id": "NACIONAL__2025-03-27__16-49__87db8fb6-8718-49c3-b739-96eec085e09d",
+  "close_hour": "16:49",
+  "close_hour_raw": "16:49",
+  "hour": "16",
+  "close": "16:49",
+  "lottery_name": "LT NACIONAL 17HS",
+  "lottery_id": "87db8fb6-8718-49c3-b739-96eec085e09d"
+}
+{
+  "id": "NACIONAL__2025-03-27__17-00__87db8fb6-8718-49c3-b739-96eec085e09d",
+  "close_hour": "17:00",
+  "close_hour_raw": "16:49",
+  "hour": "17",
+  "close": "17:00",
+  "lottery_name": "LT NACIONAL 17HS",
+  "lottery_id": "87db8fb6-8718-49c3-b739-96eec085e09d"
+}
+{
+  "id": "NACIONAL__2025-03-27__19-49__1eebc22a-890e-4598-86b5-6fda7e04ca4b",
+  "close_hour": "19:49",
+  "close_hour_raw": "19:49",
+  "hour": "19",
+  "close": "19:49",
+  "lottery_name": "LT NACIONAL 20HS",
+  "lottery_id": "1eebc22a-890e-4598-86b5-6fda7e04ca4b"
+}
+{
+  "id": "NACIONAL__2025-03-27__20-00__1eebc22a-890e-4598-86b5-6fda7e04ca4b",
+  "close_hour": "20:00",
+  "close_hour_raw": "19:49",
+  "hour": "20",
+  "close": "20:00",
+  "lottery_name": "LT NACIONAL 20HS",
+  "lottery_id": "1eebc22a-890e-4598-86b5-6fda7e04ca4b"
+}
+{
+  "id": "NACIONAL__2025-03-27__22-49__2a424135-9b6a-4415-8a57-15e0d3abd736",
+  "close_hour": "22:49",
+  "close_hour_raw": "22:49",
+  "hour": "22",
+  "close": "22:49",
+  "lottery_name": "LT NACIONAL 23HS",
+  "lottery_id": "2a424135-9b6a-4415-8a57-15e0d3abd736"
+}
+{
+  "id": "NACIONAL__2025-03-27__23-00__2a424135-9b6a-4415-8a57-15e0d3abd736",
+  "close_hour": "23:00",
+  "close_hour_raw": "22:49",
+  "hour": "23",
+  "close": "23:00",
+  "lottery_name": "LT NACIONAL 23HS",
+  "lottery_id": "2a424135-9b6a-4415-8a57-15e0d3abd736"
+}

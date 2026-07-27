@@ -1,0 +1,66 @@
+TOTAL: 8
+
+--------------------------------
+id             : NACIONAL__2026-05-06__01-49__6c2b52ec-d613-4383-9c07-ff5ac7e04611
+lottery_name   : LT NACIONAL 02HS
+close_hour     : 01:49
+close_hour_raw : 01:49
+close          : 01:49
+hour           : 01
+drawId         : NACIONAL__2026-05-06__01-49__6c2b52ec-d613-4383-9c07-ff5ac7e04611
+--------------------------------
+id             : NACIONAL__2026-05-06__07-49__76a3feee-faa6-4b6c-aae5-656fd6af7b6b
+lottery_name   : LT NACIONAL 08HS
+close_hour     : 07:49
+close_hour_raw : 07:49
+close          : 07:49
+hour           : 07
+drawId         : NACIONAL__2026-05-06__07-49__76a3feee-faa6-4b6c-aae5-656fd6af7b6b
+--------------------------------
+id             : NACIONAL__2026-05-06__09-49__4dda728b-bbd9-43eb-a17b-acf968b1eca0
+lottery_name   : LT NACIONAL 10HS
+close_hour     : 09:49
+close_hour_raw : 09:49
+close          : 09:49
+hour           : 09
+drawId         : NACIONAL__2026-05-06__09-49__4dda728b-bbd9-43eb-a17b-acf968b1eca0
+--------------------------------
+id             : NACIONAL__2026-05-06__11-49__8efc7c5a-8883-48a3-ab7f-cf3d0f7eebd4
+lottery_name   : LT NACIONAL 12HS
+close_hour     : 11:49
+close_hour_raw : 11:49
+close          : 11:49
+hour           : 11
+drawId         : NACIONAL__2026-05-06__11-49__8efc7c5a-8883-48a3-ab7f-cf3d0f7eebd4
+--------------------------------
+id             : NACIONAL__2026-05-06__14-49__3bafbe99-632b-4445-9b73-12e78ee45283
+lottery_name   : LT NACIONAL 15HS
+close_hour     : 14:49
+close_hour_raw : 14:49
+close          : 14:49
+hour           : 14
+drawId         : NACIONAL__2026-05-06__14-49__3bafbe99-632b-4445-9b73-12e78ee45283
+--------------------------------
+id             : NACIONAL__2026-05-06__16-49__87db8fb6-8718-49c3-b739-96eec085e09d
+lottery_name   : LT NACIONAL 17HS
+close_hour     : 16:49
+close_hour_raw : 16:49
+close          : 16:49
+hour           : 16
+drawId         : NACIONAL__2026-05-06__16-49__87db8fb6-8718-49c3-b739-96eec085e09d
+--------------------------------
+id             : NACIONAL__2026-05-06__20-49__1eebc22a-890e-4598-86b5-6fda7e04ca4b
+lottery_name   : LT NACIONAL 21HS
+close_hour     : 20:49
+close_hour_raw : 20:49
+close          : 20:49
+hour           : 20
+drawId         : NACIONAL__2026-05-06__20-49__1eebc22a-890e-4598-86b5-6fda7e04ca4b
+--------------------------------
+id             : NACIONAL__2026-05-06__22-49__2a424135-9b6a-4415-8a57-15e0d3abd736
+lottery_name   : LT NACIONAL 23HS
+close_hour     : 22:49
+close_hour_raw : 22:49
+close          : 22:49
+hour           : 22
+drawId         : NACIONAL__2026-05-06__22-49__2a424135-9b6a-4415-8a57-15e0d3abd736

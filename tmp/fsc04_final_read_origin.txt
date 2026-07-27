@@ -1,0 +1,165 @@
+warning: in the working copy of 'backend/scripts/backtestTop3Official.js', LF will be replaced by CRLF the next time Git touches it
+
+LastWriteTime        Length FullName
+-------------        ------ --------
+21/07/2026 16:52:04     348 C:\Users\glaub\palpitaco\backend\logs\auditCritical-PT_RIO-2026-07-21.json
+21/07/2026 15:47:12   29044 C:\Users\glaub\palpitaco\tmp\gcp01_readonly_audit.txt
+21/07/2026 14:25:16    8421 C:\Users\glaub\palpitaco\tmp\aut12a_new_head_audit.txt
+20/07/2026 23:57:02     348 C:\Users\glaub\palpitaco\backend\logs\auditCritical-PT_RIO-2026-07-20.json
+20/07/2026 20:49:18   14296 C:\Users\glaub\palpitaco\tmp\lkn185_vercel_alias_comparison.txt
+20/07/2026 20:37:04    1084 C:\Users\glaub\palpitaco\tmp\audit_nacional_2026_05_06.js
+20/07/2026 20:33:35    2162 C:\Users\glaub\palpitaco\tmp\audit_nacional_schedule_boundaries.js
+20/07/2026 20:31:12    1208 C:\Users\glaub\palpitaco\tmp\audit_nacional_schedule_transition.js
+20/07/2026 20:22:51     772 C:\Users\glaub\palpitaco\tmp\audit_nacional_firestore.js
+20/07/2026 18:42:29   32578 C:\Users\glaub\palpitaco\tmp\nac53_draw_source_audit.txt
+20/07/2026 18:40:22   67672 C:\Users\glaub\palpitaco\tmp\nac52_useKingRanking_audit.txt
+20/07/2026 17:37:09   28746 C:\Users\glaub\palpitaco\tmp\nac44_predeploy_audit.txt
+20/07/2026 17:21:27   16728 C:\Users\glaub\palpitaco\tmp\nac43_1_firebase_admin_audit.txt
+20/07/2026 16:45:58   91809 C:\Users\glaub\palpitaco\tmp\nac38_getKingResultsByRange_audit.txt
+20/07/2026 16:42:38   26684 C:\Users\glaub\palpitaco\tmp\nac37_useKingRanking_audit.txt
+20/07/2026 15:57:48   19260 C:\Users\glaub\palpitaco\tmp\nac26_firestore_hours_audit.txt
+20/07/2026 15:57:44    3549 C:\Users\glaub\palpitaco\tmp\nac26_firestore_hours_audit.js
+20/07/2026 15:51:58   41292 C:\Users\glaub\palpitaco\tmp\nac23_firebase_auth_audit.txt
+20/07/2026 15:10:30  399484 C:\Users\glaub\palpitaco\tmp\nac15_nacional_schedule_audit.txt
+20/07/2026 15:01:02   49093 C:\Users\glaub\palpitaco\tmp\nac14_nacional_federal_fix_audit.txt
+20/07/2026 14:21:50  116065 C:\Users\glaub\palpitaco\tmp\nac09_top3_nacional_audit.txt
+20/07/2026 13:50:47    5153 C:\Users\glaub\palpitaco\tmp\nac03_github_queue_audit.txt
+20/07/2026 12:12:41     390 C:\Users\glaub\palpitaco\tmp\fed15_floor_audit.txt
+20/07/2026 01:49:20 1311497 C:\Users\glaub\palpitaco\tmp\tpp05_01_top3_lotteries_audit.txt
+20/07/2026 01:15:27 1019292 C:\Users\glaub\palpitaco\tmp\lkn137_api_bounds_audit.txt
+20/07/2026 01:07:47     691 C:\Users\glaub\palpitaco\tmp\lkn133_top3_history_metadata.txt
+20/07/2026 01:04:00   31541 C:\Users\glaub\palpitaco\tmp\lkn130_importKingRange_audit.txt
+20/07/2026 00:43:59   35994 C:\Users\glaub\palpitaco\tmp\lkn127_git_history_normalization.txt
+20/07/2026 00:16:29   35749 C:\Users\glaub\palpitaco\tmp\lkn118_build_drawref_import_audit.txt
+19/07/2026 23:57:09   18081 C:\Users\glaub\palpitaco\tmp\lkn106_backend_production_audit.txt
+19/07/2026 23:57:04    1280 C:\Users\glaub\palpitaco\backend\logs\auditCritical-PT_RIO-2026-07-19.json
+19/07/2026 23:48:29    2519 C:\Users\glaub\palpitaco\tmp\lkn99_deploy_audit.txt
+19/07/2026 23:45:49   21787 C:\Users\glaub\palpitaco\tmp\lkn96_final_diff_audit.txt
+19/07/2026 23:38:21    1866 C:\Users\glaub\palpitaco\tmp\lkn93_direct_call_audit.txt
+19/07/2026 23:37:22    1413 C:\Users\glaub\palpitaco\tmp\lkn92_patch_applied_audit.txt
+19/07/2026 23:35:03    4221 C:\Users\glaub\palpitaco\tmp\lkn90_anchor_exact_audit.txt
+19/07/2026 23:28:42   15173 C:\Users\glaub\palpitaco\tmp\lkn87_normalize_calls_audit.txt
+19/07/2026 18:52:32  175286 C:\Users\glaub\palpitaco\tmp\lkn68_schedule_source_audit.txt
+19/07/2026 18:49:16   37117 C:\Users\glaub\palpitaco\tmp\lkn67_filtersbar_audit.txt
+19/07/2026 18:47:31     957 C:\Users\glaub\palpitaco\tmp\lkn65_filtersbar_git_status_audit.txt
+19/07/2026 18:42:11  124635 C:\Users\glaub\palpitaco\tmp\lkn62_look_nacional_schedules_audit.txt
+19/07/2026 18:38:08   47729 C:\Users\glaub\palpitaco\tmp\lkn61_dashboard_lotteries_audit.txt
+19/07/2026 18:32:43  789158 C:\Users\glaub\palpitaco\tmp\lkn60_lottery_filters_audit.txt
+19/07/2026 17:13:54     368 C:\Users\glaub\palpitaco\tmp\lkn51_import_audit.txt
+
+.\backend\workers\bootstrapTop3History.js:4:  fetchAllDrawsWithPrizes,
+.\backend\workers\bootstrapTop3History.js:175:async function bootstrapTop3History(
+.\backend\workers\bootstrapTop3History.js:190:    fetchAllDrawsWithPrizes;
+.\backend\workers\bootstrapTop3History.js:320:          "fetchAllDrawsWithPrizes",
+.\backend\workers\bootstrapTop3History.js:395:    await bootstrapTop3History(
+.\backend\workers\bootstrapTop3History.js:427:  bootstrapTop3History,
+.\backend\engine\bootstrapSnapshot.js:3:const { fetchAllDrawsWithPrizes } = require("./drawRepository");
+.\backend\engine\bootstrapSnapshot.js:10:async function bootstrapSnapshot(lottery = "PT_RIO") {
+.\backend\engine\bootstrapSnapshot.js:12:  const draws = await fetchAllDrawsWithPrizes({
+.\backend\engine\bootstrapSnapshot.js:52:  bootstrapSnapshot,
+.\backend\engine\drawRepository.js:170:async function fetchAllDrawsWithPrizes({
+.\backend\engine\drawRepository.js:234:  fetchAllDrawsWithPrizes,
+C:\Users\glaub\palpitaco\backend\scripts\autoImportToday.js:40: // Auditoria: thresholds (minutos)
+C:\Users\glaub\palpitaco\backend\scripts\autoImportToday.js:41: const WARN_AFTER_MIN = Number(process.env.AUDIT_WARN_MIN || 20);
+C:\Users\glaub\palpitaco\backend\scripts\autoImportToday.js:42: const CRIT_AFTER_MIN = Number(process.env.AUDIT_CRIT_MIN || 60);
+C:\Users\glaub\palpitaco\backend\scripts\autoImportToday.js:382: const st = statusMap.get(sched.hour) || "OFF";
+C:\Users\glaub\palpitaco\backend\scripts\autoImportToday.js:574: map.get(sched.hour) || "OFF";
+C:\Users\glaub\palpitaco\backend\scripts\autoImportToday.js:729: const res = await axios.get(u, {
+C:\Users\glaub\palpitaco\backend\scripts\autoImportToday.js:770: const st = statusMap.get(sched.hour) || "OFF";
+C:\Users\glaub\palpitaco\backend\scripts\autoImportToday.js:876: const res = await axios.get(u, {
+C:\Users\glaub\palpitaco\backend\scripts\autoImportToday.js:984: const calendar = statusMap.get(sched.hour) || "OFF";
+C:\Users\glaub\palpitaco\backend\scripts\autoImportToday.js:1016: Auditoria de Furos (warning/critical)
+C:\Users\glaub\palpitaco\backend\scripts\autoImportToday.js:1018: function auditOutFile(dateYMD) {
+C:\Users\glaub\palpitaco\backend\scripts\autoImportToday.js:1019: return path.join(LOG_DIR, `auditCritical-${LOTTERY}-${dateYMD}.json`);
+C:\Users\glaub\palpitaco\backend\scripts\autoImportToday.js:1022: function buildAuditReport({ date, nowMin, isoNow, dow, statusMap, state }) {
+C:\Users\glaub\palpitaco\backend\scripts\autoImportToday.js:1032: const st = statusMap.get(sched.hour) || "OFF";
+C:\Users\glaub\palpitaco\backend\scripts\autoImportToday.js:1105: const st = statusMap.get(sched.hour) || "OFF";
+C:\Users\glaub\palpitaco\backend\scripts\autoImportToday.js:1232: // Antes de auditar, sincroniza o state local com a fonte real.
+C:\Users\glaub\palpitaco\backend\scripts\autoImportToday.js:1248: // ✅ Se o dia já está completo, gera audit e encerra
+C:\Users\glaub\palpitaco\backend\scripts\autoImportToday.js:1251: const report = buildAuditReport({ date, nowMin, isoNow: new Date().toISOString(), dow, statusMap, state });
+C:\Users\glaub\palpitaco\backend\scripts\autoImportToday.js:1254: report.note = "NOW_HM override ativo: audit retroativo neutralizado (informativo).";
+C:\Users\glaub\palpitaco\backend\scripts\autoImportToday.js:1256: safeWriteJson(auditOutFile(date), report);
+C:\Users\glaub\palpitaco\backend\scripts\autoImportToday.js:1268: const st = statusMap.get(sched.hour) || "OFF";
+C:\Users\glaub\palpitaco\backend\scripts\autoImportToday.js:1292: const report = buildAuditReport({ date, nowMin, isoNow: new Date().toISOString(), dow, statusMap, state });
+C:\Users\glaub\palpitaco\backend\scripts\autoImportToday.js:1293: safeWriteJson(auditOutFile(date), report);
+C:\Users\glaub\palpitaco\backend\scripts\autoImportToday.js:1311: const st = statusMap.get(sched.hour) || "OFF";
+C:\Users\glaub\palpitaco\backend\scripts\autoImportToday.js:1522: // 3) Auditoria pós-execução
+C:\Users\glaub\palpitaco\backend\scripts\autoImportToday.js:1524: const report = buildAuditReport({ date, nowMin, isoNow: new Date().toISOString(), dow, statusMap, state });
+C:\Users\glaub\palpitaco\backend\scripts\autoImportToday.js:1528: report.note = "NOW_HM override ativo: audit retroativo neutralizado (informativo).";
+C:\Users\glaub\palpitaco\backend\scripts\autoImportToday.js:1530: safeWriteJson(auditOutFile(date), report);
+C:\Users\glaub\palpitaco\backend\scripts\autoImportToday.js:1534: `[AUDIT] CRITICAL missing=${report.criticalCount} warning=${report.warningCount} softLate=${report.softLateCount} (relatório salvo em ${path.basename(
+C:\Users\glaub\palpitaco\backend\scripts\autoImportToday.js:1535: auditOutFile(date)
+C:\Users\glaub\palpitaco\backend\scripts\autoImportToday.js:1540: logLine(`[AUDIT] FAIL_ON_CRITICAL=1 => exit(2)`, "ERROR");
+C:\Users\glaub\palpitaco\backend\scripts\autoImportToday.js:1545: `[AUDIT] WARNING missing=${report.warningCount} softLate=${report.softLateCount} (relatório salvo em ${path.basename(
+C:\Users\glaub\palpitaco\backend\scripts\autoImportToday.js:1546: auditOutFile(date)
+C:\Users\glaub\palpitaco\backend\scripts\autoImportToday.js:1551: logLine(`[AUDIT] OK (sem furos HARD acima de ${WARN_AFTER_MIN} min) softLate=${report.softLateCount}`, "INFO");
+C:\Users\glaub\palpitaco\backend\scripts\autoImportToday.js:1554: logLine(`[AUDIT] erro ao gerar relatório: ${e?.message || e}`, "ERROR");
+C:\Users\glaub\palpitaco\backend\scripts\importKingApostas.js:156: syncImportedResultToTop3History,
+C:\Users\glaub\palpitaco\backend\scripts\importKingApostas.js:696: const { data } = await axios.get(url, {
+C:\Users\glaub\palpitaco\backend\scripts\importKingApostas.js:753: const { data } = await axios.get(url, {
+C:\Users\glaub\palpitaco\backend\scripts\importKingApostas.js:877: const prev = map.get(key);
+C:\Users\glaub\palpitaco\backend\scripts\importKingApostas.js:1049: const drawRef = db.collection("draws").doc(drawId);
+C:\Users\glaub\palpitaco\backend\scripts\importKingApostas.js:1069: const dSnap = await drawRef.get();
+C:\Users\glaub\palpitaco\backend\scripts\importKingApostas.js:1076: const pSnap = await drawRef.collection("prizes").limit(1).get();
+C:\Users\glaub\palpitaco\backend\scripts\importKingApostas.js:1099: const snap = await db.collection("draws").where("date", "==", date).get();
+C:\Users\glaub\palpitaco\backend\scripts\importKingApostas.js:1259: const snap = await drawRef.get();
+C:\Users\glaub\palpitaco\backend\scripts\importKingApostas.js:1308: const prizeRef = drawRef.collection("prizes").doc(prizeId);
+C:\Users\glaub\palpitaco\backend\scripts\importKingApostas.js:1313: const psnap = await prizeRef.get();
+C:\Users\glaub\palpitaco\backend\scripts\importKingApostas.js:1420: const snap = await db.collection("draws").where("date", "==", date).get();
+C:\Users\glaub\palpitaco\backend\scripts\importKingApostas.js:1432: bySlot.get(slot).push(r);
+C:\Users\glaub\palpitaco\backend\scripts\importKingApostas.js:1779: await syncImportedResultToTop3History(
+C:\Users\glaub\palpitaco\backend\engine\top3HistorySync.js:50: .collection("prizes")
+C:\Users\glaub\palpitaco\backend\engine\top3HistorySync.js:51: .get();
+C:\Users\glaub\palpitaco\backend\engine\top3HistorySync.js:93: .collection("draws")
+C:\Users\glaub\palpitaco\backend\engine\top3HistorySync.js:95: .get();
+C:\Users\glaub\palpitaco\backend\engine\top3HistorySync.js:103: .collection("draws")
+C:\Users\glaub\palpitaco\backend\engine\top3HistorySync.js:104: .where("lottery_key", "==", lotteryKey)
+C:\Users\glaub\palpitaco\backend\engine\top3HistorySync.js:105: .where("ymd", "==", date)
+C:\Users\glaub\palpitaco\backend\engine\top3HistorySync.js:106: .get();
+C:\Users\glaub\palpitaco\backend\engine\top3HistorySync.js:194: bootstrapStatus: "stale",
+C:\Users\glaub\palpitaco\backend\engine\top3HistorySync.js:219: async function syncImportedResultToTop3History(
+C:\Users\glaub\palpitaco\backend\engine\top3HistorySync.js:235: const loadMonths =
+C:\Users\glaub\palpitaco\backend\engine\top3HistorySync.js:268: metadata?.bootstrapStatus !== "complete"
+C:\Users\glaub\palpitaco\backend\engine\top3HistorySync.js:273: reason: "bootstrap_not_complete",
+C:\Users\glaub\palpitaco\backend\engine\top3HistorySync.js:302: byMonth.get(yearMonth).push(draw);
+C:\Users\glaub\palpitaco\backend\engine\top3HistorySync.js:325: const months = await loadMonths(
+C:\Users\glaub\palpitaco\backend\engine\top3HistorySync.js:335: bootstrapStatus: "complete",
+C:\Users\glaub\palpitaco\backend\engine\top3HistorySync.js:357: "bootstrap_plus_incremental",
+C:\Users\glaub\palpitaco\backend\engine\top3HistorySync.js:411: syncImportedResultToTop3History,
+C:\Users\glaub\palpitaco\backend\engine\top3HistoryRepository.js:70: .collection(ROOT_COLLECTION)
+C:\Users\glaub\palpitaco\backend\engine\top3HistoryRepository.js:83: .collection(MONTHS_COLLECTION)
+C:\Users\glaub\palpitaco\backend\engine\top3HistoryRepository.js:95: .collection(METADATA_COLLECTION)
+C:\Users\glaub\palpitaco\backend\engine\top3HistoryRepository.js:221: async function readHistoryMonth(
+C:\Users\glaub\palpitaco\backend\engine\top3HistoryRepository.js:232: ).get();
+C:\Users\glaub\palpitaco\backend\engine\top3HistoryRepository.js:323: const current = await readHistoryMonth(
+C:\Users\glaub\palpitaco\backend\engine\top3HistoryRepository.js:352: ).get();
+C:\Users\glaub\palpitaco\backend\engine\top3HistoryRepository.js:408: .collection(MONTHS_COLLECTION)
+C:\Users\glaub\palpitaco\backend\engine\top3HistoryRepository.js:409: .get();
+C:\Users\glaub\palpitaco\backend\engine\top3HistoryRepository.js:425: async function readFullHistory(
+C:\Users\glaub\palpitaco\backend\engine\top3HistoryRepository.js:454: readHistoryMonth,
+C:\Users\glaub\palpitaco\backend\engine\top3HistoryRepository.js:460: readFullHistory,
+Reconciliar resultados	Instalar depend├¬ncias	2026-07-21T19:51:04.3135215Z added 302 packages, and audited 303 packages in 2s
+Reconciliar resultados	Instalar depend├¬ncias	2026-07-21T19:51:04.3390096Z   npm audit fix
+Reconciliar resultados	Instalar depend├¬ncias	2026-07-21T19:51:04.3391893Z   npm audit fix --force
+Reconciliar resultados	Instalar depend├¬ncias	2026-07-21T19:51:04.3392389Z Run `npm audit` for details.
+Reconciliar resultados	Importar hoje e reconciliar ontem	2026-07-21T19:51:04.3588025Z ^[[36;1m  local lottery="$1"^[[0m
+Reconciliar resultados	Importar hoje e reconciliar ontem	2026-07-21T19:51:04.3588283Z ^[[36;1m  local period="$2"^[[0m
+Reconciliar resultados	Importar hoje e reconciliar ontem	2026-07-21T19:51:04.3589884Z ^[[36;1m  echo "LOTTERY=$lottery | PERIOD=$period"^[[0m
+Reconciliar resultados	Importar hoje e reconciliar ontem	2026-07-21T19:51:04.3590794Z ^[[36;1m  env LOTTERY="$lottery" "$@" node scripts/autoImportToday.js^[[0m
+Reconciliar resultados	Importar hoje e reconciliar ontem	2026-07-21T19:51:04.3591920Z ^[[36;1m    echo "::error::Falha LOTTERY=$lottery PERIOD=$period EXIT=$code"^[[0m
+Reconciliar resultados	Importar hoje e reconciliar ontem	2026-07-21T19:51:04.3659807Z   AUDIT_WARN_MIN: 20
+Reconciliar resultados	Importar hoje e reconciliar ontem	2026-07-21T19:51:04.3660039Z   AUDIT_CRIT_MIN: 60
+Reconciliar resultados	Importar hoje e reconciliar ontem	2026-07-21T19:51:04.3747604Z LOTTERY=PT_RIO | PERIOD=TODAY
+Reconciliar resultados	Importar hoje e reconciliar ontem	2026-07-21T19:51:07.2294092Z [AUDIT] OK (sem furos HARD acima de 20 min) softLate=0
+Reconciliar resultados	Importar hoje e reconciliar ontem	2026-07-21T19:51:07.2358403Z LOTTERY=FEDERAL | PERIOD=TODAY
+Reconciliar resultados	Importar hoje e reconciliar ontem	2026-07-21T19:51:07.4042906Z [AUDIT] OK (sem furos HARD acima de 20 min) softLate=0
+Reconciliar resultados	Importar hoje e reconciliar ontem	2026-07-21T19:51:07.4218623Z LOTTERY=LOOK | PERIOD=TODAY
+Reconciliar resultados	Importar hoje e reconciliar ontem	2026-07-21T19:51:09.2538615Z [AUDIT] OK (sem furos HARD acima de 20 min) softLate=0
+Reconciliar resultados	Importar hoje e reconciliar ontem	2026-07-21T19:51:09.2598942Z LOTTERY=NACIONAL | PERIOD=TODAY
+Reconciliar resultados	Importar hoje e reconciliar ontem	2026-07-21T19:51:10.5200908Z [AUDIT] OK (sem furos HARD acima de 20 min) softLate=0
+Reconciliar resultados	Importar hoje e reconciliar ontem	2026-07-21T19:51:10.5222724Z LOTTERY=PT_RIO | PERIOD=YESTERDAY:2026-07-20
+Reconciliar resultados	Importar hoje e reconciliar ontem	2026-07-21T19:51:11.6085335Z LOTTERY=FEDERAL | PERIOD=YESTERDAY:2026-07-20
+Reconciliar resultados	Importar hoje e reconciliar ontem	2026-07-21T19:51:11.7764848Z [AUDIT] OK (sem furos HARD acima de 20 min) softLate=0
+Reconciliar resultados	Importar hoje e reconciliar ontem	2026-07-21T19:51:11.7921898Z LOTTERY=LOOK | PERIOD=YESTERDAY:2026-07-20
+Reconciliar resultados	Importar hoje e reconciliar ontem	2026-07-21T19:51:12.7732712Z LOTTERY=NACIONAL | PERIOD=YESTERDAY:2026-07-20
+warning: in the working copy of 'backend/scripts/backtestTop3Official.js', LF will be replaced by CRLF the next time Git touches it

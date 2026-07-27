@@ -1,0 +1,11 @@
+Activated [palpitacojb].
+
+Name                            State   Schedule                    TimeZone          LastAttemptTime NextSchedule
+----                            -----   --------                    --------          --------------- ------------
+palpitaco-daily-reconciliation  ENABLED 15 0 * * *                  America/Sao_Paulo                 22/07/2026 03:15:00
+palpitaco-pt-rio-saturday-19h   ENABLED 23,33 19 * * 6              America/Sao_Paulo                 25/07/2026 22:23:00
+palpitaco-standard-windows      ENABLED 32,42 2,7-12,14-18,23 * * * America/Sao_Paulo                 21/07/2026 21:42:00
+palpitaco-federal-wednesday-20h ENABLED 3,13 20 * * 3               America/Sao_Paulo                 22/07/2026 23:03:00
+palpitaco-federal-sunday-11h    ENABLED 8,18 11 * * 0               America/Sao_Paulo                 26/07/2026 14:08:00
+palpitaco-21h-windows           ENABLED 8,18 21 * * *               America/Sao_Paulo                 22/07/2026 00:08:00
+

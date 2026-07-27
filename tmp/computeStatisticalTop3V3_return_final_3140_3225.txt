@@ -1,0 +1,86 @@
+L3140:             Object.entries(layers).map(([k, v]) => [
+L3141:               k,
+L3142:               {
+L3143:                 label: v.label,
+L3144:                 samples: v.samples,
+L3145:                 weight: activeWeights[k],
+L3146:               },
+L3147:             ])
+L3148:           ),
+L3149:           details: x.details,
+L3150:         },
+L3151:       },
+L3152:     };
+L3153:   });
+L3154: 
+L3155:   return {
+L3156:     top,
+L3157:     meta: {
+L3158:       trigger: {
+L3159:         ymd: lastY,
+L3160:         hour: lastH,
+L3161:         grupo: Number(prevGrupo),
+L3162:       },
+L3163:       next: {
+L3164:         ymd: safeStr(targetY),
+L3165:         hour: safeStr(targetH),
+L3166:       },
+L3167:       samples: history.length,
+L3168:       scenario: "V3_STATISTICAL",
+L3169:       explain: {
+L3170:         engine: "V3_STATISTICAL",
+L3171:         targetDow,
+L3172:         targetDayOfMonth,
+L3173:         prevHour: lastH,
+L3174:         prevGrupo: Number(prevGrupo),
+L3175:         activeWeights,
+L3176:         layers: Object.fromEntries(
+L3177:           Object.entries(layers).map(([k, v]) => [
+L3178:             k,
+L3179:             {
+L3180:               label: v.label,
+L3181:               samples: v.samples,
+L3182:               weight: activeWeights[k],
+L3183:             },
+L3184:           ])
+L3185:         ),
+L3186:       },
+L3187:     },
+L3188:   };
+L3189: }
+L3190: 
+L3191: 
+L3192: 
+L3193: /* =========================
+L3194:    TOP3 SCENE READER
+L3195: ========================= */
+L3196: 
+L3197: function scenePickMilhar4(prize) {
+L3198:   const candidates = [
+L3199:     prize?.milhar,
+L3200:     prize?.milhar4,
+L3201:     prize?.numero,
+L3202:     prize?.number,
+L3203:     prize?.value,
+L3204:     prize?.result,
+L3205:     prize?.resultado,
+L3206:     prize?.premio,
+L3207:   ];
+L3208: 
+L3209:   for (const v of candidates) {
+L3210:     const dig = String(v ?? "").replace(/\D+/g, "");
+L3211:     if (dig) return dig.length >= 4 ? dig.slice(-4) : dig.padStart(4, "0");
+L3212:   }
+L3213: 
+L3214:   return "";
+L3215: }
+L3216: 
+L3217: function sceneGrupoFromMilhar4(m4) {
+L3218:   const s = String(m4 || "").replace(/\D+/g, "").padStart(4, "0").slice(-4);
+L3219:   if (!/^\d{4}$/.test(s)) return null;
+L3220: 
+L3221:   const dzRaw = Number(s.slice(-2));
+L3222:   if (!Number.isFinite(dzRaw)) return null;
+L3223: 
+L3224:   const dz = dzRaw === 0 ? 100 : dzRaw;
+L3225:   const grupo = Math.ceil(dz / 4);

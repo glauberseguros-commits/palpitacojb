@@ -1,0 +1,46 @@
+[
+  {
+    "lotteryKey": "PT_RIO",
+    "signature": "02DFCACF1A50F59DD064246DFC179D12A9C22958990B84D9C38356424C9FBD35",
+    "historyLoaded": 7534,
+    "eligibleCases": 7434,
+    "evaluated": 100,
+    "errors": 0,
+    "top1Hits": 6,
+    "top3Hits": 13,
+    "filePath": "C:\\Users\\glaub\\palpitaco\\tmp\\perf_top3_46_work\\optimized_run_1\\pt_rio_signature.json"
+  },
+  {
+    "lotteryKey": "FEDERAL",
+    "signature": "5F4267C52469CB43729C63D594A00B0624332B866A0C1A5F0D29DA983B7431A2",
+    "historyLoaded": 416,
+    "eligibleCases": 316,
+    "evaluated": 100,
+    "errors": 0,
+    "top1Hits": 5,
+    "top3Hits": 16,
+    "filePath": "C:\\Users\\glaub\\palpitaco\\tmp\\perf_top3_46_work\\optimized_run_1\\federal_signature.json"
+  },
+  {
+    "lotteryKey": "LOOK",
+    "signature": "D11B6930450A23CECD8F8322D0C9D948396A9F6A7349CB892929C863B200ECAA",
+    "historyLoaded": 10219,
+    "eligibleCases": 10119,
+    "evaluated": 100,
+    "errors": 0,
+    "top1Hits": 4,
+    "top3Hits": 15,
+    "filePath": "C:\\Users\\glaub\\palpitaco\\tmp\\perf_top3_46_work\\optimized_run_1\\look_signature.json"
+  },
+  {
+    "lotteryKey": "NACIONAL",
+    "signature": "9F675860326EC008E84D2A1DDE2D48DB99A26EB4BD25383DE4D93A96C1F5463D",
+    "historyLoaded": 11173,
+    "eligibleCases": 11073,
+    "evaluated": 100,
+    "errors": 0,
+    "top1Hits": 7,
+    "top3Hits": 15,
+    "filePath": "C:\\Users\\glaub\\palpitaco\\tmp\\perf_top3_46_work\\optimized_run_1\\nacional_signature.json"
+  }
+]

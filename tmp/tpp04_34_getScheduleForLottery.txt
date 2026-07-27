@@ -1,0 +1,181 @@
+0235:     // A Federal mudou de 19h para 20h em 03/11/2025.
+0236:     // Desde então, nas quartas e sábados, o PT Rio das 18h
+0237:     // é substituído pelo sorteio das 19h.
+0238:     if (String(ymd || "").trim() >= "2025-11-03") {
+0239:       return Array.from(
+0240:         new Set([
+0241:           ...baseSchedule
+0242:             .map(toHourBucket)
+0243:             .filter((hour) => hour && hour !== "18:00"),
+0244:           "19:00",
+0245:         ])
+0246:       ).sort((a, b) => hourToInt(a) - hourToInt(b));
+0247:     }
+0248: 
+0249:     return baseSchedule;
+0250:   }
+0251: 
+0252:   return PT_RIO_SCHEDULE_NORMAL;
+0253: }
+0254: 
+0255: export function getScheduleForLottery({
+0256:   lotteryKey,
+0257:   ymd,
+0258:   PT_RIO_SCHEDULE_NORMAL,
+0259:   PT_RIO_SCHEDULE_WED_SAT,
+0260:   FEDERAL_SCHEDULE,
+0261: }) {
+0262:   const key = safeStr(lotteryKey).toUpperCase();
+0263: 
+0264:   if (key === "FEDERAL") {
+0265:     return isFederalDrawDay(ymd) ? FEDERAL_SCHEDULE : [];
+0266:   }
+0267: 
+0268:   return getPtRioScheduleForYmd(
+0269:     ymd,
+0270:     PT_RIO_SCHEDULE_NORMAL,
+0271:     PT_RIO_SCHEDULE_WED_SAT
+0272:   );
+0273: }
+0274: 
+0275: export function scheduleSet(schedule) {
+0276:   return new Set((Array.isArray(schedule) ? schedule : []).map(toHourBucket));
+0277: }
+0278: 
+0279: export function isHourInSchedule(schedule, hhmm) {
+0280:   const s = scheduleSet(schedule);
+0281:   return s.has(toHourBucket(hhmm));
+0282: }
+0283: 
+0284: export function findLastDrawInList(draws, schedule) {
+0285:   const list = Array.isArray(draws) ? draws : [];
+0286:   if (!list.length) return null;
+0287: 
+0288:   const sorted = [...list]
+0289:     .filter((d) => isHourInSchedule(schedule, pickDrawHour(d)))
+0290:     .sort((a, b) => {
+0291:       const ta = ymdHourToTs(pickDrawYMD(a), toHourBucket(pickDrawHour(a)));
+0292:       const tb = ymdHourToTs(pickDrawYMD(b), toHourBucket(pickDrawHour(b)));
+0293:       return tb - ta;
+0294:     });
+0295: 
+0296:   return sorted[0] || null;
+0297: }
+0298: 
+0299: export function findPrevDrawBeforeTargetInSameDay(
+0300:   draws,
+0301:   targetHourBucket,
+0302:   schedule
+0303: ) {
+0304:   const list = Array.isArray(draws) ? draws : [];
+0305:   if (!list.length) return null;
+0306: 
+0307:   const t = hourToInt(targetHourBucket);
+0308:   if (t < 0) return null;
+0309: 
+0310:   const candidates = list
+0311:     .filter((d) => isHourInSchedule(schedule, pickDrawHour(d)))
+0312:     .map((d) => ({ d, h: hourToInt(toHourBucket(pickDrawHour(d))) }))
+0313:     .filter((x) => x.h >= 0 && x.h < t)
+0314:     .sort((a, b) => b.h - a.h);
+0315: 
+0316:   return candidates.length ? candidates[0].d : null;
+0317: }
+0318: 
+0319: export async function getPreviousDrawRobust({
+0320:   getKingResultsByDate,
+0321:   lotteryKey,
+0322:   ymdTarget,
+0323:   targetHourBucket,
+0324:   todayDraws,
+0325:   schedule,
+0326:   maxBackDays = 10,
+0327:   PT_RIO_SCHEDULE_NORMAL,
+0328:   PT_RIO_SCHEDULE_WED_SAT,
+0329:   FEDERAL_SCHEDULE,
+0330: }) {
+0331:   const prevSameDay = findPrevDrawBeforeTargetInSameDay(
+0332:     todayDraws,
+0333:     targetHourBucket,
+0334:     schedule
+0335:   );
+0336: 
+0337:   if (prevSameDay) {
+0338:     return {
+0339:       draw: prevSameDay,
+0340:       ymd: pickDrawYMD(prevSameDay) || ymdTarget,
+0341:       hour: toHourBucket(pickDrawHour(prevSameDay)),
+0342:       source: "same_day",
+0343:     };
+0344:   }
+0345: 
+0346:   for (let i = 1; i <= maxBackDays; i += 1) {
+0347:     const day = addDaysYMD(ymdTarget, -i);
+0348: 
+0349:     const daySchedule = getScheduleForLottery({
+0350:       lotteryKey,
+0351:       ymd: day,
+0352:       PT_RIO_SCHEDULE_NORMAL,
+0353:       PT_RIO_SCHEDULE_WED_SAT,
+0354:       FEDERAL_SCHEDULE,
+0355:     });
+0356: 
+0357:     if (
+0358:       safeStr(lotteryKey).toUpperCase() === "FEDERAL" &&
+0359:       !daySchedule.length
+0360:     ) {
+0361:       continue;
+0362:     }
+0363: 
+0364:     const out = await getKingResultsByDate({
+0365:       uf: lotteryKey,
+0366:       date: day,
+0367:       closeHour: null,
+0368:       positions: null,
+0369:       readPolicy: "server",
+0370:     });
+0371: 
+0372:     const last = findLastDrawInList(out, daySchedule);
+0373:     if (last) {
+0374:       return {
+0375:         draw: last,
+0376:         ymd: pickDrawYMD(last) || day,
+0377:         hour: toHourBucket(pickDrawHour(last)),
+0378:         source: "prev_day",
+0379:       };
+0380:     }
+0381:   }
+0382: 
+0383:   return { draw: null, ymd: "", hour: "", source: "none" };
+0384: }
+0385: 
+0386: /* =========================
+0387:    Próximo sorteio (slot válido)
+0388: ========================= */
+0389: 
+0390: export function getNextSlotForLottery({
+0391:   lotteryKey,
+0392:   ymd,
+0393:   hourBucket,
+0394:   PT_RIO_SCHEDULE_NORMAL,
+0395:   PT_RIO_SCHEDULE_WED_SAT,
+0396:   FEDERAL_SCHEDULE,
+0397:   maxForwardDays = 21,
+0398: }) {
+0399:   const key = safeStr(lotteryKey).toUpperCase();
+0400:   const y0 = safeStr(ymd);
+0401:   const h0 = toHourBucket(hourBucket);
+0402: 
+0403:   if (!isYMD(y0) || !safeStr(h0)) return { ymd: "", hour: "" };
+0404: 
+0405:   if (key === "FEDERAL") {
+0406:     for (let i = 1; i <= maxForwardDays; i += 1) {
+0407:       const day = addDaysYMD(y0, i);
+0408:       const sch = getScheduleForLottery({
+0409:         lotteryKey: key,
+0410:         ymd: day,
+0411:         PT_RIO_SCHEDULE_NORMAL,
+0412:         PT_RIO_SCHEDULE_WED_SAT,
+0413:         FEDERAL_SCHEDULE,
+0414:       });
+0415:       if (Array.isArray(sch) && sch.length) {
