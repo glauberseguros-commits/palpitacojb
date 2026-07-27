@@ -2237,13 +2237,17 @@ const list = Array.isArray(top3)
     ).length;
 
     const centena = validated.filter(
-      (item) => item?.hitType === "hit_centena"
+      (item) =>
+        item?.hitType === "hit_centena" ||
+        item?.hitType === "hit_exact"
     ).length;
 
     const grupo = validated.filter(
       (item) =>
         item?.hitType === "hit_grupo" ||
-        item?.hitType === "hit_dezena"
+        item?.hitType === "hit_dezena" ||
+        item?.hitType === "hit_centena" ||
+        item?.hitType === "hit_exact"
     ).length;
 
     const misses = validated.filter(
