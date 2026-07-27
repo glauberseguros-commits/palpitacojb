@@ -107,23 +107,6 @@ function normalizeRoute(saved) {
   return Object.values(ROUTES).includes(saved) ? saved : null;
 }
 
-/**
- * ✅ Resolve default/named de forma robusta
- */
-function resolveComponent(mod, name) {
-  const c = mod?.default ?? mod;
-
-  const isProbablyReactComponent =
-    typeof c === "function" ||
-    (c && typeof c === "object" && String(c.$$typeof || "").includes("react."));
-
-  if (!isProbablyReactComponent) {
-    console.error(`[IMPORT INVALID] ${name} veio inválido:`, c, " | import raw:", mod);
-  }
-
-  return c;
-}
-
 /* =========================
    Sessão (estrita)
 ========================= */
