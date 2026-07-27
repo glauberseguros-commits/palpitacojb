@@ -271,7 +271,7 @@ function getDezenasFixasFromGrupo(grupo) {
   return out;
 }
 
-function clampColsFromItemMilharesCols(milharesCols, expectedCols = 4, perCol = 5) {
+function clampColsFromItemMilharesCols(milharesCols, expectedCols = 4, perCol = 6) {
   const colsArr = Array.isArray(milharesCols) ? milharesCols : [];
   const out = [];
 
@@ -295,7 +295,7 @@ function clampColsFromItemMilharesCols(milharesCols, expectedCols = 4, perCol = 
   return out.slice(0, expectedCols);
 }
 
-function build20ByDezena({ grupo, baseMilhares, perCol = 5 }) {
+function build20ByDezena({ grupo, baseMilhares, perCol = 6 }) {
   const g = Number(grupo);
   const dezenas = getDezenasFixasFromGrupo(g);
 
@@ -1186,7 +1186,7 @@ function Top3Card({
             type="button"
             onClick={doCopyAll}
             className="pp-btn"
-            title="Copiar as 20 milhares"
+            title="Copiar as 24 milhares"
           >
             {copiedAllKey === key ? "✅ Copiado" : "📋 Copiar"}
           </button>
@@ -4501,4 +4501,5 @@ const list = Array.isArray(top3)
     </div>
   );
 }
+
 

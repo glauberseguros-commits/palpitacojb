@@ -3597,7 +3597,7 @@ function buildSceneHypothesisDistribution(sceneRanking, groupsK = TOP3_GROUPS_K)
 
 
 /* =========================
-   16/20 milhares (por grupo) — POR TERMINAÇÃO (CORRETO)
+   16/24 milhares (por grupo) — POR TERMINAÇÃO (CORRETO)
 ========================= */
 
 function getDezenasFixasFromGrupo(grupo2) {
@@ -3620,7 +3620,7 @@ export function buildMilharesForGrupo({
   analysisHourBucket,
   schedule,
   grupo2,
-  count = 20,
+  count = 24,
   targetYmd = "",
 }) {
   const list = Array.isArray(rangeDraws) ? rangeDraws : [];
@@ -3631,7 +3631,7 @@ export function buildMilharesForGrupo({
 
   const N = Number.isFinite(Number(count))
     ? Math.max(4, Math.trunc(Number(count)))
-    : 20;
+    : 24;
 
   const grupoNum = Number(grupo2);
 
@@ -4040,7 +4040,7 @@ export function build16MilharesForGrupo(args) {
 }
 
 export function build20MilharesForGrupo(args) {
-  return buildMilharesForGrupo({ ...(args || {}), count: 20 });
+  return buildMilharesForGrupo({ ...(args || {}), count: 24 });
 }
 
 /* =========================

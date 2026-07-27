@@ -47,8 +47,8 @@ export function buildTop3Predictions({
         milharesCache.set(cacheKey, out);
       }
 
-      const milharesCols = build4ColsFromEngineOut(out, 4, 5);
-      const milhares20 = milharesCols.flatMap((c) => c.items).slice(0, 20);
+      const milharesCols = build4ColsFromEngineOut(out, 4, 6);
+      const milhares20 = milharesCols.flatMap((c) => c.items).slice(0, 24);
 
       const prob = clampProb(resolveProbValue(x));
       const probPct = prob * 100;

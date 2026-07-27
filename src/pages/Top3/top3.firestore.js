@@ -124,7 +124,7 @@ function normalizeSnapshot(snapshot) {
       prob: Number(item?.prob || 0),
       probPct: Number(item?.probPct || 0),
       milhares20: Array.isArray(item?.milhares20)
-        ? item.milhares20.map(normalizeMilhar).filter(Boolean).slice(0, 20)
+        ? item.milhares20.map(normalizeMilhar).filter(Boolean).slice(0, 24)
         : [],
       milharesCols: Array.isArray(item?.milharesCols)
         ? cleanFirestoreValue(item.milharesCols)

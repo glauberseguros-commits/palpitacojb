@@ -19,7 +19,7 @@ export function normalizeTop3Milhar4(v) {
   return dig.length >= 4 ? dig.slice(-4) : dig.padStart(4, "0");
 }
 
-export function buildTop3MilharesCols(out, expectedCols = 4, perCol = 5) {
+export function buildTop3MilharesCols(out, expectedCols = 4, perCol = 6) {
   const dezenas = Array.isArray(out?.dezenas) ? out.dezenas : [];
   const slots = Array.isArray(out?.slots) ? out.slots : [];
   const cols = [];
@@ -128,15 +128,15 @@ export function buildTop3CardViewModel({
       analysisHourBucket: safeAnalysisHour,
       schedule,
       grupo2: g,
-      count: 20,
+      count: 24,
       targetYmd: nextY,
     });
 
     milharesCache?.set?.(cacheKey, out);
   }
 
-  const milharesCols = buildTop3MilharesCols(out, 4, 5);
-  const milhares20 = milharesCols.flatMap((c) => c.items).slice(0, 20);
+  const milharesCols = buildTop3MilharesCols(out, 4, 6);
+  const milhares20 = milharesCols.flatMap((c) => c.items).slice(0, 24);
 
   const prob = resolveTop3ProbValue(item);
 

@@ -288,7 +288,7 @@ function hydratePersistedTop3(entry) {
         prob: Number(item?.prob || 0),
         probPct: Number(item?.probPct || 0),
         milhares20: Array.isArray(item?.milhares20)
-          ? item.milhares20.slice(0, 20)
+          ? item.milhares20.slice(0, 24)
           : [],
         milharesCols: Array.isArray(item?.milharesCols)
           ? item.milharesCols
@@ -1266,7 +1266,7 @@ export function useTop3Controller() {
     (grupo2, item = null) => {
       return buildMilharesCached({
         grupo2,
-        count: 20,
+        count: 24,
         targetYmd: item?.meta?.next?.ymd || analysisYmd,
       });
     },
@@ -1431,7 +1431,7 @@ export function useTop3Controller() {
       prob: Number(item?.prob || 0),
       probPct: Number(item?.probPct || 0),
       milhares20: Array.isArray(item?.milhares20)
-        ? item.milhares20.slice(0, 20)
+        ? item.milhares20.slice(0, 24)
         : [],
       milharesCols: Array.isArray(item?.milharesCols)
         ? item.milharesCols
