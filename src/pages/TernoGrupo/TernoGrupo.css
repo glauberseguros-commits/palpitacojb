@@ -275,6 +275,61 @@
   font-size: 18px;
 }
 
+.terno-grupo-results__actions {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  gap: 12px;
+}
+
+.terno-grupo-results__lottery {
+  display: grid;
+  gap: 3px;
+  text-align: right;
+}
+
+.terno-grupo-copy {
+  min-height: 42px;
+  padding: 0 16px;
+  cursor: pointer;
+  border: 1px solid rgba(214, 184, 75, 0.42);
+  border-radius: 12px;
+  color: #d6b84b;
+  background: rgba(214, 184, 75, 0.075);
+  font: inherit;
+  font-size: 11px;
+  font-weight: 1000;
+  letter-spacing: 0.06em;
+  transition:
+    border-color 160ms ease,
+    color 160ms ease,
+    background 160ms ease,
+    transform 160ms ease;
+}
+
+.terno-grupo-copy:hover:not(:disabled) {
+  border-color: rgba(214, 184, 75, 0.75);
+  background: rgba(214, 184, 75, 0.14);
+  transform: translateY(-1px);
+}
+
+.terno-grupo-copy:disabled {
+  cursor: not-allowed;
+  opacity: 0.42;
+}
+
+.terno-grupo-copy--copied {
+  border-color: rgba(103, 214, 138, 0.62);
+  color: #83e9a3;
+  background: rgba(103, 214, 138, 0.1);
+}
+
+.terno-grupo-copy--error {
+  border-color: rgba(255, 104, 104, 0.6);
+  color: #ff9d9d;
+  background: rgba(255, 104, 104, 0.08);
+}
+
 .terno-grupo-list {
   display: grid;
   gap: 14px;
@@ -459,6 +514,21 @@
 
   .terno-grupo-generate {
     width: 100%;
+  }
+
+  .terno-grupo-results__header {
+    align-items: flex-end;
+  }
+
+  .terno-grupo-results__actions {
+    display: grid;
+    justify-items: end;
+  }
+
+  .terno-grupo-copy {
+    min-height: 40px;
+    padding: 0 13px;
+    font-size: 10px;
   }
 
   .terno-grupo-card__animals {

@@ -197,6 +197,9 @@ export default function TernoGrupoView(
   const [quantityError, setQuantityError] =
     useState("");
 
+  const [copyStatus, setCopyStatus] =
+    useState("idle");
+
   const lotOptions = useMemo(() => {
     const source = Array.isArray(
       LOTTERY_OPTIONS
@@ -290,6 +293,7 @@ export default function TernoGrupoView(
     setQuantityInput("1");
     setGeneratedQuantity(1);
     setQuantityError("");
+    setCopyStatus("idle");
   }, [
     lotteryKeySafe,
     analysisYmd,
@@ -335,6 +339,155 @@ export default function TernoGrupoView(
       quantityInput,
       10
     ) || 0;
+
+  const buildCopyText = () => {
+    const lotteryLabel =
+      resolveLotteryLabel(
+        lotteryKeySafe
+      );
+
+    const predictionLabel = [
+      formatDateBR(analysisYmd),
+      analysisHourBucket || "",
+    ]
+      .filter(Boolean)
+      .join(" • ");
+
+    const quantityLabel =
+      visibleTernos.length === 1
+        ? "1 terno"
+        : `${visibleTernos.length} ternos`;
+
+    const header = [
+      "TERNO DE GRUPO",
+      `Loteria: ${lotteryLabel}`,
+      `Previsão: ${predictionLabel}`,
+      `Quantidade: ${quantityLabel}`,
+    ];
+
+    const blocks = visibleTernos.map(
+      (terno) => {
+        const score = Number(
+          terno?.scorePct || 0
+        ).toLocaleString("pt-BR", {
+          minimumFractionDigits: 2,
+          maximumFractionDigits: 2,
+        });
+
+        const animals = (
+          Array.isArray(terno?.grupos)
+            ? terno.grupos
+            : []
+        ).map((grupo) => {
+          const animal = String(
+            getAnimalLabel(grupo) || "—"
+          )
+            .trim()
+            .toUpperCase();
+
+          return `${formatGrupo(
+            grupo
+          )} - ${animal}`;
+        });
+
+        return [
+          `${terno.rank}º TERNO — ÍNDICE ${score}%`,
+          ...animals,
+        ].join("\n");
+      }
+    );
+
+    return [
+      ...header,
+      "",
+      ...blocks.flatMap(
+        (block, index) =>
+          index === blocks.length - 1
+            ? [block]
+            : [block, ""]
+      ),
+    ].join("\n");
+  };
+
+  const copyTextFallback = (text) => {
+    const textarea =
+      document.createElement("textarea");
+
+    textarea.value = text;
+    textarea.setAttribute(
+      "readonly",
+      ""
+    );
+
+    textarea.style.position = "fixed";
+    textarea.style.opacity = "0";
+    textarea.style.pointerEvents = "none";
+
+    document.body.appendChild(
+      textarea
+    );
+
+    textarea.select();
+    textarea.setSelectionRange(
+      0,
+      textarea.value.length
+    );
+
+    const copied =
+      document.execCommand("copy");
+
+    document.body.removeChild(
+      textarea
+    );
+
+    if (!copied) {
+      throw new Error(
+        "Falha ao copiar os ternos."
+      );
+    }
+  };
+
+  const handleCopyTernos = async () => {
+    if (!visibleTernos.length) {
+      return;
+    }
+
+    const text = buildCopyText();
+
+    try {
+      if (
+        navigator?.clipboard &&
+        window?.isSecureContext
+      ) {
+        await navigator.clipboard.writeText(
+          text
+        );
+      } else {
+        copyTextFallback(text);
+      }
+
+      setCopyStatus("copied");
+
+      window.setTimeout(() => {
+        setCopyStatus("idle");
+      }, 1800);
+    } catch {
+      try {
+        copyTextFallback(text);
+        setCopyStatus("copied");
+
+        window.setTimeout(() => {
+          setCopyStatus("idle");
+        }, 1800);
+      } catch {
+        setCopyStatus("error");
+
+        window.setTimeout(() => {
+          setCopyStatus("idle");
+        }, 2200);
+      }
+    }
+  };
 
   return (
     <main className="terno-grupo-page">
@@ -566,14 +719,40 @@ export default function TernoGrupoView(
               </strong>
             </div>
 
-            <div>
-              <span>Loteria</span>
+            <div className="terno-grupo-results__actions">
+              <div className="terno-grupo-results__lottery">
+                <span>Loteria</span>
 
-              <strong>
-                {resolveLotteryLabel(
-                  lotteryKeySafe
-                )}
-              </strong>
+                <strong>
+                  {resolveLotteryLabel(
+                    lotteryKeySafe
+                  )}
+                </strong>
+              </div>
+
+              <button
+                type="button"
+                className={`terno-grupo-copy ${
+                  copyStatus === "copied"
+                    ? "terno-grupo-copy--copied"
+                    : ""
+                } ${
+                  copyStatus === "error"
+                    ? "terno-grupo-copy--error"
+                    : ""
+                }`}
+                onClick={handleCopyTernos}
+                disabled={
+                  loading ||
+                  !visibleTernos.length
+                }
+              >
+                {copyStatus === "copied"
+                  ? "COPIADO!"
+                  : copyStatus === "error"
+                    ? "ERRO AO COPIAR"
+                    : "COPIAR TERNOS"}
+              </button>
             </div>
           </header>
 
