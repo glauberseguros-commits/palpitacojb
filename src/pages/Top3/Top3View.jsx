@@ -697,6 +697,76 @@ function Top3Card({
 
   if (hasCols) {
     const cols4 = clampColsFromItemMilharesCols(item.milharesCols, 4, 6);
+
+    if (typeof window !== "undefined") {
+      window.__TOP3_MILHAR_DIAGNOSTIC_KEYS__ =
+        window.__TOP3_MILHAR_DIAGNOSTIC_KEYS__ || new Set();
+
+      const diagnosticKey = [
+        item?.grupo,
+        item?.animal,
+        item?.meta?.next?.ymd,
+        item?.meta?.next?.hour,
+      ].join("|");
+
+      if (
+        diagnosticKey &&
+        !window.__TOP3_MILHAR_DIAGNOSTIC_KEYS__.has(diagnosticKey)
+      ) {
+        window.__TOP3_MILHAR_DIAGNOSTIC_KEYS__.add(diagnosticKey);
+
+        const originalCols = Array.isArray(item?.milharesCols)
+          ? item.milharesCols
+          : [];
+
+        const flatMilhares = Array.isArray(item?.milhares20)
+          ? item.milhares20
+          : [];
+
+        const columnReport = originalCols.slice(0, 4).map((col, index) => {
+          const values = Array.isArray(col?.items) ? col.items : [];
+          const validValues = values.filter(
+            (value) => /^\d{4}$/.test(String(value || ""))
+          );
+
+          return {
+            coluna: index + 1,
+            dezena: String(col?.dezena || ""),
+            recebidos: values.length,
+            validos: validValues.length,
+            vazios: values.length - validValues.length,
+            valores: values.join(", "),
+          };
+        });
+
+        console.group(
+          `[TOP3-MILHAR-DIAGNOSTIC] ${diagnosticKey}`
+        );
+
+        console.log("ITEM COMPLETO:", item);
+        console.log("milhares20 recebido:", flatMilhares);
+        console.log(
+          "milhares20 quantidade:",
+          flatMilhares.length
+        );
+        console.log(
+          "milhares20 válidos:",
+          flatMilhares.filter(
+            (value) => /^\d{4}$/.test(String(value || ""))
+          ).length
+        );
+        console.log(
+          "milharesCols original:",
+          originalCols
+        );
+        console.log(
+          "milharesCols após clamp:",
+          cols4
+        );
+        console.table(columnReport);
+        console.groupEnd();
+      }
+    }
     dezenasHeader = cols4.map((c) => String(c.dezena || ""));
     gridRows = Array.from({ length: 6 }, (_, r) =>
       cols4.map((c) => c.items[r] || "")
@@ -4501,6 +4571,7 @@ const list = Array.isArray(top3)
     </div>
   );
 }
+
 
 
 
