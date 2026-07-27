@@ -1407,6 +1407,8 @@ export async function getKingResultsByRange({
   readPolicy = DEFAULT_READ_POLICY,
   bypassCache = false,
 }) {
+  const PERF_KING_RANGE_V2 = true;
+  const __perfTotalStarted = performance.now();
   if (!uf || !dateFrom || !dateTo) {
     throw new Error("Parâmetros obrigatórios: uf, dateFrom, dateTo");
   }
@@ -1443,12 +1445,17 @@ export async function getKingResultsByRange({
   const DOC_ID = documentId();
   const rangeOrder = [orderBy("ymd", "asc"), orderBy(DOC_ID)];
 
+  const __perfFirestoreStarted = performance.now();
+
   const { docs, error, usedField } = await fetchDrawDocsPreferUf({
     uf,
     extraWheres: [where("ymd", ">=", ymdFrom), where("ymd", "<=", ymdTo)],
     extraOrderBy: rangeOrder,
     policy: readPolicy,
   });
+
+  const __perfFirestoreMs =
+    performance.now() - __perfFirestoreStarted;
 
   if (error) {
     if (isIndexError(error)) {
@@ -1614,13 +1621,38 @@ const base = hourFilter?.kind
 
   const conc = chooseRangeConcurrency(ordered.length);
 
+  const __perfHydrationStarted = performance.now();
+
   const results = await mapWithConcurrency(ordered, conc, async (item) => {
     const prizes = await fetchPrizesForDraw(item.drawId, positionsArr, item.prizes);
     const pc = Array.isArray(prizes) ? prizes.length : 0;
     return { ...item, prizes, prizesCount: pc, __mode: "detailed" };
   });
 
+  const __perfHydrationMs =
+    performance.now() - __perfHydrationStarted;
+
+  const __perfDedupeStarted = performance.now();
   const out = dedupeDrawsLocal(results);
+  const __perfDedupeMs =
+    performance.now() - __perfDedupeStarted;
+
+  const __perfTotalMs =
+    performance.now() - __perfTotalStarted;
+
+  if (PERF_KING_RANGE_V2) {
+    console.log("[PERF][KING_RANGE_V2]", {
+      uf: scopeKey,
+      from: ymdFrom,
+      to: ymdTo,
+      mode: effectiveMode,
+      draws: ordered.length,
+      firestoreMs: Math.round(__perfFirestoreMs),
+      hydrationMs: Math.round(__perfHydrationMs),
+      dedupeMs: Math.round(__perfDedupeMs),
+      totalMs: Math.round(__perfTotalMs),
+    });
+  }
   if (!bypassCache) {
       cacheSet(DRAWS_CACHE, rangeKey, out);
     }
