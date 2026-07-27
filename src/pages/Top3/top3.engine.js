@@ -4571,6 +4571,38 @@ function buildTimelineForDate({
       ? getPrizeGroupsByPosition(currentDraw, 3)
       : [null, null, null];
 
+    const resultTop3Milhares = currentDraw
+      ? Array.from({ length: 3 }, (_, index) => {
+          const position = index + 1;
+          const prizes = Array.isArray(currentDraw?.prizes)
+            ? currentDraw.prizes
+            : [];
+
+          const prize =
+            prizes.find(
+              (item) =>
+                Number(guessPrizePos(item)) === position
+            ) || null;
+
+          return prize
+            ? String(pickPrizeMilhar4(prize) || "")
+                .replace(/\D+/g, "")
+                .padStart(4, "0")
+                .slice(-4)
+            : "";
+        })
+      : ["", "", ""];
+
+    const resultMilhar =
+      String(resultTop3Milhares[0] || "")
+        .replace(/\D+/g, "")
+        .padStart(4, "0")
+        .slice(-4);
+
+    const officialPrizes = currentDraw && Array.isArray(currentDraw?.prizes)
+      ? currentDraw.prizes
+      : [];
+
     const resultGrupo = Number(resultTop3Groups[0]);
 
     const normalizedResultGrupo =
@@ -4613,6 +4645,9 @@ function buildTimelineForDate({
 
       resultGrupo: normalizedResultGrupo,
       resultTop3Groups,
+      resultMilhar,
+      resultTop3Milhares,
+      prizes: officialPrizes,
 
       hit,
       top3PrizeHit: hit,
@@ -4682,3 +4717,4 @@ export function auditTop3Backtest({
     lotteryKey,
   });
 }
+
