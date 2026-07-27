@@ -10,13 +10,6 @@ import {
 } from "../../constants/bichoMap";
 
 import {
-  buildAllTernosGrupo,
-  TERNO_GRUPO_MAX_QUANTITY,
-  TERNO_GRUPO_MIN_QUANTITY,
-  validateTernoQuantity,
-} from "./modules/ternoGrupo.generator";
-
-import {
   buildAllTernosGrupoRepetition,
   TERNO_GRUPO_REPETITION_MAX_QUANTITY,
   TERNO_GRUPO_REPETITION_MIN_QUANTITY,
@@ -98,7 +91,6 @@ function AnimalImage({
 
 function TernoCard({
   terno,
-  engineMode,
 }) {
   const strengthLabel =
     terno.scorePct >= 85
@@ -162,9 +154,7 @@ function TernoCard({
 
       <footer className="terno-grupo-card__footer">
         <span>
-          {engineMode === "repetition"
-            ? "Grupos podem repetir"
-            : "3 grupos distintos"}
+          Grupos podem repetir
         </span>
 
         <span>
@@ -172,9 +162,7 @@ function TernoCard({
         </span>
 
         <span>
-          {engineMode === "repetition"
-            ? "Acerto por quantidade no TOP5"
-            : "Acerto: 3 grupos no TOP5"}
+          Acerto por quantidade no TOP5
         </span>
       </footer>
     </article>
@@ -199,11 +187,7 @@ export default function TernoGrupoView(
     analysisYmd,
     analysisHourBucket,
   } = props || {};
-
-  const [engineMode, setEngineMode] =
-    useState("traditional");
-
-  const [quantityInput, setQuantityInput] =
+const [quantityInput, setQuantityInput] =
     useState("1");
 
   const [generatedQuantity, setGeneratedQuantity] =
@@ -214,31 +198,17 @@ export default function TernoGrupoView(
 
   const [copyStatus, setCopyStatus] =
     useState("idle");
-
-  const isRepetitionMode =
-    engineMode === "repetition";
-
   const activeMinQuantity =
-    isRepetitionMode
-      ? TERNO_GRUPO_REPETITION_MIN_QUANTITY
-      : TERNO_GRUPO_MIN_QUANTITY;
+    TERNO_GRUPO_REPETITION_MIN_QUANTITY;
 
   const activeMaxQuantity =
-    isRepetitionMode
-      ? TERNO_GRUPO_REPETITION_MAX_QUANTITY
-      : TERNO_GRUPO_MAX_QUANTITY;
+    TERNO_GRUPO_REPETITION_MAX_QUANTITY;
 
   const activeQuantityValidator =
-    isRepetitionMode
-      ? validateTernoRepetitionQuantity
-      : validateTernoQuantity;
+    validateTernoRepetitionQuantity;
 
   const activeEngineLabel =
-    isRepetitionMode
-      ? "Motor Repetição"
-      : "Motor Tradicional";
-
-  const lotOptions = useMemo(() => {
+    "Jogo completo";const lotOptions = useMemo(() => {
     const source = Array.isArray(
       LOTTERY_OPTIONS
     )
@@ -295,12 +265,7 @@ export default function TernoGrupoView(
   }, [LOTTERY_OPTIONS]);
 
   const allTernos = useMemo(() => {
-    const generator =
-      engineMode === "repetition"
-        ? buildAllTernosGrupoRepetition
-        : buildAllTernosGrupo;
-
-    return generator({
+    return buildAllTernosGrupoRepetition({
       analytics,
       seedGroups: top3,
       historicalDraws: [
@@ -314,7 +279,6 @@ export default function TernoGrupoView(
       targetHour: analysisHourBucket,
     });
   }, [
-    engineMode,
     analytics,
     top3,
     rangeDraws,
@@ -337,7 +301,6 @@ export default function TernoGrupoView(
     setQuantityError("");
     setCopyStatus("idle");
   }, [
-    engineMode,
     lotteryKeySafe,
     analysisYmd,
     analysisHourBucket,
@@ -545,9 +508,7 @@ export default function TernoGrupoView(
             <h1>Terno de Grupo</h1>
 
             <p>
-              Gere combinações de três grupos
-              classificadas da maior para a
-              menor força estatística.
+              Gere combinações completas de três grupos, com grupos diferentes, duplicados ou triplicados, classificadas da maior para a menor força estatística.
             </p>
           </div>
 
@@ -565,27 +526,6 @@ export default function TernoGrupoView(
 
         <section className="terno-grupo-panel">
           <div className="terno-grupo-filters">
-            <label>
-              <span>Modo</span>
-
-              <select
-                value={engineMode}
-                onChange={(event) =>
-                  setEngineMode(
-                    event.target.value
-                  )
-                }
-              >
-                <option value="traditional">
-                  Tradicional
-                </option>
-
-                <option value="repetition">
-                  Repetição
-                </option>
-              </select>
-            </label>
-
             <label>
               <span>Loteria</span>
 
@@ -786,8 +726,7 @@ export default function TernoGrupoView(
           <header className="terno-grupo-results__header">
             <div>
               <span>
-                Resultado gerado •{" "}
-                {activeEngineLabel}
+                Resultado gerado • jogo completo
               </span>
 
               <strong>
@@ -837,7 +776,6 @@ export default function TernoGrupoView(
                   <TernoCard
                     key={terno.key}
                     terno={terno}
-                    engineMode={engineMode}
                   />
                 )
               )}
@@ -853,4 +791,5 @@ export default function TernoGrupoView(
     </main>
   );
 }
+
 
