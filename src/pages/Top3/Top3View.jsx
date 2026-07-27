@@ -692,13 +692,13 @@ function Top3Card({
     Array.isArray(item.milharesCols[0]?.items);
 
   let dezenasHeader = [];
-  let gridRows = Array.from({ length: 5 }, () => Array(4).fill(""));
+  let gridRows = Array.from({ length: 6 }, () => Array(4).fill(""));
   let flat20 = [];
 
   if (hasCols) {
-    const cols4 = clampColsFromItemMilharesCols(item.milharesCols, 4, 5);
+    const cols4 = clampColsFromItemMilharesCols(item.milharesCols, 4, 6);
     dezenasHeader = cols4.map((c) => String(c.dezena || ""));
-    gridRows = Array.from({ length: 5 }, (_, r) =>
+    gridRows = Array.from({ length: 6 }, (_, r) =>
       cols4.map((c) => c.items[r] || "")
     );
     flat20 = gridRows.flat().filter(Boolean);
@@ -738,7 +738,7 @@ function Top3Card({
     const grid = build20ByDezena({
       grupo: grupoNum,
       baseMilhares: milharesBase,
-      perCol: 5,
+      perCol: 6,
     });
 
     dezenasHeader = grid.dezenas;
@@ -4501,5 +4501,6 @@ const list = Array.isArray(top3)
     </div>
   );
 }
+
 
 
