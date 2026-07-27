@@ -3957,75 +3957,67 @@ const list = Array.isArray(top3)
                         : "rgba(212,175,55,0.38)";
 
                 const matchedOfficialIndex =
-                  resultPosition >= 1 &&
-                  resultPosition <= 3
-                    ? resultPosition - 1
-                    : -1;
+  Array.isArray(resultTop3Groups)
+    ? resultTop3Groups.findIndex(g => Number(g) === Number(resultGrupo))
+    : -1;
 
-                const matchedResultGrupoRaw =
-                  matchedOfficialIndex >= 0
-                    ? Number(
-                        item?.resultTop3Groups?.[
-                          matchedOfficialIndex
-                        ] ??
-                          item?.matchedGrupo ??
-                          analysis?.matchedGrupo ??
-                          NaN
-                      )
-                    : NaN;
+const isHit = matchedOfficialIndex >= 0;
 
-                const matchedResultGrupo =
-                  Number.isFinite(
-                    matchedResultGrupoRaw
-                  ) &&
-                  matchedResultGrupoRaw >= 1 &&
-                  matchedResultGrupoRaw <= 25
-                    ? matchedResultGrupoRaw
-                    : NaN;
+const matchedGrupo =
+  isHit
+    ? Number(resultGrupo)
+    : null;
 
-                const matchedResultMilhar =
-                  matchedOfficialIndex >= 0
-                    ? normalizeMilharStr(
-                        item?.resultTop3Milhares?.[
-                          matchedOfficialIndex
-                        ] ||
-                          item?.matchedMilhar ||
-                          analysis?.matchedMilhar ||
-                          (
-                            resultPosition === 1
-                              ? resultMilhar
-                              : ""
-                          )
-                      )
-                    : "";
+const matchedPrediction =
+  isHit && Array.isArray(slotTop3)
+    ? slotTop3[matchedOfficialIndex]
+    : null;
 
-                const matchedResultCentena =
-                  matchedResultMilhar
-                    ? matchedResultMilhar.slice(-3)
-                    : "";
+const predictedMilhares =
+  Array.isArray(matchedPrediction?.milhares20)
+    ? matchedPrediction.milhares20
+    : Array.isArray(matchedPrediction?.milhares)
+      ? matchedPrediction.milhares
+      : [];
 
-                const matchedResultDezena =
-                  matchedResultMilhar
-                    ? matchedResultMilhar.slice(-2)
-                    : "";
+const predictedCentenas =
+  predictedMilhares
+    .map(v => String(v).padStart(4,"0").slice(-3));
 
-                const hasExactHit =
-                  hitType === "hit_exact";
+const officialMilhar =
+  String(resultMilhar || "").padStart(4,"0");
 
-                const hasCentenaHit =
-                  hitType === "hit_centena" ||
-                  hasExactHit;
+const officialCentena =
+  officialMilhar.slice(-3);
 
-                /*
-                 * Todo acerto de grupo também identifica a dezena real
-                 * do prêmio oficial. Essa regra mantém compatibilidade
-                 * com registros antigos gravados como "hit_grupo".
-                 */
-                const hasDezenaHit =
-                  isHit &&
-                  Boolean(matchedResultDezena);
+const officialDezena =
+  officialMilhar.slice(-2);
 
-                const hitGrupo =
+const hasCentenaHit =
+  predictedCentenas.includes(officialCentena);
+
+const hasMilharHit =
+  predictedMilhares.includes(officialMilhar);
+
+const hitGrupo =
+  isHit
+    ? String(matchedGrupo)
+    : "";
+
+const hitDezena =
+  isHit
+    ? officialDezena
+    : "";
+
+const hitCentena =
+  hasCentenaHit
+    ? officialCentena
+    : "";
+
+const hitMilhar =
+  hasMilharHit
+    ? officialMilhar
+    : "";const hitGrupo =
                   isHit &&
                   Number.isFinite(
                     matchedResultGrupo
