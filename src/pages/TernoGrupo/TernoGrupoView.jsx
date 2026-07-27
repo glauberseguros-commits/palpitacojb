@@ -16,6 +16,13 @@ import {
   validateTernoQuantity,
 } from "./modules/ternoGrupo.generator";
 
+import {
+  buildAllTernosGrupoRepetition,
+  TERNO_GRUPO_REPETITION_MAX_QUANTITY,
+  TERNO_GRUPO_REPETITION_MIN_QUANTITY,
+  validateTernoRepetitionQuantity,
+} from "./modules/ternoGrupo.generator.repetition";
+
 import "./TernoGrupo.css";
 
 function formatGrupo(grupo) {
@@ -91,6 +98,7 @@ function AnimalImage({
 
 function TernoCard({
   terno,
+  engineMode,
 }) {
   const strengthLabel =
     terno.scorePct >= 85
@@ -123,14 +131,14 @@ function TernoCard({
       </header>
 
       <div className="terno-grupo-card__animals">
-        {terno.grupos.map((grupo) => {
+        {terno.grupos.map((grupo, groupIndex) => {
           const animal = String(
             getAnimalLabel(grupo) || ""
           ).trim();
 
           return (
             <div
-              key={`${terno.key}-${grupo}`}
+              key={`${terno.key}-${grupo}-${groupIndex}`}
               className="terno-grupo-animal"
             >
               <AnimalImage
@@ -154,7 +162,9 @@ function TernoCard({
 
       <footer className="terno-grupo-card__footer">
         <span>
-          3 grupos distintos
+          {engineMode === "repetition"
+            ? "Grupos podem repetir"
+            : "3 grupos distintos"}
         </span>
 
         <span>
@@ -162,7 +172,9 @@ function TernoCard({
         </span>
 
         <span>
-          Acerto: 3 grupos no TOP5
+          {engineMode === "repetition"
+            ? "Acerto por quantidade no TOP5"
+            : "Acerto: 3 grupos no TOP5"}
         </span>
       </footer>
     </article>
@@ -188,6 +200,9 @@ export default function TernoGrupoView(
     analysisHourBucket,
   } = props || {};
 
+  const [engineMode, setEngineMode] =
+    useState("traditional");
+
   const [quantityInput, setQuantityInput] =
     useState("1");
 
@@ -199,6 +214,29 @@ export default function TernoGrupoView(
 
   const [copyStatus, setCopyStatus] =
     useState("idle");
+
+  const isRepetitionMode =
+    engineMode === "repetition";
+
+  const activeMinQuantity =
+    isRepetitionMode
+      ? TERNO_GRUPO_REPETITION_MIN_QUANTITY
+      : TERNO_GRUPO_MIN_QUANTITY;
+
+  const activeMaxQuantity =
+    isRepetitionMode
+      ? TERNO_GRUPO_REPETITION_MAX_QUANTITY
+      : TERNO_GRUPO_MAX_QUANTITY;
+
+  const activeQuantityValidator =
+    isRepetitionMode
+      ? validateTernoRepetitionQuantity
+      : validateTernoQuantity;
+
+  const activeEngineLabel =
+    isRepetitionMode
+      ? "Motor Repetição"
+      : "Motor Tradicional";
 
   const lotOptions = useMemo(() => {
     const source = Array.isArray(
@@ -256,29 +294,33 @@ export default function TernoGrupoView(
     return Array.from(map.values());
   }, [LOTTERY_OPTIONS]);
 
-  const allTernos = useMemo(
-    () =>
-      buildAllTernosGrupo({
-        analytics,
-        seedGroups: top3,
-        historicalDraws: [
-          ...(Array.isArray(rangeDraws)
-            ? rangeDraws
-            : []),
-          ...(Array.isArray(todayDraws)
-            ? todayDraws
-            : []),
-        ],
-        targetHour: analysisHourBucket,
-      }),
-    [
+  const allTernos = useMemo(() => {
+    const generator =
+      engineMode === "repetition"
+        ? buildAllTernosGrupoRepetition
+        : buildAllTernosGrupo;
+
+    return generator({
       analytics,
-      top3,
-      rangeDraws,
-      todayDraws,
-      analysisHourBucket,
-    ]
-  );
+      seedGroups: top3,
+      historicalDraws: [
+        ...(Array.isArray(rangeDraws)
+          ? rangeDraws
+          : []),
+        ...(Array.isArray(todayDraws)
+          ? todayDraws
+          : []),
+      ],
+      targetHour: analysisHourBucket,
+    });
+  }, [
+    engineMode,
+    analytics,
+    top3,
+    rangeDraws,
+    todayDraws,
+    analysisHourBucket,
+  ]);
 
   const visibleTernos = useMemo(
     () =>
@@ -295,6 +337,7 @@ export default function TernoGrupoView(
     setQuantityError("");
     setCopyStatus("idle");
   }, [
+    engineMode,
     lotteryKeySafe,
     analysisYmd,
     analysisHourBucket,
@@ -304,9 +347,9 @@ export default function TernoGrupoView(
     nextValue
   ) => {
     const numeric = Math.max(
-      TERNO_GRUPO_MIN_QUANTITY,
+      activeMinQuantity,
       Math.min(
-        TERNO_GRUPO_MAX_QUANTITY,
+        activeMaxQuantity,
         Number(nextValue) || 1
       )
     );
@@ -317,7 +360,7 @@ export default function TernoGrupoView(
 
   const handleGenerate = () => {
     const validation =
-      validateTernoQuantity(
+      activeQuantityValidator(
         quantityInput
       );
 
@@ -362,6 +405,7 @@ export default function TernoGrupoView(
       "TERNO DE GRUPO",
       `Loteria: ${lotteryLabel}`,
       `Previsão: ${predictionLabel}`,
+      `Modo: ${activeEngineLabel}`,
       `Quantidade: ${quantityLabel}`,
     ];
 
@@ -508,7 +552,11 @@ export default function TernoGrupoView(
           </div>
 
           <div className="terno-grupo-hero__limit">
-            <strong>2.300</strong>
+            <strong>
+              {activeMaxQuantity.toLocaleString(
+                "pt-BR"
+              )}
+            </strong>
             <span>
               combinações possíveis
             </span>
@@ -517,6 +565,27 @@ export default function TernoGrupoView(
 
         <section className="terno-grupo-panel">
           <div className="terno-grupo-filters">
+            <label>
+              <span>Modo</span>
+
+              <select
+                value={engineMode}
+                onChange={(event) =>
+                  setEngineMode(
+                    event.target.value
+                  )
+                }
+              >
+                <option value="traditional">
+                  Tradicional
+                </option>
+
+                <option value="repetition">
+                  Repetição
+                </option>
+              </select>
+            </label>
+
             <label>
               <span>Loteria</span>
 
@@ -579,10 +648,12 @@ export default function TernoGrupoView(
               </h2>
 
               <p>
-                Escolha de 1 a 2.300. O
-                resultado será apresentado
-                do mais forte para o mais
-                fraco.
+                Escolha de 1 a{" "}
+                {activeMaxQuantity.toLocaleString(
+                  "pt-BR"
+                )}. O resultado será
+                apresentado do mais forte
+                para o mais fraco.
               </p>
             </div>
 
@@ -598,7 +669,7 @@ export default function TernoGrupoView(
                   }
                   disabled={
                     currentQuantity <=
-                    TERNO_GRUPO_MIN_QUANTITY
+                    activeMinQuantity
                   }
                 >
                   −
@@ -626,7 +697,7 @@ export default function TernoGrupoView(
                     }
 
                     const validation =
-                      validateTernoQuantity(
+                      activeQuantityValidator(
                         value
                       );
 
@@ -655,7 +726,7 @@ export default function TernoGrupoView(
                   }
                   disabled={
                     currentQuantity >=
-                    TERNO_GRUPO_MAX_QUANTITY
+                    activeMaxQuantity
                   }
                 >
                   +
@@ -686,7 +757,9 @@ export default function TernoGrupoView(
               }`}
             >
               {quantityError ||
-                "Quantidade máxima permitida: 2.300 ternos."}
+                `Quantidade máxima permitida: ${activeMaxQuantity.toLocaleString(
+                  "pt-BR"
+                )} ternos.`}
             </div>
           </div>
         </section>
@@ -699,17 +772,23 @@ export default function TernoGrupoView(
 
         {!loading &&
         allTernos.length !==
-          TERNO_GRUPO_MAX_QUANTITY ? (
+          activeMaxQuantity ? (
           <div className="terno-grupo-error">
             O motor não conseguiu formar
-            todas as 2.300 combinações.
+            todas as{" "}
+            {activeMaxQuantity.toLocaleString(
+              "pt-BR"
+            )} combinações.
           </div>
         ) : null}
 
         <section className="terno-grupo-results">
           <header className="terno-grupo-results__header">
             <div>
-              <span>Resultado gerado</span>
+              <span>
+                Resultado gerado •{" "}
+                {activeEngineLabel}
+              </span>
 
               <strong>
                 {visibleTernos.length}
@@ -767,6 +846,7 @@ export default function TernoGrupoView(
                   <TernoCard
                     key={terno.key}
                     terno={terno}
+                    engineMode={engineMode}
                   />
                 )
               )}
