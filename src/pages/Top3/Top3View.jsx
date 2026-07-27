@@ -1674,6 +1674,19 @@ const list = Array.isArray(top3)
   ? top3.slice(0, 3)
   : [];
   const timeline = (Array.isArray(timelineTop3) ? timelineTop3 : [])
+  .filter((slot) => {
+    const ymd = String(slot?.targetYmd || "");
+    const hour = String(slot?.targetHour || "");
+
+    if (ymd >= "2026-07-19") {
+      const d = new Date(ymd + "T12:00:00");
+      if (d.getDay() === 0 && (hour === "09:00" || hour === "11:00")) {
+        return false;
+      }
+    }
+
+    return true;
+  })
   .slice()
   .sort((a, b) => {
     const ta = `${a?.targetYmd || ""} ${a?.targetHour || ""}`;
