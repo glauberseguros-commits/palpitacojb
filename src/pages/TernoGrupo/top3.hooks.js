@@ -1831,6 +1831,10 @@ export function useTop3Controller() {
     lastLabel,
     layerMetaText,
 
+    analytics,
+    rangeDraws,
+    todayDraws,
+
     top3,
     timelineTop3,
     persistedTop3History,
