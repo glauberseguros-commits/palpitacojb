@@ -3968,7 +3968,10 @@ const list = Array.isArray(top3)
                     ? Number(
                         item?.resultTop3Groups?.[
                           matchedOfficialIndex
-                        ] ?? NaN
+                        ] ??
+                          item?.matchedGrupo ??
+                          analysis?.matchedGrupo ??
+                          NaN
                       )
                     : NaN;
 
@@ -3981,27 +3984,46 @@ const list = Array.isArray(top3)
                     ? officialMatchedGrupoRaw
                     : NaN;
 
-                const officialMatchedMilhar =
+                const officialTop3Milhar =
                   matchedOfficialIndex >= 0
                     ? normalizeMilharStr(
                         item?.resultTop3Milhares?.[
                           matchedOfficialIndex
-                        ] ||
-                          (
-                            resultPosition === 1
-                              ? resultMilhar
-                              : ""
-                          )
+                        ] || ""
                       )
                     : "";
 
+                const persistedMatchedMilhar =
+                  normalizeMilharStr(
+                    item?.matchedMilhar ||
+                      analysis?.matchedMilhar ||
+                      ""
+                  );
+
+                const firstPrizeMilhar =
+                  resultPosition === 1
+                    ? normalizeMilharStr(
+                        resultMilhar || ""
+                      )
+                    : "";
+
+                const officialMatchedMilhar =
+                  officialTop3Milhar ||
+                  persistedMatchedMilhar ||
+                  firstPrizeMilhar;
+
+                const hasOfficialMilhar =
+                  /^\d{4}$/.test(
+                    officialMatchedMilhar
+                  );
+
                 const officialMatchedCentena =
-                  officialMatchedMilhar
+                  hasOfficialMilhar
                     ? officialMatchedMilhar.slice(-3)
                     : "";
 
                 const officialMatchedDezena =
-                  officialMatchedMilhar
+                  hasOfficialMilhar
                     ? officialMatchedMilhar.slice(-2)
                     : "";
 
@@ -4033,11 +4055,6 @@ const list = Array.isArray(top3)
                 const predictedCentenas =
                   predictedMilhares.map(
                     (value) => value.slice(-3)
-                  );
-
-                const hasOfficialMilhar =
-                  /^\d{4}$/.test(
-                    officialMatchedMilhar
                   );
 
                 const hasCentenaHit =
