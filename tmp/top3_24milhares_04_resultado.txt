@@ -1,0 +1,92 @@
+===== BUILD =====
+
+> palpitaco@0.1.0 build
+> react-scripts build
+
+Creating an optimized production build...
+Compiled successfully.
+
+File sizes after gzip:
+
+  264.82 kB (-3 B)  build\static\js\main.8385d30f.js
+  138.8 kB          build\static\js\238.133659d3.chunk.js
+  128.07 kB         build\static\js\389.21aa2d35.chunk.js
+  46.35 kB          build\static\js\239.6b4eaf90.chunk.js
+  42.9 kB           build\static\js\455.7220bbdf.chunk.js
+  38.07 kB          build\static\js\289.32f16a34.chunk.js
+  29.53 kB          build\static\js\63.99538e12.chunk.js
+  10.7 kB           build\static\js\916.71c8a438.chunk.js
+  9.79 kB           build\static\js\857.e51a2e06.chunk.js
+  9.27 kB           build\static\js\411.eb31ee35.chunk.js
+  9.01 kB           build\static\js\848.8045fd05.chunk.js
+  8.96 kB           build\static\js\812.eb0d3036.chunk.js
+  8.89 kB           build\static\js\188.c75767d6.chunk.js
+  8.69 kB           build\static\js\977.efeedf50.chunk.js
+  6.73 kB           build\static\js\960.417ace1e.chunk.js
+  6.07 kB           build\static\js\886.320165d3.chunk.js
+  4.2 kB            build\static\js\854.7290a099.chunk.js
+  3.89 kB           build\static\js\532.86885c87.chunk.js
+  3.11 kB           build\static\css\960.a7d00216.chunk.css
+  2.87 kB           build\static\css\main.f1823042.css
+  2.04 kB           build\static\css\63.5dd79d34.chunk.css
+  1.82 kB           build\static\js\611.337809cd.chunk.js
+  1.53 kB           build\static\css\611.3878f01e.chunk.css
+  775 B             build\static\js\784.e009081b.chunk.js
+
+The project was built assuming it is hosted at /.
+You can control this with the homepage field in your package.json.
+
+The build folder is ready to be deployed.
+You may serve it with a static server:
+
+  serve -s build
+
+Find out more about deployment here:
+
+  https://cra.link/deployment
+
+
+===== GIT DIFF =====
+diff --git a/src/pages/Top3/Top3View.jsx b/src/pages/Top3/Top3View.jsx
+index 2e43239..8a53825 100644
+--- a/src/pages/Top3/Top3View.jsx
++++ b/src/pages/Top3/Top3View.jsx
+@@ -692,13 +692,13 @@ function Top3Card({
+     Array.isArray(item.milharesCols[0]?.items);
+ 
+   let dezenasHeader = [];
+-  let gridRows = Array.from({ length: 5 }, () => Array(4).fill(""));
++  let gridRows = Array.from({ length: 6 }, () => Array(4).fill(""));
+   let flat20 = [];
+ 
+   if (hasCols) {
+-    const cols4 = clampColsFromItemMilharesCols(item.milharesCols, 4, 5);
++    const cols4 = clampColsFromItemMilharesCols(item.milharesCols, 4, 6);
+     dezenasHeader = cols4.map((c) => String(c.dezena || ""));
+-    gridRows = Array.from({ length: 5 }, (_, r) =>
++    gridRows = Array.from({ length: 6 }, (_, r) =>
+       cols4.map((c) => c.items[r] || "")
+     );
+     flat20 = gridRows.flat().filter(Boolean);
+@@ -738,7 +738,7 @@ function Top3Card({
+     const grid = build20ByDezena({
+       grupo: grupoNum,
+       baseMilhares: milharesBase,
+-      perCol: 5,
++      perCol: 6,
+     });
+ 
+     dezenasHeader = grid.dezenas;
+@@ -4503,3 +4503,4 @@ const list = Array.isArray(top3)
+ }
+ 
+ 
++
+[main 06ba09f] fix: renderiza 24 milhares no TOP3
+ 1 file changed, 5 insertions(+), 4 deletions(-)
+To https://github.com/glauberseguros-commits/palpitacojb.git
+   ff76f0e..06ba09f  main -> main
+
+PATCH_OK
+Renderização ajustada para 4 dezenas x 6 milhares.
+Deploy automático acionado.

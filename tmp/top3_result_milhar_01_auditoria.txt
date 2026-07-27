@@ -1,0 +1,3799 @@
+====================================================================================================
+TOP3-RESULT-MILHAR-01 — AUDITORIA DO CARD RESULTADO
+====================================================================================================
+Gerado em: 27/07/2026 01:52:48
+Arquivo: .\src\pages\Top3\Top3View.jsx
+Total de linhas: 4509
+Ocorrências de MILHAR SORTEADA: 1
+====================================================================================================
+
+
+====================================================================================================
+OCORRÊNCIA NA LINHA 4468
+TRECHO EXTRAÍDO: 4288 ATÉ 4509
+====================================================================================================
+
+04288:                           <div
+04289:                             style={{
+04290:                               textAlign: "center",
+04291:                               fontSize: 10,
+04292:                               fontWeight: 900,
+04293:                             }}
+04294:                           >
+04295:                             ⏳ PENDENTE
+04296:                           </div>
+04297:                         ) : isHit ? (
+04298:                           <>
+04299:                             <div
+04300:                               style={{
+04301:                                 textAlign: "center",
+04302:                                 color: prizeColor,
+04303:                                 fontSize: 11,
+04304:                                 fontWeight: 1000,
+04305:                                 letterSpacing: 0.6,
+04306:                               }}
+04307:                             >
+04308:                               ACERTO
+04309:                             </div>
+04310: 
+04311:                             <div
+04312:                               style={{
+04313:                                 display: "grid",
+04314:                                 gridTemplateColumns:
+04315:                                   "1fr auto",
+04316:                                 gap: "2px 8px",
+04317:                                 fontSize: 10,
+04318:                                 lineHeight: 1.2,
+04319:                               }}
+04320:                             >
+04321:                               <span>Grupo</span>
+04322:                               <strong>
+04323:                                 {hitGrupo || "—"}
+04324:                               </strong>
+04325: 
+04326:                               <span>Dezena</span>
+04327:                               <strong>
+04328:                                 {hitDezena || "—"}
+04329:                               </strong>
+04330: 
+04331:                               <span>Centena</span>
+04332:                               <strong>
+04333:                                 {hitCentena || "—"}
+04334:                               </strong>
+04335: 
+04336:                               <span>Milhar</span>
+04337:                               <strong>
+04338:                                 {hitMilhar || "—"}
+04339:                               </strong>
+04340:                             </div>
+04341:                           </>
+04342:                         ) : (
+04343:                           <div
+04344:                             style={{
+04345:                               textAlign: "center",
+04346:                               fontSize: 10,
+04347:                               fontWeight: 900,
+04348:                               color:
+04349:                                 "rgba(255,255,255,0.58)",
+04350:                             }}
+04351:                           >
+04352:                             ❌ SEM ACERTO
+04353:                           </div>
+04354:                         )}
+04355:                       </div>
+04356: 
+04357:                       <div
+04358:                         style={{
+04359:                           minHeight: 76,
+04360:                           display: "grid",
+04361:                           gridTemplateColumns:
+04362:                             "60px minmax(0, 1fr)",
+04363:                           alignItems: "center",
+04364:                           gap: 10,
+04365:                           minWidth: 0,
+04366:                           padding: "8px 10px",
+04367:                           borderRadius: 12,
+04368:                           border:
+04369:                             "1px solid rgba(255,255,255,0.14)",
+04370:                           background:
+04371:                             "rgba(255,255,255,0.025)",
+04372:                           boxShadow:
+04373:                             "inset 0 0 0 1px rgba(255,255,255,0.025)",
+04374:                         }}
+04375:                         title={
+04376:                           hasResult
+04377:                             ? `${resultAnimal} — G${formatGrupo(
+04378:                                 resultGrupo
+04379:                               )}${
+04380:                                 resultMilhar
+04381:                                   ? ` — ${resultMilhar}`
+04382:                                   : ""
+04383:                               }`
+04384:                             : "Resultado pendente"
+04385:                         }
+04386:                       >
+04387:                         {hasResult ? (
+04388:                           <>
+04389:                             <div
+04390:                               style={{
+04391:                                 position:
+04392:                                   "relative",
+04393:                                 display:
+04394:                                   "flex",
+04395:                                 alignItems:
+04396:                                   "center",
+04397:                                 justifyContent:
+04398:                                   "center",
+04399:                               }}
+04400:                             >
+04401:                               <ImgWithFallback
+04402:                                 srcs={
+04403:                                   resultImg
+04404:                                     ? [resultImg]
+04405:                                     : []
+04406:                                 }
+04407:                                 alt={
+04408:                                   resultAnimal
+04409:                                 }
+04410:                                 size={
+04411:                                   isHit &&
+04412:                                   resultPosition === 1
+04413:                                     ? 58
+04414:                                     : 48
+04415:                                 }
+04416:                                 style={{
+04417:                                   borderRadius: 10,
+04418:                                   border:
+04419:                                     "1px solid rgba(201,168,62,0.36)",
+04420:                                   boxShadow:
+04421:                                     "none",
+04422:                                 }}
+04423:                               />
+04424: 
+04425: 
+04426:                             </div>
+04427: 
+04428:                             <div
+04429:                               style={{
+04430:                                 minWidth: 0,
+04431:                                 display: "grid",
+04432:                                 gap: 3,
+04433:                               }}
+04434:                             >
+04435:                               <div
+04436:                                 style={{
+04437:                                   fontSize: 11,
+04438:                                   fontWeight: 1000,
+04439:                                   color: "inherit",
+04440:                                   whiteSpace:
+04441:                                     "nowrap",
+04442:                                   overflow: "hidden",
+04443:                                   textOverflow:
+04444:                                     "ellipsis",
+04445:                                 }}
+04446:                               >
+04447:                                 G
+04448:                                 {formatGrupo(
+04449:                                   resultGrupo
+04450:                                 )}{" "}
+04451:                                 {String(
+04452:                                   resultAnimal ||
+04453:                                     ""
+04454:                                 ).toUpperCase()}
+04455:                               </div>
+04456: 
+04457:                               <div
+04458:                                 style={{
+04459:                                   fontSize: 9,
+04460:                                   fontWeight: 800,
+04461:                                   opacity: 0.7,
+04462:                                   textTransform:
+04463:                                     "uppercase",
+04464:                                   letterSpacing:
+04465:                                     0.45,
+04466:                                 }}
+04467:                               >
+04468:                                 Milhar sorteada
+04469:                               </div>
+04470: 
+04471:                               <div
+04472:                                 style={{
+04473:                                   fontSize: 15,
+04474:                                   fontWeight: 1000,
+04475:                                   letterSpacing: 1,
+04476:                                   color: "inherit",
+04477:                                 }}
+04478:                               >
+04479:                                 {resultMilhar ||
+04480:                                   "—"}
+04481:                               </div>
+04482:                             </div>
+04483:                           </>
+04484:                         ) : (
+04485:                           <div
+04486:                             style={{
+04487:                               gridColumn:
+04488:                                 "1 / -1",
+04489:                               textAlign: "center",
+04490:                               fontSize: 10,
+04491:                               fontWeight: 900,
+04492:                             }}
+04493:                           >
+04494:                             ⏳ PENDENTE
+04495:                           </div>
+04496:                         )}
+04497:                       </div>
+04498:                     </div>
+04499:                   </div>
+04500:                 );
+04501:               })
+04502:             )}
+04503:           </div>
+04504:         </section>
+04505:       </div>
+04506:     </div>
+04507:   );
+04508: }
+04509: 
+
+====================================================================================================
+DECLARAÇÕES E CAMPOS RELACIONADOS AO RESULTADO
+====================================================================================================
+
+--------------------------------------------------------------------------------
+PADRÃO: const\s+resultMilhar\s*=
+--------------------------------------------------------------------------------
+
+ARQUIVO: .\src\pages\Top3\Top3View.jsx
+LINHA: 1261
+01253:   const resultAnimal = hasResult
+01254:     ? String(getAnimalLabel(resultGrupo) || "")
+01255:     : "";
+01256: 
+01257:   const resultImg = hasResult
+01258:     ? getImgFromGrupo(resultGrupo, 64)
+01259:     : "";
+01260: 
+01261:   const resultMilhar = extractResultMilhar(slot);
+01262: 
+01263:   const matchedPredictionIndex =
+01264:     Number.isFinite(Number(analysis?.position)) &&
+01265:     Number(analysis.position) >= 1
+01266:       ? Number(analysis.position) - 1
+01267:       : -1;
+01268: 
+01269:   const resultPosition = Number(
+01270:     analysis?.resultPosition
+01271:   );
+01272: 
+01273:   const medal =
+01274:     status !== "hit"
+01275:       ? ""
+01276:       : resultPosition === 1
+
+ARQUIVO: .\src\pages\Top3\Top3View.jsx
+LINHA: 1974
+01966: 
+01967:         const resultGrupo = getSlotResultGrupo(slot);
+01968: 
+01969:         const hasResult =
+01970:           Number.isFinite(resultGrupo) &&
+01971:           resultGrupo >= 1 &&
+01972:           resultGrupo <= 25;
+01973: 
+01974:         const resultMilhar =
+01975:           extractResultMilhar(slot);
+01976: 
+01977:         const officialPodium =
+01978:           getOfficialPodium(slot);
+01979: 
+01980:         const analysis = analyzeTop3Hit(
+01981:           slotTop3,
+01982:           officialPodium
+01983:         );
+01984: 
+01985:         return {
+01986:           targetKey:
+01987:             `${String(slot?.targetYmd || "")}` +
+01988:             `__${String(slot?.targetHour || "")}`,
+01989:           target: {
+
+ARQUIVO: .\src\pages\Top3\Top3View.jsx
+LINHA: 2053
+02045:       const timelineRow = rowsByTarget.get(key);
+02046: 
+02047:       if (!timelineRow || timelineRow?.result == null) {
+02048:         rowsByTarget.set(key, row);
+02049:         continue;
+02050:       }
+02051: 
+02052:       const resultGrupo = Number(timelineRow.result);
+02053:       const resultMilhar = String(
+02054:         timelineRow?.resultMilhar || ""
+02055:       );
+02056: 
+02057:       const officialPodium = getOfficialPodium(timelineRow);
+02058: 
+02059:       const analysis = analyzeTop3Hit(
+02060:         row?.top3,
+02061:         officialPodium
+02062:       );
+02063: 
+02064:       rowsByTarget.set(key, {
+02065:         ...row,
+02066:         result: resultGrupo,
+02067:         grupo: resultGrupo,
+02068:         animal:
+
+ARQUIVO: .\src\pages\Top3\Top3View.jsx
+LINHA: 3869
+03861: 
+03862:                 const resultImg = hasResult
+03863:                   ? getImgFromGrupo(
+03864:                       resultGrupo,
+03865:                       64
+03866:                     )
+03867:                   : "";
+03868: 
+03869:                 const resultMilhar =
+03870:                   normalizeMilharStr(
+03871:                     item?.resultMilhar ||
+03872:                       item
+03873:                         ?.resultTop3Milhares?.[0] ||
+03874:                       ""
+03875:                   );
+03876: 
+03877:                 const resultCentena =
+03878:                   resultMilhar
+03879:                     ? resultMilhar.slice(-3)
+03880:                     : "";
+03881: 
+03882:                 const resultDezena =
+03883:                   resultMilhar
+03884:                     ? resultMilhar.slice(-2)
+
+--------------------------------------------------------------------------------
+PADRÃO: const\s+resultadoMilhar\s*=
+--------------------------------------------------------------------------------
+NÃO ENCONTRADO
+
+--------------------------------------------------------------------------------
+PADRÃO: const\s+officialMilhar\s*=
+--------------------------------------------------------------------------------
+NÃO ENCONTRADO
+
+--------------------------------------------------------------------------------
+PADRÃO: const\s+officialMatchedMilhar\s*=
+--------------------------------------------------------------------------------
+
+ARQUIVO: .\src\pages\Top3\Top3View.jsx
+LINHA: 4010
+04002: 
+04003:                 const firstPrizeMilhar =
+04004:                   resultPosition === 1
+04005:                     ? normalizeMilharStr(
+04006:                         resultMilhar || ""
+04007:                       )
+04008:                     : "";
+04009: 
+04010:                 const officialMatchedMilhar =
+04011:                   officialTop3Milhar ||
+04012:                   persistedMatchedMilhar ||
+04013:                   firstPrizeMilhar;
+04014: 
+04015:                 const hasOfficialMilhar =
+04016:                   /^\d{4}$/.test(
+04017:                     officialMatchedMilhar
+04018:                   );
+04019: 
+04020:                 const officialMatchedCentena =
+04021:                   hasOfficialMilhar
+04022:                     ? officialMatchedMilhar.slice(-3)
+04023:                     : "";
+04024: 
+04025:                 const officialMatchedDezena =
+
+--------------------------------------------------------------------------------
+PADRÃO: resultTop3Milhares
+--------------------------------------------------------------------------------
+
+ARQUIVO: .\src\pages\Top3\Top3View.jsx
+LINHA: 47
+00039:       ""
+00040:   );
+00041: 
+00042:   if (persistedMilhar) {
+00043:     return persistedMilhar;
+00044:   }
+00045: 
+00046:   const persistedTop3 = Array.isArray(
+00047:     slot?.resultTop3Milhares
+00048:   )
+00049:     ? slot.resultTop3Milhares
+00050:     : [];
+00051: 
+00052:   const persistedPrimeira = normalizeMilharStr(
+00053:     persistedTop3[0] ?? ""
+00054:   );
+00055: 
+00056:   if (persistedPrimeira) {
+00057:     return persistedPrimeira;
+00058:   }
+00059: 
+00060:   return extractPrizeMilharByPosition(slot, 1);
+00061: }
+00062: 
+
+ARQUIVO: .\src\pages\Top3\Top3View.jsx
+LINHA: 49
+00041: 
+00042:   if (persistedMilhar) {
+00043:     return persistedMilhar;
+00044:   }
+00045: 
+00046:   const persistedTop3 = Array.isArray(
+00047:     slot?.resultTop3Milhares
+00048:   )
+00049:     ? slot.resultTop3Milhares
+00050:     : [];
+00051: 
+00052:   const persistedPrimeira = normalizeMilharStr(
+00053:     persistedTop3[0] ?? ""
+00054:   );
+00055: 
+00056:   if (persistedPrimeira) {
+00057:     return persistedPrimeira;
+00058:   }
+00059: 
+00060:   return extractPrizeMilharByPosition(slot, 1);
+00061: }
+00062: 
+00063: function getPrizeGrupoByPosition(slot, position) {
+00064:   const persisted = Array.isArray(
+
+ARQUIVO: .\src\pages\Top3\Top3View.jsx
+LINHA: 137
+00129:         !Number.isFinite(grupo) ||
+00130:         grupo < 1 ||
+00131:         grupo > 25
+00132:       ) {
+00133:         return null;
+00134:       }
+00135: 
+00136:       const persistedMilhares = Array.isArray(
+00137:         slot?.resultTop3Milhares
+00138:       )
+00139:         ? slot.resultTop3Milhares
+00140:         : [];
+00141: 
+00142:       const milhar =
+00143:         String(
+00144:           persistedMilhares[position - 1] || ""
+00145:         ).replace(/\D/g, "") ||
+00146:         extractPrizeMilharByPosition(slot, position);
+00147: 
+00148:       return {
+00149:         position,
+00150:         grupo,
+00151:         milhar: milhar
+00152:           ? milhar.slice(-4).padStart(4, "0")
+
+ARQUIVO: .\src\pages\Top3\Top3View.jsx
+LINHA: 139
+00131:         grupo > 25
+00132:       ) {
+00133:         return null;
+00134:       }
+00135: 
+00136:       const persistedMilhares = Array.isArray(
+00137:         slot?.resultTop3Milhares
+00138:       )
+00139:         ? slot.resultTop3Milhares
+00140:         : [];
+00141: 
+00142:       const milhar =
+00143:         String(
+00144:           persistedMilhares[position - 1] || ""
+00145:         ).replace(/\D/g, "") ||
+00146:         extractPrizeMilharByPosition(slot, position);
+00147: 
+00148:       return {
+00149:         position,
+00150:         grupo,
+00151:         milhar: milhar
+00152:           ? milhar.slice(-4).padStart(4, "0")
+00153:           : "",
+00154:       };
+
+ARQUIVO: .\src\pages\Top3\Top3View.jsx
+LINHA: 1913
+01905:           podiumMedal: String(
+01906:             entry?.podiumMedal || ""
+01907:           ),
+01908:           resultTop3Groups: Array.isArray(
+01909:             entry?.resultTop3Groups
+01910:           )
+01911:             ? entry.resultTop3Groups
+01912:             : [],
+01913:           resultTop3Milhares: Array.isArray(
+01914:             entry?.resultTop3Milhares
+01915:           )
+01916:             ? entry.resultTop3Milhares
+01917:             : [],
+01918:           matchedGrupo: Number(
+01919:             entry?.matchedGrupo ?? NaN
+01920:           ),
+01921:           matchedMilhar: normalizeMilharStr(
+01922:             entry?.matchedMilhar || ""
+01923:           ),
+01924:           analysis: {
+01925:             type: String(entry?.hitType || ""),
+01926:             score: Number(entry?.hitScore || 0),
+01927:             position: Number(
+01928:               entry?.hitPosition ?? -1
+
+ARQUIVO: .\src\pages\Top3\Top3View.jsx
+LINHA: 1914
+01906:             entry?.podiumMedal || ""
+01907:           ),
+01908:           resultTop3Groups: Array.isArray(
+01909:             entry?.resultTop3Groups
+01910:           )
+01911:             ? entry.resultTop3Groups
+01912:             : [],
+01913:           resultTop3Milhares: Array.isArray(
+01914:             entry?.resultTop3Milhares
+01915:           )
+01916:             ? entry.resultTop3Milhares
+01917:             : [],
+01918:           matchedGrupo: Number(
+01919:             entry?.matchedGrupo ?? NaN
+01920:           ),
+01921:           matchedMilhar: normalizeMilharStr(
+01922:             entry?.matchedMilhar || ""
+01923:           ),
+01924:           analysis: {
+01925:             type: String(entry?.hitType || ""),
+01926:             score: Number(entry?.hitScore || 0),
+01927:             position: Number(
+01928:               entry?.hitPosition ?? -1
+01929:             ),
+
+ARQUIVO: .\src\pages\Top3\Top3View.jsx
+LINHA: 1916
+01908:           resultTop3Groups: Array.isArray(
+01909:             entry?.resultTop3Groups
+01910:           )
+01911:             ? entry.resultTop3Groups
+01912:             : [],
+01913:           resultTop3Milhares: Array.isArray(
+01914:             entry?.resultTop3Milhares
+01915:           )
+01916:             ? entry.resultTop3Milhares
+01917:             : [],
+01918:           matchedGrupo: Number(
+01919:             entry?.matchedGrupo ?? NaN
+01920:           ),
+01921:           matchedMilhar: normalizeMilharStr(
+01922:             entry?.matchedMilhar || ""
+01923:           ),
+01924:           analysis: {
+01925:             type: String(entry?.hitType || ""),
+01926:             score: Number(entry?.hitScore || 0),
+01927:             position: Number(
+01928:               entry?.hitPosition ?? -1
+01929:             ),
+01930:             predictionPosition: Number(
+01931:               entry?.predictionPosition ??
+
+ARQUIVO: .\src\pages\Top3\Top3View.jsx
+LINHA: 2010
+02002:             : null,
+02003:           animal: hasResult
+02004:             ? getAnimalLabel(resultGrupo)
+02005:             : "",
+02006:           resultMilhar,
+02007:           resultTop3Groups: officialPodium.map(
+02008:             (item) => Number(item?.grupo)
+02009:           ),
+02010:           resultTop3Milhares: officialPodium.map(
+02011:             (item) => String(item?.milhar || "")
+02012:           ),
+02013:           prizes: Array.isArray(slot?.prizes)
+02014:             ? slot.prizes
+02015:             : [],
+02016:           analysis,
+02017:           hit:
+02018:             analysis.type !== "miss" &&
+02019:             analysis.type !== "none",
+02020:           hitType: analysis.type,
+02021:           hitScore: Number(analysis.score || 0),
+02022:           hitPosition: Number(
+02023:             analysis.position ?? -1
+02024:           ),
+02025:         };
+
+ARQUIVO: .\src\pages\Top3\Top3View.jsx
+LINHA: 2078
+02070:           getAnimalLabel(resultGrupo) ||
+02071:           "",
+02072:         resultMilhar,
+02073:         resultTop3Groups: Array.isArray(
+02074:           timelineRow?.resultTop3Groups
+02075:         )
+02076:           ? timelineRow.resultTop3Groups
+02077:           : row?.resultTop3Groups || [],
+02078:         resultTop3Milhares: Array.isArray(
+02079:           timelineRow?.resultTop3Milhares
+02080:         )
+02081:           ? timelineRow.resultTop3Milhares
+02082:           : row?.resultTop3Milhares || [],
+02083:         matchedGrupo: Number(
+02084:           analysis?.matchedGrupo ?? NaN
+02085:         ),
+02086:         matchedMilhar: normalizeMilharStr(
+02087:           analysis?.matchedMilhar || ""
+02088:         ),
+02089:         analysis,
+02090:         hit:
+02091:           analysis.type !== "miss" &&
+02092:           analysis.type !== "none",
+02093:         hitType: analysis.type,
+
+ARQUIVO: .\src\pages\Top3\Top3View.jsx
+LINHA: 2079
+02071:           "",
+02072:         resultMilhar,
+02073:         resultTop3Groups: Array.isArray(
+02074:           timelineRow?.resultTop3Groups
+02075:         )
+02076:           ? timelineRow.resultTop3Groups
+02077:           : row?.resultTop3Groups || [],
+02078:         resultTop3Milhares: Array.isArray(
+02079:           timelineRow?.resultTop3Milhares
+02080:         )
+02081:           ? timelineRow.resultTop3Milhares
+02082:           : row?.resultTop3Milhares || [],
+02083:         matchedGrupo: Number(
+02084:           analysis?.matchedGrupo ?? NaN
+02085:         ),
+02086:         matchedMilhar: normalizeMilharStr(
+02087:           analysis?.matchedMilhar || ""
+02088:         ),
+02089:         analysis,
+02090:         hit:
+02091:           analysis.type !== "miss" &&
+02092:           analysis.type !== "none",
+02093:         hitType: analysis.type,
+02094:         hitScore: Number(analysis.score || 0),
+
+ARQUIVO: .\src\pages\Top3\Top3View.jsx
+LINHA: 2081
+02073:         resultTop3Groups: Array.isArray(
+02074:           timelineRow?.resultTop3Groups
+02075:         )
+02076:           ? timelineRow.resultTop3Groups
+02077:           : row?.resultTop3Groups || [],
+02078:         resultTop3Milhares: Array.isArray(
+02079:           timelineRow?.resultTop3Milhares
+02080:         )
+02081:           ? timelineRow.resultTop3Milhares
+02082:           : row?.resultTop3Milhares || [],
+02083:         matchedGrupo: Number(
+02084:           analysis?.matchedGrupo ?? NaN
+02085:         ),
+02086:         matchedMilhar: normalizeMilharStr(
+02087:           analysis?.matchedMilhar || ""
+02088:         ),
+02089:         analysis,
+02090:         hit:
+02091:           analysis.type !== "miss" &&
+02092:           analysis.type !== "none",
+02093:         hitType: analysis.type,
+02094:         hitScore: Number(analysis.score || 0),
+02095:         hitPosition: Number(
+02096:           analysis.position ?? -1
+
+ARQUIVO: .\src\pages\Top3\Top3View.jsx
+LINHA: 2082
+02074:           timelineRow?.resultTop3Groups
+02075:         )
+02076:           ? timelineRow.resultTop3Groups
+02077:           : row?.resultTop3Groups || [],
+02078:         resultTop3Milhares: Array.isArray(
+02079:           timelineRow?.resultTop3Milhares
+02080:         )
+02081:           ? timelineRow.resultTop3Milhares
+02082:           : row?.resultTop3Milhares || [],
+02083:         matchedGrupo: Number(
+02084:           analysis?.matchedGrupo ?? NaN
+02085:         ),
+02086:         matchedMilhar: normalizeMilharStr(
+02087:           analysis?.matchedMilhar || ""
+02088:         ),
+02089:         analysis,
+02090:         hit:
+02091:           analysis.type !== "miss" &&
+02092:           analysis.type !== "none",
+02093:         hitType: analysis.type,
+02094:         hitScore: Number(analysis.score || 0),
+02095:         hitPosition: Number(
+02096:           analysis.position ?? -1
+02097:         ),
+
+ARQUIVO: .\src\pages\Top3\Top3View.jsx
+LINHA: 3873
+03865:                       64
+03866:                     )
+03867:                   : "";
+03868: 
+03869:                 const resultMilhar =
+03870:                   normalizeMilharStr(
+03871:                     item?.resultMilhar ||
+03872:                       item
+03873:                         ?.resultTop3Milhares?.[0] ||
+03874:                       ""
+03875:                   );
+03876: 
+03877:                 const resultCentena =
+03878:                   resultMilhar
+03879:                     ? resultMilhar.slice(-3)
+03880:                     : "";
+03881: 
+03882:                 const resultDezena =
+03883:                   resultMilhar
+03884:                     ? resultMilhar.slice(-2)
+03885:                     : "";
+03886: 
+03887:                 const analysis =
+03888:                   item?.analysis &&
+
+ARQUIVO: .\src\pages\Top3\Top3View.jsx
+LINHA: 3990
+03982:                   officialMatchedGrupoRaw >= 1 &&
+03983:                   officialMatchedGrupoRaw <= 25
+03984:                     ? officialMatchedGrupoRaw
+03985:                     : NaN;
+03986: 
+03987:                 const officialTop3Milhar =
+03988:                   matchedOfficialIndex >= 0
+03989:                     ? normalizeMilharStr(
+03990:                         item?.resultTop3Milhares?.[
+03991:                           matchedOfficialIndex
+03992:                         ] || ""
+03993:                       )
+03994:                     : "";
+03995: 
+03996:                 const persistedMatchedMilhar =
+03997:                   normalizeMilharStr(
+03998:                     item?.matchedMilhar ||
+03999:                       analysis?.matchedMilhar ||
+04000:                       ""
+04001:                   );
+04002: 
+04003:                 const firstPrizeMilhar =
+04004:                   resultPosition === 1
+04005:                     ? normalizeMilharStr(
+
+--------------------------------------------------------------------------------
+PADRÃO: matchedMilhar
+--------------------------------------------------------------------------------
+
+ARQUIVO: .\src\pages\Top3\Top3View.jsx
+LINHA: 423
+00415:       type: "none",
+00416:       score: 0,
+00417:       position: -1,
+00418:       predictionPosition: -1,
+00419:       resultPosition: -1,
+00420:       podiumMedal: "",
+00421:       matchedValue: "",
+00422:       matchedGrupo: null,
+00423:       matchedMilhar: "",
+00424:     };
+00425:   }
+00426: 
+00427:   const officialPodium = Array.isArray(resultSource)
+00428:     ? resultSource.filter(Boolean).slice(0, 3)
+00429:     : [
+00430:         {
+00431:           position: 1,
+00432:           grupo: Number(resultSource),
+00433:           milhar: normalizeMilharStr(resultMilhar),
+00434:         },
+00435:       ].filter(
+00436:         (item) =>
+00437:           Number.isFinite(item.grupo) &&
+00438:           item.grupo >= 1 &&
+
+ARQUIVO: .\src\pages\Top3\Top3View.jsx
+LINHA: 452
+00444:       type: "none",
+00445:       score: 0,
+00446:       position: -1,
+00447:       predictionPosition: -1,
+00448:       resultPosition: -1,
+00449:       podiumMedal: "",
+00450:       matchedValue: "",
+00451:       matchedGrupo: null,
+00452:       matchedMilhar: "",
+00453:     };
+00454:   }
+00455: 
+00456:   for (const officialPrize of officialPodium) {
+00457:     const grupoNum = Number(officialPrize?.grupo);
+00458:     const milhar = normalizeMilharStr(
+00459:       officialPrize?.milhar
+00460:     );
+00461: 
+00462:     const centena = milhar
+00463:       ? milhar.slice(-3)
+00464:       : "";
+00465: 
+00466:     const dezena = milhar
+00467:       ? milhar.slice(-2)
+
+ARQUIVO: .\src\pages\Top3\Top3View.jsx
+LINHA: 545
+00537:           score,
+00538:           position: predictionIndex + 1,
+00539:           predictionPosition: predictionIndex + 1,
+00540:           resultPosition,
+00541:           podiumMedal:
+00542:             podiumMedalFromPosition(resultPosition),
+00543:           matchedValue,
+00544:           matchedGrupo: grupoNum,
+00545:           matchedMilhar: milhar,
+00546:         };
+00547:       }
+00548:     }
+00549:   }
+00550: 
+00551:   return {
+00552:     type: "miss",
+00553:     score: 0,
+00554:     position: -1,
+00555:     predictionPosition: -1,
+00556:     resultPosition: -1,
+00557:     podiumMedal: "",
+00558:     matchedValue: "",
+00559:     matchedGrupo: null,
+00560:     matchedMilhar: "",
+
+ARQUIVO: .\src\pages\Top3\Top3View.jsx
+LINHA: 560
+00552:     type: "miss",
+00553:     score: 0,
+00554:     position: -1,
+00555:     predictionPosition: -1,
+00556:     resultPosition: -1,
+00557:     podiumMedal: "",
+00558:     matchedValue: "",
+00559:     matchedGrupo: null,
+00560:     matchedMilhar: "",
+00561:   };
+00562: }
+00563: 
+00564: function ImgWithFallback({ srcs, alt, size = 84, style }) {
+00565:   const list = useMemo(
+00566:     () => (Array.isArray(srcs) ? srcs.filter(Boolean) : []),
+00567:     [srcs]
+00568:   );
+00569: 
+00570:   const [i, setI] = useState(0);
+00571:   const listKey = useMemo(() => list.join("|"), [list]);
+00572: 
+00573:   useEffect(() => {
+00574:     setI(0);
+00575:   }, [listKey]);
+
+ARQUIVO: .\src\pages\Top3\Top3View.jsx
+LINHA: 1921
+01913:           resultTop3Milhares: Array.isArray(
+01914:             entry?.resultTop3Milhares
+01915:           )
+01916:             ? entry.resultTop3Milhares
+01917:             : [],
+01918:           matchedGrupo: Number(
+01919:             entry?.matchedGrupo ?? NaN
+01920:           ),
+01921:           matchedMilhar: normalizeMilharStr(
+01922:             entry?.matchedMilhar || ""
+01923:           ),
+01924:           analysis: {
+01925:             type: String(entry?.hitType || ""),
+01926:             score: Number(entry?.hitScore || 0),
+01927:             position: Number(
+01928:               entry?.hitPosition ?? -1
+01929:             ),
+01930:             predictionPosition: Number(
+01931:               entry?.predictionPosition ??
+01932:                 entry?.hitPosition ??
+01933:                 -1
+01934:             ),
+01935:             resultPosition: Number(
+01936:               entry?.resultPosition ?? -1
+
+ARQUIVO: .\src\pages\Top3\Top3View.jsx
+LINHA: 1922
+01914:             entry?.resultTop3Milhares
+01915:           )
+01916:             ? entry.resultTop3Milhares
+01917:             : [],
+01918:           matchedGrupo: Number(
+01919:             entry?.matchedGrupo ?? NaN
+01920:           ),
+01921:           matchedMilhar: normalizeMilharStr(
+01922:             entry?.matchedMilhar || ""
+01923:           ),
+01924:           analysis: {
+01925:             type: String(entry?.hitType || ""),
+01926:             score: Number(entry?.hitScore || 0),
+01927:             position: Number(
+01928:               entry?.hitPosition ?? -1
+01929:             ),
+01930:             predictionPosition: Number(
+01931:               entry?.predictionPosition ??
+01932:                 entry?.hitPosition ??
+01933:                 -1
+01934:             ),
+01935:             resultPosition: Number(
+01936:               entry?.resultPosition ?? -1
+01937:             ),
+
+ARQUIVO: .\src\pages\Top3\Top3View.jsx
+LINHA: 1947
+01939:               entry?.podiumMedal || ""
+01940:             ),
+01941:             matchedValue: String(
+01942:               entry?.matchedValue || ""
+01943:             ),
+01944:             matchedGrupo: Number(
+01945:               entry?.matchedGrupo ?? NaN
+01946:             ),
+01947:             matchedMilhar: normalizeMilharStr(
+01948:               entry?.matchedMilhar || ""
+01949:             ),
+01950:           },
+01951:         };
+01952:       });
+01953: 
+01954:     const timelineRows = (
+01955:       Array.isArray(timeline) ? timeline : []
+01956:     )
+01957:       .filter(
+01958:         (slot) =>
+01959:           String(slot?.targetYmd || "").trim() ===
+01960:           historyAnchorYmd
+01961:       )
+01962:       .map((slot) => {
+
+ARQUIVO: .\src\pages\Top3\Top3View.jsx
+LINHA: 1948
+01940:             ),
+01941:             matchedValue: String(
+01942:               entry?.matchedValue || ""
+01943:             ),
+01944:             matchedGrupo: Number(
+01945:               entry?.matchedGrupo ?? NaN
+01946:             ),
+01947:             matchedMilhar: normalizeMilharStr(
+01948:               entry?.matchedMilhar || ""
+01949:             ),
+01950:           },
+01951:         };
+01952:       });
+01953: 
+01954:     const timelineRows = (
+01955:       Array.isArray(timeline) ? timeline : []
+01956:     )
+01957:       .filter(
+01958:         (slot) =>
+01959:           String(slot?.targetYmd || "").trim() ===
+01960:           historyAnchorYmd
+01961:       )
+01962:       .map((slot) => {
+01963:         const slotTop3 = Array.isArray(slot?.top3)
+
+ARQUIVO: .\src\pages\Top3\Top3View.jsx
+LINHA: 2086
+02078:         resultTop3Milhares: Array.isArray(
+02079:           timelineRow?.resultTop3Milhares
+02080:         )
+02081:           ? timelineRow.resultTop3Milhares
+02082:           : row?.resultTop3Milhares || [],
+02083:         matchedGrupo: Number(
+02084:           analysis?.matchedGrupo ?? NaN
+02085:         ),
+02086:         matchedMilhar: normalizeMilharStr(
+02087:           analysis?.matchedMilhar || ""
+02088:         ),
+02089:         analysis,
+02090:         hit:
+02091:           analysis.type !== "miss" &&
+02092:           analysis.type !== "none",
+02093:         hitType: analysis.type,
+02094:         hitScore: Number(analysis.score || 0),
+02095:         hitPosition: Number(
+02096:           analysis.position ?? -1
+02097:         ),
+02098:       });
+02099:     }
+02100: 
+02101:     const todayYmd = todayYMDLocalView();
+
+ARQUIVO: .\src\pages\Top3\Top3View.jsx
+LINHA: 2087
+02079:           timelineRow?.resultTop3Milhares
+02080:         )
+02081:           ? timelineRow.resultTop3Milhares
+02082:           : row?.resultTop3Milhares || [],
+02083:         matchedGrupo: Number(
+02084:           analysis?.matchedGrupo ?? NaN
+02085:         ),
+02086:         matchedMilhar: normalizeMilharStr(
+02087:           analysis?.matchedMilhar || ""
+02088:         ),
+02089:         analysis,
+02090:         hit:
+02091:           analysis.type !== "miss" &&
+02092:           analysis.type !== "none",
+02093:         hitType: analysis.type,
+02094:         hitScore: Number(analysis.score || 0),
+02095:         hitPosition: Number(
+02096:           analysis.position ?? -1
+02097:         ),
+02098:       });
+02099:     }
+02100: 
+02101:     const todayYmd = todayYMDLocalView();
+02102: 
+
+ARQUIVO: .\src\pages\Top3\Top3View.jsx
+LINHA: 3996
+03988:                   matchedOfficialIndex >= 0
+03989:                     ? normalizeMilharStr(
+03990:                         item?.resultTop3Milhares?.[
+03991:                           matchedOfficialIndex
+03992:                         ] || ""
+03993:                       )
+03994:                     : "";
+03995: 
+03996:                 const persistedMatchedMilhar =
+03997:                   normalizeMilharStr(
+03998:                     item?.matchedMilhar ||
+03999:                       analysis?.matchedMilhar ||
+04000:                       ""
+04001:                   );
+04002: 
+04003:                 const firstPrizeMilhar =
+04004:                   resultPosition === 1
+04005:                     ? normalizeMilharStr(
+04006:                         resultMilhar || ""
+04007:                       )
+04008:                     : "";
+04009: 
+04010:                 const officialMatchedMilhar =
+04011:                   officialTop3Milhar ||
+
+ARQUIVO: .\src\pages\Top3\Top3View.jsx
+LINHA: 3998
+03990:                         item?.resultTop3Milhares?.[
+03991:                           matchedOfficialIndex
+03992:                         ] || ""
+03993:                       )
+03994:                     : "";
+03995: 
+03996:                 const persistedMatchedMilhar =
+03997:                   normalizeMilharStr(
+03998:                     item?.matchedMilhar ||
+03999:                       analysis?.matchedMilhar ||
+04000:                       ""
+04001:                   );
+04002: 
+04003:                 const firstPrizeMilhar =
+04004:                   resultPosition === 1
+04005:                     ? normalizeMilharStr(
+04006:                         resultMilhar || ""
+04007:                       )
+04008:                     : "";
+04009: 
+04010:                 const officialMatchedMilhar =
+04011:                   officialTop3Milhar ||
+04012:                   persistedMatchedMilhar ||
+04013:                   firstPrizeMilhar;
+
+ARQUIVO: .\src\pages\Top3\Top3View.jsx
+LINHA: 3999
+03991:                           matchedOfficialIndex
+03992:                         ] || ""
+03993:                       )
+03994:                     : "";
+03995: 
+03996:                 const persistedMatchedMilhar =
+03997:                   normalizeMilharStr(
+03998:                     item?.matchedMilhar ||
+03999:                       analysis?.matchedMilhar ||
+04000:                       ""
+04001:                   );
+04002: 
+04003:                 const firstPrizeMilhar =
+04004:                   resultPosition === 1
+04005:                     ? normalizeMilharStr(
+04006:                         resultMilhar || ""
+04007:                       )
+04008:                     : "";
+04009: 
+04010:                 const officialMatchedMilhar =
+04011:                   officialTop3Milhar ||
+04012:                   persistedMatchedMilhar ||
+04013:                   firstPrizeMilhar;
+04014: 
+
+ARQUIVO: .\src\pages\Top3\Top3View.jsx
+LINHA: 4010
+04002: 
+04003:                 const firstPrizeMilhar =
+04004:                   resultPosition === 1
+04005:                     ? normalizeMilharStr(
+04006:                         resultMilhar || ""
+04007:                       )
+04008:                     : "";
+04009: 
+04010:                 const officialMatchedMilhar =
+04011:                   officialTop3Milhar ||
+04012:                   persistedMatchedMilhar ||
+04013:                   firstPrizeMilhar;
+04014: 
+04015:                 const hasOfficialMilhar =
+04016:                   /^\d{4}$/.test(
+04017:                     officialMatchedMilhar
+04018:                   );
+04019: 
+04020:                 const officialMatchedCentena =
+04021:                   hasOfficialMilhar
+04022:                     ? officialMatchedMilhar.slice(-3)
+04023:                     : "";
+04024: 
+04025:                 const officialMatchedDezena =
+
+ARQUIVO: .\src\pages\Top3\Top3View.jsx
+LINHA: 4012
+04004:                   resultPosition === 1
+04005:                     ? normalizeMilharStr(
+04006:                         resultMilhar || ""
+04007:                       )
+04008:                     : "";
+04009: 
+04010:                 const officialMatchedMilhar =
+04011:                   officialTop3Milhar ||
+04012:                   persistedMatchedMilhar ||
+04013:                   firstPrizeMilhar;
+04014: 
+04015:                 const hasOfficialMilhar =
+04016:                   /^\d{4}$/.test(
+04017:                     officialMatchedMilhar
+04018:                   );
+04019: 
+04020:                 const officialMatchedCentena =
+04021:                   hasOfficialMilhar
+04022:                     ? officialMatchedMilhar.slice(-3)
+04023:                     : "";
+04024: 
+04025:                 const officialMatchedDezena =
+04026:                   hasOfficialMilhar
+04027:                     ? officialMatchedMilhar.slice(-2)
+
+ARQUIVO: .\src\pages\Top3\Top3View.jsx
+LINHA: 4017
+04009: 
+04010:                 const officialMatchedMilhar =
+04011:                   officialTop3Milhar ||
+04012:                   persistedMatchedMilhar ||
+04013:                   firstPrizeMilhar;
+04014: 
+04015:                 const hasOfficialMilhar =
+04016:                   /^\d{4}$/.test(
+04017:                     officialMatchedMilhar
+04018:                   );
+04019: 
+04020:                 const officialMatchedCentena =
+04021:                   hasOfficialMilhar
+04022:                     ? officialMatchedMilhar.slice(-3)
+04023:                     : "";
+04024: 
+04025:                 const officialMatchedDezena =
+04026:                   hasOfficialMilhar
+04027:                     ? officialMatchedMilhar.slice(-2)
+04028:                     : "";
+04029: 
+04030:                 const matchedPrediction =
+04031:                   isHit &&
+04032:                   matchedPredictionIndex >= 0
+
+ARQUIVO: .\src\pages\Top3\Top3View.jsx
+LINHA: 4022
+04014: 
+04015:                 const hasOfficialMilhar =
+04016:                   /^\d{4}$/.test(
+04017:                     officialMatchedMilhar
+04018:                   );
+04019: 
+04020:                 const officialMatchedCentena =
+04021:                   hasOfficialMilhar
+04022:                     ? officialMatchedMilhar.slice(-3)
+04023:                     : "";
+04024: 
+04025:                 const officialMatchedDezena =
+04026:                   hasOfficialMilhar
+04027:                     ? officialMatchedMilhar.slice(-2)
+04028:                     : "";
+04029: 
+04030:                 const matchedPrediction =
+04031:                   isHit &&
+04032:                   matchedPredictionIndex >= 0
+04033:                     ? top3Items[
+04034:                         matchedPredictionIndex
+04035:                       ] || null
+04036:                     : null;
+04037: 
+
+ARQUIVO: .\src\pages\Top3\Top3View.jsx
+LINHA: 4027
+04019: 
+04020:                 const officialMatchedCentena =
+04021:                   hasOfficialMilhar
+04022:                     ? officialMatchedMilhar.slice(-3)
+04023:                     : "";
+04024: 
+04025:                 const officialMatchedDezena =
+04026:                   hasOfficialMilhar
+04027:                     ? officialMatchedMilhar.slice(-2)
+04028:                     : "";
+04029: 
+04030:                 const matchedPrediction =
+04031:                   isHit &&
+04032:                   matchedPredictionIndex >= 0
+04033:                     ? top3Items[
+04034:                         matchedPredictionIndex
+04035:                       ] || null
+04036:                     : null;
+04037: 
+04038:                 const predictedMilhares = (
+04039:                   Array.isArray(
+04040:                     matchedPrediction?.milhares20
+04041:                   )
+04042:                     ? matchedPrediction.milhares20
+
+ARQUIVO: .\src\pages\Top3\Top3View.jsx
+LINHA: 4071
+04063:                   predictedCentenas.includes(
+04064:                     officialMatchedCentena
+04065:                   );
+04066: 
+04067:                 const hasExactHit =
+04068:                   isHit &&
+04069:                   hasOfficialMilhar &&
+04070:                   predictedMilhares.includes(
+04071:                     officialMatchedMilhar
+04072:                   );
+04073: 
+04074:                 const hitGrupo =
+04075:                   isHit &&
+04076:                   Number.isFinite(
+04077:                     officialMatchedGrupo
+04078:                   )
+04079:                     ? formatGrupo(
+04080:                         officialMatchedGrupo
+04081:                       )
+04082:                     : "";
+04083: 
+04084:                 const hitDezena =
+04085:                   isHit &&
+04086:                   hasOfficialMilhar
+
+ARQUIVO: .\src\pages\Top3\Top3View.jsx
+LINHA: 4097
+04089: 
+04090:                 const hitCentena =
+04091:                   hasCentenaHit
+04092:                     ? officialMatchedCentena
+04093:                     : "";
+04094: 
+04095:                 const hitMilhar =
+04096:                   hasExactHit
+04097:                     ? officialMatchedMilhar
+04098:                     : "";
+04099: 
+04100:                 return (
+04101:                   <div
+04102:                     key={String(
+04103:                       item?.targetKey ||
+04104:                         `${y}_${h}`
+04105:                     )}
+04106:                     style={{
+04107:                       width: "100%",
+04108:                       overflowX: "auto",
+04109:                       border:
+04110:                         "1px solid rgba(255,255,255,0.08)",
+04111:                       borderRadius: 12,
+04112:                       background:
+
+--------------------------------------------------------------------------------
+PADRÃO: resultMilhar
+--------------------------------------------------------------------------------
+
+ARQUIVO: .\src\pages\Top3\Top3View.jsx
+LINHA: 33
+00025:       ""
+00026:   ).replace(/\D/g, "");
+00027: 
+00028:   return digits
+00029:     ? digits.slice(-4).padStart(4, "0")
+00030:     : "";
+00031: }
+00032: 
+00033: function extractResultMilhar(slot) {
+00034:   const persistedMilhar = normalizeMilharStr(
+00035:     slot?.resultMilhar ??
+00036:       slot?.milhar ??
+00037:       slot?.result?.milhar ??
+00038:       slot?.resultado?.milhar ??
+00039:       ""
+00040:   );
+00041: 
+00042:   if (persistedMilhar) {
+00043:     return persistedMilhar;
+00044:   }
+00045: 
+00046:   const persistedTop3 = Array.isArray(
+00047:     slot?.resultTop3Milhares
+00048:   )
+
+ARQUIVO: .\src\pages\Top3\Top3View.jsx
+LINHA: 35
+00027: 
+00028:   return digits
+00029:     ? digits.slice(-4).padStart(4, "0")
+00030:     : "";
+00031: }
+00032: 
+00033: function extractResultMilhar(slot) {
+00034:   const persistedMilhar = normalizeMilharStr(
+00035:     slot?.resultMilhar ??
+00036:       slot?.milhar ??
+00037:       slot?.result?.milhar ??
+00038:       slot?.resultado?.milhar ??
+00039:       ""
+00040:   );
+00041: 
+00042:   if (persistedMilhar) {
+00043:     return persistedMilhar;
+00044:   }
+00045: 
+00046:   const persistedTop3 = Array.isArray(
+00047:     slot?.resultTop3Milhares
+00048:   )
+00049:     ? slot.resultTop3Milhares
+00050:     : [];
+
+ARQUIVO: .\src\pages\Top3\Top3View.jsx
+LINHA: 408
+00400: 
+00401:   return NaN;
+00402: }
+00403: 
+00404: function hasOfficialResult(slot) {
+00405:   const grupo = getSlotResultGrupo(slot);
+00406:   if (Number.isFinite(grupo) && grupo >= 1 && grupo <= 25) return true;
+00407: 
+00408:   const milhar = extractResultMilhar(slot);
+00409:   return /^\d{4}$/.test(milhar);
+00410: }
+00411: 
+00412: function analyzeTop3Hit(top3, resultSource, resultMilhar) {
+00413:   if (!Array.isArray(top3) || !top3.length) {
+00414:     return {
+00415:       type: "none",
+00416:       score: 0,
+00417:       position: -1,
+00418:       predictionPosition: -1,
+00419:       resultPosition: -1,
+00420:       podiumMedal: "",
+00421:       matchedValue: "",
+00422:       matchedGrupo: null,
+00423:       matchedMilhar: "",
+
+ARQUIVO: .\src\pages\Top3\Top3View.jsx
+LINHA: 412
+00404: function hasOfficialResult(slot) {
+00405:   const grupo = getSlotResultGrupo(slot);
+00406:   if (Number.isFinite(grupo) && grupo >= 1 && grupo <= 25) return true;
+00407: 
+00408:   const milhar = extractResultMilhar(slot);
+00409:   return /^\d{4}$/.test(milhar);
+00410: }
+00411: 
+00412: function analyzeTop3Hit(top3, resultSource, resultMilhar) {
+00413:   if (!Array.isArray(top3) || !top3.length) {
+00414:     return {
+00415:       type: "none",
+00416:       score: 0,
+00417:       position: -1,
+00418:       predictionPosition: -1,
+00419:       resultPosition: -1,
+00420:       podiumMedal: "",
+00421:       matchedValue: "",
+00422:       matchedGrupo: null,
+00423:       matchedMilhar: "",
+00424:     };
+00425:   }
+00426: 
+00427:   const officialPodium = Array.isArray(resultSource)
+
+ARQUIVO: .\src\pages\Top3\Top3View.jsx
+LINHA: 433
+00425:   }
+00426: 
+00427:   const officialPodium = Array.isArray(resultSource)
+00428:     ? resultSource.filter(Boolean).slice(0, 3)
+00429:     : [
+00430:         {
+00431:           position: 1,
+00432:           grupo: Number(resultSource),
+00433:           milhar: normalizeMilharStr(resultMilhar),
+00434:         },
+00435:       ].filter(
+00436:         (item) =>
+00437:           Number.isFinite(item.grupo) &&
+00438:           item.grupo >= 1 &&
+00439:           item.grupo <= 25
+00440:       );
+00441: 
+00442:   if (!officialPodium.length) {
+00443:     return {
+00444:       type: "none",
+00445:       score: 0,
+00446:       position: -1,
+00447:       predictionPosition: -1,
+00448:       resultPosition: -1,
+
+ARQUIVO: .\src\pages\Top3\Top3View.jsx
+LINHA: 1261
+01253:   const resultAnimal = hasResult
+01254:     ? String(getAnimalLabel(resultGrupo) || "")
+01255:     : "";
+01256: 
+01257:   const resultImg = hasResult
+01258:     ? getImgFromGrupo(resultGrupo, 64)
+01259:     : "";
+01260: 
+01261:   const resultMilhar = extractResultMilhar(slot);
+01262: 
+01263:   const matchedPredictionIndex =
+01264:     Number.isFinite(Number(analysis?.position)) &&
+01265:     Number(analysis.position) >= 1
+01266:       ? Number(analysis.position) - 1
+01267:       : -1;
+01268: 
+01269:   const resultPosition = Number(
+01270:     analysis?.resultPosition
+01271:   );
+01272: 
+01273:   const medal =
+01274:     status !== "hit"
+01275:       ? ""
+01276:       : resultPosition === 1
+
+ARQUIVO: .\src\pages\Top3\Top3View.jsx
+LINHA: 1440
+01432:             borderLeft:
+01433:               "1px solid rgba(255,255,255,0.14)",
+01434:           }}
+01435:           title={
+01436:             hasResult
+01437:               ? `${resultAnimal} — G${formatGrupo(
+01438:                   resultGrupo
+01439:                 )}${
+01440:                   resultMilhar
+01441:                     ? ` — ${resultMilhar}`
+01442:                     : ""
+01443:                 }`
+01444:               : "Resultado pendente"
+01445:           }
+01446:         >
+01447:           {hasResult ? (
+01448:             <>
+01449:               <ImgWithFallback
+01450:                 srcs={resultImg ? [resultImg] : []}
+01451:                 alt={resultAnimal}
+01452:                 size={34}
+01453:                 style={{ borderRadius: 8 }}
+01454:               />
+01455: 
+
+ARQUIVO: .\src\pages\Top3\Top3View.jsx
+LINHA: 1441
+01433:               "1px solid rgba(255,255,255,0.14)",
+01434:           }}
+01435:           title={
+01436:             hasResult
+01437:               ? `${resultAnimal} — G${formatGrupo(
+01438:                   resultGrupo
+01439:                 )}${
+01440:                   resultMilhar
+01441:                     ? ` — ${resultMilhar}`
+01442:                     : ""
+01443:                 }`
+01444:               : "Resultado pendente"
+01445:           }
+01446:         >
+01447:           {hasResult ? (
+01448:             <>
+01449:               <ImgWithFallback
+01450:                 srcs={resultImg ? [resultImg] : []}
+01451:                 alt={resultAnimal}
+01452:                 size={34}
+01453:                 style={{ borderRadius: 8 }}
+01454:               />
+01455: 
+01456:               <div
+
+ARQUIVO: .\src\pages\Top3\Top3View.jsx
+LINHA: 1465
+01457:                 style={{
+01458:                   fontSize: "11px",
+01459:                   fontWeight: 900,
+01460:                   lineHeight: 1,
+01461:                   whiteSpace: "nowrap",
+01462:                 }}
+01463:               >
+01464:                 G{formatGrupo(resultGrupo)}
+01465:                 {resultMilhar
+01466:                   ? ` • ${resultMilhar}`
+01467:                   : ""}
+01468:               </div>
+01469:             </>
+01470:           ) : (
+01471:             <div
+01472:               style={{
+01473:                 gridRow: "1 / span 2",
+01474:                 alignSelf: "center",
+01475:                 fontSize: "10px",
+01476:                 fontWeight: 800,
+01477:               }}
+01478:             >
+01479:               PENDENTE
+01480:             </div>
+
+ARQUIVO: .\src\pages\Top3\Top3View.jsx
+LINHA: 1466
+01458:                   fontSize: "11px",
+01459:                   fontWeight: 900,
+01460:                   lineHeight: 1,
+01461:                   whiteSpace: "nowrap",
+01462:                 }}
+01463:               >
+01464:                 G{formatGrupo(resultGrupo)}
+01465:                 {resultMilhar
+01466:                   ? ` • ${resultMilhar}`
+01467:                   : ""}
+01468:               </div>
+01469:             </>
+01470:           ) : (
+01471:             <div
+01472:               style={{
+01473:                 gridRow: "1 / span 2",
+01474:                 alignSelf: "center",
+01475:                 fontSize: "10px",
+01476:                 fontWeight: 800,
+01477:               }}
+01478:             >
+01479:               PENDENTE
+01480:             </div>
+01481:           )}
+
+ARQUIVO: .\src\pages\Top3\Top3View.jsx
+LINHA: 1887
+01879:           grupo: hasResult ? resultGrupo : null,
+01880:           animal: hasResult
+01881:             ? String(
+01882:                 entry?.resultAnimal ||
+01883:                   getAnimalLabel(resultGrupo) ||
+01884:                   ""
+01885:               )
+01886:             : "",
+01887:           resultMilhar: String(
+01888:             entry?.resultMilhar || ""
+01889:           ),
+01890:           hit:
+01891:             Number(entry?.hitScore || 0) > 0,
+01892:           hitType: String(entry?.hitType || ""),
+01893:           hitScore: Number(entry?.hitScore || 0),
+01894:           hitPosition: Number(
+01895:             entry?.hitPosition ?? -1
+01896:           ),
+01897:           predictionPosition: Number(
+01898:             entry?.predictionPosition ??
+01899:               entry?.hitPosition ??
+01900:               -1
+01901:           ),
+01902:           resultPosition: Number(
+
+ARQUIVO: .\src\pages\Top3\Top3View.jsx
+LINHA: 1888
+01880:           animal: hasResult
+01881:             ? String(
+01882:                 entry?.resultAnimal ||
+01883:                   getAnimalLabel(resultGrupo) ||
+01884:                   ""
+01885:               )
+01886:             : "",
+01887:           resultMilhar: String(
+01888:             entry?.resultMilhar || ""
+01889:           ),
+01890:           hit:
+01891:             Number(entry?.hitScore || 0) > 0,
+01892:           hitType: String(entry?.hitType || ""),
+01893:           hitScore: Number(entry?.hitScore || 0),
+01894:           hitPosition: Number(
+01895:             entry?.hitPosition ?? -1
+01896:           ),
+01897:           predictionPosition: Number(
+01898:             entry?.predictionPosition ??
+01899:               entry?.hitPosition ??
+01900:               -1
+01901:           ),
+01902:           resultPosition: Number(
+01903:             entry?.resultPosition ?? -1
+
+ARQUIVO: .\src\pages\Top3\Top3View.jsx
+LINHA: 1974
+01966: 
+01967:         const resultGrupo = getSlotResultGrupo(slot);
+01968: 
+01969:         const hasResult =
+01970:           Number.isFinite(resultGrupo) &&
+01971:           resultGrupo >= 1 &&
+01972:           resultGrupo <= 25;
+01973: 
+01974:         const resultMilhar =
+01975:           extractResultMilhar(slot);
+01976: 
+01977:         const officialPodium =
+01978:           getOfficialPodium(slot);
+01979: 
+01980:         const analysis = analyzeTop3Hit(
+01981:           slotTop3,
+01982:           officialPodium
+01983:         );
+01984: 
+01985:         return {
+01986:           targetKey:
+01987:             `${String(slot?.targetYmd || "")}` +
+01988:             `__${String(slot?.targetHour || "")}`,
+01989:           target: {
+
+ARQUIVO: .\src\pages\Top3\Top3View.jsx
+LINHA: 1975
+01967:         const resultGrupo = getSlotResultGrupo(slot);
+01968: 
+01969:         const hasResult =
+01970:           Number.isFinite(resultGrupo) &&
+01971:           resultGrupo >= 1 &&
+01972:           resultGrupo <= 25;
+01973: 
+01974:         const resultMilhar =
+01975:           extractResultMilhar(slot);
+01976: 
+01977:         const officialPodium =
+01978:           getOfficialPodium(slot);
+01979: 
+01980:         const analysis = analyzeTop3Hit(
+01981:           slotTop3,
+01982:           officialPodium
+01983:         );
+01984: 
+01985:         return {
+01986:           targetKey:
+01987:             `${String(slot?.targetYmd || "")}` +
+01988:             `__${String(slot?.targetHour || "")}`,
+01989:           target: {
+01990:             ymd: String(slot?.targetYmd || ""),
+
+ARQUIVO: .\src\pages\Top3\Top3View.jsx
+LINHA: 2006
+01998:             ? Number(resultGrupo)
+01999:             : null,
+02000:           grupo: hasResult
+02001:             ? Number(resultGrupo)
+02002:             : null,
+02003:           animal: hasResult
+02004:             ? getAnimalLabel(resultGrupo)
+02005:             : "",
+02006:           resultMilhar,
+02007:           resultTop3Groups: officialPodium.map(
+02008:             (item) => Number(item?.grupo)
+02009:           ),
+02010:           resultTop3Milhares: officialPodium.map(
+02011:             (item) => String(item?.milhar || "")
+02012:           ),
+02013:           prizes: Array.isArray(slot?.prizes)
+02014:             ? slot.prizes
+02015:             : [],
+02016:           analysis,
+02017:           hit:
+02018:             analysis.type !== "miss" &&
+02019:             analysis.type !== "none",
+02020:           hitType: analysis.type,
+02021:           hitScore: Number(analysis.score || 0),
+
+ARQUIVO: .\src\pages\Top3\Top3View.jsx
+LINHA: 2053
+02045:       const timelineRow = rowsByTarget.get(key);
+02046: 
+02047:       if (!timelineRow || timelineRow?.result == null) {
+02048:         rowsByTarget.set(key, row);
+02049:         continue;
+02050:       }
+02051: 
+02052:       const resultGrupo = Number(timelineRow.result);
+02053:       const resultMilhar = String(
+02054:         timelineRow?.resultMilhar || ""
+02055:       );
+02056: 
+02057:       const officialPodium = getOfficialPodium(timelineRow);
+02058: 
+02059:       const analysis = analyzeTop3Hit(
+02060:         row?.top3,
+02061:         officialPodium
+02062:       );
+02063: 
+02064:       rowsByTarget.set(key, {
+02065:         ...row,
+02066:         result: resultGrupo,
+02067:         grupo: resultGrupo,
+02068:         animal:
+
+ARQUIVO: .\src\pages\Top3\Top3View.jsx
+LINHA: 2054
+02046: 
+02047:       if (!timelineRow || timelineRow?.result == null) {
+02048:         rowsByTarget.set(key, row);
+02049:         continue;
+02050:       }
+02051: 
+02052:       const resultGrupo = Number(timelineRow.result);
+02053:       const resultMilhar = String(
+02054:         timelineRow?.resultMilhar || ""
+02055:       );
+02056: 
+02057:       const officialPodium = getOfficialPodium(timelineRow);
+02058: 
+02059:       const analysis = analyzeTop3Hit(
+02060:         row?.top3,
+02061:         officialPodium
+02062:       );
+02063: 
+02064:       rowsByTarget.set(key, {
+02065:         ...row,
+02066:         result: resultGrupo,
+02067:         grupo: resultGrupo,
+02068:         animal:
+02069:           timelineRow?.animal ||
+
+ARQUIVO: .\src\pages\Top3\Top3View.jsx
+LINHA: 2072
+02064:       rowsByTarget.set(key, {
+02065:         ...row,
+02066:         result: resultGrupo,
+02067:         grupo: resultGrupo,
+02068:         animal:
+02069:           timelineRow?.animal ||
+02070:           getAnimalLabel(resultGrupo) ||
+02071:           "",
+02072:         resultMilhar,
+02073:         resultTop3Groups: Array.isArray(
+02074:           timelineRow?.resultTop3Groups
+02075:         )
+02076:           ? timelineRow.resultTop3Groups
+02077:           : row?.resultTop3Groups || [],
+02078:         resultTop3Milhares: Array.isArray(
+02079:           timelineRow?.resultTop3Milhares
+02080:         )
+02081:           ? timelineRow.resultTop3Milhares
+02082:           : row?.resultTop3Milhares || [],
+02083:         matchedGrupo: Number(
+02084:           analysis?.matchedGrupo ?? NaN
+02085:         ),
+02086:         matchedMilhar: normalizeMilharStr(
+02087:           analysis?.matchedMilhar || ""
+
+ARQUIVO: .\src\pages\Top3\Top3View.jsx
+LINHA: 3869
+03861: 
+03862:                 const resultImg = hasResult
+03863:                   ? getImgFromGrupo(
+03864:                       resultGrupo,
+03865:                       64
+03866:                     )
+03867:                   : "";
+03868: 
+03869:                 const resultMilhar =
+03870:                   normalizeMilharStr(
+03871:                     item?.resultMilhar ||
+03872:                       item
+03873:                         ?.resultTop3Milhares?.[0] ||
+03874:                       ""
+03875:                   );
+03876: 
+03877:                 const resultCentena =
+03878:                   resultMilhar
+03879:                     ? resultMilhar.slice(-3)
+03880:                     : "";
+03881: 
+03882:                 const resultDezena =
+03883:                   resultMilhar
+03884:                     ? resultMilhar.slice(-2)
+
+ARQUIVO: .\src\pages\Top3\Top3View.jsx
+LINHA: 3871
+03863:                   ? getImgFromGrupo(
+03864:                       resultGrupo,
+03865:                       64
+03866:                     )
+03867:                   : "";
+03868: 
+03869:                 const resultMilhar =
+03870:                   normalizeMilharStr(
+03871:                     item?.resultMilhar ||
+03872:                       item
+03873:                         ?.resultTop3Milhares?.[0] ||
+03874:                       ""
+03875:                   );
+03876: 
+03877:                 const resultCentena =
+03878:                   resultMilhar
+03879:                     ? resultMilhar.slice(-3)
+03880:                     : "";
+03881: 
+03882:                 const resultDezena =
+03883:                   resultMilhar
+03884:                     ? resultMilhar.slice(-2)
+03885:                     : "";
+03886: 
+
+ARQUIVO: .\src\pages\Top3\Top3View.jsx
+LINHA: 3878
+03870:                   normalizeMilharStr(
+03871:                     item?.resultMilhar ||
+03872:                       item
+03873:                         ?.resultTop3Milhares?.[0] ||
+03874:                       ""
+03875:                   );
+03876: 
+03877:                 const resultCentena =
+03878:                   resultMilhar
+03879:                     ? resultMilhar.slice(-3)
+03880:                     : "";
+03881: 
+03882:                 const resultDezena =
+03883:                   resultMilhar
+03884:                     ? resultMilhar.slice(-2)
+03885:                     : "";
+03886: 
+03887:                 const analysis =
+03888:                   item?.analysis &&
+03889:                   typeof item.analysis ===
+03890:                     "object"
+03891:                     ? item.analysis
+03892:                     : {};
+03893: 
+
+ARQUIVO: .\src\pages\Top3\Top3View.jsx
+LINHA: 3879
+03871:                     item?.resultMilhar ||
+03872:                       item
+03873:                         ?.resultTop3Milhares?.[0] ||
+03874:                       ""
+03875:                   );
+03876: 
+03877:                 const resultCentena =
+03878:                   resultMilhar
+03879:                     ? resultMilhar.slice(-3)
+03880:                     : "";
+03881: 
+03882:                 const resultDezena =
+03883:                   resultMilhar
+03884:                     ? resultMilhar.slice(-2)
+03885:                     : "";
+03886: 
+03887:                 const analysis =
+03888:                   item?.analysis &&
+03889:                   typeof item.analysis ===
+03890:                     "object"
+03891:                     ? item.analysis
+03892:                     : {};
+03893: 
+03894:                 const predictionPosition =
+
+ARQUIVO: .\src\pages\Top3\Top3View.jsx
+LINHA: 3883
+03875:                   );
+03876: 
+03877:                 const resultCentena =
+03878:                   resultMilhar
+03879:                     ? resultMilhar.slice(-3)
+03880:                     : "";
+03881: 
+03882:                 const resultDezena =
+03883:                   resultMilhar
+03884:                     ? resultMilhar.slice(-2)
+03885:                     : "";
+03886: 
+03887:                 const analysis =
+03888:                   item?.analysis &&
+03889:                   typeof item.analysis ===
+03890:                     "object"
+03891:                     ? item.analysis
+03892:                     : {};
+03893: 
+03894:                 const predictionPosition =
+03895:                   Number(
+03896:                     analysis?.position ??
+03897:                       analysis
+03898:                         ?.predictionPosition ??
+
+ARQUIVO: .\src\pages\Top3\Top3View.jsx
+LINHA: 3884
+03876: 
+03877:                 const resultCentena =
+03878:                   resultMilhar
+03879:                     ? resultMilhar.slice(-3)
+03880:                     : "";
+03881: 
+03882:                 const resultDezena =
+03883:                   resultMilhar
+03884:                     ? resultMilhar.slice(-2)
+03885:                     : "";
+03886: 
+03887:                 const analysis =
+03888:                   item?.analysis &&
+03889:                   typeof item.analysis ===
+03890:                     "object"
+03891:                     ? item.analysis
+03892:                     : {};
+03893: 
+03894:                 const predictionPosition =
+03895:                   Number(
+03896:                     analysis?.position ??
+03897:                       analysis
+03898:                         ?.predictionPosition ??
+03899:                       item
+
+ARQUIVO: .\src\pages\Top3\Top3View.jsx
+LINHA: 4006
+03998:                     item?.matchedMilhar ||
+03999:                       analysis?.matchedMilhar ||
+04000:                       ""
+04001:                   );
+04002: 
+04003:                 const firstPrizeMilhar =
+04004:                   resultPosition === 1
+04005:                     ? normalizeMilharStr(
+04006:                         resultMilhar || ""
+04007:                       )
+04008:                     : "";
+04009: 
+04010:                 const officialMatchedMilhar =
+04011:                   officialTop3Milhar ||
+04012:                   persistedMatchedMilhar ||
+04013:                   firstPrizeMilhar;
+04014: 
+04015:                 const hasOfficialMilhar =
+04016:                   /^\d{4}$/.test(
+04017:                     officialMatchedMilhar
+04018:                   );
+04019: 
+04020:                 const officialMatchedCentena =
+04021:                   hasOfficialMilhar
+
+ARQUIVO: .\src\pages\Top3\Top3View.jsx
+LINHA: 4380
+04372:                           boxShadow:
+04373:                             "inset 0 0 0 1px rgba(255,255,255,0.025)",
+04374:                         }}
+04375:                         title={
+04376:                           hasResult
+04377:                             ? `${resultAnimal} — G${formatGrupo(
+04378:                                 resultGrupo
+04379:                               )}${
+04380:                                 resultMilhar
+04381:                                   ? ` — ${resultMilhar}`
+04382:                                   : ""
+04383:                               }`
+04384:                             : "Resultado pendente"
+04385:                         }
+04386:                       >
+04387:                         {hasResult ? (
+04388:                           <>
+04389:                             <div
+04390:                               style={{
+04391:                                 position:
+04392:                                   "relative",
+04393:                                 display:
+04394:                                   "flex",
+04395:                                 alignItems:
+
+ARQUIVO: .\src\pages\Top3\Top3View.jsx
+LINHA: 4381
+04373:                             "inset 0 0 0 1px rgba(255,255,255,0.025)",
+04374:                         }}
+04375:                         title={
+04376:                           hasResult
+04377:                             ? `${resultAnimal} — G${formatGrupo(
+04378:                                 resultGrupo
+04379:                               )}${
+04380:                                 resultMilhar
+04381:                                   ? ` — ${resultMilhar}`
+04382:                                   : ""
+04383:                               }`
+04384:                             : "Resultado pendente"
+04385:                         }
+04386:                       >
+04387:                         {hasResult ? (
+04388:                           <>
+04389:                             <div
+04390:                               style={{
+04391:                                 position:
+04392:                                   "relative",
+04393:                                 display:
+04394:                                   "flex",
+04395:                                 alignItems:
+04396:                                   "center",
+
+ARQUIVO: .\src\pages\Top3\Top3View.jsx
+LINHA: 4479
+04471:                               <div
+04472:                                 style={{
+04473:                                   fontSize: 15,
+04474:                                   fontWeight: 1000,
+04475:                                   letterSpacing: 1,
+04476:                                   color: "inherit",
+04477:                                 }}
+04478:                               >
+04479:                                 {resultMilhar ||
+04480:                                   "—"}
+04481:                               </div>
+04482:                             </div>
+04483:                           </>
+04484:                         ) : (
+04485:                           <div
+04486:                             style={{
+04487:                               gridColumn:
+04488:                                 "1 / -1",
+04489:                               textAlign: "center",
+04490:                               fontSize: 10,
+04491:                               fontWeight: 900,
+04492:                             }}
+04493:                           >
+04494:                             ⏳ PENDENTE
+
+--------------------------------------------------------------------------------
+PADRÃO: resultadoMilhar
+--------------------------------------------------------------------------------
+NÃO ENCONTRADO
+
+--------------------------------------------------------------------------------
+PADRÃO: milharSorteada
+--------------------------------------------------------------------------------
+NÃO ENCONTRADO
+
+--------------------------------------------------------------------------------
+PADRÃO: MILHAR\s+SORTEADA
+--------------------------------------------------------------------------------
+
+ARQUIVO: .\src\pages\Top3\Top3View.jsx
+LINHA: 4468
+04460:                                   fontWeight: 800,
+04461:                                   opacity: 0.7,
+04462:                                   textTransform:
+04463:                                     "uppercase",
+04464:                                   letterSpacing:
+04465:                                     0.45,
+04466:                                 }}
+04467:                               >
+04468:                                 Milhar sorteada
+04469:                               </div>
+04470: 
+04471:                               <div
+04472:                                 style={{
+04473:                                   fontSize: 15,
+04474:                                   fontWeight: 1000,
+04475:                                   letterSpacing: 1,
+04476:                                   color: "inherit",
+04477:                                 }}
+04478:                               >
+04479:                                 {resultMilhar ||
+04480:                                   "—"}
+04481:                               </div>
+04482:                             </div>
+04483:                           </>
+
+--------------------------------------------------------------------------------
+PADRÃO: prizes
+--------------------------------------------------------------------------------
+
+ARQUIVO: .\src\pages\Top3\Top3View.jsx
+LINHA: 7
+00001: /* eslint-disable no-unused-vars */
+00002: // src/pages/Top3/Top3View.jsx
+00003: import React, { useMemo, useState, useCallback, useEffect } from "react";
+00004: import { getAnimalLabel, getImgFromGrupo } from "../../constants/bichoMap";
+00005: 
+00006: function extractPrizeMilharByPosition(slot, position) {
+00007:   const prizes = Array.isArray(slot?.prizes)
+00008:     ? slot.prizes
+00009:     : [];
+00010: 
+00011:   const prize =
+00012:     prizes.find(
+00013:       (item) => Number(item?.position) === Number(position)
+00014:     ) ||
+00015:     prizes[Number(position) - 1] ||
+00016:     null;
+00017: 
+00018:   if (!prize) return "";
+00019: 
+00020:   const digits = String(
+00021:     prize?.numero ??
+00022:       prize?.milhar ??
+
+ARQUIVO: .\src\pages\Top3\Top3View.jsx
+LINHA: 8
+00001: /* eslint-disable no-unused-vars */
+00002: // src/pages/Top3/Top3View.jsx
+00003: import React, { useMemo, useState, useCallback, useEffect } from "react";
+00004: import { getAnimalLabel, getImgFromGrupo } from "../../constants/bichoMap";
+00005: 
+00006: function extractPrizeMilharByPosition(slot, position) {
+00007:   const prizes = Array.isArray(slot?.prizes)
+00008:     ? slot.prizes
+00009:     : [];
+00010: 
+00011:   const prize =
+00012:     prizes.find(
+00013:       (item) => Number(item?.position) === Number(position)
+00014:     ) ||
+00015:     prizes[Number(position) - 1] ||
+00016:     null;
+00017: 
+00018:   if (!prize) return "";
+00019: 
+00020:   const digits = String(
+00021:     prize?.numero ??
+00022:       prize?.milhar ??
+00023:       prize?.number ??
+
+ARQUIVO: .\src\pages\Top3\Top3View.jsx
+LINHA: 12
+00004: import { getAnimalLabel, getImgFromGrupo } from "../../constants/bichoMap";
+00005: 
+00006: function extractPrizeMilharByPosition(slot, position) {
+00007:   const prizes = Array.isArray(slot?.prizes)
+00008:     ? slot.prizes
+00009:     : [];
+00010: 
+00011:   const prize =
+00012:     prizes.find(
+00013:       (item) => Number(item?.position) === Number(position)
+00014:     ) ||
+00015:     prizes[Number(position) - 1] ||
+00016:     null;
+00017: 
+00018:   if (!prize) return "";
+00019: 
+00020:   const digits = String(
+00021:     prize?.numero ??
+00022:       prize?.milhar ??
+00023:       prize?.number ??
+00024:       prize?.valor ??
+00025:       ""
+00026:   ).replace(/\D/g, "");
+00027: 
+
+ARQUIVO: .\src\pages\Top3\Top3View.jsx
+LINHA: 15
+00007:   const prizes = Array.isArray(slot?.prizes)
+00008:     ? slot.prizes
+00009:     : [];
+00010: 
+00011:   const prize =
+00012:     prizes.find(
+00013:       (item) => Number(item?.position) === Number(position)
+00014:     ) ||
+00015:     prizes[Number(position) - 1] ||
+00016:     null;
+00017: 
+00018:   if (!prize) return "";
+00019: 
+00020:   const digits = String(
+00021:     prize?.numero ??
+00022:       prize?.milhar ??
+00023:       prize?.number ??
+00024:       prize?.valor ??
+00025:       ""
+00026:   ).replace(/\D/g, "");
+00027: 
+00028:   return digits
+00029:     ? digits.slice(-4).padStart(4, "0")
+00030:     : "";
+
+ARQUIVO: .\src\pages\Top3\Top3View.jsx
+LINHA: 78
+00070:   if (
+00071:     Number.isFinite(persisted) &&
+00072:     persisted >= 1 &&
+00073:     persisted <= 25
+00074:   ) {
+00075:     return persisted;
+00076:   }
+00077: 
+00078:   const prizes = Array.isArray(slot?.prizes)
+00079:     ? slot.prizes
+00080:     : [];
+00081: 
+00082:   const prize =
+00083:     prizes.find(
+00084:       (item) => Number(item?.position) === Number(position)
+00085:     ) ||
+00086:     prizes[Number(position) - 1] ||
+00087:     null;
+00088: 
+00089:   const direct = Number(
+00090:     prize?.grupo ??
+00091:       prize?.group ??
+00092:       prize?.animal_grupo ??
+00093:       prize?.grupo2
+
+ARQUIVO: .\src\pages\Top3\Top3View.jsx
+LINHA: 79
+00071:     Number.isFinite(persisted) &&
+00072:     persisted >= 1 &&
+00073:     persisted <= 25
+00074:   ) {
+00075:     return persisted;
+00076:   }
+00077: 
+00078:   const prizes = Array.isArray(slot?.prizes)
+00079:     ? slot.prizes
+00080:     : [];
+00081: 
+00082:   const prize =
+00083:     prizes.find(
+00084:       (item) => Number(item?.position) === Number(position)
+00085:     ) ||
+00086:     prizes[Number(position) - 1] ||
+00087:     null;
+00088: 
+00089:   const direct = Number(
+00090:     prize?.grupo ??
+00091:       prize?.group ??
+00092:       prize?.animal_grupo ??
+00093:       prize?.grupo2
+00094:   );
+
+ARQUIVO: .\src\pages\Top3\Top3View.jsx
+LINHA: 83
+00075:     return persisted;
+00076:   }
+00077: 
+00078:   const prizes = Array.isArray(slot?.prizes)
+00079:     ? slot.prizes
+00080:     : [];
+00081: 
+00082:   const prize =
+00083:     prizes.find(
+00084:       (item) => Number(item?.position) === Number(position)
+00085:     ) ||
+00086:     prizes[Number(position) - 1] ||
+00087:     null;
+00088: 
+00089:   const direct = Number(
+00090:     prize?.grupo ??
+00091:       prize?.group ??
+00092:       prize?.animal_grupo ??
+00093:       prize?.grupo2
+00094:   );
+00095: 
+00096:   if (
+00097:     Number.isFinite(direct) &&
+00098:     direct >= 1 &&
+
+ARQUIVO: .\src\pages\Top3\Top3View.jsx
+LINHA: 86
+00078:   const prizes = Array.isArray(slot?.prizes)
+00079:     ? slot.prizes
+00080:     : [];
+00081: 
+00082:   const prize =
+00083:     prizes.find(
+00084:       (item) => Number(item?.position) === Number(position)
+00085:     ) ||
+00086:     prizes[Number(position) - 1] ||
+00087:     null;
+00088: 
+00089:   const direct = Number(
+00090:     prize?.grupo ??
+00091:       prize?.group ??
+00092:       prize?.animal_grupo ??
+00093:       prize?.grupo2
+00094:   );
+00095: 
+00096:   if (
+00097:     Number.isFinite(direct) &&
+00098:     direct >= 1 &&
+00099:     direct <= 25
+00100:   ) {
+00101:     return direct;
+
+ARQUIVO: .\src\pages\Top3\Top3View.jsx
+LINHA: 387
+00379:       slot?.result?.grupo ??
+00380:       slot?.resultado?.grupo
+00381:   );
+00382: 
+00383:   if (Number.isFinite(direct) && direct >= 1 && direct <= 25) {
+00384:     return direct;
+00385:   }
+00386: 
+00387:   if (Array.isArray(slot?.prizes)) {
+00388:     const p1 = slot.prizes.find((p) => Number(p?.position) === 1) || slot.prizes[0];
+00389:     const fromPrize = Number(
+00390:       p1?.grupo ??
+00391:         p1?.group ??
+00392:         p1?.animal_grupo ??
+00393:         p1?.grupo2
+00394:     );
+00395: 
+00396:     if (Number.isFinite(fromPrize) && fromPrize >= 1 && fromPrize <= 25) {
+00397:       return fromPrize;
+00398:     }
+00399:   }
+00400: 
+00401:   return NaN;
+00402: }
+
+ARQUIVO: .\src\pages\Top3\Top3View.jsx
+LINHA: 388
+00380:       slot?.resultado?.grupo
+00381:   );
+00382: 
+00383:   if (Number.isFinite(direct) && direct >= 1 && direct <= 25) {
+00384:     return direct;
+00385:   }
+00386: 
+00387:   if (Array.isArray(slot?.prizes)) {
+00388:     const p1 = slot.prizes.find((p) => Number(p?.position) === 1) || slot.prizes[0];
+00389:     const fromPrize = Number(
+00390:       p1?.grupo ??
+00391:         p1?.group ??
+00392:         p1?.animal_grupo ??
+00393:         p1?.grupo2
+00394:     );
+00395: 
+00396:     if (Number.isFinite(fromPrize) && fromPrize >= 1 && fromPrize <= 25) {
+00397:       return fromPrize;
+00398:     }
+00399:   }
+00400: 
+00401:   return NaN;
+00402: }
+00403: 
+
+ARQUIVO: .\src\pages\Top3\Top3View.jsx
+LINHA: 2013
+02005:             : "",
+02006:           resultMilhar,
+02007:           resultTop3Groups: officialPodium.map(
+02008:             (item) => Number(item?.grupo)
+02009:           ),
+02010:           resultTop3Milhares: officialPodium.map(
+02011:             (item) => String(item?.milhar || "")
+02012:           ),
+02013:           prizes: Array.isArray(slot?.prizes)
+02014:             ? slot.prizes
+02015:             : [],
+02016:           analysis,
+02017:           hit:
+02018:             analysis.type !== "miss" &&
+02019:             analysis.type !== "none",
+02020:           hitType: analysis.type,
+02021:           hitScore: Number(analysis.score || 0),
+02022:           hitPosition: Number(
+02023:             analysis.position ?? -1
+02024:           ),
+02025:         };
+02026:       });
+02027: 
+02028:     // A timeline garante todos os horarios oficiais.
+
+ARQUIVO: .\src\pages\Top3\Top3View.jsx
+LINHA: 2014
+02006:           resultMilhar,
+02007:           resultTop3Groups: officialPodium.map(
+02008:             (item) => Number(item?.grupo)
+02009:           ),
+02010:           resultTop3Milhares: officialPodium.map(
+02011:             (item) => String(item?.milhar || "")
+02012:           ),
+02013:           prizes: Array.isArray(slot?.prizes)
+02014:             ? slot.prizes
+02015:             : [],
+02016:           analysis,
+02017:           hit:
+02018:             analysis.type !== "miss" &&
+02019:             analysis.type !== "none",
+02020:           hitType: analysis.type,
+02021:           hitScore: Number(analysis.score || 0),
+02022:           hitPosition: Number(
+02023:             analysis.position ?? -1
+02024:           ),
+02025:         };
+02026:       });
+02027: 
+02028:     // A timeline garante todos os horarios oficiais.
+02029:     // O registro persistido prevalece quando realmente existe.
+
+ARQUIVO: .\src\pages\Top3\Top3View.jsx
+LINHA: 3844
+03836:                             getAnimalLabel(
+03837:                               Number(grupo)
+03838:                             ) || "",
+03839:                         }));
+03840: 
+03841:                 const resultGrupo = Number(
+03842:                   item?.result ??
+03843:                     item?.grupo ??
+03844:                     item?.prizes?.[0]?.grupo
+03845:                 );
+03846: 
+03847:                 const hasResult =
+03848:                   Number.isFinite(resultGrupo) &&
+03849:                   resultGrupo >= 1 &&
+03850:                   resultGrupo <= 25;
+03851: 
+03852:                 const resultAnimal = hasResult
+03853:                   ? String(
+03854:                       item?.animal ||
+03855:                         getAnimalLabel(
+03856:                           resultGrupo
+03857:                         ) ||
+03858:                         ""
+03859:                     )
+
+--------------------------------------------------------------------------------
+PADRÃO: premios
+--------------------------------------------------------------------------------
+NÃO ENCONTRADO
+
+--------------------------------------------------------------------------------
+PADRÃO: results
+--------------------------------------------------------------------------------
+
+ARQUIVO: .\src\pages\Top3\Top3View.jsx
+LINHA: 412
+00404: function hasOfficialResult(slot) {
+00405:   const grupo = getSlotResultGrupo(slot);
+00406:   if (Number.isFinite(grupo) && grupo >= 1 && grupo <= 25) return true;
+00407: 
+00408:   const milhar = extractResultMilhar(slot);
+00409:   return /^\d{4}$/.test(milhar);
+00410: }
+00411: 
+00412: function analyzeTop3Hit(top3, resultSource, resultMilhar) {
+00413:   if (!Array.isArray(top3) || !top3.length) {
+00414:     return {
+00415:       type: "none",
+00416:       score: 0,
+00417:       position: -1,
+00418:       predictionPosition: -1,
+00419:       resultPosition: -1,
+00420:       podiumMedal: "",
+00421:       matchedValue: "",
+00422:       matchedGrupo: null,
+00423:       matchedMilhar: "",
+00424:     };
+00425:   }
+00426: 
+00427:   const officialPodium = Array.isArray(resultSource)
+
+ARQUIVO: .\src\pages\Top3\Top3View.jsx
+LINHA: 427
+00419:       resultPosition: -1,
+00420:       podiumMedal: "",
+00421:       matchedValue: "",
+00422:       matchedGrupo: null,
+00423:       matchedMilhar: "",
+00424:     };
+00425:   }
+00426: 
+00427:   const officialPodium = Array.isArray(resultSource)
+00428:     ? resultSource.filter(Boolean).slice(0, 3)
+00429:     : [
+00430:         {
+00431:           position: 1,
+00432:           grupo: Number(resultSource),
+00433:           milhar: normalizeMilharStr(resultMilhar),
+00434:         },
+00435:       ].filter(
+00436:         (item) =>
+00437:           Number.isFinite(item.grupo) &&
+00438:           item.grupo >= 1 &&
+00439:           item.grupo <= 25
+00440:       );
+00441: 
+00442:   if (!officialPodium.length) {
+
+ARQUIVO: .\src\pages\Top3\Top3View.jsx
+LINHA: 428
+00420:       podiumMedal: "",
+00421:       matchedValue: "",
+00422:       matchedGrupo: null,
+00423:       matchedMilhar: "",
+00424:     };
+00425:   }
+00426: 
+00427:   const officialPodium = Array.isArray(resultSource)
+00428:     ? resultSource.filter(Boolean).slice(0, 3)
+00429:     : [
+00430:         {
+00431:           position: 1,
+00432:           grupo: Number(resultSource),
+00433:           milhar: normalizeMilharStr(resultMilhar),
+00434:         },
+00435:       ].filter(
+00436:         (item) =>
+00437:           Number.isFinite(item.grupo) &&
+00438:           item.grupo >= 1 &&
+00439:           item.grupo <= 25
+00440:       );
+00441: 
+00442:   if (!officialPodium.length) {
+00443:     return {
+
+ARQUIVO: .\src\pages\Top3\Top3View.jsx
+LINHA: 432
+00424:     };
+00425:   }
+00426: 
+00427:   const officialPodium = Array.isArray(resultSource)
+00428:     ? resultSource.filter(Boolean).slice(0, 3)
+00429:     : [
+00430:         {
+00431:           position: 1,
+00432:           grupo: Number(resultSource),
+00433:           milhar: normalizeMilharStr(resultMilhar),
+00434:         },
+00435:       ].filter(
+00436:         (item) =>
+00437:           Number.isFinite(item.grupo) &&
+00438:           item.grupo >= 1 &&
+00439:           item.grupo <= 25
+00440:       );
+00441: 
+00442:   if (!officialPodium.length) {
+00443:     return {
+00444:       type: "none",
+00445:       score: 0,
+00446:       position: -1,
+00447:       predictionPosition: -1,
+
+--------------------------------------------------------------------------------
+PADRÃO: resultado
+--------------------------------------------------------------------------------
+
+ARQUIVO: .\src\pages\Top3\Top3View.jsx
+LINHA: 38
+00030:     : "";
+00031: }
+00032: 
+00033: function extractResultMilhar(slot) {
+00034:   const persistedMilhar = normalizeMilharStr(
+00035:     slot?.resultMilhar ??
+00036:       slot?.milhar ??
+00037:       slot?.result?.milhar ??
+00038:       slot?.resultado?.milhar ??
+00039:       ""
+00040:   );
+00041: 
+00042:   if (persistedMilhar) {
+00043:     return persistedMilhar;
+00044:   }
+00045: 
+00046:   const persistedTop3 = Array.isArray(
+00047:     slot?.resultTop3Milhares
+00048:   )
+00049:     ? slot.resultTop3Milhares
+00050:     : [];
+00051: 
+00052:   const persistedPrimeira = normalizeMilharStr(
+00053:     persistedTop3[0] ?? ""
+
+ARQUIVO: .\src\pages\Top3\Top3View.jsx
+LINHA: 380
+00372:   return noSamples || "—";
+00373: }
+00374: 
+00375: function getSlotResultGrupo(slot) {
+00376:   const direct = Number(
+00377:     slot?.resultGrupo ??
+00378:       slot?.grupo ??
+00379:       slot?.result?.grupo ??
+00380:       slot?.resultado?.grupo
+00381:   );
+00382: 
+00383:   if (Number.isFinite(direct) && direct >= 1 && direct <= 25) {
+00384:     return direct;
+00385:   }
+00386: 
+00387:   if (Array.isArray(slot?.prizes)) {
+00388:     const p1 = slot.prizes.find((p) => Number(p?.position) === 1) || slot.prizes[0];
+00389:     const fromPrize = Number(
+00390:       p1?.grupo ??
+00391:         p1?.group ??
+00392:         p1?.animal_grupo ??
+00393:         p1?.grupo2
+00394:     );
+00395: 
+
+ARQUIVO: .\src\pages\Top3\Top3View.jsx
+LINHA: 1444
+01436:             hasResult
+01437:               ? `${resultAnimal} — G${formatGrupo(
+01438:                   resultGrupo
+01439:                 )}${
+01440:                   resultMilhar
+01441:                     ? ` — ${resultMilhar}`
+01442:                     : ""
+01443:                 }`
+01444:               : "Resultado pendente"
+01445:           }
+01446:         >
+01447:           {hasResult ? (
+01448:             <>
+01449:               <ImgWithFallback
+01450:                 srcs={resultImg ? [resultImg] : []}
+01451:                 alt={resultAnimal}
+01452:                 size={34}
+01453:                 style={{ borderRadius: 8 }}
+01454:               />
+01455: 
+01456:               <div
+01457:                 style={{
+01458:                   fontSize: "11px",
+01459:                   fontWeight: 900,
+
+ARQUIVO: .\src\pages\Top3\Top3View.jsx
+LINHA: 1537
+01529:         : analysis.type === "hit_centena"
+01530:           ? "🟡 CENTENA (66,67%)"
+01531:           : analysis.type === "hit_grupo"
+01532:             ? "✅ DEZENA/GRUPO (33,33%)"
+01533:             : "❌ ERRO (0%)";
+01534: 
+01535:   const statusDetail =
+01536:     !hasResult
+01537:       ? "Aguardando resultado oficial."
+01538:       : analysis.type === "hit_exact"
+01539:         ? `Milhar exata acertada no palpite #${analysis.position}.`
+01540:         : analysis.type === "hit_centena"
+01541:           ? `Centena acertada no palpite #${analysis.position}.`
+01542:           : analysis.type === "hit_grupo"
+01543:             ? `Grupo acertado no palpite #${analysis.position}.`
+01544:             : "Nenhum dos 3 palpites foi sorteado.";
+01545: 
+01546:   return (
+01547:     <section className="top3-shell">
+01548:       {status === "pending" ? (
+01549:         <>
+01550:           <div className="timeline-slot__header">
+01551:             <div className="timeline-slot__title">
+01552:               {formatYmdHour(
+
+ARQUIVO: .\src\pages\Top3\Top3View.jsx
+LINHA: 1581
+01573:                   slot?.baseYmd,
+01574:                   slot?.baseHour
+01575:                 )}
+01576:               </div>
+01577:             </div>
+01578: 
+01579:             <div className="top3-metaItem">
+01580:               <div className="top3-metaItem__label">
+01581:                 Resultado real
+01582:               </div>
+01583: 
+01584:               <div className="top3-metaItem__value">
+01585:                 {hasResult
+01586:                   ? `G${formatGrupo(
+01587:                       resultGrupo
+01588:                     )} • ${resultAnimal.toUpperCase()}`
+01589:                   : "Pendente"}
+01590:               </div>
+01591:             </div>
+01592: 
+01593:             <div className="top3-metaItem">
+01594:               <div className="top3-metaItem__label">
+01595:                 Status
+01596:               </div>
+
+ARQUIVO: .\src\pages\Top3\Top3View.jsx
+LINHA: 2113
+02105:       .filter((row) => {
+02106:         const targetYmd = String(
+02107:           row?.target?.ymd || ""
+02108:         ).trim();
+02109: 
+02110:         const hasResult =
+02111:           row?.result != null;
+02112: 
+02113:         // Resultado oficial existente sempre permanece.
+02114:         if (hasResult) return true;
+02115: 
+02116:         // Registro sem data válida não pode gerar card pendente.
+02117:         if (!isYMD(targetYmd)) return false;
+02118: 
+02119:         const todayYmd = todayYMDLocalView();
+02120: 
+02121:         // Pendência só permanece para o dia atual ou data futura.
+02122:         // Datas anteriores sem resultado representam sorteio
+02123:         // inexistente, cancelado ou definitivamente não publicado.
+02124:         return targetYmd >= todayYmd;
+02125:       })
+02126:       .filter((row) => {
+02127:         const targetYmd = String(
+02128:           row?.target?.ymd || ""
+
+ARQUIVO: .\src\pages\Top3\Top3View.jsx
+LINHA: 2122
+02114:         if (hasResult) return true;
+02115: 
+02116:         // Registro sem data válida não pode gerar card pendente.
+02117:         if (!isYMD(targetYmd)) return false;
+02118: 
+02119:         const todayYmd = todayYMDLocalView();
+02120: 
+02121:         // Pendência só permanece para o dia atual ou data futura.
+02122:         // Datas anteriores sem resultado representam sorteio
+02123:         // inexistente, cancelado ou definitivamente não publicado.
+02124:         return targetYmd >= todayYmd;
+02125:       })
+02126:       .filter((row) => {
+02127:         const targetYmd = String(
+02128:           row?.target?.ymd || ""
+02129:         ).trim();
+02130: 
+02131:         const hasResult = row?.result != null;
+02132: 
+02133:         // Resultado existente sempre permanece no histórico.
+02134:         if (hasResult) return true;
+02135: 
+02136:         // Linha inválida não deve gerar card pendente.
+02137:         if (!isYMD(targetYmd)) return false;
+
+ARQUIVO: .\src\pages\Top3\Top3View.jsx
+LINHA: 2133
+02125:       })
+02126:       .filter((row) => {
+02127:         const targetYmd = String(
+02128:           row?.target?.ymd || ""
+02129:         ).trim();
+02130: 
+02131:         const hasResult = row?.result != null;
+02132: 
+02133:         // Resultado existente sempre permanece no histórico.
+02134:         if (hasResult) return true;
+02135: 
+02136:         // Linha inválida não deve gerar card pendente.
+02137:         if (!isYMD(targetYmd)) return false;
+02138: 
+02139:         // Pendência só é legítima no dia atual ou em data futura.
+02140:         // Datas anteriores sem resultado representam sorteio inexistente,
+02141:         // cancelado ou definitivamente não publicado.
+02142:         return targetYmd >= todayYmd;
+02143:       })
+02144:       .sort((a, b) => {
+02145:         const ah = hourBucketToSortValue(
+02146:           a?.target?.hour
+02147:         );
+02148:         const bh = hourBucketToSortValue(
+
+ARQUIVO: .\src\pages\Top3\Top3View.jsx
+LINHA: 2140
+02132: 
+02133:         // Resultado existente sempre permanece no histórico.
+02134:         if (hasResult) return true;
+02135: 
+02136:         // Linha inválida não deve gerar card pendente.
+02137:         if (!isYMD(targetYmd)) return false;
+02138: 
+02139:         // Pendência só é legítima no dia atual ou em data futura.
+02140:         // Datas anteriores sem resultado representam sorteio inexistente,
+02141:         // cancelado ou definitivamente não publicado.
+02142:         return targetYmd >= todayYmd;
+02143:       })
+02144:       .sort((a, b) => {
+02145:         const ah = hourBucketToSortValue(
+02146:           a?.target?.hour
+02147:         );
+02148:         const bh = hourBucketToSortValue(
+02149:           b?.target?.hour
+02150:         );
+02151: 
+02152:         return ah - bh;
+02153:       });
+02154:   }, [
+02155:     timeline,
+
+ARQUIVO: .\src\pages\Top3\Top3View.jsx
+LINHA: 3610
+03602:             </div>
+03603:           </div>
+03604:         </section>
+03605: 
+03606:         <section className="top3-shell">
+03607:           <div className="top3-header__title">Calendário do TOP3</div>
+03608: 
+03609:           <div className="top3-helper">
+03610:             Escolha uma data para consultar as previsões, os resultados e a taxa de acerto de cada horário.
+03611:           </div>
+03612: 
+03613:           <div className="top3-historyToolbar">
+03614:             <button
+03615:               type="button"
+03616:               className="pp-btn"
+03617:               disabled={!canGoPrevious}
+03618:               onClick={() => {
+03619:                 if (!canGoPrevious) return;
+03620:                 goToHistoryDate(previousAvailableDate);
+03621:               }}
+03622:               style={{
+03623:                 opacity: canGoPrevious ? 1 : 0.45,
+03624:                 cursor: canGoPrevious
+03625:                   ? "pointer"
+
+ARQUIVO: .\src\pages\Top3\Top3View.jsx
+LINHA: 3730
+03722:           </section>
+03723:         )}
+03724: 
+03725:         {showDetailedTimeline && timeline.length > 0 ? (
+03726:           <section className="top3-stage">
+03727:             <section className="top3-shell">
+03728:               <div className="top3-header__title">Leitura do dia — Timeline completa</div>
+03729:               <div className="top3-helper">
+03730:                 Cada bloco abaixo mostra o Top3 calculado para o horário alvo, a base usada e o resultado real quando disponível.
+03731:               </div>
+03732:             </section>
+03733: 
+03734:             {timeline.map((slot, idx) => (
+03735:               <TimelineSlot
+03736:                 key={`${String(slot?.targetYmd || "y")}_${String(slot?.targetHour || "h")}_${idx}`}
+03737:                 slot={slot}
+03738:                 theme={t}
+03739:                 copiedAllKey={copiedAllKey}
+03740:                 copiedCellKey={copiedCellKey}
+03741:                 setCopiedAllKey={setCopiedAllKey}
+03742:                 setCopiedCellKey={setCopiedCellKey}
+03743:                 copyText={copyText}
+03744:                 build16={build16}
+03745:                 buildMilhares={buildMilhares}
+
+ARQUIVO: .\src\pages\Top3\Top3View.jsx
+LINHA: 4384
+04376:                           hasResult
+04377:                             ? `${resultAnimal} — G${formatGrupo(
+04378:                                 resultGrupo
+04379:                               )}${
+04380:                                 resultMilhar
+04381:                                   ? ` — ${resultMilhar}`
+04382:                                   : ""
+04383:                               }`
+04384:                             : "Resultado pendente"
+04385:                         }
+04386:                       >
+04387:                         {hasResult ? (
+04388:                           <>
+04389:                             <div
+04390:                               style={{
+04391:                                 position:
+04392:                                   "relative",
+04393:                                 display:
+04394:                                   "flex",
+04395:                                 alignItems:
+04396:                                   "center",
+04397:                                 justifyContent:
+04398:                                   "center",
+04399:                               }}
+
+--------------------------------------------------------------------------------
+PADRÃO: resultPosition
+--------------------------------------------------------------------------------
+
+ARQUIVO: .\src\pages\Top3\Top3View.jsx
+LINHA: 419
+00411: 
+00412: function analyzeTop3Hit(top3, resultSource, resultMilhar) {
+00413:   if (!Array.isArray(top3) || !top3.length) {
+00414:     return {
+00415:       type: "none",
+00416:       score: 0,
+00417:       position: -1,
+00418:       predictionPosition: -1,
+00419:       resultPosition: -1,
+00420:       podiumMedal: "",
+00421:       matchedValue: "",
+00422:       matchedGrupo: null,
+00423:       matchedMilhar: "",
+00424:     };
+00425:   }
+00426: 
+00427:   const officialPodium = Array.isArray(resultSource)
+00428:     ? resultSource.filter(Boolean).slice(0, 3)
+00429:     : [
+00430:         {
+00431:           position: 1,
+00432:           grupo: Number(resultSource),
+00433:           milhar: normalizeMilharStr(resultMilhar),
+00434:         },
+
+ARQUIVO: .\src\pages\Top3\Top3View.jsx
+LINHA: 448
+00440:       );
+00441: 
+00442:   if (!officialPodium.length) {
+00443:     return {
+00444:       type: "none",
+00445:       score: 0,
+00446:       position: -1,
+00447:       predictionPosition: -1,
+00448:       resultPosition: -1,
+00449:       podiumMedal: "",
+00450:       matchedValue: "",
+00451:       matchedGrupo: null,
+00452:       matchedMilhar: "",
+00453:     };
+00454:   }
+00455: 
+00456:   for (const officialPrize of officialPodium) {
+00457:     const grupoNum = Number(officialPrize?.grupo);
+00458:     const milhar = normalizeMilharStr(
+00459:       officialPrize?.milhar
+00460:     );
+00461: 
+00462:     const centena = milhar
+00463:       ? milhar.slice(-3)
+
+ARQUIVO: .\src\pages\Top3\Top3View.jsx
+LINHA: 531
+00523:         grupo === grupoNum
+00524:       ) {
+00525:         type = "hit_grupo";
+00526:         score = 33.33;
+00527:         matchedValue = formatGrupo(grupoNum);
+00528:       }
+00529: 
+00530:       if (type !== "miss") {
+00531:         const resultPosition = Number(
+00532:           officialPrize?.position
+00533:         );
+00534: 
+00535:         return {
+00536:           type,
+00537:           score,
+00538:           position: predictionIndex + 1,
+00539:           predictionPosition: predictionIndex + 1,
+00540:           resultPosition,
+00541:           podiumMedal:
+00542:             podiumMedalFromPosition(resultPosition),
+00543:           matchedValue,
+00544:           matchedGrupo: grupoNum,
+00545:           matchedMilhar: milhar,
+00546:         };
+
+ARQUIVO: .\src\pages\Top3\Top3View.jsx
+LINHA: 540
+00532:           officialPrize?.position
+00533:         );
+00534: 
+00535:         return {
+00536:           type,
+00537:           score,
+00538:           position: predictionIndex + 1,
+00539:           predictionPosition: predictionIndex + 1,
+00540:           resultPosition,
+00541:           podiumMedal:
+00542:             podiumMedalFromPosition(resultPosition),
+00543:           matchedValue,
+00544:           matchedGrupo: grupoNum,
+00545:           matchedMilhar: milhar,
+00546:         };
+00547:       }
+00548:     }
+00549:   }
+00550: 
+00551:   return {
+00552:     type: "miss",
+00553:     score: 0,
+00554:     position: -1,
+00555:     predictionPosition: -1,
+
+ARQUIVO: .\src\pages\Top3\Top3View.jsx
+LINHA: 542
+00534: 
+00535:         return {
+00536:           type,
+00537:           score,
+00538:           position: predictionIndex + 1,
+00539:           predictionPosition: predictionIndex + 1,
+00540:           resultPosition,
+00541:           podiumMedal:
+00542:             podiumMedalFromPosition(resultPosition),
+00543:           matchedValue,
+00544:           matchedGrupo: grupoNum,
+00545:           matchedMilhar: milhar,
+00546:         };
+00547:       }
+00548:     }
+00549:   }
+00550: 
+00551:   return {
+00552:     type: "miss",
+00553:     score: 0,
+00554:     position: -1,
+00555:     predictionPosition: -1,
+00556:     resultPosition: -1,
+00557:     podiumMedal: "",
+
+ARQUIVO: .\src\pages\Top3\Top3View.jsx
+LINHA: 556
+00548:     }
+00549:   }
+00550: 
+00551:   return {
+00552:     type: "miss",
+00553:     score: 0,
+00554:     position: -1,
+00555:     predictionPosition: -1,
+00556:     resultPosition: -1,
+00557:     podiumMedal: "",
+00558:     matchedValue: "",
+00559:     matchedGrupo: null,
+00560:     matchedMilhar: "",
+00561:   };
+00562: }
+00563: 
+00564: function ImgWithFallback({ srcs, alt, size = 84, style }) {
+00565:   const list = useMemo(
+00566:     () => (Array.isArray(srcs) ? srcs.filter(Boolean) : []),
+00567:     [srcs]
+00568:   );
+00569: 
+00570:   const [i, setI] = useState(0);
+00571:   const listKey = useMemo(() => list.join("|"), [list]);
+
+ARQUIVO: .\src\pages\Top3\Top3View.jsx
+LINHA: 1269
+01261:   const resultMilhar = extractResultMilhar(slot);
+01262: 
+01263:   const matchedPredictionIndex =
+01264:     Number.isFinite(Number(analysis?.position)) &&
+01265:     Number(analysis.position) >= 1
+01266:       ? Number(analysis.position) - 1
+01267:       : -1;
+01268: 
+01269:   const resultPosition = Number(
+01270:     analysis?.resultPosition
+01271:   );
+01272: 
+01273:   const medal =
+01274:     status !== "hit"
+01275:       ? ""
+01276:       : resultPosition === 1
+01277:         ? "🥇"
+01278:         : resultPosition === 2
+01279:           ? "🥈"
+01280:           : resultPosition === 3
+01281:             ? "🥉"
+01282:             : "";
+01283: 
+01284:   const dateLabel = formatYmdHour(
+
+ARQUIVO: .\src\pages\Top3\Top3View.jsx
+LINHA: 1270
+01262: 
+01263:   const matchedPredictionIndex =
+01264:     Number.isFinite(Number(analysis?.position)) &&
+01265:     Number(analysis.position) >= 1
+01266:       ? Number(analysis.position) - 1
+01267:       : -1;
+01268: 
+01269:   const resultPosition = Number(
+01270:     analysis?.resultPosition
+01271:   );
+01272: 
+01273:   const medal =
+01274:     status !== "hit"
+01275:       ? ""
+01276:       : resultPosition === 1
+01277:         ? "🥇"
+01278:         : resultPosition === 2
+01279:           ? "🥈"
+01280:           : resultPosition === 3
+01281:             ? "🥉"
+01282:             : "";
+01283: 
+01284:   const dateLabel = formatYmdHour(
+01285:     slot?.targetYmd,
+
+ARQUIVO: .\src\pages\Top3\Top3View.jsx
+LINHA: 1276
+01268: 
+01269:   const resultPosition = Number(
+01270:     analysis?.resultPosition
+01271:   );
+01272: 
+01273:   const medal =
+01274:     status !== "hit"
+01275:       ? ""
+01276:       : resultPosition === 1
+01277:         ? "🥇"
+01278:         : resultPosition === 2
+01279:           ? "🥈"
+01280:           : resultPosition === 3
+01281:             ? "🥉"
+01282:             : "";
+01283: 
+01284:   const dateLabel = formatYmdHour(
+01285:     slot?.targetYmd,
+01286:     slot?.targetHour
+01287:   );
+01288: 
+01289:   return (
+01290:     <div
+01291:       className="timeline-compact"
+
+ARQUIVO: .\src\pages\Top3\Top3View.jsx
+LINHA: 1278
+01270:     analysis?.resultPosition
+01271:   );
+01272: 
+01273:   const medal =
+01274:     status !== "hit"
+01275:       ? ""
+01276:       : resultPosition === 1
+01277:         ? "🥇"
+01278:         : resultPosition === 2
+01279:           ? "🥈"
+01280:           : resultPosition === 3
+01281:             ? "🥉"
+01282:             : "";
+01283: 
+01284:   const dateLabel = formatYmdHour(
+01285:     slot?.targetYmd,
+01286:     slot?.targetHour
+01287:   );
+01288: 
+01289:   return (
+01290:     <div
+01291:       className="timeline-compact"
+01292:       title={statusDetail || statusLabel || ""}
+01293:       style={{
+
+ARQUIVO: .\src\pages\Top3\Top3View.jsx
+LINHA: 1280
+01272: 
+01273:   const medal =
+01274:     status !== "hit"
+01275:       ? ""
+01276:       : resultPosition === 1
+01277:         ? "🥇"
+01278:         : resultPosition === 2
+01279:           ? "🥈"
+01280:           : resultPosition === 3
+01281:             ? "🥉"
+01282:             : "";
+01283: 
+01284:   const dateLabel = formatYmdHour(
+01285:     slot?.targetYmd,
+01286:     slot?.targetHour
+01287:   );
+01288: 
+01289:   return (
+01290:     <div
+01291:       className="timeline-compact"
+01292:       title={statusDetail || statusLabel || ""}
+01293:       style={{
+01294:         width: "100%",
+01295:         overflowX: "auto",
+
+ARQUIVO: .\src\pages\Top3\Top3View.jsx
+LINHA: 1902
+01894:           hitPosition: Number(
+01895:             entry?.hitPosition ?? -1
+01896:           ),
+01897:           predictionPosition: Number(
+01898:             entry?.predictionPosition ??
+01899:               entry?.hitPosition ??
+01900:               -1
+01901:           ),
+01902:           resultPosition: Number(
+01903:             entry?.resultPosition ?? -1
+01904:           ),
+01905:           podiumMedal: String(
+01906:             entry?.podiumMedal || ""
+01907:           ),
+01908:           resultTop3Groups: Array.isArray(
+01909:             entry?.resultTop3Groups
+01910:           )
+01911:             ? entry.resultTop3Groups
+01912:             : [],
+01913:           resultTop3Milhares: Array.isArray(
+01914:             entry?.resultTop3Milhares
+01915:           )
+01916:             ? entry.resultTop3Milhares
+01917:             : [],
+
+ARQUIVO: .\src\pages\Top3\Top3View.jsx
+LINHA: 1903
+01895:             entry?.hitPosition ?? -1
+01896:           ),
+01897:           predictionPosition: Number(
+01898:             entry?.predictionPosition ??
+01899:               entry?.hitPosition ??
+01900:               -1
+01901:           ),
+01902:           resultPosition: Number(
+01903:             entry?.resultPosition ?? -1
+01904:           ),
+01905:           podiumMedal: String(
+01906:             entry?.podiumMedal || ""
+01907:           ),
+01908:           resultTop3Groups: Array.isArray(
+01909:             entry?.resultTop3Groups
+01910:           )
+01911:             ? entry.resultTop3Groups
+01912:             : [],
+01913:           resultTop3Milhares: Array.isArray(
+01914:             entry?.resultTop3Milhares
+01915:           )
+01916:             ? entry.resultTop3Milhares
+01917:             : [],
+01918:           matchedGrupo: Number(
+
+ARQUIVO: .\src\pages\Top3\Top3View.jsx
+LINHA: 1935
+01927:             position: Number(
+01928:               entry?.hitPosition ?? -1
+01929:             ),
+01930:             predictionPosition: Number(
+01931:               entry?.predictionPosition ??
+01932:                 entry?.hitPosition ??
+01933:                 -1
+01934:             ),
+01935:             resultPosition: Number(
+01936:               entry?.resultPosition ?? -1
+01937:             ),
+01938:             podiumMedal: String(
+01939:               entry?.podiumMedal || ""
+01940:             ),
+01941:             matchedValue: String(
+01942:               entry?.matchedValue || ""
+01943:             ),
+01944:             matchedGrupo: Number(
+01945:               entry?.matchedGrupo ?? NaN
+01946:             ),
+01947:             matchedMilhar: normalizeMilharStr(
+01948:               entry?.matchedMilhar || ""
+01949:             ),
+01950:           },
+
+ARQUIVO: .\src\pages\Top3\Top3View.jsx
+LINHA: 1936
+01928:               entry?.hitPosition ?? -1
+01929:             ),
+01930:             predictionPosition: Number(
+01931:               entry?.predictionPosition ??
+01932:                 entry?.hitPosition ??
+01933:                 -1
+01934:             ),
+01935:             resultPosition: Number(
+01936:               entry?.resultPosition ?? -1
+01937:             ),
+01938:             podiumMedal: String(
+01939:               entry?.podiumMedal || ""
+01940:             ),
+01941:             matchedValue: String(
+01942:               entry?.matchedValue || ""
+01943:             ),
+01944:             matchedGrupo: Number(
+01945:               entry?.matchedGrupo ?? NaN
+01946:             ),
+01947:             matchedMilhar: normalizeMilharStr(
+01948:               entry?.matchedMilhar || ""
+01949:             ),
+01950:           },
+01951:         };
+
+ARQUIVO: .\src\pages\Top3\Top3View.jsx
+LINHA: 3913
+03905:                 const matchedPredictionIndex =
+03906:                   Number.isFinite(
+03907:                     predictionPosition
+03908:                   ) &&
+03909:                   predictionPosition >= 1
+03910:                     ? predictionPosition - 1
+03911:                     : -1;
+03912: 
+03913:                 const resultPosition = Number(
+03914:                   analysis?.resultPosition ??
+03915:                     item?.resultPosition ??
+03916:                     -1
+03917:                 );
+03918: 
+03919:                 const hitType = String(
+03920:                   analysis?.type ??
+03921:                     analysis?.hitType ??
+03922:                     item?.hitType ??
+03923:                     ""
+03924:                 )
+03925:                   .trim()
+03926:                   .toLowerCase();
+03927: 
+03928:                 const isHit =
+
+ARQUIVO: .\src\pages\Top3\Top3View.jsx
+LINHA: 3914
+03906:                   Number.isFinite(
+03907:                     predictionPosition
+03908:                   ) &&
+03909:                   predictionPosition >= 1
+03910:                     ? predictionPosition - 1
+03911:                     : -1;
+03912: 
+03913:                 const resultPosition = Number(
+03914:                   analysis?.resultPosition ??
+03915:                     item?.resultPosition ??
+03916:                     -1
+03917:                 );
+03918: 
+03919:                 const hitType = String(
+03920:                   analysis?.type ??
+03921:                     analysis?.hitType ??
+03922:                     item?.hitType ??
+03923:                     ""
+03924:                 )
+03925:                   .trim()
+03926:                   .toLowerCase();
+03927: 
+03928:                 const isHit =
+03929:                   hasResult &&
+
+ARQUIVO: .\src\pages\Top3\Top3View.jsx
+LINHA: 3915
+03907:                     predictionPosition
+03908:                   ) &&
+03909:                   predictionPosition >= 1
+03910:                     ? predictionPosition - 1
+03911:                     : -1;
+03912: 
+03913:                 const resultPosition = Number(
+03914:                   analysis?.resultPosition ??
+03915:                     item?.resultPosition ??
+03916:                     -1
+03917:                 );
+03918: 
+03919:                 const hitType = String(
+03920:                   analysis?.type ??
+03921:                     analysis?.hitType ??
+03922:                     item?.hitType ??
+03923:                     ""
+03924:                 )
+03925:                   .trim()
+03926:                   .toLowerCase();
+03927: 
+03928:                 const isHit =
+03929:                   hasResult &&
+03930:                   matchedPredictionIndex >= 0;
+
+ARQUIVO: .\src\pages\Top3\Top3View.jsx
+LINHA: 3933
+03925:                   .trim()
+03926:                   .toLowerCase();
+03927: 
+03928:                 const isHit =
+03929:                   hasResult &&
+03930:                   matchedPredictionIndex >= 0;
+03931: 
+03932:                 const medal =
+03933:                   resultPosition === 1
+03934:                     ? "🥇"
+03935:                     : resultPosition === 2
+03936:                       ? "🥈"
+03937:                       : resultPosition === 3
+03938:                         ? "🥉"
+03939:                         : "";
+03940: 
+03941:                 const prizeColor =
+03942:                   resultPosition === 1
+03943:                     ? "#d4af37"
+03944:                     : resultPosition === 2
+03945:                       ? "#c0c0c0"
+03946:                       : resultPosition === 3
+03947:                         ? "#cd7f32"
+03948:                         : "#d4af37";
+
+ARQUIVO: .\src\pages\Top3\Top3View.jsx
+LINHA: 3935
+03927: 
+03928:                 const isHit =
+03929:                   hasResult &&
+03930:                   matchedPredictionIndex >= 0;
+03931: 
+03932:                 const medal =
+03933:                   resultPosition === 1
+03934:                     ? "🥇"
+03935:                     : resultPosition === 2
+03936:                       ? "🥈"
+03937:                       : resultPosition === 3
+03938:                         ? "🥉"
+03939:                         : "";
+03940: 
+03941:                 const prizeColor =
+03942:                   resultPosition === 1
+03943:                     ? "#d4af37"
+03944:                     : resultPosition === 2
+03945:                       ? "#c0c0c0"
+03946:                       : resultPosition === 3
+03947:                         ? "#cd7f32"
+03948:                         : "#d4af37";
+03949: 
+03950:                 const prizeGlow =
+
+ARQUIVO: .\src\pages\Top3\Top3View.jsx
+LINHA: 3937
+03929:                   hasResult &&
+03930:                   matchedPredictionIndex >= 0;
+03931: 
+03932:                 const medal =
+03933:                   resultPosition === 1
+03934:                     ? "🥇"
+03935:                     : resultPosition === 2
+03936:                       ? "🥈"
+03937:                       : resultPosition === 3
+03938:                         ? "🥉"
+03939:                         : "";
+03940: 
+03941:                 const prizeColor =
+03942:                   resultPosition === 1
+03943:                     ? "#d4af37"
+03944:                     : resultPosition === 2
+03945:                       ? "#c0c0c0"
+03946:                       : resultPosition === 3
+03947:                         ? "#cd7f32"
+03948:                         : "#d4af37";
+03949: 
+03950:                 const prizeGlow =
+03951:                   resultPosition === 1
+03952:                     ? "rgba(212,175,55,0.58)"
+
+ARQUIVO: .\src\pages\Top3\Top3View.jsx
+LINHA: 3942
+03934:                     ? "🥇"
+03935:                     : resultPosition === 2
+03936:                       ? "🥈"
+03937:                       : resultPosition === 3
+03938:                         ? "🥉"
+03939:                         : "";
+03940: 
+03941:                 const prizeColor =
+03942:                   resultPosition === 1
+03943:                     ? "#d4af37"
+03944:                     : resultPosition === 2
+03945:                       ? "#c0c0c0"
+03946:                       : resultPosition === 3
+03947:                         ? "#cd7f32"
+03948:                         : "#d4af37";
+03949: 
+03950:                 const prizeGlow =
+03951:                   resultPosition === 1
+03952:                     ? "rgba(212,175,55,0.58)"
+03953:                     : resultPosition === 2
+03954:                       ? "rgba(192,192,192,0.46)"
+03955:                       : resultPosition === 3
+03956:                         ? "rgba(205,127,50,0.50)"
+03957:                         : "rgba(212,175,55,0.38)";
+
+ARQUIVO: .\src\pages\Top3\Top3View.jsx
+LINHA: 3944
+03936:                       ? "🥈"
+03937:                       : resultPosition === 3
+03938:                         ? "🥉"
+03939:                         : "";
+03940: 
+03941:                 const prizeColor =
+03942:                   resultPosition === 1
+03943:                     ? "#d4af37"
+03944:                     : resultPosition === 2
+03945:                       ? "#c0c0c0"
+03946:                       : resultPosition === 3
+03947:                         ? "#cd7f32"
+03948:                         : "#d4af37";
+03949: 
+03950:                 const prizeGlow =
+03951:                   resultPosition === 1
+03952:                     ? "rgba(212,175,55,0.58)"
+03953:                     : resultPosition === 2
+03954:                       ? "rgba(192,192,192,0.46)"
+03955:                       : resultPosition === 3
+03956:                         ? "rgba(205,127,50,0.50)"
+03957:                         : "rgba(212,175,55,0.38)";
+03958: 
+03959: 
+
+ARQUIVO: .\src\pages\Top3\Top3View.jsx
+LINHA: 3946
+03938:                         ? "🥉"
+03939:                         : "";
+03940: 
+03941:                 const prizeColor =
+03942:                   resultPosition === 1
+03943:                     ? "#d4af37"
+03944:                     : resultPosition === 2
+03945:                       ? "#c0c0c0"
+03946:                       : resultPosition === 3
+03947:                         ? "#cd7f32"
+03948:                         : "#d4af37";
+03949: 
+03950:                 const prizeGlow =
+03951:                   resultPosition === 1
+03952:                     ? "rgba(212,175,55,0.58)"
+03953:                     : resultPosition === 2
+03954:                       ? "rgba(192,192,192,0.46)"
+03955:                       : resultPosition === 3
+03956:                         ? "rgba(205,127,50,0.50)"
+03957:                         : "rgba(212,175,55,0.38)";
+03958: 
+03959: 
+03960:                 const matchedOfficialIndex =
+03961:                   resultPosition >= 1 &&
+
+ARQUIVO: .\src\pages\Top3\Top3View.jsx
+LINHA: 3951
+03943:                     ? "#d4af37"
+03944:                     : resultPosition === 2
+03945:                       ? "#c0c0c0"
+03946:                       : resultPosition === 3
+03947:                         ? "#cd7f32"
+03948:                         : "#d4af37";
+03949: 
+03950:                 const prizeGlow =
+03951:                   resultPosition === 1
+03952:                     ? "rgba(212,175,55,0.58)"
+03953:                     : resultPosition === 2
+03954:                       ? "rgba(192,192,192,0.46)"
+03955:                       : resultPosition === 3
+03956:                         ? "rgba(205,127,50,0.50)"
+03957:                         : "rgba(212,175,55,0.38)";
+03958: 
+03959: 
+03960:                 const matchedOfficialIndex =
+03961:                   resultPosition >= 1 &&
+03962:                   resultPosition <= 3
+03963:                     ? resultPosition - 1
+03964:                     : -1;
+03965: 
+03966:                 const officialMatchedGrupoRaw =
+
+ARQUIVO: .\src\pages\Top3\Top3View.jsx
+LINHA: 3953
+03945:                       ? "#c0c0c0"
+03946:                       : resultPosition === 3
+03947:                         ? "#cd7f32"
+03948:                         : "#d4af37";
+03949: 
+03950:                 const prizeGlow =
+03951:                   resultPosition === 1
+03952:                     ? "rgba(212,175,55,0.58)"
+03953:                     : resultPosition === 2
+03954:                       ? "rgba(192,192,192,0.46)"
+03955:                       : resultPosition === 3
+03956:                         ? "rgba(205,127,50,0.50)"
+03957:                         : "rgba(212,175,55,0.38)";
+03958: 
+03959: 
+03960:                 const matchedOfficialIndex =
+03961:                   resultPosition >= 1 &&
+03962:                   resultPosition <= 3
+03963:                     ? resultPosition - 1
+03964:                     : -1;
+03965: 
+03966:                 const officialMatchedGrupoRaw =
+03967:                   matchedOfficialIndex >= 0
+03968:                     ? Number(
+
+ARQUIVO: .\src\pages\Top3\Top3View.jsx
+LINHA: 3955
+03947:                         ? "#cd7f32"
+03948:                         : "#d4af37";
+03949: 
+03950:                 const prizeGlow =
+03951:                   resultPosition === 1
+03952:                     ? "rgba(212,175,55,0.58)"
+03953:                     : resultPosition === 2
+03954:                       ? "rgba(192,192,192,0.46)"
+03955:                       : resultPosition === 3
+03956:                         ? "rgba(205,127,50,0.50)"
+03957:                         : "rgba(212,175,55,0.38)";
+03958: 
+03959: 
+03960:                 const matchedOfficialIndex =
+03961:                   resultPosition >= 1 &&
+03962:                   resultPosition <= 3
+03963:                     ? resultPosition - 1
+03964:                     : -1;
+03965: 
+03966:                 const officialMatchedGrupoRaw =
+03967:                   matchedOfficialIndex >= 0
+03968:                     ? Number(
+03969:                         item?.resultTop3Groups?.[
+03970:                           matchedOfficialIndex
+
+ARQUIVO: .\src\pages\Top3\Top3View.jsx
+LINHA: 3961
+03953:                     : resultPosition === 2
+03954:                       ? "rgba(192,192,192,0.46)"
+03955:                       : resultPosition === 3
+03956:                         ? "rgba(205,127,50,0.50)"
+03957:                         : "rgba(212,175,55,0.38)";
+03958: 
+03959: 
+03960:                 const matchedOfficialIndex =
+03961:                   resultPosition >= 1 &&
+03962:                   resultPosition <= 3
+03963:                     ? resultPosition - 1
+03964:                     : -1;
+03965: 
+03966:                 const officialMatchedGrupoRaw =
+03967:                   matchedOfficialIndex >= 0
+03968:                     ? Number(
+03969:                         item?.resultTop3Groups?.[
+03970:                           matchedOfficialIndex
+03971:                         ] ??
+03972:                           item?.matchedGrupo ??
+03973:                           analysis?.matchedGrupo ??
+03974:                           NaN
+03975:                       )
+03976:                     : NaN;
+
+ARQUIVO: .\src\pages\Top3\Top3View.jsx
+LINHA: 3962
+03954:                       ? "rgba(192,192,192,0.46)"
+03955:                       : resultPosition === 3
+03956:                         ? "rgba(205,127,50,0.50)"
+03957:                         : "rgba(212,175,55,0.38)";
+03958: 
+03959: 
+03960:                 const matchedOfficialIndex =
+03961:                   resultPosition >= 1 &&
+03962:                   resultPosition <= 3
+03963:                     ? resultPosition - 1
+03964:                     : -1;
+03965: 
+03966:                 const officialMatchedGrupoRaw =
+03967:                   matchedOfficialIndex >= 0
+03968:                     ? Number(
+03969:                         item?.resultTop3Groups?.[
+03970:                           matchedOfficialIndex
+03971:                         ] ??
+03972:                           item?.matchedGrupo ??
+03973:                           analysis?.matchedGrupo ??
+03974:                           NaN
+03975:                       )
+03976:                     : NaN;
+03977: 
+
+ARQUIVO: .\src\pages\Top3\Top3View.jsx
+LINHA: 3963
+03955:                       : resultPosition === 3
+03956:                         ? "rgba(205,127,50,0.50)"
+03957:                         : "rgba(212,175,55,0.38)";
+03958: 
+03959: 
+03960:                 const matchedOfficialIndex =
+03961:                   resultPosition >= 1 &&
+03962:                   resultPosition <= 3
+03963:                     ? resultPosition - 1
+03964:                     : -1;
+03965: 
+03966:                 const officialMatchedGrupoRaw =
+03967:                   matchedOfficialIndex >= 0
+03968:                     ? Number(
+03969:                         item?.resultTop3Groups?.[
+03970:                           matchedOfficialIndex
+03971:                         ] ??
+03972:                           item?.matchedGrupo ??
+03973:                           analysis?.matchedGrupo ??
+03974:                           NaN
+03975:                       )
+03976:                     : NaN;
+03977: 
+03978:                 const officialMatchedGrupo =
+
+ARQUIVO: .\src\pages\Top3\Top3View.jsx
+LINHA: 4004
+03996:                 const persistedMatchedMilhar =
+03997:                   normalizeMilharStr(
+03998:                     item?.matchedMilhar ||
+03999:                       analysis?.matchedMilhar ||
+04000:                       ""
+04001:                   );
+04002: 
+04003:                 const firstPrizeMilhar =
+04004:                   resultPosition === 1
+04005:                     ? normalizeMilharStr(
+04006:                         resultMilhar || ""
+04007:                       )
+04008:                     : "";
+04009: 
+04010:                 const officialMatchedMilhar =
+04011:                   officialTop3Milhar ||
+04012:                   persistedMatchedMilhar ||
+04013:                   firstPrizeMilhar;
+04014: 
+04015:                 const hasOfficialMilhar =
+04016:                   /^\d{4}$/.test(
+04017:                     officialMatchedMilhar
+04018:                   );
+04019: 
+
+ARQUIVO: .\src\pages\Top3\Top3View.jsx
+LINHA: 4412
+04404:                                     ? [resultImg]
+04405:                                     : []
+04406:                                 }
+04407:                                 alt={
+04408:                                   resultAnimal
+04409:                                 }
+04410:                                 size={
+04411:                                   isHit &&
+04412:                                   resultPosition === 1
+04413:                                     ? 58
+04414:                                     : 48
+04415:                                 }
+04416:                                 style={{
+04417:                                   borderRadius: 10,
+04418:                                   border:
+04419:                                     "1px solid rgba(201,168,62,0.36)",
+04420:                                   boxShadow:
+04421:                                     "none",
+04422:                                 }}
+04423:                               />
+04424: 
+04425: 
+04426:                             </div>
+04427: 
+
+--------------------------------------------------------------------------------
+PADRÃO: getSlotResult
+--------------------------------------------------------------------------------
+
+ARQUIVO: .\src\pages\Top3\Top3View.jsx
+LINHA: 375
+00367:   const noSamples = raw
+00368:     .replace(/\s*[•\-|]\s*Amostras:\s*\d+\s*$/i, "")
+00369:     .replace(/\s*Amostras:\s*\d+\s*$/i, "")
+00370:     .trim();
+00371: 
+00372:   return noSamples || "—";

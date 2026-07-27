@@ -1,0 +1,954 @@
+
+==================================================
+Arquivo : C:\Users\glaub\palpitaco\src\pages\Centenas\modules\milharProbabilityEngine.js
+Linha   : 333
+Busca   : chooseBestMilhar
+Código  : export function chooseBestMilhar(args = {}) {
+
+==================================================
+Arquivo : C:\Users\glaub\palpitaco\src\pages\Centenas\modules\milharProbabilityEngine.js
+Linha   : 396
+Busca   : chooseBestMilhar
+Código  : const result = chooseBestMilhar(args);
+
+==================================================
+Arquivo : C:\Users\glaub\palpitaco\src\pages\Centenas\modules\milharProbabilityEngine.js
+Linha   : 674
+Busca   : chooseBestMilhar
+Código  : const result = chooseBestMilhar(args);
+
+==================================================
+Arquivo : C:\Users\glaub\palpitaco\src\pages\TernoGrupo\__tests__\top3.public-api.node.test.js
+Linha   : 12
+Busca   : buildMilharesForGrupo
+Código  : "buildMilharesForGrupo",
+
+==================================================
+Arquivo : C:\Users\glaub\palpitaco\src\pages\TernoGrupo\__tests__\top3.public-api.node.test.js
+Linha   : 9
+Busca   : build20MilharesForGrupo
+Código  : "build20MilharesForGrupo",
+
+==================================================
+Arquivo : C:\Users\glaub\palpitaco\src\pages\TernoGrupo\modules\ternoGrupo.prediction.js
+Linha   : 68
+Busca   : milharesCols
+Código  : const milharesCols =
+
+==================================================
+Arquivo : C:\Users\glaub\palpitaco\src\pages\TernoGrupo\modules\ternoGrupo.prediction.js
+Linha   : 73
+Busca   : milharesCols
+Código  : const milhares20 = milharesCols
+
+==================================================
+Arquivo : C:\Users\glaub\palpitaco\src\pages\TernoGrupo\modules\ternoGrupo.prediction.js
+Linha   : 102
+Busca   : milharesCols
+Código  : milharesCols,
+
+==================================================
+Arquivo : C:\Users\glaub\palpitaco\src\pages\TernoGrupo\modules\top3.prediction.js
+Linha   : 50
+Busca   : milharesCols
+Código  : const milharesCols = build4ColsFromEngineOut(out, 4, 5);
+
+==================================================
+Arquivo : C:\Users\glaub\palpitaco\src\pages\TernoGrupo\modules\top3.prediction.js
+Linha   : 51
+Busca   : milharesCols
+Código  : const milhares20 = milharesCols.flatMap((c) => c.items).slice(0, 20);
+
+==================================================
+Arquivo : C:\Users\glaub\palpitaco\src\pages\TernoGrupo\modules\top3.prediction.js
+Linha   : 67
+Busca   : milharesCols
+Código  : milharesCols,
+
+==================================================
+Arquivo : C:\Users\glaub\palpitaco\src\pages\TernoGrupo\modules\top3.timeline.js
+Linha   : 11
+Busca   : buildMilharesForGrupo
+Código  : buildMilharesForGrupo,
+
+==================================================
+Arquivo : C:\Users\glaub\palpitaco\src\pages\TernoGrupo\modules\top3.timeline.js
+Linha   : 203
+Busca   : buildMilharesForGrupo
+Código  : out = buildMilharesForGrupo({
+
+==================================================
+Arquivo : C:\Users\glaub\palpitaco\src\pages\TernoGrupo\modules\top3.timeline.js
+Linha   : 221
+Busca   : milharesCols
+Código  : const milharesCols = build4ColsFromEngineOut(out, 4, 5);
+
+==================================================
+Arquivo : C:\Users\glaub\palpitaco\src\pages\TernoGrupo\modules\top3.timeline.js
+Linha   : 222
+Busca   : milharesCols
+Código  : const milhares20 = milharesCols.flatMap((c) => c.items).slice(0, 20);
+
+==================================================
+Arquivo : C:\Users\glaub\palpitaco\src\pages\TernoGrupo\modules\top3.timeline.js
+Linha   : 239
+Busca   : milharesCols
+Código  : milharesCols,
+
+==================================================
+Arquivo : C:\Users\glaub\palpitaco\src\pages\TernoGrupo\modules\top3.timeline.js
+Linha   : 214
+Busca   : count: 20
+Código  : count: 20,
+
+==================================================
+Arquivo : C:\Users\glaub\palpitaco\src\pages\TernoGrupo\modules\top3.viewmodel.js
+Linha   : 2
+Busca   : buildMilharesForGrupo
+Código  : import { buildMilharesForGrupo } from "../top3.engine";
+
+==================================================
+Arquivo : C:\Users\glaub\palpitaco\src\pages\TernoGrupo\modules\top3.viewmodel.js
+Linha   : 126
+Busca   : buildMilharesForGrupo
+Código  : out = buildMilharesForGrupo({
+
+==================================================
+Arquivo : C:\Users\glaub\palpitaco\src\pages\TernoGrupo\modules\top3.viewmodel.js
+Linha   : 22
+Busca   : milharesCols
+Código  : export function buildTop3MilharesCols(out, expectedCols = 4, perCol = 5) {
+
+==================================================
+Arquivo : C:\Users\glaub\palpitaco\src\pages\TernoGrupo\modules\top3.viewmodel.js
+Linha   : 138
+Busca   : milharesCols
+Código  : const milharesCols = buildTop3MilharesCols(out, 4, 5);
+
+==================================================
+Arquivo : C:\Users\glaub\palpitaco\src\pages\TernoGrupo\modules\top3.viewmodel.js
+Linha   : 139
+Busca   : milharesCols
+Código  : const milhares20 = milharesCols.flatMap((c) => c.items).slice(0, 20);
+
+==================================================
+Arquivo : C:\Users\glaub\palpitaco\src\pages\TernoGrupo\modules\top3.viewmodel.js
+Linha   : 156
+Busca   : milharesCols
+Código  : milharesCols,
+
+==================================================
+Arquivo : C:\Users\glaub\palpitaco\src\pages\TernoGrupo\modules\top3.viewmodel.js
+Linha   : 131
+Busca   : count: 20
+Código  : count: 20,
+
+==================================================
+Arquivo : C:\Users\glaub\palpitaco\src\pages\TernoGrupo\top3.engine.before-history-stats-20260710_111832.js
+Linha   : 3688
+Busca   : pickDiversifiedMilharesForDezena
+Código  : function pickDiversifiedMilharesForDezena(dz, limit) {
+
+==================================================
+Arquivo : C:\Users\glaub\palpitaco\src\pages\TernoGrupo\top3.engine.before-history-stats-20260710_111832.js
+Linha   : 3793
+Busca   : pickDiversifiedMilharesForDezena
+Código  : const items = pickDiversifiedMilharesForDezena(dz, perDezena);
+
+==================================================
+Arquivo : C:\Users\glaub\palpitaco\src\pages\TernoGrupo\top3.engine.before-history-stats-20260710_111832.js
+Linha   : 3512
+Busca   : buildMilharesForGrupo
+Código  : export function buildMilharesForGrupo({
+
+==================================================
+Arquivo : C:\Users\glaub\palpitaco\src\pages\TernoGrupo\top3.engine.before-history-stats-20260710_111832.js
+Linha   : 3827
+Busca   : buildMilharesForGrupo
+Código  : return buildMilharesForGrupo({ ...(args || {}), count: 16 });
+
+==================================================
+Arquivo : C:\Users\glaub\palpitaco\src\pages\TernoGrupo\top3.engine.before-history-stats-20260710_111832.js
+Linha   : 3831
+Busca   : buildMilharesForGrupo
+Código  : return buildMilharesForGrupo({ ...(args || {}), count: 20 });
+
+==================================================
+Arquivo : C:\Users\glaub\palpitaco\src\pages\TernoGrupo\top3.engine.before-history-stats-20260710_111832.js
+Linha   : 3830
+Busca   : build20MilharesForGrupo
+Código  : export function build20MilharesForGrupo(args) {
+
+==================================================
+Arquivo : C:\Users\glaub\palpitaco\src\pages\TernoGrupo\top3.engine.before-history-stats-20260710_111832.js
+Linha   : 3539
+Busca   : perDezena
+Código  : const perDezena = Math.max(1, Math.ceil(N / dezenasFixas.length));
+
+==================================================
+Arquivo : C:\Users\glaub\palpitaco\src\pages\TernoGrupo\top3.engine.before-history-stats-20260710_111832.js
+Linha   : 3793
+Busca   : perDezena
+Código  : const items = pickDiversifiedMilharesForDezena(dz, perDezena);
+
+==================================================
+Arquivo : C:\Users\glaub\palpitaco\src\pages\TernoGrupo\top3.engine.before-history-stats-20260710_111832.js
+Linha   : 3815
+Busca   : perDezena
+Código  : while (pushed < perDezena) {
+
+==================================================
+Arquivo : C:\Users\glaub\palpitaco\src\pages\TernoGrupo\top3.engine.before-history-stats-20260710_111832.js
+Linha   : 3831
+Busca   : count: 20
+Código  : return buildMilharesForGrupo({ ...(args || {}), count: 20 });
+
+==================================================
+Arquivo : C:\Users\glaub\palpitaco\src\pages\TernoGrupo\top3.engine.before-history-stats-20260710_112326.js
+Linha   : 3688
+Busca   : pickDiversifiedMilharesForDezena
+Código  : function pickDiversifiedMilharesForDezena(dz, limit) {
+
+==================================================
+Arquivo : C:\Users\glaub\palpitaco\src\pages\TernoGrupo\top3.engine.before-history-stats-20260710_112326.js
+Linha   : 3793
+Busca   : pickDiversifiedMilharesForDezena
+Código  : const items = pickDiversifiedMilharesForDezena(dz, perDezena);
+
+==================================================
+Arquivo : C:\Users\glaub\palpitaco\src\pages\TernoGrupo\top3.engine.before-history-stats-20260710_112326.js
+Linha   : 3512
+Busca   : buildMilharesForGrupo
+Código  : export function buildMilharesForGrupo({
+
+==================================================
+Arquivo : C:\Users\glaub\palpitaco\src\pages\TernoGrupo\top3.engine.before-history-stats-20260710_112326.js
+Linha   : 3827
+Busca   : buildMilharesForGrupo
+Código  : return buildMilharesForGrupo({ ...(args || {}), count: 16 });
+
+==================================================
+Arquivo : C:\Users\glaub\palpitaco\src\pages\TernoGrupo\top3.engine.before-history-stats-20260710_112326.js
+Linha   : 3831
+Busca   : buildMilharesForGrupo
+Código  : return buildMilharesForGrupo({ ...(args || {}), count: 20 });
+
+==================================================
+Arquivo : C:\Users\glaub\palpitaco\src\pages\TernoGrupo\top3.engine.before-history-stats-20260710_112326.js
+Linha   : 3830
+Busca   : build20MilharesForGrupo
+Código  : export function build20MilharesForGrupo(args) {
+
+==================================================
+Arquivo : C:\Users\glaub\palpitaco\src\pages\TernoGrupo\top3.engine.before-history-stats-20260710_112326.js
+Linha   : 3539
+Busca   : perDezena
+Código  : const perDezena = Math.max(1, Math.ceil(N / dezenasFixas.length));
+
+==================================================
+Arquivo : C:\Users\glaub\palpitaco\src\pages\TernoGrupo\top3.engine.before-history-stats-20260710_112326.js
+Linha   : 3793
+Busca   : perDezena
+Código  : const items = pickDiversifiedMilharesForDezena(dz, perDezena);
+
+==================================================
+Arquivo : C:\Users\glaub\palpitaco\src\pages\TernoGrupo\top3.engine.before-history-stats-20260710_112326.js
+Linha   : 3815
+Busca   : perDezena
+Código  : while (pushed < perDezena) {
+
+==================================================
+Arquivo : C:\Users\glaub\palpitaco\src\pages\TernoGrupo\top3.engine.before-history-stats-20260710_112326.js
+Linha   : 3831
+Busca   : count: 20
+Código  : return buildMilharesForGrupo({ ...(args || {}), count: 20 });
+
+==================================================
+Arquivo : C:\Users\glaub\palpitaco\src\pages\TernoGrupo\top3.engine.js
+Linha   : 3849
+Busca   : pickDiversifiedMilharesForDezena
+Código  : function pickDiversifiedMilharesForDezena(dz, limit) {
+
+==================================================
+Arquivo : C:\Users\glaub\palpitaco\src\pages\TernoGrupo\top3.engine.js
+Linha   : 4005
+Busca   : pickDiversifiedMilharesForDezena
+Código  : const items = pickDiversifiedMilharesForDezena(dz, perDezena);
+
+==================================================
+Arquivo : C:\Users\glaub\palpitaco\src\pages\TernoGrupo\top3.engine.js
+Linha   : 21
+Busca   : chooseBestMilhar
+Código  : import { chooseBestMilhar } from "../../shared/predictiveMilharEngine";
+
+==================================================
+Arquivo : C:\Users\glaub\palpitaco\src\pages\TernoGrupo\top3.engine.js
+Linha   : 3799
+Busca   : chooseBestMilhar
+Código  : * O chooseBestMilhar escolhe somente o prefixo vencedor
+
+==================================================
+Arquivo : C:\Users\glaub\palpitaco\src\pages\TernoGrupo\top3.engine.js
+Linha   : 3943
+Busca   : chooseBestMilhar
+Código  : const sharedResult = chooseBestMilhar({
+
+==================================================
+Arquivo : C:\Users\glaub\palpitaco\src\pages\TernoGrupo\top3.engine.js
+Linha   : 3618
+Busca   : buildMilharesForGrupo
+Código  : export function buildMilharesForGrupo({
+
+==================================================
+Arquivo : C:\Users\glaub\palpitaco\src\pages\TernoGrupo\top3.engine.js
+Linha   : 4039
+Busca   : buildMilharesForGrupo
+Código  : return buildMilharesForGrupo({ ...(args || {}), count: 16 });
+
+==================================================
+Arquivo : C:\Users\glaub\palpitaco\src\pages\TernoGrupo\top3.engine.js
+Linha   : 4043
+Busca   : buildMilharesForGrupo
+Código  : return buildMilharesForGrupo({ ...(args || {}), count: 20 });
+
+==================================================
+Arquivo : C:\Users\glaub\palpitaco\src\pages\TernoGrupo\top3.engine.js
+Linha   : 4042
+Busca   : build20MilharesForGrupo
+Código  : export function build20MilharesForGrupo(args) {
+
+==================================================
+Arquivo : C:\Users\glaub\palpitaco\src\pages\TernoGrupo\top3.engine.js
+Linha   : 3645
+Busca   : perDezena
+Código  : const perDezena = Math.max(1, Math.ceil(N / dezenasFixas.length));
+
+==================================================
+Arquivo : C:\Users\glaub\palpitaco\src\pages\TernoGrupo\top3.engine.js
+Linha   : 4005
+Busca   : perDezena
+Código  : const items = pickDiversifiedMilharesForDezena(dz, perDezena);
+
+==================================================
+Arquivo : C:\Users\glaub\palpitaco\src\pages\TernoGrupo\top3.engine.js
+Linha   : 4027
+Busca   : perDezena
+Código  : while (pushed < perDezena) {
+
+==================================================
+Arquivo : C:\Users\glaub\palpitaco\src\pages\TernoGrupo\top3.engine.js
+Linha   : 4043
+Busca   : count: 20
+Código  : return buildMilharesForGrupo({ ...(args || {}), count: 20 });
+
+==================================================
+Arquivo : C:\Users\glaub\palpitaco\src\pages\TernoGrupo\top3.firestore.js
+Linha   : 129
+Busca   : milharesCols
+Código  : milharesCols: Array.isArray(item?.milharesCols)
+
+==================================================
+Arquivo : C:\Users\glaub\palpitaco\src\pages\TernoGrupo\top3.firestore.js
+Linha   : 130
+Busca   : milharesCols
+Código  : ? cleanFirestoreValue(item.milharesCols)
+
+==================================================
+Arquivo : C:\Users\glaub\palpitaco\src\pages\TernoGrupo\top3.hooks.js
+Linha   : 34
+Busca   : buildMilharesForGrupo
+Código  : buildMilharesForGrupo,
+
+==================================================
+Arquivo : C:\Users\glaub\palpitaco\src\pages\TernoGrupo\top3.hooks.js
+Linha   : 1231
+Busca   : buildMilharesForGrupo
+Código  : const generated = buildMilharesForGrupo({
+
+==================================================
+Arquivo : C:\Users\glaub\palpitaco\src\pages\TernoGrupo\top3.hooks.js
+Linha   : 73
+Busca   : milharesCols
+Código  : buildTop3MilharesCols,
+
+==================================================
+Arquivo : C:\Users\glaub\palpitaco\src\pages\TernoGrupo\top3.hooks.js
+Linha   : 293
+Busca   : milharesCols
+Código  : milharesCols: Array.isArray(item?.milharesCols)
+
+==================================================
+Arquivo : C:\Users\glaub\palpitaco\src\pages\TernoGrupo\top3.hooks.js
+Linha   : 294
+Busca   : milharesCols
+Código  : ? item.milharesCols
+
+==================================================
+Arquivo : C:\Users\glaub\palpitaco\src\pages\TernoGrupo\top3.hooks.js
+Linha   : 1315
+Busca   : milharesCols
+Código  : build4ColsFromEngineOut: buildTop3MilharesCols,
+
+==================================================
+Arquivo : C:\Users\glaub\palpitaco\src\pages\TernoGrupo\top3.hooks.js
+Linha   : 1436
+Busca   : milharesCols
+Código  : milharesCols: Array.isArray(item?.milharesCols)
+
+==================================================
+Arquivo : C:\Users\glaub\palpitaco\src\pages\TernoGrupo\top3.hooks.js
+Linha   : 1437
+Busca   : milharesCols
+Código  : ? item.milharesCols
+
+==================================================
+Arquivo : C:\Users\glaub\palpitaco\src\pages\TernoGrupo\top3.hooks.js
+Linha   : 1269
+Busca   : count: 20
+Código  : count: 20,
+
+==================================================
+Arquivo : C:\Users\glaub\palpitaco\src\pages\TernoGrupo\top3.public-api.js
+Linha   : 23
+Busca   : buildMilharesForGrupo
+Código  : buildMilharesForGrupo,
+
+==================================================
+Arquivo : C:\Users\glaub\palpitaco\src\pages\TernoGrupo\top3.public-api.js
+Linha   : 25
+Busca   : build20MilharesForGrupo
+Código  : build20MilharesForGrupo,
+
+==================================================
+Arquivo : C:\Users\glaub\palpitaco\src\pages\TernoGrupo\Top3View.jsx
+Linha   : 274
+Busca   : milharesCols
+Código  : function clampColsFromItemMilharesCols(milharesCols, expectedCols = 4, perCol = 5) {
+
+==================================================
+Arquivo : C:\Users\glaub\palpitaco\src\pages\TernoGrupo\Top3View.jsx
+Linha   : 275
+Busca   : milharesCols
+Código  : const colsArr = Array.isArray(milharesCols) ? milharesCols : [];
+
+==================================================
+Arquivo : C:\Users\glaub\palpitaco\src\pages\TernoGrupo\Top3View.jsx
+Linha   : 670
+Busca   : milharesCols
+Código  : Array.isArray(item?.milharesCols) &&
+
+==================================================
+Arquivo : C:\Users\glaub\palpitaco\src\pages\TernoGrupo\Top3View.jsx
+Linha   : 671
+Busca   : milharesCols
+Código  : item.milharesCols.length >= 4 &&
+
+==================================================
+Arquivo : C:\Users\glaub\palpitaco\src\pages\TernoGrupo\Top3View.jsx
+Linha   : 672
+Busca   : milharesCols
+Código  : Array.isArray(item.milharesCols[0]?.items);
+
+==================================================
+Arquivo : C:\Users\glaub\palpitaco\src\pages\TernoGrupo\Top3View.jsx
+Linha   : 679
+Busca   : milharesCols
+Código  : const cols4 = clampColsFromItemMilharesCols(item.milharesCols, 4, 5);
+
+==================================================
+Arquivo : C:\Users\glaub\palpitaco\src\pages\TernoGrupo\Top3View.premium.backup.jsx
+Linha   : 104
+Busca   : milharesCols
+Código  : function clampColsFromItemMilharesCols(milharesCols, expectedCols = 4, perCol = 5) {
+
+==================================================
+Arquivo : C:\Users\glaub\palpitaco\src\pages\TernoGrupo\Top3View.premium.backup.jsx
+Linha   : 105
+Busca   : milharesCols
+Código  : const colsArr = Array.isArray(milharesCols) ? milharesCols : [];
+
+==================================================
+Arquivo : C:\Users\glaub\palpitaco\src\pages\TernoGrupo\Top3View.premium.backup.jsx
+Linha   : 403
+Busca   : milharesCols
+Código  : Array.isArray(item?.milharesCols) &&
+
+==================================================
+Arquivo : C:\Users\glaub\palpitaco\src\pages\TernoGrupo\Top3View.premium.backup.jsx
+Linha   : 404
+Busca   : milharesCols
+Código  : item.milharesCols.length >= 4 &&
+
+==================================================
+Arquivo : C:\Users\glaub\palpitaco\src\pages\TernoGrupo\Top3View.premium.backup.jsx
+Linha   : 405
+Busca   : milharesCols
+Código  : Array.isArray(item.milharesCols[0]?.items);
+
+==================================================
+Arquivo : C:\Users\glaub\palpitaco\src\pages\TernoGrupo\Top3View.premium.backup.jsx
+Linha   : 412
+Busca   : milharesCols
+Código  : const cols4 = clampColsFromItemMilharesCols(item.milharesCols, 4, 5);
+
+==================================================
+Arquivo : C:\Users\glaub\palpitaco\src\pages\Top3\__tests__\top3.public-api.node.test.js
+Linha   : 12
+Busca   : buildMilharesForGrupo
+Código  : "buildMilharesForGrupo",
+
+==================================================
+Arquivo : C:\Users\glaub\palpitaco\src\pages\Top3\__tests__\top3.public-api.node.test.js
+Linha   : 9
+Busca   : build20MilharesForGrupo
+Código  : "build20MilharesForGrupo",
+
+==================================================
+Arquivo : C:\Users\glaub\palpitaco\src\pages\Top3\modules\top3.prediction.js
+Linha   : 50
+Busca   : milharesCols
+Código  : const milharesCols = build4ColsFromEngineOut(out, 4, 6);
+
+==================================================
+Arquivo : C:\Users\glaub\palpitaco\src\pages\Top3\modules\top3.prediction.js
+Linha   : 51
+Busca   : milharesCols
+Código  : const milhares20 = milharesCols.flatMap((c) => c.items).slice(0, 24);
+
+==================================================
+Arquivo : C:\Users\glaub\palpitaco\src\pages\Top3\modules\top3.prediction.js
+Linha   : 67
+Busca   : milharesCols
+Código  : milharesCols,
+
+==================================================
+Arquivo : C:\Users\glaub\palpitaco\src\pages\Top3\modules\top3.timeline.js
+Linha   : 11
+Busca   : buildMilharesForGrupo
+Código  : buildMilharesForGrupo,
+
+==================================================
+Arquivo : C:\Users\glaub\palpitaco\src\pages\Top3\modules\top3.timeline.js
+Linha   : 203
+Busca   : buildMilharesForGrupo
+Código  : out = buildMilharesForGrupo({
+
+==================================================
+Arquivo : C:\Users\glaub\palpitaco\src\pages\Top3\modules\top3.timeline.js
+Linha   : 221
+Busca   : milharesCols
+Código  : const milharesCols = build4ColsFromEngineOut(out, 4, 5);
+
+==================================================
+Arquivo : C:\Users\glaub\palpitaco\src\pages\Top3\modules\top3.timeline.js
+Linha   : 222
+Busca   : milharesCols
+Código  : const milhares20 = milharesCols.flatMap((c) => c.items).slice(0, 20);
+
+==================================================
+Arquivo : C:\Users\glaub\palpitaco\src\pages\Top3\modules\top3.timeline.js
+Linha   : 239
+Busca   : milharesCols
+Código  : milharesCols,
+
+==================================================
+Arquivo : C:\Users\glaub\palpitaco\src\pages\Top3\modules\top3.timeline.js
+Linha   : 214
+Busca   : count: 20
+Código  : count: 20,
+
+==================================================
+Arquivo : C:\Users\glaub\palpitaco\src\pages\Top3\modules\top3.viewmodel.js
+Linha   : 2
+Busca   : buildMilharesForGrupo
+Código  : import { buildMilharesForGrupo } from "../top3.engine";
+
+==================================================
+Arquivo : C:\Users\glaub\palpitaco\src\pages\Top3\modules\top3.viewmodel.js
+Linha   : 126
+Busca   : buildMilharesForGrupo
+Código  : out = buildMilharesForGrupo({
+
+==================================================
+Arquivo : C:\Users\glaub\palpitaco\src\pages\Top3\modules\top3.viewmodel.js
+Linha   : 22
+Busca   : milharesCols
+Código  : export function buildTop3MilharesCols(out, expectedCols = 4, perCol = 6) {
+
+==================================================
+Arquivo : C:\Users\glaub\palpitaco\src\pages\Top3\modules\top3.viewmodel.js
+Linha   : 138
+Busca   : milharesCols
+Código  : const milharesCols = buildTop3MilharesCols(out, 4, 6);
+
+==================================================
+Arquivo : C:\Users\glaub\palpitaco\src\pages\Top3\modules\top3.viewmodel.js
+Linha   : 139
+Busca   : milharesCols
+Código  : const milhares20 = milharesCols.flatMap((c) => c.items).slice(0, 24);
+
+==================================================
+Arquivo : C:\Users\glaub\palpitaco\src\pages\Top3\modules\top3.viewmodel.js
+Linha   : 156
+Busca   : milharesCols
+Código  : milharesCols,
+
+==================================================
+Arquivo : C:\Users\glaub\palpitaco\src\pages\Top3\modules\top3.viewmodel.js
+Linha   : 131
+Busca   : count: 24
+Código  : count: 24,
+
+==================================================
+Arquivo : C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js
+Linha   : 3688
+Busca   : pickDiversifiedMilharesForDezena
+Código  : function pickDiversifiedMilharesForDezena(dz, limit) {
+
+==================================================
+Arquivo : C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js
+Linha   : 3793
+Busca   : pickDiversifiedMilharesForDezena
+Código  : const items = pickDiversifiedMilharesForDezena(dz, perDezena);
+
+==================================================
+Arquivo : C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js
+Linha   : 3512
+Busca   : buildMilharesForGrupo
+Código  : export function buildMilharesForGrupo({
+
+==================================================
+Arquivo : C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js
+Linha   : 3827
+Busca   : buildMilharesForGrupo
+Código  : return buildMilharesForGrupo({ ...(args || {}), count: 16 });
+
+==================================================
+Arquivo : C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js
+Linha   : 3831
+Busca   : buildMilharesForGrupo
+Código  : return buildMilharesForGrupo({ ...(args || {}), count: 20 });
+
+==================================================
+Arquivo : C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js
+Linha   : 3830
+Busca   : build20MilharesForGrupo
+Código  : export function build20MilharesForGrupo(args) {
+
+==================================================
+Arquivo : C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js
+Linha   : 3539
+Busca   : perDezena
+Código  : const perDezena = Math.max(1, Math.ceil(N / dezenasFixas.length));
+
+==================================================
+Arquivo : C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js
+Linha   : 3793
+Busca   : perDezena
+Código  : const items = pickDiversifiedMilharesForDezena(dz, perDezena);
+
+==================================================
+Arquivo : C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js
+Linha   : 3815
+Busca   : perDezena
+Código  : while (pushed < perDezena) {
+
+==================================================
+Arquivo : C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.before-history-stats-20260710_111832.js
+Linha   : 3831
+Busca   : count: 20
+Código  : return buildMilharesForGrupo({ ...(args || {}), count: 20 });
+
+==================================================
+Arquivo : C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js
+Linha   : 3688
+Busca   : pickDiversifiedMilharesForDezena
+Código  : function pickDiversifiedMilharesForDezena(dz, limit) {
+
+==================================================
+Arquivo : C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js
+Linha   : 3793
+Busca   : pickDiversifiedMilharesForDezena
+Código  : const items = pickDiversifiedMilharesForDezena(dz, perDezena);
+
+==================================================
+Arquivo : C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js
+Linha   : 3512
+Busca   : buildMilharesForGrupo
+Código  : export function buildMilharesForGrupo({
+
+==================================================
+Arquivo : C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js
+Linha   : 3827
+Busca   : buildMilharesForGrupo
+Código  : return buildMilharesForGrupo({ ...(args || {}), count: 16 });
+
+==================================================
+Arquivo : C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js
+Linha   : 3831
+Busca   : buildMilharesForGrupo
+Código  : return buildMilharesForGrupo({ ...(args || {}), count: 20 });
+
+==================================================
+Arquivo : C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js
+Linha   : 3830
+Busca   : build20MilharesForGrupo
+Código  : export function build20MilharesForGrupo(args) {
+
+==================================================
+Arquivo : C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js
+Linha   : 3539
+Busca   : perDezena
+Código  : const perDezena = Math.max(1, Math.ceil(N / dezenasFixas.length));
+
+==================================================
+Arquivo : C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js
+Linha   : 3793
+Busca   : perDezena
+Código  : const items = pickDiversifiedMilharesForDezena(dz, perDezena);
+
+==================================================
+Arquivo : C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js
+Linha   : 3815
+Busca   : perDezena
+Código  : while (pushed < perDezena) {
+
+==================================================
+Arquivo : C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.before-history-stats-20260710_112326.js
+Linha   : 3831
+Busca   : count: 20
+Código  : return buildMilharesForGrupo({ ...(args || {}), count: 20 });
+
+==================================================
+Arquivo : C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.js
+Linha   : 3849
+Busca   : pickDiversifiedMilharesForDezena
+Código  : function pickDiversifiedMilharesForDezena(dz, limit) {
+
+==================================================
+Arquivo : C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.js
+Linha   : 4005
+Busca   : pickDiversifiedMilharesForDezena
+Código  : const items = pickDiversifiedMilharesForDezena(dz, perDezena);
+
+==================================================
+Arquivo : C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.js
+Linha   : 21
+Busca   : chooseBestMilhar
+Código  : import { chooseBestMilhar } from "../../shared/predictiveMilharEngine";
+
+==================================================
+Arquivo : C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.js
+Linha   : 3799
+Busca   : chooseBestMilhar
+Código  : * O chooseBestMilhar escolhe somente o prefixo vencedor
+
+==================================================
+Arquivo : C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.js
+Linha   : 3943
+Busca   : chooseBestMilhar
+Código  : const sharedResult = chooseBestMilhar({
+
+==================================================
+Arquivo : C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.js
+Linha   : 3618
+Busca   : buildMilharesForGrupo
+Código  : export function buildMilharesForGrupo({
+
+==================================================
+Arquivo : C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.js
+Linha   : 4039
+Busca   : buildMilharesForGrupo
+Código  : return buildMilharesForGrupo({ ...(args || {}), count: 16 });
+
+==================================================
+Arquivo : C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.js
+Linha   : 4043
+Busca   : buildMilharesForGrupo
+Código  : return buildMilharesForGrupo({ ...(args || {}), count: 24 });
+
+==================================================
+Arquivo : C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.js
+Linha   : 4042
+Busca   : build20MilharesForGrupo
+Código  : export function build20MilharesForGrupo(args) {
+
+==================================================
+Arquivo : C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.js
+Linha   : 3645
+Busca   : perDezena
+Código  : const perDezena = Math.max(1, Math.ceil(N / dezenasFixas.length));
+
+==================================================
+Arquivo : C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.js
+Linha   : 4005
+Busca   : perDezena
+Código  : const items = pickDiversifiedMilharesForDezena(dz, perDezena);
+
+==================================================
+Arquivo : C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.js
+Linha   : 4027
+Busca   : perDezena
+Código  : while (pushed < perDezena) {
+
+==================================================
+Arquivo : C:\Users\glaub\palpitaco\src\pages\Top3\top3.engine.js
+Linha   : 4043
+Busca   : count: 24
+Código  : return buildMilharesForGrupo({ ...(args || {}), count: 24 });
+
+==================================================
+Arquivo : C:\Users\glaub\palpitaco\src\pages\Top3\top3.firestore.js
+Linha   : 129
+Busca   : milharesCols
+Código  : milharesCols: Array.isArray(item?.milharesCols)
+
+==================================================
+Arquivo : C:\Users\glaub\palpitaco\src\pages\Top3\top3.firestore.js
+Linha   : 130
+Busca   : milharesCols
+Código  : ? cleanFirestoreValue(item.milharesCols)
+
+==================================================
+Arquivo : C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js
+Linha   : 34
+Busca   : buildMilharesForGrupo
+Código  : buildMilharesForGrupo,
+
+==================================================
+Arquivo : C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js
+Linha   : 1231
+Busca   : buildMilharesForGrupo
+Código  : const generated = buildMilharesForGrupo({
+
+==================================================
+Arquivo : C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js
+Linha   : 73
+Busca   : milharesCols
+Código  : buildTop3MilharesCols,
+
+==================================================
+Arquivo : C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js
+Linha   : 293
+Busca   : milharesCols
+Código  : milharesCols: Array.isArray(item?.milharesCols)
+
+==================================================
+Arquivo : C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js
+Linha   : 294
+Busca   : milharesCols
+Código  : ? item.milharesCols
+
+==================================================
+Arquivo : C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js
+Linha   : 1315
+Busca   : milharesCols
+Código  : build4ColsFromEngineOut: buildTop3MilharesCols,
+
+==================================================
+Arquivo : C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js
+Linha   : 1436
+Busca   : milharesCols
+Código  : milharesCols: Array.isArray(item?.milharesCols)
+
+==================================================
+Arquivo : C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js
+Linha   : 1437
+Busca   : milharesCols
+Código  : ? item.milharesCols
+
+==================================================
+Arquivo : C:\Users\glaub\palpitaco\src\pages\Top3\top3.hooks.js
+Linha   : 1269
+Busca   : count: 24
+Código  : count: 24,
+
+==================================================
+Arquivo : C:\Users\glaub\palpitaco\src\pages\Top3\top3.public-api.js
+Linha   : 23
+Busca   : buildMilharesForGrupo
+Código  : buildMilharesForGrupo,
+
+==================================================
+Arquivo : C:\Users\glaub\palpitaco\src\pages\Top3\top3.public-api.js
+Linha   : 25
+Busca   : build20MilharesForGrupo
+Código  : build20MilharesForGrupo,
+
+==================================================
+Arquivo : C:\Users\glaub\palpitaco\src\pages\Top3\Top3View.jsx
+Linha   : 274
+Busca   : milharesCols
+Código  : function clampColsFromItemMilharesCols(milharesCols, expectedCols = 4, perCol = 6) {
+
+==================================================
+Arquivo : C:\Users\glaub\palpitaco\src\pages\Top3\Top3View.jsx
+Linha   : 275
+Busca   : milharesCols
+Código  : const colsArr = Array.isArray(milharesCols) ? milharesCols : [];
+
+==================================================
+Arquivo : C:\Users\glaub\palpitaco\src\pages\Top3\Top3View.jsx
+Linha   : 690
+Busca   : milharesCols
+Código  : Array.isArray(item?.milharesCols) &&
+
+==================================================
+Arquivo : C:\Users\glaub\palpitaco\src\pages\Top3\Top3View.jsx
+Linha   : 691
+Busca   : milharesCols
+Código  : item.milharesCols.length >= 4 &&
+
+==================================================
+Arquivo : C:\Users\glaub\palpitaco\src\pages\Top3\Top3View.jsx
+Linha   : 692
+Busca   : milharesCols
+Código  : Array.isArray(item.milharesCols[0]?.items);
+
+==================================================
+Arquivo : C:\Users\glaub\palpitaco\src\pages\Top3\Top3View.jsx
+Linha   : 699
+Busca   : milharesCols
+Código  : const cols4 = clampColsFromItemMilharesCols(item.milharesCols, 4, 6);
+
+==================================================
+Arquivo : C:\Users\glaub\palpitaco\src\pages\Top3\Top3View.premium.backup.jsx
+Linha   : 104
+Busca   : milharesCols
+Código  : function clampColsFromItemMilharesCols(milharesCols, expectedCols = 4, perCol = 5) {
+
+==================================================
+Arquivo : C:\Users\glaub\palpitaco\src\pages\Top3\Top3View.premium.backup.jsx
+Linha   : 105
+Busca   : milharesCols
+Código  : const colsArr = Array.isArray(milharesCols) ? milharesCols : [];
+
+==================================================
+Arquivo : C:\Users\glaub\palpitaco\src\pages\Top3\Top3View.premium.backup.jsx
+Linha   : 403
+Busca   : milharesCols
+Código  : Array.isArray(item?.milharesCols) &&
+
+==================================================
+Arquivo : C:\Users\glaub\palpitaco\src\pages\Top3\Top3View.premium.backup.jsx
+Linha   : 404
+Busca   : milharesCols
+Código  : item.milharesCols.length >= 4 &&
+
+==================================================
+Arquivo : C:\Users\glaub\palpitaco\src\pages\Top3\Top3View.premium.backup.jsx
+Linha   : 405
+Busca   : milharesCols
+Código  : Array.isArray(item.milharesCols[0]?.items);
+
+==================================================
+Arquivo : C:\Users\glaub\palpitaco\src\pages\Top3\Top3View.premium.backup.jsx
+Linha   : 412
+Busca   : milharesCols
+Código  : const cols4 = clampColsFromItemMilharesCols(item.milharesCols, 4, 5);
+
+==================================================
+Arquivo : C:\Users\glaub\palpitaco\src\shared\predictiveMilharEngine\index.js
+Linha   : 22
+Busca   : chooseBestMilhar
+Código  : chooseBestMilhar,

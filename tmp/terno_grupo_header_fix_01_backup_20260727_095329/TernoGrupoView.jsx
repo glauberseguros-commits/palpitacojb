@@ -799,6 +799,15 @@ export default function TernoGrupoView(
             </div>
 
             <div className="terno-grupo-results__actions">
+              <div className="terno-grupo-results__lottery">
+                <span>Loteria</span>
+
+                <strong>
+                  {resolveLotteryLabel(
+                    lotteryKeySafe
+                  )}
+                </strong>
+              </div>
 
               <button
                 type="button"
@@ -853,4 +862,3 @@ export default function TernoGrupoView(
     </main>
   );
 }
-

@@ -1,0 +1,10 @@
+PATCH_OK
+
+Arquivo:
+.\src\pages\TernoGrupo\TernoGrupoView.jsx
+
+Alteração:
+- Removido o bloco 'Loteria / RJ' do cabeçalho dos resultados.
+- Botão 'COPIAR TERNOS' preservado.
+- Resultado Gerado preservado.
+- Quantidade de ternos preservada.

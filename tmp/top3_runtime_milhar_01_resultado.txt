@@ -1,0 +1,66 @@
+===== TOP3-RUNTIME-MILHAR-01 =====
+Data: 2026-07-27 08:51:04
+Arquivo alterado: .\src\pages\Top3\Top3View.jsx
+Backup: .\tmp\top3_runtime_milhar_01_backup_20260727_085103
+Âncora encontrada: 1
+Diagnóstico inserido: SIM
+
+
+> palpitaco@0.1.0 build
+> react-scripts build
+
+Creating an optimized production build...
+Compiled successfully.
+
+File sizes after gzip:
+
+  264.82 kB (+1 B)  build\static\js\main.1d197a82.js
+  138.8 kB          build\static\js\238.133659d3.chunk.js
+  128.07 kB         build\static\js\389.21aa2d35.chunk.js
+  46.35 kB          build\static\js\239.6b4eaf90.chunk.js
+  42.9 kB           build\static\js\455.7220bbdf.chunk.js
+  38.5 kB (+343 B)  build\static\js\289.b1258b91.chunk.js
+  29.53 kB          build\static\js\63.99538e12.chunk.js
+  10.7 kB           build\static\js\916.71c8a438.chunk.js
+  9.79 kB           build\static\js\857.e51a2e06.chunk.js
+  9.27 kB           build\static\js\411.eb31ee35.chunk.js
+  9.01 kB           build\static\js\848.8045fd05.chunk.js
+  8.96 kB           build\static\js\812.eb0d3036.chunk.js
+  8.89 kB           build\static\js\188.c75767d6.chunk.js
+  8.69 kB           build\static\js\977.efeedf50.chunk.js
+  6.73 kB           build\static\js\960.417ace1e.chunk.js
+  6.07 kB           build\static\js\886.320165d3.chunk.js
+  4.2 kB            build\static\js\854.7290a099.chunk.js
+  3.89 kB           build\static\js\532.86885c87.chunk.js
+  3.11 kB           build\static\css\960.a7d00216.chunk.css
+  2.87 kB           build\static\css\main.f1823042.css
+  2.04 kB           build\static\css\63.5dd79d34.chunk.css
+  1.82 kB           build\static\js\611.337809cd.chunk.js
+  1.53 kB           build\static\css\611.3878f01e.chunk.css
+  775 B             build\static\js\784.e009081b.chunk.js
+
+The project was built assuming it is hosted at /.
+You can control this with the homepage field in your package.json.
+
+The build folder is ready to be deployed.
+You may serve it with a static server:
+
+  serve -s build
+
+Find out more about deployment here:
+
+  https://cra.link/deployment
+
+[main 9ba87ef] diagnostic: audita 24 milhares recebidas no TOP3
+ 1 file changed, 71 insertions(+)
+To https://github.com/glauberseguros-commits/palpitacojb.git
+   4d9047b..9ba87ef  main -> main
+
+BUILD_OK
+PUSH_OK
+Próxima ação:
+1. Aguarde o deploy.
+2. Abra a página TOP3.
+3. Pressione F12.
+4. Abra a aba Console.
+5. Pesquise por TOP3-MILHAR-DIAGNOSTIC.

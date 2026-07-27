@@ -1,0 +1,803 @@
+import React, { lazy, Suspense, useEffect, useMemo, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
+
+import DashboardMod from "./pages/Dashboard/Dashboard";
+import AccountMod from "./pages/Account/Account";
+
+// ✅ Admin
+
+// ✅ Páginas placeholder
+
+// ✅ página de Centenas
+
+// ✅ AppShell
+import AppShellMod from "./pages/Dashboard/components/Sidebar/AppShell";
+
+// ✅ Firebase (Admin real / Auth real)
+import { auth, db } from "./services/firebase";
+import { onAuthStateChanged, signOut } from "firebase/auth";
+import { doc, getDoc } from "firebase/firestore";
+
+const Results = lazy(() => import("./pages/Results/Results"));
+const Top3 = lazy(() => import("./pages/Top3/Top3"));
+const TernoGrupo = lazy(() => import("./pages/TernoGrupo/TernoGrupo"));
+const Late = lazy(() => import("./pages/Late/Late"));
+const Search = lazy(() => import("./pages/Search/Search"));
+const Admin = lazy(() => import("./pages/Admin/Admin"));
+const AdminLogin = lazy(() => import("./pages/Admin/AdminLogin"));
+const Payments = lazy(() => import("./pages/Payments/Payments"));
+const Downloads = lazy(() => import("./pages/Downloads/Downloads"));
+const Centenas = lazy(() => import("./pages/Centenas/Centenas"));
+const Statistics = lazy(() => import("./pages/Statistics/Statistics"));
+
+
+const STORAGE_KEY = "palpitaco_screen_v2";
+const ACCOUNT_SESSION_KEY = "pp_session_v1";
+const LS_GUEST_ACTIVE_KEY = "pp_guest_active_v1";
+
+// ✅ Persistência de filtros do Dashboard
+const DASH_FILTERS_KEY = "pp_dashboard_filters_v1";
+
+/* =========================
+   ✅ Build stamp (Vercel)
+========================= */
+const BUILD_SHA = String(process.env.REACT_APP_BUILD_SHA || "").trim();
+const BUILD_REF = String(process.env.REACT_APP_BUILD_REF || "").trim();
+const BUILD_TIME = String(process.env.REACT_APP_BUILD_TIME || "").trim();
+
+/* =========================
+   Admin (hash gate)
+========================= */
+const ADMIN_HASH = "#admin";
+
+const ROUTES = {
+  LOGIN: "login",
+  DASHBOARD: "dashboard",
+  ACCOUNT: "account",
+  RESULTS: "results",
+  TOP3: "top3",
+  TERNO_GRUPO: "terno-grupo",
+  LATE: "late",
+  SEARCH: "search",
+  PAYMENTS: "payments",
+  DOWNLOADS: "downloads",
+  CENTENAS: "centenas",
+  STATISTICS: "statistics",
+};
+
+function safeReadLS(key) {
+  try {
+    return localStorage.getItem(key);
+  } catch {
+    return null;
+  }
+}
+
+function safeWriteLS(key, value) {
+  try {
+    localStorage.setItem(key, value);
+  } catch {}
+}
+
+function safeRemoveLS(key) {
+  try {
+    localStorage.removeItem(key);
+  } catch {}
+}
+
+function safeParseJson(raw) {
+  try {
+    return JSON.parse(raw);
+  } catch {
+    return null;
+  }
+}
+
+function normalizeRoute(saved) {
+  if (!saved) return null;
+  return Object.values(ROUTES).includes(saved) ? saved : null;
+}
+
+/**
+ * ✅ Resolve default/named de forma robusta
+ */
+function resolveComponent(mod, name) {
+  const c = mod?.default ?? mod;
+
+  const isProbablyReactComponent =
+    typeof c === "function" ||
+    (c && typeof c === "object" && String(c.$$typeof || "").includes("react."));
+
+  if (!isProbablyReactComponent) {
+    console.error(`[IMPORT INVALID] ${name} veio inválido:`, c, " | import raw:", mod);
+  }
+
+  return c;
+}
+
+/* =========================
+   Sessão (estrita)
+========================= */
+
+function normalizePlan(plan) {
+  const p = String(plan || "").trim().toUpperCase();
+  if (p === "VIP") return "VIP";
+  if (p === "PREMIUM") return "PREMIUM";
+  if (p === "FREE") return "FREE";
+  return "";
+}
+
+function loadSessionObj() {
+  const raw = safeReadLS(ACCOUNT_SESSION_KEY);
+  if (!raw) return null;
+
+  const s = String(raw || "").trim();
+  if (!s || !s.startsWith("{")) return null;
+
+  const obj = safeParseJson(s);
+  if (!obj || typeof obj !== "object") return null;
+
+  const type = String(obj.type || "").trim().toLowerCase();
+  const uid = String(obj.uid || "").trim();
+  const email = String(obj.email || "").trim().toLowerCase();
+  const ok = obj.ok === true;
+  const plan = normalizePlan(
+    obj.plan ??
+      obj.profile?.plan ??
+      obj.subscription?.plan ??
+      obj.account?.plan ??
+      obj.customClaims?.plan ??
+      obj.claims?.plan ??
+      obj.appData?.plan ??
+      obj.metadata?.plan
+  );
+
+  if (!ok) return null;
+
+  if (type === "guest") {
+    return {
+      ok: true,
+      type: "guest",
+      plan: plan || "FREE",
+      uid: "",
+      email: "",
+      raw: obj,
+    };
+  }
+
+  if (type === "user" && uid) {
+    return {
+      ok: true,
+      type: "user",
+      plan: plan || "PREMIUM",
+      uid,
+      email,
+      raw: obj,
+    };
+  }
+
+  if (uid || email) {
+    return {
+      ok: true,
+      type: "user",
+      plan: plan || "PREMIUM",
+      uid,
+      email,
+      raw: obj,
+    };
+  }
+
+  return null;
+}
+
+function getSessionKind(sess) {
+  const s = sess || loadSessionObj();
+  if (!s || s.ok !== true) return "anon";
+  return s.type === "guest" ? "guest" : s.type === "user" ? "user" : "anon";
+}
+
+function cleanupLegacyGuestFlagIfNeeded() {
+  const sess = loadSessionObj();
+  const guestFlag = safeReadLS(LS_GUEST_ACTIVE_KEY);
+
+  if (!guestFlag) return;
+
+  if (sess?.type === "guest") return;
+
+  safeRemoveLS(LS_GUEST_ACTIVE_KEY);
+}
+
+/* =========================
+   Dashboard filters (persist)
+========================= */
+
+function normalizeLoteriaInput(v) {
+  const raw = String(v ?? "").trim();
+  if (!raw) return "PT_RIO";
+
+  const key = raw
+    .toLowerCase()
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .replace(/\s+/g, " ")
+    .trim();
+
+  if (key === "federal" || key === "fed" || key === "br" || key === "brasil") {
+    return "FEDERAL";
+  }
+
+  if (key === "rj" || key === "rio" || key === "pt_rio" || key === "pt-rio") {
+    return "PT_RIO";
+  }
+
+  const out = key
+    .toUpperCase()
+    .replace(/[^A-Z0-9]+/g, "_")
+    .replace(/^_+|_+$/g, "");
+
+  return out || "PT_RIO";
+}
+
+function loteriaToLotteryKey(loteria) {
+  return normalizeLoteriaInput(loteria);
+}
+
+function getDefaultDashboardFilters() {
+  return {
+    loteria: "PT_RIO",
+    mes: "Todos",
+    diaMes: "Todos",
+    diaSemana: "Todos",
+    horario: "Todos",
+    animal: "Todos",
+    posicao: "Todos",
+  };
+}
+
+function loadDashboardFilters() {
+  const raw = safeReadLS(DASH_FILTERS_KEY);
+  if (!raw) return getDefaultDashboardFilters();
+
+  const obj = safeParseJson(raw);
+  if (!obj || typeof obj !== "object") return getDefaultDashboardFilters();
+
+  const base = getDefaultDashboardFilters();
+  const loteria = normalizeLoteriaInput(obj.loteria);
+
+  const horario =
+    loteria === "FEDERAL"
+      ? obj.horario === "Todos" || obj.horario === "19h" || obj.horario === "20h"
+        ? obj.horario
+        : "Todos"
+      : typeof obj.horario === "string"
+      ? obj.horario
+      : base.horario;
+
+  return {
+    loteria,
+    mes: typeof obj.mes === "string" ? obj.mes : base.mes,
+    diaMes: typeof obj.diaMes === "string" ? obj.diaMes : base.diaMes,
+    diaSemana: typeof obj.diaSemana === "string" ? obj.diaSemana : base.diaSemana,
+    horario,
+    animal: typeof obj.animal === "string" ? obj.animal : base.animal,
+    posicao: typeof obj.posicao === "string" ? obj.posicao : base.posicao,
+  };
+}
+
+/* =========================
+   Admin helpers
+========================= */
+
+function isAdminHashNow() {
+  try {
+    const h = String(window.location.hash || "").trim();
+    return h === ADMIN_HASH || h.startsWith(`${ADMIN_HASH}?`);
+  } catch {
+    return false;
+  }
+}
+
+async function isUidAdmin(uid) {
+  const u = String(uid || "").trim();
+  if (!u) return false;
+  try {
+    const ref = doc(db, "admins", u);
+    const snap = await getDoc(ref);
+    if (!snap.exists()) return false;
+    const data = snap.data() || {};
+    return data.active !== false;
+  } catch {
+    return false;
+  }
+}
+
+class ErrorBoundary extends React.Component {
+  constructor(props) {
+    super(props);
+    this.state = { hasError: false, err: null };
+  }
+
+  static getDerivedStateFromError(error) {
+    return { hasError: true, err: error };
+  }
+
+  componentDidCatch(error, info) {
+    console.error("App ErrorBoundary caught:", error, info);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      const msg =
+        this.state.err?.message || String(this.state.err || "Erro desconhecido");
+      return (
+        <div
+          style={{
+            minHeight: "100vh",
+            background: "#050505",
+            color: "rgba(255,255,255,0.92)",
+            padding: 18,
+            fontFamily:
+              "system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif",
+          }}
+        >
+          <div style={{ fontWeight: 900, marginBottom: 8 }}>
+            Falha ao renderizar a aplicação
+          </div>
+          <div style={{ opacity: 0.85, whiteSpace: "pre-wrap", lineHeight: 1.35 }}>
+            {msg}
+          </div>
+        </div>
+      );
+    }
+
+    return this.props.children;
+  }
+}
+
+/* =========================
+   URL helpers
+========================= */
+
+function cleanPathname(p) {
+  const s = String(p || "").trim();
+  if (!s) return "/";
+  return s.startsWith("/") ? s : `/${s}`;
+}
+
+function screenToPath(screen) {
+  switch (screen) {
+    case ROUTES.LOGIN:
+      return "/login";
+    case ROUTES.DASHBOARD:
+      return "/";
+    case ROUTES.ACCOUNT:
+      return "/account";
+    case ROUTES.RESULTS:
+      return "/results";
+    case ROUTES.TOP3:
+      return "/top3";
+    case ROUTES.TERNO_GRUPO:
+      return "/terno-grupo";
+    case ROUTES.LATE:
+      return "/late";
+    case ROUTES.SEARCH:
+      return "/search";
+    case ROUTES.PAYMENTS:
+      return "/payments";
+    case ROUTES.DOWNLOADS:
+      return "/downloads";
+    case ROUTES.CENTENAS:
+      return "/centenas";
+    case ROUTES.STATISTICS:
+      return "/statistics";
+    default:
+      return "/";
+  }
+}
+
+function pathToScreen(pathname) {
+  const p = cleanPathname(pathname).toLowerCase();
+
+  if (p === "/" || p === "/dashboard") return ROUTES.DASHBOARD;
+  if (p === "/login") return ROUTES.LOGIN;
+  if (p === "/account") return ROUTES.ACCOUNT;
+  if (p === "/results") return ROUTES.RESULTS;
+  if (p === "/top3") return ROUTES.TOP3;
+  if (p === "/terno-grupo") return ROUTES.TERNO_GRUPO;
+  if (p === "/late") return ROUTES.LATE;
+  if (p === "/search") return ROUTES.SEARCH;
+  if (p === "/payments") return ROUTES.PAYMENTS;
+  if (p === "/downloads") return ROUTES.DOWNLOADS;
+  if (p === "/centenas") return ROUTES.CENTENAS;
+  if (p === "/statistics") return ROUTES.STATISTICS;
+
+  return null;
+}
+
+function BuildStamp() {
+  const shaShort = BUILD_SHA ? BUILD_SHA.slice(0, 7) : "";
+  const ref = BUILD_REF || "";
+  const tm = BUILD_TIME || "";
+  const text = shaShort
+    ? `build ${shaShort}${ref ? ` · ${ref}` : ""}${tm ? ` · ${tm}` : ""}`
+    : "";
+
+  if (!shaShort) return null;
+
+  return (
+    <div
+      style={{
+        position: "fixed",
+        left: 10,
+        bottom: 10,
+        zIndex: 99999,
+        padding: "7px 10px",
+        borderRadius: 999,
+        background: "rgba(0,0,0,0.62)",
+        border: "1px solid rgba(202,166,75,0.28)",
+        color: "rgba(233,233,233,0.88)",
+        fontSize: 11,
+        fontWeight: 900,
+        letterSpacing: 0.2,
+        boxShadow: "0 14px 40px rgba(0,0,0,0.40)",
+        userSelect: "text",
+      }}
+      title={`SHA=${BUILD_SHA}${ref ? ` | ref=${ref}` : ""}${tm ? ` | time=${tm}` : ""}`}
+    >
+      {text}
+    </div>
+  );
+}
+
+
+function AppLoading() {
+  return (
+    <div
+      role="status"
+      aria-live="polite"
+      style={{
+        minHeight: "100vh",
+        background: "#050505",
+        color: "rgba(255,255,255,0.85)",
+        display: "grid",
+        placeItems: "center",
+        padding: 18,
+        fontFamily:
+          "system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif",
+      }}
+    >
+      Carregando...
+    </div>
+  );
+}
+
+export default function App() {
+  const location = useLocation();
+  const navigate = useNavigate();
+
+  const Dashboard = useMemo(() => resolveComponent(DashboardMod, "Dashboard"), []);
+  const Account = useMemo(() => resolveComponent(AccountMod, "Account"), []);
+
+  const AppShell = useMemo(() => resolveComponent(AppShellMod, "AppShell"), []);
+
+
+  useEffect(() => {
+    console.log("[PALPITACO BUILD]", {
+      sha: BUILD_SHA || "(none)",
+      ref: BUILD_REF || "(none)",
+      time: BUILD_TIME || "(none)",
+      href: typeof window !== "undefined" ? window.location.href : "",
+    });
+  }, []);
+
+  useEffect(() => {
+    cleanupLegacyGuestFlagIfNeeded();
+  }, []);
+
+  const [adminMode, setAdminMode] = useState(() => isAdminHashNow());
+
+  useEffect(() => {
+    const onHash = () => setAdminMode(isAdminHashNow());
+    window.addEventListener("hashchange", onHash);
+    return () => window.removeEventListener("hashchange", onHash);
+  }, []);
+
+  const [adminAuthed, setAdminAuthed] = useState(false);
+  const [adminBooting, setAdminBooting] = useState(false);
+
+  useEffect(() => {
+    if (!adminMode) return;
+
+    let alive = true;
+    setAdminBooting(true);
+    setAdminAuthed(false);
+
+    const unsub = onAuthStateChanged(auth, async (user) => {
+      if (!alive) return;
+
+      if (!user?.uid) {
+        setAdminAuthed(false);
+        setAdminBooting(false);
+        return;
+      }
+
+      const ok = await isUidAdmin(user.uid);
+      if (!alive) return;
+
+      if (!ok) {
+        try {
+          await signOut(auth);
+        } catch {}
+        setAdminAuthed(false);
+        setAdminBooting(false);
+        return;
+      }
+
+      setAdminAuthed(true);
+      setAdminBooting(false);
+    });
+
+    return () => {
+      alive = false;
+      unsub?.();
+    };
+  }, [adminMode]);
+
+  const [dashboardFilters, setDashboardFilters] = useState(() => loadDashboardFilters());
+  const [, setSessionTick] = useState(0);
+
+  useEffect(() => {
+    const lot = normalizeLoteriaInput(dashboardFilters?.loteria);
+
+    if (lot === "FEDERAL") {
+      const h = String(dashboardFilters?.horario || "");
+      if (h !== "Todos" && h !== "19h" && h !== "20h") {
+        setDashboardFilters((prev) => ({ ...prev, horario: "Todos" }));
+      } else if (dashboardFilters?.loteria !== "FEDERAL") {
+        setDashboardFilters((prev) => ({ ...prev, loteria: "FEDERAL" }));
+      }
+      return;
+    }
+
+    if (dashboardFilters?.loteria !== lot) {
+      setDashboardFilters((prev) => ({ ...prev, loteria: lot }));
+    }
+  }, [dashboardFilters?.loteria, dashboardFilters?.horario]);
+
+  useEffect(() => {
+    safeWriteLS(DASH_FILTERS_KEY, JSON.stringify(dashboardFilters));
+  }, [dashboardFilters]);
+
+  useEffect(() => {
+    const bump = () => setSessionTick((v) => v + 1);
+
+    const onStorage = (e) => {
+      if (!e) return;
+      if (e.key === ACCOUNT_SESSION_KEY || e.key === LS_GUEST_ACTIVE_KEY) {
+        bump();
+      }
+    };
+
+    const onSessionChanged = () => bump();
+    const onFocus = () => bump();
+    const onVis = () => {
+      if (document.visibilityState === "visible") bump();
+    };
+
+    window.addEventListener("storage", onStorage);
+    window.addEventListener("pp_session_changed", onSessionChanged);
+    window.addEventListener("focus", onFocus);
+    document.addEventListener("visibilitychange", onVis);
+
+    return () => {
+      window.removeEventListener("storage", onStorage);
+      window.removeEventListener("pp_session_changed", onSessionChanged);
+      window.removeEventListener("focus", onFocus);
+      document.removeEventListener("visibilitychange", onVis);
+    };
+  }, []);
+
+  const sessionObj = loadSessionObj();
+
+  const sessionKind = useMemo(() => getSessionKind(sessionObj), [sessionObj]);
+
+  const currentScreen = useMemo(() => {
+    const byPath = pathToScreen(location?.pathname);
+    if (byPath) return byPath;
+
+    const saved = normalizeRoute(safeReadLS(STORAGE_KEY));
+    if (saved && saved !== ROUTES.LOGIN) return saved;
+
+    return sessionObj ? ROUTES.DASHBOARD : ROUTES.LOGIN;
+  }, [location?.pathname, sessionObj]);
+
+  useEffect(() => {
+    if (adminMode) return;
+
+    const pathScreen = pathToScreen(location?.pathname);
+    const hasSession = !!sessionObj;
+    const curPath = cleanPathname(location?.pathname);
+
+    if (!hasSession) {
+      if (curPath !== "/login") {
+        navigate("/login", { replace: true });
+      }
+      return;
+    }
+
+    if (curPath === "/login") {
+      navigate("/", { replace: true });
+      return;
+    }
+
+    if (!pathScreen) {
+      const saved = normalizeRoute(safeReadLS(STORAGE_KEY));
+      navigate(screenToPath(saved && saved !== ROUTES.LOGIN ? saved : ROUTES.DASHBOARD), {
+        replace: true,
+      });
+    }
+  }, [adminMode, location?.pathname, navigate, sessionObj]);
+
+  useEffect(() => {
+    if (adminMode) return;
+    if (currentScreen && currentScreen !== ROUTES.LOGIN) {
+      safeWriteLS(STORAGE_KEY, currentScreen);
+    }
+  }, [adminMode, currentScreen]);
+
+  const goToScreen = (nextScreen) => {
+    const path = screenToPath(nextScreen);
+    const cur = cleanPathname(location?.pathname);
+    if (cur !== path) {
+      navigate(path);
+    }
+  };
+
+  const logout = async () => {
+    safeRemoveLS(STORAGE_KEY);
+    safeRemoveLS(ACCOUNT_SESSION_KEY);
+    safeRemoveLS(LS_GUEST_ACTIVE_KEY);
+    safeRemoveLS(DASH_FILTERS_KEY);
+
+    try {
+      window.dispatchEvent(new Event("pp_session_changed"));
+    } catch {}
+
+    try {
+      await signOut(auth);
+    } catch {}
+
+    navigate("/login", { replace: true });
+  };
+
+  const handleAuthenticated = () => {
+    cleanupLegacyGuestFlagIfNeeded();
+    safeWriteLS(STORAGE_KEY, ROUTES.DASHBOARD);
+    navigate("/", { replace: true });
+  };
+
+  const renderScreen = (s) => {
+    switch (s) {
+      case ROUTES.ACCOUNT:
+        return <Account onAuthenticated={() => {}} />;
+      case ROUTES.RESULTS:
+        return <Results />;
+      case ROUTES.TOP3:
+        return <Top3 />;
+      case ROUTES.TERNO_GRUPO:
+        return <TernoGrupo />;
+      case ROUTES.LATE:
+        return <Late />;
+      case ROUTES.SEARCH:
+        return <Search />;
+      case ROUTES.CENTENAS:
+        return <Centenas />;
+      case ROUTES.STATISTICS:
+        return <Statistics />;
+      case ROUTES.PAYMENTS:
+        return <Payments />;
+      case ROUTES.DOWNLOADS:
+        return <Downloads />;
+      default:
+        return (
+          <Dashboard
+            filters={{
+              ...dashboardFilters,
+              lotteryKey: loteriaToLotteryKey(dashboardFilters?.loteria),
+            }}
+            setFilters={setDashboardFilters}
+          />
+        );
+    }
+  };
+
+  if (adminMode) {
+    return (
+      <ErrorBoundary>
+        <Suspense fallback={<AppLoading />}>
+        {adminBooting ? (
+          <div
+            style={{
+              minHeight: "100vh",
+              background: "#050505",
+              color: "rgba(255,255,255,0.85)",
+              display: "flex",
+              alignItems: "center",
+              justifyContent: "center",
+              fontFamily:
+                "system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif",
+              padding: 18,
+            }}
+          >
+            Carregando Admin...
+          </div>
+        ) : adminAuthed ? (
+          <Admin
+            onExit={() => {
+              try {
+                window.location.hash = "";
+              } catch {}
+            }}
+            onLogout={async () => {
+              try {
+                await signOut(auth);
+              } catch {}
+              setAdminAuthed(false);
+              try {
+                window.location.hash = "";
+              } catch {}
+            }}
+          />
+        ) : (
+          <AdminLogin
+            onCancel={() => {
+              try {
+                window.location.hash = "";
+              } catch {}
+            }}
+            onAuthed={() => {
+              setAdminAuthed(true);
+            }}
+          />
+        )}
+        <BuildStamp />
+              </Suspense>
+      </ErrorBoundary>
+    );
+  }
+
+  if (sessionKind === "anon") {
+    return (
+      <ErrorBoundary>
+        <Suspense fallback={<AppLoading />}>
+        <Account
+          onClose={() => {}}
+          onAuthenticated={handleAuthenticated}
+        />
+        <BuildStamp />
+              </Suspense>
+      </ErrorBoundary>
+    );
+  }
+
+  return (
+    <ErrorBoundary>
+        <Suspense fallback={<AppLoading />}>
+      <AppShell active={currentScreen} onNavigate={goToScreen} onLogout={logout}>
+        {currentScreen === ROUTES.DASHBOARD ? (
+          <Dashboard
+            filters={{
+              ...dashboardFilters,
+              lotteryKey: loteriaToLotteryKey(dashboardFilters?.loteria),
+            }}
+            setFilters={setDashboardFilters}
+          />
+        ) : (
+          renderScreen(currentScreen)
+        )}
+      </AppShell>
+      <BuildStamp />
+            </Suspense>
+      </ErrorBoundary>
+  );
+}
