@@ -70,3 +70,6 @@ _LOCAL/
 **/*.bak_*
 **/*.bak.*
 
+
+# Arquivos temporários de auditoria
+tmp/
