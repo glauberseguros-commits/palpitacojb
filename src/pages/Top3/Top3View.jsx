@@ -4016,10 +4016,14 @@ const list = Array.isArray(top3)
                   hitType === "hit_centena" ||
                   hasExactHit;
 
+                /*
+                 * Todo acerto de grupo também identifica a dezena real
+                 * do prêmio oficial. Essa regra mantém compatibilidade
+                 * com registros antigos gravados como "hit_grupo".
+                 */
                 const hasDezenaHit =
-                  hitType === "hit_dezena" ||
-                  hasCentenaHit ||
-                  hasExactHit;
+                  isHit &&
+                  Boolean(matchedResultDezena);
 
                 const hitGrupo =
                   isHit &&
@@ -4032,7 +4036,6 @@ const list = Array.isArray(top3)
                     : "";
 
                 const hitDezena =
-                  isHit &&
                   hasDezenaHit
                     ? matchedResultDezena
                     : "";
