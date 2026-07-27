@@ -115,7 +115,7 @@ function TernoCard({
         </div>
 
         <div className="terno-grupo-card__score">
-          <span>Força</span>
+          <span>Índice de força</span>
           <strong>
             {terno.scorePct.toFixed(2)}%
           </strong>
@@ -177,6 +177,8 @@ export default function TernoGrupoView(
     error,
     analytics,
     top3,
+    rangeDraws,
+    todayDraws,
     LOTTERY_OPTIONS,
     lotteryKeySafe,
     setLotteryKey,
@@ -256,8 +258,23 @@ export default function TernoGrupoView(
       buildAllTernosGrupo({
         analytics,
         seedGroups: top3,
+        historicalDraws: [
+          ...(Array.isArray(rangeDraws)
+            ? rangeDraws
+            : []),
+          ...(Array.isArray(todayDraws)
+            ? todayDraws
+            : []),
+        ],
+        targetHour: analysisHourBucket,
       }),
-    [analytics, top3]
+    [
+      analytics,
+      top3,
+      rangeDraws,
+      todayDraws,
+      analysisHourBucket,
+    ]
   );
 
   const visibleTernos = useMemo(
