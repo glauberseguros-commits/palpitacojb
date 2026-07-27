@@ -3,7 +3,7 @@ import Icon from "./Icon";
 import MiniLogo from "./MiniLogo";
 
 import { auth } from "../../../../services/firebase";
-import { onAuthStateChanged, signOut } from "firebase/auth";
+import { signOut } from "firebase/auth";
 
 const ROUTES = {
   DASHBOARD: "dashboard",
@@ -112,38 +112,6 @@ export default function AppShell({ active, onNavigate, onLogout, children }) {
   }, [isMobile]);
 
   useEffect(() => {
-    const unsub = onAuthStateChanged(auth, (user) => {
-      if (user?.uid) {
-        setSession(readSession());
-        return;
-      }
-
-      if (safeReadLS(LS_GUEST_ACTIVE_KEY) === "1") {
-        setSession({
-          ok: true,
-          type: "guest",
-          plan: "FREE",
-          uid: "",
-          email: "",
-          raw: null,
-        });
-        return;
-      }
-
-      setSession({
-        ok: false,
-        type: "anon",
-        plan: "",
-        uid: "",
-        email: "",
-        raw: null,
-      });
-    });
-
-    return () => unsub();
-  }, []);
-
-  useEffect(() => {
     const refresh = () => setSession(readSession());
 
     const onStorage = (e) => {
@@ -155,12 +123,10 @@ export default function AppShell({ active, onNavigate, onLogout, children }) {
 
     window.addEventListener("storage", onStorage);
     window.addEventListener("pp_session_changed", refresh);
-    window.addEventListener("focus", refresh);
 
     return () => {
       window.removeEventListener("storage", onStorage);
       window.removeEventListener("pp_session_changed", refresh);
-      window.removeEventListener("focus", refresh);
     };
   }, []);
 

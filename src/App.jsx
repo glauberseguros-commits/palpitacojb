@@ -1,8 +1,6 @@
 import React, { lazy, Suspense, useEffect, useMemo, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 
-import DashboardMod from "./pages/Dashboard/Dashboard";
-import AccountMod from "./pages/Account/Account";
 
 // ✅ Admin
 
@@ -11,12 +9,23 @@ import AccountMod from "./pages/Account/Account";
 // ✅ página de Centenas
 
 // ✅ AppShell
-import AppShellMod from "./pages/Dashboard/components/Sidebar/AppShell";
 
 // ✅ Firebase (Admin real / Auth real)
 import { auth, db } from "./services/firebase";
 import { onAuthStateChanged, signOut } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
+
+const Dashboard = lazy(() =>
+  import("./pages/Dashboard/Dashboard")
+);
+
+const Account = lazy(() =>
+  import("./pages/Account/Account")
+);
+
+const AppShell = lazy(() =>
+  import("./pages/Dashboard/components/Sidebar/AppShell")
+);
 
 const Results = lazy(() => import("./pages/Results/Results"));
 const Top3 = lazy(() => import("./pages/Top3/Top3"));
@@ -475,12 +484,6 @@ export default function App() {
   const location = useLocation();
   const navigate = useNavigate();
 
-  const Dashboard = useMemo(() => resolveComponent(DashboardMod, "Dashboard"), []);
-  const Account = useMemo(() => resolveComponent(AccountMod, "Account"), []);
-
-  const AppShell = useMemo(() => resolveComponent(AppShellMod, "AppShell"), []);
-
-
   useEffect(() => {
     console.log("[PALPITACO BUILD]", {
       sha: BUILD_SHA || "(none)",
@@ -579,21 +582,13 @@ export default function App() {
     };
 
     const onSessionChanged = () => bump();
-    const onFocus = () => bump();
-    const onVis = () => {
-      if (document.visibilityState === "visible") bump();
-    };
 
     window.addEventListener("storage", onStorage);
     window.addEventListener("pp_session_changed", onSessionChanged);
-    window.addEventListener("focus", onFocus);
-    document.addEventListener("visibilitychange", onVis);
 
     return () => {
       window.removeEventListener("storage", onStorage);
       window.removeEventListener("pp_session_changed", onSessionChanged);
-      window.removeEventListener("focus", onFocus);
-      document.removeEventListener("visibilitychange", onVis);
     };
   }, []);
 
