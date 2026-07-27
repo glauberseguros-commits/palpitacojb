@@ -33,6 +33,20 @@ import { buildRanking } from "../../utils/buildRanking";
 import { applyScoreEngine } from "../../utils/scoreEngine";
 import { normalizeToYMD_SP } from "../../utils/ymd";
 
+/* PERF_BENCH_DASHBOARD_V3 */
+const __perf = (label, fn) => {
+  const startedAt = performance.now();
+
+  try {
+    return fn();
+  } finally {
+    const elapsed = performance.now() - startedAt;
+    console.log(
+      "[PERF] " + label + ": " + elapsed.toFixed(1) + "ms"
+    );
+  }
+};
+
 /* =========================
    DATA MODE
 ========================= */
@@ -1108,7 +1122,35 @@ export default function Dashboard(props) {
     return wantsPositionFilter || wantsGrupoFilter;
   }, [filters?.posicao, selectedGrupo]);
 
-  const { loading: fsLoading, error: fsError, meta: fsRankingMeta, drawsRaw: fsDrawsRaw } = useKingRanking({
+  const rankingRequestStartedRef = useRef(0);
+
+  useEffect(() => {
+    if (!canQueryFirestore) return;
+
+    rankingRequestStartedRef.current = performance.now();
+
+    console.log("[PERF] useKingRanking.start", {
+      uf,
+      queryDate,
+      dateFrom,
+      dateTo,
+      needsPrizes: needsPrizesLocal,
+    });
+  }, [
+    canQueryFirestore,
+    uf,
+    queryDate,
+    dateFrom,
+    dateTo,
+    needsPrizesLocal,
+  ]);
+
+  const {
+    loading: fsLoading,
+    error: fsError,
+    meta: fsRankingMeta,
+    drawsRaw: fsDrawsRaw,
+  } = useKingRanking({
     uf,
     date: canQueryFirestore ? queryDate : null,
     dateFrom: canQueryFirestore ? dateFrom : null,
@@ -1117,6 +1159,37 @@ export default function Dashboard(props) {
     positions: ALL_POSITIONS,
     needsPrizes: needsPrizesLocal,
   });
+
+  useEffect(() => {
+    if (DATA_MODE !== "firestore") return;
+    if (fsLoading) return;
+    if (!rankingRequestStartedRef.current) return;
+
+    const elapsed =
+      performance.now() - rankingRequestStartedRef.current;
+
+    console.log(
+      "[PERF] useKingRanking.complete: " +
+        elapsed.toFixed(1) +
+        "ms",
+      {
+        error: fsError
+          ? String(fsError?.message || fsError)
+          : null,
+        draws: Array.isArray(fsDrawsRaw)
+          ? fsDrawsRaw.length
+          : 0,
+        hydrating: fsRankingMeta?.hydrating === true,
+      }
+    );
+
+    rankingRequestStartedRef.current = 0;
+  }, [
+    fsLoading,
+    fsError,
+    fsDrawsRaw,
+    fsRankingMeta,
+  ]);
 
   const [jsonState, setJsonState] = useState({
     loading: DATA_MODE === "json",
@@ -1373,7 +1446,9 @@ export default function Dashboard(props) {
     if (!Array.isArray(drawsForUi) || !drawsForUi.length) return rankingRowsFromMeta;
 
     try {
-      const built = buildRanking(drawsForUi);
+      const built = __perf("buildRanking.global", () =>
+        buildRanking(drawsForUi)
+      );
       const arr = Array.isArray(built?.byGrupo)
         ? built.byGrupo
         : Array.isArray(built?.ranking)
@@ -1395,7 +1470,9 @@ const rankingDataForCharts = useMemo(() => {
     if (isAggregatedOnly) return [];
 
     try {
-      const built = buildRanking(drawsForView);
+      const built = __perf("buildRanking.view", () =>
+        buildRanking(drawsForView)
+      );
       const arr = Array.isArray(built?.ranking) ? built.ranking : [];
       if (arr.length) return arr;
     } catch {}
@@ -1414,14 +1491,18 @@ const rankingDataForCharts = useMemo(() => {
       ? rankingDataForCharts
       : [];
 
-    return applyScoreEngine(base);
+    return __perf("applyScoreEngine", () =>
+      applyScoreEngine(base)
+    );
   }, [rankingDataForCharts]);
 
   const palpitesByGrupo = useMemo(() => {
     if (isAggregatedOnly) return {};
     if (!dataReady || !hasAnyDrawsView) return {};
     try {
-      const out = buildPalpiteV2(drawsForView, { closeHourBucket: null });
+      const out = __perf("buildPalpiteV2", () =>
+        buildPalpiteV2(drawsForView, { closeHourBucket: null })
+      );
       return out?.palpitesByGrupo && typeof out.palpitesByGrupo === "object" ? out.palpitesByGrupo : {};
     } catch {
       return {};
