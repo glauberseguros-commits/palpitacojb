@@ -3867,12 +3867,7 @@ const list = Array.isArray(top3)
                   : "";
 
                 const resultMilhar =
-                  normalizeMilharStr(
-                    item?.resultMilhar ||
-                      item
-                        ?.resultTop3Milhares?.[0] ||
-                      ""
-                  );
+                  extractResultMilhar(item);
 
                 const resultCentena =
                   resultMilhar
