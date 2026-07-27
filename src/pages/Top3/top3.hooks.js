@@ -401,6 +401,11 @@ export function useTop3Controller() {
 
   const [baseDrawState, setBaseDrawState] = useState(null);
   const [persistedTop3History, setPersistedTop3History] = useState([]);
+  const [
+    persistedTop3HistoryResolved,
+    setPersistedTop3HistoryResolved,
+  ] = useState(false);
+
   const [currentPersistedPrediction, setCurrentPersistedPrediction] =
     useState(null);
   const [currentPersistedResolved, setCurrentPersistedResolved] =
@@ -530,6 +535,8 @@ export function useTop3Controller() {
     setBaseDrawState(null);
     setCurrentPersistedPrediction(null);
     setCurrentPersistedResolved(false);
+    setPersistedTop3History([]);
+    setPersistedTop3HistoryResolved(false);
 
     setLastInfo({
       lastYmd: "",
@@ -1558,14 +1565,21 @@ export function useTop3Controller() {
 
     if (!secondaryReady) {
       setPersistedTop3History([]);
+      setPersistedTop3HistoryResolved(false);
       return undefined;
     }
 
     let alive = true;
 
+    setPersistedTop3History([]);
+    setPersistedTop3HistoryResolved(false);
+
     async function loadPersistedHistory() {
       if (!isYMD(timelineYmd)) {
-        if (alive) setPersistedTop3History([]);
+        if (alive) {
+          setPersistedTop3History([]);
+          setPersistedTop3HistoryResolved(true);
+        }
         return;
       }
 
@@ -1582,7 +1596,13 @@ export function useTop3Controller() {
           );
         }
       } catch {
-        if (alive) setPersistedTop3History([]);
+        if (alive) {
+          setPersistedTop3History([]);
+        }
+      } finally {
+        if (alive) {
+          setPersistedTop3HistoryResolved(true);
+        }
       }
     }
 
@@ -1834,6 +1854,7 @@ export function useTop3Controller() {
     top3,
     timelineTop3,
     persistedTop3History,
+    persistedTop3HistoryResolved,
     availableHistoryDates,
 
     setLotteryKey,

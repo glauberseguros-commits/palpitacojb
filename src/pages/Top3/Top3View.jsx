@@ -1713,6 +1713,7 @@ export default function Top3View(props) {
     error,
     timelineTop3,
     persistedTop3History,
+    persistedTop3HistoryResolved,
     availableHistoryDates: controllerHistoryDates,
     top3,
     layerMetaText,
@@ -1910,6 +1911,13 @@ const list = Array.isArray(top3)
 }, [loadedYmd, ymdSafe, timeline]);
 
   const historyRows = useMemo(() => {
+    // O histórico oficial só pode ser montado depois que a leitura
+    // do Firestore estiver concluída. Isso impede a exibição temporária
+    // do backtest reconstruído antes da chegada do snapshot persistido.
+    if (!persistedTop3HistoryResolved) {
+      return [];
+    }
+
     const persistedRows = (
       Array.isArray(persistedTop3History)
         ? persistedTop3History
@@ -2225,6 +2233,7 @@ const list = Array.isArray(top3)
     timeline,
     historyAnchorYmd,
     persistedTop3History,
+    persistedTop3HistoryResolved,
   ]);
 
   const historySummary = useMemo(() => {
@@ -3880,7 +3889,11 @@ const list = Array.isArray(top3)
               marginTop: 12,
             }}
           >
-            {!historyRows.length ? (
+            {!persistedTop3HistoryResolved ? (
+              <div className="top3-empty">
+                Carregando histórico oficial...
+              </div>
+            ) : !historyRows.length ? (
               <div className="top3-empty">
                 Sem histórico para a data analisada.
               </div>
