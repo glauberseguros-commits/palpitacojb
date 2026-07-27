@@ -3956,92 +3956,128 @@ const list = Array.isArray(top3)
                         ? "rgba(205,127,50,0.50)"
                         : "rgba(212,175,55,0.38)";
 
+
                 const matchedOfficialIndex =
-  Array.isArray(resultTop3Groups)
-    ? resultTop3Groups.findIndex(g => Number(g) === Number(resultGrupo))
-    : -1;
+                  resultPosition >= 1 &&
+                  resultPosition <= 3
+                    ? resultPosition - 1
+                    : -1;
 
-const isHit = matchedOfficialIndex >= 0;
+                const officialMatchedGrupoRaw =
+                  matchedOfficialIndex >= 0
+                    ? Number(
+                        item?.resultTop3Groups?.[
+                          matchedOfficialIndex
+                        ] ?? NaN
+                      )
+                    : NaN;
 
-const matchedGrupo =
-  isHit
-    ? Number(resultGrupo)
-    : null;
+                const officialMatchedGrupo =
+                  Number.isFinite(
+                    officialMatchedGrupoRaw
+                  ) &&
+                  officialMatchedGrupoRaw >= 1 &&
+                  officialMatchedGrupoRaw <= 25
+                    ? officialMatchedGrupoRaw
+                    : NaN;
 
-const matchedPrediction =
-  isHit && Array.isArray(slotTop3)
-    ? slotTop3[matchedOfficialIndex]
-    : null;
+                const officialMatchedMilhar =
+                  matchedOfficialIndex >= 0
+                    ? normalizeMilharStr(
+                        item?.resultTop3Milhares?.[
+                          matchedOfficialIndex
+                        ] ||
+                          (
+                            resultPosition === 1
+                              ? resultMilhar
+                              : ""
+                          )
+                      )
+                    : "";
 
-const predictedMilhares =
-  Array.isArray(matchedPrediction?.milhares20)
-    ? matchedPrediction.milhares20
-    : Array.isArray(matchedPrediction?.milhares)
-      ? matchedPrediction.milhares
-      : [];
+                const officialMatchedCentena =
+                  officialMatchedMilhar
+                    ? officialMatchedMilhar.slice(-3)
+                    : "";
 
-const predictedCentenas =
-  predictedMilhares
-    .map(v => String(v).padStart(4,"0").slice(-3));
+                const officialMatchedDezena =
+                  officialMatchedMilhar
+                    ? officialMatchedMilhar.slice(-2)
+                    : "";
 
-const officialMilhar =
-  String(resultMilhar || "").padStart(4,"0");
+                const matchedPrediction =
+                  isHit &&
+                  matchedPredictionIndex >= 0
+                    ? top3Items[
+                        matchedPredictionIndex
+                      ] || null
+                    : null;
 
-const officialCentena =
-  officialMilhar.slice(-3);
+                const predictedMilhares = (
+                  Array.isArray(
+                    matchedPrediction?.milhares20
+                  )
+                    ? matchedPrediction.milhares20
+                    : Array.isArray(
+                          matchedPrediction?.milhares
+                        )
+                      ? matchedPrediction.milhares
+                      : []
+                )
+                  .map(normalizeMilharStr)
+                  .filter(
+                    (value) =>
+                      /^\d{4}$/.test(value)
+                  );
 
-const officialDezena =
-  officialMilhar.slice(-2);
+                const predictedCentenas =
+                  predictedMilhares.map(
+                    (value) => value.slice(-3)
+                  );
 
-const hasCentenaHit =
-  predictedCentenas.includes(officialCentena);
+                const hasOfficialMilhar =
+                  /^\d{4}$/.test(
+                    officialMatchedMilhar
+                  );
 
-const hasMilharHit =
-  predictedMilhares.includes(officialMilhar);
+                const hasCentenaHit =
+                  isHit &&
+                  hasOfficialMilhar &&
+                  predictedCentenas.includes(
+                    officialMatchedCentena
+                  );
 
-const hitGrupo =
-  isHit
-    ? String(matchedGrupo)
-    : "";
+                const hasExactHit =
+                  isHit &&
+                  hasOfficialMilhar &&
+                  predictedMilhares.includes(
+                    officialMatchedMilhar
+                  );
 
-const hitDezena =
-  isHit
-    ? officialDezena
-    : "";
-
-const hitCentena =
-  hasCentenaHit
-    ? officialCentena
-    : "";
-
-const hitMilhar =
-  hasMilharHit
-    ? officialMilhar
-    : "";const hitGrupo =
+                const hitGrupo =
                   isHit &&
                   Number.isFinite(
-                    matchedResultGrupo
+                    officialMatchedGrupo
                   )
                     ? formatGrupo(
-                        matchedResultGrupo
+                        officialMatchedGrupo
                       )
                     : "";
 
                 const hitDezena =
-                  hasDezenaHit
-                    ? matchedResultDezena
+                  isHit &&
+                  hasOfficialMilhar
+                    ? officialMatchedDezena
                     : "";
 
                 const hitCentena =
-                  isHit &&
                   hasCentenaHit
-                    ? matchedResultCentena
+                    ? officialMatchedCentena
                     : "";
 
                 const hitMilhar =
-                  isHit &&
                   hasExactHit
-                    ? matchedResultMilhar
+                    ? officialMatchedMilhar
                     : "";
 
                 return (
@@ -4453,3 +4489,4 @@ const hitMilhar =
     </div>
   );
 }
+
