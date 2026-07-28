@@ -1163,10 +1163,25 @@ export function useTop3Controller() {
 
         if (debugTop3 && typeof window !== "undefined") {
           const rankingAudit =
-            nextAnalytics?.rankingAudit || null;
+            nextAnalytics?.meta?.explain?.rankingAudit ||
+            null;
 
           const rankingAuditSummary =
-            nextAnalytics?.meta?.rankingAuditSummary || null;
+            nextAnalytics?.top?.[0]?.meta?.explain
+              ?.rankingAuditSummary ||
+            (rankingAudit
+              ? {
+                  changed: Boolean(rankingAudit.changed),
+                  compositionChanged: Boolean(
+                    rankingAudit.compositionChanged
+                  ),
+                  beforeTop3: rankingAudit.beforeTop3 || [],
+                  afterTop3: rankingAudit.afterTop3 || [],
+                  enteredTop3: rankingAudit.enteredTop3 || [],
+                  exitedTop3: rankingAudit.exitedTop3 || [],
+                  movedTop3: rankingAudit.movedTop3 || [],
+                }
+              : null);
 
           const diagnostic = {
             at: new Date().toISOString(),
