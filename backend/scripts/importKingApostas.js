@@ -1228,6 +1228,13 @@ async function importFromPayload({
       continue;
     }
 
+    // Mantém no documento principal a mesma estrutura normalizada
+    // gravada na subcoleção draws/{drawId}/prizes.
+    const normalizedPrizes = prizes.map((p) => ({
+      position: p.position,
+      ...normalizePrize(p.value),
+    }));
+
     totalDrawsValid++;
 
     if (filterClose) {
@@ -1291,7 +1298,10 @@ async function importFromPayload({
         // (PT_RIO HH:09 vira "", então cai em null)
         close_hour_raw: closeRaw || null,
 
-        prizesCount: prizes.length,
+        // Evita hidratação N+1 no frontend.
+        // A subcoleção prizes continua sendo preservada.
+        prizes: normalizedPrizes,
+        prizesCount: normalizedPrizes.length,
         importedAt: admin.firestore.FieldValue.serverTimestamp(),
       },
       { merge: true }
