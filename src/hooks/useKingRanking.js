@@ -517,26 +517,16 @@ export function useKingRanking({
     return () => clearInterval(id);
   }, [intervalMs, autoRefreshEnabled]);
 
-  useEffect(() => {
-    const bump = () => setRefreshTick((t) => t + 1);
-
-    const onVisibility = () => {
-      if (typeof document === "undefined") return;
-      if (!document.hidden) bump();
-    };
-
-    if (typeof window !== "undefined") window.addEventListener("focus", bump);
-    if (typeof document !== "undefined") {
-      document.addEventListener("visibilitychange", onVisibility);
-    }
-
-    return () => {
-      if (typeof window !== "undefined") window.removeEventListener("focus", bump);
-      if (typeof document !== "undefined") {
-        document.removeEventListener("visibilitychange", onVisibility);
-      }
-    };
-  }, []);
+  /*
+   * Não atualizar automaticamente ao recuperar foco ou voltar para a aba.
+   *
+   * Em ranges históricos longos, esse comportamento reiniciava uma consulta
+   * detalhada já concluída apenas porque o usuário abriu o DevTools, alternou
+   * de janela ou retornou ao navegador.
+   *
+   * A atualização periódica continua sendo controlada por
+   * autoRefreshEnabled e permanece ativa somente nos recortes permitidos.
+   */
 
   useEffect(() => {
     let mounted = true;
