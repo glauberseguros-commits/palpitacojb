@@ -3233,6 +3233,15 @@ export function computeStatisticalTop3V3({
       return a.grupo - b.grupo;
     });
 
+  const topLimit = Math.max(1, Number(topN || 3));
+
+  const rankingBeforeScore = ranked.map((item, index) => ({
+    rank: index + 1,
+    grupo: Number(item?.grupo),
+    score: Number(item?.score || 0),
+    scoreProb: Number(item?.scoreProb || 0),
+  }));
+
   const rankedScored = scoreRanking(
     ranked,
     {
@@ -3244,12 +3253,97 @@ export function computeStatisticalTop3V3({
     }
   );
 
-  const top = rankedScored
-    .sort((a, b) => {
-      if (b.score !== a.score) return b.score - a.score;
-      return a.grupo - b.grupo;
-    })
-    .slice(0, Math.max(1, Number(topN || 3)))
+  const rankedScoredSorted = [...rankedScored].sort((a, b) => {
+    if (b.score !== a.score) return b.score - a.score;
+    return a.grupo - b.grupo;
+  });
+
+  const rankingBeforeByGroup = new Map(
+    rankingBeforeScore.map((item) => [
+      Number(item.grupo),
+      item,
+    ])
+  );
+
+  const rankingAfterScore = rankedScoredSorted.map(
+    (item, index) => {
+      const before =
+        rankingBeforeByGroup.get(Number(item?.grupo)) ||
+        null;
+
+      return {
+        rank: index + 1,
+        grupo: Number(item?.grupo),
+        score: Number(item?.score || 0),
+        scoreProb: Number(item?.scoreProb || 0),
+        previousRank: Number(before?.rank || 0),
+        previousScore: Number(before?.score || 0),
+        rankDelta:
+          Number(before?.rank || 0) > 0
+            ? Number(before.rank) - (index + 1)
+            : 0,
+        scoreDelta:
+          Number(item?.score || 0) -
+          Number(before?.score || 0),
+      };
+    }
+  );
+
+  const beforeTop3 = rankingBeforeScore
+    .slice(0, topLimit)
+    .map((item) => Number(item.grupo));
+
+  const afterTop3 = rankingAfterScore
+    .slice(0, topLimit)
+    .map((item) => Number(item.grupo));
+
+  const enteredTop3 = afterTop3.filter(
+    (grupo) => !beforeTop3.includes(grupo)
+  );
+
+  const exitedTop3 = beforeTop3.filter(
+    (grupo) => !afterTop3.includes(grupo)
+  );
+
+  const movedTop3 = rankingAfterScore
+    .filter((item) => afterTop3.includes(Number(item.grupo)))
+    .filter(
+      (item) =>
+        Number(item.previousRank) !== Number(item.rank)
+    )
+    .map((item) => ({
+      grupo: Number(item.grupo),
+      from: Number(item.previousRank),
+      to: Number(item.rank),
+      delta: Number(item.rankDelta),
+    }));
+
+  const scoreAudit = {
+    lotteryKey: key,
+    targetYmd: targetY,
+    targetHour: targetH,
+    previousGroup: Number(prevGrupo),
+    topLimit,
+    changed:
+      beforeTop3.length !== afterTop3.length ||
+      beforeTop3.some(
+        (grupo, index) =>
+          Number(grupo) !== Number(afterTop3[index])
+      ),
+    compositionChanged:
+      enteredTop3.length > 0 ||
+      exitedTop3.length > 0,
+    beforeTop3,
+    afterTop3,
+    enteredTop3,
+    exitedTop3,
+    movedTop3,
+    rankingBeforeScore,
+    rankingAfterScore,
+  };
+
+  const top = rankedScoredSorted
+    .slice(0, topLimit)
     .map((x, idx) => {
     const g2 = String(x.grupo).padStart(2, "0");
     const rawScoreProb = Number(x.scoreProb || 0);
@@ -3326,6 +3420,16 @@ export function computeStatisticalTop3V3({
             ])
           ),
           details: x.details,
+          rankingAuditSummary: {
+            changed: scoreAudit.changed,
+            compositionChanged:
+              scoreAudit.compositionChanged,
+            beforeTop3: scoreAudit.beforeTop3,
+            afterTop3: scoreAudit.afterTop3,
+            enteredTop3: scoreAudit.enteredTop3,
+            exitedTop3: scoreAudit.exitedTop3,
+            movedTop3: scoreAudit.movedTop3,
+          },
         },
       },
     };
@@ -3352,6 +3456,7 @@ export function computeStatisticalTop3V3({
         prevHour: lastH,
         prevGrupo: Number(prevGrupo),
         activeWeights,
+        rankingAudit: scoreAudit,
         layers: Object.fromEntries(
           Object.entries(layers).map(([k, v]) => [
             k,
