@@ -230,20 +230,33 @@ function analyzeSnapshotHit(snapshot, officialPodium) {
     ? officialPodium.filter(Boolean).slice(0, 3)
     : [];
 
+  const missResult = {
+    hitType: "miss",
+    hitScore: 0,
+    hitPosition: -1,
+    predictionPosition: -1,
+    resultPosition: -1,
+    podiumMedal: "",
+    matchedValue: "",
+    matchedGrupo: null,
+    matchedMilhar: "",
+    matchedAnimal: "",
+  };
+
   if (!top3.length || !podium.length) {
-    return {
-      hitType: "miss",
-      hitScore: 0,
-      hitPosition: -1,
-      predictionPosition: -1,
-      resultPosition: -1,
-      podiumMedal: "",
-      matchedValue: "",
-      matchedGrupo: null,
-      matchedMilhar: "",
-      matchedAnimal: "",
-    };
+    return missResult;
   }
+
+  const hitPriority = {
+    hit_exact: 4,
+    hit_centena: 3,
+    hit_dezena: 2,
+    hit_grupo: 1,
+    miss: 0,
+  };
+
+  let bestHit = null;
+  let bestPriority = 0;
 
   for (const officialPrize of podium) {
     const resultGrupo = Number(
@@ -262,12 +275,17 @@ function analyzeSnapshotHit(snapshot, officialPodium) {
       ? resultMilhar.slice(-2)
       : "";
 
+    const resultPosition = Number(
+      officialPrize?.position
+    );
+
     for (
       let predictionIndex = 0;
       predictionIndex < top3.length;
       predictionIndex += 1
     ) {
       const prediction = top3[predictionIndex];
+
       const predictionGrupo = Number(
         prediction?.grupo
       );
@@ -326,42 +344,52 @@ function analyzeSnapshotHit(snapshot, officialPodium) {
         ).padStart(2, "0");
       }
 
-      if (hitType !== "miss") {
-        const resultPosition = Number(
-          officialPrize?.position
+      const candidatePriority =
+        hitPriority[hitType] || 0;
+
+      if (!candidatePriority) {
+        continue;
+      }
+
+      const candidate = {
+        hitType,
+        hitScore,
+        hitPosition: predictionIndex + 1,
+        predictionPosition: predictionIndex + 1,
+        resultPosition,
+        podiumMedal:
+          podiumMedalFromPosition(resultPosition),
+        matchedValue,
+        matchedGrupo: resultGrupo,
+        matchedMilhar: resultMilhar,
+        matchedAnimal: safeStr(
+          officialPrize?.animal || ""
+        ),
+      };
+
+      const shouldReplace =
+        candidatePriority > bestPriority ||
+        (
+          candidatePriority === bestPriority &&
+          (
+            !bestHit ||
+            resultPosition < bestHit.resultPosition ||
+            (
+              resultPosition === bestHit.resultPosition &&
+              candidate.predictionPosition <
+                bestHit.predictionPosition
+            )
+          )
         );
 
-        return {
-          hitType,
-          hitScore,
-          hitPosition: predictionIndex + 1,
-          predictionPosition: predictionIndex + 1,
-          resultPosition,
-          podiumMedal:
-            podiumMedalFromPosition(resultPosition),
-          matchedValue,
-          matchedGrupo: resultGrupo,
-          matchedMilhar: resultMilhar,
-          matchedAnimal: safeStr(
-            officialPrize?.animal || ""
-          ),
-        };
+      if (shouldReplace) {
+        bestHit = candidate;
+        bestPriority = candidatePriority;
       }
     }
   }
 
-  return {
-    hitType: "miss",
-    hitScore: 0,
-    hitPosition: -1,
-    predictionPosition: -1,
-    resultPosition: -1,
-    podiumMedal: "",
-    matchedValue: "",
-    matchedGrupo: null,
-    matchedMilhar: "",
-    matchedAnimal: "",
-  };
+  return bestHit || missResult;
 }
 
 export async function saveTop3PredictionSnapshot({
@@ -685,3 +713,4 @@ export async function reconcileTop3PredictionDay({
     history: reconciledHistory,
   };
 }
+

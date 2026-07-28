@@ -410,18 +410,25 @@ function hasOfficialResult(slot) {
 }
 
 function analyzeTop3Hit(top3, resultSource, resultMilhar) {
+  const emptyResult = {
+    type: "none",
+    score: 0,
+    position: -1,
+    predictionPosition: -1,
+    resultPosition: -1,
+    podiumMedal: "",
+    matchedValue: "",
+    matchedGrupo: null,
+    matchedMilhar: "",
+  };
+
+  const missResult = {
+    ...emptyResult,
+    type: "miss",
+  };
+
   if (!Array.isArray(top3) || !top3.length) {
-    return {
-      type: "none",
-      score: 0,
-      position: -1,
-      predictionPosition: -1,
-      resultPosition: -1,
-      podiumMedal: "",
-      matchedValue: "",
-      matchedGrupo: null,
-      matchedMilhar: "",
-    };
+    return emptyResult;
   }
 
   const officialPodium = Array.isArray(resultSource)
@@ -440,21 +447,25 @@ function analyzeTop3Hit(top3, resultSource, resultMilhar) {
       );
 
   if (!officialPodium.length) {
-    return {
-      type: "none",
-      score: 0,
-      position: -1,
-      predictionPosition: -1,
-      resultPosition: -1,
-      podiumMedal: "",
-      matchedValue: "",
-      matchedGrupo: null,
-      matchedMilhar: "",
-    };
+    return emptyResult;
   }
 
+  const hitPriority = {
+    hit_exact: 4,
+    hit_centena: 3,
+    hit_dezena: 2,
+    hit_grupo: 1,
+    miss: 0,
+  };
+
+  let bestHit = null;
+  let bestPriority = 0;
+
   for (const officialPrize of officialPodium) {
-    const grupoNum = Number(officialPrize?.grupo);
+    const grupoNum = Number(
+      officialPrize?.grupo
+    );
+
     const milhar = normalizeMilharStr(
       officialPrize?.milhar
     );
@@ -466,6 +477,10 @@ function analyzeTop3Hit(top3, resultSource, resultMilhar) {
     const dezena = milhar
       ? milhar.slice(-2)
       : "";
+
+    const resultPosition = Number(
+      officialPrize?.position
+    );
 
     for (
       let predictionIndex = 0;
@@ -483,15 +498,21 @@ function analyzeTop3Hit(top3, resultSource, resultMilhar) {
             : []
       )
         .map(normalizeMilharStr)
-        .filter((value) => /^\d{4}$/.test(value));
+        .filter(
+          (value) => /^\d{4}$/.test(value)
+        );
 
       const centenas = milhares
         .map((value) => value.slice(-3))
-        .filter((value) => /^\d{3}$/.test(value));
+        .filter(
+          (value) => /^\d{3}$/.test(value)
+        );
 
       const dezenas = milhares
         .map((value) => value.slice(-2))
-        .filter((value) => /^\d{2}$/.test(value));
+        .filter(
+          (value) => /^\d{2}$/.test(value)
+        );
 
       let type = "miss";
       let score = 0;
@@ -527,38 +548,49 @@ function analyzeTop3Hit(top3, resultSource, resultMilhar) {
         matchedValue = formatGrupo(grupoNum);
       }
 
-      if (type !== "miss") {
-        const resultPosition = Number(
-          officialPrize?.position
+      const candidatePriority =
+        hitPriority[type] || 0;
+
+      if (!candidatePriority) {
+        continue;
+      }
+
+      const candidate = {
+        type,
+        score,
+        position: predictionIndex + 1,
+        predictionPosition: predictionIndex + 1,
+        resultPosition,
+        podiumMedal:
+          podiumMedalFromPosition(resultPosition),
+        matchedValue,
+        matchedGrupo: grupoNum,
+        matchedMilhar: milhar,
+      };
+
+      const shouldReplace =
+        candidatePriority > bestPriority ||
+        (
+          candidatePriority === bestPriority &&
+          (
+            !bestHit ||
+            resultPosition < bestHit.resultPosition ||
+            (
+              resultPosition === bestHit.resultPosition &&
+              candidate.predictionPosition <
+                bestHit.predictionPosition
+            )
+          )
         );
 
-        return {
-          type,
-          score,
-          position: predictionIndex + 1,
-          predictionPosition: predictionIndex + 1,
-          resultPosition,
-          podiumMedal:
-            podiumMedalFromPosition(resultPosition),
-          matchedValue,
-          matchedGrupo: grupoNum,
-          matchedMilhar: milhar,
-        };
+      if (shouldReplace) {
+        bestHit = candidate;
+        bestPriority = candidatePriority;
       }
     }
   }
 
-  return {
-    type: "miss",
-    score: 0,
-    position: -1,
-    predictionPosition: -1,
-    resultPosition: -1,
-    podiumMedal: "",
-    matchedValue: "",
-    matchedGrupo: null,
-    matchedMilhar: "",
-  };
+  return bestHit || missResult;
 }
 
 function ImgWithFallback({ srcs, alt, size = 84, style }) {
@@ -1598,9 +1630,10 @@ function TimelineSlot({
         ? "🎯 MILHAR (100%)"
         : analysis.type === "hit_centena"
           ? "🟡 CENTENA (66,67%)"
-          : analysis.type === "hit_grupo"
-            ? "✅ DEZENA/GRUPO (33,33%)"
-            : "❌ ERRO (0%)";
+          : analysis.type === "hit_dezena" ||
+            analysis.type === "hit_grupo"
+          ? "✅ DEZENA/GRUPO (33,33%)"
+          : "❌ ERRO (0%)";
 
   const statusDetail =
     !hasResult
@@ -1609,6 +1642,8 @@ function TimelineSlot({
         ? `Milhar exata acertada no palpite #${analysis.position}.`
         : analysis.type === "hit_centena"
           ? `Centena acertada no palpite #${analysis.position}.`
+          : analysis.type === "hit_dezena"
+          ? `Dezena acertada no palpite #${analysis.position}.`
           : analysis.type === "hit_grupo"
             ? `Grupo acertado no palpite #${analysis.position}.`
             : "Nenhum dos 3 palpites foi sorteado.";
@@ -4588,6 +4623,7 @@ const list = Array.isArray(top3)
     </div>
   );
 }
+
 
 
 
