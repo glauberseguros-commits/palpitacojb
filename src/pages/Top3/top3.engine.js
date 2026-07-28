@@ -4655,7 +4655,26 @@ function buildTimelineForDate({
 
     const computed = computeStatisticalTop3V3({
       lotteryKey,
-      drawsRange: [...usableHistory, ...usableTodayContext],
+      // A faixa histórica já contém os sorteios anteriores ao horário-base.
+      // A timeline também mantém esses mesmos sorteios em usableTodayContext.
+      // A união simples duplicava registros do próprio dia e podia alterar
+      // o ranking histórico em relação à previsão exibida originalmente.
+      drawsRange: Array.from(
+        new Map(
+          [...usableHistory, ...usableTodayContext]
+            .map((draw) => {
+              const drawYmd = pickDrawYMD(draw);
+              const drawHour = toHourBucket(
+                pickDrawHour(draw)
+              );
+
+              return [
+                `${drawYmd || ""}|${drawHour || ""}`,
+                draw,
+              ];
+            })
+        ).values()
+      ),
       drawLast: baseDraw,
       drawsToday: usableTodayContext,
       PT_RIO_SCHEDULE_NORMAL,
@@ -4827,3 +4846,4 @@ export function auditTop3Backtest({
     lotteryKey,
   });
 }
+
