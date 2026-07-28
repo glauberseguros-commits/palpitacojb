@@ -1161,6 +1161,37 @@ export function useTop3Controller() {
 
         if (cancelled) return;
 
+        if (debugTop3 && typeof window !== "undefined") {
+          const rankingAudit =
+            nextAnalytics?.rankingAudit || null;
+
+          const rankingAuditSummary =
+            nextAnalytics?.meta?.rankingAuditSummary || null;
+
+          const diagnostic = {
+            at: new Date().toISOString(),
+            lotteryKey: lotteryKeySafe,
+            targetYmd: analysisYmd,
+            targetHour: analysisHourBucket,
+            rankingAudit,
+            rankingAuditSummary,
+          };
+
+          window.__TOP3_RANKING_AUDIT__ = diagnostic;
+
+          try {
+            window.localStorage.setItem(
+              "top3_ranking_audit_last",
+              JSON.stringify(diagnostic)
+            );
+          } catch {}
+
+          console.info(
+            "[TOP3 RANKING AUDIT]",
+            diagnostic
+          );
+        }
+
         setAnalytics(
           nextAnalytics && typeof nextAnalytics === "object"
             ? nextAnalytics
