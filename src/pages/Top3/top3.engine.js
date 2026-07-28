@@ -3231,8 +3231,7 @@ export function computeStatisticalTop3V3({
     .sort((a, b) => {
       if (b.score !== a.score) return b.score - a.score;
       return a.grupo - b.grupo;
-    })
-    .slice(0, Math.max(1, Number(topN || 3)));
+    });
 
   const rankedScored = scoreRanking(
     ranked,
@@ -3245,7 +3244,13 @@ export function computeStatisticalTop3V3({
     }
   );
 
-  const top = rankedScored.map((x, idx) => {
+  const top = rankedScored
+    .sort((a, b) => {
+      if (b.score !== a.score) return b.score - a.score;
+      return a.grupo - b.grupo;
+    })
+    .slice(0, Math.max(1, Number(topN || 3)))
+    .map((x, idx) => {
     const g2 = String(x.grupo).padStart(2, "0");
     const rawScoreProb = Number(x.scoreProb || 0);
 
@@ -4717,4 +4722,3 @@ export function auditTop3Backtest({
     lotteryKey,
   });
 }
-
