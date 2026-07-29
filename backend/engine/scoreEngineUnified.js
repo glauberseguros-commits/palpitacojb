@@ -2,18 +2,47 @@
 
 const path = require("path");
 
-const TOP3_ROOT = path.resolve(
-  __dirname,
-  "../../src/pages/Top3"
-);
+const TRANSPILE_ROOTS = [
+  path.resolve(
+    __dirname,
+    "../../src/pages/Top3"
+  ),
+
+  path.resolve(
+    __dirname,
+    "../../src/shared/predictiveMilharEngine"
+  ),
+
+  path.resolve(
+    __dirname,
+    "../../src/pages/Centenas/modules"
+  ),
+];
 
 let publicApi = null;
+
+function isInsideTranspileRoots(filename) {
+  const absolute = path.resolve(filename);
+
+  return TRANSPILE_ROOTS.some(
+    (root) =>
+      absolute === root ||
+      absolute.startsWith(`${root}${path.sep}`)
+  );
+}
 
 /**
  * Carrega o núcleo ESM do TOP3 dentro do backend CommonJS.
  *
- * A transformação é limitada ao diretório do TOP3. Nenhum arquivo
- * de React, Firebase ou restante do frontend é processado.
+ * A transformação é limitada aos módulos efetivamente utilizados
+ * pela cadeia pública do TOP3:
+ *
+ * - src/pages/Top3;
+ * - src/shared/predictiveMilharEngine;
+ * - src/pages/Centenas/modules.
+ *
+ * Nenhum componente React, Firebase ou restante do frontend
+ * é processado por este carregador.
  */
 function loadTop3PublicApi() {
   if (publicApi) {
@@ -26,14 +55,7 @@ function loadTop3PublicApi() {
     cache: true,
     extensions: [".js"],
     only: [
-      (filename) => {
-        const absolute = path.resolve(filename);
-
-        return (
-          absolute === TOP3_ROOT ||
-          absolute.startsWith(`${TOP3_ROOT}${path.sep}`)
-        );
-      },
+      isInsideTranspileRoots,
     ],
     plugins: [
       require.resolve(
