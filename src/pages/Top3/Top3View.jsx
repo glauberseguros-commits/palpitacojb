@@ -1742,6 +1742,280 @@ function TimelineSlot({
   );
 }
 
+
+function getHistoricalMilharesGrid(item) {
+  const grupo = Number(item?.grupo);
+  const dezenas = getDezenasFixasFromGrupo(grupo);
+
+  if (!dezenas.length) {
+    return {
+      dezenas: [],
+      rows: [],
+      flat: [],
+      available: false,
+    };
+  }
+
+  const hasCols =
+    Array.isArray(item?.milharesCols) &&
+    item.milharesCols.length >= 4 &&
+    Array.isArray(item.milharesCols[0]?.items);
+
+  if (hasCols) {
+    const cols = clampColsFromItemMilharesCols(
+      item.milharesCols,
+      4,
+      6
+    );
+
+    const rows = Array.from(
+      { length: 6 },
+      (_, rowIndex) =>
+        cols.map(
+          (col) =>
+            normalizeMilharStr(
+              col?.items?.[rowIndex] || ""
+            )
+        )
+    );
+
+    const flat = rows
+      .flat()
+      .filter((value) => /^\\d{4}$/.test(value));
+
+    return {
+      dezenas: cols.map(
+        (col, index) =>
+          String(
+            col?.dezena ||
+              dezenas[index] ||
+              ""
+          )
+      ),
+      rows,
+      flat,
+      available: flat.length > 0,
+    };
+  }
+
+  const storedMilhares = (
+    Array.isArray(item?.milhares20)
+      ? item.milhares20
+      : Array.isArray(item?.milhares)
+        ? item.milhares
+        : []
+  )
+    .map(normalizeMilharStr)
+    .filter(
+      (value) => /^\\d{4}$/.test(value)
+    );
+
+  if (!storedMilhares.length) {
+    return {
+      dezenas,
+      rows: Array.from(
+        { length: 6 },
+        () => Array(4).fill("")
+      ),
+      flat: [],
+      available: false,
+    };
+  }
+
+  const columns = dezenas.map(() => []);
+
+  storedMilhares.forEach((milhar) => {
+    const dezena = milhar.slice(-2);
+    const columnIndex = dezenas.indexOf(dezena);
+
+    if (
+      columnIndex >= 0 &&
+      columns[columnIndex].length < 6
+    ) {
+      columns[columnIndex].push(milhar);
+    }
+  });
+
+  const rows = Array.from(
+    { length: 6 },
+    (_, rowIndex) =>
+      columns.map(
+        (column) => column[rowIndex] || ""
+      )
+  );
+
+  const flat = rows
+    .flat()
+    .filter((value) => /^\\d{4}$/.test(value));
+
+  return {
+    dezenas,
+    rows,
+    flat,
+    available: flat.length > 0,
+  };
+}
+
+function HistoricalMilharesPopover({
+  data,
+  copyText,
+  copied,
+  setCopied,
+  onClose,
+}) {
+  const grid = useMemo(
+    () => getHistoricalMilharesGrid(data?.pick),
+    [data]
+  );
+
+  useEffect(() => {
+    if (typeof document === "undefined") {
+      return undefined;
+    }
+
+    const onKeyDown = (event) => {
+      if (event.key === "Escape") {
+        onClose();
+      }
+    };
+
+    document.addEventListener("keydown", onKeyDown);
+
+    return () => {
+      document.removeEventListener(
+        "keydown",
+        onKeyDown
+      );
+    };
+  }, [onClose]);
+
+  const doCopy = async () => {
+    const payload = grid.flat.join(" ").trim();
+
+    if (!payload) return;
+
+    const ok = await copyText(payload);
+
+    if (ok) {
+      setCopied(data?.key || "history");
+    }
+  };
+
+  return (
+    <div
+      className="top3-historyPopoverBackdrop"
+      role="presentation"
+      onMouseDown={(event) => {
+        if (event.target === event.currentTarget) {
+          onClose();
+        }
+      }}
+    >
+      <section
+        className="top3-historyPopover"
+        role="dialog"
+        aria-modal="true"
+        aria-label={`Milhares históricas de ${
+          data?.animal || "animal"
+        }`}
+      >
+        <div className="top3-historyPopover__header">
+          <div className="top3-historyPopover__identity">
+            <ImgWithFallback
+              srcs={data?.img ? [data.img] : []}
+              alt={
+                data?.animal ||
+                `G${formatGrupo(data?.grupo)}`
+              }
+              size={54}
+              style={{ borderRadius: 11 }}
+            />
+
+            <div>
+              <div className="top3-historyPopover__title">
+                {String(
+                  data?.animal || "Animal"
+                ).toUpperCase()}
+              </div>
+
+              <div className="top3-historyPopover__subtitle">
+                G{formatGrupo(data?.grupo)} ·{" "}
+                {ymdToBR(data?.ymd)} {data?.hour}
+              </div>
+            </div>
+          </div>
+
+          <button
+            type="button"
+            className="top3-historyPopover__close"
+            onClick={onClose}
+            aria-label="Fechar"
+            title="Fechar"
+          >
+            ×
+          </button>
+        </div>
+
+        {grid.available ? (
+          <>
+            <div className="top3-historyPopover__actions">
+              <button
+                type="button"
+                className="pp-btn"
+                onClick={doCopy}
+                title="Copiar"
+              >
+                {copied === data?.key
+                  ? "✅ Copiado"
+                  : "📋 Copiar"}
+              </button>
+            </div>
+
+            <div className="pp-chipRow">
+              {grid.dezenas.map((dezena, index) => (
+                <div
+                  key={`${dezena}_${index}`}
+                  className="pp-chip"
+                >
+                  {dezena || "—"}
+                </div>
+              ))}
+            </div>
+
+            <div className="pp-gridBox">
+              {grid.rows.map((row, rowIndex) => (
+                <div
+                  key={rowIndex}
+                  className="pp-row"
+                >
+                  {row.map(
+                    (milhar, columnIndex) => (
+                      <div
+                        key={`${rowIndex}_${columnIndex}`}
+                        className="pp-pill"
+                        data-empty={
+                          milhar ? "0" : "1"
+                        }
+                      >
+                        {milhar || "—"}
+                      </div>
+                    )
+                  )}
+                </div>
+              ))}
+            </div>
+          </>
+        ) : (
+          <div className="top3-historyPopover__empty">
+            Milhares históricas não disponíveis
+            para este palpite.
+          </div>
+        )}
+      </section>
+    </div>
+  );
+}
+
 export default function Top3View(props) {
   const {
     loading,
@@ -1833,6 +2107,8 @@ const list = Array.isArray(top3)
 
   const [copiedAllKey, setCopiedAllKey] = useState("");
   const [copiedCellKey, setCopiedCellKey] = useState("");
+  const [copiedHistoryKey, setCopiedHistoryKey] = useState("");
+  const [historyPopover, setHistoryPopover] = useState(null);
 
 
   useEffect(() => {
@@ -1846,6 +2122,17 @@ const list = Array.isArray(top3)
     const id = setTimeout(() => setCopiedCellKey(""), 750);
     return () => clearTimeout(id);
   }, [copiedCellKey]);
+
+  useEffect(() => {
+    if (!copiedHistoryKey) return;
+
+    const id = setTimeout(
+      () => setCopiedHistoryKey(""),
+      900
+    );
+
+    return () => clearTimeout(id);
+  }, [copiedHistoryKey]);
 
   const copyText = useCallback(async (txt) => {
     const s = String(txt || "").trim();
@@ -3264,6 +3551,118 @@ const list = Array.isArray(top3)
           letter-spacing: 0.5px;
         }
 
+        .top3-historyPopoverBackdrop{
+          position: fixed;
+          inset: 0;
+          z-index: 9999;
+          display: grid;
+          place-items: center;
+          padding: 18px;
+          background: rgba(0,0,0,0.78);
+          backdrop-filter: blur(5px);
+        }
+
+        .top3-historyPopover{
+          width: min(760px, 100%);
+          max-height: calc(100vh - 36px);
+          overflow-y: auto;
+          display: grid;
+          gap: 12px;
+          padding: 16px;
+          border-radius: 20px;
+          border: 1px solid rgba(201,168,62,0.40);
+          background:
+            radial-gradient(
+              900px 280px at 50% 0%,
+              rgba(201,168,62,0.14),
+              transparent 58%
+            ),
+            #080806;
+          box-shadow:
+            0 30px 90px rgba(0,0,0,0.72),
+            inset 0 0 0 1px rgba(255,255,255,0.04);
+        }
+
+        .top3-historyPopover__header{
+          display: flex;
+          align-items: center;
+          justify-content: space-between;
+          gap: 14px;
+        }
+
+        .top3-historyPopover__identity{
+          display: flex;
+          align-items: center;
+          gap: 12px;
+          min-width: 0;
+        }
+
+        .top3-historyPopover__title{
+          font-size: 18px;
+          font-weight: 1000;
+          letter-spacing: 0.5px;
+        }
+
+        .top3-historyPopover__subtitle{
+          margin-top: 3px;
+          color: var(--top3-muted);
+          font-size: 12px;
+          font-weight: 850;
+        }
+
+        .top3-historyPopover__close{
+          width: 40px;
+          height: 40px;
+          flex: 0 0 auto;
+          display: grid;
+          place-items: center;
+          border-radius: 999px;
+          border: 1px solid rgba(255,255,255,0.16);
+          background: rgba(255,255,255,0.06);
+          color: rgba(255,255,255,0.92);
+          font-size: 25px;
+          line-height: 1;
+          cursor: pointer;
+        }
+
+        .top3-historyPopover__actions{
+          display: flex;
+          justify-content: flex-end;
+          align-items: center;
+          border-top: 1px solid rgba(255,255,255,0.08);
+          padding-top: 12px;
+        }
+
+        .top3-historyPopover__empty{
+          padding: 28px 18px;
+          text-align: center;
+          border-radius: 14px;
+          border: 1px solid rgba(255,255,255,0.10);
+          background: rgba(255,255,255,0.025);
+          color: var(--top3-muted);
+          font-size: 14px;
+          font-weight: 850;
+        }
+
+        @media (max-width: 640px){
+          .top3-historyPopoverBackdrop{
+            padding: 8px;
+            align-items: end;
+          }
+
+          .top3-historyPopover{
+            width: 100%;
+            max-height: calc(100vh - 16px);
+            padding: 13px;
+            border-radius: 18px 18px 12px 12px;
+          }
+
+          .top3-historyPopover__actions .pp-btn{
+            width: auto;
+            min-width: 118px;
+          }
+        }
+
         @media (max-width: 1180px){
           .top3-secondaryRow{
             max-width: 980px;
@@ -4304,6 +4703,42 @@ const list = Array.isArray(top3)
                               )}`}
                             >
                               <div
+                                role="button"
+                                tabIndex={0}
+                                aria-label={`Abrir milhares históricas de ${
+                                  animal || `G${formatGrupo(grupo)}`
+                                }`}
+                                onClick={() => {
+                                  setCopiedHistoryKey("");
+                                  setHistoryPopover({
+                                    key: `${y}__${h}__${idx}__${grupo}`,
+                                    ymd: y,
+                                    hour: h,
+                                    grupo,
+                                    animal,
+                                    img,
+                                    pick,
+                                  });
+                                }}
+                                onKeyDown={(event) => {
+                                  if (
+                                    event.key === "Enter" ||
+                                    event.key === " "
+                                  ) {
+                                    event.preventDefault();
+
+                                    setCopiedHistoryKey("");
+                                    setHistoryPopover({
+                                      key: `${y}__${h}__${idx}__${grupo}`,
+                                      ymd: y,
+                                      hour: h,
+                                      grupo,
+                                      animal,
+                                      img,
+                                      pick,
+                                    });
+                                  }
+                                }}
                                 style={{
                                   position:
                                     "relative",
@@ -4313,6 +4748,8 @@ const list = Array.isArray(top3)
                                     "center",
                                   justifyContent:
                                     "center",
+                                  cursor: "pointer",
+                                  borderRadius: 10,
                                 }}
                               >
                                 <ImgWithFallback
@@ -4619,6 +5056,18 @@ const list = Array.isArray(top3)
             )}
           </div>
         </section>
+
+        {historyPopover ? (
+          <HistoricalMilharesPopover
+            data={historyPopover}
+            copyText={copyText}
+            copied={copiedHistoryKey}
+            setCopied={setCopiedHistoryKey}
+            onClose={() =>
+              setHistoryPopover(null)
+            }
+          />
+        ) : null}
       </div>
     </div>
   );
