@@ -295,12 +295,12 @@ function clampColsFromItemMilharesCols(milharesCols, expectedCols = 4, perCol = 
   return out.slice(0, expectedCols);
 }
 
-function build20ByDezena({ grupo, baseMilhares, perCol = 6 }) {
+function build24ByDezena({ grupo, baseMilhares, perCol = 6 }) {
   const g = Number(grupo);
   const dezenas = getDezenasFixasFromGrupo(g);
 
   if (!dezenas.length) {
-    return { dezenas: [], rows: [], flat20: [] };
+    return { dezenas: [], rows: [], flat24: [] };
   }
 
   const input = Array.isArray(baseMilhares) ? baseMilhares : [];
@@ -356,8 +356,8 @@ function build20ByDezena({ grupo, baseMilhares, perCol = 6 }) {
     rows.push(dezenas.map((dz) => cols[dz][r] || ""));
   }
 
-  const flat20 = rows.flat().filter(Boolean);
-  return { dezenas, rows, flat20 };
+  const flat24 = rows.flat().filter(Boolean);
+  return { dezenas, rows, flat24 };
 }
 
 function cleanLayerText(s) {
@@ -491,11 +491,13 @@ function analyzeTop3Hit(top3, resultSource, resultMilhar) {
       const grupo = Number(item?.grupo);
 
       const milhares = (
-        Array.isArray(item?.milhares20)
-          ? item.milhares20
-          : Array.isArray(item?.milhares)
-            ? item.milhares
-            : []
+        Array.isArray(item?.milhares24)
+          ? item.milhares24
+          : Array.isArray(item?.milhares20)
+            ? item.milhares20
+            : Array.isArray(item?.milhares)
+              ? item.milhares
+              : []
       )
         .map(normalizeMilharStr)
         .filter(
@@ -683,7 +685,7 @@ function Top3Card({
   copyText,
   build16,
   buildMilhares,
-  build20,
+  build24,
 }) {
   const t = theme;
 
@@ -725,7 +727,7 @@ function Top3Card({
 
   let dezenasHeader = [];
   let gridRows = Array.from({ length: 6 }, () => Array(4).fill(""));
-  let flat20 = [];
+  let flat24 = [];
 
   if (hasCols) {
     const cols4 = clampColsFromItemMilharesCols(item.milharesCols, 4, 6);
@@ -751,9 +753,11 @@ function Top3Card({
           ? item.milharesCols
           : [];
 
-        const flatMilhares = Array.isArray(item?.milhares20)
-          ? item.milhares20
-          : [];
+        const flatMilhares = Array.isArray(item?.milhares24)
+          ? item.milhares24
+          : Array.isArray(item?.milhares20)
+            ? item.milhares20
+            : [];
 
         const columnReport = originalCols.slice(0, 4).map((col, index) => {
           const values = Array.isArray(col?.items) ? col.items : [];
@@ -776,13 +780,13 @@ function Top3Card({
         );
 
         console.log("ITEM COMPLETO:", item);
-        console.log("milhares20 recebido:", flatMilhares);
+        console.log("milhares24 recebido:", flatMilhares);
         console.log(
-          "milhares20 quantidade:",
+          "milhares24 quantidade:",
           flatMilhares.length
         );
         console.log(
-          "milhares20 válidos:",
+          "milhares24 válidos:",
           flatMilhares.filter(
             (value) => /^\d{4}$/.test(String(value || ""))
           ).length
@@ -803,26 +807,30 @@ function Top3Card({
     gridRows = Array.from({ length: 6 }, (_, r) =>
       cols4.map((c) => c.items[r] || "")
     );
-    flat20 = gridRows.flat().filter(Boolean);
+    flat24 = gridRows.flat().filter(Boolean);
   } else {
     let milharesBase = [];
 
-    const m20 = Array.isArray(item?.milhares20) ? item.milhares20 : null;
+    const m24 = Array.isArray(item?.milhares24)
+      ? item.milhares24
+      : Array.isArray(item?.milhares20)
+        ? item.milhares20
+        : null;
     const mAny = Array.isArray(item?.milhares) ? item.milhares : null;
 
-    if (m20 && m20.length) milharesBase = m20.slice(0);
+    if (m24 && m24.length) milharesBase = m24.slice(0);
     else if (mAny && mAny.length) milharesBase = mAny.slice(0);
 
     if (!milharesBase.length) {
       const g = Number(item?.grupo);
 
       if (Number.isFinite(g) && g > 0) {
-        if (typeof build20 === "function") {
-          const out20 = build20(g);
-          const slots20 = Array.isArray(out20?.slots) ? out20.slots : [];
-          milharesBase = slots20.map((x) => x?.milhar).filter(Boolean);
+        if (typeof build24 === "function") {
+          const out24 = build24(g);
+          const slots24 = Array.isArray(out24?.slots) ? out24.slots : [];
+          milharesBase = slots24.map((x) => x?.milhar).filter(Boolean);
         } else if (typeof buildMilhares === "function") {
-          const out = buildMilhares(g, 20);
+          const out = buildMilhares(g, 24);
           if (Array.isArray(out)) {
             milharesBase = out.slice(0);
           } else if (out && Array.isArray(out.slots)) {
@@ -837,7 +845,7 @@ function Top3Card({
     }
 
     const grupoNum = Number(item?.grupo);
-    const grid = build20ByDezena({
+    const grid = build24ByDezena({
       grupo: grupoNum,
       baseMilhares: milharesBase,
       perCol: 6,
@@ -845,7 +853,7 @@ function Top3Card({
 
     dezenasHeader = grid.dezenas;
     gridRows = grid.rows;
-    flat20 = grid.flat20;
+    flat24 = grid.flat24;
   }
 
   const key = `${String(item?.grupo ?? "g")}__${animal || "x"}__${idx}`;
@@ -1006,7 +1014,7 @@ function Top3Card({
           : "SEM EVIDÊNCIAS";
 
   const doCopyAll = async () => {
-    const payload = flat20.join(" ").trim();
+    const payload = flat24.join(" ").trim();
     if (!payload) return;
 
     const ok = await copyText(payload);
@@ -1597,7 +1605,7 @@ function TimelineSlot({
   copyText,
   build16,
   buildMilhares,
-  build20,
+  build24,
 }) {
   const t = theme;
   const slotTop3 = Array.isArray(slot?.top3) ? slot.top3.slice(0, 3) : [];
@@ -1725,7 +1733,7 @@ function TimelineSlot({
               copyText={copyText}
               build16={build16}
               buildMilhares={buildMilhares}
-              build20={build20}
+              build24={build24}
             />
           ))}
         </div>
@@ -1799,11 +1807,13 @@ function getHistoricalMilharesGrid(item) {
   }
 
   const storedMilhares = (
-    Array.isArray(item?.milhares20)
-      ? item.milhares20
-      : Array.isArray(item?.milhares)
-        ? item.milhares
-        : []
+    Array.isArray(item?.milhares24)
+          ? item.milhares24
+          : Array.isArray(item?.milhares20)
+            ? item.milhares20
+            : Array.isArray(item?.milhares)
+              ? item.milhares
+              : []
   )
     .map(normalizeMilharStr)
     .filter(
@@ -2035,7 +2045,7 @@ export default function Top3View(props) {
     setYmd,
     build16,
     buildMilhares,
-    build20,
+    build24,
     analysisYmd,
     analysisHourBucket,
     loadedYmd,
@@ -4233,7 +4243,7 @@ const list = Array.isArray(top3)
                 copyText={copyText}
                 build16={build16}
                 buildMilhares={buildMilhares}
-                build20={build20}
+                build24={build24}
               />
             ))}
           </section>
@@ -4260,7 +4270,7 @@ const list = Array.isArray(top3)
                 copyText={copyText}
                 build16={build16}
                 buildMilhares={buildMilhares}
-                build20={build20}
+                build24={build24}
               />
             ))}
           </section>
@@ -4553,14 +4563,18 @@ const list = Array.isArray(top3)
 
                 const predictedMilhares = (
                   Array.isArray(
-                    matchedPrediction?.milhares20
+                    matchedPrediction?.milhares24
                   )
-                    ? matchedPrediction.milhares20
+                    ? matchedPrediction.milhares24
                     : Array.isArray(
+                        matchedPrediction?.milhares20
+                      )
+                      ? matchedPrediction.milhares20
+                      : Array.isArray(
                           matchedPrediction?.milhares
                         )
-                      ? matchedPrediction.milhares
-                      : []
+                        ? matchedPrediction.milhares
+                        : []
                 )
                   .map(normalizeMilharStr)
                   .filter(

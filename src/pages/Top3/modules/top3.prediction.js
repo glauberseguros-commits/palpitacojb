@@ -14,7 +14,7 @@ function isValidGrupo(g) {
 
 export function buildTop3Predictions({
   analytics,
-  build20,
+  build24,
   safeStr,
   toHourBucket,
   getAnimalLabel,
@@ -43,12 +43,12 @@ export function buildTop3Predictions({
       let out = milharesCache.get(cacheKey);
 
       if (!out) {
-        out = build20(g, x);
+        out = build24(g, x);
         milharesCache.set(cacheKey, out);
       }
 
       const milharesCols = build4ColsFromEngineOut(out, 4, 6);
-      const milhares20 = milharesCols.flatMap((c) => c.items).slice(0, 24);
+      const milhares24 = milharesCols.flatMap((c) => c.items).slice(0, 24);
 
       const prob = clampProb(resolveProbValue(x));
       const probPct = prob * 100;
@@ -65,7 +65,7 @@ export function buildTop3Predictions({
         probPct,
         meta: x?.meta || null,
         milharesCols,
-        milhares20,
+        milhares24,
       };
     });
 }

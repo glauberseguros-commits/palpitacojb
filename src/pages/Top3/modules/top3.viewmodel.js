@@ -136,7 +136,7 @@ export function buildTop3CardViewModel({
   }
 
   const milharesCols = buildTop3MilharesCols(out, 4, 6);
-  const milhares20 = milharesCols.flatMap((c) => c.items).slice(0, 24);
+  const milhares24 = milharesCols.flatMap((c) => c.items).slice(0, 24);
 
   const prob = resolveTop3ProbValue(item);
 
@@ -154,6 +154,6 @@ export function buildTop3CardViewModel({
     probPct: prob * 100,
     meta: item?.meta || null,
     milharesCols,
-    milhares20,
+    milhares24,
   };
 }

@@ -287,9 +287,11 @@ function hydratePersistedTop3(entry) {
           safeStr(getAnimalLabel(grupo)),
         prob: Number(item?.prob || 0),
         probPct: Number(item?.probPct || 0),
-        milhares20: Array.isArray(item?.milhares20)
-          ? item.milhares20.slice(0, 24)
-          : [],
+        milhares24: Array.isArray(item?.milhares24)
+          ? item.milhares24.slice(0, 24)
+          : Array.isArray(item?.milhares20)
+            ? item.milhares20.slice(0, 24)
+            : [],
         milharesCols: Array.isArray(item?.milharesCols)
           ? item.milharesCols
           : [],
@@ -1315,7 +1317,7 @@ export function useTop3Controller() {
     [buildMilharesCached, analysisYmd]
   );
 
-  const build20 = useCallback(
+  const build24 = useCallback(
     (grupo2, item = null) => {
       return buildMilharesCached({
         grupo2,
@@ -1362,7 +1364,7 @@ export function useTop3Controller() {
 
         const nextTop3 = buildTop3Predictions({
           analytics,
-          build20,
+          build24,
           safeStr,
           getAnimalLabel,
           build4ColsFromEngineOut: buildTop3MilharesCols,
@@ -1403,7 +1405,7 @@ export function useTop3Controller() {
     loading,
     analyticsReady,
     analytics,
-    build20,
+    build24,
     currentPersistedResolved,
     currentPersistedPrediction,
   ]);
@@ -1483,9 +1485,11 @@ export function useTop3Controller() {
       animal: safeStr(item?.animal || ""),
       prob: Number(item?.prob || 0),
       probPct: Number(item?.probPct || 0),
-      milhares20: Array.isArray(item?.milhares20)
-        ? item.milhares20.slice(0, 24)
-        : [],
+      milhares24: Array.isArray(item?.milhares24)
+          ? item.milhares24.slice(0, 24)
+          : Array.isArray(item?.milhares20)
+            ? item.milhares20.slice(0, 24)
+            : [],
       milharesCols: Array.isArray(item?.milharesCols)
         ? item.milharesCols
         : [],
@@ -1912,7 +1916,7 @@ export function useTop3Controller() {
     lotteryLabel,
 
     build16,
-    build20,
+    build24,
     getCentena3,
     normalizeImgSrc,
   };

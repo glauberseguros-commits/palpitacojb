@@ -123,9 +123,16 @@ function normalizeSnapshot(snapshot) {
       animal: safeStr(item?.animal || ""),
       prob: Number(item?.prob || 0),
       probPct: Number(item?.probPct || 0),
-      milhares20: Array.isArray(item?.milhares20)
-        ? item.milhares20.map(normalizeMilhar).filter(Boolean).slice(0, 24)
-        : [],
+      milhares24: (
+        Array.isArray(item?.milhares24)
+          ? item.milhares24
+          : Array.isArray(item?.milhares20)
+            ? item.milhares20
+            : []
+      )
+        .map(normalizeMilhar)
+        .filter(Boolean)
+        .slice(0, 24),
       milharesCols: Array.isArray(item?.milharesCols)
         ? cleanFirestoreValue(item.milharesCols)
         : [],
@@ -291,11 +298,13 @@ function analyzeSnapshotHit(snapshot, officialPodium) {
       );
 
       const milhares = (
-        Array.isArray(prediction?.milhares20)
-          ? prediction.milhares20
-          : Array.isArray(prediction?.milhares)
-            ? prediction.milhares
-            : []
+        Array.isArray(prediction?.milhares24)
+          ? prediction.milhares24
+          : Array.isArray(prediction?.milhares20)
+            ? prediction.milhares20
+            : Array.isArray(prediction?.milhares)
+              ? prediction.milhares
+              : []
       )
         .map(normalizeMilhar)
         .filter(Boolean);

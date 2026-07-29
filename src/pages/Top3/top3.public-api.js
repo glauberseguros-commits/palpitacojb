@@ -22,7 +22,7 @@ export {
   // Milhares
   buildMilharesForGrupo,
   build16MilharesForGrupo,
-  build20MilharesForGrupo,
+  build24MilharesForGrupo,
 
   // Agenda e slots
   getScheduleForLottery,

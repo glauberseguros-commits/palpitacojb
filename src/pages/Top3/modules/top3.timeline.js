@@ -219,7 +219,7 @@ export function buildTop3TimelineViewModel({
         }
 
         const milharesCols = build4ColsFromEngineOut(out, 4, 6);
-        const milhares20 = milharesCols.flatMap((c) => c.items).slice(0, 24);
+        const milhares24 = milharesCols.flatMap((c) => c.items).slice(0, 24);
 
         const prob = resolveProbValue(x);
 
@@ -237,7 +237,7 @@ export function buildTop3TimelineViewModel({
           probPct: prob * 100,
           meta: x?.meta || null,
           milharesCols,
-          milhares20,
+          milhares24,
         };
       });
 

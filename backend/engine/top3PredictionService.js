@@ -396,7 +396,7 @@ function scheduleForPublicProjection(
 function buildPublicMilharesCols(
   engineOutput,
   expectedCols = 4,
-  perCol = 5
+  perCol = 6
 ) {
   const dezenas = Array.isArray(engineOutput?.dezenas)
     ? engineOutput.dezenas
@@ -486,7 +486,7 @@ function buildTop3PublicSnapshot({
           : probability;
 
       const engineOutput =
-        publicApi.build20MilharesForGrupo({
+        publicApi.build24MilharesForGrupo({
           rangeDraws: history,
           analysisHourBucket: closeHour,
           schedule,
@@ -498,15 +498,15 @@ function buildTop3PublicSnapshot({
         buildPublicMilharesCols(
           engineOutput,
           4,
-          5
+          6
         );
 
-      const milhares20 = milharesCols
+      const milhares24 = milharesCols
         .flatMap((column) => column.items)
         .filter(
           (milhar) => /^\d{4}$/.test(milhar)
         )
-        .slice(0, 20);
+        .slice(0, 24);
 
       return {
         rank: index + 1,
@@ -525,7 +525,7 @@ function buildTop3PublicSnapshot({
           Number.isFinite(prob)
             ? Number((prob * 100).toFixed(4))
             : 0,
-        milhares20,
+        milhares24,
         milharesCols,
         meta: item?.meta || null,
       };
@@ -872,12 +872,12 @@ async function createTop3PredictionRun(
     publicSnapshot.length !== 3 ||
     publicSnapshot.some(
       (item) =>
-        !Array.isArray(item?.milhares20) ||
-        item.milhares20.length !== 20
+        !Array.isArray(item?.milhares24) ||
+        item.milhares24.length !== 24
     )
   ) {
     throw new Error(
-      "O motor TOP3 não produziu 20 milhares válidas para cada grupo."
+      "O motor TOP3 não produziu 24 milhares válidas para cada grupo."
     );
   }
 

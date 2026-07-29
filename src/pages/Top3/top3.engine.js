@@ -4149,7 +4149,7 @@ export function build16MilharesForGrupo(args) {
   return buildMilharesForGrupo({ ...(args || {}), count: 16 });
 }
 
-export function build20MilharesForGrupo(args) {
+export function build24MilharesForGrupo(args) {
   return buildMilharesForGrupo({ ...(args || {}), count: 24 });
 }
 
@@ -4825,8 +4825,40 @@ export function auditTop3Backtest({
 
   const allTimeline = [];
 
-  for (const ymd of dates) {
-    const drawsToday = range.filter((d) => pickDrawYMD(d) === ymd);
+  const progressEnabled =
+    typeof process !== "undefined" &&
+    process?.env &&
+    (
+      String(process.env.TOP3_BACKTEST_PROGRESS || "").trim() === "1" ||
+      String(process.env.TOP3_BACKTEST_PROGRESS || "")
+        .trim()
+        .toLowerCase() === "true"
+    );
+
+  const progressEveryRaw =
+    typeof process !== "undefined" && process?.env
+      ? Number(process.env.TOP3_BACKTEST_PROGRESS_EVERY || 25)
+      : 25;
+
+  const progressEvery =
+    Number.isFinite(progressEveryRaw) && progressEveryRaw > 0
+      ? Math.trunc(progressEveryRaw)
+      : 25;
+
+  const startedAt = Date.now();
+
+  if (progressEnabled) {
+    console.log(
+      `[TOP3 BACKTEST][${safeStr(lotteryKey).toUpperCase()}] Início: ` +
+      `${dates.length} dias | ${range.length} sorteios`
+    );
+  }
+
+  for (let index = 0; index < dates.length; index += 1) {
+    const ymd = dates[index];
+    const drawsToday = range.filter(
+      (d) => pickDrawYMD(d) === ymd
+    );
 
     const dayTimeline = buildTimelineForDate({
       ymd,
@@ -4838,7 +4870,55 @@ export function auditTop3Backtest({
       FEDERAL_SCHEDULE,
     });
 
-    allTimeline.push(...(Array.isArray(dayTimeline) ? dayTimeline : []));
+    allTimeline.push(
+      ...(Array.isArray(dayTimeline) ? dayTimeline : [])
+    );
+
+    const processed = index + 1;
+    const shouldPrint =
+      progressEnabled &&
+      (
+        processed === 1 ||
+        processed % progressEvery === 0 ||
+        processed === dates.length
+      );
+
+    if (shouldPrint) {
+      const elapsedSeconds =
+        (Date.now() - startedAt) / 1000;
+
+      const percent =
+        dates.length > 0
+          ? (processed / dates.length) * 100
+          : 100;
+
+      const averageSeconds =
+        processed > 0
+          ? elapsedSeconds / processed
+          : 0;
+
+      const remainingSeconds =
+        Math.max(0, dates.length - processed) *
+        averageSeconds;
+
+      console.log(
+        `[TOP3 BACKTEST][${safeStr(lotteryKey).toUpperCase()}] ` +
+        `${processed}/${dates.length} dias ` +
+        `(${percent.toFixed(2)}%) | ` +
+        `data=${ymd} | ` +
+        `linhas=${allTimeline.length} | ` +
+        `decorrido=${elapsedSeconds.toFixed(1)}s | ` +
+        `estimado restante=${remainingSeconds.toFixed(1)}s`
+      );
+    }
+  }
+
+  if (progressEnabled) {
+    console.log(
+      `[TOP3 BACKTEST][${safeStr(lotteryKey).toUpperCase()}] ` +
+      `Processamento concluído em ` +
+      `${((Date.now() - startedAt) / 1000).toFixed(1)}s`
+    );
   }
 
   return auditTop3Timeline({
@@ -4846,4 +4926,3 @@ export function auditTop3Backtest({
     lotteryKey,
   });
 }
-
