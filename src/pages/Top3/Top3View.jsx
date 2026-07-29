@@ -1789,7 +1789,7 @@ function getHistoricalMilharesGrid(item) {
 
     const flat = rows
       .flat()
-      .filter((value) => /^\\d{4}$/.test(value));
+      .filter((value) => /^\d{4}$/.test(value));
 
     return {
       dezenas: cols.map(
@@ -1817,7 +1817,7 @@ function getHistoricalMilharesGrid(item) {
   )
     .map(normalizeMilharStr)
     .filter(
-      (value) => /^\\d{4}$/.test(value)
+      (value) => /^\d{4}$/.test(value)
     );
 
   if (!storedMilhares.length) {
@@ -1856,7 +1856,7 @@ function getHistoricalMilharesGrid(item) {
 
   const flat = rows
     .flat()
-    .filter((value) => /^\\d{4}$/.test(value));
+    .filter((value) => /^\d{4}$/.test(value));
 
   return {
     dezenas,
