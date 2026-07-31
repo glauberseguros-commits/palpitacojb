@@ -1545,20 +1545,19 @@ export function useTop3Controller() {
             diagnostic
           );
         } else {
-          const persistedEntry = {
-            lotteryKey: lotteryKeySafe,
-            targetYmd: analysisYmd,
-            targetHour: analysisHourBucket,
-            targetKey,
-            picks,
-            snapshot,
-            engineVersion,
-            status: "predicted",
-          };
-
-          setCurrentPersistedPrediction(persistedEntry);
-          setCurrentPersistedResolved(true);
-
+          /*
+           * O TOP3 exibido já foi calculado para o contexto atual.
+           *
+           * O salvamento no Firestore é apenas persistência e não deve
+           * reaplicar o snapshot no estado visual. Uma gravação iniciada
+           * antes da troca de loteria pode terminar depois e, se atualizar
+           * currentPersistedPrediction, disparar novamente a hidratação do
+           * TOP3 com um contexto anterior.
+           *
+           * O snapshot persistido continuará sendo carregado normalmente
+           * por loadCurrentPersistedPrediction quando loteria, data ou
+           * horário forem consultados.
+           */
           console.info(
             "[TOP3 FIRESTORE SAVE OK]",
             diagnostic
