@@ -2035,6 +2035,8 @@ export default function Top3View(props) {
     persistedTop3HistoryResolved,
     availableHistoryDates: controllerHistoryDates,
     top3,
+    top3ContextKey,
+    activeTop3ContextKey,
     layerMetaText,
     lastLabel,
     prevLabel,
@@ -2060,9 +2062,16 @@ export default function Top3View(props) {
 // Fase atual:
 // apenas corrigindo nomenclatura para refletir o cálculo existente.
 
-const list = Array.isArray(top3)
-  ? top3.slice(0, 3)
-  : [];
+const hasCurrentTop3Context =
+  Boolean(activeTop3ContextKey) &&
+  Boolean(top3ContextKey) &&
+  top3ContextKey === activeTop3ContextKey;
+
+const list =
+  hasCurrentTop3Context &&
+  Array.isArray(top3)
+    ? top3.slice(0, 3)
+    : [];
   const timeline = (Array.isArray(timelineTop3) ? timelineTop3 : [])
   .filter((slot) => {
     const ymd = String(slot?.targetYmd || "");

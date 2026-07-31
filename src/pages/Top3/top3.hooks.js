@@ -352,6 +352,16 @@ export function useTop3Controller() {
     new URLSearchParams(window.location.search).get("debugTop3") === "1";
 
   const requestIdRef = useRef(0);
+
+  /*
+   * TOP3_CONTEXT_IDENTITY_GUARD_V1
+   *
+   * Identidade funcional do contexto atualmente ativo.
+   * Nenhum cálculo ou snapshot pode atualizar os cards se tiver sido
+   * produzido para outra loteria, data ou horário.
+   */
+  const activeTop3ContextRef = useRef("");
+
   const boundsCacheRef = useRef(new Map());
   const analyticsCacheRef = useRef({ key: "", value: emptyAnalytics() });
 
@@ -425,6 +435,7 @@ export function useTop3Controller() {
   const [analytics, setAnalytics] = useState(() => emptyAnalytics());
   const [analyticsReady, setAnalyticsReady] = useState(false);
   const [top3, setTop3] = useState([]);
+  const [top3ContextKey, setTop3ContextKey] = useState("");
   const [primaryComputing, setPrimaryComputing] = useState(true);
 
   const lotteryKeySafe = useMemo(
@@ -448,6 +459,28 @@ export function useTop3Controller() {
     () => (isYMD(targetYmd) ? targetYmd : ""),
     [targetYmd]
   );
+
+  const activeTop3ContextKey = useMemo(() => {
+    const lottery = safeStr(lotteryKeySafe).toUpperCase();
+    const targetDate = isYMD(analysisYmd) ? analysisYmd : "";
+    const targetHour = toHourBucket(analysisHourBucket) || "";
+
+    if (!lottery || !targetDate || !targetHour) {
+      return "";
+    }
+
+    return [
+      lottery,
+      targetDate,
+      targetHour,
+    ].join("|");
+  }, [
+    lotteryKeySafe,
+    analysisYmd,
+    analysisHourBucket,
+  ]);
+
+  activeTop3ContextRef.current = activeTop3ContextKey;
 
   const timelineYmd = useMemo(() => {
     if (isYMD(loadedYmd)) return loadedYmd;
@@ -527,6 +560,7 @@ export function useTop3Controller() {
     setAnalytics(emptyAnalytics());
     setAnalyticsReady(false);
     setTop3([]);
+    setTop3ContextKey("");
     setPrimaryComputing(true);
 
     setLoadedYmd("");
@@ -1142,6 +1176,8 @@ export function useTop3Controller() {
     let timeoutId = null;
 
     setAnalyticsReady(false);
+    setTop3([]);
+    setTop3ContextKey("");
     setPrimaryComputing(true);
 
     const computeAnalytics = () => {
@@ -1336,7 +1372,8 @@ export function useTop3Controller() {
     if (
       loading ||
       !analyticsReady ||
-      !currentPersistedResolved
+      !currentPersistedResolved ||
+      !activeTop3ContextKey
     ) {
       return undefined;
     }
@@ -1344,10 +1381,22 @@ export function useTop3Controller() {
     let cancelled = false;
     let timeoutId = null;
 
+    const capturedContextKey = activeTop3ContextKey;
+
+    const isCurrentContext = () => {
+      return (
+        !cancelled &&
+        Boolean(capturedContextKey) &&
+        activeTop3ContextRef.current === capturedContextKey
+      );
+    };
+
+    setTop3([]);
+    setTop3ContextKey("");
     setPrimaryComputing(true);
 
     const computePredictions = () => {
-      if (cancelled) return;
+      if (!isCurrentContext()) return;
 
       try {
         const persistedTop3 = hydratePersistedTop3(
@@ -1355,9 +1404,10 @@ export function useTop3Controller() {
         );
 
         if (persistedTop3.length) {
-          if (cancelled) return;
+          if (!isCurrentContext()) return;
 
           setTop3(persistedTop3);
+          setTop3ContextKey(capturedContextKey);
           setPrimaryComputing(false);
           return;
         }
@@ -1373,15 +1423,23 @@ export function useTop3Controller() {
           buildResultStyleImgVariants,
         });
 
-        if (cancelled) return;
+        if (!isCurrentContext()) return;
 
-        setTop3(Array.isArray(nextTop3) ? nextTop3 : []);
+        setTop3(
+          Array.isArray(nextTop3)
+            ? nextTop3
+            : []
+        );
+
+        setTop3ContextKey(capturedContextKey);
         setPrimaryComputing(false);
       } catch (error) {
-        if (cancelled) return;
+        if (!isCurrentContext()) return;
 
         setTop3([]);
+        setTop3ContextKey("");
         setPrimaryComputing(false);
+
         setError(
           String(
             error?.message ||
@@ -1408,6 +1466,10 @@ export function useTop3Controller() {
     build24,
     currentPersistedResolved,
     currentPersistedPrediction,
+    activeTop3ContextKey,
+    lotteryKeySafe,
+    analysisYmd,
+    analysisHourBucket,
   ]);
 
   const timelineTop3 = useMemo(() => {
@@ -1458,6 +1520,8 @@ export function useTop3Controller() {
     if (!analysisYmd || !analysisHourBucket) return;
     if (!currentPersistedResolved) return;
     if (currentPersistedPrediction) return;
+    if (!activeTop3ContextKey) return;
+    if (top3ContextKey !== activeTop3ContextKey) return;
     if (!Array.isArray(top3) || !top3.length) return;
     if (!isFutureTarget(analysisYmd, analysisHourBucket)) return;
 
@@ -1598,6 +1662,8 @@ export function useTop3Controller() {
     debugTop3,
     currentPersistedResolved,
     currentPersistedPrediction,
+    activeTop3ContextKey,
+    top3ContextKey,
   ]);
 
   useEffect(() => {
@@ -1901,6 +1967,8 @@ export function useTop3Controller() {
     layerMetaText,
 
     top3,
+    top3ContextKey,
+    activeTop3ContextKey,
     timelineTop3,
     persistedTop3History,
     persistedTop3HistoryResolved,
