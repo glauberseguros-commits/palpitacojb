@@ -452,6 +452,13 @@ export function useTop3Controller() {
     setAvailableHistoryDatesByLottery,
   ] = useState({});
 
+  /*
+   * TOP3_LOADED_LOTTERY_GUARD_V1
+   *
+   * Identifica a loteria que realmente produziu os dados atualmente
+   * carregados. A loteria selecionada sozinha não autoriza renderização.
+   */
+  const [loadedLotteryKey, setLoadedLotteryKey] = useState("");
   const [loadedYmd, setLoadedYmd] = useState("");
   const [lastHourBucket, setLastHourBucket] = useState("");
   const [targetHourBucket, setTargetHourBucket] = useState("");
@@ -524,10 +531,21 @@ export function useTop3Controller() {
 
   const activeTop3ContextKey = useMemo(() => {
     const lottery = safeStr(lotteryKeySafe).toUpperCase();
+    const loadedLottery = safeStr(loadedLotteryKey).toUpperCase();
     const targetDate = isYMD(analysisYmd) ? analysisYmd : "";
     const targetHour = toHourBucket(analysisHourBucket) || "";
 
-    if (!lottery || !targetDate || !targetHour) {
+    /*
+     * Durante a troca de loteria, lotteryKeySafe muda antes de rangeDraws,
+     * analytics e baseDrawState. Enquanto a carga não confirmar a mesma
+     * loteria, nenhum contexto de cards pode ser considerado ativo.
+     */
+    if (
+      !lottery ||
+      loadedLottery !== lottery ||
+      !targetDate ||
+      !targetHour
+    ) {
       return "";
     }
 
@@ -538,6 +556,7 @@ export function useTop3Controller() {
     ].join("|");
   }, [
     lotteryKeySafe,
+    loadedLotteryKey,
     analysisYmd,
     analysisHourBucket,
   ]);
@@ -625,6 +644,7 @@ export function useTop3Controller() {
     setTop3ContextKey("");
     setPrimaryComputing(true);
 
+    setLoadedLotteryKey("");
     setLoadedYmd("");
     setLastHourBucket("");
     setTargetHourBucket("");
@@ -1035,6 +1055,7 @@ export function useTop3Controller() {
       );
 
       setRangeDraws(hist);
+      setLoadedLotteryKey(lKey);
 
       const loadedHistoryDates = Array.from(
         new Set(
@@ -1222,7 +1243,12 @@ export function useTop3Controller() {
   useEffect(() => {
     if (loading) return undefined;
 
+    const loadedLotteryMatches =
+      safeStr(loadedLotteryKey).toUpperCase() ===
+      safeStr(lotteryKeySafe).toUpperCase();
+
     if (
+      !loadedLotteryMatches ||
       !baseDrawState ||
       !Array.isArray(rangeDraws) ||
       !rangeDraws.length
@@ -1344,6 +1370,7 @@ export function useTop3Controller() {
     rangeDraws,
     baseDrawState,
     lotteryKeySafe,
+    loadedLotteryKey,
     lookback,
     rangeInfo,
     todayDraws,
@@ -2041,6 +2068,7 @@ export function useTop3Controller() {
     LOTTERY_OPTIONS,
 
     lotteryKeySafe,
+    loadedLotteryKey,
     ymdSafe,
     loadedYmd,
     lookback,
