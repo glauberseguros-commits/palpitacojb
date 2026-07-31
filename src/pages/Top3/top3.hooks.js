@@ -251,7 +251,69 @@ function makeTargetKey(ymd, hour) {
   return isYMD(y) && h ? `${y}_${h}` : "";
 }
 
-function hydratePersistedTop3(entry) {
+/*
+ * TOP3_PERSISTED_SNAPSHOT_CONTEXT_V1
+ *
+ * Um documento pode possuir identidade externa correta e, ainda assim,
+ * carregar cards produzidos para outra loteria ou outro slot.
+ *
+ * Snapshots legados sem identidade interna são recalculados e sobrescritos.
+ */
+function isPersistedTop3EntryValid(
+  entry,
+  {
+    lotteryKey = "",
+    targetYmd = "",
+    targetHour = "",
+  } = {}
+) {
+  if (!entry || typeof entry !== "object") return false;
+
+  const expectedLottery = safeStr(lotteryKey).toUpperCase();
+  const expectedYmd = safeStr(targetYmd);
+  const expectedHour = toHourBucket(targetHour);
+
+  if (!expectedLottery || !isYMD(expectedYmd) || !expectedHour) {
+    return false;
+  }
+
+  if (
+    safeStr(entry?.lotteryKey).toUpperCase() !== expectedLottery ||
+    safeStr(entry?.targetYmd) !== expectedYmd ||
+    toHourBucket(entry?.targetHour) !== expectedHour
+  ) {
+    return false;
+  }
+
+  const snapshot = Array.isArray(entry?.snapshot)
+    ? entry.snapshot.slice(0, 3)
+    : [];
+
+  if (snapshot.length !== 3) return false;
+
+  return snapshot.every((item) => {
+    const context = item?.meta?.persistenceContext || null;
+
+    if (!context || typeof context !== "object") {
+      return false;
+    }
+
+    return (
+      safeStr(context?.lotteryKey).toUpperCase() === expectedLottery &&
+      safeStr(context?.targetYmd) === expectedYmd &&
+      toHourBucket(context?.targetHour) === expectedHour
+    );
+  });
+}
+
+function hydratePersistedTop3(
+  entry,
+  expectedContext = {}
+) {
+  if (!isPersistedTop3EntryValid(entry, expectedContext)) {
+    return [];
+  }
+
   const snapshot = Array.isArray(entry?.snapshot)
     ? entry.snapshot.slice(0, 3)
     : [];
@@ -1400,7 +1462,12 @@ export function useTop3Controller() {
 
       try {
         const persistedTop3 = hydratePersistedTop3(
-          currentPersistedPrediction
+          currentPersistedPrediction,
+          {
+            lotteryKey: lotteryKeySafe,
+            targetYmd: analysisYmd,
+            targetHour: analysisHourBucket,
+          }
         );
 
         if (persistedTop3.length) {
@@ -1519,7 +1586,28 @@ export function useTop3Controller() {
 
     if (!analysisYmd || !analysisHourBucket) return;
     if (!currentPersistedResolved) return;
-    if (currentPersistedPrediction) return;
+
+    const currentPersistedSnapshotValid =
+      isPersistedTop3EntryValid(
+        currentPersistedPrediction,
+        {
+          lotteryKey: lotteryKeySafe,
+          targetYmd: analysisYmd,
+          targetHour: analysisHourBucket,
+        }
+      );
+
+    /*
+     * Snapshot válido permanece imutável.
+     * Snapshot ausente, legado ou contaminado deve ser sobrescrito.
+     */
+    if (
+      currentPersistedPrediction &&
+      currentPersistedSnapshotValid
+    ) {
+      return;
+    }
+
     if (!activeTop3ContextKey) return;
     if (top3ContextKey !== activeTop3ContextKey) return;
     if (!Array.isArray(top3) || !top3.length) return;
@@ -1557,7 +1645,16 @@ export function useTop3Controller() {
       milharesCols: Array.isArray(item?.milharesCols)
         ? item.milharesCols
         : [],
-      meta: item?.meta || null,
+      meta: {
+        ...(item?.meta && typeof item.meta === "object"
+          ? item.meta
+          : {}),
+        persistenceContext: {
+          lotteryKey: lotteryKeySafe,
+          targetYmd: analysisYmd,
+          targetHour: analysisHourBucket,
+        },
+      },
     }));
 
     const engineVersion =
