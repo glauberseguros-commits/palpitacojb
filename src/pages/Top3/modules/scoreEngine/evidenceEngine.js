@@ -4,8 +4,10 @@ import { buildContextEvidence } from "./contextEvidence";
 /**
  * Evidence Engine
  *
- * Centraliza todos os módulos de evidência.
- * Cada módulo produz fatos; nenhum decide o resultado.
+ * Centraliza os módulos de evidência.
+ *
+ * Cada módulo produz fatos; nenhum módulo decide isoladamente
+ * o resultado do ranking.
  */
 
 const MODULES = {
@@ -13,55 +15,99 @@ const MODULES = {
   context: buildContextEvidence,
 };
 
+function normalizeWeight(value) {
+  const n = Number(value);
+
+  if (!Number.isFinite(n) || n <= 0) {
+    return 1;
+  }
+
+  return n;
+}
+
+function isValidEvidence(result) {
+  if (!result || typeof result !== "object") {
+    return false;
+  }
+
+  if (result.error) {
+    return false;
+  }
+
+  if (!result.module) {
+    return false;
+  }
+
+  const value = Number(result.value);
+
+  return Number.isFinite(value) && value > 0;
+}
+
 function collectEvidence({
   item = {},
   context = {},
   config = {},
 } = {}) {
-
   const evidence = [];
-  const enabled = config.evidenceModules || {};
+  const errors = [];
+
+  const enabled =
+    config && typeof config.evidenceModules === "object"
+      ? config.evidenceModules
+      : {};
 
   for (const [name, builder] of Object.entries(MODULES)) {
+    const moduleConfig = enabled[name] || {};
 
-    if (!enabled[name]?.enabled) {
+    if (!moduleConfig.enabled) {
       continue;
     }
 
     try {
+      const result = builder(
+        item,
+        context,
+        moduleConfig
+      );
 
-      const result = builder(item, context);
-
-      if (result) {
-        evidence.push(result);
+      if (!result) {
+        continue;
       }
 
-    } catch (err) {
+      const enriched = {
+        ...result,
+        module: result.module || name,
+        weight: normalizeWeight(moduleConfig.weight),
+      };
 
-      evidence.push({
+      if (isValidEvidence(enriched)) {
+        evidence.push(enriched);
+      }
+    } catch (err) {
+      errors.push({
         module: name,
         error: true,
-        message: err.message,
+        message:
+          err && err.message
+            ? err.message
+            : String(err),
       });
-
     }
-
   }
 
   return {
+    count: evidence.length,
 
-    count: evidence.filter(e => !e.error).length,
-
-    modules: evidence
-      .filter(e => !e.error)
-      .map(e => e.module),
+    modules: evidence.map(
+      (entry) => entry.module
+    ),
 
     evidence,
 
+    errors,
   };
-
 }
 
 export {
-collectEvidence,
+  collectEvidence,
 };

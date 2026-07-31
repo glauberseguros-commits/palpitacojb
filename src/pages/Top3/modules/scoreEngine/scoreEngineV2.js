@@ -2,42 +2,120 @@ import scoreConfig from "./scoreConfig";
 import { collectEvidence } from "./evidenceEngine";
 
 /**
- * Score Engine V2 inicial
+ * Score Engine V2
  *
- * Consome evidências.
- * Não aplica regra cega isolada.
+ * Consome a probabilidade estatística V3 e evidências complementares.
+ *
+ * Regras:
+ * - evidências inválidas não entram no cálculo;
+ * - pesos configurados são respeitados;
+ * - força é calculada por média ponderada;
+ * - confiança considera a quantidade mínima de evidências;
+ * - scoreProb permanece como principal componente do ranking.
  */
 
-function normalizeEvidenceValue(value) {
+function clampPercent(value) {
   const n = Number(value);
-  if (!Number.isFinite(n) || n <= 0) return 0;
+
+  if (!Number.isFinite(n)) {
+    return 0;
+  }
+
+  return Math.max(0, Math.min(100, n));
+}
+
+function normalizeWeight(value) {
+  const n = Number(value);
+
+  if (!Number.isFinite(n) || n <= 0) {
+    return 1;
+  }
+
   return n;
 }
 
-function calculateEvidenceStrength(evidenceList = []) {
-  const list = Array.isArray(evidenceList) ? evidenceList : [];
+function calculateEvidenceStrength(
+  evidenceList = [],
+  scoringConfig = {}
+) {
+  const minimumEvidence = Math.max(
+    1,
+    Math.trunc(Number(scoringConfig.minimumEvidence) || 1)
+  );
+
+  const list = (Array.isArray(evidenceList) ? evidenceList : [])
+    .filter((evidence) => {
+      if (!evidence || evidence.error) {
+        return false;
+      }
+
+      const value = Number(evidence.value);
+
+      return Number.isFinite(value) && value > 0;
+    })
+    .map((evidence) => ({
+      ...evidence,
+      normalizedValue: clampPercent(evidence.value),
+      normalizedWeight: normalizeWeight(evidence.weight),
+    }));
 
   if (!list.length) {
     return {
       score: 0,
       confidence: 0,
-      reasons: ["Sem evidências suficientes."],
+      reasons: ["Sem evidências complementares válidas."],
       signals: {},
+      evidenceCount: 0,
+      minimumEvidence,
+      coverage: 0,
     };
   }
 
-  const values = list.map((e) => normalizeEvidenceValue(e.value));
-  const total = values.reduce((acc, v) => acc + v, 0);
-  const max = Math.max(...values, 1);
+  const weightedTotal = list.reduce(
+    (acc, evidence) =>
+      acc +
+      (evidence.normalizedValue * evidence.normalizedWeight),
+    0
+  );
 
-  const score = Math.min(100, Math.round((total / max) * 50));
-  const confidence = Math.min(100, Math.round(score * Math.min(1, list.length / 3)));
+  const totalWeight = list.reduce(
+    (acc, evidence) =>
+      acc + evidence.normalizedWeight,
+    0
+  );
 
-  const reasons = list.flatMap((e) => Array.isArray(e.reasons) ? e.reasons : []);
+  const weightedAverage =
+    totalWeight > 0
+      ? weightedTotal / totalWeight
+      : 0;
+
+  const score = Math.round(
+    clampPercent(weightedAverage)
+  );
+
+  const coverage = Math.min(
+    1,
+    list.length / minimumEvidence
+  );
+
+  const confidence = Math.round(
+    score * coverage
+  );
+
+  const reasons = list.flatMap((evidence) =>
+    Array.isArray(evidence.reasons)
+      ? evidence.reasons
+      : []
+  );
 
   const signals = {};
-  for (const e of list) {
-    signals[e.module] = e.evidence || {};
+
+  for (const evidence of list) {
+    signals[evidence.module] = {
+      ...(evidence.evidence || {}),
+      value: evidence.normalizedValue,
+      weight: evidence.normalizedWeight,
+    };
   }
 
   return {
@@ -45,6 +123,9 @@ function calculateEvidenceStrength(evidenceList = []) {
     confidence,
     reasons,
     signals,
+    evidenceCount: list.length,
+    minimumEvidence,
+    coverage,
   };
 }
 
@@ -55,14 +136,17 @@ function scoreItem(item = {}, context = {}) {
     config: scoreConfig,
   });
 
-  const strength = calculateEvidenceStrength(collected.evidence);
+  const strength = calculateEvidenceStrength(
+    collected.evidence,
+    scoreConfig.scoring
+  );
 
-  const probability = Math.max(
-    0,
-    Math.min(
-      100,
-      Number(item.scoreProb || item.rawScoreProb || 0) * 100
-    )
+  const probability = clampPercent(
+    Number(
+      item.scoreProb ??
+      item.rawScoreProb ??
+      0
+    ) * 100
   );
 
   const finalScore = Math.round(
@@ -89,35 +173,47 @@ function scoreItem(item = {}, context = {}) {
 
     signals: {
       ...strength.signals,
+
       probability,
+
+      evidenceSummary: {
+        validCount: strength.evidenceCount,
+        minimumEvidence: strength.minimumEvidence,
+        coverage: strength.coverage,
+        score: strength.score,
+        confidence: strength.confidence,
+      },
+
+      evidenceErrors: collected.errors,
     },
 
-    evidenceCount: collected.count,
+    evidenceCount: strength.evidenceCount,
 
     evidenceModules: collected.modules,
   };
 }
 
 function scoreRanking(items = [], context = {}) {
-
   return (Array.isArray(items) ? items : [])
-    .map(item => scoreItem(item, context))
+    .map((item) => scoreItem(item, context))
     .sort((a, b) => {
-
-      if (b.score !== a.score)
+      if (b.score !== a.score) {
         return b.score - a.score;
+      }
 
-      if (b.confidence !== a.confidence)
+      if (b.confidence !== a.confidence) {
         return b.confidence - a.confidence;
+      }
 
-      return (Number(b.scoreProb || 0) - Number(a.scoreProb || 0));
-
+      return (
+        Number(b.scoreProb || 0) -
+        Number(a.scoreProb || 0)
+      );
     });
-
 }
 
 export {
-scoreItem,
+  scoreItem,
   scoreRanking,
   calculateEvidenceStrength,
 };

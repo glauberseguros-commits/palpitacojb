@@ -1,80 +1,95 @@
 /**
  * Context Evidence V2
  *
- * Responsabilidade:
- * Produzir evidências do contexto do sorteio.
- * Não calcula score.
+ * O contexto atual é apenas descritivo.
+ *
+ * Como os mesmos dados contextuais são entregues a todos os grupos,
+ * esse módulo não possui capacidade discriminatória suficiente para
+ * alterar o ranking.
+ *
+ * Ele permanece disponível na arquitetura, mas não produz evidência
+ * pontuável enquanto não houver uma relação específica entre o grupo
+ * candidato e o contexto histórico.
  */
 
 function normalize(value) {
-    const n = Number(value);
-    return Number.isFinite(n) ? n : null;
+  const n = Number(value);
+
+  return Number.isFinite(n)
+    ? n
+    : null;
 }
 
-function buildReasons(ctx) {
+function buildContextEvidence(
+  item = {},
+  context = {}
+) {
+  const grupo = normalize(
+    item.grupo ??
+    item.group
+  );
 
-    const reasons = [];
+  const evidence = {
+    grupo,
 
-    reasons.push("Contexto histórico identificado.");
+    lotteryKey:
+      context.lotteryKey ||
+      null,
 
-    if (ctx.lotteryKey)
-        reasons.push(`Loteria: ${ctx.lotteryKey}`);
+    ymd:
+      context.ymd ||
+      context.targetYmd ||
+      null,
 
-    if (ctx.weekday)
-        reasons.push(`Dia da semana: ${ctx.weekday}`);
+    weekday:
+      context.weekday ||
+      null,
 
-    if (ctx.closeHour)
-        reasons.push(`Horário: ${ctx.closeHour}`);
+    closeHour:
+      context.hour ||
+      context.targetHour ||
+      null,
 
-    if (ctx.previousGroup != null)
-        reasons.push(`Grupo anterior: ${ctx.previousGroup}`);
+    prize:
+      normalize(context.prize),
 
-    if (ctx.previousAnimal)
-        reasons.push(`Animal anterior: ${ctx.previousAnimal}`);
+    previousAnimal:
+      context.previousAnimal ||
+      null,
 
-    return reasons;
-}
+    previousGroup:
+      normalize(context.previousGroup),
 
-function buildContextEvidence(item = {}, context = {}) {
+    previousHour:
+      context.previousHour ||
+      null,
 
-    const evidence = {
+    lookback:
+      normalize(context.lookback),
 
-        lotteryKey: context.lotteryKey || null,
+    window:
+      normalize(context.window),
 
-        ymd: context.ymd || null,
+    totalDraws:
+      normalize(context.totalDraws),
+  };
 
-        weekday: context.weekday || null,
+  return {
+    module: "context",
 
-        closeHour: context.hour || null,
+    value: 0,
 
-        prize: normalize(context.prize),
+    informational: true,
 
-        previousAnimal: context.previousAnimal || null,
+    evidence,
 
-        previousGroup: normalize(context.previousGroup),
-
-        previousHour: context.previousHour || null,
-
-        lookback: normalize(context.lookback),
-
-        window: normalize(context.window),
-
-    };
-
-    return {
-
-        module: "context",
-
-        value: 1,
-
-        evidence,
-
-        reasons: buildReasons(evidence),
-
-    };
-
+    reasons: [
+      "Contexto disponível apenas como metadado.",
+      "Sem contribuição ao score por não diferenciar os grupos candidatos.",
+    ],
+  };
 }
 
 export {
-buildContextEvidence,
+  buildContextEvidence,
 };
