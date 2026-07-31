@@ -2985,6 +2985,301 @@ function sampleConfidence(samples, fullAt = 30) {
   return Math.max(0, Math.min(1, n / lim));
 }
 
+function rankPassiveInstrumentationRows(rows) {
+  return [...(Array.isArray(rows) ? rows : [])]
+    .sort((a, b) => {
+      if (Number(b?.score || 0) !== Number(a?.score || 0)) {
+        return Number(b?.score || 0) - Number(a?.score || 0);
+      }
+
+      return Number(a?.grupo || 0) - Number(b?.grupo || 0);
+    })
+    .map((item, index) => ({
+      grupo: Number(item?.grupo),
+      score: Number(item?.score || 0),
+      rank: index + 1,
+    }));
+}
+
+function buildV3PassiveLayerInstrumentation({
+  candidates,
+  layerOrder,
+  sceneWeight,
+}) {
+  const sourceCandidates = Array.isArray(candidates)
+    ? candidates
+    : [];
+
+  const orderedLayers = Array.isArray(layerOrder)
+    ? layerOrder
+    : [];
+
+  let currentRows = sourceCandidates.map((item) => ({
+    grupo: Number(item?.grupo),
+    score: 0,
+  }));
+
+  let previousRanking =
+    rankPassiveInstrumentationRows(currentRows);
+
+  const stages = [];
+
+  for (const layerKey of orderedLayers) {
+    const previousByGroup = new Map(
+      previousRanking.map((item) => [
+        Number(item.grupo),
+        item,
+      ])
+    );
+
+    const nextRows = sourceCandidates.map((item) => {
+      const previous =
+        previousByGroup.get(Number(item?.grupo)) ||
+        {
+          grupo: Number(item?.grupo),
+          score: 0,
+          rank: 0,
+        };
+
+      const layerDetails =
+        item?.details?.[layerKey] || {};
+
+      const contribution = Number(
+        layerDetails?.contributionBeforeScene || 0
+      );
+
+      return {
+        grupo: Number(item?.grupo),
+        score:
+          Number(previous?.score || 0) +
+          contribution,
+      };
+    });
+
+    const nextRanking =
+      rankPassiveInstrumentationRows(nextRows);
+
+    const nextByGroup = new Map(
+      nextRanking.map((item) => [
+        Number(item.grupo),
+        item,
+      ])
+    );
+
+    stages.push({
+      key: layerKey,
+      type: "statistical_layer",
+      candidates: sourceCandidates.map((item) => {
+        const grupo = Number(item?.grupo);
+
+        const before =
+          previousByGroup.get(grupo) ||
+          {
+            rank: 0,
+            score: 0,
+          };
+
+        const after =
+          nextByGroup.get(grupo) ||
+          {
+            rank: 0,
+            score: 0,
+          };
+
+        const details =
+          item?.details?.[layerKey] || {};
+
+        return {
+          grupo,
+          beforeRank: Number(before.rank || 0),
+          afterRank: Number(after.rank || 0),
+          rankDelta:
+            Number(before.rank || 0) -
+            Number(after.rank || 0),
+
+          beforeScore: Number(before.score || 0),
+          afterScore: Number(after.score || 0),
+          scoreDelta:
+            Number(after.score || 0) -
+            Number(before.score || 0),
+
+          firstProbability: Number(
+            details?.firstProbability || 0
+          ),
+
+          prizePresenceProbability: Number(
+            details?.prizePresenceProbability || 0
+          ),
+
+          rawProbability: Number(
+            details?.probability || 0
+          ),
+
+          baseWeight: Number(
+            details?.baseWeight || 0
+          ),
+
+          activeWeight: Number(
+            details?.weight || 0
+          ),
+
+          contribution: Number(
+            details?.contributionBeforeScene || 0
+          ),
+
+          scoreContribution:
+            Number(
+              details?.contributionBeforeScene || 0
+            ) * 1000,
+        };
+      }),
+    });
+
+    currentRows = nextRows;
+    previousRanking = nextRanking;
+  }
+
+  const normalizedSceneWeight = Math.max(
+    0,
+    Math.min(1, Number(sceneWeight || 0))
+  );
+
+  const sceneBeforeByGroup = new Map(
+    previousRanking.map((item) => [
+      Number(item.grupo),
+      item,
+    ])
+  );
+
+  const sceneRows = sourceCandidates.map((item) => {
+    const grupo = Number(item?.grupo);
+
+    const before =
+      sceneBeforeByGroup.get(grupo) ||
+      {
+        score: 0,
+        rank: 0,
+      };
+
+    const sceneProbability = Number(
+      item?.details?.scene?.probability || 0
+    );
+
+    return {
+      grupo,
+      score:
+        (
+          Number(before.score || 0) *
+          (1 - normalizedSceneWeight)
+        ) +
+        (
+          sceneProbability *
+          normalizedSceneWeight
+        ),
+    };
+  });
+
+  const sceneRanking =
+    rankPassiveInstrumentationRows(sceneRows);
+
+  const sceneAfterByGroup = new Map(
+    sceneRanking.map((item) => [
+      Number(item.grupo),
+      item,
+    ])
+  );
+
+  stages.push({
+    key: "scene",
+    type: "scene_blend",
+    weight: normalizedSceneWeight,
+    retention: 1 - normalizedSceneWeight,
+    candidates: sourceCandidates.map((item) => {
+      const grupo = Number(item?.grupo);
+
+      const before =
+        sceneBeforeByGroup.get(grupo) ||
+        {
+          rank: 0,
+          score: 0,
+        };
+
+      const after =
+        sceneAfterByGroup.get(grupo) ||
+        {
+          rank: 0,
+          score: 0,
+        };
+
+      const sceneProbability = Number(
+        item?.details?.scene?.probability || 0
+      );
+
+      const retainedContribution =
+        Number(before.score || 0) *
+        (1 - normalizedSceneWeight);
+
+      const sceneContribution =
+        sceneProbability *
+        normalizedSceneWeight;
+
+      return {
+        grupo,
+        beforeRank: Number(before.rank || 0),
+        afterRank: Number(after.rank || 0),
+        rankDelta:
+          Number(before.rank || 0) -
+          Number(after.rank || 0),
+
+        beforeScore: Number(before.score || 0),
+        afterScore: Number(after.score || 0),
+        scoreDelta:
+          Number(after.score || 0) -
+          Number(before.score || 0),
+
+        rawProbability: sceneProbability,
+        activeWeight: normalizedSceneWeight,
+        retainedStatisticalContribution:
+          retainedContribution,
+        contribution: sceneContribution,
+        scoreContribution:
+          sceneContribution * 1000,
+      };
+    }),
+  });
+
+  const byGroup = {};
+
+  for (const candidate of sourceCandidates) {
+    const grupo = Number(candidate?.grupo);
+
+    byGroup[grupo] = {
+      grupo,
+      stages: stages.map((stage) => {
+        const row = stage.candidates.find(
+          (item) =>
+            Number(item?.grupo) === grupo
+        );
+
+        return {
+          key: stage.key,
+          type: stage.type,
+          ...(row || {}),
+        };
+      }),
+    };
+  }
+
+  return {
+    mode: "PASSIVE_OBSERVATION_ONLY",
+    changesRanking: false,
+    changesScore: false,
+    layerOrder: [...orderedLayers, "scene"],
+    stages,
+    byGroup,
+  };
+}
+
 export function computeStatisticalTop3V3({
   lotteryKey,
   drawsRange,
@@ -3198,8 +3493,18 @@ export function computeStatisticalTop3V3({
         samples: layer.samples,
         firstCount: Number(layer.first.get(grupo) || 0),
         top3Count: Number(layer.prizePresence.get(grupo) || 0),
+
+        firstProbability: pFirst,
+        prizePresenceProbability: pPrizePresence,
+
         probability: pLayer,
+
+        baseWeight: Number(layer.weight || 0),
         weight: w,
+
+        contributionBeforeScene: pLayer * w,
+        scoreContributionBeforeScene:
+          pLayer * w * 1000,
       };
     }
 
@@ -3212,6 +3517,24 @@ export function computeStatisticalTop3V3({
       scoreProb = (scoreProb * (1 - sceneWeight)) + (pScene * sceneWeight);
     }
 
+    for (const keyLayer of Object.keys(layers)) {
+      const layerDetails = details[keyLayer];
+
+      const contributionBeforeScene = Number(
+        layerDetails?.contributionBeforeScene || 0
+      );
+
+      layerDetails.sceneRetention =
+        1 - Number(sceneWeight || 0);
+
+      layerDetails.contribution =
+        contributionBeforeScene *
+        layerDetails.sceneRetention;
+
+      layerDetails.scoreContribution =
+        layerDetails.contribution * 1000;
+    }
+
     details.scene = {
       label: "analogia histórica de cena",
       samples: Number(sceneHypothesis?.samples || 0),
@@ -3219,6 +3542,10 @@ export function computeStatisticalTop3V3({
       top3Count: 0,
       probability: pScene,
       weight: sceneWeight,
+      contribution:
+        pScene * Number(sceneWeight || 0),
+      scoreContribution:
+        pScene * Number(sceneWeight || 0) * 1000,
     };
 
     return {
@@ -3234,6 +3561,13 @@ export function computeStatisticalTop3V3({
     });
 
   const topLimit = Math.max(1, Number(topN || 3));
+
+  const passiveLayerInstrumentation =
+    buildV3PassiveLayerInstrumentation({
+      candidates: ranked,
+      layerOrder: Object.keys(layers),
+      sceneWeight,
+    });
 
   const rankingBeforeScore = ranked.map((item, index) => ({
     rank: index + 1,
@@ -3420,6 +3754,10 @@ export function computeStatisticalTop3V3({
             ])
           ),
           details: x.details,
+          passiveInstrumentation:
+            passiveLayerInstrumentation?.byGroup?.[
+              Number(x.grupo)
+            ] || null,
           rankingAuditSummary: {
             changed: scoreAudit.changed,
             compositionChanged:
@@ -3457,6 +3795,8 @@ export function computeStatisticalTop3V3({
         prevGrupo: Number(prevGrupo),
         activeWeights,
         rankingAudit: scoreAudit,
+        passiveInstrumentation:
+          passiveLayerInstrumentation,
         layers: Object.fromEntries(
           Object.entries(layers).map(([k, v]) => [
             k,
@@ -3957,7 +4297,7 @@ export function buildMilharesForGrupo({
   const slots = [];
 
   function pickDiversifiedMilharesForDezena(dz, limit) {
-    const candidates = ranked
+    const observedCandidates = ranked
       .filter((item) => item.dezena === dz)
       .map((item) => {
         const centena = String(
@@ -3975,11 +4315,33 @@ export function buildMilharesForGrupo({
           ),
         };
       })
-      .filter((item) => /^\d{3}$/.test(item.centena));
+      .filter(
+        (item) =>
+          /^\d{3}$/.test(item.centena) &&
+          item.centena.slice(-2) === dz
+      );
+
+    /*
+     * Uma dezena possui sempre dez centenas matematicamente possíveis:
+     *
+     * Exemplo da dezena 29:
+     * 029, 129, 229, 329, 429,
+     * 529, 629, 729, 829 e 929.
+     *
+     * O histórico classifica as centenas, mas não pode limitar
+     * a existência do universo de candidatas.
+     */
+    const allCentenas = Array.from(
+      { length: 10 },
+      (_, hundredDigit) =>
+        `${hundredDigit}${dz}`
+          .padStart(3, "0")
+          .slice(-3)
+    );
 
     const byCentena = new Map();
 
-    for (const item of candidates) {
+    for (const item of observedCandidates) {
       const current = byCentena.get(item.centena);
 
       if (
@@ -3997,53 +4359,76 @@ export function buildMilharesForGrupo({
       }
     }
 
-    const strongestCentenas = Array.from(
-      byCentena.values()
-    ).sort((a, b) => {
-      if (
-        Number(b.centenaScore || 0) !==
-        Number(a.centenaScore || 0)
-      ) {
-        return (
-          Number(b.centenaScore || 0) -
+    const strongestCentenas = allCentenas
+      .map((centena) => {
+        const observed = byCentena.get(centena);
+
+        if (observed) {
+          return observed;
+        }
+
+        return {
+          milhar: "",
+          dezena: dz,
+          centena,
+          freq: 0,
+          score: 0,
+          targetHits: 0,
+          scheduleHits: 0,
+          sameDowHits: 0,
+          firstPrizeHits: 0,
+          lastTs: 0,
+          centenaScore: Number(
+            centenaScoreMap.get(centena) || 0
+          ),
+          syntheticCentenaCandidate: true,
+        };
+      })
+      .sort((a, b) => {
+        if (
+          Number(b.centenaScore || 0) !==
           Number(a.centenaScore || 0)
-        );
-      }
+        ) {
+          return (
+            Number(b.centenaScore || 0) -
+            Number(a.centenaScore || 0)
+          );
+        }
 
-      if (
-        Number(b.score || 0) !==
-        Number(a.score || 0)
-      ) {
-        return (
-          Number(b.score || 0) -
+        if (
+          Number(b.score || 0) !==
           Number(a.score || 0)
-        );
-      }
+        ) {
+          return (
+            Number(b.score || 0) -
+            Number(a.score || 0)
+          );
+        }
 
-      if (
-        Number(b.targetHits || 0) !==
-        Number(a.targetHits || 0)
-      ) {
-        return (
-          Number(b.targetHits || 0) -
+        if (
+          Number(b.targetHits || 0) !==
           Number(a.targetHits || 0)
-        );
-      }
+        ) {
+          return (
+            Number(b.targetHits || 0) -
+            Number(a.targetHits || 0)
+          );
+        }
 
-      if (
-        Number(b.freq || 0) !==
-        Number(a.freq || 0)
-      ) {
-        return (
-          Number(b.freq || 0) -
+        if (
+          Number(b.freq || 0) !==
           Number(a.freq || 0)
-        );
-      }
+        ) {
+          return (
+            Number(b.freq || 0) -
+            Number(a.freq || 0)
+          );
+        }
 
-      return String(a.centena).localeCompare(
-        String(b.centena)
-      );
-    });
+        return String(a.centena).localeCompare(
+          String(b.centena)
+        );
+      });
 
     const picked = [];
 
@@ -4056,8 +4441,40 @@ export function buildMilharesForGrupo({
         fallbackPrizes: fallbackMilharPrizes,
       });
 
+      const sharedRanking = Array.isArray(
+        sharedResult?.ranking
+      )
+        ? sharedResult.ranking
+        : [];
+
+      /*
+       * Utiliza o primeiro candidato válido do ranking compartilhado.
+       * Não depende exclusivamente de winner caso algum resultado
+       * seja estruturalmente inválido.
+       */
       const sharedWinner =
-        sharedResult?.winner || null;
+        sharedRanking.find((candidate) => {
+          const candidateMilhar = String(
+            candidate?.milhar || ""
+          )
+            .replace(/\D+/g, "")
+            .padStart(4, "0")
+            .slice(-4);
+
+          return (
+            /^\d{4}$/.test(candidateMilhar) &&
+            candidateMilhar.slice(-3) ===
+              centenaItem.centena &&
+            getDezena2(candidateMilhar) === dz &&
+            !usedMilhares.has(candidateMilhar) &&
+            !picked.some(
+              (item) =>
+                item.milhar === candidateMilhar
+            )
+          );
+        }) ||
+        sharedResult?.winner ||
+        null;
 
       const selectedMilhar = String(
         sharedWinner?.milhar || ""
@@ -4066,18 +4483,10 @@ export function buildMilharesForGrupo({
         .padStart(4, "0")
         .slice(-4);
 
-      if (!/^\d{4}$/.test(selectedMilhar)) {
-        continue;
-      }
-
       if (
+        !/^\d{4}$/.test(selectedMilhar) ||
         selectedMilhar.slice(-3) !==
-        centenaItem.centena
-      ) {
-        continue;
-      }
-
-      if (
+          centenaItem.centena ||
         getDezena2(selectedMilhar) !== dz ||
         usedMilhares.has(selectedMilhar) ||
         picked.some(
@@ -4108,7 +4517,14 @@ export function buildMilharesForGrupo({
       });
     }
 
-    return picked.slice(0, limit);
+    if (picked.length !== limit) {
+      throw new Error(
+        `TOP3_BUILD24_INCOMPLETE: dezena=${dz}, ` +
+        `esperado=${limit}, produzido=${picked.length}.`
+      );
+    }
+
+    return picked;
   }
 
   for (const dz of dezenasFixas) {
@@ -4134,9 +4550,11 @@ export function buildMilharesForGrupo({
       pushed += 1;
     }
 
-    while (pushed < perDezena) {
-      slots.push({ dezena: dz, milhar: "" });
-      pushed += 1;
+    if (pushed !== perDezena) {
+      throw new Error(
+        `TOP3_BUILD24_SLOT_INCOMPLETE: dezena=${dz}, ` +
+        `esperado=${perDezena}, produzido=${pushed}.`
+      );
     }
   }
 
