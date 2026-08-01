@@ -3,6 +3,10 @@
 import React, { useMemo, useState, useCallback, useEffect } from "react";
 import { getAnimalLabel, getImgFromGrupo } from "../../constants/bichoMap";
 
+import {
+  normalizeTop3Hits,
+} from "./top3.hit-analysis";
+
 function extractPrizeMilharByPosition(slot, position) {
   const prizes = Array.isArray(slot?.prizes)
     ? slot.prizes
@@ -1512,7 +1516,7 @@ function CompactTop3Result({
                     }}
                   >
                     {medal}
-                  </span>
+                                  </span>
                 ) : null}
               </div>
 
@@ -2340,6 +2344,11 @@ const list =
           matchedMilhar: normalizeMilharStr(
             entry?.matchedMilhar || ""
           ),
+          hits: normalizeTop3Hits(entry),
+
+          hitCount:
+            normalizeTop3Hits(entry).length,
+
           analysis: {
             type: String(entry?.hitType || ""),
             score: Number(entry?.hitScore || 0),
@@ -2366,6 +2375,12 @@ const list =
             matchedMilhar: normalizeMilharStr(
               entry?.matchedMilhar || ""
             ),
+
+            hits:
+              normalizeTop3Hits(entry),
+
+            hitCount:
+              normalizeTop3Hits(entry).length,
           },
         };
       });
@@ -4426,30 +4441,43 @@ const list =
                     ? item.analysis
                     : {};
 
+                const hits =
+                  normalizeTop3Hits({
+                    ...item,
+                    ...analysis,
+                    hits:
+                      Array.isArray(
+                        item?.hits
+                      )
+                        ? item.hits
+                        : analysis?.hits,
+                  });
+
+                const primaryHit =
+                  hits[0] || null;
+
                 const predictionPosition =
                   Number(
-                    analysis?.position ??
-                      analysis
-                        ?.predictionPosition ??
-                      item
-                        ?.predictionPosition ??
-                      item?.hitPosition ??
+                    primaryHit
+                      ?.predictionPosition ??
+                      primaryHit
+                        ?.hitPosition ??
+                      primaryHit
+                        ?.position ??
                       -1
                   );
 
                 const matchedPredictionIndex =
-                  Number.isFinite(
-                    predictionPosition
-                  ) &&
                   predictionPosition >= 1
                     ? predictionPosition - 1
                     : -1;
 
-                const resultPosition = Number(
-                  analysis?.resultPosition ??
-                    item?.resultPosition ??
-                    -1
-                );
+                const resultPosition =
+                  Number(
+                    primaryHit
+                      ?.resultPosition ??
+                      -1
+                  );
 
                 const hitType = String(
                   analysis?.type ??
@@ -4462,7 +4490,7 @@ const list =
 
                 const isHit =
                   hasResult &&
-                  matchedPredictionIndex >= 0;
+                  hits.length > 0;
 
                 const medal =
                   resultPosition === 1
@@ -4700,10 +4728,56 @@ const list =
                                 )
                               : "";
 
+                          const pickHit =
+                            hits.find(
+                              (hit) =>
+                                Number(
+                                  hit
+                                    ?.predictionPosition ??
+                                    hit
+                                      ?.hitPosition ??
+                                    hit?.position ??
+                                    -1
+                                ) ===
+                                idx + 1
+                            ) || null;
+
                           const isMatched =
-                            isHit &&
-                            matchedPredictionIndex ===
-                              idx;
+                            Boolean(pickHit);
+
+                          const pickResultPosition =
+                            Number(
+                              pickHit
+                                ?.resultPosition ??
+                                -1
+                            );
+
+                          const pickMedal =
+                            pickResultPosition === 1
+                              ? "🥇"
+                              : pickResultPosition === 2
+                                ? "🥈"
+                                : pickResultPosition === 3
+                                  ? "🥉"
+                                  : "";
+
+                          const pickPrizeColor =
+                            pickResultPosition === 1
+                              ? "#d4af37"
+                              : pickResultPosition === 2
+                                ? "#c0c0c0"
+                                : pickResultPosition === 3
+                                  ? "#cd7f32"
+                                  : "#d4af37";
+
+                          const pickPrizeGlow =
+                            pickResultPosition === 1
+                              ? "rgba(212,175,55,0.58)"
+                              : pickResultPosition === 2
+                                ? "rgba(192,192,192,0.46)"
+                                : pickResultPosition === 3
+                                  ? "rgba(205,127,50,0.50)"
+                                  : "rgba(212,175,55,0.38)";
 
                           return (
                             <div
@@ -4790,17 +4864,14 @@ const list =
                                   size={40}
                                   style={{
                                     borderRadius: 9,
-                                    border: isMatched
-                                      ? `4px solid ${prizeColor}`
+                                    border: isMatched ? `4px solid ${pickPrizeColor}`
                                       : "1px solid rgba(201,168,62,0.36)",
-                                    boxShadow: isMatched
-                                      ? `0 0 17px ${prizeGlow}`
+                                    boxShadow: isMatched ? `0 0 17px ${pickPrizeGlow}`
                                       : "none",
                                   }}
                                 />
 
-                                {isMatched &&
-                                medal ? (
+                                {isMatched && pickMedal ? (
                                   <span
                                     aria-label="Palpite acertado"
                                     style={{
@@ -4815,7 +4886,7 @@ const list =
                                         "drop-shadow(0 2px 4px rgba(0,0,0,0.95))",
                                     }}
                                   >
-                                    {medal}
+                                    {pickMedal}
                                   </span>
                                 ) : null}
                               </div>
@@ -4828,7 +4899,7 @@ const list =
                                   whiteSpace:
                                     "nowrap",
                                   color: isMatched
-                                    ? prizeColor
+                                    ? pickPrizeColor
                                     : "inherit",
                                 }}
                               >
@@ -4872,51 +4943,186 @@ const list =
                             ⏳ PENDENTE
                           </div>
                         ) : isHit ? (
-                          <>
-                            <div
-                              style={{
-                                textAlign: "center",
-                                color: prizeColor,
-                                fontSize: 11,
-                                fontWeight: 1000,
-                                letterSpacing: 0.6,
-                              }}
-                            >
-                              ACERTO
-                            </div>
+                          <div
+                            style={{
+                              display: "grid",
+                              gap: 7,
+                            }}
+                          >
+                            {hits.map(
+                              (hit) => {
+                                const hitResultPosition =
+                                  Number(
+                                    hit
+                                      ?.resultPosition ??
+                                      -1
+                                  );
 
-                            <div
-                              style={{
-                                display: "grid",
-                                gridTemplateColumns:
-                                  "1fr auto",
-                                gap: "2px 8px",
-                                fontSize: 10,
-                                lineHeight: 1.2,
-                              }}
-                            >
-                              <span>Grupo</span>
-                              <strong>
-                                {hitGrupo || "—"}
-                              </strong>
+                                const hitPredictionPosition =
+                                  Number(
+                                    hit
+                                      ?.predictionPosition ??
+                                      hit
+                                        ?.hitPosition ??
+                                      hit
+                                        ?.position ??
+                                      -1
+                                  );
 
-                              <span>Dezena</span>
-                              <strong>
-                                {hitDezena || "—"}
-                              </strong>
+                                const hitCardColor =
+                                  hitResultPosition === 1
+                                    ? "#d4af37"
+                                    : hitResultPosition === 2
+                                      ? "#c0c0c0"
+                                      : "#cd7f32";
 
-                              <span>Centena</span>
-                              <strong>
-                                {hitCentena || "—"}
-                              </strong>
+                                const hitCardMedal =
+                                  hitResultPosition === 1
+                                    ? "🥇"
+                                    : hitResultPosition === 2
+                                      ? "🥈"
+                                      : "🥉";
 
-                              <span>Milhar</span>
-                              <strong>
-                                {hitMilhar || "—"}
-                              </strong>
-                            </div>
-                          </>
-                        ) : (
+                                const hitMilharValue =
+                                  normalizeMilharStr(
+                                    hit
+                                      ?.matchedMilhar ||
+                                      ""
+                                  );
+
+                                const hitCentenaValue =
+                                  hitMilharValue
+                                    ? hitMilharValue.slice(
+                                        -3
+                                      )
+                                    : "";
+
+                                const hitDezenaValue =
+                                  hitMilharValue
+                                    ? hitMilharValue.slice(
+                                        -2
+                                      )
+                                    : "";
+
+                                const hitGrupoValue =
+                                  formatGrupo(
+                                    hit
+                                      ?.matchedGrupo
+                                  );
+
+                                return (
+                                  <div
+                                    key={
+                                      String(
+                                        hitPredictionPosition
+                                      ) +
+                                      "__" +
+                                      String(
+                                        hitResultPosition
+                                      )
+                                    }
+                                    style={{
+                                      display:
+                                        "grid",
+                                      gap: 4,
+                                      padding:
+                                        "7px 8px",
+                                      borderRadius:
+                                        9,
+                                      border:
+                                        `1px solid ${hitCardColor}`,
+                                      background:
+                                        "rgba(0,0,0,0.20)",
+                                    }}
+                                  >
+                                    <div
+                                      style={{
+                                        textAlign:
+                                          "center",
+                                        color:
+                                          hitCardColor,
+                                        fontSize:
+                                          11,
+                                        fontWeight:
+                                          1000,
+                                        letterSpacing:
+                                          0.6,
+                                      }}
+                                    >
+                                      {hitCardMedal} ACERTO
+                                    </div>
+
+                                    <div
+                                      style={{
+                                        textAlign:
+                                          "center",
+                                        fontSize:
+                                          9,
+                                        fontWeight:
+                                          900,
+                                      }}
+                                    >
+                                      Palpite #
+                                      {hitPredictionPosition}
+                                      {" · "}
+                                      {hitResultPosition}º prêmio
+                                    </div>
+
+                                    <div
+                                      style={{
+                                        display:
+                                          "grid",
+                                        gridTemplateColumns:
+                                          "1fr auto",
+                                        gap:
+                                          "2px 8px",
+                                        fontSize:
+                                          10,
+                                        lineHeight:
+                                          1.2,
+                                      }}
+                                    >
+                                      <span>
+                                        Grupo
+                                      </span>
+
+                                      <strong>
+                                        {hitGrupoValue ||
+                                          "—"}
+                                      </strong>
+
+                                      <span>
+                                        Dezena
+                                      </span>
+
+                                      <strong>
+                                        {hitDezenaValue ||
+                                          "—"}
+                                      </strong>
+
+                                      <span>
+                                        Centena
+                                      </span>
+
+                                      <strong>
+                                        {hitCentenaValue ||
+                                          "—"}
+                                      </strong>
+
+                                      <span>
+                                        Milhar
+                                      </span>
+
+                                      <strong>
+                                        {hitMilharValue ||
+                                          "—"}
+                                      </strong>
+                                    </div>
+                                  </div>
+                                );
+                              }
+                            )}
+                          </div>                        ) : (
                           <div
                             style={{
                               textAlign: "center",
@@ -5095,8 +5301,3 @@ const list =
     </div>
   );
 }
-
-
-
-
-

@@ -21,6 +21,10 @@ import {
   pickPrize1GrupoFromDraw,
 } from "./top3.engine";
 
+import {
+  analyzeTop3Hits,
+} from "./top3.hit-analysis";
+
 const COLLECTION = "top3_predictions";
 
 function normalizeLotteryKey(value) {
@@ -228,177 +232,14 @@ function podiumMedalFromPosition(position) {
   return "";
 }
 
-function analyzeSnapshotHit(snapshot, officialPodium) {
-  const top3 = Array.isArray(snapshot)
-    ? snapshot.slice(0, 3)
-    : [];
-
-  const podium = Array.isArray(officialPodium)
-    ? officialPodium.filter(Boolean).slice(0, 3)
-    : [];
-
-  const missResult = {
-    hitType: "miss",
-    hitScore: 0,
-    hitPosition: -1,
-    predictionPosition: -1,
-    resultPosition: -1,
-    podiumMedal: "",
-    matchedValue: "",
-    matchedGrupo: null,
-    matchedMilhar: "",
-    matchedAnimal: "",
-  };
-
-  if (!top3.length || !podium.length) {
-    return missResult;
-  }
-
-  const hitPriority = {
-    hit_exact: 4,
-    hit_centena: 3,
-    hit_dezena: 2,
-    hit_grupo: 1,
-    miss: 0,
-  };
-
-  let bestHit = null;
-  let bestPriority = 0;
-
-  for (const officialPrize of podium) {
-    const resultGrupo = Number(
-      officialPrize?.grupo
-    );
-
-    const resultMilhar = normalizeMilhar(
-      officialPrize?.milhar
-    );
-
-    const resultCentena = resultMilhar
-      ? resultMilhar.slice(-3)
-      : "";
-
-    const resultDezena = resultMilhar
-      ? resultMilhar.slice(-2)
-      : "";
-
-    const resultPosition = Number(
-      officialPrize?.position
-    );
-
-    for (
-      let predictionIndex = 0;
-      predictionIndex < top3.length;
-      predictionIndex += 1
-    ) {
-      const prediction = top3[predictionIndex];
-
-      const predictionGrupo = Number(
-        prediction?.grupo
-      );
-
-      const milhares = (
-        Array.isArray(prediction?.milhares24)
-          ? prediction.milhares24
-          : Array.isArray(prediction?.milhares20)
-            ? prediction.milhares20
-            : Array.isArray(prediction?.milhares)
-              ? prediction.milhares
-              : []
-      )
-        .map(normalizeMilhar)
-        .filter(Boolean);
-
-      const centenas = milhares.map(
-        (value) => value.slice(-3)
-      );
-
-      const dezenas = milhares.map(
-        (value) => value.slice(-2)
-      );
-
-      let hitType = "miss";
-      let hitScore = 0;
-      let matchedValue = "";
-
-      if (
-        resultMilhar &&
-        milhares.includes(resultMilhar)
-      ) {
-        hitType = "hit_exact";
-        hitScore = 100;
-        matchedValue = resultMilhar;
-      } else if (
-        resultCentena &&
-        centenas.includes(resultCentena)
-      ) {
-        hitType = "hit_centena";
-        hitScore = 66.67;
-        matchedValue = resultCentena;
-      } else if (
-        resultDezena &&
-        dezenas.includes(resultDezena)
-      ) {
-        hitType = "hit_dezena";
-        hitScore = 33.33;
-        matchedValue = resultDezena;
-      } else if (
-        Number.isFinite(resultGrupo) &&
-        predictionGrupo === resultGrupo
-      ) {
-        hitType = "hit_grupo";
-        hitScore = 33.33;
-        matchedValue = String(
-          resultGrupo
-        ).padStart(2, "0");
-      }
-
-      const candidatePriority =
-        hitPriority[hitType] || 0;
-
-      if (!candidatePriority) {
-        continue;
-      }
-
-      const candidate = {
-        hitType,
-        hitScore,
-        hitPosition: predictionIndex + 1,
-        predictionPosition: predictionIndex + 1,
-        resultPosition,
-        podiumMedal:
-          podiumMedalFromPosition(resultPosition),
-        matchedValue,
-        matchedGrupo: resultGrupo,
-        matchedMilhar: resultMilhar,
-        matchedAnimal: safeStr(
-          officialPrize?.animal || ""
-        ),
-      };
-
-      const shouldReplace =
-        candidatePriority > bestPriority ||
-        (
-          candidatePriority === bestPriority &&
-          (
-            !bestHit ||
-            resultPosition < bestHit.resultPosition ||
-            (
-              resultPosition === bestHit.resultPosition &&
-              candidate.predictionPosition <
-                bestHit.predictionPosition
-            )
-          )
-        );
-
-      if (shouldReplace) {
-        bestHit = candidate;
-        bestPriority = candidatePriority;
-      }
-    }
-  }
-
-  return bestHit || missResult;
+function analyzeSnapshotHit(
+  snapshot,
+  officialPodium
+) {
+  return analyzeTop3Hits(
+    snapshot,
+    officialPodium
+  );
 }
 
 export async function saveTop3PredictionSnapshot({
@@ -483,7 +324,15 @@ export async function saveTop3PredictionSnapshot({
     hitType: "",
     hitScore: 0,
     hitPosition: -1,
+    predictionPosition: -1,
+    resultPosition: -1,
+    podiumMedal: "",
     matchedValue: "",
+    matchedGrupo: null,
+    matchedMilhar: "",
+    matchedAnimal: "",
+    hits: [],
+    hitCount: 0,
     createdAt: now,
     updatedAt: now,
     createdBy: user.uid,
@@ -649,6 +498,20 @@ export async function reconcileTop3PredictionDay({
       officialPodium
     );
 
+    const savedHitsSignature =
+      JSON.stringify(
+        Array.isArray(entry?.hits)
+          ? entry.hits
+          : []
+      );
+
+    const analysisHitsSignature =
+      JSON.stringify(
+        Array.isArray(analysis?.hits)
+          ? analysis.hits
+          : []
+      );
+
     const alreadyMatchesRealResult =
       entry?.status === "validated" &&
       savedLottery === lottery &&
@@ -661,7 +524,10 @@ export async function reconcileTop3PredictionDay({
         Number(analysis.resultPosition ?? -1) &&
       safeStr(entry?.podiumMedal) ===
         safeStr(analysis.podiumMedal) &&
-      safeStr(entry?.matchedValue) === analysis.matchedValue;
+      safeStr(entry?.matchedValue) ===
+        analysis.matchedValue &&
+      savedHitsSignature ===
+        analysisHitsSignature;
 
     if (alreadyMatchesRealResult) {
       reconciledHistory.push(entry);
@@ -696,6 +562,24 @@ export async function reconcileTop3PredictionDay({
       matchedMilhar: analysis.matchedMilhar,
       matchedAnimal: analysis.matchedAnimal,
       matchedValue: analysis.matchedValue,
+
+      hits: Array.isArray(analysis.hits)
+        ? analysis.hits
+        : [],
+
+      hitCount: Array.isArray(
+        analysis.hits
+      )
+        ? analysis.hits.length
+        : 0,
+
+      matchedPredictions: Number(
+        analysis.matchedPredictions || 0
+      ),
+
+      matchedPrizePositions: Number(
+        analysis.matchedPrizePositions || 0
+      ),
       validatedAt: now,
       validatedBy: user.uid,
       updatedAt: now,
