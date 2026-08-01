@@ -3001,6 +3001,453 @@ function rankPassiveInstrumentationRows(rows) {
     }));
 }
 
+
+/*
+ * TOP3_POSITION_EVIDENCE_PASSIVE_V1
+ *
+ * Instrumentação de auditoria:
+ * - 1º prêmio individual
+ * - 2º prêmio individual
+ * - 3º prêmio individual
+ * - presença no pódio (1º ao 3º)
+ *
+ * Não altera ranking, score, pesos ou previsões.
+ */
+function buildTop3PassivePositionAudit({
+  history,
+  targetTs,
+  targetHour,
+  targetDow,
+  targetDayOfMonth,
+  previousGroup,
+  previousHour,
+  lotteryKey,
+  sceneRanking,
+  PT_RIO_SCHEDULE_NORMAL,
+  PT_RIO_SCHEDULE_WED_SAT,
+  FEDERAL_SCHEDULE,
+}) {
+  const list = Array.isArray(history)
+    ? history
+    : [];
+
+  const groupsK = safeInt(
+    TOP3_GROUPS_K,
+    25
+  );
+
+  function emptyPositionMaps() {
+    return {
+      first: emptyGroupMap(),
+      second: emptyGroupMap(),
+      third: emptyGroupMap(),
+      podium: emptyGroupMap(),
+    };
+  }
+
+  function createLayer(label) {
+    return {
+      label,
+      samples: 0,
+      ...emptyPositionMaps(),
+    };
+  }
+
+  function normalizePodium(draw) {
+    const values = getPrizeGroupsByPosition(
+      draw,
+      3
+    );
+
+    return Array.from(
+      { length: 3 },
+      (_, index) => {
+        const grupo = Number(
+          values?.[index]
+        );
+
+        return (
+          Number.isFinite(grupo) &&
+          grupo >= 1 &&
+          grupo <= groupsK
+        )
+          ? grupo
+          : null;
+      }
+    );
+  }
+
+  function addDraw(layer, draw) {
+    if (!layer || !draw) return;
+
+    const podium = normalizePodium(draw);
+
+    if (!Number.isFinite(podium[0])) {
+      return;
+    }
+
+    layer.samples += 1;
+
+    incMap(
+      layer.first,
+      podium[0],
+      1
+    );
+
+    if (Number.isFinite(podium[1])) {
+      incMap(
+        layer.second,
+        podium[1],
+        1
+      );
+    }
+
+    if (Number.isFinite(podium[2])) {
+      incMap(
+        layer.third,
+        podium[2],
+        1
+      );
+    }
+
+    const uniquePodium = new Set(
+      podium.filter(Number.isFinite)
+    );
+
+    for (const grupo of uniquePodium) {
+      incMap(
+        layer.podium,
+        grupo,
+        1
+      );
+    }
+  }
+
+  function serializeLayer(layer, grupo) {
+    const samples = Number(
+      layer?.samples || 0
+    );
+
+    const first = Number(
+      layer?.first?.get?.(grupo) || 0
+    );
+
+    const second = Number(
+      layer?.second?.get?.(grupo) || 0
+    );
+
+    const third = Number(
+      layer?.third?.get?.(grupo) || 0
+    );
+
+    const podium = Number(
+      layer?.podium?.get?.(grupo) || 0
+    );
+
+    return {
+      label: String(
+        layer?.label || ""
+      ),
+
+      samples,
+
+      counts: {
+        first,
+        second,
+        third,
+        podium,
+      },
+
+      rates: {
+        first:
+          samples > 0
+            ? first / samples
+            : 0,
+
+        second:
+          samples > 0
+            ? second / samples
+            : 0,
+
+        third:
+          samples > 0
+            ? third / samples
+            : 0,
+
+        podium:
+          samples > 0
+            ? podium / samples
+            : 0,
+      },
+    };
+  }
+
+  const layers = {
+    hour: createLayer(
+      `frequência no horário ${targetHour}`
+    ),
+
+    dowHour: createLayer(
+      "frequência no dia da semana + horário"
+    ),
+
+    dayMonth: createLayer(
+      `frequência no dia ${String(
+        targetDayOfMonth
+      ).padStart(2, "0")}`
+    ),
+
+    transition: createLayer(
+      `transição G${String(
+        previousGroup
+      ).padStart(2, "0")} @ ${previousHour} → ${targetHour}`
+    ),
+
+    recent: createLayer(
+      "recência comparável"
+    ),
+
+    scene: createLayer(
+      "analogia histórica de cena"
+    ),
+  };
+
+  const eligibleHistory = list.filter(
+    (draw) => {
+      const ymd = pickDrawYMD(draw);
+      const hour = toHourBucket(
+        pickDrawHour(draw)
+      );
+
+      const ts = ymdHourToTs(
+        ymd,
+        hour
+      );
+
+      return (
+        isYMD(ymd) &&
+        hour &&
+        Number.isFinite(ts) &&
+        ts < targetTs
+      );
+    }
+  );
+
+  for (const draw of eligibleHistory) {
+    const ymd = pickDrawYMD(draw);
+    const hour = toHourBucket(
+      pickDrawHour(draw)
+    );
+
+    const dow = getDowKey(ymd);
+    const dom = Number(
+      String(ymd).slice(8, 10)
+    );
+
+    if (hour === targetHour) {
+      addDraw(
+        layers.hour,
+        draw
+      );
+    }
+
+    if (
+      hour === targetHour &&
+      Number(dow) === Number(targetDow)
+    ) {
+      addDraw(
+        layers.dowHour,
+        draw
+      );
+    }
+
+    if (
+      Number(dom) ===
+      Number(targetDayOfMonth)
+    ) {
+      addDraw(
+        layers.dayMonth,
+        draw
+      );
+    }
+  }
+
+  const indexed =
+    indexDrawsByYmdHour(
+      eligibleHistory
+    );
+
+  for (const previousDraw of eligibleHistory) {
+    const previousYmd =
+      pickDrawYMD(previousDraw);
+
+    const historicalPreviousHour =
+      toHourBucket(
+        pickDrawHour(previousDraw)
+      );
+
+    const historicalPreviousGroup =
+      getFirstGrupoFromDraw(
+        previousDraw
+      );
+
+    if (
+      !isYMD(previousYmd) ||
+      !historicalPreviousHour ||
+      Number(historicalPreviousGroup) !==
+        Number(previousGroup)
+    ) {
+      continue;
+    }
+
+    const nextSlot =
+      getNextSlotForLottery({
+        lotteryKey,
+        ymd: previousYmd,
+        hourBucket:
+          historicalPreviousHour,
+        PT_RIO_SCHEDULE_NORMAL,
+        PT_RIO_SCHEDULE_WED_SAT,
+        FEDERAL_SCHEDULE,
+      });
+
+    const nextHour =
+      toHourBucket(
+        nextSlot?.hour
+      );
+
+    if (nextHour !== targetHour) {
+      continue;
+    }
+
+    if (
+      historicalPreviousHour !==
+      previousHour
+    ) {
+      continue;
+    }
+
+    const nextDraw = indexed.get(
+      `${safeStr(
+        nextSlot?.ymd
+      )}|${nextHour}`
+    ) || null;
+
+    if (!nextDraw) continue;
+
+    addDraw(
+      layers.transition,
+      nextDraw
+    );
+  }
+
+  const recentComparable =
+    eligibleHistory
+      .filter((draw) => {
+        const ymd =
+          pickDrawYMD(draw);
+
+        const hour =
+          toHourBucket(
+            pickDrawHour(draw)
+          );
+
+        return (
+          hour === targetHour &&
+          Number(getDowKey(ymd)) ===
+            Number(targetDow)
+        );
+      })
+      .slice(-20);
+
+  for (const draw of recentComparable) {
+    addDraw(
+      layers.recent,
+      draw
+    );
+  }
+
+  for (
+    const sceneItem of (
+      Array.isArray(sceneRanking)
+        ? sceneRanking
+        : []
+    )
+  ) {
+    if (!sceneItem?.nextDraw) {
+      continue;
+    }
+
+    addDraw(
+      layers.scene,
+      sceneItem.nextDraw
+    );
+  }
+
+  const byGroup = {};
+
+  for (
+    let grupo = 1;
+    grupo <= groupsK;
+    grupo += 1
+  ) {
+    byGroup[grupo] = {
+      contract:
+        "TOP3_POSITION_EVIDENCE_PASSIVE_V1",
+
+      passive: true,
+
+      changesRanking: false,
+      changesScore: false,
+      changesWeights: false,
+      changesPrediction: false,
+
+      lotteryKey: String(
+        lotteryKey || ""
+      ).toUpperCase(),
+
+      grupo,
+
+      positions: {
+        first: true,
+        second: true,
+        third: true,
+        podiumFirstToThird: true,
+      },
+
+      layers: Object.fromEntries(
+        Object.entries(layers).map(
+          ([key, layer]) => [
+            key,
+            serializeLayer(
+              layer,
+              grupo
+            ),
+          ]
+        )
+      ),
+    };
+  }
+
+  return {
+    contract:
+      "TOP3_POSITION_EVIDENCE_PASSIVE_V1",
+
+    passive: true,
+
+    changesRanking: false,
+    changesScore: false,
+    changesWeights: false,
+    changesPrediction: false,
+
+    lotteryKey: String(
+      lotteryKey || ""
+    ).toUpperCase(),
+
+    byGroup,
+  };
+}
+
 function buildV3PassiveLayerInstrumentation({
   candidates,
   layerOrder,
@@ -3431,6 +3878,23 @@ export function computeStatisticalTop3V3({
   const currentScene = buildSceneFromDraw(drawLast);
   const sceneRanking = buildHistoricalSceneRanking(history, currentScene, 80);
   const sceneHypothesis = buildSceneHypothesisDistribution(sceneRanking, TOP3_GROUPS_K);
+
+  const positionAudit =
+    buildTop3PassivePositionAudit({
+      history,
+      targetTs,
+      targetHour: targetH,
+      targetDow,
+      targetDayOfMonth,
+      previousGroup: prevGrupo,
+      previousHour: lastH,
+      lotteryKey: key,
+      sceneRanking,
+      PT_RIO_SCHEDULE_NORMAL,
+      PT_RIO_SCHEDULE_WED_SAT,
+      FEDERAL_SCHEDULE,
+    });
+
   const sceneWeight =
     sampleConfidence(sceneHypothesis?.samples || 0, TOP3_SCENE_SAMPLE_TARGET) *
     TOP3_SCENE_WEIGHT;
@@ -3754,6 +4218,12 @@ export function computeStatisticalTop3V3({
             ])
           ),
           details: x.details,
+
+          positionAudit:
+            positionAudit?.byGroup?.[
+              Number(x.grupo)
+            ] || null,
+
           passiveInstrumentation:
             passiveLayerInstrumentation?.byGroup?.[
               Number(x.grupo)
