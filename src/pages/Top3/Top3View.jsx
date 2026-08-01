@@ -4888,11 +4888,17 @@ const list =
                           <div
                             style={{
                               display: "grid",
-                              gap: 7,
+                              gap: 0,
                             }}
                           >
+                            {/*
+                              TOP3_PREMIUM_TRUTHFUL_HIT_CARD_V2
+                            */}
                             {hits.map(
-                              (hit) => {
+                              (
+                                hit,
+                                hitIndex
+                              ) => {
                                 const hitResultPosition =
                                   Number(
                                     hit
@@ -4911,6 +4917,67 @@ const list =
                                       -1
                                   );
 
+                                const normalizedHitType =
+                                  String(
+                                    hit?.hitType ||
+                                      hit?.type ||
+                                      ""
+                                  )
+                                    .trim()
+                                    .toLowerCase();
+
+                                const isDezenaLevel =
+                                  normalizedHitType ===
+                                    "hit_dezena" ||
+                                  normalizedHitType ===
+                                    "hit_centena" ||
+                                  normalizedHitType ===
+                                    "hit_exact";
+
+                                const isCentenaLevel =
+                                  normalizedHitType ===
+                                    "hit_centena" ||
+                                  normalizedHitType ===
+                                    "hit_exact";
+
+                                const isMilharLevel =
+                                  normalizedHitType ===
+                                  "hit_exact";
+
+                                const officialMilhar =
+                                  normalizeMilharStr(
+                                    hit
+                                      ?.matchedMilhar ||
+                                      ""
+                                  );
+
+                                const hitGrupoValue =
+                                  formatGrupo(
+                                    hit
+                                      ?.matchedGrupo
+                                  );
+
+                                const hitDezenaValue =
+                                  isDezenaLevel &&
+                                  officialMilhar
+                                    ? officialMilhar.slice(
+                                        -2
+                                      )
+                                    : "";
+
+                                const hitCentenaValue =
+                                  isCentenaLevel &&
+                                  officialMilhar
+                                    ? officialMilhar.slice(
+                                        -3
+                                      )
+                                    : "";
+
+                                const hitMilharValue =
+                                  isMilharLevel
+                                    ? officialMilhar
+                                    : "";
+
                                 const hitCardColor =
                                   hitResultPosition === 1
                                     ? "#d4af37"
@@ -4923,34 +4990,9 @@ const list =
                                     ? "🥇"
                                     : hitResultPosition === 2
                                       ? "🥈"
-                                      : "🥉";
-
-                                const hitMilharValue =
-                                  normalizeMilharStr(
-                                    hit
-                                      ?.matchedMilhar ||
-                                      ""
-                                  );
-
-                                const hitCentenaValue =
-                                  hitMilharValue
-                                    ? hitMilharValue.slice(
-                                        -3
-                                      )
-                                    : "";
-
-                                const hitDezenaValue =
-                                  hitMilharValue
-                                    ? hitMilharValue.slice(
-                                        -2
-                                      )
-                                    : "";
-
-                                const hitGrupoValue =
-                                  formatGrupo(
-                                    hit
-                                      ?.matchedGrupo
-                                  );
+                                      : hitResultPosition === 3
+                                        ? "🥉"
+                                        : "";
 
                                 return (
                                   <div
@@ -4961,6 +5003,10 @@ const list =
                                       "__" +
                                       String(
                                         hitResultPosition
+                                      ) +
+                                      "__" +
+                                      String(
+                                        normalizedHitType
                                       )
                                     }
                                     style={{
@@ -4968,13 +5014,13 @@ const list =
                                         "grid",
                                       gap: 4,
                                       padding:
-                                        "7px 8px",
-                                      borderRadius:
-                                        9,
-                                      border:
-                                        `1px solid ${hitCardColor}`,
-                                      background:
-                                        "rgba(0,0,0,0.20)",
+                                        hitIndex === 0
+                                          ? "2px 0 7px"
+                                          : "8px 0 7px",
+                                      borderTop:
+                                        hitIndex === 0
+                                          ? "none"
+                                          : "1px solid rgba(255,255,255,0.16)",
                                     }}
                                   >
                                     <div
@@ -4983,12 +5029,13 @@ const list =
                                           "center",
                                         color:
                                           hitCardColor,
-                                        fontSize:
-                                          11,
+                                        fontSize: 11,
                                         fontWeight:
                                           1000,
                                         letterSpacing:
                                           0.6,
+                                        textShadow:
+                                          "0 0 10px rgba(0,0,0,0.92)",
                                       }}
                                     >
                                       {hitCardMedal} ACERTO
@@ -4998,16 +5045,22 @@ const list =
                                       style={{
                                         textAlign:
                                           "center",
-                                        fontSize:
-                                          9,
+                                        fontSize: 9,
                                         fontWeight:
                                           900,
+                                        color:
+                                          "rgba(255,255,255,0.90)",
                                       }}
                                     >
                                       Palpite #
-                                      {hitPredictionPosition}
+                                      {
+                                        hitPredictionPosition
+                                      }
                                       {" · "}
-                                      {hitResultPosition}º prêmio
+                                      {
+                                        hitResultPosition
+                                      }
+                                      º prêmio
                                     </div>
 
                                     <div
@@ -5017,9 +5070,8 @@ const list =
                                         gridTemplateColumns:
                                           "1fr auto",
                                         gap:
-                                          "2px 8px",
-                                        fontSize:
-                                          10,
+                                          "2px 12px",
+                                        fontSize: 10,
                                         lineHeight:
                                           1.2,
                                       }}
@@ -5033,32 +5085,44 @@ const list =
                                           "—"}
                                       </strong>
 
-                                      <span>
-                                        Dezena
-                                      </span>
+                                      {isDezenaLevel ? (
+                                        <>
+                                          <span>
+                                            Dezena
+                                          </span>
 
-                                      <strong>
-                                        {hitDezenaValue ||
-                                          "—"}
-                                      </strong>
+                                          <strong>
+                                            {hitDezenaValue ||
+                                              "—"}
+                                          </strong>
+                                        </>
+                                      ) : null}
 
-                                      <span>
-                                        Centena
-                                      </span>
+                                      {isCentenaLevel ? (
+                                        <>
+                                          <span>
+                                            Centena
+                                          </span>
 
-                                      <strong>
-                                        {hitCentenaValue ||
-                                          "—"}
-                                      </strong>
+                                          <strong>
+                                            {hitCentenaValue ||
+                                              "—"}
+                                          </strong>
+                                        </>
+                                      ) : null}
 
-                                      <span>
-                                        Milhar
-                                      </span>
+                                      {isMilharLevel ? (
+                                        <>
+                                          <span>
+                                            Milhar
+                                          </span>
 
-                                      <strong>
-                                        {hitMilharValue ||
-                                          "—"}
-                                      </strong>
+                                          <strong>
+                                            {hitMilharValue ||
+                                              "—"}
+                                          </strong>
+                                        </>
+                                      ) : null}
                                     </div>
                                   </div>
                                 );
