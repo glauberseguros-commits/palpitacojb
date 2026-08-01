@@ -4857,20 +4857,20 @@ const list =
 
                       <div
                         style={{
-                          minHeight: 70,
+                          minHeight: 78,
                           display: "grid",
                           alignContent: "center",
                           gap: 4,
-                          padding: "7px 10px",
-                          borderRadius: 11,
+                          padding: "11px 14px",
+                          borderRadius: 14,
                           border: isHit
-                            ? `2px solid ${prizeColor}`
+                            ? `1px solid ${prizeColor}`
                             : "1px solid rgba(255,255,255,0.10)",
                           background: isHit
-                            ? `linear-gradient(180deg, ${prizeGlow}, rgba(0,0,0,0.20))`
+                            ? `linear-gradient(145deg, ${prizeGlow} 0%, rgba(48,36,15,0.96) 46%, rgba(10,10,10,0.99) 100%)`
                             : "rgba(255,255,255,0.02)",
                           boxShadow: isHit
-                            ? `0 0 13px ${prizeGlow}`
+                            ? `0 0 18px ${prizeGlow}, inset 0 1px 0 rgba(255,255,255,0.14), inset 0 -1px 0 rgba(0,0,0,0.62)`
                             : "none",
                         }}
                       >
@@ -4892,7 +4892,7 @@ const list =
                             }}
                           >
                             {/*
-                              TOP3_PREMIUM_TRUTHFUL_HIT_CARD_V2
+                              TOP3_PREMIUM_LUXURY_TRUTHFUL_HIT_CARD_V3
                             */}
                             {hits.map(
                               (
@@ -5012,15 +5012,15 @@ const list =
                                     style={{
                                       display:
                                         "grid",
-                                      gap: 4,
+                                      gap: 5,
                                       padding:
                                         hitIndex === 0
-                                          ? "2px 0 7px"
-                                          : "8px 0 7px",
+                                          ? "3px 2px 9px"
+                                          : "11px 2px 9px",
                                       borderTop:
                                         hitIndex === 0
                                           ? "none"
-                                          : "1px solid rgba(255,255,255,0.16)",
+                                          : "1px solid rgba(212,175,55,0.24)",
                                     }}
                                   >
                                     <div
@@ -5029,13 +5029,13 @@ const list =
                                           "center",
                                         color:
                                           hitCardColor,
-                                        fontSize: 11,
+                                        fontSize: 12,
                                         fontWeight:
                                           1000,
                                         letterSpacing:
-                                          0.6,
+                                          0.95,
                                         textShadow:
-                                          "0 0 10px rgba(0,0,0,0.92)",
+                                          "0 1px 2px rgba(0,0,0,0.96), 0 0 10px currentColor",
                                       }}
                                     >
                                       {hitCardMedal} ACERTO
@@ -5045,11 +5045,13 @@ const list =
                                       style={{
                                         textAlign:
                                           "center",
-                                        fontSize: 9,
+                                        fontSize: 9.5,
                                         fontWeight:
                                           900,
+                                        letterSpacing:
+                                          0.15,
                                         color:
-                                          "rgba(255,255,255,0.90)",
+                                          "rgba(255,255,255,0.92)",
                                       }}
                                     >
                                       Palpite #
@@ -5070,10 +5072,12 @@ const list =
                                         gridTemplateColumns:
                                           "1fr auto",
                                         gap:
-                                          "2px 12px",
-                                        fontSize: 10,
+                                          "3px 18px",
+                                        fontSize: 10.5,
                                         lineHeight:
-                                          1.2,
+                                          1.32,
+                                        padding:
+                                          "3px 2px 0",
                                       }}
                                     >
                                       <span>
