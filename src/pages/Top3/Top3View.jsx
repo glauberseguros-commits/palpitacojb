@@ -4891,269 +4891,179 @@ const list =
                               gap: 7,
                             }}
                           >
-                            {/*
-                              TOP3_COMPACT_PREMIUM_MULTI_HIT_V1
-                            */}
-                            <div
-                              style={{
-                                display: "grid",
-                                gap: 0,
-                                width: "100%",
-                                minWidth: 270,
-                                borderRadius: 12,
-                                overflow: "hidden",
-                                border:
-                                  "1px solid rgba(212,175,55,0.88)",
-                                background:
-                                  "linear-gradient(135deg, rgba(78,57,13,0.94) 0%, rgba(31,25,13,0.97) 44%, rgba(10,10,10,0.98) 100%)",
-                                boxShadow:
-                                  "0 0 18px rgba(212,175,55,0.30), inset 0 1px 0 rgba(255,255,255,0.10)",
-                              }}
-                            >
-                              {hits.map(
-                                (
-                                  hit,
-                                  hitIndex
-                                ) => {
-                                  const hitResultPosition =
-                                    Number(
+                            {hits.map(
+                              (hit) => {
+                                const hitResultPosition =
+                                  Number(
+                                    hit
+                                      ?.resultPosition ??
+                                      -1
+                                  );
+
+                                const hitPredictionPosition =
+                                  Number(
+                                    hit
+                                      ?.predictionPosition ??
                                       hit
-                                        ?.resultPosition ??
-                                        -1
-                                    );
-
-                                  const hitPredictionPosition =
-                                    Number(
+                                        ?.hitPosition ??
                                       hit
-                                        ?.predictionPosition ??
-                                        hit
-                                          ?.hitPosition ??
-                                        hit
-                                          ?.position ??
-                                        -1
-                                    );
+                                        ?.position ??
+                                      -1
+                                  );
 
-                                  const hitCardColor =
-                                    hitResultPosition === 1
-                                      ? "#f1cf45"
-                                      : hitResultPosition === 2
-                                        ? "#d6d6d6"
-                                        : "#db9150";
+                                const hitCardColor =
+                                  hitResultPosition === 1
+                                    ? "#d4af37"
+                                    : hitResultPosition === 2
+                                      ? "#c0c0c0"
+                                      : "#cd7f32";
 
-                                  const hitCardMedal =
-                                    hitResultPosition === 1
-                                      ? "🥇"
-                                      : hitResultPosition === 2
-                                        ? "🥈"
-                                        : hitResultPosition === 3
-                                          ? "🥉"
-                                          : "";
+                                const hitCardMedal =
+                                  hitResultPosition === 1
+                                    ? "🥇"
+                                    : hitResultPosition === 2
+                                      ? "🥈"
+                                      : "🥉";
 
-                                  const hitMilharValue =
-                                    normalizeMilharStr(
-                                      hit
-                                        ?.matchedMilhar ||
-                                        ""
-                                    );
+                                const hitMilharValue =
+                                  normalizeMilharStr(
+                                    hit
+                                      ?.matchedMilhar ||
+                                      ""
+                                  );
 
-                                  const hitCentenaValue =
-                                    hitMilharValue
-                                      ? hitMilharValue.slice(
-                                          -3
-                                        )
-                                      : "";
+                                const hitCentenaValue =
+                                  hitMilharValue
+                                    ? hitMilharValue.slice(
+                                        -3
+                                      )
+                                    : "";
 
-                                  const hitDezenaValue =
-                                    hitMilharValue
-                                      ? hitMilharValue.slice(
-                                          -2
-                                        )
-                                      : "";
+                                const hitDezenaValue =
+                                  hitMilharValue
+                                    ? hitMilharValue.slice(
+                                        -2
+                                      )
+                                    : "";
 
-                                  const hitGrupoValue =
-                                    formatGrupo(
-                                      hit
-                                        ?.matchedGrupo
-                                    );
+                                const hitGrupoValue =
+                                  formatGrupo(
+                                    hit
+                                      ?.matchedGrupo
+                                  );
 
-                                  return (
+                                return (
+                                  <div
+                                    key={
+                                      String(
+                                        hitPredictionPosition
+                                      ) +
+                                      "__" +
+                                      String(
+                                        hitResultPosition
+                                      )
+                                    }
+                                    style={{
+                                      display:
+                                        "grid",
+                                      gap: 4,
+                                      padding:
+                                        "7px 8px",
+                                      borderRadius:
+                                        9,
+                                      border:
+                                        `1px solid ${hitCardColor}`,
+                                      background:
+                                        "rgba(0,0,0,0.20)",
+                                    }}
+                                  >
                                     <div
-                                      key={
-                                        String(
-                                          hitPredictionPosition
-                                        ) +
-                                        "__" +
-                                        String(
-                                          hitResultPosition
-                                        )
-                                      }
+                                      style={{
+                                        textAlign:
+                                          "center",
+                                        color:
+                                          hitCardColor,
+                                        fontSize:
+                                          11,
+                                        fontWeight:
+                                          1000,
+                                        letterSpacing:
+                                          0.6,
+                                      }}
+                                    >
+                                      {hitCardMedal} ACERTO
+                                    </div>
+
+                                    <div
+                                      style={{
+                                        textAlign:
+                                          "center",
+                                        fontSize:
+                                          9,
+                                        fontWeight:
+                                          900,
+                                      }}
+                                    >
+                                      Palpite #
+                                      {hitPredictionPosition}
+                                      {" · "}
+                                      {hitResultPosition}º prêmio
+                                    </div>
+
+                                    <div
                                       style={{
                                         display:
                                           "grid",
                                         gridTemplateColumns:
-                                          "minmax(112px, 0.85fr) minmax(180px, 1.35fr)",
-                                        alignItems:
-                                          "center",
-                                        columnGap: 14,
-                                        rowGap: 3,
-                                        padding:
-                                          "9px 11px",
-                                        borderTop:
-                                          hitIndex === 0
-                                            ? "none"
-                                            : "1px solid rgba(255,255,255,0.16)",
-                                        background:
-                                          hitIndex % 2 === 0
-                                            ? "rgba(255,255,255,0.025)"
-                                            : "rgba(0,0,0,0.10)",
+                                          "1fr auto",
+                                        gap:
+                                          "2px 8px",
+                                        fontSize:
+                                          10,
+                                        lineHeight:
+                                          1.2,
                                       }}
                                     >
-                                      <div
-                                        style={{
-                                          display:
-                                            "grid",
-                                          gap: 2,
-                                          alignContent:
-                                            "center",
-                                        }}
-                                      >
-                                        <div
-                                          style={{
-                                            color:
-                                              hitCardColor,
-                                            fontSize: 11,
-                                            fontWeight:
-                                              1000,
-                                            letterSpacing:
-                                              0.6,
-                                            whiteSpace:
-                                              "nowrap",
-                                          }}
-                                        >
-                                          {hitCardMedal} ACERTO
-                                        </div>
+                                      <span>
+                                        Grupo
+                                      </span>
 
-                                        <div
-                                          style={{
-                                            color:
-                                              "rgba(255,255,255,0.88)",
-                                            fontSize: 9,
-                                            fontWeight:
-                                              900,
-                                            whiteSpace:
-                                              "nowrap",
-                                          }}
-                                        >
-                                          Palpite #
-                                          {
-                                            hitPredictionPosition
-                                          }
-                                          {" · "}
-                                          {
-                                            hitResultPosition
-                                          }
-                                          º prêmio
-                                        </div>
-                                      </div>
+                                      <strong>
+                                        {hitGrupoValue ||
+                                          "—"}
+                                      </strong>
 
-                                      <div
-                                        style={{
-                                          display:
-                                            "grid",
-                                          gridTemplateColumns:
-                                            "auto 1fr auto 1fr",
-                                          alignItems:
-                                            "center",
-                                          gap:
-                                            "3px 8px",
-                                          fontSize: 10,
-                                          lineHeight:
-                                            1.15,
-                                        }}
-                                      >
-                                        <span
-                                          style={{
-                                            opacity:
-                                              0.78,
-                                          }}
-                                        >
-                                          Grupo
-                                        </span>
+                                      <span>
+                                        Dezena
+                                      </span>
 
-                                        <strong
-                                          style={{
-                                            textAlign:
-                                              "right",
-                                          }}
-                                        >
-                                          {hitGrupoValue ||
-                                            "—"}
-                                        </strong>
+                                      <strong>
+                                        {hitDezenaValue ||
+                                          "—"}
+                                      </strong>
 
-                                        <span
-                                          style={{
-                                            opacity:
-                                              0.78,
-                                          }}
-                                        >
-                                          Dezena
-                                        </span>
+                                      <span>
+                                        Centena
+                                      </span>
 
-                                        <strong
-                                          style={{
-                                            textAlign:
-                                              "right",
-                                          }}
-                                        >
-                                          {hitDezenaValue ||
-                                            "—"}
-                                        </strong>
+                                      <strong>
+                                        {hitCentenaValue ||
+                                          "—"}
+                                      </strong>
 
-                                        <span
-                                          style={{
-                                            opacity:
-                                              0.78,
-                                          }}
-                                        >
-                                          Centena
-                                        </span>
+                                      <span>
+                                        Milhar
+                                      </span>
 
-                                        <strong
-                                          style={{
-                                            textAlign:
-                                              "right",
-                                          }}
-                                        >
-                                          {hitCentenaValue ||
-                                            "—"}
-                                        </strong>
-
-                                        <span
-                                          style={{
-                                            opacity:
-                                              0.78,
-                                          }}
-                                        >
-                                          Milhar
-                                        </span>
-
-                                        <strong
-                                          style={{
-                                            textAlign:
-                                              "right",
-                                            color:
-                                              hitCardColor,
-                                          }}
-                                        >
-                                          {hitMilharValue ||
-                                            "—"}
-                                        </strong>
-                                      </div>
+                                      <strong>
+                                        {hitMilharValue ||
+                                          "—"}
+                                      </strong>
                                     </div>
-                                  );
-                                }
-                              )}
-                            </div>}
+                                  </div>
+                                );
+                              }
+                            )}
                           </div>                        ) : (
                           <div
                             style={{
