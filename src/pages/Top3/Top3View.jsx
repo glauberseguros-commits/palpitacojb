@@ -4,6 +4,7 @@ import React, { useMemo, useState, useCallback, useEffect } from "react";
 import { getAnimalLabel, getImgFromGrupo } from "../../constants/bichoMap";
 
 import {
+  buildTop3HistoryAnalysis,
   normalizeTop3Hits,
 } from "./top3.hit-analysis";
 
@@ -411,192 +412,6 @@ function hasOfficialResult(slot) {
 
   const milhar = extractResultMilhar(slot);
   return /^\d{4}$/.test(milhar);
-}
-
-function analyzeTop3Hit(top3, resultSource, resultMilhar) {
-  const emptyResult = {
-    type: "none",
-    score: 0,
-    position: -1,
-    predictionPosition: -1,
-    resultPosition: -1,
-    podiumMedal: "",
-    matchedValue: "",
-    matchedGrupo: null,
-    matchedMilhar: "",
-  };
-
-  const missResult = {
-    ...emptyResult,
-    type: "miss",
-  };
-
-  if (!Array.isArray(top3) || !top3.length) {
-    return emptyResult;
-  }
-
-  const officialPodium = Array.isArray(resultSource)
-    ? resultSource.filter(Boolean).slice(0, 3)
-    : [
-        {
-          position: 1,
-          grupo: Number(resultSource),
-          milhar: normalizeMilharStr(resultMilhar),
-        },
-      ].filter(
-        (item) =>
-          Number.isFinite(item.grupo) &&
-          item.grupo >= 1 &&
-          item.grupo <= 25
-      );
-
-  if (!officialPodium.length) {
-    return emptyResult;
-  }
-
-  const hitPriority = {
-    hit_exact: 4,
-    hit_centena: 3,
-    hit_dezena: 2,
-    hit_grupo: 1,
-    miss: 0,
-  };
-
-  let bestHit = null;
-  let bestPriority = 0;
-
-  for (const officialPrize of officialPodium) {
-    const grupoNum = Number(
-      officialPrize?.grupo
-    );
-
-    const milhar = normalizeMilharStr(
-      officialPrize?.milhar
-    );
-
-    const centena = milhar
-      ? milhar.slice(-3)
-      : "";
-
-    const dezena = milhar
-      ? milhar.slice(-2)
-      : "";
-
-    const resultPosition = Number(
-      officialPrize?.position
-    );
-
-    for (
-      let predictionIndex = 0;
-      predictionIndex < top3.length;
-      predictionIndex += 1
-    ) {
-      const item = top3[predictionIndex];
-      const grupo = Number(item?.grupo);
-
-      const milhares = (
-        Array.isArray(item?.milhares24)
-          ? item.milhares24
-          : Array.isArray(item?.milhares20)
-            ? item.milhares20
-            : Array.isArray(item?.milhares)
-              ? item.milhares
-              : []
-      )
-        .map(normalizeMilharStr)
-        .filter(
-          (value) => /^\d{4}$/.test(value)
-        );
-
-      const centenas = milhares
-        .map((value) => value.slice(-3))
-        .filter(
-          (value) => /^\d{3}$/.test(value)
-        );
-
-      const dezenas = milhares
-        .map((value) => value.slice(-2))
-        .filter(
-          (value) => /^\d{2}$/.test(value)
-        );
-
-      let type = "miss";
-      let score = 0;
-      let matchedValue = "";
-
-      if (
-        milhar &&
-        milhares.includes(milhar)
-      ) {
-        type = "hit_exact";
-        score = 100;
-        matchedValue = milhar;
-      } else if (
-        centena &&
-        centenas.includes(centena)
-      ) {
-        type = "hit_centena";
-        score = 66.67;
-        matchedValue = centena;
-      } else if (
-        dezena &&
-        dezenas.includes(dezena)
-      ) {
-        type = "hit_dezena";
-        score = 33.33;
-        matchedValue = dezena;
-      } else if (
-        Number.isFinite(grupoNum) &&
-        grupo === grupoNum
-      ) {
-        type = "hit_grupo";
-        score = 33.33;
-        matchedValue = formatGrupo(grupoNum);
-      }
-
-      const candidatePriority =
-        hitPriority[type] || 0;
-
-      if (!candidatePriority) {
-        continue;
-      }
-
-      const candidate = {
-        type,
-        score,
-        position: predictionIndex + 1,
-        predictionPosition: predictionIndex + 1,
-        resultPosition,
-        podiumMedal:
-          podiumMedalFromPosition(resultPosition),
-        matchedValue,
-        matchedGrupo: grupoNum,
-        matchedMilhar: milhar,
-      };
-
-      const shouldReplace =
-        candidatePriority > bestPriority ||
-        (
-          candidatePriority === bestPriority &&
-          (
-            !bestHit ||
-            resultPosition < bestHit.resultPosition ||
-            (
-              resultPosition === bestHit.resultPosition &&
-              candidate.predictionPosition <
-                bestHit.predictionPosition
-            )
-          )
-        );
-
-      if (shouldReplace) {
-        bestHit = candidate;
-        bestPriority = candidatePriority;
-      }
-    }
-  }
-
-  return bestHit || missResult;
 }
 
 function ImgWithFallback({ srcs, alt, size = 84, style }) {
@@ -1623,7 +1438,7 @@ function TimelineSlot({
 
   const officialPodium = getOfficialPodium(slot);
 
-  const analysis = analyzeTop3Hit(
+  const analysis = buildTop3HistoryAnalysis(
     slotTop3,
     officialPodium
   );
@@ -2411,7 +2226,7 @@ const list =
         const officialPodium =
           getOfficialPodium(slot);
 
-        const analysis = analyzeTop3Hit(
+        const analysis = buildTop3HistoryAnalysis(
           slotTop3,
           officialPodium
         );
@@ -2448,13 +2263,51 @@ const list =
             ? slot.prizes
             : [],
           analysis,
+
+          hits: Array.isArray(analysis?.hits)
+            ? analysis.hits
+            : [],
+
+          hitCount: Number(
+            analysis?.hitCount || 0
+          ),
+
           hit:
-            analysis.type !== "miss" &&
-            analysis.type !== "none",
-          hitType: analysis.type,
-          hitScore: Number(analysis.score || 0),
+            Array.isArray(analysis?.hits) &&
+            analysis.hits.length > 0,
+
+          hitType: String(
+            analysis?.hitType ||
+              analysis?.type ||
+              "miss"
+          ),
+
+          hitScore: Number(
+            analysis?.hitScore ??
+              analysis?.score ??
+              0
+          ),
+
           hitPosition: Number(
-            analysis.position ?? -1
+            analysis?.predictionPosition ??
+              analysis?.hitPosition ??
+              analysis?.position ??
+              -1
+          ),
+
+          predictionPosition: Number(
+            analysis?.predictionPosition ??
+              analysis?.hitPosition ??
+              analysis?.position ??
+              -1
+          ),
+
+          resultPosition: Number(
+            analysis?.resultPosition ?? -1
+          ),
+
+          podiumMedal: String(
+            analysis?.podiumMedal || ""
           ),
         };
       });
@@ -2490,7 +2343,7 @@ const list =
 
       const officialPodium = getOfficialPodium(timelineRow);
 
-      const analysis = analyzeTop3Hit(
+      const analysis = buildTop3HistoryAnalysis(
         row?.top3,
         officialPodium
       );
@@ -2520,14 +2373,53 @@ const list =
         matchedMilhar: normalizeMilharStr(
           analysis?.matchedMilhar || ""
         ),
+
         analysis,
+
+        hits: Array.isArray(analysis?.hits)
+          ? analysis.hits
+          : [],
+
+        hitCount: Number(
+          analysis?.hitCount || 0
+        ),
+
         hit:
-          analysis.type !== "miss" &&
-          analysis.type !== "none",
-        hitType: analysis.type,
-        hitScore: Number(analysis.score || 0),
+          Array.isArray(analysis?.hits) &&
+          analysis.hits.length > 0,
+
+        hitType: String(
+          analysis?.hitType ||
+            analysis?.type ||
+            "miss"
+        ),
+
+        hitScore: Number(
+          analysis?.hitScore ??
+            analysis?.score ??
+            0
+        ),
+
         hitPosition: Number(
-          analysis.position ?? -1
+          analysis?.predictionPosition ??
+            analysis?.hitPosition ??
+            analysis?.position ??
+            -1
+        ),
+
+        predictionPosition: Number(
+          analysis?.predictionPosition ??
+            analysis?.hitPosition ??
+            analysis?.position ??
+            -1
+        ),
+
+        resultPosition: Number(
+          analysis?.resultPosition ?? -1
+        ),
+
+        podiumMedal: String(
+          analysis?.podiumMedal || ""
         ),
       });
     }

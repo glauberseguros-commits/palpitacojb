@@ -458,5 +458,117 @@ export function normalizeTop3Hits(
   return [];
 }
 
+
+export function buildTop3HistoryAnalysis(
+  snapshot,
+  officialPodium
+) {
+  const analysis = analyzeTop3Hits(
+    snapshot,
+    officialPodium
+  );
+
+  const hits = normalizeTop3Hits(
+    analysis
+  );
+
+  const primaryHit = hits[0] || null;
+
+  return {
+    ...analysis,
+
+    type:
+      primaryHit?.type ||
+      primaryHit?.hitType ||
+      "miss",
+
+    hitType:
+      primaryHit?.hitType ||
+      primaryHit?.type ||
+      "miss",
+
+    score: Number(
+      primaryHit?.score ??
+        primaryHit?.hitScore ??
+        0
+    ),
+
+    hitScore: Number(
+      primaryHit?.hitScore ??
+        primaryHit?.score ??
+        0
+    ),
+
+    position: Number(
+      primaryHit?.predictionPosition ??
+        primaryHit?.hitPosition ??
+        primaryHit?.position ??
+        -1
+    ),
+
+    hitPosition: Number(
+      primaryHit?.predictionPosition ??
+        primaryHit?.hitPosition ??
+        primaryHit?.position ??
+        -1
+    ),
+
+    predictionPosition: Number(
+      primaryHit?.predictionPosition ??
+        primaryHit?.hitPosition ??
+        primaryHit?.position ??
+        -1
+    ),
+
+    resultPosition: Number(
+      primaryHit?.resultPosition ??
+        -1
+    ),
+
+    podiumMedal: String(
+      primaryHit?.podiumMedal || ""
+    ),
+
+    matchedValue: String(
+      primaryHit?.matchedValue || ""
+    ),
+
+    matchedGrupo:
+      primaryHit?.matchedGrupo ?? null,
+
+    matchedMilhar: String(
+      primaryHit?.matchedMilhar || ""
+    ),
+
+    matchedAnimal: String(
+      primaryHit?.matchedAnimal || ""
+    ),
+
+    hits,
+    hitCount: hits.length,
+
+    matchedPredictions:
+      new Set(
+        hits.map((hit) =>
+          Number(
+            hit?.predictionPosition ??
+              hit?.hitPosition ??
+              hit?.position ??
+              -1
+          )
+        )
+      ).size,
+
+    matchedPrizePositions:
+      new Set(
+        hits.map((hit) =>
+          Number(
+            hit?.resultPosition ?? -1
+          )
+        )
+      ).size,
+  };
+}
+
 export const TOP3_MULTI_HIT_CONTRACT =
   "TOP3_MULTI_HIT_CONTRACT_V1";
