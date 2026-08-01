@@ -4620,26 +4620,27 @@ const list =
                                 )
                               : "";
 
-                          const pickHit =
-                            hits.find(
+                          const pickHits =
+                            hits.filter(
                               (hit) =>
                                 Number(
-                                  hit
-                                    ?.predictionPosition ??
-                                    hit
-                                      ?.hitPosition ??
+                                  hit?.predictionPosition ??
+                                    hit?.hitPosition ??
                                     hit?.position ??
                                     -1
                                 ) ===
                                 idx + 1
-                            ) || null;
+                            );
 
                           const isMatched =
-                            Boolean(pickHit);
+                            pickHits.length > 0;
+
+                          const primaryPickHit =
+                            pickHits[0] || null;
 
                           const pickResultPosition =
                             Number(
-                              pickHit
+                              primaryPickHit
                                 ?.resultPosition ??
                                 -1
                             );
@@ -4763,24 +4764,73 @@ const list =
                                   }}
                                 />
 
-                                {isMatched && pickMedal ? (
-                                  <span
-                                    aria-label="Palpite acertado"
-                                    style={{
-                                      position:
-                                        "absolute",
-                                      top: -14,
-                                      right: -19,
-                                      zIndex: 3,
-                                      fontSize: 27,
-                                      lineHeight: 1,
-                                      filter:
-                                        "drop-shadow(0 2px 4px rgba(0,0,0,0.95))",
-                                    }}
-                                  >
-                                    {pickMedal}
-                                  </span>
-                                ) : null}
+                                {isMatched
+                                  ? pickHits.map(
+                                      (
+                                        pickHitItem,
+                                        medalIndex
+                                      ) => {
+                                        const medalPosition =
+                                          Number(
+                                            pickHitItem
+                                              ?.resultPosition ??
+                                              -1
+                                          );
+
+                                        const medalIcon =
+                                          medalPosition === 1
+                                            ? "🥇"
+                                            : medalPosition === 2
+                                              ? "🥈"
+                                              : medalPosition === 3
+                                                ? "🥉"
+                                                : "";
+
+                                        if (!medalIcon) {
+                                          return null;
+                                        }
+
+                                        return (
+                                          <span
+                                            key={
+                                              String(
+                                                medalPosition
+                                              ) +
+                                              "__" +
+                                              String(
+                                                medalIndex
+                                              )
+                                            }
+                                            aria-label={
+                                              "Palpite acertado no " +
+                                              String(
+                                                medalPosition
+                                              ) +
+                                              "º prêmio"
+                                            }
+                                            style={{
+                                              position:
+                                                "absolute",
+                                              top:
+                                                -14 +
+                                                medalIndex *
+                                                  16,
+                                              right: -19,
+                                              zIndex:
+                                                3 +
+                                                medalIndex,
+                                              fontSize: 27,
+                                              lineHeight: 1,
+                                              filter:
+                                                "drop-shadow(0 2px 4px rgba(0,0,0,0.95))",
+                                            }}
+                                          >
+                                            {medalIcon}
+                                          </span>
+                                        );
+                                      }
+                                    )
+                                  : null}
                               </div>
 
                               <div
