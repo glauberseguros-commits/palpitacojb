@@ -257,7 +257,8 @@ function makeTargetKey(ymd, hour) {
  * Um documento pode possuir identidade externa correta e, ainda assim,
  * carregar cards produzidos para outra loteria ou outro slot.
  *
- * Snapshots legados sem identidade interna são recalculados e sobrescritos.
+ * Snapshots legados sem identidade interna permanecem válidos e imutáveis.
+ * Apenas identidade interna explicitamente divergente invalida o documento.
  */
 function isPersistedTop3EntryValid(
   entry,
@@ -294,8 +295,19 @@ function isPersistedTop3EntryValid(
   return snapshot.every((item) => {
     const context = item?.meta?.persistenceContext || null;
 
+    /*
+     * TOP3_LEGACY_SNAPSHOT_FREEZE_V1
+     *
+     * Snapshots publicados antes da inclusão de persistenceContext
+     * não podem ser recalculados nem sobrescritos retroativamente.
+     *
+     * A identidade externa do documento já foi validada acima por:
+     * lotteryKey + targetYmd + targetHour.
+     *
+     * Quando o contexto interno existir, ele também precisa coincidir.
+     */
     if (!context || typeof context !== "object") {
-      return false;
+      return true;
     }
 
     return (
@@ -2113,3 +2125,4 @@ export function useTop3Controller() {
     normalizeImgSrc,
   };
 }
+
