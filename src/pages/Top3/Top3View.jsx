@@ -2341,86 +2341,42 @@ const list =
         timelineRow?.resultMilhar || ""
       );
 
-      const officialPodium = getOfficialPodium(timelineRow);
-
-      const analysis = buildTop3HistoryAnalysis(
-        row?.top3,
-        officialPodium
-      );
-
+            /*
+       * TOP3_PERSISTED_HITS_PRECEDENCE_V2
+       *
+       * A timeline complementa somente o resultado oficial.
+       * Snapshot, análise e hits persistidos permanecem imutáveis.
+       */
       rowsByTarget.set(key, {
         ...row,
+
         result: resultGrupo,
         grupo: resultGrupo,
+
         animal:
           timelineRow?.animal ||
           getAnimalLabel(resultGrupo) ||
           "",
+
         resultMilhar,
+
         resultTop3Groups: Array.isArray(
           timelineRow?.resultTop3Groups
         )
           ? timelineRow.resultTop3Groups
           : row?.resultTop3Groups || [],
+
         resultTop3Milhares: Array.isArray(
           timelineRow?.resultTop3Milhares
         )
           ? timelineRow.resultTop3Milhares
           : row?.resultTop3Milhares || [],
-        matchedGrupo: Number(
-          analysis?.matchedGrupo ?? NaN
-        ),
-        matchedMilhar: normalizeMilharStr(
-          analysis?.matchedMilhar || ""
-        ),
 
-        analysis,
-
-        hits: Array.isArray(analysis?.hits)
-          ? analysis.hits
-          : [],
-
-        hitCount: Number(
-          analysis?.hitCount || 0
-        ),
-
-        hit:
-          Array.isArray(analysis?.hits) &&
-          analysis.hits.length > 0,
-
-        hitType: String(
-          analysis?.hitType ||
-            analysis?.type ||
-            "miss"
-        ),
-
-        hitScore: Number(
-          analysis?.hitScore ??
-            analysis?.score ??
-            0
-        ),
-
-        hitPosition: Number(
-          analysis?.predictionPosition ??
-            analysis?.hitPosition ??
-            analysis?.position ??
-            -1
-        ),
-
-        predictionPosition: Number(
-          analysis?.predictionPosition ??
-            analysis?.hitPosition ??
-            analysis?.position ??
-            -1
-        ),
-
-        resultPosition: Number(
-          analysis?.resultPosition ?? -1
-        ),
-
-        podiumMedal: String(
-          analysis?.podiumMedal || ""
-        ),
+        prizes: Array.isArray(
+          timelineRow?.prizes
+        )
+          ? timelineRow.prizes
+          : row?.prizes || [],
       });
     }
 
@@ -5311,3 +5267,4 @@ const list =
     </div>
   );
 }
+
