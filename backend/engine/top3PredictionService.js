@@ -625,65 +625,25 @@ async function saveTop3PublicProjection({
         };
       }
 
-      const currentData =
-        current.data() || {};
-
-      const currentStatus = String(
-        currentData.status || ""
-      )
-        .trim()
-        .toLowerCase();
-
-      if (currentStatus === "validated") {
-        return {
-          ok: true,
-          created: false,
-          updated: false,
-          existing: true,
-          protected: true,
-          reason: "ALREADY_VALIDATED",
-          id,
-        };
-      }
-
-      const updatedPayload = {
-        ...payload,
-        createdAt:
-          currentData.createdAt ||
-          payload.createdAt,
-        updatedAt: Date.now(),
-        resultGrupo:
-          currentData.resultGrupo ?? null,
-        resultMilhar:
-          currentData.resultMilhar || "",
-        resultAnimal:
-          currentData.resultAnimal || "",
-        hitType:
-          currentData.hitType || "",
-        hitScore:
-          Number(currentData.hitScore || 0),
-        hitPosition:
-          Number.isFinite(
-            Number(currentData.hitPosition)
-          )
-            ? Number(currentData.hitPosition)
-            : -1,
-        matchedValue:
-          currentData.matchedValue || "",
-      };
-
-      transaction.set(
-        ref,
-        updatedPayload,
-        { merge: true }
-      );
-
+      /*
+       * TOP3_BACKEND_IMMUTABLE_SNAPSHOT_V1
+       *
+       * A primeira projeção publicada para loteria/data/horário
+       * constitui o palpite oficial e permanece imutável.
+       *
+       * Novas execuções do backend não podem recalcular nem substituir
+       * snapshot, picks, milhares24 ou milharesCols.
+       *
+       * A reconciliação do resultado oficial atualiza somente os campos
+       * de validação no fluxo próprio.
+       */
       return {
         ok: true,
         created: false,
-        updated: true,
+        updated: false,
         existing: true,
-        protected: false,
+        protected: true,
+        reason: "ALREADY_PERSISTED",
         id,
       };
     }
@@ -973,3 +933,4 @@ module.exports = {
   saveTop3PublicProjection,
   resolveNextTop3Slot,
 };
+
