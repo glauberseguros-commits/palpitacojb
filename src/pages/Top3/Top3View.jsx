@@ -4438,56 +4438,58 @@ const list =
                     ? officialMatchedMilhar.slice(-2)
                     : "";
 
-                const matchedPrediction =
-                  isHit &&
-                  matchedPredictionIndex >= 0
-                    ? top3Items[
-                        matchedPredictionIndex
-                      ] || null
-                    : null;
-
-                const predictedMilhares = (
-                  Array.isArray(
-                    matchedPrediction?.milhares24
-                  )
-                    ? matchedPrediction.milhares24
-                    : Array.isArray(
-                        matchedPrediction?.milhares20
-                      )
-                      ? matchedPrediction.milhares20
-                      : Array.isArray(
-                          matchedPrediction?.milhares
-                        )
-                        ? matchedPrediction.milhares
-                        : []
+                /*
+                 * TOP3_VIEW_PERSISTED_HIT_LEVEL_V1
+                 *
+                 * A View não reavalia milhares, centenas ou dezenas.
+                 * O nível exibido vem exclusivamente do hit persistido.
+                 */
+                const normalizedPrimaryHitType = String(
+                  primaryHit?.hitType ??
+                    primaryHit?.type ??
+                    hitType ??
+                    ""
                 )
-                  .map(normalizeMilharStr)
-                  .filter(
-                    (value) =>
-                      /^\d{4}$/.test(value)
-                  );
+                  .trim()
+                  .toLowerCase();
 
-                const predictedCentenas =
-                  predictedMilhares.map(
-                    (value) => value.slice(-3)
-                  );
+                const primaryMatchedValue = String(
+                  primaryHit?.matchedValue ??
+                    analysis?.matchedValue ??
+                    item?.matchedValue ??
+                    ""
+                ).replace(/\D/g, "");
 
-                const hasCentenaHit =
+                const isGrupoLevel =
                   isHit &&
-                  hasOfficialMilhar &&
-                  predictedCentenas.includes(
-                    officialMatchedCentena
-                  );
+                  [
+                    "hit_grupo",
+                    "hit_dezena",
+                    "hit_centena",
+                    "hit_exact",
+                  ].includes(normalizedPrimaryHitType);
 
-                const hasExactHit =
+                const isDezenaLevel =
                   isHit &&
-                  hasOfficialMilhar &&
-                  predictedMilhares.includes(
-                    officialMatchedMilhar
-                  );
+                  [
+                    "hit_dezena",
+                    "hit_centena",
+                    "hit_exact",
+                  ].includes(normalizedPrimaryHitType);
+
+                const isCentenaLevel =
+                  isHit &&
+                  [
+                    "hit_centena",
+                    "hit_exact",
+                  ].includes(normalizedPrimaryHitType);
+
+                const isMilharLevel =
+                  isHit &&
+                  normalizedPrimaryHitType === "hit_exact";
 
                 const hitGrupo =
-                  isHit &&
+                  isGrupoLevel &&
                   Number.isFinite(
                     officialMatchedGrupo
                   )
@@ -4497,19 +4499,24 @@ const list =
                     : "";
 
                 const hitDezena =
-                  isHit &&
-                  hasOfficialMilhar
-                    ? officialMatchedDezena
+                  isDezenaLevel
+                    ? primaryMatchedValue.length >= 2
+                      ? primaryMatchedValue.slice(-2)
+                      : officialMatchedDezena
                     : "";
 
                 const hitCentena =
-                  hasCentenaHit
-                    ? officialMatchedCentena
+                  isCentenaLevel
+                    ? primaryMatchedValue.length >= 3
+                      ? primaryMatchedValue.slice(-3)
+                      : officialMatchedCentena
                     : "";
 
                 const hitMilhar =
-                  hasExactHit
-                    ? officialMatchedMilhar
+                  isMilharLevel
+                    ? primaryMatchedValue.length >= 4
+                      ? primaryMatchedValue.slice(-4)
+                      : officialMatchedMilhar
                     : "";
 
                 return (
