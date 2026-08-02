@@ -4040,16 +4040,46 @@ export function computeStatisticalTop3V3({
     scoreProb: Number(item?.scoreProb || 0),
   }));
 
-  const rankedScored = scoreRanking(
-    ranked,
-    {
-      lotteryKey,
-      targetYmd: targetY,
-      targetHour: targetH,
-      previousGroup: prevGrupo,
-      totalDraws: history.length,
-    }
-  );
+  /*
+   * TOP3_PT_RIO_RAW_PROBABILITY_RANKING_V1
+   *
+   * PT_RIO usa o ranking probabilístico original.
+   *
+   * Evidência da auditoria fechada de 162 sorteios:
+   * - antes do scoreRanking: 58/162 (35,80%);
+   * - depois do scoreRanking: 50/162 (30,86%);
+   * - grupos 1 a 5: 17,49% antes e 70,99% depois.
+   *
+   * Outras loterias preservam o scoreRanking existente.
+   */
+  const shouldApplyScoreRanking = key !== "PT_RIO";
+
+  const rankedScored = shouldApplyScoreRanking
+    ? scoreRanking(
+        ranked,
+        {
+          lotteryKey,
+          targetYmd: targetY,
+          targetHour: targetH,
+          previousGroup: prevGrupo,
+          totalDraws: history.length,
+        }
+      )
+    : ranked.map((item, index) => {
+        const originalScore = Number(
+          item?.score ??
+          item?.scoreProb ??
+          0
+        );
+
+        return {
+          ...item,
+          previousRank: index + 1,
+          previousScore: originalScore,
+          rankDelta: 0,
+          scoreDelta: 0,
+        };
+      });
 
   const rankedScoredSorted = [...rankedScored].sort((a, b) => {
     if (b.score !== a.score) return b.score - a.score;
