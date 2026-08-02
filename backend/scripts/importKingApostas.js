@@ -442,6 +442,49 @@ function normalizeDrawCloseHour(draw, lotteryKey) {
     };
   }
 
+  /*
+   * LOOK_NAME_CLOSE_HOUR_V1
+   *
+   * A fonte pode fornecer um close_hour cuja hora não corresponde ao
+   * sorteio oficial, por exemplo:
+   *
+   *   name="LT LOOK 18HS"
+   *   close_hour="19:12"
+   *
+   * Para LOOK, o horário existente em name/lottery_name identifica
+   * o slot oficial. O valor bruto da API continua preservado em raw.
+   */
+  if (lk === "LOOK") {
+    const lotteryName = String(
+      draw?.lottery_name ||
+      draw?.name ||
+      ""
+    );
+
+    const match = lotteryName.match(/(\d{1,2})\s*HS/i);
+
+    if (!match) {
+      return base;
+    }
+
+    const nameSlot =
+      `${String(match[1]).padStart(2, "0")}:00`;
+
+    if (base.slot && base.slot !== nameSlot) {
+      console.warn(
+        `[LOOK:SLOT_NORMALIZED] name=${lotteryName}` +
+        ` api_close=${base.raw || draw?.close_hour || ""}` +
+        ` api_slot=${base.slot}` +
+        ` official_slot=${nameSlot}`
+      );
+    }
+
+    return {
+      raw: base.raw,
+      slot: nameSlot,
+    };
+  }
+
   if (lk !== "NACIONAL") {
     return base;
   }
@@ -460,10 +503,9 @@ function normalizeDrawCloseHour(draw, lotteryKey) {
 
   return {
     raw: base.raw,
-    slot: `${String(m[1]).padStart(2,"0")}:00`
+    slot: `${String(m[1]).padStart(2, "0")}:00`,
   };
 }
-
 
 /**
  * ✅ Normaliza o parâmetro closeHour (do CLI/scheduler) e evita log enganoso.
@@ -1980,3 +2022,5 @@ module.exports = {
   importFromPayload,
   buildResultsUrl,
 };
+
+
