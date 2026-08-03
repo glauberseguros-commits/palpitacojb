@@ -18,6 +18,11 @@ import {
 
 import { scoreRanking } from "./modules/scoreEngine/scoreEngineV2";
 
+import {
+  bridgeCurrentRankingToTop3V7,
+  summarizeTop3V7Bridge,
+} from "./modules/v7/top3.v7.bridge";
+
 import { chooseBestMilhar } from "../../shared/predictiveMilharEngine";
 
 import {
@@ -3738,6 +3743,7 @@ export function computeStatisticalTop3V3({
   targetYmdOverride = "",
   targetHourOverride = "",
   drawsAlreadySorted = false,
+  includeV7Telemetry = false,
 }) {
   const sourceList =
     Array.isArray(drawsRange)
@@ -4033,6 +4039,31 @@ export function computeStatisticalTop3V3({
       sceneWeight,
     });
 
+  /*
+   * TOP3_V7_OPT_IN_PIPELINE_INTEGRATION_V1
+   *
+   * O V7 é executado somente mediante solicitação explícita.
+   * A chamada produtiva normal não calcula as 18 camadas.
+   * Nenhum score ou posição do V3 é modificado.
+   */
+  const v7Telemetry =
+    includeV7Telemetry === true
+      ? bridgeCurrentRankingToTop3V7({
+          candidates: ranked,
+          history,
+          lotteryKey: key,
+          targetYmd: targetY,
+          targetHour: targetH,
+        })
+      : null;
+
+  const v7TelemetrySummary =
+    includeV7Telemetry === true
+      ? summarizeTop3V7Bridge(
+          v7Telemetry
+        )
+      : null;
+
   const rankingBeforeScore = ranked.map((item, index) => ({
     rank: index + 1,
     grupo: Number(item?.grupo),
@@ -4275,6 +4306,14 @@ export function computeStatisticalTop3V3({
 
   return {
     top,
+
+    ...(includeV7Telemetry === true
+      ? {
+          v7Telemetry,
+          v7TelemetrySummary,
+        }
+      : {}),
+
     meta: {
       trigger: {
         ymd: lastY,
