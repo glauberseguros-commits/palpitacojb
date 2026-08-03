@@ -2123,6 +2123,14 @@ const list =
           resultGrupo <= 25;
 
         return {
+          /*
+           * TOP3_HISTORY_POPOVER_RUNTIME_TRACE_V1
+           */
+          __top3HistorySource: "persisted",
+          __top3PersistedDocumentId: String(
+            entry?.id || ""
+          ),
+
           targetKey: String(
             entry?.id || entry?.targetKey || ""
           ),
@@ -2255,6 +2263,8 @@ const list =
         );
 
         return {
+          __top3HistorySource: "timeline",
+
           targetKey: buildTop3HistoryTargetKey(
             slot?.targetYmd,
             slot?.targetHour
@@ -2356,6 +2366,82 @@ const list =
       );
 
       const timelineRow = rowsByTarget.get(key);
+
+      if (typeof window !== "undefined") {
+        window.__TOP3_HISTORY_MERGE_TRACE__ =
+          window.__TOP3_HISTORY_MERGE_TRACE__ || [];
+
+        window.__TOP3_HISTORY_MERGE_TRACE__.push({
+          key,
+          persistedDocumentId:
+            row?.__top3PersistedDocumentId || "",
+          persistedSource:
+            row?.__top3HistorySource || "",
+          persistedTop3: Array.isArray(row?.top3)
+            ? row.top3.map((pick, index) => ({
+                index,
+                grupo: Number(pick?.grupo),
+                animal: String(pick?.animal || ""),
+                milhares24: Array.isArray(
+                  pick?.milhares24
+                )
+                  ? [...pick.milhares24]
+                  : [],
+                milharesCols: Array.isArray(
+                  pick?.milharesCols
+                )
+                  ? pick.milharesCols.map((column) => ({
+                      dezena: String(
+                        column?.dezena || ""
+                      ),
+                      items: Array.isArray(
+                        column?.items
+                      )
+                        ? [...column.items]
+                        : [],
+                    }))
+                  : [],
+              }))
+            : [],
+          timelineFound: Boolean(timelineRow),
+          timelineHasResult:
+            timelineRow?.result != null,
+          timelineTop3: Array.isArray(
+            timelineRow?.top3
+          )
+            ? timelineRow.top3.map(
+                (pick, index) => ({
+                  index,
+                  grupo: Number(pick?.grupo),
+                  animal: String(
+                    pick?.animal || ""
+                  ),
+                  milhares24: Array.isArray(
+                    pick?.milhares24
+                  )
+                    ? [...pick.milhares24]
+                    : [],
+                  milharesCols: Array.isArray(
+                    pick?.milharesCols
+                  )
+                    ? pick.milharesCols.map(
+                        (column) => ({
+                          dezena: String(
+                            column?.dezena || ""
+                          ),
+                          items: Array.isArray(
+                            column?.items
+                          )
+                            ? [...column.items]
+                            : [],
+                        })
+                      )
+                    : [],
+                })
+              )
+            : [],
+        });
+      }
 
       if (!timelineRow || timelineRow?.result == null) {
         rowsByTarget.set(key, row);
@@ -4689,6 +4775,109 @@ const list =
                                 }`}
                                 onClick={() => {
                                   setCopiedHistoryKey("");
+
+                                  if (
+                                    typeof window !==
+                                    "undefined"
+                                  ) {
+                                    const trace = {
+                                      targetKey:
+                                        String(
+                                          item?.targetKey ||
+                                            ""
+                                        ),
+                                      normalizedTargetKey:
+                                        buildTop3HistoryTargetKey(
+                                          y,
+                                          h
+                                        ),
+                                      historySource:
+                                        String(
+                                          item
+                                            ?.__top3HistorySource ||
+                                            ""
+                                        ),
+                                      persistedDocumentId:
+                                        String(
+                                          item
+                                            ?.__top3PersistedDocumentId ||
+                                            ""
+                                        ),
+                                      index: idx,
+                                      grupo,
+                                      animal,
+                                      pick,
+                                      milhares24:
+                                        Array.isArray(
+                                          pick
+                                            ?.milhares24
+                                        )
+                                          ? [
+                                              ...pick.milhares24,
+                                            ]
+                                          : [],
+                                      milharesCols:
+                                        Array.isArray(
+                                          pick
+                                            ?.milharesCols
+                                        )
+                                          ? pick.milharesCols.map(
+                                              (
+                                                column
+                                              ) => ({
+                                                dezena:
+                                                  String(
+                                                    column
+                                                      ?.dezena ||
+                                                      ""
+                                                  ),
+                                                items:
+                                                  Array.isArray(
+                                                    column
+                                                      ?.items
+                                                  )
+                                                    ? [
+                                                        ...column.items,
+                                                      ]
+                                                    : [],
+                                              })
+                                            )
+                                          : [],
+                                    };
+
+                                    window.__TOP3_HISTORY_POPOVER_TRACE__ =
+                                      trace;
+
+                                    console.group(
+                                      "[TOP3 HISTORY POPOVER TRACE]"
+                                    );
+                                    console.log(
+                                      "Origem:",
+                                      trace.historySource
+                                    );
+                                    console.log(
+                                      "Documento:",
+                                      trace.persistedDocumentId
+                                    );
+                                    console.log(
+                                      "Chave:",
+                                      trace.normalizedTargetKey
+                                    );
+                                    console.log(
+                                      "Pick completo:",
+                                      trace.pick
+                                    );
+                                    console.log(
+                                      "milhares24:",
+                                      trace.milhares24
+                                    );
+                                    console.log(
+                                      "milharesCols:",
+                                      trace.milharesCols
+                                    );
+                                    console.groupEnd();
+                                  }
+
                                   setHistoryPopover({
                                     key: `${y}__${h}__${idx}__${grupo}`,
                                     ymd: y,
