@@ -203,6 +203,29 @@ function isYMD(s) {
   return /^\d{4}-\d{2}-\d{2}$/.test(String(s || "").trim());
 }
 
+/*
+ * TOP3_HISTORY_TARGET_KEY_V1
+ *
+ * Timeline e snapshot persistido precisam usar a mesma chave.
+ * Exemplos equivalentes: 11, 11h, 11HS e 11:00.
+ */
+function buildTop3HistoryTargetKey(ymd, hour) {
+  const normalizedYmd = String(ymd || "").trim();
+  const hourText = String(hour || "").trim();
+
+  const match = hourText.match(
+    /^(\d{1,2})(?::(\d{2}))?\s*(?:H|HS)?$/i
+  );
+
+  const normalizedHour = match
+    ? `${String(Number(match[1])).padStart(2, "0")}:${String(
+        Number(match[2] || 0)
+      ).padStart(2, "0")}`
+    : hourText;
+
+  return `${normalizedYmd}__${normalizedHour}`;
+}
+
 function ymdToBR(ymd) {
   const s = String(ymd || "").trim();
   if (!isYMD(s)) return s || "—";
@@ -2232,9 +2255,10 @@ const list =
         );
 
         return {
-          targetKey:
-            `${String(slot?.targetYmd || "")}` +
-            `__${String(slot?.targetHour || "")}`,
+          targetKey: buildTop3HistoryTargetKey(
+            slot?.targetYmd,
+            slot?.targetHour
+          ),
           target: {
             ymd: String(slot?.targetYmd || ""),
             hour: String(slot?.targetHour || ""),
@@ -2317,17 +2341,19 @@ const list =
     const rowsByTarget = new Map();
 
     for (const row of timelineRows) {
-      const key =
-        `${String(row?.target?.ymd || "")}` +
-        `__${String(row?.target?.hour || "")}`;
+      const key = buildTop3HistoryTargetKey(
+        row?.target?.ymd,
+        row?.target?.hour
+      );
 
       rowsByTarget.set(key, row);
     }
 
     for (const row of persistedRows) {
-      const key =
-        `${String(row?.target?.ymd || "")}` +
-        `__${String(row?.target?.hour || "")}`;
+      const key = buildTop3HistoryTargetKey(
+        row?.target?.ymd,
+        row?.target?.hour
+      );
 
       const timelineRow = rowsByTarget.get(key);
 
