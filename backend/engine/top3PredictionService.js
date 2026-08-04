@@ -893,6 +893,24 @@ async function createTop3PredictionRun(
   const source =
     input.source || "backend-top3";
 
+  /*
+   * TOP3_ENGINE_VERSION_RUNTIME_SAFE_V2
+   * TOP3_ENGINE_VERSION_SURGICAL_CLEANUP_V4
+   *
+   * Persist the engine version produced by the current TOP3 result.
+   *
+   * Priority:
+   * 1. publicSnapshot[0].meta.explain.engine
+   * 2. metadata.explain.engine
+   * 3. metadata.engine
+   * 4. V3_STATISTICAL
+   */
+  const effectiveEngineVersion =
+    publicSnapshot?.[0]?.meta?.explain?.engine ||
+    metadata?.explain?.engine ||
+    metadata?.engine ||
+    "V3_STATISTICAL";
+
   const result = await persistRun({
     lotteryKey,
     date,
@@ -909,7 +927,7 @@ async function createTop3PredictionRun(
       date,
       closeHour,
       snapshot: publicSnapshot,
-      engineVersion: "V3_STATISTICAL",
+      engineVersion: effectiveEngineVersion,
       source,
     });
 
