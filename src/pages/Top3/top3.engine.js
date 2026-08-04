@@ -4212,35 +4212,25 @@ export function computeStatisticalTop3V3({
     new Set(v7OrderedGroups).size === 25 &&
     v7RankedCandidates.length === 25;
 
+  
   /*
-   * TOP3_V7_HARD_VALIDATION_PASSAGEM1_FIX_V2
+   * TOP3_TEMPORARY_V3_PRODUCTION_RESTORE_V1
    *
-   * A primeira implantação do V7 não admite fallback silencioso.
-   * Qualquer inconsistência interrompe o processamento.
+   * O ranking público volta temporariamente ao V3 enquanto
+   * o V7 permanece disponível somente para telemetria,
+   * laboratório, calibração histórica e comparação.
+   *
+   * Nenhuma camada ou módulo V7 é removido.
    */
-  if (!v7RankingIsValid) {
-    throw new Error(
-      [
-        "TOP3 V7 inválido.",
-        `lotteryKey=${key}`,
-        `orderedGroups=${v7OrderedGroups.length}`,
-        `uniqueGroups=${new Set(v7OrderedGroups).size}`,
-        `rankedCandidates=${v7RankedCandidates.length}`,
-        `candidateCount=${Number(
-          v7Calibration?.candidateCount || 0
-        )}`,
-      ].join(" ")
-    );
-  }
-
   const effectiveRankedScoredSorted =
-    v7RankedCandidates;
+    rankedScoredSorted;
+
 
   const v7ProductionMeta = {
     requested: true,
-    applied: true,
+    applied: false,
     validationMode:
-      "HARD_FAIL",
+      "LAB_ONLY_V3_PUBLIC",
 
     configVersion:
       v7Profile?.configVersion ||
@@ -4422,9 +4412,7 @@ export function computeStatisticalTop3V3({
         scenario: "V3_STATISTICAL",
         explain: {
           engine:
-            v7RankingIsValid
-              ? "V7_18_LAYERS"
-              : "V3_STATISTICAL",
+            "V3_STATISTICAL",
 
           baselineEngine:
             "V3_STATISTICAL",
