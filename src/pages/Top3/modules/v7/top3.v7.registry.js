@@ -9,7 +9,7 @@
 import {
   TOP3_V7_LAYER_CATALOG,
   isTop3V7LayerKey,
-} from "./top3.v7.catalog";
+} from "./top3.v7.catalog.js";
 
 const implementations = new Map();
 
@@ -68,3 +68,4 @@ export function listTop3V7LayerRegistry() {
 export function clearTop3V7LayerRegistryForTests() {
   implementations.clear();
 }
+

@@ -7,12 +7,12 @@
 import {
   TOP3_V7_ENGINE_VERSION,
   TOP3_V7_LAYER_CATALOG,
-} from "./top3.v7.catalog";
+} from "./top3.v7.catalog.js";
 
 import {
   createDisabledTop3V7LayerResult,
   validateTop3V7LayerResult,
-} from "./top3.v7.contract";
+} from "./top3.v7.contract.js";
 
 function safeArray(value) {
   return Array.isArray(value)
@@ -134,3 +134,4 @@ export function summarizeTop3V7Telemetry(
       ).length,
   });
 }
+

@@ -18,6 +18,20 @@ import {
 
 import { scoreRanking } from "./modules/scoreEngine/scoreEngineV2";
 
+import {
+  bridgeCurrentRankingToTop3V7,
+  summarizeTop3V7Bridge,
+} from "./modules/v7/top3.v7.bridge";
+
+import {
+  calibrateTop3V7Ranking,
+} from "./modules/v7/top3.v7.calibrator";
+
+import {
+  getTop3V7Profile,
+  TOP3_V7_CONFIG_VERSION,
+} from "./modules/v7/top3.v7.profiles";
+
 import { chooseBestMilhar } from "../../shared/predictiveMilharEngine";
 
 import {
@@ -4033,6 +4047,40 @@ export function computeStatisticalTop3V3({
       sceneWeight,
     });
 
+  /*
+   * TOP3_V7_OPT_IN_PIPELINE_INTEGRATION_V1
+   *
+   * O V7 é executado somente mediante solicitação explícita.
+   * A chamada produtiva normal não calcula as 18 camadas.
+   * Nenhum score ou posição do V3 é modificado.
+   */
+  /*
+   * TOP3_V7_PASSAGEM1_OFFICIAL_RANKING_INTEGRATION_V1
+   *
+   * A telemetria V7 passa a ser construída para o ranking oficial.
+   * A flag includeV7Telemetry continua controlando somente a exposição
+   * pública dos dados de auditoria no retorno.
+   */
+  const shouldBuildV7Ranking = true;
+
+  const v7Telemetry =
+    shouldBuildV7Ranking
+      ? bridgeCurrentRankingToTop3V7({
+          candidates: ranked,
+          history,
+          lotteryKey: key,
+          targetYmd: targetY,
+          targetHour: targetH,
+        })
+      : null;
+
+  const v7TelemetrySummary =
+    shouldBuildV7Ranking
+      ? summarizeTop3V7Bridge(
+          v7Telemetry
+        )
+      : null;
+
   const rankingBeforeScore = ranked.map((item, index) => ({
     rank: index + 1,
     grupo: Number(item?.grupo),
@@ -4093,7 +4141,155 @@ export function computeStatisticalTop3V3({
     ])
   );
 
-  const rankingAfterScore = rankedScoredSorted.map(
+  /*
+   * TOP3_V7_PASSAGEM1_OFFICIAL_RANKING_INTEGRATION_V1
+   *
+   * O V7 não reconstrói dezenas, centenas ou milhares.
+   * Ele apenas define a nova ordem dos grupos.
+   *
+   * Os objetos completos continuam sendo os objetos do motor atual,
+   * preservando todo o contrato já consumido pelas camadas posteriores.
+   */
+  const v7Profile =
+    getTop3V7Profile(key);
+
+  const v7Calibration =
+    v7Profile?.enabled === true &&
+    v7Profile?.experimentalOnly === false &&
+    Array.isArray(v7Telemetry) &&
+    v7Telemetry.length === 25
+      ? calibrateTop3V7Ranking({
+          telemetry: v7Telemetry,
+          weights: v7Profile.weights,
+          topN: Math.max(
+            3,
+            Number(topN || 3)
+          ),
+        })
+      : null;
+
+  const v7OrderedGroups =
+    Array.isArray(v7Calibration?.ranking)
+      ? v7Calibration.ranking
+          .map((item) =>
+            Number(
+              item?.group ??
+              item?.grupo
+            )
+          )
+          .filter(
+            (group) =>
+              Number.isFinite(group) &&
+              group >= 1 &&
+              group <= 25
+          )
+      : [];
+
+  const v3CandidateByGroup =
+    new Map(
+      rankedScoredSorted.map(
+        (item) => [
+          Number(
+            item?.grupo ??
+            item?.group
+          ),
+          item,
+        ]
+      )
+    );
+
+  const v7RankedCandidates =
+    v7OrderedGroups
+      .map((group) =>
+        v3CandidateByGroup.get(group) || null
+      )
+      .filter(Boolean);
+
+  const v7RankingIsValid =
+    v7Profile?.enabled === true &&
+    v7Profile?.experimentalOnly === false &&
+    v7OrderedGroups.length === 25 &&
+    new Set(v7OrderedGroups).size === 25 &&
+    v7RankedCandidates.length === 25;
+
+  /*
+   * TOP3_V7_HARD_VALIDATION_PASSAGEM1_FIX_V2
+   *
+   * A primeira implantação do V7 não admite fallback silencioso.
+   * Qualquer inconsistência interrompe o processamento.
+   */
+  if (!v7RankingIsValid) {
+    throw new Error(
+      [
+        "TOP3 V7 inválido.",
+        `lotteryKey=${key}`,
+        `orderedGroups=${v7OrderedGroups.length}`,
+        `uniqueGroups=${new Set(v7OrderedGroups).size}`,
+        `rankedCandidates=${v7RankedCandidates.length}`,
+        `candidateCount=${Number(
+          v7Calibration?.candidateCount || 0
+        )}`,
+      ].join(" ")
+    );
+  }
+
+  const effectiveRankedScoredSorted =
+    v7RankedCandidates;
+
+  const v7ProductionMeta = {
+    requested: true,
+    applied: true,
+    validationMode:
+      "HARD_FAIL",
+
+    configVersion:
+      v7Profile?.configVersion ||
+      TOP3_V7_CONFIG_VERSION ||
+      "",
+
+    lotteryKey: key,
+
+    sourceProfileKey:
+      v7Profile?.sourceProfileKey ||
+      key,
+
+    candidateCount:
+      Number(
+        v7Calibration?.candidateCount || 0
+      ),
+
+    activeLayerCount:
+      Number(
+        v7Calibration
+          ?.weightsSummary
+          ?.activeLayerCount || 0
+      ),
+
+    totalWeight:
+      Number(
+        v7Calibration
+          ?.weightsSummary
+          ?.totalWeight || 0
+      ),
+
+    maximumLayerInfluence:
+      Number(
+        v7Profile
+          ?.maximumLayerInfluence || 0
+      ),
+
+    topGroups:
+      effectiveRankedScoredSorted
+        .slice(0, 3)
+        .map((item) =>
+          Number(
+            item?.grupo ??
+            item?.group
+          )
+        ),
+  };
+
+  const rankingAfterScore = effectiveRankedScoredSorted.map(
     (item, index) => {
       const before =
         rankingBeforeByGroup.get(Number(item?.grupo)) ||
@@ -4170,7 +4366,7 @@ export function computeStatisticalTop3V3({
     rankingAfterScore,
   };
 
-  const top = rankedScoredSorted
+  const top = effectiveRankedScoredSorted
     .slice(0, topLimit)
     .map((x, idx) => {
     const g2 = String(x.grupo).padStart(2, "0");
@@ -4225,7 +4421,16 @@ export function computeStatisticalTop3V3({
         },
         scenario: "V3_STATISTICAL",
         explain: {
-          engine: "V3_STATISTICAL",
+          engine:
+            v7RankingIsValid
+              ? "V7_18_LAYERS"
+              : "V3_STATISTICAL",
+
+          baselineEngine:
+            "V3_STATISTICAL",
+
+          v7Production:
+            v7ProductionMeta,
           targetDow,
           targetDayOfMonth,
           prevHour: lastH,

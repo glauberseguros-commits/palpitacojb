@@ -14,20 +14,20 @@
 
 import {
   TOP3_V7_LAYER_CATALOG,
-} from "./top3.v7.catalog";
+} from "./top3.v7.catalog.js";
 
 import {
   createDisabledTop3V7LayerResult,
   createTop3V7LayerResult,
-} from "./top3.v7.contract";
+} from "./top3.v7.contract.js";
 
 import {
   getTop3V7Profile,
-} from "./top3.v7.profiles";
+} from "./top3.v7.profiles.js";
 
 import {
   buildTop3V7CandidateTelemetry,
-} from "./top3.v7.telemetry";
+} from "./top3.v7.telemetry.js";
 
 /*
  * TOP3_V7_18_LAYERS_PASSIVE_INTEGRATION_FINAL_V3
@@ -39,7 +39,7 @@ import {
   TOP3_V7_ADDITIONAL_LAYER_KEYS,
   buildTop3V7AdditionalLayers,
   getTop3V7AdditionalLayerResult,
-} from "./top3.v7.additional-layers";
+} from "./top3.v7.additional-layers.js";
 
 const UNIFORM_PROBABILITY = 1 / 25;
 
@@ -834,3 +834,4 @@ export function summarizeTop3V7Bridge(
     layerAvailability,
   };
 }
+

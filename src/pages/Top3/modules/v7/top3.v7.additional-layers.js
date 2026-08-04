@@ -15,7 +15,7 @@
 import {
   createDisabledTop3V7LayerResult,
   createTop3V7LayerResult,
-} from "./top3.v7.contract";
+} from "./top3.v7.contract.js";
 
 const GROUP_COUNT = 25;
 const UNIFORM_PROBABILITY = 1 / GROUP_COUNT;
@@ -1372,3 +1372,4 @@ export function summarizeTop3V7AdditionalLayers(
     }
   );
 }
+

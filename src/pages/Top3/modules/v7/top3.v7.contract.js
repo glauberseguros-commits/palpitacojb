@@ -7,7 +7,7 @@
 import {
   getTop3V7LayerDefinition,
   isTop3V7LayerKey,
-} from "./top3.v7.catalog";
+} from "./top3.v7.catalog.js";
 
 const UNIFORM_PROBABILITY = 1 / 25;
 
@@ -150,3 +150,4 @@ export function validateTop3V7LayerResult(result) {
 
 export const TOP3_V7_UNIFORM_PROBABILITY =
   UNIFORM_PROBABILITY;
+
