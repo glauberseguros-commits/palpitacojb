@@ -1866,6 +1866,44 @@ async function runImport({ date, lotteryKey = "PT_RIO", closeHour = null } = {})
     reason: "not_attempted",
   };
 
+  /*
+   * TOP3_AUTO_POST_IMPORT_TRACE_V3
+   *
+   * Diagnóstico do fluxo automático:
+   * importação -> próximo slot -> motor -> persistência pública.
+   *
+   * Nenhuma regra de negócio é alterada.
+   */
+
+  console.log("[TOP3 AUTO TRACE] DECISION", {
+    lotteryKey: lk,
+    importedYmd: date,
+    normalizedClose:
+      normalizedClose || null,
+    responseOk:
+      response?.ok === true,
+    blocked:
+      response?.blocked === true,
+    blockedReason:
+      response?.blockedReason || null,
+    captured:
+      response?.captured === true,
+    apiHasPrizes:
+      response?.apiHasPrizes ?? null,
+    alreadyCompleteAny:
+      response?.alreadyCompleteAny ?? null,
+    alreadyCompleteAll:
+      response?.alreadyCompleteAll ?? null,
+    savedCount:
+      response?.savedCount ?? null,
+    writeCount:
+      response?.writeCount ?? null,
+    targetDrawIds:
+      Array.isArray(response?.targetDrawIds)
+        ? response.targetDrawIds
+        : [],
+  });
+
   if (
     response.ok === true &&
     response.blocked !== true &&
@@ -1889,10 +1927,39 @@ async function runImport({ date, lotteryKey = "PT_RIO", closeHour = null } = {})
       const nextHour =
         String(nextSlot?.hour || "").trim();
 
+      console.log("[TOP3 AUTO TRACE] NEXT_SLOT", {
+        lotteryKey: lk,
+        importedYmd: date,
+        importedHour:
+          normalizedClose || null,
+        rawNextSlot:
+          nextSlot || null,
+        targetYmd:
+          nextYmd || null,
+        targetHour:
+          nextHour || null,
+        validTargetYmd:
+          /^\d{4}-\d{2}-\d{2}$/.test(nextYmd),
+        validTargetHour:
+          Boolean(nextHour),
+      });
+
       if (
         /^\d{4}-\d{2}-\d{2}$/.test(nextYmd) &&
         nextHour
       ) {
+        console.log("[TOP3 AUTO TRACE] CREATE_START", {
+          lotteryKey: lk,
+          importedYmd: date,
+          importedHour:
+            normalizedClose || null,
+          targetYmd: nextYmd,
+          targetHour: nextHour,
+        });
+
+        const top3CreateStartedAt =
+          Date.now();
+
         const generated =
           await createTop3PredictionRun({
             lotteryKey: lk,
@@ -1906,6 +1973,41 @@ async function runImport({ date, lotteryKey = "PT_RIO", closeHour = null } = {})
               importedHour: normalizedClose,
             },
           });
+
+        console.log("[TOP3 AUTO TRACE] CREATE_SUCCESS", {
+          lotteryKey: lk,
+          importedYmd: date,
+          importedHour:
+            normalizedClose || null,
+          targetYmd: nextYmd,
+          targetHour: nextHour,
+          durationMs:
+            Date.now() - top3CreateStartedAt,
+          runId:
+            generated?.run?.id || null,
+          dryRun:
+            generated?.dryRun === true,
+          engine:
+            generated?.engine || null,
+          predictionsLength:
+            Array.isArray(generated?.predictions)
+              ? generated.predictions.length
+              : 0,
+          publicSnapshotLength:
+            Array.isArray(generated?.publicSnapshot)
+              ? generated.publicSnapshot.length
+              : 0,
+          publicProjection:
+            generated?.publicProjection || null,
+          projectionCreated:
+            generated?.publicProjection?.created === true,
+          projectionExisting:
+            generated?.publicProjection?.existing === true,
+          projectionReason:
+            generated?.publicProjection?.reason || null,
+          projectionId:
+            generated?.publicProjection?.id || null,
+        });
 
         top3AutoPrediction = {
           ok: true,
@@ -1946,6 +2048,23 @@ async function runImport({ date, lotteryKey = "PT_RIO", closeHour = null } = {})
         ),
       };
 
+      console.error("[TOP3 AUTO TRACE] CREATE_ERROR", {
+        lotteryKey: lk,
+        importedYmd: date,
+        importedHour:
+          normalizedClose || null,
+        errorName:
+          error?.name || null,
+        errorCode:
+          error?.code || null,
+        errorMessage:
+          error?.message ||
+          String(error || "top3_auto_failed"),
+        errorStack:
+          error?.stack || null,
+        error,
+      });
+
       console.error(
         "[TOP3 AUTO] falhou:",
         error?.stack ||
@@ -1954,15 +2073,35 @@ async function runImport({ date, lotteryKey = "PT_RIO", closeHour = null } = {})
       );
     }
   } else {
+    const top3AutoSkipReason =
+      response.blocked === true
+        ? "import_blocked"
+        : response.captured !== true
+        ? "result_not_captured"
+        : "close_hour_missing";
+
+    console.warn("[TOP3 AUTO TRACE] SKIPPED", {
+      lotteryKey: lk,
+      importedYmd: date,
+      normalizedClose:
+        normalizedClose || null,
+      responseOk:
+        response?.ok === true,
+      blocked:
+        response?.blocked === true,
+      blockedReason:
+        response?.blockedReason || null,
+      captured:
+        response?.captured === true,
+      reason:
+        top3AutoSkipReason,
+    });
+
     top3AutoPrediction = {
       ok: true,
       skipped: true,
       reason:
-        response.blocked === true
-          ? "import_blocked"
-          : response.captured !== true
-          ? "result_not_captured"
-          : "close_hour_missing",
+        top3AutoSkipReason,
     };
   }
 
@@ -2022,5 +2161,6 @@ module.exports = {
   importFromPayload,
   buildResultsUrl,
 };
+
 
 
