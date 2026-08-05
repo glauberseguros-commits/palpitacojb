@@ -6,8 +6,8 @@
   "routes": [
     { "src": "^/$", "dest": "/gateway.html" },
 
-    { "src": "^/loterias/?$", "dest": "https://palpitaco-loterias-app.web.app/" },
-    { "src": "^/loterias/(.*)$", "dest": "https://palpitaco-loterias-app.web.app/$1" },
+    { "src": "^/loterias/?$", "dest": "https://palpitaco-loterias-app.web.app/?release=94f5141" },
+    { "src": "^/loterias/(.*)$", "dest": "https://palpitaco-loterias-app.web.app/$1?release=94f5141" },
 
     { "src": "^/health$", "dest": "https://palpitacojb.onrender.com/health" },
     { "src": "^/api/(.*)$", "dest": "https://palpitacojb.onrender.com/api/$1" },
@@ -16,4 +16,5 @@
     { "src": "/(.*)", "dest": "/index.html" }
   ]
 }
+
 
