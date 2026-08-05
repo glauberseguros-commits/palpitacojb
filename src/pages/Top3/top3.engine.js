@@ -3752,6 +3752,14 @@ export function computeStatisticalTop3V3({
   targetYmdOverride = "",
   targetHourOverride = "",
   drawsAlreadySorted = false,
+
+  /*
+   * TOP3_V7_TELEMETRY_PARAMETER_RUNTIME_FIX_V8
+   *
+   * Controls only the exposure of V7 laboratory telemetry.
+   * It does not change the public ranking or prediction.
+   */
+  includeV7Telemetry = false,
 }) {
   const sourceList =
     Array.isArray(drawsRange)
@@ -3814,11 +3822,26 @@ export function computeStatisticalTop3V3({
   });
 
   const layers = {
-    hour: { label: `frequência no horário ${targetH}`, samples: 0, first: emptyGroupMap(), prizePresence: emptyGroupMap(), weight: 0.33 },
-    dowHour: { label: `frequência no dia da semana + horário`, samples: 0, first: emptyGroupMap(), prizePresence: emptyGroupMap(), weight: 0.27 },
-    dayMonth: { label: `frequência no dia ${String(targetDayOfMonth).padStart(2, "0")}`, samples: 0, first: emptyGroupMap(), prizePresence: emptyGroupMap(), weight: 0.04 },
-    transition: { label: `transição G${String(prevGrupo).padStart(2, "0")} @ ${lastH} → ${targetH}`, samples: 0, first: emptyGroupMap(), prizePresence: emptyGroupMap(), weight: 0.26 },
-    recent: { label: `recência comparável`, samples: 0, first: emptyGroupMap(), prizePresence: emptyGroupMap(), weight: 0.10 },
+    hour: { label: `frequência no horário ${targetH}`, samples: 0, first: emptyGroupMap(),
+      second: emptyGroupMap(),
+      third: emptyGroupMap(),
+      prizePresence: emptyGroupMap(), weight: 0.33 },
+    dowHour: { label: `frequência no dia da semana + horário`, samples: 0, first: emptyGroupMap(),
+      second: emptyGroupMap(),
+      third: emptyGroupMap(),
+      prizePresence: emptyGroupMap(), weight: 0.27 },
+    dayMonth: { label: `frequência no dia ${String(targetDayOfMonth).padStart(2, "0")}`, samples: 0, first: emptyGroupMap(),
+      second: emptyGroupMap(),
+      third: emptyGroupMap(),
+      prizePresence: emptyGroupMap(), weight: 0.04 },
+    transition: { label: `transição G${String(prevGrupo).padStart(2, "0")} @ ${lastH} → ${targetH}`, samples: 0, first: emptyGroupMap(),
+      second: emptyGroupMap(),
+      third: emptyGroupMap(),
+      prizePresence: emptyGroupMap(), weight: 0.26 },
+    recent: { label: `recência comparável`, samples: 0, first: emptyGroupMap(),
+      second: emptyGroupMap(),
+      third: emptyGroupMap(),
+      prizePresence: emptyGroupMap(), weight: 0.10 },
   };
 
   for (const d of history) {
@@ -3829,10 +3852,34 @@ export function computeStatisticalTop3V3({
     const g1 = getFirstGrupoFromDraw(d);
     const prizePresenceSet = getPrizePresenceGroupSet(d);
 
+    const podiumGroups = getPrizeGroupsByPosition(d, 3);
+    const g2 = Number(podiumGroups?.[1]);
+    const g3 = Number(podiumGroups?.[2]);
+
     const addToLayer = (layer) => {
       layer.samples += 1;
+
       incMap(layer.first, g1, 1);
-      for (const g of prizePresenceSet) incMap(layer.prizePresence, g, 1);
+
+      if (
+        Number.isFinite(g2) &&
+        g2 >= 1 &&
+        g2 <= TOP3_GROUPS_K
+      ) {
+        incMap(layer.second, g2, 1);
+      }
+
+      if (
+        Number.isFinite(g3) &&
+        g3 >= 1 &&
+        g3 <= TOP3_GROUPS_K
+      ) {
+        incMap(layer.third, g3, 1);
+      }
+
+      for (const g of prizePresenceSet) {
+        incMap(layer.prizePresence, g, 1);
+      }
     };
 
     if (h === targetH) addToLayer(layers.hour);
@@ -3944,6 +3991,8 @@ export function computeStatisticalTop3V3({
       keyLayer,
       {
         first: layerProbability(layer.first, layer.samples),
+        second: layerProbability(layer.second, layer.samples),
+        third: layerProbability(layer.third, layer.samples),
         prizePresence: layerProbability(layer.prizePresence, layer.samples),
       },
     ])
@@ -3958,10 +4007,36 @@ export function computeStatisticalTop3V3({
     for (const [keyLayer, layer] of Object.entries(layers)) {
       const probabilities = layerProbabilities[keyLayer];
 
-      const pFirst = Number(probabilities.first.get(grupo) || 0);
-      const pPrizePresence = Number(probabilities.prizePresence.get(grupo) || 0);
+      const pFirst = Number(
+        probabilities.first.get(grupo) || 0
+      );
 
-      const pLayer = (pFirst * 0.92) + (pPrizePresence * 0.08);
+      const pSecond = Number(
+        probabilities.second.get(grupo) || 0
+      );
+
+      const pThird = Number(
+        probabilities.third.get(grupo) || 0
+      );
+
+      const pPrizePresence = Number(
+        probabilities.prizePresence.get(grupo) || 0
+      );
+
+      /*
+       * TOP3_TEAM_PODIUM_EQUAL_WEIGHT_V1
+       *
+       * Nesta fase, o TOP3 é avaliado como equipe:
+       * - 1º prêmio: 1/3;
+       * - 2º prêmio: 1/3;
+       * - 3º prêmio: 1/3.
+       *
+       * A presença agregada no pódio permanece disponível
+       * para auditoria, mas não é somada novamente ao score,
+       * evitando dupla contagem.
+       */
+      const pLayer =
+        (pFirst + pSecond + pThird) / 3;
       const w = Number(activeWeights[keyLayer] || 0);
 
       scoreProb += pLayer * w;
@@ -3969,11 +4044,32 @@ export function computeStatisticalTop3V3({
       details[keyLayer] = {
         label: layer.label,
         samples: layer.samples,
-        firstCount: Number(layer.first.get(grupo) || 0),
-        top3Count: Number(layer.prizePresence.get(grupo) || 0),
+        firstCount: Number(
+          layer.first.get(grupo) || 0
+        ),
+
+        secondCount: Number(
+          layer.second.get(grupo) || 0
+        ),
+
+        thirdCount: Number(
+          layer.third.get(grupo) || 0
+        ),
+
+        top3Count: Number(
+          layer.prizePresence.get(grupo) || 0
+        ),
 
         firstProbability: pFirst,
+        secondProbability: pSecond,
+        thirdProbability: pThird,
         prizePresenceProbability: pPrizePresence,
+
+        positionWeights: {
+          first: 1 / 3,
+          second: 1 / 3,
+          third: 1 / 3,
+        },
 
         probability: pLayer,
 
@@ -4100,7 +4196,7 @@ export function computeStatisticalTop3V3({
    *
    * Outras loterias preservam o scoreRanking existente.
    */
-  const shouldApplyScoreRanking = key !== "PT_RIO";
+  const shouldApplyScoreRanking = false;
 
   const rankedScored = shouldApplyScoreRanking
     ? scoreRanking(
@@ -4391,7 +4487,7 @@ export function computeStatisticalTop3V3({
         `Base: G${String(prevGrupo).padStart(2, "0")} @ ${lastH}`,
         `Probabilidade final G${g2}: ${(Number(rawScoreProb || 0) * 100).toFixed(2)}%`,
         ...strongest.map((d) =>
-          `${d.label}: ${d.firstCount}x em 1º | ${d.top3Count}x no TOP3 | amostras=${d.samples} | peso=${(d.weight * 100).toFixed(0)}%`
+          `${d.label}: 1º=${d.firstCount}x | 2º=${d.secondCount}x | 3º=${d.thirdCount}x | pódio=${d.top3Count}x | amostras=${d.samples} | peso=${(d.weight * 100).toFixed(0)}%`
         ),
       ],
       meta: {
@@ -4487,6 +4583,25 @@ export function computeStatisticalTop3V3({
         prevHour: lastH,
         prevGrupo: Number(prevGrupo),
         activeWeights,
+
+        v7Production:
+          v7ProductionMeta,
+
+        v7Telemetry:
+          includeV7Telemetry
+            ? v7Telemetry
+            : undefined,
+
+        v7TelemetrySummary:
+          includeV7Telemetry
+            ? v7TelemetrySummary
+            : undefined,
+
+        v7Calibration:
+          includeV7Telemetry
+            ? v7Calibration
+            : undefined,
+
         rankingAudit: scoreAudit,
         passiveInstrumentation:
           passiveLayerInstrumentation,
@@ -6037,3 +6152,6 @@ export function auditTop3Backtest({
     lotteryKey,
   });
 }
+
+
+
