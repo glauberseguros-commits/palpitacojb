@@ -213,30 +213,45 @@ async function loadPredictionHistory({
           metadata?.totalDraws || 0
         );
 
-        if (
+        const snapshotCountMismatch =
           expectedTotal > 0 &&
-          draws.length !== expectedTotal
-        ) {
-          throw new Error(
-            "Histórico TOP3 inconsistente: metadata.totalDraws=" +
-            `${expectedTotal}, carregados=${draws.length}.`
-          );
+          draws.length !== expectedTotal;
+
+        if (!snapshotCountMismatch) {
+          return {
+            source: "snapshot",
+            draws,
+            metadata,
+            lookbackDays: null,
+            maxDraws: null,
+            startYmd:
+              metadata?.firstYmd || null,
+          };
         }
 
-        return {
-          source: "snapshot",
-          draws,
-          metadata,
-          lookbackDays: null,
-          maxDraws: null,
-          startYmd:
-            metadata?.firstYmd || null,
-        };
-      }
+        const mismatchMessage =
+          "Histórico TOP3 inconsistente: metadata.totalDraws=" +
+          `${expectedTotal}, carregados=${draws.length}.`;
 
-      throw new Error(
-        "Metadata do histórico TOP3 está completo, mas nenhum draw foi carregado."
-      );
+        if (requestedSource === "snapshot") {
+          throw new Error(mismatchMessage);
+        }
+
+        console.warn(
+          "[TOP3 HISTORY FALLBACK] " +
+          mismatchMessage +
+          " Utilizando histórico por intervalo."
+        );
+      } else if (requestedSource === "snapshot") {
+        throw new Error(
+          "Metadata do histórico TOP3 está completo, mas nenhum draw foi carregado."
+        );
+      } else {
+        console.warn(
+          "[TOP3 HISTORY FALLBACK] Metadata completa sem draws carregados. " +
+          "Utilizando histórico por intervalo."
+        );
+      }
     }
 
     if (requestedSource === "snapshot") {
