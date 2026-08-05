@@ -764,3 +764,140 @@ body {
     white-space: normal;
   }
 }
+
+/* ==========================================================
+   GATEWAY_REMOVE_HEADING_SCROLLBAR_05
+   Remove o titulo intermediario e ajusta a Gateway ao viewport.
+   ========================================================== */
+
+.heading {
+  display: none !important;
+}
+
+/* Aproxima os cards do slogan */
+.brand {
+  margin-bottom: 24px;
+}
+
+.products {
+  margin-top: 0;
+}
+
+/* Descrições em uma linha no desktop */
+.card .description {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: nowrap;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.card .description strong {
+  display: inline !important;
+  white-space: nowrap;
+}
+
+/*
+ * Em telas desktop, a Gateway inteira deve caber no viewport.
+ * A barra lateral observada era a rolagem do navegador.
+ */
+@media (min-width: 921px) and (min-height: 720px) {
+  html,
+  body {
+    height: 100%;
+    overflow: hidden;
+  }
+
+  .page {
+    height: 100svh;
+    min-height: 0;
+    overflow: hidden;
+  }
+
+  .shell {
+    height: 100%;
+    min-height: 0;
+    padding-top: 18px;
+    padding-bottom: 10px;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .brand-logo {
+    width: clamp(92px, 7.2vh, 126px);
+  }
+
+  .tagline {
+    margin-top: 7px;
+  }
+
+  .brand {
+    margin-bottom: 19px;
+  }
+
+  .products {
+    flex: 0 0 auto;
+  }
+
+  .card {
+    padding-top: 25px;
+    padding-bottom: 23px;
+  }
+
+  .card-header {
+    min-height: 112px;
+  }
+
+  .features {
+    margin-top: 17px;
+    padding-top: 17px;
+    padding-bottom: 17px;
+  }
+
+  .button {
+    min-height: 55px;
+  }
+
+  .trust {
+    margin-top: 18px;
+  }
+
+  .footer {
+    margin-top: 16px;
+    padding-top: 15px;
+    padding-bottom: 15px;
+  }
+
+  .copyright {
+    margin-top: 11px;
+  }
+}
+
+/* No celular a rolagem continua permitida e segura */
+@media (max-width: 920px) {
+  html,
+  body {
+    height: auto;
+    overflow-y: auto;
+  }
+
+  .page {
+    min-height: 100vh;
+    height: auto;
+    overflow: visible;
+  }
+
+  .brand {
+    margin-bottom: 22px;
+  }
+
+  .card .description {
+    display: block;
+    white-space: normal;
+  }
+
+  .card .description strong {
+    display: inline !important;
+    white-space: normal;
+  }
+}
