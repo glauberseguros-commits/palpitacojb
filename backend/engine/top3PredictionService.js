@@ -392,20 +392,25 @@ function resolveNextTop3Slot({
 
 function scheduleForPublicProjection(
   lotteryKey,
-  date
+  date,
+  publicApi
 ) {
-  if (normalizeLotteryKey(lotteryKey) === "FEDERAL") {
-    return [...FEDERAL_SCHEDULE];
+  if (
+    !publicApi ||
+    typeof publicApi.getScheduleForLottery !== "function"
+  ) {
+    throw new Error(
+      "API pública TOP3 sem getScheduleForLottery."
+    );
   }
 
-  const parsed = new Date(`${date}T12:00:00Z`);
-  const dow = parsed.getUTCDay();
-
-  if (dow === 3 || dow === 6) {
-    return [...PT_RIO_SCHEDULE_WED_SAT];
-  }
-
-  return [...PT_RIO_SCHEDULE_NORMAL];
+  return publicApi.getScheduleForLottery({
+    lotteryKey: normalizeLotteryKey(lotteryKey),
+    ymd: normalizeYmd(date),
+    PT_RIO_SCHEDULE_NORMAL,
+    PT_RIO_SCHEDULE_WED_SAT,
+    FEDERAL_SCHEDULE,
+  });
 }
 
 function buildPublicMilharesCols(
@@ -469,7 +474,8 @@ function buildTop3PublicSnapshot({
 }) {
   const schedule = scheduleForPublicProjection(
     lotteryKey,
-    date
+    date,
+    publicApi
   );
 
   return (Array.isArray(computedTop)

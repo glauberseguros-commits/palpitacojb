@@ -257,7 +257,7 @@ function getFederalScheduleForYmd(ymd, FEDERAL_SCHEDULE) {
   const dow = Number(getDowKey(y));
 
   if (y >= FEDERAL_SUNDAY_START_YMD && dow === 0) {
-    return ["11:00"];
+    return ["11:30"];
   }
 
   const historical = Array.isArray(FEDERAL_SCHEDULE)
@@ -318,8 +318,8 @@ export function getPtRioScheduleForYmd(
         .filter(Boolean)
         .filter((hour) => hour !== "18:00");
 
-      if (!transitionedSchedule.includes("19:00")) {
-        transitionedSchedule.push("19:00");
+      if (!transitionedSchedule.includes("19:30")) {
+        transitionedSchedule.push("19:30");
       }
 
       return transitionedSchedule
@@ -338,7 +338,10 @@ export function getPtRioScheduleForYmd(
 
   if (dow === 3) {
     return Array.isArray(PT_RIO_SCHEDULE_WED_SAT)
-      ? [...PT_RIO_SCHEDULE_WED_SAT]
+      ? PT_RIO_SCHEDULE_WED_SAT
+          .map(normalizeHourLike)
+          .filter(Boolean)
+          .filter((hour) => hour !== "18:00")
       : [];
   }
 
