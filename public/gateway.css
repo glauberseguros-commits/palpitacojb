@@ -568,3 +568,139 @@ body {
   }
 }
 
+
+/* ==========================================================
+   GATEWAY_CONTRAST_HOTFIX_02
+   Correção exclusiva da página estática de entrada.
+   ========================================================== */
+
+/* Marca e composição superior */
+.brand {
+  gap: 0;
+}
+
+.brand-logo {
+  display: block;
+  margin: 0 auto;
+}
+
+.tagline {
+  margin-top: 10px;
+}
+
+.tagline p {
+  color: rgba(255, 255, 255, 0.92) !important;
+  font-weight: 450;
+}
+
+.heading {
+  margin-top: 27px;
+  margin-bottom: 25px;
+}
+
+.heading h2 {
+  color: rgba(255, 255, 255, 0.96) !important;
+  text-shadow: 0 0 16px rgba(202, 166, 75, 0.08);
+}
+
+/* Títulos e identificação dos cards */
+.card .eyebrow {
+  color: #caa64b !important;
+}
+
+.card h3 {
+  color: #f1d579 !important;
+  text-shadow: 0 0 16px rgba(202, 166, 75, 0.08);
+}
+
+.card .description {
+  color: rgba(255, 255, 255, 0.82) !important;
+}
+
+.card .description strong {
+  color: rgba(255, 255, 255, 0.98) !important;
+}
+
+/* Recursos */
+.feature b {
+  color: #f1d579 !important;
+}
+
+.feature strong {
+  color: rgba(255, 255, 255, 0.92) !important;
+}
+
+.feature span {
+  color: rgba(255, 255, 255, 0.56) !important;
+}
+
+/* Botões */
+.button:not(.button-disabled) {
+  color: #090703 !important;
+}
+
+.button:not(.button-disabled) span,
+.button:not(.button-disabled) b {
+  color: #090703 !important;
+}
+
+.button-disabled,
+.button-disabled span,
+.button-disabled b {
+  color: rgba(255, 255, 255, 0.46) !important;
+}
+
+/* Linha institucional */
+.trust {
+  color: rgba(255, 255, 255, 0.52) !important;
+}
+
+.trust span {
+  color: #caa64b !important;
+}
+
+.trust p {
+  color: rgba(255, 255, 255, 0.52) !important;
+}
+
+/* Rodapé */
+.footer strong {
+  color: #f1d579 !important;
+}
+
+.footer span {
+  color: rgba(255, 255, 255, 0.48) !important;
+}
+
+.copyright {
+  color: rgba(255, 255, 255, 0.44) !important;
+}
+
+.copyright strong {
+  color: #caa64b !important;
+}
+
+/* Acabamento dos cards */
+.card {
+  border-color: rgba(202, 166, 75, 0.50);
+  box-shadow:
+    0 32px 76px rgba(0, 0, 0, 0.56),
+    0 0 32px rgba(202, 166, 75, 0.04),
+    inset 0 1px 0 rgba(255, 255, 255, 0.045);
+}
+
+/* Mobile */
+@media (max-width: 620px) {
+  .tagline {
+    margin-top: 8px;
+  }
+
+  .heading {
+    margin-top: 24px;
+    margin-bottom: 19px;
+  }
+
+  .heading h2 {
+    color: rgba(255, 255, 255, 0.96) !important;
+  }
+}
