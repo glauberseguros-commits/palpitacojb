@@ -403,7 +403,67 @@ export async function loadTop3PredictionDay({
     })
   );
 
-  const resolvedSnapshots = snapshots
+  /*
+ * TOP3_FIRESTORE_FILTER_TRACE_V1
+ */
+
+if (typeof window !== "undefined") {
+
+  try {
+
+    console.groupCollapsed(
+      "[TOP3 FIRESTORE FILTER TRACE]"
+    );
+
+    snapshots.forEach((doc,index)=>{
+
+      console.log({
+
+        index,
+
+        id: doc?.id,
+
+        targetYmd: doc?.targetYmd,
+
+        targetHour: doc?.targetHour,
+
+        targetKey: doc?.targetKey,
+
+        exists: !!doc,
+
+        status: doc?.status,
+
+        snapshotLength:
+          Array.isArray(doc?.snapshot)
+            ? doc.snapshot.length
+            : 0,
+
+        snapshotExists:
+          Array.isArray(doc?.snapshot),
+
+        engineVersion:
+          doc?.engineVersion,
+
+        predictionVersion:
+          doc?.predictionVersion,
+
+        createdAt:
+          doc?.createdAt,
+
+        updatedAt:
+          doc?.updatedAt
+
+      });
+
+    });
+
+    console.groupEnd();
+
+  } catch {}
+
+}
+
+const resolvedSnapshots = snapshots
     .filter(Boolean)
     .sort((a, b) => {
       return normalizeHour(a?.targetHour).localeCompare(
@@ -672,5 +732,6 @@ export async function reconcileTop3PredictionDay({
     history: reconciledHistory,
   };
 }
+
 
 
