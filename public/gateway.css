@@ -1129,3 +1129,40 @@ body {
     white-space: normal;
   }
 }
+
+/* ==========================================================
+   GATEWAY_FINAL_POLISH_01
+   ========================================================== */
+
+@media (min-width:1200px){
+
+    .brand{
+        margin-top:6px;
+        margin-bottom:18px;
+    }
+
+    .brand-logo{
+        transform:scale(1.15);
+        transform-origin:center;
+    }
+
+    .products{
+        transform:scale(1.06);
+        transform-origin:top center;
+        margin-top:12px;
+        margin-bottom:18px;
+    }
+
+    .card{
+        min-height:430px;
+    }
+
+    .trust{
+        margin-top:18px;
+    }
+
+    .footer{
+        margin-top:12px;
+    }
+}
+
