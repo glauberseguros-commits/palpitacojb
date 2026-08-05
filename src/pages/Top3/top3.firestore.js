@@ -379,7 +379,22 @@ export async function loadTop3PredictionDay({
     )
   );
 
-  const snapshots = await Promise.all(
+  
+/*
+ * TOP3_SNAPSHOT_SOURCE_TRACE_V1
+ */
+if (typeof window !== "undefined") {
+
+  window.__TOP3_SNAPSHOT_SOURCE_TRACE__ = [];
+
+  const __tracePush = (entry) => {
+    try {
+      window.__TOP3_SNAPSHOT_SOURCE_TRACE__.push(entry);
+    } catch {}
+  };
+
+}
+const snapshots = await Promise.all(
     hours.map(async (hour) => {
       const ref = predictionRef({
         lotteryKey: lottery,
@@ -732,6 +747,7 @@ export async function reconcileTop3PredictionDay({
     history: reconciledHistory,
   };
 }
+
 
 
 
