@@ -704,3 +704,63 @@ body {
     color: rgba(255, 255, 255, 0.96) !important;
   }
 }
+
+/* ==========================================================
+   GATEWAY_CLEAN_HEADER_LINE_FIX_04
+   Gateway sem titulo intermediario e descricoes em uma linha.
+   ========================================================== */
+
+/* A marca, o slogan e os cards formam um unico bloco visual */
+.brand {
+  margin-bottom: 30px;
+}
+
+.tagline {
+  margin-top: 10px;
+}
+
+/* O antigo titulo intermediario nao ocupa espaco */
+.heading {
+  display: none !important;
+}
+
+/* Cards sobem apos a retirada do titulo */
+.products {
+  margin-top: 0;
+}
+
+/* Descricoes dos dois produtos em uma unica linha no desktop */
+.card .description {
+  display: flex;
+  align-items: baseline;
+  flex-wrap: nowrap;
+  gap: 6px;
+  white-space: nowrap;
+}
+
+.card .description strong {
+  display: inline !important;
+  white-space: nowrap;
+}
+
+/* Mantem simetria entre os dois cards */
+.card-header {
+  align-items: center;
+}
+
+/* Celulares estreitos podem quebrar para nao provocar overflow */
+@media (max-width: 620px) {
+  .brand {
+    margin-bottom: 22px;
+  }
+
+  .card .description {
+    display: block;
+    white-space: normal;
+  }
+
+  .card .description strong {
+    display: inline !important;
+    white-space: normal;
+  }
+}
