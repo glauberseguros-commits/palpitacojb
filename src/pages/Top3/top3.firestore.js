@@ -406,6 +406,24 @@ const snapshots = await Promise.all(
 
       try {
         const snap = await getDoc(ref);
+
+        if (typeof window !== "undefined") {
+
+          console.log("[TOP3 GETDOC]",{
+            requestedHour: hour,
+            requestedId: ref.id,
+            exists: snap.exists(),
+            firestoreId: snap.id,
+            dataTargetHour: snap.data()?.targetHour,
+            dataTargetYmd: snap.data()?.targetYmd,
+            dataTargetKey: snap.data()?.targetKey,
+            snapshotLength: Array.isArray(snap.data()?.snapshot)
+              ? snap.data().snapshot.length
+              : 0
+          });
+
+        }
+
         if (!snap.exists()) return null;
 
         return {
@@ -747,6 +765,7 @@ export async function reconcileTop3PredictionDay({
     history: reconciledHistory,
   };
 }
+
 
 
 
