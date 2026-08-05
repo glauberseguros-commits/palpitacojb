@@ -1841,6 +1841,57 @@ export function useTop3Controller() {
           schedule: persistedSchedule,
         });
 
+        /*
+         * TOP3_HISTORY_HOOK_RUNTIME_TRACE_V1
+         *
+         * Registra exatamente o histórico recebido do Firestore.
+         * Não altera ou filtra os registros.
+         */
+        if (typeof window !== "undefined") {
+          const normalizedHistory = Array.isArray(history)
+            ? history
+            : [];
+
+          const diagnostic = {
+            at: new Date().toISOString(),
+            lotteryKey: lotteryKeySafe,
+            timelineYmd,
+            requestedSchedule: persistedSchedule,
+            receivedCount: normalizedHistory.length,
+            receivedEntries: normalizedHistory.map((entry) => ({
+              id: safeStr(entry?.id),
+              targetYmd: safeStr(entry?.targetYmd),
+              targetHour: toHourBucket(entry?.targetHour),
+              targetKey: safeStr(entry?.targetKey),
+              status: safeStr(entry?.status),
+              snapshotLength: Array.isArray(entry?.snapshot)
+                ? entry.snapshot.length
+                : 0,
+              grupos: (Array.isArray(entry?.snapshot)
+                ? entry.snapshot
+                : []
+              )
+                .slice(0, 3)
+                .map((item) => Number(item?.grupo) || null),
+            })),
+          };
+
+          window.__TOP3_HISTORY_HOOK_RUNTIME_TRACE__ =
+            diagnostic;
+
+          try {
+            window.localStorage.setItem(
+              "top3_history_hook_runtime_trace_last",
+              JSON.stringify(diagnostic)
+            );
+          } catch {}
+
+          console.info(
+            "[TOP3 HISTORY HOOK RUNTIME TRACE]",
+            diagnostic
+          );
+        }
+
         if (alive) {
           setPersistedTop3History(
             Array.isArray(history) ? history : []
@@ -2125,4 +2176,5 @@ export function useTop3Controller() {
     normalizeImgSrc,
   };
 }
+
 

@@ -403,13 +403,79 @@ export async function loadTop3PredictionDay({
     })
   );
 
-  return snapshots
+  const resolvedSnapshots = snapshots
     .filter(Boolean)
     .sort((a, b) => {
       return normalizeHour(a?.targetHour).localeCompare(
         normalizeHour(b?.targetHour)
       );
     });
+
+  /*
+   * TOP3_HISTORY_RUNTIME_LOAD_TRACE_V1
+   *
+   * Instrumentação temporária.
+   * Não altera documentos, snapshots ou ordem dos registros.
+   */
+  if (typeof window !== "undefined") {
+    const diagnostic = {
+      at: new Date().toISOString(),
+      lotteryKey: lottery,
+      targetYmd: ymd,
+      requestedHours: hours,
+      requestedIds: hours.map((hour) =>
+        makePredictionId({
+          lotteryKey: lottery,
+          targetYmd: ymd,
+          targetHour: hour,
+        })
+      ),
+      returnedCount: resolvedSnapshots.length,
+      returnedEntries: resolvedSnapshots.map((entry) => ({
+        id: safeStr(entry?.id),
+        lotteryKey: safeStr(entry?.lotteryKey),
+        targetYmd: safeStr(entry?.targetYmd),
+        targetHour: normalizeHour(entry?.targetHour),
+        targetKey: safeStr(entry?.targetKey),
+        status: safeStr(entry?.status),
+        engineVersion: safeStr(entry?.engineVersion),
+        snapshotLength: Array.isArray(entry?.snapshot)
+          ? entry.snapshot.length
+          : 0,
+        grupos: (Array.isArray(entry?.snapshot)
+          ? entry.snapshot
+          : []
+        )
+          .slice(0, 3)
+          .map((item) => Number(item?.grupo) || null),
+      })),
+    };
+
+    const previous = Array.isArray(
+      window.__TOP3_HISTORY_RUNTIME_LOAD_TRACE__
+    )
+      ? window.__TOP3_HISTORY_RUNTIME_LOAD_TRACE__
+      : [];
+
+    window.__TOP3_HISTORY_RUNTIME_LOAD_TRACE__ = [
+      ...previous.slice(-49),
+      diagnostic,
+    ];
+
+    try {
+      window.localStorage.setItem(
+        "top3_history_runtime_load_trace_last",
+        JSON.stringify(diagnostic)
+      );
+    } catch {}
+
+    console.info(
+      "[TOP3 HISTORY RUNTIME LOAD TRACE]",
+      diagnostic
+    );
+  }
+
+  return resolvedSnapshots;
 }
 
 export async function reconcileTop3PredictionDay({
@@ -606,4 +672,5 @@ export async function reconcileTop3PredictionDay({
     history: reconciledHistory,
   };
 }
+
 
