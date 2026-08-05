@@ -1,0 +1,573 @@
+:root {
+  --gold: #caa64b;
+  --gold-light: #f1d579;
+  --gold-dark: #7c5d18;
+  --white: rgba(255, 255, 255, 0.96);
+  --muted: rgba(255, 255, 255, 0.62);
+  --border: rgba(202, 166, 75, 0.42);
+}
+
+* {
+  box-sizing: border-box;
+}
+
+html,
+body {
+  margin: 0;
+  min-height: 100%;
+  background: #030303;
+}
+
+body {
+  color: var(--white);
+  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
+}
+
+.page {
+  min-height: 100vh;
+  position: relative;
+  overflow-x: hidden;
+  background:
+    radial-gradient(circle at 50% -12%, rgba(202, 166, 75, 0.16), transparent 35%),
+    linear-gradient(180deg, #080806 0%, #020202 55%, #050505 100%);
+}
+
+.background {
+  position: fixed;
+  inset: 0;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+.background::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background-image:
+    linear-gradient(rgba(255, 255, 255, 0.012) 1px, transparent 1px),
+    linear-gradient(90deg, rgba(255, 255, 255, 0.012) 1px, transparent 1px);
+  background-size: 52px 52px;
+  mask-image: linear-gradient(to bottom, black, transparent 80%);
+}
+
+.glow {
+  position: absolute;
+  width: 600px;
+  height: 600px;
+  border-radius: 50%;
+  filter: blur(34px);
+  background: rgba(202, 166, 75, 0.22);
+}
+
+.glow-left {
+  left: -390px;
+  top: 240px;
+}
+
+.glow-right {
+  right: -390px;
+  top: 240px;
+}
+
+.orbit {
+  position: absolute;
+  width: 760px;
+  height: 430px;
+  top: 310px;
+  border: 1px solid rgba(202, 166, 75, 0.10);
+  border-radius: 50%;
+  transform: rotate(-18deg);
+}
+
+.orbit-left {
+  left: -430px;
+}
+
+.orbit-right {
+  right: -430px;
+}
+
+.shell {
+  position: relative;
+  z-index: 2;
+  width: min(1280px, calc(100% - 36px));
+  margin: 0 auto;
+  padding: 28px 0 22px;
+}
+
+.brand {
+  display: grid;
+  place-items: center;
+  text-align: center;
+}
+
+.brand-logo {
+  width: clamp(100px, 9vw, 145px);
+  height: auto;
+  object-fit: contain;
+  filter:
+    drop-shadow(0 16px 28px rgba(0, 0, 0, 0.70))
+    drop-shadow(0 0 20px rgba(202, 166, 75, 0.12));
+}
+
+.brand h1 {
+  margin: 0;
+  color: var(--gold-light);
+  font-size: clamp(46px, 6vw, 82px);
+  line-height: 0.95;
+  letter-spacing: 0.06em;
+  font-weight: 900;
+  text-shadow:
+    0 2px 0 rgba(67, 45, 6, 0.9),
+    0 0 28px rgba(202, 166, 75, 0.16);
+}
+
+.tagline {
+  margin-top: 14px;
+  display: grid;
+  grid-template-columns: minmax(35px, 90px) auto minmax(35px, 90px);
+  align-items: center;
+  gap: 14px;
+}
+
+.tagline span {
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--gold));
+}
+
+.tagline span:last-child {
+  background: linear-gradient(90deg, var(--gold), transparent);
+}
+
+.tagline p {
+  margin: 0;
+  color: rgba(255, 255, 255, 0.86);
+  font-size: clamp(15px, 1.6vw, 21px);
+}
+
+.heading {
+  margin: 38px 0 22px;
+  display: grid;
+  place-items: center;
+  gap: 10px;
+  text-align: center;
+}
+
+.heading h2 {
+  margin: 0;
+  font-size: clamp(18px, 2vw, 25px);
+  font-weight: 750;
+  letter-spacing: 0.27em;
+}
+
+.heading span {
+  width: 68px;
+  height: 2px;
+  background: var(--gold);
+  box-shadow: 0 0 15px rgba(202, 166, 75, 0.66);
+}
+
+.products {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 36px;
+}
+
+.card {
+  position: relative;
+  min-width: 0;
+  padding: 32px 36px 30px;
+  border: 1px solid var(--border);
+  border-radius: 25px;
+  background:
+    radial-gradient(circle at 50% 0%, rgba(202, 166, 75, 0.08), transparent 38%),
+    linear-gradient(155deg, rgba(15, 15, 13, 0.96), rgba(2, 2, 2, 0.97));
+  box-shadow:
+    0 28px 70px rgba(0, 0, 0, 0.46),
+    inset 0 1px 0 rgba(255, 255, 255, 0.035);
+  transition:
+    transform 180ms ease,
+    border-color 180ms ease,
+    box-shadow 180ms ease;
+}
+
+.card::before,
+.card::after {
+  content: "";
+  position: absolute;
+  left: 12%;
+  right: 12%;
+  height: 1px;
+  background: linear-gradient(90deg, transparent, var(--gold), transparent);
+}
+
+.card::before {
+  top: -1px;
+}
+
+.card::after {
+  bottom: -1px;
+}
+
+.card:hover {
+  transform: translateY(-5px);
+  border-color: rgba(202, 166, 75, 0.72);
+  box-shadow:
+    0 35px 80px rgba(0, 0, 0, 0.56),
+    0 0 35px rgba(202, 166, 75, 0.07);
+}
+
+.card-header {
+  min-height: 135px;
+  display: grid;
+  grid-template-columns: 115px minmax(0, 1fr);
+  align-items: center;
+  gap: 24px;
+}
+
+.card-logo {
+  width: 110px;
+  height: 110px;
+  object-fit: contain;
+  filter: drop-shadow(0 0 18px rgba(202, 166, 75, 0.14));
+}
+
+.lottery-mark {
+  width: 88px;
+  height: 88px;
+  margin: 0 auto;
+  display: grid;
+  place-items: center;
+  border: 2px solid rgba(202, 166, 75, 0.72);
+  border-radius: 23px;
+  transform: rotate(45deg);
+  background:
+    radial-gradient(circle at 35% 28%, rgba(255, 255, 255, 0.12), transparent 31%),
+    linear-gradient(145deg, rgba(202, 166, 75, 0.22), rgba(202, 166, 75, 0.04));
+}
+
+.lottery-mark span {
+  transform: rotate(-45deg);
+  color: var(--gold-light);
+  font-size: 27px;
+  font-weight: 900;
+  letter-spacing: 0.04em;
+}
+
+.eyebrow {
+  margin: 0 0 5px;
+  color: var(--gold);
+  font-size: 11px;
+  font-weight: 850;
+  letter-spacing: 0.18em;
+}
+
+.card h3 {
+  margin: 0;
+  color: var(--gold-light);
+  font-size: clamp(25px, 2.4vw, 37px);
+  line-height: 1.08;
+}
+
+.description {
+  margin: 12px 0 0;
+  color: rgba(255, 255, 255, 0.84);
+  font-size: clamp(17px, 1.55vw, 21px);
+  line-height: 1.42;
+}
+
+.description strong {
+  display: block;
+  color: #fff;
+}
+
+.features {
+  margin-top: 22px;
+  padding: 22px 0;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 14px;
+  border-top: 1px solid rgba(202, 166, 75, 0.16);
+}
+
+.feature {
+  min-width: 0;
+  display: grid;
+  place-items: center;
+  align-content: start;
+  text-align: center;
+}
+
+.feature b {
+  width: 44px;
+  height: 44px;
+  margin-bottom: 9px;
+  display: grid;
+  place-items: center;
+  border: 1px solid rgba(202, 166, 75, 0.25);
+  border-radius: 14px;
+  color: var(--gold-light);
+  background: rgba(202, 166, 75, 0.055);
+  font-size: 13px;
+}
+
+.feature strong,
+.feature span {
+  display: block;
+}
+
+.feature strong {
+  color: rgba(255, 255, 255, 0.92);
+  font-size: 13px;
+}
+
+.feature span {
+  margin-top: 2px;
+  color: var(--muted);
+  font-size: 12px;
+}
+
+.button {
+  width: 100%;
+  min-height: 63px;
+  padding: 0 24px;
+  border: 1px solid rgba(247, 215, 123, 0.64);
+  border-radius: 16px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  background: linear-gradient(105deg, #b88720, #efd36f 46%, #c29330);
+  color: #090703;
+  font-size: clamp(15px, 1.4vw, 20px);
+  font-weight: 950;
+  text-decoration: none;
+  box-shadow:
+    0 12px 28px rgba(0, 0, 0, 0.36),
+    inset 0 1px 0 rgba(255, 255, 255, 0.46);
+  transition:
+    transform 150ms ease,
+    filter 150ms ease;
+}
+
+.button:hover {
+  transform: translateY(-2px);
+  filter: brightness(1.07);
+}
+
+.button b {
+  font-size: 29px;
+}
+
+.button-disabled {
+  color: rgba(255, 255, 255, 0.63);
+  border-color: rgba(202, 166, 75, 0.22);
+  background:
+    linear-gradient(180deg, rgba(202, 166, 75, 0.13), rgba(202, 166, 75, 0.05));
+  cursor: not-allowed;
+  box-shadow: none;
+}
+
+.button-disabled:hover {
+  transform: none;
+  filter: none;
+}
+
+.trust {
+  margin: 28px auto 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  gap: 10px;
+  text-align: center;
+  color: rgba(255, 255, 255, 0.57);
+}
+
+.trust span {
+  color: var(--gold);
+  font-size: 19px;
+}
+
+.trust p {
+  margin: 0;
+  font-size: 14px;
+}
+
+.footer {
+  margin-top: 24px;
+  padding: 21px 0;
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.footer div {
+  min-width: 0;
+  padding: 0 22px;
+  display: grid;
+  gap: 4px;
+  border-right: 1px solid rgba(255, 255, 255, 0.07);
+}
+
+.footer div:last-child {
+  border-right: 0;
+}
+
+.footer strong {
+  color: var(--gold-light);
+  font-size: 14px;
+}
+
+.footer span {
+  color: rgba(255, 255, 255, 0.47);
+  font-size: 12px;
+}
+
+.copyright {
+  margin: 18px 0 0;
+  text-align: center;
+  color: rgba(255, 255, 255, 0.42);
+  font-size: 12px;
+}
+
+.copyright strong {
+  color: var(--gold);
+}
+
+@media (max-width: 920px) {
+  .shell {
+    width: min(680px, calc(100% - 28px));
+  }
+
+  .products {
+    grid-template-columns: 1fr;
+    gap: 24px;
+  }
+}
+
+@media (max-width: 620px) {
+  .shell {
+    width: min(520px, calc(100% - 22px));
+    padding-top: 20px;
+  }
+
+  .brand-logo {
+    width: 86px;
+  }
+
+  .brand h1 {
+    font-size: clamp(38px, 13vw, 57px);
+  }
+
+  .tagline {
+    gap: 9px;
+  }
+
+  .tagline p {
+    white-space: nowrap;
+    font-size: 13px;
+  }
+
+  .heading {
+    margin: 29px 0 18px;
+  }
+
+  .heading h2 {
+    font-size: 14px;
+    letter-spacing: 0.18em;
+  }
+
+  .card {
+    padding: 23px 18px 20px;
+    border-radius: 21px;
+  }
+
+  .card-header {
+    min-height: 0;
+    grid-template-columns: 78px minmax(0, 1fr);
+    gap: 14px;
+  }
+
+  .card-logo {
+    width: 76px;
+    height: 76px;
+  }
+
+  .lottery-mark {
+    width: 62px;
+    height: 62px;
+    border-radius: 17px;
+  }
+
+  .lottery-mark span {
+    font-size: 19px;
+  }
+
+  .card h3 {
+    font-size: clamp(22px, 7vw, 29px);
+  }
+
+  .description {
+    margin-top: 8px;
+    font-size: 15px;
+  }
+
+  .features {
+    margin-top: 18px;
+    padding: 18px 0;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 15px 10px;
+  }
+
+  .button {
+    min-height: 58px;
+    padding: 0 17px;
+    font-size: 14px;
+  }
+
+  .trust {
+    margin-top: 22px;
+    align-items: flex-start;
+  }
+
+  .trust p {
+    font-size: 12px;
+    line-height: 1.5;
+  }
+
+  .footer {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 18px 0;
+  }
+
+  .footer div {
+    padding: 0 14px;
+  }
+
+  .footer div:nth-child(2) {
+    border-right: 0;
+  }
+}
+
+@media (max-width: 360px) {
+  .card {
+    padding-inline: 14px;
+  }
+
+  .card-header {
+    grid-template-columns: 66px minmax(0, 1fr);
+  }
+
+  .card-logo {
+    width: 64px;
+    height: 64px;
+  }
+
+  .card h3 {
+    font-size: 21px;
+  }
+
+  .button {
+    font-size: 12px;
+  }
+}

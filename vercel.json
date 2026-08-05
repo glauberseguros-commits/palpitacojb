@@ -4,6 +4,8 @@
   "installCommand": null,
   "outputDirectory": "build",
   "routes": [
+    { "src": "^/$", "dest": "/gateway.html" },
+
     { "src": "^/health$", "dest": "https://palpitacojb.onrender.com/health" },
     { "src": "^/api/(.*)$", "dest": "https://palpitacojb.onrender.com/api/$1" },
 
