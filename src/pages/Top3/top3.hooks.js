@@ -1967,26 +1967,73 @@ export function useTop3Controller() {
     const drawSignature = targetDraws
       .map((draw) => {
         const key = drawKey(draw);
-        const grupo = Number(
-          pickPrize1GrupoFromDraw(draw) || 0
-        );
 
-        const prize1 = Array.isArray(draw?.prizes)
-          ? draw.prizes.find(
-              (item) => Number(item?.position) === 1
-            ) || draw.prizes[0]
-          : null;
+        const prizes = Array.isArray(draw?.prizes)
+          ? draw.prizes
+          : [];
 
-        const milhar = safeStr(
-          prize1?.milhar ??
-            prize1?.numero ??
-            prize1?.number ??
-            prize1?.valor ??
-            draw?.prize_1 ??
-            ""
-        );
+        const podiumSignature = [1, 2, 3]
+          .map((position) => {
+            const prize =
+              prizes.find(
+                (item) =>
+                  Number(item?.position) === position
+              ) ||
+              prizes[position - 1] ||
+              null;
 
-        return `${key}:${grupo}:${milhar}`;
+            const milhar = safeStr(
+              prize?.milhar ??
+                prize?.numero ??
+                prize?.number ??
+                prize?.valor ??
+                draw?.[`prize_${position}`] ??
+                ""
+            )
+              .replace(/\D+/g, "")
+              .padStart(4, "0")
+              .slice(-4);
+
+            const directGrupo = Number(
+              prize?.grupo ??
+                prize?.group ??
+                prize?.animal_grupo ??
+                prize?.grupo2
+            );
+
+            const dezenaRaw = Number(
+              milhar.slice(-2)
+            );
+
+            const dezena =
+              dezenaRaw === 0
+                ? 100
+                : dezenaRaw;
+
+            const inferredGrupo =
+              milhar && Number.isFinite(dezena)
+                ? Math.ceil(dezena / 4)
+                : 0;
+
+            const grupo =
+              Number.isFinite(directGrupo) &&
+              directGrupo >= 1 &&
+              directGrupo <= 25
+                ? directGrupo
+                : inferredGrupo >= 1 &&
+                    inferredGrupo <= 25
+                  ? inferredGrupo
+                  : 0;
+
+            return [
+              position,
+              grupo,
+              milhar,
+            ].join(":");
+          })
+          .join(";");
+
+        return `${key}:${podiumSignature}`;
       })
       .join(",");
 

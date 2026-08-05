@@ -652,6 +652,46 @@ export async function reconcileTop3PredictionDay({
     const savedGrupo = Number(entry?.resultGrupo);
     const savedMilhar = normalizeMilhar(entry?.resultMilhar);
 
+    const officialTop3Groups =
+      officialPodium.map(
+        (item) => Number(item?.grupo) || null
+      );
+
+    const officialTop3Milhares =
+      officialPodium.map(
+        (item) => normalizeMilhar(item?.milhar)
+      );
+
+    const savedTop3Groups = (
+      Array.isArray(entry?.resultTop3Groups)
+        ? entry.resultTop3Groups
+        : []
+    )
+      .slice(0, 3)
+      .map(
+        (value) => Number(value) || null
+      );
+
+    const savedTop3Milhares = (
+      Array.isArray(entry?.resultTop3Milhares)
+        ? entry.resultTop3Milhares
+        : []
+    )
+      .slice(0, 3)
+      .map(normalizeMilhar);
+
+    const officialPodiumSignature =
+      JSON.stringify({
+        groups: officialTop3Groups,
+        milhares: officialTop3Milhares,
+      });
+
+    const savedPodiumSignature =
+      JSON.stringify({
+        groups: savedTop3Groups,
+        milhares: savedTop3Milhares,
+      });
+
     const analysis = analyzeSnapshotHit(
       entry?.snapshot,
       officialPodium
@@ -676,6 +716,8 @@ export async function reconcileTop3PredictionDay({
       savedLottery === lottery &&
       savedGrupo === resultGrupo &&
       savedMilhar === resultMilhar &&
+      savedPodiumSignature ===
+        officialPodiumSignature &&
       safeStr(entry?.hitType) === analysis.hitType &&
       Number(entry?.hitScore) === analysis.hitScore &&
       Number(entry?.hitPosition) === analysis.hitPosition &&
@@ -705,12 +747,10 @@ export async function reconcileTop3PredictionDay({
           extractPrize1(realDraw)?.animal ||
           ""
       ),
-      resultTop3Groups: officialPodium.map(
-        (item) => Number(item?.grupo) || null
-      ),
-      resultTop3Milhares: officialPodium.map(
-        (item) => normalizeMilhar(item?.milhar)
-      ),
+      resultTop3Groups:
+        officialTop3Groups,
+      resultTop3Milhares:
+        officialTop3Milhares,
       hitType: analysis.hitType,
       hitScore: analysis.hitScore,
       hitPosition: analysis.hitPosition,
