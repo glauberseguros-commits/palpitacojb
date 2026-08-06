@@ -157,6 +157,10 @@ const {
 } = require("../engine/top3HistorySync");
 
 const {
+  reconcileTop3PredictionDayBackend,
+} = require("../engine/top3ResultReconciliation");
+
+const {
   createTop3PredictionRun,
   resolveNextTop3Slot,
 } = require("../engine/top3PredictionService");
@@ -1858,6 +1862,59 @@ async function runImport({ date, lotteryKey = "PT_RIO", closeHour = null } = {})
   performance.historySyncMs =
     Date.now() - historySyncStartedAt;
 
+  const top3ReconciliationStartedAt =
+    Date.now();
+
+  let top3ResultReconciliation = {
+    ok: true,
+    skipped: true,
+    reason: "result_not_captured",
+  };
+
+  if (
+    response?.ok === true &&
+    response?.captured === true &&
+    normalizedClose
+  ) {
+    try {
+      top3ResultReconciliation =
+        await reconcileTop3PredictionDayBackend({
+          lotteryKey: lk,
+          targetYmd: date,
+          onlyHour: normalizedClose,
+          dryRun: false,
+          source: "auto-import",
+        });
+
+      console.log(
+        "[TOP3 RESULT RECONCILIATION]",
+        JSON.stringify(
+          top3ResultReconciliation
+        )
+      );
+    }
+    catch (error) {
+      top3ResultReconciliation = {
+        ok: false,
+        skipped: false,
+        error:
+          error?.message ||
+          String(error),
+      };
+
+      console.error(
+        "[TOP3 RESULT RECONCILIATION] falhou:",
+        error?.stack ||
+        error?.message ||
+        error
+      );
+    }
+  }
+
+  performance.top3ReconciliationMs =
+    Date.now() -
+    top3ReconciliationStartedAt;
+
   const top3StartedAt = Date.now();
 
   let top3AutoPrediction = {
@@ -2124,6 +2181,7 @@ async function runImport({ date, lotteryKey = "PT_RIO", closeHour = null } = {})
   return {
     ...response,
     top3HistorySync,
+    top3ResultReconciliation,
     top3AutoPrediction,
     performance,
   };
