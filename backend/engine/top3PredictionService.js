@@ -1,6 +1,11 @@
 "use strict";
 
 const {
+  getTop3ProductionProfileAssignment,
+} = require("./top3ProductionProfileMap");
+
+
+const {
   fetchDrawsWithPrizesByRange,
 } = require("./drawRepository");
 
@@ -733,7 +738,20 @@ async function createTop3PredictionRun(
   const date = normalizeYmd(input.date);
   const closeHour = normalizeHour(input.closeHour);
 
-  const computeTop3 =
+  
+
+  /*
+   * TOP3_PRODUCTION_PROFILE_MATRIX_BASELINE_V2
+   *
+   * lotteryKey permanece como loteria-alvo para histórico,
+   * resultados e persistência.
+   * profileLotteryKey é entregue somente ao cálculo.
+   */
+  const productionProfile =
+    getTop3ProductionProfileAssignment(
+      lotteryKey
+    );
+const computeTop3 =
     dependencies.computeTop3 ||
     computeStatisticalTop3V3;
 
@@ -817,7 +835,8 @@ async function createTop3PredictionRun(
   );
 
   const computed = computeTop3({
-    lotteryKey,
+    lotteryKey:
+      productionProfile.profileLotteryKey,
     drawsRange: history,
     drawLast,
     PT_RIO_SCHEDULE_NORMAL,

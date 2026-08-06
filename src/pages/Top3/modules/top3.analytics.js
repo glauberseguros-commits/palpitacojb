@@ -13,6 +13,10 @@ import {
   computeStatisticalTop3V3,
 } from "../top3.engine";
 
+
+import {
+  getTop3ProductionProfileAssignment,
+} from "./top3.production-profile-map";
 function emptyAnalytics() {
   return { top: [], meta: null };
 }
@@ -123,7 +127,19 @@ export function computeTop3Analytics({
   const forcedTargetY = isYMD(targetYmd) ? targetYmd : "";
   const forcedTargetH = toHourBucket(targetHourBucket);
 
-  if (
+  
+
+  /*
+   * TOP3_PRODUCTION_PROFILE_MATRIX_BASELINE_V2
+   *
+   * lotteryKeySafe continua sendo a loteria-alvo.
+   * productionProfile.profileLotteryKey é usada somente no cálculo.
+   */
+  const productionProfile =
+    getTop3ProductionProfileAssignment(
+      lotteryKeySafe
+    );
+if (
     !Number.isFinite(lastG) ||
     lastG < 1 ||
     lastG > 25 ||
@@ -166,7 +182,10 @@ export function computeTop3Analytics({
     .join(",");
 
   const cacheKey = [
-    "V3",
+    
+    productionProfile.version,
+    productionProfile.targetLotteryKey,
+    productionProfile.profileLotteryKey,"V3",
     lotteryKey,
     lookback,
     rangeInfo?.from || "",
@@ -191,7 +210,8 @@ export function computeTop3Analytics({
 
   const computed =
     computeStatisticalTop3V3({
-      lotteryKey,
+      lotteryKey:
+        productionProfile.profileLotteryKey,
       drawsRange: safeHistoricalList,
       drawLast,
       drawsToday: Array.isArray(todayDraws) ? todayDraws : [],
@@ -211,7 +231,10 @@ export function computeTop3Analytics({
 
   const value = {
     ...computed,
-    top: sanitizeTop3(computed?.top),
+    
+    productionProfileAssignment:
+      productionProfile,
+top: sanitizeTop3(computed?.top),
   };
 
   cacheRef.current = { key: cacheKey, value };
