@@ -2557,28 +2557,51 @@ const list =
       (item) => item?.result != null
     );
 
-    const exact = validated.filter(
-      (item) => item?.hitType === "hit_exact"
-    ).length;
+    /*
+     * TOP3_DAILY_SUMMARY_MULTI_HIT_V2
+     *
+     * Cada sorteio possui até 3 palpites independentes.
+     * O resumo diário contabiliza cada hit individual,
+     * preservando os hits persistidos/normalizados.
+     */
+    const allHits = validated.flatMap((item) =>
+      normalizeTop3Hits(item)
+    );
 
-    const centena = validated.filter(
-      (item) =>
-        item?.hitType === "hit_centena" ||
-        item?.hitType === "hit_exact"
-    ).length;
+    const exact = allHits.filter((hit) => {
+      const type = String(
+        hit?.hitType || hit?.type || ""
+      ).toLowerCase();
 
-    const grupo = validated.filter(
-      (item) =>
-        item?.hitType === "hit_grupo" ||
-        item?.hitType === "hit_dezena" ||
-        item?.hitType === "hit_centena" ||
-        item?.hitType === "hit_exact"
-    ).length;
+      return type === "hit_exact";
+    }).length;
+
+    const centena = allHits.filter((hit) => {
+      const type = String(
+        hit?.hitType || hit?.type || ""
+      ).toLowerCase();
+
+      return (
+        type === "hit_centena" ||
+        type === "hit_exact"
+      );
+    }).length;
+
+    const grupo = allHits.filter((hit) => {
+      const type = String(
+        hit?.hitType || hit?.type || ""
+      ).toLowerCase();
+
+      return (
+        type === "hit_grupo" ||
+        type === "hit_dezena" ||
+        type === "hit_centena" ||
+        type === "hit_exact"
+      );
+    }).length;
 
     const misses = validated.filter(
-      (item) =>
-        item?.hitType === "miss" ||
-        item?.hitType === "none"
+      (item) => normalizeTop3Hits(item).length === 0
     ).length;
 
     const totalScore = validated.reduce(
@@ -2594,7 +2617,10 @@ const list =
     return {
       total: historyRows.length,
       validated: validated.length,
-      pending: Math.max(0, historyRows.length - validated.length),
+      pending: Math.max(
+        0,
+        historyRows.length - validated.length
+      ),
       exact,
       centena,
       grupo,
@@ -5489,4 +5515,5 @@ const list =
     </div>
   );
 }
+
 
