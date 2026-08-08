@@ -278,7 +278,7 @@ async function loadPredictionHistory({
     100,
     Math.min(
       5000,
-      Number(input.maxDraws || 5000)
+      Number(input.maxDraws || 1200)
     )
   );
 
