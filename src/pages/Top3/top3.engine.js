@@ -4391,7 +4391,375 @@ export function computeStatisticalTop3V3({
               ]
             )
           : rankedScoredSorted;
-  const rankingAfterScore = effectiveRankedScoredSorted.map(
+  /*
+   * TOP3_PROVEN_SLOT_PROFILES_V1
+   *
+   * Resultado do ALL LOTTERIES SLOT LAYER WALK-FORWARD 01.
+   *
+   * Regra:
+   * - somente slots atuais com ganho sobre o V3;
+   * - nenhuma loteria se mistura com outra;
+   * - nenhum horário se mistura com outro;
+   * - nenhum grupo/bicho é fixado;
+   * - RJ 14h/16h já permanecem na regra anterior;
+   * - sexta-feira RJ 21h mantém prioridade da regra específica
+   *   CENA/HISTÓRICO já publicada.
+   *
+   * Slots aplicados nesta camada:
+   *
+   * PT_RIO
+   * 09h -> FREQ. HORÁRIO
+   * 11h -> FREQ. HORÁRIO + RECÊNCIA
+   * 18h -> RECÊNCIA
+   * 21h -> DIA SEMANA + HORÁRIO
+   *        EXCETO sexta-feira, que preserva CENA/HISTÓRICO.
+   *
+   * NACIONAL
+   * 02h -> DIA DO MÊS + RECÊNCIA
+   * 08h -> TODAS AS 6 CAMADAS
+   * 10h -> DIA SEMANA + HORÁRIO + DIA DO MÊS + CENA/HISTÓRICO
+   * 12h -> DIA DO MÊS
+   * 15h -> TRANSIÇÃO + CENA/HISTÓRICO
+   * 17h -> FREQ. HORÁRIO + CENA/HISTÓRICO
+   * 21h -> TRANSIÇÃO
+   * 23h -> DIA DO MÊS + RECÊNCIA
+   *
+   * FEDERAL
+   * 20h -> TRANSIÇÃO + CENA/HISTÓRICO
+   *
+   * LOOK
+   * 07h -> DIA DO MÊS + RECÊNCIA
+   * 09h -> DIA SEMANA + HORÁRIO + DIA DO MÊS
+   * 11h -> FREQ. HORÁRIO
+   * 14h -> FREQ. HORÁRIO + DIA DO MÊS + TRANSIÇÃO
+   * 16h -> DIA SEMANA + HORÁRIO + DIA DO MÊS + TRANSIÇÃO + RECÊNCIA
+   * 18h -> DIA SEMANA + HORÁRIO + RECÊNCIA + CENA/HISTÓRICO
+   * 21h -> FREQ. HORÁRIO + DIA SEMANA + HORÁRIO + TRANSIÇÃO
+   * 23h -> FREQ. HORÁRIO + DIA DO MÊS + RECÊNCIA + CENA/HISTÓRICO
+   */
+
+  const normalizeProvenSlotHour = (value) => {
+    const raw = String(value || "")
+      .trim()
+      .toLowerCase();
+
+    const match = raw.match(/(\d{1,2})(?::(\d{2}))?/);
+
+    if (!match) {
+      return "";
+    }
+
+    const hh = String(Number(match[1]))
+      .padStart(2, "0");
+
+    const mm = String(match[2] || "00")
+      .padStart(2, "0");
+
+    if (
+      hh === "19" &&
+      (mm === "00" || mm === "30")
+    ) {
+      return "19:30";
+    }
+
+    return `${hh}:${mm}`;
+  };
+
+  const provenSlotLottery =
+    String(key || lotteryKey || "")
+      .trim()
+      .toUpperCase();
+
+  const provenSlotHour =
+    normalizeProvenSlotHour(targetH);
+
+  /*
+   * Somente os horários oficiais/atuais aprovados.
+   *
+   * RJ 14h e 16h NÃO entram aqui porque já estão
+   * tratados pela regra anterior.
+   */
+  const provenSlotProfiles = {
+    PT_RIO: {
+      "09:00": ["hour"],
+      "11:00": ["hour", "recent"],
+      "18:00": ["recent"],
+      "21:00": ["dowHour"],
+    },
+
+    NACIONAL: {
+      "02:00": ["dayMonth", "recent"],
+
+      "08:00": [
+        "hour",
+        "dowHour",
+        "dayMonth",
+        "transition",
+        "recent",
+        "scene",
+      ],
+
+      "10:00": [
+        "dowHour",
+        "dayMonth",
+        "scene",
+      ],
+
+      "12:00": [
+        "dayMonth",
+      ],
+
+      "15:00": [
+        "transition",
+        "scene",
+      ],
+
+      "17:00": [
+        "hour",
+        "scene",
+      ],
+
+      "21:00": [
+        "transition",
+      ],
+
+      "23:00": [
+        "dayMonth",
+        "recent",
+      ],
+    },
+
+    FEDERAL: {
+      "20:00": [
+        "transition",
+        "scene",
+      ],
+    },
+
+    LOOK: {
+      "07:00": [
+        "dayMonth",
+        "recent",
+      ],
+
+      "09:00": [
+        "dowHour",
+        "dayMonth",
+      ],
+
+      "11:00": [
+        "hour",
+      ],
+
+      "14:00": [
+        "hour",
+        "dayMonth",
+        "transition",
+      ],
+
+      "16:00": [
+        "dowHour",
+        "dayMonth",
+        "transition",
+        "recent",
+      ],
+
+      "18:00": [
+        "dowHour",
+        "recent",
+        "scene",
+      ],
+
+      "21:00": [
+        "hour",
+        "dowHour",
+        "transition",
+      ],
+
+      "23:00": [
+        "hour",
+        "dayMonth",
+        "recent",
+        "scene",
+      ],
+    },
+  };
+
+  const provenSlotLayerKeys =
+    provenSlotProfiles?.[provenSlotLottery]?.[provenSlotHour] ||
+    null;
+
+  /*
+   * A sexta-feira 21h do RJ já possui teste específico:
+   *
+   * CENA/HISTÓRICO = 37,21%
+   *
+   * portanto a regra geral de RJ 21h NÃO substitui
+   * essa especialização.
+   */
+  const preservePtRioFriday21hScene =
+    Boolean(
+      shouldUsePtRioFriday21hSceneProfile
+    );
+
+  const shouldUseProvenSlotProfile =
+    Array.isArray(provenSlotLayerKeys) &&
+    provenSlotLayerKeys.length > 0 &&
+    !(
+      provenSlotLottery === "PT_RIO" &&
+      provenSlotHour === "21:00" &&
+      preservePtRioFriday21hScene
+    );
+
+  /*
+   * As probabilidades das camadas já foram calculadas
+   * pelo V3 antes deste ponto.
+   *
+   * Reproduzimos exatamente o princípio usado no teste:
+   *
+   * 1. normalizar cada camada entre os grupos;
+   * 2. combinar somente as camadas vencedoras;
+   * 3. peso igual entre as camadas do perfil;
+   * 4. score V3 apenas como desempate.
+   */
+  const buildProvenSlotRanking = (
+    source,
+    layerKeys
+  ) => {
+    const list =
+      Array.isArray(source)
+        ? [...source]
+        : [];
+
+    const totals =
+      Object.fromEntries(
+        layerKeys.map(
+          (layerKey) => [
+            layerKey,
+
+            list.reduce(
+              (sum, item) => {
+                const raw =
+                  Number(
+                    item?.details?.[layerKey]?.probability ??
+                    item?.details?.[layerKey]?.rawProbability ??
+                    0
+                  );
+
+                return (
+                  sum +
+                  (
+                    Number.isFinite(raw)
+                      ? Math.max(0, raw)
+                      : 0
+                  )
+                );
+              },
+              0
+            ),
+          ]
+        )
+      );
+
+    const profileScore = (item) => {
+      let sum = 0;
+      let used = 0;
+
+      for (const layerKey of layerKeys) {
+        const total =
+          Number(
+            totals?.[layerKey] || 0
+          );
+
+        if (!(total > 0)) {
+          continue;
+        }
+
+        const raw =
+          Number(
+            item?.details?.[layerKey]?.probability ??
+            item?.details?.[layerKey]?.rawProbability ??
+            0
+          );
+
+        const safeRaw =
+          Number.isFinite(raw)
+            ? Math.max(0, raw)
+            : 0;
+
+        sum +=
+          safeRaw / total;
+
+        used++;
+      }
+
+      return used > 0
+        ? sum / used
+        : 0;
+    };
+
+    return list.sort(
+      (a, b) => {
+        const scoreA =
+          profileScore(a);
+
+        const scoreB =
+          profileScore(b);
+
+        if (scoreB !== scoreA) {
+          return scoreB - scoreA;
+        }
+
+        /*
+         * Desempate:
+         * mantém a força probabilística original do V3.
+         */
+        const v3A =
+          Number(
+            a?.scoreProb ??
+            a?.score ??
+            0
+          );
+
+        const v3B =
+          Number(
+            b?.scoreProb ??
+            b?.score ??
+            0
+          );
+
+        if (v3B !== v3A) {
+          return v3B - v3A;
+        }
+
+        return (
+          Number(a?.grupo || 0) -
+          Number(b?.grupo || 0)
+        );
+      }
+    );
+  };
+
+  /*
+   * A primeira camada já contém:
+   *
+   * - V3 padrão;
+   * - sexta RJ 21h;
+   * - RJ 14h;
+   * - RJ 16h.
+   *
+   * Só aplicamos um novo perfil quando o slot atual
+   * consta explicitamente na matriz aprovada.
+   */
+  const finalRankedScoredSorted =
+    shouldUseProvenSlotProfile
+      ? buildProvenSlotRanking(
+          effectiveRankedScoredSorted,
+          provenSlotLayerKeys
+        )
+      : effectiveRankedScoredSorted;
+
+  const rankingAfterScore = finalRankedScoredSorted.map(
     (item, index) => {
       const before =
         rankingBeforeByGroup.get(Number(item?.grupo)) ||
@@ -6147,6 +6515,7 @@ export function auditTop3Backtest({
     lotteryKey,
   });
 }
+
 
 
 
