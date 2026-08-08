@@ -4189,8 +4189,69 @@ export function computeStatisticalTop3V3({
    * O ranking oficial é produzido exclusivamente
    * pelo V3_STATISTICAL.
    */
+  /*
+   * TOP3_PT_RIO_FRIDAY_21H_SCENE_PROFILE_V1
+   *
+   * Walk-forward:
+   * PT_RIO | sexta-feira | 21h
+   *
+   * V3....................: 61/215 = 28,37%
+   * CENA/HISTÓRICO........: 80/215 = 37,21%
+   * Ganho.................: +19 acertos
+   *
+   * IMPORTANTE:
+   * - não fixa grupo;
+   * - não fixa bicho;
+   * - somente altera o ranking deste contexto;
+   * - demais contextos permanecem no V3.
+   */
+  const shouldUsePtRioFriday21hSceneProfile =
+    String(key || lotteryKey || "").toUpperCase() === "PT_RIO" &&
+    Number(targetDow) === 5 &&
+    ["21h", "21:00"].includes(String(targetH || "").trim()) &&
+    String(targetY || "") >= "2026-08-07";
+
   const effectiveRankedScoredSorted =
-    rankedScoredSorted;
+    shouldUsePtRioFriday21hSceneProfile
+      ? [...rankedScoredSorted].sort((a, b) => {
+          const sceneA = Number(
+            a?.details?.scene?.probability || 0
+          );
+
+          const sceneB = Number(
+            b?.details?.scene?.probability || 0
+          );
+
+          if (sceneB !== sceneA) {
+            return sceneB - sceneA;
+          }
+
+          /*
+           * Desempate:
+           * mantém o score V3 como critério secundário.
+           */
+          const scoreA = Number(
+            a?.scoreProb ??
+            a?.score ??
+            0
+          );
+
+          const scoreB = Number(
+            b?.scoreProb ??
+            b?.score ??
+            0
+          );
+
+          if (scoreB !== scoreA) {
+            return scoreB - scoreA;
+          }
+
+          return (
+            Number(a?.grupo || 0) -
+            Number(b?.grupo || 0)
+          );
+        })
+      : rankedScoredSorted;
   const rankingAfterScore = effectiveRankedScoredSorted.map(
     (item, index) => {
       const before =
@@ -5947,6 +6008,7 @@ export function auditTop3Backtest({
     lotteryKey,
   });
 }
+
 
 
 
