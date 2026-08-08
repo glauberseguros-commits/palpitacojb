@@ -2472,7 +2472,39 @@ const list =
 
       if (timelineRow?.result == null) {
 
+
+
+        /*
+         * TOP3_HISTORY_EXACT_ORDER_MIRROR_V3
+         *
+         * O slot pendente correspondente ao cálculo atual
+         * deve reproduzir exatamente o mesmo array usado
+         * pelo card principal, inclusive a ordem 1º/2º/3º.
+         *
+         * Nenhum cálculo é refeito.
+         */
+        const currentPredictionKey =
+          buildTop3HistoryTargetKey(
+            analysisYmd,
+            analysisHourBucket
+          );
+        const isCurrentPredictionSlot =
+          hasCurrentTop3Context &&
+          key === currentPredictionKey &&
+          Array.isArray(list) &&
+          list.length >= 3;
+        if (isCurrentPredictionSlot) {
+          rowsByTarget.set(key, {
+            ...timelineRow,
+            picks: list
+              .slice(0, 3)
+              .map((item) => Number(item?.grupo))
+              .filter(Number.isFinite),
+            top3: list.slice(0, 3),
+          });
+        }
         continue;
+
 
       }
 
@@ -2578,6 +2610,10 @@ const list =
     historyAnchorYmd,
     persistedTop3History,
     persistedTop3HistoryResolved,
+    hasCurrentTop3Context,
+    list,
+    analysisYmd,
+    analysisHourBucket,
   ]);
 
   const historySummary = useMemo(() => {
