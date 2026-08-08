@@ -1500,14 +1500,32 @@ export function useTop3Controller() {
       if (!isCurrentContext()) return;
 
       try {
-        const persistedTop3 = hydratePersistedTop3(
-          currentPersistedPrediction,
-          {
-            lotteryKey: lotteryKeySafe,
-            targetYmd: analysisYmd,
-            targetHour: analysisHourBucket,
-          }
-        );
+        /*
+         * TOP3_PREDICTED_SNAPSHOT_REFRESH_V1
+         *
+         * Snapshot VALIDATED representa histórico fechado e pode ser
+         * hidratado normalmente.
+         *
+         * Snapshot ainda PREDICTED não é fonte de verdade para o motor.
+         * Ele pode ter sido persistido durante uma transição de contexto
+         * e, portanto, não deve impedir um novo cálculo legítimo para
+         * loteria + data + horário atuais.
+         */
+        const persistedStatus = safeStr(
+          currentPersistedPrediction?.status
+        ).toLowerCase();
+
+        const persistedTop3 =
+          persistedStatus === "validated"
+            ? hydratePersistedTop3(
+                currentPersistedPrediction,
+                {
+                  lotteryKey: lotteryKeySafe,
+                  targetYmd: analysisYmd,
+                  targetHour: analysisHourBucket,
+                }
+              )
+            : [];
 
         if (persistedTop3.length) {
           if (!isCurrentContext()) return;
@@ -1637,12 +1655,23 @@ export function useTop3Controller() {
       );
 
     /*
-     * Snapshot válido permanece imutável.
-     * Snapshot ausente, legado ou contaminado deve ser sobrescrito.
+     * TOP3_PREDICTED_SNAPSHOT_REFRESH_V1
+     *
+     * Histórico VALIDATED permanece absolutamente imutável.
+     *
+     * Um documento PREDICTED, mesmo estruturalmente válido, ainda pode
+     * ser atualizado enquanto o slot não foi fechado. Isso impede que
+     * um snapshot contaminado fique congelado e prevaleça sobre o
+     * cálculo correto do contexto atual.
      */
+    const currentPersistedStatus = safeStr(
+      currentPersistedPrediction?.status
+    ).toLowerCase();
+
     if (
       currentPersistedPrediction &&
-      currentPersistedSnapshotValid
+      currentPersistedSnapshotValid &&
+      currentPersistedStatus === "validated"
     ) {
       return;
     }

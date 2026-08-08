@@ -342,10 +342,49 @@ export async function saveTop3PredictionSnapshot({
     const current = await transaction.get(ref);
 
     if (current.exists()) {
+      const existingData = current.data() || {};
+      const existingStatus = safeStr(
+        existingData?.status
+      ).toLowerCase();
+
+      /*
+       * TOP3_PREDICTED_SNAPSHOT_REFRESH_V1
+       *
+       * VALIDATED é histórico fechado: nunca substituir.
+       *
+       * PREDICTED ainda pertence ao ciclo de previsão e pode ser
+       * atualizado pelo cálculo legítimo do mesmo
+       * lotteryKey + targetYmd + targetHour.
+       *
+       * Preservamos createdAt/createdBy para manter a origem do
+       * documento e alteramos apenas o conteúdo ainda não validado.
+       */
+      if (existingStatus === "validated") {
+        return {
+          ok: true,
+          created: false,
+          existing: true,
+          preserved: true,
+          reason: "VALIDATED_IMMUTABLE",
+        };
+      }
+
+      const refreshedPayload = cleanFirestoreValue({
+        ...payload,
+        createdAt:
+          existingData?.createdAt ?? payload.createdAt,
+        createdBy:
+          existingData?.createdBy || payload.createdBy,
+        updatedAt: now,
+      });
+
+      transaction.set(ref, refreshedPayload);
+
       return {
         ok: true,
         created: false,
         existing: true,
+        refreshed: true,
       };
     }
 
