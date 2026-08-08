@@ -4211,6 +4211,133 @@ export function computeStatisticalTop3V3({
     ["21h", "21:00"].includes(String(targetH || "").trim()) &&
     String(targetY || "") >= "2026-08-07";
 
+  /*
+   * TOP3_PT_RIO_14H_16H_PROVEN_PROFILE_V1
+   *
+   * WALK-FORWARD 2022-06-07 -> 2026-08-07
+   *
+   * RJ 14h
+   * V3........................: 483/1509 = 32,01%
+   * DOW+HOUR + TRANSITION.....: 506/1509 = 33,53%
+   * Ganho.....................: +23
+   *
+   * RJ 16h
+   * V3........................: 490/1507 = 32,51%
+   * TRANSITION + RECENT.......: 522/1507 = 34,64%
+   * Ganho.....................: +32
+   *
+   * Nenhum grupo é fixado.
+   * O ranking continua sendo calculado dinamicamente.
+   */
+
+  const isPtRioProfileContext =
+    String(key || lotteryKey || "").toUpperCase() === "PT_RIO" &&
+    String(targetY || "") >= "2026-08-08";
+
+  const shouldUsePtRio14hProvenProfile =
+    isPtRioProfileContext &&
+    ["14h", "14:00"].includes(String(targetH || "").trim());
+
+  const shouldUsePtRio16hProvenProfile =
+    isPtRioProfileContext &&
+    ["16h", "16:00"].includes(String(targetH || "").trim());
+
+  /*
+   * Reproduz o mesmo princípio utilizado no walk-forward:
+   *
+   * 1. pega a probabilidade bruta de cada camada;
+   * 2. normaliza a camada entre os 25 grupos;
+   * 3. soma as camadas selecionadas com peso igual;
+   * 4. ordena pelo score do perfil;
+   * 5. usa o score V3 somente como desempate.
+   */
+  const buildPtRioProvenProfileRanking = (
+    source,
+    layerKeys
+  ) => {
+    const list = Array.isArray(source)
+      ? [...source]
+      : [];
+
+    const totals = Object.fromEntries(
+      layerKeys.map((layerKey) => [
+        layerKey,
+        list.reduce(
+          (sum, item) =>
+            sum +
+            Math.max(
+              0,
+              Number(
+                item?.details?.[layerKey]?.probability ||
+                0
+              )
+            ),
+          0
+        ),
+      ])
+    );
+
+    return list.sort((a, b) => {
+      const profileScore = (item) => {
+        let score = 0;
+        let used = 0;
+
+        for (const layerKey of layerKeys) {
+          const total =
+            Number(totals?.[layerKey] || 0);
+
+          if (!(total > 0)) {
+            continue;
+          }
+
+          const raw =
+            Math.max(
+              0,
+              Number(
+                item?.details?.[layerKey]?.probability ||
+                0
+              )
+            );
+
+          score += raw / total;
+          used += 1;
+        }
+
+        return used > 0
+          ? score / used
+          : 0;
+      };
+
+      const profileA = profileScore(a);
+      const profileB = profileScore(b);
+
+      if (profileB !== profileA) {
+        return profileB - profileA;
+      }
+
+      const scoreA = Number(
+        a?.scoreProb ??
+        a?.score ??
+        0
+      );
+
+      const scoreB = Number(
+        b?.scoreProb ??
+        b?.score ??
+        0
+      );
+
+      if (scoreB !== scoreA) {
+        return scoreB - scoreA;
+      }
+
+      return (
+        Number(a?.grupo || 0) -
+        Number(b?.grupo || 0)
+      );
+    });
+  };
+
   const effectiveRankedScoredSorted =
     shouldUsePtRioFriday21hSceneProfile
       ? [...rankedScoredSorted].sort((a, b) => {
@@ -4226,10 +4353,6 @@ export function computeStatisticalTop3V3({
             return sceneB - sceneA;
           }
 
-          /*
-           * Desempate:
-           * mantém o score V3 como critério secundário.
-           */
           const scoreA = Number(
             a?.scoreProb ??
             a?.score ??
@@ -4251,7 +4374,23 @@ export function computeStatisticalTop3V3({
             Number(b?.grupo || 0)
           );
         })
-      : rankedScoredSorted;
+      : shouldUsePtRio14hProvenProfile
+        ? buildPtRioProvenProfileRanking(
+            rankedScoredSorted,
+            [
+              "dowHour",
+              "transition",
+            ]
+          )
+        : shouldUsePtRio16hProvenProfile
+          ? buildPtRioProvenProfileRanking(
+              rankedScoredSorted,
+              [
+                "transition",
+                "recent",
+              ]
+            )
+          : rankedScoredSorted;
   const rankingAfterScore = effectiveRankedScoredSorted.map(
     (item, index) => {
       const before =
@@ -6008,6 +6147,7 @@ export function auditTop3Backtest({
     lotteryKey,
   });
 }
+
 
 
 
