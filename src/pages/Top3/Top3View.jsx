@@ -2443,9 +2443,37 @@ const list =
         });
       }
 
-      if (!timelineRow || timelineRow?.result == null) {
+      /*
+
+       * TOP3_HISTORY_CURRENT_CALCULATION_PRECEDENCE_V1
+
+       *
+
+       * Slot sem resultado:
+
+       * mantém o TOP3 já calculado pela timeline.
+
+       *
+
+       * Slot com resultado:
+
+       * segue para o merge com o snapshot histórico persistido.
+
+       */
+
+      if (!timelineRow) {
+
         rowsByTarget.set(key, row);
+
         continue;
+
+      }
+
+
+      if (timelineRow?.result == null) {
+
+        continue;
+
       }
 
       const resultGrupo = Number(timelineRow.result);
