@@ -533,7 +533,17 @@ function buildTodaySlotStatusMapPT_RIO(
     const hh = sched.hour;
 
     if (isSunday) {
-      if (
+      const sunday14And16Only =
+        String(dateYMD || "") >= "2026-07-19";
+
+      if (sunday14And16Only) {
+        map.set(
+          hh,
+          hh === "14:00" || hh === "16:00"
+            ? "HARD"
+            : "OFF"
+        );
+      } else if (
         hh === "18:00" ||
         hh === "19:00" ||
         hh === "21:00"
@@ -1604,3 +1614,4 @@ main().catch((e) => {
   releaseLock();
   process.exit(1);
 });
+
