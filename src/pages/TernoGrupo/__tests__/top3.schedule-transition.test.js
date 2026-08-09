@@ -57,6 +57,29 @@ function rioSchedule(ymd) {
 }
 
 describe("TOP3 — transição oficial de horários", () => {
+
+  test("PT Rio: sábado 08/08/2026 21h avança para domingo 09/08/2026 14h", () => {
+    const next = getNextSlotForLottery({
+      lotteryKey: "PT_RIO",
+      ymd: "2026-08-08",
+      hourBucket: "21h",
+      PT_RIO_SCHEDULE_NORMAL,
+      PT_RIO_SCHEDULE_WED_SAT,
+      FEDERAL_SCHEDULE,
+    });
+
+    expect(next).toBeTruthy();
+    expect(next.ymd).toBe("2026-08-09");
+    expect(
+      String(next.hour || "")
+        .trim()
+        .replace(/^(\d{1,2})h(?::?(\d{2}))?$/i, (_, h, m) =>
+          `${String(h).padStart(2, "0")}:${m || "00"}`
+        )
+    ).toBe("14:00");
+  });
+
+
   test("Federal histórica funciona no sábado 18/07/2026 às 20h", () => {
     expect(isFederalDrawDay("2026-07-18")).toBe(true);
 

@@ -800,30 +800,30 @@ export function useTop3Controller() {
         baseY = pickDrawYMD(todayLast) || effectiveYmd;
         baseH = toHourBucket(pickDrawHour(todayLast));
 
-        const effectiveTodaySchedule = (Array.isArray(todaySchedule) ? todaySchedule : [])
-          .map(toHourBucket)
-          .filter(Boolean);
+        /*
+         * HOTFIX RJ NEXT SLOT
+         *
+         * O alvo deve ser resolvido exclusivamente pelo calendário oficial.
+         *
+         * Não usar a posição física de todaySchedule para decidir o próximo
+         * sorteio. Essa abordagem podia produzir regressão temporal quando
+         * buckets equivalentes como 19h/19:30 eram normalizados em ordem
+         * diferente da cronológica.
+         *
+         * Exemplo obrigatório:
+         * 08/08/2026 21h -> 09/08/2026 14h.
+         */
+        const nextSlot = getNextSlotForLottery({
+          lotteryKey: lKey,
+          ymd: baseY,
+          hourBucket: baseH,
+          PT_RIO_SCHEDULE_NORMAL,
+          PT_RIO_SCHEDULE_WED_SAT,
+          FEDERAL_SCHEDULE,
+        });
 
-        const baseIdx = baseY === effectiveYmd
-          ? effectiveTodaySchedule.indexOf(baseH)
-          : -1;
-
-        if (baseIdx >= 0 && baseIdx < effectiveTodaySchedule.length - 1) {
-          resolvedTargetY = effectiveYmd;
-          resolvedTargetH = effectiveTodaySchedule[baseIdx + 1];
-        } else {
-          const nextSlot = getNextSlotForLottery({
-            lotteryKey: lKey,
-            ymd: baseY,
-            hourBucket: baseH,
-            PT_RIO_SCHEDULE_NORMAL,
-            PT_RIO_SCHEDULE_WED_SAT,
-            FEDERAL_SCHEDULE,
-          });
-
-          resolvedTargetY = safeStr(nextSlot?.ymd || "");
-          resolvedTargetH = toHourBucket(nextSlot?.hour || "");
-        }
+        resolvedTargetY = safeStr(nextSlot?.ymd || "");
+        resolvedTargetH = toHourBucket(nextSlot?.hour || "");
       } else {
         const firstHourToday = toHourBucket(todaySchedule?.[0]);
 
