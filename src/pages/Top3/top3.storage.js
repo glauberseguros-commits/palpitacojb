@@ -183,28 +183,17 @@ function registerPrediction({
   const status = resolvePendingStatus(ymd, hour, normalizedPicks);
 
   if (idx >= 0) {
-    const prev = log[idx] || {};
-
-    if (prev.result != null || prev.status === "validated") return;
-
-    log[idx] = {
-      ...prev,
-      targetKey: normalizedKey,
-      target: { ymd, hour },
-      picks: normalizedPicks,
-      result: null,
-      hit: null,
-      snapshot:
-        Array.isArray(prev?.snapshot) && prev.snapshot.length
-          ? prev.snapshot
-          : Array.isArray(snapshot)
-            ? snapshot
-            : [],
-      engineVersion:
-        safeStr(prev?.engineVersion || engineVersion || "V3_STATISTICAL"),
-      createdAt: prev.createdAt || Date.now(),
-      status,
-    };
+    /*
+     * TOP3_FIRST_PUBLISHED_SNAPSHOT_IMMUTABLE_V1
+     *
+     * O primeiro registro do slot é o palpite oficial.
+     * registerPrediction não pode substituir picks/snapshot
+     * por uma previsão calculada posteriormente.
+     *
+     * Resultado e hit continuam sendo acrescentados por
+     * registerResult/reconcilePendingTop3Log.
+     */
+    return;
   } else {
     log.push({
       targetKey: normalizedKey,

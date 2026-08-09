@@ -1501,31 +1501,20 @@ export function useTop3Controller() {
 
       try {
         /*
-         * TOP3_PREDICTED_SNAPSHOT_REFRESH_V1
+         * TOP3_FIRST_PUBLISHED_SNAPSHOT_IMMUTABLE_V1
          *
-         * Snapshot VALIDATED representa histórico fechado e pode ser
-         * hidratado normalmente.
-         *
-         * Snapshot ainda PREDICTED não é fonte de verdade para o motor.
-         * Ele pode ter sido persistido durante uma transição de contexto
-         * e, portanto, não deve impedir um novo cálculo legítimo para
-         * loteria + data + horário atuais.
+         * A primeira previsão válida persistida para o slot é o
+         * palpite oficial, independentemente de ainda estar PREDICTED
+         * ou já estar VALIDATED.
          */
-        const persistedStatus = safeStr(
-          currentPersistedPrediction?.status
-        ).toLowerCase();
-
-        const persistedTop3 =
-          persistedStatus === "validated"
-            ? hydratePersistedTop3(
-                currentPersistedPrediction,
-                {
-                  lotteryKey: lotteryKeySafe,
-                  targetYmd: analysisYmd,
-                  targetHour: analysisHourBucket,
-                }
-              )
-            : [];
+        const persistedTop3 = hydratePersistedTop3(
+          currentPersistedPrediction,
+          {
+            lotteryKey: lotteryKeySafe,
+            targetYmd: analysisYmd,
+            targetHour: analysisHourBucket,
+          }
+        );
 
         if (persistedTop3.length) {
           if (!isCurrentContext()) return;
@@ -1655,23 +1644,14 @@ export function useTop3Controller() {
       );
 
     /*
-     * TOP3_PREDICTED_SNAPSHOT_REFRESH_V1
+     * TOP3_FIRST_PUBLISHED_SNAPSHOT_IMMUTABLE_V1
      *
-     * Histórico VALIDATED permanece absolutamente imutável.
-     *
-     * Um documento PREDICTED, mesmo estruturalmente válido, ainda pode
-     * ser atualizado enquanto o slot não foi fechado. Isso impede que
-     * um snapshot contaminado fique congelado e prevaleça sobre o
-     * cálculo correto do contexto atual.
+     * Snapshot válido já persistido = palpite oficial do slot.
+     * Não permitir que execução posterior do motor o substitua.
      */
-    const currentPersistedStatus = safeStr(
-      currentPersistedPrediction?.status
-    ).toLowerCase();
-
     if (
       currentPersistedPrediction &&
-      currentPersistedSnapshotValid &&
-      currentPersistedStatus === "validated"
+      currentPersistedSnapshotValid
     ) {
       return;
     }
