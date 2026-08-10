@@ -183,6 +183,25 @@ const {
 const CHECK_EXISTENCE = String(process.env.CHECK_EXISTENCE || "").trim() === "1";
 
 /**
+ * TOP3_FIRESTORE_QUOTA_CIRCUIT_BREAKER_V1
+ */
+function isFirestoreQuotaError(value) {
+  const text = String(
+    value?.error ||
+    value?.message ||
+    value?.details ||
+    value ||
+    ""
+  );
+
+  return (
+    Number(value?.code) === 8 ||
+    text.includes("RESOURCE_EXHAUSTED") ||
+    text.includes("Quota exceeded")
+  );
+}
+
+/**
  * Retry HTTP simples (evita falhas intermitentes/429)
  */
 const HTTP_RETRIES = Number.isFinite(Number(process.env.HTTP_RETRIES))
@@ -1854,10 +1873,57 @@ async function runImport({ date, lotteryKey = "PT_RIO", closeHour = null } = {})
 
   const historySyncStartedAt = Date.now();
 
-  const top3HistorySync =
-    await syncImportedResultToTop3History(
-      response
+  let firestoreQuotaBlocked = false;
+
+  let top3HistorySync = {
+    ok: true,
+    skipped: true,
+    reason: "not_attempted",
+  };
+
+  try {
+    top3HistorySync =
+      await syncImportedResultToTop3History(
+        response
+      );
+  } catch (error) {
+    top3HistorySync = {
+      ok: false,
+      skipped: false,
+      error:
+        error?.message ||
+        String(error),
+    };
+
+    if (isFirestoreQuotaError(error)) {
+      firestoreQuotaBlocked = true;
+
+      console.warn(
+        "[TOP3 QUOTA BREAKER] HISTORY SYNC -> quota; " +
+        "reconciliation e auto prediction ignorados neste ciclo."
+      );
+    } else {
+      console.error(
+        "[TOP3 HISTORY SYNC] falhou:",
+        error?.stack ||
+        error?.message ||
+        error
+      );
+    }
+  }
+
+  // O history sync também pode retornar erro de quota sem lançar exceção.
+  if (
+    !firestoreQuotaBlocked &&
+    isFirestoreQuotaError(top3HistorySync)
+  ) {
+    firestoreQuotaBlocked = true;
+
+    console.warn(
+      "[TOP3 QUOTA BREAKER] HISTORY SYNC retornou quota; " +
+      "reconciliation e auto prediction ignorados neste ciclo."
     );
+  }
 
   performance.historySyncMs =
     Date.now() - historySyncStartedAt;
@@ -1872,6 +1938,7 @@ async function runImport({ date, lotteryKey = "PT_RIO", closeHour = null } = {})
   };
 
   if (
+    !firestoreQuotaBlocked &&
     response?.ok === true &&
     response?.captured === true &&
     normalizedClose
@@ -1901,6 +1968,15 @@ async function runImport({ date, lotteryKey = "PT_RIO", closeHour = null } = {})
           error?.message ||
           String(error),
       };
+
+      if (isFirestoreQuotaError(error)) {
+        firestoreQuotaBlocked = true;
+
+        console.warn(
+          "[TOP3 QUOTA BREAKER] RECONCILIATION -> quota; " +
+          "auto prediction ignorado neste ciclo."
+        );
+      }
 
       console.error(
         "[TOP3 RESULT RECONCILIATION] falhou:",
@@ -1962,6 +2038,7 @@ async function runImport({ date, lotteryKey = "PT_RIO", closeHour = null } = {})
   });
 
   if (
+    !firestoreQuotaBlocked &&
     response.ok === true &&
     response.blocked !== true &&
     response.captured === true &&
@@ -2131,7 +2208,9 @@ async function runImport({ date, lotteryKey = "PT_RIO", closeHour = null } = {})
     }
   } else {
     const top3AutoSkipReason =
-      response.blocked === true
+      firestoreQuotaBlocked
+        ? "firestore_quota_blocked"
+        : response.blocked === true
         ? "import_blocked"
         : response.captured !== true
         ? "result_not_captured"
