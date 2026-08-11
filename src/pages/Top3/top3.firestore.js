@@ -353,12 +353,23 @@ export async function saveTop3PredictionSnapshot({
        * snapshot, picks, análise e milhares não são substituídos
        * por nova execução do motor.
        */
+      /*
+       * TOP3_OFFICIAL_PERSISTED_ENTRY_RETURN_V1
+       *
+       * O chamador precisa receber o snapshot que realmente venceu
+       * a transação. Se já existe documento oficial, nunca deve assumir
+       * que o cálculo recém-produzido corresponde ao snapshot persistido.
+       */
       return {
         ok: true,
         created: false,
         existing: true,
         preserved: true,
         reason: "FIRST_PUBLISHED_SNAPSHOT_IMMUTABLE",
+        entry: {
+          id: ref.id,
+          ...current.data(),
+        },
       };
     }
 
@@ -368,6 +379,10 @@ export async function saveTop3PredictionSnapshot({
       ok: true,
       created: true,
       existing: false,
+      entry: {
+        id: ref.id,
+        ...payload,
+      },
     };
   });
 

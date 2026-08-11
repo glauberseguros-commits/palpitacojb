@@ -2552,6 +2552,71 @@ const list =
       });
     }
 
+    /*
+     * TOP3_HISTORY_CURRENT_PENDING_FINAL_MIRROR_V2
+     *
+     * CONSISTÊNCIA DO SLOT CORRENTE
+     *
+     * O histórico pendente do mesmo lottery/date/hour
+     * deve reproduzir exatamente o TOP3 atualmente
+     * apresentado pelo card principal.
+     *
+     * Esta etapa ocorre DEPOIS do merge entre timeline
+     * e histórico persistido para cobrir também o caminho:
+     *
+     *   !timelineRow -> persisted row -> continue
+     *
+     * Nenhum cálculo é refeito.
+     * Nenhum snapshot validado é alterado.
+     * Nenhum resultado/hit é alterado.
+     */
+    const currentPendingFinalMirrorKey =
+      buildTop3HistoryTargetKey(
+        analysisYmd,
+        analysisHourBucket
+      );
+
+    if (
+      hasCurrentTop3Context &&
+      currentPendingFinalMirrorKey &&
+      Array.isArray(list) &&
+      list.length >= 3
+    ) {
+      const currentPendingFinalMirrorRow =
+        rowsByTarget.get(
+          currentPendingFinalMirrorKey
+        );
+
+      if (
+        currentPendingFinalMirrorRow &&
+        currentPendingFinalMirrorRow?.result == null
+      ) {
+        rowsByTarget.set(
+          currentPendingFinalMirrorKey,
+          {
+            ...currentPendingFinalMirrorRow,
+
+            picks: list
+              .slice(0, 3)
+              .map(
+                (item) =>
+                  Number(item?.grupo)
+              )
+              .filter(Number.isFinite),
+
+            top3: list.slice(0, 3),
+
+            /*
+             * Marcador exclusivamente de runtime/UI.
+             * Não persiste no Firestore.
+             */
+            __top3CurrentPendingFinalMirror:
+              true,
+          }
+        );
+      }
+    }
+
     const todayYmd = todayYMDLocalView();
 
     return Array.from(rowsByTarget.values())
@@ -5579,5 +5644,3 @@ const list =
     </div>
   );
 }
-
-

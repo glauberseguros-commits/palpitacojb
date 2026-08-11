@@ -46,6 +46,36 @@ function normalizeLotteryKey(value) {
   return safeStr(value).toUpperCase();
 }
 
+/*
+ * TOP3_RECONCILIATION_QUOTA_PROPAGATION_V1
+ *
+ * RESOURCE_EXHAUSTED nunca pode ser tratado como
+ * "consulta ignorada". O erro precisa subir para o
+ * circuit breaker do importador.
+ */
+function isFirestoreQuotaError(error) {
+  const text = safeStr(
+    error?.message ||
+    error?.details ||
+    error
+  );
+
+  return (
+    Number(error?.code) === 8 ||
+    text.includes("RESOURCE_EXHAUSTED") ||
+    text.includes("Quota exceeded")
+  );
+}
+
+function stableJson(value) {
+  try {
+    return JSON.stringify(value);
+  }
+  catch {
+    return "";
+  }
+}
+
 function normalizeMilhar(value) {
   const digits = safeStr(value).replace(/\D/g, "");
 
@@ -228,13 +258,69 @@ async function readPredictionDocuments({
   targetYmd,
   onlyHour,
 }) {
+  const normalizedOnlyHour =
+    normalizeHour(onlyHour);
+
+  /*
+   * TOP3_RECONCILIATION_DIRECT_PREDICTION_READ_V1
+   *
+   * Para reconciliação de um único slot usamos o ID
+   * determinístico já adotado pelo frontend/backend:
+   *
+   * LOTTERY__YYYY-MM-DD__HH
+   *
+   * Evita consultar todas as previsões da data.
+   */
+  if (normalizedOnlyHour) {
+    const hourCode =
+      normalizedOnlyHour.slice(0, 2);
+
+    const id =
+      lotteryKey +
+      "__" +
+      targetYmd +
+      "__" +
+      hourCode;
+
+    const docSnapshot =
+      await database
+        .collection("top3_predictions")
+        .doc(id)
+        .get();
+
+    if (!docSnapshot.exists) {
+      return [];
+    }
+
+    const entry = {
+      id: docSnapshot.id,
+      ref: docSnapshot.ref,
+      ...docSnapshot.data(),
+    };
+
+    if (
+      normalizeLotteryKey(
+        entry?.lotteryKey
+      ) !== lotteryKey
+    ) {
+      return [];
+    }
+
+    if (
+      normalizeHour(
+        entry?.targetHour
+      ) !== normalizedOnlyHour
+    ) {
+      return [];
+    }
+
+    return [entry];
+  }
+
   const snapshot = await database
     .collection("top3_predictions")
     .where("targetYmd", "==", targetYmd)
     .get();
-
-  const normalizedOnlyHour =
-    normalizeHour(onlyHour);
 
   return snapshot.docs
     .map((doc) => ({
@@ -243,28 +329,11 @@ async function readPredictionDocuments({
       ...doc.data(),
     }))
     .filter((entry) => {
-      const entryLottery =
+      return (
         normalizeLotteryKey(
           entry?.lotteryKey
-        );
-
-      const entryHour =
-        normalizeHour(
-          entry?.targetHour
-        );
-
-      if (entryLottery !== lotteryKey) {
-        return false;
-      }
-
-      if (
-        normalizedOnlyHour &&
-        entryHour !== normalizedOnlyHour
-      ) {
-        return false;
-      }
-
-      return true;
+        ) === lotteryKey
+      );
     });
 }
 
@@ -286,6 +355,16 @@ async function readDrawDocuments({
       snapshots.push(snapshot);
     }
     catch (error) {
+      /*
+       * TOP3_RECONCILIATION_QUOTA_PROPAGATION_V1
+       *
+       * Quota esgotada precisa interromper imediatamente
+       * o reconciliador e alcançar o circuit breaker.
+       */
+      if (isFirestoreQuotaError(error)) {
+        throw error;
+      }
+
       console.warn(
         "[TOP3 RECONCILE] consulta ignorada",
         {
@@ -726,6 +805,129 @@ async function reconcileTop3PredictionDayBackend({
       updatedAt: now,
       validationSource: source,
     };
+
+    /*
+     * TOP3_RECONCILIATION_IDEMPOTENT_WRITE_V1
+     *
+     * Resultado e análise já persistidos corretamente:
+     * zero escrita adicional.
+     */
+    const alreadyValidated =
+      safeStr(prediction?.status).toLowerCase() ===
+        "validated" &&
+
+      normalizeLotteryKey(
+        prediction?.resultLotteryKey
+      ) === lottery &&
+
+      Number(prediction?.resultGrupo) ===
+        Number(payload.resultGrupo) &&
+
+      normalizeMilhar(
+        prediction?.resultMilhar
+      ) ===
+        normalizeMilhar(payload.resultMilhar) &&
+
+      stableJson(
+        Array.isArray(
+          prediction?.resultTop3Groups
+        )
+          ? prediction.resultTop3Groups
+          : []
+      ) ===
+        stableJson(
+          payload.resultTop3Groups
+        ) &&
+
+      stableJson(
+        Array.isArray(
+          prediction?.resultTop3Milhares
+        )
+          ? prediction.resultTop3Milhares
+          : []
+      ) ===
+        stableJson(
+          payload.resultTop3Milhares
+        ) &&
+
+      safeStr(
+        prediction?.hitType
+      ) === safeStr(payload.hitType) &&
+
+      Number(
+        prediction?.hitScore ?? 0
+      ) === Number(payload.hitScore) &&
+
+      Number(
+        prediction?.hitPosition ?? -1
+      ) === Number(payload.hitPosition) &&
+
+      Number(
+        prediction?.predictionPosition ?? -1
+      ) === Number(
+        payload.predictionPosition
+      ) &&
+
+      Number(
+        prediction?.resultPosition ?? -1
+      ) === Number(payload.resultPosition) &&
+
+      safeStr(
+        prediction?.podiumMedal
+      ) === safeStr(payload.podiumMedal) &&
+
+      safeStr(
+        prediction?.matchedValue
+      ) === safeStr(payload.matchedValue) &&
+
+      Number(
+        prediction?.matchedGrupo ?? -1
+      ) === Number(
+        payload.matchedGrupo ?? -1
+      ) &&
+
+      normalizeMilhar(
+        prediction?.matchedMilhar
+      ) ===
+        normalizeMilhar(
+          payload.matchedMilhar
+        ) &&
+
+      stableJson(
+        Array.isArray(prediction?.hits)
+          ? prediction.hits
+          : []
+      ) ===
+        stableJson(
+          Array.isArray(payload.hits)
+            ? payload.hits
+            : []
+        );
+
+    if (alreadyValidated) {
+      rows.push({
+        id: prediction.id,
+        hour,
+        status: "ALREADY_VALIDATED",
+        hitType: payload.hitType,
+        hitScore: payload.hitScore,
+        hitPosition:
+          payload.hitPosition,
+        predictionPosition:
+          payload.predictionPosition,
+        resultPosition:
+          payload.resultPosition,
+        hitCount:
+          payload.hitCount,
+        resultTop3Groups:
+          payload.resultTop3Groups,
+        resultTop3Milhares:
+          payload.resultTop3Milhares,
+        hits: payload.hits,
+      });
+
+      continue;
+    }
 
     if (!dryRun) {
       await prediction.ref.set(

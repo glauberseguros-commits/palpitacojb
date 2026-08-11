@@ -1749,27 +1749,88 @@ export function useTop3Controller() {
         if (!result?.ok) {
           top3SaveRunKeys.delete(saveRunKey);
 
+          /*
+           * TOP3_OFFICIAL_PUBLICATION_CONFIRMATION_V1
+           *
+           * Um cálculo que não foi persistido não pode continuar sendo
+           * apresentado como palpite oficial.
+           *
+           * Isso evita exatamente o cenário:
+           * card principal = cálculo novo
+           * histórico      = snapshot oficial antigo
+           */
+          if (
+            activeTop3ContextRef.current === activeTop3ContextKey &&
+            top3ContextKey === activeTop3ContextKey
+          ) {
+            setTop3([]);
+            setTop3ContextKey("");
+          }
+
           console.error(
             "[TOP3 FIRESTORE SAVE FAILED]",
             diagnostic
           );
         } else {
           /*
-           * O TOP3 exibido já foi calculado para o contexto atual.
+           * TOP3_OFFICIAL_PUBLICATION_CONFIRMATION_V1
            *
-           * O salvamento no Firestore é apenas persistência e não deve
-           * reaplicar o snapshot no estado visual. Uma gravação iniciada
-           * antes da troca de loteria pode terminar depois e, se atualizar
-           * currentPersistedPrediction, disparar novamente a hidratação do
-           * TOP3 com um contexto anterior.
+           * A autoridade é o documento que venceu a transação.
            *
-           * O snapshot persistido continuará sendo carregado normalmente
-           * por loadCurrentPersistedPrediction quando loteria, data ou
-           * horário forem consultados.
+           * - created=true:
+           *   o snapshot recém-criado passa a ser oficial.
+           *
+           * - preserved/existing:
+           *   o snapshot antigo já era o oficial e deve substituir
+           *   qualquer cálculo novo produzido localmente.
            */
+          const officialEntry =
+            result?.entry &&
+            typeof result.entry === "object"
+              ? result.entry
+              : null;
+
+          const officialTop3 =
+            hydratePersistedTop3(
+              officialEntry,
+              {
+                lotteryKey: lotteryKeySafe,
+                targetYmd: analysisYmd,
+                targetHour: analysisHourBucket,
+              }
+            );
+
+          if (
+            activeTop3ContextRef.current === activeTop3ContextKey &&
+            top3ContextKey === activeTop3ContextKey &&
+            officialTop3.length === 3
+          ) {
+            setCurrentPersistedPrediction(
+              officialEntry
+            );
+
+            setCurrentPersistedResolved(true);
+
+            setTop3(officialTop3);
+
+            setTop3ContextKey(
+              activeTop3ContextKey
+            );
+          }
+
           console.info(
             "[TOP3 FIRESTORE SAVE OK]",
-            diagnostic
+            {
+              ...diagnostic,
+              officialGroups:
+                officialTop3.map(
+                  (item) => Number(item?.grupo)
+                ),
+              preserved:
+                Boolean(result?.preserved),
+              created:
+                Boolean(result?.created),
+            }
           );
         }
       })
@@ -1793,6 +1854,20 @@ export function useTop3Controller() {
 
           window.__TOP3_FIRESTORE_LAST_SAVE__ = diagnostic;
         } catch {}
+
+        /*
+         * TOP3_OFFICIAL_PUBLICATION_CONFIRMATION_V1
+         *
+         * Falha técnica de persistência:
+         * não publicar cálculo local como previsão oficial.
+         */
+        if (
+          activeTop3ContextRef.current === activeTop3ContextKey &&
+          top3ContextKey === activeTop3ContextKey
+        ) {
+          setTop3([]);
+          setTop3ContextKey("");
+        }
 
         console.error(
           "[TOP3 FIRESTORE SAVE EXCEPTION]",
@@ -1929,244 +2004,24 @@ export function useTop3Controller() {
     secondaryReady,
   ]);
 
-  useEffect(() => {
-    const persistedSchedule = scheduleKey
-      ? scheduleKey.split("|").filter(Boolean)
-      : [];
+  /*
+   * TOP3_BACKEND_ONLY_RECONCILIATION_V2
+   *
+   * A reconciliacao oficial dos resultados pertence exclusivamente
+   * ao backend.
+   *
+   * O antigo useEffect de reconciliacao no navegador foi removido
+   * fisicamente. O frontend permanece consumidor dos snapshots
+   * persistidos e nao executa reconciliacao oficial.
+   *
+   * Isso evita:
+   * - leituras duplicadas;
+   * - escritas concorrentes;
+   * - retries do navegador;
+   * - pressao desnecessaria sobre o Firestore;
+   * - duas autoridades para os hits oficiais.
+   */
 
-    debugTop3Effect("05_reconcile_history", {
-      lotteryKey: lotteryKeySafe,
-      timelineYmd,
-      scheduleLength: persistedSchedule.length,
-      todayDrawsLength: Array.isArray(todayDraws)
-        ? todayDraws.length
-        : -1,
-      rangeDrawsLength: Array.isArray(rangeDraws)
-        ? rangeDraws.length
-        : -1,
-      loading,
-      secondaryReady,
-    });
-
-    if (!secondaryReady) return;
-    if (loading) return;
-    if (!isYMD(timelineYmd)) return;
-    if (!(todayDraws?.length || rangeDraws?.length)) return;
-
-    const drawMap = new Map();
-
-    for (const draw of [
-      ...(Array.isArray(rangeDraws) ? rangeDraws : []),
-      ...(Array.isArray(todayDraws) ? todayDraws : []),
-    ]) {
-      if (pickDrawYMD(draw) !== timelineYmd) continue;
-
-      const key = drawKey(draw);
-      if (!key) continue;
-
-      drawMap.set(key, draw);
-    }
-
-    const targetDraws = Array.from(drawMap.values()).sort(
-      (a, b) => drawTs(a) - drawTs(b)
-    );
-
-    if (!targetDraws.length) return;
-
-    const drawSignature = targetDraws
-      .map((draw) => {
-        const key = drawKey(draw);
-
-        const prizes = Array.isArray(draw?.prizes)
-          ? draw.prizes
-          : [];
-
-        const podiumSignature = [1, 2, 3]
-          .map((position) => {
-            const prize =
-              prizes.find(
-                (item) =>
-                  Number(item?.position) === position
-              ) ||
-              prizes[position - 1] ||
-              null;
-
-            const milhar = safeStr(
-              prize?.milhar ??
-                prize?.numero ??
-                prize?.number ??
-                prize?.valor ??
-                draw?.[`prize_${position}`] ??
-                ""
-            )
-              .replace(/\D+/g, "")
-              .padStart(4, "0")
-              .slice(-4);
-
-            const directGrupo = Number(
-              prize?.grupo ??
-                prize?.group ??
-                prize?.animal_grupo ??
-                prize?.grupo2
-            );
-
-            const dezenaRaw = Number(
-              milhar.slice(-2)
-            );
-
-            const dezena =
-              dezenaRaw === 0
-                ? 100
-                : dezenaRaw;
-
-            const inferredGrupo =
-              milhar && Number.isFinite(dezena)
-                ? Math.ceil(dezena / 4)
-                : 0;
-
-            const grupo =
-              Number.isFinite(directGrupo) &&
-              directGrupo >= 1 &&
-              directGrupo <= 25
-                ? directGrupo
-                : inferredGrupo >= 1 &&
-                    inferredGrupo <= 25
-                  ? inferredGrupo
-                  : 0;
-
-            return [
-              position,
-              grupo,
-              milhar,
-            ].join(":");
-          })
-          .join(";");
-
-        return `${key}:${podiumSignature}`;
-      })
-      .join(",");
-
-    const reconcileRunKey = [
-      lotteryKeySafe,
-      timelineYmd,
-      scheduleKey,
-      drawSignature,
-    ].join("|");
-
-    if (top3ReconcileRunKeys.has(reconcileRunKey)) return;
-
-    top3ReconcileRunKeys.add(reconcileRunKey);
-
-    let alive = true;
-
-    reconcilePendingTop3Log({
-      todayDraws: Array.isArray(todayDraws) ? todayDraws : [],
-      rangeDraws: Array.isArray(rangeDraws) ? rangeDraws : [],
-    });
-
-    reconcileTop3PredictionDay({
-      lotteryKey: lotteryKeySafe,
-      targetYmd: timelineYmd,
-      schedule: persistedSchedule,
-      draws: targetDraws,
-    })
-      .then((result) => {
-        if (!result?.ok) {
-          top3ReconcileRunKeys.delete(reconcileRunKey);
-          top3ReconcileRetryCounts.delete(reconcileRunKey);
-          return;
-        }
-
-        const reconciledHistory = Array.isArray(result?.history)
-          ? result.history
-          : [];
-
-        if (alive) {
-          setPersistedTop3History(reconciledHistory);
-        }
-
-        const targetDrawKeys = new Set(
-          targetDraws
-            .map((draw) => drawKey(draw))
-            .filter(Boolean)
-        );
-
-        const hasPendingResult = reconciledHistory.some((entry) => {
-          const y = safeStr(entry?.targetYmd);
-          const h = toHourBucket(entry?.targetHour);
-          const key = isYMD(y) && h ? `${y}|${h}` : "";
-
-          return (
-            key &&
-            targetDrawKeys.has(key) &&
-            safeStr(entry?.status).toLowerCase() !== "validated"
-          );
-        });
-
-        const updated = Number(result?.updated || 0);
-
-        if (updated > 0 || !hasPendingResult) {
-          top3ReconcileRetryCounts.delete(reconcileRunKey);
-          return;
-        }
-
-        const retryCount =
-          Number(top3ReconcileRetryCounts.get(reconcileRunKey) || 0) + 1;
-
-        if (retryCount > TOP3_RECONCILE_MAX_RETRIES) {
-          top3ReconcileRunKeys.delete(reconcileRunKey);
-          top3ReconcileRetryCounts.delete(reconcileRunKey);
-
-          if (debugTop3) {
-            console.warn(
-              "[TOP3 FIRESTORE RECONCILE RETRIES EXHAUSTED]",
-              {
-                reconcileRunKey,
-                retryCount: retryCount - 1,
-                historyLength: reconciledHistory.length,
-              }
-            );
-          }
-
-          return;
-        }
-
-        top3ReconcileRetryCounts.set(
-          reconcileRunKey,
-          retryCount
-        );
-
-        window.setTimeout(() => {
-          top3ReconcileRunKeys.delete(reconcileRunKey);
-
-          if (alive) {
-            setReconcileRetryNonce((value) => value + 1);
-          }
-        }, TOP3_RECONCILE_RETRY_DELAY_MS);
-      })
-      .catch((error) => {
-        top3ReconcileRunKeys.delete(reconcileRunKey);
-        top3ReconcileRetryCounts.delete(reconcileRunKey);
-
-        if (debugTop3) {
-          console.warn("[TOP3 FIRESTORE RECONCILE]", error);
-        }
-      });
-
-    return () => {
-      alive = false;
-    };
-  }, [
-    todayDraws,
-    rangeDraws,
-    lotteryKeySafe,
-    timelineYmd,
-    scheduleKey,
-    debugTop3,
-    loading,
-    secondaryReady,
-    reconcileRetryNonce,
-  ]);
 
   const availableHistoryDates = useMemo(() => {
     const key = safeStr(lotteryKeySafe).toUpperCase();
