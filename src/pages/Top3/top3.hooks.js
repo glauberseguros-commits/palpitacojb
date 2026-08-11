@@ -1759,13 +1759,15 @@ export function useTop3Controller() {
            * card principal = cálculo novo
            * histórico      = snapshot oficial antigo
            */
-          if (
-            activeTop3ContextRef.current === activeTop3ContextKey &&
-            top3ContextKey === activeTop3ContextKey
-          ) {
-            setTop3([]);
-            setTop3ContextKey("");
-          }
+          /*
+           * TOP3_PERSISTENCE_ERROR_NON_DESTRUCTIVE_V1
+           *
+           * Falha de persistência não invalida nem apaga um TOP3
+           * já calculado/hidratado para o contexto atual.
+           *
+           * O erro continua registrado para diagnóstico.
+           * Não altera motor, ranking, snapshot ou histórico.
+           */
 
           console.error(
             "[TOP3 FIRESTORE SAVE FAILED]",
@@ -1861,13 +1863,15 @@ export function useTop3Controller() {
          * Falha técnica de persistência:
          * não publicar cálculo local como previsão oficial.
          */
-        if (
-          activeTop3ContextRef.current === activeTop3ContextKey &&
-          top3ContextKey === activeTop3ContextKey
-        ) {
-          setTop3([]);
-          setTop3ContextKey("");
-        }
+        /*
+           * TOP3_PERSISTENCE_ERROR_NON_DESTRUCTIVE_V1
+           *
+           * Falha de persistência não invalida nem apaga um TOP3
+           * já calculado/hidratado para o contexto atual.
+           *
+           * O erro continua registrado para diagnóstico.
+           * Não altera motor, ranking, snapshot ou histórico.
+           */
 
         console.error(
           "[TOP3 FIRESTORE SAVE EXCEPTION]",
