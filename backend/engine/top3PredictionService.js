@@ -727,6 +727,40 @@ function mapTop3ToPredictions(top = []) {
     .filter((item) => /^\d{2}$/.test(item.grupo));
 }
 
+async function loadExistingTop3PublicProjection({
+  lotteryKey,
+  date,
+  closeHour,
+}) {
+  const lk = normalizeLotteryKey(lotteryKey);
+  const ymd = normalizeYmd(date);
+  const hour = normalizeHour(closeHour);
+  const hourCode = publicHourCode(hour);
+
+  const id =
+    `${lk}__${ymd}__${hourCode}`;
+
+  const ref = getDb()
+    .collection("top3_predictions")
+    .doc(id);
+
+  const snap = await ref.get();
+
+  if (!snap.exists) {
+    return {
+      exists: false,
+      id,
+      data: null,
+    };
+  }
+
+  return {
+    exists: true,
+    id,
+    data: snap.data() || null,
+  };
+}
+
 async function createTop3PredictionRun(
   input = {},
   dependencies = {}
@@ -763,6 +797,47 @@ const computeTop3 =
     dependencies.publicApi ||
     loadTop3PublicApi();
 
+  /*
+   * TOP3_AUTO_IMPORT_EARLY_PUBLIC_GUARD_V1
+   *
+   * O auto-import não deve recalcular uma previsão oficial
+   * que já está persistida em top3_predictions.
+   *
+   * Esta proteção é exclusiva do source=auto-import.
+   * Chamadas manuais continuam seguindo o fluxo completo.
+   */
+  if (
+    input.dryRun !== true &&
+    String(input.source || "").trim() === "auto-import"
+  ) {
+    const existingPublic =
+      await loadExistingTop3PublicProjection({
+        lotteryKey,
+        date,
+        closeHour,
+      });
+
+    if (existingPublic.exists) {
+      return {
+        run: null,
+        predictions: [],
+        publicSnapshot: [],
+        publicProjection: {
+          ok: true,
+          created: false,
+          updated: false,
+          existing: true,
+          protected: true,
+          reason: "ALREADY_PERSISTED",
+          id: existingPublic.id,
+        },
+        engine: null,
+        dryRun: false,
+        skipped: true,
+        skipReason: "ALREADY_PERSISTED",
+      };
+    }
+  }
   const historyLoad = await loadPredictionHistory({
     lotteryKey,
     date,
@@ -991,4 +1066,3 @@ module.exports = {
   saveTop3PublicProjection,
   resolveNextTop3Slot,
 };
-
