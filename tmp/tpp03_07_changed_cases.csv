@@ -1,1 +1,0 @@
-variant,variant_name,case_number,history_index,ymd,hour,weekday,actual_group,baseline_groups,variant_groups,top1_changed,membership_changed,order_only_changed,entered_top3,exited_top3,baseline_top1_hit,variant_top1_hit,baseline_top3_hit,variant_top3_hit,top1_impact,top3_impact,candidate_scores_changed

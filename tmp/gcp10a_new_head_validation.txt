@@ -1,3 +1,0 @@
-Activated [palpitacojb].
-c178156 (HEAD -> main, origin/main, origin/HEAD) fix(top3): validar resultado pela loteria correta
-src/pages/Top3/top3.firestore.js

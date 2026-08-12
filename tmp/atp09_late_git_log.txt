@@ -1,5 +1,0 @@
-350c13e (HEAD -> main, origin/main, origin/HEAD) fix(late): remove filtros legados e consolida loterias
-e25a2e3 fix(late): separa loteria e horario em atrasados
-7d49994 feat(late): adiciona filtro de loteria em atrasados
-1bf64ea chore: ui polish dashboard/results + remove stray dot
-a953b59 chore(eol): renormalize files to LF

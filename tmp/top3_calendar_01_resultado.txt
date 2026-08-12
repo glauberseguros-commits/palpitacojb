@@ -1,4 +1,0 @@
-ALTERA├ç├âO APLICADA COM SUCESSO
-Arquivo: src/pages/Top3/Top3View.jsx
-Navega├º├úo anterior: ├║ltima data real dispon├¡vel.
-Navega├º├úo seguinte: pr├│xima data real dispon├¡vel.

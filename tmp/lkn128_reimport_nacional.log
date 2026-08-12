@@ -1,6 +1,0 @@
-STEP 1/3 Buscando API: NACIONAL 2022-01-01
-[FETCH] NACIONAL 2022-01-01 per-lottery=8 -> merged_draws=0 close_hours=[]
-STEP 2/3 Processando 0 draws retornados pela API...
-[IMPORT] API draws=0 | match_close=0 | validos=0 | draws_upserted=0 | draws_novos=0 | prizes_upserted=0 | prizes_novos=0 | skip_vazio=0 | skip_invalido=0 | skip_close=0 | skip_complete=0 | CHECK_EXISTENCE=OFF | uf=BR lottery_key=NACIONAL
-STEP 3/3 OK. Import concluído: NACIONAL 2022-01-01
-[CLEANUP] NACIONAL 2022-01-01 slots=0 deleted=0

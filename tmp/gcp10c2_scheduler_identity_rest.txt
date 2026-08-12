@@ -1,7 +1,0 @@
-Activated [palpitacojb].
-
-===== FALHA CONTROLADA =====
-A identidade oficial não apareceu em até 90 segundos.
-
-Nenhum agendamento foi criado por este comando.
-Não execute novamente antes da análise.

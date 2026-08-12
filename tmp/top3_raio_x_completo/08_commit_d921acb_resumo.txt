@@ -1,4 +1,0 @@
-d921acb fix(top3): prevent stale data and improve mobile layout
- src/pages/Top3/Top3View.jsx  | 241 +++++++++++++++++++++++++++++++++++--------
- src/pages/Top3/top3.hooks.js |   3 +-
- 2 files changed, 201 insertions(+), 43 deletions(-)

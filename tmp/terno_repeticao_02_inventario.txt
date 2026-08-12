@@ -1,9 +1,0 @@
-
-========================================================================================================================
-OBJETIVO
-========================================================================================================================
-1. Congelar o Motor Tradicional.
-2. Clonar a arquitetura para um Motor Repetição.
-3. Preservar 100% do funcionamento atual.
-4. Alterar apenas o novo motor.
-5. Permitir validação por multiplicidade (2x e 3x).

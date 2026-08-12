@@ -1,5 +1,0 @@
-version=original
-run=3
-warmup=False
-elapsed_ms=33329
-exit_code=0

@@ -1,9 +1,0 @@
-description: 'Duas tentativas r?pidas nas janelas normais: minutos 08 e 18'
-httpTarget:
-  uri: https://run.googleapis.com/v2/projects/palpitacojb-app/locations/southamerica-east1/jobs/palpitaco-auto-import:run
-lastAttemptTime: '2026-07-24T13:42:04.964077Z'
-name: projects/palpitacojb-app/locations/southamerica-east1/jobs/palpitaco-standard-windows
-schedule: 8,18 2,7-12,14-18,23 * * *
-scheduleTime: '2026-07-24T14:08:00Z'
-state: ENABLED
-timeZone: America/Sao_Paulo

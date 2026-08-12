@@ -1,9 +1,0 @@
-isFederal adicionado ao array de dependências correto.
-
-DEPENDÊNCIAS VALIDADAS:
-- scopeKey
-- isFederal
-- effectiveBounds?.minYmd
-- effectiveBounds?.maxYmd
-- ymd
-- ymdSafe

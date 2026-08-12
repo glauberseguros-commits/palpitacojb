@@ -1,9 +1,0 @@
-
-Loteria  ExitCode Status Log
--------  -------- ------ ---
-PT_RIO          0 OK     .\tmp\top3_method_validation_20260723_222152\PT_RIO.log
-FEDERAL         1 FALHA  .\tmp\top3_method_validation_20260723_222152\FEDERAL.log
-LOOK            1 FALHA  .\tmp\top3_method_validation_20260723_222152\LOOK.log
-NACIONAL        1 FALHA  .\tmp\top3_method_validation_20260723_222152\NACIONAL.log
-
-

@@ -1,4 +1,0 @@
-===== https://api.palpitacojb.com.br/api/pitaco/results?date=2026-07-19&lottery=NACIONAL =====
-ERRO=Response status code does not indicate success: 400 (Bad Request).
-===== https://palpitacojb.onrender.com/api/pitaco/results?date=2026-07-19&lottery=NACIONAL =====
-ERRO=Response status code does not indicate success: 400 (Bad Request).

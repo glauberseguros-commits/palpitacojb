@@ -1,7 +1,0 @@
-Activated [palpitacojb].
-
-===== FALHA CONTROLADA =====
-Não foi possível criar a identidade oficial do Cloud Scheduler.
-
-Nenhum agendamento foi criado por este comando.
-Não execute novamente antes da análise.

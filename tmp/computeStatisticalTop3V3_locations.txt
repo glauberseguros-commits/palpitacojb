@@ -1,7 +1,0 @@
-C:\Users\glaub\palpitaco\backend\engine\scoreEngineUnified.js:88: function computeStatisticalTop3V3(input = {}) {
-C:\Users\glaub\palpitaco\backend\engine\scoreEngineUnified.js:93: "computeStatisticalTop3V3"
-C:\Users\glaub\palpitaco\backend\engine\scoreEngineUnified.js:102: computeStatisticalTop3V3,
-C:\Users\glaub\palpitaco\backend\engine\top3PredictionService.js:13: computeStatisticalTop3V3,
-C:\Users\glaub\palpitaco\backend\engine\top3PredictionService.js:757: computeStatisticalTop3V3;
-C:\Users\glaub\palpitaco\backend\scripts\backtestTop3Official.js:12: computeStatisticalTop3V3,
-C:\Users\glaub\palpitaco\backend\scripts\backtestTop3Official.js:516: computeStatisticalTop3V3;

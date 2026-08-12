@@ -1,6 +1,0 @@
-STEP 1/3 Buscando API: PT_RIO 2026-07-18 req=19:20 -> slot=19:00
-[FETCH] PT_RIO 2026-07-18 per-lottery=6 -> merged_draws=5 close_hours=[09:00, 11:00, 14:00, 16:00, 19:00]
-STEP 2/3 Processando 5 draws retornados pela API...
-[IMPORT] API draws=5 | match_close=1 | validos=1 | draws_upserted=1 | draws_novos=0 | prizes_upserted=7 | prizes_novos=0 | skip_vazio=0 | skip_invalido=0 | skip_close=4 | skip_complete=0 | CHECK_EXISTENCE=OFF | uf=RJ lottery_key=PT_RIO | expected=1 complete=1 slotDocs=1 apiTargets=1
-STEP 3/3 OK. Import conclu├¡do: PT_RIO 2026-07-18 19:00
-[CLEANUP] PT_RIO 2026-07-18 slots=0 deleted=0

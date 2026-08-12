@@ -1,9 +1,0 @@
-===== DAT-04 — VALIDAÇÃO PÓS-DEPLOY =====
-
-URL: https://palpitacojb.com.br
-HTTP: 200
-OK
-
-URL: https://api.palpitacojb.com.br/health
-HTTP: 200
-OK
