@@ -89,7 +89,6 @@ C:.
 �   �       predictionRepository.js
 �   �       predictionService.js
 �   �       scoreConfig.js
-�   �       scoreEngineV1.js
 �   �       scoreEngineV2.js
 �   �       snapshotManager.js
 �   �       snapshotMetadata.js
@@ -8114,7 +8113,6 @@ C:.
 �   �   �   runAutoRepairToday.cmd
 �   �   �   runBackfillFromPlan.js
 �   �   �   smoke-receive.ps1
-�   �   �   testPredictionRun.js
 �   �   �   
 �   �   +---maintenance
 �   �           backfillYmdDraws.js
