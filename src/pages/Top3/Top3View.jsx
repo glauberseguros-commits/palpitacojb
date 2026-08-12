@@ -2471,41 +2471,41 @@ const list =
 
 
       if (timelineRow?.result == null) {
-
-
-
         /*
-         * TOP3_HISTORY_EXACT_ORDER_MIRROR_V3
+         * TOP3_PENDING_PERSISTED_UI_AUTHORITY_V1
          *
-         * O slot pendente correspondente ao cálculo atual
-         * deve reproduzir exatamente o mesmo array usado
-         * pelo card principal, inclusive a ordem 1º/2º/3º.
+         * Slot ainda sem resultado oficial:
          *
-         * Nenhum cálculo é refeito.
+         * Se existe documento persistido para este mesmo
+         * lottery/date/hour, o snapshot desse documento é
+         * a previsão oficial já publicada e deve ser o que
+         * chega ao usuário final.
+         *
+         * A timeline continua fornecendo apenas metadados
+         * auxiliares. Não recalculamos nem substituímos o
+         * TOP3 por `list`.
          */
-        const currentPredictionKey =
-          buildTop3HistoryTargetKey(
-            analysisYmd,
-            analysisHourBucket
-          );
-        const isCurrentPredictionSlot =
-          hasCurrentTop3Context &&
-          key === currentPredictionKey &&
-          Array.isArray(list) &&
-          list.length >= 3;
-        if (isCurrentPredictionSlot) {
-          rowsByTarget.set(key, {
-            ...timelineRow,
-            picks: list
-              .slice(0, 3)
-              .map((item) => Number(item?.grupo))
-              .filter(Number.isFinite),
-            top3: list.slice(0, 3),
-          });
-        }
+        rowsByTarget.set(key, {
+          ...timelineRow,
+          ...row,
+
+          picks: Array.isArray(row?.picks)
+            ? row.picks.slice(0, 3)
+            : Array.isArray(row?.top3)
+              ? row.top3
+                  .slice(0, 3)
+                  .map((item) => Number(item?.grupo))
+                  .filter(Number.isFinite)
+              : [],
+
+          top3: Array.isArray(row?.top3)
+            ? row.top3.slice(0, 3)
+            : [],
+
+          __top3PendingPersistedAuthority: true,
+        });
+
         continue;
-
-
       }
 
       const resultGrupo = Number(timelineRow.result);
@@ -2589,7 +2589,11 @@ const list =
 
       if (
         currentPendingFinalMirrorRow &&
-        currentPendingFinalMirrorRow?.result == null
+        currentPendingFinalMirrorRow?.result == null &&
+        currentPendingFinalMirrorRow
+          ?.__top3HistorySource !== "persisted" &&
+        !currentPendingFinalMirrorRow
+          ?.__top3PendingPersistedAuthority
       ) {
         rowsByTarget.set(
           currentPendingFinalMirrorKey,
