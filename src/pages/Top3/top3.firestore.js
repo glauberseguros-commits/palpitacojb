@@ -249,6 +249,7 @@ export async function saveTop3PredictionSnapshot({
   picks,
   snapshot,
   engineVersion,
+  replaceCurrentFutureSnapshot = false,
 }) {
   let user = null;
 
@@ -343,28 +344,65 @@ export async function saveTop3PredictionSnapshot({
 
     if (current.exists()) {
       /*
+       * TOP3_CURRENT_MOTOR_AUTHORITY_V2
+       *
+       * O chamador somente envia replaceCurrentFutureSnapshot=true
+       * para um target ainda futuro.
+       *
+       * Nesse caso, o calculo atual do motor substitui o snapshot
+       * incorreto daquele MESMO lotteryKey + targetYmd + targetHour.
+       *
+       * Nenhum slot encerrado passa por esta regra.
+       */
+      if (replaceCurrentFutureSnapshot === true) {
+        const previous = current.data() || {};
+
+        const replacementPayload = {
+          ...payload,
+
+          /*
+           * Mantem a data original de primeira criacao para auditoria,
+           * mas registra updatedAt da sincronizacao correta.
+           */
+          createdAt:
+            previous?.createdAt ||
+            payload.createdAt ||
+            now,
+
+          updatedAt: now,
+        };
+
+        transaction.set(
+          ref,
+          replacementPayload
+        );
+
+        return {
+          ok: true,
+          created: false,
+          existing: true,
+          preserved: false,
+          replaced: true,
+          reason: "CURRENT_FUTURE_MOTOR_AUTHORITY",
+          entry: {
+            id: ref.id,
+            ...replacementPayload,
+          },
+        };
+      }
+
+      /*
        * TOP3_FIRST_PUBLISHED_SNAPSHOT_IMMUTABLE_V1
        *
-       * A primeira previsão persistida para
-       * lotteryKey + targetYmd + targetHour
-       * é o palpite oficial daquele sorteio.
-       *
-       * PREDICTED ou VALIDATED:
-       * snapshot, picks, análise e milhares não são substituídos
-       * por nova execução do motor.
-       */
-      /*
-       * TOP3_OFFICIAL_PERSISTED_ENTRY_RETURN_V1
-       *
-       * O chamador precisa receber o snapshot que realmente venceu
-       * a transação. Se já existe documento oficial, nunca deve assumir
-       * que o cálculo recém-produzido corresponde ao snapshot persistido.
+       * Para historico/slot encerrado, permanece exatamente
+       * a regra de imutabilidade anterior.
        */
       return {
         ok: true,
         created: false,
         existing: true,
         preserved: true,
+        replaced: false,
         reason: "FIRST_PUBLISHED_SNAPSHOT_IMMUTABLE",
         entry: {
           id: ref.id,
@@ -833,8 +871,3 @@ export async function reconcileTop3PredictionDay({
     history: reconciledHistory,
   };
 }
-
-
-
-
-

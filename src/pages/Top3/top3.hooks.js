@@ -1516,7 +1516,23 @@ export function useTop3Controller() {
           }
         );
 
-        if (persistedTop3.length) {
+        /*
+         * TOP3_CURRENT_MOTOR_AUTHORITY_V2
+         *
+         * Slot encerrado:
+         *   snapshot persistido permanece a autoridade historica.
+         *
+         * Slot ainda futuro:
+         *   nao interromper o pipeline; deixar o motor produzir
+         *   o TOP3 correspondente ao contexto atual.
+         */
+        if (
+          persistedTop3.length &&
+          !isFutureTarget(
+            analysisYmd,
+            analysisHourBucket
+          )
+        ) {
           if (!isCurrentContext()) return;
 
           setTop3(persistedTop3);
@@ -1649,9 +1665,22 @@ export function useTop3Controller() {
      * Snapshot válido já persistido = palpite oficial do slot.
      * Não permitir que execução posterior do motor o substitua.
      */
+    /*
+     * TOP3_CURRENT_MOTOR_AUTHORITY_V2
+     *
+     * Snapshot persistido bloqueia nova escrita somente
+     * depois que o horario-alvo deixou de ser futuro.
+     *
+     * Enquanto o slot ainda esta aberto, o TOP3 calculado
+     * pelo motor pode corrigir/sincronizar o proprio documento.
+     */
     if (
       currentPersistedPrediction &&
-      currentPersistedSnapshotValid
+      currentPersistedSnapshotValid &&
+      !isFutureTarget(
+        analysisYmd,
+        analysisHourBucket
+      )
     ) {
       return;
     }
@@ -1726,6 +1755,15 @@ export function useTop3Controller() {
       picks,
       snapshot,
       engineVersion,
+
+      /*
+       * TOP3_CURRENT_MOTOR_AUTHORITY_V2
+       *
+       * Este efeito somente chega ao save para target futuro,
+       * pois o guard isFutureTarget ocorre antes da montagem
+       * do snapshot.
+       */
+      replaceCurrentFutureSnapshot: true,
     })
       .then((result) => {
         const diagnostic = {
@@ -2091,5 +2129,3 @@ export function useTop3Controller() {
     normalizeImgSrc,
   };
 }
-
-
