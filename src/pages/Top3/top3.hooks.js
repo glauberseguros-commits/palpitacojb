@@ -1552,6 +1552,74 @@ export function useTop3Controller() {
           buildResultStyleImgVariants,
         });
 
+        /*
+         * TOP3_NACIONAL_RUNTIME_AUTHORITY_TRACE_V4
+         * STAGE=ENGINE_TOP3
+         */
+        
+if (
+          lotteryKeySafe === "NACIONAL" &&
+          typeof window !== "undefined"
+        ) {
+          try {
+            const traceEntry = {
+              at: new Date().toISOString(),
+              stage: "ENGINE_TOP3",
+              lotteryKey: lotteryKeySafe,
+              analysisYmd,
+              analysisHourBucket,
+              activeTop3ContextKey,
+              top3ContextKey,
+            capturedContextKey,
+            groups: (
+              Array.isArray(nextTop3)
+                ? nextTop3
+                : []
+            )
+              .map((item) => Number(item?.grupo))
+              .filter((grupo) => Number.isFinite(grupo))
+              .slice(0, 3),
+            };
+        
+            const raw =
+              window.localStorage.getItem(
+                "nacional_top3_runtime_authority_trace_v4"
+              );
+        
+            let trace = [];
+        
+            try {
+              const parsed = raw
+                ? JSON.parse(raw)
+                : [];
+        
+              trace = Array.isArray(parsed)
+                ? parsed
+                : [];
+            } catch {
+              trace = [];
+            }
+        
+            const nextTrace = [
+              ...trace,
+              traceEntry,
+            ].slice(-500);
+        
+            window.localStorage.setItem(
+              "nacional_top3_runtime_authority_trace_v4",
+              JSON.stringify(nextTrace)
+            );
+        
+            window.__NACIONAL_TOP3_RUNTIME_AUTHORITY_TRACE_V4__ =
+              nextTrace;
+        
+            console.info(
+              "[NACIONAL TOP3 AUTHORITY TRACE V4]",
+              traceEntry
+            );
+          } catch {}
+        }
+
         if (!isCurrentContext()) return;
 
         setTop3(
@@ -1696,6 +1764,75 @@ export function useTop3Controller() {
       .filter((n) => Number.isFinite(n) && n >= 1 && n <= 25)
       .slice(0, 3);
 
+    /*
+     * TOP3_NACIONAL_RUNTIME_AUTHORITY_TRACE_V4
+     * STAGE=SAVE_PICKS
+     */
+    
+if (
+      lotteryKeySafe === "NACIONAL" &&
+      typeof window !== "undefined"
+    ) {
+      try {
+        const traceEntry = {
+          at: new Date().toISOString(),
+          stage: "SAVE_PICKS",
+          lotteryKey: lotteryKeySafe,
+          analysisYmd,
+          analysisHourBucket,
+          activeTop3ContextKey,
+          top3ContextKey,
+        targetKey,
+        groups: picks,
+        stateGroups: (
+          Array.isArray(top3)
+            ? top3
+            : []
+        )
+          .map((item) => Number(item?.grupo))
+          .filter((grupo) => Number.isFinite(grupo))
+          .slice(0, 3),
+        };
+    
+        const raw =
+          window.localStorage.getItem(
+            "nacional_top3_runtime_authority_trace_v4"
+          );
+    
+        let trace = [];
+    
+        try {
+          const parsed = raw
+            ? JSON.parse(raw)
+            : [];
+    
+          trace = Array.isArray(parsed)
+            ? parsed
+            : [];
+        } catch {
+          trace = [];
+        }
+    
+        const nextTrace = [
+          ...trace,
+          traceEntry,
+        ].slice(-500);
+    
+        window.localStorage.setItem(
+          "nacional_top3_runtime_authority_trace_v4",
+          JSON.stringify(nextTrace)
+        );
+    
+        window.__NACIONAL_TOP3_RUNTIME_AUTHORITY_TRACE_V4__ =
+          nextTrace;
+    
+        console.info(
+          "[NACIONAL TOP3 AUTHORITY TRACE V4]",
+          traceEntry
+        );
+      } catch {}
+    }
+
     if (!targetKey || !picks.length) return;
 
     const saveRunKey = [
@@ -1747,6 +1884,84 @@ export function useTop3Controller() {
       snapshot,
       engineVersion,
     });
+
+    /*
+     * TOP3_NACIONAL_RUNTIME_AUTHORITY_TRACE_V4
+     * STAGE=SAVE_PAYLOAD
+     */
+    
+if (
+      lotteryKeySafe === "NACIONAL" &&
+      typeof window !== "undefined"
+    ) {
+      try {
+        const traceEntry = {
+          at: new Date().toISOString(),
+          stage: "SAVE_PAYLOAD",
+          lotteryKey: lotteryKeySafe,
+          analysisYmd,
+          analysisHourBucket,
+          activeTop3ContextKey,
+          top3ContextKey,
+        targetKey,
+        picks,
+        groups: (
+          Array.isArray(snapshot)
+            ? snapshot
+            : []
+        )
+          .map((item) => Number(item?.grupo))
+          .filter((grupo) => Number.isFinite(grupo))
+          .slice(0, 3),
+        persistenceContexts: (
+          Array.isArray(snapshot)
+            ? snapshot
+            : []
+        ).map(
+          (item) =>
+            item?.meta?.persistenceContext ||
+            null
+        ),
+        };
+    
+        const raw =
+          window.localStorage.getItem(
+            "nacional_top3_runtime_authority_trace_v4"
+          );
+    
+        let trace = [];
+    
+        try {
+          const parsed = raw
+            ? JSON.parse(raw)
+            : [];
+    
+          trace = Array.isArray(parsed)
+            ? parsed
+            : [];
+        } catch {
+          trace = [];
+        }
+    
+        const nextTrace = [
+          ...trace,
+          traceEntry,
+        ].slice(-500);
+    
+        window.localStorage.setItem(
+          "nacional_top3_runtime_authority_trace_v4",
+          JSON.stringify(nextTrace)
+        );
+    
+        window.__NACIONAL_TOP3_RUNTIME_AUTHORITY_TRACE_V4__ =
+          nextTrace;
+    
+        console.info(
+          "[NACIONAL TOP3 AUTHORITY TRACE V4]",
+          traceEntry
+        );
+      } catch {}
+    }
 
     saveTop3PredictionSnapshot({
       lotteryKey: lotteryKeySafe,
@@ -1839,6 +2054,80 @@ export function useTop3Controller() {
                 targetHour: analysisHourBucket,
               }
             );
+
+          /*
+           * TOP3_NACIONAL_RUNTIME_AUTHORITY_TRACE_V4
+           * STAGE=OFFICIAL_TOP3
+           */
+          
+if (
+            lotteryKeySafe === "NACIONAL" &&
+            typeof window !== "undefined"
+          ) {
+            try {
+              const traceEntry = {
+                at: new Date().toISOString(),
+                stage: "OFFICIAL_TOP3",
+                lotteryKey: lotteryKeySafe,
+                analysisYmd,
+                analysisHourBucket,
+                activeTop3ContextKey,
+                top3ContextKey,
+              requestedGroups: picks,
+              officialGroups: (
+                Array.isArray(officialTop3)
+                  ? officialTop3
+                  : []
+              )
+                .map((item) => Number(item?.grupo))
+                .filter((grupo) => Number.isFinite(grupo))
+                .slice(0, 3),
+              created: Boolean(result?.created),
+              preserved: Boolean(result?.preserved),
+              officialTargetYmd:
+                officialEntry?.targetYmd || null,
+              officialTargetHour:
+                officialEntry?.targetHour || null,
+              };
+          
+              const raw =
+                window.localStorage.getItem(
+                  "nacional_top3_runtime_authority_trace_v4"
+                );
+          
+              let trace = [];
+          
+              try {
+                const parsed = raw
+                  ? JSON.parse(raw)
+                  : [];
+          
+                trace = Array.isArray(parsed)
+                  ? parsed
+                  : [];
+              } catch {
+                trace = [];
+              }
+          
+              const nextTrace = [
+                ...trace,
+                traceEntry,
+              ].slice(-500);
+          
+              window.localStorage.setItem(
+                "nacional_top3_runtime_authority_trace_v4",
+                JSON.stringify(nextTrace)
+              );
+          
+              window.__NACIONAL_TOP3_RUNTIME_AUTHORITY_TRACE_V4__ =
+                nextTrace;
+          
+              console.info(
+                "[NACIONAL TOP3 AUTHORITY TRACE V4]",
+                traceEntry
+              );
+            } catch {}
+          }
 
           if (
             activeTop3ContextRef.current === activeTop3ContextKey &&
