@@ -172,22 +172,68 @@ service cloud.firestore {
         && request.resource.data.snapshot.size() > 0
         && request.resource.data.snapshot.size() <= 3;
 
-      allow update: if signedIn()
-        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
-          "resultGrupo",
-          "resultMilhar",
-          "resultAnimal",
-          "hitType",
-          "hitScore",
-          "hitPosition",
-          "matchedValue",
-          "validatedAt",
-          "validatedBy",
-          "updatedAt",
-          "status"
-        ])
-        && request.resource.data.status == "validated"
-        && request.resource.data.validatedBy == request.auth.uid;
+      /*
+       * TOP3_PREDICTED_SNAPSHOT_REFRESH_V2
+       *
+       * UPDATE possui dois caminhos independentes:
+       *
+       * A) refresh de previsão ainda aberta;
+       * B) validação definitiva após resultado.
+       *
+       * Um documento validated nunca entra no caminho A.
+       */
+      allow update: if
+
+        /*
+         * CAMINHO A — REFRESH DA PREVISÃO ABERTA
+         *
+         * Mantém identidade/autoria/data/horário/status imutáveis.
+         * Somente o conteúdo calculado pelo motor pode mudar.
+         */
+        (
+          signedIn()
+
+          && resource.data.status == "predicted"
+          && request.resource.data.status == "predicted"
+
+          && request.resource.data.snapshot is list
+          && request.resource.data.snapshot.size() > 0
+          && request.resource.data.snapshot.size() <= 3
+
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+            "picks",
+            "snapshot",
+            "engineVersion",
+            "updatedAt"
+          ])
+        )
+
+        ||
+
+        /*
+         * CAMINHO B — VALIDAÇÃO DO RESULTADO
+         * Mantém a política anterior.
+         */
+        (
+          signedIn()
+
+          && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+            "resultGrupo",
+            "resultMilhar",
+            "resultAnimal",
+            "hitType",
+            "hitScore",
+            "hitPosition",
+            "matchedValue",
+            "validatedAt",
+            "validatedBy",
+            "updatedAt",
+            "status"
+          ])
+
+          && request.resource.data.status == "validated"
+          && request.resource.data.validatedBy == request.auth.uid
+        );
 
       allow delete: if false;
     }
