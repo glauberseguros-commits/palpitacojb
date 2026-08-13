@@ -357,24 +357,25 @@ export async function saveTop3PredictionSnapshot({
       if (replaceCurrentFutureSnapshot === true) {
         const previous = current.data() || {};
 
+        /*
+         * TOP3_PREDICTED_REFRESH_PARTIAL_WRITE_V2
+         *
+         * Para previsão ainda aberta, atualizar exclusivamente
+         * os quatro campos autorizados pelas Firestore Rules.
+         */
         const replacementPayload = {
-          ...payload,
-
-          /*
-           * Mantem a data original de primeira criacao para auditoria,
-           * mas registra updatedAt da sincronizacao correta.
-           */
-          createdAt:
-            previous?.createdAt ||
-            payload.createdAt ||
-            now,
-
+          picks: normalizedPicks,
+          snapshot: normalizedSnapshot,
+          engineVersion: safeStr(
+            engineVersion || "V3_STATISTICAL"
+          ),
           updatedAt: now,
         };
 
         transaction.set(
           ref,
-          replacementPayload
+          replacementPayload,
+          { merge: true }
         );
 
         return {
@@ -386,6 +387,7 @@ export async function saveTop3PredictionSnapshot({
           reason: "CURRENT_FUTURE_MOTOR_AUTHORITY",
           entry: {
             id: ref.id,
+            ...previous,
             ...replacementPayload,
           },
         };
