@@ -436,6 +436,17 @@ export function useTop3Controller() {
    */
   const activeTop3ContextRef = useRef("");
 
+  /*
+   * TOP3_ENGINE_CONTEXT_PERSISTENCE_AUTHORITY_V1
+   *
+   * Guarda a saída produzida pelo motor vinculada à identidade exata
+   * lottery + targetYmd + targetHour.
+   *
+   * O estado React `top3` continua responsável pela apresentação,
+   * mas deixa de ser a fonte de autoridade para persistência.
+   */
+  const engineTop3ByContextRef = useRef(new Map());
+
   const boundsCacheRef = useRef(new Map());
   const analyticsCacheRef = useRef({ key: "", value: emptyAnalytics() });
 
@@ -1553,6 +1564,22 @@ export function useTop3Controller() {
         });
 
         /*
+         * TOP3_ENGINE_CONTEXT_PERSISTENCE_AUTHORITY_V1
+         *
+         * A persistência precisa receber exatamente o mesmo array
+         * recém-produzido pelo motor para este capturedContextKey.
+         */
+        const engineTop3ForContext =
+          Array.isArray(nextTop3)
+            ? nextTop3
+            : [];
+
+        engineTop3ByContextRef.current.set(
+          capturedContextKey,
+          engineTop3ForContext
+        );
+
+        /*
          * TOP3_NACIONAL_RUNTIME_AUTHORITY_TRACE_V4
          * STAGE=ENGINE_TOP3
          */
@@ -1755,11 +1782,33 @@ if (
 
     if (!activeTop3ContextKey) return;
     if (top3ContextKey !== activeTop3ContextKey) return;
-    if (!Array.isArray(top3) || !top3.length) return;
     if (!isFutureTarget(analysisYmd, analysisHourBucket)) return;
 
-    const targetKey = makeTargetKey(analysisYmd, analysisHourBucket);
-    const picks = top3
+    /*
+     * TOP3_ENGINE_CONTEXT_PERSISTENCE_AUTHORITY_V1
+     *
+     * Nunca reconstruir a persistência a partir do estado visual `top3`.
+     * O save deve usar a saída que o motor produziu para a MESMA
+     * identidade de contexto.
+     */
+    const engineTop3ForSave =
+      engineTop3ByContextRef.current.get(
+        activeTop3ContextKey
+      );
+
+    if (
+      !Array.isArray(engineTop3ForSave) ||
+      !engineTop3ForSave.length
+    ) {
+      return;
+    }
+
+    const targetKey = makeTargetKey(
+      analysisYmd,
+      analysisHourBucket
+    );
+
+    const picks = engineTop3ForSave
       .map((x) => Number(x?.grupo))
       .filter((n) => Number.isFinite(n) && n >= 1 && n <= 25)
       .slice(0, 3);
@@ -1845,7 +1894,7 @@ if (
 
     top3SaveRunKeys.add(saveRunKey);
 
-    const snapshot = top3.map((item, index) => ({
+    const snapshot = engineTop3ForSave.map((item, index) => ({
       rank: index + 1,
       grupo: Number(item?.grupo),
       animal: safeStr(item?.animal || ""),
@@ -1872,8 +1921,12 @@ if (
     }));
 
     const engineVersion =
-      safeStr(top3?.[0]?.meta?.explain?.engine) ||
-      safeStr(top3?.[0]?.meta?.scenario) ||
+      safeStr(
+        engineTop3ForSave?.[0]?.meta?.explain?.engine
+      ) ||
+      safeStr(
+        engineTop3ForSave?.[0]?.meta?.scenario
+      ) ||
       "V3_STATISTICAL";
 
     registerPrediction({
