@@ -2512,15 +2512,82 @@ const list =
       const resultMilhar = String(
         timelineRow?.resultMilhar || ""
       );
-
-            /*
-       * TOP3_PERSISTED_HITS_PRECEDENCE_V2
+      /*
+       * TOP3_VALIDATED_HISTORY_MOTOR_AUTHORITY_V1
        *
-       * A timeline complementa somente o resultado oficial.
-       * Snapshot, análise e hits persistidos permanecem imutáveis.
+       * Slot já encerrado:
+       *
+       * - o resultado oficial continua vindo da timeline/resultado real;
+       * - o TOP3 visual vem da reconstrução do motor para o MESMO
+       *   lottery + data + horário;
+       * - snapshot persistido legado não tem autoridade visual quando
+       *   divergir da saída reconstruída pelo motor.
+       *
+       * IMPORTANTE:
+       * nenhum documento Firestore é alterado.
        */
+      const engineHistoryTop3 =
+        Array.isArray(timelineRow?.top3)
+          ? timelineRow.top3.slice(0, 3)
+          : [];
+
+      const officialPodium =
+        getOfficialPodium(timelineRow);
+
+      const engineHistoryAnalysis =
+        buildTop3HistoryAnalysis(
+          engineHistoryTop3,
+          officialPodium
+        );
+
+      const engineHistoryHits =
+        normalizeTop3Hits({
+          top3: engineHistoryTop3,
+
+          resultGrupo,
+          resultMilhar,
+
+          resultTop3Groups: Array.isArray(
+            timelineRow?.resultTop3Groups
+          )
+            ? timelineRow.resultTop3Groups
+            : row?.resultTop3Groups || [],
+
+          resultTop3Milhares: Array.isArray(
+            timelineRow?.resultTop3Milhares
+          )
+            ? timelineRow.resultTop3Milhares
+            : row?.resultTop3Milhares || [],
+
+          prizes: Array.isArray(
+            timelineRow?.prizes
+          )
+            ? timelineRow.prizes
+            : row?.prizes || [],
+        });
+
       rowsByTarget.set(key, {
         ...row,
+
+        /*
+         * Se o motor conseguiu reconstruir os 3 palpites,
+         * eles passam a ser a verdade visual deste slot.
+         */
+        picks:
+          engineHistoryTop3.length === 3
+            ? engineHistoryTop3
+                .map((item) => Number(item?.grupo))
+                .filter(Number.isFinite)
+            : Array.isArray(row?.picks)
+              ? row.picks.slice(0, 3)
+              : [],
+
+        top3:
+          engineHistoryTop3.length === 3
+            ? engineHistoryTop3
+            : Array.isArray(row?.top3)
+              ? row.top3.slice(0, 3)
+              : [],
 
         result: resultGrupo,
         grupo: resultGrupo,
@@ -2549,6 +2616,36 @@ const list =
         )
           ? timelineRow.prizes
           : row?.prizes || [],
+
+        /*
+         * O diagnóstico/acerto acompanha exatamente o TOP3
+         * que agora aparece ao usuário.
+         */
+        analysis:
+          engineHistoryTop3.length === 3
+            ? engineHistoryAnalysis
+            : row?.analysis,
+
+        hits:
+          engineHistoryTop3.length === 3
+            ? engineHistoryHits
+            : normalizeTop3Hits(row),
+
+        hitCount:
+          engineHistoryTop3.length === 3
+            ? engineHistoryHits.length
+            : Number(
+                row?.hitCount ??
+                normalizeTop3Hits(row).length
+              ),
+
+        __top3ValidatedMotorAuthority:
+          engineHistoryTop3.length === 3,
+
+        __top3HistoryOriginalPersistedTop3:
+          Array.isArray(row?.top3)
+            ? row.top3.slice(0, 3)
+            : [],
       });
     }
 
