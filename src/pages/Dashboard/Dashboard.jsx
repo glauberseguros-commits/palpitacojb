@@ -1392,7 +1392,25 @@ export default function Dashboard(props) {
 
         if (wantBucket) {
           const b = normalizeHourBucket(getDrawCloseHour(d));
-          if (b !== wantBucket) return false;
+
+          // NACIONAL — transição histórica do slot noturno:
+          // até 2025-11-06 = 20h
+          // a partir de 2025-11-07 = 21h
+          //
+          // O FiltersBar mantém label 21h -> value 20h por compatibilidade
+          // com o legado. Aqui reconciliamos os dois períodos pela data.
+          const isNacionalNightFilter =
+            String(uf || "").trim().toUpperCase() === "NACIONAL" &&
+            wantBucket === "20h";
+
+          if (isNacionalNightFilter) {
+            const expectedBucket =
+              ymd >= "2025-11-07" ? "21h" : "20h";
+
+            if (b !== expectedBucket) return false;
+          } else {
+            if (b !== wantBucket) return false;
+          }
         }
 
         return true;
@@ -1437,6 +1455,7 @@ export default function Dashboard(props) {
     selectedGrupo,
     isHydrating,
     isAggregatedOnly,
+    uf,
   ]);
 
   const hasAnyDrawsView = drawsForView.length > 0;
