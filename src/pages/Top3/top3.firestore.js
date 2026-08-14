@@ -344,55 +344,21 @@ export async function saveTop3PredictionSnapshot({
 
     if (current.exists()) {
       /*
-       * TOP3_CURRENT_MOTOR_AUTHORITY_V2
+       * TOP3_ENGINE_OUTPUT_FIRST_PUBLISH_FREEZE_V1
        *
-       * O chamador somente envia replaceCurrentFutureSnapshot=true
-       * para um target ainda futuro.
+       * A primeira publicacao do TOP3 para este
+       * lotteryKey + targetYmd + targetHour e canonica.
        *
-       * Nesse caso, o calculo atual do motor substitui o snapshot
-       * incorreto daquele MESMO lotteryKey + targetYmd + targetHour.
+       * Se o documento ja existe, nenhuma nova renderizacao,
+       * reexecucao ou recalculo pode substituir:
        *
-       * Nenhum slot encerrado passa por esta regra.
+       * - picks
+       * - snapshot
+       * - engineVersion
+       *
+       * A validacao posterior do resultado continua separada
+       * e autorizada pelas Firestore Rules.
        */
-      if (replaceCurrentFutureSnapshot === true) {
-        const previous = current.data() || {};
-
-        /*
-         * TOP3_PREDICTED_REFRESH_PARTIAL_WRITE_V2
-         *
-         * Para previsão ainda aberta, atualizar exclusivamente
-         * os quatro campos autorizados pelas Firestore Rules.
-         */
-        const replacementPayload = {
-          picks: normalizedPicks,
-          snapshot: normalizedSnapshot,
-          engineVersion: safeStr(
-            engineVersion || "V3_STATISTICAL"
-          ),
-          updatedAt: now,
-        };
-
-        transaction.set(
-          ref,
-          replacementPayload,
-          { merge: true }
-        );
-
-        return {
-          ok: true,
-          created: false,
-          existing: true,
-          preserved: false,
-          replaced: true,
-          reason: "CURRENT_FUTURE_MOTOR_AUTHORITY",
-          entry: {
-            id: ref.id,
-            ...previous,
-            ...replacementPayload,
-          },
-        };
-      }
-
       /*
        * TOP3_FIRST_PUBLISHED_SNAPSHOT_IMMUTABLE_V1
        *
