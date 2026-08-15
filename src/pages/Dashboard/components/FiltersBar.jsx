@@ -4,33 +4,33 @@ import React, { useMemo, useCallback } from "react";
 /**
  * FiltersBar (Premium)
  *
- * ✅ Loteria:
+ * Ô£à Loteria:
  * - filters.loteria: "PT_RIO" | "FEDERAL" | "LOOK" | "NACIONAL"
  *   (default: "PT_RIO")
  *
- * ✅ Horário (domínio próprio por loteria):
+ * Ô£à Hor├írio (dom├¡nio pr├│prio por loteria):
  * - PT_RIO: Todos + 09h/11h/14h/16h/18h/19:30h/21h
  * - FEDERAL: Todos + 19h/20h
  * - LOOK: Todos + 07h/09h/11h/14h/16h/18h/21h/23h
- * - NACIONAL: Todos + 02h/08h/10h/12h/15h/17h/21h/23h
+ * - NACIONAL: Todos + 02h/08h/10h/12h/15h/17h/20h/21h/23h
  *
- * ✅ Segurança:
- * - Ao trocar loteria, reseta filtros sensíveis:
+ * Ô£à Seguran├ºa:
+ * - Ao trocar loteria, reseta filtros sens├¡veis:
  *   horario -> "Todos"
  *   animal  -> "Todos"
  *   posicao -> "Todos"
  *
  * posicaoMode:
- * - "full" (default): Todos + 1º..7º
- * - "v1": trava em 1º (desabilita select e lista só 1º)
+ * - "full" (default): Todos + 1┬║..7┬║
+ * - "v1": trava em 1┬║ (desabilita select e lista s├│ 1┬║)
  *
  * posicoesFromOptionsMode:
- * - "ignore" (default): IGNORA options.posicoes (posição é domínio fixo)
+ * - "ignore" (default): IGNORA options.posicoes (posi├º├úo ├® dom├¡nio fixo)
  * - "respect": respeita options.posicoes se vier (com fallback seguro)
  *
  * Extras (freeze-safe):
- * - disabledAll: trava todos selects (útil para modo DEMO)
- * - onBlocked: callback quando usuário tenta interagir enquanto bloqueado
+ * - disabledAll: trava todos selects (├║til para modo DEMO)
+ * - onBlocked: callback quando usu├írio tenta interagir enquanto bloqueado
  */
 
 function normalizeValue(v, fallback = "Todos") {
@@ -66,22 +66,22 @@ function normalizeLoteriaInput(v) {
   return out || "PT_RIO";
 }
 
-/** Normaliza posição para "1º..7º" ou "Todos" */
+/** Normaliza posi├º├úo para "1┬║..7┬║" ou "Todos" */
 function normalizePosicaoInput(v) {
   const s = String(v ?? "").trim();
   if (!s) return "Todos";
   if (s.toLowerCase() === "todos") return "Todos";
 
   const mNum = s.match(/^(\d{1,2})$/);
-  if (mNum) return `${Number(mNum[1])}º`;
+  if (mNum) return `${Number(mNum[1])}┬║`;
 
-  const mOrd = s.match(/^(\d{1,2})\s*º$/);
-  if (mOrd) return `${Number(mOrd[1])}º`;
+  const mOrd = s.match(/^(\d{1,2})\s*┬║$/);
+  if (mOrd) return `${Number(mOrd[1])}┬║`;
 
   return s;
 }
 
-/** ✅ Normaliza Dia da Semana para o formato curto: Dom/Seg/Ter/Qua/Qui/Sex/Sáb/Todos */
+/** Ô£à Normaliza Dia da Semana para o formato curto: Dom/Seg/Ter/Qua/Qui/Sex/S├íb/Todos */
 function normalizeDiaSemanaInput(v) {
   const raw = String(v ?? "").trim();
   if (!raw) return "Todos";
@@ -118,13 +118,13 @@ function normalizeDiaSemanaInput(v) {
     "sexta-feira": "Sex",
     "sexta feira": "Sex",
     sexta: "Sex",
-    sab: "Sáb",
-    sabado: "Sáb",
-    "sabado-feira": "Sáb",
-    "sabado feira": "Sáb",
-    sabb: "Sáb",
-    sáb: "Sáb",
-    sábado: "Sáb",
+    sab: "S├íb",
+    sabado: "S├íb",
+    "sabado-feira": "S├íb",
+    "sabado feira": "S├íb",
+    sabb: "S├íb",
+    s├íb: "S├íb",
+    s├íbado: "S├íb",
   };
 
   return map[key] || raw;
@@ -224,7 +224,7 @@ export default function FiltersBar({
       "Todos",
       "Janeiro",
       "Fevereiro",
-      "Março",
+      "Mar├ºo",
       "Abril",
       "Maio",
       "Junho",
@@ -240,14 +240,14 @@ export default function FiltersBar({
       { label: "Todos", value: "Todos" },
       { label: "Domingo", value: "Dom" },
       { label: "Segunda-Feira", value: "Seg" },
-      { label: "Terça-Feira", value: "Ter" },
+      { label: "Ter├ºa-Feira", value: "Ter" },
       { label: "Quarta-Feira", value: "Qua" },
       { label: "Quinta-Feira", value: "Qui" },
       { label: "Sexta-Feira", value: "Sex" },
-      { label: "Sábado", value: "Sáb" },
+      { label: "S├íbado", value: "S├íb" },
     ];
 
-    // ✅ PT_RIO (domínio fixo)
+    // Ô£à PT_RIO (dom├¡nio fixo)
     const horariosRJ = [
       { label: "Todos", value: "Todos" },
       { label: "09h", value: "09h" },
@@ -259,14 +259,14 @@ export default function FiltersBar({
       { label: "21h", value: "21h" },
     ];
 
-    // ✅ FEDERAL
+    // Ô£à FEDERAL
     const horariosFED = [
       { label: "Todos", value: "Todos" },
       { label: "19h", value: "19h" },
       { label: "20h", value: "20h" },
     ];
 
-    // ✅ LOOK
+    // Ô£à LOOK
     const horariosLOOK = [
       { label: "Todos", value: "Todos" },
       { label: "07h", value: "07h" },
@@ -279,10 +279,10 @@ export default function FiltersBar({
       { label: "23h", value: "23h" },
     ];
 
-    // ✅ NACIONAL
-    // O label mantém o horário oficial exibido ao usuário.
+    // Ô£à NACIONAL
+    // O label mant├®m o hor├írio oficial exibido ao usu├írio.
     // O value usa o bucket da hora real persistida no Firestore
-    // (ex.: 14:50 pertence ao bucket 14h, mas é exibido como 15h).
+    // (ex.: 14:50 pertence ao bucket 14h, mas ├® exibido como 15h).
     const horariosNACIONAL = [
       { label: "Todos", value: "Todos" },
       { label: "02h", value: "01h" },
@@ -291,22 +291,23 @@ export default function FiltersBar({
       { label: "12h", value: "11h" },
       { label: "15h", value: "14h" },
       { label: "17h", value: "16h" },
-      { label: "21h", value: "20h" },
+      { label: "20h", value: "20h" },
+      { label: "21h", value: "21h" },
       { label: "23h", value: "22h" },
     ];
 
     const posicoesDefaultFull = [
       { label: "Todos", value: "Todos" },
-      { label: "1º", value: "1º" },
-      { label: "2º", value: "2º" },
-      { label: "3º", value: "3º" },
-      { label: "4º", value: "4º" },
-      { label: "5º", value: "5º" },
-      { label: "6º", value: "6º" },
-      { label: "7º", value: "7º" },
+      { label: "1┬║", value: "1┬║" },
+      { label: "2┬║", value: "2┬║" },
+      { label: "3┬║", value: "3┬║" },
+      { label: "4┬║", value: "4┬║" },
+      { label: "5┬║", value: "5┬║" },
+      { label: "6┬║", value: "6┬║" },
+      { label: "7┬║", value: "7┬║" },
     ];
 
-    const posicoesDefaultV1 = [{ label: "1º", value: "1º" }];
+    const posicoesDefaultV1 = [{ label: "1┬║", value: "1┬║" }];
 
     const normalizeLabelValueList = (arr, fallback) => {
       if (!Array.isArray(arr) || !arr.length) return fallback;
@@ -375,7 +376,7 @@ export default function FiltersBar({
         ? normalizeLabelValueList(options.diasSemana, diasSemanaDefault)
         : diasSemanaDefault;
 
-    // ✅ Cada loteria mantém seu próprio domínio de horários.
+    // Ô£à Cada loteria mant├®m seu pr├│prio dom├¡nio de hor├írios.
     const horariosPorLoteria = {
       PT_RIO: horariosRJ,
       FEDERAL: horariosFED,
@@ -568,7 +569,7 @@ export default function FiltersBar({
   };
 
   const lockPosicaoV1 = posicaoMode === "v1";
-  const posicaoForcedValue = lockPosicaoV1 ? "1º" : null;
+  const posicaoForcedValue = lockPosicaoV1 ? "1┬║" : null;
 
   const handleChange = useCallback(
     (name, next) => {
@@ -577,12 +578,12 @@ export default function FiltersBar({
         return;
       }
 
-      // ✅ Troca loteria: normaliza e reseta filtros sensíveis SEMPRE
+      // Ô£à Troca loteria: normaliza e reseta filtros sens├¡veis SEMPRE
       if (name === "loteria") {
         const nextLot = normalizeLoteriaInput(next);
         onChange("loteria", nextLot);
 
-        // reset para evitar “estatística inválida” por estado anterior
+        // reset para evitar ÔÇ£estat├¡stica inv├ílidaÔÇØ por estado anterior
         onChange("horario", "Todos");
         onChange("animal", "Todos");
         onChange("posicao", "Todos");
@@ -591,7 +592,7 @@ export default function FiltersBar({
       }
 
       if (lockPosicaoV1 && name === "posicao") {
-        onChange("posicao", "1º");
+        onChange("posicao", "1┬║");
         return;
       }
 
@@ -662,8 +663,8 @@ export default function FiltersBar({
             <select
               value={normalizedValue}
               aria-disabled={finalDisabled ? "true" : "false"}
-              tabIndex={finalDisabled ? -1 : 0}   // ✅ FIX: evita foco via TAB quando bloqueado
-              onWheelCapture={block}              // ✅ FIX: bloqueia troca por roda do mouse
+              tabIndex={finalDisabled ? -1 : 0}   // Ô£à FIX: evita foco via TAB quando bloqueado
+              onWheelCapture={block}              // Ô£à FIX: bloqueia troca por roda do mouse
               onMouseDownCapture={block}
               onClickCapture={block}
               onKeyDownCapture={(e) => {
@@ -696,7 +697,7 @@ export default function FiltersBar({
     );
   };
 
-  // FEDERAL NÃO trava horário — só troca a lista (Todos/19h/20h)
+  // FEDERAL N├âO trava hor├írio ÔÇö s├│ troca a lista (Todos/19h/20h)
   const horarioForcedValue = null;
   const horarioDisabled = false;
 
@@ -715,7 +716,7 @@ export default function FiltersBar({
         />
 
         <Item
-          label="Mês"
+          label="M├¬s"
           name="mes"
           value={filters.mes}
           list={defaultOptions.meses}
@@ -724,7 +725,7 @@ export default function FiltersBar({
         />
 
         <Item
-          label="Dia do Mês"
+          label="Dia do M├¬s"
           name="diaMes"
           value={filters.diaMes}
           list={defaultOptions.diasMes}
@@ -742,7 +743,7 @@ export default function FiltersBar({
         />
 
         <Item
-          label="Horário"
+          label="Hor├írio"
           name="horario"
           value={filters.horario}
           list={defaultOptions.horarios}
@@ -762,7 +763,7 @@ export default function FiltersBar({
         />
 
         <Item
-          label="Posição"
+          label="Posi├º├úo"
           name="posicao"
           value={filters.posicao}
           list={defaultOptions.posicoes}

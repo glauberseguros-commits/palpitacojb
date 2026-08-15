@@ -1,14 +1,14 @@
 /* eslint-disable no-unused-vars */
 /**
  * ============================================================
- * DASHBOARD — BASELINE CONGELADA (freeze)
+ * DASHBOARD ÔÇö BASELINE CONGELADA (freeze)
  * ============================================================
- * ✅ Ajuste temporário corrigido:
+ * Ô£à Ajuste tempor├írio corrigido:
  * - guest/demo continua com acesso liberado no painel
- * - login visual "ENTRAR" (sessão local type:user) NÃO aparece mais
- *   como convidado/demonstração
- * - sessão agora lê type + plan corretamente
- * - sem bloqueio de filtros, período, cliques ou ações locais
+ * - login visual "ENTRAR" (sess├úo local type:user) N├âO aparece mais
+ *   como convidado/demonstra├º├úo
+ * - sess├úo agora l├¬ type + plan corretamente
+ * - sem bloqueio de filtros, per├¡odo, cliques ou a├º├Áes locais
  * ============================================================
  */
 
@@ -56,14 +56,14 @@ const RANKING_JSON_URL = "/data/ranking_current.json";
 const ALL_POSITIONS = [1, 2, 3, 4, 5, 6, 7];
 
 /* =========================
-   Persistência (Dashboard State)
-   - Não inclui filtros (filtros ficam no App.js)
+   Persist├¬ncia (Dashboard State)
+   - N├úo inclui filtros (filtros ficam no App.js)
 ========================= */
 const DASH_STATE_KEY_V1 = "pp_dash_state_v1";
 const DASH_STATE_KEY_BASE = "pp_dash_state_v2"; // versionado + por UF
 
 /* =========================
-   Sessão / Guest / User
+   Sess├úo / Guest / User
 ========================= */
 const ACCOUNT_SESSION_KEY = "pp_session_v1";
 const SESSION_POLL_MS = 1500;
@@ -275,7 +275,7 @@ function getDrawCloseHour(d) {
 const MONTH_NAME_TO_MM = {
   janeiro: "01",
   fevereiro: "02",
-  março: "03",
+  mar├ºo: "03",
   marco: "03",
   abril: "04",
   maio: "05",
@@ -300,7 +300,7 @@ function ymdToWeekdayShortPT(ymd) {
   const dt = new Date(Date.UTC(y, mo - 1, d));
   const idx = dt.getUTCDay();
 
-  const arr = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"];
+  const arr = ["Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "S├íb"];
   return arr[idx] || null;
 }
 
@@ -447,9 +447,9 @@ function PremiumTopRightSkeleton({ message }) {
   return (
     <div style={{ display: "grid", gap: 10 }}>
       <PremiumInfoBox
-        title="Carregando período disponível"
+        title="Carregando per├¡odo dispon├¡vel"
         description={message || "Consultando base para identificar min/max reais..."}
-        extra="Enquanto o período não for resolvido, o painel não exibe estatística fechada para evitar zeros e inconsistências."
+        extra="Enquanto o per├¡odo n├úo for resolvido, o painel n├úo exibe estat├¡stica fechada para evitar zeros e inconsist├¬ncias."
       />
       <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 10 }}>
         <div
@@ -482,7 +482,7 @@ function isIndexErrorMessage(err) {
     msg.includes("failed_precondition") ||
     msg.includes("requires an index") ||
     (msg.includes("index") && msg.includes("create")) ||
-    (msg.includes("índice") && msg.includes("criar")) ||
+    (msg.includes("├¡ndice") && msg.includes("criar")) ||
     (msg.includes("indice") && msg.includes("criar"))
   );
 }
@@ -659,7 +659,7 @@ function buildYearsAvailable(minISO, maxISO) {
 }
 
 /* =========================
-   ✅ Persistência por UF
+   Ô£à Persist├¬ncia por UF
 ========================= */
 function makeDashStateKeyV2(ufKey) {
   const u = String(ufKey || "").trim().toUpperCase() || "PT_RIO";
@@ -794,8 +794,8 @@ export default function Dashboard(props) {
 
   const fedBucket = isFederal ? normalizeHourBucket(filters?.horario) : null;
   const locationLabel = isFederal
-    ? `FEDERAL (Brasil)${fedBucket ? ` — ${fedBucket}` : ""}`
-    : `${loteriaKey} — Brasil`;
+    ? `FEDERAL (Brasil)${fedBucket ? ` ÔÇö ${fedBucket}` : ""}`
+    : `${loteriaKey} ÔÇö Brasil`;
 
   const uf = loteriaKey;
 
@@ -1213,7 +1213,7 @@ export default function Dashboard(props) {
 
         const json = await res.json();
         const mapped = mapRankingJsonToApp(json);
-        if (!mapped) throw new Error("JSON inválido (estrutura não reconhecida).");
+        if (!mapped) throw new Error("JSON inv├ílido (estrutura n├úo reconhecida).");
 
         if (!alive) return;
 
@@ -1393,21 +1393,63 @@ export default function Dashboard(props) {
         if (wantBucket) {
           const b = normalizeHourBucket(getDrawCloseHour(d));
 
-          // NACIONAL — transição histórica do slot noturno:
-          // até 2025-11-06 = 20h
+          // NACIONAL ÔÇö transi├º├úo hist├│rica do slot noturno:
+          // at├® 2025-11-06 = 20h
           // a partir de 2025-11-07 = 21h
           //
-          // O FiltersBar mantém label 21h -> value 20h por compatibilidade
-          // com o legado. Aqui reconciliamos os dois períodos pela data.
-          const isNacionalNightFilter =
-            String(uf || "").trim().toUpperCase() === "NACIONAL" &&
-            wantBucket === "20h";
+          // O FiltersBar mant├®m label 21h -> value 20h por compatibilidade
+          // com o legado. Aqui reconciliamos os dois per├¡odos pela data.
+          const isNacional =
+            String(uf || "").trim().toUpperCase() === "NACIONAL";
 
-          if (isNacionalNightFilter) {
-            const expectedBucket =
-              ymd >= "2025-11-07" ? "21h" : "20h";
+          const isNacional20Filter =
+            isNacional && wantBucket === "20h";
 
-            if (b !== expectedBucket) return false;
+          const isNacional21Filter =
+            isNacional && wantBucket === "21h";
+
+          if (isNacional20Filter || isNacional21Filter) {
+            const expectedNominalHour =
+              isNacional21Filter ? "21h" : "20h";
+
+            const validByCalendar =
+              expectedNominalHour === "20h"
+                ? ymd >= "2023-09-01" && ymd <= "2025-11-06"
+                : ymd >= "2025-11-07";
+
+            if (!validByCalendar) return false;
+
+            const lotteryName = String(
+              d?.lottery_name ??
+                d?.lotteryName ??
+                d?.name ??
+                ""
+            )
+              .trim()
+              .toUpperCase();
+
+            const nominalMatch =
+              lotteryName.match(
+                /NACIONAL\s*(20|21)\s*H(?:S)?/
+              );
+
+            if (nominalMatch) {
+              const nominalHour =
+                `${nominalMatch[1]}h`;
+
+              if (nominalHour !== expectedNominalHour) {
+                return false;
+              }
+            } else {
+              const allowedRawBuckets =
+                expectedNominalHour === "20h"
+                  ? new Set(["19h", "20h"])
+                  : new Set(["20h", "21h"]);
+
+              if (!allowedRawBuckets.has(b)) {
+                return false;
+              }
+            }
           } else {
             if (b !== wantBucket) return false;
           }
@@ -1556,22 +1598,22 @@ const rankingDataForCharts = useMemo(() => {
       { label: "Todos", value: "Todos" },
       { label: "Domingo", value: "Dom" },
       { label: "Segunda-Feira", value: "Seg" },
-      { label: "Terça-Feira", value: "Ter" },
+      { label: "Ter├ºa-Feira", value: "Ter" },
       { label: "Quarta-Feira", value: "Qua" },
       { label: "Quinta-Feira", value: "Qui" },
       { label: "Sexta-Feira", value: "Sex" },
-      { label: "Sábado", value: "Sáb" },
+      { label: "S├íbado", value: "S├íb" },
     ];
 
     const posicoes = [
       { label: "Todos", value: "Todos" },
-      { label: "1º", value: "1º" },
-      { label: "2º", value: "2º" },
-      { label: "3º", value: "3º" },
-      { label: "4º", value: "4º" },
-      { label: "5º", value: "5º" },
-      { label: "6º", value: "6º" },
-      { label: "7º", value: "7º" },
+      { label: "1┬║", value: "1┬║" },
+      { label: "2┬║", value: "2┬║" },
+      { label: "3┬║", value: "3┬║" },
+      { label: "4┬║", value: "4┬║" },
+      { label: "5┬║", value: "5┬║" },
+      { label: "6┬║", value: "6┬║" },
+      { label: "7┬║", value: "7┬║" },
     ];
 
     return {
@@ -1696,14 +1738,14 @@ const rankingDataForCharts = useMemo(() => {
       const n = m ? Number(m[1]) : NaN;
 
       if (!Number.isFinite(n) || n < 1 || n > 7) return;
-      setFilters((prev) => ({ ...prev, posicao: `${n}º` }));
+      setFilters((prev) => ({ ...prev, posicao: `${n}┬║` }));
     },
     [setFilters]
   );
 
   const boundsMessage = useMemo(() => {
-    if (bounds.loading) return "Carregando período disponível...";
-    if (!boundsReady) return bounds.error || "Não foi possível obter bounds reais.";
+    if (bounds.loading) return "Carregando per├¡odo dispon├¡vel...";
+    if (!boundsReady) return bounds.error || "N├úo foi poss├¡vel obter bounds reais.";
     return null;
   }, [bounds.loading, boundsReady, bounds.error]);
 
@@ -1727,11 +1769,11 @@ const rankingDataForCharts = useMemo(() => {
 
   const indexErrorHint = useMemo(() => {
     return (
-      "Os índices já foram criados e estão como Ativado. Se este erro aparecer, normalmente é um destes cenários:\n" +
-      "1) Cache/aba antiga: faça Ctrl+Shift+R ou teste em aba anônima.\n" +
-      "2) Query ainda está batendo em 'date' ou em campo diferente do esperado (ymd/uf/lottery_key/close_hour).\n" +
-      "3) Algum documento não tem o campo usado no filtro (ex.: ymd ausente em parte da base).\n" +
-      "4) O filtro de hora está em formato divergente do salvo (ex.: '11h' vs '11:10')."
+      "Os ├¡ndices j├í foram criados e est├úo como Ativado. Se este erro aparecer, normalmente ├® um destes cen├írios:\n" +
+      "1) Cache/aba antiga: fa├ºa Ctrl+Shift+R ou teste em aba an├┤nima.\n" +
+      "2) Query ainda est├í batendo em 'date' ou em campo diferente do esperado (ymd/uf/lottery_key/close_hour).\n" +
+      "3) Algum documento n├úo tem o campo usado no filtro (ex.: ymd ausente em parte da base).\n" +
+      "4) O filtro de hora est├í em formato divergente do salvo (ex.: '11h' vs '11:10')."
     );
   }, []);
 
@@ -1800,9 +1842,9 @@ const rankingDataForCharts = useMemo(() => {
 
     return (
       <PremiumInfoBox
-        title="Carregando detalhes do período"
-        description='Você selecionou um intervalo grande ("Todos"). O sistema está hidratando os prizes para garantir estatística correta.'
-        extra={`Intervalo: ${from} → ${to}\nAguarde concluir para liberar KPIs, ranking filtrado e gráficos.`}
+        title="Carregando detalhes do per├¡odo"
+        description='Voc├¬ selecionou um intervalo grande ("Todos"). O sistema est├í hidratando os prizes para garantir estat├¡stica correta.'
+        extra={`Intervalo: ${from} ÔåÆ ${to}\nAguarde concluir para liberar KPIs, ranking filtrado e gr├íficos.`}
       />
     );
   }, [isHydrating, dateFrom, dateTo, queryDate, MIN_DATE, MAX_DATE]);
@@ -1810,14 +1852,14 @@ const rankingDataForCharts = useMemo(() => {
   const aggregatedInfoBox = useMemo(() => {
     if (!isAggregatedOnly) return null;
 
-    const from = dateFrom || queryDate || MIN_DATE || "—";
-    const to = dateTo || queryDate || MAX_DATE || "—";
+    const from = dateFrom || queryDate || MIN_DATE || "ÔÇö";
+    const to = dateTo || queryDate || MAX_DATE || "ÔÇö";
 
     return (
       <PremiumInfoBox
-        title="Modo resumo para período grande"
-        description="O período atual foi carregado em modo agregado para evitar hidratação massiva de prizes e reduzir custo/latência."
-        extra={`Intervalo: ${from} → ${to}\nKPIs gerais continuam disponíveis.\nRanking, Top 3, gráficos analíticos e palpites exigem detalhamento completo. Para isso, reduza o período ou aplique filtros mais específicos.`}
+        title="Modo resumo para per├¡odo grande"
+        description="O per├¡odo atual foi carregado em modo agregado para evitar hidrata├º├úo massiva de prizes e reduzir custo/lat├¬ncia."
+        extra={`Intervalo: ${from} ÔåÆ ${to}\nKPIs gerais continuam dispon├¡veis.\nRanking, Top 3, gr├íficos anal├¡ticos e palpites exigem detalhamento completo. Para isso, reduza o per├¡odo ou aplique filtros mais espec├¡ficos.`}
       />
     );
   }, [isAggregatedOnly, dateFrom, dateTo, queryDate, MIN_DATE, MAX_DATE]);
@@ -1828,8 +1870,8 @@ const rankingDataForCharts = useMemo(() => {
     return (
       <PremiumInfoBox
         title="Detalhamento desativado neste recorte"
-        description="Neste intervalo grande, o Dashboard não hidrata prizes automaticamente."
-        extra="Para liberar ranking, Top 3, palpites por grupo e gráficos analíticos, reduza o período selecionado."
+        description="Neste intervalo grande, o Dashboard n├úo hidrata prizes automaticamente."
+        extra="Para liberar ranking, Top 3, palpites por grupo e gr├íficos anal├¡ticos, reduza o per├¡odo selecionado."
       />
     );
   }, [isAggregatedOnly]);
@@ -1884,9 +1926,9 @@ const rankingDataForCharts = useMemo(() => {
                   </div>
                 ) : (
                   <PremiumInfoBox
-                    title="Período indisponível"
-                    description={boundsMessage || "Não foi possível resolver o intervalo de datas."}
-                    extra="Se isso persistir, valide se todos os docs possuem o campo 'ymd' e se a coleção consultada é a mesma do app."
+                    title="Per├¡odo indispon├¡vel"
+                    description={boundsMessage || "N├úo foi poss├¡vel resolver o intervalo de datas."}
+                    extra="Se isso persistir, valide se todos os docs possuem o campo 'ymd' e se a cole├º├úo consultada ├® a mesma do app."
                   />
                 )}
 
@@ -1930,14 +1972,14 @@ const rankingDataForCharts = useMemo(() => {
         <section className="dashCharts">
           {uiBlockedByBounds ? (
             <PremiumInfoBox
-              title="Painel inicializando período"
-              description="O sistema ainda está resolvendo o intervalo oficial da base. Assim que o range local estiver disponível, o painel libera o conteúdo."
-              extra="Se houver período salvo ou consulta já resolvida, os blocos carregam sem esperar o bounds finalizar."
+              title="Painel inicializando per├¡odo"
+              description="O sistema ainda est├í resolvendo o intervalo oficial da base. Assim que o range local estiver dispon├¡vel, o painel libera o conte├║do."
+              extra="Se houver per├¡odo salvo ou consulta j├í resolvida, os blocos carregam sem esperar o bounds finalizar."
             />
           ) : rankingError && isIndexErrorMessage(rankingError) ? (
             <PremiumInfoBox
               title="Falha ao executar consulta (Firestore)"
-              description="O Firestore retornou um erro típico de índice/consulta composta. Como os índices já estão criados, este erro costuma ser cache, query antiga ou divergência de campos."
+              description="O Firestore retornou um erro t├¡pico de ├¡ndice/consulta composta. Como os ├¡ndices j├í est├úo criados, este erro costuma ser cache, query antiga ou diverg├¬ncia de campos."
               extra={indexErrorHint}
             />
           ) : isHydrating ? (
@@ -1946,9 +1988,9 @@ const rankingDataForCharts = useMemo(() => {
             aggregatedNeedsDetailBox
           ) : emptyForRange ? (
             <PremiumInfoBox
-              title="Sem registros no período / filtro atual"
-              description="O período selecionado retornou zero draws. Ajuste o intervalo de datas ou filtros (horário, mês, dia, etc.) para voltar a exibir estatísticas."
-              extra={`Dica rápida: ajuste o intervalo dentro de ${MIN_DATE || "—"} a ${MAX_DATE || "—"}.`}
+              title="Sem registros no per├¡odo / filtro atual"
+              description="O per├¡odo selecionado retornou zero draws. Ajuste o intervalo de datas ou filtros (hor├írio, m├¬s, dia, etc.) para voltar a exibir estat├¡sticas."
+              extra={`Dica r├ípida: ajuste o intervalo dentro de ${MIN_DATE || "ÔÇö"} a ${MAX_DATE || "ÔÇö"}.`}
             />
           ) : (
             <ChartsGrid
