@@ -468,7 +468,7 @@ function RowImg({ variants, alt, fallbackText }) {
   const [failed, setFailed] = useState(false);
 
   if (!variants.length || failed) {
-    return <div className="pp_imgFallback">{fallbackText || "ÔÇö"}</div>;
+    return <div className="pp_imgFallback">{fallbackText || "—"}</div>;
   }
 
   return (
@@ -612,14 +612,14 @@ function getExpectedRjHoursDesc(ymd) {
 
   /*
    * Quarta-feira:
-   * n├úo existe sorteio das 18h.
+   * não existe sorteio das 18h.
    */
   if (dow === 3) {
     out = [...RJ_EXPECTED_HOURS_WEDNESDAY_DESC];
   }
   /*
-   * S├íbado a partir de 18/07/2026:
-   * 19:30 substitui o antigo hor├írio das 18h.
+   * Sábado a partir de 18/07/2026:
+   * 19:30 substitui o antigo horário das 18h.
    */
   else if (
     dow === 6 &&
@@ -657,11 +657,11 @@ function shouldShowExpectedHour(ymd, hour) {
 }
 
 /*
- * A fonte grava o novo sorteio de s├íbado da PT_RIO no bucket 19:00,
- * embora o hor├írio oficial exibido seja 19:30.
+ * A fonte grava o novo sorteio de sábado da PT_RIO no bucket 19:00,
+ * embora o horário oficial exibido seja 19:30.
  *
- * A convers├úo fica restrita ├á camada visual da p├ígina Resultados para n├úo
- * alterar filtros, estat├¡sticas, Top3 ou o hist├│rico armazenado no Firestore.
+ * A conversão fica restrita à camada visual da página Resultados para não
+ * alterar filtros, estatísticas, Top3 ou o histórico armazenado no Firestore.
  */
 function normalizeRjDisplayHour(draw, ymd) {
   const hour = normalizeHourLike(
@@ -793,14 +793,14 @@ function buildExpectedDrawsForScope(scopeKey, orderedDraws, ymd) {
     const found = byHour.get(hour);
 
     /*
-     * O hor├írio das 18h continua pertencendo ao calend├írio hist├│rico da PT_RIO.
+     * O horário das 18h continua pertencendo ao calendário histórico da PT_RIO.
      *
-     * Entretanto, a auditoria oficial dos s├íbados confirmou que, quando n├úo
-     * existe resultado real ├ás 18h, o card vazio representa uma aus├¬ncia
-     * leg├¡tima de sorteio e n├úo uma falha de importa├º├úo.
+     * Entretanto, a auditoria oficial dos sábados confirmou que, quando não
+     * existe resultado real às 18h, o card vazio representa uma ausência
+     * legítima de sorteio e não uma falha de importação.
      *
      * Resultados reais continuam sendo exibidos porque a busca por `found`
-     * acontece antes desta condi├º├úo.
+     * acontece antes desta condição.
      */
     if (found) return [found];
 
@@ -1036,16 +1036,16 @@ export default function Results() {
     gcTime: 2 * 60 * 60 * 1000,
     placeholderData: (prev) => prev ?? [],
 
-    // Resultados do dia atual podem entrar depois que a tela j├í foi aberta.
-    // Faz nova leitura peri├│dica somente para hoje, sem gerar consultas
-    // desnecess├írias ao navegar por datas hist├│ricas.
+    // Resultados do dia atual podem entrar depois que a tela já foi aberta.
+    // Faz nova leitura periódica somente para hoje, sem gerar consultas
+    // desnecessárias ao navegar por datas históricas.
     refetchInterval:
       ymdClamped === todayYMDLocal()
         ? 60 * 1000
         : false,
     refetchIntervalInBackground: false,
 
-    // Ao retornar para a tela ou recuperar a conex├úo, busca o estado real.
+    // Ao retornar para a tela ou recuperar a conexão, busca o estado real.
     refetchOnMount: true,
     refetchOnWindowFocus: true,
     refetchOnReconnect: true,
@@ -1795,14 +1795,14 @@ export default function Results() {
               <button
                 type="button"
                 className="pp_btn pp_dateBtn"
-                title="Calend├írio"
+                title="Calendário"
                 aria-label={`Selecionar data. Atual: ${dateBR}`}
                 onClick={(e) => {
                   stopEvt(e);
                   setCalendarOpen((v) => !v);
                 }}
               >
-                <span aria-hidden="true">­ƒôà</span>
+                <span aria-hidden="true">📅</span>
                 <span>{dateBR}</span>
               </button>
 
@@ -1823,9 +1823,9 @@ export default function Results() {
                           setCalendarMonthYmd((v) => shiftMonthYMD(v, -1));
                         }
                       }}
-                      aria-label="M├¬s anterior"
+                      aria-label="Mês anterior"
                     >
-                      ÔÇ╣
+                      ‹
                     </button>
 
                     <div className="pp_calTitle">{calendarTitle}</div>
@@ -1840,9 +1840,9 @@ export default function Results() {
                           setCalendarMonthYmd((v) => shiftMonthYMD(v, 1));
                         }
                       }}
-                      aria-label="Pr├│ximo m├¬s"
+                      aria-label="Próximo mês"
                     >
-                      ÔÇ║
+                      ›
                     </button>
                   </div>
 
@@ -1903,13 +1903,13 @@ export default function Results() {
 
                   <div className="pp_calFoot">
                     <div className="pp_calLegend">
-                      <strong>ÔÇó</strong> dia com sorteio
+                      <strong>•</strong> dia com sorteio
                     </div>
                     <div className="pp_calMini">
                       {calendarLoading
-                        ? "Lendo m├¬sÔÇª"
+                        ? "Lendo mês…"
                         : isFederal && isYMD(effectiveBounds?.maxYmd)
-                        ? `├Ültimo: ${ymdToBR(effectiveBounds.maxYmd)}`
+                        ? `Último: ${ymdToBR(effectiveBounds.maxYmd)}`
                         : ""}
                     </div>
                   </div>
@@ -1940,7 +1940,7 @@ export default function Results() {
         <div className="pp_body">
           <div className="pp_center" ref={centerRef}>
             {loading ? (
-              <div className="pp_state">CarregandoÔÇª</div>
+              <div className="pp_state">Carregando…</div>
             ) : error ? (
               <div className="pp_state">
                 <div style={{ fontWeight: 1100, marginBottom: 6 }}>Erro</div>
@@ -1987,7 +1987,7 @@ const hs = displayHour
   ? displayHour.endsWith(":00")
     ? `${displayHour.slice(0, 2)}HS`
     : `${displayHour.slice(0, 2)}H${displayHour.slice(3, 5)}`
-  : "ÔÇö";
+  : "—";
 
                     const byPos = new Map();
                     for (const p of prizesRaw) {
@@ -2020,7 +2020,7 @@ const hs = displayHour
                         <div className="pp_cardInner">
                           <div className="pp_cardHead">
                             <div className="pp_headLeft">
-                              <div className="pp_headTitle">{`Resultado ÔÇó ${label}`}</div>
+                              <div className="pp_headTitle">{`Resultado • ${label}`}</div>
                               <div className="pp_headSub">{dateBR}</div>
                             </div>
 
@@ -2029,7 +2029,7 @@ const hs = displayHour
 
                           <div className="pp_rows">
                             {rows.map((r) => {
-                              const gtxt = r.grupo ? `G${pad2(r.grupo)}` : "ÔÇö";
+                              const gtxt = r.grupo ? `G${pad2(r.grupo)}` : "—";
                               const numFmt = r.numero
                                 ? formatPrizeNumberByPos(r.numero, r.pos)
                                 : "";
@@ -2037,7 +2037,7 @@ const hs = displayHour
                               return (
                                 <div key={`${id}_pos_${r.pos}`} className="pp_row">
                                   <div className={`pp_posBadge ${prizeRankClass(r.pos)}`}>
-                                    {`${r.pos}┬║`}
+                                    {`${r.pos}º`}
                                   </div>
 
                                   <div className="pp_mid">
@@ -2055,12 +2055,12 @@ const hs = displayHour
 
                                     <div className="pp_textBlock">
                                       <div className="pp_group">
-                                        {r.grupo ? `GRUPO ${pad2(r.grupo)}` : "GRUPO ÔÇö"}
+                                        {r.grupo ? `GRUPO ${pad2(r.grupo)}` : "GRUPO —"}
                                       </div>
                                       <div className="pp_animal">
                                         {r.animalLabel
                                           ? r.animalLabel.toUpperCase()
-                                          : "ÔÇö"}
+                                          : "—"}
                                       </div>
                                     </div>
                                   </div>
@@ -2078,7 +2078,7 @@ const hs = displayHour
                                         className="pp_numValue"
                                         style={{ opacity: 0.55 }}
                                       >
-                                        ÔÇö
+                                        —
                                       </span>
                                     )}
                                   </div>
