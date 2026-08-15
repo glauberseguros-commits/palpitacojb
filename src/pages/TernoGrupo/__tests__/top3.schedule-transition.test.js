@@ -226,6 +226,85 @@ describe("TOP3 — transição oficial de horários", () => {
     expect(nacional).not.toContain("09:00");
   });
 
+  test("Nacional usa 20h em 27/03/2025", () => {
+    const nacional = normalizeSchedule(
+      schedule("NACIONAL", "2025-03-27")
+    );
+
+    expect(nacional).toEqual([
+      "02:00",
+      "08:00",
+      "10:00",
+      "12:00",
+      "15:00",
+      "17:00",
+      "20:00",
+      "23:00",
+    ]);
+
+    expect(nacional).toContain("20:00");
+    expect(nacional).not.toContain("21:00");
+  });
+
+  test("Nacional preserva 20h no ultimo dia antes da transicao", () => {
+    const nacional = normalizeSchedule(
+      schedule("NACIONAL", "2025-11-06")
+    );
+
+    expect(nacional).toEqual([
+      "02:00",
+      "08:00",
+      "10:00",
+      "12:00",
+      "15:00",
+      "17:00",
+      "20:00",
+      "23:00",
+    ]);
+
+    expect(nacional).toContain("20:00");
+    expect(nacional).not.toContain("21:00");
+  });
+
+  test("Nacional usa 21h a partir de 07/11/2025", () => {
+    const nacional = normalizeSchedule(
+      schedule("NACIONAL", "2025-11-07")
+    );
+
+    expect(nacional).toEqual([
+      "02:00",
+      "08:00",
+      "10:00",
+      "12:00",
+      "15:00",
+      "17:00",
+      "21:00",
+      "23:00",
+    ]);
+
+    expect(nacional).toContain("21:00");
+    expect(nacional).not.toContain("20:00");
+  });
+
+  test("Nacional continua usando 21h na grade atual", () => {
+    const nacional = normalizeSchedule(
+      schedule("NACIONAL", "2026-08-15")
+    );
+
+    expect(nacional).toEqual([
+      "02:00",
+      "08:00",
+      "10:00",
+      "12:00",
+      "15:00",
+      "17:00",
+      "21:00",
+      "23:00",
+    ]);
+
+    expect(nacional).toContain("21:00");
+    expect(nacional).not.toContain("20:00");
+  });
   test("Nacional faz a transicao 23h para 2h do dia seguinte", () => {
     expect(
       getNextSlotForLottery({

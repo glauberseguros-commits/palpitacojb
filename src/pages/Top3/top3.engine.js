@@ -371,7 +371,14 @@ export function getScheduleForLottery({
   }
 
   if (key === "NACIONAL") {
-    return [...NACIONAL_SCHEDULE];
+    const nacionalNightHour =
+      isYMD(ymd) && ymd >= "2025-11-07"
+        ? "21:00"
+        : "20:00";
+
+    return NACIONAL_SCHEDULE.map((hour) =>
+      hour === "21:00" ? nacionalNightHour : hour
+    );
   }
 
   return getPtRioScheduleForYmd(
@@ -6515,11 +6522,3 @@ export function auditTop3Backtest({
     lotteryKey,
   });
 }
-
-
-
-
-
-
-
-
