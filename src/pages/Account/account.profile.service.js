@@ -35,10 +35,12 @@
  *   -> migra para PREMIUM quando ainda válido
  */
 
-import { doc, getDoc, setDoc } from "firebase/firestore";
+import { doc, getDoc, setDoc, serverTimestamp, Timestamp } from "firebase/firestore";
 import { safeISO } from "./account.formatters";
 
 const PLAN_FREE = "FREE";
+const PLAN_STANDARD = "STANDARD";
+const PLAN_PLUS = "PLUS";
 const PLAN_PREMIUM = "PREMIUM";
 const PLAN_VIP = "VIP";
 
@@ -48,6 +50,8 @@ function nowIso() {
 
 function normalizePlan(v) {
   const s = String(v || "").trim().toUpperCase();
+  if (s === PLAN_STANDARD) return PLAN_STANDARD;
+  if (s === PLAN_PLUS) return PLAN_PLUS;
   if (s === PLAN_PREMIUM) return PLAN_PREMIUM;
   if (s === PLAN_VIP) return PLAN_VIP;
   return PLAN_FREE;
@@ -55,6 +59,40 @@ function normalizePlan(v) {
 
 function normalizeIsoString(v) {
   return String(v || "").trim();
+}
+
+function normalizeTimestampIso(v) {
+  try {
+    if (v && typeof v.toDate === "function") {
+      const d = v.toDate();
+      if (d instanceof Date && Number.isFinite(d.getTime())) {
+        return d.toISOString();
+      }
+    }
+  } catch {
+    // fallback abaixo
+  }
+
+  return "";
+}
+
+const SIGNUP_TRIAL_DAYS = 7;
+
+function addUtcDaysIso(startIso, days) {
+  const startMs = Date.parse(String(startIso || "").trim());
+
+  if (!Number.isFinite(startMs)) return "";
+
+  return new Date(
+    startMs + Number(days || 0) * 24 * 60 * 60 * 1000
+  ).toISOString();
+}
+
+function isTrialCurrentlyActive({ trialActive, trialEndAt, refIso }) {
+  if (trialActive !== true) return false;
+  if (!safeISO(trialEndAt)) return false;
+
+  return isFutureIso(trialEndAt, refIso);
 }
 
 function isFutureIso(iso, refIso) {
@@ -82,30 +120,6 @@ function buildExpiredToFreePatch() {
   };
 }
 
-function buildLegacyTrialMigration(data, refIso) {
-  const trialStartAt = normalizeIsoString(data?.trialStartAt);
-  const trialEndAt = normalizeIsoString(data?.trialEndAt);
-  const trialActiveStored = data?.trialActive === true;
-
-  const hasLegacyTrial = !!trialStartAt || !!trialEndAt || trialActiveStored;
-  if (!hasLegacyTrial) return null;
-
-  const activeByDate = safeISO(trialEndAt) ? isFutureIso(trialEndAt, refIso) : false;
-  const shouldBePremium = trialActiveStored || activeByDate;
-
-  if (shouldBePremium && safeISO(trialEndAt) && activeByDate) {
-    return {
-      plan: PLAN_PREMIUM,
-      planStartAt: trialStartAt || refIso,
-      planEndAt: trialEndAt,
-      isLifetime: false,
-      updatedAt: nowIso(),
-      updatedAtMs: Date.now(),
-    };
-  }
-
-  return buildExpiredToFreePatch();
-}
 
 /**
  * Garante o doc users/{uid}.
@@ -146,6 +160,18 @@ export async function ensureUserDoc(db, uid, user) {
           planStartAt: "",
           planEndAt: "",
           isLifetime: false,
+
+          trialStartAt: createdAtIso,
+          trialEndAt: addUtcDaysIso(createdAtIso, SIGNUP_TRIAL_DAYS),
+          trialActive: true,
+
+          // Segurança temporal: início ancorado no servidor.
+          // O fim proposto pelo client só será aceito pelas Rules
+          // dentro de uma janela de ±2 minutos em torno de 7 dias.
+          trialStartAtTs: serverTimestamp(),
+          trialEndAtTs: Timestamp.fromMillis(
+            Date.now() + SIGNUP_TRIAL_DAYS * 24 * 60 * 60 * 1000
+          ),
         },
         { merge: true }
       );
@@ -182,16 +208,12 @@ export async function ensureUserDoc(db, uid, user) {
 
     const hasPlanField = String(data.plan || "").trim().length > 0;
     if (!hasPlanField) {
-      const legacyPatch = buildLegacyTrialMigration(data, currentNowIso);
-
-      if (legacyPatch) {
-        Object.assign(patch, legacyPatch);
-      } else {
-        patch.plan = PLAN_FREE;
-        patch.planStartAt = "";
-        patch.planEndAt = "";
-        patch.isLifetime = false;
-      }
+      // Documento legado sem plano:
+      // preserva o Trial independente e inicializa somente o plano como FREE.
+      patch.plan = PLAN_FREE;
+      patch.planStartAt = "";
+      patch.planEndAt = "";
+      patch.isLifetime = false;
       needPatch = true;
     } else {
       const normalizedPlan = normalizePlan(data.plan);
@@ -266,31 +288,47 @@ export async function loadUserProfile(db, uid) {
     let planEndAt = normalizeIsoString(data.planEndAt);
     let isLifetime = data.isLifetime === true;
 
+    let trialStartAt =
+      normalizeTimestampIso(data.trialStartAtTs) ||
+      normalizeIsoString(data.trialStartAt);
+    let trialEndAt =
+      normalizeTimestampIso(data.trialEndAtTs) ||
+      normalizeIsoString(data.trialEndAt);
+    let trialActive = isTrialCurrentlyActive({
+      trialActive: data.trialActive === true,
+      trialEndAt,
+      refIso: currentNowIso,
+    });
+
     const hasPlanField = String(data.plan || "").trim().length > 0;
 
-    // Compat legado: trial -> PREMIUM/FREE
+    // Documento legado sem plano:
+    // Trial permanece independente; ausência de plano comercial significa FREE.
     if (!hasPlanField) {
-      const legacyPatch = buildLegacyTrialMigration(data, currentNowIso);
+      patch = {
+        ...(patch || {}),
+        plan: PLAN_FREE,
+        planStartAt: "",
+        planEndAt: "",
+        isLifetime: false,
+      };
+      plan = PLAN_FREE;
+      planStartAt = "";
+      planEndAt = "";
+      isLifetime = false;
+    }
 
-      if (legacyPatch) {
-        patch = { ...(patch || {}), ...legacyPatch };
-        plan = normalizePlan(legacyPatch.plan);
-        planStartAt = normalizeIsoString(legacyPatch.planStartAt);
-        planEndAt = normalizeIsoString(legacyPatch.planEndAt);
-        isLifetime = legacyPatch.isLifetime === true;
-      } else {
-        patch = {
-          ...(patch || {}),
-          plan: PLAN_FREE,
-          planStartAt: "",
-          planEndAt: "",
-          isLifetime: false,
-        };
-        plan = PLAN_FREE;
-        planStartAt = "";
-        planEndAt = "";
-        isLifetime = false;
-      }
+    // Trial é independente do plano comercial.
+    // Ao vencer, preservamos as datas e apenas desativamos o entitlement.
+    if (
+      data.trialActive === true &&
+      safeISO(trialEndAt) &&
+      !isFutureIso(trialEndAt, currentNowIso)
+    ) {
+      // A expiração é derivada localmente de trialEndAt.
+      // Não persistimos trialActive=false pelo cliente porque
+      // o estado do Trial é protegido pelas Firestore Rules.
+      trialActive = false;
     }
 
     // Downgrade automático se PREMIUM/VIP expirou
@@ -350,6 +388,10 @@ export async function loadUserProfile(db, uid) {
       planEndAt,
       isLifetime,
       isActivePlan: activePlan || plan === PLAN_FREE,
+
+      trialStartAt,
+      trialEndAt,
+      trialActive,
 
       lastActiveAt: currentNowIso,
     };

@@ -1,5 +1,18 @@
-// src/pages/Payments/Payments.jsx
 import React from "react";
+
+/**
+ * PALPITACO JB — PAGAMENTOS
+ *
+ * Esta página permanece disponível como ponto de entrada da futura
+ * experiência comercial.
+ *
+ * IMPORTANTE:
+ * - Não declarar preços provisórios.
+ * - Não declarar benefícios ainda não consolidados.
+ * - Não reutilizar o contrato legado de Trial 24h / Premium 30 dias.
+ * - O Trial oficial da plataforma é controlado pelo contrato atual
+ *   de acesso e perfil do usuário.
+ */
 
 export default function Payments() {
   return (
@@ -14,30 +27,36 @@ export default function Payments() {
           color: "rgba(255,255,255,0.92)",
         }}
       >
-        <div style={{ fontSize: 18, fontWeight: 900, letterSpacing: 0.3 }}>
-          Pagamentos
+        <div
+          style={{
+            fontSize: 18,
+            fontWeight: 900,
+            letterSpacing: 0.3,
+          }}
+        >
+          Planos e pagamentos
         </div>
 
-        <div style={{ marginTop: 10, lineHeight: 1.5, color: "rgba(255,255,255,0.78)" }}>
-          Esta tela está em modo esqueleto (Opção B).
-          <br />
-          Mercado Pago e domínio serão integrados depois.
+        <div
+          style={{
+            marginTop: 10,
+            lineHeight: 1.5,
+            color: "rgba(255,255,255,0.78)",
+          }}
+        >
+          Estamos preparando a área de planos do Palpitaco JB.
         </div>
 
-        <div style={{ marginTop: 14, color: "rgba(202,166,75,0.95)", fontWeight: 800 }}>
-          Regras (planejamento):
-        </div>
-
-        <ul style={{ marginTop: 8, paddingLeft: 18, color: "rgba(255,255,255,0.78)" }}>
-          <li>Usuário novo: entra Free e recebe Trial de 24h.</li>
-          <li>Premium: 30 dias após confirmação do pagamento.</li>
-          <li>Expirou premium: volta automaticamente para Free.</li>
-          <li>Renovação pode ocorrer a qualquer momento.</li>
-          <li>Pagamento mínimo planejado: R$ 10,00 / 30 dias.</li>
-        </ul>
-
-        <div style={{ marginTop: 12, fontSize: 12, color: "rgba(255,255,255,0.55)" }}>
-          Próximo passo desta tela: layout do plano + CTA + status do usuário (free/trial/premium).
+        <div
+          style={{
+            marginTop: 12,
+            lineHeight: 1.5,
+            color: "rgba(255,255,255,0.62)",
+            fontSize: 13,
+          }}
+        >
+          Os planos, benefícios e condições comerciais serão apresentados
+          aqui quando a configuração comercial estiver concluída.
         </div>
       </div>
     </div>

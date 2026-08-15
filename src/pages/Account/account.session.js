@@ -66,10 +66,37 @@ export function safeRemoveSession() {
 function normalizePlan(plan) {
   const raw = String(plan ?? "").trim().toUpperCase();
 
+  if (raw === "STANDARD") return "STANDARD";
+  if (raw === "PLUS") return "PLUS";
   if (raw === "VIP") return "VIP";
   if (raw === "PREMIUM") return "PREMIUM";
   if (raw === "FREE") return "FREE";
   return "";
+}
+
+function normalizeIsoString(value) {
+  return String(value || "").trim();
+}
+
+function isFutureIso(value, refMs = Date.now()) {
+  const ms = Date.parse(normalizeIsoString(value));
+  return Number.isFinite(ms) && ms > refMs;
+}
+
+function resolveUserEntitlement(user, plan) {
+  const trialActive = user?.trialActive === true;
+  const trialEndAt = normalizeIsoString(user?.trialEndAt);
+
+  if (trialActive && isFutureIso(trialEndAt)) {
+    return "TRIAL";
+  }
+
+  if (plan === "STANDARD") return "STANDARD";
+  if (plan === "PLUS") return "PLUS";
+  if (plan === "PREMIUM") return "PREMIUM";
+  if (plan === "VIP") return "VIP";
+
+  return "FREE";
 }
 
 function resolveUserPlan(user) {
@@ -105,10 +132,32 @@ export function markSessionAuth(user) {
 
   const plan = resolveUserPlan(user);
 
+  const trialStartAt = normalizeIsoString(user?.trialStartAt);
+  const trialEndAt = normalizeIsoString(user?.trialEndAt);
+  const trialActive =
+    user?.trialActive === true &&
+    isFutureIso(trialEndAt);
+
+  const entitlement = resolveUserEntitlement(
+    {
+      ...user,
+      trialActive,
+      trialEndAt,
+    },
+    plan
+  );
+
   safeWriteSession({
     ok: true,
     type: "user",
+
     plan,
+    entitlement,
+
+    trialStartAt,
+    trialEndAt,
+    trialActive,
+
     uid,
     email,
     ts: Date.now(),

@@ -32,6 +32,10 @@ import { loadDashboardStatistics } from "./dashboard.snapshot.loader";
 import { buildRanking } from "../../utils/buildRanking";
 import { applyScoreEngine } from "../../utils/scoreEngine";
 import { normalizeToYMD_SP } from "../../utils/ymd";
+import {
+  ACCESS_CAPABILITY,
+  can,
+} from "../../services/accessControl";
 
 /* PERF_BENCH_DASHBOARD_V3 */
 const __perf = (label, fn) => {
@@ -715,11 +719,21 @@ export default function Dashboard(props) {
     []
   );
 
-  const [, setSessionObj] = useState(() => loadSessionObj());
+  const [sessionObj, setSessionObj] = useState(() => loadSessionObj());
   const [sessionKind, setSessionKind] = useState(() => getSessionKind(loadSessionObj()));
   const [, setSessionPlan] = useState(() => getSessionPlan(loadSessionObj()));
 
   const isGuest = sessionKind === "guest";
+
+  const canChangeFilters = can(
+    sessionObj,
+    ACCESS_CAPABILITY.CHANGE_FILTERS
+  );
+
+  const canChangeDate = can(
+    sessionObj,
+    ACCESS_CAPABILITY.CHANGE_DATE
+  );
 
   useEffect(() => {
     const serializeSession = (sess) => {
@@ -1060,6 +1074,7 @@ export default function Dashboard(props) {
 
   const applyDateRange = useCallback(
     (next) => {
+      if (!canChangeDate) return;
       if (!next) return;
 
       let clampedNext = next;
@@ -1086,7 +1101,7 @@ export default function Dashboard(props) {
         setDateRangeQuery(clampedNext);
       }, 250);
     },
-    [boundsReady, MIN_DATE, MAX_DATE]
+    [canChangeDate, boundsReady, MIN_DATE, MAX_DATE]
   );
 
   useEffect(() => {
@@ -1316,6 +1331,8 @@ export default function Dashboard(props) {
 
   const handleFilterChange = useCallback(
     (name, value) => {
+      if (!canChangeFilters) return;
+
       if (name === "loteria" || name === "lotteryKey" || name === "uf") {
         setFilters((prev) => ({
           ...prev,
@@ -1340,7 +1357,7 @@ export default function Dashboard(props) {
         setSelectedGrupo(g);
       }
     },
-    [findGrupoByAnimalLabel, setFilters]
+    [canChangeFilters, findGrupoByAnimalLabel, setFilters]
   );
 
   const drawsForView = useMemo(() => {
@@ -1392,13 +1409,19 @@ export default function Dashboard(props) {
 
         if (wantBucket) {
           const b = normalizeHourBucket(getDrawCloseHour(d));
-
-          // NACIONAL — transição histórica do slot noturno:
-          // até 2025-11-06 = 20h
-          // a partir de 2025-11-07 = 21h
-          //
-          // O FiltersBar mantém label 21h -> value 20h por compatibilidade
-          // com o legado. Aqui reconciliamos os dois períodos pela data.
+          /*
+           * NACIONAL — horários noturnos são camadas independentes.
+           *
+           * 20h:
+           *   01/09/2023 até 06/11/2025
+           *
+           * 21h:
+           *   a partir de 07/11/2025
+           *
+           * O horário nominal é prioritário quando disponível.
+           * O bucket bruto serve somente como fallback porque a fonte
+           * historicamente registra o fechamento alguns minutos antes.
+           */
           const isNacional =
             String(uf || "").trim().toUpperCase() === "NACIONAL";
 
@@ -1441,6 +1464,19 @@ export default function Dashboard(props) {
                 return false;
               }
             } else {
+              /*
+               * Fallback para registros legados:
+               *
+               * 20h nominal:
+               *   normalmente fechamento 19:xx,
+               *   com exceções persistidas como 20:00.
+               *
+               * 21h nominal:
+               *   normalmente fechamento 20:xx,
+               *   podendo existir normalização 21:00.
+               *
+               * A data impede qualquer contaminação cruzada.
+               */
               const allowedRawBuckets =
                 expectedNominalHour === "20h"
                   ? new Set(["19h", "20h"])
@@ -1629,13 +1665,14 @@ const rankingDataForCharts = useMemo(() => {
   }, [MIN_DATE, MAX_DATE]);
 
   const applyAllYearsFull = useCallback(() => {
+    if (!canChangeDate) return;
     if (!MIN_DATE || !MAX_DATE) return;
     setSelectedYears([]);
     const full = { from: MIN_DATE, to: MAX_DATE };
     setDateRange(full);
     setDateRangeQuery(full);
     setFollowMax(true);
-  }, [MIN_DATE, MAX_DATE]);
+  }, [canChangeDate, MIN_DATE, MAX_DATE]);
 
   const onClearYears = useCallback(() => {
     applyAllYearsFull();
@@ -1643,6 +1680,8 @@ const rankingDataForCharts = useMemo(() => {
 
   const onToggleYear = useCallback(
     (year) => {
+      if (!canChangeDate) return;
+
       const y = Number(year);
       if (!Number.isFinite(y)) return;
 
@@ -1669,7 +1708,7 @@ const rankingDataForCharts = useMemo(() => {
         return next;
       });
     },
-    [applyAllYearsFull, MIN_DATE, MAX_DATE]
+    [canChangeDate, applyAllYearsFull, MIN_DATE, MAX_DATE]
   );
 
   const kpiItems = useMemo(() => {
@@ -1701,6 +1740,8 @@ const rankingDataForCharts = useMemo(() => {
 
   const onSelectGrupo = useCallback(
     (grupoNum) => {
+      if (!canChangeFilters) return;
+
       const g = Number(grupoNum);
       if (!Number.isFinite(g) || g < 1 || g > 25) {
         setSelectedGrupo(null);
@@ -1728,11 +1769,13 @@ const rankingDataForCharts = useMemo(() => {
         return next;
       });
     },
-    [rankingDataGlobalForLabels, setFilters]
+    [canChangeFilters, rankingDataGlobalForLabels, setFilters]
   );
 
   const onSelectPosicao = useCallback(
     (posNumberString) => {
+      if (!canChangeFilters) return;
+
       const raw = String(posNumberString ?? "").trim();
       const m = raw.match(/^(\d+)/);
       const n = m ? Number(m[1]) : NaN;
@@ -1740,7 +1783,7 @@ const rankingDataForCharts = useMemo(() => {
       if (!Number.isFinite(n) || n < 1 || n > 7) return;
       setFilters((prev) => ({ ...prev, posicao: `${n}º` }));
     },
-    [setFilters]
+    [canChangeFilters, setFilters]
   );
 
   const boundsMessage = useMemo(() => {
@@ -1910,7 +1953,16 @@ const rankingDataForCharts = useMemo(() => {
               <>
 
                 {MIN_DATE && MAX_DATE && dateRange ? (
-                  <div style={{ position: "relative", zIndex: 10, pointerEvents: "auto" }}>
+                  <div
+                    aria-disabled={isGuest ? "true" : undefined}
+                    title={isGuest ? "Modo convidado: período somente para visualização." : undefined}
+                    style={{
+                      position: "relative",
+                      zIndex: 10,
+                      pointerEvents: isGuest ? "none" : "auto",
+                      opacity: isGuest ? 0.78 : 1,
+                    }}
+                  >
                     <div style={{ position: "relative" }}>
                       <DateRangeControl
                         value={dateRange}
@@ -1964,8 +2016,20 @@ const rankingDataForCharts = useMemo(() => {
         </section>
 
         <section className="dashFilters">
-          <div style={{ position: "relative" }}>
-            <FiltersBar filters={filters} onChange={handleFilterChange} options={options} />
+          <div
+            aria-disabled={isGuest ? "true" : undefined}
+            title={isGuest ? "Modo convidado: filtros somente para visualização." : undefined}
+            style={{
+              position: "relative",
+              pointerEvents: isGuest ? "none" : "auto",
+              opacity: isGuest ? 0.78 : 1,
+            }}
+          >
+            <FiltersBar
+              filters={filters}
+              onChange={handleFilterChange}
+              options={options}
+            />
           </div>
         </section>
 

@@ -68,6 +68,8 @@ import {
  */
 
 const PLAN_FREE = "FREE";
+const PLAN_STANDARD = "STANDARD";
+const PLAN_PLUS = "PLUS";
 const PLAN_PREMIUM = "PREMIUM";
 const PLAN_VIP = "VIP";
 const ACCOUNT_SESSION_KEY = "pp_session_v1";
@@ -75,6 +77,8 @@ const ACCOUNT_SESSION_KEY = "pp_session_v1";
 function normalizePlan(planRaw) {
   const p = String(planRaw || "").trim().toUpperCase();
   if (p === PLAN_VIP) return PLAN_VIP;
+  if (p === PLAN_STANDARD) return PLAN_STANDARD;
+  if (p === PLAN_PLUS) return PLAN_PLUS;
   if (p === PLAN_PREMIUM) return PLAN_PREMIUM;
   return PLAN_FREE;
 }
@@ -390,18 +394,19 @@ export default function Account({ onClose = null, onAuthenticated = null }) {
         remote?.isActivePlan === true ||
         (remotePlan !== PLAN_FREE && remoteIsLifetime === true);
 
+      const remoteTrialStartAt = String(remote?.trialStartAt || "").trim();
+      const remoteTrialEndAt = String(remote?.trialEndAt || "").trim();
+      const remoteTrialActive = remote?.trialActive === true;
+
       setPlan(remotePlan);
       setPlanStartAt(remotePlanStartAt);
       setPlanEndAt(remotePlanEndAt);
       setIsLifetime(remoteIsLifetime);
       setIsActivePlan(remoteIsActivePlan);
 
-      // compat temporária com hooks/view antigos:
-      // FREE => sem trial ativo
-      // PREMIUM/VIP => considera como "ativo" se houver plano ativo
-      setTrialStartAt(remotePlanStartAt);
-      setTrialEndAt(remotePlanEndAt);
-      setTrialActive(remotePlan !== PLAN_FREE && remoteIsActivePlan);
+      setTrialStartAt(remoteTrialStartAt);
+      setTrialEndAt(remoteTrialEndAt);
+      setTrialActive(remoteTrialActive);
 
       setNameDraft(String(remote?.name || "").trim());
       setPhoneDraft(normalizePhoneDigits(remote?.phone || ""));
@@ -414,11 +419,17 @@ export default function Account({ onClose = null, onAuthenticated = null }) {
       markSessionAuth({
         uid: user.uid,
         email: String(user.email || "").trim().toLowerCase(),
+
         plan: remotePlan,
         planStartAt: remotePlanStartAt,
         planEndAt: remotePlanEndAt,
         isLifetime: remoteIsLifetime,
         isActivePlan: remoteIsActivePlan,
+
+        trialStartAt: remoteTrialStartAt,
+        trialEndAt: remoteTrialEndAt,
+        trialActive: remoteTrialActive,
+
         metadata: user?.metadata || {},
       });
 

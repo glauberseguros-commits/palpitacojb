@@ -31,7 +31,10 @@ service cloud.firestore {
         "uid",
         "email",
         "createdAt",
+        "createdAtMs",
         "updatedAt",
+        "updatedAtMs",
+        "lastActiveAt",
 
         // profile
         "name",
@@ -44,12 +47,17 @@ service cloud.firestore {
         "trialStartAt",
         "trialEndAt",
         "trialActive",
+        "trialStartAtTs",
+        "trialEndAtTs",
         "trialStart",
         "trialEnd",
         "trialEndsAt",
 
-        // plan (mas com regras abaixo)
-        "plan"
+        // access plan
+        "plan",
+        "planStartAt",
+        "planEndAt",
+        "isLifetime"
       ];
     }
 
@@ -70,15 +78,24 @@ service cloud.firestore {
 
     /**
      * ✅ PLAN: regras seguras
-     * - CREATE: só aceita FREE/TRIAL (ou sem plan)
-     * - UPDATE: permite qualquer plan EXISTENTE (FREE/TRIAL/PRO/VIP),
+     * - CREATE: só aceita FREE (ou sem plan)
+     * - UPDATE: usuário não pode alterar o plan existente,
      *           mas o usuário NÃO pode ALTERAR o plan.
      */
     function planSafeForCreate() {
       return !("plan" in request.resource.data)
-        || request.resource.data.plan in ["FREE", "TRIAL"];
+        || request.resource.data.plan == "FREE";
     }
 
+    function planMetadataSafeForCreate() {
+      return
+        (!("planStartAt" in request.resource.data)
+          || request.resource.data.planStartAt == "") &&
+        (!("planEndAt" in request.resource.data)
+          || request.resource.data.planEndAt == "") &&
+        (!("isLifetime" in request.resource.data)
+          || request.resource.data.isLifetime == false);
+    }
     function planNotChangedOnUpdate() {
       return !("plan" in request.resource.data)
         || resource.data.plan == request.resource.data.plan;
@@ -88,22 +105,50 @@ service cloud.firestore {
      * ✅ TRIAL: usuário pode setar no CREATE (porque seu client cria trial),
      * mas NÃO pode alterar depois (somente admin).
      */
+    function trialSafeForCreate() {
+      return
+        ("trialStartAtTs" in request.resource.data) &&
+        ("trialEndAtTs" in request.resource.data) &&
+        ("trialActive" in request.resource.data) &&
+        request.resource.data.trialStartAtTs is timestamp &&
+        request.resource.data.trialEndAtTs is timestamp &&
+        request.resource.data.trialActive == true &&
+        request.resource.data.trialStartAtTs == request.time &&
+
+        // 7 dias = 10080 minutos.
+        // Tolerância técnica máxima: ±2 minutos.
+        request.resource.data.trialEndAtTs >=
+          request.time + duration.value(10078, "m") &&
+        request.resource.data.trialEndAtTs <=
+          request.time + duration.value(10082, "m");
+    }
+    function planMetadataNotChangedOnUpdate() {
+      return
+        (!("planStartAt" in request.resource.data)
+          || request.resource.data.planStartAt == resource.data.planStartAt) &&
+        (!("planEndAt" in request.resource.data)
+          || request.resource.data.planEndAt == resource.data.planEndAt) &&
+        (!("isLifetime" in request.resource.data)
+          || request.resource.data.isLifetime == resource.data.isLifetime);
+    }
     function trialNotChangedOnUpdate() {
       return
         (!("trialStartAt" in request.resource.data) || request.resource.data.trialStartAt == resource.data.trialStartAt) &&
         (!("trialEndAt"   in request.resource.data) || request.resource.data.trialEndAt   == resource.data.trialEndAt) &&
         (!("trialActive"  in request.resource.data) || request.resource.data.trialActive  == resource.data.trialActive) &&
+        (!("trialStartAtTs" in request.resource.data) || request.resource.data.trialStartAtTs == resource.data.trialStartAtTs) &&
+        (!("trialEndAtTs" in request.resource.data) || request.resource.data.trialEndAtTs == resource.data.trialEndAtTs) &&
         (!("trialStart"   in request.resource.data) || request.resource.data.trialStart   == resource.data.trialStart) &&
         (!("trialEnd"     in request.resource.data) || request.resource.data.trialEnd     == resource.data.trialEnd) &&
         (!("trialEndsAt"  in request.resource.data) || request.resource.data.trialEndsAt  == resource.data.trialEndsAt);
     }
 
     function userCreateIsSafe() {
-      return createKeysAreSafe() && planSafeForCreate();
+      return createKeysAreSafe() && planSafeForCreate() && planMetadataSafeForCreate() && trialSafeForCreate();
     }
 
     function userUpdateIsSafe() {
-      return updateKeysAreSafe() && planNotChangedOnUpdate() && trialNotChangedOnUpdate();
+      return updateKeysAreSafe() && planNotChangedOnUpdate() && planMetadataNotChangedOnUpdate() && trialNotChangedOnUpdate();
     }
 
     /* =========================================================

@@ -2,6 +2,12 @@
 // src/pages/Late/Late.jsx
 import React, { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import {
+  ACCESS_CAPABILITY,
+  can,
+  getAccessSessionKind,
+  loadAccessSession,
+} from "../../services/accessControl";
+import {
   getKingBoundsByUf,
   getKingResultsByDate,
   getKingLateByRange,
@@ -333,6 +339,15 @@ const LATE_HOUR_OPTIONS = {
 };
 
 export default function Late() {
+
+  const session = loadAccessSession();
+  const sessionKind = getAccessSessionKind(session);
+
+  const canChangeLateView = can(
+    session,
+    ACCESS_CAPABILITY.CHANGE_FILTERS
+  );
+
 
 
   // UI
@@ -768,6 +783,8 @@ export default function Late() {
   // ✅ handler clamped (date input)
   const onChangeDate = useCallback(
     (raw) => {
+      if (!canChangeLateView) return;
+
       const minYmd = bounds?.minYmd;
       const maxYmd = bounds?.maxYmd;
       const next = normalizeSingleDateWithBounds(
@@ -777,7 +794,7 @@ export default function Late() {
       );
       setDateYmd(next);
     },
-    [bounds?.minYmd, bounds?.maxYmd]
+    [bounds?.minYmd, bounds?.maxYmd, canChangeLateView]
   );
 
   return (
@@ -957,10 +974,11 @@ LATE_LOTTERY_OPTIONS.find(
             <select
               id="lateLottery"
               value={selectedLotteryId}
-              onChange={(event) =>
-                setSelectedLotteryId(event.target.value)
-              }
-              disabled={loading}
+              onChange={(event) => {
+                if (!canChangeLateView) return;
+                setSelectedLotteryId(event.target.value);
+              }}
+              disabled={!canChangeLateView || loading}
             >
               {LATE_LOTTERY_OPTIONS.map((option) => (
                 <option
@@ -978,12 +996,13 @@ LATE_LOTTERY_OPTIONS.find(
             <select
               id="lateHour"
               value={lotteryOptId}
-              onChange={(event) =>
+              onChange={(event) => {
+                if (!canChangeLateView) return;
                 setLotteryOptId(
                   String(event.target.value || "ALL")
-                )
-              }
-              disabled={loading}
+                );
+              }}
+              disabled={!canChangeLateView || loading}
             >
               {selectedHourOptions.map((option) => (
                 <option
@@ -998,7 +1017,14 @@ LATE_LOTTERY_OPTIONS.find(
 
           <div className="ppCtl">
             <label>Tipo</label>
-            <select value={kind} onChange={(e) => setKind(String(e.target.value || "grupo"))}>
+            <select
+              value={kind}
+              onChange={(e) => {
+                if (!canChangeLateView) return;
+                setKind(String(e.target.value || "grupo"));
+              }}
+              disabled={!canChangeLateView}
+            >
               <option value="grupo">Grupo</option>
               <option value="milhar" disabled>Milhar</option>
               <option value="centena" disabled>Centena</option>
@@ -1009,7 +1035,14 @@ LATE_LOTTERY_OPTIONS.find(
 
           <div className="ppCtl">
             <label>Prêmio</label>
-            <select value={prizeMode} onChange={(e) => setPrizeMode(String(e.target.value || "1"))}>
+            <select
+              value={prizeMode}
+              onChange={(e) => {
+                if (!canChangeLateView) return;
+                setPrizeMode(String(e.target.value || "1"));
+              }}
+              disabled={!canChangeLateView}
+            >
               <option value="1">1º Prêmio</option>
               <option value="2">2º Prêmio</option>
               <option value="3">3º Prêmio</option>
@@ -1027,10 +1060,18 @@ LATE_LOTTERY_OPTIONS.find(
               min={bounds?.minYmd || undefined}
               max={todayYMDLocal()}
               onChange={(e) => onChangeDate(e.target.value || todayYMDLocal())}
+              disabled={!canChangeLateView}
             />
           </div>
 
-          <button className="ppBtn" onClick={() => refresh()} disabled={loading || !boundsReady}>
+          <button
+            className="ppBtn"
+            onClick={() => {
+              if (!canChangeLateView) return;
+              refresh();
+            }}
+            disabled={!canChangeLateView || loading || !boundsReady}
+          >
             {loading ? "Carregando..." : "Atualizar"}
           </button>
         </div>

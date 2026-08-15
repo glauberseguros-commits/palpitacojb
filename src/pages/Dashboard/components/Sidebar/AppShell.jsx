@@ -5,6 +5,12 @@ import MiniLogo from "./MiniLogo";
 import { auth } from "../../../../services/firebase";
 import { signOut } from "firebase/auth";
 
+import {
+  ACCESS_ENTITLEMENT,
+  getAccessEntitlement,
+  isCommercialPlan,
+  normalizeAccessEntitlement,
+} from "../../../../services/accessControl";
 const ROUTES = {
   DASHBOARD: "dashboard",
   ACCOUNT: "account",
@@ -36,12 +42,17 @@ const safeRemoveLS = (k) => {
   } catch {}
 };
 
-function normalizePlan(plan) {
-  const p = String(plan || "").trim().toUpperCase();
-  if (p === "VIP") return "VIP";
-  if (p === "PREMIUM") return "PREMIUM";
-  if (p === "FREE") return "FREE";
-  return "";
+function normalizeSessionPlan(plan) {
+  const normalized = normalizeAccessEntitlement(plan);
+
+  if (
+    isCommercialPlan(normalized) ||
+    normalized === ACCESS_ENTITLEMENT.VIP
+  ) {
+    return normalized;
+  }
+
+  return ACCESS_ENTITLEMENT.FREE;
 }
 
 function readSession() {
@@ -60,12 +71,21 @@ function readSession() {
   try {
     const obj = JSON.parse(raw);
     const type = String(obj?.type || "").trim().toLowerCase();
-    const plan = normalizePlan(obj?.plan);
+    const plan = normalizeSessionPlan(obj?.plan);
 
     return {
       ok: obj?.ok === true,
       type: type || "anon",
-      plan: type === "guest" ? "FREE" : plan || (type === "user" ? "FREE" : ""),
+      plan:
+        type === "guest"
+          ? ACCESS_ENTITLEMENT.FREE
+          : type === "user"
+          ? plan
+          : "",
+      entitlement:
+        type === "guest"
+          ? ACCESS_ENTITLEMENT.FREE
+          : getAccessEntitlement(obj),
       uid: String(obj?.uid || "").trim(),
       email: String(obj?.email || "").trim().toLowerCase(),
       raw: obj,
@@ -131,7 +151,9 @@ export default function AppShell({ active, onNavigate, onLogout, children }) {
   }, []);
 
   const isGuest = session?.type === "guest";
-  const planLabel = isGuest ? "PREVIEW" : normalizePlan(session?.plan) || "FREE";
+  const planLabel = isGuest
+    ? "PREVIEW"
+    : getAccessEntitlement(session);
 
   useEffect(() => {
     const isDashboard = active === ROUTES.DASHBOARD;

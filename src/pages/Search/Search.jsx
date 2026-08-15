@@ -6,6 +6,12 @@ import {
   getImgFromGrupo as getImgFromGrupoFn,
 } from "../../constants/bichoMap";
 import SearchResultsTable from "../Dashboard/components/SearchResultsTable";
+import {
+  ACCESS_CAPABILITY,
+  can,
+  getAccessSessionKind,
+  loadAccessSession,
+} from "../../services/accessControl";
 
 /**
  * Search — Premium (SEM índice)
@@ -404,7 +410,16 @@ function buildSlots(digits) {
   return slots;
 }
 
-function SearchDigitsInput({ value, onChange, loading, onBuscar, onLimpar, canSearch, showLimpar }) {
+function SearchDigitsInput({
+  value,
+  onChange,
+  loading,
+  onBuscar,
+  onLimpar,
+  canSearch,
+  showLimpar,
+  canInteract,
+}) {
   const digits = normalizeDigitsOnly(value).slice(0, 4);
   const slots = useMemo(() => buildSlots(digits), [digits]);
   const inputRef = useRef(null);
@@ -446,8 +461,19 @@ function SearchDigitsInput({ value, onChange, loading, onBuscar, onLimpar, canSe
           inputMode="numeric"
           autoComplete="off"
           value={digits}
-          onChange={(e) => onChange(normalizeDigitsOnly(e.target.value).slice(0, 4))}
-          onKeyDown={handleKeyDown}
+          onChange={(e) => {
+            if (!canInteract) return;
+            onChange(normalizeDigitsOnly(e.target.value).slice(0, 4));
+          }}
+          onKeyDown={(e) => {
+            if (!canInteract) {
+              e.preventDefault();
+              e.stopPropagation();
+              return;
+            }
+            handleKeyDown(e);
+          }}
+          disabled={!canInteract}
           aria-label="Digite 2, 3 ou 4 dígitos"
         />
 
@@ -467,8 +493,14 @@ function SearchDigitsInput({ value, onChange, loading, onBuscar, onLimpar, canSe
           type="button"
           className="ppBtn ppBtnPrimary"
           onClick={onBuscar}
-          disabled={!canSearch}
-          title={canSearch ? "Buscar" : "Digite 2, 3 ou 4 dígitos"}
+          disabled={!canInteract || !canSearch}
+          title={
+            !canInteract
+              ? "Disponível para usuários cadastrados"
+              : canSearch
+              ? "Buscar"
+              : "Digite 2, 3 ou 4 dígitos"
+          }
         >
           {loading ? "Buscando..." : "Buscar"}
         </button>
@@ -477,8 +509,12 @@ function SearchDigitsInput({ value, onChange, loading, onBuscar, onLimpar, canSe
           type="button"
           className="ppBtn"
           onClick={onLimpar}
-          disabled={!showLimpar || loading}
-          title="Limpar busca"
+          disabled={!canInteract || !showLimpar || loading}
+          title={
+            canInteract
+              ? "Limpar busca"
+              : "Disponível para usuários cadastrados"
+          }
         >
           Limpar
         </button>
@@ -557,6 +593,14 @@ const SEARCH_LOTTERIES = Object.freeze([
 ]);
 
 export default function Search() {
+  const session = loadAccessSession();
+  const sessionKind = getAccessSessionKind(session);
+
+  const canUseSearch = can(
+    session,
+    ACCESS_CAPABILITY.SEARCH
+  );
+
   const [lotteryKey, setLotteryKey] = useState("PT_RIO");
   const LOTTERY_KEY = lotteryKey;
 
@@ -642,6 +686,8 @@ export default function Search() {
   }, [LOTTERY_KEY]);
 
   const onLotteryChange = useCallback((nextLottery) => {
+    if (!canUseSearch) return;
+
     const validLottery = SEARCH_LOTTERIES.some(
       (lottery) => lottery.value === nextLottery
     );
@@ -657,7 +703,7 @@ export default function Search() {
     setHorario("Todos");
     setRange({ from: "", to: "" });
     setLotteryKey(nextLottery);
-  }, [lotteryKey]);
+  }, [lotteryKey, canUseSearch]);
 
   const animalOptions = useMemo(() => {
     const out = ["Todos"];
@@ -693,6 +739,8 @@ export default function Search() {
   }, [range, bounds]);
 
   const runSearch = useCallback(async () => {
+    if (!canUseSearch) return;
+
     const runId = (runIdRef.current += 1);
     abortedRef.current = false;
 
@@ -910,11 +958,19 @@ export default function Search() {
     setMatches([]);
   }, []);
 
-  const canSearch = useMemo(() => boundsReady && !loading && buildQueryInfo(queryDraft).len >= 2, [
-    boundsReady,
-    loading,
-    queryDraft,
-  ]);
+  const canSearch = useMemo(
+    () =>
+      canUseSearch &&
+      boundsReady &&
+      !loading &&
+      buildQueryInfo(queryDraft).len >= 2,
+    [
+      canUseSearch,
+      boundsReady,
+      loading,
+      queryDraft,
+    ]
+  );
 
   const showLimpar = useMemo(() => normalizeDigitsOnly(queryDraft).length > 0 || matches.length > 0, [
     queryDraft,
@@ -1158,8 +1214,11 @@ export default function Search() {
             <label>Loteria</label>
             <select
               value={lotteryKey}
-              onChange={(e) => onLotteryChange(String(e.target.value || "PT_RIO"))}
-              disabled={loading}
+              onChange={(e) => {
+                if (!canUseSearch) return;
+                onLotteryChange(String(e.target.value || "PT_RIO"));
+              }}
+              disabled={!canUseSearch || loading}
             >
               {SEARCH_LOTTERIES.map((lottery) => (
                 <option key={lottery.value} value={lottery.value}>
@@ -1176,7 +1235,14 @@ export default function Search() {
               value={safeRange.from}
               min={bounds?.minYmd || undefined}
               max={bounds?.maxYmd || undefined}
-              onChange={(e) => setRange((r) => ({ ...r, from: String(e.target.value || "") }))}
+              onChange={(e) => {
+                if (!canUseSearch) return;
+                setRange((r) => ({
+                  ...r,
+                  from: String(e.target.value || ""),
+                }));
+              }}
+              disabled={!canUseSearch}
             />
           </div>
 
@@ -1187,13 +1253,27 @@ export default function Search() {
               value={safeRange.to}
               min={bounds?.minYmd || undefined}
               max={bounds?.maxYmd || undefined}
-              onChange={(e) => setRange((r) => ({ ...r, to: String(e.target.value || "") }))}
+              onChange={(e) => {
+                if (!canUseSearch) return;
+                setRange((r) => ({
+                  ...r,
+                  to: String(e.target.value || ""),
+                }));
+              }}
+              disabled={!canUseSearch}
             />
           </div>
 
           <div className="ppCtl">
             <label>Mês</label>
-            <select value={mes} onChange={(e) => setMes(String(e.target.value || "Todos"))}>
+            <select
+              value={mes}
+              onChange={(e) => {
+                if (!canUseSearch) return;
+                setMes(String(e.target.value || "Todos"));
+              }}
+              disabled={!canUseSearch}
+            >
               {["Todos", "Jan", "Fev", "Mar", "Abr", "Mai", "Jun", "Jul", "Ago", "Set", "Out", "Nov", "Dez"].map((x) => (
                 <option key={x} value={x}>
                   {x}
@@ -1204,7 +1284,14 @@ export default function Search() {
 
           <div className="ppCtl">
             <label>Dia</label>
-            <select value={diaMes} onChange={(e) => setDiaMes(String(e.target.value || "Todos"))}>
+            <select
+              value={diaMes}
+              onChange={(e) => {
+                if (!canUseSearch) return;
+                setDiaMes(String(e.target.value || "Todos"));
+              }}
+              disabled={!canUseSearch}
+            >
               {["Todos", ...Array.from({ length: 31 }, (_, i) => String(i + 1))].map((x) => (
                 <option key={x} value={x}>
                   {x}
@@ -1215,7 +1302,14 @@ export default function Search() {
 
           <div className="ppCtl">
             <label>Semana</label>
-            <select value={diaSemana} onChange={(e) => setDiaSemana(String(e.target.value || "Todos"))}>
+            <select
+              value={diaSemana}
+              onChange={(e) => {
+                if (!canUseSearch) return;
+                setDiaSemana(String(e.target.value || "Todos"));
+              }}
+              disabled={!canUseSearch}
+            >
               {["Todos", "Dom", "Seg", "Ter", "Qua", "Qui", "Sex", "Sáb"].map((x) => (
                 <option key={x} value={x}>
                   {x}
@@ -1226,7 +1320,14 @@ export default function Search() {
 
           <div className="ppCtl">
             <label>Horário</label>
-            <select value={horario} onChange={(e) => setHorario(String(e.target.value || "Todos"))}>
+            <select
+              value={horario}
+              onChange={(e) => {
+                if (!canUseSearch) return;
+                setHorario(String(e.target.value || "Todos"));
+              }}
+              disabled={!canUseSearch}
+            >
               {["Todos", ...lotteryHours].map((x) => (
                 <option key={x} value={x}>
                   {x}
@@ -1237,7 +1338,14 @@ export default function Search() {
 
           <div className="ppCtl">
             <label>Animal</label>
-            <select value={animal} onChange={(e) => setAnimal(String(e.target.value || "Todos"))}>
+            <select
+              value={animal}
+              onChange={(e) => {
+                if (!canUseSearch) return;
+                setAnimal(String(e.target.value || "Todos"));
+              }}
+              disabled={!canUseSearch}
+            >
               {animalOptions.map((x) => (
                 <option key={x} value={x}>
                   {x}
@@ -1248,7 +1356,14 @@ export default function Search() {
 
           <div className="ppCtl">
             <label>Posição</label>
-            <select value={posicao} onChange={(e) => setPosicao(String(e.target.value || "Todos"))}>
+            <select
+              value={posicao}
+              onChange={(e) => {
+                if (!canUseSearch) return;
+                setPosicao(String(e.target.value || "Todos"));
+              }}
+              disabled={!canUseSearch}
+            >
               {["Todos", "1º", "2º", "3º", "4º", "5º", "6º", "7º"].map((x) => (
                 <option key={x} value={x}>
                   {x}
@@ -1266,9 +1381,13 @@ export default function Search() {
               <div className="ppLeftCardBody">
                 <SearchDigitsInput
                   value={queryDraft}
-                  onChange={setQueryDraft}
+                  onChange={(value) => {
+                    if (!canUseSearch) return;
+                    setQueryDraft(value);
+                  }}
                   loading={loading}
                   canSearch={canSearch}
+                  canInteract={canUseSearch}
                   showLimpar={showLimpar}
                   onBuscar={runSearch}
                   onLimpar={onClickLimpar}

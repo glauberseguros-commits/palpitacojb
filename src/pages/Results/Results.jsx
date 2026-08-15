@@ -3,6 +3,12 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import {
+  ACCESS_CAPABILITY,
+  can,
+  getAccessSessionKind,
+  loadAccessSession,
+} from "../../services/accessControl";
+import {
   getKingBoundsByUf,
   getKingResultsByDate,
   getKingResultsByRange,
@@ -769,20 +775,27 @@ function buildExpectedDrawsForScope(scopeKey, orderedDraws, ymd) {
     expectedHours = LOOK_EXPECTED_HOURS_DESC;
   } else if (scopeKey === SCOPE_NACIONAL) {
     /*
-     * NACIONAL — calendário histórico real:
+     * NACIONAL — calendário histórico real do slot noturno:
      *
-     * 01/09/2023..06/11/2025 => slot nominal 20h
-     * 07/11/2025..atual       => slot nominal 21h
+     * 01/09/2023..06/11/2025 => 20h
+     * 07/11/2025..atual       => 21h
      *
-     * Nunca criar simultaneamente placeholders 20h e 21h.
+     * O horário inválido da outra época não entra em expectedHours.
+     * Assim, nenhum placeholder fantasma é criado para um slot
+     * historicamente inexistente.
      */
-    expectedHours = NACIONAL_EXPECTED_HOURS_DESC.map((hour) => {
-      if (hour !== "21h") return hour;
-
-      return ymd >= "2025-11-07"
+    const nacionalNightHour =
+      ymd >= "2025-11-07"
         ? "21h"
         : "20h";
-    });
+
+    expectedHours = NACIONAL_EXPECTED_HOURS_DESC
+      .filter((hour) => hour !== "20h" && hour !== "21h");
+
+    expectedHours = [
+      ...expectedHours,
+      nacionalNightHour,
+    ];
   }
 
   const visibleExpectedHours = expectedHours.filter((hour) =>
@@ -803,6 +816,26 @@ function buildExpectedDrawsForScope(scopeKey, orderedDraws, ymd) {
      * acontece antes desta condição.
      */
     if (found) return [found];
+
+    /*
+     * Histórico fechado:
+     *
+     * Se a data já passou e não existe resultado real para este slot,
+     * não existe card a ser exibido.
+     *
+     * Placeholders ficam restritos ao dia atual, onde um sorteio
+     * válido ainda pode estar aguardando publicação/importação.
+     *
+     * Resultados reais sempre têm precedência porque `found`
+     * retorna antes desta condição.
+     */
+    const isHistoricalDate =
+      isYMD(ymd) &&
+      safeStr(ymd) < todayYMDLocal();
+
+    if (isHistoricalDate) {
+      return [];
+    }
 
     const selectedDate = ymdToDateLocal(ymd);
     const selectedDow =
@@ -864,6 +897,15 @@ function monthDaysWithDraws(draws) {
 ========================= */
 
 export default function Results() {
+
+  const session = loadAccessSession();
+  const sessionKind = getAccessSessionKind(session);
+
+  const canChangeResultsView = can(
+    session,
+    ACCESS_CAPABILITY.CHANGE_FILTERS
+  );
+
   const DEFAULT_SCOPE = SCOPE_RJ;
 
   const [scopeUi, setScopeUi] = useState(DEFAULT_SCOPE);
@@ -1152,6 +1194,7 @@ export default function Results() {
   }, [calendarMonthYmd, effectiveBounds?.maxYmd]);
 
   function handleSelectYmd(nextYmd) {
+    if (!canChangeResultsView) return;
     if (!isYMD(nextYmd)) return;
     const bounded = normalizeSingleDateWithBounds(
       nextYmd,
@@ -1164,6 +1207,8 @@ export default function Results() {
 
   async function handleRefresh(e) {
     stopEvt(e);
+    if (!canChangeResultsView) return;
+
     await Promise.allSettled([
       boundsQuery.refetch(),
       calendarMarksQuery.refetch(),
@@ -1745,8 +1790,10 @@ export default function Results() {
               <button
                 type="button"
                 className={scopePillClass(scopeKey === SCOPE_RJ)}
+                disabled={!canChangeResultsView}
                 onClick={(e) => {
                   stopEvt(e);
+                  if (!canChangeResultsView) return;
                   setScopeUi(SCOPE_RJ);
                 }}
                 title="Resultados do Rio de Janeiro"
@@ -1757,8 +1804,10 @@ export default function Results() {
               <button
                 type="button"
                 className={scopePillClass(scopeKey === SCOPE_FEDERAL)}
+                disabled={!canChangeResultsView}
                 onClick={(e) => {
                   stopEvt(e);
+                  if (!canChangeResultsView) return;
                   setScopeUi(SCOPE_FEDERAL);
                 }}
                 title="Resultados da Federal"
@@ -1769,8 +1818,10 @@ export default function Results() {
               <button
                 type="button"
                 className={scopePillClass(scopeKey === SCOPE_LOOK)}
+                disabled={!canChangeResultsView}
                 onClick={(e) => {
                   stopEvt(e);
+                  if (!canChangeResultsView) return;
                   setScopeUi(SCOPE_LOOK);
                 }}
                 title="Resultados da LOOK"
@@ -1781,8 +1832,10 @@ export default function Results() {
               <button
                 type="button"
                 className={scopePillClass(scopeKey === SCOPE_NACIONAL)}
+                disabled={!canChangeResultsView}
                 onClick={(e) => {
                   stopEvt(e);
+                  if (!canChangeResultsView) return;
                   setScopeUi(SCOPE_NACIONAL);
                 }}
                 title="Resultados da Nacional"
@@ -1795,10 +1848,16 @@ export default function Results() {
               <button
                 type="button"
                 className="pp_btn pp_dateBtn"
-                title="Calendário"
+                disabled={!canChangeResultsView}
+                title={
+                  canChangeResultsView
+                    ? "Calendário"
+                    : "Modo convidado: data somente para visualização"
+                }
                 aria-label={`Selecionar data. Atual: ${dateBR}`}
                 onClick={(e) => {
                   stopEvt(e);
+                  if (!canChangeResultsView) return;
                   setCalendarOpen((v) => !v);
                 }}
               >
@@ -1816,7 +1875,7 @@ export default function Results() {
                     <button
                       type="button"
                       className="pp_calNav"
-                      disabled={!canGoPrevMonth}
+                      disabled={!canChangeResultsView || !canGoPrevMonth}
                       onClick={(e) => {
                         stopEvt(e);
                         if (canGoPrevMonth) {
@@ -1833,7 +1892,7 @@ export default function Results() {
                     <button
                       type="button"
                       className="pp_calNav"
-                      disabled={!canGoNextMonth}
+                      disabled={!canChangeResultsView || !canGoNextMonth}
                       onClick={(e) => {
                         stopEvt(e);
                         if (canGoNextMonth) {
@@ -1885,9 +1944,10 @@ export default function Results() {
                           key={cell.ymd}
                           type="button"
                           className={cls}
-                          disabled={disabled}
+                          disabled={!canChangeResultsView || disabled}
                           onClick={(e) => {
                             stopEvt(e);
+                            if (!canChangeResultsView) return;
                             if (!disabled) handleSelectYmd(cell.ymd);
                           }}
                           title={ymdToBR(cell.ymd)}
@@ -1923,6 +1983,7 @@ export default function Results() {
               type="button"
               title="Atualizar"
               disabled={
+                !canChangeResultsView ||
                 boundsQuery.isFetching ||
                 calendarMarksQuery.isFetching ||
                 dayResultsQuery.isFetching

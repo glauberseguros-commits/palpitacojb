@@ -14,6 +14,12 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { auth, db } from "./services/firebase";
 import { onAuthStateChanged, signOut } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
+import {
+  ACCESS_ENTITLEMENT,
+  getAccessEntitlement,
+  isCommercialPlan,
+  normalizeAccessEntitlement,
+} from "./services/accessControl";
 
 const Dashboard = lazy(() =>
   import("./pages/Dashboard/Dashboard")
@@ -111,12 +117,19 @@ function normalizeRoute(saved) {
    Sessão (estrita)
 ========================= */
 
-function normalizePlan(plan) {
-  const p = String(plan || "").trim().toUpperCase();
-  if (p === "VIP") return "VIP";
-  if (p === "PREMIUM") return "PREMIUM";
-  if (p === "FREE") return "FREE";
-  return "";
+function normalizeSessionPlan(plan) {
+  const normalized = normalizeAccessEntitlement(plan);
+
+  if (
+    isCommercialPlan(normalized) ||
+    normalized === ACCESS_ENTITLEMENT.VIP
+  ) {
+    return normalized;
+  }
+
+  // TRIAL e ADMIN são entitlements, não planos comerciais.
+  // Ausência/desconhecido também nunca escala privilégio.
+  return ACCESS_ENTITLEMENT.FREE;
 }
 
 function loadSessionObj() {
@@ -133,7 +146,7 @@ function loadSessionObj() {
   const uid = String(obj.uid || "").trim();
   const email = String(obj.email || "").trim().toLowerCase();
   const ok = obj.ok === true;
-  const plan = normalizePlan(
+  const plan = normalizeSessionPlan(
     obj.plan ??
       obj.profile?.plan ??
       obj.subscription?.plan ??
@@ -144,13 +157,16 @@ function loadSessionObj() {
       obj.metadata?.plan
   );
 
+  const entitlement = getAccessEntitlement(obj);
+
   if (!ok) return null;
 
   if (type === "guest") {
     return {
       ok: true,
       type: "guest",
-      plan: plan || "FREE",
+      plan: ACCESS_ENTITLEMENT.FREE,
+      entitlement: ACCESS_ENTITLEMENT.FREE,
       uid: "",
       email: "",
       raw: obj,
@@ -161,7 +177,8 @@ function loadSessionObj() {
     return {
       ok: true,
       type: "user",
-      plan: plan || "PREMIUM",
+      plan,
+      entitlement,
       uid,
       email,
       raw: obj,
@@ -172,7 +189,8 @@ function loadSessionObj() {
     return {
       ok: true,
       type: "user",
-      plan: plan || "PREMIUM",
+      plan,
+      entitlement,
       uid,
       email,
       raw: obj,
