@@ -307,58 +307,17 @@ function isAdminHashNow() {
   }
 }
 
-async function getUidAdminAuthority(uid) {
+async function isUidAdmin(uid) {
   const u = String(uid || "").trim();
-
-  if (!u) {
-    return {
-      isAdmin: false,
-      isOwner: false,
-      role: null,
-    };
-  }
-
+  if (!u) return false;
   try {
     const ref = doc(db, "admins", u);
     const snap = await getDoc(ref);
-
-    if (!snap.exists()) {
-      return {
-        isAdmin: false,
-        isOwner: false,
-        role: null,
-      };
-    }
-
+    if (!snap.exists()) return false;
     const data = snap.data() || {};
-    const active = data.active !== false;
-
-    if (!active) {
-      return {
-        isAdmin: false,
-        isOwner: false,
-        role: null,
-      };
-    }
-
-    const role =
-      String(data.role || "")
-        .trim()
-        .toUpperCase() === "OWNER"
-        ? "OWNER"
-        : "ADMIN";
-
-    return {
-      isAdmin: true,
-      isOwner: role === "OWNER",
-      role,
-    };
+    return data.active !== false;
   } catch {
-    return {
-      isAdmin: false,
-      isOwner: false,
-      role: null,
-    };
+    return false;
   }
 }
 
@@ -566,10 +525,10 @@ export default function App() {
         return;
       }
 
-      const authority = await getUidAdminAuthority(user.uid);
+      const ok = await isUidAdmin(user.uid);
       if (!alive) return;
 
-      if (!authority.isAdmin) {
+      if (!ok) {
         try {
           await signOut(auth);
         } catch {}
