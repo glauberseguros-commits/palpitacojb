@@ -605,9 +605,9 @@ export function getAccessPolicy(sessionOrKind) {
     : normalizeSessionKind(sessionOrKind);
 
   if (kind === SESSION_KIND.GUEST) {
-    return COMMERCIAL_ACCESS_MATRIX_V1[
+    return getRuntimeAccessPolicyForEntitlement(
       ACCESS_ENTITLEMENT.PREMIUM
-    ];
+    );
   }
 
   if (kind === SESSION_KIND.USER) {
