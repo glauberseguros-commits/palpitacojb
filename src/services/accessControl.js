@@ -605,7 +605,9 @@ export function getAccessPolicy(sessionOrKind) {
     : normalizeSessionKind(sessionOrKind);
 
   if (kind === SESSION_KIND.GUEST) {
-    return GUEST_ACCESS;
+    return COMMERCIAL_ACCESS_MATRIX_V1[
+      ACCESS_ENTITLEMENT.PREMIUM
+    ];
   }
 
   if (kind === SESSION_KIND.USER) {
@@ -679,27 +681,9 @@ export function isProtectedGuestFeature(feature) {
  * "blocked":
  *   acesso funcional indisponível.
  */
-export const GUEST_PAGE_MODE = Object.freeze({
-  dashboard: "readonly",
-  results: "readonly",
-  late: "readonly",
-  search: "readonly",
-  statistics: "readonly",
-
-  top3: "preview",
-  centenas: "preview",
-  "terno-grupo": "preview",
-
-  downloads: "blocked",
-
-  account: "readonly",
-  payments: "readonly",
-});
+export const GUEST_PAGE_MODE = Object.freeze({});
 
 export function getGuestPageMode(screen) {
-  const key = String(screen || "")
-    .trim()
-    .toLowerCase();
-
-  return GUEST_PAGE_MODE[key] || "readonly";
+  void screen;
+  return null;
 }

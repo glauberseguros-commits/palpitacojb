@@ -3,9 +3,7 @@ import React from "react";
 
 import {
   ACCESS_CAPABILITY,
-  SESSION_KIND,
   can,
-  getAccessSessionKind,
   loadAccessSession,
 } from "../../services/accessControl";
 
@@ -167,17 +165,13 @@ function Top3Authenticated() {
 
 export default function Top3() {
   const session = loadAccessSession();
-  const sessionKind = getAccessSessionKind(session);
 
   const canAccessLivePredictions = can(
     session,
     ACCESS_CAPABILITY.ACCESS_LIVE_PREDICTIONS
   );
 
-  if (
-    sessionKind === SESSION_KIND.GUEST ||
-    !canAccessLivePredictions
-  ) {
+  if (!canAccessLivePredictions) {
     return <Top3GuestPreview />;
   }
 

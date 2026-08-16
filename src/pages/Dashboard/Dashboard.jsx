@@ -1954,13 +1954,9 @@ const rankingDataForCharts = useMemo(() => {
 
                 {MIN_DATE && MAX_DATE && dateRange ? (
                   <div
-                    aria-disabled={isGuest ? "true" : undefined}
-                    title={isGuest ? "Modo convidado: período somente para visualização." : undefined}
                     style={{
                       position: "relative",
                       zIndex: 10,
-                      pointerEvents: isGuest ? "none" : "auto",
-                      opacity: isGuest ? 0.78 : 1,
                     }}
                   >
                     <div style={{ position: "relative" }}>
@@ -2017,12 +2013,8 @@ const rankingDataForCharts = useMemo(() => {
 
         <section className="dashFilters">
           <div
-            aria-disabled={isGuest ? "true" : undefined}
-            title={isGuest ? "Modo convidado: filtros somente para visualização." : undefined}
             style={{
               position: "relative",
-              pointerEvents: isGuest ? "none" : "auto",
-              opacity: isGuest ? 0.78 : 1,
             }}
           >
             <FiltersBar
@@ -2074,11 +2066,3 @@ const rankingDataForCharts = useMemo(() => {
     </div>
   );
 }
-
-
-
-
-
-
-
-
