@@ -1487,7 +1487,67 @@ export default function Dashboard(props) {
               }
             }
           } else {
-            if (b !== wantBucket) return false;
+            /*
+             * NACIONAL — identidade nominal do sorteio.
+             *
+             * O horário bruto de fechamento da fonte pode pertencer
+             * à hora anterior ao horário nominal do sorteio.
+             *
+             * Quando lottery_name está disponível, ele identifica
+             * diretamente a entidade nominal:
+             * 02h, 08h, 10h, 12h, 15h, 17h ou 23h.
+             *
+             * 20h e 21h NÃO entram nesta regra:
+             * continuam segregados acima pela regra histórica
+             * específica já existente.
+             */
+            if (isNacional) {
+              const lotteryName = String(
+                d?.lottery_name ??
+                  d?.lotteryName ??
+                  d?.name ??
+                  ""
+              )
+                .trim()
+                .toUpperCase();
+
+              const nominalMatch = lotteryName.match(
+                /NACIONAL\s*(02|08|10|12|15|17|23)\s*H(?:S)?/
+              );
+
+              if (nominalMatch) {
+                const nominalHour = `${nominalMatch[1]}h`;
+
+                if (nominalHour !== wantBucket) {
+                  return false;
+                }
+              } else {
+                /*
+                 * Fallback somente para documentos legados sem
+                 * identidade nominal utilizável.
+                 *
+                 * Não altera dados e não converte horários globalmente.
+                 */
+                const nacionalLegacyBuckets = {
+                  "02h": new Set(["01h", "02h"]),
+                  "08h": new Set(["07h", "08h"]),
+                  "10h": new Set(["09h", "10h"]),
+                  "12h": new Set(["11h", "12h"]),
+                  "15h": new Set(["14h", "15h"]),
+                  "17h": new Set(["16h", "17h"]),
+                  "23h": new Set(["22h", "23h"]),
+                };
+
+                const allowed =
+                  nacionalLegacyBuckets[wantBucket];
+
+                if (!allowed || !allowed.has(b)) {
+                  return false;
+                }
+              }
+            } else {
+              if (b !== wantBucket) return false;
+            }
           }
         }
 
