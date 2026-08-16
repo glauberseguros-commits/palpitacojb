@@ -18,6 +18,8 @@ import {
 
 import {
   ADMINS_COLLECTION,
+  ADMIN_ROLE,
+  normalizeAdminRole,
 } from "./adminKeys";
 
 import "./AdminLogin.css";
@@ -54,11 +56,15 @@ function translateAuthError(error) {
   }
 }
 
-async function isAuthorizedAdmin(uid) {
+async function getAuthorizedAdminAuthority(uid) {
   const normalizedUid = String(uid || "").trim();
 
   if (!normalizedUid) {
-    return false;
+    return {
+      isAdmin: false,
+      isOwner: false,
+      role: null,
+    };
   }
 
   const ref = doc(
@@ -70,14 +76,32 @@ async function isAuthorizedAdmin(uid) {
   const snapshot = await getDoc(ref);
 
   if (!snapshot.exists()) {
-    return false;
+    return {
+      isAdmin: false,
+      isOwner: false,
+      role: null,
+    };
   }
 
   const data = snapshot.data() || {};
+  const active = data.active !== false;
 
-  return data.active !== false;
+  if (!active) {
+    return {
+      isAdmin: false,
+      isOwner: false,
+      role: null,
+    };
+  }
+
+  const role = normalizeAdminRole(data.role);
+
+  return {
+    isAdmin: true,
+    isOwner: role === ADMIN_ROLE.OWNER,
+    role,
+  };
 }
-
 export default function AdminLogin({
   onCancel,
   onAuthed,
@@ -116,10 +140,11 @@ export default function AdminLogin({
           return;
         }
 
-        const authorized =
-          await isAuthorizedAdmin(
+        const authority =
+          await getAuthorizedAdminAuthority(
             currentUser.uid
           );
+        const authorized = authority.isAdmin;
 
         if (!alive) return;
 
@@ -187,8 +212,9 @@ export default function AdminLogin({
         credential?.user?.uid || ""
       ).trim();
 
-      const authorized =
-        await isAuthorizedAdmin(uid);
+      const authority =
+        await getAuthorizedAdminAuthority(uid);
+      const authorized = authority.isAdmin;
 
       if (!authorized) {
         try {

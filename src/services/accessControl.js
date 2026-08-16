@@ -46,6 +46,7 @@ export const ACCESS_ENTITLEMENT = Object.freeze({
   PREMIUM: "PREMIUM",
   VIP: "VIP",
   ADMIN: "ADMIN",
+  OWNER: "OWNER",
 });
 
 export const COMMERCIAL_PLAN = Object.freeze({
@@ -116,6 +117,10 @@ export function getAccessEntitlement(session) {
 
   if (kind !== SESSION_KIND.USER) {
     return ACCESS_ENTITLEMENT.FREE;
+  }
+
+  if (obj.isOwner === true) {
+    return ACCESS_ENTITLEMENT.OWNER;
   }
 
   if (obj.isAdmin === true) {
@@ -418,6 +423,16 @@ export const ADMIN_PLATFORM_ACCESS_POLICY =
   COMMERCIAL_ACCESS_MATRIX_V1[ACCESS_ENTITLEMENT.PREMIUM];
 
 /**
+ * OWNER da plataforma.
+ *
+ * OWNER é autoridade administrativa superior.
+ * Nesta fundação, sua política funcional permanece igual à do ADMIN.
+ * A autoridade OWNER é derivada de /admins/{uid}.role.
+ */
+export const OWNER_PLATFORM_ACCESS_POLICY =
+  ADMIN_PLATFORM_ACCESS_POLICY;
+
+/**
  * Retorna a política comercial registrada para um entitlement.
  *
  * IMPORTANTE:
@@ -433,6 +448,10 @@ export function getCommercialAccessPolicy(entitlement) {
 
   if (normalized === ACCESS_ENTITLEMENT.VIP) {
     return VIP_ACCESS_POLICY;
+  }
+
+  if (normalized === ACCESS_ENTITLEMENT.OWNER) {
+    return OWNER_PLATFORM_ACCESS_POLICY;
   }
 
   if (normalized === ACCESS_ENTITLEMENT.ADMIN) {
