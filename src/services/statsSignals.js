@@ -193,7 +193,56 @@ function guessPrizeGrupo(p) {
   return g;
 }
 
+function pickNacionalNominalHour(draw) {
+  const lotteryKey = String(
+    draw?.lottery_key ??
+    draw?.lotteryKey ??
+    draw?.lottery ??
+    draw?.loteria ??
+    ""
+  ).trim().toUpperCase();
+
+  const textCandidates = [
+    draw?.lottery_name,
+    draw?.lotteryName,
+    draw?.name,
+    draw?.title,
+    draw?.label,
+    draw?.lotteryLabel,
+    draw?.loteriaName,
+    draw?.loteriaLabel,
+  ];
+
+  const joined = textCandidates
+    .filter((value) => value !== null && value !== undefined)
+    .map((value) => String(value).trim())
+    .filter(Boolean)
+    .join(" | ")
+    .toUpperCase();
+
+  const isNacional =
+    lotteryKey === "NACIONAL" ||
+    /\bNACIONAL\b/.test(joined);
+
+  if (!isNacional) return "";
+
+  const match = joined.match(
+    /\bNACIONAL\s*(02|08|10|12|15|17|20|21|23)\s*H(?:S)?\b/
+  );
+
+  if (!match) return "";
+
+  return `${match[1]}:00`;
+}
+
 function pickDrawHour(draw) {
+  const nacionalNominalHour =
+    pickNacionalNominalHour(draw);
+
+  if (nacionalNominalHour) {
+    return nacionalNominalHour;
+  }
+
   return normalizeHourLike(
     draw?.close_hour || draw?.closeHour || draw?.hour || draw?.hora || ""
   );

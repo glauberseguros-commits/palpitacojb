@@ -20,7 +20,7 @@ export const TOP3_PRODUCTION_PROFILE_BY_TARGET =
     PT_RIO: "FEDERAL",
     FEDERAL: "LOOK",
     LOOK: "LOOK",
-    NACIONAL: "LOOK",
+    NACIONAL: "NACIONAL",
   });
 
 function normalizeLotteryKey(value) {
@@ -81,3 +81,4 @@ export default {
   resolveTop3ProductionProfileLotteryKey,
   getTop3ProductionProfileAssignment,
 };
+

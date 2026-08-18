@@ -131,7 +131,56 @@ export function guessPrizeGrupo(p) {
   return null;
 }
 
+function pickNacionalNominalHour(draw) {
+  const lotteryKey = String(
+    draw?.lottery_key ??
+    draw?.lotteryKey ??
+    draw?.lottery ??
+    draw?.loteria ??
+    ""
+  ).trim().toUpperCase();
+
+  const textCandidates = [
+    draw?.lottery_name,
+    draw?.lotteryName,
+    draw?.name,
+    draw?.title,
+    draw?.label,
+    draw?.lotteryLabel,
+    draw?.loteriaName,
+    draw?.loteriaLabel,
+  ];
+
+  const joined = textCandidates
+    .filter((value) => value !== null && value !== undefined)
+    .map((value) => String(value).trim())
+    .filter(Boolean)
+    .join(" | ")
+    .toUpperCase();
+
+  const isNacional =
+    lotteryKey === "NACIONAL" ||
+    /\bNACIONAL\b/.test(joined);
+
+  if (!isNacional) return "";
+
+  const match = joined.match(
+    /\bNACIONAL\s*(02|08|10|12|15|17|20|21|23)\s*H(?:S)?\b/
+  );
+
+  if (!match) return "";
+
+  return `${match[1]}:00`;
+}
+
 export function pickDrawHour(draw) {
+  const nacionalNominalHour =
+    pickNacionalNominalHour(draw);
+
+  if (nacionalNominalHour) {
+    return nacionalNominalHour;
+  }
+
   return normalizeHourLike(
     draw?.close_hour || draw?.closeHour || draw?.hour || draw?.hora || ""
   );
@@ -3176,6 +3225,51 @@ export function computeStatisticalTop3V3({
     activeWeights[keyLayer] = activeWeights[keyLayer] / totalWeight;
   }
 
+  /*
+   * NACIONAL — calibrated production profile
+   *
+   * Freeze aprovado:
+   *   NO_DOW_HOUR__SCENE
+   *
+   * Mantém:
+   *   hour
+   *   dayMonth
+   *   transition
+   *   recent
+   *
+   * Remove:
+   *   dowHour
+   *
+   * Os pesos restantes são renormalizados exatamente como
+   * no replay causal aprovado.
+   */
+  const isNacionalCalibratedProfile =
+    String(lotteryKey || "").trim().toUpperCase() === "NACIONAL";
+
+  if (isNacionalCalibratedProfile) {
+    activeWeights.dowHour = 0;
+
+    const nacionalRemainingWeight =
+      Number(activeWeights.hour || 0) +
+      Number(activeWeights.dayMonth || 0) +
+      Number(activeWeights.transition || 0) +
+      Number(activeWeights.recent || 0);
+
+    if (nacionalRemainingWeight > 0) {
+      activeWeights.hour =
+        Number(activeWeights.hour || 0) / nacionalRemainingWeight;
+
+      activeWeights.dayMonth =
+        Number(activeWeights.dayMonth || 0) / nacionalRemainingWeight;
+
+      activeWeights.transition =
+        Number(activeWeights.transition || 0) / nacionalRemainingWeight;
+
+      activeWeights.recent =
+        Number(activeWeights.recent || 0) / nacionalRemainingWeight;
+    }
+  }
+
   const layerProbabilities = Object.fromEntries(
     Object.entries(layers).map(([keyLayer, layer]) => [
       keyLayer,
@@ -3218,8 +3312,15 @@ export function computeStatisticalTop3V3({
       (pSceneRaw * TOP3_SCENE_BLEND_SCENE) +
       ((1 / TOP3_GROUPS_K) * TOP3_SCENE_BLEND_UNIFORM);
 
-    if (sceneWeight > 0) {
-      scoreProb = (scoreProb * (1 - sceneWeight)) + (pScene * sceneWeight);
+    const effectiveSceneWeight =
+      isNacionalCalibratedProfile
+        ? 0
+        : sceneWeight;
+
+    if (effectiveSceneWeight > 0) {
+      scoreProb =
+        (scoreProb * (1 - effectiveSceneWeight)) +
+        (pScene * effectiveSceneWeight);
     }
 
     details.scene = {
@@ -3228,7 +3329,7 @@ export function computeStatisticalTop3V3({
       firstCount: Number(sceneHypothesis?.freq?.get?.(grupo) || 0),
       top3Count: 0,
       probability: pScene,
-      weight: sceneWeight,
+      weight: effectiveSceneWeight,
     };
 
     return {
@@ -3317,7 +3418,7 @@ export function computeStatisticalTop3V3({
           scene: {
             samples: Number(sceneHypothesis?.samples || 0),
             totalWeight: Number(sceneHypothesis?.totalWeight || 0),
-            weight: Number(sceneWeight || 0),
+            weight: Number(isNacionalCalibratedProfile ? 0 : (sceneWeight || 0)),
             currentSignature: currentScene?.signature || "",
           },
           layers: Object.fromEntries(
@@ -4692,3 +4793,5 @@ export function auditTop3Backtest({
     lotteryKey,
   });
 }
+
+
