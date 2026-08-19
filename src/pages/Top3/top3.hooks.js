@@ -2020,6 +2020,20 @@ if (
       lotteryKey: lotteryKeySafe,
       targetYmd: analysisYmd,
       targetHour: analysisHourBucket,
+      /*
+       * TOP3_NACIONAL_FUTURE_ENGINE_SAVE_AUTHORITY_V1
+       *
+       * Para NACIONAL, enquanto o horario-alvo ainda for futuro,
+       * o snapshot oficial deve acompanhar a saida atual do motor.
+       *
+       * Slots encerrados continuam congelados.
+       */
+      allowReplaceExisting:
+        lotteryKeySafe === "NACIONAL" &&
+        isFutureTarget(
+          analysisYmd,
+          analysisHourBucket
+        ),
       picks,
       snapshot,
       engineVersion,

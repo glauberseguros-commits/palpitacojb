@@ -250,7 +250,8 @@ export async function saveTop3PredictionSnapshot({
   snapshot,
   engineVersion,
   replaceCurrentFutureSnapshot = false,
-}) {
+
+  allowReplaceExisting = false,}) {
   let user = null;
 
   try {
@@ -343,6 +344,57 @@ export async function saveTop3PredictionSnapshot({
     const current = await transaction.get(ref);
 
     if (current.exists()) {
+      /*
+       * FUTURE_TARGET_ENGINE_REFRESH_V1
+       *
+       * Enquanto o slot ainda esta no futuro, o calculo atual
+       * do motor pode substituir o snapshot previamente publicado.
+       *
+       * A chamada deste modo e liberada somente pela NACIONAL
+       * no hook. Depois do horario-alvo, a regra antiga de
+       * imutabilidade continua valendo.
+       */
+      if (allowReplaceExisting === true) {
+        const currentData =
+          current.data() || {};
+
+        const replacementPayload = {
+          ...payload,
+
+          /*
+           * Preservar identidade original do documento.
+           * Atualizamos somente o conteudo calculado/publicado.
+           */
+          createdAt:
+            currentData?.createdAt ??
+            payload.createdAt,
+
+          createdBy:
+            currentData?.createdBy ??
+            payload.createdBy,
+
+          updatedAt: now,
+        };
+
+        transaction.set(
+          ref,
+          replacementPayload
+        );
+
+        return {
+          ok: true,
+          created: false,
+          existing: true,
+          preserved: false,
+          replaced: true,
+          reason:
+            "FUTURE_TARGET_ENGINE_REFRESH",
+          entry: {
+            id: ref.id,
+            ...replacementPayload,
+          },
+        };
+      }
       /*
        * TOP3_ENGINE_OUTPUT_FIRST_PUBLISH_FREEZE_V1
        *
