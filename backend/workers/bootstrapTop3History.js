@@ -316,6 +316,8 @@ async function bootstrapTop3History(
           plan.lastDrawId,
         lastProcessedDrawId:
           plan.lastDrawId,
+        staleReason: null,
+        staleAt: null,
         source:
           "fetchAllDrawsWithPrizes",
       },
