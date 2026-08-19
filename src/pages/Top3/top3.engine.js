@@ -5019,7 +5019,7 @@ export function computeStatisticalTop3V3({
     rankingAfterScore,
   };
 
-  const top = effectiveRankedScoredSorted
+  const top = finalRankedScoredSorted
     .slice(0, topLimit)
     .map((x, idx) => {
     const g2 = String(x.grupo).padStart(2, "0");
