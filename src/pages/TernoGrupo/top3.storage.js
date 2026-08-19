@@ -21,10 +21,20 @@ function normHour(h) {
   return toHourBucket(h) || "";
 }
 
-function makeKey(ymd, hour) {
+const STORAGE_KEY = "terno_grupo_log_v1";
+
+function normLotteryKey(value) {
+  return safeStr(value).toUpperCase();
+}
+
+function makeKey(ymd, hour, lotteryKey) {
+  const lottery = normLotteryKey(lotteryKey);
   const y = safeStr(ymd);
   const h = normHour(hour);
-  return isYMD(y) && h ? `${y}_${h}` : "";
+
+  return lottery && isYMD(y) && h
+    ? `${lottery}_${y}_${h}`
+    : "";
 }
 
 function parseTargetDate(ymd, hour) {
@@ -71,11 +81,17 @@ function normalizeResult(resultValue) {
 function normalizeLogEntry(entry) {
   if (!entry || typeof entry !== "object") return null;
 
+  const lotteryKey =
+    normLotteryKey(
+      entry?.lotteryKey || ""
+    );
+
   const ymd = safeStr(entry?.target?.ymd || "");
   const hour = normHour(entry?.target?.hour || "");
-  const targetKey = makeKey(ymd, hour);
+  const targetKey =
+    makeKey(ymd, hour, lotteryKey);
 
-  if (!targetKey) return null;
+  if (!lotteryKey || !targetKey) return null;
 
   const picks = normalizePicks(entry?.picks);
   const result = normalizeResult(entry?.result);
@@ -92,6 +108,7 @@ function normalizeLogEntry(entry) {
 
   return {
     ...entry,
+    lotteryKey,
     targetKey,
     target: { ymd, hour },
     picks,
@@ -143,7 +160,7 @@ function normalizeAndDedupeLog(log) {
 
 function getTop3Log() {
   try {
-    const raw = JSON.parse(localStorage.getItem("top3_log") || "[]");
+    const raw = JSON.parse(localStorage.getItem(STORAGE_KEY) || "[]");
     return normalizeAndDedupeLog(raw);
   } catch {
     return [];
@@ -153,23 +170,34 @@ function getTop3Log() {
 function saveTop3Log(log) {
   try {
     const normalized = normalizeAndDedupeLog(log).slice(-200);
-    localStorage.setItem("top3_log", JSON.stringify(normalized));
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(normalized));
   } catch {}
 }
 
 function registerPrediction({
-  targetKey,
+  lotteryKey,
   targetYmd,
   targetHour,
   picks,
   snapshot = [],
   engineVersion = "",
 }) {
+  const lottery =
+    normLotteryKey(lotteryKey);
+
   const ymd = safeStr(targetYmd);
   const hour = normHour(targetHour);
-  const normalizedKey = targetKey || makeKey(ymd, hour);
+  const normalizedKey =
+    makeKey(ymd, hour, lottery);
 
-  if (!isYMD(ymd) || !hour || !normalizedKey) return;
+  if (
+    !lottery ||
+    !isYMD(ymd) ||
+    !hour ||
+    !normalizedKey
+  ) {
+    return;
+  }
 
   const normalizedPicks = normalizePicks(picks);
   if (!normalizedPicks.length) return;
@@ -189,24 +217,34 @@ function registerPrediction({
 
     log[idx] = {
       ...prev,
+      lotteryKey: lottery,
       targetKey: normalizedKey,
       target: { ymd, hour },
       picks: normalizedPicks,
       result: null,
       hit: null,
+      /*
+       * TERNO_GRUPO_LOCAL_SNAPSHOT_ATOMIC_V1
+       *
+       * Picks e snapshot pertencem à mesma previsão.
+       * Nunca preservar snapshot antigo ao substituir picks pendentes.
+       */
       snapshot:
-        Array.isArray(prev?.snapshot) && prev.snapshot.length
-          ? prev.snapshot
-          : Array.isArray(snapshot)
-            ? snapshot
-            : [],
+        Array.isArray(snapshot)
+          ? snapshot
+          : [],
       engineVersion:
-        safeStr(prev?.engineVersion || engineVersion || "V3_STATISTICAL"),
+        safeStr(
+          engineVersion ||
+          prev?.engineVersion ||
+          "TERNO_GRUPO_V1_TOP5"
+        ),
       createdAt: prev.createdAt || Date.now(),
       status,
     };
   } else {
     log.push({
+      lotteryKey: lottery,
       targetKey: normalizedKey,
       target: { ymd, hour },
       picks: normalizedPicks,
@@ -267,7 +305,16 @@ function findRealDrawByTarget({ targetYmd, targetHour, todayDraws, rangeDraws })
   return realToday || realRange || null;
 }
 
-function reconcilePendingTop3Log({ todayDraws, rangeDraws }) {
+function reconcilePendingTop3Log({
+  lotteryKey,
+  todayDraws,
+  rangeDraws,
+}) {
+  const lottery =
+    normLotteryKey(lotteryKey);
+
+  if (!lottery) return;
+
   const log = getTop3Log();
   if (!Array.isArray(log) || !log.length) return;
 
@@ -275,6 +322,13 @@ function reconcilePendingTop3Log({ todayDraws, rangeDraws }) {
 
   const nextLog = log.map((entry) => {
     if (!entry || entry.result != null) return entry;
+
+    if (
+      normLotteryKey(entry?.lotteryKey) !==
+      lottery
+    ) {
+      return entry;
+    }
 
     const targetYmd = safeStr(entry?.target?.ymd || "");
     const targetHour = normHour(entry?.target?.hour || "");
@@ -314,8 +368,13 @@ function reconcilePendingTop3Log({ todayDraws, rangeDraws }) {
 function ensureDayTimeline({ ymd, lotteryKey }) {
   if (!isYMD(ymd)) return;
 
+  const lottery =
+    normLotteryKey(lotteryKey);
+
+  if (!lottery) return;
+
   const schedule = getScheduleForLottery({
-    lotteryKey,
+    lotteryKey: lottery,
     ymd,
     PT_RIO_SCHEDULE_NORMAL,
     PT_RIO_SCHEDULE_WED_SAT,
@@ -328,7 +387,8 @@ function ensureDayTimeline({ ymd, lotteryKey }) {
 
   for (const h of schedule) {
     const hour = normHour(h);
-    const targetKey = makeKey(ymd, hour);
+    const targetKey =
+      makeKey(ymd, hour, lottery);
 
     if (!targetKey) continue;
 
@@ -345,6 +405,7 @@ function ensureDayTimeline({ ymd, lotteryKey }) {
 
       log[idx] = {
         ...prev,
+        lotteryKey: lottery,
         targetKey,
         target: { ymd, hour },
         picks,
@@ -356,6 +417,7 @@ function ensureDayTimeline({ ymd, lotteryKey }) {
       };
     } else {
       log.push({
+        lotteryKey: lottery,
         targetKey,
         target: { ymd, hour },
         picks: [],

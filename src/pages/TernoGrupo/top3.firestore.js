@@ -21,7 +21,7 @@ import {
   pickPrize1GrupoFromDraw,
 } from "./top3.engine";
 
-const COLLECTION = "top3_predictions";
+const COLLECTION = "terno_grupo_predictions";
 
 function normalizeLotteryKey(value) {
   return safeStr(value).toUpperCase() || "PT_RIO";
@@ -415,6 +415,7 @@ export async function saveTop3PredictionSnapshot({
     targetYmd: ymd,
     targetHour: hour,
     targetKey: `${ymd}_${hour}`,
+    predictionType: "TERNO_GRUPO",
     picks: normalizedPicks,
     snapshot: normalizedSnapshot,
     engineVersion: safeStr(engineVersion || "V3_STATISTICAL"),
@@ -435,10 +436,17 @@ export async function saveTop3PredictionSnapshot({
     const current = await transaction.get(ref);
 
     if (current.exists()) {
+      const currentData =
+        current.data() || {};
+
       return {
         ok: true,
         created: false,
         existing: true,
+        entry: {
+          id: ref.id,
+          ...currentData,
+        },
       };
     }
 
@@ -448,6 +456,10 @@ export async function saveTop3PredictionSnapshot({
       ok: true,
       created: true,
       existing: false,
+      entry: {
+        id: ref.id,
+        ...payload,
+      },
     };
   });
 

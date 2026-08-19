@@ -1436,22 +1436,18 @@ export function useTop3Controller() {
       milharesCols: Array.isArray(item?.milharesCols)
         ? item.milharesCols
         : [],
-      meta: item?.meta || null,
+      meta: {
+        ...(item?.meta && typeof item.meta === "object"
+          ? item.meta
+          : {}),
+        predictionType: "TERNO_GRUPO",
+      },
     }));
 
     const engineVersion =
       safeStr(top3?.[0]?.meta?.explain?.engine) ||
       safeStr(top3?.[0]?.meta?.scenario) ||
       "TERNO_GRUPO_V1_TOP5";
-
-    registerPrediction({
-      targetKey,
-      targetYmd: analysisYmd,
-      targetHour: analysisHourBucket,
-      picks,
-      snapshot,
-      engineVersion,
-    });
 
     saveTop3PredictionSnapshot({
       lotteryKey: lotteryKeySafe,
@@ -1473,11 +1469,11 @@ export function useTop3Controller() {
 
         try {
           window.localStorage.setItem(
-            "top3_firestore_last_save",
+            "terno_grupo_firestore_last_save",
             JSON.stringify(diagnostic)
           );
 
-          window.__TOP3_FIRESTORE_LAST_SAVE__ = diagnostic;
+          window.__TERNO_GRUPO_FIRESTORE_LAST_SAVE__ = diagnostic;
         } catch {}
 
         if (!result?.ok) {
@@ -1488,19 +1484,60 @@ export function useTop3Controller() {
             diagnostic
           );
         } else {
-          const persistedEntry = {
+          const persistedEntry =
+            result?.entry &&
+            typeof result.entry === "object"
+              ? result.entry
+              : {
+                  lotteryKey: lotteryKeySafe,
+                  targetYmd: analysisYmd,
+                  targetHour: analysisHourBucket,
+                  targetKey,
+                  predictionType:
+                    "TERNO_GRUPO",
+                  picks,
+                  snapshot,
+                  engineVersion,
+                  status: "predicted",
+                };
+
+          const officialTerno =
+            hydratePersistedTop3(
+              persistedEntry
+            );
+
+          registerPrediction({
             lotteryKey: lotteryKeySafe,
             targetYmd: analysisYmd,
             targetHour: analysisHourBucket,
-            targetKey,
-            picks,
-            snapshot,
-            engineVersion,
-            status: "predicted",
-          };
+            picks:
+              officialTerno.length
+                ? officialTerno.map(
+                    (item) =>
+                      Number(item?.grupo)
+                  )
+                : picks,
+            snapshot:
+              Array.isArray(
+                persistedEntry?.snapshot
+              )
+                ? persistedEntry.snapshot
+                : snapshot,
+            engineVersion:
+              safeStr(
+                persistedEntry?.engineVersion
+              ) ||
+              engineVersion,
+          });
 
-          setCurrentPersistedPrediction(persistedEntry);
+          setCurrentPersistedPrediction(
+            persistedEntry
+          );
           setCurrentPersistedResolved(true);
+
+          if (officialTerno.length === 3) {
+            setTop3(officialTerno);
+          }
 
           console.info(
             "[TOP3 FIRESTORE SAVE OK]",
@@ -1522,11 +1559,11 @@ export function useTop3Controller() {
 
         try {
           window.localStorage.setItem(
-            "top3_firestore_last_save",
+            "terno_grupo_firestore_last_save",
             JSON.stringify(diagnostic)
           );
 
-          window.__TOP3_FIRESTORE_LAST_SAVE__ = diagnostic;
+          window.__TERNO_GRUPO_FIRESTORE_LAST_SAVE__ = diagnostic;
         } catch {}
 
         console.error(
@@ -1682,6 +1719,7 @@ export function useTop3Controller() {
     let alive = true;
 
     reconcilePendingTop3Log({
+      lotteryKey: lotteryKeySafe,
       todayDraws: Array.isArray(todayDraws) ? todayDraws : [],
       rangeDraws: Array.isArray(rangeDraws) ? rangeDraws : [],
     });

@@ -242,6 +242,136 @@ function analyzeSnapshotHit(
   );
 }
 
+function isExplicitForeignTop3Snapshot(data) {
+  if (!data || typeof data !== "object") {
+    return false;
+  }
+
+  const outerType =
+    safeStr(data?.predictionType)
+      .toUpperCase();
+
+  const outerEngine =
+    safeStr(data?.engineVersion)
+      .toUpperCase();
+
+  if (
+    outerType === "TERNO_GRUPO" ||
+    outerEngine.includes("TERNO_GRUPO")
+  ) {
+    return true;
+  }
+
+  const snapshot =
+    Array.isArray(data?.snapshot)
+      ? data.snapshot.slice(0, 3)
+      : [];
+
+  return snapshot.some((item) => {
+    const metaType =
+      safeStr(item?.meta?.predictionType)
+        .toUpperCase();
+
+    const metaEngine =
+      safeStr(item?.meta?.engineVersion)
+        .toUpperCase();
+
+    return (
+      metaType === "TERNO_GRUPO" ||
+      metaEngine.includes("TERNO_GRUPO")
+    );
+  });
+}
+
+/*
+ * TOP3_FIRST_VALID_SNAPSHOT_IMMUTABLE_V1
+ *
+ * Um snapshot válido já publicado é canônico e imutável.
+ *
+ * A única substituição permitida é o reparo de um documento
+ * estruturalmente inválido ou explicitamente pertencente a outro
+ * contexto interno.
+ */
+function isStoredTop3SnapshotValid(
+  data,
+  {
+    lotteryKey,
+    targetYmd,
+    targetHour,
+  }
+) {
+  if (!data || typeof data !== "object") {
+    return false;
+  }
+
+  if (isExplicitForeignTop3Snapshot(data)) {
+    return false;
+  }
+
+  const expectedLottery =
+    normalizeLotteryKey(lotteryKey);
+
+  const expectedYmd =
+    safeStr(targetYmd);
+
+  const expectedHour =
+    normalizeHour(targetHour);
+
+  if (
+    normalizeLotteryKey(data?.lotteryKey) !==
+      expectedLottery ||
+    safeStr(data?.targetYmd) !== expectedYmd ||
+    normalizeHour(data?.targetHour) !==
+      expectedHour
+  ) {
+    return false;
+  }
+
+  const storedSnapshot =
+    Array.isArray(data?.snapshot)
+      ? data.snapshot.slice(0, 3)
+      : [];
+
+  if (storedSnapshot.length !== 3) {
+    return false;
+  }
+
+  return storedSnapshot.every((item) => {
+    const grupo = Number(item?.grupo);
+
+    if (
+      !Number.isFinite(grupo) ||
+      grupo < 1 ||
+      grupo > 25
+    ) {
+      return false;
+    }
+
+    const context =
+      item?.meta?.persistenceContext;
+
+    /*
+     * Snapshot legado sem persistenceContext continua válido.
+     */
+    if (
+      !context ||
+      typeof context !== "object"
+    ) {
+      return true;
+    }
+
+    return (
+      normalizeLotteryKey(
+        context?.lotteryKey
+      ) === expectedLottery &&
+      safeStr(context?.targetYmd) ===
+        expectedYmd &&
+      normalizeHour(context?.targetHour) ===
+        expectedHour
+    );
+  });
+}
+
 export async function saveTop3PredictionSnapshot({
   lotteryKey,
   targetYmd,
@@ -249,9 +379,7 @@ export async function saveTop3PredictionSnapshot({
   picks,
   snapshot,
   engineVersion,
-  replaceCurrentFutureSnapshot = false,
-
-  allowReplaceExisting = false,}) {
+}) {
   let user = null;
 
   try {
@@ -316,6 +444,7 @@ export async function saveTop3PredictionSnapshot({
     targetYmd: ymd,
     targetHour: hour,
     targetKey: `${ymd}_${hour}`,
+    predictionType: "TOP3",
     picks: normalizedPicks,
     snapshot: normalizedSnapshot,
     engineVersion: safeStr(engineVersion || "V3_STATISTICAL"),
@@ -344,89 +473,66 @@ export async function saveTop3PredictionSnapshot({
     const current = await transaction.get(ref);
 
     if (current.exists()) {
-      /*
-       * FUTURE_TARGET_ENGINE_REFRESH_V1
-       *
-       * Enquanto o slot ainda esta no futuro, o calculo atual
-       * do motor pode substituir o snapshot previamente publicado.
-       *
-       * A chamada deste modo e liberada somente pela NACIONAL
-       * no hook. Depois do horario-alvo, a regra antiga de
-       * imutabilidade continua valendo.
-       */
-      if (allowReplaceExisting === true) {
-        const currentData =
-          current.data() || {};
+      const currentData =
+        current.data() || {};
 
-        const replacementPayload = {
-          ...payload,
-
-          /*
-           * Preservar identidade original do documento.
-           * Atualizamos somente o conteudo calculado/publicado.
-           */
-          createdAt:
-            currentData?.createdAt ??
-            payload.createdAt,
-
-          createdBy:
-            currentData?.createdBy ??
-            payload.createdBy,
-
-          updatedAt: now,
-        };
-
-        transaction.set(
-          ref,
-          replacementPayload
+      const currentIsValid =
+        isStoredTop3SnapshotValid(
+          currentData,
+          {
+            lotteryKey: lottery,
+            targetYmd: ymd,
+            targetHour: hour,
+          }
         );
 
+      /*
+       * Snapshot válido já publicado:
+       * nenhuma reexecução pode substituí-lo.
+       */
+      if (currentIsValid) {
         return {
           ok: true,
           created: false,
           existing: true,
-          preserved: false,
-          replaced: true,
+          preserved: true,
+          replaced: false,
           reason:
-            "FUTURE_TARGET_ENGINE_REFRESH",
+            "FIRST_VALID_SNAPSHOT_IMMUTABLE",
           entry: {
             id: ref.id,
-            ...replacementPayload,
+            ...currentData,
           },
         };
       }
+
       /*
-       * TOP3_ENGINE_OUTPUT_FIRST_PUBLISH_FREEZE_V1
+       * TOP3_BROWSER_NO_REPAIR_AUTHORITY_V1
        *
-       * A primeira publicacao do TOP3 para este
-       * lotteryKey + targetYmd + targetHour e canonica.
+       * O navegador não possui autoridade para substituir
+       * documento existente.
        *
-       * Se o documento ja existe, nenhuma nova renderizacao,
-       * reexecucao ou recalculo pode substituir:
-       *
-       * - picks
-       * - snapshot
-       * - engineVersion
-       *
-       * A validacao posterior do resultado continua separada
-       * e autorizada pelas Firestore Rules.
+       * Reparo estrutural pertence exclusivamente ao backend/Admin.
        */
-      /*
-       * TOP3_FIRST_PUBLISHED_SNAPSHOT_IMMUTABLE_V1
-       *
-       * Para historico/slot encerrado, permanece exatamente
-       * a regra de imutabilidade anterior.
-       */
+      const foreign =
+        isExplicitForeignTop3Snapshot(
+          currentData
+        );
+
       return {
-        ok: true,
+        ok: false,
+        skipped: true,
         created: false,
         existing: true,
         preserved: true,
         replaced: false,
-        reason: "FIRST_PUBLISHED_SNAPSHOT_IMMUTABLE",
+        foreign,
+        reason: foreign
+          ? "EXISTING_FOREIGN_SNAPSHOT_REQUIRES_MIGRATION"
+          : "EXISTING_INVALID_SNAPSHOT_REQUIRES_BACKEND_REPAIR",
         entry: {
           id: ref.id,
-          ...current.data(),
+          ...currentData,
         },
       };
     }
@@ -512,9 +618,32 @@ const snapshots = await Promise.all(
 
         if (!snap.exists()) return null;
 
+        const data =
+          snap.data() || {};
+
+        /*
+         * TOP3_DOMAIN_OWNERSHIP_GUARD_V1
+         *
+         * top3_predictions pode conter registros legados.
+         * Documento explicitamente marcado como Terno de Grupo
+         * não é consumido pelo TOP3.
+         */
+        if (
+          !isStoredTop3SnapshotValid(
+            data,
+            {
+              lotteryKey: lottery,
+              targetYmd: ymd,
+              targetHour: hour,
+            }
+          )
+        ) {
+          return null;
+        }
+
         return {
           id: snap.id,
-          ...snap.data(),
+          ...data,
         };
       } catch {
         return null;

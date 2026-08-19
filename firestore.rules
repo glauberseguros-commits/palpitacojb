@@ -208,6 +208,7 @@ service cloud.firestore {
       allow read: if true;
 
       allow create: if signedIn()
+        && request.resource.data.predictionType == "TOP3"
         && request.resource.data.createdBy == request.auth.uid
         && request.resource.data.status == "predicted"
         && request.resource.data.targetYmd is string
@@ -235,6 +236,65 @@ service cloud.firestore {
           "hitType",
           "hitScore",
           "hitPosition",
+          "matchedValue",
+          "validatedAt",
+          "validatedBy",
+          "updatedAt",
+          "status"
+        ])
+
+        && request.resource.data.status == "validated"
+        && request.resource.data.validatedBy == request.auth.uid;
+
+      allow delete: if false;
+    }
+
+    /* =========================================================
+       TERNO DE GRUPO
+       - domínio de persistência independente do TOP3;
+       - leitura pública;
+       - primeira previsão do slot imutável;
+       - update exclusivamente para validação do resultado.
+    ========================================================= */
+
+    match /terno_grupo_predictions/{predictionId} {
+      allow read: if true;
+
+      allow create: if signedIn()
+        && request.resource.data.predictionType == "TERNO_GRUPO"
+        && request.resource.data.createdBy == request.auth.uid
+        && request.resource.data.status == "predicted"
+        && request.resource.data.targetYmd is string
+        && request.resource.data.targetHour is string
+        && request.resource.data.lotteryKey is string
+        && request.resource.data.snapshot is list
+        && request.resource.data.snapshot.size() > 0
+        && request.resource.data.snapshot.size() <= 3;
+
+      allow update: if
+        signedIn()
+
+        && resource.data.predictionType == "TERNO_GRUPO"
+
+        && request.resource.data.predictionType ==
+          resource.data.predictionType
+
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          "resultGrupo",
+          "resultMilhar",
+          "resultLotteryKey",
+          "resultAnimal",
+          "resultTop3Groups",
+          "resultTop3Milhares",
+          "hitType",
+          "hitScore",
+          "hitPosition",
+          "predictionPosition",
+          "resultPosition",
+          "podiumMedal",
+          "matchedGrupo",
+          "matchedMilhar",
+          "matchedAnimal",
           "matchedValue",
           "validatedAt",
           "validatedBy",

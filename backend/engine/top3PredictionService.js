@@ -553,7 +553,17 @@ function buildTop3PublicSnapshot({
             : 0,
         milhares24,
         milharesCols,
-        meta: item?.meta || null,
+        meta: {
+          ...(item?.meta && typeof item.meta === "object"
+            ? item.meta
+            : {}),
+          predictionType: "TOP3",
+          persistenceContext: {
+            lotteryKey: normalizeLotteryKey(lotteryKey),
+            targetYmd: date,
+            targetHour: normalizeHour(closeHour),
+          },
+        },
       };
     })
     .filter(Boolean);
@@ -616,6 +626,7 @@ async function saveTop3PublicProjection({
       `${hourCode}h`,
     targetKey:
       `${date}_${hourCode}h`,
+    predictionType: "TOP3",
     picks,
     snapshot: normalizedSnapshot,
     engineVersion,
@@ -648,29 +659,104 @@ async function saveTop3PublicProjection({
           existing: false,
           protected: false,
           id,
+          entry: payload,
+        };
+      }
+
+      const currentData =
+        current.data() || {};
+
+      /*
+       * TOP3_DOMAIN_OWNERSHIP_GUARD_V1
+       *
+       * Documento explicitamente pertencente ao Terno de Grupo
+       * jamais é recalculado, convertido ou sobrescrito pelo TOP3.
+       *
+       * Os casos históricos ficam preservados até migração
+       * administrativa específica.
+       */
+      if (
+        isExplicitForeignTop3Projection(
+          currentData
+        )
+      ) {
+        return {
+          ok: false,
+          created: false,
+          updated: false,
+          existing: true,
+          protected: true,
+          foreign: true,
+          reason:
+            "FOREIGN_PERSISTED_SNAPSHOT_REQUIRES_MIGRATION",
+          id,
+          entry: currentData,
+        };
+      }
+
+      const currentIsValid =
+        isStoredPublicProjectionValid(
+          currentData,
+          {
+            lotteryKey: lottery,
+            date,
+            closeHour: hour,
+          }
+        );
+
+      /*
+       * TOP3_FIRST_VALID_PUBLIC_SNAPSHOT_IMMUTABLE_V1
+       *
+       * Snapshot válido já publicado permanece imutável.
+       */
+      if (currentIsValid) {
+        return {
+          ok: true,
+          created: false,
+          updated: false,
+          existing: true,
+          protected: true,
+          reason:
+            "ALREADY_PERSISTED_VALID_SNAPSHOT",
+          id,
+          entry: currentData,
         };
       }
 
       /*
-       * TOP3_BACKEND_IMMUTABLE_SNAPSHOT_V1
-       *
-       * A primeira projeção publicada para loteria/data/horário
-       * constitui o palpite oficial e permanece imutável.
-       *
-       * Novas execuções do backend não podem recalcular nem substituir
-       * snapshot, picks, milhares24 ou milharesCols.
-       *
-       * A reconciliação do resultado oficial atualiza somente os campos
-       * de validação no fluxo próprio.
+       * Documento inválido pode ser reparado uma única vez
+       * com um snapshot válido para o contexto correto.
        */
+      const replacementPayload = {
+        ...payload,
+
+        createdAt:
+          currentData?.createdAt ??
+          payload.createdAt,
+
+        createdBy:
+          currentData?.createdBy ??
+          payload.createdBy,
+
+        updatedAt: now,
+      };
+
+      transaction.set(
+        ref,
+        replacementPayload
+      );
+
       return {
         ok: true,
         created: false,
-        updated: false,
+        updated: true,
         existing: true,
-        protected: true,
-        reason: "ALREADY_PERSISTED",
+        protected: false,
+        repaired: true,
+        reason:
+          "INVALID_PERSISTED_SNAPSHOT_REPAIRED",
         id,
+        entry: replacementPayload,
       };
     }
   );
@@ -725,6 +811,172 @@ function mapTop3ToPredictions(top = []) {
       };
     })
     .filter((item) => /^\d{2}$/.test(item.grupo));
+}
+
+function isExplicitForeignTop3Projection(data) {
+  if (!data || typeof data !== "object") {
+    return false;
+  }
+
+  const outerType = String(
+    data?.predictionType || ""
+  )
+    .trim()
+    .toUpperCase();
+
+  const outerEngine = String(
+    data?.engineVersion || ""
+  )
+    .trim()
+    .toUpperCase();
+
+  if (
+    outerType === "TERNO_GRUPO" ||
+    outerEngine.includes("TERNO_GRUPO")
+  ) {
+    return true;
+  }
+
+  const snapshot =
+    Array.isArray(data?.snapshot)
+      ? data.snapshot.slice(0, 3)
+      : [];
+
+  return snapshot.some((item) => {
+    const metaType = String(
+      item?.meta?.predictionType || ""
+    )
+      .trim()
+      .toUpperCase();
+
+    const metaEngine = String(
+      item?.meta?.engineVersion || ""
+    )
+      .trim()
+      .toUpperCase();
+
+    return (
+      metaType === "TERNO_GRUPO" ||
+      metaEngine.includes("TERNO_GRUPO")
+    );
+  });
+}
+
+/*
+ * TOP3_FIRST_VALID_PUBLIC_SNAPSHOT_IMMUTABLE_V1
+ *
+ * Primeira projeção pública válida de um slot é canônica.
+ * Documento inválido pode ser reparado; documento válido não
+ * pode ser substituído por nova execução.
+ */
+function isStoredPublicProjectionValid(
+  data,
+  {
+    lotteryKey,
+    date,
+    closeHour,
+  }
+) {
+  if (!data || typeof data !== "object") {
+    return false;
+  }
+
+  if (isExplicitForeignTop3Projection(data)) {
+    return false;
+  }
+
+  const expectedLottery =
+    normalizeLotteryKey(lotteryKey);
+
+  const expectedDate =
+    normalizeYmd(date);
+
+  const expectedHour =
+    normalizeHour(closeHour);
+
+  if (
+    normalizeLotteryKey(
+      data?.lotteryKey
+    ) !== expectedLottery ||
+    String(
+      data?.targetYmd || ""
+    ).trim() !== expectedDate ||
+    normalizeHour(
+      data?.targetHour
+    ) !== expectedHour
+  ) {
+    return false;
+  }
+
+  const snapshot =
+    Array.isArray(data?.snapshot)
+      ? data.snapshot.slice(0, 3)
+      : [];
+
+  if (snapshot.length !== 3) {
+    return false;
+  }
+
+  return snapshot.every((item) => {
+    const grupo = Number(item?.grupo);
+
+    if (
+      !Number.isFinite(grupo) ||
+      grupo < 1 ||
+      grupo > 25
+    ) {
+      return false;
+    }
+
+    const context =
+      item?.meta?.persistenceContext;
+
+    if (
+      !context ||
+      typeof context !== "object"
+    ) {
+      return true;
+    }
+
+    return (
+      normalizeLotteryKey(
+        context?.lotteryKey
+      ) === expectedLottery &&
+      String(
+        context?.targetYmd || ""
+      ).trim() === expectedDate &&
+      normalizeHour(
+        context?.targetHour
+      ) === expectedHour
+    );
+  });
+}
+
+function mapPersistedSnapshotToPredictions(
+  snapshot = []
+) {
+  const normalized =
+    Array.isArray(snapshot)
+      ? snapshot.slice(0, 3)
+      : [];
+
+  return mapTop3ToPredictions(
+    normalized.map((item) => {
+      const prob = Number(item?.prob);
+      const probPct = Number(item?.probPct);
+
+      return {
+        ...item,
+
+        scoreProb:
+          Number.isFinite(prob)
+            ? prob
+            : Number.isFinite(probPct)
+              ? probPct / 100
+              : 0,
+      };
+    })
+  );
 }
 
 async function loadExistingTop3PublicProjection({
@@ -798,18 +1050,14 @@ const computeTop3 =
     loadTop3PublicApi();
 
   /*
-   * TOP3_AUTO_IMPORT_EARLY_PUBLIC_GUARD_V1
+   * TOP3_OFFICIAL_SNAPSHOT_EARLY_GUARD_V1
    *
-   * O auto-import não deve recalcular uma previsão oficial
-   * que já está persistida em top3_predictions.
+   * Qualquer execução persistente precisa respeitar a projeção
+   * pública válida que já venceu para este slot.
    *
-   * Esta proteção é exclusiva do source=auto-import.
-   * Chamadas manuais continuam seguindo o fluxo completo.
+   * dryRun continua livre para cálculo/auditoria sem escrita.
    */
-  if (
-    input.dryRun !== true &&
-    String(input.source || "").trim() === "auto-import"
-  ) {
+  if (input.dryRun !== true) {
     const existingPublic =
       await loadExistingTop3PublicProjection({
         lotteryKey,
@@ -817,27 +1065,97 @@ const computeTop3 =
         closeHour,
       });
 
-    if (existingPublic.exists) {
+    /*
+     * TOP3_DOMAIN_OWNERSHIP_GUARD_V1
+     *
+     * Não transformar retroativamente um documento de outro
+     * produto em previsão TOP3.
+     */
+    if (
+      existingPublic.exists &&
+      isExplicitForeignTop3Projection(
+        existingPublic.data
+      )
+    ) {
       return {
         run: null,
         predictions: [],
         publicSnapshot: [],
+        publicProjection: {
+          ok: false,
+          created: false,
+          updated: false,
+          existing: true,
+          protected: true,
+          foreign: true,
+          reason:
+            "FOREIGN_PERSISTED_SNAPSHOT_REQUIRES_MIGRATION",
+          id: existingPublic.id,
+          entry: existingPublic.data,
+        },
+        engine: null,
+        dryRun: false,
+        skipped: true,
+        skipReason:
+          "FOREIGN_PERSISTED_SNAPSHOT_REQUIRES_MIGRATION",
+      };
+    }
+
+    const existingIsValid =
+      existingPublic.exists &&
+      isStoredPublicProjectionValid(
+        existingPublic.data,
+        {
+          lotteryKey,
+          date,
+          closeHour,
+        }
+      );
+
+    if (existingIsValid) {
+      const existingSnapshot =
+        Array.isArray(
+          existingPublic?.data?.snapshot
+        )
+          ? existingPublic.data.snapshot.slice(
+              0,
+              3
+            )
+          : [];
+
+      return {
+        run: null,
+
+        predictions:
+          mapPersistedSnapshotToPredictions(
+            existingSnapshot
+          ),
+
+        publicSnapshot:
+          existingSnapshot,
+
         publicProjection: {
           ok: true,
           created: false,
           updated: false,
           existing: true,
           protected: true,
-          reason: "ALREADY_PERSISTED",
+          reason:
+            "ALREADY_PERSISTED_VALID_SNAPSHOT",
           id: existingPublic.id,
+          entry:
+            existingPublic.data,
         },
+
         engine: null,
         dryRun: false,
         skipped: true,
-        skipReason: "ALREADY_PERSISTED",
+        skipReason:
+          "ALREADY_PERSISTED_VALID_SNAPSHOT",
       };
     }
   }
+
   const historyLoad = await loadPredictionHistory({
     lotteryKey,
     date,
@@ -1026,16 +1344,15 @@ const computeTop3 =
     metadata?.engine ||
     "V3_STATISTICAL";
 
-  const result = await persistRun({
-    lotteryKey,
-    date,
-    closeHour,
-    source,
-    algorithm: "top3_statistical_v3",
-    metadata,
-    predictions,
-  });
-
+  /*
+   * TOP3_PUBLIC_PROJECTION_WRITE_AUTHORITY_V1
+   *
+   * A transação da projeção pública acontece antes de prediction_runs.
+   *
+   * Assim, duas execuções concorrentes não conseguem persistir
+   * versões operacionais diferentes antes da definição do snapshot
+   * oficial vencedor.
+   */
   const publicProjection =
     await saveTop3PublicProjection({
       lotteryKey,
@@ -1045,6 +1362,67 @@ const computeTop3 =
       engineVersion: effectiveEngineVersion,
       source,
     });
+
+  if (
+    publicProjection?.foreign === true
+  ) {
+    return {
+      run: null,
+      predictions: [],
+      publicSnapshot: [],
+      publicProjection,
+      engine: null,
+      dryRun: false,
+      skipped: true,
+      skipReason:
+        "FOREIGN_PERSISTED_SNAPSHOT_REQUIRES_MIGRATION",
+    };
+  }
+
+  if (
+    publicProjection?.protected === true &&
+    publicProjection?.existing === true
+  ) {
+    const officialSnapshot =
+      Array.isArray(
+        publicProjection?.entry?.snapshot
+      )
+        ? publicProjection.entry.snapshot.slice(
+            0,
+            3
+          )
+        : [];
+
+    return {
+      run: null,
+
+      predictions:
+        mapPersistedSnapshotToPredictions(
+          officialSnapshot
+        ),
+
+      publicSnapshot:
+        officialSnapshot,
+
+      publicProjection,
+
+      engine: null,
+      dryRun: false,
+      skipped: true,
+      skipReason:
+        "ALREADY_PERSISTED_VALID_SNAPSHOT",
+    };
+  }
+
+  const result = await persistRun({
+    lotteryKey,
+    date,
+    closeHour,
+    source,
+    algorithm: "top3_statistical_v3",
+    metadata,
+    predictions,
+  });
 
   return {
     ...result,

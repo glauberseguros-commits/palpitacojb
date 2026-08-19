@@ -260,6 +260,47 @@ function makeTargetKey(ymd, hour) {
  * Snapshots legados sem identidade interna permanecem válidos e imutáveis.
  * Apenas identidade interna explicitamente divergente invalida o documento.
  */
+function isExplicitForeignTop3Entry(entry) {
+  if (!entry || typeof entry !== "object") {
+    return false;
+  }
+
+  const outerType =
+    safeStr(entry?.predictionType)
+      .toUpperCase();
+
+  const outerEngine =
+    safeStr(entry?.engineVersion)
+      .toUpperCase();
+
+  if (
+    outerType === "TERNO_GRUPO" ||
+    outerEngine.includes("TERNO_GRUPO")
+  ) {
+    return true;
+  }
+
+  const snapshot =
+    Array.isArray(entry?.snapshot)
+      ? entry.snapshot.slice(0, 3)
+      : [];
+
+  return snapshot.some((item) => {
+    const metaType =
+      safeStr(item?.meta?.predictionType)
+        .toUpperCase();
+
+    const metaEngine =
+      safeStr(item?.meta?.engineVersion)
+        .toUpperCase();
+
+    return (
+      metaType === "TERNO_GRUPO" ||
+      metaEngine.includes("TERNO_GRUPO")
+    );
+  });
+}
+
 function isPersistedTop3EntryValid(
   entry,
   {
@@ -269,6 +310,10 @@ function isPersistedTop3EntryValid(
   } = {}
 ) {
   if (!entry || typeof entry !== "object") return false;
+
+  if (isExplicitForeignTop3Entry(entry)) {
+    return false;
+  }
 
   const expectedLottery = safeStr(lotteryKey).toUpperCase();
   const expectedYmd = safeStr(targetYmd);
@@ -1537,13 +1582,7 @@ export function useTop3Controller() {
          *   nao interromper o pipeline; deixar o motor produzir
          *   o TOP3 correspondente ao contexto atual.
          */
-        if (
-          persistedTop3.length &&
-          !isFutureTarget(
-            analysisYmd,
-            analysisHourBucket
-          )
-        ) {
+        if (persistedTop3.length) {
           if (!isCurrentContext()) return;
 
           setTop3(persistedTop3);
@@ -1771,11 +1810,7 @@ if (
      */
     if (
       currentPersistedPrediction &&
-      currentPersistedSnapshotValid &&
-      !isFutureTarget(
-        analysisYmd,
-        analysisHourBucket
-      )
+      currentPersistedSnapshotValid
     ) {
       return;
     }
@@ -1912,6 +1947,7 @@ if (
         ...(item?.meta && typeof item.meta === "object"
           ? item.meta
           : {}),
+        predictionType: "TOP3",
         persistenceContext: {
           lotteryKey: lotteryKeySafe,
           targetYmd: analysisYmd,
@@ -1928,15 +1964,6 @@ if (
         engineTop3ForSave?.[0]?.meta?.scenario
       ) ||
       "V3_STATISTICAL";
-
-    registerPrediction({
-      targetKey,
-      targetYmd: analysisYmd,
-      targetHour: analysisHourBucket,
-      picks,
-      snapshot,
-      engineVersion,
-    });
 
     /*
      * TOP3_NACIONAL_RUNTIME_AUTHORITY_TRACE_V4
@@ -2021,31 +2048,16 @@ if (
       targetYmd: analysisYmd,
       targetHour: analysisHourBucket,
       /*
-       * TOP3_NACIONAL_FUTURE_ENGINE_SAVE_AUTHORITY_V1
+       * TOP3_FIRST_VALID_SNAPSHOT_IMMUTABLE_V1
        *
-       * Para NACIONAL, enquanto o horario-alvo ainda for futuro,
-       * o snapshot oficial deve acompanhar a saida atual do motor.
+       * A persistência pode criar o primeiro snapshot válido
+       * ou reparar um documento inválido.
        *
-       * Slots encerrados continuam congelados.
+       * Snapshot válido já publicado jamais é substituído.
        */
-      allowReplaceExisting:
-        lotteryKeySafe === "NACIONAL" &&
-        isFutureTarget(
-          analysisYmd,
-          analysisHourBucket
-        ),
       picks,
       snapshot,
       engineVersion,
-
-      /*
-       * TOP3_CURRENT_MOTOR_AUTHORITY_V2
-       *
-       * Este efeito somente chega ao save para target futuro,
-       * pois o guard isFutureTarget ocorre antes da montagem
-       * do snapshot.
-       */
-      replaceCurrentFutureSnapshot: true,
     })
       .then((result) => {
         const diagnostic = {
@@ -2121,6 +2133,34 @@ if (
                 targetHour: analysisHourBucket,
               }
             );
+
+          /*
+           * TOP3_LOCAL_LOG_AFTER_AUTHORITY_V1
+           *
+           * O localStorage recebe somente o snapshot que venceu
+           * a transação Firestore.
+           */
+          if (officialTop3.length === 3) {
+            registerPrediction({
+              lotteryKey: lotteryKeySafe,
+              targetYmd: analysisYmd,
+              targetHour: analysisHourBucket,
+              picks: officialTop3.map(
+                (item) => Number(item?.grupo)
+              ),
+              snapshot:
+                Array.isArray(
+                  officialEntry?.snapshot
+                )
+                  ? officialEntry.snapshot
+                  : snapshot,
+              engineVersion:
+                safeStr(
+                  officialEntry?.engineVersion
+                ) ||
+                engineVersion,
+            });
+          }
 
           /*
            * TOP3_NACIONAL_RUNTIME_AUTHORITY_TRACE_V4
