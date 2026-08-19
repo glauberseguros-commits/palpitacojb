@@ -239,27 +239,59 @@ function normalizeHourLike(value) {
  * 22:49 -> 23:00
  */
 function normalizeCloseHourForLottery(lotteryInput, value) {
-  const normalized = normalizeHourLike(value);
-  if (!normalized) return "";
+  const normalized =
+    normalizeHourLike(value);
 
-  const lotteryKey = canonicalScopeKey(lotteryInput);
-
-  if (lotteryKey !== "NACIONAL") {
+  if (!normalized) {
     return normalized;
   }
 
-  const nacionalHourMap = {
-    "01:49": "02:00",
-    "07:49": "08:00",
-    "09:49": "10:00",
-    "11:49": "12:00",
-    "14:49": "15:00",
-    "16:49": "17:00",
-    "20:49": "21:00",
-    "22:49": "23:00",
+  const lottery =
+    String(
+      lotteryInput ?? ""
+    )
+      .trim()
+      .toUpperCase();
+
+  if (
+    !lottery.includes(
+      "NACIONAL"
+    )
+  ) {
+    return normalized;
+  }
+
+  const m =
+    normalized.match(
+      /^(\d{2}):(\d{2})$/
+    );
+
+  if (!m) {
+    return normalized;
+  }
+
+  const hh = m[1];
+
+  const fixedMap = {
+    "01": "02:00",
+    "07": "08:00",
+    "09": "10:00",
+    "11": "12:00",
+    "14": "15:00",
+    "16": "17:00",
+    "22": "23:00",
   };
 
-  return nacionalHourMap[normalized] || normalized;
+  /*
+   * IMPORTANTE:
+   * 19xx / 20xx / 21xx NÃO são alterados aqui.
+   * A mudança histórica 20h -> 21h será tratada
+   * em uma etapa própria.
+   */
+  return (
+    fixedMap[hh] ??
+    normalized
+  );
 }
 
 function mhxToInt(v) {

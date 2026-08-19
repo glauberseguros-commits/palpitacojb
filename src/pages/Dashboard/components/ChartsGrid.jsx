@@ -1264,14 +1264,39 @@ function computeStats({ drawsRawView, drawsRawGlobal, filters, selectedGrupo }) 
     value: wdMap.get(it.key) || 0,
   }));
 
-  const ALLOWED_BUCKETS = ["09h", "11h", "14h", "16h", "18h", "21h"];
-  const hourMap = new Map(ALLOWED_BUCKETS.map((b) => [b, 0]));
+  /*
+   * Horários do gráfico são derivados do recorte já filtrado.
+   *
+   * Não usar whitelist fixa de uma loteria aqui:
+   * Dashboard.jsx já resolve a identidade/segregação dos horários
+   * antes de entregar drawsRaw ao ChartsGrid.
+   */
+  const hourMap = new Map();
   let aparicoesComHoraTotal = 0;
 
+  /*
+   * draws já chega filtrado pelo Dashboard conforme a identidade
+   * nominal do horário da loteria.
+   *
+   * Quando existe um horário específico selecionado, esse horário
+   * é a identidade correta do recorte e deve prevalecer no gráfico.
+   *
+   * Em "Todos", preservamos a resolução individual do draw.
+   */
+  const selectedHourRaw = String(filters?.horario ?? "").trim();
+
+  const selectedHourBucket =
+    selectedHourRaw &&
+    selectedHourRaw.toLowerCase() !== "todos"
+      ? hhmmToBucket09h(selectedHourRaw)
+      : null;
+
   for (const d of draws) {
-    const bucket = hhmmToBucket09h(getDrawCloseHour(d));
+    const bucket =
+      selectedHourBucket ??
+      hhmmToBucket09h(getDrawCloseHour(d));
+
     if (!bucket) continue;
-    if (!hourMap.has(bucket)) continue;
 
     const apar = countAparicoesInDraw(d, {
       selectedGrupo: hasSelected ? gSel : null,
@@ -1283,11 +1308,72 @@ function computeStats({ drawsRawView, drawsRawGlobal, filters, selectedGrupo }) 
     aparicoesComHoraTotal += apar;
   }
 
-  const hourData = ALLOWED_BUCKETS.map((label) => ({
-    label,
-    value: hourMap.get(label) || 0,
-  })).filter((x) => safeNumber(x.value) > 0);
+  const hourData = Array.from(hourMap.entries())
+    .map(([label, value]) => ({
+      label,
+      value,
+    }))
+    .filter((x) => safeNumber(x.value) > 0)
+    .sort((a, b) => {
+      const ah = Number(String(a.label).replace(/\D/g, ""));
+      const bh = Number(String(b.label).replace(/\D/g, ""));
+      return ah - bh;
+    });
 
+  /*
+   * PALPITACO_HOUR_TRACE_24
+   * Diagnóstico temporário.
+   * Não altera filtros, contagens ou dados retornados.
+   */
+  if (typeof window !== "undefined") {
+    const rawHourSamples = draws
+      .slice(0, 12)
+      .map((d) => ({
+        rawHour: getDrawCloseHour(d),
+        rawBucket: hhmmToBucket09h(getDrawCloseHour(d)),
+        lotteryName:
+          d?.lottery_name ??
+          d?.lotteryName ??
+          d?.name ??
+          null,
+      }));
+
+    console.group(
+      `[PALPITACO_HOUR_TRACE_24] horario=${selectedHourRaw || "(vazio)"}`
+    );
+
+    console.log("filters.horario =", filters?.horario);
+    console.log("selectedHourRaw =", selectedHourRaw);
+    console.log("selectedHourBucket =", selectedHourBucket);
+
+    console.log("draws.length =", draws.length);
+    console.log(
+      "totalAparicoesNoRecorte =",
+      totalAparicoesNoRecorte
+    );
+
+    console.log(
+      "rawHourSamples =",
+      rawHourSamples
+    );
+
+    console.log(
+      "hourMap.entries =",
+      Array.from(hourMap.entries())
+    );
+
+    console.log(
+      "aparicoesComHoraTotal =",
+      aparicoesComHoraTotal
+    );
+
+    console.log(
+      "hourData =",
+      hourData
+    );
+
+    console.groupEnd();
+  }
   const hourDataWithTotal =
     hourData.length > 0 && aparicoesComHoraTotal > 0
       ? [...hourData, { label: "Total", value: aparicoesComHoraTotal }]

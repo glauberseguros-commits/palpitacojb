@@ -131,6 +131,60 @@ export function guessPrizeGrupo(p) {
   return null;
 }
 
+
+/**
+ * NACIONAL — horário NOMINAL do sorteio.
+ *
+ * Corrige SOMENTE faixas sem ambiguidade histórica.
+ *
+ * Não altera 19xx, 20xx ou 21xx.
+ * O bloco 20h/21h será tratado separadamente.
+ */
+function normalizeNacionalUnambiguousHour(value) {
+  const raw =
+    String(value ?? "").trim();
+
+  if (!raw) return "";
+
+  const m =
+    raw.match(
+      /^(\d{1,2})(?::?(\d{2}))?(?:h)?$/i
+    );
+
+  if (!m) return raw;
+
+  const hh =
+    String(
+      Number(m[1])
+    ).padStart(2, "0");
+
+  const mm =
+    String(
+      m[2] ?? "00"
+    ).padStart(2, "0");
+
+  const fixedMap = {
+    "01": "02:00",
+    "07": "08:00",
+    "09": "10:00",
+    "11": "12:00",
+    "14": "15:00",
+    "16": "17:00",
+    "22": "23:00",
+  };
+
+  if (
+    Object.prototype.hasOwnProperty.call(
+      fixedMap,
+      hh
+    )
+  ) {
+    return fixedMap[hh];
+  }
+
+  return `${hh}:${mm}`;
+}
+
 function pickNacionalNominalHour(draw) {
   const lotteryKey = String(
     draw?.lottery_key ??
@@ -174,16 +228,49 @@ function pickNacionalNominalHour(draw) {
 }
 
 export function pickDrawHour(draw) {
-  const nacionalNominalHour =
+  const nominal =
     pickNacionalNominalHour(draw);
 
-  if (nacionalNominalHour) {
-    return nacionalNominalHour;
+  if (nominal) {
+    return nominal;
   }
 
-  return normalizeHourLike(
-    draw?.close_hour || draw?.closeHour || draw?.hour || draw?.hora || ""
-  );
+  const raw =
+    String(
+      draw?.close_hour ??
+      draw?.closeHour ??
+      draw?.hour ??
+      draw?.hora ??
+      ""
+    ).trim();
+
+  if (!raw) {
+    return "";
+  }
+
+  const identity =
+    [
+      draw?.lottery_key,
+      draw?.lotteryKey,
+      draw?.lottery,
+      draw?.lottery_name,
+      draw?.lotteryName,
+      draw?.name,
+      draw?.title,
+      draw?.source,
+    ]
+      .filter(Boolean)
+      .join(" ")
+      .toUpperCase();
+
+  const isNacional =
+    identity.includes(
+      "NACIONAL"
+    );
+
+  return isNacional
+    ? normalizeNacionalUnambiguousHour(raw)
+    : raw;
 }
 
 export function pickDrawYMD(draw) {

@@ -2513,23 +2513,31 @@ const list =
         timelineRow?.resultMilhar || ""
       );
       /*
-       * TOP3_VALIDATED_HISTORY_MOTOR_AUTHORITY_V1
+       * TOP3_VALIDATED_HISTORY_PERSISTED_AUTHORITY_V1
        *
        * Slot já encerrado:
        *
        * - o resultado oficial continua vindo da timeline/resultado real;
-       * - o TOP3 visual vem da reconstrução do motor para o MESMO
-       *   lottery + data + horário;
-       * - snapshot persistido legado não tem autoridade visual quando
-       *   divergir da saída reconstruída pelo motor.
+       * - o TOP3 visual deve preservar o palpite que foi oficialmente
+       *   publicado antes do sorteio;
+       * - quando existe row.top3 vindo do snapshot persistido, ele é
+       *   a autoridade histórica;
+       * - timelineRow.top3 é apenas fallback para registros sem
+       *   snapshot persistido utilizável.
+       *
+       * Isso impede que uma reconstrução posterior do motor altere
+       * retrospectivamente os palpites vistos pelo usuário.
        *
        * IMPORTANTE:
        * nenhum documento Firestore é alterado.
        */
       const engineHistoryTop3 =
-        Array.isArray(timelineRow?.top3)
-          ? timelineRow.top3.slice(0, 3)
-          : [];
+        Array.isArray(row?.top3) &&
+        row.top3.length === 3
+          ? row.top3.slice(0, 3)
+          : Array.isArray(timelineRow?.top3)
+            ? timelineRow.top3.slice(0, 3)
+            : [];
 
       const officialPodium =
         getOfficialPodium(timelineRow);
