@@ -5,6 +5,10 @@ const {
 } = require("../service/firebaseAdmin");
 
 const {
+  fetchDrawsWithPrizesByRange,
+} = require("./drawRepository");
+
+const {
   readMetadata,
   writeMetadata,
   upsertHistoryMonth,
@@ -32,6 +36,46 @@ function validYmd(value) {
   return /^\d{4}-\d{2}-\d{2}$/.test(ymd)
     ? ymd
     : null;
+}
+
+function hasEstablishedHistoryBaseline(
+  metadata = {}
+) {
+  if (
+    !metadata ||
+    typeof metadata !== "object"
+  ) {
+    return false;
+  }
+
+  const lastYmd =
+    validYmd(metadata.lastYmd);
+
+  const totalDraws =
+    Number(metadata.totalDraws || 0);
+
+  const months =
+    safeArray(metadata.months)
+      .map((value) =>
+        String(value || "").trim()
+      )
+      .filter(Boolean);
+
+  const monthCount =
+    Number(metadata.monthCount || 0);
+
+  return Boolean(
+    lastYmd &&
+    Number.isFinite(totalDraws) &&
+    totalDraws > 0 &&
+    (
+      months.length > 0 ||
+      (
+        Number.isFinite(monthCount) &&
+        monthCount > 0
+      )
+    )
+  );
 }
 
 function resolveDb(dependencies = {}) {
@@ -294,9 +338,25 @@ async function syncImportedResultToTop3History(
       compactManifestResult?.exists === true &&
       compactManifest?.status === "complete";
 
+    const bootstrapStatus =
+      String(
+        metadata?.bootstrapStatus || ""
+      ).trim();
+
+    const normalReady =
+      metadataResult?.exists === true &&
+      bootstrapStatus === "complete";
+
+    const staleRecoverable =
+      metadataResult?.exists === true &&
+      bootstrapStatus === "stale" &&
+      hasEstablishedHistoryBaseline(
+        metadata
+      );
+
     if (
-      metadataResult?.exists !== true ||
-      metadata?.bootstrapStatus !== "complete"
+      !normalReady &&
+      !staleRecoverable
     ) {
       return {
         ok: true,
@@ -305,13 +365,116 @@ async function syncImportedResultToTop3History(
       };
     }
 
-    const draws = await (
+    const importedDraws = await (
       dependencies.loadImportedDraws ||
       loadImportedDraws
     )(
       importResult,
       dependencies
     );
+
+    let catchUpDraws = [];
+    let recoveryMode =
+      "incremental";
+
+    if (staleRecoverable) {
+      const catchUpStartYmd =
+        validYmd(metadata?.lastYmd);
+
+      const catchUpEndYmd =
+        validYmd(importResult.date);
+
+      if (
+        !catchUpStartYmd ||
+        !catchUpEndYmd
+      ) {
+        throw new Error(
+          "stale_catch_up_invalid_range"
+        );
+      }
+
+      const fetchCatchUpDraws =
+        dependencies.fetchCatchUpDraws ||
+        fetchDrawsWithPrizesByRange;
+
+      const catchUpPageSize =
+        Math.max(
+          25,
+          Math.min(
+            500,
+            Number(
+              dependencies.catchUpPageSize ||
+              250
+            )
+          )
+        );
+
+      const catchUpMaxDraws =
+        Math.max(
+          100,
+          Math.min(
+            5000,
+            Number(
+              dependencies.catchUpMaxDraws ||
+              5000
+            )
+          )
+        );
+
+      const catchUpPrizeConcurrency =
+        Math.max(
+          1,
+          Math.min(
+            50,
+            Number(
+              dependencies.catchUpPrizeConcurrency ||
+              24
+            )
+          )
+        );
+
+      const rawCatchUp =
+        await fetchCatchUpDraws({
+          lottery:
+            lotteryKey,
+          startYmd:
+            catchUpStartYmd,
+          endYmd:
+            catchUpEndYmd,
+          pageSize:
+            catchUpPageSize,
+          maxDraws:
+            catchUpMaxDraws,
+          prizeConcurrency:
+            catchUpPrizeConcurrency,
+        });
+
+      catchUpDraws =
+        safeArray(
+          rawCatchUp?.draws ||
+          rawCatchUp
+        );
+
+      if (
+        catchUpDraws.length >=
+        catchUpMaxDraws
+      ) {
+        throw new Error(
+          "stale_catch_up_limit_reached"
+        );
+      }
+
+      recoveryMode =
+        "stale_catch_up";
+    }
+
+    const draws =
+      deduplicateDraws([
+        ...catchUpDraws,
+        ...safeArray(
+          importedDraws
+        ),
+      ]);
 
     if (!draws.length) {
       return {
@@ -629,6 +792,11 @@ async function syncImportedResultToTop3History(
       skipped: false,
       lotteryKey,
       importedDraws: draws.length,
+      currentImportDraws:
+        safeArray(importedDraws).length,
+      catchUpDraws:
+        catchUpDraws.length,
+      recoveryMode,
       updatedMonths,
       compactReady,
       compactUpdated,
