@@ -8,6 +8,11 @@ import {
   normalizeTop3Hits,
 } from "./top3.hit-analysis";
 
+import {
+  isTop3HistoricalMilharesUnavailable,
+  resolveTop3ProbabilityFractionOrNull,
+} from "./top3.historical-truth";
+
 function extractPrizeMilharByPosition(slot, position) {
   const prizes = Array.isArray(slot?.prizes)
     ? slot.prizes
@@ -531,6 +536,23 @@ function Top3Card({
 }) {
   const t = theme;
 
+  const resolvedProbability =
+    resolveTop3ProbabilityFractionOrNull(
+      item
+    );
+
+  const probabilityUnavailable =
+    resolvedProbability == null;
+
+  const historicalMilharesUnavailable =
+    isTop3HistoricalMilharesUnavailable(
+      item
+    );
+
+  const allowMilharesRegeneration =
+    !historicalMilharesUnavailable &&
+    item?.persistedSnapshot !== true;
+
   const grupoTxt = formatGrupo(item?.grupo);
   const animal = String(item?.animal || "").trim();
 
@@ -547,13 +569,15 @@ function Top3Card({
   const denom = samples > 0 ? samples * 5 : 0;
   const derivedScore = denom > 0 ? freq / denom : 0;
 
-  const pct = toPercent(
-    item?.probPct ??
-      item?.prob ??
-      item?.probCond ??
-      item?.score ??
-      derivedScore
-  );
+  const pct =
+    probabilityUnavailable
+      ? 0
+      : resolvedProbability * 100;
+
+  const confidenceText =
+    probabilityUnavailable
+      ? "INDISPONÍVEL"
+      : `${pct.toFixed(2)}%`;
 
   const iconSrcs =
     Array.isArray(item?.imgIcon) && item.imgIcon.length
@@ -563,6 +587,7 @@ function Top3Card({
         : [];
 
   const hasCols =
+    !historicalMilharesUnavailable &&
     Array.isArray(item?.milharesCols) &&
     item.milharesCols.length >= 4 &&
     Array.isArray(item.milharesCols[0]?.items);
@@ -653,17 +678,29 @@ function Top3Card({
   } else {
     let milharesBase = [];
 
-    const m24 = Array.isArray(item?.milhares24)
-      ? item.milhares24
-      : Array.isArray(item?.milhares20)
-        ? item.milhares20
-        : null;
-    const mAny = Array.isArray(item?.milhares) ? item.milhares : null;
+    const m24 =
+      historicalMilharesUnavailable
+        ? null
+        : Array.isArray(item?.milhares24)
+          ? item.milhares24
+          : Array.isArray(item?.milhares20)
+            ? item.milhares20
+            : null;
+
+    const mAny =
+      historicalMilharesUnavailable
+        ? null
+        : Array.isArray(item?.milhares)
+          ? item.milhares
+          : null;
 
     if (m24 && m24.length) milharesBase = m24.slice(0);
     else if (mAny && mAny.length) milharesBase = mAny.slice(0);
 
-    if (!milharesBase.length) {
+    if (
+      !milharesBase.length &&
+      allowMilharesRegeneration
+    ) {
       const g = Number(item?.grupo);
 
       if (Number.isFinite(g) && g > 0) {
@@ -782,7 +819,11 @@ function Top3Card({
     );
   }
 
-  smartReasons.push(`Probabilidade final do G${grupoTxt}: ${pct.toFixed(2)}%.`);
+  if (!probabilityUnavailable) {
+    smartReasons.push(
+      `Probabilidade final do G${grupoTxt}: ${pct.toFixed(2)}%.`
+    );
+  }
 
   const evidenceReasons = smartReasons
     .concat(Array.isArray(item?.reasons) ? item.reasons.filter(Boolean) : [])
@@ -898,7 +939,9 @@ function Top3Card({
 
         <div className="top3-card__confidence">
           <div className="top3-card__confidenceLabel">CONFIANÇA</div>
-          <div className="top3-card__confidenceValue">{pct.toFixed(2)}%</div>
+          <div className="top3-card__confidenceValue">
+            {confidenceText}
+          </div>
           <div className="top3-card__confidenceBar">
             <div
               className="top3-card__confidenceBarFill"
@@ -1601,6 +1644,28 @@ function getHistoricalMilharesGrid(item) {
     return {
       dezenas: [],
       rows: [],
+      flat: [],
+      available: false,
+    };
+  }
+
+  /*
+   * TOP3_HISTORICAL_MILHARES_UI_TRUTH_V1
+   *
+   * O marcador persistido de indisponibilidade prevalece
+   * sobre qualquer conteúdo reconstruído posteriormente.
+   */
+  if (
+    isTop3HistoricalMilharesUnavailable(
+      item
+    )
+  ) {
+    return {
+      dezenas,
+      rows: Array.from(
+        { length: 6 },
+        () => Array(4).fill("")
+      ),
       flat: [],
       available: false,
     };

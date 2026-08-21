@@ -2,6 +2,10 @@ import { safeStr, toHourBucket } from "../top3.formatters";
 import { buildMilharesForGrupo } from "../top3.engine";
 import { getAnimalLabel, getImgFromGrupo } from "../../../constants/bichoMap";
 
+import {
+  resolveTop3ProbabilityFractionOrNull,
+} from "../top3.historical-truth";
+
 export function clampTop3Prob(v) {
   const n = Number(v);
   if (!Number.isFinite(n)) return 0;
@@ -125,7 +129,7 @@ export function buildTop3CardViewModel({
   if (!out) {
     out = buildMilharesForGrupo({
       rangeDraws,
-      analysisHourBucket: safeAnalysisHour,
+      analysisHourBucket: nextH || safeAnalysisHour,
       schedule,
       grupo2: g,
       count: 24,
@@ -138,7 +142,10 @@ export function buildTop3CardViewModel({
   const milharesCols = buildTop3MilharesCols(out, 4, 6);
   const milhares24 = milharesCols.flatMap((c) => c.items).slice(0, 24);
 
-  const prob = resolveTop3ProbValue(item);
+  const prob =
+    resolveTop3ProbabilityFractionOrNull(
+      item
+    );
 
   const bgPrimary = normalizeTop3ImgSrc(
     safeStr(getImgFromGrupo?.(g, 512) || getImgFromGrupo?.(g) || ""),
@@ -151,7 +158,10 @@ export function buildTop3CardViewModel({
     imgBg: bgPrimary ? [bgPrimary] : [],
     imgIcon: buildTop3ImgVariants(g, publicBase, 96),
     prob,
-    probPct: prob * 100,
+    probPct:
+      prob == null
+        ? null
+        : prob * 100,
     meta: item?.meta || null,
     milharesCols,
     milhares24,

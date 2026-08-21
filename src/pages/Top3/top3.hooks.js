@@ -80,6 +80,11 @@ import {
   buildResultStyleImgVariants,
 } from "./top3.images";
 
+import {
+  isTop3HistoricalMilharesUnavailable,
+  resolveTop3ProbabilityFractionOrNull,
+} from "./top3.historical-truth";
+
 const top3SaveRunKeys = new Set();
 const top3ReconcileRunKeys = new Set();
 const top3ReconcileRetryCounts = new Map();
@@ -367,17 +372,24 @@ function hydratePersistedTop3(
   entry,
   expectedContext = {}
 ) {
-  if (!isPersistedTop3EntryValid(entry, expectedContext)) {
+  if (
+    !isPersistedTop3EntryValid(
+      entry,
+      expectedContext
+    )
+  ) {
     return [];
   }
 
-  const snapshot = Array.isArray(entry?.snapshot)
-    ? entry.snapshot.slice(0, 3)
-    : [];
+  const snapshot =
+    Array.isArray(entry?.snapshot)
+      ? entry.snapshot.slice(0, 3)
+      : [];
 
   return snapshot
     .map((item, index) => {
-      const grupo = Number(item?.grupo);
+      const grupo =
+        Number(item?.grupo);
 
       if (
         !Number.isFinite(grupo) ||
@@ -388,35 +400,121 @@ function hydratePersistedTop3(
       }
 
       const imgBg =
-        Array.isArray(item?.imgBg) && item.imgBg.length
+        Array.isArray(item?.imgBg) &&
+        item.imgBg.length
           ? item.imgBg.filter(Boolean)
-          : [getGrupoImgSrc(grupo, 512)].filter(Boolean);
+          : [
+              getGrupoImgSrc(
+                grupo,
+                512
+              ),
+            ].filter(Boolean);
 
       const imgIcon =
-        Array.isArray(item?.imgIcon) && item.imgIcon.length
+        Array.isArray(item?.imgIcon) &&
+        item.imgIcon.length
           ? item.imgIcon.filter(Boolean)
-          : buildResultStyleImgVariants(grupo, 96);
+          : buildResultStyleImgVariants(
+              grupo,
+              96
+            );
+
+      const probability =
+        resolveTop3ProbabilityFractionOrNull(
+          item
+        );
+
+      const historicalMilharesUnavailable =
+        isTop3HistoricalMilharesUnavailable(
+          item
+        );
+
+      const milhares24 =
+        historicalMilharesUnavailable
+          ? []
+          : Array.isArray(
+              item?.milhares24
+            )
+            ? item.milhares24.slice(
+                0,
+                24
+              )
+            : Array.isArray(
+                item?.milhares20
+              )
+              ? item.milhares20.slice(
+                  0,
+                  24
+                )
+              : [];
+
+      const milhares20 =
+        historicalMilharesUnavailable
+          ? []
+          : Array.isArray(
+              item?.milhares20
+            )
+            ? item.milhares20.slice(
+                0,
+                20
+              )
+            : milhares24.slice(
+                0,
+                20
+              );
+
+      const milharesCols =
+        historicalMilharesUnavailable
+          ? []
+          : Array.isArray(
+              item?.milharesCols
+            )
+            ? item.milharesCols
+            : [];
 
       return {
         ...item,
-        rank: Number(item?.rank || index + 1),
+
+        rank:
+          Number(
+            item?.rank ||
+            index + 1
+          ),
+
         grupo,
+
         animal:
-          safeStr(item?.animal) ||
-          safeStr(getAnimalLabel(grupo)),
-        prob: Number(item?.prob || 0),
-        probPct: Number(item?.probPct || 0),
-        milhares24: Array.isArray(item?.milhares24)
-          ? item.milhares24.slice(0, 24)
-          : Array.isArray(item?.milhares20)
-            ? item.milhares20.slice(0, 24)
-            : [],
-        milharesCols: Array.isArray(item?.milharesCols)
-          ? item.milharesCols
-          : [],
+          safeStr(
+            item?.animal
+          ) ||
+          safeStr(
+            getAnimalLabel(
+              grupo
+            )
+          ),
+
+        prob:
+          probability,
+
+        probPct:
+          probability == null
+            ? null
+            : probability * 100,
+
+        milhares24,
+        milhares20,
+        milharesCols,
+
+        historicalProbabilityUnavailable:
+          probability == null,
+
+        historicalMilharesUnavailable,
+
         imgBg,
         imgIcon,
-        persistedSnapshot: true,
+
+        persistedSnapshot:
+          true,
       };
     })
     .filter(Boolean)
@@ -512,6 +610,7 @@ export function useTop3Controller() {
   const [error, setError] = useState("");
 
   const [rangeDraws, setRangeDraws] = useState([]);
+  const [milharRangeDraws, setMilharRangeDraws] = useState([]);
   const [todayDraws, setTodayDraws] = useState([]);
   const [rangeInfo, setRangeInfo] = useState({ from: "", to: "" });
 
@@ -741,6 +840,7 @@ export function useTop3Controller() {
 
     setRangeInfo({ from: "", to: "" });
     setRangeDraws([]);
+    setMilharRangeDraws([]);
     setTodayDraws([]);
   }, []);
 
@@ -751,6 +851,7 @@ export function useTop3Controller() {
     setLoading(true);
     setLoadingStage({ today: true, range: false });
     setError("");
+    setMilharRangeDraws([]);
     setSecondaryReady(false);
 
     // Impede exibir resultados pertencentes à consulta anterior.
@@ -1122,7 +1223,75 @@ export function useTop3Controller() {
         )
       );
 
-      setRangeDraws(hist);
+      /*
+       * TOP3_NACIONAL_MILHAR_HISTORY_SOURCE_V1
+       *
+       * O lookback visual continua alimentando o motor de bichos.
+       * O motor de milhares da NACIONAL recebe fonte independente,
+       * cobrindo todo o historico anterior disponivel.
+       *
+       * Isso e necessario porque:
+       * - a selecao de centena usa janela de 365 dias;
+       * - CENTENA_365 usa historico total como fallback.
+       */
+      let milharHistory =
+        hist;
+
+      if (
+        lKey === "NACIONAL"
+      ) {
+        const milharRangeFrom =
+          isYMD(minDate)
+            ? minDate
+            : addDaysYMD(
+                isYMD(resolvedTargetY)
+                  ? resolvedTargetY
+                  : baseY,
+                -365
+              );
+
+        const currentRangeAlreadyCoversMilhar =
+          isYMD(rangeFrom) &&
+          isYMD(milharRangeFrom) &&
+          rangeFrom <= milharRangeFrom;
+
+        if (
+          !currentRangeAlreadyCoversMilhar
+        ) {
+          const milharHistRaw =
+            await loadHistoryRange({
+              getKingResultsByRange,
+              uf: ufResolved,
+              dateFrom:
+                milharRangeFrom,
+              dateTo:
+                rangeTo,
+              readPolicy:
+                "cache",
+            });
+
+          if (
+            requestIdRef.current !==
+            currentRequestId
+          ) {
+            return;
+          }
+
+          milharHistory =
+            mergeBaseIntoRange(
+              milharHistRaw,
+              baseDraw
+            );
+        }
+      }
+
+      setRangeDraws(
+        hist
+      );
+
+      setMilharRangeDraws(
+        milharHistory
+      );
       setLoadedLotteryKey(lKey);
 
       const loadedHistoryDates = Array.from(
@@ -1450,6 +1619,7 @@ export function useTop3Controller() {
     milharesCacheRef.current.clear();
   }, [
     rangeDraws,
+    milharRangeDraws,
     analysisHourBucket,
     scheduleKey,
     analysisYmd,
@@ -1477,7 +1647,14 @@ export function useTop3Controller() {
       }
 
       const generated = buildMilharesForGrupo({
-        rangeDraws,
+        rangeDraws:
+          lotteryKeySafe === "NACIONAL" &&
+          Array.isArray(milharRangeDraws) &&
+          milharRangeDraws.length
+            ? milharRangeDraws
+            : rangeDraws,
+        lotteryKey:
+          lotteryKeySafe,
         analysisHourBucket,
         schedule,
         grupo2,
@@ -1491,6 +1668,7 @@ export function useTop3Controller() {
     },
     [
       rangeDraws,
+      milharRangeDraws,
       analysisHourBucket,
       schedule,
       scheduleKey,
@@ -1741,6 +1919,7 @@ if (
     const built = buildTop3TimelineViewModel({
       todayDraws,
       rangeDraws,
+      milharRangeDraws,
       lotteryKeySafe,
       ymdSafe: timelineYmd,
       analysisYmd,
@@ -1763,6 +1942,7 @@ if (
   }, [
     todayDraws,
     rangeDraws,
+    milharRangeDraws,
     lotteryKeySafe,
     timelineYmd,
     analysisYmd,
@@ -1929,32 +2109,90 @@ if (
 
     top3SaveRunKeys.add(saveRunKey);
 
-    const snapshot = engineTop3ForSave.map((item, index) => ({
-      rank: index + 1,
-      grupo: Number(item?.grupo),
-      animal: safeStr(item?.animal || ""),
-      prob: Number(item?.prob || 0),
-      probPct: Number(item?.probPct || 0),
-      milhares24: Array.isArray(item?.milhares24)
-          ? item.milhares24.slice(0, 24)
-          : Array.isArray(item?.milhares20)
-            ? item.milhares20.slice(0, 24)
-            : [],
-      milharesCols: Array.isArray(item?.milharesCols)
-        ? item.milharesCols
-        : [],
-      meta: {
-        ...(item?.meta && typeof item.meta === "object"
-          ? item.meta
-          : {}),
-        predictionType: "TOP3",
-        persistenceContext: {
-          lotteryKey: lotteryKeySafe,
-          targetYmd: analysisYmd,
-          targetHour: analysisHourBucket,
-        },
-      },
-    }));
+    /*
+     * TOP3_PERSISTED_PROBABILITY_TRUTH_V1
+     *
+     * A persistência não fabrica 0% quando o valor está ausente.
+     */
+    const snapshot =
+      engineTop3ForSave.map(
+        (item, index) => {
+          const probability =
+            resolveTop3ProbabilityFractionOrNull(
+              item
+            );
+
+          return {
+            rank:
+              index + 1,
+
+            grupo:
+              Number(
+                item?.grupo
+              ),
+
+            animal:
+              safeStr(
+                item?.animal || ""
+              ),
+
+            prob:
+              probability,
+
+            probPct:
+              probability == null
+                ? null
+                : probability * 100,
+
+            milhares24:
+              Array.isArray(
+                item?.milhares24
+              )
+                ? item.milhares24.slice(
+                    0,
+                    24
+                  )
+                : Array.isArray(
+                    item?.milhares20
+                  )
+                  ? item.milhares20.slice(
+                      0,
+                      24
+                    )
+                  : [],
+
+            milharesCols:
+              Array.isArray(
+                item?.milharesCols
+              )
+                ? item.milharesCols
+                : [],
+
+            meta: {
+              ...(
+                item?.meta &&
+                typeof item.meta === "object"
+                  ? item.meta
+                  : {}
+              ),
+
+              predictionType:
+                "TOP3",
+
+              persistenceContext: {
+                lotteryKey:
+                  lotteryKeySafe,
+
+                targetYmd:
+                  analysisYmd,
+
+                targetHour:
+                  analysisHourBucket,
+              },
+            },
+          };
+        }
+      );
 
     const engineVersion =
       safeStr(

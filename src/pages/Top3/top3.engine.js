@@ -5419,7 +5419,7 @@ function getDezenasFixasFromGrupo(grupo2) {
 }
 
 
-export function buildMilharesForGrupo({
+function buildMilharesForGrupoLegacy({
   rangeDraws,
   analysisHourBucket,
   schedule,
@@ -5432,6 +5432,23 @@ export function buildMilharesForGrupo({
   const schSet = scheduleSet(schedule);
   const targetDay = safeStr(targetYmd);
   const targetDow = isYMD(targetDay) ? getDowKey(targetDay) : null;
+
+  /*
+   * TOP3_MILHAR_CAUSAL_CUTOFF_V1
+   *
+   * Um slot só pode utilizar resultados estritamente
+   * anteriores à própria data/hora prevista.
+   *
+   * O bloqueio fica na autoridade compartilhada da geração
+   * de milhares para proteger todos os consumidores.
+   */
+  const targetTs =
+    isYMD(targetDay) && target
+      ? ymdHourToTs(
+          targetDay,
+          target
+        )
+      : Number.NaN;
 
   const N = Number.isFinite(Number(count))
     ? Math.max(4, Math.trunc(Number(count)))
@@ -5458,6 +5475,16 @@ export function buildMilharesForGrupo({
     const isScheduleHour = schSet.size && schSet.has(h);
     const isSameDow = targetDow !== null && Number(getDowKey(y)) === Number(targetDow);
     const ts = ymdHourToTs(y, h);
+
+    if (
+      Number.isFinite(targetTs) &&
+      (
+        !Number.isFinite(ts) ||
+        ts >= targetTs
+      )
+    ) {
+      continue;
+    }
 
     const ps = Array.isArray(d?.prizes) ? d.prizes : [];
 
@@ -5915,6 +5942,1372 @@ export function buildMilharesForGrupo({
   while (slots.length < N) slots.push({ dezena: "", milhar: "" });
 
   return { dezenas: dezenasFixas, slots: slots.slice(0, N) };
+}
+
+
+/*
+ * ============================================================
+ * PALPITACO_NACIONAL_TOP3_MILHAR_FROZEN_V1
+ * ============================================================
+ *
+ * Contrato NACIONAL:
+ *
+ * CENTENA
+ * - HOUR_DOM + 365D
+ * - somente P1/P2/P3
+ * - 10 candidatas por dezena
+ * - 6 selecionadas por dezena quando count=24
+ * - 24 centenas por grupo
+ *
+ * UNIDADE DA MILHAR
+ * - CENTENA_365
+ * - uma decisao independente 0..9 para cada centena selecionada
+ * - vetor:
+ *   [centena365, centenaAll, dezena365, dezenaAll,
+ *    global365, globalAll]
+ *
+ * HORARIO
+ * - identidade documental UUID
+ * - closeHour tecnico NAO participa da canonicalizacao
+ * - 20h e 21h permanecem entidades historicas distintas
+ *
+ * CAUSALIDADE
+ * - somente eventos com ts < targetTs
+ *
+ * O motor legado continua soberano para as demais loterias.
+ */
+
+const NACIONAL_TOP3_MILHAR_MODEL_VERSION =
+  "PALPITACO_NACIONAL_TOP3_MILHAR_FROZEN_V1";
+
+const NACIONAL_TOP3_CENTENA_MODEL =
+  "NACIONAL_HOUR_DOM_365D_P1_P3";
+
+const NACIONAL_TOP3_UNIT_MODEL =
+  "NACIONAL_CENTENA_365_P1_P3";
+
+const NACIONAL_TOP3_365D_MS =
+  365 * 86400000;
+
+const NACIONAL_TOP3_NIGHT_21_START =
+  "2025-11-07";
+
+const NACIONAL_TOP3_UUID_TO_SLOT =
+  Object.freeze({
+    "6c2b52ec-d613-4383-9c07-ff5ac7e04611": "02:00",
+    "76a3feee-faa6-4b6c-aae5-656fd6af7b6b": "08:00",
+    "4dda728b-bbd9-43eb-a17b-acf968b1eca0": "10:00",
+    "8efc7c5a-8883-48a3-ab7f-cf3d0f7eebd4": "12:00",
+    "3bafbe99-632b-4445-9b73-12e78ee45283": "15:00",
+    "87db8fb6-8718-49c3-b739-96eec085e09d": "17:00",
+    "2a424135-9b6a-4415-8a57-15e0d3abd736": "23:00",
+  });
+
+const NACIONAL_TOP3_NIGHT_UUID =
+  "1eebc22a-890e-4598-86b5-6fda7e04ca4b";
+
+function nacionalTop3DrawIdentityText(draw) {
+  return [
+    draw?.id,
+    draw?.drawId,
+    draw?.draw_id,
+    draw?.docId,
+    draw?.documentId,
+    draw?.lottery_id,
+    draw?.lotteryId,
+  ]
+    .filter(
+      (value) =>
+        value !== null &&
+        value !== undefined &&
+        String(value).trim()
+    )
+    .map((value) =>
+      String(value)
+        .trim()
+        .toLowerCase()
+    )
+    .join("|");
+}
+
+function nacionalTop3CanonicalSlotFromDraw(draw) {
+  const ymd =
+    safeStr(
+      pickDrawYMD(draw)
+    );
+
+  if (!isYMD(ymd)) {
+    return "";
+  }
+
+  const identity =
+    nacionalTop3DrawIdentityText(
+      draw
+    );
+
+  if (!identity) {
+    return "";
+  }
+
+  for (
+    const [
+      uuid,
+      slot,
+    ]
+    of Object.entries(
+      NACIONAL_TOP3_UUID_TO_SLOT
+    )
+  ) {
+    if (
+      identity.includes(
+        uuid
+      )
+    ) {
+      /*
+       * TOP3_NACIONAL_CANONICAL_SLOT_BUCKET_FIX_V1
+       *
+       * O UUID continua sendo a autoridade documental.
+       * Apenas normalizamos sua identidade nominal para
+       * o bucket canonico do projeto: "HHh".
+       */
+      return toHourBucket(
+        slot
+      );
+    }
+  }
+
+  if (
+    identity.includes(
+      NACIONAL_TOP3_NIGHT_UUID
+    )
+  ) {
+    return toHourBucket(
+      (
+        ymd >=
+        NACIONAL_TOP3_NIGHT_21_START
+      )
+        ? "21:00"
+        : "20:00"
+    );
+  }
+
+  return "";
+}
+
+function nacionalTop3LooksLikeNacionalDraw(
+  draw
+) {
+  const key =
+    String(
+      draw?.lottery_key ??
+      draw?.lotteryKey ??
+      draw?.lottery ??
+      draw?.loteria ??
+      ""
+    )
+      .trim()
+      .toUpperCase();
+
+  if (
+    key === "NACIONAL"
+  ) {
+    return true;
+  }
+
+  const identity =
+    nacionalTop3DrawIdentityText(
+      draw
+    );
+
+  if (
+    identity.includes(
+      NACIONAL_TOP3_NIGHT_UUID
+    )
+  ) {
+    return true;
+  }
+
+  return Object.keys(
+    NACIONAL_TOP3_UUID_TO_SLOT
+  ).some(
+    (uuid) =>
+      identity.includes(
+        uuid
+      )
+  );
+}
+
+function nacionalTop3IsNacionalRequest(
+  lotteryKey,
+  rangeDraws
+) {
+  const key =
+    safeStr(
+      lotteryKey
+    )
+      .trim()
+      .toUpperCase();
+
+  if (
+    key === "NACIONAL"
+  ) {
+    return true;
+  }
+
+  if (key) {
+    return false;
+  }
+
+  return (
+    Array.isArray(
+      rangeDraws
+    )
+      ? rangeDraws
+      : []
+  )
+    .slice(
+      0,
+      32
+    )
+    .some(
+      nacionalTop3LooksLikeNacionalDraw
+    );
+}
+
+function nacionalTop3Increment(
+  map,
+  key,
+  amount = 1
+) {
+  map.set(
+    key,
+    Number(
+      map.get(
+        key
+      ) || 0
+    ) +
+      Number(
+        amount || 0
+      )
+  );
+}
+
+function nacionalTop3CompareVectors(
+  a,
+  b
+) {
+  const length =
+    Math.max(
+      Array.isArray(a)
+        ? a.length
+        : 0,
+      Array.isArray(b)
+        ? b.length
+        : 0
+    );
+
+  for (
+    let i = 0;
+    i < length;
+    i += 1
+  ) {
+    const av =
+      Number(
+        a?.[i] || 0
+      );
+
+    const bv =
+      Number(
+        b?.[i] || 0
+      );
+
+    if (
+      av !== bv
+    ) {
+      return (
+        bv - av
+      );
+    }
+  }
+
+  return 0;
+}
+
+function nacionalTop3EmptyCentenaStats(
+  centena
+) {
+  return {
+    centena,
+    sameSlotDom: 0,
+    sameSlot: 0,
+    sameDom: 0,
+    total: 0,
+    lastTs: 0,
+  };
+}
+
+/*
+ * TOP3_NACIONAL_CENTENA_HIERARCHICAL_BACKOFF_V1
+ *
+ * A classificacao das 10 centenas candidatas de cada
+ * dezena nunca reduz a quantidade de saidas.
+ *
+ * Hierarquia:
+ *
+ * 1. centena exata / 365 dias;
+ * 2. centena exata / historico causal completo;
+ * 3. algarismo das centenas / 365 dias;
+ * 4. algarismo das centenas / historico causal completo;
+ * 5. desempate deterministico final.
+ *
+ * Para count=24 continuam obrigatorias:
+ * 4 dezenas x 6 centenas = 24 milhares.
+ */
+function nacionalTop3RecordContextStats(
+  map,
+  key,
+  slot,
+  targetSlot,
+  dom,
+  targetDom,
+  ts
+) {
+  const current =
+    map.get(
+      key
+    ) ||
+    nacionalTop3EmptyCentenaStats(
+      key
+    );
+
+  current.total += 1;
+
+  if (
+    slot ===
+    targetSlot
+  ) {
+    current.sameSlot += 1;
+  }
+
+  if (
+    dom ===
+    targetDom
+  ) {
+    current.sameDom += 1;
+  }
+
+  if (
+    slot ===
+      targetSlot &&
+    dom ===
+      targetDom
+  ) {
+    current.sameSlotDom += 1;
+  }
+
+  if (
+    ts >
+    Number(
+      current.lastTs ||
+      0
+    )
+  ) {
+    current.lastTs =
+      ts;
+  }
+
+  map.set(
+    key,
+    current
+  );
+}
+
+function nacionalTop3CandidateCentenasForDezena(
+  dezena
+) {
+  const dz =
+    String(
+      dezena ?? ""
+    )
+      .replace(
+        /\D+/g,
+        ""
+      )
+      .padStart(
+        2,
+        "0"
+      )
+      .slice(
+        -2
+      );
+
+  return Array.from(
+    {
+      length: 10,
+    },
+    (
+      _,
+      digit
+    ) =>
+      `${digit}${dz}`
+  );
+}
+
+function buildNacionalTop3MilharesFrozen({
+  rangeDraws,
+  analysisHourBucket,
+  grupo2,
+  count = 24,
+  targetYmd = "",
+}) {
+  const list =
+    Array.isArray(
+      rangeDraws
+    )
+      ? rangeDraws
+      : [];
+
+  const targetDay =
+    safeStr(
+      targetYmd
+    );
+
+  const targetSlot =
+    toHourBucket(
+      analysisHourBucket
+    );
+
+  const targetTs =
+    ymdHourToTs(
+      targetDay,
+      targetSlot
+    );
+
+  const targetDom =
+    getDayOfMonth(
+      targetDay
+    );
+
+  const grupoNum =
+    Number(
+      grupo2
+    );
+
+  /*
+   * Universo maximo por grupo:
+   * 4 dezenas x 10 centenas = 40 candidatas.
+   */
+  const N =
+    Number.isFinite(
+      Number(
+        count
+      )
+    )
+      ? Math.max(
+          4,
+          Math.min(
+            40,
+            Math.trunc(
+              Number(
+                count
+              )
+            )
+          )
+        )
+      : 24;
+
+  const dezenasFixas =
+    getDezenasFixasFromGrupo(
+      grupoNum
+    );
+
+  if (
+    !isYMD(
+      targetDay
+    ) ||
+    !targetSlot ||
+    !Number.isFinite(
+      targetTs
+    ) ||
+    !Number.isFinite(
+      targetDom
+    ) ||
+    !Number.isFinite(
+      grupoNum
+    ) ||
+    grupoNum < 1 ||
+    grupoNum > 25 ||
+    !Array.isArray(
+      dezenasFixas
+    ) ||
+    dezenasFixas.length !== 4
+  ) {
+    return {
+      dezenas:
+        Array.isArray(
+          dezenasFixas
+        )
+          ? dezenasFixas
+          : [],
+      slots: [],
+      meta: {
+        model:
+          NACIONAL_TOP3_MILHAR_MODEL_VERSION,
+        valid: false,
+      },
+    };
+  }
+
+  const min365Ts =
+    targetTs -
+    NACIONAL_TOP3_365D_MS;
+
+  /*
+   * Ranking principal:
+   * centenaStats = centena exata / 365 dias.
+   *
+   * Backoff:
+   * centenaStatsAll = centena exata / historico completo.
+   * hundredDigitStats365 = algarismo das centenas / 365 dias.
+   * hundredDigitStatsAll = algarismo / historico completo.
+   */
+  const centenaStats =
+    new Map();
+
+  const centenaStatsAll =
+    new Map();
+
+  const hundredDigitStats365 =
+    new Map();
+
+  const hundredDigitStatsAll =
+    new Map();
+
+  const unitCentenaAll =
+    new Map();
+
+  const unitCentena365 =
+    new Map();
+
+  const unitDezenaAll =
+    new Map();
+
+  const unitDezena365 =
+    new Map();
+
+  const unitGlobalAll =
+    new Map();
+
+  const unitGlobal365 =
+    new Map();
+
+  let canonicalPriorDraws = 0;
+  let unresolvedIdentityDraws = 0;
+  let podiumEvents = 0;
+  let podiumMilharEvents = 0;
+
+  for (
+    const draw
+    of list
+  ) {
+    const ymd =
+      safeStr(
+        pickDrawYMD(
+          draw
+        )
+      );
+
+    if (
+      !isYMD(
+        ymd
+      )
+    ) {
+      continue;
+    }
+
+    const slot =
+      nacionalTop3CanonicalSlotFromDraw(
+        draw
+      );
+
+    if (!slot) {
+      if (
+        nacionalTop3LooksLikeNacionalDraw(
+          draw
+        )
+      ) {
+        unresolvedIdentityDraws += 1;
+      }
+
+      continue;
+    }
+
+    const ts =
+      ymdHourToTs(
+        ymd,
+        slot
+      );
+
+    if (
+      !Number.isFinite(
+        ts
+      ) ||
+      ts >= targetTs
+    ) {
+      continue;
+    }
+
+    canonicalPriorDraws += 1;
+
+    const dom =
+      getDayOfMonth(
+        ymd
+      );
+
+    const recent365 =
+      ts >= min365Ts;
+
+    const prizes =
+      Array.isArray(
+        draw?.prizes
+      )
+        ? draw.prizes
+        : [];
+
+    /*
+     * TOP3_NACIONAL_P1_P3_EXPLICIT_POSITION_GUARD_V1
+     *
+     * Se qualquer premio do sorteio possui informacao
+     * explicita de posicao, o motor respeita somente
+     * essas posicoes.
+     *
+     * Assim P4/P5/P6/P7 jamais podem ocupar P1/P2/P3
+     * apenas por estarem nos primeiros indices do array.
+     *
+     * O fallback por indice permanece permitido somente
+     * para registros historicos em que NENHUM premio
+     * possui informacao explicita de posicao.
+     */
+    const hasAnyExplicitPrizePosition =
+      prizes.some(
+        (item) =>
+          [
+            item?.position,
+            item?.posicao,
+            item?.pos,
+            item?.colocacao,
+          ].some(
+            (value) =>
+              value !== null &&
+              value !== undefined &&
+              String(
+                value
+              ).trim() !== ""
+          )
+      );
+
+    for (
+      let position = 1;
+      position <= 3;
+      position += 1
+    ) {
+      const explicitPrize =
+        prizes.find(
+          (item) =>
+            Number(
+              guessPrizePos(
+                item
+              )
+            ) === position
+        ) ||
+        null;
+
+      const prize =
+        explicitPrize ||
+        (
+          !hasAnyExplicitPrizePosition
+            ? (
+                prizes[
+                  position - 1
+                ] ||
+                null
+              )
+            : null
+        );
+
+      if (!prize) {
+        continue;
+      }
+
+      podiumEvents += 1;
+
+      const milharRaw =
+        pickPrizeMilhar4(
+          prize
+        );
+
+      const milhar =
+        /^\d{4}$/.test(
+          String(
+            milharRaw || ""
+          )
+        )
+          ? String(
+              milharRaw
+            )
+          : "";
+
+      if (!milhar) {
+        continue;
+      }
+
+      podiumMilharEvents += 1;
+
+      const unit =
+        milhar.slice(
+          0,
+          1
+        );
+
+      const centena =
+        milhar.slice(
+          -3
+        );
+
+      const dezena =
+        milhar.slice(
+          -2
+        );
+
+      const hundredDigit =
+        centena.slice(
+          0,
+          1
+        );
+
+      /*
+       * Historico causal completo.
+       * Continua restrito a P1/P2/P3 e ts < targetTs.
+       */
+      nacionalTop3RecordContextStats(
+        centenaStatsAll,
+        centena,
+        slot,
+        targetSlot,
+        dom,
+        targetDom,
+        ts
+      );
+
+      nacionalTop3RecordContextStats(
+        hundredDigitStatsAll,
+        hundredDigit,
+        slot,
+        targetSlot,
+        dom,
+        targetDom,
+        ts
+      );
+
+      nacionalTop3Increment(
+        unitCentenaAll,
+        `${centena}|${unit}`
+      );
+
+      nacionalTop3Increment(
+        unitDezenaAll,
+        `${dezena}|${unit}`
+      );
+
+      nacionalTop3Increment(
+        unitGlobalAll,
+        unit
+      );
+
+      if (
+        recent365
+      ) {
+        nacionalTop3Increment(
+          unitCentena365,
+          `${centena}|${unit}`
+        );
+
+        nacionalTop3Increment(
+          unitDezena365,
+          `${dezena}|${unit}`
+        );
+
+        nacionalTop3Increment(
+          unitGlobal365,
+          unit
+        );
+
+        nacionalTop3RecordContextStats(
+          centenaStats,
+          centena,
+          slot,
+          targetSlot,
+          dom,
+          targetDom,
+          ts
+        );
+
+        nacionalTop3RecordContextStats(
+          hundredDigitStats365,
+          hundredDigit,
+          slot,
+          targetSlot,
+          dom,
+          targetDom,
+          ts
+        );
+      }
+    }
+  }
+
+  const requestedPerDezena =
+    Math.max(
+      1,
+      Math.min(
+        10,
+        Math.ceil(
+          N /
+          dezenasFixas.length
+        )
+      )
+    );
+
+  const perDezena =
+    N === 24
+      ? 6
+      : requestedPerDezena;
+
+  const selectedCentenas = [];
+
+  for (
+    const dezena
+    of dezenasFixas
+  ) {
+    const ranked =
+      nacionalTop3CandidateCentenasForDezena(
+        dezena
+      )
+        .map(
+          (centena) => {
+            const stats =
+              centenaStats.get(
+                centena
+              ) ||
+              nacionalTop3EmptyCentenaStats(
+                centena
+              );
+
+            const statsAll =
+              centenaStatsAll.get(
+                centena
+              ) ||
+              nacionalTop3EmptyCentenaStats(
+                centena
+              );
+
+            const hundredDigit =
+              centena.slice(
+                0,
+                1
+              );
+
+            const digitStats365 =
+              hundredDigitStats365.get(
+                hundredDigit
+              ) ||
+              nacionalTop3EmptyCentenaStats(
+                hundredDigit
+              );
+
+            const digitStatsAll =
+              hundredDigitStatsAll.get(
+                hundredDigit
+              ) ||
+              nacionalTop3EmptyCentenaStats(
+                hundredDigit
+              );
+
+            /*
+             * Comparacao lexicografica.
+             *
+             * O criterio original CENTENA_365 permanece
+             * soberano. Os demais so desempatarão o que
+             * o nivel anterior nao conseguiu diferenciar.
+             */
+            const vector = [
+              stats.sameSlotDom,
+              stats.sameSlot,
+              stats.sameDom,
+              stats.total,
+              stats.lastTs,
+
+              statsAll.sameSlotDom,
+              statsAll.sameSlot,
+              statsAll.sameDom,
+              statsAll.total,
+              statsAll.lastTs,
+
+              digitStats365.sameSlotDom,
+              digitStats365.sameSlot,
+              digitStats365.sameDom,
+              digitStats365.total,
+              digitStats365.lastTs,
+
+              digitStatsAll.sameSlotDom,
+              digitStatsAll.sameSlot,
+              digitStatsAll.sameDom,
+              digitStatsAll.total,
+              digitStatsAll.lastTs,
+            ];
+
+            const evidenceTier =
+              Number(
+                stats.total ||
+                0
+              ) > 0
+                ? "CENTENA_365"
+                : Number(
+                    statsAll.total ||
+                    0
+                  ) > 0
+                  ? "CENTENA_ALL_HISTORY"
+                  : Number(
+                      digitStats365.total ||
+                      0
+                    ) > 0
+                    ? "HUNDRED_DIGIT_365"
+                    : Number(
+                        digitStatsAll.total ||
+                        0
+                      ) > 0
+                      ? "HUNDRED_DIGIT_ALL_HISTORY"
+                      : "DETERMINISTIC_FINAL";
+
+            return {
+              centena,
+              dezena:
+                String(
+                  dezena
+                )
+                  .padStart(
+                    2,
+                    "0"
+                  )
+                  .slice(
+                    -2
+                  ),
+              stats,
+              statsAll,
+              digitStats365,
+              digitStatsAll,
+              evidenceTier,
+              vector,
+            };
+          }
+        )
+        .sort(
+          (
+            a,
+            b
+          ) => {
+            const cmp =
+              nacionalTop3CompareVectors(
+                a.vector,
+                b.vector
+              );
+
+            if (
+              cmp !== 0
+            ) {
+              return cmp;
+            }
+
+            return String(
+              a.centena
+            ).localeCompare(
+              String(
+                b.centena
+              )
+            );
+          }
+        )
+        .slice(
+          0,
+          perDezena
+        );
+
+    selectedCentenas.push(
+      ...ranked
+    );
+  }
+
+  /*
+   * O fallback altera somente a classificacao.
+   * Nao reduz a quantidade contratual.
+   */
+  const centenaSelectionTierCounts =
+    selectedCentenas.reduce(
+      (
+        acc,
+        item
+      ) => {
+        const tier =
+          String(
+            item?.evidenceTier ||
+            "DETERMINISTIC_FINAL"
+          );
+
+        acc[tier] =
+          Number(
+            acc[tier] ||
+            0
+          ) + 1;
+
+        return acc;
+      },
+      {}
+    );
+
+  const centenaFallbackCount =
+    selectedCentenas.filter(
+      (item) =>
+        String(
+          item?.evidenceTier ||
+          ""
+        ) !==
+        "CENTENA_365"
+    ).length;
+
+  const centenaDeterministicCount =
+    selectedCentenas.filter(
+      (item) =>
+        String(
+          item?.evidenceTier ||
+          ""
+        ) ===
+        "DETERMINISTIC_FINAL"
+    ).length;
+
+  const slots = [];
+
+  for (
+    const selected
+    of selectedCentenas
+  ) {
+    const units =
+      Array.from(
+        {
+          length: 10,
+        },
+        (
+          _,
+          index
+        ) =>
+          String(
+            index
+          )
+      )
+        .map(
+          (unit) => {
+            const vector = [
+              Number(
+                unitCentena365.get(
+                  `${selected.centena}|${unit}`
+                ) || 0
+              ),
+              Number(
+                unitCentenaAll.get(
+                  `${selected.centena}|${unit}`
+                ) || 0
+              ),
+              Number(
+                unitDezena365.get(
+                  `${selected.dezena}|${unit}`
+                ) || 0
+              ),
+              Number(
+                unitDezenaAll.get(
+                  `${selected.dezena}|${unit}`
+                ) || 0
+              ),
+              Number(
+                unitGlobal365.get(
+                  unit
+                ) || 0
+              ),
+              Number(
+                unitGlobalAll.get(
+                  unit
+                ) || 0
+              ),
+            ];
+
+            return {
+              unit,
+              vector,
+            };
+          }
+        )
+        .sort(
+          (
+            a,
+            b
+          ) => {
+            const cmp =
+              nacionalTop3CompareVectors(
+                a.vector,
+                b.vector
+              );
+
+            if (
+              cmp !== 0
+            ) {
+              return cmp;
+            }
+
+            return (
+              Number(
+                a.unit
+              ) -
+              Number(
+                b.unit
+              )
+            );
+          }
+        );
+
+    const bestUnit =
+      units[0]?.unit ??
+      "0";
+
+    const milhar =
+      `${bestUnit}${selected.centena}`;
+
+    slots.push({
+      dezena:
+        selected.dezena,
+      centena:
+        selected.centena,
+      unit:
+        bestUnit,
+      prefix:
+        bestUnit,
+      milhar,
+      centenaVector:
+        selected.vector.slice(),
+      unitVector:
+        Array.isArray(
+          units[0]?.vector
+        )
+          ? units[0].vector.slice()
+          : [],
+      centenaModel:
+        NACIONAL_TOP3_CENTENA_MODEL,
+      centenaBackoffModel:
+        "NACIONAL_CENTENA_HIERARCHICAL_BACKOFF_V1",
+      centenaEvidenceTier:
+        selected.evidenceTier,
+      centenaFallbackUsed:
+        selected.evidenceTier !==
+        "CENTENA_365",
+      unitModel:
+        NACIONAL_TOP3_UNIT_MODEL,
+      canonicalSlotSource:
+        "UUID",
+      trainingPositions:
+        "P1_P2_P3_ONLY",
+    });
+  }
+
+  const outputSlots =
+    slots.slice(
+      0,
+      N
+    );
+
+  if (
+    N === 24
+  ) {
+    const perDz =
+      new Map();
+
+    for (
+      const slot
+      of outputSlots
+    ) {
+      perDz.set(
+        slot.dezena,
+        Number(
+          perDz.get(
+            slot.dezena
+          ) || 0
+        ) + 1
+      );
+    }
+
+    const exactlySixEach =
+      dezenasFixas.every(
+        (dezena) =>
+          Number(
+            perDz.get(
+              String(
+                dezena
+              )
+                .padStart(
+                  2,
+                  "0"
+                )
+                .slice(
+                  -2
+                )
+            ) || 0
+          ) === 6
+      );
+
+    const uniqueCentenas =
+      new Set(
+        outputSlots.map(
+          (slot) =>
+            slot.centena
+        )
+      );
+
+    const suffixOk =
+      outputSlots.every(
+        (slot) =>
+          /^\d{4}$/.test(
+            String(
+              slot.milhar
+            )
+          ) &&
+          String(
+            slot.milhar
+          ).slice(
+            -3
+          ) ===
+            String(
+              slot.centena
+            )
+      );
+
+    if (
+      outputSlots.length !== 24 ||
+      uniqueCentenas.size !== 24 ||
+      !exactlySixEach ||
+      !suffixOk
+    ) {
+      throw new Error(
+        "NACIONAL_TOP3_MILHAR_24_ARCHITECTURE_INVALID"
+      );
+    }
+  }
+
+  return {
+    dezenas:
+      dezenasFixas,
+    slots:
+      outputSlots,
+    meta: {
+      model:
+        NACIONAL_TOP3_MILHAR_MODEL_VERSION,
+      centenaModel:
+        NACIONAL_TOP3_CENTENA_MODEL,
+      unitModel:
+        NACIONAL_TOP3_UNIT_MODEL,
+      canonicalSlotSource:
+        "UUID",
+      targetYmd:
+        targetDay,
+      targetHour:
+        targetSlot,
+      strictCausalCutoff:
+        true,
+      trainingPositions: [
+        1,
+        2,
+        3,
+      ],
+      p4ToP7Used:
+        false,
+      centenaWindowDays:
+        365,
+      unitRecentWindowDays:
+        365,
+      unitAllHistoryFallback:
+        true,
+      independentUnitPerCentena:
+        true,
+
+      /*
+       * Contrato de completude.
+       */
+      candidateUniversePerGroup:
+        40,
+      alwaysFillRequestedCount:
+        true,
+      sixPerDezenaWhen24:
+        true,
+
+      /*
+       * Diagnostico do fallback.
+       */
+      centenaBackoffModel:
+        "NACIONAL_CENTENA_HIERARCHICAL_BACKOFF_V1",
+      centenaSelectionTierCounts,
+      centenaFallbackCount,
+      centenaDeterministicCount,
+
+      canonicalPriorDraws,
+      unresolvedIdentityDraws,
+      podiumEvents,
+      podiumMilharEvents,
+    },
+  };
+}
+
+export function buildMilharesForGrupo(
+  args = {}
+) {
+  const input =
+    args &&
+    typeof args === "object"
+      ? args
+      : {};
+
+  const rangeDraws =
+    Array.isArray(
+      input.rangeDraws
+    )
+      ? input.rangeDraws
+      : [];
+
+  if (
+    nacionalTop3IsNacionalRequest(
+      input.lotteryKey,
+      rangeDraws
+    )
+  ) {
+    return buildNacionalTop3MilharesFrozen({
+      rangeDraws,
+      analysisHourBucket:
+        input.analysisHourBucket,
+      grupo2:
+        input.grupo2,
+      count:
+        input.count,
+      targetYmd:
+        input.targetYmd,
+    });
+  }
+
+  return buildMilharesForGrupoLegacy(
+    input
+  );
 }
 
 export function build16MilharesForGrupo(args) {

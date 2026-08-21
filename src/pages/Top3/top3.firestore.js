@@ -25,6 +25,11 @@ import {
   analyzeTop3Hits,
 } from "./top3.hit-analysis";
 
+import {
+  isTop3HistoricalMilharesUnavailable,
+  resolveTop3ProbabilityFractionOrNull,
+} from "./top3.historical-truth";
+
 const COLLECTION = "top3_predictions";
 
 function normalizeLotteryKey(value) {
@@ -121,30 +126,96 @@ function findDrawForTarget({
 function normalizeSnapshot(snapshot) {
   return (Array.isArray(snapshot) ? snapshot : [])
     .slice(0, 3)
-    .map((item, index) => ({
-      rank: Number(item?.rank || index + 1),
-      grupo: Number(item?.grupo),
-      animal: safeStr(item?.animal || ""),
-      prob: Number(item?.prob || 0),
-      probPct: Number(item?.probPct || 0),
-      milhares24: (
-        Array.isArray(item?.milhares24)
-          ? item.milhares24
-          : Array.isArray(item?.milhares20)
-            ? item.milhares20
-            : []
-      )
-        .map(normalizeMilhar)
-        .filter(Boolean)
-        .slice(0, 24),
-      milharesCols: Array.isArray(item?.milharesCols)
-        ? cleanFirestoreValue(item.milharesCols)
-        : [],
-      meta: cleanFirestoreValue(item?.meta || null),
-    }))
+    .map((item, index) => {
+      const meta =
+        cleanFirestoreValue(
+          item?.meta || null
+        );
+
+      const truthItem = {
+        ...(item || {}),
+        meta,
+      };
+
+      const probability =
+        resolveTop3ProbabilityFractionOrNull(
+          truthItem
+        );
+
+      const historicalMilharesUnavailable =
+        isTop3HistoricalMilharesUnavailable(
+          truthItem
+        );
+
+      const milhares24 =
+        historicalMilharesUnavailable
+          ? []
+          : (
+              Array.isArray(item?.milhares24)
+                ? item.milhares24
+                : Array.isArray(item?.milhares20)
+                  ? item.milhares20
+                  : []
+            )
+              .map(normalizeMilhar)
+              .filter(Boolean)
+              .slice(0, 24);
+
+      const milharesCols =
+        historicalMilharesUnavailable
+          ? []
+          : Array.isArray(
+              item?.milharesCols
+            )
+            ? cleanFirestoreValue(
+                item.milharesCols
+              )
+            : [];
+
+      return {
+        rank:
+          Number(
+            item?.rank ||
+            index + 1
+          ),
+
+        grupo:
+          Number(
+            item?.grupo
+          ),
+
+        animal:
+          safeStr(
+            item?.animal || ""
+          ),
+
+        /*
+         * TOP3_HISTORICAL_PROBABILITY_TRUTH_V1
+         *
+         * null = informação histórica indisponível.
+         * Zero só permanece zero quando zero realmente existe.
+         */
+        prob:
+          probability,
+
+        probPct:
+          probability == null
+            ? null
+            : probability * 100,
+
+        /*
+         * TOP3_HISTORICAL_MILHARES_TRUTH_V1
+         */
+        milhares24,
+        milharesCols,
+        meta,
+      };
+    })
     .filter((item) => {
       return (
-        Number.isFinite(item.grupo) &&
+        Number.isFinite(
+          item.grupo
+        ) &&
         item.grupo >= 1 &&
         item.grupo <= 25
       );

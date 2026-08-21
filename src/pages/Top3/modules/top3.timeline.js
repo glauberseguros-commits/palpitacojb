@@ -122,6 +122,7 @@ function top3ItemMatchesSlot(item, slot) {
 export function buildTop3TimelineViewModel({
   todayDraws,
   rangeDraws,
+  milharRangeDraws = [],
   lotteryKeySafe,
   ymdSafe,
   analysisYmd,
@@ -129,6 +130,12 @@ export function buildTop3TimelineViewModel({
 }) {
   const day = Array.isArray(todayDraws) ? todayDraws : [];
   const range = Array.isArray(rangeDraws) ? rangeDraws : [];
+
+  const milharRange =
+    Array.isArray(milharRangeDraws) &&
+    milharRangeDraws.length
+      ? milharRangeDraws
+      : range;
 
   const safeAnalysisYmd = safeStr(analysisYmd || "");
   const safeYmd = safeStr(ymdSafe || "");
@@ -201,7 +208,8 @@ export function buildTop3TimelineViewModel({
 
         if (!out) {
           out = buildMilharesForGrupo({
-            rangeDraws: range,
+            rangeDraws: milharRange,
+            lotteryKey: lotteryKeySafe,
             analysisHourBucket: slotHour,
             schedule: getScheduleForLottery({
               lotteryKey: lotteryKeySafe,
