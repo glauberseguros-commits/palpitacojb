@@ -125,7 +125,34 @@ function normalizePredictions(snapshot = []) {
     .filter(Boolean);
 }
 
+function top3HitPrecisionRank(hit) {
+  const type = String(
+    hit?.hitType ||
+      hit?.type ||
+      ""
+  )
+    .trim()
+    .toLowerCase();
+
+  if (type === "hit_exact") return 4;
+  if (type === "hit_centena") return 3;
+  if (type === "hit_dezena") return 2;
+  if (type === "hit_grupo") return 1;
+
+  return 0;
+}
+
 function compareHits(left, right) {
+  const leftPrecision =
+    top3HitPrecisionRank(left);
+
+  const rightPrecision =
+    top3HitPrecisionRank(right);
+
+  if (leftPrecision !== rightPrecision) {
+    return rightPrecision - leftPrecision;
+  }
+
   const leftResult = Number(
     left?.resultPosition || 99
   );

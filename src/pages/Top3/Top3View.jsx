@@ -2613,31 +2613,18 @@ const list =
           officialPodium
         );
 
+      /*
+       * TOP3_VALIDATED_HISTORY_MULTI_HIT_AUTHORITY_V2
+       *
+       * buildTop3HistoryAnalysis() ja avaliou os 3 palpites
+       * contra todo o podium oficial e produziu analysis.hits.
+       *
+       * A lista canonica de hits deve ser preservada integralmente.
+       */
       const engineHistoryHits =
-        normalizeTop3Hits({
-          top3: engineHistoryTop3,
-
-          resultGrupo,
-          resultMilhar,
-
-          resultTop3Groups: Array.isArray(
-            timelineRow?.resultTop3Groups
-          )
-            ? timelineRow.resultTop3Groups
-            : row?.resultTop3Groups || [],
-
-          resultTop3Milhares: Array.isArray(
-            timelineRow?.resultTop3Milhares
-          )
-            ? timelineRow.resultTop3Milhares
-            : row?.resultTop3Milhares || [],
-
-          prizes: Array.isArray(
-            timelineRow?.prizes
-          )
-            ? timelineRow.prizes
-            : row?.prizes || [],
-        });
+        normalizeTop3Hits(
+          engineHistoryAnalysis
+        );
 
       rowsByTarget.set(key, {
         ...row,
