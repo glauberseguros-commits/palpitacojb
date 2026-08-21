@@ -17,6 +17,31 @@ function getHistoricalMeta(item) {
     : {};
 }
 
+/*
+ * TOP3_HISTORICAL_STATISTICAL_PAYLOAD_TRUTH_V1
+ *
+ * Um ranking recuperado administrativamente pode ser verdadeiro
+ * mesmo quando o objeto estatistico original nao foi preservado.
+ *
+ * Nessa situacao, zeros placeholders nao podem ser apresentados
+ * como amostras, frequencias, score ou evidencia historica real.
+ */
+export function isTop3HistoricalStatisticalPayloadUnavailable(
+  item
+) {
+  const meta = getHistoricalMeta(item);
+
+  return (
+    item?.historicalStatisticalPayloadUnavailable === true ||
+    item?.historicalPayloadUnavailable === true ||
+    item?.originalSnapshotObjectUnavailable === true ||
+    item?.reconstructedPayloadUnavailable === true ||
+    meta?.historicalPayloadUnavailable === true ||
+    meta?.originalSnapshotObjectUnavailable === true ||
+    meta?.reconstructedPayloadUnavailable === true
+  );
+}
+
 export function finiteTop3NumberOrNull(value) {
   if (
     value === null ||

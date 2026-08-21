@@ -10,6 +10,7 @@ import {
 
 import {
   isTop3HistoricalMilharesUnavailable,
+  isTop3HistoricalStatisticalPayloadUnavailable,
   resolveTop3ProbabilityFractionOrNull,
 } from "./top3.historical-truth";
 
@@ -543,6 +544,11 @@ function Top3Card({
 
   const probabilityUnavailable =
     resolvedProbability == null;
+
+  const historicalStatisticalPayloadUnavailable =
+    isTop3HistoricalStatisticalPayloadUnavailable(
+      item
+    );
 
   const historicalMilharesUnavailable =
     isTop3HistoricalMilharesUnavailable(
@@ -1079,38 +1085,58 @@ function Top3Card({
             <div className="top3-metaItem">
               <div className="top3-metaItem__label">📊 Base estatística</div>
               <div className="top3-metaItem__value">
-                {periodFrom && periodTo
-                  ? `${ymdToBR(periodFrom)} → ${ymdToBR(periodTo)}`
-                  : `${samples} sorteios`}
+                {historicalStatisticalPayloadUnavailable
+                  ? "DADO HISTÓRICO NÃO PRESERVADO"
+                  : periodFrom && periodTo
+                    ? `${ymdToBR(periodFrom)} → ${ymdToBR(periodTo)}`
+                    : `${samples} sorteios`}
               </div>
             </div>
 
             <div className="top3-metaItem">
               <div className="top3-metaItem__label">🔄 Transição</div>
               <div className="top3-metaItem__value">
-                Após {baseLabel} às {baseHour}
-                <br />
-                {targetLabel} em 1º: {transitionFirst}x
-                <br />
-                {targetLabel} no TOP3: {transitionTop3}x
+                {historicalStatisticalPayloadUnavailable ? (
+                  "INDISPONÍVEL"
+                ) : (
+                  <>
+                    Após {baseLabel} às {baseHour}
+                    <br />
+                    {targetLabel} em 1º: {transitionFirst}x
+                    <br />
+                    {targetLabel} no TOP3: {transitionTop3}x
+                  </>
+                )}
               </div>
             </div>
 
             <div className="top3-metaItem">
               <div className="top3-metaItem__label">🕘 Horário</div>
               <div className="top3-metaItem__value">
-                Às {targetHour || "—"}
-                <br />
-                {targetLabel} em 1º: {hourFirst}x
+                {historicalStatisticalPayloadUnavailable ? (
+                  "INDISPONÍVEL"
+                ) : (
+                  <>
+                    Às {targetHour || "—"}
+                    <br />
+                    {targetLabel} em 1º: {hourFirst}x
+                  </>
+                )}
               </div>
             </div>
 
             <div className="top3-metaItem">
               <div className="top3-metaItem__label">📅 Dia da semana</div>
               <div className="top3-metaItem__value">
-                {targetWeekdayName}
-                <br />
-                {targetLabel} em 1º: {dowFirst}x
+                {historicalStatisticalPayloadUnavailable ? (
+                  "INDISPONÍVEL"
+                ) : (
+                  <>
+                    {targetWeekdayName}
+                    <br />
+                    {targetLabel} em 1º: {dowFirst}x
+                  </>
+                )}
               </div>
             </div>
 
@@ -1118,11 +1144,13 @@ function Top3Card({
               <div className="top3-metaItem__label">🧠 Cenários semelhantes</div>
               <div className="top3-metaItem__value">
                 {
-      sceneSamples > 0
-        ? `${sceneSamples} cenários semelhantes`
-        : transitionSamples > 0
-          ? `${transitionSamples} transições históricas`
-          : `${samples} registros históricos`
+      historicalStatisticalPayloadUnavailable
+        ? "INDISPONÍVEL"
+        : sceneSamples > 0
+          ? `${sceneSamples} cenários semelhantes`
+          : transitionSamples > 0
+            ? `${transitionSamples} transições históricas`
+            : `${samples} registros históricos`
     }
               </div>
             </div>
@@ -1130,9 +1158,11 @@ function Top3Card({
             <div className="top3-metaItem">
               <div className="top3-metaItem__label">🎯 Frequência histórica da transição</div>
               <div className="top3-metaItem__value">
-                {transitionFirst > 0 && transitionSamples > 0
-                  ? `${transitionFirst} ocorrências em ${transitionSamples} transições`
-                  : "Em apuração"}
+                {historicalStatisticalPayloadUnavailable
+                  ? "INDISPONÍVEL"
+                  : transitionFirst > 0 && transitionSamples > 0
+                    ? `${transitionFirst} ocorrências em ${transitionSamples} transições`
+                    : "Em apuração"}
               </div>
             </div>
           </div>
@@ -1161,7 +1191,9 @@ function Top3Card({
                 Score — confiança da análise
               </div>
               <div style={{ color: "rgba(255,255,255,0.82)", fontSize: 13 }}>
-                {displayScore}/100 · {visibleEvidenceCount} evidências estatísticas · {trendLabel}
+                {historicalStatisticalPayloadUnavailable
+                  ? "DADO HISTÓRICO NÃO PRESERVADO"
+                  : `${displayScore}/100 · ${visibleEvidenceCount} evidências estatísticas · ${trendLabel}`}
               </div>
             </div>
           </div>
@@ -1169,6 +1201,12 @@ function Top3Card({
       </div>
 
       <div className="top3-card__body">
+        {historicalMilharesUnavailable ? (
+          <div className="top3-historyPopover__empty">
+            Milhares históricas não disponíveis para este palpite.
+          </div>
+        ) : (
+          <>
         <div
           className="top3-card__actions"
           style={{
@@ -1222,6 +1260,8 @@ function Top3Card({
             </div>
           ))}
         </div>
+          </>
+        )}
       </div>
     </article>
   );
