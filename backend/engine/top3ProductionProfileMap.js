@@ -1,7 +1,7 @@
 "use strict";
 
 /**
- * TOP3 PRODUCTION PROFILE MATRIX — BASELINE V2
+ * TOP3 PRODUCTION PROFILE MATRIX — PT_RIO NATIVE V3
  *
  * A loteria-alvo continua determinando:
  * - histórico;
@@ -10,16 +10,19 @@
  * - resultados oficiais;
  * - persistência.
  *
- * Esta matriz altera somente a lotteryKey entregue ao cálculo
- * das novas previsões do TOP3.
+ * PT_RIO passa a usar sua própria identidade no cálculo.
+ *
+ * Esta correção não altera os demais mapeamentos da matriz.
+ * FEDERAL, LOOK e NACIONAL serão tratados separadamente
+ * em suas próprias etapas de auditoria e calibração.
  */
 
 const TOP3_PRODUCTION_PROFILE_MATRIX_VERSION =
-  "TOP3_PRODUCTION_PROFILE_MATRIX_BASELINE_V2";
+  "TOP3_PRODUCTION_PROFILE_MATRIX_PT_RIO_NATIVE_V3";
 
 const TOP3_PRODUCTION_PROFILE_BY_TARGET =
   Object.freeze({
-    PT_RIO: "FEDERAL",
+    PT_RIO: "PT_RIO",
     FEDERAL: "LOOK",
     LOOK: "LOOK",
     NACIONAL: "NACIONAL",
