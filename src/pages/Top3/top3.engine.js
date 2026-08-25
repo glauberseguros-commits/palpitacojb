@@ -34,6 +34,10 @@ import {
   NACIONAL_SCHEDULE,
 } from "./top3.constants";
 
+import {
+  computePtRioCalibratedTop3,
+} from "./modules/top3.pt-rio-calibrated";
+
 function findPreviousValidDraw(draws, currentYmd, currentHour) {
   const list = Array.isArray(draws) ? draws : [];
   const targetY = safeStr(currentYmd);
@@ -3873,7 +3877,7 @@ function buildV3PassiveLayerInstrumentation({
   };
 }
 
-export function computeStatisticalTop3V3({
+function computeStatisticalTop3V3Base({
   lotteryKey,
   drawsRange,
   drawLast,
@@ -8092,3 +8096,33 @@ export function auditTop3Backtest({
   });
 }
 
+
+
+/*
+ * PT_RIO_MONDAY_CALIBRATED_V1
+ *
+ * Perfil produtivo validado por Gate B -> Gate C -> Gate D.
+ *
+ * Escopo:
+ * - PT_RIO
+ * - segunda-feira
+ * - 14:00
+ * - 16:00
+ *
+ * Fora desse escopo, o V3 original é devolvido sem alteração.
+ */
+export function computeStatisticalTop3V3(input = {}) {
+  return computePtRioCalibratedTop3({
+    input,
+
+    baseCompute:
+      computeStatisticalTop3V3Base,
+
+    helpers: {
+      pickDrawYMD,
+      pickDrawHour,
+      guessPrizePos,
+      guessPrizeGrupo,
+    },
+  });
+}
