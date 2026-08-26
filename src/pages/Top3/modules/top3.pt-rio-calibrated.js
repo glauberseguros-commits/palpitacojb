@@ -1569,6 +1569,651 @@ export function computePtRioMondayCalibratedTop3({
   };
 }
 
+
+/*
+ * =====================================================================
+ * PT_RIO - TERCA-FEIRA - V7 FINALISTAS CONGELADOS
+ *
+ * TER 11:00 -> V7_PAIR_50_25_25::sequenceOrder2+stoneFlip
+ * TER 21:00 -> V7_PAIR_50_25_25::weekday+dailyFlow
+ * =====================================================================
+ */
+
+const PT_RIO_TUESDAY_V7_PROFILES =
+  Object.freeze({
+    "11:00": Object.freeze({
+      model:
+        "V7_PAIR_50_25_25::sequenceOrder2+stoneFlip",
+
+      baselineLayers:
+        Object.freeze([
+          "hour",
+          "recent",
+        ]),
+
+      signalA:
+        "sequenceOrder2",
+
+      signalB:
+        "stoneFlip",
+    }),
+
+    "21:00": Object.freeze({
+      model:
+        "V7_PAIR_50_25_25::weekday+dailyFlow",
+
+      baselineLayers:
+        Object.freeze([
+          "dowHour",
+        ]),
+
+      signalA:
+        "weekday",
+
+      signalB:
+        "dailyFlow",
+    }),
+  });
+
+function computePtRioTuesdayV7CalibratedTop3({
+  input = {},
+  baseCompute,
+  helpers,
+}) {
+  if (
+    typeof baseCompute !==
+    "function"
+  ) {
+    throw new Error(
+      "PT_RIO_CALIBRATED_BASE_COMPUTE_MISSING"
+    );
+  }
+
+  const lotteryKey =
+    normalizeLotteryKey(
+      input?.lotteryKey
+    );
+
+  const resolved =
+    resolveTarget(
+      input,
+      baseCompute
+    );
+
+  const {
+    targetY,
+    targetH,
+    precomputed,
+  } = resolved;
+
+  const profile =
+    PT_RIO_TUESDAY_V7_PROFILES[targetH] ||
+    null;
+
+  const shouldCalibrate =
+    lotteryKey === "PT_RIO" &&
+    ptRioContextWeekday(targetY) === 2 &&
+    Boolean(profile);
+
+  if (!shouldCalibrate) {
+    return (
+      precomputed ||
+      baseCompute(
+        input
+      )
+    );
+  }
+
+  if (
+    !helpers ||
+    typeof helpers.pickDrawYMD !==
+      "function" ||
+    typeof helpers.pickDrawHour !==
+      "function" ||
+    typeof helpers.guessPrizePos !==
+      "function" ||
+    typeof helpers.guessPrizeGrupo !==
+      "function"
+  ) {
+    throw new Error(
+      "PT_RIO_CALIBRATED_HELPERS_MISSING"
+    );
+  }
+
+  assertV7Signals();
+
+  const targetTs =
+    ymdHourToTs(
+      targetY,
+      targetH
+    );
+
+  if (
+    !Number.isFinite(
+      targetTs
+    )
+  ) {
+    throw new Error(
+      "PT_RIO_CALIBRATED_INVALID_TARGET"
+    );
+  }
+
+  const canonicalEntries =
+    canonicalizeHistory(
+      input?.drawsRange,
+      helpers
+    )
+      .filter(
+        (item) =>
+          Number.isFinite(
+            item?.ts
+          ) &&
+          item.ts <
+            targetTs
+      );
+
+  if (
+    canonicalEntries.length <
+    1
+  ) {
+    throw new Error(
+      "PT_RIO_CALIBRATED_HISTORY_EMPTY"
+    );
+  }
+
+  const previousEntry =
+    canonicalEntries[
+      canonicalEntries.length - 1
+    ];
+
+  const historyBefore =
+    canonicalEntries.map(
+      (item) =>
+        item.draw
+    );
+
+  const drawsToday =
+    canonicalEntries
+      .filter(
+        (item) =>
+          item.ymd ===
+          targetY
+      )
+      .map(
+        (item) =>
+          item.draw
+      );
+
+  const base =
+    baseCompute({
+      ...input,
+
+      lotteryKey:
+        "PT_RIO",
+
+      drawsRange:
+        historyBefore,
+
+      drawLast:
+        previousEntry.draw,
+
+      drawsToday,
+
+      targetYmdOverride:
+        targetY,
+
+      targetHourOverride:
+        targetH,
+
+      drawsAlreadySorted:
+        true,
+    });
+
+  const computedY =
+    String(
+      base?.meta?.next?.ymd ||
+      ""
+    ).trim();
+
+  const computedH =
+    normalizeHour(
+      base?.meta?.next?.hour
+    );
+
+  if (
+    computedY !== targetY ||
+    computedH !== targetH
+  ) {
+    throw new Error(
+      `PT_RIO_CALIBRATED_TARGET_DIVERGED=${computedY}|${computedH}`
+    );
+  }
+
+  const explain =
+    base?.meta?.explain ||
+    {};
+
+  const passive =
+    explain?.passiveInstrumentation ||
+    null;
+
+  const rankingBefore =
+    safeArray(
+      explain
+        ?.rankingAudit
+        ?.rankingBeforeScore
+    );
+
+  if (
+    !passive ||
+    rankingBefore.length !== 25
+  ) {
+    throw new Error(
+      "PT_RIO_CALIBRATED_V3_INSTRUMENTATION_MISSING"
+    );
+  }
+
+  const sourceOrder =
+    buildSourceOrder({
+      passive,
+      rankingBefore,
+    });
+
+  const tieMap =
+    tieMapFromSource(
+      sourceOrder
+    );
+
+  const baselineMap =
+    profileScoreMap(
+      sourceOrder,
+      profile.baselineLayers
+    );
+
+  const additionalLayers =
+    buildTop3V7AdditionalLayers({
+      history:
+        historyBefore,
+
+      targetYmd:
+        targetY,
+
+      targetHour:
+        targetH,
+    });
+
+  const signalA =
+    v7SignalFromLayers({
+      additionalLayers,
+      layerKey:
+        profile.signalA,
+    });
+
+  const signalB =
+    v7SignalFromLayers({
+      additionalLayers,
+      layerKey:
+        profile.signalB,
+    });
+
+  const blended =
+    blendBaselineWithTwoSignals({
+      baselineMap,
+
+      signalA:
+        signalA.map,
+
+      reliabilityA:
+        signalA.reliability,
+
+      signalB:
+        signalB.map,
+
+      reliabilityB:
+        signalB.reliability,
+    });
+
+  const requestedTopN =
+    Number(
+      input?.topN || 3
+    );
+
+  const topLimit =
+    Math.min(
+      25,
+      Math.max(
+        1,
+        Number.isFinite(
+          requestedTopN
+        )
+          ? Math.trunc(
+              requestedTopN
+            )
+          : 3
+      )
+    );
+
+  const selectedGroups =
+    rankScoreMap(
+      blended.scoreMap,
+      tieMap
+    )
+      .slice(
+        0,
+        topLimit
+      );
+
+  const baseTopByGroup =
+    new Map(
+      safeArray(
+        base?.top
+      )
+        .map(
+          (item) => [
+            Number(
+              item?.grupo
+            ),
+            item,
+          ]
+        )
+        .filter(
+          ([group]) =>
+            Number.isFinite(
+              group
+            )
+        )
+    );
+
+  const periodFrom =
+    String(
+      helpers.pickDrawYMD(
+        historyBefore[0]
+      ) || ""
+    );
+
+  const periodTo =
+    String(
+      helpers.pickDrawYMD(
+        historyBefore[
+          historyBefore.length - 1
+        ]
+      ) || ""
+    );
+
+  const profileMeta = {
+    version:
+      PT_RIO_CONTEXT_CALIBRATION_VERSION,
+
+    model:
+      profile.model,
+
+    baselineLayers:
+      [
+        ...profile.baselineLayers,
+      ],
+
+    signalA: {
+      key:
+        profile.signalA,
+
+      reliability:
+        signalA.reliability,
+
+      samples:
+        signalA.sample,
+
+      active:
+        signalA.active,
+    },
+
+    signalB: {
+      key:
+        profile.signalB,
+
+      reliability:
+        signalB.reliability,
+
+      samples:
+        signalB.sample,
+
+      active:
+        signalB.active,
+    },
+
+    weights: {
+      ...blended.weights,
+    },
+
+    gateEvidence:
+      "GATE_B_GATE_C_GATE_D_ACCEPTED",
+  };
+
+  const top =
+    selectedGroups.map(
+      (group, index) => {
+        const existing =
+          baseTopByGroup.get(
+            group
+          ) ||
+          {};
+
+        const calibratedScore =
+          num(
+            blended
+              .scoreMap
+              .get(group),
+            0
+          );
+
+        const baselineScore =
+          num(
+            normalizeSumMap(
+              baselineMap
+            ).get(group),
+            0
+          );
+
+        const signalAScore =
+          num(
+            normalizeSumMap(
+              signalA.map
+            ).get(group),
+            0
+          );
+
+        const signalBScore =
+          num(
+            normalizeSumMap(
+              signalB.map
+            ).get(group),
+            0
+          );
+
+        return {
+          ...existing,
+
+          rank:
+            index + 1,
+
+          title:
+            buildTitle(
+              index
+            ),
+
+          grupo:
+            group,
+
+          scoreProb:
+            calibratedScore,
+
+          rawScoreProb:
+            calibratedScore,
+
+          score:
+            calibratedScore *
+            1000,
+
+          probCond:
+            Number(
+              existing?.probCond ||
+              0
+            ),
+
+          probBase:
+            Number(
+              existing?.probBase ||
+              0
+            ),
+
+          lateBonus:
+            Number(
+              existing?.lateBonus ||
+              0
+            ),
+
+          freq:
+            Number(
+              existing?.freq ||
+              0
+            ),
+
+          freqCond:
+            Number(
+              existing?.freqCond ||
+              0
+            ),
+
+          freqBase:
+            Number(
+              existing?.freqBase ||
+              0
+            ),
+
+          freqZeroWhy:
+            String(
+              existing?.freqZeroWhy ||
+              ""
+            ),
+
+          reasons: [
+            `Motor: ${PT_RIO_CONTEXT_CALIBRATION_VERSION}`,
+            `Perfil aprovado: ${profile.model}`,
+            `Baseline: ${profile.baselineLayers.join("+")}`,
+            `Sinais: ${profile.signalA} + ${profile.signalB}`,
+            (
+              "Pesos efetivos: " +
+              `baseline=${blended.weights.baseline.toFixed(6)} | ` +
+              `${profile.signalA}=${blended.weights.signalA.toFixed(6)} | ` +
+              `${profile.signalB}=${blended.weights.signalB.toFixed(6)}`
+            ),
+          ],
+
+          meta: {
+            ...(existing?.meta ||
+              {}),
+
+            trigger:
+              base?.meta?.trigger ||
+              existing?.meta?.trigger ||
+              null,
+
+            next:
+              base?.meta?.next ||
+              existing?.meta?.next ||
+              {
+                ymd:
+                  targetY,
+                hour:
+                  targetH,
+              },
+
+            samples:
+              historyBefore.length,
+
+            period:
+              existing?.meta?.period ||
+              {
+                from:
+                  periodFrom,
+                to:
+                  periodTo,
+              },
+
+            scenario:
+              profile.model,
+
+            explain: {
+              ...(
+                existing
+                  ?.meta
+                  ?.explain ||
+                {}
+              ),
+
+              engine:
+                PT_RIO_CONTEXT_CALIBRATION_VERSION,
+
+              baselineEngine:
+                "V3_STATISTICAL",
+
+              productionProfile:
+                profile.model,
+
+              calibratedProfile: {
+                ...profileMeta,
+
+                group,
+
+                calibratedScore,
+                baselineScore,
+                signalAScore,
+                signalBScore,
+              },
+            },
+          },
+        };
+      }
+    );
+
+  return {
+    ...base,
+
+    top,
+    ranking:
+      top,
+
+    meta: {
+      ...(base?.meta ||
+        {}),
+
+      scenario:
+        profile.model,
+
+      explain: {
+        ...(
+          base
+            ?.meta
+            ?.explain ||
+          {}
+        ),
+
+        engine:
+          PT_RIO_CONTEXT_CALIBRATION_VERSION,
+
+        baselineEngine:
+          "V3_STATISTICAL",
+
+        productionProfile:
+          profile.model,
+
+        calibratedProfile:
+          profileMeta,
+      },
+    },
+  };
+}
+
+
 /*
  * =====================================================================
  * PT_RIO_SIMPLE_CONTEXT_PROFILES_V1
@@ -1586,7 +2231,7 @@ export function computePtRioMondayCalibratedTop3({
  */
 
 export const PT_RIO_CONTEXT_CALIBRATION_VERSION =
-  "PT_RIO_SUNDAY_MONDAY_CONTEXT_V2";
+  "PT_RIO_SUNDAY_MONDAY_TUESDAY_CONTEXT_V3";
 
 const PT_RIO_SIMPLE_CONTEXT_PROFILES =
   Object.freeze({
@@ -1631,6 +2276,40 @@ const PT_RIO_SIMPLE_CONTEXT_PROFILES =
       layers:
         Object.freeze([
           "hour",
+          "recent",
+        ]),
+    }),
+
+    "2|09:00": Object.freeze({
+      model:
+        "BASELINE_HOUR",
+
+      layers:
+        Object.freeze([
+          "hour",
+        ]),
+    }),
+
+    "2|14:00": Object.freeze({
+      model:
+        "REFERENCE_HOUR_DOWHOUR_DAYMONTH_TRANSITION",
+
+      layers:
+        Object.freeze([
+          "hour",
+          "dowHour",
+          "dayMonth",
+          "transition",
+        ]),
+    }),
+
+    "2|16:00": Object.freeze({
+      model:
+        "BASELINE_TRANSITION_RECENT",
+
+      layers:
+        Object.freeze([
+          "transition",
           "recent",
         ]),
     }),
@@ -2096,9 +2775,603 @@ function computePtRioSimpleContextProfile({
   };
 }
 
+
+function computePtRioTuesdayV2StructuralFirst({
+  input,
+  baseCompute,
+  v2Compute,
+  helpers,
+  targetY,
+  targetH,
+}) {
+  if (
+    typeof baseCompute !== "function" ||
+    typeof v2Compute !== "function"
+  ) {
+    throw new Error(
+      "PT_RIO_TUESDAY_V2_COMPUTE_MISSING"
+    );
+  }
+
+  if (
+    !helpers ||
+    typeof helpers.pickDrawYMD !== "function" ||
+    typeof helpers.pickDrawHour !== "function" ||
+    typeof helpers.guessPrizePos !== "function" ||
+    typeof helpers.guessPrizeGrupo !== "function"
+  ) {
+    throw new Error(
+      "PT_RIO_TUESDAY_V2_HELPERS_MISSING"
+    );
+  }
+
+  const targetTs =
+    ymdHourToTs(
+      targetY,
+      targetH
+    );
+
+  if (!Number.isFinite(targetTs)) {
+    throw new Error(
+      "PT_RIO_TUESDAY_V2_INVALID_TARGET"
+    );
+  }
+
+  const canonicalEntries =
+    canonicalizeHistory(
+      input?.drawsRange,
+      helpers
+    )
+      .filter(
+        (item) =>
+          Number.isFinite(
+            item?.ts
+          ) &&
+          item.ts < targetTs
+      );
+
+  if (
+    canonicalEntries.length < 1
+  ) {
+    throw new Error(
+      "PT_RIO_TUESDAY_V2_HISTORY_EMPTY"
+    );
+  }
+
+  const previousEntry =
+    canonicalEntries[
+      canonicalEntries.length - 1
+    ];
+
+  const historyBefore =
+    canonicalEntries.map(
+      (item) =>
+        item.draw
+    );
+
+  const drawsToday =
+    canonicalEntries
+      .filter(
+        (item) =>
+          item.ymd === targetY
+      )
+      .map(
+        (item) =>
+          item.draw
+      );
+
+  const base =
+    baseCompute({
+      ...input,
+
+      lotteryKey:
+        "PT_RIO",
+
+      drawsRange:
+        historyBefore,
+
+      drawLast:
+        previousEntry.draw,
+
+      drawsToday,
+
+      targetYmdOverride:
+        targetY,
+
+      targetHourOverride:
+        targetH,
+
+      drawsAlreadySorted:
+        true,
+    });
+
+  const computedY =
+    String(
+      base?.meta?.next?.ymd ||
+      ""
+    ).trim();
+
+  const computedH =
+    normalizeHour(
+      base?.meta?.next?.hour
+    );
+
+  if (
+    computedY !== targetY ||
+    computedH !== targetH
+  ) {
+    throw new Error(
+      "PT_RIO_TUESDAY_V2_BASE_TARGET_DIVERGED=" +
+      computedY +
+      "|" +
+      computedH
+    );
+  }
+
+  const explain =
+    base?.meta?.explain ||
+    {};
+
+  const passive =
+    explain?.passiveInstrumentation ||
+    null;
+
+  const rankingBefore =
+    safeArray(
+      explain
+        ?.rankingAudit
+        ?.rankingBeforeScore
+    );
+
+  if (
+    !passive ||
+    rankingBefore.length !== 25
+  ) {
+    throw new Error(
+      "PT_RIO_TUESDAY_V2_V3_INSTRUMENTATION_MISSING"
+    );
+  }
+
+  const sourceOrder =
+    buildSourceOrder({
+      passive,
+      rankingBefore,
+    });
+
+  const tieMap =
+    tieMapFromSource(
+      sourceOrder
+    );
+
+  const baselineMap =
+    profileScoreMap(
+      sourceOrder,
+      [
+        "recent",
+      ]
+    );
+
+  const baselinePicks =
+    rankScoreMap(
+      baselineMap,
+      tieMap
+    ).slice(
+      0,
+      Math.max(
+        1,
+        Number(
+          input?.topN ||
+          3
+        )
+      )
+    );
+
+  const PT_RIO_SCHEDULE_NORMAL =
+    Array.isArray(
+      input?.PT_RIO_SCHEDULE_NORMAL
+    )
+      ? input.PT_RIO_SCHEDULE_NORMAL
+      : [
+          "09:00",
+          "11:00",
+          "14:00",
+          "16:00",
+          "18:00",
+          "21:00",
+        ];
+
+  const PT_RIO_SCHEDULE_WED_SAT =
+    Array.isArray(
+      input?.PT_RIO_SCHEDULE_WED_SAT
+    )
+      ? input.PT_RIO_SCHEDULE_WED_SAT
+      : [
+          "09:00",
+          "11:00",
+          "14:00",
+          "16:00",
+          "18:00",
+          "21:00",
+        ];
+
+  const FEDERAL_SCHEDULE =
+    Array.isArray(
+      input?.FEDERAL_SCHEDULE
+    )
+      ? input.FEDERAL_SCHEDULE
+      : [
+          "20:00",
+        ];
+
+  if (
+    !Array.isArray(
+      PT_RIO_SCHEDULE_NORMAL
+    ) ||
+    !Array.isArray(
+      PT_RIO_SCHEDULE_WED_SAT
+    ) ||
+    !Array.isArray(
+      FEDERAL_SCHEDULE
+    )
+  ) {
+    throw new Error(
+      "PT_RIO_TUESDAY_V2_SCHEDULES_MISSING"
+    );
+  }
+
+  const v2 =
+    v2Compute({
+      lotteryKey:
+        "PT_RIO",
+
+      drawsRange:
+        historyBefore,
+
+      drawLast:
+        previousEntry.draw,
+
+      drawsToday,
+
+      PT_RIO_SCHEDULE_NORMAL,
+      PT_RIO_SCHEDULE_WED_SAT,
+      FEDERAL_SCHEDULE,
+
+      topN:
+        25,
+
+      targetYmdOverride:
+        targetY,
+
+      targetHourOverride:
+        targetH,
+    });
+
+  const v2Top =
+    safeArray(
+      v2?.top
+    );
+
+  if (v2Top.length !== 25) {
+    throw new Error(
+      "PT_RIO_TUESDAY_V2_TOP25_INCOMPLETE=" +
+      v2Top.length
+    );
+  }
+
+  const structuralFirstMap =
+    new Map();
+
+  for (
+    let group = 1;
+    group <= 25;
+    group += 1
+  ) {
+    structuralFirstMap.set(
+      group,
+      0
+    );
+  }
+
+  let parsedCount = 0;
+
+  for (const item of v2Top) {
+
+    const group =
+      Number(
+        item?.grupo
+      );
+
+    if (
+      !Number.isFinite(group) ||
+      group < 1 ||
+      group > 25
+    ) {
+      continue;
+    }
+
+    const reasons =
+      safeArray(
+        item?.reasons
+      )
+        .map(
+          (reason) =>
+            String(
+              reason ||
+              ""
+            )
+        );
+
+    const text =
+      reasons.join(
+        " | "
+      );
+
+    const match =
+      text.match(
+        /estrutural de 1º=([0-9]+(?:.[0-9]+)?)%/i
+      );
+
+    if (!match) {
+      continue;
+    }
+
+    const value =
+      Number(
+        match[1]
+      ) / 100;
+
+    structuralFirstMap.set(
+      group,
+      Number.isFinite(value)
+        ? value
+        : 0
+    );
+
+    parsedCount += 1;
+  }
+
+  if (parsedCount !== 25) {
+    throw new Error(
+      "PT_RIO_TUESDAY_V2_STRUCTURAL_PARSE_COUNT=" +
+      parsedCount
+    );
+  }
+
+  const structuralNormalized =
+    normalizeSumMap(
+      structuralFirstMap
+    );
+
+  const structuralTotal =
+    Array.from(
+      structuralNormalized.values()
+    )
+      .reduce(
+        (sum, value) =>
+          sum +
+          num(
+            value,
+            0
+          ),
+        0
+      );
+
+  const active =
+    structuralTotal > 0;
+
+  const requestedTopN =
+    Math.max(
+      1,
+      Number(
+        input?.topN ||
+        3
+      )
+    );
+
+  const selectedGroups =
+    active
+      ? rankScoreMap(
+          structuralNormalized,
+          tieMap
+        ).slice(
+          0,
+          requestedTopN
+        )
+      : baselinePicks;
+
+  const baseTopByGroup =
+    new Map(
+      safeArray(
+        base?.top
+      )
+        .map(
+          (item) => [
+            Number(
+              item?.grupo
+            ),
+            item,
+          ]
+        )
+        .filter(
+          ([group]) =>
+            Number.isFinite(group) &&
+            group >= 1 &&
+            group <= 25
+        )
+    );
+
+  const normalizedBaseline =
+    normalizeSumMap(
+      baselineMap
+    );
+
+  const model =
+    "V2_STANDALONE::v2StructuralFirst";
+
+  const profileMeta = {
+    model,
+
+    family:
+      "V2_STANDALONE",
+
+    signal:
+      "v2StructuralFirst",
+
+    baselineLayers: [
+      "recent",
+    ],
+
+    parsedGroups:
+      parsedCount,
+
+    active,
+
+    gateEvidence:
+      "GATE_B_GATE_C_GATE_D_ACCEPTED",
+  };
+
+  const top =
+    selectedGroups.map(
+      (group, index) => {
+
+        const existing =
+          baseTopByGroup.get(
+            group
+          ) ||
+          {};
+
+        const calibratedScore =
+          active
+            ? num(
+                structuralNormalized.get(
+                  group
+                ),
+                0
+              )
+            : num(
+                normalizedBaseline.get(
+                  group
+                ),
+                0
+              );
+
+        return {
+          ...existing,
+
+          rank:
+            index + 1,
+
+          title:
+            buildTitle(
+              index
+            ),
+
+          grupo:
+            group,
+
+          scoreProb:
+            calibratedScore,
+
+          rawScoreProb:
+            calibratedScore,
+
+          score:
+            calibratedScore *
+            1000,
+
+          reasons: [
+            ...safeArray(
+              existing?.reasons
+            ),
+
+            "Motor: " +
+              PT_RIO_CONTEXT_CALIBRATION_VERSION,
+
+            "Perfil aprovado: " +
+              model,
+
+            "Sinal: v2StructuralFirst",
+          ],
+
+          meta: {
+            ...(
+              existing?.meta ||
+              {}
+            ),
+
+            scenario:
+              model,
+
+            explain: {
+              ...(
+                existing
+                  ?.meta
+                  ?.explain ||
+                {}
+              ),
+
+              engine:
+                PT_RIO_CONTEXT_CALIBRATION_VERSION,
+
+              baselineEngine:
+                "V3_STATISTICAL",
+
+              productionProfile:
+                model,
+
+              calibratedProfile:
+                profileMeta,
+            },
+          },
+        };
+      }
+    );
+
+  return {
+    ...base,
+
+    top,
+
+    ranking:
+      top,
+
+    meta: {
+      ...(
+        base?.meta ||
+        {}
+      ),
+
+      scenario:
+        model,
+
+      explain: {
+        ...(
+          base
+            ?.meta
+            ?.explain ||
+          {}
+        ),
+
+        engine:
+          PT_RIO_CONTEXT_CALIBRATION_VERSION,
+
+        baselineEngine:
+          "V3_STATISTICAL",
+
+        productionProfile:
+          model,
+
+        calibratedProfile:
+          profileMeta,
+      },
+    },
+  };
+}
+
 export function computePtRioCalibratedTop3({
   input = {},
   baseCompute,
+  v2Compute,
   helpers,
 }) {
   const lotteryKey =
@@ -2128,9 +3401,26 @@ export function computePtRioCalibratedTop3({
       targetY
     );
 
+  if (
+    lotteryKey === "PT_RIO" &&
+    weekday === 2 &&
+    targetH === "18:00"
+  ) {
+    return computePtRioTuesdayV2StructuralFirst({
+      input,
+      baseCompute,
+      v2Compute,
+      helpers,
+      targetY,
+      targetH,
+    });
+  }
+
   const simpleProfile =
     PT_RIO_SIMPLE_CONTEXT_PROFILES[
-      `${weekday}|${targetH}`
+      String(weekday) +
+      "|" +
+      targetH
     ] ||
     null;
 
@@ -2146,6 +3436,21 @@ export function computePtRioCalibratedTop3({
       targetH,
       profile:
         simpleProfile,
+    });
+  }
+
+  if (
+    lotteryKey === "PT_RIO" &&
+    weekday === 2 &&
+    (
+      targetH === "11:00" ||
+      targetH === "21:00"
+    )
+  ) {
+    return computePtRioTuesdayV7CalibratedTop3({
+      input,
+      baseCompute,
+      helpers,
     });
   }
 

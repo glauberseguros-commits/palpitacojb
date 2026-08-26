@@ -8118,6 +8118,9 @@ export function computeStatisticalTop3V3(input = {}) {
     baseCompute:
       computeStatisticalTop3V3Base,
 
+    v2Compute:
+      computeConditionalNextTop3V2,
+
     helpers: {
       pickDrawYMD,
       pickDrawHour,
