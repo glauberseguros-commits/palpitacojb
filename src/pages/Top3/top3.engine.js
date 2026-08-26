@@ -38,6 +38,10 @@ import {
   computePtRioCalibratedTop3,
 } from "./modules/top3.pt-rio-calibrated";
 
+import {
+  computeNacionalMaster56Top3,
+} from "./modules/top3.nacional-master56";
+
 function findPreviousValidDraw(draws, currentYmd, currentHour) {
   const list = Array.isArray(draws) ? draws : [];
   const targetY = safeStr(currentYmd);
@@ -8111,7 +8115,7 @@ export function auditTop3Backtest({
  *
  * Fora desse escopo, o V3 original é devolvido sem alteração.
  */
-export function computeStatisticalTop3V3(input = {}) {
+function computeStatisticalTop3V3Current(input = {}) {
   return computePtRioCalibratedTop3({
     input,
 
@@ -8126,6 +8130,33 @@ export function computeStatisticalTop3V3(input = {}) {
       pickDrawHour,
       guessPrizePos,
       guessPrizeGrupo,
+    },
+  });
+}
+
+
+/*
+ * NACIONAL_MASTER56_PRODUCTION_V1
+ *
+ * Roteamento final:
+ * - 18 contextos NACIONAL usam R1 calibrado;
+ * - 38 contextos NACIONAL preservam CURRENT_NACIONAL;
+ * - PT_RIO / FEDERAL / LOOK preservam o caminho atual.
+ */
+export function computeStatisticalTop3V3(input = {}) {
+  return computeNacionalMaster56Top3({
+    input,
+
+    baseCompute:
+      computeStatisticalTop3V3Base,
+
+    currentCompute:
+      computeStatisticalTop3V3Current,
+
+    helpers: {
+      pickDrawYMD,
+      pickDrawHour,
+      nacionalTop3CanonicalSlotFromDraw,
     },
   });
 }
