@@ -17,6 +17,10 @@ const SIX_LAYERS = [
 ];
 
 const REQUIRED_V7_SIGNALS = [
+  "month",
+  "weekday",
+  "sequenceOrder2",
+  "stoneFlip",
   "cycleRegime",
   "dailyFlow",
   "historicalFrequency",
@@ -1572,16 +1576,23 @@ export function computePtRioMondayCalibratedTop3({
 
 /*
  * =====================================================================
- * PT_RIO - TERCA-FEIRA - V7 FINALISTAS CONGELADOS
+ * PT_RIO - CONTEXTOS V7 PRODUTIVOS
  *
  * TER 11:00 -> V7_PAIR_50_25_25::sequenceOrder2+stoneFlip
  * TER 21:00 -> V7_PAIR_50_25_25::weekday+dailyFlow
+ *
+ * QUA 11:00 -> V7_PAIR_50_25_25::weekday+historicalFrequency
+ * QUA 14:00 -> V7_PAIR_50_25_25::month+weekday
+ * QUA 16:00 -> V7_PAIR_50_25_25::historicalFrequency+dailyFlow
+ *
+ * Os perfis de quarta acima foram aceitos pelo Gate D congelado.
+ * QUA 09:00 e QUA 21:00 permanecem nos respectivos baselines.
  * =====================================================================
  */
 
-const PT_RIO_TUESDAY_V7_PROFILES =
+const PT_RIO_CONTEXT_V7_PROFILES =
   Object.freeze({
-    "11:00": Object.freeze({
+    "2|11:00": Object.freeze({
       model:
         "V7_PAIR_50_25_25::sequenceOrder2+stoneFlip",
 
@@ -1598,7 +1609,7 @@ const PT_RIO_TUESDAY_V7_PROFILES =
         "stoneFlip",
     }),
 
-    "21:00": Object.freeze({
+    "2|21:00": Object.freeze({
       model:
         "V7_PAIR_50_25_25::weekday+dailyFlow",
 
@@ -1613,9 +1624,60 @@ const PT_RIO_TUESDAY_V7_PROFILES =
       signalB:
         "dailyFlow",
     }),
+
+    "3|11:00": Object.freeze({
+      model:
+        "V7_PAIR_50_25_25::weekday+historicalFrequency",
+
+      baselineLayers:
+        Object.freeze([
+          "hour",
+          "recent",
+        ]),
+
+      signalA:
+        "weekday",
+
+      signalB:
+        "historicalFrequency",
+    }),
+
+    "3|14:00": Object.freeze({
+      model:
+        "V7_PAIR_50_25_25::month+weekday",
+
+      baselineLayers:
+        Object.freeze([
+          "dowHour",
+          "transition",
+        ]),
+
+      signalA:
+        "month",
+
+      signalB:
+        "weekday",
+    }),
+
+    "3|16:00": Object.freeze({
+      model:
+        "V7_PAIR_50_25_25::historicalFrequency+dailyFlow",
+
+      baselineLayers:
+        Object.freeze([
+          "transition",
+          "recent",
+        ]),
+
+      signalA:
+        "historicalFrequency",
+
+      signalB:
+        "dailyFlow",
+    }),
   });
 
-function computePtRioTuesdayV7CalibratedTop3({
+function computePtRioContextV7CalibratedTop3({
   input = {},
   baseCompute,
   helpers,
@@ -1646,13 +1708,15 @@ function computePtRioTuesdayV7CalibratedTop3({
     precomputed,
   } = resolved;
 
+  const contextKey =
+    `${ptRioContextWeekday(targetY)}|${targetH}`;
+
   const profile =
-    PT_RIO_TUESDAY_V7_PROFILES[targetH] ||
+    PT_RIO_CONTEXT_V7_PROFILES[contextKey] ||
     null;
 
   const shouldCalibrate =
     lotteryKey === "PT_RIO" &&
-    ptRioContextWeekday(targetY) === 2 &&
     Boolean(profile);
 
   if (!shouldCalibrate) {
@@ -2216,7 +2280,7 @@ function computePtRioTuesdayV7CalibratedTop3({
 
 /*
  * =====================================================================
- * PT_RIO_SIMPLE_CONTEXT_PROFILES_V1
+ * PT_RIO_SIMPLE_CONTEXT_PROFILES_V2
  *
  * Decisões finais congeladas:
  *
@@ -2225,13 +2289,18 @@ function computePtRioTuesdayV7CalibratedTop3({
  * SEG 09:00 -> REFERENCE_HOUR_TRANSITION_RECENT
  * SEG 11:00 -> BASELINE_HOUR_RECENT
  *
- * SEG 14:00 e SEG 16:00 continuam delegados ao adaptador V7 já
- * validado acima.
+ * SEG 14:00 e SEG 16:00 continuam delegados ao adaptador V7.
+ *
+ * QUA 09:00 -> BASELINE_HOUR
+ * QUA 21:00 -> BASELINE_DOWHOUR
+ *
+ * QUA 11:00, 14:00 e 16:00 são delegados ao mapa V7 contextual
+ * aprovado pelo Gate D.
  * =====================================================================
  */
 
 export const PT_RIO_CONTEXT_CALIBRATION_VERSION =
-  "PT_RIO_SUNDAY_MONDAY_TUESDAY_CONTEXT_V3";
+  "PT_RIO_SUNDAY_MONDAY_TUESDAY_WEDNESDAY_CONTEXT_V4";
 
 const PT_RIO_SIMPLE_CONTEXT_PROFILES =
   Object.freeze({
@@ -2311,6 +2380,26 @@ const PT_RIO_SIMPLE_CONTEXT_PROFILES =
         Object.freeze([
           "transition",
           "recent",
+        ]),
+    }),
+
+    "3|09:00": Object.freeze({
+      model:
+        "BASELINE_HOUR",
+
+      layers:
+        Object.freeze([
+          "hour",
+        ]),
+    }),
+
+    "3|21:00": Object.freeze({
+      model:
+        "BASELINE_DOWHOUR",
+
+      layers:
+        Object.freeze([
+          "dowHour",
         ]),
     }),
   });
@@ -3439,15 +3528,17 @@ export function computePtRioCalibratedTop3({
     });
   }
 
+  const v7Profile =
+    PT_RIO_CONTEXT_V7_PROFILES[
+      `${weekday}|${targetH}`
+    ] ||
+    null;
+
   if (
     lotteryKey === "PT_RIO" &&
-    weekday === 2 &&
-    (
-      targetH === "11:00" ||
-      targetH === "21:00"
-    )
+    v7Profile
   ) {
-    return computePtRioTuesdayV7CalibratedTop3({
+    return computePtRioContextV7CalibratedTop3({
       input,
       baseCompute,
       helpers,

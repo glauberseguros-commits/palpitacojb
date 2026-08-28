@@ -8103,17 +8103,15 @@ export function auditTop3Backtest({
 
 
 /*
- * PT_RIO_MONDAY_CALIBRATED_V1
+ * PT_RIO_CONTEXT_CALIBRATION_PRODUCTION
  *
- * Perfil produtivo validado por Gate B -> Gate C -> Gate D.
+ * Wrapper produtivo do PT_RIO.
  *
- * Escopo:
- * - PT_RIO
- * - segunda-feira
- * - 14:00
- * - 16:00
+ * Perfis já aprovados são resolvidos por dia da semana + horário
+ * em top3.pt-rio-calibrated.js.
  *
- * Fora desse escopo, o V3 original é devolvido sem alteração.
+ * O wrapper preserva o V3 base quando não existe perfil contextual
+ * aprovado para o sorteio-alvo.
  */
 function computeStatisticalTop3V3Current(input = {}) {
   return computePtRioCalibratedTop3({
