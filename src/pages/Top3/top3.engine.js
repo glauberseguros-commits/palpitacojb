@@ -42,6 +42,10 @@ import {
   computeNacionalMaster56Top3,
 } from "./modules/top3.nacional-master56";
 
+import {
+  computeLookFinal56Top3,
+} from "./modules/top3.look-final56";
+
 function findPreviousValidDraw(draws, currentYmd, currentHour) {
   const list = Array.isArray(draws) ? draws : [];
   const targetY = safeStr(currentYmd);
@@ -8141,7 +8145,7 @@ function computeStatisticalTop3V3Current(input = {}) {
  * - 38 contextos NACIONAL preservam CURRENT_NACIONAL;
  * - PT_RIO / FEDERAL / LOOK preservam o caminho atual.
  */
-export function computeStatisticalTop3V3(input = {}) {
+function computeStatisticalTop3V3BeforeLook(input = {}) {
   return computeNacionalMaster56Top3({
     input,
 
@@ -8155,6 +8159,39 @@ export function computeStatisticalTop3V3(input = {}) {
       pickDrawYMD,
       pickDrawHour,
       nacionalTop3CanonicalSlotFromDraw,
+    },
+  });
+}
+
+
+/*
+ * LOOK_FINAL56_FULL29_PRODUCTION_V1
+ *
+ * Roteamento final:
+ * - PT_RIO preserva a calibracao publicada;
+ * - NACIONAL preserva MASTER56;
+ * - FEDERAL preserva o caminho atual;
+ * - LOOK usa a matriz FINAL56 confirmada no replay integral:
+ *   7 finalistas confirmados + 49 baselines preservados.
+ */
+export function computeStatisticalTop3V3(input = {}) {
+  return computeLookFinal56Top3({
+    input,
+
+    baseCompute:
+      computeStatisticalTop3V3Base,
+
+    currentCompute:
+      computeStatisticalTop3V3BeforeLook,
+
+    v2Compute:
+      computeConditionalNextTop3V2,
+
+    helpers: {
+      pickDrawYMD,
+      pickDrawHour,
+      guessPrizePos,
+      guessPrizeGrupo,
     },
   });
 }
