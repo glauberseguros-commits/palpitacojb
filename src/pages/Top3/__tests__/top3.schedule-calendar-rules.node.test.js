@@ -54,7 +54,7 @@ test("Federal nova: domingo às 11h desde 19/07/2026", () => {
 
   assert.deepEqual(
     schedule("FEDERAL", "2026-07-19"),
-    ["11:00"]
+    ["11:30"]
   );
 });
 

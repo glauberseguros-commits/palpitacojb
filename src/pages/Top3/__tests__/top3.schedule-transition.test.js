@@ -90,14 +90,14 @@ describe("TOP3 — transição oficial de horários", () => {
     ).toEqual(["20:00"]);
   });
 
-  test("Federal passa para domingo 19/07/2026 às 11h", () => {
+  test("Federal passa para domingo 19/07/2026 às 11:30h", () => {
     expect(isFederalDrawDay("2026-07-19")).toBe(true);
 
     expect(
       normalizeSchedule(
         schedule("FEDERAL", "2026-07-19")
       )
-    ).toEqual(["11:00"]);
+    ).toEqual(["11:30"]);
   });
 
   test("Federal deixa de funcionar aos sábados após a transição", () => {

@@ -380,12 +380,14 @@ function resolveNextTop3Slot({
     ""
   ).trim();
 
-  const hourMatch =
-    rawHour.match(/^(\d{1,2})(?::00|h)?$/i);
+  let canonicalHour = "";
 
-  const canonicalHour = hourMatch
-    ? `${String(Number(hourMatch[1])).padStart(2, "0")}:00`
-    : "";
+  try {
+    canonicalHour =
+      normalizeHour(rawHour);
+  } catch {
+    canonicalHour = "";
+  }
 
   return {
     ...resolved,
@@ -623,7 +625,10 @@ async function saveTop3PublicProjection({
     lotteryKey: lottery,
     targetYmd: date,
     targetHour:
-      `${hourCode}h`,
+      lottery === "FEDERAL" &&
+      hour === "11:30"
+        ? "11:30"
+        : `${hourCode}h`,
     targetKey:
       `${date}_${hourCode}h`,
     predictionType: "TOP3",
@@ -869,6 +874,52 @@ function isExplicitForeignTop3Projection(data) {
  * Documento inválido pode ser reparado; documento válido não
  * pode ser substituído por nova execução.
  */
+function normalizeStoredFederalTargetHour({
+  lotteryKey,
+  date,
+  value,
+} = {}) {
+  const lottery =
+    normalizeLotteryKey(lotteryKey);
+
+  if (lottery !== "FEDERAL") {
+    return normalizeHour(value);
+  }
+
+  const raw =
+    String(value || "").trim();
+
+  let normalized = "";
+
+  const legacyHour =
+    raw.match(/^(\d{1,2})h$/i);
+
+  if (legacyHour) {
+    normalized =
+      `${String(Number(legacyHour[1])).padStart(2, "0")}:00`;
+  } else {
+    try {
+      normalized =
+        normalizeHour(raw);
+    } catch {
+      normalized = "";
+    }
+  }
+
+  /*
+   * Snapshots dominicais gravados antes da correção
+   * podem conter 11h/11:00.
+   */
+  if (
+    String(date || "").trim() >= "2026-07-19" &&
+    normalized === "11:00"
+  ) {
+    return "11:30";
+  }
+
+  return normalized;
+}
+
 function isStoredPublicProjectionValid(
   data,
   {
@@ -894,6 +945,17 @@ function isStoredPublicProjectionValid(
   const expectedHour =
     normalizeHour(closeHour);
 
+  const storedOuterHour =
+    expectedLottery === "FEDERAL"
+      ? normalizeStoredFederalTargetHour({
+          lotteryKey: expectedLottery,
+          date: expectedDate,
+          value: data?.targetHour,
+        })
+      : normalizeHour(
+          data?.targetHour
+        );
+
   if (
     normalizeLotteryKey(
       data?.lotteryKey
@@ -901,9 +963,7 @@ function isStoredPublicProjectionValid(
     String(
       data?.targetYmd || ""
     ).trim() !== expectedDate ||
-    normalizeHour(
-      data?.targetHour
-    ) !== expectedHour
+    storedOuterHour !== expectedHour
   ) {
     return false;
   }
@@ -918,7 +978,8 @@ function isStoredPublicProjectionValid(
   }
 
   return snapshot.every((item) => {
-    const grupo = Number(item?.grupo);
+    const grupo =
+      Number(item?.grupo);
 
     if (
       !Number.isFinite(grupo) ||
@@ -938,6 +999,17 @@ function isStoredPublicProjectionValid(
       return true;
     }
 
+    const storedContextHour =
+      expectedLottery === "FEDERAL"
+        ? normalizeStoredFederalTargetHour({
+            lotteryKey: expectedLottery,
+            date: expectedDate,
+            value: context?.targetHour,
+          })
+        : normalizeHour(
+            context?.targetHour
+          );
+
     return (
       normalizeLotteryKey(
         context?.lotteryKey
@@ -945,9 +1017,7 @@ function isStoredPublicProjectionValid(
       String(
         context?.targetYmd || ""
       ).trim() === expectedDate &&
-      normalizeHour(
-        context?.targetHour
-      ) === expectedHour
+      storedContextHour === expectedHour
     );
   });
 }

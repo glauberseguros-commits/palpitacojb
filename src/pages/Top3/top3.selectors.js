@@ -153,7 +153,7 @@ export function makeImgVariantsFromGrupo({
 export function lotteryLabel(lotteryKey) {
   const k = safeStr(lotteryKey).toUpperCase();
 
-  if (k === "FEDERAL") return "FEDERAL (20h • qua/sáb)";
+  if (k === "FEDERAL") return "FEDERAL (11:30 dom / 20h qua)";
   if (k === "PT_RIO") return "RIO (PT_RIO)";
 
   return k || "—";

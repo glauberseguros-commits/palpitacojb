@@ -373,13 +373,17 @@ const FEDERAL_20_REMOVES_PT_RIO_18_START_YMD = "2025-11-03";
 /**
  * Calendário Federal com preservação histórica.
  *
- * Até 18/07/2026:
+ * 08/06/2022 até 04/11/2025:
+ * - quarta-feira às 19h;
+ * - sábado às 19h.
+ *
+ * 05/11/2025 até 18/07/2026:
  * - quarta-feira às 20h;
  * - sábado às 20h.
  *
  * A partir de 19/07/2026:
+ * - domingo às 11:30h;
  * - quarta-feira às 20h;
- * - domingo às 11h;
  * - sábado deixa de ter sorteio Federal.
  */
 export function isFederalDrawDay(ymd) {
@@ -404,25 +408,40 @@ function getFederalScheduleForYmd(ymd, FEDERAL_SCHEDULE) {
 
   const dow = Number(getDowKey(y));
 
-  if (y >= FEDERAL_SUNDAY_START_YMD && dow === 0) {
-    return ["11:30"];
+  /*
+   * FEDERAL_CALENDAR_HISTORY_V1
+   *
+   * As duplicidades 19:00/20:00 existentes no Firestore
+   * antes da mudança não definem o horário oficial.
+   * A grade é determinada pela data real da transição.
+   */
+  if (y >= FEDERAL_SUNDAY_START_YMD) {
+    if (dow === 0) {
+      return ["11:30"];
+    }
+
+    if (dow === 3) {
+      return ["20:00"];
+    }
+
+    return [];
   }
 
-  const historical = Array.isArray(FEDERAL_SCHEDULE)
-    ? FEDERAL_SCHEDULE
+  if (y >= "2025-11-05") {
+    return (
+      dow === 3 ||
+      dow === 6
+    )
+      ? ["20:00"]
+      : [];
+  }
+
+  return (
+    dow === 3 ||
+    dow === 6
+  )
+    ? ["19:00"]
     : [];
-
-  const normalized = historical
-    .map(toHourBucket)
-    .filter(Boolean);
-
-  if (normalized.includes("20:00")) {
-    return ["20:00"];
-  }
-
-  return normalized.length
-    ? normalized
-    : ["20:00"];
 }
 
 /**

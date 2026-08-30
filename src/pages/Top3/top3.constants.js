@@ -54,7 +54,7 @@ export const PT_RIO_SCHEDULE_WED_SAT = [
   "21:00",
 ];
 
-// Federal: travado em 20h
+// Federal: fallback legado; o calendário oficial é date-aware no motor.
 export const FEDERAL_SCHEDULE = ["20:00"];
 
 export const LOOK_SCHEDULE = [

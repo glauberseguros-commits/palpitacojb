@@ -21,7 +21,7 @@ export const TOP3_PRODUCTION_PROFILE_MATRIX_VERSION =
 export const TOP3_PRODUCTION_PROFILE_BY_TARGET =
   Object.freeze({
     PT_RIO: "PT_RIO",
-    FEDERAL: "LOOK",
+    FEDERAL: "FEDERAL",
     LOOK: "LOOK",
     NACIONAL: "NACIONAL",
   });

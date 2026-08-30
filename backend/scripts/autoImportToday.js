@@ -147,11 +147,11 @@ const SCHEDULES = {
   ],
 
   // FEDERAL:
-  // - domingo, desde 19/07/2026: 11h;
+  // - domingo, desde 19/07/2026: 11:30h;
   // - quarta-feira: 20h;
   // - ate 18/07/2026, sabado tambem era 20h.
   FEDERAL: [
-    { hour: "11:00", windowStart: "11:05", releaseAt: "11:05", windowEnd: "11:35" },
+    { hour: "11:30", windowStart: "11:35", releaseAt: "11:35", windowEnd: "12:05" },
     { hour: "19:00", windowStart: "18:50", releaseAt: "19:00", windowEnd: "19:20" },
     { hour: "20:00", windowStart: "19:50", releaseAt: "20:00", windowEnd: "20:20" },
   ],
@@ -647,7 +647,7 @@ function buildTodaySlotStatusMapPT_RIO(
 /**
  * Grade Federal oficial com preservacao historica.
  * A fonte ainda publica domingo como Federal 20H,
- * mas o slot operacional desde 19/07/2026 e 11h.
+ * mas o slot operacional desde 19/07/2026 e 11:30h.
  */
 function buildTodaySlotStatusMapFEDERAL({
   dateYMD,

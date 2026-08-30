@@ -532,7 +532,7 @@ function normalizeDrawCloseHour(draw, lotteryKey) {
 
 /**
  * ✅ Normaliza o parâmetro closeHour (do CLI/scheduler) e evita log enganoso.
- * - Para FEDERAL: qualquer coisa vira slot=20:00, mas mantemos "requested" para log.
+ * - Para FEDERAL: 19h, 20h e 11:30 são slots distintos; a fonte é normalizada pela data oficial.
  */
 function normalizeRequestedCloseHour(closeHour, lotteryKey) {
   const lk = String(lotteryKey || "").trim().toUpperCase();
