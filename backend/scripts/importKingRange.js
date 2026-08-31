@@ -52,6 +52,7 @@ const fs = require("fs");
 const MIN_BY_LOTTERY = {
   PT_RIO: "2022-06-07",
   FEDERAL: "2022-06-08",
+  PT_SP: "2022-07-06",
 };
 
 const ENV_GLOBAL_MAX_DATE = String(process.env.GLOBAL_MAX_DATE || "").trim();
@@ -156,11 +157,18 @@ function todayLocalDate() {
 
 /**
  * Resolve o min global (por loteria).
- * Se a loteria for desconhecida, cai no PT_RIO.
+ * Loteria desconhecida deve falhar explicitamente.
  */
 function resolveGlobalMinDate(lotteryKey) {
   const key = String(lotteryKey || "").trim().toUpperCase();
-  const minStr = MIN_BY_LOTTERY[key] || MIN_BY_LOTTERY.PT_RIO;
+  const minStr = MIN_BY_LOTTERY[key];
+
+  if (!minStr) {
+    console.error(
+      `ERRO: loteria sem minimo historico configurado: ${key}`
+    );
+    process.exit(1);
+  }
   const parsed = parseDate(minStr);
   if (!parsed) {
     console.error(`ERRO: MIN_BY_LOTTERY inválido para ${key}: "${minStr}"`);
@@ -193,6 +201,9 @@ function resolveGlobalMaxDate() {
 function normLotteryKey(v) {
   const s = String(v || "").trim().toUpperCase();
   if (s === "RJ" || s === "RIO" || s === "PT-RIO") return "PT_RIO";
+  if (s === "SP" || s === "PT-SP" || s === "PT_SP" || s === "PT SP") {
+    return "PT_SP";
+  }
   return s || "PT_RIO";
 }
 
