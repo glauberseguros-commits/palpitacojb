@@ -407,12 +407,25 @@ const kingDraws = require("./routes/kingDraws");
 const receiveResults = require("./routes/receiveResults");
 const bounds = require("./routes/bounds");
 const predictions = require("./routes/predictions");
+const accessRoutes = require("./routes/access");
 
 app.use("/api/pitaco", pitacoResults);
 app.use("/api/king", kingDraws);
 app.use("/api", receiveResults);
 app.use("/api", bounds);
 app.use("/api/predictions", predictions);
+
+/*
+ * ACCESS AUTHORITY V1
+ *
+ * Nesta fase somente o domínio /api/access
+ * é conectado ao novo contrato.
+ *
+ * As APIs operacionais existentes serão
+ * protegidas depois que o frontend passar
+ * a enviar Firebase ID Token.
+ */
+app.use("/api/access", accessRoutes);
 
 // ✅ alias compat: alguns pontos chamam /api/king/bounds (mantém /api/bounds intacto)
 app.use("/api/king", bounds);
