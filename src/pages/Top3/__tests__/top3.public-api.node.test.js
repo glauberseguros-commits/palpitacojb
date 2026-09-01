@@ -6,7 +6,7 @@ const EXPECTED_EXPORTS = [
   "auditTop3Backtest",
   "auditTop3Timeline",
   "build16MilharesForGrupo",
-  "build20MilharesForGrupo",
+  "build24MilharesForGrupo",
   "buildContextEvidence",
   "buildFrequencyEvidence",
   "buildMilharesForGrupo",
