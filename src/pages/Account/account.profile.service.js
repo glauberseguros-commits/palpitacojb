@@ -1,434 +1,300 @@
-/* eslint-disable no-unused-vars */
-// src/pages/Account/account.profile.service.js
+import {
+  doc,
+  getDoc,
+  setDoc,
+} from "firebase/firestore";
 
 /**
- * Firestore profile + access plan
- * Collection: users/{uid}
+ * Perfil do usuario.
  *
- * Campos:
- * - name: string
- * - phone: string (apenas dígitos)
- * - phoneDigits: string (apenas dígitos; compat/login)
- * - photoURL: string
- * - createdAt: ISO
- * - createdAtMs: number
- * - updatedAt: ISO
- * - updatedAtMs: number
- * - lastActiveAt: ISO
- * - email: string
- *
- * Plano:
- * - plan: "FREE" | "PREMIUM" | "VIP"
- * - planStartAt: ISO
- * - planEndAt: ISO
- * - isLifetime: boolean
- *
- * Regras:
- * - usuário novo nasce como FREE
- * - PREMIUM vencido volta para FREE
- * - VIP vencido volta para FREE
- * - VIP com isLifetime=true não vence
- * - FREE não precisa de validade
- *
- * Compat legado:
- * - trialStartAt / trialEndAt / trialActive
- *   -> migra para PREMIUM quando ainda válido
+ * IMPORTANTE:
+ * - users/{uid} guarda somente identidade/perfil;
+ * - assinatura comercial NAO pertence a este documento;
+ * - Trial NAO existe;
+ * - plan/FREE/PREMIUM/VIP NAO sao autoridade de acesso;
+ * - assinatura e validade pertencem ao backend autoritativo
+ *   em access_accounts/{uid}.
  */
-
-import { doc, getDoc, setDoc, serverTimestamp, Timestamp } from "firebase/firestore";
-import { safeISO } from "./account.formatters";
-
-const PLAN_FREE = "FREE";
-const PLAN_STANDARD = "STANDARD";
-const PLAN_PLUS = "PLUS";
-const PLAN_PREMIUM = "PREMIUM";
-const PLAN_VIP = "VIP";
 
 function nowIso() {
   return new Date().toISOString();
 }
 
-function normalizePlan(v) {
-  const s = String(v || "").trim().toUpperCase();
-  if (s === PLAN_STANDARD) return PLAN_STANDARD;
-  if (s === PLAN_PLUS) return PLAN_PLUS;
-  if (s === PLAN_PREMIUM) return PLAN_PREMIUM;
-  if (s === PLAN_VIP) return PLAN_VIP;
-  return PLAN_FREE;
+function normalizeText(value) {
+  return String(value || "").trim();
 }
 
-function normalizeIsoString(v) {
-  return String(v || "").trim();
+function normalizeEmail(value) {
+  return normalizeText(value).toLowerCase();
 }
 
-function normalizeTimestampIso(v) {
-  try {
-    if (v && typeof v.toDate === "function") {
-      const d = v.toDate();
-      if (d instanceof Date && Number.isFinite(d.getTime())) {
-        return d.toISOString();
-      }
-    }
-  } catch {
-    // fallback abaixo
-  }
-
-  return "";
+function normalizePhone(value) {
+  return String(value || "")
+    .replace(/\D+/g, "")
+    .slice(0, 11);
 }
-
-const SIGNUP_TRIAL_DAYS = 7;
-
-function addUtcDaysIso(startIso, days) {
-  const startMs = Date.parse(String(startIso || "").trim());
-
-  if (!Number.isFinite(startMs)) return "";
-
-  return new Date(
-    startMs + Number(days || 0) * 24 * 60 * 60 * 1000
-  ).toISOString();
-}
-
-function isTrialCurrentlyActive({ trialActive, trialEndAt, refIso }) {
-  if (trialActive !== true) return false;
-  if (!safeISO(trialEndAt)) return false;
-
-  return isFutureIso(trialEndAt, refIso);
-}
-
-function isFutureIso(iso, refIso) {
-  return !!safeISO(iso) && safeISO(refIso) < safeISO(iso);
-}
-
-function isPlanCurrentlyActive({ plan, planEndAt, isLifetime, refIso }) {
-  const p = normalizePlan(plan);
-
-  if (p === PLAN_FREE) return true;
-  if (isLifetime === true) return true;
-  if (!safeISO(planEndAt)) return false;
-
-  return isFutureIso(planEndAt, refIso);
-}
-
-function buildExpiredToFreePatch() {
-  return {
-    plan: PLAN_FREE,
-    planStartAt: "",
-    planEndAt: "",
-    isLifetime: false,
-    updatedAt: nowIso(),
-    updatedAtMs: Date.now(),
-  };
-}
-
 
 /**
- * Garante o doc users/{uid}.
- * Usuário novo nasce como FREE.
- * Retorna { ok, created }.
+ * Garante users/{uid}.
+ *
+ * Usuario novo nasce apenas como usuario autenticado.
+ * Nao recebe Trial e nao recebe plano comercial pelo client.
  */
-export async function ensureUserDoc(db, uid, user) {
-  const u = String(uid || "").trim();
-  if (!u) return { ok: false, created: false };
+export async function ensureUserDoc(
+  db,
+  uid,
+  user
+) {
+  const u =
+    normalizeText(uid);
+
+  if (!u) {
+    return {
+      ok: false,
+      created: false,
+    };
+  }
 
   try {
-    const r = doc(db, "users", u);
-    const snap = await getDoc(r);
+    const ref =
+      doc(db, "users", u);
 
-    const createdAtIso = user?.metadata?.creationTime
-      ? new Date(user.metadata.creationTime).toISOString()
-      : nowIso();
+    const snap =
+      await getDoc(ref);
 
-    const currentNowIso = nowIso();
+    const now =
+      nowIso();
 
     if (!snap.exists()) {
-      await setDoc(
-        r,
-        {
-          createdAt: createdAtIso,
-          createdAtMs: Date.parse(createdAtIso) || Date.now(),
-          updatedAt: currentNowIso,
-          updatedAtMs: Date.now(),
-          lastActiveAt: currentNowIso,
+      const createdAt =
+        user?.metadata?.creationTime
+          ? new Date(
+              user.metadata.creationTime
+            ).toISOString()
+          : now;
 
-          email: String(user?.email || "").trim().toLowerCase(),
-          name: String(user?.displayName || "").trim(),
+      await setDoc(
+        ref,
+        {
+          email:
+            normalizeEmail(user?.email),
+
+          name:
+            normalizeText(
+              user?.displayName
+            ),
+
           phone: "",
           phoneDigits: "",
           photoURL: "",
 
-          plan: PLAN_FREE,
-          planStartAt: "",
-          planEndAt: "",
-          isLifetime: false,
+          createdAt,
+          createdAtMs:
+            Date.parse(createdAt) ||
+            Date.now(),
 
-          trialStartAt: createdAtIso,
-          trialEndAt: addUtcDaysIso(createdAtIso, SIGNUP_TRIAL_DAYS),
-          trialActive: true,
-
-          // Segurança temporal: início ancorado no servidor.
-          // O fim proposto pelo client só será aceito pelas Rules
-          // dentro de uma janela de ±2 minutos em torno de 7 dias.
-          trialStartAtTs: serverTimestamp(),
-          trialEndAtTs: Timestamp.fromMillis(
-            Date.now() + SIGNUP_TRIAL_DAYS * 24 * 60 * 60 * 1000
-          ),
+          updatedAt: now,
+          updatedAtMs: Date.now(),
+          lastActiveAt: now,
         },
-        { merge: true }
+        { merge: false }
       );
 
-      return { ok: true, created: true };
+      return {
+        ok: true,
+        created: true,
+      };
     }
 
-    const data = snap.data() || {};
-    const patch = {};
-    let needPatch = false;
+    const current =
+      snap.data() || {};
 
-    if (!String(data.createdAt || "").trim()) {
-      patch.createdAt = createdAtIso;
-      patch.createdAtMs = Date.parse(createdAtIso) || Date.now();
-      needPatch = true;
+    const patch = {
+      updatedAt: now,
+      updatedAtMs: Date.now(),
+      lastActiveAt: now,
+    };
+
+    const authEmail =
+      normalizeEmail(user?.email);
+
+    if (
+      authEmail &&
+      normalizeEmail(current.email) !==
+        authEmail
+    ) {
+      patch.email =
+        authEmail;
     }
 
-    if (!String(data.email || "").trim() && user?.email) {
-      patch.email = String(user.email).trim().toLowerCase();
-      needPatch = true;
+    if (
+      !normalizeText(current.name) &&
+      normalizeText(user?.displayName)
+    ) {
+      patch.name =
+        normalizeText(
+          user.displayName
+        );
     }
 
-    if (!String(data.name || "").trim() && user?.displayName) {
-      patch.name = String(user.displayName).trim();
-      needPatch = true;
+    const phone =
+      normalizePhone(
+        current.phone ||
+        current.phoneDigits
+      );
+
+    if (
+      phone &&
+      normalizePhone(
+        current.phoneDigits
+      ) !== phone
+    ) {
+      patch.phoneDigits =
+        phone;
     }
 
-    const phone = String(data.phone || "").trim();
-    const phoneDigits = String(data.phoneDigits || "").trim();
-    if (phone && !phoneDigits) {
-      patch.phoneDigits = phone;
-      needPatch = true;
-    }
+    await setDoc(
+      ref,
+      patch,
+      { merge: true }
+    );
 
-    const hasPlanField = String(data.plan || "").trim().length > 0;
-    if (!hasPlanField) {
-      // Documento legado sem plano:
-      // preserva o Trial independente e inicializa somente o plano como FREE.
-      patch.plan = PLAN_FREE;
-      patch.planStartAt = "";
-      patch.planEndAt = "";
-      patch.isLifetime = false;
-      needPatch = true;
-    } else {
-      const normalizedPlan = normalizePlan(data.plan);
-      const normalizedLifetime = data.isLifetime === true;
-      const normalizedPlanStartAt = normalizeIsoString(data.planStartAt);
-      const normalizedPlanEndAt = normalizeIsoString(data.planEndAt);
-
-      if (normalizedPlan !== String(data.plan || "").trim().toUpperCase()) {
-        patch.plan = normalizedPlan;
-        needPatch = true;
-      }
-
-      if (data.isLifetime == null) {
-        patch.isLifetime = normalizedLifetime;
-        needPatch = true;
-      }
-
-      if (data.planStartAt == null) {
-        patch.planStartAt = normalizedPlanStartAt;
-        needPatch = true;
-      }
-
-      if (data.planEndAt == null) {
-        patch.planEndAt = normalizedPlanEndAt;
-        needPatch = true;
-      }
-    }
-
-    patch.lastActiveAt = currentNowIso;
-    needPatch = true;
-
-    if (needPatch) {
-      patch.updatedAt = currentNowIso;
-      patch.updatedAtMs = Date.now();
-      await setDoc(r, patch, { merge: true });
-    }
-
-    return { ok: true, created: false };
-  } catch {
-    return { ok: false, created: false };
+    return {
+      ok: true,
+      created: false,
+    };
+  }
+  catch {
+    return {
+      ok: false,
+      created: false,
+    };
   }
 }
 
 /**
- * Carrega perfil do Firestore.
- * Faz migração de legado trial -> plan.
- * Faz downgrade automático PREMIUM/VIP vencidos -> FREE.
+ * Carrega somente perfil.
  *
- * Retorna:
- * {
- *   name, phone, photoURL,
- *   plan, planStartAt, planEndAt, isLifetime, isActivePlan,
- *   lastActiveAt
- * }
+ * Nenhum campo comercial legado participa do retorno.
  */
-export async function loadUserProfile(db, uid) {
-  const u = String(uid || "").trim();
-  if (!u) return null;
+export async function loadUserProfile(
+  db,
+  uid
+) {
+  const u =
+    normalizeText(uid);
+
+  if (!u) {
+    return null;
+  }
 
   try {
-    const r = doc(db, "users", u);
-    const snap = await getDoc(r);
-    if (!snap.exists()) return null;
+    const ref =
+      doc(db, "users", u);
 
-    const data = snap.data() || {};
-    const currentNowIso = nowIso();
+    const snap =
+      await getDoc(ref);
 
-    let patch = null;
-
-    let plan = normalizePlan(data.plan);
-    let planStartAt = normalizeIsoString(data.planStartAt);
-    let planEndAt = normalizeIsoString(data.planEndAt);
-    let isLifetime = data.isLifetime === true;
-
-    let trialStartAt =
-      normalizeTimestampIso(data.trialStartAtTs) ||
-      normalizeIsoString(data.trialStartAt);
-    let trialEndAt =
-      normalizeTimestampIso(data.trialEndAtTs) ||
-      normalizeIsoString(data.trialEndAt);
-    let trialActive = isTrialCurrentlyActive({
-      trialActive: data.trialActive === true,
-      trialEndAt,
-      refIso: currentNowIso,
-    });
-
-    const hasPlanField = String(data.plan || "").trim().length > 0;
-
-    // Documento legado sem plano:
-    // Trial permanece independente; ausência de plano comercial significa FREE.
-    if (!hasPlanField) {
-      patch = {
-        ...(patch || {}),
-        plan: PLAN_FREE,
-        planStartAt: "",
-        planEndAt: "",
-        isLifetime: false,
-      };
-      plan = PLAN_FREE;
-      planStartAt = "";
-      planEndAt = "";
-      isLifetime = false;
+    if (!snap.exists()) {
+      return null;
     }
 
-    // Trial é independente do plano comercial.
-    // Ao vencer, preservamos as datas e apenas desativamos o entitlement.
-    if (
-      data.trialActive === true &&
-      safeISO(trialEndAt) &&
-      !isFutureIso(trialEndAt, currentNowIso)
-    ) {
-      // A expiração é derivada localmente de trialEndAt.
-      // Não persistimos trialActive=false pelo cliente porque
-      // o estado do Trial é protegido pelas Firestore Rules.
-      trialActive = false;
-    }
-
-    // Downgrade automático se PREMIUM/VIP expirou
-    const activePlan = isPlanCurrentlyActive({
-      plan,
-      planEndAt,
-      isLifetime,
-      refIso: currentNowIso,
-    });
-
-    if ((plan === PLAN_PREMIUM || plan === PLAN_VIP) && !activePlan) {
-      const freePatch = buildExpiredToFreePatch();
-      patch = { ...(patch || {}), ...freePatch };
-
-      plan = PLAN_FREE;
-      planStartAt = "";
-      planEndAt = "";
-      isLifetime = false;
-    }
-
-    const phone =
-      String(data.phone || "").trim() ||
-      String(data.phoneDigits || "").trim();
-
-    const photoURL =
-      String(data.photoURL || "").trim() ||
-      String(data.photoUrl || "").trim();
-
-    const name = String(data.name || "").trim();
-    const lastActiveAt = normalizeIsoString(data.lastActiveAt) || currentNowIso;
-
-    // Compat: se existir phone mas não existir phoneDigits
-    if (String(data.phone || "").trim() && !String(data.phoneDigits || "").trim()) {
-      patch = {
-        ...(patch || {}),
-        phoneDigits: String(data.phone || "").trim(),
-      };
-    }
-
-    // Atualiza lastActiveAt em toda leitura autenticada
-    patch = {
-      ...(patch || {}),
-      lastActiveAt: currentNowIso,
-      updatedAt: currentNowIso,
-      updatedAtMs: Date.now(),
-    };
-
-    await setDoc(r, patch, { merge: true });
+    const data =
+      snap.data() || {};
 
     return {
-      name,
-      phone,
-      photoURL,
+      name:
+        normalizeText(data.name),
 
-      plan,
-      planStartAt,
-      planEndAt,
-      isLifetime,
-      isActivePlan: activePlan || plan === PLAN_FREE,
+      phone:
+        normalizePhone(
+          data.phone ||
+          data.phoneDigits
+        ),
 
-      trialStartAt,
-      trialEndAt,
-      trialActive,
+      photoURL:
+        normalizeText(
+          data.photoURL ||
+          data.photoUrl
+        ),
 
-      lastActiveAt: currentNowIso,
+      email:
+        normalizeEmail(data.email),
+
+      createdAt:
+        normalizeText(data.createdAt),
+
+      lastActiveAt:
+        normalizeText(
+          data.lastActiveAt
+        ),
     };
-  } catch {
+  }
+  catch {
     return null;
   }
 }
 
 /**
- * Salva perfil básico no Firestore.
- * payload: { name, phone, photoURL }
- * Retorna boolean ok.
+ * Atualiza somente dados de perfil.
  */
-export async function saveUserProfile(db, uid, payload) {
-  const u = String(uid || "").trim();
-  if (!u) return false;
+export async function saveUserProfile(
+  db,
+  uid,
+  payload
+) {
+  const u =
+    normalizeText(uid);
+
+  if (!u) {
+    return false;
+  }
 
   try {
-    const phoneDigits = String(payload?.phone || "").trim();
-    const now = nowIso();
+    const phoneDigits =
+      normalizePhone(
+        payload?.phone
+      );
 
-    const r = doc(db, "users", u);
+    const now =
+      nowIso();
+
+    const ref =
+      doc(db, "users", u);
+
     await setDoc(
-      r,
+      ref,
       {
-        name: String(payload?.name || "").trim(),
-        phone: phoneDigits,
+        name:
+          normalizeText(
+            payload?.name
+          ),
+
+        phone:
+          phoneDigits,
+
         phoneDigits,
-        photoURL: String(payload?.photoURL || "").trim(),
-        updatedAt: now,
-        updatedAtMs: Date.now(),
-        lastActiveAt: now,
+
+        photoURL:
+          normalizeText(
+            payload?.photoURL
+          ),
+
+        updatedAt:
+          now,
+
+        updatedAtMs:
+          Date.now(),
+
+        lastActiveAt:
+          now,
       },
       { merge: true }
     );
+
     return true;
-  } catch {
+  }
+  catch {
     return false;
   }
 }

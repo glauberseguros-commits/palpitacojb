@@ -25,132 +25,61 @@ service cloud.firestore {
      * ✅ Campos permitidos para o PRÓPRIO usuário (client)
      * - inclui variações antigas para compatibilidade
      */
-    function allowedUserKeys() {
-      return [
-        // identity/basic
-        "uid",
-        "email",
-        "createdAt",
-        "createdAtMs",
-        "updatedAt",
-        "updatedAtMs",
-        "lastActiveAt",
-
-        // profile
-        "name",
-        "phoneDigits",
-        "phone",        // compat legado
-        "photoUrl",
-        "photoURL",     // compat legado
-
-        // trial (compat + atual)
-        "trialStartAt",
-        "trialEndAt",
-        "trialActive",
-        "trialStartAtTs",
-        "trialEndAtTs",
-        "trialStart",
-        "trialEnd",
-        "trialEndsAt",
-
-        // access plan
-        "plan",
-        "planStartAt",
-        "planEndAt",
-        "isLifetime"
-      ];
-    }
-
-    /**
-     * ✅ No CREATE, o doc inteiro precisa estar dentro do allowlist
+    /*
+     * PERFIL DO USUARIO
+     *
+     * Assinatura comercial nao pertence a users/{uid}.
+     * Trial nao existe.
+     * O client pode criar/alterar somente identidade e perfil.
      */
-    function createKeysAreSafe() {
-      return request.resource.data.keys().hasOnly(allowedUserKeys());
-    }
-
-    /**
-     * ✅ No UPDATE, só pode MUDAR campos dentro do allowlist
-     */
-    function updateKeysAreSafe() {
-      return request.resource.data.diff(resource.data).changedKeys()
-        .hasOnly(allowedUserKeys());
-    }
-
-    /**
-     * ✅ PLAN: regras seguras
-     * - CREATE: só aceita FREE (ou sem plan)
-     * - UPDATE: usuário não pode alterar o plan existente,
-     *           mas o usuário NÃO pode ALTERAR o plan.
-     */
-    function planSafeForCreate() {
-      return !("plan" in request.resource.data)
-        || request.resource.data.plan == "FREE";
-    }
-
-    function planMetadataSafeForCreate() {
-      return
-        (!("planStartAt" in request.resource.data)
-          || request.resource.data.planStartAt == "") &&
-        (!("planEndAt" in request.resource.data)
-          || request.resource.data.planEndAt == "") &&
-        (!("isLifetime" in request.resource.data)
-          || request.resource.data.isLifetime == false);
-    }
-    function planNotChangedOnUpdate() {
-      return !("plan" in request.resource.data)
-        || resource.data.plan == request.resource.data.plan;
-    }
-
-    /**
-     * ✅ TRIAL: usuário pode setar no CREATE (porque seu client cria trial),
-     * mas NÃO pode alterar depois (somente admin).
-     */
-    function trialSafeForCreate() {
-      return
-        ("trialStartAtTs" in request.resource.data) &&
-        ("trialEndAtTs" in request.resource.data) &&
-        ("trialActive" in request.resource.data) &&
-        request.resource.data.trialStartAtTs is timestamp &&
-        request.resource.data.trialEndAtTs is timestamp &&
-        request.resource.data.trialActive == true &&
-        request.resource.data.trialStartAtTs == request.time &&
-
-        // 7 dias = 10080 minutos.
-        // Tolerância técnica máxima: ±2 minutos.
-        request.resource.data.trialEndAtTs >=
-          request.time + duration.value(10078, "m") &&
-        request.resource.data.trialEndAtTs <=
-          request.time + duration.value(10082, "m");
-    }
-    function planMetadataNotChangedOnUpdate() {
-      return
-        (!("planStartAt" in request.resource.data)
-          || request.resource.data.planStartAt == resource.data.planStartAt) &&
-        (!("planEndAt" in request.resource.data)
-          || request.resource.data.planEndAt == resource.data.planEndAt) &&
-        (!("isLifetime" in request.resource.data)
-          || request.resource.data.isLifetime == resource.data.isLifetime);
-    }
-    function trialNotChangedOnUpdate() {
-      return
-        (!("trialStartAt" in request.resource.data) || request.resource.data.trialStartAt == resource.data.trialStartAt) &&
-        (!("trialEndAt"   in request.resource.data) || request.resource.data.trialEndAt   == resource.data.trialEndAt) &&
-        (!("trialActive"  in request.resource.data) || request.resource.data.trialActive  == resource.data.trialActive) &&
-        (!("trialStartAtTs" in request.resource.data) || request.resource.data.trialStartAtTs == resource.data.trialStartAtTs) &&
-        (!("trialEndAtTs" in request.resource.data) || request.resource.data.trialEndAtTs == resource.data.trialEndAtTs) &&
-        (!("trialStart"   in request.resource.data) || request.resource.data.trialStart   == resource.data.trialStart) &&
-        (!("trialEnd"     in request.resource.data) || request.resource.data.trialEnd     == resource.data.trialEnd) &&
-        (!("trialEndsAt"  in request.resource.data) || request.resource.data.trialEndsAt  == resource.data.trialEndsAt);
-    }
 
     function userCreateIsSafe() {
-      return createKeysAreSafe() && planSafeForCreate() && planMetadataSafeForCreate() && trialSafeForCreate();
+      return
+        request.resource.data.keys().hasOnly([
+          "email",
+          "createdAt",
+          "createdAtMs",
+          "updatedAt",
+          "updatedAtMs",
+          "lastActiveAt",
+          "name",
+          "phoneDigits",
+          "phone",
+          "photoUrl",
+          "photoURL"
+        ])
+
+        && (
+          !("email" in request.resource.data)
+          || request.resource.data.email == request.auth.token.email
+        );
     }
 
     function userUpdateIsSafe() {
-      return updateKeysAreSafe() && planNotChangedOnUpdate() && planMetadataNotChangedOnUpdate() && trialNotChangedOnUpdate();
-    }
+      return
+        request.resource.data
+          .diff(resource.data)
+          .affectedKeys()
+          .hasOnly([
+            "email",
+            "updatedAt",
+            "updatedAtMs",
+            "lastActiveAt",
+            "name",
+            "phoneDigits",
+            "phone",
+            "photoUrl",
+            "photoURL"
+          ])
 
+        && (
+          !request.resource.data
+            .diff(resource.data)
+            .affectedKeys()
+            .hasAny(["email"])
+          || request.resource.data.email == request.auth.token.email
+        );
+    }
     /* =========================================================
        ADMINS
     ========================================================= */
@@ -163,22 +92,32 @@ service cloud.firestore {
 
     /* =========================================================
        USERS
+       - perfil do usuario;
+       - nenhuma autoridade comercial no client.
     ========================================================= */
 
     match /users/{uid} {
-      allow get: if isOwner(uid) || isAdmin();
-      allow list: if isAdmin();
+      allow get:
+        if isOwner(uid) || isAdmin();
 
-      // ✅ usuário pode criar o próprio doc (primeiro login/primeiro salvar)
-      allow create: if isOwner(uid) && userCreateIsSafe();
+      allow list:
+        if isAdmin();
 
-      // ✅ usuário pode atualizar perfil com segurança (sem mexer plan/trial)
-      allow update: if (isOwner(uid) && userUpdateIsSafe()) || isAdmin();
+      allow create:
+        if (
+          isOwner(uid) &&
+          userCreateIsSafe()
+        ) || isAdmin();
 
-      // delete: só admin
-      allow delete: if isAdmin();
+      allow update:
+        if (
+          isOwner(uid) &&
+          userUpdateIsSafe()
+        ) || isAdmin();
+
+      allow delete:
+        if isAdmin();
     }
-
     /* =========================================================
        DADOS DO APP (PREVIEW PUBLIC READ)
        - Para o modo "Entrar sem login (Preview)" funcionar,
