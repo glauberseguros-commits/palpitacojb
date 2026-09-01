@@ -26,6 +26,7 @@ const TOP3_PRODUCTION_PROFILE_BY_TARGET =
     FEDERAL: "FEDERAL",
     LOOK: "LOOK",
     NACIONAL: "NACIONAL",
+    PT_SP: "PT_SP",
   });
 
 function normalizeLotteryKey(value) {

@@ -35,6 +35,14 @@ import {
 } from "./top3.constants";
 
 import {
+  getPtSpScheduleForYmd,
+} from "./modules/top3.pt-sp-calendar";
+
+import {
+  computePtSpProductionV1Top3,
+} from "./modules/top3.pt-sp-production-v1";
+
+import {
   computePtRioCalibratedTop3,
 } from "./modules/top3.pt-rio-calibrated";
 
@@ -525,6 +533,14 @@ export function getScheduleForLottery({
   FEDERAL_SCHEDULE,
 }) {
   const key = safeStr(lotteryKey).toUpperCase();
+
+  if (
+    key === "PT_SP"
+  ) {
+    return getPtSpScheduleForYmd(
+      ymd
+    );
+  }
 
   if (key === "FEDERAL") {
     return getFederalScheduleForYmd(
@@ -8193,7 +8209,7 @@ function computeStatisticalTop3V3BeforeLook(input = {}) {
  * - LOOK usa a matriz FINAL56 confirmada no replay integral:
  *   7 finalistas confirmados + 49 baselines preservados.
  */
-export function computeStatisticalTop3V3(input = {}) {
+function computeStatisticalTop3V3BeforePtSp(input = {}) {
   return computeLookFinal56Top3({
     input,
 
@@ -8213,4 +8229,35 @@ export function computeStatisticalTop3V3(input = {}) {
       guessPrizeGrupo,
     },
   });
+}
+
+/*
+ * PT_SP production interception.
+ *
+ * PT_SP calls the generic V3 base directly with canonical
+ * lotteryKey PT_SP.
+ */
+export function computeStatisticalTop3V3(input = {}) {
+  const key =
+    safeStr(
+      input?.lotteryKey
+    ).toUpperCase();
+
+  if (key === "PT_SP") {
+    return computePtSpProductionV1Top3({
+      input: {
+        ...input,
+
+        lotteryKey:
+          "PT_SP",
+      },
+
+      baseCompute:
+        computeStatisticalTop3V3Base,
+    });
+  }
+
+  return computeStatisticalTop3V3BeforePtSp(
+    input
+  );
 }
