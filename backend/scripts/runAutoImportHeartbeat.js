@@ -105,7 +105,27 @@ function run() {
 
   let failed = false;
 
-  for (const lottery of LOTTERIES) {
+  // HEARTBEAT_PTSP_SCOPE_V1
+  // LOTTERY=PT_SP restringe este heartbeat exclusivamente a Sao Paulo.
+  // Sem override, o comportamento geral existente permanece inalterado.
+  const heartbeatRequestedLottery =
+    String(process.env.LOTTERY || "")
+      .trim()
+      .toUpperCase();
+
+  const heartbeatLotteries =
+    heartbeatRequestedLottery === "PT_SP"
+      ? ["PT_SP"]
+      : LOTTERIES;
+
+  console.log(
+    "[HEARTBEAT] LOTTERY_SCOPE=" +
+      (heartbeatRequestedLottery === "PT_SP"
+        ? "PT_SP"
+        : "ALL")
+  );
+
+  for (const lottery of heartbeatLotteries) {
     console.log("");
     console.log(
       `LOTTERY=${lottery} | PERIOD=${plan.period} | ` +
