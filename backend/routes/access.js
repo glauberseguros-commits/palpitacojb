@@ -25,6 +25,11 @@ const {
 } = require("../access/deviceSessionService");
 
 const {
+  startDeviceChallenge,
+  confirmDeviceChallenge,
+} = require("../access/deviceChallengeService");
+
+const {
   requireFirebaseUser,
   requireAdminUser,
 } = require("../middleware/firebaseUserAuth");
@@ -283,6 +288,149 @@ function sendSessionError(
 }
 
 
+function sendChallengeError(
+  res,
+  error
+) {
+  const code =
+    String(
+      error?.code || ""
+    );
+
+  const attemptsRemaining =
+    error?.details
+      ?.attemptsRemaining;
+
+  const badRequest =
+    new Set([
+      "INVALID_DEVICE_SLOT",
+      "INVALID_DEVICE_ID",
+      "INVALID_DEVICE_SECRET",
+      "INVALID_DEVICE_CHALLENGE",
+      "INVALID_CONFIRMATION_CODE",
+      "DEVICE_CONFIRMATION_CODE_INVALID",
+    ]);
+
+  const forbidden =
+    new Set([
+      "ACTIVE_SUBSCRIPTION_REQUIRED",
+      "DEVICE_CHALLENGE_OWNER_MISMATCH",
+      "DEVICE_CHALLENGE_EMAIL_MISMATCH",
+      "DEVICE_CHALLENGE_DEVICE_MISMATCH",
+    ]);
+
+  const conflict =
+    new Set([
+      "DEVICE_ALREADY_AUTHORIZED",
+      "DEVICE_CHALLENGE_SUPERSEDED",
+      "DEVICE_CHALLENGE_CONSUMED",
+      "DEVICE_CHALLENGE_CANCELLED",
+      "DEVICE_CHALLENGE_LOCKED",
+    ]);
+
+  const unavailable =
+    new Set([
+      "EMAIL_DELIVERY_NOT_CONFIGURED",
+      "EMAIL_DELIVERY_FAILED",
+      "EMAIL_DELIVERY_TIMEOUT",
+    ]);
+
+  if (
+    code ===
+      "DEVICE_CHALLENGE_COOLDOWN" ||
+    code ===
+      "DEVICE_CHALLENGE_RATE_LIMIT"
+  ) {
+    return res.status(429).json({
+      ok: false,
+      error: code,
+    });
+  }
+
+  if (
+    code ===
+      "DEVICE_CHALLENGE_EXPIRED"
+  ) {
+    return res.status(410).json({
+      ok: false,
+      error: code,
+    });
+  }
+
+  if (
+    code ===
+      "DEVICE_CHALLENGE_NOT_FOUND" ||
+    code ===
+      "ACCESS_ACCOUNT_NOT_FOUND"
+  ) {
+    return res.status(404).json({
+      ok: false,
+      error: code,
+    });
+  }
+
+  if (badRequest.has(code)) {
+    return res.status(400).json({
+      ok: false,
+      error: code,
+
+      ...(Number.isFinite(
+        Number(attemptsRemaining)
+      )
+        ? {
+            attemptsRemaining:
+              Number(
+                attemptsRemaining
+              ),
+          }
+        : {}),
+    });
+  }
+
+  if (forbidden.has(code)) {
+    return res.status(403).json({
+      ok: false,
+      error: code,
+    });
+  }
+
+  if (conflict.has(code)) {
+    return res.status(409).json({
+      ok: false,
+      error: code,
+    });
+  }
+
+  if (unavailable.has(code)) {
+    return res.status(503).json({
+      ok: false,
+      error: code,
+    });
+  }
+
+  if (
+    code ===
+      "AUTH_EMAIL_REQUIRED"
+  ) {
+    return res.status(409).json({
+      ok: false,
+      error: code,
+    });
+  }
+
+  console.error(
+    "[DEVICE_CHALLENGE_ROUTE]",
+    error
+  );
+
+  return res.status(500).json({
+    ok: false,
+    error:
+      "DEVICE_CONFIRMATION_OPERATION_FAILED",
+  });
+}
+
+
 /**
  * Contrato comercial público.
  */
@@ -314,11 +462,7 @@ router.get(
 
 
 /**
- * Estado da assinatura.
- *
- * Não exige ainda dispositivo/sessão
- * porque será usado durante bootstrap,
- * pagamento e vinculação.
+ * Estado de assinatura.
  */
 router.get(
   "/me",
@@ -366,10 +510,121 @@ router.get(
 
 
 /**
- * Abre/rotaciona a única sessão ativa.
+ * Inicia confirmação de vínculo/substituição.
  *
- * Só funciona se o dispositivo já estiver
- * previamente vinculado.
+ * O slot aqui é apenas destino do vínculo.
+ * Nunca é usado como autoridade no /check.
+ */
+router.post(
+  "/device/start",
+
+  requireFirebaseUser,
+
+  async (req, res) => {
+    try {
+      const challenge =
+        await startDeviceChallenge({
+          uid:
+            req.authUser.uid,
+
+          email:
+            req.authUser.email,
+
+          slot:
+            bodyText(
+              req,
+              "slot"
+            ),
+
+          deviceId:
+            headerText(
+              req,
+              ACCESS_HEADERS.DEVICE_ID
+            ),
+
+          deviceSecret:
+            headerText(
+              req,
+              ACCESS_HEADERS.DEVICE_SECRET
+            ),
+        });
+
+      return res.json({
+        ok: true,
+        challenge,
+      });
+    } catch (error) {
+      return sendChallengeError(
+        res,
+        error
+      );
+    }
+  }
+);
+
+
+/**
+ * Confirma o código recebido por e-mail.
+ *
+ * É o único endpoint público que efetivamente
+ * vincula/substitui um dispositivo.
+ */
+router.post(
+  "/device/confirm",
+
+  requireFirebaseUser,
+
+  async (req, res) => {
+    try {
+      const result =
+        await confirmDeviceChallenge({
+          uid:
+            req.authUser.uid,
+
+          email:
+            req.authUser.email,
+
+          challengeToken:
+            bodyText(
+              req,
+              "challengeToken"
+            ),
+
+          code:
+            bodyText(
+              req,
+              "code"
+            ),
+
+          deviceId:
+            headerText(
+              req,
+              ACCESS_HEADERS.DEVICE_ID
+            ),
+
+          deviceSecret:
+            headerText(
+              req,
+              ACCESS_HEADERS.DEVICE_SECRET
+            ),
+        });
+
+      return res.json({
+        ok: true,
+        result,
+      });
+    } catch (error) {
+      return sendChallengeError(
+        res,
+        error
+      );
+    }
+  }
+);
+
+
+/**
+ * Abre/rotaciona a única sessão ativa.
  */
 router.post(
   "/session/open",
@@ -459,12 +714,7 @@ router.post(
 
 
 /**
- * Check autoritativo completo:
- *
- * Firebase user
- * + assinatura
- * + dispositivo
- * + sessão.
+ * Check completo.
  */
 router.get(
   "/check",
@@ -476,7 +726,8 @@ router.get(
     return res.json({
       ok: true,
 
-      accessGranted: true,
+      accessGranted:
+        true,
 
       access:
         req.authorizedAccess,
@@ -498,7 +749,10 @@ router.post(
     try {
       const target =
         await resolveTargetUser(
-          bodyText(req, "uid")
+          bodyText(
+            req,
+            "uid"
+          )
         );
 
       const operationId =
@@ -551,7 +805,10 @@ router.post(
     try {
       const target =
         await resolveTargetUser(
-          bodyText(req, "uid")
+          bodyText(
+            req,
+            "uid"
+          )
         );
 
       const operationId =
