@@ -240,6 +240,16 @@ function normalizeLoteriaInput(v) {
     return "PT_RIO";
   }
 
+  if (
+    key === "sp" ||
+    key === "pt_sp" ||
+    key === "pt-sp" ||
+    key === "sao paulo" ||
+    key === "saopaulo"
+  ) {
+    return "PT_SP";
+  }
+
   const out = key
     .toUpperCase()
     .replace(/[^A-Z0-9]+/g, "_")

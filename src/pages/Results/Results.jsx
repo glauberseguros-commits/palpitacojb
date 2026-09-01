@@ -200,6 +200,7 @@ function normalizeSingleDateWithBounds(dateIn, minYmd, maxYmd) {
 ========================= */
 
 const SCOPE_RJ = "RJ";
+const SCOPE_PT_SP = "PT_SP";
 const SCOPE_FEDERAL = "FEDERAL";
 const SCOPE_LOOK = "LOOK";
 const SCOPE_NACIONAL = "NACIONAL";
@@ -281,6 +282,15 @@ function normalizeScopeInput(input) {
     return SCOPE_RJ;
   }
 
+  if (
+    s === SCOPE_PT_SP ||
+    compact === "PTSP" ||
+    compact === "SP" ||
+    compact === "SAOPAULO"
+  ) {
+    return SCOPE_PT_SP;
+  }
+
   if (isFederalInput(s)) {
     return SCOPE_FEDERAL;
   }
@@ -304,6 +314,7 @@ function scopeDisplayName(scope) {
   const up = normalizeScopeInput(scope);
 
   if (up === SCOPE_RJ) return "RIO DE JANEIRO";
+  if (up === SCOPE_PT_SP) return "SÃO PAULO";
   if (up === SCOPE_FEDERAL) return "FEDERAL";
   if (up === SCOPE_LOOK) return "LOOK";
   if (up === SCOPE_NACIONAL) return "NACIONAL";
@@ -755,7 +766,10 @@ function buildExpectedDrawsForScope(scopeKey, orderedDraws, ymd) {
     if (!byHour.has(h)) byHour.set(h, d);
   }
 
-  if (scopeKey === SCOPE_FEDERAL) {
+  if (
+    scopeKey === SCOPE_FEDERAL ||
+    scopeKey === SCOPE_PT_SP
+  ) {
     return [...list].sort((a, b) => {
       const ha = hourToNum(
         a?.__slotHour || a?.close_hour || a?.closeHour || a?.hour || a?.hora
@@ -1799,6 +1813,20 @@ export default function Results() {
                 title="Resultados do Rio de Janeiro"
               >
                 RJ
+              </button>
+
+              <button
+                type="button"
+                className={scopePillClass(scopeKey === SCOPE_PT_SP)}
+                disabled={!canChangeResultsView}
+                onClick={(e) => {
+                  stopEvt(e);
+                  if (!canChangeResultsView) return;
+                  setScopeUi(SCOPE_PT_SP);
+                }}
+                title="Resultados de São Paulo"
+              >
+                SP
               </button>
 
               <button

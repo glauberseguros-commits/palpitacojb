@@ -22,6 +22,20 @@ const LOTTERIES = Object.freeze([
     ]),
   }),
   Object.freeze({
+    value: "PT_SP",
+    label: "São Paulo",
+    hours: Object.freeze([
+      "08:00",
+      "10:00",
+      "12:00",
+      "13:00",
+      "15:00",
+      "17:00",
+      "19:00",
+      "20:00",
+    ]),
+  }),
+  Object.freeze({
     value: "FEDERAL",
     label: "Federal",
     hours: Object.freeze([

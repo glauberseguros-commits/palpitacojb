@@ -186,6 +186,8 @@ function pickDrawYMD(draw) {
 
 const UF_TO_LOTTERY_KEY = {
   RJ: "PT_RIO",
+  SP: "PT_SP",
+  PT_SP: "PT_SP",
   FEDERAL: "FEDERAL",
   BR: "FEDERAL",
   LOOK: "LOOK",
@@ -202,6 +204,7 @@ function normalizeUfToQueryKey(input) {
 function lotteryLabelFromKey(key) {
   const s = safeStr(key).toUpperCase();
   if (s === "PT_RIO") return "RIO";
+  if (s === "PT_SP") return "SÃO PAULO";
   if (s === "FEDERAL") return "FEDERAL";
   if (s === "LOOK") return "LOOK";
   if (s === "NACIONAL") return "NACIONAL";
@@ -676,6 +679,7 @@ export default function Downloads() {
 
     const hoursByLottery = {
       PT_RIO: ["09:00", "11:00", "14:00", "16:00", "18:00", "19:00", "21:00"],
+      PT_SP: ["08:00", "10:00", "12:00", "13:00", "15:00", "17:00", "19:00", "20:00"],
       FEDERAL: ["19:00", "20:00"],
       LOOK: ["07:00", "09:00", "11:00", "14:00", "16:00", "18:00", "21:00", "23:00"],
       NACIONAL: ["02:00", "08:00", "10:00", "12:00", "15:00", "17:00", "21:00", "23:00"],
@@ -763,6 +767,8 @@ export default function Downloads() {
     const lotteryUiLabel =
       lotteryKey === "PT_RIO"
         ? "RJ"
+        : lotteryKey === "PT_SP"
+        ? "São Paulo"
         : lotteryKey === "FEDERAL"
         ? "Federal"
         : lotteryKey === "LOOK"
@@ -1272,6 +1278,7 @@ export default function Downloads() {
               <div className="pp-fieldLabel">UF</div>
               <select className="pp-select" value={ufUi} onChange={(e) => setUfUi(e.target.value)}>
                 <option value="PT_RIO">RJ</option>
+                <option value="PT_SP">São Paulo</option>
                 <option value="FEDERAL">Federal</option>
                 <option value="LOOK">LOOK</option>
                 <option value="NACIONAL">Nacional</option>
