@@ -87,7 +87,7 @@ const { getDb } = require("../service/firebaseAdmin");
 
 const {
   fetchKingResults,
-  importFromPayload,
+  runImport,
 } = require("./importKingApostas");
 
 const LOTTERY_KEY = "PT_SP";
@@ -530,41 +530,212 @@ async function main() {
     return;
   }
 
-  const pendingPayload = {
-    ...payload,
-    data:
-      pending.map(
-        (item) =>
-          item.row
-      ),
-  };
+  /*
+   * PTSP_AUTO_TOP3_PRODUCTION_V1
+   *
+   * Source discovery and UUID validation happened above.
+   *
+   * Each pending registered PT_SP source becomes exactly one
+   * canonical HH:00 slot. The official runImport path is then
+   * executed for that PT_SP slot so result import and TOP3 side
+   * effects remain in the existing production transaction chain.
+   */
+  const pendingSlots = [];
 
-  const result =
-    await importFromPayload({
-      payload:
-        pendingPayload,
-      lotteryKey:
-        LOTTERY_KEY,
-      closeHour:
-        null,
-      skipIfAlreadyComplete:
-        false,
-    });
+  const pendingSlotSet =
+    new Set();
+
+  for (const item of pending) {
+
+    const rawClose =
+      item?.row?.close_hour ??
+      item?.row?.closeHour ??
+      item?.row?.horario ??
+      item?.row?.close ??
+      "";
+
+    const match =
+      String(rawClose || "")
+        .trim()
+        .match(
+          /^(\d{1,2})(?::\d{2})?/
+        );
+
+    if (!match) {
+      throw new Error(
+        "PTSP_PENDING_SLOT_INVALID " +
+        `source=${String(
+          item?.sourceId ||
+          item?.row?.lottery_id ||
+          item?.row?.lotteryId ||
+          ""
+        )} ` +
+        `close=${String(rawClose)}`
+      );
+    }
+
+    const hourNumber =
+      Number(
+        match[1]
+      );
+
+    if (
+      !Number.isInteger(
+        hourNumber
+      ) ||
+      hourNumber < 0 ||
+      hourNumber > 23
+    ) {
+      throw new Error(
+        "PTSP_PENDING_HOUR_INVALID=" +
+        String(rawClose)
+      );
+    }
+
+    const slot =
+      String(hourNumber)
+        .padStart(2, "0") +
+      ":00";
+
+    if (
+      pendingSlotSet.has(
+        slot
+      )
+    ) {
+      throw new Error(
+        "PTSP_PENDING_SLOT_DUPLICATE=" +
+        slot
+      );
+    }
+
+    pendingSlotSet.add(
+      slot
+    );
+
+    pendingSlots.push(
+      slot
+    );
+  }
 
   if (
-    Number(
-      result?.totalDrawsValid || 0
-    ) !==
+    pendingSlots.length !==
     pending.length
   ) {
     throw new Error(
-      "IMPORT_VALID_COUNT_MISMATCH " +
-      `expected=${pending.length} ` +
-      `actual=${Number(
-        result?.totalDrawsValid || 0
-      )}`
+      "PTSP_PENDING_SLOT_COUNT_MISMATCH " +
+      `pending=${pending.length} ` +
+      `slots=${pendingSlots.length}`
     );
   }
+
+  pendingSlots.sort();
+
+  const importResults = [];
+
+  console.log(
+    "PTSP_AUTO_TOP3_ENABLED=YES"
+  );
+
+  console.log(
+    `PTSP_AUTO_TOP3_PENDING_SLOTS=${pendingSlots.join(
+      ","
+    )}`
+  );
+
+  for (
+    const slot of
+    pendingSlots
+  ) {
+
+    console.log(
+      `[PTSP_AUTO_TOP3] RUN_IMPORT ` +
+      `date=${date} ` +
+      `lottery=${LOTTERY_KEY} ` +
+      `slot=${slot}`
+    );
+
+    const slotResult =
+      await runImport({
+        date,
+        lotteryKey:
+          LOTTERY_KEY,
+        closeHour:
+          slot,
+      });
+
+    if (
+      !slotResult ||
+      slotResult.ok !== true
+    ) {
+      throw new Error(
+        "PTSP_RUNIMPORT_FAILED " +
+        `date=${date} ` +
+        `slot=${slot}`
+      );
+    }
+
+    if (
+      slotResult.blocked === true
+    ) {
+      throw new Error(
+        "PTSP_RUNIMPORT_BLOCKED " +
+        `date=${date} ` +
+        `slot=${slot} ` +
+        `reason=${String(
+          slotResult.blockedReason ||
+          ""
+        )}`
+      );
+    }
+
+    importResults.push(
+      slotResult
+    );
+
+    console.log(
+      `[PTSP_AUTO_TOP3] SLOT_PASS ` +
+      `date=${date} ` +
+      `slot=${slot}`
+    );
+  }
+
+  if (
+    importResults.length !==
+    pending.length
+  ) {
+    throw new Error(
+      "PTSP_RUNIMPORT_RESULT_COUNT_MISMATCH " +
+      `expected=${pending.length} ` +
+      `actual=${importResults.length}`
+    );
+  }
+
+  const result = {
+    totalDrawsUpserted:
+      importResults.reduce(
+        (sum, item) =>
+          sum +
+          Number(
+            item?.totalDrawsUpserted ||
+            0
+          ),
+        0
+      ),
+
+    totalPrizesUpserted:
+      importResults.reduce(
+        (sum, item) =>
+          sum +
+          Number(
+            item?.totalPrizesUpserted ||
+            0
+          ),
+        0
+      ),
+
+    slotResults:
+      importResults,
+  };
 
   const after =
     await readExistingDay(
