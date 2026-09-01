@@ -257,6 +257,9 @@ const LOOK_LOTTERY_KEY = "LOOK";
 const NACIONAL_STATE_CODE = "BR";
 const NACIONAL_LOTTERY_KEY = "NACIONAL";
 
+const PT_SP_STATE_CODE = "SP";
+const PT_SP_LOTTERY_KEY = "PT_SP";
+
 function resolveUfFromLotteryKey(lotteryKey) {
   const lk = String(lotteryKey || "").trim().toUpperCase();
   if (!lk) return null;
@@ -264,6 +267,7 @@ function resolveUfFromLotteryKey(lotteryKey) {
   if (lk === FEDERAL_LOTTERY_KEY) return FEDERAL_STATE_CODE;
   if (lk === LOOK_LOTTERY_KEY) return LOOK_STATE_CODE;
   if (lk === NACIONAL_LOTTERY_KEY) return NACIONAL_STATE_CODE;
+  if (lk === PT_SP_LOTTERY_KEY) return PT_SP_STATE_CODE;
 
   // se for uma UF padrão de 2 letras (SP, MG, DF etc.), preserva
   if (/^[A-Z]{2}$/.test(lk)) return lk;
@@ -439,13 +443,80 @@ function normalizeCloseHourForLottery(value, lotteryKey) {
     return { raw, slot: `${hh}:00` };
   }
 
+  // PT SP:
+  // - King historicamente usa HH:10 e, desde 2025-02-06, HH:09;
+  // - raw e preservado integralmente;
+  // - slot de negocio permanece HH:00.
+  if (lk === "PT_SP") {
+    const hh = raw0.slice(0, 2);
+    return {
+      raw: raw0,
+      slot: `${hh}:00`,
+    };
+  }
+
   return { raw: raw0, slot: raw0 };
 }
 
 
 /**
- * NACIONAL:
- * usa lottery_name para obter o horário oficial do sorteio.
+ * Extrai do nome nominal da fonte o slot operacional HH:00.
+ *
+ * Exemplos:
+ * - LT LOOK 18HS   -> 18:00
+ * - LT NACIONAL 21HS -> 21:00
+ * - LT PT SP 17HS -> 17:00
+ * - LT BAND 15HS  -> 15:00
+ *
+ * Nao decide qual loteria deve usar o valor nominal.
+ * Essa decisao permanece explicita em normalizeDrawCloseHour.
+ */
+function extractNominalWholeHourSlot(draw) {
+  const lotteryName = String(
+    draw?.lottery_name ||
+    draw?.name ||
+    ""
+  );
+
+  const match =
+    lotteryName.match(
+      /(\d{1,2})\s*HS/i
+    );
+
+  if (!match) {
+    return {
+      lotteryName,
+      slot: "",
+    };
+  }
+
+  const hour =
+    Number(match[1]);
+
+  if (
+    !Number.isInteger(hour) ||
+    hour < 0 ||
+    hour > 23
+  ) {
+    return {
+      lotteryName,
+      slot: "",
+    };
+  }
+
+  return {
+    lotteryName,
+    slot:
+      `${String(hour).padStart(2, "0")}:00`,
+  };
+}
+
+/**
+ * Normaliza o horario de um draw conforme a identidade
+ * da loteria.
+ *
+ * LOOK, NACIONAL e PT_SP usam explicitamente o horario
+ * nominal presente em name/lottery_name.
  */
 function normalizeDrawCloseHour(draw, lotteryKey) {
   const base = normalizeCloseHourForLottery(
@@ -478,22 +549,22 @@ function normalizeDrawCloseHour(draw, lotteryKey) {
    * o slot oficial. O valor bruto da API continua preservado em raw.
    */
   if (lk === "LOOK") {
-    const lotteryName = String(
-      draw?.lottery_name ||
-      draw?.name ||
-      ""
-    );
+    const {
+      lotteryName,
+      slot: nameSlot,
+    } =
+      extractNominalWholeHourSlot(
+        draw
+      );
 
-    const match = lotteryName.match(/(\d{1,2})\s*HS/i);
-
-    if (!match) {
+    if (!nameSlot) {
       return base;
     }
 
-    const nameSlot =
-      `${String(match[1]).padStart(2, "0")}:00`;
-
-    if (base.slot && base.slot !== nameSlot) {
+    if (
+      base.slot &&
+      base.slot !== nameSlot
+    ) {
       console.warn(
         `[LOOK:SLOT_NORMALIZED] name=${lotteryName}` +
         ` api_close=${base.raw || draw?.close_hour || ""}` +
@@ -508,26 +579,43 @@ function normalizeDrawCloseHour(draw, lotteryKey) {
     };
   }
 
-  if (lk !== "NACIONAL") {
-    return base;
+  if (lk === "NACIONAL") {
+    const {
+      slot: nominalSlot,
+    } =
+      extractNominalWholeHourSlot(
+        draw
+      );
+
+    if (!nominalSlot) {
+      return base;
+    }
+
+    return {
+      raw: base.raw,
+      slot: nominalSlot,
+    };
   }
 
-  const lotteryName = String(
-    draw?.lottery_name ||
-    draw?.name ||
-    ""
-  );
+  if (lk === "PT_SP") {
+    const {
+      slot: nominalSlot,
+    } =
+      extractNominalWholeHourSlot(
+        draw
+      );
 
-  const m = lotteryName.match(/(\d{1,2})\s*HS/i);
+    if (!nominalSlot) {
+      return base;
+    }
 
-  if (!m) {
-    return base;
+    return {
+      raw: base.raw,
+      slot: nominalSlot,
+    };
   }
 
-  return {
-    raw: base.raw,
-    slot: `${String(m[1]).padStart(2, "0")}:00`,
-  };
+  return base;
 }
 
 /**
@@ -603,6 +691,16 @@ function pickLotteryId(draw) {
  * - KING_LOTTERIES_NACIONAL="uuid1,uuid2,..."
  */
 const LOTTERIES_BY_KEY = {
+  PT_SP: [
+    "2e8ef446-a20d-4fce-9ee8-b05eea20ef02",
+    "721c0dd6-a8a6-41b1-b7a5-720caf097910",
+    "a7fa16f1-2406-4a4e-920c-d70be712f3ff",
+    "991998f0-a960-4298-8f29-39e0b3db70b9",
+    "9ba690f8-3efc-46da-99ff-85dc77176fa7",
+    "84cd3637-1e6f-4d08-821b-73701c1dd52e",
+    "7d2862e8-ee2f-490f-afe7-690be3964b1e",
+    "0911130d-82bf-4d70-a66f-4342d4dac9de",
+  ],
   PT_RIO: [
     "c168d9b3-97b7-42dc-a332-7815edaa51e2",
     "cbac7c11-e733-400b-ba4d-2dfe0cba4272",
@@ -638,6 +736,21 @@ const LOTTERIES_BY_KEY = {
 
 (function applyLotteryOverridesFromEnv() {
   try {
+    const rawPtSp = String(
+      process.env.KING_LOTTERIES_PT_SP || ""
+    ).trim();
+
+    if (rawPtSp) {
+      const arrPtSp = rawPtSp
+        .split(",")
+        .map((x) => String(x || "").trim())
+        .filter(Boolean);
+
+      if (arrPtSp.length) {
+        LOTTERIES_BY_KEY.PT_SP = arrPtSp;
+      }
+    }
+
     const rawRio = String(process.env.KING_LOTTERIES_PT_RIO || "").trim();
     if (rawRio) {
       const arr = rawRio

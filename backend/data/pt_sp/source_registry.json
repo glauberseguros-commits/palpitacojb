@@ -1,0 +1,143 @@
+{
+  "schemaVersion": 1,
+  "lotteryKey": "PT_SP",
+  "uf": "SP",
+  "historyFloor": "2022-07-06",
+  "historicalPolicy": {
+    "mode": "SOURCE_DRIVEN",
+    "description": "Historical backfill must query every known PT_SP source UUID for each date. Current weekday rules must not be applied retroactively."
+  },
+  "sources": [
+    {
+      "slot": "08:00",
+      "sourceName": "LT PT SP 08HS",
+      "uuid": "2e8ef446-a20d-4fce-9ee8-b05eea20ef02",
+      "firstAvailable": "2024-04-11"
+    },
+    {
+      "slot": "10:00",
+      "sourceName": "LT PT SP 10HS",
+      "uuid": "721c0dd6-a8a6-41b1-b7a5-720caf097910",
+      "firstAvailable": "2022-07-07"
+    },
+    {
+      "slot": "12:00",
+      "sourceName": "LT PT SP 12HS",
+      "uuid": "a7fa16f1-2406-4a4e-920c-d70be712f3ff",
+      "firstAvailable": "2024-06-11"
+    },
+    {
+      "slot": "13:00",
+      "sourceName": "LT PT SP 13HS",
+      "uuid": "991998f0-a960-4298-8f29-39e0b3db70b9",
+      "firstAvailable": "2022-07-06"
+    },
+    {
+      "slot": "15:00",
+      "sourceName": "LT BAND 15HS",
+      "uuid": "9ba690f8-3efc-46da-99ff-85dc77176fa7",
+      "firstAvailable": "2022-07-06",
+      "preserveSourceIdentity": true
+    },
+    {
+      "slot": "17:00",
+      "sourceName": "LT PT SP 17HS",
+      "uuid": "84cd3637-1e6f-4d08-821b-73701c1dd52e",
+      "firstAvailable": "2023-06-03"
+    },
+    {
+      "slot": "19:00",
+      "sourceName": "LT PT SP 19HS",
+      "uuid": "7d2862e8-ee2f-490f-afe7-690be3964b1e",
+      "firstAvailable": "2024-06-14"
+    },
+    {
+      "slot": "20:00",
+      "sourceName": "LT PT SP 20HS",
+      "uuid": "0911130d-82bf-4d70-a66f-4342d4dac9de",
+      "firstAvailable": "2022-07-06"
+    }
+  ],
+  "rawCloseHourRegime": {
+    "observedTransitionAnchor": "2025-02-06",
+    "beforeMinute": "10",
+    "onOrAfterMinute": "09",
+    "canonicalSlotMinute": "00",
+    "description": "The source raw close_hour is preserved. The canonical business slot remains HH:00."
+  },
+  "currentOperationalRegime": {
+    "validationAnchor": "2026-08-01",
+    "formalTransitionDateClaimed": false,
+    "description": "Repeated August 2026 observations validate this current weekday pattern. validationAnchor is not claimed as the real-world transition date.",
+    "dow": {
+      "0": [
+        "08:00",
+        "10:00",
+        "12:00",
+        "13:00",
+        "15:00",
+        "17:00",
+        "19:00",
+        "20:00"
+      ],
+      "1": [
+        "08:00",
+        "10:00",
+        "12:00",
+        "13:00",
+        "15:00",
+        "17:00",
+        "19:00",
+        "20:00"
+      ],
+      "2": [
+        "08:00",
+        "10:00",
+        "12:00",
+        "13:00",
+        "15:00",
+        "17:00",
+        "19:00",
+        "20:00"
+      ],
+      "3": [
+        "08:00",
+        "10:00",
+        "12:00",
+        "13:00",
+        "15:00",
+        "17:00",
+        "19:00"
+      ],
+      "4": [
+        "08:00",
+        "10:00",
+        "12:00",
+        "13:00",
+        "15:00",
+        "17:00",
+        "19:00",
+        "20:00"
+      ],
+      "5": [
+        "08:00",
+        "10:00",
+        "12:00",
+        "13:00",
+        "15:00",
+        "17:00",
+        "19:00",
+        "20:00"
+      ],
+      "6": [
+        "08:00",
+        "10:00",
+        "12:00",
+        "13:00",
+        "15:00",
+        "17:00",
+        "20:00"
+      ]
+    }
+  }
+}

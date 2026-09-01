@@ -2136,6 +2136,7 @@ const list =
     { value: "FEDERAL", label: "Federal" },
     { value: "LOOK", label: "LOOK" },
     { value: "NACIONAL", label: "Nacional" },
+    { value: "PT_SP", label: "São Paulo" },
   ];
 
   const map = new Map();
@@ -2160,6 +2161,7 @@ const list =
     map.get("FEDERAL"),
     map.get("LOOK"),
     map.get("NACIONAL"),
+    map.get("PT_SP"),
     ...[...map.values()].filter(
       (x) =>
         ![
@@ -2167,6 +2169,7 @@ const list =
           "FEDERAL",
           "LOOK",
           "NACIONAL",
+          "PT_SP",
         ].includes(
           String(
             x?.value || ""

@@ -22,6 +22,12 @@ function normalizeLotteryKey(v) {
     return "NACIONAL";
   }
 
+  if (
+    ["SP", "PT_SP", "PT-SP", "PT SP"].includes(s)
+  ) {
+    return "PT_SP";
+  }
+
   return null;
 }
 

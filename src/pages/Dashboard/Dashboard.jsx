@@ -521,6 +521,14 @@ function normalizeLoteriaKey(v) {
   if (key === "federal" || key === "fed" || key === "br" || key === "brasil") return "FEDERAL";
   if (key === "rj" || key === "rio" || key === "pt_rio" || key === "pt-rio") return "PT_RIO";
 
+  if (
+    key === "sp" ||
+    key === "pt_sp" ||
+    key === "pt-sp" ||
+    key === "sao paulo" ||
+    key === "saopaulo"
+  ) return "PT_SP";
+
   const out = key
     .toUpperCase()
     .replace(/[^A-Z0-9]+/g, "_")
@@ -538,6 +546,10 @@ function getDefaultFloorByUf(ufKey) {
 
   if (u === "FEDERAL" || u === "FED" || u === "BR" || u === "BRASIL") {
     return "2022-06-08";
+  }
+
+  if (u === "PT_SP" || u === "SP" || u === "PT-SP") {
+    return "2022-07-06";
   }
 
   if (u === "LOOK") {
@@ -805,10 +817,13 @@ export default function Dashboard(props) {
   );
 
   const isFederal = loteriaKey === "FEDERAL";
+  const isPtSp = loteriaKey === "PT_SP";
 
   const fedBucket = isFederal ? normalizeHourBucket(filters?.horario) : null;
   const locationLabel = isFederal
     ? `FEDERAL (Brasil)${fedBucket ? ` — ${fedBucket}` : ""}`
+    : isPtSp
+    ? "PT SP — São Paulo"
     : `${loteriaKey} — Brasil`;
 
   const uf = loteriaKey;

@@ -9,6 +9,7 @@ const LOTTERIES = [
   "FEDERAL",
   "LOOK",
   "NACIONAL",
+  "PT_SP",
 ];
 
 function saoPauloParts(date = new Date()) {
@@ -135,12 +136,17 @@ function run() {
       delete childEnv.NOW_HM;
     }
 
+    const childScript =
+      lottery === "PT_SP"
+        ? "autoImportPtSp.js"
+        : "autoImportToday.js";
+
     const child = spawnSync(
       process.execPath,
       [
         path.join(
           __dirname,
-          "autoImportToday.js"
+          childScript
         ),
       ],
       {
