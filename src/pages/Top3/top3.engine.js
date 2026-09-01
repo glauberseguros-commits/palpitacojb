@@ -46,6 +46,10 @@ import {
   computeLookFinal56Top3,
 } from "./modules/top3.look-final56";
 
+import {
+  applyTop3MilharPrefixChallenger,
+} from "./modules/top3.milhar-prefix-challenger";
+
 function findPreviousValidDraw(draws, currentYmd, currentHour) {
   const list = Array.isArray(draws) ? draws : [];
   const targetY = safeStr(currentYmd);
@@ -7317,28 +7321,45 @@ export function buildMilharesForGrupo(
       ? input.rangeDraws
       : [];
 
+  let currentOutput;
+
   if (
     nacionalTop3IsNacionalRequest(
       input.lotteryKey,
       rangeDraws
     )
   ) {
-    return buildNacionalTop3MilharesFrozen({
-      rangeDraws,
-      analysisHourBucket:
-        input.analysisHourBucket,
-      grupo2:
-        input.grupo2,
-      count:
-        input.count,
-      targetYmd:
-        input.targetYmd,
-    });
+    currentOutput =
+      buildNacionalTop3MilharesFrozen({
+        rangeDraws,
+        analysisHourBucket:
+          input.analysisHourBucket,
+        grupo2:
+          input.grupo2,
+        count:
+          input.count,
+        targetYmd:
+          input.targetYmd,
+      });
+  }
+  else {
+    currentOutput =
+      buildMilharesForGrupoLegacy(
+        input
+      );
   }
 
-  return buildMilharesForGrupoLegacy(
-    input
-  );
+  return applyTop3MilharPrefixChallenger({
+    currentOutput,
+    input,
+    helpers: {
+      pickDrawYMD,
+      pickDrawHour,
+      guessPrizePos,
+      guessPrizeGrupo,
+      pickPrizeMilhar4,
+    },
+  });
 }
 
 export function build16MilharesForGrupo(args) {
