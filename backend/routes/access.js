@@ -9,6 +9,7 @@ const {
 
 const {
   ACCESS_PRODUCT,
+  ACCESS_HEADERS,
 } = require("../access/accessConfig");
 
 const {
@@ -19,12 +20,23 @@ const {
 } = require("../access/accessService");
 
 const {
+  openAccessSession,
+  closeAccessSession,
+} = require("../access/deviceSessionService");
+
+const {
   requireFirebaseUser,
   requireAdminUser,
 } = require("../middleware/firebaseUserAuth");
 
+const {
+  requireAuthorizedAccess,
+} = require("../middleware/requireAuthorizedAccess");
+
+
 const router =
   express.Router();
+
 
 function bodyText(
   req,
@@ -34,6 +46,17 @@ function bodyText(
     req?.body?.[key] || ""
   ).trim();
 }
+
+
+function headerText(
+  req,
+  name
+) {
+  return String(
+    req?.headers?.[name] || ""
+  ).trim();
+}
+
 
 async function resolveTargetUser(uid) {
   const safeUid =
@@ -123,6 +146,7 @@ async function resolveTargetUser(uid) {
   }
 }
 
+
 function requireOperationId(req) {
   const operationId =
     normalizeOperationId(
@@ -146,6 +170,7 @@ function requireOperationId(req) {
 
   return operationId;
 }
+
 
 function sendAdminError(
   res,
@@ -206,9 +231,60 @@ function sendAdminError(
 }
 
 
+function sendSessionError(
+  res,
+  error
+) {
+  const code =
+    String(
+      error?.code || ""
+    );
+
+  if (
+    code ===
+      "INVALID_DEVICE_ID" ||
+    code ===
+      "INVALID_DEVICE_SECRET" ||
+    code ===
+      "SESSION_TOKEN_REQUIRED"
+  ) {
+    return res.status(400).json({
+      ok: false,
+      error: code,
+    });
+  }
+
+  if (
+    code ===
+      "ACTIVE_SUBSCRIPTION_REQUIRED" ||
+    code ===
+      "DEVICE_NOT_AUTHORIZED" ||
+    code ===
+      "ACTIVE_SESSION_REQUIRED" ||
+    code ===
+      "ACCESS_ACCOUNT_NOT_FOUND"
+  ) {
+    return res.status(403).json({
+      ok: false,
+      error: code,
+    });
+  }
+
+  console.error(
+    "[ACCESS_SESSION_ROUTE]",
+    error
+  );
+
+  return res.status(500).json({
+    ok: false,
+    error:
+      "ACCESS_SESSION_OPERATION_FAILED",
+  });
+}
+
+
 /**
- * Contrato comercial.
- * Público e sem qualquer concessão de acesso.
+ * Contrato comercial público.
  */
 router.get(
   "/product",
@@ -238,7 +314,11 @@ router.get(
 
 
 /**
- * Estado autoritativo do próprio usuário.
+ * Estado da assinatura.
+ *
+ * Não exige ainda dispositivo/sessão
+ * porque será usado durante bootstrap,
+ * pagamento e vinculação.
  */
 router.get(
   "/me",
@@ -286,10 +366,127 @@ router.get(
 
 
 /**
- * Ativação / renovação.
+ * Abre/rotaciona a única sessão ativa.
  *
- * operationId é obrigatório para garantir
- * idempotência do grant.
+ * Só funciona se o dispositivo já estiver
+ * previamente vinculado.
+ */
+router.post(
+  "/session/open",
+
+  requireFirebaseUser,
+
+  async (req, res) => {
+    try {
+      const session =
+        await openAccessSession({
+          uid:
+            req.authUser.uid,
+
+          deviceId:
+            headerText(
+              req,
+              ACCESS_HEADERS.DEVICE_ID
+            ),
+
+          deviceSecret:
+            headerText(
+              req,
+              ACCESS_HEADERS.DEVICE_SECRET
+            ),
+        });
+
+      return res.json({
+        ok: true,
+        session,
+      });
+    } catch (error) {
+      return sendSessionError(
+        res,
+        error
+      );
+    }
+  }
+);
+
+
+/**
+ * Fecha a sessão ativa.
+ */
+router.post(
+  "/session/close",
+
+  requireFirebaseUser,
+
+  async (req, res) => {
+    try {
+      const result =
+        await closeAccessSession({
+          uid:
+            req.authUser.uid,
+
+          deviceId:
+            headerText(
+              req,
+              ACCESS_HEADERS.DEVICE_ID
+            ),
+
+          deviceSecret:
+            headerText(
+              req,
+              ACCESS_HEADERS.DEVICE_SECRET
+            ),
+
+          sessionToken:
+            headerText(
+              req,
+              ACCESS_HEADERS.SESSION_TOKEN
+            ),
+        });
+
+      return res.json({
+        ok: true,
+        result,
+      });
+    } catch (error) {
+      return sendSessionError(
+        res,
+        error
+      );
+    }
+  }
+);
+
+
+/**
+ * Check autoritativo completo:
+ *
+ * Firebase user
+ * + assinatura
+ * + dispositivo
+ * + sessão.
+ */
+router.get(
+  "/check",
+
+  requireFirebaseUser,
+  requireAuthorizedAccess,
+
+  (req, res) => {
+    return res.json({
+      ok: true,
+
+      accessGranted: true,
+
+      access:
+        req.authorizedAccess,
+    });
+  }
+);
+
+
+/**
+ * Grant administrativo.
  */
 router.post(
   "/admin/activate",
@@ -389,5 +586,6 @@ router.post(
     }
   }
 );
+
 
 module.exports = router;
