@@ -29,11 +29,9 @@ import {
   usePhotoPreview,
   useAccountDerived,
 } from "./account.hooks";
-import { markSessionAuth, markSessionGuest, safeRemoveSession } from "./account.session";
+import { markSessionAuth, safeRemoveSession } from "./account.session";
 import {
-  isGuestActive,
   setGuestActive,
-  loadGuestProfile,
   saveGuestProfile,
   clearGuestProfile,
 } from "./account.guestStorage";
@@ -72,7 +70,6 @@ const PLAN_STANDARD = "STANDARD";
 const PLAN_PLUS = "PLUS";
 const PLAN_PREMIUM = "PREMIUM";
 const PLAN_VIP = "VIP";
-const ACCOUNT_SESSION_KEY = "pp_session_v1";
 
 function normalizePlan(planRaw) {
   const p = String(planRaw || "").trim().toUpperCase();
@@ -83,31 +80,6 @@ function normalizePlan(planRaw) {
   return PLAN_FREE;
 }
 
-function safeParseSession(raw) {
-  try {
-    const obj = JSON.parse(raw);
-    return obj && typeof obj === "object" ? obj : null;
-  } catch {
-    return null;
-  }
-}
-
-function loadFormalGuestSession() {
-  try {
-    const raw = localStorage.getItem(ACCOUNT_SESSION_KEY);
-    if (!raw) return null;
-
-    const obj = safeParseSession(raw);
-    if (!obj || obj.ok !== true) return null;
-
-    const type = String(obj.type || "").trim().toLowerCase();
-    if (type !== "guest") return null;
-
-    return obj;
-  } catch {
-    return null;
-  }
-}
 
 export default function Account({ onClose = null, onAuthenticated = null }) {
   // viewport + ui
@@ -322,48 +294,12 @@ export default function Account({ onClose = null, onAuthenticated = null }) {
 
       setAuthReady(true);
 
-      // sem Firebase user => pode ser guest local
+      // Sem Firebase user, nao existe acesso alternativo.
       if (!user?.uid) {
-        const formalGuest = loadFormalGuestSession();
-        const guestActive = isGuestActive();
-
-        if (formalGuest || guestActive) {
-          setIsGuest(true);
-
-          setUid("");
-          setEmail("");
-          setCreatedAtIso("");
-
-          setPlan(PLAN_FREE);
-          setPlanStartAt("");
-          setPlanEndAt("");
-          setIsLifetime(false);
-          setIsActivePlan(false);
-
-          // compat
-          setTrialStartAt("");
-          setTrialEndAt("");
-          setTrialActive(false);
-
-          const g = loadGuestProfile();
-
-          // mantém a sessão formal guest como fonte principal
-          markSessionGuest();
-
-          setNameDraft(g.name);
-          setPhoneDraft(normalizePhoneDigits(g.phone));
-          setPhotoURL(g.photoURL);
-          setPhotoFile(null);
-          clearPreview();
-
-          authNotifiedRef.current = false;
-          return;
-        }
-
-        // sem auth real e sem guest => limpa tudo
         resetAuthedState();
         resetGuestState();
         safeRemoveSession();
+
         authNotifiedRef.current = false;
         return;
       }
@@ -811,33 +747,6 @@ export default function Account({ onClose = null, onAuthenticated = null }) {
     }
   };
 
-  const onSkip = () => {
-    setMsg("");
-    setErr("");
-
-    loginInFlightRef.current = false;
-    authNotifiedRef.current = false;
-
-    safeRemoveSession();
-
-    setGuestActive(true, { silent: true });
-    markSessionGuest();
-    setIsGuest(true);
-
-    resetAuthedState();
-
-    const g = loadGuestProfile();
-    setNameDraft(g.name);
-    setPhoneDraft(normalizePhoneDigits(g.phone));
-    setPhotoURL(g.photoURL);
-    setPhotoFile(null);
-    clearPreview();
-
-    if (typeof onAuthenticated === "function") {
-      onAuthenticated();
-    }
-  };
-
   /* =========================
      Render
   ========================= */
@@ -850,12 +759,10 @@ export default function Account({ onClose = null, onAuthenticated = null }) {
     );
   }
 
-  if (!isLogged && !isGuest) {
+  if (!isLogged) {
     return (
       <LoginVisual
         onEnter={onEnter}
-        onSkip={onSkip}
-        onRegister={onRegister}
       />
     );
   }

@@ -1,8 +1,8 @@
 // src/pages/Account/LoginVisual.jsx
 import React, { useEffect, useMemo, useState } from "react";
 
-const ACCOUNT_SESSION_KEY = "pp_session_v1";
-const LS_GUEST_ACTIVE_KEY = "pp_guest_active_v1";
+const LEGACY_ACCOUNT_SESSION_KEY = "pp_session_v1";
+const LEGACY_GUEST_ACTIVE_KEY = "pp_guest_active_v1";
 const LOGO_SRC = "/logo/palpitaco-jb.png";
 
 function dispatchSessionChanged() {
@@ -17,7 +17,7 @@ function safeRemoveLS(key) {
   } catch {}
 }
 
-export default function LoginVisual({ onEnter, onSkip }) {
+export default function LoginVisual({ onEnter }) {
   const [logoOk, setLogoOk] = useState(true);
   const [loginValue, setLoginValue] = useState("");
   const [passwordValue, setPasswordValue] = useState("");
@@ -242,8 +242,8 @@ export default function LoginVisual({ onEnter, onSkip }) {
   }, []);
 
   function clearVisualSession() {
-    safeRemoveLS(ACCOUNT_SESSION_KEY);
-    safeRemoveLS(LS_GUEST_ACTIVE_KEY);
+    safeRemoveLS(LEGACY_ACCOUNT_SESSION_KEY);
+    safeRemoveLS(LEGACY_GUEST_ACTIVE_KEY);
     dispatchSessionChanged();
   }
 
@@ -283,24 +283,6 @@ export default function LoginVisual({ onEnter, onSkip }) {
       setErrorMsg(msg);
     } finally {
       setSubmitting(false);
-    }
-  }
-
-  function enterGuest() {
-    setErrorMsg("");
-    setSubmitting(false);
-
-    try {
-      if (typeof onSkip !== "function") {
-        throw new Error("Fluxo de convidado não foi conectado no componente pai.");
-      }
-
-      onSkip();
-    } catch (err) {
-      const msg =
-        String(err?.message || "").trim() ||
-        "Não foi possível entrar como convidado.";
-      setErrorMsg(msg);
     }
   }
 
@@ -384,18 +366,6 @@ export default function LoginVisual({ onEnter, onSkip }) {
                   disabled={submitting}
                 >
                   {submitting ? "PROCESSANDO..." : "ENTRAR / CADASTRAR"}
-                </button>
-
-                <button
-                  type="button"
-                  style={{
-                    ...ui.btnSecondary,
-                    ...(submitting ? ui.btnDisabled : null),
-                  }}
-                  onClick={enterGuest}
-                  disabled={submitting}
-                >
-                  CONVIDADO
                 </button>
               </div>
             </form>

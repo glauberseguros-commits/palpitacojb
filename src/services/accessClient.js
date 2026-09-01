@@ -173,8 +173,8 @@ function secureRandomHex(
   byteLength
 ) {
   const cryptoApi =
-    typeof globalThis !== "undefined"
-      ? globalThis.crypto
+    typeof window !== "undefined"
+      ? window.crypto
       : null;
 
   if (

@@ -194,6 +194,11 @@ export default function AppShell({ active, onNavigate, onLogout, children }) {
     if (isMobile) setSidebarOpen(false);
 
     if (key === "__LOGOUT__") {
+      if (typeof onLogout === "function") {
+        await onLogout();
+        return;
+      }
+
       try {
         await signOut(auth);
       } catch {}
@@ -201,7 +206,6 @@ export default function AppShell({ active, onNavigate, onLogout, children }) {
       safeRemoveLS(ACCOUNT_SESSION_KEY);
       safeRemoveLS(LS_GUEST_ACTIVE_KEY);
 
-      onLogout?.();
       return;
     }
 

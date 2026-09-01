@@ -1,4 +1,4 @@
-import React, { lazy, Suspense, useEffect, useMemo, useState } from "react";
+import React, { lazy, Suspense, useEffect, useMemo, useRef, useState } from "react";
 import { useLocation, useNavigate } from "react-router-dom";
 
 
@@ -14,12 +14,13 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { auth, db } from "./services/firebase";
 import { onAuthStateChanged, signOut } from "firebase/auth";
 import { doc, getDoc } from "firebase/firestore";
+import { clearAccessRuntimeSession } from "./services/accessClient";
 import {
-  ACCESS_ENTITLEMENT,
-  getAccessEntitlement,
-  isCommercialPlan,
-  normalizeAccessEntitlement,
-} from "./services/accessControl";
+  ACCESS_FLOW_STATE,
+  bootstrapAuthorizedAccess,
+  confirmDeviceAndAuthorize,
+  closeAuthoritativeAccess,
+} from "./services/accessFlow";
 
 const Dashboard = lazy(() =>
   import("./pages/Dashboard/Dashboard")
@@ -27,6 +28,10 @@ const Dashboard = lazy(() =>
 
 const Account = lazy(() =>
   import("./pages/Account/Account")
+);
+
+const AccessGate = lazy(() =>
+  import("./pages/Account/AccessGate")
 );
 
 const AppShell = lazy(() =>
@@ -47,8 +52,8 @@ const Statistics = lazy(() => import("./pages/Statistics/Statistics"));
 
 
 const STORAGE_KEY = "palpitaco_screen_v2";
-const ACCOUNT_SESSION_KEY = "pp_session_v1";
-const LS_GUEST_ACTIVE_KEY = "pp_guest_active_v1";
+const LEGACY_ACCOUNT_SESSION_KEY = "pp_session_v1";
+const LEGACY_GUEST_ACTIVE_KEY = "pp_guest_active_v1";
 
 // ✅ Persistência de filtros do Dashboard
 const DASH_FILTERS_KEY = "pp_dashboard_filters_v1";
@@ -111,110 +116,6 @@ function safeParseJson(raw) {
 function normalizeRoute(saved) {
   if (!saved) return null;
   return Object.values(ROUTES).includes(saved) ? saved : null;
-}
-
-/* =========================
-   Sessão (estrita)
-========================= */
-
-function normalizeSessionPlan(plan) {
-  const normalized = normalizeAccessEntitlement(plan);
-
-  if (
-    isCommercialPlan(normalized) ||
-    normalized === ACCESS_ENTITLEMENT.VIP
-  ) {
-    return normalized;
-  }
-
-  // TRIAL e ADMIN são entitlements, não planos comerciais.
-  // Ausência/desconhecido também nunca escala privilégio.
-  return ACCESS_ENTITLEMENT.FREE;
-}
-
-function loadSessionObj() {
-  const raw = safeReadLS(ACCOUNT_SESSION_KEY);
-  if (!raw) return null;
-
-  const s = String(raw || "").trim();
-  if (!s || !s.startsWith("{")) return null;
-
-  const obj = safeParseJson(s);
-  if (!obj || typeof obj !== "object") return null;
-
-  const type = String(obj.type || "").trim().toLowerCase();
-  const uid = String(obj.uid || "").trim();
-  const email = String(obj.email || "").trim().toLowerCase();
-  const ok = obj.ok === true;
-  const plan = normalizeSessionPlan(
-    obj.plan ??
-      obj.profile?.plan ??
-      obj.subscription?.plan ??
-      obj.account?.plan ??
-      obj.customClaims?.plan ??
-      obj.claims?.plan ??
-      obj.appData?.plan ??
-      obj.metadata?.plan
-  );
-
-  const entitlement = getAccessEntitlement(obj);
-
-  if (!ok) return null;
-
-  if (type === "guest") {
-    return {
-      ok: true,
-      type: "guest",
-      plan: ACCESS_ENTITLEMENT.FREE,
-      entitlement: ACCESS_ENTITLEMENT.FREE,
-      uid: "",
-      email: "",
-      raw: obj,
-    };
-  }
-
-  if (type === "user" && uid) {
-    return {
-      ok: true,
-      type: "user",
-      plan,
-      entitlement,
-      uid,
-      email,
-      raw: obj,
-    };
-  }
-
-  if (uid || email) {
-    return {
-      ok: true,
-      type: "user",
-      plan,
-      entitlement,
-      uid,
-      email,
-      raw: obj,
-    };
-  }
-
-  return null;
-}
-
-function getSessionKind(sess) {
-  const s = sess || loadSessionObj();
-  if (!s || s.ok !== true) return "anon";
-  return s.type === "guest" ? "guest" : s.type === "user" ? "user" : "anon";
-}
-
-function cleanupLegacyGuestFlagIfNeeded() {
-  const sess = loadSessionObj();
-  const guestFlag = safeReadLS(LS_GUEST_ACTIVE_KEY);
-
-  if (!guestFlag) return;
-
-  if (sess?.type === "guest") return;
-
-  safeRemoveLS(LS_GUEST_ACTIVE_KEY);
 }
 
 /* =========================
@@ -494,10 +395,6 @@ export default function App() {
     });
   }, []);
 
-  useEffect(() => {
-    cleanupLegacyGuestFlagIfNeeded();
-  }, []);
-
   const [adminMode, setAdminMode] = useState(() => isAdminHashNow());
 
   useEffect(() => {
@@ -548,7 +445,127 @@ export default function App() {
   }, [adminMode]);
 
   const [dashboardFilters, setDashboardFilters] = useState(() => loadDashboardFilters());
-  const [, setSessionTick] = useState(0);
+
+  const [userAuthReady, setUserAuthReady] = useState(false);
+  const [firebaseUser, setFirebaseUser] = useState(null);
+  const [accessResult, setAccessResult] = useState(null);
+  const [accessBusy, setAccessBusy] = useState(false);
+  const [accessError, setAccessError] = useState("");
+
+  const accessRunRef = useRef(0);
+
+  function clearLegacyAccessMarkers() {
+    safeRemoveLS(LEGACY_ACCOUNT_SESSION_KEY);
+    safeRemoveLS(LEGACY_GUEST_ACTIVE_KEY);
+
+    try {
+      window.dispatchEvent(new Event("pp_session_changed"));
+    } catch {}
+  }
+
+  async function resolveAuthoritativeAccess(user = auth.currentUser) {
+    const runId = accessRunRef.current + 1;
+    accessRunRef.current = runId;
+
+    if (!user?.uid || user?.isAnonymous === true) {
+      clearAccessRuntimeSession();
+      clearLegacyAccessMarkers();
+
+      setFirebaseUser(null);
+      setAccessResult(null);
+      setAccessBusy(false);
+      setAccessError("");
+
+      return null;
+    }
+
+    setFirebaseUser(user);
+    setAccessBusy(true);
+    setAccessError("");
+
+    try {
+      const result =
+        await bootstrapAuthorizedAccess();
+
+      if (accessRunRef.current !== runId) {
+        return null;
+      }
+
+      clearLegacyAccessMarkers();
+      setAccessResult(result || null);
+
+      return result || null;
+    } catch (error) {
+      if (accessRunRef.current !== runId) {
+        return null;
+      }
+
+      clearAccessRuntimeSession();
+      clearLegacyAccessMarkers();
+      setAccessResult(null);
+
+      setAccessError(
+        String(
+          error?.message ||
+            error?.code ||
+            "Não foi possível validar seu acesso."
+        ).trim()
+      );
+
+      return null;
+    } finally {
+      if (accessRunRef.current === runId) {
+        setAccessBusy(false);
+      }
+    }
+  }
+
+  useEffect(() => {
+    let alive = true;
+
+    const unsub = onAuthStateChanged(auth, async (user) => {
+      if (!alive) return;
+
+      setUserAuthReady(true);
+
+      if (adminMode) {
+        setFirebaseUser(user?.uid ? user : null);
+        return;
+      }
+
+      if (user?.isAnonymous === true) {
+        clearAccessRuntimeSession();
+        clearLegacyAccessMarkers();
+
+        setFirebaseUser(null);
+        setAccessResult(null);
+        setAccessError("");
+        setAccessBusy(false);
+
+        try {
+          await signOut(auth);
+        } catch {}
+
+        return;
+      }
+
+      setFirebaseUser(user?.uid ? user : null);
+
+      await resolveAuthoritativeAccess(user);
+    });
+
+    return () => {
+      alive = false;
+      accessRunRef.current += 1;
+      unsub?.();
+    };
+
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [adminMode]);
+
+  async function refreshAuthoritativeAccess() {
+    return resolveAuthoritativeAccess(auth.currentUser);
+  }
 
   useEffect(() => {
     const lot = normalizeLoteriaInput(dashboardFilters?.loteria);
@@ -572,30 +589,7 @@ export default function App() {
     safeWriteLS(DASH_FILTERS_KEY, JSON.stringify(dashboardFilters));
   }, [dashboardFilters]);
 
-  useEffect(() => {
-    const bump = () => setSessionTick((v) => v + 1);
 
-    const onStorage = (e) => {
-      if (!e) return;
-      if (e.key === ACCOUNT_SESSION_KEY || e.key === LS_GUEST_ACTIVE_KEY) {
-        bump();
-      }
-    };
-
-    const onSessionChanged = () => bump();
-
-    window.addEventListener("storage", onStorage);
-    window.addEventListener("pp_session_changed", onSessionChanged);
-
-    return () => {
-      window.removeEventListener("storage", onStorage);
-      window.removeEventListener("pp_session_changed", onSessionChanged);
-    };
-  }, []);
-
-  const sessionObj = loadSessionObj();
-
-  const sessionKind = useMemo(() => getSessionKind(sessionObj), [sessionObj]);
 
   const currentScreen = useMemo(() => {
     const byPath = pathToScreen(location?.pathname);
@@ -604,35 +598,94 @@ export default function App() {
     const saved = normalizeRoute(safeReadLS(STORAGE_KEY));
     if (saved && saved !== ROUTES.LOGIN) return saved;
 
-    return sessionObj ? ROUTES.DASHBOARD : ROUTES.LOGIN;
-  }, [location?.pathname, sessionObj]);
+    return accessResult?.state === ACCESS_FLOW_STATE.AUTHORIZED
+      ? ROUTES.DASHBOARD
+      : ROUTES.LOGIN;
+  }, [location?.pathname, accessResult?.state]);
 
   useEffect(() => {
     if (adminMode) return;
+    if (!userAuthReady) return;
 
-    const pathScreen = pathToScreen(location?.pathname);
-    const hasSession = !!sessionObj;
-    const curPath = cleanPathname(location?.pathname);
+    const pathScreen =
+      pathToScreen(location?.pathname);
 
-    if (!hasSession) {
+    const curPath =
+      cleanPathname(location?.pathname);
+
+    if (!firebaseUser?.uid) {
       if (curPath !== "/login") {
         navigate("/login", { replace: true });
       }
       return;
     }
 
-    if (curPath === "/login") {
+    if (accessBusy && !accessResult) {
+      return;
+    }
+
+    const phase =
+      accessResult?.state || "";
+
+    if (
+      phase ===
+      ACCESS_FLOW_STATE.SUBSCRIPTION_REQUIRED
+    ) {
+      if (curPath !== "/payments") {
+        navigate("/payments", { replace: true });
+      }
+      return;
+    }
+
+    if (
+      phase ===
+      ACCESS_FLOW_STATE.DEVICE_CONFIRMATION_REQUIRED
+    ) {
+      if (curPath !== "/login") {
+        navigate("/login", { replace: true });
+      }
+      return;
+    }
+
+    if (
+      phase !==
+      ACCESS_FLOW_STATE.AUTHORIZED
+    ) {
+      return;
+    }
+
+    if (
+      curPath === "/login" ||
+      curPath === "/payments"
+    ) {
       navigate("/", { replace: true });
       return;
     }
 
     if (!pathScreen) {
-      const saved = normalizeRoute(safeReadLS(STORAGE_KEY));
-      navigate(screenToPath(saved && saved !== ROUTES.LOGIN ? saved : ROUTES.DASHBOARD), {
-        replace: true,
-      });
+      const saved =
+        normalizeRoute(
+          safeReadLS(STORAGE_KEY)
+        );
+
+      navigate(
+        screenToPath(
+          saved && saved !== ROUTES.LOGIN
+            ? saved
+            : ROUTES.DASHBOARD
+        ),
+        { replace: true }
+      );
     }
-  }, [adminMode, location?.pathname, navigate, sessionObj]);
+  }, [
+    adminMode,
+    userAuthReady,
+    firebaseUser?.uid,
+    accessBusy,
+    accessResult,
+    location?.pathname,
+    navigate,
+  ]);
 
   useEffect(() => {
     if (adminMode) return;
@@ -651,13 +704,22 @@ export default function App() {
 
   const logout = async () => {
     safeRemoveLS(STORAGE_KEY);
-    safeRemoveLS(ACCOUNT_SESSION_KEY);
-    safeRemoveLS(LS_GUEST_ACTIVE_KEY);
     safeRemoveLS(DASH_FILTERS_KEY);
 
     try {
-      window.dispatchEvent(new Event("pp_session_changed"));
-    } catch {}
+      await closeAuthoritativeAccess();
+    } catch {
+      clearAccessRuntimeSession();
+    }
+
+    clearLegacyAccessMarkers();
+
+    accessRunRef.current += 1;
+
+    setAccessResult(null);
+    setAccessError("");
+    setAccessBusy(false);
+    setFirebaseUser(null);
 
     try {
       await signOut(auth);
@@ -667,9 +729,65 @@ export default function App() {
   };
 
   const handleAuthenticated = () => {
-    cleanupLegacyGuestFlagIfNeeded();
-    safeWriteLS(STORAGE_KEY, ROUTES.DASHBOARD);
-    navigate("/", { replace: true });
+    clearLegacyAccessMarkers();
+  };
+
+  const handleDeviceConfirmation = async (code) => {
+    const challengeToken =
+      String(
+        accessResult?.challengeToken ||
+          accessResult?.challenge?.challengeToken ||
+          ""
+      ).trim();
+
+    if (!challengeToken) {
+      setAccessError(
+        "Não foi possível localizar o desafio de confirmação."
+      );
+      return false;
+    }
+
+    setAccessBusy(true);
+    setAccessError("");
+
+    try {
+      const result =
+        await confirmDeviceAndAuthorize({
+          challengeToken,
+          code,
+        });
+
+      clearLegacyAccessMarkers();
+      setAccessResult(result);
+
+      safeWriteLS(
+        STORAGE_KEY,
+        ROUTES.DASHBOARD
+      );
+
+      navigate("/", {
+        replace: true,
+      });
+
+      return true;
+    } catch (error) {
+      setAccessError(
+        String(
+          error?.message ||
+            error?.code ||
+            "Não foi possível confirmar este dispositivo."
+        ).trim()
+      );
+
+      return false;
+    } finally {
+      setAccessBusy(false);
+    }
+  };
+
+  const handleAccessRetry = async () => {
+    setAccessError("");
+    await refreshAuthoritativeAccess();
   };
 
   const renderScreen = (s) => {
@@ -762,16 +880,103 @@ export default function App() {
     );
   }
 
-  if (sessionKind === "anon") {
+  if (
+    !userAuthReady ||
+    (
+      firebaseUser?.uid &&
+      accessBusy &&
+      !accessResult &&
+      !accessError
+    )
+  ) {
+    return <AppLoading />;
+  }
+
+  if (!firebaseUser?.uid) {
     return (
       <ErrorBoundary>
         <Suspense fallback={<AppLoading />}>
-        <Account
-          onClose={() => {}}
-          onAuthenticated={handleAuthenticated}
-        />
-        <BuildStamp />
-              </Suspense>
+          <Account
+            onClose={() => {}}
+            onAuthenticated={handleAuthenticated}
+          />
+          <BuildStamp />
+        </Suspense>
+      </ErrorBoundary>
+    );
+  }
+
+  const authoritativePhase =
+    accessResult?.state || "";
+
+  if (
+    authoritativePhase ===
+    ACCESS_FLOW_STATE.SUBSCRIPTION_REQUIRED
+  ) {
+    return (
+      <ErrorBoundary>
+        <Suspense fallback={<AppLoading />}>
+          <AccessGate
+            mode="subscription"
+            email={firebaseUser?.email || ""}
+            busy={accessBusy}
+            error={accessError}
+            onRetry={handleAccessRetry}
+            onLogout={logout}
+          />
+          <BuildStamp />
+        </Suspense>
+      </ErrorBoundary>
+    );
+  }
+
+  if (
+    authoritativePhase ===
+    ACCESS_FLOW_STATE.DEVICE_CONFIRMATION_REQUIRED
+  ) {
+    return (
+      <ErrorBoundary>
+        <Suspense fallback={<AppLoading />}>
+          <AccessGate
+            mode="device"
+            email={
+              accessResult?.user?.email ||
+              firebaseUser?.email ||
+              ""
+            }
+            slot={accessResult?.slot || ""}
+            busy={accessBusy}
+            error={accessError}
+            onConfirmCode={handleDeviceConfirmation}
+            onRetry={handleAccessRetry}
+            onLogout={logout}
+          />
+          <BuildStamp />
+        </Suspense>
+      </ErrorBoundary>
+    );
+  }
+
+  if (
+    authoritativePhase !==
+    ACCESS_FLOW_STATE.AUTHORIZED
+  ) {
+    return (
+      <ErrorBoundary>
+        <Suspense fallback={<AppLoading />}>
+          <AccessGate
+            mode="error"
+            email={firebaseUser?.email || ""}
+            busy={accessBusy}
+            error={
+              accessError ||
+              "Não foi possível validar seu acesso."
+            }
+            onRetry={handleAccessRetry}
+            onLogout={logout}
+          />
+          <BuildStamp />
+        </Suspense>
       </ErrorBoundary>
     );
   }
