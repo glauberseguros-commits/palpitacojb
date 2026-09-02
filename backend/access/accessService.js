@@ -236,6 +236,33 @@ function computeSubscriptionState(
   };
 }
 
+
+function normalizeSubscriptionDays(
+  value
+) {
+  const days =
+    Number(value);
+
+  if (
+    !Number.isSafeInteger(days) ||
+    days < 1 ||
+    days > 3650
+  ) {
+    const error =
+      new Error(
+        "INVALID_SUBSCRIPTION_DAYS"
+      );
+
+    error.code =
+      "INVALID_SUBSCRIPTION_DAYS";
+
+    throw error;
+  }
+
+  return days;
+}
+
+
 /**
  * Regra de renovação.
  *
@@ -248,8 +275,15 @@ function computeSubscriptionState(
  */
 function computeRenewalWindow(
   currentState,
-  nowMs = Date.now()
+  nowMs = Date.now(),
+  durationDays =
+    ACCESS_PRODUCT.durationDays
 ) {
+  const safeDays =
+    normalizeSubscriptionDays(
+      durationDays
+    );
+
   const current =
     currentState &&
     typeof currentState === "object"
@@ -285,7 +319,8 @@ function computeRenewalWindow(
 
     newEndsAtMs:
       baseMs +
-      ACCESS_PRODUCT.durationMs,
+      safeDays *
+        24 * 60 * 60 * 1000,
 
     renewal:
       active,
@@ -419,6 +454,8 @@ async function activateSubscription({
   actorUid,
   operationId,
   paymentReference = "",
+  days =
+    ACCESS_PRODUCT.durationDays,
   nowMs = Date.now(),
 }) {
   const safeUid =
@@ -460,6 +497,11 @@ async function activateSubscription({
       "INVALID_OPERATION_ID"
     );
   }
+
+  const safeDays =
+    normalizeSubscriptionDays(
+      days
+    );
 
   const db =
     getDb();
@@ -523,7 +565,8 @@ async function activateSubscription({
       const window =
         computeRenewalWindow(
           currentState,
-          nowMs
+          nowMs,
+          safeDays
         );
 
       const nowTs =
@@ -609,8 +652,7 @@ async function activateSubscription({
               .currency,
 
           durationDays:
-            ACCESS_PRODUCT
-              .durationDays,
+            safeDays,
 
           startedAt:
             startedAtTs,
@@ -690,6 +732,9 @@ async function activateSubscription({
 
         actorUid:
           safeActorUid,
+
+        durationDays:
+          safeDays,
 
         payment: {
           method:
@@ -971,6 +1016,7 @@ module.exports = {
   asMillis,
   normalizeOperationId,
   computeSubscriptionState,
+  normalizeSubscriptionDays,
   computeRenewalWindow,
   getAccessSnapshot,
   assertActiveSubscription,

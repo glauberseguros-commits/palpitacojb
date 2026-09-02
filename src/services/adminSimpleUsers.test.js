@@ -11,106 +11,61 @@ function read(relative) {
   );
 }
 
-test("Admin principal mostra somente usuarios", () => {
-  const source =
+test("Admin apresenta apenas gestao operacional de usuarios", () => {
+  const admin =
     read(
       "src/pages/Admin/Admin.jsx"
     );
 
-  expect(source).toContain(
-    "Gestão de usuários"
-  );
-
-  expect(source).toContain(
-    "<UserManagementPage"
-  );
-
-  [
-    "Dashboard Técnico",
-    "Motor de Milhares",
-    "Auditorias",
-    "Backtests",
-    "Logs",
-    "Configurações",
-  ].forEach(
-    (value) => {
-      expect(source)
-        .not
-        .toContain(value);
-    }
-  );
-});
-
-test("login Admin nao fala mais em Engine Center", () => {
-  const source =
+  const users =
     read(
-      "src/pages/Admin/AdminLogin.jsx"
+      "src/pages/Admin/modules/UserManagement/UserManagementPage.jsx"
     );
 
-  expect(source)
+  expect(admin)
+    .toContain(
+      "<UserManagementPage"
+    );
+
+  [
+    "DIAS",
+    "LIBERAR",
+    "RENOVAR",
+    "REATIVAR",
+    "SUSPENDER",
+    "EXCLUIR",
+  ].forEach(
+    (marker) => {
+      expect(users)
+        .toContain(marker);
+    }
+  );
+
+  expect(users)
     .not
     .toContain(
-      "Engine Center"
+      "REVOGAR ACESSO"
     );
-
-  expect(source).toContain(
-    "Gestão de usuários"
-  );
 });
 
-test("gestao usa autoridade existente de acesso", () => {
-  const source =
+test("suspensao usa autoridade tecnica existente sem expor o termo", () => {
+  const users =
     read(
       "src/pages/Admin/modules/UserManagement/UserManagementPage.jsx"
     );
 
-  [
-    "listUsers",
-    "getUserAccess",
-    "createAdminOperationId",
-    "activateUserAccess",
-    "revokeUserAccess",
-    "ATIVAR / RENOVAR +30 DIAS",
-    "REVOGAR ACESSO",
-    "Fonte de verdade: backend de acesso",
-  ].forEach(
-    (value) => {
-      expect(source)
-        .toContain(value);
-    }
-  );
-});
-
-test("nome e telefone sao editaveis", () => {
-  const source =
-    read(
-      "src/pages/Admin/modules/UserManagement/userProfileAdmin.api.js"
+  expect(users)
+    .toContain(
+      "revokeUserAccess"
     );
 
-  expect(source).toContain(
-    "updateDoc"
-  );
-
-  expect(source).toContain(
-    "name:"
-  );
-
-  expect(source).toContain(
-    "phone:"
-  );
-
-  expect(source).toContain(
-    "phoneDigits"
-  );
-});
-
-test("email nao e editado pelo painel", () => {
-  const source =
-    read(
-      "src/pages/Admin/modules/UserManagement/UserManagementPage.jsx"
+  expect(users)
+    .toContain(
+      "Suspensão administrativa"
     );
 
-  expect(source).toContain(
-    "readOnly"
-  );
+  expect(users)
+    .toContain(
+      "Acesso suspenso."
+    );
 });

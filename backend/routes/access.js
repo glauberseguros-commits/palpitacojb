@@ -5,6 +5,7 @@ const express =
 
 const {
   admin,
+  getDb,
 } = require("../service/firebaseAdmin");
 
 const {
@@ -189,6 +190,8 @@ function sendAdminError(
   if (
     code === "UID_REQUIRED" ||
     code ===
+      "INVALID_SUBSCRIPTION_DAYS" ||
+    code ===
       "VALID_OPERATION_ID_REQUIRED"
   ) {
     return res.status(400).json({
@@ -215,7 +218,9 @@ function sendAdminError(
     code ===
       "TARGET_USER_EMAIL_REQUIRED" ||
     code ===
-      "OPERATION_ID_CONFLICT"
+      "OPERATION_ID_CONFLICT" ||
+    code ===
+      "ADMIN_SELF_DELETE_FORBIDDEN"
   ) {
     return res.status(409).json({
       ok: false,
@@ -844,6 +849,14 @@ router.post(
               req,
               "paymentReference"
             ),
+
+          days:
+            bodyText(
+              req,
+              "days"
+            ) ||
+            ACCESS_PRODUCT
+              .durationDays,
         });
 
       return res.json({
@@ -904,6 +917,184 @@ router.post(
         access,
       });
     } catch (error) {
+      return sendAdminError(
+        res,
+        error
+      );
+    }
+  }
+);
+
+
+
+async function deleteDocumentTree(
+  ref
+) {
+  const childCollections =
+    await ref.listCollections();
+
+  for (
+    const collectionRef of
+    childCollections
+  ) {
+    while (true) {
+      const snapshot =
+        await collectionRef
+          .limit(200)
+          .get();
+
+      if (snapshot.empty) {
+        break;
+      }
+
+      for (
+        const document of
+        snapshot.docs
+      ) {
+        await deleteDocumentTree(
+          document.ref
+        );
+      }
+    }
+  }
+
+  await ref.delete();
+}
+
+
+/**
+ * Exclusão definitiva de usuário.
+ *
+ * Remove exclusivamente:
+ * - Firebase Auth do usuário-alvo
+ * - perfil users/{uid}
+ * - autoridade access_accounts/{uid}
+ * - eventual autorização admins/{uid}
+ *
+ * Um Admin não pode excluir a própria conta.
+ */
+router.post(
+  "/admin/delete",
+
+  requireFirebaseUser,
+  requireAdminUser,
+
+  async (req, res) => {
+    try {
+      const uid =
+        bodyText(
+          req,
+          "uid"
+        );
+
+      if (!uid) {
+        const error =
+          new Error(
+            "UID_REQUIRED"
+          );
+
+        error.code =
+          "UID_REQUIRED";
+
+        throw error;
+      }
+
+      if (
+        uid ===
+        String(
+          req.adminUser?.uid || ""
+        )
+      ) {
+        const error =
+          new Error(
+            "ADMIN_SELF_DELETE_FORBIDDEN"
+          );
+
+        error.code =
+          "ADMIN_SELF_DELETE_FORBIDDEN";
+
+        throw error;
+      }
+
+      let authUserExists =
+        true;
+
+      try {
+        await admin
+          .auth()
+          .updateUser(
+            uid,
+            {
+              disabled: true,
+            }
+          );
+      }
+      catch (error) {
+        if (
+          error?.code ===
+          "auth/user-not-found"
+        ) {
+          authUserExists =
+            false;
+        }
+        else {
+          throw error;
+        }
+      }
+
+      const db =
+        getDb();
+
+      const refs = [
+        db
+          .collection(
+            ACCESS_PRODUCT
+              .accountCollection
+          )
+          .doc(uid),
+
+        db
+          .collection("users")
+          .doc(uid),
+
+        db
+          .collection("admins")
+          .doc(uid),
+      ];
+
+      for (
+        const ref of refs
+      ) {
+        await deleteDocumentTree(
+          ref
+        );
+      }
+
+      if (authUserExists) {
+        try {
+          await admin
+            .auth()
+            .deleteUser(uid);
+        }
+        catch (error) {
+          if (
+            error?.code !==
+            "auth/user-not-found"
+          ) {
+            throw error;
+          }
+        }
+      }
+
+      return res.json({
+        ok: true,
+
+        deleted: {
+          uid,
+        },
+      });
+    }
+    catch (error) {
       return sendAdminError(
         res,
         error

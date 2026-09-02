@@ -8,6 +8,7 @@ import React, {
 import {
   activateUserAccess,
   createAdminOperationId,
+  deleteUserAccount,
   getUserAccess,
   listUsers,
   revokeUserAccess,
@@ -17,51 +18,60 @@ import {
   updateAdminUserProfile,
 } from "./userProfileAdmin.api";
 
-import "../../AdminSimple.css";
-
 /*
- * Fonte de verdade: backend de acesso
+ * Fonte de verdade: backend de acesso.
+ *
+ * "revoke" permanece apenas como operação técnica interna.
+ * Para o Admin, o conceito operacional é SUSPENDER.
  */
 
 function clean(value) {
-  return String(value ?? "").trim();
+  return String(
+    value ?? ""
+  ).trim();
 }
 
-function digits(value) {
-  return String(value ?? "")
+function onlyDigits(value) {
+  return clean(value)
     .replace(/\D+/g, "")
     .slice(0, 11);
 }
 
 function phoneMask(value) {
-  const phone = digits(value);
+  const digits =
+    onlyDigits(value);
 
-  if (!phone) {
+  if (!digits) {
     return "";
   }
 
-  if (phone.length <= 2) {
-    return `(${phone}`;
+  if (digits.length <= 2) {
+    return `(${digits}`;
   }
 
-  if (phone.length <= 6) {
-    return `(${phone.slice(0, 2)}) ${phone.slice(2)}`;
-  }
-
-  if (phone.length <= 10) {
+  if (digits.length <= 6) {
     return (
-      `(${phone.slice(0, 2)}) ` +
-      `${phone.slice(2, 6)}-${phone.slice(6)}`
+      `(${digits.slice(0, 2)}) ` +
+      digits.slice(2)
+    );
+  }
+
+  if (digits.length <= 10) {
+    return (
+      `(${digits.slice(0, 2)}) ` +
+      `${digits.slice(2, 6)}-` +
+      digits.slice(6)
     );
   }
 
   return (
-    `(${phone.slice(0, 2)}) ` +
-    `${phone.slice(2, 7)}-${phone.slice(7)}`
+    `(${digits.slice(0, 2)}) ` +
+    `${digits.slice(2, 7)}-` +
+    digits.slice(7)
   );
 }
 
-function toDate(value) {
+function asDate(value) {
   if (!value) {
     return null;
   }
@@ -70,7 +80,10 @@ function toDate(value) {
     return value;
   }
 
-  if (typeof value?.toDate === "function") {
+  if (
+    typeof value?.toDate ===
+    "function"
+  ) {
     try {
       return value.toDate();
     }
@@ -81,20 +94,29 @@ function toDate(value) {
 
   if (
     typeof value === "object" &&
-    Number.isFinite(Number(value?.seconds))
+    Number.isFinite(
+      Number(value?.seconds)
+    )
   ) {
-    return new Date(Number(value.seconds) * 1000);
+    return new Date(
+      Number(value.seconds) *
+        1000
+    );
   }
 
-  const parsed = new Date(value);
+  const parsed =
+    new Date(value);
 
-  return Number.isNaN(parsed.getTime())
+  return Number.isNaN(
+    parsed.getTime()
+  )
     ? null
     : parsed;
 }
 
 function dateLabel(value) {
-  const date = toDate(value);
+  const date =
+    asDate(value);
 
   if (!date) {
     return "—";
@@ -103,133 +125,123 @@ function dateLabel(value) {
   return date.toLocaleString(
     "pt-BR",
     {
-      dateStyle: "short",
-      timeStyle: "short",
+      dateStyle:
+        "short",
+
+      timeStyle:
+        "short",
     }
   );
 }
 
-function friendlyError(error, fallback) {
-  const raw = clean(
-    error?.message ||
-    error?.code
-  );
-
-  const code = raw.toUpperCase();
-
-  const messages = {
-    TARGET_USER_EMAIL_REQUIRED:
-      "Este cadastro não possui e-mail.",
-
-    UID_REQUIRED:
-      "Usuário inválido.",
-
-    ADMIN_NOT_AUTHORIZED:
-      "Operação não autorizada.",
-
-    ACCESS_ADMIN_REQUIRED:
-      "Operação não autorizada.",
-
-    UNAUTHORIZED:
-      "Sua sessão expirou. Entre novamente.",
-
-    FORBIDDEN:
-      "Operação não autorizada.",
-
-    USER_NOT_FOUND:
-      "Usuário não encontrado.",
-
-    TARGET_USER_NOT_FOUND:
-      "Usuário não encontrado.",
-  };
-
-  return (
-    messages[code] ||
-    fallback ||
-    "Não foi possível concluir a operação."
-  );
-}
-
-function statusOf(user) {
-  if (!clean(user?.email)) {
-    return "PENDENTE";
-  }
-
+function statusFromAccess(
+  response
+) {
   const access =
-    user?._access ||
-    null;
+    response?.access || null;
 
   const subscription =
-    access?.subscription ||
-    null;
-
-  const raw =
-    clean(subscription?.status)
-      .toUpperCase();
+    access?.subscription || null;
 
   if (
     access?.accessGranted === true ||
-    subscription?.active === true ||
-    raw === "ACTIVE"
+    subscription?.active === true
   ) {
     return "ATIVO";
   }
 
-  if (
-    raw === "SUSPENDED" ||
-    raw === "REVOKED"
-  ) {
+  const stored =
+    clean(
+      subscription?.status
+    ).toUpperCase();
+
+  if (stored === "REVOKED") {
     return "SUSPENSO";
   }
 
-  if (raw === "EXPIRED") {
+  if (stored === "EXPIRED") {
     return "EXPIRADO";
   }
 
   return "PENDENTE";
 }
 
-function validityOf(user) {
-  return (
-    user?._access
-      ?.subscription
-      ?.endsAt ||
-    null
-  );
-}
+function statusColor(status) {
+  if (status === "ATIVO") {
+    return "#9be7b2";
+  }
 
-function displayName(user) {
-  return (
-    clean(user?.name) ||
-    clean(user?.email) ||
-    "Cadastro incompleto"
-  );
+  if (status === "SUSPENSO") {
+    return "#ffaaaa";
+  }
+
+  if (status === "EXPIRADO") {
+    return "#ffbf8a";
+  }
+
+  return "#e5ca66";
 }
 
 export default function UserManagementPage() {
   const [users, setUsers] =
     useState([]);
 
-  const [query, setQuery] =
+  const [
+    selectedUid,
+    setSelectedUid,
+  ] =
     useState("");
 
-  const [filter, setFilter] =
-    useState("TODOS");
+  const [
+    accessResponse,
+    setAccessResponse,
+  ] =
+    useState(null);
 
-  const [loading, setLoading] =
+  const [search, setSearch] =
+    useState("");
+
+  const [name, setName] =
+    useState("");
+
+  const [phone, setPhone] =
+    useState("");
+
+  const [days, setDays] =
+    useState("30");
+
+  const [editing, setEditing] =
+    useState(false);
+
+  const [
+    loadingUsers,
+    setLoadingUsers,
+  ] =
     useState(true);
 
-  const [busyUid, setBusyUid] =
-    useState("");
+  const [
+    loadingAccess,
+    setLoadingAccess,
+  ] =
+    useState(false);
 
-  const [editingUid, setEditingUid] =
-    useState("");
+  const [
+    savingProfile,
+    setSavingProfile,
+  ] =
+    useState(false);
 
-  const [editName, setEditName] =
-    useState("");
+  const [
+    savingAccess,
+    setSavingAccess,
+  ] =
+    useState(false);
 
-  const [editPhone, setEditPhone] =
-    useState("");
+  const [
+    deleting,
+    setDeleting,
+  ] =
+    useState(false);
 
   const [error, setError] =
     useState("");
@@ -237,160 +249,36 @@ export default function UserManagementPage() {
   const [success, setSuccess] =
     useState("");
 
-  const enrichUsers =
-    useCallback(
-      async (rows) => {
-        return Promise.all(
-          rows.map(
-            async (user) => {
-              const email =
-                clean(user.email);
-
-              if (!email) {
-                return {
-                  ...user,
-                  _access: null,
-                };
-              }
-
-              try {
-                const result =
-                  await getUserAccess(
-                    user.uid
-                  );
-
-                return {
-                  ...user,
-                  _access:
-                    result?.access ||
-                    null,
-                };
-              }
-              catch {
-                return {
-                  ...user,
-                  _access: null,
-                };
-              }
-            }
-          )
-        );
-      },
-      []
-    );
-
-  const loadUsers =
-    useCallback(
-      async () => {
-        setLoading(true);
-        setError("");
-
-        try {
-          const rows =
-            await listUsers();
-
-          const enriched =
-            await enrichUsers(
-              rows
-            );
-
-          setUsers(enriched);
-        }
-        catch (err) {
-          setError(
-            friendlyError(
-              err,
-              "Não foi possível carregar os usuários."
-            )
-          );
-        }
-        finally {
-          setLoading(false);
-        }
-      },
-      [
-        enrichUsers,
-      ]
-    );
-
-  useEffect(
-    () => {
-      loadUsers();
-    },
-    [
-      loadUsers,
-    ]
-  );
-
-  const counts =
+  const selectedUser =
     useMemo(
-      () => {
-        const result = {
-          TOTAL:
-            users.length,
-
-          ATIVO:
-            0,
-
-          PENDENTE:
-            0,
-
-          SUSPENSO:
-            0,
-
-          EXPIRADO:
-            0,
-        };
-
-        users.forEach(
-          (user) => {
-            const status =
-              statusOf(user);
-
-            if (
-              Object.prototype.hasOwnProperty.call(
-                result,
-                status
-              )
-            ) {
-              result[status] += 1;
-            }
-          }
-        );
-
-        return result;
-      },
+      () =>
+        users.find(
+          (user) =>
+            user.uid ===
+            selectedUid
+        ) || null,
       [
         users,
+        selectedUid,
       ]
     );
 
-  const filtered =
+  const filteredUsers =
     useMemo(
       () => {
-        const needle =
-          clean(query)
+        const q =
+          clean(search)
             .toLocaleLowerCase(
               "pt-BR"
             );
 
+        if (!q) {
+          return users;
+        }
+
         return users.filter(
-          (user) => {
-            const status =
-              statusOf(user);
-
-            if (
-              filter !== "TODOS" &&
-              status !== filter
-            ) {
-              return false;
-            }
-
-            if (!needle) {
-              return true;
-            }
-
-            return [
+          (user) =>
+            [
               user.name,
               user.email,
               user.phone,
@@ -403,85 +291,234 @@ export default function UserManagementPage() {
                     )
               )
               .join(" ")
-              .includes(needle);
-          }
+              .includes(q)
         );
       },
       [
         users,
-        query,
-        filter,
+        search,
       ]
     );
 
-  function beginEdit(user) {
-    setEditingUid(
-      user.uid
+  const status =
+    useMemo(
+      () =>
+        statusFromAccess(
+          accessResponse
+        ),
+      [
+        accessResponse,
+      ]
     );
 
-    setEditName(
-      clean(user.name)
+  const active =
+    status === "ATIVO";
+
+  const suspended =
+    status === "SUSPENSO";
+
+  const subscription =
+    accessResponse
+      ?.access
+      ?.subscription ||
+    null;
+
+  const actionLabel =
+    active
+      ? "RENOVAR"
+      : suspended
+        ? "REATIVAR"
+        : "LIBERAR";
+
+  const loadAccess =
+    useCallback(
+      async (uid) => {
+        const safeUid =
+          clean(uid);
+
+        if (!safeUid) {
+          setAccessResponse(null);
+          return;
+        }
+
+        setLoadingAccess(true);
+
+        try {
+          const response =
+            await getUserAccess(
+              safeUid
+            );
+
+          setAccessResponse(
+            response || null
+          );
+        }
+        catch (err) {
+          setAccessResponse(null);
+
+          setError(
+            clean(
+              err?.message
+            ) ||
+            "Não foi possível consultar o acesso."
+          );
+        }
+        finally {
+          setLoadingAccess(false);
+        }
+      },
+      []
     );
 
-    setEditPhone(
-      phoneMask(
-        user.phone
-      )
+  const loadUsers =
+    useCallback(
+      async (
+        preserveUid = ""
+      ) => {
+        setLoadingUsers(true);
+        setError("");
+
+        try {
+          const rows =
+            await listUsers();
+
+          setUsers(rows);
+
+          setSelectedUid(
+            (current) => {
+              const wanted =
+                preserveUid ||
+                current;
+
+              if (
+                wanted &&
+                rows.some(
+                  (user) =>
+                    user.uid ===
+                    wanted
+                )
+              ) {
+                return wanted;
+              }
+
+              return (
+                rows[0]?.uid ||
+                ""
+              );
+            }
+          );
+        }
+        catch (err) {
+          setError(
+            clean(
+              err?.message
+            ) ||
+            "Não foi possível carregar os usuários."
+          );
+        }
+        finally {
+          setLoadingUsers(false);
+        }
+      },
+      []
     );
 
-    setError("");
-    setSuccess("");
-  }
+  useEffect(
+    () => {
+      loadUsers();
+    },
+    [
+      loadUsers,
+    ]
+  );
 
-  function cancelEdit() {
-    setEditingUid("");
-    setEditName("");
-    setEditPhone("");
-  }
+  useEffect(
+    () => {
+      if (!selectedUser) {
+        setName("");
+        setPhone("");
+        setEditing(false);
+        setAccessResponse(null);
+        return;
+      }
 
-  async function saveUser(user) {
+      setName(
+        clean(
+          selectedUser.name
+        )
+      );
+
+      setPhone(
+        phoneMask(
+          selectedUser.phone
+        )
+      );
+
+      setEditing(false);
+      setError("");
+      setSuccess("");
+
+      loadAccess(
+        selectedUser.uid
+      );
+    },
+    [
+      selectedUid,
+      selectedUser?.uid,
+      loadAccess,
+    ]
+  );
+
+  async function saveProfile() {
     if (
-      !user ||
-      busyUid
+      !selectedUser ||
+      savingProfile
     ) {
       return;
     }
 
-    setBusyUid(user.uid);
+    setSavingProfile(true);
     setError("");
     setSuccess("");
 
     try {
       const updated =
         await updateAdminUserProfile(
-          user.uid,
+          selectedUser.uid,
           {
-            name:
-              editName,
-
-            phone:
-              editPhone,
+            name,
+            phone,
           }
         );
 
       setUsers(
         (current) =>
           current.map(
-            (item) =>
-              item.uid ===
-              user.uid
+            (user) =>
+              user.uid ===
+              selectedUser.uid
                 ? {
-                    ...item,
+                    ...user,
+
                     name:
                       updated.name,
+
                     phone:
                       updated.phone,
                   }
-                : item
+                : user
           )
       );
 
-      cancelEdit();
+      setName(
+        updated.name
+      );
+
+      setPhone(
+        updated.phone
+      );
+
+      setEditing(false);
 
       setSuccess(
         "Dados do usuário atualizados."
@@ -489,61 +526,43 @@ export default function UserManagementPage() {
     }
     catch (err) {
       setError(
-        friendlyError(
-          err,
-          "Não foi possível salvar os dados."
-        )
+        clean(
+          err?.message
+        ) ||
+        "Não foi possível salvar os dados."
       );
     }
     finally {
-      setBusyUid("");
+      setSavingProfile(false);
     }
   }
 
-  async function refreshAccess(user) {
+  async function grantOrRenew() {
     if (
-      !user ||
-      !clean(user.email)
+      !selectedUser ||
+      savingAccess
     ) {
       return;
     }
 
-    try {
-      const result =
-        await getUserAccess(
-          user.uid
-        );
+    const safeDays =
+      Number(days);
 
-      setUsers(
-        (current) =>
-          current.map(
-            (item) =>
-              item.uid ===
-              user.uid
-                ? {
-                    ...item,
-                    _access:
-                      result?.access ||
-                      null,
-                  }
-                : item
-          )
+    if (
+      !Number.isSafeInteger(
+        safeDays
+      ) ||
+      safeDays < 1 ||
+      safeDays > 3650
+    ) {
+      setError(
+        "Informe uma quantidade de dias entre 1 e 3650."
       );
-    }
-    catch {
-      // mantém o último estado conhecido
-    }
-  }
 
-  async function activate(user) {
-    if (
-      !user ||
-      busyUid
-    ) {
       return;
     }
 
-    if (!clean(user.email)) {
+    if (!selectedUser.email) {
       setError(
         "Este cadastro não possui e-mail."
       );
@@ -551,7 +570,10 @@ export default function UserManagementPage() {
       return;
     }
 
-    setBusyUid(user.uid);
+    const action =
+      actionLabel;
+
+    setSavingAccess(true);
     setError("");
     setSuccess("");
 
@@ -559,53 +581,63 @@ export default function UserManagementPage() {
       const operationId =
         createAdminOperationId(
           "grant",
-          user.uid
+          selectedUser.uid
         );
 
       await activateUserAccess(
-        user.uid,
+        selectedUser.uid,
         {
           operationId,
 
           paymentReference:
             "admin-manual",
+
+          days:
+            safeDays,
         }
       );
 
-      await refreshAccess(
-        user
+      await loadAccess(
+        selectedUser.uid
       );
 
-      setSuccess(
-        "Acesso ativado/renovado por 30 dias."
-      );
+      if (action === "RENOVAR") {
+        setSuccess(
+          `Assinatura renovada por mais ${safeDays} dia(s).`
+        );
+      }
+      else if (
+        action === "REATIVAR"
+      ) {
+        setSuccess(
+          `Acesso reativado por ${safeDays} dia(s).`
+        );
+      }
+      else {
+        setSuccess(
+          `Acesso liberado por ${safeDays} dia(s).`
+        );
+      }
     }
     catch (err) {
       setError(
-        friendlyError(
-          err,
-          "Não foi possível ativar o acesso."
-        )
+        clean(
+          err?.message
+        ) ||
+        "Não foi possível alterar o acesso."
       );
     }
     finally {
-      setBusyUid("");
+      setSavingAccess(false);
     }
   }
 
-  async function revoke(user) {
+  async function suspend() {
     if (
-      !user ||
-      busyUid
+      !selectedUser ||
+      savingAccess ||
+      !active
     ) {
-      return;
-    }
-
-    if (!clean(user.email)) {
-      setError(
-        "Este cadastro não possui e-mail."
-      );
-
       return;
     }
 
@@ -613,13 +645,13 @@ export default function UserManagementPage() {
       typeof window !==
         "undefined" &&
       !window.confirm(
-        `Revogar o acesso de ${displayName(user)}?`
+        "Suspender o acesso deste usuário?"
       )
     ) {
       return;
     }
 
-    setBusyUid(user.uid);
+    setSavingAccess(true);
     setError("");
     setSuccess("");
 
@@ -627,471 +659,1143 @@ export default function UserManagementPage() {
       const operationId =
         createAdminOperationId(
           "revoke",
-          user.uid
+          selectedUser.uid
         );
 
       await revokeUserAccess(
-        user.uid,
+        selectedUser.uid,
         {
           operationId,
 
           reason:
-            "Revogação administrativa",
+            "Suspensão administrativa",
         }
       );
 
-      await refreshAccess(
-        user
+      await loadAccess(
+        selectedUser.uid
       );
 
       setSuccess(
-        "Acesso revogado."
+        "Acesso suspenso."
       );
     }
     catch (err) {
       setError(
-        friendlyError(
-          err,
-          "Não foi possível revogar o acesso."
-        )
+        clean(
+          err?.message
+        ) ||
+        "Não foi possível suspender o acesso."
       );
     }
     finally {
-      setBusyUid("");
+      setSavingAccess(false);
     }
   }
 
-  return (
-    <div className="jb-admin-content">
-      <div className="jb-admin-title-row">
-        <div>
-          <span className="jb-admin-kicker">
-            ASSINATURAS
-          </span>
+  async function removeUser() {
+    if (
+      !selectedUser ||
+      deleting
+    ) {
+      return;
+    }
 
-          <h1>
+    const identity =
+      selectedUser.name ||
+      selectedUser.email ||
+      "este usuário";
+
+    if (
+      typeof window !==
+        "undefined" &&
+      !window.confirm(
+        `Excluir definitivamente ${identity}? Esta ação remove login, cadastro e acesso e não pode ser desfeita.`
+      )
+    ) {
+      return;
+    }
+
+    setDeleting(true);
+    setError("");
+    setSuccess("");
+
+    try {
+      const uid =
+        selectedUser.uid;
+
+      await deleteUserAccount(
+        uid
+      );
+
+      const remaining =
+        users.filter(
+          (user) =>
+            user.uid !== uid
+        );
+
+      setUsers(
+        remaining
+      );
+
+      setSelectedUid(
+        remaining[0]?.uid ||
+        ""
+      );
+
+      setAccessResponse(null);
+
+      setSuccess(
+        "Usuário excluído definitivamente."
+      );
+    }
+    catch (err) {
+      const code =
+        clean(
+          err?.code
+        );
+
+      if (
+        code ===
+        "ADMIN_SELF_DELETE_FORBIDDEN"
+      ) {
+        setError(
+          "A conta Admin que está em uso não pode ser excluída."
+        );
+      }
+      else {
+        setError(
+          clean(
+            err?.message
+          ) ||
+          "Não foi possível excluir o usuário."
+        );
+      }
+    }
+    finally {
+      setDeleting(false);
+    }
+  }
+
+  const inputStyle = {
+    width:
+      "100%",
+
+    minHeight:
+      44,
+
+    boxSizing:
+      "border-box",
+
+    padding:
+      "0 12px",
+
+    borderRadius:
+      10,
+
+    outline:
+      "none",
+
+    color:
+      "#fff",
+
+    background:
+      "rgba(255,255,255,0.035)",
+
+    border:
+      "1px solid rgba(255,255,255,0.12)",
+  };
+
+  const buttonStyle = {
+    minHeight:
+      42,
+
+    padding:
+      "0 15px",
+
+    borderRadius:
+      10,
+
+    cursor:
+      "pointer",
+
+    fontWeight:
+      900,
+  };
+
+  return (
+    <section>
+      <div
+        style={{
+          display:
+            "flex",
+
+          alignItems:
+            "end",
+
+          justifyContent:
+            "space-between",
+
+          gap:
+            12,
+
+          flexWrap:
+            "wrap",
+
+          marginBottom:
+            18,
+        }}
+      >
+        <div>
+          <div
+            style={{
+              color:
+                "#d8b94e",
+
+              fontSize:
+                11,
+
+              fontWeight:
+                900,
+
+              letterSpacing:
+                1,
+            }}
+          >
+            USUÁRIOS
+          </div>
+
+          <h1
+            style={{
+              margin:
+                "5px 0 0",
+
+              fontSize:
+                27,
+            }}
+          >
             Usuários cadastrados
           </h1>
-
-          <p>
-            Consulte, edite e controle os acessos.
-          </p>
         </div>
 
         <button
           type="button"
-          className="jb-btn jb-btn--outline"
-          onClick={loadUsers}
-          disabled={loading}
+          onClick={() =>
+            loadUsers(
+              selectedUid
+            )
+          }
+          disabled={
+            loadingUsers
+          }
+          style={{
+            ...buttonStyle,
+
+            color:
+              "#fff",
+
+            background:
+              "rgba(202,166,75,0.10)",
+
+            border:
+              "1px solid rgba(202,166,75,0.34)",
+          }}
         >
-          {loading
-            ? "ATUALIZANDO..."
-            : "ATUALIZAR"}
+          ATUALIZAR
         </button>
       </div>
 
-      <div className="jb-admin-stats">
-        <button
-          type="button"
-          onClick={() =>
-            setFilter("TODOS")
-          }
-          className={
-            filter === "TODOS"
-              ? "is-selected"
-              : ""
-          }
+      <label
+        style={{
+          display:
+            "grid",
+
+          gap:
+            6,
+
+          marginBottom:
+            14,
+        }}
+      >
+        <span
+          style={{
+            color:
+              "#d8b94e",
+
+            fontSize:
+              10,
+
+            fontWeight:
+              900,
+          }}
         >
-          <span>TOTAL</span>
-          <strong>
-            {counts.TOTAL}
-          </strong>
-        </button>
+          BUSCAR
+        </span>
 
-        <button
-          type="button"
-          onClick={() =>
-            setFilter("ATIVO")
-          }
-          className={
-            filter === "ATIVO"
-              ? "is-selected"
-              : ""
-          }
-        >
-          <span>ATIVOS</span>
-          <strong>
-            {counts.ATIVO}
-          </strong>
-        </button>
-
-        <button
-          type="button"
-          onClick={() =>
-            setFilter("PENDENTE")
-          }
-          className={
-            filter === "PENDENTE"
-              ? "is-selected"
-              : ""
-          }
-        >
-          <span>PENDENTES</span>
-          <strong>
-            {counts.PENDENTE}
-          </strong>
-        </button>
-
-        <button
-          type="button"
-          onClick={() =>
-            setFilter("SUSPENSO")
-          }
-          className={
-            filter === "SUSPENSO"
-              ? "is-selected"
-              : ""
-          }
-        >
-          <span>SUSPENSOS</span>
-          <strong>
-            {counts.SUSPENSO}
-          </strong>
-        </button>
-
-        <button
-          type="button"
-          onClick={() =>
-            setFilter("EXPIRADO")
-          }
-          className={
-            filter === "EXPIRADO"
-              ? "is-selected"
-              : ""
-          }
-        >
-          <span>EXPIRADOS</span>
-          <strong>
-            {counts.EXPIRADO}
-          </strong>
-        </button>
-      </div>
-
-      <div className="jb-admin-filters">
-        <label>
-          <span>
-            BUSCAR
-          </span>
-
-          <input
-            type="search"
-            value={query}
-            onChange={(event) =>
-              setQuery(
+        <input
+          type="search"
+          value={search}
+          onChange={
+            (event) =>
+              setSearch(
                 event.target.value
               )
-            }
-            placeholder="Nome, e-mail ou telefone"
-          />
-        </label>
-
-        <label>
-          <span>
-            SITUAÇÃO
-          </span>
-
-          <select
-            value={filter}
-            onChange={(event) =>
-              setFilter(
-                event.target.value
-              )
-            }
-          >
-            <option value="TODOS">
-              Todos
-            </option>
-
-            <option value="ATIVO">
-              Ativos
-            </option>
-
-            <option value="PENDENTE">
-              Pendentes
-            </option>
-
-            <option value="SUSPENSO">
-              Suspensos
-            </option>
-
-            <option value="EXPIRADO">
-              Expirados
-            </option>
-          </select>
-        </label>
-      </div>
+          }
+          placeholder="Nome, e-mail ou telefone"
+          style={inputStyle}
+        />
+      </label>
 
       {error ? (
-        <div className="jb-message jb-message--error">
+        <div
+          role="alert"
+          style={{
+            marginBottom:
+              12,
+
+            padding:
+              11,
+
+            borderRadius:
+              9,
+
+            color:
+              "#ffaaaa",
+
+            border:
+              "1px solid rgba(220,80,80,.28)",
+
+            background:
+              "rgba(120,30,30,.13)",
+          }}
+        >
           {error}
         </div>
       ) : null}
 
       {success ? (
-        <div className="jb-message jb-message--success">
+        <div
+          role="status"
+          style={{
+            marginBottom:
+              12,
+
+            padding:
+              11,
+
+            borderRadius:
+              9,
+
+            color:
+              "#a7e8ba",
+
+            border:
+              "1px solid rgba(70,180,105,.28)",
+
+            background:
+              "rgba(25,95,48,.13)",
+          }}
+        >
           {success}
         </div>
       ) : null}
 
-      {loading ? (
-        <div className="jb-admin-loading">
-          Carregando usuários...
-        </div>
-      ) : filtered.length === 0 ? (
-        <div className="jb-admin-loading">
-          Nenhum usuário encontrado.
-        </div>
-      ) : (
-        <div className="jb-admin-users">
-          {filtered.map(
-            (user) => {
-              const status =
-                statusOf(user);
+      <div
+        className="jb-admin-users-grid"
+        style={{
+          display:
+            "grid",
 
-              const active =
-                status === "ATIVO";
+          gridTemplateColumns:
+            "minmax(250px,330px) minmax(0,1fr)",
 
-              const editing =
-                editingUid ===
-                user.uid;
+          gap:
+            16,
 
-              const busy =
-                busyUid ===
-                user.uid;
+          alignItems:
+            "start",
+        }}
+      >
+        <aside
+          style={{
+            borderRadius:
+              13,
 
-              const hasEmail =
-                Boolean(
-                  clean(user.email)
-                );
+            overflow:
+              "hidden",
 
-              return (
-                <article
-                  key={user.uid}
-                  className="jb-user-card"
+            border:
+              "1px solid rgba(202,166,75,0.20)",
+
+            background:
+              "rgba(255,255,255,0.018)",
+          }}
+        >
+          <div
+            style={{
+              padding:
+                "10px 13px",
+
+              fontSize:
+                12,
+
+              opacity:
+                0.58,
+
+              borderBottom:
+                "1px solid rgba(255,255,255,0.06)",
+            }}
+          >
+            {filteredUsers.length}
+            {" usuário(s)"}
+          </div>
+
+          <div
+            style={{
+              maxHeight:
+                "65vh",
+
+              overflowY:
+                "auto",
+            }}
+          >
+            {loadingUsers ? (
+              <div
+                style={{
+                  padding:
+                    17,
+
+                  opacity:
+                    0.6,
+                }}
+              >
+                Carregando...
+              </div>
+            ) : filteredUsers.length === 0 ? (
+              <div
+                style={{
+                  padding:
+                    17,
+
+                  opacity:
+                    0.6,
+                }}
+              >
+                Nenhum usuário encontrado.
+              </div>
+            ) : (
+              filteredUsers.map(
+                (user) => (
+                  <button
+                    key={user.uid}
+                    type="button"
+                    onClick={() =>
+                      setSelectedUid(
+                        user.uid
+                      )
+                    }
+                    style={{
+                      width:
+                        "100%",
+
+                      display:
+                        "grid",
+
+                      gap:
+                        3,
+
+                      padding:
+                        "12px 13px",
+
+                      cursor:
+                        "pointer",
+
+                      textAlign:
+                        "left",
+
+                      color:
+                        "#fff",
+
+                      border:
+                        0,
+
+                      borderBottom:
+                        "1px solid rgba(255,255,255,0.055)",
+
+                      background:
+                        user.uid ===
+                        selectedUid
+                          ? "rgba(202,166,75,0.12)"
+                          : "transparent",
+                    }}
+                  >
+                    <strong>
+                      {user.name ||
+                        "Sem nome"}
+                    </strong>
+
+                    <span
+                      style={{
+                        fontSize:
+                          12,
+
+                        opacity:
+                          0.62,
+                      }}
+                    >
+                      {user.email ||
+                        "Sem e-mail"}
+                    </span>
+
+                    <span
+                      style={{
+                        color:
+                          "#d8b94e",
+
+                        fontSize:
+                          11,
+                      }}
+                    >
+                      {user.phone ||
+                        "Sem telefone"}
+                    </span>
+                  </button>
+                )
+              )
+            )}
+          </div>
+        </aside>
+
+        <main>
+          {!selectedUser ? (
+            <div
+              style={{
+                padding:
+                  28,
+
+                textAlign:
+                  "center",
+
+                opacity:
+                  0.58,
+              }}
+            >
+              Selecione um usuário.
+            </div>
+          ) : (
+            <div
+              style={{
+                display:
+                  "grid",
+
+                gap:
+                  13,
+              }}
+            >
+              <article
+                style={{
+                  padding:
+                    18,
+
+                  borderRadius:
+                    13,
+
+                  background:
+                    "rgba(255,255,255,0.018)",
+
+                  border:
+                    "1px solid rgba(202,166,75,0.20)",
+                }}
+              >
+                <div
+                  style={{
+                    display:
+                      "flex",
+
+                    justifyContent:
+                      "space-between",
+
+                    alignItems:
+                      "center",
+
+                    gap:
+                      12,
+
+                    flexWrap:
+                      "wrap",
+                  }}
                 >
-                  <div className="jb-user-card__top">
-                    <div>
-                      <span
-                        className={
-                          `jb-status jb-status--${status.toLowerCase()}`
-                        }
-                      >
-                        {status}
-                      </span>
+                  <div>
+                    <div
+                      style={{
+                        color:
+                          "#d8b94e",
 
-                      <h2>
-                        {displayName(
-                          user
-                        )}
-                      </h2>
+                        fontSize:
+                          10,
 
-                      <p>
-                        {clean(
-                          user.email
-                        ) ||
-                          "E-mail não informado"}
-                      </p>
-
-                      <small>
-                        Cadastro:{" "}
-                        {dateLabel(
-                          user.createdAt
-                        )}
-                      </small>
+                        fontWeight:
+                          900,
+                      }}
+                    >
+                      DADOS DO USUÁRIO
                     </div>
 
-                    <div className="jb-user-validity">
-                      <span>
-                        VALIDADE
-                      </span>
-
-                      <strong>
-                        {dateLabel(
-                          validityOf(
-                            user
-                          )
-                        )}
-                      </strong>
-                    </div>
+                    <h2
+                      style={{
+                        margin:
+                          "5px 0 0",
+                      }}
+                    >
+                      {selectedUser.name ||
+                        "Sem nome"}
+                    </h2>
                   </div>
 
-                  {editing ? (
-                    <div className="jb-user-edit">
-                      <label>
-                        <span>
-                          Nome
-                        </span>
+                  <strong
+                    style={{
+                      color:
+                        statusColor(
+                          status
+                        ),
+                    }}
+                  >
+                    {loadingAccess
+                      ? "CONSULTANDO..."
+                      : status}
+                  </strong>
+                </div>
 
-                        <input
-                          value={editName}
-                          onChange={(event) =>
-                            setEditName(
-                              event.target.value
+                {editing ? (
+                  <div
+                    style={{
+                      display:
+                        "grid",
+
+                      gridTemplateColumns:
+                        "repeat(auto-fit,minmax(190px,1fr))",
+
+                      gap:
+                        11,
+
+                      marginTop:
+                        17,
+                    }}
+                  >
+                    <label>
+                      <span>Nome</span>
+
+                      <input
+                        value={name}
+                        onChange={
+                          (event) =>
+                            setName(
+                              event
+                                .target
+                                .value
                             )
-                          }
-                        />
-                      </label>
+                        }
+                        style={{
+                          ...inputStyle,
+                          marginTop:
+                            5,
+                        }}
+                      />
+                    </label>
 
-                      <label>
-                        <span>
-                          Telefone
-                        </span>
+                    <label>
+                      <span>
+                        Telefone
+                      </span>
 
-                        <input
-                          value={editPhone}
-                          inputMode="numeric"
-                          onChange={(event) =>
-                            setEditPhone(
+                      <input
+                        value={phone}
+                        onChange={
+                          (event) =>
+                            setPhone(
                               phoneMask(
-                                event.target.value
+                                event
+                                  .target
+                                  .value
                               )
                             )
-                          }
-                        />
-                      </label>
+                        }
+                        inputMode="numeric"
+                        style={{
+                          ...inputStyle,
+                          marginTop:
+                            5,
+                        }}
+                      />
+                    </label>
 
-                      <label>
-                        <span>
-                          E-mail
-                        </span>
+                    <label>
+                      <span>E-mail</span>
 
-                        <input
-                          value={
-                            user.email ||
-                            ""
-                          }
-                          readOnly
-                        />
-                      </label>
+                      <input
+                        value={
+                          selectedUser.email ||
+                          ""
+                        }
+                        readOnly
+                        style={{
+                          ...inputStyle,
+
+                          marginTop:
+                            5,
+
+                          opacity:
+                            0.6,
+
+                          cursor:
+                            "not-allowed",
+                        }}
+                      />
+                    </label>
+                  </div>
+                ) : (
+                  <div
+                    style={{
+                      display:
+                        "grid",
+
+                      gridTemplateColumns:
+                        "repeat(auto-fit,minmax(180px,1fr))",
+
+                      gap:
+                        13,
+
+                      marginTop:
+                        17,
+
+                      paddingTop:
+                        14,
+
+                      borderTop:
+                        "1px solid rgba(255,255,255,0.06)",
+                    }}
+                  >
+                    <div>
+                      <small
+                        style={{
+                          opacity:
+                            0.55,
+                        }}
+                      >
+                        E-MAIL
+                      </small>
+
+                      <div>
+                        {selectedUser.email ||
+                          "—"}
+                      </div>
                     </div>
+
+                    <div>
+                      <small
+                        style={{
+                          opacity:
+                            0.55,
+                        }}
+                      >
+                        TELEFONE
+                      </small>
+
+                      <div>
+                        {selectedUser.phone ||
+                          "—"}
+                      </div>
+                    </div>
+
+                    <div>
+                      <small
+                        style={{
+                          opacity:
+                            0.55,
+                        }}
+                      >
+                        CADASTRO
+                      </small>
+
+                      <div>
+                        {dateLabel(
+                          selectedUser
+                            .createdAt
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                <div
+                  style={{
+                    display:
+                      "flex",
+
+                    gap:
+                      8,
+
+                    flexWrap:
+                      "wrap",
+
+                    marginTop:
+                      14,
+                  }}
+                >
+                  {!editing ? (
+                    <button
+                      type="button"
+                      onClick={() =>
+                        setEditing(
+                          true
+                        )
+                      }
+                      style={{
+                        ...buttonStyle,
+
+                        color:
+                          "#fff",
+
+                        background:
+                          "rgba(255,255,255,0.04)",
+
+                        border:
+                          "1px solid rgba(216,185,78,.32)",
+                      }}
+                    >
+                      EDITAR
+                    </button>
                   ) : (
-                    <div className="jb-user-data">
-                      <div>
-                        <span>
-                          TELEFONE
-                        </span>
-
-                        <strong>
-                          {clean(
-                            user.phone
-                          ) ||
-                            "Não informado"}
-                        </strong>
-                      </div>
-
-                      <div>
-                        <span>
-                          SITUAÇÃO
-                        </span>
-
-                        <strong>
-                          {status}
-                        </strong>
-                      </div>
-
-                      <div>
-                        <span>
-                          PLANO
-                        </span>
-
-                        <strong>
-                          R$ 49,90 · 30 dias
-                        </strong>
-                      </div>
-                    </div>
-                  )}
-
-                  <div className="jb-user-actions">
-                    {editing ? (
-                      <>
-                        <button
-                          type="button"
-                          className="jb-btn jb-btn--gold"
-                          onClick={() =>
-                            saveUser(
-                              user
-                            )
-                          }
-                          disabled={busy}
-                        >
-                          SALVAR DADOS
-                        </button>
-
-                        <button
-                          type="button"
-                          className="jb-btn jb-btn--outline"
-                          onClick={
-                            cancelEdit
-                          }
-                          disabled={busy}
-                        >
-                          CANCELAR
-                        </button>
-                      </>
-                    ) : (
+                    <>
                       <button
                         type="button"
-                        className="jb-btn jb-btn--outline"
-                        onClick={() =>
-                          beginEdit(
-                            user
-                          )
+                        onClick={
+                          saveProfile
                         }
-                        disabled={busy}
+                        disabled={
+                          savingProfile
+                        }
+                        style={{
+                          ...buttonStyle,
+
+                          color:
+                            "#171107",
+
+                          background:
+                            "#d8b94e",
+
+                          border:
+                            "1px solid #d8b94e",
+                        }}
                       >
-                        EDITAR
+                        {savingProfile
+                          ? "SALVANDO..."
+                          : "SALVAR DADOS"}
                       </button>
-                    )}
 
-                    <button
-                      type="button"
-                      className="jb-btn jb-btn--gold"
-                      onClick={() =>
-                        activate(
-                          user
-                        )
-                      }
-                      disabled={
-                        busy ||
-                        !hasEmail
-                      }
-                    >
-                      ATIVAR / RENOVAR +30 DIAS
-                    </button>
+                      <button
+                        type="button"
+                        onClick={() => {
+                          setName(
+                            clean(
+                              selectedUser
+                                .name
+                            )
+                          );
 
-                    <button
-                      type="button"
-                      className="jb-btn jb-btn--danger"
-                      onClick={() =>
-                        revoke(
-                          user
-                        )
-                      }
-                      disabled={
-                        busy ||
-                        !active ||
-                        !hasEmail
-                      }
+                          setPhone(
+                            phoneMask(
+                              selectedUser
+                                .phone
+                            )
+                          );
+
+                          setEditing(
+                            false
+                          );
+                        }}
+                        style={{
+                          ...buttonStyle,
+
+                          color:
+                            "#fff",
+
+                          background:
+                            "transparent",
+
+                          border:
+                            "1px solid rgba(255,255,255,.14)",
+                        }}
+                      >
+                        CANCELAR
+                      </button>
+                    </>
+                  )}
+                </div>
+              </article>
+
+              <article
+                style={{
+                  padding:
+                    18,
+
+                  borderRadius:
+                    13,
+
+                  background:
+                    "rgba(255,255,255,0.018)",
+
+                  border:
+                    "1px solid rgba(202,166,75,0.20)",
+                }}
+              >
+                <div
+                  style={{
+                    display:
+                      "flex",
+
+                    alignItems:
+                      "center",
+
+                    justifyContent:
+                      "space-between",
+
+                    gap:
+                      12,
+
+                    flexWrap:
+                      "wrap",
+                  }}
+                >
+                  <div>
+                    <div
+                      style={{
+                        color:
+                          "#d8b94e",
+
+                        fontSize:
+                          10,
+
+                        fontWeight:
+                          900,
+                      }}
                     >
-                      REVOGAR ACESSO
-                    </button>
+                      ACESSO
+                    </div>
+
+                    <h3
+                      style={{
+                        margin:
+                          "5px 0 0",
+                      }}
+                    >
+                      Assinatura Palpitaco JB
+                    </h3>
                   </div>
-                </article>
-              );
-            }
+
+                  <strong
+                    style={{
+                      color:
+                        statusColor(
+                          status
+                        ),
+                    }}
+                  >
+                    {status}
+                  </strong>
+                </div>
+
+                <div
+                  style={{
+                    display:
+                      "grid",
+
+                    gridTemplateColumns:
+                      "repeat(auto-fit,minmax(150px,1fr))",
+
+                    gap:
+                      10,
+
+                    marginTop:
+                      17,
+                  }}
+                >
+                  <div>
+                    <small
+                      style={{
+                        opacity:
+                          0.55,
+                      }}
+                    >
+                      SITUAÇÃO
+                    </small>
+
+                    <div>
+                      {status}
+                    </div>
+                  </div>
+
+                  <div>
+                    <small
+                      style={{
+                        opacity:
+                          0.55,
+                      }}
+                    >
+                      VALIDADE
+                    </small>
+
+                    <div>
+                      {dateLabel(
+                        subscription?.endsAt
+                      )}
+                    </div>
+                  </div>
+
+                  <label>
+                    <small
+                      style={{
+                        display:
+                          "block",
+
+                        opacity:
+                          0.55,
+
+                        marginBottom:
+                          5,
+                      }}
+                    >
+                      DIAS
+                    </small>
+
+                    <input
+                      type="number"
+                      min="1"
+                      max="3650"
+                      step="1"
+                      value={days}
+                      onChange={
+                        (event) =>
+                          setDays(
+                            event.target
+                              .value
+                          )
+                      }
+                      style={inputStyle}
+                    />
+                  </label>
+                </div>
+
+                <div
+                  style={{
+                    display:
+                      "flex",
+
+                    gap:
+                      8,
+
+                    flexWrap:
+                      "wrap",
+
+                    marginTop:
+                      16,
+                  }}
+                >
+                  <button
+                    type="button"
+                    onClick={
+                      grantOrRenew
+                    }
+                    disabled={
+                      savingAccess ||
+                      deleting
+                    }
+                    style={{
+                      ...buttonStyle,
+
+                      color:
+                        "#171107",
+
+                      background:
+                        "#d8b94e",
+
+                      border:
+                        "1px solid #d8b94e",
+                    }}
+                  >
+                    {savingAccess
+                      ? "PROCESSANDO..."
+                      : actionLabel}
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={
+                      suspend
+                    }
+                    disabled={
+                      savingAccess ||
+                      deleting ||
+                      !active
+                    }
+                    style={{
+                      ...buttonStyle,
+
+                      color:
+                        "#ffb0b0",
+
+                      background:
+                        "rgba(150,40,40,.10)",
+
+                      border:
+                        "1px solid rgba(220,80,80,.30)",
+                    }}
+                  >
+                    SUSPENDER
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={
+                      removeUser
+                    }
+                    disabled={
+                      deleting ||
+                      savingAccess
+                    }
+                    style={{
+                      ...buttonStyle,
+
+                      color:
+                        "#ff8f8f",
+
+                      background:
+                        "rgba(150,20,20,.16)",
+
+                      border:
+                        "1px solid rgba(255,70,70,.36)",
+                    }}
+                  >
+                    {deleting
+                      ? "EXCLUINDO..."
+                      : "EXCLUIR"}
+                  </button>
+                </div>
+              </article>
+            </div>
           )}
-        </div>
-      )}
-    </div>
+        </main>
+      </div>
+
+      <style>
+        {`
+          @media (max-width: 760px) {
+            .jb-admin-users-grid {
+              grid-template-columns: 1fr !important;
+            }
+          }
+        `}
+      </style>
+    </section>
   );
 }

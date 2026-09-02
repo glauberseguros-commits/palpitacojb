@@ -7,6 +7,7 @@ import { db } from "../../../../services/firebase";
 
 import {
   activateAdminUserAccess,
+  deleteAdminUserAccount,
   getAccessProduct,
   getAdminUserAccess,
   revokeAdminUserAccess,
@@ -127,12 +128,14 @@ export async function activateUserAccess(
   {
     operationId,
     paymentReference,
+    days = 30,
   } = {}
 ) {
   return activateAdminUserAccess({
     uid,
     operationId,
     paymentReference,
+    days,
   });
 }
 
@@ -148,6 +151,15 @@ export async function revokeUserAccess(
     uid,
     operationId,
     reason,
+  });
+}
+
+
+export async function deleteUserAccount(
+  uid
+) {
+  return deleteAdminUserAccount({
+    uid,
   });
 }
 

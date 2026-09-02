@@ -11,7 +11,7 @@ function read(relative) {
   );
 }
 
-test("pagamento usa contrato autoritativo", () => {
+test("pagamento continua no contrato autoritativo de 30 dias", () => {
   const source =
     read(
       "src/pages/Payments/Payments.jsx"
@@ -33,100 +33,97 @@ test("pagamento usa contrato autoritativo", () => {
     );
 
   expect(source)
-    .not.toContain(
+    .not
+    .toContain(
       "Trial"
     );
 });
 
-test("admin nao grava assinatura em users", () => {
-  const source =
+test("admin usa backend para assinatura e exclusao", () => {
+  const api =
     read(
       "src/pages/Admin/modules/UserManagement/userManagement.api.js"
     );
 
-  expect(source)
-    .not.toContain(
+  [
+    "activateAdminUserAccess",
+    "revokeAdminUserAccess",
+    "deleteAdminUserAccount",
+  ].forEach(
+    (marker) => {
+      expect(api)
+        .toContain(marker);
+    }
+  );
+
+  expect(api)
+    .not
+    .toContain(
       "updateDoc"
     );
 
-  expect(source)
-    .not.toContain(
+  expect(api)
+    .not
+    .toContain(
       "serverTimestamp"
-    );
-
-  expect(source)
-    .toContain(
-      "activateAdminUserAccess"
-    );
-
-  expect(source)
-    .toContain(
-      "revokeAdminUserAccess"
     );
 });
 
-test("admin nao usa planos legados ou vitalicio", () => {
+test("admin nao exibe planos legados nem revogar", () => {
   const source =
     read(
       "src/pages/Admin/modules/UserManagement/UserManagementPage.jsx"
     );
 
-  expect(source)
-    .not.toContain(
-      "ADMIN_USER_PLAN_OPTIONS"
-    );
+  [
+    "ADMIN_USER_PLAN_OPTIONS",
+    "planStartAt",
+    "planEndAt",
+    "isLifetime",
+    ">Trial<",
+    "REVOGAR ACESSO",
+  ].forEach(
+    (marker) => {
+      expect(source)
+        .not
+        .toContain(marker);
+    }
+  );
 
-  expect(source)
-    .not.toContain(
-      "planStartAt"
-    );
-
-  expect(source)
-    .not.toContain(
-      "planEndAt"
-    );
-
-  expect(source)
-    .not.toContain(
-      "isLifetime"
-    );
-
-  expect(source)
-    .not.toContain(
-      ">Trial<"
-    );
-
-  expect(source)
-    .toContain(
-      "ATIVAR / RENOVAR +30 DIAS"
-    );
-
-  expect(source)
-    .toContain(
-      "REVOGAR ACESSO"
-    );
+  [
+    "DIAS",
+    "LIBERAR",
+    "RENOVAR",
+    "REATIVAR",
+    "SUSPENDER",
+    "EXCLUIR",
+  ].forEach(
+    (marker) => {
+      expect(source)
+        .toContain(marker);
+    }
+  );
 });
 
-test("backend oferece consulta admin e PIX por ambiente", () => {
+test("backend expoe rotas Admin protegidas", () => {
   const source =
     read(
       "backend/routes/access.js"
     );
 
-  expect(source)
-    .toContain(
-      '"/admin/user/:uid"'
-    );
-
-  expect(source)
-    .toContain(
-      "PALPITACO_PIX_KEY"
-    );
-
-  expect(source)
-    .toContain(
-      "PALPITACO_PIX_RECEIVER"
-    );
+  [
+    '"/admin/user/:uid"',
+    '"/admin/activate"',
+    '"/admin/revoke"',
+    '"/admin/delete"',
+    "PALPITACO_PIX_KEY",
+    "PALPITACO_PIX_RECEIVER",
+  ].forEach(
+    (marker) => {
+      expect(source)
+        .toContain(marker);
+    }
+  );
 });
 
 test("accessClient usa endpoints administrativos", () => {
@@ -135,28 +132,18 @@ test("accessClient usa endpoints administrativos", () => {
       "src/services/accessClient.js"
     );
 
-  expect(source)
-    .toContain(
-      "getAdminUserAccess"
-    );
-
-  expect(source)
-    .toContain(
-      "activateAdminUserAccess"
-    );
-
-  expect(source)
-    .toContain(
-      "revokeAdminUserAccess"
-    );
-
-  expect(source)
-    .toContain(
-      '"/api/access/admin/activate"'
-    );
-
-  expect(source)
-    .toContain(
-      '"/api/access/admin/revoke"'
-    );
+  [
+    "getAdminUserAccess",
+    "activateAdminUserAccess",
+    "revokeAdminUserAccess",
+    "deleteAdminUserAccount",
+    '"/api/access/admin/activate"',
+    '"/api/access/admin/revoke"',
+    '"/api/access/admin/delete"',
+  ].forEach(
+    (marker) => {
+      expect(source)
+        .toContain(marker);
+    }
+  );
 });

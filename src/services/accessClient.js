@@ -758,12 +758,16 @@ export async function activateAdminUserAccess({
   uid,
   operationId,
   paymentReference = "",
+  days = 30,
 } = {}) {
   const safeUid =
     String(uid || "").trim();
 
   const safeOperationId =
     String(operationId || "").trim();
+
+  const safeDays =
+    Number(days);
 
   if (!safeUid) {
     throw new AccessClientError(
@@ -776,6 +780,19 @@ export async function activateAdminUserAccess({
     throw new AccessClientError(
       "OPERATION_ID_REQUIRED",
       "operationId e obrigatorio."
+    );
+  }
+
+  if (
+    !Number.isSafeInteger(
+      safeDays
+    ) ||
+    safeDays < 1 ||
+    safeDays > 3650
+  ) {
+    throw new AccessClientError(
+      "INVALID_SUBSCRIPTION_DAYS",
+      "Quantidade de dias invalida."
     );
   }
 
@@ -796,6 +813,9 @@ export async function activateAdminUserAccess({
           String(
             paymentReference || ""
           ).trim(),
+
+        days:
+          safeDays,
       },
     }
   );
@@ -847,6 +867,37 @@ export async function revokeAdminUserAccess({
           String(
             reason || ""
           ).trim(),
+      },
+    }
+  );
+}
+
+
+/**
+ * Exclui definitivamente um usuário pelo backend Admin.
+ */
+export async function deleteAdminUserAccount({
+  uid,
+} = {}) {
+  const safeUid =
+    String(uid || "").trim();
+
+  if (!safeUid) {
+    throw new AccessClientError(
+      "UID_REQUIRED",
+      "UID do usuario e obrigatorio."
+    );
+  }
+
+  return accessRequest(
+    "/api/access/admin/delete",
+    {
+      method:
+        "POST",
+
+      body: {
+        uid:
+          safeUid,
       },
     }
   );

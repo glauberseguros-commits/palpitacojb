@@ -11,7 +11,7 @@ function read(relative) {
   );
 }
 
-test("Admin e uma pagina simples de cadastro e controle", () => {
+test("Admin operacional usa ciclo simples de usuario", () => {
   const source =
     read(
       "src/pages/Admin/modules/UserManagement/UserManagementPage.jsx"
@@ -19,33 +19,68 @@ test("Admin e uma pagina simples de cadastro e controle", () => {
 
   [
     "Usuários cadastrados",
-    "TOTAL",
-    "ATIVOS",
-    "PENDENTES",
-    "SUSPENSOS",
-    "EXPIRADOS",
-    "BUSCAR",
-    "SITUAÇÃO",
     "EDITAR",
     "SALVAR DADOS",
-    "ATIVAR / RENOVAR +30 DIAS",
-    "REVOGAR ACESSO",
+    "DIAS",
+    "LIBERAR",
+    "RENOVAR",
+    "REATIVAR",
+    "SUSPENDER",
+    "EXCLUIR",
   ].forEach(
     (marker) => {
       expect(source)
         .toContain(marker);
     }
   );
+
+  expect(source)
+    .not
+    .toContain(
+      "REVOGAR ACESSO"
+    );
 });
 
-test("nao existe painel lateral ou dashboard tecnico", () => {
+test("autoridade de acesso permanece no backend", () => {
+  const source =
+    read(
+      "src/pages/Admin/modules/UserManagement/UserManagementPage.jsx"
+    );
+
+  [
+    "listUsers",
+    "getUserAccess",
+    "activateUserAccess",
+    "revokeUserAccess",
+    "deleteUserAccount",
+    "createAdminOperationId",
+    "updateAdminUserProfile",
+    "Fonte de verdade: backend de acesso",
+  ].forEach(
+    (marker) => {
+      expect(source)
+        .toContain(marker);
+    }
+  );
+
+  expect(source)
+    .toContain(
+      "readOnly"
+    );
+});
+
+test("Admin principal nao volta a ter dashboard tecnico", () => {
   const source =
     read(
       "src/pages/Admin/Admin.jsx"
     );
 
+  expect(source)
+    .toContain(
+      "<UserManagementPage"
+    );
+
   [
-    "Engine Center",
     "Dashboard Técnico",
     "Motor de Milhares",
     "Auditorias",
@@ -58,38 +93,5 @@ test("nao existe painel lateral ou dashboard tecnico", () => {
         .not
         .toContain(marker);
     }
-  );
-});
-
-test("autoridade existente permanece", () => {
-  const source =
-    read(
-      "src/pages/Admin/modules/UserManagement/UserManagementPage.jsx"
-    );
-
-  [
-    "listUsers",
-    "getUserAccess",
-    "activateUserAccess",
-    "revokeUserAccess",
-    "createAdminOperationId",
-    "updateAdminUserProfile",
-    "Fonte de verdade: backend de acesso",
-  ].forEach(
-    (marker) => {
-      expect(source)
-        .toContain(marker);
-    }
-  );
-});
-
-test("email continua somente leitura", () => {
-  const source =
-    read(
-      "src/pages/Admin/modules/UserManagement/UserManagementPage.jsx"
-    );
-
-  expect(source).toContain(
-    "readOnly"
   );
 });
