@@ -5,12 +5,6 @@ import MiniLogo from "./MiniLogo";
 import { auth } from "../../../../services/firebase";
 import { signOut } from "firebase/auth";
 
-import {
-  ACCESS_ENTITLEMENT,
-  getAccessEntitlement,
-  isCommercialPlan,
-  normalizeAccessEntitlement,
-} from "../../../../services/accessControl";
 const ROUTES = {
   DASHBOARD: "dashboard",
   ACCOUNT: "account",
@@ -42,26 +36,16 @@ const safeRemoveLS = (k) => {
   } catch {}
 };
 
-function normalizeSessionPlan(plan) {
-  const normalized = normalizeAccessEntitlement(plan);
-
-  if (
-    isCommercialPlan(normalized) ||
-    normalized === ACCESS_ENTITLEMENT.VIP
-  ) {
-    return normalized;
-  }
-
-  return ACCESS_ENTITLEMENT.FREE;
-}
-
 function readSession() {
-  const raw = safeReadLS(ACCOUNT_SESSION_KEY);
+  const raw =
+    safeReadLS(
+      ACCOUNT_SESSION_KEY
+    );
+
   if (!raw) {
     return {
       ok: false,
       type: "anon",
-      plan: "",
       uid: "",
       email: "",
       raw: null,
@@ -69,32 +53,43 @@ function readSession() {
   }
 
   try {
-    const obj = JSON.parse(raw);
-    const type = String(obj?.type || "").trim().toLowerCase();
-    const plan = normalizeSessionPlan(obj?.plan);
+    const obj =
+      JSON.parse(raw);
+
+    const type =
+      String(
+        obj?.type || ""
+      )
+        .trim()
+        .toLowerCase();
 
     return {
-      ok: obj?.ok === true,
-      type: type || "anon",
-      plan:
-        type === "guest"
-          ? ACCESS_ENTITLEMENT.FREE
-          : type === "user"
-          ? plan
-          : "",
-      entitlement:
-        type === "guest"
-          ? ACCESS_ENTITLEMENT.FREE
-          : getAccessEntitlement(obj),
-      uid: String(obj?.uid || "").trim(),
-      email: String(obj?.email || "").trim().toLowerCase(),
-      raw: obj,
+      ok:
+        obj?.ok === true,
+
+      type:
+        type || "anon",
+
+      uid:
+        String(
+          obj?.uid || ""
+        ).trim(),
+
+      email:
+        String(
+          obj?.email || ""
+        )
+          .trim()
+          .toLowerCase(),
+
+      raw:
+        obj,
     };
-  } catch {
+  }
+  catch {
     return {
-      ok: true,
-      type: "user",
-      plan: "FREE",
+      ok: false,
+      type: "anon",
       uid: "",
       email: "",
       raw: null,
@@ -150,10 +145,8 @@ export default function AppShell({ active, onNavigate, onLogout, children }) {
     };
   }, []);
 
-  const isGuest = session?.type === "guest";
-  const planLabel = isGuest
-    ? "PREVIEW"
-    : getAccessEntitlement(session);
+  const isGuest =
+    session?.type === "guest";
 
   useEffect(() => {
     const isDashboard = active === ROUTES.DASHBOARD;
@@ -304,21 +297,6 @@ export default function AppShell({ active, onNavigate, onLogout, children }) {
       justifyContent: "center",
     };
 
-    const plan = {
-      minWidth: 64,
-      textAlign: "center",
-      fontSize: 11,
-      fontWeight: 900,
-      padding: "8px 12px",
-      borderRadius: 999,
-      border: `1px solid ${GOLD_SOFT}`,
-      color: GOLD,
-      background:
-        "linear-gradient(180deg, rgba(202,166,75,0.10), rgba(0,0,0,0.22))",
-      letterSpacing: 0.4,
-      boxShadow: "inset 0 0 0 1px rgba(255,255,255,0.03)",
-    };
-
     const nav = {
       width: "100%",
       display: "flex",
@@ -440,7 +418,6 @@ export default function AppShell({ active, onNavigate, onLogout, children }) {
       overlay,
       brand,
       logoWrap,
-      plan,
       nav,
       navDivider,
       btn,
@@ -514,7 +491,7 @@ export default function AppShell({ active, onNavigate, onLogout, children }) {
   };
 
   return (
-    <div style={UI.shell}>
+    <div style={UI.shell} data-access-authority="paid-full">
       <div
         style={UI.overlay}
         onClick={() => setSidebarOpen(false)}
@@ -526,7 +503,6 @@ export default function AppShell({ active, onNavigate, onLogout, children }) {
           <div style={UI.logoWrap}>
             <MiniLogo size={52} />
           </div>
-          <div style={UI.plan}>{planLabel}</div>
         </div>
 
         <nav style={UI.nav} role="navigation" aria-label="Navegação principal">

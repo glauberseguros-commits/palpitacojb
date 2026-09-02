@@ -486,22 +486,18 @@ export const GUEST_ACCESS = Object.freeze({
  * Nesta etapa não estamos impondo diferenças entre FREE/PREMIUM/VIP.
  * Isso será tratado posteriormente pela matriz de planos.
  */
-export const USER_ACCESS = Object.freeze({
-  [ACCESS_CAPABILITY.NAVIGATE]: true,
-
-  [ACCESS_CAPABILITY.CHANGE_FILTERS]: true,
-  [ACCESS_CAPABILITY.CHANGE_DATE]: true,
-  [ACCESS_CAPABILITY.CHANGE_LOTTERY]: true,
-  [ACCESS_CAPABILITY.CHANGE_HOUR]: true,
-
-  [ACCESS_CAPABILITY.SEARCH]: true,
-  [ACCESS_CAPABILITY.GENERATE]: true,
-
-  [ACCESS_CAPABILITY.DOWNLOAD]: true,
-  [ACCESS_CAPABILITY.EXPORT]: true,
-
-  [ACCESS_CAPABILITY.ACCESS_LIVE_PREDICTIONS]: true,
-});
+export const USER_ACCESS = Object.freeze(
+  Object.fromEntries(
+    Object.values(
+      ACCESS_CAPABILITY
+    ).map(
+      (capability) => [
+        capability,
+        true,
+      ]
+    )
+  )
+);
 
 export function normalizeSessionKind(kind) {
   const value = String(kind || "")
@@ -593,57 +589,22 @@ export function getRuntimeAccessPolicyForEntitlement(entitlement) {
       legacyLivePredictions,
   });
 }
-export function getAccessPolicy(sessionOrKind) {
-  const session =
-    sessionOrKind &&
-    typeof sessionOrKind === "object"
-      ? sessionOrKind
-      : null;
+export function getAccessPolicy(
+  sessionOrKind
+) {
+  /*
+   * O App.jsx e accessFlow.js sao a autoridade comercial.
+   *
+   * Se uma pagina da plataforma esta sendo renderizada,
+   * o usuario ja passou pelo gate autoritativo de assinatura.
+   *
+   * pp_session_v1, FREE, STANDARD, PLUS, PREMIUM, VIP,
+   * Trial ou qualquer outro entitlement legado nao podem
+   * reduzir permissoes internas.
+   */
+  void sessionOrKind;
 
-  const kind = session
-    ? getAccessSessionKind(session)
-    : normalizeSessionKind(sessionOrKind);
-
-  if (kind === SESSION_KIND.GUEST) {
-    return getRuntimeAccessPolicyForEntitlement(
-      ACCESS_ENTITLEMENT.PREMIUM
-    );
-  }
-
-  if (kind === SESSION_KIND.USER) {
-    /**
-     * Runtime comercial ativo.
-     *
-     * A sessão determina o entitlement e toda a autorização
-     * funcional passa pelo contrato central.
-     *
-     * Nenhuma página precisa conhecer diretamente:
-     * FREE / TRIAL / STANDARD / PLUS / PREMIUM / VIP / ADMIN.
-     */
-    const entitlement =
-      getAccessEntitlement(session);
-
-    return getRuntimeAccessPolicyForEntitlement(
-      entitlement
-    );
-  }
-
-  return Object.freeze({
-    [ACCESS_CAPABILITY.NAVIGATE]: false,
-
-    [ACCESS_CAPABILITY.CHANGE_FILTERS]: false,
-    [ACCESS_CAPABILITY.CHANGE_DATE]: false,
-    [ACCESS_CAPABILITY.CHANGE_LOTTERY]: false,
-    [ACCESS_CAPABILITY.CHANGE_HOUR]: false,
-
-    [ACCESS_CAPABILITY.SEARCH]: false,
-    [ACCESS_CAPABILITY.GENERATE]: false,
-
-    [ACCESS_CAPABILITY.DOWNLOAD]: false,
-    [ACCESS_CAPABILITY.EXPORT]: false,
-
-    [ACCESS_CAPABILITY.ACCESS_LIVE_PREDICTIONS]: false,
-  });
+  return USER_ACCESS;
 }
 
 export function can(sessionOrKind, capability) {
