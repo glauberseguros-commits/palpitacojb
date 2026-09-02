@@ -455,6 +455,22 @@ router.get(
 
         paymentMethod:
           ACCESS_PRODUCT.paymentMethod,
+
+        pixKey:
+          String(
+            process.env.PALPITACO_PIX_KEY ||
+            ""
+          )
+            .trim()
+            .slice(0, 200),
+
+        pixReceiver:
+          String(
+            process.env.PALPITACO_PIX_RECEIVER ||
+            ""
+          )
+            .trim()
+            .slice(0, 200),
       },
     });
   }
@@ -732,6 +748,52 @@ router.get(
       access:
         req.authorizedAccess,
     });
+  }
+);
+
+
+/**
+ * Consulta administrativa do acesso autoritativo.
+ */
+router.get(
+  "/admin/user/:uid",
+
+  requireFirebaseUser,
+  requireAdminUser,
+
+  async (req, res) => {
+    try {
+      const target =
+        await resolveTargetUser(
+          String(
+            req?.params?.uid || ""
+          ).trim()
+        );
+
+      const access =
+        await getAccessSnapshot(
+          target.uid
+        );
+
+      return res.json({
+        ok: true,
+
+        user: {
+          uid:
+            target.uid,
+
+          email:
+            target.email,
+        },
+
+        access,
+      });
+    } catch (error) {
+      return sendAdminError(
+        res,
+        error
+      );
+    }
   }
 );
 

@@ -728,6 +728,132 @@ export async function getMyAccess() {
 
 
 /**
+ * Consulta administrativa do acesso de um usuario.
+ */
+export async function getAdminUserAccess(
+  uid
+) {
+  const safeUid =
+    String(uid || "").trim();
+
+  if (!safeUid) {
+    throw new AccessClientError(
+      "UID_REQUIRED",
+      "UID do usuario e obrigatorio."
+    );
+  }
+
+  return accessRequest(
+    `/api/access/admin/user/${encodeURIComponent(
+      safeUid
+    )}`
+  );
+}
+
+
+/**
+ * Ativa ou renova +30 dias pelo backend autoritativo.
+ */
+export async function activateAdminUserAccess({
+  uid,
+  operationId,
+  paymentReference = "",
+} = {}) {
+  const safeUid =
+    String(uid || "").trim();
+
+  const safeOperationId =
+    String(operationId || "").trim();
+
+  if (!safeUid) {
+    throw new AccessClientError(
+      "UID_REQUIRED",
+      "UID do usuario e obrigatorio."
+    );
+  }
+
+  if (!safeOperationId) {
+    throw new AccessClientError(
+      "OPERATION_ID_REQUIRED",
+      "operationId e obrigatorio."
+    );
+  }
+
+  return accessRequest(
+    "/api/access/admin/activate",
+    {
+      method:
+        "POST",
+
+      body: {
+        uid:
+          safeUid,
+
+        operationId:
+          safeOperationId,
+
+        paymentReference:
+          String(
+            paymentReference || ""
+          ).trim(),
+      },
+    }
+  );
+}
+
+
+/**
+ * Revoga assinatura pelo backend autoritativo.
+ */
+export async function revokeAdminUserAccess({
+  uid,
+  operationId,
+  reason = "",
+} = {}) {
+  const safeUid =
+    String(uid || "").trim();
+
+  const safeOperationId =
+    String(operationId || "").trim();
+
+  if (!safeUid) {
+    throw new AccessClientError(
+      "UID_REQUIRED",
+      "UID do usuario e obrigatorio."
+    );
+  }
+
+  if (!safeOperationId) {
+    throw new AccessClientError(
+      "OPERATION_ID_REQUIRED",
+      "operationId e obrigatorio."
+    );
+  }
+
+  return accessRequest(
+    "/api/access/admin/revoke",
+    {
+      method:
+        "POST",
+
+      body: {
+        uid:
+          safeUid,
+
+        operationId:
+          safeOperationId,
+
+        reason:
+          String(
+            reason || ""
+          ).trim(),
+      },
+    }
+  );
+}
+
+
+/**
  * Inicia confirmacao de dispositivo.
  *
  * O slot existe somente no fluxo de REGISTRO.

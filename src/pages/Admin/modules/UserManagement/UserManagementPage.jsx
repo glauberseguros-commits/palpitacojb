@@ -6,63 +6,48 @@ import React, {
 } from "react";
 
 import {
-  ADMIN_USER_PLAN_OPTIONS,
+  activateUserAccess,
+  createAdminOperationId,
+  getAccessProductContract,
+  getUserAccess,
   listUsers,
-  updateUserAccess,
+  revokeUserAccess,
 } from "./userManagement.api";
 
 import "./UserManagementPage.css";
+
 
 function clean(value) {
   return String(value ?? "").trim();
 }
 
-function toDateInput(value) {
-  const raw = clean(value);
-
-  if (!raw) return "";
-
-  const timestamp = Date.parse(raw);
-
-  if (!Number.isFinite(timestamp)) return "";
-
-  const date = new Date(timestamp);
-
-  const year = date.getFullYear();
-  const month = String(date.getMonth() + 1).padStart(2, "0");
-  const day = String(date.getDate()).padStart(2, "0");
-
-  return `${year}-${month}-${day}`;
-}
-
-function dateInputToIso(value, endOfDay = false) {
-  const raw = clean(value);
-
-  if (!raw) return "";
-
-  const suffix = endOfDay
-    ? "T23:59:59.999"
-    : "T00:00:00.000";
-
-  const date = new Date(`${raw}${suffix}`);
-
-  if (!Number.isFinite(date.getTime())) {
-    throw new Error("Data inválida.");
-  }
-
-  return date.toISOString();
-}
 
 function formatDate(value) {
-  if (!value) return "—";
+  if (!value) {
+    return "—";
+  }
 
-  let candidate = value;
+  let candidate =
+    value;
 
   if (
     typeof value === "object" &&
-    typeof value.toDate === "function"
+    typeof value.toDate ===
+      "function"
   ) {
-    candidate = value.toDate();
+    candidate =
+      value.toDate();
+  }
+
+  if (
+    typeof value === "object" &&
+    typeof value.seconds ===
+      "number"
+  ) {
+    candidate =
+      new Date(
+        value.seconds * 1000
+      );
   }
 
   const date =
@@ -70,195 +55,606 @@ function formatDate(value) {
       ? candidate
       : new Date(candidate);
 
-  if (!Number.isFinite(date.getTime())) {
+  if (
+    !Number.isFinite(
+      date.getTime()
+    )
+  ) {
     return "—";
   }
 
-  return date.toLocaleString("pt-BR");
+  return date.toLocaleString(
+    "pt-BR"
+  );
 }
 
-function makeDraft(user) {
-  return {
-    plan: clean(user?.plan).toUpperCase() || "FREE",
-    planStartAt: toDateInput(user?.planStartAt),
-    planEndAt: toDateInput(user?.planEndAt),
-    isLifetime: user?.isLifetime === true,
-  };
+
+function formatMoney(
+  cents,
+  currency = "BRL"
+) {
+  const amount =
+    Number(cents);
+
+  if (
+    !Number.isFinite(
+      amount
+    )
+  ) {
+    return "—";
+  }
+
+  return new Intl.NumberFormat(
+    "pt-BR",
+    {
+      style:
+        "currency",
+
+      currency:
+        clean(currency) ||
+        "BRL",
+    }
+  ).format(
+    amount / 100
+  );
 }
+
+
+function statusLabel(
+  subscription,
+  accessGranted
+) {
+  if (
+    accessGranted === true ||
+    subscription?.active === true
+  ) {
+    return "ATIVO";
+  }
+
+  const status =
+    clean(
+      subscription?.status
+    ).toUpperCase();
+
+  return status || "SEM ACESSO";
+}
+
 
 export default function UserManagementPage() {
-  const [users, setUsers] = useState([]);
-  const [queryText, setQueryText] = useState("");
-  const [selectedUid, setSelectedUid] = useState("");
-  const [draft, setDraft] = useState(makeDraft(null));
+  const [
+    users,
+    setUsers,
+  ] =
+    useState([]);
 
-  const [loading, setLoading] = useState(true);
-  const [saving, setSaving] = useState(false);
+  const [
+    queryText,
+    setQueryText,
+  ] =
+    useState("");
 
-  const [error, setError] = useState("");
-  const [success, setSuccess] = useState("");
+  const [
+    selectedUid,
+    setSelectedUid,
+  ] =
+    useState("");
 
-  const loadUsers = useCallback(async () => {
-    setLoading(true);
-    setError("");
+  const [
+    accessData,
+    setAccessData,
+  ] =
+    useState(null);
 
-    try {
-      const rows = await listUsers();
+  const [
+    product,
+    setProduct,
+  ] =
+    useState(null);
 
-      setUsers(rows);
+  const [
+    paymentReference,
+    setPaymentReference,
+  ] =
+    useState("");
 
-      setSelectedUid((current) => {
-        if (
-          current &&
-          rows.some((user) => user.uid === current)
-        ) {
-          return current;
+  const [
+    revokeReason,
+    setRevokeReason,
+  ] =
+    useState("");
+
+  const [
+    pendingOperation,
+    setPendingOperation,
+  ] =
+    useState(null);
+
+  const [
+    loading,
+    setLoading,
+  ] =
+    useState(true);
+
+  const [
+    accessLoading,
+    setAccessLoading,
+  ] =
+    useState(false);
+
+  const [
+    saving,
+    setSaving,
+  ] =
+    useState(false);
+
+  const [
+    error,
+    setError,
+  ] =
+    useState("");
+
+  const [
+    success,
+    setSuccess,
+  ] =
+    useState("");
+
+
+  const loadUsers =
+    useCallback(
+      async () => {
+        setLoading(true);
+        setError("");
+
+        try {
+          const rows =
+            await listUsers();
+
+          setUsers(rows);
+
+          setSelectedUid(
+            (current) => {
+              if (
+                current &&
+                rows.some(
+                  (user) =>
+                    user.uid ===
+                    current
+                )
+              ) {
+                return current;
+              }
+
+              return (
+                rows[0]?.uid ||
+                ""
+              );
+            }
+          );
+        }
+        catch (err) {
+          console.error(
+            "[ADMIN-USERS] Falha ao listar usuarios:",
+            err
+          );
+
+          setError(
+            err?.message ||
+            "Nao foi possivel carregar os usuarios."
+          );
+        }
+        finally {
+          setLoading(false);
+        }
+      },
+      []
+    );
+
+
+  const loadSelectedAccess =
+    useCallback(
+      async (
+        uid = selectedUid
+      ) => {
+        const safeUid =
+          clean(uid);
+
+        if (!safeUid) {
+          setAccessData(null);
+          return;
         }
 
-        return rows[0]?.uid || "";
-      });
-    } catch (err) {
-      console.error("[ADMIN-USERS] Falha ao listar usuários:", err);
+        setAccessLoading(true);
 
-      setError(
-        err?.message ||
-          "Não foi possível carregar os usuários."
-      );
-    } finally {
-      setLoading(false);
-    }
-  }, []);
+        try {
+          const result =
+            await getUserAccess(
+              safeUid
+            );
+
+          setAccessData(
+            result
+          );
+        }
+        catch (err) {
+          console.error(
+            "[ADMIN-USERS] Falha ao consultar acesso:",
+            err
+          );
+
+          setError(
+            err?.message ||
+            "Nao foi possivel consultar o acesso."
+          );
+        }
+        finally {
+          setAccessLoading(
+            false
+          );
+        }
+      },
+      [selectedUid]
+    );
+
 
   useEffect(() => {
     loadUsers();
   }, [loadUsers]);
 
-  const selectedUser = useMemo(
-    () =>
-      users.find((user) => user.uid === selectedUid) ||
-      null,
-    [users, selectedUid]
-  );
 
   useEffect(() => {
-    setDraft(makeDraft(selectedUser));
+    let alive =
+      true;
+
+    getAccessProductContract()
+      .then((value) => {
+        if (alive) {
+          setProduct(value);
+        }
+      })
+      .catch((err) => {
+        console.error(
+          "[ADMIN-USERS] Produto:",
+          err
+        );
+      });
+
+    return () => {
+      alive =
+        false;
+    };
+  }, []);
+
+
+  useEffect(() => {
     setSuccess("");
     setError("");
-  }, [selectedUser]);
+    setPaymentReference("");
+    setRevokeReason("");
+    setPendingOperation(null);
 
-  const filteredUsers = useMemo(() => {
-    const needle = clean(queryText).toLocaleLowerCase("pt-BR");
+    if (selectedUid) {
+      loadSelectedAccess(
+        selectedUid
+      );
+    }
+    else {
+      setAccessData(null);
+    }
+  }, [
+    selectedUid,
+    loadSelectedAccess,
+  ]);
 
-    if (!needle) return users;
 
-    return users.filter((user) => {
-      const haystack = [
-        user.name,
-        user.email,
-        user.uid,
-        user.phone,
-        user.plan,
+  const selectedUser =
+    useMemo(
+      () =>
+        users.find(
+          (user) =>
+            user.uid ===
+            selectedUid
+        ) ||
+        null,
+      [
+        users,
+        selectedUid,
       ]
-        .map((value) =>
-          clean(value).toLocaleLowerCase("pt-BR")
-        )
-        .join(" ");
-
-      return haystack.includes(needle);
-    });
-  }, [users, queryText]);
-
-  const hasChanges = useMemo(() => {
-    if (!selectedUser) return false;
-
-    const original = makeDraft(selectedUser);
-
-    return (
-      draft.plan !== original.plan ||
-      draft.planStartAt !== original.planStartAt ||
-      draft.planEndAt !== original.planEndAt ||
-      draft.isLifetime !== original.isLifetime
     );
-  }, [draft, selectedUser]);
 
-  function updateDraft(field, value) {
-    setDraft((current) => ({
-      ...current,
-      [field]: value,
-    }));
 
-    setSuccess("");
-    setError("");
-  }
+  const filteredUsers =
+    useMemo(
+      () => {
+        const needle =
+          clean(queryText)
+            .toLocaleLowerCase(
+              "pt-BR"
+            );
 
-  async function handleSave(event) {
+        if (!needle) {
+          return users;
+        }
+
+        return users.filter(
+          (user) => {
+            const haystack =
+              [
+                user.name,
+                user.email,
+                user.uid,
+                user.phone,
+              ]
+                .map(
+                  (value) =>
+                    clean(value)
+                      .toLocaleLowerCase(
+                        "pt-BR"
+                      )
+                )
+                .join(" ");
+
+            return haystack.includes(
+              needle
+            );
+          }
+        );
+      },
+      [
+        users,
+        queryText,
+      ]
+    );
+
+
+  const access =
+    accessData?.access ||
+    null;
+
+  const subscription =
+    access?.subscription ||
+    null;
+
+
+  async function handleActivate(
+    event
+  ) {
     event.preventDefault();
 
-    if (!selectedUser) return;
+    if (
+      !selectedUser ||
+      saving
+    ) {
+      return;
+    }
+
+    const reference =
+      clean(
+        paymentReference
+      );
+
+    if (!reference) {
+      setError(
+        "Informe a referencia do pagamento PIX antes de ativar."
+      );
+
+      return;
+    }
+
+    const reusable =
+      pendingOperation &&
+      pendingOperation.kind ===
+        "activate" &&
+      pendingOperation.uid ===
+        selectedUser.uid;
+
+    const operationId =
+      reusable
+        ? pendingOperation.id
+        : createAdminOperationId(
+            "grant",
+            selectedUser.uid
+          );
+
+    if (!reusable) {
+      setPendingOperation({
+        kind:
+          "activate",
+
+        uid:
+          selectedUser.uid,
+
+        id:
+          operationId,
+      });
+    }
 
     setSaving(true);
     setError("");
     setSuccess("");
 
     try {
-      const plan = clean(draft.plan).toUpperCase();
+      const response =
+        await activateUserAccess(
+          selectedUser.uid,
+          {
+            operationId,
+            paymentReference:
+              reference,
+          }
+        );
 
-      const payload = {
-        plan,
-        isLifetime:
-          plan === "FREE"
-            ? false
-            : draft.isLifetime === true,
-
-        planStartAt:
-          plan === "FREE"
-            ? ""
-            : dateInputToIso(
-                draft.planStartAt,
-                false
-              ),
-
-        planEndAt:
-          plan === "FREE" ||
-          draft.isLifetime === true
-            ? ""
-            : dateInputToIso(
-                draft.planEndAt,
-                true
-              ),
-      };
-
-      await updateUserAccess(
-        selectedUser.uid,
-        payload
+      setPendingOperation(
+        null
       );
 
-      setSuccess("Acesso atualizado com sucesso.");
+      setPaymentReference(
+        ""
+      );
 
-      await loadUsers();
-    } catch (err) {
-      console.error("[ADMIN-USERS] Falha ao salvar acesso:", err);
+      setSuccess(
+        "Assinatura ativada/renovada por mais 30 dias."
+      );
+
+      if (
+        response?.access
+      ) {
+        setAccessData(
+          (current) => ({
+            ...current,
+            access:
+              response.access,
+          })
+        );
+      }
+
+      await loadSelectedAccess(
+        selectedUser.uid
+      );
+    }
+    catch (err) {
+      console.error(
+        "[ADMIN-USERS] Falha ao ativar acesso:",
+        err
+      );
 
       setError(
         err?.message ||
-          "Não foi possível salvar o acesso."
+        "Nao foi possivel ativar o acesso."
       );
-    } finally {
+    }
+    finally {
       setSaving(false);
     }
   }
 
-  const isFree = draft.plan === "FREE";
-  const isLifetime = draft.isLifetime === true;
+
+  async function handleRevoke() {
+    if (
+      !selectedUser ||
+      saving
+    ) {
+      return;
+    }
+
+    const reason =
+      clean(
+        revokeReason
+      );
+
+    if (!reason) {
+      setError(
+        "Informe o motivo da revogacao."
+      );
+
+      return;
+    }
+
+    if (
+      typeof window !==
+        "undefined" &&
+      !window.confirm(
+        "Confirma a revogacao do acesso deste usuario?"
+      )
+    ) {
+      return;
+    }
+
+    const reusable =
+      pendingOperation &&
+      pendingOperation.kind ===
+        "revoke" &&
+      pendingOperation.uid ===
+        selectedUser.uid;
+
+    const operationId =
+      reusable
+        ? pendingOperation.id
+        : createAdminOperationId(
+            "revoke",
+            selectedUser.uid
+          );
+
+    if (!reusable) {
+      setPendingOperation({
+        kind:
+          "revoke",
+
+        uid:
+          selectedUser.uid,
+
+        id:
+          operationId,
+      });
+    }
+
+    setSaving(true);
+    setError("");
+    setSuccess("");
+
+    try {
+      const response =
+        await revokeUserAccess(
+          selectedUser.uid,
+          {
+            operationId,
+            reason,
+          }
+        );
+
+      setPendingOperation(
+        null
+      );
+
+      setRevokeReason(
+        ""
+      );
+
+      setSuccess(
+        "Acesso revogado com sucesso."
+      );
+
+      if (
+        response?.access
+      ) {
+        setAccessData(
+          (current) => ({
+            ...current,
+            access:
+              response.access,
+          })
+        );
+      }
+
+      await loadSelectedAccess(
+        selectedUser.uid
+      );
+    }
+    catch (err) {
+      console.error(
+        "[ADMIN-USERS] Falha ao revogar acesso:",
+        err
+      );
+
+      setError(
+        err?.message ||
+        "Nao foi possivel revogar o acesso."
+      );
+    }
+    finally {
+      setSaving(false);
+    }
+  }
+
 
   return (
     <div className="admin-users">
       <div className="admin-users__header">
         <div>
-          <h2>Usuários</h2>
+          <h2>Usuarios</h2>
+
           <p>
-            Consulte usuários e gerencie o acesso comercial.
-            Trial e perfil permanecem somente leitura.
+            Gerencie a assinatura comercial autoritativa do PalPitaco JB.
           </p>
         </div>
 
@@ -266,9 +662,14 @@ export default function UserManagementPage() {
           type="button"
           className="admin-users__refresh"
           onClick={loadUsers}
-          disabled={loading || saving}
+          disabled={
+            loading ||
+            saving
+          }
         >
-          {loading ? "Carregando..." : "Atualizar lista"}
+          {loading
+            ? "Carregando..."
+            : "Atualizar lista"}
         </button>
       </div>
 
@@ -293,65 +694,73 @@ export default function UserManagementPage() {
       <div className="admin-users__layout">
         <aside className="admin-users__list-panel">
           <label className="admin-users__search">
-            <span>Buscar usuário</span>
+            <span>Buscar usuario</span>
 
             <input
               type="search"
               value={queryText}
               onChange={(event) =>
-                setQueryText(event.target.value)
+                setQueryText(
+                  event.target.value
+                )
               }
               placeholder="Nome, e-mail, UID ou telefone"
             />
           </label>
 
           <div className="admin-users__counter">
-            {filteredUsers.length} de {users.length} usuário(s)
+            {filteredUsers.length} de {users.length} usuario(s)
           </div>
 
           <div className="admin-users__list">
             {loading ? (
               <div className="admin-users__empty">
-                Carregando usuários...
+                Carregando usuarios...
               </div>
             ) : filteredUsers.length === 0 ? (
               <div className="admin-users__empty">
-                Nenhum usuário encontrado.
+                Nenhum usuario encontrado.
               </div>
             ) : (
-              filteredUsers.map((user) => {
-                const active =
-                  user.uid === selectedUid;
+              filteredUsers.map(
+                (user) => {
+                  const active =
+                    user.uid ===
+                    selectedUid;
 
-                return (
-                  <button
-                    key={user.uid}
-                    type="button"
-                    className={
-                      active
-                        ? "admin-users__user admin-users__user--active"
-                        : "admin-users__user"
-                    }
-                    onClick={() =>
-                      setSelectedUid(user.uid)
-                    }
-                  >
-                    <strong>
-                      {clean(user.name) ||
-                        clean(user.email) ||
-                        "Usuário sem nome"}
-                    </strong>
+                  return (
+                    <button
+                      key={user.uid}
+                      type="button"
+                      className={
+                        active
+                          ? "admin-users__user admin-users__user--active"
+                          : "admin-users__user"
+                      }
+                      onClick={() =>
+                        setSelectedUid(
+                          user.uid
+                        )
+                      }
+                    >
+                      <strong>
+                        {clean(user.name) ||
+                          clean(user.email) ||
+                          "Usuario sem nome"}
+                      </strong>
 
-                    <span>
-                      {clean(user.email) || "Sem e-mail"}
-                    </span>
+                      <span>
+                        {clean(user.email) ||
+                          "Sem e-mail"}
+                      </span>
 
-                    <small>
-                      {user.plan || "FREE"} · {user.uid}
-                    </small>
-                  </button>
-                );
-              })
+                      <small>
+                        {user.uid}
+                      </small>
+                    </button>
+                  );
+                }
+              )
             )}
           </div>
         </aside>
@@ -359,7 +768,7 @@ export default function UserManagementPage() {
         <main className="admin-users__detail">
           {!selectedUser ? (
             <div className="admin-users__empty admin-users__empty--detail">
-              Selecione um usuário.
+              Selecione um usuario.
             </div>
           ) : (
             <>
@@ -367,37 +776,41 @@ export default function UserManagementPage() {
                 <div className="admin-users__card-title">
                   <div>
                     <h3>
-                      {clean(selectedUser.name) ||
-                        "Usuário"}
+                      {clean(
+                        selectedUser.name
+                      ) ||
+                        "Usuario"}
                     </h3>
 
-                    <p>{selectedUser.email || "Sem e-mail"}</p>
+                    <p>
+                      {selectedUser.email ||
+                        "Sem e-mail"}
+                    </p>
                   </div>
 
                   <span className="admin-users__plan-badge">
-                    {selectedUser.plan || "FREE"}
+                    {accessLoading
+                      ? "..."
+                      : statusLabel(
+                          subscription,
+                          access?.accessGranted
+                        )}
                   </span>
                 </div>
 
                 <dl className="admin-users__info-grid">
                   <div>
                     <dt>UID</dt>
-                    <dd>{selectedUser.uid}</dd>
+                    <dd>
+                      {selectedUser.uid}
+                    </dd>
                   </div>
 
                   <div>
                     <dt>Telefone</dt>
                     <dd>
-                      {selectedUser.phone || "—"}
-                    </dd>
-                  </div>
-
-                  <div>
-                    <dt>Última atividade</dt>
-                    <dd>
-                      {formatDate(
-                        selectedUser.lastActiveAt
-                      )}
+                      {selectedUser.phone ||
+                        "—"}
                     </dd>
                   </div>
 
@@ -409,41 +822,110 @@ export default function UserManagementPage() {
                       )}
                     </dd>
                   </div>
+
+                  <div>
+                    <dt>
+                      Ultima atividade
+                    </dt>
+                    <dd>
+                      {formatDate(
+                        selectedUser.lastActiveAt
+                      )}
+                    </dd>
+                  </div>
                 </dl>
               </section>
 
               <section className="admin-users__card">
-                <h3>Trial</h3>
+                <h3>
+                  Assinatura
+                </h3>
 
                 <p className="admin-users__readonly-note">
-                  Somente leitura nesta versão.
+                  Fonte de verdade: backend de acesso.
                 </p>
 
                 <dl className="admin-users__info-grid">
                   <div>
                     <dt>Status</dt>
                     <dd>
-                      {selectedUser.trialActive
-                        ? "Ativo"
-                        : "Inativo"}
+                      {accessLoading
+                        ? "Carregando..."
+                        : statusLabel(
+                            subscription,
+                            access?.accessGranted
+                          )}
                     </dd>
                   </div>
 
                   <div>
-                    <dt>Início</dt>
+                    <dt>Produto</dt>
                     <dd>
-                      {formatDate(
-                        selectedUser.trialStartAt
+                      {product?.planCode ||
+                        subscription?.planCode ||
+                        "—"}
+                    </dd>
+                  </div>
+
+                  <div>
+                    <dt>Valor</dt>
+                    <dd>
+                      {formatMoney(
+                        product?.priceCents ??
+                          subscription?.priceCents,
+                        product?.currency ??
+                          subscription?.currency
                       )}
                     </dd>
                   </div>
 
                   <div>
-                    <dt>Fim</dt>
+                    <dt>Duracao</dt>
+                    <dd>
+                      {Number(
+                        product?.durationDays ??
+                          subscription?.durationDays
+                      ) || 30}
+                      {" dias"}
+                    </dd>
+                  </div>
+
+                  <div>
+                    <dt>Inicio</dt>
                     <dd>
                       {formatDate(
-                        selectedUser.trialEndAt
+                        subscription?.startedAt
                       )}
+                    </dd>
+                  </div>
+
+                  <div>
+                    <dt>Valido ate</dt>
+                    <dd>
+                      {formatDate(
+                        subscription?.endsAt
+                      )}
+                    </dd>
+                  </div>
+
+                  <div>
+                    <dt>Ativacoes</dt>
+                    <dd>
+                      {Number(
+                        subscription?.grantCount ||
+                          0
+                      )}
+                    </dd>
+                  </div>
+
+                  <div>
+                    <dt>Pagamento</dt>
+                    <dd>
+                      {subscription?.lastPayment
+                        ?.reference ||
+                        subscription?.lastPayment
+                          ?.paymentReference ||
+                        "—"}
                     </dd>
                   </div>
                 </dl>
@@ -451,117 +933,121 @@ export default function UserManagementPage() {
 
               <form
                 className="admin-users__card"
-                onSubmit={handleSave}
+                onSubmit={
+                  handleActivate
+                }
               >
-                <h3>Gerenciar acesso</h3>
+                <h3>
+                  Ativar / renovar
+                </h3>
+
+                <p className="admin-users__readonly-note">
+                  Cada confirmacao concede mais 30 dias. Se a assinatura ainda estiver ativa, os novos 30 dias sao acrescentados ao vencimento atual.
+                </p>
 
                 <div className="admin-users__form-grid">
                   <label>
-                    <span>Plano</span>
+                    <span>
+                      Referencia do pagamento PIX
+                    </span>
 
-                    <select
-                      value={draft.plan}
-                      onChange={(event) =>
-                        updateDraft(
-                          "plan",
-                          event.target.value
-                        )
+                    <input
+                      type="text"
+                      value={
+                        paymentReference
                       }
+                      onChange={(event) => {
+                        setPaymentReference(
+                          event.target.value
+                        );
+
+                        setPendingOperation(
+                          null
+                        );
+
+                        setError("");
+                        setSuccess("");
+                      }}
+                      placeholder="ID PIX, comprovante ou referencia"
                       disabled={saving}
-                    >
-                      {ADMIN_USER_PLAN_OPTIONS.map(
-                        (plan) => (
-                          <option
-                            key={plan}
-                            value={plan}
-                          >
-                            {plan}
-                          </option>
-                        )
-                      )}
-                    </select>
-                  </label>
-
-                  <label>
-                    <span>Data inicial</span>
-
-                    <input
-                      type="date"
-                      value={draft.planStartAt}
-                      onChange={(event) =>
-                        updateDraft(
-                          "planStartAt",
-                          event.target.value
-                        )
-                      }
-                      disabled={saving || isFree}
-                    />
-                  </label>
-
-                  <label>
-                    <span>Data final</span>
-
-                    <input
-                      type="date"
-                      value={draft.planEndAt}
-                      onChange={(event) =>
-                        updateDraft(
-                          "planEndAt",
-                          event.target.value
-                        )
-                      }
-                      disabled={
-                        saving ||
-                        isFree ||
-                        isLifetime
-                      }
                     />
                   </label>
                 </div>
 
-                <label className="admin-users__lifetime">
-                  <input
-                    type="checkbox"
-                    checked={draft.isLifetime}
-                    onChange={(event) =>
-                      updateDraft(
-                        "isLifetime",
-                        event.target.checked
-                      )
-                    }
-                    disabled={saving || isFree}
-                  />
-
-                  <span>Acesso vitalício</span>
-                </label>
-
                 <div className="admin-users__actions">
-                  <button
-                    type="button"
-                    className="admin-users__secondary"
-                    onClick={() =>
-                      setDraft(makeDraft(selectedUser))
-                    }
-                    disabled={saving || !hasChanges}
-                  >
-                    Descartar alterações
-                  </button>
-
                   <button
                     type="submit"
                     className="admin-users__save"
                     disabled={
                       saving ||
-                      loading ||
-                      !hasChanges
+                      accessLoading ||
+                      !clean(
+                        paymentReference
+                      )
                     }
                   >
                     {saving
-                      ? "Salvando..."
-                      : "Salvar acesso"}
+                      ? "Processando..."
+                      : "ATIVAR / RENOVAR +30 DIAS"}
                   </button>
                 </div>
               </form>
+
+              <section className="admin-users__card">
+                <h3>
+                  Revogar acesso
+                </h3>
+
+                <div className="admin-users__form-grid">
+                  <label>
+                    <span>
+                      Motivo
+                    </span>
+
+                    <input
+                      type="text"
+                      value={
+                        revokeReason
+                      }
+                      onChange={(event) => {
+                        setRevokeReason(
+                          event.target.value
+                        );
+
+                        setPendingOperation(
+                          null
+                        );
+
+                        setError("");
+                        setSuccess("");
+                      }}
+                      placeholder="Informe o motivo da revogacao"
+                      disabled={saving}
+                    />
+                  </label>
+                </div>
+
+                <div className="admin-users__actions">
+                  <button
+                    type="button"
+                    className="admin-users__secondary"
+                    onClick={
+                      handleRevoke
+                    }
+                    disabled={
+                      saving ||
+                      accessLoading ||
+                      !clean(
+                        revokeReason
+                      )
+                    }
+                  >
+                    {saving
+                      ? "Processando..."
+                      : "REVOGAR ACESSO"}
+                  </button>
+                </div>
+              </section>
             </>
           )}
         </main>

@@ -1,188 +1,223 @@
 import {
   collection,
-  doc,
   getDocs,
-  serverTimestamp,
-  updateDoc,
 } from "firebase/firestore";
 
 import { db } from "../../../../services/firebase";
 
-/**
- * Gestão administrativa de users/{uid}.
- *
- * Contrato V1:
- * - lista usuários existentes;
- * - altera somente:
- *   plan
- *   planStartAt
- *   planEndAt
- *   isLifetime
- *
- * Não altera:
- * - Trial;
- * - papel ADMIN;
- * - identidade/perfil;
- * - Firebase Authentication;
- * - exclusão de usuário.
- */
+import {
+  activateAdminUserAccess,
+  getAccessProduct,
+  getAdminUserAccess,
+  revokeAdminUserAccess,
+} from "../../../../services/accessClient";
 
-export const ADMIN_USER_PLAN_OPTIONS = Object.freeze([
-  "FREE",
-  "STANDARD",
-  "PLUS",
-  "PREMIUM",
-  "VIP",
-]);
 
-const ADMIN_USER_PLAN_SET = new Set(ADMIN_USER_PLAN_OPTIONS);
-
-function normalizeString(value) {
+function clean(value) {
   return String(value ?? "").trim();
 }
 
-function normalizePlan(value) {
-  const plan = normalizeString(value).toUpperCase();
-
-  if (!ADMIN_USER_PLAN_SET.has(plan)) {
-    throw new Error(`Plano administrativo inválido: ${plan || "(vazio)"}`);
-  }
-
-  return plan;
-}
-
-function normalizeBoolean(value) {
-  if (value === true) return true;
-  if (value === false) return false;
-
-  throw new Error("isLifetime deve ser boolean.");
-}
-
-function normalizeDateValue(value) {
-  if (value == null) return "";
-
-  const raw = normalizeString(value);
-
-  if (!raw) return "";
-
-  const timestamp = Date.parse(raw);
-
-  if (!Number.isFinite(timestamp)) {
-    throw new Error(`Data inválida: ${raw}`);
-  }
-
-  return new Date(timestamp).toISOString();
-}
 
 function normalizeUserSnapshot(snapshot) {
-  const data = snapshot.data() || {};
+  const data =
+    snapshot.data() || {};
 
   return {
-    uid: snapshot.id,
+    uid:
+      snapshot.id,
 
-    email: normalizeString(data.email),
-    name: normalizeString(data.name),
-    phone: normalizeString(data.phone),
-    photoURL: normalizeString(data.photoURL),
+    email:
+      clean(data.email),
 
-    plan: normalizeString(data.plan).toUpperCase() || "FREE",
-    planStartAt: normalizeString(data.planStartAt),
-    planEndAt: normalizeString(data.planEndAt),
-    isLifetime: data.isLifetime === true,
+    name:
+      clean(data.name),
 
-    trialStartAt: normalizeString(data.trialStartAt),
-    trialEndAt: normalizeString(data.trialEndAt),
-    trialActive: data.trialActive === true,
+    phone:
+      clean(data.phone),
 
-    createdAt: data.createdAt ?? null,
-    updatedAt: data.updatedAt ?? null,
-    lastActiveAt: data.lastActiveAt ?? null,
+    photoURL:
+      clean(data.photoURL),
+
+    createdAt:
+      data.createdAt ?? null,
+
+    updatedAt:
+      data.updatedAt ?? null,
+
+    lastActiveAt:
+      data.lastActiveAt ?? null,
   };
 }
 
+
 function sortUsers(users) {
-  return [...users].sort((a, b) => {
-    const aName =
-      normalizeString(a.name) ||
-      normalizeString(a.email) ||
-      normalizeString(a.uid);
+  return [...users].sort(
+    (a, b) => {
+      const aName =
+        clean(a.name) ||
+        clean(a.email) ||
+        clean(a.uid);
 
-    const bName =
-      normalizeString(b.name) ||
-      normalizeString(b.email) ||
-      normalizeString(b.uid);
+      const bName =
+        clean(b.name) ||
+        clean(b.email) ||
+        clean(b.uid);
 
-    return aName.localeCompare(bName, "pt-BR", {
-      sensitivity: "base",
-    });
+      return aName.localeCompare(
+        bName,
+        "pt-BR",
+        {
+          sensitivity:
+            "base",
+        }
+      );
+    }
+  );
+}
+
+
+export async function listUsers() {
+  const snapshot =
+    await getDocs(
+      collection(
+        db,
+        "users"
+      )
+    );
+
+  return sortUsers(
+    snapshot.docs.map(
+      normalizeUserSnapshot
+    )
+  );
+}
+
+
+export async function getUserAccess(
+  uid
+) {
+  const response =
+    await getAdminUserAccess(
+      uid
+    );
+
+  return {
+    user:
+      response?.user || null,
+
+    access:
+      response?.access || null,
+  };
+}
+
+
+export async function getAccessProductContract() {
+  const response =
+    await getAccessProduct();
+
+  return (
+    response?.product ||
+    null
+  );
+}
+
+
+export async function activateUserAccess(
+  uid,
+  {
+    operationId,
+    paymentReference,
+  } = {}
+) {
+  return activateAdminUserAccess({
+    uid,
+    operationId,
+    paymentReference,
   });
 }
 
-export async function listUsers() {
-  const snapshot = await getDocs(collection(db, "users"));
 
-  return sortUsers(snapshot.docs.map(normalizeUserSnapshot));
+export async function revokeUserAccess(
+  uid,
+  {
+    operationId,
+    reason,
+  } = {}
+) {
+  return revokeAdminUserAccess({
+    uid,
+    operationId,
+    reason,
+  });
 }
 
-export async function updateUserAccess(uid, payload = {}) {
-  const safeUid = normalizeString(uid);
 
-  if (!safeUid) {
-    throw new Error("UID do usuário é obrigatório.");
-  }
-
-  const plan = normalizePlan(payload.plan);
-  const isLifetime = normalizeBoolean(payload.isLifetime);
-
-  let planStartAt = normalizeDateValue(payload.planStartAt);
-  let planEndAt = normalizeDateValue(payload.planEndAt);
-
-  /**
-   * FREE não representa assinatura comercial.
-   * Ao retornar para FREE, removemos a validade comercial.
-   */
-  if (plan === "FREE") {
-    planStartAt = "";
-    planEndAt = "";
-  } else {
-    if (!planStartAt) {
-      throw new Error(
-        "Plano com acesso exige data inicial."
-      );
-    }
-
-    if (isLifetime) {
-      planEndAt = "";
-    } else {
-      if (!planEndAt) {
-        throw new Error(
-          "Plano temporário exige data final."
-        );
+function randomToken() {
+  try {
+    if (
+      typeof window !== "undefined" &&
+      window.crypto
+    ) {
+      if (
+        typeof window.crypto.randomUUID ===
+        "function"
+      ) {
+        return window.crypto
+          .randomUUID()
+          .replace(/-/g, "");
       }
 
-      if (Date.parse(planEndAt) <= Date.parse(planStartAt)) {
-        throw new Error(
-          "A data final deve ser posterior à data inicial."
-        );
+      if (
+        typeof window.crypto
+          .getRandomValues ===
+        "function"
+      ) {
+        const bytes =
+          new Uint8Array(12);
+
+        window.crypto
+          .getRandomValues(bytes);
+
+        return Array.from(bytes)
+          .map((value) =>
+            value
+              .toString(16)
+              .padStart(2, "0")
+          )
+          .join("");
       }
     }
-  }
+  } catch {}
 
-  const updatePayload = {
-    plan,
-    planStartAt,
-    planEndAt,
-    isLifetime: plan === "FREE" ? false : isLifetime,
-    updatedAt: serverTimestamp(),
-  };
-
-  await updateDoc(
-    doc(db, "users", safeUid),
-    updatePayload
+  return String(
+    Date.now()
   );
+}
 
-  return {
-    uid: safeUid,
-    ...updatePayload,
-  };
+
+export function createAdminOperationId(
+  kind,
+  uid
+) {
+  const safeKind =
+    clean(kind)
+      .toLowerCase()
+      .replace(
+        /[^a-z0-9_-]+/g,
+        "-"
+      ) ||
+    "access";
+
+  const safeUid =
+    clean(uid)
+      .replace(
+        /[^A-Za-z0-9._:-]+/g,
+        "-"
+      )
+      .slice(0, 40) ||
+    "user";
+
+  return (
+    `${safeKind}:${safeUid}:${Date.now()}:${randomToken()}`
+  ).slice(0, 128);
 }
