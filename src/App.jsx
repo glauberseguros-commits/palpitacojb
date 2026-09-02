@@ -34,6 +34,10 @@ const AccessGate = lazy(() =>
   import("./pages/Account/AccessGate")
 );
 
+const LegalPage = lazy(() =>
+  import("./pages/Legal/LegalPage")
+);
+
 const AppShell = lazy(() =>
   import("./pages/Dashboard/components/Sidebar/AppShell")
 );
@@ -810,6 +814,13 @@ export default function App() {
     const curPath =
       cleanPathname(location?.pathname);
 
+    if (
+      curPath === "/termos" ||
+      curPath === "/privacidade"
+    ) {
+      return;
+    }
+
     if (!firebaseUser?.uid) {
       const expectedSearch =
         "?product=" +
@@ -1152,6 +1163,31 @@ export default function App() {
     );
   }
 
+  const publicLegalPath =
+    cleanPathname(
+      location?.pathname
+    ).toLowerCase();
+
+  if (
+    publicLegalPath === "/termos" ||
+    publicLegalPath === "/privacidade"
+  ) {
+    return (
+      <ErrorBoundary>
+        <Suspense fallback={<AppLoading />}>
+          <LegalPage
+            kind={
+              publicLegalPath ===
+              "/privacidade"
+                ? "privacy"
+                : "terms"
+            }
+          />
+        </Suspense>
+      </ErrorBoundary>
+    );
+  }
+
   if (
     !userAuthReady ||
     (
@@ -1188,11 +1224,9 @@ export default function App() {
     return (
       <ErrorBoundary>
         <Suspense fallback={<AppLoading />}>
-          <AccessGate
-            mode="subscription"
+          <Payments
             email={firebaseUser?.email || ""}
             busy={accessBusy}
-            error={accessError}
             onRetry={handleAccessRetry}
             onLogout={logout}
           />

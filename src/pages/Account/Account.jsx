@@ -10,6 +10,7 @@ import {
   deleteUser,
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
+  sendPasswordResetEmail,
 } from "firebase/auth";
 import {
   doc,
@@ -826,6 +827,69 @@ export default function Account({ onClose = null, onAuthenticated = null }) {
     }
   };
 
+  async function onResetPassword(
+    emailRaw
+  ) {
+    const emailCandidate =
+      normalizeLoginToEmail(
+        emailRaw
+      );
+
+    if (
+      !isEmailLogin(
+        emailCandidate
+      )
+    ) {
+      throw new Error(
+        "Informe um e-mail válido."
+      );
+    }
+
+    try {
+      await sendPasswordResetEmail(
+        auth,
+        emailCandidate
+      );
+
+      return true;
+    }
+    catch (error) {
+      const code =
+        String(
+          error?.code || ""
+        ).trim();
+
+      if (
+        code ===
+        "auth/user-not-found"
+      ) {
+        return true;
+      }
+
+      if (
+        code ===
+        "auth/too-many-requests"
+      ) {
+        throw new Error(
+          "Muitas solicitações. Aguarde alguns minutos e tente novamente."
+        );
+      }
+
+      if (
+        code ===
+        "auth/network-request-failed"
+      ) {
+        throw new Error(
+          "Falha de rede. Verifique sua conexão."
+        );
+      }
+
+      throw new Error(
+        "Não foi possível enviar a recuperação de senha."
+      );
+    }
+  }
+
   /* =========================
      Render
   ========================= */
@@ -843,6 +907,7 @@ export default function Account({ onClose = null, onAuthenticated = null }) {
       <LoginVisual
         onEnter={onEnter}
         onRegister={onRegister}
+        onResetPassword={onResetPassword}
       />
     );
   }

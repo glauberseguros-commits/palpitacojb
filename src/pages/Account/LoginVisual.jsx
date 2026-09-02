@@ -3,6 +3,15 @@ import React, { useState } from "react";
 const LOGO_SRC =
   "/logo/palpitaco-jb.png";
 
+const SUPPORT_DISPLAY =
+  "+55 (61) 9 9987-8710";
+
+const SUPPORT_WHATSAPP =
+  "https://wa.me/5561999878710";
+
+const SUPPORT_EMAIL =
+  "contato@palpitacojb.com.br";
+
 function onlyDigits(value) {
   return String(value || "")
     .replace(/\D+/g, "")
@@ -56,21 +65,22 @@ function validEmail(value) {
 export default function LoginVisual({
   onEnter,
   onRegister,
+  onResetPassword,
 }) {
   const [mode, setMode] =
     useState("login");
 
-  const [
-    loginEmail,
-    setLoginEmail,
-  ] =
+  const [loginEmail, setLoginEmail] =
+    useState("");
+
+  const [loginPassword, setLoginPassword] =
     useState("");
 
   const [
-    loginPassword,
-    setLoginPassword,
+    showLoginPassword,
+    setShowLoginPassword,
   ] =
-    useState("");
+    useState(false);
 
   const [name, setName] =
     useState("");
@@ -81,10 +91,7 @@ export default function LoginVisual({
   const [email, setEmail] =
     useState("");
 
-  const [
-    password,
-    setPassword,
-  ] =
+  const [password, setPassword] =
     useState("");
 
   const [
@@ -93,10 +100,31 @@ export default function LoginVisual({
   ] =
     useState("");
 
+  const [
+    showRegisterPassword,
+    setShowRegisterPassword,
+  ] =
+    useState(false);
+
+  const [
+    showConfirmPassword,
+    setShowConfirmPassword,
+  ] =
+    useState(false);
+
+  const [
+    acceptedTerms,
+    setAcceptedTerms,
+  ] =
+    useState(false);
+
   const [busy, setBusy] =
     useState(false);
 
   const [error, setError] =
+    useState("");
+
+  const [notice, setNotice] =
     useState("");
 
   const [logoOk, setLogoOk] =
@@ -105,12 +133,13 @@ export default function LoginVisual({
   const ui = {
     page: {
       width: "100%",
-      minHeight: "100%",
+      minHeight: "100vh",
       boxSizing: "border-box",
       display: "flex",
       alignItems: "center",
       justifyContent: "center",
       padding: 18,
+      background: "#030303",
       color: "#fff",
     },
 
@@ -121,7 +150,7 @@ export default function LoginVisual({
       borderRadius: 22,
       overflow: "hidden",
       border:
-        "1px solid rgba(202,166,75,0.28)",
+        "1px solid rgba(202,166,75,0.34)",
       background:
         "linear-gradient(180deg, rgba(17,14,7,0.98), rgba(3,3,3,0.99))",
       boxShadow:
@@ -129,28 +158,28 @@ export default function LoginVisual({
     },
 
     brand: {
-      padding: "28px 22px 24px",
+      padding: "26px 22px 22px",
       textAlign: "center",
       borderBottom:
         "1px solid rgba(202,166,75,0.16)",
     },
 
     logo: {
-      width: 112,
-      height: 112,
+      width: 124,
+      height: 124,
       objectFit: "contain",
-      margin: "0 auto 10px",
+      margin: "0 auto 8px",
       display: "block",
     },
 
     title: {
-      fontSize: 24,
+      fontSize: 25,
       fontWeight: 950,
       letterSpacing: 0.5,
     },
 
     subtitle: {
-      marginTop: 8,
+      marginTop: 7,
       fontSize: 12.5,
       fontWeight: 700,
       opacity: 0.72,
@@ -162,8 +191,7 @@ export default function LoginVisual({
 
     tabs: {
       display: "grid",
-      gridTemplateColumns:
-        "1fr 1fr",
+      gridTemplateColumns: "1fr 1fr",
       gap: 7,
       padding: 5,
       borderRadius: 13,
@@ -177,17 +205,14 @@ export default function LoginVisual({
       cursor: "pointer",
       fontWeight: 900,
       fontSize: 12.5,
-
       color:
         active
           ? "#e3c56b"
           : "rgba(255,255,255,0.64)",
-
       background:
         active
           ? "rgba(202,166,75,0.13)"
           : "transparent",
-
       border:
         active
           ? "1px solid rgba(202,166,75,0.40)"
@@ -226,6 +251,38 @@ export default function LoginVisual({
         "1px solid rgba(255,255,255,0.14)",
     },
 
+    passwordWrap: {
+      position: "relative",
+    },
+
+    passwordInput: {
+      width: "100%",
+      height: 46,
+      boxSizing: "border-box",
+      padding: "0 82px 0 13px",
+      borderRadius: 12,
+      outline: "none",
+      color: "#fff",
+      background:
+        "rgba(255,255,255,0.045)",
+      border:
+        "1px solid rgba(255,255,255,0.14)",
+    },
+
+    showButton: {
+      position: "absolute",
+      top: 0,
+      right: 4,
+      height: 46,
+      padding: "0 10px",
+      border: 0,
+      color: "#d8b950",
+      background: "transparent",
+      fontSize: 11,
+      fontWeight: 900,
+      cursor: "pointer",
+    },
+
     primary: {
       minHeight: 48,
       marginTop: 4,
@@ -240,6 +297,34 @@ export default function LoginVisual({
       fontSize: 13,
     },
 
+    textButton: {
+      display: "block",
+      margin: "12px auto 0",
+      padding: 0,
+      border: 0,
+      background: "transparent",
+      color: "rgba(255,255,255,0.72)",
+      textDecoration: "underline",
+      cursor: "pointer",
+      fontSize: 12,
+    },
+
+    acceptance: {
+      display: "grid",
+      gridTemplateColumns: "18px 1fr",
+      gap: 9,
+      alignItems: "start",
+      fontSize: 11.5,
+      lineHeight: 1.5,
+      color: "rgba(255,255,255,0.72)",
+    },
+
+    legalLink: {
+      color: "#d7b84c",
+      textDecoration: "underline",
+      fontWeight: 800,
+    },
+
     error: {
       marginTop: 14,
       padding: 11,
@@ -252,6 +337,30 @@ export default function LoginVisual({
       background:
         "rgba(255,70,70,0.08)",
     },
+
+    notice: {
+      marginTop: 14,
+      padding: 11,
+      borderRadius: 11,
+      color: "#cdebd6",
+      fontSize: 12.5,
+      lineHeight: 1.4,
+      border:
+        "1px solid rgba(80,190,120,0.24)",
+      background:
+        "rgba(70,180,110,0.08)",
+    },
+
+    footer: {
+      marginTop: 20,
+      paddingTop: 16,
+      borderTop:
+        "1px solid rgba(255,255,255,0.08)",
+      textAlign: "center",
+      fontSize: 11.5,
+      lineHeight: 1.7,
+      color: "rgba(255,255,255,0.60)",
+    },
   };
 
   function switchMode(nextMode) {
@@ -259,6 +368,7 @@ export default function LoginVisual({
 
     setMode(nextMode);
     setError("");
+    setNotice("");
   }
 
   async function submitLogin(event) {
@@ -275,7 +385,6 @@ export default function LoginVisual({
       setError(
         "Informe um e-mail válido."
       );
-
       return;
     }
 
@@ -283,7 +392,6 @@ export default function LoginVisual({
       setError(
         "Informe sua senha."
       );
-
       return;
     }
 
@@ -294,19 +402,18 @@ export default function LoginVisual({
       setError(
         "Login indisponível."
       );
-
       return;
     }
 
     setBusy(true);
     setError("");
+    setNotice("");
 
     try {
       await onEnter({
         mode: "firebase",
         login: safeEmail,
-        password:
-          loginPassword,
+        password: loginPassword,
       });
     }
     catch (err) {
@@ -322,9 +429,58 @@ export default function LoginVisual({
     }
   }
 
-  async function submitRegister(
-    event
-  ) {
+  async function resetPassword() {
+    if (busy) return;
+
+    const safeEmail =
+      String(loginEmail || "")
+        .trim()
+        .toLowerCase();
+
+    if (!validEmail(safeEmail)) {
+      setError(
+        "Digite seu e-mail acima para recuperar a senha."
+      );
+      return;
+    }
+
+    if (
+      typeof onResetPassword !==
+      "function"
+    ) {
+      setError(
+        "Recuperação de senha indisponível."
+      );
+      return;
+    }
+
+    setBusy(true);
+    setError("");
+    setNotice("");
+
+    try {
+      await onResetPassword(
+        safeEmail
+      );
+
+      setNotice(
+        "Enviamos as instruções de recuperação para o e-mail informado."
+      );
+    }
+    catch (err) {
+      setError(
+        String(
+          err?.message || ""
+        ).trim() ||
+        "Não foi possível enviar a recuperação de senha."
+      );
+    }
+    finally {
+      setBusy(false);
+    }
+  }
+
+  async function submitRegister(event) {
     event.preventDefault();
 
     if (busy) return;
@@ -344,7 +500,6 @@ export default function LoginVisual({
       setError(
         "Informe seu nome."
       );
-
       return;
     }
 
@@ -355,7 +510,6 @@ export default function LoginVisual({
       setError(
         "Informe um telefone válido."
       );
-
       return;
     }
 
@@ -363,7 +517,6 @@ export default function LoginVisual({
       setError(
         "Informe um e-mail válido."
       );
-
       return;
     }
 
@@ -373,7 +526,6 @@ export default function LoginVisual({
       setError(
         "A senha precisa ter pelo menos 6 caracteres."
       );
-
       return;
     }
 
@@ -384,7 +536,13 @@ export default function LoginVisual({
       setError(
         "As senhas não coincidem."
       );
+      return;
+    }
 
+    if (!acceptedTerms) {
+      setError(
+        "Para criar a conta, aceite os Termos de Uso e a Política de Privacidade."
+      );
       return;
     }
 
@@ -395,27 +553,23 @@ export default function LoginVisual({
       setError(
         "Cadastro indisponível."
       );
-
       return;
     }
 
     setBusy(true);
     setError("");
+    setNotice("");
 
     try {
       await onRegister({
-        name:
-          safeName,
-
-        phone:
-          safePhone,
-
-        email:
-          safeEmail,
-
+        name: safeName,
+        phone: safePhone,
+        email: safeEmail,
         password,
-
         confirmPassword,
+        acceptedTerms: true,
+        legalVersion:
+          "2026-09-02",
       });
     }
     catch (err) {
@@ -451,7 +605,7 @@ export default function LoginVisual({
           </div>
 
           <div style={ui.subtitle}>
-            Resultados • Estatística • Insights
+            Estatística • Leitura • Análise
           </div>
         </div>
 
@@ -491,81 +645,115 @@ export default function LoginVisual({
           </div>
 
           {error ? (
-            <div style={ui.error}>
+            <div
+              style={ui.error}
+              role="alert"
+            >
               {error}
             </div>
           ) : null}
 
-          {mode === "login" ? (
-            <form
-              style={ui.form}
-              onSubmit={
-                submitLogin
-              }
+          {notice ? (
+            <div
+              style={ui.notice}
+              role="status"
             >
-              <label style={ui.field}>
-                <span style={ui.label}>
-                  E-mail
-                </span>
+              {notice}
+            </div>
+          ) : null}
 
-                <input
-                  type="email"
-                  value={
-                    loginEmail
-                  }
-                  onChange={(e) =>
-                    setLoginEmail(
-                      e.target.value
-                    )
-                  }
-                  placeholder=
-                    "Digite seu e-mail"
-                  autoComplete="email"
+          {mode === "login" ? (
+            <>
+              <form
+                style={ui.form}
+                onSubmit={submitLogin}
+              >
+                <label style={ui.field}>
+                  <span style={ui.label}>
+                    E-mail
+                  </span>
+
+                  <input
+                    type="email"
+                    value={loginEmail}
+                    onChange={(e) =>
+                      setLoginEmail(
+                        e.target.value
+                      )
+                    }
+                    placeholder="Digite seu e-mail"
+                    autoComplete="email"
+                    disabled={busy}
+                    style={ui.input}
+                  />
+                </label>
+
+                <label style={ui.field}>
+                  <span style={ui.label}>
+                    Senha
+                  </span>
+
+                  <div style={ui.passwordWrap}>
+                    <input
+                      type={
+                        showLoginPassword
+                          ? "text"
+                          : "password"
+                      }
+                      value={loginPassword}
+                      onChange={(e) =>
+                        setLoginPassword(
+                          e.target.value
+                        )
+                      }
+                      placeholder="Digite sua senha"
+                      autoComplete="current-password"
+                      disabled={busy}
+                      style={ui.passwordInput}
+                    />
+
+                    <button
+                      type="button"
+                      style={ui.showButton}
+                      onClick={() =>
+                        setShowLoginPassword(
+                          (value) =>
+                            !value
+                        )
+                      }
+                      disabled={busy}
+                    >
+                      {showLoginPassword
+                        ? "OCULTAR"
+                        : "MOSTRAR"}
+                    </button>
+                  </div>
+                </label>
+
+                <button
+                  type="submit"
                   disabled={busy}
-                  style={ui.input}
-                />
-              </label>
-
-              <label style={ui.field}>
-                <span style={ui.label}>
-                  Senha
-                </span>
-
-                <input
-                  type="password"
-                  value={
-                    loginPassword
-                  }
-                  onChange={(e) =>
-                    setLoginPassword(
-                      e.target.value
-                    )
-                  }
-                  placeholder=
-                    "Digite sua senha"
-                  autoComplete=
-                    "current-password"
-                  disabled={busy}
-                  style={ui.input}
-                />
-              </label>
+                  style={ui.primary}
+                >
+                  {busy
+                    ? "ENTRANDO..."
+                    : "ENTRAR"}
+                </button>
+              </form>
 
               <button
-                type="submit"
+                type="button"
+                style={ui.textButton}
+                onClick={resetPassword}
                 disabled={busy}
-                style={ui.primary}
               >
-                {busy
-                  ? "ENTRANDO..."
-                  : "ENTRAR"}
+                Esqueci minha senha
               </button>
-            </form>
+            </>
           ) : (
             <form
               style={ui.form}
-              onSubmit={
-                submitRegister
-              }
+              onSubmit={submitRegister}
             >
               <label style={ui.field}>
                 <span style={ui.label}>
@@ -580,8 +768,7 @@ export default function LoginVisual({
                       e.target.value
                     )
                   }
-                  placeholder=
-                    "Digite seu nome"
+                  placeholder="Digite seu nome"
                   autoComplete="name"
                   disabled={busy}
                   style={ui.input}
@@ -607,8 +794,7 @@ export default function LoginVisual({
                       )
                     )
                   }
-                  placeholder=
-                    "(61) 99999-9999"
+                  placeholder="(61) 99999-9999"
                   autoComplete="tel"
                   inputMode="numeric"
                   disabled={busy}
@@ -629,8 +815,7 @@ export default function LoginVisual({
                       e.target.value
                     )
                   }
-                  placeholder=
-                    "Digite seu e-mail"
+                  placeholder="Digite seu e-mail"
                   autoComplete="email"
                   disabled={busy}
                   style={ui.input}
@@ -642,21 +827,41 @@ export default function LoginVisual({
                   Senha
                 </span>
 
-                <input
-                  type="password"
-                  value={password}
-                  onChange={(e) =>
-                    setPassword(
-                      e.target.value
-                    )
-                  }
-                  placeholder=
-                    "Mínimo de 6 caracteres"
-                  autoComplete=
-                    "new-password"
-                  disabled={busy}
-                  style={ui.input}
-                />
+                <div style={ui.passwordWrap}>
+                  <input
+                    type={
+                      showRegisterPassword
+                        ? "text"
+                        : "password"
+                    }
+                    value={password}
+                    onChange={(e) =>
+                      setPassword(
+                        e.target.value
+                      )
+                    }
+                    placeholder="Mínimo de 6 caracteres"
+                    autoComplete="new-password"
+                    disabled={busy}
+                    style={ui.passwordInput}
+                  />
+
+                  <button
+                    type="button"
+                    style={ui.showButton}
+                    onClick={() =>
+                      setShowRegisterPassword(
+                        (value) =>
+                          !value
+                      )
+                    }
+                    disabled={busy}
+                  >
+                    {showRegisterPassword
+                      ? "OCULTAR"
+                      : "MOSTRAR"}
+                  </button>
+                </div>
               </label>
 
               <label style={ui.field}>
@@ -664,28 +869,84 @@ export default function LoginVisual({
                   Confirmar senha
                 </span>
 
+                <div style={ui.passwordWrap}>
+                  <input
+                    type={
+                      showConfirmPassword
+                        ? "text"
+                        : "password"
+                    }
+                    value={confirmPassword}
+                    onChange={(e) =>
+                      setConfirmPassword(
+                        e.target.value
+                      )
+                    }
+                    placeholder="Digite a senha novamente"
+                    autoComplete="new-password"
+                    disabled={busy}
+                    style={ui.passwordInput}
+                  />
+
+                  <button
+                    type="button"
+                    style={ui.showButton}
+                    onClick={() =>
+                      setShowConfirmPassword(
+                        (value) =>
+                          !value
+                      )
+                    }
+                    disabled={busy}
+                  >
+                    {showConfirmPassword
+                      ? "OCULTAR"
+                      : "MOSTRAR"}
+                  </button>
+                </div>
+              </label>
+
+              <label style={ui.acceptance}>
                 <input
-                  type="password"
-                  value={
-                    confirmPassword
-                  }
-                  onChange={(e) =>
-                    setConfirmPassword(
-                      e.target.value
+                  type="checkbox"
+                  checked={acceptedTerms}
+                  onChange={(event) =>
+                    setAcceptedTerms(
+                      event.target.checked
                     )
                   }
-                  placeholder=
-                    "Digite a senha novamente"
-                  autoComplete=
-                    "new-password"
                   disabled={busy}
-                  style={ui.input}
                 />
+
+                <span>
+                  Li e aceito os{" "}
+                  <a
+                    href="/termos"
+                    target="_blank"
+                    rel="noreferrer"
+                    style={ui.legalLink}
+                  >
+                    Termos de Uso
+                  </a>
+                  {" "}e declaro ciência da{" "}
+                  <a
+                    href="/privacidade"
+                    target="_blank"
+                    rel="noreferrer"
+                    style={ui.legalLink}
+                  >
+                    Política de Privacidade
+                  </a>
+                  .
+                </span>
               </label>
 
               <button
                 type="submit"
-                disabled={busy}
+                disabled={
+                  busy ||
+                  !acceptedTerms
+                }
                 style={ui.primary}
               >
                 {busy
@@ -694,6 +955,56 @@ export default function LoginVisual({
               </button>
             </form>
           )}
+
+          <div style={ui.footer}>
+            <div>
+              Precisa de ajuda?
+            </div>
+
+            <a
+              href={SUPPORT_WHATSAPP}
+              target="_blank"
+              rel="noreferrer"
+              style={ui.legalLink}
+            >
+              WhatsApp: {SUPPORT_DISPLAY}
+            </a>
+
+            <div>
+              <a
+                href={"mailto:" + SUPPORT_EMAIL}
+                style={ui.legalLink}
+              >
+                {SUPPORT_EMAIL}
+              </a>
+            </div>
+
+            <div
+              style={{
+                marginTop: 8,
+              }}
+            >
+              <a
+                href="/termos"
+                target="_blank"
+                rel="noreferrer"
+                style={ui.legalLink}
+              >
+                Termos de Uso
+              </a>
+
+              {" · "}
+
+              <a
+                href="/privacidade"
+                target="_blank"
+                rel="noreferrer"
+                style={ui.legalLink}
+              >
+                Política de Privacidade
+              </a>
+            </div>
+          </div>
         </div>
       </div>
     </div>

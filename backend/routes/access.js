@@ -459,7 +459,7 @@ router.get(
         pixKey:
           String(
             process.env.PALPITACO_PIX_KEY ||
-            ""
+            "+5561999878710"
           )
             .trim()
             .slice(0, 200),
@@ -471,6 +471,12 @@ router.get(
           )
             .trim()
             .slice(0, 200),
+
+        supportPhone:
+          "+5561999878710",
+
+        supportEmail:
+          "contato@palpitacojb.com.br",
       },
     });
   }
