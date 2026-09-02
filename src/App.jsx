@@ -231,6 +231,7 @@ const BUILD_TIME = String(process.env.REACT_APP_BUILD_TIME || "").trim();
    Admin (hash gate)
 ========================= */
 const ADMIN_HASH = "#admin";
+const ADMIN_PATH = "/admin";
 
 const ROUTES = {
   LOGIN: "login",
@@ -371,10 +372,36 @@ function loadDashboardFilters() {
    Admin helpers
 ========================= */
 
-function isAdminHashNow() {
+function isAdminRouteNow(
+  pathname,
+  hash
+) {
   try {
-    const h = String(window.location.hash || "").trim();
-    return h === ADMIN_HASH || h.startsWith(`${ADMIN_HASH}?`);
+    const path =
+      cleanPathname(
+        pathname ||
+          window.location.pathname
+      ).toLowerCase();
+
+    if (path === ADMIN_PATH) {
+      return true;
+    }
+
+    const h =
+      String(
+        hash ??
+          window.location.hash ??
+          ""
+      )
+        .trim()
+        .toLowerCase();
+
+    return (
+      h === ADMIN_HASH ||
+      h.startsWith(
+        `${ADMIN_HASH}?`
+      )
+    );
   } catch {
     return false;
   }
@@ -596,13 +623,18 @@ export default function App() {
     });
   }, []);
 
-  const [adminMode, setAdminMode] = useState(() => isAdminHashNow());
-
-  useEffect(() => {
-    const onHash = () => setAdminMode(isAdminHashNow());
-    window.addEventListener("hashchange", onHash);
-    return () => window.removeEventListener("hashchange", onHash);
-  }, []);
+  const adminMode =
+    useMemo(
+      () =>
+        isAdminRouteNow(
+          location?.pathname,
+          location?.hash
+        ),
+      [
+        location?.pathname,
+        location?.hash,
+      ]
+    );
 
   const [adminAuthed, setAdminAuthed] = useState(false);
   const [adminBooting, setAdminBooting] = useState(false);
