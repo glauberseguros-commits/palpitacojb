@@ -1,61 +1,28 @@
 import {
-  getStoredAccessSessionToken,
   clearAccessRuntimeSession,
-  detectRegistrationDeviceSlot,
   getMyAccess,
-  startDeviceConfirmation,
-  confirmDeviceConfirmation,
-  openAccessSession,
   closeAccessSession,
-  checkAuthorizedAccess,
 } from "./accessClient";
 
 
-export const ACCESS_FLOW_STATE = Object.freeze({
-  AUTHORIZED: "AUTHORIZED",
-  SUBSCRIPTION_REQUIRED: "SUBSCRIPTION_REQUIRED",
-  DEVICE_CONFIRMATION_REQUIRED: "DEVICE_CONFIRMATION_REQUIRED",
-});
+export const ACCESS_FLOW_STATE =
+  Object.freeze({
+    AUTHORIZED:
+      "AUTHORIZED",
 
-
-function normalizeErrorCode(error) {
-  return String(
-    error?.code ||
-    error?.payload?.error ||
-    error?.error ||
-    ""
-  )
-    .trim()
-    .toUpperCase();
-}
-
-
-function createFlowError(
-  code,
-  message
-) {
-  const error =
-    new Error(
-      String(message || code)
-    );
-
-  error.code =
-    String(code || "ACCESS_FLOW_ERROR");
-
-  return error;
-}
+    SUBSCRIPTION_REQUIRED:
+      "SUBSCRIPTION_REQUIRED",
+  });
 
 
 export function isSubscriptionActive(
   mePayload
 ) {
-  const access =
-    mePayload?.access ||
-    null;
-
   return (
-    access?.accessGranted === true &&
-    access?.subscription?.active === true
+    mePayload
+      ?.access
+      ?.subscription
+      ?.active === true
   );
 }
 
@@ -73,32 +40,24 @@ function subscriptionRequiredState(
       false,
 
     reason:
-      String(reason || "").trim(),
+      String(
+        reason || ""
+      ).trim(),
 
     user:
-      mePayload?.user || null,
+      mePayload?.user ||
+      null,
 
     access:
-      mePayload?.access || null,
+      mePayload?.access ||
+      null,
   };
 }
 
 
-function authorizedState({
-  check,
-  me = null,
-  session = null,
-  reusedSession = false,
-} = {}) {
-  if (
-    check?.accessGranted !== true
-  ) {
-    throw createFlowError(
-      "ACCESS_NOT_GRANTED",
-      "Backend nao concedeu acesso."
-    );
-  }
-
+function authorizedState(
+  mePayload
+) {
   return {
     state:
       ACCESS_FLOW_STATE.AUTHORIZED,
@@ -106,224 +65,61 @@ function authorizedState({
     accessGranted:
       true,
 
+    authority:
+      "ADMIN_SUBSCRIPTION_SOVEREIGN",
+
     user:
-      me?.user || null,
+      mePayload?.user ||
+      null,
 
     access:
-      check?.access ||
-      me?.access ||
+      mePayload?.access ||
       null,
 
     session:
-      session || null,
+      null,
 
     reusedSession:
-      reusedSession === true,
+      false,
   };
 }
 
 
-async function tryStoredSession() {
-  const storedToken =
-    getStoredAccessSessionToken();
-
-  if (!storedToken) {
-    return null;
-  }
-
-  try {
-    const check =
-      await checkAuthorizedAccess();
-
-    return authorizedState({
-      check,
-      reusedSession:
-        true,
-    });
-  }
-  catch {
-    clearAccessRuntimeSession();
-    return null;
-  }
-}
-
-
 export async function bootstrapAuthorizedAccess() {
-  const existing =
-    await tryStoredSession();
-
-  if (existing) {
-    return existing;
-  }
-
   const me =
     await getMyAccess();
+
+  /*
+   * Device/session antigos não possuem mais
+   * autoridade para bloquear acesso.
+   */
+  clearAccessRuntimeSession();
 
   if (
     !isSubscriptionActive(me)
   ) {
-    clearAccessRuntimeSession();
-
     return subscriptionRequiredState(
       me,
       String(
-        me?.access?.subscription?.status ||
-        me?.access?.status ||
+        me
+          ?.access
+          ?.subscription
+          ?.status ||
         "INACTIVE"
       ).toUpperCase()
     );
   }
 
-  let opened = null;
-
-  try {
-    opened =
-      await openAccessSession();
-  }
-  catch (error) {
-    const code =
-      normalizeErrorCode(error);
-
-    if (
-      code ===
-        "ACTIVE_SUBSCRIPTION_REQUIRED" ||
-      code ===
-        "ACCESS_ACCOUNT_NOT_FOUND"
-    ) {
-      clearAccessRuntimeSession();
-
-      return subscriptionRequiredState(
-        me,
-        code
-      );
-    }
-
-    if (
-      code !==
-      "DEVICE_NOT_AUTHORIZED"
-    ) {
-      throw error;
-    }
-
-    const slot =
-      detectRegistrationDeviceSlot();
-
-    const challengePayload =
-      await startDeviceConfirmation({
-        slot,
-      });
-
-    const challenge =
-      challengePayload?.challenge ||
-      null;
-
-    const challengeToken =
-      String(
-        challenge?.challengeToken ||
-        ""
-      ).trim();
-
-    if (!challengeToken) {
-      throw createFlowError(
-        "DEVICE_CHALLENGE_TOKEN_MISSING",
-        "Backend nao retornou token do desafio de dispositivo."
-      );
-    }
-
-    return {
-      state:
-        ACCESS_FLOW_STATE
-          .DEVICE_CONFIRMATION_REQUIRED,
-
-      accessGranted:
-        false,
-
-      slot,
-
-      user:
-        me?.user || null,
-
-      access:
-        me?.access || null,
-
-      challenge,
-
-      challengeToken,
-    };
-  }
-
-  const check =
-    await checkAuthorizedAccess();
-
-  return authorizedState({
-    check,
-    me,
-
-    session:
-      opened?.session || null,
-
-    reusedSession:
-      false,
-  });
+  return authorizedState(me);
 }
 
 
-export async function confirmDeviceAndAuthorize({
-  challengeToken,
-  code,
-} = {}) {
-  const token =
-    String(
-      challengeToken || ""
-    ).trim();
-
-  const confirmationCode =
-    String(
-      code || ""
-    )
-      .replace(/\D/g, "");
-
-  if (!token) {
-    throw createFlowError(
-      "DEVICE_CHALLENGE_TOKEN_REQUIRED",
-      "Token do desafio de dispositivo ausente."
-    );
-  }
-
-  if (
-    !/^\d{6}$/.test(
-      confirmationCode
-    )
-  ) {
-    throw createFlowError(
-      "DEVICE_CONFIRMATION_CODE_INVALID",
-      "O codigo de confirmacao deve conter 6 digitos."
-    );
-  }
-
-  await confirmDeviceConfirmation({
-    challengeToken:
-      token,
-
-    code:
-      confirmationCode,
-  });
-
-  const opened =
-    await openAccessSession();
-
-  const check =
-    await checkAuthorizedAccess();
-
-  return authorizedState({
-    check,
-
-    session:
-      opened?.session || null,
-
-    reusedSession:
-      false,
-  });
+/*
+ * Compatibilidade com consumidores antigos.
+ * Não cria challenge e não exige código.
+ */
+export async function confirmDeviceAndAuthorize() {
+  return bootstrapAuthorizedAccess();
 }
 
 
@@ -337,12 +133,12 @@ export async function closeAuthoritativeAccess() {
 }
 
 
-export default {
+const accessFlow = {
   ACCESS_FLOW_STATE,
-
   isSubscriptionActive,
-
   bootstrapAuthorizedAccess,
   confirmDeviceAndAuthorize,
   closeAuthoritativeAccess,
 };
+
+export default accessFlow;

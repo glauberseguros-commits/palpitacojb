@@ -18,7 +18,6 @@ import { clearAccessRuntimeSession } from "./services/accessClient";
 import {
   ACCESS_FLOW_STATE,
   bootstrapAuthorizedAccess,
-  confirmDeviceAndAuthorize,
   closeAuthoritativeAccess,
 } from "./services/accessFlow";
 
@@ -917,35 +916,6 @@ export default function App() {
       return;
     }
 
-    if (
-      phase ===
-      ACCESS_FLOW_STATE.DEVICE_CONFIRMATION_REQUIRED
-    ) {
-      const expectedSearch =
-        "?product=" +
-        encodeURIComponent(
-          selectedProduct
-        );
-
-      if (
-        curPath !== "/login" ||
-        String(
-          location?.search || ""
-        ) !== expectedSearch
-      ) {
-        navigate(
-          productFlowPath(
-            "/login",
-            selectedProduct
-          ),
-          {
-            replace: true,
-          }
-        );
-      }
-
-      return;
-    }
 
     if (
       phase !==
@@ -1046,59 +1016,6 @@ export default function App() {
     clearLegacyAccessMarkers();
   };
 
-  const handleDeviceConfirmation = async (code) => {
-    const challengeToken =
-      String(
-        accessResult?.challengeToken ||
-          accessResult?.challenge?.challengeToken ||
-          ""
-      ).trim();
-
-    if (!challengeToken) {
-      setAccessError(
-        "Não foi possível localizar o desafio de confirmação."
-      );
-      return false;
-    }
-
-    setAccessBusy(true);
-    setAccessError("");
-
-    try {
-      const result =
-        await confirmDeviceAndAuthorize({
-          challengeToken,
-          code,
-        });
-
-      clearLegacyAccessMarkers();
-      setAccessResult(result);
-
-      safeWriteLS(
-        STORAGE_KEY,
-        ROUTES.DASHBOARD
-      );
-
-      redirectToSelectedProduct(
-        selectedProduct,
-        navigate
-      );
-
-      return true;
-    } catch (error) {
-      setAccessError(
-        String(
-          error?.message ||
-            error?.code ||
-            "Não foi possível confirmar este dispositivo."
-        ).trim()
-      );
-
-      return false;
-    } finally {
-      setAccessBusy(false);
-    }
-  };
 
   const handleAccessRetry = async () => {
     setAccessError("");
@@ -1259,33 +1176,6 @@ export default function App() {
           <Payments
             email={firebaseUser?.email || ""}
             busy={accessBusy}
-            onRetry={handleAccessRetry}
-            onLogout={logout}
-          />
-          <BuildStamp />
-        </Suspense>
-      </ErrorBoundary>
-    );
-  }
-
-  if (
-    authoritativePhase ===
-    ACCESS_FLOW_STATE.DEVICE_CONFIRMATION_REQUIRED
-  ) {
-    return (
-      <ErrorBoundary>
-        <Suspense fallback={<AppLoading />}>
-          <AccessGate
-            mode="device"
-            email={
-              accessResult?.user?.email ||
-              firebaseUser?.email ||
-              ""
-            }
-            slot={accessResult?.slot || ""}
-            busy={accessBusy}
-            error={accessError}
-            onConfirmCode={handleDeviceConfirmation}
             onRetry={handleAccessRetry}
             onLogout={logout}
           />

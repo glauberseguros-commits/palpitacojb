@@ -1,86 +1,147 @@
 import fs from "fs";
 import path from "path";
 
+
 function srcFile(relative) {
   return fs.readFileSync(
-    path.resolve(__dirname, "..", relative),
+    path.resolve(
+      __dirname,
+      "..",
+      relative
+    ),
     "utf8"
   );
 }
 
+
 describe(
-  "PalPitaco B4B-2 authoritative frontend integration",
+  "PalPitaco sovereign administrative access integration",
   () => {
-    test("login visual has no guest entry", () => {
-      const source =
-        srcFile("pages/Account/LoginVisual.jsx");
 
-      expect(source).not.toContain("CONVIDADO");
-      expect(source).not.toContain("enterGuest");
-      expect(source).not.toContain("onSkip");
-    });
+    test(
+      "login visual has no guest entry",
+      () => {
+        const source =
+          srcFile(
+            "pages/Account/LoginVisual.jsx"
+          );
 
-    test("Account cannot hydrate or enter guest mode", () => {
-      const source =
-        srcFile("pages/Account/Account.jsx");
+        expect(source)
+          .not
+          .toContain("CONVIDADO");
 
-      expect(source).not.toContain("loadFormalGuestSession");
-      expect(source).not.toContain("markSessionGuest()");
-      expect(source).not.toContain("onSkip={onSkip}");
-    });
+        expect(source)
+          .not
+          .toContain("enterGuest");
 
-    test("App does not use pp_session as protected access authority", () => {
-      const source =
-        srcFile("App.jsx");
+        expect(source)
+          .not
+          .toContain("onSkip");
+      }
+    );
 
-      expect(source).toContain("bootstrapAuthorizedAccess");
-      expect(source).toContain("confirmDeviceAndAuthorize");
-      expect(source).toContain("ACCESS_FLOW_STATE.AUTHORIZED");
 
-      expect(source).not.toContain("loadSessionObj");
-      expect(source).not.toContain("getSessionKind");
-      expect(source).not.toContain("sessionObj");
-    });
+    test(
+      "App uses subscription authority",
+      () => {
+        const source =
+          srcFile("App.jsx");
 
-    test("protected render requires authoritative states", () => {
-      const source =
-        srcFile("App.jsx");
+        expect(source)
+          .toContain(
+            "bootstrapAuthorizedAccess"
+          );
 
-      expect(source).toContain(
-        "ACCESS_FLOW_STATE.SUBSCRIPTION_REQUIRED"
-      );
+        expect(source)
+          .toContain(
+            "ACCESS_FLOW_STATE.AUTHORIZED"
+          );
 
-      expect(source).toContain(
-        "ACCESS_FLOW_STATE.DEVICE_CONFIRMATION_REQUIRED"
-      );
+        expect(source)
+          .toContain(
+            "ACCESS_FLOW_STATE.SUBSCRIPTION_REQUIRED"
+          );
+      }
+    );
 
-      expect(source).toContain(
-        "authoritativePhase !=="
-      );
-    });
 
-    test("logout delegates to authoritative App handler", () => {
-      const source =
-        srcFile(
-          "pages/Dashboard/components/Sidebar/AppShell.jsx"
+    test(
+      "App has no device confirmation gate",
+      () => {
+        const source =
+          srcFile("App.jsx");
+
+        expect(source)
+          .not
+          .toContain(
+            "confirmDeviceAndAuthorize"
+          );
+
+        expect(source)
+          .not
+          .toContain(
+            "DEVICE_CONFIRMATION_REQUIRED"
+          );
+
+        expect(source)
+          .not
+          .toContain(
+            'mode="device"'
+          );
+      }
+    );
+
+
+    test(
+      "access flow has no device email or session gate",
+      () => {
+        const source =
+          srcFile(
+            "services/accessFlow.js"
+          );
+
+        [
+          "startDeviceConfirmation",
+          "confirmDeviceConfirmation",
+          "openAccessSession",
+          "checkAuthorizedAccess",
+          "DEVICE_NOT_AUTHORIZED",
+          "EMAIL_DELIVERY_NOT_CONFIGURED",
+          "DEVICE_CHALLENGE_COOLDOWN",
+        ].forEach(
+          (marker) => {
+            expect(source)
+              .not
+              .toContain(marker);
+          }
         );
 
-      expect(source).toContain(
-        'typeof onLogout === "function"'
-      );
+        expect(source)
+          .toContain(
+            "ADMIN_SUBSCRIPTION_SOVEREIGN"
+          );
+      }
+    );
 
-      expect(source).toContain(
-        "await onLogout();"
-      );
-    });
 
-    test("device UI requires six digits", () => {
-      const source =
-        srcFile("pages/Account/AccessGate.jsx");
+    test(
+      "logout remains wired",
+      () => {
+        const source =
+          srcFile(
+            "pages/Dashboard/components/Sidebar/AppShell.jsx"
+          );
 
-      expect(source).toContain("maxLength={6}");
-      expect(source).toContain("code.length !== 6");
-      expect(source).toContain("CONFIRMAR DISPOSITIVO");
-    });
+        expect(source)
+          .toContain(
+            'typeof onLogout === "function"'
+          );
+
+        expect(source)
+          .toContain(
+            "await onLogout();"
+          );
+      }
+    );
   }
 );
