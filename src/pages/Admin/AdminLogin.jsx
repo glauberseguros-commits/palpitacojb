@@ -244,7 +244,7 @@ export default function AdminLogin({
 
           <div>
             <span>PALPITACO JB</span>
-            <strong>Engine Center</strong>
+            <strong>Gestão de usuários</strong>
           </div>
         </div>
 
@@ -258,8 +258,8 @@ export default function AdminLogin({
           </h1>
 
           <p>
-            Entre com uma conta autorizada para acessar auditorias,
-            backtests e ferramentas internas.
+            Entre com sua conta autorizada para
+            gerenciar os usuários do PalPitaco JB.
           </p>
         </div>
 
@@ -350,7 +350,7 @@ export default function AdminLogin({
               ? "Verificando sessão..."
               : loading
               ? "Validando acesso..."
-              : "Entrar no Engine Center"}
+              : "Entrar no Gestão de usuários"}
           </button>
 
           <button
@@ -364,7 +364,7 @@ export default function AdminLogin({
         </form>
 
         <footer className="admin-login-footer">
-          Ambiente exclusivo para desenvolvimento e administração.
+          Área administrativa do PalPitaco JB.
         </footer>
       </section>
     </main>
