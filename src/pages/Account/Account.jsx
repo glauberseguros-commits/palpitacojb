@@ -14,11 +14,6 @@ import {
 import {
   doc,
   deleteDoc,
-  collection,
-  query,
-  where,
-  limit,
-  getDocs,
 } from "firebase/firestore";
 
 // Module pieces
@@ -51,9 +46,7 @@ import {
  * - Estados válidos:
  *   1) Firebase real autenticado
  *   2) Guest local
- * - Login aceita:
- *   - e-mail
- *   - telefone (+55 / com máscara / só dígitos)
+ * - Login autenticado por e-mail e senha.
  *
  * Plano real:
  *   - FREE
@@ -164,78 +157,6 @@ export default function Account({ onClose = null, onAuthenticated = null }) {
     return String(loginRaw || "").trim().toLowerCase();
   }
 
-  function normalizeLoginToPhoneCandidates(loginRaw) {
-    const rawDigits = normalizePhoneDigits(loginRaw);
-    const digits = String(rawDigits || "").trim();
-
-    if (!digits) return [];
-
-    const variants = new Set();
-    variants.add(digits);
-
-    // Se vier com +55 / 55 na frente e total BR internacional
-    if (digits.length >= 12 && digits.startsWith("55")) {
-      variants.add(digits.slice(2));
-    }
-
-    // Se vier sem +55, adiciona com 55 na frente
-    if (!digits.startsWith("55")) {
-      variants.add(`55${digits}`);
-    }
-
-    return Array.from(variants).filter(Boolean);
-  }
-
-  async function resolveEmailFromPhone(loginRaw) {
-    const candidates = normalizeLoginToPhoneCandidates(loginRaw);
-
-    if (!candidates.length) return "";
-
-    for (const phoneCandidate of candidates) {
-      try {
-        const qRef = query(
-          collection(db, "users"),
-          where("phone", "==", phoneCandidate),
-          limit(1)
-        );
-        const snap = await getDocs(qRef);
-
-        if (!snap.empty) {
-          const data = snap.docs[0]?.data() || {};
-          const foundEmail = String(data.email || "").trim().toLowerCase();
-          if (foundEmail) return foundEmail;
-        }
-      } catch {}
-    }
-
-    // compat com base antiga usando phoneDigits
-    for (const phoneCandidate of candidates) {
-      try {
-        const qRef = query(
-          collection(db, "users"),
-          where("phoneDigits", "==", phoneCandidate),
-          limit(1)
-        );
-        const snap = await getDocs(qRef);
-
-        if (!snap.empty) {
-          const data = snap.docs[0]?.data() || {};
-          const foundEmail = String(data.email || "").trim().toLowerCase();
-          if (foundEmail) return foundEmail;
-        }
-      } catch {}
-    }
-
-    return "";
-  }
-
-  async function resolveLoginToEmail(loginRaw) {
-    if (isEmailLogin(loginRaw)) {
-      return normalizeLoginToEmail(loginRaw);
-    }
-
-    return await resolveEmailFromPhone(loginRaw);
-  }
 
   function buildFirebaseLoginError(error) {
     const code = String(error?.code || "").trim();
@@ -646,36 +567,179 @@ export default function Account({ onClose = null, onAuthenticated = null }) {
      Login / Guest
   ========================= */
 
-  const onRegister = async ({ login, password }) => {
+  const onRegister = async ({
+    name,
+    phone,
+    email,
+    password,
+    confirmPassword,
+  }) => {
     setMsg("");
     setErr("");
 
-    const emailCandidate = normalizeLoginToEmail(login);
+    const safeName =
+      String(name || "").trim();
 
-    if (!isEmailLogin(emailCandidate)) {
-      throw new Error("Para criar conta, informe um e-mail válido.");
+    const safePhone =
+      normalizePhoneDigits(
+        phone
+      );
+
+    const emailCandidate =
+      normalizeLoginToEmail(
+        email
+      );
+
+    if (safeName.length < 2) {
+      throw new Error(
+        "Informe seu nome."
+      );
     }
 
-    if (String(password || "").length < 6) {
-      throw new Error("A senha precisa ter pelo menos 6 caracteres.");
+    if (
+      !isPhoneBRValidDigits(
+        safePhone
+      )
+    ) {
+      throw new Error(
+        "Informe um telefone válido."
+      );
     }
 
-    // trava guest enquanto cadastra
-    loginInFlightRef.current = true;
-    authNotifiedRef.current = false;
+    if (
+      !isEmailLogin(
+        emailCandidate
+      )
+    ) {
+      throw new Error(
+        "Informe um e-mail válido."
+      );
+    }
 
-    // mata estado guest antes do cadastro real
+    if (
+      String(
+        password || ""
+      ).length < 6
+    ) {
+      throw new Error(
+        "A senha precisa ter pelo menos 6 caracteres."
+      );
+    }
+
+    if (
+      String(password || "") !==
+      String(confirmPassword || "")
+    ) {
+      throw new Error(
+        "As senhas não coincidem."
+      );
+    }
+
+    loginInFlightRef.current =
+      true;
+
+    authNotifiedRef.current =
+      false;
+
     setGuestActive(false);
     setIsGuest(false);
+
+    try {
+      clearGuestProfile();
+    } catch {}
+
     safeRemoveSession();
 
     try {
-      await createUserWithEmailAndPassword(auth, emailCandidate, password);
+      const credential =
+        await createUserWithEmailAndPassword(
+          auth,
+          emailCandidate,
+          password
+        );
+
+      const user =
+        credential?.user;
+
+      if (!user?.uid) {
+        throw new Error(
+          "Conta criada sem identificação válida."
+        );
+      }
+
+      const ensured =
+        await ensureUserDoc(
+          db,
+          user.uid,
+          user
+        );
+
+      if (
+        ensured?.ok !== true
+      ) {
+        throw new Error(
+          "Não foi possível criar o perfil."
+        );
+      }
+
+      const saved =
+        await saveUserProfile(
+          db,
+          user.uid,
+          {
+            name:
+              safeName,
+
+            phone:
+              safePhone,
+
+            photoURL:
+              "",
+          }
+        );
+
+      if (!saved) {
+        throw new Error(
+          "Conta criada, mas não foi possível salvar nome e telefone."
+        );
+      }
+
+      setNameDraft(
+        safeName
+      );
+
+      setPhoneDraft(
+        safePhone
+      );
+
+      setEmail(
+        emailCandidate
+      );
+
       return true;
-    } catch (error) {
-      loginInFlightRef.current = false;
-      const parsed = buildFirebaseLoginError(error);
-      throw new Error(parsed.msg);
+    }
+    catch (error) {
+      loginInFlightRef.current =
+        false;
+
+      const parsed =
+        buildFirebaseLoginError(
+          error
+        );
+
+      if (
+        parsed?.type ===
+          "unknown" &&
+        error?.message
+      ) {
+        throw error;
+      }
+
+      throw new Error(
+        parsed?.msg ||
+        error?.message ||
+        "Não foi possível criar a conta."
+      );
     }
   };
 
@@ -683,67 +747,82 @@ export default function Account({ onClose = null, onAuthenticated = null }) {
     setMsg("");
     setErr("");
 
-    const login = String(payload?.login || "").trim();
-    const password = String(payload?.password || "");
-    const mode = String(payload?.mode || "").trim().toLowerCase();
+    const emailForAuth =
+      normalizeLoginToEmail(
+        payload?.login
+      );
+
+    const password =
+      String(
+        payload?.password || ""
+      );
+
+    const mode =
+      String(
+        payload?.mode || ""
+      )
+        .trim()
+        .toLowerCase();
 
     if (mode !== "firebase") {
-      throw new Error("Modo de autenticação inválido.");
+      throw new Error(
+        "Modo de autenticação inválido."
+      );
     }
 
-    if (!login || !password) {
-      throw new Error("Preencha login e senha.");
+    if (
+      !isEmailLogin(
+        emailForAuth
+      )
+    ) {
+      throw new Error(
+        "Informe seu e-mail."
+      );
     }
 
-    const isEmail = isEmailLogin(login);
-    const emailForAuth = isEmail ? normalizeLoginToEmail(login) : await resolveLoginToEmail(login);
-
-    // telefone sem vínculo => não dá para cadastrar sem e-mail
-    if (!emailForAuth && !isEmail) {
-      throw new Error("Telefone não localizado. Para criar conta, entre com um e-mail.");
+    if (!password) {
+      throw new Error(
+        "Informe sua senha."
+      );
     }
 
-    // trava guest enquanto autentica
-    loginInFlightRef.current = true;
-    authNotifiedRef.current = false;
+    loginInFlightRef.current =
+      true;
 
-    // mata estado guest antes do login real
+    authNotifiedRef.current =
+      false;
+
     setGuestActive(false);
     setIsGuest(false);
+
+    try {
+      clearGuestProfile();
+    } catch {}
+
     safeRemoveSession();
 
     try {
-      await signInWithEmailAndPassword(auth, emailForAuth, password);
+      await signInWithEmailAndPassword(
+        auth,
+        emailForAuth,
+        password
+      );
+
       return true;
-    } catch (error) {
-      loginInFlightRef.current = false;
+    }
+    catch (error) {
+      loginInFlightRef.current =
+        false;
 
-      const parsed = buildFirebaseLoginError(error);
+      const parsed =
+        buildFirebaseLoginError(
+          error
+        );
 
-      // Para e-mail, o Firebase pode mascarar "usuário não encontrado"
-      // como invalid-credential. Então tentamos criar a conta.
-      if (
-        isEmail &&
-        (parsed.type === "user_not_found" ||
-          parsed.type === "invalid_credential" ||
-          parsed.type === "wrong_password")
-      ) {
-        try {
-          return await onRegister({ login: emailForAuth, password });
-        } catch (registerError) {
-          const registerParsed = buildFirebaseLoginError(registerError);
-
-          // Se ao tentar cadastrar disser que o e-mail já existe,
-          // então o login falhou porque a senha está errada.
-          if (registerParsed.type === "email_in_use") {
-            throw new Error("Login ou senha inválidos.");
-          }
-
-          throw registerError;
-        }
-      }
-
-      throw new Error(parsed.msg);
+      throw new Error(
+        parsed?.msg ||
+        "Login ou senha inválidos."
+      );
     }
   };
 
@@ -763,6 +842,7 @@ export default function Account({ onClose = null, onAuthenticated = null }) {
     return (
       <LoginVisual
         onEnter={onEnter}
+        onRegister={onRegister}
       />
     );
   }

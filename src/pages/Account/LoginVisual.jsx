@@ -1,375 +1,699 @@
-// src/pages/Account/LoginVisual.jsx
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useState } from "react";
 
-const LEGACY_ACCOUNT_SESSION_KEY = "pp_session_v1";
-const LEGACY_GUEST_ACTIVE_KEY = "pp_guest_active_v1";
-const LOGO_SRC = "/logo/palpitaco-jb.png";
+const LOGO_SRC =
+  "/logo/palpitaco-jb.png";
 
-function dispatchSessionChanged() {
-  try {
-    window.dispatchEvent(new Event("pp_session_changed"));
-  } catch {}
+function onlyDigits(value) {
+  return String(value || "")
+    .replace(/\D+/g, "")
+    .slice(0, 11);
 }
 
-function safeRemoveLS(key) {
-  try {
-    localStorage.removeItem(key);
-  } catch {}
-}
+function formatPhone(value) {
+  const digits =
+    onlyDigits(value);
 
-export default function LoginVisual({ onEnter }) {
-  const [logoOk, setLogoOk] = useState(true);
-  const [loginValue, setLoginValue] = useState("");
-  const [passwordValue, setPasswordValue] = useState("");
-  const [submitting, setSubmitting] = useState(false);
-  const [errorMsg, setErrorMsg] = useState("");
+  if (!digits) return "";
 
-  useEffect(() => {
-    if (process.env.NODE_ENV === "production") return;
-
-    (async () => {
-      try {
-        const mod = await import("../../dev/runAuditRJ");
-        if (mod?.runAuditRJ) {
-          console.log("🔎 Rodando auditoria RJ (bounds) [DEV]...");
-          await mod.runAuditRJ();
-        }
-      } catch (e) {
-        console.warn("AuditRJ (DEV) falhou:", e);
-      }
-    })();
-  }, []);
-
-  const ui = useMemo(() => {
-    const GOLD = "rgba(202,166,75,1)";
-    const WHITE = "rgba(255,255,255,0.94)";
-    const WHITE_82 = "rgba(255,255,255,0.82)";
-    const BORDER = "rgba(255,255,255,0.12)";
-    const BORDER_GOLD = "rgba(202,166,75,0.30)";
-    const BG = "#050505";
-    const RED = "rgba(255,110,110,0.95)";
-
-    return {
-      page: {
-        minHeight: "100vh",
-        background: BG,
-        color: WHITE,
-        display: "grid",
-        placeItems: "center",
-        padding: "clamp(16px, 2.6vw, 28px)",
-        boxSizing: "border-box",
-        position: "relative",
-        overflow: "hidden",
-        fontFamily: "system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif",
-      },
-
-      glowA: {
-        position: "absolute",
-        inset: "-25%",
-        background:
-          "radial-gradient(760px 460px at 18% 18%, rgba(202,166,75,0.16), rgba(0,0,0,0) 62%)," +
-          "radial-gradient(560px 380px at 84% 30%, rgba(202,166,75,0.08), rgba(0,0,0,0) 64%)," +
-          "radial-gradient(620px 620px at 50% 100%, rgba(255,255,255,0.04), rgba(0,0,0,0) 66%)",
-        pointerEvents: "none",
-      },
-
-      glowB: {
-        position: "absolute",
-        inset: 0,
-        background:
-          "linear-gradient(180deg, rgba(255,255,255,0.03), rgba(0,0,0,0) 40%)," +
-          "linear-gradient(0deg, rgba(255,255,255,0.02), rgba(0,0,0,0) 44%)",
-        pointerEvents: "none",
-      },
-
-      shell: {
-        width: "min(540px, 100%)",
-        display: "grid",
-        zIndex: 2,
-      },
-
-      card: {
-        width: "100%",
-        margin: "0 auto",
-        borderRadius: 24,
-        border: `1px solid ${BORDER}`,
-        background: "rgba(0,0,0,0.54)",
-        boxShadow: "0 24px 70px rgba(0,0,0,0.62)",
-        overflow: "hidden",
-        backdropFilter: "blur(4px)",
-      },
-
-      header: {
-        padding: "clamp(18px, 2.4vw, 24px) clamp(22px, 3vw, 30px) 10px",
-        borderBottom: "1px solid rgba(255,255,255,0.07)",
-        background: "linear-gradient(180deg, rgba(202,166,75,0.09), rgba(0,0,0,0.02) 70%)",
-      },
-
-      logoWrap: {
-        display: "grid",
-        placeItems: "center",
-        gap: 4,
-      },
-
-      logoBox: {
-        width: "min(330px, 74vw)",
-        display: "grid",
-        placeItems: "center",
-      },
-
-      logoImg: {
-        width: "100%",
-        height: "auto",
-        display: "block",
-        objectFit: "contain",
-        filter:
-          "drop-shadow(0 14px 34px rgba(0,0,0,0.50)) drop-shadow(0 0 18px rgba(202,166,75,0.08))",
-      },
-
-      markFallback: {
-        width: 64,
-        height: 64,
-        borderRadius: 18,
-        border: `1px solid ${BORDER_GOLD}`,
-        background:
-          "radial-gradient(20px 20px at 28% 25%, rgba(255,255,255,0.20), rgba(0,0,0,0) 60%)," +
-          "linear-gradient(180deg, rgba(202,166,75,0.24), rgba(0,0,0,0.18))",
-        display: "grid",
-        placeItems: "center",
-        fontWeight: 1000,
-        fontSize: 28,
-        color: GOLD,
-      },
-
-      titleWrap: {
-        textAlign: "center",
-        marginTop: -8,
-      },
-
-      subtitle: {
-        fontSize: "clamp(14px, 1.5vw, 15px)",
-        color: WHITE,
-        fontWeight: 700,
-        letterSpacing: 0.35,
-        margin: 0,
-      },
-
-      body: {
-        padding: "10px 22px 22px",
-        display: "grid",
-        gap: 10,
-      },
-
-      fieldWrap: {
-        display: "grid",
-        gap: 6,
-      },
-
-      label: {
-        fontSize: 13,
-        fontWeight: 900,
-        color: WHITE_82,
-        letterSpacing: 0.2,
-      },
-
-      input: {
-        height: 50,
-        borderRadius: 15,
-        border: "1px solid rgba(255,255,255,0.14)",
-        background: "rgba(255,255,255,0.04)",
-        color: WHITE,
-        outline: "none",
-        padding: "0 14px",
-        fontSize: 15,
-        fontWeight: 700,
-      },
-
-      errorBox: {
-        border: "1px solid rgba(255,110,110,0.30)",
-        background: "rgba(255,110,110,0.08)",
-        color: RED,
-        borderRadius: 14,
-        padding: "10px 12px",
-        fontSize: 13,
-        fontWeight: 700,
-        textAlign: "center",
-        marginBottom: 2,
-      },
-
-      formGrid: {
-        display: "grid",
-        gap: 12,
-      },
-
-      btnRow: {
-        display: "grid",
-        gap: 12,
-        marginTop: 4,
-      },
-
-      btnPrimary: {
-        height: 54,
-        borderRadius: 17,
-        border: "1px solid rgba(202,166,75,0.52)",
-        background: "linear-gradient(180deg, rgba(202,166,75,0.22), rgba(202,166,75,0.10))",
-        color: WHITE,
-        fontWeight: 950,
-        cursor: "pointer",
-        fontSize: 16,
-        letterSpacing: 0.3,
-        boxShadow: "0 10px 24px rgba(0,0,0,0.28)",
-        opacity: 1,
-      },
-
-      btnSecondary: {
-        height: 54,
-        borderRadius: 17,
-        border: "1px solid rgba(255,255,255,0.16)",
-        background: "rgba(255,255,255,0.05)",
-        color: WHITE,
-        fontWeight: 900,
-        cursor: "pointer",
-        fontSize: 16,
-        letterSpacing: 0.2,
-        opacity: 1,
-      },
-
-      btnDisabled: {
-        opacity: 0.55,
-        cursor: "not-allowed",
-      },
-    };
-  }, []);
-
-  function clearVisualSession() {
-    safeRemoveLS(LEGACY_ACCOUNT_SESSION_KEY);
-    safeRemoveLS(LEGACY_GUEST_ACTIVE_KEY);
-    dispatchSessionChanged();
+  if (digits.length <= 2) {
+    return `(${digits}`;
   }
 
-  async function handleRealLogin() {
-    const login = String(loginValue || "").trim();
-    const password = String(passwordValue || "");
+  const ddd =
+    digits.slice(0, 2);
 
-    if (!login || !password) {
-      setErrorMsg("Preencha e-mail/telefone e senha.");
+  if (digits.length <= 10) {
+    const first =
+      digits.slice(2, 6);
+
+    const second =
+      digits.slice(6, 10);
+
+    return second
+      ? `(${ddd}) ${first}-${second}`
+      : `(${ddd}) ${first}`;
+  }
+
+  const first =
+    digits.slice(2, 7);
+
+  const second =
+    digits.slice(7, 11);
+
+  return second
+    ? `(${ddd}) ${first}-${second}`
+    : `(${ddd}) ${first}`;
+}
+
+function validEmail(value) {
+  return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(
+    String(value || "")
+      .trim()
+      .toLowerCase()
+  );
+}
+
+export default function LoginVisual({
+  onEnter,
+  onRegister,
+}) {
+  const [mode, setMode] =
+    useState("login");
+
+  const [
+    loginEmail,
+    setLoginEmail,
+  ] =
+    useState("");
+
+  const [
+    loginPassword,
+    setLoginPassword,
+  ] =
+    useState("");
+
+  const [name, setName] =
+    useState("");
+
+  const [phone, setPhone] =
+    useState("");
+
+  const [email, setEmail] =
+    useState("");
+
+  const [
+    password,
+    setPassword,
+  ] =
+    useState("");
+
+  const [
+    confirmPassword,
+    setConfirmPassword,
+  ] =
+    useState("");
+
+  const [busy, setBusy] =
+    useState(false);
+
+  const [error, setError] =
+    useState("");
+
+  const [logoOk, setLogoOk] =
+    useState(true);
+
+  const ui = {
+    page: {
+      width: "100%",
+      minHeight: "100%",
+      boxSizing: "border-box",
+      display: "flex",
+      alignItems: "center",
+      justifyContent: "center",
+      padding: 18,
+      color: "#fff",
+    },
+
+    card: {
+      width: "100%",
+      maxWidth: 430,
+      boxSizing: "border-box",
+      borderRadius: 22,
+      overflow: "hidden",
+      border:
+        "1px solid rgba(202,166,75,0.28)",
+      background:
+        "linear-gradient(180deg, rgba(17,14,7,0.98), rgba(3,3,3,0.99))",
+      boxShadow:
+        "0 26px 80px rgba(0,0,0,0.60)",
+    },
+
+    brand: {
+      padding: "28px 22px 24px",
+      textAlign: "center",
+      borderBottom:
+        "1px solid rgba(202,166,75,0.16)",
+    },
+
+    logo: {
+      width: 112,
+      height: 112,
+      objectFit: "contain",
+      margin: "0 auto 10px",
+      display: "block",
+    },
+
+    title: {
+      fontSize: 24,
+      fontWeight: 950,
+      letterSpacing: 0.5,
+    },
+
+    subtitle: {
+      marginTop: 8,
+      fontSize: 12.5,
+      fontWeight: 700,
+      opacity: 0.72,
+    },
+
+    body: {
+      padding: 18,
+    },
+
+    tabs: {
+      display: "grid",
+      gridTemplateColumns:
+        "1fr 1fr",
+      gap: 7,
+      padding: 5,
+      borderRadius: 13,
+      background:
+        "rgba(255,255,255,0.04)",
+    },
+
+    tab: (active) => ({
+      minHeight: 42,
+      borderRadius: 9,
+      cursor: "pointer",
+      fontWeight: 900,
+      fontSize: 12.5,
+
+      color:
+        active
+          ? "#e3c56b"
+          : "rgba(255,255,255,0.64)",
+
+      background:
+        active
+          ? "rgba(202,166,75,0.13)"
+          : "transparent",
+
+      border:
+        active
+          ? "1px solid rgba(202,166,75,0.40)"
+          : "1px solid transparent",
+    }),
+
+    form: {
+      display: "grid",
+      gap: 13,
+      marginTop: 18,
+    },
+
+    field: {
+      display: "grid",
+      gap: 6,
+    },
+
+    label: {
+      fontSize: 12,
+      fontWeight: 850,
+      color:
+        "rgba(255,255,255,0.88)",
+    },
+
+    input: {
+      width: "100%",
+      height: 46,
+      boxSizing: "border-box",
+      padding: "0 13px",
+      borderRadius: 12,
+      outline: "none",
+      color: "#fff",
+      background:
+        "rgba(255,255,255,0.045)",
+      border:
+        "1px solid rgba(255,255,255,0.14)",
+    },
+
+    primary: {
+      minHeight: 48,
+      marginTop: 4,
+      borderRadius: 13,
+      border:
+        "1px solid rgba(218,184,72,0.60)",
+      background:
+        "linear-gradient(180deg, rgba(94,71,17,0.88), rgba(40,31,10,0.94))",
+      color: "#fff",
+      cursor: "pointer",
+      fontWeight: 950,
+      fontSize: 13,
+    },
+
+    error: {
+      marginTop: 14,
+      padding: 11,
+      borderRadius: 11,
+      color: "#ffb1b1",
+      fontSize: 12.5,
+      lineHeight: 1.4,
+      border:
+        "1px solid rgba(255,100,100,0.25)",
+      background:
+        "rgba(255,70,70,0.08)",
+    },
+  };
+
+  function switchMode(nextMode) {
+    if (busy) return;
+
+    setMode(nextMode);
+    setError("");
+  }
+
+  async function submitLogin(event) {
+    event.preventDefault();
+
+    if (busy) return;
+
+    const safeEmail =
+      String(loginEmail || "")
+        .trim()
+        .toLowerCase();
+
+    if (!validEmail(safeEmail)) {
+      setError(
+        "Informe um e-mail válido."
+      );
+
       return;
     }
 
-    setSubmitting(true);
-    setErrorMsg("");
+    if (!loginPassword) {
+      setError(
+        "Informe sua senha."
+      );
 
-    // limpa apenas resíduo legado/local antes do fluxo real
-    clearVisualSession();
+      return;
+    }
+
+    if (
+      typeof onEnter !==
+      "function"
+    ) {
+      setError(
+        "Login indisponível."
+      );
+
+      return;
+    }
+
+    setBusy(true);
+    setError("");
 
     try {
-      if (typeof onEnter !== "function") {
-        throw new Error("Fluxo de autenticação real não foi conectado no componente pai.");
-      }
-
-      const result = await onEnter({
-        login,
-        password,
+      await onEnter({
         mode: "firebase",
+        login: safeEmail,
+        password:
+          loginPassword,
       });
-
-      if (result === false) {
-        throw new Error("Não foi possível concluir o acesso.");
-      }
-    } catch (err) {
-      const msg =
-        String(err?.message || "").trim() ||
-        "Não foi possível autenticar com o Firebase.";
-      setErrorMsg(msg);
-    } finally {
-      setSubmitting(false);
+    }
+    catch (err) {
+      setError(
+        String(
+          err?.message || ""
+        ).trim() ||
+        "Não foi possível entrar."
+      );
+    }
+    finally {
+      setBusy(false);
     }
   }
 
-  async function onSubmitLogin(e) {
-    e.preventDefault();
-    if (submitting) return;
-    await handleRealLogin();
+  async function submitRegister(
+    event
+  ) {
+    event.preventDefault();
+
+    if (busy) return;
+
+    const safeName =
+      String(name || "").trim();
+
+    const safePhone =
+      onlyDigits(phone);
+
+    const safeEmail =
+      String(email || "")
+        .trim()
+        .toLowerCase();
+
+    if (safeName.length < 2) {
+      setError(
+        "Informe seu nome."
+      );
+
+      return;
+    }
+
+    if (
+      safePhone.length !== 10 &&
+      safePhone.length !== 11
+    ) {
+      setError(
+        "Informe um telefone válido."
+      );
+
+      return;
+    }
+
+    if (!validEmail(safeEmail)) {
+      setError(
+        "Informe um e-mail válido."
+      );
+
+      return;
+    }
+
+    if (
+      String(password).length < 6
+    ) {
+      setError(
+        "A senha precisa ter pelo menos 6 caracteres."
+      );
+
+      return;
+    }
+
+    if (
+      password !==
+      confirmPassword
+    ) {
+      setError(
+        "As senhas não coincidem."
+      );
+
+      return;
+    }
+
+    if (
+      typeof onRegister !==
+      "function"
+    ) {
+      setError(
+        "Cadastro indisponível."
+      );
+
+      return;
+    }
+
+    setBusy(true);
+    setError("");
+
+    try {
+      await onRegister({
+        name:
+          safeName,
+
+        phone:
+          safePhone,
+
+        email:
+          safeEmail,
+
+        password,
+
+        confirmPassword,
+      });
+    }
+    catch (err) {
+      setError(
+        String(
+          err?.message || ""
+        ).trim() ||
+        "Não foi possível criar sua conta."
+      );
+    }
+    finally {
+      setBusy(false);
+    }
   }
 
   return (
     <div style={ui.page}>
-      <div style={ui.glowA} />
-      <div style={ui.glowB} />
+      <div style={ui.card}>
+        <div style={ui.brand}>
+          {logoOk ? (
+            <img
+              src={LOGO_SRC}
+              alt="PalPitaco JB"
+              style={ui.logo}
+              onError={() =>
+                setLogoOk(false)
+              }
+            />
+          ) : null}
 
-      <div style={ui.shell}>
-        <div style={ui.card}>
-          <div style={ui.header}>
-            <div style={ui.logoWrap}>
-              {logoOk ? (
-                <div style={ui.logoBox}>
-                  <img
-                    src={LOGO_SRC}
-                    alt="Palpitaco JB"
-                    style={ui.logoImg}
-                    onError={() => setLogoOk(false)}
-                  />
-                </div>
-              ) : (
-                <div style={ui.markFallback}>PJ</div>
-              )}
+          <div style={ui.title}>
+            PALPITACO JB
+          </div>
 
-              <div style={ui.titleWrap}>
-                <p style={ui.subtitle}>Resultados • Estatística • Insights</p>
-              </div>
+          <div style={ui.subtitle}>
+            Resultados • Estatística • Insights
+          </div>
+        </div>
+
+        <div style={ui.body}>
+          <div style={ui.tabs}>
+            <button
+              type="button"
+              style={
+                ui.tab(
+                  mode === "login"
+                )
+              }
+              onClick={() =>
+                switchMode("login")
+              }
+              disabled={busy}
+            >
+              ENTRAR
+            </button>
+
+            <button
+              type="button"
+              style={
+                ui.tab(
+                  mode === "register"
+                )
+              }
+              onClick={() =>
+                switchMode(
+                  "register"
+                )
+              }
+              disabled={busy}
+            >
+              CRIAR CONTA
+            </button>
+          </div>
+
+          {error ? (
+            <div style={ui.error}>
+              {error}
             </div>
-          </div>
+          ) : null}
 
-          <div style={ui.body}>
-            {errorMsg ? <div style={ui.errorBox}>{errorMsg}</div> : null}
+          {mode === "login" ? (
+            <form
+              style={ui.form}
+              onSubmit={
+                submitLogin
+              }
+            >
+              <label style={ui.field}>
+                <span style={ui.label}>
+                  E-mail
+                </span>
 
-            <form style={ui.formGrid} onSubmit={onSubmitLogin}>
-              <div style={ui.fieldWrap}>
-                <label style={ui.label} htmlFor="pp-login">
-                  Login
-                </label>
                 <input
-                  id="pp-login"
-                  type="text"
-                  value={loginValue}
-                  onChange={(e) => setLoginValue(e.target.value)}
-                  placeholder="Digite seu e-mail ou telefone"
+                  type="email"
+                  value={
+                    loginEmail
+                  }
+                  onChange={(e) =>
+                    setLoginEmail(
+                      e.target.value
+                    )
+                  }
+                  placeholder=
+                    "Digite seu e-mail"
+                  autoComplete="email"
+                  disabled={busy}
                   style={ui.input}
-                  autoComplete="username"
-                  disabled={submitting}
                 />
-              </div>
+              </label>
 
-              <div style={ui.fieldWrap}>
-                <label style={ui.label} htmlFor="pp-password">
+              <label style={ui.field}>
+                <span style={ui.label}>
                   Senha
-                </label>
-                <input
-                  id="pp-password"
-                  type="password"
-                  value={passwordValue}
-                  onChange={(e) => setPasswordValue(e.target.value)}
-                  placeholder="Digite sua senha"
-                  style={ui.input}
-                  autoComplete="current-password"
-                  disabled={submitting}
-                />
-              </div>
+                </span>
 
-              <div style={ui.btnRow}>
-                <button
-                  type="submit"
-                  style={{
-                    ...ui.btnPrimary,
-                    ...(submitting ? ui.btnDisabled : null),
-                  }}
-                  disabled={submitting}
-                >
-                  {submitting ? "PROCESSANDO..." : "ENTRAR / CADASTRAR"}
-                </button>
-              </div>
+                <input
+                  type="password"
+                  value={
+                    loginPassword
+                  }
+                  onChange={(e) =>
+                    setLoginPassword(
+                      e.target.value
+                    )
+                  }
+                  placeholder=
+                    "Digite sua senha"
+                  autoComplete=
+                    "current-password"
+                  disabled={busy}
+                  style={ui.input}
+                />
+              </label>
+
+              <button
+                type="submit"
+                disabled={busy}
+                style={ui.primary}
+              >
+                {busy
+                  ? "ENTRANDO..."
+                  : "ENTRAR"}
+              </button>
             </form>
-          </div>
+          ) : (
+            <form
+              style={ui.form}
+              onSubmit={
+                submitRegister
+              }
+            >
+              <label style={ui.field}>
+                <span style={ui.label}>
+                  Nome
+                </span>
+
+                <input
+                  type="text"
+                  value={name}
+                  onChange={(e) =>
+                    setName(
+                      e.target.value
+                    )
+                  }
+                  placeholder=
+                    "Digite seu nome"
+                  autoComplete="name"
+                  disabled={busy}
+                  style={ui.input}
+                />
+              </label>
+
+              <label style={ui.field}>
+                <span style={ui.label}>
+                  Telefone
+                </span>
+
+                <input
+                  type="tel"
+                  value={
+                    formatPhone(
+                      phone
+                    )
+                  }
+                  onChange={(e) =>
+                    setPhone(
+                      onlyDigits(
+                        e.target.value
+                      )
+                    )
+                  }
+                  placeholder=
+                    "(61) 99999-9999"
+                  autoComplete="tel"
+                  inputMode="numeric"
+                  disabled={busy}
+                  style={ui.input}
+                />
+              </label>
+
+              <label style={ui.field}>
+                <span style={ui.label}>
+                  E-mail
+                </span>
+
+                <input
+                  type="email"
+                  value={email}
+                  onChange={(e) =>
+                    setEmail(
+                      e.target.value
+                    )
+                  }
+                  placeholder=
+                    "Digite seu e-mail"
+                  autoComplete="email"
+                  disabled={busy}
+                  style={ui.input}
+                />
+              </label>
+
+              <label style={ui.field}>
+                <span style={ui.label}>
+                  Senha
+                </span>
+
+                <input
+                  type="password"
+                  value={password}
+                  onChange={(e) =>
+                    setPassword(
+                      e.target.value
+                    )
+                  }
+                  placeholder=
+                    "Mínimo de 6 caracteres"
+                  autoComplete=
+                    "new-password"
+                  disabled={busy}
+                  style={ui.input}
+                />
+              </label>
+
+              <label style={ui.field}>
+                <span style={ui.label}>
+                  Confirmar senha
+                </span>
+
+                <input
+                  type="password"
+                  value={
+                    confirmPassword
+                  }
+                  onChange={(e) =>
+                    setConfirmPassword(
+                      e.target.value
+                    )
+                  }
+                  placeholder=
+                    "Digite a senha novamente"
+                  autoComplete=
+                    "new-password"
+                  disabled={busy}
+                  style={ui.input}
+                />
+              </label>
+
+              <button
+                type="submit"
+                disabled={busy}
+                style={ui.primary}
+              >
+                {busy
+                  ? "CADASTRANDO..."
+                  : "CADASTRAR"}
+              </button>
+            </form>
+          )}
         </div>
       </div>
     </div>

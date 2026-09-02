@@ -10,8 +10,6 @@ import { normalizePhoneDigits, formatPhoneBR } from "./account.formatters";
 
 export default function AccountView({
   ui,
-  isGuest,
-  isLogged,
   needsProfile,
 
   initials,
@@ -23,9 +21,6 @@ export default function AccountView({
   email,
   uid,
   createdAtLabel,
-  trialStartLabel,
-  trialEndLabel,
-  trialLabel,
 
   busy,
   err,
@@ -83,13 +78,7 @@ return (
       <div style={ui.header}>
         <div style={ui.title}>Minha Conta</div>
         <div style={ui.subtitle}>
-          {isGuest ? "Modo convidado (sem login)." : "Sessão ativa."}
-          {!isGuest ? (
-            <>
-              <br />
-              <span style={{ opacity: 0.92 }}>Trial: {trialLabel}</span>
-            </>
-          ) : null}
+          Sessão autenticada.
         </div>
       </div>
 
@@ -97,7 +86,7 @@ return (
         <div style={ui.cardHeader}>
           <div style={ui.cardTitle}>{needsProfile ? "Completar Perfil" : "Perfil"}</div>
           <div style={ui.badge}>
-            {needsProfile ? "Obrigatório" : isGuest ? "Opcional" : "Sessão ativa"}
+            {needsProfile ? "Obrigatório" : "CADASTRADO"}
           </div>
         </div>
 
@@ -112,22 +101,16 @@ return (
 
           <div style={{ display: "grid", gap: 10 }}>
             <div style={ui.hint}>
-              {isGuest ? (
-                <>
-                  <b>Nome</b>, <b>telefone</b> e <b>foto</b> são opcionais.
-                </>
-              ) : (
-                <>
-                  <b>Nome</b> e <b>telefone</b> são obrigatórios.
-                </>
-              )}
+              <>
+                <b>Nome</b> e <b>telefone</b> são obrigatórios.
+              </>
             </div>
 
             <input
               style={ui.input}
               value={name}
               onChange={(e) => onNameChange(e.target.value)}
-              placeholder={isGuest ? "Digite seu nome (opcional)" : "Digite seu nome"}
+              placeholder="Digite seu nome"
               disabled={busy}
             />
 
@@ -138,7 +121,7 @@ return (
               autoComplete="tel"
               value={formatPhoneBR(phoneDigits)}
               onChange={onPhoneInputChange}
-              placeholder={isGuest ? "(xx) x xxxx-xxxx (opcional)" : "(xx) x xxxx-xxxx"}
+              placeholder="(xx) x xxxx-xxxx"
               disabled={busy}
             />
 
@@ -187,16 +170,10 @@ return (
         <div style={ui.divider} />
 
         <div style={{ display: "grid", gap: 10 }}>
-          <InfoRow ui={ui} label="Identificação" value={isGuest ? "—" : uid || "—"} />
-          <InfoRow ui={ui} label="E-mail" value={isGuest ? "—" : email || "—"} />
-          <InfoRow ui={ui} label="Cadastro" value={isGuest ? "—" : createdAtLabel} />
+          <InfoRow ui={ui} label="Identificação" value={uid || "—"} />
+          <InfoRow ui={ui} label="E-mail" value={email || "—"} />
+          <InfoRow ui={ui} label="Cadastro" value={createdAtLabel} />
 
-          {!isGuest ? (
-            <>
-              <InfoRow ui={ui} label="Trial início" value={trialStartLabel} />
-              <InfoRow ui={ui} label="Trial fim" value={trialEndLabel} />
-            </>
-          ) : null}
 
           {needsProfile ? (
             <div style={ui.msgErr}>
