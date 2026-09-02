@@ -350,7 +350,7 @@ export default function AdminLogin({
               ? "Verificando sessão..."
               : loading
               ? "Validando acesso..."
-              : "Entrar no Gestão de usuários"}
+              : "Entrar no Admin"}
           </button>
 
           <button

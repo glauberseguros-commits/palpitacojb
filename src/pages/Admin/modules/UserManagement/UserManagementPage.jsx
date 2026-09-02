@@ -17,58 +17,51 @@ import {
   updateAdminUserProfile,
 } from "./userProfileAdmin.api";
 
+import "../../AdminSimple.css";
+
 /*
  * Fonte de verdade: backend de acesso
- *
- * Esta observação é interna e não aparece na interface.
- * Assinatura não é escrita diretamente pelo frontend.
  */
 
 function clean(value) {
   return String(value ?? "").trim();
 }
 
-function onlyDigits(value) {
+function digits(value) {
   return String(value ?? "")
     .replace(/\D+/g, "")
     .slice(0, 11);
 }
 
 function phoneMask(value) {
-  const digits =
-    onlyDigits(value);
+  const phone = digits(value);
 
-  if (!digits) {
+  if (!phone) {
     return "";
   }
 
-  if (digits.length <= 2) {
-    return `(${digits}`;
+  if (phone.length <= 2) {
+    return `(${phone}`;
   }
 
-  if (digits.length <= 6) {
-    return (
-      `(${digits.slice(0, 2)}) ` +
-      digits.slice(2)
-    );
+  if (phone.length <= 6) {
+    return `(${phone.slice(0, 2)}) ${phone.slice(2)}`;
   }
 
-  if (digits.length <= 10) {
+  if (phone.length <= 10) {
     return (
-      `(${digits.slice(0, 2)}) ` +
-      `${digits.slice(2, 6)}-` +
-      digits.slice(6)
+      `(${phone.slice(0, 2)}) ` +
+      `${phone.slice(2, 6)}-${phone.slice(6)}`
     );
   }
 
   return (
-    `(${digits.slice(0, 2)}) ` +
-    `${digits.slice(2, 7)}-` +
-    digits.slice(7)
+    `(${phone.slice(0, 2)}) ` +
+    `${phone.slice(2, 7)}-${phone.slice(7)}`
   );
 }
 
-function asDate(value) {
+function toDate(value) {
   if (!value) {
     return null;
   }
@@ -77,42 +70,31 @@ function asDate(value) {
     return value;
   }
 
-  if (
-    typeof value?.toDate ===
-    "function"
-  ) {
+  if (typeof value?.toDate === "function") {
     try {
       return value.toDate();
-    } catch {
+    }
+    catch {
       return null;
     }
   }
 
   if (
     typeof value === "object" &&
-    Number.isFinite(
-      Number(value?.seconds)
-    )
+    Number.isFinite(Number(value?.seconds))
   ) {
-    return new Date(
-      Number(value.seconds) *
-        1000
-    );
+    return new Date(Number(value.seconds) * 1000);
   }
 
-  const parsed =
-    new Date(value);
+  const parsed = new Date(value);
 
-  return Number.isNaN(
-    parsed.getTime()
-  )
+  return Number.isNaN(parsed.getTime())
     ? null
     : parsed;
 }
 
 function dateLabel(value) {
-  const date =
-    asDate(value);
+  const date = toDate(value);
 
   if (!date) {
     return "—";
@@ -127,90 +109,259 @@ function dateLabel(value) {
   );
 }
 
+function friendlyError(error, fallback) {
+  const raw = clean(
+    error?.message ||
+    error?.code
+  );
+
+  const code = raw.toUpperCase();
+
+  const messages = {
+    TARGET_USER_EMAIL_REQUIRED:
+      "Este cadastro não possui e-mail.",
+
+    UID_REQUIRED:
+      "Usuário inválido.",
+
+    ADMIN_NOT_AUTHORIZED:
+      "Operação não autorizada.",
+
+    ACCESS_ADMIN_REQUIRED:
+      "Operação não autorizada.",
+
+    UNAUTHORIZED:
+      "Sua sessão expirou. Entre novamente.",
+
+    FORBIDDEN:
+      "Operação não autorizada.",
+
+    USER_NOT_FOUND:
+      "Usuário não encontrado.",
+
+    TARGET_USER_NOT_FOUND:
+      "Usuário não encontrado.",
+  };
+
+  return (
+    messages[code] ||
+    fallback ||
+    "Não foi possível concluir a operação."
+  );
+}
+
+function statusOf(user) {
+  if (!clean(user?.email)) {
+    return "PENDENTE";
+  }
+
+  const access =
+    user?._access ||
+    null;
+
+  const subscription =
+    access?.subscription ||
+    null;
+
+  const raw =
+    clean(subscription?.status)
+      .toUpperCase();
+
+  if (
+    access?.accessGranted === true ||
+    subscription?.active === true ||
+    raw === "ACTIVE"
+  ) {
+    return "ATIVO";
+  }
+
+  if (
+    raw === "SUSPENDED" ||
+    raw === "REVOKED"
+  ) {
+    return "SUSPENSO";
+  }
+
+  if (raw === "EXPIRED") {
+    return "EXPIRADO";
+  }
+
+  return "PENDENTE";
+}
+
+function validityOf(user) {
+  return (
+    user?._access
+      ?.subscription
+      ?.endsAt ||
+    null
+  );
+}
+
+function displayName(user) {
+  return (
+    clean(user?.name) ||
+    clean(user?.email) ||
+    "Cadastro incompleto"
+  );
+}
+
 export default function UserManagementPage() {
-  const [
-    users,
-    setUsers,
-  ] =
+  const [users, setUsers] =
     useState([]);
 
-  const [
-    selectedUid,
-    setSelectedUid,
-  ] =
+  const [query, setQuery] =
     useState("");
 
-  const [
-    accessData,
-    setAccessData,
-  ] =
-    useState(null);
+  const [filter, setFilter] =
+    useState("TODOS");
 
-  const [
-    query,
-    setQuery,
-  ] =
-    useState("");
-
-  const [
-    name,
-    setName,
-  ] =
-    useState("");
-
-  const [
-    phone,
-    setPhone,
-  ] =
-    useState("");
-
-  const [
-    loadingUsers,
-    setLoadingUsers,
-  ] =
+  const [loading, setLoading] =
     useState(true);
 
-  const [
-    loadingAccess,
-    setLoadingAccess,
-  ] =
-    useState(false);
-
-  const [
-    savingProfile,
-    setSavingProfile,
-  ] =
-    useState(false);
-
-  const [
-    savingAccess,
-    setSavingAccess,
-  ] =
-    useState(false);
-
-  const [
-    error,
-    setError,
-  ] =
+  const [busyUid, setBusyUid] =
     useState("");
 
-  const [
-    success,
-    setSuccess,
-  ] =
+  const [editingUid, setEditingUid] =
     useState("");
 
-  const selectedUser =
+  const [editName, setEditName] =
+    useState("");
+
+  const [editPhone, setEditPhone] =
+    useState("");
+
+  const [error, setError] =
+    useState("");
+
+  const [success, setSuccess] =
+    useState("");
+
+  const enrichUsers =
+    useCallback(
+      async (rows) => {
+        return Promise.all(
+          rows.map(
+            async (user) => {
+              const email =
+                clean(user.email);
+
+              if (!email) {
+                return {
+                  ...user,
+                  _access: null,
+                };
+              }
+
+              try {
+                const result =
+                  await getUserAccess(
+                    user.uid
+                  );
+
+                return {
+                  ...user,
+                  _access:
+                    result?.access ||
+                    null,
+                };
+              }
+              catch {
+                return {
+                  ...user,
+                  _access: null,
+                };
+              }
+            }
+          )
+        );
+      },
+      []
+    );
+
+  const loadUsers =
+    useCallback(
+      async () => {
+        setLoading(true);
+        setError("");
+
+        try {
+          const rows =
+            await listUsers();
+
+          const enriched =
+            await enrichUsers(
+              rows
+            );
+
+          setUsers(enriched);
+        }
+        catch (err) {
+          setError(
+            friendlyError(
+              err,
+              "Não foi possível carregar os usuários."
+            )
+          );
+        }
+        finally {
+          setLoading(false);
+        }
+      },
+      [
+        enrichUsers,
+      ]
+    );
+
+  useEffect(
+    () => {
+      loadUsers();
+    },
+    [
+      loadUsers,
+    ]
+  );
+
+  const counts =
     useMemo(
-      () =>
-        users.find(
-          (user) =>
-            user.uid ===
-            selectedUid
-        ) || null,
+      () => {
+        const result = {
+          TOTAL:
+            users.length,
+
+          ATIVO:
+            0,
+
+          PENDENTE:
+            0,
+
+          SUSPENSO:
+            0,
+
+          EXPIRADO:
+            0,
+        };
+
+        users.forEach(
+          (user) => {
+            const status =
+              statusOf(user);
+
+            if (
+              Object.prototype.hasOwnProperty.call(
+                result,
+                status
+              )
+            ) {
+              result[status] += 1;
+            }
+          }
+        );
+
+        return result;
+      },
       [
         users,
-        selectedUid,
       ]
     );
 
@@ -223,13 +374,23 @@ export default function UserManagementPage() {
               "pt-BR"
             );
 
-        if (!needle) {
-          return users;
-        }
-
         return users.filter(
-          (user) =>
-            [
+          (user) => {
+            const status =
+              statusOf(user);
+
+            if (
+              filter !== "TODOS" &&
+              status !== filter
+            ) {
+              return false;
+            }
+
+            if (!needle) {
+              return true;
+            }
+
+            return [
               user.name,
               user.email,
               user.phone,
@@ -242,240 +403,155 @@ export default function UserManagementPage() {
                     )
               )
               .join(" ")
-              .includes(needle)
+              .includes(needle);
+          }
         );
       },
       [
         users,
         query,
+        filter,
       ]
     );
 
-  const access =
-    accessData?.access ||
-    null;
-
-  const subscription =
-    access?.subscription ||
-    null;
-
-  const active =
-    access?.accessGranted === true ||
-    subscription?.active === true;
-
-  const status =
-    clean(
-      subscription?.status
-    ).toUpperCase() ||
-    (
-      active
-        ? "ATIVO"
-        : "INATIVO"
+  function beginEdit(user) {
+    setEditingUid(
+      user.uid
     );
 
-  const loadAccess =
-    useCallback(
-      async (uid) => {
-        const safeUid =
-          clean(uid);
-
-        if (!safeUid) {
-          setAccessData(null);
-          return;
-        }
-
-        setLoadingAccess(true);
-
-        try {
-          const result =
-            await getUserAccess(
-              safeUid
-            );
-
-          setAccessData(
-            result || null
-          );
-        } catch (err) {
-          setAccessData(null);
-
-          setError(
-            clean(
-              err?.message
-            ) ||
-            "Não foi possível consultar o acesso."
-          );
-        } finally {
-          setLoadingAccess(false);
-        }
-      },
-      []
+    setEditName(
+      clean(user.name)
     );
 
-  const loadUsers =
-    useCallback(
-      async (
-        preserveUid = ""
-      ) => {
-        setLoadingUsers(true);
-        setError("");
-
-        try {
-          const rows =
-            await listUsers();
-
-          setUsers(rows);
-
-          setSelectedUid(
-            (current) => {
-              const wanted =
-                preserveUid ||
-                current;
-
-              if (
-                wanted &&
-                rows.some(
-                  (user) =>
-                    user.uid ===
-                    wanted
-                )
-              ) {
-                return wanted;
-              }
-
-              return (
-                rows[0]?.uid ||
-                ""
-              );
-            }
-          );
-        } catch (err) {
-          setError(
-            clean(
-              err?.message
-            ) ||
-            "Não foi possível carregar os usuários."
-          );
-        } finally {
-          setLoadingUsers(false);
-        }
-      },
-      []
+    setEditPhone(
+      phoneMask(
+        user.phone
+      )
     );
 
-  useEffect(
-    () => {
-      loadUsers();
-    },
-    [
-      loadUsers,
-    ]
-  );
+    setError("");
+    setSuccess("");
+  }
 
-  useEffect(
-    () => {
-      if (!selectedUser) {
-        setName("");
-        setPhone("");
-        setAccessData(null);
-        return;
-      }
+  function cancelEdit() {
+    setEditingUid("");
+    setEditName("");
+    setEditPhone("");
+  }
 
-      setName(
-        clean(
-          selectedUser.name
-        )
-      );
-
-      setPhone(
-        phoneMask(
-          selectedUser.phone
-        )
-      );
-
-      setError("");
-      setSuccess("");
-
-      loadAccess(
-        selectedUser.uid
-      );
-    },
-    [
-      selectedUser,
-      loadAccess,
-    ]
-  );
-
-  async function saveUser() {
+  async function saveUser(user) {
     if (
-      !selectedUser ||
-      savingProfile
+      !user ||
+      busyUid
     ) {
       return;
     }
 
-    setSavingProfile(true);
+    setBusyUid(user.uid);
     setError("");
     setSuccess("");
 
     try {
       const updated =
         await updateAdminUserProfile(
-          selectedUser.uid,
+          user.uid,
           {
-            name,
-            phone,
+            name:
+              editName,
+
+            phone:
+              editPhone,
           }
         );
 
       setUsers(
         (current) =>
           current.map(
-            (user) =>
-              user.uid ===
-              selectedUser.uid
+            (item) =>
+              item.uid ===
+              user.uid
                 ? {
-                    ...user,
+                    ...item,
                     name:
                       updated.name,
                     phone:
                       updated.phone,
                   }
-                : user
+                : item
           )
       );
 
-      setName(
-        updated.name
-      );
-
-      setPhone(
-        updated.phone
-      );
+      cancelEdit();
 
       setSuccess(
         "Dados do usuário atualizados."
       );
-    } catch (err) {
+    }
+    catch (err) {
       setError(
-        clean(
-          err?.message
-        ) ||
-        "Não foi possível salvar os dados."
+        friendlyError(
+          err,
+          "Não foi possível salvar os dados."
+        )
       );
-    } finally {
-      setSavingProfile(false);
+    }
+    finally {
+      setBusyUid("");
     }
   }
 
-  async function activate() {
+  async function refreshAccess(user) {
     if (
-      !selectedUser ||
-      savingAccess
+      !user ||
+      !clean(user.email)
     ) {
       return;
     }
 
-    setSavingAccess(true);
+    try {
+      const result =
+        await getUserAccess(
+          user.uid
+        );
+
+      setUsers(
+        (current) =>
+          current.map(
+            (item) =>
+              item.uid ===
+              user.uid
+                ? {
+                    ...item,
+                    _access:
+                      result?.access ||
+                      null,
+                  }
+                : item
+          )
+      );
+    }
+    catch {
+      // mantém o último estado conhecido
+    }
+  }
+
+  async function activate(user) {
+    if (
+      !user ||
+      busyUid
+    ) {
+      return;
+    }
+
+    if (!clean(user.email)) {
+      setError(
+        "Este cadastro não possui e-mail."
+      );
+
+      return;
+    }
+
+    setBusyUid(user.uid);
     setError("");
     setSuccess("");
 
@@ -483,11 +559,11 @@ export default function UserManagementPage() {
       const operationId =
         createAdminOperationId(
           "grant",
-          selectedUser.uid
+          user.uid
         );
 
       await activateUserAccess(
-        selectedUser.uid,
+        user.uid,
         {
           operationId,
 
@@ -496,30 +572,40 @@ export default function UserManagementPage() {
         }
       );
 
-      await loadAccess(
-        selectedUser.uid
+      await refreshAccess(
+        user
       );
 
       setSuccess(
         "Acesso ativado/renovado por 30 dias."
       );
-    } catch (err) {
+    }
+    catch (err) {
       setError(
-        clean(
-          err?.message
-        ) ||
-        "Não foi possível ativar o acesso."
+        friendlyError(
+          err,
+          "Não foi possível ativar o acesso."
+        )
       );
-    } finally {
-      setSavingAccess(false);
+    }
+    finally {
+      setBusyUid("");
     }
   }
 
-  async function revoke() {
+  async function revoke(user) {
     if (
-      !selectedUser ||
-      savingAccess
+      !user ||
+      busyUid
     ) {
+      return;
+    }
+
+    if (!clean(user.email)) {
+      setError(
+        "Este cadastro não possui e-mail."
+      );
+
       return;
     }
 
@@ -527,13 +613,13 @@ export default function UserManagementPage() {
       typeof window !==
         "undefined" &&
       !window.confirm(
-        "Revogar o acesso deste usuário?"
+        `Revogar o acesso de ${displayName(user)}?`
       )
     ) {
       return;
     }
 
-    setSavingAccess(true);
+    setBusyUid(user.uid);
     setError("");
     setSuccess("");
 
@@ -541,11 +627,11 @@ export default function UserManagementPage() {
       const operationId =
         createAdminOperationId(
           "revoke",
-          selectedUser.uid
+          user.uid
         );
 
       await revokeUserAccess(
-        selectedUser.uid,
+        user.uid,
         {
           operationId,
 
@@ -554,76 +640,147 @@ export default function UserManagementPage() {
         }
       );
 
-      await loadAccess(
-        selectedUser.uid
+      await refreshAccess(
+        user
       );
 
       setSuccess(
         "Acesso revogado."
       );
-    } catch (err) {
+    }
+    catch (err) {
       setError(
-        clean(
-          err?.message
-        ) ||
-        "Não foi possível revogar o acesso."
+        friendlyError(
+          err,
+          "Não foi possível revogar o acesso."
+        )
       );
-    } finally {
-      setSavingAccess(false);
+    }
+    finally {
+      setBusyUid("");
     }
   }
 
-  const field = {
-    width: "100%",
-    minHeight: 44,
-    boxSizing: "border-box",
-    padding: "0 12px",
-    borderRadius: 10,
-    outline: "none",
-    color: "#fff",
-    background:
-      "rgba(255,255,255,0.035)",
-    border:
-      "1px solid rgba(255,255,255,0.12)",
-  };
-
-  const button = {
-    minHeight: 42,
-    padding: "0 15px",
-    borderRadius: 10,
-    cursor: "pointer",
-    fontWeight: 900,
-  };
-
   return (
-    <div>
-      <div
-        style={{
-          display: "flex",
-          justifyContent:
-            "space-between",
-          alignItems: "end",
-          gap: 12,
-          flexWrap: "wrap",
-          marginBottom: 18,
-        }}
-      >
-        <label
-          style={{
-            display: "grid",
-            gap: 6,
-            width:
-              "min(100%,520px)",
-          }}
+    <div className="jb-admin-content">
+      <div className="jb-admin-title-row">
+        <div>
+          <span className="jb-admin-kicker">
+            ASSINATURAS
+          </span>
+
+          <h1>
+            Usuários cadastrados
+          </h1>
+
+          <p>
+            Consulte, edite e controle os acessos.
+          </p>
+        </div>
+
+        <button
+          type="button"
+          className="jb-btn jb-btn--outline"
+          onClick={loadUsers}
+          disabled={loading}
         >
-          <span
-            style={{
-              color: "#d8b94e",
-              fontSize: 11,
-              fontWeight: 900,
-            }}
-          >
-            BUSCAR USUÁRIO
+          {loading
+            ? "ATUALIZANDO..."
+            : "ATUALIZAR"}
+        </button>
+      </div>
+
+      <div className="jb-admin-stats">
+        <button
+          type="button"
+          onClick={() =>
+            setFilter("TODOS")
+          }
+          className={
+            filter === "TODOS"
+              ? "is-selected"
+              : ""
+          }
+        >
+          <span>TOTAL</span>
+          <strong>
+            {counts.TOTAL}
+          </strong>
+        </button>
+
+        <button
+          type="button"
+          onClick={() =>
+            setFilter("ATIVO")
+          }
+          className={
+            filter === "ATIVO"
+              ? "is-selected"
+              : ""
+          }
+        >
+          <span>ATIVOS</span>
+          <strong>
+            {counts.ATIVO}
+          </strong>
+        </button>
+
+        <button
+          type="button"
+          onClick={() =>
+            setFilter("PENDENTE")
+          }
+          className={
+            filter === "PENDENTE"
+              ? "is-selected"
+              : ""
+          }
+        >
+          <span>PENDENTES</span>
+          <strong>
+            {counts.PENDENTE}
+          </strong>
+        </button>
+
+        <button
+          type="button"
+          onClick={() =>
+            setFilter("SUSPENSO")
+          }
+          className={
+            filter === "SUSPENSO"
+              ? "is-selected"
+              : ""
+          }
+        >
+          <span>SUSPENSOS</span>
+          <strong>
+            {counts.SUSPENSO}
+          </strong>
+        </button>
+
+        <button
+          type="button"
+          onClick={() =>
+            setFilter("EXPIRADO")
+          }
+          className={
+            filter === "EXPIRADO"
+              ? "is-selected"
+              : ""
+          }
+        >
+          <span>EXPIRADOS</span>
+          <strong>
+            {counts.EXPIRADO}
+          </strong>
+        </button>
+      </div>
+
+      <div className="jb-admin-filters">
+        <label>
+          <span>
+            BUSCAR
           </span>
 
           <input
@@ -635,509 +792,306 @@ export default function UserManagementPage() {
               )
             }
             placeholder="Nome, e-mail ou telefone"
-            style={field}
           />
         </label>
 
-        <button
-          type="button"
-          disabled={loadingUsers}
-          onClick={() =>
-            loadUsers(
-              selectedUid
-            )
-          }
-          style={{
-            ...button,
-            color: "#fff",
-            background:
-              "rgba(202,166,75,0.10)",
-            border:
-              "1px solid rgba(202,166,75,0.34)",
-          }}
-        >
-          ATUALIZAR
-        </button>
+        <label>
+          <span>
+            SITUAÇÃO
+          </span>
+
+          <select
+            value={filter}
+            onChange={(event) =>
+              setFilter(
+                event.target.value
+              )
+            }
+          >
+            <option value="TODOS">
+              Todos
+            </option>
+
+            <option value="ATIVO">
+              Ativos
+            </option>
+
+            <option value="PENDENTE">
+              Pendentes
+            </option>
+
+            <option value="SUSPENSO">
+              Suspensos
+            </option>
+
+            <option value="EXPIRADO">
+              Expirados
+            </option>
+          </select>
+        </label>
       </div>
 
       {error ? (
-        <div
-          role="alert"
-          style={{
-            marginBottom: 12,
-            padding: 11,
-            borderRadius: 9,
-            color: "#ffb0b0",
-            background:
-              "rgba(200,50,50,0.07)",
-            border:
-              "1px solid rgba(255,90,90,0.22)",
-          }}
-        >
+        <div className="jb-message jb-message--error">
           {error}
         </div>
       ) : null}
 
       {success ? (
-        <div
-          role="status"
-          style={{
-            marginBottom: 12,
-            padding: 11,
-            borderRadius: 9,
-            color: "#b6edc7",
-            background:
-              "rgba(60,180,100,0.07)",
-            border:
-              "1px solid rgba(70,190,110,0.23)",
-          }}
-        >
+        <div className="jb-message jb-message--success">
           {success}
         </div>
       ) : null}
 
-      <div
-        className="jb-admin-users-grid"
-        style={{
-          display: "grid",
-          gridTemplateColumns:
-            "minmax(250px,330px) minmax(0,1fr)",
-          gap: 16,
-          alignItems: "start",
-        }}
-      >
-        <aside
-          style={{
-            overflow: "hidden",
-            borderRadius: 13,
-            border:
-              "1px solid rgba(202,166,75,0.20)",
-            background:
-              "rgba(255,255,255,0.018)",
-          }}
-        >
-          <div
-            style={{
-              padding: "10px 13px",
-              fontSize: 12,
-              opacity: 0.58,
-              borderBottom:
-                "1px solid rgba(255,255,255,0.06)",
-            }}
-          >
-            {filtered.length}
-            {" usuário(s)"}
-          </div>
+      {loading ? (
+        <div className="jb-admin-loading">
+          Carregando usuários...
+        </div>
+      ) : filtered.length === 0 ? (
+        <div className="jb-admin-loading">
+          Nenhum usuário encontrado.
+        </div>
+      ) : (
+        <div className="jb-admin-users">
+          {filtered.map(
+            (user) => {
+              const status =
+                statusOf(user);
 
-          <div
-            style={{
-              maxHeight: "67vh",
-              overflowY: "auto",
-            }}
-          >
-            {loadingUsers ? (
-              <div
-                style={{
-                  padding: 18,
-                  opacity: 0.6,
-                }}
-              >
-                Carregando...
-              </div>
-            ) : filtered.length === 0 ? (
-              <div
-                style={{
-                  padding: 18,
-                  opacity: 0.6,
-                }}
-              >
-                Nenhum usuário encontrado.
-              </div>
-            ) : (
-              filtered.map(
-                (user) => (
-                  <button
-                    key={user.uid}
-                    type="button"
-                    onClick={() =>
-                      setSelectedUid(
-                        user.uid
-                      )
-                    }
-                    style={{
-                      width: "100%",
-                      display: "grid",
-                      gap: 3,
-                      padding:
-                        "12px 13px",
-                      cursor: "pointer",
-                      textAlign: "left",
-                      border: 0,
-                      color: "#fff",
-                      borderBottom:
-                        "1px solid rgba(255,255,255,0.055)",
-                      background:
-                        user.uid ===
-                        selectedUid
-                          ? "rgba(202,166,75,0.12)"
-                          : "transparent",
-                    }}
-                  >
-                    <strong>
-                      {user.name ||
-                        "Sem nome"}
-                    </strong>
+              const active =
+                status === "ATIVO";
 
-                    <span
-                      style={{
-                        fontSize: 12,
-                        opacity: 0.62,
-                      }}
-                    >
-                      {user.email ||
-                        "Sem e-mail"}
-                    </span>
+              const editing =
+                editingUid ===
+                user.uid;
 
-                    <span
-                      style={{
-                        color: "#d8b94e",
-                        fontSize: 11,
-                      }}
-                    >
-                      {user.phone ||
-                        "Sem telefone"}
-                    </span>
-                  </button>
-                )
-              )
-            )}
-          </div>
-        </aside>
+              const busy =
+                busyUid ===
+                user.uid;
 
-        <section>
-          {!selectedUser ? (
-            <div
-              style={{
-                padding: 28,
-                textAlign: "center",
-                opacity: 0.58,
-              }}
-            >
-              Selecione um usuário.
-            </div>
-          ) : (
-            <div
-              style={{
-                display: "grid",
-                gap: 13,
-              }}
-            >
-              <article
-                style={{
-                  padding: 18,
-                  borderRadius: 13,
-                  background:
-                    "rgba(255,255,255,0.018)",
-                  border:
-                    "1px solid rgba(202,166,75,0.20)",
-                }}
-              >
-                <div
-                  style={{
-                    display: "flex",
-                    justifyContent:
-                      "space-between",
-                    alignItems: "center",
-                    gap: 12,
-                    flexWrap: "wrap",
-                  }}
+              const hasEmail =
+                Boolean(
+                  clean(user.email)
+                );
+
+              return (
+                <article
+                  key={user.uid}
+                  className="jb-user-card"
                 >
-                  <div>
-                    <div
-                      style={{
-                        color: "#d8b94e",
-                        fontSize: 11,
-                        fontWeight: 900,
-                      }}
-                    >
-                      DADOS DO USUÁRIO
+                  <div className="jb-user-card__top">
+                    <div>
+                      <span
+                        className={
+                          `jb-status jb-status--${status.toLowerCase()}`
+                        }
+                      >
+                        {status}
+                      </span>
+
+                      <h2>
+                        {displayName(
+                          user
+                        )}
+                      </h2>
+
+                      <p>
+                        {clean(
+                          user.email
+                        ) ||
+                          "E-mail não informado"}
+                      </p>
+
+                      <small>
+                        Cadastro:{" "}
+                        {dateLabel(
+                          user.createdAt
+                        )}
+                      </small>
                     </div>
 
-                    <h2
-                      style={{
-                        margin: "4px 0 0",
-                      }}
-                    >
-                      {selectedUser.name ||
-                        "Sem nome"}
-                    </h2>
-                  </div>
+                    <div className="jb-user-validity">
+                      <span>
+                        VALIDADE
+                      </span>
 
-                  <strong
-                    style={{
-                      color:
-                        active
-                          ? "#9be7b2"
-                          : "#e3c663",
-                    }}
-                  >
-                    {loadingAccess
-                      ? "CONSULTANDO..."
-                      : status}
-                  </strong>
-                </div>
-
-                <div
-                  style={{
-                    display: "grid",
-                    gridTemplateColumns:
-                      "repeat(auto-fit,minmax(200px,1fr))",
-                    gap: 11,
-                    marginTop: 17,
-                  }}
-                >
-                  <label
-                    style={{
-                      display: "grid",
-                      gap: 5,
-                    }}
-                  >
-                    <span>Nome</span>
-
-                    <input
-                      value={name}
-                      onChange={(event) =>
-                        setName(
-                          event.target.value
-                        )
-                      }
-                      style={field}
-                    />
-                  </label>
-
-                  <label
-                    style={{
-                      display: "grid",
-                      gap: 5,
-                    }}
-                  >
-                    <span>Telefone</span>
-
-                    <input
-                      value={phone}
-                      inputMode="numeric"
-                      onChange={(event) =>
-                        setPhone(
-                          phoneMask(
-                            event.target.value
+                      <strong>
+                        {dateLabel(
+                          validityOf(
+                            user
                           )
+                        )}
+                      </strong>
+                    </div>
+                  </div>
+
+                  {editing ? (
+                    <div className="jb-user-edit">
+                      <label>
+                        <span>
+                          Nome
+                        </span>
+
+                        <input
+                          value={editName}
+                          onChange={(event) =>
+                            setEditName(
+                              event.target.value
+                            )
+                          }
+                        />
+                      </label>
+
+                      <label>
+                        <span>
+                          Telefone
+                        </span>
+
+                        <input
+                          value={editPhone}
+                          inputMode="numeric"
+                          onChange={(event) =>
+                            setEditPhone(
+                              phoneMask(
+                                event.target.value
+                              )
+                            )
+                          }
+                        />
+                      </label>
+
+                      <label>
+                        <span>
+                          E-mail
+                        </span>
+
+                        <input
+                          value={
+                            user.email ||
+                            ""
+                          }
+                          readOnly
+                        />
+                      </label>
+                    </div>
+                  ) : (
+                    <div className="jb-user-data">
+                      <div>
+                        <span>
+                          TELEFONE
+                        </span>
+
+                        <strong>
+                          {clean(
+                            user.phone
+                          ) ||
+                            "Não informado"}
+                        </strong>
+                      </div>
+
+                      <div>
+                        <span>
+                          SITUAÇÃO
+                        </span>
+
+                        <strong>
+                          {status}
+                        </strong>
+                      </div>
+
+                      <div>
+                        <span>
+                          PLANO
+                        </span>
+
+                        <strong>
+                          R$ 49,90 · 30 dias
+                        </strong>
+                      </div>
+                    </div>
+                  )}
+
+                  <div className="jb-user-actions">
+                    {editing ? (
+                      <>
+                        <button
+                          type="button"
+                          className="jb-btn jb-btn--gold"
+                          onClick={() =>
+                            saveUser(
+                              user
+                            )
+                          }
+                          disabled={busy}
+                        >
+                          SALVAR DADOS
+                        </button>
+
+                        <button
+                          type="button"
+                          className="jb-btn jb-btn--outline"
+                          onClick={
+                            cancelEdit
+                          }
+                          disabled={busy}
+                        >
+                          CANCELAR
+                        </button>
+                      </>
+                    ) : (
+                      <button
+                        type="button"
+                        className="jb-btn jb-btn--outline"
+                        onClick={() =>
+                          beginEdit(
+                            user
+                          )
+                        }
+                        disabled={busy}
+                      >
+                        EDITAR
+                      </button>
+                    )}
+
+                    <button
+                      type="button"
+                      className="jb-btn jb-btn--gold"
+                      onClick={() =>
+                        activate(
+                          user
                         )
                       }
-                      style={field}
-                    />
-                  </label>
-
-                  <label
-                    style={{
-                      display: "grid",
-                      gap: 5,
-                    }}
-                  >
-                    <span>E-mail</span>
-
-                    <input
-                      value={
-                        selectedUser.email ||
-                        ""
+                      disabled={
+                        busy ||
+                        !hasEmail
                       }
-                      readOnly
-                      style={{
-                        ...field,
-                        opacity: 0.6,
-                        cursor:
-                          "not-allowed",
-                      }}
-                    />
-                  </label>
-                </div>
-
-                <div
-                  style={{
-                    marginTop: 14,
-                    display: "flex",
-                    justifyContent:
-                      "space-between",
-                    alignItems: "center",
-                    gap: 10,
-                    flexWrap: "wrap",
-                  }}
-                >
-                  <span
-                    style={{
-                      fontSize: 11,
-                      opacity: 0.55,
-                    }}
-                  >
-                    Cadastro:{" "}
-                    {dateLabel(
-                      selectedUser.createdAt
-                    )}
-                  </span>
-
-                  <button
-                    type="button"
-                    onClick={saveUser}
-                    disabled={savingProfile}
-                    style={{
-                      ...button,
-                      color: "#171109",
-                      background:
-                        "#d8b94e",
-                      border:
-                        "1px solid #d8b94e",
-                    }}
-                  >
-                    {savingProfile
-                      ? "SALVANDO..."
-                      : "SALVAR DADOS"}
-                  </button>
-                </div>
-              </article>
-
-              <article
-                style={{
-                  padding: 18,
-                  borderRadius: 13,
-                  background:
-                    "rgba(255,255,255,0.018)",
-                  border:
-                    "1px solid rgba(202,166,75,0.20)",
-                }}
-              >
-                <div
-                  style={{
-                    color: "#d8b94e",
-                    fontSize: 11,
-                    fontWeight: 900,
-                  }}
-                >
-                  ACESSO
-                </div>
-
-                <div
-                  style={{
-                    display: "flex",
-                    gap: 28,
-                    flexWrap: "wrap",
-                    marginTop: 11,
-                  }}
-                >
-                  <div>
-                    <div
-                      style={{
-                        fontSize: 11,
-                        opacity: 0.55,
-                      }}
                     >
-                      Situação
-                    </div>
+                      ATIVAR / RENOVAR +30 DIAS
+                    </button>
 
-                    <strong>
-                      {status}
-                    </strong>
-                  </div>
-
-                  <div>
-                    <div
-                      style={{
-                        fontSize: 11,
-                        opacity: 0.55,
-                      }}
+                    <button
+                      type="button"
+                      className="jb-btn jb-btn--danger"
+                      onClick={() =>
+                        revoke(
+                          user
+                        )
+                      }
+                      disabled={
+                        busy ||
+                        !active ||
+                        !hasEmail
+                      }
                     >
-                      Validade
-                    </div>
-
-                    <strong>
-                      {dateLabel(
-                        subscription?.endsAt
-                      )}
-                    </strong>
+                      REVOGAR ACESSO
+                    </button>
                   </div>
-
-                  <div>
-                    <div
-                      style={{
-                        fontSize: 11,
-                        opacity: 0.55,
-                      }}
-                    >
-                      Plano
-                    </div>
-
-                    <strong>
-                      R$ 49,90 · 30 dias
-                    </strong>
-                  </div>
-                </div>
-
-                <div
-                  style={{
-                    display: "flex",
-                    gap: 9,
-                    flexWrap: "wrap",
-                    marginTop: 16,
-                  }}
-                >
-                  <button
-                    type="button"
-                    onClick={activate}
-                    disabled={savingAccess}
-                    style={{
-                      ...button,
-                      color: "#171109",
-                      background:
-                        "#d8b94e",
-                      border:
-                        "1px solid #d8b94e",
-                    }}
-                  >
-                    ATIVAR / RENOVAR +30 DIAS
-                  </button>
-
-                  <button
-                    type="button"
-                    onClick={revoke}
-                    disabled={
-                      savingAccess ||
-                      !active
-                    }
-                    style={{
-                      ...button,
-                      color: "#ffabab",
-                      background:
-                        "rgba(180,40,40,0.07)",
-                      border:
-                        "1px solid rgba(255,100,100,0.22)",
-                    }}
-                  >
-                    REVOGAR ACESSO
-                  </button>
-                </div>
-              </article>
-            </div>
-          )}
-        </section>
-      </div>
-
-      <style>
-        {`
-          @media (max-width: 760px) {
-            .jb-admin-users-grid {
-              grid-template-columns: 1fr !important;
+                </article>
+              );
             }
-          }
-        `}
-      </style>
+          )}
+        </div>
+      )}
     </div>
   );
 }
