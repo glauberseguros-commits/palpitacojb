@@ -49,8 +49,13 @@ function createFlowError(
 export function isSubscriptionActive(
   mePayload
 ) {
+  const access =
+    mePayload?.access ||
+    null;
+
   return (
-    mePayload?.access?.active === true
+    access?.accessGranted === true &&
+    access?.subscription?.active === true
   );
 }
 
@@ -162,6 +167,7 @@ export async function bootstrapAuthorizedAccess() {
     return subscriptionRequiredState(
       me,
       String(
+        me?.access?.subscription?.status ||
         me?.access?.status ||
         "INACTIVE"
       ).toUpperCase()

@@ -60,11 +60,22 @@ function activeMe() {
     },
 
     access: {
-      active:
+      uid:
+        "uid-b4b-001",
+
+      exists:
         true,
 
-      status:
-        "active",
+      subscription: {
+        active:
+          true,
+
+        status:
+          "active",
+      },
+
+      accessGranted:
+        true,
     },
   };
 }
@@ -83,15 +94,25 @@ function inactiveMe() {
     },
 
     access: {
-      active:
-        false,
+      uid:
+        "uid-b4b-001",
 
-      status:
-        "pending",
+      exists:
+        true,
+
+      subscription: {
+        active:
+          false,
+
+        status:
+          "pending",
+      },
+
+      accessGranted:
+        false,
     },
   };
 }
-
 
 describe(
   "PalPitaco authoritative access flow",
@@ -111,7 +132,7 @@ describe(
 
 
     test(
-      "subscription state is derived only from authoritative access.active",
+      "subscription state follows current authoritative /me snapshot contract",
       () => {
         expect(
           isSubscriptionActive(
@@ -128,6 +149,37 @@ describe(
         expect(
           isSubscriptionActive({
             access: {
+              accessGranted:
+                true,
+
+              subscription: {
+                active:
+                  false,
+              },
+            },
+          })
+        ).toBe(false);
+
+        expect(
+          isSubscriptionActive({
+            access: {
+              accessGranted:
+                false,
+
+              subscription: {
+                active:
+                  true,
+              },
+            },
+          })
+        ).toBe(false);
+
+        expect(
+          isSubscriptionActive({
+            access: {
+              active:
+                true,
+
               status:
                 "active",
             },
@@ -135,7 +187,6 @@ describe(
         ).toBe(false);
       }
     );
-
 
     test(
       "inactive subscription never opens an access session",
@@ -158,6 +209,10 @@ describe(
         expect(
           result.accessGranted
         ).toBe(false);
+
+        expect(
+          result.reason
+        ).toBe("PENDING");
 
         expect(
           openAccessSession
