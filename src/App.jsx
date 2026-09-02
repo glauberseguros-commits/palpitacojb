@@ -58,6 +58,164 @@ const LEGACY_GUEST_ACTIVE_KEY = "pp_guest_active_v1";
 // ✅ Persistência de filtros do Dashboard
 const DASH_FILTERS_KEY = "pp_dashboard_filters_v1";
 
+const SELECTED_PRODUCT_KEY =
+  "pp_selected_product_v1";
+
+const PRODUCT_JB =
+  "jb";
+
+const PRODUCT_LOTERIAS =
+  "loterias";
+
+const PRODUCT_MILHAR_PRIME =
+  "milhar-prime";
+
+const PRODUCT_DESTINATIONS =
+  Object.freeze({
+    [PRODUCT_JB]:
+      "/",
+
+    [PRODUCT_LOTERIAS]:
+      "/loterias/",
+
+    [PRODUCT_MILHAR_PRIME]:
+      "/palpitacomilharprime/",
+  });
+
+
+function normalizeSelectedProduct(
+  value
+) {
+  const product =
+    String(
+      value || ""
+    )
+      .trim()
+      .toLowerCase();
+
+  return Object.prototype
+    .hasOwnProperty.call(
+      PRODUCT_DESTINATIONS,
+      product
+    )
+      ? product
+      : "";
+}
+
+
+function productFromSearch(
+  search
+) {
+  try {
+    const params =
+      new URLSearchParams(
+        String(
+          search || ""
+        )
+      );
+
+    return normalizeSelectedProduct(
+      params.get("product")
+    );
+  }
+  catch {
+    return "";
+  }
+}
+
+
+function safeReadSelectedProduct() {
+  try {
+    return normalizeSelectedProduct(
+      window.sessionStorage.getItem(
+        SELECTED_PRODUCT_KEY
+      )
+    );
+  }
+  catch {
+    return "";
+  }
+}
+
+
+function safeWriteSelectedProduct(
+  product
+) {
+  const normalized =
+    normalizeSelectedProduct(
+      product
+    );
+
+  if (!normalized) {
+    return;
+  }
+
+  try {
+    window.sessionStorage.setItem(
+      SELECTED_PRODUCT_KEY,
+      normalized
+    );
+  }
+  catch {}
+}
+
+
+function productFlowPath(
+  pathname,
+  product
+) {
+  const normalized =
+    normalizeSelectedProduct(
+      product
+    ) || PRODUCT_JB;
+
+  return (
+    pathname +
+    "?product=" +
+    encodeURIComponent(
+      normalized
+    )
+  );
+}
+
+
+function redirectToSelectedProduct(
+  product,
+  navigate
+) {
+  const normalized =
+    normalizeSelectedProduct(
+      product
+    ) || PRODUCT_JB;
+
+  const destination =
+    PRODUCT_DESTINATIONS[
+      normalized
+    ];
+
+  safeWriteSelectedProduct(
+    normalized
+  );
+
+  if (
+    normalized ===
+    PRODUCT_JB
+  ) {
+    navigate(
+      "/",
+      {
+        replace: true,
+      }
+    );
+
+    return;
+  }
+
+  window.location.replace(
+    destination
+  );
+}
+
 /* =========================
    ✅ Build stamp (Vercel)
 ========================= */
@@ -386,6 +544,35 @@ export default function App() {
   const location = useLocation();
   const navigate = useNavigate();
 
+  const queryProduct =
+    useMemo(
+      () =>
+        productFromSearch(
+          location?.search
+        ),
+      [
+        location?.search,
+      ]
+    );
+
+  const selectedProduct =
+    queryProduct ||
+    safeReadSelectedProduct() ||
+    PRODUCT_JB;
+
+  useEffect(
+    () => {
+      if (queryProduct) {
+        safeWriteSelectedProduct(
+          queryProduct
+        );
+      }
+    },
+    [
+      queryProduct,
+    ]
+  );
+
   useEffect(() => {
     console.log("[PALPITACO BUILD]", {
       sha: BUILD_SHA || "(none)",
@@ -614,9 +801,29 @@ export default function App() {
       cleanPathname(location?.pathname);
 
     if (!firebaseUser?.uid) {
-      if (curPath !== "/login") {
-        navigate("/login", { replace: true });
+      const expectedSearch =
+        "?product=" +
+        encodeURIComponent(
+          selectedProduct
+        );
+
+      if (
+        curPath !== "/login" ||
+        String(
+          location?.search || ""
+        ) !== expectedSearch
+      ) {
+        navigate(
+          productFlowPath(
+            "/login",
+            selectedProduct
+          ),
+          {
+            replace: true,
+          }
+        );
       }
+
       return;
     }
 
@@ -631,9 +838,29 @@ export default function App() {
       phase ===
       ACCESS_FLOW_STATE.SUBSCRIPTION_REQUIRED
     ) {
-      if (curPath !== "/payments") {
-        navigate("/payments", { replace: true });
+      const expectedSearch =
+        "?product=" +
+        encodeURIComponent(
+          selectedProduct
+        );
+
+      if (
+        curPath !== "/payments" ||
+        String(
+          location?.search || ""
+        ) !== expectedSearch
+      ) {
+        navigate(
+          productFlowPath(
+            "/payments",
+            selectedProduct
+          ),
+          {
+            replace: true,
+          }
+        );
       }
+
       return;
     }
 
@@ -641,9 +868,29 @@ export default function App() {
       phase ===
       ACCESS_FLOW_STATE.DEVICE_CONFIRMATION_REQUIRED
     ) {
-      if (curPath !== "/login") {
-        navigate("/login", { replace: true });
+      const expectedSearch =
+        "?product=" +
+        encodeURIComponent(
+          selectedProduct
+        );
+
+      if (
+        curPath !== "/login" ||
+        String(
+          location?.search || ""
+        ) !== expectedSearch
+      ) {
+        navigate(
+          productFlowPath(
+            "/login",
+            selectedProduct
+          ),
+          {
+            replace: true,
+          }
+        );
       }
+
       return;
     }
 
@@ -658,7 +905,11 @@ export default function App() {
       curPath === "/login" ||
       curPath === "/payments"
     ) {
-      navigate("/", { replace: true });
+      redirectToSelectedProduct(
+        selectedProduct,
+        navigate
+      );
+
       return;
     }
 
@@ -684,6 +935,8 @@ export default function App() {
     accessBusy,
     accessResult,
     location?.pathname,
+    location?.search,
+    selectedProduct,
     navigate,
   ]);
 
@@ -725,7 +978,15 @@ export default function App() {
       await signOut(auth);
     } catch {}
 
-    navigate("/login", { replace: true });
+    navigate(
+      productFlowPath(
+        "/login",
+        selectedProduct
+      ),
+      {
+        replace: true,
+      }
+    );
   };
 
   const handleAuthenticated = () => {
@@ -765,9 +1026,10 @@ export default function App() {
         ROUTES.DASHBOARD
       );
 
-      navigate("/", {
-        replace: true,
-      });
+      redirectToSelectedProduct(
+        selectedProduct,
+        navigate
+      );
 
       return true;
     } catch (error) {
