@@ -182,6 +182,49 @@ function statusColor(status) {
   return "#e5ca66";
 }
 
+function adminErrorMessage(
+  error,
+  fallback
+) {
+  const code =
+    clean(
+      error?.code ||
+      error?.payload?.error
+    ).toUpperCase();
+
+  const messages = {
+    TARGET_USER_EMAIL_REQUIRED:
+      "Este cadastro não possui e-mail.",
+
+    TARGET_USER_NOT_FOUND:
+      "A conta de login deste cadastro não foi encontrada.",
+
+    TARGET_USER_DISABLED:
+      "A conta de login deste cadastro está desativada.",
+
+    ADMIN_SELF_DELETE_FORBIDDEN:
+      "A conta Admin que está em uso não pode ser excluída.",
+
+    UID_REQUIRED:
+      "Identificador do usuário ausente.",
+
+    INVALID_SUBSCRIPTION_DAYS:
+      "Informe uma quantidade de dias válida.",
+
+    VALID_OPERATION_ID_REQUIRED:
+      "Não foi possível identificar a operação. Tente novamente.",
+
+    OPERATION_ID_CONFLICT:
+      "Esta operação já foi processada. Atualize a página e tente novamente.",
+  };
+
+  return (
+    messages[code] ||
+    clean(error?.message) ||
+    fallback
+  );
+}
+
 export default function UserManagementPage() {
   const [users, setUsers] =
     useState([]);
@@ -357,10 +400,10 @@ export default function UserManagementPage() {
           setAccessResponse(null);
 
           setError(
-            clean(
-              err?.message
-            ) ||
-            "Não foi possível consultar o acesso."
+            adminErrorMessage(
+              err,
+              "Não foi possível consultar o acesso."
+            )
           );
         }
         finally {
@@ -526,11 +569,11 @@ export default function UserManagementPage() {
     }
     catch (err) {
       setError(
-        clean(
-          err?.message
-        ) ||
-        "Não foi possível salvar os dados."
-      );
+            adminErrorMessage(
+              err,
+              "Não foi possível salvar os dados."
+            )
+          );
     }
     finally {
       setSavingProfile(false);
@@ -621,11 +664,11 @@ export default function UserManagementPage() {
     }
     catch (err) {
       setError(
-        clean(
-          err?.message
-        ) ||
-        "Não foi possível alterar o acesso."
-      );
+            adminErrorMessage(
+              err,
+              "Não foi possível alterar o acesso."
+            )
+          );
     }
     finally {
       setSavingAccess(false);
@@ -682,11 +725,11 @@ export default function UserManagementPage() {
     }
     catch (err) {
       setError(
-        clean(
-          err?.message
-        ) ||
-        "Não foi possível suspender o acesso."
-      );
+            adminErrorMessage(
+              err,
+              "Não foi possível suspender o acesso."
+            )
+          );
     }
     finally {
       setSavingAccess(false);
@@ -765,11 +808,11 @@ export default function UserManagementPage() {
       }
       else {
         setError(
-          clean(
-            err?.message
-          ) ||
-          "Não foi possível excluir o usuário."
-        );
+            adminErrorMessage(
+              err,
+              "Não foi possível excluir o usuário."
+            )
+          );
       }
     }
     finally {

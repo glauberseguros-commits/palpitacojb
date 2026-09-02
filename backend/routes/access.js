@@ -86,18 +86,6 @@ async function resolveTargetUser(uid) {
         .auth()
         .getUser(safeUid);
 
-    if (user.disabled === true) {
-      const error =
-        new Error(
-          "TARGET_USER_DISABLED"
-        );
-
-      error.code =
-        "TARGET_USER_DISABLED";
-
-      throw error;
-    }
-
     const email =
       String(
         user.email || ""
@@ -105,23 +93,15 @@ async function resolveTargetUser(uid) {
         .trim()
         .toLowerCase();
 
-    if (!email) {
-      const error =
-        new Error(
-          "TARGET_USER_EMAIL_REQUIRED"
-        );
-
-      error.code =
-        "TARGET_USER_EMAIL_REQUIRED";
-
-      throw error;
-    }
 
     return {
       uid:
         String(user.uid),
 
       email,
+
+      disabled:
+        user.disabled === true,
     };
   } catch (error) {
     if (
@@ -152,6 +132,46 @@ async function resolveTargetUser(uid) {
   }
 }
 
+
+function requireTargetCanActivate(
+  target
+) {
+  if (target?.disabled === true) {
+    const error =
+      new Error(
+        "TARGET_USER_DISABLED"
+      );
+
+    error.code =
+      "TARGET_USER_DISABLED";
+
+    throw error;
+  }
+
+  const email =
+    String(
+      target?.email || ""
+    )
+      .trim()
+      .toLowerCase();
+
+  if (!email) {
+    const error =
+      new Error(
+        "TARGET_USER_EMAIL_REQUIRED"
+      );
+
+    error.code =
+      "TARGET_USER_EMAIL_REQUIRED";
+
+    throw error;
+  }
+
+  return {
+    ...target,
+    email,
+  };
+}
 
 function requireOperationId(req) {
   const operationId =
@@ -827,6 +847,10 @@ router.post(
             "uid"
           )
         );
+
+      requireTargetCanActivate(
+        target
+      );
 
       const operationId =
         requireOperationId(req);
