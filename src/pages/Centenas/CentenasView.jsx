@@ -44,6 +44,7 @@ import {
 
 const LOTTERY_KEYS = {
   PT_RIO: "PT_RIO",
+  PT_SP: "PT_SP",
   FEDERAL: "FEDERAL",
   LOOK: "LOOK",
   NACIONAL: "NACIONAL",
@@ -591,6 +592,7 @@ export default function CentenasView() {
         label: "Todas as loterias",
         lotteryKeys: [
           LOTTERY_KEYS.PT_RIO,
+          LOTTERY_KEYS.PT_SP,
           LOTTERY_KEYS.FEDERAL,
           LOTTERY_KEYS.LOOK,
           LOTTERY_KEYS.NACIONAL,
@@ -601,6 +603,13 @@ export default function CentenasView() {
         label: "PT Rio",
         lotteryKeys: [
           LOTTERY_KEYS.PT_RIO,
+        ],
+      },
+      {
+        id: LOTTERY_KEYS.PT_SP,
+        label: "São Paulo",
+        lotteryKeys: [
+          LOTTERY_KEYS.PT_SP,
         ],
       },
       {
@@ -801,6 +810,17 @@ export default function CentenasView() {
       "21:00",
     ];
 
+    const ptSpHours = [
+      "08:00",
+      "10:00",
+      "12:00",
+      "13:00",
+      "15:00",
+      "17:00",
+      "19:00",
+      "20:00",
+    ];
+
     const federalHours = [
       "20:00",
     ];
@@ -813,6 +833,14 @@ export default function CentenasView() {
       )
     ) {
       base.push(...ptRioHours);
+    }
+
+    if (
+      selectedLotteryKeys.includes(
+        LOTTERY_KEYS.PT_SP
+      )
+    ) {
+      base.push(...ptSpHours);
     }
 
     if (

@@ -16,6 +16,12 @@ function normalizeLotteryKey(v) {
   if (s === "RJ" || s === "RIO" || s === "PT-RIO" || s === "PT_RIO") return "PT_RIO";
   if (s === "FED" || s === "FEDERAL" || s === "BR") return "FEDERAL";
 
+  if (
+    ["SP", "PT_SP", "PT-SP", "PT SP"].includes(s)
+  ) {
+    return "PT_SP";
+  }
+
   return "";
 }
 
@@ -349,7 +355,7 @@ function requireLotteryOr400(lottery, res) {
   if (!lottery) {
     res.status(400).json({
       ok: false,
-      error: "Parâmetro inválido: lottery (use RJ/PT_RIO ou FED/FEDERAL)",
+      error: "Parâmetro inválido: lottery (use PT_RIO/RJ, FEDERAL/FED/BR ou PT_SP/SP)",
     });
     return false;
   }

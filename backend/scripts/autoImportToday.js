@@ -179,7 +179,13 @@ const SCHEDULES = {
   ],
 };
 
-const SCHEDULE = Array.isArray(SCHEDULES[LOTTERY]) ? SCHEDULES[LOTTERY] : SCHEDULES.PT_RIO;
+if (!Object.prototype.hasOwnProperty.call(SCHEDULES, LOTTERY)) {
+  throw new Error(
+    `LOTTERY nao suportada pelo autoImportToday: ${LOTTERY}`
+  );
+}
+
+const SCHEDULE = SCHEDULES[LOTTERY];
 
 /* =========================
    Utils

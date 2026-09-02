@@ -294,6 +294,12 @@ const LATE_LOTTERY_OPTIONS = [
     uf: "RJ",
   },
   {
+    id: "PT_SP",
+    label: "São Paulo",
+    lotteries: ["PT_SP"],
+    uf: "PT_SP",
+  },
+  {
     id: "FEDERAL",
     label: "Federal",
     lotteries: ["FEDERAL"],
@@ -322,6 +328,18 @@ const LATE_HOUR_OPTIONS = {
     { id: "16", label: "16h", closeHour: "16:00" },
     { id: "18", label: "18h", closeHour: "18:00" },
     { id: "21", label: "21h", closeHour: "21:00" },
+  ],
+
+  PT_SP: [
+    { id: "ALL", label: "Todos os horários", closeHour: null },
+    { id: "08", label: "08h", closeHour: "08:00" },
+    { id: "10", label: "10h", closeHour: "10:00" },
+    { id: "12", label: "12h", closeHour: "12:00" },
+    { id: "13", label: "13h", closeHour: "13:00" },
+    { id: "15", label: "15h", closeHour: "15:00" },
+    { id: "17", label: "17h", closeHour: "17:00" },
+    { id: "19", label: "19h", closeHour: "19:00" },
+    { id: "20", label: "20h", closeHour: "20:00" },
   ],
 
   FEDERAL: [

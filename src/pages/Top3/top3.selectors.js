@@ -155,6 +155,7 @@ export function lotteryLabel(lotteryKey) {
 
   if (k === "FEDERAL") return "FEDERAL (11:30 dom / 20h qua)";
   if (k === "PT_RIO") return "RIO (PT_RIO)";
+  if (k === "PT_SP") return "SÃO PAULO (PT_SP)";
 
   return k || "—";
 }

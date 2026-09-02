@@ -23,7 +23,17 @@ function normalizeLotteryKey(v) {
   if (s === "LT_NACIONAL") return "NACIONAL";
   if (s === "LT-NACIONAL") return "NACIONAL";
 
-  return "PT_RIO"; // fallback seguro
+  if (
+    s === "SP" ||
+    s === "PT_SP" ||
+    s === "PT-SP" ||
+    s === "PT SP"
+  ) {
+    return "PT_SP";
+  }
+
+  // Chave desconhecida nao pode assumir identidade PT_RIO.
+  return "";
 }
 
 function isValidHourFormat(h) {
@@ -39,6 +49,16 @@ function sortHoursAsc(arr) {
 }
 
 export const SCHEDULES = Object.freeze({
+  PT_SP: Object.freeze([
+    "08:00",
+    "10:00",
+    "12:00",
+    "13:00",
+    "15:00",
+    "17:00",
+    "19:00",
+    "20:00",
+  ]),
   PT_RIO: Object.freeze([
     "09:00",
     "11:00",

@@ -58,6 +58,15 @@ function normalizeLoteriaInput(v) {
   if (key === "rj" || key === "rio" || key === "pt_rio" || key === "pt-rio")
     return "PT_RIO";
 
+  if (
+    key === "sp" ||
+    key === "pt_sp" ||
+    key === "pt-sp" ||
+    key === "sao paulo" ||
+    key === "saopaulo"
+  )
+    return "PT_SP";
+
   const out = key
     .toUpperCase()
     .replace(/[^A-Z0-9]+/g, "_")
@@ -215,6 +224,7 @@ export default function FiltersBar({
   const defaultOptions = useMemo(() => {
     const loteriasDefault = [
       { label: "RJ", value: "PT_RIO" },
+      { label: "SP", value: "PT_SP" },
       { label: "FEDERAL", value: "FEDERAL" },
       { label: "LOOK", value: "LOOK" },
       { label: "NACIONAL", value: "NACIONAL" },
@@ -260,6 +270,18 @@ export default function FiltersBar({
     ];
 
     // ✅ FEDERAL
+    const horariosPTSP = [
+      { label: "Todos", value: "Todos" },
+      { label: "08h", value: "08h" },
+      { label: "10h", value: "10h" },
+      { label: "12h", value: "12h" },
+      { label: "13h", value: "13h" },
+      { label: "15h", value: "15h" },
+      { label: "17h", value: "17h" },
+      { label: "19h", value: "19h" },
+      { label: "20h", value: "20h" },
+    ];
+
     const horariosFED = [
       { label: "Todos", value: "Todos" },
       { label: "19h", value: "19h" },
@@ -379,6 +401,7 @@ export default function FiltersBar({
     // ✅ Cada loteria mantém seu próprio domínio de horários.
     const horariosPorLoteria = {
       PT_RIO: horariosRJ,
+      PT_SP: horariosPTSP,
       FEDERAL: horariosFED,
       LOOK: horariosLOOK,
       NACIONAL: horariosNACIONAL,
