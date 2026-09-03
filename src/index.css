@@ -134,12 +134,12 @@ img, video, canvas, svg{
 }
 
 /* Payments deve rolar sem exibir barra lateral. */
-.standalone-access-scroll--payments{
+.standalone-access-scroll{
   -ms-overflow-style: none;
   scrollbar-width: none;
 }
 
-.standalone-access-scroll--payments::-webkit-scrollbar{
+.standalone-access-scroll::-webkit-scrollbar{
   display: none;
   width: 0;
   height: 0;
