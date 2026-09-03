@@ -5,6 +5,11 @@ const express = require("express");
 const router = express.Router();
 
 const {
+    requireFirebaseUser,
+    requireAdminUser,
+} = require("../middleware/firebaseUserAuth");
+
+const {
     createPredictionRun,
 } = require("../engine/predictionService");
 
@@ -18,7 +23,11 @@ const {
  * Executa uma previsão e grava o resultado.
  */
 
-router.post("/run", async (req, res) => {
+router.post(
+    "/run",
+    requireFirebaseUser,
+    requireAdminUser,
+    async (req, res) => {
 
     try {
 
@@ -56,7 +65,11 @@ router.post("/run", async (req, res) => {
  *
  * Calcula o TOP3 no backend e persiste a execução.
  */
-router.post("/top3/run", async (req, res) => {
+router.post(
+    "/top3/run",
+    requireFirebaseUser,
+    requireAdminUser,
+    async (req, res) => {
     try {
         const result = await createTop3PredictionRun(
             req.body || {}

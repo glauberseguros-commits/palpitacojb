@@ -408,6 +408,10 @@ const receiveResults = require("./routes/receiveResults");
 const bounds = require("./routes/bounds");
 const predictions = require("./routes/predictions");
 const accessRoutes = require("./routes/access");
+const {
+  requireFirebaseUser,
+  requireAdminUser,
+} = require("./middleware/firebaseUserAuth");
 
 app.use("/api/pitaco", pitacoResults);
 app.use("/api/king", kingDraws);
@@ -697,7 +701,11 @@ app.get("/api/lates", async (req, res) => {
 
 const { runImport } = require("./scripts/importKingApostas");
 
-app.get("/api/import/manual", async (req, res) => {
+app.get(
+  "/api/import/manual",
+  requireFirebaseUser,
+  requireAdminUser,
+  async (req, res) => {
   try {
     const date = String(req.query.date || "").trim();
     const lk = getLotteryFromReq(req);
@@ -737,7 +745,11 @@ app.get("/api/import/manual", async (req, res) => {
   }
 });
 
-app.get("/api/import/window", async (req, res) => {
+app.get(
+  "/api/import/window",
+  requireFirebaseUser,
+  requireAdminUser,
+  async (req, res) => {
   try {
     const date = String(req.query.date || "").trim();
     const lk = getLotteryFromReq(req);
