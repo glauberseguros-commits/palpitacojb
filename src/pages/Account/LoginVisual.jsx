@@ -138,7 +138,10 @@ export default function LoginVisual({
       display: "flex",
       alignItems: "safe center",
       justifyContent: "center",
-      padding: 18,
+      padding:
+        mode === "register"
+          ? 8
+          : 18,
       background: "#030303",
       color: "#fff",
     },
@@ -158,49 +161,82 @@ export default function LoginVisual({
     },
 
     brand: {
-      padding: "26px 22px 22px",
+      padding:
+        mode === "register"
+          ? "10px 18px 8px"
+          : "26px 22px 22px",
       textAlign: "center",
       borderBottom:
         "1px solid rgba(202,166,75,0.16)",
     },
 
     logo: {
-      width: 124,
-      height: 124,
+      width:
+        mode === "register"
+          ? 78
+          : 124,
+      height:
+        mode === "register"
+          ? 78
+          : 124,
       objectFit: "contain",
-      margin: "0 auto 8px",
+      margin:
+        mode === "register"
+          ? "0 auto 3px"
+          : "0 auto 8px",
       display: "block",
     },
 
     title: {
-      fontSize: 25,
+      fontSize:
+        mode === "register"
+          ? 22
+          : 25,
       fontWeight: 950,
       letterSpacing: 0.5,
     },
 
     subtitle: {
-      marginTop: 7,
-      fontSize: 12.5,
+      marginTop:
+        mode === "register"
+          ? 3
+          : 7,
+      fontSize:
+        mode === "register"
+          ? 11
+          : 12.5,
       fontWeight: 700,
       opacity: 0.72,
     },
 
     body: {
-      padding: 18,
+      padding:
+        mode === "register"
+          ? 10
+          : 18,
     },
 
     tabs: {
       display: "grid",
       gridTemplateColumns: "1fr 1fr",
-      gap: 7,
-      padding: 5,
+      gap:
+        mode === "register"
+          ? 4
+          : 7,
+      padding:
+        mode === "register"
+          ? 3
+          : 5,
       borderRadius: 13,
       background:
         "rgba(255,255,255,0.04)",
     },
 
     tab: (active) => ({
-      minHeight: 42,
+      minHeight:
+        mode === "register"
+          ? 34
+          : 42,
       borderRadius: 9,
       cursor: "pointer",
       fontWeight: 900,
@@ -221,17 +257,29 @@ export default function LoginVisual({
 
     form: {
       display: "grid",
-      gap: 13,
-      marginTop: 18,
+      gap:
+        mode === "register"
+          ? 6
+          : 13,
+      marginTop:
+        mode === "register"
+          ? 8
+          : 18,
     },
 
     field: {
       display: "grid",
-      gap: 6,
+      gap:
+        mode === "register"
+          ? 3
+          : 6,
     },
 
     label: {
-      fontSize: 12,
+      fontSize:
+        mode === "register"
+          ? 11.5
+          : 12,
       fontWeight: 850,
       color:
         "rgba(255,255,255,0.88)",
@@ -239,7 +287,10 @@ export default function LoginVisual({
 
     input: {
       width: "100%",
-      height: 46,
+      height:
+        mode === "register"
+          ? 38
+          : 46,
       boxSizing: "border-box",
       padding: "0 13px",
       borderRadius: 12,
@@ -257,7 +308,10 @@ export default function LoginVisual({
 
     passwordInput: {
       width: "100%",
-      height: 46,
+      height:
+        mode === "register"
+          ? 38
+          : 46,
       boxSizing: "border-box",
       padding: "0 82px 0 13px",
       borderRadius: 12,
@@ -273,7 +327,10 @@ export default function LoginVisual({
       position: "absolute",
       top: 0,
       right: 4,
-      height: 46,
+      height:
+        mode === "register"
+          ? 38
+          : 46,
       padding: "0 10px",
       border: 0,
       color: "#d8b950",
@@ -284,8 +341,14 @@ export default function LoginVisual({
     },
 
     primary: {
-      minHeight: 48,
-      marginTop: 4,
+      minHeight:
+        mode === "register"
+          ? 40
+          : 48,
+      marginTop:
+        mode === "register"
+          ? 1
+          : 4,
       borderRadius: 13,
       border:
         "1px solid rgba(218,184,72,0.60)",
@@ -312,10 +375,19 @@ export default function LoginVisual({
     acceptance: {
       display: "grid",
       gridTemplateColumns: "18px 1fr",
-      gap: 9,
+      gap:
+        mode === "register"
+          ? 6
+          : 9,
       alignItems: "start",
-      fontSize: 11.5,
-      lineHeight: 1.5,
+      fontSize:
+        mode === "register"
+          ? 10.5
+          : 11.5,
+      lineHeight:
+        mode === "register"
+          ? 1.3
+          : 1.5,
       color: "rgba(255,255,255,0.72)",
     },
 
@@ -326,12 +398,24 @@ export default function LoginVisual({
     },
 
     error: {
-      marginTop: 14,
-      padding: 11,
+      marginTop:
+        mode === "register"
+          ? 7
+          : 14,
+      padding:
+        mode === "register"
+          ? 8
+          : 11,
       borderRadius: 11,
       color: "#ffb1b1",
-      fontSize: 12.5,
-      lineHeight: 1.4,
+      fontSize:
+        mode === "register"
+          ? 11.5
+          : 12.5,
+      lineHeight:
+        mode === "register"
+          ? 1.3
+          : 1.4,
       border:
         "1px solid rgba(255,100,100,0.25)",
       background:
@@ -339,12 +423,24 @@ export default function LoginVisual({
     },
 
     notice: {
-      marginTop: 14,
-      padding: 11,
+      marginTop:
+        mode === "register"
+          ? 7
+          : 14,
+      padding:
+        mode === "register"
+          ? 8
+          : 11,
       borderRadius: 11,
       color: "#cdebd6",
-      fontSize: 12.5,
-      lineHeight: 1.4,
+      fontSize:
+        mode === "register"
+          ? 11.5
+          : 12.5,
+      lineHeight:
+        mode === "register"
+          ? 1.3
+          : 1.4,
       border:
         "1px solid rgba(80,190,120,0.24)",
       background:
@@ -352,13 +448,25 @@ export default function LoginVisual({
     },
 
     footer: {
-      marginTop: 20,
-      paddingTop: 16,
+      marginTop:
+        mode === "register"
+          ? 8
+          : 20,
+      paddingTop:
+        mode === "register"
+          ? 6
+          : 16,
       borderTop:
         "1px solid rgba(255,255,255,0.08)",
       textAlign: "center",
-      fontSize: 11.5,
-      lineHeight: 1.7,
+      fontSize:
+        mode === "register"
+          ? 10
+          : 11.5,
+      lineHeight:
+        mode === "register"
+          ? 1.35
+          : 1.7,
       color: "rgba(255,255,255,0.60)",
     },
   };
