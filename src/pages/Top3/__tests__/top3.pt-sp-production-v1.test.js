@@ -116,7 +116,6 @@ describe(
           "15:00",
           "17:00",
           "19:00",
-          "20:00",
         ]);
 
         expect(
@@ -158,7 +157,7 @@ describe(
 
 
     test(
-      "PT_SP 02/09/2026 preserva os oito sorteios incluindo 20h",
+      "PT_SP 02/09/2026 encerra em 19h porque quarta nao teve sorteio 20h",
       () => {
         expect(
           getPtSpScheduleForYmd(
@@ -172,7 +171,6 @@ describe(
           "15:00",
           "17:00",
           "19:00",
-          "20:00",
         ]);
       }
     );
