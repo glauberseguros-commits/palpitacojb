@@ -101,6 +101,50 @@ img, video, canvas, svg{
   }
 }
 
+/* Standalone access pages outside AppShell. */
+.standalone-access-scroll{
+  width: 100%;
+  min-height: 100vh;
+  min-height: 100dvh;
+  overflow-x: hidden !important;
+}
+
+/*
+ * Desktop: body/root ficam travados pelo AppShell.
+ * Login/Cadastro e Payments assumem o proprio scroll.
+ */
+@media (min-width: 981px){
+  .standalone-access-scroll{
+    height: 100vh;
+    height: 100dvh;
+    overflow-y: auto !important;
+    overscroll-behavior-y: contain;
+    -webkit-overflow-scrolling: touch;
+  }
+}
+
+/*
+ * Mobile continua usando o fluxo natural existente.
+ */
+@media (max-width: 980px){
+  .standalone-access-scroll{
+    height: auto;
+    overflow-y: visible !important;
+  }
+}
+
+/* Payments deve rolar sem exibir barra lateral. */
+.standalone-access-scroll--payments{
+  -ms-overflow-style: none;
+  scrollbar-width: none;
+}
+
+.standalone-access-scroll--payments::-webkit-scrollbar{
+  display: none;
+  width: 0;
+  height: 0;
+}
+
 /* Scrollbar */
 *::-webkit-scrollbar{
   width: 10px;

@@ -136,7 +136,7 @@ export default function LoginVisual({
       minHeight: "100vh",
       boxSizing: "border-box",
       display: "flex",
-      alignItems: "center",
+      alignItems: "safe center",
       justifyContent: "center",
       padding: 18,
       background: "#030303",
@@ -586,7 +586,7 @@ export default function LoginVisual({
   }
 
   return (
-    <div style={ui.page}>
+    <div className="standalone-access-scroll standalone-access-scroll--login" style={ui.page}>
       <div style={ui.card}>
         <div style={ui.brand}>
           {logoOk ? (

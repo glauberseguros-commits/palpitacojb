@@ -453,11 +453,13 @@ export default function Payments({
 
   return (
     <div
+      className="standalone-access-scroll standalone-access-scroll--payments"
       style={{
         minHeight: "100dvh",
         boxSizing: "border-box",
         display: "grid",
-        placeItems: "center",
+        alignItems: "safe center",
+        justifyItems: "center",
         padding: "8px 12px",
         overflowX: "hidden",
         background: "#030303",
