@@ -146,6 +146,7 @@ export function useAccountDerived({
     isLogged,
     needsProfile,
     initials,
+    phoneDigits: normalizePhoneDigits(phoneDraft),
     phoneDisplay,
     createdAtLabel,
     trialStartLabel,
