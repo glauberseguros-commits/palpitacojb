@@ -48,13 +48,6 @@ function isYmd(value) {
 }
 
 
-function getDow(ymd) {
-  return new Date(
-    `${ymd}T12:00:00Z`
-  ).getUTCDay();
-}
-
-
 export function getPtSpScheduleForYmd(
   ymd
 ) {
@@ -83,30 +76,6 @@ export function getPtSpScheduleForYmd(
         );
       }
     );
-
-  if (
-    y >=
-    PT_SP_CURRENT_REGIME_ANCHOR_YMD
-  ) {
-    const dow =
-      getDow(y);
-
-    if (dow === 3) {
-      schedule =
-        schedule.filter(
-          (hour) =>
-            hour !== "20:00"
-        );
-    }
-
-    if (dow === 6) {
-      schedule =
-        schedule.filter(
-          (hour) =>
-            hour !== "19:00"
-        );
-    }
-  }
 
   return schedule;
 }

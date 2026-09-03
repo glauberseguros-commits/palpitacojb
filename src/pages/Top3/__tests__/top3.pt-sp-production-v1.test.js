@@ -116,6 +116,7 @@ describe(
           "15:00",
           "17:00",
           "19:00",
+          "20:00",
         ]);
 
         expect(
@@ -129,6 +130,8 @@ describe(
           "13:00",
           "15:00",
           "17:00",
+          "19:00",
+
           "20:00",
         ]);
 
@@ -153,6 +156,26 @@ describe(
       }
     );
 
+
+    test(
+      "PT_SP 02/09/2026 preserva os oito sorteios incluindo 20h",
+      () => {
+        expect(
+          getPtSpScheduleForYmd(
+            "2026-09-02"
+          )
+        ).toEqual([
+          "08:00",
+          "10:00",
+          "12:00",
+          "13:00",
+          "15:00",
+          "17:00",
+          "19:00",
+          "20:00",
+        ]);
+      }
+    );
 
     test(
       "shared schedule entry routes PT_SP to dedicated calendar",
