@@ -151,20 +151,8 @@ function TernoCard({
         })}
       </div>
 
-      <footer className="terno-grupo-card__footer">
-        <span>
-          Grupos podem repetir
-        </span>
 
-        <span>
-          Ordem irrelevante
-        </span>
-
-        <span>
-          Acerto por quantidade no TOP5
-        </span>
-      </footer>
-    </article>
+</article>
   );
 }
 
