@@ -63,6 +63,10 @@ function resolveLotteryLabel(value) {
     return "Nacional";
   }
 
+  if (key === "PT_SP") {
+    return "São Paulo";
+  }
+
   return key || "—";
 }
 
@@ -114,12 +118,7 @@ function TernoCard({
           </div>
         </div>
 
-        <div className="terno-grupo-card__score">
-          <span>Índice de força</span>
-          <strong>
-            {terno.scorePct.toFixed(2)}%
-          </strong>
-        </div>
+
       </header>
 
       <div className="terno-grupo-card__animals">
@@ -231,6 +230,10 @@ const [quantityInput, setQuantityInput] =
       {
         value: "NACIONAL",
         label: "Nacional",
+      },
+      {
+        value: "PT_SP",
+        label: "São Paulo",
       },
     ];
 
@@ -374,14 +377,7 @@ const [quantityInput, setQuantityInput] =
 
     const blocks = visibleTernos.map(
       (terno) => {
-        const score = Number(
-          terno?.scorePct || 0
-        ).toLocaleString("pt-BR", {
-          minimumFractionDigits: 2,
-          maximumFractionDigits: 2,
-        });
-
-        const animals = (
+const animals = (
           Array.isArray(terno?.grupos)
             ? terno.grupos
             : []
@@ -398,7 +394,7 @@ const [quantityInput, setQuantityInput] =
         });
 
         return [
-          `${terno.rank}º TERNO — ÍNDICE ${score}%`,
+          `${terno.rank}º TERNO`,
           ...animals,
         ].join("\n");
       }

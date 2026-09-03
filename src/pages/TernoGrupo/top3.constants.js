@@ -20,6 +20,7 @@ export const LOTTERY_OPTIONS = [
   { key: "FEDERAL", value: "FEDERAL", label: "Federal" },
   { key: "LOOK", value: "LOOK", label: "LOOK" },
   { key: "NACIONAL", value: "NACIONAL", label: "Nacional" },
+  { key: "PT_SP", value: "PT_SP", label: "São Paulo" },
 ];
 
 // Grades

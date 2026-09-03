@@ -20,6 +20,8 @@ import { scoreRanking } from "./modules/scoreEngine/scoreEngineV2";
 
 import { chooseBestMilhar } from "../../shared/predictiveMilharEngine";
 
+import { getPtSpScheduleForYmd } from "../Top3/modules/top3.pt-sp-calendar";
+
 import {
   TOP3_NEXTDRAW_SCAN_MAX_STEPS,
   TOP3_NEXTDRAW_SCAN_MAX_DAYS,
@@ -428,6 +430,10 @@ export function getScheduleForLottery({
     return NACIONAL_SCHEDULE.map((hour) =>
       hour === "21:00" ? nacionalNightHour : hour
     );
+  }
+
+  if (key === "PT_SP") {
+    return getPtSpScheduleForYmd(ymd);
   }
 
   return getPtRioScheduleForYmd(
