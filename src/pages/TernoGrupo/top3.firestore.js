@@ -1,3 +1,4 @@
+import { auth } from "../../services/firebase";
 /* eslint-disable no-unused-vars */
 import {
   doc,
@@ -7,7 +8,6 @@ import {
 } from "firebase/firestore";
 
 import { db } from "../../services/firebase";
-import { loginAnonymous } from "../../services/auth";
 
 import {
   safeStr,
@@ -354,7 +354,8 @@ export async function saveTop3PredictionSnapshot({
   let user = null;
 
   try {
-    user = await loginAnonymous();
+    user = auth.currentUser;
+    if (user?.isAnonymous === true) user = null;
   } catch (error) {
     return {
       ok: false,
@@ -526,7 +527,8 @@ export async function reconcileTop3PredictionDay({
   let user = null;
 
   try {
-    user = await loginAnonymous();
+    user = auth.currentUser;
+    if (user?.isAnonymous === true) user = null;
   } catch (error) {
     return {
       ok: false,

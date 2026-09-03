@@ -10,6 +10,11 @@ service cloud.firestore {
       return request.auth != null;
     }
 
+    function authenticatedUser() {
+      return signedIn()
+        && request.auth.token.firebase.sign_in_provider != "anonymous";
+    }
+
     // Admin = existe doc /admins/{uid} e active == true
     function isAdmin() {
       return signedIn()
@@ -119,34 +124,34 @@ service cloud.firestore {
         if isAdmin();
     }
     /* =========================================================
-       DADOS DO APP (PREVIEW PUBLIC READ)
-       - Para o modo "Entrar sem login (Preview)" funcionar,
-         precisamos permitir READ sem auth.
+       DADOS DO APP (AUTHENTICATED NON-ANONYMOUS READ)
+       - Preview anonimo removido do produto.
+         - READ exige usuario Firebase nao anonimo.
        - WRITE continua restrito a admin.
     ========================================================= */
 
     match /draws/{drawId} {
-      allow read: if true;        // ✅ público (Preview funciona)
+      allow read: if authenticatedUser();        // ✅ público (Preview funciona)
       allow write: if isAdmin();
     }
 
     match /draws/{drawId}/prizes/{prizeId} {
-      allow read: if true;        // ✅ público (Preview funciona)
+      allow read: if authenticatedUser();        // ✅ público (Preview funciona)
       allow write: if isAdmin();
     }
 
     /* =========================================================
        HISTÓRICO GLOBAL DO TOP3
-       - leitura pública;
+       - leitura autenticada e nao anonima;
        - criação somente por usuário autenticado;
        - snapshot original imutável;
        - atualização limitada à validação do resultado.
     ========================================================= */
 
     match /top3_predictions/{predictionId} {
-      allow read: if true;
+      allow read: if authenticatedUser();
 
-      allow create: if signedIn()
+      allow create: if authenticatedUser()
         && request.resource.data.predictionType == "TOP3"
         && request.resource.data.createdBy == request.auth.uid
         && request.resource.data.status == "predicted"
@@ -166,16 +171,29 @@ service cloud.firestore {
        * do resultado oficial.
        */
       allow update: if
-        signedIn()
+        authenticatedUser()
 
         && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
           "resultGrupo",
           "resultMilhar",
+          "resultLotteryKey",
           "resultAnimal",
+          "resultTop3Groups",
+          "resultTop3Milhares",
           "hitType",
           "hitScore",
           "hitPosition",
+          "predictionPosition",
+          "resultPosition",
+          "podiumMedal",
+          "matchedGrupo",
+          "matchedMilhar",
+          "matchedAnimal",
           "matchedValue",
+          "hits",
+          "hitCount",
+          "matchedPredictions",
+          "matchedPrizePositions",
           "validatedAt",
           "validatedBy",
           "updatedAt",
@@ -191,15 +209,15 @@ service cloud.firestore {
     /* =========================================================
        TERNO DE GRUPO
        - domínio de persistência independente do TOP3;
-       - leitura pública;
+       - leitura autenticada e nao anonima;
        - primeira previsão do slot imutável;
        - update exclusivamente para validação do resultado.
     ========================================================= */
 
     match /terno_grupo_predictions/{predictionId} {
-      allow read: if true;
+      allow read: if authenticatedUser();
 
-      allow create: if signedIn()
+      allow create: if authenticatedUser()
         && request.resource.data.predictionType == "TERNO_GRUPO"
         && request.resource.data.createdBy == request.auth.uid
         && request.resource.data.status == "predicted"
@@ -211,7 +229,7 @@ service cloud.firestore {
         && request.resource.data.snapshot.size() <= 3;
 
       allow update: if
-        signedIn()
+        authenticatedUser()
 
         && resource.data.predictionType == "TERNO_GRUPO"
 
