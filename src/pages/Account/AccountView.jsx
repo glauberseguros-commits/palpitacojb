@@ -13,7 +13,6 @@ export default function AccountView({
   needsProfile,
 
   initials,
-  photoSrc,
 
   name,
   phoneDigits,
@@ -28,9 +27,7 @@ export default function AccountView({
 
   onNameChange,
   onPhoneChange,
-  onPhotoPick,
   onSave,
-  onRemovePhoto,
   onDeleteAccount,
 }) {
   
@@ -91,12 +88,8 @@ return (
         </div>
 
         <div style={ui.avatarRow}>
-          <div style={ui.avatar}>
-            {photoSrc ? (
-              <img src={photoSrc} alt="Foto do perfil" style={ui.avatarImg} />
-            ) : (
-              <div style={ui.avatarFallback}>{initials}</div>
-            )}
+          <div style={ui.avatar} data-avatar-mode="initials-only">
+            <div style={ui.avatarFallback}>{initials}</div>
           </div>
 
           <div style={{ display: "grid", gap: 10 }}>
@@ -125,14 +118,6 @@ return (
               disabled={busy}
             />
 
-            <input
-              type="file"
-              accept="image/*"
-              onChange={(e) => onPhotoPick(e.target.files?.[0] || null)}
-              disabled={busy}
-              style={{ color: "rgba(255,255,255,0.78)" }}
-            />
-
             <div style={ui.actions}>
               <button
                 type="button"
@@ -141,15 +126,6 @@ return (
                 disabled={busy}
               >
                 {busy ? "SALVANDO..." : "SALVAR"}
-              </button>
-
-              <button
-                type="button"
-                style={ui.secondaryBtn(busy)}
-                onClick={onRemovePhoto}
-                disabled={busy}
-              >
-                REMOVER FOTO
               </button>
 
               <button
