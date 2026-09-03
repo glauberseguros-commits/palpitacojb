@@ -440,7 +440,7 @@ export default function Payments({
 
   const primaryButton = {
     width: "100%",
-    minHeight: 48,
+    minHeight: 40,
     borderRadius: 12,
     cursor: "pointer",
     fontWeight: 950,
@@ -454,11 +454,12 @@ export default function Payments({
   return (
     <div
       style={{
-        minHeight: "100vh",
+        minHeight: "100dvh",
         boxSizing: "border-box",
         display: "grid",
         placeItems: "center",
-        padding: 18,
+        padding: "8px 12px",
+        overflowX: "hidden",
         background: "#030303",
         color:
           "rgba(255,255,255,0.94)",
@@ -467,7 +468,7 @@ export default function Payments({
       <div
         style={{
           width: "100%",
-          maxWidth: 980,
+          maxWidth: 1120,
           borderRadius: 22,
           border:
             "1px solid rgba(202,166,75,0.30)",
@@ -487,7 +488,7 @@ export default function Payments({
         >
           <section
             style={{
-              padding: 28,
+              padding: 18,
               borderRight:
                 "1px solid rgba(202,166,75,0.14)",
               textAlign: "center",
@@ -497,8 +498,8 @@ export default function Payments({
               src={LOGO_SRC}
               alt="PalPitaco JB"
               style={{
-                width: 150,
-                height: 150,
+                width: 108,
+                height: 108,
                 objectFit:
                   "contain",
               }}
@@ -519,8 +520,8 @@ export default function Payments({
             <h1
               style={{
                 margin:
-                  "10px 0 0",
-                fontSize: 29,
+                  "6px 0 0",
+                fontSize: 26,
               }}
             >
               Pagamento via PIX
@@ -529,9 +530,9 @@ export default function Payments({
             <p
               style={{
                 margin:
-                  "10px auto 0",
+                  "6px auto 0",
                 maxWidth: 330,
-                lineHeight: 1.55,
+                lineHeight: 1.35,
                 opacity: 0.72,
               }}
             >
@@ -540,8 +541,8 @@ export default function Payments({
 
             <div
               style={{
-                marginTop: 20,
-                padding: 17,
+                marginTop: 12,
+                padding: 12,
                 borderRadius: 15,
                 border:
                   "1px solid rgba(202,166,75,0.30)",
@@ -562,8 +563,8 @@ export default function Payments({
 
               <div
                 style={{
-                  marginTop: 8,
-                  fontSize: 31,
+                  marginTop: 5,
+                  fontSize: 28,
                   fontWeight: 1000,
                 }}
               >
@@ -590,9 +591,9 @@ export default function Payments({
 
             <div
               style={{
-                marginTop: 18,
-                fontSize: 12.5,
-                lineHeight: 1.55,
+                marginTop: 10,
+                fontSize: 12,
+                lineHeight: 1.35,
                 opacity: 0.72,
               }}
             >
@@ -605,7 +606,7 @@ export default function Payments({
 
           <section
             style={{
-              padding: 28,
+              padding: 18,
             }}
           >
             <div
@@ -651,14 +652,14 @@ export default function Payments({
               style={{
                 display: "grid",
                 placeItems: "center",
-                marginTop: 16,
+                marginTop: 8,
               }}
             >
               {qrDataUrl ? (
                 <div
                   style={{
-                    padding: 12,
-                    borderRadius: 16,
+                    padding: 8,
+                    borderRadius: 12,
                     background: "#fff",
                   }}
                 >
@@ -667,7 +668,7 @@ export default function Payments({
                     alt="QR Code PIX PalPitaco JB"
                     style={{
                       display: "block",
-                      width: "min(280px, 70vw)",
+                      width: "min(220px, 62vw)",
                       height: "auto",
                     }}
                   />
@@ -702,8 +703,8 @@ export default function Payments({
 
               <div
                 style={{
-                  marginTop: 7,
-                  padding: 13,
+                  marginTop: 5,
+                  padding: 9,
                   borderRadius: 11,
                   wordBreak:
                     "break-all",
@@ -726,7 +727,7 @@ export default function Payments({
                 }
                 style={{
                   ...primaryButton,
-                  marginTop: 9,
+                  marginTop: 6,
                 }}
               >
                 {copiedKey
@@ -753,10 +754,10 @@ export default function Payments({
 
               <div
                 style={{
-                  marginTop: 7,
-                  maxHeight: 92,
+                  marginTop: 5,
+                  maxHeight: 52,
                   overflow: "auto",
-                  padding: 12,
+                  padding: 8,
                   borderRadius: 11,
                   wordBreak:
                     "break-all",
@@ -766,8 +767,8 @@ export default function Payments({
                     "1px solid rgba(255,255,255,0.11)",
                   fontFamily:
                     "monospace",
-                  fontSize: 11,
-                  lineHeight: 1.45,
+                  fontSize: 10.5,
+                  lineHeight: 1.25,
                 }}
               >
                 {pixPayload ||
@@ -784,7 +785,7 @@ export default function Payments({
                 }
                 style={{
                   ...primaryButton,
-                  marginTop: 9,
+                  marginTop: 6,
                 }}
               >
                 {copiedPayload
@@ -795,8 +796,8 @@ export default function Payments({
 
             <div
               style={{
-                marginTop: 20,
-                padding: 15,
+                marginTop: 10,
+                padding: 10,
                 borderRadius: 13,
                 background:
                   "rgba(255,255,255,0.035)",
@@ -811,9 +812,9 @@ export default function Payments({
               <p
                 style={{
                   margin:
-                    "8px 0 12px",
-                  fontSize: 12.5,
-                  lineHeight: 1.55,
+                    "5px 0 8px",
+                  fontSize: 11.5,
+                  lineHeight: 1.35,
                   opacity: 0.70,
                 }}
               >
@@ -836,11 +837,11 @@ export default function Payments({
 
               <div
                 style={{
-                  marginTop: 11,
+                  marginTop: 6,
                   display: "grid",
-                  gap: 4,
+                  gap: 2,
                   textAlign: "center",
-                  fontSize: 12,
+                  fontSize: 11.5,
                 }}
               >
                 <a
@@ -870,8 +871,8 @@ export default function Payments({
 
             <div
               style={{
-                marginTop: 18,
-                padding: 15,
+                marginTop: 10,
+                padding: 10,
                 borderRadius: 13,
                 border:
                   active
@@ -892,9 +893,9 @@ export default function Payments({
               <p
                 style={{
                   margin:
-                    "8px 0 0",
-                  fontSize: 12.5,
-                  lineHeight: 1.55,
+                    "5px 0 0",
+                  fontSize: 11.5,
+                  lineHeight: 1.35,
                   opacity: 0.72,
                 }}
               >
@@ -906,8 +907,8 @@ export default function Payments({
               {subscription?.endsAt ? (
                 <div
                   style={{
-                    marginTop: 8,
-                    fontSize: 12.5,
+                    marginTop: 5,
+                    fontSize: 11.5,
                     opacity: 0.75,
                   }}
                 >
@@ -930,7 +931,7 @@ export default function Payments({
               }
               style={{
                 ...primaryButton,
-                marginTop: 18,
+                marginTop: 10,
               }}
             >
               {externalBusy
@@ -950,8 +951,8 @@ export default function Payments({
                 }
                 style={{
                   width: "100%",
-                  minHeight: 46,
-                  marginTop: 9,
+                  minHeight: 38,
+                  marginTop: 6,
                   borderRadius: 12,
                   cursor: "pointer",
                   color: "#fff",
@@ -968,9 +969,9 @@ export default function Payments({
 
             <div
               style={{
-                marginTop: 18,
+                marginTop: 10,
                 textAlign: "center",
-                fontSize: 11.5,
+                fontSize: 10.5,
               }}
             >
               <a
