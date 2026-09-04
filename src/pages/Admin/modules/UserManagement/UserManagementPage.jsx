@@ -2,6 +2,7 @@ import React, {
   useCallback,
   useEffect,
   useMemo,
+  useRef,
   useState,
 } from "react";
 
@@ -253,6 +254,15 @@ export default function UserManagementPage() {
   const [days, setDays] =
     useState("30");
 
+  const selectedUidRef =
+    useRef("");
+
+  const accessRequestSeqRef =
+    useRef(0);
+
+  selectedUidRef.current =
+    clean(selectedUid);
+
   const [editing, setEditing] =
     useState(false);
 
@@ -399,8 +409,25 @@ export default function UserManagementPage() {
         const safeUid =
           clean(uid);
 
+        const requestSeq =
+          ++accessRequestSeqRef.current;
+
         if (!safeUid) {
-          setAccessResponse(null);
+          if (
+            requestSeq ===
+            accessRequestSeqRef.current
+          ) {
+            setAccessResponse(null);
+            setLoadingAccess(false);
+          }
+
+          return;
+        }
+
+        if (
+          safeUid !==
+          selectedUidRef.current
+        ) {
           return;
         }
 
@@ -412,11 +439,43 @@ export default function UserManagementPage() {
               safeUid
             );
 
+          if (
+            requestSeq !==
+              accessRequestSeqRef.current ||
+            safeUid !==
+              selectedUidRef.current
+          ) {
+            return;
+          }
+
+          const responseUid =
+            clean(
+              response?.user?.uid
+            );
+
+          if (
+            responseUid &&
+            responseUid !== safeUid
+          ) {
+            throw new Error(
+              "ACCESS_RESPONSE_UID_MISMATCH"
+            );
+          }
+
           setAccessResponse(
             response || null
           );
         }
         catch (err) {
+          if (
+            requestSeq !==
+              accessRequestSeqRef.current ||
+            safeUid !==
+              selectedUidRef.current
+          ) {
+            return;
+          }
+
           setAccessResponse(null);
 
           setError(
@@ -427,7 +486,14 @@ export default function UserManagementPage() {
           );
         }
         finally {
-          setLoadingAccess(false);
+          if (
+            requestSeq ===
+              accessRequestSeqRef.current &&
+            safeUid ===
+              selectedUidRef.current
+          ) {
+            setLoadingAccess(false);
+          }
         }
       },
       []
@@ -501,6 +567,9 @@ export default function UserManagementPage() {
         setName("");
         setPhone("");
 
+        accessRequestSeqRef.current += 1;
+        setLoadingAccess(false);
+
         setDays("30");
         setEditing(false);
         setAccessResponse(null);
@@ -518,6 +587,8 @@ export default function UserManagementPage() {
           selectedUser.phone
         )
       );
+
+      setAccessResponse(null);
 
       setDays("30");
 
