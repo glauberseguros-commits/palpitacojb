@@ -480,6 +480,8 @@ export default function UserManagementPage() {
       if (!selectedUser) {
         setName("");
         setPhone("");
+
+        setDays("30");
         setEditing(false);
         setAccessResponse(null);
         return;
@@ -496,6 +498,8 @@ export default function UserManagementPage() {
           selectedUser.phone
         )
       );
+
+      setDays("30");
 
       setEditing(false);
       setError("");
@@ -643,6 +647,9 @@ export default function UserManagementPage() {
       await loadAccess(
         selectedUser.uid
       );
+
+      setDays("30");
+
 
       if (action === "RENOVAR") {
         setSuccess(
