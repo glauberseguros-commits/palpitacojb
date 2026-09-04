@@ -41,6 +41,7 @@ const PT_RIO_SCHEDULE_WED_SAT = [
   "11:00",
   "14:00",
   "16:00",
+  "18:00",
   "21:00",
 ];
 
@@ -380,11 +381,30 @@ function resolveNextTop3Slot({
     ""
   ).trim();
 
+  /*
+   * TOP3_PUBLIC_HOUR_CONTRACT_BRIDGE_V1
+   *
+   * A API publica TOP3 pode retornar buckets como "09h", "20h".
+   * O backend trabalha com o contrato canonico "HH:MM".
+   *
+   * Esta ponte normaliza somente a fronteira entre os contratos.
+   * Nao altera calendario, motor ou regra de proximo slot.
+   */
+  const publicHourMatch =
+    rawHour.match(/^(\d{1,2})h$/i);
+
+  const hourForBackend =
+    publicHourMatch
+      ? `${String(
+          Number(publicHourMatch[1])
+        ).padStart(2, "0")}:00`
+      : rawHour;
+
   let canonicalHour = "";
 
   try {
     canonicalHour =
-      normalizeHour(rawHour);
+      normalizeHour(hourForBackend);
   } catch {
     canonicalHour = "";
   }

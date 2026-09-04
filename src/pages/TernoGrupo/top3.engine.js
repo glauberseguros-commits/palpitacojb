@@ -569,13 +569,32 @@ export function getNextSlotForLottery({
 }) {
   const key = safeStr(lotteryKey).toUpperCase();
   const y0 = safeStr(ymd);
-  const h0 = toHourBucket(hourBucket);
 
-  if (!isYMD(y0) || !safeStr(h0)) return { ymd: "", hour: "" };
+  /*
+   * SLOT_HOUR_IDENTITY_V1
+   *
+   * toHourBucket() pertence ao bucketing estatistico e reduz
+   * minutos para HH:00. Identidade de sorteio nao pode fazer isso,
+   * pois existem slots reais como 19:30 e 11:30.
+   */
+  const toExactSlotHour = (value) => {
+    const normalized = normalizeHourLike(value);
+
+    return /^\d{2}:\d{2}$/.test(normalized)
+      ? normalized
+      : "";
+  };
+
+  const h0 = toExactSlotHour(hourBucket);
+
+  if (!isYMD(y0) || !safeStr(h0)) {
+    return { ymd: "", hour: "" };
+  }
 
   if (key === "FEDERAL") {
     for (let i = 1; i <= maxForwardDays; i += 1) {
       const day = addDaysYMD(y0, i);
+
       const sch = getScheduleForLottery({
         lotteryKey: key,
         ymd: day,
@@ -583,10 +602,20 @@ export function getNextSlotForLottery({
         PT_RIO_SCHEDULE_WED_SAT,
         FEDERAL_SCHEDULE,
       });
+
       if (Array.isArray(sch) && sch.length) {
-        return { ymd: day, hour: toHourBucket(sch[0]) };
+        const nextHour =
+          toExactSlotHour(sch[0]);
+
+        if (nextHour) {
+          return {
+            ymd: day,
+            hour: nextHour,
+          };
+        }
       }
     }
+
     return { ymd: "", hour: "" };
   }
 
@@ -599,16 +628,29 @@ export function getNextSlotForLottery({
     FEDERAL_SCHEDULE,
   });
 
-  const idx = (Array.isArray(sch0) ? sch0 : []).findIndex(
-    (x) => toHourBucket(x) === h0
-  );
+  const normalizedSchedule =
+    (Array.isArray(sch0) ? sch0 : [])
+      .map(toExactSlotHour)
+      .filter(Boolean);
 
-  if (idx >= 0 && idx < sch0.length - 1) {
-    return { ymd: y0, hour: toHourBucket(sch0[idx + 1]) };
+  const idx =
+    normalizedSchedule.findIndex(
+      (hour) => hour === h0
+    );
+
+  if (
+    idx >= 0 &&
+    idx < normalizedSchedule.length - 1
+  ) {
+    return {
+      ymd: y0,
+      hour: normalizedSchedule[idx + 1],
+    };
   }
 
   for (let i = 1; i <= maxForwardDays; i += 1) {
     const day = addDaysYMD(y0, i);
+
     const sch = getScheduleForLottery({
       lotteryKey: key,
       ymd: day,
@@ -616,8 +658,17 @@ export function getNextSlotForLottery({
       PT_RIO_SCHEDULE_WED_SAT,
       FEDERAL_SCHEDULE,
     });
+
     if (Array.isArray(sch) && sch.length) {
-      return { ymd: day, hour: toHourBucket(sch[0]) };
+      const nextHour =
+        toExactSlotHour(sch[0]);
+
+      if (nextHour) {
+        return {
+          ymd: day,
+          hour: nextHour,
+        };
+      }
     }
   }
 
