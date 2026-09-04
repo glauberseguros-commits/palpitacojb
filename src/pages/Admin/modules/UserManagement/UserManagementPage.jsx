@@ -366,6 +366,26 @@ export default function UserManagementPage() {
       ?.subscription ||
     null;
 
+  useEffect(() => {
+    if (!selectedUser?.uid) {
+      return;
+    }
+
+    const persistedDays =
+      Number(subscription?.durationDays);
+
+    if (
+      Number.isSafeInteger(persistedDays) &&
+      persistedDays >= 1 &&
+      persistedDays <= 3650
+    ) {
+      setDays(String(persistedDays));
+    }
+  }, [
+    selectedUser?.uid,
+    subscription?.durationDays,
+  ]);
+
   const actionLabel =
     active
       ? "RENOVAR"
@@ -648,10 +668,7 @@ export default function UserManagementPage() {
         selectedUser.uid
       );
 
-      setDays("30");
-
-
-      if (action === "RENOVAR") {
+if (action === "RENOVAR") {
         setSuccess(
           `Assinatura renovada por mais ${safeDays} dia(s).`
         );
