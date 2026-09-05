@@ -98,6 +98,7 @@ function normalizeYmd(value) {
 function normalizeHour(value) {
   const text = String(value || "")
     .trim()
+    .replace(/^(\d{1,2})[hH]$/, "$1:00")
     .replace(/[hH]/g, ":");
 
   const match = text.match(
