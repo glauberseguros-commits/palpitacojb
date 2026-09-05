@@ -6,6 +6,8 @@ const assert =
 const {
   normalizeSubscriptionDays,
   computeRenewalWindow,
+  normalizeValidityYmd,
+  validityEndOfDayMs,
 } = require("../access/accessService");
 
 const DAY =
@@ -84,6 +86,40 @@ assert.strictEqual(
   active.newEndsAtMs,
   NOW + 20 * DAY
 );
+
+
+assert.strictEqual(
+  normalizeValidityYmd(
+    "2026-10-04"
+  ),
+  "2026-10-04"
+);
+
+assert.throws(
+  () =>
+    normalizeValidityYmd(
+      "2026-02-30"
+    ),
+  /INVALID_VALIDITY_DATE/
+);
+
+assert.throws(
+  () =>
+    normalizeValidityYmd(
+      "04/10/2026"
+    ),
+  /INVALID_VALIDITY_DATE/
+);
+
+assert.strictEqual(
+  validityEndOfDayMs(
+    "2026-10-04"
+  ),
+  Date.parse(
+    "2026-10-04T23:59:59.999-03:00"
+  )
+);
+
 
 console.log(
   "ACCESS_ADMIN_CONTROLS=PASS"

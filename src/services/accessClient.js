@@ -825,6 +825,74 @@ export async function activateAdminUserAccess({
 /**
  * Revoga assinatura pelo backend autoritativo.
  */
+
+/**
+ * Ajusta a validade absoluta de um usuario.
+ */
+export async function adjustAdminUserValidity({
+  uid,
+  operationId,
+  validUntilYmd,
+} = {}) {
+  const safeUid =
+    String(uid || "")
+      .trim();
+
+  const safeOperationId =
+    String(operationId || "")
+      .trim();
+
+  const safeYmd =
+    String(validUntilYmd || "")
+      .trim();
+
+  if (!safeUid) {
+    throw new AccessClientError(
+      "UID_REQUIRED",
+      "UID do usuario e obrigatorio."
+    );
+  }
+
+  if (!safeOperationId) {
+    throw new AccessClientError(
+      "OPERATION_ID_REQUIRED",
+      "operationId e obrigatorio."
+    );
+  }
+
+  if (
+    !/^\d{4}-\d{2}-\d{2}$/
+      .test(
+        safeYmd
+      )
+  ) {
+    throw new AccessClientError(
+      "INVALID_VALIDITY_DATE",
+      "Data de validade invalida."
+    );
+  }
+
+  return accessRequest(
+    "/api/access/admin/validity",
+    {
+      method:
+        "POST",
+
+      body: {
+        uid:
+          safeUid,
+
+        operationId:
+          safeOperationId,
+
+        validUntilYmd:
+          safeYmd,
+      },
+    }
+  );
+}
+
+
 export async function revokeAdminUserAccess({
   uid,
   operationId,

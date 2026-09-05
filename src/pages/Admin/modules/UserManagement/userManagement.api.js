@@ -7,6 +7,7 @@ import { db } from "../../../../services/firebase";
 
 import {
   activateAdminUserAccess,
+  adjustAdminUserValidity,
   deleteAdminUserAccount,
   getAccessProduct,
   getAdminUserAccess,
@@ -136,6 +137,22 @@ export async function activateUserAccess(
     operationId,
     paymentReference,
     days,
+  });
+}
+
+
+
+export async function adjustUserValidity(
+  uid,
+  {
+    operationId,
+    validUntilYmd,
+  } = {}
+) {
+  return adjustAdminUserValidity({
+    uid,
+    operationId,
+    validUntilYmd,
   });
 }
 

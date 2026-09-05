@@ -52,6 +52,9 @@ const ACCESS_EVENT_TYPE =
 
     REVOKE:
       "subscription_revoke",
+
+    ADJUST_VALIDITY:
+      "subscription_validity_adjust",
   });
 
 const DEVICE_SLOT =

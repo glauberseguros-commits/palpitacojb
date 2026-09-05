@@ -8,6 +8,7 @@ import React, {
 
 import {
   activateUserAccess,
+  adjustUserValidity,
   createAdminOperationId,
   deleteUserAccount,
   getUserAccess,
@@ -226,6 +227,132 @@ function adminErrorMessage(
   );
 }
 
+
+function validityDateFromValue(
+  value
+) {
+  if (!value) {
+    return null;
+  }
+
+  if (
+    value instanceof
+    Date
+  ) {
+    return value;
+  }
+
+  if (
+    typeof value?.toDate ===
+    "function"
+  ) {
+    return value.toDate();
+  }
+
+  if (
+    typeof value?.seconds ===
+    "number"
+  ) {
+    return new Date(
+      value.seconds *
+      1000
+    );
+  }
+
+  if (
+    typeof value ===
+    "number"
+  ) {
+    return new Date(
+      value
+    );
+  }
+
+  const date =
+    new Date(
+      value
+    );
+
+  return Number.isFinite(
+    date.getTime()
+  )
+    ? date
+    : null;
+}
+
+function validityYmdInSaoPaulo(
+  value
+) {
+  const date =
+    validityDateFromValue(
+      value
+    );
+
+  if (
+    !date ||
+    !Number.isFinite(
+      date.getTime()
+    )
+  ) {
+    return "";
+  }
+
+  const parts =
+    new Intl.DateTimeFormat(
+      "en-CA",
+      {
+        timeZone:
+          "America/Sao_Paulo",
+
+        year:
+          "numeric",
+
+        month:
+          "2-digit",
+
+        day:
+          "2-digit",
+      }
+    )
+      .formatToParts(
+        date
+      );
+
+  const values = {};
+
+  parts.forEach(
+    (part) => {
+      if (
+        part.type !==
+        "literal"
+      ) {
+        values[
+          part.type
+        ] =
+          part.value;
+      }
+    }
+  );
+
+  return (
+    String(
+      values.year ||
+      ""
+    ) +
+    "-" +
+    String(
+      values.month ||
+      ""
+    ) +
+    "-" +
+    String(
+      values.day ||
+      ""
+    )
+  );
+}
+
+
 export default function UserManagementPage() {
   const [users, setUsers] =
     useState([]);
@@ -253,6 +380,9 @@ export default function UserManagementPage() {
 
   const [days, setDays] =
     useState("30");
+
+  const [validUntil, setValidUntil] =
+    useState("");
 
   const selectedUidRef =
     useRef("");
@@ -395,6 +525,37 @@ export default function UserManagementPage() {
     selectedUser?.uid,
     subscription?.durationDays,
   ]);
+
+  useEffect(() => {
+    const responseUid =
+      clean(
+        accessResponse
+          ?.user
+          ?.uid
+      );
+
+    if (
+      !selectedUser?.uid ||
+      responseUid !==
+        selectedUser.uid
+    ) {
+      setValidUntil("");
+      return;
+    }
+
+    setValidUntil(
+      validityYmdInSaoPaulo(
+        subscription?.endsAt ||
+        subscription?.endsAtMs
+      )
+    );
+  }, [
+    selectedUser?.uid,
+    accessResponse?.user?.uid,
+    subscription?.endsAt,
+    subscription?.endsAtMs,
+  ]);
+
 
   const actionLabel =
     active
@@ -769,6 +930,132 @@ if (action === "RENOVAR") {
       setSavingAccess(false);
     }
   }
+
+
+  async function adjustValidity() {
+    if (
+      !selectedUser ||
+      savingAccess
+    ) {
+      return;
+    }
+
+    const safeYmd =
+      clean(
+        validUntil
+      );
+
+    if (
+      !/^\d{4}-\d{2}-\d{2}$/
+        .test(
+          safeYmd
+        )
+    ) {
+      setError(
+        "Informe uma nova validade válida."
+      );
+
+      return;
+    }
+
+    const [
+      year,
+      month,
+      day,
+    ] =
+      safeYmd.split("-");
+
+    const label =
+      day +
+      "/" +
+      month +
+      "/" +
+      year;
+
+    if (
+      typeof window !==
+        "undefined" &&
+      !window.confirm(
+        "Ajustar a validade deste usuário para " +
+        label +
+        "? Esta operação substitui a data atual e pode reduzir ou ampliar o acesso."
+      )
+    ) {
+      return;
+    }
+
+    setSavingAccess(
+      true
+    );
+
+    setError("");
+    setSuccess("");
+
+    try {
+      const operationId =
+        createAdminOperationId(
+          "validity",
+          selectedUser.uid
+        );
+
+      await adjustUserValidity(
+        selectedUser.uid,
+        {
+          operationId,
+          validUntilYmd:
+            safeYmd,
+        }
+      );
+
+      await loadAccess(
+        selectedUser.uid
+      );
+
+      setSuccess(
+        "Validade ajustada para " +
+        label +
+        "."
+      );
+    }
+    catch (err) {
+      const code =
+        clean(
+          err?.code ||
+          err?.message
+        );
+
+      if (
+        code ===
+        "VALIDITY_DATE_IN_PAST"
+      ) {
+        setError(
+          "A nova validade deve terminar no futuro. Para interromper agora, use SUSPENDER."
+        );
+      }
+      else if (
+        code ===
+        "INVALID_VALIDITY_DATE"
+      ) {
+        setError(
+          "Informe uma data de validade válida."
+        );
+      }
+      else {
+        setError(
+          adminErrorMessage(
+            err,
+            "Não foi possível ajustar a validade."
+          )
+        );
+      }
+    }
+    finally {
+      setSavingAccess(
+        false
+      );
+    }
+  }
+
 
   async function suspend() {
     if (
@@ -1822,6 +2109,41 @@ if (action === "RENOVAR") {
                       style={inputStyle}
                     />
                   </label>
+
+              <label>
+                <small
+                  style={{
+                    display:
+                      "block",
+
+                    marginBottom:
+                      6,
+
+                    color:
+                      "rgba(255,255,255,.62)",
+                  }}
+                >
+                  NOVA VALIDADE
+                </small>
+
+                <input
+                  type="date"
+                  value={validUntil}
+                  onChange={(event) =>
+                    setValidUntil(
+                      event.target.value
+                    )
+                  }
+                  disabled={
+                    savingAccess ||
+                    deleting ||
+                    loadingAccess
+                  }
+                  style={
+                    inputStyle
+                  }
+                />
+              </label>
                 </div>
 
                 <div
@@ -1866,7 +2188,35 @@ if (action === "RENOVAR") {
                       : actionLabel}
                   </button>
 
-                  <button
+
+            <button
+              type="button"
+              onClick={
+                adjustValidity
+              }
+              disabled={
+                savingAccess ||
+                deleting ||
+                loadingAccess ||
+                !validUntil
+              }
+              style={{
+                ...buttonStyle,
+
+                color:
+                  "#d8b94e",
+
+                background:
+                  "rgba(216,185,78,.08)",
+
+                border:
+                  "1px solid rgba(216,185,78,.32)",
+              }}
+            >
+              AJUSTAR VALIDADE
+            </button>
+
+<button
                     type="button"
                     onClick={
                       suspend

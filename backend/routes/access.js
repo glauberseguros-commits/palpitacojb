@@ -16,6 +16,7 @@ const {
 const {
   getAccessSnapshot,
   activateSubscription,
+  adjustSubscriptionValidity,
   revokeSubscription,
   normalizeOperationId,
 } = require("../access/accessService");
@@ -202,6 +203,28 @@ function sendAdminError(
   res,
   error
 ) {
+  const validityErrorCode =
+    String(
+      error?.code ||
+      error?.message ||
+      ""
+    ).trim();
+
+  if (
+    validityErrorCode ===
+      "INVALID_VALIDITY_DATE" ||
+    validityErrorCode ===
+      "VALIDITY_DATE_IN_PAST"
+  ) {
+    return res
+      .status(400)
+      .json({
+        ok: false,
+        error:
+          validityErrorCode,
+      });
+  }
+
   const code =
     String(
       error?.code || ""
@@ -900,6 +923,73 @@ router.post(
 /**
  * Revogação administrativa.
  */
+
+/**
+ * Ajuste administrativo da validade absoluta.
+ *
+ * Nao soma dias.
+ * Substitui exclusivamente subscription.endsAt.
+ */
+router.post(
+  "/admin/validity",
+
+  requireFirebaseUser,
+  requireAdminUser,
+
+  async (req, res) => {
+    try {
+      const target =
+        await resolveTargetUser(
+          bodyText(
+            req,
+            "uid"
+          )
+        );
+
+      requireTargetCanActivate(
+        target
+      );
+
+      const operationId =
+        requireOperationId(
+          req
+        );
+
+      const access =
+        await adjustSubscriptionValidity({
+          uid:
+            target.uid,
+
+          email:
+            target.email,
+
+          actorUid:
+            req.adminUser.uid,
+
+          operationId,
+
+          validUntilYmd:
+            bodyText(
+              req,
+              "validUntilYmd"
+            ),
+        });
+
+      return res.json({
+        ok: true,
+        access,
+      });
+    }
+    catch (error) {
+      return sendAdminError(
+        res,
+        error
+      );
+    }
+  }
+);
+
+
 router.post(
   "/admin/revoke",
 

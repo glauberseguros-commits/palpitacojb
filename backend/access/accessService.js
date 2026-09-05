@@ -273,6 +273,205 @@ function normalizeSubscriptionDays(
  * NEW / EXPIRED / REVOKED:
  *   começa um novo período agora.
  */
+
+const VALIDITY_TIME_ZONE =
+  "America/Sao_Paulo";
+
+function validityError(code) {
+  const error =
+    new Error(code);
+
+  error.code =
+    code;
+
+  return error;
+}
+
+function normalizeValidityYmd(
+  value
+) {
+  const ymd =
+    String(value || "")
+      .trim();
+
+  const match =
+    /^(\d{4})-(\d{2})-(\d{2})$/
+      .exec(ymd);
+
+  if (!match) {
+    throw validityError(
+      "INVALID_VALIDITY_DATE"
+    );
+  }
+
+  const year =
+    Number(match[1]);
+
+  const month =
+    Number(match[2]);
+
+  const day =
+    Number(match[3]);
+
+  const probe =
+    new Date(
+      Date.UTC(
+        year,
+        month - 1,
+        day
+      )
+    );
+
+  if (
+    probe.getUTCFullYear() !== year ||
+    probe.getUTCMonth() !== month - 1 ||
+    probe.getUTCDate() !== day
+  ) {
+    throw validityError(
+      "INVALID_VALIDITY_DATE"
+    );
+  }
+
+  return ymd;
+}
+
+function validityZoneParts(
+  ms
+) {
+  const parts =
+    new Intl.DateTimeFormat(
+      "en-CA",
+      {
+        timeZone:
+          VALIDITY_TIME_ZONE,
+
+        year:
+          "numeric",
+
+        month:
+          "2-digit",
+
+        day:
+          "2-digit",
+
+        hour:
+          "2-digit",
+
+        minute:
+          "2-digit",
+
+        second:
+          "2-digit",
+
+        hourCycle:
+          "h23",
+      }
+    )
+      .formatToParts(
+        new Date(ms)
+      );
+
+  return Object.fromEntries(
+    parts
+      .filter(
+        (part) =>
+          part.type !==
+          "literal"
+      )
+      .map(
+        (part) => [
+          part.type,
+          part.value,
+        ]
+      )
+  );
+}
+
+function validityEndOfDayMs(
+  value
+) {
+  const ymd =
+    normalizeValidityYmd(
+      value
+    );
+
+  const [
+    year,
+    month,
+    day,
+  ] =
+    ymd
+      .split("-")
+      .map(Number);
+
+  const wantedUtc =
+    Date.UTC(
+      year,
+      month - 1,
+      day,
+      23,
+      59,
+      59,
+      999
+    );
+
+  let guess =
+    wantedUtc;
+
+  for (
+    let attempt = 0;
+    attempt < 4;
+    attempt += 1
+  ) {
+    const shown =
+      validityZoneParts(
+        guess
+      );
+
+    const shownAsUtc =
+      Date.UTC(
+        Number(shown.year),
+        Number(shown.month) - 1,
+        Number(shown.day),
+        Number(shown.hour),
+        Number(shown.minute),
+        Number(shown.second),
+        999
+      );
+
+    const delta =
+      wantedUtc -
+      shownAsUtc;
+
+    guess +=
+      delta;
+
+    if (delta === 0) {
+      break;
+    }
+  }
+
+  const check =
+    validityZoneParts(
+      guess
+    );
+
+  if (
+    Number(check.year) !== year ||
+    Number(check.month) !== month ||
+    Number(check.day) !== day ||
+    Number(check.hour) !== 23 ||
+    Number(check.minute) !== 59 ||
+    Number(check.second) !== 59
+  ) {
+    throw validityError(
+      "INVALID_VALIDITY_DATE"
+    );
+  }
+
+  return guess;
+}
+
 function computeRenewalWindow(
   currentState,
   nowMs = Date.now(),
@@ -791,6 +990,270 @@ async function activateSubscription({
   };
 }
 
+
+async function adjustSubscriptionValidity({
+  uid,
+  email = "",
+  actorUid,
+  operationId,
+  validUntilYmd,
+  nowMs = Date.now(),
+} = {}) {
+  const safeUid =
+    String(uid || "")
+      .trim();
+
+  const safeEmail =
+    String(email || "")
+      .trim()
+      .toLowerCase();
+
+  const safeActorUid =
+    String(actorUid || "")
+      .trim();
+
+  const op =
+    normalizeOperationId(
+      operationId
+    );
+
+  if (!safeUid) {
+    throw new Error(
+      "ACCESS_UID_REQUIRED"
+    );
+  }
+
+  if (!safeActorUid) {
+    throw new Error(
+      "ADMIN_ACTOR_REQUIRED"
+    );
+  }
+
+  if (!op) {
+    throw new Error(
+      "INVALID_OPERATION_ID"
+    );
+  }
+
+  const safeYmd =
+    normalizeValidityYmd(
+      validUntilYmd
+    );
+
+  const newEndsAtMs =
+    validityEndOfDayMs(
+      safeYmd
+    );
+
+  const db =
+    getDb();
+
+  const ref =
+    accountRef(
+      safeUid
+    );
+
+  const historyRef =
+    eventRef(
+      safeUid,
+      op
+    );
+
+  let idempotentReplay =
+    false;
+
+  await db.runTransaction(
+    async (tx) => {
+      const accountSnap =
+        await tx.get(
+          ref
+        );
+
+      const eventSnap =
+        await tx.get(
+          historyRef
+        );
+
+      if (eventSnap.exists) {
+        const existing =
+          eventSnap.data() ||
+          {};
+
+        if (
+          existing.type !==
+            ACCESS_EVENT_TYPE
+              .ADJUST_VALIDITY ||
+          String(
+            existing
+              .validUntilYmd ||
+            ""
+          ).trim() !==
+            safeYmd
+        ) {
+          const conflict =
+            new Error(
+              "OPERATION_ID_CONFLICT"
+            );
+
+          conflict.code =
+            "OPERATION_ID_CONFLICT";
+
+          throw conflict;
+        }
+
+        idempotentReplay =
+          true;
+
+        return;
+      }
+
+      if (!accountSnap.exists) {
+        const missing =
+          new Error(
+            "ACCESS_ACCOUNT_NOT_FOUND"
+          );
+
+        missing.code =
+          "ACCESS_ACCOUNT_NOT_FOUND";
+
+        throw missing;
+      }
+
+      if (
+        newEndsAtMs <=
+        Number(nowMs)
+      ) {
+        throw validityError(
+          "VALIDITY_DATE_IN_PAST"
+        );
+      }
+
+      const current =
+        accountSnap.data() ||
+        {};
+
+      const currentState =
+        computeSubscriptionState(
+          current,
+          nowMs
+        );
+
+      const nowTs =
+        admin.firestore.Timestamp
+          .fromMillis(
+            Number(nowMs)
+          );
+
+      const newEndsAtTs =
+        admin.firestore.Timestamp
+          .fromMillis(
+            newEndsAtMs
+          );
+
+      const previousEndsAtTs =
+        typeof currentState
+          .endsAtMs ===
+          "number"
+          ? admin.firestore.Timestamp
+              .fromMillis(
+                currentState
+                  .endsAtMs
+              )
+          : null;
+
+      tx.update(
+        ref,
+        {
+          "subscription.status":
+            SUBSCRIPTION_STATUS
+              .ACTIVE,
+
+          "subscription.endsAt":
+            newEndsAtTs,
+
+          "subscription.revokedAt":
+            admin.firestore
+              .FieldValue
+              .delete(),
+
+          "subscription.revokedBy":
+            admin.firestore
+              .FieldValue
+              .delete(),
+
+          "subscription.revokeReason":
+            admin.firestore
+              .FieldValue
+              .delete(),
+
+          updatedAt:
+            nowTs,
+
+          updatedBy:
+            safeActorUid,
+        }
+      );
+
+      tx.set(
+        historyRef,
+        {
+          schemaVersion:
+            ACCESS_PRODUCT
+              .schemaVersion,
+
+          type:
+            ACCESS_EVENT_TYPE
+              .ADJUST_VALIDITY,
+
+          operationId:
+            op,
+
+          uid:
+            safeUid,
+
+          email:
+            safeEmail,
+
+          actorUid:
+            safeActorUid,
+
+          validUntilYmd:
+            safeYmd,
+
+          previousStatus:
+            currentState
+              .status,
+
+          previousEndsAt:
+            previousEndsAtTs,
+
+          newEndsAt:
+            newEndsAtTs,
+
+          reactivated:
+            currentState
+              .active !== true,
+
+          occurredAt:
+            nowTs,
+        }
+      );
+    }
+  );
+
+  const access =
+    await getAccessSnapshot(
+      safeUid
+    );
+
+  return {
+    ...access,
+    operationId:
+      op,
+    idempotentReplay,
+  };
+}
+
 async function revokeSubscription({
   uid,
   actorUid,
@@ -1018,8 +1481,11 @@ module.exports = {
   computeSubscriptionState,
   normalizeSubscriptionDays,
   computeRenewalWindow,
+  normalizeValidityYmd,
+  validityEndOfDayMs,
   getAccessSnapshot,
   assertActiveSubscription,
   activateSubscription,
+  adjustSubscriptionValidity,
   revokeSubscription,
 };
