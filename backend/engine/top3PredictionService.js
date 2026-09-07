@@ -376,6 +376,16 @@ function resolveNextTop3Slot({
       FEDERAL_SCHEDULE,
     });
 
+  /*
+   * TOP3_NEXT_SLOT_NULL_CONTRACT_V1
+   *
+   * Ausência de próximo slot é um estado válido do resolver.
+   * O consumidor decide se deve pular a geração.
+   */
+  if (!resolved) {
+    return null;
+  }
+
   const rawHour = String(
     resolved?.hour ||
     resolved?.hourBucket ||
