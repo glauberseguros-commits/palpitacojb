@@ -561,7 +561,7 @@ function debugTop3Effect(name, details = {}) {
   );
 }
 
-export function useTop3Controller() {
+export function useTop3Controller(initialLotteryKey = "") {
   const DEFAULT_LOTTERY = "PT_RIO";
 
   const debugTop3 =
@@ -598,7 +598,9 @@ export function useTop3Controller() {
   // funcional da geração de milhares muda.
   const milharesCacheRef = useRef(new Map());
 
-  const [lotteryKey, setLotteryKey] = useState(DEFAULT_LOTTERY);
+  const [lotteryKey, setLotteryKey] = useState(
+    () => safeStr(initialLotteryKey).toUpperCase() || DEFAULT_LOTTERY
+  );
   const [ymd, setYmd] = useState(() => todayYMDLocal());
   const [lookback, setLookback] = useState(LOOKBACK_ALL);
 

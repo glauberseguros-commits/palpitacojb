@@ -510,8 +510,12 @@ function pathToScreen(pathname) {
   if (p === "/" || p === "/dashboard") return ROUTES.DASHBOARD;
   if (p === "/login") return ROUTES.LOGIN;
   if (p === "/account") return ROUTES.ACCOUNT;
-  if (p === "/results") return ROUTES.RESULTS;
-  if (p === "/top3") return ROUTES.TOP3;
+  if (/^\/results(?:\/(?:rj|sp|federal|look|nacional))?$/.test(p)) {
+    return ROUTES.RESULTS;
+  }
+  if (/^\/top3(?:\/(?:rj|sp|federal|look|nacional))?$/.test(p)) {
+    return ROUTES.TOP3;
+  }
   if (p === "/terno-grupo") return ROUTES.TERNO_GRUPO;
   if (p === "/late") return ROUTES.LATE;
   if (p === "/search") return ROUTES.SEARCH;

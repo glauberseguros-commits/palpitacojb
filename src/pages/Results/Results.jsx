@@ -1,6 +1,7 @@
 /* eslint-disable no-unused-vars */
 // src/pages/Results/Results.jsx
 import React, { useEffect, useMemo, useRef, useState } from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useQuery } from "@tanstack/react-query";
 import {
   ACCESS_CAPABILITY,
@@ -906,11 +907,56 @@ function monthDaysWithDraws(draws) {
   return out;
 }
 
+function normalizeResultsRoutePath(pathname) {
+  const raw = String(pathname || "").trim().toLowerCase();
+  const normalized = raw.replace(/\/+$/, "");
+  return normalized || "/results";
+}
+
+function resultsScopeFromPath(pathname) {
+  const path = normalizeResultsRoutePath(pathname);
+
+  switch (path) {
+    case "/results/sp":
+      return SCOPE_PT_SP;
+    case "/results/federal":
+      return SCOPE_FEDERAL;
+    case "/results/look":
+      return SCOPE_LOOK;
+    case "/results/nacional":
+      return SCOPE_NACIONAL;
+    case "/results":
+    case "/results/rj":
+    default:
+      return SCOPE_RJ;
+  }
+}
+
+function resultsPathForScope(scope) {
+  const normalized = normalizeScopeInput(scope);
+
+  switch (normalized) {
+    case SCOPE_PT_SP:
+      return "/results/sp";
+    case SCOPE_FEDERAL:
+      return "/results/federal";
+    case SCOPE_LOOK:
+      return "/results/look";
+    case SCOPE_NACIONAL:
+      return "/results/nacional";
+    case SCOPE_RJ:
+    default:
+      return "/results/rj";
+  }
+}
+
 /* =========================
    Page
 ========================= */
 
 export default function Results() {
+  const location = useLocation();
+  const navigate = useNavigate();
 
   const session = loadAccessSession();
   const sessionKind = getAccessSessionKind(session);
@@ -922,7 +968,11 @@ export default function Results() {
 
   const DEFAULT_SCOPE = SCOPE_RJ;
 
-  const [scopeUi, setScopeUi] = useState(DEFAULT_SCOPE);
+  const initialRouteScope = resultsScopeFromPath(location?.pathname);
+
+  const [scopeUi, setScopeUiState] = useState(() =>
+    canChangeResultsView ? initialRouteScope : DEFAULT_SCOPE
+  );
   const [ymd, setYmd] = useState(() => todayYMDLocal());
 
   const [showAll, setShowAll] = useState(true);
@@ -938,6 +988,55 @@ export default function Results() {
   const previousScopeRef = useRef(DEFAULT_SCOPE);
 
   const scopeKey = useMemo(() => normalizeScopeInput(scopeUi), [scopeUi]);
+
+  const setScopeUi = React.useCallback(
+    (nextScope) => {
+      if (!canChangeResultsView) return;
+
+      const normalized = normalizeScopeInput(nextScope);
+      const targetPath = resultsPathForScope(normalized);
+      const currentPath = normalizeResultsRoutePath(location?.pathname);
+
+      if (currentPath === targetPath) {
+        if (scopeKey !== normalized) {
+          setScopeUiState(normalized);
+        }
+        return;
+      }
+
+      navigate(targetPath);
+    },
+    [
+      canChangeResultsView,
+      location?.pathname,
+      navigate,
+      scopeKey,
+    ]
+  );
+
+  useEffect(() => {
+    const routeScope = canChangeResultsView
+      ? resultsScopeFromPath(location?.pathname)
+      : DEFAULT_SCOPE;
+
+    const currentPath = normalizeResultsRoutePath(location?.pathname);
+    const canonicalPath = resultsPathForScope(routeScope);
+
+    if (scopeKey !== routeScope) {
+      setScopeUiState(routeScope);
+    }
+
+    if (currentPath !== canonicalPath) {
+      navigate(canonicalPath, { replace: true });
+    }
+  }, [
+    canChangeResultsView,
+    DEFAULT_SCOPE,
+    location?.pathname,
+    navigate,
+    scopeKey,
+  ]);
+
   const isFederal = useMemo(() => isFederalInput(scopeKey), [scopeKey]);
   const label = useMemo(() => scopeDisplayName(scopeKey), [scopeKey]);
 

@@ -1,5 +1,6 @@
 // src/pages/Top3/Top3.jsx
 import React from "react";
+import { useLocation, useNavigate } from "react-router-dom";
 
 import {
   ACCESS_CAPABILITY,
@@ -9,6 +10,47 @@ import {
 
 import { useTop3Controller } from "./top3.hooks";
 import Top3View from "./Top3View";
+
+const TOP3_ROUTE_TO_LOTTERY = Object.freeze({
+  rj: "PT_RIO",
+  sp: "PT_SP",
+  federal: "FEDERAL",
+  look: "LOOK",
+  nacional: "NACIONAL",
+});
+
+const TOP3_LOTTERY_TO_ROUTE = Object.freeze({
+  PT_RIO: "/top3/rj",
+  RJ: "/top3/rj",
+  PT_SP: "/top3/sp",
+  FEDERAL: "/top3/federal",
+  LOOK: "/top3/look",
+  NACIONAL: "/top3/nacional",
+});
+
+function normalizeTop3RoutePath(pathname) {
+  const raw = String(pathname || "").trim().toLowerCase();
+  const normalized = raw.replace(/\/+$/, "");
+  return normalized || "/top3";
+}
+
+function lotteryFromTop3Path(pathname) {
+  const path = normalizeTop3RoutePath(pathname);
+
+  if (path === "/top3") {
+    return "PT_RIO";
+  }
+
+  const match = path.match(/^\/top3\/([^/]+)$/);
+  const slug = String(match?.[1] || "").toLowerCase();
+
+  return TOP3_ROUTE_TO_LOTTERY[slug] || "PT_RIO";
+}
+
+function top3PathForLottery(lotteryKey) {
+  const key = String(lotteryKey || "").trim().toUpperCase();
+  return TOP3_LOTTERY_TO_ROUTE[key] || "/top3/rj";
+}
 
 /**
  * PALPITACO JB — TOP3 GUEST HARD GATE
@@ -158,9 +200,65 @@ function Top3GuestPreview() {
 }
 
 function Top3Authenticated() {
-  const controller = useTop3Controller();
+  const location = useLocation();
+  const navigate = useNavigate();
 
-  return <Top3View {...controller} />;
+  const initialLotteryKey = lotteryFromTop3Path(location?.pathname);
+  const controller = useTop3Controller(initialLotteryKey);
+  const { lotteryKeySafe, setLotteryKey } = controller;
+
+  React.useEffect(() => {
+    const routeLottery = lotteryFromTop3Path(location?.pathname);
+    const currentPath = normalizeTop3RoutePath(location?.pathname);
+    const canonicalPath = top3PathForLottery(routeLottery);
+
+    if (lotteryKeySafe !== routeLottery) {
+      setLotteryKey(routeLottery);
+    }
+
+    if (currentPath !== canonicalPath) {
+      navigate(canonicalPath, { replace: true });
+    }
+  }, [
+    location?.pathname,
+    navigate,
+    lotteryKeySafe,
+    setLotteryKey,
+  ]);
+
+  const setLotteryKeyWithRoute = React.useCallback(
+    (nextLotteryKey) => {
+      const key = String(nextLotteryKey || "").trim().toUpperCase();
+      const targetPath = top3PathForLottery(key);
+      const currentPath = normalizeTop3RoutePath(location?.pathname);
+
+      if (!TOP3_LOTTERY_TO_ROUTE[key]) {
+        return;
+      }
+
+      if (currentPath === targetPath) {
+        if (lotteryKeySafe !== key) {
+          setLotteryKey(key);
+        }
+        return;
+      }
+
+      navigate(targetPath);
+    },
+    [
+      lotteryKeySafe,
+      setLotteryKey,
+      location?.pathname,
+      navigate,
+    ]
+  );
+
+  return (
+    <Top3View
+      {...controller}
+      setLotteryKey={setLotteryKeyWithRoute}
+    />
+  );
 }
 
 export default function Top3() {
