@@ -20,6 +20,10 @@ const {
 } = require("./scoreEngineUnified");
 
 const {
+  applyTop3Radar360Rescue,
+} = require("./top3Radar360Rescue");
+
+const {
   createPredictionRun,
 } = require("./predictionService");
 
@@ -1342,13 +1346,48 @@ const computeTop3 =
     drawsAlreadySorted: true,
   });
 
-  const predictions = mapTop3ToPredictions(
-    computed?.top
-  );
+  const radar360 =
+    applyTop3Radar360Rescue({
+      lotteryKey,
+      date,
+      closeHour,
+      drawLast,
+      computedTop: computed?.top,
+      publicApi,
+    });
+
+  const effectiveTop =
+    Array.isArray(radar360?.top) &&
+    radar360.top.length
+      ? radar360.top
+      : computed?.top;
+
+  if (radar360?.applied) {
+    console.log(
+      "[TOP3 RADAR360 RESCUE] " +
+      JSON.stringify({
+        lotteryKey,
+        targetYmd: date,
+        targetHour: closeHour,
+        ruleId: radar360.ruleId,
+        positions: radar360.positions,
+        rescueGroups: radar360.rescueGroups,
+        engineGroups: radar360.engineGroups,
+        finalGroups: radar360.finalGroups,
+        observedRate: radar360.observedRate,
+        observedCases: radar360.observedCases,
+      })
+    );
+  }
+
+  const predictions =
+    mapTop3ToPredictions(
+      effectiveTop
+    );
 
   const publicSnapshot =
     buildTop3PublicSnapshot({
-      computedTop: computed?.top,
+      computedTop: effectiveTop,
       history,
       lotteryKey,
       date,
