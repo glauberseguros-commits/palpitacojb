@@ -1362,6 +1362,68 @@ const computeTop3 =
       ? radar360.top
       : computed?.top;
 
+  /*
+   * TOP3_RADAR360_TELEMETRY_V1
+   *
+   * Apenas telemetria prospectiva.
+   * Nao altera a selecao dos grupos.
+   */
+  const publicComputedTop =
+    radar360?.applied &&
+    Array.isArray(effectiveTop)
+      ? effectiveTop.map((item) => ({
+          ...item,
+
+          meta: {
+            ...(
+              item?.meta &&
+              typeof item.meta === "object"
+                ? item.meta
+                : {}
+            ),
+
+            radar360EngineGroups:
+              Array.isArray(radar360?.engineGroups)
+                ? radar360.engineGroups
+                    .map(Number)
+                    .filter(
+                      (group) =>
+                        Number.isFinite(group) &&
+                        group >= 1 &&
+                        group <= 25
+                    )
+                    .slice(0, 3)
+                : [],
+
+            radar360RescueGroups:
+              Array.isArray(radar360?.rescueGroups)
+                ? radar360.rescueGroups
+                    .map(Number)
+                    .filter(
+                      (group) =>
+                        Number.isFinite(group) &&
+                        group >= 1 &&
+                        group <= 25
+                    )
+                    .slice(0, 3)
+                : [],
+
+            radar360FinalGroups:
+              Array.isArray(radar360?.finalGroups)
+                ? radar360.finalGroups
+                    .map(Number)
+                    .filter(
+                      (group) =>
+                        Number.isFinite(group) &&
+                        group >= 1 &&
+                        group <= 25
+                    )
+                    .slice(0, 3)
+                : [],
+          },
+        }))
+      : effectiveTop;
+
   if (radar360?.applied) {
     console.log(
       "[TOP3 RADAR360 RESCUE] " +
@@ -1387,7 +1449,7 @@ const computeTop3 =
 
   const publicSnapshot =
     buildTop3PublicSnapshot({
-      computedTop: effectiveTop,
+      computedTop: publicComputedTop,
       history,
       lotteryKey,
       date,
