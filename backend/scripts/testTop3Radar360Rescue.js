@@ -17,7 +17,7 @@ const {
 
 assert.strictEqual(
   Object.keys(RULES).length,
-  16
+  18
 );
 
 
@@ -630,6 +630,448 @@ assert.deepStrictEqual(
       )
   ),
   [7, 8, 9]
+);
+
+
+
+/*
+ * ============================================================
+ * RADAR360 H2H RJ V3
+ * ============================================================
+ */
+
+const radarH2hV3 =
+  require(
+    "../engine/top3Radar360Rescue"
+  );
+
+assert.strictEqual(
+  Object.keys(
+    radarH2hV3.RULES
+  ).length,
+  18
+);
+
+assert.ok(
+  radarH2hV3.RULES[
+    "PT_RIO|TER|14:00"
+  ]
+);
+
+assert.ok(
+  radarH2hV3.RULES[
+    "PT_RIO|SEX|18:00"
+  ]
+);
+
+/*
+ * TERCA 11 -> 14
+ *
+ * P1 1234 -> CA = 31 -> G08
+ * P3 5678 -> AC = 57 -> G15
+ * P6 9012 -> PROD_OUTER = 80 -> G20
+ */
+const previousH2hTer = {
+  hour:
+    "11:00",
+
+  prizes: [
+    {
+      position: 1,
+      milhar: "1234",
+    },
+    {
+      position: 2,
+      milhar: "2222",
+    },
+    {
+      position: 3,
+      milhar: "5678",
+    },
+    {
+      position: 4,
+      milhar: "4444",
+    },
+    {
+      position: 5,
+      milhar: "5555",
+    },
+    {
+      position: 6,
+      milhar: "9012",
+    },
+    {
+      position: 7,
+      centena: "058",
+    },
+  ],
+};
+
+const h2hTer =
+  radarH2hV3
+    .applyTop3Radar360Rescue({
+      lotteryKey:
+        "PT_RIO",
+
+      date:
+        "2026-09-15",
+
+      closeHour:
+        "14:00",
+
+      drawLast:
+        previousH2hTer,
+
+      computedTop: [
+        { grupo: 1 },
+        { grupo: 2 },
+        { grupo: 3 },
+      ],
+
+      publicApi: {
+        pickDrawHour:
+          draw =>
+            draw.hour,
+      },
+    });
+
+assert.strictEqual(
+  h2hTer.applied,
+  true
+);
+
+assert.strictEqual(
+  h2hTer.ruleId,
+  "PT_RIO_TER_11_14_R3_H2H_PASS_V3"
+);
+
+assert.deepStrictEqual(
+  h2hTer.rescueGroups,
+  [
+    8,
+    15,
+    20,
+  ]
+);
+
+assert.deepStrictEqual(
+  h2hTer.finalGroups,
+  [
+    8,
+    15,
+    20,
+  ]
+);
+
+/*
+ * SEXTA 16 -> 18
+ *
+ * P5 1234 -> PROD_CROSS = 38 -> G10
+ *
+ * P7 = CENTENA 058
+ * ABC = 0,5,8
+ * COMP99_AB = 99 - 05 = 94 -> G24
+ *
+ * P5 1234 -> CB = 32 -> G08
+ */
+const previousH2hSex = {
+  hour:
+    "16:00",
+
+  prizes: [
+    {
+      position: 1,
+      milhar: "1111",
+    },
+    {
+      position: 2,
+      milhar: "2222",
+    },
+    {
+      position: 3,
+      milhar: "3333",
+    },
+    {
+      position: 4,
+      milhar: "4444",
+    },
+    {
+      position: 5,
+      milhar: "1234",
+    },
+    {
+      position: 6,
+      milhar: "6666",
+    },
+    {
+      position: 7,
+
+      /*
+       * Mesmo que exista algum campo
+       * estranho chamado milhar,
+       * a transformacao deve usar
+       * EXCLUSIVAMENTE a centena.
+       */
+      centena:
+        "058",
+
+      milhar:
+        "9999",
+    },
+  ],
+};
+
+const h2hSex =
+  radarH2hV3
+    .applyTop3Radar360Rescue({
+      lotteryKey:
+        "PT_RIO",
+
+      date:
+        "2026-09-11",
+
+      closeHour:
+        "18:00",
+
+      drawLast:
+        previousH2hSex,
+
+      computedTop: [
+        { grupo: 1 },
+        { grupo: 2 },
+        { grupo: 3 },
+      ],
+
+      publicApi: {
+        pickDrawHour:
+          draw =>
+            draw.hour,
+      },
+    });
+
+assert.strictEqual(
+  h2hSex.applied,
+  true
+);
+
+assert.strictEqual(
+  h2hSex.ruleId,
+  "PT_RIO_SEX_16_18_R3_H2H_PASS_V3"
+);
+
+assert.deepStrictEqual(
+  h2hSex.rescueGroups,
+  [
+    10,
+    24,
+    8,
+  ]
+);
+
+assert.deepStrictEqual(
+  h2hSex.finalGroups,
+  [
+    10,
+    24,
+    8,
+  ]
+);
+
+/*
+ * KILL SWITCH continua soberano.
+ */
+const h2hDisabled =
+  radarH2hV3
+    .applyTop3Radar360Rescue({
+      lotteryKey:
+        "PT_RIO",
+
+      date:
+        "2026-09-15",
+
+      closeHour:
+        "14:00",
+
+      drawLast:
+        previousH2hTer,
+
+      computedTop: [
+        { grupo: 1 },
+        { grupo: 2 },
+        { grupo: 3 },
+      ],
+
+      enabled:
+        false,
+
+      publicApi: {
+        pickDrawHour:
+          draw =>
+            draw.hour,
+      },
+    });
+
+assert.strictEqual(
+  h2hDisabled.applied,
+  false
+);
+
+assert.deepStrictEqual(
+  h2hDisabled.top.map(
+    item =>
+      Number(
+        item.grupo
+      )
+  ),
+  [
+    1,
+    2,
+    3,
+  ]
+);
+
+/*
+ * QUA 14 continua FORA.
+ */
+const h2hQuaNotApproved =
+  radarH2hV3
+    .applyTop3Radar360Rescue({
+      lotteryKey:
+        "PT_RIO",
+
+      date:
+        "2026-09-16",
+
+      closeHour:
+        "14:00",
+
+      drawLast: {
+        ...previousH2hTer,
+        hour:
+          "11:00",
+      },
+
+      computedTop: [
+        { grupo: 4 },
+        { grupo: 5 },
+        { grupo: 6 },
+      ],
+
+      publicApi: {
+        pickDrawHour:
+          draw =>
+            draw.hour,
+      },
+    });
+
+assert.strictEqual(
+  h2hQuaNotApproved.applied,
+  false
+);
+
+assert.deepStrictEqual(
+  h2hQuaNotApproved.top.map(
+    item =>
+      Number(
+        item.grupo
+      )
+  ),
+  [
+    4,
+    5,
+    6,
+  ]
+);
+
+/*
+ * SEX 16 continua FORA.
+ */
+const h2hSex16NotApproved =
+  radarH2hV3
+    .applyTop3Radar360Rescue({
+      lotteryKey:
+        "PT_RIO",
+
+      date:
+        "2026-09-11",
+
+      closeHour:
+        "16:00",
+
+      drawLast: {
+        ...previousH2hSex,
+        hour:
+          "14:00",
+      },
+
+      computedTop: [
+        { grupo: 4 },
+        { grupo: 5 },
+        { grupo: 6 },
+      ],
+
+      publicApi: {
+        pickDrawHour:
+          draw =>
+            draw.hour,
+      },
+    });
+
+assert.strictEqual(
+  h2hSex16NotApproved.applied,
+  false
+);
+
+/*
+ * DOM 14 continua com a antiga
+ * regra 11 -> 14, portanto NAO
+ * fazemos a troca indevida 21 -> 14.
+ */
+const dom14Stale =
+  radarH2hV3
+    .applyTop3Radar360Rescue({
+      lotteryKey:
+        "PT_RIO",
+
+      date:
+        "2026-09-13",
+
+      closeHour:
+        "14:00",
+
+      drawLast: {
+        hour:
+          "21:00",
+
+        prizes:
+          previousH2hTer.prizes,
+      },
+
+      computedTop: [
+        { grupo: 1 },
+        { grupo: 2 },
+        { grupo: 3 },
+      ],
+
+      publicApi: {
+        pickDrawHour:
+          draw =>
+            draw.hour,
+      },
+    });
+
+assert.strictEqual(
+  dom14Stale.applied,
+  false
+);
+
+assert.strictEqual(
+  dom14Stale.reason,
+  "PREVIOUS_HOUR_MISMATCH"
+);
+
+console.log(
+  "TOP3_RADAR360_H2H_RJ_V3_SMOKE=PASS"
 );
 
 

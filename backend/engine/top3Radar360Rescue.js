@@ -1479,6 +1479,1160 @@ function applyTop3Radar360Rescue({
 }
 
 
+
+/*
+ * ============================================================
+ * RADAR360_H2H_APPROVED_RJ_V3
+ * ============================================================
+ *
+ * Ativacao seletiva posterior a H2H evento-a-evento.
+ *
+ * PT_RIO TER 11 -> 14
+ * CURRENT 12/36
+ * OVERLAY 15/36
+ * RESCUES 13
+ * DESTROYS 10
+ * NET +3
+ * MISS_MAX 8 -> 5
+ *
+ * PT_RIO SEX 16 -> 18
+ * CURRENT 13/36
+ * OVERLAY 16/36
+ * RESCUES 8
+ * DESTROYS 5
+ * NET +3
+ * MISS_MAX 10 -> 5
+ *
+ * P7 permanece CENTENA ABC de 3 digitos.
+ *
+ * As 16 regras anteriores continuam delegadas integralmente
+ * ao applyTop3Radar360Rescue original.
+ * ============================================================
+ */
+
+const RADAR360_H2H_VERSION =
+  "RADAR360_H2H_APPROVED_RJ_V3";
+
+const H2H_APPROVED_RULES =
+  Object.freeze({
+
+    "PT_RIO|TER|14:00":
+      Object.freeze({
+        id:
+          "PT_RIO_TER_11_14_R3_H2H_PASS_V3",
+
+        mode:
+          "TRANSFORM_SIGNALS",
+
+        previousHour:
+          "11:00",
+
+        signals:
+          Object.freeze([
+            Object.freeze({
+              position: 1,
+              transform: "CA",
+            }),
+
+            Object.freeze({
+              position: 3,
+              transform: "AC",
+            }),
+
+            Object.freeze({
+              position: 6,
+              transform:
+                "PROD_OUTER",
+            }),
+          ]),
+
+        /*
+         * Taxa do candidato R3 puro
+         * no holdout usado no gate.
+         */
+        observedRate:
+          15 / 36,
+
+        observedCases:
+          36,
+
+        source:
+          "R3_WATCH_H2H_PASS",
+
+        h2h:
+          Object.freeze({
+            currentHits: 12,
+            overlayHits: 15,
+            rescues: 13,
+            destroys: 10,
+            net: 3,
+            currentMissMax: 8,
+            overlayMissMax: 5,
+            n: 36,
+          }),
+      }),
+
+    "PT_RIO|SEX|18:00":
+      Object.freeze({
+        id:
+          "PT_RIO_SEX_16_18_R3_H2H_PASS_V3",
+
+        mode:
+          "TRANSFORM_SIGNALS",
+
+        previousHour:
+          "16:00",
+
+        signals:
+          Object.freeze([
+            Object.freeze({
+              position: 5,
+              transform:
+                "PROD_CROSS",
+            }),
+
+            Object.freeze({
+              /*
+               * IMPORTANTE:
+               * P7 = CENTENA ABC,
+               * nunca milhar.
+               */
+              position: 7,
+              transform:
+                "COMP99_AB",
+            }),
+
+            Object.freeze({
+              position: 5,
+              transform:
+                "CB",
+            }),
+          ]),
+
+        /*
+         * Taxa do trio R3 puro.
+         * O overlay H2H foi 16/36.
+         */
+        observedRate:
+          14 / 36,
+
+        observedCases:
+          36,
+
+        source:
+          "R3_WATCH_H2H_PASS",
+
+        h2h:
+          Object.freeze({
+            currentHits: 13,
+            overlayHits: 16,
+            rescues: 8,
+            destroys: 5,
+            net: 3,
+            currentMissMax: 10,
+            overlayMissMax: 5,
+            n: 36,
+          }),
+      }),
+  });
+
+const RADAR360_ALL_RULES_V3 =
+  Object.freeze({
+    ...RULES,
+    ...H2H_APPROVED_RULES,
+  });
+
+function h2hSafeArray(
+  value
+) {
+  return Array.isArray(value)
+    ? value
+    : [];
+}
+
+function h2hNormalizeLotteryKey(
+  value
+) {
+
+  const key =
+    String(value || "")
+      .trim()
+      .toUpperCase();
+
+  if (
+    key === "RJ" ||
+    key === "RIO" ||
+    key === "PT-RIO"
+  ) {
+    return "PT_RIO";
+  }
+
+  return key;
+}
+
+function h2hNormalizeHour(
+  value
+) {
+
+  const raw =
+    String(value ?? "")
+      .trim()
+      .toLowerCase()
+      .replace("h", ":")
+      .replace(".", ":");
+
+  const match =
+    raw.match(
+      /^(\d{1,2})(?::(\d{1,2}))?$/
+    );
+
+  if (!match) {
+    return "";
+  }
+
+  const hour =
+    Number(match[1]);
+
+  const minute =
+    Number(match[2] ?? 0);
+
+  if (
+    !Number.isInteger(hour) ||
+    hour < 0 ||
+    hour > 23 ||
+    !Number.isInteger(minute) ||
+    minute < 0 ||
+    minute > 59
+  ) {
+    return "";
+  }
+
+  return (
+    String(hour)
+      .padStart(2, "0") +
+    ":" +
+    String(minute)
+      .padStart(2, "0")
+  );
+}
+
+function h2hDowCode(
+  ymd
+) {
+
+  if (
+    !/^\d{4}-\d{2}-\d{2}$/.test(
+      String(ymd || "")
+    )
+  ) {
+    return "";
+  }
+
+  const day =
+    new Date(
+      String(ymd) +
+      "T12:00:00Z"
+    ).getUTCDay();
+
+  return (
+    [
+      "DOM",
+      "SEG",
+      "TER",
+      "QUA",
+      "QUI",
+      "SEX",
+      "SAB",
+    ][day] || ""
+  );
+}
+
+function h2hDigits(
+  value
+) {
+  return String(
+    value ?? ""
+  ).replace(
+    /\D/g,
+    ""
+  );
+}
+
+function h2hPrizePosition(
+  prize,
+  fallback,
+  publicApi
+) {
+
+  if (
+    publicApi &&
+    typeof publicApi.guessPrizePos ===
+      "function"
+  ) {
+    try {
+
+      const viaApi =
+        Number(
+          publicApi.guessPrizePos(
+            prize
+          )
+        );
+
+      if (
+        Number.isInteger(viaApi) &&
+        viaApi >= 1 &&
+        viaApi <= 15
+      ) {
+        return viaApi;
+      }
+    }
+    catch (_) {}
+  }
+
+  for (
+    const candidate
+    of [
+      prize?.position,
+      prize?.posicao,
+      prize?.pos,
+      prize?.colocacao,
+      prize?.rank,
+      fallback,
+    ]
+  ) {
+
+    const number =
+      Number(candidate);
+
+    if (
+      Number.isInteger(number) &&
+      number >= 1 &&
+      number <= 15
+    ) {
+      return number;
+    }
+  }
+
+  return null;
+}
+
+function h2hGetPrize(
+  draw,
+  position,
+  publicApi
+) {
+
+  const prizes =
+    h2hSafeArray(
+      draw?.prizes
+    );
+
+  const exact =
+    prizes.find(
+      (
+        prize,
+        index
+      ) =>
+        h2hPrizePosition(
+          prize,
+          index + 1,
+          publicApi
+        ) === position
+    );
+
+  return (
+    exact ||
+    prizes[position - 1] ||
+    null
+  );
+}
+
+/*
+ * P1-P6 = MILHAR ABCD.
+ *
+ * P7 e explicitamente proibido
+ * nesta funcao.
+ */
+function h2hMilhar4(
+  draw,
+  position,
+  publicApi
+) {
+
+  if (position === 7) {
+    return null;
+  }
+
+  const prize =
+    h2hGetPrize(
+      draw,
+      position,
+      publicApi
+    );
+
+  if (!prize) {
+    return null;
+  }
+
+  const raw =
+    prize?.milhar ??
+    prize?.numero ??
+    prize?.number ??
+    prize?.valor ??
+    prize?.value ??
+    prize?.result ??
+    "";
+
+  let digits =
+    h2hDigits(raw);
+
+  if (!digits) {
+    return null;
+  }
+
+  if (digits.length > 4) {
+    digits =
+      digits.slice(-4);
+  }
+
+  return digits.padStart(
+    4,
+    "0"
+  );
+}
+
+/*
+ * P7 = CENTENA ABC.
+ *
+ * 97  -> 097
+ * 097 -> 097
+ *
+ * NUNCA usa campo "milhar".
+ * NUNCA padStart(4).
+ */
+function h2hCentena3P7(
+  draw,
+  publicApi
+) {
+
+  const prize =
+    h2hGetPrize(
+      draw,
+      7,
+      publicApi
+    );
+
+  if (!prize) {
+    return null;
+  }
+
+  const raw =
+    prize?.centena ??
+    prize?.numero ??
+    prize?.number ??
+    prize?.valor ??
+    prize?.value ??
+    prize?.result ??
+    "";
+
+  const digits =
+    h2hDigits(raw);
+
+  if (
+    !digits ||
+    digits.length > 3
+  ) {
+    return null;
+  }
+
+  return digits.padStart(
+    3,
+    "0"
+  );
+}
+
+function h2hPair(
+  a,
+  b
+) {
+  return (
+    Number(a) * 10 +
+    Number(b)
+  );
+}
+
+function h2hGroupFromEnding(
+  value
+) {
+
+  if (
+    !Number.isFinite(
+      Number(value)
+    )
+  ) {
+    return null;
+  }
+
+  let ending =
+    Math.trunc(
+      Number(value)
+    );
+
+  ending =
+    (
+      (ending % 100) +
+      100
+    ) % 100;
+
+  const normalized =
+    ending === 0
+      ? 100
+      : ending;
+
+  const group =
+    Math.ceil(
+      normalized / 4
+    );
+
+  return (
+    group >= 1 &&
+    group <= 25
+  )
+    ? group
+    : null;
+}
+
+function h2hUniqueGroups(
+  values
+) {
+
+  const output = [];
+  const seen =
+    new Set();
+
+  for (
+    const raw
+    of h2hSafeArray(values)
+  ) {
+
+    const group =
+      Number(raw);
+
+    if (
+      !Number.isInteger(group) ||
+      group < 1 ||
+      group > 25 ||
+      seen.has(group)
+    ) {
+      continue;
+    }
+
+    seen.add(group);
+    output.push(group);
+  }
+
+  return output;
+}
+
+function h2hTransformMilhar4(
+  transform,
+  raw
+) {
+
+  if (
+    !/^\d{4}$/.test(
+      String(raw || "")
+    )
+  ) {
+    return null;
+  }
+
+  const [
+    A,
+    B,
+    C,
+    D
+  ] =
+    raw
+      .split("")
+      .map(Number);
+
+  switch (transform) {
+
+    case "CA":
+      return h2hPair(
+        C,
+        A
+      );
+
+    case "AC":
+      return h2hPair(
+        A,
+        C
+      );
+
+    case "CB":
+      return h2hPair(
+        C,
+        B
+      );
+
+    case "PROD_OUTER":
+      return (
+        ((A * D) % 10) * 10 +
+        ((B * C) % 10)
+      );
+
+    case "PROD_CROSS":
+      return (
+        ((A * C) % 10) * 10 +
+        ((B * D) % 10)
+      );
+
+    default:
+      return null;
+  }
+}
+
+function h2hTransformCentena3(
+  transform,
+  raw
+) {
+
+  if (
+    !/^\d{3}$/.test(
+      String(raw || "")
+    )
+  ) {
+    return null;
+  }
+
+  const [
+    A,
+    B,
+    C
+  ] =
+    raw
+      .split("")
+      .map(Number);
+
+  switch (transform) {
+
+    case "COMP99_AB":
+      return (
+        99 -
+        h2hPair(
+          A,
+          B
+        )
+      );
+
+    case "CA":
+      return h2hPair(
+        C,
+        A
+      );
+
+    case "AC":
+      return h2hPair(
+        A,
+        C
+      );
+
+    case "CB":
+      return h2hPair(
+        C,
+        B
+      );
+
+    default:
+      return null;
+  }
+}
+
+function h2hSignalEntries(
+  drawLast,
+  rule,
+  publicApi
+) {
+
+  const entries = [];
+
+  for (
+    const signal
+    of h2hSafeArray(
+      rule?.signals
+    )
+  ) {
+
+    let sourceValue =
+      null;
+
+    let transformed =
+      null;
+
+    if (
+      Number(signal.position) === 7
+    ) {
+
+      sourceValue =
+        h2hCentena3P7(
+          drawLast,
+          publicApi
+        );
+
+      if (!sourceValue) {
+        return [];
+      }
+
+      transformed =
+        h2hTransformCentena3(
+          signal.transform,
+          sourceValue
+        );
+    }
+    else {
+
+      sourceValue =
+        h2hMilhar4(
+          drawLast,
+          Number(
+            signal.position
+          ),
+          publicApi
+        );
+
+      if (!sourceValue) {
+        return [];
+      }
+
+      transformed =
+        h2hTransformMilhar4(
+          signal.transform,
+          sourceValue
+        );
+    }
+
+    const group =
+      h2hGroupFromEnding(
+        transformed
+      );
+
+    if (!group) {
+      return [];
+    }
+
+    entries.push({
+      position:
+        Number(
+          signal.position
+        ),
+
+      transform:
+        signal.transform,
+
+      sourceValue,
+
+      transformed,
+
+      group,
+    });
+  }
+
+  return entries;
+}
+
+/*
+ * Wrapper V3.
+ *
+ * Primeiro delega ao Radar V2 original.
+ * Isso preserva:
+ * - kill switch;
+ * - as 16 regras existentes;
+ * - comportamento de fallback.
+ *
+ * Somente quando o contexto pertence
+ * aos dois H2H aprovados executa
+ * a camada nova.
+ */
+function applyTop3Radar360RescueH2hV3(
+  input = {}
+) {
+
+  const base =
+    applyTop3Radar360Rescue(
+      input
+    );
+
+  /*
+   * Kill switch do Radar original
+   * continua soberano.
+   */
+  if (
+    String(
+      base?.reason ||
+      ""
+    ) === "DISABLED"
+  ) {
+    return base;
+  }
+
+  const lotteryKey =
+    h2hNormalizeLotteryKey(
+      input.lotteryKey
+    );
+
+  const date =
+    String(
+      input.date ??
+      input.targetYmd ??
+      ""
+    );
+
+  const closeHour =
+    h2hNormalizeHour(
+      input.closeHour ??
+      input.targetHour
+    );
+
+  const key =
+    lotteryKey +
+    "|" +
+    h2hDowCode(date) +
+    "|" +
+    closeHour;
+
+  const rule =
+    H2H_APPROVED_RULES[
+      key
+    ];
+
+  /*
+   * Todos os outros contextos:
+   * exatamente o comportamento V2.
+   */
+  if (!rule) {
+    return base;
+  }
+
+  const engineTop =
+    h2hSafeArray(
+      input.computedTop
+    );
+
+  const engineGroups =
+    h2hUniqueGroups(
+      engineTop.map(
+        item =>
+          item?.grupo ??
+          item?.group
+      )
+    ).slice(
+      0,
+      3
+    );
+
+  /*
+   * Fail closed:
+   * se o motor nao forneceu trio valido,
+   * nao tenta substituir nada.
+   */
+  if (
+    engineGroups.length !== 3
+  ) {
+    return {
+      ...base,
+      top:
+        engineTop,
+
+      applied:
+        false,
+
+      reason:
+        "INVALID_ENGINE_GROUPS",
+
+      key,
+    };
+  }
+
+  const publicApi =
+    input.publicApi;
+
+  let rawPreviousHour =
+    "";
+
+  if (
+    publicApi &&
+    typeof publicApi.pickDrawHour ===
+      "function"
+  ) {
+    try {
+      rawPreviousHour =
+        publicApi.pickDrawHour(
+          input.drawLast
+        );
+    }
+    catch (_) {}
+  }
+
+  if (!rawPreviousHour) {
+    rawPreviousHour =
+      input.drawLast?.hour ??
+      input.drawLast?.closeHour ??
+      input.drawLast?.hourBucket ??
+      "";
+  }
+
+  const previousHour =
+    h2hNormalizeHour(
+      rawPreviousHour
+    );
+
+  if (
+    previousHour !==
+    rule.previousHour
+  ) {
+    return {
+      top:
+        engineTop,
+
+      applied:
+        false,
+
+      reason:
+        "PREVIOUS_HOUR_MISMATCH",
+
+      key,
+
+      expectedPreviousHour:
+        rule.previousHour,
+
+      actualPreviousHour:
+        previousHour,
+    };
+  }
+
+  const signalEntries =
+    h2hSignalEntries(
+      input.drawLast,
+      rule,
+      publicApi
+    );
+
+  if (
+    signalEntries.length !==
+    rule.signals.length
+  ) {
+    return {
+      top:
+        engineTop,
+
+      applied:
+        false,
+
+      reason:
+        "INSUFFICIENT_RESCUE_GROUPS",
+
+      key,
+
+      engineGroups,
+
+      rescueGroups:
+        [],
+    };
+  }
+
+  const rescueGroups =
+    h2hUniqueGroups(
+      signalEntries.map(
+        entry =>
+          entry.group
+      )
+    );
+
+  /*
+   * MESMA SEMANTICA DO H2H:
+   *
+   * regra primeiro;
+   * motor completa somente
+   * grupos unicos restantes.
+   */
+  const finalGroups =
+    h2hUniqueGroups([
+      ...rescueGroups,
+      ...engineGroups,
+    ]).slice(
+      0,
+      3
+    );
+
+  if (
+    rescueGroups.length === 0 ||
+    finalGroups.length < 3
+  ) {
+    return {
+      top:
+        engineTop,
+
+      applied:
+        false,
+
+      reason:
+        "INSUFFICIENT_RESCUE_GROUPS",
+
+      key,
+      rescueGroups,
+      engineGroups,
+    };
+  }
+
+  const top =
+    finalGroups.map(
+      (
+        group,
+        index
+      ) => {
+
+        const engineItem =
+          engineTop.find(
+            item =>
+              Number(
+                item?.grupo ??
+                item?.group
+              ) === group
+          );
+
+        const source =
+          signalEntries.find(
+            entry =>
+              entry.group === group
+          );
+
+        return {
+          ...(engineItem || {}),
+
+          grupo:
+            group,
+
+          score:
+            Number(
+              engineItem?.score ||
+              0
+            ),
+
+          scoreProb:
+            Number(
+              engineItem?.scoreProb ||
+              0
+            ),
+
+          probability:
+            Number(
+              engineItem?.probability ||
+              0
+            ),
+
+          confidence:
+            Number(
+              engineItem?.confidence ||
+              0
+            ),
+
+          meta: {
+            ...(
+              engineItem?.meta &&
+              typeof engineItem.meta ===
+                "object"
+                ? engineItem.meta
+                : {}
+            ),
+
+            radar360Rescue:
+              true,
+
+            radar360RuleId:
+              rule.id,
+
+            radar360Mode:
+              rule.mode,
+
+            radar360Source:
+              rule.source,
+
+            radar360SourcePosition:
+              source?.position ??
+              null,
+
+            radar360Transform:
+              source?.transform ??
+              null,
+
+            radar360ObservedRate:
+              rule.observedRate,
+
+            radar360ObservedCases:
+              rule.observedCases,
+
+            radar360Rank:
+              index + 1,
+
+            radar360H2hApproved:
+              true,
+
+            radar360H2hVersion:
+              RADAR360_H2H_VERSION,
+          },
+        };
+      }
+    );
+
+  return {
+    top,
+
+    applied:
+      true,
+
+    reason:
+      "H2H_APPROVED_RULE",
+
+    version:
+      RADAR360_H2H_VERSION,
+
+    key,
+
+    ruleId:
+      rule.id,
+
+    mode:
+      rule.mode,
+
+    signals:
+      signalEntries,
+
+    positions:
+      rule.signals.map(
+        signal =>
+          signal.position
+      ),
+
+    rescueGroups,
+    engineGroups,
+    finalGroups,
+
+    observedRate:
+      rule.observedRate,
+
+    observedCases:
+      rule.observedCases,
+
+    source:
+      rule.source,
+
+    h2h:
+      rule.h2h,
+  };
+}
+
 module.exports = {
   RULES,
   normalizeHour,
@@ -1489,4 +2643,34 @@ module.exports = {
   extractMilhar4,
   signalToGroup,
   applyTop3Radar360Rescue,
+
+  /*
+   * RADAR360_H2H_APPROVED_RJ_V3
+   * exports soberanos.
+   */
+  RULES:
+    RADAR360_ALL_RULES_V3,
+
+  applyTop3Radar360Rescue:
+    applyTop3Radar360RescueH2hV3,
+
+  RADAR360_H2H_VERSION,
+
+  H2H_APPROVED_RULES,
+
 };
+
+/*
+ * RADAR360_H2H_EXPORT_FIX_V3
+ */
+module.exports.RULES =
+  RADAR360_ALL_RULES_V3;
+
+module.exports.applyTop3Radar360Rescue =
+  applyTop3Radar360RescueH2hV3;
+
+module.exports.RADAR360_H2H_VERSION =
+  RADAR360_H2H_VERSION;
+
+module.exports.H2H_APPROVED_RULES =
+  H2H_APPROVED_RULES;
