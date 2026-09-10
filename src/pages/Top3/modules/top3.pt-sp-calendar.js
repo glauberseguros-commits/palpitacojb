@@ -110,6 +110,13 @@ export function getPtSpScheduleForYmd(
         );
 
     }
+    if (dow === 6) {
+      schedule =
+        schedule.filter(
+          (hour) =>
+            hour !== "19:00"
+        );
+    }
 
   }
 
