@@ -385,6 +385,27 @@ const RULES =
       }),
 
 
+    "PT_SP|QUA|12:00":
+      rawRule({
+        id:
+          "PT_SP_QUA_10_12_P2_P4_P5_H2H_PASS_V4",
+
+        previousHour:
+          "10:00",
+
+        positions:
+          [2, 4, 5],
+
+        observedRate:
+          13 / 36,
+
+        observedCases:
+          36,
+
+        source:
+          "R21_H2H_PASS_2026",
+      }),
+
     "NACIONAL|TER|10:00":
       rawRule({
         id:
