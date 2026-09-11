@@ -1354,6 +1354,7 @@ const computeTop3 =
       drawLast,
       computedTop: computed?.top,
       publicApi,
+      history,
     });
 
   const effectiveTop =

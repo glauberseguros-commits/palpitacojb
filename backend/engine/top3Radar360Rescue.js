@@ -1593,6 +1593,45 @@ const H2H_APPROVED_RULES =
           }),
       }),
 
+    "PT_RIO|SEX|14:00":
+      Object.freeze({
+        id:
+          "PT_RIO_SEX_11_14_TRANSITION_RANK3_PASS_V1",
+
+        mode:
+          "TRANSITION_RANK3_RESCUE",
+
+        previousHour:
+          "11:00",
+
+        discoveryEnd:
+          "2026-07-10",
+
+        expectedDiscoveryPairs:
+          212,
+
+        signals:
+          Object.freeze([]),
+
+        observedRate:
+          3 / 8,
+
+        observedCases:
+          8,
+
+        source:
+          "ARCHIVED_8_TRANSITION_RESCUE_PASS",
+
+        h2h:
+          Object.freeze({
+            currentHits: 2,
+            overlayHits: 3,
+            rescues: 1,
+            destroys: 0,
+            net: 1,
+            n: 8,
+          }),
+      }),
     "PT_RIO|SEX|18:00":
       Object.freeze({
         id:
@@ -2276,6 +2315,406 @@ function h2hSignalEntries(
  * aos dois H2H aprovados executa
  * a camada nova.
  */
+function h2hTransitionYmd(
+  draw,
+  publicApi
+) {
+
+  let value = "";
+
+  if (
+    publicApi &&
+    typeof publicApi.pickDrawYMD ===
+      "function"
+  ) {
+
+    try {
+      value =
+        publicApi.pickDrawYMD(
+          draw
+        );
+    }
+    catch (_) {}
+  }
+
+  if (!value) {
+    value =
+      draw?.ymd ??
+      draw?.date ??
+      draw?.drawDate ??
+      "";
+  }
+
+  return String(
+    value
+  ).slice(
+    0,
+    10
+  );
+}
+
+function h2hTransitionHour(
+  draw,
+  publicApi
+) {
+
+  let value = "";
+
+  if (
+    publicApi &&
+    typeof publicApi.pickDrawHour ===
+      "function"
+  ) {
+
+    try {
+      value =
+        publicApi.pickDrawHour(
+          draw
+        );
+    }
+    catch (_) {}
+  }
+
+  if (!value) {
+    value =
+      draw?.closeHour ??
+      draw?.hour ??
+      draw?.hourBucket ??
+      "";
+  }
+
+  return h2hNormalizeHour(
+    value
+  );
+}
+
+function h2hTransitionPodiumGroups(
+  draw
+) {
+
+  const prizes =
+    h2hSafeArray(
+      draw?.prizes
+    );
+
+  const rows =
+    prizes
+      .map(
+        (
+          prize,
+          index
+        ) => {
+
+          const position =
+            Number(
+              prize?.position ??
+              prize?.pos ??
+              prize?.rank ??
+              (
+                index + 1
+              )
+            );
+
+          let group =
+            Number(
+              prize?.grupo ??
+              prize?.group
+            );
+
+          if (
+            !Number.isInteger(group) ||
+            group < 1 ||
+            group > 25
+          ) {
+
+            group =
+              h2hGroupFromEnding(
+                prize?.milhar ??
+                prize?.value ??
+                prize?.number ??
+                prize?.numero ??
+                ""
+              );
+          }
+
+          return {
+            position,
+            group,
+          };
+        }
+      )
+      .filter(
+        row =>
+          row.position >= 1 &&
+          row.position <= 3 &&
+          Number.isInteger(
+            row.group
+          ) &&
+          row.group >= 1 &&
+          row.group <= 25
+      )
+      .sort(
+        (a, b) =>
+          a.position -
+          b.position
+      );
+
+  return h2hUniqueGroups(
+    rows.map(
+      row =>
+        row.group
+    )
+  ).slice(
+    0,
+    3
+  );
+}
+
+function h2hBuildTransitionRank3Rescue({
+  history = [],
+  drawLast = null,
+  engineGroups = [],
+  rule = null,
+  publicApi = null,
+} = {}) {
+
+  const byKey =
+    new Map();
+
+  const discoveryEnd =
+    String(
+      rule?.discoveryEnd ??
+      ""
+    );
+
+  for (
+    const draw
+    of h2hSafeArray(history)
+  ) {
+
+    const ymd =
+      h2hTransitionYmd(
+        draw,
+        publicApi
+      );
+
+    if (
+      !ymd ||
+      ymd > discoveryEnd ||
+      h2hDowCode(ymd) !==
+        "SEX"
+    ) {
+      continue;
+    }
+
+    const hour =
+      h2hTransitionHour(
+        draw,
+        publicApi
+      );
+
+    if (
+      hour !== "11:00" &&
+      hour !== "14:00"
+    ) {
+      continue;
+    }
+
+    byKey.set(
+      `${ymd}|${hour}`,
+      draw
+    );
+  }
+
+  const dates =
+    Array.from(
+      new Set(
+        Array.from(
+          byKey.keys()
+        ).map(
+          key =>
+            key.slice(
+              0,
+              10
+            )
+        )
+      )
+    ).sort();
+
+  const pairs = [];
+
+  for (const ymd of dates) {
+
+    const draw11 =
+      byKey.get(
+        `${ymd}|11:00`
+      );
+
+    const draw14 =
+      byKey.get(
+        `${ymd}|14:00`
+      );
+
+    if (!draw11 || !draw14) {
+      continue;
+    }
+
+    const prev =
+      h2hTransitionPodiumGroups(
+        draw11
+      );
+
+    const target =
+      h2hTransitionPodiumGroups(
+        draw14
+      );
+
+    if (
+      !prev.length ||
+      !target.length
+    ) {
+      continue;
+    }
+
+    pairs.push({
+      prev,
+      target,
+    });
+  }
+
+  if (
+    pairs.length !==
+    Number(
+      rule?.expectedDiscoveryPairs
+    )
+  ) {
+    return {
+      ok: false,
+      reason:
+        "TRANSITION_DISCOVERY_DRIFT",
+      discoveryPairs:
+        pairs.length,
+    };
+  }
+
+  const prevOccurrences =
+    Array(26).fill(0);
+
+  const transition =
+    Array.from(
+      { length: 26 },
+      () =>
+        Array(26).fill(0)
+    );
+
+  const globalTarget =
+    Array(26).fill(0);
+
+  for (const pair of pairs) {
+
+    for (const g of pair.target) {
+      globalTarget[g]++;
+    }
+
+    for (const p of pair.prev) {
+
+      prevOccurrences[p]++;
+
+      for (
+        const g
+        of pair.target
+      ) {
+        transition[p][g]++;
+      }
+    }
+  }
+
+  const previousGroups =
+    h2hTransitionPodiumGroups(
+      drawLast
+    );
+
+  if (!previousGroups.length) {
+    return {
+      ok: false,
+      reason:
+        "TRANSITION_PREVIOUS_PODIUM_MISSING",
+    };
+  }
+
+  const championSet =
+    new Set(
+      h2hUniqueGroups(
+        engineGroups
+      )
+    );
+
+  const candidates = [];
+
+  for (
+    let g = 1;
+    g <= 25;
+    g++
+  ) {
+
+    if (championSet.has(g)) {
+      continue;
+    }
+
+    let score = 0;
+
+    for (
+      const p
+      of previousGroups
+    ) {
+
+      const denom =
+        prevOccurrences[p];
+
+      if (denom > 0) {
+        score +=
+          transition[p][g] /
+          denom;
+      }
+    }
+
+    candidates.push({
+      group: g,
+      score,
+      global:
+        globalTarget[g],
+    });
+  }
+
+  candidates.sort(
+    (a, b) =>
+      b.score - a.score ||
+      b.global - a.global ||
+      a.group - b.group
+  );
+
+  const winner =
+    candidates[0];
+
+  if (!winner) {
+    return {
+      ok: false,
+      reason:
+        "TRANSITION_RESCUE_NOT_FOUND",
+    };
+  }
+
+  return {
+    ok: true,
+    group:
+      winner.group,
+    score:
+      winner.score,
+    discoveryPairs:
+      pairs.length,
+    previousGroups,
+  };
+}
 function applyTop3Radar360RescueH2hV3(
   input = {}
 ) {
@@ -2433,36 +2872,80 @@ function applyTop3Radar360RescueH2hV3(
     };
   }
 
-  const signalEntries =
-    h2hSignalEntries(
-      input.drawLast,
-      rule,
-      publicApi
-    );
+  let signalEntries = [];
 
   if (
-    signalEntries.length !==
-    rule.signals.length
+    rule.mode ===
+    "TRANSITION_RANK3_RESCUE"
   ) {
-    return {
-      top:
-        engineTop,
 
-      applied:
-        false,
+    const transition =
+      h2hBuildTransitionRank3Rescue({
+        history:
+          input.history,
+        drawLast:
+          input.drawLast,
+        engineGroups,
+        rule,
+        publicApi,
+      });
 
-      reason:
-        "INSUFFICIENT_RESCUE_GROUPS",
+    if (!transition?.ok) {
+      return {
+        top:
+          engineTop,
+        applied:
+          false,
+        reason:
+          transition?.reason ??
+          "TRANSITION_RESCUE_FAILED",
+        key,
+        engineGroups,
+        rescueGroups:
+          [],
+        transition,
+      };
+    }
 
-      key,
-
-      engineGroups,
-
-      rescueGroups:
-        [],
-    };
+    signalEntries = [
+      {
+        position: 3,
+        transform:
+          "FRIDAY_11_TO_14_TRANSITION",
+        group:
+          transition.group,
+        signal:
+          transition,
+      },
+    ];
   }
+  else {
 
+    signalEntries =
+      h2hSignalEntries(
+        input.drawLast,
+        rule,
+        publicApi
+      );
+
+    if (
+      signalEntries.length !==
+      rule.signals.length
+    ) {
+      return {
+        top:
+          engineTop,
+        applied:
+          false,
+        reason:
+          "INSUFFICIENT_RESCUE_GROUPS",
+        key,
+        engineGroups,
+        rescueGroups:
+          [],
+      };
+    }
+  }
   const rescueGroups =
     h2hUniqueGroups(
       signalEntries.map(
@@ -2479,14 +2962,24 @@ function applyTop3Radar360RescueH2hV3(
    * grupos unicos restantes.
    */
   const finalGroups =
-    h2hUniqueGroups([
-      ...rescueGroups,
-      ...engineGroups,
-    ]).slice(
-      0,
-      3
-    );
-
+    rule.mode ===
+    "TRANSITION_RANK3_RESCUE"
+      ? h2hUniqueGroups([
+          engineGroups[0],
+          engineGroups[1],
+          ...rescueGroups,
+          engineGroups[2],
+        ]).slice(
+          0,
+          3
+        )
+      : h2hUniqueGroups([
+          ...rescueGroups,
+          ...engineGroups,
+        ]).slice(
+          0,
+          3
+        );
   if (
     rescueGroups.length === 0 ||
     finalGroups.length < 3
@@ -2631,11 +3124,16 @@ function applyTop3Radar360RescueH2hV3(
       signalEntries,
 
     positions:
-      rule.signals.map(
-        signal =>
-          signal.position
-      ),
-
+      signalEntries
+        .map(
+          entry =>
+            Number(
+              entry.position
+            )
+        )
+        .filter(
+          Number.isFinite
+        ),
     rescueGroups,
     engineGroups,
     finalGroups,
