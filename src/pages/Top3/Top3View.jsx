@@ -2430,12 +2430,52 @@ const list =
               ? row.picks.slice(0, 3)
               : [],
 
-        top3:
-          engineHistoryTop3.length === 3
-            ? engineHistoryTop3
-            : Array.isArray(row?.top3)
-              ? row.top3.slice(0, 3)
-              : [],
+          /*
+           * TOP3_HISTORY_TOP3_PICKS_FALLBACK_V1
+           *
+           * O Firestore pode preservar os 3 grupos em `picks`
+           * mesmo quando `top3` historico estiver parcial.
+           *
+           * Nesse caso:
+           * - preserva objetos completos que ja existirem em row.top3;
+           * - recompõe os grupos ausentes usando row.picks;
+           * - nunca reduz visualmente um TOP3 persistido para 1 ou 2 grupos.
+           */
+          top3:
+            engineHistoryTop3.length === 3
+              ? engineHistoryTop3
+              : Array.isArray(row?.picks) &&
+                  row.picks.length >= 3
+                ? row.picks
+                    .slice(0, 3)
+                    .map((grupo) => {
+                      const numericGrupo =
+                        Number(grupo);
+
+                      const persistedItem =
+                        Array.isArray(row?.top3)
+                          ? row.top3.find(
+                              (entry) =>
+                                Number(
+                                  entry?.grupo
+                                ) === numericGrupo
+                            )
+                          : null;
+
+                      return (
+                        persistedItem || {
+                          grupo: numericGrupo,
+                        }
+                      );
+                    })
+                    .filter((entry) =>
+                      Number.isFinite(
+                        Number(entry?.grupo)
+                      )
+                    )
+                : Array.isArray(row?.top3)
+                  ? row.top3.slice(0, 3)
+                  : [],
 
         result: resultGrupo,
         grupo: resultGrupo,
