@@ -4479,23 +4479,56 @@ const list =
                   item?.target?.hour || ""
                 );
 
-                const top3Items =
-                  Array.isArray(item?.top3) &&
-                  item.top3.length
+                /*
+                 * TOP3_RENDER_PARTIAL_TOP3_PICKS_FALLBACK_V1
+                 *
+                 * `top3` historico pode chegar parcial enquanto `picks`
+                 * preserva os 3 grupos publicados.
+                 *
+                 * Um top3 com 1 ou 2 itens nao deve bloquear o fallback.
+                 * Preservamos os objetos completos existentes e recompomos
+                 * somente os grupos ausentes a partir de `picks`.
+                 */
+                const persistedTop3 =
+                  Array.isArray(item?.top3)
                     ? item.top3.slice(0, 3)
-                    : (
-                        Array.isArray(item?.picks)
-                          ? item.picks
-                          : []
-                      )
+                    : [];
+
+                const persistedPicks =
+                  Array.isArray(item?.picks)
+                    ? item.picks
                         .slice(0, 3)
-                        .map((grupo) => ({
-                          grupo: Number(grupo),
-                          animal:
-                            getAnimalLabel(
-                              Number(grupo)
-                            ) || "",
-                        }));
+                        .map((grupo) => Number(grupo))
+                        .filter(
+                          (grupo) =>
+                            Number.isFinite(grupo) &&
+                            grupo >= 1 &&
+                            grupo <= 25
+                        )
+                    : [];
+
+                const top3Items =
+                  persistedTop3.length === 3
+                    ? persistedTop3
+                    : persistedPicks.length
+                      ? persistedPicks.map((grupo) => {
+                          const persistedItem =
+                            persistedTop3.find(
+                              (entry) =>
+                                Number(entry?.grupo) ===
+                                grupo
+                            );
+
+                          return (
+                            persistedItem || {
+                              grupo,
+                              animal:
+                                getAnimalLabel(grupo) ||
+                                "",
+                            }
+                          );
+                        })
+                      : persistedTop3;
 
                 const resultGrupo = Number(
                   item?.result ??
