@@ -2565,9 +2565,24 @@ if (
   ]);
 
   useEffect(() => {
-    const persistedSchedule = scheduleKey
-      ? scheduleKey.split("|").filter(Boolean)
-      : [];
+    /*
+     * TOP3_PERSISTED_HISTORY_TIMELINE_SCHEDULE_V1
+     *
+     * O calendario do historico pertence a timelineYmd.
+     * Nao reutilizar o schedule do contexto ativo.
+     */
+    const persistedSchedule =
+      isYMD(timelineYmd)
+        ? getScheduleForLottery({
+            lotteryKey: lotteryKeySafe,
+            ymd: timelineYmd,
+            PT_RIO_SCHEDULE_NORMAL,
+            PT_RIO_SCHEDULE_WED_SAT,
+            FEDERAL_SCHEDULE,
+          })
+            .map(toHourBucket)
+            .filter(Boolean)
+        : [];
 
     debugTop3Effect("04_load_persisted_history", {
       lotteryKey: lotteryKeySafe,
