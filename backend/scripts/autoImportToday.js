@@ -943,13 +943,33 @@ async function verifySlotPersistedViaBackend({ date, slotHHMM }) {
     const slots = Array.isArray(j.slots) ? j.slots : [];
     const hh = hhFromSlotHHMM(slotHHMM);
 
+    // PERSISTENCE_SLOT_REQUIRES_ACTUAL_DRAW_V1
     const foundInSlots = slots.some((s) => {
-      const v = (s && (s.hour || s.close_hour || s.closeHour || s.close || s.slot || s.time || s.close_hour_raw)) ?? "";
+      if (!s || typeof s !== "object") return false;
+
+      const v =
+        s.hour ??
+        s.close_hour ??
+        s.closeHour ??
+        s.close ??
+        s.slot ??
+        s.time ??
+        "";
+
       const t = String(v).trim();
-      return t.startsWith(hh);
+      if (!t.startsWith(hh)) return false;
+
+      const status = String(s.status ?? "").trim().toLowerCase();
+
+      if (status === "missing") return false;
+      if (s.draw == null) return false;
+
+      return drawLooksLikeSlot(s.draw, slotHHMM);
     });
 
-    if (foundInSlots) return { ok: true, where: "slots", slotsCount: slots.length };
+    if (foundInSlots) {
+      return { ok: true, where: "slots_with_actual_draw" };
+    }
 
     return { ok: false, reason: "NOT_FOUND", drawsCount: draws.length, slotsCount: slots.length };
   } catch (e) {
@@ -960,6 +980,29 @@ async function verifySlotPersistedViaBackend({ date, slotHHMM }) {
   }
 }
 
+// PT_RIO_21H_HARD_MISSING_PERSISTENCE_GUARD_V1
+async function isPtRio21PersistedInBackend(date) {
+  if (LOTTERY !== "PT_RIO") return true;
+
+  const ds = await fetchDayStatusFromBackend({
+    date,
+    lottery: LOTTERY,
+  });
+
+  if (!ds) return false;
+
+  const presentHours = Array.isArray(ds.presentHours)
+    ? ds.presentHours
+    : [];
+
+  return presentHours.some((value) => {
+    const match = String(value ?? "").trim().match(/^(\d{1,2})(?::|$)/);
+    if (!match) return false;
+
+    const hour = Number(match[1]);
+    return Number.isFinite(hour) && hour === 21;
+  });
+}
 async function guardPersistedOrCritical({ date, slotHHMM, calendar, closeHourTried, meta }) {
   if (!VERIFY_PERSISTED) return { ok: true, skipped: true };
 
@@ -1524,7 +1567,31 @@ async function main() {
         }
 
         if (doneByAlreadyComplete || doneByCaptureWrite) {
-          slot.done = true;
+          // PT_RIO_21H_HARD_MISSING_PERSISTENCE_GUARD_V1
+          if (LOTTERY === "PT_RIO" && sched.hour === "21:00") {
+            const ptRio21Persisted = await isPtRio21PersistedInBackend(date);
+
+            if (!ptRio21Persisted) {
+              slot.done = false;
+              slot.na = false;
+              slot.naReason = null;
+              slot.lastResult = {
+                ...(slot.lastResult || {}),
+                ok: false,
+                retry: true,
+                reason: "PT_RIO_21H_BACKEND_STILL_MISSING",
+              };
+
+              logLine(
+                "[PT_RIO-21H-GUARD] backend ainda nao confirmou 21h persistido -> mantendo PENDING para catch-up",
+                "WARN"
+              );
+            } else {
+              slot.done = true;
+            }
+          } else {
+            slot.done = true;
+          }
           saveState(date, state);
 
           if (doneByAlreadyComplete) {
@@ -1620,4 +1687,3 @@ main().catch((e) => {
   releaseLock();
   process.exit(1);
 });
-
