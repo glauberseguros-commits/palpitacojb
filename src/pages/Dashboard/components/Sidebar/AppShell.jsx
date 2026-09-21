@@ -11,13 +11,11 @@ const ROUTES = {
   RESULTS: "results",
   TOP3: "top3",
   RADAR_BICHOS: "radar-dos-bichos",
-  TERNO_GRUPO: "terno-grupo",
   LATE: "late",
   SEARCH: "search",
   PAYMENTS: "payments",
   DOWNLOADS: "downloads",
   CENTENAS: "centenas",
-  STATISTICS: "statistics",
 };
 
 const ACCOUNT_SESSION_KEY = "pp_session_v1";
@@ -438,20 +436,14 @@ export default function AppShell({ active, onNavigate, onLogout, children }) {
     { key: ROUTES.TOP3, icon: "trophy", title: "Top 3" },
     {
       key: ROUTES.RADAR_BICHOS,
-      icon: "search",
-      title: "Radar dos Bichos",
-    },
-    {
-      key: ROUTES.TERNO_GRUPO,
       icon: "pets",
-      title: "Terno de Grupo",
+      title: "Radar dos Bichos",
     },
     { key: ROUTES.LATE, icon: "clock", title: "Atrasados" },
   ];
 
   const menuTools = [
     { key: ROUTES.SEARCH, icon: "search", title: "Busca" },
-    { key: ROUTES.STATISTICS, icon: "chart", title: "Estatísticas" },
     { key: ROUTES.CENTENAS, icon: "hash", title: "Centenas" },
     { key: ROUTES.DOWNLOADS, icon: "download", title: "Downloads" },
   ];

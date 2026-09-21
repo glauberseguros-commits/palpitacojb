@@ -4215,32 +4215,88 @@ const list =
               Previsão baseada na transição: <b>{meta.prev}</b> → <b>{meta.last}</b>
             </div>
 
-            <div className="pp-tabs">
-              {lotOptions.map((op) => {
-                const k = String(op?.value || "").toUpperCase();
-                const active = k === curLot ? "1" : "0";
-                const canSet = typeof setLotteryKey === "function" && !!k;
+            <div
+              className="top3-lottery-picker"
+              style={{
+                display: "flex",
+                alignItems: "center",
+                gap: 10,
+                marginTop: 14,
+                marginBottom: 14,
+                flexWrap: "wrap",
+              }}
+            >
+              <label
+                htmlFor="top3-lottery-select"
+                style={{
+                  fontSize: 12,
+                  fontWeight: 800,
+                  letterSpacing: ".04em",
+                  opacity: .72,
+                }}
+              >
+                Loteria
+              </label>
 
-                return (
-                  <button
-                    key={k || op?.label}
-                    type="button"
-                    className="pp-tab"
-                    data-active={active}
-                    onClick={() => {
-                      if (!canSet) return;
-                      setLotteryKey(k);
-                    }}
-                    title={op?.label || k}
-                    style={{
-                      opacity: canSet ? 1 : 0.55,
-                      cursor: canSet ? "pointer" : "default",
-                    }}
-                  >
-                    {op?.label || k}
-                  </button>
-                );
-              })}
+              <select
+                id="top3-lottery-select"
+                value={curLot}
+                onChange={(event) => {
+                  const next =
+                    String(
+                      event.target.value || ""
+                    )
+                      .trim()
+                      .toUpperCase();
+
+                  if (
+                    next &&
+                    typeof setLotteryKey ===
+                      "function"
+                  ) {
+                    setLotteryKey(
+                      next
+                    );
+                  }
+                }}
+                style={{
+                  width: "min(100%, 320px)",
+                  height: 42,
+                  borderRadius: 12,
+                  padding: "0 38px 0 12px",
+                  border:
+                    "1px solid rgba(202,166,75,.38)",
+                  background: "#0d0d0d",
+                  color: "#fff",
+                  fontWeight: 800,
+                  outline: "none",
+                  cursor: "pointer",
+                }}
+              >
+                {lotOptions.map(
+                  (op) => {
+                    const k =
+                      String(
+                        op?.value || ""
+                      )
+                        .trim()
+                        .toUpperCase();
+
+                    if (!k) {
+                      return null;
+                    }
+
+                    return (
+                      <option
+                        key={k}
+                        value={k}
+                      >
+                        {op?.label || k}
+                      </option>
+                    );
+                  }
+                )}
+              </select>
             </div>
 
             <div className="top3-metaGrid">

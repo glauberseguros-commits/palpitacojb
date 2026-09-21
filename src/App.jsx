@@ -46,7 +46,6 @@ const Top3 = lazy(() => import("./pages/Top3/Top3"));
 const RadarDosBichos = lazy(() =>
   import("./pages/RadarDosBichos/RadarDosBichos")
 );
-const TernoGrupo = lazy(() => import("./pages/TernoGrupo/TernoGrupo"));
 const Late = lazy(() => import("./pages/Late/Late"));
 const Search = lazy(() => import("./pages/Search/Search"));
 const Admin = lazy(() => import("./pages/Admin/Admin"));
@@ -54,7 +53,6 @@ const AdminLogin = lazy(() => import("./pages/Admin/AdminLogin"));
 const Payments = lazy(() => import("./pages/Payments/Payments"));
 const Downloads = lazy(() => import("./pages/Downloads/Downloads"));
 const Centenas = lazy(() => import("./pages/Centenas/Centenas"));
-const Statistics = lazy(() => import("./pages/Statistics/Statistics"));
 
 
 const STORAGE_KEY = "palpitaco_screen_v2";
@@ -242,13 +240,11 @@ const ROUTES = {
   RESULTS: "results",
   TOP3: "top3",
   RADAR_BICHOS: "radar-dos-bichos",
-  TERNO_GRUPO: "terno-grupo",
   LATE: "late",
   SEARCH: "search",
   PAYMENTS: "payments",
   DOWNLOADS: "downloads",
   CENTENAS: "centenas",
-  STATISTICS: "statistics",
 };
 
 function safeReadLS(key) {
@@ -491,8 +487,6 @@ function screenToPath(screen) {
       return "/top3";
     case ROUTES.RADAR_BICHOS:
       return "/radar-dos-bichos";
-    case ROUTES.TERNO_GRUPO:
-      return "/terno-grupo";
     case ROUTES.LATE:
       return "/late";
     case ROUTES.SEARCH:
@@ -503,8 +497,6 @@ function screenToPath(screen) {
       return "/downloads";
     case ROUTES.CENTENAS:
       return "/centenas";
-    case ROUTES.STATISTICS:
-      return "/statistics";
     default:
       return "/";
   }
@@ -523,13 +515,13 @@ function pathToScreen(pathname) {
     return ROUTES.TOP3;
   }
   if (p === "/radar-dos-bichos") return ROUTES.RADAR_BICHOS;
-  if (p === "/terno-grupo") return ROUTES.TERNO_GRUPO;
+  if (p === "/terno-grupo") return ROUTES.DASHBOARD;
   if (p === "/late") return ROUTES.LATE;
   if (p === "/search") return ROUTES.SEARCH;
   if (p === "/payments") return ROUTES.PAYMENTS;
   if (p === "/downloads") return ROUTES.DOWNLOADS;
   if (p === "/centenas") return ROUTES.CENTENAS;
-  if (p === "/statistics") return ROUTES.STATISTICS;
+  if (p === "/statistics") return ROUTES.DASHBOARD;
 
   return null;
 }
@@ -1043,16 +1035,12 @@ export default function App() {
         return <Top3 />;
       case ROUTES.RADAR_BICHOS:
         return <RadarDosBichos />;
-      case ROUTES.TERNO_GRUPO:
-        return <TernoGrupo />;
       case ROUTES.LATE:
         return <Late />;
       case ROUTES.SEARCH:
         return <Search />;
       case ROUTES.CENTENAS:
         return <Centenas />;
-      case ROUTES.STATISTICS:
-        return <Statistics />;
       case ROUTES.PAYMENTS:
         return <Payments />;
       case ROUTES.DOWNLOADS:
