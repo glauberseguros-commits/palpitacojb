@@ -43,6 +43,9 @@ const AppShell = lazy(() =>
 
 const Results = lazy(() => import("./pages/Results/Results"));
 const Top3 = lazy(() => import("./pages/Top3/Top3"));
+const RadarDosBichos = lazy(() =>
+  import("./pages/RadarDosBichos/RadarDosBichos")
+);
 const TernoGrupo = lazy(() => import("./pages/TernoGrupo/TernoGrupo"));
 const Late = lazy(() => import("./pages/Late/Late"));
 const Search = lazy(() => import("./pages/Search/Search"));
@@ -238,6 +241,7 @@ const ROUTES = {
   ACCOUNT: "account",
   RESULTS: "results",
   TOP3: "top3",
+  RADAR_BICHOS: "radar-dos-bichos",
   TERNO_GRUPO: "terno-grupo",
   LATE: "late",
   SEARCH: "search",
@@ -485,6 +489,8 @@ function screenToPath(screen) {
       return "/results";
     case ROUTES.TOP3:
       return "/top3";
+    case ROUTES.RADAR_BICHOS:
+      return "/radar-dos-bichos";
     case ROUTES.TERNO_GRUPO:
       return "/terno-grupo";
     case ROUTES.LATE:
@@ -510,12 +516,13 @@ function pathToScreen(pathname) {
   if (p === "/" || p === "/dashboard") return ROUTES.DASHBOARD;
   if (p === "/login") return ROUTES.LOGIN;
   if (p === "/account") return ROUTES.ACCOUNT;
-  if (/^\/results(?:\/(?:rj|sp|federal|look|nacional))?$/.test(p)) {
+  if (/^\/results(?:\/[a-z0-9-]+)?$/.test(p)) {
     return ROUTES.RESULTS;
   }
-  if (/^\/top3(?:\/(?:rj|sp|federal|look|nacional))?$/.test(p)) {
+  if (/^\/top3(?:\/[a-z0-9-]+)?$/.test(p)) {
     return ROUTES.TOP3;
   }
+  if (p === "/radar-dos-bichos") return ROUTES.RADAR_BICHOS;
   if (p === "/terno-grupo") return ROUTES.TERNO_GRUPO;
   if (p === "/late") return ROUTES.LATE;
   if (p === "/search") return ROUTES.SEARCH;
@@ -1034,6 +1041,8 @@ export default function App() {
         return <Results />;
       case ROUTES.TOP3:
         return <Top3 />;
+      case ROUTES.RADAR_BICHOS:
+        return <RadarDosBichos />;
       case ROUTES.TERNO_GRUPO:
         return <TernoGrupo />;
       case ROUTES.LATE:

@@ -17,6 +17,7 @@ import {
   getImgFromGrupo as getImgFromGrupoFn,
 } from "../../constants/bichoMap";
 
+import { LOTTERY_CATALOG_GLOBAL } from "../../constants/lotteryCatalog";
 /**
  * Late (Atrasados) — Premium
  *
@@ -286,36 +287,24 @@ function normalizeBoundsResponse(b) {
   return { minYmd, maxYmd, source: safeStr(b?.source || "") };
 }
 
-const LATE_LOTTERY_OPTIONS = [
+const LATE_LOTTERY_OPTIONS =
+  LOTTERY_CATALOG_GLOBAL.map(
+    (lottery) => ({
+      id: lottery.key,
+      label: lottery.label,
+      lotteries: [lottery.key],
+      uf:
+        lottery.key === "PT_RIO"
+          ? "RJ"
+          : lottery.key,
+    })
+  );
+
+const LATE_DEFAULT_HOUR_OPTIONS = [
   {
-    id: "PT_RIO",
-    label: "Rio de Janeiro",
-    lotteries: ["PT_RIO"],
-    uf: "RJ",
-  },
-  {
-    id: "PT_SP",
-    label: "São Paulo",
-    lotteries: ["PT_SP"],
-    uf: "PT_SP",
-  },
-  {
-    id: "FEDERAL",
-    label: "Federal",
-    lotteries: ["FEDERAL"],
-    uf: "FEDERAL",
-  },
-  {
-    id: "LOOK",
-    label: "LOOK",
-    lotteries: ["LOOK"],
-    uf: "GO",
-  },
-  {
-    id: "NACIONAL",
-    label: "Nacional",
-    lotteries: ["NACIONAL"],
-    uf: "NACIONAL",
+    id: "ALL",
+    label: "Todos os horários",
+    closeHour: null,
   },
 ];
 
@@ -405,8 +394,7 @@ export default function Late() {
   const pollRef = useRef(null);
   const selectedHourOptions = useMemo(
     () =>
-      LATE_HOUR_OPTIONS[selectedLotteryId] ||
-      LATE_HOUR_OPTIONS.PT_RIO,
+      LATE_HOUR_OPTIONS[selectedLotteryId] || LATE_DEFAULT_HOUR_OPTIONS,
     [selectedLotteryId]
   );
 

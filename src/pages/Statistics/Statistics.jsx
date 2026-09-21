@@ -7,72 +7,32 @@ import {
   getAnimalLabel,
 } from "../../constants/bichoMap";
 
-const LOTTERIES = Object.freeze([
-  Object.freeze({
-    value: "PT_RIO",
-    label: "Rio de Janeiro",
-    hours: Object.freeze([
-      "09:00",
-      "11:00",
-      "14:00",
-      "16:00",
-      "18:00",
-      "19:30",
-      "21:00",
-    ]),
-  }),
-  Object.freeze({
-    value: "PT_SP",
-    label: "São Paulo",
-    hours: Object.freeze([
-      "08:00",
-      "10:00",
-      "12:00",
-      "13:00",
-      "15:00",
-      "17:00",
-      "19:00",
-      "20:00",
-    ]),
-  }),
-  Object.freeze({
-    value: "FEDERAL",
-    label: "Federal",
-    hours: Object.freeze([
-      "11:00",
-      "19:00",
-      "20:00",
-    ]),
-  }),
-  Object.freeze({
-    value: "LOOK",
-    label: "LOOK",
-    hours: Object.freeze([
-      "07:00",
-      "09:00",
-      "11:00",
-      "14:00",
-      "16:00",
-      "18:00",
-      "21:00",
-      "23:00",
-    ]),
-  }),
-  Object.freeze({
-    value: "NACIONAL",
-    label: "Nacional",
-    hours: Object.freeze([
-      "02:00",
-      "08:00",
-      "10:00",
-      "12:00",
-      "15:00",
-      "17:00",
-      "21:00",
-      "23:00",
-    ]),
-  }),
-]);
+import { LOTTERY_CATALOG_GLOBAL } from "../../constants/lotteryCatalog";
+import { SCHEDULES } from "../../constants/schedule";
+const LOTTERIES = Object.freeze(
+  LOTTERY_CATALOG_GLOBAL.map(
+    (lottery) =>
+      Object.freeze({
+        value: lottery.key,
+        label: lottery.label,
+        hours: Object.freeze(
+          Object.prototype.hasOwnProperty.call(
+            SCHEDULES,
+            lottery.key
+          ) &&
+          Array.isArray(
+            SCHEDULES[lottery.key]
+          )
+            ? [
+                ...SCHEDULES[
+                  lottery.key
+                ],
+              ]
+            : []
+        ),
+      })
+  )
+);
 
 const MODES = Object.freeze([
   Object.freeze({ value: "dezena", label: "Dezenas" }),

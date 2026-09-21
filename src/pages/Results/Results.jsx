@@ -20,6 +20,7 @@ import {
   getSlugByGrupo,
 } from "../../constants/bichoMap";
 
+import { LOTTERY_CATALOG_GLOBAL, normalizeLotteryKeyGlobal, getLotteryLabelGlobal, getLotterySlugGlobal, getLotteryKeyBySlugGlobal } from "../../constants/lotteryCatalog";
 /* =========================
    Helpers (locais e robustos)
 ========================= */
@@ -274,53 +275,44 @@ function isFederalInput(scope) {
 }
 
 function normalizeScopeInput(input) {
-  const s = safeStr(input).toUpperCase();
-  if (!s) return SCOPE_RJ;
+  const raw =
+    safeStr(input).toUpperCase();
 
-  const compact = s.replace(/[\s_-]+/g, "");
-
-  if (s === SCOPE_RJ || compact === "PTRIO" || compact === "RIO") {
+  if (!raw) {
     return SCOPE_RJ;
   }
 
-  if (
-    s === SCOPE_PT_SP ||
-    compact === "PTSP" ||
-    compact === "SP" ||
-    compact === "SAOPAULO"
-  ) {
-    return SCOPE_PT_SP;
-  }
-
-  if (isFederalInput(s)) {
+  if (isFederalInput(raw)) {
     return SCOPE_FEDERAL;
   }
 
-  if (s === SCOPE_LOOK || compact === "LOOK" || compact === "GO") {
-    return SCOPE_LOOK;
+  const globalKey =
+    normalizeLotteryKeyGlobal(raw);
+
+  if (!globalKey) {
+    return SCOPE_RJ;
   }
 
-  if (
-    s === SCOPE_NACIONAL ||
-    compact === "NACIONAL" ||
-    compact === "LTNACIONAL"
-  ) {
-    return SCOPE_NACIONAL;
+  if (globalKey === "PT_RIO") {
+    return SCOPE_RJ;
   }
 
-  return s;
+  return globalKey;
 }
 
 function scopeDisplayName(scope) {
-  const up = normalizeScopeInput(scope);
+  const normalized =
+    normalizeScopeInput(scope);
 
-  if (up === SCOPE_RJ) return "RIO DE JANEIRO";
-  if (up === SCOPE_PT_SP) return "SÃO PAULO";
-  if (up === SCOPE_FEDERAL) return "FEDERAL";
-  if (up === SCOPE_LOOK) return "LOOK";
-  if (up === SCOPE_NACIONAL) return "NACIONAL";
+  const globalKey =
+    normalized === SCOPE_RJ
+      ? "PT_RIO"
+      : normalized;
 
-  return up;
+  return safeStr(
+    getLotteryLabelGlobal(globalKey) ||
+    globalKey
+  ).toUpperCase();
 }
 
 /* =========================
@@ -914,40 +906,66 @@ function normalizeResultsRoutePath(pathname) {
 }
 
 function resultsScopeFromPath(pathname) {
-  const path = normalizeResultsRoutePath(pathname);
+  const path =
+    normalizeResultsRoutePath(
+      pathname
+    );
 
-  switch (path) {
-    case "/results/sp":
-      return SCOPE_PT_SP;
-    case "/results/federal":
-      return SCOPE_FEDERAL;
-    case "/results/look":
-      return SCOPE_LOOK;
-    case "/results/nacional":
-      return SCOPE_NACIONAL;
-    case "/results":
-    case "/results/rj":
-    default:
-      return SCOPE_RJ;
+  if (
+    path === "/results" ||
+    path === "/results/rj"
+  ) {
+    return SCOPE_RJ;
   }
+
+  const prefix =
+    "/results/";
+
+  if (
+    !path.startsWith(prefix)
+  ) {
+    return SCOPE_RJ;
+  }
+
+  const slug =
+    path.slice(
+      prefix.length
+    );
+
+  const globalKey =
+    getLotteryKeyBySlugGlobal(
+      slug
+    );
+
+  if (!globalKey) {
+    return SCOPE_RJ;
+  }
+
+  return globalKey === "PT_RIO"
+    ? SCOPE_RJ
+    : globalKey;
 }
 
 function resultsPathForScope(scope) {
-  const normalized = normalizeScopeInput(scope);
+  const normalized =
+    normalizeScopeInput(
+      scope
+    );
 
-  switch (normalized) {
-    case SCOPE_PT_SP:
-      return "/results/sp";
-    case SCOPE_FEDERAL:
-      return "/results/federal";
-    case SCOPE_LOOK:
-      return "/results/look";
-    case SCOPE_NACIONAL:
-      return "/results/nacional";
-    case SCOPE_RJ:
-    default:
-      return "/results/rj";
-  }
+  const globalKey =
+    normalized === SCOPE_RJ
+      ? "PT_RIO"
+      : normalized;
+
+  const slug =
+    getLotterySlugGlobal(
+      globalKey
+    );
+
+  return (
+    "/results/" +
+    (slug || "rj")
+  );
 }
 
 /* =========================
@@ -1899,76 +1917,46 @@ export default function Results() {
             onMouseDown={stopOnly}
             onTouchStart={stopOnly}
           >
-            <div className="pp_pills" aria-label="Escopo">
-              <button
-                type="button"
-                className={scopePillClass(scopeKey === SCOPE_RJ)}
+            <div className="pp_pills" aria-label="Loteria">
+              <select
+                className="pp_resultsLotterySelect"
+                value={scopeKey}
                 disabled={!canChangeResultsView}
-                onClick={(e) => {
-                  stopEvt(e);
+                onChange={(event) => {
                   if (!canChangeResultsView) return;
-                  setScopeUi(SCOPE_RJ);
+                  setScopeUi(event.target.value);
                 }}
-                title="Resultados do Rio de Janeiro"
+                aria-label="Selecionar loteria"
+                style={{
+                  minWidth: 170,
+                  height: 38,
+                  padding: "0 34px 0 14px",
+                  borderRadius: 12,
+                  border: "1px solid rgba(202,166,75,.40)",
+                  background: "#111",
+                  color: "#fff",
+                  fontWeight: 800,
+                  cursor: canChangeResultsView
+                    ? "pointer"
+                    : "not-allowed",
+                }}
               >
-                RJ
-              </button>
+                {LOTTERY_CATALOG_GLOBAL.map((lottery) => {
+                  const value =
+                    lottery.key === "PT_RIO"
+                      ? SCOPE_RJ
+                      : lottery.key;
 
-              <button
-                type="button"
-                className={scopePillClass(scopeKey === SCOPE_PT_SP)}
-                disabled={!canChangeResultsView}
-                onClick={(e) => {
-                  stopEvt(e);
-                  if (!canChangeResultsView) return;
-                  setScopeUi(SCOPE_PT_SP);
-                }}
-                title="Resultados de São Paulo"
-              >
-                SP
-              </button>
-
-              <button
-                type="button"
-                className={scopePillClass(scopeKey === SCOPE_FEDERAL)}
-                disabled={!canChangeResultsView}
-                onClick={(e) => {
-                  stopEvt(e);
-                  if (!canChangeResultsView) return;
-                  setScopeUi(SCOPE_FEDERAL);
-                }}
-                title="Resultados da Federal"
-              >
-                FEDERAL
-              </button>
-
-              <button
-                type="button"
-                className={scopePillClass(scopeKey === SCOPE_LOOK)}
-                disabled={!canChangeResultsView}
-                onClick={(e) => {
-                  stopEvt(e);
-                  if (!canChangeResultsView) return;
-                  setScopeUi(SCOPE_LOOK);
-                }}
-                title="Resultados da LOOK"
-              >
-                LOOK
-              </button>
-
-              <button
-                type="button"
-                className={scopePillClass(scopeKey === SCOPE_NACIONAL)}
-                disabled={!canChangeResultsView}
-                onClick={(e) => {
-                  stopEvt(e);
-                  if (!canChangeResultsView) return;
-                  setScopeUi(SCOPE_NACIONAL);
-                }}
-                title="Resultados da Nacional"
-              >
-                NACIONAL
-              </button>
+                  return (
+                    <option
+                      key={lottery.key}
+                      value={value}
+                    >
+                      {lottery.label}
+                    </option>
+                  );
+                })}
+              </select>
             </div>
 
             <div className="pp_dateWrap" ref={calendarRef}>

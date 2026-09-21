@@ -3,6 +3,8 @@ import React, { useEffect, useMemo, useState, useCallback, useRef } from "react"
 import { getKingResultsByRange, getKingBoundsByUf } from "../../services/kingResultsService";
 import { getAnimalLabel } from "../../constants/bichoMap";
 
+import { LOTTERY_CATALOG_GLOBAL, getLotteryLabelGlobal, normalizeLotteryKeyGlobal } from "../../constants/lotteryCatalog";
+import { SCHEDULES } from "../../constants/schedule";
 const GOLD = "rgba(202,166,75,1)";
 const GOLD_SOFT = "rgba(202,166,75,0.16)";
 const GOLD_SOFT2 = "rgba(202,166,75,0.24)";
@@ -195,22 +197,38 @@ const UF_TO_LOTTERY_KEY = {
 };
 
 function normalizeUfToQueryKey(input) {
-  const s = safeStr(input).toUpperCase();
-  if (!s) return "";
-  if (s.includes("_") || s.length > 2) return s;
-  return UF_TO_LOTTERY_KEY[s] || s;
+  const raw =
+    safeStr(input)
+      .toUpperCase();
+
+  if (!raw) {
+    return "";
+  }
+
+  const legacy =
+    UF_TO_LOTTERY_KEY[raw] ||
+    raw;
+
+  return (
+    normalizeLotteryKeyGlobal(
+      legacy
+    ) ||
+    legacy
+  );
 }
 
 function lotteryLabelFromKey(key) {
-  const s = safeStr(key).toUpperCase();
-  if (s === "PT_RIO") return "RIO";
-  if (s === "PT_SP") return "SÃO PAULO";
-  if (s === "FEDERAL") return "FEDERAL";
-  if (s === "LOOK") return "LOOK";
-  if (s === "NACIONAL") return "NACIONAL";
-  if (s.length === 2) return s;
-  const parts = s.split("_");
-  return parts[parts.length - 1] || s;
+  const normalized =
+    normalizeLotteryKeyGlobal(
+      key
+    );
+
+  return (
+    getLotteryLabelGlobal(
+      normalized || key
+    ) ||
+    safeStr(key)
+  );
 }
 
 /* =========================
@@ -675,23 +693,44 @@ export default function Downloads() {
   }, []);
 
   const hourOptions = useMemo(() => {
-    const lotteryKey = safeStr(ufQueryKey).toUpperCase();
+    const lotteryKey =
+      normalizeLotteryKeyGlobal(
+        ufQueryKey
+      );
 
-    const hoursByLottery = {
-      PT_RIO: ["09:00", "11:00", "14:00", "16:00", "18:00", "19:00", "21:00"],
-      PT_SP: ["08:00", "10:00", "12:00", "13:00", "15:00", "17:00", "19:00", "20:00"],
-      FEDERAL: ["19:00", "20:00"],
-      LOOK: ["07:00", "09:00", "11:00", "14:00", "16:00", "18:00", "21:00", "23:00"],
-      NACIONAL: ["02:00", "08:00", "10:00", "12:00", "15:00", "17:00", "21:00", "23:00"],
-    };
+    const knownHours =
+      lotteryKey &&
+      Object.prototype.hasOwnProperty.call(
+        SCHEDULES,
+        lotteryKey
+      ) &&
+      Array.isArray(
+        SCHEDULES[lotteryKey]
+      )
+        ? SCHEDULES[lotteryKey]
+        : [];
 
-    const base = ["ALL", ...(hoursByLottery[lotteryKey] || [])];
-    const uniq = Array.from(new Set(base));
+    const base = [
+      "ALL",
+      ...knownHours,
+    ];
 
-    return uniq.map((h) =>
-      h === "ALL"
-        ? { v: "ALL", label: "Todos" }
-        : { v: h, label: h }
+    const uniq =
+      Array.from(
+        new Set(base)
+      );
+
+    return uniq.map(
+      (hour) =>
+        hour === "ALL"
+          ? {
+              v: "ALL",
+              label: "Todos",
+            }
+          : {
+              v: hour,
+              label: hour,
+            }
     );
   }, [ufQueryKey]);
 
@@ -765,17 +804,10 @@ export default function Downloads() {
 
     const lotteryKey = safeStr(ufUi).toUpperCase();
     const lotteryUiLabel =
-      lotteryKey === "PT_RIO"
-        ? "RJ"
-        : lotteryKey === "PT_SP"
-        ? "São Paulo"
-        : lotteryKey === "FEDERAL"
-        ? "Federal"
-        : lotteryKey === "LOOK"
-        ? "LOOK"
-        : lotteryKey === "NACIONAL"
-        ? "Nacional"
-        : lotteryKey;
+      getLotteryLabelGlobal(
+        lotteryKey
+      ) ||
+      lotteryKey;
 
     lines.push(`Loteria: ${lotteryUiLabel} • ${label}`);
 
@@ -1275,13 +1307,18 @@ export default function Downloads() {
         <div className="pp-export">
           <div className="pp-exportBar">
             <div className="pp-field">
-              <div className="pp-fieldLabel">UF</div>
+              <div className="pp-fieldLabel">Loteria</div>
               <select className="pp-select" value={ufUi} onChange={(e) => setUfUi(e.target.value)}>
-                <option value="PT_RIO">RJ</option>
-                <option value="PT_SP">São Paulo</option>
-                <option value="FEDERAL">Federal</option>
-                <option value="LOOK">LOOK</option>
-                <option value="NACIONAL">Nacional</option>
+                {LOTTERY_CATALOG_GLOBAL.map(
+                  (lottery) => (
+                    <option
+                      key={lottery.key}
+                      value={lottery.key}
+                    >
+                      {lottery.label}
+                    </option>
+                  )
+                )}
               </select>
             </div>
 

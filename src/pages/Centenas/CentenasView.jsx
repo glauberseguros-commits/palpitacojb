@@ -11,6 +11,8 @@ import {
   getImgFromGrupo as getImgFromGrupoFn,
 } from "../../constants/bichoMap";
 
+import { LOTTERY_CATALOG_GLOBAL } from "../../constants/lotteryCatalog";
+import { SCHEDULES } from "../../constants/schedule";
 /**
  * Centenas+ (PREMIUM)
  * ✅ Performance:
@@ -590,49 +592,21 @@ export default function CentenasView() {
       {
         id: "ALL",
         label: "Todas as loterias",
-        lotteryKeys: [
-          LOTTERY_KEYS.PT_RIO,
-          LOTTERY_KEYS.PT_SP,
-          LOTTERY_KEYS.FEDERAL,
-          LOTTERY_KEYS.LOOK,
-          LOTTERY_KEYS.NACIONAL,
-        ],
+        lotteryKeys:
+          LOTTERY_CATALOG_GLOBAL.map(
+            (lottery) =>
+              lottery.key
+          ),
       },
-      {
-        id: LOTTERY_KEYS.PT_RIO,
-        label: "PT Rio",
-        lotteryKeys: [
-          LOTTERY_KEYS.PT_RIO,
-        ],
-      },
-      {
-        id: LOTTERY_KEYS.PT_SP,
-        label: "São Paulo",
-        lotteryKeys: [
-          LOTTERY_KEYS.PT_SP,
-        ],
-      },
-      {
-        id: LOTTERY_KEYS.FEDERAL,
-        label: "Federal",
-        lotteryKeys: [
-          LOTTERY_KEYS.FEDERAL,
-        ],
-      },
-      {
-        id: LOTTERY_KEYS.LOOK,
-        label: "LOOK",
-        lotteryKeys: [
-          LOTTERY_KEYS.LOOK,
-        ],
-      },
-      {
-        id: LOTTERY_KEYS.NACIONAL,
-        label: "Nacional",
-        lotteryKeys: [
-          LOTTERY_KEYS.NACIONAL,
-        ],
-      },
+      ...LOTTERY_CATALOG_GLOBAL.map(
+        (lottery) => ({
+          id: lottery.key,
+          label: lottery.label,
+          lotteryKeys: [
+            lottery.key,
+          ],
+        })
+      ),
     ],
     []
   );
@@ -801,102 +775,48 @@ export default function CentenasView() {
   }, []);
 
   const horarioOptions = useMemo(() => {
-    const ptRioHours = [
-      "09:00",
-      "11:00",
-      "14:00",
-      "16:00",
-      "18:00",
-      "21:00",
-    ];
-
-    const ptSpHours = [
-      "08:00",
-      "10:00",
-      "12:00",
-      "13:00",
-      "15:00",
-      "17:00",
-      "19:00",
-      "20:00",
-    ];
-
-    const federalHours = [
-      "20:00",
-    ];
-
     let base = [];
 
-    if (
-      selectedLotteryKeys.includes(
-        LOTTERY_KEYS.PT_RIO
-      )
+    for (
+      const lotteryKey
+      of selectedLotteryKeys
     ) {
-      base.push(...ptRioHours);
-    }
+      const knownHours =
+        Object.prototype.hasOwnProperty.call(
+          SCHEDULES,
+          lotteryKey
+        ) &&
+        Array.isArray(
+          SCHEDULES[lotteryKey]
+        )
+          ? SCHEDULES[lotteryKey]
+          : [];
 
-    if (
-      selectedLotteryKeys.includes(
-        LOTTERY_KEYS.PT_SP
-      )
-    ) {
-      base.push(...ptSpHours);
-    }
-
-    if (
-      selectedLotteryKeys.includes(
-        LOTTERY_KEYS.FEDERAL
-      )
-    ) {
-      base.push(...federalHours);
-    }
-
-
-    if (
-      selectedLotteryKeys.includes(
-        LOTTERY_KEYS.LOOK
-      )
-    ) {
       base.push(
-        "07:00",
-        "09:00",
-        "11:00",
-        "14:00",
-        "16:00",
-        "18:00",
-        "21:00",
-        "23:00"
+        ...knownHours
       );
     }
 
-    if (
-      selectedLotteryKeys.includes(
-        LOTTERY_KEYS.NACIONAL
-      )
-    ) {
-      base.push(
-        "02:00",
-        "08:00",
-        "10:00",
-        "12:00",
-        "15:00",
-        "17:00",
-        "21:00",
-        "23:00"
-      );
-    }
-
-    base = [...new Set(base)].sort();
+    base =
+      Array.from(
+        new Set(base)
+      ).sort();
 
     return [
       {
         v: "Todos",
         label: "Todos",
       },
-      ...base.map((hour) => ({
-        v: hour,
-        label: hour.replace(":00", "h"),
-      })),
+      ...base.map(
+        (hour) => ({
+          v: hour,
+          label:
+            hour.replace(
+              ":00",
+              "h"
+            ),
+        })
+      ),
     ];
   }, [selectedLotteryKeys]);
 

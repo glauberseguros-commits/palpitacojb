@@ -10,6 +10,7 @@ const ROUTES = {
   ACCOUNT: "account",
   RESULTS: "results",
   TOP3: "top3",
+  RADAR_BICHOS: "radar-dos-bichos",
   TERNO_GRUPO: "terno-grupo",
   LATE: "late",
   SEARCH: "search",
@@ -435,6 +436,11 @@ export default function AppShell({ active, onNavigate, onLogout, children }) {
     { key: ROUTES.DASHBOARD, icon: "home", title: "Dashboard" },
     { key: ROUTES.RESULTS, icon: "calendar", title: "Resultados" },
     { key: ROUTES.TOP3, icon: "trophy", title: "Top 3" },
+    {
+      key: ROUTES.RADAR_BICHOS,
+      icon: "search",
+      title: "Radar dos Bichos",
+    },
     {
       key: ROUTES.TERNO_GRUPO,
       icon: "pets",

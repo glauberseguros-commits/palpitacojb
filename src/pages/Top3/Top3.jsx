@@ -11,22 +11,46 @@ import {
 import { useTop3Controller } from "./top3.hooks";
 import Top3View from "./Top3View";
 
-const TOP3_ROUTE_TO_LOTTERY = Object.freeze({
-  rj: "PT_RIO",
-  sp: "PT_SP",
-  federal: "FEDERAL",
-  look: "LOOK",
-  nacional: "NACIONAL",
-});
+import { LOTTERY_CATALOG_GLOBAL, getLotteryGlobal, getLotteryKeyBySlugGlobal, getLotterySlugGlobal, normalizeLotteryKeyGlobal } from "../../constants/lotteryCatalog";
+const TOP3_ENGINE_LOTTERIES = Object.freeze([
+  "PT_RIO",
+  "PT_SP",
+  "FEDERAL",
+  "LOOK",
+  "NACIONAL",
+]);
 
-const TOP3_LOTTERY_TO_ROUTE = Object.freeze({
-  PT_RIO: "/top3/rj",
-  RJ: "/top3/rj",
-  PT_SP: "/top3/sp",
-  FEDERAL: "/top3/federal",
-  LOOK: "/top3/look",
-  NACIONAL: "/top3/nacional",
-});
+const TOP3_ENGINE_LOTTERY_SET =
+  new Set(
+    TOP3_ENGINE_LOTTERIES
+  );
+
+const TOP3_GLOBAL_OPTIONS =
+  Object.freeze(
+    LOTTERY_CATALOG_GLOBAL.map(
+      (lottery) =>
+        Object.freeze({
+          value: lottery.key,
+          label: lottery.label,
+        })
+    )
+  );
+
+function isTop3EngineLottery(
+  lotteryKey
+) {
+  const key =
+    normalizeLotteryKeyGlobal(
+      lotteryKey
+    );
+
+  return (
+    !!key &&
+    TOP3_ENGINE_LOTTERY_SET.has(
+      key
+    )
+  );
+}
 
 function normalizeTop3RoutePath(pathname) {
   const raw = String(pathname || "").trim().toLowerCase();
@@ -35,21 +59,59 @@ function normalizeTop3RoutePath(pathname) {
 }
 
 function lotteryFromTop3Path(pathname) {
-  const path = normalizeTop3RoutePath(pathname);
+  const routePath =
+    normalizeTop3RoutePath(
+      pathname
+    );
 
-  if (path === "/top3") {
+  if (
+    routePath === "/top3"
+  ) {
     return "PT_RIO";
   }
 
-  const match = path.match(/^\/top3\/([^/]+)$/);
-  const slug = String(match?.[1] || "").toLowerCase();
+  const match =
+    routePath.match(
+      /^\/top3\/([^/]+)$/
+    );
 
-  return TOP3_ROUTE_TO_LOTTERY[slug] || "PT_RIO";
+  const slug =
+    String(
+      match?.[1] || ""
+    )
+      .trim()
+      .toLowerCase();
+
+  if (!slug) {
+    return "";
+  }
+
+  return (
+    getLotteryKeyBySlugGlobal(
+      slug
+    ) ||
+    ""
+  );
 }
 
 function top3PathForLottery(lotteryKey) {
-  const key = String(lotteryKey || "").trim().toUpperCase();
-  return TOP3_LOTTERY_TO_ROUTE[key] || "/top3/rj";
+  const key =
+    normalizeLotteryKeyGlobal(
+      lotteryKey
+    );
+
+  if (!key) {
+    return "";
+  }
+
+  const slug =
+    getLotterySlugGlobal(
+      key
+    );
+
+  return slug
+    ? `/top3/${slug}`
+    : "";
 }
 
 /**
@@ -199,64 +261,333 @@ function Top3GuestPreview() {
   );
 }
 
-function Top3Authenticated() {
-  const location = useLocation();
-  const navigate = useNavigate();
+function Top3SupportedRuntime({
+  routeLottery,
+}) {
+  const location =
+    useLocation();
 
-  const initialLotteryKey = lotteryFromTop3Path(location?.pathname);
-  const controller = useTop3Controller(initialLotteryKey);
-  const { lotteryKeySafe, setLotteryKey } = controller;
+  const navigate =
+    useNavigate();
+
+  const controller =
+    useTop3Controller(
+      routeLottery
+    );
+
+  const {
+    lotteryKeySafe,
+    setLotteryKey,
+  } = controller;
 
   React.useEffect(() => {
-    const routeLottery = lotteryFromTop3Path(location?.pathname);
-    const currentPath = normalizeTop3RoutePath(location?.pathname);
-    const canonicalPath = top3PathForLottery(routeLottery);
-
-    if (lotteryKeySafe !== routeLottery) {
-      setLotteryKey(routeLottery);
+    if (
+      !isTop3EngineLottery(
+        routeLottery
+      )
+    ) {
+      return;
     }
 
-    if (currentPath !== canonicalPath) {
-      navigate(canonicalPath, { replace: true });
+    if (
+      lotteryKeySafe !==
+      routeLottery
+    ) {
+      setLotteryKey(
+        routeLottery
+      );
     }
   }, [
-    location?.pathname,
-    navigate,
+    routeLottery,
     lotteryKeySafe,
     setLotteryKey,
   ]);
 
-  const setLotteryKeyWithRoute = React.useCallback(
-    (nextLotteryKey) => {
-      const key = String(nextLotteryKey || "").trim().toUpperCase();
-      const targetPath = top3PathForLottery(key);
-      const currentPath = normalizeTop3RoutePath(location?.pathname);
+  const setLotteryKeyWithRoute =
+    React.useCallback(
+      (nextLotteryKey) => {
+        const key =
+          normalizeLotteryKeyGlobal(
+            nextLotteryKey
+          );
 
-      if (!TOP3_LOTTERY_TO_ROUTE[key]) {
-        return;
-      }
-
-      if (currentPath === targetPath) {
-        if (lotteryKeySafe !== key) {
-          setLotteryKey(key);
+        if (!key) {
+          return;
         }
-        return;
-      }
 
-      navigate(targetPath);
-    },
-    [
-      lotteryKeySafe,
-      setLotteryKey,
-      location?.pathname,
-      navigate,
-    ]
-  );
+        const targetPath =
+          top3PathForLottery(
+            key
+          );
+
+        if (!targetPath) {
+          return;
+        }
+
+        const currentPath =
+          normalizeTop3RoutePath(
+            location?.pathname
+          );
+
+        if (
+          !isTop3EngineLottery(
+            key
+          )
+        ) {
+          navigate(
+            targetPath
+          );
+          return;
+        }
+
+        if (
+          currentPath ===
+          targetPath
+        ) {
+          if (
+            lotteryKeySafe !== key
+          ) {
+            setLotteryKey(
+              key
+            );
+          }
+
+          return;
+        }
+
+        navigate(
+          targetPath
+        );
+      },
+      [
+        location?.pathname,
+        navigate,
+        lotteryKeySafe,
+        setLotteryKey,
+      ]
+    );
 
   return (
     <Top3View
       {...controller}
-      setLotteryKey={setLotteryKeyWithRoute}
+      LOTTERY_OPTIONS={
+        TOP3_GLOBAL_OPTIONS
+      }
+      setLotteryKey={
+        setLotteryKeyWithRoute
+      }
+    />
+  );
+}
+
+function Top3CatalogOnlyState({
+  lotteryKey,
+}) {
+  const navigate =
+    useNavigate();
+
+  const lottery =
+    getLotteryGlobal(
+      lotteryKey
+    );
+
+  const selectedValue =
+    lottery?.key || "";
+
+  const onChange =
+    (event) => {
+      const nextKey =
+        normalizeLotteryKeyGlobal(
+          event.target.value
+        );
+
+      const nextPath =
+        top3PathForLottery(
+          nextKey
+        );
+
+      if (nextPath) {
+        navigate(
+          nextPath
+        );
+      }
+    };
+
+  return (
+    <section
+      style={{
+        width: "min(1180px, calc(100% - 32px))",
+        margin: "0 auto",
+        padding: "32px 0 64px",
+      }}
+    >
+      <div
+        style={{
+          border: "1px solid rgba(202,166,75,.32)",
+          borderRadius: 18,
+          background: "rgba(10,10,10,.92)",
+          padding: 20,
+        }}
+      >
+        <div
+          style={{
+            fontSize: 12,
+            fontWeight: 800,
+            letterSpacing: ".08em",
+            opacity: .65,
+            marginBottom: 8,
+          }}
+        >
+          TOP3
+        </div>
+
+        <h2
+          style={{
+            margin: "0 0 18px",
+          }}
+        >
+          {lottery
+            ? lottery.label
+            : "Loteria"}
+        </h2>
+
+        <label
+          style={{
+            display: "block",
+            marginBottom: 18,
+          }}
+        >
+          <span
+            style={{
+              display: "block",
+              fontSize: 12,
+              fontWeight: 800,
+              marginBottom: 7,
+            }}
+          >
+            Loteria
+          </span>
+
+          <select
+            value={
+              selectedValue
+            }
+            onChange={
+              onChange
+            }
+            style={{
+              width: "100%",
+              maxWidth: 360,
+              height: 42,
+              borderRadius: 12,
+              padding: "0 12px",
+              background: "#111",
+              color: "#fff",
+              border: "1px solid rgba(202,166,75,.40)",
+            }}
+          >
+            {!selectedValue ? (
+              <option value="">
+                Selecione uma loteria
+              </option>
+            ) : null}
+
+            {TOP3_GLOBAL_OPTIONS.map(
+              (option) => (
+                <option
+                  key={
+                    option.value
+                  }
+                  value={
+                    option.value
+                  }
+                >
+                  {option.label}
+                </option>
+              )
+            )}
+          </select>
+        </label>
+
+        <div
+          style={{
+            padding: "14px 16px",
+            borderRadius: 12,
+            background: "rgba(255,255,255,.04)",
+            lineHeight: 1.5,
+          }}
+        >
+          {lottery
+            ? "Esta loteria faz parte do catálogo do PalPitaco JB, mas o TOP3 ainda não possui motor configurado para ela."
+            : "Esta rota não corresponde a uma loteria reconhecida no catálogo."}
+        </div>
+      </div>
+    </section>
+  );
+}
+
+function Top3Authenticated() {
+  const location =
+    useLocation();
+
+  const navigate =
+    useNavigate();
+
+  const routeLottery =
+    lotteryFromTop3Path(
+      location?.pathname
+    );
+
+  React.useEffect(() => {
+    const currentPath =
+      normalizeTop3RoutePath(
+        location?.pathname
+      );
+
+    if (
+      currentPath === "/top3"
+    ) {
+      navigate(
+        "/top3/rj",
+        {
+          replace: true,
+        }
+      );
+    }
+  }, [
+    location?.pathname,
+    navigate,
+  ]);
+
+  if (
+    !routeLottery
+  ) {
+    return (
+      <Top3CatalogOnlyState
+        lotteryKey=""
+      />
+    );
+  }
+
+  if (
+    !isTop3EngineLottery(
+      routeLottery
+    )
+  ) {
+    return (
+      <Top3CatalogOnlyState
+        lotteryKey={
+          routeLottery
+        }
+      />
+    );
+  }
+
+  return (
+    <Top3SupportedRuntime
+      routeLottery={
+        routeLottery
+      }
     />
   );
 }

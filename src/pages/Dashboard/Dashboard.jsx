@@ -37,6 +37,7 @@ import {
   can,
 } from "../../services/accessControl";
 
+import { normalizeLotteryKeyGlobal } from "../../constants/lotteryCatalog";
 /* PERF_BENCH_DASHBOARD_V3 */
 const __perf = (label, fn) => {
   const startedAt = performance.now();
@@ -506,35 +507,11 @@ function clampRangeToBounds(next, minDate, maxDate) {
   return { from, to };
 }
 
-function normalizeLoteriaKey(v) {
-  const raw = String(v ?? "").trim();
-
-  if (!raw) return "PT_RIO";
-
-  const key = raw
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/\s+/g, " ")
-    .trim();
-
-  if (key === "federal" || key === "fed" || key === "br" || key === "brasil") return "FEDERAL";
-  if (key === "rj" || key === "rio" || key === "pt_rio" || key === "pt-rio") return "PT_RIO";
-
-  if (
-    key === "sp" ||
-    key === "pt_sp" ||
-    key === "pt-sp" ||
-    key === "sao paulo" ||
-    key === "saopaulo"
-  ) return "PT_SP";
-
-  const out = key
-    .toUpperCase()
-    .replace(/[^A-Z0-9]+/g, "_")
-    .replace(/^_+|_+$/g, "");
-
-  return out || "PT_RIO";
+function normalizeLoteriaKey(value) {
+  return (
+    normalizeLotteryKeyGlobal(value) ||
+    "PT_RIO"
+  );
 }
 
 function getDefaultFloorByUf(ufKey) {

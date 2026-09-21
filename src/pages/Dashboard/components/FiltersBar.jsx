@@ -1,6 +1,7 @@
 // src/pages/Dashboard/components/FiltersBar.jsx
 import React, { useMemo, useCallback } from "react";
 
+import { LOTTERY_OPTIONS_GLOBAL, normalizeLotteryKeyGlobal } from "../../../constants/lotteryCatalog";
 /**
  * FiltersBar (Premium)
  *
@@ -42,37 +43,11 @@ function sortPTBR(a, b) {
   return String(a).localeCompare(String(b), "pt-BR", { sensitivity: "base" });
 }
 
-function normalizeLoteriaInput(v) {
-  const raw = String(v ?? "").trim();
-  if (!raw) return "PT_RIO";
-
-  const key = raw
-    .toLowerCase()
-    .normalize("NFD")
-    .replace(/[\u0300-\u036f]/g, "")
-    .replace(/\s+/g, " ")
-    .trim();
-
-  if (key === "federal" || key === "fed" || key === "br" || key === "brasil")
-    return "FEDERAL";
-  if (key === "rj" || key === "rio" || key === "pt_rio" || key === "pt-rio")
-    return "PT_RIO";
-
-  if (
-    key === "sp" ||
-    key === "pt_sp" ||
-    key === "pt-sp" ||
-    key === "sao paulo" ||
-    key === "saopaulo"
-  )
-    return "PT_SP";
-
-  const out = key
-    .toUpperCase()
-    .replace(/[^A-Z0-9]+/g, "_")
-    .replace(/^_+|_+$/g, "");
-
-  return out || "PT_RIO";
+function normalizeLoteriaInput(value) {
+  return (
+    normalizeLotteryKeyGlobal(value) ||
+    "PT_RIO"
+  );
 }
 
 /** Normaliza posição para "1º..7º" ou "Todos" */
@@ -222,13 +197,8 @@ export default function FiltersBar({
     [filters?.loteria]
   );
   const defaultOptions = useMemo(() => {
-    const loteriasDefault = [
-      { label: "RJ", value: "PT_RIO" },
-      { label: "SP", value: "PT_SP" },
-      { label: "FEDERAL", value: "FEDERAL" },
-      { label: "LOOK", value: "LOOK" },
-      { label: "NACIONAL", value: "NACIONAL" },
-    ];
+    const loteriasDefault =
+      LOTTERY_OPTIONS_GLOBAL;
 
     const mesesDefault = [
       "Todos",
