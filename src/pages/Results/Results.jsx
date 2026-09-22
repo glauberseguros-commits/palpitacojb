@@ -507,9 +507,79 @@ function RowImg({ variants, alt, fallbackText }) {
   );
 }
 
-function resolveAnimalUI(prize) {
-  const grupo = guessPrizeGrupo(prize);
+function resolveAnimalUI(prize, scopeKey = "") {
+  let grupo = guessPrizeGrupo(prize);
   const animalRaw = guessPrizeAnimal(prize);
+
+  /*
+   * LBR_SPECIAL_DISPLAY_GROUP_FROM_DEZENA_V1
+   *
+   * P6/P7 continuam sendo resultados especiais.
+   * O grupo abaixo existe somente para exibicao:
+   * nome do bicho, grupo e imagem.
+   */
+  if (
+    !grupo &&
+    safeStr(scopeKey)
+      .trim()
+      .toUpperCase() === "LBR"
+  ) {
+    const pos =
+      guessPrizePos(prize);
+
+    const prizeType =
+      safeStr(
+        prize?.prizeType
+      )
+        .trim()
+        .toLowerCase();
+
+    const numero =
+      guessPrizeNumber(prize);
+
+    const digits =
+      safeStr(numero)
+        .replace(/\D+/g, "");
+
+    const isLbrSoma =
+      pos === 6 &&
+      prizeType === "soma" &&
+      /^\d{5}$/.test(digits);
+
+    const isLbrMultiplicacao =
+      pos === 7 &&
+      prizeType === "multiplicacao" &&
+      /^\d{3}$/.test(digits);
+
+    if (
+      isLbrSoma ||
+      isLbrMultiplicacao
+    ) {
+      const dezena2 =
+        digits.slice(-2);
+
+      if (dezena2 === "00") {
+        grupo = 25;
+      } else {
+        const dezenaNumber =
+          Number(dezena2);
+
+        const derivedGrupo =
+          Math.ceil(
+            dezenaNumber / 4
+          );
+
+        if (
+          Number.isInteger(derivedGrupo) &&
+          derivedGrupo >= 1 &&
+          derivedGrupo <= 25
+        ) {
+          grupo =
+            derivedGrupo;
+        }
+      }
+    }
+  }
 
   if (grupo) {
     const label = safeGetAnimalLabel(grupo, animalRaw);
@@ -636,7 +706,8 @@ function prizeLabelByPos(
     scope === "LBR" &&
     pos === 6
   ) {
-    return "TIRO CERTO";
+    /* LBR_P6_SOURCE_LABEL_SOMA_V1 */
+    return "SOMA";
   }
 
   if (
@@ -2238,7 +2309,7 @@ const hs = displayHour
                       const p = byPos.get(posWanted) || null;
 
                       const { grupo, label: animalLabelRaw, imgVariants } = p
-                        ? resolveAnimalUI(p)
+                        ? resolveAnimalUI(p, scopeKey)
                         : { grupo: null, label: "", imgVariants: [] };
 
                       const numero = p ? guessPrizeNumber(p) : "";
