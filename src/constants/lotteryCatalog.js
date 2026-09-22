@@ -33,23 +33,26 @@ export const LOTTERY_CATALOG_GLOBAL = Object.freeze([
   { key: "TRADICIONAL", label: "Tradicional", slug: "tradicional" },
 ]);
 
+export const LOTTERY_CATALOG_DISPLAY_GLOBAL =
+  Object.freeze(
+    [...LOTTERY_CATALOG_GLOBAL].sort((a, b) =>
+      a.label.localeCompare(
+        b.label,
+        "pt-BR",
+        { sensitivity: "base" }
+      )
+    )
+  );
+
 export const LOTTERY_OPTIONS_GLOBAL =
   Object.freeze(
-    LOTTERY_CATALOG_GLOBAL
-      .map(
-        (item) =>
-          Object.freeze({
-            value: item.key,
-            label: item.label,
-          })
-      )
-      .sort((a, b) =>
-        a.label.localeCompare(
-          b.label,
-          "pt-BR",
-          { sensitivity: "base" }
-        )
-      )
+    LOTTERY_CATALOG_DISPLAY_GLOBAL.map(
+      (item) =>
+        Object.freeze({
+          value: item.key,
+          label: item.label,
+        })
+    )
   );
 
 export const LOTTERY_KEYS_GLOBAL =

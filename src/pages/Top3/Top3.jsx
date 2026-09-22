@@ -11,7 +11,7 @@ import {
 import { useTop3Controller } from "./top3.hooks";
 import Top3View from "./Top3View";
 
-import { LOTTERY_CATALOG_GLOBAL, getLotteryGlobal, getLotteryKeyBySlugGlobal, getLotterySlugGlobal, normalizeLotteryKeyGlobal } from "../../constants/lotteryCatalog";
+import { LOTTERY_CATALOG_DISPLAY_GLOBAL, getLotteryGlobal, getLotteryKeyBySlugGlobal, getLotterySlugGlobal, normalizeLotteryKeyGlobal } from "../../constants/lotteryCatalog";
 const TOP3_ENGINE_LOTTERIES = Object.freeze([
   "PT_RIO",
   "PT_SP",
@@ -27,7 +27,7 @@ const TOP3_ENGINE_LOTTERY_SET =
 
 const TOP3_GLOBAL_OPTIONS =
   Object.freeze(
-    LOTTERY_CATALOG_GLOBAL.map(
+    LOTTERY_CATALOG_DISPLAY_GLOBAL.map(
       (lottery) =>
         Object.freeze({
           value: lottery.key,

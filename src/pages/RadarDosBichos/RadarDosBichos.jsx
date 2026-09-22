@@ -1,7 +1,7 @@
 import React, { useMemo, useState } from "react";
 import { getScheduleByLottery } from "../../constants/schedule";
 
-import { LOTTERY_CATALOG_GLOBAL } from "../../constants/lotteryCatalog";
+import { LOTTERY_CATALOG_DISPLAY_GLOBAL } from "../../constants/lotteryCatalog";
 /*
  * RADAR_DOS_BICHOS_SHELL_V1
  *
@@ -18,7 +18,7 @@ import { LOTTERY_CATALOG_GLOBAL } from "../../constants/lotteryCatalog";
  */
 
 const LOTTERIES =
-  LOTTERY_CATALOG_GLOBAL;
+  LOTTERY_CATALOG_DISPLAY_GLOBAL;
 
 const TABS = Object.freeze([
   {

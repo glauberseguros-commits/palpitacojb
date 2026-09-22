@@ -17,7 +17,7 @@ import {
   getImgFromGrupo as getImgFromGrupoFn,
 } from "../../constants/bichoMap";
 
-import { LOTTERY_CATALOG_GLOBAL } from "../../constants/lotteryCatalog";
+import { LOTTERY_CATALOG_DISPLAY_GLOBAL } from "../../constants/lotteryCatalog";
 /**
  * Late (Atrasados) — Premium
  *
@@ -288,7 +288,7 @@ function normalizeBoundsResponse(b) {
 }
 
 const LATE_LOTTERY_OPTIONS =
-  LOTTERY_CATALOG_GLOBAL.map(
+  LOTTERY_CATALOG_DISPLAY_GLOBAL.map(
     (lottery) => ({
       id: lottery.key,
       label: lottery.label,

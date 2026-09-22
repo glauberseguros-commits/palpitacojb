@@ -13,7 +13,7 @@ import {
   loadAccessSession,
 } from "../../services/accessControl";
 
-import { LOTTERY_CATALOG_GLOBAL } from "../../constants/lotteryCatalog";
+import { LOTTERY_CATALOG_DISPLAY_GLOBAL } from "../../constants/lotteryCatalog";
 import { SCHEDULES } from "../../constants/schedule";
 /**
  * Search — Premium (SEM índice)
@@ -542,7 +542,7 @@ async function runPool(items, worker, concurrency = 3) {
 }
 
 const SEARCH_LOTTERIES = Object.freeze(
-  LOTTERY_CATALOG_GLOBAL.map(
+  LOTTERY_CATALOG_DISPLAY_GLOBAL.map(
     (lottery) =>
       Object.freeze({
         value: lottery.key,

@@ -1740,7 +1740,7 @@ const list = Array.isArray(top3)
 
   const baseLots = Array.isArray(LOTTERY_OPTIONS) ? LOTTERY_OPTIONS : [];
   const mustHave = [
-    { value: "PT_RIO", label: "RJ" },
+    { value: "PT_RIO", label: "Rio de Janeiro" },
     { value: "FEDERAL", label: "Federal" },
     { value: "LOOK", label: "LOOK" },
     { value: "NACIONAL", label: "Nacional" },
@@ -1757,7 +1757,7 @@ const list = Array.isArray(top3)
         value: rawVal,
         label:
           rawVal === "PT_RIO"
-            ? "RJ"
+            ? "Rio de Janeiro"
             : op?.label || rawVal,
       });
     }
@@ -1782,6 +1782,13 @@ const list = Array.isArray(top3)
         )
     ),
   ].filter(Boolean);
+  lotOptions.sort((a, b) =>
+    String(a?.label || "").localeCompare(
+      String(b?.label || ""),
+      "pt-BR",
+      { sensitivity: "base" }
+    )
+  );
 
   const curLot = String(lotteryKeySafe || "PT_RIO").toUpperCase();
   const visibleTop3 = list.slice(0, 3);

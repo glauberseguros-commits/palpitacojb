@@ -7,10 +7,10 @@ import {
   getAnimalLabel,
 } from "../../constants/bichoMap";
 
-import { LOTTERY_CATALOG_GLOBAL } from "../../constants/lotteryCatalog";
+import { LOTTERY_CATALOG_DISPLAY_GLOBAL } from "../../constants/lotteryCatalog";
 import { SCHEDULES } from "../../constants/schedule";
 const LOTTERIES = Object.freeze(
-  LOTTERY_CATALOG_GLOBAL.map(
+  LOTTERY_CATALOG_DISPLAY_GLOBAL.map(
     (lottery) =>
       Object.freeze({
         value: lottery.key,

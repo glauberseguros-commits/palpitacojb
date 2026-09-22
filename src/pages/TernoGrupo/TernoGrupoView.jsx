@@ -205,7 +205,7 @@ const [quantityInput, setQuantityInput] =
     const required = [
       {
         value: "PT_RIO",
-        label: "RJ",
+        label: "Rio de Janeiro",
       },
       {
         value: "FEDERAL",
@@ -227,7 +227,7 @@ const [quantityInput, setQuantityInput] =
 
     const map = new Map();
 
-    [...required, ...source].forEach(
+    [...required, ...source]`r`n      .sort((a, b) =>`r`n        String(a?.label || "").localeCompare(`r`n          String(b?.label || ""),`r`n          "pt-BR",`r`n          { sensitivity: "base" }`r`n        )`r`n      )`r`n      .forEach(
       (option) => {
         const value = String(
           option?.value ??

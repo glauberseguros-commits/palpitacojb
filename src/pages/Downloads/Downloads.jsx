@@ -3,7 +3,7 @@ import React, { useEffect, useMemo, useState, useCallback, useRef } from "react"
 import { getKingResultsByRange, getKingBoundsByUf } from "../../services/kingResultsService";
 import { getAnimalLabel } from "../../constants/bichoMap";
 
-import { LOTTERY_CATALOG_GLOBAL, getLotteryLabelGlobal, normalizeLotteryKeyGlobal } from "../../constants/lotteryCatalog";
+import { LOTTERY_CATALOG_DISPLAY_GLOBAL, getLotteryLabelGlobal, normalizeLotteryKeyGlobal } from "../../constants/lotteryCatalog";
 import { SCHEDULES } from "../../constants/schedule";
 const GOLD = "rgba(202,166,75,1)";
 const GOLD_SOFT = "rgba(202,166,75,0.16)";
@@ -1309,7 +1309,7 @@ export default function Downloads() {
             <div className="pp-field">
               <div className="pp-fieldLabel">Loteria</div>
               <select className="pp-select" value={ufUi} onChange={(e) => setUfUi(e.target.value)}>
-                {LOTTERY_CATALOG_GLOBAL.map(
+                {LOTTERY_CATALOG_DISPLAY_GLOBAL.map(
                   (lottery) => (
                     <option
                       key={lottery.key}

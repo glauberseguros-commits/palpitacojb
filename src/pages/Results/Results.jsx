@@ -20,7 +20,7 @@ import {
   getSlugByGrupo,
 } from "../../constants/bichoMap";
 
-import { LOTTERY_CATALOG_GLOBAL, normalizeLotteryKeyGlobal, getLotteryLabelGlobal, getLotterySlugGlobal, getLotteryKeyBySlugGlobal } from "../../constants/lotteryCatalog";
+import { LOTTERY_CATALOG_DISPLAY_GLOBAL, normalizeLotteryKeyGlobal, getLotteryLabelGlobal, getLotterySlugGlobal, getLotteryKeyBySlugGlobal } from "../../constants/lotteryCatalog";
 /* =========================
    Helpers (locais e robustos)
 ========================= */
@@ -2073,7 +2073,7 @@ export default function Results() {
                     : "not-allowed",
                 }}
               >
-                {LOTTERY_CATALOG_GLOBAL.map((lottery) => {
+                {LOTTERY_CATALOG_DISPLAY_GLOBAL.map((lottery) => {
                   const value =
                     lottery.key === "PT_RIO"
                       ? SCOPE_RJ

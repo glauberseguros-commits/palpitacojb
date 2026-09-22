@@ -11,7 +11,7 @@ import {
   getImgFromGrupo as getImgFromGrupoFn,
 } from "../../constants/bichoMap";
 
-import { LOTTERY_CATALOG_GLOBAL } from "../../constants/lotteryCatalog";
+import { LOTTERY_CATALOG_GLOBAL, LOTTERY_CATALOG_DISPLAY_GLOBAL } from "../../constants/lotteryCatalog";
 import { SCHEDULES } from "../../constants/schedule";
 /**
  * Centenas+ (PREMIUM)
@@ -598,7 +598,7 @@ export default function CentenasView() {
               lottery.key
           ),
       },
-      ...LOTTERY_CATALOG_GLOBAL.map(
+      ...LOTTERY_CATALOG_DISPLAY_GLOBAL.map(
         (lottery) => ({
           id: lottery.key,
           label: lottery.label,
