@@ -563,6 +563,65 @@ function prizesCacheKeyAll(drawId) {
  * Se existir embeddedPrizes mas vier "agregado/incompleto" (sem grupo/posição válidos),
  * faz fallback e busca a subcollection draws/{id}/prizes.
  */
+/*
+ * LBR_SPECIAL_PRIZE_HYDRATION_V1
+ *
+ * Premio convencional:
+ * - exige position valida
+ * - exige grupo valido
+ *
+ * Excecoes LBR:
+ * - P6 / soma / 5 digitos
+ * - P7 / multiplicacao / 3 digitos
+ *
+ * P6/P7 permanecem sem grupo e sem animal.
+ */
+function isHydratablePrize(x) {
+  if (!isValidPosition(x?.position)) {
+    return false;
+  }
+
+  if (isValidGrupo(x?.grupo)) {
+    return true;
+  }
+
+  const position =
+    Number(x?.position);
+
+  const prizeType =
+    String(
+      x?.prizeType || ""
+    )
+      .trim()
+      .toLowerCase();
+
+  const digits =
+    String(
+      x?.displayValue ??
+      x?.raw ??
+      x?.numero ??
+      ""
+    ).replace(/\D+/g, "");
+
+  if (
+    position === 6 &&
+    prizeType === "soma" &&
+    /^\d{5}$/.test(digits)
+  ) {
+    return true;
+  }
+
+  if (
+    position === 7 &&
+    prizeType === "multiplicacao" &&
+    /^\d{3}$/.test(digits)
+  ) {
+    return true;
+  }
+
+  return false;
+}
+
 async function fetchPrizesForDraw(drawId, positionsArr, embeddedPrizes) {
   const drawKey = String(drawId || "").trim();
   if (!drawKey) return [];
@@ -573,7 +632,7 @@ async function fetchPrizesForDraw(drawId, positionsArr, embeddedPrizes) {
     );
 
     const cleaned = normalized.filter(
-      (x) => isValidGrupo(x?.grupo) && isValidPosition(x?.position)
+      (x) => isHydratablePrize(x)
     );
 
     if (cleaned.length) {
@@ -598,7 +657,7 @@ async function fetchPrizesForDraw(drawId, positionsArr, embeddedPrizes) {
   // console.log("DEBUG allRaw:", allRaw);
 
 const all = allRaw.filter(
-  (x) => isValidGrupo(x?.grupo) && isValidPosition(x?.position)
+  (x) => isHydratablePrize(x)
 );
 
 // console.log("DEBUG allFiltered:", all);
