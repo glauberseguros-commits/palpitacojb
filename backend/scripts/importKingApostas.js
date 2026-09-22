@@ -260,6 +260,46 @@ const NACIONAL_LOTTERY_KEY = "NACIONAL";
 const PT_SP_STATE_CODE = "SP";
 const PT_SP_LOTTERY_KEY = "PT_SP";
 
+/*
+ * KING9_UF_MAP_V1
+ *
+ * UF/região operacional das novas loterias King.
+ *
+ * MALUCA_FEDERAL pertence à família Maluquinha RJ.
+ * Não representa a FEDERAL nacional e portanto NÃO usa BR.
+ *
+ * POPULAR, CAPITAL e LBR permanecem fora deste mapa.
+ */
+const KING9_UF_BY_KEY =
+  Object.freeze({
+    MALUCA_FEDERAL:
+      "RJ",
+
+    MALUQUINHA_RIO:
+      "RJ",
+
+    BOA_SORTE:
+      "GO",
+
+    LOTEP:
+      "PB",
+
+    LOTECE:
+      "CE",
+
+    BAHIA:
+      "BA",
+
+    BA_MALUCA:
+      "BA",
+
+    MINAS:
+      "MG",
+
+    SORTE:
+      "RS",
+  });
+
 function resolveUfFromLotteryKey(lotteryKey) {
   const lk = String(lotteryKey || "").trim().toUpperCase();
   if (!lk) return null;
@@ -268,6 +308,9 @@ function resolveUfFromLotteryKey(lotteryKey) {
   if (lk === LOOK_LOTTERY_KEY) return LOOK_STATE_CODE;
   if (lk === NACIONAL_LOTTERY_KEY) return NACIONAL_STATE_CODE;
   if (lk === PT_SP_LOTTERY_KEY) return PT_SP_STATE_CODE;
+
+  const king9Uf = KING9_UF_BY_KEY[lk];
+  if (king9Uf) return king9Uf;
 
   // se for uma UF padrão de 2 letras (SP, MG, DF etc.), preserva
   if (/^[A-Z]{2}$/.test(lk)) return lk;
@@ -361,6 +404,96 @@ function normalizePrize(raw) {
   const grupo = dezenaToGrupo(dezena);
   const animal = grupo ? GRUPO_TO_ANIMAL[grupo] : null;
   return { raw: String(raw), milhar, centena, dezena, grupo, animal };
+}
+
+/*
+ * LBR_SPECIAL_PRIZE_NORMALIZER_V2
+ *
+ * Os prêmios 6 e 7 da LBR não são milhares.
+ *
+ * P6 = Soma
+ * P7 = Multiplicação
+ *
+ * Portanto nenhum deles recebe bicho,
+ * grupo, dezena, centena ou milhar.
+ */
+function normalizePrizeForLottery(
+  raw,
+  lotteryKey,
+  position
+) {
+  const key =
+    String(
+      lotteryKey || ""
+    )
+      .trim()
+      .toUpperCase();
+
+  const pos =
+    Number(position);
+
+  const value =
+    String(
+      raw ?? ""
+    ).trim();
+
+  if (
+    key === "LBR" &&
+    pos === 6
+  ) {
+    if (
+      !/^\d{5}$/.test(
+        value
+      )
+    ) {
+      throw new Error(
+        "INVALID_LBR_SOMA=" +
+        value
+      );
+    }
+
+    return {
+      raw: value,
+      displayValue: value,
+      prizeType: "soma",
+      milhar: null,
+      centena: null,
+      dezena: null,
+      grupo: null,
+      animal: null,
+    };
+  }
+
+  if (
+    key === "LBR" &&
+    pos === 7
+  ) {
+    if (
+      !/^\d{3}$/.test(
+        value
+      )
+    ) {
+      throw new Error(
+        "INVALID_LBR_MULTIPLICACAO=" +
+        value
+      );
+    }
+
+    return {
+      raw: value,
+      displayValue: value,
+      prizeType: "multiplicacao",
+      milhar: null,
+      centena: null,
+      dezena: null,
+      grupo: null,
+      animal: null,
+    };
+  }
+
+  return normalizePrize(
+    raw
+  );
 }
 
 function isISODate(s) {
@@ -526,6 +659,41 @@ function normalizeDrawCloseHour(draw, lotteryKey) {
 
   const lk = String(lotteryKey || "").trim().toUpperCase();
 
+  /*
+   * EXTERNAL_EXACT_MINUTE_SLOT_V1
+   *
+   * POPULAR e LBR possuem minutos oficiais que fazem parte
+   * da identidade do sorteio.
+   *
+   * Exemplos:
+   * POPULAR 09:30
+   * LBR     00:40
+   *
+   * Portanto, para estas loterias o close_hour deve ser
+   * preservado exatamente em HH:MM.
+   */
+  if (
+    lk === "POPULAR" ||
+    lk === "LBR"
+  ) {
+    const raw = String(
+      draw?.close_hour ||
+      draw?.close ||
+      ""
+    ).trim();
+
+    const exact =
+      normalizeHHMM(raw);
+
+    return {
+      raw,
+      slot:
+        exact && isHHMM(exact)
+          ? exact
+          : null,
+    };
+  }
+
   if (lk === "FEDERAL") {
     return {
       raw: base.raw,
@@ -533,6 +701,97 @@ function normalizeDrawCloseHour(draw, lotteryKey) {
         date: draw?.date || draw?.ymd || "",
         rawSlot: base.raw || base.slot,
       }),
+    };
+  }
+
+  /*
+   * KING_NOMINAL_NAME_SLOT_V1_1
+   *
+   * Novas loterias King:
+   * o horario oficial vem de name/lottery_name.
+   *
+   * Suporta explicitamente:
+   *
+   *   09H
+   *   09HS
+   *   16H
+   *   18HS
+   *
+   * close_hour da API permanece preservado como raw.
+   */
+  const kingNominalNameSlotKeys =
+    new Set([
+      "MALUCA_FEDERAL",
+      "MALUQUINHA_RIO",
+      "BOA_SORTE",
+      "LOTEP",
+      "LOTECE",
+      "BAHIA",
+      "BA_MALUCA",
+      "MINAS",
+      "SORTE",
+    ]);
+
+  if (
+    kingNominalNameSlotKeys.has(
+      lk
+    )
+  ) {
+    const lotteryName =
+      String(
+        draw?.lottery_name ||
+        draw?.name ||
+        ""
+      ).trim();
+
+    const nominalMatch =
+      lotteryName.match(
+        /\b(\d{1,2})\s*H(?:S)?\b/i
+      );
+
+    let nominalSlot =
+      null;
+
+    if (nominalMatch) {
+      const hour =
+        Number(
+          nominalMatch[1]
+        );
+
+      if (
+        Number.isInteger(hour) &&
+        hour >= 0 &&
+        hour <= 23
+      ) {
+        nominalSlot =
+          `${String(hour).padStart(2, "0")}:00`;
+      }
+    }
+
+    if (!nominalSlot) {
+      return base;
+    }
+
+    if (
+      base.slot &&
+      base.slot !==
+        nominalSlot
+    ) {
+      console.warn(
+        `[KING:SLOT_NORMALIZED] key=${lk}` +
+          ` name=${lotteryName}` +
+          ` api_close=${base.raw || draw?.close_hour || ""}` +
+          ` api_slot=${base.slot}` +
+          ` official_slot=${nominalSlot}`
+      );
+    }
+
+    return {
+      raw:
+        base.raw,
+
+      slot:
+        nominalSlot,
     };
   }
 
@@ -701,6 +960,7 @@ const LOTTERIES_BY_KEY = {
     "7d2862e8-ee2f-490f-afe7-690be3964b1e",
     "0911130d-82bf-4d70-a66f-4342d4dac9de",
   ],
+
   PT_RIO: [
     "c168d9b3-97b7-42dc-a332-7815edaa51e2",
     "cbac7c11-e733-400b-ba4d-2dfe0cba4272",
@@ -709,10 +969,12 @@ const LOTTERIES_BY_KEY = {
     "8290329b-aac0-4a6a-9649-5feb6182cf4f",
     "d5123f7e-629d-43e9-a8fb-1385ff1cba45",
   ],
+
   FEDERAL: [
     "9519c673-c3b8-4cb9-bcfe-9ddece3b03f3",
   ],
-    LOOK: [
+
+  LOOK: [
     "64d49fc1-9230-4d6a-92e5-5f2f70e5d352",
     "aaede2c3-8305-460a-a580-bb7c26ecd0b6",
     "fe478ce4-0387-4985-b35a-4656ecc40382",
@@ -722,7 +984,8 @@ const LOTTERIES_BY_KEY = {
     "09593bd0-4a14-4372-a550-e34bfd463bdd",
     "42881b70-6505-427d-8433-b8568c1220ac",
   ],
-    NACIONAL: [
+
+  NACIONAL: [
     "6c2b52ec-d613-4383-9c07-ff5ac7e04611",
     "76a3feee-faa6-4b6c-aae5-656fd6af7b6b",
     "4dda728b-bbd9-43eb-a17b-acf968b1eca0",
@@ -731,6 +994,79 @@ const LOTTERIES_BY_KEY = {
     "87db8fb6-8718-49c3-b739-96eec085e09d",
     "1eebc22a-890e-4598-86b5-6fda7e04ca4b",
     "2a424135-9b6a-4415-8a57-15e0d3abd736",
+  ],
+
+  MALUCA_FEDERAL: [
+    "e42c9408-4acc-4ba8-be9c-8ae95fe8f00c", // 11h
+    "73e5182e-0208-4fcb-b083-6ef3001e43d0", // 20h
+  ],
+
+  MALUQUINHA_RIO: [
+    "3f237a42-32ee-4f88-8734-d702f141393a", // 09h
+    "96569016-9c0d-4302-988c-a3740c4f8e84", // 11h
+    "1dc2cef0-89d7-4cbb-8f4d-a5125ebc188a", // 14h
+    "a41a2018-0cd2-461b-aeb6-58283d41b37c", // 16h
+    "70e14136-547a-42cf-9efd-7bb2c1b775ef", // 18h
+    "55eb318c-8078-48b7-b319-430e90fd5104", // 21h
+  ],
+
+  BOA_SORTE: [
+    "1b4ae960-c2bf-46cf-8d8d-f178b5d428d3", // 09h
+    "b1815862-0ca8-49d9-ac2c-398274da9de5", // 11h
+    "dd55c366-cb90-4183-b3d3-4098bb9f11df", // 14h
+    "5614bb46-7739-4222-bf4f-a18629347a77", // 16h
+    "2a467408-d961-4168-bbbd-110e3edb2e36", // 18h
+    "739edba9-50a8-4ee0-934e-6f5d91032fb5", // 21h
+  ],
+
+  LOTEP: [
+    "51bc048d-a423-4cfc-9e3d-f1c4490db31f", // 09h
+    "3d65c595-64aa-4b2e-9dae-22490b5fbe7c", // 10h
+    "0ba32c93-bb10-4eeb-a4a4-339bd5963ba1", // 12h
+    "0debc679-84c5-4e52-9375-cbfd3f1373ff", // 15h
+    "1f04c45b-f597-4841-b8a9-2825ff6b9011", // 18h
+    "b0d5a3f4-c5fe-429c-9aae-cf53975d653d", // 20h
+  ],
+
+  LOTECE: [
+    "ef29088b-27f0-472f-84eb-66086ceb8d76", // 10h
+    "2079e0a5-b530-4bc5-b0be-59ca8ef71060", // 14h
+    "5d9ff10b-0052-4737-a6a3-b038c1f8a0df", // 16h
+    "a8ffcfc2-d15e-4204-be7d-eb1b15b06131", // 19h
+  ],
+
+
+  BAHIA: [
+    "492511a2-0f92-4623-93f3-4fdd5a245d7c", // 10h
+    "89961016-4b49-48bd-842a-f5880e729d7c", // 12h
+    "3df7b2bc-0c26-44f2-909f-0fd8d4302c67", // 15h
+    "8226bffd-a13d-42af-be26-0890a2a627da", // 19h
+    "e166393c-91a2-438e-88c6-aac7cbe6c943", // Federal 20h
+    "15b711c6-4072-4c42-a26a-9ed7991c8823", // 21h
+    "cb3e4f03-1766-455a-b7ee-c7faf1336e4f", // Federal 11h
+  ],
+
+  BA_MALUCA: [
+    "54ee0219-3456-4c42-a5e9-0d37fb591a31", // 10h
+    "94e16c5a-d7f2-4ce7-aca1-5c371a59fcf6", // Federal 11h
+    "7be8b967-22b5-4707-8f43-b225d449ecc8", // 12h
+    "efb856d8-a3f7-40df-8235-ce2e59e79558", // 15h
+    "4206df18-77e9-4805-9d44-c90b0c69c9e6", // 19h
+    "89d90535-09f0-48e5-a2fd-b10bfb7b53cc", // 21h
+  ],
+
+
+  MINAS: [
+    "8db715db-1f61-45d2-b5c6-3f3fac0894ee", // Alvorada 12h
+    "0aadafa0-089b-4250-b3d8-a99d61d5fc62", // Salv 13h
+    "4f2501e7-aaad-41b4-90e0-64daadf2dfbf", // Dia 15h
+    "d75695c3-29d9-4fac-bbb1-f91ba2fd018e", // Noite 19h
+    "ce21ea3e-8cde-461e-9da0-786f7deec5df", // Pref 21h
+  ],
+
+  SORTE: [
+    "dc887839-dc06-4aaa-bb58-86b17c8c19b9", // 14h
+    "05a3cd11-76a1-48b8-a31e-0a0f6ab7d139", // 18h
   ],
 };
 
@@ -1320,9 +1656,16 @@ async function importFromPayload({
   lotteryKey,
   closeHour = null,
   skipIfAlreadyComplete = false,
+  source = "kingapostas",
+  ufOverride = null,
 } = {}) {
   const lk = String(lotteryKey || "").trim().toUpperCase();
-  const uf = resolveUfFromLotteryKey(lk); // ✅ UF correta (ex.: RJ)
+
+  const uf =
+    String(ufOverride || "")
+      .trim()
+      .toUpperCase() ||
+    resolveUfFromLotteryKey(lk);
 
   let batch = db.batch();
   let ops = 0;
@@ -1410,7 +1753,7 @@ async function importFromPayload({
     // gravada na subcoleção draws/{drawId}/prizes.
     const normalizedPrizes = prizes.map((p) => ({
       position: p.position,
-      ...normalizePrize(p.value),
+      ...normalizePrizeForLottery(p.value, lk, p.position),
     }));
 
     totalDrawsValid++;
@@ -1453,7 +1796,7 @@ async function importFromPayload({
     batch.set(
       drawRef,
       {
-        source: "kingapostas",
+        source: String(source || "kingapostas").trim() || "kingapostas",
 
         uf: uf || null,
         lottery_key: lk,
@@ -1461,6 +1804,57 @@ async function importFromPayload({
         lottery_name: lotteryName,
         lottery_id: lotteryIdFromDraw || null,
         drawId,
+
+        ...(draw?.source_primary
+          ? {
+              source_primary:
+                String(draw.source_primary),
+            }
+          : {}),
+
+        ...(draw?.source_primary_url
+          ? {
+              source_primary_url:
+                String(draw.source_primary_url),
+            }
+          : {}),
+
+        ...(draw?.source_confirmation
+          ? {
+              source_confirmation:
+                String(draw.source_confirmation),
+            }
+          : {}),
+
+        ...(draw?.source_confirmation_url
+          ? {
+              source_confirmation_url:
+                String(draw.source_confirmation_url),
+            }
+          : {}),
+
+        ...(draw?.external_confirmed === true
+          ? {
+              external_confirmed: true,
+            }
+          : {}),
+
+        /*
+         * EXTERNAL_PRIZE_CONTRACT_PERSISTENCE_V1
+         *
+         * Preserva contratos especiais fornecidos
+         * explicitamente pelo provider/importador externo.
+         * Para draws convencionais, nenhum campo adicional
+         * é criado.
+         */
+        ...(draw?.prize_contract
+          ? {
+              prize_contract:
+                String(
+                  draw.prize_contract
+                ).trim(),
+            }
+          : {}),
 
         date,
         ymd,
@@ -1491,7 +1885,7 @@ async function importFromPayload({
     if (filterClose) proof.targetWriteCount += 1;
 
     for (const p of prizes) {
-      const n = normalizePrize(p.value);
+      const n = normalizePrizeForLottery(p.value, lk, p.position);
       const prizeId = `p${String(p.position).padStart(2, "0")}`;
       const prizeRef = drawRef.collection("prizes").doc(prizeId);
 

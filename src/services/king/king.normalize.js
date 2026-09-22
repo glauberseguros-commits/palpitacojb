@@ -119,6 +119,89 @@ export function normalizePrize(p, prizeId) {
   const grupo = extractIntInRange(rawGrupo, 1, 25);
   const position = extractIntInRange(rawPos, 1, 10);
 
+  /*
+   * LBR_FRONTEND_SPECIAL_PRIZE_V2
+   *
+   * P6 = Soma na fonte / TIRO CERTO na UI
+   * P7 = Multiplicacao
+   *
+   * P6/P7 nao representam grupo, animal,
+   * dezena, centena ou milhar convencional.
+   */
+  const prizeType =
+    String(
+      p?.prizeType || ""
+    )
+      .trim()
+      .toLowerCase();
+
+  const specialRaw =
+    normalizeDigitsOnly(
+      p?.displayValue ??
+      p?.raw ??
+      ""
+    );
+
+  const isLbrSoma =
+    prizeType === "soma" &&
+    position === 6 &&
+    /^\d{5}$/.test(
+      specialRaw
+    );
+
+  const isLbrMultiplicacao =
+    prizeType === "multiplicacao" &&
+    position === 7 &&
+    /^\d{3}$/.test(
+      specialRaw
+    );
+
+  if (
+    isLbrSoma ||
+    isLbrMultiplicacao
+  ) {
+    return {
+      ...p,
+
+      prizeId:
+        prizeId ??
+        p?.prizeId ??
+        null,
+
+      position,
+      prizeType,
+
+      raw:
+        specialRaw,
+
+      displayValue:
+        specialRaw,
+
+      numero:
+        specialRaw,
+
+      digitsLen:
+        specialRaw.length,
+
+      grupo:
+        null,
+
+      milhar4:
+        null,
+
+      milhar:
+        null,
+
+      dezena2:
+        null,
+
+      centena3:
+        null,
+
+      animal: "",
+    };
+  }
+
   const numero = toPrizeDigitsByPosition(rawMilhar, position);
   const digitsLen = numero ? numero.length : null;
 

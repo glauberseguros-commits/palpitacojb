@@ -326,6 +326,9 @@ function guessPrizeNumber(p) {
   if (direct) return direct;
 
   const candidates = [
+    /* LBR_RESULTS_SPECIAL_PRIZE_V2 */
+    p?.displayValue,
+    p?.raw,
     p?.milhar,
     p?.milhares,
     p?.m,
@@ -572,22 +575,80 @@ function prizeRankClass(pos) {
   return "";
 }
 
-function formatPrizeNumberByPos(value, pos) {
+function formatPrizeNumberByPos(
+  value,
+  pos,
+  scopeKey = ""
+) {
   const s = safeStr(value);
+
   if (!s) return "";
 
-  const digits = s.replace(/\D+/g, "");
+  const digits =
+    s.replace(/\D+/g, "");
+
   if (!digits) return s;
 
+  const scope =
+    safeStr(scopeKey)
+      .trim()
+      .toUpperCase();
+
+  /* LBR_RESULTS_SPECIAL_PRIZE_V2 */
+  if (
+    scope === "LBR" &&
+    pos === 6
+  ) {
+    return digits
+      .slice(-5)
+      .padStart(5, "0");
+  }
+
+  if (
+    scope === "LBR" &&
+    pos === 7
+  ) {
+    return digits
+      .slice(-3)
+      .padStart(3, "0");
+  }
+
+  /* comportamento historico das demais loterias */
   if (pos === 7) {
     return digits.slice(-3);
   }
 
-  return digits.slice(-4).padStart(4, "0");
+  return digits
+    .slice(-4)
+    .padStart(4, "0");
 }
 
-function prizeLabelByPos(pos) {
-  return pos === 7 ? "CENTENA" : "MILHAR";
+function prizeLabelByPos(
+  pos,
+  scopeKey = ""
+) {
+  const scope =
+    safeStr(scopeKey)
+      .trim()
+      .toUpperCase();
+
+  if (
+    scope === "LBR" &&
+    pos === 6
+  ) {
+    return "TIRO CERTO";
+  }
+
+  if (
+    scope === "LBR" &&
+    pos === 7
+  ) {
+    return "MULTIPLICAÇÃO";
+  }
+
+  return pos === 7
+    ? "CENTENA"
+    : "MILHAR";
 }
 
 function scopePillClass(active) {
@@ -2207,7 +2268,7 @@ const hs = displayHour
                             {rows.map((r) => {
                               const gtxt = r.grupo ? `G${pad2(r.grupo)}` : "—";
                               const numFmt = r.numero
-                                ? formatPrizeNumberByPos(r.numero, r.pos)
+                                ? formatPrizeNumberByPos(r.numero, r.pos, scopeKey)
                                 : "";
 
                               return (
@@ -2245,7 +2306,7 @@ const hs = displayHour
                                     {r.numero ? (
                                       <>
                                         <span className="pp_numHint">
-                                          {prizeLabelByPos(r.pos)}
+                                          {prizeLabelByPos(r.pos, scopeKey)}
                                         </span>
                                         <span className="pp_numValue">{numFmt}</span>
                                       </>
