@@ -35,13 +35,21 @@ export const LOTTERY_CATALOG_GLOBAL = Object.freeze([
 
 export const LOTTERY_OPTIONS_GLOBAL =
   Object.freeze(
-    LOTTERY_CATALOG_GLOBAL.map(
-      (item) =>
-        Object.freeze({
-          value: item.key,
-          label: item.label,
-        })
-    )
+    LOTTERY_CATALOG_GLOBAL
+      .map(
+        (item) =>
+          Object.freeze({
+            value: item.key,
+            label: item.label,
+          })
+      )
+      .sort((a, b) =>
+        a.label.localeCompare(
+          b.label,
+          "pt-BR",
+          { sensitivity: "base" }
+        )
+      )
   );
 
 export const LOTTERY_KEYS_GLOBAL =
