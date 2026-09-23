@@ -6,7 +6,7 @@ const axios = require("axios");
 
 /* =========================
    DOW seguro para YYYY-MM-DD (independe de timezone)
-   - calcula como UTC do pr├│prio dia
+   - calcula como UTC do próprio dia
 ========================= */
 function dowFromYMD(dateYMD) {
   const m = String(dateYMD || "").match(/^(\d{4})-(\d{2})-(\d{2})$/);
@@ -26,18 +26,18 @@ const {
   isPtRioSaturday19Expected,
 } = require("./ptRioCalendar");
 
-// Ô£à LOTTERY parametriz├ível por env (default PT_RIO)
+// ✅ LOTTERY parametrizável por env (default PT_RIO)
 const LOTTERY = String(process.env.LOTTERY || "PT_RIO").trim().toUpperCase() || "PT_RIO";
 
 const LOG_DIR = path.join(__dirname, "..", "logs");
 
-// Logs (por loteria para n├úo misturar)
+// Logs (por loteria para não misturar)
 const LOG_FILE = path.join(LOG_DIR, `autoImportToday-${LOTTERY}.log`);
 
-// Lock para evitar concorr├¬ncia (por loteria)
+// Lock para evitar concorrência (por loteria)
 const LOCK_FILE = path.join(LOG_DIR, `autoImport-${LOTTERY}.lock`);
 
-// TTL do lock (ambientes locais). Em GitHub Actions, o workspace ├® isolado por execu├º├úo.
+// TTL do lock (ambientes locais). Em GitHub Actions, o workspace é isolado por execução.
 const LOCK_TTL_MS = 90 * 1000; // 1m30s
 
 // Auditoria: thresholds (minutos)
@@ -45,22 +45,22 @@ const WARN_AFTER_MIN = Number(process.env.AUDIT_WARN_MIN || 20);
 const CRIT_AFTER_MIN = Number(process.env.AUDIT_CRIT_MIN || 60);
 const FAIL_ON_CRITICAL = String(process.env.FAIL_ON_CRITICAL || "0").trim() === "1";
 
-// Ô£à Limite de catch-up p├│s-janela (minutos ap├│s windowEnd)
-// Default 1440: qualquer slot anterior do mesmo dia continua recuper├ível
+// ✅ Limite de catch-up pós-janela (minutos após windowEnd)
+// Default 1440: qualquer slot anterior do mesmo dia continua recuperável
 const CATCHUP_MAX_AFTER_END_MIN = Number(process.env.CATCHUP_MAX_AFTER_END_MIN || 1440);
 
-// Ô£à PROBE/SOFT da FEDERAL: limite de tentativas por slot/dia (anti-spam)
+// ✅ PROBE/SOFT da FEDERAL: limite de tentativas por slot/dia (anti-spam)
 // default 2 (tenta 2 ticks e para, mesmo que o cron rode mais vezes)
 const FEDERAL_SOFT_MAX_TRIES_PER_DAY = Number(process.env.FEDERAL_SOFT_MAX_TRIES_PER_DAY || 2);
 
 /**
- * Ô£à Base URL do backend (pra ler dayStatus sem duplicar regra)
+ * ✅ Base URL do backend (pra ler dayStatus sem duplicar regra)
  * - Local default: http://127.0.0.1:3333
  * - Override: PITACO_API_BASE="https://seu-dominio"
  */
 let PITACO_API_BASE = String(process.env.PITACO_API_BASE || "http://127.0.0.1:3333").trim();
 
-// Ô£à hardening: se vier "localhost:3334" (ou 3333 errado), cai automaticamente pro backend local padr├úo
+// ✅ hardening: se vier "localhost:3334" (ou 3333 errado), cai automaticamente pro backend local padrão
 try {
   const u = new URL(PITACO_API_BASE);
   const host = String(u.hostname || "").toLowerCase();
@@ -70,7 +70,7 @@ try {
   }
 } catch {}
 
-// Ô£à log da base efetiva (ajuda a detectar env polu├¡do)
+// ✅ log da base efetiva (ajuda a detectar env poluído)
 try {
   const eff = PITACO_API_BASE;
   if (!globalThis.__PITACO_API_BASE_LOGGED__) {
@@ -80,7 +80,7 @@ try {
 } catch {}
 
 /**
- * Ô£à Cache do DayStatus (evita bater no backend a cada tick do cron)
+ * ✅ Cache do DayStatus (evita bater no backend a cada tick do cron)
  * - Arquivo por (loteria+dia)
  * - TTL default: 10 min
  */
@@ -140,7 +140,7 @@ const SCHEDULES = {
     { hour: "14:00", windowStart: "14:05", releaseAt: "14:29", windowEnd: "14:35" },
     { hour: "16:00", windowStart: "16:05", releaseAt: "16:29", windowEnd: "16:35" },
     { hour: "18:00", windowStart: "18:05", releaseAt: "18:29", windowEnd: "18:35" },
-    // Desde 18/07/2026, s├íbado: sorteio 19h, com publica├º├úo prevista a partir de 19h20.
+    // Desde 18/07/2026, sábado: sorteio 19h, com publicação prevista a partir de 19h20.
     { hour: "19:00", windowStart: "19:20", releaseAt: "19:20", windowEnd: "19:50" },
     // 21h: janela longa
     { hour: "21:00", windowStart: "21:05", releaseAt: "21:05", windowEnd: "21:45" },
@@ -366,7 +366,7 @@ function todayYMDInSaoPaulo() {
 }
 
 function nowHMInSaoPaulo() {
-  // Ô£à Override para testes (sem mexer no rel├│gio do sistema)
+  // ✅ Override para testes (sem mexer no relógio do sistema)
   const ov = String(process.env.NOW_HM || "").trim();
   const mOv = ov.match(/^(\d{2}):(\d{2})$/);
   if (mOv) {
@@ -517,13 +517,13 @@ function isAllDoneHardOnly(state, statusMap) {
 }
 
 /**
- * Gera closes candidatos (toler├óncia de minutos)
+ * Gera closes candidatos (tolerância de minutos)
  */
 function closeCandidates(hhmm) {
   const s = String(hhmm || "").trim();
 
   // PT_RIO 21h pode sair como fechamento de 21:30.
-  // Mant├®m os closes hist├│ricos e adiciona a faixa 21:29~21:32.
+  // Mantém os closes históricos e adiciona a faixa 21:29~21:32.
   if (LOTTERY === "PT_RIO" && s === "21:00") {
     return [
       "21:00", "21:01", "21:02",
@@ -550,7 +550,7 @@ function closeCandidates(hhmm) {
 }
 
 /* =========================
-   FEDERAL PROBE: valida se o resultado pertence ao hor├írio do slot
+   FEDERAL PROBE: valida se o resultado pertence ao horário do slot
    - usa targetDrawIds no formato: FEDERAL__YYYY-MM-DD__20-00__uuid
 ========================= */
 function slotHourKey(slotHHMM) {
@@ -562,9 +562,9 @@ function slotHourKey(slotHHMM) {
 
 function resultMatchesSlotHour(r, slotHHMM) {
   const key = slotHourKey(slotHHMM);
-  if (!key) return true; // se n├úo d├í pra inferir, n├úo bloqueia
+  if (!key) return true; // se não dá pra inferir, não bloqueia
   const ids = Array.isArray(r && r.targetDrawIds) ? r.targetDrawIds.map(String) : [];
-  if (ids.length === 0) return true; // sem id, n├úo bloqueia
+  if (ids.length === 0) return true; // sem id, não bloqueia
   return ids.some((id) => String(id).includes("__" + key + "__"));
 }
 
@@ -850,7 +850,7 @@ function slotWindow(schedule) {
 }
 
 /* =========================
-   Lock (anti-concorr├¬ncia)
+   Lock (anti-concorrência)
 ========================= */
 function acquireLock() {
   ensureLogDir();
@@ -884,7 +884,7 @@ function releaseLock() {
 }
 
 /* =========================
-   DayStatus guard + agenda din├ómica
+   DayStatus guard + agenda dinâmica
 ========================= */
 async function fetchDayStatusFromBackend({ date, lottery }) {
   try {
@@ -909,12 +909,12 @@ async function fetchDayStatusFromBackend({ date, lottery }) {
       blockedReason: String(j.blockedReason || "").trim(),
       count: Number.isFinite(Number(j.count)) ? Number(j.count) : null,
 
-      // Ô£à debug (n├úo ├® fonte da verdade pro FEDERAL fixed)
+      // ✅ debug (não é fonte da verdade pro FEDERAL fixed)
       expectedHard: Array.isArray(j.expectedHard) ? j.expectedHard.map(String) : [],
       expectedSoft: Array.isArray(j.expectedSoft) ? j.expectedSoft.map(String) : [],
       presentHours: Array.isArray(j.presentHours) ? j.presentHours.map(String) : [],
 
-      // debug ├║til
+      // debug útil
       slotsSummary: j.slotsSummary ?? null,
       slots: Array.isArray(j.slots) ? j.slots : [],
     };
@@ -952,7 +952,7 @@ function applyHolidayNoDrawToState({ state, statusMap, isoNow }) {
 }
 
 /* =========================
-   Verifica├º├úo de persist├¬ncia (BIRTH-GUARD)
+   Verificação de persistência (BIRTH-GUARD)
    (mantido como no seu arquivo)
 ========================= */
 const VERIFY_PERSISTED = String(process.env.VERIFY_PERSISTED || "1").trim() === "1";
@@ -1144,7 +1144,7 @@ async function guardPersistedOrCritical({ date, slotHHMM, calendar, closeHourTri
   });
 
   logLine(
-    `[BIRTH-GUARD] CRITICAL slot=${slotHHMM} date=${date} calendar=${calendar || "ÔÇö"} closeTried=${closeHourTried || "ÔÇö"} reason=${
+    `[BIRTH-GUARD] CRITICAL slot=${slotHHMM} date=${date} calendar=${calendar || "—"} closeTried=${closeHourTried || "—"} reason=${
       v.reason || "NOT_PERSISTED"
     } file=${path.basename(file)}`,
     "ERROR"
@@ -1156,7 +1156,7 @@ async function guardPersistedOrCritical({ date, slotHHMM, calendar, closeHourTri
 }
 
 /**
- * Reconcilia o state tempor├írio do runner com os hor├írios
+ * Reconcilia o state temporário do runner com os horários
  * realmente presentes no backend/Firestore.
  */
 function syncStateFromBackendSnapshot({
@@ -1351,7 +1351,7 @@ async function main() {
 
   if (isFutureISODate(date)) {
     const todayBR = todayYMDInSaoPaulo();
-    logLine(`[GUARD] FUTURE_DATE_BLOCKED date=${date} todayBR=${todayBR} (n├úo vamos importar)`, "ERROR");
+    logLine(`[GUARD] FUTURE_DATE_BLOCKED date=${date} todayBR=${todayBR} (não vamos importar)`, "ERROR");
     process.exit(2);
     return;
   }
@@ -1376,7 +1376,7 @@ async function main() {
     const state = loadState(date);
     const isoNow = new Date().toISOString();
 
-    // Ô£à Buscar DS cedo (cache)
+    // ✅ Buscar DS cedo (cache)
     const ds = await fetchDayStatusCached({ date, lottery: LOTTERY });
 
     let statusMap = null;
@@ -1395,7 +1395,7 @@ async function main() {
 
       if (!federalDayStatus) {
         logLine(
-          `[CAL] FEDERAL dayStatus indispon├¡vel: ` +
+          `[CAL] FEDERAL dayStatus indisponível: ` +
             `date=${date}; mantendo regra PT_RIO base`,
           "ERROR"
         );
@@ -1443,7 +1443,7 @@ async function main() {
       }
     }
 
-    // O workspace do GitHub Actions ├® novo a cada execu├º├úo.
+    // O workspace do GitHub Actions é novo a cada execução.
     // Antes de auditar, sincroniza o state local com a fonte real.
     const syncedFromBackend = syncStateFromBackendSnapshot({
       state,
@@ -1460,7 +1460,7 @@ async function main() {
       );
     }
 
-    // Ô£à Se o dia j├í est├í completo, gera audit e encerra
+    // ✅ Se o dia já está completo, gera audit e encerra
     if (isAllDoneHardOnly(state, statusMap)) {
       try {
         const report = buildAuditReport({ date, nowMin, isoNow: new Date().toISOString(), dow, statusMap, state });
@@ -1470,7 +1470,7 @@ async function main() {
         }
         safeWriteJson(auditOutFile(date), report);
       } catch {}
-      logLine(`[AUTO] DIA COMPLETO (${date}) ÔÇö slots conclu├¡dos (skip import)`, "INFO");
+      logLine(`[AUTO] DIA COMPLETO (${date}) — slots concluídos (skip import)`, "INFO");
       return;
     }
 
@@ -1509,7 +1509,7 @@ async function main() {
       } catch {}
 
       logLine(
-        `[DAY_STATUS] holiday_no_draw confirmado (blockedReason=${ds.blockedReason || "ÔÇö"}). Slots aplic├íveis -> N/A. Encerrando.`,
+        `[DAY_STATUS] holiday_no_draw confirmado (blockedReason=${ds.blockedReason || "—"}). Slots aplicáveis -> N/A. Encerrando.`,
         "INFO"
       );
       return;
@@ -1517,7 +1517,7 @@ async function main() {
 
     let didSomething = false;
 
-    // 2) Processa slots aplic├íveis (HARD/SOFT)
+    // 2) Processa slots aplicáveis (HARD/SOFT)
     for (const sched of SCHEDULE) {
       const slot = state[sched.hour];
       if (!slot) continue;
@@ -1527,7 +1527,7 @@ async function main() {
       const applies = st === "HARD" || st === "SOFT";
       if (!applies) continue;
 
-      // Ô£à anti-spam: PROBE/SOFT da FEDERAL para depois de N tentativas/dia
+      // ✅ anti-spam: PROBE/SOFT da FEDERAL para depois de N tentativas/dia
       if (LOTTERY === "FEDERAL" && st === "SOFT") {
         const tries = Number(slot.tries || 0);
         if (Number.isFinite(FEDERAL_SOFT_MAX_TRIES_PER_DAY) && FEDERAL_SOFT_MAX_TRIES_PER_DAY > 0) {
@@ -1554,7 +1554,7 @@ async function main() {
         catchupTried.add(key);
 
         logLine(
-          `[AUTO] CATCH-UP p├│s-release ${date} slot=${sched.hour} (${st}) releaseAt=${w.releaseLabel} window=${w.startLabel}~${w.endLabel} (fora da janela)`,
+          `[AUTO] CATCH-UP pós-release ${date} slot=${sched.hour} (${st}) releaseAt=${w.releaseLabel} window=${w.startLabel}~${w.endLabel} (fora da janela)`,
           "INFO"
         );
       }
@@ -1660,7 +1660,7 @@ async function main() {
         let doneByAlreadyComplete = alreadyCompleteAll === true;
         let doneByCaptureWrite = captured === true && (savedCount > 0 || writeCount > 0);
 
-        // Ô£à FEDERAL PROBE (SOFT): n├úo marca DONE se o resultado n├úo for do hor├írio do slot
+        // ✅ FEDERAL PROBE (SOFT): não marca DONE se o resultado não for do horário do slot
         if (LOTTERY === "FEDERAL" && st === "SOFT") {
           if (!resultMatchesSlotHour(r, sched.hour)) {
             doneByAlreadyComplete = false;
@@ -1674,7 +1674,7 @@ async function main() {
 
             logLine(
               `[AUTO] FEDERAL PROBE mismatch: slot=${sched.hour} close=${closeHour} targetDrawIds=${
-                Array.isArray(r && r.targetDrawIds) ? r.targetDrawIds.join(",") : "ÔÇö"
+                Array.isArray(r && r.targetDrawIds) ? r.targetDrawIds.join(",") : "—"
               } -> mantendo PENDENTE`,
               "INFO"
             );
@@ -1713,7 +1713,7 @@ async function main() {
           saveState(date, state);
 
           if (doneByAlreadyComplete) {
-            logLine(`[AUTO] FS j├í tem slot=${sched.hour} COMPLETO (close=${closeHour}) -> DONE`, "INFO");
+            logLine(`[AUTO] FS já tem slot=${sched.hour} COMPLETO (close=${closeHour}) -> DONE`, "INFO");
             await guardPersistedOrCritical({
               date,
               slotHHMM: sched.hour,
@@ -1742,7 +1742,7 @@ async function main() {
           logLine(`[AUTO] falhou slot=${sched.hour} (erros em closes candidatos)`, "ERROR");
           didSomething = true;
         } else {
-          logLine(`[AUTO] ainda indispon├¡vel slot=${sched.hour} (nenhum close candidato capturou)`, "INFO");
+          logLine(`[AUTO] ainda indisponível slot=${sched.hour} (nenhum close candidato capturou)`, "INFO");
         }
       }
     }
@@ -1758,7 +1758,7 @@ async function main() {
       }
     } catch {}
 
-    // 3) Auditoria p├│s-execu├º├úo
+    // 3) Auditoria pós-execução
     try {
       const report = buildAuditReport({ date, nowMin, isoNow: new Date().toISOString(), dow, statusMap, state });
 
@@ -1770,7 +1770,7 @@ async function main() {
 
       if (report.status === "critical") {
         logLine(
-          `[AUDIT] CRITICAL missing=${report.criticalCount} warning=${report.warningCount} softLate=${report.softLateCount} (relat├│rio salvo em ${path.basename(
+          `[AUDIT] CRITICAL missing=${report.criticalCount} warning=${report.warningCount} softLate=${report.softLateCount} (relatório salvo em ${path.basename(
             auditOutFile(date)
           )})`,
           "ERROR"
@@ -1781,7 +1781,7 @@ async function main() {
         }
       } else if (report.status === "warning") {
         logLine(
-          `[AUDIT] WARNING missing=${report.warningCount} softLate=${report.softLateCount} (relat├│rio salvo em ${path.basename(
+          `[AUDIT] WARNING missing=${report.warningCount} softLate=${report.softLateCount} (relatório salvo em ${path.basename(
             auditOutFile(date)
           )})`,
           "INFO"
@@ -1790,10 +1790,10 @@ async function main() {
         logLine(`[AUDIT] OK (sem furos HARD acima de ${WARN_AFTER_MIN} min) softLate=${report.softLateCount}`, "INFO");
       }
     } catch (e) {
-      logLine(`[AUDIT] erro ao gerar relat├│rio: ${e?.message || e}`, "ERROR");
+      logLine(`[AUDIT] erro ao gerar relatório: ${e?.message || e}`, "ERROR");
     }
 
-    if (isAllDoneHardOnly(state, statusMap)) logLine(`[AUTO] DIA COMPLETO (${date}) ÔÇö slots conclu├¡dos`, "INFO");
+    if (isAllDoneHardOnly(state, statusMap)) logLine(`[AUTO] DIA COMPLETO (${date}) — slots concluídos`, "INFO");
     else if (!didSomething) logLine(`[AUTO] nada para fazer agora (${date})`, "INFO");
   } finally {
     releaseLock();
