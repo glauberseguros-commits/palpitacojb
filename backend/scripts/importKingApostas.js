@@ -2379,48 +2379,54 @@ async function runImport({ date, lotteryKey = "PT_RIO", closeHour = null } = {})
   };
 
   const historySyncStartedAt = Date.now();
+  const supportsTop3 = new Set([
+    "PT_RIO", "FEDERAL", "LOOK", "NACIONAL", "PT_SP",
+  ]).has(lk);
 
   let firestoreQuotaBlocked = false;
 
   let top3HistorySync = {
     ok: true,
     skipped: true,
-    reason: "not_attempted",
+    reason: supportsTop3 ? "not_attempted" : "lottery_without_top3_engine",
   };
 
-  try {
-    top3HistorySync =
-      await syncImportedResultToTop3History(
-        response
-      );
-  } catch (error) {
-    top3HistorySync = {
-      ok: false,
-      skipped: false,
-      error:
-        error?.message ||
-        String(error),
-    };
+  if (supportsTop3) {
+    try {
+      top3HistorySync =
+        await syncImportedResultToTop3History(
+          response
+        );
+    } catch (error) {
+      top3HistorySync = {
+        ok: false,
+        skipped: false,
+        error:
+          error?.message ||
+          String(error),
+      };
 
-    if (isFirestoreQuotaError(error)) {
-      firestoreQuotaBlocked = true;
+      if (isFirestoreQuotaError(error)) {
+        firestoreQuotaBlocked = true;
 
-      console.warn(
-        "[TOP3 QUOTA BREAKER] HISTORY SYNC -> quota; " +
-        "reconciliation e auto prediction ignorados neste ciclo."
-      );
-    } else {
-      console.error(
-        "[TOP3 HISTORY SYNC] falhou:",
-        error?.stack ||
-        error?.message ||
-        error
-      );
+        console.warn(
+          "[TOP3 QUOTA BREAKER] HISTORY SYNC -> quota; " +
+          "reconciliation e auto prediction ignorados neste ciclo."
+        );
+      } else {
+        console.error(
+          "[TOP3 HISTORY SYNC] falhou:",
+          error?.stack ||
+          error?.message ||
+          error
+        );
+      }
     }
   }
 
   // O history sync também pode retornar erro de quota sem lançar exceção.
   if (
+    supportsTop3 &&
     !firestoreQuotaBlocked &&
     isFirestoreQuotaError(top3HistorySync)
   ) {
@@ -2441,10 +2447,11 @@ async function runImport({ date, lotteryKey = "PT_RIO", closeHour = null } = {})
   let top3ResultReconciliation = {
     ok: true,
     skipped: true,
-    reason: "result_not_captured",
+    reason: supportsTop3 ? "result_not_captured" : "lottery_without_top3_engine",
   };
 
   if (
+    supportsTop3 &&
     !firestoreQuotaBlocked &&
     response?.ok === true &&
     response?.captured === true &&
@@ -2545,6 +2552,7 @@ async function runImport({ date, lotteryKey = "PT_RIO", closeHour = null } = {})
   });
 
   if (
+    supportsTop3 &&
     !firestoreQuotaBlocked &&
     response.ok === true &&
     response.blocked !== true &&
@@ -2715,7 +2723,9 @@ async function runImport({ date, lotteryKey = "PT_RIO", closeHour = null } = {})
     }
   } else {
     const top3AutoSkipReason =
-      firestoreQuotaBlocked
+      !supportsTop3
+        ? "lottery_without_top3_engine"
+        : firestoreQuotaBlocked
         ? "firestore_quota_blocked"
         : response.blocked === true
         ? "import_blocked"
@@ -2805,6 +2815,4 @@ module.exports = {
   importFromPayload,
   buildResultsUrl,
 };
-
-
 

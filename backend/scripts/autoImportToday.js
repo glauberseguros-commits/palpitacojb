@@ -18,6 +18,7 @@ function dowFromYMD(dateYMD) {
 }
 
 const { runImport } = require("./importKingApostas");
+const { getDb } = require("../service/firebaseAdmin");
 const { main: runLbrToday } = require("./autoImportLbrToday");
 const {
   getFederalScheduleForDate,
@@ -29,6 +30,11 @@ const {
 
 // ✅ LOTTERY parametrizável por env (default PT_RIO)
 const LOTTERY = String(process.env.LOTTERY || "PT_RIO").trim().toUpperCase() || "PT_RIO";
+
+const KING9_LOTTERIES = new Set([
+  "MALUCA_FEDERAL", "MALUQUINHA_RIO", "BOA_SORTE",
+  "LOTEP", "LOTECE", "BAHIA", "BA_MALUCA", "MINAS", "SORTE",
+]);
 
 const LOG_DIR = path.join(__dirname, "..", "logs");
 
@@ -129,6 +135,30 @@ async function fetchDayStatusCached({ date, lottery }) {
   const value = await fetchDayStatusFromBackend({ date, lottery });
   writeJsonSafeFile(f, { atMs: nowMs, iso: new Date().toISOString(), value });
   return value;
+}
+
+// /api/pitaco/results ainda não atende as nove loterias King. Consulta apenas
+// os documentos completos da loteria para não refazer o fetch da fonte a cada
+// nova execução do Cloud Run, cujo disco local é temporário.
+async function fetchKing9DaySnapshot(date) {
+  const snapshot = await getDb()
+    .collection("draws")
+    .where("date", "==", date)
+    .where("lottery_key", "==", LOTTERY)
+    .get();
+
+  return {
+    blocked: false,
+    presentHours: snapshot.docs
+      .map((doc) => doc.data() || {})
+      .filter((draw) =>
+        Number(draw.prizesCount) >= 5 &&
+        Array.isArray(draw.prizes) &&
+        draw.prizes.length >= 5
+      )
+      .map((draw) => String(draw.close_hour || ""))
+      .filter((slot) => /^\d{2}:00$/.test(slot)),
+  };
 }
 
 /* =========================
@@ -1378,7 +1408,9 @@ async function main() {
     const isoNow = new Date().toISOString();
 
     // ✅ Buscar DS cedo (cache)
-    const ds = await fetchDayStatusCached({ date, lottery: LOTTERY });
+    const ds = KING9_LOTTERIES.has(LOTTERY)
+      ? await fetchKing9DaySnapshot(date)
+      : await fetchDayStatusCached({ date, lottery: LOTTERY });
 
     let statusMap = null;
 

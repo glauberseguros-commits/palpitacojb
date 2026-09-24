@@ -10,7 +10,19 @@ const LOTTERIES = [
   "LOOK",
   "NACIONAL",
   "PT_SP",
+  "MALUCA_FEDERAL",
+  "MALUQUINHA_RIO",
+  "BOA_SORTE",
+  "LOTEP",
+  "LOTECE",
+  "BAHIA",
+  "BA_MALUCA",
+  "MINAS",
+  "SORTE",
+  "POPULAR",
 ];
+// LBR mantém sua janela própria; as demais usam o heartbeat geral.
+const SCOPED_LOTTERIES = new Set([...LOTTERIES, "LBR"]);
 
 function saoPauloParts(date = new Date()) {
   const formatter = new Intl.DateTimeFormat("en-CA", {
@@ -94,7 +106,20 @@ function buildPlan() {
 
 function run() {
   const plan = buildPlan();
-  if (String(process.env.LOTTERY || "").trim().toUpperCase() === "LBR") {
+  const heartbeatRequestedLottery =
+    String(process.env.LOTTERY || "").trim().toUpperCase();
+
+  if (
+    heartbeatRequestedLottery &&
+    !SCOPED_LOTTERIES.has(heartbeatRequestedLottery)
+  ) {
+    throw new Error(`LOTTERY nao suportada no heartbeat: ${heartbeatRequestedLottery}`);
+  }
+
+  if (
+    heartbeatRequestedLottery === "LBR" ||
+    heartbeatRequestedLottery === "POPULAR"
+  ) {
     const dateOverride = String(process.env.DATE || "").trim();
     if (dateOverride) {
       const parsed = new Date(`${dateOverride}T00:00:00.000Z`);
@@ -103,7 +128,7 @@ function run() {
         Number.isNaN(parsed.getTime()) ||
         parsed.toISOString().slice(0, 10) !== dateOverride
       ) {
-        throw new Error(`DATE invalida para LBR: ${dateOverride}`);
+        throw new Error(`DATE invalida para ${heartbeatRequestedLottery}: ${dateOverride}`);
       }
       plan.date = dateOverride;
       plan.period = "OVERRIDE";
@@ -121,17 +146,8 @@ function run() {
 
   let failed = false;
 
-  // HEARTBEAT_PTSP_SCOPE_V1
-  // LOTTERY=PT_SP restringe este heartbeat exclusivamente a Sao Paulo.
-  // Sem override, o comportamento geral existente permanece inalterado.
-  const heartbeatRequestedLottery =
-    String(process.env.LOTTERY || "")
-      .trim()
-      .toUpperCase();
-
   const heartbeatLotteries =
-    heartbeatRequestedLottery === "PT_SP" ||
-    heartbeatRequestedLottery === "LBR"
+    heartbeatRequestedLottery
       ? [heartbeatRequestedLottery]
       : LOTTERIES;
 
@@ -173,7 +189,7 @@ function run() {
       delete childEnv.NOW_HM;
     }
 
-    if (lottery === "LBR") {
+    if (lottery === "LBR" || lottery === "POPULAR") {
       childEnv.DATE = plan.date;
       delete childEnv.NOW_HM;
     }
@@ -183,6 +199,8 @@ function run() {
         ? "autoImportPtSp.js"
         : lottery === "LBR"
           ? "autoImportLbrToday.js"
+          : lottery === "POPULAR"
+            ? "autoImportPopularToday.js"
           : "autoImportToday.js";
 
     const child = spawnSync(
