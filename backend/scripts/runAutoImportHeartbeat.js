@@ -94,6 +94,22 @@ function buildPlan() {
 
 function run() {
   const plan = buildPlan();
+  if (String(process.env.LOTTERY || "").trim().toUpperCase() === "LBR") {
+    const dateOverride = String(process.env.DATE || "").trim();
+    if (dateOverride) {
+      const parsed = new Date(`${dateOverride}T00:00:00.000Z`);
+      if (
+        !/^\d{4}-\d{2}-\d{2}$/.test(dateOverride) ||
+        Number.isNaN(parsed.getTime()) ||
+        parsed.toISOString().slice(0, 10) !== dateOverride
+      ) {
+        throw new Error(`DATE invalida para LBR: ${dateOverride}`);
+      }
+      plan.date = dateOverride;
+      plan.period = "OVERRIDE";
+      plan.nowHm = null;
+    }
+  }
   const dryRun =
     String(process.env.HEARTBEAT_DRY_RUN || "")
       .trim() === "1";
@@ -114,14 +130,15 @@ function run() {
       .toUpperCase();
 
   const heartbeatLotteries =
-    heartbeatRequestedLottery === "PT_SP"
-      ? ["PT_SP"]
+    heartbeatRequestedLottery === "PT_SP" ||
+    heartbeatRequestedLottery === "LBR"
+      ? [heartbeatRequestedLottery]
       : LOTTERIES;
 
   console.log(
     "[HEARTBEAT] LOTTERY_SCOPE=" +
-      (heartbeatRequestedLottery === "PT_SP"
-        ? "PT_SP"
+      (heartbeatLotteries.length === 1
+        ? heartbeatLotteries[0]
         : "ALL")
   );
 
@@ -156,10 +173,17 @@ function run() {
       delete childEnv.NOW_HM;
     }
 
+    if (lottery === "LBR") {
+      childEnv.DATE = plan.date;
+      delete childEnv.NOW_HM;
+    }
+
     const childScript =
       lottery === "PT_SP"
         ? "autoImportPtSp.js"
-        : "autoImportToday.js";
+        : lottery === "LBR"
+          ? "autoImportLbrToday.js"
+          : "autoImportToday.js";
 
     const child = spawnSync(
       process.execPath,
