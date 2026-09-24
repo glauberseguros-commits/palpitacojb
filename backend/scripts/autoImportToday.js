@@ -18,6 +18,7 @@ function dowFromYMD(dateYMD) {
 }
 
 const { runImport } = require("./importKingApostas");
+const { main: runLbrToday } = require("./autoImportLbrToday");
 const {
   getFederalScheduleForDate,
 } = require("./federalCalendar");
@@ -292,13 +293,13 @@ function scheduleAppliesOnDate(schedule, dateYMD) {
   return schedule.days.includes(day);
 }
 
-if (!Object.prototype.hasOwnProperty.call(SCHEDULES, LOTTERY)) {
+if (LOTTERY !== "LBR" && !Object.prototype.hasOwnProperty.call(SCHEDULES, LOTTERY)) {
   throw new Error(
     `LOTTERY nao suportada pelo autoImportToday: ${LOTTERY}`
   );
 }
 
-const SCHEDULE = SCHEDULES[LOTTERY];
+const SCHEDULE = LOTTERY === "LBR" ? [] : SCHEDULES[LOTTERY];
 
 /* =========================
    Utils
@@ -1800,7 +1801,12 @@ async function main() {
   }
 }
 
-main().catch((e) => {
+const selectedMain =
+  LOTTERY === "LBR"
+    ? runLbrToday
+    : main;
+
+selectedMain().catch((e) => {
   logLine(`ERRO: ${e?.message || e}`, "ERROR");
   releaseLock();
   process.exit(1);
