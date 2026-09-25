@@ -389,6 +389,27 @@
   transform: scale(0.985);
 }
 
+
+.radar-bichos-milhar-stack {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, max-content));
+  column-gap: 14px;
+  row-gap: 6px;
+  align-self: start;
+  align-content: start;
+  justify-content: start;
+}
+
+.radar-bichos-milhar-stack span {
+  white-space: nowrap;
+}
+
+@media (max-width: 980px) {
+  .radar-bichos-milhar-stack {
+    grid-template-columns: repeat(2, minmax(0, max-content));
+    column-gap: 12px;
+  }
+}
 @media (max-width: 1080px) {
   .radar-bichos-grid {
     grid-template-columns: repeat(2, minmax(0, 1fr));
