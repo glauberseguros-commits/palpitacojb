@@ -10,24 +10,209 @@ console.log("[KING] routes loaded from:", __filename);
 /* =========================
    NORMALIZAÇÃO
 ========================= */
+/*
+ * ROUTE_20_LOTTERIES_V2
+ *
+ * Loterias operacionais no backend:
+ *
+ * 5 originais:
+ * PT_RIO, FEDERAL, LOOK, NACIONAL, PT_SP
+ *
+ * 9 King:
+ * MALUCA_FEDERAL, MALUQUINHA_RIO, BOA_SORTE,
+ * LOTEP, LOTECE, BAHIA, BA_MALUCA, MINAS, SORTE
+ *
+ * Externas:
+ * POPULAR, LBR, CAPITAL, PT_PB, AVAL_PE, TRADICIONAL
+ *
+ * TOP3 permanece independente e restrito ao contrato
+ * proprio do motor. Esta rota apenas le resultados.
+ */
 function normalizeLotteryKey(v) {
-  const s = String(v ?? "").trim().toUpperCase();
+  const raw =
+    String(v || "")
+      .trim()
+      .toUpperCase();
 
-  if (s === "RJ" || s === "RIO" || s === "PT-RIO" || s === "PT_RIO") return "PT_RIO";
-  if (s === "FED" || s === "FEDERAL" || s === "BR") return "FEDERAL";
+  if (!raw) {
+    return "";
+  }
+
+  const normalized =
+    raw
+      .replace(/\s+/g, " ")
+      .replace(/[\s-]+/g, "_");
 
   if (
-    ["SP", "PT_SP", "PT-SP", "PT SP"].includes(s)
+    [
+      "RJ",
+      "RIO",
+      "PT_RIO",
+    ].includes(normalized)
+  ) {
+    return "PT_RIO";
+  }
+
+  if (
+    [
+      "FED",
+      "FEDERAL",
+      "BR",
+    ].includes(normalized)
+  ) {
+    return "FEDERAL";
+  }
+
+  if (
+    [
+      "SP",
+      "PT_SP",
+    ].includes(normalized)
   ) {
     return "PT_SP";
   }
 
+  if (
+    [
+      "LOOK",
+      "GO",
+    ].includes(normalized)
+  ) {
+    return "LOOK";
+  }
+
+  if (
+    [
+      "NACIONAL",
+      "LT_NACIONAL",
+    ].includes(normalized)
+  ) {
+    return "NACIONAL";
+  }
+
+  if (
+    [
+      "MALUCA_FEDERAL",
+      "MALUQUINHA_FEDERAL",
+    ].includes(normalized)
+  ) {
+    return "MALUCA_FEDERAL";
+  }
+
+  if (
+    [
+      "MALUQUINHA_RIO",
+      "MALUCA_RIO",
+    ].includes(normalized)
+  ) {
+    return "MALUQUINHA_RIO";
+  }
+
+  if (
+    [
+      "BOA_SORTE",
+      "BOASORTE",
+    ].includes(normalized)
+  ) {
+    return "BOA_SORTE";
+  }
+
+  if (
+    normalized ===
+    "LOTEP"
+  ) {
+    return "LOTEP";
+  }
+
+  if (
+    normalized ===
+    "LOTECE"
+  ) {
+    return "LOTECE";
+  }
+
+  if (
+    normalized ===
+    "BAHIA"
+  ) {
+    return "BAHIA";
+  }
+
+  if (
+    [
+      "BA_MALUCA",
+      "BAHIA_MALUCA",
+    ].includes(normalized)
+  ) {
+    return "BA_MALUCA";
+  }
+
+  if (
+    normalized ===
+    "MINAS"
+  ) {
+    return "MINAS";
+  }
+
+  if (
+    normalized ===
+    "SORTE"
+  ) {
+    return "SORTE";
+  }
+
+  if (
+    normalized ===
+    "POPULAR"
+  ) {
+    return "POPULAR";
+  }
+
+  if (
+    normalized ===
+    "LBR"
+  ) {
+    return "LBR";
+  }
+  if (
+    [
+      "CAPITAL",
+      "LT_CAPITAL",
+    ].includes(normalized)
+  ) {
+    return "CAPITAL";
+  }
+
+  if (
+    [
+      "PT_PB",
+      "PARATODOS_PB",
+      "PARA_TODOS_PB",
+    ].includes(normalized)
+  ) {
+    return "PT_PB";
+  }
+
+  if (
+    [
+      "AVAL_PE",
+      "AVAL_PERNAMBUCO",
+    ].includes(normalized)
+  ) {
+    return "AVAL_PE";
+  }
+
+  if (
+    [
+      "TRADICIONAL",
+      "LT_TRADICIONAL",
+    ].includes(normalized)
+  ) {
+    return "TRADICIONAL";
+  }
   return "";
 }
 
-/* =========================
-   REGRAS DE HORÁRIOS
-========================= */
 function getExpectedHours(lottery, date, hasFederal) {
   if (lottery !== "PT_RIO") return [];
 
@@ -355,7 +540,7 @@ function requireLotteryOr400(lottery, res) {
   if (!lottery) {
     res.status(400).json({
       ok: false,
-      error: "Parâmetro inválido: lottery (use PT_RIO/RJ, FEDERAL/FED/BR ou PT_SP/SP)",
+      error: "Parâmetro inválido: lottery. Use uma lottery_key operacional do PalPitaco JB.",
     });
     return false;
   }

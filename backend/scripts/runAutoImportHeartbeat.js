@@ -5,6 +5,7 @@ const { spawnSync } = require("node:child_process");
 
 const TIME_ZONE = "America/Sao_Paulo";
 const LOTTERIES = [
+
   "PT_RIO",
   "FEDERAL",
   "LOOK",
@@ -20,7 +21,24 @@ const LOTTERIES = [
   "MINAS",
   "SORTE",
   "POPULAR",
+  "CAPITAL",
+  "PT_PB",
+  "AVAL_PE",
+  "TRADICIONAL",
 ];
+
+const EXTERNAL_FOUR_LOTTERIES = new Set([
+  "CAPITAL",
+  "PT_PB",
+  "AVAL_PE",
+  "TRADICIONAL",
+]);
+
+const EXTERNAL_DATE_ONLY_LOTTERIES = new Set([
+  "LBR",
+  "POPULAR",
+  ...EXTERNAL_FOUR_LOTTERIES,
+]);
 // LBR mantém sua janela própria; as demais usam o heartbeat geral.
 const SCOPED_LOTTERIES = new Set([...LOTTERIES, "LBR"]);
 
@@ -189,19 +207,32 @@ function run() {
       delete childEnv.NOW_HM;
     }
 
-    if (lottery === "LBR" || lottery === "POPULAR") {
-      childEnv.DATE = plan.date;
+    if (EXTERNAL_DATE_ONLY_LOTTERIES.has(lottery)) {
+      const explicitDate =
+        String(
+          process.env.DATE ||
+          ""
+        ).trim();
+
+      childEnv.DATE =
+        explicitDate ||
+        plan.date;
+
       delete childEnv.NOW_HM;
     }
 
     const childScript =
-      lottery === "PT_SP"
-        ? "autoImportPtSp.js"
-        : lottery === "LBR"
-          ? "autoImportLbrToday.js"
-          : lottery === "POPULAR"
-            ? "autoImportPopularToday.js"
-          : "autoImportToday.js";
+        lottery === "PT_SP"
+          ? "autoImportPtSp.js"
+          : lottery === "LBR"
+            ? "autoImportLbrToday.js"
+            : lottery === "POPULAR"
+              ? "autoImportPopularToday.js"
+              : EXTERNAL_FOUR_LOTTERIES.has(
+                    lottery
+                  )
+                ? "autoImportExternalFourToday.js"
+                : "autoImportToday.js";
 
     const child = spawnSync(
       process.execPath,

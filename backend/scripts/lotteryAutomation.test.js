@@ -30,15 +30,26 @@ function heartbeat(env) {
   return { calls, exitCode: fakeProcess.exitCode };
 }
 
-test("heartbeat dispatches the nine King lotteries and Popular with the original five", () => {
+test("heartbeat dispatches original five, King9, Popular and external four", () => {
   const result = heartbeat({});
   assert.equal(result.exitCode, 0);
   assert.deepEqual(result.calls.map((call) => call.lottery), [
     "PT_RIO", "FEDERAL", "LOOK", "NACIONAL", "PT_SP",
     "MALUCA_FEDERAL", "MALUQUINHA_RIO", "BOA_SORTE", "LOTEP",
     "LOTECE", "BAHIA", "BA_MALUCA", "MINAS", "SORTE", "POPULAR",
+    "CAPITAL", "PT_PB", "AVAL_PE", "TRADICIONAL",
   ]);
-  assert.equal(result.calls.at(-1).script, "autoImportPopularToday.js");
+  assert.equal(
+    result.calls.find(
+      (call) => call.lottery === "POPULAR"
+    ).script,
+    "autoImportPopularToday.js"
+  );
+
+  assert.equal(
+    result.calls.at(-1).script,
+    "autoImportExternalFourToday.js"
+  );
   assert.equal(result.calls[4].script, "autoImportPtSp.js");
   assert.equal(result.calls[5].script, "autoImportToday.js");
 });
@@ -50,7 +61,43 @@ test("scoped LBR and Popular keep their dates and never inherit NOW_HM", () => {
     date: "2026-09-23", nowHm: undefined }]);
   assert.deepEqual(popular.calls, [{ script: "autoImportPopularToday.js", lottery: "POPULAR",
     date: "2026-09-23", nowHm: undefined }]);
-  assert.equal(heartbeat({ LOTTERY: "CAPITAL" }).exitCode, 1);
+  for (
+      const key of [
+        "CAPITAL",
+        "PT_PB",
+        "AVAL_PE",
+        "TRADICIONAL",
+      ]
+    ) {
+      const scoped =
+        heartbeat({
+          LOTTERY:
+            key,
+          DATE:
+            "2026-09-23",
+          NOW_HM:
+            "12:00",
+        });
+
+      assert.equal(
+        scoped.exitCode,
+        0
+      );
+
+      assert.deepEqual(
+        scoped.calls,
+        [{
+          script:
+            "autoImportExternalFourToday.js",
+          lottery:
+            key,
+          date:
+            "2026-09-23",
+          nowHm:
+            undefined,
+        }]
+      );
+    }
 });
 
 function popular({ draws, existing = [], commit = true }) {

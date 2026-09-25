@@ -5,11 +5,11 @@
  */
 
 /*
- * SCHEDULE_16_OPERATIONAL_V1
+ * SCHEDULE_20_OPERATIONAL_V2
  *
  * Normalização compartilhada do calendário operacional.
  *
- * CAPITAL permanece fora até a fonte atual ser validada.
+ * CAPITAL, PT_PB, AVAL_PE e TRADICIONAL usam fontes externas validadas.
  */
 function normalizeLotteryKey(v) {
   const raw =
@@ -161,6 +161,34 @@ function normalizeLotteryKey(v) {
   /*
    * CAPITAL deliberadamente bloqueada.
    */
+  if (
+    normalized === "CAPITAL" ||
+    normalized === "LT_CAPITAL"
+  ) {
+    return "CAPITAL";
+  }
+
+  if (
+    normalized === "PT_PB" ||
+    normalized === "PARATODOS_PB" ||
+    normalized === "PARA_TODOS_PB"
+  ) {
+    return "PT_PB";
+  }
+
+  if (
+    normalized === "AVAL_PE" ||
+    normalized === "AVAL_PERNAMBUCO"
+  ) {
+    return "AVAL_PE";
+  }
+
+  if (
+    normalized === "TRADICIONAL" ||
+    normalized === "LT_TRADICIONAL"
+  ) {
+    return "TRADICIONAL";
+  }
   return "";
 }
 
@@ -341,6 +369,59 @@ export const SCHEDULES = Object.freeze({
     "13:40",
     "14:40",
     "16:40",
+  ]),
+
+  CAPITAL: Object.freeze([
+    "00:40",
+    "01:40",
+    "02:40",
+    "07:40",
+    "08:40",
+    "09:40",
+    "10:40",
+    "11:40",
+    "12:40",
+    "13:40",
+    "14:40",
+    "15:40",
+    "16:40",
+    "17:40",
+    "18:40",
+    "19:40",
+    "20:40",
+    "21:40",
+    "22:40",
+    "23:40",
+  ]),
+
+  PT_PB: Object.freeze([
+    "10:05",
+    "20:40",
+  ]),
+
+  AVAL_PE: Object.freeze([
+    "09:20",
+    "11:00",
+    "12:45",
+    "14:00",
+    "15:45",
+    "17:00",
+    "19:00",
+  ]),
+
+  TRADICIONAL: Object.freeze([
+    "09:40",
+    "10:40",
+    "11:40",
+    "12:40",
+    "13:40",
+    "14:40",
+    "18:40",
+    "19:40",
+    "20:40",
+    "21:40",
+    "22:40",
+    "23:40",
   ]),
 });
 
