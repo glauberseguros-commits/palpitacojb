@@ -235,7 +235,11 @@ function animalImage(
     return (
       getImgFromGrupo(
         Number(group),
-        256
+        192
+      ) ||
+      getImgFromGrupo(
+        Number(group),
+        128
       ) ||
       getImgFromGrupo(
         Number(group)
