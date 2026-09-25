@@ -132,7 +132,7 @@ describe(
     );
 
     test(
-      'cada bicho possui 4 dezenas e 12 milhares',
+      'cada bicho possui 4 dezenas e 16 milhares',
       () => {
         const cards =
           buildRadarCards({
@@ -154,7 +154,7 @@ describe(
           expect(
             card.milhares
           ).toHaveLength(
-            12
+            16
           );
 
           for (
@@ -164,7 +164,7 @@ describe(
             expect(
               row.numbers
             ).toHaveLength(
-              3
+              4
             );
 
             expect(
@@ -175,7 +175,7 @@ describe(
                 )
               ).size
             ).toBe(
-              3
+              4
             );
           }
         }

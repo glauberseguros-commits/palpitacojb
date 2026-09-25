@@ -1232,7 +1232,7 @@ export function buildRadarNumberRows({
 
         if (
           numbers.length ===
-          3
+          4
         ) {
           break;
         }
