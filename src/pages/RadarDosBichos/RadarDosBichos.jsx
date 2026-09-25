@@ -1,590 +1,945 @@
-import React, { useMemo, useState } from "react";
-import { getScheduleByLottery } from "../../constants/schedule";
+import React, {
+  useEffect,
+  useMemo,
+  useState,
+} from "react";
 
-import { LOTTERY_CATALOG_DISPLAY_GLOBAL } from "../../constants/lotteryCatalog";
-/*
- * RADAR_DOS_BICHOS_SHELL_V1
- *
- * Esta página cria SOMENTE a estrutura funcional/visual:
- *
- * LOTERIAS
- * CALENDÁRIO
- * TOP3
- * HISTÓRICO
- *
- * Não existe cálculo preditivo nesta etapa.
- * Não reutiliza o motor TOP3 existente.
- * Não cria palpites.
- */
+import {
+  LOTTERY_CATALOG_DISPLAY_GLOBAL,
+} from "../../constants/lotteryCatalog";
 
-const LOTTERIES =
-  LOTTERY_CATALOG_DISPLAY_GLOBAL;
+import {
+  getRadarScheduleForDate,
+} from "./radarSchedule";
 
-const TABS = Object.freeze([
+import {
+  getAnimalLabel,
+  getImgFromGrupo,
+} from "../../constants/bichoMap";
+
+import {
+  buildRadarCards,
+} from "./radarTop1Top7Engine";
+
+import {
+  loadRadarHistorySource,
+} from "./radarSource";
+
+import "./RadarDosBichos.css";
+
+const MODES = Object.freeze([
   {
-    key: "lotteries",
-    label: "LOTERIAS",
+    key: "TOP1",
+    label: "TOP1",
   },
   {
-    key: "calendar",
-    label: "CALENDÁRIO",
-  },
-  {
-    key: "top3",
-    label: "TOP3",
-  },
-  {
-    key: "history",
-    label: "HISTÓRICO",
+    key: "TOP7",
+    label: "TOP7",
   },
 ]);
 
-function hourLabel(hour) {
-  const value =
-    String(hour || "").trim();
+function todayYmdLocal() {
+  const now =
+    new Date();
 
-  if (!value) {
+  const year =
+    now.getFullYear();
+
+  const month =
+    String(
+      now.getMonth() + 1
+    ).padStart(
+      2,
+      "0"
+    );
+
+  const day =
+    String(
+      now.getDate()
+    ).padStart(
+      2,
+      "0"
+    );
+
+  return `${year}-${month}-${day}`;
+}
+
+function hourToMinutes(
+  value
+) {
+  const text =
+    String(
+      value || ""
+    ).trim();
+
+  const match =
+    text.match(
+      /^(\d{1,2})(?::(\d{2}))?$/
+    );
+
+  if (!match) {
+    return null;
+  }
+
+  const hour =
+    Number(
+      match[1]
+    );
+
+  const minute =
+    Number(
+      match[2] || 0
+    );
+
+  if (
+    !Number.isInteger(hour) ||
+    !Number.isInteger(minute) ||
+    hour < 0 ||
+    hour > 23 ||
+    minute < 0 ||
+    minute > 59
+  ) {
+    return null;
+  }
+
+  return (
+    hour * 60 +
+    minute
+  );
+}
+
+function normalizeHourLabel(
+  value
+) {
+  const minutes =
+    hourToMinutes(
+      value
+    );
+
+  if (minutes === null) {
+    return String(
+      value || ""
+    );
+  }
+
+  const hour =
+    Math.floor(
+      minutes / 60
+    );
+
+  const minute =
+    minutes % 60;
+
+  return (
+    String(hour)
+      .padStart(
+        2,
+        "0"
+      ) +
+    ":" +
+    String(minute)
+      .padStart(
+        2,
+        "0"
+      )
+  );
+}
+
+function initialHourForSchedule(
+  schedule
+) {
+  const list =
+    Array.isArray(
+      schedule
+    )
+      ? schedule
+          .map(
+            normalizeHourLabel
+          )
+          .filter(Boolean)
+      : [];
+
+  if (!list.length) {
     return "";
   }
 
-  return value;
+  const now =
+    new Date();
+
+  const nowMinutes =
+    now.getHours() *
+      60 +
+    now.getMinutes();
+
+  const future =
+    list.find(
+      (hour) => {
+        const minutes =
+          hourToMinutes(
+            hour
+          );
+
+        return (
+          minutes !== null &&
+          minutes >
+            nowMinutes
+        );
+      }
+    );
+
+  return (
+    future ||
+    list[list.length - 1]
+  );
+}
+
+function formatDateBR(
+  ymd
+) {
+  const match =
+    String(
+      ymd || ""
+    ).match(
+      /^(\d{4})-(\d{2})-(\d{2})$/
+    );
+
+  if (!match) {
+    return ymd;
+  }
+
+  return `${match[3]}/${match[2]}/${match[1]}`;
+}
+
+function animalName(
+  group
+) {
+  try {
+    const label =
+      getAnimalLabel(
+        Number(group)
+      );
+
+    if (label) {
+      return String(label);
+    }
+  }
+  catch {}
+
+  return `Grupo ${String(group).padStart(2, "0")}`;
+}
+
+function animalImage(
+  group
+) {
+  try {
+    return (
+      getImgFromGrupo(
+        Number(group),
+        256
+      ) ||
+      getImgFromGrupo(
+        Number(group)
+      ) ||
+      ""
+    );
+  }
+  catch {
+    return "";
+  }
+}
+
+function buildClipboardText(
+  card
+) {
+  const name =
+    animalName(
+      card.group
+    );
+
+  const lines = [
+    `${name} — G${String(card.group).padStart(2, "0")}`,
+    "",
+  ];
+
+  for (
+    const row
+    of card.rows || []
+  ) {
+    lines.push(
+      `${row.dezena}: ${(row.numbers || [])
+        .map(
+          (item) =>
+            item.milhar
+        )
+        .join(" ")}`
+    );
+  }
+
+  return lines.join(
+    "\n"
+  );
 }
 
 export default function RadarDosBichos() {
-  const [activeTab, setActiveTab] =
-    useState("lotteries");
+  const lotteries =
+    LOTTERY_CATALOG_DISPLAY_GLOBAL;
 
-  const [lotteryKey, setLotteryKey] =
-    useState("PT_RIO");
+  const [
+    lotteryKey,
+    setLotteryKey,
+  ] =
+    useState(
+      "PT_RIO"
+    );
 
-  const selectedLottery =
-    useMemo(
-      () =>
-        LOTTERIES.find(
-          (item) =>
-            item.key ===
-            lotteryKey
-        ) ||
-        LOTTERIES[0],
-      [lotteryKey]
+  const [
+    mode,
+    setMode,
+  ] =
+    useState(
+      "TOP1"
+    );
+
+  const [
+    targetDate,
+    setTargetDate,
+  ] =
+    useState(
+      todayYmdLocal
     );
 
   const schedule =
     useMemo(
-      () =>
-        getScheduleByLottery(
-          lotteryKey
-        ),
-      [lotteryKey]
+      () => {
+        const raw =
+          getRadarScheduleForDate(
+            lotteryKey,
+            targetDate
+          );
+
+        return (
+          Array.isArray(raw)
+            ? raw
+                .map(
+                  normalizeHourLabel
+                )
+                .filter(Boolean)
+            : []
+        );
+      },
+      [
+        lotteryKey,
+        targetDate,
+      ]
     );
 
-  const ui = {
-    page: {
-      width: "100%",
-      minHeight: "100%",
-      padding:
-        "clamp(18px, 3vw, 34px)",
-      boxSizing: "border-box",
-      color:
-        "rgba(255,255,255,0.94)",
-      background:
-        "radial-gradient(circle at 50% 0%, rgba(202,166,75,0.10), transparent 32%), #050505",
+  const [
+    targetHour,
+    setTargetHour,
+  ] =
+    useState(
+      () =>
+        initialHourForSchedule(
+          getRadarScheduleForDate(
+            "PT_RIO",
+            todayYmdLocal()
+          )
+        )
+    );
+
+  const [
+    sourceData,
+    setSourceData,
+  ] =
+    useState(
+      null
+    );
+
+  const [
+    loading,
+    setLoading,
+  ] =
+    useState(
+      false
+    );
+
+  const [
+    error,
+    setError,
+  ] =
+    useState(
+      ""
+    );
+
+  const [
+    copiedGroup,
+    setCopiedGroup,
+  ] =
+    useState(
+      null
+    );
+
+  useEffect(
+    () => {
+      if (!schedule.length) {
+        setTargetHour(
+          ""
+        );
+
+        return;
+      }
+
+      if (
+        schedule.includes(
+          targetHour
+        )
+      ) {
+        return;
+      }
+
+      setTargetHour(
+        targetDate ===
+          todayYmdLocal()
+          ? initialHourForSchedule(
+              schedule
+            )
+          : schedule[0]
+      );
     },
+    [
+      schedule,
+      targetDate,
+      targetHour,
+    ]
+  );
 
-    inner: {
-      width: "100%",
-      maxWidth: 1180,
-      margin: "0 auto",
-      display: "grid",
-      gap: 18,
-    },
+  useEffect(
+    () => {
+      if (
+        !lotteryKey ||
+        !targetDate ||
+        !targetHour
+      ) {
+        setSourceData(
+          null
+        );
 
-    header: {
-      border:
-        "1px solid rgba(202,166,75,0.26)",
-      borderRadius: 22,
-      padding:
-        "clamp(18px, 3vw, 28px)",
-      background:
-        "linear-gradient(180deg, rgba(202,166,75,0.10), rgba(255,255,255,0.025))",
-      boxShadow:
-        "0 20px 60px rgba(0,0,0,0.34)",
-    },
+        return;
+      }
 
-    eyebrow: {
-      color:
-        "rgba(202,166,75,0.95)",
-      fontSize: 12,
-      fontWeight: 900,
-      letterSpacing: "0.15em",
-      marginBottom: 8,
-    },
+      let cancelled =
+        false;
 
-    title: {
-      margin: 0,
-      fontSize:
-        "clamp(1.6rem, 4vw, 2.45rem)",
-      lineHeight: 1.04,
-      letterSpacing: "-0.035em",
-    },
+      async function run() {
+        setLoading(
+          true
+        );
 
-    subtitle: {
-      margin:
-        "10px 0 0",
-      color:
-        "rgba(255,255,255,0.62)",
-      fontSize: 14,
-      lineHeight: 1.55,
-      maxWidth: 780,
-    },
+        setError(
+          ""
+        );
 
-    tabs: {
-      display: "grid",
-      gridTemplateColumns:
-        "repeat(4, minmax(0, 1fr))",
-      gap: 8,
-      padding: 6,
-      borderRadius: 18,
-      border:
-        "1px solid rgba(255,255,255,0.08)",
-      background:
-        "rgba(255,255,255,0.025)",
-    },
+        try {
+          const out =
+            await loadRadarHistorySource({
+              lotteryKey,
+              targetDate,
+              targetHour,
+            });
 
-    tab: (active) => ({
-      minWidth: 0,
-      border:
-        active
-          ? "1px solid rgba(202,166,75,0.52)"
-          : "1px solid rgba(255,255,255,0.07)",
-      borderRadius: 13,
-      minHeight: 44,
-      padding:
-        "9px 8px",
-      cursor: "pointer",
-      color:
-        active
-          ? "#f4d97d"
-          : "rgba(255,255,255,0.64)",
-      background:
-        active
-          ? "linear-gradient(180deg, rgba(202,166,75,0.18), rgba(202,166,75,0.055))"
-          : "rgba(255,255,255,0.02)",
-      fontSize: 11,
-      fontWeight: 900,
-      letterSpacing: "0.06em",
-    }),
+          if (!cancelled) {
+            setSourceData(
+              out
+            );
+          }
+        }
+        catch (err) {
+          if (!cancelled) {
+            setSourceData(
+              null
+            );
 
-    panel: {
-      border:
-        "1px solid rgba(255,255,255,0.09)",
-      borderRadius: 22,
-      padding:
-        "clamp(16px, 3vw, 26px)",
-      background:
-        "linear-gradient(180deg, rgba(255,255,255,0.035), rgba(255,255,255,0.016))",
-      boxShadow:
-        "0 20px 60px rgba(0,0,0,0.24)",
-    },
+            const code =
+              String(
+                err?.message ||
+                err ||
+                ""
+              );
 
-    panelTitle: {
-      margin: 0,
-      fontSize: 17,
-      fontWeight: 900,
-      letterSpacing: "-0.01em",
-    },
-
-    panelSubtitle: {
-      margin:
-        "7px 0 0",
-      color:
-        "rgba(255,255,255,0.54)",
-      fontSize: 13,
-      lineHeight: 1.5,
-    },
-
-    lotteryGrid: {
-      display: "grid",
-      gridTemplateColumns:
-        "repeat(auto-fit, minmax(150px, 1fr))",
-      gap: 10,
-      marginTop: 18,
-    },
-
-    lotteryButton: (active) => ({
-      width: "100%",
-      minHeight: 58,
-      border:
-        active
-          ? "1px solid rgba(202,166,75,0.62)"
-          : "1px solid rgba(255,255,255,0.08)",
-      borderRadius: 14,
-      padding:
-        "10px 12px",
-      textAlign: "left",
-      color:
-        active
-          ? "#f4d97d"
-          : "rgba(255,255,255,0.82)",
-      background:
-        active
-          ? "rgba(202,166,75,0.10)"
-          : "rgba(255,255,255,0.025)",
-      cursor: "pointer",
-      fontSize: 12,
-      fontWeight: 850,
-      letterSpacing: "0.035em",
-    }),
-
-    selectedCard: {
-      marginTop: 18,
-      padding: 16,
-      borderRadius: 16,
-      border:
-        "1px solid rgba(202,166,75,0.22)",
-      background:
-        "rgba(202,166,75,0.045)",
-    },
-
-    selectedLabel: {
-      color:
-        "rgba(255,255,255,0.50)",
-      fontSize: 11,
-      fontWeight: 800,
-      letterSpacing: "0.10em",
-    },
-
-    selectedName: {
-      marginTop: 5,
-      color:
-        "#f4d97d",
-      fontSize: 18,
-      fontWeight: 950,
-    },
-
-    hourGrid: {
-      display: "grid",
-      gridTemplateColumns:
-        "repeat(auto-fit, minmax(90px, 1fr))",
-      gap: 10,
-      marginTop: 18,
-    },
-
-    hour: {
-      border:
-        "1px solid rgba(202,166,75,0.20)",
-      borderRadius: 14,
-      padding:
-        "13px 10px",
-      textAlign: "center",
-      background:
-        "rgba(202,166,75,0.055)",
-      color:
-        "#f4d97d",
-      fontWeight: 900,
-      fontVariantNumeric:
-        "tabular-nums",
-    },
-
-    top3Grid: {
-      display: "grid",
-      gridTemplateColumns:
-        "repeat(3, minmax(0, 1fr))",
-      gap: 10,
-      marginTop: 18,
-    },
-
-    top3Card: {
-      minHeight: 126,
-      borderRadius: 18,
-      border:
-        "1px solid rgba(255,255,255,0.08)",
-      background:
-        "rgba(255,255,255,0.025)",
-      display: "grid",
-      alignContent: "center",
-      justifyItems: "center",
-      gap: 8,
-      padding: 14,
-    },
-
-    top3Position: {
-      color:
-        "rgba(202,166,75,0.90)",
-      fontWeight: 950,
-      fontSize: 12,
-      letterSpacing: "0.12em",
-    },
-
-    top3Empty: {
-      fontSize: 28,
-      fontWeight: 950,
-      color:
-        "rgba(255,255,255,0.26)",
-    },
-
-    notice: {
-      marginTop: 18,
-      padding: 16,
-      borderRadius: 15,
-      border:
-        "1px solid rgba(202,166,75,0.17)",
-      background:
-        "rgba(202,166,75,0.035)",
-      color:
-        "rgba(255,255,255,0.62)",
-      lineHeight: 1.55,
-      fontSize: 13,
-    },
-
-    historyEmpty: {
-      marginTop: 18,
-      minHeight: 160,
-      borderRadius: 18,
-      border:
-        "1px dashed rgba(255,255,255,0.13)",
-      display: "grid",
-      placeItems: "center",
-      textAlign: "center",
-      padding: 24,
-      color:
-        "rgba(255,255,255,0.42)",
-      fontSize: 13,
-      lineHeight: 1.55,
-    },
-  };
-
-  const renderLotteries =
-    () => (
-      <section style={ui.panel}>
-        <h2 style={ui.panelTitle}>
-          Loterias
-        </h2>
-
-        <p style={ui.panelSubtitle}>
-          Selecione a loteria que será
-          analisada pelo Radar dos Bichos.
-        </p>
-
-        <div style={ui.lotteryGrid}>
-          {LOTTERIES.map(
-            (lottery) => {
-              const active =
-                lottery.key ===
-                lotteryKey;
-
-              return (
-                <button
-                  key={lottery.key}
-                  type="button"
-                  style={ui.lotteryButton(
-                    active
-                  )}
-                  aria-pressed={active}
-                  onClick={() =>
-                    setLotteryKey(
-                      lottery.key
-                    )
-                  }
-                >
-                  {lottery.label}
-                </button>
+            if (
+              code.includes(
+                "RADAR_SOURCE_HISTORY_INSUFFICIENT"
+              )
+            ) {
+              setError(
+                "Ainda não existem três resultados anteriores válidos para formar este Radar."
               );
             }
-          )}
-        </div>
+            else {
+              setError(
+                "Não foi possível carregar a base histórica deste Radar."
+              );
+            }
+          }
+        }
+        finally {
+          if (!cancelled) {
+            setLoading(
+              false
+            );
+          }
+        }
+      }
 
-        <div style={ui.selectedCard}>
-          <div style={ui.selectedLabel}>
-            LOTERIA SELECIONADA
-          </div>
+      run();
 
-          <div style={ui.selectedName}>
-            {selectedLottery.label}
-          </div>
-        </div>
-      </section>
+      return () => {
+        cancelled =
+          true;
+      };
+    },
+    [
+      lotteryKey,
+      targetDate,
+      targetHour,
+    ]
+  );
+
+  const cards =
+    useMemo(
+      () => {
+        if (
+          !sourceData?.days?.d1?.milhar ||
+          !sourceData?.days?.d2?.milhar ||
+          !sourceData?.days?.d3?.milhar
+        ) {
+          return [];
+        }
+
+        try {
+          return buildRadarCards({
+            mode,
+
+            d1:
+              sourceData.days.d1.milhar,
+
+            d2:
+              sourceData.days.d2.milhar,
+
+            d3:
+              sourceData.days.d3.milhar,
+          });
+        }
+        catch {
+          return [];
+        }
+      },
+      [
+        mode,
+        sourceData,
+      ]
     );
 
-  const renderCalendar =
-    () => (
-      <section style={ui.panel}>
-        <h2 style={ui.panelTitle}>
-          Calendário —{" "}
-          {selectedLottery.label}
-        </h2>
-
-        <p style={ui.panelSubtitle}>
-          Horários operacionais vindos da
-          fonte única de calendário do
-          PalPitaco JB.
-        </p>
-
-        <div style={ui.hourGrid}>
-          {schedule.map(
-            (hour) => (
-              <div
-                key={hour}
-                style={ui.hour}
-              >
-                {hourLabel(hour)}
-              </div>
-            )
-          )}
-        </div>
-
-        {schedule.length === 0 && (
-          <div style={ui.notice}>
-            Nenhum horário operacional
-            disponível para esta loteria.
-          </div>
-        )}
-      </section>
+  const selectedLottery =
+    useMemo(
+      () =>
+        lotteries.find(
+          (item) =>
+            item.key ===
+            lotteryKey
+        ) || null,
+      [
+        lotteries,
+        lotteryKey,
+      ]
     );
 
-  const renderTop3 =
-    () => (
-      <section style={ui.panel}>
-        <h2 style={ui.panelTitle}>
-          TOP3 —{" "}
-          {selectedLottery.label}
-        </h2>
+  async function copyCard(
+    card
+  ) {
+    const text =
+      buildClipboardText(
+        card
+      );
 
-        <p style={ui.panelSubtitle}>
-          Estrutura reservada para os três
-          bichos calculados pelo motor
-          próprio do Radar.
-        </p>
+    try {
+      await navigator.clipboard.writeText(
+        text
+      );
 
-        <div style={ui.top3Grid}>
-          {[1, 2, 3].map(
-            (position) => (
-              <div
-                key={position}
-                style={ui.top3Card}
-              >
-                <div
-                  style={
-                    ui.top3Position
-                  }
-                >
-                  {position}º
-                </div>
+      setCopiedGroup(
+        card.group
+      );
 
-                <div
-                  style={ui.top3Empty}
-                >
-                  —
-                </div>
-              </div>
-            )
-          )}
-        </div>
-
-        <div style={ui.notice}>
-          O cálculo do Radar dos Bichos
-          ainda não foi definido. Nenhum
-          motor, regra ou previsão do TOP3
-          atual foi conectado a esta página.
-        </div>
-      </section>
-    );
-
-  const renderHistory =
-    () => (
-      <section style={ui.panel}>
-        <h2 style={ui.panelTitle}>
-          Histórico —{" "}
-          {selectedLottery.label}
-        </h2>
-
-        <p style={ui.panelSubtitle}>
-          Área reservada ao histórico das
-          previsões produzidas pelo Radar.
-        </p>
-
-        <div style={ui.historyEmpty}>
-          Nenhuma previsão do Radar existe
-          nesta etapa.
-          <br />
-          O histórico será alimentado
-          somente quando o cálculo próprio
-          estiver definido e validado.
-        </div>
-      </section>
-    );
+      window.setTimeout(
+        () => {
+          setCopiedGroup(
+            null
+          );
+        },
+        1500
+      );
+    }
+    catch {
+      setCopiedGroup(
+        null
+      );
+    }
+  }
 
   return (
-    <div
-      style={ui.page}
-      data-page="radar-dos-bichos"
-      data-engine-connected="false"
+    <main
+      className="radar-bichos-page"
+      data-radar-engine="TOP1_TOP7_V1"
     >
-      <div style={ui.inner}>
-        <header style={ui.header}>
-          <div style={ui.eyebrow}>
-            PALPITACO JB
-          </div>
+      <section className="radar-bichos-hero">
+        <span className="radar-bichos-eyebrow">
+          PALPITACO JB
+        </span>
 
-          <h1 style={ui.title}>
-            RADAR DOS BICHOS
-          </h1>
+        <h1>
+          RADAR DOS BICHOS
+        </h1>
 
-          <p style={ui.subtitle}>
-            Leitura independente por
-            loteria e horário. A estrutura
-            está pronta para receber o
-            cálculo próprio do Radar sem
-            interferir no motor TOP3 já
-            existente.
-          </p>
-        </header>
+        <p>
+          Leitura independente por loteria, horário e data.
+          Escolha TOP1 ou TOP7 para visualizar os bichos,
+          centenas e milhares do Radar.
+        </p>
+      </section>
 
-        <nav
-          style={ui.tabs}
-          aria-label="Seções do Radar dos Bichos"
-        >
-          {TABS.map(
-            (tab) => {
-              const active =
-                activeTab ===
-                tab.key;
+      <section className="radar-bichos-filters">
+        <div className="radar-bichos-field">
+          <label htmlFor="radar-lottery">
+            LOTERIA
+          </label>
 
-              return (
-                <button
-                  key={tab.key}
-                  type="button"
-                  style={ui.tab(active)}
-                  aria-pressed={active}
-                  onClick={() =>
-                    setActiveTab(
-                      tab.key
-                    )
-                  }
-                >
-                  {tab.label}
-                </button>
-              );
+          <select
+            id="radar-lottery"
+            value={lotteryKey}
+            onChange={
+              (event) =>
+                setLotteryKey(
+                  event.target.value
+                )
             }
-          )}
-        </nav>
+          >
+            {lotteries.map(
+              (lottery) => (
+                <option
+                  key={lottery.key}
+                  value={lottery.key}
+                >
+                  {lottery.label}
+                </option>
+              )
+            )}
+          </select>
+        </div>
 
-        {activeTab ===
-          "lotteries" &&
-          renderLotteries()}
+        <div className="radar-bichos-field">
+          <label htmlFor="radar-mode">
+            MODO
+          </label>
 
-        {activeTab ===
-          "calendar" &&
-          renderCalendar()}
+          <select
+            id="radar-mode"
+            value={mode}
+            onChange={
+              (event) =>
+                setMode(
+                  event.target.value
+                )
+            }
+          >
+            {MODES.map(
+              (item) => (
+                <option
+                  key={item.key}
+                  value={item.key}
+                >
+                  {item.label}
+                </option>
+              )
+            )}
+          </select>
+        </div>
 
-        {activeTab ===
-          "top3" &&
-          renderTop3()}
+        <div className="radar-bichos-field">
+          <label htmlFor="radar-hour">
+            HORÁRIO
+          </label>
 
-        {activeTab ===
-          "history" &&
-          renderHistory()}
-      </div>
-    </div>
+          <select
+            id="radar-hour"
+            value={targetHour}
+            disabled={
+              !schedule.length
+            }
+            onChange={
+              (event) =>
+                setTargetHour(
+                  event.target.value
+                )
+            }
+          >
+            {!schedule.length && (
+              <option value="">
+                Sem horários
+              </option>
+            )}
+
+            {schedule.map(
+              (hour) => (
+                <option
+                  key={hour}
+                  value={hour}
+                >
+                  {hour}
+                </option>
+              )
+            )}
+          </select>
+        </div>
+
+        <div className="radar-bichos-field">
+          <label htmlFor="radar-date">
+            DATA
+          </label>
+
+          <input
+            id="radar-date"
+            type="date"
+            value={targetDate}
+            onChange={
+              (event) =>
+                setTargetDate(
+                  event.target.value
+                )
+            }
+          />
+        </div>
+      </section>
+
+      <section className="radar-bichos-context">
+        <div>
+          <span>
+            LOTERIA
+          </span>
+
+          <strong>
+            {selectedLottery?.label ||
+              lotteryKey}
+          </strong>
+        </div>
+
+        <div>
+          <span>
+            MODO
+          </span>
+
+          <strong>
+            {mode}
+          </strong>
+        </div>
+
+        <div>
+          <span>
+            SORTEIO
+          </span>
+
+          <strong>
+            {targetHour || "—"}
+          </strong>
+        </div>
+
+        <div>
+          <span>
+            DATA
+          </span>
+
+          <strong>
+            {formatDateBR(
+              targetDate
+            )}
+          </strong>
+        </div>
+      </section>
+
+      {loading && (
+        <section className="radar-bichos-state">
+          <div className="radar-bichos-spinner" />
+
+          <strong>
+            Calculando Radar...
+          </strong>
+        </section>
+      )}
+
+      {!loading &&
+        error && (
+          <section className="radar-bichos-state radar-bichos-state-error">
+            <strong>
+              Radar indisponível para este contexto
+            </strong>
+
+            <p>
+              {error}
+            </p>
+          </section>
+        )}
+
+      {!loading &&
+        !error &&
+        cards.length > 0 && (
+          <>
+            <div className="radar-bichos-result-heading">
+              <div>
+                <span>
+                  RESULTADO DO RADAR
+                </span>
+
+                <h2>
+                  {mode ===
+                  "TOP1"
+                    ? "4 bichos"
+                    : "7 bichos"}
+                </h2>
+              </div>
+
+              <small>
+                {selectedLottery?.label ||
+                  lotteryKey}
+                {" • "}
+                {targetHour}
+                {" • "}
+                {formatDateBR(
+                  targetDate
+                )}
+              </small>
+            </div>
+
+            <section
+              className={`radar-bichos-grid radar-bichos-grid-${mode.toLowerCase()}`}
+            >
+              {cards.map(
+                (card) => {
+                  const image =
+                    animalImage(
+                      card.group
+                    );
+
+                  const name =
+                    animalName(
+                      card.group
+                    );
+
+                  return (
+                    <article
+                      className="radar-bichos-card"
+                      key={`${mode}-${card.group}-${card.rank}`}
+                    >
+                      <div className="radar-bichos-animal">
+                        <div className="radar-bichos-image-frame">
+                          {image ? (
+                            <img
+                              src={image}
+                              alt={name}
+                              loading="lazy"
+                            />
+                          ) : (
+                            <div className="radar-bichos-image-fallback">
+                              G{String(card.group).padStart(2, "0")}
+                            </div>
+                          )}
+                        </div>
+
+                        <div className="radar-bichos-animal-title">
+                          <strong>
+                            {name}
+                          </strong>
+
+                          <span>
+                            G{String(card.group).padStart(2, "0")}
+                          </span>
+                        </div>
+                      </div>
+
+                      <div className="radar-bichos-table-head">
+                        <span>
+                          DEZENA
+                        </span>
+
+                        <span>
+                          CENTENAS
+                        </span>
+
+                        <span>
+                          MILHARES
+                        </span>
+                      </div>
+
+                      <div className="radar-bichos-number-table">
+                        {(card.rows || []).map(
+                          (row) => (
+                            <div
+                              className="radar-bichos-number-row"
+                              key={`${card.group}-${row.dezena}`}
+                            >
+                              <strong className="radar-bichos-dezena">
+                                {row.dezena}
+                              </strong>
+
+                              <div className="radar-bichos-number-stack">
+                                {(row.numbers || []).map(
+                                  (item) => (
+                                    <span
+                                      key={`c-${row.dezena}-${item.centena}-${item.milhar}`}
+                                    >
+                                      {item.centena}
+                                    </span>
+                                  )
+                                )}
+                              </div>
+
+                              <div className="radar-bichos-number-stack radar-bichos-milhar-stack">
+                                {(row.numbers || []).map(
+                                  (item) => (
+                                    <span
+                                      key={`m-${row.dezena}-${item.milhar}`}
+                                    >
+                                      {item.milhar}
+                                    </span>
+                                  )
+                                )}
+                              </div>
+                            </div>
+                          )
+                        )}
+                      </div>
+
+                      <button
+                        type="button"
+                        className="radar-bichos-copy"
+                        onClick={
+                          () =>
+                            copyCard(
+                              card
+                            )
+                        }
+                      >
+                        {copiedGroup ===
+                        card.group
+                          ? "COPIADO"
+                          : "COPIAR MILHARES"}
+                      </button>
+                    </article>
+                  );
+                }
+              )}
+            </section>
+          </>
+        )}
+    </main>
   );
 }
