@@ -607,8 +607,8 @@ export default function RadarDosBichos() {
 
         <p>
           Leitura independente por loteria, horário e data.
-          Escolha TOP1 ou TOP7 para visualizar os bichos,
-          centenas e milhares do Radar.
+          Escolha TOP1 ou TOP7 para visualizar os bichos
+          e milhares do Radar.
         </p>
       </section>
 
@@ -875,10 +875,6 @@ export default function RadarDosBichos() {
                         </span>
 
                         <span>
-                          CENTENAS
-                        </span>
-
-                        <span>
                           MILHARES
                         </span>
                       </div>
@@ -894,17 +890,6 @@ export default function RadarDosBichos() {
                                 {row.dezena}
                               </strong>
 
-                              <div className="radar-bichos-number-stack">
-                                {(row.numbers || []).map(
-                                  (item) => (
-                                    <span
-                                      key={`c-${row.dezena}-${item.centena}-${item.milhar}`}
-                                    >
-                                      {item.centena}
-                                    </span>
-                                  )
-                                )}
-                              </div>
 
                               <div className="radar-bichos-number-stack radar-bichos-milhar-stack">
                                 {(row.numbers || []).map(
