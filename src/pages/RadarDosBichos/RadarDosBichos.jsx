@@ -802,13 +802,6 @@ export default function RadarDosBichos() {
                 <span>
                   RESULTADO DO RADAR
                 </span>
-
-                <h2>
-                  {mode ===
-                  "TOP1"
-                    ? "4 bichos"
-                    : "7 bichos"}
-                </h2>
               </div>
 
               <small>
