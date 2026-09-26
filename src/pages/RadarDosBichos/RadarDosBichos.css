@@ -838,3 +838,96 @@
     letter-spacing: 0.02em;
   }
 }
+
+
+/* RADAR_TOP3_SCALE_ALIGNMENT_V2
+ * TOP3 antigo permanece como referência.
+ * Ajusta somente escala e hierarquia visual do Radar.
+ */
+
+.radar-bichos-hero {
+  padding: 16px 18px;
+}
+
+.radar-bichos-eyebrow {
+  display: none;
+}
+
+.radar-bichos-hero h1 {
+  margin: 0;
+  font-size: 1.28rem;
+  line-height: 1.15;
+  letter-spacing: 0;
+}
+
+.radar-bichos-hero p {
+  max-width: 760px;
+  margin-top: 7px;
+  font-size: 0.78rem;
+  line-height: 1.4;
+}
+
+.radar-bichos-animal {
+  display: grid;
+  grid-template-columns: 84px minmax(0, 1fr);
+  align-items: center;
+  gap: 12px;
+  padding: 12px;
+}
+
+.radar-bichos-image-frame {
+  width: 84px;
+  height: 84px;
+  aspect-ratio: 1 / 1;
+  border-radius: 12px;
+  justify-self: start;
+}
+
+.radar-bichos-image-frame img {
+  width: 100%;
+  height: 100%;
+  padding: 0;
+  object-fit: cover;
+  border-radius: 11px;
+}
+
+.radar-bichos-animal-title {
+  width: 100%;
+  min-height: 0;
+  margin-top: 0;
+  align-self: center;
+}
+
+.radar-bichos-animal-title strong {
+  font-size: 1rem;
+  line-height: 1.1;
+}
+
+.radar-bichos-animal-title span {
+  flex: 0 0 auto;
+}
+
+@media (max-width: 560px) {
+  .radar-bichos-hero {
+    padding: 15px;
+  }
+
+  .radar-bichos-hero h1 {
+    font-size: 1.18rem;
+  }
+
+  .radar-bichos-hero p {
+    font-size: 0.76rem;
+  }
+
+  .radar-bichos-animal {
+    grid-template-columns: 76px minmax(0, 1fr);
+    gap: 10px;
+    padding: 10px;
+  }
+
+  .radar-bichos-image-frame {
+    width: 76px;
+    height: 76px;
+  }
+}
