@@ -977,3 +977,49 @@
     font-size: 1rem;
   }
 }
+
+
+/* RADAR_CONTROL_PANEL_TOP3_V4
+ * TOP3 antigo permanece como referência visual.
+ * Título e filtros do Radar formam um único bloco funcional.
+ */
+
+.radar-bichos-control-panel {
+  padding: 16px;
+  border: 1px solid rgba(255,255,255,0.16);
+  border-radius: 16px;
+  background: #070707;
+}
+
+.radar-bichos-control-panel > h1 {
+  margin: 0 0 14px;
+  color: #f4f4f4;
+  font-size: 1.05rem;
+  font-weight: 900;
+  line-height: 1.2;
+  letter-spacing: 0;
+}
+
+.radar-bichos-control-panel .radar-bichos-filters {
+  margin: 0;
+  padding: 0;
+  border: 0;
+  border-radius: 0;
+  background: transparent;
+  box-shadow: none;
+}
+
+.radar-bichos-hero {
+  display: none !important;
+}
+
+@media (max-width: 560px) {
+  .radar-bichos-control-panel {
+    padding: 14px;
+  }
+
+  .radar-bichos-control-panel > h1 {
+    margin-bottom: 12px;
+    font-size: 1rem;
+  }
+}

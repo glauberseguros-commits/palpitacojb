@@ -595,13 +595,13 @@ export default function RadarDosBichos() {
     <main
       className="radar-bichos-page"
     >
-      <section className="radar-bichos-hero">
+      <section className="radar-bichos-control-panel">
         <h1>
           RADAR DOS BICHOS
         </h1>
-      </section>
 
-      <section className="radar-bichos-filters">
+        <div className="radar-bichos-filters">
+
         <div className="radar-bichos-field">
           <label htmlFor="radar-lottery">
             LOTERIA
@@ -711,6 +711,8 @@ export default function RadarDosBichos() {
                 )
             }
           />
+        </div>
+
         </div>
       </section>
 
