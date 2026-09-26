@@ -725,50 +725,6 @@ export default function RadarDosBichos() {
         </div>
       </section>
 
-      <section className="radar-bichos-context">
-        <div>
-          <span>
-            LOTERIA
-          </span>
-
-          <strong>
-            {selectedLottery?.label ||
-              lotteryKey}
-          </strong>
-        </div>
-
-        <div>
-          <span>
-            MODO
-          </span>
-
-          <strong>
-            {mode}
-          </strong>
-        </div>
-
-        <div>
-          <span>
-            SORTEIO
-          </span>
-
-          <strong>
-            {targetHour || "—"}
-          </strong>
-        </div>
-
-        <div>
-          <span>
-            DATA
-          </span>
-
-          <strong>
-            {formatDateBR(
-              targetDate
-            )}
-          </strong>
-        </div>
-      </section>
 
       {loading && (
         <section className="radar-bichos-state">
@@ -862,42 +818,48 @@ export default function RadarDosBichos() {
                         </div>
                       </div>
 
-                      <div className="radar-bichos-table-head">
-                        <span>
-                          DEZENA
-                        </span>
-
-                        <span>
-                          MILHARES
-                        </span>
-                      </div>
-
-                      <div className="radar-bichos-number-table">
-                        {(card.rows || []).map(
-                          (row) => (
-                            <div
-                              className="radar-bichos-number-row"
-                              key={`${card.group}-${row.dezena}`}
-                            >
-                              <strong className="radar-bichos-dezena">
+                      <div className="radar-bichos-number-matrix">
+                        <div className="radar-bichos-dezena-chip-row">
+                          {(card.rows || []).map(
+                            (row) => (
+                              <div
+                                className="radar-bichos-dezena-chip"
+                                key={`dz-${card.group}-${row.dezena}`}
+                              >
                                 {row.dezena}
-                              </strong>
-
-
-                              <div className="radar-bichos-number-stack radar-bichos-milhar-stack">
-                                {(row.numbers || []).map(
-                                  (item) => (
-                                    <span
-                                      key={`m-${row.dezena}-${item.milhar}`}
-                                    >
-                                      {item.milhar}
-                                    </span>
-                                  )
-                                )}
                               </div>
-                            </div>
-                          )
-                        )}
+                            )
+                          )}
+                        </div>
+
+                        <div className="radar-bichos-milhar-grid">
+                          {Array.from(
+                            {
+                              length: 4,
+                            },
+                            (
+                              _,
+                              numberIndex
+                            ) =>
+                              (card.rows || []).map(
+                                (row) => {
+                                  const item =
+                                    (row.numbers || [])[
+                                      numberIndex
+                                    ];
+
+                                  return (
+                                    <div
+                                      className="radar-bichos-milhar-pill"
+                                      key={`m-${card.group}-${row.dezena}-${numberIndex}`}
+                                    >
+                                      {item?.milhar || "—"}
+                                    </div>
+                                  );
+                                }
+                              )
+                          )}
+                        </div>
                       </div>
 
                       <button

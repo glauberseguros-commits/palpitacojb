@@ -1,4 +1,3 @@
-import "./Top3Visual.css";
 /* eslint-disable no-unused-vars */
 // src/pages/Top3/Top3View.jsx
 import React, { useMemo, useState, useCallback, useEffect } from "react";
@@ -931,15 +930,7 @@ function Top3Card({
       <div className="top3-card__summary">
         <div className="top3-card__identity">
           <ImgWithFallback
-            srcs={[
-              getImgFromGrupo(
-                Number(item?.grupo),
-                192
-              ),
-              ...(Array.isArray(iconSrcs)
-                ? iconSrcs
-                : []),
-            ].filter(Boolean)}
+            srcs={iconSrcs}
             alt={animal ? animal : `G${grupoTxt}`}
             size={isHero ? 92 : 84}
           />
@@ -975,7 +966,7 @@ function Top3Card({
             className="pp-btn"
             title="Copiar as 24 milhares"
           >
-            {copiedAllKey === key ? "COPIADO" : "COPIAR MILHARES"}
+            {copiedAllKey === key ? "✅ Copiado" : "📋 Copiar"}
           </button>
         </div>
 
