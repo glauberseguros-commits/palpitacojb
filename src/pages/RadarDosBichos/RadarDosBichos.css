@@ -931,3 +931,49 @@
     height: 76px;
   }
 }
+
+
+/* RADAR_USER_HEADER_CLEANUP_V3
+ * Cabeçalho voltado exclusivamente ao usuário final.
+ * TOP3 antigo permanece como referência visual.
+ */
+
+.radar-bichos-hero {
+  padding: 15px 16px;
+  border: 1px solid rgba(255,255,255,0.16);
+  border-radius: 16px;
+  background: #070707;
+  box-shadow: none;
+}
+
+.radar-bichos-hero h1 {
+  margin: 0;
+  color: #f4f4f4;
+  font-size: 1.05rem;
+  font-weight: 900;
+  line-height: 1.2;
+  letter-spacing: 0;
+}
+
+.radar-bichos-hero p,
+.radar-bichos-eyebrow {
+  display: none !important;
+}
+
+.radar-bichos-result-heading {
+  display: none !important;
+}
+
+.radar-bichos-filters {
+  margin-top: 14px;
+}
+
+@media (max-width: 560px) {
+  .radar-bichos-hero {
+    padding: 13px 14px;
+  }
+
+  .radar-bichos-hero h1 {
+    font-size: 1rem;
+  }
+}

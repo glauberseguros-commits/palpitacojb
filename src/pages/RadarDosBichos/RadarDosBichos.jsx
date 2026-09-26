@@ -594,22 +594,11 @@ export default function RadarDosBichos() {
   return (
     <main
       className="radar-bichos-page"
-      data-radar-engine="TOP1_TOP7_V1"
     >
       <section className="radar-bichos-hero">
-        <span className="radar-bichos-eyebrow">
-          PALPITACO JB
-        </span>
-
         <h1>
           RADAR DOS BICHOS
         </h1>
-
-        <p>
-          Leitura independente por loteria, horário e data.
-          Escolha TOP1 ou TOP7 para visualizar os bichos
-          e milhares do Radar.
-        </p>
       </section>
 
       <section className="radar-bichos-filters">
