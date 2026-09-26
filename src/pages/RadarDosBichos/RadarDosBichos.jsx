@@ -24,6 +24,7 @@ import {
 import {
   loadRadarHistorySource,
 } from "./radarSource";
+import RadarHistoryPanel from "./RadarHistoryPanel";
 
 import "./RadarDosBichos.css";
 
@@ -873,6 +874,14 @@ export default function RadarDosBichos() {
                 }
               )}
             </section>
+
+            <RadarHistoryPanel
+              lotteryKey={lotteryKey}
+              targetYmd={targetDate}
+              targetHour={targetHour}
+              mode={mode}
+              source={sourceData}
+            />
           </>
         )}
     </main>

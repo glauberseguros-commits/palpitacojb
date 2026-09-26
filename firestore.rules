@@ -207,6 +207,82 @@ service cloud.firestore {
     }
 
     /* =========================================================
+       RADAR DOS BICHOS
+       - dominio independente do TOP3;
+       - TOP1 e TOP7 sao snapshots distintos;
+       - primeira previsao do slot e imutavel;
+       - update exclusivamente para validacao do resultado.
+    ========================================================= */
+
+    match /radar_predictions/{predictionId} {
+      allow read: if authenticatedUser();
+
+      allow create: if authenticatedUser()
+        && request.resource.data.predictionType == "RADAR"
+        && request.resource.data.createdBy == request.auth.uid
+        && request.resource.data.status == "predicted"
+        && request.resource.data.targetYmd is string
+        && request.resource.data.targetHour is string
+        && request.resource.data.lotteryKey is string
+        && (
+          request.resource.data.mode == "TOP1"
+          || request.resource.data.mode == "TOP7"
+        )
+        && request.resource.data.source is map
+        && request.resource.data.snapshot is list
+        && (
+          (
+            request.resource.data.mode == "TOP1"
+            && request.resource.data.snapshot.size() == 4
+          )
+          ||
+          (
+            request.resource.data.mode == "TOP7"
+            && request.resource.data.snapshot.size() == 7
+          )
+        );
+
+      allow update: if
+        authenticatedUser()
+
+        && resource.data.predictionType == "RADAR"
+
+        && request.resource.data.predictionType ==
+          resource.data.predictionType
+
+        && request.resource.data.mode ==
+          resource.data.mode
+
+        && request.resource.data.diff(resource.data).affectedKeys().hasOnly([
+          "resultPrizes",
+          "hitType",
+          "hitScore",
+          "hitPosition",
+          "predictionPosition",
+          "predictionRank",
+          "resultPosition",
+          "matchedGrupo",
+          "matchedMilhar",
+          "matchedCentena",
+          "matchedDezena",
+          "matchedValue",
+          "hits",
+          "hitCount",
+          "validatedAtMs",
+          "validatedBy",
+          "updatedAtMs",
+          "status"
+        ])
+
+        && request.resource.data.status == "validated"
+
+        && request.resource.data.validatedBy ==
+          request.auth.uid;
+
+      allow delete: if false;
+    }
+
+    /* =========================================================
        TERNO DE GRUPO
        - domínio de persistência independente do TOP3;
        - leitura autenticada e nao anonima;
