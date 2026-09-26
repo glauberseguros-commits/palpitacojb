@@ -637,11 +637,65 @@ export function buildRadarHistorySource({
     );
   }
 
-  const selected =
-    unique.slice(
-      0,
-      RADAR_SOURCE_REQUIRED_DRAWS
+  /*
+   * RADAR_SOURCE_DISTINCT_DAYS_V2
+   *
+   * Paridade funcional do criterio D1 / D2 / D3:
+   *
+   * - a lista `unique` ja esta ordenada do sorteio
+   *   elegivel mais recente para o mais antigo;
+   * - somente resultados anteriores ao horario alvo
+   *   permanecem elegiveis;
+   * - D1, D2 e D3 devem vir de DATAS DISTINTAS;
+   * - em cada data fica o sorteio mais recente
+   *   disponivel antes do alvo.
+   *
+   * Portanto varios sorteios do mesmo dia jamais
+   * podem ocupar D1, D2 e D3 simultaneamente.
+   */
+  const selected = [];
+  const selectedDates =
+    new Set();
+
+  for (const item of unique) {
+    const itemDate =
+      safeString(
+        item?.date
+      );
+
+    if (
+      !itemDate ||
+      selectedDates.has(
+        itemDate
+      )
+    ) {
+      continue;
+    }
+
+    selectedDates.add(
+      itemDate
     );
+
+    selected.push(
+      item
+    );
+
+    if (
+      selected.length >=
+      RADAR_SOURCE_REQUIRED_DRAWS
+    ) {
+      break;
+    }
+  }
+
+  if (
+    selected.length <
+    RADAR_SOURCE_REQUIRED_DRAWS
+  ) {
+    throw new Error(
+      'RADAR_SOURCE_HISTORY_INSUFFICIENT'
+    );
+  }
 
   if (
     selected.length <

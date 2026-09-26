@@ -15,6 +15,7 @@ describe(
     ) {
       return {
         date,
+
         close_hour:
           hour,
 
@@ -22,6 +23,7 @@ describe(
           {
             position:
               1,
+
             milhar,
           },
         ],
@@ -66,12 +68,14 @@ describe(
               {
                 position:
                   2,
+
                 milhar:
                   '2222',
               },
               {
                 position:
                   1,
+
                 milhar:
                   '0123',
               },
@@ -92,6 +96,7 @@ describe(
               {
                 position:
                   1,
+
                 milhar:
                   '0000',
               },
@@ -104,7 +109,7 @@ describe(
     );
 
     test(
-      'D1 D2 D3 sao os tres sorteios imediatamente anteriores',
+      'D1 D2 D3 usam tres datas distintas',
       () => {
         const result =
           buildRadarHistorySource({
@@ -136,12 +141,24 @@ describe(
               draw(
                 '2026-09-25',
                 '16:00',
+                '9999'
+              ),
+
+              draw(
+                '2026-09-24',
+                '09:00',
                 '4004'
               ),
               draw(
                 '2026-09-24',
                 '21:00',
                 '5005'
+              ),
+
+              draw(
+                '2026-09-23',
+                '21:00',
+                '6006'
               ),
             ],
           });
@@ -152,26 +169,34 @@ describe(
           d1: {
             date:
               '2026-09-25',
+
             hour:
               '14:00',
+
             milhar:
               '3003',
           },
+
           d2: {
             date:
-              '2026-09-25',
+              '2026-09-24',
+
             hour:
-              '11:00',
+              '21:00',
+
             milhar:
-              '2002',
+              '5005',
           },
+
           d3: {
             date:
-              '2026-09-25',
+              '2026-09-23',
+
             hour:
-              '09:00',
+              '21:00',
+
             milhar:
-              '1001',
+              '6006',
           },
         });
       }
@@ -189,59 +214,73 @@ describe(
               '2026-09-25',
 
             targetHour:
-              '14:00',
+              '07:00',
 
             draws: [
               draw(
-                '2026-09-24',
-                '21:00',
-                '1111'
-              ),
-              draw(
                 '2026-09-25',
                 '07:00',
-                '2222'
-              ),
-              draw(
-                '2026-09-25',
-                '09:00',
-                '3333'
-              ),
-              draw(
-                '2026-09-25',
-                '11:00',
-                '4444'
-              ),
-              draw(
-                '2026-09-25',
-                '14:00',
                 '9999'
               ),
               draw(
-                '2026-09-25',
-                '16:00',
-                '8888'
+                '2026-09-24',
+                '07:00',
+                '1111'
+              ),
+              draw(
+                '2026-09-24',
+                '23:00',
+                '2222'
+              ),
+              draw(
+                '2026-09-23',
+                '23:00',
+                '3333'
+              ),
+              draw(
+                '2026-09-22',
+                '23:00',
+                '4444'
               ),
             ],
           });
 
         expect(
-          result.days.d1.milhar
-        ).toBe(
-          '4444'
-        );
+          result.days
+        ).toEqual({
+          d1: {
+            date:
+              '2026-09-24',
 
-        expect(
-          result.days.d2.milhar
-        ).toBe(
-          '3333'
-        );
+            hour:
+              '23:00',
 
-        expect(
-          result.days.d3.milhar
-        ).toBe(
-          '2222'
-        );
+            milhar:
+              '2222',
+          },
+
+          d2: {
+            date:
+              '2026-09-23',
+
+            hour:
+              '23:00',
+
+            milhar:
+              '3333',
+          },
+
+          d3: {
+            date:
+              '2026-09-22',
+
+            hour:
+              '23:00',
+
+            milhar:
+              '4444',
+          },
+        });
 
         expect(
           Object.values(
@@ -258,58 +297,97 @@ describe(
     );
 
     test(
-      'atravessa dias quando necessario',
+      'reproduz a regra de referencia D1 D2 D3',
       () => {
         const result =
           buildRadarHistorySource({
             lotteryKey:
-              'FEDERAL',
+              'PT_RIO',
 
             targetDate:
-              '2026-09-27',
+              '2026-09-15',
 
             targetHour:
-              '11:30',
+              '09:00',
 
             draws: [
               draw(
-                '2026-09-20',
-                '11:30',
+                '2026-09-15',
+                '09:00',
+                '9999'
+              ),
+
+              draw(
+                '2026-09-14',
+                '09:00',
                 '1111'
               ),
               draw(
-                '2026-09-23',
-                '20:00',
+                '2026-09-14',
+                '21:00',
+                '4497'
+              ),
+
+              draw(
+                '2026-09-13',
+                '11:00',
                 '2222'
               ),
               draw(
-                '2026-09-24',
-                '09:00',
-                '3333'
+                '2026-09-13',
+                '16:00',
+                '8267'
               ),
+
               draw(
-                '2026-09-26',
-                '18:00',
-                '4444'
+                '2026-09-12',
+                '21:00',
+                '5028'
               ),
             ],
           });
 
         expect(
-          result.history.selected.map(
-            (item) =>
-              item.milhar
-          )
-        ).toEqual([
-          '4444',
-          '3333',
-          '2222',
-        ]);
+          result.days
+        ).toEqual({
+          d1: {
+            date:
+              '2026-09-14',
+
+            hour:
+              '21:00',
+
+            milhar:
+              '4497',
+          },
+
+          d2: {
+            date:
+              '2026-09-13',
+
+            hour:
+              '16:00',
+
+            milhar:
+              '8267',
+          },
+
+          d3: {
+            date:
+              '2026-09-12',
+
+            hour:
+              '21:00',
+
+            milhar:
+              '5028',
+          },
+        });
       }
     );
 
     test(
-      'deduplica documentos do mesmo sorteio',
+      'deduplica documentos e mantem uma data por D',
       () => {
         const result =
           buildRadarHistorySource({
@@ -325,48 +403,80 @@ describe(
             draws: [
               draw(
                 '2026-09-25',
-                '10:00',
-                '1111'
+                '15:00',
+                '3333'
+              ),
+              draw(
+                '2026-09-25',
+                '15:00',
+                '3333'
               ),
               draw(
                 '2026-09-25',
                 '12:00',
                 '2222'
               ),
+
               draw(
-                '2026-09-25',
-                '15:00',
-                '3333'
+                '2026-09-24',
+                '20:00',
+                '4444'
               ),
               draw(
-                '2026-09-25',
-                '15:00',
-                '3333'
+                '2026-09-24',
+                '20:00',
+                '4444'
+              ),
+
+              draw(
+                '2026-09-23',
+                '20:00',
+                '5555'
               ),
             ],
           });
 
         expect(
-          result.history.selected
-        ).toHaveLength(
-          3
-        );
+          result.days
+        ).toEqual({
+          d1: {
+            date:
+              '2026-09-25',
 
-        expect(
-          result.history.selected.map(
-            (item) =>
-              item.hour
-          )
-        ).toEqual([
-          '15:00',
-          '12:00',
-          '10:00',
-        ]);
+            hour:
+              '15:00',
+
+            milhar:
+              '3333',
+          },
+
+          d2: {
+            date:
+              '2026-09-24',
+
+            hour:
+              '20:00',
+
+            milhar:
+              '4444',
+          },
+
+          d3: {
+            date:
+              '2026-09-23',
+
+            hour:
+              '20:00',
+
+            milhar:
+              '5555',
+          },
+        });
       }
     );
 
     test(
-      'bloqueia historico com menos de tres resultados validos',
+      'bloqueia historico com menos de tres datas validas',
       () => {
         expect(
           () =>
@@ -378,13 +488,28 @@ describe(
                 '2026-09-25',
 
               targetHour:
-                '11:00',
+                '17:00',
 
               draws: [
                 draw(
                   '2026-09-25',
                   '09:00',
-                  '1234'
+                  '1111'
+                ),
+                draw(
+                  '2026-09-25',
+                  '11:00',
+                  '2222'
+                ),
+                draw(
+                  '2026-09-25',
+                  '14:00',
+                  '3333'
+                ),
+                draw(
+                  '2026-09-24',
+                  '21:00',
+                  '4444'
                 ),
               ],
             })
