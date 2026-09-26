@@ -2,11 +2,13 @@ import {
   analyzeRadarPrediction,
   buildRadarPredictionSnapshot,
   isRadarSlotOpenForSnapshot,
+  radarHitCoverage,
   radarHitLabel,
   radarPredictionId,
 } from './radarHistory';
 
 import {
+  isRadarHistoryScheduledSlot,
   normalizeRadarOfficialDraws,
 } from './radarHistory.firestore';
 
@@ -288,6 +290,71 @@ describe(
     );
 
     test(
+      'cobertura estatistica e cumulativa',
+      () => {
+        expect(
+          radarHitCoverage(
+            'hit_exact'
+          )
+        ).toEqual({
+          milhar: true,
+          centena: true,
+          dezena: true,
+          grupo: true,
+          erro: false,
+        });
+
+        expect(
+          radarHitCoverage(
+            'hit_centena'
+          )
+        ).toEqual({
+          milhar: false,
+          centena: true,
+          dezena: true,
+          grupo: true,
+          erro: false,
+        });
+
+        expect(
+          radarHitCoverage(
+            'hit_dezena'
+          )
+        ).toEqual({
+          milhar: false,
+          centena: false,
+          dezena: true,
+          grupo: true,
+          erro: false,
+        });
+
+        expect(
+          radarHitCoverage(
+            'hit_grupo'
+          )
+        ).toEqual({
+          milhar: false,
+          centena: false,
+          dezena: false,
+          grupo: true,
+          erro: false,
+        });
+
+        expect(
+          radarHitCoverage(
+            'miss'
+          )
+        ).toEqual({
+          milhar: false,
+          centena: false,
+          dezena: false,
+          grupo: false,
+          erro: true,
+        });
+      }
+    );
+
+    test(
       'milhar tem prioridade sobre centena dezena e grupo',
       () => {
         const snapshot =
@@ -438,6 +505,56 @@ describe(
             value: '9496',
             group: 24,
           })
+        );
+      }
+    );
+    test(
+      'Nacional historico aceita somente horarios oficiais',
+      () => {
+        const valid = [
+          '02:00',
+          '08:00',
+          '10:00',
+          '12:00',
+          '15:00',
+          '17:00',
+          '21:00',
+          '23:00',
+        ];
+
+        valid.forEach(
+          (targetHour) => {
+            expect(
+              isRadarHistoryScheduledSlot({
+                lotteryKey:
+                  'NACIONAL',
+
+                targetYmd:
+                  '2026-09-26',
+
+                targetHour,
+              })
+            ).toBe(true);
+          }
+        );
+
+        [
+          '09:00',
+          '14:00',
+        ].forEach(
+          (targetHour) => {
+            expect(
+              isRadarHistoryScheduledSlot({
+                lotteryKey:
+                  'NACIONAL',
+
+                targetYmd:
+                  '2026-09-26',
+
+                targetHour,
+              })
+            ).toBe(false);
+          }
         );
       }
     );

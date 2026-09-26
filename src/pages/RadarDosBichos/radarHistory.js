@@ -878,6 +878,73 @@ export function isRadarSlotOpenForSnapshot({
   );
 }
 
+export function radarHitCoverage(
+  hitType
+) {
+  const type =
+    String(
+      hitType || ''
+    )
+      .trim()
+      .toLowerCase();
+
+  switch (type) {
+    case 'hit_exact':
+      return {
+        milhar: true,
+        centena: true,
+        dezena: true,
+        grupo: true,
+        erro: false,
+      };
+
+    case 'hit_centena':
+      return {
+        milhar: false,
+        centena: true,
+        dezena: true,
+        grupo: true,
+        erro: false,
+      };
+
+    case 'hit_dezena':
+      return {
+        milhar: false,
+        centena: false,
+        dezena: true,
+        grupo: true,
+        erro: false,
+      };
+
+    case 'hit_grupo':
+      return {
+        milhar: false,
+        centena: false,
+        dezena: false,
+        grupo: true,
+        erro: false,
+      };
+
+    case 'miss':
+      return {
+        milhar: false,
+        centena: false,
+        dezena: false,
+        grupo: false,
+        erro: true,
+      };
+
+    default:
+      return {
+        milhar: false,
+        centena: false,
+        dezena: false,
+        grupo: false,
+        erro: false,
+      };
+  }
+}
+
 export function radarHitLabel(
   hitType
 ) {

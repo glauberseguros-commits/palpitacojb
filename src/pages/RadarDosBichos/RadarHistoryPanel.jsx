@@ -9,6 +9,7 @@ import {
 } from "./radarTop1Top7Engine";
 
 import {
+  radarHitCoverage,
   radarHitLabel,
 } from "./radarHistory";
 
@@ -403,12 +404,15 @@ export default function RadarHistoryPanel({
               "validated"
           );
 
-        const count =
-          (type) =>
+        const coverageCount =
+          (level) =>
             validated.filter(
               (entry) =>
-                entry?.hitType ===
-                type
+                Boolean(
+                  radarHitCoverage(
+                    entry?.hitType
+                  )?.[level]
+                )
             ).length;
 
         return {
@@ -426,28 +430,28 @@ export default function RadarHistoryPanel({
             ),
 
           milhar:
-            count(
-              "hit_exact"
+            coverageCount(
+              "milhar"
             ),
 
           centena:
-            count(
-              "hit_centena"
+            coverageCount(
+              "centena"
             ),
 
           dezena:
-            count(
-              "hit_dezena"
+            coverageCount(
+              "dezena"
             ),
 
           grupo:
-            count(
-              "hit_grupo"
+            coverageCount(
+              "grupo"
             ),
 
           erro:
-            count(
-              "miss"
+            coverageCount(
+              "erro"
             ),
         };
       },

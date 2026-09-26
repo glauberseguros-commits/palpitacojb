@@ -31,6 +31,10 @@ import {
   radarPredictionId,
 } from './radarHistory';
 
+import {
+  getRadarScheduleForDate,
+} from './radarSchedule';
+
 const db =
   getFirestore(
     app
@@ -58,6 +62,72 @@ function lotteryKeyOf(
   return safeString(
     value
   ).toUpperCase();
+}
+
+export function isRadarHistoryScheduledSlot({
+  lotteryKey,
+  targetYmd,
+  targetHour,
+} = {}) {
+  const lottery =
+    lotteryKeyOf(
+      lotteryKey
+    );
+
+  const ymd =
+    safeString(
+      targetYmd
+    );
+
+  if (
+    !lottery ||
+    !/^\d{4}-\d{2}-\d{2}$/.test(
+      ymd
+    )
+  ) {
+    return false;
+  }
+
+  let hour =
+    '';
+
+  try {
+    hour =
+      normalizeRadarHistoryHour(
+        targetHour
+      );
+  } catch {
+    return false;
+  }
+
+  const schedule =
+    getRadarScheduleForDate(
+      lottery,
+      ymd
+    );
+
+  const normalizedSchedule =
+    (
+      Array.isArray(schedule)
+        ? schedule
+        : []
+    )
+      .map(
+        (item) => {
+          try {
+            return normalizeRadarHistoryHour(
+              item
+            );
+          } catch {
+            return '';
+          }
+        }
+      )
+      .filter(Boolean);
+
+  return normalizedSchedule.includes(
+    hour
+  );
 }
 
 function drawYmd(
@@ -176,6 +246,22 @@ export async function saveRadarPredictionSnapshot({
 
       reason:
         'AUTH_REQUIRED',
+    };
+  }
+
+  if (
+    !isRadarHistoryScheduledSlot({
+      lotteryKey,
+      targetYmd,
+      targetHour,
+    })
+  ) {
+    return {
+      saved:
+        false,
+
+      reason:
+        'INVALID_SCHEDULE_SLOT',
     };
   }
 
@@ -387,6 +473,19 @@ export async function loadRadarPredictionDay({
           ).toUpperCase() ===
             normalizedMode
         )
+    )
+    .filter(
+      (item) =>
+        isRadarHistoryScheduledSlot({
+          lotteryKey:
+            item?.lotteryKey,
+
+          targetYmd:
+            item?.targetYmd,
+
+          targetHour:
+            item?.targetHour,
+        })
     )
     .sort(
       (a, b) =>
