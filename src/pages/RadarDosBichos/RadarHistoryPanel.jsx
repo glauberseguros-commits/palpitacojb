@@ -5,6 +5,10 @@ import React, {
 } from "react";
 
 import {
+  getAnimalLabel,
+} from "../../constants/bichoMap";
+
+import {
   buildRadarCards,
 } from "./radarTop1Top7Engine";
 
@@ -15,7 +19,7 @@ import {
 
 import {
   saveRadarPredictionSnapshot,
-  syncRadarPredictionDay,
+  loadRadarHistoryViewDay,
 } from "./radarHistory.firestore";
 
 function safeString(value) {
@@ -128,51 +132,170 @@ function hitClass(
   }
 }
 
-function formatResult(
+function hitMatchedValue(
+  hit
+) {
+  const direct =
+    safeString(
+      hit?.matchedValue
+    );
+
+  if (direct) {
+    return direct;
+  }
+
+  switch (
+    safeString(
+      hit?.hitType
+    )
+  ) {
+    case "hit_exact":
+      return safeString(
+        hit?.matchedMilhar ||
+          hit?.resultMilhar
+      );
+
+    case "hit_centena":
+      return safeString(
+        hit?.matchedCentena
+      );
+
+    case "hit_dezena":
+      return safeString(
+        hit?.matchedDezena
+      );
+
+    default:
+      return "";
+  }
+}
+
+function hitAnimal(
+  hit
+) {
+  const group =
+    Number(
+      hit?.matchedGrupo
+    );
+
+  if (
+    !Number.isInteger(group) ||
+    group < 1 ||
+    group > 25
+  ) {
+    return "";
+  }
+
+  return safeString(
+    getAnimalLabel(
+      group
+    )
+  ).toUpperCase();
+}
+
+function entryHits(
   entry
 ) {
   if (
     entry?.status !==
     "validated"
   ) {
-    return "AGUARDANDO RESULTADO";
+    return [];
   }
 
+  const persisted =
+    Array.isArray(
+      entry?.hits
+    )
+      ? entry.hits.filter(
+          (hit) =>
+            hit &&
+            hit?.hitType !==
+              "miss"
+        )
+      : [];
+
+  const hits =
+    persisted.length
+      ? persisted
+      : (
+          entry?.hitType &&
+          entry?.hitType !==
+            "miss"
+        )
+        ? [
+            entry,
+          ]
+        : [];
+
+  return [
+    ...hits,
+  ].sort(
+    (a, b) =>
+      Number(
+        a?.resultPosition ||
+          999
+      ) -
+        Number(
+          b?.resultPosition ||
+            999
+        ) ||
+      Number(
+        a?.predictionPosition ||
+          999
+      ) -
+        Number(
+          b?.predictionPosition ||
+            999
+        )
+  );
+}
+
+function formatHit(
+  hit
+) {
   const label =
     radarHitLabel(
-      entry?.hitType
+      hit?.hitType
     );
 
-  if (
-    entry?.hitType ===
-    "miss"
-  ) {
-    return label;
-  }
+  const value =
+    hitMatchedValue(
+      hit
+    );
 
-  const pieces = [
-    label,
-  ];
+  const animal =
+    hitAnimal(
+      hit
+    );
 
-  if (
-    entry?.matchedValue
-  ) {
+  const pieces = [];
+
+  if (animal) {
     pieces.push(
-      entry.matchedValue
+      animal
     );
   }
+
+  pieces.push(
+    value
+      ? `${label} ${value}`
+      : label
+  );
+
+  const position =
+    Number(
+      hit?.resultPosition
+    );
 
   if (
     Number.isInteger(
-      Number(
-        entry?.resultPosition
-      )
-    )
+      position
+    ) &&
+    position > 0
   ) {
     pieces.push(
-      `P${Number(
-        entry.resultPosition
-      )}`
+      `P${position}`
     );
   }
 
@@ -224,6 +347,102 @@ function cardPosition(
 
   return (
     `CARD ${position}`
+  );
+}
+
+function HistoryHitDetails({
+  entry,
+}) {
+  if (
+    entry?.status !==
+    "validated"
+  ) {
+    return (
+      <span className="radar-history-hit-pending">
+        AGUARDANDO RESULTADO
+      </span>
+    );
+  }
+
+  const hits =
+    entryHits(
+      entry
+    );
+
+  if (!hits.length) {
+    return (
+      <>
+        <span className="radar-history-hit-count">
+          0 ACERTOS
+        </span>
+
+        <span className="radar-history-hit-miss">
+          ERRO
+        </span>
+      </>
+    );
+  }
+
+  return (
+    <>
+      <span className="radar-history-hit-count">
+        {hits.length}
+        {" "}
+        {hits.length === 1
+          ? "ACERTO"
+          : "ACERTOS"}
+      </span>
+
+      <div className="radar-history-hit-list">
+        {hits.map(
+          (
+            hit,
+            index
+          ) => (
+            <div
+              className="radar-history-hit-item"
+              key={[
+                entry?.id,
+                hit?.resultPosition,
+                hit?.predictionPosition,
+                hit?.hitType,
+                index,
+              ].join("-")}
+            >
+              <span
+                className={[
+                  "radar-history-hit-main",
+                  hitClass(
+                    hit?.hitType
+                  ),
+                ]
+                  .filter(Boolean)
+                  .join(" ")}
+              >
+                {formatHit(
+                  hit
+                )}
+              </span>
+
+              <small className="radar-history-hit-meta">
+                {[
+                  entryGroup(
+                    hit
+                  ),
+                  cardPosition(
+                    hit
+                  ),
+                ]
+                  .filter(Boolean)
+                  .join(
+                    " · "
+                  )}
+              </small>
+            </div>
+          )
+        )}
+      </div>
+    </>
   );
 }
 
@@ -326,7 +545,7 @@ export default function RadarHistoryPanel({
            * Os dois snapshots permanecem congelados.
            */
           const resolved =
-            await syncRadarPredictionDay({
+            await loadRadarHistoryViewDay({
               lotteryKey,
               targetYmd,
               mode,
@@ -573,34 +792,11 @@ export default function RadarHistoryPanel({
                 </div>
 
                 <div className="radar-history-detail">
-                  <span
-                    className={
-                      hitClass(
-                        entry.hitType
-                      )
-                    }
-                  >
-                    {formatResult(
+                  <HistoryHitDetails
+                    entry={
                       entry
-                    )}
-                  </span>
-
-                  <small>
-                    {[
-                      entryGroup(
-                        entry
-                      ),
-                      cardPosition(
-                        entry
-                      ),
-                    ]
-                      .filter(
-                        Boolean
-                      )
-                      .join(
-                        " · "
-                      )}
-                  </small>
+                    }
+                  />
                 </div>
 
                 <div className="radar-history-mode">

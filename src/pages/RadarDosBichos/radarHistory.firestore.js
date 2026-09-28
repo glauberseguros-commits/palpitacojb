@@ -1,3 +1,7 @@
+import * as radarHistoryViewCore from './radarHistory';
+import * as radarTopEngineView from './radarTop1Top7Engine';
+import * as radarSourceHistoryView from './radarSource';
+import * as kingResultsHistoryView from '../../services/kingResultsService';
 import {
   collection,
   doc,
@@ -766,4 +770,455 @@ export async function syncRadarPredictionDay({
   }
 
   return resolved;
+}
+
+/*
+ * RADAR_HISTORY_VIEW_V4
+ *
+ * Historico visual independente dos snapshots antigos.
+ *
+ * A grade oficial define TODAS as linhas.
+ * Cada horario reconstrói sua propria previsao AS-OF.
+ * TOP1 e TOP7 sao conferidos separadamente.
+ *
+ * Esta view e somente leitura.
+ * Nao grava nem apaga documentos do Firestore.
+ */
+
+const RADAR_HISTORY_VIEW_HOURS = Object.freeze([
+  '02:00',
+  '07:00',
+  '08:00',
+  '09:00',
+  '10:00',
+  '11:00',
+  '11:30',
+  '12:00',
+  '13:00',
+  '14:00',
+  '15:00',
+  '16:00',
+  '17:00',
+  '18:00',
+  '19:00',
+  '19:30',
+  '20:00',
+  '21:00',
+  '23:00',
+]);
+
+function radarHistoryViewAddDays(
+  ymd,
+  amount
+) {
+  const match =
+    /^(\d{4})-(\d{2})-(\d{2})$/.exec(
+      safeString(
+        ymd
+      )
+    );
+
+  if (!match) {
+    return '';
+  }
+
+  const date =
+    new Date(
+      Date.UTC(
+        Number(match[1]),
+        Number(match[2]) - 1,
+        Number(match[3])
+      )
+    );
+
+  date.setUTCDate(
+    date.getUTCDate() +
+      Number(amount || 0)
+  );
+
+  return date
+    .toISOString()
+    .slice(
+      0,
+      10
+    );
+}
+
+function radarHistoryViewMode(
+  mode
+) {
+  const value =
+    safeString(
+      mode
+    ).toUpperCase();
+
+  if (
+    value !== 'TOP1' &&
+    value !== 'TOP7'
+  ) {
+    throw new Error(
+      `RADAR_HISTORY_VIEW_INVALID_MODE=${value || 'EMPTY'}`
+    );
+  }
+
+  return value;
+}
+
+function radarHistoryViewMilhar(
+  source,
+  key
+) {
+  const direct =
+    safeString(
+      source?.[key]
+    );
+
+  if (
+    /^\d{4}$/.test(
+      direct
+    )
+  ) {
+    return direct;
+  }
+
+  const nested =
+    safeString(
+      source?.days?.[key]?.milhar
+    );
+
+  if (
+    /^\d{4}$/.test(
+      nested
+    )
+  ) {
+    return nested;
+  }
+
+  return '';
+}
+
+export function radarHistoryScheduleForView({
+  lotteryKey,
+  targetYmd,
+} = {}) {
+  return (
+    RADAR_HISTORY_VIEW_HOURS
+      .filter(
+        (targetHour) => {
+          try {
+            return (
+              isRadarHistoryScheduledSlot({
+                lotteryKey,
+                targetYmd,
+                targetHour,
+              }) === true
+            );
+          }
+          catch {
+            return false;
+          }
+        }
+      )
+  );
+}
+
+export function buildRadarHistoryViewEntry({
+  lotteryKey,
+  targetYmd,
+  targetHour,
+  mode,
+  source,
+  draw = null,
+} = {}) {
+  const normalizedMode =
+    radarHistoryViewMode(
+      mode
+    );
+
+  const lottery =
+    lotteryKeyOf(
+      lotteryKey
+    );
+
+  const hour =
+    normalizeRadarHistoryHour(
+      targetHour
+    );
+
+  const base = {
+    id:
+      [
+        lottery,
+        safeString(targetYmd),
+        hour,
+        normalizedMode,
+        'VIEW_V4',
+      ].join('__'),
+
+    lotteryKey:
+      lottery,
+
+    targetYmd:
+      safeString(
+        targetYmd
+      ),
+
+    targetHour:
+      hour,
+
+    mode:
+      normalizedMode,
+
+    predictionType:
+      'RADAR_VIEW_V4',
+  };
+
+  const d1 =
+    radarHistoryViewMilhar(
+      source,
+      'd1'
+    );
+
+  const d2 =
+    radarHistoryViewMilhar(
+      source,
+      'd2'
+    );
+
+  const d3 =
+    radarHistoryViewMilhar(
+      source,
+      'd3'
+    );
+
+  if (
+    !/^\d{4}$/.test(d1) ||
+    !/^\d{4}$/.test(d2) ||
+    !/^\d{4}$/.test(d3)
+  ) {
+    return {
+      ...base,
+
+      status:
+        'source_unavailable',
+
+      hitType:
+        null,
+    };
+  }
+
+  const cards =
+    radarTopEngineView
+      .buildRadarCards({
+        mode:
+          normalizedMode,
+
+        d1,
+        d2,
+        d3,
+      });
+
+  const snapshot =
+    radarHistoryViewCore
+      .buildRadarPredictionSnapshot({
+        mode:
+          normalizedMode,
+
+        cards,
+      });
+
+  if (
+    !draw?.prizes?.length
+  ) {
+    return {
+      ...base,
+
+      status:
+        'predicted',
+
+      snapshot,
+
+      hitType:
+        null,
+    };
+  }
+
+  const analysis =
+    radarHistoryViewCore
+      .analyzeRadarPrediction({
+        snapshot,
+
+        prizes:
+          draw.prizes,
+      });
+
+  return {
+    ...base,
+
+    status:
+      'validated',
+
+    snapshot,
+
+    resultPrizes:
+      draw.prizes,
+
+    ...analysis,
+  };
+}
+
+export async function loadRadarHistoryViewDay({
+  lotteryKey,
+  targetYmd,
+  mode = null,
+} = {}) {
+  const normalizedMode =
+    radarHistoryViewMode(
+      mode
+    );
+
+  const lottery =
+    lotteryKeyOf(
+      lotteryKey
+    );
+
+  const ymd =
+    safeString(
+      targetYmd
+    );
+
+  const schedule =
+    radarHistoryScheduleForView({
+      lotteryKey:
+        lottery,
+
+      targetYmd:
+        ymd,
+    });
+
+  const lookbackDays =
+    Number(
+      radarSourceHistoryView
+        .RADAR_SOURCE_LOOKBACK_DAYS ||
+      45
+    );
+
+  const dateFrom =
+    radarHistoryViewAddDays(
+      ymd,
+      -lookbackDays
+    );
+
+  const [
+    officialDraws,
+    sourceDraws,
+  ] =
+    await Promise.all([
+      loadOfficialDay({
+        lotteryKey:
+          lottery,
+
+        targetYmd:
+          ymd,
+      }),
+
+      kingResultsHistoryView
+        .getKingResultsByRange({
+          uf:
+            lottery,
+
+          dateFrom,
+
+          dateTo:
+            ymd,
+
+          positions: [
+            1,
+          ],
+
+          mode:
+            'aggregated',
+        }),
+    ]);
+
+  const byHour =
+    new Map(
+      (
+        Array.isArray(
+          officialDraws
+        )
+          ? officialDraws
+          : []
+      ).map(
+        (draw) => [
+          normalizeRadarHistoryHour(
+            draw.hour
+          ),
+
+          draw,
+        ]
+      )
+    );
+
+  return schedule.map(
+    (
+      targetHour,
+      index
+    ) => {
+      let source =
+        null;
+
+      try {
+        source =
+          radarSourceHistoryView
+            .buildRadarHistorySource({
+              lotteryKey:
+                lottery,
+
+              targetDate:
+                ymd,
+
+              targetHour,
+
+              draws:
+                sourceDraws,
+            });
+      }
+      catch (error) {
+        console.warn(
+          '[RADAR_HISTORY_VIEW_V4_SOURCE]',
+          lottery,
+          ymd,
+          targetHour,
+          error
+        );
+      }
+
+      return {
+        ...buildRadarHistoryViewEntry({
+          lotteryKey:
+            lottery,
+
+          targetYmd:
+            ymd,
+
+          targetHour,
+
+          mode:
+            normalizedMode,
+
+          source,
+
+          draw:
+            byHour.get(
+              targetHour
+            ) ||
+            null,
+        }),
+
+        schedulePosition:
+          index + 1,
+      };
+    }
+  );
 }
