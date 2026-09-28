@@ -1043,13 +1043,57 @@ export function buildRadarHistoryViewEntry({
     };
   }
 
+
+  /*
+   * RADAR_HISTORY_PRIZE_SCOPE_V5
+   *
+   * TOP1:
+   * compara somente o primeiro premio.
+   *
+   * TOP7:
+   * compara os premios do primeiro ao setimo.
+   *
+   * A selecao de cards continua sendo definida
+   * pelo motor de cada modo.
+   */
+  const prizesForMode =
+    (
+      Array.isArray(
+        draw?.prizes
+      )
+        ? draw.prizes
+        : []
+    )
+      .filter(
+        (prize) => {
+          const position =
+            Number(
+              prize?.position
+            );
+
+          if (
+            normalizedMode ===
+            'TOP1'
+          ) {
+            return (
+              position === 1
+            );
+          }
+
+          return (
+            position >= 1 &&
+            position <= 7
+          );
+        }
+      );
+
   const analysis =
     radarHistoryViewCore
       .analyzeRadarPrediction({
         snapshot,
 
         prizes:
-          draw.prizes,
+          prizesForMode,
       });
 
   return {
@@ -1061,7 +1105,7 @@ export function buildRadarHistoryViewEntry({
     snapshot,
 
     resultPrizes:
-      draw.prizes,
+      prizesForMode,
 
     ...analysis,
   };
