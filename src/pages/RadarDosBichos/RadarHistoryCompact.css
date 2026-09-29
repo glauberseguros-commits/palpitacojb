@@ -1,0 +1,267 @@
+/*
+ * RADAR HISTORY COMPACT UI V1
+ *
+ * Somente apresentacao.
+ * Nao altera motor, resultados ou persistencia.
+ */
+
+/* ---------------------------------------------------------
+   BLOCO GERAL
+--------------------------------------------------------- */
+
+.radar-history {
+  margin-top: 22px !important;
+}
+
+.radar-history-heading {
+  padding-block: 13px !important;
+}
+
+.radar-history-summary-title {
+  padding: 9px 14px 7px;
+  border-top: 1px solid rgba(255, 255, 255, 0.045);
+  color: #8b7a42;
+  font-size: 0.58rem;
+  font-weight: 900;
+  letter-spacing: 0.11em;
+}
+
+/* ---------------------------------------------------------
+   RESUMO DO DIA
+--------------------------------------------------------- */
+
+.radar-history-summary > div {
+  padding-block: 8px !important;
+}
+
+.radar-history-summary > div:not(:first-child):not(:last-child) {
+  opacity: 0.72;
+}
+
+.radar-history-summary > div:first-child b,
+.radar-history-summary > div:last-child b {
+  font-size: 1.03rem !important;
+}
+
+/* ---------------------------------------------------------
+   LISTA
+--------------------------------------------------------- */
+
+.radar-history-list {
+  padding: 4px 14px !important;
+}
+
+.radar-history-row {
+  grid-template-columns: 72px minmax(0, 1fr) !important;
+  gap: 10px !important;
+  min-height: 42px;
+  padding: 7px 4px !important;
+}
+
+/*
+ * "HORARIO" ja e obvio pelo valor da primeira coluna.
+ */
+.radar-history-time > span {
+  display: none !important;
+}
+
+.radar-history-time strong {
+  font-size: 0.84rem !important;
+}
+
+/*
+ * TOP1/TOP7 ja aparece no cabecalho do historico
+ * e no seletor da pagina.
+ */
+.radar-history-mode {
+  display: none !important;
+}
+
+.radar-history-detail {
+  min-width: 0;
+}
+
+/* ---------------------------------------------------------
+   UM ACERTO
+--------------------------------------------------------- */
+
+.radar-history-compact-single
+  .radar-history-hit-count {
+  display: none !important;
+}
+
+.radar-history-compact-single
+  .radar-history-hit-list {
+  display: block;
+  padding: 0 !important;
+}
+
+.radar-history-compact-single
+  .radar-history-hit-list > * {
+  margin: 0 !important;
+}
+
+.radar-history-compact-single
+  small {
+  display: none !important;
+}
+
+/* ---------------------------------------------------------
+   VARIOS ACERTOS
+--------------------------------------------------------- */
+
+.radar-history-compact-multi {
+  min-width: 0;
+}
+
+.radar-history-compact-preview {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.radar-history-compact-count {
+  flex: 0 0 auto;
+  color: #d8c46b;
+  font-size: 0.65rem;
+  font-weight: 950;
+  letter-spacing: 0.035em;
+  white-space: nowrap;
+}
+
+.radar-history-compact-primary {
+  min-width: 0;
+}
+
+.radar-history-compact-primary
+  .radar-history-hit-count {
+  display: none !important;
+}
+
+.radar-history-compact-primary
+  .radar-history-hit-list {
+  padding: 0 !important;
+}
+
+.radar-history-compact-primary
+  .radar-history-hit-list > * {
+  margin: 0 !important;
+}
+
+.radar-history-compact-primary
+  small {
+  display: none !important;
+}
+
+/* ---------------------------------------------------------
+   EXPANDIR DETALHES
+--------------------------------------------------------- */
+
+.radar-history-compact-details {
+  margin-top: 3px;
+}
+
+.radar-history-compact-details > summary {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  cursor: pointer;
+  list-style: none;
+  color: #777777;
+  font-size: 0.58rem;
+  font-weight: 850;
+  letter-spacing: 0.045em;
+  user-select: none;
+}
+
+.radar-history-compact-details > summary::-webkit-details-marker {
+  display: none;
+}
+
+.radar-history-compact-details > summary::before {
+  content: "›";
+  color: #b9a04a;
+  font-size: 0.85rem;
+  line-height: 1;
+  transform: translateY(-1px);
+  transition: transform 120ms ease;
+}
+
+.radar-history-compact-details[open] > summary::before {
+  transform: rotate(90deg);
+}
+
+.radar-history-compact-details > summary b {
+  color: #a89249;
+  font-size: inherit;
+}
+
+.radar-history-compact-expanded {
+  margin-top: 7px;
+  padding: 7px 10px;
+  border-left: 1px solid rgba(210, 173, 62, 0.22);
+  background: rgba(255, 255, 255, 0.012);
+}
+
+.radar-history-compact-expanded
+  .radar-history-hit-count {
+  display: none !important;
+}
+
+/* ---------------------------------------------------------
+   ERRO / PENDENTE
+--------------------------------------------------------- */
+
+.radar-history-hit-miss,
+.radar-history-hit-pending {
+  font-weight: 800 !important;
+}
+
+.radar-history-hit-pending {
+  opacity: 0.72;
+}
+
+/* ---------------------------------------------------------
+   RODAPE
+--------------------------------------------------------- */
+
+.radar-history-footnote {
+  padding-block: 7px 9px !important;
+  opacity: 0.68;
+}
+
+/* ---------------------------------------------------------
+   MOBILE
+--------------------------------------------------------- */
+
+@media (max-width: 700px) {
+  .radar-history-row {
+    grid-template-columns: 62px minmax(0, 1fr) !important;
+    gap: 8px !important;
+  }
+
+  .radar-history-compact-preview {
+    gap: 6px;
+  }
+}
+
+@media (max-width: 420px) {
+  .radar-history-list {
+    padding-inline: 10px !important;
+  }
+
+  .radar-history-row {
+    grid-template-columns: 56px minmax(0, 1fr) !important;
+    min-height: 40px;
+    padding-block: 6px !important;
+  }
+
+  .radar-history-summary-title {
+    padding-inline: 10px;
+  }
+
+  .radar-history-compact-count {
+    font-size: 0.61rem;
+  }
+}

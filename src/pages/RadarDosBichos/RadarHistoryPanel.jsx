@@ -21,6 +21,7 @@ import {
   saveRadarPredictionSnapshot,
   loadRadarHistoryViewDay,
 } from "./radarHistory.firestore";
+import "./RadarHistoryCompact.css";
 
 function safeString(value) {
   return String(value ?? "").trim();
@@ -446,6 +447,102 @@ function HistoryHitDetails({
   );
 }
 
+
+/*
+ * RADAR_HISTORY_COMPACT_UI_V1
+ *
+ * Camada exclusivamente visual.
+ *
+ * - erro/pendente: usa renderer existente;
+ * - 1 acerto: mostra somente o acerto principal;
+ * - varios acertos: mostra o primeiro e recolhe os demais;
+ * - todos os detalhes continuam disponiveis ao expandir.
+ */
+function CompactHistoryHitDetails({
+  entry,
+}) {
+  const hits =
+    entryHits(
+      entry
+    );
+
+  if (
+    !Array.isArray(
+      hits
+    ) ||
+    hits.length === 0
+  ) {
+    return (
+      <CompactHistoryHitDetails
+                      entry={entry}
+                    />
+    );
+  }
+
+  const primary =
+    hits[0];
+
+  const primaryEntry = {
+    ...entry,
+
+    hits: [
+      primary,
+    ],
+
+    hitCount:
+      1,
+  };
+
+  if (
+    hits.length === 1
+  ) {
+    return (
+      <div className="radar-history-compact-single">
+        <HistoryHitDetails
+          entry={primaryEntry}
+        />
+      </div>
+    );
+  }
+
+  return (
+    <div className="radar-history-compact-multi">
+      <div className="radar-history-compact-preview">
+        <span className="radar-history-compact-count">
+          {hits.length}
+          {" "}
+          ACERTOS
+        </span>
+
+        <div className="radar-history-compact-primary">
+          <HistoryHitDetails
+            entry={primaryEntry}
+          />
+        </div>
+      </div>
+
+      <details className="radar-history-compact-details">
+        <summary>
+          <span>
+            VER DETALHES
+          </span>
+
+          <b>
+            +{hits.length - 1}
+          </b>
+        </summary>
+
+        <div className="radar-history-compact-expanded">
+          <HistoryHitDetails
+            entry={entry}
+          />
+        </div>
+      </details>
+    </div>
+  );
+}
+
+
 export default function RadarHistoryPanel({
   lotteryKey,
   targetYmd,
@@ -698,6 +795,10 @@ export default function RadarHistoryPanel({
         <strong>
           {mode}
         </strong>
+      </div>
+
+      <div className="radar-history-summary-title">
+        RESUMO DO DIA
       </div>
 
       <div className="radar-history-summary">
