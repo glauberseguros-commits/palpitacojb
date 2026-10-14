@@ -1157,6 +1157,45 @@
   font-weight: 750;
 }
 
+.radar-history-hit-count {
+  display: block;
+  margin-bottom: 7px;
+  color: #eeeeee;
+  font-size: 0.65rem;
+  font-weight: 950;
+  letter-spacing: 0.07em;
+}
+
+.radar-history-hit-list {
+  display: grid;
+  gap: 7px;
+}
+
+.radar-history-hit-item {
+  min-width: 0;
+  padding-left: 9px;
+  border-left: 2px solid rgba(226, 198, 94, 0.3);
+}
+
+.radar-history-hit-main {
+  display: block;
+  overflow: hidden;
+  font-size: 0.78rem;
+  font-weight: 950;
+  line-height: 1.25;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.radar-history-hit-meta {
+  display: block;
+  min-height: 15px;
+  margin-top: 2px;
+  color: #777777;
+  font-size: 0.64rem;
+  font-weight: 750;
+}
+
 .radar-history-mode {
   justify-self: end;
   padding: 5px 7px;

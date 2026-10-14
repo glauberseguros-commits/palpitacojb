@@ -25,6 +25,10 @@ import {
   loadRadarHistorySource,
 } from "./radarSource";
 import RadarHistoryPanel from "./RadarHistoryPanel";
+import {
+  applyRadarCentenas24,
+  loadRadarCentenas24Context,
+} from "./radarCentenas24"; // RADAR_CENTENAS24_CONTEXTUAL_V1
 
 import "./RadarDosBichos.css";
 
@@ -446,16 +450,27 @@ export default function RadarDosBichos() {
 
         try {
           const out =
-            await loadRadarHistorySource({
-              lotteryKey,
-              targetDate,
-              targetHour,
-            });
+            await Promise.all([
+              loadRadarHistorySource({
+                lotteryKey,
+                targetDate,
+                targetHour,
+              }),
+              loadRadarCentenas24Context({
+                lotteryKey,
+                targetDate,
+                targetHour,
+              }),
+            ]);
+
+          const radarSource = out[0];
+          const centenasContext = out[1];
 
           if (!cancelled) {
-            setSourceData(
-              out
-            );
+            setSourceData({
+              ...radarSource,
+              centenasContext,
+            });
           }
         }
         catch (err) {
@@ -522,7 +537,7 @@ export default function RadarDosBichos() {
         }
 
         try {
-          return buildRadarCards({
+          const baseCards = buildRadarCards({
             mode,
 
             d1:
@@ -534,6 +549,11 @@ export default function RadarDosBichos() {
             d3:
               sourceData.days.d3.milhar,
           });
+
+          return applyRadarCentenas24(
+            baseCards,
+            sourceData.centenasContext
+          );
         }
         catch {
           return [];
@@ -827,7 +847,7 @@ export default function RadarDosBichos() {
                         <div className="radar-bichos-milhar-grid">
                           {Array.from(
                             {
-                              length: 4,
+                              length: 6,
                             },
                             (
                               _,
