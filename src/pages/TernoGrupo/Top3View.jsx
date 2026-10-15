@@ -3554,11 +3554,6 @@ const list = Array.isArray(top3)
         </section>
 
         <section className="top3-shell">
-          <div className="top3-header__title">Calendário do TOP3</div>
-
-          <div className="top3-helper">
-            Escolha uma data para consultar as previsões, os resultados e a taxa de acerto de cada horário.
-          </div>
 
           <div className="top3-historyToolbar">
             <button
