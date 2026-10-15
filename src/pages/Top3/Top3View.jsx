@@ -4444,6 +4444,47 @@ const list =
             box-sizing: border-box;
           }
         }
+
+        /* TOP3_MOBILE_DATE_OVERFLOW_V10 */
+        @media (max-width: 640px) {
+
+          .top3-historyToolbar .top3-controls-v7 {
+            max-width: 100%;
+            box-sizing: border-box;
+          }
+
+          .top3-historyToolbar .top3-controls-v7 > div:last-child {
+            display: block;
+            width: 100% !important;
+            min-width: 0 !important;
+            max-width: 100% !important;
+            margin: 0 !important;
+            padding: 0;
+            box-sizing: border-box;
+            overflow: hidden;
+          }
+
+          .top3-historyToolbar .top3-controls-v7 input.top3-historyDate {
+            display: block;
+            width: 100% !important;
+            min-width: 0 !important;
+            max-width: 100% !important;
+            inline-size: 100% !important;
+            min-inline-size: 0 !important;
+            max-inline-size: 100% !important;
+            box-sizing: border-box !important;
+            margin: 0 !important;
+            padding: 9px 12px;
+            font-size: 14px;
+            overflow: hidden;
+          }
+
+          .top3-historyToolbar .top3-historyDate::-webkit-date-and-time-value {
+            min-width: 0;
+            max-width: 100%;
+            text-align: center;
+          }
+        }
       `}</style>
 
       <div className="top3-header-band">
