@@ -4485,6 +4485,68 @@ const list =
             text-align: center;
           }
         }
+
+        /* TOP3_MOBILE_DATE_NATIVE_OVERLAY_V11 */
+
+        .top3-mobileDateVisual {
+          display: none;
+        }
+
+        @media (max-width: 640px) {
+
+          .top3-historyToolbar .top3-mobileDateWrap {
+            position: relative;
+            display: block;
+            width: 100% !important;
+            min-width: 0 !important;
+            max-width: 100% !important;
+            height: 42px;
+            margin: 0 !important;
+            padding: 0;
+            box-sizing: border-box;
+            border: 1px solid rgba(201,168,62,0.35);
+            border-radius: 12px;
+            background: rgba(0,0,0,0.38);
+            overflow: hidden;
+          }
+
+          .top3-historyToolbar .top3-mobileDateVisual {
+            position: absolute;
+            inset: 0;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 12px;
+            padding: 0 12px;
+            box-sizing: border-box;
+            color: #ffffff;
+            font-size: 14px;
+            font-weight: 900;
+            white-space: nowrap;
+            pointer-events: none;
+          }
+
+          .top3-historyToolbar .top3-mobileDateVisual svg {
+            flex: 0 0 auto;
+          }
+
+          .top3-historyToolbar .top3-mobileDateWrap input.top3-historyDate {
+            position: absolute !important;
+            inset: 0 !important;
+            display: block !important;
+            width: 100% !important;
+            height: 100% !important;
+            min-width: 0 !important;
+            max-width: 100% !important;
+            min-height: 0 !important;
+            margin: 0 !important;
+            padding: 0 !important;
+            border: 0 !important;
+            opacity: 0 !important;
+            cursor: pointer;
+            box-sizing: border-box !important;
+          }
+        }
       `}</style>
 
       <div className="top3-header-band">
@@ -4599,8 +4661,30 @@ const list =
                 )}
               </select>
     </div>
-    <div style={{ minWidth: 0 }}>
-      <input
+    <div className="top3-mobileDateWrap">
+  <div className="top3-mobileDateVisual" aria-hidden="true">
+    <span>
+      {new Date(`${selectedHistoryYmd}T12:00:00`).toLocaleDateString(
+        "pt-BR",
+        { day: "numeric", month: "short", year: "numeric" }
+      )}
+    </span>
+    <svg
+      width="18"
+      height="18"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <rect x="3" y="5" width="18" height="16" rx="2" />
+      <path d="M16 3v4M8 3v4M3 10h18" />
+    </svg>
+  </div>
+  <input
               type="date"
               className="top3-historyDate"
               value={selectedHistoryYmd}
@@ -4610,7 +4694,7 @@ const list =
               }
               aria-label="Selecionar data do histórico TOP3"
             />
-    </div>
+</div>
   </div>
 </div>
         </section>
