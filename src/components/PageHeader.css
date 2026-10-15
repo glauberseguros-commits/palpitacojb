@@ -84,3 +84,18 @@
 .pp-page-standard--centenas .ppSharedPageHeader__subtitle {
   display: none !important;
 }
+/* PALPITACO_CENTENAS_SUBTITLE_HIDE_V1 */
+.pp-page-standard--centenas .cx0_wrap .cx0_sub {
+    display: none !important;
+}
+/* PALPITACO_DOWNLOADS_PAGE_TITLE_V1 */
+
+/* O titulo oficial fica fora do painel, no cabecalho compartilhado. */
+.pp-page-standard--downloads .pp-top .pp-title {
+    display: none !important;
+}
+
+/* O subtitulo compartilhado nao deve acrescentar outra linha. */
+.pp-page-standard--downloads .ppSharedPageHeader__subtitle {
+    display: none !important;
+}
