@@ -3771,12 +3771,24 @@ const list =
           padding: 6px 0;
         }
 
+        /* TOP3_TOOLBAR_DOIS_CONTROLES_V8 */
         .top3-historyToolbar{
-          display: grid;
-          grid-template-columns: auto minmax(190px, 260px) auto auto;
-          gap: 10px;
-          align-items: center;
+          display: block;
           margin-top: 14px;
+        }
+
+        .top3-historyToolbar .top3-controls-v7{
+          display: flex;
+          width: 100%;
+          min-width: 0;
+          justify-content: space-between;
+          align-items: center;
+          gap: 12px;
+          flex-wrap: wrap;
+        }
+
+        .top3-historyToolbar .top3-controls-v7 > div:last-child{
+          margin-left: auto;
         }
 
         .top3-historyDate{
