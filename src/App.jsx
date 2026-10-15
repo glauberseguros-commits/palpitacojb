@@ -13,8 +13,15 @@ import { useLocation, useNavigate } from "react-router-dom";
 // ✅ Firebase (Admin real / Auth real)
 import { auth, db } from "./services/firebase";
 import { onAuthStateChanged, signOut } from "firebase/auth";
+import { loginAnonymous } from "./services/auth";
+// PALPITACO_GUEST_FIREBASE_V5
 import { doc, getDoc } from "firebase/firestore";
 import { clearAccessRuntimeSession } from "./services/accessClient";
+import {
+  markSessionGuest,
+  safeRemoveSession,
+} from "./pages/Account/account.session";
+// PALPITACO_GUEST_SESSION_V4
 import {
   ACCESS_FLOW_STATE,
   bootstrapAuthorizedAccess,
@@ -58,6 +65,13 @@ const Centenas = lazy(() => import("./pages/Centenas/Centenas"));
 const STORAGE_KEY = "palpitaco_screen_v2";
 const LEGACY_ACCOUNT_SESSION_KEY = "pp_session_v1";
 const LEGACY_GUEST_ACTIVE_KEY = "pp_guest_active_v1";
+
+// PALPITACO_GUEST_PUBLIC_V1
+// Desligar esta constante remove a autorizacao publica da interface.
+const PUBLIC_ACCESS_ENABLED = true;
+// PALPITACO_GUEST_PUBLIC_V3
+// Apenas o modo convidado recebe a liberacao temporaria.
+const PUBLIC_GUEST_SESSION_KEY = "pp_public_guest_v1";
 
 // ✅ Persistência de filtros do Dashboard
 const DASH_FILTERS_KEY = "pp_dashboard_filters_v1";
@@ -583,6 +597,57 @@ function AppLoading() {
   );
 }
 
+
+/* PALPITACO_GUEST_ACCOUNT_V2 */
+function GuestAccountInfo() {
+  return (
+    <main
+      style={{
+        width: "min(900px, calc(100% - 32px))",
+        margin: "32px auto",
+        color: "#f5f0dc"
+      }}
+    >
+      <section
+        style={{
+          padding: "28px",
+          border: "1px solid #7a6329",
+          borderRadius: "18px",
+          background: "#0b0b0b"
+        }}
+      >
+        <div
+          style={{
+            color: "#d9b951",
+            fontWeight: 800,
+            fontSize: "12px",
+            letterSpacing: "0.08em",
+            marginBottom: "12px"
+          }}
+        >
+          PALPITACO JB
+        </div>
+
+        <h1 style={{ margin: "0 0 14px", fontSize: "24px" }}>
+          Acesso de Convidado
+        </h1>
+
+        <p style={{ lineHeight: 1.7 }}>
+          Você está utilizando o PalPitaco JB como convidado.
+        </p>
+
+        <p style={{ lineHeight: 1.7, color: "#c7c7c7" }}>
+          Não é necessário informar nome, telefone, e-mail,
+          senha ou contratar uma assinatura.
+        </p>
+
+        <p style={{ lineHeight: 1.7, color: "#d9b951" }}>
+          Utilize o menu lateral para acessar as funcionalidades.
+        </p>
+      </section>
+    </main>
+  );
+}
 export default function App() {
   const location = useLocation();
   const navigate = useNavigate();
@@ -689,6 +754,92 @@ export default function App() {
 
   const accessRunRef = useRef(0);
 
+  const [guestMode, setGuestMode] = useState(() => {
+    if (!PUBLIC_ACCESS_ENABLED) return false;
+
+    try {
+      return window.sessionStorage.getItem(
+        PUBLIC_GUEST_SESSION_KEY
+      ) === "1";
+    } catch {
+      return false;
+    }
+  });
+
+  // PALPITACO_GUEST_AUTH_RECOVERY_V1
+  // Restaura a autenticacao apenas quando o modo convidado
+  // ja foi escolhido e nao existe usuario Firebase ativo.
+  const guestAuthRecoveryPendingRef = useRef(false);
+
+  useEffect(() => {
+    if (!userAuthReady || !guestMode || adminMode) return;
+    if (auth.currentUser?.uid) return;
+    if (guestAuthRecoveryPendingRef.current) return;
+
+    let selectedAsGuest = false;
+
+    try {
+      selectedAsGuest =
+        window.sessionStorage.getItem(PUBLIC_GUEST_SESSION_KEY) === "1";
+    } catch {
+      return;
+    }
+
+    if (!selectedAsGuest) return;
+
+    guestAuthRecoveryPendingRef.current = true;
+
+    loginAnonymous()
+      .catch((error) => {
+        console.error(
+          "Falha ao restaurar autenticacao Firebase do convidado:",
+          error
+        );
+      })
+      .finally(() => {
+        guestAuthRecoveryPendingRef.current = false;
+      });
+  }, [userAuthReady, guestMode, adminMode]);
+  const guestAccess =
+    PUBLIC_ACCESS_ENABLED &&
+    guestMode &&
+    (!firebaseUser?.uid || firebaseUser?.isAnonymous === true);
+
+  useEffect(() => {
+    if (!userAuthReady || !guestAccess || adminMode) return;
+
+    markSessionGuest();
+  }, [userAuthReady, guestAccess, adminMode]);
+
+  async function enterGuestMode() {
+    if (!PUBLIC_ACCESS_ENABLED) return;
+
+    try {
+      window.sessionStorage.setItem(
+        PUBLIC_GUEST_SESSION_KEY,
+        "1"
+      );
+
+      setGuestMode(true);
+      await loginAnonymous();
+      markSessionGuest();
+      navigate("/", { replace: true });
+    } catch (error) {
+      setGuestMode(false);
+
+      try {
+        window.sessionStorage.removeItem(
+          PUBLIC_GUEST_SESSION_KEY
+        );
+      } catch {}
+
+      window.alert(
+        "Não foi possível entrar como convidado: " +
+        String(error?.message || error)
+      );
+    }
+  }
+
   function clearLegacyAccessMarkers() {
     safeRemoveLS(LEGACY_ACCOUNT_SESSION_KEY);
     safeRemoveLS(LEGACY_GUEST_ACTIVE_KEY);
@@ -769,17 +920,32 @@ export default function App() {
       }
 
       if (user?.isAnonymous === true) {
-        clearAccessRuntimeSession();
-        clearLegacyAccessMarkers();
+        let guestSelected = false;
 
-        setFirebaseUser(null);
+        try {
+          guestSelected =
+            PUBLIC_ACCESS_ENABLED &&
+            window.sessionStorage.getItem(
+              PUBLIC_GUEST_SESSION_KEY
+            ) === "1";
+        } catch {}
+
+        clearAccessRuntimeSession();
         setAccessResult(null);
         setAccessError("");
         setAccessBusy(false);
 
-        try {
-          await signOut(auth);
-        } catch {}
+        if (guestSelected) {
+          setFirebaseUser(user);
+          setGuestMode(true);
+          markSessionGuest();
+        } else {
+          setFirebaseUser(null);
+
+          try {
+            await signOut(auth);
+          } catch {}
+        }
 
         return;
       }
@@ -841,6 +1007,9 @@ export default function App() {
   useEffect(() => {
     if (adminMode) return;
     if (!userAuthReady) return;
+
+    // A navegacao publica nao depende da assinatura.
+    if (guestAccess) return;
 
     const pathScreen =
       pathToScreen(location?.pathname);
@@ -964,6 +1133,7 @@ export default function App() {
     location?.search,
     selectedProduct,
     navigate,
+    guestAccess,
   ]);
 
   useEffect(() => {
@@ -982,6 +1152,15 @@ export default function App() {
   };
 
   const logout = async () => {
+    setGuestMode(false);
+
+    try {
+      window.sessionStorage.removeItem(
+        PUBLIC_GUEST_SESSION_KEY
+      );
+    } catch {}
+
+    safeRemoveSession();
     safeRemoveLS(STORAGE_KEY);
     safeRemoveLS(DASH_FILTERS_KEY);
 
@@ -1028,7 +1207,11 @@ export default function App() {
   const renderScreen = (s) => {
     switch (s) {
       case ROUTES.ACCOUNT:
-        return <Account onAuthenticated={() => {}} />;
+        return (
+          auth.currentUser?.isAnonymous === true
+            ? <GuestAccountInfo />
+            : <Account onAuthenticated={() => {}} />
+        );
       case ROUTES.RESULTS:
         return <Results />;
       case ROUTES.TOP3:
@@ -1150,13 +1333,16 @@ export default function App() {
     return <AppLoading />;
   }
 
-  if (!firebaseUser?.uid) {
+  if (
+    !firebaseUser?.uid &&
+    !(PUBLIC_ACCESS_ENABLED && guestMode)
+  ) {
     return (
       <ErrorBoundary>
         <Suspense fallback={<AppLoading />}>
           <Account
             onClose={() => {}}
-            onAuthenticated={handleAuthenticated}
+            onAuthenticated={handleAuthenticated} onGuest={enterGuestMode}
           />
           <BuildStamp />
         </Suspense>
@@ -1168,6 +1354,7 @@ export default function App() {
     accessResult?.state || "";
 
   if (
+    !guestAccess &&
     authoritativePhase ===
     ACCESS_FLOW_STATE.SUBSCRIPTION_REQUIRED
   ) {
@@ -1187,6 +1374,7 @@ export default function App() {
   }
 
   if (
+    !guestAccess &&
     authoritativePhase !==
     ACCESS_FLOW_STATE.AUTHORIZED
   ) {

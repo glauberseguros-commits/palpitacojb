@@ -75,7 +75,8 @@ function normalizePlan(planRaw) {
 }
 
 
-export default function Account({ onClose = null, onAuthenticated = null }) {
+export default function Account({
+  onGuest, onClose = null, onAuthenticated = null }) {
   // viewport + ui
   const vw = useViewportWidth();
   const ui = useAccountUI(vw);
@@ -907,7 +908,7 @@ export default function Account({ onClose = null, onAuthenticated = null }) {
       <LoginVisual
         onEnter={onEnter}
         onRegister={onRegister}
-        onResetPassword={onResetPassword}
+        onResetPassword={onResetPassword} onGuest={onGuest}
       />
     );
   }

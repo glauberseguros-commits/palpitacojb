@@ -63,6 +63,7 @@ function validEmail(value) {
 }
 
 export default function LoginVisual({
+  onGuest,
   onEnter,
   onRegister,
   onResetPassword,
@@ -849,6 +850,26 @@ export default function LoginVisual({
                 </button>
               </form>
 
+                            {typeof onGuest === "function" && (
+                <button
+                  type="button"
+                  onClick={onGuest}
+                  disabled={busy}
+                  style={{
+                    width: "100%",
+                    minHeight: 48,
+                    marginTop: 14,
+                    borderRadius: 12,
+                    border: "1px solid #caa64b",
+                    background: "#171207",
+                    color: "#f3d27a",
+                    fontWeight: 900,
+                    cursor: "pointer"
+                  }}
+                >
+                  ENTRAR COMO CONVIDADO
+                </button>
+              )}
               <button
                 type="button"
                 style={ui.textButton}
