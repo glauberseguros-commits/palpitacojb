@@ -436,7 +436,7 @@ export default function AppShell({ active, onNavigate, onLogout, children }) {
     { key: ROUTES.TOP3, icon: "trophy", title: "Top 3" },
     {
       key: ROUTES.RADAR_BICHOS,
-      icon: "pets",
+      icon: "radar",
       title: "Radar dos Bichos",
     },
     { key: ROUTES.LATE, icon: "clock", title: "Atrasados" },

@@ -107,6 +107,48 @@ export default function Icon({ name = "home", size = 18 }) {
     );
   }
 
+  // PALPITACO_RADAR_SIDEBAR_ICON_V1
+  if (name === "radar") {
+    return (
+      <svg {...common}>
+        <circle
+          cx="12"
+          cy="12"
+          r="9"
+          stroke={stroke}
+          strokeWidth="1.7"
+        />
+        <circle
+          cx="12"
+          cy="12"
+          r="5.5"
+          stroke={stroke}
+          strokeWidth="1.4"
+          opacity="0.65"
+        />
+        <circle
+          cx="12"
+          cy="12"
+          r="2"
+          fill={gold}
+        />
+        <path
+          d="M12 12 18.4 5.6"
+          stroke={gold}
+          strokeWidth="2"
+          strokeLinecap="round"
+        />
+        <path
+          d="M12 12 20.3 8.5"
+          stroke={gold}
+          strokeWidth="1.2"
+          strokeLinecap="round"
+          opacity="0.65"
+        />
+      </svg>
+    );
+  }
+
   if (name === "pets") {
     return (
       <svg {...common}>
