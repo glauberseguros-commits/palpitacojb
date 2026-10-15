@@ -3008,6 +3008,12 @@ const list =
           display:grid;
           gap:14px;
         }
+        /* TOP3_LOTERIA_ALINHADA_V3 */
+        @media (min-width: 901px) {
+          .top3-header-band {
+            padding-right: max(0px, calc((100% - 1190px) / 2));
+          }
+        }
         /* TOP3_HEADER_BAND_V2 */
         .top3-header-band {
           width: 100%;
