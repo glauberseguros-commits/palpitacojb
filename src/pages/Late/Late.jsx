@@ -822,7 +822,7 @@ export default function Late() {
 
         .ppLateTitleWrap{ display:flex; flex-direction:column; align-items:center; justify-content:center; gap:4px; }
         .ppLateTitle{ font-size:20px; font-weight:800; letter-spacing:0.6px; text-transform:uppercase; text-align:left; align-self:flex-start; margin:0; line-height:1.05; }
-        .ppLateSubtitle{ font-size:11px; color:rgba(233,233,233,0.72); text-align:center; line-height:1.15; }
+        .ppLateSubtitle{ display:none; font-size:11px; color:rgba(233,233,233,0.72); text-align:center; line-height:1.15; }
         .ppLateSubtitle b{ color:#caa64b; font-weight:800; }
 
         .ppLateControls{ display:flex; justify-content:center; align-items:center; gap:8px; flex-wrap:wrap; }
