@@ -2060,6 +2060,18 @@ export default function Results() {
             >
               RESULTADOS
             </div>
+            <div
+              style={{
+                marginTop: 8,
+                color: "rgba(255,255,255,0.78)",
+                fontSize: 12,
+                lineHeight: 1.5,
+                fontWeight: 400,
+                textAlign: "left",
+              }}
+            >
+              Consulte os resultados por loteria, data e hor├írio.
+            </div>
           </div>
 
           <div
