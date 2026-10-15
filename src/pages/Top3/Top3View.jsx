@@ -1005,6 +1005,44 @@ function Top3Card({
             </div>
           ))}
         </div>
+        {/* PALPITACO_TOP3_MOBILE_DEZENAS_V1 */}
+        <div className="top3-mobileDezGrid">
+          {dezenasHeader.map((dz, cIdx) => (
+            <div
+              className="top3-mobileDezBlock"
+              key={`${dz}-${cIdx}`}
+            >
+              <div className="top3-mobileDezTitle">
+                DEZENA {dz || "—"}
+              </div>
+
+              <div className="top3-mobileDezNumbers">
+                {gridRows.map((row, rIdx) => {
+                  const mm = normalizeMilharStr(row[cIdx]);
+                  const cKey = `${key}__${rIdx}__${cIdx}`;
+                  const isCopied = copiedCellKey === cKey;
+
+                  return (
+                    <div
+                      key={cKey}
+                      className="pp-pill top3-mobileMilhar"
+                      data-empty={mm ? "0" : "1"}
+                      title={mm ? "Clique para copiar" : ""}
+                      onClick={() => doCopyOne(mm, rIdx, cIdx)}
+                    >
+                      {mm || "—"}
+                      {isCopied ? (
+                        <div className="pp-copiedBadge">
+                          COPIADO
+                        </div>
+                      ) : null}
+                    </div>
+                  );
+                })}
+              </div>
+            </div>
+          ))}
+        </div>
           </>
         )}
       </div>
@@ -2892,6 +2930,78 @@ const list =
 
         .top3-header .top3-metaGrid {
           display: none !important;
+        }
+
+                /* PALPITACO_TOP3_MOBILE_DEZENAS_V1 */
+        .top3-mobileDezGrid {
+          display: none;
+        }
+
+        @media (max-width: 700px) and (orientation: portrait) {
+          .top3-card__body > .pp-chipRow,
+          .top3-card__body > .pp-gridBox {
+            display: none !important;
+          }
+
+          .top3-card__body > .top3-mobileDezGrid {
+            display: grid;
+            grid-template-columns: repeat(2, minmax(0, 1fr));
+            gap: 10px;
+            width: 100%;
+            min-width: 0;
+            margin-top: 12px;
+          }
+
+          .top3-mobileDezBlock {
+            min-width: 0;
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            padding: 8px;
+            border: 1px solid rgba(212,175,55,0.24);
+            border-radius: 12px;
+            background: rgba(0,0,0,0.20);
+          }
+
+          .top3-mobileDezTitle {
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            min-height: 38px;
+            padding: 6px 2px;
+            border-radius: 8px;
+            background: rgba(212,175,55,0.16);
+            border: 1px solid rgba(212,175,55,0.25);
+            color: #f3d27a;
+            font-size: 12px;
+            font-weight: 900;
+            text-align: center;
+          }
+
+          .top3-mobileDezNumbers {
+            display: flex;
+            flex-direction: column;
+            gap: 8px;
+            min-width: 0;
+          }
+
+          .top3-mobileDezNumbers .top3-mobileMilhar {
+            width: 100%;
+            min-width: 0;
+            min-height: 44px;
+            box-sizing: border-box;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+            padding: 8px 2px;
+            margin: 0;
+            font-size: clamp(13px, 3.8vw, 17px);
+            font-weight: 900;
+            letter-spacing: 0.5px;
+            text-align: center;
+            cursor: pointer;
+          }
         }
 
         .top3-header{
