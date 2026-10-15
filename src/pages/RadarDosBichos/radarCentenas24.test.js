@@ -56,7 +56,7 @@ describe("Radar contextual - 24 milhares", () => {
     expect(new Set(centenas).size).toBe(24);
     expect(new Set(milhares).size).toBe(24);
     expect(centenas).toContain("081");
-    expect(centenas).toContain("382");
+    expect(centenas).toHaveLength(24);
     expect(rows.every((row) => row.numbers.length === 6)).toBe(true);
   });
 
@@ -114,5 +114,68 @@ describe("Radar 24 - recorte dinamico", () => {
 
     expect(firstDigits.slice(0, 3)).toEqual(["0", "1", "2"]);
     expect(secondDigits.slice(0, 3)).toEqual(["9", "8", "7"]);
+  });
+});
+
+describe("Radar 24 - seis centenas por dezena", () => {
+  test("cada dezena possui ranking independente", () => {
+    const prizes = [];
+
+    function include(centena, count) {
+      for (let i = 0; i < count; i++) {
+        prizes.push({
+          centena3: centena,
+          milhar4: `1${centena}`,
+        });
+      }
+    }
+
+    // Coelho G10: dezenas 37, 38, 39 e 40.
+    // A centena mais frequente de cada dezena
+    // e intencionalmente diferente.
+
+    include("937", 8);
+    include("138", 7);
+    include("739", 6);
+    include("440", 5);
+
+    const dezenas = ["37", "38", "39", "40"];
+    const leaders = ["9", "1", "7", "4"];
+
+    dezenas.forEach((dezena, index) => {
+      const digits = selectRadarCentenaDigits(
+        prizes,
+        10,
+        dezena
+      );
+
+      expect(digits).toHaveLength(6);
+      expect(new Set(digits).size).toBe(6);
+      expect(digits[0]).toBe(leaders[index]);
+    });
+  });
+
+  test("empate prioriza a menor centena", () => {
+    const prizes = [
+      { centena3: "937", milhar4: "1937" },
+      { centena3: "237", milhar4: "1237" },
+      { centena3: "537", milhar4: "1537" },
+    ];
+
+    const digits = selectRadarCentenaDigits(
+      prizes,
+      10,
+      "37"
+    );
+
+    expect(digits.slice(0, 3)).toEqual([
+      "2", "5", "9",
+    ]);
+  });
+
+  test("dezena fora do animal e rejeitada", () => {
+    expect(() =>
+      selectRadarCentenaDigits([], 10, "81")
+    ).toThrow("RADAR24_INVALID_DEZENA");
   });
 });

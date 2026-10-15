@@ -306,8 +306,28 @@ function dezenasDoGrupo(group) {
  * Sao escolhidos os seis primeiros digitos
  * iniciais distintos encontrados nesse ranking.
  */
-export function selectRadarCentenaDigits(prizes, group) {
-  const dezenas = dezenasDoGrupo(group);
+/* RADAR24_SIX_PER_DEZENA_V1 */
+export function selectRadarCentenaDigits(
+  prizes,
+  group,
+  selectedDezena = null
+) {
+  const allDezenas = dezenasDoGrupo(group);
+
+  if (
+    selectedDezena !== null &&
+    !allDezenas.includes(selectedDezena)
+  ) {
+    throw new Error(
+      `RADAR24_INVALID_DEZENA=${selectedDezena}`
+    );
+  }
+
+  const dezenas =
+    selectedDezena === null
+      ? allDezenas
+      : [selectedDezena];
+
   const counts = new Map();
 
   for (const dezena of dezenas) {
@@ -367,7 +387,16 @@ export function buildRadarCentenas24Rows({
   }
 
   const dezenas = dezenasDoGrupo(group);
-  const digits = selectRadarCentenaDigits(prizes, group);
+  const digitsByDezena = new Map(
+    dezenas.map((dezena) => [
+      dezena,
+      selectRadarCentenaDigits(
+        prizes,
+        group,
+        dezena
+      ),
+    ])
+  );
 
   const groupPrizes = prizes.filter(
     (prize) => groupOf(prize) === Number(group)
@@ -382,7 +411,7 @@ export function buildRadarCentenas24Rows({
   }
 
   const raw = dezenas.flatMap((dezena) =>
-    digits.map((digit) => {
+    digitsByDezena.get(dezena).map((digit) => {
       const centena = `${digit}${dezena}`;
 
       const recommendation = buildMilharRecommendationV3({
@@ -437,8 +466,11 @@ export function buildRadarCentenas24Rows({
   );
 
   if (
-    digits.length !== 6 ||
-    new Set(digits).size !== 6 ||
+    [...digitsByDezena.values()].some(
+      (digits) =>
+        digits.length !== 6 ||
+        new Set(digits).size !== 6
+    ) ||
     rows.length !== 4 ||
     rows.some((row) => row.numbers.length !== 6) ||
     new Set(centenas).size !== 24 ||
