@@ -3008,6 +3008,55 @@ const list =
           display:grid;
           gap:14px;
         }
+        /* TOP3_HEADER_BAND_V2 */
+        .top3-header-band {
+          width: 100%;
+          min-width: 0;
+          box-sizing: border-box;
+          margin: 0 0 18px;
+        }
+
+        @media (min-width: 901px) {
+          .top3-header-band .top3-header {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr) auto;
+            grid-template-rows: auto auto;
+            column-gap: 20px;
+            row-gap: 8px;
+            align-items: center;
+          }
+
+          .top3-header-band .top3-header__title {
+            grid-column: 1;
+            grid-row: 1;
+            justify-self: start;
+          }
+
+          .top3-header-band .top3-context {
+            grid-column: 1;
+            grid-row: 2;
+          }
+
+          .top3-header-band .top3-lottery-picker {
+            grid-column: 2;
+            grid-row: 1 / 3;
+            justify-self: end;
+            margin-top: 0 !important;
+            margin-bottom: 0 !important;
+          }
+        }
+
+        @media (max-width: 900px) {
+          .top3-header-band .top3-header {
+            display: grid;
+            grid-template-columns: minmax(0, 1fr);
+            gap: 10px;
+          }
+
+          .top3-header-band .top3-lottery-picker {
+            min-width: 0;
+          }
+        }
 
         .top3-header__title{
           font-weight: 950;
@@ -4321,7 +4370,7 @@ const list =
 
       `}</style>
 
-      <div className="top3-page">
+      <div className="top3-header-band">
         <section
           className="top3-shell"
           style={{
@@ -4435,6 +4484,8 @@ const list =
             </div>
           </div>
         </section>
+      </div>
+      <div className="top3-page">
 
         <section className="top3-shell">
 
