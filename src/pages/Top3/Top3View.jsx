@@ -4398,6 +4398,52 @@ const list =
           }
         }
 
+
+        /* TOP3_MOBILE_CONTROLES_V9 */
+        @media (max-width: 640px) {
+
+          .top3-historyToolbar {
+            display: block;
+            width: 100%;
+            min-width: 0;
+          }
+
+          .top3-historyToolbar .top3-controls-v7 {
+            display: grid !important;
+            grid-template-columns: minmax(0, 1fr);
+            gap: 12px;
+            width: 100%;
+            min-width: 0;
+            box-sizing: border-box;
+          }
+
+          .top3-historyToolbar .top3-controls-v7 > div {
+            width: 100% !important;
+            min-width: 0 !important;
+            max-width: 100%;
+            margin: 0 !important;
+            box-sizing: border-box;
+          }
+
+          .top3-historyToolbar #top3-lottery-select {
+            display: block;
+            width: 100% !important;
+            max-width: 100%;
+            min-width: 0;
+            height: 42px;
+            box-sizing: border-box;
+          }
+
+          .top3-historyToolbar .top3-historyDate {
+            display: block;
+            width: 100% !important;
+            max-width: 100%;
+            min-width: 0;
+            min-height: 42px;
+            grid-column: auto;
+            box-sizing: border-box;
+          }
+        }
       `}</style>
 
       <div className="top3-header-band">
