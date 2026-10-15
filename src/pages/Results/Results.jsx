@@ -2041,10 +2041,10 @@ export default function Results() {
         <div
           className="pp_header"
           style={{
-            border: "1px solid rgba(212,175,55,0.22)",
-            borderRadius: 18,
-            background: "#080808",
-            padding: 16,
+            border: "none",
+            borderRadius: 0,
+            background: "transparent",
+            padding: 0,
             boxSizing: "border-box",
           }}
         >
@@ -2062,6 +2062,7 @@ export default function Results() {
             </div>
             <div
               style={{
+                display: "none",
                 marginTop: 8,
                 color: "rgba(255,255,255,0.78)",
                 fontSize: 12,
