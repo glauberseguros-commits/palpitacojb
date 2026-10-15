@@ -31,6 +31,7 @@ import {
 } from "./radarCentenas24"; // RADAR_CENTENAS24_CONTEXTUAL_V1
 
 import "./RadarDosBichos.css";
+import "./RadarDateMobile.css";
 
 const MODES = Object.freeze([
   {
@@ -721,7 +722,19 @@ export default function RadarDosBichos() {
             DATA
           </label>
 
-          <input
+          <div className="radar-bichos-mobile-date">
+  <span
+    className="radar-bichos-mobile-date__text"
+    aria-hidden="true"
+  >
+    {targetDate
+      ? new Date(`${targetDate}T12:00:00`).toLocaleDateString(
+          "pt-BR",
+          { day: "numeric", month: "short", year: "numeric" }
+        )
+      : "Selecionar data"}
+  </span>
+  <input
             id="radar-date"
             type="date"
             value={targetDate}
@@ -732,6 +745,7 @@ export default function RadarDosBichos() {
                 )
             }
           />
+</div>
         </div>
 
         </div>

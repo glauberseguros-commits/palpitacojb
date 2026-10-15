@@ -1,0 +1,72 @@
+/*
+ * PALPITACO JB - RADAR MOBILE DATE CENTER
+ * Corrige exclusivamente a apresentacao da data no celular.
+ * O input nativo permanece funcional.
+ */
+
+.radar-bichos-mobile-date {
+  width: 100%;
+  min-width: 0;
+}
+
+.radar-bichos-mobile-date__text {
+  display: none;
+}
+
+@media (max-width: 640px) {
+
+  .radar-bichos-field .radar-bichos-mobile-date {
+    position: relative;
+    display: flex;
+    width: 100%;
+    height: 48px;
+    min-width: 0;
+    max-width: 100%;
+    align-items: center;
+    justify-content: center;
+    box-sizing: border-box;
+    border: 1px solid rgba(210, 173, 62, 0.28);
+    border-radius: 12px;
+    background: #111111;
+  }
+
+  .radar-bichos-field .radar-bichos-mobile-date__text {
+    position: absolute;
+    inset: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0 14px;
+    box-sizing: border-box;
+    color: #f6f6f6;
+    font: inherit;
+    font-size: 0.9rem;
+    font-weight: 800;
+    line-height: normal;
+    text-align: center;
+    white-space: nowrap;
+    pointer-events: none;
+  }
+
+  .radar-bichos-field .radar-bichos-mobile-date > #radar-date {
+    position: absolute !important;
+    inset: 0 !important;
+    display: block !important;
+    width: 100% !important;
+    height: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    border: 0 !important;
+    opacity: 0 !important;
+    box-sizing: border-box !important;
+    cursor: pointer;
+    z-index: 1;
+  }
+
+  .radar-bichos-field .radar-bichos-mobile-date:focus-within {
+    border-color: rgba(226, 190, 71, 0.82);
+    box-shadow: 0 0 0 3px rgba(210, 173, 62, 0.09);
+  }
+}
