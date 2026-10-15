@@ -2038,9 +2038,28 @@ export default function Results() {
       <style>{styles}</style>
 
       <div className="pp_shell">
-        <div className="pp_header">
+        <div
+          className="pp_header"
+          style={{
+            border: "1px solid rgba(212,175,55,0.22)",
+            borderRadius: 18,
+            background: "#080808",
+            padding: 16,
+            boxSizing: "border-box",
+          }}
+        >
           <div style={{ minWidth: 0 }}>
-            <div className="pp_title">Resultados</div>
+            <div
+              className="pp_title"
+              style={{
+                color: "#ffffff",
+                fontWeight: 900,
+                textTransform: "uppercase",
+                textAlign: "left",
+              }}
+            >
+              RESULTADOS
+            </div>
           </div>
 
           <div
