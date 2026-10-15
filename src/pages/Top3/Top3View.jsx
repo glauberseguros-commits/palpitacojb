@@ -4388,31 +4388,44 @@ const list =
 
             <div className="top3-context"><div><b>Previsão:</b> {headerForecast}</div></div>
 
-            <div
-              className="top3-lottery-picker"
-              style={{
-                display: "flex",
-                alignItems: "center",
-                gap: 10,
-                marginTop: 14,
-                marginBottom: 14,
-                flexWrap: "wrap",
-              }}
-            >
-              <label
-                htmlFor="top3-lottery-select"
-                style={{
-                  fontSize: 12,
-                  fontWeight: 800,
-                  letterSpacing: ".04em",
-                  opacity: .72,
-                }}
-              >
-                Loteria
-              </label>
 
-              <select
-                id="top3-lottery-select"
+
+            <div className="top3-metaGrid">
+              <div className="top3-metaItem">
+                <div className="top3-metaItem__label">Último</div>
+                <div className="top3-metaItem__value">{meta.last}</div>
+              </div>
+
+              <div className="top3-metaItem">
+                <div className="top3-metaItem__label">Anterior</div>
+                <div className="top3-metaItem__value">{meta.prev}</div>
+              </div>
+
+            </div>
+          </div>
+        </section>
+      </div>
+      <div className="top3-page">
+
+        <section className="top3-shell">
+
+          <div className="top3-historyToolbar">
+  {/* TOP3_CONTROLES_LOTERIA_DATA_V7 */}
+  <div
+    className="top3-controls-v7"
+    style={{
+      width: "100%",
+      minWidth: 0,
+      display: "flex",
+      justifyContent: "space-between",
+      alignItems: "center",
+      gap: 12,
+      flexWrap: "wrap"
+    }}
+  >
+    <div style={{ minWidth: 0, width: "min(100%, 320px)" }}>
+      <select
+                id="top3-lottery-select" aria-label="Selecionar loteria TOP3"
                 value={curLot}
                 onChange={(event) => {
                   const next =
@@ -4470,47 +4483,9 @@ const list =
                   }
                 )}
               </select>
-            </div>
-
-            <div className="top3-metaGrid">
-              <div className="top3-metaItem">
-                <div className="top3-metaItem__label">Último</div>
-                <div className="top3-metaItem__value">{meta.last}</div>
-              </div>
-
-              <div className="top3-metaItem">
-                <div className="top3-metaItem__label">Anterior</div>
-                <div className="top3-metaItem__value">{meta.prev}</div>
-              </div>
-
-            </div>
-          </div>
-        </section>
-      </div>
-      <div className="top3-page">
-
-        <section className="top3-shell">
-
-          <div className="top3-historyToolbar">
-            <button
-              type="button"
-              className="pp-btn"
-              disabled={!canGoPrevious}
-              onClick={() => {
-                if (!canGoPrevious) return;
-                goToHistoryDate(previousAvailableDate);
-              }}
-              style={{
-                opacity: canGoPrevious ? 1 : 0.45,
-                cursor: canGoPrevious
-                  ? "pointer"
-                  : "not-allowed",
-              }}
-            >
-              ◀ Dia anterior
-            </button>
-
-            <input
+    </div>
+    <div style={{ minWidth: 0 }}>
+      <input
               type="date"
               className="top3-historyDate"
               value={selectedHistoryYmd}
@@ -4520,33 +4495,9 @@ const list =
               }
               aria-label="Selecionar data do histórico TOP3"
             />
-
-            <button
-              type="button"
-              className="pp-btn"
-              onClick={() => goToHistoryDate(todayForCalendar)}
-            >
-              Hoje
-            </button>
-
-            <button
-              type="button"
-              className="pp-btn"
-              disabled={!canGoNext}
-              onClick={() => {
-                if (!canGoNext) return;
-                goToHistoryDate(nextAvailableDate);
-              }}
-              style={{
-                opacity: canGoNext ? 1 : 0.45,
-                cursor: canGoNext
-                  ? "pointer"
-                  : "not-allowed",
-              }}
-            >
-              Próximo dia ▶
-            </button>
-          </div>
+    </div>
+  </div>
+</div>
         </section>
 
         {loading ? (
