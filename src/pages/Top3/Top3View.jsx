@@ -3016,14 +3016,11 @@ const list =
           margin: 0 0 18px;
         }
 
-        /* TOP3_PREVISAO_LOTERIA_V4 */
+        /* TOP3_PREVISAO_FIXA_LOTERIA_AO_LADO_V5 */
         @media (min-width: 901px) {
           .top3-header-band .top3-header {
             display: grid;
-            grid-template-columns:
-              minmax(0px, calc((100% - 1190px) / 2))
-              max-content
-              minmax(0, 1fr);
+            grid-template-columns: max-content minmax(0, 1fr);
             grid-template-rows: auto auto;
             column-gap: 16px;
             row-gap: 12px;
@@ -3037,13 +3034,13 @@ const list =
           }
 
           .top3-header-band .top3-context {
-            grid-column: 2;
+            grid-column: 1;
             grid-row: 2;
             justify-self: start;
           }
 
           .top3-header-band .top3-lottery-picker {
-            grid-column: 3;
+            grid-column: 2;
             grid-row: 2;
             justify-self: start;
             margin-top: 0 !important;
