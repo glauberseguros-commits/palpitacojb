@@ -99,3 +99,48 @@
 .pp-page-standard--downloads .ppSharedPageHeader__subtitle {
     display: none !important;
 }
+
+/* PALPITACO_RADAR_MOBILE_DATE_WIDTH_V1
+   Safari iPhone: campo nativo de data contido na largura do filtro.
+   Alteracao restrita ao Radar em telas de ate 640px.
+*/
+@media (max-width: 640px) {
+  .pp-page-standard--radar-dos-bichos .radar-bichos-filters {
+    grid-template-columns: minmax(0, 1fr) !important;
+    min-width: 0;
+    max-width: 100%;
+    box-sizing: border-box;
+  }
+
+  .pp-page-standard--radar-dos-bichos .radar-bichos-field {
+    display: block;
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    box-sizing: border-box;
+  }
+
+  .pp-page-standard--radar-dos-bichos #radar-date {
+    display: block;
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    inline-size: 100% !important;
+    min-inline-size: 0 !important;
+    max-inline-size: 100% !important;
+    box-sizing: border-box !important;
+    margin: 0 !important;
+    padding: 0 12px !important;
+    font-size: 14px;
+    text-align: center;
+    -webkit-appearance: none;
+    appearance: none;
+  }
+
+  .pp-page-standard--radar-dos-bichos
+  #radar-date::-webkit-date-and-time-value {
+    min-width: 0;
+    max-width: 100%;
+    text-align: center;
+  }
+}
