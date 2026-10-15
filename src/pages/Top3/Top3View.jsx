@@ -3008,12 +3008,6 @@ const list =
           display:grid;
           gap:14px;
         }
-        /* TOP3_LOTERIA_ALINHADA_V3 */
-        @media (min-width: 901px) {
-          .top3-header-band {
-            padding-right: max(0px, calc((100% - 1190px) / 2));
-          }
-        }
         /* TOP3_HEADER_BAND_V2 */
         .top3-header-band {
           width: 100%;
@@ -3022,31 +3016,36 @@ const list =
           margin: 0 0 18px;
         }
 
+        /* TOP3_PREVISAO_LOTERIA_V4 */
         @media (min-width: 901px) {
           .top3-header-band .top3-header {
             display: grid;
-            grid-template-columns: minmax(0, 1fr) auto;
+            grid-template-columns:
+              minmax(0px, calc((100% - 1190px) / 2))
+              max-content
+              minmax(0, 1fr);
             grid-template-rows: auto auto;
-            column-gap: 20px;
-            row-gap: 8px;
+            column-gap: 16px;
+            row-gap: 12px;
             align-items: center;
           }
 
           .top3-header-band .top3-header__title {
-            grid-column: 1;
+            grid-column: 1 / -1;
             grid-row: 1;
             justify-self: start;
           }
 
           .top3-header-band .top3-context {
-            grid-column: 1;
+            grid-column: 2;
             grid-row: 2;
+            justify-self: start;
           }
 
           .top3-header-band .top3-lottery-picker {
-            grid-column: 2;
-            grid-row: 1 / 3;
-            justify-self: end;
+            grid-column: 3;
+            grid-row: 2;
+            justify-self: start;
             margin-top: 0 !important;
             margin-bottom: 0 !important;
           }
