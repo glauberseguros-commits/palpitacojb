@@ -3074,7 +3074,23 @@ const list =
           line-height: 1.35;
         }
 
-        .top3-context b{
+                /* TOP3_FORECAST_HIGHLIGHT_V1 */
+        .top3-header-band .top3-forecast-highlight{
+          font-size: 14px;
+          font-weight: 600;
+          line-height: 1.35;
+        }
+
+        .top3-header-band .top3-forecast-highlight b{
+          color: #e5c46b;
+          font-weight: 800;
+        }
+
+        .top3-header-band .top3-forecast-highlight span{
+          color: #ffffff;
+          font-weight: 700;
+        }
+.top3-context b{
           color: rgba(255,255,255,0.98);
         }
 
@@ -4398,7 +4414,7 @@ const list =
           <div className="top3-header">
             <div className="top3-header__title" style={{ textAlign: "left", textTransform: "uppercase", color: "#fff" }}>TOP3</div>
 
-            <div className="top3-context"><div><b>Previsão:</b> {headerForecast}</div></div>
+            <div className="top3-context"><div className="top3-forecast-highlight"><b>Previsão:</b> <span>{headerForecast}</span></div></div>
 
 
 
