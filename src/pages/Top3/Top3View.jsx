@@ -2890,6 +2890,10 @@ const list =
             inset 0 0 0 1px rgba(255,255,255,0.03);
         }
 
+        .top3-header .top3-metaGrid {
+          display: none !important;
+        }
+
         .top3-header{
           display:grid;
           gap:14px;
@@ -4212,15 +4216,7 @@ const list =
           <div className="top3-header">
             <div className="top3-header__title">TOP3 — Próximo sorteio</div>
 
-            <div className="top3-context">
-              <div><b>Base:</b> {headerBase}</div>
-              <div><b>Previsão:</b> {headerForecast}</div>
-              <div><b>Transição:</b> {headerTransition}</div>
-            </div>
-
-            <div className="top3-helper">
-              Previsão baseada na transição: <b>{meta.prev}</b> → <b>{meta.last}</b>
-            </div>
+            <div className="top3-context"><div><b>Previsão:</b> {headerForecast}</div></div>
 
             <div
               className="top3-lottery-picker"
