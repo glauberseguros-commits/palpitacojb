@@ -1,0 +1,86 @@
+/* PALPITACO_SHARED_PAGE_HEADER_V2 */
+
+.pp-page-standard {
+  width: 100%;
+  min-width: 0;
+}
+
+.ppSharedPageHeader {
+  box-sizing: border-box;
+  width: 100%;
+  padding: 16px 14px 10px;
+  margin: 0;
+  text-align: left;
+  background: transparent;
+  border: 0;
+  box-shadow: none;
+  font-family: inherit;
+}
+
+.ppSharedPageHeader__title {
+  display: block;
+  margin: 0 !important;
+  padding: 0 !important;
+  color: #f5f0dc !important;
+  font-family: inherit !important;
+  font-size: 18px !important;
+  font-weight: 800 !important;
+  line-height: 1.25 !important;
+  letter-spacing: 0 !important;
+  text-transform: uppercase !important;
+  text-align: left !important;
+}
+
+.ppSharedPageHeader__subtitle {
+  margin: 6px 0 0 !important;
+  padding: 0 !important;
+  font-family: inherit !important;
+  color: #aaa49b !important;
+  font-size: 12px !important;
+  font-weight: 400 !important;
+  line-height: 1.5 !important;
+  text-align: left !important;
+}
+
+.pp-page-standard__body {
+  min-width: 0;
+}
+
+/*
+ * Os titulos antigos sao ocultados apenas no topo
+ * das paginas correspondentes.
+ * Titulos internos de cards e tabelas permanecem.
+ */
+
+.pp-page-standard--radar-dos-bichos .radar-bichos-control-panel > h1,
+.pp-page-standard--centenas .cx0_wrap .cx0_title {
+  display: none !important;
+}
+
+/* Busca: remove visualmente o titulo avulso antigo. */
+.pp-page-standard--search .pp-page-standard__body > h1 {
+  display: none !important;
+}
+
+/* Frequencias e Terno de Grupo: caso integrados
+   futuramente, nao alterar secoes internas. */
+
+@media (max-width: 640px) {
+  .ppSharedPageHeader {
+    padding: 16px 14px 12px;
+  }
+
+  .ppSharedPageHeader__title {
+    font-size: 20px !important;
+  }
+
+  .ppSharedPageHeader__subtitle {
+    font-size: 12px !important;
+  }
+}
+/* TITULOS PADRONIZADOS - SOMENTE TRES PAGINAS */
+.pp-page-standard--radar-dos-bichos .ppSharedPageHeader__subtitle,
+.pp-page-standard--search .ppSharedPageHeader__subtitle,
+.pp-page-standard--centenas .ppSharedPageHeader__subtitle {
+  display: none !important;
+}

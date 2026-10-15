@@ -12,6 +12,8 @@ import { useLocation, useNavigate } from "react-router-dom";
 
 // ✅ Firebase (Admin real / Auth real)
 import { auth, db } from "./services/firebase";
+import PageHeader from "./components/PageHeader";
+// PALPITACO_SHARED_PAGE_HEADER_V2
 import { onAuthStateChanged, signOut } from "firebase/auth";
 import { loginAnonymous } from "./services/auth";
 // PALPITACO_GUEST_FIREBASE_V5
@@ -1402,6 +1404,9 @@ export default function App() {
     <ErrorBoundary>
         <Suspense fallback={<AppLoading />}>
       <AppShell active={currentScreen} onNavigate={goToScreen} onLogout={logout}>
+        <div className={"pp-page-standard pp-page-standard--" + currentScreen}>
+          {["radar-dos-bichos", "search", "centenas"].includes(currentScreen) && <PageHeader screen={currentScreen} />}
+          <div className="pp-page-standard__body">
         {currentScreen === ROUTES.DASHBOARD ? (
           <Dashboard
             filters={{
@@ -1413,6 +1418,8 @@ export default function App() {
         ) : (
           renderScreen(currentScreen)
         )}
+          </div>
+        </div>
       </AppShell>
       <BuildStamp />
             </Suspense>
