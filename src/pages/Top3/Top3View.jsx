@@ -3008,51 +3008,6 @@ const list =
           display:grid;
           gap:14px;
         }
-        /* TOP3_HEADER_PADRAO_ATRASADOS_V1 */
-        @media (min-width: 901px) {
-          .top3-page > .top3-shell:first-child {
-            width: calc(100vw - 106px);
-            max-width: none;
-            justify-self: center;
-            box-sizing: border-box;
-          }
-
-          .top3-page > .top3-shell:first-child .top3-header {
-            display: grid;
-            grid-template-columns: minmax(0, 1fr) auto;
-            grid-template-rows: auto auto;
-            column-gap: 24px;
-            row-gap: 8px;
-            align-items: center;
-          }
-
-          .top3-page > .top3-shell:first-child .top3-header__title {
-            grid-column: 1;
-            grid-row: 1;
-            justify-self: start;
-          }
-
-          .top3-page > .top3-shell:first-child .top3-context {
-            grid-column: 1;
-            grid-row: 2;
-          }
-
-          .top3-page > .top3-shell:first-child .top3-lottery-picker {
-            grid-column: 2;
-            grid-row: 1 / 3;
-            justify-self: end;
-            margin-top: 0 !important;
-            margin-bottom: 0 !important;
-          }
-        }
-
-        @media (max-width: 900px) {
-          .top3-page > .top3-shell:first-child {
-            width: 100%;
-            min-width: 0;
-            max-width: none;
-          }
-        }
 
         .top3-header__title{
           font-weight: 950;
