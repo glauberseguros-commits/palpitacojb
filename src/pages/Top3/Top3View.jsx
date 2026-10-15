@@ -4322,9 +4322,18 @@ const list =
       `}</style>
 
       <div className="top3-page">
-        <section className="top3-shell">
+        <section
+          className="top3-shell"
+          style={{
+            background: "transparent",
+            border: "none",
+            borderRadius: 0,
+            boxShadow: "none",
+            padding: 0,
+          }}
+        >
           <div className="top3-header">
-            <div className="top3-header__title">TOP3 — Próximo sorteio</div>
+            <div className="top3-header__title" style={{ textAlign: "left", textTransform: "uppercase", color: "#fff" }}>TOP3</div>
 
             <div className="top3-context"><div><b>Previsão:</b> {headerForecast}</div></div>
 
