@@ -25,6 +25,8 @@ import {
   loadRadarHistorySource,
 } from "./radarSource";
 import RadarHistoryPanel from "./RadarHistoryPanel";
+import { isRadarSlotOpenForSnapshot } from "./radarHistory";
+import { loadRadarFrozenOriginal } from "./radarHistory.firestore";
 import {
   applyRadarCentenas24,
   loadRadarCentenas24Context,
@@ -437,6 +439,10 @@ export default function RadarDosBichos() {
         return;
       }
 
+      // RADAR_ASOF_RESTORE_V1
+      // Carrega a base anterior ao horario mesmo em datas passadas.
+      // Um calculo retrospectivo nao comprova publicacao anterior.
+
       let cancelled =
         false;
 
@@ -566,6 +572,103 @@ export default function RadarDosBichos() {
       ]
     );
 
+  // RADAR_V28_ORIGINAL_ONLY
+  const radarV28Open = !targetHour ||
+    isRadarSlotOpenForSnapshot({
+      targetYmd: targetDate,
+      targetHour,
+    });
+
+  const radarV28Key =
+    `${lotteryKey}|${targetDate}|${targetHour}|${mode}`;
+
+  const [radarV28Original, setRadarV28Original] =
+    useState(null);
+
+  const radarRefreshFrozen = React.useCallback(async () => {
+    const result = await loadRadarFrozenOriginal({
+      lotteryKey,
+      targetYmd: targetDate,
+      targetHour,
+      mode,
+    });
+
+    if (result.status === "stored") {
+      setRadarV28Original((previous) =>
+        previous?.key === radarV28Key
+          ? { key: radarV28Key, ...result }
+          : previous
+      );
+    }
+  }, [lotteryKey, targetDate, targetHour, mode, radarV28Key]);
+
+  useEffect(() => {
+    let cancelled = false;
+
+    if (!lotteryKey || !targetDate || !targetHour) {
+      setRadarV28Original(null);
+      return () => { cancelled = true; };
+    }
+
+    setRadarV28Original(null);
+
+    loadRadarFrozenOriginal({
+      lotteryKey,
+      targetYmd: targetDate,
+      targetHour,
+      mode,
+    })
+      .then((result) => {
+        if (!cancelled) {
+          setRadarV28Original({
+            key: radarV28Key,
+            ...result,
+          });
+        }
+      })
+      .catch((readError) => {
+        console.warn("[RADAR_V28_ORIGINAL]", readError);
+
+        if (!cancelled) {
+          setRadarV28Original({
+            key: radarV28Key,
+            status: "unavailable",
+            cards: [],
+          });
+        }
+      });
+
+    return () => { cancelled = true; };
+  }, [
+    lotteryKey,
+    targetDate,
+    targetHour,
+    mode,
+    radarV28Open,
+    radarV28Key,
+  ]);
+
+  // RADAR_V29_FRONTEND_REVIEW
+  // O snapshot original tem prioridade absoluta.
+  const radarV28Resolved =
+    radarV28Original?.key === radarV28Key
+      ? radarV28Original
+      : null;
+
+  const radarSourceIsCurrent =
+    sourceData?.lottery === lotteryKey &&
+    sourceData?.target?.date === targetDate &&
+    sourceData?.target?.hour === targetHour;
+
+  // Documento comprovado prevalece sobre qualquer novo calculo.
+  const radarV28VisibleCards =
+    radarV28Resolved?.status === "stored"
+      ? radarV28Resolved.cards
+      : radarV28Resolved &&
+        ["missing", "unavailable", "unverified"].includes(radarV28Resolved.status) &&
+        radarSourceIsCurrent
+        ? cards
+        : [];
   const selectedLottery =
     useMemo(
       () =>
@@ -777,7 +880,7 @@ export default function RadarDosBichos() {
 
       {!loading &&
         !error &&
-        cards.length > 0 && (
+        radarV28VisibleCards.length > 0 && (
           <>
             <div className="radar-bichos-result-heading">
               <div>
@@ -801,7 +904,7 @@ export default function RadarDosBichos() {
             <section
               className={`radar-bichos-grid radar-bichos-grid-${mode.toLowerCase()}`}
             >
-              {cards.map(
+              {radarV28VisibleCards.map(
                 (card) => {
                   const image =
                     animalImage(
@@ -915,6 +1018,35 @@ export default function RadarDosBichos() {
               targetHour={targetHour}
               mode={mode}
               source={sourceData}
+              displayedCards={radarV28VisibleCards}
+              snapshotStored={radarV28Resolved?.status === "stored"}
+              onSnapshotSaved={radarRefreshFrozen}
+            />
+          </>
+        )}
+      {!loading && !error &&
+        !radarV28Open &&
+        radarV28VisibleCards.length === 0 && (
+          <>
+            <section className="radar-bichos-state">
+              <strong>
+                {radarV28Original?.key !== radarV28Key
+                  ? "Consultando previsão original..."
+                  : "PREVISÃO ORIGINAL NÃO COMPROVADA"}
+              </strong>
+              <p>
+                Não apresentamos milhares recalculadas
+                depois do horário como previsão original.
+              </p>
+            </section>
+
+            <RadarHistoryPanel
+              lotteryKey={lotteryKey}
+              targetYmd={targetDate}
+              targetHour={targetHour}
+              mode={mode}
+              source={sourceData}
+              displayedCards={[]}
             />
           </>
         )}

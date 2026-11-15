@@ -290,6 +290,148 @@ describe(
     );
 
     test(
+      'preserva todos os acertos e posicoes do mesmo horario',
+      () => {
+        const snapshot =
+          buildRadarPredictionSnapshot({
+            mode:
+              'TOP1',
+
+            cards: [
+              card({
+                group: 8,
+                rank: 7,
+              }),
+              card({
+                group: 16,
+                rank: 6,
+              }),
+              card({
+                group: 17,
+                rank: 5,
+              }),
+              card({
+                group: 20,
+                rank: 4,
+              }),
+            ],
+          });
+
+        snapshot[0].centenas =
+          Array.from(
+            new Set([
+              ...snapshot[0].centenas,
+              '831',
+              '331',
+            ])
+          );
+
+        snapshot[2].centenas =
+          Array.from(
+            new Set([
+              ...snapshot[2].centenas,
+              '365',
+            ])
+          );
+
+        const result =
+          analyzeRadarPrediction({
+            snapshot,
+
+            prizes: [
+              {
+                position: 1,
+                milhar: '7831',
+                grupo: 8,
+              },
+              {
+                position: 2,
+                milhar: '6331',
+                grupo: 8,
+              },
+              {
+                position: 3,
+                milhar: '3884',
+                grupo: 21,
+              },
+              {
+                position: 4,
+                milhar: '6365',
+                grupo: 17,
+              },
+            ],
+          });
+
+        expect(
+          result.hitCount
+        ).toBe(
+          3
+        );
+
+        expect(
+          result.hits.map(
+            (hit) => ({
+              type:
+                hit.hitType,
+
+              group:
+                hit.matchedGrupo,
+
+              resultPosition:
+                hit.resultPosition,
+
+              predictionPosition:
+                hit.predictionPosition,
+            })
+          )
+        ).toEqual([
+          {
+            type:
+              'hit_centena',
+            group:
+              8,
+            resultPosition:
+              1,
+            predictionPosition:
+              1,
+          },
+          {
+            type:
+              'hit_centena',
+            group:
+              8,
+            resultPosition:
+              2,
+            predictionPosition:
+              1,
+          },
+          {
+            type:
+              'hit_centena',
+            group:
+              17,
+            resultPosition:
+              4,
+            predictionPosition:
+              3,
+          },
+        ]);
+
+        expect(
+          result.hitType
+        ).toBe(
+          'hit_centena'
+        );
+
+        expect(
+          result.resultPosition
+        ).toBe(
+          1
+        );
+      }
+    );
+
+    test(
       'cobertura estatistica e cumulativa',
       () => {
         expect(

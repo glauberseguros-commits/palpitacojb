@@ -856,7 +856,7 @@ export async function loadRadarHistorySource({
       ],
 
       mode:
-        'aggregated',
+        'detailed',
     });
 
   return buildRadarHistorySource({

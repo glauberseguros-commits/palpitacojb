@@ -1,15 +1,16 @@
+import { getAuth as radarV25GetAuth } from 'firebase/auth';
 import * as radarHistoryViewCore from './radarHistory';
 import * as radarTopEngineView from './radarTop1Top7Engine';
 import * as radarSourceHistoryView from './radarSource';
+import { applyRadarCentenas24, loadRadarCentenas24Context } from './radarCentenas24';
 import * as kingResultsHistoryView from '../../services/kingResultsService';
 import {
   collection,
   doc,
-  getDoc,
   getDocs,
   getFirestore,
   query,
-  setDoc,
+  runTransaction,
   updateDoc,
   where,
 } from 'firebase/firestore';
@@ -240,8 +241,11 @@ export async function saveRadarPredictionSnapshot({
   source,
   now = new Date(),
 } = {}) {
-  const user =
-    auth.currentUser;
+  if (typeof auth.authStateReady === "function") {
+    await auth.authStateReady();
+  }
+
+  const user = auth.currentUser;
 
   if (!user?.uid) {
     return {
@@ -314,28 +318,6 @@ export async function saveRadarPredictionSnapshot({
         normalizedMode,
     });
 
-  const existing =
-    await getDoc(
-      ref
-    );
-
-  if (
-    existing.exists()
-  ) {
-    return {
-      saved:
-        false,
-
-      frozen:
-        true,
-
-      reason:
-        'ALREADY_EXISTS',
-
-      data:
-        existing.data(),
-    };
-  }
 
   const snapshot =
     buildRadarPredictionSnapshot({
@@ -395,21 +377,35 @@ export async function saveRadarPredictionSnapshot({
       nowMs,
   };
 
-  await setDoc(
-    ref,
-    payload
-  );
+  // Cria somente se nao existir.
+  // O snapshot original nao pode ser sobrescrito.
+  return runTransaction(db, async (tx) => {
+    const current = await tx.get(ref);
 
-  return {
-    saved:
-      true,
+    if (current.exists()) {
+      return {
+        saved: false,
+        frozen: true,
+        reason: "ALREADY_EXISTS",
+        data: current.data(),
+      };
+    }
 
-    frozen:
-      true,
+    if (!isRadarSlotOpenForSnapshot({ targetYmd, targetHour })) {
+      return {
+        saved: false,
+        reason: "SLOT_CLOSED",
+      };
+    }
 
-    data:
-      payload,
-  };
+    tx.set(ref, payload);
+
+    return {
+      saved: true,
+      frozen: true,
+      data: payload,
+    };
+  });
 }
 
 export async function loadRadarPredictionDay({
@@ -928,6 +924,8 @@ export function buildRadarHistoryViewEntry({
   targetHour,
   mode,
   source,
+  centenasContext = null,
+  requireCentenasContext = false,
   draw = null,
 } = {}) {
   const normalizedMode =
@@ -1007,7 +1005,7 @@ export function buildRadarHistoryViewEntry({
     };
   }
 
-  const cards =
+  const baseCards =
     radarTopEngineView
       .buildRadarCards({
         mode:
@@ -1017,6 +1015,18 @@ export function buildRadarHistoryViewEntry({
         d2,
         d3,
       });
+
+  if (requireCentenasContext && !centenasContext?.valid) {
+    return {
+      ...base,
+      status: 'source_unavailable',
+      hitType: null,
+    };
+  }
+
+  const cards = centenasContext?.valid
+    ? applyRadarCentenas24(baseCards, centenasContext)
+    : baseCards;
 
   const snapshot =
     radarHistoryViewCore
@@ -1111,7 +1121,7 @@ export function buildRadarHistoryViewEntry({
   };
 }
 
-export async function loadRadarHistoryViewDay({
+export async function radarLegacyHistoryViewDay({
   lotteryKey,
   targetYmd,
   mode = null,
@@ -1204,6 +1214,16 @@ export async function loadRadarHistoryViewDay({
       )
     );
 
+  const centenasContexts = await Promise.allSettled(
+    schedule.map((hour) =>
+      loadRadarCentenas24Context({
+        lotteryKey: lottery,
+        targetDate: ymd,
+        targetHour: hour,
+      })
+    )
+  );
+
   return schedule.map(
     (
       targetHour,
@@ -1253,6 +1273,13 @@ export async function loadRadarHistoryViewDay({
 
           source,
 
+          centenasContext:
+            centenasContexts[index]?.status === 'fulfilled'
+              ? centenasContexts[index].value
+              : null,
+
+          requireCentenasContext: true,
+
           draw:
             byHour.get(
               targetHour
@@ -1265,4 +1292,420 @@ export async function loadRadarHistoryViewDay({
       };
     }
   );
+}
+
+
+
+// RADAR_HISTORY_VERIFIED_SERVER_V25
+// Somente snapshots documentados antes do sorteio
+// podem gerar acertos historicos confirmados.
+
+function radarV25Decode(value) {
+  if (!value || typeof value !== "object") return null;
+
+  if ("stringValue" in value) return value.stringValue;
+  if ("integerValue" in value) return Number(value.integerValue);
+  if ("doubleValue" in value) return Number(value.doubleValue);
+  if ("booleanValue" in value) return value.booleanValue;
+  if ("timestampValue" in value) return value.timestampValue;
+  if ("nullValue" in value) return null;
+
+  if ("arrayValue" in value) {
+    return (value.arrayValue?.values || []).map(radarV25Decode);
+  }
+
+  if ("mapValue" in value) {
+    return Object.fromEntries(
+      Object.entries(value.mapValue?.fields || {}).map(
+        ([key, item]) => [key, radarV25Decode(item)]
+      )
+    );
+  }
+
+  return null;
+}
+
+async function radarV25ReadFromServer(ref) {
+  const firebaseApp = ref.firestore.app;
+  const projectId = firebaseApp.options.projectId;
+  const readAuth = radarV25GetAuth(firebaseApp);
+
+  if (typeof readAuth.authStateReady === "function") {
+    await readAuth.authStateReady();
+  }
+
+  const user = readAuth.currentUser;
+
+  if (!projectId || !user) {
+    throw new Error("RADAR_V25_AUTH_REQUIRED");
+  }
+
+  const token = await user.getIdToken();
+  const url =
+    "https://firestore.googleapis.com/v1/projects/" +
+    encodeURIComponent(projectId) +
+    "/databases/(default)/documents/radar_predictions/" +
+    encodeURIComponent(ref.id);
+
+  const response = await fetch(url, {
+    method: "GET",
+    cache: "no-store",
+    headers: {
+      Authorization: `Bearer ${token}`,
+    },
+  });
+
+  if (response.status === 404) {
+    return null;
+  }
+
+  if (!response.ok) {
+    throw new Error(`RADAR_V25_READ_${response.status}`);
+  }
+
+  const document = await response.json();
+
+  return {
+    data: Object.fromEntries(
+      Object.entries(document.fields || {}).map(
+        ([key, value]) => [key, radarV25Decode(value)]
+      )
+    ),
+    createdMs: Date.parse(document.createTime || ""),
+    updatedMs: Date.parse(document.updateTime || ""),
+  };
+}
+
+// RADAR_V28_ORIGINAL_ONLY
+// Leitura de documento original. Nao grava e nao recalcula.
+export async function loadRadarFrozenOriginal({
+  lotteryKey,
+  targetYmd,
+  targetHour,
+  mode,
+} = {}) {
+  const lottery = lotteryKeyOf(lotteryKey);
+  const hour = normalizeRadarHistoryHour(targetHour);
+  const selectedMode = radarHistoryViewMode(mode);
+
+  const ref = radarPredictionRef({
+    lotteryKey: lottery,
+    targetYmd,
+    targetHour: hour,
+    mode: selectedMode,
+  });
+
+  const stored = await radarV25ReadFromServer(ref);
+
+  if (!stored?.data) {
+    return { status: "missing", cards: [] };
+  }
+
+  const record = stored.data;
+  const cards = record.snapshot;
+  const expected = selectedMode === "TOP1" ? 4 : 7;
+
+  const cutoff = Date.parse(
+    `${targetYmd}T${hour}:00-03:00`
+  );
+
+  const identityOk =
+    record.lotteryKey === lottery &&
+    record.targetYmd === targetYmd &&
+    record.targetHour === hour &&
+    record.mode === selectedMode;
+
+  const timeOk =
+    Number.isFinite(cutoff) &&
+    Number.isFinite(stored.createdMs) &&
+    stored.createdMs > 0 &&
+    stored.createdMs < cutoff;
+
+  const cardsOk =
+    Array.isArray(cards) &&
+    cards.length === expected &&
+    cards.every((card) =>
+      Array.isArray(card.rows) &&
+      card.rows.length === 4 &&
+      card.rows.every((row) =>
+        Array.isArray(row.numbers) &&
+        row.numbers.length === 6 &&
+        row.numbers.every((item) =>
+          /^\d{4}$/.test(String(item.milhar))
+        )
+      )
+    );
+
+  if (!identityOk || !timeOk || !cardsOk) {
+    return {
+      status: "unverified",
+      cards: [],
+      reason: !identityOk
+        ? "IDENTITY"
+        : !timeOk
+          ? "TIME"
+          : "FORMAT",
+    };
+  }
+
+  return {
+    status: "stored",
+    cards,
+    serverCreatedMs: stored.createdMs,
+    serverUpdatedMs: stored.updatedMs,
+  };
+}
+
+export async function loadRadarHistoryViewDay({
+  lotteryKey,
+  targetYmd,
+  mode = null,
+} = {}) {
+  const lottery = lotteryKeyOf(lotteryKey);
+  const ymd = safeString(targetYmd);
+  const selectedMode = radarHistoryViewMode(mode);
+
+  const schedule = radarHistoryScheduleForView({
+    lotteryKey: lottery,
+    targetYmd: ymd,
+  });
+
+  const draws = await loadOfficialDay({
+    lotteryKey: lottery,
+    targetYmd: ymd,
+  });
+
+  const byHour = new Map(
+    (Array.isArray(draws) ? draws : []).map((draw) => [
+      normalizeRadarHistoryHour(draw.hour),
+      draw,
+    ])
+  );
+
+  const records = await Promise.all(
+    schedule.map(async (hour) => {
+      const ref = radarPredictionRef({
+        lotteryKey: lottery,
+        targetYmd: ymd,
+        targetHour: hour,
+        mode: selectedMode,
+      });
+
+      try {
+        return {
+          hour,
+          id: ref.id,
+          stored: await radarV25ReadFromServer(ref),
+          error: null,
+        };
+      } catch (error) {
+        console.warn(
+          "[RADAR_V25_SNAPSHOT]",
+          lottery,
+          ymd,
+          hour,
+          error
+        );
+
+        return {
+          hour,
+          id: ref.id,
+          stored: null,
+          error: "SNAPSHOT_READ_FAILED",
+        };
+      }
+    })
+  );
+
+  const entries = records.map(({ hour, id, stored, error }) => {
+    const draw = byHour.get(hour) || null;
+    const record = stored?.data || null;
+    const snapshot = record?.snapshot;
+
+    const base = {
+      id,
+      lotteryKey: lottery,
+      targetYmd: ymd,
+      targetHour: hour,
+      mode: selectedMode,
+      predictionType: "RADAR",
+    };
+
+    const cutoff = /^\d{2}:\d{2}$/.test(hour)
+      ? Date.parse(`${ymd}T${hour}:00-03:00`)
+      : NaN;
+
+    const correctIdentity =
+      record?.lotteryKey === lottery &&
+      record?.targetYmd === ymd &&
+      record?.targetHour === hour &&
+      record?.mode === selectedMode;
+
+    const originalBeforeDraw =
+      Number.isFinite(cutoff) &&
+      Number.isFinite(stored?.createdMs) &&
+      stored.createdMs > 0 &&
+      stored.createdMs < cutoff;
+
+    const expectedCards = selectedMode === "TOP1" ? 4 : 7;
+
+    const validCards =
+      Array.isArray(snapshot) &&
+      snapshot.length === expectedCards &&
+      snapshot.every((card) => {
+        const legacyValid =
+          Array.isArray(card?.milhares) &&
+          card.milhares.length > 0 &&
+          card.milhares.every((value) =>
+            /^\d{4}$/.test(String(value))
+          ) &&
+          (
+            ymd < "2026-10-15" ||
+            card.milhares.length === 24
+          );
+
+        const rowsValid =
+          Array.isArray(card?.rows) &&
+          card.rows.length === 4 &&
+          card.rows.every((row) =>
+            Array.isArray(row?.numbers) &&
+            row.numbers.length === 6 &&
+            row.numbers.every((item) =>
+              /^\d{4}$/.test(String(item?.milhar))
+            )
+          );
+
+        return legacyValid || rowsValid;
+      });
+    const verified =
+      !error &&
+      correctIdentity &&
+      originalBeforeDraw &&
+      validCards;
+
+    const reason = error ||
+      (!record
+        ? "NO_STORED_SNAPSHOT"
+        : !correctIdentity
+          ? "SNAPSHOT_IDENTITY_MISMATCH"
+          : !originalBeforeDraw
+            ? "SNAPSHOT_TIME_NOT_VERIFIED"
+            : !validCards
+              ? "SNAPSHOT_FORMAT_INVALID"
+              : null);
+
+    if (!verified) {
+      return {
+        ...base,
+        status: draw?.prizes?.length
+          ? "unverified"
+          : "predicted",
+        snapshot: Array.isArray(snapshot) ? snapshot : [],
+        hitType: null,
+        hitCount: 0,
+        hits: [],
+        verificationReason: reason,
+        serverCreatedMs: stored?.createdMs ?? null,
+        serverUpdatedMs: stored?.updatedMs ?? null,
+      };
+    }
+
+    const prizes = (
+      Array.isArray(draw?.prizes) ? draw.prizes : []
+    ).filter((prize) => {
+      const position = Number(prize?.position);
+      return selectedMode === "TOP1"
+        ? position === 1
+        : position >= 1 && position <= 7;
+    });
+
+    if (!prizes.length) {
+      return {
+        ...base,
+        ...record,
+        status: "predicted",
+        snapshot,
+        hitType: null,
+        hitCount: 0,
+        hits: [],
+      };
+    }
+
+    const analysis =
+      radarHistoryViewCore.analyzeRadarPrediction({
+        snapshot,
+        prizes,
+      });
+
+    return {
+      ...record,
+      ...base,
+      status: "validated",
+      snapshot,
+      resultPrizes: prizes,
+      verificationSource: "SERVER_PRE_DRAW_SNAPSHOT",
+      serverCreatedMs: stored.createdMs,
+      serverUpdatedMs: stored.updatedMs,
+      ...analysis,
+    };
+  });
+
+  // RADAR_RETROSPECTIVE_FALLBACK_V1
+  const missing = entries.some(
+    (entry) =>
+      entry.status === "unverified" &&
+      entry.verificationReason === "NO_STORED_SNAPSHOT"
+  );
+
+  if (!missing) return entries;
+
+  let reconstructed;
+
+  try {
+    reconstructed = await radarLegacyHistoryViewDay({
+      lotteryKey: lottery,
+      targetYmd: ymd,
+      mode: selectedMode,
+    });
+  } catch (error) {
+    console.warn("[RADAR_RETROSPECTIVE]", error);
+    return entries;
+  }
+
+  const retrospectiveByHour = new Map(
+    (Array.isArray(reconstructed) ? reconstructed : []).map(
+      (entry) => [entry.targetHour, entry]
+    )
+  );
+
+  return entries.map((entry) => {
+    if (
+      entry.status !== "unverified" ||
+      entry.verificationReason !== "NO_STORED_SNAPSHOT"
+    ) return entry;
+
+    const simulated = retrospectiveByHour.get(entry.targetHour);
+
+    if (simulated?.status !== "validated") return entry;
+
+    return {
+      ...entry,
+      status: "retrospective",
+      snapshot: simulated.snapshot,
+      hitType: simulated.hitType,
+      hitScore: simulated.hitScore,
+      hitCount: simulated.hitCount,
+      hits: simulated.hits,
+      predictionPosition: simulated.predictionPosition,
+      predictionRank: simulated.predictionRank,
+      resultPosition: simulated.resultPosition,
+      matchedGrupo: simulated.matchedGrupo,
+      matchedMilhar: simulated.matchedMilhar,
+      matchedCentena: simulated.matchedCentena,
+      matchedDezena: simulated.matchedDezena,
+      matchedValue: simulated.matchedValue,
+      resultPrizes: simulated.resultPrizes,
+      verificationSource: "RETROSPECTIVE_RECONSTRUCTION",
+    };
+  });
 }

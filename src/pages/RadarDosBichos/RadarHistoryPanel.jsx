@@ -1,3 +1,4 @@
+import { applyRadarCentenas24 } from './radarCentenas24';
 import React, {
   useEffect,
   useMemo,
@@ -15,6 +16,7 @@ import {
 import {
   radarHitCoverage,
   radarHitLabel,
+  isRadarSlotOpenForSnapshot,
 } from "./radarHistory";
 
 import {
@@ -84,7 +86,7 @@ function buildBothModes(
       "d3"
     );
 
-  return {
+  const baseByMode = {
     TOP1:
       buildRadarCards({
         mode:
@@ -102,6 +104,19 @@ function buildBothModes(
         d2,
         d3,
       }),
+  };
+
+  // RADAR_HISTORY_CONTEXTUAL_PARITY_V1
+  // Mesmo calculo contextual da tela principal.
+  return {
+    TOP1: applyRadarCentenas24(
+      baseByMode.TOP1,
+      source?.centenasContext
+    ),
+    TOP7: applyRadarCentenas24(
+      baseByMode.TOP7,
+      source?.centenasContext
+    ),
   };
 }
 
@@ -197,9 +212,15 @@ function hitAnimal(
 function entryHits(
   entry
 ) {
+  const retrospectiveNotice = entry?.status === "retrospective"
+    ? (
+        <span className="radar-history-hit-pending">
+          SIMULAÇÃO RETROSPECTIVA — NÃO COMPROVADA
+        </span>
+      )
+    : null;
   if (
-    entry?.status !==
-    "validated"
+    !["validated", "retrospective"].includes(entry?.status)
   ) {
     return [];
   }
@@ -354,13 +375,37 @@ function cardPosition(
 function HistoryHitDetails({
   entry,
 }) {
+  const retrospectiveNotice = entry?.status === "retrospective"
+    ? (
+        <span className="radar-history-hit-pending">
+          SIMULAÇÃO RETROSPECTIVA — NÃO COMPROVADA
+        </span>
+      )
+    : null;
   if (
-    entry?.status !==
-    "validated"
+    !["validated", "retrospective"].includes(entry?.status)
   ) {
     return (
       <span className="radar-history-hit-pending">
-        AGUARDANDO RESULTADO
+        {/* RADAR_HISTORY_STATUS_V26 */}
+        {entry?.status === "unverified"
+          ? (
+            "NÃO COMPROVADO — " +
+            (
+              ({
+                SNAPSHOT_READ_FAILED: "FALHA NA LEITURA DO REGISTRO",
+                NO_STORED_SNAPSHOT: "SEM PREVISÃO ARMAZENADA",
+                SNAPSHOT_IDENTITY_MISMATCH: "IDENTIFICAÇÃO DIVERGENTE",
+                SNAPSHOT_TIME_NOT_VERIFIED: "HORÁRIO NÃO COMPROVADO",
+                SNAPSHOT_FORMAT_INVALID: "FORMATO DA PREVISÃO DIVERGENTE",
+              })[entry?.verificationReason] ||
+              entry?.verificationReason ||
+              "SEM EVIDÊNCIA ORIGINAL"
+            )
+          )
+          : entry?.status === "source_unavailable"
+            ? "DADOS HISTÓRICOS INDISPONÍVEIS"
+            : "AGUARDANDO RESULTADO"}
       </span>
     );
   }
@@ -373,6 +418,7 @@ function HistoryHitDetails({
   if (!hits.length) {
     return (
       <>
+
         <span className="radar-history-hit-count">
           0 ACERTOS
         </span>
@@ -473,9 +519,7 @@ function CompactHistoryHitDetails({
     hits.length === 0
   ) {
     return (
-      <CompactHistoryHitDetails
-                      entry={entry}
-                    />
+      <HistoryHitDetails entry={entry} />
     );
   }
 
@@ -549,6 +593,9 @@ export default function RadarHistoryPanel({
   targetHour,
   mode,
   source,
+  displayedCards,
+  snapshotStored = false,
+  onSnapshotSaved,
 }) {
   const [
     entries,
@@ -580,9 +627,7 @@ export default function RadarHistoryPanel({
           !lotteryKey ||
           !targetYmd ||
           !targetHour ||
-          !hasCompleteSource(
-            source
-          )
+          (!hasCompleteSource(source) && isRadarSlotOpenForSnapshot({ targetYmd, targetHour }))
         ) {
           if (
             !cancelled
@@ -609,38 +654,90 @@ export default function RadarHistoryPanel({
            * Uma visita ao slot congela os dois modos.
            * TOP1 e TOP7 possuem IDs independentes.
            */
-          const cardsByMode =
-            buildBothModes(
-              source
-            );
+          // RADAR_V28_ORIGINAL_ONLY
+          // Slot encerrado: nunca reconstruir e salvar.
+          const sourceMatchesTarget =
+            source?.lottery === lotteryKey &&
+            source?.target?.date === targetYmd &&
+            source?.target?.hour === targetHour;
 
-          await Promise.all(
-            [
-              "TOP1",
-              "TOP7",
-            ].map(
-              (
-                historyMode
-              ) =>
-                saveRadarPredictionSnapshot({
-                  lotteryKey,
-                  targetYmd,
-                  targetHour,
-                  mode:
-                    historyMode,
-                  cards:
-                    cardsByMode[
-                      historyMode
-                    ],
-                  source,
-                })
-            )
-          );
+          if (!snapshotStored && isRadarSlotOpenForSnapshot({
+            targetYmd,
+            targetHour,
+          }) && hasCompleteSource(source) && sourceMatchesTarget) {
+            try {
+              const cardsByMode = buildBothModes(source);
+              const expected = mode === "TOP1" ? 4 : 7;
 
-          /*
-           * Sincroniza somente o modo atualmente exibido.
-           * Os dois snapshots permanecem congelados.
-           */
+              if (
+                Array.isArray(displayedCards) &&
+                displayedCards.length === expected &&
+                displayedCards.every((card) =>
+                  Array.isArray(card.rows) &&
+                  card.rows.length === 4 &&
+                  card.rows.every((row) =>
+                    Array.isArray(row.numbers) && row.numbers.length === 6
+                  )
+                )
+              ) {
+                cardsByMode[mode] = displayedCards;
+
+                const attempts = await Promise.allSettled(
+                  ["TOP1", "TOP7"].map((historyMode) =>
+                    saveRadarPredictionSnapshot({
+                      lotteryKey,
+                      targetYmd,
+                      targetHour,
+                      mode: historyMode,
+                      cards: cardsByMode[historyMode],
+                      source,
+                    })
+                  )
+                );
+
+                let refreshSelected = false;
+
+                attempts.forEach((attempt, index) => {
+                  const attemptedMode = ["TOP1", "TOP7"][index];
+
+                  if (attempt.status === "rejected") {
+                    console.warn("[RADAR_FREEZE]", attemptedMode, attempt.reason);
+                    return;
+                  }
+
+                  const outcome = attempt.value;
+
+                  if (!outcome?.saved && outcome?.reason !== "ALREADY_EXISTS") {
+                    console.warn(
+                      "[RADAR_FREEZE_NOT_SAVED]",
+                      attemptedMode,
+                      outcome?.reason
+                    );
+                  }
+
+                  if (
+                    attemptedMode === mode &&
+                    (outcome?.saved || outcome?.reason === "ALREADY_EXISTS")
+                  ) {
+                    refreshSelected = true;
+                  }
+                });
+
+                if (refreshSelected && typeof onSnapshotSaved === "function") {
+                  try {
+                    await onSnapshotSaved();
+                  } catch (readError) {
+                    console.warn("[RADAR_FREEZE_REFRESH]", readError);
+                  }
+                }
+              }
+            } catch (freezeError) {
+              console.warn(
+                "[RADAR_V28_FREEZE]",
+                freezeError
+              );
+            }
+          }
           const resolved =
             await loadRadarHistoryViewDay({
               lotteryKey,
@@ -700,6 +797,9 @@ export default function RadarHistoryPanel({
       targetHour,
       mode,
       source,
+      displayedCards,
+      snapshotStored,
+      onSnapshotSaved,
     ]
   );
 
@@ -715,14 +815,22 @@ export default function RadarHistoryPanel({
 
         const validated =
           rows.filter(
-            (entry) =>
-              entry?.status ===
-              "validated"
+            (entry) => entry?.status === "validated"
           );
+
+        const retrospective =
+          rows.filter(
+            (entry) => entry?.status === "retrospective"
+          );
+
+        const analyzed = [
+          ...validated,
+          ...retrospective,
+        ];
 
         const coverageCount =
           (level) =>
-            validated.filter(
+            analyzed.filter(
               (entry) =>
                 Boolean(
                   radarHitCoverage(
@@ -738,11 +846,14 @@ export default function RadarHistoryPanel({
           validated:
             validated.length,
 
+          retrospective:
+            retrospective.length,
+
           pending:
             Math.max(
               0,
               rows.length -
-                validated.length
+                analyzed.length
             ),
 
           milhar:
@@ -783,12 +894,18 @@ export default function RadarHistoryPanel({
     >
       <div className="radar-history-heading">
         <div>
-          <span>
-            CONFERÊNCIA
-          </span>
-
           <h2>
-            Histórico do Radar
+            HISTÓRICO — {({
+              PT_RIO: "RIO DE JANEIRO",
+              RJ: "RIO DE JANEIRO",
+              NACIONAL: "NACIONAL",
+              PT_NACIONAL: "NACIONAL",
+              LOOK: "LOOK",
+              PT_LOOK: "LOOK",
+              FEDERAL: "FEDERAL",
+              PT_SP: "SÃO PAULO",
+              SP: "SÃO PAULO",
+            })[safeString(lotteryKey).toUpperCase()] || safeString(lotteryKey).toUpperCase()} — {(/^\d{4}-\d{2}-\d{2}$/.test(safeString(targetYmd)) ? safeString(targetYmd).split("-").reverse().join("/") : safeString(targetYmd))}
           </h2>
         </div>
 
@@ -917,7 +1034,13 @@ export default function RadarHistoryPanel({
         </span>
 
         <span>
-          Pendentes:
+          Retrospectivos:
+          {" "}
+          {summary.retrospective}
+        </span>
+
+        <span>
+          Não confirmados:
           {" "}
           {summary.pending}
         </span>

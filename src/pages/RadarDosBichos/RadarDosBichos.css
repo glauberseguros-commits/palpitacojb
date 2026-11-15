@@ -1282,3 +1282,83 @@
     padding-inline: 12px;
   }
 }
+
+/* PALPITACO_RADAR_FILTROS_ALINHADOS_V4
+   Escopo exclusivo: Radar dos Bichos.
+   Uma coluna de filtro para cada coluna de card.
+*/
+
+.radar-bichos-page .radar-bichos-control-panel {
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+    margin-left: 0 !important;
+    margin-right: 0 !important;
+    padding: 0 !important;
+    border: 0 !important;
+    border-radius: 0 !important;
+    background: transparent !important;
+    box-shadow: none !important;
+}
+
+.radar-bichos-page .radar-bichos-filters {
+    display: grid !important;
+    grid-template-columns: repeat(4, minmax(0, 1fr)) !important;
+    gap: 12px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+    margin: 0 !important;
+    padding: 0 !important;
+    align-items: stretch !important;
+    justify-content: stretch !important;
+}
+
+.radar-bichos-page .radar-bichos-filters > .radar-bichos-field {
+    width: 100% !important;
+    max-width: none !important;
+    min-width: 0 !important;
+    margin: 0 !important;
+    padding: 12px !important;
+    box-sizing: border-box !important;
+
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: center !important;
+
+    border: 1px solid rgba(201,168,62,0.26) !important;
+    border-radius: 16px !important;
+    background: rgba(12,12,12,0.90) !important;
+}
+
+.radar-bichos-page .radar-bichos-filters > .radar-bichos-field select,
+.radar-bichos-page .radar-bichos-filters > .radar-bichos-field input {
+    display: block !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    box-sizing: border-box !important;
+}
+
+@media (max-width: 900px) {
+    .radar-bichos-page .radar-bichos-filters {
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+    }
+}
+
+@media (max-width: 560px) {
+    .radar-bichos-page .radar-bichos-filters {
+        grid-template-columns: repeat(2, minmax(0, 1fr)) !important;
+        gap: 10px !important;
+    }
+
+    .radar-bichos-page .radar-bichos-filters > .radar-bichos-field {
+        padding: 10px !important;
+    }
+}
+
+@media (max-width: 360px) {
+    .radar-bichos-page .radar-bichos-filters {
+        grid-template-columns: minmax(0, 1fr) !important;
+    }
+}
