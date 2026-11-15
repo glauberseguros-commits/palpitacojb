@@ -547,8 +547,9 @@ function hitAgainstCard(
     ) || '';
 
   if (
-    card.centenas.includes(
-      resultCentena
+    (
+      card.centenas?.includes(resultCentena) ||
+      Boolean(matchedMilharByCentena)
     )
   ) {
     return {
