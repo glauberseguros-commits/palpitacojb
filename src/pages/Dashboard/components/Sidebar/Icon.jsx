@@ -307,18 +307,45 @@ export default function Icon({ name = "home", size = 18 }) {
   if (name === "updown") {
     return (
       <svg {...common}>
+        <defs>
+          <linearGradient id="sd-gold-3d" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stopColor="#FFF2B0" />
+            <stop offset="42%" stopColor="#E5BF60" />
+            <stop offset="75%" stopColor="#BD8F32" />
+            <stop offset="100%" stopColor="#79551B" />
+          </linearGradient>
+          <linearGradient id="sd-silver-3d" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stopColor="#FFFFFF" />
+            <stop offset="45%" stopColor="#E3E5E8" />
+            <stop offset="75%" stopColor="#ADB3BC" />
+            <stop offset="100%" stopColor="#626975" />
+          </linearGradient>
+        </defs>
+
         <path
-          d="M7 20V5M3 9l4-4 4 4"
-          stroke={gold}
-          strokeWidth="2"
-          strokeLinecap="round"
+          d="M2 11L7.5 3L13 11H10.5V21H4.5V11Z"
+          fill="#543A12"
+          opacity="0.75"
+          transform="translate(0.7 0.7)"
+        />
+        <path
+          d="M2 11L7.5 3L13 11H10.5V21H4.5V11Z"
+          fill="url(#sd-gold-3d)"
+          stroke="#F8D984"
+          strokeWidth="0.6"
           strokeLinejoin="round"
         />
         <path
-          d="M17 4v15m-4-4 4 4 4-4"
-          stroke={stroke}
-          strokeWidth="2"
-          strokeLinecap="round"
+          d="M12 13H14.5V3H20.5V13H23L17.5 21Z"
+          fill="#34383F"
+          opacity="0.7"
+          transform="translate(0.5 0.7)"
+        />
+        <path
+          d="M12 13H14.5V3H20.5V13H23L17.5 21Z"
+          fill="url(#sd-silver-3d)"
+          stroke="#F5F5F5"
+          strokeWidth="0.6"
           strokeLinejoin="round"
         />
       </svg>
