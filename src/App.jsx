@@ -62,6 +62,7 @@ const AdminLogin = lazy(() => import("./pages/Admin/AdminLogin"));
 const Payments = lazy(() => import("./pages/Payments/Payments"));
 const Downloads = lazy(() => import("./pages/Downloads/Downloads"));
 const Centenas = lazy(() => import("./pages/Centenas/Centenas"));
+const SobeDesce = lazy(() => import("./pages/SobeDesce/SobeDesce"));
 
 
 const STORAGE_KEY = "palpitaco_screen_v2";
@@ -261,6 +262,7 @@ const ROUTES = {
   PAYMENTS: "payments",
   DOWNLOADS: "downloads",
   CENTENAS: "centenas",
+  SOBE_DESCE: "sobe-desce",
 };
 
 function safeReadLS(key) {
@@ -513,6 +515,8 @@ function screenToPath(screen) {
       return "/downloads";
     case ROUTES.CENTENAS:
       return "/centenas";
+    case ROUTES.SOBE_DESCE:
+      return "/sobe-desce";
     default:
       return "/";
   }
@@ -537,6 +541,7 @@ function pathToScreen(pathname) {
   if (p === "/payments") return ROUTES.PAYMENTS;
   if (p === "/downloads") return ROUTES.DOWNLOADS;
   if (p === "/centenas") return ROUTES.CENTENAS;
+  if (p === "/sobe-desce") return ROUTES.SOBE_DESCE;
   if (p === "/statistics") return ROUTES.DASHBOARD;
 
   return null;
@@ -1226,6 +1231,8 @@ export default function App() {
         return <Search />;
       case ROUTES.CENTENAS:
         return <Centenas />;
+      case ROUTES.SOBE_DESCE:
+        return <SobeDesce />;
       case ROUTES.PAYMENTS:
         return <Payments />;
       case ROUTES.DOWNLOADS:

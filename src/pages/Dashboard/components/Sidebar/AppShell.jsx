@@ -16,6 +16,7 @@ const ROUTES = {
   PAYMENTS: "payments",
   DOWNLOADS: "downloads",
   CENTENAS: "centenas",
+  SOBE_DESCE: "sobe-desce",
 };
 
 const ACCOUNT_SESSION_KEY = "pp_session_v1";
@@ -445,6 +446,7 @@ export default function AppShell({ active, onNavigate, onLogout, children }) {
   const menuTools = [
     { key: ROUTES.SEARCH, icon: "search", title: "Busca" },
     { key: ROUTES.CENTENAS, icon: "hash", title: "Centenas" },
+    { key: ROUTES.SOBE_DESCE, icon: "chart", title: "Sobe & Desce" },
     { key: ROUTES.DOWNLOADS, icon: "download", title: "Downloads" },
   ];
 
