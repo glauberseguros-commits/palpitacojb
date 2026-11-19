@@ -8,8 +8,8 @@
 }
 
 .sd-panel {
-  max-width: 840px;
-  margin: 18px auto;
+  max-width: 1040px;
+  margin: 4px auto 24px;
   padding: clamp(14px, 3vw, 30px);
   border: 1px solid rgba(202,166,75,.35);
   border-radius: 20px;
@@ -236,4 +236,55 @@
   .sd-principal { font-size: 23px; }
   .sd-conjunto { gap: 3px; }
   .sd-numero { font-size: 11px; padding: 7px 1px; }
+}
+
+
+/* SOBE & DESCE - INTEGRAÇÃO AO LAYOUT OFICIAL */
+
+.pp-page-standard--sobe-desce .sd-page {
+  width: 100%;
+  min-width: 0;
+  min-height: auto;
+  padding: 8px 14px 24px;
+  box-sizing: border-box;
+}
+
+.pp-page-standard--sobe-desce .sd-panel {
+  width: 100%;
+  max-width: 1040px;
+  margin: 0 auto;
+  padding: clamp(16px, 2.5vw, 28px);
+}
+
+.pp-page-standard--sobe-desce .sd-grid {
+  grid-template-columns: minmax(95px, 160px) minmax(0, 1fr);
+}
+
+.pp-page-standard--sobe-desce .sd-card {
+  min-height: 90px;
+}
+
+.pp-page-standard--sobe-desce .sd-heading {
+  text-align: left;
+  padding-left: 8px;
+}
+
+@media (max-width: 640px) {
+  .pp-page-standard--sobe-desce .sd-page {
+    padding: 6px 10px 22px;
+  }
+
+  .pp-page-standard--sobe-desce .sd-panel {
+    padding: 12px 9px;
+    border-radius: 14px;
+  }
+
+  .pp-page-standard--sobe-desce .sd-grid {
+    grid-template-columns: minmax(68px, 85px) minmax(0, 1fr);
+    gap: 8px;
+  }
+
+  .pp-page-standard--sobe-desce .sd-card {
+    min-height: 74px;
+  }
 }

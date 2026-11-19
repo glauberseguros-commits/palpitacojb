@@ -279,11 +279,6 @@ export default function SobeDesce() {
   return (
     <main className="sd-page">
       <section className="sd-panel">
-        <header className="sd-header">
-          <span>PALPITACO JB</span>
-          <h1>Sobe &amp; Desce</h1>
-        </header>
-
         <div className="sd-grid">
           <div className="sd-heading">GRUPOS</div>
           <div className="sd-heading">MILHARES E BICHOS</div>

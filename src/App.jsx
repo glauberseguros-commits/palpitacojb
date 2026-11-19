@@ -1412,7 +1412,7 @@ export default function App() {
         <Suspense fallback={<AppLoading />}>
       <AppShell active={currentScreen} onNavigate={goToScreen} onLogout={logout}>
         <div className={"pp-page-standard pp-page-standard--" + currentScreen}>
-          {["radar-dos-bichos", "search", "centenas", "downloads"].includes(currentScreen) && <PageHeader screen={currentScreen} />}
+          {["radar-dos-bichos", "search", "centenas", "downloads", "sobe-desce"].includes(currentScreen) && <PageHeader screen={currentScreen} />}
           <div className="pp-page-standard__body">
         {currentScreen === ROUTES.DASHBOARD ? (
           <Dashboard

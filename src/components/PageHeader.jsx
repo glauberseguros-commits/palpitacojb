@@ -34,6 +34,10 @@ const HEADINGS = {
     "DOWNLOADS",
     "Consulte e exporte resultados em PDF e Excel."
   ],
+  "sobe-desce": [
+    "SOBE & DESCE",
+    "Cálculo de milhares e identificação dos bichos."
+  ],
   account: [
     "MINHA CONTA",
     "Informações sobre o seu acesso ao PalPitaco JB."
