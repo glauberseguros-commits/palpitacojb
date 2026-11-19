@@ -446,7 +446,7 @@ export default function AppShell({ active, onNavigate, onLogout, children }) {
   const menuTools = [
     { key: ROUTES.SEARCH, icon: "search", title: "Busca" },
     { key: ROUTES.CENTENAS, icon: "hash", title: "Centenas" },
-    { key: ROUTES.SOBE_DESCE, icon: "chart", title: "Sobe & Desce" },
+    { key: ROUTES.SOBE_DESCE, icon: "updown", title: "Sobe & Desce" },
     { key: ROUTES.DOWNLOADS, icon: "download", title: "Downloads" },
   ];
 
