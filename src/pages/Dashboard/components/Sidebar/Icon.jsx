@@ -308,44 +308,33 @@ export default function Icon({ name = "home", size = 18 }) {
     return (
       <svg {...common}>
         <defs>
-          <linearGradient id="sd-gold-3d" x1="0" y1="0" x2="1" y2="1">
-            <stop offset="0%" stopColor="#FFF2B0" />
-            <stop offset="42%" stopColor="#E5BF60" />
-            <stop offset="75%" stopColor="#BD8F32" />
-            <stop offset="100%" stopColor="#79551B" />
+          <linearGradient id="sd-gold-mid" x1="0" y1="0" x2="1" y2="1">
+            <stop offset="0%" stopColor="#FFF0AE" />
+            <stop offset="55%" stopColor="#D5AD4F" />
+            <stop offset="100%" stopColor="#94702B" />
           </linearGradient>
-          <linearGradient id="sd-silver-3d" x1="0" y1="0" x2="1" y2="1">
+          <linearGradient id="sd-silver-mid" x1="0" y1="0" x2="1" y2="1">
             <stop offset="0%" stopColor="#FFFFFF" />
-            <stop offset="45%" stopColor="#E3E5E8" />
-            <stop offset="75%" stopColor="#ADB3BC" />
-            <stop offset="100%" stopColor="#626975" />
+            <stop offset="55%" stopColor="#C5C9D1" />
+            <stop offset="100%" stopColor="#9299A4" />
           </linearGradient>
         </defs>
 
         <path
-          d="M2 11L7.5 3L13 11H10.5V21H4.5V11Z"
-          fill="#543A12"
-          opacity="0.75"
-          transform="translate(0.7 0.7)"
-        />
-        <path
-          d="M2 11L7.5 3L13 11H10.5V21H4.5V11Z"
-          fill="url(#sd-gold-3d)"
-          stroke="#F8D984"
-          strokeWidth="0.6"
+          d="M6.5 20V5.5M3.5 8.5L6.5 5.5L9.5 8.5"
+          fill="none"
+          stroke="url(#sd-gold-mid)"
+          strokeWidth="2.3"
+          strokeLinecap="round"
           strokeLinejoin="round"
         />
+
         <path
-          d="M12 13H14.5V3H20.5V13H23L17.5 21Z"
-          fill="#34383F"
-          opacity="0.7"
-          transform="translate(0.5 0.7)"
-        />
-        <path
-          d="M12 13H14.5V3H20.5V13H23L17.5 21Z"
-          fill="url(#sd-silver-3d)"
-          stroke="#F5F5F5"
-          strokeWidth="0.6"
+          d="M17.5 4V18.5M14.5 15.5L17.5 18.5L20.5 15.5"
+          fill="none"
+          stroke="url(#sd-silver-mid)"
+          strokeWidth="2.3"
+          strokeLinecap="round"
           strokeLinejoin="round"
         />
       </svg>
