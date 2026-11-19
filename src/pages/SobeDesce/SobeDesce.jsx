@@ -1,130 +1,385 @@
 import React, { useMemo, useState } from "react";
 import "./SobeDesce.css";
 
-const INITIAL = ["", "", "", "", ""];
+const CATALOGO = [
+  {
+    "grupo": 1,
+    "nome": "Avestruz",
+    "emoji": "🪶",
+    "imagem": "/assets/animals/animais_128_png/01_avestruz.png"
+  },
+  {
+    "grupo": 2,
+    "nome": "Águia",
+    "emoji": "🦅",
+    "imagem": "/assets/animals/animais_128_png/02_aguia.png"
+  },
+  {
+    "grupo": 3,
+    "nome": "Burro",
+    "emoji": "🐴",
+    "imagem": "/assets/animals/animais_128_png/03_burro.png"
+  },
+  {
+    "grupo": 4,
+    "nome": "Borboleta",
+    "emoji": "🦋",
+    "imagem": "/assets/animals/animais_128_png/04_borboleta.png"
+  },
+  {
+    "grupo": 5,
+    "nome": "Cachorro",
+    "emoji": "🐕",
+    "imagem": "/assets/animals/animais_128_png/05_cachorro.png"
+  },
+  {
+    "grupo": 6,
+    "nome": "Cabra",
+    "emoji": "🐐",
+    "imagem": "/assets/animals/animais_128_png/06_cabra.png"
+  },
+  {
+    "grupo": 7,
+    "nome": "Carneiro",
+    "emoji": "🐏",
+    "imagem": "/assets/animals/animais_128_png/07_carneiro.png"
+  },
+  {
+    "grupo": 8,
+    "nome": "Camelo",
+    "emoji": "🐪",
+    "imagem": "/assets/animals/animais_128_png/08_camelo.png"
+  },
+  {
+    "grupo": 9,
+    "nome": "Cobra",
+    "emoji": "🐍",
+    "imagem": "/assets/animals/animais_128_png/09_cobra.png"
+  },
+  {
+    "grupo": 10,
+    "nome": "Coelho",
+    "emoji": "🐇",
+    "imagem": "/assets/animals/animais_128_png/10_coelho.png"
+  },
+  {
+    "grupo": 11,
+    "nome": "Cavalo",
+    "emoji": "🐎",
+    "imagem": "/assets/animals/animais_128_png/11_cavalo.png"
+  },
+  {
+    "grupo": 12,
+    "nome": "Elefante",
+    "emoji": "🐘",
+    "imagem": "/assets/animals/animais_128_png/12_elefante.png"
+  },
+  {
+    "grupo": 13,
+    "nome": "Galo",
+    "emoji": "🐓",
+    "imagem": "/assets/animals/animais_128_png/13_galo.png"
+  },
+  {
+    "grupo": 14,
+    "nome": "Gato",
+    "emoji": "🐈",
+    "imagem": "/assets/animals/animais_128_png/14_gato.png"
+  },
+  {
+    "grupo": 15,
+    "nome": "Jacaré",
+    "emoji": "🐊",
+    "imagem": "/assets/animals/animais_128_png/15_jacare.png"
+  },
+  {
+    "grupo": 16,
+    "nome": "Leão",
+    "emoji": "🦁",
+    "imagem": "/assets/animals/animais_128_png/16_leao.png"
+  },
+  {
+    "grupo": 17,
+    "nome": "Macaco",
+    "emoji": "🐒",
+    "imagem": "/assets/animals/animais_128_png/17_macaco.png"
+  },
+  {
+    "grupo": 18,
+    "nome": "Porco",
+    "emoji": "🐖",
+    "imagem": "/assets/animals/animais_128_png/18_porco.png"
+  },
+  {
+    "grupo": 19,
+    "nome": "Pavão",
+    "emoji": "🦚",
+    "imagem": "/assets/animals/animais_128_png/19_pavao.png"
+  },
+  {
+    "grupo": 20,
+    "nome": "Peru",
+    "emoji": "🦃",
+    "imagem": "/assets/animals/animais_128_png/20_peru.png"
+  },
+  {
+    "grupo": 21,
+    "nome": "Touro",
+    "emoji": "🐂",
+    "imagem": "/assets/animals/animais_128_png/21_touro.png"
+  },
+  {
+    "grupo": 22,
+    "nome": "Tigre",
+    "emoji": "🐅",
+    "imagem": "/assets/animals/animais_128_png/22_tigre.png"
+  },
+  {
+    "grupo": 23,
+    "nome": "Urso",
+    "emoji": "🐻",
+    "imagem": "/assets/animals/animais_128_png/23_urso.png"
+  },
+  {
+    "grupo": 24,
+    "nome": "Veado",
+    "emoji": "🦌",
+    "imagem": "/assets/animals/animais_128_png/24_veado.png"
+  },
+  {
+    "grupo": 25,
+    "nome": "Vaca",
+    "emoji": "🐄",
+    "imagem": "/assets/animals/animais_128_png/25_vaca.png"
+  }
+];
+
+const VAZIOS = ["", "", "", "", ""];
 
 export function calcularSobeDesce(grupos) {
   if (
     !Array.isArray(grupos) ||
     grupos.length !== 5 ||
     !grupos.every((g) => /^(0[1-9]|1[0-9]|2[0-5])$/.test(g))
-  ) {
-    return [];
+  ) return [];
+
+  const centenas = grupos.map(
+    (g, i) => g + grupos[(i + 4) % 5].slice(-1)
+  );
+
+  return centenas.map(
+    (c, i) => c + centenas[(i + 4) % 5].slice(-1)
+  );
+}
+
+export function detalharMilhar(milhar) {
+  if (!/^\d{4}$/.test(milhar || "")) return null;
+
+  const prefixo = milhar.slice(0, 2);
+  const dezena = Number(milhar.slice(-2));
+
+  const grupo = dezena === 0 ? 25 : Math.ceil(dezena / 4);
+  const animal = CATALOGO[grupo - 1];
+
+  if (!animal) return null;
+
+  const dezenas = grupo === 25
+    ? [97, 98, 99, 0]
+    : Array.from({ length: 4 }, (_, i) => (grupo - 1) * 4 + i + 1);
+
+  const conjunto = dezenas.map(
+    (d) => prefixo + String(d).padStart(2, "0")
+  );
+
+  return { ...animal, milhar, conjunto };
+}
+
+function FotoBicho({ animal }) {
+  const [falha, setFalha] = useState(false);
+
+  if (!animal.imagem || falha) {
+    return (
+      <div className="sd-foto sd-foto-fallback"
+        title={animal.nome} aria-label={animal.nome}>
+        {animal.emoji}
+      </div>
+    );
   }
 
-  const centenas = grupos.map((grupo, i) => {
-    const anterior = grupos[(i + 4) % 5];
-    return grupo + anterior.slice(-1);
-  });
-
-  return centenas.map((centena, i) => {
-    const anterior = centenas[(i + 4) % 5];
-    return centena + anterior.slice(-1);
-  });
+  return (
+    <img
+      key={animal.imagem}
+      className="sd-foto"
+      src={animal.imagem}
+      alt={animal.nome}
+      loading="lazy"
+      onError={() => setFalha(true)}
+    />
+  );
 }
 
 export default function SobeDesce() {
-  const [grupos, setGrupos] = useState(INITIAL);
+  const [grupos, setGrupos] = useState(VAZIOS);
   const [mensagem, setMensagem] = useState("");
 
   const milhares = useMemo(
-    () => calcularSobeDesce(grupos),
-    [grupos]
+    () => calcularSobeDesce(grupos), [grupos]
   );
 
-  const completos = grupos.every((g) => g.length === 2);
-  const invalido = completos && milhares.length !== 5;
+  const resultados = useMemo(
+    () => milhares.map(detalharMilhar),
+    [milhares]
+  );
 
-  function alterar(index, valor) {
-    const limpo = String(valor).replace(/\D/g, "").slice(0, 2);
-    setGrupos((anteriores) =>
-      anteriores.map((g, i) => i === index ? limpo : g)
-    );
+  const pronto = resultados.length === 5 &&
+    resultados.every(Boolean);
+
+  const invalidos = grupos.some(
+    (g) => g.length === 2 &&
+      !/^(0[1-9]|1[0-9]|2[0-5])$/.test(g)
+  );
+
+  function atualizar(i, valor) {
+    const v = String(valor).replace(/\D/g, "").slice(0, 2);
+    setGrupos((atual) => atual.map((g, j) => j === i ? v : g));
     setMensagem("");
   }
 
-  async function copiar() {
-    if (milhares.length !== 5) return;
-
-    const texto = milhares.join("\n");
-
+  async function copiar(texto) {
     try {
       await navigator.clipboard.writeText(texto);
-      setMensagem("Milhares copiadas!");
+      setMensagem("Copiado com sucesso!");
     } catch {
-      const campo = document.createElement("textarea");
-      campo.value = texto;
-      campo.style.position = "fixed";
-      campo.style.opacity = "0";
-      document.body.appendChild(campo);
-      campo.select();
-      const copiado = document.execCommand("copy");
-      document.body.removeChild(campo);
-      setMensagem(copiado ? "Milhares copiadas!" : "Não foi possível copiar.");
+      try {
+        const campo = document.createElement("textarea");
+        campo.value = texto;
+        campo.style.position = "fixed";
+        campo.style.opacity = "0";
+        document.body.appendChild(campo);
+        campo.select();
+        const ok = document.execCommand("copy");
+        campo.remove();
+        setMensagem(ok ? "Copiado com sucesso!" : "Falha ao copiar.");
+      } catch {
+        setMensagem("Não foi possível copiar.");
+      }
     }
+  }
+
+  function copiarPrincipais() {
+    if (!pronto) return;
+    copiar(milhares.join("\n"));
+  }
+
+  function copiarConjuntos() {
+    if (!pronto) return;
+    copiar(resultados.map((r) => r.conjunto.join("\n")).join("\n"));
   }
 
   return (
     <main className="sd-page">
       <section className="sd-panel">
         <header className="sd-header">
-          <div className="sd-brand">PALPITACO JB</div>
+          <span>PALPITACO JB</span>
           <h1>Sobe &amp; Desce</h1>
         </header>
 
-        <div className="sd-table">
-          <div className="sd-column-title">GRUPOS</div>
-          <div className="sd-column-title">MILHARES</div>
+        <div className="sd-grid">
+          <div className="sd-heading">GRUPOS</div>
+          <div className="sd-heading">MILHARES E BICHOS</div>
 
-          {grupos.map((grupo, index) => (
-            <React.Fragment key={index}>
-              <label className="sd-group-field">
-                <span>{index + 1}º</span>
-                <input
-                  aria-label={"Grupo " + (index + 1)}
-                  type="text"
-                  inputMode="numeric"
-                  autoComplete="off"
-                  maxLength={2}
-                  placeholder="00"
-                  value={grupo}
-                  onChange={(e) => alterar(index, e.target.value)}
-                />
-              </label>
+          {grupos.map((grupo, i) => {
+            const resultado = resultados[i];
 
-              <div
-                className="sd-result"
-                aria-label={"Milhar " + (index + 1)}
-              >
-                {milhares[index] || "—"}
-              </div>
-            </React.Fragment>
-          ))}
+            return (
+              <React.Fragment key={i}>
+                <label className="sd-input-wrap">
+                  <span>{i + 1}º</span>
+                  <input
+                    aria-label={"Grupo " + (i + 1)}
+                    type="text"
+                    inputMode="numeric"
+                    maxLength={2}
+                    autoComplete="off"
+                    placeholder="00"
+                    value={grupo}
+                    onChange={(e) => atualizar(i, e.target.value)}
+                  />
+                </label>
+
+                <article className="sd-card">
+                  {resultado ? (
+                    <>
+                      <div className="sd-card-top">
+                        <FotoBicho animal={resultado} />
+                        <div className="sd-info">
+                          <div className="sd-animal">
+                            {resultado.nome} · G{String(
+                              resultado.grupo
+                            ).padStart(2, "0")}
+                          </div>
+                          <strong className="sd-principal">
+                            {resultado.milhar}
+                          </strong>
+                        </div>
+                      </div>
+
+                      <div className="sd-conjunto">
+                        {resultado.conjunto.map((numero) => (
+                          <span
+                            key={numero}
+                            className={
+                              "sd-numero" +
+                              (numero === resultado.milhar
+                                ? " sd-numero-ativo" : "")
+                            }
+                          >
+                            {numero}
+                          </span>
+                        ))}
+                      </div>
+                    </>
+                  ) : (
+                    <div className="sd-empty">—</div>
+                  )}
+                </article>
+              </React.Fragment>
+            );
+          })}
         </div>
 
-        {invalido && (
+        {invalidos && (
           <p className="sd-error" role="alert">
-            Informe grupos válidos de 01 a 25.
+            Informe grupos de 01 a 25.
           </p>
         )}
 
         <div className="sd-actions">
           <button
-            type="button"
             className="sd-copy"
-            onClick={copiar}
-            disabled={milhares.length !== 5}
+            disabled={!pronto}
+            onClick={copiarConjuntos}
+            type="button"
           >
-            Copiar milhares
+            Copiar conjuntos
           </button>
 
           <button
+            className="sd-secondary"
+            disabled={!pronto}
+            onClick={copiarPrincipais}
             type="button"
+          >
+            Copiar 5 milhares
+          </button>
+
+          <button
             className="sd-clear"
             onClick={() => {
-              setGrupos(INITIAL);
+              setGrupos(VAZIOS);
               setMensagem("");
             }}
+            type="button"
           >
             Limpar
           </button>

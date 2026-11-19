@@ -1,163 +1,239 @@
 
 .sd-page {
   min-height: 100%;
-  padding: clamp(16px, 4vw, 48px);
+  padding: clamp(12px, 3vw, 40px);
   background: #050505;
   color: #f5f5f5;
   box-sizing: border-box;
-  font-family: inherit;
 }
 
 .sd-panel {
-  width: 100%;
-  max-width: 590px;
-  margin: 20px auto;
-  padding: clamp(18px, 4vw, 36px);
-  box-sizing: border-box;
+  max-width: 840px;
+  margin: 18px auto;
+  padding: clamp(14px, 3vw, 30px);
   border: 1px solid rgba(202,166,75,.35);
   border-radius: 20px;
-  background: linear-gradient(150deg, #17150f, #090909 55%);
-  box-shadow: 0 20px 60px rgba(0,0,0,.4);
+  background: linear-gradient(145deg,#17150f,#090909 60%);
+  box-sizing: border-box;
 }
 
 .sd-header {
   text-align: center;
-  margin-bottom: 30px;
+  margin-bottom: 26px;
 }
 
-.sd-brand {
-  color: #caa64b;
+.sd-header span {
   font-size: 11px;
-  font-weight: 800;
   letter-spacing: 2px;
+  color: #caa64b;
+  font-weight: 800;
 }
 
 .sd-header h1 {
-  margin: 10px 0 0;
   color: #e7c66f;
-  font-size: clamp(26px, 5vw, 36px);
-  font-weight: 800;
+  font-size: clamp(26px,5vw,36px);
+  margin: 8px 0 0;
 }
 
-.sd-table {
+.sd-grid {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
-  gap: 12px 18px;
+  grid-template-columns: minmax(88px, 165px) minmax(0, 1fr);
+  gap: 12px;
   align-items: stretch;
 }
 
-.sd-column-title {
+.sd-heading {
   color: #caa64b;
+  font-size: 12px;
   font-weight: 800;
-  text-align: center;
-  font-size: 13px;
   letter-spacing: 1px;
-  padding-bottom: 6px;
-}
-
-.sd-group-field {
-  display: flex;
-  gap: 10px;
-  align-items: center;
-  min-width: 0;
-}
-
-.sd-group-field span {
-  color: #aaa;
-  font-size: 13px;
-  min-width: 23px;
-}
-
-.sd-group-field input,
-.sd-result {
-  box-sizing: border-box;
-  min-width: 0;
-  width: 100%;
-  height: 58px;
-  border-radius: 12px;
-  font-size: clamp(20px, 4vw, 27px);
   text-align: center;
-  font-weight: 800;
-  font-variant-numeric: tabular-nums;
+  padding: 5px 0 9px;
 }
 
-.sd-group-field input {
-  border: 1px solid #484033;
-  outline: none;
+.sd-input-wrap {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+}
+
+.sd-input-wrap span {
+  font-size: 12px;
+  color: #aaa;
+  flex-shrink: 0;
+}
+
+.sd-input-wrap input {
+  width: 100%;
+  min-width: 0;
+  height: 62px;
+  box-sizing: border-box;
+  border-radius: 11px;
   background: #101010;
-  color: white;
+  border: 1px solid #494032;
+  color: #fff;
+  font-size: 25px;
+  font-weight: 800;
+  text-align: center;
+  outline: none;
 }
 
-.sd-group-field input:focus {
+.sd-input-wrap input:focus {
   border-color: #d4b35e;
-  box-shadow: 0 0 0 2px rgba(202,166,75,.18);
+  box-shadow: 0 0 0 2px rgba(202,166,75,.16);
 }
 
-.sd-group-field input::placeholder {
+.sd-input-wrap input::placeholder {
   color: #555;
 }
 
-.sd-result {
+.sd-card {
+  min-width: 0;
+  padding: 12px;
+  background: rgba(202,166,75,.065);
+  border: 1px solid rgba(202,166,75,.30);
+  border-radius: 13px;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  gap: 10px;
+}
+
+.sd-card-top {
   display: flex;
   align-items: center;
-  justify-content: center;
-  border: 1px solid rgba(202,166,75,.35);
-  background: rgba(202,166,75,.10);
+  gap: 12px;
+  min-width: 0;
+}
+
+.sd-foto {
+  width: 62px;
+  height: 62px;
+  border-radius: 12px;
+  flex-shrink: 0;
+  object-fit: contain;
+  background: #111;
+  border: 1px solid rgba(202,166,75,.30);
+}
+
+.sd-foto-fallback {
+  display: grid;
+  place-items: center;
+  font-size: 36px;
+}
+
+.sd-info { min-width: 0; }
+
+.sd-animal {
+  font-size: 13px;
+  font-weight: 700;
+  color: #ddd;
+}
+
+.sd-principal {
+  display: block;
+  margin-top: 3px;
   color: #e7c66f;
+  font-size: 29px;
+  font-variant-numeric: tabular-nums;
+}
+
+.sd-conjunto {
+  display: grid;
+  grid-template-columns: repeat(4,minmax(0,1fr));
+  gap: 6px;
+}
+
+.sd-numero {
+  min-width: 0;
+  text-align: center;
+  border: 1px solid #38352d;
+  border-radius: 8px;
+  background: #101010;
+  color: #eee;
+  font-size: clamp(12px,2vw,17px);
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  padding: 9px 2px;
+}
+
+.sd-numero-ativo {
+  color: #f4d67c;
+  border-color: #b69a4f;
+  background: rgba(202,166,75,.20);
+}
+
+.sd-empty {
+  text-align: center;
+  color: #d2b65d;
+  font-size: 28px;
 }
 
 .sd-actions {
   display: flex;
-  gap: 12px;
-  margin-top: 28px;
+  gap: 10px;
+  flex-wrap: wrap;
+  margin-top: 24px;
 }
 
 .sd-actions button {
-  min-height: 49px;
-  border-radius: 12px;
-  cursor: pointer;
+  flex: 1 1 150px;
+  min-height: 48px;
+  border-radius: 11px;
+  font-size: 13px;
   font-weight: 800;
-  font-size: 14px;
+  cursor: pointer;
 }
 
 .sd-copy {
-  flex: 2;
-  background: linear-gradient(135deg, #e2c16b, #b38b32);
-  border: 0;
-  color: #090909;
+  background: linear-gradient(135deg,#e2c16b,#b38b32);
+  color: #080808;
+  border: none;
 }
 
-.sd-copy:disabled {
+.sd-secondary,.sd-clear {
+  background: #111;
+  color: #f5f5f5;
+  border: 1px solid #65512a;
+}
+
+.sd-actions button:disabled {
   opacity: .4;
   cursor: not-allowed;
 }
 
-.sd-clear {
-  flex: 1;
-  background: #111;
-  border: 1px solid #5a4c2e;
-  color: #f5f5f5;
-}
-
 .sd-message {
-  min-height: 22px;
-  margin-top: 14px;
-  color: #e7c66f;
+  min-height: 20px;
+  margin-top: 12px;
   text-align: center;
+  color: #e7c66f;
   font-size: 13px;
 }
 
 .sd-error {
   color: #ffaaa0;
-  text-align: center;
   font-size: 13px;
+  text-align: center;
 }
 
-@media (max-width: 480px) {
-  .sd-page { padding: 12px; }
-  .sd-panel { margin: 8px auto; padding: 16px 12px; }
-  .sd-table { gap: 10px 8px; }
-  .sd-group-field { gap: 5px; }
-  .sd-group-field span { min-width: 20px; font-size: 12px; }
-  .sd-group-field input, .sd-result { height: 52px; font-size: 22px; }
+@media(max-width:600px) {
+  .sd-page { padding: 10px; }
+  .sd-panel { padding: 14px 9px; margin: 6px auto; }
+  .sd-grid {
+    grid-template-columns: minmax(68px,85px) minmax(0,1fr);
+    gap: 8px;
+  }
+  .sd-heading { font-size: 10px; }
+  .sd-input-wrap { gap: 3px; }
+  .sd-input-wrap span { font-size: 10px; }
+  .sd-input-wrap input { height: 55px; font-size: 20px; }
+  .sd-card { padding: 8px; gap: 7px; }
+  .sd-card-top { gap: 7px; }
+  .sd-foto { width: 43px; height: 43px; }
+  .sd-foto-fallback { font-size: 26px; }
+  .sd-animal { font-size: 11px; }
+  .sd-principal { font-size: 23px; }
+  .sd-conjunto { gap: 3px; }
+  .sd-numero { font-size: 11px; padding: 7px 1px; }
 }
