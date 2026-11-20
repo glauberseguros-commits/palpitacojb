@@ -285,7 +285,7 @@ function FotoBicho({ animal }) {
 export default function SobeDescePermutacoes() {
   const [grupos, setGrupos] = useState(VAZIOS);
   const [mensagem, setMensagem] = useState("");
-  const [filtroBicho, setFiltroBicho] = useState("todos");
+  const [filtroBichos, setFiltroBichos] = useState([]);
   const [expandidos, setExpandidos] = useState({});
 
   const milhares = useMemo(
@@ -331,13 +331,28 @@ export default function SobeDescePermutacoes() {
   );
 
   const bichosExibidos = useMemo(
-    () => filtroBicho === "todos"
+    () => filtroBichos.length === 0
       ? bichosClassificados
       : bichosClassificados.filter(
-          (animal) => String(animal.grupo) === filtroBicho
+          (animal) => filtroBichos.includes(animal.grupo)
         ),
-    [bichosClassificados, filtroBicho]
+    [bichosClassificados, filtroBichos]
   );
+
+  const milharesParaCopiar = useMemo(
+    () => bichosExibidos.flatMap(
+      (animal) => animal.milhares
+    ),
+    [bichosExibidos]
+  );
+
+  function alternarSelecaoBicho(grupo) {
+    setFiltroBichos((atual) =>
+      atual.includes(grupo)
+        ? atual.filter((numero) => numero !== grupo)
+        : [...atual, grupo]
+    );
+  }
 
   function alternarExpansao(grupo) {
     setExpandidos((atual) => ({
@@ -347,19 +362,15 @@ export default function SobeDescePermutacoes() {
   }
 
   function copiarTodasPermutacoes() {
-    if (!pronto) return;
+    if (!pronto || milharesParaCopiar.length === 0) return;
 
-    copiar(
-      bichosClassificados
-        .flatMap((animal) => animal.milhares)
-        .join("\n")
-    );
+    copiar(milharesParaCopiar.join("\n"));
   }
   function atualizar(i, valor) {
     const v = String(valor).replace(/\D/g, "").slice(0, 2);
     setGrupos((atual) => atual.map((g, j) => j === i ? v : g));
     setMensagem("");
-    setFiltroBicho("todos");
+    setFiltroBichos([]);
     setExpandidos({});
   }
 
@@ -491,7 +502,7 @@ export default function SobeDescePermutacoes() {
             onClick={() => {
               setGrupos(VAZIOS);
               setMensagem("");
-              setFiltroBicho("todos");
+              setFiltroBichos([]);
               setExpandidos({});
             }}
             type="button"
@@ -536,38 +547,86 @@ export default function SobeDescePermutacoes() {
         </div>
 
         <div className="sdp-toolbar">
-          <label className="sdp-select-wrap">
-            <span>Filtrar por bicho</span>
-            <select
-              value={filtroBicho}
-              onChange={(e) => setFiltroBicho(e.target.value)}
-              disabled={!pronto}
-            >
-              <option value="todos">Todos os bichos</option>
+          <div className="sdp-multi-wrap">
+            <span className="sdp-multi-label">
+              Selecionar bichos
+            </span>
 
-              {bichosClassificados.map((animal) => (
-                <option
-                  key={animal.grupo}
-                  value={String(animal.grupo)}
-                >
-                  G{String(animal.grupo).padStart(2, "0")}
-                  {" · "}
-                  {animal.nome}
-                  {" ("}
-                  {animal.milhares.length}
-                  {")"}
-                </option>
-              ))}
-            </select>
-          </label>
+            <details className="sdp-multi-dropdown">
+              <summary>
+                <span>
+                  {filtroBichos.length === 0
+                    ? "Todos os bichos"
+                    : filtroBichos.length === 1
+                      ? "1 bicho selecionado"
+                      : `${filtroBichos.length} bichos selecionados`}
+                </span>
+                <span aria-hidden="true">▾</span>
+              </summary>
+
+              <div className="sdp-multi-menu">
+                <div className="sdp-multi-actions">
+                  <button
+                    type="button"
+                    disabled={!pronto}
+                    onClick={() =>
+                      setFiltroBichos(
+                        bichosClassificados.map(
+                          (animal) => animal.grupo
+                        )
+                      )
+                    }
+                  >
+                    Marcar todos
+                  </button>
+
+                  <button
+                    type="button"
+                    onClick={() => setFiltroBichos([])}
+                  >
+                    Limpar seleção
+                  </button>
+                </div>
+
+                <div className="sdp-multi-options">
+                  {bichosClassificados.map((animal) => (
+                    <label
+                      className="sdp-multi-option"
+                      key={animal.grupo}
+                    >
+                      <input
+                        type="checkbox"
+                        checked={filtroBichos.includes(animal.grupo)}
+                        onChange={() =>
+                          alternarSelecaoBicho(animal.grupo)
+                        }
+                      />
+
+                      <span>
+                        G{String(animal.grupo).padStart(2, "0")}
+                        {" · "}
+                        {animal.nome}
+                      </span>
+
+                      <small>
+                        {animal.milhares.length}
+                      </small>
+                    </label>
+                  ))}
+                </div>
+              </div>
+            </details>
+          </div>
 
           <button
             className="sdp-button-gold"
             type="button"
-            disabled={!pronto}
+            disabled={!pronto || milharesParaCopiar.length === 0}
             onClick={copiarTodasPermutacoes}
           >
-            Copiar todas as milhares
+            {filtroBichos.length === 0
+              ? "Copiar todas as milhares"
+              : `Copiar ${milharesParaCopiar.length} milhares selecionadas`}
           </button>
         </div>
 
