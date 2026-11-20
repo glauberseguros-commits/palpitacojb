@@ -34,6 +34,10 @@ const HEADINGS = {
     "DOWNLOADS",
     "Consulte e exporte resultados em PDF e Excel."
   ],
+  "sobe-desce-transicoes": [
+    "SOBE & DESCE - ANÁLISE DE TRANSIÇÕES",
+    "Cálculos tradicionais e análise complementar de resultados."
+  ],
   "cabeca-de-milhar": [
     "CABEÇA DE MILHAR",
     "Forme milhares a partir das cabeças e dos bichos selecionados."

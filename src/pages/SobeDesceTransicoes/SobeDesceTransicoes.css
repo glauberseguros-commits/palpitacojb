@@ -1,0 +1,390 @@
+/* SOBE & DESCE — ANÁLISE DE TRANSIÇÕES */
+
+.sdt-page,
+.sdt-page * {
+  box-sizing: border-box;
+}
+
+.sdt-page {
+  color: #f1e8d3;
+  padding: 18px 12px 65px;
+  background: transparent;
+}
+
+.sdt-shell {
+  width: min(100%, 940px);
+  margin: 0 auto;
+  display: flex;
+  flex-direction: column;
+  gap: 17px;
+}
+
+.sdt-panel {
+  padding: 20px;
+  border: 1px solid #544523;
+  border-radius: 16px;
+  background: linear-gradient(140deg, #1b1811, #080808);
+}
+
+.sdt-section-heading {
+  margin-bottom: 18px;
+}
+
+.sdt-section-heading h2 {
+  margin: 0;
+  font-size: 20px;
+  color: #e9cf81;
+}
+
+.sdt-section-heading p {
+  margin: 6px 0 0;
+  font-size: 12px;
+  color: #a99d86;
+  line-height: 1.5;
+}
+
+.sdt-context-grid {
+  display: grid;
+  grid-template-columns: 1.3fr 1fr 1fr;
+  gap: 12px;
+}
+
+.sdt-context-grid label,
+.sdt-groups label,
+.sdt-prizes label {
+  min-width: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+}
+
+.sdt-context-grid label > span,
+.sdt-groups label > span,
+.sdt-prizes label > span {
+  font-size: 11px;
+  font-weight: 750;
+  color: #d2b76e;
+}
+
+.sdt-page input {
+  display: block;
+  width: 100%;
+  min-width: 0;
+  border: 1px solid #62502d;
+  border-radius: 9px;
+  padding: 11px 8px;
+  background: #0c0c0c;
+  color: #f5e5b3;
+  color-scheme: dark;
+  font: inherit;
+  outline: none;
+}
+
+.sdt-page input:focus {
+  border-color: #e6c36b;
+  box-shadow: 0 0 0 2px #d1ae5433;
+}
+
+.sdt-groups {
+  display: grid;
+  grid-template-columns: repeat(5, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.sdt-groups input {
+  text-align: center;
+  font-size: 23px;
+  font-weight: 850;
+  font-variant-numeric: tabular-nums;
+}
+
+.sdt-hint {
+  color: #a89b80;
+  font-size: 11px;
+  margin: 13px 0 0;
+}
+
+.sdt-prizes {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.sdt-prizes input {
+  text-align: center;
+  font-size: 19px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.sdt-prizes small {
+  color: #918571;
+  font-size: 10px;
+}
+
+.sdt-summary {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin: 15px 0;
+}
+
+.sdt-summary > div {
+  border: 1px solid #483a22;
+  border-radius: 10px;
+  padding: 13px;
+  background: #15120c;
+}
+
+.sdt-summary strong {
+  display: block;
+  font-size: 23px;
+  color: #eed078;
+}
+
+.sdt-summary span {
+  display: block;
+  margin-top: 4px;
+  color: #a89a83;
+  font-size: 11px;
+}
+
+.sdt-conjuntos {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.sdt-conjunto {
+  min-width: 0;
+  padding: 13px;
+  border: 1px solid #493a22;
+  border-radius: 12px;
+  background: #17140f;
+}
+
+.sdt-conjunto-head {
+  display: flex;
+  align-items: center;
+  gap: 11px;
+  margin-bottom: 11px;
+}
+
+.sdt-photo,
+.sdt-photo-fallback {
+  flex: 0 0 46px;
+  width: 46px;
+  height: 46px;
+  object-fit: cover;
+  border: 1px solid #9b7b3c;
+  border-radius: 9px;
+}
+
+.sdt-photo-fallback {
+  display: grid;
+  place-items: center;
+  font-size: 20px;
+}
+
+.sdt-conjunto-head > div {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.sdt-conjunto-head small,
+.sdt-conjunto-head span {
+  font-size: 10px;
+  color: #b3a78f;
+}
+
+.sdt-conjunto-head strong {
+  font-size: 22px;
+  color: #ebcd77;
+  font-variant-numeric: tabular-nums;
+}
+
+.sdt-bases {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 5px;
+}
+
+.sdt-bases span {
+  min-width: 0;
+  padding: 9px 2px;
+  border: 1px solid #3b3428;
+  border-radius: 7px;
+  text-align: center;
+  background: #0c0c0c;
+  font-size: 13px;
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+}
+
+.sdt-bases .sdt-original {
+  color: #eed07e;
+  border-color: #9d8044;
+  background: #40351d;
+}
+
+.sdt-page button {
+  border: 1px solid #987d40;
+  border-radius: 8px;
+  background: #1c1810;
+  color: #f0d17d;
+  padding: 10px 12px;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 800;
+  cursor: pointer;
+}
+
+.sdt-page button:hover {
+  border-color: #e7c36a;
+}
+
+.sdt-copy-small {
+  display: block;
+  margin: 11px 0 0 auto;
+}
+
+.sdt-copy-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 15px;
+}
+
+.sdt-copy-actions button:last-child {
+  background: linear-gradient(135deg, #ebce7a, #b59448);
+  color: #15110a;
+}
+
+.sdt-empty {
+  padding: 25px 15px;
+  border: 1px dashed #54462b;
+  border-radius: 11px;
+  text-align: center;
+  color: #a99b80;
+  font-size: 12px;
+}
+
+.sdt-relacoes {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.sdt-relacao {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr);
+  align-items: center;
+  gap: 9px;
+  padding: 12px;
+  border: 1px solid #453920;
+  border-radius: 10px;
+  background: #12100c;
+}
+
+.sdt-relacao > div:not(.sdt-relation-tags) {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.sdt-relacao small {
+  font-size: 10px;
+  color: #a99e88;
+}
+
+.sdt-relacao strong {
+  font-size: 18px;
+  font-variant-numeric: tabular-nums;
+}
+
+.sdt-relation-arrow {
+  color: #d8b35e;
+  font-size: 19px;
+}
+
+.sdt-relation-tags {
+  grid-column: 1 / -1;
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+.sdt-relation-tags span {
+  padding: 5px 8px;
+  border: 1px solid #756034;
+  border-radius: 20px;
+  background: #2a2417;
+  color: #e6c879;
+  font-size: 10px;
+}
+
+.sdt-expand {
+  margin-top: 12px;
+}
+
+.sdt-disclaimer {
+  color: #9d917b;
+  font-size: 11px;
+  line-height: 1.5;
+  margin: 18px 0 0;
+}
+
+.sdt-status {
+  text-align: center;
+  color: #e9c979;
+  font-size: 12px;
+  min-height: 20px;
+}
+
+@media (max-width: 650px) {
+  .sdt-page {
+    padding: 10px 7px 45px;
+  }
+
+  .sdt-panel {
+    padding: 13px;
+  }
+
+  .sdt-context-grid {
+    grid-template-columns: 1fr 1fr;
+  }
+
+  .sdt-context-grid label:first-child {
+    grid-column: 1 / -1;
+  }
+
+  .sdt-groups {
+    gap: 5px;
+  }
+
+  .sdt-groups input {
+    padding: 10px 3px;
+    font-size: 18px;
+  }
+
+  .sdt-groups label > span {
+    font-size: 9px;
+  }
+
+  .sdt-prizes {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .sdt-conjuntos {
+    grid-template-columns: 1fr;
+  }
+
+  .sdt-bases span {
+    font-size: 12px;
+  }
+
+  .sdt-copy-actions {
+    grid-template-columns: 1fr;
+  }
+}

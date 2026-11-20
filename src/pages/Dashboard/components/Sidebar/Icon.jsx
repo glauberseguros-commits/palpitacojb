@@ -304,6 +304,28 @@ export default function Icon({ name = "home", size = 18 }) {
     );
   }
 
+  if (name === "transitions") {
+    return (
+      <svg {...common}>
+        <path
+          d="M3 7h17m0 0-4-4m4 4-4 4"
+          fill="none"
+          stroke={gold}
+          strokeWidth="1.6"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+        <path
+          d="M21 17H4m0 0 4-4m-4 4 4 4"
+          fill="none"
+          stroke={stroke}
+          strokeWidth="1.6"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </svg>
+    );
+  }
   if (name === "milhar-head") {
     return (
       <svg {...common}>
