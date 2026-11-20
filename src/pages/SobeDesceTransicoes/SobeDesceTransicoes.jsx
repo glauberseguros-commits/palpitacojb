@@ -1,158 +1,73 @@
 import React, { useMemo, useState } from "react";
+
 import {
-  calcularSobeDesceTransicoes,
-  analisarCoincidencias
-} from "./sobeDesceTransicoes.logic.mjs";
-import AnaliseAmpliada from "./AnaliseAmpliada";
+  gerarPorGruposECentenas,
+  ANIMAIS_TRANSICOES,
+  dezenasDoGrupo
+} from "./geradorGruposCentenas.logic.mjs";
+
 import "./SobeDesceTransicoes.css";
-
-function FotoAnimal({ animal }) {
-  const [falhou, setFalhou] = useState(false);
-
-  if (!animal) return null;
-
-  return falhou ? (
-    <span className="sdt-photo-fallback">
-      {animal.nome.slice(0, 1)}
-    </span>
-  ) : (
-    <img
-      src={animal.imagem}
-      alt={animal.nome}
-      className="sdt-photo"
-      loading="lazy"
-      onError={() => setFalhou(true)}
-    />
-  );
-}
+import "./GeradorGruposCentenas.css";
 
 export default function SobeDesceTransicoes() {
-  const [grupos, setGrupos] = useState(
-    ["", "", "", "", ""]
-  );
-
   const [resultados, setResultados] = useState(
-    ["", "", "", "", "", "", ""]
+    Array(7).fill("")
   );
 
   const [mensagem, setMensagem] = useState("");
-  const [verTodasRelacoes, setVerTodasRelacoes] = useState(false);
 
-  const calculo = useMemo(
-    () => calcularSobeDesceTransicoes(grupos),
-    [grupos]
+  const dados = useMemo(
+    () => gerarPorGruposECentenas(resultados),
+    [resultados]
   );
 
-  const coincidencias = useMemo(
-    () => analisarCoincidencias(calculo, resultados),
-    [calculo, resultados]
-  );
+  function alterarResultado(indice, valor) {
+    const limite = indice === 6 ? 3 : 4;
 
-  const resultadosInformados = resultados.filter(
-    (numero, index) =>
-      index === 6
-        ? /^\d{3}$/.test(numero)
-        : /^\d{4}$/.test(numero)
-  ).length;
+    const numero = valor
+      .replace(/\D/g, "")
+      .slice(0, limite);
 
-  const resultadosAgrupados = useMemo(() => {
-    const porPremio = new Map();
-
-    for (const item of coincidencias) {
-      const chave = `${item.premio}:${item.anterior}`;
-
-      if (!porPremio.has(chave)) {
-        porPremio.set(chave, {
-          premio: item.premio,
-          anterior: item.anterior,
-          candidatas: []
-        });
-      }
-
-      const grupo = porPremio.get(chave);
-
-      const existente = grupo.candidatas.find(
-        (candidata) => candidata.candidata === item.candidata
-      );
-
-      if (existente) {
-        existente.relacoes = [
-          ...new Set([...existente.relacoes, ...item.relacoes])
-        ];
-      } else {
-        grupo.candidatas.push({
-          candidata: item.candidata,
-          relacoes: [...new Set(item.relacoes)]
-        });
-      }
-    }
-
-    return [...porPremio.values()]
-      .map((grupo) => ({
-        ...grupo,
-        candidatas: grupo.candidatas.sort((a, b) =>
-          a.candidata.localeCompare(b.candidata)
-        )
-      }))
-      .sort((a, b) => a.premio - b.premio);
-  }, [coincidencias]);
-
-  const candidatasDistintas = new Set(
-    coincidencias.map((item) => item.candidata)
-  ).size;
-
-  const coincidenciasExibidas = verTodasRelacoes
-    ? resultadosAgrupados
-    : resultadosAgrupados.slice(0, 12);
-
-  function alterarGrupo(index, valor) {
-    const somenteDigitos = valor.replace(/\D/g, "").slice(0, 2);
-
-    setGrupos((atuais) =>
-      atuais.map((grupo, i) =>
-        i === index ? somenteDigitos : grupo
+    setResultados((anteriores) =>
+      anteriores.map(
+        (atual, posicao) =>
+          indice === posicao ? numero : atual
       )
     );
 
     setMensagem("");
   }
 
-  function alterarResultado(index, valor) {
-    const limite = index === 6 ? 3 : 4;
-    const numero = valor.replace(/\D/g, "").slice(0, limite);
+  async function copiar(numeros) {
+    if (!numeros.length) return;
 
-    setResultados((atuais) =>
-      atuais.map((atual, i) =>
-        i === index ? numero : atual
-      )
-    );
-
-    setMensagem("");
-  }
-
-  async function copiarNumeros(numeros) {
-    const texto = numeros.join("\n");
-
-    if (!texto) return;
+    const lista = [...new Set(numeros)].sort();
+    const texto = lista.join("\n");
 
     try {
       if (navigator.clipboard?.writeText) {
         await navigator.clipboard.writeText(texto);
       } else {
         const campo = document.createElement("textarea");
+
         campo.value = texto;
         campo.style.position = "fixed";
         campo.style.opacity = "0";
+
         document.body.appendChild(campo);
         campo.select();
 
-        const ok = document.execCommand("copy");
+        const sucesso = document.execCommand("copy");
         campo.remove();
 
-        if (!ok) throw new Error("Cópia indisponível");
+        if (!sucesso) {
+          throw new Error("Copia indisponivel");
+        }
       }
 
-      setMensagem(`${numeros.length} milhares copiadas.`);
+      setMensagem(
+        `${lista.length} milhares copiadas.`
+      );
     } catch {
       setMensagem("Não foi possível copiar os números.");
     }
@@ -160,293 +75,299 @@ export default function SobeDesceTransicoes() {
 
   return (
     <main className="sdt-page">
-      <div className="sdt-shell">
+      <div className="sdt-shell sgc-shell">
         <section className="sdt-panel">
           <div className="sdt-section-heading">
-            <h2>Grupos do Sobe & Desce</h2>
-            <p>Entrada principal do cálculo.</p>
-          </div>
-
-          <div className="sdt-groups">
-            {grupos.map((grupo, i) => (
-              <label key={i}>
-                <span>{i + 1}º grupo</span>
-                <input
-                  type="text"
-                  inputMode="numeric"
-                  autoComplete="off"
-                  maxLength={2}
-                  value={grupo}
-                  placeholder="00"
-                  onChange={(e) =>
-                    alterarGrupo(i, e.target.value)
-                  }
-                  aria-label={`${i + 1}º grupo`}
-                />
-              </label>
-            ))}
-          </div>
-
-          <p className="sdt-hint">
-            Informe cinco grupos de 01 a 25.
-            Eles determinam o cálculo original.
-          </p>
-        </section>
-
-        <section className="sdt-panel">
-          <div className="sdt-section-heading">
-            <h2>Milhares do sorteio anterior</h2>
+            <h2>Grupos + Centenas</h2>
             <p>
-              Entrada complementar. Não modifica os cinco grupos.
+              Formação experimental de milhares para
+              o próximo sorteio, a partir do resultado anterior.
             </p>
           </div>
 
-          <div className="sdt-prizes">
-            {resultados.map((numero, i) => (
-              <label key={i}>
-                <span>{i + 1}º prêmio</span>
+          <div className="sgc-section-caption">
+            Resultados do sorteio anterior
+          </div>
+
+          <div className="sgc-input-grid">
+            {resultados.map((numero, indice) => (
+              <label
+                key={indice}
+                className="sgc-field"
+              >
+                <span>
+                  {indice + 1}º prêmio
+                </span>
+
                 <input
                   type="text"
                   inputMode="numeric"
                   autoComplete="off"
+                  maxLength={indice === 6 ? 3 : 4}
+                  placeholder={indice === 6 ? "000" : "0000"}
                   value={numero}
-                  maxLength={i === 6 ? 3 : 4}
-                  placeholder={i === 6 ? "000" : "0000"}
-                  onChange={(e) =>
-                    alterarResultado(i, e.target.value)
-                  }
-                  aria-label={
-                    i === 6
-                      ? "7º prêmio, centena"
-                      : `${i + 1}º prêmio, milhar`
+                  onChange={(event) =>
+                    alterarResultado(
+                      indice,
+                      event.target.value
+                    )
                   }
                 />
+
                 <small>
-                  {i === 6 ? "Centena" : "Milhar"}
+                  {indice === 6 ? "Centena" : "Milhar"}
                 </small>
               </label>
             ))}
           </div>
-        </section>
 
-        <section className="sdt-panel">
-          <div className="sdt-section-heading">
-            <h2>Milhares calculadas</h2>
-            <p>
-              Resultado original, sem influência das milhares
-              informadas na análise complementar.
-            </p>
-          </div>
-
-          {calculo ? (
-            <>
-              <div className="sdt-summary">
-                <div>
-                  <strong>5</strong>
-                  <span>Milhares principais</span>
-                </div>
-                <div>
-                  <strong>20</strong>
-                  <span>Milhares-base</span>
-                </div>
-              </div>
-
-              <div className="sdt-conjuntos">
-                {calculo.conjuntos.map((conjunto) => (
-                  <article
-                    className="sdt-conjunto"
-                    key={conjunto.posicao}
-                  >
-                    <div className="sdt-conjunto-head">
-                      <FotoAnimal animal={conjunto.animal} />
-
-                      <div>
-                        <small>
-                          {conjunto.posicao}º · Grupo informado{" "}
-                          {conjunto.grupoInformado}
-                        </small>
-                        <strong>{conjunto.milhar}</strong>
-                        <span>
-                          {conjunto.animal.nome} · G
-                          {String(
-                            conjunto.animal.grupo
-                          ).padStart(2, "0")}
-                        </span>
-                      </div>
-                    </div>
-
-                    <div className="sdt-bases">
-                      {conjunto.bases.map((numero) => (
-                        <span
-                          key={numero}
-                          className={
-                            numero === conjunto.milhar
-                              ? "sdt-original"
-                              : ""
-                          }
-                        >
-                          {numero}
-                        </span>
-                      ))}
-                    </div>
-
-                    <button
-                      type="button"
-                      className="sdt-copy-small"
-                      onClick={() =>
-                        copiarNumeros(conjunto.bases)
-                      }
-                    >
-                      Copiar 4
-                    </button>
-                  </article>
-                ))}
-              </div>
-
-              <div className="sdt-copy-actions">
-                <button
-                  type="button"
-                  onClick={() =>
-                    copiarNumeros(calculo.milhares)
-                  }
-                >
-                  Copiar 5 milhares
-                </button>
-
-                <button
-                  type="button"
-                  onClick={() =>
-                    copiarNumeros(calculo.bases)
-                  }
-                >
-                  Copiar 20 milhares-base
-                </button>
-              </div>
-            </>
-          ) : (
-            <div className="sdt-empty">
-              Informe os cinco grupos para gerar o Sobe & Desce.
-            </div>
-          )}
-        </section>
-
-        <section className="sdt-panel">
-          <div className="sdt-section-heading">
-            <h2>Análise complementar</h2>
-            <p>
-              Relações numéricas entre os resultados anteriores
-              e as milhares-base calculadas.
-            </p>
-          </div>
-
-          <div className="sdt-summary">
-            <div>
-              <strong>{resultadosInformados}</strong>
-              <span>Resultados informados</span>
-            </div>
-
-            <div>
-              <strong>{resultadosAgrupados.length}</strong>
-              <span>Prêmios com relações</span>
-            </div>
-
-            <div>
-              <strong>{candidatasDistintas}</strong>
-              <span>Milhares candidatas distintas</span>
-            </div>
-
-            <div>
-              <strong>{coincidencias.length}</strong>
-              <span>Relações individuais</span>
-            </div>
-          </div>
-
-          {calculo && resultadosInformados > 0 ? (
-            coincidencias.length > 0 ? (
-              <>
-                <div className="sdt-relacoes">
-                  {coincidenciasExibidas.map((grupo) => (
-                    <article
-                      className="sdt-relacao sdt-relacao-agrupada"
-                      key={`${grupo.premio}-${grupo.anterior}`}
-                    >
-                      <div className="sdt-transicao-top">
-                        <div>
-                          <small>
-                            Resultado anterior · {grupo.premio}º prêmio
-                          </small>
-                          <strong>{grupo.anterior}</strong>
-                        </div>
-
-                        <span>
-                          {grupo.candidatas.length}{" "}
-                          {grupo.candidatas.length === 1
-                            ? "milhar relacionada"
-                            : "milhares relacionadas"}
-                        </span>
-                      </div>
-
-                      <div className="sdt-transicao-grid">
-                        {grupo.candidatas.map((item) => (
-                          <div
-                            className="sdt-transicao-candidata"
-                            key={item.candidata}
-                          >
-                            <strong>{item.candidata}</strong>
-
-                            <div className="sdt-relation-tags">
-                              {item.relacoes.map((relacao) => (
-                                <span key={relacao}>
-                                  {relacao}
-                                </span>
-                              ))}
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </article>
-                  ))}
-                </div>
-                {resultadosAgrupados.length > 12 && (
-                  <button
-                    className="sdt-expand"
-                    type="button"
-                    onClick={() =>
-                      setVerTodasRelacoes((valor) => !valor)
-                    }
-                  >
-                    {verTodasRelacoes
-                      ? "Mostrar menos"
-                      : `Ver todas (${resultadosAgrupados.length})`}
-                  </button>
-                )}
-              </>
-            ) : (
-              <div className="sdt-empty">
-                Nenhuma relação dos tipos analisados foi
-                encontrada neste conjunto.
-              </div>
-            )
-          ) : (
-            <div className="sdt-empty">
-              Informe os grupos e os resultados anteriores
-              para realizar a comparação.
-            </div>
-          )}
-
-          <p className="sdt-disclaimer">
-            Estas relações são observações matemáticas.
-            Não representam previsão de acerto.
-            A validação por horário dependerá de testes históricos.
+          <p className="sgc-help">
+            Informe os sete resultados de um mesmo sorteio.
+            Os grupos e as centenas serão extraídos
+            automaticamente.
           </p>
         </section>
 
-        <AnaliseAmpliada
-          calculo={calculo}
-          resultados={resultados}
-        />
+        {!dados ? (
+          <section className="sdt-panel sgc-empty">
+            Preencha os sete resultados para gerar
+            as milhares experimentais.
+          </section>
+        ) : (
+          <>
+            <section className="sdt-panel">
+              <div className="sdt-section-heading">
+                <h2>Grupos e centenas identificados</h2>
+                <p>
+                  Informações extraídas dos resultados
+                  anteriores, sem novos campos.
+                </p>
+              </div>
 
-        <p className="sdt-status" role="status">
+              <div className="sgc-extracao">
+                {dados.centenas.map((centena, indice) => {
+                  const grupo = dados.gruposAnteriores[indice];
+                  const animal = ANIMAIS_TRANSICOES[grupo - 1];
+
+                  return (
+                    <div
+                      className="sgc-extracao-item"
+                      key={indice}
+                    >
+                      <small>{indice + 1}º prêmio</small>
+                      <strong>{centena}</strong>
+                      <span>
+                        G{String(grupo).padStart(2, "0")}
+                        {" · "}
+                        {animal.nome}
+                      </span>
+                    </div>
+                  );
+                })}
+              </div>
+            </section>
+
+            <section className="sdt-panel">
+              <div className="sdt-section-heading">
+                <h2>Formação das milhares</h2>
+                <p>
+                  Grupos convergentes cruzados com cabeças
+                  extraídas das centenas anteriores.
+                </p>
+              </div>
+
+              <div className="sgc-metrics">
+                <div>
+                  <strong>{dados.gruposCandidatos.length}</strong>
+                  <span>Grupos convergentes</span>
+                </div>
+
+                <div>
+                  <strong>{dados.cabecas.length}</strong>
+                  <span>Cabeças distintas</span>
+                </div>
+
+                <div>
+                  <strong>{dados.candidatas.length}</strong>
+                  <span>Milhares formadas</span>
+                </div>
+              </div>
+
+              <div className="sgc-subhead">
+                Cabeças extraídas das centenas
+              </div>
+
+              <div className="sgc-heads">
+                {dados.cabecas.map((item) => (
+                  <div
+                    className="sgc-head"
+                    key={item.cabeca}
+                  >
+                    <strong>{item.cabeca}</strong>
+                    <small>
+                      {item.origens.join(" / ")}
+                    </small>
+                  </div>
+                ))}
+              </div>
+
+              <div className="sgc-subhead">
+                Grupos selecionados pelas convergências
+              </div>
+
+              {dados.gruposCandidatos.length === 0 ? (
+                <div className="sgc-no-groups">
+                  Nenhum grupo recebeu duas indicações
+                  independentes neste cálculo.
+                  Nenhuma milhar será forçada.
+                </div>
+              ) : (
+                <>
+                  <div className="sgc-toolbar">
+                    <span>
+                      {dados.candidatas.length} milhares distintas
+                    </span>
+
+                    <button
+                      type="button"
+                      onClick={() =>
+                        copiar(
+                          dados.candidatas.map(
+                            (item) => item.numero
+                          )
+                        )
+                      }
+                    >
+                      Copiar todas
+                    </button>
+                  </div>
+
+                  <div className="sgc-animals">
+                    {dados.gruposCandidatos.map((itemGrupo) => {
+                      const animal =
+                        ANIMAIS_TRANSICOES[itemGrupo.grupo - 1];
+
+                      const itens = dados.candidatas.filter(
+                        (item) =>
+                          item.grupo === itemGrupo.grupo
+                      );
+
+                      return (
+                        <article
+                          className="sgc-animal"
+                          key={itemGrupo.grupo}
+                        >
+                          <div className="sgc-animal-header">
+                            <img
+                              src={animal.imagem}
+                              alt={animal.nome}
+                              loading="lazy"
+                            />
+
+                            <div>
+                              <strong>
+                                {animal.nome}
+                                {" · "}
+                                G{String(itemGrupo.grupo).padStart(2, "0")}
+                              </strong>
+
+                              <small>
+                                {itemGrupo.origens.join(" / ")}
+                              </small>
+                            </div>
+                          </div>
+
+                          <div className="sgc-tens">
+                            {dezenasDoGrupo(itemGrupo.grupo).map(
+                              (dezena) => (
+                                <div
+                                  className="sgc-ten"
+                                  key={dezena}
+                                >
+                                  <div className="sgc-ten-head">
+                                    Dezena {dezena}
+                                  </div>
+
+                                  {itens
+                                    .filter(
+                                      (item) =>
+                                        item.numero.slice(-2) === dezena
+                                    )
+                                    .map((item) => (
+                                      <div
+                                        className="sgc-number"
+                                        key={item.numero}
+                                      >
+                                        <strong>
+                                          {item.numero}
+                                        </strong>
+
+                                        <small>
+                                          {item.origensCabeca.join(" / ")}
+                                        </small>
+                                      </div>
+                                    ))}
+                                </div>
+                              )
+                            )}
+                          </div>
+
+                          <button
+                            className="sgc-copy-animal"
+                            type="button"
+                            onClick={() =>
+                              copiar(
+                                itens.map((item) => item.numero)
+                              )
+                            }
+                          >
+                            Copiar {itens.length} milhares
+                          </button>
+                        </article>
+                      );
+                    })}
+                  </div>
+                </>
+              )}
+
+              <p className="sgc-help">
+                Regra experimental: deslocamento de −5 nos
+                cinco primeiros grupos, +1 no 6º e 7º;
+                seleção de grupos com pelo menos duas
+                indicações; cabeça formada pelo primeiro
+                e último algarismos de cada centena.
+                Esta regra ainda não demonstrou vantagem
+                de acerto em testes históricos.
+              </p>
+            </section>
+
+            <details className="sdt-panel sgc-reference">
+              <summary>
+                Consultar cálculo Sobe & Desce tradicional
+              </summary>
+
+              <p>
+                Referência independente, calculada pelos
+                grupos do 1º ao 5º prêmio anterior.
+              </p>
+
+              <div className="sgc-originals">
+                {dados.calculoOriginal?.conjuntos.map(
+                  (conjunto) => (
+                    <div key={conjunto.posicao}>
+                      <strong>{conjunto.milhar}</strong>
+                      <small>
+                        {conjunto.bases.join(" · ")}
+                      </small>
+                    </div>
+                  )
+                )}
+              </div>
+            </details>
+          </>
+        )}
+
+        <p className="sgc-status" role="status">
           {mensagem}
         </p>
       </div>
