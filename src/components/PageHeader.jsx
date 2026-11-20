@@ -34,6 +34,10 @@ const HEADINGS = {
     "DOWNLOADS",
     "Consulte e exporte resultados em PDF e Excel."
   ],
+  "cruz-do-dia": [
+    "CRUZ DO DIA",
+    "Milhares formadas a partir da data selecionada."
+  ],
   "sobe-desce-permutacoes": [
     "SOBE & DESCE - PERMUTAÇÕES",
     "Permutações individuais de milhares classificadas por bicho."

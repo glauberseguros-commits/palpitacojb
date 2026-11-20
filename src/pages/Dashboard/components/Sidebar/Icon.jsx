@@ -304,6 +304,23 @@ export default function Icon({ name = "home", size = 18 }) {
     );
   }
 
+  if (name === "day-cross") {
+    return (
+      <svg {...common}>
+        <path
+          d="M12 3v18M3 12h18"
+          fill="none"
+          stroke={gold}
+          strokeWidth="1.6"
+          strokeLinecap="round"
+        />
+        <circle cx="7" cy="7" r="2.1" fill={gold} />
+        <circle cx="17" cy="7" r="2.1" fill={stroke} />
+        <circle cx="7" cy="17" r="2.1" fill={stroke} />
+        <circle cx="17" cy="17" r="2.1" fill={gold} />
+      </svg>
+    );
+  }
   if (name === "permutations") {
     return (
       <svg {...common}>

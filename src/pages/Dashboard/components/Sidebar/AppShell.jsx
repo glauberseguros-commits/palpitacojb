@@ -18,6 +18,7 @@ const ROUTES = {
   CENTENAS: "centenas",
   SOBE_DESCE: "sobe-desce",
   SOBE_DESCE_PERMUTACOES: "sobe-desce-permutacoes",
+  CRUZ_DO_DIA: "cruz-do-dia",
 };
 
 const ACCOUNT_SESSION_KEY = "pp_session_v1";
@@ -449,6 +450,7 @@ export default function AppShell({ active, onNavigate, onLogout, children }) {
     { key: ROUTES.CENTENAS, icon: "hash", title: "Centenas" },
     { key: ROUTES.SOBE_DESCE, icon: "updown", title: "Sobe & Desce" },
     { key: ROUTES.SOBE_DESCE_PERMUTACOES, icon: "permutations", title: "Sobe & Desce - Permutações" },
+    { key: ROUTES.CRUZ_DO_DIA, icon: "day-cross", title: "Cruz do Dia" },
     { key: ROUTES.DOWNLOADS, icon: "download", title: "Downloads" },
   ];
 
