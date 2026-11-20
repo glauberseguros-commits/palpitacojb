@@ -552,7 +552,20 @@ export default function SobeDescePermutacoes() {
               Selecionar bichos
             </span>
 
-            <details className="sdp-multi-dropdown">
+            <details
+              className="sdp-multi-dropdown"
+              onBlur={(event) => {
+                if (!event.currentTarget.contains(event.relatedTarget)) {
+                  event.currentTarget.open = false;
+                }
+              }}
+              onKeyDown={(event) => {
+                if (event.key === "Escape") {
+                  event.currentTarget.open = false;
+                  event.stopPropagation();
+                }
+              }}
+            >
               <summary>
                 <span>
                   {filtroBichos.length === 0
@@ -614,6 +627,19 @@ export default function SobeDescePermutacoes() {
                     </label>
                   ))}
                 </div>
+
+                <button
+                  type="button"
+                  className="sdp-multi-close"
+                  onClick={(event) => {
+                    const seletor = event.currentTarget.closest("details");
+                    if (seletor) {
+                      seletor.open = false;
+                    }
+                  }}
+                >
+                  Ver bichos selecionados
+                </button>
               </div>
             </details>
           </div>

@@ -837,3 +837,31 @@
     width: 100%;
   }
 }
+
+/* SDP FECHAMENTO DO SELETOR V2 */
+
+.sdp-page .sdp-multi-close {
+  display: block;
+  width: 100%;
+  min-height: 42px;
+  margin-top: 10px;
+  padding: 10px;
+  border: 1px solid #c9a756;
+  border-radius: 8px;
+  background: linear-gradient(135deg, #e8cb74, #b99a4c);
+  color: #17130b;
+  font: inherit;
+  font-size: 12px;
+  font-weight: 800;
+  text-align: center;
+  cursor: pointer;
+}
+
+.sdp-page .sdp-multi-close:hover {
+  background: linear-gradient(135deg, #f5dd91, #c6a65b);
+}
+
+.sdp-page .sdp-multi-close:focus-visible {
+  outline: 2px solid #f5dd91;
+  outline-offset: 3px;
+}
