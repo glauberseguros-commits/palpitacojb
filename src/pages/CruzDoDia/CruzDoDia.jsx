@@ -87,9 +87,11 @@ export default function CruzDoDia() {
     <main className="sd-page sdp-page cdd-page">
 
       <section className="sdp-panel cdd-intro">
-        <div className="cdd-date-row">
-          <label className="cdd-date-field">
-            <span>SELECIONE A DATA</span>
+        <div className="cdd-cross-section">
+          <label className="cdd-date-field cdd-date-centered">
+            <span className="cdd-visually-hidden">
+              Selecione a data
+            </span>
 
             <input
               type="date"
@@ -98,46 +100,24 @@ export default function CruzDoDia() {
                 setData(e.target.value);
                 setMensagem("");
               }}
-              aria-label="Data da Cruz do Dia"
+              aria-label="Selecionar data da Cruz do Dia"
             />
           </label>
 
-          <div className="cdd-method">
-            <span>CÁLCULO</span>
-            <strong>Dia + 3</strong>
-          </div>
-        </div>
-
-        {sequencia.length === 4 ? (
-          <>
-            <div className="cdd-sequence">
-              {sequencia.map((numero, i) => (
-                <React.Fragment key={i}>
-                  {i > 0 && (
-                    <span className="cdd-step-arrow">→</span>
-                  )}
-                  <span>{numero}</span>
-                </React.Fragment>
+          {sequencia.length === 4 ? (
+            <div className="cdd-cross">
+              {digitos.map((digito, i) => (
+                <div className="cdd-cross-cell" key={i}>
+                  {digito}
+                </div>
               ))}
             </div>
-
-            <div className="cdd-cross-section">
-              <h2>CRUZ FORMADA</h2>
-
-              <div className="cdd-cross">
-                {digitos.map((digito, i) => (
-                  <div className="cdd-cross-cell" key={i}>
-                    {digito}
-                  </div>
-                ))}
-              </div>
-            </div>
-          </>
-        ) : (
-          <p className="cdd-empty">
-            Selecione uma data válida para formar a cruz.
-          </p>
-        )}
+          ) : (
+            <p className="cdd-empty">
+              Selecione uma data válida.
+            </p>
+          )}
+        </div>
       </section>
 
       <section className="sdp-panel">
