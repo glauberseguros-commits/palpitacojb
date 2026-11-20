@@ -388,3 +388,75 @@
     grid-template-columns: 1fr;
   }
 }
+
+/* AGRUPAMENTO DE TRANSICOES V2 */
+
+.sdt-relacao.sdt-relacao-agrupada {
+  display: block;
+}
+
+.sdt-transicao-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  margin-bottom: 12px;
+}
+
+.sdt-transicao-top > div {
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+}
+
+.sdt-transicao-top small {
+  color: #a99e88;
+  font-size: 11px;
+}
+
+.sdt-transicao-top strong {
+  color: #eed078;
+  font-size: 23px;
+  font-variant-numeric: tabular-nums;
+}
+
+.sdt-transicao-top > span {
+  color: #cbb474;
+  font-size: 11px;
+  font-weight: 750;
+}
+
+.sdt-transicao-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+}
+
+.sdt-transicao-candidata {
+  min-width: 0;
+  padding: 11px;
+  border: 1px solid #4b3d25;
+  border-radius: 9px;
+  background: #0b0b0b;
+}
+
+.sdt-transicao-candidata > strong {
+  display: block;
+  margin-bottom: 8px;
+  color: #f0d481;
+  font-size: 18px;
+  font-variant-numeric: tabular-nums;
+}
+
+.sdt-transicao-candidata .sdt-relation-tags {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 5px;
+}
+
+@media (max-width: 460px) {
+  .sdt-transicao-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+}

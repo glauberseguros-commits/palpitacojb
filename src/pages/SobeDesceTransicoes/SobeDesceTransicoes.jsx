@@ -54,9 +54,55 @@ export default function SobeDesceTransicoes() {
         : /^\d{4}$/.test(numero)
   ).length;
 
+  const resultadosAgrupados = useMemo(() => {
+    const porPremio = new Map();
+
+    for (const item of coincidencias) {
+      const chave = `${item.premio}:${item.anterior}`;
+
+      if (!porPremio.has(chave)) {
+        porPremio.set(chave, {
+          premio: item.premio,
+          anterior: item.anterior,
+          candidatas: []
+        });
+      }
+
+      const grupo = porPremio.get(chave);
+
+      const existente = grupo.candidatas.find(
+        (candidata) => candidata.candidata === item.candidata
+      );
+
+      if (existente) {
+        existente.relacoes = [
+          ...new Set([...existente.relacoes, ...item.relacoes])
+        ];
+      } else {
+        grupo.candidatas.push({
+          candidata: item.candidata,
+          relacoes: [...new Set(item.relacoes)]
+        });
+      }
+    }
+
+    return [...porPremio.values()]
+      .map((grupo) => ({
+        ...grupo,
+        candidatas: grupo.candidatas.sort((a, b) =>
+          a.candidata.localeCompare(b.candidata)
+        )
+      }))
+      .sort((a, b) => a.premio - b.premio);
+  }, [coincidencias]);
+
+  const candidatasDistintas = new Set(
+    coincidencias.map((item) => item.candidata)
+  ).size;
+
   const coincidenciasExibidas = verTodasRelacoes
-    ? coincidencias
-    : coincidencias.slice(0, 12);
+    ? resultadosAgrupados
+    : resultadosAgrupados.slice(0, 12);
 
   function alterarGrupo(index, valor) {
     const somenteDigitos = valor.replace(/\D/g, "").slice(0, 2);
@@ -295,12 +341,22 @@ export default function SobeDesceTransicoes() {
           <div className="sdt-summary">
             <div>
               <strong>{resultadosInformados}</strong>
-              <span>Resultados completos</span>
+              <span>Resultados informados</span>
+            </div>
+
+            <div>
+              <strong>{resultadosAgrupados.length}</strong>
+              <span>Prêmios com relações</span>
+            </div>
+
+            <div>
+              <strong>{candidatasDistintas}</strong>
+              <span>Milhares candidatas distintas</span>
             </div>
 
             <div>
               <strong>{coincidencias.length}</strong>
-              <span>Relações encontradas</span>
+              <span>Relações individuais</span>
             </div>
           </div>
 
@@ -308,43 +364,49 @@ export default function SobeDesceTransicoes() {
             coincidencias.length > 0 ? (
               <>
                 <div className="sdt-relacoes">
-                  {coincidenciasExibidas.map((item, i) => (
-                    <div
-                      className="sdt-relacao"
-                      key={
-                        item.posicao + "-" +
-                        item.candidata + "-" +
-                        item.premio + "-" + i
-                      }
+                  {coincidenciasExibidas.map((grupo) => (
+                    <article
+                      className="sdt-relacao sdt-relacao-agrupada"
+                      key={`${grupo.premio}-${grupo.anterior}`}
                     >
-                      <div>
-                        <small>
-                          Resultado anterior · {item.premio}º
-                        </small>
-                        <strong>{item.anterior}</strong>
+                      <div className="sdt-transicao-top">
+                        <div>
+                          <small>
+                            Resultado anterior · {grupo.premio}º prêmio
+                          </small>
+                          <strong>{grupo.anterior}</strong>
+                        </div>
+
+                        <span>
+                          {grupo.candidatas.length}{" "}
+                          {grupo.candidatas.length === 1
+                            ? "milhar relacionada"
+                            : "milhares relacionadas"}
+                        </span>
                       </div>
 
-                      <span className="sdt-relation-arrow">
-                        ⇄
-                      </span>
+                      <div className="sdt-transicao-grid">
+                        {grupo.candidatas.map((item) => (
+                          <div
+                            className="sdt-transicao-candidata"
+                            key={item.candidata}
+                          >
+                            <strong>{item.candidata}</strong>
 
-                      <div>
-                        <small>Sobe & Desce</small>
-                        <strong>{item.candidata}</strong>
-                      </div>
-
-                      <div className="sdt-relation-tags">
-                        {item.relacoes.map((relacao) => (
-                          <span key={relacao}>
-                            {relacao}
-                          </span>
+                            <div className="sdt-relation-tags">
+                              {item.relacoes.map((relacao) => (
+                                <span key={relacao}>
+                                  {relacao}
+                                </span>
+                              ))}
+                            </div>
+                          </div>
                         ))}
                       </div>
-                    </div>
+                    </article>
                   ))}
                 </div>
-
-                {coincidencias.length > 12 && (
+                {resultadosAgrupados.length > 12 && (
                   <button
                     className="sdt-expand"
                     type="button"
@@ -354,7 +416,7 @@ export default function SobeDesceTransicoes() {
                   >
                     {verTodasRelacoes
                       ? "Mostrar menos"
-                      : `Ver todas (${coincidencias.length})`}
+                      : `Ver todas (${resultadosAgrupados.length})`}
                   </button>
                 )}
               </>
