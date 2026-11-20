@@ -304,6 +304,38 @@ export default function Icon({ name = "home", size = 18 }) {
     );
   }
 
+  if (name === "milhar-head") {
+    return (
+      <svg {...common}>
+        <rect
+          x="3.5"
+          y="4"
+          width="17"
+          height="16"
+          rx="3"
+          fill="none"
+          stroke={gold}
+          strokeWidth="1.5"
+        />
+        <path
+          d="M7 10h10M12 10v7"
+          fill="none"
+          stroke={stroke}
+          strokeWidth="1.3"
+          strokeLinecap="round"
+        />
+        <path
+          d="M8 7h3M14 7h2"
+          fill="none"
+          stroke={gold}
+          strokeWidth="1.5"
+          strokeLinecap="round"
+        />
+        <circle cx="9" cy="15" r="1.3" fill={gold} />
+        <circle cx="15" cy="15" r="1.3" fill={gold} />
+      </svg>
+    );
+  }
   if (name === "day-cross") {
     return (
       <svg {...common}>

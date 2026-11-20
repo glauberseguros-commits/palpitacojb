@@ -65,6 +65,7 @@ const Centenas = lazy(() => import("./pages/Centenas/Centenas"));
 const SobeDesce = lazy(() => import("./pages/SobeDesce/SobeDesce"));
 const SobeDescePermutacoes = lazy(() => import("./pages/SobeDescePermutacoes/SobeDescePermutacoes"));
 const CruzDoDia = lazy(() => import("./pages/CruzDoDia/CruzDoDia"));
+const CabecaDeMilhar = lazy(() => import("./pages/CabecaDeMilhar/CabecaDeMilhar"));
 
 
 const STORAGE_KEY = "palpitaco_screen_v2";
@@ -267,6 +268,7 @@ const ROUTES = {
   SOBE_DESCE: "sobe-desce",
   SOBE_DESCE_PERMUTACOES: "sobe-desce-permutacoes",
   CRUZ_DO_DIA: "cruz-do-dia",
+  CABECA_DE_MILHAR: "cabeca-de-milhar",
 };
 
 function safeReadLS(key) {
@@ -525,6 +527,8 @@ function screenToPath(screen) {
       return "/sobe-desce-permutacoes";
     case ROUTES.CRUZ_DO_DIA:
       return "/cruz-do-dia";
+    case ROUTES.CABECA_DE_MILHAR:
+      return "/cabeca-de-milhar";
     default:
       return "/";
   }
@@ -552,6 +556,7 @@ function pathToScreen(pathname) {
   if (p === "/sobe-desce") return ROUTES.SOBE_DESCE;
   if (p === "/sobe-desce-permutacoes") return ROUTES.SOBE_DESCE_PERMUTACOES;
   if (p === "/cruz-do-dia") return ROUTES.CRUZ_DO_DIA;
+  if (p === "/cabeca-de-milhar") return ROUTES.CABECA_DE_MILHAR;
   if (p === "/statistics") return ROUTES.DASHBOARD;
 
   return null;
@@ -1247,6 +1252,8 @@ export default function App() {
         return <SobeDescePermutacoes />;
       case ROUTES.CRUZ_DO_DIA:
         return <CruzDoDia />;
+      case ROUTES.CABECA_DE_MILHAR:
+        return <CabecaDeMilhar />;
       case ROUTES.PAYMENTS:
         return <Payments />;
       case ROUTES.DOWNLOADS:
@@ -1426,7 +1433,7 @@ export default function App() {
         <Suspense fallback={<AppLoading />}>
       <AppShell active={currentScreen} onNavigate={goToScreen} onLogout={logout}>
         <div className={"pp-page-standard pp-page-standard--" + currentScreen}>
-          {["radar-dos-bichos", "search", "centenas", "downloads", "sobe-desce", "sobe-desce-permutacoes", "cruz-do-dia"].includes(currentScreen) && <PageHeader screen={currentScreen} />}
+          {["radar-dos-bichos", "search", "centenas", "downloads", "sobe-desce", "sobe-desce-permutacoes", "cruz-do-dia", "cabeca-de-milhar"].includes(currentScreen) && <PageHeader screen={currentScreen} />}
           <div className="pp-page-standard__body">
         {currentScreen === ROUTES.DASHBOARD ? (
           <Dashboard

@@ -34,6 +34,10 @@ const HEADINGS = {
     "DOWNLOADS",
     "Consulte e exporte resultados em PDF e Excel."
   ],
+  "cabeca-de-milhar": [
+    "CABEÇA DE MILHAR",
+    "Forme milhares a partir das cabeças e dos bichos selecionados."
+  ],
   "cruz-do-dia": [
     "CRUZ DO DIA",
     "Milhares formadas a partir da data selecionada."
