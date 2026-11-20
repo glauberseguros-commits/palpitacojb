@@ -3,6 +3,7 @@ import {
   calcularSobeDesceTransicoes,
   analisarCoincidencias
 } from "./sobeDesceTransicoes.logic.mjs";
+import AnaliseAmpliada from "./AnaliseAmpliada";
 import "./SobeDesceTransicoes.css";
 
 function FotoAnimal({ animal }) {
@@ -439,6 +440,11 @@ export default function SobeDesceTransicoes() {
             A validação por horário dependerá de testes históricos.
           </p>
         </section>
+
+        <AnaliseAmpliada
+          calculo={calculo}
+          resultados={resultados}
+        />
 
         <p className="sdt-status" role="status">
           {mensagem}

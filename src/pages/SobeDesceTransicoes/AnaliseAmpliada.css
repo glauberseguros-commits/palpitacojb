@@ -1,0 +1,336 @@
+.sdt-av,
+.sdt-av * {
+  box-sizing: border-box;
+}
+
+.sdt-av-stats {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: 9px;
+  margin: 15px 0;
+}
+
+.sdt-av-stats > div {
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid #554428;
+  border-radius: 10px;
+  background: #15120d;
+}
+
+.sdt-av-stats strong {
+  display: block;
+  color: #efd179;
+  font-size: 24px;
+}
+
+.sdt-av-stats span {
+  display: block;
+  color: #ac9d80;
+  font-size: 11px;
+  margin-top: 4px;
+}
+
+.sdt-av-filtros {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 12px;
+}
+
+.sdt-av-filtros label,
+.sdt-av-auditoria label {
+  display: flex;
+  flex-direction: column;
+  gap: 7px;
+  min-width: 0;
+}
+
+.sdt-av-filtros label > span,
+.sdt-av-auditoria label > span {
+  color: #ddc47c;
+  font-size: 11px;
+  font-weight: 750;
+}
+
+.sdt-av-filtros select,
+.sdt-av-auditoria input {
+  width: 100%;
+  min-height: 42px;
+  min-width: 0;
+  padding: 9px;
+  border: 1px solid #766039;
+  border-radius: 8px;
+  background: #0b0b0b;
+  color: #f3e4be;
+  font: inherit;
+  font-size: 12px;
+}
+
+.sdt-av-auditoria input {
+  text-align: center;
+  font-weight: 800;
+  font-size: 18px;
+}
+
+.sdt-av button {
+  cursor: pointer;
+  border: 1px solid #967c43;
+  border-radius: 8px;
+  background: #211b10;
+  color: #efcf77;
+  font: inherit;
+  font-weight: 800;
+  font-size: 11px;
+  padding: 10px;
+}
+
+.sdt-av button:hover:not(:disabled) {
+  border-color: #e2c477;
+  background: #302512;
+}
+
+.sdt-av button:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.sdt-av-barra {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 10px;
+  margin: 16px 0;
+}
+
+.sdt-av-barra span {
+  font-size: 11px;
+  color: #ac9d80;
+}
+
+.sdt-av-barra button {
+  background: linear-gradient(
+    135deg,
+    #e7cb76,
+    #b79b50
+  );
+  color: #19150d;
+}
+
+.sdt-av-grid {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+}
+
+.sdt-av-card {
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid #514229;
+  background: #17140f;
+  border-radius: 12px;
+}
+
+.sdt-av-card-top {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.sdt-av-card-top img {
+  flex: 0 0 40px;
+  width: 40px;
+  height: 40px;
+  object-fit: cover;
+  border: 1px solid #947a43;
+  border-radius: 8px;
+}
+
+.sdt-av-card-top > div {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  min-width: 0;
+}
+
+.sdt-av-card-top > div strong {
+  font-size: 12px;
+  color: #eee4cd;
+}
+
+.sdt-av-card-top > div small {
+  font-size: 10px;
+  color: #a99a7d;
+}
+
+.sdt-av-card-top > b {
+  margin-left: auto;
+  font-size: 10px;
+  color: #efd178;
+  white-space: nowrap;
+}
+
+.sdt-av-dezenas {
+  display: grid;
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+  gap: 5px;
+  align-items: start;
+}
+
+.sdt-av-coluna {
+  min-width: 0;
+  padding: 4px;
+  border: 1px solid #403522;
+  background: #0c0c0b;
+  border-radius: 8px;
+}
+
+.sdt-av-coluna-top {
+  display: flex;
+  justify-content: center;
+  gap: 5px;
+  align-items: center;
+  padding: 4px 0 7px;
+  margin-bottom: 5px;
+  border-bottom: 1px solid #67552c;
+}
+
+.sdt-av-coluna-top strong {
+  font-size: 12px;
+  color: #f0d47d;
+}
+
+.sdt-av-coluna-top small {
+  font-size: 9px;
+  color: #ab9e7e;
+}
+
+.sdt-av-numero {
+  min-width: 0;
+  display: flex;
+  align-items: center;
+  flex-direction: column;
+  gap: 4px;
+  margin: 3px 0;
+  padding: 6px 1px;
+  border: 1px solid #383125;
+  border-radius: 6px;
+  background: #15130f;
+}
+
+.sdt-av-numero strong {
+  font-size: 12px;
+  color: #f4ebd6;
+  font-variant-numeric: tabular-nums;
+}
+
+.sdt-av-numero small {
+  font-size: 9px;
+  color: #c9ae70;
+}
+
+.sdt-av-vazia {
+  display: block;
+  text-align: center;
+  color: #756950;
+  padding: 12px 0;
+}
+
+.sdt-av-card-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 8px;
+  margin-top: 10px;
+}
+
+.sdt-av-auditoria {
+  border-top: 1px solid #514229;
+  margin-top: 20px;
+  padding-top: 16px;
+}
+
+.sdt-av-auditoria h3 {
+  margin: 0 0 8px;
+  color: #efd178;
+  font-size: 17px;
+}
+
+.sdt-av-auditoria p,
+.sdt-av-nota {
+  font-size: 11px;
+  line-height: 1.6;
+  color: #aca084;
+}
+
+.sdt-av-auditoria label {
+  max-width: 230px;
+}
+
+.sdt-av-audit-result {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  margin-top: 12px;
+  border: 1px solid #776038;
+  border-radius: 9px;
+  padding: 12px;
+  background: #16120e;
+}
+
+.sdt-av-audit-result strong {
+  font-size: 13px;
+  color: #ecd078;
+}
+
+.sdt-av-audit-result span {
+  font-size: 11px;
+  color: #c1b292;
+}
+
+.sdt-av-nota {
+  margin: 16px 0 0;
+}
+
+.sdt-av-aviso {
+  min-height: 15px;
+  color: #efd178;
+  text-align: center;
+  font-size: 11px;
+}
+
+@media (max-width: 700px) {
+  .sdt-av-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
+@media (max-width: 450px) {
+  .sdt-av-filtros {
+    grid-template-columns: 1fr;
+  }
+
+  .sdt-av-stats {
+    gap: 5px;
+  }
+
+  .sdt-av-stats > div {
+    padding: 8px 5px;
+  }
+
+  .sdt-av-stats strong {
+    font-size: 21px;
+  }
+
+  .sdt-av-card {
+    padding: 8px;
+  }
+
+  .sdt-av-coluna {
+    padding: 2px;
+  }
+
+  .sdt-av-numero strong {
+    font-size: 11px;
+  }
+}
