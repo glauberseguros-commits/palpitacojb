@@ -34,6 +34,10 @@ const HEADINGS = {
     "DOWNLOADS",
     "Consulte e exporte resultados em PDF e Excel."
   ],
+  "sobe-desce-permutacoes": [
+    "SOBE & DESCE - PERMUTAÇÕES",
+    "Permutações individuais de milhares classificadas por bicho."
+  ],
   "sobe-desce": [
     "SOBE & DESCE",
     "Cálculo de milhares e identificação dos bichos."

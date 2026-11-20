@@ -304,6 +304,42 @@ export default function Icon({ name = "home", size = 18 }) {
     );
   }
 
+  if (name === "permutations") {
+    return (
+      <svg {...common}>
+        <path
+          d="M2 18h3c5 0 7-12 12-12h5"
+          fill="none"
+          stroke={gold}
+          strokeWidth="1.8"
+          strokeLinecap="round"
+        />
+        <path
+          d="M19 3l3 3-3 3"
+          fill="none"
+          stroke={gold}
+          strokeWidth="1.8"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+        <path
+          d="M2 6h3c5 0 7 12 12 12h5"
+          fill="none"
+          stroke={stroke}
+          strokeWidth="1.8"
+          strokeLinecap="round"
+        />
+        <path
+          d="M19 15l3 3-3 3"
+          fill="none"
+          stroke={stroke}
+          strokeWidth="1.8"
+          strokeLinecap="round"
+          strokeLinejoin="round"
+        />
+      </svg>
+    );
+  }
   if (name === "updown") {
     return (
       <svg {...common}>
