@@ -516,7 +516,6 @@ export default function SobeDescePermutacoes() {
             </p>
           </div>
 
-          <span className="sdp-chip">Sem duplicatas</span>
         </div>
 
         <div className="sdp-stats">
@@ -652,11 +651,7 @@ export default function SobeDescePermutacoes() {
           </div>
         )}
 
-        <p className="sdp-footer-note">
-          As milhares destacadas em dourado pertencem
-          aos conjuntos originais do Sobe &amp; Desce.
-          Cada milhar é permutada individualmente.
-        </p>
+
       </section>
     </main>
   );
