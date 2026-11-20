@@ -576,9 +576,24 @@ export default function SobeDescePermutacoes() {
             {bichosExibidos.map((animal) => {
               const aberto = Boolean(expandidos[animal.grupo]);
 
-              const numeros = aberto
-                ? animal.milhares
-                : animal.milhares.slice(0, 8);
+              const dezenas = animal.grupo === 25
+                ? [97, 98, 99, 0]
+                : Array.from(
+                    { length: 4 },
+                    (_, i) => (animal.grupo - 1) * 4 + i + 1
+                  );
+
+              const colunas = dezenas.map((dezena) => {
+                const todas = animal.milhares.filter(
+                  (numero) => Number(numero.slice(-2)) === dezena
+                );
+
+                return {
+                  dezena,
+                  total: todas.length,
+                  numeros: aberto ? todas : todas.slice(0, 2)
+                };
+              });
 
               return (
                 <article
@@ -600,24 +615,50 @@ export default function SobeDescePermutacoes() {
                     </span>
                   </header>
 
-                  <div className="sdp-numbers">
-                    {numeros.map((numero) => (
-                      <span
-                        key={numero}
-                        className={
-                          "sdp-number" +
-                          (baseOriginal.has(numero)
-                            ? " sdp-number-original"
-                            : "")
-                        }
+                  <div className="sdp-dezenas-grade">
+                    {colunas.map((coluna) => (
+                      <div
+                        className="sdp-dezena-coluna"
+                        key={coluna.dezena}
                       >
-                        {numero}
-                      </span>
+                        <div
+                          className="sdp-dezena-cabecalho"
+                          aria-label={
+                            "Dezena " +
+                            String(coluna.dezena).padStart(2, "0")
+                          }
+                        >
+                          <strong>
+                            {String(coluna.dezena).padStart(2, "0")}
+                          </strong>
+                          <small>{coluna.total}</small>
+                        </div>
+
+                        <div className="sdp-dezena-lista">
+                          {coluna.numeros.length > 0 ? (
+                            coluna.numeros.map((numero) => (
+                              <span
+                                key={numero}
+                                className={
+                                  "sdp-number" +
+                                  (baseOriginal.has(numero)
+                                    ? " sdp-number-original"
+                                    : "")
+                                }
+                              >
+                                {numero}
+                              </span>
+                            ))
+                          ) : (
+                            <span className="sdp-dezena-vazia">—</span>
+                          )}
+                        </div>
+                      </div>
                     ))}
                   </div>
 
                   <div className="sdp-card-actions">
-                    {animal.milhares.length > 8 ? (
+                    {colunas.some((coluna) => coluna.total > 2) ? (
                       <button
                         type="button"
                         onClick={() => alternarExpansao(animal.grupo)}
