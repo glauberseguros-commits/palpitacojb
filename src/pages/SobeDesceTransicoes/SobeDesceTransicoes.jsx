@@ -34,9 +34,6 @@ export default function SobeDesceTransicoes() {
     ["", "", "", "", "", "", ""]
   );
 
-  const [loteria, setLoteria] = useState("PT Rio");
-  const [horarioOrigem, setHorarioOrigem] = useState("");
-  const [horarioAlvo, setHorarioAlvo] = useState("");
   const [mensagem, setMensagem] = useState("");
   const [verTodasRelacoes, setVerTodasRelacoes] = useState(false);
 
@@ -117,42 +114,6 @@ export default function SobeDesceTransicoes() {
   return (
     <main className="sdt-page">
       <div className="sdt-shell">
-        <section className="sdt-panel">
-          <div className="sdt-section-heading">
-            <h2>Identificação do sorteio</h2>
-          </div>
-
-          <div className="sdt-context-grid">
-            <label>
-              <span>Loteria</span>
-              <input
-                value={loteria}
-                onChange={(e) => setLoteria(e.target.value)}
-                maxLength={40}
-                placeholder="PT Rio"
-              />
-            </label>
-
-            <label>
-              <span>Horário anterior</span>
-              <input
-                type="time"
-                value={horarioOrigem}
-                onChange={(e) => setHorarioOrigem(e.target.value)}
-              />
-            </label>
-
-            <label>
-              <span>Horário a analisar</span>
-              <input
-                type="time"
-                value={horarioAlvo}
-                onChange={(e) => setHorarioAlvo(e.target.value)}
-              />
-            </label>
-          </div>
-        </section>
-
         <section className="sdt-panel">
           <div className="sdt-section-heading">
             <h2>Grupos do Sobe & Desce</h2>
