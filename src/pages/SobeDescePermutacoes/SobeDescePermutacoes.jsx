@@ -286,6 +286,7 @@ export default function SobeDescePermutacoes() {
   const [grupos, setGrupos] = useState(VAZIOS);
   const [mensagem, setMensagem] = useState("");
   const [filtroBichos, setFiltroBichos] = useState([]);
+  const [menuMobileAberto, setMenuMobileAberto] = useState(false);
   const [expandidos, setExpandidos] = useState({});
 
   const milhares = useMemo(
@@ -642,6 +643,100 @@ export default function SobeDescePermutacoes() {
                 </button>
               </div>
             </details>
+
+            <div className="sdp-mobile-selector">
+              <button
+                type="button"
+                className="sdp-mobile-trigger"
+                aria-expanded={menuMobileAberto}
+                onClick={() =>
+                  setMenuMobileAberto((aberto) => !aberto)
+                }
+              >
+                <span>
+                  {filtroBichos.length === 0
+                    ? "Todos os bichos"
+                    : filtroBichos.length === 1
+                      ? "1 bicho selecionado"
+                      : `${filtroBichos.length} bichos selecionados`}
+                </span>
+
+                <span aria-hidden="true">
+                  {menuMobileAberto ? "▲" : "▼"}
+                </span>
+              </button>
+
+              {menuMobileAberto && (
+                <div className="sdp-mobile-menu">
+                  <div className="sdp-mobile-actions">
+                    <button
+                      type="button"
+                      disabled={!pronto}
+                      onClick={() =>
+                        setFiltroBichos(
+                          bichosClassificados.map(
+                            (animal) => animal.grupo
+                          )
+                        )
+                      }
+                    >
+                      Marcar todos
+                    </button>
+
+                    <button
+                      type="button"
+                      onClick={() => setFiltroBichos([])}
+                    >
+                      Limpar seleção
+                    </button>
+                  </div>
+
+                  <div className="sdp-mobile-options">
+                    {bichosClassificados.map((animal) => {
+                      const selecionado =
+                        filtroBichos.includes(animal.grupo);
+
+                      return (
+                        <button
+                          key={animal.grupo}
+                          type="button"
+                          className="sdp-mobile-option"
+                          aria-pressed={selecionado}
+                          onClick={() =>
+                            alternarSelecaoBicho(animal.grupo)
+                          }
+                        >
+                          <span
+                            className="sdp-mobile-check"
+                            aria-hidden="true"
+                          >
+                            {selecionado ? "✓" : ""}
+                          </span>
+
+                          <span className="sdp-mobile-animal">
+                            G{String(animal.grupo).padStart(2, "0")}
+                            {" · "}
+                            {animal.nome}
+                          </span>
+
+                          <small>
+                            {animal.milhares.length}
+                          </small>
+                        </button>
+                      );
+                    })}
+                  </div>
+
+                  <button
+                    type="button"
+                    className="sdp-mobile-close"
+                    onClick={() => setMenuMobileAberto(false)}
+                  >
+                    Ver bichos selecionados
+                  </button>
+                </div>
+              )}
+            </div>
           </div>
 
           <button
