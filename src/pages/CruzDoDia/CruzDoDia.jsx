@@ -40,6 +40,7 @@ function FotoBicho({ animal }) {
 export default function CruzDoDia() {
   const [data, setData] = useState(dataLocalAtual);
   const [mensagem, setMensagem] = useState("");
+  const [textoManual, setTextoManual] = useState("");
 
   const calculo = useMemo(
     () => calcularCruzDoDia(data),
@@ -59,34 +60,73 @@ export default function CruzDoDia() {
   );
 
   async function copiar(numeros) {
-    if (!numeros.length) return;
+    if (!Array.isArray(numeros) || numeros.length === 0) {
+      setMensagem("Nenhuma milhar disponível para copiar.");
+      return;
+    }
 
     const texto = numeros.join("\n");
 
+    setMensagem("");
+    setTextoManual("");
+
+    let copiado = false;
+    let campo = null;
+
+    // Primeira tentativa: copia sincronica durante o clique.
+    // Evita perder a ativacao do usuario em alguns navegadores.
     try {
-      await navigator.clipboard.writeText(texto);
-      setMensagem(`${numeros.length} milhares copiadas.`);
-    } catch {
-      try {
-        const campo = document.createElement("textarea");
-        campo.value = texto;
-        campo.style.position = "fixed";
-        campo.style.opacity = "0";
-        document.body.appendChild(campo);
-        campo.select();
+      campo = document.createElement("textarea");
+      campo.value = texto;
+      campo.setAttribute("aria-hidden", "true");
 
-        const sucesso = document.execCommand("copy");
+      campo.style.position = "fixed";
+      campo.style.top = "0";
+      campo.style.left = "0";
+      campo.style.width = "1px";
+      campo.style.height = "1px";
+      campo.style.opacity = "0";
+      campo.style.fontSize = "16px";
+
+      document.body.appendChild(campo);
+
+      campo.focus({ preventScroll: true });
+      campo.select();
+      campo.setSelectionRange(0, texto.length);
+
+      copiado = document.execCommand("copy") === true;
+    } catch (erro) {
+      console.warn("Cruz do Dia: copia legada indisponivel.", erro);
+    } finally {
+      if (campo) {
         campo.remove();
-
-        setMensagem(
-          sucesso
-            ? `${numeros.length} milhares copiadas.`
-            : "Não foi possível copiar."
-        );
-      } catch {
-        setMensagem("Não foi possível copiar.");
       }
     }
+
+    // Segunda tentativa: API moderna de clipboard.
+    if (
+      !copiado &&
+      navigator.clipboard &&
+      typeof navigator.clipboard.writeText === "function"
+    ) {
+      try {
+        await navigator.clipboard.writeText(texto);
+        copiado = true;
+      } catch (erro) {
+        console.warn("Cruz do Dia: clipboard bloqueado.", erro);
+      }
+    }
+
+    if (copiado) {
+      setMensagem(`${numeros.length} milhares copiadas.`);
+      return;
+    }
+
+    // Ultimo recurso: apresenta texto selecionavel.
+    setTextoManual(texto);
+    setMensagem(
+      "Copia automatica bloqueada. Selecione o texto para copiar."
+    );
   }
 
   return (
@@ -283,9 +323,48 @@ export default function CruzDoDia() {
           </div>
         )}
 
-        <div className="sd-message" role="status">
-          {mensagem}
-        </div>
+
+        {mensagem && (
+          <div
+            className="cdd-copy-toast"
+            role="status"
+            aria-live="polite"
+          >
+            {mensagem}
+          </div>
+        )}
+
+        {textoManual && (
+          <div className="cdd-copy-overlay">
+            <div
+              className="cdd-copy-dialog"
+              role="dialog"
+              aria-modal="true"
+              aria-label="Copiar milhares manualmente"
+            >
+              <p>
+                O navegador bloqueou a copia automatica.
+                Selecione o texto abaixo e copie.
+              </p>
+
+              <textarea
+                className="cdd-copy-manual-text"
+                value={textoManual}
+                readOnly
+                rows={8}
+                onFocus={(evento) => evento.currentTarget.select()}
+                onClick={(evento) => evento.currentTarget.select()}
+              />
+
+              <button
+                type="button"
+                onClick={() => setTextoManual("")}
+              >
+                Fechar
+              </button>
+            </div>
+          </div>
+        )}
       </section>
     </main>
   );
