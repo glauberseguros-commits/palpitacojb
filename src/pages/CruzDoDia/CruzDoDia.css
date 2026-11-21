@@ -1071,22 +1071,26 @@
     display: none !important;
 }
 
+/* CRUZ DO DIA - ALINHAMENTO DESKTOP V2 */
 @media (min-width: 981px) {
-  .cdd-summary-actions {
-    display: grid;
-    grid-template-columns: repeat(3, minmax(0, 1fr));
-    gap: 16px;
+  .cdd-page .sdp-toolbar.cdd-toolbar.cdd-summary-actions {
+    display: grid !important;
+    grid-template-columns: repeat(3, minmax(0, 1fr)) !important;
+    justify-content: stretch !important;
     align-items: stretch;
+    gap: 16px;
     width: 100%;
   }
 
-  .cdd-summary-actions > * {
-    width: 100%;
-    min-width: 0;
-  }
-
-  .cdd-summary-actions button {
-    width: 100%;
+  .cdd-page .sdp-toolbar.cdd-toolbar.cdd-summary-actions > button {
+    display: flex;
+    align-items: center;
     justify-content: center;
+    width: 100% !important;
+    min-width: 0;
+    max-width: none;
+    margin: 0;
+    white-space: normal;
+    text-align: center;
   }
 }
