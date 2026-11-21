@@ -1053,3 +1053,20 @@
     gap: 10px;
   }
 }
+
+/* LIMPEZA VISUAL PONTUAL V1 */
+
+/* Ocultar o subtitulo repetido CRUZ DO DIA */
+.cdd-page .sdp-section-header .sdp-eyebrow {
+    display: none !important;
+}
+
+/* Ocultar a legenda original/complementar */
+.cdd-page .cdd-legend {
+    display: none !important;
+}
+
+/* Ocultar a contagem redundante em cada animal */
+.cdd-page .sdp-animal-header .sdp-animal-count {
+    display: none !important;
+}
