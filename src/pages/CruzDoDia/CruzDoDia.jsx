@@ -134,50 +134,64 @@ export default function CruzDoDia() {
           </div>
         </div>
 
-        <div className="cdd-compact-summary">
-          <strong>{fechamento.originais.length} originais</strong>
-          <span aria-hidden="true">+</span>
-          <span>{fechamento.complementares.length} complementares</span>
-          <span aria-hidden="true">=</span>
-          <strong>{fechamento.numeros.length} milhares</strong>
-          <span className="cdd-summary-bichos">
-            {fechamento.bichos.length} bichos
-          </span>
+        <div className="sdp-stats cdd-stats">
+          <div className="sdp-stat">
+            <strong>{fechamento.originais.length}</strong>
+            <span>Milhares da Cruz</span>
+          </div>
+
+          <div className="sdp-stat">
+            <strong>{fechamento.complementares.length}</strong>
+            <span>Complementares</span>
+          </div>
+
+          <div className="sdp-stat">
+            <strong>{fechamento.numeros.length}</strong>
+            <span>Total do fechamento</span>
+          </div>
+
+          <div className="sdp-stat">
+            <strong>{fechamento.bichos.length}</strong>
+            <span>Bichos identificados</span>
+          </div>
         </div>
 
-        <div className="cdd-copy-toolbar">
+        <div className="sdp-toolbar cdd-toolbar">
           <button
-            className="sdp-button-gold cdd-copy-main"
+            className="sdp-card-copy"
+            type="button"
+            disabled={!fechamento.originais.length}
+            onClick={() => copiar(fechamento.originais)}
+          >
+            Copiar Cruz original ({fechamento.originais.length})
+          </button>
+
+          <button
+            className="sdp-card-copy"
+            type="button"
+            disabled={!fechamento.complementares.length}
+            onClick={() => copiar(fechamento.complementares)}
+          >
+            Copiar complemento ({fechamento.complementares.length})
+          </button>
+
+          <button
+            className="sdp-button-gold"
             type="button"
             disabled={!fechamento.numeros.length}
             onClick={() => copiar(fechamento.numeros)}
           >
-            Copiar fechamento completo
+            Copiar fechamento completo ({fechamento.numeros.length})
           </button>
-
-          <details className="cdd-copy-options">
-            <summary>Outras opções de cópia</summary>
-            <div className="cdd-copy-options-body">
-              <button
-                type="button"
-                className="sdp-card-copy"
-                disabled={!fechamento.originais.length}
-                onClick={() => copiar(fechamento.originais)}
-              >
-                Copiar Cruz original ({fechamento.originais.length})
-              </button>
-
-              <button
-                type="button"
-                className="sdp-card-copy"
-                disabled={!fechamento.complementares.length}
-                onClick={() => copiar(fechamento.complementares)}
-              >
-                Copiar complemento ({fechamento.complementares.length})
-              </button>
-            </div>
-          </details>
         </div>
+
+        {milhares.length > 0 && (
+          <div className="cdd-legend">
+            <span className="cdd-legend-original">Milhar original da Cruz</span>
+            <span className="cdd-legend-extra">Milhar complementar</span>
+          </div>
+        )}
+
         {milhares.length > 0 ? (
           <div className="sdp-animals-grid">
             {fechamento.bichos.map((animal) => (
@@ -200,89 +214,66 @@ export default function CruzDoDia() {
                   </span>
                 </header>
 
-                <div
-                  className="cdd-original-group"
-                  aria-label="Milhares originais da Cruz do Dia"
-                >
-                  {animal.originais.map((numero) => (
-                    <span
-                      className="sdp-number cdd-number-original"
-                      key={numero}
+                <div className="sdp-dezenas-grade">
+                  {animal.colunas.map((coluna) => (
+                    <div
+                      className="sdp-dezena-coluna"
+                      key={coluna.dezena}
                     >
-                      {numero}
-                    </span>
+                      <div className="sdp-dezena-cabecalho">
+                        <strong>{coluna.dezena}</strong>
+                        <small>{coluna.numeros.length}</small>
+                      </div>
+
+                      <div className="sdp-dezena-lista">
+                        {coluna.numeros.length ? (
+                          coluna.numeros.map((numero) => (
+                            <span
+                              className={
+                                animal.originais.includes(numero)
+                                  ? "sdp-number cdd-number-original"
+                                  : "sdp-number cdd-number-complement"
+                              }
+                              key={numero}
+                            >
+                              {numero}
+                            </span>
+                          ))
+                        ) : (
+                          <span className="sdp-dezena-vazia">
+                            —
+                          </span>
+                        )}
+                      </div>
+                    </div>
                   ))}
                 </div>
 
-                {animal.complementares.length > 0 && (
-                  <details className="cdd-animal-expansion">
-                    <summary>
-                      Ver {animal.complementares.length} complementares
-                    </summary>
-
-                    <div className="sdp-dezenas-grade cdd-complement-grid">
-                      {animal.colunas.map((coluna) => {
-                        const extras = coluna.numeros.filter(
-                          (numero) => !animal.originais.includes(numero)
-                        );
-
-                        return (
-                          <div
-                            className="sdp-dezena-coluna"
-                            key={coluna.dezena}
-                          >
-                            <div className="sdp-dezena-cabecalho">
-                              <strong>{coluna.dezena}</strong>
-                              <small>{extras.length}</small>
-                            </div>
-
-                            <div className="sdp-dezena-lista">
-                              {extras.map((numero) => (
-                                <span
-                                  className="sdp-number cdd-number-complement"
-                                  key={numero}
-                                >
-                                  {numero}
-                                </span>
-                              ))}
-                            </div>
-                          </div>
-                        );
-                      })}
-                    </div>
-                  </details>
-                )}
-                <div className="cdd-card-controls">
+                <div className="sdp-card-actions cdd-card-actions">
                   <button
                     type="button"
-                    className="sdp-card-copy cdd-card-primary"
-                    onClick={() => copiar(animal.numeros)}
+                    className="sdp-card-copy"
+                    onClick={() => copiar(animal.originais)}
                   >
-                    Copiar fechamento ({animal.numeros.length})
+                    Cruz {animal.originais.length}
                   </button>
 
-                  <details className="cdd-card-copy-options">
-                    <summary>Outras cópias</summary>
+                  <button
+                    type="button"
+                    className="sdp-card-copy"
+                    disabled={!animal.complementares.length}
+                    onClick={() => copiar(animal.complementares)}
+                  >
+                    Complemento {animal.complementares.length}
+                  </button>
 
-                    <div className="cdd-card-extra-buttons">
-                      <button
-                        type="button"
-                        className="sdp-card-copy"
-                        onClick={() => copiar(animal.originais)}
-                      >
-                        Copiar Cruz ({animal.originais.length})
-                      </button>
-
-                      <button
-                        type="button"
-                        className="sdp-card-copy"
-                        disabled={!animal.complementares.length}
-                        onClick={() => copiar(animal.complementares)}
-                      >
-                        Copiar complemento ({animal.complementares.length})
-                      </button>
-                    </div>
-                  </details>
+                  <button
+                    type="button"
+                    className="sdp-card-copy cdd-copy-completo"
+                    onClick={() => copiar(animal.numeros)}
+                  >
+                    Fechamento {animal.numeros.length}
+                  </button>
                 </div>
               </article>
             ))}
