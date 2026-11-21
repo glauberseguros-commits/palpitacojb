@@ -1092,5 +1092,6 @@
     margin: 0;
     white-space: normal;
     text-align: center;
+    border-radius: 8px !important;
   }
 }
