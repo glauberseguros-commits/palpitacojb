@@ -2,6 +2,7 @@ import React, { useMemo, useState } from "react";
 import {
   calcularCruzDoDia
 } from "./cruzDoDia.logic.mjs";
+import { fecharCruzDoDia } from "./fechamentoCruz.logic.mjs";
 import "./CruzDoDia.css";
 
 function dataLocalAtual() {
@@ -51,6 +52,11 @@ export default function CruzDoDia() {
     milhares,
     bichos
   } = calculo;
+
+  const fechamento = useMemo(
+    () => fecharCruzDoDia(bichos),
+    [bichos]
+  );
 
   async function copiar(numeros) {
     if (!numeros.length) return;
@@ -130,30 +136,65 @@ export default function CruzDoDia() {
 
         <div className="sdp-stats cdd-stats">
           <div className="sdp-stat">
-            <strong>{milhares.length}</strong>
-            <span>Milhares distintas</span>
+            <strong>{fechamento.originais.length}</strong>
+            <span>Milhares da Cruz</span>
           </div>
 
           <div className="sdp-stat">
-            <strong>{bichos.length}</strong>
+            <strong>{fechamento.complementares.length}</strong>
+            <span>Complementares</span>
+          </div>
+
+          <div className="sdp-stat">
+            <strong>{fechamento.numeros.length}</strong>
+            <span>Total do fechamento</span>
+          </div>
+
+          <div className="sdp-stat">
+            <strong>{fechamento.bichos.length}</strong>
             <span>Bichos identificados</span>
           </div>
         </div>
 
         <div className="sdp-toolbar cdd-toolbar">
           <button
+            className="sdp-card-copy"
+            type="button"
+            disabled={!fechamento.originais.length}
+            onClick={() => copiar(fechamento.originais)}
+          >
+            Copiar Cruz original ({fechamento.originais.length})
+          </button>
+
+          <button
+            className="sdp-card-copy"
+            type="button"
+            disabled={!fechamento.complementares.length}
+            onClick={() => copiar(fechamento.complementares)}
+          >
+            Copiar complemento ({fechamento.complementares.length})
+          </button>
+
+          <button
             className="sdp-button-gold"
             type="button"
-            disabled={!milhares.length}
-            onClick={() => copiar(milhares)}
+            disabled={!fechamento.numeros.length}
+            onClick={() => copiar(fechamento.numeros)}
           >
-            Copiar todas as milhares
+            Copiar fechamento completo ({fechamento.numeros.length})
           </button>
         </div>
 
+        {milhares.length > 0 && (
+          <div className="cdd-legend">
+            <span className="cdd-legend-original">Milhar original da Cruz</span>
+            <span className="cdd-legend-extra">Milhar complementar</span>
+          </div>
+        )}
+
         {milhares.length > 0 ? (
           <div className="sdp-animals-grid">
-            {bichos.map((animal) => (
+            {fechamento.bichos.map((animal) => (
               <article
                 className="sdp-animal-card"
                 key={animal.grupo}
@@ -169,7 +210,7 @@ export default function CruzDoDia() {
                   </div>
 
                   <span className="sdp-animal-count">
-                    {animal.numeros.length} milhares
+                    {animal.originais.length} Cruz + {animal.complementares.length} complementares
                   </span>
                 </header>
 
@@ -188,7 +229,11 @@ export default function CruzDoDia() {
                         {coluna.numeros.length ? (
                           coluna.numeros.map((numero) => (
                             <span
-                              className="sdp-number"
+                              className={
+                                animal.originais.includes(numero)
+                                  ? "sdp-number cdd-number-original"
+                                  : "sdp-number cdd-number-complement"
+                              }
                               key={numero}
                             >
                               {numero}
@@ -204,13 +249,30 @@ export default function CruzDoDia() {
                   ))}
                 </div>
 
-                <div className="sdp-card-actions">
+                <div className="sdp-card-actions cdd-card-actions">
                   <button
                     type="button"
                     className="sdp-card-copy"
+                    onClick={() => copiar(animal.originais)}
+                  >
+                    Cruz {animal.originais.length}
+                  </button>
+
+                  <button
+                    type="button"
+                    className="sdp-card-copy"
+                    disabled={!animal.complementares.length}
+                    onClick={() => copiar(animal.complementares)}
+                  >
+                    Complemento {animal.complementares.length}
+                  </button>
+
+                  <button
+                    type="button"
+                    className="sdp-card-copy cdd-copy-completo"
                     onClick={() => copiar(animal.numeros)}
                   >
-                    Copiar {animal.numeros.length}
+                    Fechamento {animal.numeros.length}
                   </button>
                 </div>
               </article>

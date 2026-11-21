@@ -927,3 +927,129 @@
     font-size: 16px;
   }
 }
+
+/* CRUZ DO DIA - FECHAMENTO V1 */
+
+.cdd-page .cdd-stats {
+  grid-template-columns: repeat(4, minmax(0, 1fr));
+}
+
+.cdd-page .cdd-toolbar {
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 10px;
+}
+
+.cdd-page .cdd-toolbar button {
+  min-height: 42px;
+  padding: 10px 13px;
+  cursor: pointer;
+}
+
+.cdd-page .cdd-toolbar button:disabled,
+.cdd-page .cdd-card-actions button:disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+}
+
+.cdd-page .cdd-legend {
+  display: flex;
+  justify-content: center;
+  gap: 14px;
+  flex-wrap: wrap;
+  margin: 9px 0 18px;
+  color: #b7ab91;
+  font-size: 12px;
+}
+
+.cdd-page .cdd-legend span {
+  display: inline-flex;
+  align-items: center;
+  gap: 7px;
+}
+
+.cdd-page .cdd-legend span::before {
+  content: "";
+  width: 12px;
+  height: 12px;
+  border-radius: 3px;
+  display: inline-block;
+}
+
+.cdd-page .cdd-legend-original::before {
+  background: #c6a65a;
+  border: 1px solid #edcf81;
+}
+
+.cdd-page .cdd-legend-extra::before {
+  background: #161616;
+  border: 1px solid #574a31;
+}
+
+.cdd-page .sdp-number.cdd-number-original {
+  background: linear-gradient(145deg, #46381b, #2b2416);
+  border: 1px solid #bf9f50;
+  color: #f6d987;
+  font-weight: 800;
+  box-shadow: inset 0 1px 0 rgba(235, 198, 107, 0.1);
+}
+
+.cdd-page .sdp-number.cdd-number-complement {
+  background: #0e0e0e;
+  border: 1px solid #383124;
+  color: #ac9d80;
+  font-weight: 500;
+  box-shadow: none;
+}
+
+.cdd-page .sdp-animal-count {
+  font-size: 11px;
+  text-align: right;
+}
+
+.cdd-page .cdd-card-actions {
+  display: flex;
+  justify-content: flex-end;
+  flex-wrap: wrap;
+  gap: 7px;
+}
+
+.cdd-page .cdd-card-actions button {
+  min-height: 35px;
+  padding: 7px 9px;
+  font-size: 11px;
+  white-space: nowrap;
+  cursor: pointer;
+}
+
+.cdd-page .cdd-card-actions .cdd-copy-completo {
+  border-color: #d4b568;
+  color: #f0d18a;
+}
+
+@media (max-width: 640px) {
+  .cdd-page .cdd-stats {
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .cdd-page .cdd-toolbar,
+  .cdd-page .cdd-toolbar button {
+    width: 100%;
+  }
+
+  .cdd-page .cdd-card-actions {
+    justify-content: stretch;
+  }
+
+  .cdd-page .cdd-card-actions button {
+    flex: 1 1 auto;
+    min-height: 42px;
+    white-space: normal;
+  }
+
+  .cdd-page .cdd-legend {
+    font-size: 11px;
+    gap: 10px;
+  }
+}
