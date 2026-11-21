@@ -1095,3 +1095,18 @@
     border-radius: 8px !important;
   }
 }
+
+/* ACABAMENTO BOTOES DESKTOP V3 */
+@media (min-width: 981px) {
+  /* Remove apenas a borda branca dos botoes cinza */
+  .cdd-page .sdp-toolbar.cdd-toolbar.cdd-summary-actions > button.sdp-card-copy {
+    border-color: transparent !important;
+    box-shadow: none !important;
+  }
+
+  /* Mantem o foco visivel para navegacao por teclado */
+  .cdd-page .sdp-toolbar.cdd-toolbar.cdd-summary-actions > button:focus-visible {
+    outline: 2px solid #f0d18a !important;
+    outline-offset: 3px;
+  }
+}
