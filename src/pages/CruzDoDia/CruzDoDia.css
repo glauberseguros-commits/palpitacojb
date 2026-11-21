@@ -1070,3 +1070,23 @@
 .cdd-page .sdp-animal-header .sdp-animal-count {
     display: none !important;
 }
+
+@media (min-width: 981px) {
+  .cdd-summary-actions {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: 16px;
+    align-items: stretch;
+    width: 100%;
+  }
+
+  .cdd-summary-actions > * {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .cdd-summary-actions button {
+    width: 100%;
+    justify-content: center;
+  }
+}

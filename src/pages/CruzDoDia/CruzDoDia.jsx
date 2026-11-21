@@ -130,8 +130,7 @@ export default function CruzDoDia() {
         <div className="sdp-section-header">
           <div>
             <span className="sdp-eyebrow">CRUZ DO DIA</span>
-            <h2>Milhares por bicho</h2>
-          </div>
+</div>
         </div>
 
         <div className="sdp-stats cdd-stats">
@@ -156,7 +155,7 @@ export default function CruzDoDia() {
           </div>
         </div>
 
-        <div className="sdp-toolbar cdd-toolbar">
+        <div className="sdp-toolbar cdd-toolbar cdd-summary-actions">
           <button
             className="sdp-card-copy"
             type="button"
