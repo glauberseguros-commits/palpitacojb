@@ -1,5 +1,13 @@
-import React, { useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import "./SobeDescePermutacoes.css";
+import { getKingResultsByDate } from "../../services/kingResultsService";
+import { LOTTERY_CATALOG_DISPLAY_GLOBAL } from "../../constants/lotteryCatalog";
+import {
+  selecionarUltimoCompleto,
+  dataHojeBrasil,
+  deslocarDia,
+  formatarOrigemSorteio
+} from "./autoPreencherGrupos.logic.mjs";
 
 const CATALOGO = [
   {
@@ -284,10 +292,114 @@ function FotoBicho({ animal }) {
 
 export default function SobeDescePermutacoes() {
   const [grupos, setGrupos] = useState(VAZIOS);
+  const [loteria, setLoteria] = useState("");
+  const [versaoConsulta, setVersaoConsulta] = useState(0);
+  const [buscandoGrupos, setBuscandoGrupos] = useState(false);
+  const [origemGrupos, setOrigemGrupos] = useState("");
+  const [avisoGrupos, setAvisoGrupos] = useState("");
+  const [gruposEditados, setGruposEditados] = useState(false);
+  const requisicaoRef = useRef(0);
   const [mensagem, setMensagem] = useState("");
   const [filtroBichos, setFiltroBichos] = useState([]);
   const [menuMobileAberto, setMenuMobileAberto] = useState(false);
   const [expandidos, setExpandidos] = useState({});
+
+  useEffect(() => {
+    if (!loteria) return undefined;
+
+    let ativo = true;
+    const requisicao = ++requisicaoRef.current;
+
+    setBuscandoGrupos(true);
+    setAvisoGrupos("Consultando os resultados...");
+    setOrigemGrupos("");
+    setGruposEditados(false);
+
+    async function consultar() {
+      try {
+        const hoje = dataHojeBrasil();
+
+        for (let dias = 0; dias < 14; dias += 1) {
+          if (
+            !ativo ||
+            requisicaoRef.current !== requisicao
+          ) return;
+
+          const dia = deslocarDia(hoje, -dias);
+
+          const dados = await getKingResultsByDate({
+            uf: loteria,
+            date: dia,
+            closeHour: null,
+            closeHourBucket: null,
+            positions: [1, 2, 3, 4, 5]
+          });
+
+          if (
+            !ativo ||
+            requisicaoRef.current !== requisicao
+          ) return;
+
+          const encontrado = selecionarUltimoCompleto(
+            dados,
+            dia
+          );
+
+          if (!encontrado) continue;
+
+          setGrupos(encontrado.grupos);
+          setFiltroBichos([]);
+          setExpandidos({});
+          setMensagem("");
+          setOrigemGrupos(
+            formatarOrigemSorteio(encontrado)
+          );
+          setAvisoGrupos(
+            "Grupos preenchidos automaticamente."
+          );
+          setGruposEditados(false);
+          return;
+        }
+
+        if (
+          ativo &&
+          requisicaoRef.current === requisicao
+        ) {
+          setAvisoGrupos(
+            "Nenhum sorteio completo nos ultimos 14 dias. Informe os grupos manualmente."
+          );
+        }
+      } catch (erro) {
+        console.error(
+          "Falha ao consultar resultados:",
+          erro
+        );
+
+        if (
+          ativo &&
+          requisicaoRef.current === requisicao
+        ) {
+          setAvisoGrupos(
+            "Consulta indisponivel. Os campos continuam editaveis."
+          );
+        }
+      } finally {
+        if (
+          ativo &&
+          requisicaoRef.current === requisicao
+        ) {
+          setBuscandoGrupos(false);
+        }
+      }
+    }
+
+    consultar();
+
+    return () => {
+      ativo = false;
+      requisicaoRef.current += 1;
+    };
+  }, [loteria, versaoConsulta]);
 
   const milhares = useMemo(
     () => calcularSobeDesce(grupos), [grupos]
@@ -368,6 +480,12 @@ export default function SobeDescePermutacoes() {
     copiar(milharesParaCopiar.join("\n"));
   }
   function atualizar(i, valor) {
+    requisicaoRef.current += 1;
+    setBuscandoGrupos(false);
+    setGruposEditados(true);
+    setAvisoGrupos(
+      "Edicao manual. Clique em Atualizar resultados para consultar novamente."
+    );
     const v = String(valor).replace(/\D/g, "").slice(0, 2);
     setGrupos((atual) => atual.map((g, j) => j === i ? v : g));
     setMensagem("");
@@ -409,6 +527,63 @@ export default function SobeDescePermutacoes() {
   return (
     <main className="sd-page sdp-page">
       <section className="sd-panel">
+        <div className="sdp-perm-auto">
+          <label className="sdp-perm-auto-label">
+            <span>LOTERIA</span>
+            <select
+              value={loteria}
+              onChange={(evento) => {
+                requisicaoRef.current += 1;
+                setLoteria(evento.target.value);
+                setGrupos(VAZIOS);
+                setOrigemGrupos("");
+                setAvisoGrupos("");
+                setGruposEditados(false);
+                setFiltroBichos([]);
+                setExpandidos({});
+                setMensagem("");
+              }}
+            >
+              <option value="">Selecione a loteria</option>
+              {LOTTERY_CATALOG_DISPLAY_GLOBAL.map((item) => (
+                <option key={item.key} value={item.key}>
+                  {item.label}
+                </option>
+              ))}
+            </select>
+          </label>
+
+          <button
+            type="button"
+            className="sdp-perm-update"
+            disabled={!loteria || buscandoGrupos}
+            onClick={() =>
+              setVersaoConsulta((v) => v + 1)
+            }
+          >
+            {buscandoGrupos
+              ? "Consultando..."
+              : "Atualizar resultados"}
+          </button>
+        </div>
+
+        {(origemGrupos || avisoGrupos) && (
+          <div
+            className="sdp-perm-auto-status"
+            role="status"
+          >
+            {origemGrupos && (
+              <strong>
+                Sorteio utilizado: {origemGrupos}
+                {gruposEditados
+                  ? " · Editado manualmente"
+                  : ""}
+              </strong>
+            )}
+            {avisoGrupos && <span>{avisoGrupos}</span>}
+          </div>
+        )}
+
         <div className="sd-grid">
           <div className="sd-heading">GRUPOS</div>
           <div className="sd-heading">MILHARES E BICHOS</div>
@@ -501,6 +676,11 @@ export default function SobeDescePermutacoes() {
           <button
             className="sd-clear"
             onClick={() => {
+              requisicaoRef.current += 1;
+              setBuscandoGrupos(false);
+              setOrigemGrupos("");
+              setAvisoGrupos("Campos limpos. Selecione outra loteria ou atualize.");
+              setGruposEditados(false);
               setGrupos(VAZIOS);
               setMensagem("");
               setFiltroBichos([]);
