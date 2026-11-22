@@ -516,11 +516,11 @@ export default function AppShell({ active, onNavigate, onLogout, children }) {
         <nav style={UI.nav} role="navigation" aria-label="Navegação principal">
           {menuPrimary.map(renderMenuButton)}
 
-          <div style={UI.navDivider} />
+
 
           {menuTools.map(renderMenuButton)}
 
-          <div style={UI.navDivider} />
+
 
           {menuAccount.map(renderMenuButton)}
 
